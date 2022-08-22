@@ -1,4 +1,4 @@
-Hey ho that´s the calculix plugin for coreform cubit!
+Hey ho thatÂ´s the calculix plugin for coreform cubit!
 
 Here you can find the source code and a build for linux.
 If you want to build the plugin yourself, i would recommend using Centos 7.
@@ -55,3 +55,4 @@ HEX8        ->  C3D8
 HEX9        ->  not supported
 HEX20       ->  C3D20
 HEX27       ->  not supported
+
