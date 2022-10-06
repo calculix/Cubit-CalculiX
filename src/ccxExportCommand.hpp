@@ -4,6 +4,7 @@
 #include "CubitCommandInterface.hpp"
 
 class MeshExportInterface;
+class MaterialInterface;
 
 /*!
  * \brief The ccxExportCommand class implements a calculix export command.
@@ -30,7 +31,7 @@ protected:
   //! \param output_file the file stream that is used for writing
   //! \param[in] iface the reference to the MeshExportInterface
   //! \return true if file write succeeded
-  bool write_file(std::ofstream& output_file, MeshExportInterface *iface);
+  bool write_file(std::ofstream& output_file, MeshExportInterface *iface, MaterialInterface *material_iface);
 
   //! \brief close the file
   //! \param output_file the file stream that is used for writing
@@ -46,6 +47,7 @@ protected:
   bool write_nodes(std::ofstream& output_file,MeshExportInterface *iface);
   bool write_nodesets(std::ofstream& output_file,MeshExportInterface *iface);
   bool write_sidesets(std::ofstream& output_file,MeshExportInterface *iface);
+  bool write_materials(std::ofstream& output_file,MeshExportInterface *iface, MaterialInterface *material_iface);
   int get_side(int element_type,int side);
 };
 
