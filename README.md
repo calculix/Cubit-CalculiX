@@ -75,6 +75,7 @@ Supported Material Properties:
  - yield stress vs. strain vs. temperature
 
 The thickness for plain strain and stress elements is defined with block attribute 1
+
 The thickness for shells is defined with block attribute 1, the offset with block attribute 2
 
 Beam section not supported.
