@@ -1,5 +1,6 @@
 #include "ccxExportCommand.hpp"
 #include "MeshExportInterface.hpp"
+#include "MaterialInterface.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 
@@ -42,6 +43,7 @@ bool ccxExportCommand::execute(CubitCommandData &data)
 {
   std::ofstream output_file;
   MeshExportInterface *iface;
+  MaterialInterface *material_iface;
 
   // The command syntax specified that we should have a string labeled "filename" in the
   // the command. We would not have gotten to this point without having that required
@@ -66,18 +68,27 @@ bool ccxExportCommand::execute(CubitCommandData &data)
     return false;
   }
 
+  // Get the Material Interface from CubitInterface
+  material_iface = dynamic_cast<MaterialInterface*>(CubitInterface::get_interface("Material"));
+  if(!material_iface)
+  {
+    PRINT_ERROR("Unable to get material interface.\n");
+    return false;
+  }
+
   // Now we can use the interface as before
   iface->set_use_sequential_ids(false);
 
   // Open the file and write to it
   bool result =
-      open_file(filename, output_file) && write_file(output_file, iface);
+      open_file(filename, output_file) && write_file(output_file, iface, material_iface);
 
   // Close the file
   close_file(output_file);
 
   // Make sure that you release the interface after accessing it
   CubitInterface::release_interface(iface);
+  CubitInterface::release_interface(material_iface);
 
   return result;
 }
@@ -181,7 +192,7 @@ int ccxExportCommand::get_side(int element_type,int side)
   return s_return;
 }
 
-bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterface *iface)
+bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterface *iface, MaterialInterface *material_iface)
 {
   bool result;
   // Initialize the exporter
@@ -203,6 +214,10 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
 
   // Write the sidesets
   result = write_sidesets(output_file, iface);
+
+  // Write the materials and properties
+  result = write_materials(output_file, iface, material_iface);
+  result = write_properties(output_file, iface, material_iface);
 
   return result;
 }
@@ -716,5 +731,292 @@ bool ccxExportCommand::write_sidesets(std::ofstream& output_file, MeshExportInte
   }
 
   output_file << "** \n";
+  return true;
+}
+
+bool ccxExportCommand::write_materials(std::ofstream& output_file, MeshExportInterface *iface,MaterialInterface *material_iface)
+{
+
+  // define variables
+  std::string material_name;
+
+  // define block handles
+  std::vector<BlockHandle> blocks;
+  BlockHandle block;
+
+  // define material handles
+  std::vector<MaterialHandle> materials;
+  MaterialHandle material;
+  std::vector<MaterialInterface::Property> properties;
+  MaterialInterface::Property prop;
+  double prop_scalar;
+  MaterialVector prop_vector;
+  MaterialMatrix prop_matrix;
+
+  // Get the list of blocks and materials
+  iface->get_block_list(blocks);
+  iface->get_material_list(materials);
+
+  output_file << "********************************** M A T E R I A L S **************************** \n";
+  for (size_t i = 0; i < materials.size(); i++)
+  {
+    // variables for later output
+    // are defined her so they will be erased/cleared after each different material
+    std::vector<double> material_elastic(2); // index 0=modulus 1=poisson
+    MaterialMatrix material_plastic;
+    //
+    material = materials[i];
+    material_name = material_iface->get_material_name(material);
+    output_file << "*MATERIAL, NAME="<< material_name << " \n";
+    properties = material_iface->get_material_properties(material);
+    // we have to first get all data for the material and then write to the file
+    // because the order of the data that we get can be mixed
+    for (size_t ii = 0; ii < properties.size(); ii++)
+    {
+      prop = properties[ii];
+      if (material_iface->get_property_name(prop) == "MODULUS") {
+        material_iface->get_material_property_value(material, prop, prop_scalar);
+        material_elastic[0] = prop_scalar;
+      } else if (material_iface->get_property_name(prop) == "POISSON") {
+        material_iface->get_material_property_value(material, prop, prop_scalar);
+        material_elastic[1] = prop_scalar;
+      } else if (material_iface->get_property_name(prop) == "YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE") {
+        material_iface->get_material_property_value(material, prop, prop_matrix);
+        material_plastic = prop_matrix;
+      } else {
+        output_file << "\n export for property name "<< material_iface->get_property_name(prop) << " is not supported \n";
+      }
+    }
+    // write out the data in our wished order
+    if (material_elastic[0]!=0){
+    output_file << "* ELASTIC "<< " \n";
+    output_file << material_elastic[0] << ", " << material_elastic[1] << " \n";
+    }
+    if (material_plastic.size()!=0){
+    output_file << "* PLASTIC "<< " \n";
+    }
+    for (size_t ii = 0; ii < material_plastic.size(); ii++)
+    {
+      output_file << material_plastic[ii][0] << ", ";
+      output_file << material_plastic[ii][1] ;
+      if (material_plastic[ii][2]!=0){
+        output_file << ", " << material_plastic[ii][2] << " \n";
+      } else {
+        output_file << " \n";
+      }
+    }
+  }
+  return true;
+}
+
+
+bool ccxExportCommand::write_properties(std::ofstream& output_file, MeshExportInterface *iface,MaterialInterface *material_iface)
+{
+
+  // define variables
+  std::string block_name;
+  std::string material_name;
+  std::string section_name;
+  std::string section_first_line;
+  std::string section_second_line;
+  
+  // define block handles
+  std::vector<BlockHandle> blocks;
+  BlockHandle block;
+
+  // define material handles
+  std::vector<MaterialHandle> materials;
+  MaterialHandle material;
+  
+  // Get the list of blocks and materials
+  iface->get_block_list(blocks);
+  iface->get_material_list(materials);
+
+  output_file << "********************************** P R O P E R T I E S **************************** \n";
+  // connect the materials to our blocks
+  for (size_t i = 0; i < blocks.size(); i++)
+  {
+
+    block = blocks[i];
+    block_name = iface->name_from_handle(block);
+    
+    //get block attributes
+    std::vector<std::pair<char *,double>> block_attributes; //list of attributes on block
+    iface->get_block_attributes(block, block_attributes);
+
+    iface->get_block_material(block,material);
+    material_name = material_iface->get_material_name(material);
+
+    // Get a batch of elements in an initialized block
+    std::vector<ElementType>   element_type(1);
+    std::vector<ElementHandle> handles(1);
+
+    iface->get_block_elements(0, 1, block, element_type, handles);
+    // choose right section type for the element type
+    if (element_type[0] == 1) {
+      // BAR
+      section_name = "BEAM";
+    } else if (element_type[0] == 2) {
+      // BAR2
+      section_name = "BEAM";
+    } else if (element_type[0] == 3) {
+      // BAR3
+      section_name = "NOT SUPPORTED";
+    } else if (element_type[0] == 4) {
+      // BEAM
+      section_name = "BEAM";
+    } else if (element_type[0] == 5) {
+      // BEAM2
+      section_name = "BEAM";
+    } else if (element_type[0] == 6) {
+      // BEAM3
+      section_name = "BEAM";
+    } else if (element_type[0] == 7) {
+      // TRUSS
+      section_name = "BEAM";
+    } else if (element_type[0] == 8) {
+      // TRUSS2
+      section_name = "BEAM";
+    } else if (element_type[0] == 9) {
+      // TRUSS3
+      section_name = "BEAM";
+    } else if (element_type[0] == 10) {
+      // SPRING
+      section_name = "NOT SUPPORTED";
+    } else if (element_type[0] == 11) {
+      // TRI
+      section_name = "SOLID";
+    } else if (element_type[0] == 12) {
+      // TRI3
+      section_name = "SOLID";
+    } else if (element_type[0] == 13) {
+      // TRI6
+      section_name = "SOLID";
+    } else if (element_type[0] == 14) {
+      // TRI7
+      section_name = "NOT SUPPORTED";
+    } else if (element_type[0] == 15) {
+      // TRISHELL
+      section_name = "SHELL";
+    } else if (element_type[0] == 16) {
+      // TRISHELL3
+      section_name = "SHELL";
+    } else if (element_type[0] == 17) {
+      // TRISHELL6
+      section_name = "SHELL";
+    } else if (element_type[0] == 18) {
+      // TRISHELL7
+      section_name = "NOT SUPPORTED";
+    } else if (element_type[0] == 19) {
+      // SHELL
+      section_name = "SHELL";
+    } else if (element_type[0] == 20) {
+      // SHELL4
+      section_name = "SHELL";
+    } else if (element_type[0] == 21) {
+      // SHELL8
+      section_name = "SHELL";
+    } else if (element_type[0] == 22) {
+      // SHELL9
+      section_name = "NOT SUPPORTED";
+    } else if (element_type[0] == 23) {
+      // QUAD
+      section_name = "SOLID";
+    } else if (element_type[0] == 24) {
+      // QUAD4
+      section_name = "SOLID";
+    } else if (element_type[0] == 25) {
+      // QUAD5
+      section_name = "NOT SUPPORTED";
+    } else if (element_type[0] == 26) {
+      // QUAD8
+      section_name = "SOLID";
+    } else if (element_type[0] == 27) {
+      // QUAD9
+      section_name = "NOT SUPPORTED";
+    } else if (element_type[0] == 28) {
+      // Tetra
+      section_name = "SOLID";
+    } else if (element_type[0] == 29) {
+      // Tetra4
+      section_name = "SOLID";
+    } else if (element_type[0] == 30) {
+      // Tetra8
+      section_name = "NOT SUPPORTED";
+    } else if (element_type[0] == 31) {
+      // Tetra10
+      section_name = "SOLID";
+    } else if (element_type[0] == 32) {
+      // Tetra14
+      section_name = "NOT SUPPORTED";
+    } else if (element_type[0] == 33) {
+      // Tetra15
+      section_name = "NOT SUPPORTED";
+    } else if (element_type[0] == 39) {
+      // HEX
+      section_name = "SOLID";
+    } else if (element_type[0] == 40) {
+      // HEX8
+      section_name = "SOLID";
+    } else if (element_type[0] == 41) {
+      // HEX9
+      section_name = "NOT SUPPORTED";
+    } else if (element_type[0] == 42) {
+      // HEX20
+      section_name = "SOLID";
+    } else if (element_type[0] == 43) {
+      // HEX27
+      section_name = "NOT SUPPORTED";
+    } else {
+      // if not implemented take cubit name
+      section_name = "NOT SUPPORTED";
+    }
+    //output_file << "BLOCKNAME "<< block_name << ", MaterialNAME "<< material_name << ", SectionNAME "<< section_name << " \n";;
+    section_first_line = "*" + section_name + " SECTION, ELSET=" + block_name + ", MATERIAL=" + material_name;
+    
+
+    //the thickness for plain strain and stress is defined in block attribute 1
+    //the thickness for shell defined in block attribute 1, the offset in block attribute 2
+    if ((element_type[0]>=11) && (element_type[0]<=14)) {
+      // TRI
+      if (block_attributes.size() == 1) {
+        section_second_line = std::to_string(block_attributes[0].second);  
+      }else{
+        section_second_line = "1";  
+      }
+    } else if ((element_type[0]>=15) && (element_type[0]<=18)) {
+      // TRISHELL
+      if (block_attributes.size() == 2) {
+        section_first_line = section_first_line + ", OFFSET=" +  std::to_string(block_attributes[1].second);
+        section_second_line = std::to_string(block_attributes[0].second);  
+      }else{
+        section_first_line = section_first_line + ", OFFSET= 0";
+        section_second_line = "1";  
+      }
+    } else if ((element_type[0]>=19) && (element_type[0]<=22)) {
+      // SHELL
+      if (block_attributes.size() == 2) {
+        section_first_line = section_first_line + ", OFFSET=" +  std::to_string(block_attributes[1].second);
+        section_second_line = std::to_string(block_attributes[0].second);  
+      }else{
+        section_first_line = section_first_line + ", OFFSET= 0";
+        section_second_line = "1";  
+      }
+    } else if ((element_type[0]>=23) && (element_type[0]<=27)) {
+      // QUAD
+      if (block_attributes.size() == 1) {
+        section_second_line = std::to_string(block_attributes[0].second);  
+      }else{
+        section_second_line = "1";  
+      }
+    }
+    
+    if ((block_name!="") && (section_name!="Default-Steel")){ //catch unassigned material
+    output_file << section_first_line << " \n" ;
+    output_file << section_second_line << " \n" ;
+    }
+
+  }
+
   return true;
 }

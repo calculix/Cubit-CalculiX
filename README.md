@@ -14,7 +14,8 @@ e.g.: /opt/Coreform-Cubit-2022.4/bin/plugins/
 Features:
 - adds an export option for the use with CalculiX
 - supported element types: see listing below 
-- supports export of nodesets and sidesets 
+- supports export of nodesets and sidesets
+- supports export of materials and section properties
 
 How to use:
 - command 'export ccx "filename"' for export of the mesh
@@ -64,3 +65,17 @@ HEX9        ->  not supported
 HEX20       ->  C3D20
 HEX27       ->  not supported
 ```
+
+# material and section properties export:
+Use the Cubit-Abaqus Card to define the material.
+
+Supported Material Properties:
+ - youngs modulus
+ - poisson's ratio
+ - yield stress vs. strain vs. temperature
+
+The thickness for plain strain and stress elements is defined with block attribute 1
+
+The thickness for shells is defined with block attribute 1, the offset with block attribute 2
+
+Beam section not supported.
