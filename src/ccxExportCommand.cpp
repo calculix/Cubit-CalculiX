@@ -217,6 +217,7 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
 
   // Write the materials and properties
   result = write_materials(output_file, iface, material_iface);
+  result = write_properties(output_file, iface, material_iface);
 
   return result;
 }
@@ -737,9 +738,7 @@ bool ccxExportCommand::write_materials(std::ofstream& output_file, MeshExportInt
 {
 
   // define variables
-  std::string block_name;
   std::string material_name;
-  std::string section_name;
 
   // define block handles
   std::vector<BlockHandle> blocks;
@@ -807,6 +806,31 @@ bool ccxExportCommand::write_materials(std::ofstream& output_file, MeshExportInt
       }
     }
   }
+  return true;
+}
+
+
+bool ccxExportCommand::write_properties(std::ofstream& output_file, MeshExportInterface *iface,MaterialInterface *material_iface)
+{
+
+  // define variables
+  std::string block_name;
+  std::string material_name;
+  std::string section_name;
+  std::string section_first_line;
+  std::string section_second_line;
+  
+  // define block handles
+  std::vector<BlockHandle> blocks;
+  BlockHandle block;
+
+  // define material handles
+  std::vector<MaterialHandle> materials;
+  MaterialHandle material;
+  
+  // Get the list of blocks and materials
+  iface->get_block_list(blocks);
+  iface->get_material_list(materials);
 
   output_file << "********************************** P R O P E R T I E S **************************** \n";
   // connect the materials to our blocks
@@ -815,6 +839,10 @@ bool ccxExportCommand::write_materials(std::ofstream& output_file, MeshExportInt
 
     block = blocks[i];
     block_name = iface->name_from_handle(block);
+    
+    //get block attributes
+    std::vector<std::pair<char *,double>> block_attributes; //list of attributes on block
+    iface->get_block_attributes(block, block_attributes);
 
     iface->get_block_material(block,material);
     material_name = material_iface->get_material_name(material);
@@ -943,10 +971,52 @@ bool ccxExportCommand::write_materials(std::ofstream& output_file, MeshExportInt
       // if not implemented take cubit name
       section_name = "NOT SUPPORTED";
     }
-    output_file << "BLOCKNAME "<< block_name << ", MaterialNAME "<< material_name << ", SectionNAME "<< section_name << " \n";;
+    //output_file << "BLOCKNAME "<< block_name << ", MaterialNAME "<< material_name << ", SectionNAME "<< section_name << " \n";;
+    section_first_line = "*" + section_name + " SECTION, ELSET=" + block_name + ", MATERIAL=" + material_name;
+    
+
+    //the thickness for plain strain and stress is defined in block attribute 1
+    //the thickness for shell defined in block attribute 1, the offset in block attribute 2
+    if ((element_type[0]>=11) && (element_type[0]<=14)) {
+      // TRI
+      if (block_attributes.size() == 1) {
+        section_second_line = std::to_string(block_attributes[0].second);  
+      }else{
+        section_second_line = "1";  
+      }
+    } else if ((element_type[0]>=15) && (element_type[0]<=18)) {
+      // TRISHELL
+      if (block_attributes.size() == 2) {
+        section_first_line = section_first_line + ", OFFSET=" +  std::to_string(block_attributes[1].second);
+        section_second_line = std::to_string(block_attributes[0].second);  
+      }else{
+        section_first_line = section_first_line + ", OFFSET= 0";
+        section_second_line = "1";  
+      }
+    } else if ((element_type[0]>=19) && (element_type[0]<=22)) {
+      // SHELL
+      if (block_attributes.size() == 2) {
+        section_first_line = section_first_line + ", OFFSET=" +  std::to_string(block_attributes[1].second);
+        section_second_line = std::to_string(block_attributes[0].second);  
+      }else{
+        section_first_line = section_first_line + ", OFFSET= 0";
+        section_second_line = "1";  
+      }
+    } else if ((element_type[0]>=23) && (element_type[0]<=27)) {
+      // QUAD
+      if (block_attributes.size() == 1) {
+        section_second_line = std::to_string(block_attributes[0].second);  
+      }else{
+        section_second_line = "1";  
+      }
+    }
+    
+    if ((block_name!="") && (section_name!="Default-Steel")){ //catch unassigned material
+    output_file << section_first_line << " \n" ;
+    output_file << section_second_line << " \n" ;
+    }
 
   }
-
 
   return true;
 }

@@ -48,6 +48,7 @@ protected:
   bool write_nodesets(std::ofstream& output_file,MeshExportInterface *iface);
   bool write_sidesets(std::ofstream& output_file,MeshExportInterface *iface);
   bool write_materials(std::ofstream& output_file,MeshExportInterface *iface, MaterialInterface *material_iface);
+  bool write_properties(std::ofstream& output_file,MeshExportInterface *iface, MaterialInterface *material_iface);
   int get_side(int element_type,int side);
 };
 
