@@ -1,15 +1,19 @@
 #ifndef CALCULIXCORE_HPP
 #define CALCULIXCORE_HPP
 
+#include "CoreBlocks.hpp"
+
 class CalculiXCore
 {
-  int testint=0;
+  CoreBlocks cb;
 
 public:
   CalculiXCore();
   ~CalculiXCore();
-	
-  std::string test();
+
+  bool print_to_log(std::string str_log);
+  bool init();
+  std::string print_data();
 };
 
 #endif // CALCULIXCore_HPP

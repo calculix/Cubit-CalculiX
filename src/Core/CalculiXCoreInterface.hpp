@@ -8,7 +8,7 @@ public:
   CalculiXCoreInterface();
   ~CalculiXCoreInterface();
 	
-  std::string test();
+  std::string print_data();
 };
 
 #endif // CALCULIXCOREINTERFACE_HPP
