@@ -31,5 +31,24 @@ bool CalculiXCoreInterface::set_ccx_element_type(int block_id, std::string ccx_e
   }else{
     return false;
   }
+}
 
+bool CalculiXCoreInterface::core_update()
+{
+  if (ccx_core.update())
+  {
+    return true;
+  }else{
+    return false;
+  }
+}
+
+bool CalculiXCoreInterface::core_reset()
+{
+  if (ccx_core.reset())
+  {
+    return true;
+  }else{
+    return false;
+  }
 }

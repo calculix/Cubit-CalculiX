@@ -25,14 +25,8 @@ public:
   Observer();
   ~Observer();
 
-  // Provides an example of reading our custom data from a .cub file.
-  // This function is executed after Cubit is done reading the file.
-  void notify_cub_file_read(std::string filename);
-
-  // Provides an example of writing our custom data to a .cub file.
-  // This function is executed after Cubit is done writing its data
-  // to the file.
-  void notify_cub_file_saved(std::string filename, bool is_tmp_file);
+  void notify_model_reset();
+  void notify_command_complete();
 };
 
 #endif // OBSERVER_HPP

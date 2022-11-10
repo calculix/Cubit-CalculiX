@@ -30,6 +30,26 @@ bool CalculiXCore::init()
   return true;
 }
 
+bool CalculiXCore::update()
+{
+  cb.update();
+  
+  print_to_log("UPDATE");
+  print_to_log(print_data());
+
+  return true;
+}
+
+bool CalculiXCore::reset()
+{
+  cb.reset();
+  
+  print_to_log("RESET");
+  print_to_log(print_data());
+
+  return true;
+}
+
 std::string CalculiXCore::print_data()
 {
   std::string str_return = "";

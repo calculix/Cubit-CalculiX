@@ -13,6 +13,8 @@ public:
 
   bool print_to_log(std::string str_log);
   bool init();
+  bool update(); // updates everything to catch changes in the entities
+  bool reset(); // delete all data and init new
   std::string print_data();
   std::vector<std::string> get_ccx_element_types(); // returns all supported ccx element types;
   bool set_ccx_element_type(int block_id, std::string ccx_element_type); // sets the ccx element type for a block

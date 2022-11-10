@@ -1,4 +1,5 @@
 #include "CoreBlocks.hpp"
+#include "CubitInterface.hpp"
 
 CoreBlocks::CoreBlocks()
 {
@@ -80,7 +81,35 @@ bool CoreBlocks::init()
 }
 
 bool CoreBlocks::update()
-{
+{ 
+  // Get the list of blocks
+  std::vector<int> block_ids;
+  int block_id;
+  block_ids = CubitInterface::get_block_id_list();
+  
+  std::string element_type;
+  int blocks_data_id;
+
+  // check for new blocks and changes of the cubit element type!
+
+  for (size_t i = 0; i < block_ids.size(); i++)
+  {
+    block_id = block_ids[i];
+    element_type = CubitInterface::get_block_element_type(block_id);
+    blocks_data_id = get_blocks_data_id_from_block_id(block_id);
+    if (blocks_data_id == -1)
+    {
+      add_block(int block_id, int element_type_cubit, int element_type_ccx);
+    } else {
+
+      add_block(int block_id, int element_type_cubit, int element_type_ccx);      
+    }
+  }
+
+  // check if a block changes id or is removec, this means we have erase all blocks in our blocks_data that cannot be connected anymore
+
+
+
   return true;
 }
 
