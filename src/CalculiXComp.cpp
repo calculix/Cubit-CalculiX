@@ -12,7 +12,7 @@
 #include "ComponentInfo.hpp"
 #include "ExportManager.hpp"
 #include "MenuManager.hpp"
-#include "ObserverComp.hpp"
+#include "Observer.hpp"
 #include "PanelManager.hpp"
 #include "ToolbarManager.hpp"
 
@@ -133,7 +133,7 @@ void CalculiXComp::setup_observers(int withGUI)
 {
   if(!mListener)
   {
-    mListener = new ObserverComp();
+    mListener = new Observer();
 
     // Let Cubit know that this class will be observing events
     mListener->register_observer();

@@ -1,6 +1,6 @@
 project(Cubit-CalculiX_observers)
 
 set(EO_COMP_SRC
-    ${CMAKE_CURRENT_LIST_DIR}/ObserverComp.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/ObserverComp.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/Observer.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Observer.hpp
     PARENT_SCOPE)

@@ -2,6 +2,8 @@
 #include "ccxVersionCommand.hpp"
 #include "ccxExportCommand.hpp"
 #include "ccxPrintCoreCommand.hpp"
+#include "ccxLogCoreCommand.hpp"
+#include "ccxBlockElementTypeCommand.hpp"
 
 //! This macro is required to identify this as a valid Cubit plugin. The plugin
 //! will NOT be loaded if this macro is not present.
@@ -19,6 +21,8 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxVersionCommand");
   keys.push_back("ccxExportCommand");
   keys.push_back("ccxPrintCoreCommand");
+  keys.push_back("ccxLogCoreCommand");
+  keys.push_back("ccxBlockElementTypeCommand");
 
   return keys;
 }
@@ -36,6 +40,12 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxPrintCoreCommand")
     return new ccxPrintCoreCommand();
+  
+  else if(key == "ccxLogCoreCommand")
+    return new ccxLogCoreCommand();
+  
+  else if(key == "ccxBlockElementTypeCommand")
+    return new ccxBlockElementTypeCommand();
 
   return NULL;
 }

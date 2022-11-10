@@ -8,10 +8,12 @@ public:
   CoreBlocks();
   ~CoreBlocks();
 
-  std::vector<std::vector<int>> blocks_data; // used to store the connection between a block and is possible options
+  std::vector<std::vector<int>> blocks_data; // used to store the connection between a block and its possible options
   // blocks_data[0][0] block_id
   // blocks_data[0][1] block_element_type_cubit
   // blocks_data[0][2] block_element_type_ccx
+
+  std::vector<std::string> ccx_element_types; // all possible element types, the index from the vector will also be the element "id"
 
   bool is_initialized = false;
 
@@ -25,7 +27,8 @@ public:
   bool modify_block_element_type_cubit(int block_id, int new_element_type_cubit); // modifies the block_element_type from given block
   bool modify_block_element_type_ccx(int block_id, int new_element_type_ccx); // modifies the block_element_type from given block
   int get_blocks_data_id_from_block_id(int block_id); // searches for the block_id in the blocks_data and returns the indices or -1 if it fails
-
+  std::vector<std::string> get_ccx_element_types(); // returns all supported ccx element types ;
+  int get_ccx_element_type_id(std::string ccx_element_type); // returns the index for the ccx element type
   std::string print_data(); // prints out the blocks_data
 };
 

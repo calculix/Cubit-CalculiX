@@ -19,7 +19,10 @@ Features:
 
 How to use:
 - command 'export ccx "filename"' for export of the mesh
+- command 'ccx print core' to print out data from the core, mainly useful for development
+- command 'ccx log core' to print out data from the core to the logfile, mainly useful for development
 - command 'ccx version' to print out the plugin version
+- command 'ccx block <block id>... element_type <ccx element type>' set the ccx element type to a block
 
 # Standard Element conversion:
 ```

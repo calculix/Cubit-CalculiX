@@ -16,7 +16,7 @@ class ToolbarManager;
 class PanelManager;
 class ExportManager;
 
-class ObserverComp;
+class Observer;
 
 class CalculiXComp : public Component
 {
@@ -50,7 +50,7 @@ private:
   PanelManager*   myPanels;
   ExportManager*  myExportManager;
 
-  ObserverComp* mListener;
+  Observer* mListener;
 };
 
 #endif // CALCULIXCOMP_HPP
