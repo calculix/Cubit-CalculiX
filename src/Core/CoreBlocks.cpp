@@ -64,6 +64,86 @@ CoreBlocks::CoreBlocks()
   ccx_element_types.push_back("T3D3");
   // special elements
   //ccx_element_types.push_back("SPRINGA");
+
+  // define the cubit element types
+  
+  cubit_element_types.push_back("SPHERE");
+  cubit_element_types.push_back("SPRING");
+  cubit_element_types.push_back("BAR");
+  cubit_element_types.push_back("BAR2");
+  cubit_element_types.push_back("BAR3");
+  cubit_element_types.push_back("BEAM");
+  cubit_element_types.push_back("BEAM2");
+  cubit_element_types.push_back("BEAM3");
+  cubit_element_types.push_back("TRUSS");
+  cubit_element_types.push_back("TRUSS2");
+  cubit_element_types.push_back("TRUSS3");
+  cubit_element_types.push_back("QUAD");
+  cubit_element_types.push_back("QUAD4");
+  cubit_element_types.push_back("QUAD5");
+  cubit_element_types.push_back("QUAD8");
+  cubit_element_types.push_back("QUAD9");
+  cubit_element_types.push_back("SHELL");
+  cubit_element_types.push_back("SHELL4");
+  cubit_element_types.push_back("SHELL8");
+  cubit_element_types.push_back("SHELL9");
+  cubit_element_types.push_back("TRI");
+  cubit_element_types.push_back("TRI3");
+  cubit_element_types.push_back("TRI6");
+  cubit_element_types.push_back("TRI7");
+  cubit_element_types.push_back("TRISHELL");
+  cubit_element_types.push_back("TRISHELL3");
+  cubit_element_types.push_back("TRISHELL6");
+  cubit_element_types.push_back("TRISHELL7");
+  cubit_element_types.push_back("HEX");
+  cubit_element_types.push_back("HEX8");
+  cubit_element_types.push_back("HEX9");
+  cubit_element_types.push_back("HEX20");
+  cubit_element_types.push_back("HEX27");
+  cubit_element_types.push_back("TETRA");
+  cubit_element_types.push_back("TETRA4");
+  cubit_element_types.push_back("TETRA8");
+  cubit_element_types.push_back("TETRA10");
+  cubit_element_types.push_back("TETRA14");
+  cubit_element_types.push_back("TETRA15");
+  cubit_element_types.push_back("WEDGE");
+  cubit_element_types.push_back("HEXSHELL");
+  cubit_element_types.push_back("PYRAMID");
+  cubit_element_types.push_back("PYRAMID5");
+  cubit_element_types.push_back("PYRAMID8");
+  cubit_element_types.push_back("PYRAMID13");
+  cubit_element_types.push_back("PYRAMID18");
+
+  // cubit 2 ccx standard element conversion
+
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("HEX","C3D8R"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("BAR","B21"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("BAR2","B21"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("BEAM","B31"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("BEAM2","B31"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("BEAM3","B32"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("TRUSS","T3D2"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("TRUSS2","T3D2"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("TRUSS3","T3D2"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("SPRING","SPRINGA"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("TRI","CPS3"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("TRI3","CPS3"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("TRI6","CPS6"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("TRISHELL","S3"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("TRISHELL3","S3"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("TRISHELL6","S6"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("SHELL","S4R"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("SHELL4","S4R"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("SHELL8","S8R"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("QUAD","CPE4R"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("QUAD4","CPE4"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("QUAD8","CPE8R"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("Tetra","C3D4"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("Tetra4","C3D4"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("Tetra10","C3D10"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("HEX","C3D8R"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("HEX8","C3D8"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("HEX20","C3D20"));
 }
 
 CoreBlocks::~CoreBlocks()
@@ -89,6 +169,9 @@ bool CoreBlocks::update()
   
   std::string element_type;
   int blocks_data_id;
+  int cubit_element_type_id;
+  int ccx_element_type_id;
+  bool erase_block;
 
   // check for new blocks and changes of the cubit element type!
 
@@ -97,18 +180,39 @@ bool CoreBlocks::update()
     block_id = block_ids[i];
     element_type = CubitInterface::get_block_element_type(block_id);
     blocks_data_id = get_blocks_data_id_from_block_id(block_id);
+    cubit_element_type_id = get_cubit_element_type_id(element_type);
+    ccx_element_type_id = get_standard_ccx_element_type_id(element_type);
     if (blocks_data_id == -1)
     {
-      add_block(int block_id, int element_type_cubit, int element_type_ccx);
+      add_block(block_id,cubit_element_type_id, ccx_element_type_id);
     } else {
-
-      add_block(int block_id, int element_type_cubit, int element_type_ccx);      
+      if (cubit_element_type_id!=blocks_data[blocks_data_id][1])
+      {
+        modify_block_element_type_cubit(block_id,cubit_element_type_id);
+        modify_block_element_type_ccx(block_id,ccx_element_type_id);
+      }   
     }
   }
 
-  // check if a block changes id or is removec, this means we have erase all blocks in our blocks_data that cannot be connected anymore
+  // check if a block changes id or is removed, this means we have erase all blocks in our blocks_data that cannot be connected anymore
 
-
+  for (size_t i = 0; i < blocks_data.size(); i++)
+  {
+    erase_block = true;
+    for (size_t ii = 0; ii < block_ids.size(); ii++)
+    {
+      block_id = block_ids[ii];
+      if (block_id == blocks_data[i][0])
+      {
+        erase_block = false;
+        break;
+      }
+    }
+    if (erase_block)
+    {
+      delete_block(blocks_data[i][0]);
+    }
+  }
 
   return true;
 }
@@ -155,25 +259,25 @@ bool CoreBlocks::modify_block_id(int block_id, int new_block_id)
     return true;
   }
 }
-bool CoreBlocks::modify_block_element_type_cubit(int block_id, int new_element_type_cubit)
+bool CoreBlocks::modify_block_element_type_cubit(int block_id, int new_cubit_element_type)
 {
   int blocks_data_id = get_blocks_data_id_from_block_id(block_id);
   if (blocks_data_id == -1)
   {
     return false;
   } else {
-    blocks_data[blocks_data_id][1]=new_element_type_cubit;
+    blocks_data[blocks_data_id][1]=new_cubit_element_type;
     return true;
   }
 }
-bool CoreBlocks::modify_block_element_type_ccx(int block_id, int new_element_type_ccx)
+bool CoreBlocks::modify_block_element_type_ccx(int block_id, int new_ccx_element_type)
 {
   int blocks_data_id = get_blocks_data_id_from_block_id(block_id);
   if (blocks_data_id == -1)
   {
     return false;
   } else {
-    blocks_data[blocks_data_id][2]=new_element_type_ccx;
+    blocks_data[blocks_data_id][2]=new_ccx_element_type;
     return true;
   }
 }
@@ -221,4 +325,46 @@ int CoreBlocks::get_ccx_element_type_id(std::string ccx_element_type)
     }  
   }
   return return_int;
+}
+
+int CoreBlocks::get_cubit_element_type_id(std::string cubit_element_type)
+{ 
+  int return_int = -1;
+  for (size_t i = 0; i < cubit_element_types.size(); i++)
+  {
+    if (cubit_element_types[i]==cubit_element_type)
+    {
+        return i;
+    }  
+  }
+  return return_int;
+}
+
+int CoreBlocks::get_standard_ccx_element_type_id(std::string cubit_element_type)
+{ 
+  int return_int = -1;
+  for (size_t i = 0; i < cubit_ccx_element_types_conversion.size(); i++)
+  {
+    if (cubit_ccx_element_types_conversion[i].first==cubit_element_type)
+    {
+        return get_ccx_element_type_id(cubit_ccx_element_types_conversion[i].second);
+    }  
+  }
+  return return_int;
+}
+
+std::string CoreBlocks::get_ccx_element_type_name(int block_id)
+{
+  std::string str_return;
+  str_return = "";
+    
+  int blocks_data_id = get_blocks_data_id_from_block_id(block_id);
+  if (blocks_data_id != -1)
+  {
+    if (blocks_data[blocks_data_id][2] != -1)
+    {
+      str_return = ccx_element_types[blocks_data[blocks_data_id][2]];
+    }
+  }
+  return str_return;
 }

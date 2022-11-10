@@ -44,8 +44,8 @@ bool CalculiXCore::reset()
 {
   cb.reset();
   
-  print_to_log("RESET");
-  print_to_log(print_data());
+  //print_to_log("RESET");
+  //print_to_log(print_data());
 
   return true;
 }

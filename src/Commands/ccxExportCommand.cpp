@@ -557,9 +557,6 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
 
 }
 
-
-
-
 bool ccxExportCommand::write_nodesets(std::ofstream& output_file,MeshExportInterface *iface)
 {
 
