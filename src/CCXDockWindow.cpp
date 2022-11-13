@@ -8,7 +8,7 @@
 CCXDockWindow::CCXDockWindow() :
   isInitialized(false)
 { 
-  dock_title = "CalculiX";
+  dock_title = "CalculiX Plugin";
 }
 
 CCXDockWindow::~CCXDockWindow()
@@ -44,16 +44,25 @@ void CCXDockWindow::initialize()
   } 
 
   QDockWidget *dock = new QDockWidget(dock_title,gui);
-  dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-  customerList = new QListWidget(dock);
-  customerList->addItems(QStringList()
-            << "John Doe, Harmony Enterprises, 12 Lakeside, Ambleton"
-            << "Jane Doe, Memorabilia, 23 Watersedge, Beaton"
-            << "Tammy Shea, Tiblanka, 38 Sea Views, Carlton"
-            << "Tim Sheen, Caraba Gifts, 48 Ocean Way, Deal"
-            << "Sol Harvey, Chicos Coffee, 53 New Springs, Eccleston"
-            << "Sally Hobart, Tiroli Tea, 67 Long River, Fedula");
-  dock->setWidget(customerList);
+  dock->setAllowedAreas(Qt::AllDockWidgetAreas);
+  myModelTree = new QTreeWidget(dock);
+  myModelTree->setColumnCount(1);
+  myModelTree->setHeaderLabel("Tree");
+  BlocksTree = new QTreeWidgetItem(myModelTree);
+  BlocksTree->setText(0,"Blocks");
+  
+  QTreeWidgetItem *BlocksTreeChild;
+  QTreeWidgetItem *BlocksTreeChild2;
+  BlocksTreeChild = new QTreeWidgetItem();
+  BlocksTreeChild->setText(0,"BlocksChild");
+  BlocksTreeChild2 = new QTreeWidgetItem();
+  BlocksTreeChild2->setText(0,"BlocksChild2");
+
+  BlocksTree->addChild(BlocksTreeChild);
+  BlocksTree->addChild(BlocksTreeChild2);
+  
+
+  dock->setWidget(myModelTree);
       
   gui->add_dock_window(dock,"CalculiXComp",Qt::LeftDockWidgetArea,Qt::AllDockWidgetAreas);
     

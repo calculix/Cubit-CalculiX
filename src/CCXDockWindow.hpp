@@ -6,7 +6,8 @@ class Claro;
 class ClaroViewMenu;
 
 #include <QObject>
-#include <QListWidget>
+#include <QTreeWidget>
+#include <QTreeWidgetItem>
 
 class CCXDockWindow
 {
@@ -26,7 +27,8 @@ private:
   
   Claro* myClaro;
   ClaroViewMenu* ViewMenu;
-  QListWidget *customerList;
+  QTreeWidget *myModelTree;
+  QTreeWidgetItem *BlocksTree; //Blocks root item
 };
 
 #endif // CCXDOCKWINDOW_HPP
