@@ -13,7 +13,8 @@
 #include "ExportManager.hpp"
 #include "MenuManager.hpp"
 #include "Observer.hpp"
-#include "PanelManager.hpp"
+#include "cmdPanelManager.hpp"
+#include "CCXDockWindow.hpp"
 #include "ToolbarManager.hpp"
 
 // Default constructor. Remember to include the component name (should match
@@ -22,7 +23,8 @@ CalculiXComp::CalculiXComp() :
   Component("CalculiXComp"),
   myMenus(NULL),
   myToolbars(NULL),
-  myPanels(NULL),
+  mycmdPanels(NULL),
+  myCCXDockWindow(NULL),
   myExportManager(NULL),
   mListener(NULL)
 {}
@@ -35,8 +37,11 @@ CalculiXComp::~CalculiXComp()
   if(myToolbars)
     delete myToolbars;
 
-  if(myPanels)
-    delete myPanels;
+  if(mycmdPanels)
+    delete mycmdPanels;
+
+  if(myCCXDockWindow)
+    delete myCCXDockWindow;
 
   if(myExportManager)
     delete myExportManager;
@@ -52,6 +57,7 @@ void CalculiXComp::start_up(int withGUI)
     setup_menus();
     setup_toolbars();
     setup_command_panels();
+    setup_CCXDockWindow();
     add_exports();
   }
 
@@ -63,6 +69,7 @@ void CalculiXComp::clean_up()
   cleanup_menus();
   cleanup_toolbars();
   cleanup_command_panels();
+  cleanup_CCXDockWindow();
   cleanup_exports();
   cleanup_observers();
 
@@ -102,17 +109,32 @@ void CalculiXComp::cleanup_toolbars()
 
 void CalculiXComp::setup_command_panels()
 {
-  if(!myPanels)
-    myPanels = new PanelManager;
+  if(!mycmdPanels)
+    mycmdPanels = new cmdPanelManager;
 
-  myPanels->initialize();
+  mycmdPanels->initialize();
 }
 
 void CalculiXComp::cleanup_command_panels()
 {
-  if(myPanels)
-    myPanels->clear();
+  if(mycmdPanels)
+    mycmdPanels->clear();
 }
+
+void CalculiXComp::setup_CCXDockWindow()
+{
+  if(!myCCXDockWindow)
+    myCCXDockWindow = new CCXDockWindow;
+
+  myCCXDockWindow->initialize();
+}
+
+void CalculiXComp::cleanup_CCXDockWindow()
+{
+  if(myCCXDockWindow)
+    myCCXDockWindow->clear();
+}
+
 
 void CalculiXComp::add_exports()
 {

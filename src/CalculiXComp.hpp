@@ -13,8 +13,9 @@
 
 class MenuManager;
 class ToolbarManager;
-class PanelManager;
+class cmdPanelManager;
 class ExportManager;
+class CCXDockWindow;
 
 class Observer;
 
@@ -38,6 +39,9 @@ private:
   void setup_command_panels();
   void cleanup_command_panels();
 
+  void setup_CCXDockWindow();
+  void cleanup_CCXDockWindow();
+
   //! Add export types to the file menu
   void add_exports();
   void cleanup_exports();
@@ -47,8 +51,9 @@ private:
 
   MenuManager*    myMenus;
   ToolbarManager* myToolbars;
-  PanelManager*   myPanels;
+  cmdPanelManager*   mycmdPanels;
   ExportManager*  myExportManager;
+  CCXDockWindow* myCCXDockWindow;
 
   Observer* mListener;
 };

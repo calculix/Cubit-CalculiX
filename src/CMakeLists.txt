@@ -21,19 +21,6 @@ find_package(Qt5Widgets REQUIRED)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${CMAKE_CURRENT_BINARY_DIR})
 
-# Include hdf5 files for the .trelis file example. It is recommended that you
-# use your own hdf5 libraries to do this
-option(SDK_BUILD_HDF5 "Use hdf5 libraries when building the SDK examples." OFF)
-if(SDK_BUILD_HDF5)
-  include_directories(${HDF5_SOURCE_DIR}/src
-                      ${HDF5_SOURCE_DIR}/hl/src
-                      ${HDF5_SOURCE_DIR}/hl/c++/src
-                      ${HDF5_INCLUDE_DIR}
-                      ${HDF5_BINARY_DIR})
-  add_definitions(-DSDK_BUILD_HDF5)
-endif()
-
-
 # Include our Core code
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Core)
 add_subdirectory(Core)
@@ -62,10 +49,12 @@ set(CCXCOMP_SRCS
     MenuManager.hpp
     ToolbarManager.cpp
     ToolbarManager.hpp
-    PanelManager.cpp
-    PanelManager.hpp
-    MyWidgetFactory.cpp
-    MyWidgetFactory.hpp
+    cmdPanelManager.cpp
+    cmdPanelManager.hpp
+    MyCmdWidgetFactory.cpp
+    MyCmdWidgetFactory.hpp
+    CCXDockWindow.cpp
+    CCXDockWindow.hpp
     ExportManager.cpp
     ExportManager.hpp
     loadCalculiXComp.cpp)
@@ -83,18 +72,6 @@ add_library(calculix_comp SHARED ${CCXCOMP_SRCS})
 set_target_properties(calculix_comp PROPERTIES SUFFIX ".ccl")
 target_link_libraries(calculix_comp clarogui navigation pickwidget cubiti clarofw)
 set_target_properties(calculix_comp PROPERTIES AUTOMOC 1)
-
-if(SDK_BUILD_HDF5)
-  if( USE_MPI_HDF5 )
-    if( NOT HDF5_C_LIBRARY OR NOT HDF5_LIBRARIES )
-      message( FATAL_ERROR "HDF5_C_LIBRARY not defined." )
-    endif()
-    ADD_DEFINITIONS(-DH5_BUILT_AS_DYNAMIC_LIB)
-    target_link_libraries(calculix_comp ${HDF5_LIBRARIES} )
-  else()
-    target_link_libraries(calculix_comp hdf5_hl-static hdf5-static)
-  endif()
-endif()
 
 target_link_libraries(calculix_comp Qt5::Widgets)
 
