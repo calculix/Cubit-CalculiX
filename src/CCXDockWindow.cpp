@@ -3,6 +3,7 @@
 #include "Claro.hpp"
 #include "ClaroViewMenu.hpp"
 #include <iostream>
+#include "BlocksTree.hpp"
 
 
 CCXDockWindow::CCXDockWindow() :
@@ -46,10 +47,10 @@ void CCXDockWindow::initialize()
   QDockWidget *dock = new QDockWidget(dock_title,gui);
   dock->setAllowedAreas(Qt::AllDockWidgetAreas);
   myModelTree = new QTreeWidget(dock);
-  myModelTree->setColumnCount(1);
-  myModelTree->setHeaderLabel("Tree");
-  BlocksTree = new QTreeWidgetItem(myModelTree);
-  BlocksTree->setText(0,"Blocks");
+  myModelTree->setColumnCount(2);
+  myModelTree->setHeaderLabels(QStringList() << "Name" << "ID");
+  myBlocksTree = new BlocksTree(myModelTree);
+  myBlocksTree->initialize();
   
   QTreeWidgetItem *BlocksTreeChild;
   QTreeWidgetItem *BlocksTreeChild2;
@@ -58,10 +59,9 @@ void CCXDockWindow::initialize()
   BlocksTreeChild2 = new QTreeWidgetItem();
   BlocksTreeChild2->setText(0,"BlocksChild2");
 
-  BlocksTree->addChild(BlocksTreeChild);
-  BlocksTree->addChild(BlocksTreeChild2);
+  myBlocksTree->addChild(BlocksTreeChild);
+  myBlocksTree->addChild(BlocksTreeChild2);
   
-
   dock->setWidget(myModelTree);
       
   gui->add_dock_window(dock,"CalculiXComp",Qt::LeftDockWidgetArea,Qt::AllDockWidgetAreas);

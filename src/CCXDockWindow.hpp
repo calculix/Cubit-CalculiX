@@ -9,6 +9,8 @@ class ClaroViewMenu;
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
 
+class BlocksTree;
+
 class CCXDockWindow
 {
 
@@ -28,7 +30,7 @@ private:
   Claro* myClaro;
   ClaroViewMenu* ViewMenu;
   QTreeWidget *myModelTree;
-  QTreeWidgetItem *BlocksTree; //Blocks root item
+  BlocksTree *myBlocksTree; //Blocks aka Element sets root item
 };
 
 #endif // CCXDOCKWINDOW_HPP
