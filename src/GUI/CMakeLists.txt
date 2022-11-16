@@ -1,6 +1,8 @@
 project(Cubit-CalculiX_component_gui)
 
 set(SRC
+    ${CMAKE_CURRENT_LIST_DIR}/ModelTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ModelTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/BlocksTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/BlocksTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/MyPanel1.cpp

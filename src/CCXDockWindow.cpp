@@ -3,6 +3,7 @@
 #include "Claro.hpp"
 #include "ClaroViewMenu.hpp"
 #include <iostream>
+#include "ModelTree.hpp"
 #include "BlocksTree.hpp"
 
 
@@ -21,7 +22,7 @@ void CCXDockWindow::initialize()
   if(isInitialized)
     return;
 
-  Claro* gui = Claro::instance();
+  gui = Claro::instance();
 
   ViewMenu = gui->view_menu();
 
@@ -46,9 +47,8 @@ void CCXDockWindow::initialize()
 
   dock = new QDockWidget(dock_title,gui);
   dock->setAllowedAreas(Qt::AllDockWidgetAreas);
-  myModelTree = new QTreeWidget(dock);
-  myModelTree->setColumnCount(2);
-  myModelTree->setHeaderLabels(QStringList() << "Name" << "ID");
+  dock->setObjectName(dock_title);
+  myModelTree = new ModelTree(dock);
   myBlocksTree = new BlocksTree(myModelTree);
   myBlocksTree->initialize();
     
@@ -64,32 +64,39 @@ void CCXDockWindow::initialize()
     std::cout << "---";
     std::cout << dock_labels[i].toStdString();
     std::cout << "\n";
-  } 
-  
+  }
+
+  settings = new QSettings("CalculiXPlugin","CalculiXComp");
+  dock->restoreGeometry(settings->value("geometry").toByteArray());
+  gui->restoreState(settings->value("state").toByteArray());
+    
   isInitialized = true;
 }
 
 void CCXDockWindow::clear()
 {
  // Remove all of our menu items.
-  Claro* gui = Claro::instance();
+  
   if(gui)
-  {
+  { 
     // Items are removed based on the component name
     gui->remove_dock_windows("CalculiXComp");
-    ViewMenu = gui->view_menu();
     ViewMenu->remove_component_items("CalculiXComp");
     delete myBlocksTree;
     delete myModelTree;
     delete dock;
     isInitialized = false;  
   }
+  
 }
 
 void CCXDockWindow::update()
 {
+  settings->setValue("geometry",dock->saveGeometry());
+  settings->setValue("state",gui->saveState());
+
   // update our dock items
-  myBlocksTree->update();  
+  myBlocksTree->update(); 
 }
 
 void CCXDockWindow::reset()

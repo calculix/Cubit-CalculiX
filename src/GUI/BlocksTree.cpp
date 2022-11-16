@@ -82,7 +82,6 @@ void BlocksTree::update()
       removeBlock(temp_child);
     }
   }
-
 }
 
 void BlocksTree::clear()

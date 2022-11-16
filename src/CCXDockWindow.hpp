@@ -9,7 +9,10 @@ class ClaroViewMenu;
 #include <QDockWidget>
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
+#include <QSettings>
+#include <QHeaderView>
 
+class ModelTree;
 class BlocksTree;
 
 class CCXDockWindow
@@ -33,12 +36,12 @@ private:
   QString dock_title;
 
   
-  Claro* myClaro;
+  Claro* gui;
   ClaroViewMenu* ViewMenu;
   QDockWidget *dock;
-  QTreeWidget *myModelTree;
+  ModelTree *myModelTree;
   BlocksTree *myBlocksTree; //Blocks aka Element sets root item
-  
+  QSettings *settings;
 };
 
 #endif // CCXDOCKWINDOW_HPP
