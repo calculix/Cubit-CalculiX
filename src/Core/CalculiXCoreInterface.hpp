@@ -14,6 +14,7 @@ public:
   bool set_ccx_element_type(int block_id, std::string ccx_element_type); // sets the ccx element type for a block
   bool core_update(); // lets the core check for updates aka changes from the entities
   bool core_reset(); // reset the whole core to the init level
+  std::vector<std::vector<std::string>> get_blocks_tree_data(); // gets the data from core blocks to build the tree
 };
 
 #endif // CALCULIXCOREINTERFACE_HPP

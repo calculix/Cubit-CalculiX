@@ -29,6 +29,11 @@ public:
   void start_up(int withGUI);
   void clean_up();
 
+  void update();
+  void reset();
+
+  bool boolwithGUI;
+
 private:
   void setup_menus();
   void cleanup_menus();

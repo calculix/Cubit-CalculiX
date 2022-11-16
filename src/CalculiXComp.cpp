@@ -59,6 +59,7 @@ void CalculiXComp::start_up(int withGUI)
     setup_command_panels();
     setup_CCXDockWindow();
     add_exports();
+    boolwithGUI = true;
   }
 
   setup_observers(withGUI);
@@ -75,6 +76,24 @@ void CalculiXComp::clean_up()
 
   // Let the framework know you are done.
   clean_up_complete();
+}
+
+void CalculiXComp::update()
+{
+  if(boolwithGUI)
+  {
+    if(myCCXDockWindow)
+    myCCXDockWindow->update();
+  }
+}
+
+void CalculiXComp::reset()
+{
+  if(boolwithGUI)
+  {
+    if(myCCXDockWindow)
+    myCCXDockWindow->reset();
+  }
 }
 
 void CalculiXComp::setup_menus()
@@ -159,6 +178,9 @@ void CalculiXComp::setup_observers(int withGUI)
 
     // Let Cubit know that this class will be observing events
     mListener->register_observer();
+
+    // get a connection down to the observer
+    mListener->fetch_comp(this);
   }
 }
 

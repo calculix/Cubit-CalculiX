@@ -19,14 +19,22 @@
 // Note that the component still needs to call the register_observer and
 // unregister_observer methods of the base class in order to receive (or
 // stop) event notification.
+
+class CalculiXCoreInterface;
+class CalculiXComp;
+
 class Observer : public CubitInterface::ObserverBase
 {
 public:
   Observer();
   ~Observer();
 
+  CalculiXCoreInterface *ccx_iface;
+  CalculiXComp *ccx_comp;
+
   void notify_model_reset();
   void notify_command_complete();
+  void fetch_comp(CalculiXComp *CalculiXComp);
 };
 
 #endif // OBSERVER_HPP

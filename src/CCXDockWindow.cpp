@@ -44,24 +44,14 @@ void CCXDockWindow::initialize()
     std::cout << "\n";
   } 
 
-  QDockWidget *dock = new QDockWidget(dock_title,gui);
+  dock = new QDockWidget(dock_title,gui);
   dock->setAllowedAreas(Qt::AllDockWidgetAreas);
   myModelTree = new QTreeWidget(dock);
   myModelTree->setColumnCount(2);
   myModelTree->setHeaderLabels(QStringList() << "Name" << "ID");
   myBlocksTree = new BlocksTree(myModelTree);
   myBlocksTree->initialize();
-  
-  QTreeWidgetItem *BlocksTreeChild;
-  QTreeWidgetItem *BlocksTreeChild2;
-  BlocksTreeChild = new QTreeWidgetItem();
-  BlocksTreeChild->setText(0,"BlocksChild");
-  BlocksTreeChild2 = new QTreeWidgetItem();
-  BlocksTreeChild2->setText(0,"BlocksChild2");
-
-  myBlocksTree->addChild(BlocksTreeChild);
-  myBlocksTree->addChild(BlocksTreeChild2);
-  
+    
   dock->setWidget(myModelTree);
       
   gui->add_dock_window(dock,"CalculiXComp",Qt::LeftDockWidgetArea,Qt::AllDockWidgetAreas);
@@ -87,7 +77,22 @@ void CCXDockWindow::clear()
   {
     // Items are removed based on the component name
     gui->remove_dock_windows("CalculiXComp");
-
+    ViewMenu = gui->view_menu();
+    ViewMenu->remove_component_items("CalculiXComp");
+    delete myBlocksTree;
+    delete myModelTree;
+    delete dock;
     isInitialized = false;  
   }
+}
+
+void CCXDockWindow::update()
+{
+  // update our dock items
+  myBlocksTree->update();  
+}
+
+void CCXDockWindow::reset()
+{
+  // reset, not necessary right now
 }
