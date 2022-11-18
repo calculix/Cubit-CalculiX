@@ -31,6 +31,9 @@ public:
                      const QModelIndex &index,
                      QWidget *parent);
 
+  // This returns the command panel widget that is requested by the other classes.
+  QWidget* getWidget2();
+
   // Clean up our widgets
   void clear();
 
@@ -39,11 +42,9 @@ private slots:
   void removeCache(QObject *object);
 
 private:
-  // Map to store our created widgets (cache).
-  QMap<QWidget*, NavigationWidgetCache*> widget_cache;
-
   // Create a widget based on the name (used in the get_widget_using_cache
   // example).
+  QMap<QWidget*, NavigationWidgetCache*> widget_cache;
   QWidget* createWidget(const QString &name);
 };
 

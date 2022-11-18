@@ -22,7 +22,7 @@
 MyCmdWidgetFactory::MyCmdWidgetFactory(QObject* parent) :
   QObject(parent),
   widget_cache()
-{}
+{ }
 
 MyCmdWidgetFactory::~MyCmdWidgetFactory()
 {

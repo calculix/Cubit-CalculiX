@@ -57,7 +57,7 @@ void CalculiXComp::start_up(int withGUI)
     setup_menus();
     setup_toolbars();
     setup_command_panels();
-    setup_CCXDockWindow();
+    setup_CCXDockWindow(); // command panels has to be setup before dockwindow
     add_exports();
     boolwithGUI = true;
   }
