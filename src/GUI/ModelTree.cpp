@@ -8,9 +8,7 @@
 #include "NavigationNode.hpp"
 
 #include "MyCmdWidgetFactory.hpp"
-
 #include "CommandButtonPanel.hpp"
-
 
 
 ModelTree::ModelTree(QDockWidget* parent):QTreeWidget(parent)
@@ -40,7 +38,7 @@ ModelTree::ModelTree(QDockWidget* parent):QTreeWidget(parent)
 
   success = connect(this, SIGNAL(customContextMenuRequested(const QPoint &)),
           this, SLOT(showContextMenu(const QPoint &)));
-  
+
   success = connect(this, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)),
           this, SLOT(ModelTreeItemDoubleClicked(QTreeWidgetItem*, int)));
   
@@ -48,6 +46,13 @@ ModelTree::ModelTree(QDockWidget* parent):QTreeWidget(parent)
   {
     ccx_iface->log_str("connected signals and slots");
   }    
+
+  //to get our current right clicked action
+  // contextMenuAction[0][0] => Tree
+  // contextMenuAction[0][1] => action
+  // contextMenuAction[0][2] => ID
+  std::vector<int> v = {-1,-1,-1};
+  contextMenuAction.push_back(v);
 }
 
 ModelTree::~ModelTree()
@@ -57,21 +62,39 @@ ModelTree::~ModelTree()
 void ModelTree::showContextMenu(const QPoint &pos)
 {
   QTreeWidgetItem* item = this->itemAt(pos);
+  if (item)
+  {   
+    BlocksTree* BlocksTreeItem;
+    BlocksTreeItem = dynamic_cast<BlocksTree*>(item);
+    if (BlocksTreeItem)
+    {
+      if (BlocksTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Assign CCX Element Type",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(execContextMenuAction()));
+        contextMenu.addAction(&action1);      
+        contextMenu.exec(mapToGlobal(pos));
 
-  BlocksTree* BlocksTreeItem;
-  BlocksTreeItem = dynamic_cast<BlocksTree*>(item);
-  if (BlocksTreeItem)
-  {
-    if (BlocksTreeItem->text(1).toStdString()=="")
-    {
-      ccx_iface->log_str("right Click - ROOT ");
+        contextMenuAction[0][0] = 0;
+        contextMenuAction[0][1] = 0;
+      }
+      } else {
+      if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item->parent()))
+      {
+        //ccx_iface->log_str("right Click - Block ID " + item->text(1).toStdString());
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Assign CCX Element Type",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(execContextMenuAction()));
+        contextMenu.addAction(&action1);   
+        contextMenu.exec(mapToGlobal(pos));   
+
+        contextMenuAction[0][0] = 0;
+        contextMenuAction[0][1] = 0;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+      }
     }
-  } else {
-    if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item->parent()))
-    {
-      ccx_iface->log_str("right Click - Block ID " + item->text(1).toStdString());
-    }
-  } 
+  }
 }
 
 void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
@@ -84,18 +107,17 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     if (BlocksTreeItem->text(1).toStdString()=="")
     {
       //ccx_iface->log_str("double Click - ROOT ");
-      this->setWidgetInCmdPanel("MySecondLevelNode1");
+      this->setWidgetInCmdPanelMarker("BlocksCCXElementType");
     }
   } else {
     if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item->parent()))
     {
-      ccx_iface->log_str("double Click - Block ID " + item->text(1).toStdString());
-      this->setWidgetInCmdPanel("MySecondLevelNode2");
+      this->setWidgetInCmdPanelMarker("BlocksCCXElementType");
     }
   }
 }
   
-void ModelTree::setWidgetInCmdPanel(const QString name) // get Widget from navigation model
+void ModelTree::setWidgetInCmdPanelMarker(const QString name) // get Widget from navigation model
 {
   QModelIndex widget_index;
   NavigationNode* node = nav_model->getMarkedNode(name);
@@ -103,10 +125,26 @@ void ModelTree::setWidgetInCmdPanel(const QString name) // get Widget from navig
   cmdpanel->setCurrent(widget_index);
 }
 
-void ModelTree::getWidgetInCmdPanel() // get Widget from navigation model
+void ModelTree::setWidgetInCmdPanelPath(const QString name) // get Widget from navigation model
 {
   QModelIndex widget_index;
-  widget_index = cmdpanel->getCurrent();
-  NavigationNode* node = nav_model->getNode(widget_index);
-  ccx_iface->log_str(node->getMarker().toStdString());
+  NavigationNode* node = nav_model->getNode(name);
+  widget_index = nav_model->getIndex(node);
+  cmdpanel->setCurrent(widget_index);
+}
+
+void ModelTree::execContextMenuAction(){
+  if (contextMenuAction[0][0]!=-1 && contextMenuAction[0][1]!=-1)
+  {
+    if (contextMenuAction[0][0]==0) //Blocktree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("BlocksCCXElementType");
+      }
+    }
+  }
+  contextMenuAction[0][0]=-1;
+  contextMenuAction[0][1]=-1;
+  contextMenuAction[0][2]=-1;
 }

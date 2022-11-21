@@ -1,11 +1,3 @@
-/*!
- *  \file cmdPanelManager.cpp
- *  \brief
- *    Provides an example of how to create command panels.
- *  \author Michael Plooster
- *  \date 11 Feb 2014
- */
-
 #include "cmdPanelManager.hpp"
 #include "Claro.hpp"
 #include "NavigationModel.hpp"
@@ -56,6 +48,7 @@ void cmdPanelManager::clear()
     QStringList my_markers;
     my_markers.push_back("MySecondLevelNode1");
     my_markers.push_back("MySecondLevelNode2");
+    my_markers.push_back("BlocksCCXElementType");
 
     // For each marker, we want to get the navigation node and assign the node
     // to use this factory to get widgets as needed.
@@ -88,7 +81,7 @@ void cmdPanelManager::initialize_from_code()
   NavigationModel* model = Claro::instance()->navigation_model();
   if(!model)
     return;
-
+  
   // Create the top-level node (which will be next to Geometry, Mesh, etc.)
   NavigationNode* root_node = model->getMarkedNode("MyRootNode");
   if(!root_node)
@@ -120,6 +113,15 @@ void cmdPanelManager::initialize_from_code()
     node = model->addNode("MySecondLevelNode2Name", root_node);
     model->setNodeMarker(node, "MySecondLevelNode2");
   }
+
+  //##############################
+  // add BlocksTree Nodes
+  NavigationNode* icon_node;
+  root_node = model->getNode("Exodus/Block");
+  node = model->addNode("CCX Element Types", root_node);
+  model->setNodeMarker(node, "BlocksCCXElementType");
+  icon_node = model->getMarkedNode("ExodusElementTypeBlock");
+  node->setIcon(icon_node->getIcon());
 }
 
 void cmdPanelManager::associate_panels_with_nodes()
@@ -136,6 +138,7 @@ void cmdPanelManager::associate_panels_with_nodes()
   QStringList my_markers;
   my_markers.push_back("MySecondLevelNode1");
   my_markers.push_back("MySecondLevelNode2");
+  my_markers.push_back("BlocksCCXElementType");
 
   // For each marker, we want to get the navigation node and assign the node
   // to use this factory to get widgets as needed.

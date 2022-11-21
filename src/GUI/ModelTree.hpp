@@ -7,6 +7,8 @@
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
 #include <QPoint>
+#include <QMenu>
+#include <QAction>
 #include <QModelIndex>
 
 class BlocksTree;
@@ -26,18 +28,19 @@ public:
   ModelTree(QDockWidget *parent);
   ~ModelTree();
 
-  void setWidgetInCmdPanel(QString name); // set Widget in CommandPanel
-  void getWidgetInCmdPanel(); // get current Widget in CommandPanel
-  
   NavigationModel* nav_model;
   CalculiXCoreInterface* ccx_iface;
   Claro* gui;
   CommandButtonPanel* cmdpanel;
+  std::vector<std::vector<int>> contextMenuAction;
+
+  void setWidgetInCmdPanelMarker(QString name); // set Widget in CommandPanel
+  void setWidgetInCmdPanelPath(QString name); // set Widget in CommandPanel
 
 public slots:
   void showContextMenu(const QPoint &pos);
+  void execContextMenuAction();
   void ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column);
-
 };
 
 #endif // MODELTREE_HPP

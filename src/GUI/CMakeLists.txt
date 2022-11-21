@@ -5,12 +5,15 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/ModelTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/BlocksTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/BlocksTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/BlocksCCXElementType.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/BlocksCCXElementType.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MyPanel1.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MyPanel1.hpp
     ${CMAKE_CURRENT_LIST_DIR}/MyPanel2.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MyPanel2.hpp)
 
 set(UI
+    ${CMAKE_CURRENT_LIST_DIR}/BlocksCCXElementType.ui
     ${CMAKE_CURRENT_LIST_DIR}/MyPanel1.ui
     ${CMAKE_CURRENT_LIST_DIR}/MyPanel2.ui)
 
