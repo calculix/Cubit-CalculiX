@@ -116,12 +116,12 @@ void cmdPanelManager::initialize_from_code()
 
   //##############################
   // add BlocksTree Nodes
-  NavigationNode* icon_node;
+  //NavigationNode* icon_node;
   root_node = model->getNode("Exodus/Block");
   node = model->addNode("CCX Element Types", root_node);
   model->setNodeMarker(node, "BlocksCCXElementType");
-  icon_node = model->getMarkedNode("ExodusElementTypeBlock");
-  node->setIcon(icon_node->getIcon());
+  //icon_node = model->getMarkedNode("ExodusElementTypeBlock");
+  //node->setIcon(icon_node->getIcon());
 }
 
 void cmdPanelManager::associate_panels_with_nodes()

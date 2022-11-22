@@ -1,6 +1,7 @@
 #include "BlocksCCXElementType.hpp"
 #include "ui_BlocksCCXElementType.h"
 
+#include "CubitInterface.hpp"
 #include "Broker.hpp"
 #include "Claro.hpp"
 #include "ScriptTranslator.hpp"
@@ -22,6 +23,13 @@ BlocksCCXElementType::BlocksCCXElementType(QWidget *parent) :
   // and add our pickwidget to the layout.
   QGridLayout* pickwidget_layout = new QGridLayout(ui->pwBlock);
   pickwidget_layout->addWidget(pwBlockIds);
+
+  //group and uncheck all radio buttons
+  QList<QRadioButton *> allButtons = ui->groupBox->findChildren<QRadioButton *>();
+  for (size_t i = 0; i < allButtons.size(); i++)
+  {
+    group.addButton(allButtons[i],i);
+  }
 }
 
 BlocksCCXElementType::~BlocksCCXElementType()
@@ -36,7 +44,19 @@ void BlocksCCXElementType::on_pbApply_clicked()
 {
   QStringList commands;
 
-  commands.push_back("reset");
+  if (group.exclusive())
+  {
+    QRadioButton *rb = dynamic_cast<QRadioButton*>(group.checkedButton());
+    if (rb)
+    {
+      std::string pickwidget_text = pwBlockIds->text().toUtf8().data();
+      std::vector<int> ids = CubitInterface::parse_cubit_list("block", pickwidget_text);
+      for (size_t i = 0; i < ids.size(); i++)
+      {
+        commands.push_back("ccx block " + QString::number(ids[i]) + " element_type "  + rb->text());
+      }
+    }
+  }
 
   // We must send the Cubit commands through the Claro framework, so first we need to translate
   // the commands into the python form that Claro will understand.

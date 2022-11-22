@@ -70,7 +70,6 @@ bool ccxBlockElementTypeCommand::execute(CubitCommandData &data)
   
   for (size_t i = 0; i < block_ids.size(); i++)
   {
-
     output = "\ttry to set element type " + element_type + " on block " + std::to_string(block_ids[i]) + "\n" ;
 
     PRINT_INFO("%s", output.c_str());  

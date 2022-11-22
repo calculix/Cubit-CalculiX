@@ -2,6 +2,10 @@
 #define BLOCKSCCXELEMENTTYPE_HPP
 
 #include <QWidget>
+#include <QList>
+#include <QRadioButton>
+#include <QButtonGroup>
+
 
 namespace Ui {
 class BlocksCCXElementType;
@@ -23,6 +27,7 @@ private slots:
 private:
   Ui::BlocksCCXElementType *ui;
   PickWidget* pwBlockIds;  // Reference to our pickwidget.
+  QButtonGroup group;
 };
 
 #endif // BLOCKSCCXELEMENTTYPE_HPP
