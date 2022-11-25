@@ -14,6 +14,7 @@ class ClaroViewMenu;
 
 class ModelTree;
 class BlocksTree;
+class NodesetTree;
 
 class CCXDockWindow
 {
@@ -41,6 +42,7 @@ private:
   QDockWidget *dock;
   ModelTree *myModelTree;
   BlocksTree *myBlocksTree; //Blocks aka Element sets root item
+  NodesetTree *myNodesetTree; //Node sets root item
   QSettings *settings;
 };
 

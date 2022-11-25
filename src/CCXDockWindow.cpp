@@ -5,6 +5,7 @@
 #include <iostream>
 #include "ModelTree.hpp"
 #include "BlocksTree.hpp"
+#include "NodesetTree.hpp"
 
 
 
@@ -52,6 +53,8 @@ void CCXDockWindow::initialize()
   myModelTree = new ModelTree(dock);
   myBlocksTree = new BlocksTree(myModelTree);
   myBlocksTree->initialize();
+  myNodesetTree = new NodesetTree(myModelTree);
+  myNodesetTree->initialize();
     
   dock->setWidget(myModelTree);
       
@@ -84,6 +87,7 @@ void CCXDockWindow::clear()
     gui->remove_dock_windows("CalculiXComp");
     ViewMenu->remove_component_items("CalculiXComp");
     delete myBlocksTree;
+    delete myNodesetTree;
     delete myModelTree;
     delete dock;
     isInitialized = false;  
@@ -98,6 +102,7 @@ void CCXDockWindow::update()
 
   // update our dock items
   myBlocksTree->update(); 
+  myNodesetTree->update(); 
 }
 
 void CCXDockWindow::reset()

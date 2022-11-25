@@ -90,6 +90,26 @@ bool CalculiXCore::set_ccx_element_type(int block_id, std::string ccx_element_ty
   }
 }
 
+std::string CalculiXCore::get_ccx_element_type(int block_id)
+{
+  return cb->get_ccx_element_type_name(block_id);
+}
+
+std::string CalculiXCore::get_block_name(int block_id)
+{
+  std::string block_name;
+
+  BlockHandle block;
+  me_iface->get_block_handle(block_id, block);
+  block_name = me_iface->name_from_handle(block);
+    
+  if (block_name == "")
+  {
+    block_name = "Block_" + std::to_string(block_id);
+  }
+  return block_name;
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_blocks_tree_data()
 { 
   std::vector<std::vector<std::string>> blocks_tree_data;
@@ -105,7 +125,7 @@ std::vector<std::vector<std::string>> CalculiXCore::get_blocks_tree_data()
     
     if (block_name == "")
     {
-      block_name = "Block " + std::to_string(cb->blocks_data[i][0]);
+      block_name = "Block_" + std::to_string(cb->blocks_data[i][0]);
     }
     
     blocks_tree_data_set.push_back(std::to_string(cb->blocks_data[i][0])); //block_id
@@ -115,4 +135,36 @@ std::vector<std::vector<std::string>> CalculiXCore::get_blocks_tree_data()
   }
 
   return blocks_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_nodeset_tree_data()
+{ 
+  std::vector<std::vector<std::string>> nodeset_tree_data;
+
+  // Get the list of nodesets
+  std::vector<int> nodesets;
+  nodesets = CubitInterface::get_nodeset_id_list();
+  
+  // loop over the nodesets
+  for (size_t i = 0; i < nodesets.size(); i++)
+  {
+    std::vector<std::string> nodeset_tree_data_set;
+    std::string nodeset_name;
+
+    NodesetHandle nodeset;
+    me_iface->get_nodeset_handle(nodesets[i],nodeset);
+    
+    nodeset_name = me_iface->get_nodeset_name(nodeset);
+    
+    if (nodeset_name == "")
+    {
+      nodeset_name = "Nodeset_" + std::to_string(me_iface->id_from_handle(nodeset));
+    }
+
+    nodeset_tree_data_set.push_back(std::to_string(me_iface->id_from_handle(nodeset))); //nodeset_id
+    nodeset_tree_data_set.push_back(nodeset_name); //nodeset_name
+    nodeset_tree_data.push_back(nodeset_tree_data_set);
+  }
+
+  return nodeset_tree_data;
 }

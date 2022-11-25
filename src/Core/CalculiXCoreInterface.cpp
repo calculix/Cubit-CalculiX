@@ -33,6 +33,16 @@ bool CalculiXCoreInterface::set_ccx_element_type(int block_id, std::string ccx_e
   }
 }
 
+std::string CalculiXCoreInterface::get_ccx_element_type(int block_id)
+{
+  return ccx_core.get_ccx_element_type(block_id);
+}
+
+std::string CalculiXCoreInterface::get_block_name(int block_id)
+{
+  return ccx_core.get_block_name(block_id);
+}
+
 bool CalculiXCoreInterface::core_update()
 {
   if (ccx_core.update())
@@ -56,4 +66,9 @@ bool CalculiXCoreInterface::core_reset()
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_blocks_tree_data()
 { 
   return ccx_core.get_blocks_tree_data();
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_nodeset_tree_data()
+{ 
+  return ccx_core.get_nodeset_tree_data();
 }

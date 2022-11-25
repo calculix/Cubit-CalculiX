@@ -1,6 +1,7 @@
 
 #include "ModelTree.hpp"
 #include "BlocksTree.hpp"
+#include "NodesetTree.hpp"
 #include "CalculiXCoreInterface.hpp"
 
 #include "Claro.hpp"
@@ -65,32 +66,61 @@ void ModelTree::showContextMenu(const QPoint &pos)
   if (item)
   {   
     BlocksTree* BlocksTreeItem;
-    BlocksTreeItem = dynamic_cast<BlocksTree*>(item);
-    if (BlocksTreeItem)
+    NodesetTree* NodesetTreeItem;
+    if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item))
     {
       if (BlocksTreeItem->text(1).toStdString()=="")
       { 
         QMenu contextMenu("Context Menu",this);
         QAction action1("Assign CCX Element Type",this);
-        connect(&action1, SIGNAL(triggered()),this,SLOT(execContextMenuAction()));
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);      
         contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 0;
-        contextMenuAction[0][1] = 0;
       }
-      } else {
+    }else if (NodesetTreeItem = dynamic_cast<NodesetTree*>(item))
+    {
+      if (NodesetTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Node Set",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);      
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 1;
+      }
+    }else 
+    {
       if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item->parent()))
       {
         //ccx_iface->log_str("right Click - Block ID " + item->text(1).toStdString());
         QMenu contextMenu("Context Menu",this);
         QAction action1("Assign CCX Element Type",this);
-        connect(&action1, SIGNAL(triggered()),this,SLOT(execContextMenuAction()));
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);   
         contextMenu.exec(mapToGlobal(pos));   
 
         contextMenuAction[0][0] = 0;
-        contextMenuAction[0][1] = 0;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+      } else if (NodesetTreeItem = dynamic_cast<NodesetTree*>(item->parent()))
+      {
+        //ccx_iface->log_str("right Click - Block ID " + item->text(1).toStdString());
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Node Set",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Modify Node Set",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+        QAction action3("Delete Node Set",this);
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 1;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
       }
     }
@@ -100,19 +130,27 @@ void ModelTree::showContextMenu(const QPoint &pos)
 void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
 {
   BlocksTree* BlocksTreeItem;
+  NodesetTree* NodesetTreeItem;
 
-  BlocksTreeItem = dynamic_cast<BlocksTree*>(item);
-  if (BlocksTreeItem)
+  if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item))
   {
     if (BlocksTreeItem->text(1).toStdString()=="")
     {
-      //ccx_iface->log_str("double Click - ROOT ");
       this->setWidgetInCmdPanelMarker("BlocksCCXElementType");
+    }
+  }else if (NodesetTreeItem = dynamic_cast<NodesetTree*>(item))
+  {
+    if (NodesetTreeItem->text(1).toStdString()=="")
+    {
+      this->setWidgetInCmdPanelMarker("ExodusCreateNodeset");
     }
   } else {
     if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item->parent()))
     {
       this->setWidgetInCmdPanelMarker("BlocksCCXElementType");
+    } else if (NodesetTreeItem = dynamic_cast<NodesetTree*>(item->parent()))
+    {
+      this->setWidgetInCmdPanelMarker("ExodusRemoveContentsNodeset");
     }
   }
 }
@@ -143,8 +181,37 @@ void ModelTree::execContextMenuAction(){
         this->setWidgetInCmdPanelMarker("BlocksCCXElementType");
       }
     }
+    if (contextMenuAction[0][0]==1) //NodesetTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("ExodusCreateNodeset");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        this->setWidgetInCmdPanelMarker("ExodusRemoveContentsNodeset");
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("ExodusDeleteNodeset");
+      }
+      
+    }
   }
   contextMenuAction[0][0]=-1;
   contextMenuAction[0][1]=-1;
   contextMenuAction[0][2]=-1;
+}
+
+void ModelTree::ContextMenuAction1(){
+  contextMenuAction[0][1]=0;
+  this->execContextMenuAction();
+}
+
+void ModelTree::ContextMenuAction2(){
+  contextMenuAction[0][1]=1;
+  this->execContextMenuAction();
+}
+
+void ModelTree::ContextMenuAction3(){
+  contextMenuAction[0][1]=2;
+  this->execContextMenuAction();
 }

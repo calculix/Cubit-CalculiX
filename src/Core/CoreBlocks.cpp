@@ -357,14 +357,26 @@ std::string CoreBlocks::get_ccx_element_type_name(int block_id)
 {
   std::string str_return;
   str_return = "";
-    
+  int standard_id = -1;
+  int cubit_element_types_id = -1;
+  
   int blocks_data_id = get_blocks_data_id_from_block_id(block_id);
   if (blocks_data_id != -1)
   {
     if (blocks_data[blocks_data_id][2] != -1)
     {
       str_return = ccx_element_types[blocks_data[blocks_data_id][2]];
+    }else{
+      cubit_element_types_id = blocks_data[blocks_data_id][1];
+      if (cubit_element_types_id != -1)
+      {
+        standard_id = get_standard_ccx_element_type_id(cubit_element_types[cubit_element_types_id]);
+        if (standard_id != -1){
+          str_return = ccx_element_types[standard_id];
+        }
+      }
     }
   }
+  
   return str_return;
 }

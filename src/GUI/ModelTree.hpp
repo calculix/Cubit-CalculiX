@@ -12,6 +12,7 @@
 #include <QModelIndex>
 
 class BlocksTree;
+class NodesetTree;
 class QTreeWidgetItem;
 
 class NavigationModel;
@@ -36,10 +37,13 @@ public:
 
   void setWidgetInCmdPanelMarker(QString name); // set Widget in CommandPanel
   void setWidgetInCmdPanelPath(QString name); // set Widget in CommandPanel
+  void execContextMenuAction();
 
 public slots:
   void showContextMenu(const QPoint &pos);
-  void execContextMenuAction();
+  void ContextMenuAction1();
+  void ContextMenuAction2();
+  void ContextMenuAction3();
   void ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column);
 };
 

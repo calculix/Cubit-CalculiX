@@ -5,6 +5,8 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/ModelTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/BlocksTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/BlocksTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/NodesetTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/NodesetTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/BlocksCCXElementType.hpp
     ${CMAKE_CURRENT_LIST_DIR}/BlocksCCXElementType.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MyPanel1.cpp
