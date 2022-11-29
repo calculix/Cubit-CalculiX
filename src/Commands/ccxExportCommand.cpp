@@ -337,21 +337,25 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
     int num_elems;
     int start_index = 0;
     BlockHandle block = blocks[i];
+
+    if (element_type[0] != 0) 
+    {         
+      // write only once per block
+      int block_id = iface->id_from_handle(block);
+      block_name = ccx_iface.get_block_name(block_id);
+      element_type_name = ccx_iface.get_ccx_element_type(block_id);
+      output_file << "*ELEMENT, TYPE=" << element_type_name << ", ELSET=" << block_name << "\n";
+    }
+
     while( (num_elems = iface->get_block_elements(start_index, buf_size, block, element_type, handles)) > 0)
     {
       // Get ids for the element handles
       std::vector<int> ids(num_elems);
       iface->get_element_ids(num_elems, handles, ids);
 
-      int block_id = iface->id_from_handle(block);
       // skip if element type is 0 (SPHERE), that element type doesn´t exist in CalculiX
       if (element_type[0] != 0) 
-      {         
-          block_name = ccx_iface.get_block_name(block_id);
-          element_type_name = ccx_iface.get_ccx_element_type(block_id);
-
-          output_file << "*ELEMENT, TYPE=" << element_type_name << ", ELSET=" << block_name << "\n";
-        
+      {
         // Write out the connectivity
         for (int i = 0; i < num_elems; i++)
         {

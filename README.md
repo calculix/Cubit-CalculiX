@@ -7,6 +7,9 @@ As far as i know, that's the distro on which cubit is build.
 This plugin was tested with Cubit 2022.4 on Ubuntu 22.04
 
 # Installation
+needed installed packages 
+qt5-qtbase5-dev
+
 copy the **libcalculix_plugin.so** into the plugins directory, that you can find in your Cubit installation directory.
 
 e.g.: /opt/Coreform-Cubit-2022.4/bin/plugins/
