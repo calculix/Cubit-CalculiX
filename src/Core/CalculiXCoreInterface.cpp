@@ -63,6 +63,11 @@ bool CalculiXCoreInterface::core_reset()
   }
 }
 
+std::vector<int> CalculiXCoreInterface::get_blocks()
+{ 
+  return ccx_core.get_blocks();
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_blocks_tree_data()
 { 
   return ccx_core.get_blocks_tree_data();

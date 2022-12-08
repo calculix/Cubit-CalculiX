@@ -110,6 +110,17 @@ std::string CalculiXCore::get_block_name(int block_id)
   return block_name;
 }
 
+std::vector<int> CalculiXCore::get_blocks()
+{ 
+  std::vector<int> blocks;
+  
+  for (size_t i = 0; i < cb->blocks_data.size(); i++)
+  {
+    blocks.push_back(cb->blocks_data[i][0]);
+  }
+  return blocks;
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_blocks_tree_data()
 { 
   std::vector<std::vector<std::string>> blocks_tree_data;

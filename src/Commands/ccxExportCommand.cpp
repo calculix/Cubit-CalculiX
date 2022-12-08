@@ -308,6 +308,7 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
 
   output_file << "********************************** E L E M E N T S **************************** \n";
 
+  /*
   // Get the list of blocks
   std::vector<BlockHandle> blocks;
   iface->get_block_list(blocks);
@@ -321,6 +322,11 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
     if (status)
       num_elements += nelems;
   }
+  */
+
+  // Get Block id's
+  std::vector<int> blocks;
+  blocks = ccx_iface.get_blocks();
 
   // Get a batch of elements in an initialized block
   int buf_size = 100;
@@ -336,12 +342,14 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
   {
     int num_elems;
     int start_index = 0;
-    BlockHandle block = blocks[i];
+    //BlockHandle block = blocks[i];
+    BlockHandle block;
+    iface->get_block_handle(blocks[i], block);
 
     if (element_type[0] != 0) 
     {         
       // write only once per block
-      int block_id = iface->id_from_handle(block);
+      int block_id = blocks[i];
       block_name = ccx_iface.get_block_name(block_id);
       element_type_name = ccx_iface.get_ccx_element_type(block_id);
       output_file << "*ELEMENT, TYPE=" << element_type_name << ", ELSET=" << block_name << "\n";
