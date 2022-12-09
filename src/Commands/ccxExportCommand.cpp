@@ -346,55 +346,55 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
     BlockHandle block;
     iface->get_block_handle(blocks[i], block);
 
-    if (element_type[0] != 0) 
+    if (CubitInterface::get_block_element_type(blocks[i]) != "SPHERE") // check if cubit element type from block is sphere
     {         
       // write only once per block
       int block_id = blocks[i];
       block_name = ccx_iface.get_block_name(block_id);
       element_type_name = ccx_iface.get_ccx_element_type(block_id);
       output_file << "*ELEMENT, TYPE=" << element_type_name << ", ELSET=" << block_name << "\n";
-    }
 
-    while( (num_elems = iface->get_block_elements(start_index, buf_size, block, element_type, handles)) > 0)
-    {
-      // Get ids for the element handles
-      std::vector<int> ids(num_elems);
-      iface->get_element_ids(num_elems, handles, ids);
-
-      // skip if element type is 0 (SPHERE), that element type doesn´t exist in CalculiX
-      if (element_type[0] != 0) 
+      while( (num_elems = iface->get_block_elements(start_index, buf_size, block, element_type, handles)) > 0)
       {
-        // Write out the connectivity
-        for (int i = 0; i < num_elems; i++)
-        {
-          std::vector<int> conn(27);
-          int num_nodes = iface->get_connectivity(handles[i], conn);
+        // Get ids for the element handles
+        std::vector<int> ids(num_elems);
+        iface->get_element_ids(num_elems, handles, ids);
 
-          //output_file << (int) element_type[i] << " " << ids[i] << " " << block_id << " ";
-          output_file << ids[i] << ", ";
-          for (int j = 0; j < num_nodes; j++)
+        // skip if element type is 0 (SPHERE), that element type doesn´t exist in CalculiX
+        if (element_type[0] != 0) 
+        {
+          // Write out the connectivity
+          for (int i = 0; i < num_elems; i++)
           {
-            // different node numbering for hex20
-            if (element_type[0] == 42) {
-              if (j >= 12 && j<=15) {
-                output_file << conn[j+4] << ", ";
-              } else if (j >= 16 && j<=19) {
-                output_file << conn[j-4] << ", ";
+            std::vector<int> conn(27);
+            int num_nodes = iface->get_connectivity(handles[i], conn);
+
+            //output_file << (int) element_type[i] << " " << ids[i] << " " << block_id << " ";
+            output_file << ids[i] << ", ";
+            for (int j = 0; j < num_nodes; j++)
+            {
+              // different node numbering for hex20
+              if (element_type[0] == 42) {
+                if (j >= 12 && j<=15) {
+                  output_file << conn[j+4] << ", ";
+                } else if (j >= 16 && j<=19) {
+                  output_file << conn[j-4] << ", ";
+                } else {
+                  output_file << conn[j] << ", ";
+                }
               } else {
                 output_file << conn[j] << ", ";
               }
-            } else {
-              output_file << conn[j] << ", ";
-            }
 
-            if (j == 14) {
-              output_file << "\n";
+              if (j == 14) {
+                output_file << "\n";
+              }
             }
+            output_file << std::endl;
           }
-          output_file << std::endl;
         }
+        start_index += num_elems;
       }
-      start_index += num_elems;
     }
   }
 
