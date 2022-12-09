@@ -14,24 +14,28 @@ std::vector<std::string> ccxBlockElementTypeCommand::get_syntax()
   CalculiXCoreInterface ccx_iface;
   std::vector<std::string> ccx_element_types = ccx_iface.get_ccx_element_types(); 
 
-  std::string syntax = "ccx " 
-  "block <value:label='block id',help='<block id>'>... "
-  "element_type "
-  "{";
-  for (size_t i = 0; i < ccx_element_types.size(); i++)
-  {
-    syntax.append(ccx_element_types[i]);
-    if (i+1 < ccx_element_types.size())
-    {
-      syntax.append(" | ");
-    }
-    
-  }
-  syntax.append(":label='ccx_element_type'} ");
-
   std::vector<std::string> syntax_list;
-  syntax_list.push_back(syntax);
 
+  //for (size_t syn_i = 1; syn_i < 20; syn_i++)
+  //{
+    std::string syntax = "ccx " 
+    //"block <string:type='unquoted',number='" + std::to_string(syn_i) + "',label='block id',help='<block id>'> "
+    "block <string:type='unquoted',number='1',label='block id',help='<block id>'> "
+    "element_type "
+    "{";
+    for (size_t i = 0; i < ccx_element_types.size(); i++)
+    {
+      syntax.append(ccx_element_types[i]);
+      if (i+1 < ccx_element_types.size())
+      {
+        syntax.append(" | ");
+      }
+      
+    }
+    syntax.append(":label='ccx_element_type'} ");
+    syntax_list.push_back(syntax);
+  //}
+  
   return syntax_list;
 }
 
@@ -56,9 +60,24 @@ bool ccxBlockElementTypeCommand::execute(CubitCommandData &data)
   std::string element_type;
 
   std::vector<int> block_ids;
-  data.get_values("block id", block_ids);
+  std::vector<std::string> blocks_string;
+
+  std::string block_string;
+  //data.get_string("block id", block_string);
+  data.get_strings("block id", blocks_string);
+  for (size_t i = 0; i < blocks_string.size(); i++)
+  {
+    block_string.append(" "+std::to_string(i) + " ");
+    block_string.append(blocks_string[i]);
+  }
 
   std::string output;  
+
+  output = "\tblock string " + block_string + "\n" ;
+  PRINT_INFO("%s", output.c_str()); 
+
+  block_ids = CubitInterface::parse_cubit_list("block", block_string);
+
     
   for (size_t i = 0; i < ccx_element_types.size(); i++)
   {

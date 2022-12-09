@@ -14,7 +14,7 @@
 #include "Claro.hpp"
 
 // A list of headers for my command panels.
-#include "BlocksCCXElementType.hpp"
+#include "BlocksCCXElementTypePanel.hpp"
 #include "MyPanel1.hpp"
 #include "MyPanel2.hpp"
 
