@@ -3,6 +3,7 @@
 
 
 class CoreBlocks;
+class CoreMaterials;
 class MeshExportInterface;
 
 class CalculiXCore
@@ -26,8 +27,8 @@ public:
   std::vector<std::vector<std::string>> get_nodeset_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_sideset_tree_data(); // gets the data from core to build the tree
 
-
   CoreBlocks *cb;
+  CoreMaterials *mat;
   MeshExportInterface *me_iface;
 };
 

@@ -9,4 +9,6 @@ set(CORE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/loadCalculiXCore.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreBlocks.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreBlocks.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreMaterials.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreMaterials.hpp
     PARENT_SCOPE)

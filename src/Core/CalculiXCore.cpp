@@ -7,9 +7,10 @@
 
 
 #include "CoreBlocks.hpp"
+#include "CoreMaterials.hpp"
 
 CalculiXCore::CalculiXCore():
-  cb(NULL)
+  cb(NULL),mat(NULL)
 {
   print_to_log("CalculiXCore Initialization!");
   init();
@@ -19,6 +20,8 @@ CalculiXCore::~CalculiXCore()
 {
   if(cb)
     delete cb;
+  if(mat)
+    delete mat;
 }
 
 bool CalculiXCore::print_to_log(std::string str_log)
@@ -40,6 +43,11 @@ bool CalculiXCore::init()
     cb = new CoreBlocks;
   
   cb->init();
+
+  if(!mat)
+    mat = new CoreMaterials;
+  
+  mat->init();
   
   return true;
 }
@@ -47,6 +55,7 @@ bool CalculiXCore::init()
 bool CalculiXCore::update()
 {
   cb->update();
+  //mat->update();
   
   print_to_log("UPDATE");
   print_to_log(print_data());
@@ -57,6 +66,7 @@ bool CalculiXCore::update()
 bool CalculiXCore::reset()
 {
   cb->reset();
+  //mat->reset();
   
   //print_to_log("RESET");
   //print_to_log(print_data());
