@@ -34,7 +34,7 @@ void NodesetTree::update()
 
   for (size_t i = 0; i < nodeset_tree_data.size(); i++)
   {
-    // check if block already exists as item
+    // check if nodeset already exists as item
     
     ChildId = this->get_child_id(nodeset_tree_data[i][0]);
 

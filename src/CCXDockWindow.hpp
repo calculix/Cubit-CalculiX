@@ -15,6 +15,7 @@ class ClaroViewMenu;
 class ModelTree;
 class BlocksTree;
 class NodesetTree;
+class SidesetTree;
 
 class CCXDockWindow
 {
@@ -43,6 +44,7 @@ private:
   ModelTree *myModelTree;
   BlocksTree *myBlocksTree; //Blocks aka Element sets root item
   NodesetTree *myNodesetTree; //Node sets root item
+  SidesetTree *mySidesetTree; //Side sets root item
   QSettings *settings;
 };
 

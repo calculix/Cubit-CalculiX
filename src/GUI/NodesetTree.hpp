@@ -28,7 +28,7 @@ private:
   void addNodeset(QString nodeset_id, QString nodeset_name); // adds a new nodeset to the tree
   void removeNodeset(QTreeWidgetItem *nodeset); // removes the nodeset from to the tree
 
-  int get_child_id(std::string nodeset_id); // check if the item for the given block_id exists, returns the id or -1 if failed;
+  int get_child_id(std::string nodeset_id); // check if the item for the given nodeset_id exists, returns the id or -1 if failed;
 
   CalculiXCoreInterface *ccx_iface;
 };

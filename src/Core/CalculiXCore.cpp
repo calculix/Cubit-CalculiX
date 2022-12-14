@@ -179,3 +179,35 @@ std::vector<std::vector<std::string>> CalculiXCore::get_nodeset_tree_data()
 
   return nodeset_tree_data;
 }
+
+std::vector<std::vector<std::string>> CalculiXCore::get_sideset_tree_data()
+{ 
+  std::vector<std::vector<std::string>> sideset_tree_data;
+
+  // Get the list of sidesets
+  std::vector<int> sidesets;
+  sidesets = CubitInterface::get_sideset_id_list();
+  
+  // loop over the sidesets
+  for (size_t i = 0; i < sidesets.size(); i++)
+  {
+    std::vector<std::string> sideset_tree_data_set;
+    std::string sideset_name;
+
+    SidesetHandle sideset;
+    me_iface->get_sideset_handle(sidesets[i],sideset);
+    
+    sideset_name = me_iface->get_sideset_name(sideset);
+    
+    if (sideset_name == "")
+    {
+      sideset_name = "Sideset_" + std::to_string(me_iface->id_from_handle(sideset));
+    }
+
+    sideset_tree_data_set.push_back(std::to_string(me_iface->id_from_handle(sideset))); //sideset_id
+    sideset_tree_data_set.push_back(sideset_name); //sideset_name
+    sideset_tree_data.push_back(sideset_tree_data_set);
+  }
+
+  return sideset_tree_data;
+}

@@ -13,6 +13,7 @@
 
 class BlocksTree;
 class NodesetTree;
+class SidesetTree;
 class QTreeWidgetItem;
 
 class NavigationModel;
