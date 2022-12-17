@@ -15,6 +15,7 @@
 
 // A list of headers for my command panels.
 #include "BlocksCCXElementTypePanel.hpp"
+#include "MaterialsCCXcreatePanel.hpp"
 #include "MyPanel1.hpp"
 #include "MyPanel2.hpp"
 
@@ -121,6 +122,9 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
 
   else if(name == "BlocksCCXElementType")
     return new BlocksCCXElementType();
+  
+  else if(name == "MaterialsCCXcreate")
+    return new MaterialsCCXcreate();
 
   else
     return NULL;
