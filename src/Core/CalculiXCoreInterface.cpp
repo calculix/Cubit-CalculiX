@@ -82,3 +82,8 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_sideset_tree_da
 { 
   return ccx_core.get_sideset_tree_data();
 }
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_material_tree_data()
+{ 
+  return ccx_core.get_material_tree_data();
+}

@@ -7,13 +7,14 @@
 #include "BlocksTree.hpp"
 #include "NodesetTree.hpp"
 #include "SidesetTree.hpp"
+#include "MaterialTree.hpp"
 
 
 
 CCXDockWindow::CCXDockWindow() :
   isInitialized(false)
 { 
-  dock_title = "CalculiX Plugin";
+  dock_title = "CalculiX Tree";
 }
 
 CCXDockWindow::~CCXDockWindow()
@@ -34,7 +35,7 @@ void CCXDockWindow::initialize()
   std::vector<QString> dock_labels;
   
   title = gui->get_title();
-  title = title + " -- with CalculiX Plugin";
+  title = title + " -- with CalculiX";
   std::cout << title.toStdString();
   
   gui->set_title(title);
@@ -58,7 +59,9 @@ void CCXDockWindow::initialize()
   myNodesetTree->initialize();
   mySidesetTree = new SidesetTree(myModelTree);
   mySidesetTree->initialize();
-    
+  myMaterialTree = new MaterialTree(myModelTree);
+  myMaterialTree->initialize();   
+  
   dock->setWidget(myModelTree);
       
   gui->add_dock_window(dock,"CalculiXComp",Qt::LeftDockWidgetArea,Qt::AllDockWidgetAreas);
@@ -92,6 +95,7 @@ void CCXDockWindow::clear()
     delete myBlocksTree;
     delete myNodesetTree;
     delete mySidesetTree;
+    delete myMaterialTree;
     delete myModelTree;
     delete dock;
     isInitialized = false;  
@@ -108,6 +112,7 @@ void CCXDockWindow::update()
   myBlocksTree->update(); 
   myNodesetTree->update(); 
   mySidesetTree->update(); 
+  myMaterialTree->update(); 
 }
 
 void CCXDockWindow::reset()

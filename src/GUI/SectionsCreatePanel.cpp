@@ -1,5 +1,5 @@
-#include "MaterialsCCXcreatePanel.hpp"
-#include "ui_MaterialsCCXcreatePanel.h"
+#include "SectionsCreatePanel.hpp"
+#include "ui_SectionsCreatePanel.h"
 
 #include "CubitInterface.hpp"
 #include "Broker.hpp"
@@ -7,20 +7,20 @@
 #include "ScriptTranslator.hpp"
 
 
-MaterialsCCXcreate::MaterialsCCXcreate(QWidget *parent) :
+SectionsCreate::SectionsCreate(QWidget *parent) :
   QWidget(parent),
-  ui(new Ui::MaterialsCCXcreate)
+  ui(new Ui::SectionsCreate)
 {
   ui->setupUi(this);
 
 }
 
-MaterialsCCXcreate::~MaterialsCCXcreate()
+SectionsCreate::~SectionsCreate()
 {
   delete ui;
 }
 
-void MaterialsCCXcreate::on_pbApply_clicked()
+void SectionsCreate::on_pbApply_clicked()
 {
   QStringList commands;
 

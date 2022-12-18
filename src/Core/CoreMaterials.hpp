@@ -10,6 +10,11 @@ public:
   CoreMaterials();
   ~CoreMaterials();
 
+  std::vector<std::vector<std::string>> material_cards; // used to store the material cards an its property prefix
+  // materials_data[0][0] material_card
+  // materials_data[0][1] material card property prefix
+
+
   bool is_initialized = false;
 
   bool init(); // initialize

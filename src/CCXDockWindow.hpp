@@ -16,6 +16,8 @@ class ModelTree;
 class BlocksTree;
 class NodesetTree;
 class SidesetTree;
+class MaterialTree;
+
 
 class CCXDockWindow
 {
@@ -45,6 +47,7 @@ private:
   BlocksTree *myBlocksTree; //Blocks aka Element sets root item
   NodesetTree *myNodesetTree; //Node sets root item
   SidesetTree *mySidesetTree; //Side sets root item
+  MaterialTree *myMaterialTree; //Materials root item
   QSettings *settings;
 };
 

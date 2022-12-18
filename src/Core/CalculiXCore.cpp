@@ -2,8 +2,10 @@
 #include <fstream>
 #include <chrono>
 #include <ctime>
+#include <algorithm>
 #include "CubitInterface.hpp"
 #include "MeshExportInterface.hpp"
+#include "MaterialInterface.hpp"
 
 
 #include "CoreBlocks.hpp"
@@ -38,7 +40,8 @@ bool CalculiXCore::print_to_log(std::string str_log)
 bool CalculiXCore::init()
 {
   me_iface = dynamic_cast<MeshExportInterface*>(CubitInterface::get_interface("MeshExport"));
-  
+  mat_iface = dynamic_cast<MaterialInterface*>(CubitInterface::get_interface("Material"));
+
   if(!cb)
     cb = new CoreBlocks;
   
@@ -220,4 +223,33 @@ std::vector<std::vector<std::string>> CalculiXCore::get_sideset_tree_data()
   }
 
   return sideset_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_material_tree_data()
+{ 
+  std::vector<std::vector<std::string>> material_tree_data;
+  // Get the list of materials
+  std::vector<std::string> material_name_list;
+  material_name_list = CubitInterface::get_material_name_list();
+  //loop over all materials
+  for (size_t i = 0; i < material_name_list.size(); i++)
+  { 
+    MaterialInterface::Material material;
+    MaterialInterface::PropertyGroup group;
+    std::string group_name;
+    std::vector<std::string> group_list;
+    material = mat_iface->get_material(material_name_list[i]);
+    group = mat_iface->get_material_property_group(material);
+    group_name = mat_iface->get_group_name(group);
+    group_list = mat->get_group_list();
+
+    if (std::find(group_list.begin(), group_list.end(), group_name) != group_list.end())
+    {
+      std::vector<std::string> material_tree_data_set;
+      material_tree_data_set.push_back(std::to_string(mat_iface->get_material_id(material))); //material_id
+      material_tree_data_set.push_back(material_name_list[i]); //material_name
+      material_tree_data.push_back(material_tree_data_set);
+    }
+  }
+  return material_tree_data;
 }

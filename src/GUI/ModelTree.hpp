@@ -14,6 +14,7 @@
 class BlocksTree;
 class NodesetTree;
 class SidesetTree;
+class MaterialTree;
 class QTreeWidgetItem;
 
 class NavigationModel;

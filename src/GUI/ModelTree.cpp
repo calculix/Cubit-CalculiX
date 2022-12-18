@@ -3,6 +3,7 @@
 #include "BlocksTree.hpp"
 #include "NodesetTree.hpp"
 #include "SidesetTree.hpp"
+#include "MaterialTree.hpp"
 #include "CalculiXCoreInterface.hpp"
 
 #include "Claro.hpp"

@@ -49,7 +49,7 @@ void cmdPanelManager::clear()
     my_markers.push_back("MySecondLevelNode1");
     my_markers.push_back("MySecondLevelNode2");
     my_markers.push_back("BlocksCCXElementType");
-    my_markers.push_back("MaterialsCCXcreate");
+    my_markers.push_back("SectionsCreate");
 
     // For each marker, we want to get the navigation node and assign the node
     // to use this factory to get widgets as needed.
@@ -127,13 +127,12 @@ void cmdPanelManager::initialize_from_code()
   //##############################
   // add Materials Nodes
   root_node = model->getNode("Exodus/Material");
-  node = model->addNode("CCX Materials Create", root_node);
-  model->setNodeMarker(node, "MaterialsCCXcreate");
+  node = model->addNode("CCX Sections Create", root_node);
+  model->setNodeMarker(node, "SectionsCreate");
 }
 
 void cmdPanelManager::associate_panels_with_nodes()
 {
-
   // The widget factory is in charge of giving out our panels when the framework
   // needs them.
   if(!myFactory)
@@ -146,7 +145,7 @@ void cmdPanelManager::associate_panels_with_nodes()
   my_markers.push_back("MySecondLevelNode1");
   my_markers.push_back("MySecondLevelNode2");
   my_markers.push_back("BlocksCCXElementType");
-  my_markers.push_back("MaterialsCCXcreate");
+  my_markers.push_back("SectionsCreate");
 
   // For each marker, we want to get the navigation node and assign the node
   // to use this factory to get widgets as needed.
@@ -157,5 +156,4 @@ void cmdPanelManager::associate_panels_with_nodes()
     if(node)
       node->setFactory(myFactory);
   }
-
 }

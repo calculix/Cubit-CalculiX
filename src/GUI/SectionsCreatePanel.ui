@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MaterialsCCXcreate</class>
- <widget class="QWidget" name="MaterialsCCXcreate">
+ <class>SectionsCreate</class>
+ <widget class="QWidget" name="SectionsCreatePanel">
   <property name="geometry">
    <rect>
     <x>0</x>

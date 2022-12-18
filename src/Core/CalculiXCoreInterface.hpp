@@ -20,6 +20,7 @@ public:
   std::vector<std::vector<std::string>> get_blocks_tree_data(); // gets the data from core blocks to build the tree
   std::vector<std::vector<std::string>> get_nodeset_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_sideset_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_material_tree_data(); // gets the data from core to build the tree
 };
 
 #endif // CALCULIXCOREINTERFACE_HPP
