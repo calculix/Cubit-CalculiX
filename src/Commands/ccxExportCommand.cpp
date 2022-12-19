@@ -219,7 +219,7 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
   result = write_sidesets(output_file, iface);
 
   // Write the materials and properties
-  result = write_materials(output_file, iface, material_iface);
+  result = write_materials(output_file, ccx_iface);
   result = write_properties(output_file, iface, material_iface);
 
   return result;
@@ -581,9 +581,11 @@ bool ccxExportCommand::write_sidesets(std::ofstream& output_file, MeshExportInte
   return true;
 }
 
-bool ccxExportCommand::write_materials(std::ofstream& output_file, MeshExportInterface *iface,MaterialInterface *material_iface)
+bool ccxExportCommand::write_materials(std::ofstream& output_file, CalculiXCoreInterface ccx_iface)
 {
-
+  output_file << ccx_iface.get_material_export_data();
+    
+  /*
   // define variables
   std::string material_name;
 
@@ -653,6 +655,7 @@ bool ccxExportCommand::write_materials(std::ofstream& output_file, MeshExportInt
       }
     }
   }
+  */
   return true;
 }
 

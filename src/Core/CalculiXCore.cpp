@@ -7,7 +7,6 @@
 #include "MeshExportInterface.hpp"
 #include "MaterialInterface.hpp"
 
-
 #include "CoreBlocks.hpp"
 #include "CoreMaterials.hpp"
 
@@ -252,4 +251,10 @@ std::vector<std::vector<std::string>> CalculiXCore::get_material_tree_data()
     }
   }
   return material_tree_data;
+}
+
+
+std::string CalculiXCore::get_material_export_data() // gets the export data from materials core
+{
+  return mat->get_material_export();
 }

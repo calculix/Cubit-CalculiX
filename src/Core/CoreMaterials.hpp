@@ -22,6 +22,7 @@ public:
   bool reset(); // delete all data and initialize afterwards // just a placeholder right now
   bool check_initialized(); // check if object is initialized
   std::vector<std::string> get_group_list(); // get a list of CalculiX Material Groups
+  std::string get_material_export(); // get a list of CalculiX Material exports
 
   MaterialInterface *m_iface;
 };
