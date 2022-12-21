@@ -4,9 +4,7 @@
 #include "CubitCommandInterface.hpp"
 
 /*!
- * \brief The ccxVersionCommand class reimplements the "version" command to
- * display information about the version of CalculixPlugin in addition to the
- * version information displayed by Cubit.
+ * \brief The Section create command lets you create your desired sections
  */
 class ccxSectionCreateCommand : public CubitCommand
 {

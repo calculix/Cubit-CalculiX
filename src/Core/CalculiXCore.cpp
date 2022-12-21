@@ -9,6 +9,8 @@
 
 #include "CoreBlocks.hpp"
 #include "CoreMaterials.hpp"
+#include "CoreSections.hpp"
+
 
 CalculiXCore::CalculiXCore():
   cb(NULL),mat(NULL)
@@ -23,6 +25,8 @@ CalculiXCore::~CalculiXCore()
     delete cb;
   if(mat)
     delete mat;
+  if(sections)
+    delete sections;
 }
 
 bool CalculiXCore::print_to_log(std::string str_log)
@@ -51,6 +55,11 @@ bool CalculiXCore::init()
   
   mat->init();
   
+  if(!sections)
+    sections = new CoreSections;
+  
+  sections->init();
+
   return true;
 }
 
@@ -68,6 +77,7 @@ bool CalculiXCore::update()
 bool CalculiXCore::reset()
 {
   cb->reset();
+  sections->reset();
   //mat->reset();
   
   //print_to_log("RESET");
@@ -80,6 +90,7 @@ std::string CalculiXCore::print_data()
 {
   std::string str_return = "";
   str_return.append(cb->print_data());
+  str_return.append(sections->print_data());
 
   return str_return;
 }
@@ -257,4 +268,32 @@ std::vector<std::vector<std::string>> CalculiXCore::get_material_tree_data()
 std::string CalculiXCore::get_material_export_data() // gets the export data from materials core
 {
   return mat->get_material_export();
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_sections_tree_data()
+{ 
+  std::vector<std::vector<std::string>> sections_tree_data;
+  /*  
+  for (size_t i = 0; i < cb->blocks_data.size(); i++)
+  {
+    std::vector<std::string> blocks_tree_data_set;
+    std::string block_name;
+
+    BlockHandle block;
+    me_iface->get_block_handle(cb->blocks_data[i][0], block);
+    block_name = me_iface->name_from_handle(block);
+    
+    if (block_name == "")
+    {
+      block_name = "Block_" + std::to_string(cb->blocks_data[i][0]);
+    }
+    
+    blocks_tree_data_set.push_back(std::to_string(cb->blocks_data[i][0])); //block_id
+    blocks_tree_data_set.push_back(block_name); //block_name
+    blocks_tree_data_set.push_back(cb->get_ccx_element_type_name(cb->blocks_data[i][0]));//ccx_element_type
+    blocks_tree_data.push_back(blocks_tree_data_set);
+  }
+  */
+
+  return sections_tree_data;
 }

@@ -4,10 +4,9 @@
 #include "CubitCommandInterface.hpp"
 
 /*!
- * \brief The ccxVersionCommand class reimplements the "version" command to
- * display information about the version of CalculixPlugin in addition to the
- * version information displayed by Cubit.
+ * \brief The ccxBlockElementTypeCommand class implements a command to change the ccx element type on a block.
  */
+
 class ccxBlockElementTypeCommand : public CubitCommand
 {
 public:

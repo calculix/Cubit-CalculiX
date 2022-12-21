@@ -4,6 +4,8 @@
 
 class CoreBlocks;
 class CoreMaterials;
+class CoreSections;
+
 class MeshExportInterface;
 class MaterialInterface;
 
@@ -29,9 +31,11 @@ public:
   std::vector<std::vector<std::string>> get_nodeset_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_sideset_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_material_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_sections_tree_data(); // gets the data from core to build the tree
 
   CoreBlocks *cb;
   CoreMaterials *mat;
+  CoreSections *sections;
   MeshExportInterface *me_iface;
   MaterialInterface *mat_iface;
 };
