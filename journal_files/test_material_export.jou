@@ -1,0 +1,17 @@
+reset
+create material "Test1" property_group "CalculiX-FEA" 
+modify material "Test1" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "Test1" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 22 11 33 
+
+create material "Test2" property_group "CalculiX-FEA" 
+modify material "Test2" scalar_properties "CCX_ELASTIC_ORTHO_USE_CARD" 1
+modify material "Test2" matrix_property "CCX_ELASTIC_ORTHO_CONSTANTS_VS_TEMPERATURE" 1 2 3 4 5 6 7 8 9 10 1 2 3 4 5 6 7 8 9 10 1 2 3 4 5 6 7 8 9 10 1 2 3 4 5 6 7 8 9 10
+
+modify material "Test2" scalar_properties "CCX_ELASTIC_EC_USE_CARD" 1
+modify material "Test2" matrix_property "CCX_ELASTIC_EC_CONSTANTS_VS_TEMPERATURE" 1 2 3 4 5 6 7 8 9 10
+
+create material "Test3" property_group "CalculiX-FEA" 
+modify material "Test3" scalar_properties "CCX_ELASTIC_ANISO_USE_CARD" 1
+modify material "Test3" matrix_property "CCX_ELASTIC_ANISO_CONSTANTS_VS_TEMPERATURE" 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
+
+export ccx "test_output.inp"
