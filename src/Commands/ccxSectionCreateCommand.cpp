@@ -16,7 +16,7 @@ std::vector<std::string> ccxSectionCreateCommand::get_syntax()
   std::string syntax = "ccx ";
   syntax.append("create section solid block <value:label='block id',help='<block id>'> ");
   syntax.append("material <string:type='unquoted', number='1', label='material', help='<material_name>'> ");
-  syntax.append("[orientation <string:type='unquoted', number='1', label='orientation', help='<orientation_name>'> ");
+  syntax.append("[orientation <string:type='unquoted', number='1', label='orientation', help='<orientation_name>'>] ");
   syntax.append("[thickness <value:label='thickness',help='<thickness>'>]");
   
   syntax_list.push_back(syntax);
@@ -29,7 +29,7 @@ std::vector<std::string> ccxSectionCreateCommand::get_syntax()
   syntax.append("x <value:label='x',help='<x>'> "); //second line
   syntax.append("y <value:label='y',help='<y>'> ");
   syntax.append("z <value:label='z',help='<z>'> ");
-  syntax.append("[orientation <string:type='unquoted', number='1', label='orientation', help='<orientation_name>'> ");
+  syntax.append("[orientation <string:type='unquoted', number='1', label='orientation', help='<orientation_name>'>] ");
   syntax.append("[offset1 <value:label='offset1',help='<offset1>'>] ");
   syntax.append("[offset2 <value:label='offset2',help='<offset2>'>] ");
   syntax_list.push_back(syntax);
@@ -38,7 +38,7 @@ std::vector<std::string> ccxSectionCreateCommand::get_syntax()
   syntax = "ccx ";
   syntax.append("create section shell block <value:label='block id',help='<block id>'> ");
   syntax.append("material <string:type='unquoted', number='1', label='material', help='<material_name>'> ");
-  syntax.append("[orientation <string:type='unquoted', number='1', label='orientation', help='<orientation_name>'> ");
+  syntax.append("[orientation <string:type='unquoted', number='1', label='orientation', help='<orientation_name>'>] ");
   syntax.append("[thickness <value:label='thickness',help='<thickness>'>]");
   syntax.append("[offset <value:label='offset',help='<offset>'>]");
   syntax_list.push_back(syntax);
@@ -47,7 +47,7 @@ std::vector<std::string> ccxSectionCreateCommand::get_syntax()
   syntax = "ccx ";
   syntax.append("create section membrane block <value:label='block id',help='<block id>'> ");
   syntax.append("material <string:type='unquoted', number='1', label='material', help='<material_name>'> ");
-  syntax.append("[orientation <string:type='unquoted', number='1', label='orientation', help='<orientation_name>'> ");
+  syntax.append("[orientation <string:type='unquoted', number='1', label='orientation', help='<orientation_name>'>] ");
   syntax.append("[thickness <value:label='thickness',help='<thickness>'>]");
   syntax.append("[offset <value:label='offset',help='<offset>'>]");
   syntax_list.push_back(syntax);
