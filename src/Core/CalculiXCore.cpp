@@ -144,6 +144,11 @@ std::vector<int> CalculiXCore::get_blocks()
   return blocks;
 }
 
+bool CalculiXCore::create_section(std::string section_type,int block_id, std::string material_name, std::vector<std::string> options)
+{
+  return sections->create_section(section_type, block_id, material_name, options);
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_blocks_tree_data()
 { 
   std::vector<std::vector<std::string>> blocks_tree_data;

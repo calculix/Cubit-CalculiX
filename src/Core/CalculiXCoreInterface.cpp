@@ -68,6 +68,11 @@ std::vector<int> CalculiXCoreInterface::get_blocks()
   return ccx_core.get_blocks();
 }
 
+bool CalculiXCoreInterface::create_section(std::string section_type,int block_id, std::string material_name, std::vector<std::string> options)
+{
+  return ccx_core.create_section(section_type,block_id,material_name,options);
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_blocks_tree_data()
 { 
   return ccx_core.get_blocks_tree_data();

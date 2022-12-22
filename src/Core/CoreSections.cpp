@@ -39,6 +39,11 @@ bool CoreSections::check_initialized()
   return is_initialized;
 }
 
+bool CoreSections::create_section(std::string section_type,int block_id, std::string material_name, std::vector<std::string> options)
+{
+  return true;
+}
+
 bool CoreSections::add_section(int section_id, int section_type, int section_type_id)
 {
   std::vector<int> v = {section_id, section_type, section_type_id};

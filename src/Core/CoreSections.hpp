@@ -29,6 +29,7 @@ public:
   bool update(); // check for changes of the sections
   bool reset(); // delete all data and initialize afterwards
   bool check_initialized(); // check if object is initialized
+  bool create_section(std::string section_type,int block_id, std::string material_name, std::vector<std::string> options); // adds new section
   bool add_section(int section_id, int section_type, int section_type_id); // adds new section to sections_data
   bool delete_section(int section_id); // deletes section from sections_data
   bool modify_section_id(int section_id, int new_section_id); // modifies the section_id from given section

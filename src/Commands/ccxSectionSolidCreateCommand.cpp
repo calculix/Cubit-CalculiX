@@ -81,9 +81,13 @@ bool ccxSectionSolidCreateCommand::execute(CubitCommandData &data)
   
   CalculiXCoreInterface ccx_iface;
 
-  std::string output;  
+  std::string output;
 
   std::string material_name;
+  std::string orientation;
+  std::vector<std::string> options;
+  double thickness_value;
+  std::string thickness; 
   std::vector<int> block_ids;
   int block_id_s1;
   int block_id_s2;
@@ -92,6 +96,21 @@ bool ccxSectionSolidCreateCommand::execute(CubitCommandData &data)
   std::string block_string = " ";
   
   data.get_string("material", material_name);
+  if (!data.get_string("orientation", orientation))
+  {
+    orientation = "";
+  }
+  if (!data.get_value("thickness", thickness_value))
+  {
+    thickness = "";
+  }
+  else
+  {
+    thickness = std::to_string(thickness_value);
+  }
+  
+  options.push_back(orientation);
+  options.push_back(thickness);
 
   data.get_value("block id s1", block_id_s1);
   data.get_value("block id s2", block_id_s2);
@@ -134,27 +153,11 @@ bool ccxSectionSolidCreateCommand::execute(CubitCommandData &data)
   }
   
   for (size_t i = 0; i < block_ids.size(); i++)
-  {
-    output = "\ttry to create section solid with block " + std::to_string(block_ids[i]) + " and material '" + material_name + "'\n" ;
-
-    if (data.find_keyword("ORIENTATION")){
-      output.append("\tORIENTATION\n");
-    }
-    if (data.find_keyword("THICKNESS")){
-      output.append("\tTHICKNESS\n");
-    }
-
-    PRINT_INFO("%s", output.c_str());  
-    /*
-    if (ccx_iface.create_section(type ,block_ids[i], material))
+  {    
+    if (!ccx_iface.create_section("SOLID",block_ids[i],material_name,options))
     {
-      output = "\tSuccessful!\n" ;
-    }else{
-      output = "\tFailed!\n" ;
-    }
-    PRINT_INFO("%s", output.c_str());
-    */
-  }
-  
+      PRINT_ERROR("Failed!\n");
+    } 
+  }  
   return true;
 }
