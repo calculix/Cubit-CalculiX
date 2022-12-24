@@ -149,6 +149,11 @@ bool CalculiXCore::create_section(std::string section_type,int block_id, std::st
   return sections->create_section(section_type, block_id, material_name, options);
 }
 
+bool CalculiXCore::delete_section(int section_id)
+{
+  return sections->delete_section(section_id);
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_blocks_tree_data()
 { 
   std::vector<std::vector<std::string>> blocks_tree_data;
@@ -301,4 +306,87 @@ std::vector<std::vector<std::string>> CalculiXCore::get_sections_tree_data()
   */
 
   return sections_tree_data;
+}
+
+std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_string)
+{
+  std::vector<int> input_ids;
+  
+  std::vector<int> all_ids;
+  std::vector<int> except_ids;
+  std::vector<int> to_ids;
+
+  size_t pos_all = parse_string.find("all");
+  size_t pos_except = parse_string.find("except");
+  size_t pos_to = parse_string.find("to");
+
+  input_ids = this->extractIntegers(parse_string);
+
+  if (pos_all != std::string::npos)
+  {
+    if (parse_type=="section")
+    {
+      for (size_t i = 0; i < sections->sections_data.size(); i++)
+      {
+        all_ids.push_back(sections->sections_data[i][0]);
+      }
+    }
+  }
+
+  if (pos_to != std::string::npos)
+  { 
+    if ((input_ids[0]<=input_ids[1])&&(input_ids[0]>0))
+    {  
+      for (size_t i = input_ids[0]; i < input_ids[1]+1; i++)
+      {
+        to_ids.push_back(i);
+      }
+    }
+  }
+
+  if ((pos_except != std::string::npos) && (pos_to == std::string::npos))
+  { 
+    except_ids = input_ids;
+  } else if ((pos_except != std::string::npos) && (pos_to != std::string::npos))
+  {
+    except_ids = to_ids;
+  }
+
+  if ((pos_all == std::string::npos) && (pos_to != std::string::npos))
+  {
+    return to_ids;  
+  }
+
+  for (size_t i = 0; i < except_ids.size(); i++)
+  {
+    all_ids.erase(std::remove(all_ids.begin(), all_ids.end(), except_ids[i]), all_ids.end());
+  }
+  
+  return all_ids;
+}
+
+
+std::vector<int> CalculiXCore::extractIntegers(std::string str)
+{
+    std::stringstream ss;
+    std::vector<int> ids;
+ 
+    /* Storing the whole string into string stream */
+    ss << str;
+ 
+    /* Running loop till the end of the stream */
+    std::string temp;
+    int found;
+    while (!ss.eof()) {
+        /* extracting word by word from stream */
+        ss >> temp;
+ 
+        /* Checking the given word is integer or not */
+        if (std::stringstream(temp) >> found){
+            ids.push_back(found);
+        }
+        /* To save from space at the end of string */
+        temp = "";
+    }
+    return ids;
 }

@@ -11,6 +11,8 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxLogCoreCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxBlockElementTypeCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxBlockElementTypeCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSectionDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSectionDeleteCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxSectionSolidCreateCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxSectionSolidCreateCommand.hpp
     PARENT_SCOPE)

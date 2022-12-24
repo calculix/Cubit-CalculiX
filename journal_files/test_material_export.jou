@@ -51,9 +51,10 @@ ccx create section membrane block 2 material Test2 orientation OR1 thickness 99 
 
 ccx create section shell block 3 material Test3 orientation OR1 thickness 99 offset -0.5
 
-ccx create section solid block 4 material Test1 orientation OR1 thickness 99
+ccx create section solid block all material Test1 orientation OR1 thickness 99
 
 export ccx "test_output.inp"
+
 
 
 

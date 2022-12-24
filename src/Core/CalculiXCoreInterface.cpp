@@ -18,6 +18,11 @@ bool CalculiXCoreInterface::log_str(std::string str_log)
   return true;
 }
 
+std::vector<int> CalculiXCoreInterface::parser(std::string parse_type, std::string parse_string)
+{
+  return ccx_core.parser(parse_type, parse_string);
+}
+
 std::vector<std::string> CalculiXCoreInterface::get_ccx_element_types()
 { 
   return ccx_core.get_ccx_element_types();
@@ -71,6 +76,11 @@ std::vector<int> CalculiXCoreInterface::get_blocks()
 bool CalculiXCoreInterface::create_section(std::string section_type,int block_id, std::string material_name, std::vector<std::string> options)
 {
   return ccx_core.create_section(section_type,block_id,material_name,options);
+}
+
+bool CalculiXCoreInterface::delete_section(int section_id)
+{
+  return ccx_core.delete_section(section_id);
 }
 
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_blocks_tree_data()
