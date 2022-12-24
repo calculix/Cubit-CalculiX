@@ -6,6 +6,7 @@
 #include "ccxBlockElementTypeCommand.hpp"
 #include "ccxSectionDeleteCommand.hpp"
 #include "ccxSectionSolidCreateCommand.hpp"
+#include "ccxSectionSolidModifyCommand.hpp"
 
 //! This macro is required to identify this as a valid Cubit plugin. The plugin
 //! will NOT be loaded if this macro is not present.
@@ -27,6 +28,7 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxBlockElementTypeCommand");
   keys.push_back("ccxSectionDeleteCommand");
   keys.push_back("ccxSectionSolidCreateCommand");
+  keys.push_back("ccxSectionSolidModifyCommand");
   
   return keys;
 }
@@ -56,6 +58,9 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxSectionSolidCreateCommand")
     return new ccxSectionSolidCreateCommand();
+
+  else if(key == "ccxSectionSolidModifyCommand")
+    return new ccxSectionSolidModifyCommand();
 
   return NULL;
 }

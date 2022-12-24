@@ -74,6 +74,46 @@ bool CoreSections::create_section(std::string section_type,int block_id, std::st
   return true;
 }
 
+bool CoreSections::modify_section(std::string section_type,int section_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  int section_type_value;
+  if (section_type=="SOLID")
+  {
+    section_type_value = 1;
+  }else if (section_type=="SHELL")
+  {
+    section_type_value = 2;
+  }else if (section_type=="BEAM")
+  {
+    section_type_value = 3;
+  }else if (section_type=="MEMBRANE")
+  {
+    section_type_value = 4;
+  }
+
+  int sub_section_data_id;
+  int sections_data_id = get_sections_data_id_from_section_id(section_id);
+  
+  if (sections_data_id == -1)
+  {
+    return false;
+  } else {
+    if ((sections_data[sections_data_id][1]==1) && (sections_data[sections_data_id][1]==section_type_value))
+    {
+      sub_section_data_id = get_solid_section_data_id_from_solid_section_id(sections_data[sections_data_id][2]);
+
+      for (size_t i = 0; i < options.size(); i++)
+      {
+        if (options_marker[i]==1)
+        {
+          solid_section_data[sub_section_data_id][i+1] = options[i];
+        }
+      }
+    }
+    return true;
+  }
+}
+
 bool CoreSections::add_section(int section_id, int section_type, int section_type_id)
 {
   std::vector<int> v = {section_id, section_type, section_type_id};
@@ -145,6 +185,55 @@ int CoreSections::get_solid_section_data_id_from_solid_section_id(int solid_sect
     }  
   }
   return return_int;
+}
+
+std::string CoreSections::get_section_export() // get a list of the CalculiX section exports
+{
+  std::vector<std::string> sections_export_list;
+  sections_export_list.push_back("********************************** S E C T I O N S ****************************");
+  std::string str_temp;
+  int sub_section_data_id;
+
+  //loop over all sections
+  for (size_t i = 0; i < sections_data.size(); i++)
+  { 
+
+    // SOLID
+    if (sections_data[i][1] == 1)
+    {
+      sub_section_data_id = get_solid_section_data_id_from_solid_section_id(sections_data[i][2]);
+
+      str_temp = "*SOLID SECTION, MATERIAL=";
+      str_temp.append(solid_section_data[sub_section_data_id][2]);
+      str_temp.append(", ELSET=");
+      str_temp.append(solid_section_data[sub_section_data_id][1]);
+      
+      if (solid_section_data[sub_section_data_id][3]!="")
+      {
+        str_temp.append(", ORIENTATION=");
+        str_temp.append(solid_section_data[sub_section_data_id][3]);
+      }
+
+      sections_export_list.push_back(str_temp);
+
+      if (solid_section_data[sub_section_data_id][4]!="")
+      { 
+        sections_export_list.push_back(solid_section_data[sub_section_data_id][4]);
+      }    
+    }
+    // SHELL
+    // BEAM
+    // MEMBRANE
+  }
+
+  std::string section_export;
+
+  for (size_t i = 0; i < sections_export_list.size(); i++)
+  {
+    section_export.append(sections_export_list[i] + "\n");
+  }
+  
+  return section_export;
 }
 
 std::string CoreSections::print_data()

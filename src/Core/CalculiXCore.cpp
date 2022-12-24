@@ -149,6 +149,11 @@ bool CalculiXCore::create_section(std::string section_type,int block_id, std::st
   return sections->create_section(section_type, block_id, material_name, options);
 }
 
+bool CalculiXCore::modify_section(std::string section_type,int section_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return sections->modify_section(section_type, section_id, options, options_marker);
+}
+
 bool CalculiXCore::delete_section(int section_id)
 {
   return sections->delete_section(section_id);
@@ -278,6 +283,11 @@ std::vector<std::vector<std::string>> CalculiXCore::get_material_tree_data()
 std::string CalculiXCore::get_material_export_data() // gets the export data from materials core
 {
   return mat->get_material_export();
+}
+
+std::string CalculiXCore::get_section_export_data() // gets the export data from sections core
+{
+  return sections->get_section_export();
 }
 
 std::vector<std::vector<std::string>> CalculiXCore::get_sections_tree_data()

@@ -56,5 +56,3 @@ ccx create section solid block all material Test1 orientation OR1 thickness 99
 export ccx "test_output.inp"
 
 
-
-

@@ -15,4 +15,6 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxSectionDeleteCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxSectionSolidCreateCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxSectionSolidCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSectionSolidModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSectionSolidModifyCommand.hpp
     PARENT_SCOPE)
