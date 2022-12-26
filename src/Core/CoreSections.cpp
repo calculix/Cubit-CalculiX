@@ -42,6 +42,7 @@ bool CoreSections::check_initialized()
 bool CoreSections::create_section(std::string section_type,int block_id, std::string material_name, std::vector<std::string> options)
 {
   int section_id;
+  int section_type_value;
   int section_last;
   int sub_section_id;
   int sub_section_last;
@@ -57,7 +58,47 @@ bool CoreSections::create_section(std::string section_type,int block_id, std::st
       sub_section_last = solid_section_data.size() - 1;
       sub_section_id = std::stoi(solid_section_data[sub_section_last][0]) + 1;
     }
+    section_type_value = 1;
     this->add_solid_section(std::to_string(sub_section_id), std::to_string(block_id), material_name, options[0], options[1]);
+  } else if (section_type=="SHELL")
+  {
+    if (shell_section_data.size()==0)
+    {
+      sub_section_id = 1;
+    }
+    else
+    {
+      sub_section_last = shell_section_data.size() - 1;
+      sub_section_id = std::stoi(shell_section_data[sub_section_last][0]) + 1;
+    }
+    section_type_value = 2;
+    this->add_shell_section(std::to_string(sub_section_id), std::to_string(block_id), material_name, options[0], options[1], options[2]);
+  } else if (section_type=="BEAM")
+  {
+    if (beam_section_data.size()==0)
+    {
+      sub_section_id = 1;
+    }
+    else
+    {
+      sub_section_last = beam_section_data.size() - 1;
+      sub_section_id = std::stoi(beam_section_data[sub_section_last][0]) + 1;
+    }
+    section_type_value = 3;
+    this->add_beam_section(std::to_string(sub_section_id), std::to_string(block_id), material_name, options[0], options[1], options[2], options[3], options[4], options[5], options[6], options[7], options[8]);
+  }else if (section_type=="MEMBRANE")
+  {
+    if (membrane_section_data.size()==0)
+    {
+      sub_section_id = 1;
+    }
+    else
+    {
+      sub_section_last = membrane_section_data.size() - 1;
+      sub_section_id = std::stoi(membrane_section_data[sub_section_last][0]) + 1;
+    }
+    section_type_value = 4;
+    this->add_membrane_section(std::to_string(sub_section_id), std::to_string(block_id), material_name, options[0], options[1], options[2]);
   }
   
   if (sections_data.size()==0)
@@ -70,7 +111,7 @@ bool CoreSections::create_section(std::string section_type,int block_id, std::st
     section_id = sections_data[section_last][0] + 1;
   }
 
-  this->add_section(section_id,1,sub_section_id);
+  this->add_section(section_id,section_type_value,sub_section_id);
   return true;
 }
 
@@ -109,6 +150,39 @@ bool CoreSections::modify_section(std::string section_type,int section_id, std::
           solid_section_data[sub_section_data_id][i+1] = options[i];
         }
       }
+    }else if ((sections_data[sections_data_id][1]==2) && (sections_data[sections_data_id][1]==section_type_value))
+    {
+      sub_section_data_id = get_shell_section_data_id_from_shell_section_id(sections_data[sections_data_id][2]);
+
+      for (size_t i = 0; i < options.size(); i++)
+      {
+        if (options_marker[i]==1)
+        {
+          shell_section_data[sub_section_data_id][i+1] = options[i];
+        }
+      }
+    }else if ((sections_data[sections_data_id][1]==3) && (sections_data[sections_data_id][1]==section_type_value))
+    {
+      sub_section_data_id = get_beam_section_data_id_from_beam_section_id(sections_data[sections_data_id][2]);
+
+      for (size_t i = 0; i < options.size(); i++)
+      {
+        if (options_marker[i]==1)
+        {
+          beam_section_data[sub_section_data_id][i+1] = options[i];
+        }
+      }
+    }else if ((sections_data[sections_data_id][1]==4) && (sections_data[sections_data_id][1]==section_type_value))
+    {
+      sub_section_data_id = get_membrane_section_data_id_from_membrane_section_id(sections_data[sections_data_id][2]);
+
+      for (size_t i = 0; i < options.size(); i++)
+      {
+        if (options_marker[i]==1)
+        {
+          membrane_section_data[sub_section_data_id][i+1] = options[i];
+        }
+      }
     }
     return true;
   }
@@ -132,6 +206,33 @@ bool CoreSections::add_solid_section(std::string solid_section_id, std::string b
   return true;
 }
 
+bool CoreSections::add_shell_section(std::string shell_section_id, std::string block_id, std::string material_name,std::string orientation,std::string thickness,std::string offset)
+{
+  std::vector<std::string> v = {shell_section_id, block_id, material_name, orientation, thickness, offset};
+      
+  shell_section_data.push_back(v);
+
+  return true;
+}
+
+bool CoreSections::add_beam_section(std::string beam_section_id, std::string block_id, std::string material_name,std::string beam_type,std::string thickness1,std::string thickness2,std::string x,std::string y,std::string z,std::string orientation,std::string offset1,std::string offset2)
+{
+  std::vector<std::string> v = {beam_section_id, block_id, material_name, beam_type, thickness1, thickness2, x, y, z, orientation, offset1, offset2};
+      
+  beam_section_data.push_back(v);
+
+  return true;
+}
+
+bool CoreSections::add_membrane_section(std::string membrane_section_id, std::string block_id, std::string material_name,std::string orientation,std::string thickness,std::string offset)
+{
+  std::vector<std::string> v = {membrane_section_id, block_id, material_name, orientation, thickness, offset};
+      
+  membrane_section_data.push_back(v);
+
+  return true;
+}
+
 bool CoreSections::delete_section(int section_id)
 {
   int sub_section_data_id;
@@ -144,6 +245,18 @@ bool CoreSections::delete_section(int section_id)
     {
       sub_section_data_id = get_solid_section_data_id_from_solid_section_id(sections_data[sections_data_id][2]);
       solid_section_data.erase(solid_section_data.begin() + sub_section_data_id);  
+    }else if (sections_data[sections_data_id][1]==2)
+    {
+      sub_section_data_id = get_shell_section_data_id_from_shell_section_id(sections_data[sections_data_id][2]);
+      shell_section_data.erase(shell_section_data.begin() + sub_section_data_id);  
+    }else if (sections_data[sections_data_id][1]==3)
+    {
+      sub_section_data_id = get_beam_section_data_id_from_beam_section_id(sections_data[sections_data_id][2]);
+      beam_section_data.erase(beam_section_data.begin() + sub_section_data_id);  
+    }else if (sections_data[sections_data_id][1]==4)
+    {
+      sub_section_data_id = get_membrane_section_data_id_from_membrane_section_id(sections_data[sections_data_id][2]);
+      membrane_section_data.erase(membrane_section_data.begin() + sub_section_data_id);  
     }
     sections_data.erase(sections_data.begin() + sections_data_id);
     return true;
@@ -187,6 +300,48 @@ int CoreSections::get_solid_section_data_id_from_solid_section_id(int solid_sect
   return return_int;
 }
 
+
+int CoreSections::get_shell_section_data_id_from_shell_section_id(int shell_section_id)
+{ 
+  int return_int = -1;
+  for (size_t i = 0; i < shell_section_data.size(); i++)
+  {
+    if (shell_section_data[i][0]==std::to_string(shell_section_id))
+    {
+        return_int = i;
+    }  
+  }
+  return return_int;
+}
+
+
+int CoreSections::get_beam_section_data_id_from_beam_section_id(int beam_section_id)
+{ 
+  int return_int = -1;
+  for (size_t i = 0; i < beam_section_data.size(); i++)
+  {
+    if (beam_section_data[i][0]==std::to_string(beam_section_id))
+    {
+        return_int = i;
+    }  
+  }
+  return return_int;
+}
+
+
+int CoreSections::get_membrane_section_data_id_from_membrane_section_id(int membrane_section_id)
+{ 
+  int return_int = -1;
+  for (size_t i = 0; i < membrane_section_data.size(); i++)
+  {
+    if (membrane_section_data[i][0]==std::to_string(membrane_section_id))
+    {
+        return_int = i;
+    }  
+  }
+  return return_int;
+}
+
 std::string CoreSections::get_section_export() // get a list of the CalculiX section exports
 {
   std::vector<std::string> sections_export_list;
@@ -222,8 +377,100 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
       }    
     }
     // SHELL
+    if (sections_data[i][1] == 2) 
+    {
+      sub_section_data_id = get_shell_section_data_id_from_shell_section_id(sections_data[i][2]);
+
+      str_temp = "*SHELL SECTION, MATERIAL=";
+      str_temp.append(shell_section_data[sub_section_data_id][2]);
+      str_temp.append(", ELSET=");
+      str_temp.append(shell_section_data[sub_section_data_id][1]);
+      
+      if (shell_section_data[sub_section_data_id][3]!="")
+      {
+        str_temp.append(", ORIENTATION=");
+        str_temp.append(shell_section_data[sub_section_data_id][3]);
+      }
+
+      if (shell_section_data[sub_section_data_id][5]!="")
+      {
+        str_temp.append(", OFFSET=");
+        str_temp.append(shell_section_data[sub_section_data_id][5]);
+      }
+
+      sections_export_list.push_back(str_temp);
+
+      if (shell_section_data[sub_section_data_id][4]!="")
+      { 
+        sections_export_list.push_back(shell_section_data[sub_section_data_id][4]);
+      }    
+    }
     // BEAM
+    if (sections_data[i][1] == 3) 
+    {
+      sub_section_data_id = get_beam_section_data_id_from_beam_section_id(sections_data[i][2]);
+
+      str_temp = "*BEAM SECTION, MATERIAL=";
+      str_temp.append(beam_section_data[sub_section_data_id][2]);
+      str_temp.append(", ELSET=");
+      str_temp.append(beam_section_data[sub_section_data_id][1]);
+      
+      if (beam_section_data[sub_section_data_id][3]!="")
+      {
+        str_temp.append(", SECTION=");
+        str_temp.append(beam_section_data[sub_section_data_id][3]);
+      }
+      
+      if (beam_section_data[sub_section_data_id][10]!="")
+      {
+        str_temp.append(", OFFSET1=");
+        str_temp.append(beam_section_data[sub_section_data_id][10]);
+      }
+
+      if (beam_section_data[sub_section_data_id][11]!="")
+      {
+        str_temp.append(", OFFSET2=");
+        str_temp.append(beam_section_data[sub_section_data_id][11]);
+      }
+
+      if (beam_section_data[sub_section_data_id][9]!="")
+      {
+        str_temp.append(", ORIENTATION=");
+        str_temp.append(beam_section_data[sub_section_data_id][9]);
+      }
+      sections_export_list.push_back(str_temp);
+      sections_export_list.push_back(beam_section_data[sub_section_data_id][4] + ", " + beam_section_data[sub_section_data_id][5]);
+      sections_export_list.push_back(beam_section_data[sub_section_data_id][6] + ", " + beam_section_data[sub_section_data_id][7] + ", " + beam_section_data[sub_section_data_id][8]);
+    }
     // MEMBRANE
+    if (sections_data[i][1] == 4) 
+    {
+      sub_section_data_id = get_membrane_section_data_id_from_membrane_section_id(sections_data[i][2]);
+
+      str_temp = "*MEMBRANE SECTION, MATERIAL=";
+      str_temp.append(membrane_section_data[sub_section_data_id][2]);
+      str_temp.append(", ELSET=");
+      str_temp.append(membrane_section_data[sub_section_data_id][1]);
+      
+      if (membrane_section_data[sub_section_data_id][3]!="")
+      {
+        str_temp.append(", ORIENTATION=");
+        str_temp.append(membrane_section_data[sub_section_data_id][3]);
+      }
+
+      if (membrane_section_data[sub_section_data_id][5]!="")
+      {
+        str_temp.append(", OFFSET=");
+        str_temp.append(membrane_section_data[sub_section_data_id][5]);
+      }
+
+      sections_export_list.push_back(str_temp);
+
+      if (membrane_section_data[sub_section_data_id][4]!="")
+      { 
+        sections_export_list.push_back(membrane_section_data[sub_section_data_id][4]);
+      }    
+    }
   }
 
   std::string section_export;
@@ -255,5 +502,29 @@ std::string CoreSections::print_data()
     str_return.append(solid_section_data[i][0] + " " + solid_section_data[i][1] + " " + solid_section_data[i][2] + " " + solid_section_data[i][3] + " " + solid_section_data[i][4] + " \n");
   }
   
+  str_return.append("\n CoreSections shell_section_data: \n");
+  str_return.append("shell_section_id,block_id,material,orientation,thickness,offset \n");
+
+  for (size_t i = 0; i < shell_section_data.size(); i++)
+  {
+    str_return.append(shell_section_data[i][0] + " " + shell_section_data[i][1] + " " + shell_section_data[i][2] + " " + shell_section_data[i][3] + " " + shell_section_data[i][4] + " " + shell_section_data[i][5] + " \n");
+  }
+
+  str_return.append("\n CoreSections shell_section_data: \n");
+  str_return.append("beam_section_id,block_id,material,beam_type,thickness1,thickness2,x,y,z,orientation,offset1,offset2 \n");
+
+  for (size_t i = 0; i < beam_section_data.size(); i++)
+  {
+    str_return.append(beam_section_data[i][0] + " " + beam_section_data[i][1] + " " + beam_section_data[i][2] + " " + beam_section_data[i][3] + " " + beam_section_data[i][4] + " " + beam_section_data[i][5] + " " + beam_section_data[i][6] + " " + beam_section_data[i][7] + " " + beam_section_data[i][8] + " " + beam_section_data[i][9] + " " + beam_section_data[i][10] + " " + beam_section_data[i][11] + " \n");
+  }
+
+  str_return.append("\n CoreSections membrane_section_data: \n");
+  str_return.append("membrane_section_id,block_id,material,orientation,thickness,offset \n");
+
+  for (size_t i = 0; i < membrane_section_data.size(); i++)
+  {
+    str_return.append(membrane_section_data[i][0] + " " + membrane_section_data[i][1] + " " + membrane_section_data[i][2] + " " + membrane_section_data[i][3] + " " + membrane_section_data[i][4] + " " + membrane_section_data[i][5] + " \n");
+  }
+
   return str_return;
 }

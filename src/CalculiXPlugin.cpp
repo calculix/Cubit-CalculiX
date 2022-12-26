@@ -7,6 +7,12 @@
 #include "ccxSectionDeleteCommand.hpp"
 #include "ccxSectionSolidCreateCommand.hpp"
 #include "ccxSectionSolidModifyCommand.hpp"
+#include "ccxSectionShellCreateCommand.hpp"
+#include "ccxSectionShellModifyCommand.hpp"
+#include "ccxSectionBeamCreateCommand.hpp"
+#include "ccxSectionBeamModifyCommand.hpp"
+#include "ccxSectionMembraneCreateCommand.hpp"
+#include "ccxSectionMembraneModifyCommand.hpp"
 
 //! This macro is required to identify this as a valid Cubit plugin. The plugin
 //! will NOT be loaded if this macro is not present.
@@ -29,7 +35,13 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxSectionDeleteCommand");
   keys.push_back("ccxSectionSolidCreateCommand");
   keys.push_back("ccxSectionSolidModifyCommand");
-  
+  keys.push_back("ccxSectionShellCreateCommand");
+  keys.push_back("ccxSectionShellModifyCommand");
+  keys.push_back("ccxSectionBeamCreateCommand");
+  keys.push_back("ccxSectionBeamModifyCommand");
+  keys.push_back("ccxSectionMembraneCreateCommand");
+  keys.push_back("ccxSectionMembraneModifyCommand");
+
   return keys;
 }
 
@@ -61,6 +73,24 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxSectionSolidModifyCommand")
     return new ccxSectionSolidModifyCommand();
+
+  else if(key == "ccxSectionShellCreateCommand")
+    return new ccxSectionShellCreateCommand();
+
+  else if(key == "ccxSectionShellModifyCommand")
+    return new ccxSectionShellModifyCommand();
+
+  else if(key == "ccxSectionBeamCreateCommand")
+    return new ccxSectionBeamCreateCommand();
+
+  else if(key == "ccxSectionBeamModifyCommand")
+    return new ccxSectionBeamModifyCommand();
+
+  else if(key == "ccxSectionMembraneCreateCommand")
+    return new ccxSectionMembraneCreateCommand();
+
+  else if(key == "ccxSectionMembraneModifyCommand")
+    return new ccxSectionMembraneModifyCommand();
 
   return NULL;
 }

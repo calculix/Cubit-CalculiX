@@ -1,16 +1,16 @@
-#ifndef CCXSECTIONCREATECOMMAND_HPP
-#define CCXSECTIONCREATECOMMAND_HPP
+#ifndef CCXSECTIONMEMBRANECREATECOMMAND_HPP
+#define CCXSECTIONMEMBRANECREATECOMMAND_HPP
 
 #include "CubitCommandInterface.hpp"
 
 /*!
  * \brief The Section create command lets you create your desired sections
  */
-class ccxSectionCreateCommand : public CubitCommand
+class ccxSectionMembraneCreateCommand : public CubitCommand
 {
 public:
-  ccxSectionCreateCommand();
-  ~ccxSectionCreateCommand();
+  ccxSectionMembraneCreateCommand();
+  ~ccxSectionMembraneCreateCommand();
 
   std::vector<std::string> get_syntax();
   std::vector<std::string> get_syntax_help();
@@ -18,4 +18,4 @@ public:
   bool execute(CubitCommandData &data);
 };
 
-#endif // CCXSECTIONCREATECOMMAND
+#endif // CCXSECTIONMEMBRANECREATECOMMAND

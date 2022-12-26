@@ -45,14 +45,19 @@ modify material "Test3" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 1 1 1 
 modify material "Test3" matrix_property "CCX_EXPANSION_ORTHO_CONSTANTS_VS_TEMPERATURE" 1 2 3 4 1 2 3 5 12 32 33 6 
 modify material "Test3" matrix_property "CCX_EXPANSION_ANISO_CONSTANTS_VS_TEMPERATURE" 1 2 3 4 5 6 7 
 
-ccx create section beam block 1 material Test1 thickness1 0.1 thickness2 99 x 1 y 0 z 0 orientation OR1 offset1 0.1 offset2 -0.22
+ccx create section beam beam_type rect block 1 material Test1 thickness1 0.1 thickness2 99 x 1 y 0 z 0 orientation OR1 offset1 0.1 offset2 -0.22
 
 ccx create section membrane block 2 material Test2 orientation OR1 thickness 99 offset -0.5
 
-ccx create section shell block 3 material Test3 orientation OR1 thickness 99 offset -0.5
+ccx create section shell block 2 material Test3 orientation OR1 thickness 99 offset -0.5
 
-ccx create section solid block all material Test1 orientation OR1 thickness 99
+ccx create section solid block 3 material Test1 orientation OR1 thickness 99
 
 export ccx "test_output.inp"
+
+
+
+
+
 
 

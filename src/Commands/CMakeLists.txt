@@ -17,4 +17,16 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxSectionSolidCreateCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxSectionSolidModifyCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxSectionSolidModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSectionShellCreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSectionShellCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSectionShellModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSectionShellModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSectionBeamCreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSectionBeamCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSectionBeamModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSectionBeamModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSectionMembraneCreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSectionMembraneCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSectionMembraneModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSectionMembraneModifyCommand.hpp
     PARENT_SCOPE)
