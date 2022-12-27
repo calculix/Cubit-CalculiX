@@ -381,10 +381,10 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
         prop_zero = mat_iface->get_property(material_card[1] + "ZERO_USE_CARD");
         if (mat_iface->get_material_property_value(material, prop_zero, prop_scalar))
         {
-          material_cards_export.append("*EXPANSION,TYPE=ISO,ZERO=" + std::to_string(prop_scalar));
+          material_cards_export.append("*EXPANSION,TYPE=ISO,ZERO=" + std::to_string(prop_scalar) + "\n");
         }else
         {
-          material_cards_export.append("*EXPANSION,TYPE=ISO");
+          material_cards_export.append("*EXPANSION,TYPE=ISO\n");
         }
 
         prop = mat_iface->get_property(material_card[1] + "ISO_A_TEMPERATURE");
@@ -407,10 +407,10 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
         prop_zero = mat_iface->get_property(material_card[1] + "ZERO_USE_CARD");
         if (mat_iface->get_material_property_value(material, prop_zero, prop_scalar))
         {
-          material_cards_export.append("*EXPANSION,TYPE=ORTHO,ZERO=" + std::to_string(prop_scalar));
+          material_cards_export.append("*EXPANSION,TYPE=ORTHO,ZERO=" + std::to_string(prop_scalar) + "\n");
         }else
         {
-          material_cards_export.append("*EXPANSION,TYPE=ORTHO");
+          material_cards_export.append("*EXPANSION,TYPE=ORTHO\n");
         }    
 
         prop = mat_iface->get_property(material_card[1] + "ORTHO_CONSTANTS_VS_TEMPERATURE");
@@ -435,10 +435,10 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
         prop_zero = mat_iface->get_property(material_card[1] + "ZERO_USE_CARD");
         if (mat_iface->get_material_property_value(material, prop_zero, prop_scalar))
         {
-          material_cards_export.append("*EXPANSION,TYPE=ANISO,ZERO=" + std::to_string(prop_scalar));
+          material_cards_export.append("*EXPANSION,TYPE=ANISO,ZERO=" + std::to_string(prop_scalar) + "\n");
         }else
         {
-          material_cards_export.append("*EXPANSION,TYPE=ANISO");
+          material_cards_export.append("*EXPANSION,TYPE=ANISO\n");
         }  
 
         prop = mat_iface->get_property(material_card[1] + "ANISO_CONSTANTS_VS_TEMPERATURE");

@@ -55,8 +55,8 @@ set(CCXCOMP_SRCS
     cmdPanelManager.hpp
     MyCmdWidgetFactory.cpp
     MyCmdWidgetFactory.hpp
-    CCXDockWindow.cpp
-    CCXDockWindow.hpp
+    CCXDockWindowTree.cpp
+    CCXDockWindowTree.hpp
     ExportManager.cpp
     ExportManager.hpp
     loadCalculiXComp.cpp)

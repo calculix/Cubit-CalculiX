@@ -1,5 +1,4 @@
-
-#include "CCXDockWindow.hpp"
+#include "CCXDockWindowTree.hpp"
 #include "Claro.hpp"
 #include "ClaroViewMenu.hpp"
 #include <iostream>
@@ -8,20 +7,21 @@
 #include "NodesetTree.hpp"
 #include "SidesetTree.hpp"
 #include "MaterialTree.hpp"
+#include "SectionsTree.hpp"
 
 
 
-CCXDockWindow::CCXDockWindow() :
+CCXDockWindowTree::CCXDockWindowTree() :
   isInitialized(false)
 { 
-  dock_title = "CalculiX Tree";
+  dock_title = "CalculiX Model Tree";
 }
 
-CCXDockWindow::~CCXDockWindow()
+CCXDockWindowTree::~CCXDockWindowTree()
 {
 }
 
-void CCXDockWindow::initialize()
+void CCXDockWindowTree::initialize()
 {
   if(isInitialized)
     return;
@@ -61,7 +61,9 @@ void CCXDockWindow::initialize()
   mySidesetTree->initialize();
   myMaterialTree = new MaterialTree(myModelTree);
   myMaterialTree->initialize();   
-  
+  mySectionsTree = new SectionsTree(myModelTree);
+  mySectionsTree->initialize();   
+
   dock->setWidget(myModelTree);
       
   gui->add_dock_window(dock,"CalculiXComp",Qt::LeftDockWidgetArea,Qt::AllDockWidgetAreas);
@@ -83,7 +85,7 @@ void CCXDockWindow::initialize()
   isInitialized = true;
 }
 
-void CCXDockWindow::clear()
+void CCXDockWindowTree::clear()
 {
  // Remove all of our menu items.
   
@@ -96,6 +98,7 @@ void CCXDockWindow::clear()
     delete myNodesetTree;
     delete mySidesetTree;
     delete myMaterialTree;
+    delete mySectionsTree;
     delete myModelTree;
     delete dock;
     isInitialized = false;  
@@ -103,7 +106,7 @@ void CCXDockWindow::clear()
   
 }
 
-void CCXDockWindow::update()
+void CCXDockWindowTree::update()
 {
   settings->setValue("geometry",dock->saveGeometry());
   settings->setValue("state",gui->saveState());
@@ -113,9 +116,10 @@ void CCXDockWindow::update()
   myNodesetTree->update(); 
   mySidesetTree->update(); 
   myMaterialTree->update(); 
+  mySectionsTree->update();
 }
 
-void CCXDockWindow::reset()
+void CCXDockWindowTree::reset()
 {
   // reset, not necessary right now
 }

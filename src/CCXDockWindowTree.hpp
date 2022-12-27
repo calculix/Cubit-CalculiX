@@ -1,6 +1,6 @@
 
-#ifndef CCXDOCKWINDOW_HPP
-#define CCXDOCKWINDOW_HPP
+#ifndef CCXDOCKWINDOWTREE_HPP
+#define CCXDOCKWINDOWTREE_HPP
 
 class Claro;
 class ClaroViewMenu;
@@ -17,14 +17,15 @@ class BlocksTree;
 class NodesetTree;
 class SidesetTree;
 class MaterialTree;
+class SectionsTree;
 
 
-class CCXDockWindow
+class CCXDockWindowTree
 {
 
 public:
-  CCXDockWindow();
-  ~CCXDockWindow();
+  CCXDockWindowTree();
+  ~CCXDockWindowTree();
 
   void initialize();
 
@@ -48,7 +49,8 @@ private:
   NodesetTree *myNodesetTree; //Node sets root item
   SidesetTree *mySidesetTree; //Side sets root item
   MaterialTree *myMaterialTree; //Materials root item
+  SectionsTree *mySectionsTree; //Sections root item
   QSettings *settings;
 };
 
-#endif // CCXDOCKWINDOW_HPP
+#endif // CCXDOCKWINDOWTREE_HPP

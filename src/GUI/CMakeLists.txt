@@ -11,6 +11,8 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/SidesetTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/MaterialTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MaterialTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/SectionsTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/SectionsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/BlocksCCXElementTypePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/BlocksCCXElementTypePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/SectionsCreatePanel.hpp

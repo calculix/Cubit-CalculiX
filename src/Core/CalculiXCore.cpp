@@ -123,7 +123,11 @@ std::string CalculiXCore::get_block_name(int block_id)
   std::string block_name;
 
   BlockHandle block;
-  me_iface->get_block_handle(block_id, block);
+  if (!me_iface->get_block_handle(block_id, block))
+  {
+    block_name = "BLOCK " + std::to_string(block_id) + " doesn't exist!";
+    return block_name;
+  }
   block_name = me_iface->name_from_handle(block);
     
   if (block_name == "")
@@ -293,27 +297,45 @@ std::string CalculiXCore::get_section_export_data() // gets the export data from
 std::vector<std::vector<std::string>> CalculiXCore::get_sections_tree_data()
 { 
   std::vector<std::vector<std::string>> sections_tree_data;
-  /*  
-  for (size_t i = 0; i < cb->blocks_data.size(); i++)
+  
+  for (size_t i = 0; i < sections->sections_data.size(); i++)
   {
-    std::vector<std::string> blocks_tree_data_set;
+    std::vector<std::string> sections_tree_data_set;
+    std::string section_name;
     std::string block_name;
+    std::string material_name;
+    int sub_section_data_id;
 
-    BlockHandle block;
-    me_iface->get_block_handle(cb->blocks_data[i][0], block);
-    block_name = me_iface->name_from_handle(block);
-    
-    if (block_name == "")
+    if (sections->sections_data[i][1] == 1)
     {
-      block_name = "Block_" + std::to_string(cb->blocks_data[i][0]);
+      sub_section_data_id = sections->get_solid_section_data_id_from_solid_section_id(sections->sections_data[i][2]);
+      material_name = sections->solid_section_data[sub_section_data_id][2];
+      block_name = this->get_block_name(std::stoi(sections->solid_section_data[sub_section_data_id][1]));
+      section_name = "SOLID (" + block_name + "|" + material_name + ")";
+    } else if (sections->sections_data[i][1] == 2)
+    {
+      sub_section_data_id = sections->get_shell_section_data_id_from_shell_section_id(sections->sections_data[i][2]);
+      material_name = sections->shell_section_data[sub_section_data_id][2];
+      block_name = this->get_block_name(std::stoi(sections->shell_section_data[sub_section_data_id][1]));
+      section_name = "SHELL (" + block_name + "|" + material_name + ")";
+    } else if (sections->sections_data[i][1] == 3)
+    {
+      sub_section_data_id = sections->get_beam_section_data_id_from_beam_section_id(sections->sections_data[i][2]);
+      material_name = sections->beam_section_data[sub_section_data_id][2];
+      block_name = this->get_block_name(std::stoi(sections->beam_section_data[sub_section_data_id][1]));
+      section_name = "BEAM (" + block_name + "|" + material_name + ")";
+    } else if (sections->sections_data[i][1] == 4)
+    {
+      sub_section_data_id = sections->get_membrane_section_data_id_from_membrane_section_id(sections->sections_data[i][2]);
+      material_name = sections->membrane_section_data[sub_section_data_id][2];
+      block_name = this->get_block_name(std::stoi(sections->membrane_section_data[sub_section_data_id][1]));
+      section_name = "MEMRBANE (" + block_name + "|" + material_name + ")";
     }
     
-    blocks_tree_data_set.push_back(std::to_string(cb->blocks_data[i][0])); //block_id
-    blocks_tree_data_set.push_back(block_name); //block_name
-    blocks_tree_data_set.push_back(cb->get_ccx_element_type_name(cb->blocks_data[i][0]));//ccx_element_type
-    blocks_tree_data.push_back(blocks_tree_data_set);
+    sections_tree_data_set.push_back(std::to_string(sections->sections_data[i][0])); //section_id
+    sections_tree_data_set.push_back(section_name); //section_name
+    sections_tree_data.push_back(sections_tree_data_set);
   }
-  */
 
   return sections_tree_data;
 }

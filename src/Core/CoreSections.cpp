@@ -1,5 +1,6 @@
 #include "CoreSections.hpp"
 #include "CubitInterface.hpp"
+#include "CalculiXCoreInterface.hpp"
 
 CoreSections::CoreSections()
 {}
@@ -13,6 +14,7 @@ bool CoreSections::init()
   {
     return false; // already initialized
   }else{
+    CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
     is_initialized = true;  
     return true;
   }
@@ -361,7 +363,7 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
       str_temp = "*SOLID SECTION, MATERIAL=";
       str_temp.append(solid_section_data[sub_section_data_id][2]);
       str_temp.append(", ELSET=");
-      str_temp.append(solid_section_data[sub_section_data_id][1]);
+      str_temp.append(ccx_iface->get_block_name(std::stoi(solid_section_data[sub_section_data_id][1])));
       
       if (solid_section_data[sub_section_data_id][3]!="")
       {
@@ -384,7 +386,7 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
       str_temp = "*SHELL SECTION, MATERIAL=";
       str_temp.append(shell_section_data[sub_section_data_id][2]);
       str_temp.append(", ELSET=");
-      str_temp.append(shell_section_data[sub_section_data_id][1]);
+      str_temp.append(ccx_iface->get_block_name(std::stoi(shell_section_data[sub_section_data_id][1])));
       
       if (shell_section_data[sub_section_data_id][3]!="")
       {
@@ -413,7 +415,7 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
       str_temp = "*BEAM SECTION, MATERIAL=";
       str_temp.append(beam_section_data[sub_section_data_id][2]);
       str_temp.append(", ELSET=");
-      str_temp.append(beam_section_data[sub_section_data_id][1]);
+      str_temp.append(ccx_iface->get_block_name(std::stoi(beam_section_data[sub_section_data_id][1])));
       
       if (beam_section_data[sub_section_data_id][3]!="")
       {
@@ -450,7 +452,7 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
       str_temp = "*MEMBRANE SECTION, MATERIAL=";
       str_temp.append(membrane_section_data[sub_section_data_id][2]);
       str_temp.append(", ELSET=");
-      str_temp.append(membrane_section_data[sub_section_data_id][1]);
+      str_temp.append(ccx_iface->get_block_name(std::stoi(membrane_section_data[sub_section_data_id][1])));
       
       if (membrane_section_data[sub_section_data_id][3]!="")
       {

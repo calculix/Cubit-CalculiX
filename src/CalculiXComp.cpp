@@ -14,7 +14,7 @@
 #include "MenuManager.hpp"
 #include "Observer.hpp"
 #include "cmdPanelManager.hpp"
-#include "CCXDockWindow.hpp"
+#include "CCXDockWindowTree.hpp"
 #include "ToolbarManager.hpp"
 
 // Default constructor. Remember to include the component name (should match
@@ -24,7 +24,7 @@ CalculiXComp::CalculiXComp() :
   myMenus(NULL),
   myToolbars(NULL),
   mycmdPanels(NULL),
-  myCCXDockWindow(NULL),
+  myCCXDockWindowTree(NULL),
   myExportManager(NULL),
   mListener(NULL)
 {}
@@ -40,8 +40,8 @@ CalculiXComp::~CalculiXComp()
   if(mycmdPanels)
     delete mycmdPanels;
 
-  if(myCCXDockWindow)
-    delete myCCXDockWindow;
+  if(myCCXDockWindowTree)
+    delete myCCXDockWindowTree;
 
   if(myExportManager)
     delete myExportManager;
@@ -57,7 +57,7 @@ void CalculiXComp::start_up(int withGUI)
     setup_menus();
     setup_toolbars();
     setup_command_panels();
-    setup_CCXDockWindow(); // command panels has to be setup before dockwindow
+    setup_CCXDockWindowTree(); // command panels has to be setup before dockwindow
     add_exports();
     boolwithGUI = true;
   }
@@ -70,7 +70,7 @@ void CalculiXComp::clean_up()
   cleanup_menus();
   cleanup_toolbars();
   cleanup_command_panels();
-  cleanup_CCXDockWindow();
+  cleanup_CCXDockWindowTree();
   cleanup_exports();
   cleanup_observers();
 
@@ -82,8 +82,8 @@ void CalculiXComp::update()
 {
   if(boolwithGUI)
   {
-    if(myCCXDockWindow)
-    myCCXDockWindow->update();
+    if(myCCXDockWindowTree)
+    myCCXDockWindowTree->update();
   }
 }
 
@@ -91,8 +91,8 @@ void CalculiXComp::reset()
 {
   if(boolwithGUI)
   {
-    if(myCCXDockWindow)
-    myCCXDockWindow->reset();
+    if(myCCXDockWindowTree)
+    myCCXDockWindowTree->reset();
   }
 }
 
@@ -140,18 +140,18 @@ void CalculiXComp::cleanup_command_panels()
     mycmdPanels->clear();
 }
 
-void CalculiXComp::setup_CCXDockWindow()
+void CalculiXComp::setup_CCXDockWindowTree()
 {
-  if(!myCCXDockWindow)
-    myCCXDockWindow = new CCXDockWindow;
+  if(!myCCXDockWindowTree)
+    myCCXDockWindowTree = new CCXDockWindowTree;
 
-  myCCXDockWindow->initialize();
+  myCCXDockWindowTree->initialize();
 }
 
-void CalculiXComp::cleanup_CCXDockWindow()
+void CalculiXComp::cleanup_CCXDockWindowTree()
 {
-  if(myCCXDockWindow)
-    myCCXDockWindow->clear();
+  if(myCCXDockWindowTree)
+    myCCXDockWindowTree->clear();
 }
 
 

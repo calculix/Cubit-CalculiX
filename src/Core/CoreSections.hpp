@@ -1,6 +1,8 @@
 #ifndef CORESECTIONS_HPP
 #define CORESECTIONS_HPP
 
+class CalculiXCoreInterface;
+
 class CoreSections
 {
 
@@ -77,6 +79,8 @@ public:
   int  get_membrane_section_data_id_from_membrane_section_id(int membrane_section_id); // searches for the membrane_section_id in the membrane_section_data and returns the indices or -1 if it fails
   std::string get_section_export(); // get CalculiX section exports
   std::string print_data(); // prints out the blocks_data
+
+  CalculiXCoreInterface *ccx_iface;
 };
 
 #endif // CORESECTIONS_HPP

@@ -108,6 +108,11 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_material_tree_d
   return ccx_core.get_material_tree_data();
 }
 
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_sections_tree_data()
+{ 
+  return ccx_core.get_sections_tree_data();
+}
+
 std::string CalculiXCoreInterface::get_material_export_data() // gets the export data from materials core
 {
   return ccx_core.get_material_export_data();
