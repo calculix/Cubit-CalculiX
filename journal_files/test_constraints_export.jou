@@ -1,0 +1,25 @@
+reset
+
+create brick x 1
+create brick x 1
+create brick x 1
+create brick x 1
+set duplicate block elements off
+block 1 add volume 1
+block 2 add volume 2
+block 3 add volume 3
+block 4 add volume 4
+
+
+
+
+
+export ccx "test_output.inp"
+
+
+
+
+
+
+
+

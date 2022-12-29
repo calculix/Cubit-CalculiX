@@ -123,7 +123,10 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
   else if(name == "BlocksCCXElementType")
     return new BlocksCCXElementType();
   
-  else if(name == "SectionsCreate")
+  else if(name == "CCXSectionsCreate")
+    return new SectionsCreate();
+
+  else if(name == "CCXRigidBodyCreate")
     return new SectionsCreate();
 
   else

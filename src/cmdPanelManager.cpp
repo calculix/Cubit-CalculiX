@@ -5,6 +5,7 @@
 #include "MyCmdWidgetFactory.hpp"
 
 #include <QAction>
+#include <QIcon>
 #include <QStringList>
 
 cmdPanelManager::cmdPanelManager() :
@@ -49,7 +50,8 @@ void cmdPanelManager::clear()
     my_markers.push_back("MySecondLevelNode1");
     my_markers.push_back("MySecondLevelNode2");
     my_markers.push_back("BlocksCCXElementType");
-    my_markers.push_back("SectionsCreate");
+    my_markers.push_back("CCXSectionsCreate");
+    my_markers.push_back("CCXRigidBodyCreate");
 
     // For each marker, we want to get the navigation node and assign the node
     // to use this factory to get widgets as needed.
@@ -77,6 +79,7 @@ void cmdPanelManager::initialize_from_xml()
 
 void cmdPanelManager::initialize_from_code()
 {
+  QIcon *NodeIconPointer;
   // This example shows how to create the command panel navigation buttons (nodes)
   // using the NavigationModel directly.
   NavigationModel* model = Claro::instance()->navigation_model();
@@ -126,9 +129,36 @@ void cmdPanelManager::initialize_from_code()
 
   //##############################
   // add Materials Nodes
-  root_node = model->getNode("Exodus/Material");
-  node = model->addNode("CCX Sections Create", root_node);
-  model->setNodeMarker(node, "SectionsCreate");
+  root_node = model->getNode("Exodus");
+  node = model->addNode("CCX Sections", root_node);
+  model->setNodeMarker(node, "CCXSections");
+  root_node = model->getMarkedNode("CCXSections");
+  node = model->addNode("Create", root_node);
+  model->setNodeMarker(node, "CCXSectionsCreate");
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXSectionsModify");
+  node = model->addNode("Delete", root_node);
+  model->setNodeMarker(node, "CCXSectionsDelete");
+
+  //##############################
+  // add Constraint Nodes
+  // add new Node between FEA/Create and FEAConstraintCreate
+  root_node = model->getNode("FEA/Create");
+  node = model->addNode("Constraints", root_node);
+  model->setNodeMarker(node, "FEAConstraintCreateNavigation");
+  node->setUseComboForChildren(true);
+  // set new Parent to FEAConstraintCreate and remove from old
+  node = model->getMarkedNode("FEAConstraintCreate");
+  root_node->removeChild(root_node->getChildIndex(node));
+  root_node = model->getMarkedNode("FEAConstraintCreateNavigation");
+  node->setParent(root_node);
+  root_node->insertChild(root_node->childCount()+1,node);
+  NodeIconPointer = node->getIcon();
+  root_node->setIcon(NodeIconPointer);
+  // add Constraint Node
+  root_node = model->getMarkedNode("FEAConstraintCreateNavigation");
+  node = model->addNode("CCX Rigid Body", root_node);
+  model->setNodeMarker(node, "CCXRigidBodyCreate");
 }
 
 void cmdPanelManager::associate_panels_with_nodes()
@@ -145,7 +175,8 @@ void cmdPanelManager::associate_panels_with_nodes()
   my_markers.push_back("MySecondLevelNode1");
   my_markers.push_back("MySecondLevelNode2");
   my_markers.push_back("BlocksCCXElementType");
-  my_markers.push_back("SectionsCreate");
+  my_markers.push_back("CCXSectionsCreate");
+  my_markers.push_back("CCXRigidBodyCreate");
 
   // For each marker, we want to get the navigation node and assign the node
   // to use this factory to get widgets as needed.
