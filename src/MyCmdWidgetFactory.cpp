@@ -14,7 +14,7 @@
 #include "Claro.hpp"
 
 // A list of headers for my command panels.
-#include "BlocksCCXElementTypePanel.hpp"
+#include "CCXBlocksElementTypePanel.hpp"
 #include "SectionsCreatePanel.hpp"
 #include "MyPanel1.hpp"
 #include "MyPanel2.hpp"
@@ -120,8 +120,8 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
   else if(name == "MySecondLevelNode2")
     return new MyPanel2();
 
-  else if(name == "BlocksCCXElementType")
-    return new BlocksCCXElementType();
+  else if(name == "CCXBlocksElementType")
+    return new CCXBlocksElementType();
   
   else if(name == "CCXSectionsCreate")
     return new SectionsCreate();

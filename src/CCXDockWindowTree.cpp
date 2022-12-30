@@ -53,6 +53,10 @@ void CCXDockWindowTree::initialize()
   dock->setAllowedAreas(Qt::AllDockWidgetAreas);
   dock->setObjectName(dock_title);
   myModelTree = new ModelTree(dock);
+  myModelTree->header()->setMinimumSectionSize(25);
+  myModelTree->header()->resizeSection(0, 180);
+  myModelTree->header()->resizeSection(1, 25);
+  
   myBlocksTree = new BlocksTree(myModelTree);
   myBlocksTree->initialize();
   myNodesetTree = new NodesetTree(myModelTree);
@@ -121,5 +125,10 @@ void CCXDockWindowTree::update()
 
 void CCXDockWindowTree::reset()
 {
-  // reset, not necessary right now
+  // reset, our trees, so clear all child items
+  myBlocksTree->clear(); 
+  myNodesetTree->clear(); 
+  mySidesetTree->clear(); 
+  myMaterialTree->clear(); 
+  mySectionsTree->clear();
 }

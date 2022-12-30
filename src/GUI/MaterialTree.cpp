@@ -80,8 +80,11 @@ void MaterialTree::update()
 
 void MaterialTree::clear()
 {
- // Remove all of our tree items.
- // not implemented yet
+  // Remove all of our tree items.
+  while (this->childCount()>0)
+  {
+    this->removeChild(this->child(0));
+  }
 }
 
 void MaterialTree::addMaterial(QString material_id, QString material_name)

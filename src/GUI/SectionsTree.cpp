@@ -80,8 +80,11 @@ void SectionsTree::update()
 
 void SectionsTree::clear()
 {
- // Remove all of our tree items.
- // not implemented yet
+  // Remove all of our tree items.
+  while (this->childCount()>0)
+  {
+    this->removeChild(this->child(0));
+  }
 }
 
 void SectionsTree::addSection(QString section_id, QString section_name)

@@ -80,8 +80,11 @@ void SidesetTree::update()
 
 void SidesetTree::clear()
 {
- // Remove all of our tree items.
- // not implemented yet
+  // Remove all of our tree items.
+  while (this->childCount()>0)
+  {
+    this->removeChild(this->child(0));
+  }
 }
 
 void SidesetTree::addSideset(QString sideset_id, QString sideset_name)

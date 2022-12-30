@@ -1,5 +1,5 @@
-#include "BlocksCCXElementTypePanel.hpp"
-#include "ui_BlocksCCXElementTypePanel.h"
+#include "CCXBlocksElementTypePanel.hpp"
+#include "ui_CCXBlocksElementTypePanel.h"
 
 #include "CubitInterface.hpp"
 #include "Broker.hpp"
@@ -8,9 +8,9 @@
 #include "PickWidget.hpp"
 
 
-BlocksCCXElementType::BlocksCCXElementType(QWidget *parent) :
+CCXBlocksElementType::CCXBlocksElementType(QWidget *parent) :
   QWidget(parent),
-  ui(new Ui::BlocksCCXElementType)
+  ui(new Ui::CCXBlocksElementType)
 {
   ui->setupUi(this);
 
@@ -32,7 +32,7 @@ BlocksCCXElementType::BlocksCCXElementType(QWidget *parent) :
   }
 }
 
-BlocksCCXElementType::~BlocksCCXElementType()
+CCXBlocksElementType::~CCXBlocksElementType()
 {
   delete ui;
 
@@ -40,7 +40,7 @@ BlocksCCXElementType::~BlocksCCXElementType()
     delete pwBlockIds;
 }
 
-void BlocksCCXElementType::on_pbApply_clicked()
+void CCXBlocksElementType::on_pbApply_clicked()
 {
   QStringList commands;
 

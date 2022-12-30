@@ -49,7 +49,7 @@ void cmdPanelManager::clear()
     QStringList my_markers;
     my_markers.push_back("MySecondLevelNode1");
     my_markers.push_back("MySecondLevelNode2");
-    my_markers.push_back("BlocksCCXElementType");
+    my_markers.push_back("CCXBlocksElementType");
     my_markers.push_back("CCXSectionsCreate");
     my_markers.push_back("CCXRigidBodyCreate");
 
@@ -120,15 +120,25 @@ void cmdPanelManager::initialize_from_code()
 
   //##############################
   // add BlocksTree Nodes
-  //NavigationNode* icon_node;
+  // add new Node between Exodus/Block and ExodusElementTypeBlock
   root_node = model->getNode("Exodus/Block");
+  node = model->addNode("Element Types", root_node);
+  model->setNodeMarker(node, "ElementTypeBlockNavigation");
+  // set new Parent to ExodusElementTypeBlock and remove from old
+  node = model->getMarkedNode("ExodusElementTypeBlock");
+  root_node->removeChild(root_node->getChildIndex(node));
+  root_node = model->getMarkedNode("ElementTypeBlockNavigation");
+  node->setParent(root_node);
+  root_node->insertChild(root_node->childCount()+1,node);
+  NodeIconPointer = node->getIcon();
+  root_node->setIcon(NodeIconPointer);
+  // add Element Type Node
+  root_node = model->getMarkedNode("ElementTypeBlockNavigation");
   node = model->addNode("CCX Element Types", root_node);
-  model->setNodeMarker(node, "BlocksCCXElementType");
-  //icon_node = model->getMarkedNode("ExodusElementTypeBlock");
-  //node->setIcon(icon_node->getIcon());
+  model->setNodeMarker(node, "CCXBlocksElementType");
 
   //##############################
-  // add Materials Nodes
+  // add Materials and Section Nodes
   root_node = model->getNode("Exodus");
   node = model->addNode("CCX Sections", root_node);
   model->setNodeMarker(node, "CCXSections");
@@ -146,7 +156,7 @@ void cmdPanelManager::initialize_from_code()
   root_node = model->getNode("FEA/Create");
   node = model->addNode("Constraints", root_node);
   model->setNodeMarker(node, "FEAConstraintCreateNavigation");
-  node->setUseComboForChildren(true);
+  //node->setUseComboForChildren(true);
   // set new Parent to FEAConstraintCreate and remove from old
   node = model->getMarkedNode("FEAConstraintCreate");
   root_node->removeChild(root_node->getChildIndex(node));
@@ -174,7 +184,7 @@ void cmdPanelManager::associate_panels_with_nodes()
   QStringList my_markers;
   my_markers.push_back("MySecondLevelNode1");
   my_markers.push_back("MySecondLevelNode2");
-  my_markers.push_back("BlocksCCXElementType");
+  my_markers.push_back("CCXBlocksElementType");
   my_markers.push_back("CCXSectionsCreate");
   my_markers.push_back("CCXRigidBodyCreate");
 
