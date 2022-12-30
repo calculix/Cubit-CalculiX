@@ -93,6 +93,9 @@ bool ccxExportCommand::execute(CubitCommandData &data)
   CubitInterface::release_interface(iface);
   CubitInterface::release_interface(material_iface);
 
+  // clear reference points data
+  ccx_iface.referencepoints_reset_on_export();
+
   return result;
 }
 
@@ -236,7 +239,7 @@ bool ccxExportCommand::close_file(std::ofstream& output_file)
 
 bool ccxExportCommand::write_nodes(std::ofstream& output_file,MeshExportInterface *iface, CalculiXCoreInterface ccx_iface)
 {
-
+  int max_node_id = -1;
   // Fetch and output the coordinates
   int number_nodes = iface->get_num_nodes();
 
@@ -267,6 +270,10 @@ bool ccxExportCommand::write_nodes(std::ofstream& output_file,MeshExportInterfac
     // Write out the coordinates
     for(int i = 0; i < number_found; i++)
     {
+      if (max_node_id<node_ids_tmp[i])
+      {
+        max_node_id = node_ids_tmp[i];
+      }
       node_ids[start+i] = node_ids_tmp[i];
       xcoords[start+i] = xcoords_tmp[i];
       ycoords[start+i] = ycoords_tmp[i];
@@ -297,10 +304,11 @@ bool ccxExportCommand::write_nodes(std::ofstream& output_file,MeshExportInterfac
   }
   start += number_found;
 
-  output_file << "** \n";
-
   // add needed nodes for reference points
-  ccx_iface.referencepoints_update_on_export();
+  ccx_iface.referencepoints_update_on_export(max_node_id);
+  
+  output_file << ccx_iface.get_referencepoints_export();  
+  output_file << "** \n";
 
   return true;
 }

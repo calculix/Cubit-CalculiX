@@ -1,6 +1,8 @@
 #ifndef CALCULIXCOREINTERFACE_HPP
 #define CALCULIXCOREINTERFACE_HPP
 
+class MeshExportInterface;
+
 class CalculiXCoreInterface
 {
 
@@ -30,13 +32,19 @@ public:
   bool modify_constraint(std::string constraint_type,int constraint_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a constraint  
   bool delete_constraint(int constraint_id); // delete constraint
   std::vector<int> get_rigidbody_vertex_list(); // get list of rigid body vertices
-  bool referencepoints_update_on_export(); // update reference points
+  bool referencepoints_update_on_export(int max_node_id); // update reference points
+  bool referencepoints_reset_on_export(); // reset reference points
+  std::string get_referencepoints_export(); // export reference points
+  int  referencepoints_get_ref_from_vertex_id(int vertex_id); // get ref_node for the vertex_id  and returns -1 if it fails
+  int  referencepoints_get_rot_from_vertex_id(int vertex_id); // get ref_node for the vertex_id  and returns -1 if it fails
   std::vector<std::vector<std::string>> get_blocks_tree_data(); // gets the data from core blocks to build the tree
   std::vector<std::vector<std::string>> get_nodeset_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_sideset_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_material_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_sections_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_constraints_tree_data(); // gets the data from core to build the tree
+
+  MeshExportInterface *me_iface;
 };
 
 #endif // CALCULIXCOREINTERFACE_HPP

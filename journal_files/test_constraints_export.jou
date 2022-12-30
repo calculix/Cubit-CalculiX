@@ -34,10 +34,11 @@ ccx create constraint tie name "testname1" master 1 slave 2
 ccx create constraint tie name "testname2" master 99 slave 100 position tolerance 88
 
 volume all size 100
-mesh vol all
+#mesh vol all
 mesh vertex all
 
 export ccx "test_output.inp"
+
 
 
 

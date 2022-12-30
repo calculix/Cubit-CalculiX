@@ -251,8 +251,10 @@ std::string CoreConstraints::get_constraint_export() // get a list of the Calcul
       }
 
       str_temp.append(", REF NODE=");
+      str_temp.append(std::to_string(ccx_iface->referencepoints_get_ref_from_vertex_id(std::stoi(rigidbody_constraint_data[sub_constraint_data_id][3]))));
+      
       str_temp.append(", ROT NODE=");
-      //str_temp.append(ccx_iface->get_sideset_name(std::stoi(tie_constraint_data[sub_constraint_data_id][3])));
+      str_temp.append(std::to_string(ccx_iface->referencepoints_get_rot_from_vertex_id(std::stoi(rigidbody_constraint_data[sub_constraint_data_id][3]))));
       constraints_export_list.push_back(str_temp);
     }
     // TIE

@@ -118,9 +118,29 @@ std::vector<int> CalculiXCoreInterface::get_rigidbody_vertex_list()
   return ccx_core.get_rigidbody_vertex_list();
 }
 
-bool CalculiXCoreInterface::referencepoints_update_on_export()
+bool CalculiXCoreInterface::referencepoints_update_on_export(int max_node_id)
 {
-  return ccx_core.referencepoints_update_on_export();
+  return ccx_core.referencepoints_update_on_export(max_node_id);
+}
+
+bool CalculiXCoreInterface::referencepoints_reset_on_export()
+{
+  return ccx_core.referencepoints_reset_on_export();
+}
+
+std::string CalculiXCoreInterface::get_referencepoints_export()
+{
+  return ccx_core.get_referencepoints_export();
+}
+
+int CalculiXCoreInterface::referencepoints_get_ref_from_vertex_id(int vertex_id)
+{
+  return ccx_core.referencepoints_get_ref_from_vertex_id(vertex_id);
+}
+
+int CalculiXCoreInterface::referencepoints_get_rot_from_vertex_id(int vertex_id)
+{
+  return ccx_core.referencepoints_get_rot_from_vertex_id(vertex_id);
 }
 
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_blocks_tree_data()

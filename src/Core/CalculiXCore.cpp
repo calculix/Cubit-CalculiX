@@ -243,9 +243,29 @@ std::vector<int> CalculiXCore::get_rigidbody_vertex_list()
   return constraints->get_rigidbody_vertex_list();
 }
 
-bool CalculiXCore::referencepoints_update_on_export()
+bool CalculiXCore::referencepoints_update_on_export(int max_node_id)
 {
-  return referencepoints->update_on_export();
+  return referencepoints->update_on_export(max_node_id);
+}
+
+bool CalculiXCore::referencepoints_reset_on_export()
+{
+  return referencepoints->reset();
+}
+
+std::string CalculiXCore::get_referencepoints_export()
+{
+  return referencepoints->get_referencepoints_export();
+}
+
+int CalculiXCore::referencepoints_get_ref_from_vertex_id(int vertex_id)
+{
+  return referencepoints->get_ref_from_vertex_id(vertex_id);
+}
+
+int CalculiXCore::referencepoints_get_rot_from_vertex_id(int vertex_id)
+{
+  return referencepoints->get_rot_from_vertex_id(vertex_id);
 }
 
 std::vector<std::vector<std::string>> CalculiXCore::get_blocks_tree_data()
