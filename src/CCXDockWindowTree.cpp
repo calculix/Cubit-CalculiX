@@ -8,6 +8,7 @@
 #include "SidesetTree.hpp"
 #include "MaterialTree.hpp"
 #include "SectionsTree.hpp"
+#include "ConstraintsTree.hpp"
 
 
 
@@ -67,6 +68,8 @@ void CCXDockWindowTree::initialize()
   myMaterialTree->initialize();   
   mySectionsTree = new SectionsTree(myModelTree);
   mySectionsTree->initialize();   
+  myConstraintsTree = new ConstraintsTree(myModelTree);
+  myConstraintsTree->initialize();   
 
   dock->setWidget(myModelTree);
       
@@ -103,6 +106,7 @@ void CCXDockWindowTree::clear()
     delete mySidesetTree;
     delete myMaterialTree;
     delete mySectionsTree;
+    delete myConstraintsTree;
     delete myModelTree;
     delete dock;
     isInitialized = false;  
@@ -121,6 +125,7 @@ void CCXDockWindowTree::update()
   mySidesetTree->update(); 
   myMaterialTree->update(); 
   mySectionsTree->update();
+  myConstraintsTree->update();
 }
 
 void CCXDockWindowTree::reset()
@@ -131,4 +136,5 @@ void CCXDockWindowTree::reset()
   mySidesetTree->clear(); 
   myMaterialTree->clear(); 
   mySectionsTree->clear();
+  myConstraintsTree->clear();
 }

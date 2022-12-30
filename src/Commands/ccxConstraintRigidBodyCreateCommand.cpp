@@ -1,23 +1,22 @@
-#include "ccxSectionShellCreateCommand.hpp"
+#include "ccxConstraintRigidBodyCreateCommand.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "CalculiXCoreInterface.hpp"
 
-ccxSectionShellCreateCommand::ccxSectionShellCreateCommand()
+ccxConstraintRigidBodyCreateCommand::ccxConstraintRigidBodyCreateCommand()
 {}
 
-ccxSectionShellCreateCommand::~ccxSectionShellCreateCommand()
+ccxConstraintRigidBodyCreateCommand::~ccxConstraintRigidBodyCreateCommand()
 {}
 
-std::vector<std::string> ccxSectionShellCreateCommand::get_syntax()
+std::vector<std::string> ccxConstraintRigidBodyCreateCommand::get_syntax()
 {
   std::vector<std::string> syntax_list;
 
-  
   for (size_t syn_i = 1; syn_i < 6; syn_i++)
   {
     std::string syntax = "ccx ";
-    syntax.append("create section shell block ");
+    syntax.append("create constraint rigid body block ");
     
     if (syn_i==1)
     {
@@ -46,10 +45,7 @@ std::vector<std::string> ccxSectionShellCreateCommand::get_syntax()
       syntax.append("<value:label='block id s2'>");
     }
     
-    syntax.append("material <string:type='unquoted', number='1', label='material', help='<material_name>'> ");
-    syntax.append("[orientation <string:type='unquoted', number='1', label='orientation', help='<orientation_name>'>] ");
-    syntax.append("[thickness <value:label='thickness',help='<thickness>'>]");
-    syntax.append("[offset <value:label='offset',help='<offset>'>]");
+    syntax.append("vertex <value:label='vertex',help='<vertex>'>");
   
     syntax_list.push_back(syntax);
   }
@@ -58,10 +54,10 @@ std::vector<std::string> ccxSectionShellCreateCommand::get_syntax()
   return syntax_list;
 }
 
-std::vector<std::string> ccxSectionShellCreateCommand::get_syntax_help()
+std::vector<std::string> ccxConstraintRigidBodyCreateCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx create section shell block <block id> material <material_name> [orientation <orientation_name>] [thickness <thickness>] [offset <offset>]";
+  help[0] = "ccx create constraint rigid body block <block id> vertex <vertex id>";
   help[1]=" ";
   help[2]=" ";
   help[3]=" ";
@@ -71,26 +67,23 @@ std::vector<std::string> ccxSectionShellCreateCommand::get_syntax_help()
   return help;
 }
 
-std::vector<std::string> ccxSectionShellCreateCommand::get_help()
+std::vector<std::string> ccxConstraintRigidBodyCreateCommand::get_help()
 {
   std::vector<std::string> help;
   return help;
 }
 
-bool ccxSectionShellCreateCommand::execute(CubitCommandData &data)
+bool ccxConstraintRigidBodyCreateCommand::execute(CubitCommandData &data)
 {
   
   CalculiXCoreInterface ccx_iface;
 
   std::string output;
 
-  std::string material_name;
-  std::string orientation;
   std::vector<std::string> options;
-  double thickness_value;
-  std::string thickness;
-  double offset_value;
-  std::string offset; 
+  int vertex_value;
+  std::string vertex;
+  std::string block;
   std::vector<int> block_ids;
   int block_id_s1;
   int block_id_s2;
@@ -98,32 +91,15 @@ bool ccxSectionShellCreateCommand::execute(CubitCommandData &data)
 
   std::string block_string = " ";
   
-  data.get_string("material", material_name);
-  if (!data.get_string("orientation", orientation))
+  if (!data.get_value("vertex", vertex_value))
   {
-    orientation = "";
-  }
-  if (!data.get_value("thickness", thickness_value))
-  {
-    thickness = "";
+    vertex = "";
   }
   else
   {
-    thickness = std::to_string(thickness_value);
+    vertex = std::to_string(vertex_value);
   }
-  if (!data.get_value("offset", offset_value))
-  {
-    offset = "";
-  }
-  else
-  {
-    offset = std::to_string(offset_value);
-  }
-
-  options.push_back(orientation);
-  options.push_back(thickness);
-  options.push_back(offset);
-
+  
   data.get_value("block id s1", block_id_s1);
   data.get_value("block id s2", block_id_s2);
 
@@ -173,11 +149,18 @@ bool ccxSectionShellCreateCommand::execute(CubitCommandData &data)
   }
   
   for (size_t i = 0; i < block_ids.size(); i++)
-  {    
-    if (!ccx_iface.create_section("SHELL",block_ids[i],material_name,options))
+  { 
+    options.push_back("2"); // entity type   
+    block = std::to_string(block_ids[i]);
+    options.push_back(block);
+    options.push_back(vertex);
+
+    if (!ccx_iface.create_constraint("RIGIDBODY",options))
     {
-      PRINT_ERROR("Failed!\n");
-    } 
+      output = "Failed with Block ID " + std::to_string(block_ids[i]) + "!\n";
+      PRINT_ERROR(output.c_str());
+    }
+    options.clear();
   }  
   return true;
 }

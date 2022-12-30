@@ -221,6 +221,14 @@ bool ccxSectionBeamCreateCommand::execute(CubitCommandData &data)
   if(!data.get_values("block id", block_ids))
   {   
     block_ids = CubitInterface::parse_cubit_list("block", block_string);
+  }else
+  {
+    block_string = "";
+    for (size_t i = 0; i < block_ids.size(); i++)
+    {
+      block_string.append(" " + std::to_string(block_ids[i]) + " ");
+    }
+    block_ids = CubitInterface::parse_cubit_list("block", block_string);
   }
 
   if (block_ids.size()==0)

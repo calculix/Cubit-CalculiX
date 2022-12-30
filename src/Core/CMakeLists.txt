@@ -13,4 +13,8 @@ set(CORE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/CoreMaterials.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreSections.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreSections.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreConstraints.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreConstraints.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreReferencePoints.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreReferencePoints.hpp
     PARENT_SCOPE)

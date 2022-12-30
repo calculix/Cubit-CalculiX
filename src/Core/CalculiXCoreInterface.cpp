@@ -48,6 +48,16 @@ std::string CalculiXCoreInterface::get_block_name(int block_id)
   return ccx_core.get_block_name(block_id);
 }
 
+std::string CalculiXCoreInterface::get_nodeset_name(int nodeset_id)
+{
+  return ccx_core.get_nodeset_name(nodeset_id);
+}
+
+std::string CalculiXCoreInterface::get_sideset_name(int sideset_id)
+{
+  return ccx_core.get_sideset_name(sideset_id);
+}
+
 bool CalculiXCoreInterface::core_update()
 {
   if (ccx_core.update())
@@ -88,6 +98,31 @@ bool CalculiXCoreInterface::delete_section(int section_id)
   return ccx_core.delete_section(section_id);
 }
 
+bool CalculiXCoreInterface::create_constraint(std::string constraint_type, std::vector<std::string> options)
+{
+  return ccx_core.create_constraint(constraint_type,options);
+}
+
+bool CalculiXCoreInterface::modify_constraint(std::string constraint_type,int constraint_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return ccx_core.modify_constraint(constraint_type,constraint_id,options, options_marker);
+}
+
+bool CalculiXCoreInterface::delete_constraint(int constraint_id)
+{
+  return ccx_core.delete_constraint(constraint_id);
+}
+
+std::vector<int> CalculiXCoreInterface::get_rigidbody_vertex_list()
+{
+  return ccx_core.get_rigidbody_vertex_list();
+}
+
+bool CalculiXCoreInterface::referencepoints_update_on_export()
+{
+  return ccx_core.referencepoints_update_on_export();
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_blocks_tree_data()
 { 
   return ccx_core.get_blocks_tree_data();
@@ -113,6 +148,11 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_sections_tree_d
   return ccx_core.get_sections_tree_data();
 }
 
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_constraints_tree_data()
+{ 
+  return ccx_core.get_constraints_tree_data();
+}
+
 std::string CalculiXCoreInterface::get_material_export_data() // gets the export data from materials core
 {
   return ccx_core.get_material_export_data();
@@ -121,4 +161,9 @@ std::string CalculiXCoreInterface::get_material_export_data() // gets the export
 std::string CalculiXCoreInterface::get_section_export_data() // gets the export data from sections core
 {
   return ccx_core.get_section_export_data();
+}
+
+std::string CalculiXCoreInterface::get_constraint_export_data() // gets the export data from constraints core
+{
+  return ccx_core.get_constraint_export_data();
 }

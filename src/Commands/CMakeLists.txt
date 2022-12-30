@@ -29,4 +29,16 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxSectionMembraneCreateCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxSectionMembraneModifyCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxSectionMembraneModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintRigidBodyCreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintRigidBodyCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintRigidBody2CreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintRigidBody2CreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintRigidBodyModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintRigidBodyModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintTieCreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintTieCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintTieModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintTieModifyCommand.hpp
     PARENT_SCOPE)

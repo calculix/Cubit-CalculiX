@@ -13,6 +13,12 @@
 #include "ccxSectionBeamModifyCommand.hpp"
 #include "ccxSectionMembraneCreateCommand.hpp"
 #include "ccxSectionMembraneModifyCommand.hpp"
+#include "ccxConstraintDeleteCommand.hpp"
+#include "ccxConstraintRigidBodyCreateCommand.hpp"
+#include "ccxConstraintRigidBody2CreateCommand.hpp"
+#include "ccxConstraintRigidBodyModifyCommand.hpp"
+#include "ccxConstraintTieCreateCommand.hpp"
+#include "ccxConstraintTieModifyCommand.hpp"
 
 //! This macro is required to identify this as a valid Cubit plugin. The plugin
 //! will NOT be loaded if this macro is not present.
@@ -41,6 +47,12 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxSectionBeamModifyCommand");
   keys.push_back("ccxSectionMembraneCreateCommand");
   keys.push_back("ccxSectionMembraneModifyCommand");
+  keys.push_back("ccxConstraintDeleteCommand");
+  keys.push_back("ccxConstraintRigidBodyCreateCommand");
+  keys.push_back("ccxConstraintRigidBody2CreateCommand");
+  keys.push_back("ccxConstraintRigidBodyModifyCommand");
+  keys.push_back("ccxConstraintTieCreateCommand");
+  keys.push_back("ccxConstraintTieModifyCommand");
 
   return keys;
 }
@@ -91,6 +103,24 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxSectionMembraneModifyCommand")
     return new ccxSectionMembraneModifyCommand();
+
+  else if(key == "ccxConstraintDeleteCommand")
+    return new ccxConstraintDeleteCommand();
+
+  else if(key == "ccxConstraintRigidBodyCreateCommand")
+    return new ccxConstraintRigidBodyCreateCommand();
+
+  else if(key == "ccxConstraintRigidBody2CreateCommand")
+    return new ccxConstraintRigidBody2CreateCommand();
+  
+  else if(key == "ccxConstraintRigidBodyModifyCommand")
+    return new ccxConstraintRigidBodyModifyCommand();
+
+  else if(key == "ccxConstraintTieCreateCommand")
+    return new ccxConstraintTieCreateCommand();
+
+  else if(key == "ccxConstraintTieModifyCommand")
+    return new ccxConstraintTieModifyCommand();
 
   return NULL;
 }

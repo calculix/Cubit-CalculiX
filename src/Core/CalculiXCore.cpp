@@ -10,6 +10,8 @@
 #include "CoreBlocks.hpp"
 #include "CoreMaterials.hpp"
 #include "CoreSections.hpp"
+#include "CoreConstraints.hpp"
+#include "CoreReferencePoints.hpp"
 
 
 CalculiXCore::CalculiXCore():
@@ -27,6 +29,10 @@ CalculiXCore::~CalculiXCore()
     delete mat;
   if(sections)
     delete sections;
+  if(constraints)
+    delete constraints;
+  if(referencepoints)
+    delete referencepoints;
 }
 
 bool CalculiXCore::print_to_log(std::string str_log)
@@ -60,6 +66,16 @@ bool CalculiXCore::init()
   
   sections->init();
 
+  if(!constraints)
+    constraints = new CoreConstraints;
+  
+  constraints->init();
+
+  if(!referencepoints)
+    referencepoints = new CoreReferencePoints;
+  
+  constraints->init();
+
   return true;
 }
 
@@ -77,8 +93,10 @@ bool CalculiXCore::update()
 bool CalculiXCore::reset()
 {
   cb->reset();
-  sections->reset();
   //mat->reset();
+  sections->reset();
+  constraints->reset();
+  referencepoints->reset();
   
   //print_to_log("RESET");
   //print_to_log(print_data());
@@ -91,6 +109,8 @@ std::string CalculiXCore::print_data()
   std::string str_return = "";
   str_return.append(cb->print_data());
   str_return.append(sections->print_data());
+  str_return.append(constraints->print_data());
+  str_return.append(referencepoints->print_data());
 
   return str_return;
 }
@@ -137,6 +157,46 @@ std::string CalculiXCore::get_block_name(int block_id)
   return block_name;
 }
 
+std::string CalculiXCore::get_nodeset_name(int nodeset_id)
+{
+  std::string nodeset_name;
+
+  NodesetHandle nodeset;
+  if (!me_iface->get_nodeset_handle(nodeset_id, nodeset))
+  {
+    nodeset_name = "NODESET " + std::to_string(nodeset_id) + " doesn't exist!";
+    return nodeset_name;
+  }
+  nodeset_name = me_iface->get_nodeset_name(nodeset);
+
+  // nodesetname or id
+  if (nodeset_name == "")
+  {
+    nodeset_name = "Nodeset_" + std::to_string(nodeset_id);
+  }
+  return nodeset_name;
+}
+
+std::string CalculiXCore::get_sideset_name(int sideset_id)
+{
+  std::string sideset_name;
+
+  SidesetHandle sideset;
+  if (!me_iface->get_sideset_handle(sideset_id, sideset))
+  {
+    sideset_name = "SIDESET " + std::to_string(sideset_id) + " doesn't exist!";
+    return sideset_name;
+  }
+  sideset_name = me_iface->get_sideset_name(sideset);
+
+  // sidesetname or id
+  if (sideset_name == "")
+  {
+    sideset_name = "Surface_" + std::to_string(sideset_id);
+  }
+  return sideset_name;
+}
+
 std::vector<int> CalculiXCore::get_blocks()
 { 
   std::vector<int> blocks;
@@ -161,6 +221,31 @@ bool CalculiXCore::modify_section(std::string section_type,int section_id, std::
 bool CalculiXCore::delete_section(int section_id)
 {
   return sections->delete_section(section_id);
+}
+
+bool CalculiXCore::create_constraint(std::string constraint_type, std::vector<std::string> options)
+{
+  return constraints->create_constraint(constraint_type, options);
+}
+
+bool CalculiXCore::modify_constraint(std::string constraint_type,int constraint_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return constraints->modify_constraint(constraint_type, constraint_id, options, options_marker);
+}
+
+bool CalculiXCore::delete_constraint(int constraint_id)
+{
+  return constraints->delete_constraint(constraint_id);
+}
+
+std::vector<int> CalculiXCore::get_rigidbody_vertex_list()
+{
+  return constraints->get_rigidbody_vertex_list();
+}
+
+bool CalculiXCore::referencepoints_update_on_export()
+{
+  return referencepoints->update_on_export();
 }
 
 std::vector<std::vector<std::string>> CalculiXCore::get_blocks_tree_data()
@@ -294,6 +379,11 @@ std::string CalculiXCore::get_section_export_data() // gets the export data from
   return sections->get_section_export();
 }
 
+std::string CalculiXCore::get_constraint_export_data() // gets the export data from constraints core
+{
+  return constraints->get_constraint_export();
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_sections_tree_data()
 { 
   std::vector<std::vector<std::string>> sections_tree_data;
@@ -340,6 +430,50 @@ std::vector<std::vector<std::string>> CalculiXCore::get_sections_tree_data()
   return sections_tree_data;
 }
 
+std::vector<std::vector<std::string>> CalculiXCore::get_constraints_tree_data()
+{ 
+  std::vector<std::vector<std::string>> constraints_tree_data;
+  
+  for (size_t i = 0; i < constraints->constraints_data.size(); i++)
+  {
+    std::vector<std::string> constraints_tree_data_set;
+    std::string constraint_name;
+    std::string entity_name;
+    std::string entity_id;
+    std::string vertex;
+
+    int sub_constraint_data_id;
+
+    if (constraints->constraints_data[i][1] == 1)
+    {
+      sub_constraint_data_id = constraints->get_rigidbody_constraint_data_id_from_rigidbody_constraint_id(constraints->constraints_data[i][2]);
+      entity_name = "";
+      if (constraints->rigidbody_constraint_data[sub_constraint_data_id][1]=="1")
+      {
+        entity_name = "Nodeset ";
+      } else if (constraints->rigidbody_constraint_data[sub_constraint_data_id][1]=="2")
+      {
+        entity_name = "Block ";
+      }
+      
+      entity_id = constraints->rigidbody_constraint_data[sub_constraint_data_id][2];
+      vertex = constraints->rigidbody_constraint_data[sub_constraint_data_id][3];
+      constraint_name = "Rigid Body ("+ entity_name + entity_id + "| Vertex " + vertex + ")";
+    } else if (constraints->constraints_data[i][1] == 2)
+    {
+      sub_constraint_data_id = constraints->get_tie_constraint_data_id_from_tie_constraint_id(constraints->constraints_data[i][2]);
+      
+      constraint_name = "TIE (" + constraints->tie_constraint_data[sub_constraint_data_id][1] + ")";
+    }
+    
+    constraints_tree_data_set.push_back(std::to_string(constraints->constraints_data[i][0])); //constraint_id
+    constraints_tree_data_set.push_back(constraint_name); //constraint_name
+    constraints_tree_data.push_back(constraints_tree_data_set);
+  }
+
+  return constraints_tree_data;
+}
+
 std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_string)
 {
   std::vector<int> input_ids;
@@ -361,6 +495,12 @@ std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_
       for (size_t i = 0; i < sections->sections_data.size(); i++)
       {
         all_ids.push_back(sections->sections_data[i][0]);
+      }
+    } else if (parse_type=="constraint")
+    {
+      for (size_t i = 0; i < constraints->constraints_data.size(); i++)
+      {
+        all_ids.push_back(constraints->constraints_data[i][0]);
       }
     }
   }

@@ -207,7 +207,7 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
   output_file << "** \n";
 
   // Write the nodes
-  result = write_nodes(output_file, iface);
+  result = write_nodes(output_file, iface, ccx_iface);
 
   // Write the elements/connectivity
   result = write_connectivity(output_file, iface, ccx_iface);
@@ -221,6 +221,7 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
   // Write the materials and sections
   result = write_materials(output_file, ccx_iface);
   result = write_sections(output_file, ccx_iface);
+  result = write_constraints(output_file, ccx_iface);
 
   return result;
 }
@@ -233,7 +234,7 @@ bool ccxExportCommand::close_file(std::ofstream& output_file)
 
 
 
-bool ccxExportCommand::write_nodes(std::ofstream& output_file,MeshExportInterface *iface)
+bool ccxExportCommand::write_nodes(std::ofstream& output_file,MeshExportInterface *iface, CalculiXCoreInterface ccx_iface)
 {
 
   // Fetch and output the coordinates
@@ -297,6 +298,10 @@ bool ccxExportCommand::write_nodes(std::ofstream& output_file,MeshExportInterfac
   start += number_found;
 
   output_file << "** \n";
+
+  // add needed nodes for reference points
+  ccx_iface.referencepoints_update_on_export();
+
   return true;
 }
 
@@ -415,12 +420,18 @@ bool ccxExportCommand::write_nodesets(std::ofstream& output_file,MeshExportInter
 
   // Get a batch of nodes from the nodeset
   int buf_size = 100;
+  std::string nodeset_name;
 
   // loop over the nodesets
   for (size_t i = 0; i < nodesets.size(); i++)
   {
     NodesetHandle nodeset = nodesets[i];
-    output_file << "*NSET, NSET=" << iface->get_nodeset_name(nodeset) << " \n";
+    nodeset_name = iface->get_nodeset_name(nodeset);
+    if (nodeset_name == "") {
+      nodeset_name = "Nodeset_" + std::to_string(iface->id_from_handle(nodeset));
+    }
+
+    output_file << "*NSET, NSET=" << nodeset_name << " \n";
 
     int num_nodes;
     int start_index = 0;
@@ -478,7 +489,7 @@ bool ccxExportCommand::write_sidesets(std::ofstream& output_file, MeshExportInte
     sideset_name = iface->get_sideset_name(sideset);
     // sidesetname or id
     if (sideset_name == "") {
-      sideset_name = "Block_" + std::to_string(i);
+      sideset_name = "Surface_" + std::to_string(iface->id_from_handle(sideset));
     }
 
     int num_elems;
@@ -557,7 +568,7 @@ bool ccxExportCommand::write_sidesets(std::ofstream& output_file, MeshExportInte
       bool_first=true;
     }
     // write surface card for sideset
-    output_file << "*SURFACE, NAME=";
+    //output_file << "*SURFACE, NAME=";
     for (int s = 1; s < 7; s++)
     {
       if (bool_first) {
@@ -591,5 +602,11 @@ bool ccxExportCommand::write_materials(std::ofstream& output_file, CalculiXCoreI
 bool ccxExportCommand::write_sections(std::ofstream& output_file, CalculiXCoreInterface ccx_iface)
 {
   output_file << ccx_iface.get_section_export_data();
+  return true;
+}
+
+bool ccxExportCommand::write_constraints(std::ofstream& output_file, CalculiXCoreInterface ccx_iface)
+{
+  output_file << ccx_iface.get_constraint_export_data();
   return true;
 }

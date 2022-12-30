@@ -14,6 +14,7 @@ public:
   // solid
   // shell
   // beam
+  // membrane
 
   std::vector<std::vector<int>> sections_data; // used to store the connection between a section id and section type id
   // sections_data[0][0] section_id
