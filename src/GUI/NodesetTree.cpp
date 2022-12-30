@@ -80,8 +80,11 @@ void NodesetTree::update()
 
 void NodesetTree::clear()
 {
- // Remove all of our tree items.
- // not implemented yet
+  // Remove all of our tree items.
+  while (this->childCount()>0)
+  {
+    this->removeChild(this->child(0));
+  }
 }
 
 void NodesetTree::addNodeset(QString nodeset_id, QString nodeset_name)
