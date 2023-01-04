@@ -258,6 +258,11 @@ std::string CalculiXCore::get_referencepoints_export()
   return referencepoints->get_referencepoints_export();
 }
 
+std::string CalculiXCore::get_referencepoints_export_nodesets()
+{
+  return referencepoints->get_referencepoints_export_nodesets();
+}
+
 int CalculiXCore::referencepoints_get_ref_from_vertex_id(int vertex_id)
 {
   return referencepoints->get_ref_from_vertex_id(vertex_id);

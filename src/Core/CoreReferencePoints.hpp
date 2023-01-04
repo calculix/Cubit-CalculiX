@@ -35,6 +35,7 @@ public:
   int  get_rot_from_vertex_id(int vertex_id); // get ref_node for the vertex_id  and returns -1 if it fails
   
   std::string get_referencepoints_export(); // get CalculiX referencepoints exports
+  std::string get_referencepoints_export_nodesets(); // get CalculiX referencepoints exports
   std::string print_data(); // prints out the referencepoints_data
 
   CalculiXCoreInterface *ccx_iface;

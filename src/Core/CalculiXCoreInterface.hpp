@@ -35,6 +35,7 @@ public:
   bool referencepoints_update_on_export(int max_node_id); // update reference points
   bool referencepoints_reset_on_export(); // reset reference points
   std::string get_referencepoints_export(); // export reference points
+  std::string get_referencepoints_export_nodesets(); // export reference points
   int  referencepoints_get_ref_from_vertex_id(int vertex_id); // get ref_node for the vertex_id  and returns -1 if it fails
   int  referencepoints_get_rot_from_vertex_id(int vertex_id); // get ref_node for the vertex_id  and returns -1 if it fails
   std::vector<std::vector<std::string>> get_blocks_tree_data(); // gets the data from core blocks to build the tree

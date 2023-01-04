@@ -216,7 +216,7 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
   result = write_connectivity(output_file, iface, ccx_iface);
 
   // Write the nodesets
-  result = write_nodesets(output_file, iface);
+  result = write_nodesets(output_file, iface, ccx_iface);
 
   // Write the sidesets
   result = write_sidesets(output_file, iface);
@@ -417,7 +417,7 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
 
 }
 
-bool ccxExportCommand::write_nodesets(std::ofstream& output_file,MeshExportInterface *iface)
+bool ccxExportCommand::write_nodesets(std::ofstream& output_file,MeshExportInterface *iface, CalculiXCoreInterface ccx_iface)
 {
 
   output_file << "********************************** N O D E S E T S ********************************** \n";
@@ -470,6 +470,8 @@ bool ccxExportCommand::write_nodesets(std::ofstream& output_file,MeshExportInter
     }
     output_file << std::endl;
   }
+
+  output_file << ccx_iface.get_referencepoints_export_nodesets();
 
   output_file << "** \n";
   return true;

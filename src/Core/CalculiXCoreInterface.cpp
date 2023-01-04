@@ -133,6 +133,11 @@ std::string CalculiXCoreInterface::get_referencepoints_export()
   return ccx_core.get_referencepoints_export();
 }
 
+std::string CalculiXCoreInterface::get_referencepoints_export_nodesets()
+{
+  return ccx_core.get_referencepoints_export_nodesets();
+}
+
 int CalculiXCoreInterface::referencepoints_get_ref_from_vertex_id(int vertex_id)
 {
   return ccx_core.referencepoints_get_ref_from_vertex_id(vertex_id);

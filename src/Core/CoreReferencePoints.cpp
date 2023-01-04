@@ -177,6 +177,24 @@ std::string CoreReferencePoints::get_referencepoints_export()
   return output;
 }
 
+
+std::string CoreReferencePoints::get_referencepoints_export_nodesets()
+{
+  std::string output;
+
+  output = "";
+  for (size_t i = 0; i < referencepoints_data.size(); i++)
+  { 
+    output.append("*NSET, NSET=REF_NODE_" + std::to_string(i) + "\n");
+    output.append(std::to_string(referencepoints_data[i][1]) + "\n");
+    output.append("*NSET, NSET=ROT_NODE_" + std::to_string(i) + "\n");
+    output.append(std::to_string(referencepoints_data[i][2]) + "\n");
+  }
+  
+  return output;
+}
+
+
 std::string CoreReferencePoints::print_data()
 {
   std::string str_return;
