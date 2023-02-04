@@ -7,6 +7,7 @@ class CoreMaterials;
 class CoreSections;
 class CoreConstraints;
 class CoreReferencePoints;
+class CoreSurfaceInteractions;
 
 class MeshExportInterface;
 class MaterialInterface;
@@ -60,6 +61,7 @@ public:
   CoreSections *sections;
   CoreConstraints *constraints;
   CoreReferencePoints *referencepoints;
+  CoreSurfaceInteractions *surfaceinteractions;
   MeshExportInterface *me_iface;
   MaterialInterface *mat_iface;
 };

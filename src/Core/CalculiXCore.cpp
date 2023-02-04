@@ -12,10 +12,11 @@
 #include "CoreSections.hpp"
 #include "CoreConstraints.hpp"
 #include "CoreReferencePoints.hpp"
+#include "CoreSurfaceInteractions.hpp"
 
 
 CalculiXCore::CalculiXCore():
-  cb(NULL),mat(NULL)
+  cb(NULL),mat(NULL),sections(NULL),constraints(NULL),referencepoints(NULL),surfaceinteractions(NULL)
 {
   print_to_log("CalculiXCore Initialization!");
   init();
@@ -33,6 +34,8 @@ CalculiXCore::~CalculiXCore()
     delete constraints;
   if(referencepoints)
     delete referencepoints;
+  if(surfaceinteractions)
+    delete surfaceinteractions;
 }
 
 bool CalculiXCore::print_to_log(std::string str_log)
@@ -74,7 +77,12 @@ bool CalculiXCore::init()
   if(!referencepoints)
     referencepoints = new CoreReferencePoints;
   
-  constraints->init();
+  referencepoints->init();
+
+  if(!surfaceinteractions)
+    surfaceinteractions = new CoreSurfaceInteractions;
+  
+  surfaceinteractions->init();
 
   return true;
 }
@@ -97,6 +105,7 @@ bool CalculiXCore::reset()
   sections->reset();
   constraints->reset();
   referencepoints->reset();
+  surfaceinteractions->reset();
   
   //print_to_log("RESET");
   //print_to_log(print_data());
@@ -111,6 +120,7 @@ std::string CalculiXCore::print_data()
   str_return.append(sections->print_data());
   str_return.append(constraints->print_data());
   str_return.append(referencepoints->print_data());
+  str_return.append(surfaceinteractions->print_data());
 
   return str_return;
 }
@@ -561,7 +571,6 @@ std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_
   
   return all_ids;
 }
-
 
 std::vector<int> CalculiXCore::extractIntegers(std::string str)
 {
