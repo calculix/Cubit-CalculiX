@@ -16,7 +16,7 @@ bool CoreReferencePoints::init()
     return false; // already initialized
   }else{
     CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-    
+    rot_max_node_id = 0;  
     is_initialized = true;  
     return true;
   }

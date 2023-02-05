@@ -94,7 +94,7 @@ public:
   int  get_linear_surfacebehavior_data_id_from_linear_surfacebehavior_id(int linear_surfacebehavior_id); // searches for the linear_surfacebehavior_id in the linear_surfacebehavior_data and returns the indices or -1 if it fails
   std::vector<int> get_tabular_surfacebehavior_data_ids_from_tabular_surfacebehavior_id(int tabular_surfacebehavior_id); // searches for the tabular_surfacebehavior_id in the tabular_surfacebehavior_data and returns the indices or -1 if it fails
   int  get_tied_surfacebehavior_data_id_from_tied_surfacebehavior_id(int tied_surfacebehavior_id); // searches for the tied_surfacebehavior_id in the tied_surfacebehavior_data and returns the indices or -1 if it fails
-  int  get_gap_conductance_data_id_from_gap_conductance_id(int gap_conductance_id); // searches for the gap_conductance_id in the gap_conductance_data and returns the indices or -1 if it fails
+  std::vector<int> get_gap_conductance_data_ids_from_gap_conductance_id(int gap_conductance_id); // searches for the gap_conductance_id in the gap_conductance_data and returns the indices or -1 if it fails
   int  get_gap_heat_generation_data_id_from_gap_heat_generation_id(int gap_heat_generation_id); // searches for the gap_heat_generation_id in the gap_heat_generation_data and returns the indices or -1 if it fails
   int  get_friction_data_id_from_friction_id(int friction_id); // searches for the friction_id in the friction_data and returns the indices or -1 if it fails
 
