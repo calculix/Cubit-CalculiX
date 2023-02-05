@@ -124,10 +124,13 @@ bool CoreSurfaceInteractions::create_surfaceinteraction(std::string surfacebehav
   return true;
 }
 
-bool CoreSurfaceInteractions::modify_constraint(std::string modify_type,int surfaceinteraction_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2)
+bool CoreSurfaceInteractions::modify_surfaceinteraction(std::string modify_type,int surfaceinteraction_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2)
 {
   int modify_type_value;
-  if (modify_type=="EXPONENTIAL")
+  if (modify_type=="NAME")
+  {
+    modify_type_value = 0;
+  }else if (modify_type=="EXPONENTIAL")
   {
     modify_type_value = 1;
   }else if (modify_type=="LINEAR")
@@ -153,33 +156,148 @@ bool CoreSurfaceInteractions::modify_constraint(std::string modify_type,int surf
     modify_type_value = 8;
   }
 
-  int sub_constraint_data_id;
-  int constraints_data_id = get_constraints_data_id_from_constraint_id(constraint_id);
+  int sub_data_id;
+  std::vector<int> sub_data_ids;
+  int surfaceinteractions_data_id = get_surfaceinteractions_data_id_from_surfaceinteraction_id(surfaceinteraction_id);
   
-  if (constraints_data_id == -1)
+  if (surfaceinteractions_data_id == -1)
   {
     return false;
   } else {
-    if ((constraints_data[constraints_data_id][1]==1) && (constraints_data[constraints_data_id][1]==constraint_type_value))
+    if (modify_type_value == 0) // modify name
     {
-      sub_constraint_data_id = get_rigidbody_constraint_data_id_from_rigidbody_constraint_id(constraints_data[constraints_data_id][2]);
-
       for (size_t i = 0; i < options.size(); i++)
       {
         if (options_marker[i]==1)
         {
-          rigidbody_constraint_data[sub_constraint_data_id][i+1] = options[i];
+          surfaceinteraction_name_data[surfaceinteractions_data[surfaceinteractions_data_id][1]] = options[i];
         }
       }
-    }else if ((constraints_data[constraints_data_id][1]==2) && (constraints_data[constraints_data_id][1]==constraint_type_value))
+    }else if ((surfaceinteractions_data[surfaceinteractions_data_id][2]==1) && (surfaceinteractions_data[surfaceinteractions_data_id][2]==modify_type_value))
     {
-      sub_constraint_data_id = get_tie_constraint_data_id_from_tie_constraint_id(constraints_data[constraints_data_id][2]);
+      sub_data_id = get_exponential_surfacebehavior_data_id_from_exponential_surfacebehavior_id(surfaceinteractions_data[surfaceinteractions_data_id][3]);
 
       for (size_t i = 0; i < options.size(); i++)
       {
         if (options_marker[i]==1)
         {
-          tie_constraint_data[sub_constraint_data_id][i+1] = options[i];
+          exponential_surfacebehavior_data[sub_data_id][i+1] = options[i];
+        }
+      }
+    }else if ((surfaceinteractions_data[surfaceinteractions_data_id][2]==2) && (surfaceinteractions_data[surfaceinteractions_data_id][2]==modify_type_value))
+    {
+      sub_data_id = get_linear_surfacebehavior_data_id_from_linear_surfacebehavior_id(surfaceinteractions_data[surfaceinteractions_data_id][3]);
+
+      for (size_t i = 0; i < options.size(); i++)
+      {
+        if (options_marker[i]==1)
+        {
+          linear_surfacebehavior_data[sub_data_id][i+1] = options[i];
+        }
+      }
+    }else if ((surfaceinteractions_data[surfaceinteractions_data_id][2]==3) && (surfaceinteractions_data[surfaceinteractions_data_id][2]==modify_type_value))
+    {
+      sub_data_ids = get_tabular_surfacebehavior_data_ids_from_tabular_surfacebehavior_id(surfaceinteractions_data[surfaceinteractions_data_id][3]);
+
+      if (options2.size()==sub_data_ids.size())
+      {
+        for (size_t i = 0; i < options2.size(); i++)
+        {
+          tabular_surfacebehavior_data[sub_data_ids[i]][0] = options2[i][0];
+          tabular_surfacebehavior_data[sub_data_ids[i]][1] = options2[i][1];
+          tabular_surfacebehavior_data[sub_data_ids[i]][2] = options2[i][2];
+        }
+      }else{
+        // first delete and then make a push back
+        // delete from back to begin so that we don't have to care about mismatching id's
+        for (size_t i = sub_data_ids.size()-1; i > -1; i--)
+        {
+          tabular_surfacebehavior_data.erase(sub_data_ids[i]);
+        }
+        for (size_t i = 0; i < options2.size(); i++)
+        {
+          add_tabular_surfacebehavior({options2[i][0],options2[i][1],options2[i][2]});
+        }
+      }
+    }else if ((surfaceinteractions_data[surfaceinteractions_data_id][2]==4) && (surfaceinteractions_data[surfaceinteractions_data_id][2]==modify_type_value))
+    {
+      sub_data_id = get_tied_surfacebehavior_data_id_from_tied_surfacebehavior_id(surfaceinteractions_data[surfaceinteractions_data_id][3]);
+
+      for (size_t i = 0; i < options.size(); i++)
+      {
+        if (options_marker[i]==1)
+        {
+          tied_surfacebehavior_data[sub_data_id][i+1] = options[i];
+        }
+      }
+    } // modify type 5 not needed to implement, right now...
+    else if (modify_type_value == 6) // gap conductance
+    {
+      // check if already set, if not create
+      sub_data_id = get_gap_conductance_data_id_from_gap_conductance_id(surfaceinteractions_data[surfaceinteractions_data_id][4]);
+      if (sub_data_id == -1)
+      { 
+        if (gap_conductance_data.size()!=0)
+        {
+          sub_data_id = 1;
+          surfaceinteractions_data[surfaceinteractions_data_id][4] = sub_data_id;
+        }else{
+          sub_data_id = gap_conductance_data[gap_conductance_data.size()-1][0] + 1
+        }
+        add_gap_conductance(sub_data_id, options[0], options[1], options[2]);
+      }else{
+        for (size_t i = 0; i < options.size(); i++)
+        {
+          if (options_marker[i]==1)
+          {
+            gap_conductance_data[sub_data_id][i+1] = options[i];
+          }
+        }
+      }
+    }else if (modify_type_value == 7) // gap_heat_generation
+    {
+      // check if already set, if not create
+      sub_data_id = get_gap_heat_generation_data_id_from_gap_heat_generation_id(surfaceinteractions_data[surfaceinteractions_data_id][5]);
+      if (sub_data_id == -1)
+      { 
+        if (gap_heat_generation_data.size()!=0)
+        {
+          sub_data_id = 1;
+          surfaceinteractions_data[surfaceinteractions_data_id][5] = sub_data_id;
+        }else{
+          sub_data_id = gap_heat_generation_data[gap_heat_generation_data.size()-1][0] + 1
+        }
+        add_gap_heat_generation(sub_data_id, options[0], options[1], options[2]);
+      }else{
+        for (size_t i = 0; i < options.size(); i++)
+        {
+          if (options_marker[i]==1)
+          {
+            gap_heat_generation_data[sub_data_id][i+1] = options[i];
+          }
+        }
+      }
+    }else if (modify_type_value == 8) // friction
+    {
+      // check if already set, if not create
+      sub_data_id = get_friction_data_id_from_friction_id(surfaceinteractions_data[surfaceinteractions_data_id][6]);
+      if (sub_data_id == -1)
+      { 
+        if (friction_data.size()!=0)
+        {
+          sub_data_id = 1;
+          surfaceinteractions_data[surfaceinteractions_data_id][6] = sub_data_id;
+        }else{
+          sub_data_id = gap_heat_generation_data[gap_heat_generation_data.size()-1][0] + 1
+        }
+        add_friction(sub_data_id, options[0], options[1]);
+      }else{
+        for (size_t i = 0; i < options.size(); i++)
+        {
+          if (options_marker[i]==1)
+          {
+            friction_data[sub_data_id][i+1] = options[i];
+          }
         }
       }
     }
@@ -187,54 +305,137 @@ bool CoreSurfaceInteractions::modify_constraint(std::string modify_type,int surf
   }
 }
 
-bool CoreSurfaceInteractions::add_constraint(int constraint_id, int constraint_type, int constraint_type_id)
+bool CoreSurfaceInteractions::delete_surfaceinteraction(int surfaceinteraction_id)
 {
-  std::vector<int> v = {constraint_id, constraint_type, constraint_type_id};
+  int sub_data_id;
+  std::vector<int> sub_data_ids;
+  int surfaceinteractions_data_id = get_surfaceinteractions_data_id_from_surfaceinteraction_id(surfaceinteraction_id);
+  if (surfaceinteractions_data_id == -1)
+  {
+    return false;
+  } else {
+    // surface name
+    surfaceinteraction_name_data.erase(surfaceinteractions_data[surfaceinteraction_id][1]);
+    // surface behavior
+    if (surfaceinteractions_data[surfaceinteractions_data_id][2]==1)
+    {
+      sub_data_id = get_exponential_surfacebehavior_data_id_from_exponential_surfacebehavior_id(surfaceinteractions_data[surfaceinteractions_data_id][3]);
+      exponential_surfacebehavior_data.erase(exponential_surfacebehavior_data.begin() + sub_data_id);  
+    }else if (surfaceinteractions_data[surfaceinteractions_data_id][2]==2)
+    {
+      sub_data_id = get_linear_surfacebehavior_data_id_from_linear_surfacebehavior_id(surfaceinteractions_data[surfaceinteractions_data_id][3]);
+      linear_surfacebehavior_data.erase(linear_surfacebehavior_data.begin() + sub_data_id);  
+    }else if (surfaceinteractions_data[surfaceinteractions_data_id][2]==3)
+    {
+      sub_data_ids = get_tabular_surfacebehavior_data_ids_from_tabular_surfacebehavior_id(surfaceinteractions_data[surfaceinteractions_data_id][3]);
+      for (size_t i = sub_data_ids.size()-1; i > -1; i--)
+      {
+        tabular_surfacebehavior_data.erase(sub_data_ids[i]);
+      } 
+    }else if (surfaceinteractions_data[surfaceinteractions_data_id][2]==4)
+    {
+      sub_data_id = get_tied_surfacebehavior_data_id_from_tied_surfacebehavior_id(surfaceinteractions_data[surfaceinteractions_data_id][3]);
+      tied_surfacebehavior_data.erase(tied_surfacebehavior_data.begin() + sub_data_id);  
+    } 
+    // skip HARD
+    // gap conductance
+    if (surfaceinteractions_data[surfaceinteractions_data_id][4]!=-1)
+    {
+      sub_data_id = get_gap_conductance_data_id_from_gap_conductance_id(surfaceinteractions_data[surfaceinteractions_data_id][4]);
+      gap_conductance_data.erase(gap_conductance_data.begin() + sub_data_id);  
+    }
+    // gap heat generation
+    if (surfaceinteractions_data[surfaceinteractions_data_id][5]!=-1)
+    {
+      sub_data_id = get_gap_heat_generation_data_id_from_gap_heat_generation_id(surfaceinteractions_data[surfaceinteractions_data_id][5]);
+      gap_heat_generation_data.erase(gap_heat_generation_data.begin() + sub_data_id);  
+    }
+    // friction
+    if (surfaceinteractions_data[surfaceinteractions_data_id][6]!=-1)
+    {
+      sub_data_id = get_friction_data_id_from_friction_id(surfaceinteractions_data[surfaceinteractions_data_id][6]);
+      friction_data.erase(friction_data.begin() + sub_data_id);  
+    }
+
+    surfaceinteractions_data.erase(surfaceinteractions_data.begin() + surfaceinteractions_data_id);
+    return true;
+  }
+}
+
+bool CoreSurfaceInteractions::add_surfaceinteraction(int surfaceinteraction_id, std::string surfaceinteraction_name, int surfacebehavior_type, int surfacebehavior_type_id, int gap_conductance_id, int gap_heat_generation_id, int friction_id)
+{
+  surfaceinteraction_name_data.push_back(surfaceinteraction_name);
+
+  std::vector<int> v = {surfaceinteraction_id,surfaceinteraction_name_data[surfaceinteraction_name_data.size()-1],surfacebehavior_type,surfacebehavior_type_id,gap_conductance_id,gap_heat_generation_id,friction_id};
       
-  constraints_data.push_back(v);
+  surfaceinteractions_data.push_back(v);
 
   return true;
 }
 
-bool CoreSurfaceInteractions::add_rigidbody_constraint(std::string rigid_body_constraint_id, std::string entity_type, std::string type_id,std::string vertex)
+bool CoreSurfaceInteractions::add_exponential_surfacebehavior(std::string exponential_surfacebehavior_id, std::string constant_1, std::string constant_2)
 {
-  std::vector<std::string> v = {rigid_body_constraint_id,entity_type,type_id,vertex};
+  std::vector<std::string> v = {exponential_surfacebehavior_id, constant_1, constant_2};
       
-  rigidbody_constraint_data.push_back(v);
+  exponential_surfacebehavior_data.push_back(v);
   
   return true;
 }
 
-bool CoreSurfaceInteractions::add_tie_constraint(std::string tie_constraint_id, std::string name, std::string master,std::string slave,std::string position_tolerance)
+bool CoreSurfaceInteractions::add_linear_surfacebehavior(std::string linear_surfacebehavior_id, std::string constant_1, std::string constant_2, std::string constant_3)
 {
-  std::vector<std::string> v = {tie_constraint_id,name,master,slave,position_tolerance};
+  std::vector<std::string> v = {linear_surfacebehavior_id, constant_1, constant_2, constant_3};
       
-  tie_constraint_data.push_back(v);
-
+  linear_surfacebehavior_data.push_back(v);
+  
   return true;
 }
 
-bool CoreSurfaceInteractions::delete_constraint(int constraint_id)
+bool CoreSurfaceInteractions::add_tabular_surfacebehavior(std::string tabular_surfacebehavior_id, std::string constant_1, std::string constant_2)
 {
-  int sub_constraint_data_id;
-  int constraints_data_id = get_constraints_data_id_from_constraint_id(constraint_id);
-  if (constraints_data_id == -1)
-  {
-    return false;
-  } else {
-    if (constraints_data[constraints_data_id][1]==1)
-    {
-      sub_constraint_data_id = get_rigidbody_constraint_data_id_from_rigidbody_constraint_id(constraints_data[constraints_data_id][2]);
-      rigidbody_constraint_data.erase(rigidbody_constraint_data.begin() + sub_constraint_data_id);  
-    }else if (constraints_data[constraints_data_id][1]==2)
-    {
-      sub_constraint_data_id = get_tie_constraint_data_id_from_tie_constraint_id(constraints_data[constraints_data_id][2]);
-      tie_constraint_data.erase(tie_constraint_data.begin() + sub_constraint_data_id);  
-    }
-    constraints_data.erase(constraints_data.begin() + constraints_data_id);
-    return true;
-  }
+  std::vector<std::string> v = {tabular_surfacebehavior_id, constant_1, constant_2};
+      
+  tabular_surfacebehavior_data.push_back(v);
+  
+  return true;
 }
+
+bool CoreSurfaceInteractions::add_tied_surfacebehavior(std::string tied_surfacebehavior_id, std::string constant_1)
+{
+  std::vector<std::string> v = {tied_surfacebehavior_id, constant_1};
+      
+  tied_surfacebehavior_data.push_back(v);
+  
+  return true;
+}
+
+bool CoreSurfaceInteractions::add_gap_conductance(std::string gap_conductance_id, std::string constant_1, std::string constant_2, std::string constant_3)
+{
+  std::vector<std::string> v = {gap_conductance_id, constant_1, constant_2, constant_3};
+      
+  gap_conductance_data.push_back(v);
+  
+  return true;
+}
+
+bool CoreSurfaceInteractions::add_gap_heat_generation(std::string gap_heat_generation_id, std::string constant_1, std::string constant_2, std::string constant_3)
+{
+  std::vector<std::string> v = {gap_heat_generation_id, constant_1, constant_2, constant_3};
+      
+  gap_heat_generation_data.push_back(v);
+  
+  return true;
+}
+
+bool CoreSurfaceInteractions::add_friction(std::string friction_id, std::string constant_1, std::string constant_2)
+{
+  std::vector<std::string> v = {gap_conductance_id, constant_1, constant_2};
+      
+  friction_data.push_back(v);
+  
+  return true;
+}
+
 
 int CoreSurfaceInteractions::get_constraints_data_id_from_constraint_id(int constraint_id)
 { 

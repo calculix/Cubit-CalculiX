@@ -25,9 +25,9 @@ public:
   // surfaceinteractions_data[0][1] surfaceinteraction_name_id
   // surfaceinteractions_data[0][2] surfacebehavior_type
   // surfaceinteractions_data[0][3] surfacebehavior_type_id
-  // surfaceinteractions_data[0][3] gap_conductance_id
-  // surfaceinteractions_data[0][3] gap_heat_generation_id
-  // surfaceinteractions_data[0][3] friction_id
+  // surfaceinteractions_data[0][4] gap_conductance_id
+  // surfaceinteractions_data[0][5] gap_heat_generation_id
+  // surfaceinteractions_data[0][6] friction_id
 
 
   std::vector<std::string> surfaceinteraction_name_data; // name
