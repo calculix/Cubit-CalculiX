@@ -476,13 +476,13 @@ int CoreSurfaceInteractions::get_tie_constraint_data_id_from_tie_constraint_id(i
   return return_int;
 }
 
-std::string CoreSurfaceInteractions::get_constraint_export() // get a list of the CalculiX constraint exports
+std::string CoreSurfaceInteractions::get_surfaceinteractions_export() // get a list of the CalculiX surfaceinteractions exports
 {
   std::vector<std::string> constraints_export_list;
   constraints_export_list.push_back("********************************** C O N S T R A I N T S ****************************");
   std::string str_temp;
   int sub_constraint_data_id;
-
+  /*
   //loop over all constraints
   for (size_t i = 0; i < constraints_data.size(); i++)
   { 
@@ -533,7 +533,7 @@ std::string CoreSurfaceInteractions::get_constraint_export() // get a list of th
       constraints_export_list.push_back(str_temp);
     }
   }
-
+  */
   std::string constraint_export;
 
   for (size_t i = 0; i < constraints_export_list.size(); i++)
@@ -542,17 +542,6 @@ std::string CoreSurfaceInteractions::get_constraint_export() // get a list of th
   }
   
   return constraint_export;
-}
-
-std::vector<int> CoreSurfaceInteractions::get_rigidbody_vertex_list()
-{
-  std::vector<int> vertices;
-  for (size_t i = 0; i < rigidbody_constraint_data.size(); i++)
-  {
-    vertices.push_back(std::stoi(rigidbody_constraint_data[i][3]));
-  }
-  
-  return vertices;
 }
 
 
