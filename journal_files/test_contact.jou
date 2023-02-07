@@ -1,0 +1,16 @@
+#reset
+ccx create surfaceinteraction name test1_1 exponential c0 1.0 p0 2.0
+ccx create surfaceinteraction name test1_2 exponential c0 1.0 p0 2.0
+ccx create surfaceinteraction name test1_3 exponential c0 1.0 p0 2.0
+ccx create surfaceinteraction name test2_1 linear slopeK 1 sigmaINF 2 c0 3
+ccx create surfaceinteraction name test2_2 linear slopeK 1 sigmaINF 2 c0 3
+ccx create surfaceinteraction name test2_3 linear slopeK 1 sigmaINF 2 c0 3
+ccx create surfaceinteraction name test4_1 tied slopeK 1
+ccx create surfaceinteraction name test4_2 tied slopeK 2
+ccx create surfaceinteraction name test4_3 tied slopeK 3
+ccx create surfaceinteraction name test5_1 hard
+ccx create surfaceinteraction name test5_2 hard
+ccx create surfaceinteraction name test5_3 hard
+ccx create surfaceinteraction name test3_1 tabular pressure_overclosure 0 1 2 3 4 5 6 7
+ccx create surfaceinteraction name test3_2 tabular pressure_overclosure 0 1 2 3 4 5 6 7 8 9
+ccx create surfaceinteraction name test3_3 tabular pressure_overclosure 0 1 2 3 4 5 6 7 8 9 10 11 12 13
