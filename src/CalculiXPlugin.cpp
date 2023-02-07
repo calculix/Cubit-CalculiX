@@ -19,6 +19,11 @@
 #include "ccxConstraintRigidBodyModifyCommand.hpp"
 #include "ccxConstraintTieCreateCommand.hpp"
 #include "ccxConstraintTieModifyCommand.hpp"
+#include "ccxSurfaceInteractionExponentialCreateCommand.hpp"
+#include "ccxSurfaceInteractionLinearCreateCommand.hpp"
+#include "ccxSurfaceInteractionTabularCreateCommand.hpp"
+#include "ccxSurfaceInteractionTiedCreateCommand.hpp"
+#include "ccxSurfaceInteractionHardCreateCommand.hpp"
 
 //! This macro is required to identify this as a valid Cubit plugin. The plugin
 //! will NOT be loaded if this macro is not present.
@@ -53,6 +58,11 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxConstraintRigidBodyModifyCommand");
   keys.push_back("ccxConstraintTieCreateCommand");
   keys.push_back("ccxConstraintTieModifyCommand");
+  keys.push_back("ccxSurfaceInteractionExponentialCreateCommand");
+  keys.push_back("ccxSurfaceInteractionLinearCreateCommand");
+  keys.push_back("ccxSurfaceInteractionTabularCreateCommand");
+  keys.push_back("ccxSurfaceInteractionTiedCreateCommand");
+  keys.push_back("ccxSurfaceInteractionHardCreateCommand");
 
   return keys;
 }
@@ -121,6 +131,21 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxConstraintTieModifyCommand")
     return new ccxConstraintTieModifyCommand();
+
+  else if(key == "ccxSurfaceInteractionExponentialCreateCommand")
+    return new ccxSurfaceInteractionExponentialCreateCommand();
+
+  else if(key == "ccxSurfaceInteractionLinearCreateCommand")
+    return new ccxSurfaceInteractionLinearCreateCommand();
+  
+  else if(key == "ccxSurfaceInteractionTabularCreateCommand")
+    return new ccxSurfaceInteractionTabularCreateCommand();
+
+  else if(key == "ccxSurfaceInteractionTiedCreateCommand")
+    return new ccxSurfaceInteractionTiedCreateCommand();
+
+  else if(key == "ccxSurfaceInteractionHardCreateCommand")
+    return new ccxSurfaceInteractionHardCreateCommand();
 
   return NULL;
 }

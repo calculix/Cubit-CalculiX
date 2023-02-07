@@ -283,6 +283,11 @@ int CalculiXCore::referencepoints_get_rot_from_vertex_id(int vertex_id)
   return referencepoints->get_rot_from_vertex_id(vertex_id);
 }
 
+bool CalculiXCore::create_surfaceinteraction(std::string surfacebehavior_type, std::vector<std::string> options, std::vector<std::vector<std::string>> options2)
+{
+  return surfaceinteractions->create_surfaceinteraction(surfacebehavior_type, options, options2);
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_blocks_tree_data()
 { 
   std::vector<std::vector<std::string>> blocks_tree_data;

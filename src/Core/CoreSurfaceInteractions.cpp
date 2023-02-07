@@ -133,6 +133,7 @@ bool CoreSurfaceInteractions::create_surfaceinteraction(std::string surfacebehav
 
   //this->add_surfaceinteraction(surfaceinteraction_id,surfaceinteraction_name,surfacebehavior_type,surfacebehavior_type_id,gap_conductance_id,gap_heat_generation_id,friction_id);
   this->add_surfaceinteraction(surfaceinteraction_id,options[0],surfacebehavior_type_value,sub_surfacebehavior_id,-1,-1,-1);
+  
   return true;
 }
 
