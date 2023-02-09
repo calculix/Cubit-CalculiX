@@ -51,4 +51,14 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionTiedCreateCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionHardCreateCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionHardCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionNameModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionNameModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionExponentialModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionExponentialModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionLinearModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionLinearModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionTabularModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionTabularModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionTiedModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionTiedModifyCommand.hpp
     PARENT_SCOPE)

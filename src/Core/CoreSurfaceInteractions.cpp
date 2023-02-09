@@ -90,9 +90,10 @@ bool CoreSurfaceInteractions::create_surfaceinteraction(std::string surfacebehav
     {
       for (size_t i = 0; i < tabular_surfacebehavior_data.size(); i++)
       {
-        if (sub_surfacebehavior_id < std::stoi(tabular_surfacebehavior_data[i][0]))
+        sub_surfacebehavior_last = std::stoi(tabular_surfacebehavior_data[i][0]);
+        if (sub_surfacebehavior_id < sub_surfacebehavior_last)
         {
-          sub_surfacebehavior_id = std::stoi(tabular_surfacebehavior_data[i][0]);
+          sub_surfacebehavior_id = sub_surfacebehavior_last;
         }
       }
       sub_surfacebehavior_id = sub_surfacebehavior_id + 1;
@@ -104,14 +105,15 @@ bool CoreSurfaceInteractions::create_surfaceinteraction(std::string surfacebehav
     }
   } else if (surfacebehavior_type=="TIED")
   {
-    if (tabular_surfacebehavior_data.size()==0)
+    if (tied_surfacebehavior_data.size()==0)
     {
       sub_surfacebehavior_id = 1;
     }
     else
     {
       sub_surfacebehavior_last = tied_surfacebehavior_data.size() - 1;
-      sub_surfacebehavior_id = std::stoi(tied_surfacebehavior_data[sub_surfacebehavior_last][0]) + 1;
+      sub_surfacebehavior_id = std::stoi(tied_surfacebehavior_data[sub_surfacebehavior_last][0]);
+      sub_surfacebehavior_id = sub_surfacebehavior_id + 1;
     }
     surfacebehavior_type_value = 4;
     this->add_tied_surfacebehavior(std::to_string(sub_surfacebehavior_id), options[1]);
@@ -186,6 +188,7 @@ bool CoreSurfaceInteractions::modify_surfaceinteraction(std::string modify_type,
           surfaceinteraction_name_data[surfaceinteractions_data[surfaceinteractions_data_id][1]] = options[i];
         }
       }
+      return true;
     }else if ((surfaceinteractions_data[surfaceinteractions_data_id][2]==1) && (surfaceinteractions_data[surfaceinteractions_data_id][2]==modify_type_value))
     {
       sub_data_id = get_exponential_surfacebehavior_data_id_from_exponential_surfacebehavior_id(surfaceinteractions_data[surfaceinteractions_data_id][3]);
@@ -197,6 +200,7 @@ bool CoreSurfaceInteractions::modify_surfaceinteraction(std::string modify_type,
           exponential_surfacebehavior_data[sub_data_id][i+1] = options[i];
         }
       }
+      return true;
     }else if ((surfaceinteractions_data[surfaceinteractions_data_id][2]==2) && (surfaceinteractions_data[surfaceinteractions_data_id][2]==modify_type_value))
     {
       sub_data_id = get_linear_surfacebehavior_data_id_from_linear_surfacebehavior_id(surfaceinteractions_data[surfaceinteractions_data_id][3]);
@@ -208,6 +212,7 @@ bool CoreSurfaceInteractions::modify_surfaceinteraction(std::string modify_type,
           linear_surfacebehavior_data[sub_data_id][i+1] = options[i];
         }
       }
+      return true;
     }else if ((surfaceinteractions_data[surfaceinteractions_data_id][2]==3) && (surfaceinteractions_data[surfaceinteractions_data_id][2]==modify_type_value))
     {
       sub_data_ids = get_tabular_surfacebehavior_data_ids_from_tabular_surfacebehavior_id(surfaceinteractions_data[surfaceinteractions_data_id][3]);
@@ -216,22 +221,24 @@ bool CoreSurfaceInteractions::modify_surfaceinteraction(std::string modify_type,
       {
         for (size_t i = 0; i < options2.size(); i++)
         {
-          tabular_surfacebehavior_data[sub_data_ids[i]][0] = options2[i][0];
-          tabular_surfacebehavior_data[sub_data_ids[i]][1] = options2[i][1];
-          tabular_surfacebehavior_data[sub_data_ids[i]][2] = options2[i][2];
+          tabular_surfacebehavior_data[sub_data_ids[i]][0] = std::to_string(surfaceinteractions_data[surfaceinteractions_data_id][3]);
+          tabular_surfacebehavior_data[sub_data_ids[i]][1] = options2[i][0];
+          tabular_surfacebehavior_data[sub_data_ids[i]][2] = options2[i][1];
         }
       }else{
         // first delete and then make a push back
         // delete from back to begin so that we don't have to care about mismatching id's
-        for (size_t i = sub_data_ids.size()-1; i > -1; i--)
+        for (size_t i = sub_data_ids.size(); i > 0; i--)
         {
-          tabular_surfacebehavior_data.erase(tabular_surfacebehavior_data.begin() + sub_data_ids[i]);
+          tabular_surfacebehavior_data.erase(tabular_surfacebehavior_data.begin() + sub_data_ids[i-1]);
         }
+        
         for (size_t i = 0; i < options2.size(); i++)
         {
-          add_tabular_surfacebehavior(options2[i][0],options2[i][1],options2[i][2]);
+          add_tabular_surfacebehavior(std::to_string(surfaceinteractions_data[surfaceinteractions_data_id][3]),options2[i][0],options2[i][1]);
         }
       }
+      return true;
     }else if ((surfaceinteractions_data[surfaceinteractions_data_id][2]==4) && (surfaceinteractions_data[surfaceinteractions_data_id][2]==modify_type_value))
     {
       sub_data_id = get_tied_surfacebehavior_data_id_from_tied_surfacebehavior_id(surfaceinteractions_data[surfaceinteractions_data_id][3]);
@@ -243,6 +250,7 @@ bool CoreSurfaceInteractions::modify_surfaceinteraction(std::string modify_type,
           tied_surfacebehavior_data[sub_data_id][i+1] = options[i];
         }
       }
+      return true;
     } // modify type 5 not needed to implement, right now...
     else if (modify_type_value == 6) // gap conductance
     {
@@ -273,25 +281,25 @@ bool CoreSurfaceInteractions::modify_surfaceinteraction(std::string modify_type,
         {
           for (size_t i = 0; i < options2.size(); i++)
           {
-            gap_conductance_data[sub_data_ids[i]][0] = options2[i][0];
-            gap_conductance_data[sub_data_ids[i]][1] = options2[i][1];
-            gap_conductance_data[sub_data_ids[i]][2] = options2[i][2];
-            gap_conductance_data[sub_data_ids[i]][3] = options2[i][3];
+            gap_conductance_data[sub_data_ids[i]][0] = std::to_string(surfaceinteractions_data[surfaceinteractions_data_id][5]);
+            gap_conductance_data[sub_data_ids[i]][1] = options2[i][0];
+            gap_conductance_data[sub_data_ids[i]][2] = options2[i][1];
+            gap_conductance_data[sub_data_ids[i]][3] = options2[i][2];
           }
         }else{
           // first delete and then make a push back
           // delete from back to begin so that we don't have to care about mismatching id's
-          for (size_t i = sub_data_ids.size()-1; i > -1; i--)
+          for (size_t i = sub_data_ids.size(); i > 0; i--)
           {
-            gap_conductance_data.erase(gap_conductance_data.begin() + sub_data_ids[i]);
+            gap_conductance_data.erase(gap_conductance_data.begin() + sub_data_ids[i-1]);
           }
           for (size_t i = 0; i < options2.size(); i++)
           {
-            add_gap_conductance(options2[i][0],options2[i][1],options2[i][2],options2[i][3]);
+            add_gap_conductance(std::to_string(surfaceinteractions_data[surfaceinteractions_data_id][5]),options2[i][0],options2[i][1],options2[i][2]);
           }
         }
       }
-
+      return true;
     }else if (modify_type_value == 7) // gap_heat_generation
     {
       // check if already set, if not create
@@ -315,6 +323,7 @@ bool CoreSurfaceInteractions::modify_surfaceinteraction(std::string modify_type,
           }
         }
       }
+      return true;
     }else if (modify_type_value == 8) // friction
     {
       // check if already set, if not create
@@ -338,8 +347,9 @@ bool CoreSurfaceInteractions::modify_surfaceinteraction(std::string modify_type,
           }
         }
       }
+      return true;
     }
-    return true;
+    return false;
   }
 }
 

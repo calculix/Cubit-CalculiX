@@ -24,6 +24,11 @@
 #include "ccxSurfaceInteractionTabularCreateCommand.hpp"
 #include "ccxSurfaceInteractionTiedCreateCommand.hpp"
 #include "ccxSurfaceInteractionHardCreateCommand.hpp"
+#include "ccxSurfaceInteractionNameModifyCommand.hpp"
+#include "ccxSurfaceInteractionExponentialModifyCommand.hpp"
+#include "ccxSurfaceInteractionLinearModifyCommand.hpp"
+#include "ccxSurfaceInteractionTabularModifyCommand.hpp"
+#include "ccxSurfaceInteractionTiedModifyCommand.hpp"
 
 //! This macro is required to identify this as a valid Cubit plugin. The plugin
 //! will NOT be loaded if this macro is not present.
@@ -63,6 +68,11 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxSurfaceInteractionTabularCreateCommand");
   keys.push_back("ccxSurfaceInteractionTiedCreateCommand");
   keys.push_back("ccxSurfaceInteractionHardCreateCommand");
+  keys.push_back("ccxSurfaceInteractionNameModifyCommand");
+  keys.push_back("ccxSurfaceInteractionExponentialModifyCommand");
+  keys.push_back("ccxSurfaceInteractionLinearModifyCommand");
+  keys.push_back("ccxSurfaceInteractionTabularModifyCommand");
+  keys.push_back("ccxSurfaceInteractionTiedModifyCommand");
 
   return keys;
 }
@@ -146,6 +156,21 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxSurfaceInteractionHardCreateCommand")
     return new ccxSurfaceInteractionHardCreateCommand();
+
+  else if(key == "ccxSurfaceInteractionNameModifyCommand")
+    return new ccxSurfaceInteractionNameModifyCommand();
+
+  else if(key == "ccxSurfaceInteractionExponentialModifyCommand")
+    return new ccxSurfaceInteractionExponentialModifyCommand();
+
+  else if(key == "ccxSurfaceInteractionLinearModifyCommand")
+    return new ccxSurfaceInteractionLinearModifyCommand();
+
+  else if(key == "ccxSurfaceInteractionTabularModifyCommand")
+    return new ccxSurfaceInteractionTabularModifyCommand();
+
+  else if(key == "ccxSurfaceInteractionTiedModifyCommand")
+    return new ccxSurfaceInteractionTiedModifyCommand();
 
   return NULL;
 }

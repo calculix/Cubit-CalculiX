@@ -152,6 +152,12 @@ bool CalculiXCoreInterface::create_surfaceinteraction(std::string surfacebehavio
   return ccx_core.create_surfaceinteraction(surfacebehavior_type,options,options2);
 }
 
+bool CalculiXCoreInterface::modify_surfaceinteraction(std::string modify_type, int surfaceinteraction_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2)
+{
+  return ccx_core.modify_surfaceinteraction(modify_type,surfaceinteraction_id,options,options_marker,options2);
+}
+
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_blocks_tree_data()
 { 
   return ccx_core.get_blocks_tree_data();

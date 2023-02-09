@@ -1,21 +1,20 @@
-#include "ccxSurfaceInteractionTabularCreateCommand.hpp"
+#include "ccxSurfaceInteractionTabularModifyCommand.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "CalculiXCoreInterface.hpp"
 
-ccxSurfaceInteractionTabularCreateCommand::ccxSurfaceInteractionTabularCreateCommand()
+ccxSurfaceInteractionTabularModifyCommand::ccxSurfaceInteractionTabularModifyCommand()
 {}
 
-ccxSurfaceInteractionTabularCreateCommand::~ccxSurfaceInteractionTabularCreateCommand()
+ccxSurfaceInteractionTabularModifyCommand::~ccxSurfaceInteractionTabularModifyCommand()
 {}
 
-std::vector<std::string> ccxSurfaceInteractionTabularCreateCommand::get_syntax()
+std::vector<std::string> ccxSurfaceInteractionTabularModifyCommand::get_syntax()
 {
   std::vector<std::string> syntax_list;
   
   std::string syntax = "ccx ";
-  syntax.append("create surfaceinteraction ");
-  syntax.append("name <string:type='unquoted', number='1', label='name', help='<name>'> " );
+  syntax.append("modify surfaceinteraction <value:label='surfaceinteraction id',help='<surfaceinteraction id>'>");
   syntax.append("tabular " );
   syntax.append("pressure_overclosure <value:label='pressure_overclosure',help='<pressure_overclosure>'>... " );
   
@@ -24,33 +23,35 @@ std::vector<std::string> ccxSurfaceInteractionTabularCreateCommand::get_syntax()
   return syntax_list;
 }
 
-std::vector<std::string> ccxSurfaceInteractionTabularCreateCommand::get_syntax_help()
+std::vector<std::string> ccxSurfaceInteractionTabularModifyCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx create surfaceinteraction name <name> tabular pressure_overclosure <values>..."; 
+  help[0] = "ccx modify surfaceinteraction <surfaceinteraction id> tabular pressure_overclosure <values>..."; 
 
   return help;
 }
 
-std::vector<std::string> ccxSurfaceInteractionTabularCreateCommand::get_help()
+std::vector<std::string> ccxSurfaceInteractionTabularModifyCommand::get_help()
 {
   std::vector<std::string> help;
   return help;
 }
 
-bool ccxSurfaceInteractionTabularCreateCommand::execute(CubitCommandData &data)
+bool ccxSurfaceInteractionTabularModifyCommand::execute(CubitCommandData &data)
 {
   
   CalculiXCoreInterface ccx_iface;
 
   std::string output;
 
-  std::string name;
   std::vector<std::string> options;
+  std::vector<int> options_marker;
   std::vector<std::vector<std::string>> options2;
+  int surfaceinteraction_id;
   std::vector<double> pressure_overclosure_values;
 
-  data.get_string("name", name);
+  data.get_value("surfaceinteraction id", surfaceinteraction_id);
+
   data.get_values("pressure_overclosure", pressure_overclosure_values);
   
   if (pressure_overclosure_values.size() % 2 != 0)
@@ -68,14 +69,11 @@ bool ccxSurfaceInteractionTabularCreateCommand::execute(CubitCommandData &data)
       pressure_overclosure.clear();
     }
   }
-  
-  options.push_back(name);
-   
-  if (!ccx_iface.create_surfaceinteraction("TABULAR", options, options2))
+    
+  if (!ccx_iface.modify_surfaceinteraction("TABULAR",surfaceinteraction_id,options,options_marker,options2))
   {
     output = "Failed!\n";
     PRINT_ERROR(output.c_str());
-    return false;
   }
   options.clear();
   options2.clear();
