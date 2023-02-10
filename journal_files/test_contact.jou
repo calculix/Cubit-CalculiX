@@ -21,4 +21,15 @@ ccx modify surfaceinteraction 3 exponential c0 5.0 p0 6.0
 ccx modify surfaceinteraction 4 linear slopeK 22 sigmaINF 99 c0 33.0
 ccx modify surfaceinteraction 7 tabular pressure_overclosure 9999 1 2 3 4 5 6 7 897897897 8978978979
 ccx modify surfaceinteraction 10 tied slopeK 9999999
+ccx modify surfaceinteraction 10 gapconductance conductance_contactpressure_temperature 11 22 33
+ccx modify surfaceinteraction 10 gapconductance conductance_contactpressure_temperature 91 29 99
+ccx modify surfaceinteraction 11 gapconductance conductance_contactpressure_temperature 11 22 33
+ccx modify surfaceinteraction 11 gapconductance conductance_contactpressure_temperature 11 22 33 44 55 66 77 88 99
+ccx modify surfaceinteraction 11 gapconductance conductance_contactpressure_temperature 77 88 99
+ccx modify surfaceinteraction 10 gapconductance conductance_contactpressure_temperature 91 29 99 88 88 88
+ccx modify surfaceinteraction 1 gapconductance conductance_contactpressure_temperature 91 29 99 88 88 88
+
+
+
+
 

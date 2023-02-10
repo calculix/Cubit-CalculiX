@@ -29,6 +29,7 @@
 #include "ccxSurfaceInteractionLinearModifyCommand.hpp"
 #include "ccxSurfaceInteractionTabularModifyCommand.hpp"
 #include "ccxSurfaceInteractionTiedModifyCommand.hpp"
+#include "ccxSurfaceInteractionGapConductanceModifyCommand.hpp"
 
 //! This macro is required to identify this as a valid Cubit plugin. The plugin
 //! will NOT be loaded if this macro is not present.
@@ -73,6 +74,7 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxSurfaceInteractionLinearModifyCommand");
   keys.push_back("ccxSurfaceInteractionTabularModifyCommand");
   keys.push_back("ccxSurfaceInteractionTiedModifyCommand");
+  keys.push_back("ccxSurfaceInteractionGapConductanceModifyCommand");
 
   return keys;
 }
@@ -171,6 +173,9 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxSurfaceInteractionTiedModifyCommand")
     return new ccxSurfaceInteractionTiedModifyCommand();
+
+  else if(key == "ccxSurfaceInteractionGapConductanceModifyCommand")
+    return new ccxSurfaceInteractionGapConductanceModifyCommand();
 
   return NULL;
 }

@@ -61,4 +61,6 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionTabularModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionTiedModifyCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionTiedModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionGapConductanceModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionGapConductanceModifyCommand.hpp
     PARENT_SCOPE)

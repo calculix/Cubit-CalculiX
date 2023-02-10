@@ -88,6 +88,7 @@ bool CoreSurfaceInteractions::create_surfaceinteraction(std::string surfacebehav
     }
     else
     {
+      sub_surfacebehavior_id = 1;
       for (size_t i = 0; i < tabular_surfacebehavior_data.size(); i++)
       {
         sub_surfacebehavior_last = std::stoi(tabular_surfacebehavior_data[i][0]);
@@ -172,6 +173,7 @@ bool CoreSurfaceInteractions::modify_surfaceinteraction(std::string modify_type,
   }
 
   int sub_data_id;
+  int sub_data_last;
   std::vector<int> sub_data_ids;
   int surfaceinteractions_data_id = get_surfaceinteractions_data_id_from_surfaceinteraction_id(surfaceinteraction_id);
   
@@ -258,30 +260,32 @@ bool CoreSurfaceInteractions::modify_surfaceinteraction(std::string modify_type,
       sub_data_ids = get_gap_conductance_data_ids_from_gap_conductance_id(surfaceinteractions_data[surfaceinteractions_data_id][4]);
       if (sub_data_ids.size() == 0)
       { 
-        if (gap_conductance_data.size()!=0)
+        if (gap_conductance_data.size()==0)
         {
           sub_data_id = 1;
-          surfaceinteractions_data[surfaceinteractions_data_id][4] = sub_data_id;
         }else{
+          sub_data_id = 1;
           for (size_t i = 0; i < gap_conductance_data.size(); i++)
           {
-            if (sub_data_id < std::stoi(gap_conductance_data[i][0]))
+            sub_data_last = std::stoi(gap_conductance_data[i][0]);
+            if (sub_data_id < sub_data_last)
             {
-              sub_data_id = std::stoi(gap_conductance_data[i][0]);
+              sub_data_id = sub_data_last;
             }
           }
           sub_data_id = sub_data_id + 1;
         }
+        surfaceinteractions_data[surfaceinteractions_data_id][4] = sub_data_id;
         for (size_t i = 0; i < options2.size(); i++)
         {
-          add_gap_conductance(std::to_string(sub_data_id),options2[i][1],options2[i][2],options2[i][3]);
+          add_gap_conductance(std::to_string(sub_data_id),options2[i][0],options2[i][1],options2[i][2]);
         }
       }else{
         if (options2.size()==sub_data_ids.size())
         {
           for (size_t i = 0; i < options2.size(); i++)
           {
-            gap_conductance_data[sub_data_ids[i]][0] = std::to_string(surfaceinteractions_data[surfaceinteractions_data_id][5]);
+            gap_conductance_data[sub_data_ids[i]][0] = std::to_string(surfaceinteractions_data[surfaceinteractions_data_id][4]);
             gap_conductance_data[sub_data_ids[i]][1] = options2[i][0];
             gap_conductance_data[sub_data_ids[i]][2] = options2[i][1];
             gap_conductance_data[sub_data_ids[i]][3] = options2[i][2];
@@ -295,7 +299,7 @@ bool CoreSurfaceInteractions::modify_surfaceinteraction(std::string modify_type,
           }
           for (size_t i = 0; i < options2.size(); i++)
           {
-            add_gap_conductance(std::to_string(surfaceinteractions_data[surfaceinteractions_data_id][5]),options2[i][0],options2[i][1],options2[i][2]);
+            add_gap_conductance(std::to_string(surfaceinteractions_data[surfaceinteractions_data_id][4]),options2[i][0],options2[i][1],options2[i][2]);
           }
         }
       }
@@ -306,7 +310,7 @@ bool CoreSurfaceInteractions::modify_surfaceinteraction(std::string modify_type,
       sub_data_id = get_gap_heat_generation_data_id_from_gap_heat_generation_id(surfaceinteractions_data[surfaceinteractions_data_id][5]);
       if (sub_data_id == -1)
       { 
-        if (gap_heat_generation_data.size()!=0)
+        if (gap_heat_generation_data.size()==0)
         {
           sub_data_id = 1;
           surfaceinteractions_data[surfaceinteractions_data_id][5] = sub_data_id;
@@ -330,7 +334,7 @@ bool CoreSurfaceInteractions::modify_surfaceinteraction(std::string modify_type,
       sub_data_id = get_friction_data_id_from_friction_id(surfaceinteractions_data[surfaceinteractions_data_id][6]);
       if (sub_data_id == -1)
       { 
-        if (friction_data.size()!=0)
+        if (friction_data.size()==0)
         {
           sub_data_id = 1;
           surfaceinteractions_data[surfaceinteractions_data_id][6] = sub_data_id;
