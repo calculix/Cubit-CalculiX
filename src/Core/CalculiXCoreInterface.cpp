@@ -157,6 +157,10 @@ bool CalculiXCoreInterface::modify_surfaceinteraction(std::string modify_type, i
   return ccx_core.modify_surfaceinteraction(modify_type,surfaceinteraction_id,options,options_marker,options2);
 }
 
+bool CalculiXCoreInterface::delete_surfaceinteraction(int surfaceinteraction_id)
+{
+  return ccx_core.delete_surfaceinteraction(surfaceinteraction_id);
+}
 
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_blocks_tree_data()
 { 

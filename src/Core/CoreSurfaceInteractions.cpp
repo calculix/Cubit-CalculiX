@@ -313,10 +313,19 @@ bool CoreSurfaceInteractions::modify_surfaceinteraction(std::string modify_type,
         if (gap_heat_generation_data.size()==0)
         {
           sub_data_id = 1;
-          surfaceinteractions_data[surfaceinteractions_data_id][5] = sub_data_id;
         }else{
-          sub_data_id = std::stoi(gap_heat_generation_data[gap_heat_generation_data.size()-1][0]) + 1;
+          sub_data_id = 1;
+          for (size_t i = 0; i < gap_heat_generation_data.size(); i++)
+          {
+            sub_data_last = std::stoi(gap_heat_generation_data[i][0]);
+            if (sub_data_id < sub_data_last)
+            {
+              sub_data_id = sub_data_last;
+            }
+          }
+          sub_data_id = sub_data_id + 1;
         }
+        surfaceinteractions_data[surfaceinteractions_data_id][5] = sub_data_id;
         add_gap_heat_generation(std::to_string(sub_data_id), options[0], options[1], options[2]);
       }else{
         for (size_t i = 0; i < options.size(); i++)
@@ -337,10 +346,19 @@ bool CoreSurfaceInteractions::modify_surfaceinteraction(std::string modify_type,
         if (friction_data.size()==0)
         {
           sub_data_id = 1;
-          surfaceinteractions_data[surfaceinteractions_data_id][6] = sub_data_id;
         }else{
-          sub_data_id = std::stoi(gap_heat_generation_data[gap_heat_generation_data.size()-1][0]) + 1;
+          sub_data_id = 1;
+          for (size_t i = 0; i < friction_data.size(); i++)
+          {
+            sub_data_last = std::stoi(friction_data[i][0]);
+            if (sub_data_id < sub_data_last)
+            {
+              sub_data_id = sub_data_last;
+            }
+          }
+          sub_data_id = sub_data_id + 1;
         }
+        surfaceinteractions_data[surfaceinteractions_data_id][6] = sub_data_id;
         add_friction(std::to_string(sub_data_id), options[0], options[1]);
       }else{
         for (size_t i = 0; i < options.size(); i++)
@@ -380,9 +398,9 @@ bool CoreSurfaceInteractions::delete_surfaceinteraction(int surfaceinteraction_i
     }else if (surfaceinteractions_data[surfaceinteractions_data_id][2]==3)
     {
       sub_data_ids = get_tabular_surfacebehavior_data_ids_from_tabular_surfacebehavior_id(surfaceinteractions_data[surfaceinteractions_data_id][3]);
-      for (size_t i = sub_data_ids.size()-1; i > -1; i--)
+      for (size_t i = sub_data_ids.size(); i > 0; i--)
       {
-        tabular_surfacebehavior_data.erase(tabular_surfacebehavior_data.begin() + sub_data_ids[i]);
+        tabular_surfacebehavior_data.erase(tabular_surfacebehavior_data.begin() + sub_data_ids[i-1]);
       } 
     }else if (surfaceinteractions_data[surfaceinteractions_data_id][2]==4)
     {
@@ -394,9 +412,9 @@ bool CoreSurfaceInteractions::delete_surfaceinteraction(int surfaceinteraction_i
     if (surfaceinteractions_data[surfaceinteractions_data_id][4]!=-1)
     {
       sub_data_ids = get_gap_conductance_data_ids_from_gap_conductance_id(surfaceinteractions_data[surfaceinteractions_data_id][4]);
-      for (size_t i = sub_data_ids.size()-1; i > -1; i--)
+      for (size_t i = sub_data_ids.size(); i > 0; i--)
       {
-        gap_conductance_data.erase(gap_conductance_data.begin() + sub_data_ids[i]);
+        gap_conductance_data.erase(gap_conductance_data.begin() + sub_data_ids[i-1]);
       } 
     }
     // gap heat generation

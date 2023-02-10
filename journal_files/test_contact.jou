@@ -28,6 +28,20 @@ ccx modify surfaceinteraction 11 gapconductance conductance_contactpressure_temp
 ccx modify surfaceinteraction 11 gapconductance conductance_contactpressure_temperature 77 88 99
 ccx modify surfaceinteraction 10 gapconductance conductance_contactpressure_temperature 91 29 99 88 88 88
 ccx modify surfaceinteraction 1 gapconductance conductance_contactpressure_temperature 91 29 99 88 88 88
+ccx modify surfaceinteraction 2 gapheatgeneration heat_conversion_factor 22 surface_weighing_factor 55 differential_tangential_velocity 2000
+ccx modify surfaceinteraction 1 gapheatgeneration heat_conversion_factor 22 surface_weighing_factor 55 differential_tangential_velocity 2000
+ccx modify surfaceinteraction 3 gapheatgeneration heat_conversion_factor 22 surface_weighing_factor 55 differential_tangential_velocity 2000
+ccx modify surfaceinteraction 1 friction mu 0.5 lambda 99
+ccx modify surfaceinteraction 2 friction mu 0.5 lambda 99
+ccx modify surfaceinteraction 3 friction mu 0.5 lambda 99
+ccx modify surfaceinteraction 1 friction mu 0.5 lambda 22
+#ccx delete surfaceinteraction 1
+
+
+
+
+
+
 
 
 

@@ -31,7 +31,8 @@ public:
 
 
   std::vector<std::string> surfaceinteraction_name_data; // name
-  // surfaceinteraction_name_data[0] name for id 0
+  // surfaceinteraction_name_data[0] name_id
+  // surfaceinteraction_name_data[1] name for id 0
 
   std::vector<std::vector<std::string>> exponential_surfacebehavior_data; // type 1
   // exponential_surfacebehavior_data[0][0] exponential_surfacebehavior_id
@@ -67,7 +68,7 @@ public:
 
   std::vector<std::vector<std::string>> friction_data; 
   // friction_data[0][0] friction_id
-  // friction_data[0][1] mü
+  // friction_data[0][1] mu
   // friction_data[0][2] lambda
 
   bool is_initialized = false;
@@ -81,6 +82,7 @@ public:
   bool delete_surfaceinteraction(int surfaceinteraction_id); // deletes surfaceinteraction from surfaceinteractions_data
   bool add_surfaceinteraction(int surfaceinteraction_id, std::string surfaceinteraction_name, int surfacebehavior_type, int surfacebehavior_type_id, int gap_conductance_id, int gap_heat_generation_id, int friction_id); // adds new surfaceinteraction to surfaceinteractions_data
   
+  bool add_name(std::string name_id, std::string name); // adds new name to name_data
   bool add_exponential_surfacebehavior(std::string exponential_surfacebehavior_id, std::string constant_1, std::string constant_2); // adds new exponential_surfacebehavior to exponential_surfacebehavior_data
   bool add_linear_surfacebehavior(std::string linear_surfacebehavior_id, std::string constant_1, std::string constant_2, std::string constant_3); // adds new linear_surfacebehavior to linear_surfacebehavior_data
   bool add_tabular_surfacebehavior(std::string tabular_surfacebehavior_id, std::string constant_1, std::string constant_2); // adds new tabular_surfacebehavior to tabular_surfacebehavior_data

@@ -63,4 +63,10 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionTiedModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionGapConductanceModifyCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionGapConductanceModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionGapHeatGenerationModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionGapHeatGenerationModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionFrictionModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionFrictionModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionDeleteCommand.hpp
     PARENT_SCOPE)

@@ -293,6 +293,11 @@ bool CalculiXCore::modify_surfaceinteraction(std::string modify_type, int surfac
   return surfaceinteractions->modify_surfaceinteraction(modify_type,surfaceinteraction_id,options,options_marker,options2);
 }
 
+bool CalculiXCore::delete_surfaceinteraction(int surfaceinteraction_id)
+{
+  return surfaceinteractions->delete_surfaceinteraction(surfaceinteraction_id);
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_blocks_tree_data()
 { 
   std::vector<std::vector<std::string>> blocks_tree_data;
@@ -546,6 +551,12 @@ std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_
       for (size_t i = 0; i < constraints->constraints_data.size(); i++)
       {
         all_ids.push_back(constraints->constraints_data[i][0]);
+      }
+    } else if (parse_type=="surfaceinteraction")
+    {
+      for (size_t i = 0; i < surfaceinteractions->surfaceinteractions_data.size(); i++)
+      {
+        all_ids.push_back(surfaceinteractions->surfaceinteractions_data[i][0]);
       }
     }
   }
