@@ -225,6 +225,7 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
   result = write_materials(output_file, ccx_iface);
   result = write_sections(output_file, ccx_iface);
   result = write_constraints(output_file, ccx_iface);
+  result = write_surfaceinteractions(output_file, ccx_iface);
 
   return result;
 }
@@ -618,5 +619,11 @@ bool ccxExportCommand::write_sections(std::ofstream& output_file, CalculiXCoreIn
 bool ccxExportCommand::write_constraints(std::ofstream& output_file, CalculiXCoreInterface ccx_iface)
 {
   output_file << ccx_iface.get_constraint_export_data();
+  return true;
+}
+
+bool ccxExportCommand::write_surfaceinteractions(std::ofstream& output_file, CalculiXCoreInterface ccx_iface)
+{
+  output_file << ccx_iface.get_surfaceinteraction_export_data();
   return true;
 }

@@ -434,6 +434,11 @@ std::string CalculiXCore::get_constraint_export_data() // gets the export data f
   return constraints->get_constraint_export();
 }
 
+std::string CalculiXCore::get_surfaceinteraction_export_data() // gets the export data from surfaceinteractions core
+{
+  return surfaceinteractions->get_surfaceinteraction_export();
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_sections_tree_data()
 { 
   std::vector<std::vector<std::string>> sections_tree_data;

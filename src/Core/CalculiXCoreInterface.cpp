@@ -206,3 +206,8 @@ std::string CalculiXCoreInterface::get_constraint_export_data() // gets the expo
 {
   return ccx_core.get_constraint_export_data();
 }
+
+std::string CalculiXCoreInterface::get_surfaceinteraction_export_data() // gets the export data from surfaceinteractions core
+{
+  return ccx_core.get_surfaceinteraction_export_data();
+}

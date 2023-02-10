@@ -49,8 +49,10 @@ bool CoreSurfaceInteractions::check_initialized()
 bool CoreSurfaceInteractions::create_surfaceinteraction(std::string surfacebehavior_type, std::vector<std::string> options, std::vector<std::vector<std::string>> options2)
 {
   int surfaceinteraction_id;
-  int surfacebehavior_type_value;
   int surfaceinteraction_last;
+  int surfaceinteraction_name_id;
+  int surfaceinteraction_name_last;
+  int surfacebehavior_type_value;
   int sub_surfacebehavior_id;
   int sub_surfacebehavior_last;
 
@@ -124,6 +126,17 @@ bool CoreSurfaceInteractions::create_surfaceinteraction(std::string surfacebehav
     surfacebehavior_type_value = 5;
   }
 
+  if (surfaceinteraction_name_data.size()==0)
+  {
+    surfaceinteraction_name_id = 1;
+  }
+  else
+  {
+    surfaceinteraction_name_last = surfaceinteraction_name_data.size() - 1;
+    surfaceinteraction_name_id = std::stoi(surfaceinteraction_name_data[surfaceinteraction_name_last][0]) + 1;
+  }
+  this->add_name(std::to_string(surfaceinteraction_name_id),options[0]);
+
   if (surfaceinteractions_data.size()==0)
   {
     surfaceinteraction_id = 1;
@@ -134,8 +147,9 @@ bool CoreSurfaceInteractions::create_surfaceinteraction(std::string surfacebehav
     surfaceinteraction_id = surfaceinteractions_data[surfaceinteraction_last][0] + 1;
   }
 
-  //this->add_surfaceinteraction(surfaceinteraction_id,surfaceinteraction_name,surfacebehavior_type,surfacebehavior_type_id,gap_conductance_id,gap_heat_generation_id,friction_id);
-  this->add_surfaceinteraction(surfaceinteraction_id,options[0],surfacebehavior_type_value,sub_surfacebehavior_id,-1,-1,-1);
+  //this->add_surfaceinteraction(surfaceinteraction_id,surfaceinteraction_name_id,surfacebehavior_type,surfacebehavior_type_id,gap_conductance_id,gap_heat_generation_id,friction_id);
+  
+  this->add_surfaceinteraction(surfaceinteraction_id,surfaceinteraction_name_id,surfacebehavior_type_value,sub_surfacebehavior_id,-1,-1,-1);
   
   return true;
 }
@@ -183,11 +197,12 @@ bool CoreSurfaceInteractions::modify_surfaceinteraction(std::string modify_type,
   } else {
     if (modify_type_value == 0) // modify name
     {
+      sub_data_id = get_surfaceinteraction_name_data_id_from_surfaceinteraction_name_id(surfaceinteractions_data[surfaceinteractions_data_id][1]);
       for (size_t i = 0; i < options.size(); i++)
       {
         if (options_marker[i]==1)
         {
-          surfaceinteraction_name_data[surfaceinteractions_data[surfaceinteractions_data_id][1]] = options[i];
+          surfaceinteraction_name_data[sub_data_id][1] = options[i];
         }
       }
       return true;
@@ -385,7 +400,8 @@ bool CoreSurfaceInteractions::delete_surfaceinteraction(int surfaceinteraction_i
     return false;
   } else {
     // surface name
-    surfaceinteraction_name_data.erase(surfaceinteraction_name_data.begin() + surfaceinteractions_data[surfaceinteraction_id][1]);
+    sub_data_id = get_surfaceinteraction_name_data_id_from_surfaceinteraction_name_id(surfaceinteractions_data[surfaceinteractions_data_id][1]);
+    surfaceinteraction_name_data.erase(surfaceinteraction_name_data.begin() + sub_data_id);
     // surface behavior
     if (surfaceinteractions_data[surfaceinteractions_data_id][2]==1)
     {
@@ -435,15 +451,21 @@ bool CoreSurfaceInteractions::delete_surfaceinteraction(int surfaceinteraction_i
   }
 }
 
-bool CoreSurfaceInteractions::add_surfaceinteraction(int surfaceinteraction_id, std::string surfaceinteraction_name, int surfacebehavior_type, int surfacebehavior_type_id, int gap_conductance_id, int gap_heat_generation_id, int friction_id)
+bool CoreSurfaceInteractions::add_surfaceinteraction(int surfaceinteraction_id, int surfaceinteraction_name_id, int surfacebehavior_type, int surfacebehavior_type_id, int gap_conductance_id, int gap_heat_generation_id, int friction_id)
 {
-  surfaceinteraction_name_data.push_back(surfaceinteraction_name);
-  int surfaceinteraction_name_id = surfaceinteraction_name_data.size()-1;
-
   std::vector<int> v = {surfaceinteraction_id,surfaceinteraction_name_id,surfacebehavior_type,surfacebehavior_type_id,gap_conductance_id,gap_heat_generation_id,friction_id};
       
   surfaceinteractions_data.push_back(v);
 
+  return true;
+}
+
+bool CoreSurfaceInteractions::add_name(std::string name_id, std::string name)
+{
+  std::vector<std::string> v = {name_id, name};
+      
+  surfaceinteraction_name_data.push_back(v);
+  
   return true;
 }
 
@@ -517,6 +539,19 @@ int CoreSurfaceInteractions::get_surfaceinteractions_data_id_from_surfaceinterac
   for (size_t i = 0; i < surfaceinteractions_data.size(); i++)
   {
     if (surfaceinteractions_data[i][0]==surfaceinteraction_id)
+    {
+        return_int = i;
+    }  
+  }
+  return return_int;
+}
+
+int CoreSurfaceInteractions::get_surfaceinteraction_name_data_id_from_surfaceinteraction_name_id(int surfaceinteraction_name_id)
+{ 
+  int return_int = -1;
+  for (size_t i = 0; i < surfaceinteraction_name_data.size(); i++)
+  {
+    if (surfaceinteraction_name_data[i][0]==std::to_string(surfaceinteraction_name_id))
     {
         return_int = i;
     }  
@@ -615,72 +650,140 @@ int CoreSurfaceInteractions::get_friction_data_id_from_friction_id(int friction_
   return return_int;
 }
 
-std::string CoreSurfaceInteractions::get_surfaceinteractions_export() // get a list of the CalculiX surfaceinteractions exports
+std::string CoreSurfaceInteractions::get_surfaceinteraction_export() // get a list of the CalculiX surfaceinteractions exports
 {
-  std::vector<std::string> constraints_export_list;
-  constraints_export_list.push_back("********************************** S U R F A C E I N T E R A C T I O N S ****************************");
+  std::vector<std::string> surfaceinteractions_export_list;
+  surfaceinteractions_export_list.push_back("********************************** S U R F A C E I N T E R A C T I O N S ****************************");
   std::string str_temp;
-  int sub_constraint_data_id;
-  /*
-  //loop over all constraints
-  for (size_t i = 0; i < constraints_data.size(); i++)
+  int sub_data_id;
+  std::vector<int> sub_data_ids;
+   
+  //loop over all surface interactions
+  for (size_t i = 0; i < surfaceinteractions_data.size(); i++)
   { 
-    // RIGID BODY
-    if (constraints_data[i][1] == 1)
+    // NAME
+    str_temp = "*SURFACE INTERACTION,NAME=";
+    sub_data_id = get_surfaceinteraction_name_data_id_from_surfaceinteraction_name_id(surfaceinteractions_data[i][1]);
+    str_temp.append(surfaceinteraction_name_data[sub_data_id][1]);
+    surfaceinteractions_export_list.push_back(str_temp);
+      
+    // EXPONENTIAL
+    if (surfaceinteractions_data[i][2] == 1) 
     {
-      sub_constraint_data_id = get_rigidbody_constraint_data_id_from_rigidbody_constraint_id(constraints_data[i][2]);
-
-      str_temp = "*RIGID BODY, ";
-      
-      if (rigidbody_constraint_data[sub_constraint_data_id][1]=="1")
-      {
-        str_temp.append("NSET=");
-        str_temp.append(ccx_iface->get_nodeset_name(std::stoi(rigidbody_constraint_data[sub_constraint_data_id][2])));
-      } else if (rigidbody_constraint_data[sub_constraint_data_id][1]=="2")
-      {
-        str_temp.append("ELSET=");
-        str_temp.append(ccx_iface->get_block_name(std::stoi(rigidbody_constraint_data[sub_constraint_data_id][2])));
-      }
-
-      str_temp.append(", REF NODE=");
-      str_temp.append(std::to_string(ccx_iface->referencepoints_get_ref_from_vertex_id(std::stoi(rigidbody_constraint_data[sub_constraint_data_id][3]))));
-      
-      str_temp.append(", ROT NODE=");
-      str_temp.append(std::to_string(ccx_iface->referencepoints_get_rot_from_vertex_id(std::stoi(rigidbody_constraint_data[sub_constraint_data_id][3]))));
-      constraints_export_list.push_back(str_temp);
-    }
-    // TIE
-    if (constraints_data[i][1] == 2) 
-    {
-      sub_constraint_data_id = get_tie_constraint_data_id_from_tie_constraint_id(constraints_data[i][2]);
-      
-      str_temp = "*TIE, NAME=";
-      str_temp.append(tie_constraint_data[sub_constraint_data_id][1]);
-      
-      if (tie_constraint_data[sub_constraint_data_id][4]!="")
-      {
-        str_temp.append(", POSITION TOLERANCE=");
-        str_temp.append(tie_constraint_data[sub_constraint_data_id][4]);
-      }
-
-      constraints_export_list.push_back(str_temp);
+      sub_data_id = get_exponential_surfacebehavior_data_id_from_exponential_surfacebehavior_id(surfaceinteractions_data[i][3]);
+      str_temp = "*SURFACE BEHAVIOR,PRESSURE-OVERCLOSURE=EXPONENTIAL";
+      surfaceinteractions_export_list.push_back(str_temp);
       // second line
       str_temp = "";
-      str_temp.append(ccx_iface->get_sideset_name(std::stoi(tie_constraint_data[sub_constraint_data_id][2])));
+      str_temp.append(exponential_surfacebehavior_data[sub_data_id][1]);
       str_temp.append(",");
-      str_temp.append(ccx_iface->get_sideset_name(std::stoi(tie_constraint_data[sub_constraint_data_id][3])));
-      constraints_export_list.push_back(str_temp);
+      str_temp.append(exponential_surfacebehavior_data[sub_data_id][2]);
+      surfaceinteractions_export_list.push_back(str_temp);
+    }
+    // LINEAR
+    if (surfaceinteractions_data[i][2] == 2) 
+    {
+      sub_data_id = get_linear_surfacebehavior_data_id_from_linear_surfacebehavior_id(surfaceinteractions_data[i][3]);
+      str_temp = "*SURFACE BEHAVIOR,PRESSURE-OVERCLOSURE=LINEAR";
+      surfaceinteractions_export_list.push_back(str_temp);
+      // second line
+      str_temp = "";
+      str_temp.append(linear_surfacebehavior_data[sub_data_id][1]);
+      str_temp.append(",");
+      str_temp.append(linear_surfacebehavior_data[sub_data_id][2]);
+      str_temp.append(",");
+      str_temp.append(linear_surfacebehavior_data[sub_data_id][3]);
+      surfaceinteractions_export_list.push_back(str_temp);
+    }
+    // TABULAR
+    if (surfaceinteractions_data[i][2] == 3) 
+    {
+      sub_data_ids = get_tabular_surfacebehavior_data_ids_from_tabular_surfacebehavior_id(surfaceinteractions_data[i][3]);
+      str_temp = "*SURFACE BEHAVIOR,PRESSURE-OVERCLOSURE=TABULAR";
+      surfaceinteractions_export_list.push_back(str_temp);
+      // second lines
+      for (size_t i = 0; i < sub_data_ids.size(); i++)
+      {
+        str_temp = "";
+        str_temp.append(tabular_surfacebehavior_data[sub_data_ids[i]][1]);
+        str_temp.append(",");
+        str_temp.append(tabular_surfacebehavior_data[sub_data_ids[i]][2]);
+        surfaceinteractions_export_list.push_back(str_temp);
+      }
+    }
+    // TIED
+    if (surfaceinteractions_data[i][2] == 4) 
+    {
+      sub_data_id = get_tied_surfacebehavior_data_id_from_tied_surfacebehavior_id(surfaceinteractions_data[i][3]);
+      str_temp = "*SURFACE BEHAVIOR,PRESSURE-OVERCLOSURE=TIED";
+      surfaceinteractions_export_list.push_back(str_temp);
+      // second line
+      str_temp = "";
+      str_temp.append(tied_surfacebehavior_data[sub_data_id][1]);
+      surfaceinteractions_export_list.push_back(str_temp);
+    }
+    // HARD
+    if (surfaceinteractions_data[i][2] == 5) 
+    {
+      str_temp = "*SURFACE BEHAVIOR,PRESSURE-OVERCLOSURE=HARD";
+      surfaceinteractions_export_list.push_back(str_temp);
+    }
+    // GAP CONDUCTANCE
+    if (surfaceinteractions_data[i][4] != -1) 
+    {
+      sub_data_ids = get_gap_conductance_data_ids_from_gap_conductance_id(surfaceinteractions_data[i][4]);
+      str_temp = "*GAP CONDUCTANCE";
+      surfaceinteractions_export_list.push_back(str_temp);
+      // second lines
+      for (size_t i = 0; i < sub_data_ids.size(); i++)
+      {
+        str_temp = "";
+        str_temp.append(gap_conductance_data[sub_data_ids[i]][1]);
+        str_temp.append(",");
+        str_temp.append(gap_conductance_data[sub_data_ids[i]][2]);
+        str_temp.append(",");
+        str_temp.append(gap_conductance_data[sub_data_ids[i]][3]);
+        surfaceinteractions_export_list.push_back(str_temp);
+      }
+    }
+    // GAP HEAT GENERATION
+    if (surfaceinteractions_data[i][5] != -1) 
+    {
+      sub_data_id = get_gap_heat_generation_data_id_from_gap_heat_generation_id(surfaceinteractions_data[i][5]);
+      str_temp = "*GAP HEAT GENERATION";
+      surfaceinteractions_export_list.push_back(str_temp);
+      // second line
+      str_temp = "";
+      str_temp.append(gap_heat_generation_data[sub_data_id][1]);
+      str_temp.append(",");
+      str_temp.append(gap_heat_generation_data[sub_data_id][2]);
+      str_temp.append(",");
+      str_temp.append(gap_heat_generation_data[sub_data_id][3]);
+      surfaceinteractions_export_list.push_back(str_temp);
+    }
+    // FRICTION
+    if (surfaceinteractions_data[i][6] != -1) 
+    {
+      sub_data_id = get_friction_data_id_from_friction_id(surfaceinteractions_data[i][6]);
+      str_temp = "*FRICTION";
+      surfaceinteractions_export_list.push_back(str_temp);
+      // second line
+      str_temp = "";
+      str_temp.append(friction_data[sub_data_id][1]);
+      str_temp.append(",");
+      str_temp.append(friction_data[sub_data_id][2]);
+      surfaceinteractions_export_list.push_back(str_temp);
     }
   }
-  */
-  std::string constraint_export;
+  
+  std::string surfaceinteractions_export;
 
-  for (size_t i = 0; i < constraints_export_list.size(); i++)
+  for (size_t i = 0; i < surfaceinteractions_export_list.size(); i++)
   {
-    constraint_export.append(constraints_export_list[i] + "\n");
+    surfaceinteractions_export.append(surfaceinteractions_export_list[i] + "\n");
   }
   
-  return constraint_export;
+  return surfaceinteractions_export;
 }
 
 
@@ -696,11 +799,11 @@ std::string CoreSurfaceInteractions::print_data()
   }
 
   str_return.append("\n CoreSurfaceInteractions surfaceinteraction_name_data: \n");
-  str_return.append("name \n");
+  str_return.append("name_id, name \n");
 
   for (size_t i = 0; i < surfaceinteraction_name_data.size(); i++)
   {
-    str_return.append(surfaceinteraction_name_data[i] + " \n");
+    str_return.append(surfaceinteraction_name_data[i][0] + " " + surfaceinteraction_name_data[i][1] + " \n");
   }
 
   str_return.append("\n CoreSurfaceInteractions exponential_surfacebehavior_data: \n");

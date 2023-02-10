@@ -25,6 +25,7 @@ public:
   std::string get_material_export_data(); // gets the export data from materials core
   std::string get_section_export_data(); // gets the export data from sections core
   std::string get_constraint_export_data(); // gets the export data from constraints core
+  std::string get_surfaceinteraction_export_data(); // gets the export data from surfaceinteractions core
   bool create_section(std::string section_type,int block_id, std::string material_name, std::vector<std::string> options); // adds a new section
   bool modify_section(std::string section_type,int section_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a section  
   bool delete_section(int section_id); // delete section
