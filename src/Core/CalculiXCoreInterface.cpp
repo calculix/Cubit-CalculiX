@@ -192,6 +192,11 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_constraints_tre
   return ccx_core.get_constraints_tree_data();
 }
 
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_surfaceinteractions_tree_data()
+{ 
+  return ccx_core.get_surfaceinteractions_tree_data();
+}
+
 std::string CalculiXCoreInterface::get_material_export_data() // gets the export data from materials core
 {
   return ccx_core.get_material_export_data();

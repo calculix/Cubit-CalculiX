@@ -19,6 +19,7 @@ class SidesetTree;
 class MaterialTree;
 class SectionsTree;
 class ConstraintsTree;
+class SurfaceInteractionsTree;
 
 
 class CCXDockWindowTree
@@ -52,6 +53,7 @@ private:
   MaterialTree *myMaterialTree; //Materials root item
   SectionsTree *mySectionsTree; //Sections root item
   ConstraintsTree *myConstraintsTree; //Constraints root item
+  SurfaceInteractionsTree *mySurfaceInteractionsTree; //SurfaceInteractions root item
   QSettings *settings;
 };
 

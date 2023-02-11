@@ -59,6 +59,7 @@ public:
   std::vector<std::vector<std::string>> get_material_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_sections_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_constraints_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_surfaceinteractions_tree_data(); // gets the data from core to build the tree
 
   CoreBlocks *cb;
   CoreMaterials *mat;

@@ -36,7 +36,8 @@ ccx modify surfaceinteraction 2 friction mu 0.5 lambda 99
 ccx modify surfaceinteraction 3 friction mu 0.5 lambda 99
 ccx modify surfaceinteraction 1 friction mu 0.5 lambda 22
 #ccx delete surfaceinteraction 1
-export ccx "test_contact.inp"
+#export ccx "test_contact.inp"
+
 
 
 

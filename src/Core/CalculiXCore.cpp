@@ -418,7 +418,6 @@ std::vector<std::vector<std::string>> CalculiXCore::get_material_tree_data()
   return material_tree_data;
 }
 
-
 std::string CalculiXCore::get_material_export_data() // gets the export data from materials core
 {
   return mat->get_material_export();
@@ -528,6 +527,28 @@ std::vector<std::vector<std::string>> CalculiXCore::get_constraints_tree_data()
 
   return constraints_tree_data;
 }
+
+std::vector<std::vector<std::string>> CalculiXCore::get_surfaceinteractions_tree_data()
+{ 
+  std::vector<std::vector<std::string>> surfaceinteractions_tree_data;
+  
+  for (size_t i = 0; i < surfaceinteractions->surfaceinteractions_data.size(); i++)
+  {
+    std::vector<std::string> surfaceinteractions_tree_data_set;
+    std::string surfaceinteraction_name;
+    int surfaceinteraction_name_id;
+
+    surfaceinteraction_name_id = surfaceinteractions->get_surfaceinteraction_name_data_id_from_surfaceinteraction_name_id(surfaceinteractions->surfaceinteractions_data[i][1]);
+    surfaceinteraction_name = surfaceinteractions->surfaceinteraction_name_data[surfaceinteraction_name_id][1];
+    
+    surfaceinteractions_tree_data_set.push_back(std::to_string(surfaceinteractions->surfaceinteractions_data[i][0])); //surfaceinteraction_id
+    surfaceinteractions_tree_data_set.push_back(surfaceinteraction_name); //surfaceinteraction_name
+    surfaceinteractions_tree_data.push_back(surfaceinteractions_tree_data_set);
+  }
+
+  return surfaceinteractions_tree_data;
+}
+
 
 std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_string)
 {

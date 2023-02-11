@@ -57,10 +57,10 @@ void SectionsTree::update()
 
   // check if item has been removed
 
-  for (size_t i = 0; i < this->childCount(); i++)
+  for (size_t i = this->childCount(); i > 0; i--)
   { 
     erase_item = true;
-    temp_child = this->child(i);
+    temp_child = this->child(i-1);
 
     for (size_t ii = 0; ii < sections_tree_data.size(); ii++)
     {    
