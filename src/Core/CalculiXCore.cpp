@@ -13,6 +13,7 @@
 #include "CoreConstraints.hpp"
 #include "CoreReferencePoints.hpp"
 #include "CoreSurfaceInteractions.hpp"
+#include "CoreContactPairs.hpp"
 
 
 CalculiXCore::CalculiXCore():
@@ -36,6 +37,8 @@ CalculiXCore::~CalculiXCore()
     delete referencepoints;
   if(surfaceinteractions)
     delete surfaceinteractions;
+  if(contactpairs)
+    delete contactpairs;
 }
 
 bool CalculiXCore::print_to_log(std::string str_log)
@@ -84,6 +87,11 @@ bool CalculiXCore::init()
   
   surfaceinteractions->init();
 
+  if(!contactpairs)
+    contactpairs = new CoreContactPairs;
+  
+  contactpairs->init();
+  
   return true;
 }
 
@@ -106,6 +114,7 @@ bool CalculiXCore::reset()
   constraints->reset();
   referencepoints->reset();
   surfaceinteractions->reset();
+  contactpairs->reset();
   
   //print_to_log("RESET");
   //print_to_log(print_data());
@@ -121,6 +130,7 @@ std::string CalculiXCore::print_data()
   str_return.append(constraints->print_data());
   str_return.append(referencepoints->print_data());
   str_return.append(surfaceinteractions->print_data());
+  str_return.append(contactpairs->print_data());
 
   return str_return;
 }
