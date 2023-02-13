@@ -58,6 +58,11 @@ std::string CalculiXCoreInterface::get_sideset_name(int sideset_id)
   return ccx_core.get_sideset_name(sideset_id);
 }
 
+std::string CalculiXCoreInterface::get_surfaceinteraction_name(int surfaceinteraction_id)
+{
+  return ccx_core.get_surfaceinteraction_name(surfaceinteraction_id);
+}
+
 bool CalculiXCoreInterface::core_update()
 {
   if (ccx_core.update())
@@ -167,6 +172,16 @@ bool CalculiXCoreInterface::create_contactpair(std::vector<std::string> options)
   return ccx_core.create_contactpair(options);
 }
 
+bool CalculiXCoreInterface::modify_contactpair(int contactpair_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return ccx_core.modify_contactpair(contactpair_id,options,options_marker);
+}
+
+bool CalculiXCoreInterface::delete_contactpair(int contactpair_id)
+{
+  return ccx_core.delete_contactpair(contactpair_id);
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_blocks_tree_data()
 { 
   return ccx_core.get_blocks_tree_data();
@@ -202,6 +217,11 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_surfaceinteract
   return ccx_core.get_surfaceinteractions_tree_data();
 }
 
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_contactpairs_tree_data()
+{ 
+  return ccx_core.get_contactpairs_tree_data();
+}
+
 std::string CalculiXCoreInterface::get_material_export_data() // gets the export data from materials core
 {
   return ccx_core.get_material_export_data();
@@ -220,4 +240,9 @@ std::string CalculiXCoreInterface::get_constraint_export_data() // gets the expo
 std::string CalculiXCoreInterface::get_surfaceinteraction_export_data() // gets the export data from surfaceinteractions core
 {
   return ccx_core.get_surfaceinteraction_export_data();
+}
+
+std::string CalculiXCoreInterface::get_contactpair_export_data() // gets the export data from contactpairs core
+{
+  return ccx_core.get_contactpair_export_data();
 }

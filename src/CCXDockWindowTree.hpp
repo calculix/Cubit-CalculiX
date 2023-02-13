@@ -20,6 +20,7 @@ class MaterialTree;
 class SectionsTree;
 class ConstraintsTree;
 class SurfaceInteractionsTree;
+class ContactPairsTree;
 
 
 class CCXDockWindowTree
@@ -54,6 +55,7 @@ private:
   SectionsTree *mySectionsTree; //Sections root item
   ConstraintsTree *myConstraintsTree; //Constraints root item
   SurfaceInteractionsTree *mySurfaceInteractionsTree; //SurfaceInteractions root item
+  ContactPairsTree *myContactPairsTree; //ContactPairs root item
   QSettings *settings;
 };
 

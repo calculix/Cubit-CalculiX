@@ -32,12 +32,14 @@ public:
   std::string get_block_name(int block_id); // gets the block name
   std::string get_nodeset_name(int nodeset_id); // gets the nodeset name
   std::string get_sideset_name(int sideset_id); // gets the sideset name
+  std::string get_surfaceinteraction_name(int surfaceinteraction_id); // gets the surfaceinteraction name
   bool set_ccx_element_type(int block_id, std::string ccx_element_type); // sets the ccx element type for a block
   std::vector<int> get_blocks(); // gets the block ids from core blocks
   std::string get_material_export_data(); // gets the export data from materials core
   std::string get_section_export_data(); // gets the export data from sections core
   std::string get_constraint_export_data(); // gets the export data from constraints core
   std::string get_surfaceinteraction_export_data(); // gets the export data from surfaceinteractions core
+  std::string get_contactpair_export_data(); // gets the export data from contactpairs core
   bool create_section(std::string section_type,int block_id, std::string material_name, std::vector<std::string> options); // adds a new section
   bool modify_section(std::string section_type,int section_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a section
   bool delete_section(int section_id); // adds a new section
@@ -55,6 +57,8 @@ public:
   bool modify_surfaceinteraction(std::string modify_type, int surfaceinteraction_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2); // modifies a surfaceinteraction
   bool delete_surfaceinteraction(int surfaceinteraction_id); // delete surface interaction
   bool create_contactpair(std::vector<std::string> options); // adds a new contactpair
+  bool modify_contactpair(int contactpair_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a contactpair  
+  bool delete_contactpair(int contactpair_id); // delete contact pair
   std::vector<std::vector<std::string>> get_blocks_tree_data(); // gets the data from core blocks to build the tree
   std::vector<std::vector<std::string>> get_nodeset_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_sideset_tree_data(); // gets the data from core to build the tree
@@ -62,6 +66,7 @@ public:
   std::vector<std::vector<std::string>> get_sections_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_constraints_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_surfaceinteractions_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_contactpairs_tree_data(); // gets the data from core to build the tree
 
   CoreBlocks *cb;
   CoreMaterials *mat;

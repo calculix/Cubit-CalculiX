@@ -217,6 +217,27 @@ std::string CalculiXCore::get_sideset_name(int sideset_id)
   return sideset_name;
 }
 
+std::string CalculiXCore::get_surfaceinteraction_name(int surfaceinteraction_id)
+{
+  std::string surfaceinteraction_name;
+  int surfaceinteraction_data_id;
+  int surfaceinteraction_name_id;
+  int surfaceinteraction_name_data_id;
+
+  surfaceinteraction_data_id = surfaceinteractions->get_surfaceinteractions_data_id_from_surfaceinteraction_id(surfaceinteraction_id);
+
+  if (surfaceinteraction_data_id != -1)
+  {
+    surfaceinteraction_name_id = surfaceinteractions->surfaceinteractions_data[surfaceinteraction_data_id][1];
+    surfaceinteraction_name_data_id = surfaceinteractions->get_surfaceinteraction_name_data_id_from_surfaceinteraction_name_id(surfaceinteraction_name_id);
+    surfaceinteraction_name = surfaceinteractions->surfaceinteraction_name_data[surfaceinteraction_name_data_id][1];
+  }else{
+    surfaceinteraction_name = "SURFACEINTERACTION " + std::to_string(surfaceinteraction_id) + " doesn't exist!";
+  }
+
+  return surfaceinteraction_name;
+}
+
 std::vector<int> CalculiXCore::get_blocks()
 { 
   std::vector<int> blocks;
@@ -311,6 +332,41 @@ bool CalculiXCore::delete_surfaceinteraction(int surfaceinteraction_id)
 bool CalculiXCore::create_contactpair(std::vector<std::string> options)
 {
   return contactpairs->create_contactpair(options);
+}
+
+bool CalculiXCore::modify_contactpair(int contactpair_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return contactpairs->modify_contactpair(contactpair_id,options,options_marker);
+}
+
+bool CalculiXCore::delete_contactpair(int contactpair_id)
+{
+  return contactpairs->delete_contactpair(contactpair_id);
+}
+
+std::string CalculiXCore::get_material_export_data() // gets the export data from materials core
+{
+  return mat->get_material_export();
+}
+
+std::string CalculiXCore::get_section_export_data() // gets the export data from sections core
+{
+  return sections->get_section_export();
+}
+
+std::string CalculiXCore::get_constraint_export_data() // gets the export data from constraints core
+{
+  return constraints->get_constraint_export();
+}
+
+std::string CalculiXCore::get_surfaceinteraction_export_data() // gets the export data from surfaceinteractions core
+{
+  return surfaceinteractions->get_surfaceinteraction_export();
+}
+
+std::string CalculiXCore::get_contactpair_export_data() // gets the export data from contactpairs core
+{
+  return contactpairs->get_contactpair_export();
 }
 
 std::vector<std::vector<std::string>> CalculiXCore::get_blocks_tree_data()
@@ -433,26 +489,6 @@ std::vector<std::vector<std::string>> CalculiXCore::get_material_tree_data()
   return material_tree_data;
 }
 
-std::string CalculiXCore::get_material_export_data() // gets the export data from materials core
-{
-  return mat->get_material_export();
-}
-
-std::string CalculiXCore::get_section_export_data() // gets the export data from sections core
-{
-  return sections->get_section_export();
-}
-
-std::string CalculiXCore::get_constraint_export_data() // gets the export data from constraints core
-{
-  return constraints->get_constraint_export();
-}
-
-std::string CalculiXCore::get_surfaceinteraction_export_data() // gets the export data from surfaceinteractions core
-{
-  return surfaceinteractions->get_surfaceinteraction_export();
-}
-
 std::vector<std::vector<std::string>> CalculiXCore::get_sections_tree_data()
 { 
   std::vector<std::vector<std::string>> sections_tree_data;
@@ -564,6 +600,28 @@ std::vector<std::vector<std::string>> CalculiXCore::get_surfaceinteractions_tree
   return surfaceinteractions_tree_data;
 }
 
+std::vector<std::vector<std::string>> CalculiXCore::get_contactpairs_tree_data()
+{ 
+  std::vector<std::vector<std::string>> contactpairs_tree_data;
+  
+  for (size_t i = 0; i < contactpairs->contactpairs_data.size(); i++)
+  {
+    std::vector<std::string> contactpairs_tree_data_set;
+    std::string contactpair_name;
+    int contactpair_name_id;
+
+    contactpair_name = "Master: ";
+    contactpair_name.append(this->get_sideset_name(contactpairs->contactpairs_data[i][3]));
+    contactpair_name.append(" | Slave: ");
+    contactpair_name.append(this->get_sideset_name(contactpairs->contactpairs_data[i][4]));
+
+    contactpairs_tree_data_set.push_back(std::to_string(contactpairs->contactpairs_data[i][0])); //contactpair_id
+    contactpairs_tree_data_set.push_back(contactpair_name); //contactpair_name
+    contactpairs_tree_data.push_back(contactpairs_tree_data_set);
+  }
+
+  return contactpairs_tree_data;
+}
 
 std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_string)
 {
@@ -598,6 +656,12 @@ std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_
       for (size_t i = 0; i < surfaceinteractions->surfaceinteractions_data.size(); i++)
       {
         all_ids.push_back(surfaceinteractions->surfaceinteractions_data[i][0]);
+      }
+    } else if (parse_type=="contactpair")
+    {
+      for (size_t i = 0; i < contactpairs->contactpairs_data.size(); i++)
+      {
+        all_ids.push_back(contactpairs->contactpairs_data[i][0]);
       }
     }
   }

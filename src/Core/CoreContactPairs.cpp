@@ -193,12 +193,9 @@ bool CoreContactPairs::delete_contactpair(int contactpair_id)
   {
     return false;
   } else {
-    if (contactpairs_data[contactpairs_data_id][1]==1)
-    {
-      sub_data_id = get_adjust_contactpair_data_id_from_adjust_contactpair_id(contactpairs_data[contactpairs_data_id][5]);
-      if (sub_data_id != -1){
-        adjust_contactpair_data.erase(adjust_contactpair_data.begin() + sub_data_id);  
-      }
+    sub_data_id = get_adjust_contactpair_data_id_from_adjust_contactpair_id(contactpairs_data[contactpairs_data_id][5]);
+    if (sub_data_id != -1){
+      adjust_contactpair_data.erase(adjust_contactpair_data.begin() + sub_data_id);  
     }
     contactpairs_data.erase(contactpairs_data.begin() + contactpairs_data_id);
     return true;
@@ -233,70 +230,64 @@ int CoreContactPairs::get_adjust_contactpair_data_id_from_adjust_contactpair_id(
 
 std::string CoreContactPairs::get_contactpair_export() // get a list of the CalculiX contactpair exports
 {
-  std::vector<std::string> constraints_export_list;
-  constraints_export_list.push_back("********************************** C O N S T R A I N T S ****************************");
+  std::vector<std::string> contactpairs_export_list;
+  contactpairs_export_list.push_back("********************************** C O N T A C T P A I R S ****************************");
   std::string str_temp;
-  int sub_constraint_data_id;
-  /*
-  //loop over all constraints
-  for (size_t i = 0; i < constraints_data.size(); i++)
+  int sub_data_id;
+  
+  //loop over all contactpairs
+  for (size_t i = 0; i < contactpairs_data.size(); i++)
   { 
-    // RIGID BODY
-    if (constraints_data[i][1] == 1)
+    str_temp = "*CONTACT PAIR, INTERACTION=";
+    str_temp.append(ccx_iface->get_surfaceinteraction_name(contactpairs_data[i][1]));
+
+    str_temp.append(", TYPE=");
+    if (contactpairs_data[i][2]==1)
     {
-      sub_constraint_data_id = get_rigidbody_constraint_data_id_from_rigidbody_constraint_id(constraints_data[i][2]);
-
-      str_temp = "*RIGID BODY, ";
-      
-      if (rigidbody_constraint_data[sub_constraint_data_id][1]=="1")
-      {
-        str_temp.append("NSET=");
-        str_temp.append(ccx_iface->get_nodeset_name(std::stoi(rigidbody_constraint_data[sub_constraint_data_id][2])));
-      } else if (rigidbody_constraint_data[sub_constraint_data_id][1]=="2")
-      {
-        str_temp.append("ELSET=");
-        str_temp.append(ccx_iface->get_block_name(std::stoi(rigidbody_constraint_data[sub_constraint_data_id][2])));
-      }
-
-      str_temp.append(", REF NODE=");
-      str_temp.append(std::to_string(ccx_iface->referencepoints_get_ref_from_vertex_id(std::stoi(rigidbody_constraint_data[sub_constraint_data_id][3]))));
-      
-      str_temp.append(", ROT NODE=");
-      str_temp.append(std::to_string(ccx_iface->referencepoints_get_rot_from_vertex_id(std::stoi(rigidbody_constraint_data[sub_constraint_data_id][3]))));
-      constraints_export_list.push_back(str_temp);
-    }
-    // TIE
-    if (constraints_data[i][1] == 2) 
+      str_temp.append("NODE TO SURFACE");
+    }else if (contactpairs_data[i][2]==2)
     {
-      sub_constraint_data_id = get_tie_constraint_data_id_from_tie_constraint_id(constraints_data[i][2]);
-      
-      str_temp = "*TIE, NAME=";
-      str_temp.append(tie_constraint_data[sub_constraint_data_id][1]);
-      
-      if (tie_constraint_data[sub_constraint_data_id][4]!="")
-      {
-        str_temp.append(", POSITION TOLERANCE=");
-        str_temp.append(tie_constraint_data[sub_constraint_data_id][4]);
-      }
+      str_temp.append("SURFACE TO SURFACE");
+    }else if (contactpairs_data[i][2]==3)
+    {
+      str_temp.append("MORTAR");
+    }else if (contactpairs_data[i][2]==4)
+    {
+      str_temp.append("LINMORTAR");
+    }else if (contactpairs_data[i][2]==5)
+    {
+      str_temp.append("PGLINMORTAR");
+    }else if (contactpairs_data[i][2]==6)
+    {
+      str_temp.append("MASSLESS");
+    }    
+    
+    sub_data_id = get_adjust_contactpair_data_id_from_adjust_contactpair_id(contactpairs_data[i][5]);
 
-      constraints_export_list.push_back(str_temp);
-      // second line
-      str_temp = "";
-      str_temp.append(ccx_iface->get_sideset_name(std::stoi(tie_constraint_data[sub_constraint_data_id][2])));
-      str_temp.append(",");
-      str_temp.append(ccx_iface->get_sideset_name(std::stoi(tie_constraint_data[sub_constraint_data_id][3])));
-      constraints_export_list.push_back(str_temp);
+    if(adjust_contactpair_data[sub_data_id][1]!="")
+    {
+      str_temp.append(", ADJUST=");
+      str_temp.append(adjust_contactpair_data[sub_data_id][1]);
     }
-  }
-  */
-  std::string constraint_export;
+    
+    contactpairs_export_list.push_back(str_temp);
 
-  for (size_t i = 0; i < constraints_export_list.size(); i++)
-  {
-    constraint_export.append(constraints_export_list[i] + "\n");
+    // second line
+    str_temp = "";
+    str_temp.append(ccx_iface->get_sideset_name(contactpairs_data[i][4]));
+    str_temp.append(",");
+    str_temp.append(ccx_iface->get_sideset_name(contactpairs_data[i][3]));
+    contactpairs_export_list.push_back(str_temp);
   }
   
-  return constraint_export;
+  std::string contactpair_export;
+
+  for (size_t i = 0; i < contactpairs_export_list.size(); i++)
+  {
+    contactpair_export.append(contactpairs_export_list[i] + "\n");
+  }
+  
+  return contactpair_export;
 }
 
 std::string CoreContactPairs::print_data()

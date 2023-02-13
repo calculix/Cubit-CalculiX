@@ -1,4 +1,12 @@
 reset
+create brick x 1
+undo group begin
+sideset 1 add surface 1  
+sideset 1 name "testname"
+undo group end
+undo group begin
+sideset 2 add surface 2
+undo group end
 ccx create surfaceinteraction name test1_1 exponential c0 1.0 p0 2.0
 ccx create surfaceinteraction name test1_2 exponential c0 1.0 p0 2.0
 ccx create surfaceinteraction name test1_3 exponential c0 1.0 p0 2.0
@@ -41,7 +49,9 @@ ccx create contactpair surfaceinteraction 3 mortar master 1 slave 2 adjust 0.99
 ccx create contactpair surfaceinteraction 4 linmortar master 1 slave 2
 ccx create contactpair surfaceinteraction 5 pglinmortar master 1 slave 2
 ccx create contactpair surfaceinteraction 6 massless master 1 slave 2
+#ccx delete contactpair all
 #export ccx "test_contact.inp"
+
 
 
 

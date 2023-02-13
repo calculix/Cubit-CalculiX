@@ -10,6 +10,7 @@
 #include "SectionsTree.hpp"
 #include "ConstraintsTree.hpp"
 #include "SurfaceInteractionsTree.hpp"
+#include "ContactPairsTree.hpp"
 
 
 CCXDockWindowTree::CCXDockWindowTree() :
@@ -71,7 +72,9 @@ void CCXDockWindowTree::initialize()
   myConstraintsTree = new ConstraintsTree(myModelTree);
   myConstraintsTree->initialize();   
   mySurfaceInteractionsTree = new SurfaceInteractionsTree(myModelTree);
-  mySurfaceInteractionsTree->initialize();   
+  mySurfaceInteractionsTree->initialize();
+  myContactPairsTree = new ContactPairsTree(myModelTree);
+  myContactPairsTree->initialize();
 
   dock->setWidget(myModelTree);
       
@@ -110,6 +113,7 @@ void CCXDockWindowTree::clear()
     delete mySectionsTree;
     delete myConstraintsTree;
     delete mySurfaceInteractionsTree;
+    delete myContactPairsTree;
     delete myModelTree;
     delete dock;
     isInitialized = false;  
@@ -130,6 +134,7 @@ void CCXDockWindowTree::update()
   mySectionsTree->update();
   myConstraintsTree->update();
   mySurfaceInteractionsTree->update();
+  myContactPairsTree->update();
 }
 
 void CCXDockWindowTree::reset()
@@ -142,4 +147,5 @@ void CCXDockWindowTree::reset()
   mySectionsTree->clear();
   myConstraintsTree->clear();
   mySurfaceInteractionsTree->clear();
+  myContactPairsTree->clear();
 }

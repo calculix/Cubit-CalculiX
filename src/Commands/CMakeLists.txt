@@ -71,4 +71,8 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionDeleteCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxContactPairCreateCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxContactPairCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxContactPairModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxContactPairModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxContactPairDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxContactPairDeleteCommand.hpp
     PARENT_SCOPE)
