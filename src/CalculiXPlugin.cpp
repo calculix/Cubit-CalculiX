@@ -36,6 +36,7 @@
 #include "ccxContactPairCreateCommand.hpp"
 #include "ccxContactPairModifyCommand.hpp"
 #include "ccxContactPairDeleteCommand.hpp"
+#include "ccxContactPairCreateFromCubitContactPairCommand.hpp"
 
 //! This macro is required to identify this as a valid Cubit plugin. The plugin
 //! will NOT be loaded if this macro is not present.
@@ -87,6 +88,7 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxContactPairCreateCommand");
   keys.push_back("ccxContactPairModifyCommand");
   keys.push_back("ccxContactPairDeleteCommand");
+  keys.push_back("ccxContactPairCreateFromCubitContactPairCommand");
 
   return keys;
 }
@@ -206,6 +208,9 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
   
   else if(key == "ccxContactPairDeleteCommand")
     return new ccxContactPairDeleteCommand();
+  
+  else if(key == "ccxContactPairCreateFromCubitContactPairCommand")
+    return new ccxContactPairCreateFromCubitContactPairCommand();
 
   return NULL;
 }

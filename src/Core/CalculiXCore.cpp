@@ -344,6 +344,59 @@ bool CalculiXCore::delete_contactpair(int contactpair_id)
   return contactpairs->delete_contactpair(contactpair_id);
 }
 
+bool CalculiXCore::create_contactpair_from_cubitcontactpair(std::vector<std::string> options)
+{
+  int surfaceinteraction_id;
+  std::vector<std::string> options_ccx;
+  surfaceinteraction_id = std::stoi(options[0]);
+
+  std::vector<int> contact_ids;
+  contact_ids = CubitInterface::get_bc_id_list(CI_BCTYPE_CONTACT_PAIR);	
+
+  if (surfaceinteractions->get_surfaceinteractions_data_id_from_surfaceinteraction_id(surfaceinteraction_id)==-1)
+  {
+    return false;
+  }
+
+  BCContactHandle contact;
+  
+  for (size_t i = 0; i < contact_ids.size(); i++)
+  {
+    me_iface->get_bc_contact_handle(contact_ids[i], contact);
+    BCEntityHandle master_region;
+		BCEntityHandle slave_region; 
+    SidesetHandle master_sideset;
+    SidesetHandle slave_sideset;
+    int master_id;
+    int slave_id;
+
+    me_iface->get_contact_regions(contact,master_region,slave_region);
+    if (!me_iface->get_bc_sideset(master_region,master_sideset))
+    {
+      return false;
+    }
+
+    if (!me_iface->get_bc_sideset(slave_region,slave_sideset))
+    {
+      return false;
+    }
+
+    master_id = me_iface->id_from_handle(master_sideset);
+    slave_id = me_iface->id_from_handle(slave_sideset);
+
+    options_ccx.push_back(options[0]);
+    options_ccx.push_back(options[1]);
+    options_ccx.push_back(std::to_string(master_id));
+    options_ccx.push_back(std::to_string(slave_id));
+    options_ccx.push_back(options[2]);
+
+    this->create_contactpair(options_ccx);
+    options_ccx.clear();
+  } 
+  
+  return true;
+}
+
 std::string CalculiXCore::get_material_export_data() // gets the export data from materials core
 {
   return mat->get_material_export();

@@ -75,4 +75,6 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxContactPairModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxContactPairDeleteCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxContactPairDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxContactPairCreateFromCubitContactPairCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxContactPairCreateFromCubitContactPairCommand.hpp
     PARENT_SCOPE)
