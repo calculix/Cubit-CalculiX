@@ -33,6 +33,7 @@
 #include "ccxSurfaceInteractionGapHeatGenerationModifyCommand.hpp"
 #include "ccxSurfaceInteractionFrictionModifyCommand.hpp"
 #include "ccxSurfaceInteractionDeleteCommand.hpp"
+#include "ccxContactPairCreateCommand.hpp"
 
 //! This macro is required to identify this as a valid Cubit plugin. The plugin
 //! will NOT be loaded if this macro is not present.
@@ -81,6 +82,7 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxSurfaceInteractionGapHeatGenerationModifyCommand");
   keys.push_back("ccxSurfaceInteractionFrictionModifyCommand");
   keys.push_back("ccxSurfaceInteractionDeleteCommand");
+  keys.push_back("ccxContactPairCreateCommand");
 
   return keys;
 }
@@ -191,6 +193,9 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxSurfaceInteractionDeleteCommand")
     return new ccxSurfaceInteractionDeleteCommand();
+
+  else if(key == "ccxContactPairCreateCommand")
+    return new ccxContactPairCreateCommand();
 
   return NULL;
 }

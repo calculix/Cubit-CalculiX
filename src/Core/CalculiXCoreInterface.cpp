@@ -162,6 +162,11 @@ bool CalculiXCoreInterface::delete_surfaceinteraction(int surfaceinteraction_id)
   return ccx_core.delete_surfaceinteraction(surfaceinteraction_id);
 }
 
+bool CalculiXCoreInterface::create_contactpair(std::vector<std::string> options)
+{
+  return ccx_core.create_contactpair(options);
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_blocks_tree_data()
 { 
   return ccx_core.get_blocks_tree_data();

@@ -69,4 +69,6 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionFrictionModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionDeleteCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxContactPairCreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxContactPairCreateCommand.hpp
     PARENT_SCOPE)

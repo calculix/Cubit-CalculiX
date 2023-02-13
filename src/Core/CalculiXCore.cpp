@@ -308,6 +308,11 @@ bool CalculiXCore::delete_surfaceinteraction(int surfaceinteraction_id)
   return surfaceinteractions->delete_surfaceinteraction(surfaceinteraction_id);
 }
 
+bool CalculiXCore::create_contactpair(std::vector<std::string> options)
+{
+  return contactpairs->create_contactpair(options);
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_blocks_tree_data()
 { 
   std::vector<std::vector<std::string>> blocks_tree_data;

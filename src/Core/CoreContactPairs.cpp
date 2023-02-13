@@ -28,7 +28,7 @@ bool CoreContactPairs::update()
 bool CoreContactPairs::reset()
 {
   contactpairs_data.clear();
-  adjust_contactpairs_data.clear();
+  adjust_contactpair_data.clear();
   
   init();
   return true;
@@ -39,13 +39,20 @@ bool CoreContactPairs::check_initialized()
   return is_initialized;
 }
 
-bool CoreContactPairs::create_contactpair(std::string contactpair_type, std::vector<std::string> options)
+bool CoreContactPairs::create_contactpair(std::vector<std::string> options)
 {
   int contactpair_id;
+  std::string contactpair_type;
   int contactpair_type_value;
   int contactpair_last;
   int sub_id;
   int sub_last;
+  int surfaceinteractions_id;
+  int master_id;
+  int slave_id;
+  int adjust_id;
+  
+  contactpair_type = options[1];
 
   if (contactpair_type=="NODE TO SURFACE")
   {
@@ -77,110 +84,133 @@ bool CoreContactPairs::create_contactpair(std::string contactpair_type, std::vec
     contactpair_id = contactpairs_data[contactpair_last][0] + 1;
   }
 
-  this->add_contactpair(contactpair_id,contactpair_type_value,sub_id);
+  if (adjust_contactpair_data.size()==0)
+  {
+    sub_id = 1;
+  }
+  else
+  {
+    sub_last = adjust_contactpair_data.size() - 1;
+    sub_id = std::stoi(adjust_contactpair_data[sub_last][0]) + 1;
+  }
+  this->add_adjust_contactpair(std::to_string(sub_id), options[4]);
+
+  //contactpair_id, surfaceinteractions_id, contactpair_type, master_id, slave_id, adjust_id
+  surfaceinteractions_id = std::stoi(options[0]);
+  master_id = std::stoi(options[2]);
+  slave_id = std::stoi(options[3]);
+  adjust_id = sub_id;
+  
+  this->add_contactpair(contactpair_id, surfaceinteractions_id, contactpair_type_value, master_id, slave_id, adjust_id);
   return true;
 }
 
-bool CoreContactPairs::modify_contactpair(std::string constraint_type,int constraint_id, std::vector<std::string> options, std::vector<int> options_marker)
+bool CoreContactPairs::modify_contactpair(int contactpair_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
-  int constraint_type_value;
-  if (constraint_type=="RIGIDBODY")
-  {
-    constraint_type_value = 1;
-  }else if (constraint_type=="TIE")
-  {
-    constraint_type_value = 2;
-  }
-
-  int sub_constraint_data_id;
-  int constraints_data_id = get_constraints_data_id_from_constraint_id(constraint_id);
+  std::string contactpair_type;
+  int contactpair_type_value;
+  int sub_data_id;
+  int contactpairs_data_id = get_contactpairs_data_id_from_contactpair_id(contactpair_id);
   
-  if (constraints_data_id == -1)
+  if (contactpairs_data_id == -1)
   {
     return false;
   } else {
-    if ((constraints_data[constraints_data_id][1]==1) && (constraints_data[constraints_data_id][1]==constraint_type_value))
+    // surfaceinteraction id
+    if (options_marker[0]==1)
     {
-      sub_constraint_data_id = get_rigidbody_constraint_data_id_from_rigidbody_constraint_id(constraints_data[constraints_data_id][2]);
-
-      for (size_t i = 0; i < options.size(); i++)
-      {
-        if (options_marker[i]==1)
-        {
-          rigidbody_constraint_data[sub_constraint_data_id][i+1] = options[i];
-        }
-      }
-    }else if ((constraints_data[constraints_data_id][1]==2) && (constraints_data[constraints_data_id][1]==constraint_type_value))
+      contactpairs_data[contactpairs_data_id][1] = std::stoi(options[0]);
+    }
+    // contactpair type
+    if (options_marker[1]==1)
     {
-      sub_constraint_data_id = get_tie_constraint_data_id_from_tie_constraint_id(constraints_data[constraints_data_id][2]);
+      contactpair_type = options[1];
 
-      for (size_t i = 0; i < options.size(); i++)
+      if (contactpair_type=="NODE TO SURFACE")
       {
-        if (options_marker[i]==1)
-        {
-          tie_constraint_data[sub_constraint_data_id][i+1] = options[i];
-        }
+        contactpair_type_value = 1;
+      } else if (contactpair_type=="SURFACE TO SURFACE")
+      {
+        contactpair_type_value = 2;
+      } else if (contactpair_type=="MORTAR")
+      {
+        contactpair_type_value = 3;
+      } else if (contactpair_type=="LINMORTAR")
+      {
+        contactpair_type_value = 4;
+      } else if (contactpair_type=="PGLINMORTAR")
+      {
+        contactpair_type_value = 5;
+      } else if (contactpair_type=="MASSLESS")
+      {
+        contactpair_type_value = 6;
       }
+      contactpairs_data[contactpairs_data_id][2] = contactpair_type_value;
+    }
+    // master id
+    if (options_marker[2]==1)
+    {
+      contactpairs_data[contactpairs_data_id][3] = std::stoi(options[2]);
+    }
+    // slave id
+    if (options_marker[3]==1)
+    {
+      contactpairs_data[contactpairs_data_id][4] = std::stoi(options[3]);
+    }
+    // adjust
+    if (options_marker[4]==1)
+    {
+      sub_data_id = get_adjust_contactpair_data_id_from_adjust_contactpair_id(contactpairs_data[contactpairs_data_id][5]);
+      adjust_contactpair_data[sub_data_id][1] = options[4];
     }
     return true;
   }
 }
 
-bool CoreContactPairs::add_constraint(int constraint_id, int constraint_type, int constraint_type_id)
+bool CoreContactPairs::add_contactpair(int contactpair_id, int surfaceinteractions_id, int contactpair_type, int master_id, int slave_id, int adjust_id)
 {
-  std::vector<int> v = {constraint_id, constraint_type, constraint_type_id};
+  std::vector<int> v = {contactpair_id, surfaceinteractions_id, contactpair_type, master_id, slave_id, adjust_id};
       
-  constraints_data.push_back(v);
+  contactpairs_data.push_back(v);
 
   return true;
 }
 
-bool CoreContactPairs::add_rigidbody_constraint(std::string rigid_body_constraint_id, std::string entity_type, std::string type_id,std::string vertex)
+bool CoreContactPairs::add_adjust_contactpair(std::string adjust_contactpair_id, std::string adjust_value)
 {
-  std::vector<std::string> v = {rigid_body_constraint_id,entity_type,type_id,vertex};
-      
-  rigidbody_constraint_data.push_back(v);
+  std::vector<std::string> v = {adjust_contactpair_id, adjust_value};
+  
+  adjust_contactpair_data.push_back(v);
   
   return true;
 }
 
-bool CoreContactPairs::add_tie_constraint(std::string tie_constraint_id, std::string name, std::string master,std::string slave,std::string position_tolerance)
+bool CoreContactPairs::delete_contactpair(int contactpair_id)
 {
-  std::vector<std::string> v = {tie_constraint_id,name,master,slave,position_tolerance};
-      
-  tie_constraint_data.push_back(v);
-
-  return true;
-}
-
-bool CoreContactPairs::delete_constraint(int constraint_id)
-{
-  int sub_constraint_data_id;
-  int constraints_data_id = get_constraints_data_id_from_constraint_id(constraint_id);
-  if (constraints_data_id == -1)
+  int sub_data_id;
+  int contactpairs_data_id = get_contactpairs_data_id_from_contactpair_id(contactpair_id);
+  if (contactpairs_data_id == -1)
   {
     return false;
   } else {
-    if (constraints_data[constraints_data_id][1]==1)
+    if (contactpairs_data[contactpairs_data_id][1]==1)
     {
-      sub_constraint_data_id = get_rigidbody_constraint_data_id_from_rigidbody_constraint_id(constraints_data[constraints_data_id][2]);
-      rigidbody_constraint_data.erase(rigidbody_constraint_data.begin() + sub_constraint_data_id);  
-    }else if (constraints_data[constraints_data_id][1]==2)
-    {
-      sub_constraint_data_id = get_tie_constraint_data_id_from_tie_constraint_id(constraints_data[constraints_data_id][2]);
-      tie_constraint_data.erase(tie_constraint_data.begin() + sub_constraint_data_id);  
+      sub_data_id = get_adjust_contactpair_data_id_from_adjust_contactpair_id(contactpairs_data[contactpairs_data_id][5]);
+      if (sub_data_id != -1){
+        adjust_contactpair_data.erase(adjust_contactpair_data.begin() + sub_data_id);  
+      }
     }
-    constraints_data.erase(constraints_data.begin() + constraints_data_id);
+    contactpairs_data.erase(contactpairs_data.begin() + contactpairs_data_id);
     return true;
   }
 }
 
-int CoreContactPairs::get_constraints_data_id_from_constraint_id(int constraint_id)
+int CoreContactPairs::get_contactpairs_data_id_from_contactpair_id(int contactpair_id)
 { 
   int return_int = -1;
-  for (size_t i = 0; i < constraints_data.size(); i++)
+  for (size_t i = 0; i < contactpairs_data.size(); i++)
   {
-    if (constraints_data[i][0]==constraint_id)
+    if (contactpairs_data[i][0]==contactpair_id)
     {
         return_int = i;
     }  
@@ -188,12 +218,12 @@ int CoreContactPairs::get_constraints_data_id_from_constraint_id(int constraint_
   return return_int;
 }
 
-int CoreContactPairs::get_rigidbody_constraint_data_id_from_rigidbody_constraint_id(int rigidbody_constraint_id)
+int CoreContactPairs::get_adjust_contactpair_data_id_from_adjust_contactpair_id(int adjust_contactpair_id)
 { 
   int return_int = -1;
-  for (size_t i = 0; i < rigidbody_constraint_data.size(); i++)
+  for (size_t i = 0; i < adjust_contactpair_data.size(); i++)
   {
-    if (rigidbody_constraint_data[i][0]==std::to_string(rigidbody_constraint_id))
+    if (adjust_contactpair_data[i][0]==std::to_string(adjust_contactpair_id))
     {
         return_int = i;
     }  
@@ -201,26 +231,13 @@ int CoreContactPairs::get_rigidbody_constraint_data_id_from_rigidbody_constraint
   return return_int;
 }
 
-int CoreContactPairs::get_tie_constraint_data_id_from_tie_constraint_id(int tie_constraint_id)
-{ 
-  int return_int = -1;
-  for (size_t i = 0; i < tie_constraint_data.size(); i++)
-  {
-    if (tie_constraint_data[i][0]==std::to_string(tie_constraint_id))
-    {
-        return_int = i;
-    }  
-  }
-  return return_int;
-}
-
-std::string CoreContactPairs::get_constraint_export() // get a list of the CalculiX constraint exports
+std::string CoreContactPairs::get_contactpair_export() // get a list of the CalculiX contactpair exports
 {
   std::vector<std::string> constraints_export_list;
   constraints_export_list.push_back("********************************** C O N S T R A I N T S ****************************");
   std::string str_temp;
   int sub_constraint_data_id;
-
+  /*
   //loop over all constraints
   for (size_t i = 0; i < constraints_data.size(); i++)
   { 
@@ -271,7 +288,7 @@ std::string CoreContactPairs::get_constraint_export() // get a list of the Calcu
       constraints_export_list.push_back(str_temp);
     }
   }
-
+  */
   std::string constraint_export;
 
   for (size_t i = 0; i < constraints_export_list.size(); i++)
@@ -282,44 +299,24 @@ std::string CoreContactPairs::get_constraint_export() // get a list of the Calcu
   return constraint_export;
 }
 
-std::vector<int> CoreContactPairs::get_rigidbody_vertex_list()
-{
-  std::vector<int> vertices;
-  for (size_t i = 0; i < rigidbody_constraint_data.size(); i++)
-  {
-    vertices.push_back(std::stoi(rigidbody_constraint_data[i][3]));
-  }
-  
-  return vertices;
-}
-
-
 std::string CoreContactPairs::print_data()
 {
   std::string str_return;
-  str_return = "\n CoreConstraints constraints_data: \n";
-  str_return.append("constraint_id, constraint_type, constraint_type_id \n");
+  str_return = "\n CoreContactPairs contactpairs_data: \n";
+  str_return.append("contactpair_id, surfaceinteractions_id, contactpair_type, master_id, slave_id, adjust_id \n");
 
-  for (size_t i = 0; i < constraints_data.size(); i++)
+  for (size_t i = 0; i < contactpairs_data.size(); i++)
   {
-    str_return.append(std::to_string(constraints_data[i][0]) + " " + std::to_string(constraints_data[i][1]) + " " + std::to_string(constraints_data[i][2]) + " \n");
+    str_return.append(std::to_string(contactpairs_data[i][0]) + " " + std::to_string(contactpairs_data[i][1]) + " " + std::to_string(contactpairs_data[i][2]) + " " + std::to_string(contactpairs_data[i][3]) + " " + std::to_string(contactpairs_data[i][4]) + " " + std::to_string(contactpairs_data[i][5]) + " \n");
   }
 
-  str_return.append("\n CoreConstraints rigidbody_constraint_data: \n");
-  str_return.append("rigidbody_constraint_id,entity_type,type_id,vertex \n");
+  str_return.append("\n CoreContactPairs adjust_contactpair_data: \n");
+  str_return.append("adjust_contactpair_id, adjust_value \n");
 
-  for (size_t i = 0; i < rigidbody_constraint_data.size(); i++)
+  for (size_t i = 0; i < adjust_contactpair_data.size(); i++)
   {
-    str_return.append(rigidbody_constraint_data[i][0] + " " + rigidbody_constraint_data[i][1] + " " + rigidbody_constraint_data[i][2] + " " + rigidbody_constraint_data[i][3] + " \n");
+    str_return.append(adjust_contactpair_data[i][0] + " " + adjust_contactpair_data[i][1] + " \n");
   }
-
-  str_return.append("\n CoreConstraints tie_constraint_data: \n");
-  str_return.append("tie_constraint_id,name,master,slave,position tolerance \n");
-
-  for (size_t i = 0; i < tie_constraint_data.size(); i++)
-  {
-    str_return.append(tie_constraint_data[i][0] + " " + tie_constraint_data[i][1] + " " + tie_constraint_data[i][2] + " " + tie_constraint_data[i][3] + " " + tie_constraint_data[i][4] + " \n");
-  }
-  
+ 
   return str_return;
 }
