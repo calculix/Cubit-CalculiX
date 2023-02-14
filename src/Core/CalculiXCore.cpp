@@ -344,11 +344,9 @@ bool CalculiXCore::delete_contactpair(int contactpair_id)
   return contactpairs->delete_contactpair(contactpair_id);
 }
 
-bool CalculiXCore::create_contactpair_from_cubitcontactpair(std::vector<std::string> options)
+bool CalculiXCore::create_contactpair_from_cubitcontactpair(int surfaceinteraction_id, std::string contactpairtype, std::string adjust)
 {
-  int surfaceinteraction_id;
-  std::vector<std::string> options_ccx;
-  surfaceinteraction_id = std::stoi(options[0]);
+  std::vector<std::string> options;
 
   std::vector<int> contact_ids;
   contact_ids = CubitInterface::get_bc_id_list(CI_BCTYPE_CONTACT_PAIR);	
@@ -384,14 +382,14 @@ bool CalculiXCore::create_contactpair_from_cubitcontactpair(std::vector<std::str
     master_id = me_iface->id_from_handle(master_sideset);
     slave_id = me_iface->id_from_handle(slave_sideset);
 
-    options_ccx.push_back(options[0]);
-    options_ccx.push_back(options[1]);
-    options_ccx.push_back(std::to_string(master_id));
-    options_ccx.push_back(std::to_string(slave_id));
-    options_ccx.push_back(options[2]);
+    options.push_back(std::to_string(surfaceinteraction_id));
+    options.push_back(contactpairtype);
+    options.push_back(std::to_string(master_id));
+    options.push_back(std::to_string(slave_id));
+    options.push_back(adjust);
 
-    this->create_contactpair(options_ccx);
-    options_ccx.clear();
+    this->create_contactpair(options);
+    options.clear();
   } 
   
   return true;

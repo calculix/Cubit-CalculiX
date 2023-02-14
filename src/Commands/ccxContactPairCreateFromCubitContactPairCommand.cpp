@@ -85,7 +85,7 @@ bool ccxContactPairCreateFromCubitContactPairCommand::execute(CubitCommandData &
   
   options.push_back(adjust);
 
-  if (!ccx_iface.create_contactpair_from_cubitcontactpair(options))
+  if (!ccx_iface.create_contactpair_from_cubitcontactpair(surfaceinteraction_value,options[1],options[2]))
   {
     output = "Failed!\n";
     PRINT_ERROR(output.c_str());
