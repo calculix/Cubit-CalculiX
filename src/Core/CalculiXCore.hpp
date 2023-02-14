@@ -9,6 +9,7 @@ class CoreConstraints;
 class CoreReferencePoints;
 class CoreSurfaceInteractions;
 class CoreContactPairs;
+class CoreAmplitudes;
 
 class MeshExportInterface;
 class MaterialInterface;
@@ -60,6 +61,9 @@ public:
   bool modify_contactpair(int contactpair_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a contactpair  
   bool delete_contactpair(int contactpair_id); // delete contact pair
   bool create_contactpair_from_cubitcontactpair(int surfaceinteraction_id, std::string contactpairtype, std::string adjust); // create contact pairs from cubit contact pairs with given surface interaction
+  bool create_amplitude(std::vector<std::string> options, std::vector<std::vector<std::string>> options2); // adds a new amplitude
+  bool modify_amplitude(int amplitude_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2); // modify a amplitude
+  bool delete_amplitude(int amplitude_id); // delete amplitude
   std::vector<std::vector<std::string>> get_blocks_tree_data(); // gets the data from core blocks to build the tree
   std::vector<std::vector<std::string>> get_nodeset_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_sideset_tree_data(); // gets the data from core to build the tree
@@ -75,6 +79,7 @@ public:
   CoreConstraints *constraints;
   CoreReferencePoints *referencepoints;
   CoreSurfaceInteractions *surfaceinteractions;
+  CoreAmplitudes *amplitudes;
   CoreContactPairs *contactpairs;
   MeshExportInterface *me_iface;
   MaterialInterface *mat_iface;

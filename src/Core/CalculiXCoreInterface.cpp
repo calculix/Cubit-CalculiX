@@ -187,6 +187,21 @@ bool CalculiXCoreInterface::create_contactpair_from_cubitcontactpair(int surface
   return ccx_core.create_contactpair_from_cubitcontactpair(surfaceinteraction_id,contactpairtype,adjust);
 }
 
+bool CalculiXCoreInterface::create_amplitude(std::vector<std::string> options, std::vector<std::vector<std::string>> options2)
+{
+  return ccx_core.create_amplitude(options, options2);
+}
+
+bool CalculiXCoreInterface::modify_amplitude(int amplitude_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2)
+{
+  return ccx_core.modify_amplitude(amplitude_id,options,options_marker, options2);
+}
+
+bool CalculiXCoreInterface::delete_amplitude(int amplitude_id)
+{
+  return ccx_core.delete_amplitude(amplitude_id);
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_blocks_tree_data()
 { 
   return ccx_core.get_blocks_tree_data();

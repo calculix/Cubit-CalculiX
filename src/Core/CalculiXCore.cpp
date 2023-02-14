@@ -14,10 +14,12 @@
 #include "CoreReferencePoints.hpp"
 #include "CoreSurfaceInteractions.hpp"
 #include "CoreContactPairs.hpp"
+#include "CoreAmplitudes.hpp"
 
 
 CalculiXCore::CalculiXCore():
-  cb(NULL),mat(NULL),sections(NULL),constraints(NULL),referencepoints(NULL),surfaceinteractions(NULL)
+  cb(NULL),mat(NULL),sections(NULL),constraints(NULL),referencepoints(NULL),surfaceinteractions(NULL),
+  contactpairs(NULL),amplitudes(NULL)
 {
   print_to_log("CalculiXCore Initialization!");
   init();
@@ -39,6 +41,8 @@ CalculiXCore::~CalculiXCore()
     delete surfaceinteractions;
   if(contactpairs)
     delete contactpairs;
+  if(amplitudes)
+    delete amplitudes;
 }
 
 bool CalculiXCore::print_to_log(std::string str_log)
@@ -91,6 +95,11 @@ bool CalculiXCore::init()
     contactpairs = new CoreContactPairs;
   
   contactpairs->init();
+
+  if(!amplitudes)
+    amplitudes = new CoreAmplitudes;
+  
+  amplitudes->init();
   
   return true;
 }
@@ -115,6 +124,7 @@ bool CalculiXCore::reset()
   referencepoints->reset();
   surfaceinteractions->reset();
   contactpairs->reset();
+  amplitudes->reset();
   
   //print_to_log("RESET");
   //print_to_log(print_data());
@@ -131,6 +141,7 @@ std::string CalculiXCore::print_data()
   str_return.append(referencepoints->print_data());
   str_return.append(surfaceinteractions->print_data());
   str_return.append(contactpairs->print_data());
+  str_return.append(amplitudes->print_data());
 
   return str_return;
 }
@@ -394,6 +405,22 @@ bool CalculiXCore::create_contactpair_from_cubitcontactpair(int surfaceinteracti
   
   return true;
 }
+
+bool CalculiXCore::create_amplitude(std::vector<std::string> options, std::vector<std::vector<std::string>> options2)
+{
+  return amplitudes->create_amplitude(options,options2);
+}
+
+bool CalculiXCore::modify_amplitude(int amplitude_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2)
+{
+  return amplitudes->modify_amplitude(amplitude_id,options,options_marker,options2);
+}
+
+bool CalculiXCore::delete_amplitude(int amplitude_id)
+{
+  return amplitudes->delete_amplitude(amplitude_id);
+}
+
 
 std::string CalculiXCore::get_material_export_data() // gets the export data from materials core
 {

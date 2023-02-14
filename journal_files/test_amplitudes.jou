@@ -1,0 +1,13 @@
+reset
+#ccx create amplitude name <name> amplitudevalues <amplitudevalues>... [shiftx <value>] [shifty <value>] [totaltime]
+ccx create amplitude name abc amplitudevalues 1 2 3 4
+ccx create amplitude name abc amplitudevalues 1 2 3 4 shiftx 2 shifty 1 totaltime
+ccx create amplitude name abc amplitudevalues 1 2 3 4 shiftx 2 shifty 1
+ccx modify amplitude 1 name xxx amplitudevalues 9 8 shiftx 0 shifty -1
+ccx modify amplitude 3 name xxx amplitudevalues 9 8 1 2 3 4 5 6 7 8 9 10 shiftx 0 shifty -1 totaltime
+
+
+
+
+
+

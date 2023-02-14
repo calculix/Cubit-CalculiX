@@ -21,4 +21,6 @@ set(CORE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/CoreSurfaceInteractions.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreContactPairs.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreContactPairs.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreAmplitudes.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreAmplitudes.hpp
     PARENT_SCOPE)
