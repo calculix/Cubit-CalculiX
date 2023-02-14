@@ -19,6 +19,8 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/SurfaceInteractionsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ContactPairsTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ContactPairsTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/AmplitudesTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/AmplitudesTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CCXBlocksElementTypePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CCXBlocksElementTypePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/SectionsCreatePanel.hpp

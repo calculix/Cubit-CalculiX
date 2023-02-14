@@ -342,52 +342,65 @@ std::string CoreAmplitudes::get_amplitude_export() // get a list of the CalculiX
   amplitudes_export_list.push_back("********************************** A M P L I T U D E S ****************************");
   std::string str_temp;
   int sub_data_id;
-  /*
-  //loop over all contactpairs
-  for (size_t i = 0; i < contactpairs_data.size(); i++)
+  std::vector<int> sub_data_ids;
+  
+  //loop over all amplitudes
+  for (size_t i = 0; i < amplitudes_data.size(); i++)
   { 
-    str_temp = "*CONTACT PAIR, INTERACTION=";
-    str_temp.append(ccx_iface->get_surfaceinteraction_name(contactpairs_data[i][1]));
-
-    str_temp.append(", TYPE=");
-    if (contactpairs_data[i][2]==1)
+    str_temp = "*AMPLITUDE, NAME=";
+    sub_data_id = get_name_amplitude_data_id_from_name_amplitude_id(amplitudes_data[i][1]);
+    str_temp.append(name_amplitude_data[sub_data_id][1]);
+    //shiftx
+    sub_data_id = get_shiftx_amplitude_data_id_from_shiftx_amplitude_id(amplitudes_data[i][2]);
+    if(shiftx_amplitude_data[sub_data_id][1]!="")
     {
-      str_temp.append("NODE TO SURFACE");
-    }else if (contactpairs_data[i][2]==2)
+      str_temp.append(", SHIFTX=");
+      str_temp.append(shiftx_amplitude_data[sub_data_id][1]);
+    }
+    //shifty
+    sub_data_id = get_shifty_amplitude_data_id_from_shifty_amplitude_id(amplitudes_data[i][3]);
+    if(shifty_amplitude_data[sub_data_id][1]!="")
     {
-      str_temp.append("SURFACE TO SURFACE");
-    }else if (contactpairs_data[i][2]==3)
+      str_temp.append(", SHIFTY=");
+      str_temp.append(shifty_amplitude_data[sub_data_id][1]);
+    }
+    // time_type
+    if (amplitudes_data[i][4]==1)
     {
-      str_temp.append("MORTAR");
-    }else if (contactpairs_data[i][2]==4)
-    {
-      str_temp.append("LINMORTAR");
-    }else if (contactpairs_data[i][2]==5)
-    {
-      str_temp.append("PGLINMORTAR");
-    }else if (contactpairs_data[i][2]==6)
-    {
-      str_temp.append("MASSLESS");
-    }    
-    
-    sub_data_id = get_adjust_contactpair_data_id_from_adjust_contactpair_id(contactpairs_data[i][5]);
-
-    if(adjust_contactpair_data[sub_data_id][1]!="")
-    {
-      str_temp.append(", ADJUST=");
-      str_temp.append(adjust_contactpair_data[sub_data_id][1]);
+      str_temp.append(", TIME=TOTAL TIME"); 
     }
     
-    contactpairs_export_list.push_back(str_temp);
+    amplitudes_export_list.push_back(str_temp);
 
     // second line
+    // time_amplitude
+
+    sub_data_ids = get_amplitudevalues_amplitude_data_ids_from_amplitudevalues_amplitude_id(amplitudes_data[i][5]);
+    // second lines
     str_temp = "";
-    str_temp.append(ccx_iface->get_sideset_name(contactpairs_data[i][4]));
-    str_temp.append(",");
-    str_temp.append(ccx_iface->get_sideset_name(contactpairs_data[i][3]));
-    contactpairs_export_list.push_back(str_temp);
+    int ii = 0;
+    for (size_t i = 0; i < sub_data_ids.size(); i++)
+    {
+      if ((i != 0) && (ii!=0))
+      {
+        str_temp.append(",");
+      }
+      ii = ii + 1;
+      
+      str_temp.append(amplitudevalues_amplitude_data[sub_data_ids[i]][1]);
+      str_temp.append(",");
+      str_temp.append(amplitudevalues_amplitude_data[sub_data_ids[i]][2]);
+      if (ii == 4)
+      {
+        ii = 0;
+        str_temp.append(",");
+        amplitudes_export_list.push_back(str_temp);
+        str_temp = "";
+      }
+    }
+    amplitudes_export_list.push_back(str_temp);
   }
-  */
+  
   std::string amplitude_export;
 
   for (size_t i = 0; i < amplitudes_export_list.size(); i++)

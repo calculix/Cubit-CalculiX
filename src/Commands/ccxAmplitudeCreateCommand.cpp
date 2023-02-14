@@ -16,7 +16,7 @@ std::vector<std::string> ccxAmplitudeCreateCommand::get_syntax()
   std::string syntax = "ccx ";
   syntax.append("create amplitude ");
   syntax.append("name <string:type='unquoted', number='1', label='name', help='<name>'> " );
-  syntax.append("amplitudevalues <value:label='amplitudevalues',help='<amplitudevalues>'>... " );
+  syntax.append("time_amplitude <value:label='time_amplitude',help='<time_amplitude>'>... " );
   syntax.append("[shiftx <value:label='shiftx',help='<shiftx>'>] ");
   syntax.append("[shifty <value:label='shifty',help='<shifty>'>] ");
   syntax.append("[totaltime] ");
@@ -29,7 +29,7 @@ std::vector<std::string> ccxAmplitudeCreateCommand::get_syntax()
 std::vector<std::string> ccxAmplitudeCreateCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx create amplitude name <name> amplitudevalues <amplitudevalues>... [shiftx <value>] [shifty <value>] [totaltime]"; 
+  help[0] = "ccx create amplitude name <name> time_amplitude <time_amplitude>... [shiftx <value>] [shifty <value>] [totaltime]"; 
 
   return help;
 }
@@ -54,7 +54,7 @@ bool ccxAmplitudeCreateCommand::execute(CubitCommandData &data)
   std::string shifty;
   std::vector<double> amplitudevalues;
 
-  data.get_values("amplitudevalues", amplitudevalues);
+  data.get_values("time_amplitude", amplitudevalues);
   
   if (amplitudevalues.size() % 2 != 0)
   {

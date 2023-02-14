@@ -81,4 +81,6 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxAmplitudeCreateCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxAmplitudeModifyCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxAmplitudeModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxAmplitudeDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxAmplitudeDeleteCommand.hpp
     PARENT_SCOPE)

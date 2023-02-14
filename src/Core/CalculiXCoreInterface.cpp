@@ -242,6 +242,11 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_contactpairs_tr
   return ccx_core.get_contactpairs_tree_data();
 }
 
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_amplitudes_tree_data()
+{ 
+  return ccx_core.get_amplitudes_tree_data();
+}
+
 std::string CalculiXCoreInterface::get_material_export_data() // gets the export data from materials core
 {
   return ccx_core.get_material_export_data();
@@ -265,4 +270,9 @@ std::string CalculiXCoreInterface::get_surfaceinteraction_export_data() // gets 
 std::string CalculiXCoreInterface::get_contactpair_export_data() // gets the export data from contactpairs core
 {
   return ccx_core.get_contactpair_export_data();
+}
+
+std::string CalculiXCoreInterface::get_amplitude_export_data() // gets the export data from amplitudes core
+{
+  return ccx_core.get_amplitude_export_data();
 }

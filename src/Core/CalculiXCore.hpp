@@ -41,6 +41,7 @@ public:
   std::string get_constraint_export_data(); // gets the export data from constraints core
   std::string get_surfaceinteraction_export_data(); // gets the export data from surfaceinteractions core
   std::string get_contactpair_export_data(); // gets the export data from contactpairs core
+  std::string get_amplitude_export_data(); // gets the export data from amplitudes core
   bool create_section(std::string section_type,int block_id, std::string material_name, std::vector<std::string> options); // adds a new section
   bool modify_section(std::string section_type,int section_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a section
   bool delete_section(int section_id); // adds a new section
@@ -72,6 +73,7 @@ public:
   std::vector<std::vector<std::string>> get_constraints_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_surfaceinteractions_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_contactpairs_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_amplitudes_tree_data(); // gets the data from core to build the tree
 
   CoreBlocks *cb;
   CoreMaterials *mat;

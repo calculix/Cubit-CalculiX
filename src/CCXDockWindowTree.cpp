@@ -11,6 +11,7 @@
 #include "ConstraintsTree.hpp"
 #include "SurfaceInteractionsTree.hpp"
 #include "ContactPairsTree.hpp"
+#include "AmplitudesTree.hpp"
 
 
 CCXDockWindowTree::CCXDockWindowTree() :
@@ -75,6 +76,8 @@ void CCXDockWindowTree::initialize()
   mySurfaceInteractionsTree->initialize();
   myContactPairsTree = new ContactPairsTree(myModelTree);
   myContactPairsTree->initialize();
+  myAmplitudesTree = new AmplitudesTree(myModelTree);
+  myAmplitudesTree->initialize();
 
   dock->setWidget(myModelTree);
       
@@ -114,6 +117,7 @@ void CCXDockWindowTree::clear()
     delete myConstraintsTree;
     delete mySurfaceInteractionsTree;
     delete myContactPairsTree;
+    delete myAmplitudesTree;
     delete myModelTree;
     delete dock;
     isInitialized = false;  
@@ -135,6 +139,7 @@ void CCXDockWindowTree::update()
   myConstraintsTree->update();
   mySurfaceInteractionsTree->update();
   myContactPairsTree->update();
+  myAmplitudesTree->update();
 }
 
 void CCXDockWindowTree::reset()
@@ -148,4 +153,5 @@ void CCXDockWindowTree::reset()
   myConstraintsTree->clear();
   mySurfaceInteractionsTree->clear();
   myContactPairsTree->clear();
+  myAmplitudesTree->clear();
 }

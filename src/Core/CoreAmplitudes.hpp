@@ -38,8 +38,8 @@ public:
 
   std::vector<std::vector<std::string>> amplitudevalues_amplitude_data;
   // amplitudevalues_amplitude_data[0][0] amplitudevalues_amplitude_id
-  // amplitudevalues_amplitude_data[0][1] amplitudevalues_value
-  // amplitudevalues_amplitude_data[0][2] amplitudevalues_value
+  // amplitudevalues_amplitude_data[0][1] time
+  // amplitudevalues_amplitude_data[0][2] amplitude
 
   bool is_initialized = false;
 

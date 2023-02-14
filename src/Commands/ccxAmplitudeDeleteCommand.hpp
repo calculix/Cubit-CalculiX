@@ -1,16 +1,16 @@
-#ifndef CCXCONTACTPAIRDELETECOMMAND_HPP
-#define CCXCONTACTPAIRDELETECOMMAND_HPP
+#ifndef CCXAMPLITUDEDELETECOMMAND_HPP
+#define CCXAMPLITUDEDELETECOMMAND_HPP
 
 #include "CubitCommandInterface.hpp"
 
 /*!
- * \brief The contact pair delete command lets you delete your desired contact pairs
+ * \brief The amplitude delete command lets you delete your desired amplitudes
  */
-class ccxContactPairDeleteCommand : public CubitCommand
+class ccxAmplitudeDeleteCommand : public CubitCommand
 {
 public:
-  ccxContactPairDeleteCommand();
-  ~ccxContactPairDeleteCommand();
+  ccxAmplitudeDeleteCommand();
+  ~ccxAmplitudeDeleteCommand();
 
   std::vector<std::string> get_syntax();
   std::vector<std::string> get_syntax_help();
@@ -18,4 +18,4 @@ public:
   bool execute(CubitCommandData &data);
 };
 
-#endif // CCXCONTACTPAIRDELETECOMMAND_HPP
+#endif // CCXAMPLITUDEDELETECOMMAND_HPP

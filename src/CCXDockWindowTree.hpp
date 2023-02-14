@@ -21,7 +21,7 @@ class SectionsTree;
 class ConstraintsTree;
 class SurfaceInteractionsTree;
 class ContactPairsTree;
-
+class AmplitudesTree;
 
 class CCXDockWindowTree
 {
@@ -56,6 +56,7 @@ private:
   ConstraintsTree *myConstraintsTree; //Constraints root item
   SurfaceInteractionsTree *mySurfaceInteractionsTree; //SurfaceInteractions root item
   ContactPairsTree *myContactPairsTree; //ContactPairs root item
+  AmplitudesTree *myAmplitudesTree; //Amplitudes root item
   QSettings *settings;
 };
 

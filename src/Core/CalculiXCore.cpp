@@ -447,6 +447,11 @@ std::string CalculiXCore::get_contactpair_export_data() // gets the export data 
   return contactpairs->get_contactpair_export();
 }
 
+std::string CalculiXCore::get_amplitude_export_data() // gets the export data from amplitudes core
+{
+  return amplitudes->get_amplitude_export();
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_blocks_tree_data()
 { 
   std::vector<std::vector<std::string>> blocks_tree_data;
@@ -701,6 +706,28 @@ std::vector<std::vector<std::string>> CalculiXCore::get_contactpairs_tree_data()
   return contactpairs_tree_data;
 }
 
+std::vector<std::vector<std::string>> CalculiXCore::get_amplitudes_tree_data()
+{ 
+  std::vector<std::vector<std::string>> amplitudes_tree_data;
+  
+  for (size_t i = 0; i < amplitudes->amplitudes_data.size(); i++)
+  {
+    std::vector<std::string> amplitudes_tree_data_set;
+    std::string amplitude_name;
+    int amplitude_name_id;
+
+    amplitude_name_id = amplitudes->get_name_amplitude_data_id_from_name_amplitude_id(amplitudes->amplitudes_data[i][1]);
+    amplitude_name = amplitudes->name_amplitude_data[amplitude_name_id][1];
+    
+    amplitudes_tree_data_set.push_back(std::to_string(amplitudes->amplitudes_data[i][0])); //amplitude_id
+    amplitudes_tree_data_set.push_back(amplitude_name); //amplitude_name
+    amplitudes_tree_data.push_back(amplitudes_tree_data_set);
+  }
+
+  return amplitudes_tree_data;
+}
+
+
 std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_string)
 {
   std::vector<int> input_ids;
@@ -740,6 +767,12 @@ std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_
       for (size_t i = 0; i < contactpairs->contactpairs_data.size(); i++)
       {
         all_ids.push_back(contactpairs->contactpairs_data[i][0]);
+      }
+    } else if (parse_type=="amplitude")
+    {
+      for (size_t i = 0; i < amplitudes->amplitudes_data.size(); i++)
+      {
+        all_ids.push_back(amplitudes->amplitudes_data[i][0]);
       }
     }
   }

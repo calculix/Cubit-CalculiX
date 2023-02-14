@@ -53,6 +53,7 @@ protected:
   bool write_constraints(std::ofstream& output_file,CalculiXCoreInterface ccx_iface);
   bool write_surfaceinteractions(std::ofstream& output_file,CalculiXCoreInterface ccx_iface);
   bool write_contactpairs(std::ofstream& output_file,CalculiXCoreInterface ccx_iface);
+  bool write_amplitudes(std::ofstream& output_file,CalculiXCoreInterface ccx_iface);
   int get_side(int element_type,int side);
 };
 
