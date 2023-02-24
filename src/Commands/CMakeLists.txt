@@ -41,6 +41,8 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintTieCreateCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintTieModifyCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintTieModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintTieCreateFromCubitContactPairCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintTieCreateFromCubitContactPairCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionExponentialCreateCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionExponentialCreateCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxSurfaceInteractionLinearCreateCommand.cpp

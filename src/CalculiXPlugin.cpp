@@ -19,6 +19,7 @@
 #include "ccxConstraintRigidBodyModifyCommand.hpp"
 #include "ccxConstraintTieCreateCommand.hpp"
 #include "ccxConstraintTieModifyCommand.hpp"
+#include "ccxConstraintTieCreateFromCubitContactPairCommand.hpp"
 #include "ccxSurfaceInteractionExponentialCreateCommand.hpp"
 #include "ccxSurfaceInteractionLinearCreateCommand.hpp"
 #include "ccxSurfaceInteractionTabularCreateCommand.hpp"
@@ -74,6 +75,7 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxConstraintRigidBodyModifyCommand");
   keys.push_back("ccxConstraintTieCreateCommand");
   keys.push_back("ccxConstraintTieModifyCommand");
+  keys.push_back("ccxConstraintTieCreateFromCubitContactPairCommand");
   keys.push_back("ccxSurfaceInteractionExponentialCreateCommand");
   keys.push_back("ccxSurfaceInteractionLinearCreateCommand");
   keys.push_back("ccxSurfaceInteractionTabularCreateCommand");
@@ -163,6 +165,9 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxConstraintTieModifyCommand")
     return new ccxConstraintTieModifyCommand();
+
+  else if(key == "ccxConstraintTieCreateFromCubitContactPairCommand")
+    return new ccxConstraintTieCreateFromCubitContactPairCommand();
 
   else if(key == "ccxSurfaceInteractionExponentialCreateCommand")
     return new ccxSurfaceInteractionExponentialCreateCommand();

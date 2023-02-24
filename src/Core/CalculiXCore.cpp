@@ -290,6 +290,51 @@ bool CalculiXCore::delete_constraint(int constraint_id)
   return constraints->delete_constraint(constraint_id);
 }
 
+bool CalculiXCore::create_constraint_tie_from_cubitcontactpair(std::string name, std::string position_tolerance) // create constraint tie from cubit contact pairs
+{
+  std::vector<std::string> options;
+
+  std::vector<int> contact_ids;
+  contact_ids = CubitInterface::get_bc_id_list(CI_BCTYPE_CONTACT_PAIR);	
+
+  BCContactHandle contact;
+  
+  for (size_t i = 0; i < contact_ids.size(); i++)
+  {
+    me_iface->get_bc_contact_handle(contact_ids[i], contact);
+    BCEntityHandle master_region;
+		BCEntityHandle slave_region; 
+    SidesetHandle master_sideset;
+    SidesetHandle slave_sideset;
+    int master_id;
+    int slave_id;
+
+    me_iface->get_contact_regions(contact,master_region,slave_region);
+    if (!me_iface->get_bc_sideset(master_region,master_sideset))
+    {
+      return false;
+    }
+
+    if (!me_iface->get_bc_sideset(slave_region,slave_sideset))
+    {
+      return false;
+    }
+
+    master_id = me_iface->id_from_handle(master_sideset);
+    slave_id = me_iface->id_from_handle(slave_sideset);
+
+    options.push_back(name + std::to_string(i));
+    options.push_back(std::to_string(master_id));
+    options.push_back(std::to_string(slave_id));
+    options.push_back(position_tolerance);
+
+    this->create_constraint("TIE", options);
+    options.clear();
+  } 
+  
+  return true;
+}
+
 std::vector<int> CalculiXCore::get_rigidbody_vertex_list()
 {
   return constraints->get_rigidbody_vertex_list();

@@ -118,6 +118,11 @@ bool CalculiXCoreInterface::delete_constraint(int constraint_id)
   return ccx_core.delete_constraint(constraint_id);
 }
 
+bool CalculiXCoreInterface::create_constraint_tie_from_cubitcontactpair(std::string name, std::string position_tolerance)
+{
+  return ccx_core.create_constraint_tie_from_cubitcontactpair(name, position_tolerance);
+}
+
 std::vector<int> CalculiXCoreInterface::get_rigidbody_vertex_list()
 {
   return ccx_core.get_rigidbody_vertex_list();

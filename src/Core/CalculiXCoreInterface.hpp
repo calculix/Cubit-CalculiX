@@ -35,6 +35,7 @@ public:
   bool create_constraint(std::string constraint_type, std::vector<std::string> options); // adds a new constraint
   bool modify_constraint(std::string constraint_type,int constraint_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a constraint  
   bool delete_constraint(int constraint_id); // delete constraint
+  bool create_constraint_tie_from_cubitcontactpair(std::string name, std::string position_tolerance); // create constraint tie from cubit contact pairs
   std::vector<int> get_rigidbody_vertex_list(); // get list of rigid body vertices
   bool referencepoints_update_on_export(int max_node_id); // update reference points
   bool referencepoints_reset_on_export(); // reset reference points
