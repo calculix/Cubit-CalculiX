@@ -25,4 +25,10 @@ set(CORE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/CoreAmplitudes.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsForces.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsForces.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsPressures.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsPressures.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreBCsDisplacements.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreBCsDisplacements.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreBCsTemperatures.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreBCsTemperatures.hpp
     PARENT_SCOPE)

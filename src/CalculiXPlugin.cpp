@@ -42,6 +42,10 @@
 #include "ccxAmplitudeCreateCommand.hpp"
 #include "ccxAmplitudeModifyCommand.hpp"
 #include "ccxAmplitudeDeleteCommand.hpp"
+#include "ccxLoadsForcesModifyCommand.hpp"
+#include "ccxLoadsPressuresModifyCommand.hpp"
+#include "ccxBCsDisplacementsModifyCommand.hpp"
+#include "ccxBCsTemperaturesModifyCommand.hpp"
 
 //! This macro is required to identify this as a valid Cubit plugin. The plugin
 //! will NOT be loaded if this macro is not present.
@@ -99,6 +103,10 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxAmplitudeCreateCommand");
   keys.push_back("ccxAmplitudeModifyCommand");
   keys.push_back("ccxAmplitudeDeleteCommand");
+  keys.push_back("ccxLoadsForcesModifyCommand");
+  keys.push_back("ccxLoadsPressuresModifyCommand");
+  keys.push_back("ccxBCsDisplacementsModifyCommand");
+  keys.push_back("ccxBCsTemperaturesModifyCommand");
 
   return keys;
 }
@@ -236,6 +244,18 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxAmplitudeDeleteCommand")
     return new ccxAmplitudeDeleteCommand();
+
+  else if(key == "ccxLoadsForcesModifyCommand")
+    return new ccxLoadsForcesModifyCommand();
+
+  else if(key == "ccxLoadsPressuresModifyCommand")
+    return new ccxLoadsPressuresModifyCommand();
+
+  else if(key == "ccxBCsDisplacementsModifyCommand")
+    return new ccxBCsDisplacementsModifyCommand();
+
+  else if(key == "ccxBCsTemperaturesModifyCommand")
+    return new ccxBCsTemperaturesModifyCommand();
 
   return NULL;
 }

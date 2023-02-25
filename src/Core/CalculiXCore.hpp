@@ -11,6 +11,9 @@ class CoreSurfaceInteractions;
 class CoreContactPairs;
 class CoreAmplitudes;
 class CoreLoadsForces;
+class CoreLoadsPressures;
+class CoreBCsDisplacements;
+class CoreBCsTemperatures;
 
 class MeshExportInterface;
 class MaterialInterface;
@@ -69,6 +72,10 @@ public:
   bool create_amplitude(std::vector<std::string> options, std::vector<std::vector<std::string>> options2); // adds a new amplitude
   bool modify_amplitude(int amplitude_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2); // modify a amplitude
   bool delete_amplitude(int amplitude_id); // delete amplitude
+  bool modify_loadsforces(int force_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a force
+  bool modify_loadspressures(int pressure_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a pressure
+  bool modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a displacement
+  bool modify_bcstemperatures(int temperature_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a temperature
   std::vector<std::vector<std::string>> get_blocks_tree_data(); // gets the data from core blocks to build the tree
   std::vector<std::vector<std::string>> get_nodeset_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_sideset_tree_data(); // gets the data from core to build the tree
@@ -78,6 +85,10 @@ public:
   std::vector<std::vector<std::string>> get_surfaceinteractions_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_contactpairs_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_amplitudes_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_loadsforces_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_loadspressures_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_bcsdisplacements_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_bcstemperatures_tree_data(); // gets the data from core to build the tree
 
   CoreBlocks *cb;
   CoreMaterials *mat;
@@ -88,6 +99,9 @@ public:
   CoreContactPairs *contactpairs;
   CoreAmplitudes *amplitudes;
   CoreLoadsForces *loadsforces;
+  CoreLoadsPressures *loadspressures;
+  CoreBCsDisplacements *bcsdisplacements;
+  CoreBCsTemperatures *bcstemperatures;
   MeshExportInterface *me_iface;
   MaterialInterface *mat_iface;
 };

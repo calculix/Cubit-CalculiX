@@ -213,6 +213,26 @@ bool CalculiXCoreInterface::delete_amplitude(int amplitude_id)
   return ccx_core.delete_amplitude(amplitude_id);
 }
 
+bool CalculiXCoreInterface::modify_loadsforces(int force_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return ccx_core.modify_loadsforces(force_id,options,options_marker);
+}
+
+bool CalculiXCoreInterface::modify_loadspressures(int pressure_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return ccx_core.modify_loadspressures(pressure_id,options,options_marker);
+}
+
+bool CalculiXCoreInterface::modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return ccx_core.modify_bcsdisplacements(displacement_id,options,options_marker);
+}
+
+bool CalculiXCoreInterface::modify_bcstemperatures(int temperature_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return ccx_core.modify_bcstemperatures(temperature_id,options,options_marker);
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_blocks_tree_data()
 { 
   return ccx_core.get_blocks_tree_data();
@@ -256,6 +276,26 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_contactpairs_tr
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_amplitudes_tree_data()
 { 
   return ccx_core.get_amplitudes_tree_data();
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_loadsforces_tree_data()
+{ 
+  return ccx_core.get_loadsforces_tree_data();
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_loadspressures_tree_data()
+{ 
+  return ccx_core.get_loadspressures_tree_data();
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_bcsdisplacements_tree_data()
+{ 
+  return ccx_core.get_bcsdisplacements_tree_data();
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_bcstemperatures_tree_data()
+{ 
+  return ccx_core.get_bcstemperatures_tree_data();
 }
 
 std::string CalculiXCoreInterface::get_material_export_data() // gets the export data from materials core

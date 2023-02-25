@@ -1,4 +1,3 @@
-
 #ifndef CCXDOCKWINDOWTREE_HPP
 #define CCXDOCKWINDOWTREE_HPP
 
@@ -22,6 +21,12 @@ class ConstraintsTree;
 class SurfaceInteractionsTree;
 class ContactPairsTree;
 class AmplitudesTree;
+class LoadsTree;
+class LoadsForcesTree;
+class LoadsPressuresTree;
+class BCsTree;
+class BCsDisplacementsTree;
+class BCsTemperaturesTree;
 
 class CCXDockWindowTree
 {
@@ -57,6 +62,12 @@ private:
   SurfaceInteractionsTree *mySurfaceInteractionsTree; //SurfaceInteractions root item
   ContactPairsTree *myContactPairsTree; //ContactPairs root item
   AmplitudesTree *myAmplitudesTree; //Amplitudes root item
+  LoadsTree *myLoadsTree; //Loads root item
+  LoadsForcesTree *myLoadsForcesTree; //Forces root item
+  LoadsPressuresTree *myLoadsPressuresTree; //Pressures root item
+  BCsTree *myBCsTree; //BCs root item
+  BCsDisplacementsTree *myBCsDisplacementsTree; //Displacements root item
+  BCsTemperaturesTree *myBCsTemperaturesTree; //Temperature root item
   QSettings *settings;
 };
 

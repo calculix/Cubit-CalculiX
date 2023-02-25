@@ -16,11 +16,15 @@
 #include "CoreContactPairs.hpp"
 #include "CoreAmplitudes.hpp"
 #include "CoreLoadsForces.hpp"
+#include "CoreLoadsPressures.hpp"
+#include "CoreBCsDisplacements.hpp"
+#include "CoreBCsTemperatures.hpp"
 
 
 CalculiXCore::CalculiXCore():
   cb(NULL),mat(NULL),sections(NULL),constraints(NULL),referencepoints(NULL),surfaceinteractions(NULL),
-  contactpairs(NULL),amplitudes(NULL),loadsforces(NULL)
+  contactpairs(NULL),amplitudes(NULL),loadsforces(NULL),loadspressures(NULL),bcsdisplacements(NULL),
+  bcstemperatures(NULL)
 {
   init();
 }
@@ -45,6 +49,12 @@ CalculiXCore::~CalculiXCore()
     delete amplitudes;
   if(loadsforces)
     delete loadsforces;
+  if(loadspressures)
+    delete loadspressures;
+  if(bcsdisplacements)
+    delete bcsdisplacements;
+  if(bcstemperatures)
+    delete bcstemperatures;
 }
 
 bool CalculiXCore::print_to_log(std::string str_log)
@@ -108,6 +118,21 @@ bool CalculiXCore::init()
   
   loadsforces->init();
 
+  if(!loadspressures)
+    loadspressures = new CoreLoadsPressures;
+  
+  loadspressures->init();
+
+  if(!bcsdisplacements)
+    bcsdisplacements = new CoreBCsDisplacements;
+  
+  bcsdisplacements->init();
+
+  if(!bcstemperatures)
+    bcstemperatures = new CoreBCsTemperatures;
+  
+  bcstemperatures->init();
+
   if (use_ccx_logfile)
   {
     print_to_log("CalculiXCore Initialization!");
@@ -120,6 +145,9 @@ bool CalculiXCore::update()
   cb->update();
   //mat->update();
   loadsforces->update();
+  loadspressures->update();
+  bcsdisplacements->update();
+  bcstemperatures->update();
   
   if (use_ccx_logfile)
   {
@@ -141,6 +169,9 @@ bool CalculiXCore::reset()
   contactpairs->reset();
   amplitudes->reset();
   loadsforces->reset();
+  loadspressures->reset();
+  bcsdisplacements->reset();
+  bcstemperatures->reset();
   
   //print_to_log("RESET");
   //print_to_log(print_data());
@@ -159,6 +190,9 @@ std::string CalculiXCore::print_data()
   str_return.append(contactpairs->print_data());
   str_return.append(amplitudes->print_data());
   str_return.append(loadsforces->print_data());
+  str_return.append(loadspressures->print_data());
+  str_return.append(bcsdisplacements->print_data());
+  str_return.append(bcstemperatures->print_data());
 
   return str_return;
 }
@@ -483,6 +517,25 @@ bool CalculiXCore::delete_amplitude(int amplitude_id)
   return amplitudes->delete_amplitude(amplitude_id);
 }
 
+bool CalculiXCore::modify_loadsforces(int force_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return loadsforces->modify_load(force_id,options,options_marker);
+}
+
+bool CalculiXCore::modify_loadspressures(int pressure_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return loadspressures->modify_load(pressure_id,options,options_marker);
+}
+
+bool CalculiXCore::modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return bcsdisplacements->modify_bc(displacement_id,options,options_marker);
+}
+
+bool CalculiXCore::modify_bcstemperatures(int temperature_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return bcstemperatures->modify_bc(temperature_id,options,options_marker);
+}
 
 std::string CalculiXCore::get_material_export_data() // gets the export data from materials core
 {
@@ -789,6 +842,93 @@ std::vector<std::vector<std::string>> CalculiXCore::get_amplitudes_tree_data()
   return amplitudes_tree_data;
 }
 
+std::vector<std::vector<std::string>> CalculiXCore::get_loadsforces_tree_data()
+{ 
+  std::vector<std::vector<std::string>> loadsforces_tree_data;
+  
+  for (size_t i = 0; i < loadsforces->loads_data.size(); i++)
+  {
+    std::vector<std::string> loadsforces_tree_data_set;
+    std::string name;
+    
+    name = CubitInterface::get_bc_name(CI_BCTYPE_FORCE,loadsforces->loads_data[i][0]);
+    if (name == "")
+    {
+      name = "Force_" + std::to_string(loadsforces->loads_data[i][0]);
+    }
+
+    loadsforces_tree_data_set.push_back(std::to_string(loadsforces->loads_data[i][0])); //load_id
+    loadsforces_tree_data_set.push_back(name); 
+    loadsforces_tree_data.push_back(loadsforces_tree_data_set);
+  }
+  return loadsforces_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_loadspressures_tree_data()
+{ 
+  std::vector<std::vector<std::string>> loadspressures_tree_data;
+  
+  for (size_t i = 0; i < loadspressures->loads_data.size(); i++)
+  {
+    std::vector<std::string> loadspressures_tree_data_set;
+    std::string name;
+    
+    name = CubitInterface::get_bc_name(CI_BCTYPE_PRESSURE,loadspressures->loads_data[i][0]);
+    if (name == "")
+    {
+      name = "Pressure_" + std::to_string(loadspressures->loads_data[i][0]);
+    }
+    
+    loadspressures_tree_data_set.push_back(std::to_string(loadspressures->loads_data[i][0])); //load_id
+    loadspressures_tree_data_set.push_back(name); 
+    loadspressures_tree_data.push_back(loadspressures_tree_data_set);
+  }
+  return loadspressures_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_bcsdisplacements_tree_data()
+{ 
+  std::vector<std::vector<std::string>> bcsdisplacements_tree_data;
+  
+  for (size_t i = 0; i < bcsdisplacements->bcs_data.size(); i++)
+  {
+    std::vector<std::string> bcsdisplacements_tree_data_set;
+    std::string name;
+    
+    name = CubitInterface::get_bc_name(CI_BCTYPE_DISPLACEMENT,bcsdisplacements->bcs_data[i][0]);
+    if (name == "")
+    {
+      name = "Displacement_" + std::to_string(bcsdisplacements->bcs_data[i][0]);
+    }
+    
+    bcsdisplacements_tree_data_set.push_back(std::to_string(bcsdisplacements->bcs_data[i][0])); //bc_id
+    bcsdisplacements_tree_data_set.push_back(name); 
+    bcsdisplacements_tree_data.push_back(bcsdisplacements_tree_data_set);
+  }
+  return bcsdisplacements_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_bcstemperatures_tree_data()
+{ 
+  std::vector<std::vector<std::string>> bcstemperatures_tree_data;
+  
+  for (size_t i = 0; i < bcstemperatures->bcs_data.size(); i++)
+  {
+    std::vector<std::string> bcstemperatures_tree_data_set;
+    std::string name;
+    
+    name = CubitInterface::get_bc_name(CI_BCTYPE_TEMPERATURE,bcstemperatures->bcs_data[i][0]);
+    if (name == "")
+    {
+      name = "Temperature_" + std::to_string(bcstemperatures->bcs_data[i][0]);
+    }
+    
+    bcstemperatures_tree_data_set.push_back(std::to_string(bcstemperatures->bcs_data[i][0])); //bc_id
+    bcstemperatures_tree_data_set.push_back(name); 
+    bcstemperatures_tree_data.push_back(bcstemperatures_tree_data_set);
+  }
+  return bcstemperatures_tree_data;
+}
 
 std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_string)
 {

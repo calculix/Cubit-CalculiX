@@ -12,6 +12,12 @@
 #include "SurfaceInteractionsTree.hpp"
 #include "ContactPairsTree.hpp"
 #include "AmplitudesTree.hpp"
+#include "LoadsTree.hpp"
+#include "LoadsForcesTree.hpp"
+#include "LoadsPressuresTree.hpp"
+#include "BCsTree.hpp"
+#include "BCsDisplacementsTree.hpp"
+#include "BCsTemperaturesTree.hpp"
 
 
 CCXDockWindowTree::CCXDockWindowTree() :
@@ -78,6 +84,18 @@ void CCXDockWindowTree::initialize()
   myContactPairsTree->initialize();
   myAmplitudesTree = new AmplitudesTree(myModelTree);
   myAmplitudesTree->initialize();
+  myLoadsTree = new LoadsTree(myModelTree);
+  myLoadsTree->initialize();
+  myLoadsForcesTree = new LoadsForcesTree(myLoadsTree);
+  myLoadsForcesTree->initialize();
+  myLoadsPressuresTree = new LoadsPressuresTree(myLoadsTree);
+  myLoadsPressuresTree->initialize();
+  myBCsTree = new BCsTree(myModelTree);
+  myBCsTree->initialize();
+  myBCsDisplacementsTree = new BCsDisplacementsTree(myBCsTree);
+  myBCsDisplacementsTree->initialize();
+  myBCsTemperaturesTree = new BCsTemperaturesTree(myBCsTree);
+  myBCsTemperaturesTree->initialize();
 
   dock->setWidget(myModelTree);
       
@@ -118,6 +136,12 @@ void CCXDockWindowTree::clear()
     delete mySurfaceInteractionsTree;
     delete myContactPairsTree;
     delete myAmplitudesTree;
+    delete myLoadsForcesTree;
+    delete myLoadsPressuresTree;
+    delete myLoadsTree;
+    delete myBCsTemperaturesTree;
+    delete myBCsDisplacementsTree;
+    delete myBCsTree;
     delete myModelTree;
     delete dock;
     isInitialized = false;  
@@ -140,6 +164,12 @@ void CCXDockWindowTree::update()
   mySurfaceInteractionsTree->update();
   myContactPairsTree->update();
   myAmplitudesTree->update();
+  //myLoadsTree->update();
+  myLoadsForcesTree->update();
+  myLoadsPressuresTree->update();
+  //myBCsTree->update();
+  myBCsDisplacementsTree->update();
+  myBCsTemperaturesTree->update();
 }
 
 void CCXDockWindowTree::reset()
@@ -154,4 +184,10 @@ void CCXDockWindowTree::reset()
   mySurfaceInteractionsTree->clear();
   myContactPairsTree->clear();
   myAmplitudesTree->clear();
+  //myLoadsTree->clear();
+  myLoadsForcesTree->clear();
+  myLoadsPressuresTree->clear();
+  //myBCsTree->clear();
+  myBCsDisplacementsTree->clear();
+  myBCsTemperaturesTree->clear();
 }

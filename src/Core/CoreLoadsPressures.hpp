@@ -1,16 +1,16 @@
-#ifndef CORELOADSFORCES_HPP
-#define CORELOADSFORCES_HPP
+#ifndef CORELOADSPRESSURES_HPP
+#define CORELOADSPRESSURES_HPP
 
 class CalculiXCoreInterface;
 
-class CoreLoadsForces
+class CoreLoadsPressures
 {
 
 public:
-  CoreLoadsForces();
-  ~CoreLoadsForces();
+  CoreLoadsPressures();
+  ~CoreLoadsPressures();
 
-  std::vector<std::vector<int>> loads_data; // used to store the connection between a force and its possible options
+  std::vector<std::vector<int>> loads_data; // used to store the connection between a pressure and its possible options
   // loads_data[0][0] load_id
   // loads_data[0][1] OP mode: 0 for OP=MOD | 1  for OP=NEW
   // loads_data[0][2] amplitude_id
@@ -37,4 +37,4 @@ public:
   CalculiXCoreInterface *ccx_iface;
 };
 
-#endif // CORELOADSFORCES_HPP
+#endif // CORELOADSPRESSURES_HPP

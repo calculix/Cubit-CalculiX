@@ -21,6 +21,18 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/ContactPairsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/AmplitudesTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/AmplitudesTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsForcesTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsForcesTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsPressuresTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsPressuresTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/BCsTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/BCsTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/BCsDisplacementsTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/BCsDisplacementsTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/BCsTemperaturesTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/BCsTemperaturesTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CCXBlocksElementTypePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CCXBlocksElementTypePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/SectionsCreatePanel.hpp

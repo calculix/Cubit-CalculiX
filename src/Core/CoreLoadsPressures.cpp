@@ -1,14 +1,14 @@
-#include "CoreLoadsForces.hpp"
+#include "CoreLoadsPressures.hpp"
 #include "CubitInterface.hpp"
 #include "CalculiXCoreInterface.hpp"
 
-CoreLoadsForces::CoreLoadsForces()
+CoreLoadsPressures::CoreLoadsPressures()
 {}
 
-CoreLoadsForces::~CoreLoadsForces()
+CoreLoadsPressures::~CoreLoadsPressures()
 {}
 
-bool CoreLoadsForces::init()
+bool CoreLoadsPressures::init()
 {
   if (is_initialized)
   {
@@ -20,7 +20,7 @@ bool CoreLoadsForces::init()
   }
 }
 
-bool CoreLoadsForces::update()
+bool CoreLoadsPressures::update()
 { 
   // Get the list of loads
   std::vector<int> load_ids;
@@ -28,7 +28,7 @@ bool CoreLoadsForces::update()
   int sub_id;
   int sub_last;
   int time_delay_id;
-  load_ids = CubitInterface::get_bc_id_list(CI_BCTYPE_FORCE);	
+  load_ids = CubitInterface::get_bc_id_list(CI_BCTYPE_PRESSURE);	
   
   int loads_data_id;
   bool erase_load;
@@ -81,7 +81,7 @@ bool CoreLoadsForces::update()
   return true;
 }
 
-bool CoreLoadsForces::reset()
+bool CoreLoadsPressures::reset()
 {
   loads_data.clear();
   time_delay_data.clear();
@@ -89,12 +89,12 @@ bool CoreLoadsForces::reset()
   return true;
 }
 
-bool CoreLoadsForces::check_initialized()
+bool CoreLoadsPressures::check_initialized()
 {
   return is_initialized;
 }
 
-bool CoreLoadsForces::add_load(int load_id, int op_mode, int amplitude_id, int time_delay_id)
+bool CoreLoadsPressures::add_load(int load_id, int op_mode, int amplitude_id, int time_delay_id)
 {
   std::vector<int> v = {load_id, op_mode, amplitude_id, time_delay_id};
       
@@ -103,7 +103,7 @@ bool CoreLoadsForces::add_load(int load_id, int op_mode, int amplitude_id, int t
   return true;
 }
 
-bool CoreLoadsForces::modify_load(int load_id, std::vector<std::string> options, std::vector<int> options_marker)
+bool CoreLoadsPressures::modify_load(int load_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
   int sub_data_id;
   std::vector<int> sub_data_ids;
@@ -133,7 +133,7 @@ bool CoreLoadsForces::modify_load(int load_id, std::vector<std::string> options,
   }
 }
 
-bool CoreLoadsForces::delete_load(int load_id)
+bool CoreLoadsPressures::delete_load(int load_id)
 {
   int sub_data_id;
   int loads_data_id = get_loads_data_id_from_load_id(load_id);
@@ -151,7 +151,7 @@ bool CoreLoadsForces::delete_load(int load_id)
   }
 }
 
-bool CoreLoadsForces::add_time_delay(std::string time_delay_id, std::string time_delay_value)
+bool CoreLoadsPressures::add_time_delay(std::string time_delay_id, std::string time_delay_value)
 {
   std::vector<std::string> v = {time_delay_id, time_delay_value};
       
@@ -160,7 +160,7 @@ bool CoreLoadsForces::add_time_delay(std::string time_delay_id, std::string time
   return true;
 }
 
-int CoreLoadsForces::get_loads_data_id_from_load_id(int load_id)
+int CoreLoadsPressures::get_loads_data_id_from_load_id(int load_id)
 { 
   int return_int = -1;
   for (size_t i = 0; i < loads_data.size(); i++)
@@ -173,7 +173,7 @@ int CoreLoadsForces::get_loads_data_id_from_load_id(int load_id)
   return return_int;
 }
 
-int CoreLoadsForces::get_time_delay_data_id_from_time_delay_id(int time_delay_id)
+int CoreLoadsPressures::get_time_delay_data_id_from_time_delay_id(int time_delay_id)
 { 
   int return_int = -1;
   for (size_t i = 0; i < time_delay_data.size(); i++)
@@ -186,10 +186,10 @@ int CoreLoadsForces::get_time_delay_data_id_from_time_delay_id(int time_delay_id
   return return_int;
 }
 
-std::string CoreLoadsForces::print_data()
+std::string CoreLoadsPressures::print_data()
 {
   std::string str_return;
-  str_return = "\n CoreLoadsForces loads_data: \n";
+  str_return = "\n CoreLoadsPressures loads_data: \n";
   str_return.append("load_id, OP MODE, amplitude_id, time_delay_id \n");
 
   for (size_t i = 0; i < loads_data.size(); i++)
@@ -197,7 +197,7 @@ std::string CoreLoadsForces::print_data()
     str_return.append(std::to_string(loads_data[i][0]) + " " + std::to_string(loads_data[i][1]) + " " + std::to_string(loads_data[i][2]) + " " + std::to_string(loads_data[i][3]) + " \n");
   }
 
-  str_return.append("\n CoreLoadsForces time_delay_data: \n");
+  str_return.append("\n CoreLoadsPressures time_delay_data: \n");
   str_return.append("time_delay_id, time_delay_value \n");
 
   for (size_t i = 0; i < time_delay_data.size(); i++)
