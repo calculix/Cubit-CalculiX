@@ -10,6 +10,7 @@ class CoreReferencePoints;
 class CoreSurfaceInteractions;
 class CoreContactPairs;
 class CoreAmplitudes;
+class CoreLoads;
 
 class MeshExportInterface;
 class MaterialInterface;
@@ -20,6 +21,8 @@ class CalculiXCore
 public:
   CalculiXCore();
   ~CalculiXCore();
+
+  bool use_ccx_logfile = false;
 
   bool print_to_log(std::string str_log);
   bool init();
@@ -82,8 +85,9 @@ public:
   CoreConstraints *constraints;
   CoreReferencePoints *referencepoints;
   CoreSurfaceInteractions *surfaceinteractions;
-  CoreAmplitudes *amplitudes;
   CoreContactPairs *contactpairs;
+  CoreAmplitudes *amplitudes;
+  CoreLoads *loads;
   MeshExportInterface *me_iface;
   MaterialInterface *mat_iface;
 };

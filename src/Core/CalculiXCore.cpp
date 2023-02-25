@@ -15,13 +15,13 @@
 #include "CoreSurfaceInteractions.hpp"
 #include "CoreContactPairs.hpp"
 #include "CoreAmplitudes.hpp"
+#include "CoreLoads.hpp"
 
 
 CalculiXCore::CalculiXCore():
   cb(NULL),mat(NULL),sections(NULL),constraints(NULL),referencepoints(NULL),surfaceinteractions(NULL),
-  contactpairs(NULL),amplitudes(NULL)
+  contactpairs(NULL),amplitudes(NULL),loads(NULL)
 {
-  print_to_log("CalculiXCore Initialization!");
   init();
 }
 
@@ -43,6 +43,8 @@ CalculiXCore::~CalculiXCore()
     delete contactpairs;
   if(amplitudes)
     delete amplitudes;
+  if(loads)
+    delete loads;
 }
 
 bool CalculiXCore::print_to_log(std::string str_log)
@@ -101,6 +103,15 @@ bool CalculiXCore::init()
   
   amplitudes->init();
   
+  if(!loads)
+    loads = new CoreLoads;
+  
+  loads->init();
+
+  if (use_ccx_logfile)
+  {
+    print_to_log("CalculiXCore Initialization!");
+  }
   return true;
 }
 
@@ -108,9 +119,13 @@ bool CalculiXCore::update()
 {
   cb->update();
   //mat->update();
+  loads->update();
   
-  print_to_log("UPDATE");
-  print_to_log(print_data());
+  if (use_ccx_logfile)
+  {
+    print_to_log("UPDATE");
+    print_to_log(print_data());
+  }
 
   return true;
 }
@@ -125,6 +140,7 @@ bool CalculiXCore::reset()
   surfaceinteractions->reset();
   contactpairs->reset();
   amplitudes->reset();
+  loads->reset();
   
   //print_to_log("RESET");
   //print_to_log(print_data());
@@ -142,6 +158,7 @@ std::string CalculiXCore::print_data()
   str_return.append(surfaceinteractions->print_data());
   str_return.append(contactpairs->print_data());
   str_return.append(amplitudes->print_data());
+  str_return.append(loads->print_data());
 
   return str_return;
 }
@@ -295,7 +312,7 @@ bool CalculiXCore::create_constraint_tie_from_cubitcontactpair(std::string name,
   std::vector<std::string> options;
 
   std::vector<int> contact_ids;
-  contact_ids = CubitInterface::get_bc_id_list(CI_BCTYPE_CONTACT_PAIR);	
+  contact_ids = CubitInterface::get_bc_id_list(CI_BCTYPE_CONTACT_PAIR);
 
   BCContactHandle contact;
   

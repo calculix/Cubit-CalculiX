@@ -10,6 +10,7 @@ public:
   CalculiXCoreInterface();
   ~CalculiXCoreInterface();
 	
+  bool set_use_ccx_logfile(bool bool_use);
   std::string print_data();
   bool log_str(std::string str_log);
   std::vector<int> parser(std::string parse_type, std::string parse_string);

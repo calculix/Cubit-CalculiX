@@ -7,6 +7,12 @@ CalculiXCoreInterface::CalculiXCoreInterface()
 CalculiXCoreInterface::~CalculiXCoreInterface()
 {}
 
+bool CalculiXCoreInterface::set_use_ccx_logfile(bool bool_use)
+{
+  ccx_core.use_ccx_logfile = bool_use;
+  return true;
+}
+
 std::string CalculiXCoreInterface::print_data()
 {
   return ccx_core.print_data();

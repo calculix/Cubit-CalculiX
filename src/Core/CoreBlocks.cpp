@@ -196,13 +196,13 @@ bool CoreBlocks::update()
 
   // check if a block changes id or is removed, this means we have erase all blocks in our blocks_data that cannot be connected anymore
 
-  for (size_t i = 0; i < blocks_data.size(); i++)
+  for (size_t i = blocks_data.size(); i > 0; i--)
   {
     erase_block = true;
     for (size_t ii = 0; ii < block_ids.size(); ii++)
     {
       block_id = block_ids[ii];
-      if (block_id == blocks_data[i][0])
+      if (block_id == blocks_data[i-1][0])
       {
         erase_block = false;
         break;
@@ -210,7 +210,7 @@ bool CoreBlocks::update()
     }
     if (erase_block)
     {
-      delete_block(blocks_data[i][0]);
+      delete_block(blocks_data[i-1][0]);
     }
   }
 

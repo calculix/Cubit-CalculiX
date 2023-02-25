@@ -1,6 +1,7 @@
 #include "CalculiXPlugin.hpp"
 #include "ccxVersionCommand.hpp"
 #include "ccxExportCommand.hpp"
+#include "ccxUseLogCoreCommand.hpp"
 #include "ccxPrintCoreCommand.hpp"
 #include "ccxLogCoreCommand.hpp"
 #include "ccxBlockElementTypeCommand.hpp"
@@ -57,6 +58,7 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   std::vector<std::string> keys;
   keys.push_back("ccxVersionCommand");
   keys.push_back("ccxExportCommand");
+  keys.push_back("ccxUseLogCoreCommand");
   keys.push_back("ccxPrintCoreCommand");
   keys.push_back("ccxLogCoreCommand");
   keys.push_back("ccxBlockElementTypeCommand");
@@ -111,6 +113,9 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxExportCommand")
     return new ccxExportCommand();
+
+  else if(key == "ccxUseLogCoreCommand")
+    return new ccxUseLogCoreCommand();
 
   else if(key == "ccxPrintCoreCommand")
     return new ccxPrintCoreCommand();

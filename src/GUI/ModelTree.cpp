@@ -22,16 +22,20 @@ ModelTree::ModelTree(QDockWidget* parent):QTreeWidget(parent)
   gui = Claro::instance();
 
   nav_model = gui->navigation_model();
+  /*
   if (nav_model)
   {
     ccx_iface->log_str("NavigationModel access");
   }
-  
+  */
+
   cmdpanel = dynamic_cast<CommandButtonPanel*>(gui->command_buttons());
+  /*
   if (nav_model)
   {
     ccx_iface->log_str("CommandButtonPanel access");
   }
+  */
 
   this->setColumnCount(2);
   this->setHeaderLabels(QStringList() << "Name" << "ID");
@@ -46,10 +50,10 @@ ModelTree::ModelTree(QDockWidget* parent):QTreeWidget(parent)
   success = connect(this, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)),
           this, SLOT(ModelTreeItemDoubleClicked(QTreeWidgetItem*, int)));
   
-  if (success)
+  /*if (success)
   {
     ccx_iface->log_str("connected signals and slots");
-  }    
+  }*/   
 
   //to get our current right clicked action
   // contextMenuAction[0][0] => Tree

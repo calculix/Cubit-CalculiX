@@ -1,0 +1,7 @@
+ccx use logfile core on
+reset
+create brick x 1
+create force  on vertex 2  force value 1 moment value 2 direction 0 0 1 
+modify force 1 name 'test' add vertex 5  
+modify force 1 add surface 5
+
