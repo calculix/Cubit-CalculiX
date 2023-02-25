@@ -1,14 +1,14 @@
-#include "CoreLoads.hpp"
+#include "CoreLoadsForces.hpp"
 #include "CubitInterface.hpp"
 #include "CalculiXCoreInterface.hpp"
 
-CoreLoads::CoreLoads()
+CoreLoadsForces::CoreLoadsForces()
 {}
 
-CoreLoads::~CoreLoads()
+CoreLoadsForces::~CoreLoadsForces()
 {}
 
-bool CoreLoads::init()
+bool CoreLoadsForces::init()
 {
   if (is_initialized)
   {
@@ -20,7 +20,7 @@ bool CoreLoads::init()
   }
 }
 
-bool CoreLoads::update()
+bool CoreLoadsForces::update()
 { 
   // Get the list of loads
   std::vector<int> load_ids;
@@ -65,19 +65,19 @@ bool CoreLoads::update()
   return true;
 }
 
-bool CoreLoads::reset()
+bool CoreLoadsForces::reset()
 {
   loads_data.clear();
   init();
   return true;
 }
 
-bool CoreLoads::check_initialized()
+bool CoreLoadsForces::check_initialized()
 {
   return is_initialized;
 }
 
-bool CoreLoads::add_load(int load_id)
+bool CoreLoadsForces::add_load(int load_id)
 {
   std::vector<int> v = {load_id};
       
@@ -85,7 +85,8 @@ bool CoreLoads::add_load(int load_id)
 
   return true;
 }
-bool CoreLoads::delete_load(int load_id)
+
+bool CoreLoadsForces::delete_load(int load_id)
 {
   int loads_data_id = get_loads_data_id_from_load_id(load_id);
   if (loads_data_id == -1)
@@ -97,7 +98,16 @@ bool CoreLoads::delete_load(int load_id)
   }
 }
 
-int CoreLoads::get_loads_data_id_from_load_id(int load_id)
+bool CoreLoadsForces::(std::string time_delay_id, std::string time_delay_value)
+{
+  std::vector<std::string> v = {time_delay_id, time_delay_value};
+      
+  time_delay_data.push_back(v);
+
+  return true;
+}
+
+int CoreLoadsForces::get_loads_data_id_from_load_id(int load_id)
 { 
   int return_int = -1;
   for (size_t i = 0; i < loads_data.size(); i++)
@@ -110,10 +120,10 @@ int CoreLoads::get_loads_data_id_from_load_id(int load_id)
   return return_int;
 }
 
-std::string CoreLoads::print_data()
+std::string CoreLoadsForces::print_data()
 {
   std::string str_return;
-  str_return = "\n CoreLoads loads_data: \n";
+  str_return = "\n CoreLoadsForces loads_data: \n";
   str_return.append("load_id \n");
 
   for (size_t i = 0; i < loads_data.size(); i++)

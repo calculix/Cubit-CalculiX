@@ -10,7 +10,7 @@ class CoreReferencePoints;
 class CoreSurfaceInteractions;
 class CoreContactPairs;
 class CoreAmplitudes;
-class CoreLoads;
+class CoreLoadsForces;
 
 class MeshExportInterface;
 class MaterialInterface;
@@ -87,7 +87,7 @@ public:
   CoreSurfaceInteractions *surfaceinteractions;
   CoreContactPairs *contactpairs;
   CoreAmplitudes *amplitudes;
-  CoreLoads *loads;
+  CoreLoadsForces *loadsforces;
   MeshExportInterface *me_iface;
   MaterialInterface *mat_iface;
 };

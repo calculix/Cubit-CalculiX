@@ -15,12 +15,12 @@
 #include "CoreSurfaceInteractions.hpp"
 #include "CoreContactPairs.hpp"
 #include "CoreAmplitudes.hpp"
-#include "CoreLoads.hpp"
+#include "CoreLoadsForces.hpp"
 
 
 CalculiXCore::CalculiXCore():
   cb(NULL),mat(NULL),sections(NULL),constraints(NULL),referencepoints(NULL),surfaceinteractions(NULL),
-  contactpairs(NULL),amplitudes(NULL),loads(NULL)
+  contactpairs(NULL),amplitudes(NULL),loadsforces(NULL)
 {
   init();
 }
@@ -43,8 +43,8 @@ CalculiXCore::~CalculiXCore()
     delete contactpairs;
   if(amplitudes)
     delete amplitudes;
-  if(loads)
-    delete loads;
+  if(loadsforces)
+    delete loadsforces;
 }
 
 bool CalculiXCore::print_to_log(std::string str_log)
@@ -103,10 +103,10 @@ bool CalculiXCore::init()
   
   amplitudes->init();
   
-  if(!loads)
-    loads = new CoreLoads;
+  if(!loadsforces)
+    loadsforces = new CoreLoadsForces;
   
-  loads->init();
+  loadsforces->init();
 
   if (use_ccx_logfile)
   {
@@ -119,7 +119,7 @@ bool CalculiXCore::update()
 {
   cb->update();
   //mat->update();
-  loads->update();
+  loadsforces->update();
   
   if (use_ccx_logfile)
   {
@@ -140,7 +140,7 @@ bool CalculiXCore::reset()
   surfaceinteractions->reset();
   contactpairs->reset();
   amplitudes->reset();
-  loads->reset();
+  loadsforces->reset();
   
   //print_to_log("RESET");
   //print_to_log(print_data());
@@ -158,7 +158,7 @@ std::string CalculiXCore::print_data()
   str_return.append(surfaceinteractions->print_data());
   str_return.append(contactpairs->print_data());
   str_return.append(amplitudes->print_data());
-  str_return.append(loads->print_data());
+  str_return.append(loadsforces->print_data());
 
   return str_return;
 }
