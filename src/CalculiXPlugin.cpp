@@ -46,6 +46,11 @@
 #include "ccxLoadsPressuresModifyCommand.hpp"
 #include "ccxBCsDisplacementsModifyCommand.hpp"
 #include "ccxBCsTemperaturesModifyCommand.hpp"
+#include "ccxHistoryOutputCreateCommand.hpp"
+#include "ccxHistoryOutputNodeModifyCommand.hpp"
+#include "ccxHistoryOutputElementModifyCommand.hpp"
+#include "ccxHistoryOutputContactModifyCommand.hpp"
+#include "ccxHistoryOutputDeleteCommand.hpp"
 
 //! This macro is required to identify this as a valid Cubit plugin. The plugin
 //! will NOT be loaded if this macro is not present.
@@ -107,6 +112,11 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxLoadsPressuresModifyCommand");
   keys.push_back("ccxBCsDisplacementsModifyCommand");
   keys.push_back("ccxBCsTemperaturesModifyCommand");
+  keys.push_back("ccxHistoryOutputCreateCommand");
+  keys.push_back("ccxHistoryOutputNodeModifyCommand");
+  keys.push_back("ccxHistoryOutputElementModifyCommand");
+  keys.push_back("ccxHistoryOutputContactModifyCommand");
+  keys.push_back("ccxHistoryOutputDeleteCommand");
 
   return keys;
 }
@@ -256,6 +266,21 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxBCsTemperaturesModifyCommand")
     return new ccxBCsTemperaturesModifyCommand();
+  
+  else if(key == "ccxHistoryOutputCreateCommand")
+    return new ccxHistoryOutputCreateCommand();
+
+  else if(key == "ccxHistoryOutputNodeModifyCommand")
+    return new ccxHistoryOutputNodeModifyCommand();
+  
+  else if(key == "ccxHistoryOutputElementModifyCommand")
+    return new ccxHistoryOutputElementModifyCommand();
+  
+  else if(key == "ccxHistoryOutputContactModifyCommand")
+    return new ccxHistoryOutputContactModifyCommand();
+
+  else if(key == "ccxHistoryOutputDeleteCommand")
+    return new ccxHistoryOutputDeleteCommand();
 
   return NULL;
 }

@@ -19,12 +19,13 @@
 #include "CoreLoadsPressures.hpp"
 #include "CoreBCsDisplacements.hpp"
 #include "CoreBCsTemperatures.hpp"
+#include "CoreHistoryOutputs.hpp"
 
 
 CalculiXCore::CalculiXCore():
   cb(NULL),mat(NULL),sections(NULL),constraints(NULL),referencepoints(NULL),surfaceinteractions(NULL),
   contactpairs(NULL),amplitudes(NULL),loadsforces(NULL),loadspressures(NULL),bcsdisplacements(NULL),
-  bcstemperatures(NULL)
+  bcstemperatures(NULL), historyoutputs(NULL)
 {
   init();
 }
@@ -55,6 +56,8 @@ CalculiXCore::~CalculiXCore()
     delete bcsdisplacements;
   if(bcstemperatures)
     delete bcstemperatures;
+  if(historyoutputs)
+    delete historyoutputs;
 }
 
 bool CalculiXCore::print_to_log(std::string str_log)
@@ -133,6 +136,11 @@ bool CalculiXCore::init()
   
   bcstemperatures->init();
 
+  if(!historyoutputs)
+    historyoutputs = new CoreHistoryOutputs;
+  
+  historyoutputs->init();
+
   if (use_ccx_logfile)
   {
     print_to_log("CalculiXCore Initialization!");
@@ -172,6 +180,7 @@ bool CalculiXCore::reset()
   loadspressures->reset();
   bcsdisplacements->reset();
   bcstemperatures->reset();
+  historyoutputs->reset();
   
   //print_to_log("RESET");
   //print_to_log(print_data());
@@ -193,6 +202,7 @@ std::string CalculiXCore::print_data()
   str_return.append(loadspressures->print_data());
   str_return.append(bcsdisplacements->print_data());
   str_return.append(bcstemperatures->print_data());
+  str_return.append(historyoutputs->print_data());
 
   return str_return;
 }
@@ -535,6 +545,21 @@ bool CalculiXCore::modify_bcsdisplacements(int displacement_id, std::vector<std:
 bool CalculiXCore::modify_bcstemperatures(int temperature_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
   return bcstemperatures->modify_bc(temperature_id,options,options_marker);
+}
+
+bool CalculiXCore::create_historyoutput(std::vector<std::string> options)
+{
+  return historyoutputs->create_output(options);
+}
+
+bool CalculiXCore::modify_historyoutput(int output_id, int modify_type, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return historyoutputs->modify_output(output_id, modify_type, options, options_marker);
+}
+
+bool CalculiXCore::delete_historyoutput(int output_id)
+{
+  return historyoutputs->delete_output(output_id);
 }
 
 std::string CalculiXCore::get_material_export_data() // gets the export data from materials core
@@ -975,6 +1000,12 @@ std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_
       for (size_t i = 0; i < amplitudes->amplitudes_data.size(); i++)
       {
         all_ids.push_back(amplitudes->amplitudes_data[i][0]);
+      }
+    } else if (parse_type=="historyoutput")
+    {
+      for (size_t i = 0; i < historyoutputs->outputs_data.size(); i++)
+      {
+        all_ids.push_back(historyoutputs->outputs_data[i][0]);
       }
     }
   }

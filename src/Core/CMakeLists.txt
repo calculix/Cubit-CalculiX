@@ -31,4 +31,6 @@ set(CORE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/CoreBCsDisplacements.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreBCsTemperatures.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreBCsTemperatures.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreHistoryOutputs.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreHistoryOutputs.hpp
     PARENT_SCOPE)

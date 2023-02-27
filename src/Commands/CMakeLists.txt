@@ -95,4 +95,14 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxBCsDisplacementsModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxBCsTemperaturesModifyCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxBCsTemperaturesModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxHistoryOutputCreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxHistoryOutputCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxHistoryOutputNodeModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxHistoryOutputNodeModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxHistoryOutputElementModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxHistoryOutputElementModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxHistoryOutputContactModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxHistoryOutputContactModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxHistoryOutputDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxHistoryOutputDeleteCommand.hpp
     PARENT_SCOPE)

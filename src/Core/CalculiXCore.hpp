@@ -14,6 +14,7 @@ class CoreLoadsForces;
 class CoreLoadsPressures;
 class CoreBCsDisplacements;
 class CoreBCsTemperatures;
+class CoreHistoryOutputs;
 
 class MeshExportInterface;
 class MaterialInterface;
@@ -76,6 +77,9 @@ public:
   bool modify_loadspressures(int pressure_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a pressure
   bool modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a displacement
   bool modify_bcstemperatures(int temperature_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a temperature
+  bool create_historyoutput(std::vector<std::string> options); // adds a new output
+  bool modify_historyoutput(int output_id, int modify_type, std::vector<std::string> options, std::vector<int> options_marker); // modify a output
+  bool delete_historyoutput(int output_id); // delete output
   std::vector<std::vector<std::string>> get_blocks_tree_data(); // gets the data from core blocks to build the tree
   std::vector<std::vector<std::string>> get_nodeset_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_sideset_tree_data(); // gets the data from core to build the tree
@@ -102,6 +106,7 @@ public:
   CoreLoadsPressures *loadspressures;
   CoreBCsDisplacements *bcsdisplacements;
   CoreBCsTemperatures *bcstemperatures;
+  CoreHistoryOutputs *historyoutputs;
   MeshExportInterface *me_iface;
   MaterialInterface *mat_iface;
 };

@@ -233,6 +233,21 @@ bool CalculiXCoreInterface::modify_bcstemperatures(int temperature_id, std::vect
   return ccx_core.modify_bcstemperatures(temperature_id,options,options_marker);
 }
 
+bool CalculiXCoreInterface::create_historyoutput(std::vector<std::string> options)
+{
+  return ccx_core.create_historyoutput(options);
+}
+
+bool CalculiXCoreInterface::modify_historyoutput(int output_id, int modify_type, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return ccx_core.modify_historyoutput(output_id, modify_type, options, options_marker);
+}
+
+bool CalculiXCoreInterface::delete_historyoutput(int output_id)
+{
+  return ccx_core.delete_historyoutput(output_id);
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_blocks_tree_data()
 { 
   return ccx_core.get_blocks_tree_data();

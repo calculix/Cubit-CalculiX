@@ -1,0 +1,14 @@
+ccx use logfile core on
+reset
+ccx create historyoutput name test_name1 node
+ccx create historyoutput name test_name2 element
+ccx create historyoutput name test_name3 contact
+ccx create historyoutput name test_name1 node
+ccx create historyoutput name test_name2 element
+ccx create historyoutput name test_name3 contact
+ccx create historyoutput name test_name1 node
+ccx create historyoutput name test_name2 element
+ccx create historyoutput name test_name3 contact
+ccx modify historyoutput 1 node name juhey nodeset 99 frequency 22 frequencyf 11 totals_yes global_yes key_on u  nt tsf ttf pn psf ptf mach cp vf depf turb mf rf rfl
+ccx modify historyoutput 2 element name juhey block 99 frequency 22 frequencyf 11 totals_yes global_yes key_on S SVF E ME PEEQ CEEQ ENER SDV HFL HFLF COORD ELSE ELKE EVOL EMAS EBHE CENT
+ccx modify historyoutput 3 contact name juhey contactpair 99 frequency 22 totals_yes global_yes key_on cdis cstr cnum cf cfn cfs
