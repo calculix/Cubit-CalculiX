@@ -18,6 +18,8 @@
 #include "BCsTree.hpp"
 #include "BCsDisplacementsTree.hpp"
 #include "BCsTemperaturesTree.hpp"
+#include "HistoryOutputsTree.hpp"
+#include "FieldOutputsTree.hpp"
 
 
 CCXDockWindowTree::CCXDockWindowTree() :
@@ -96,6 +98,10 @@ void CCXDockWindowTree::initialize()
   myBCsDisplacementsTree->initialize();
   myBCsTemperaturesTree = new BCsTemperaturesTree(myBCsTree);
   myBCsTemperaturesTree->initialize();
+  myHistoryOutputsTree = new HistoryOutputsTree(myModelTree);
+  myHistoryOutputsTree->initialize();
+  myFieldOutputsTree = new FieldOutputsTree(myModelTree);
+  myFieldOutputsTree->initialize();
 
   dock->setWidget(myModelTree);
       
@@ -142,6 +148,8 @@ void CCXDockWindowTree::clear()
     delete myBCsTemperaturesTree;
     delete myBCsDisplacementsTree;
     delete myBCsTree;
+    delete myHistoryOutputsTree;
+    delete myFieldOutputsTree;
     delete myModelTree;
     delete dock;
     isInitialized = false;  
@@ -170,6 +178,8 @@ void CCXDockWindowTree::update()
   //myBCsTree->update();
   myBCsDisplacementsTree->update();
   myBCsTemperaturesTree->update();
+  myHistoryOutputsTree->update();
+  myFieldOutputsTree->update();
 }
 
 void CCXDockWindowTree::reset()
@@ -190,4 +200,6 @@ void CCXDockWindowTree::reset()
   //myBCsTree->clear();
   myBCsDisplacementsTree->clear();
   myBCsTemperaturesTree->clear();
+  myHistoryOutputsTree->clear();
+  myFieldOutputsTree->clear();
 }

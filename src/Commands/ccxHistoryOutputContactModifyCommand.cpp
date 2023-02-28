@@ -21,9 +21,9 @@ std::vector<std::string> ccxHistoryOutputContactModifyCommand::get_syntax()
   syntax.append("[name <string:type='unquoted', number='1', label='name', help='<name>'>] " );
   syntax.append("[contactpair <value:label='contactpair id',help='<contactpair id>'>] ");
   syntax.append("[frequency <value:label='frequency',help='<frequency>'>] ");
-  syntax.append("[{totals_yes|totals_only|totals_no} ");
-  syntax.append("[{global_yes|global_no} ");
-  //syntax.append("[TIME_POINTS {yes|no} ");
+  syntax.append("[{totals_yes|totals_only|totals_no}] ");
+  syntax.append("[{global_yes|global_no}] ");
+  //syntax.append("[TIME_POINTS {yes|no}] ");
   syntax.append("[{key_on|key_off}");
 
   keys_list = ccx_iface.get_historyoutput_contact_keys();
@@ -51,9 +51,9 @@ std::vector<std::string> ccxHistoryOutputContactModifyCommand::get_syntax_help()
   help[0].append("[name <name>] " );
   help[0].append("[contactpair <contactpair id>] ");
   help[0].append("[frequency <frequency>] ");
-  help[0].append("[{totals_yes|totals_only|totals_no} ");
-  help[0].append("[{global_yes|global_no} ");
-  //help[0].append("[TIME_POINTS {yes|no} ");
+  help[0].append("[{totals_yes|totals_only|totals_no}] ");
+  help[0].append("[{global_yes|global_no}] ");
+  //help[0].append("[TIME_POINTS {yes|no}] ");
   help[0].append("[{key_on|key_off}");
 
   keys_list = ccx_iface.get_historyoutput_contact_keys();

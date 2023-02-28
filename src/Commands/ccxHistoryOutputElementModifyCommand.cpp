@@ -23,9 +23,9 @@ std::vector<std::string> ccxHistoryOutputElementModifyCommand::get_syntax()
   syntax.append("[block <value:label='block id',help='<block id>'>] ");
   syntax.append("[frequency <value:label='frequency',help='<frequency>'>] ");
   syntax.append("[frequencyf <value:label='frequencyf',help='<frequencyf>'>] ");
-  syntax.append("[{totals_yes|totals_only|totals_no} ");
-  syntax.append("[{global_yes|global_no} ");
-  //syntax.append("[TIME_POINTS {yes|no} ");
+  syntax.append("[{totals_yes|totals_only|totals_no}] ");
+  syntax.append("[{global_yes|global_no}] ");
+  //syntax.append("[TIME_POINTS {yes|no}] ");
   syntax.append("[{key_on|key_off}");
 
   keys_list = ccx_iface.get_historyoutput_element_keys();
@@ -54,9 +54,9 @@ std::vector<std::string> ccxHistoryOutputElementModifyCommand::get_syntax_help()
   help[0].append("[block <block id>] ");
   help[0].append("[frequency <frequency>] ");
   help[0].append("[frequencyf <frequencyf>] ");
-  help[0].append("[{totals_yes|totals_only|totals_no} ");
-  help[0].append("[{global_yes|global_no} ");
-  //help[0].append("[TIME_POINTS {yes|no} ");
+  help[0].append("[{totals_yes|totals_only|totals_no}] ");
+  help[0].append("[{global_yes|global_no}] ");
+  //help[0].append("[TIME_POINTS {yes|no}] ");
   help[0].append("[{key_on|key_off}");
 
   keys_list = ccx_iface.get_historyoutput_element_keys();

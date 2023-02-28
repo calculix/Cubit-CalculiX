@@ -1,22 +1,22 @@
-#include "ccxHistoryOutputDeleteCommand.hpp"
+#include "ccxFieldOutputDeleteCommand.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "CalculiXCoreInterface.hpp"
 
-ccxHistoryOutputDeleteCommand::ccxHistoryOutputDeleteCommand()
+ccxFieldOutputDeleteCommand::ccxFieldOutputDeleteCommand()
 {}
 
-ccxHistoryOutputDeleteCommand::~ccxHistoryOutputDeleteCommand()
+ccxFieldOutputDeleteCommand::~ccxFieldOutputDeleteCommand()
 {}
 
-std::vector<std::string> ccxHistoryOutputDeleteCommand::get_syntax()
+std::vector<std::string> ccxFieldOutputDeleteCommand::get_syntax()
 {
   std::vector<std::string> syntax_list;
   
   for (size_t syn_i = 1; syn_i < 6; syn_i++)
   {
     std::string syntax = "ccx ";
-    syntax.append("delete historyoutput ");
+    syntax.append("delete fieldoutput ");
     
     if (syn_i==1)
     {
@@ -51,10 +51,10 @@ std::vector<std::string> ccxHistoryOutputDeleteCommand::get_syntax()
   return syntax_list;
 }
 
-std::vector<std::string> ccxHistoryOutputDeleteCommand::get_syntax_help()
+std::vector<std::string> ccxFieldOutputDeleteCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx delete historyoutput <output id>";
+  help[0] = "ccx delete fieldoutput <output id>";
   help[1]=" ";
   help[2]=" ";
   help[3]=" ";
@@ -64,13 +64,13 @@ std::vector<std::string> ccxHistoryOutputDeleteCommand::get_syntax_help()
   return help;
 }
 
-std::vector<std::string> ccxHistoryOutputDeleteCommand::get_help()
+std::vector<std::string> ccxFieldOutputDeleteCommand::get_help()
 {
   std::vector<std::string> help;
   return help;
 }
 
-bool ccxHistoryOutputDeleteCommand::execute(CubitCommandData &data)
+bool ccxFieldOutputDeleteCommand::execute(CubitCommandData &data)
 {
   
   CalculiXCoreInterface ccx_iface;
@@ -115,7 +115,7 @@ bool ccxHistoryOutputDeleteCommand::execute(CubitCommandData &data)
   
   if(!data.get_values("output id", output_ids))
   {   
-    output_ids = ccx_iface.parser("historyoutput", output_string);
+    output_ids = ccx_iface.parser("fieldoutput", output_string);
   }
 
   if (output_ids.size()==0)
@@ -126,7 +126,7 @@ bool ccxHistoryOutputDeleteCommand::execute(CubitCommandData &data)
 
   for (size_t i = 0; i < output_ids.size(); i++)
   {    
-    if (!ccx_iface.delete_historyoutput(output_ids[i]))
+    if (!ccx_iface.delete_fieldoutput(output_ids[i]))
     {
       //PRINT_INFO("%s", output.c_str());  
       output = "Failed with ID " + std::to_string(output_ids[i]) + "!\n";

@@ -81,7 +81,7 @@ public:
   // element_data[0][8] TIME POINTS
   // element_data[0][9] LAST ITERATIONS
   // element_data[0][10] CONTACT ELEMENTS
-  // element_data[0][11] KEY: CEEQ"
+  // element_data[0][11] KEY: CEEQ
   // element_data[0][12] KEY: E
   // element_data[0][13] KEY: ECD
   // element_data[0][14] KEY: EMFB
@@ -103,15 +103,13 @@ public:
   // element_data[0][30] KEY: SPOS
   // element_data[0][31] KEY: SVF
   // element_data[0][32] KEY: SDV
-  // element_data[0][33] KEY: SDV
-  // element_data[0][34] KEY: THE
-  // element_data[0][35] KEY: ZZS
+  // element_data[0][33] KEY: THE
+  // element_data[0][34] KEY: ZZS
   
   std::vector<std::string> contact_keys;
   std::vector<std::vector<std::string>> contact_data;
   // contact_data[0][0] contact_id              
-  // contact_data[0][1] contactpair_id // to define master and slave on export    option[0]...
-  // contact_data[0][2] FREQUENCY
+  // contact_data[0][2] FREQUENCY   option[0]...
   // contact_data[0][3] TIME POINTS
   // contact_data[0][4] LAST ITERATIONS
   // contact_data[0][5] CONTACT ELEMENTS

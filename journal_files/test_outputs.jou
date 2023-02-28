@@ -13,3 +13,16 @@ ccx modify historyoutput 1 node name juhey nodeset 99 frequency 22 frequencyf 11
 ccx modify historyoutput 2 element name juhey block 99 frequency 22 frequencyf 11 totals_yes global_yes key_on S SVF E ME PEEQ CEEQ ENER SDV HFL HFLF COORD ELSE ELKE EVOL EMAS EBHE CENT
 ccx modify historyoutput 3 contact name juhey contactpair 99 frequency 22 totals_yes global_yes key_on cdis cstr cels cnum cf cfn cfs
 
+ccx create fieldoutput name fieldtest1 node
+ccx create fieldoutput name fieldtest2 element
+ccx create fieldoutput name fieldtest3 contact
+ccx create fieldoutput name fieldtest1 node
+ccx create fieldoutput name fieldtest2 element
+ccx create fieldoutput name fieldtest3 contact
+ccx create fieldoutput name fieldtest1 node
+ccx create fieldoutput name fieldtest2 element
+ccx create fieldoutput name fieldtest3 contact
+
+ccx modify fieldoutput 1 node name fieldjuhi nodeset 11 frequency 22 frequencyf 33 totals_yes global_yes output_2d output_all_on last_iterations_on contact_elements_on key_on CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF NT PNT POT PRF PS PSF PT PTF PU RF RFL SEN TS TSF TT TTF TURB U V VF
+ccx modify fieldoutput 2 element name fieldjuhi nodeset 11 frequency 22 frequencyf 33 global_yes output_2d output_all_on section_forces_on last_iterations_on contact_elements_on key_on CEEQ E ECD EMFB EMFE ENER ERR HER HFL HFLF MAXE MAXS ME PEEQ PHS S SF SMID SNEG SPOS SVF SDV THE ZZS
+ccx modify fieldoutput 3 contact name fieldcontact frequency 33 last_iterations_on contact_elements_on key_on cdis cstr cels pcon

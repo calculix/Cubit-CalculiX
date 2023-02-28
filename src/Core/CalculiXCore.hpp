@@ -87,6 +87,9 @@ public:
   bool create_fieldoutput(std::vector<std::string> options); // adds a new output
   bool modify_fieldoutput(int output_id, int modify_type, std::vector<std::string> options, std::vector<int> options_marker); // modify a output
   bool delete_fieldoutput(int output_id); // delete output
+  std::vector<std::string> get_fieldoutput_node_keys();
+  std::vector<std::string> get_fieldoutput_element_keys();
+  std::vector<std::string> get_fieldoutput_contact_keys();
   std::vector<std::vector<std::string>> get_blocks_tree_data(); // gets the data from core blocks to build the tree
   std::vector<std::vector<std::string>> get_nodeset_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_sideset_tree_data(); // gets the data from core to build the tree
@@ -100,6 +103,8 @@ public:
   std::vector<std::vector<std::string>> get_loadspressures_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_bcsdisplacements_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_bcstemperatures_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_historyoutputs_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_fieldoutputs_tree_data(); // gets the data from core to build the tree
 
   CoreBlocks *cb;
   CoreMaterials *mat;

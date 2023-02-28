@@ -33,6 +33,10 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/BCsDisplacementsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsTemperaturesTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsTemperaturesTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/HistoryOutputsTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/HistoryOutputsTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/FieldOutputsTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/FieldOutputsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CCXBlocksElementTypePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CCXBlocksElementTypePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/SectionsCreatePanel.hpp

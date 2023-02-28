@@ -278,6 +278,21 @@ bool CalculiXCoreInterface::delete_fieldoutput(int output_id)
   return ccx_core.delete_fieldoutput(output_id);
 }
 
+std::vector<std::string> CalculiXCoreInterface::get_fieldoutput_node_keys()
+{
+  return  ccx_core.get_fieldoutput_node_keys();
+}
+
+std::vector<std::string> CalculiXCoreInterface::get_fieldoutput_element_keys()
+{
+  return  ccx_core.get_fieldoutput_element_keys();
+}
+
+std::vector<std::string> CalculiXCoreInterface::get_fieldoutput_contact_keys()
+{
+  return  ccx_core.get_fieldoutput_contact_keys();
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_blocks_tree_data()
 { 
   return ccx_core.get_blocks_tree_data();
@@ -341,6 +356,16 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_bcsdisplacement
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_bcstemperatures_tree_data()
 { 
   return ccx_core.get_bcstemperatures_tree_data();
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_historyoutputs_tree_data()
+{ 
+  return ccx_core.get_historyoutputs_tree_data();
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_fieldoutputs_tree_data()
+{ 
+  return ccx_core.get_fieldoutputs_tree_data();
 }
 
 std::string CalculiXCoreInterface::get_material_export_data() // gets the export data from materials core

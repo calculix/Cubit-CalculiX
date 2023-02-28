@@ -105,4 +105,14 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxHistoryOutputContactModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxHistoryOutputDeleteCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxHistoryOutputDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxFieldOutputCreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxFieldOutputCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxFieldOutputNodeModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxFieldOutputNodeModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxFieldOutputElementModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxFieldOutputElementModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxFieldOutputContactModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxFieldOutputContactModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxFieldOutputDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxFieldOutputDeleteCommand.hpp
     PARENT_SCOPE)

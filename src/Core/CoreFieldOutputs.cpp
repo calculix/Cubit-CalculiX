@@ -56,7 +56,6 @@ CoreFieldOutputs::CoreFieldOutputs()
   element_keys.push_back("SPOS");
   element_keys.push_back("SVF");
   element_keys.push_back("SDV");
-  element_keys.push_back("SDV");
   element_keys.push_back("THE");
   element_keys.push_back("ZZS");
 
@@ -276,7 +275,7 @@ bool CoreFieldOutputs::add_node(std::string node_id)
 bool CoreFieldOutputs::add_element(std::string element_id)
 {
   std::vector<std::string> v = {element_id};
-  for (size_t i = 1; i < 36; i++)
+  for (size_t i = 1; i < 35; i++)
   {
     v.push_back("");
   }
@@ -290,7 +289,7 @@ bool CoreFieldOutputs::add_contact(std::string contact_id)
 {
   std::vector<std::string> v = {contact_id};
 
-  for (size_t i = 1; i < 10; i++)
+  for (size_t i = 1; i < 9; i++)
   {
     v.push_back("");
   }
@@ -527,7 +526,7 @@ std::string CoreFieldOutputs::print_data()
 
   for (size_t i = 0; i < element_data.size(); i++)
   {
-    for (size_t ii = 0; ii < 36; ii++)
+    for (size_t ii = 0; ii < 35; ii++)
     {
       str_return.append(element_data[i][ii] + " ");
     }
@@ -535,7 +534,7 @@ std::string CoreFieldOutputs::print_data()
   }
 
   str_return.append("\n CoreFieldOutputs contact_data: \n");
-  str_return.append("contact_id, contactpair_id, FREQUENCY, TIME POINTS, LAST ITERATIONS, CONTACT ELEMENTS");
+  str_return.append("contact_id, FREQUENCY, TIME POINTS, LAST ITERATIONS, CONTACT ELEMENTS");
   for (size_t i = 0; i < contact_keys.size(); i++)
   {
     str_return.append(", " + contact_keys[i]);
@@ -544,7 +543,7 @@ std::string CoreFieldOutputs::print_data()
 
   for (size_t i = 0; i < contact_data.size(); i++)
   {
-    for (size_t ii = 0; ii < 10; ii++)
+    for (size_t ii = 0; ii < 9; ii++)
     {
       str_return.append(contact_data[i][ii] + " ");
     }

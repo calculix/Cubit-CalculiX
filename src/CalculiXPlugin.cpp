@@ -51,6 +51,12 @@
 #include "ccxHistoryOutputElementModifyCommand.hpp"
 #include "ccxHistoryOutputContactModifyCommand.hpp"
 #include "ccxHistoryOutputDeleteCommand.hpp"
+#include "ccxFieldOutputCreateCommand.hpp"
+#include "ccxFieldOutputNodeModifyCommand.hpp"
+#include "ccxFieldOutputElementModifyCommand.hpp"
+#include "ccxFieldOutputContactModifyCommand.hpp"
+#include "ccxFieldOutputDeleteCommand.hpp"
+
 
 //! This macro is required to identify this as a valid Cubit plugin. The plugin
 //! will NOT be loaded if this macro is not present.
@@ -117,6 +123,11 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxHistoryOutputElementModifyCommand");
   keys.push_back("ccxHistoryOutputContactModifyCommand");
   keys.push_back("ccxHistoryOutputDeleteCommand");
+  keys.push_back("ccxFieldOutputCreateCommand");
+  keys.push_back("ccxFieldOutputNodeModifyCommand");
+  keys.push_back("ccxFieldOutputElementModifyCommand");
+  keys.push_back("ccxFieldOutputContactModifyCommand");
+  keys.push_back("ccxFieldOutputDeleteCommand");
 
   return keys;
 }
@@ -281,6 +292,21 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxHistoryOutputDeleteCommand")
     return new ccxHistoryOutputDeleteCommand();
+
+  else if(key == "ccxFieldOutputCreateCommand")
+    return new ccxFieldOutputCreateCommand();
+
+  else if(key == "ccxFieldOutputNodeModifyCommand")
+    return new ccxFieldOutputNodeModifyCommand();
+  
+  else if(key == "ccxFieldOutputElementModifyCommand")
+    return new ccxFieldOutputElementModifyCommand();
+
+  else if(key == "ccxFieldOutputContactModifyCommand")
+    return new ccxFieldOutputContactModifyCommand();
+
+  else if(key == "ccxFieldOutputDeleteCommand")
+    return new ccxFieldOutputDeleteCommand();
 
   return NULL;
 }

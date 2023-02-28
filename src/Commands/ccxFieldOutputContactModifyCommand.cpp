@@ -1,33 +1,30 @@
-#include "ccxHistoryOutputNodeModifyCommand.hpp"
+#include "ccxFieldOutputContactModifyCommand.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "CalculiXCoreInterface.hpp"
 
-ccxHistoryOutputNodeModifyCommand::ccxHistoryOutputNodeModifyCommand()
+ccxFieldOutputContactModifyCommand::ccxFieldOutputContactModifyCommand()
 {}
 
-ccxHistoryOutputNodeModifyCommand::~ccxHistoryOutputNodeModifyCommand()
+ccxFieldOutputContactModifyCommand::~ccxFieldOutputContactModifyCommand()
 {}
 
-std::vector<std::string> ccxHistoryOutputNodeModifyCommand::get_syntax()
+std::vector<std::string> ccxFieldOutputContactModifyCommand::get_syntax()
 {
   CalculiXCoreInterface ccx_iface;
   std::vector<std::string> keys_list;
   std::vector<std::string> syntax_list;
-
+       
   std::string syntax = "ccx ";
-  syntax.append("modify historyoutput <value:label='output id',help='<output id>'> ");
-  syntax.append("node ");
+  syntax.append("modify fieldoutput <value:label='output id',help='<output id>'> ");
+  syntax.append("contact ");
   syntax.append("[name <string:type='unquoted', number='1', label='name', help='<name>'>] " );
-  syntax.append("[nodeset <value:label='nodeset id',help='<nodeset id>'>] ");
   syntax.append("[frequency <value:label='frequency',help='<frequency>'>] ");
-  syntax.append("[frequencyf <value:label='frequencyf',help='<frequencyf>'>] ");
-  syntax.append("[{totals_yes|totals_only|totals_no}] ");
-  syntax.append("[{global_yes|global_no}] ");
-  //syntax.append("[TIME_POINTS {yes|no}] ");
-   syntax.append("[{key_on|key_off}");
-
-  keys_list = ccx_iface.get_historyoutput_node_keys();
+  //syntax.append("[TIME_POINTS {yes|no} ");
+  syntax.append("[{last_iterations_on|last_iterations_off}] ");
+  syntax.append("[{contact_elements_on|contact_elements_off}] ");
+  syntax.append("[{key_on|key_off}");
+  keys_list = ccx_iface.get_fieldoutput_contact_keys();
   for (size_t i = 0; i < keys_list.size(); i++)
   {
     syntax.append(" [" + keys_list[i] + "]");
@@ -39,25 +36,23 @@ std::vector<std::string> ccxHistoryOutputNodeModifyCommand::get_syntax()
   return syntax_list;
 }
 
-std::vector<std::string> ccxHistoryOutputNodeModifyCommand::get_syntax_help()
+std::vector<std::string> ccxFieldOutputContactModifyCommand::get_syntax_help()
 {
   CalculiXCoreInterface ccx_iface;
   std::vector<std::string> keys_list;
-
+  
   std::vector<std::string> help(1);
   help[0] = "ccx ";
-  help[0].append("modify historyoutput <output id> ");
-  help[0].append("node ");
+  help[0].append("modify fieldoutput <output id> ");
+  help[0].append("contact ");
   help[0].append("[name <name>] " );
-  help[0].append("[nodeset <nodeset id>] ");
   help[0].append("[frequency <frequency>] ");
-  help[0].append("[frequencyf <frequencyf>] ");
-  help[0].append("[{totals_yes|totals_only|totals_no}] ");
-  help[0].append("[{global_yes|global_no}] ");
   //help[0].append("[TIME_POINTS {yes|no} ");
-   help[0].append("[{key_on|key_off}");
+  help[0].append("[{last_iterations_on|last_iterations_off}] ");
+  help[0].append("[{contact_elements_on|contact_elements_off}] ");
+  help[0].append("[{key_on|key_off}");
 
-  keys_list = ccx_iface.get_historyoutput_node_keys();
+  keys_list = ccx_iface.get_fieldoutput_contact_keys();
   for (size_t i = 0; i < keys_list.size(); i++)
   {
     help[0].append(" [" + keys_list[i] + "]");
@@ -68,31 +63,28 @@ std::vector<std::string> ccxHistoryOutputNodeModifyCommand::get_syntax_help()
   return help;
 }
 
-std::vector<std::string> ccxHistoryOutputNodeModifyCommand::get_help()
+std::vector<std::string> ccxFieldOutputContactModifyCommand::get_help()
 {
   std::vector<std::string> help;
   return help;
 }
 
-bool ccxHistoryOutputNodeModifyCommand::execute(CubitCommandData &data)
+bool ccxFieldOutputContactModifyCommand::execute(CubitCommandData &data)
 {
   CalculiXCoreInterface ccx_iface;
 
   std::string output;
   std::vector<std::string> keys_list;
-  keys_list = ccx_iface.get_historyoutput_node_keys();
+  keys_list = ccx_iface.get_fieldoutput_contact_keys();
   std::vector<std::string> options;
   std::vector<int> options_marker;
   int output_id;
   std::string name;
-  int nodeset_value;
-  std::string nodeset;
   int frequency_value;
   std::string frequency;
-  int frequencyf_value;
-  std::string frequencyf;
-  std::string totals;
-  std::string global;
+  std::string section_forces;
+  std::string last_iterations;
+  std::string contact_elements;
 
   data.get_value("output id", output_id);
 
@@ -100,7 +92,7 @@ bool ccxHistoryOutputNodeModifyCommand::execute(CubitCommandData &data)
   {
     options_marker.push_back(1);
     options.push_back(name);
-    if (!ccx_iface.modify_historyoutput(output_id, 0, options, options_marker))
+    if (!ccx_iface.modify_fieldoutput(output_id, 0, options, options_marker))
     {
       output = "Changing Name Failed!\n";
       PRINT_ERROR(output.c_str());
@@ -109,18 +101,6 @@ bool ccxHistoryOutputNodeModifyCommand::execute(CubitCommandData &data)
     options_marker.clear();
   }
 
-  if (!data.get_value("nodeset id", nodeset_value))
-  {
-    nodeset = "";
-    options_marker.push_back(0);
-  }
-  else
-  {
-    nodeset = std::to_string(nodeset_value);
-    options_marker.push_back(1);
-  }
-  options.push_back(nodeset);
-  
   if (!data.get_value("frequency", frequency_value))
   {
     frequency = "";
@@ -133,53 +113,37 @@ bool ccxHistoryOutputNodeModifyCommand::execute(CubitCommandData &data)
   }
   options.push_back(frequency);
   
-  if (!data.get_value("frequencyf", frequencyf_value))
-  {
-    frequencyf = "";
-    options_marker.push_back(0);
-  }
-  else
-  {
-    frequencyf = std::to_string(frequencyf_value);
-    options_marker.push_back(1);
-  }
-  options.push_back(frequencyf);
-  
-  if (data.find_keyword("TOTALS_YES"))
-  {
-    totals = "YES";
-    options_marker.push_back(1);
-  }else if (data.find_keyword("TOTALS_ONLY"))
-  {
-    totals = "ONLY";
-    options_marker.push_back(1);
-  }else if (data.find_keyword("TOTALS_NO"))
-  {
-    totals = "";
-    options_marker.push_back(1);
-  }else{
-    totals = "";
-    options_marker.push_back(0);
-  }
-  options.push_back(totals);
-
-  if (data.find_keyword("GLOBAL_YES"))
-  {
-    global = "YES";
-    options_marker.push_back(1);
-  }else if (data.find_keyword("GLOBAL_NO"))
-  {
-    global = "";
-    options_marker.push_back(1);
-  }else{
-    global = "";
-    options_marker.push_back(0);
-  }
-  options.push_back(global);
-
   // timepoints
   options.push_back("");
   options_marker.push_back(0);
+
+  if (data.find_keyword("LAST_ITERATIONS_ON"))
+  {
+    last_iterations = "LAST ITERATIONS";
+    options_marker.push_back(1);
+  }else if (data.find_keyword("LAST_ITERATIONS_OFF"))
+  {
+    last_iterations = "";
+    options_marker.push_back(1);
+  }else{
+    last_iterations = "";
+    options_marker.push_back(0);
+  }
+  options.push_back(last_iterations);
+
+  if (data.find_keyword("CONTACT_ELEMENTS_ON"))
+  {
+    contact_elements = "CONTACT ELEMENTS";
+    options_marker.push_back(1);
+  }else if (data.find_keyword("CONTACT_ELEMENTS_OFF"))
+  {
+    contact_elements = "";
+    options_marker.push_back(1);
+  }else{
+    contact_elements = "";
+    options_marker.push_back(0);
+  }
+  options.push_back(contact_elements);
 
   //keys
   if (data.find_keyword("KEY_OFF"))
@@ -212,14 +176,14 @@ bool ccxHistoryOutputNodeModifyCommand::execute(CubitCommandData &data)
     }
   }else
   {
-    for (size_t i = 6; i < 23; i++)
+    for (size_t i = 10; i < 34; i++)
     {
       options.push_back("");
       options_marker.push_back(0);
     }
   }
   
-  if (!ccx_iface.modify_historyoutput(output_id, 1, options, options_marker))
+  if (!ccx_iface.modify_fieldoutput(output_id, 3, options, options_marker))
   {
     output = "Failed!\n";
     PRINT_ERROR(output.c_str());

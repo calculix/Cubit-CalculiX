@@ -602,6 +602,21 @@ bool CalculiXCore::delete_fieldoutput(int output_id)
   return fieldoutputs->delete_output(output_id);
 }
 
+std::vector<std::string> CalculiXCore::get_fieldoutput_node_keys()
+{
+  return  fieldoutputs->node_keys;
+}
+
+std::vector<std::string> CalculiXCore::get_fieldoutput_element_keys()
+{
+  return  fieldoutputs->element_keys;
+}
+
+std::vector<std::string> CalculiXCore::get_fieldoutput_contact_keys()
+{
+  return  fieldoutputs->contact_keys;
+}
+
 std::string CalculiXCore::get_material_export_data() // gets the export data from materials core
 {
   return mat->get_material_export();
@@ -993,6 +1008,70 @@ std::vector<std::vector<std::string>> CalculiXCore::get_bcstemperatures_tree_dat
     bcstemperatures_tree_data.push_back(bcstemperatures_tree_data_set);
   }
   return bcstemperatures_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_historyoutputs_tree_data()
+{ 
+  std::vector<std::vector<std::string>> outputs_tree_data;
+  
+  for (size_t i = 0; i < historyoutputs->outputs_data.size(); i++)
+  {
+    std::vector<std::string> outputs_tree_data_set;
+    std::string output_name;
+    int output_name_id;
+
+    output_name_id = historyoutputs->get_name_data_id_from_name_id(historyoutputs->outputs_data[i][1]);
+    output_name = historyoutputs->name_data[output_name_id][1];
+    
+    if (historyoutputs->outputs_data[i][2]==1)
+    {
+      output_name = output_name + " (node)";
+    }else if (historyoutputs->outputs_data[i][2]==2)
+    {
+      output_name = output_name + " (element)";
+    }else if (historyoutputs->outputs_data[i][2]==3)
+    {
+      output_name = output_name + " (contact)";
+    }
+
+    outputs_tree_data_set.push_back(std::to_string(historyoutputs->outputs_data[i][0])); //output_id
+    outputs_tree_data_set.push_back(output_name); //output_name
+    outputs_tree_data.push_back(outputs_tree_data_set);
+  }
+
+  return outputs_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_fieldoutputs_tree_data()
+{ 
+  std::vector<std::vector<std::string>> outputs_tree_data;
+  
+  for (size_t i = 0; i < fieldoutputs->outputs_data.size(); i++)
+  {
+    std::vector<std::string> outputs_tree_data_set;
+    std::string output_name;
+    int output_name_id;
+
+    output_name_id = fieldoutputs->get_name_data_id_from_name_id(fieldoutputs->outputs_data[i][1]);
+    output_name = fieldoutputs->name_data[output_name_id][1];
+    
+    if (fieldoutputs->outputs_data[i][2]==1)
+    {
+      output_name = output_name + " (node)";
+    }else if (fieldoutputs->outputs_data[i][2]==2)
+    {
+      output_name = output_name + " (element)";
+    }else if (fieldoutputs->outputs_data[i][2]==3)
+    {
+      output_name = output_name + " (contact)";
+    }
+
+    outputs_tree_data_set.push_back(std::to_string(fieldoutputs->outputs_data[i][0])); //output_id
+    outputs_tree_data_set.push_back(output_name); //output_name
+    outputs_tree_data.push_back(outputs_tree_data_set);
+  }
+
+  return outputs_tree_data;
 }
 
 std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_string)

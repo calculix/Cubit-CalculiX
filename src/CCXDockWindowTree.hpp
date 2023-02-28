@@ -27,6 +27,8 @@ class LoadsPressuresTree;
 class BCsTree;
 class BCsDisplacementsTree;
 class BCsTemperaturesTree;
+class HistoryOutputsTree;
+class FieldOutputsTree;
 
 class CCXDockWindowTree
 {
@@ -68,6 +70,9 @@ private:
   BCsTree *myBCsTree; //BCs root item
   BCsDisplacementsTree *myBCsDisplacementsTree; //Displacements root item
   BCsTemperaturesTree *myBCsTemperaturesTree; //Temperature root item
+  HistoryOutputsTree *myHistoryOutputsTree; //HistoryOutputs root item
+  FieldOutputsTree *myFieldOutputsTree; //HistoryOutputs root item
+  
   QSettings *settings;
 };
 
