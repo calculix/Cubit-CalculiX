@@ -1,56 +1,75 @@
-#include "CoreHistoryOutputs.hpp"
+#include "CoreFieldOutputs.hpp"
 #include "CubitInterface.hpp"
 #include "CalculiXCoreInterface.hpp"
 
-CoreHistoryOutputs::CoreHistoryOutputs()
+CoreFieldOutputs::CoreFieldOutputs()
 {
-  node_keys.push_back("U");
-  node_keys.push_back("NT");
-  node_keys.push_back("TSF");
-  node_keys.push_back("TTF");
-  node_keys.push_back("PN");
-  node_keys.push_back("PSF");
-  node_keys.push_back("PTF");
-  node_keys.push_back("MACH");
   node_keys.push_back("CP");
-  node_keys.push_back("VF");
   node_keys.push_back("DEPF");
-  node_keys.push_back("TURB");
+  node_keys.push_back("DEPT");
+  node_keys.push_back("DTF");
+  node_keys.push_back("HCRI");
+  node_keys.push_back("KEQ");
+  node_keys.push_back("MACH");
+  node_keys.push_back("MAXU");
   node_keys.push_back("MF");
+  node_keys.push_back("NT");
+  node_keys.push_back("PNT");
+  node_keys.push_back("POT");
+  node_keys.push_back("PRF");
+  node_keys.push_back("PS");
+  node_keys.push_back("PSF");
+  node_keys.push_back("PT");
+  node_keys.push_back("PTF");
+  node_keys.push_back("PU");
   node_keys.push_back("RF");
   node_keys.push_back("RFL");
+  node_keys.push_back("SEN");
+  node_keys.push_back("TS");
+  node_keys.push_back("TSF");
+  node_keys.push_back("TT");
+  node_keys.push_back("TTF");
+  node_keys.push_back("TURB");
+  node_keys.push_back("U");
+  node_keys.push_back("V");
+  node_keys.push_back("VF");
  
-  element_keys.push_back("S");
-  element_keys.push_back("SVF");
-  element_keys.push_back("E");
-  element_keys.push_back("ME");
-  element_keys.push_back("PEEQ");
   element_keys.push_back("CEEQ");
+  element_keys.push_back("E");
+  element_keys.push_back("ECD");
+  element_keys.push_back("EMFB");
+  element_keys.push_back("EMFE");
   element_keys.push_back("ENER");
-  element_keys.push_back("SDV");
+  element_keys.push_back("ERR");
+  element_keys.push_back("HER");
   element_keys.push_back("HFL");
   element_keys.push_back("HFLF");
-  element_keys.push_back("COORD");
-  element_keys.push_back("ELSE");
-  element_keys.push_back("ELKE");
-  element_keys.push_back("EVOL");
-  element_keys.push_back("EMAS");
-  element_keys.push_back("EBHE");
-  element_keys.push_back("CENT");
+  element_keys.push_back("MAXE");
+  element_keys.push_back("MAXS");
+  element_keys.push_back("ME");
+  element_keys.push_back("PEEQ");
+  element_keys.push_back("PHS");
+  element_keys.push_back("S");
+  element_keys.push_back("SF");
+  element_keys.push_back("SMID");
+  element_keys.push_back("SNEG");
+  element_keys.push_back("SPOS");
+  element_keys.push_back("SVF");
+  element_keys.push_back("SDV");
+  element_keys.push_back("SDV");
+  element_keys.push_back("THE");
+  element_keys.push_back("ZZS");
 
   contact_keys.push_back("CDIS");
   contact_keys.push_back("CSTR");
   contact_keys.push_back("CELS");
-  contact_keys.push_back("CNUM");
-  contact_keys.push_back("CF");
-  contact_keys.push_back("CFN");
-  contact_keys.push_back("CFS");
+  contact_keys.push_back("PCON");
 }
 
-CoreHistoryOutputs::~CoreHistoryOutputs()
+CoreFieldOutputs::~CoreFieldOutputs()
 {}
 
-bool CoreHistoryOutputs::init()
+bool CoreFieldOutputs::init()
 {
   if (is_initialized)
   {
@@ -62,12 +81,12 @@ bool CoreHistoryOutputs::init()
   }
 }
 
-bool CoreHistoryOutputs::update()
+bool CoreFieldOutputs::update()
 { 
   return true;
 }
 
-bool CoreHistoryOutputs::reset()
+bool CoreFieldOutputs::reset()
 {
   outputs_data.clear();
   name_data.clear();
@@ -79,12 +98,12 @@ bool CoreHistoryOutputs::reset()
   return true;
 }
 
-bool CoreHistoryOutputs::check_initialized()
+bool CoreFieldOutputs::check_initialized()
 {
   return is_initialized;
 }
 
-bool CoreHistoryOutputs::create_output(std::vector<std::string> options)
+bool CoreFieldOutputs::create_output(std::vector<std::string> options)
 {
   int output_id;
   int output_last;
@@ -167,7 +186,7 @@ bool CoreHistoryOutputs::create_output(std::vector<std::string> options)
   return true;
 }
 
-bool CoreHistoryOutputs::modify_output(int output_id,int modify_type, std::vector<std::string> options, std::vector<int> options_marker)
+bool CoreFieldOutputs::modify_output(int output_id,int modify_type, std::vector<std::string> options, std::vector<int> options_marker)
 {
   int sub_data_id;
   int outputs_data_id = get_outputs_data_id_from_output_id(output_id);
@@ -223,7 +242,7 @@ bool CoreHistoryOutputs::modify_output(int output_id,int modify_type, std::vecto
   }
 }
 
-bool CoreHistoryOutputs::add_output(int output_id, int name_id, int output_type, int output_type_id)
+bool CoreFieldOutputs::add_output(int output_id, int name_id, int output_type, int output_type_id)
 {
   std::vector<int> v = {output_id, name_id, output_type, output_type_id};
       
@@ -232,7 +251,7 @@ bool CoreHistoryOutputs::add_output(int output_id, int name_id, int output_type,
   return true;
 }
 
-bool CoreHistoryOutputs::add_name(std::string name_id, std::string name)
+bool CoreFieldOutputs::add_name(std::string name_id, std::string name)
 {
   std::vector<std::string> v = {name_id, name};
   
@@ -241,34 +260,47 @@ bool CoreHistoryOutputs::add_name(std::string name_id, std::string name)
   return true;
 }
 
-bool CoreHistoryOutputs::add_node(std::string node_id)
+bool CoreFieldOutputs::add_node(std::string node_id)
 {
-  std::vector<std::string> v = {node_id,"","","","","","","","","","","","","","","","","","","","",""};
+  std::vector<std::string> v = {node_id};
+  for (size_t i = 1; i < 40; i++)
+  {
+    v.push_back("");
+  }
   
   node_data.push_back(v);
   
   return true;
 }
 
-bool CoreHistoryOutputs::add_element(std::string element_id)
+bool CoreFieldOutputs::add_element(std::string element_id)
 {
-  std::vector<std::string> v = {element_id,"","","","","","","","","","","","","","","","","","","","","","",""};
+  std::vector<std::string> v = {element_id};
+  for (size_t i = 1; i < 36; i++)
+  {
+    v.push_back("");
+  }
 
   element_data.push_back(v);
   
   return true;
 }
 
-bool CoreHistoryOutputs::add_contact(std::string contact_id)
+bool CoreFieldOutputs::add_contact(std::string contact_id)
 {
-  std::vector<std::string> v = {contact_id,"","","","","","","","","","","",""};
+  std::vector<std::string> v = {contact_id};
+
+  for (size_t i = 1; i < 10; i++)
+  {
+    v.push_back("");
+  }
 
   contact_data.push_back(v);
   
   return true;
 }
 
-bool CoreHistoryOutputs::delete_output(int output_id)
+bool CoreFieldOutputs::delete_output(int output_id)
 {
   int sub_data_id;
   int outputs_data_id = get_outputs_data_id_from_output_id(output_id);
@@ -304,7 +336,7 @@ bool CoreHistoryOutputs::delete_output(int output_id)
   }
 }
 
-int CoreHistoryOutputs::get_outputs_data_id_from_output_id(int output_id)
+int CoreFieldOutputs::get_outputs_data_id_from_output_id(int output_id)
 { 
   int return_int = -1;
   for (size_t i = 0; i < outputs_data.size(); i++)
@@ -317,7 +349,7 @@ int CoreHistoryOutputs::get_outputs_data_id_from_output_id(int output_id)
   return return_int;
 }
 
-int CoreHistoryOutputs::get_name_data_id_from_name_id(int name_id)
+int CoreFieldOutputs::get_name_data_id_from_name_id(int name_id)
 { 
   int return_int = -1;
   for (size_t i = 0; i < name_data.size(); i++)
@@ -330,7 +362,7 @@ int CoreHistoryOutputs::get_name_data_id_from_name_id(int name_id)
   return return_int;
 }
 
-int CoreHistoryOutputs::get_node_data_id_from_node_id(int node_id)
+int CoreFieldOutputs::get_node_data_id_from_node_id(int node_id)
 { 
   int return_int = -1;
   for (size_t i = 0; i < node_data.size(); i++)
@@ -343,7 +375,7 @@ int CoreHistoryOutputs::get_node_data_id_from_node_id(int node_id)
   return return_int;
 }
 
-int CoreHistoryOutputs::get_element_data_id_from_element_id(int element_id)
+int CoreFieldOutputs::get_element_data_id_from_element_id(int element_id)
 { 
   int return_int = -1;
   for (size_t i = 0; i < element_data.size(); i++)
@@ -356,7 +388,7 @@ int CoreHistoryOutputs::get_element_data_id_from_element_id(int element_id)
   return return_int;
 }
 
-int CoreHistoryOutputs::get_contact_data_id_from_contact_id(int contact_id)
+int CoreFieldOutputs::get_contact_data_id_from_contact_id(int contact_id)
 { 
   int return_int = -1;
   for (size_t i = 0; i < contact_data.size(); i++)
@@ -369,7 +401,7 @@ int CoreHistoryOutputs::get_contact_data_id_from_contact_id(int contact_id)
   return return_int;
 }
 
-std::string CoreHistoryOutputs::get_output_export(std::vector<int> output_ids) // get a list of the CalculiX output exports
+std::string CoreFieldOutputs::get_output_export(std::vector<int> output_ids) // get a list of the CalculiX output exports
 {
   std::vector<std::string> outputs_export_list;
   outputs_export_list.push_back("********************************** H I S T O R Y O U T P U T S ****************************");
@@ -447,10 +479,10 @@ std::string CoreHistoryOutputs::get_output_export(std::vector<int> output_ids) /
   return output_export;
 }
 
-std::string CoreHistoryOutputs::print_data()
+std::string CoreFieldOutputs::print_data()
 {
   std::string str_return;
-  str_return = "\n CoreHistoryOutputs outputs_data: \n";
+  str_return = "\n CoreFieldOutputs outputs_data: \n";
   str_return.append("output_id, name_id, output_type, output_type_id \n");
 
   for (size_t i = 0; i < outputs_data.size(); i++)
@@ -458,7 +490,7 @@ std::string CoreHistoryOutputs::print_data()
     str_return.append(std::to_string(outputs_data[i][0]) + " " + std::to_string(outputs_data[i][1]) + " " + std::to_string(outputs_data[i][2]) + " " + std::to_string(outputs_data[i][3]) + " \n");
   }
 
-  str_return.append("\n CoreHistoryOutputs name_data: \n");
+  str_return.append("\n CoreFieldOutputs name_data: \n");
   str_return.append("name_id, name \n");
 
   for (size_t i = 0; i < name_data.size(); i++)
@@ -466,8 +498,9 @@ std::string CoreHistoryOutputs::print_data()
     str_return.append(name_data[i][0] + " " + name_data[i][1] + " \n");
   }
 
-  str_return.append("\n CoreHistoryOutputs node_data: \n");
-  str_return.append("node_id, nodeset_id, FREQUENCY, FREQUENCYF, TOTALS, GLOBAL, TIME POINTS");
+  str_return.append("\n CoreFieldOutputs node_data: \n");
+  str_return.append("node_id, nodeset_id, FREQUENCY, FREQUENCYF, TOTALS, GLOBAL, OUTPUT, OUTPUT ALL, TIME POINTS, LAST ITERATIONS, CONTACT ELEMENTS");
+
   for (size_t i = 0; i < node_keys.size(); i++)
   {
     str_return.append(", " + node_keys[i]);
@@ -476,15 +509,15 @@ std::string CoreHistoryOutputs::print_data()
 
   for (size_t i = 0; i < node_data.size(); i++)
   {
-    for (size_t ii = 0; ii < 22; ii++)
+    for (size_t ii = 0; ii < 40; ii++)
     {
       str_return.append(node_data[i][ii] + " ");
     }
     str_return.append("\n");
   }
 
-  str_return.append("\n CoreHistoryOutputs element_data: \n");
-  str_return.append("element_id, elementset_id, FREQUENCY, FREQUENCYF, TOTALS, GLOBAL, TIME POINTS");
+  str_return.append("\n CoreFieldOutputs element_data: \n");
+  str_return.append("element_id, elementset_id, FREQUENCY, FREQUENCYF, GLOBAL, OUTPUT, OUTPUT ALL, SECTION FORCES, TIME POINTS, LAST ITERATIONS, CONTACT ELEMENTS");
 
   for (size_t i = 0; i < element_keys.size(); i++)
   {
@@ -494,15 +527,15 @@ std::string CoreHistoryOutputs::print_data()
 
   for (size_t i = 0; i < element_data.size(); i++)
   {
-    for (size_t ii = 0; ii < 24; ii++)
+    for (size_t ii = 0; ii < 36; ii++)
     {
       str_return.append(element_data[i][ii] + " ");
     }
     str_return.append("\n");
   }
 
-  str_return.append("\n CoreHistoryOutputs contact_data: \n");
-  str_return.append("contact_id, contactpair_id, FREQUENCY, TOTALS, GLOBAL, TIME POINTS");
+  str_return.append("\n CoreFieldOutputs contact_data: \n");
+  str_return.append("contact_id, contactpair_id, FREQUENCY, TIME POINTS, LAST ITERATIONS, CONTACT ELEMENTS");
   for (size_t i = 0; i < contact_keys.size(); i++)
   {
     str_return.append(", " + contact_keys[i]);
@@ -511,7 +544,7 @@ std::string CoreHistoryOutputs::print_data()
 
   for (size_t i = 0; i < contact_data.size(); i++)
   {
-    for (size_t ii = 0; ii < 13; ii++)
+    for (size_t ii = 0; ii < 10; ii++)
     {
       str_return.append(contact_data[i][ii] + " ");
     }

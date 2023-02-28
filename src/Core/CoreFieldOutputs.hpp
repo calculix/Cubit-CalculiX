@@ -1,14 +1,13 @@
-#ifndef COREHISTORYOUTPUTS_HPP
-#define COREHISTORYOUTPUTS_HPP
+#ifndef COREFIELDOUTPUTS_HPP
+#define COREFIELDOUTPUTS_HPP
 
 class CalculiXCoreInterface;
 
-class CoreHistoryOutputs
+class CoreFieldOutputs
 {
-
 public:
-  CoreHistoryOutputs();
-  ~CoreHistoryOutputs();
+  CoreFieldOutputs();
+  ~CoreFieldOutputs();
 
   // make 1 data storage for each history output parameter
   // NAME
@@ -28,71 +27,98 @@ public:
 
   std::vector<std::string> node_keys;
   std::vector<std::vector<std::string>> node_data;
-  // node_data[0][0] node_id              
+  // node_data[0][0] node_id
   // node_data[0][1] nodeset_id NSET      option[0]...
   // node_data[0][2] FREQUENCY
   // node_data[0][3] FREQUENCYF
   // node_data[0][4] TOTALS
   // node_data[0][5] GLOBAL
-  // node_data[0][6] TIME POINTS
-  // node_data[0][7] KEY: U
-  // node_data[0][8] KEY: NT
-  // node_data[0][9] KEY: TSF
-  // node_data[0][10] KEY: TTF
-  // node_data[0][11] KEY: PN
-  // node_data[0][12] KEY: PSF
-  // node_data[0][13] KEY: PTF
-  // node_data[0][14] KEY: MACH
-  // node_data[0][15] KEY: CP
-  // node_data[0][16] KEY: VF
-  // node_data[0][17] KEY: DEPF
-  // node_data[0][18] KEY: TURB
+  // node_data[0][6] OUTPUT
+  // node_data[0][7] OUTPUT ALL
+  // node_data[0][8] TIME POINTS
+  // node_data[0][9] LAST ITERATIONS
+  // node_data[0][10] CONTACT ELEMENTS
+  // node_data[0][11] KEY: CP
+  // node_data[0][12] KEY: DEPF
+  // node_data[0][13] KEY: DEPT
+  // node_data[0][14] KEY: DTF
+  // node_data[0][15] KEY: HCRI
+  // node_data[0][16] KEY: KEQ
+  // node_data[0][17] KEY: MACH
+  // node_data[0][18] KEY: MAXU
   // node_data[0][19] KEY: MF
-  // node_data[0][20] KEY: RF
-  // node_data[0][21] KEY: RFL
+  // node_data[0][20] KEY: NT
+  // node_data[0][21] KEY: PNT
+  // node_data[0][22] KEY: POT
+  // node_data[0][23] KEY: PRF
+  // node_data[0][24] KEY: PS
+  // node_data[0][25] KEY: PSF
+  // node_data[0][26] KEY: PT
+  // node_data[0][27] KEY: PTF
+  // node_data[0][28] KEY: PU
+  // node_data[0][29] KEY: RF
+  // node_data[0][30] KEY: RFL
+  // node_data[0][31] KEY: SEN
+  // node_data[0][32] KEY: TS
+  // node_data[0][33] KEY: TSF
+  // node_data[0][34] KEY: TT
+  // node_data[0][35] KEY: TTF
+  // node_data[0][36] KEY: TURB
+  // node_data[0][37] KEY: U
+  // node_data[0][38] KEY: V
+  // node_data[0][39] KEY: VF
   
   std::vector<std::string> element_keys;
   std::vector<std::vector<std::string>> element_data;
   // element_data[0][0] element_id            
-  // element_data[0][1] elementset_id ELSET   option[0]...
+  // element_data[0][1] nodeset_id NSET   option[0]...
   // element_data[0][2] FREQUENCY
   // element_data[0][3] FREQUENCYF
-  // element_data[0][4] TOTALS
-  // element_data[0][5] GLOBAL
-  // element_data[0][6] TIME POINTS
-  // element_data[0][7] KEY: S
-  // element_data[0][8] KEY: SVF
-  // element_data[0][9] KEY: E
-  // element_data[0][10] KEY: ME
-  // element_data[0][11] KEY: PEEQ
-  // element_data[0][12] KEY: CEEQ
-  // element_data[0][13] KEY: ENER
-  // element_data[0][14] KEY: SDV
-  // element_data[0][15] KEY: HFL
-  // element_data[0][16] KEY: HFLF
-  // element_data[0][17] KEY: COORD
-  // element_data[0][18] KEY: ELSE
-  // element_data[0][19] KEY: ELKE
-  // element_data[0][20] KEY: EVOL
-  // element_data[0][21] KEY: EMAS
-  // element_data[0][22] KEY: EBHE
-  // element_data[0][23] KEY: CENT
+  // element_data[0][4] GLOBAL
+  // element_data[0][5] OUTPUT
+  // element_data[0][6] OUTPUT ALL
+  // element_data[0][7] SECTION FORCES
+  // element_data[0][8] TIME POINTS
+  // element_data[0][9] LAST ITERATIONS
+  // element_data[0][10] CONTACT ELEMENTS
+  // element_data[0][11] KEY: CEEQ"
+  // element_data[0][12] KEY: E
+  // element_data[0][13] KEY: ECD
+  // element_data[0][14] KEY: EMFB
+  // element_data[0][15] KEY: EMFE
+  // element_data[0][16] KEY: ENER
+  // element_data[0][17] KEY: ERR
+  // element_data[0][18] KEY: HER
+  // element_data[0][19] KEY: HFL
+  // element_data[0][20] KEY: HFLF
+  // element_data[0][21] KEY: MAXE
+  // element_data[0][22] KEY: MAXS
+  // element_data[0][23] KEY: ME
+  // element_data[0][24] KEY: PEEQ
+  // element_data[0][25] KEY: PHS
+  // element_data[0][26] KEY: S
+  // element_data[0][27] KEY: SF
+  // element_data[0][28] KEY: SMID
+  // element_data[0][29] KEY: SNEG
+  // element_data[0][30] KEY: SPOS
+  // element_data[0][31] KEY: SVF
+  // element_data[0][32] KEY: SDV
+  // element_data[0][33] KEY: SDV
+  // element_data[0][34] KEY: THE
+  // element_data[0][35] KEY: ZZS
   
   std::vector<std::string> contact_keys;
   std::vector<std::vector<std::string>> contact_data;
   // contact_data[0][0] contact_id              
   // contact_data[0][1] contactpair_id // to define master and slave on export    option[0]...
   // contact_data[0][2] FREQUENCY
-  // contact_data[0][3] TOTALS
-  // contact_data[0][4] GLOBAL
-  // contact_data[0][5] TIME POINTS
+  // contact_data[0][3] TIME POINTS
+  // contact_data[0][4] LAST ITERATIONS
+  // contact_data[0][5] CONTACT ELEMENTS
   // contact_data[0][6] KEY: CDIS
   // contact_data[0][7] KEY: CSTR
   // contact_data[0][8] KEY: CELS
-  // contact_data[0][9] KEY: CNUM
-  // contact_data[0][10] KEY: CF // needs contact pair
-  // contact_data[0][11] KEY: CFN // needs contact pair
-  // contact_data[0][12] KEY: CFS // needs contact pair 
+  // contact_data[0][9] KEY: PCON
     
   bool is_initialized = false;
 
@@ -119,4 +145,4 @@ public:
   CalculiXCoreInterface *ccx_iface;
 };
 
-#endif // COREHISTORYOUTPUTS_HPP
+#endif // COREFIELDOUTPUTS_HPP

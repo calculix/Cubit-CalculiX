@@ -11,6 +11,9 @@ ccxHistoryOutputElementModifyCommand::~ccxHistoryOutputElementModifyCommand()
 
 std::vector<std::string> ccxHistoryOutputElementModifyCommand::get_syntax()
 {
+  CalculiXCoreInterface ccx_iface;
+  std::vector<std::string> keys_list;
+
   std::vector<std::string> syntax_list;
 
   std::string syntax = "ccx ";
@@ -23,7 +26,16 @@ std::vector<std::string> ccxHistoryOutputElementModifyCommand::get_syntax()
   syntax.append("[{totals_yes|totals_only|totals_no} ");
   syntax.append("[{global_yes|global_no} ");
   //syntax.append("[TIME_POINTS {yes|no} ");
-  syntax.append("[{key_on|key_off} [S] [SVF] [E] [ME] [PEEQ] [CEEQ] [ENER] [SDV] [HFL] [HFLF] [COORD] [ELSE] [ELKE] [EVOL] [EMAS] [EBHE] [CENT]]");
+  syntax.append("[{key_on|key_off}");
+
+  keys_list = ccx_iface.get_historyoutput_element_keys();
+  for (size_t i = 0; i < keys_list.size(); i++)
+  {
+    syntax.append(" [" + keys_list[i] + "]");
+  }
+  
+  syntax.append("]");
+
   syntax_list.push_back(syntax);
 
   return syntax_list;
@@ -31,6 +43,9 @@ std::vector<std::string> ccxHistoryOutputElementModifyCommand::get_syntax()
 
 std::vector<std::string> ccxHistoryOutputElementModifyCommand::get_syntax_help()
 {
+  CalculiXCoreInterface ccx_iface;
+  std::vector<std::string> keys_list;
+
   std::vector<std::string> help(1);
   help[0] = "ccx ";
   help[0].append("modify historyoutput <output id> ");
@@ -42,7 +57,14 @@ std::vector<std::string> ccxHistoryOutputElementModifyCommand::get_syntax_help()
   help[0].append("[{totals_yes|totals_only|totals_no} ");
   help[0].append("[{global_yes|global_no} ");
   //help[0].append("[TIME_POINTS {yes|no} ");
-  help[0].append("[{key_on|key_off} [S] [SVF] [E] [ME] [PEEQ] [CEEQ] [ENER] [SDV] [HFL] [HFLF] [COORD] [ELSE] [ELKE] [EVOL] [EMAS] [EBHE] [CENT]]");
+  help[0].append("[{key_on|key_off}");
+
+  keys_list = ccx_iface.get_historyoutput_element_keys();
+  for (size_t i = 0; i < keys_list.size(); i++)
+  {
+    help[0].append(" [" + keys_list[i] + "]");
+  }
+  help[0].append("]");
 
   return help;
 }
@@ -58,6 +80,8 @@ bool ccxHistoryOutputElementModifyCommand::execute(CubitCommandData &data)
   CalculiXCoreInterface ccx_iface;
 
   std::string output;
+  std::vector<std::string> keys_list;
+  keys_list = ccx_iface.get_historyoutput_element_keys();
   std::vector<std::string> options;
   std::vector<int> options_marker;
   int output_id;
@@ -160,314 +184,32 @@ bool ccxHistoryOutputElementModifyCommand::execute(CubitCommandData &data)
 
   //keys
   if (data.find_keyword("KEY_OFF"))
-  {
-    if (data.find_keyword("S"))
+  {  
+    for (size_t i = 0; i < keys_list.size(); i++)
     {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("SVF"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("E"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("ME"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("PEEQ"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("CEEQ"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("ENER"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("SDV"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("HFL"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("HFLF"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("COORD"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("ELSE"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("ELKE"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("EVOL"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("EMAS"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("EBHE"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("CENT"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
+      if (data.find_keyword(keys_list[i]))
+      {
+        options.push_back("");
+        options_marker.push_back(1);
+      }else
+      {
+        options.push_back("");
+        options_marker.push_back(0);
+      }
     }
   }else if (data.find_keyword("KEY_ON"))
   {
-    if (data.find_keyword("S"))
+    for (size_t i = 0; i < keys_list.size(); i++)
     {
-      options.push_back("S");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("SVF"))
-    {
-      options.push_back("SVF");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("E"))
-    {
-      options.push_back("E");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("ME"))
-    {
-      options.push_back("ME");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("PN"))
-    {
-      options.push_back("PN");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("PEEQ"))
-    {
-      options.push_back("PEEQ");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("CEEQ"))
-    {
-      options.push_back("CEEQ");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("ENER"))
-    {
-      options.push_back("ENER");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("SDV"))
-    {
-      options.push_back("SDV");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("HFL"))
-    {
-      options.push_back("HFL");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("HFLF"))
-    {
-      options.push_back("HFLF");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("ELSE"))
-    {
-      options.push_back("ELSE");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("ELKE"))
-    {
-      options.push_back("ELKE");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("EVOL"))
-    {
-      options.push_back("EVOL");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("EMAS"))
-    {
-      options.push_back("EMAS");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("EBHE"))
-    {
-      options.push_back("EBHE");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("CENT"))
-    {
-      options.push_back("CENT");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
+      if (data.find_keyword(keys_list[i]))
+      {
+        options.push_back(keys_list[i]);
+        options_marker.push_back(1);
+      }else
+      {
+        options.push_back("");
+        options_marker.push_back(0);
+      }
     }
   }else
   {

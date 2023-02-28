@@ -15,6 +15,7 @@ class CoreLoadsPressures;
 class CoreBCsDisplacements;
 class CoreBCsTemperatures;
 class CoreHistoryOutputs;
+class CoreFieldOutputs;
 
 class MeshExportInterface;
 class MaterialInterface;
@@ -80,6 +81,12 @@ public:
   bool create_historyoutput(std::vector<std::string> options); // adds a new output
   bool modify_historyoutput(int output_id, int modify_type, std::vector<std::string> options, std::vector<int> options_marker); // modify a output
   bool delete_historyoutput(int output_id); // delete output
+  std::vector<std::string> get_historyoutput_node_keys();
+  std::vector<std::string> get_historyoutput_element_keys();
+  std::vector<std::string> get_historyoutput_contact_keys();
+  bool create_fieldoutput(std::vector<std::string> options); // adds a new output
+  bool modify_fieldoutput(int output_id, int modify_type, std::vector<std::string> options, std::vector<int> options_marker); // modify a output
+  bool delete_fieldoutput(int output_id); // delete output
   std::vector<std::vector<std::string>> get_blocks_tree_data(); // gets the data from core blocks to build the tree
   std::vector<std::vector<std::string>> get_nodeset_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_sideset_tree_data(); // gets the data from core to build the tree
@@ -107,6 +114,7 @@ public:
   CoreBCsDisplacements *bcsdisplacements;
   CoreBCsTemperatures *bcstemperatures;
   CoreHistoryOutputs *historyoutputs;
+  CoreFieldOutputs *fieldoutputs;
   MeshExportInterface *me_iface;
   MaterialInterface *mat_iface;
 };

@@ -20,12 +20,13 @@
 #include "CoreBCsDisplacements.hpp"
 #include "CoreBCsTemperatures.hpp"
 #include "CoreHistoryOutputs.hpp"
+#include "CoreFieldOutputs.hpp"
 
 
 CalculiXCore::CalculiXCore():
   cb(NULL),mat(NULL),sections(NULL),constraints(NULL),referencepoints(NULL),surfaceinteractions(NULL),
   contactpairs(NULL),amplitudes(NULL),loadsforces(NULL),loadspressures(NULL),bcsdisplacements(NULL),
-  bcstemperatures(NULL), historyoutputs(NULL)
+  bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL)
 {
   init();
 }
@@ -58,6 +59,8 @@ CalculiXCore::~CalculiXCore()
     delete bcstemperatures;
   if(historyoutputs)
     delete historyoutputs;
+  if(fieldoutputs)
+    delete fieldoutputs;
 }
 
 bool CalculiXCore::print_to_log(std::string str_log)
@@ -141,6 +144,11 @@ bool CalculiXCore::init()
   
   historyoutputs->init();
 
+  if(!fieldoutputs)
+    fieldoutputs = new CoreFieldOutputs;
+  
+  fieldoutputs->init();
+
   if (use_ccx_logfile)
   {
     print_to_log("CalculiXCore Initialization!");
@@ -181,6 +189,7 @@ bool CalculiXCore::reset()
   bcsdisplacements->reset();
   bcstemperatures->reset();
   historyoutputs->reset();
+  fieldoutputs->reset();
   
   //print_to_log("RESET");
   //print_to_log(print_data());
@@ -203,6 +212,7 @@ std::string CalculiXCore::print_data()
   str_return.append(bcsdisplacements->print_data());
   str_return.append(bcstemperatures->print_data());
   str_return.append(historyoutputs->print_data());
+  str_return.append(fieldoutputs->print_data());
 
   return str_return;
 }
@@ -560,6 +570,36 @@ bool CalculiXCore::modify_historyoutput(int output_id, int modify_type, std::vec
 bool CalculiXCore::delete_historyoutput(int output_id)
 {
   return historyoutputs->delete_output(output_id);
+}
+
+std::vector<std::string> CalculiXCore::get_historyoutput_node_keys()
+{
+  return  historyoutputs->node_keys;
+}
+
+std::vector<std::string> CalculiXCore::get_historyoutput_element_keys()
+{
+  return  historyoutputs->element_keys;
+}
+
+std::vector<std::string> CalculiXCore::get_historyoutput_contact_keys()
+{
+  return  historyoutputs->contact_keys;
+}
+
+bool CalculiXCore::create_fieldoutput(std::vector<std::string> options)
+{
+  return fieldoutputs->create_output(options);
+}
+
+bool CalculiXCore::modify_fieldoutput(int output_id, int modify_type, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return fieldoutputs->modify_output(output_id, modify_type, options, options_marker);
+}
+
+bool CalculiXCore::delete_fieldoutput(int output_id)
+{
+  return fieldoutputs->delete_output(output_id);
 }
 
 std::string CalculiXCore::get_material_export_data() // gets the export data from materials core
@@ -1006,6 +1046,13 @@ std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_
       for (size_t i = 0; i < historyoutputs->outputs_data.size(); i++)
       {
         all_ids.push_back(historyoutputs->outputs_data[i][0]);
+      }
+    }
+    else if (parse_type=="fieldoutput")
+    {
+      for (size_t i = 0; i < fieldoutputs->outputs_data.size(); i++)
+      {
+        all_ids.push_back(fieldoutputs->outputs_data[i][0]);
       }
     }
   }

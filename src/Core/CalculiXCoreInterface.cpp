@@ -248,6 +248,36 @@ bool CalculiXCoreInterface::delete_historyoutput(int output_id)
   return ccx_core.delete_historyoutput(output_id);
 }
 
+std::vector<std::string> CalculiXCoreInterface::get_historyoutput_node_keys()
+{
+  return  ccx_core.get_historyoutput_node_keys();
+}
+
+std::vector<std::string> CalculiXCoreInterface::get_historyoutput_element_keys()
+{
+  return  ccx_core.get_historyoutput_element_keys();
+}
+
+std::vector<std::string> CalculiXCoreInterface::get_historyoutput_contact_keys()
+{
+  return  ccx_core.get_historyoutput_contact_keys();
+}
+
+bool CalculiXCoreInterface::create_fieldoutput(std::vector<std::string> options)
+{
+  return ccx_core.create_fieldoutput(options);
+}
+
+bool CalculiXCoreInterface::modify_fieldoutput(int output_id, int modify_type, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return ccx_core.modify_fieldoutput(output_id, modify_type, options, options_marker);
+}
+
+bool CalculiXCoreInterface::delete_fieldoutput(int output_id)
+{
+  return ccx_core.delete_fieldoutput(output_id);
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_blocks_tree_data()
 { 
   return ccx_core.get_blocks_tree_data();

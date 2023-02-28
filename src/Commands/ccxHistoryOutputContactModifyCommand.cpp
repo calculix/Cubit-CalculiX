@@ -12,6 +12,8 @@ ccxHistoryOutputContactModifyCommand::~ccxHistoryOutputContactModifyCommand()
 std::vector<std::string> ccxHistoryOutputContactModifyCommand::get_syntax()
 {
   std::vector<std::string> syntax_list;
+  CalculiXCoreInterface ccx_iface;
+  std::vector<std::string> keys_list;
 
   std::string syntax = "ccx ";
   syntax.append("modify historyoutput <value:label='output id',help='<output id>'> ");
@@ -22,7 +24,16 @@ std::vector<std::string> ccxHistoryOutputContactModifyCommand::get_syntax()
   syntax.append("[{totals_yes|totals_only|totals_no} ");
   syntax.append("[{global_yes|global_no} ");
   //syntax.append("[TIME_POINTS {yes|no} ");
-  syntax.append("[{key_on|key_off} [CDIS] [CSTR] [CNUM] [CF] [CFN] [CFS]]");
+  syntax.append("[{key_on|key_off}");
+
+  keys_list = ccx_iface.get_historyoutput_contact_keys();
+  for (size_t i = 0; i < keys_list.size(); i++)
+  {
+    syntax.append(" [" + keys_list[i] + "]");
+  }
+  
+  syntax.append("]");
+
   syntax_list.push_back(syntax);
 
   return syntax_list;
@@ -30,6 +41,9 @@ std::vector<std::string> ccxHistoryOutputContactModifyCommand::get_syntax()
 
 std::vector<std::string> ccxHistoryOutputContactModifyCommand::get_syntax_help()
 {
+  CalculiXCoreInterface ccx_iface;
+  std::vector<std::string> keys_list;
+
   std::vector<std::string> help(1);
   help[0] = "ccx ";
   help[0].append("modify historyoutput <output id> ");
@@ -40,7 +54,14 @@ std::vector<std::string> ccxHistoryOutputContactModifyCommand::get_syntax_help()
   help[0].append("[{totals_yes|totals_only|totals_no} ");
   help[0].append("[{global_yes|global_no} ");
   //help[0].append("[TIME_POINTS {yes|no} ");
-  help[0].append("[{key_on|key_off} [CDIS] [CSTR] [CNUM] [CF] [CFN] [CFS]]");
+  help[0].append("[{key_on|key_off}");
+
+  keys_list = ccx_iface.get_historyoutput_contact_keys();
+  for (size_t i = 0; i < keys_list.size(); i++)
+  {
+    help[0].append(" [" + keys_list[i] + "]");
+  }
+  help[0].append("]");
 
   return help;
 }
@@ -56,6 +77,8 @@ bool ccxHistoryOutputContactModifyCommand::execute(CubitCommandData &data)
   CalculiXCoreInterface ccx_iface;
 
   std::string output;
+  std::vector<std::string> keys_list;
+  keys_list = ccx_iface.get_historyoutput_contact_keys();
   std::vector<std::string> options;
   std::vector<int> options_marker;
   int output_id;
@@ -144,138 +167,36 @@ bool ccxHistoryOutputContactModifyCommand::execute(CubitCommandData &data)
 
   //keys
   if (data.find_keyword("KEY_OFF"))
-  {
-    if (data.find_keyword("CDIS"))
+  {  
+    for (size_t i = 0; i < keys_list.size(); i++)
     {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("CSTR"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("CELS"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("CNUM"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("CF"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("CFN"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("CFS"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
+      if (data.find_keyword(keys_list[i]))
+      {
+        options.push_back("");
+        options_marker.push_back(1);
+      }else
+      {
+        options.push_back("");
+        options_marker.push_back(0);
+      }
     }
   }else if (data.find_keyword("KEY_ON"))
   {
-    if (data.find_keyword("CDIS"))
+    for (size_t i = 0; i < keys_list.size(); i++)
     {
-      options.push_back("CDIS");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("CSTR"))
-    {
-      options.push_back("CSTR");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("CELS"))
-    {
-      options.push_back("CELS");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("CNUM"))
-    {
-      options.push_back("CNUM");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("CF"))
-    {
-      options.push_back("CF");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("CFN"))
-    {
-      options.push_back("CFN");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("CFS"))
-    {
-      options.push_back("CFS");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
+      if (data.find_keyword(keys_list[i]))
+      {
+        options.push_back(keys_list[i]);
+        options_marker.push_back(1);
+      }else
+      {
+        options.push_back("");
+        options_marker.push_back(0);
+      }
     }
   }else
   {
-    for (size_t i = 5; i < 12; i++)
+    for (size_t i = 6; i < 23; i++)
     {
       options.push_back("");
       options_marker.push_back(0);

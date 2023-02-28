@@ -11,6 +11,8 @@ ccxHistoryOutputNodeModifyCommand::~ccxHistoryOutputNodeModifyCommand()
 
 std::vector<std::string> ccxHistoryOutputNodeModifyCommand::get_syntax()
 {
+  CalculiXCoreInterface ccx_iface;
+  std::vector<std::string> keys_list;
   std::vector<std::string> syntax_list;
 
   std::string syntax = "ccx ";
@@ -23,7 +25,15 @@ std::vector<std::string> ccxHistoryOutputNodeModifyCommand::get_syntax()
   syntax.append("[{totals_yes|totals_only|totals_no} ");
   syntax.append("[{global_yes|global_no} ");
   //syntax.append("[TIME_POINTS {yes|no} ");
-  syntax.append("[{key_on|key_off} [U] [NT] [TSF] [TTF] [PN] [PSF] [PTF] [MACH] [CP] [VF] [DEPF] [TURB] [MF] [RF] [RFL]]");
+   syntax.append("[{key_on|key_off}");
+
+  keys_list = ccx_iface.get_historyoutput_node_keys();
+  for (size_t i = 0; i < keys_list.size(); i++)
+  {
+    syntax.append(" [" + keys_list[i] + "]");
+  }
+  
+  syntax.append("]");
   syntax_list.push_back(syntax);
 
   return syntax_list;
@@ -31,6 +41,9 @@ std::vector<std::string> ccxHistoryOutputNodeModifyCommand::get_syntax()
 
 std::vector<std::string> ccxHistoryOutputNodeModifyCommand::get_syntax_help()
 {
+  CalculiXCoreInterface ccx_iface;
+  std::vector<std::string> keys_list;
+
   std::vector<std::string> help(1);
   help[0] = "ccx ";
   help[0].append("modify historyoutput <output id> ");
@@ -42,7 +55,15 @@ std::vector<std::string> ccxHistoryOutputNodeModifyCommand::get_syntax_help()
   help[0].append("[{totals_yes|totals_only|totals_no} ");
   help[0].append("[{global_yes|global_no} ");
   //help[0].append("[TIME_POINTS {yes|no} ");
-  help[0].append("[{key_on|key_off} [U] [NT] [TSF] [TTF] [PN] [PSF] [PTF] [MACH] [CP] [VF] [DEPF] [TURB] [MF] [RF] [RFL]]");
+   help[0].append("[{key_on|key_off}");
+
+  keys_list = ccx_iface.get_historyoutput_node_keys();
+  for (size_t i = 0; i < keys_list.size(); i++)
+  {
+    help[0].append(" [" + keys_list[i] + "]");
+  }
+  help[0].append("]");
+
 
   return help;
 }
@@ -58,6 +79,8 @@ bool ccxHistoryOutputNodeModifyCommand::execute(CubitCommandData &data)
   CalculiXCoreInterface ccx_iface;
 
   std::string output;
+  std::vector<std::string> keys_list;
+  keys_list = ccx_iface.get_historyoutput_node_keys();
   std::vector<std::string> options;
   std::vector<int> options_marker;
   int output_id;
@@ -160,282 +183,36 @@ bool ccxHistoryOutputNodeModifyCommand::execute(CubitCommandData &data)
 
   //keys
   if (data.find_keyword("KEY_OFF"))
-  {
-    if (data.find_keyword("U"))
+  {  
+    for (size_t i = 0; i < keys_list.size(); i++)
     {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("NT"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("TSF"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("TTF"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("PN"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("PSF"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("PTF"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("MACH"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("CP"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("VF"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("DEPF"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("TURB"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("MF"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("RF"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("RFL"))
-    {
-      options.push_back("");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
+      if (data.find_keyword(keys_list[i]))
+      {
+        options.push_back("");
+        options_marker.push_back(1);
+      }else
+      {
+        options.push_back("");
+        options_marker.push_back(0);
+      }
     }
   }else if (data.find_keyword("KEY_ON"))
   {
-    if (data.find_keyword("U"))
+    for (size_t i = 0; i < keys_list.size(); i++)
     {
-      options.push_back("U");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("NT"))
-    {
-      options.push_back("NT");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("TSF"))
-    {
-      options.push_back("TSF");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("TTF"))
-    {
-      options.push_back("TTF");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("PN"))
-    {
-      options.push_back("PN");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("PSF"))
-    {
-      options.push_back("PSF");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("PTF"))
-    {
-      options.push_back("PTF");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("MACH"))
-    {
-      options.push_back("MACH");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("CP"))
-    {
-      options.push_back("CP");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("VF"))
-    {
-      options.push_back("VF");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("DEPF"))
-    {
-      options.push_back("DEPF");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("TURB"))
-    {
-      options.push_back("TURB");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("MF"))
-    {
-      options.push_back("MF");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("RF"))
-    {
-      options.push_back("RF");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
-    }
-    if (data.find_keyword("RFL"))
-    {
-      options.push_back("RFL");
-      options_marker.push_back(1);
-    }else
-    {
-      options.push_back("");
-      options_marker.push_back(0);
+      if (data.find_keyword(keys_list[i]))
+      {
+        options.push_back(keys_list[i]);
+        options_marker.push_back(1);
+      }else
+      {
+        options.push_back("");
+        options_marker.push_back(0);
+      }
     }
   }else
   {
-    for (size_t i = 6; i < 21; i++)
+    for (size_t i = 6; i < 23; i++)
     {
       options.push_back("");
       options_marker.push_back(0);
