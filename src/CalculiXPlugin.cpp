@@ -56,6 +56,8 @@
 #include "ccxFieldOutputElementModifyCommand.hpp"
 #include "ccxFieldOutputContactModifyCommand.hpp"
 #include "ccxFieldOutputDeleteCommand.hpp"
+#include "ccxInitialConditionCreateCommand.hpp"
+#include "ccxInitialConditionDeleteCommand.hpp"
 
 
 //! This macro is required to identify this as a valid Cubit plugin. The plugin
@@ -128,6 +130,8 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxFieldOutputElementModifyCommand");
   keys.push_back("ccxFieldOutputContactModifyCommand");
   keys.push_back("ccxFieldOutputDeleteCommand");
+  keys.push_back("ccxInitialConditionCreateCommand");
+  keys.push_back("ccxInitialConditionDeleteCommand");
 
   return keys;
 }
@@ -307,6 +311,12 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxFieldOutputDeleteCommand")
     return new ccxFieldOutputDeleteCommand();
+
+  else if(key == "ccxInitialConditionCreateCommand")
+    return new ccxInitialConditionCreateCommand();
+
+  else if(key == "ccxInitialConditionDeleteCommand")
+    return new ccxInitialConditionDeleteCommand();
 
   return NULL;
 }

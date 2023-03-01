@@ -293,6 +293,21 @@ std::vector<std::string> CalculiXCoreInterface::get_fieldoutput_contact_keys()
   return  ccx_core.get_fieldoutput_contact_keys();
 }
 
+bool CalculiXCoreInterface::create_initialcondition(std::vector<std::string> options)
+{
+  return ccx_core.create_initialcondition(options);
+}
+
+bool CalculiXCoreInterface::modify_initialcondition(int initialcondition_id, int modify_type, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return ccx_core.modify_initialcondition(initialcondition_id, modify_type, options, options_marker);
+}
+
+bool CalculiXCoreInterface::delete_initialcondition(int initialcondition_id)
+{
+  return ccx_core.delete_initialcondition(initialcondition_id);
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_blocks_tree_data()
 { 
   return ccx_core.get_blocks_tree_data();

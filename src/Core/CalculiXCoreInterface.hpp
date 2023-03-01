@@ -70,6 +70,9 @@ public:
   std::vector<std::string> get_fieldoutput_node_keys();
   std::vector<std::string> get_fieldoutput_element_keys();
   std::vector<std::string> get_fieldoutput_contact_keys();
+  bool create_initialcondition(std::vector<std::string> options); // adds a new initialcondition
+  bool modify_initialcondition(int initialcondition_id, int modify_type, std::vector<std::string> options, std::vector<int> options_marker); // modify a initialcondition
+  bool delete_initialcondition(int initialcondition_id); // delete initialcondition
   std::vector<std::vector<std::string>> get_blocks_tree_data(); // gets the data from core blocks to build the tree
   std::vector<std::vector<std::string>> get_nodeset_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_sideset_tree_data(); // gets the data from core to build the tree

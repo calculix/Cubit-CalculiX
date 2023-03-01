@@ -18,3 +18,10 @@ create temperature  on volume 1  value 654
 create temperature  on surface 6  value 5
 modify temperature 2 name 'temp' 
 ccx modify temperature 2 op new amplitude 1 timedelay -55.1
+
+ccx create initialcondition displacement
+ccx create initialcondition temperature
+ccx create initialcondition displacement
+ccx create initialcondition temperature
+ccx create initialcondition displacement
+ccx create initialcondition temperature

@@ -115,4 +115,8 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxFieldOutputContactModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxFieldOutputDeleteCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxFieldOutputDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxInitialConditionCreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxInitialConditionCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxInitialConditionDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxInitialConditionDeleteCommand.hpp
     PARENT_SCOPE)

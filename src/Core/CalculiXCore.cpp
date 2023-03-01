@@ -21,12 +21,13 @@
 #include "CoreBCsTemperatures.hpp"
 #include "CoreHistoryOutputs.hpp"
 #include "CoreFieldOutputs.hpp"
+#include "CoreInitialConditions.hpp"
 
 
 CalculiXCore::CalculiXCore():
   cb(NULL),mat(NULL),sections(NULL),constraints(NULL),referencepoints(NULL),surfaceinteractions(NULL),
   contactpairs(NULL),amplitudes(NULL),loadsforces(NULL),loadspressures(NULL),bcsdisplacements(NULL),
-  bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL)
+  bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL), initialconditions(NULL)
 {
   init();
 }
@@ -61,6 +62,8 @@ CalculiXCore::~CalculiXCore()
     delete historyoutputs;
   if(fieldoutputs)
     delete fieldoutputs;
+  if(initialconditions)
+    delete initialconditions;
 }
 
 bool CalculiXCore::print_to_log(std::string str_log)
@@ -149,6 +152,11 @@ bool CalculiXCore::init()
   
   fieldoutputs->init();
 
+  if(!initialconditions)
+    initialconditions = new CoreInitialConditions;
+  
+  fieldoutputs->init();
+
   if (use_ccx_logfile)
   {
     print_to_log("CalculiXCore Initialization!");
@@ -190,6 +198,7 @@ bool CalculiXCore::reset()
   bcstemperatures->reset();
   historyoutputs->reset();
   fieldoutputs->reset();
+  initialconditions->reset();
   
   //print_to_log("RESET");
   //print_to_log(print_data());
@@ -213,6 +222,7 @@ std::string CalculiXCore::print_data()
   str_return.append(bcstemperatures->print_data());
   str_return.append(historyoutputs->print_data());
   str_return.append(fieldoutputs->print_data());
+  str_return.append(initialconditions->print_data());
 
   return str_return;
 }
@@ -615,6 +625,21 @@ std::vector<std::string> CalculiXCore::get_fieldoutput_element_keys()
 std::vector<std::string> CalculiXCore::get_fieldoutput_contact_keys()
 {
   return  fieldoutputs->contact_keys;
+}
+
+bool CalculiXCore::create_initialcondition(std::vector<std::string> options)
+{
+  return initialconditions->create_initialcondition(options);
+}
+
+bool CalculiXCore::modify_initialcondition(int initialcondition_id, int modify_type, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return initialconditions->modify_initialcondition(initialcondition_id, modify_type, options, options_marker);
+}
+
+bool CalculiXCore::delete_initialcondition(int initialcondition_id)
+{
+  return initialconditions->delete_initialcondition(initialcondition_id);
 }
 
 std::string CalculiXCore::get_material_export_data() // gets the export data from materials core
@@ -1126,12 +1151,17 @@ std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_
       {
         all_ids.push_back(historyoutputs->outputs_data[i][0]);
       }
-    }
-    else if (parse_type=="fieldoutput")
+    } else if (parse_type=="fieldoutput")
     {
       for (size_t i = 0; i < fieldoutputs->outputs_data.size(); i++)
       {
         all_ids.push_back(fieldoutputs->outputs_data[i][0]);
+      }
+    } else if (parse_type=="initialcondition")
+    {
+      for (size_t i = 0; i < initialconditions->initialconditions_data.size(); i++)
+      {
+        all_ids.push_back(initialconditions->initialconditions_data[i][0]);
       }
     }
   }
