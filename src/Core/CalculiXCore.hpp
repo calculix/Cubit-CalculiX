@@ -42,6 +42,7 @@ public:
   std::string get_nodeset_name(int nodeset_id); // gets the nodeset name
   std::string get_sideset_name(int sideset_id); // gets the sideset name
   std::string get_surfaceinteraction_name(int surfaceinteraction_id); // gets the surfaceinteraction name
+  bool check_bc_exists(int bc_id,int BCType); // checks if the id for the bc type exists
   bool set_ccx_element_type(int block_id, std::string ccx_element_type); // sets the ccx element type for a block
   std::vector<int> get_blocks(); // gets the block ids from core blocks
   std::string get_material_export_data(); // gets the export data from materials core
@@ -108,6 +109,7 @@ public:
   std::vector<std::vector<std::string>> get_bcstemperatures_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_historyoutputs_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_fieldoutputs_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_initialconditions_tree_data(); // gets the data from core to build the tree
 
   CoreBlocks *cb;
   CoreMaterials *mat;

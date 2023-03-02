@@ -330,6 +330,29 @@ std::string CalculiXCore::get_surfaceinteraction_name(int surfaceinteraction_id)
   return surfaceinteraction_name;
 }
 
+
+bool CalculiXCore::check_bc_exists(int bc_id,int BCType)
+{
+  std::vector<int> ids;
+
+  if (BCType == 4)
+  {
+    ids = CubitInterface::get_bc_id_list(CI_BCTYPE_DISPLACEMENT);
+  }else if (BCType == 5)
+  {
+    ids = CubitInterface::get_bc_id_list(CI_BCTYPE_TEMPERATURE);
+  }
+  
+  for (size_t i = 0; i < ids.size(); i++)
+  {
+    if (ids[i]==bc_id)
+    {
+      return true;
+    } 
+  }
+  return false;
+}
+
 std::vector<int> CalculiXCore::get_blocks()
 { 
   std::vector<int> blocks;
@@ -1097,6 +1120,70 @@ std::vector<std::vector<std::string>> CalculiXCore::get_fieldoutputs_tree_data()
   }
 
   return outputs_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_initialconditions_tree_data()
+{ 
+  std::vector<std::vector<std::string>> initialconditions_tree_data;
+  
+  for (size_t i = 0; i < initialconditions->initialconditions_data.size(); i++)
+  {
+    std::vector<std::string> initialconditions_tree_data_set;
+    std::string initialcondition_name;
+    int sub_id;
+    std::string bc_id;
+    
+    sub_id = initialconditions->get_displacement_data_id_from_displacement_id(initialconditions->initialconditions_data[i][2]);
+
+    if (initialconditions->initialconditions_data[i][1]==1)
+    {
+      bc_id = initialconditions->displacement_data[sub_id][1];
+      if (bc_id == "")
+      {
+        initialcondition_name = "Displacement ID not set!";
+      } else {
+        if (check_bc_exists(std::stoi(bc_id),4))
+        {
+          initialcondition_name = CubitInterface::get_bc_name(CI_BCTYPE_DISPLACEMENT,std::stoi(bc_id));
+        } else 
+        {
+          initialcondition_name = "Displacement ID " + bc_id + " doesn't exist!";
+        }
+      }
+      if (initialcondition_name == "")
+      {
+        initialcondition_name = "Displacement_" + initialconditions->displacement_data[sub_id][1];
+      }
+      initialcondition_name = initialcondition_name + " (Displacement)";
+    }else if (initialconditions->initialconditions_data[i][1]==2)
+    { 
+      bc_id = initialconditions->temperature_data[sub_id][1];
+      if (bc_id == "")
+      {
+        initialcondition_name = "Temperature ID not set";
+      }else {
+        if (check_bc_exists(std::stoi(bc_id),5))
+        {
+          initialcondition_name = CubitInterface::get_bc_name(CI_BCTYPE_TEMPERATURE,std::stoi(bc_id));
+        } else 
+        {
+          initialcondition_name = "Temperature ID " + bc_id + " doesn't exist!";
+        }
+      }
+      if (initialcondition_name == "")
+      {
+        initialcondition_name = "Temperature_" + initialconditions->temperature_data[sub_id][1];
+      }
+      initialcondition_name = initialcondition_name + " (Temperature)";
+      
+    }
+
+    initialconditions_tree_data_set.push_back(std::to_string(initialconditions->initialconditions_data[i][0])); //initialcondition_id
+    initialconditions_tree_data_set.push_back(initialcondition_name); //initialcondition_name
+    initialconditions_tree_data.push_back(initialconditions_tree_data_set);
+  }
+
+  return initialconditions_tree_data;
 }
 
 std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_string)

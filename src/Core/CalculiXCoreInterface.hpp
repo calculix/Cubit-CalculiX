@@ -88,6 +88,7 @@ public:
   std::vector<std::vector<std::string>> get_bcstemperatures_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_historyoutputs_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_fieldoutputs_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_initialconditions_tree_data(); // gets the data from core to build the tree
 
   MeshExportInterface *me_iface;
 };

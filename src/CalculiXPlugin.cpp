@@ -57,6 +57,8 @@
 #include "ccxFieldOutputContactModifyCommand.hpp"
 #include "ccxFieldOutputDeleteCommand.hpp"
 #include "ccxInitialConditionCreateCommand.hpp"
+#include "ccxInitialConditionDisplacementModifyCommand.hpp"
+#include "ccxInitialConditionTemperatureModifyCommand.hpp"
 #include "ccxInitialConditionDeleteCommand.hpp"
 
 
@@ -131,6 +133,8 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxFieldOutputContactModifyCommand");
   keys.push_back("ccxFieldOutputDeleteCommand");
   keys.push_back("ccxInitialConditionCreateCommand");
+  keys.push_back("ccxInitialConditionDisplacementModifyCommand");
+  keys.push_back("ccxInitialConditionTemperatureModifyCommand");
   keys.push_back("ccxInitialConditionDeleteCommand");
 
   return keys;
@@ -314,6 +318,12 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxInitialConditionCreateCommand")
     return new ccxInitialConditionCreateCommand();
+
+  else if(key == "ccxInitialConditionDisplacementModifyCommand")
+    return new ccxInitialConditionDisplacementModifyCommand();
+
+  else if(key == "ccxInitialConditionTemperatureModifyCommand")
+    return new ccxInitialConditionTemperatureModifyCommand();
 
   else if(key == "ccxInitialConditionDeleteCommand")
     return new ccxInitialConditionDeleteCommand();

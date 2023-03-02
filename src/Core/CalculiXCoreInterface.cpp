@@ -383,6 +383,11 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_fieldoutputs_tr
   return ccx_core.get_fieldoutputs_tree_data();
 }
 
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_initialconditions_tree_data()
+{ 
+  return ccx_core.get_initialconditions_tree_data();
+}
+
 std::string CalculiXCoreInterface::get_material_export_data() // gets the export data from materials core
 {
   return ccx_core.get_material_export_data();
