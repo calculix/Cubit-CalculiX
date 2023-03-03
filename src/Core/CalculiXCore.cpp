@@ -22,12 +22,12 @@
 #include "CoreHistoryOutputs.hpp"
 #include "CoreFieldOutputs.hpp"
 #include "CoreInitialConditions.hpp"
-
+#include "CoreSteps.hpp"
 
 CalculiXCore::CalculiXCore():
   cb(NULL),mat(NULL),sections(NULL),constraints(NULL),referencepoints(NULL),surfaceinteractions(NULL),
   contactpairs(NULL),amplitudes(NULL),loadsforces(NULL),loadspressures(NULL),bcsdisplacements(NULL),
-  bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL), initialconditions(NULL)
+  bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL), initialconditions(NULL), steps(NULL)
 {
   init();
 }
@@ -64,6 +64,8 @@ CalculiXCore::~CalculiXCore()
     delete fieldoutputs;
   if(initialconditions)
     delete initialconditions;
+  if(steps)
+    delete steps;
 }
 
 bool CalculiXCore::print_to_log(std::string str_log)
@@ -155,7 +157,12 @@ bool CalculiXCore::init()
   if(!initialconditions)
     initialconditions = new CoreInitialConditions;
   
-  fieldoutputs->init();
+  initialconditions->init();
+
+  if(!steps)
+    steps = new CoreSteps;
+  
+  steps->init();
 
   if (use_ccx_logfile)
   {
@@ -199,6 +206,7 @@ bool CalculiXCore::reset()
   historyoutputs->reset();
   fieldoutputs->reset();
   initialconditions->reset();
+  steps->reset();
   
   //print_to_log("RESET");
   //print_to_log(print_data());
@@ -223,6 +231,7 @@ std::string CalculiXCore::print_data()
   str_return.append(historyoutputs->print_data());
   str_return.append(fieldoutputs->print_data());
   str_return.append(initialconditions->print_data());
+  str_return.append(steps->print_data());
 
   return str_return;
 }

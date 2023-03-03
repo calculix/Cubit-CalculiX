@@ -37,4 +37,6 @@ set(CORE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/CoreFieldOutputs.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreInitialConditions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreInitialConditions.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreSteps.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreSteps.hpp
     PARENT_SCOPE)

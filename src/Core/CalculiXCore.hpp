@@ -16,6 +16,7 @@ class CoreBCsTemperatures;
 class CoreHistoryOutputs;
 class CoreFieldOutputs;
 class CoreInitialConditions;
+class CoreSteps;
 
 class MeshExportInterface;
 class MaterialInterface;
@@ -126,6 +127,7 @@ public:
   CoreHistoryOutputs *historyoutputs;
   CoreFieldOutputs *fieldoutputs;
   CoreInitialConditions *initialconditions;
+  CoreSteps *steps;
   MeshExportInterface *me_iface;
   MaterialInterface *mat_iface;
 };
