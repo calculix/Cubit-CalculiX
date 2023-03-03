@@ -95,6 +95,13 @@ public:
   bool create_initialcondition(std::vector<std::string> options); // adds a new initialcondition
   bool modify_initialcondition(int initialcondition_id, int modify_type, std::vector<std::string> options, std::vector<int> options_marker); // modify a initialcondition
   bool delete_initialcondition(int initialcondition_id); // delete initialcondition
+  bool create_step(std::vector<std::string> options); // adds a new step
+  bool modify_step(int step_id, int modify_type, std::vector<std::string> options, std::vector<int> options_marker); // modify a step
+  bool delete_step(int step_id); // delete step
+  bool step_add_loads(int step_id, int load_type, std::vector<int> load_ids); // adds loads to loads_data
+  bool step_add_bcs(int step_id, int bc_type, std::vector<int> bc_ids); // adds bcs to bcs_data
+  bool step_remove_loads(int step_id, int load_type, std::vector<int> load_ids); // removes loads from loads_data
+  bool step_remove_bcs(int step_id, int bc_type, std::vector<int> bc_ids); // removes bcs from bcs_data
   std::vector<std::vector<std::string>> get_blocks_tree_data(); // gets the data from core blocks to build the tree
   std::vector<std::vector<std::string>> get_nodeset_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_sideset_tree_data(); // gets the data from core to build the tree
@@ -111,6 +118,7 @@ public:
   std::vector<std::vector<std::string>> get_historyoutputs_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_fieldoutputs_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_initialconditions_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_steps_tree_data(); // gets the data from core to build the tree
 
   CoreBlocks *cb;
   CoreMaterials *mat;

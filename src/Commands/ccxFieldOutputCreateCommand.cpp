@@ -16,7 +16,7 @@ std::vector<std::string> ccxFieldOutputCreateCommand::get_syntax()
   std::string syntax = "ccx ";
   syntax.append("create fieldoutput ");
   syntax.append("name <string:type='unquoted', number='1', label='name', help='<name>'> " );
-  syntax.append("[{node|element|contact}]" );
+  syntax.append("{node|element|contact}" );
   syntax_list.push_back(syntax);
   
   return syntax_list;
@@ -25,7 +25,7 @@ std::vector<std::string> ccxFieldOutputCreateCommand::get_syntax()
 std::vector<std::string> ccxFieldOutputCreateCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx create fieldoutput name <name> [{node|element|contact}]"; 
+  help[0] = "ccx create fieldoutput name <name> {node|element|contact}"; 
 
   return help;
 }

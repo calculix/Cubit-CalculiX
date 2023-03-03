@@ -674,6 +674,41 @@ bool CalculiXCore::delete_initialcondition(int initialcondition_id)
   return initialconditions->delete_initialcondition(initialcondition_id);
 }
 
+bool CalculiXCore::create_step(std::vector<std::string> options)
+{
+  return steps->create_step(options);
+}
+
+bool CalculiXCore::modify_step(int step_id, int modify_type, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return steps->modify_step(step_id, modify_type, options, options_marker);
+}
+
+bool CalculiXCore::delete_step(int step_id)
+{
+  return steps->delete_step(step_id);
+}
+
+bool CalculiXCore::step_add_loads(int step_id, int load_type, std::vector<int> load_ids)
+{
+  return steps->add_loads(step_id,load_type,load_ids);
+}
+
+bool CalculiXCore::step_add_bcs(int step_id, int bc_type, std::vector<int> bc_ids)
+{
+  return steps->add_bcs(step_id,bc_type,bc_ids);
+}
+
+bool CalculiXCore::step_remove_loads(int step_id, int load_type, std::vector<int> load_ids)
+{
+  return steps->remove_loads(step_id, load_type, load_ids);
+}
+
+bool CalculiXCore::step_remove_bcs(int step_id, int bc_type, std::vector<int> bc_ids)
+{
+  return steps->remove_bcs(step_id, bc_type, bc_ids);
+}
+
 std::string CalculiXCore::get_material_export_data() // gets the export data from materials core
 {
   return mat->get_material_export();
@@ -1195,6 +1230,50 @@ std::vector<std::vector<std::string>> CalculiXCore::get_initialconditions_tree_d
   return initialconditions_tree_data;
 }
 
+std::vector<std::vector<std::string>> CalculiXCore::get_steps_tree_data()
+{ 
+  std::vector<std::vector<std::string>> steps_tree_data;
+  
+  for (size_t i = 0; i < steps->steps_data.size(); i++)
+  {
+    std::vector<std::string> steps_tree_data_set;
+    std::string step_name;
+    int step_name_id;
+
+    step_name_id = steps->get_name_data_id_from_name_id(steps->steps_data[i][1]);
+    step_name = steps->name_data[step_name_id][1];
+    
+    if (steps->steps_data[i][3]==1)
+    {
+      step_name = step_name + " (NO ANALYSIS)";
+    }else if (steps->steps_data[i][3]==2)
+    {
+      step_name = step_name + " (STATIC)";
+    }else if (steps->steps_data[i][3]==3)
+    {
+      step_name = step_name + " (FREQUENCY)";
+    }else if (steps->steps_data[i][3]==4)
+    {
+      step_name = step_name + " (BUCKLE)";
+    }else if (steps->steps_data[i][3]==5)
+    {
+      step_name = step_name + " (HEAT TRANSFER)";
+    }else if (steps->steps_data[i][3]==6)
+    {
+      step_name = step_name + " (COUPLED TEMPERATURE-DISPLACEMENT)";
+    }else if (steps->steps_data[i][3]==7)
+    {
+      step_name = step_name + " (UNCOUPLED TEMPERATURE-DISPLACEMENT)";
+    }
+
+    steps_tree_data_set.push_back(std::to_string(steps->steps_data[i][0])); //step_id
+    steps_tree_data_set.push_back(step_name); //step_name
+    steps_tree_data.push_back(steps_tree_data_set);
+  }
+
+  return steps_tree_data;
+}
+
 std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_string)
 {
   std::vector<int> input_ids;
@@ -1258,6 +1337,12 @@ std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_
       for (size_t i = 0; i < initialconditions->initialconditions_data.size(); i++)
       {
         all_ids.push_back(initialconditions->initialconditions_data[i][0]);
+      }
+    } else if (parse_type=="step")
+    {
+      for (size_t i = 0; i < steps->steps_data.size(); i++)
+      {
+        all_ids.push_back(steps->steps_data[i][0]);
       }
     }
   }

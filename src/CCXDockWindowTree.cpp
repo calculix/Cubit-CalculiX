@@ -21,6 +21,7 @@
 #include "HistoryOutputsTree.hpp"
 #include "FieldOutputsTree.hpp"
 #include "InitialConditionsTree.hpp"
+#include "StepsTree.hpp"
 
 
 CCXDockWindowTree::CCXDockWindowTree() :
@@ -105,6 +106,8 @@ void CCXDockWindowTree::initialize()
   myFieldOutputsTree->initialize();
   myInitialConditionsTree = new InitialConditionsTree(myModelTree);
   myInitialConditionsTree->initialize();
+  myStepsTree = new StepsTree(myModelTree);
+  myStepsTree->initialize();
 
   dock->setWidget(myModelTree);
       
@@ -154,6 +157,7 @@ void CCXDockWindowTree::clear()
     delete myHistoryOutputsTree;
     delete myFieldOutputsTree;
     delete myInitialConditionsTree;
+    delete myStepsTree;
     delete myModelTree;
     delete dock;
     isInitialized = false;  
@@ -185,6 +189,7 @@ void CCXDockWindowTree::update()
   myHistoryOutputsTree->update();
   myFieldOutputsTree->update();
   myInitialConditionsTree->update();
+  myStepsTree->update();
 }
 
 void CCXDockWindowTree::reset()
@@ -208,4 +213,5 @@ void CCXDockWindowTree::reset()
   myHistoryOutputsTree->clear();
   myFieldOutputsTree->clear();
   myInitialConditionsTree->clear();
+  myStepsTree->clear();
 }

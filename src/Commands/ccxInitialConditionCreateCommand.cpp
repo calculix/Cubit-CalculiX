@@ -15,7 +15,7 @@ std::vector<std::string> ccxInitialConditionCreateCommand::get_syntax()
 
   std::string syntax = "ccx ";
   syntax.append("create initialcondition ");
-  syntax.append("[{displacement|temperature}]" );
+  syntax.append("{displacement|temperature}" );
   syntax_list.push_back(syntax);
   
   return syntax_list;
@@ -24,7 +24,7 @@ std::vector<std::string> ccxInitialConditionCreateCommand::get_syntax()
 std::vector<std::string> ccxInitialConditionCreateCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx create initialcondition [{displacement|temperature}]"; 
+  help[0] = "ccx create initialcondition {displacement|temperature}"; 
 
   return help;
 }

@@ -1,0 +1,59 @@
+ccx use logfile core on
+reset
+create brick x 1
+create force  on vertex 2  force value 1 moment value 2 direction 0 0 1 
+modify force 1 name 'test' add vertex 5  
+modify force 1 add surface 5
+create pressure on surface 5 magnitude 20
+modify pressure 1 name 'test_p'
+ccx modify force 1 op new amplitude 22 timedelay -99.55
+ccx modify pressure 1 op new amplitude 1 timedelay -55.1
+
+create displacement  on surface 6  dof all fix 0 
+modify displacement 1 name 'disp' dof all fix  
+create displacement  on surface 6  dof all fix 0 
+ccx modify displacement 2 op new amplitude 1 timedelay -55.1
+
+create temperature  on volume 1  value 654
+create temperature  on surface 6  value 5
+create temperature  on surface 6  value 5
+create temperature  on surface 6  value 5
+create temperature  on surface 6  value 5
+modify temperature 2 name 'temp' 
+ccx modify temperature 2 op new amplitude 1 timedelay -55.1
+
+ccx create initialcondition displacement
+ccx create initialcondition temperature
+ccx create initialcondition displacement
+ccx create initialcondition temperature
+ccx create initialcondition displacement
+ccx create initialcondition temperature
+ccx modify initialcondition 1 displacement bc_id 2
+ccx modify initialcondition 2 temperature bc_id 998
+
+ccx create step name stepname1 noanalysis
+ccx create step name stepname2 static
+ccx create step name stepname3 frequency
+ccx create step name stepname4 buckle
+ccx create step name stepname5 heattransfer
+ccx create step name stepname6 coupledtemperaturedisplacement
+ccx create step name stepname7 uncoupledtemperaturedisplacement
+ccx create step name stepname8 static
+
+ccx step 1 add load force 1 2  pressure 1 2 
+ccx step 2 add load force 1 2  pressure 1 2 
+ccx step 3 add load force 1 2  pressure 1 2 
+ccx step 4 add load force 1 2  pressure 1 2 
+ccx step 5 add load force 1 2  pressure 1 2 
+ccx step 6 add load force 1 2  pressure 1 2
+ccx step 7 add load force 1 2  pressure 1 2 
+ccx step 4 remove load force 2  pressure 1 99
+
+ccx step 1 add bc displacement 1 2 temperature 1 2
+ccx step 2 add bc displacement 1 2 temperature 1 2
+ccx step 3 add bc displacement 1 2 temperature 1 2
+ccx step 4 add bc displacement 1 2 temperature 1 2
+ccx step 5 add bc displacement 1 2 temperature 1 2
+ccx step 6 add bc displacement 1 2 temperature 1 2
+ccx step 7 add bc displacement 1 2 temperature 1 2
+ccx step 4 remove bc displacement 1 99 temperature 2

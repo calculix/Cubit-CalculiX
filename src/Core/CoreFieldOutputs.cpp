@@ -236,7 +236,6 @@ bool CoreFieldOutputs::modify_output(int output_id,int modify_type, std::vector<
         }
       }
     }
-
     return true;
   }
 }

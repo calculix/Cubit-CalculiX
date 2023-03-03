@@ -61,6 +61,79 @@ public:
   // static_data[0][3] explicit
   // static_data[0][4] time reset
   // static_data[0][5] total time at start
+  // static_data[0][6] initial time increment
+  // static_data[0][7] time period of the step
+  // static_data[0][8] minimum time increment allowed
+  // static_data[0][9] maximum time increment allowed
+  // static_data[0][10] initial time increment CFD
+
+
+  std::vector<std::vector<std::string>> frequency_data;
+  // frequency_data[0][0] frequency_id
+  // frequency_data[0][1] solver
+  // frequency_data[0][2] storage
+  // frequency_data[0][3] global
+  // frequency_data[0][4] cycmpc
+  // frequency_data[0][5] number of eigenfrequencies desired
+  // frequency_data[0][6] lower value
+  // frequency_data[0][7] upper value
+
+  std::vector<std::vector<std::string>> buckle_data;
+  // buckle_data[0][0] buckle_id
+  // buckle_data[0][1] solver
+  // buckle_data[0][2] number of buckling factors
+  // buckle_data[0][3] accuracy
+  // buckle_data[0][4] lanczos vectors
+  // buckle_data[0][5] maximum iterations
+
+  std::vector<std::vector<std::string>> heattransfer_data;
+  // heattransfer_data[0][0] heattransfer_id
+  // heattransfer_data[0][1] solver
+  // heattransfer_data[0][2] direct
+  // heattransfer_data[0][3] steady state
+  // heattransfer_data[0][4] frequency
+  // heattransfer_data[0][5] modal dynamic
+  // heattransfer_data[0][6] storage
+  // heattransfer_data[0][7] deltmx
+  // heattransfer_data[0][8] time reset
+  // heattransfer_data[0][9] total time at start
+  // heattransfer_data[0][10] initial time increment
+  // heattransfer_data[0][11] time period of the step
+  // heattransfer_data[0][12] minimum time increment allowed
+  // heattransfer_data[0][13] maximum time increment allowed
+
+  //COUPLED TEMPERATURE-DISPLACEMENT
+  std::vector<std::vector<std::string>> coupledtd_data;
+  // coupledtd_data[0][0] coupledtd_id
+  // coupledtd_data[0][1] solver
+  // coupledtd_data[0][2] direct
+  // coupledtd_data[0][3] alpha
+  // coupledtd_data[0][4] steady state
+  // coupledtd_data[0][5] deltmx
+  // coupledtd_data[0][6] time reset
+  // coupledtd_data[0][7] total time at start
+  // coupledtd_data[0][8] compressible
+  // coupledtd_data[0][9] initial time increment
+  // coupledtd_data[0][10] time period of the step
+  // coupledtd_data[0][11] minimum time increment allowed
+  // coupledtd_data[0][12] maximum time increment allowed
+  // coupledtd_data[0][13] initial time increment CFD
+
+  //UNCOUPLED TEMPERATURE-DISPLACEMENT
+  std::vector<std::vector<std::string>> uncoupledtd_data;
+  // uncoupledtd_data[0][0] uncoupledtd_id
+  // uncoupledtd_data[0][1] solver
+  // uncoupledtd_data[0][2] direct
+  // uncoupledtd_data[0][3] alpha
+  // uncoupledtd_data[0][4] steady state
+  // uncoupledtd_data[0][5] deltmx
+  // uncoupledtd_data[0][6] explicit
+  // uncoupledtd_data[0][7] time reset
+  // uncoupledtd_data[0][8] total time at start
+  // uncoupledtd_data[0][9] initial time increment
+  // uncoupledtd_data[0][10] time period of the step
+  // uncoupledtd_data[0][11] minimum time increment allowed
+  // uncoupledtd_data[0][12] maximum time increment allowed
 
   std::vector<std::vector<int>> loads_data;
   // forces_data[0][0] loads_id
@@ -89,12 +162,22 @@ public:
   bool add_name(std::string name_id, std::string name); // adds new name to name_data
   bool add_parameter(std::string parameter_id); // adds new parameter to parameter_data
   bool add_static(std::string static_id); // adds new static to static_data
+  bool add_frequency(std::string frequency_id); // adds new frequency to frequency_data
+  bool add_buckle(std::string buckle_id); // adds new buckle to buckle_data
+  bool add_heattransfer(std::string heattransfer_id); // adds new heattransfer to heattransfer_data
+  bool add_coupledtd(std::string coupledtd_id); // adds new coupledtd to coupledtd_data
+  bool add_uncoupledtd(std::string uncoupledtd_id); // adds new uncoupledtd to uncoupledtd_data
   bool add_load(int loads_id, int load_type, int load_id); // adds new load to loads_data
   bool add_bc(int bcs_id, int bc_type, int bc_id); // adds new bc to bcs_data
   int  get_steps_data_id_from_step_id(int step_id); // searches for the step_id in the steps_data and returns the indices or -1 if it fails
   int  get_name_data_id_from_name_id(int name_id); // searches for the name_id in the name_data and returns the indices or -1 if it fails
   int  get_parameter_data_id_from_parameter_id(int parameter_id); // searches for the parameter_id in the parameter_data and returns the indices or -1 if it fails
   int  get_static_data_id_from_static_id(int static_id); // searches for the static_id in the static_data and returns the indices or -1 if it fails
+  int  get_frequency_data_id_from_frequency_id(int frequency_id); // searches for the frequency_id in the frequency_data and returns the indices or -1 if it fails
+  int  get_buckle_data_id_from_buckle_id(int buckle_id); // searches for the buckle_id in the buckle_data and returns the indices or -1 if it fails
+  int  get_heattransfer_data_id_from_heattransfer_id(int heattransfer_id); // searches for the heattransfer_id in the heattransfer_data and returns the indices or -1 if it fails
+  int  get_coupledtd_data_id_from_coupledtd_id(int coupledtd_id); // searches for the coupledtd_id in the coupledtd_data and returns the indices or -1 if it fails
+  int  get_uncoupledtd_data_id_from_uncoupledtd_id(int uncoupledtd_id); // searches for the uncoupledtd_id in the uncoupledtd_data and returns the indices or -1 if it fails
   int  get_load_data_id(int loads_id, int load_type,int load_id); // searches for the load_id in the load_data and returns the indices or -1 if it fails
   int  get_bc_data_id(int bcs_id, int bc_type, int bc_id); // searches for the bc_id in the bc_data and returns the indices or -1 if it fails
   std::vector<int> get_load_data_ids_from_loads_id(int loads_id); // searches for the loads_id in the loads_data and returns the indices or -1 if it fails

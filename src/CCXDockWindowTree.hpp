@@ -30,6 +30,7 @@ class BCsTemperaturesTree;
 class HistoryOutputsTree;
 class FieldOutputsTree;
 class InitialConditionsTree;
+class StepsTree;
 
 class CCXDockWindowTree
 {
@@ -73,7 +74,8 @@ private:
   BCsTemperaturesTree *myBCsTemperaturesTree; //Temperature root item
   HistoryOutputsTree *myHistoryOutputsTree; //HistoryOutputs root item
   FieldOutputsTree *myFieldOutputsTree; //HistoryOutputs root item
-  InitialConditionsTree *myInitialConditionsTree; //HistoryOutputs root item
+  InitialConditionsTree *myInitialConditionsTree; //InitialConditions root item
+  StepsTree *myStepsTree; //Steps root item
   
   QSettings *settings;
 };

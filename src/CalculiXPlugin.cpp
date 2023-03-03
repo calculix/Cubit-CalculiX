@@ -60,6 +60,12 @@
 #include "ccxInitialConditionDisplacementModifyCommand.hpp"
 #include "ccxInitialConditionTemperatureModifyCommand.hpp"
 #include "ccxInitialConditionDeleteCommand.hpp"
+#include "ccxStepCreateCommand.hpp"
+#include "ccxStepAddLoadCommand.hpp"
+#include "ccxStepRemoveLoadCommand.hpp"
+#include "ccxStepAddBCCommand.hpp"
+#include "ccxStepRemoveBCCommand.hpp"
+#include "ccxStepDeleteCommand.hpp"
 
 
 //! This macro is required to identify this as a valid Cubit plugin. The plugin
@@ -136,6 +142,12 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxInitialConditionDisplacementModifyCommand");
   keys.push_back("ccxInitialConditionTemperatureModifyCommand");
   keys.push_back("ccxInitialConditionDeleteCommand");
+  keys.push_back("ccxStepCreateCommand");
+  keys.push_back("ccxStepAddLoadCommand");
+  keys.push_back("ccxStepRemoveLoadCommand");
+  keys.push_back("ccxStepAddBCCommand");
+  keys.push_back("ccxStepRemoveBCCommand");
+  keys.push_back("ccxStepDeleteCommand");
 
   return keys;
 }
@@ -327,6 +339,24 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxInitialConditionDeleteCommand")
     return new ccxInitialConditionDeleteCommand();
+
+  else if(key == "ccxStepCreateCommand")
+    return new ccxStepCreateCommand();
+  
+  else if(key == "ccxStepAddLoadCommand")
+    return new ccxStepAddLoadCommand();
+
+  else if(key == "ccxStepRemoveLoadCommand")
+    return new ccxStepRemoveLoadCommand();
+
+  else if(key == "ccxStepAddBCCommand")
+    return new ccxStepAddBCCommand();
+
+  else if(key == "ccxStepRemoveBCCommand")
+    return new ccxStepRemoveBCCommand();
+
+  else if(key == "ccxStepDeleteCommand")
+    return new ccxStepDeleteCommand();
 
   return NULL;
 }

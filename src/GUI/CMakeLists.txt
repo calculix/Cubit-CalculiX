@@ -39,6 +39,10 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/FieldOutputsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/InitialConditionsTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/InitialConditionsTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CCXBlocksElementTypePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CCXBlocksElementTypePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/SectionsCreatePanel.hpp

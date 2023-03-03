@@ -123,4 +123,16 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxInitialConditionTemperatureModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxInitialConditionDeleteCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxInitialConditionDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepCreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepAddLoadCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepAddLoadCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepRemoveLoadCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepRemoveLoadCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepAddBCCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepAddBCCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepRemoveBCCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepRemoveBCCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepDeleteCommand.hpp
     PARENT_SCOPE)

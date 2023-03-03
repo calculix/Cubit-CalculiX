@@ -308,6 +308,41 @@ bool CalculiXCoreInterface::delete_initialcondition(int initialcondition_id)
   return ccx_core.delete_initialcondition(initialcondition_id);
 }
 
+bool CalculiXCoreInterface::create_step(std::vector<std::string> options)
+{
+  return ccx_core.create_step(options);
+}
+
+bool CalculiXCoreInterface::modify_step(int step_id, int modify_type, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return ccx_core.modify_step(step_id, modify_type, options, options_marker);
+}
+
+bool CalculiXCoreInterface::delete_step(int step_id)
+{
+  return ccx_core.delete_step(step_id);
+}
+
+bool CalculiXCoreInterface::step_add_loads(int step_id, int load_type, std::vector<int> load_ids)
+{
+  return ccx_core.step_add_loads(step_id,load_type,load_ids);
+}
+
+bool CalculiXCoreInterface::step_add_bcs(int step_id, int bc_type, std::vector<int> bc_ids)
+{
+  return ccx_core.step_add_bcs(step_id,bc_type,bc_ids);
+}
+
+bool CalculiXCoreInterface::step_remove_loads(int step_id, int load_type, std::vector<int> load_ids)
+{
+  return ccx_core.step_remove_loads(step_id, load_type, load_ids);
+}
+
+bool CalculiXCoreInterface::step_remove_bcs(int step_id, int bc_type, std::vector<int> bc_ids)
+{
+  return ccx_core.step_remove_bcs(step_id, bc_type, bc_ids);
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_blocks_tree_data()
 { 
   return ccx_core.get_blocks_tree_data();
@@ -386,6 +421,11 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_fieldoutputs_tr
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_initialconditions_tree_data()
 { 
   return ccx_core.get_initialconditions_tree_data();
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_tree_data()
+{ 
+  return ccx_core.get_steps_tree_data();
 }
 
 std::string CalculiXCoreInterface::get_material_export_data() // gets the export data from materials core
