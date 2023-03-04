@@ -54,12 +54,12 @@ bool ccxStepRemoveBCCommand::execute(CubitCommandData &data)
    
   if (!ccx_iface.step_remove_bcs(step_id, 1, displacement_ids))
   {
-    output = "Failed adding Displacement!\n";
+    output = "Failed removing Displacement!\n";
     PRINT_ERROR(output.c_str());
   }
   if (!ccx_iface.step_remove_bcs(step_id, 2, temperature_ids))
   {
-    output = "Failed adding Temperature!\n";
+    output = "Failed removing Temperature!\n";
     PRINT_ERROR(output.c_str());
   }
     

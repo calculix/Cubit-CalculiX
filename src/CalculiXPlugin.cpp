@@ -62,11 +62,15 @@
 #include "ccxInitialConditionDeleteCommand.hpp"
 #include "ccxStepCreateCommand.hpp"
 #include "ccxStepAddLoadCommand.hpp"
-#include "ccxStepRemoveLoadCommand.hpp"
 #include "ccxStepAddBCCommand.hpp"
+#include "ccxStepAddHistoryOutputCommand.hpp"
+#include "ccxStepAddFieldOutputCommand.hpp"
+#include "ccxStepRemoveLoadCommand.hpp"
 #include "ccxStepRemoveBCCommand.hpp"
+#include "ccxStepRemoveHistoryOutputCommand.hpp"
+#include "ccxStepRemoveFieldOutputCommand.hpp"
+#include "ccxStepStaticModifyCommand.hpp"
 #include "ccxStepDeleteCommand.hpp"
-
 
 //! This macro is required to identify this as a valid Cubit plugin. The plugin
 //! will NOT be loaded if this macro is not present.
@@ -144,9 +148,14 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxInitialConditionDeleteCommand");
   keys.push_back("ccxStepCreateCommand");
   keys.push_back("ccxStepAddLoadCommand");
-  keys.push_back("ccxStepRemoveLoadCommand");
   keys.push_back("ccxStepAddBCCommand");
+  keys.push_back("ccxStepAddHistoryOutputCommand");
+  keys.push_back("ccxStepAddFieldOutputCommand");
+  keys.push_back("ccxStepRemoveLoadCommand");
   keys.push_back("ccxStepRemoveBCCommand");
+  keys.push_back("ccxStepRemoveHistoryOutputCommand");
+  keys.push_back("ccxStepRemoveFieldOutputCommand");
+  keys.push_back("ccxStepStaticModifyCommand");
   keys.push_back("ccxStepDeleteCommand");
 
   return keys;
@@ -346,14 +355,29 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
   else if(key == "ccxStepAddLoadCommand")
     return new ccxStepAddLoadCommand();
 
-  else if(key == "ccxStepRemoveLoadCommand")
-    return new ccxStepRemoveLoadCommand();
-
   else if(key == "ccxStepAddBCCommand")
     return new ccxStepAddBCCommand();
 
+  else if(key == "ccxStepAddHistoryOutputCommand")
+    return new ccxStepAddHistoryOutputCommand();
+  
+  else if(key == "ccxStepAddFieldOutputCommand")
+    return new ccxStepAddFieldOutputCommand();
+
+  else if(key == "ccxStepRemoveLoadCommand")
+    return new ccxStepRemoveLoadCommand();
+
   else if(key == "ccxStepRemoveBCCommand")
     return new ccxStepRemoveBCCommand();
+
+  else if(key == "ccxStepRemoveHistoryOutputCommand")
+    return new ccxStepRemoveHistoryOutputCommand();
+  
+  else if(key == "ccxStepRemoveFieldOutputCommand")
+    return new ccxStepRemoveFieldOutputCommand();
+  
+  else if(key == "ccxStepStaticModifyCommand")
+    return new ccxStepStaticModifyCommand();
 
   else if(key == "ccxStepDeleteCommand")
     return new ccxStepDeleteCommand();

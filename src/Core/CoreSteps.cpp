@@ -38,6 +38,8 @@ bool CoreSteps::reset()
   uncoupledtd_data.clear();
   loads_data.clear();
   bcs_data.clear();
+  historyoutputs_data.clear();
+  fieldoutputs_data.clear();
   
   init();
   return true;
@@ -60,6 +62,8 @@ bool CoreSteps::create_step(std::vector<std::string> options)
   int step_type_id;
   int loads_id;
   int bcs_id;
+  int historyoutputs_id;
+  int fieldoutputs_id;
   
   if (steps_data.size()==0)
   {
@@ -184,10 +188,11 @@ bool CoreSteps::create_step(std::vector<std::string> options)
   }
   
   loads_id = step_id;
-
   bcs_id = step_id;
+  historyoutputs_id = step_id;;
+  fieldoutputs_id = step_id;;
 
-  this->add_step(step_id, name_id, parameter_id, step_type, step_type_id, loads_id, bcs_id);
+  this->add_step(step_id, name_id, parameter_id, step_type, step_type_id, loads_id, bcs_id,historyoutputs_id,fieldoutputs_id);
   return true;
 }
 
@@ -284,7 +289,6 @@ bool CoreSteps::modify_step(int step_id, int modify_type, std::vector<std::strin
         }
       }
     }
-
     return true;
   }
 }
@@ -331,6 +335,48 @@ bool CoreSteps::add_bcs(int step_id, int bc_type, std::vector<int> bc_ids)
   }
 }
 
+bool CoreSteps::add_historyoutputs(int step_id, std::vector<int> historyoutput_ids)
+{
+  int historyoutputs_id;
+  int steps_data_id = get_steps_data_id_from_step_id(step_id);
+  if (steps_data_id == -1)
+  {
+    return false;
+  } else {
+    historyoutputs_id = steps_data[steps_data_id][7];
+    
+    for (size_t i = 0; i < historyoutput_ids.size(); i++)
+    {
+      if (get_historyoutput_data_id(historyoutputs_id, historyoutput_ids[i])==-1)
+      {
+        add_historyoutput(historyoutputs_id, historyoutput_ids[i]);
+      }
+    }
+    return true;
+  }
+}
+
+bool CoreSteps::add_fieldoutputs(int step_id, std::vector<int> fieldoutput_ids)
+{
+  int fieldoutputs_id;
+  int steps_data_id = get_steps_data_id_from_step_id(step_id);
+  if (steps_data_id == -1)
+  {
+    return false;
+  } else {
+    fieldoutputs_id = steps_data[steps_data_id][8];
+
+    for (size_t i = 0; i < fieldoutput_ids.size(); i++)
+    {
+      if (get_fieldoutput_data_id(fieldoutputs_id, fieldoutput_ids[i])==-1)
+      {
+        add_fieldoutput(fieldoutputs_id, fieldoutput_ids[i]);
+      }
+    }
+    return true;
+  }
+}
+
 bool CoreSteps::remove_loads(int step_id, int load_type, std::vector<int> load_ids)
 {
   int loads_id;
@@ -371,6 +417,52 @@ bool CoreSteps::remove_bcs(int step_id, int bc_type, std::vector<int> bc_ids)
       if (bcs_data_id!=-1)
       {
         bcs_data.erase(bcs_data.begin() + bcs_data_id);
+      }
+    }
+    return true;
+  }
+}
+
+bool CoreSteps::remove_historyoutputs(int step_id, std::vector<int> historyoutput_ids)
+{
+  int historyoutputs_id;
+  int historyoutputs_data_id;
+  int steps_data_id = get_steps_data_id_from_step_id(step_id);
+  if (steps_data_id == -1)
+  {
+    return false;
+  } else {
+    historyoutputs_id = steps_data[steps_data_id][7];
+    
+    for (size_t i = historyoutput_ids.size(); i > 0; i--)
+    {
+      historyoutputs_data_id = get_historyoutput_data_id(historyoutputs_id, historyoutput_ids[i-1]);
+      if (historyoutputs_data_id!=-1)
+      {
+        historyoutputs_data.erase(historyoutputs_data.begin() + historyoutputs_data_id);
+      }
+    }
+    return true;
+  }
+}
+
+bool CoreSteps::remove_fieldoutputs(int step_id, std::vector<int> fieldoutput_ids)
+{
+  int fieldoutputs_id;
+  int fieldoutputs_data_id;
+  int steps_data_id = get_steps_data_id_from_step_id(step_id);
+  if (steps_data_id == -1)
+  {
+    return false;
+  } else {
+    fieldoutputs_id = steps_data[steps_data_id][8];
+    
+    for (size_t i = fieldoutput_ids.size(); i > 0; i--)
+    {
+      fieldoutputs_data_id = get_fieldoutput_data_id(fieldoutputs_id, fieldoutput_ids[i-1]);
+      if (fieldoutputs_data_id!=-1)
+      {
+        fieldoutputs_data.erase(fieldoutputs_data.begin() + fieldoutputs_data_id);
       }
     }
     return true;
@@ -446,14 +538,24 @@ bool CoreSteps::delete_step(int step_id)
     {
       bcs_data.erase(bcs_data.begin() + sub_data_ids[i-1]);
     }
+    sub_data_ids = get_historyoutput_data_ids_from_historyoutputs_id(steps_data[steps_data_id][7]);
+    for (size_t i = sub_data_ids.size(); i > 0; i--)
+    {
+      historyoutputs_data.erase(historyoutputs_data.begin() + sub_data_ids[i-1]);
+    }
+    sub_data_ids = get_fieldoutput_data_ids_from_fieldoutputs_id(steps_data[steps_data_id][8]);
+    for (size_t i = sub_data_ids.size(); i > 0; i--)
+    {
+      fieldoutputs_data.erase(fieldoutputs_data.begin() + sub_data_ids[i-1]);
+    }
     steps_data.erase(steps_data.begin() + steps_data_id);
     return true;
   }
 }
 
-bool CoreSteps::add_step(int step_id, int name_id, int parameter_id, int step_type, int step_type_id, int loads_id, int bcs_id)
+bool CoreSteps::add_step(int step_id, int name_id, int parameter_id, int step_type, int step_type_id, int loads_id, int bcs_id, int historyoutputs_id, int fieldoutputs_id)
 {
-  std::vector<int> v = {step_id,name_id,parameter_id,step_type,step_type_id,loads_id,bcs_id};
+  std::vector<int> v = {step_id,name_id,parameter_id,step_type,step_type_id,loads_id,bcs_id,historyoutputs_id,fieldoutputs_id};
  
   steps_data.push_back(v);
 
@@ -541,11 +643,29 @@ bool CoreSteps::add_load(int loads_id, int load_type, int load_id)
   return true;
 }
 
-bool CoreSteps::add_bc(int bcs_id, int load_type, int load_id)
+bool CoreSteps::add_bc(int bcs_id, int bc_type, int bc_id)
 {
-  std::vector<int> v = {bcs_id, load_type, load_id};
+  std::vector<int> v = {bcs_id, bc_type, bc_id};
   
   bcs_data.push_back(v);
+  
+  return true;
+}
+
+bool CoreSteps::add_historyoutput(int historyoutputs_id, int historyoutput_id)
+{
+  std::vector<int> v = {historyoutputs_id, historyoutput_id};
+  
+  historyoutputs_data.push_back(v);
+  
+  return true;
+}
+
+bool CoreSteps::add_fieldoutput(int fieldoutputs_id, int fieldoutput_id)
+{
+  std::vector<int> v = {fieldoutputs_id, fieldoutput_id};
+  
+  fieldoutputs_data.push_back(v);
   
   return true;
 }
@@ -693,6 +813,32 @@ int CoreSteps::get_bc_data_id(int bcs_id, int bc_type,int bc_id)
   return return_int;
 }
 
+int CoreSteps::get_historyoutput_data_id(int historyoutputs_id, int historyoutput_id)
+{ 
+  int return_int = -1;
+  for (size_t i = 0; i < historyoutputs_data.size(); i++)
+  {
+    if ((historyoutputs_data[i][0]==historyoutputs_id) && (historyoutputs_data[i][1]==historyoutput_id))
+    {
+        return_int = i;
+    }  
+  }
+  return return_int;
+}
+
+int CoreSteps::get_fieldoutput_data_id(int fieldoutputs_id, int fieldoutput_id)
+{ 
+  int return_int = -1;
+  for (size_t i = 0; i < fieldoutputs_data.size(); i++)
+  {
+    if ((fieldoutputs_data[i][0]==fieldoutputs_id) && (fieldoutputs_data[i][1]==fieldoutput_id))
+    {
+        return_int = i;
+    }  
+  }
+  return return_int;
+}
+
 std::vector<int> CoreSteps::get_load_data_ids_from_loads_id(int loads_id)
 { 
   std::vector<int> return_int;
@@ -712,6 +858,32 @@ std::vector<int> CoreSteps::get_bc_data_ids_from_bcs_id(int bcs_id)
   for (size_t i = 0; i < bcs_data.size(); i++)
   {
     if (bcs_data[i][0]==bcs_id)
+    {
+        return_int.push_back(i);
+    }  
+  }
+  return return_int;
+}
+
+std::vector<int> CoreSteps::get_historyoutput_data_ids_from_historyoutputs_id(int historyoutputs_id)
+{ 
+  std::vector<int> return_int;
+  for (size_t i = 0; i < historyoutputs_data.size(); i++)
+  {
+    if (historyoutputs_data[i][0]==historyoutputs_id)
+    {
+        return_int.push_back(i);
+    }  
+  }
+  return return_int;
+}
+
+std::vector<int> CoreSteps::get_fieldoutput_data_ids_from_fieldoutputs_id(int fieldoutputs_id)
+{ 
+  std::vector<int> return_int;
+  for (size_t i = 0; i < fieldoutputs_data.size(); i++)
+  {
+    if (fieldoutputs_data[i][0]==fieldoutputs_id)
     {
         return_int.push_back(i);
     }  
@@ -798,11 +970,11 @@ std::string CoreSteps::print_data()
 {
   std::string str_return;
   str_return = "\n CoreSteps steps_data: \n";
-  str_return.append("step_id, name_id, parameter_id, step_type, step_type_id, loads_id, bcs_id \n");
+  str_return.append("step_id, name_id, parameter_id, step_type, step_type_id, loads_id, bcs_id,historyoutputs_id,fieldoutputs_id \n");
 
   for (size_t i = 0; i < steps_data.size(); i++)
   {
-    str_return.append(std::to_string(steps_data[i][0]) + " " + std::to_string(steps_data[i][1]) + " " + std::to_string(steps_data[i][2]) + " " + std::to_string(steps_data[i][3]) + " " + std::to_string(steps_data[i][4]) + " " + std::to_string(steps_data[i][5]) + " " + std::to_string(steps_data[i][6]) + " \n");
+    str_return.append(std::to_string(steps_data[i][0]) + " " + std::to_string(steps_data[i][1]) + " " + std::to_string(steps_data[i][2]) + " " + std::to_string(steps_data[i][3]) + " " + std::to_string(steps_data[i][4]) + " " + std::to_string(steps_data[i][5]) + " " + std::to_string(steps_data[i][6]) + " " + std::to_string(steps_data[i][7]) + " " + std::to_string(steps_data[i][8]) + " \n");
   }
 
   str_return.append("\n CoreSteps name_data: \n");
@@ -883,7 +1055,23 @@ std::string CoreSteps::print_data()
   for (size_t i = 0; i < bcs_data.size(); i++)
   {
     str_return.append(std::to_string(bcs_data[i][0]) + " " + std::to_string(bcs_data[i][1]) + " " + std::to_string(bcs_data[i][2]) + " \n");
-  } 
+  }
+
+  str_return.append("\n CoreSteps historyoutputs_data: \n");
+  str_return.append("historyoutput_id, historyoutput_id \n");
+
+  for (size_t i = 0; i < historyoutputs_data.size(); i++)
+  {
+    str_return.append(std::to_string(historyoutputs_data[i][0]) + " " + std::to_string(historyoutputs_data[i][1]) + " \n");
+  }
+
+  str_return.append("\n CoreSteps fieldoutputs_data: \n");
+  str_return.append("fieldoutput_id, fieldoutput_id \n");
+
+  for (size_t i = 0; i < fieldoutputs_data.size(); i++)
+  {
+    str_return.append(std::to_string(fieldoutputs_data[i][0]) + " " + std::to_string(fieldoutputs_data[i][1]) + " \n");
+  }
 
   return str_return;
 }

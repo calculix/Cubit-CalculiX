@@ -127,12 +127,22 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepCreateCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepAddLoadCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepAddLoadCommand.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/ccxStepRemoveLoadCommand.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/ccxStepRemoveLoadCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepAddBCCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepAddBCCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepAddHistoryOutputCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepAddHistoryOutputCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepAddFieldOutputCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepAddFieldOutputCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepRemoveLoadCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepRemoveLoadCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepRemoveBCCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepRemoveBCCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepRemoveHistoryOutputCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepRemoveHistoryOutputCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepRemoveFieldOutputCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepRemoveFieldOutputCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepStaticModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepStaticModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepDeleteCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepDeleteCommand.hpp
     PARENT_SCOPE)

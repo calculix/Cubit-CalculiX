@@ -43,6 +43,20 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/StepsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsForcesTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsForcesTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsPressuresTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsPressuresTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsBCsTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsBCsTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsBCsDisplacementsTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsBCsDisplacementsTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsBCsTemperaturesTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsBCsTemperaturesTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsHistoryOutputsTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsHistoryOutputsTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsFieldOutputsTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsFieldOutputsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CCXBlocksElementTypePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CCXBlocksElementTypePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/SectionsCreatePanel.hpp

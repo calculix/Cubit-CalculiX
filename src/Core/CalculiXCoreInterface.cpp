@@ -333,6 +333,16 @@ bool CalculiXCoreInterface::step_add_bcs(int step_id, int bc_type, std::vector<i
   return ccx_core.step_add_bcs(step_id,bc_type,bc_ids);
 }
 
+bool CalculiXCoreInterface::step_add_historyoutputs(int step_id, std::vector<int> historyoutput_ids)
+{
+  return ccx_core.step_add_historyoutputs(step_id,historyoutput_ids);
+}
+
+bool CalculiXCoreInterface::step_add_fieldoutputs(int step_id, std::vector<int> fieldoutput_ids)
+{
+  return ccx_core.step_add_fieldoutputs(step_id,fieldoutput_ids);
+}
+
 bool CalculiXCoreInterface::step_remove_loads(int step_id, int load_type, std::vector<int> load_ids)
 {
   return ccx_core.step_remove_loads(step_id, load_type, load_ids);
@@ -341,6 +351,16 @@ bool CalculiXCoreInterface::step_remove_loads(int step_id, int load_type, std::v
 bool CalculiXCoreInterface::step_remove_bcs(int step_id, int bc_type, std::vector<int> bc_ids)
 {
   return ccx_core.step_remove_bcs(step_id, bc_type, bc_ids);
+}
+
+bool CalculiXCoreInterface::step_remove_historyoutputs(int step_id,std::vector<int> historyoutput_ids)
+{
+  return ccx_core.step_remove_historyoutputs(step_id,historyoutput_ids);
+}
+
+bool CalculiXCoreInterface::step_remove_fieldoutputs(int step_id, std::vector<int> fieldoutput_ids)
+{
+  return ccx_core.step_remove_fieldoutputs(step_id,fieldoutput_ids);
 }
 
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_blocks_tree_data()
@@ -426,6 +446,36 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_initialconditio
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_tree_data()
 { 
   return ccx_core.get_steps_tree_data();
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_loadsforces_tree_data(int step_id)
+{ 
+  return ccx_core.get_steps_loadsforces_tree_data(step_id);
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_loadspressures_tree_data(int step_id)
+{ 
+  return ccx_core.get_steps_loadspressures_tree_data(step_id);
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_bcsdisplacements_tree_data(int step_id)
+{ 
+  return ccx_core.get_steps_bcsdisplacements_tree_data(step_id);
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_bcstemperatures_tree_data(int step_id)
+{ 
+  return ccx_core.get_steps_bcstemperatures_tree_data(step_id);
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_historyoutputs_tree_data(int step_id)
+{ 
+  return ccx_core.get_steps_historyoutputs_tree_data(step_id);
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_fieldoutputs_tree_data(int step_id)
+{ 
+  return ccx_core.get_steps_fieldoutputs_tree_data(step_id);
 }
 
 std::string CalculiXCoreInterface::get_material_export_data() // gets the export data from materials core

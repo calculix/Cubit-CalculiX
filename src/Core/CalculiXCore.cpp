@@ -699,6 +699,16 @@ bool CalculiXCore::step_add_bcs(int step_id, int bc_type, std::vector<int> bc_id
   return steps->add_bcs(step_id,bc_type,bc_ids);
 }
 
+bool CalculiXCore::step_add_historyoutputs(int step_id, std::vector<int> historyoutput_ids)
+{
+  return steps->add_historyoutputs(step_id,historyoutput_ids);
+}
+
+bool CalculiXCore::step_add_fieldoutputs(int step_id, std::vector<int> fieldoutput_ids)
+{
+  return steps->add_fieldoutputs(step_id, fieldoutput_ids);
+}
+
 bool CalculiXCore::step_remove_loads(int step_id, int load_type, std::vector<int> load_ids)
 {
   return steps->remove_loads(step_id, load_type, load_ids);
@@ -707,6 +717,16 @@ bool CalculiXCore::step_remove_loads(int step_id, int load_type, std::vector<int
 bool CalculiXCore::step_remove_bcs(int step_id, int bc_type, std::vector<int> bc_ids)
 {
   return steps->remove_bcs(step_id, bc_type, bc_ids);
+}
+
+bool CalculiXCore::step_remove_historyoutputs(int step_id, std::vector<int> historyoutput_ids)
+{
+  return steps->remove_historyoutputs(step_id,historyoutput_ids);
+}
+
+bool CalculiXCore::step_remove_fieldoutputs(int step_id, std::vector<int> fieldoutput_ids)
+{
+  return steps->remove_fieldoutputs(step_id,fieldoutput_ids);
 }
 
 std::string CalculiXCore::get_material_export_data() // gets the export data from materials core
@@ -1272,6 +1292,194 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_tree_data()
   }
 
   return steps_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadsforces_tree_data(int step_id)
+{ 
+  std::vector<std::vector<std::string>> loadsforces_tree_data;
+  int step_data_id;
+  std::vector<int> loads_ids;
+  step_data_id = steps->get_steps_data_id_from_step_id(step_id);
+  loads_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[step_data_id][5]);
+
+  for (size_t i = 0; i < loads_ids.size(); i++)
+  {
+    std::vector<std::string> loadsforces_tree_data_set;
+    std::string name;
+    if (steps->loads_data[loads_ids[i]][1]==1)
+    {
+      name = CubitInterface::get_bc_name(CI_BCTYPE_FORCE,steps->loads_data[loads_ids[i]][2]);
+      if (name == "")
+      {
+        name = "Force_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+      }
+      loadsforces_tree_data_set.push_back(std::to_string(steps->loads_data[loads_ids[i]][2])); //load_id
+      loadsforces_tree_data_set.push_back(name); 
+      loadsforces_tree_data.push_back(loadsforces_tree_data_set);  
+    }
+  }
+  return loadsforces_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadspressures_tree_data(int step_id)
+{ 
+  std::vector<std::vector<std::string>> loadspressures_tree_data;
+  int step_data_id;
+  std::vector<int> loads_ids;
+  step_data_id = steps->get_steps_data_id_from_step_id(step_id);
+  loads_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[step_data_id][5]);
+
+  for (size_t i = 0; i < loads_ids.size(); i++)
+  {
+    std::vector<std::string> loadspressures_tree_data_set;
+    std::string name;
+    if (steps->loads_data[loads_ids[i]][1]==2)
+    {
+      name = CubitInterface::get_bc_name(CI_BCTYPE_PRESSURE,steps->loads_data[loads_ids[i]][2]);
+      if (name == "")
+      {
+        name = "Pressure_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+      }
+      loadspressures_tree_data_set.push_back(std::to_string(steps->loads_data[loads_ids[i]][2])); //load_id
+      loadspressures_tree_data_set.push_back(name); 
+      loadspressures_tree_data.push_back(loadspressures_tree_data_set);  
+    }
+  }
+  return loadspressures_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_steps_bcsdisplacements_tree_data(int step_id)
+{ 
+  std::vector<std::vector<std::string>> bcsdisplacements_tree_data;
+  int step_data_id;
+  std::vector<int> bcs_ids;
+  step_data_id = steps->get_steps_data_id_from_step_id(step_id);
+  bcs_ids = steps->get_bc_data_ids_from_bcs_id(steps->steps_data[step_data_id][6]);
+
+  for (size_t i = 0; i < bcs_ids.size(); i++)
+  {
+    std::vector<std::string> bcsdisplacements_tree_data_set;
+    std::string name;
+    if (steps->bcs_data[bcs_ids[i]][1]==1)
+    {
+      name = CubitInterface::get_bc_name(CI_BCTYPE_DISPLACEMENT,steps->bcs_data[bcs_ids[i]][2]);
+      if (name == "")
+      {
+        name = "Displacement_" + std::to_string(steps->bcs_data[bcs_ids[i]][2]);
+      }
+      bcsdisplacements_tree_data_set.push_back(std::to_string(steps->bcs_data[bcs_ids[i]][2])); //bc_id
+      bcsdisplacements_tree_data_set.push_back(name); 
+      bcsdisplacements_tree_data.push_back(bcsdisplacements_tree_data_set);  
+    }
+  }
+  return bcsdisplacements_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_steps_bcstemperatures_tree_data(int step_id)
+{ 
+  std::vector<std::vector<std::string>> bcstemperatures_tree_data;
+  int step_data_id;
+  std::vector<int> bcs_ids;
+  step_data_id = steps->get_steps_data_id_from_step_id(step_id);
+  bcs_ids = steps->get_bc_data_ids_from_bcs_id(steps->steps_data[step_data_id][6]);
+
+  for (size_t i = 0; i < bcs_ids.size(); i++)
+  {
+    std::vector<std::string> bcstemperatures_tree_data_set;
+    std::string name;
+    if (steps->bcs_data[bcs_ids[i]][1]==2)
+    {
+      name = CubitInterface::get_bc_name(CI_BCTYPE_TEMPERATURE,steps->bcs_data[bcs_ids[i]][2]);
+      if (name == "")
+      {
+        name = "Temperature_" + std::to_string(steps->bcs_data[bcs_ids[i]][2]);
+      }
+      bcstemperatures_tree_data_set.push_back(std::to_string(steps->bcs_data[bcs_ids[i]][2])); //bc_id
+      bcstemperatures_tree_data_set.push_back(name); 
+      bcstemperatures_tree_data.push_back(bcstemperatures_tree_data_set);  
+    }
+  }
+  return bcstemperatures_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_steps_historyoutputs_tree_data(int step_id)
+{ 
+  std::vector<std::vector<std::string>> outputs_tree_data;
+  int step_data_id;
+  std::vector<int> historyoutputs_ids;
+  step_data_id = steps->get_steps_data_id_from_step_id(step_id);
+  historyoutputs_ids = steps->get_historyoutput_data_ids_from_historyoutputs_id(steps->steps_data[step_data_id][7]);
+  
+  for (size_t i = 0; i < historyoutputs_ids.size(); i++)
+  {
+    int output_id;
+    int output_data_id;
+    std::vector<std::string> outputs_tree_data_set;
+    std::string output_name;
+    int output_name_id;
+    output_id = steps->historyoutputs_data[historyoutputs_ids[i]][1];
+    output_data_id = historyoutputs->get_outputs_data_id_from_output_id(output_id);
+
+    output_name_id = historyoutputs->get_name_data_id_from_name_id(historyoutputs->outputs_data[output_data_id][1]);
+    output_name = historyoutputs->name_data[output_name_id][1];
+    
+    if (historyoutputs->outputs_data[output_data_id][2]==1)
+    {
+      output_name = output_name + " (node)";
+    }else if (historyoutputs->outputs_data[output_data_id][2]==2)
+    {
+      output_name = output_name + " (element)";
+    }else if (historyoutputs->outputs_data[output_data_id][2]==3)
+    {
+      output_name = output_name + " (contact)";
+    }
+
+    outputs_tree_data_set.push_back(std::to_string(historyoutputs->outputs_data[output_data_id][0])); //output_id
+    outputs_tree_data_set.push_back(output_name); //output_name
+    outputs_tree_data.push_back(outputs_tree_data_set);
+  }
+
+  return outputs_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_steps_fieldoutputs_tree_data(int step_id)
+{ 
+  std::vector<std::vector<std::string>> outputs_tree_data;
+  int step_data_id;
+  std::vector<int> fieldoutputs_ids;
+  step_data_id = steps->get_steps_data_id_from_step_id(step_id);
+  fieldoutputs_ids = steps->get_fieldoutput_data_ids_from_fieldoutputs_id(steps->steps_data[step_data_id][8]);
+  
+  for (size_t i = 0; i < fieldoutputs_ids.size(); i++)
+  {
+    int output_id;
+    int output_data_id;
+    std::vector<std::string> outputs_tree_data_set;
+    std::string output_name;
+    int output_name_id;
+    output_id = steps->fieldoutputs_data[fieldoutputs_ids[i]][1];
+    output_data_id = fieldoutputs->get_outputs_data_id_from_output_id(output_id);
+
+    output_name_id = fieldoutputs->get_name_data_id_from_name_id(fieldoutputs->outputs_data[output_data_id][1]);
+    output_name = fieldoutputs->name_data[output_name_id][1];
+    
+    if (fieldoutputs->outputs_data[output_data_id][2]==1)
+    {
+      output_name = output_name + " (node)";
+    }else if (fieldoutputs->outputs_data[output_data_id][2]==2)
+    {
+      output_name = output_name + " (element)";
+    }else if (fieldoutputs->outputs_data[output_data_id][2]==3)
+    {
+      output_name = output_name + " (contact)";
+    }
+
+    outputs_tree_data_set.push_back(std::to_string(fieldoutputs->outputs_data[output_data_id][0])); //output_id
+    outputs_tree_data_set.push_back(output_name); //output_name
+    outputs_tree_data.push_back(outputs_tree_data_set);
+  }
+
+  return outputs_tree_data;
 }
 
 std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_string)

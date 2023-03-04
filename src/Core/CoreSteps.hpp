@@ -39,6 +39,8 @@ public:
   // steps_data[0][4] step_type_id        option 3
   // steps_data[0][5] loads_id            option 4
   // steps_data[0][6] bcs_id              option 5
+  // steps_data[0][7] historyoutputs_id   option 6
+  // steps_data[0][8] fieldoutputs_id     option 7
 
   std::vector<std::vector<std::string>> name_data;
   // name_data[0][0] name_id
@@ -145,6 +147,14 @@ public:
   // bcs_data[0][1] bc_type       // 1: displacement | 2: temperature
   // bcs_data[0][2] bc_id
 
+  std::vector<std::vector<int>> historyoutputs_data;
+  // historyoutputs_data[0][0] historyoutputs_id
+  // historyoutputs_data[0][1] historyoutput_id
+
+  std::vector<std::vector<int>> fieldoutputs_data;
+  // fieldoutputs_data[0][0] fieldoutputs_id
+  // fieldoutputs_data[0][1] fieldoutput_id
+
   bool is_initialized = false;
 
   bool init(); // initialize
@@ -155,10 +165,14 @@ public:
   bool modify_step(int step_id, int modify_type, std::vector<std::string> options, std::vector<int> options_marker); // modify a step
   bool add_loads(int step_id, int load_type, std::vector<int> load_ids); // adds loads to loads_data
   bool add_bcs(int step_id, int bc_type, std::vector<int> bc_ids); // adds bcs to bcs_data
+  bool add_historyoutputs(int step_id, std::vector<int> historyoutput_ids); // adds historyoutputs to historyoutputs_data
+  bool add_fieldoutputs(int step_id, std::vector<int> fieldoutput_ids); // adds fieldoutputs to fieldoutputs_data
   bool remove_loads(int step_id, int load_type, std::vector<int> load_ids); // removes loads from loads_data
   bool remove_bcs(int step_id, int bc_type, std::vector<int> bc_ids); // removes bcs from bcs_data
+  bool remove_historyoutputs(int step_id, std::vector<int> historyoutput_ids); // removes historyoutputs from historyoutputs_data
+  bool remove_fieldoutputs(int step_id, std::vector<int> fieldoutput_ids); // removes fieldoutputs from fieldoutputs_data
   bool delete_step(int step_id); // deletes step from steps_data
-  bool add_step(int step_id, int name_id, int parameter_id, int step_type, int step_type_id, int loads_id, int bcs_id); // adds new step to steps_data
+  bool add_step(int step_id, int name_id, int parameter_id, int step_type, int step_type_id, int loads_id, int bcs_id, int historyoutputs_id, int fieldoutputs_id); // adds new step to steps_data
   bool add_name(std::string name_id, std::string name); // adds new name to name_data
   bool add_parameter(std::string parameter_id); // adds new parameter to parameter_data
   bool add_static(std::string static_id); // adds new static to static_data
@@ -169,6 +183,8 @@ public:
   bool add_uncoupledtd(std::string uncoupledtd_id); // adds new uncoupledtd to uncoupledtd_data
   bool add_load(int loads_id, int load_type, int load_id); // adds new load to loads_data
   bool add_bc(int bcs_id, int bc_type, int bc_id); // adds new bc to bcs_data
+  bool add_historyoutput(int historyoutputs_id, int historyoutput_id); // adds new historyoutput to historyoutputs_data
+  bool add_fieldoutput(int fieldoutputs_id, int fieldoutput_id); // adds new fieldoutput to fieldoutputs_data
   int  get_steps_data_id_from_step_id(int step_id); // searches for the step_id in the steps_data and returns the indices or -1 if it fails
   int  get_name_data_id_from_name_id(int name_id); // searches for the name_id in the name_data and returns the indices or -1 if it fails
   int  get_parameter_data_id_from_parameter_id(int parameter_id); // searches for the parameter_id in the parameter_data and returns the indices or -1 if it fails
@@ -180,8 +196,12 @@ public:
   int  get_uncoupledtd_data_id_from_uncoupledtd_id(int uncoupledtd_id); // searches for the uncoupledtd_id in the uncoupledtd_data and returns the indices or -1 if it fails
   int  get_load_data_id(int loads_id, int load_type,int load_id); // searches for the load_id in the load_data and returns the indices or -1 if it fails
   int  get_bc_data_id(int bcs_id, int bc_type, int bc_id); // searches for the bc_id in the bc_data and returns the indices or -1 if it fails
+  int  get_historyoutput_data_id(int historyoutputs_id, int historyoutput_id); // searches for the historyoutput_id in the historyoutput_data and returns the indices or -1 if it fails
+  int  get_fieldoutput_data_id(int fieldoutputs_id, int fieldoutput_id); // searches for the historyoutput_id in the historyoutput_data and returns the indices or -1 if it fails
   std::vector<int> get_load_data_ids_from_loads_id(int loads_id); // searches for the loads_id in the loads_data and returns the indices or -1 if it fails
   std::vector<int> get_bc_data_ids_from_bcs_id(int bcs_id); // searches for the bcs_id in the bcs_data and returns the indices or -1 if it fails
+  std::vector<int> get_historyoutput_data_ids_from_historyoutputs_id(int historyoutputs_id); // searches for the historyoutputs_id in the historyoutputs_data and returns the indices or -1 if it fails
+  std::vector<int> get_fieldoutput_data_ids_from_fieldoutputs_id(int fieldoutputs_id); // searches for the historyoutputs_id in the historyoutputs_data and returns the indices or -1 if it fails
   std::string get_step_export(); // get CalculiX step exports
   std::string print_data(); // prints out the data
 

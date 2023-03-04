@@ -1,5 +1,8 @@
 #include "StepsTree.hpp"
 #include "StepsLoadsTree.hpp"
+#include "StepsBCsTree.hpp"
+#include "StepsHistoryOutputsTree.hpp"
+#include "StepsFieldOutputsTree.hpp"
 #include "CalculiXCoreInterface.hpp"
 
 StepsTree::StepsTree(QTreeWidget* parent):
@@ -44,7 +47,20 @@ void StepsTree::update()
     }else{
       // modify name if necessary
       temp_child = this->child(ChildId);
-      
+      // update childs
+      StepsLoadsTree *StepsLoadsChild;
+      StepsLoadsChild = dynamic_cast<StepsLoadsTree*>(temp_child->child(0));
+      StepsLoadsChild->update();
+      StepsBCsTree *StepsBCsChild;
+      StepsBCsChild = dynamic_cast<StepsBCsTree*>(temp_child->child(1));
+      StepsBCsChild->update();
+      StepsHistoryOutputsTree *StepsHistoryOutputsChild;
+      StepsHistoryOutputsChild = dynamic_cast<StepsHistoryOutputsTree*>(temp_child->child(2));
+      StepsHistoryOutputsChild->update();
+      StepsFieldOutputsTree *StepsFieldOutputsChild;
+      StepsFieldOutputsChild = dynamic_cast<StepsFieldOutputsTree*>(temp_child->child(3));
+      StepsFieldOutputsChild->update();
+
       str_check = steps_tree_data[i][1];    
 
       if (temp_child->text(0).toStdString() != str_check)
@@ -95,7 +111,16 @@ void StepsTree::addStep(QString step_id, QString step_name)
   StepTreeChild->setText(1, step_id);
 
   StepsLoadsTree *StepsLoadsChild = new StepsLoadsTree(StepTreeChild);
-  StepsLoadsChild->initialize();
+  StepsLoadsChild->initialize(step_id.toInt());
+
+  StepsBCsTree *StepsBCsChild = new StepsBCsTree(StepTreeChild);
+  StepsBCsChild->initialize(step_id.toInt());
+
+  StepsHistoryOutputsTree *StepsHistoryOutputsChild = new StepsHistoryOutputsTree(StepTreeChild);
+  StepsHistoryOutputsChild->initialize(step_id.toInt());
+
+  StepsFieldOutputsTree *StepsFieldOutputsChild = new StepsFieldOutputsTree(StepTreeChild);
+  StepsFieldOutputsChild->initialize(step_id.toInt());
 
   this->addChild(StepTreeChild);
 }
