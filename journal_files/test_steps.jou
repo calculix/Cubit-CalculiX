@@ -103,4 +103,7 @@ ccx step 6 add fieldoutput 1 2
 ccx step 7 add fieldoutput 1 2
 ccx step 4 remove fieldoutput 1
 
+ccx modify step 1 parameter name noanalysisstep perturbation_yes nlgeom_yes inc 1000 incf 99 thermalnetwork_yes amplitude_step shocksmoothing 0.22
 ccx modify step 2 static name staticstep solver pastix direct_yes explicit_yes timereset_yes totaltimeatstart 1.25 initialtimeincrement 0.0001 timeperiodofstep 1.3 minimumtimeincrement 0.1 maximumtimeincrement 5.99 initialtimeincrementcfd 0.000001 
+ccx modify step 3 frequency name frequencystep solver spooles storage_yes global_yes cycmpc_active eigenfrequencies 11 lower 5 upper 6
+ccx modify step 4 buckle name bucklestep solver pardiso bucklingfactors 11.5 accuracy 0.11 lanczosvectors 1 maximumiterations 99.9

@@ -69,7 +69,10 @@
 #include "ccxStepRemoveBCCommand.hpp"
 #include "ccxStepRemoveHistoryOutputCommand.hpp"
 #include "ccxStepRemoveFieldOutputCommand.hpp"
+#include "ccxStepParameterModifyCommand.hpp"
 #include "ccxStepStaticModifyCommand.hpp"
+#include "ccxStepFrequencyModifyCommand.hpp"
+#include "ccxStepBuckleModifyCommand.hpp"
 #include "ccxStepDeleteCommand.hpp"
 
 //! This macro is required to identify this as a valid Cubit plugin. The plugin
@@ -155,7 +158,10 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxStepRemoveBCCommand");
   keys.push_back("ccxStepRemoveHistoryOutputCommand");
   keys.push_back("ccxStepRemoveFieldOutputCommand");
+  keys.push_back("ccxStepParameterModifyCommand");
   keys.push_back("ccxStepStaticModifyCommand");
+  keys.push_back("ccxStepFrequencyModifyCommand");
+  keys.push_back("ccxStepBuckleModifyCommand");
   keys.push_back("ccxStepDeleteCommand");
 
   return keys;
@@ -376,8 +382,17 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
   else if(key == "ccxStepRemoveFieldOutputCommand")
     return new ccxStepRemoveFieldOutputCommand();
   
+  else if(key == "ccxStepParameterModifyCommand")
+    return new ccxStepParameterModifyCommand();
+
   else if(key == "ccxStepStaticModifyCommand")
     return new ccxStepStaticModifyCommand();
+
+  else if(key == "ccxStepFrequencyModifyCommand")
+    return new ccxStepFrequencyModifyCommand();
+
+  else if(key == "ccxStepBuckleModifyCommand")
+    return new ccxStepBuckleModifyCommand();
 
   else if(key == "ccxStepDeleteCommand")
     return new ccxStepDeleteCommand();

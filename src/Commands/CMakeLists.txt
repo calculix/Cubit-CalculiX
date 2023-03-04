@@ -141,8 +141,14 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepRemoveHistoryOutputCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepRemoveFieldOutputCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepRemoveFieldOutputCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepParameterModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepParameterModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepStaticModifyCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepStaticModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepFrequencyModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepFrequencyModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepBuckleModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepBuckleModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepDeleteCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepDeleteCommand.hpp
     PARENT_SCOPE)
