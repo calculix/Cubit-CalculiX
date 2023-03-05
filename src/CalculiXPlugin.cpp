@@ -73,6 +73,9 @@
 #include "ccxStepStaticModifyCommand.hpp"
 #include "ccxStepFrequencyModifyCommand.hpp"
 #include "ccxStepBuckleModifyCommand.hpp"
+#include "ccxStepHeatTransferModifyCommand.hpp"
+#include "ccxStepCoupledTemperatureDisplacementModifyCommand.hpp"
+#include "ccxStepUncoupledTemperatureDisplacementModifyCommand.hpp"
 #include "ccxStepDeleteCommand.hpp"
 
 //! This macro is required to identify this as a valid Cubit plugin. The plugin
@@ -162,6 +165,9 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxStepStaticModifyCommand");
   keys.push_back("ccxStepFrequencyModifyCommand");
   keys.push_back("ccxStepBuckleModifyCommand");
+  keys.push_back("ccxStepHeatTransferModifyCommand");
+  keys.push_back("ccxStepCoupledTemperatureDisplacementModifyCommand");
+  keys.push_back("ccxStepUncoupledTemperatureDisplacementModifyCommand");
   keys.push_back("ccxStepDeleteCommand");
 
   return keys;
@@ -393,6 +399,15 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxStepBuckleModifyCommand")
     return new ccxStepBuckleModifyCommand();
+
+  else if(key == "ccxStepHeatTransferModifyCommand")
+    return new ccxStepHeatTransferModifyCommand();
+
+  else if(key == "ccxStepCoupledTemperatureDisplacementModifyCommand")
+    return new ccxStepCoupledTemperatureDisplacementModifyCommand();  
+
+  else if(key == "ccxStepUncoupledTemperatureDisplacementModifyCommand")
+    return new ccxStepUncoupledTemperatureDisplacementModifyCommand();  
 
   else if(key == "ccxStepDeleteCommand")
     return new ccxStepDeleteCommand();

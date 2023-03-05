@@ -149,6 +149,12 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepFrequencyModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepBuckleModifyCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepBuckleModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepHeatTransferModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepHeatTransferModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepCoupledTemperatureDisplacementModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepCoupledTemperatureDisplacementModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepUncoupledTemperatureDisplacementModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepUncoupledTemperatureDisplacementModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepDeleteCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepDeleteCommand.hpp
     PARENT_SCOPE)
