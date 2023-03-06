@@ -4,6 +4,7 @@
 #include <ctime>
 #include <algorithm>
 #include "CubitInterface.hpp"
+#include "CubitCoreformInterface.hpp"
 #include "CubitMessage.hpp"
 #include "MeshExportInterface.hpp"
 #include "MaterialInterface.hpp"
@@ -317,9 +318,63 @@ std::string CalculiXCore::autocleanup()
     }
   }
 
-  // CONSTRAINTS
-  sub_bool = false;
-  
+  // CONSTRAINTS  
+  for (size_t i = 0; i < constraints->constraints_data.size(); i++)
+  { 
+    sub_bool = false;
+    // RIGID BODY
+    if (constraints->constraints_data[i][1] == 1)
+    {
+      sub_data_id = constraints->get_rigidbody_constraint_data_id_from_rigidbody_constraint_id(constraints->constraints_data[i][2]);
+      
+      if (constraints->rigidbody_constraint_data[sub_data_id][1]=="1")
+      {
+        if (!check_nodeset_exists(std::stoi(constraints->rigidbody_constraint_data[sub_data_id][2])))
+        {
+          log.append("Nodeset ID " + constraints->rigidbody_constraint_data[sub_data_id][2] + " doesn't exist.\n");
+          log.append("Constraint ID " + std::to_string(constraints->constraints_data[i][0]) + " will be deleted.\n");
+          sub_bool = true;
+        }
+      } else if (constraints->rigidbody_constraint_data[sub_data_id][1]=="2")
+      {
+        if (cb->get_blocks_data_id_from_block_id(std::stoi(constraints->rigidbody_constraint_data[sub_data_id][2]))==-1)
+        {
+          log.append("Block ID " + constraints->rigidbody_constraint_data[sub_data_id][2] + " doesn't exist.\n");
+          log.append("Constraint ID " + std::to_string(constraints->constraints_data[i][0]) + " will be deleted.\n");
+          sub_bool = true;
+        }
+      }
+      if (!check_vertex_exists(std::stoi(constraints->rigidbody_constraint_data[sub_data_id][3])))
+      {
+        log.append("Vertex ID " + constraints->rigidbody_constraint_data[sub_data_id][3] + " doesn't exist.\n");
+        log.append("Constraint ID " + std::to_string(constraints->constraints_data[i][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    }
+    // TIE
+    if (constraints->constraints_data[i][1] == 2) 
+    {
+      sub_data_id = constraints->get_tie_constraint_data_id_from_tie_constraint_id(constraints->constraints_data[i][2]);
+
+      if (!check_sideset_exists(std::stoi(constraints->tie_constraint_data[sub_data_id][2])))
+      {
+        log.append("Master: Sideset ID " + constraints->tie_constraint_data[sub_data_id][2] + " doesn't exist.\n");
+        log.append("Constraint ID " + std::to_string(constraints->constraints_data[i][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+      if (!check_sideset_exists(std::stoi(constraints->tie_constraint_data[sub_data_id][3])))
+      {
+        log.append("Slave: Sideset ID " + constraints->tie_constraint_data[sub_data_id][3] + " doesn't exist.\n");
+        log.append("Constraint ID " + std::to_string(constraints->constraints_data[i][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      constraints->delete_constraint(constraints->constraints_data[i][0]);
+    }
+  }
 
   if (print_log)
   {
@@ -475,6 +530,35 @@ bool CalculiXCore::check_bc_exists(int bc_id,int BCType)
     } 
   }
   return false;
+}
+
+bool CalculiXCore::check_nodeset_exists(int nodeset_id)
+{
+  NodesetHandle nodeset;
+  if (!me_iface->get_nodeset_handle(nodeset_id, nodeset))
+  {
+    return false;
+  }
+  return true;
+}
+
+bool CalculiXCore::check_sideset_exists(int sideset_id)
+{
+  SidesetHandle sideset;
+  if (!me_iface->get_sideset_handle(sideset_id, sideset))
+  {
+    return false;
+  }
+  return true;
+}
+
+bool CalculiXCore::check_vertex_exists(int vertex_id)
+{
+  if (!CubitCoreformInterface::is_entity(CubitCoreformInterface::CubitCoreformInterfaceEntityType::VERTEX,vertex_id))
+  {
+    return false;
+  }
+  return true;
 }
 
 std::vector<int> CalculiXCore::get_blocks()

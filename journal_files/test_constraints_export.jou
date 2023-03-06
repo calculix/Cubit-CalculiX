@@ -37,7 +37,8 @@ volume all size 100
 #mesh vol all
 mesh vertex all
 
-export ccx "test_output.inp"
+#export ccx "test_output.inp"
+
 
 
 
