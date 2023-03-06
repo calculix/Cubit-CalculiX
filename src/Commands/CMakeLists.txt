@@ -5,6 +5,8 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxVersionCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxExportCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxExportCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxUseAutoCleanupCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxUseAutoCleanupCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxUseLogCoreCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxUseLogCoreCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxPrintCoreCommand.cpp

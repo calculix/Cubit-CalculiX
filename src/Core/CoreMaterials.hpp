@@ -23,6 +23,8 @@ public:
   std::vector<std::string> get_group_list(); // get a list of CalculiX Material Groups
   std::string get_material_export(); // get CalculiX Material exports
   std::string get_material_cards_export(std::string material_name, std::string group_name); // get card exports for a material
+  bool check_material_exists(int material_id); // check if material exists
+  std::string get_material_name(int material_id); // gets material name
 
   MaterialInterface *mat_iface;
 };

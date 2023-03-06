@@ -31,6 +31,7 @@ public:
   std::vector<std::vector<std::string>> adjust_contactpair_data;
   // adjust_contactpair_data[0][0] adjust_contactpair_id
   // adjust_contactpair_data[0][1] adjust_value
+  // adjust_contactpair_data[0][2] adjust_nodeset
 
   bool is_initialized = false;
 
@@ -42,7 +43,7 @@ public:
   bool modify_contactpair(int contactpair_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a contactpair
   bool delete_contactpair(int contactpair_id); // deletes contactpair from contactpairs_data
   bool add_contactpair(int contactpair_id, int surfaceinteractions_id, int contactpair_type, int master_id, int slave_id, int adjust_id); // adds new contactpair to contactpairs_data
-  bool add_adjust_contactpair(std::string adjust_contactpair_id, std::string adjust_value); // adds new adjustvalue to adjust_contactpair_data
+  bool add_adjust_contactpair(std::string adjust_contactpair_id, std::string adjust_value, std::string adjust_nodeset); // adds new adjustvalue to adjust_contactpair_data
   int  get_contactpairs_data_id_from_contactpair_id(int contactpair_id); // searches for the contactpair_id in the contactpairs_data and returns the indices or -1 if it fails
   int  get_adjust_contactpair_data_id_from_adjust_contactpair_id(int adjust_contactpair_id); // searches for the adjust_contactpair_id in the adjust_contactpair_data and returns the indices or -1 if it fails
   std::string get_contactpair_export(); // get CalculiX contactpair exports

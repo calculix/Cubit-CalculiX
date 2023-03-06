@@ -18,7 +18,7 @@ std::vector<std::string> ccxContactPairCreateFromCubitContactPairCommand::get_sy
   syntax.append("from cubitcontactpair ");
   syntax.append("surfaceinteraction <value:label='surfaceinteraction id',help='<surfaceinteraction id>'> ");
   syntax.append("{nodetosurface|surfacetosurface|mortar|linmortar|pglinmortar|massless} ");
-  syntax.append("[adjust <value:label='adjust',help='<adjust>'>] ");
+  syntax.append("[{adjust <value:label='adjust',help='<adjust>'>|adjust_nodeset <value:label='adjust_nodeset',help='<adjust_nodeset>'>} ] ");
   
   syntax_list.push_back(syntax);
   
@@ -28,7 +28,7 @@ std::vector<std::string> ccxContactPairCreateFromCubitContactPairCommand::get_sy
 std::vector<std::string> ccxContactPairCreateFromCubitContactPairCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx create contactpair from cubitcontactpair surfaceinteraction <surfaceinteraction id> {nodetosurface|surfacetosurface|mortar|linmortar|pglinmortar|massless} [adjust <value>]"; 
+  help[0] = "ccx create contactpair from cubitcontactpair surfaceinteraction <surfaceinteraction id> {nodetosurface|surfacetosurface|mortar|linmortar|pglinmortar|massless} [{adjust <value>|adjust_nodeset <nodeset id>}]"; 
 
   return help;
 }
@@ -49,6 +49,8 @@ bool ccxContactPairCreateFromCubitContactPairCommand::execute(CubitCommandData &
   double adjust_value;
   std::string surfaceinteraction_id;
   std::string adjust;
+  int adjust_nodeset_value;
+  std::string adjust_nodeset;
   
   data.get_value("surfaceinteraction id", surfaceinteraction_value);
   surfaceinteraction_id = std::to_string(surfaceinteraction_value);
@@ -85,7 +87,18 @@ bool ccxContactPairCreateFromCubitContactPairCommand::execute(CubitCommandData &
   
   options.push_back(adjust);
 
-  if (!ccx_iface.create_contactpair_from_cubitcontactpair(surfaceinteraction_value,options[1],options[2]))
+  if (!data.get_value("adjust_nodeset", adjust_nodeset_value))
+  {
+    adjust_nodeset = "";
+  }
+  else
+  {
+    adjust_nodeset = std::to_string(adjust_nodeset_value);
+  }
+  
+  options.push_back(adjust_nodeset);
+
+  if (!ccx_iface.create_contactpair_from_cubitcontactpair(surfaceinteraction_value,options[1],options[2],options[3]))
   {
     output = "Failed!\n";
     PRINT_ERROR(output.c_str());

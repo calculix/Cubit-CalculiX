@@ -7,6 +7,12 @@ CalculiXCoreInterface::CalculiXCoreInterface()
 CalculiXCoreInterface::~CalculiXCoreInterface()
 {}
 
+bool CalculiXCoreInterface::set_use_ccx_autocleanup(bool bool_use)
+{
+  ccx_core.use_ccx_autocleanup = bool_use;
+  return true;
+}
+
 bool CalculiXCoreInterface::set_use_ccx_logfile(bool bool_use)
 {
   ccx_core.use_ccx_logfile = bool_use;
@@ -94,9 +100,9 @@ std::vector<int> CalculiXCoreInterface::get_blocks()
   return ccx_core.get_blocks();
 }
 
-bool CalculiXCoreInterface::create_section(std::string section_type,int block_id, std::string material_name, std::vector<std::string> options)
+bool CalculiXCoreInterface::create_section(std::string section_type,int block_id, int material_id, std::vector<std::string> options)
 {
-  return ccx_core.create_section(section_type,block_id,material_name,options);
+  return ccx_core.create_section(section_type,block_id,material_id,options);
 }
 
 bool CalculiXCoreInterface::modify_section(std::string section_type,int section_id, std::vector<std::string> options, std::vector<int> options_marker)
@@ -193,9 +199,9 @@ bool CalculiXCoreInterface::delete_contactpair(int contactpair_id)
   return ccx_core.delete_contactpair(contactpair_id);
 }
 
-bool CalculiXCoreInterface::create_contactpair_from_cubitcontactpair(int surfaceinteraction_id, std::string contactpairtype, std::string adjust)
+bool CalculiXCoreInterface::create_contactpair_from_cubitcontactpair(int surfaceinteraction_id, std::string contactpairtype, std::string adjust, std::string adjust_nodeset)
 {
-  return ccx_core.create_contactpair_from_cubitcontactpair(surfaceinteraction_id,contactpairtype,adjust);
+  return ccx_core.create_contactpair_from_cubitcontactpair(surfaceinteraction_id,contactpairtype,adjust,adjust_nodeset);
 }
 
 bool CalculiXCoreInterface::create_amplitude(std::vector<std::string> options, std::vector<std::vector<std::string>> options2)

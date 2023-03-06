@@ -10,6 +10,7 @@ public:
   CalculiXCoreInterface();
   ~CalculiXCoreInterface();
 	
+  bool set_use_ccx_autocleanup(bool bool_use);
   bool set_use_ccx_logfile(bool bool_use);
   std::string print_data();
   bool log_str(std::string str_log);
@@ -30,7 +31,7 @@ public:
   std::string get_surfaceinteraction_export_data(); // gets the export data from surfaceinteractions core
   std::string get_contactpair_export_data(); // gets the export data from contactpairs core
   std::string get_amplitude_export_data(); // gets the export data from amplitudes core
-  bool create_section(std::string section_type,int block_id, std::string material_name, std::vector<std::string> options); // adds a new section
+  bool create_section(std::string section_type,int block_id, int material_id, std::vector<std::string> options); // adds a new section
   bool modify_section(std::string section_type,int section_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a section  
   bool delete_section(int section_id); // delete section
   bool create_constraint(std::string constraint_type, std::vector<std::string> options); // adds a new constraint
@@ -50,7 +51,7 @@ public:
   bool create_contactpair(std::vector<std::string> options); // adds a new contactpair
   bool modify_contactpair(int contactpair_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a contactpair  
   bool delete_contactpair(int contactpair_id); // delete contact pair
-  bool create_contactpair_from_cubitcontactpair(int surfaceinteraction_id, std::string contactpairtype, std::string adjust); // create contact pairs from cubit contact pairs with given surface interaction
+  bool create_contactpair_from_cubitcontactpair(int surfaceinteraction_id, std::string contactpairtype, std::string adjust, std::string adjust_nodeset); // create contact pairs from cubit contact pairs with given surface interaction
   bool create_amplitude(std::vector<std::string> options, std::vector<std::vector<std::string>> options2); // adds a new amplitude
   bool modify_amplitude(int amplitude_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2); // modify a amplitude
   bool delete_amplitude(int amplitude_id); // delete amplitude

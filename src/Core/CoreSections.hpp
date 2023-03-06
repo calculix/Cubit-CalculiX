@@ -31,7 +31,7 @@ public:
   std::vector<std::vector<std::string>> shell_section_data; // type 2
   // shell_section_data[0][0] shell_section_id
   // shell_section_data[0][1] block_id
-  // shell_section_data[0][2] material
+  // shell_section_data[0][2] material_id
   // shell_section_data[0][3] option: orientation
   // shell_section_data[0][4] option: thickness
   // shell_section_data[0][5] option: offset
@@ -39,8 +39,8 @@ public:
   std::vector<std::vector<std::string>> beam_section_data;  // type 3
   // beam_section_data[0][0] shell_section_id
   // beam_section_data[0][1] block_id
-  // beam_section_data[0][2] material
-  // beam_section_data[0][3] beam_type
+  // beam_section_data[0][2] material_id
+  // beam_section_data[0][3] beam_type_id
   // beam_section_data[0][4] thickness1
   // beam_section_data[0][5] thickness2
   // beam_section_data[0][6] x
@@ -53,7 +53,7 @@ public:
   std::vector<std::vector<std::string>> membrane_section_data;// type 4
   // membrane_section_data[0][0] shell_section_id
   // membrane_section_data[0][1] block_id
-  // membrane_section_data[0][2] material
+  // membrane_section_data[0][2] material_id
   // membrane_section_data[0][3] option: orientation
   // membrane_section_data[0][4] option: thickness
   // membrane_section_data[0][5] option: offset
@@ -64,14 +64,14 @@ public:
   bool update(); // check for changes of the sections
   bool reset(); // delete all data and initialize afterwards
   bool check_initialized(); // check if object is initialized
-  bool create_section(std::string section_type,int block_id, std::string material_name, std::vector<std::string> options); // adds new section
+  bool create_section(std::string section_type,int block_id, int material_id, std::vector<std::string> options); // adds new section
   bool modify_section(std::string section_type,int section_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a section
   bool delete_section(int section_id); // deletes section from sections_data
   bool add_section(int section_id, int section_type, int section_type_id); // adds new section to sections_data
-  bool add_solid_section(std::string solid_section_id, std::string block_id, std::string material_name,std::string orientation,std::string thickness); // adds new solid section to solid_sections_data
-  bool add_shell_section(std::string shell_section_id, std::string block_id, std::string material_name,std::string orientation,std::string thickness,std::string offset); // adds new shell section to shell_sections_data
-  bool add_beam_section(std::string beam_section_id, std::string block_id, std::string material_name,std::string beam_type,std::string thickness1,std::string thickness2,std::string x,std::string y,std::string z,std::string orientation,std::string offset1,std::string offset2); // adds new beam section to beam_sections_data
-  bool add_membrane_section(std::string membrane_section_id, std::string block_id, std::string material_name,std::string orientation,std::string thickness,std::string offset); // adds new membrane section to membrane_sections_data
+  bool add_solid_section(std::string solid_section_id, std::string block_id, std::string material_id,std::string orientation,std::string thickness); // adds new solid section to solid_sections_data
+  bool add_shell_section(std::string shell_section_id, std::string block_id, std::string material_id,std::string orientation,std::string thickness,std::string offset); // adds new shell section to shell_sections_data
+  bool add_beam_section(std::string beam_section_id, std::string block_id, std::string material_id,std::string beam_type,std::string thickness1,std::string thickness2,std::string x,std::string y,std::string z,std::string orientation,std::string offset1,std::string offset2); // adds new beam section to beam_sections_data
+  bool add_membrane_section(std::string membrane_section_id, std::string block_id, std::string material_id,std::string orientation,std::string thickness,std::string offset); // adds new membrane section to membrane_sections_data
   bool modify_section_id(int section_id, int new_section_id); // modifies the section_id from given section
   int  get_sections_data_id_from_section_id(int section_id); // searches for the section_id in the sections_data and returns the indices or -1 if it fails
   int  get_solid_section_data_id_from_solid_section_id(int solid_section_id); // searches for the solid_section_id in the solid_section_data and returns the indices or -1 if it fails

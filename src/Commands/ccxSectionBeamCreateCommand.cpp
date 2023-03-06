@@ -48,7 +48,7 @@ std::vector<std::string> ccxSectionBeamCreateCommand::get_syntax()
       syntax.append("<value:label='block id s2'>");
     }
     
-    syntax.append("material <string:type='unquoted', number='1', label='material', help='<material_name>'> ");
+    syntax.append("material <value:label='material',help='<material>'> ");
     syntax.append("thickness1 <value:label='thickness1',help='<thickness1>'> "); // first line
     syntax.append("thickness2 <value:label='thickness2',help='<thickness2>'> ");
     syntax.append("x <value:label='x',help='<x>'> "); //second line
@@ -68,7 +68,7 @@ std::vector<std::string> ccxSectionBeamCreateCommand::get_syntax()
 std::vector<std::string> ccxSectionBeamCreateCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "create section beam beam_type [rect|circ|block|pipe] block <block id> material <material_name> thickness1 <thickness1> thickness2 <thickness2> x <x> y <y> z <z> [orientation <orientation_name>] [offset1 <offset1>] [offset2 <offset2>]";
+  help[0] = "create section beam beam_type [rect|circ|block|pipe] block <block id> material <material id> thickness1 <thickness1> thickness2 <thickness2> x <x> y <y> z <z> [orientation <orientation_name>] [offset1 <offset1>] [offset2 <offset2>]";
   help[1]=" ";
   help[2]=" ";
   help[3]=" ";
@@ -92,7 +92,7 @@ bool ccxSectionBeamCreateCommand::execute(CubitCommandData &data)
   std::string output;
 
   std::string beam_type;
-  std::string material_name;
+  int material_id;
   std::string orientation;
   std::vector<std::string> options;
   double thickness1_value;
@@ -117,7 +117,7 @@ bool ccxSectionBeamCreateCommand::execute(CubitCommandData &data)
   std::string block_string = " ";
 
   data.get_string("beam_type", beam_type);  
-  data.get_string("material", material_name);
+  data.get_value("material", material_id);
   if (!data.get_string("orientation", orientation))
   {
     orientation = "";
@@ -239,7 +239,7 @@ bool ccxSectionBeamCreateCommand::execute(CubitCommandData &data)
   
   for (size_t i = 0; i < block_ids.size(); i++)
   {    
-    if (!ccx_iface.create_section("BEAM",block_ids[i],material_name,options))
+    if (!ccx_iface.create_section("BEAM",block_ids[i],material_id,options))
     {
       PRINT_ERROR("Failed!\n");
     } 

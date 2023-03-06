@@ -4,6 +4,7 @@
 #include <ctime>
 #include <algorithm>
 #include "CubitInterface.hpp"
+#include "CubitMessage.hpp"
 #include "MeshExportInterface.hpp"
 #include "MaterialInterface.hpp"
 
@@ -173,6 +174,8 @@ bool CalculiXCore::init()
 
 bool CalculiXCore::update()
 {
+  std::string temp_str = "";
+
   cb->update();
   //mat->update();
   loadsforces->update();
@@ -180,6 +183,15 @@ bool CalculiXCore::update()
   bcsdisplacements->update();
   bcstemperatures->update();
   
+  if (use_ccx_autocleanup)
+  {
+    temp_str = autocleanup();
+    if (temp_str != "")
+    {
+      print_to_log(temp_str);
+    }
+  }
+
   if (use_ccx_logfile)
   {
     print_to_log("UPDATE");
@@ -212,6 +224,109 @@ bool CalculiXCore::reset()
   //print_to_log(print_data());
 
   return true;
+}
+
+std::string CalculiXCore::autocleanup()
+{
+  std::string log = "";
+  bool print_log = false;
+  int sub_data_id;
+  bool sub_bool;
+
+  std::string output;
+
+  log = "CCX Autocleanup\n";
+
+  // SECTIONS
+  //loop over all sections
+  for (size_t i = 0; i < sections->sections_data.size(); i++)
+  { 
+    sub_bool = false;
+    // SOLID
+    if (sections->sections_data[i][1] == 1)
+    {
+      sub_data_id = sections->get_solid_section_data_id_from_solid_section_id(sections->sections_data[i][2]);
+      if (!mat->check_material_exists(std::stoi(sections->solid_section_data[sub_data_id][2])))
+      {
+        log.append("Material " + sections->solid_section_data[sub_data_id][2] + " doesn't exist.\n");
+        log.append("Section ID " + std::to_string(sections->sections_data[i][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+      if (cb->get_blocks_data_id_from_block_id(std::stoi(sections->solid_section_data[sub_data_id][1]))==-1)
+      {
+        log.append("Block ID " + sections->solid_section_data[sub_data_id][1] + " doesn't exist.\n");
+        log.append("Section ID " + std::to_string(sections->sections_data[i][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    }
+    // SHELL
+    if (sections->sections_data[i][1] == 2) 
+    {
+      sub_data_id = sections->get_shell_section_data_id_from_shell_section_id(sections->sections_data[i][2]);
+      if (!mat->check_material_exists(std::stoi(sections->shell_section_data[sub_data_id][2])))
+      {
+        log.append("Material " + sections->shell_section_data[sub_data_id][2] + " doesn't exist.\n");
+        log.append("Section ID " + std::to_string(sections->sections_data[i][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+      if (cb->get_blocks_data_id_from_block_id(std::stoi(sections->shell_section_data[sub_data_id][1]))==-1)
+      {
+        log.append("Block ID " + sections->shell_section_data[sub_data_id][1] + " doesn't exist.\n");
+        log.append("Section ID " + std::to_string(sections->sections_data[i][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    }
+    // BEAM
+    if (sections->sections_data[i][1] == 3) 
+    {
+      sub_data_id = sections->get_beam_section_data_id_from_beam_section_id(sections->sections_data[i][2]);
+      if (!mat->check_material_exists(std::stoi(sections->beam_section_data[sub_data_id][2])))
+      {
+        log.append("Material " + sections->beam_section_data[sub_data_id][2] + " doesn't exist.\n");
+        log.append("Section ID " + std::to_string(sections->sections_data[i][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+      if (cb->get_blocks_data_id_from_block_id(std::stoi(sections->beam_section_data[sub_data_id][1]))==-1)
+      {
+        log.append("Block ID " + sections->beam_section_data[sub_data_id][1] + " doesn't exist.\n");
+        log.append("Section ID " + std::to_string(sections->sections_data[i][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    }
+    // MEMBRANE
+    if (sections->sections_data[i][1] == 4) 
+    {
+      sub_data_id = sections->get_membrane_section_data_id_from_membrane_section_id(sections->sections_data[i][2]);
+      if (!mat->check_material_exists(std::stoi(sections->membrane_section_data[sub_data_id][2])))
+      {
+        log.append("Material " + sections->membrane_section_data[sub_data_id][2] + " doesn't exist.\n");
+        log.append("Section ID " + std::to_string(sections->sections_data[i][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+      if (cb->get_blocks_data_id_from_block_id(std::stoi(sections->membrane_section_data[sub_data_id][1]))==-1)
+      {
+        log.append("Block ID " + sections->membrane_section_data[sub_data_id][1] + " doesn't exist.\n");
+        log.append("Section ID " + std::to_string(sections->sections_data[i][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      sections->delete_section(sections->sections_data[i][0]);
+    }
+  }
+
+  // CONSTRAINTS
+  sub_bool = false;
+  
+
+  if (print_log)
+  {
+    PRINT_INFO("%s", log.c_str());
+    return log;
+  }
+  return "";
 }
 
 std::string CalculiXCore::print_data()
@@ -373,9 +488,9 @@ std::vector<int> CalculiXCore::get_blocks()
   return blocks;
 }
 
-bool CalculiXCore::create_section(std::string section_type,int block_id, std::string material_name, std::vector<std::string> options)
+bool CalculiXCore::create_section(std::string section_type,int block_id, int material_id, std::vector<std::string> options)
 {
-  return sections->create_section(section_type, block_id, material_name, options);
+  return sections->create_section(section_type, block_id, material_id, options);
 }
 
 bool CalculiXCore::modify_section(std::string section_type,int section_id, std::vector<std::string> options, std::vector<int> options_marker)
@@ -513,7 +628,7 @@ bool CalculiXCore::delete_contactpair(int contactpair_id)
   return contactpairs->delete_contactpair(contactpair_id);
 }
 
-bool CalculiXCore::create_contactpair_from_cubitcontactpair(int surfaceinteraction_id, std::string contactpairtype, std::string adjust)
+bool CalculiXCore::create_contactpair_from_cubitcontactpair(int surfaceinteraction_id, std::string contactpairtype, std::string adjust, std::string adjust_nodeset)
 {
   std::vector<std::string> options;
 
@@ -556,6 +671,7 @@ bool CalculiXCore::create_contactpair_from_cubitcontactpair(int surfaceinteracti
     options.push_back(std::to_string(master_id));
     options.push_back(std::to_string(slave_id));
     options.push_back(adjust);
+    options.push_back(adjust_nodeset);
 
     this->create_contactpair(options);
     options.clear();

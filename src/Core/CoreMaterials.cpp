@@ -460,3 +460,14 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
 
   return material_cards_export;
 }
+
+bool CoreMaterials::check_material_exists(int material_id)
+{
+  MaterialInterface::Material material;
+  material = mat_iface->get_material(material_id);
+  if (material != NULL)
+  {
+    return true;
+  }
+  return false;
+}

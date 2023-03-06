@@ -17,7 +17,7 @@ std::vector<std::string> ccxSectionBeamModifyCommand::get_syntax()
   syntax.append("modify section beam <value:label='section id',help='<section id>'>");
   syntax.append("[beam_type <string:type='unquoted', number='1', label='beam_type', help='<[rect|circ|block|pipe]>'>] ");
   syntax.append("[block <value:label='block id',help='<block id>'>] ");
-  syntax.append("[material <string:type='unquoted', number='1', label='material', help='<material_name>'>] ");
+  syntax.append("[material <value:label='material',help='<material>'>] ");
   syntax.append("[thickness1 <value:label='thickness1',help='<thickness1>'>] ");
   syntax.append("[thickness2 <value:label='thickness2',help='<thickness2>'>] ");
   syntax.append("[x <value:label='x',help='<x>'>] ");
@@ -35,7 +35,7 @@ std::vector<std::string> ccxSectionBeamModifyCommand::get_syntax()
 std::vector<std::string> ccxSectionBeamModifyCommand::get_syntax_help()
 {
   std::vector<std::string> help(1);
-  help[0] = "ccx modify section beam <section id> [beam_type <beam_type>] [block <block id>] [material <material_name>] [thickness1 <thickness1>] [thickness2 <thickness2>] [x <x>] [y <y>] [z <z>] [orientation <orientation_name>] [offset1 <offset1>] [offset2 <offset2>]";
+  help[0] = "ccx modify section beam <section id> [beam_type <beam_type>] [block <block id>] [material <material id>] [thickness1 <thickness1>] [thickness2 <thickness2>] [x <x>] [y <y>] [z <z>] [orientation <orientation_name>] [offset1 <offset1>] [offset2 <offset2>]";
 
   return help;
 }
@@ -54,7 +54,8 @@ bool ccxSectionBeamModifyCommand::execute(CubitCommandData &data)
   std::string output;
 
   std::string beam_type;
-  std::string material_name;
+  int material_value;
+  std::string material;
   std::string orientation;
   std::vector<std::string> options;
   std::vector<int> options_marker;
@@ -96,12 +97,14 @@ bool ccxSectionBeamModifyCommand::execute(CubitCommandData &data)
     block_id = std::to_string(block_id_value);
     options_marker.push_back(1);
   }
-  if (!data.get_string("material", material_name))
+  if (!data.get_value("material", material_value))
   {
-    material_name = "";
+    material = "";
     options_marker.push_back(0);
-  }else
+  }
+  else
   {
+    material = std::to_string(material_value);
     options_marker.push_back(1);
   }
   if (!data.get_string("orientation", orientation))
@@ -186,7 +189,7 @@ bool ccxSectionBeamModifyCommand::execute(CubitCommandData &data)
 
 
   options.push_back(block_id);
-  options.push_back(material_name);  
+  options.push_back(material);  
   options.push_back(beam_type);
   options.push_back(thickness1);
   options.push_back(thickness2);

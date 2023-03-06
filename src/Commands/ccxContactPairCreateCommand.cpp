@@ -19,7 +19,7 @@ std::vector<std::string> ccxContactPairCreateCommand::get_syntax()
   syntax.append("{nodetosurface|surfacetosurface|mortar|linmortar|pglinmortar|massless} ");
   syntax.append("master <value:label='master id',help='<sideset id>'> ");
   syntax.append("slave <value:label='slave id',help='<sideset id>'> ");
-  syntax.append("[adjust <value:label='adjust',help='<adjust>'>] ");
+  syntax.append("[{adjust <value:label='adjust',help='<adjust>'>|adjust_nodeset <value:label='adjust_nodeset',help='<adjust_nodeset>'>} ] ");
   
   syntax_list.push_back(syntax);
   
@@ -31,7 +31,7 @@ std::vector<std::string> ccxContactPairCreateCommand::get_syntax()
 std::vector<std::string> ccxContactPairCreateCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx create contactpair surfaceinteraction <surfaceinteraction id> {nodetosurface|surfacetosurface|mortar|linmortar|pglinmortar|massless} master <sideset id> slave <sideset id> [adjust <value>]"; 
+  help[0] = "ccx create contactpair surfaceinteraction <surfaceinteraction id> {nodetosurface|surfacetosurface|mortar|linmortar|pglinmortar|massless} master <sideset id> slave <sideset id> [{adjust <value>|adjust_nodeset <nodeset id>}]"; 
 
   return help;
 }
@@ -56,6 +56,8 @@ bool ccxContactPairCreateCommand::execute(CubitCommandData &data)
   std::string master_id;
   std::string slave_id;
   std::string adjust;
+  int adjust_nodeset_value;
+  std::string adjust_nodeset;
   
   data.get_value("surfaceinteraction id", surfaceinteraction_value);
   surfaceinteraction_id = std::to_string(surfaceinteraction_value);
@@ -98,6 +100,17 @@ bool ccxContactPairCreateCommand::execute(CubitCommandData &data)
   }
   
   options.push_back(adjust);
+
+  if (!data.get_value("adjust_nodeset", adjust_nodeset_value))
+  {
+    adjust_nodeset = "";
+  }
+  else
+  {
+    adjust_nodeset = std::to_string(adjust_nodeset_value);
+  }
+  
+  options.push_back(adjust_nodeset);
 
   if (!ccx_iface.create_contactpair(options))
   {

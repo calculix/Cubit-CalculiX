@@ -46,7 +46,7 @@ std::vector<std::string> ccxSectionShellCreateCommand::get_syntax()
       syntax.append("<value:label='block id s2'>");
     }
     
-    syntax.append("material <string:type='unquoted', number='1', label='material', help='<material_name>'> ");
+    syntax.append("material <value:label='material',help='<material>'> ");
     syntax.append("[orientation <string:type='unquoted', number='1', label='orientation', help='<orientation_name>'>] ");
     syntax.append("[thickness <value:label='thickness',help='<thickness>'>]");
     syntax.append("[offset <value:label='offset',help='<offset>'>]");
@@ -61,7 +61,7 @@ std::vector<std::string> ccxSectionShellCreateCommand::get_syntax()
 std::vector<std::string> ccxSectionShellCreateCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx create section shell block <block id> material <material_name> [orientation <orientation_name>] [thickness <thickness>] [offset <offset>]";
+  help[0] = "ccx create section shell block <block id> material <material id> [orientation <orientation_name>] [thickness <thickness>] [offset <offset>]";
   help[1]=" ";
   help[2]=" ";
   help[3]=" ";
@@ -84,7 +84,7 @@ bool ccxSectionShellCreateCommand::execute(CubitCommandData &data)
 
   std::string output;
 
-  std::string material_name;
+  int material_id;
   std::string orientation;
   std::vector<std::string> options;
   double thickness_value;
@@ -98,7 +98,7 @@ bool ccxSectionShellCreateCommand::execute(CubitCommandData &data)
 
   std::string block_string = " ";
   
-  data.get_string("material", material_name);
+  data.get_value("material", material_id);
   if (!data.get_string("orientation", orientation))
   {
     orientation = "";
@@ -174,7 +174,7 @@ bool ccxSectionShellCreateCommand::execute(CubitCommandData &data)
   
   for (size_t i = 0; i < block_ids.size(); i++)
   {    
-    if (!ccx_iface.create_section("SHELL",block_ids[i],material_name,options))
+    if (!ccx_iface.create_section("SHELL",block_ids[i],material_id,options))
     {
       PRINT_ERROR("Failed!\n");
     } 

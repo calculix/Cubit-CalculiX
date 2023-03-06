@@ -29,11 +29,13 @@ public:
   ~CalculiXCore();
 
   bool use_ccx_logfile = false;
+  bool use_ccx_autocleanup = true;
 
   bool print_to_log(std::string str_log);
   bool init();
   bool update(); // updates everything to catch changes in the entities
   bool reset(); // delete all data and init new
+  std::string autocleanup(); // cleans up the core data
   std::string print_data();
   std::vector<int> parser(std::string parse_type, std::string parse_string);
   std::vector<int> extractIntegers(std::string str);
@@ -46,13 +48,7 @@ public:
   bool check_bc_exists(int bc_id,int BCType); // checks if the id for the bc type exists
   bool set_ccx_element_type(int block_id, std::string ccx_element_type); // sets the ccx element type for a block
   std::vector<int> get_blocks(); // gets the block ids from core blocks
-  std::string get_material_export_data(); // gets the export data from materials core
-  std::string get_section_export_data(); // gets the export data from sections core
-  std::string get_constraint_export_data(); // gets the export data from constraints core
-  std::string get_surfaceinteraction_export_data(); // gets the export data from surfaceinteractions core
-  std::string get_contactpair_export_data(); // gets the export data from contactpairs core
-  std::string get_amplitude_export_data(); // gets the export data from amplitudes core
-  bool create_section(std::string section_type,int block_id, std::string material_name, std::vector<std::string> options); // adds a new section
+  bool create_section(std::string section_type,int block_id, int material_id, std::vector<std::string> options); // adds a new section
   bool modify_section(std::string section_type,int section_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a section
   bool delete_section(int section_id); // adds a new section
   bool create_constraint(std::string constraint_type, std::vector<std::string> options); // adds a new constraint
@@ -72,7 +68,7 @@ public:
   bool create_contactpair(std::vector<std::string> options); // adds a new contactpair
   bool modify_contactpair(int contactpair_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a contactpair  
   bool delete_contactpair(int contactpair_id); // delete contact pair
-  bool create_contactpair_from_cubitcontactpair(int surfaceinteraction_id, std::string contactpairtype, std::string adjust); // create contact pairs from cubit contact pairs with given surface interaction
+  bool create_contactpair_from_cubitcontactpair(int surfaceinteraction_id, std::string contactpairtype, std::string adjust, std::string adjust_nodeset); // create contact pairs from cubit contact pairs with given surface interaction
   bool create_amplitude(std::vector<std::string> options, std::vector<std::vector<std::string>> options2); // adds a new amplitude
   bool modify_amplitude(int amplitude_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2); // modify a amplitude
   bool delete_amplitude(int amplitude_id); // delete amplitude
@@ -129,6 +125,12 @@ public:
   std::vector<std::vector<std::string>> get_steps_bcstemperatures_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_historyoutputs_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_fieldoutputs_tree_data(int step_id); // gets the data from core to build the tree
+  std::string get_material_export_data(); // gets the export data from materials core
+  std::string get_section_export_data(); // gets the export data from sections core
+  std::string get_constraint_export_data(); // gets the export data from constraints core
+  std::string get_surfaceinteraction_export_data(); // gets the export data from surfaceinteractions core
+  std::string get_contactpair_export_data(); // gets the export data from contactpairs core
+  std::string get_amplitude_export_data(); // gets the export data from amplitudes core
 
   CoreBlocks *cb;
   CoreMaterials *mat;

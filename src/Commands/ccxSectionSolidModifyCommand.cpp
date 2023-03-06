@@ -16,7 +16,7 @@ std::vector<std::string> ccxSectionSolidModifyCommand::get_syntax()
   std::string syntax = "ccx ";
   syntax.append("modify section solid <value:label='section id',help='<section id>'>");
   syntax.append("[block <value:label='block id',help='<block id>'>] ");
-  syntax.append("[material <string:type='unquoted', number='1', label='material', help='<material_name>'>] ");
+  syntax.append("[material <value:label='material',help='<material>'>] ");
   syntax.append("[orientation <string:type='unquoted', number='1', label='orientation', help='<orientation_name>'>] ");
   syntax.append("[thickness <value:label='thickness',help='<thickness>'>]");
     
@@ -28,7 +28,7 @@ std::vector<std::string> ccxSectionSolidModifyCommand::get_syntax()
 std::vector<std::string> ccxSectionSolidModifyCommand::get_syntax_help()
 {
   std::vector<std::string> help(1);
-  help[0] = "ccx modify section solid <section id> [block <block id>] [material <material_name>] [orientation <orientation_name>] [thickness <thickness>]";
+  help[0] = "ccx modify section solid <section id> [block <block id>] [material <material id>] [orientation <orientation_name>] [thickness <thickness>]";
 
   return help;
 }
@@ -46,7 +46,8 @@ bool ccxSectionSolidModifyCommand::execute(CubitCommandData &data)
 
   std::string output;
 
-  std::string material_name;
+  int material_value;
+  std::string material;
   std::string orientation;
   std::vector<std::string> options;
   std::vector<int> options_marker;
@@ -68,12 +69,14 @@ bool ccxSectionSolidModifyCommand::execute(CubitCommandData &data)
     block_id = std::to_string(block_id_value);
     options_marker.push_back(1);
   }
-  if (!data.get_string("material", material_name))
+  if (!data.get_value("material", material_value))
   {
-    material_name = "";
+    material = "";
     options_marker.push_back(0);
-  }else
+  }
+  else
   {
+    material = std::to_string(material_value);
     options_marker.push_back(1);
   }
   
@@ -99,7 +102,7 @@ bool ccxSectionSolidModifyCommand::execute(CubitCommandData &data)
   }
 
   options.push_back(block_id);
-  options.push_back(material_name);  
+  options.push_back(material);  
   options.push_back(orientation);
   options.push_back(thickness);
 

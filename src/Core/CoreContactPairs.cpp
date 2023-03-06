@@ -93,7 +93,7 @@ bool CoreContactPairs::create_contactpair(std::vector<std::string> options)
     sub_last = adjust_contactpair_data.size() - 1;
     sub_id = std::stoi(adjust_contactpair_data[sub_last][0]) + 1;
   }
-  this->add_adjust_contactpair(std::to_string(sub_id), options[4]);
+  this->add_adjust_contactpair(std::to_string(sub_id), options[4], options[5]);
 
   //contactpair_id, surfaceinteractions_id, contactpair_type, master_id, slave_id, adjust_id
   surfaceinteractions_id = std::stoi(options[0]);
@@ -163,6 +163,11 @@ bool CoreContactPairs::modify_contactpair(int contactpair_id, std::vector<std::s
       sub_data_id = get_adjust_contactpair_data_id_from_adjust_contactpair_id(contactpairs_data[contactpairs_data_id][5]);
       adjust_contactpair_data[sub_data_id][1] = options[4];
     }
+    if (options_marker[5]==1)
+    {
+      sub_data_id = get_adjust_contactpair_data_id_from_adjust_contactpair_id(contactpairs_data[contactpairs_data_id][5]);
+      adjust_contactpair_data[sub_data_id][2] = options[5];
+    }
     return true;
   }
 }
@@ -176,9 +181,9 @@ bool CoreContactPairs::add_contactpair(int contactpair_id, int surfaceinteractio
   return true;
 }
 
-bool CoreContactPairs::add_adjust_contactpair(std::string adjust_contactpair_id, std::string adjust_value)
+bool CoreContactPairs::add_adjust_contactpair(std::string adjust_contactpair_id, std::string adjust_value, std::string adjust_nodeset)
 {
-  std::vector<std::string> v = {adjust_contactpair_id, adjust_value};
+  std::vector<std::string> v = {adjust_contactpair_id, adjust_value, adjust_nodeset};
   
   adjust_contactpair_data.push_back(v);
   
@@ -234,6 +239,7 @@ std::string CoreContactPairs::get_contactpair_export() // get a list of the Calc
   contactpairs_export_list.push_back("********************************** C O N T A C T P A I R S ****************************");
   std::string str_temp;
   int sub_data_id;
+  std::string nodeset_name;
   
   //loop over all contactpairs
   for (size_t i = 0; i < contactpairs_data.size(); i++)
@@ -268,7 +274,16 @@ std::string CoreContactPairs::get_contactpair_export() // get a list of the Calc
     {
       str_temp.append(", ADJUST=");
       str_temp.append(adjust_contactpair_data[sub_data_id][1]);
+    }else if (adjust_contactpair_data[sub_data_id][2]!="")
+    {
+      nodeset_name = CubitInterface::get_exodus_entity_name("nodeset",std::stoi(adjust_contactpair_data[sub_data_id][2]));
+      if (nodeset_name == "") {
+      nodeset_name = "Nodeset_" + adjust_contactpair_data[sub_data_id][2];
+      }
+      str_temp.append(", ADJUST=");
+      str_temp.append(nodeset_name);
     }
+    
     
     contactpairs_export_list.push_back(str_temp);
 
@@ -302,11 +317,11 @@ std::string CoreContactPairs::print_data()
   }
 
   str_return.append("\n CoreContactPairs adjust_contactpair_data: \n");
-  str_return.append("adjust_contactpair_id, adjust_value \n");
+  str_return.append("adjust_contactpair_id, adjust_value, adjust_nodeset \n");
 
   for (size_t i = 0; i < adjust_contactpair_data.size(); i++)
   {
-    str_return.append(adjust_contactpair_data[i][0] + " " + adjust_contactpair_data[i][1] + " \n");
+    str_return.append(adjust_contactpair_data[i][0] + " " + adjust_contactpair_data[i][1] + " " + adjust_contactpair_data[i][2] + " \n");
   }
  
   return str_return;

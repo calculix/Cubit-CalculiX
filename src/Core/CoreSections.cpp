@@ -41,7 +41,7 @@ bool CoreSections::check_initialized()
   return is_initialized;
 }
 
-bool CoreSections::create_section(std::string section_type,int block_id, std::string material_name, std::vector<std::string> options)
+bool CoreSections::create_section(std::string section_type,int block_id, int material_id, std::vector<std::string> options)
 {
   int section_id;
   int section_type_value;
@@ -61,7 +61,7 @@ bool CoreSections::create_section(std::string section_type,int block_id, std::st
       sub_section_id = std::stoi(solid_section_data[sub_section_last][0]) + 1;
     }
     section_type_value = 1;
-    this->add_solid_section(std::to_string(sub_section_id), std::to_string(block_id), material_name, options[0], options[1]);
+    this->add_solid_section(std::to_string(sub_section_id), std::to_string(block_id), std::to_string(material_id), options[0], options[1]);
   } else if (section_type=="SHELL")
   {
     if (shell_section_data.size()==0)
@@ -74,7 +74,7 @@ bool CoreSections::create_section(std::string section_type,int block_id, std::st
       sub_section_id = std::stoi(shell_section_data[sub_section_last][0]) + 1;
     }
     section_type_value = 2;
-    this->add_shell_section(std::to_string(sub_section_id), std::to_string(block_id), material_name, options[0], options[1], options[2]);
+    this->add_shell_section(std::to_string(sub_section_id), std::to_string(block_id), std::to_string(material_id), options[0], options[1], options[2]);
   } else if (section_type=="BEAM")
   {
     if (beam_section_data.size()==0)
@@ -87,7 +87,7 @@ bool CoreSections::create_section(std::string section_type,int block_id, std::st
       sub_section_id = std::stoi(beam_section_data[sub_section_last][0]) + 1;
     }
     section_type_value = 3;
-    this->add_beam_section(std::to_string(sub_section_id), std::to_string(block_id), material_name, options[0], options[1], options[2], options[3], options[4], options[5], options[6], options[7], options[8]);
+    this->add_beam_section(std::to_string(sub_section_id), std::to_string(block_id), std::to_string(material_id), options[0], options[1], options[2], options[3], options[4], options[5], options[6], options[7], options[8]);
   }else if (section_type=="MEMBRANE")
   {
     if (membrane_section_data.size()==0)
@@ -100,7 +100,7 @@ bool CoreSections::create_section(std::string section_type,int block_id, std::st
       sub_section_id = std::stoi(membrane_section_data[sub_section_last][0]) + 1;
     }
     section_type_value = 4;
-    this->add_membrane_section(std::to_string(sub_section_id), std::to_string(block_id), material_name, options[0], options[1], options[2]);
+    this->add_membrane_section(std::to_string(sub_section_id), std::to_string(block_id), std::to_string(material_id), options[0], options[1], options[2]);
   }
   
   if (sections_data.size()==0)
@@ -199,36 +199,36 @@ bool CoreSections::add_section(int section_id, int section_type, int section_typ
   return true;
 }
 
-bool CoreSections::add_solid_section(std::string solid_section_id, std::string block_id, std::string material_name,std::string orientation,std::string thickness)
+bool CoreSections::add_solid_section(std::string solid_section_id, std::string block_id, std::string material_id,std::string orientation,std::string thickness)
 {
-  std::vector<std::string> v = {solid_section_id, block_id, material_name, orientation, thickness};
+  std::vector<std::string> v = {solid_section_id, block_id, material_id, orientation, thickness};
       
   solid_section_data.push_back(v);
 
   return true;
 }
 
-bool CoreSections::add_shell_section(std::string shell_section_id, std::string block_id, std::string material_name,std::string orientation,std::string thickness,std::string offset)
+bool CoreSections::add_shell_section(std::string shell_section_id, std::string block_id, std::string material_id,std::string orientation,std::string thickness,std::string offset)
 {
-  std::vector<std::string> v = {shell_section_id, block_id, material_name, orientation, thickness, offset};
+  std::vector<std::string> v = {shell_section_id, block_id, material_id, orientation, thickness, offset};
       
   shell_section_data.push_back(v);
 
   return true;
 }
 
-bool CoreSections::add_beam_section(std::string beam_section_id, std::string block_id, std::string material_name,std::string beam_type,std::string thickness1,std::string thickness2,std::string x,std::string y,std::string z,std::string orientation,std::string offset1,std::string offset2)
+bool CoreSections::add_beam_section(std::string beam_section_id, std::string block_id, std::string material_id,std::string beam_type,std::string thickness1,std::string thickness2,std::string x,std::string y,std::string z,std::string orientation,std::string offset1,std::string offset2)
 {
-  std::vector<std::string> v = {beam_section_id, block_id, material_name, beam_type, thickness1, thickness2, x, y, z, orientation, offset1, offset2};
+  std::vector<std::string> v = {beam_section_id, block_id, material_id, beam_type, thickness1, thickness2, x, y, z, orientation, offset1, offset2};
       
   beam_section_data.push_back(v);
 
   return true;
 }
 
-bool CoreSections::add_membrane_section(std::string membrane_section_id, std::string block_id, std::string material_name,std::string orientation,std::string thickness,std::string offset)
+bool CoreSections::add_membrane_section(std::string membrane_section_id, std::string block_id, std::string material_id,std::string orientation,std::string thickness,std::string offset)
 {
-  std::vector<std::string> v = {membrane_section_id, block_id, material_name, orientation, thickness, offset};
+  std::vector<std::string> v = {membrane_section_id, block_id, material_id, orientation, thickness, offset};
       
   membrane_section_data.push_back(v);
 
@@ -361,7 +361,7 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
       sub_section_data_id = get_solid_section_data_id_from_solid_section_id(sections_data[i][2]);
 
       str_temp = "*SOLID SECTION, MATERIAL=";
-      str_temp.append(solid_section_data[sub_section_data_id][2]);
+      str_temp.append(CubitInterface::get_material_name(std::stoi(solid_section_data[sub_section_data_id][2])));
       str_temp.append(", ELSET=");
       str_temp.append(ccx_iface->get_block_name(std::stoi(solid_section_data[sub_section_data_id][1])));
       
@@ -384,7 +384,7 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
       sub_section_data_id = get_shell_section_data_id_from_shell_section_id(sections_data[i][2]);
 
       str_temp = "*SHELL SECTION, MATERIAL=";
-      str_temp.append(shell_section_data[sub_section_data_id][2]);
+      str_temp.append(CubitInterface::get_material_name(std::stoi(shell_section_data[sub_section_data_id][2])));
       str_temp.append(", ELSET=");
       str_temp.append(ccx_iface->get_block_name(std::stoi(shell_section_data[sub_section_data_id][1])));
       
@@ -413,7 +413,7 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
       sub_section_data_id = get_beam_section_data_id_from_beam_section_id(sections_data[i][2]);
 
       str_temp = "*BEAM SECTION, MATERIAL=";
-      str_temp.append(beam_section_data[sub_section_data_id][2]);
+      str_temp.append(CubitInterface::get_material_name(std::stoi(beam_section_data[sub_section_data_id][2])));
       str_temp.append(", ELSET=");
       str_temp.append(ccx_iface->get_block_name(std::stoi(beam_section_data[sub_section_data_id][1])));
       
@@ -450,7 +450,7 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
       sub_section_data_id = get_membrane_section_data_id_from_membrane_section_id(sections_data[i][2]);
 
       str_temp = "*MEMBRANE SECTION, MATERIAL=";
-      str_temp.append(membrane_section_data[sub_section_data_id][2]);
+      str_temp.append(CubitInterface::get_material_name(std::stoi(membrane_section_data[sub_section_data_id][2])));
       str_temp.append(", ELSET=");
       str_temp.append(ccx_iface->get_block_name(std::stoi(membrane_section_data[sub_section_data_id][1])));
       
