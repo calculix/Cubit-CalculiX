@@ -240,99 +240,99 @@ std::string CalculiXCore::autocleanup()
 
   // SECTIONS
   //loop over all sections
-  for (size_t i = 0; i < sections->sections_data.size(); i++)
+  for (size_t i = sections->sections_data.size(); i > 0; i--)
   { 
     sub_bool = false;
     // SOLID
-    if (sections->sections_data[i][1] == 1)
+    if (sections->sections_data[i-1][1] == 1)
     {
-      sub_data_id = sections->get_solid_section_data_id_from_solid_section_id(sections->sections_data[i][2]);
+      sub_data_id = sections->get_solid_section_data_id_from_solid_section_id(sections->sections_data[i-1][2]);
       if (!mat->check_material_exists(std::stoi(sections->solid_section_data[sub_data_id][2])))
       {
         log.append("Material " + sections->solid_section_data[sub_data_id][2] + " doesn't exist.\n");
-        log.append("Section ID " + std::to_string(sections->sections_data[i][0]) + " will be deleted.\n");
+        log.append("Section ID " + std::to_string(sections->sections_data[i-1][0]) + " will be deleted.\n");
         sub_bool = true;
       }
       if (cb->get_blocks_data_id_from_block_id(std::stoi(sections->solid_section_data[sub_data_id][1]))==-1)
       {
         log.append("Block ID " + sections->solid_section_data[sub_data_id][1] + " doesn't exist.\n");
-        log.append("Section ID " + std::to_string(sections->sections_data[i][0]) + " will be deleted.\n");
+        log.append("Section ID " + std::to_string(sections->sections_data[i-1][0]) + " will be deleted.\n");
         sub_bool = true;
       }
     }
     // SHELL
-    if (sections->sections_data[i][1] == 2) 
+    if (sections->sections_data[i-1][1] == 2) 
     {
-      sub_data_id = sections->get_shell_section_data_id_from_shell_section_id(sections->sections_data[i][2]);
+      sub_data_id = sections->get_shell_section_data_id_from_shell_section_id(sections->sections_data[i-1][2]);
       if (!mat->check_material_exists(std::stoi(sections->shell_section_data[sub_data_id][2])))
       {
         log.append("Material " + sections->shell_section_data[sub_data_id][2] + " doesn't exist.\n");
-        log.append("Section ID " + std::to_string(sections->sections_data[i][0]) + " will be deleted.\n");
+        log.append("Section ID " + std::to_string(sections->sections_data[i-1][0]) + " will be deleted.\n");
         sub_bool = true;
       }
       if (cb->get_blocks_data_id_from_block_id(std::stoi(sections->shell_section_data[sub_data_id][1]))==-1)
       {
         log.append("Block ID " + sections->shell_section_data[sub_data_id][1] + " doesn't exist.\n");
-        log.append("Section ID " + std::to_string(sections->sections_data[i][0]) + " will be deleted.\n");
+        log.append("Section ID " + std::to_string(sections->sections_data[i-1][0]) + " will be deleted.\n");
         sub_bool = true;
       }
     }
     // BEAM
-    if (sections->sections_data[i][1] == 3) 
+    if (sections->sections_data[i-1][1] == 3) 
     {
-      sub_data_id = sections->get_beam_section_data_id_from_beam_section_id(sections->sections_data[i][2]);
+      sub_data_id = sections->get_beam_section_data_id_from_beam_section_id(sections->sections_data[i-1][2]);
       if (!mat->check_material_exists(std::stoi(sections->beam_section_data[sub_data_id][2])))
       {
         log.append("Material " + sections->beam_section_data[sub_data_id][2] + " doesn't exist.\n");
-        log.append("Section ID " + std::to_string(sections->sections_data[i][0]) + " will be deleted.\n");
+        log.append("Section ID " + std::to_string(sections->sections_data[i-1][0]) + " will be deleted.\n");
         sub_bool = true;
       }
       if (cb->get_blocks_data_id_from_block_id(std::stoi(sections->beam_section_data[sub_data_id][1]))==-1)
       {
         log.append("Block ID " + sections->beam_section_data[sub_data_id][1] + " doesn't exist.\n");
-        log.append("Section ID " + std::to_string(sections->sections_data[i][0]) + " will be deleted.\n");
+        log.append("Section ID " + std::to_string(sections->sections_data[i-1][0]) + " will be deleted.\n");
         sub_bool = true;
       }
     }
     // MEMBRANE
-    if (sections->sections_data[i][1] == 4) 
+    if (sections->sections_data[i-1][1] == 4) 
     {
-      sub_data_id = sections->get_membrane_section_data_id_from_membrane_section_id(sections->sections_data[i][2]);
+      sub_data_id = sections->get_membrane_section_data_id_from_membrane_section_id(sections->sections_data[i-1][2]);
       if (!mat->check_material_exists(std::stoi(sections->membrane_section_data[sub_data_id][2])))
       {
         log.append("Material " + sections->membrane_section_data[sub_data_id][2] + " doesn't exist.\n");
-        log.append("Section ID " + std::to_string(sections->sections_data[i][0]) + " will be deleted.\n");
+        log.append("Section ID " + std::to_string(sections->sections_data[i-1][0]) + " will be deleted.\n");
         sub_bool = true;
       }
       if (cb->get_blocks_data_id_from_block_id(std::stoi(sections->membrane_section_data[sub_data_id][1]))==-1)
       {
         log.append("Block ID " + sections->membrane_section_data[sub_data_id][1] + " doesn't exist.\n");
-        log.append("Section ID " + std::to_string(sections->sections_data[i][0]) + " will be deleted.\n");
+        log.append("Section ID " + std::to_string(sections->sections_data[i-1][0]) + " will be deleted.\n");
         sub_bool = true;
       }
     }
     if (sub_bool)
     {
       print_log = sub_bool;
-      sections->delete_section(sections->sections_data[i][0]);
+      sections->delete_section(sections->sections_data[i-1][0]);
     }
   }
 
   // CONSTRAINTS  
-  for (size_t i = 0; i < constraints->constraints_data.size(); i++)
+  for (size_t i = constraints->constraints_data.size(); i > 0; i--)
   { 
     sub_bool = false;
     // RIGID BODY
-    if (constraints->constraints_data[i][1] == 1)
+    if (constraints->constraints_data[i-1][1] == 1)
     {
-      sub_data_id = constraints->get_rigidbody_constraint_data_id_from_rigidbody_constraint_id(constraints->constraints_data[i][2]);
+      sub_data_id = constraints->get_rigidbody_constraint_data_id_from_rigidbody_constraint_id(constraints->constraints_data[i-1][2]);
       
       if (constraints->rigidbody_constraint_data[sub_data_id][1]=="1")
       {
         if (!check_nodeset_exists(std::stoi(constraints->rigidbody_constraint_data[sub_data_id][2])))
         {
           log.append("Nodeset ID " + constraints->rigidbody_constraint_data[sub_data_id][2] + " doesn't exist.\n");
-          log.append("Constraint ID " + std::to_string(constraints->constraints_data[i][0]) + " will be deleted.\n");
+          log.append("Constraint ID " + std::to_string(constraints->constraints_data[i-1][0]) + " will be deleted.\n");
           sub_bool = true;
         }
       } else if (constraints->rigidbody_constraint_data[sub_data_id][1]=="2")
@@ -340,39 +340,79 @@ std::string CalculiXCore::autocleanup()
         if (cb->get_blocks_data_id_from_block_id(std::stoi(constraints->rigidbody_constraint_data[sub_data_id][2]))==-1)
         {
           log.append("Block ID " + constraints->rigidbody_constraint_data[sub_data_id][2] + " doesn't exist.\n");
-          log.append("Constraint ID " + std::to_string(constraints->constraints_data[i][0]) + " will be deleted.\n");
+          log.append("Constraint ID " + std::to_string(constraints->constraints_data[i-1][0]) + " will be deleted.\n");
           sub_bool = true;
         }
       }
       if (!check_vertex_exists(std::stoi(constraints->rigidbody_constraint_data[sub_data_id][3])))
       {
         log.append("Vertex ID " + constraints->rigidbody_constraint_data[sub_data_id][3] + " doesn't exist.\n");
-        log.append("Constraint ID " + std::to_string(constraints->constraints_data[i][0]) + " will be deleted.\n");
+        log.append("Constraint ID " + std::to_string(constraints->constraints_data[i-1][0]) + " will be deleted.\n");
         sub_bool = true;
       }
     }
     // TIE
-    if (constraints->constraints_data[i][1] == 2) 
+    if (constraints->constraints_data[i-1][1] == 2) 
     {
-      sub_data_id = constraints->get_tie_constraint_data_id_from_tie_constraint_id(constraints->constraints_data[i][2]);
+      sub_data_id = constraints->get_tie_constraint_data_id_from_tie_constraint_id(constraints->constraints_data[i-1][2]);
 
       if (!check_sideset_exists(std::stoi(constraints->tie_constraint_data[sub_data_id][2])))
       {
         log.append("Master: Sideset ID " + constraints->tie_constraint_data[sub_data_id][2] + " doesn't exist.\n");
-        log.append("Constraint ID " + std::to_string(constraints->constraints_data[i][0]) + " will be deleted.\n");
+        log.append("Constraint ID " + std::to_string(constraints->constraints_data[i-1][0]) + " will be deleted.\n");
         sub_bool = true;
       }
       if (!check_sideset_exists(std::stoi(constraints->tie_constraint_data[sub_data_id][3])))
       {
         log.append("Slave: Sideset ID " + constraints->tie_constraint_data[sub_data_id][3] + " doesn't exist.\n");
-        log.append("Constraint ID " + std::to_string(constraints->constraints_data[i][0]) + " will be deleted.\n");
+        log.append("Constraint ID " + std::to_string(constraints->constraints_data[i-1][0]) + " will be deleted.\n");
         sub_bool = true;
       }
     }
     if (sub_bool)
     {
       print_log = sub_bool;
-      constraints->delete_constraint(constraints->constraints_data[i][0]);
+      constraints->delete_constraint(constraints->constraints_data[i-1][0]);
+    }
+  }
+
+  // CONTACT PAIRS
+  for (size_t i = contactpairs->contactpairs_data.size(); i > 0; i--)
+  { 
+    sub_bool = false;
+
+    if (!check_surfaceinteraction_exists(contactpairs->contactpairs_data[i-1][1]))
+    {
+      log.append("Surfaceinteraction ID " + std::to_string(contactpairs->contactpairs_data[i-1][1]) + " doesn't exist.\n");
+      log.append("Contact Pair ID " + std::to_string(contactpairs->contactpairs_data[i-1][0]) + " will be deleted.\n");
+      sub_bool = true;
+    }
+    sub_data_id = contactpairs->get_adjust_contactpair_data_id_from_adjust_contactpair_id(contactpairs->contactpairs_data[i-1][5]);
+    if (contactpairs->adjust_contactpair_data[sub_data_id][2]!="")
+    {
+      if (!check_nodeset_exists(std::stoi(contactpairs->adjust_contactpair_data[sub_data_id][2])))
+      {
+        log.append("Nodeset ID " + contactpairs->adjust_contactpair_data[sub_data_id][2] + " doesn't exist.\n");
+        log.append("Contact Pair ID " + std::to_string(contactpairs->contactpairs_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    }
+    if (!check_sideset_exists(contactpairs->contactpairs_data[i-1][3]))
+    {
+      log.append("Master: Sideset ID " + std::to_string(contactpairs->contactpairs_data[i-1][3]) + " doesn't exist.\n");
+      log.append("Contact Pair ID " + std::to_string(contactpairs->contactpairs_data[i-1][0]) + " will be deleted.\n");
+      sub_bool = true;
+    }
+    if (!check_sideset_exists(contactpairs->contactpairs_data[i-1][4]))
+    {
+      log.append("Slave: Sideset ID " + std::to_string(contactpairs->contactpairs_data[i-1][4]) + " doesn't exist.\n");
+      log.append("Contact Pair ID " + std::to_string(contactpairs->contactpairs_data[i-1][0]) + " will be deleted.\n");
+      sub_bool = true;
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      contactpairs->delete_contactpair(contactpairs->contactpairs_data[i-1][0]);
     }
   }
 
@@ -560,6 +600,18 @@ bool CalculiXCore::check_vertex_exists(int vertex_id)
   }
   return true;
 }
+
+bool CalculiXCore::check_surfaceinteraction_exists(int surfaceinteraction_id)
+{
+  int surfaceinteraction_data_id;
+  surfaceinteraction_data_id = surfaceinteractions->get_surfaceinteractions_data_id_from_surfaceinteraction_id(surfaceinteraction_id);
+  if (surfaceinteraction_data_id == -1)
+  {
+    return false;
+  }
+  return true;
+}
+
 
 std::vector<int> CalculiXCore::get_blocks()
 { 

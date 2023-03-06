@@ -49,6 +49,7 @@ public:
   bool check_nodeset_exists(int nodeset_id);
   bool check_sideset_exists(int sideset_id);
   bool check_vertex_exists(int vertex_id);
+  bool check_surfaceinteraction_exists(int surfaceinteraction_id);
   bool set_ccx_element_type(int block_id, std::string ccx_element_type); // sets the ccx element type for a block
   std::vector<int> get_blocks(); // gets the block ids from core blocks
   bool create_section(std::string section_type,int block_id, int material_id, std::vector<std::string> options); // adds a new section
