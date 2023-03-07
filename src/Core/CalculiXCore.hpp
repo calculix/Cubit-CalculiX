@@ -45,11 +45,16 @@ public:
   std::string get_nodeset_name(int nodeset_id); // gets the nodeset name
   std::string get_sideset_name(int sideset_id); // gets the sideset name
   std::string get_surfaceinteraction_name(int surfaceinteraction_id); // gets the surfaceinteraction name
+  bool check_block_exists(int block_id);
   bool check_bc_exists(int bc_id,int BCType); // checks if the id for the bc type exists
   bool check_nodeset_exists(int nodeset_id);
   bool check_sideset_exists(int sideset_id);
   bool check_vertex_exists(int vertex_id);
   bool check_surfaceinteraction_exists(int surfaceinteraction_id);
+  bool check_contactpair_exists(int contactpair_id);
+  bool check_amplitude_exists(int amplitude_id);
+  bool check_historyoutput_exists(int historyoutput_id);
+  bool check_fieldoutput_exists(int fieldoutput_id);
   bool set_ccx_element_type(int block_id, std::string ccx_element_type); // sets the ccx element type for a block
   std::vector<int> get_blocks(); // gets the block ids from core blocks
   bool create_section(std::string section_type,int block_id, int material_id, std::vector<std::string> options); // adds a new section

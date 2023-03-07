@@ -28,7 +28,7 @@ bool CoreLoadsForces::update()
   int sub_id;
   int sub_last;
   int time_delay_id;
-  load_ids = CubitInterface::get_bc_id_list(CI_BCTYPE_FORCE);	
+  load_ids = CubitInterface::get_bc_id_list(CI_BCTYPE_FORCE);
   
   int loads_data_id;
   bool erase_load;

@@ -54,7 +54,7 @@ public:
   std::vector<std::string> element_keys;
   std::vector<std::vector<std::string>> element_data;
   // element_data[0][0] element_id            
-  // element_data[0][1] elementset_id ELSET   option[0]...
+  // element_data[0][1] elementset_id ELSET  BLOCK! option[0]...
   // element_data[0][2] FREQUENCY
   // element_data[0][3] FREQUENCYF
   // element_data[0][4] TOTALS

@@ -6,7 +6,10 @@ modify force 1 name 'test' add vertex 5
 modify force 1 add surface 5
 create pressure on surface 5 magnitude 20
 modify pressure 1 name 'test_p'
-ccx modify force 1 op new amplitude 22 timedelay -99.55
+ccx create amplitude name amp1 time_amplitude 0 1 2 3 
+ccx create amplitude name amp2 time_amplitude 0 1 2 3 
+ccx create amplitude name amp3 time_amplitude 0 1 2 3 
+ccx modify force 1 op new amplitude 2 timedelay -99.55
 ccx modify pressure 1 op new amplitude 1 timedelay -55.1
 
 create displacement  on surface 6  dof all fix 0 

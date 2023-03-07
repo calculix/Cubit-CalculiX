@@ -39,9 +39,9 @@ public:
   bool add_initialcondition(int initialcondition_id, int initialcondition_type, int initialcondition_type_id); // adds new initialcondition to initialconditions_data
   bool add_displacement(std::string displacement_id); // adds new displacement to displacement_data
   bool add_temperature(std::string temperature_id); // adds new temperature to temperature_data
-  int  get_initialconditions_data_id_from_initialcondition_id(int amplitude_id); // searches for the initialcondition_id in the initialconditions_data and returns the indices or -1 if it fails
-  int  get_displacement_data_id_from_displacement_id(int name_amplitude_id); // searches for the displacement_id in the displacement_data and returns the indices or -1 if it fails
-  int  get_temperature_data_id_from_temperature_id(int shiftx_amplitude_id); // searches for the temperature_id in the temperature_data and returns the indices or -1 if it fails
+  int  get_initialconditions_data_id_from_initialcondition_id(int initialcondition_id); // searches for the initialcondition_id in the initialconditions_data and returns the indices or -1 if it fails
+  int  get_displacement_data_id_from_displacement_id(int displacement_id); // searches for the displacement_id in the displacement_data and returns the indices or -1 if it fails
+  int  get_temperature_data_id_from_temperature_id(int temperature_id); // searches for the temperature_id in the temperature_data and returns the indices or -1 if it fails
   std::string get_initialcondition_export(); // get CalculiX initialcondition exports
   std::string print_data(); // prints out the blocks_data
 

@@ -232,6 +232,7 @@ std::string CalculiXCore::autocleanup()
   std::string log = "";
   bool print_log = false;
   int sub_data_id;
+  std::vector<int> sub_data_ids;
   bool sub_bool;
 
   std::string output;
@@ -416,6 +417,305 @@ std::string CalculiXCore::autocleanup()
     }
   }
 
+  // LOADS FORCES
+  for (size_t i = loadsforces->loads_data.size(); i > 0; i--)
+  { 
+    sub_bool = false;
+    if (loadsforces->loads_data[i-1][2]!=-1)
+    {
+      if (!check_amplitude_exists(loadsforces->loads_data[i-1][2]))
+      {
+        log.append("Amplitude ID " + std::to_string(loadsforces->loads_data[i-1][2]) + " doesn't exist.\n");
+        log.append("Amplitude Reference from Load Force ID " + std::to_string(loadsforces->loads_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      loadsforces->loads_data[i-1][2]=-1;
+    }
+  }
+  // LOADS PRESSURES
+  for (size_t i = loadspressures->loads_data.size(); i > 0; i--)
+  { 
+    sub_bool = false;
+    if (loadspressures->loads_data[i-1][2]!=-1)
+    {
+      if (!check_amplitude_exists(loadspressures->loads_data[i-1][2]))
+      {
+        log.append("Amplitude ID " + std::to_string(loadspressures->loads_data[i-1][2]) + " doesn't exist.\n");
+        log.append("Amplitude Reference from Load Pressure ID " + std::to_string(loadspressures->loads_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      loadspressures->loads_data[i-1][2]=-1;
+    }
+  }
+  // BCS DISPLACEMENTS
+  for (size_t i = bcsdisplacements->bcs_data.size(); i > 0; i--)
+  { 
+    sub_bool = false;
+    
+    if (bcsdisplacements->bcs_data[i-1][2]!=-1)
+    {
+      if (!check_amplitude_exists(bcsdisplacements->bcs_data[i-1][2]))
+      {
+        log.append("Amplitude ID " + std::to_string(bcsdisplacements->bcs_data[i-1][2]) + " doesn't exist.\n");
+        log.append("Amplitude Reference from BC Displament ID " + std::to_string(bcsdisplacements->bcs_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      bcsdisplacements->bcs_data[i-1][2]=-1;
+    }
+  }
+  // BCS TEMPERATURES
+  for (size_t i = bcstemperatures->bcs_data.size(); i > 0; i--)
+  { 
+    sub_bool = false;
+    
+    if (bcstemperatures->bcs_data[i-1][2]!=-1)
+    {
+      if (!check_amplitude_exists(bcstemperatures->bcs_data[i-1][2]))
+      {
+        log.append("Amplitude ID " + std::to_string(bcstemperatures->bcs_data[i-1][2]) + " doesn't exist.\n");
+        log.append("Amplitude Reference from BC Temperature ID " + std::to_string(bcstemperatures->bcs_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      bcstemperatures->bcs_data[i-1][2]=-1;
+    }
+  }
+
+  // INITIAL CONDITIONS
+  for (size_t i = initialconditions->initialconditions_data.size(); i > 0; i--)
+  { 
+    sub_bool = false;
+    // Displacement
+    if (initialconditions->initialconditions_data[i-1][1] == 1)
+    {
+      sub_data_id = initialconditions->get_displacement_data_id_from_displacement_id(initialconditions->initialconditions_data[i-1][2]);
+      if (initialconditions->displacement_data[sub_data_id][1]!="")
+      {
+        if (!check_bc_exists(std::stoi(initialconditions->displacement_data[sub_data_id][1]),4))
+        {
+          log.append("BC Displacement ID " + initialconditions->displacement_data[sub_data_id][1] + " doesn't exist.\n");
+          log.append("BC Displacement Reference from Initial Condition ID " + std::to_string(initialconditions->initialconditions_data[i-1][0]) + " will be deleted.\n");
+          sub_bool = true;
+          initialconditions->displacement_data[sub_data_id][1]="";
+        }
+      }
+    }
+    // Temperature
+    if (initialconditions->initialconditions_data[i-1][1] == 2)
+    {
+      sub_data_id = initialconditions->get_temperature_data_id_from_temperature_id(initialconditions->initialconditions_data[i-1][2]);
+      if (initialconditions->temperature_data[sub_data_id][1]!="")
+      {
+        if (!check_bc_exists(std::stoi(initialconditions->temperature_data[sub_data_id][1]),5))
+        {
+          log.append("BC Temperature ID " + initialconditions->temperature_data[sub_data_id][1] + " doesn't exist.\n");
+          log.append("BC Temperature Reference from Initial Condition ID " + std::to_string(initialconditions->initialconditions_data[i-1][0]) + " will be deleted.\n");
+          sub_bool = true;
+          initialconditions->temperature_data[sub_data_id][1]="";
+        }
+      }
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+    }
+  }
+  // HISTORY OUTPUTS
+  for (size_t i = historyoutputs->outputs_data.size(); i > 0; i--)
+  { 
+    sub_bool = false;
+    // Node
+    if (historyoutputs->outputs_data[i-1][2] == 1)
+    {
+      sub_data_id = historyoutputs->get_node_data_id_from_node_id(historyoutputs->outputs_data[i-1][3]);
+      if (historyoutputs->node_data[sub_data_id][1]!="")
+      {
+        if (!check_nodeset_exists(std::stoi(historyoutputs->node_data[sub_data_id][1])))
+        {
+          log.append("Nodeset ID " + historyoutputs->node_data[sub_data_id][1] + " doesn't exist.\n");
+          log.append("Nodeset Reference from History Output ID " + std::to_string(historyoutputs->outputs_data[i-1][0]) + " will be deleted.\n");
+          sub_bool = true;
+          historyoutputs->node_data[sub_data_id][1] = "";
+        }
+      }
+    }
+    // Element
+    if (historyoutputs->outputs_data[i-1][2] == 2)
+    {
+      sub_data_id = historyoutputs->get_element_data_id_from_element_id(historyoutputs->outputs_data[i-1][3]);
+      if (historyoutputs->element_data[sub_data_id][1]!="")
+      {
+        if (!check_block_exists(std::stoi(historyoutputs->element_data[sub_data_id][1])))
+        {
+          log.append("Block ID " + historyoutputs->element_data[sub_data_id][1] + " doesn't exist.\n");
+          log.append("Block Reference from History Output ID " + std::to_string(historyoutputs->outputs_data[i-1][0]) + " will be deleted.\n");
+          sub_bool = true;
+          historyoutputs->element_data[sub_data_id][1] = "";
+        }
+      }
+    }
+    // Contact
+    if (historyoutputs->outputs_data[i-1][2] == 3)
+    {
+      sub_data_id = historyoutputs->get_contact_data_id_from_contact_id(historyoutputs->outputs_data[i-1][3]);
+      if (historyoutputs->contact_data[sub_data_id][1]!="")
+      {
+        if (!check_contactpair_exists(std::stoi(historyoutputs->contact_data[sub_data_id][1])))
+        {
+          log.append("Contact Pair ID " + historyoutputs->contact_data[sub_data_id][1] + " doesn't exist.\n");
+          log.append("Contact Pair Reference from History Output ID " + std::to_string(historyoutputs->outputs_data[i-1][0]) + " will be deleted.\n");
+          sub_bool = true;
+          historyoutputs->contact_data[sub_data_id][1] = "";
+        }
+      }
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+    }
+  }
+  // FIELD OUTPUTS
+  for (size_t i = fieldoutputs->outputs_data.size(); i > 0; i--)
+  { 
+    sub_bool = false;
+    // Node
+    if (fieldoutputs->outputs_data[i-1][2] == 1)
+    {
+      sub_data_id = fieldoutputs->get_node_data_id_from_node_id(fieldoutputs->outputs_data[i-1][3]);
+      if (fieldoutputs->node_data[sub_data_id][1]!="")
+      {
+        if (!check_nodeset_exists(std::stoi(fieldoutputs->node_data[sub_data_id][1])))
+        {
+          log.append("Nodeset ID " + fieldoutputs->node_data[sub_data_id][1] + " doesn't exist.\n");
+          log.append("Nodeset Reference from Field Output ID " + std::to_string(fieldoutputs->outputs_data[i-1][0]) + " will be deleted.\n");
+          sub_bool = true;
+          fieldoutputs->node_data[sub_data_id][1] = "";
+        }
+      }
+    }
+    // Element
+    if (fieldoutputs->outputs_data[i-1][2] == 2)
+    {
+      sub_data_id = fieldoutputs->get_element_data_id_from_element_id(fieldoutputs->outputs_data[i-1][3]);
+      if (fieldoutputs->element_data[sub_data_id][1]!="")
+      {
+        if (!check_block_exists(std::stoi(fieldoutputs->element_data[sub_data_id][1])))
+        {
+          log.append("Block ID " + fieldoutputs->element_data[sub_data_id][1] + " doesn't exist.\n");
+          log.append("Block Reference from Field Output ID " + std::to_string(fieldoutputs->outputs_data[i-1][0]) + " will be deleted.\n");
+          sub_bool = true;
+          fieldoutputs->element_data[sub_data_id][1] = "";
+        }
+      }
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+    }
+  }
+  // STEPS
+  for (size_t i = steps->steps_data.size(); i > 0; i--)
+  { 
+    sub_bool = false;
+    // STEP LOADS
+    sub_data_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[i-1][5]);
+    for (size_t ii = sub_data_ids.size(); ii > 0; ii--)
+    {
+      // Force 
+      if (steps->loads_data[sub_data_ids[ii-1]][1]==1)
+      {
+        if (!check_bc_exists(steps->loads_data[sub_data_ids[ii-1]][2],6))
+        {
+          log.append("Load Force ID " + std::to_string(steps->loads_data[sub_data_ids[ii-1]][2]) + " doesn't exist.\n");
+          log.append("Load Force Reference from Step ID " + std::to_string(steps->steps_data[i-1][0]) + " will be deleted.\n");
+          sub_bool = true;
+          steps->remove_loads(steps->steps_data[i-1][0], 1, {steps->loads_data[sub_data_ids[ii-1]][2]});
+        }
+      }
+      // Pressure
+      if (steps->loads_data[sub_data_ids[ii-1]][1]==2)
+      {
+        if (!check_bc_exists(steps->loads_data[sub_data_ids[ii-1]][2],7))
+        {
+          log.append("Load Pressure ID " + std::to_string(steps->loads_data[sub_data_ids[ii-1]][2]) + " doesn't exist.\n");
+          log.append("Load Pressure Reference from Step ID " + std::to_string(steps->steps_data[i-1][0]) + " will be deleted.\n");
+          sub_bool = true;
+          steps->remove_loads(steps->steps_data[i-1][0], 2, {steps->loads_data[sub_data_ids[ii-1]][2]});
+        }
+      }
+    }
+    // STEP BCS
+    sub_data_ids = steps->get_bc_data_ids_from_bcs_id(steps->steps_data[i-1][6]);
+    for (size_t ii = sub_data_ids.size(); ii > 0; ii--)
+    {
+      // Displacement 
+      if (steps->bcs_data[sub_data_ids[ii-1]][1]==1)
+      {
+        if (!check_bc_exists(steps->bcs_data[sub_data_ids[ii-1]][2],4))
+        {
+          log.append("BC Displacement ID " + std::to_string(steps->bcs_data[sub_data_ids[ii-1]][2]) + " doesn't exist.\n");
+          log.append("BC Displacement Reference from Step ID " + std::to_string(steps->steps_data[i-1][0]) + " will be deleted.\n");
+          sub_bool = true;
+          steps->remove_bcs(steps->steps_data[i-1][0], 1, {steps->bcs_data[sub_data_ids[ii-1]][2]});
+        }
+      }
+      // Temperature
+      if (steps->bcs_data[sub_data_ids[ii-1]][1]==2)
+      {
+        if (!check_bc_exists(steps->bcs_data[sub_data_ids[ii-1]][2],5))
+        {
+          log.append("BC Temperature ID " + std::to_string(steps->bcs_data[sub_data_ids[ii-1]][2]) + " doesn't exist.\n");
+          log.append("BC Temperature Reference from Step ID " + std::to_string(steps->steps_data[i-1][0]) + " will be deleted.\n");
+          sub_bool = true;
+          steps->remove_bcs(steps->steps_data[i-1][0], 2, {steps->bcs_data[sub_data_ids[ii-1]][2]});
+        }
+      }
+    }
+    // STEPS HISTORY OUTPUTS
+    sub_data_ids = steps->get_historyoutput_data_ids_from_historyoutputs_id(steps->steps_data[i-1][7]);
+    for (size_t ii = sub_data_ids.size(); ii > 0; ii--)
+    {
+      if (!check_historyoutput_exists(steps->historyoutputs_data[sub_data_ids[ii-1]][1]))
+      {
+        log.append("History Output ID " + std::to_string(steps->historyoutputs_data[sub_data_ids[ii-1]][1]) + " doesn't exist.\n");
+        log.append("History Output Reference from Step ID " + std::to_string(steps->steps_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+        steps->remove_historyoutputs(steps->steps_data[i-1][0], {steps->historyoutputs_data[sub_data_ids[ii-1]][1]});
+      }
+    }
+    // STEPS FIELD OUTPUTS
+    sub_data_ids = steps->get_fieldoutput_data_ids_from_fieldoutputs_id(steps->steps_data[i-1][8]);
+    for (size_t ii = sub_data_ids.size(); ii > 0; ii--)
+    {
+      if (!check_fieldoutput_exists(steps->fieldoutputs_data[sub_data_ids[ii-1]][1]))
+      {
+        log.append("Field Output ID " + std::to_string(steps->fieldoutputs_data[sub_data_ids[ii-1]][1]) + " doesn't exist.\n");
+        log.append("Field Output Reference from Step ID " + std::to_string(steps->steps_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+        steps->remove_fieldoutputs(steps->steps_data[i-1][0], {steps->fieldoutputs_data[sub_data_ids[ii-1]][1]});
+      }
+    }
+
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+    }
+  }
   if (print_log)
   {
     PRINT_INFO("%s", log.c_str());
@@ -549,6 +849,16 @@ std::string CalculiXCore::get_surfaceinteraction_name(int surfaceinteraction_id)
   return surfaceinteraction_name;
 }
 
+bool CalculiXCore::check_block_exists(int block_id)
+{
+  int block_data_id;
+  block_data_id = cb->get_blocks_data_id_from_block_id(block_id);
+  if (block_data_id == -1)
+  {
+    return false;
+  }
+  return true;
+}
 
 bool CalculiXCore::check_bc_exists(int bc_id,int BCType)
 {
@@ -560,6 +870,12 @@ bool CalculiXCore::check_bc_exists(int bc_id,int BCType)
   }else if (BCType == 5)
   {
     ids = CubitInterface::get_bc_id_list(CI_BCTYPE_TEMPERATURE);
+  }else if (BCType == 6)
+  {
+    ids = CubitInterface::get_bc_id_list(CI_BCTYPE_FORCE);
+  }else if (BCType == 7)
+  {
+    ids = CubitInterface::get_bc_id_list(CI_BCTYPE_PRESSURE);
   }
   
   for (size_t i = 0; i < ids.size(); i++)
@@ -612,6 +928,49 @@ bool CalculiXCore::check_surfaceinteraction_exists(int surfaceinteraction_id)
   return true;
 }
 
+bool CalculiXCore::check_contactpair_exists(int contactpair_id)
+{
+  int contactpair_data_id;
+  contactpair_data_id = contactpairs->get_contactpairs_data_id_from_contactpair_id(contactpair_id);
+  if (contactpair_data_id == -1)
+  {
+    return false;
+  }
+  return true;
+}
+
+bool CalculiXCore::check_amplitude_exists(int amplitude_id)
+{
+  int amplitude_data_id;
+  amplitude_data_id = amplitudes->get_amplitudes_data_id_from_amplitude_id(amplitude_id);
+  if (amplitude_data_id == -1)
+  {
+    return false;
+  }
+  return true;
+}
+
+bool CalculiXCore::check_historyoutput_exists(int historyoutput_id)
+{
+  int historyoutput_data_id;
+  historyoutput_data_id = historyoutputs->get_outputs_data_id_from_output_id(historyoutput_id);
+  if (historyoutput_data_id == -1)
+  {
+    return false;
+  }
+  return true;
+}
+
+bool CalculiXCore::check_fieldoutput_exists(int fieldoutput_id)
+{
+  int field_data_id;
+  field_data_id = fieldoutputs->get_outputs_data_id_from_output_id(fieldoutput_id);
+  if (field_data_id == -1)
+  {
+    return false;
+  }
+  return true;
+}
 
 std::vector<int> CalculiXCore::get_blocks()
 { 
