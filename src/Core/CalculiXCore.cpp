@@ -972,6 +972,38 @@ bool CalculiXCore::check_fieldoutput_exists(int fieldoutput_id)
   return true;
 }
 
+int CalculiXCore::get_bc_fea_type(std::vector<std::pair<int, double>> bc_attribs)
+{
+  for (size_t i = 0; i < bc_attribs.size(); i++)
+  {
+    if ((bc_attribs[i].first > -1) && (bc_attribs[i].first < 6))
+    {
+      //displacement
+      return 1;
+    }
+    if ((bc_attribs[i].first > 5) && (bc_attribs[i].first < 12))
+    {
+      //Velocity
+      return 2;
+    }
+    if ((bc_attribs[i].first > 11) && (bc_attribs[i].first < 18))
+    {
+      //Acceleration
+      return 3;
+    }
+    //if ((bc_attribs[i].first > 17) && (bc_attribs[i].first < 23))
+    if (bc_attribs[i].first == 22)
+    {
+      //Temperature
+      return 4;
+    }
+  }
+  
+
+
+  return -1;
+}
+
 std::vector<int> CalculiXCore::get_blocks()
 { 
   std::vector<int> blocks;
@@ -1368,6 +1400,88 @@ std::string CalculiXCore::get_contactpair_export_data() // gets the export data 
 std::string CalculiXCore::get_amplitude_export_data() // gets the export data from amplitudes core
 {
   return amplitudes->get_amplitude_export();
+}
+
+std::string CalculiXCore::get_initialcondition_export_data() // gets the export data from core
+{
+  std::vector<std::string> initialconditions_export_list;
+  initialconditions_export_list.push_back("********************************** I N I T I A L C O N D I T I O N S ****************************");
+  std::string str_temp;
+  int sub_data_id;
+  std::string command;
+  int bc_set_id;
+  BCSetHandle bc_set;
+  NodesetHandle nodeset;
+  std::vector<BCEntityHandle> bc_handles;
+  BCEntityHandle bc_handle;
+  std::vector<MeshExportBCData> bc_attribs; 
+
+  //loop over all initialconditions
+  for (size_t i = 0; i < initialconditions->initialconditions_data.size(); i++)
+  { 
+    if (i==0)
+    { 
+      me_iface->initialize_export();
+      me_iface->create_default_bcset(0,true,true,true,bc_set);
+      me_iface->get_bc_restraints(bc_set, bc_handles);
+      bc_set_id = me_iface->id_from_handle(bc_set);
+    }
+
+    for (size_t ii = 0; ii < bc_handles.size(); ii++)
+    {  
+      me_iface->get_bc_attributes(bc_handles[ii],bc_attribs);
+    
+      if ((get_bc_fea_type(bc_attribs)==1) && (initialconditions->initialconditions_data[i][1]==1))
+      {
+        sub_data_id = initialconditions->get_displacement_data_id_from_displacement_id(initialconditions->initialconditions_data[i][2]);
+        if (initialconditions->displacement_data[sub_data_id][1]!="")
+        {
+          if (std::stoi(initialconditions->displacement_data[sub_data_id][1])==me_iface->id_from_handle(bc_handles[ii]))
+          {
+            me_iface->get_bc_nodeset(bc_handles[ii],nodeset);
+            str_temp = "*INITIAL CONDITIONS,TYPE=DISPLACEMENT";
+            initialconditions_export_list.push_back(str_temp);
+            for (size_t iii = 0; iii < bc_attribs.size(); iii++)
+            { 
+              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iii].first+1) + "," + std::to_string(bc_attribs[iii].second);
+              initialconditions_export_list.push_back(str_temp);
+            }
+          }
+        }
+      }else if ((get_bc_fea_type(bc_attribs)==4) && (initialconditions->initialconditions_data[i][1]==2))
+      {
+        sub_data_id = initialconditions->get_temperature_data_id_from_temperature_id(initialconditions->initialconditions_data[i][2]);
+        if (initialconditions->temperature_data[sub_data_id][1]!="")
+        {
+          if (std::stoi(initialconditions->temperature_data[sub_data_id][1])==me_iface->id_from_handle(bc_handles[ii]))
+          {
+            me_iface->get_bc_nodeset(bc_handles[ii],nodeset);
+            str_temp = "*INITIAL CONDITIONS,TYPE=TEMPARATURE";
+            initialconditions_export_list.push_back(str_temp);
+            for (size_t iii = 0; iii < bc_attribs.size(); iii++)
+            { 
+              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iii].second);
+              initialconditions_export_list.push_back(str_temp);
+            }
+          }
+        }
+      }
+
+      bc_attribs.clear();
+    }
+  }
+
+  command = "delete bcset " + std::to_string(bc_set_id);
+  CubitInterface::cmd(command.c_str());
+
+  std::string initialcondition_export;
+
+  for (size_t i = 0; i < initialconditions_export_list.size(); i++)
+  {
+    initialcondition_export.append(initialconditions_export_list[i] + "\n");
+  }
+
+  return initialcondition_export;
 }
 
 std::vector<std::vector<std::string>> CalculiXCore::get_blocks_tree_data()

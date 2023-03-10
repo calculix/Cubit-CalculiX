@@ -42,7 +42,6 @@ public:
   int  get_initialconditions_data_id_from_initialcondition_id(int initialcondition_id); // searches for the initialcondition_id in the initialconditions_data and returns the indices or -1 if it fails
   int  get_displacement_data_id_from_displacement_id(int displacement_id); // searches for the displacement_id in the displacement_data and returns the indices or -1 if it fails
   int  get_temperature_data_id_from_temperature_id(int temperature_id); // searches for the temperature_id in the temperature_data and returns the indices or -1 if it fails
-  std::string get_initialcondition_export(); // get CalculiX initialcondition exports
   std::string print_data(); // prints out the blocks_data
 
   CalculiXCoreInterface *ccx_iface;

@@ -224,10 +224,13 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
   // Write the materials and sections
   result = write_materials(output_file, ccx_iface);
   result = write_sections(output_file, ccx_iface);
+  
   result = write_constraints(output_file, ccx_iface);
   result = write_surfaceinteractions(output_file, ccx_iface);
   result = write_contactpairs(output_file, ccx_iface);
   result = write_amplitudes(output_file, ccx_iface);
+  result = write_initialconditions(output_file, ccx_iface);
+
 
   return result;
 }
@@ -639,5 +642,11 @@ bool ccxExportCommand::write_contactpairs(std::ofstream& output_file, CalculiXCo
 bool ccxExportCommand::write_amplitudes(std::ofstream& output_file, CalculiXCoreInterface ccx_iface)
 {
   output_file << ccx_iface.get_amplitude_export_data();
+  return true;
+}
+
+bool ccxExportCommand::write_initialconditions(std::ofstream& output_file, CalculiXCoreInterface ccx_iface)
+{
+  output_file << ccx_iface.get_initialcondition_export_data();
   return true;
 }

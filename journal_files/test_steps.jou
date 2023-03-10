@@ -9,16 +9,20 @@ modify pressure 1 name 'test_p'
 ccx modify force 1 op new amplitude 22 timedelay -99.55
 ccx modify pressure 1 op new amplitude 1 timedelay -55.1
 
-create displacement  on surface 6  dof all fix 0 
-modify displacement 1 name 'disp' dof all fix  
+create displacement  on surface 6  dof all fix 99 
+modify displacement 1 name 'disp' 
 create displacement  on surface 6  dof all fix 0 
 ccx modify displacement 2 op new amplitude 1 timedelay -55.1
+create displacement on surface 5 dof all fix 55
 
-create temperature  on volume 1  value 654
-create temperature  on surface 6  value 5
-create temperature  on surface 6  value 5
-create temperature  on surface 6  value 5
-create temperature  on surface 6  value 5
+create surface circle radius 1 zplane 
+create temperature  on surface 7  middle 1 gradient 22 
+
+create temperature  on volume 1  value 22
+create temperature  on surface 6  value 33
+create temperature  on surface 6  value 44
+create temperature  on surface 6  value 55
+create temperature  on surface 6  value 66
 modify temperature 2 name 'temp' 
 ccx modify temperature 2 op new amplitude 1 timedelay -55.1
 
@@ -56,7 +60,11 @@ ccx create initialcondition temperature
 ccx create initialcondition displacement
 ccx create initialcondition temperature
 ccx modify initialcondition 1 displacement bc_id 2
-ccx modify initialcondition 2 temperature bc_id 998
+ccx modify initialcondition 5 displacement bc_id 1
+ccx modify initialcondition 3 displacement bc_id 3
+ccx modify initialcondition 2 temperature bc_id 1
+ccx modify initialcondition 4 temperature bc_id 2
+ccx modify initialcondition 6 temperature bc_id 3
 
 ccx create step name stepname1 noanalysis
 ccx create step name stepname2 static
@@ -110,3 +118,7 @@ ccx modify step 4 buckle name bucklestep solver pardiso bucklingfactors 11.5 acc
 ccx modify step 5 heattransfer name heattransferstep solver pastix direct_yes steadystate_yes frequency_yes modaldynamic_yes storage_yes deltmx 2.1 timereset_yes totaltimeatstart 0.1 initialtimeincrement 0.1 timeperiodofstep 2 minimumtimeincrement 1 maximumtimeincrement 20
 ccx modify step 6 coupledtemperaturedisplacement name coupledtemperaturedisplacementstep solver pastix direct_yes alpha 0.3 steadystate_yes deltmx 2 timereset_yes totaltimeatstart 1 compressible_yes initialtimeincrement 1 timeperiodofstep 2 minimumtimeincrement 3 maximumtimeincrement 5 initialtimeincrementcfd 1000
 ccx modify step 7 uncoupledtemperaturedisplacement name uncoupledtemperaturedisplacementstep solver pastix direct_yes alpha 0.3 steadystate_yes deltmx 2 explicit_yes timereset_yes totaltimeatstart 1 initialtimeincrement 1 timeperiodofstep 2 minimumtimeincrement 3 maximumtimeincrement 5 
+
+export ccx "test_export.inp"
+
+

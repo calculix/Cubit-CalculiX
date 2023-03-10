@@ -55,6 +55,7 @@ public:
   bool check_amplitude_exists(int amplitude_id);
   bool check_historyoutput_exists(int historyoutput_id);
   bool check_fieldoutput_exists(int fieldoutput_id);
+  int get_bc_fea_type(std::vector<std::pair<int, double>> bc_attribs);
   bool set_ccx_element_type(int block_id, std::string ccx_element_type); // sets the ccx element type for a block
   std::vector<int> get_blocks(); // gets the block ids from core blocks
   bool create_section(std::string section_type,int block_id, int material_id, std::vector<std::string> options); // adds a new section
@@ -140,7 +141,8 @@ public:
   std::string get_surfaceinteraction_export_data(); // gets the export data from surfaceinteractions core
   std::string get_contactpair_export_data(); // gets the export data from contactpairs core
   std::string get_amplitude_export_data(); // gets the export data from amplitudes core
-
+  std::string get_initialcondition_export_data(); // gets the export data from core
+  
   CoreBlocks *cb;
   CoreMaterials *mat;
   CoreSections *sections;

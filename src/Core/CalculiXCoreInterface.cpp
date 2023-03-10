@@ -513,3 +513,8 @@ std::string CalculiXCoreInterface::get_amplitude_export_data() // gets the expor
 {
   return ccx_core.get_amplitude_export_data();
 }
+
+std::string CalculiXCoreInterface::get_initialcondition_export_data() // gets the export data from core
+{
+  return ccx_core.get_initialcondition_export_data();
+}
