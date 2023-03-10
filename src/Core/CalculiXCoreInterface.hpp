@@ -32,6 +32,7 @@ public:
   std::string get_contactpair_export_data(); // gets the export data from contactpairs core
   std::string get_amplitude_export_data(); // gets the export data from amplitudes core
   std::string get_initialcondition_export_data(); // gets the export data from core
+  std::string get_step_export_data(); // gets the export data from core
   bool create_section(std::string section_type,int block_id, int material_id, std::vector<std::string> options); // adds a new section
   bool modify_section(std::string section_type,int section_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a section  
   bool delete_section(int section_id); // delete section

@@ -230,6 +230,7 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
   result = write_contactpairs(output_file, ccx_iface);
   result = write_amplitudes(output_file, ccx_iface);
   result = write_initialconditions(output_file, ccx_iface);
+  result = write_steps(output_file, ccx_iface);
 
 
   return result;
@@ -240,8 +241,6 @@ bool ccxExportCommand::close_file(std::ofstream& output_file)
   output_file.close();
   return true;
 }
-
-
 
 bool ccxExportCommand::write_nodes(std::ofstream& output_file,MeshExportInterface *iface, CalculiXCoreInterface ccx_iface)
 {
@@ -648,5 +647,11 @@ bool ccxExportCommand::write_amplitudes(std::ofstream& output_file, CalculiXCore
 bool ccxExportCommand::write_initialconditions(std::ofstream& output_file, CalculiXCoreInterface ccx_iface)
 {
   output_file << ccx_iface.get_initialcondition_export_data();
+  return true;
+}
+
+bool ccxExportCommand::write_steps(std::ofstream& output_file, CalculiXCoreInterface ccx_iface)
+{
+  output_file << ccx_iface.get_step_export_data();
   return true;
 }

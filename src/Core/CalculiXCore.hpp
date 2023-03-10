@@ -142,6 +142,7 @@ public:
   std::string get_contactpair_export_data(); // gets the export data from contactpairs core
   std::string get_amplitude_export_data(); // gets the export data from amplitudes core
   std::string get_initialcondition_export_data(); // gets the export data from core
+  std::string get_step_export_data(); // gets the export data from core
   
   CoreBlocks *cb;
   CoreMaterials *mat;

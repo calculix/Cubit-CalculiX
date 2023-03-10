@@ -891,6 +891,15 @@ std::vector<int> CoreSteps::get_fieldoutput_data_ids_from_fieldoutputs_id(int fi
   return return_int;
 }
 
+std::string CoreSteps::get_step_export(int step_id)
+{
+  std::string str_tmp;
+
+  str_tmp = "*STEP " + std::to_string(step_id);
+
+  return str_tmp;
+}
+
 std::string CoreSteps::print_data()
 {
   std::string str_return;

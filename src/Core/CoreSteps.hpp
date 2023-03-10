@@ -202,6 +202,7 @@ public:
   std::vector<int> get_bc_data_ids_from_bcs_id(int bcs_id); // searches for the bcs_id in the bcs_data and returns the indices or -1 if it fails
   std::vector<int> get_historyoutput_data_ids_from_historyoutputs_id(int historyoutputs_id); // searches for the historyoutputs_id in the historyoutputs_data and returns the indices or -1 if it fails
   std::vector<int> get_fieldoutput_data_ids_from_fieldoutputs_id(int fieldoutputs_id); // searches for the historyoutputs_id in the historyoutputs_data and returns the indices or -1 if it fails
+  std::string get_step_export(int step_id); // get steps data export for given id
   std::string print_data(); // prints out the data
 
   CalculiXCoreInterface *ccx_iface;

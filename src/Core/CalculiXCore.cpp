@@ -1456,7 +1456,7 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
           if (std::stoi(initialconditions->temperature_data[sub_data_id][1])==me_iface->id_from_handle(bc_handles[ii]))
           {
             me_iface->get_bc_nodeset(bc_handles[ii],nodeset);
-            str_temp = "*INITIAL CONDITIONS,TYPE=TEMPARATURE";
+            str_temp = "*INITIAL CONDITIONS,TYPE=TEMPERATURE";
             initialconditions_export_list.push_back(str_temp);
             for (size_t iii = 0; iii < bc_attribs.size(); iii++)
             { 
@@ -1483,6 +1483,95 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
 
   return initialcondition_export;
 }
+
+std::string CalculiXCore::get_step_export_data() // gets the export data from core
+{
+  std::vector<std::string> steps_export_list;
+  steps_export_list.push_back("********************************** S T E P S ****************************");
+  std::string str_temp;
+  int sub_data_id;
+  std::string command;
+  int bc_set_id;
+  BCSetHandle bc_set;
+  NodesetHandle nodeset;
+  std::vector<BCEntityHandle> bc_handles;
+  BCEntityHandle bc_handle;
+  std::vector<MeshExportBCData> bc_attribs; 
+
+  //loop over all steps
+  for (size_t i = 0; i < steps->steps_data.size(); i++)
+  { 
+    if (i==0)
+    { 
+      me_iface->initialize_export();
+      me_iface->create_default_bcset(0,true,true,true,bc_set);
+      me_iface->get_bc_restraints(bc_set, bc_handles);
+      bc_set_id = me_iface->id_from_handle(bc_set);
+    }
+    str_temp = steps->get_step_export(steps->steps_data[i][0]);
+    steps_export_list.push_back(str_temp);        
+  
+    /*
+    for (size_t ii = 0; ii < bc_handles.size(); ii++)
+    {  
+      me_iface->get_bc_attributes(bc_handles[ii],bc_attribs);
+    
+      if ((get_bc_fea_type(bc_attribs)==1) && (steps->steps_data[i][1]==1))
+      {
+        sub_data_id = steps->get_displacement_data_id_from_displacement_id(steps->steps_data[i][2]);
+        if (steps->displacement_data[sub_data_id][1]!="")
+        {
+          if (std::stoi(steps->displacement_data[sub_data_id][1])==me_iface->id_from_handle(bc_handles[ii]))
+          {
+            me_iface->get_bc_nodeset(bc_handles[ii],nodeset);
+            str_temp = "*INITIAL CONDITIONS,TYPE=DISPLACEMENT";
+            steps_export_list.push_back(str_temp);
+            for (size_t iii = 0; iii < bc_attribs.size(); iii++)
+            { 
+              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iii].first+1) + "," + std::to_string(bc_attribs[iii].second);
+              steps_export_list.push_back(str_temp);
+            }
+          }
+        }
+      }else if ((get_bc_fea_type(bc_attribs)==4) && (steps->steps_data[i][1]==2))
+      {
+        sub_data_id = steps->get_temperature_data_id_from_temperature_id(steps->steps_data[i][2]);
+        if (steps->temperature_data[sub_data_id][1]!="")
+        {
+          if (std::stoi(steps->temperature_data[sub_data_id][1])==me_iface->id_from_handle(bc_handles[ii]))
+          {
+            me_iface->get_bc_nodeset(bc_handles[ii],nodeset);
+            str_temp = "*INITIAL CONDITIONS,TYPE=TEMPARATURE";
+            steps_export_list.push_back(str_temp);
+            for (size_t iii = 0; iii < bc_attribs.size(); iii++)
+            { 
+              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iii].second);
+              steps_export_list.push_back(str_temp);
+            }
+          }
+        }
+      }
+
+      bc_attribs.clear();
+    }
+    */
+    str_temp = "*END STEP";
+    steps_export_list.push_back(str_temp);        
+  }
+
+  command = "delete bcset " + std::to_string(bc_set_id);
+  CubitInterface::cmd(command.c_str());
+
+  std::string step_export;
+
+  for (size_t i = 0; i < steps_export_list.size(); i++)
+  {
+    step_export.append(steps_export_list[i] + "\n");
+  }
+
+  return step_export;
+}
+
 
 std::vector<std::vector<std::string>> CalculiXCore::get_blocks_tree_data()
 { 
