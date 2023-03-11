@@ -108,7 +108,7 @@ bool ccxStepParameterModifyCommand::execute(CubitCommandData &data)
     options_marker.push_back(1);
   }else if (data.find_keyword("NLGEOM_NO"))
   {
-    nlgeom = "";
+    nlgeom = "NO";
     options_marker.push_back(1);
   }else{
     nlgeom = "";

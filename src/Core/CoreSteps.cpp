@@ -893,11 +893,461 @@ std::vector<int> CoreSteps::get_fieldoutput_data_ids_from_fieldoutputs_id(int fi
 
 std::string CoreSteps::get_step_export(int step_id)
 {
-  std::string str_tmp;
+  std::vector<std::string> steps_export_list;
+  std::string str_temp;
+  int steps_data_id;
+  int sub_data_id;
 
-  str_tmp = "*STEP " + std::to_string(step_id);
+  steps_data_id = get_steps_data_id_from_step_id(step_id);
 
-  return str_tmp;
+  // name
+  sub_data_id = get_name_data_id_from_name_id(steps_data[steps_data_id][1]);
+  str_temp = "**** STEP " + std::to_string(step_id) + " NAME: " + name_data[sub_data_id][1];
+  steps_export_list.push_back(str_temp);
+
+  // parameters  
+  sub_data_id = get_parameter_data_id_from_parameter_id(steps_data[steps_data_id][2]);
+  str_temp = "*STEP";
+
+  if (parameter_data[sub_data_id][1]!="")
+  {
+    str_temp.append(",PERTURBATION"); 
+  }
+
+  if (parameter_data[sub_data_id][2]=="YES")
+  {
+    str_temp.append(",NLGEOM"); 
+  }else if (parameter_data[sub_data_id][2]=="NO")
+  {
+    str_temp.append(",NLGEOM=NO");
+  }
+  
+  if (parameter_data[sub_data_id][3]!="")
+  {
+    str_temp.append(",INC=" + parameter_data[sub_data_id][3]); 
+  }
+
+  if (parameter_data[sub_data_id][4]!="")
+  {
+    str_temp.append(",INCF=" + parameter_data[sub_data_id][4]); 
+  }
+
+  if (parameter_data[sub_data_id][5]!="")
+  {
+    str_temp.append(",THERMAL NETWORK"); 
+  }
+
+  if (parameter_data[sub_data_id][6]!="")
+  {
+    str_temp.append("," + parameter_data[sub_data_id][6]); 
+  }
+
+  if (parameter_data[sub_data_id][7]!="")
+  {
+    str_temp.append(",SHOCK SMOOTHING=" + parameter_data[sub_data_id][7]); 
+  }
+  steps_export_list.push_back(str_temp);
+
+  // STEPTYPE
+  if (steps_data[steps_data_id][3]==1)
+  {
+    str_temp = "*NO ANALYSIS"; 
+    steps_export_list.push_back(str_temp);
+  }
+  if (steps_data[steps_data_id][3]==2)
+  {
+    sub_data_id = get_static_data_id_from_static_id(steps_data[steps_data_id][4]);
+    str_temp = "*STATIC";
+
+    if (static_data[sub_data_id][1]!="")
+    {
+      str_temp.append(",SOLVER=" + static_data[sub_data_id][1]); 
+    }
+    if (static_data[sub_data_id][2]!="")
+    {
+      str_temp.append(",DIRECT"); 
+    }
+    if (static_data[sub_data_id][3]!="")
+    {
+      str_temp.append(",EXPLICIT"); 
+    }
+    if (static_data[sub_data_id][4]!="")
+    {
+      str_temp.append(",TIME RESET"); 
+    }
+    if (static_data[sub_data_id][5]!="")
+    {
+      str_temp.append(",TOTAL TIME AT START=" + static_data[sub_data_id][5]); 
+    }
+    steps_export_list.push_back(str_temp);
+    // second line
+    str_temp = "";
+    if (static_data[sub_data_id][6]!="")
+    {
+      str_temp.append(static_data[sub_data_id][6]); 
+    }
+    if (static_data[sub_data_id][7]!="")
+    {
+      str_temp.append("," + static_data[sub_data_id][7]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    if (static_data[sub_data_id][8]!="")
+    {
+      str_temp.append("," + static_data[sub_data_id][8]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    if (static_data[sub_data_id][9]!="")
+    {
+      str_temp.append("," + static_data[sub_data_id][9]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    if (static_data[sub_data_id][10]!="")
+    {
+      str_temp.append("," + static_data[sub_data_id][10]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    steps_export_list.push_back(str_temp);
+  }
+  else if (steps_data[steps_data_id][3]==3)
+  {
+    sub_data_id = get_frequency_data_id_from_frequency_id(steps_data[steps_data_id][4]);
+    str_temp = "*FREQUENCY";
+    if (frequency_data[sub_data_id][1]!="")
+    {
+      str_temp.append(",SOLVER=" + frequency_data[sub_data_id][1]); 
+    }
+    if (frequency_data[sub_data_id][2]=="YES")
+    {
+      str_temp.append(",STORAGE=YES"); 
+    }else if (frequency_data[sub_data_id][2]=="NO")
+    {
+      str_temp.append(",STORAGE=NO"); 
+    }
+    if (frequency_data[sub_data_id][3]!="")
+    {
+      str_temp.append(",GLOBAL"); 
+    }
+    if (frequency_data[sub_data_id][4]!="")
+    {
+      str_temp.append("," + frequency_data[sub_data_id][4]); 
+    }
+    steps_export_list.push_back(str_temp);
+    // second line
+    str_temp = "";
+    if (frequency_data[sub_data_id][5]!="")
+    {
+      str_temp.append(frequency_data[sub_data_id][5]); 
+    }
+    if (frequency_data[sub_data_id][6]!="")
+    {
+      str_temp.append("," + frequency_data[sub_data_id][6]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    if (frequency_data[sub_data_id][7]!="")
+    {
+      str_temp.append("," + frequency_data[sub_data_id][7]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    steps_export_list.push_back(str_temp);
+  }
+  else if (steps_data[steps_data_id][3]==4)
+  {
+    sub_data_id = get_buckle_data_id_from_buckle_id(steps_data[steps_data_id][4]);
+    str_temp = "*BUCKLE";
+    if (buckle_data[sub_data_id][1]!="")
+    {
+      str_temp.append(",SOLVER=" + buckle_data[sub_data_id][1]); 
+    }
+    steps_export_list.push_back(str_temp);
+    // second line
+    str_temp = "";
+    if (buckle_data[sub_data_id][2]!="")
+    {
+      str_temp.append(buckle_data[sub_data_id][2]); 
+    }
+    if (buckle_data[sub_data_id][3]!="")
+    {
+      str_temp.append("," + buckle_data[sub_data_id][3]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    if (buckle_data[sub_data_id][4]!="")
+    {
+      str_temp.append("," + buckle_data[sub_data_id][4]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    if (buckle_data[sub_data_id][5]!="")
+    {
+      str_temp.append("," + buckle_data[sub_data_id][5]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    steps_export_list.push_back(str_temp);
+  }
+  else if (steps_data[steps_data_id][3]==5)
+  {
+    sub_data_id = get_heattransfer_data_id_from_heattransfer_id(steps_data[steps_data_id][4]);
+    str_temp = "*HEAT TRANSFER";
+    if (heattransfer_data[sub_data_id][1]!="")
+    {
+      str_temp.append(",SOLVER=" + heattransfer_data[sub_data_id][1]); 
+    }
+    if (heattransfer_data[sub_data_id][2]!="")
+    {
+      str_temp.append(",DIRECT"); 
+    }
+    if (heattransfer_data[sub_data_id][3]!="")
+    {
+      str_temp.append(",STEADY STATE"); 
+    }
+    if (heattransfer_data[sub_data_id][4]!="")
+    {
+      str_temp.append(",FREQUENCY"); 
+    }
+    if (heattransfer_data[sub_data_id][5]!="")
+    {
+      str_temp.append(",MODAL DYNAMIC"); 
+    }
+    if (heattransfer_data[sub_data_id][6]=="YES")
+    {
+      str_temp.append(",STORAGE=YES"); 
+    }else if (heattransfer_data[sub_data_id][6]=="NO")
+    {
+      str_temp.append(",STORAGE=NO"); 
+    }
+    if (heattransfer_data[sub_data_id][7]!="")
+    {
+      str_temp.append(",DELTMX=" + heattransfer_data[sub_data_id][7]); 
+    }
+    if (heattransfer_data[sub_data_id][8]!="")
+    {
+      str_temp.append(",TIME RESET"); 
+    }
+    steps_export_list.push_back(str_temp);
+    // second line
+    str_temp = "";
+    if (heattransfer_data[sub_data_id][9]!="")
+    {
+      str_temp.append(heattransfer_data[sub_data_id][9]); 
+    }
+    if (heattransfer_data[sub_data_id][10]!="")
+    {
+      str_temp.append("," + heattransfer_data[sub_data_id][10]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    if (heattransfer_data[sub_data_id][11]!="")
+    {
+      str_temp.append("," + heattransfer_data[sub_data_id][11]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    if (heattransfer_data[sub_data_id][12]!="")
+    {
+      str_temp.append("," + heattransfer_data[sub_data_id][12]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    if (heattransfer_data[sub_data_id][13]!="")
+    {
+      str_temp.append("," + heattransfer_data[sub_data_id][13]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    steps_export_list.push_back(str_temp);
+  }
+  else if (steps_data[steps_data_id][3]==6)
+  {
+    sub_data_id = get_coupledtd_data_id_from_coupledtd_id(steps_data[steps_data_id][4]);
+    str_temp = "*COUPLED TEMPERATURE-DISPLACEMENT";
+    if (coupledtd_data[sub_data_id][1]!="")
+    {
+      str_temp.append(",SOLVER=" + coupledtd_data[sub_data_id][1]); 
+    }
+    if (coupledtd_data[sub_data_id][2]!="")
+    {
+      str_temp.append(",DIRECT"); 
+    }
+    if (coupledtd_data[sub_data_id][3]!="")
+    {
+      str_temp.append(",ALPHA=" + coupledtd_data[sub_data_id][3]); 
+    }
+    if (coupledtd_data[sub_data_id][4]!="")
+    {
+      str_temp.append(",STEADY STATE"); 
+    }
+    if (coupledtd_data[sub_data_id][5]!="")
+    {
+      str_temp.append(",DELTMX=" + coupledtd_data[sub_data_id][5]); 
+    }
+    if (coupledtd_data[sub_data_id][6]!="")
+    {
+      str_temp.append(",TIME RESET"); 
+    }
+    if (coupledtd_data[sub_data_id][7]!="")
+    {
+      str_temp.append(",TOTAL TIME AT START=" + coupledtd_data[sub_data_id][7]); 
+    }
+    if (coupledtd_data[sub_data_id][8]!="")
+    {
+      str_temp.append(",COMPRESSIBLE"); 
+    }
+    steps_export_list.push_back(str_temp);
+    // second line
+    str_temp = "";
+    if (coupledtd_data[sub_data_id][9]!="")
+    {
+      str_temp.append(coupledtd_data[sub_data_id][9]); 
+    }
+    if (coupledtd_data[sub_data_id][10]!="")
+    {
+      str_temp.append("," + coupledtd_data[sub_data_id][10]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    if (coupledtd_data[sub_data_id][11]!="")
+    {
+      str_temp.append("," + coupledtd_data[sub_data_id][11]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    if (coupledtd_data[sub_data_id][12]!="")
+    {
+      str_temp.append("," + coupledtd_data[sub_data_id][12]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    if (coupledtd_data[sub_data_id][13]!="")
+    {
+      str_temp.append("," + coupledtd_data[sub_data_id][13]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    steps_export_list.push_back(str_temp);
+  }
+  else if (steps_data[steps_data_id][3]==7)
+  {
+    sub_data_id = get_uncoupledtd_data_id_from_uncoupledtd_id(steps_data[steps_data_id][4]);
+    str_temp = "*UNCOUPLED TEMPERATURE-DISPLACEMENT";
+    if (uncoupledtd_data[sub_data_id][1]!="")
+    {
+      str_temp.append(",SOLVER=" + uncoupledtd_data[sub_data_id][1]); 
+    }
+    if (uncoupledtd_data[sub_data_id][2]!="")
+    {
+      str_temp.append(",DIRECT"); 
+    }
+    if (uncoupledtd_data[sub_data_id][3]!="")
+    {
+      str_temp.append(",ALPHA=" + uncoupledtd_data[sub_data_id][3]); 
+    }
+    if (uncoupledtd_data[sub_data_id][4]!="")
+    {
+      str_temp.append(",STEADY STATE"); 
+    }
+    if (uncoupledtd_data[sub_data_id][5]!="")
+    {
+      str_temp.append(",DELTMX=" + uncoupledtd_data[sub_data_id][5]); 
+    }
+    if (uncoupledtd_data[sub_data_id][6]!="")
+    {
+      str_temp.append(",EXPLICIT"); 
+    }
+    if (uncoupledtd_data[sub_data_id][7]!="")
+    {
+      str_temp.append(",TIME RESET"); 
+    }
+    if (uncoupledtd_data[sub_data_id][8]!="")
+    {
+      str_temp.append(",TOTAL TIME AT START=" + uncoupledtd_data[sub_data_id][7]); 
+    }
+    steps_export_list.push_back(str_temp);
+    // second line
+    str_temp = "";
+    if (uncoupledtd_data[sub_data_id][9]!="")
+    {
+      str_temp.append(uncoupledtd_data[sub_data_id][9]); 
+    }
+    if (uncoupledtd_data[sub_data_id][10]!="")
+    {
+      str_temp.append("," + uncoupledtd_data[sub_data_id][10]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    if (uncoupledtd_data[sub_data_id][11]!="")
+    {
+      str_temp.append("," + uncoupledtd_data[sub_data_id][11]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    if (uncoupledtd_data[sub_data_id][12]!="")
+    {
+      str_temp.append("," + uncoupledtd_data[sub_data_id][12]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    steps_export_list.push_back(str_temp);
+  }
+  std::string step_export;
+
+  for (size_t i = 0; i < steps_export_list.size(); i++)
+  {
+    if (i==steps_export_list.size()-1)
+    {
+      step_export.append(steps_export_list[i]);
+    }else{
+      step_export.append(steps_export_list[i] + "\n");
+    }
+  }
+
+  return step_export;
 }
 
 std::string CoreSteps::print_data()

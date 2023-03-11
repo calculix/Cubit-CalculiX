@@ -116,7 +116,7 @@ bool ccxStepFrequencyModifyCommand::execute(CubitCommandData &data)
     options_marker.push_back(1);
   }else if (data.find_keyword("STORAGE_NO"))
   {
-    storage = "";
+    storage = "NO";
     options_marker.push_back(1);
   }else{
     storage = "";

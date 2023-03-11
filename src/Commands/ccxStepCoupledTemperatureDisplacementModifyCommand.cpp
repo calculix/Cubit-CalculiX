@@ -211,18 +211,6 @@ bool ccxStepCoupledTemperatureDisplacementModifyCommand::execute(CubitCommandDat
   }
   options.push_back(totaltimeatstart);
    
-  if (!data.get_value("initialtimeincrement", initialtimeincrement_value))
-  {
-    initialtimeincrement = "";
-    options_marker.push_back(0);
-  }
-  else
-  {
-    initialtimeincrement = std::to_string(initialtimeincrement_value);
-    options_marker.push_back(1);
-  }
-  options.push_back(initialtimeincrement);
-
   if (data.find_keyword("COMPRESSIBLE_YES"))
   {
     compressible = "YES";
@@ -236,6 +224,18 @@ bool ccxStepCoupledTemperatureDisplacementModifyCommand::execute(CubitCommandDat
     options_marker.push_back(0);
   }
   options.push_back(compressible);
+
+  if (!data.get_value("initialtimeincrement", initialtimeincrement_value))
+  {
+    initialtimeincrement = "";
+    options_marker.push_back(0);
+  }
+  else
+  {
+    initialtimeincrement = std::to_string(initialtimeincrement_value);
+    options_marker.push_back(1);
+  }
+  options.push_back(initialtimeincrement);
 
   if (!data.get_value("timeperiodofstep", timeperiodofstep_value))
   {

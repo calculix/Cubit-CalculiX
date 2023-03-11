@@ -69,7 +69,6 @@ public:
   // static_data[0][9] maximum time increment allowed
   // static_data[0][10] initial time increment CFD
 
-
   std::vector<std::vector<std::string>> frequency_data;
   // frequency_data[0][0] frequency_id
   // frequency_data[0][1] solver
