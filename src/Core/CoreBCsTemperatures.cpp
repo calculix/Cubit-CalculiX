@@ -186,6 +186,31 @@ int CoreBCsTemperatures::get_time_delay_data_id_from_time_delay_id(int time_dela
   return return_int;
 }
 
+std::string CoreBCsTemperatures::get_bc_parameter_export(int bc_id)
+{
+  int bc_data_id;
+  int sub_data_id;
+  std::string str_temp = "";
+  bc_data_id = get_bcs_data_id_from_bc_id(bc_id);
+  if (bcs_data[bc_data_id][1]==0)
+  {
+    str_temp.append(",OP=MOD");
+  }else if (bcs_data[bc_data_id][1]==1)
+  {
+    str_temp.append(",OP=NEW");
+  }
+  if (bcs_data[bc_data_id][2]!=-1)
+  {
+    str_temp.append(",AMPLITUDE=" + ccx_iface->get_amplitude_name(bcs_data[bc_data_id][2]));
+  }
+  sub_data_id = get_time_delay_data_id_from_time_delay_id(bcs_data[bc_data_id][3]);
+  if (time_delay_data[sub_data_id][1]!="")
+  {
+    str_temp.append(",TIME DELAY=" + time_delay_data[sub_data_id][1]);
+  }
+  return str_temp;
+}
+
 std::string CoreBCsTemperatures::print_data()
 {
   std::string str_return;

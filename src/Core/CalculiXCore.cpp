@@ -849,6 +849,25 @@ std::string CalculiXCore::get_surfaceinteraction_name(int surfaceinteraction_id)
   return surfaceinteraction_name;
 }
 
+std::string CalculiXCore::get_amplitude_name(int amplitude_id)
+{
+  std::string amplitude_name="";
+  int amplitude_data_id;
+  int amplitude_name_id;
+  int amplitude_name_data_id;
+
+  amplitude_data_id = amplitudes->get_amplitudes_data_id_from_amplitude_id(amplitude_id);
+
+  if (amplitude_id != -1)
+  {
+    amplitude_name_id = amplitudes->amplitudes_data[amplitude_data_id][1];
+    amplitude_name_data_id = amplitudes->get_name_amplitude_data_id_from_name_amplitude_id(amplitude_name_id);
+    amplitude_name = amplitudes->name_amplitude_data[amplitude_name_data_id][1];
+  }
+
+  return amplitude_name;
+}
+
 bool CalculiXCore::check_block_exists(int block_id)
 {
   int block_data_id;
@@ -997,10 +1016,17 @@ int CalculiXCore::get_bc_fea_type(std::vector<std::pair<int, double>> bc_attribs
       //Temperature
       return 4;
     }
+    if ((bc_attribs[i].first > 22) && (bc_attribs[i].first < 31))
+    {
+      //Forces
+      return 5;
+    }
+    if (bc_attribs[i].first == 31)
+    {
+      //Pressure
+      return 6;
+    }
   }
-  
-
-
   return -1;
 }
 
@@ -1490,10 +1516,12 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
   steps_export_list.push_back("********************************** S T E P S ****************************");
   std::string str_temp;
   int sub_data_id;
+  std::vector<int> sub_data_ids;
   std::string command;
   int bc_set_id;
   BCSetHandle bc_set;
   NodesetHandle nodeset;
+  SidesetHandle sideset;
   std::vector<BCEntityHandle> bc_handles;
   BCEntityHandle bc_handle;
   std::vector<MeshExportBCData> bc_attribs; 
@@ -1505,56 +1533,100 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
     { 
       me_iface->initialize_export();
       me_iface->create_default_bcset(0,true,true,true,bc_set);
-      me_iface->get_bc_restraints(bc_set, bc_handles);
       bc_set_id = me_iface->id_from_handle(bc_set);
     }
     str_temp = steps->get_step_export(steps->steps_data[i][0]);
     steps_export_list.push_back(str_temp);        
-  
-    /*
+    // Loads
+    me_iface->get_bc_loads(bc_set, bc_handles);
+    sub_data_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[i][5]);
     for (size_t ii = 0; ii < bc_handles.size(); ii++)
     {  
       me_iface->get_bc_attributes(bc_handles[ii],bc_attribs);
-    
-      if ((get_bc_fea_type(bc_attribs)==1) && (steps->steps_data[i][1]==1))
-      {
-        sub_data_id = steps->get_displacement_data_id_from_displacement_id(steps->steps_data[i][2]);
-        if (steps->displacement_data[sub_data_id][1]!="")
+      for (size_t iii = 0; iii < sub_data_ids.size(); iii++)
+      { 
+        // FORCE CLOAD
+        if ((get_bc_fea_type(bc_attribs)==5) && (steps->loads_data[iii][1]==1))
         {
-          if (std::stoi(steps->displacement_data[sub_data_id][1])==me_iface->id_from_handle(bc_handles[ii]))
+          //if (steps->bcs_data[iii][2]==me_iface->id_from_handle(bc_handles[ii]))
           {
             me_iface->get_bc_nodeset(bc_handles[ii],nodeset);
-            str_temp = "*INITIAL CONDITIONS,TYPE=DISPLACEMENT";
+            str_temp = "*CLOAD";
+            str_temp.append(loadsforces->get_load_parameter_export(steps->loads_data[iii][2]));
             steps_export_list.push_back(str_temp);
-            for (size_t iii = 0; iii < bc_attribs.size(); iii++)
-            { 
-              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iii].first+1) + "," + std::to_string(bc_attribs[iii].second);
+            for (size_t iv = 1; iv < 4; iv++)
+            {
+              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(iv) + "," + std::to_string(bc_attribs[iv].second*bc_attribs[0].second);
               steps_export_list.push_back(str_temp);
             }
-          }
+            for (size_t iv = 1; iv < 4; iv++)
+            {
+              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(iv+3) + "," + std::to_string(bc_attribs[iv+4].second*bc_attribs[4].second);
+              steps_export_list.push_back(str_temp);
+            }
+          }  
         }
-      }else if ((get_bc_fea_type(bc_attribs)==4) && (steps->steps_data[i][1]==2))
-      {
-        sub_data_id = steps->get_temperature_data_id_from_temperature_id(steps->steps_data[i][2]);
-        if (steps->temperature_data[sub_data_id][1]!="")
+        // PRESSURE DLOAD 
+        if ((get_bc_fea_type(bc_attribs)==6) && (steps->loads_data[iii][1]==2))
         {
-          if (std::stoi(steps->temperature_data[sub_data_id][1])==me_iface->id_from_handle(bc_handles[ii]))
+          //if (steps->bcs_data[iii][2]==me_iface->id_from_handle(bc_handles[ii]))
           {
-            me_iface->get_bc_nodeset(bc_handles[ii],nodeset);
-            str_temp = "*INITIAL CONDITIONS,TYPE=TEMPARATURE";
+            me_iface->get_bc_sideset(bc_handles[ii],sideset);
+            str_temp = "*DLOAD";
+            str_temp.append(loadspressures->get_load_parameter_export(steps->loads_data[iii][2]));
             steps_export_list.push_back(str_temp);
-            for (size_t iii = 0; iii < bc_attribs.size(); iii++)
-            { 
-              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iii].second);
-              steps_export_list.push_back(str_temp);
-            }
-          }
+            
+            str_temp = get_sideset_name(me_iface->id_from_handle(sideset)) + ",FACE SIDE," + std::to_string(bc_attribs[0].second);
+            steps_export_list.push_back(str_temp);
+          }  
         }
       }
-
       bc_attribs.clear();
     }
-    */
+    // BCs
+    me_iface->get_bc_restraints(bc_set, bc_handles);
+    sub_data_ids = steps->get_bc_data_ids_from_bcs_id(steps->steps_data[i][6]);
+    for (size_t ii = 0; ii < bc_handles.size(); ii++)
+    {  
+      me_iface->get_bc_attributes(bc_handles[ii],bc_attribs);
+      for (size_t iii = 0; iii < sub_data_ids.size(); iii++)
+      { 
+        // DISPLACEMENT
+        if ((get_bc_fea_type(bc_attribs)==1) && (steps->bcs_data[iii][1]==1))
+        {
+          if (steps->bcs_data[iii][2]==me_iface->id_from_handle(bc_handles[ii]))
+          {
+            me_iface->get_bc_nodeset(bc_handles[ii],nodeset);
+            str_temp = "*BOUNDARY";
+            str_temp.append(bcsdisplacements->get_bc_parameter_export(steps->bcs_data[iii][2]));
+            steps_export_list.push_back(str_temp);
+            for (size_t iv = 0; iv < bc_attribs.size(); iv++)
+            { 
+              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iv].first+1) + "," + std::to_string(bc_attribs[iv].second);
+              steps_export_list.push_back(str_temp);
+            }
+          }  
+        }
+        // TEMPERATURE
+        if ((get_bc_fea_type(bc_attribs)==4) && (steps->bcs_data[iii][1]==2))
+        {
+          if (steps->bcs_data[iii][2]==me_iface->id_from_handle(bc_handles[ii]))
+          {
+            me_iface->get_bc_nodeset(bc_handles[ii],nodeset);
+            str_temp = "*BOUNDARY";
+            str_temp.append(bcstemperatures->get_bc_parameter_export(steps->bcs_data[iii][2]));
+            steps_export_list.push_back(str_temp);
+            for (size_t iv = 0; iv < bc_attribs.size(); iv++)
+            { 
+              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + ",11," + std::to_string(bc_attribs[iv].second);
+              steps_export_list.push_back(str_temp);
+            }
+          }  
+        }
+      }
+      bc_attribs.clear();
+    }
+    
     str_temp = "*END STEP";
     steps_export_list.push_back(str_temp);        
   }

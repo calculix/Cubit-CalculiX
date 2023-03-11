@@ -32,6 +32,7 @@ public:
   bool add_time_delay(std::string time_delay_id, std::string time_delay_value); // adds new time delay to time_delay_data
   int  get_loads_data_id_from_load_id(int load_id); // searches for the load_id in the loads_data and returns the indices or -1 if it fails
   int  get_time_delay_data_id_from_time_delay_id(int time_delay_id); // searches for the time_delay_id in the time_delay_data and returns the indices or -1 if it fails
+  std::string get_load_parameter_export(int load_id); // gets the optional parameters for the export
   std::string print_data(); // prints out the loads_data
 
   CalculiXCoreInterface *ccx_iface;

@@ -75,6 +75,11 @@ std::string CalculiXCoreInterface::get_surfaceinteraction_name(int surfaceintera
   return ccx_core.get_surfaceinteraction_name(surfaceinteraction_id);
 }
 
+std::string CalculiXCoreInterface::get_amplitude_name(int amplitude_id)
+{
+  return ccx_core.get_amplitude_name(amplitude_id);
+}
+
 bool CalculiXCoreInterface::core_update()
 {
   if (ccx_core.update())
