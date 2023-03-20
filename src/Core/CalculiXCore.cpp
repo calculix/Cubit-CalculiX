@@ -1433,6 +1433,7 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
   std::vector<std::string> initialconditions_export_list;
   initialconditions_export_list.push_back("********************************** I N I T I A L C O N D I T I O N S ****************************");
   std::string str_temp;
+  std::string log;
   int sub_data_id;
   std::string command;
   int bc_set_id;
@@ -1447,6 +1448,8 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
   { 
     if (i==0)
     { 
+      log = "Creating BCSet for exporting Initial Conditions.\n";
+      PRINT_INFO("%s", log.c_str());
       me_iface->initialize_export();
       me_iface->create_default_bcset(0,true,true,true,bc_set);
       me_iface->get_bc_restraints(bc_set, bc_handles);
@@ -1496,7 +1499,9 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
       bc_attribs.clear();
     }
   }
-
+  
+  log = "Deleting BCSet Initial Conditions Export.\n";
+  PRINT_INFO("%s", log.c_str());
   command = "delete bcset " + std::to_string(bc_set_id);
   CubitInterface::cmd(command.c_str());
 
@@ -1515,6 +1520,7 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
   std::vector<std::string> steps_export_list;
   steps_export_list.push_back("********************************** S T E P S ****************************");
   std::string str_temp;
+  std::string log;
   int sub_data_id;
   std::vector<int> sub_data_ids;
   std::string command;
@@ -1531,6 +1537,8 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
   { 
     if (i==0)
     { 
+      log = "Creating BCSet for exporting Steps.\n";
+      PRINT_INFO("%s", log.c_str());
       me_iface->initialize_export();
       me_iface->create_default_bcset(0,true,true,true,bc_set);
       bc_set_id = me_iface->id_from_handle(bc_set);
@@ -1630,7 +1638,9 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
     str_temp = "*END STEP";
     steps_export_list.push_back(str_temp);        
   }
-
+  
+  log = "Deleting BCSet Steps Export.\n";
+  PRINT_INFO("%s", log.c_str());
   command = "delete bcset " + std::to_string(bc_set_id);
   CubitInterface::cmd(command.c_str());
 

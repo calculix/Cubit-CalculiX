@@ -204,6 +204,37 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
   // Initialize the exporter
   iface->initialize_export();
 
+  // check if everything is meshed. if no. abort!
+  std::vector<std::string> entity_type_list;
+  entity_type_list.push_back("vertex");
+  entity_type_list.push_back("curve");
+  entity_type_list.push_back("surface");
+  entity_type_list.push_back("volume");
+  std::vector<int> entity_id_list;
+  for (size_t i = 0; i < entity_type_list.size(); i++)
+  {
+    entity_id_list = CubitInterface::get_entities(entity_type_list[i]);
+    for (size_t ii = 0; ii < entity_id_list.size(); ii++)
+    {
+      if (!(CubitInterface::is_meshed(entity_type_list[i],entity_id_list[ii])))
+      {
+        if (entity_type_list[i]=="volume")
+        {
+          if (!(CubitInterface::is_sheet_body(entity_id_list[ii])))
+          {
+            PRINT_WARNING("\nEvery Entity has to be meshed before export!\n");
+            return false;
+          }
+        }else{
+          PRINT_WARNING("\nEvery Entity has to be meshed before export!\n");
+          return false;
+        }
+      }
+    }
+    entity_id_list.clear();
+  }
+  
+
   // first blood ... no i mean first line
   output_file << "*HEADING \n";
   output_file << "Cubit2CalculiX with CalculiX Plugin \n";
