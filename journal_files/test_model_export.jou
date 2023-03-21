@@ -12,7 +12,7 @@ create force  on vertex 2  force value 1 moment value 2 direction 0 0 1
 modify force 1 name 'test' add vertex 5  
 modify force 1 add surface 5
 create force on curve 12 force value 55 direction 1 0 1
-create pressure on surface 5 magnitude 20
+create pressure on surface 1 4 5 magnitude 20
 modify pressure 1 name 'test_p'
 ccx modify force 1 op new amplitude 2 timedelay -99.55
 ccx modify pressure 1 op new amplitude 1 timedelay -55.1
@@ -131,6 +131,8 @@ mesh vol all
 mesh surf all
 
 export ccx "test_export.inp"
+
+
 
 
 

@@ -174,6 +174,18 @@ int CalculiXCoreInterface::referencepoints_get_rot_from_vertex_id(int vertex_id)
 {
   return ccx_core.referencepoints_get_rot_from_vertex_id(vertex_id);
 }
+
+bool CalculiXCoreInterface::add_sideset_face(std::string sideset_id, std::string sideset_name, std::string face)
+{
+  return ccx_core.add_sideset_face(sideset_id, sideset_name, face);
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_sideset_face(int sideset_id)
+{
+  return ccx_core.get_sideset_face(sideset_id);
+}
+
+
 bool CalculiXCoreInterface::create_surfaceinteraction(std::string surfacebehavior_type, std::vector<std::string> options, std::vector<std::vector<std::string>> options2)
 {
   return ccx_core.create_surfaceinteraction(surfacebehavior_type,options,options2);

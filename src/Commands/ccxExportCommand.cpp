@@ -250,7 +250,7 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
   result = write_nodesets(output_file, iface, ccx_iface);
 
   // Write the sidesets
-  result = write_sidesets(output_file, iface);
+  result = write_sidesets(output_file, iface, ccx_iface);
 
   // Write the materials and sections
   result = write_materials(output_file, ccx_iface);
@@ -513,7 +513,7 @@ bool ccxExportCommand::write_nodesets(std::ofstream& output_file,MeshExportInter
   return true;
 }
 
-bool ccxExportCommand::write_sidesets(std::ofstream& output_file, MeshExportInterface *iface)
+bool ccxExportCommand::write_sidesets(std::ofstream& output_file, MeshExportInterface *iface, CalculiXCoreInterface ccx_iface)
 {
 
   output_file << "********************************** S I D E S E T S ********************************** \n";
@@ -592,6 +592,8 @@ bool ccxExportCommand::write_sidesets(std::ofstream& output_file, MeshExportInte
           sw = get_side(element_type_all[0], s);
           output_file << "*ELSET, ELSET=" << sideset_name << ("_S" + std::to_string(sw)) << " \n";
           bool_first=false;
+          // add elset to storage, for later use by cards like dload
+          ccx_iface.add_sideset_face(std::to_string(iface->id_from_handle(sideset)), sideset_name + "_S" + std::to_string(sw), std::to_string(sw));
         }
         ic=0;
         for (int j = 0; j < element_count; j++)

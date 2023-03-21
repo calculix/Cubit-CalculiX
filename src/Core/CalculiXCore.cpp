@@ -1151,6 +1151,28 @@ int CalculiXCore::referencepoints_get_rot_from_vertex_id(int vertex_id)
   return referencepoints->get_rot_from_vertex_id(vertex_id);
 }
 
+bool CalculiXCore::add_sideset_face(std::string sideset_id, std::string sideset_name, std::string face)
+{
+  std::vector<std::string> v = {sideset_id, sideset_name, face};
+  
+  sideset_face_data.push_back(v);
+  
+  return true;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_sideset_face(int sideset_id)
+{
+  std::vector<std::vector<std::string>> return_data;
+  for (size_t i = 0; i < sideset_face_data.size(); i++)
+  {
+    if (sideset_face_data[i][0]==std::to_string(sideset_id))
+    {
+        return_data.push_back({sideset_face_data[i][0],sideset_face_data[i][1],sideset_face_data[i][2]});
+    }  
+  }
+  return return_data;
+}
+
 bool CalculiXCore::create_surfaceinteraction(std::string surfacebehavior_type, std::vector<std::string> options, std::vector<std::vector<std::string>> options2)
 {
   return surfaceinteractions->create_surfaceinteraction(surfacebehavior_type, options, options2);
@@ -1520,6 +1542,7 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
   std::vector<std::string> steps_export_list;
   steps_export_list.push_back("********************************** S T E P S ****************************");
   std::string str_temp;
+  std::vector<std::vector<std::string>> temp_list;
   std::string log;
   int sub_data_id;
   std::vector<int> sub_data_ids;
@@ -1580,12 +1603,16 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
           //if (steps->bcs_data[iii][2]==me_iface->id_from_handle(bc_handles[ii]))
           {
             me_iface->get_bc_sideset(bc_handles[ii],sideset);
-            str_temp = "*DLOAD";
-            str_temp.append(loadspressures->get_load_parameter_export(steps->loads_data[iii][2]));
-            steps_export_list.push_back(str_temp);
-            
-            str_temp = get_sideset_name(me_iface->id_from_handle(sideset)) + ",FACE SIDE," + std::to_string(bc_attribs[0].second);
-            steps_export_list.push_back(str_temp);
+            temp_list = get_sideset_face(me_iface->id_from_handle(sideset));
+            for (size_t iv = 0; iv < temp_list.size(); iv++)
+            {              
+              str_temp = "*DLOAD";
+              str_temp.append(loadspressures->get_load_parameter_export(steps->loads_data[iii][2]));
+              steps_export_list.push_back(str_temp);
+
+              str_temp = temp_list[iv][1] + ",P" + temp_list[iv][2] + "," + std::to_string(bc_attribs[0].second);
+              steps_export_list.push_back(str_temp);
+            }
           }  
         }
       }
@@ -1634,7 +1661,24 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
       }
       bc_attribs.clear();
     }
-    
+    // History Outputs
+    sub_data_ids = steps->get_historyoutput_data_ids_from_historyoutputs_id(steps->steps_data[i][7]);
+    for (size_t ii = 0; ii < sub_data_ids.size(); ii++)
+    {
+      sub_data_id = historyoutputs->get_outputs_data_id_from_output_id(steps->historyoutputs_data[sub_data_ids[ii]][1]);
+      if (historyoutputs->outputs_data[sub_data_id][2]==1)
+      {
+        str_temp = std::to_string(sub_data_id) + " (node)";
+      }else if (historyoutputs->outputs_data[sub_data_id][2]==2)
+      {
+        str_temp = std::to_string(sub_data_id) + " (element)";
+      }else if (historyoutputs->outputs_data[sub_data_id][2]==3)
+      {
+        str_temp = std::to_string(sub_data_id) + " (contact)";
+      }
+      steps_export_list.push_back(str_temp);
+    }
+
     str_temp = "*END STEP";
     steps_export_list.push_back(str_temp);        
   }
@@ -1650,6 +1694,9 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
   {
     step_export.append(steps_export_list[i] + "\n");
   }
+
+  // clear export storage data
+  sideset_face_data.clear();
 
   return step_export;
 }
