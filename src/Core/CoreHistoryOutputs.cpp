@@ -369,74 +369,56 @@ int CoreHistoryOutputs::get_contact_data_id_from_contact_id(int contact_id)
   return return_int;
 }
 
-std::string CoreHistoryOutputs::get_output_export(std::vector<int> output_ids) // get a list of the CalculiX output exports
+std::string CoreHistoryOutputs::get_output_export(int output_id) // get a list of the CalculiX output export
 {
   std::vector<std::string> outputs_export_list;
-  outputs_export_list.push_back("********************************** H I S T O R Y O U T P U T S ****************************");
   std::string str_temp;
+  std::string output_name;
   int output_data_id;
   int sub_data_id;
-  std::vector<int> sub_data_ids;
-  /*
-  //loop over all outputs
-  for (size_t i = 0; i < output_ids.size(); i++)
-  { 
-    output_data_id = get_outputs_data_id_from_output_id(output_ids[i]);
+  
+  output_data_id = get_outputs_data_id_from_output_id(output_id);
 
-    str_temp = "*AMPLITUDE, NAME=";
-    sub_data_id = get_name_amplitude_data_id_from_name_amplitude_id(outputs_data[i][1]);
-    str_temp.append(name_amplitude_data[sub_data_id][1]);
-    //shiftx
-    sub_data_id = get_shiftx_amplitude_data_id_from_shiftx_amplitude_id(amplitudes_data[i][2]);
-    if(shiftx_amplitude_data[sub_data_id][1]!="")
+  sub_data_id = get_name_data_id_from_name_id(outputs_data[output_data_id][1]);
+  output_name = name_data[sub_data_id][1];
+    
+  if (outputs_data[output_data_id][2]==1)
+  {
+    sub_data_id = get_node_data_id_from_node_id(outputs_data[output_data_id][3]);
+    str_temp = "*NODE PRINT, NSET=";
+    if (node_data[sub_data_id][1]=="")
     {
-      str_temp.append(", SHIFTX=");
-      str_temp.append(shiftx_amplitude_data[sub_data_id][1]);
-    }
-    //shifty
-    sub_data_id = get_shifty_amplitude_data_id_from_shifty_amplitude_id(amplitudes_data[i][3]);
-    if(shifty_amplitude_data[sub_data_id][1]!="")
-    {
-      str_temp.append(", SHIFTY=");
-      str_temp.append(shifty_amplitude_data[sub_data_id][1]);
-    }
-    // time_type
-    if (amplitudes_data[i][4]==1)
-    {
-      str_temp.append(", TIME=TOTAL TIME"); 
+      return "";
     }
     
-    amplitudes_export_list.push_back(str_temp);
+    str_temp.append(ccx_iface->get_nodeset_name(std::stoi(node_data[sub_data_id][1])));
 
-    // second line
-    // time_amplitude
+    outputs_export_list.push_back(str_temp);
 
-    sub_data_ids = get_amplitudevalues_amplitude_data_ids_from_amplitudevalues_amplitude_id(amplitudes_data[i][5]);
-    // second lines
+    //second line
     str_temp = "";
-    int ii = 0;
-    for (size_t i = 0; i < sub_data_ids.size(); i++)
+    for (size_t i = 7; i < 7 + node_keys.size(); i++)
     {
-      if ((i != 0) && (ii!=0))
+      if (i!=7)
       {
         str_temp.append(",");
       }
-      ii = ii + 1;
-      
-      str_temp.append(amplitudevalues_amplitude_data[sub_data_ids[i]][1]);
-      str_temp.append(",");
-      str_temp.append(amplitudevalues_amplitude_data[sub_data_ids[i]][2]);
-      if (ii == 4)
+      if (node_data[sub_data_id][i]!="")
       {
-        ii = 0;
-        str_temp.append(",");
-        amplitudes_export_list.push_back(str_temp);
-        str_temp = "";
+        str_temp.append(node_data[sub_data_id][i]);
       }
     }
-    amplitudes_export_list.push_back(str_temp);
+
+  }else if (outputs_data[output_data_id][2]==2)
+  {
+    output_name = output_name + " (element)";
+  }else if (outputs_data[output_data_id][2]==3)
+  {
+    output_name = output_name + " (contact)";
   }
-  */
+
+  outputs_export_list.push_back(str_temp);
+
   std::string output_export;
 
   for (size_t i = 0; i < outputs_export_list.size(); i++)

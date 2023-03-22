@@ -113,7 +113,7 @@ public:
   int  get_node_data_id_from_node_id(int node_id); // searches for the node_id in the node_data and returns the indices or -1 if it fails
   int  get_element_data_id_from_element_id(int element_id); // searches for the element_id in the element_data and returns the indices or -1 if it fails
   int  get_contact_data_id_from_contact_id(int contact_id); // searches for the contact_id in the contact_data and returns the indices or -1 if it fails
-  std::string get_output_export(std::vector<int> output_ids); // get CalculiX output exports
+  std::string get_output_export(int output_id); // get CalculiX output export
   std::string print_data(); // prints out the data
 
   CalculiXCoreInterface *ccx_iface;

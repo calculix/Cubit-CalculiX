@@ -1663,24 +1663,15 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
     }
     // History Outputs
     sub_data_ids = steps->get_historyoutput_data_ids_from_historyoutputs_id(steps->steps_data[i][7]);
+
     for (size_t ii = 0; ii < sub_data_ids.size(); ii++)
     {
-      sub_data_id = historyoutputs->get_outputs_data_id_from_output_id(steps->historyoutputs_data[sub_data_ids[ii]][1]);
-      if (historyoutputs->outputs_data[sub_data_id][2]==1)
-      {
-        str_temp = std::to_string(sub_data_id) + " (node)";
-      }else if (historyoutputs->outputs_data[sub_data_id][2]==2)
-      {
-        str_temp = std::to_string(sub_data_id) + " (element)";
-      }else if (historyoutputs->outputs_data[sub_data_id][2]==3)
-      {
-        str_temp = std::to_string(sub_data_id) + " (contact)";
-      }
+      str_temp = historyoutputs->get_output_export(steps->historyoutputs_data[sub_data_ids[ii]][1]);
       steps_export_list.push_back(str_temp);
     }
 
     str_temp = "*END STEP";
-    steps_export_list.push_back(str_temp);        
+    steps_export_list.push_back(str_temp);
   }
   
   log = "Deleting BCSet Steps Export.\n";
