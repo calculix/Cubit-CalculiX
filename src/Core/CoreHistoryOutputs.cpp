@@ -388,11 +388,29 @@ std::string CoreHistoryOutputs::get_output_export(int output_id) // get a list o
     str_temp = "*NODE PRINT, NSET=";
     if (node_data[sub_data_id][1]=="")
     {
-      return "";
+      str_temp = "** No NSET defined for History Output ID " + std::to_string(output_id);
+      return str_temp;
     }
-    
     str_temp.append(ccx_iface->get_nodeset_name(std::stoi(node_data[sub_data_id][1])));
 
+    if (node_data[sub_data_id][2]!="")
+    {
+      str_temp.append(", FREQUENCY=" + node_data[sub_data_id][2]);
+    }
+    if (node_data[sub_data_id][3]!="")
+    {
+      str_temp.append(", FREQUENCYF=" + node_data[sub_data_id][3]);
+    }
+    if (node_data[sub_data_id][4]!="")
+    {
+      str_temp.append(", TOTALS=" + node_data[sub_data_id][4]);
+    }
+    if (node_data[sub_data_id][5]!="")
+    {
+      str_temp.append(", GLOBAL=" + node_data[sub_data_id][5]);
+    }
+
+    // TIME POINTS not implemented yet
     outputs_export_list.push_back(str_temp);
 
     //second line
@@ -423,7 +441,12 @@ std::string CoreHistoryOutputs::get_output_export(int output_id) // get a list o
 
   for (size_t i = 0; i < outputs_export_list.size(); i++)
   {
-    output_export.append(outputs_export_list[i] + "\n");
+    if (i < outputs_export_list.size()-1)
+    {
+      output_export.append(outputs_export_list[i] + "\n");
+    }else{
+      output_export.append(outputs_export_list[i]);
+    }
   }
 
   return output_export;

@@ -155,7 +155,7 @@ bool ccxHistoryOutputNodeModifyCommand::execute(CubitCommandData &data)
     options_marker.push_back(1);
   }else if (data.find_keyword("TOTALS_NO"))
   {
-    totals = "";
+    totals = "NO";
     options_marker.push_back(1);
   }else{
     totals = "";
@@ -169,7 +169,7 @@ bool ccxHistoryOutputNodeModifyCommand::execute(CubitCommandData &data)
     options_marker.push_back(1);
   }else if (data.find_keyword("GLOBAL_NO"))
   {
-    global = "";
+    global = "NO";
     options_marker.push_back(1);
   }else{
     global = "";
