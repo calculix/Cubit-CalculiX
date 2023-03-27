@@ -233,7 +233,6 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
     }
     entity_id_list.clear();
   }
-  
 
   // first blood ... no i mean first line
   output_file << "*HEADING \n";
@@ -245,6 +244,9 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
 
   // Write the elements/connectivity
   result = write_connectivity(output_file, iface, ccx_iface);
+
+  // Write the blocks
+  //result = write_blocks(output_file, iface, ccx_iface);
 
   // Write the nodesets
   result = write_nodesets(output_file, iface, ccx_iface);
@@ -351,27 +353,7 @@ bool ccxExportCommand::write_nodes(std::ofstream& output_file,MeshExportInterfac
 
 bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportInterface *iface, CalculiXCoreInterface ccx_iface)
 {
-  //output_file << " List of Elements" << std::endl;
-  //output_file << " Element Type, ID, Block, Connectivity" << std::endl;
-
-
   output_file << "********************************** E L E M E N T S **************************** \n";
-
-  /*
-  // Get the list of blocks
-  std::vector<BlockHandle> blocks;
-  iface->get_block_list(blocks);
-
-  // Test for get_block_size
-  int num_elements = 0;
-  for (size_t i = 0; i < blocks.size(); i++)
-  {
-    int nelems;
-    bool status = iface->get_block_size(blocks[i], nelems);
-    if (status)
-      num_elements += nelems;
-  }
-  */
 
   // Get Block id's
   std::vector<int> blocks;
@@ -452,6 +434,75 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
   return true;
 
 }
+
+/*
+bool ccxExportCommand::write_blocks(std::ofstream& output_file,MeshExportInterface *iface, CalculiXCoreInterface ccx_iface)
+{
+  output_file << "********************************** B L O C K S **************************** \n";
+
+  // Get Block id's
+  std::vector<int> blocks;
+  blocks = ccx_iface.get_blocks();
+
+  // Get a batch of elements in an initialized block
+  int buf_size = 98;
+  std::vector<ElementType>   element_type(buf_size);
+  std::vector<ElementHandle> handles(buf_size);
+
+  // define name variable
+  std::string element_type_name;
+  std::string block_name;
+
+  // Elements in a buffer set will be of the same element type and in the same block
+  for (size_t i = 0; i < blocks.size(); i++)
+  {
+    int num_elems;
+    int start_index = 0;
+    //BlockHandle block = blocks[i];
+    BlockHandle block;
+    iface->get_block_handle(blocks[i], block);
+
+    if (CubitInterface::get_block_element_type(blocks[i]) != "SPHERE") // check if cubit element type from block is sphere
+    {         
+      // write only once per block
+      int block_id = blocks[i];
+      block_name = ccx_iface.get_block_name(block_id);
+      element_type_name = ccx_iface.get_ccx_element_type(block_id);
+      output_file << "*ELSET, ELSET=" << block_name << "\n";
+
+      while( (num_elems = iface->get_block_elements(start_index, buf_size, block, element_type, handles)) > 0)
+      {
+        // Get ids for the element handles
+        std::vector<int> ids(num_elems);
+        iface->get_element_ids(num_elems, handles, ids);
+
+        // skip if element type is 0 (SPHERE), that element type doesn´t exist in CalculiX
+        if (element_type[0] != 0) 
+        {
+          // Write out the elements
+          int j=0;
+          for (int i = 0; i < num_elems; i++)
+          {
+            j += 1;
+            output_file << ids[i] << ", ";
+            if (j == 14) {
+              output_file << "\n";
+              j = 0;
+            }
+          }
+        }
+        start_index += num_elems;
+      }
+      output_file << std::endl;
+    }
+  }
+
+  output_file << "** \n";
+
+  return true;
+
+}
+*/
 
 bool ccxExportCommand::write_nodesets(std::ofstream& output_file,MeshExportInterface *iface, CalculiXCoreInterface ccx_iface)
 {

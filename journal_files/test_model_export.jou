@@ -2,6 +2,8 @@ ccx use logfile core on
 reset
 create brick x 1
 
+set duplicate block elements off
+block 1 add volume 1
 
 ccx create amplitude name amp1 time_amplitude 0 1 2 3 
 ccx create amplitude name amp2 time_amplitude 0 1 2 3 
@@ -44,8 +46,8 @@ ccx create historyoutput name test_name1 node
 ccx create historyoutput name test_name2 element
 ccx create historyoutput name test_name3 contact
 ccx modify historyoutput 1 node name juhey nodeset 1 frequency 22 frequencyf 11 totals_yes global_yes key_on u  nt tsf ttf pn psf ptf mach cp vf depf turb mf rf rfl
-ccx modify historyoutput 2 element name juhey block 1 frequency 22 frequencyf 11 totals_yes global_yes key_on S SVF E ME PEEQ CEEQ ENER SDV HFL HFLF COORD ELSE ELKE EVOL EMAS EBHE CENT
-ccx modify historyoutput 3 contact name juhey contactpair 1 frequency 22 totals_yes global_yes key_on cdis cstr cels cnum cf cfn cfs
+ccx modify historyoutput 2 element name juheys block 1 frequency 22 frequencyf 11 totals_yes global_yes key_on S SVF E ME PEEQ CEEQ ENER SDV HFL HFLF COORD ELSE ELKE EVOL EMAS EBHE CENT
+ccx modify historyoutput 3 contact name juheyz contactpair 1 frequency 22 totals_yes global_yes key_on cdis cstr cels cnum cf cfn cfs
 
 ccx create fieldoutput name fieldtest1 node
 ccx create fieldoutput name fieldtest2 element
@@ -101,22 +103,22 @@ ccx step 6 add bc displacement 1 2 temperature 1 2
 ccx step 7 add bc displacement 1 2 temperature 1 2
 ccx step 4 remove bc displacement 1 99 temperature 2
 
-ccx step 1 add historyoutput 1 2
-ccx step 2 add historyoutput 1 2
-ccx step 3 add historyoutput 1 2
-ccx step 4 add historyoutput 1 2
-ccx step 5 add historyoutput 1 2
-ccx step 6 add historyoutput 1 2
-ccx step 7 add historyoutput 1 2
+ccx step 1 add historyoutput 1 2 3
+ccx step 2 add historyoutput 1 2 3
+ccx step 3 add historyoutput 1 2 3
+ccx step 4 add historyoutput 1 2 3
+ccx step 5 add historyoutput 1 2 3
+ccx step 6 add historyoutput 1 2 3
+ccx step 7 add historyoutput 1 2 3
 ccx step 4 remove historyoutput 1
 
-ccx step 1 add fieldoutput 1 2
-ccx step 2 add fieldoutput 1 2
-ccx step 3 add fieldoutput 1 2
-ccx step 4 add fieldoutput 1 2
-ccx step 5 add fieldoutput 1 2
-ccx step 6 add fieldoutput 1 2
-ccx step 7 add fieldoutput 1 2
+ccx step 1 add fieldoutput 1 2 3
+ccx step 2 add fieldoutput 1 2 3
+ccx step 3 add fieldoutput 1 2 3
+ccx step 4 add fieldoutput 1 2 3
+ccx step 5 add fieldoutput 1 2 3
+ccx step 6 add fieldoutput 1 2 3
+ccx step 7 add fieldoutput 1 2 3
 ccx step 4 remove fieldoutput 1
 
 ccx modify step 1 parameter name noanalysisstep perturbation_yes nlgeom_yes inc 1000 incf 99 thermalnetwork_yes amplitude_step shocksmoothing 0.22
@@ -131,10 +133,4 @@ mesh vol all
 mesh surf all
 
 export ccx "test_export.inp"
-
-
-
-
-
-
 

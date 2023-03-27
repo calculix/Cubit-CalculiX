@@ -109,14 +109,14 @@ public:
   std::vector<std::string> contact_keys;
   std::vector<std::vector<std::string>> contact_data;
   // contact_data[0][0] contact_id              
-  // contact_data[0][2] FREQUENCY   option[0]...
-  // contact_data[0][3] TIME POINTS
-  // contact_data[0][4] LAST ITERATIONS
-  // contact_data[0][5] CONTACT ELEMENTS
-  // contact_data[0][6] KEY: CDIS
-  // contact_data[0][7] KEY: CSTR
-  // contact_data[0][8] KEY: CELS
-  // contact_data[0][9] KEY: PCON
+  // contact_data[0][1] FREQUENCY   option[0]...
+  // contact_data[0][2] TIME POINTS
+  // contact_data[0][3] LAST ITERATIONS
+  // contact_data[0][4] CONTACT ELEMENTS
+  // contact_data[0][5] KEY: CDIS
+  // contact_data[0][6] KEY: CSTR
+  // contact_data[0][7] KEY: CELS
+  // contact_data[0][8] KEY: PCON
     
   bool is_initialized = false;
 
@@ -137,7 +137,7 @@ public:
   int  get_node_data_id_from_node_id(int node_id); // searches for the node_id in the node_data and returns the indices or -1 if it fails
   int  get_element_data_id_from_element_id(int element_id); // searches for the element_id in the element_data and returns the indices or -1 if it fails
   int  get_contact_data_id_from_contact_id(int contact_id); // searches for the contact_id in the contact_data and returns the indices or -1 if it fails
-  std::string get_output_export(std::vector<int> output_ids); // get CalculiX output exports
+  std::string get_output_export(int output_id); // get CalculiX output exports
   std::string print_data(); // prints out the data
 
   CalculiXCoreInterface *ccx_iface;

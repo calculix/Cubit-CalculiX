@@ -46,6 +46,7 @@ public:
   std::string get_nodeset_name(int nodeset_id); // gets the nodeset name
   std::string get_sideset_name(int sideset_id); // gets the sideset name
   std::string get_surfaceinteraction_name(int surfaceinteraction_id); // gets the surfaceinteraction name
+  std::vector<std::string> get_contactpair_master_slave(int contactpair_id); // gets the contactpair master and slave name
   std::string get_amplitude_name(int amplitude_id); // gets the amplitude name
   bool check_block_exists(int block_id);
   bool check_bc_exists(int bc_id,int BCType); // checks if the id for the bc type exists

@@ -75,6 +75,11 @@ std::string CalculiXCoreInterface::get_surfaceinteraction_name(int surfaceintera
   return ccx_core.get_surfaceinteraction_name(surfaceinteraction_id);
 }
 
+std::vector<std::string> CalculiXCoreInterface::get_contactpair_master_slave(int contactpair_id)
+{
+  return ccx_core.get_contactpair_master_slave(contactpair_id);
+}
+
 std::string CalculiXCoreInterface::get_amplitude_name(int amplitude_id)
 {
   return ccx_core.get_amplitude_name(amplitude_id);
@@ -184,7 +189,6 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_sideset_face(in
 {
   return ccx_core.get_sideset_face(sideset_id);
 }
-
 
 bool CalculiXCoreInterface::create_surfaceinteraction(std::string surfacebehavior_type, std::vector<std::string> options, std::vector<std::vector<std::string>> options2)
 {

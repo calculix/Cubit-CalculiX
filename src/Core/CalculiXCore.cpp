@@ -84,6 +84,7 @@ bool CalculiXCore::print_to_log(std::string str_log)
 bool CalculiXCore::init()
 {
   me_iface = dynamic_cast<MeshExportInterface*>(CubitInterface::get_interface("MeshExport"));
+  me_iface->initialize_export();
   mat_iface = dynamic_cast<MaterialInterface*>(CubitInterface::get_interface("Material"));
 
   if(!cb)
@@ -220,7 +221,8 @@ bool CalculiXCore::reset()
   fieldoutputs->reset();
   initialconditions->reset();
   steps->reset();
-  
+
+  sideset_face_data.clear();
   //print_to_log("RESET");
   //print_to_log(print_data());
 
@@ -849,6 +851,23 @@ std::string CalculiXCore::get_surfaceinteraction_name(int surfaceinteraction_id)
   return surfaceinteraction_name;
 }
 
+std::vector<std::string> CalculiXCore::get_contactpair_master_slave(int contactpair_id)
+{
+  std::vector<std::string> contactpair(2);
+  int contactpair_data_id;
+  
+  contactpair_data_id = contactpairs->get_contactpairs_data_id_from_contactpair_id(contactpair_id);
+  if (contactpair_data_id!=-1)
+  {    
+    contactpair[0] = this->get_sideset_name(contactpairs->contactpairs_data[contactpair_data_id][3]);
+    contactpair[1] = this->get_sideset_name(contactpairs->contactpairs_data[contactpair_data_id][4]);
+  } else {
+    contactpair[0] = "CONTACTPAIR " + std::to_string(contactpair_id) + "DOESN'T EXIST!";
+    contactpair[1] = "CONTACTPAIR " + std::to_string(contactpair_id) + "DOESN'T EXIST!";
+  }
+  return contactpair;
+}
+
 std::string CalculiXCore::get_amplitude_name(int amplitude_id)
 {
   std::string amplitude_name="";
@@ -1472,7 +1491,6 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
     { 
       log = "Creating BCSet for exporting Initial Conditions.\n";
       PRINT_INFO("%s", log.c_str());
-      me_iface->initialize_export();
       me_iface->create_default_bcset(0,true,true,true,bc_set);
       me_iface->get_bc_restraints(bc_set, bc_handles);
       bc_set_id = me_iface->id_from_handle(bc_set);
@@ -1517,7 +1535,6 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
           }
         }
       }
-
       bc_attribs.clear();
     }
   }
@@ -1562,7 +1579,6 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
     { 
       log = "Creating BCSet for exporting Steps.\n";
       PRINT_INFO("%s", log.c_str());
-      me_iface->initialize_export();
       me_iface->create_default_bcset(0,true,true,true,bc_set);
       bc_set_id = me_iface->id_from_handle(bc_set);
     }
@@ -1667,6 +1683,15 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
     for (size_t ii = 0; ii < sub_data_ids.size(); ii++)
     {
       str_temp = historyoutputs->get_output_export(steps->historyoutputs_data[sub_data_ids[ii]][1]);
+      steps_export_list.push_back(str_temp);
+    }
+
+    // Field Outputs
+    sub_data_ids = steps->get_fieldoutput_data_ids_from_fieldoutputs_id(steps->steps_data[i][8]);
+
+    for (size_t ii = 0; ii < sub_data_ids.size(); ii++)
+    {
+      str_temp = fieldoutputs->get_output_export(steps->fieldoutputs_data[sub_data_ids[ii]][1]);
       steps_export_list.push_back(str_temp);
     }
 

@@ -46,6 +46,7 @@ protected:
   bool write_connectivity(std::ofstream& output_file,MeshExportInterface *iface, CalculiXCoreInterface ccx_iface);
 
   bool write_nodes(std::ofstream& output_file,MeshExportInterface *iface, CalculiXCoreInterface ccx_iface);
+  //bool write_blocks(std::ofstream& output_file,MeshExportInterface *iface, CalculiXCoreInterface ccx_iface);
   bool write_nodesets(std::ofstream& output_file,MeshExportInterface *iface, CalculiXCoreInterface ccx_iface);
   bool write_sidesets(std::ofstream& output_file,MeshExportInterface *iface, CalculiXCoreInterface ccx_iface);
   bool write_materials(std::ofstream& output_file,CalculiXCoreInterface ccx_iface);

@@ -399,79 +399,183 @@ int CoreFieldOutputs::get_contact_data_id_from_contact_id(int contact_id)
   return return_int;
 }
 
-std::string CoreFieldOutputs::get_output_export(std::vector<int> output_ids) // get a list of the CalculiX output exports
+std::string CoreFieldOutputs::get_output_export(int output_id) // get a list of the CalculiX output exports
 {
   std::vector<std::string> outputs_export_list;
-  outputs_export_list.push_back("********************************** H I S T O R Y O U T P U T S ****************************");
   std::string str_temp;
+  std::string output_name;
+  std::vector<std::string> contactpair;
   int output_data_id;
   int sub_data_id;
-  std::vector<int> sub_data_ids;
-  /*
-  //loop over all outputs
-  for (size_t i = 0; i < output_ids.size(); i++)
-  { 
-    output_data_id = get_outputs_data_id_from_output_id(output_ids[i]);
+  
+  output_data_id = get_outputs_data_id_from_output_id(output_id);
 
-    str_temp = "*AMPLITUDE, NAME=";
-    sub_data_id = get_name_amplitude_data_id_from_name_amplitude_id(outputs_data[i][1]);
-    str_temp.append(name_amplitude_data[sub_data_id][1]);
-    //shiftx
-    sub_data_id = get_shiftx_amplitude_data_id_from_shiftx_amplitude_id(amplitudes_data[i][2]);
-    if(shiftx_amplitude_data[sub_data_id][1]!="")
-    {
-      str_temp.append(", SHIFTX=");
-      str_temp.append(shiftx_amplitude_data[sub_data_id][1]);
-    }
-    //shifty
-    sub_data_id = get_shifty_amplitude_data_id_from_shifty_amplitude_id(amplitudes_data[i][3]);
-    if(shifty_amplitude_data[sub_data_id][1]!="")
-    {
-      str_temp.append(", SHIFTY=");
-      str_temp.append(shifty_amplitude_data[sub_data_id][1]);
-    }
-    // time_type
-    if (amplitudes_data[i][4]==1)
-    {
-      str_temp.append(", TIME=TOTAL TIME"); 
-    }
+  sub_data_id = get_name_data_id_from_name_id(outputs_data[output_data_id][1]);
+  output_name = name_data[sub_data_id][1];
     
-    amplitudes_export_list.push_back(str_temp);
-
-    // second line
-    // time_amplitude
-
-    sub_data_ids = get_amplitudevalues_amplitude_data_ids_from_amplitudevalues_amplitude_id(amplitudes_data[i][5]);
-    // second lines
-    str_temp = "";
-    int ii = 0;
-    for (size_t i = 0; i < sub_data_ids.size(); i++)
+  if (outputs_data[output_data_id][2]==1)
+  {
+    sub_data_id = get_node_data_id_from_node_id(outputs_data[output_data_id][3]);
+    str_temp = "*NODE FILE";
+    if (node_data[sub_data_id][1]!="")
     {
-      if ((i != 0) && (ii!=0))
+      str_temp.append(", NSET=" + ccx_iface->get_nodeset_name(std::stoi(node_data[sub_data_id][1])));
+    }
+    if (node_data[sub_data_id][2]!="")
+    {
+      str_temp.append(", FREQUENCY=" + node_data[sub_data_id][2]);
+    }
+    if (node_data[sub_data_id][3]!="")
+    {
+      str_temp.append(", FREQUENCYF=" + node_data[sub_data_id][3]);
+    }
+    if (node_data[sub_data_id][4]!="")
+    {
+      str_temp.append(", TOTALS=" + node_data[sub_data_id][4]);
+    }
+    if (node_data[sub_data_id][5]!="")
+    {
+      str_temp.append(", GLOBAL=" + node_data[sub_data_id][5]);
+    }
+    if (node_data[sub_data_id][6]!="")
+    {
+      str_temp.append(", " + node_data[sub_data_id][6]);
+    }
+    if (node_data[sub_data_id][7]!="")
+    {
+      str_temp.append(", " + node_data[sub_data_id][7]);
+    }
+    // TIME POINTS not implemented yet
+    if (node_data[sub_data_id][9]!="")
+    {
+      str_temp.append(", " + node_data[sub_data_id][9]);
+    }
+    if (node_data[sub_data_id][10]!="")
+    {
+      str_temp.append(", " + node_data[sub_data_id][10]);
+    }
+
+    outputs_export_list.push_back(str_temp);
+
+    //second line
+    str_temp = "";
+    for (size_t i = 11; i < 11 + node_keys.size(); i++)
+    {
+      if (i!=11)
       {
         str_temp.append(",");
       }
-      ii = ii + 1;
-      
-      str_temp.append(amplitudevalues_amplitude_data[sub_data_ids[i]][1]);
-      str_temp.append(",");
-      str_temp.append(amplitudevalues_amplitude_data[sub_data_ids[i]][2]);
-      if (ii == 4)
+      if (node_data[sub_data_id][i]!="")
       {
-        ii = 0;
-        str_temp.append(",");
-        amplitudes_export_list.push_back(str_temp);
-        str_temp = "";
+        str_temp.append(node_data[sub_data_id][i]);
       }
     }
-    amplitudes_export_list.push_back(str_temp);
+
+  }else if (outputs_data[output_data_id][2]==2)
+  {
+    sub_data_id = get_element_data_id_from_element_id(outputs_data[output_data_id][3]);
+    str_temp = "*EL FILE";
+    if (element_data[sub_data_id][1]!="")
+    {
+      str_temp.append(", NSET=" + ccx_iface->get_nodeset_name(std::stoi(element_data[sub_data_id][1])));
+    }
+    if (element_data[sub_data_id][2]!="")
+    {
+      str_temp.append(", FREQUENCY=" + element_data[sub_data_id][2]);
+    }
+    if (element_data[sub_data_id][3]!="")
+    {
+      str_temp.append(", FREQUENCYF=" + element_data[sub_data_id][3]);
+    }
+    if (element_data[sub_data_id][4]!="")
+    {
+      str_temp.append(", GLOBAL=" + element_data[sub_data_id][4]);
+    }
+    if (element_data[sub_data_id][5]!="")
+    {
+      str_temp.append(", " + element_data[sub_data_id][5]);
+    }
+    if (element_data[sub_data_id][6]!="")
+    {
+      str_temp.append(", " + element_data[sub_data_id][6]);
+    }
+    if (element_data[sub_data_id][7]!="")
+    {
+      str_temp.append(", " + element_data[sub_data_id][7]);
+    }
+    // TIME POINTS not implemented yet
+    if (element_data[sub_data_id][9]!="")
+    {
+      str_temp.append(", " + element_data[sub_data_id][9]);
+    }
+    if (element_data[sub_data_id][10]!="")
+    {
+      str_temp.append(", " + element_data[sub_data_id][10]);
+    }
+
+    outputs_export_list.push_back(str_temp);
+
+    //second line
+    str_temp = "";
+    for (size_t i = 11; i < 11 + element_keys.size(); i++)
+    {
+      if (i!=11)
+      {
+        str_temp.append(",");
+      }
+      if (element_data[sub_data_id][i]!="")
+      {
+        str_temp.append(element_data[sub_data_id][i]);
+      }
+    }
+  }else if (outputs_data[output_data_id][2]==3)
+  {
+    sub_data_id = get_contact_data_id_from_contact_id(outputs_data[output_data_id][3]);
+    
+    str_temp = "*CONTACT FILE";
+    if (contact_data[sub_data_id][1]!="")
+    {
+      str_temp.append(", FREQUENCY=" + contact_data[sub_data_id][1]);
+    }
+    // TIME POINTS not implemented yet
+    if (contact_data[sub_data_id][3]!="")
+    {
+      str_temp.append(", " + contact_data[sub_data_id][3]);
+    }
+    if (contact_data[sub_data_id][4]!="")
+    {
+      str_temp.append(", " + contact_data[sub_data_id][4]);
+    }
+
+    outputs_export_list.push_back(str_temp);
+
+    //second line
+    str_temp = "";
+    for (size_t i = 5; i < 5 + contact_keys.size(); i++)
+    {
+      if (i!=5)
+      {
+        str_temp.append(",");
+      }
+      if (contact_data[sub_data_id][i]!="")
+      {
+        str_temp.append(contact_data[sub_data_id][i]);
+      }
+    }
   }
-  */
+
+  outputs_export_list.push_back(str_temp);
+
   std::string output_export;
 
   for (size_t i = 0; i < outputs_export_list.size(); i++)
   {
-    output_export.append(outputs_export_list[i] + "\n");
+    if (i < outputs_export_list.size()-1)
+    {
+      output_export.append(outputs_export_list[i] + "\n");
+    }else{
+      output_export.append(outputs_export_list[i]);
+    }
   }
 
   return output_export;

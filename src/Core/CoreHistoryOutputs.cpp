@@ -374,6 +374,7 @@ std::string CoreHistoryOutputs::get_output_export(int output_id) // get a list o
   std::vector<std::string> outputs_export_list;
   std::string str_temp;
   std::string output_name;
+  std::vector<std::string> contactpair;
   int output_data_id;
   int sub_data_id;
   
@@ -429,10 +430,89 @@ std::string CoreHistoryOutputs::get_output_export(int output_id) // get a list o
 
   }else if (outputs_data[output_data_id][2]==2)
   {
-    output_name = output_name + " (element)";
+    sub_data_id = get_element_data_id_from_element_id(outputs_data[output_data_id][3]);
+    str_temp = "*EL PRINT, ELSET=";
+    if (element_data[sub_data_id][1]=="")
+    {
+      str_temp = "** No ELSET defined for History Output ID " + std::to_string(output_id);
+      return str_temp;
+    }
+    str_temp.append(ccx_iface->get_block_name(std::stoi(element_data[sub_data_id][1])));
+
+    if (element_data[sub_data_id][2]!="")
+    {
+      str_temp.append(", FREQUENCY=" + element_data[sub_data_id][2]);
+    }
+    if (element_data[sub_data_id][3]!="")
+    {
+      str_temp.append(", FREQUENCYF=" + element_data[sub_data_id][3]);
+    }
+    if (element_data[sub_data_id][4]!="")
+    {
+      str_temp.append(", TOTALS=" + element_data[sub_data_id][4]);
+    }
+    if (element_data[sub_data_id][5]!="")
+    {
+      str_temp.append(", GLOBAL=" + element_data[sub_data_id][5]);
+    }
+
+    // TIME POINTS not implemented yet
+    outputs_export_list.push_back(str_temp);
+
+    //second line
+    str_temp = "";
+    for (size_t i = 7; i < 7 + element_keys.size(); i++)
+    {
+      if (i!=7)
+      {
+        str_temp.append(",");
+      }
+      if (element_data[sub_data_id][i]!="")
+      {
+        str_temp.append(element_data[sub_data_id][i]);
+      }
+    }
   }else if (outputs_data[output_data_id][2]==3)
   {
-    output_name = output_name + " (contact)";
+    sub_data_id = get_contact_data_id_from_contact_id(outputs_data[output_data_id][3]);
+    
+    str_temp = "*CONTACT PRINT";
+    if (contact_data[sub_data_id][1]!="")
+    {
+      contactpair = ccx_iface->get_contactpair_master_slave(std::stoi(contact_data[sub_data_id][1]));
+      str_temp.append(", MASTER=" + contactpair[0]);
+      str_temp.append(", SLAVE=" + contactpair[1]);
+    }
+
+    if (contact_data[sub_data_id][2]!="")
+    {
+      str_temp.append(", FREQUENCY=" + contact_data[sub_data_id][2]);
+    }
+    if (contact_data[sub_data_id][3]!="")
+    {
+      str_temp.append(", TOTALS=" + contact_data[sub_data_id][3]);
+    }
+    if (contact_data[sub_data_id][4]!="")
+    {
+      str_temp.append(", GLOBAL=" + contact_data[sub_data_id][4]);
+    }
+
+    // TIME POINTS not implemented yet
+    outputs_export_list.push_back(str_temp);
+
+    //second line
+    str_temp = "";
+    for (size_t i = 6; i < 6 + contact_keys.size(); i++)
+    {
+      if (i!=6)
+      {
+        str_temp.append(",");
+      }
+      if (contact_data[sub_data_id][i]!="")
+      {
+        str_temp.append(contact_data[sub_data_id][i]);
+      }
+    }
   }
 
   outputs_export_list.push_back(str_temp);
