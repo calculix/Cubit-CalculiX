@@ -58,6 +58,7 @@ public:
   bool check_amplitude_exists(int amplitude_id);
   bool check_historyoutput_exists(int historyoutput_id);
   bool check_fieldoutput_exists(int fieldoutput_id);
+  bool check_vertex_in_nodeset_exists(int vertex_id,int nodeset_id); // checks if the vertex exists in the nodeset
   int get_bc_fea_type(std::vector<std::pair<int, double>> bc_attribs);
   bool set_ccx_element_type(int block_id, std::string ccx_element_type); // sets the ccx element type for a block
   std::vector<int> get_blocks(); // gets the block ids from core blocks

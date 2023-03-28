@@ -1010,6 +1010,20 @@ bool CalculiXCore::check_fieldoutput_exists(int fieldoutput_id)
   return true;
 }
 
+bool CalculiXCore::check_vertex_in_nodeset_exists(int vertex_id,int nodeset_id)
+{
+  std::vector<int> nodeset_vertices;
+  nodeset_vertices = CubitInterface::get_nodeset_vertices(nodeset_id);
+  for (size_t i = 0; i < nodeset_vertices.size(); i++)
+  {
+    if (nodeset_vertices[i] == vertex_id)
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
 int CalculiXCore::get_bc_fea_type(std::vector<std::pair<int, double>> bc_attribs)
 {
   for (size_t i = 0; i < bc_attribs.size(); i++)

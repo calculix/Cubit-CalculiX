@@ -85,6 +85,11 @@ std::string CalculiXCoreInterface::get_amplitude_name(int amplitude_id)
   return ccx_core.get_amplitude_name(amplitude_id);
 }
 
+bool CalculiXCoreInterface::check_vertex_in_nodeset_exists(int vertex_id,int nodeset_id)
+{
+  return ccx_core.check_vertex_in_nodeset_exists(vertex_id,nodeset_id);
+}
+
 bool CalculiXCoreInterface::core_update()
 {
   if (ccx_core.update())

@@ -24,6 +24,7 @@ public:
   std::string get_surfaceinteraction_name(int surfaceinteraction_id); // gets the surfaceinteraction name
   std::vector<std::string> get_contactpair_master_slave(int contactpair_id); // gets the contactpair master and slave name
   std::string get_amplitude_name(int amplitude_id); // gets the surfaceinteraction name
+  bool check_vertex_in_nodeset_exists(int vertex_id,int nodeset_id); // checks if the vertex exists in the nodeset
   bool core_update(); // lets the core check for updates aka changes from the entities
   bool core_reset(); // reset the whole core to the init level
   std::vector<int> get_blocks(); // gets the block ids from core blocks
