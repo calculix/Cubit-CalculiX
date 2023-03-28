@@ -5,12 +5,15 @@ create brick x 1
 set duplicate block elements off
 block 1 add volume 1
 
+create vertex 2 0 0 
+create vertex 0 2 0 
+
+
 ccx create amplitude name amp1 time_amplitude 0 1 2 3 
 ccx create amplitude name amp2 time_amplitude 0 1 2 3 
 ccx create amplitude name amp3 time_amplitude 0 1 2 3 
 
-
-create force  on vertex 2  force value 1 moment value 2 direction 0 0 1 
+create force  on vertex 2 9 10 force value 1 moment value 2 direction 0 0 1 
 modify force 1 name 'test' add vertex 5  
 modify force 1 add surface 5
 create force on curve 12 force value 55 direction 1 0 1
@@ -21,9 +24,15 @@ ccx modify pressure 1 op new amplitude 1 timedelay -55.1
 
 create displacement  on surface 6  dof all fix 99 
 modify displacement 1 name 'disp' 
+modify displacement 1 add vertex 9
+modify displacement 1 dof 1 fix 1
+modify displacement 1 dof 4 fix 4
+modify displacement 1 dof 5 fix 5
+modify displacement 1 dof 6 fix 6
 create displacement  on surface 6  dof all fix 0 
 ccx modify displacement 2 op new amplitude 1 timedelay -55.1
 create displacement on surface 5 dof all fix 55
+modify displacement 2 add vertex 10
 
 create surface circle radius 1 zplane 
 create temperature  on surface 7  middle 1 gradient 22 
@@ -35,6 +44,9 @@ create temperature  on surface 6  value 55
 create temperature  on surface 6  value 66
 modify temperature 2 name 'temp' 
 ccx modify temperature 2 op new amplitude 1 timedelay -55.1
+
+ccx create constraint rigid body nodeset 1 vertex 9
+ccx create constraint rigid body nodeset 5 vertex 10
 
 ccx create historyoutput name test_name1 node
 ccx create historyoutput name test_name2 element
@@ -59,8 +71,8 @@ ccx create fieldoutput name fieldtest1 node
 ccx create fieldoutput name fieldtest2 element
 ccx create fieldoutput name fieldtest3 contact
 
-ccx modify fieldoutput 1 node name fieldjuhi nodeset 11 frequency 22 frequencyf 33 totals_yes global_yes output_2d output_all_on last_iterations_on contact_elements_on key_on CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF NT PNT POT PRF PS PSF PT PTF PU RF RFL SEN TS TSF TT TTF TURB U V VF
-ccx modify fieldoutput 2 element name fieldjuhi nodeset 11 frequency 22 frequencyf 33 global_yes output_2d output_all_on section_forces_on last_iterations_on contact_elements_on key_on CEEQ E ECD EMFB EMFE ENER ERR HER HFL HFLF MAXE MAXS ME PEEQ PHS S SF SMID SNEG SPOS SVF SDV THE ZZS
+ccx modify fieldoutput 1 node name fieldjuhi nodeset 1 frequency 22 frequencyf 33 totals_yes global_yes output_2d output_all_on last_iterations_on contact_elements_on key_on CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF NT PNT POT PRF PS PSF PT PTF PU RF RFL SEN TS TSF TT TTF TURB U V VF
+ccx modify fieldoutput 2 element name fieldjuhi nodeset 1 frequency 22 frequencyf 33 global_yes output_2d output_all_on section_forces_on last_iterations_on contact_elements_on key_on CEEQ E ECD EMFB EMFE ENER ERR HER HFL HFLF MAXE MAXS ME PEEQ PHS S SF SMID SNEG SPOS SVF SDV THE ZZS
 ccx modify fieldoutput 3 contact name fieldcontact frequency 33 last_iterations_on contact_elements_on key_on cdis cstr cels pcon
 
 ccx create initialcondition displacement
@@ -131,6 +143,14 @@ ccx modify step 7 uncoupledtemperaturedisplacement name uncoupledtemperaturedisp
 
 mesh vol all
 mesh surf all
+mesh vertex all
 
 export ccx "test_export.inp"
+
+
+
+
+
+
+
 

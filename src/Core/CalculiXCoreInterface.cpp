@@ -165,6 +165,11 @@ bool CalculiXCoreInterface::referencepoints_reset_on_export()
   return ccx_core.referencepoints_reset_on_export();
 }
 
+std::vector<std::string> CalculiXCoreInterface::get_referencepoints_nodesets(int vertex_id)
+{
+  return ccx_core.get_referencepoints_nodesets(vertex_id);
+}
+
 std::string CalculiXCoreInterface::get_referencepoints_export()
 {
   return ccx_core.get_referencepoints_export();

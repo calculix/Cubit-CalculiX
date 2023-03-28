@@ -377,54 +377,76 @@ std::string CoreHistoryOutputs::get_output_export(int output_id) // get a list o
   std::vector<std::string> contactpair;
   int output_data_id;
   int sub_data_id;
+  int nodeset_id = -1;
+  std::vector<int> rigidbody_vertex_list;
+  std::vector<std::string> referencepoints_nodesets;
+  rigidbody_vertex_list = ccx_iface->get_rigidbody_vertex_list();
+
   
   output_data_id = get_outputs_data_id_from_output_id(output_id);
 
   sub_data_id = get_name_data_id_from_name_id(outputs_data[output_data_id][1]);
   output_name = name_data[sub_data_id][1];
-    
+
   if (outputs_data[output_data_id][2]==1)
-  {
+  { 
     sub_data_id = get_node_data_id_from_node_id(outputs_data[output_data_id][3]);
-    str_temp = "*NODE PRINT, NSET=";
-    if (node_data[sub_data_id][1]=="")
+    if (node_data[sub_data_id][1]!="")
     {
-      str_temp = "** No NSET defined for History Output ID " + std::to_string(output_id);
-      return str_temp;
+      nodeset_id = std::stoi(node_data[sub_data_id][1]);
     }
-    str_temp.append(ccx_iface->get_nodeset_name(std::stoi(node_data[sub_data_id][1])));
-
-    if (node_data[sub_data_id][2]!="")
+    for (size_t i = 0; i < rigidbody_vertex_list.size()+1; i++)
     {
-      str_temp.append(", FREQUENCY=" + node_data[sub_data_id][2]);
-    }
-    if (node_data[sub_data_id][3]!="")
-    {
-      str_temp.append(", FREQUENCYF=" + node_data[sub_data_id][3]);
-    }
-    if (node_data[sub_data_id][4]!="")
-    {
-      str_temp.append(", TOTALS=" + node_data[sub_data_id][4]);
-    }
-    if (node_data[sub_data_id][5]!="")
-    {
-      str_temp.append(", GLOBAL=" + node_data[sub_data_id][5]);
-    }
-
-    // TIME POINTS not implemented yet
-    outputs_export_list.push_back(str_temp);
-
-    //second line
-    str_temp = "";
-    for (size_t i = 7; i < 7 + node_keys.size(); i++)
-    {
-      if (i!=7)
+      if ((ccx_iface->check_vertex_in_nodeset_exists(rigidbody_vertex_list[i],nodeset_id))||(i==rigidbody_vertex_list.size()))
       {
-        str_temp.append(",");
-      }
-      if (node_data[sub_data_id][i]!="")
-      {
-        str_temp.append(node_data[sub_data_id][i]);
+        str_temp = "*NODE PRINT, NSET=";
+        if (i==rigidbody_vertex_list.size())
+        {
+          if (node_data[sub_data_id][1]=="")
+          {
+            str_temp = "** No NSET defined for History Output ID " + std::to_string(output_id);
+            return str_temp;
+          }
+          str_temp.append(ccx_iface->get_nodeset_name(nodeset_id));
+        }else{
+          referencepoints_nodesets = ccx_iface->get_referencepoints_nodesets(rigidbody_vertex_list[i]);
+          str_temp.append(referencepoints_nodesets[1]);
+        }
+
+        if (node_data[sub_data_id][2]!="")
+        {
+          str_temp.append(", FREQUENCY=" + node_data[sub_data_id][2]);
+        }
+        if (node_data[sub_data_id][3]!="")
+        {
+          str_temp.append(", FREQUENCYF=" + node_data[sub_data_id][3]);
+        }
+        if (node_data[sub_data_id][4]!="")
+        {
+          str_temp.append(", TOTALS=" + node_data[sub_data_id][4]);
+        }
+        if (node_data[sub_data_id][5]!="")
+        {
+          str_temp.append(", GLOBAL=" + node_data[sub_data_id][5]);
+        }
+
+        // TIME POINTS not implemented yet
+        outputs_export_list.push_back(str_temp);
+
+        //second line
+        str_temp = "";
+        for (size_t i = 7; i < 7 + node_keys.size(); i++)
+        {
+          if (i!=7)
+          {
+            str_temp.append(",");
+          }
+          if (node_data[sub_data_id][i]!="")
+          {
+            str_temp.append(node_data[sub_data_id][i]);
+          }
+        }
+        outputs_export_list.push_back(str_temp);
       }
     }
 
@@ -472,6 +494,8 @@ std::string CoreHistoryOutputs::get_output_export(int output_id) // get a list o
         str_temp.append(element_data[sub_data_id][i]);
       }
     }
+    outputs_export_list.push_back(str_temp);
+
   }else if (outputs_data[output_data_id][2]==3)
   {
     sub_data_id = get_contact_data_id_from_contact_id(outputs_data[output_data_id][3]);
@@ -513,9 +537,9 @@ std::string CoreHistoryOutputs::get_output_export(int output_id) // get a list o
         str_temp.append(contact_data[sub_data_id][i]);
       }
     }
-  }
+    outputs_export_list.push_back(str_temp);
 
-  outputs_export_list.push_back(str_temp);
+  }
 
   std::string output_export;
 

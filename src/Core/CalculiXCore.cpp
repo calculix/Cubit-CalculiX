@@ -1164,6 +1164,11 @@ bool CalculiXCore::referencepoints_reset_on_export()
   return referencepoints->reset();
 }
 
+std::vector<std::string> CalculiXCore::get_referencepoints_nodesets(int vertex_id)
+{
+  return referencepoints->get_referencepoints_nodesets(vertex_id);
+}
+
 std::string CalculiXCore::get_referencepoints_export()
 {
   return referencepoints->get_referencepoints_export();
@@ -1497,6 +1502,9 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
   std::vector<BCEntityHandle> bc_handles;
   BCEntityHandle bc_handle;
   std::vector<MeshExportBCData> bc_attribs; 
+  std::vector<int> rigidbody_vertex_list;
+  std::vector<std::string> referencepoints_nodesets;
+  rigidbody_vertex_list = get_rigidbody_vertex_list();
 
   //loop over all initialconditions
   for (size_t i = 0; i < initialconditions->initialconditions_data.size(); i++)
@@ -1528,6 +1536,19 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
             { 
               str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iii].first+1) + "," + std::to_string(bc_attribs[iii].second);
               initialconditions_export_list.push_back(str_temp);
+            }
+
+            for (size_t iii = 0; iii < rigidbody_vertex_list.size(); iii++)
+            {
+              if (check_vertex_in_nodeset_exists(rigidbody_vertex_list[iii],me_iface->id_from_handle(nodeset)))
+              { 
+                referencepoints_nodesets = referencepoints->get_referencepoints_nodesets(rigidbody_vertex_list[iii]);
+                for (size_t iv = 3; iv < bc_attribs.size(); iv++)
+                { 
+                  str_temp = referencepoints_nodesets[1] + "," + std::to_string(bc_attribs[iv].first-2) + "," + std::to_string(bc_attribs[iv].second);
+                  initialconditions_export_list.push_back(str_temp);
+                }
+              }
             }
           }
         }
@@ -1585,6 +1606,9 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
   std::vector<BCEntityHandle> bc_handles;
   BCEntityHandle bc_handle;
   std::vector<MeshExportBCData> bc_attribs; 
+  std::vector<int> rigidbody_vertex_list;
+  std::vector<std::string> referencepoints_nodesets;
+  rigidbody_vertex_list = get_rigidbody_vertex_list();
 
   //loop over all steps
   for (size_t i = 0; i < steps->steps_data.size(); i++)
@@ -1624,6 +1648,18 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
             {
               str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(iv+3) + "," + std::to_string(bc_attribs[iv+4].second*bc_attribs[4].second);
               steps_export_list.push_back(str_temp);
+            }
+            for (size_t iv = 0; iv < rigidbody_vertex_list.size(); iv++)
+            {
+              if (check_vertex_in_nodeset_exists(rigidbody_vertex_list[iv],me_iface->id_from_handle(nodeset)))
+              { 
+                referencepoints_nodesets = referencepoints->get_referencepoints_nodesets(rigidbody_vertex_list[iv]);
+                for (size_t v = 1; v < 4; v++)
+                { 
+                  str_temp = referencepoints_nodesets[1] + "," + std::to_string(v) + "," + std::to_string(bc_attribs[v+4].second*bc_attribs[4].second);
+                  steps_export_list.push_back(str_temp);
+                }
+              }
             }
           }  
         }
@@ -1669,6 +1705,18 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
             { 
               str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iv].first+1) + "," + std::to_string(bc_attribs[iv].second);
               steps_export_list.push_back(str_temp);
+            }
+            for (size_t iv = 0; iv < rigidbody_vertex_list.size(); iv++)
+            {
+              if (check_vertex_in_nodeset_exists(rigidbody_vertex_list[iv],me_iface->id_from_handle(nodeset)))
+              { 
+                referencepoints_nodesets = referencepoints->get_referencepoints_nodesets(rigidbody_vertex_list[iv]);
+                for (size_t v = 3; v < bc_attribs.size(); v++)
+                { 
+                  str_temp = referencepoints_nodesets[1] + "," + std::to_string(bc_attribs[v].first-2) + "," + std::to_string(bc_attribs[v].second);
+                  steps_export_list.push_back(str_temp);
+                }
+              }
             }
           }  
         }

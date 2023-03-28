@@ -143,6 +143,19 @@ int CoreReferencePoints::get_rot_from_vertex_id(int vertex_id)
   }
 }  
 
+std::vector<std::string> CoreReferencePoints::get_referencepoints_nodesets(int vertex_id)
+{
+  std::vector<std::string> output(2);
+  int referencepoint_data_id;
+  
+  referencepoint_data_id = get_referencepoint_data_id_from_vertex_id(vertex_id);
+
+  output[0] = "REF_NODE_" + std::to_string(referencepoint_data_id);
+  output[1] = "ROT_NODE_" + std::to_string(referencepoint_data_id);
+  
+  return output;
+}
+
 std::string CoreReferencePoints::get_referencepoints_export()
 {
   std::string output;
