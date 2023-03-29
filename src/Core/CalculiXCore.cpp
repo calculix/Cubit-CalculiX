@@ -25,11 +25,14 @@
 #include "CoreFieldOutputs.hpp"
 #include "CoreInitialConditions.hpp"
 #include "CoreSteps.hpp"
+#include "CoreJobs.hpp"
+#include "CoreSimulation.hpp"
 
 CalculiXCore::CalculiXCore():
   cb(NULL),mat(NULL),sections(NULL),constraints(NULL),referencepoints(NULL),surfaceinteractions(NULL),
   contactpairs(NULL),amplitudes(NULL),loadsforces(NULL),loadspressures(NULL),bcsdisplacements(NULL),
-  bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL), initialconditions(NULL), steps(NULL)
+  bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL), initialconditions(NULL), steps(NULL),
+  jobs(NULL), simulation(NULL)
 {
   init();
 }
@@ -68,6 +71,10 @@ CalculiXCore::~CalculiXCore()
     delete initialconditions;
   if(steps)
     delete steps;
+  if(jobs)
+    delete jobs;
+  if(simulation)
+    delete simulation;
 }
 
 bool CalculiXCore::print_to_log(std::string str_log)
@@ -167,6 +174,16 @@ bool CalculiXCore::init()
   
   steps->init();
 
+  if(!jobs)
+    jobs = new CoreJobs;
+  
+  jobs->init();
+
+  if(!simulation)
+    simulation = new CoreSimulation;
+  
+  simulation->init();
+
   if (use_ccx_logfile)
   {
     print_to_log("CalculiXCore Initialization!");
@@ -221,6 +238,8 @@ bool CalculiXCore::reset()
   fieldoutputs->reset();
   initialconditions->reset();
   steps->reset();
+  jobs->reset();
+  simulation->reset();
 
   sideset_face_data.clear();
   //print_to_log("RESET");
@@ -744,6 +763,7 @@ std::string CalculiXCore::print_data()
   str_return.append(fieldoutputs->print_data());
   str_return.append(initialconditions->print_data());
   str_return.append(steps->print_data());
+  str_return.append(jobs->print_data());
 
   return str_return;
 }
@@ -1456,6 +1476,47 @@ bool CalculiXCore::step_remove_historyoutputs(int step_id, std::vector<int> hist
 bool CalculiXCore::step_remove_fieldoutputs(int step_id, std::vector<int> fieldoutput_ids)
 {
   return steps->remove_fieldoutputs(step_id,fieldoutput_ids);
+}
+
+bool CalculiXCore::create_job(std::vector<std::string> options)
+{
+  return jobs->create_job(options);
+}
+
+bool CalculiXCore::modify_job(int job_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return jobs->modify_job(job_id, options, options_marker);
+}
+
+bool CalculiXCore::delete_job(int job_id)
+{
+  return jobs->delete_job(job_id);
+}
+
+bool CalculiXCore::run_job(int job_id)
+{
+  std::string filepath;
+  std::string log;
+  std::string command;
+  int job_data_id;
+  job_data_id = jobs->get_jobs_data_id_from_job_id(job_id);
+
+  if (jobs->jobs_data[job_data_id][2]!="")
+  {
+    filepath = jobs->jobs_data[job_data_id][2];
+  } else {
+    filepath = jobs->jobs_data[job_data_id][1] + ".inp";
+    log = "Exporting Job " + jobs->jobs_data[job_data_id][1] + " with ID " + jobs->jobs_data[job_data_id][0] + " to \n";
+    log.append(filepath +  " \n");
+    PRINT_INFO("%s", log.c_str());
+    command = "export ccx \"" + filepath + "\"";
+    CubitInterface::cmd(command.c_str());
+    if (CubitInterface::was_last_cmd_undoable())
+    {
+      return false;
+    }
+  }
+  return simulation->solve(filepath);
 }
 
 std::string CalculiXCore::get_material_export_data() // gets the export data from materials core
@@ -2503,6 +2564,22 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_fieldoutputs_tree_
   return outputs_tree_data;
 }
 
+std::vector<std::vector<std::string>> CalculiXCore::get_jobs_tree_data()
+{ 
+  std::vector<std::vector<std::string>> jobs_tree_data;
+  
+  for (size_t i = 0; i < jobs->jobs_data.size(); i++)
+  {
+    std::vector<std::string> jobs_tree_data_set;
+    
+    jobs_tree_data_set.push_back(jobs->jobs_data[i][0]); //job_id
+    jobs_tree_data_set.push_back(jobs->jobs_data[i][1]); //job_name
+    jobs_tree_data.push_back(jobs_tree_data_set);
+  }
+
+  return jobs_tree_data;
+}
+
 std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_string)
 {
   std::vector<int> input_ids;
@@ -2572,6 +2649,12 @@ std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_
       for (size_t i = 0; i < steps->steps_data.size(); i++)
       {
         all_ids.push_back(steps->steps_data[i][0]);
+      }
+    } else if (parse_type=="job")
+    {
+      for (size_t i = 0; i < jobs->jobs_data.size(); i++)
+      {
+        all_ids.push_back(std::stoi(jobs->jobs_data[i][0]));
       }
     }
   }

@@ -78,6 +78,10 @@
 #include "ccxStepCoupledTemperatureDisplacementModifyCommand.hpp"
 #include "ccxStepUncoupledTemperatureDisplacementModifyCommand.hpp"
 #include "ccxStepDeleteCommand.hpp"
+#include "ccxJobCreateCommand.hpp"
+#include "ccxJobModifyCommand.hpp"
+#include "ccxJobDeleteCommand.hpp"
+#include "ccxRunJobCommand.hpp"
 
 //! This macro is required to identify this as a valid Cubit plugin. The plugin
 //! will NOT be loaded if this macro is not present.
@@ -171,6 +175,10 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxStepCoupledTemperatureDisplacementModifyCommand");
   keys.push_back("ccxStepUncoupledTemperatureDisplacementModifyCommand");
   keys.push_back("ccxStepDeleteCommand");
+  keys.push_back("ccxJobCreateCommand");
+  keys.push_back("ccxJobModifyCommand");
+  keys.push_back("ccxJobDeleteCommand");
+  keys.push_back("ccxRunJobCommand");
 
   return keys;
 }
@@ -416,6 +424,18 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxStepDeleteCommand")
     return new ccxStepDeleteCommand();
+  
+  else if(key == "ccxJobCreateCommand")
+    return new ccxJobCreateCommand();
+
+  else if(key == "ccxJobModifyCommand")
+    return new ccxJobModifyCommand();
+  
+  else if(key == "ccxJobDeleteCommand")
+    return new ccxJobDeleteCommand();
+
+  else if(key == "ccxRunJobCommand")
+    return new ccxRunJobCommand();
 
   return NULL;
 }

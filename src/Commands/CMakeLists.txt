@@ -159,4 +159,12 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepUncoupledTemperatureDisplacementModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepDeleteCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxJobCreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxJobCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxJobModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxJobModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxJobDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxJobDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxRunJobCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxRunJobCommand.hpp
     PARENT_SCOPE)

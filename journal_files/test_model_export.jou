@@ -147,10 +147,8 @@ mesh vertex all
 
 export ccx "test_export.inp"
 
+ccx create job name jobname1
+ccx create job name jobname2 filepath test_export.inp
 
-
-
-
-
-
-
+ccx run job 1
+ccx run job 2

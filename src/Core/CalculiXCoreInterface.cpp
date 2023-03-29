@@ -400,6 +400,26 @@ bool CalculiXCoreInterface::step_remove_fieldoutputs(int step_id, std::vector<in
   return ccx_core.step_remove_fieldoutputs(step_id,fieldoutput_ids);
 }
 
+bool CalculiXCoreInterface::create_job(std::vector<std::string> options)
+{
+  return ccx_core.create_job(options);
+}
+
+bool CalculiXCoreInterface::modify_job(int job_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return ccx_core.modify_job(job_id, options, options_marker);
+}
+
+bool CalculiXCoreInterface::delete_job(int job_id)
+{
+  return ccx_core.delete_job(job_id);
+}
+
+bool CalculiXCoreInterface::run_job(int job_id)
+{
+  return ccx_core.run_job(job_id);
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_blocks_tree_data()
 { 
   return ccx_core.get_blocks_tree_data();
@@ -513,6 +533,11 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_historyou
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_fieldoutputs_tree_data(int step_id)
 { 
   return ccx_core.get_steps_fieldoutputs_tree_data(step_id);
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_jobs_tree_data()
+{ 
+  return ccx_core.get_jobs_tree_data();
 }
 
 std::string CalculiXCoreInterface::get_material_export_data() // gets the export data from materials core

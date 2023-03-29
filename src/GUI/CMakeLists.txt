@@ -57,6 +57,8 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/StepsHistoryOutputsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsFieldOutputsTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsFieldOutputsTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/JobsTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/JobsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CCXBlocksElementTypePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CCXBlocksElementTypePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/SectionsCreatePanel.hpp

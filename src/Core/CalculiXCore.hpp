@@ -17,6 +17,8 @@ class CoreHistoryOutputs;
 class CoreFieldOutputs;
 class CoreInitialConditions;
 class CoreSteps;
+class CoreJobs;
+class CoreSimulation;
 
 class MeshExportInterface;
 class MaterialInterface;
@@ -119,6 +121,10 @@ public:
   bool step_remove_bcs(int step_id, int bc_type, std::vector<int> bc_ids); // removes bcs from bcs_data
   bool step_remove_historyoutputs(int step_id, std::vector<int> historyoutput_ids); // removes historyoutputs to historyoutputs_data
   bool step_remove_fieldoutputs(int step_id, std::vector<int> fieldoutput_ids); // removes fieldoutputs to fieldoutputs_data
+  bool create_job(std::vector<std::string> options); // adds a new job
+  bool modify_job(int job_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a job
+  bool delete_job(int job_id); // delete job
+  bool run_job(int job_id); // runs job
   std::vector<std::vector<std::string>> get_blocks_tree_data(); // gets the data from core blocks to build the tree
   std::vector<std::vector<std::string>> get_nodeset_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_sideset_tree_data(); // gets the data from core to build the tree
@@ -142,6 +148,7 @@ public:
   std::vector<std::vector<std::string>> get_steps_bcstemperatures_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_historyoutputs_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_fieldoutputs_tree_data(int step_id); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_jobs_tree_data(); // gets the data from core to build the tree
   std::string get_material_export_data(); // gets the export data from materials core
   std::string get_section_export_data(); // gets the export data from sections core
   std::string get_constraint_export_data(); // gets the export data from constraints core
@@ -167,6 +174,8 @@ public:
   CoreFieldOutputs *fieldoutputs;
   CoreInitialConditions *initialconditions;
   CoreSteps *steps;
+  CoreJobs *jobs;
+  CoreSimulation *simulation;
   MeshExportInterface *me_iface;
   MaterialInterface *mat_iface;
 };
