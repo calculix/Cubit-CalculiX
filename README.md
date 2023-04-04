@@ -6,6 +6,10 @@ If you want to build the plugin yourself, i would recommend using Centos 7.
 As far as i know, that's the distro on which cubit is build.
 This plugin was tested with Cubit 2022.4 on Ubuntu 22.04
 
+# Upcoming soon
+I am currently working on a deeper integration of calculix to cubit. So that a complete model definition can be done with cubit.
+When the alpha is ready i will release it here.
+
 # Installation
 
 copy the **libcalculix_plugin.so** into the plugins directory, that you can find in your Cubit installation directory.
