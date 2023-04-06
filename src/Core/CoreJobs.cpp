@@ -1,6 +1,8 @@
 #include "CoreJobs.hpp"
-#include "CubitInterface.hpp"
 #include "CalculiXCoreInterface.hpp"
+#include "CubitInterface.hpp"
+#include "CubitMessage.hpp"
+
 
 CoreJobs::CoreJobs()
 {}
@@ -81,7 +83,7 @@ bool CoreJobs::modify_job(int job_id, std::vector<std::string> options, std::vec
 
 bool CoreJobs::add_job(int job_id, std::string name, std::string filepath)
 {
-  std::vector<std::string> v = {std::to_string(job_id), name, filepath};      
+  std::vector<std::string> v = {std::to_string(job_id), name, filepath, "0"};      
   jobs_data.push_back(v);
   return true;
 }
@@ -96,6 +98,49 @@ bool CoreJobs::delete_job(int job_id)
     jobs_data.erase(jobs_data.begin() + jobs_data_id);
     return true;
   }
+}
+
+bool CoreJobs::run_job(int job_id)
+{
+  std::string filepath;
+  std::string log;
+  std::string command;
+  int job_data_id;
+  job_data_id = get_jobs_data_id_from_job_id(job_id);
+
+  if (jobs_data[job_data_id][2]!="")
+  {
+    filepath = jobs_data[job_data_id][2];
+  } else {
+    filepath = jobs_data[job_data_id][1] + ".inp";
+    log = "Exporting Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " to \n";
+    log.append(filepath +  " \n");
+    PRINT_INFO("%s", log.c_str());
+    command = "export ccx \"" + filepath + "\"";
+    CubitInterface::cmd(command.c_str());
+    if (CubitInterface::was_last_cmd_undoable())
+    {
+      return false;
+    }
+  }
+  start_process_linux(job_id, filepath);
+  return true;
+}
+
+bool CoreJobs::start_process_linux(int job_id, std::string filepath)
+{
+  std::string log;
+  std::string ccx_exe;
+  std::string command;
+  int job_data_id;
+  job_data_id = get_jobs_data_id_from_job_id(job_id);
+
+  log = "Submitting Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " to CCX\n";
+  PRINT_INFO("%s", log.c_str());
+  
+  ccx_exe = "/home/user/Downloads/cgx_2.20.1";
+
+  return true;
 }
 
 int CoreJobs::get_jobs_data_id_from_job_id(int job_id)
@@ -115,11 +160,11 @@ std::string CoreJobs::print_data()
 {
   std::string str_return;
   str_return = "\n CoreJobs jobs_data: \n";
-  str_return.append("job_id, name, filepath \n");
+  str_return.append("job_id, name, filepath, status \n");
 
   for (size_t i = 0; i < jobs_data.size(); i++)
   {
-    str_return.append(jobs_data[i][0] + " " + jobs_data[i][1] + " " + jobs_data[i][2] + " \n");
+    str_return.append(jobs_data[i][0] + " " + jobs_data[i][1] + " " + jobs_data[i][2] + " " + jobs_data[i][3] + " \n");
   }
 
   return str_return;

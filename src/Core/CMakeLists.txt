@@ -41,6 +41,4 @@ set(CORE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/CoreSteps.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreJobs.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreJobs.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreSimulation.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreSimulation.hpp
     PARENT_SCOPE)

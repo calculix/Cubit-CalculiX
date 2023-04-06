@@ -141,7 +141,7 @@ ccx modify step 5 heattransfer name heattransferstep solver pastix direct_yes st
 ccx modify step 6 coupledtemperaturedisplacement name coupledtemperaturedisplacementstep solver pastix direct_yes alpha 0.3 steadystate_yes deltmx 2 timereset_yes totaltimeatstart 1 compressible_yes initialtimeincrement 1 timeperiodofstep 2 minimumtimeincrement 3 maximumtimeincrement 5 initialtimeincrementcfd 1000
 ccx modify step 7 uncoupledtemperaturedisplacement name uncoupledtemperaturedisplacementstep solver pastix direct_yes alpha 0.3 steadystate_yes deltmx 2 explicit_yes timereset_yes totaltimeatstart 1 initialtimeincrement 1 timeperiodofstep 2 minimumtimeincrement 3 maximumtimeincrement 5 
 
-mesh vol all
+mesh vol 1
 mesh surf all
 mesh vertex all
 

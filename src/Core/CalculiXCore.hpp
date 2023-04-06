@@ -175,7 +175,6 @@ public:
   CoreInitialConditions *initialconditions;
   CoreSteps *steps;
   CoreJobs *jobs;
-  CoreSimulation *simulation;
   MeshExportInterface *me_iface;
   MaterialInterface *mat_iface;
 };
