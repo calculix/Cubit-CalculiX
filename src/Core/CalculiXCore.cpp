@@ -1557,7 +1557,7 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
   std::string log;
   int sub_data_id;
   std::string command;
-  int bc_set_id;
+  int bc_set_id=-1;
   BCSetHandle bc_set;
   NodesetHandle nodeset;
   std::vector<BCEntityHandle> bc_handles;
@@ -1635,10 +1635,13 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
     }
   }
   
-  log = "Deleting BCSet Initial Conditions Export.\n";
-  PRINT_INFO("%s", log.c_str());
-  command = "delete bcset " + std::to_string(bc_set_id);
-  CubitInterface::cmd(command.c_str());
+  if (bc_set_id!=-1)
+  {
+    log = "Deleting BCSet Initial Conditions Export.\n";
+    PRINT_INFO("%s", log.c_str());
+    command = "delete bcset " + std::to_string(bc_set_id);
+    CubitInterface::cmd(command.c_str());
+  }
 
   std::string initialcondition_export;
 
@@ -1660,7 +1663,7 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
   int sub_data_id;
   std::vector<int> sub_data_ids;
   std::string command;
-  int bc_set_id;
+  int bc_set_id=-1;
   BCSetHandle bc_set;
   NodesetHandle nodeset;
   SidesetHandle sideset;
@@ -1822,10 +1825,13 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
     steps_export_list.push_back(str_temp);
   }
   
-  log = "Deleting BCSet Steps Export.\n";
-  PRINT_INFO("%s", log.c_str());
-  command = "delete bcset " + std::to_string(bc_set_id);
-  CubitInterface::cmd(command.c_str());
+  if (bc_set_id!=-1)
+  {
+    log = "Deleting BCSet Steps Export.\n";
+    PRINT_INFO("%s", log.c_str());
+    command = "delete bcset " + std::to_string(bc_set_id);
+    CubitInterface::cmd(command.c_str());
+  }
 
   std::string step_export;
 
