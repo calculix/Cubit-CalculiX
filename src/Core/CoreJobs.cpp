@@ -154,7 +154,7 @@ bool CoreJobs::start_process_linux(int job_id, std::string filepath)
   
   filepath = " -i " + filepath;
 
-  command_argv[0] = ccx_exe.c_str();
+  command_argv[0] = "ccx_2.20";
   command_argv[1] = filepath.c_str();
   command_argv[2] = NULL;
 
@@ -167,13 +167,18 @@ bool CoreJobs::start_process_linux(int job_id, std::string filepath)
   }
   if (process_id == 0)
   {
-    execvp(command_argv[0], const_cast<char* const*>(command_argv));
+    execvp(ccx_exe.c_str(), const_cast<char* const*>(command_argv));
     assert(false && "execvp did not work");
     exit(-1);
+  }else
+  {
+    /* Parent process, wait for child to complete. */
+    int status;
+    waitpid(process_id, &status, 0);
   }
   
-  //std::string command = ccx_exe + filepath;
-  //PRINT_INFO("%s", command.c_str());
+  std::string log = "submission from job to ccx not implemented yet! \n";
+  PRINT_INFO("%s", command.c_str());
   //system(command.c_str());
 
   return true;
