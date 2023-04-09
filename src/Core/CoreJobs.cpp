@@ -3,11 +3,9 @@
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 
-// Process Handling
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <stdlib.h>
+#include "PyBroker.hpp"
+#include "CubitProcess.hpp"
+#include "CubitString.hpp"
 
 
 CoreJobs::CoreJobs()
@@ -111,6 +109,9 @@ bool CoreJobs::run_job(int job_id)
   std::string filepath;
   std::string log;
   std::string command;
+  CubitProcess CubitProcessHandler;
+  CubitString programm;
+  std::vector<CubitString> arguments(1);
   int job_data_id;
   job_data_id = get_jobs_data_id_from_job_id(job_id);
   if (job_data_id != -1)
@@ -130,59 +131,20 @@ bool CoreJobs::run_job(int job_id)
         return false;
       }
     }
-    start_process_linux(job_id, filepath.substr(0, filepath.size()-4));
+
+    programm = "/home/user/Downloads/ccx_2.20";
+    arguments[0] = "-i " + filepath.substr(0, filepath.size()-4);;
+    CubitProcessHandler.set_program(programm);
+    CubitProcessHandler.set_arguments(arguments);
+    //CubitProcessHandler.start();
+    CubitProcessHandler.execute(programm, arguments, false);;
+
     return true;
   } else {
     return false;
   }
 }
 
-bool CoreJobs::start_process_linux(int job_id, std::string filepath)
-{
-  pid_t process_id;
-  std::string log;
-  std::string ccx_exe;
-  const char* command_argv[3];
-
-  int job_data_id;
-  job_data_id = get_jobs_data_id_from_job_id(job_id);
-
-  ccx_exe = "/home/user/Downloads/ccx_2.20";
-
-  log = "Submitting Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " to " + ccx_exe + "\n";
-  PRINT_INFO("%s", log.c_str());
-  
-  filepath = " -i " + filepath;
-
-  command_argv[0] = "ccx_2.20";
-  command_argv[1] = filepath.c_str();
-  command_argv[2] = NULL;
-
-  
-  process_id = fork();
-
-  if (process_id == -1)
-  {
-    return false;
-  }
-  if (process_id == 0)
-  {
-    execvp(ccx_exe.c_str(), const_cast<char* const*>(command_argv));
-    assert(false && "execvp did not work");
-    exit(-1);
-  }else
-  {
-    /* Parent process, wait for child to complete. */
-    int status;
-    waitpid(process_id, &status, 0);
-  }
-  
-  std::string log = "submission from job to ccx not implemented yet! \n";
-  PRINT_INFO("%s", command.c_str());
-  //system(command.c_str());
-
-  return true;
-}
 
 int CoreJobs::get_jobs_data_id_from_job_id(int job_id)
 { 
