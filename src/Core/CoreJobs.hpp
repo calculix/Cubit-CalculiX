@@ -14,7 +14,8 @@ public:
   // jobs_data[0][0] job_id
   // jobs_data[0][1] name
   // jobs_data[0][2] filepath
-  // jobs_data[0][3] status 0 no process, 1 process running, 2 process finished, 3 process killed
+  // jobs_data[0][3] status -1 no process, 1 process running, 2 process finished, 3 process killed
+  // jobs_data[0][4] process id
 
   bool is_initialized = false;
 

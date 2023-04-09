@@ -3,6 +3,12 @@
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 
+// Process Handling
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <stdlib.h>
+
 
 CoreJobs::CoreJobs()
 {}
@@ -83,7 +89,7 @@ bool CoreJobs::modify_job(int job_id, std::vector<std::string> options, std::vec
 
 bool CoreJobs::add_job(int job_id, std::string name, std::string filepath)
 {
-  std::vector<std::string> v = {std::to_string(job_id), name, filepath, "0"};      
+  std::vector<std::string> v = {std::to_string(job_id), name, filepath, "-1", "-1"};      
   jobs_data.push_back(v);
   return true;
 }
@@ -107,38 +113,68 @@ bool CoreJobs::run_job(int job_id)
   std::string command;
   int job_data_id;
   job_data_id = get_jobs_data_id_from_job_id(job_id);
-
-  if (jobs_data[job_data_id][2]!="")
+  if (job_data_id != -1)
   {
-    filepath = jobs_data[job_data_id][2];
-  } else {
-    filepath = jobs_data[job_data_id][1] + ".inp";
-    log = "Exporting Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " to \n";
-    log.append(filepath +  " \n");
-    PRINT_INFO("%s", log.c_str());
-    command = "export ccx \"" + filepath + "\"";
-    CubitInterface::cmd(command.c_str());
-    if (CubitInterface::was_last_cmd_undoable())
+    if (jobs_data[job_data_id][2]!="")
     {
-      return false;
+      filepath = jobs_data[job_data_id][2];
+    } else {
+      filepath = jobs_data[job_data_id][1] + ".inp";
+      log = "Exporting Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " to \n";
+      log.append(filepath +  " \n");
+      PRINT_INFO("%s", log.c_str());
+      command = "export ccx \"" + filepath + "\"";
+      CubitInterface::cmd(command.c_str());
+      if (CubitInterface::was_last_cmd_undoable())
+      {
+        return false;
+      }
     }
+    start_process_linux(job_id, filepath.substr(0, filepath.size()-4));
+    return true;
+  } else {
+    return false;
   }
-  start_process_linux(job_id, filepath);
-  return true;
 }
 
 bool CoreJobs::start_process_linux(int job_id, std::string filepath)
 {
+  pid_t process_id;
   std::string log;
   std::string ccx_exe;
-  std::string command;
+  const char* command_argv[3];
+
   int job_data_id;
   job_data_id = get_jobs_data_id_from_job_id(job_id);
 
-  log = "Submitting Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " to CCX\n";
+  ccx_exe = "/home/user/Downloads/ccx_2.20";
+
+  log = "Submitting Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " to " + ccx_exe + "\n";
   PRINT_INFO("%s", log.c_str());
   
-  ccx_exe = "/home/user/Downloads/cgx_2.20.1";
+  filepath = " -i " + filepath;
+
+  command_argv[0] = ccx_exe.c_str();
+  command_argv[1] = filepath.c_str();
+  command_argv[2] = NULL;
+
+  
+  process_id = fork();
+
+  if (process_id == -1)
+  {
+    return false;
+  }
+  if (process_id == 0)
+  {
+    execvp(command_argv[0], const_cast<char* const*>(command_argv));
+    assert(false && "execvp did not work");
+    exit(-1);
+  }
+  
+  //std::string command = ccx_exe + filepath;
+  //PRINT_INFO("%s", command.c_str());
+  //system(command.c_str());
 
   return true;
 }
@@ -160,11 +196,11 @@ std::string CoreJobs::print_data()
 {
   std::string str_return;
   str_return = "\n CoreJobs jobs_data: \n";
-  str_return.append("job_id, name, filepath, status \n");
+  str_return.append("job_id, name, filepath, status, process id \n");
 
   for (size_t i = 0; i < jobs_data.size(); i++)
   {
-    str_return.append(jobs_data[i][0] + " " + jobs_data[i][1] + " " + jobs_data[i][2] + " " + jobs_data[i][3] + " \n");
+    str_return.append(jobs_data[i][0] + " " + jobs_data[i][1] + " " + jobs_data[i][2] + " " + jobs_data[i][3] + " " + jobs_data[i][4] + " \n");
   }
 
   return str_return;
