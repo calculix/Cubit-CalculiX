@@ -109,9 +109,12 @@ bool CoreJobs::run_job(int job_id)
   std::string filepath;
   std::string log;
   std::string command;
+  pid_t process_id;
+  int int_wait;
   CubitProcess CubitProcessHandler;
   CubitString programm;
-  std::vector<CubitString> arguments(1);
+  CubitString temp;
+  std::vector<CubitString> arguments(2);
   int job_data_id;
   job_data_id = get_jobs_data_id_from_job_id(job_id);
   if (job_data_id != -1)
@@ -133,11 +136,19 @@ bool CoreJobs::run_job(int job_id)
     }
 
     programm = "/home/user/Downloads/ccx_2.20";
-    arguments[0] = "-i " + filepath.substr(0, filepath.size()-4);;
+    arguments[0] = "-i";
+    arguments[1] = filepath.substr(0, filepath.size()-4);
     CubitProcessHandler.set_program(programm);
     CubitProcessHandler.set_arguments(arguments);
-    //CubitProcessHandler.start();
-    CubitProcessHandler.execute(programm, arguments, false);;
+    process_id = CubitProcessHandler.start(programm, arguments, false);
+    int_wait = CubitProcessHandler.wait(process_id);
+    log = " Path to executable ";
+    temp = CubitProcessHandler.find_executable(programm);
+    log.append(temp.str() + "\n");
+    log.append(" Process ID " + std::to_string(process_id) + " \n");
+    log.append(" Wait Exit Code " + std::to_string(int_wait) + " \n");
+    log.append(" Exit Code " + std::to_string(CubitProcessHandler.exit_code()) + " \n");
+    PRINT_INFO("%s", log.c_str());
 
     return true;
   } else {
