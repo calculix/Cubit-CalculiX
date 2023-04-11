@@ -113,8 +113,10 @@ bool CoreJobs::run_job(int job_id)
   int int_wait;
   CubitProcess CubitProcessHandler;
   CubitString programm;
+  CubitString working_dir;
   CubitString temp;
-  std::vector<CubitString> arguments(2);
+  CubitString output;
+  std::vector<CubitString> arguments(3);
   int job_data_id;
   job_data_id = get_jobs_data_id_from_job_id(job_id);
   if (job_data_id != -1)
@@ -135,19 +137,31 @@ bool CoreJobs::run_job(int job_id)
       }
     }
 
-    programm = "/home/user/Downloads/ccx_2.20";
+    programm = "ccx_2.20";
+    //programm = "ccx_2.19_MT";
+    working_dir = "/home/user/Downloads/";
+    //arguments[0] = programm;
+    //arguments[0] = NULL;
     arguments[0] = "-i";
     arguments[1] = filepath.substr(0, filepath.size()-4);
+    arguments[2] = NULL;
+    
     CubitProcessHandler.set_program(programm);
+    CubitProcessHandler.set_working_dir(working_dir);
     CubitProcessHandler.set_arguments(arguments);
-    process_id = CubitProcessHandler.start(programm, arguments, false);
+    CubitProcessHandler.set_channel_mode(CubitProcess::ChannelMode::MergedChannels);
+    temp = CubitProcessHandler.find_executable(programm);
+    //process_id = CubitProcessHandler.start(programm, arguments, false);
+    CubitProcessHandler.start();
+    process_id = CubitProcessHandler.pid();
+    output = CubitProcessHandler.read_output_channel(-1);
     int_wait = CubitProcessHandler.wait(process_id);
     log = " Path to executable ";
-    temp = CubitProcessHandler.find_executable(programm);
-    log.append(temp.str() + "\n");
+    log.append(working_dir.str() + temp.str() + "\n");
     log.append(" Process ID " + std::to_string(process_id) + " \n");
+    log.append(" Output " + output.str() + " \n");
     log.append(" Wait Exit Code " + std::to_string(int_wait) + " \n");
-    log.append(" Exit Code " + std::to_string(CubitProcessHandler.exit_code()) + " \n");
+    //log.append(" Exit Code " + std::to_string(CubitProcessHandler.exit_code()) + " \n");
     PRINT_INFO("%s", log.c_str());
 
     return true;
