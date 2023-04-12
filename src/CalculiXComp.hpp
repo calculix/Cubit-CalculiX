@@ -1,11 +1,3 @@
-/*!
- *  \file MyComp.hpp
- *  \brief
- *    Provides an example of creating a custom component.
- *  \author Michael Plooster
- *  \date 11 Feb 2014
- */
-
 #ifndef CALCULIXCOMP_HPP
 #define CALCULIXCOMP_HPP
 
@@ -15,7 +7,8 @@ class MenuManager;
 class ToolbarManager;
 class cmdPanelManager;
 class ExportManager;
-class CCXDockWindowTree;
+class CCXDockWindowModelTree;
+class CCXDockWindowMaterialManagement;
 
 class Observer;
 
@@ -44,8 +37,11 @@ private:
   void setup_command_panels();
   void cleanup_command_panels();
 
-  void setup_CCXDockWindowTree();
-  void cleanup_CCXDockWindowTree();
+  void setup_CCXDockWindowModelTree();
+  void cleanup_CCXDockWindowModelTree();
+
+  void setup_CCXDockWindowMaterialManagement();
+  void cleanup_CCXDockWindowMaterialManagement();
 
   //! Add export types to the file menu
   void add_exports();
@@ -58,7 +54,8 @@ private:
   ToolbarManager* myToolbars;
   cmdPanelManager*   mycmdPanels;
   ExportManager*  myExportManager;
-  CCXDockWindowTree* myCCXDockWindowTree;
+  CCXDockWindowModelTree* myCCXDockWindowModelTree;
+  CCXDockWindowMaterialManagement* myCCXDockWindowMaterialManagement;
 
   Observer* mListener;
 };

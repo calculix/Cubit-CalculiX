@@ -75,6 +75,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
     BlocksTree* BlocksTreeItem;
     NodesetTree* NodesetTreeItem;
     SidesetTree* SidesetTreeItem;
+    MaterialTree* MaterialTreeItem;
     if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item))
     {
       if (BlocksTreeItem->text(1).toStdString()=="")
@@ -110,6 +111,18 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 2;
+      }
+    }else if (MaterialTreeItem = dynamic_cast<MaterialTree*>(item))
+    {
+      if (MaterialTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Open Material Management",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);      
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 3;
       }
     }else 
     {
@@ -158,6 +171,17 @@ void ModelTree::showContextMenu(const QPoint &pos)
 
         contextMenuAction[0][0] = 2;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+      } else if (MaterialTreeItem = dynamic_cast<MaterialTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Open Material Management",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 3;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
       }
     }
   }
@@ -168,6 +192,7 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   BlocksTree* BlocksTreeItem;
   NodesetTree* NodesetTreeItem;
   SidesetTree* SidesetTreeItem;
+  MaterialTree* MaterialTreeItem;
 
   if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item))
   {
@@ -184,6 +209,12 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   }else if (SidesetTreeItem = dynamic_cast<SidesetTree*>(item))
   {
     if (SidesetTreeItem->text(1).toStdString()=="")
+    {
+      this->setWidgetInCmdPanelMarker("ExodusCreateSideset");
+    }
+  }else if (MaterialTreeItem = dynamic_cast<MaterialTree*>(item))
+  {
+    if (MaterialTreeItem->text(1).toStdString()=="")
     {
       this->setWidgetInCmdPanelMarker("ExodusCreateSideset");
     }
@@ -224,7 +255,7 @@ void ModelTree::execContextMenuAction(){
     {
       if (contextMenuAction[0][1]==0) //Action1
       {
-        this->setWidgetInCmdPanelMarker("BlocksCCXElementType");
+        this->setWidgetInCmdPanelMarker("CCXBlocksElementType");
       }
     }else if (contextMenuAction[0][0]==1) //NodesetTree
     {
@@ -249,6 +280,12 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==2) //Action3
       {
         this->setWidgetInCmdPanelMarker("ExodusDeleteSideset");
+      }  
+    }else if (contextMenuAction[0][0]==3) //MaterialTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("ExodusCreateSideset");
       }  
     }
   }

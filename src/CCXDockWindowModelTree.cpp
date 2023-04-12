@@ -1,4 +1,4 @@
-#include "CCXDockWindowTree.hpp"
+#include "CCXDockWindowModelTree.hpp"
 #include "Claro.hpp"
 #include "ClaroViewMenu.hpp"
 #include <iostream>
@@ -25,17 +25,17 @@
 #include "JobsTree.hpp"
 
 
-CCXDockWindowTree::CCXDockWindowTree() :
+CCXDockWindowModelTree::CCXDockWindowModelTree() :
   isInitialized(false)
 { 
   dock_title = "CalculiX Model Tree";
 }
 
-CCXDockWindowTree::~CCXDockWindowTree()
+CCXDockWindowModelTree::~CCXDockWindowModelTree()
 {
 }
 
-void CCXDockWindowTree::initialize()
+void CCXDockWindowModelTree::initialize()
 {
   if(isInitialized)
     return;
@@ -133,7 +133,7 @@ void CCXDockWindowTree::initialize()
   isInitialized = true;
 }
 
-void CCXDockWindowTree::clear()
+void CCXDockWindowModelTree::clear()
 {
  // Remove all of our menu items.
   
@@ -169,7 +169,7 @@ void CCXDockWindowTree::clear()
   
 }
 
-void CCXDockWindowTree::update()
+void CCXDockWindowModelTree::update()
 {
   settings->setValue("geometry",dock->saveGeometry());
   settings->setValue("state",gui->saveState());
@@ -197,7 +197,7 @@ void CCXDockWindowTree::update()
   myJobsTree->update();
 }
 
-void CCXDockWindowTree::reset()
+void CCXDockWindowModelTree::reset()
 {
   // reset, our trees, so clear all child items
   myBlocksTree->clear(); 

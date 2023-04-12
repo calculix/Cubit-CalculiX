@@ -1,0 +1,6 @@
+reset
+create brick x 1
+block 1 add volume 1
+block 1 element type HEX20
+nodeset 1 add surface 5  
+sideset 1 add surface 1  

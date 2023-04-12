@@ -1,5 +1,5 @@
-#ifndef CCXDOCKWINDOWTREE_HPP
-#define CCXDOCKWINDOWTREE_HPP
+#ifndef CCXDOCKWINDOWMODELTREE_HPP
+#define CCXDOCKWINDOWMODELTREE_HPP
 
 class Claro;
 class ClaroViewMenu;
@@ -33,12 +33,12 @@ class InitialConditionsTree;
 class StepsTree;
 class JobsTree;
 
-class CCXDockWindowTree
+class CCXDockWindowModelTree
 {
 
 public:
-  CCXDockWindowTree();
-  ~CCXDockWindowTree();
+  CCXDockWindowModelTree();
+  ~CCXDockWindowModelTree();
 
   void initialize();
 
@@ -82,4 +82,4 @@ private:
   QSettings *settings;
 };
 
-#endif // CCXDOCKWINDOWTREE_HPP
+#endif // CCXDOCKWINDOWMODELTREE
