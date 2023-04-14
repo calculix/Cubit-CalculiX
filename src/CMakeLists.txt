@@ -57,8 +57,6 @@ set(CCXCOMP_SRCS
     MyCmdWidgetFactory.hpp
     CCXDockWindowModelTree.cpp
     CCXDockWindowModelTree.hpp
-    CCXDockWindowMaterialManagement.cpp
-    CCXDockWindowMaterialManagement.hpp
     ExportManager.cpp
     ExportManager.hpp
     loadCalculiXComp.cpp)

@@ -5,6 +5,7 @@
 #include "SidesetTree.hpp"
 #include "MaterialTree.hpp"
 #include "SectionsTree.hpp"
+#include "MaterialManagement.hpp"
 #include "CalculiXCoreInterface.hpp"
 
 #include "Claro.hpp"
@@ -20,8 +21,9 @@ ModelTree::ModelTree(QDockWidget* parent):QTreeWidget(parent)
   ccx_iface = new CalculiXCoreInterface();
 
   gui = Claro::instance();
-
   nav_model = gui->navigation_model();
+  myMaterialManagement = new MaterialManagement();
+
   /*
   if (nav_model)
   {
@@ -55,7 +57,7 @@ ModelTree::ModelTree(QDockWidget* parent):QTreeWidget(parent)
     ccx_iface->log_str("connected signals and slots");
   }*/   
 
-  //to get our current right clicked action
+  // to get our current right clicked action
   // contextMenuAction[0][0] => Tree
   // contextMenuAction[0][1] => action
   // contextMenuAction[0][2] => ID
@@ -216,7 +218,7 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   {
     if (MaterialTreeItem->text(1).toStdString()=="")
     {
-      this->setWidgetInCmdPanelMarker("ExodusCreateSideset");
+      myMaterialManagement->show();
     }
   } else {
     if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item->parent()))
@@ -228,6 +230,9 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     } else if (SidesetTreeItem = dynamic_cast<SidesetTree*>(item->parent()))
     {
       this->setWidgetInCmdPanelMarker("ExodusRemoveContentsSideset");
+    } else if (MaterialTreeItem = dynamic_cast<MaterialTree*>(item->parent()))
+    {
+      myMaterialManagement->show();
     }
   }
 }
@@ -285,7 +290,7 @@ void ModelTree::execContextMenuAction(){
     {
       if (contextMenuAction[0][1]==0) //Action1
       {
-        this->setWidgetInCmdPanelMarker("ExodusCreateSideset");
+        myMaterialManagement->show();
       }  
     }
   }

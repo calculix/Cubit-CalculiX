@@ -7,7 +7,6 @@
 #include "Observer.hpp"
 #include "cmdPanelManager.hpp"
 #include "CCXDockWindowModelTree.hpp"
-#include "CCXDockWindowMaterialManagement.hpp"
 #include "ToolbarManager.hpp"
 
 // Default constructor. Remember to include the component name (should match
@@ -18,7 +17,6 @@ CalculiXComp::CalculiXComp() :
   myToolbars(NULL),
   mycmdPanels(NULL),
   myCCXDockWindowModelTree(NULL),
-  myCCXDockWindowMaterialManagement(NULL),
   myExportManager(NULL),
   mListener(NULL)
 {}
@@ -37,9 +35,6 @@ CalculiXComp::~CalculiXComp()
   if(myCCXDockWindowModelTree)
     delete myCCXDockWindowModelTree;
 
-  if(myCCXDockWindowMaterialManagement)
-    delete myCCXDockWindowMaterialManagement;
-
   if(myExportManager)
     delete myExportManager;
 
@@ -55,7 +50,6 @@ void CalculiXComp::start_up(int withGUI)
     setup_toolbars();
     setup_command_panels();
     setup_CCXDockWindowModelTree(); // command panels has to be setup before dockwindow
-    setup_CCXDockWindowMaterialManagement();
     add_exports();
     boolwithGUI = true;
   }
@@ -69,7 +63,6 @@ void CalculiXComp::clean_up()
   cleanup_toolbars();
   cleanup_command_panels();
   cleanup_CCXDockWindowModelTree();
-  cleanup_CCXDockWindowMaterialManagement();
   cleanup_exports();
   cleanup_observers();
 
@@ -83,8 +76,6 @@ void CalculiXComp::update()
   {
     if(myCCXDockWindowModelTree)
     myCCXDockWindowModelTree->update();
-    if(myCCXDockWindowMaterialManagement)
-    myCCXDockWindowMaterialManagement->update();
   }
 }
 
@@ -94,8 +85,6 @@ void CalculiXComp::reset()
   {
     if(myCCXDockWindowModelTree)
     myCCXDockWindowModelTree->reset();
-    if(myCCXDockWindowMaterialManagement)
-    myCCXDockWindowMaterialManagement->reset();
   }
 }
 
@@ -155,20 +144,6 @@ void CalculiXComp::cleanup_CCXDockWindowModelTree()
 {
   if(myCCXDockWindowModelTree)
     myCCXDockWindowModelTree->clear();
-}
-
-void CalculiXComp::setup_CCXDockWindowMaterialManagement()
-{
-  if(!myCCXDockWindowMaterialManagement)
-    myCCXDockWindowMaterialManagement = new CCXDockWindowMaterialManagement;
-
-  myCCXDockWindowMaterialManagement->initialize();
-}
-
-void CalculiXComp::cleanup_CCXDockWindowMaterialManagement()
-{
-  if(myCCXDockWindowMaterialManagement)
-    myCCXDockWindowMaterialManagement->clear();
 }
 
 void CalculiXComp::add_exports()

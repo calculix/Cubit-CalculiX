@@ -17,6 +17,7 @@ class SidesetTree;
 class MaterialTree;
 class SectionsTree;
 class QTreeWidgetItem;
+class MaterialManagement;
 
 class NavigationModel;
 
@@ -36,6 +37,7 @@ public:
   CalculiXCoreInterface* ccx_iface;
   Claro* gui;
   CommandButtonPanel* cmdpanel;
+  MaterialManagement* myMaterialManagement;
   std::vector<std::vector<int>> contextMenuAction;
 
   void setWidgetInCmdPanelMarker(QString name); // set Widget in CommandPanel

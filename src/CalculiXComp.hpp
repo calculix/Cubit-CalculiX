@@ -8,7 +8,6 @@ class ToolbarManager;
 class cmdPanelManager;
 class ExportManager;
 class CCXDockWindowModelTree;
-class CCXDockWindowMaterialManagement;
 
 class Observer;
 
@@ -40,9 +39,6 @@ private:
   void setup_CCXDockWindowModelTree();
   void cleanup_CCXDockWindowModelTree();
 
-  void setup_CCXDockWindowMaterialManagement();
-  void cleanup_CCXDockWindowMaterialManagement();
-
   //! Add export types to the file menu
   void add_exports();
   void cleanup_exports();
@@ -55,7 +51,6 @@ private:
   cmdPanelManager*   mycmdPanels;
   ExportManager*  myExportManager;
   CCXDockWindowModelTree* myCCXDockWindowModelTree;
-  CCXDockWindowMaterialManagement* myCCXDockWindowMaterialManagement;
 
   Observer* mListener;
 };
