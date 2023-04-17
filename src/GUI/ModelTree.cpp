@@ -313,3 +313,7 @@ void ModelTree::ContextMenuAction3(){
   contextMenuAction[0][1]=2;
   this->execContextMenuAction();
 }
+
+void ModelTree::update(){
+  myMaterialManagement->update();
+}

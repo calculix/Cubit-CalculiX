@@ -175,6 +175,7 @@ void CCXDockWindowModelTree::update()
   settings->setValue("state",gui->saveState());
 
   // update our dock items
+  myModelTree->update();
   myBlocksTree->update(); 
   myNodesetTree->update(); 
   mySidesetTree->update(); 
