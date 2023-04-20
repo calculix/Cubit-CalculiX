@@ -1937,6 +1937,11 @@ std::vector<std::vector<std::string>> CalculiXCore::get_material_tree_data()
   return material_tree_data;
 }
 
+std::vector<std::vector<std::string>> CalculiXCore::get_material_group_properties()
+{ 
+  return mat->group_properties;
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_sections_tree_data()
 { 
   std::vector<std::vector<std::string>> sections_tree_data;

@@ -149,6 +149,13 @@ void MaterialManagement::update()
       this->removeMaterial(temp_child);
     }
   }
+
+  // update childs
+  for (size_t i = tree_material->topLevelItemCount(); i > 0; i--)
+  { 
+    temp_child = dynamic_cast<MaterialManagementItem*>(tree_material->topLevelItem(i-1));
+    temp_child->update();
+  }
 }
 
 void MaterialManagement::addMaterial(QString material_id, QString material_name)
@@ -163,13 +170,50 @@ void MaterialManagement::removeMaterial(MaterialManagementItem *material)
   delete material;
 }
 
+void MaterialManagement::printproperties()
+{
+  MaterialManagementItem *temp_child;
+
+  for (size_t i = 0; i < tree_material->topLevelItemCount(); i++)
+  {
+    temp_child = dynamic_cast<MaterialManagementItem*>(tree_material->topLevelItem(i));
+    
+    log = "########### \n";
+    log.append(temp_child->text(1).toStdString() + " child id \n");
+    for (size_t ii = 0; ii < temp_child->properties.size(); ii++)
+    {
+      log.append("----------\n");
+      log.append(temp_child->group_properties[temp_child->properties[ii][0]][0] + " \n");
+      log.append("----------\n");
+      log.append(std::to_string(temp_child->properties[ii][0]) + " " + std::to_string(temp_child->properties[ii][1]) + " " + std::to_string(temp_child->properties[ii][2]) + " \n");
+      if (temp_child->properties[ii][1]==1)
+      {
+        log.append("SCALAR\n");
+        log.append(std::to_string(temp_child->property_scalar[temp_child->properties[ii][2]]) + " \n");
+      } else if (temp_child->properties[ii][1]==4)
+      {        
+        log.append("MATRIX\n");
+        for (size_t iii = 0; iii < temp_child->property_matrix[temp_child->properties[ii][2]].size(); iii++)
+        {
+          for (size_t iv = 0; iv < temp_child->property_matrix[temp_child->properties[ii][2]][iii].size(); iv++)
+          {
+            log.append(std::to_string(temp_child->property_matrix[temp_child->properties[ii][2]][iii][iv]) + " ");
+          }
+          log.append("\n");
+        }
+      }
+    }
+    PRINT_INFO("%s", log.c_str());
+  }
+}
+
 int MaterialManagement::get_child_id(std::string material_id)
 {
   int int_return;
   int_return = -1;
 
-  log = std::to_string(tree_material->topLevelItemCount()) + " child count \n";
-  PRINT_INFO("%s", log.c_str());
+  //log = std::to_string(tree_material->topLevelItemCount()) + " child count \n";
+  //PRINT_INFO("%s", log.c_str());
 
   MaterialManagementItem *temp_child;
 
@@ -177,8 +221,8 @@ int MaterialManagement::get_child_id(std::string material_id)
   {
     temp_child = dynamic_cast<MaterialManagementItem*>(tree_material->topLevelItem(i));
     
-    log = temp_child->text(1).toStdString() + " == " + material_id + " child ids \n";
-    PRINT_INFO("%s", log.c_str());
+    //log = temp_child->text(1).toStdString() + " == " + material_id + " child ids \n";
+    //PRINT_INFO("%s", log.c_str());
     
     if (temp_child->text(1).toStdString()==material_id)
     {
@@ -223,6 +267,8 @@ void MaterialManagement::on_pushButton_new_clicked(bool)
 {
   log = " clicked new \n";
   PRINT_INFO("%s", log.c_str());
+
+  this->printproperties();
 }
 
 void MaterialManagement::on_pushButton_delete_clicked(bool)

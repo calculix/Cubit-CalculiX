@@ -22,11 +22,8 @@ bool CoreMaterials::init()
     MaterialInterface::Property prop;
 
     std::string group_name = "CalculiX-FEA"; // don't forget to add new groups into grouplist function
-    std::vector<std::vector<std::string>> group_properties;
-    std::vector<std::string> group_properties_description;
-    // group_properties[0][0] property name
-    // group_properties[0][1] property name type  1=scalar, 2=vector, 3 = matrix, 4 = tabular
-    // group_properties[0][2] type column size for table property
+    group_properties.clear();
+    group_properties_description.clear();
 
     std::vector<std::string> material_card(2);
     material_card[0]="ELASTIC"; // card name

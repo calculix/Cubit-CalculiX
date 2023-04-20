@@ -29,6 +29,8 @@ public:
   void removeMaterial(MaterialManagementItem *material); // removes the material from to the tree
   int get_child_id(std::string material_id); // check if the item for the given material_id exists, returns the id or -1 if failed;
 
+  void printproperties(); // prints out material with all properties
+
 private slots:
   void on_pushButton_ok_clicked(bool);
   void on_pushButton_apply_clicked(bool);
