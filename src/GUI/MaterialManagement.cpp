@@ -52,11 +52,11 @@ MaterialManagement::MaterialManagement()
   label_material->setText("Material");
   
   label_available = new QLabel(this);
-  label_available->setGeometry(450,10,100,16);
+  label_available->setGeometry(300,10,100,16);
   label_available->setText("Available Cards");
 
   label_used = new QLabel(this);
-  label_used->setGeometry(300,10,100,16);
+  label_used->setGeometry(450,10,100,16);
   label_used->setText("Used Cards");
 
   // tree/lists
@@ -66,10 +66,10 @@ MaterialManagement::MaterialManagement()
   tree_material->setHeaderLabels(QStringList() << "Name" << "ID");
 
   list_available = new QListWidget(this);
-  list_available->setGeometry(450,30,111,191);
+  list_available->setGeometry(300,30,111,191);
 
   list_used = new QListWidget(this);
-  list_used->setGeometry(300,30,111,191);
+  list_used->setGeometry(450,30,111,191);
 
   // Signals
   QObject::connect(pushButton_ok, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_ok_clicked(bool)));
@@ -79,6 +79,7 @@ MaterialManagement::MaterialManagement()
   QObject::connect(pushButton_delete, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_delete_clicked(bool)));
   QObject::connect(pushButton_add, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_add_clicked(bool)));
   QObject::connect(pushButton_remove, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_remove_clicked(bool)));
+  QObject::connect(tree_material, SIGNAL(itemClicked(QTreeWidgetItem*, int)),this,  SLOT(material_clicked(QTreeWidgetItem*, int)));
 
   // Update list items and data
   this->update();
@@ -233,6 +234,118 @@ int MaterialManagement::get_child_id(std::string material_id)
   return int_return;
 }
 
+void MaterialManagement::createListItems(MaterialManagementItem *material)
+{
+  bool use_elastic = false;
+  bool use_plastic = false;
+  bool use_density = false;
+  bool use_expansion = false;
+
+  for (size_t i = 0; i < material->properties.size(); i++)
+  {
+    if ((material->group_properties[material->properties[i][0]][0]=="CCX_ELASTIC_ISO_USE_CARD")
+        || (material->group_properties[material->properties[i][0]][0]=="CCX_ELASTIC_ORTHO_USE_CARD")
+        || (material->group_properties[material->properties[i][0]][0]=="CCX_ELASTIC_EC_USE_CARD")
+        || (material->group_properties[material->properties[i][0]][0]=="CCX_ELASTIC_ANISO_USE_CARD")
+        )
+    {
+      if (material->property_scalar_gui[material->properties[i][0]]==1)
+      {
+        use_elastic = true;
+      }
+    }
+    if ((material->group_properties[material->properties[i][0]][0]=="CCX_PLASTIC_ISO_USE_CARD"))
+    {
+      if (material->property_scalar_gui[material->properties[i][0]]==1)
+      {
+        use_plastic = true;
+      }
+    }
+    if ((material->group_properties[material->properties[i][0]][0]=="CCX_DENSITY_USE_CARD"))
+    {
+      if (material->property_scalar_gui[material->properties[i][0]]==1)
+      {
+        use_density = true;
+      }
+    }
+    if ((material->group_properties[material->properties[i][0]][0]=="CCX_EXPANSION_ISO_USE_CARD")
+        || (material->group_properties[material->properties[i][0]][0]=="CCX_EXPANSION_ORTHO_USE_CARD")
+        || (material->group_properties[material->properties[i][0]][0]=="CCX_EXPANSION_ZERO_USE_CARD")
+        || (material->group_properties[material->properties[i][0]][0]=="CCX_EXPANSION_ANISO_USE_CARD")
+        )
+    {
+      if (material->property_scalar_gui[material->properties[i][0]]==1)
+      {
+        use_expansion = true;
+      }
+    }
+  }
+  
+  if (use_elastic)
+  {
+    list_elastic = new QListWidgetItem("Elastic",list_used);
+  } else {
+    list_elastic = new QListWidgetItem("Elastic",list_available);
+  }
+  
+  if (use_plastic)
+  {
+    list_plastic = new QListWidgetItem("Plastic",list_used);
+  } else {
+    list_plastic = new QListWidgetItem("Plastic",list_available);
+  }
+
+  if (use_density)
+  {
+    list_density = new QListWidgetItem("Density",list_used);
+  } else {
+    list_density = new QListWidgetItem("Density",list_available);
+  }
+
+  if (use_expansion)
+  {
+    list_expansion = new QListWidgetItem("Expansion",list_used);
+  } else {
+    list_expansion = new QListWidgetItem("Expansion",list_available);
+  }
+
+  list_available->sortItems();
+  list_used->sortItems();
+}
+
+void MaterialManagement::removeListItems()
+{
+  if (list_available->count()>0)
+  {
+    list_available->setCurrentItem(list_available->item(0));
+    while (list_available->currentItem())
+    {
+      delete list_available->currentItem();
+    }
+  } 
+
+  if (list_used->count()>0)
+  {
+    list_used->setCurrentItem(list_used->item(0));
+    while (list_used->currentItem())
+    {
+      delete list_used->currentItem();
+    }
+  } 
+}
+
+void MaterialManagement::switchListItem(QListWidget* source, QListWidget* target)
+{
+  if(source->currentItem()){
+    QListWidgetItem* newItem = source->currentItem()->clone();
+    target->addItem(newItem);
+    target->setCurrentItem(newItem);
+    delete source->currentItem();
+    source->sortItems();
+    target->sortItems();
+  }
+}
+
 void MaterialManagement::on_pushButton_ok_clicked(bool)
 {
   log = " clicked ok \n";
@@ -279,12 +392,27 @@ void MaterialManagement::on_pushButton_delete_clicked(bool)
 
 void MaterialManagement::on_pushButton_add_clicked(bool)
 {
-  log = " clicked add \n";
-  PRINT_INFO("%s", log.c_str());
+  //log = " clicked add \n";
+  //PRINT_INFO("%s", log.c_str());
+  switchListItem(list_available, list_used);
 }
 
 void MaterialManagement::on_pushButton_remove_clicked(bool)
 {
-  log = " clicked remove \n";
-  PRINT_INFO("%s", log.c_str());
+  //log = " clicked remove \n";
+  //PRINT_INFO("%s", log.c_str());
+  switchListItem(list_used, list_available);
+}
+
+void MaterialManagement::material_clicked(QTreeWidgetItem* item, int column)
+{
+  //log = " material clicked \n";
+  //PRINT_INFO("%s", log.c_str());
+  MaterialManagementItem *material_item;
+
+  if (material_item = dynamic_cast<MaterialManagementItem*>(item))
+  {
+    this->removeListItems();
+    this->createListItems(material_item);
+  }
 }

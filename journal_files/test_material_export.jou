@@ -55,3 +55,6 @@ ccx create section shell block 2 material 3 orientation OR1 thickness 99 offset 
 ccx create section solid block 3 material 1 orientation OR1 thickness 99
 
 export ccx "test_output.inp"
+
+
+

@@ -6,6 +6,7 @@
 #include <QPushButton>
 #include <QLabel>
 #include <QListWidget>
+#include <QListWidgetItem>
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
 
@@ -28,6 +29,9 @@ public:
   void addMaterial(QString material_id, QString material_name); // adds a new material to the tree
   void removeMaterial(MaterialManagementItem *material); // removes the material from to the tree
   int get_child_id(std::string material_id); // check if the item for the given material_id exists, returns the id or -1 if failed;
+  void createListItems(MaterialManagementItem *material); // creates the list items for selected material
+  void removeListItems(); // removes current list items
+  void switchListItem(QListWidget* source, QListWidget* target); // switches the current item from sry list to target list
 
   void printproperties(); // prints out material with all properties
 
@@ -39,6 +43,7 @@ private slots:
   void on_pushButton_delete_clicked(bool);
   void on_pushButton_add_clicked(bool);
   void on_pushButton_remove_clicked(bool);
+  void material_clicked(QTreeWidgetItem* item, int column);
 
 private:
   std::string log;
@@ -55,6 +60,10 @@ private:
   QTreeWidget* tree_material;
   QListWidget* list_available;
   QListWidget* list_used;
+  QListWidgetItem* list_elastic;
+  QListWidgetItem* list_plastic;
+  QListWidgetItem* list_density;
+  QListWidgetItem* list_expansion;
   MaterialManagementItem* material_item;
 };
 
