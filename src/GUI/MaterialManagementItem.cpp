@@ -42,7 +42,7 @@ void MaterialManagementItem::initialize(QString material_id_qstring,QString mate
     property[0] = i;
     if (group_properties[i][1]=="1")
     {
-      double tmp_scalar;
+      double tmp_scalar = 0;
       property[1] = 1;
       property[2] = property_scalar.size();
       prop = mat_iface->get_property(group_properties[i][0]);
@@ -88,6 +88,7 @@ void MaterialManagementItem::initialize(QString material_id_qstring,QString mate
       property_matrix.push_back(tmp_matrix);
     }
     properties.push_back(property);
+
   }
   
   isInitialized = true;
@@ -106,7 +107,7 @@ void MaterialManagementItem::update()
   {
     if (properties[i][1]==1)
     {
-      double tmp_scalar;
+      double tmp_scalar=0;
       prop = mat_iface->get_property(group_properties[properties[i][0]][0]);
       if (mat_iface->get_material_property_value(material, prop, prop_scalar))
       {

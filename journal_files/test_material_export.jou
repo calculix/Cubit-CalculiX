@@ -21,6 +21,7 @@ modify material "Test2" matrix_property "CCX_ELASTIC_ORTHO_CONSTANTS_VS_TEMPERAT
 
 modify material "Test2" scalar_properties "CCX_ELASTIC_EC_USE_CARD" 1
 modify material "Test2" matrix_property "CCX_ELASTIC_EC_CONSTANTS_VS_TEMPERATURE" 1 2 3 4 5 6 7 8 9 10
+modify material "Test2" scalar_properties "CCX_PLASTIC_KIN_USE_CARD" 1
 
 create material "Test3" property_group "CalculiX-FEA" 
 modify material "Test3" scalar_properties "CCX_ELASTIC_ANISO_USE_CARD" 1
@@ -55,6 +56,7 @@ ccx create section shell block 2 material 3 orientation OR1 thickness 99 offset 
 ccx create section solid block 3 material 1 orientation OR1 thickness 99
 
 export ccx "test_output.inp"
+
 
 
 

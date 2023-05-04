@@ -191,6 +191,8 @@ void MaterialManagement::printproperties()
       {
         log.append("SCALAR\n");
         log.append(std::to_string(temp_child->property_scalar[temp_child->properties[ii][2]]) + " \n");
+        log.append("SCALAR GUI\n");
+        log.append(std::to_string(temp_child->property_scalar_gui[temp_child->properties[ii][2]]) + " \n");
       } else if (temp_child->properties[ii][1]==4)
       {        
         log.append("MATRIX\n");
@@ -199,6 +201,15 @@ void MaterialManagement::printproperties()
           for (size_t iv = 0; iv < temp_child->property_matrix[temp_child->properties[ii][2]][iii].size(); iv++)
           {
             log.append(std::to_string(temp_child->property_matrix[temp_child->properties[ii][2]][iii][iv]) + " ");
+          }
+          log.append("\n");
+        }
+        log.append("MATRIX GUI\n");
+        for (size_t iii = 0; iii < temp_child->property_matrix_gui[temp_child->properties[ii][2]].size(); iii++)
+        {
+          for (size_t iv = 0; iv < temp_child->property_matrix_gui[temp_child->properties[ii][2]][iii].size(); iv++)
+          {
+            log.append(std::to_string(temp_child->property_matrix_gui[temp_child->properties[ii][2]][iii][iv]) + " ");
           }
           log.append("\n");
         }
@@ -249,21 +260,23 @@ void MaterialManagement::createListItems(MaterialManagementItem *material)
         || (material->group_properties[material->properties[i][0]][0]=="CCX_ELASTIC_ANISO_USE_CARD")
         )
     {
-      if (material->property_scalar_gui[material->properties[i][0]]==1)
+      if (material->property_scalar_gui[material->properties[i][2]]==1)
       {
         use_elastic = true;
       }
     }
-    if ((material->group_properties[material->properties[i][0]][0]=="CCX_PLASTIC_ISO_USE_CARD"))
+    if ((material->group_properties[material->properties[i][0]][0]=="CCX_PLASTIC_ISO_USE_CARD")
+        || (material->group_properties[material->properties[i][0]][0]=="CCX_PLASTIC_KIN_USE_CARD")
+        )
     {
-      if (material->property_scalar_gui[material->properties[i][0]]==1)
+      if (material->property_scalar_gui[material->properties[i][2]]==1)
       {
         use_plastic = true;
       }
     }
     if ((material->group_properties[material->properties[i][0]][0]=="CCX_DENSITY_USE_CARD"))
     {
-      if (material->property_scalar_gui[material->properties[i][0]]==1)
+      if (material->property_scalar_gui[material->properties[i][2]]==1)
       {
         use_density = true;
       }
@@ -274,7 +287,7 @@ void MaterialManagement::createListItems(MaterialManagementItem *material)
         || (material->group_properties[material->properties[i][0]][0]=="CCX_EXPANSION_ANISO_USE_CARD")
         )
     {
-      if (material->property_scalar_gui[material->properties[i][0]]==1)
+      if (material->property_scalar_gui[material->properties[i][2]]==1)
       {
         use_expansion = true;
       }
