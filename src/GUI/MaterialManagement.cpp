@@ -71,6 +71,41 @@ MaterialManagement::MaterialManagement()
   list_used = new QListWidget(this);
   list_used->setGeometry(450,30,111,191);
 
+  // card widgets
+  card_widget = new QWidget(this);
+  card_widget->setGeometry(10,250,500,250);
+  //card_widget->setStyleSheet("border: 1px solid black");  
+
+  elastic_widget = new QWidget(card_widget);
+  //elastic_widget->setGeometry(10,400,100,100);
+  elastic_label_title = new QLabel(elastic_widget);
+  elastic_label_title->setGeometry(10,10,150,16);
+  elastic_label_title->setText("Elastic Card");
+
+  plastic_widget = new QWidget(card_widget);
+  //plastic_widget->setGeometry(10,400,100,100);
+  plastic_label_title = new QLabel(plastic_widget);
+  plastic_label_title->setGeometry(10,10,150,16);
+  plastic_label_title->setText("Plastic Card");
+
+  density_widget = new QWidget(card_widget);
+  //density_widget->setGeometry(10,400,100,100);
+  density_label_title = new QLabel(density_widget);
+  density_label_title->setGeometry(10,10,150,16);
+  density_label_title->setText("Density Card");
+
+  expansion_widget = new QWidget(card_widget);
+  //expansion_widget->setGeometry(10,400,100,100);
+  expansion_label_title = new QLabel(expansion_widget);
+  expansion_label_title->setGeometry(10,10,150,16);
+  expansion_label_title->setText("Expansion Card");
+
+  card_widget->show();
+  elastic_widget->hide();
+  plastic_widget->hide();
+  density_widget->hide();
+  expansion_widget->hide();
+
   // Signals
   QObject::connect(pushButton_ok, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_ok_clicked(bool)));
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
@@ -80,6 +115,11 @@ MaterialManagement::MaterialManagement()
   QObject::connect(pushButton_add, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_add_clicked(bool)));
   QObject::connect(pushButton_remove, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_remove_clicked(bool)));
   QObject::connect(tree_material, SIGNAL(itemClicked(QTreeWidgetItem*, int)),this,  SLOT(material_clicked(QTreeWidgetItem*, int)));
+  QObject::connect(tree_material, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),this,  SLOT(material_changed(QTreeWidgetItem*,QTreeWidgetItem*)));
+  QObject::connect(list_used, SIGNAL(itemClicked(QListWidgetItem*)),this,  SLOT(material_card_clicked(QListWidgetItem*)));
+  QObject::connect(list_available, SIGNAL(itemClicked(QListWidgetItem*)),this,  SLOT(material_card_clicked(QListWidgetItem*)));
+  QObject::connect(list_used, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)),this,  SLOT(material_card_changed(QListWidgetItem*,QListWidgetItem*)));  
+  QObject::connect(list_available, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)),this,  SLOT(material_card_changed(QListWidgetItem*,QListWidgetItem*)));
 
   // Update list items and data
   this->update();
@@ -354,9 +394,75 @@ void MaterialManagement::switchListItem(QListWidget* source, QListWidget* target
     target->addItem(newItem);
     target->setCurrentItem(newItem);
     delete source->currentItem();
+    this->selectListItem(newItem);
     source->sortItems();
     target->sortItems();
   }
+}
+
+void MaterialManagement::selectListItem(QListWidgetItem* item)
+{
+  QListWidgetItem* temp_item;
+
+  for (size_t i = 0; i < list_available->count(); i++)
+  {
+    temp_item = list_available->item(i);
+    if (temp_item != item)
+    {
+      temp_item->setSelected(false);
+    }
+  }
+  for (size_t i = 0; i < list_used->count(); i++)
+  {
+    temp_item = list_used->item(i);
+    if (temp_item != item)
+    {
+      temp_item->setSelected(false);
+    }
+  }
+  if (item->text()=="Elastic")
+  {
+    elastic_widget->show();
+  }else if (item->text()=="Plastic")
+  {
+    /* code */
+  }else if (item->text()=="Density")
+  {
+    /* code */
+  }else if (item->text()=="Expansion")
+  {
+    /* code */
+  }
+  
+}
+
+void MaterialManagement::loadWidget(QListWidgetItem* item)
+{
+  if (item->text().toStdString()=="Elastic")
+  {
+    elastic_widget->show();
+    plastic_widget->hide();
+    density_widget->hide();
+    expansion_widget->hide();
+  }else if (item->text().toStdString()=="Plastic")
+  {
+    elastic_widget->hide();
+    plastic_widget->show();
+    density_widget->hide();
+    expansion_widget->hide();
+  }else if (item->text().toStdString()=="Density")
+  { 
+    elastic_widget->hide();
+    plastic_widget->hide();
+    density_widget->show();
+    expansion_widget->hide();
+  }else if (item->text().toStdString()=="Expansion")
+  {
+    elastic_widget->hide();
+    plastic_widget->hide();
+    density_widget->hide();
+    expansion_widget->show();
+  } 
 }
 
 void MaterialManagement::on_pushButton_ok_clicked(bool)
@@ -421,11 +527,39 @@ void MaterialManagement::material_clicked(QTreeWidgetItem* item, int column)
 {
   //log = " material clicked \n";
   //PRINT_INFO("%s", log.c_str());
-  MaterialManagementItem *material_item;
+  MaterialManagementItem* material_item;
 
   if (material_item = dynamic_cast<MaterialManagementItem*>(item))
   {
     this->removeListItems();
     this->createListItems(material_item);
+    elastic_widget->hide();
+    plastic_widget->hide();
+    density_widget->hide();
+    expansion_widget->hide();
+  }
+}
+
+void MaterialManagement::material_changed(QTreeWidgetItem* current_item, QTreeWidgetItem* prev_item)
+{
+  if (current_item!=nullptr)
+  {
+    this->material_clicked(current_item,0);
+  }
+}
+
+void MaterialManagement::material_card_clicked(QListWidgetItem* item)
+{
+  //log = " material card " + item->text().toStdString() + " clicked \n";
+  //PRINT_INFO("%s", log.c_str()); 
+  this->selectListItem(item);
+  this->loadWidget(item);
+}
+
+void MaterialManagement::material_card_changed(QListWidgetItem* current_item, QListWidgetItem* prev_item)
+{
+  if (current_item!=nullptr)
+  {
+    this->loadWidget(current_item);
   }
 }

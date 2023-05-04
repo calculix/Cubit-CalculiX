@@ -32,6 +32,8 @@ public:
   void createListItems(MaterialManagementItem *material); // creates the list items for selected material
   void removeListItems(); // removes current list items
   void switchListItem(QListWidget* source, QListWidget* target); // switches the current item from sry list to target list
+  void selectListItem(QListWidgetItem* item); // unselect all list items except the given
+  void loadWidget(QListWidgetItem* item); // load Widget for given list item
 
   void printproperties(); // prints out material with all properties
 
@@ -44,7 +46,10 @@ private slots:
   void on_pushButton_add_clicked(bool);
   void on_pushButton_remove_clicked(bool);
   void material_clicked(QTreeWidgetItem* item, int column);
-
+  void material_changed(QTreeWidgetItem* current_item, QTreeWidgetItem* prev_item);
+  void material_card_clicked(QListWidgetItem* item);
+  void material_card_changed(QListWidgetItem* current_item, QListWidgetItem* prev_item);
+  
 private:
   std::string log;
   QPushButton* pushButton_ok;
@@ -64,6 +69,15 @@ private:
   QListWidgetItem* list_plastic;
   QListWidgetItem* list_density;
   QListWidgetItem* list_expansion;
+  QWidget* card_widget;
+  QWidget* elastic_widget;
+  QLabel* elastic_label_title;
+  QWidget* plastic_widget;
+  QLabel* plastic_label_title;
+  QWidget* density_widget;
+  QLabel* density_label_title;
+  QWidget* expansion_widget;
+  QLabel* expansion_label_title;
   MaterialManagementItem* material_item;
 };
 
