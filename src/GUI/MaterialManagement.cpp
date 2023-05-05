@@ -111,9 +111,36 @@ MaterialManagement::MaterialManagement()
   //card_widget->setStyleSheet("border: 1px solid black");
   
   elastic_widget = new QWidget(card_frame);
-  elastic_widget->setGeometry(10,10,150,23);
-  elastic_label_title = new QLabel(elastic_widget);
+  elastic_widget->setMinimumSize(680,280);
+  elastix_boxLayout = new QVBoxLayout(elastic_widget);
+  elastic_label_title = new QLabel();
   elastic_label_title->setText("Elastic Card");
+  elastic_type = new QComboBox();
+  elastic_type->addItem("Isotropic");
+  elastic_type->addItem("Orthotropic");
+  elastic_type->addItem("Anisotropic");
+  elastix_boxLayout->addWidget(elastic_label_title);
+  elastix_boxLayout->addWidget(elastic_type);
+  
+
+  /*
+    group_properties.push_back({material_card[1] + "ISO_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE ELASTIC TYPE=ISOTROPIC CARD");
+    group_properties.push_back({material_card[1] + "ISO_MODULUS_VS_POISSON_VS_TEMPERATURE", "4", "3"});
+    group_properties_description.push_back("ISOTROPIC:\nYoung's Modulus vs Poisson's ratio vs Temperature");
+    group_properties.push_back({material_card[1] + "ORTHO_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE ELASTIC TYPE=ORTHOTROPIC CARD");
+    group_properties.push_back({material_card[1] + "ORTHO_CONSTANTS_VS_TEMPERATURE", "4", "10"});
+    group_properties_description.push_back("ORTHOTROPIC:\nD1111,D1122,D2222,D1133,D2233,D3333,D1212,D1313,\nD2323,TEMPERATURE");
+    group_properties.push_back({material_card[1] + "EC_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE ELASTIC TYPE=ENGINEERING CONSTANTS CARD");
+    group_properties.push_back({material_card[1] + "EC_CONSTANTS_VS_TEMPERATURE", "4", "10"});
+    group_properties_description.push_back("ENGINEERING CONSTANTS:\nE1,E2,E3,v12,v13,v23,G12,G13,\nG23,TEMPERATURE");
+    group_properties.push_back({material_card[1] + "ANISO_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE ELASTIC TYPE=ANISO CARD");
+    group_properties.push_back({material_card[1] + "ANISO_CONSTANTS_VS_TEMPERATURE", "4", "22"});
+    group_properties_description.push_back("ANISOTROPIC:\nD1111,D1122,D2222,D1133,D2233,D3333,D1112,D2212,\nD3312,D1212,D1113,D2213,D3313,D1213,D1313,D1123,\nD2223,D3323,D1223,D1323,D2323,TEMPERATURE");
+  */
 
   plastic_widget = new QWidget(card_frame);
   plastic_widget->setGeometry(10,10,150,23);
@@ -512,8 +539,10 @@ void MaterialManagement::loadWidget(QListWidgetItem* item)
 
 void MaterialManagement::on_pushButton_ok_clicked(bool)
 {
-  log = " clicked ok \n";
-  PRINT_INFO("%s", log.c_str());
+  //log = " clicked ok \n";
+  //PRINT_INFO("%s", log.c_str());
+  this->on_pushButton_apply_clicked(true);
+  this->on_pushButton_close_clicked(true);
 }
 
 void MaterialManagement::on_pushButton_apply_clicked(bool)
@@ -542,10 +571,27 @@ void MaterialManagement::on_pushButton_close_clicked(bool)
 
 void MaterialManagement::on_pushButton_new_clicked(bool)
 {
-  log = " clicked new \n";
-  PRINT_INFO("%s", log.c_str());
+  //log = " clicked new \n";
+  //PRINT_INFO("%s", log.c_str());
+  //this->printproperties();
+  QStringList commands;
+  bool ok;  
+  QString name = QInputDialog::getText(0, "Create Material",
+                                         "Material Name:", QLineEdit::Normal,
+                                         "", &ok);
+  if (ok && !name.isEmpty()){
+    commands.push_back("create material \"" + name + "\" property_group \"CalculiX-FEA\"");
+  }
 
-  this->printproperties();
+  ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");
+  if(cubit_translator)
+  {
+    for(int i = 0; i < commands.size(); i++)
+      cubit_translator->decode(commands[i]);
+
+    // Send the translated commands
+    Claro::instance()->send_gui_commands(commands);
+  }
 }
 
 void MaterialManagement::on_pushButton_delete_clicked(bool)

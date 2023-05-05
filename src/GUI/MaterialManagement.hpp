@@ -14,6 +14,8 @@
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
 #include <QMessageBox>
+#include <QInputDialog>
+#include <QComboBox>
 
 class CalculiXCoreInterface;
 class MaterialManagementItem;
@@ -89,7 +91,9 @@ private:
   // cards
   QFrame* card_frame;
   QWidget* elastic_widget;
+  QVBoxLayout* elastix_boxLayout;
   QLabel* elastic_label_title;
+  QComboBox* elastic_type;
   QWidget* plastic_widget;
   QLabel* plastic_label_title;
   QWidget* density_widget;
