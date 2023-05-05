@@ -23,6 +23,8 @@ void MaterialManagementItem::initialize(QString material_id_qstring,QString mate
 
   QTreeWidgetItem::setText(0, material_name_qstring);
   QTreeWidgetItem::setText(1, material_id_qstring);
+  this->material_id_qstring = material_id_qstring;
+  this->material_name_qstring = material_name_qstring;
 
   MaterialInterface::Material material;
   MaterialInterface::Property prop;
@@ -90,7 +92,6 @@ void MaterialManagementItem::initialize(QString material_id_qstring,QString mate
     properties.push_back(property);
 
   }
-  
   isInitialized = true;
 }
 
@@ -140,4 +141,46 @@ void MaterialManagementItem::update()
   //property_vector_gui = property_vector;
   //property_tabular_gui = property_tabular;
   property_matrix_gui = property_matrix;
+}
+
+int MaterialManagementItem::get_properties_data_id_from_group(std::string group)
+{
+  int return_int = -1;
+  for (size_t i = 0; i < group_properties.size(); i++)
+  {
+    if (group_properties[i][0]==group)
+    {
+        return_int = i;
+    }  
+  }
+  return return_int;
+}
+
+
+void MaterialManagementItem::setScalarPropertyGUI(std::string group, double prop_scalar)
+{
+  int properties_data_id = get_properties_data_id_from_group(group);
+
+  if (properties_data_id !=-1 )
+  {
+    if (properties[properties_data_id][1]==1)
+    {
+      property_scalar_gui[properties[properties_data_id][2]] = prop_scalar;
+    }
+  }
+}
+
+double MaterialManagementItem::getScalarPropertyGUI(std::string group)
+{
+  int properties_data_id = get_properties_data_id_from_group(group);
+  double double_return;
+
+  if (properties_data_id !=-1 )
+  {
+    if (properties[properties_data_id][1]==1)
+    {
+      double_return = property_scalar_gui[properties[properties_data_id][2]];
+    }
+  }
+  return double_return;
 }

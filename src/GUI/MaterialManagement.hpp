@@ -2,6 +2,10 @@
 #define MATERIALMANAGEMENT_HPP
 
 #include <QWidget>
+#include <QFrame>
+#include <QGridLayout>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
 #include <QList>
 #include <QPushButton>
 #include <QLabel>
@@ -9,6 +13,7 @@
 #include <QListWidgetItem>
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
+#include <QMessageBox>
 
 class CalculiXCoreInterface;
 class MaterialManagementItem;
@@ -34,8 +39,8 @@ public:
   void switchListItem(QListWidget* source, QListWidget* target); // switches the current item from sry list to target list
   void selectListItem(QListWidgetItem* item); // unselect all list items except the given
   void loadWidget(QListWidgetItem* item); // load Widget for given list item
-
   void printproperties(); // prints out material with all properties
+  // cards
 
 private slots:
   void on_pushButton_ok_clicked(bool);
@@ -47,11 +52,23 @@ private slots:
   void on_pushButton_remove_clicked(bool);
   void material_clicked(QTreeWidgetItem* item, int column);
   void material_changed(QTreeWidgetItem* current_item, QTreeWidgetItem* prev_item);
+  // cards
   void material_card_clicked(QListWidgetItem* item);
+  void material_card_doubleclicked(QListWidgetItem* item);
   void material_card_changed(QListWidgetItem* current_item, QListWidgetItem* prev_item);
   
 private:
   std::string log;
+  MaterialManagementItem* material_item;
+  MaterialManagementItem* current_material_item;
+  QGridLayout* gridLayout;
+  QHBoxLayout* boxLayout_window;
+  QVBoxLayout* boxLayout_material1;
+  QVBoxLayout* boxLayout_material2;
+  QVBoxLayout* boxLayout_material_cards1;
+  QVBoxLayout* boxLayout_material_cards2;
+  QVBoxLayout* boxLayout_material_cards3;
+  QVBoxLayout* boxLayout_widget;
   QPushButton* pushButton_ok;
   QPushButton* pushButton_apply;
   QPushButton* pushButton_close;
@@ -69,7 +86,8 @@ private:
   QListWidgetItem* list_plastic;
   QListWidgetItem* list_density;
   QListWidgetItem* list_expansion;
-  QWidget* card_widget;
+  // cards
+  QFrame* card_frame;
   QWidget* elastic_widget;
   QLabel* elastic_label_title;
   QWidget* plastic_widget;
@@ -78,7 +96,6 @@ private:
   QLabel* density_label_title;
   QWidget* expansion_widget;
   QLabel* expansion_label_title;
-  MaterialManagementItem* material_item;
 };
 
 #endif // MATERIALMANAGEMENT_HPP

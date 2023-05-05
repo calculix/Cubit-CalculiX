@@ -29,6 +29,8 @@ bool CoreMaterials::init()
     material_card[0]="ELASTIC"; // card name
     material_card[1]="CCX_ELASTIC_"; // property prefix
     material_cards.push_back(material_card);
+    group_properties.push_back({material_card[1] + "USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE ELASTIC CARD"); // needed for Material Management GUI
     group_properties.push_back({material_card[1] + "ISO_USE_CARD", "1"});
     group_properties_description.push_back("SET 1 TO USE ELASTIC TYPE=ISOTROPIC CARD");
     group_properties.push_back({material_card[1] + "ISO_MODULUS_VS_POISSON_VS_TEMPERATURE", "4", "3"});
@@ -49,6 +51,8 @@ bool CoreMaterials::init()
     material_card[0]="PLASTIC"; // card name
     material_card[1]="CCX_PLASTIC_"; // property prefix
     material_cards.push_back(material_card);
+    group_properties.push_back({material_card[1] + "USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE PLASTIC CARD"); // needed for Material Management GUI
     group_properties.push_back({material_card[1] + "ISO_USE_CARD", "1"});
     group_properties_description.push_back("SET 1 TO USE PLASTIC HARDENING=ISOTROPIC CARD");
     group_properties.push_back({material_card[1] + "ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE", "4","3"});
@@ -69,6 +73,8 @@ bool CoreMaterials::init()
     material_card[0]="EXPANSION"; // card name
     material_card[1]="CCX_EXPANSION_"; // property prefix
     material_cards.push_back(material_card);
+    group_properties.push_back({material_card[1] + "USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE EXPANSION CARD"); // needed for Material Management GUI
     group_properties.push_back({material_card[1] + "ISO_USE_CARD", "1"});
     group_properties_description.push_back("SET 1 TO USE EXPANSION TYPE=ISO CARD");
     group_properties.push_back({material_card[1] + "ISO_A_TEMPERATURE", "4", "2"});
@@ -199,148 +205,160 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
     material_card[0]="ELASTIC"; // card name
     material_card[1]="CCX_ELASTIC_"; // property prefix
 
-    prop = mat_iface->get_property(material_card[1] + "ISO_USE_CARD");
+    prop = mat_iface->get_property(material_card[1] + "USE_CARD");
     if (mat_iface->get_material_property_value(material, prop, prop_scalar))
-    {
+    { 
       if (prop_scalar==1)
-      {
-        material_cards_export.append("*ELASTIC,TYPE=ISO\n");
-
-        prop = mat_iface->get_property(material_card[1] + "ISO_MODULUS_VS_POISSON_VS_TEMPERATURE");
-        mat_iface->get_material_property_value(material, prop, prop_matrix);
-
-        for (size_t i = 0; i < prop_matrix.size(); i++)
+      { 
+        prop = mat_iface->get_property(material_card[1] + "ISO_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
         {
-          material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][2]) + "\n");
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*ELASTIC,TYPE=ISO\n");
+
+            prop = mat_iface->get_property(material_card[1] + "ISO_MODULUS_VS_POISSON_VS_TEMPERATURE");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][2]) + "\n");
+            }
+          }
+        }
+        prop = mat_iface->get_property(material_card[1] + "ORTHO_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*ELASTIC,TYPE=ORTHO\n");
+
+            prop = mat_iface->get_property(material_card[1] + "ORTHO_CONSTANTS_VS_TEMPERATURE");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][2]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][3]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][4]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][5]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][6]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][7]) + ",\n");
+              material_cards_export.append(std::to_string(prop_matrix[i][8]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][9]) + "\n");
+            }
+          }
+        }
+        prop = mat_iface->get_property(material_card[1] + "EC_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*ELASTIC,TYPE=ENGINEERING CONSTANTS\n");
+
+            prop = mat_iface->get_property(material_card[1] + "EC_CONSTANTS_VS_TEMPERATURE");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][2]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][3]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][4]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][5]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][6]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][7]) + ",\n");
+              material_cards_export.append(std::to_string(prop_matrix[i][8]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][9]) + "\n");
+            }
+          }
+        }
+        prop = mat_iface->get_property(material_card[1] + "ANISO_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*ELASTIC,TYPE=ANISO\n");
+
+            prop = mat_iface->get_property(material_card[1] + "ANISO_CONSTANTS_VS_TEMPERATURE");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][2]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][3]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][4]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][5]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][6]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][7]) + ",\n");
+              material_cards_export.append(std::to_string(prop_matrix[i][8]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][9]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][10]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][11]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][12]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][13]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][14]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][15]) + ",\n");
+              material_cards_export.append(std::to_string(prop_matrix[i][16]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][17]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][18]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][19]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][20]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][21]) + "\n");
+            }
+          }
         }
       }
     }
-    prop = mat_iface->get_property(material_card[1] + "ORTHO_USE_CARD");
-    if (mat_iface->get_material_property_value(material, prop, prop_scalar))
-    {
-      if (prop_scalar==1)
-      {
-        material_cards_export.append("*ELASTIC,TYPE=ORTHO\n");
-
-        prop = mat_iface->get_property(material_card[1] + "ORTHO_CONSTANTS_VS_TEMPERATURE");
-        mat_iface->get_material_property_value(material, prop, prop_matrix);
-
-        for (size_t i = 0; i < prop_matrix.size(); i++)
-        {
-          material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][2]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][3]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][4]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][5]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][6]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][7]) + ",\n");
-          material_cards_export.append(std::to_string(prop_matrix[i][8]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][9]) + "\n");
-        }
-      }
-    }
-    prop = mat_iface->get_property(material_card[1] + "EC_USE_CARD");
-    if (mat_iface->get_material_property_value(material, prop, prop_scalar))
-    {
-      if (prop_scalar==1)
-      {
-        material_cards_export.append("*ELASTIC,TYPE=ENGINEERING CONSTANTS\n");
-
-        prop = mat_iface->get_property(material_card[1] + "EC_CONSTANTS_VS_TEMPERATURE");
-        mat_iface->get_material_property_value(material, prop, prop_matrix);
-
-        for (size_t i = 0; i < prop_matrix.size(); i++)
-        {
-          material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][2]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][3]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][4]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][5]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][6]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][7]) + ",\n");
-          material_cards_export.append(std::to_string(prop_matrix[i][8]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][9]) + "\n");
-        }
-      }
-    }
-    prop = mat_iface->get_property(material_card[1] + "ANISO_USE_CARD");
-    if (mat_iface->get_material_property_value(material, prop, prop_scalar))
-    {
-      if (prop_scalar==1)
-      {
-        material_cards_export.append("*ELASTIC,TYPE=ANISO\n");
-
-        prop = mat_iface->get_property(material_card[1] + "ANISO_CONSTANTS_VS_TEMPERATURE");
-        mat_iface->get_material_property_value(material, prop, prop_matrix);
-
-        for (size_t i = 0; i < prop_matrix.size(); i++)
-        {
-          material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][2]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][3]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][4]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][5]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][6]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][7]) + ",\n");
-          material_cards_export.append(std::to_string(prop_matrix[i][8]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][9]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][10]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][11]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][12]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][13]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][14]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][15]) + ",\n");
-          material_cards_export.append(std::to_string(prop_matrix[i][16]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][17]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][18]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][19]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][20]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][21]) + "\n");
-        }
-      }
-    }
-
     material_card[0]="PLASTIC"; // card name
     material_card[1]="CCX_PLASTIC_"; // property prefix
-
-    prop = mat_iface->get_property(material_card[1] + "ISO_USE_CARD");
+    prop = mat_iface->get_property(material_card[1] + "USE_CARD");
     if (mat_iface->get_material_property_value(material, prop, prop_scalar))
-    {
+    { 
       if (prop_scalar==1)
-      {
-        material_cards_export.append("*PLASTIC,HARDENING=ISOTROPIC\n");
-
-        prop = mat_iface->get_property(material_card[1] + "ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE");
-        mat_iface->get_material_property_value(material, prop, prop_matrix);
-
-        for (size_t i = 0; i < prop_matrix.size(); i++)
+      {       
+        prop = mat_iface->get_property(material_card[1] + "ISO_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
         {
-          material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][2]) + "\n");
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*PLASTIC,HARDENING=ISOTROPIC\n");
+
+            prop = mat_iface->get_property(material_card[1] + "ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][2]) + "\n");
+            }
+          }
         }
-      }
-    }
-    prop = mat_iface->get_property(material_card[1] + "KIN_USE_CARD");
-    if (mat_iface->get_material_property_value(material, prop, prop_scalar))
-    {
-      if (prop_scalar==1)
-      {
-        material_cards_export.append("*PLASTIC,HARDENING=KINEMATIC\n");
-
-        prop = mat_iface->get_property(material_card[1] + "KIN_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE");
-        mat_iface->get_material_property_value(material, prop, prop_matrix);
-
-        for (size_t i = 0; i < prop_matrix.size(); i++)
+        prop = mat_iface->get_property(material_card[1] + "KIN_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
         {
-          material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][2]) + "\n");
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*PLASTIC,HARDENING=KINEMATIC\n");
+
+            prop = mat_iface->get_property(material_card[1] + "KIN_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][2]) + "\n");
+            }
+          }
         }
       }
     }
@@ -369,87 +387,94 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
     material_card[0]="EXPANSION"; // card name
     material_card[1]="CCX_EXPANSION_"; // property prefix
     
-    prop = mat_iface->get_property(material_card[1] + "ISO_USE_CARD");
+    prop = mat_iface->get_property(material_card[1] + "USE_CARD");
     if (mat_iface->get_material_property_value(material, prop, prop_scalar))
-    {
-      if (prop_scalar==1)
-      {
-        MaterialInterface::Property prop_zero;
-        prop_zero = mat_iface->get_property(material_card[1] + "ZERO_USE_CARD");
-        if (mat_iface->get_material_property_value(material, prop_zero, prop_scalar))
-        {
-          material_cards_export.append("*EXPANSION,TYPE=ISO,ZERO=" + std::to_string(prop_scalar) + "\n");
-        }else
-        {
-          material_cards_export.append("*EXPANSION,TYPE=ISO\n");
-        }
-
-        prop = mat_iface->get_property(material_card[1] + "ISO_A_TEMPERATURE");
-        mat_iface->get_material_property_value(material, prop, prop_matrix);
-
-        for (size_t i = 0; i < prop_matrix.size(); i++)
-        {
-          material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][1]) + "\n");
-        }
-      }
-    }
-
-    prop = mat_iface->get_property(material_card[1] + "ORTHO_USE_CARD");
-    if (mat_iface->get_material_property_value(material, prop, prop_scalar))
-    {
-      if (prop_scalar==1)
-      {
-        MaterialInterface::Property prop_zero;
-        prop_zero = mat_iface->get_property(material_card[1] + "ZERO_USE_CARD");
-        if (mat_iface->get_material_property_value(material, prop_zero, prop_scalar))
-        {
-          material_cards_export.append("*EXPANSION,TYPE=ORTHO,ZERO=" + std::to_string(prop_scalar) + "\n");
-        }else
-        {
-          material_cards_export.append("*EXPANSION,TYPE=ORTHO\n");
-        }    
-
-        prop = mat_iface->get_property(material_card[1] + "ORTHO_CONSTANTS_VS_TEMPERATURE");
-        mat_iface->get_material_property_value(material, prop, prop_matrix);
-
-        for (size_t i = 0; i < prop_matrix.size(); i++)
-        {
-          material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][2]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][3]) + "\n");
-        }
-      }
-    }
-    
-    prop = mat_iface->get_property(material_card[1] + "ANISO_USE_CARD");
-    if (mat_iface->get_material_property_value(material, prop, prop_scalar))
-    {
+    { 
       if (prop_scalar==1)
       { 
-        MaterialInterface::Property prop_zero;
-        prop_zero = mat_iface->get_property(material_card[1] + "ZERO_USE_CARD");
-        if (mat_iface->get_material_property_value(material, prop_zero, prop_scalar))
+        prop = mat_iface->get_property(material_card[1] + "ISO_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
         {
-          material_cards_export.append("*EXPANSION,TYPE=ANISO,ZERO=" + std::to_string(prop_scalar) + "\n");
-        }else
-        {
-          material_cards_export.append("*EXPANSION,TYPE=ANISO\n");
-        }  
+          if (prop_scalar==1)
+          {
+            MaterialInterface::Property prop_zero;
+            prop_zero = mat_iface->get_property(material_card[1] + "ZERO_USE_CARD");
+            if (mat_iface->get_material_property_value(material, prop_zero, prop_scalar))
+            {
+              material_cards_export.append("*EXPANSION,TYPE=ISO,ZERO=" + std::to_string(prop_scalar) + "\n");
+            }else
+            {
+              material_cards_export.append("*EXPANSION,TYPE=ISO\n");
+            }
 
-        prop = mat_iface->get_property(material_card[1] + "ANISO_CONSTANTS_VS_TEMPERATURE");
-        mat_iface->get_material_property_value(material, prop, prop_matrix);
+            prop = mat_iface->get_property(material_card[1] + "ISO_A_TEMPERATURE");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
 
-        for (size_t i = 0; i < prop_matrix.size(); i++)
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][1]) + "\n");
+            }
+          }
+        }
+
+        prop = mat_iface->get_property(material_card[1] + "ORTHO_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
         {
-          material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][2]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][3]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][4]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][5]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][6]) + "\n");
+          if (prop_scalar==1)
+          {
+            MaterialInterface::Property prop_zero;
+            prop_zero = mat_iface->get_property(material_card[1] + "ZERO_USE_CARD");
+            if (mat_iface->get_material_property_value(material, prop_zero, prop_scalar))
+            {
+              material_cards_export.append("*EXPANSION,TYPE=ORTHO,ZERO=" + std::to_string(prop_scalar) + "\n");
+            }else
+            {
+              material_cards_export.append("*EXPANSION,TYPE=ORTHO\n");
+            }    
+
+            prop = mat_iface->get_property(material_card[1] + "ORTHO_CONSTANTS_VS_TEMPERATURE");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][2]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][3]) + "\n");
+            }
+          }
+        }
+        
+        prop = mat_iface->get_property(material_card[1] + "ANISO_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          { 
+            MaterialInterface::Property prop_zero;
+            prop_zero = mat_iface->get_property(material_card[1] + "ZERO_USE_CARD");
+            if (mat_iface->get_material_property_value(material, prop_zero, prop_scalar))
+            {
+              material_cards_export.append("*EXPANSION,TYPE=ANISO,ZERO=" + std::to_string(prop_scalar) + "\n");
+            }else
+            {
+              material_cards_export.append("*EXPANSION,TYPE=ANISO\n");
+            }  
+
+            prop = mat_iface->get_property(material_card[1] + "ANISO_CONSTANTS_VS_TEMPERATURE");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][2]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][3]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][4]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][5]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][6]) + "\n");
+            }
+          }
         }
       }
     }

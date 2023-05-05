@@ -14,93 +14,125 @@ MaterialManagement::MaterialManagement()
 
 
   // main window
-  this->setGeometry(0,0,590,570);
+  //this->setGeometry(0,0,700,570);
   this->setWindowTitle("Material Management");
-  
+  gridLayout = new QGridLayout(this);
+  boxLayout_window = new QHBoxLayout();
+  boxLayout_material1 = new QVBoxLayout();
+  boxLayout_material2 = new QVBoxLayout();
+  boxLayout_material_cards1 = new QVBoxLayout();
+  boxLayout_material_cards2 = new QVBoxLayout();
+  boxLayout_material_cards3 = new QVBoxLayout();
+  boxLayout_widget = new QVBoxLayout();
+  gridLayout->addLayout(boxLayout_window,2,4, Qt::AlignRight);
+  gridLayout->addLayout(boxLayout_material1,0,0, Qt::AlignTop);
+  gridLayout->addLayout(boxLayout_material2,0,1, Qt::AlignTop);
+  gridLayout->addLayout(boxLayout_material_cards1,0,2, Qt::AlignTop);
+  gridLayout->addLayout(boxLayout_material_cards2,0,3, Qt::AlignTop);
+  gridLayout->addLayout(boxLayout_material_cards3,0,4, Qt::AlignTop);
+  gridLayout->addLayout(boxLayout_widget,1,0,1,5, Qt::AlignTop);
+  boxLayout_material2->addSpacing(30);
+  boxLayout_material_cards2->addSpacing(30);
+
   // buttons
-  pushButton_ok = new QPushButton(this);
-  pushButton_ok->setGeometry(310,530,75,23);
+  pushButton_ok = new QPushButton();
+  //pushButton_ok->setGeometry(310,530,75,23);
   pushButton_ok->setText("OK");
+  boxLayout_window->addWidget(pushButton_ok);
 
-  pushButton_apply = new QPushButton(this);
-  pushButton_apply->setGeometry(400,530,75,23);
+  pushButton_apply = new QPushButton();
+  //pushButton_apply->setGeometry(400,530,75,23);
   pushButton_apply->setText("Apply");
+  boxLayout_window->addWidget(pushButton_apply);
 
-  pushButton_close = new QPushButton(this);
-  pushButton_close->setGeometry(490,530,75,23);
+  pushButton_close = new QPushButton();
+  //pushButton_close->setGeometry(490,530,75,23);
   pushButton_close->setText("Close");
+  boxLayout_window->addWidget(pushButton_close);
   
-  pushButton_new = new QPushButton(this);
-  pushButton_new->setGeometry(200,30,75,23);
+  pushButton_new = new QPushButton();
+  //pushButton_new->setGeometry(200,30,75,23);
   pushButton_new->setText("New");
+  boxLayout_material2->addWidget(pushButton_new);
 
-  pushButton_delete = new QPushButton(this);
-  pushButton_delete->setGeometry(200,60,75,23);
+  pushButton_delete = new QPushButton();
+  //pushButton_delete->setGeometry(200,60,75,23);
   pushButton_delete->setText("Delete");
+  boxLayout_material2->addWidget(pushButton_delete);
   
-  pushButton_add = new QPushButton(this);
-  pushButton_add->setGeometry(420,70,21,21);
+  pushButton_add = new QPushButton();
+  //pushButton_add->setGeometry(420,70,21,21);
   pushButton_add->setText(">");
+  boxLayout_material_cards2->addWidget(pushButton_add);
 
-  pushButton_remove = new QPushButton(this);
-  pushButton_remove->setGeometry(420,100,21,21);
+  pushButton_remove = new QPushButton();
+  //pushButton_remove->setGeometry(420,100,21,21);
   pushButton_remove->setText("<");
+  boxLayout_material_cards2->addWidget(pushButton_remove);
 
   // labels
-  label_material = new QLabel(this);
-  label_material->setGeometry(10,10,80,16);
+  label_material = new QLabel();
+  //label_material->setGeometry(10,10,80,16);
   label_material->setText("Material");
-  
-  label_available = new QLabel(this);
-  label_available->setGeometry(300,10,100,16);
-  label_available->setText("Available Cards");
+  boxLayout_material1->addWidget(label_material);
 
-  label_used = new QLabel(this);
-  label_used->setGeometry(450,10,100,16);
+  label_available = new QLabel();
+  //label_available->setGeometry(300,10,100,16);
+  label_available->setText("Available Cards");
+  boxLayout_material_cards1->addWidget(label_available);
+
+  label_used = new QLabel();
+  //label_used->setGeometry(450,10,100,16);
   label_used->setText("Used Cards");
+  boxLayout_material_cards3->addWidget(label_used);
 
   // tree/lists
-  tree_material = new QTreeWidget(this);
-  tree_material->setGeometry(10,30,181,191);
+  tree_material = new QTreeWidget();
+  //tree_material->setGeometry(10,30,181,191);
   tree_material->setColumnCount(2);
   tree_material->setHeaderLabels(QStringList() << "Name" << "ID");
+  boxLayout_material1->addWidget(tree_material);
 
-  list_available = new QListWidget(this);
-  list_available->setGeometry(300,30,111,191);
+  list_available = new QListWidget();
+  //list_available->setGeometry(300,30,111,191);
+  boxLayout_material_cards1->addWidget(list_available);
 
-  list_used = new QListWidget(this);
-  list_used->setGeometry(450,30,111,191);
+  list_used = new QListWidget();
+  //list_used->setGeometry(450,30,111,191);
+  boxLayout_material_cards3->addWidget(list_used);
 
   // card widgets
-  card_widget = new QWidget(this);
-  card_widget->setGeometry(10,250,500,250);
-  //card_widget->setStyleSheet("border: 1px solid black");  
-
-  elastic_widget = new QWidget(card_widget);
-  //elastic_widget->setGeometry(10,400,100,100);
+  card_frame = new QFrame();
+  //card_widget->setGeometry(10,10,500,250);
+  card_frame->setMinimumSize(700,300);
+  card_frame->setLineWidth(1);
+  card_frame->setMidLineWidth(0);
+  card_frame->setFrameStyle(QFrame::Box | QFrame::Raised);
+  //card_widget->setStyleSheet("border: 1px solid black");
+  
+  elastic_widget = new QWidget(card_frame);
+  elastic_widget->setGeometry(10,10,150,23);
   elastic_label_title = new QLabel(elastic_widget);
-  elastic_label_title->setGeometry(10,10,150,16);
   elastic_label_title->setText("Elastic Card");
 
-  plastic_widget = new QWidget(card_widget);
-  //plastic_widget->setGeometry(10,400,100,100);
+  plastic_widget = new QWidget(card_frame);
+  plastic_widget->setGeometry(10,10,150,23);
   plastic_label_title = new QLabel(plastic_widget);
-  plastic_label_title->setGeometry(10,10,150,16);
   plastic_label_title->setText("Plastic Card");
 
-  density_widget = new QWidget(card_widget);
-  //density_widget->setGeometry(10,400,100,100);
+  density_widget = new QWidget(card_frame);
+  density_widget->setGeometry(10,10,150,23);
   density_label_title = new QLabel(density_widget);
-  density_label_title->setGeometry(10,10,150,16);
   density_label_title->setText("Density Card");
 
-  expansion_widget = new QWidget(card_widget);
-  //expansion_widget->setGeometry(10,400,100,100);
+  expansion_widget = new QWidget(card_frame);
+  expansion_widget->setGeometry(10,10,150,23);
   expansion_label_title = new QLabel(expansion_widget);
-  expansion_label_title->setGeometry(10,10,150,16);
   expansion_label_title->setText("Expansion Card");
 
-  card_widget->show();
+  boxLayout_widget->addWidget(card_frame);
+
+  //card_frame->show();
   elastic_widget->hide();
   plastic_widget->hide();
   density_widget->hide();
@@ -118,6 +150,8 @@ MaterialManagement::MaterialManagement()
   QObject::connect(tree_material, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),this,  SLOT(material_changed(QTreeWidgetItem*,QTreeWidgetItem*)));
   QObject::connect(list_used, SIGNAL(itemClicked(QListWidgetItem*)),this,  SLOT(material_card_clicked(QListWidgetItem*)));
   QObject::connect(list_available, SIGNAL(itemClicked(QListWidgetItem*)),this,  SLOT(material_card_clicked(QListWidgetItem*)));
+  QObject::connect(list_used, SIGNAL(itemDoubleClicked(QListWidgetItem*)),this,  SLOT(material_card_doubleclicked(QListWidgetItem*)));
+  QObject::connect(list_available, SIGNAL(itemDoubleClicked(QListWidgetItem*)),this,  SLOT(material_card_doubleclicked(QListWidgetItem*)));
   QObject::connect(list_used, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)),this,  SLOT(material_card_changed(QListWidgetItem*,QListWidgetItem*)));  
   QObject::connect(list_available, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)),this,  SLOT(material_card_changed(QListWidgetItem*,QListWidgetItem*)));
 
@@ -294,20 +328,14 @@ void MaterialManagement::createListItems(MaterialManagementItem *material)
 
   for (size_t i = 0; i < material->properties.size(); i++)
   {
-    if ((material->group_properties[material->properties[i][0]][0]=="CCX_ELASTIC_ISO_USE_CARD")
-        || (material->group_properties[material->properties[i][0]][0]=="CCX_ELASTIC_ORTHO_USE_CARD")
-        || (material->group_properties[material->properties[i][0]][0]=="CCX_ELASTIC_EC_USE_CARD")
-        || (material->group_properties[material->properties[i][0]][0]=="CCX_ELASTIC_ANISO_USE_CARD")
-        )
+    if ((material->group_properties[material->properties[i][0]][0]=="CCX_ELASTIC_USE_CARD"))
     {
       if (material->property_scalar_gui[material->properties[i][2]]==1)
       {
         use_elastic = true;
       }
     }
-    if ((material->group_properties[material->properties[i][0]][0]=="CCX_PLASTIC_ISO_USE_CARD")
-        || (material->group_properties[material->properties[i][0]][0]=="CCX_PLASTIC_KIN_USE_CARD")
-        )
+    if ((material->group_properties[material->properties[i][0]][0]=="CCX_PLASTIC_USE_CARD"))
     {
       if (material->property_scalar_gui[material->properties[i][2]]==1)
       {
@@ -321,11 +349,7 @@ void MaterialManagement::createListItems(MaterialManagementItem *material)
         use_density = true;
       }
     }
-    if ((material->group_properties[material->properties[i][0]][0]=="CCX_EXPANSION_ISO_USE_CARD")
-        || (material->group_properties[material->properties[i][0]][0]=="CCX_EXPANSION_ORTHO_USE_CARD")
-        || (material->group_properties[material->properties[i][0]][0]=="CCX_EXPANSION_ZERO_USE_CARD")
-        || (material->group_properties[material->properties[i][0]][0]=="CCX_EXPANSION_ANISO_USE_CARD")
-        )
+    if ((material->group_properties[material->properties[i][0]][0]=="CCX_EXPANSION_USE_CARD"))
     {
       if (material->property_scalar_gui[material->properties[i][2]]==1)
       {
@@ -395,8 +419,43 @@ void MaterialManagement::switchListItem(QListWidget* source, QListWidget* target
     target->setCurrentItem(newItem);
     delete source->currentItem();
     this->selectListItem(newItem);
+    this->loadWidget(newItem);
     source->sortItems();
     target->sortItems();
+
+    if (newItem->text()=="Elastic")
+    {
+      if (current_material_item->getScalarPropertyGUI("CCX_ELASTIC_USE_CARD")==0)
+      {
+        current_material_item->setScalarPropertyGUI("CCX_ELASTIC_USE_CARD", 1);
+      }else{
+        current_material_item->setScalarPropertyGUI("CCX_ELASTIC_USE_CARD", 0);
+      }
+    }else if (newItem->text()=="Plastic")
+    {
+      if (current_material_item->getScalarPropertyGUI("CCX_PLASTIC_USE_CARD")==0)
+      {
+        current_material_item->setScalarPropertyGUI("CCX_PLASTIC_USE_CARD", 1);
+      }else{
+        current_material_item->setScalarPropertyGUI("CCX_PLASTIC_USE_CARD", 0);
+      }
+    }else if (newItem->text()=="Density")
+    {
+      if (current_material_item->getScalarPropertyGUI("CCX_DENSITY_USE_CARD")==0)
+      {
+        current_material_item->setScalarPropertyGUI("CCX_DENSITY_USE_CARD", 1);
+      }else{
+        current_material_item->setScalarPropertyGUI("CCX_DENSITY_USE_CARD", 0);
+      }
+    }else if (newItem->text()=="Expansion")
+    {
+      if (current_material_item->getScalarPropertyGUI("CCX_EXPANSION_USE_CARD")==0)
+      {
+        current_material_item->setScalarPropertyGUI("CCX_EXPANSION_USE_CARD", 1);
+      }else{
+        current_material_item->setScalarPropertyGUI("CCX_EXPANSION_USE_CARD", 0);
+      }
+    }
   }
 }
 
@@ -419,21 +478,7 @@ void MaterialManagement::selectListItem(QListWidgetItem* item)
     {
       temp_item->setSelected(false);
     }
-  }
-  if (item->text()=="Elastic")
-  {
-    elastic_widget->show();
-  }else if (item->text()=="Plastic")
-  {
-    /* code */
-  }else if (item->text()=="Density")
-  {
-    /* code */
-  }else if (item->text()=="Expansion")
-  {
-    /* code */
-  }
-  
+  }  
 }
 
 void MaterialManagement::loadWidget(QListWidgetItem* item)
@@ -505,8 +550,27 @@ void MaterialManagement::on_pushButton_new_clicked(bool)
 
 void MaterialManagement::on_pushButton_delete_clicked(bool)
 {
-  log = " clicked delete \n";
-  PRINT_INFO("%s", log.c_str());
+  //log = " clicked delete \n";
+  //PRINT_INFO("%s", log.c_str());
+  QStringList commands;
+  
+  QMessageBox::StandardButton msgbox;
+  msgbox = QMessageBox::question(this,"Delete Material","Delete Material " + current_material_item->material_name_qstring + "?", QMessageBox::Yes | QMessageBox::No);
+  
+  if (msgbox == QMessageBox::Yes)
+  {
+    commands.push_back("delete material " + current_material_item->material_id_qstring);
+  }
+
+  ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");
+  if(cubit_translator)
+  {
+    for(int i = 0; i < commands.size(); i++)
+      cubit_translator->decode(commands[i]);
+
+    // Send the translated commands
+    Claro::instance()->send_gui_commands(commands);
+  }
 }
 
 void MaterialManagement::on_pushButton_add_clicked(bool)
@@ -531,6 +595,7 @@ void MaterialManagement::material_clicked(QTreeWidgetItem* item, int column)
 
   if (material_item = dynamic_cast<MaterialManagementItem*>(item))
   {
+    current_material_item = material_item;
     this->removeListItems();
     this->createListItems(material_item);
     elastic_widget->hide();
@@ -556,10 +621,23 @@ void MaterialManagement::material_card_clicked(QListWidgetItem* item)
   this->loadWidget(item);
 }
 
+void MaterialManagement::material_card_doubleclicked(QListWidgetItem* item)
+{
+  //log = " material card " + item->text().toStdString() + " clicked \n";
+  //PRINT_INFO("%s", log.c_str()); 
+  if (item->listWidget()==list_used)
+  {
+    switchListItem(list_used, list_available);
+  }else{
+    switchListItem(list_available, list_used);
+  }
+}
+
 void MaterialManagement::material_card_changed(QListWidgetItem* current_item, QListWidgetItem* prev_item)
 {
   if (current_item!=nullptr)
   {
+    this->selectListItem(current_item);
     this->loadWidget(current_item);
   }
 }
