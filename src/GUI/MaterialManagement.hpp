@@ -19,13 +19,14 @@
 
 class CalculiXCoreInterface;
 class MaterialManagementItem;
+class MaterialManagementElasticCard;
 
 class MaterialManagement : public QWidget
 {
   Q_OBJECT
   
 public:
-  explicit MaterialManagement();
+  MaterialManagement();
   ~MaterialManagement();
 
   CalculiXCoreInterface *ccx_iface;
@@ -90,10 +91,7 @@ private:
   QListWidgetItem* list_expansion;
   // cards
   QFrame* card_frame;
-  QWidget* elastic_widget;
-  QVBoxLayout* elastix_boxLayout;
-  QLabel* elastic_label_title;
-  QComboBox* elastic_type;
+  MaterialManagementElasticCard* elastic_widget;
   QWidget* plastic_widget;
   QLabel* plastic_label_title;
   QWidget* density_widget;
