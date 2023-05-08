@@ -184,3 +184,31 @@ double MaterialManagementItem::getScalarPropertyGUI(std::string group)
   }
   return double_return;
 }
+
+void MaterialManagementItem::setMatrixPropertyGUI(std::string group, std::vector<std::vector<double>> matrix)
+{
+  int properties_data_id = get_properties_data_id_from_group(group);
+
+  if (properties_data_id !=-1 )
+  {
+    if (properties[properties_data_id][1]==4)
+    {
+      property_matrix_gui[properties[properties_data_id][2]] = matrix;
+    }
+  }
+}
+
+std::vector<std::vector<double>> MaterialManagementItem::getMatrixPropertyGUI(std::string group)
+{
+  int properties_data_id = get_properties_data_id_from_group(group);
+  std::vector<std::vector<double>> matrix_return;
+
+  if (properties_data_id !=-1 )
+  {
+    if (properties[properties_data_id][1]==4)
+    {
+      matrix_return = property_matrix_gui[properties[properties_data_id][2]];
+    }
+  }
+  return matrix_return;
+}

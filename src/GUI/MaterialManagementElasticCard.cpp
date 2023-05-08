@@ -2,12 +2,14 @@
 #include "MaterialManagementItem.hpp"
 #include "MaterialManagementTable.hpp"
 
-MaterialManagementElasticCard::MaterialManagementElasticCard(QWidget* parent):
+MaterialManagementElasticCard::MaterialManagementElasticCard(QWidget* parent, MaterialManagementItem *material):
   QWidget (parent),
   isInitialized(false)
 {
   if(isInitialized)
     return;
+
+  this->material = material;
 
   this->setMinimumSize(700,300);
   GridLayout = new QGridLayout(this);
@@ -24,7 +26,7 @@ MaterialManagementElasticCard::MaterialManagementElasticCard(QWidget* parent):
   elastic_type->addItem("Isotropic");
   elastic_type->addItem("Orthotropic");
   elastic_type->addItem("Anisotropic");
-  table_isotropic = new MaterialManagementTable(this);
+  table_isotropic = new MaterialManagementTable(this,"CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE");
 
   // Layout
   GridLayout->addLayout(HBoxLayout,0,0, Qt::AlignTop);
@@ -61,4 +63,10 @@ MaterialManagementElasticCard::MaterialManagementElasticCard(QWidget* parent):
 
 MaterialManagementElasticCard::~MaterialManagementElasticCard()
 {
+}
+
+void MaterialManagementElasticCard::update(MaterialManagementItem *material)
+{
+  this->material = material;
+  table_isotropic->update(material);
 }

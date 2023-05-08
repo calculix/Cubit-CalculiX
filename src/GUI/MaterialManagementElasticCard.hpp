@@ -19,11 +19,12 @@ class MaterialManagementElasticCard : public QWidget
   Q_OBJECT
   
 public:
-  MaterialManagementElasticCard(QWidget *parent);
+  MaterialManagementElasticCard(QWidget *parent, MaterialManagementItem *material);
   ~MaterialManagementElasticCard();
 
   bool isInitialized;
   
+  void update(MaterialManagementItem *material);
 /*
 private slots:
   void on_pushButton_ok_clicked(bool);
@@ -31,7 +32,7 @@ private slots:
   
 private:
   std::string log;
-  MaterialManagementItem* material_item;
+  MaterialManagementItem* material;
 
   QGridLayout* GridLayout;
   QVBoxLayout* VBoxLayout;

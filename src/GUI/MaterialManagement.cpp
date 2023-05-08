@@ -111,7 +111,7 @@ MaterialManagement::MaterialManagement()
   card_frame->setFrameStyle(QFrame::Box | QFrame::Raised);
   //card_widget->setStyleSheet("border: 1px solid black");
   
-  elastic_widget = new MaterialManagementElasticCard(card_frame);
+  elastic_widget = new MaterialManagementElasticCard(card_frame,current_material_item);
 
   plastic_widget = new QWidget(card_frame);
   plastic_widget->setGeometry(10,10,150,23);
@@ -519,7 +519,7 @@ void MaterialManagement::on_pushButton_ok_clicked(bool)
 void MaterialManagement::on_pushButton_apply_clicked(bool)
 {
   QStringList commands;
-
+  this->printproperties();
   // We must send the Cubit commands through the Claro framework, so first we need to translate
   // the commands into the python form that Claro will understand.
   ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");
@@ -544,7 +544,7 @@ void MaterialManagement::on_pushButton_new_clicked(bool)
 {
   //log = " clicked new \n";
   //PRINT_INFO("%s", log.c_str());
-  //this->printproperties();
+  
   QStringList commands;
   bool ok;  
   QString name = QInputDialog::getText(0, "Create Material",
@@ -588,6 +588,11 @@ void MaterialManagement::on_pushButton_delete_clicked(bool)
     // Send the translated commands
     Claro::instance()->send_gui_commands(commands);
   }
+  this->removeListItems();
+  elastic_widget->hide();
+  plastic_widget->hide();
+  density_widget->hide();
+  expansion_widget->hide();
 }
 
 void MaterialManagement::on_pushButton_add_clicked(bool)
@@ -619,6 +624,10 @@ void MaterialManagement::material_clicked(QTreeWidgetItem* item, int column)
     plastic_widget->hide();
     density_widget->hide();
     expansion_widget->hide();
+    if (current_material_item!=nullptr)
+    {
+      elastic_widget->update(material_item);
+    }
   }
 }
 

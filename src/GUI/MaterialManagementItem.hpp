@@ -45,6 +45,8 @@ public:
   int get_properties_data_id_from_group(std::string group); // searches for the group in the group_properties and returns the linked indices from the properties or -1 if it fails
   void setScalarPropertyGUI(std::string group, double prop_scalar); // sets the scalar property to given value
   double getScalarPropertyGUI(std::string group); // gets the scalar property value
+  void setMatrixPropertyGUI(std::string group, std::vector<std::vector<double>> matrix); // sets the matrix property values to gui storage
+  std::vector<std::vector<double>> getMatrixPropertyGUI(std::string group); // gets the matrix property values
 
   bool isInitialized;
   int material_id;
