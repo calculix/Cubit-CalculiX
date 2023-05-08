@@ -517,6 +517,58 @@ void MaterialManagement::on_pushButton_apply_clicked(bool)
 {
   QStringList commands;
   this->printproperties();
+
+
+  //modify material "Test3" matrix_property "CCX_ELASTIC_ANISO_CONSTANTS_VS_TEMPERATURE" 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
+  //modify material "Test3" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+
+  MaterialManagementItem *temp_child;
+
+  for (size_t i = 0; i < tree_material->topLevelItemCount(); i++)
+  {
+    temp_child = dynamic_cast<MaterialManagementItem*>(tree_material->topLevelItem(i));
+    
+    log = "########### \n";
+    log.append(temp_child->text(1).toStdString() + " child id \n");
+    for (size_t ii = 0; ii < temp_child->properties.size(); ii++)
+    {
+      log.append("----------\n");
+      log.append(temp_child->group_properties[temp_child->properties[ii][0]][0] + " \n");
+      log.append("----------\n");
+      log.append(std::to_string(temp_child->properties[ii][0]) + " " + std::to_string(temp_child->properties[ii][1]) + " " + std::to_string(temp_child->properties[ii][2]) + " \n");
+      if (temp_child->properties[ii][1]==1)
+      {
+        log.append("SCALAR\n");
+        log.append(std::to_string(temp_child->property_scalar[temp_child->properties[ii][2]]) + " \n");
+        log.append("SCALAR GUI\n");
+        log.append(std::to_string(temp_child->property_scalar_gui[temp_child->properties[ii][2]]) + " \n");
+      } else if (temp_child->properties[ii][1]==4)
+      {        
+        log.append("MATRIX\n");
+        for (size_t iii = 0; iii < temp_child->property_matrix[temp_child->properties[ii][2]].size(); iii++)
+        {
+          for (size_t iv = 0; iv < temp_child->property_matrix[temp_child->properties[ii][2]][iii].size(); iv++)
+          {
+            log.append(std::to_string(temp_child->property_matrix[temp_child->properties[ii][2]][iii][iv]) + " ");
+          }
+          log.append("\n");
+        }
+        log.append("MATRIX GUI\n");
+        for (size_t iii = 0; iii < temp_child->property_matrix_gui[temp_child->properties[ii][2]].size(); iii++)
+        {
+          for (size_t iv = 0; iv < temp_child->property_matrix_gui[temp_child->properties[ii][2]][iii].size(); iv++)
+          {
+            log.append(std::to_string(temp_child->property_matrix_gui[temp_child->properties[ii][2]][iii][iv]) + " ");
+          }
+          log.append("\n");
+        }
+      }
+    }
+    PRINT_INFO("%s", log.c_str());
+  }
+
+
+
   // We must send the Cubit commands through the Claro framework, so first we need to translate
   // the commands into the python form that Claro will understand.
   ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");
