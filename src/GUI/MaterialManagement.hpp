@@ -20,6 +20,7 @@
 class CalculiXCoreInterface;
 class MaterialManagementItem;
 class MaterialManagementElasticCard;
+class MaterialManagementPlasticCard;
 
 class MaterialManagement : public QWidget
 {
@@ -92,7 +93,7 @@ private:
   // cards
   QFrame* card_frame;
   MaterialManagementElasticCard* elastic_widget;
-  QWidget* plastic_widget;
+  MaterialManagementPlasticCard* plastic_widget;
   QLabel* plastic_label_title;
   QWidget* density_widget;
   QLabel* density_label_title;

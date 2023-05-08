@@ -2,6 +2,7 @@
 #include "CalculiXCoreInterface.hpp"
 #include "MaterialManagementItem.hpp"
 #include "MaterialManagementElasticCard.hpp"
+#include "MaterialManagementPlasticCard.hpp"
 
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
@@ -112,11 +113,7 @@ MaterialManagement::MaterialManagement()
   //card_widget->setStyleSheet("border: 1px solid black");
   
   elastic_widget = new MaterialManagementElasticCard(card_frame,current_material_item);
-
-  plastic_widget = new QWidget(card_frame);
-  plastic_widget->setGeometry(10,10,150,23);
-  plastic_label_title = new QLabel(plastic_widget);
-  plastic_label_title->setText("Plastic Card");
+  plastic_widget = new MaterialManagementPlasticCard(card_frame,current_material_item);
 
   density_widget = new QWidget(card_frame);
   density_widget->setGeometry(10,10,150,23);
@@ -519,7 +516,7 @@ void MaterialManagement::on_pushButton_ok_clicked(bool)
 void MaterialManagement::on_pushButton_apply_clicked(bool)
 {
   QStringList commands;
-  //this->printproperties();
+  this->printproperties();
   // We must send the Cubit commands through the Claro framework, so first we need to translate
   // the commands into the python form that Claro will understand.
   ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");
@@ -627,6 +624,7 @@ void MaterialManagement::material_clicked(QTreeWidgetItem* item, int column)
     if (current_material_item!=nullptr)
     {
       elastic_widget->update(material_item);
+      plastic_widget->update(material_item);
     }
   }
 }

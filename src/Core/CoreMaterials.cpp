@@ -92,7 +92,6 @@ bool CoreMaterials::init()
     group_properties.push_back({material_card[1] + "ZERO", "1"});
     group_properties_description.push_back("ZERO Temperature");
 
-
     mat_iface->create_group(group_name);
     grp = mat_iface->get_group(group_name);
     for (size_t i = 0; i < group_properties.size(); i++)

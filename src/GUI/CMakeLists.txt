@@ -69,6 +69,8 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementTable.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementElasticCard.hpp
     ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementElasticCard.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementPlasticCard.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementPlasticCard.cpp
     ${CMAKE_CURRENT_LIST_DIR}/SectionsCreatePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/SectionsCreatePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MyPanel1.cpp

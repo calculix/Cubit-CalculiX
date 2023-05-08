@@ -3,14 +3,14 @@
 
 #include "CubitMessage.hpp"
 
-MaterialManagementTable::MaterialManagementTable(QWidget* parent, QString group):
+MaterialManagementTable::MaterialManagementTable(QWidget* parent, QString group_name):
   QTableWidget(parent),
   isInitialized(false)
 {
   if(isInitialized)
     return;
 
-  this->group = group.toStdString();
+  this->group = group_name.toStdString();
   
   //delegator = new QAbstractItemDelegate();
   this->setItemDelegateForColumn(0,delegator);
@@ -32,22 +32,35 @@ void MaterialManagementTable::update(MaterialManagementItem *material)
   bool_update=true;
   this->setRowCount(0);
   
-  if (group=="CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE")
+  if (this->group=="CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE")
   {
     this->setColumnCount(3);
     this->setHorizontalHeaderLabels({"Young's Modulus","Poisson's ratio","Temperature"});
-  }else if (group=="ORTHO_CONSTANTS_VS_TEMPERATURE")
+    this->setColumnWidth(0,150);
+  }else if (this->group=="CCX_ELASTIC_ORTHO_CONSTANTS_VS_TEMPERATURE")
   {
     this->setColumnCount(10);
     this->setHorizontalHeaderLabels({"D1111","D1122","D2222","D1133","D2233","D3333","D1212","D1313","D2323","TEMPERATURE"});
-  }else if (group=="EC_CONSTANTS_VS_TEMPERATURE")
+  }else if (this->group=="CCX_ELASTIC_EC_CONSTANTS_VS_TEMPERATURE")
   {
     this->setColumnCount(10);
     this->setHorizontalHeaderLabels({"E1","E2","E3","v12","v13","v23","G12","G13","G23","TEMPERATURE"});
-  }else if (group=="ANISO_CONSTANTS_VS_TEMPERATURE")
+  }else if (this->group=="CCX_ELASTIC_ANISO_CONSTANTS_VS_TEMPERATURE")
   {
     this->setColumnCount(22);
-    this->setHorizontalHeaderLabels({"D1111","D1122","D2222","D1133","D2233","D3333","D1112","D2212","D3312","D1212","D1113","D2213","D3313","D1213","D1313","D1123","D2223","D3323","D1223","D1323,D2323","TEMPERATURE"});
+    this->setHorizontalHeaderLabels({"D1111","D1122","D2222","D1133","D2233","D3333","D1112","D2212","D3312","D1212","D1113","D2213","D3313","D1213","D1313","D1123","D2223","D3323","D1223","D1323","D2323","TEMPERATURE"});
+  }else if (this->group=="CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE")
+  {
+    this->setColumnCount(3);
+    this->setHorizontalHeaderLabels({"von Mises Stress","Plastic Strain","Temperature"});
+    this->setColumnWidth(0,150);
+    this->setColumnWidth(1,150);
+  }else if (this->group=="CCX_PLASTIC_KIN_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE")
+  {
+    this->setColumnCount(3);
+    this->setHorizontalHeaderLabels({"von Mises Stress","Plastic Strain","Temperature"});
+    this->setColumnWidth(0,150);
+    this->setColumnWidth(1,150);
   }
 
   verticalHeaderLabels = QStringList();
