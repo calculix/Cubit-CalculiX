@@ -25,10 +25,9 @@ public:
   bool isInitialized;
   
   void update(MaterialManagementItem *material);
-/*
+
 private slots:
-  void on_pushButton_ok_clicked(bool);
-*/
+  void elastic_type_currentIndexChanged(int index);
   
 private:
   std::string log;
@@ -45,6 +44,9 @@ private:
   QLabel* label_type;
   QComboBox* elastic_type;
   MaterialManagementTable* table_isotropic;
+  MaterialManagementTable* table_orthotropic;
+  MaterialManagementTable* table_anisotropic;
+  MaterialManagementTable* table_ec;
 };
 
 #endif // MATERIALMANAGEMENTELASTICCARD_HPP

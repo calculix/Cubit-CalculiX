@@ -14,7 +14,6 @@ MaterialManagementTable::MaterialManagementTable(QWidget* parent, QString group)
   
   //delegator = new QAbstractItemDelegate();
   this->setItemDelegateForColumn(0,delegator);
-
   
   // Signals
   QObject::connect(this, SIGNAL(currentItemChanged(QTableWidgetItem*, QTableWidgetItem*)),this,  SLOT(currentItemChanged(QTableWidgetItem*,QTableWidgetItem*)));
@@ -30,12 +29,25 @@ MaterialManagementTable::~MaterialManagementTable()
 
 void MaterialManagementTable::update(MaterialManagementItem *material)
 {
+  bool_update=true;
   this->setRowCount(0);
-
+  
   if (group=="CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE")
   {
     this->setColumnCount(3);
     this->setHorizontalHeaderLabels({"Young's Modulus","Poisson's ratio","Temperature"});
+  }else if (group=="ORTHO_CONSTANTS_VS_TEMPERATURE")
+  {
+    this->setColumnCount(10);
+    this->setHorizontalHeaderLabels({"D1111","D1122","D2222","D1133","D2233","D3333","D1212","D1313","D2323","TEMPERATURE"});
+  }else if (group=="EC_CONSTANTS_VS_TEMPERATURE")
+  {
+    this->setColumnCount(10);
+    this->setHorizontalHeaderLabels({"E1","E2","E3","v12","v13","v23","G12","G13","G23","TEMPERATURE"});
+  }else if (group=="ANISO_CONSTANTS_VS_TEMPERATURE")
+  {
+    this->setColumnCount(22);
+    this->setHorizontalHeaderLabels({"D1111","D1122","D2222","D1133","D2233","D3333","D1112","D2212","D3312","D1212","D1113","D2213","D3313","D1213","D1313","D1123","D2223","D3323","D1223","D1323,D2323","TEMPERATURE"});
   }
 
   verticalHeaderLabels = QStringList();
@@ -49,6 +61,7 @@ void MaterialManagementTable::update(MaterialManagementItem *material)
   
   // insert last row
   this->insertLastRow();
+  bool_update = false;
 }
 
 
@@ -57,8 +70,8 @@ std::vector<std::vector<double>> MaterialManagementTable::getMatrixPropertyGUI()
   std::vector<std::vector<double>> matrix_return;
   std::vector<double> matrix_row;
   matrix_return.clear();
-  log = "ROW COUNT " + std::to_string(this->rowCount()) + "COLUMN COUNT " + std::to_string(this->columnCount()) + " \n";
-  PRINT_INFO("%s", log.c_str());
+  //log = "ROW COUNT " + std::to_string(this->rowCount()) + "COLUMN COUNT " + std::to_string(this->columnCount()) + " \n";
+  //PRINT_INFO("%s", log.c_str());
 
   for (size_t i = 0; i < this->rowCount()-1; i++)
   {
@@ -132,7 +145,7 @@ bool MaterialManagementTable::checkRowEmtpy(int row)
     item = this->item(row,i);
     if (item!=NULL)
     {
-      if (item->text()!="")
+      if (item->text().toDouble()!=0.)
       {
         bool_empty = false;
       }
@@ -160,14 +173,14 @@ void MaterialManagementTable::cellChanged(int row,int column)
   this->currentRow = row;
 
   // check if data was added to the last row
-  if ((currentRow==this->rowCount()-1) && (this->checkRowEmtpy(row)==false))
+  if ((row==this->rowCount()-1) && (this->checkRowEmtpy(row)==false) && !bool_update)
   {
     this->insertLastRow();
     this->setCurrentCell(row, column);
   }
 
   //check if this row (except last row) is empty, when yes delete
-  if (!(currentRow==this->rowCount()-1) && (this->checkRowEmtpy(row)==true))
+  if (!(row==this->rowCount()-1) && (this->checkRowEmtpy(row)==true))
   {
     this->removeRow(row);
     
@@ -180,7 +193,7 @@ void MaterialManagementTable::cellChanged(int row,int column)
   }
 
   material->setMatrixPropertyGUI(group,this->getMatrixPropertyGUI());
-
+  /*
   log = "matrix gui \n";
   std::vector<std::vector<double>> matrix = this->getMatrixPropertyGUI();
   for (size_t i = 0; i < matrix.size(); i++)
@@ -191,6 +204,6 @@ void MaterialManagementTable::cellChanged(int row,int column)
     }
     log.append(" \n");
   }
-
   PRINT_INFO("%s", log.c_str()); 
+  */
 }

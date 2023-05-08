@@ -519,7 +519,7 @@ void MaterialManagement::on_pushButton_ok_clicked(bool)
 void MaterialManagement::on_pushButton_apply_clicked(bool)
 {
   QStringList commands;
-  this->printproperties();
+  //this->printproperties();
   // We must send the Cubit commands through the Claro framework, so first we need to translate
   // the commands into the python form that Claro will understand.
   ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");

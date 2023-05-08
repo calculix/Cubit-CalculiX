@@ -30,6 +30,7 @@ private slots:
   void cellChanged(int row,int column);
 
 private: 
+bool bool_update=true;
 std::string log;
 QAbstractItemDelegate* delegator;
 MaterialManagementItem* material;
