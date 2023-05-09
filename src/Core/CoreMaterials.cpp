@@ -70,6 +70,14 @@ bool CoreMaterials::init()
     group_properties.push_back({material_card[1] + "DENSITY", "4","2"});
     group_properties_description.push_back("Density, Temperature");
 
+    material_card[0]="SPECIFIC_HEAT"; // card name
+    material_card[1]="CCX_SPECIFIC_HEAT_"; // property prefix
+    material_cards.push_back(material_card);
+    group_properties.push_back({material_card[1] + "USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE SPECIFIC HEAT CARD");
+    group_properties.push_back({material_card[1] + "SPECIFIC_HEAT", "4","2"});
+    group_properties_description.push_back("Specific heat, Temperature");
+
     material_card[0]="EXPANSION"; // card name
     material_card[1]="CCX_EXPANSION_"; // property prefix
     material_cards.push_back(material_card);
@@ -91,6 +99,24 @@ bool CoreMaterials::init()
     group_properties_description.push_back("SET 1 TO USE EXPANSION ZERO=TEMP CARD");
     group_properties.push_back({material_card[1] + "ZERO", "1"});
     group_properties_description.push_back("ZERO Temperature");
+
+    material_card[0]="CONDUCTIVITY"; // card name
+    material_card[1]="CCX_CONDUCTIVITY_"; // property prefix
+    material_cards.push_back(material_card);
+    group_properties.push_back({material_card[1] + "USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE CONDUCTIVITY CARD"); // needed for Material Management GUI
+    group_properties.push_back({material_card[1] + "ISO_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE CONDUCTIVITY TYPE=ISO CARD");
+    group_properties.push_back({material_card[1] + "ISO_K_TEMPERATURE", "4", "2"});
+    group_properties_description.push_back("ISOTROPIC:\n \u03BA,Temperature");
+    group_properties.push_back({material_card[1] + "ORTHO_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE CONDUCTIVITY TYPE=ORTHO CARD");
+    group_properties.push_back({material_card[1] + "ORTHO_CONSTANTS_VS_TEMPERATURE", "4", "4"});
+    group_properties_description.push_back("ORTHOTROPIC:\n\u03BA11,\u03BA22,\u03BA33,TEMPERATURE");
+    group_properties.push_back({material_card[1] + "ANISO_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE CONDUCTIVITY TYPE=ANISO CARD");
+    group_properties.push_back({material_card[1] + "ANISO_CONSTANTS_VS_TEMPERATURE", "4", "7"});
+    group_properties_description.push_back("ANISOTROPIC:\n\u03BA11,\u03BA22,\u03BA33,\u03BA12,\u03BA13,\u03BA23,TEMPERATURE");
 
     mat_iface->create_group(group_name);
     grp = mat_iface->get_group(group_name);
@@ -383,6 +409,27 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
       }
     }
 
+    material_card[0]="SPECIFIC_HEAT"; // card name
+    material_card[1]="CCX_SPECIFIC_HEAT_"; // property prefix
+
+    prop = mat_iface->get_property(material_card[1] + "USE_CARD");
+    if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+    {
+      if (prop_scalar==1)
+      {
+        material_cards_export.append("*SPECIFIC HEAT\n");
+
+        prop = mat_iface->get_property(material_card[1] + "SPECIFIC_HEAT");
+        mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+        for (size_t i = 0; i < prop_matrix.size(); i++)
+        {
+          material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
+          material_cards_export.append(std::to_string(prop_matrix[i][1]) + "\n");
+        }
+      }
+    }
+
     material_card[0]="EXPANSION"; // card name
     material_card[1]="CCX_EXPANSION_"; // property prefix
     
@@ -459,6 +506,78 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
             {
               material_cards_export.append("*EXPANSION,TYPE=ANISO\n");
             }  
+
+            prop = mat_iface->get_property(material_card[1] + "ANISO_CONSTANTS_VS_TEMPERATURE");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][2]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][3]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][4]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][5]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][6]) + "\n");
+            }
+          }
+        }
+      }
+    }
+
+    material_card[0]="CONDUCTIVITY"; // card name
+    material_card[1]="CCX_CONDUCTIVITY_"; // property prefix
+    
+    prop = mat_iface->get_property(material_card[1] + "USE_CARD");
+    if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+    { 
+      if (prop_scalar==1)
+      { 
+        prop = mat_iface->get_property(material_card[1] + "ISO_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          {
+            
+            material_cards_export.append("*CONDUCTIVITY,TYPE=ISO\n");
+            
+            prop = mat_iface->get_property(material_card[1] + "ISO_A_TEMPERATURE");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][1]) + "\n");
+            }
+          }
+        }
+
+        prop = mat_iface->get_property(material_card[1] + "ORTHO_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*CONDUCTIVITY,TYPE=ORTHO\n");    
+
+            prop = mat_iface->get_property(material_card[1] + "ORTHO_CONSTANTS_VS_TEMPERATURE");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][2]) + ",");
+              material_cards_export.append(std::to_string(prop_matrix[i][3]) + "\n");
+            }
+          }
+        }
+        
+        prop = mat_iface->get_property(material_card[1] + "ANISO_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          { 
+            material_cards_export.append("*CONDUCTIVITY,TYPE=ANISO\n");
 
             prop = mat_iface->get_property(material_card[1] + "ANISO_CONSTANTS_VS_TEMPERATURE");
             mat_iface->get_material_property_value(material, prop, prop_matrix);

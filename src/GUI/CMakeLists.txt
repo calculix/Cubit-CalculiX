@@ -71,6 +71,14 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementElasticCard.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementPlasticCard.hpp
     ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementPlasticCard.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementDensityCard.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementDensityCard.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementExpansionCard.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementExpansionCard.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementSpecificHeatCard.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementSpecificHeatCard.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementConductivityCard.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementConductivityCard.cpp
     ${CMAKE_CURRENT_LIST_DIR}/SectionsCreatePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/SectionsCreatePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MyPanel1.cpp

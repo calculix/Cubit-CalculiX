@@ -13,7 +13,8 @@ MaterialManagementTable::MaterialManagementTable(QWidget* parent, QString group_
   this->group = group_name.toStdString();
   
   //delegator = new QAbstractItemDelegate();
-  this->setItemDelegateForColumn(0,delegator);
+  //this->setItemDelegateForColumn(0,delegator);
+  this->setMinimumSize(750,200);
   
   // Signals
   QObject::connect(this, SIGNAL(currentItemChanged(QTableWidgetItem*, QTableWidgetItem*)),this,  SLOT(currentItemChanged(QTableWidgetItem*,QTableWidgetItem*)));
@@ -61,6 +62,38 @@ void MaterialManagementTable::update(MaterialManagementItem *material)
     this->setHorizontalHeaderLabels({"von Mises Stress","Plastic Strain","Temperature"});
     this->setColumnWidth(0,150);
     this->setColumnWidth(1,150);
+  }else if (this->group=="CCX_DENSITY_DENSITY")
+  {
+    this->setColumnCount(2);
+    this->setHorizontalHeaderLabels({"Density","Temperature"});
+  }else if (this->group=="CCX_SPECIFIC_HEAT_SPECIFIC_HEAT")
+  {
+    this->setColumnCount(2);
+    this->setHorizontalHeaderLabels({"Specific heat","Temperature"});
+  }else if (this->group=="CCX_EXPANSION_ISO_A_TEMPERATURE")
+  {
+    this->setColumnCount(2);
+    this->setHorizontalHeaderLabels({"\u03B1","Temperature"});
+  }else if (this->group=="CCX_EXPANSION_ORTHO_CONSTANTS_VS_TEMPERATURE")
+  {
+    this->setColumnCount(4);
+    this->setHorizontalHeaderLabels({"\u03B111","\u03B122","\u03B133","Temperature"});
+  }else if (this->group=="CCX_EXPANSION_ANISO_CONSTANTS_VS_TEMPERATURE")
+  {
+    this->setColumnCount(7);
+    this->setHorizontalHeaderLabels({"\u03B111","\u03B122","\u03B133","\u03B112","\u03B113","\u03B123","Temperature"});
+  }else if (this->group=="CCX_CONDUCTIVITY_ISO_K_TEMPERATURE")
+  {
+    this->setColumnCount(2);
+    this->setHorizontalHeaderLabels({"\u03BA","Temperature"});
+  }else if (this->group=="CCX_CONDUCTIVITY_ORTHO_CONSTANTS_VS_TEMPERATURE")
+  {
+    this->setColumnCount(4);
+    this->setHorizontalHeaderLabels({"\u03BA11","\u03BA22","\u03BA33","Temperature"});
+  }else if (this->group=="CCX_CONDUCTIVITY_ANISO_CONSTANTS_VS_TEMPERATURE")
+  {
+    this->setColumnCount(7);
+    this->setHorizontalHeaderLabels({"\u03BA11","\u03BA22","\u03BA33","\u03BA12","\u03BA13","\u03BA23","Temperature"});
   }
 
   verticalHeaderLabels = QStringList();

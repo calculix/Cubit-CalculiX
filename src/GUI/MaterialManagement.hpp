@@ -16,11 +16,17 @@
 #include <QMessageBox>
 #include <QInputDialog>
 #include <QComboBox>
+#include <QString>
+#include <QStringList>
 
 class CalculiXCoreInterface;
 class MaterialManagementItem;
 class MaterialManagementElasticCard;
 class MaterialManagementPlasticCard;
+class MaterialManagementDensityCard;
+class MaterialManagementSpecificHeatCard;
+class MaterialManagementExpansionCard;
+class MaterialManagementConductivityCard;
 
 class MaterialManagement : public QWidget
 {
@@ -89,16 +95,17 @@ private:
   QListWidgetItem* list_elastic;
   QListWidgetItem* list_plastic;
   QListWidgetItem* list_density;
+  QListWidgetItem* list_specific_heat;
   QListWidgetItem* list_expansion;
+  QListWidgetItem* list_conductivity;
   // cards
   QFrame* card_frame;
   MaterialManagementElasticCard* elastic_widget;
   MaterialManagementPlasticCard* plastic_widget;
-  QLabel* plastic_label_title;
-  QWidget* density_widget;
-  QLabel* density_label_title;
-  QWidget* expansion_widget;
-  QLabel* expansion_label_title;
+  MaterialManagementDensityCard* density_widget;
+  MaterialManagementSpecificHeatCard* specific_heat_widget;
+  MaterialManagementExpansionCard* expansion_widget;
+  MaterialManagementConductivityCard* conductivity_widget;
 };
 
 #endif // MATERIALMANAGEMENT_HPP

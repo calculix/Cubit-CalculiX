@@ -3,6 +3,10 @@
 #include "MaterialManagementItem.hpp"
 #include "MaterialManagementElasticCard.hpp"
 #include "MaterialManagementPlasticCard.hpp"
+#include "MaterialManagementDensityCard.hpp"
+#include "MaterialManagementSpecificHeatCard.hpp"
+#include "MaterialManagementExpansionCard.hpp"
+#include "MaterialManagementConductivityCard.hpp"
 
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
@@ -13,7 +17,6 @@
 MaterialManagement::MaterialManagement()
 {
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-
 
   // main window
   //this->setGeometry(0,0,700,570);
@@ -106,7 +109,7 @@ MaterialManagement::MaterialManagement()
   // card widgets
   card_frame = new QFrame();
   //card_widget->setGeometry(10,10,500,250);
-  card_frame->setMinimumSize(700,300);
+  card_frame->setMinimumSize(700,350);
   card_frame->setLineWidth(1);
   card_frame->setMidLineWidth(0);
   card_frame->setFrameStyle(QFrame::Box | QFrame::Raised);
@@ -114,16 +117,10 @@ MaterialManagement::MaterialManagement()
   
   elastic_widget = new MaterialManagementElasticCard(card_frame,current_material_item);
   plastic_widget = new MaterialManagementPlasticCard(card_frame,current_material_item);
-
-  density_widget = new QWidget(card_frame);
-  density_widget->setGeometry(10,10,150,23);
-  density_label_title = new QLabel(density_widget);
-  density_label_title->setText("Density Card");
-
-  expansion_widget = new QWidget(card_frame);
-  expansion_widget->setGeometry(10,10,150,23);
-  expansion_label_title = new QLabel(expansion_widget);
-  expansion_label_title->setText("Expansion Card");
+  density_widget = new MaterialManagementDensityCard(card_frame,current_material_item);
+  expansion_widget = new MaterialManagementExpansionCard(card_frame,current_material_item);
+  specific_heat_widget = new MaterialManagementSpecificHeatCard(card_frame,current_material_item);
+  conductivity_widget = new MaterialManagementConductivityCard(card_frame,current_material_item);
 
   boxLayout_widget->addWidget(card_frame);
 
@@ -132,6 +129,8 @@ MaterialManagement::MaterialManagement()
   plastic_widget->hide();
   density_widget->hide();
   expansion_widget->hide();
+  specific_heat_widget->hide();
+  conductivity_widget->hide();
 
   // Signals
   QObject::connect(pushButton_ok, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_ok_clicked(bool)));
@@ -319,7 +318,10 @@ void MaterialManagement::createListItems(MaterialManagementItem *material)
   bool use_elastic = false;
   bool use_plastic = false;
   bool use_density = false;
+  bool use_specific_heat = false;
   bool use_expansion = false;
+  bool use_conductivity = false;
+
 
   for (size_t i = 0; i < material->properties.size(); i++)
   {
@@ -344,11 +346,25 @@ void MaterialManagement::createListItems(MaterialManagementItem *material)
         use_density = true;
       }
     }
+    if ((material->group_properties[material->properties[i][0]][0]=="CCX_SPECIFIC_HEAT_USE_CARD"))
+    {
+      if (material->property_scalar_gui[material->properties[i][2]]==1)
+      {
+        use_specific_heat = true;
+      }
+    }
     if ((material->group_properties[material->properties[i][0]][0]=="CCX_EXPANSION_USE_CARD"))
     {
       if (material->property_scalar_gui[material->properties[i][2]]==1)
       {
         use_expansion = true;
+      }
+    }
+    if ((material->group_properties[material->properties[i][0]][0]=="CCX_CONDUCTIVITY_USE_CARD"))
+    {
+      if (material->property_scalar_gui[material->properties[i][2]]==1)
+      {
+        use_conductivity = true;
       }
     }
   }
@@ -374,11 +390,25 @@ void MaterialManagement::createListItems(MaterialManagementItem *material)
     list_density = new QListWidgetItem("Density",list_available);
   }
 
+  if (use_specific_heat)
+  {
+    list_specific_heat = new QListWidgetItem("Specific heat",list_used);
+  } else {
+    list_specific_heat = new QListWidgetItem("Specific heat",list_available);
+  }
+
   if (use_expansion)
   {
     list_expansion = new QListWidgetItem("Expansion",list_used);
   } else {
     list_expansion = new QListWidgetItem("Expansion",list_available);
+  }
+  
+  if (use_conductivity)
+  {
+    list_conductivity = new QListWidgetItem("Conductivity",list_used);
+  } else {
+    list_conductivity = new QListWidgetItem("Conductivity",list_available);
   }
 
   list_available->sortItems();
@@ -442,6 +472,14 @@ void MaterialManagement::switchListItem(QListWidget* source, QListWidget* target
       }else{
         current_material_item->setScalarPropertyGUI("CCX_DENSITY_USE_CARD", 0);
       }
+    }else if (newItem->text()=="Specific heat")
+    {
+      if (current_material_item->getScalarPropertyGUI("CCX_SPECIFIC_HEAT_USE_CARD")==0)
+      {
+        current_material_item->setScalarPropertyGUI("CCX_SPECIFIC_HEAT_USE_CARD", 1);
+      }else{
+        current_material_item->setScalarPropertyGUI("CCX_SPECIFIC_HEAT_USE_CARD", 0);
+      }
     }else if (newItem->text()=="Expansion")
     {
       if (current_material_item->getScalarPropertyGUI("CCX_EXPANSION_USE_CARD")==0)
@@ -450,6 +488,14 @@ void MaterialManagement::switchListItem(QListWidget* source, QListWidget* target
       }else{
         current_material_item->setScalarPropertyGUI("CCX_EXPANSION_USE_CARD", 0);
       }
+    }else if (newItem->text()=="Conductivity")
+    {
+      if (current_material_item->getScalarPropertyGUI("CCX_CONDUCTIVITY_USE_CARD")==0)
+      {
+        current_material_item->setScalarPropertyGUI("CCX_CONDUCTIVITY_USE_CARD", 1);
+      }else{
+        current_material_item->setScalarPropertyGUI("CCX_CONDUCTIVITY_USE_CARD", 0);
+      } 
     }
   }
 }
@@ -478,31 +524,32 @@ void MaterialManagement::selectListItem(QListWidgetItem* item)
 
 void MaterialManagement::loadWidget(QListWidgetItem* item)
 {
+  elastic_widget->hide();
+  plastic_widget->hide();
+  density_widget->hide();
+  specific_heat_widget->hide();
+  expansion_widget->hide();
+  conductivity_widget->hide();
+
   if (item->text().toStdString()=="Elastic")
   {
     elastic_widget->show();
-    plastic_widget->hide();
-    density_widget->hide();
-    expansion_widget->hide();
   }else if (item->text().toStdString()=="Plastic")
   {
-    elastic_widget->hide();
     plastic_widget->show();
-    density_widget->hide();
-    expansion_widget->hide();
   }else if (item->text().toStdString()=="Density")
-  { 
-    elastic_widget->hide();
-    plastic_widget->hide();
+  {
     density_widget->show();
-    expansion_widget->hide();
   }else if (item->text().toStdString()=="Expansion")
   {
-    elastic_widget->hide();
-    plastic_widget->hide();
-    density_widget->hide();
     expansion_widget->show();
-  } 
+  }else if (item->text().toStdString()=="Specific heat")
+  {
+    specific_heat_widget->show();
+  }else if (item->text().toStdString()=="Conductivity")
+  {
+    conductivity_widget->show();
+  }
 }
 
 void MaterialManagement::on_pushButton_ok_clicked(bool)
@@ -516,58 +563,55 @@ void MaterialManagement::on_pushButton_ok_clicked(bool)
 void MaterialManagement::on_pushButton_apply_clicked(bool)
 {
   QStringList commands;
-  this->printproperties();
-
-
-  //modify material "Test3" matrix_property "CCX_ELASTIC_ANISO_CONSTANTS_VS_TEMPERATURE" 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
-  //modify material "Test3" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+  //this->printproperties();
+  QString command;
+  QString command_prefix;
 
   MaterialManagementItem *temp_child;
 
   for (size_t i = 0; i < tree_material->topLevelItemCount(); i++)
   {
     temp_child = dynamic_cast<MaterialManagementItem*>(tree_material->topLevelItem(i));
-    
-    log = "########### \n";
-    log.append(temp_child->text(1).toStdString() + " child id \n");
+    command_prefix = "modify material \"" + temp_child->material_name_qstring + "\" ";
+
     for (size_t ii = 0; ii < temp_child->properties.size(); ii++)
     {
-      log.append("----------\n");
-      log.append(temp_child->group_properties[temp_child->properties[ii][0]][0] + " \n");
-      log.append("----------\n");
-      log.append(std::to_string(temp_child->properties[ii][0]) + " " + std::to_string(temp_child->properties[ii][1]) + " " + std::to_string(temp_child->properties[ii][2]) + " \n");
-      if (temp_child->properties[ii][1]==1)
+      command = "";
+
+      if ((temp_child->properties[ii][1]==1) &&
+          (temp_child->property_scalar[temp_child->properties[ii][2]] != temp_child->property_scalar_gui[temp_child->properties[ii][2]]))
       {
-        log.append("SCALAR\n");
-        log.append(std::to_string(temp_child->property_scalar[temp_child->properties[ii][2]]) + " \n");
-        log.append("SCALAR GUI\n");
-        log.append(std::to_string(temp_child->property_scalar_gui[temp_child->properties[ii][2]]) + " \n");
-      } else if (temp_child->properties[ii][1]==4)
-      {        
-        log.append("MATRIX\n");
-        for (size_t iii = 0; iii < temp_child->property_matrix[temp_child->properties[ii][2]].size(); iii++)
-        {
-          for (size_t iv = 0; iv < temp_child->property_matrix[temp_child->properties[ii][2]][iii].size(); iv++)
-          {
-            log.append(std::to_string(temp_child->property_matrix[temp_child->properties[ii][2]][iii][iv]) + " ");
-          }
-          log.append("\n");
-        }
-        log.append("MATRIX GUI\n");
+        command.append(command_prefix);
+        // scalar
+        command.append("scalar_properties ");
+        // group property
+        command.append("\"" + QString::fromStdString(temp_child->group_properties[temp_child->properties[ii][0]][0]) + "\" ");
+        // value
+        command.append(QString::number(temp_child->property_scalar_gui[temp_child->properties[ii][2]]));
+      } else if ((temp_child->properties[ii][1]==4) &&
+          (temp_child->property_matrix[temp_child->properties[ii][2]] != temp_child->property_matrix_gui[temp_child->properties[ii][2]]))
+      { 
+        command.append(command_prefix);
+        // matrix
+        command.append("matrix_property ");
+        // group property
+        command.append("\"" + QString::fromStdString(temp_child->group_properties[temp_child->properties[ii][0]][0]) + "\" ");
+        // value
         for (size_t iii = 0; iii < temp_child->property_matrix_gui[temp_child->properties[ii][2]].size(); iii++)
         {
           for (size_t iv = 0; iv < temp_child->property_matrix_gui[temp_child->properties[ii][2]][iii].size(); iv++)
           {
-            log.append(std::to_string(temp_child->property_matrix_gui[temp_child->properties[ii][2]][iii][iv]) + " ");
+            command.append(QString::number(temp_child->property_matrix_gui[temp_child->properties[ii][2]][iii][iv]) + " ");
           }
-          log.append("\n");
         }
       }
+      if (command != "")
+      {
+        commands.push_back(command);
+      }
     }
-    PRINT_INFO("%s", log.c_str());
+    
   }
-
-
 
   // We must send the Cubit commands through the Claro framework, so first we need to translate
   // the commands into the python form that Claro will understand.
@@ -638,10 +682,14 @@ void MaterialManagement::on_pushButton_delete_clicked(bool)
     Claro::instance()->send_gui_commands(commands);
   }
   this->removeListItems();
+  
   elastic_widget->hide();
   plastic_widget->hide();
   density_widget->hide();
+  specific_heat_widget->hide();
   expansion_widget->hide();
+  conductivity_widget->hide();
+  
 }
 
 void MaterialManagement::on_pushButton_add_clicked(bool)
@@ -669,14 +717,21 @@ void MaterialManagement::material_clicked(QTreeWidgetItem* item, int column)
     current_material_item = material_item;
     this->removeListItems();
     this->createListItems(material_item);
+    
     elastic_widget->hide();
     plastic_widget->hide();
     density_widget->hide();
+    specific_heat_widget->hide();
     expansion_widget->hide();
+    conductivity_widget->hide();
     if (current_material_item!=nullptr)
     {
       elastic_widget->update(material_item);
       plastic_widget->update(material_item);
+      density_widget->update(material_item);
+      specific_heat_widget->update(material_item);
+      expansion_widget->update(material_item);
+      conductivity_widget->update(material_item);
     }
   }
 }
