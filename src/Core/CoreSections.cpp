@@ -87,7 +87,7 @@ bool CoreSections::create_section(std::string section_type,int block_id, int mat
       sub_section_id = std::stoi(beam_section_data[sub_section_last][0]) + 1;
     }
     section_type_value = 3;
-    this->add_beam_section(std::to_string(sub_section_id), std::to_string(block_id), std::to_string(material_id), options[0], options[1], options[2], options[3], options[4], options[5], options[6], options[7], options[8]);
+    this->add_beam_section(std::to_string(sub_section_id), std::to_string(block_id), std::to_string(material_id), options[0], options[1], options[2], options[3], options[4], options[5], options[6], options[7], options[8], options[9], options[10], options[11], options[12]);
   }else if (section_type=="MEMBRANE")
   {
     if (membrane_section_data.size()==0)
@@ -217,9 +217,9 @@ bool CoreSections::add_shell_section(std::string shell_section_id, std::string b
   return true;
 }
 
-bool CoreSections::add_beam_section(std::string beam_section_id, std::string block_id, std::string material_id,std::string beam_type,std::string thickness1,std::string thickness2,std::string x,std::string y,std::string z,std::string orientation,std::string offset1,std::string offset2)
+bool CoreSections::add_beam_section(std::string beam_section_id, std::string block_id, std::string material_id,std::string beam_type,std::string parameter1,std::string parameter2,std::string parameter3,std::string parameter4,std::string parameter5,std::string parameter6,std::string x,std::string y,std::string z,std::string orientation,std::string offset1,std::string offset2)
 {
-  std::vector<std::string> v = {beam_section_id, block_id, material_id, beam_type, thickness1, thickness2, x, y, z, orientation, offset1, offset2};
+  std::vector<std::string> v = {beam_section_id, block_id, material_id, beam_type, parameter1, parameter2, parameter3, parameter4, parameter5, parameter6, x, y, z, orientation, offset1, offset2};
       
   beam_section_data.push_back(v);
 
@@ -423,26 +423,31 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
         str_temp.append(beam_section_data[sub_section_data_id][3]);
       }
       
-      if (beam_section_data[sub_section_data_id][10]!="")
+      if (beam_section_data[sub_section_data_id][14]!="")
       {
         str_temp.append(", OFFSET1=");
-        str_temp.append(beam_section_data[sub_section_data_id][10]);
+        str_temp.append(beam_section_data[sub_section_data_id][14]);
       }
 
-      if (beam_section_data[sub_section_data_id][11]!="")
+      if (beam_section_data[sub_section_data_id][15]!="")
       {
         str_temp.append(", OFFSET2=");
-        str_temp.append(beam_section_data[sub_section_data_id][11]);
+        str_temp.append(beam_section_data[sub_section_data_id][15]);
       }
 
-      if (beam_section_data[sub_section_data_id][9]!="")
+      if (beam_section_data[sub_section_data_id][13]!="")
       {
         str_temp.append(", ORIENTATION=");
-        str_temp.append(beam_section_data[sub_section_data_id][9]);
+        str_temp.append(beam_section_data[sub_section_data_id][13]);
       }
       sections_export_list.push_back(str_temp);
-      sections_export_list.push_back(beam_section_data[sub_section_data_id][4] + ", " + beam_section_data[sub_section_data_id][5]);
-      sections_export_list.push_back(beam_section_data[sub_section_data_id][6] + ", " + beam_section_data[sub_section_data_id][7] + ", " + beam_section_data[sub_section_data_id][8]);
+      if (str_temp.append(beam_section_data[sub_section_data_id][3])=="BOX")
+      {
+        sections_export_list.push_back(beam_section_data[sub_section_data_id][4] + ", " + beam_section_data[sub_section_data_id][5] + ", " + beam_section_data[sub_section_data_id][6] + ", " + beam_section_data[sub_section_data_id][7] + ", " + beam_section_data[sub_section_data_id][8] + ", " + beam_section_data[sub_section_data_id][9]);
+      }else{
+        sections_export_list.push_back(beam_section_data[sub_section_data_id][4] + ", " + beam_section_data[sub_section_data_id][5]);
+      }
+      sections_export_list.push_back(beam_section_data[sub_section_data_id][10] + ", " + beam_section_data[sub_section_data_id][11] + ", " + beam_section_data[sub_section_data_id][12]);
     }
     // MEMBRANE
     if (sections_data[i][1] == 4) 
@@ -513,11 +518,11 @@ std::string CoreSections::print_data()
   }
 
   str_return.append("\n CoreSections shell_section_data: \n");
-  str_return.append("beam_section_id,block_id,material,beam_type,thickness1,thickness2,x,y,z,orientation,offset1,offset2 \n");
+  str_return.append("beam_section_id,block_id,material,beam_type,parameter1,parameter2,parameter3,parameter4,parameter5,parameter6,x,y,z,orientation,offset1,offset2 \n");
 
   for (size_t i = 0; i < beam_section_data.size(); i++)
   {
-    str_return.append(beam_section_data[i][0] + " " + beam_section_data[i][1] + " " + beam_section_data[i][2] + " " + beam_section_data[i][3] + " " + beam_section_data[i][4] + " " + beam_section_data[i][5] + " " + beam_section_data[i][6] + " " + beam_section_data[i][7] + " " + beam_section_data[i][8] + " " + beam_section_data[i][9] + " " + beam_section_data[i][10] + " " + beam_section_data[i][11] + " \n");
+    str_return.append(beam_section_data[i][0] + " " + beam_section_data[i][1] + " " + beam_section_data[i][2] + " " + beam_section_data[i][3] + " " + beam_section_data[i][4] + " " + beam_section_data[i][5] + " " + beam_section_data[i][6] + " " + beam_section_data[i][7] + " " + beam_section_data[i][8] + " " + beam_section_data[i][9] + " " + beam_section_data[i][10] + " " + beam_section_data[i][11] + " " + beam_section_data[i][1] + " " + beam_section_data[i][12] + " " + beam_section_data[i][13] + " " + beam_section_data[i][14] + " " + beam_section_data[i][15] + " \n");
   }
 
   str_return.append("\n CoreSections membrane_section_data: \n");

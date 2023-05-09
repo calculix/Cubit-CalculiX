@@ -15,11 +15,15 @@ std::vector<std::string> ccxSectionBeamModifyCommand::get_syntax()
 
   std::string syntax = "ccx ";
   syntax.append("modify section beam <value:label='section id',help='<section id>'>");
-  syntax.append("[beam_type <string:type='unquoted', number='1', label='beam_type', help='<[rect|circ|block|pipe]>'>] ");
+  syntax.append("[beam_type {rect|circ|box|pipe}] ");
   syntax.append("[block <value:label='block id',help='<block id>'>] ");
   syntax.append("[material <value:label='material',help='<material>'>] ");
-  syntax.append("[thickness1 <value:label='thickness1',help='<thickness1>'>] ");
-  syntax.append("[thickness2 <value:label='thickness2',help='<thickness2>'>] ");
+  syntax.append("[parameter1 <value:label='parameter1',help='<parameter1>'>] ");
+  syntax.append("[parameter2 <value:label='parameter2',help='<parameter2>'>] ");
+  syntax.append("[parameter3 <value:label='parameter3',help='<parameter3>'>] ");
+  syntax.append("[parameter4 <value:label='parameter4',help='<parameter4>'>] ");
+  syntax.append("[parameter5 <value:label='parameter5',help='<parameter5>'>] ");
+  syntax.append("[parameter6 <value:label='parameter6',help='<parameter6>'>] ");
   syntax.append("[x <value:label='x',help='<x>'>] ");
   syntax.append("[y <value:label='y',help='<y>'>] ");
   syntax.append("[z <value:label='z',help='<z>'>] ");
@@ -35,7 +39,7 @@ std::vector<std::string> ccxSectionBeamModifyCommand::get_syntax()
 std::vector<std::string> ccxSectionBeamModifyCommand::get_syntax_help()
 {
   std::vector<std::string> help(1);
-  help[0] = "ccx modify section beam <section id> [beam_type <beam_type>] [block <block id>] [material <material id>] [thickness1 <thickness1>] [thickness2 <thickness2>] [x <x>] [y <y>] [z <z>] [orientation <orientation_name>] [offset1 <offset1>] [offset2 <offset2>]";
+  help[0] = "ccx modify section beam <section id> [beam_type {rect|circ|box|pipe}] [block <block id>] [material <material id>] [parameter1 <parameter1>] [parameter2 <parameter2>] [parameter3 <parameter3>] [parameter4 <parameter4>] [parameter5 <parameter5>] [parameter6 <parameter6>] [x <x>] [y <y>] [z <z>] [orientation <orientation_name>] [offset1 <offset1>] [offset2 <offset2>]";
 
   return help;
 }
@@ -59,10 +63,18 @@ bool ccxSectionBeamModifyCommand::execute(CubitCommandData &data)
   std::string orientation;
   std::vector<std::string> options;
   std::vector<int> options_marker;
-  double thickness1_value;
-  std::string thickness1;
-  double thickness2_value;
-  std::string thickness2;
+  double parameter1_value;
+  std::string parameter1;
+  double parameter2_value;
+  std::string parameter2;
+  double parameter3_value;
+  std::string parameter3;
+  double parameter4_value;
+  std::string parameter4;
+  double parameter5_value;
+  std::string parameter5;
+  double parameter6_value;
+  std::string parameter6;
   double x_value;
   std::string x;
   double y_value;
@@ -79,14 +91,28 @@ bool ccxSectionBeamModifyCommand::execute(CubitCommandData &data)
 
   data.get_value("section id", section_id);
 
-  if (!data.get_string("beam_type", beam_type))
+  if (!data.find_keyword("BEAM_TYPE"))
   {
     beam_type = "";
     options_marker.push_back(0);
   }else
   {
     options_marker.push_back(1);
+    if (data.find_keyword("RECT"))
+    {
+      beam_type = "RECT";
+    }else if (data.find_keyword("CIRC"))
+    {
+      beam_type = "CIRC";
+    }else if (data.find_keyword("BOX"))
+    {
+      beam_type = "BOX";
+    }else if (data.find_keyword("PIPE"))
+    {
+      beam_type = "PIPE";
+    }
   }
+
   if (!data.get_value("block id", block_id_value))
   {
     block_id = "";
@@ -116,24 +142,64 @@ bool ccxSectionBeamModifyCommand::execute(CubitCommandData &data)
   {
     options_marker.push_back(1);
   }
-  if (!data.get_value("thickness1", thickness1_value))
+  if (!data.get_value("parameter1", parameter1_value))
   {
-    thickness1 = "";
+    parameter1 = "";
     options_marker.push_back(0);
   }
   else
   {
-    thickness1 = std::to_string(thickness1_value);
+    parameter1 = std::to_string(parameter1_value);
     options_marker.push_back(1);
   }
-  if (!data.get_value("thickness2", thickness2_value))
+  if (!data.get_value("parameter2", parameter2_value))
   {
-    thickness2 = "";
+    parameter2 = "";
     options_marker.push_back(0);
   }
   else
   {
-    thickness2 = std::to_string(thickness2_value);
+    parameter2 = std::to_string(parameter2_value);
+    options_marker.push_back(1);
+  }
+  if (!data.get_value("parameter3", parameter3_value))
+  {
+    parameter3 = "";
+    options_marker.push_back(0);
+  }
+  else
+  {
+    parameter3 = std::to_string(parameter3_value);
+    options_marker.push_back(1);
+  }
+  if (!data.get_value("parameter4", parameter4_value))
+  {
+    parameter4 = "";
+    options_marker.push_back(0);
+  }
+  else
+  {
+    parameter4 = std::to_string(parameter4_value);
+    options_marker.push_back(1);
+  }
+  if (!data.get_value("parameter5", parameter5_value))
+  {
+    parameter5 = "";
+    options_marker.push_back(0);
+  }
+  else
+  {
+    parameter5 = std::to_string(parameter5_value);
+    options_marker.push_back(1);
+  }
+  if (!data.get_value("parameter6", parameter6_value))
+  {
+    parameter6 = "";
+    options_marker.push_back(0);
+  }
+  else
+  {
+    parameter6 = std::to_string(parameter6_value);
     options_marker.push_back(1);
   }
   if (!data.get_value("x", x_value))
@@ -191,8 +257,12 @@ bool ccxSectionBeamModifyCommand::execute(CubitCommandData &data)
   options.push_back(block_id);
   options.push_back(material);  
   options.push_back(beam_type);
-  options.push_back(thickness1);
-  options.push_back(thickness2);
+  options.push_back(parameter1);
+  options.push_back(parameter2);
+  options.push_back(parameter3);
+  options.push_back(parameter4);
+  options.push_back(parameter5);
+  options.push_back(parameter6);
   options.push_back(x);
   options.push_back(y);
   options.push_back(z);
