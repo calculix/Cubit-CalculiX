@@ -1,5 +1,5 @@
-#ifndef SECTIONSCREATE_HPP
-#define SECTIONSCREATE_HPP
+#ifndef SECTIONSCREATESOLID_HPP
+#define SECTIONSCREATESOLID_HPP
 
 #include <QWidget>
 #include <QList>
@@ -15,18 +15,18 @@
 #include <QTableWidget>
 #include <QLineEdit>
 
-class SectionsCreate : public QWidget
+class SectionsCreateSolid : public QWidget
 {
   Q_OBJECT
   
 public:
-  explicit SectionsCreate(QWidget *parent = 0);
-  ~SectionsCreate();
+  explicit SectionsCreateSolid(QWidget *parent = 0);
+  ~SectionsCreateSolid();
 
   bool isInitialized;
   
 private slots:
-  void on_pbApply_clicked();
+  void on_pushButton_apply_clicked(bool);
 
 private:
   std::string log;
@@ -34,15 +34,21 @@ private:
   QGridLayout* GridLayout;
   QVBoxLayout* VBoxLayout;
   QSpacerItem* vertical_spacer;
+  QPushButton* pushButton_apply;
+  QHBoxLayout* HBoxLayout_pushButton_apply;
+  QSpacerItem* horizontal_spacer_pushButton_apply;
   QHBoxLayout* HBoxLayout_1;
   QHBoxLayout* HBoxLayout_2;
   QHBoxLayout* HBoxLayout_3;
+  QHBoxLayout* HBoxLayout_4;
   QLabel* label_1;
   QLabel* label_2;
   QLabel* label_3;
+  QLabel* label_4;
   QLineEdit* lineEdit_1;
   QLineEdit* lineEdit_2;
   QLineEdit* lineEdit_3;
+  QLineEdit* lineEdit_4;
 };
 
-#endif // SECTIONSCREATE_HPP
+#endif // SECTIONSCREATESOLID_HPP

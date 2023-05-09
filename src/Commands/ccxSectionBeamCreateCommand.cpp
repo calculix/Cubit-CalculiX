@@ -68,7 +68,7 @@ std::vector<std::string> ccxSectionBeamCreateCommand::get_syntax()
 std::vector<std::string> ccxSectionBeamCreateCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "create section beam beam_type [rect|circ|block|pipe] block <block id> material <material id> thickness1 <thickness1> thickness2 <thickness2> x <x> y <y> z <z> [orientation <orientation_name>] [offset1 <offset1>] [offset2 <offset2>]";
+  help[0] = "ccx create section beam beam_type [rect|circ|block|pipe] block <block id> material <material id> thickness1 <thickness1> thickness2 <thickness2> x <x> y <y> z <z> [orientation <orientation_name>] [offset1 <offset1>] [offset2 <offset2>]";
   help[1]=" ";
   help[2]=" ";
   help[3]=" ";

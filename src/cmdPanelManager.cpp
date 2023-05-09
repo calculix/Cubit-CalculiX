@@ -48,7 +48,14 @@ void cmdPanelManager::clear()
     // Remove the factory reference from my navigation nodes
     QStringList my_markers;
     my_markers.push_back("CCXBlocksElementType");
-    my_markers.push_back("CCXSectionsCreate");
+    my_markers.push_back("CCXSectionsCreateSolid");
+    my_markers.push_back("CCXSectionsCreateShell");
+    my_markers.push_back("CCXSectionsCreateBeam");
+    my_markers.push_back("CCXSectionsCreateMembrane");
+    my_markers.push_back("CCXSectionsModifySolid");
+    my_markers.push_back("CCXSectionsModifyShell");
+    my_markers.push_back("CCXSectionsModifyBeam");
+    my_markers.push_back("CCXSectionsModifyMembrane");
     my_markers.push_back("CCXRigidBodyCreate");
 
     // For each marker, we want to get the navigation node and assign the node
@@ -117,6 +124,26 @@ void cmdPanelManager::initialize_from_code()
   model->setNodeMarker(node, "CCXSectionsModify");
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXSectionsDelete");
+  //##
+  root_node = model->getMarkedNode("CCXSectionsCreate");
+  node = model->addNode("Create Solid Section", root_node);
+  model->setNodeMarker(node, "CCXSectionsCreateSolid");
+  node = model->addNode("Create Shell Section", root_node);
+  model->setNodeMarker(node, "CCXSectionsCreateShell");
+  node = model->addNode("Create Beam Section", root_node);
+  model->setNodeMarker(node, "CCXSectionsCreateBeam");
+  node = model->addNode("Create Membrane Section", root_node);
+  model->setNodeMarker(node, "CCXSectionsCreateMembrane");
+  //##
+  root_node = model->getMarkedNode("CCXSectionsModify");
+  node = model->addNode("Modify Solid Section", root_node);
+  model->setNodeMarker(node, "CCXSectionsModifySolid");
+  node = model->addNode("Modify Shell Section", root_node);
+  model->setNodeMarker(node, "CCXSectionsModifyShell");
+  node = model->addNode("Modify Beam Section", root_node);
+  model->setNodeMarker(node, "CCXSectionsModifyBeam");
+  node = model->addNode("Modify Membrane Section", root_node);
+  model->setNodeMarker(node, "CCXSectionsModifyMembrane");
 
   //##############################
   // add Constraint Nodes
@@ -151,7 +178,14 @@ void cmdPanelManager::associate_panels_with_nodes()
   // command panel for it.
   QStringList my_markers;
   my_markers.push_back("CCXBlocksElementType");
-  my_markers.push_back("CCXSectionsCreate");
+  my_markers.push_back("CCXSectionsCreateSolid");
+  my_markers.push_back("CCXSectionsCreateShell");
+  my_markers.push_back("CCXSectionsCreateBeam");
+  my_markers.push_back("CCXSectionsCreateMembrane");
+  my_markers.push_back("CCXSectionsModifySolid");
+  my_markers.push_back("CCXSectionsModifyShell");
+  my_markers.push_back("CCXSectionsModifyBeam");
+  my_markers.push_back("CCXSectionsModifyMembrane");
   my_markers.push_back("CCXRigidBodyCreate");
 
   // For each marker, we want to get the navigation node and assign the node

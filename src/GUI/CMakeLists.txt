@@ -79,8 +79,14 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementSpecificHeatCard.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementConductivityCard.hpp
     ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementConductivityCard.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/SectionsCreatePanel.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/SectionsCreatePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/SectionsCreateSolidPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/SectionsCreateSolidPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/SectionsCreateShellPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/SectionsCreateShellPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/SectionsCreateBeamPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/SectionsCreateBeamPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/SectionsCreateMembranePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/SectionsCreateMembranePanel.cpp
     )
 
 set(UI

@@ -15,7 +15,10 @@
 
 // A list of headers for my command panels.
 #include "CCXBlocksElementTypePanel.hpp"
-#include "SectionsCreatePanel.hpp"
+#include "SectionsCreateSolidPanel.hpp"
+#include "SectionsCreateShellPanel.hpp"
+#include "SectionsCreateBeamPanel.hpp"
+#include "SectionsCreateMembranePanel.hpp"
 
 #include <QWidget>
 
@@ -115,11 +118,20 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
   if(name == "CCXBlocksElementType")
     return new CCXBlocksElementType();
   
-  else if(name == "CCXSectionsCreate")
-    return new SectionsCreate();
+  else if(name == "CCXSectionsCreateSolid")
+    return new SectionsCreateSolid();
+
+  else if(name == "CCXSectionsCreateShell")
+    return new SectionsCreateShell();
+
+  else if(name == "CCXSectionsCreateBeam")
+    return new SectionsCreateBeam();
+
+  else if(name == "CCXSectionsCreateMembrane")
+    return new SectionsCreateMembrane();
 
   else if(name == "CCXRigidBodyCreate")
-    return new SectionsCreate();
+    return new SectionsCreateSolid();
 
   else
     return NULL;
