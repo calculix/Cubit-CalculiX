@@ -16,8 +16,6 @@
 // A list of headers for my command panels.
 #include "CCXBlocksElementTypePanel.hpp"
 #include "SectionsCreatePanel.hpp"
-#include "MyPanel1.hpp"
-#include "MyPanel2.hpp"
 
 #include <QWidget>
 
@@ -114,13 +112,7 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
   // We don't worry about setting the widget parent here because it is
   // set in the getWidget() function.
 
-  if(name == "MySecondLevelNode1")
-    return new MyPanel1();
-
-  else if(name == "MySecondLevelNode2")
-    return new MyPanel2();
-
-  else if(name == "CCXBlocksElementType")
+  if(name == "CCXBlocksElementType")
     return new CCXBlocksElementType();
   
   else if(name == "CCXSectionsCreate")

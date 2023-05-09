@@ -81,16 +81,11 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementConductivityCard.cpp
     ${CMAKE_CURRENT_LIST_DIR}/SectionsCreatePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/SectionsCreatePanel.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/MyPanel1.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/MyPanel1.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/MyPanel2.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/MyPanel2.hpp)
+    )
 
 set(UI
     ${CMAKE_CURRENT_LIST_DIR}/CCXBlocksElementTypePanel.ui
-    ${CMAKE_CURRENT_LIST_DIR}/SectionsCreatePanel.ui
-    ${CMAKE_CURRENT_LIST_DIR}/MyPanel1.ui
-    ${CMAKE_CURRENT_LIST_DIR}/MyPanel2.ui)
+    )
 
 # Add the parent scope so that our parent cmake list can use them
 set(GUI_SRC ${SRC} PARENT_SCOPE)

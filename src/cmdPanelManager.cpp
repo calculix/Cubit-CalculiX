@@ -47,8 +47,6 @@ void cmdPanelManager::clear()
 
     // Remove the factory reference from my navigation nodes
     QStringList my_markers;
-    my_markers.push_back("MySecondLevelNode1");
-    my_markers.push_back("MySecondLevelNode2");
     my_markers.push_back("CCXBlocksElementType");
     my_markers.push_back("CCXSectionsCreate");
     my_markers.push_back("CCXRigidBodyCreate");
@@ -86,38 +84,8 @@ void cmdPanelManager::initialize_from_code()
   if(!model)
     return;
   
-  // Create the top-level node (which will be next to Geometry, Mesh, etc.)
-  NavigationNode* root_node = model->getMarkedNode("MyRootNode");
-  if(!root_node)
-  {
-    // Add a node and set it's parent to the model's root so it will be top-level.
-    root_node = model->addNode("MyRootNodeName", model->getRoot());
-
-    // Set the title that will be displayed for nodes under this node.
-    root_node->setTitle("MyActions");
-
-    // Set the marker so that we can find this node later if we want. Marker
-    // names should be unique.
-    model->setNodeMarker(root_node, "MyRootNode");
-  }
-
-  // Create our second level nodes (below our root node)
-  NavigationNode* node = model->getMarkedNode("MySecondLevelNode1");
-  if(!node)
-  {
-    // Add a node and set it's parent to our component's root node.
-    node = model->addNode("MySecondLevelNode1Name", root_node);
-    model->setNodeMarker(node, "MySecondLevelNode1");
-  }
-
-  node = model->getMarkedNode("MySecondLevelNode2");
-  if(!node)
-  {
-    // Add a node and set it's parent to our component's root node.
-    node = model->addNode("MySecondLevelNode2Name", root_node);
-    model->setNodeMarker(node, "MySecondLevelNode2");
-  }
-
+  NavigationNode* root_node;
+  NavigationNode* node;
   //##############################
   // add BlocksTree Nodes
   // add new Node between Exodus/Block and ExodusElementTypeBlock
@@ -182,8 +150,6 @@ void cmdPanelManager::associate_panels_with_nodes()
   // we did not include our root marker because we do not need to create a
   // command panel for it.
   QStringList my_markers;
-  my_markers.push_back("MySecondLevelNode1");
-  my_markers.push_back("MySecondLevelNode2");
   my_markers.push_back("CCXBlocksElementType");
   my_markers.push_back("CCXSectionsCreate");
   my_markers.push_back("CCXRigidBodyCreate");

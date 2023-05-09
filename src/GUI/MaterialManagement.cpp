@@ -610,7 +610,6 @@ void MaterialManagement::on_pushButton_apply_clicked(bool)
         commands.push_back(command);
       }
     }
-    
   }
 
   // We must send the Cubit commands through the Claro framework, so first we need to translate

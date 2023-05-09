@@ -78,6 +78,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
     NodesetTree* NodesetTreeItem;
     SidesetTree* SidesetTreeItem;
     MaterialTree* MaterialTreeItem;
+    SectionsTree* SectionsTreeItem;
     if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item))
     {
       if (BlocksTreeItem->text(1).toStdString()=="")
@@ -184,6 +185,23 @@ void ModelTree::showContextMenu(const QPoint &pos)
 
         contextMenuAction[0][0] = 3;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+      } else if (SectionsTreeItem = dynamic_cast<SectionsTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Section",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Modify Section",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+        QAction action3("Delete Section",this);
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 4;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
       }
     }
   }
@@ -195,6 +213,7 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   NodesetTree* NodesetTreeItem;
   SidesetTree* SidesetTreeItem;
   MaterialTree* MaterialTreeItem;
+  SectionsTree* SectionsTreeItem;
 
   if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item))
   {
@@ -220,6 +239,12 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     {
       myMaterialManagement->show();
     }
+  }else if (SectionsTreeItem = dynamic_cast<SectionsTree*>(item))
+  {
+    if (SectionsTreeItem->text(1).toStdString()=="")
+    {
+      this->setWidgetInCmdPanelMarker("CCXSectionsCreate");
+    }
   } else {
     if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item->parent()))
     {
@@ -233,6 +258,9 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     } else if (MaterialTreeItem = dynamic_cast<MaterialTree*>(item->parent()))
     {
       myMaterialManagement->show();
+    } else if (SectionsTreeItem = dynamic_cast<SectionsTree*>(item->parent()))
+    {
+      this->setWidgetInCmdPanelMarker("CCXSectionsModfiy");
     }
   }
 }
@@ -291,6 +319,18 @@ void ModelTree::execContextMenuAction(){
       if (contextMenuAction[0][1]==0) //Action1
       {
         myMaterialManagement->show();
+      }  
+    }else if (contextMenuAction[0][0]==4) //SectionsTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("CCXSectionsCreate");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        this->setWidgetInCmdPanelMarker("CCXSectionsModify");
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXSectionsDelete");
       }  
     }
   }
