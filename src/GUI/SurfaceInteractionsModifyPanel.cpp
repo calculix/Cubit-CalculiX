@@ -1,4 +1,4 @@
-#include "SectionsCreateSolidPanel.hpp"
+#include "SurfaceInteractionsModifyPanel.hpp"
 
 #include "CubitInterface.hpp"
 #include "Broker.hpp"
@@ -6,7 +6,7 @@
 #include "ScriptTranslator.hpp"
 
 
-SectionsCreateSolidPanel::SectionsCreateSolidPanel(QWidget *parent) :
+SurfaceInteractionsModifyPanel::SurfaceInteractionsModifyPanel(QWidget *parent) :
   QWidget(parent),
   isInitialized(false)
 {
@@ -16,31 +16,34 @@ SectionsCreateSolidPanel::SectionsCreateSolidPanel(QWidget *parent) :
   //this->setMinimumSize(1000,300);
   GridLayout = new QGridLayout(this);
   VBoxLayout = new QVBoxLayout();
+  frame_1 = new QFrame();
+  frame_1->setLineWidth(1);
+  frame_1->setMidLineWidth(0);
+  frame_1->setFrameStyle(QFrame::Box | QFrame::Raised);
+  VBoxLayout_1 = new QVBoxLayout(frame_1);
   vertical_spacer = new QSpacerItem(1,1,QSizePolicy::Minimum,QSizePolicy::Expanding);
   HBoxLayout_1 = new QHBoxLayout();
   HBoxLayout_2 = new QHBoxLayout();
   HBoxLayout_3 = new QHBoxLayout();
-  HBoxLayout_4 = new QHBoxLayout();
+  radioButton_1 = new QRadioButton();
+  radioButton_1->setChecked(true);
+  radioButton_2 = new QRadioButton();
   label_1 = new QLabel();
   label_2 = new QLabel();
   label_3 = new QLabel();
-  label_4 = new QLabel();
-  label_1->setFixedWidth(labelWidth);
-  label_2->setFixedWidth(labelWidth);
+  label_1->setFixedWidth(labelWidth-30);
+  label_2->setFixedWidth(labelWidth-30);
   label_3->setFixedWidth(labelWidth);
-  label_4->setFixedWidth(labelWidth);
   label_1->setText("Block ID");
-  label_2->setText("Material ID");
-  label_3->setText("Orientation Name");
-  label_4->setText("Thickness");
+  label_2->setText("Nodeset ID");
+  label_3->setText("Vertex ID");
   lineEdit_1 = new QLineEdit();
   lineEdit_2 = new QLineEdit();
+  lineEdit_2->setDisabled(true);
   lineEdit_3 = new QLineEdit();
-  lineEdit_4 = new QLineEdit();
   //lineEdit_1->setPlaceholderText("Optional");
   //lineEdit_2->setPlaceholderText("Optional");
-  lineEdit_3->setPlaceholderText("Optional");
-  lineEdit_4->setPlaceholderText("Optional");
+  //lineEdit_3->setPlaceholderText("Optional");
   pushButton_apply = new QPushButton();
   pushButton_apply->setText("Apply");
   HBoxLayout_pushButton_apply = new QHBoxLayout();
@@ -48,49 +51,49 @@ SectionsCreateSolidPanel::SectionsCreateSolidPanel(QWidget *parent) :
   
   // Layout
   GridLayout->addLayout(VBoxLayout,0,0, Qt::AlignTop);
-  VBoxLayout->addLayout(HBoxLayout_1);
-  VBoxLayout->addLayout(HBoxLayout_2);
+  VBoxLayout->addWidget(frame_1);
+  VBoxLayout_1->addLayout(HBoxLayout_1);
+  VBoxLayout_1->addLayout(HBoxLayout_2);
   VBoxLayout->addLayout(HBoxLayout_3);
-  VBoxLayout->addLayout(HBoxLayout_4);
   VBoxLayout->addItem(vertical_spacer);
   VBoxLayout->addLayout(HBoxLayout_pushButton_apply);
+  
 
+  HBoxLayout_1->addWidget(radioButton_1);
   HBoxLayout_1->addWidget(label_1);
   HBoxLayout_1->addWidget(lineEdit_1);
+  HBoxLayout_2->addWidget(radioButton_2);
   HBoxLayout_2->addWidget(label_2);
   HBoxLayout_2->addWidget(lineEdit_2);
   HBoxLayout_3->addWidget(label_3);
   HBoxLayout_3->addWidget(lineEdit_3);
-  HBoxLayout_4->addWidget(label_4);
-  HBoxLayout_4->addWidget(lineEdit_4);
 
   HBoxLayout_pushButton_apply->addItem(horizontal_spacer_pushButton_apply);
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
+  QObject::connect(radioButton_1, SIGNAL(toggled(bool)),this,  SLOT(on_radioButton_1_toggled(bool)));
+  QObject::connect(radioButton_2, SIGNAL(toggled(bool)),this,  SLOT(on_radioButton_2_toggled(bool)));
 
   isInitialized = true;
 }
 
-SectionsCreateSolidPanel::~SectionsCreateSolidPanel()
+SurfaceInteractionsModifyPanel::~SurfaceInteractionsModifyPanel()
 {}
 
-void SectionsCreateSolidPanel::on_pushButton_apply_clicked(bool)
+void SurfaceInteractionsModifyPanel::on_pushButton_apply_clicked(bool)
 {
   QStringList commands;
   QString command = "";
 
-  if ((lineEdit_1->text()!="") && (lineEdit_2->text()!=""))
+  if ((lineEdit_1->text()!="") && (lineEdit_1->isEnabled()))
   {
-    command.append("ccx create section solid block " + lineEdit_1->text() + " material " + lineEdit_2->text());
-    if (lineEdit_3->text()!="")
-    {
-      command.append(" orientation \"" + lineEdit_3->text() + "\"");
-    }
-    if (lineEdit_4->text()!="")
-    {
-      command.append(" thickness " + lineEdit_4->text());
-    }
+    command.append("ccx create constraint rigid body block " + lineEdit_1->text());
+    command.append(" vertex " + lineEdit_3->text());
+  }else if ((lineEdit_2->text()!="") && (lineEdit_2->isEnabled()))
+  {
+    command.append("ccx create constraint rigid body nodeset " + lineEdit_2->text());
+    command.append(" vertex " + lineEdit_3->text());
   }
   
   if (command != "")
@@ -99,7 +102,6 @@ void SectionsCreateSolidPanel::on_pushButton_apply_clicked(bool)
     lineEdit_1->setText("");
     lineEdit_2->setText("");
     lineEdit_3->setText("");
-    lineEdit_4->setText("");
   }
   
   // We must send the Cubit commands through the Claro framework, so first we need to translate
@@ -113,4 +115,16 @@ void SectionsCreateSolidPanel::on_pushButton_apply_clicked(bool)
     // Send the translated commands
     Claro::instance()->send_gui_commands(commands);
   }
+}
+
+void SurfaceInteractionsModifyPanel::on_radioButton_1_toggled(bool toggled)
+{
+  lineEdit_1->setDisabled(false);
+  lineEdit_2->setDisabled(true);
+}
+
+void SurfaceInteractionsModifyPanel::on_radioButton_2_toggled(bool toggled)
+{
+  lineEdit_1->setDisabled(true);
+  lineEdit_2->setDisabled(false);
 }

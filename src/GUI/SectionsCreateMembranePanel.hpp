@@ -1,5 +1,5 @@
-#ifndef SECTIONSCREATEMEMBRANE_HPP
-#define SECTIONSCREATEMEMBRANE_HPP
+#ifndef SECTIONSCREATEMEMBRANEPANEL_HPP
+#define SECTIONSCREATEMEMBRANEPANEL_HPP
 
 #include <QWidget>
 #include <QList>
@@ -15,13 +15,13 @@
 #include <QTableWidget>
 #include <QLineEdit>
 
-class SectionsCreateMembrane : public QWidget
+class SectionsCreateMembranePanel : public QWidget
 {
   Q_OBJECT
   
 public:
-  explicit SectionsCreateMembrane(QWidget *parent = 0);
-  ~SectionsCreateMembrane();
+  explicit SectionsCreateMembranePanel(QWidget *parent = 0);
+  ~SectionsCreateMembranePanel();
 
   bool isInitialized;
   
@@ -54,4 +54,4 @@ private:
   QLineEdit* lineEdit_5;
 };
 
-#endif // SECTIONSCREATEMEMBRANE_HPP
+#endif // SECTIONSCREATEMEMBRANEPANEL_HPP

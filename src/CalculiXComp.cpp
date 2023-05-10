@@ -46,8 +46,8 @@ void CalculiXComp::start_up(int withGUI)
 {
   if(withGUI)
   {
-    setup_menus();
-    setup_toolbars();
+    //setup_menus();
+    //setup_toolbars();
     setup_command_panels();
     setup_CCXDockWindowModelTree(); // command panels has to be setup before dockwindow
     add_exports();
@@ -59,8 +59,8 @@ void CalculiXComp::start_up(int withGUI)
 
 void CalculiXComp::clean_up()
 {
-  cleanup_menus();
-  cleanup_toolbars();
+  //cleanup_menus();
+  //cleanup_toolbars();
   cleanup_command_panels();
   cleanup_CCXDockWindowModelTree();
   cleanup_exports();

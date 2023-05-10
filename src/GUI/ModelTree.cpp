@@ -5,6 +5,8 @@
 #include "SidesetTree.hpp"
 #include "MaterialTree.hpp"
 #include "SectionsTree.hpp"
+#include "ConstraintsTree.hpp"
+#include "SurfaceInteractionsTree.hpp"
 #include "MaterialManagement.hpp"
 #include "CalculiXCoreInterface.hpp"
 
@@ -79,6 +81,8 @@ void ModelTree::showContextMenu(const QPoint &pos)
     SidesetTree* SidesetTreeItem;
     MaterialTree* MaterialTreeItem;
     SectionsTree* SectionsTreeItem;
+    ConstraintsTree* ConstraintsTreeItem;
+    SurfaceInteractionsTree* SurfaceInteractionsTreeItem;
     if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item))
     {
       if (BlocksTreeItem->text(1).toStdString()=="")
@@ -126,6 +130,42 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 3;
+      }
+    }else if (SectionsTreeItem = dynamic_cast<SectionsTree*>(item))
+    {
+      if (SectionsTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Section",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);      
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 4;
+      }
+    }else if (ConstraintsTreeItem = dynamic_cast<ConstraintsTree*>(item))
+    {
+      if (ConstraintsTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Constraint",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);      
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 5;
+      }
+    }else if (SurfaceInteractionsTreeItem = dynamic_cast<SurfaceInteractionsTree*>(item))
+    {
+      if (SurfaceInteractionsTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Surface Interaction",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);      
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 6;
       }
     }else 
     {
@@ -202,6 +242,40 @@ void ModelTree::showContextMenu(const QPoint &pos)
 
         contextMenuAction[0][0] = 4;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+      } else if (ConstraintsTreeItem = dynamic_cast<ConstraintsTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Constraint",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Modify Constraint",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+        QAction action3("Delete Constraint",this);
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 5;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+      } else if (SurfaceInteractionsTreeItem = dynamic_cast<SurfaceInteractionsTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Surface Interaction",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Modify Surface Interaction",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+        QAction action3("Delete Surface Interaction",this);
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 6;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
       }
     }
   }
@@ -214,6 +288,8 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   SidesetTree* SidesetTreeItem;
   MaterialTree* MaterialTreeItem;
   SectionsTree* SectionsTreeItem;
+  ConstraintsTree* ConstraintsTreeItem;
+  SurfaceInteractionsTree* SurfaceInteractionsTreeItem;
 
   if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item))
   {
@@ -245,6 +321,18 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     {
       this->setWidgetInCmdPanelMarker("CCXSectionsCreate");
     }
+  }else if (ConstraintsTreeItem = dynamic_cast<ConstraintsTree*>(item))
+  {
+    if (ConstraintsTreeItem->text(1).toStdString()=="")
+    {
+      this->setWidgetInCmdPanelMarker("CCXConstraintsCreateRigidBody");
+    }
+  }else if (SurfaceInteractionsTreeItem = dynamic_cast<SurfaceInteractionsTree*>(item))
+  {
+    if (SurfaceInteractionsTreeItem->text(1).toStdString()=="")
+    {
+      this->setWidgetInCmdPanelMarker("CCXSurfaceInteractionsCreate");
+    }
   } else {
     if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item->parent()))
     {
@@ -261,6 +349,12 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     } else if (SectionsTreeItem = dynamic_cast<SectionsTree*>(item->parent()))
     {
       this->setWidgetInCmdPanelMarker("CCXSectionsModfiy");
+    } else if (ConstraintsTreeItem = dynamic_cast<ConstraintsTree*>(item->parent()))
+    {
+      this->setWidgetInCmdPanelMarker("CCXConstraintsModifyRigidBody");
+    } else if (SurfaceInteractionsTreeItem = dynamic_cast<SurfaceInteractionsTree*>(item->parent()))
+    {
+      this->setWidgetInCmdPanelMarker("CCXSurfaceInteractionsModify");
     }
   }
 }
@@ -331,6 +425,30 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==2) //Action3
       {
         this->setWidgetInCmdPanelMarker("CCXSectionsDelete");
+      }  
+    }else if (contextMenuAction[0][0]==5) //ConstraintsTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("CCXConstraintsCreateRigidBody");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        this->setWidgetInCmdPanelMarker("CCXConstraintsModifyRigidBody");
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXConstraintsDelete");
+      }  
+    }else if (contextMenuAction[0][0]==6) //SurfaceInteractionsTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("CCXSurfaceInteractionsCreate");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        this->setWidgetInCmdPanelMarker("CCXSurfaceInteractionsModify");
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXSurfaceInteractionsDelete");
       }  
     }
   }

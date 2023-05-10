@@ -1,5 +1,5 @@
-#ifndef SECTIONSCREATEBEAMPANEL_HPP
-#define SECTIONSCREATEBEAMPANEL_HPP
+#ifndef SECTIONSMODIFYBEAMPANEL_HPP
+#define SECTIONSMODIFYBEAMPANEL_HPP
 
 #include <QWidget>
 #include <QList>
@@ -15,13 +15,13 @@
 #include <QTableWidget>
 #include <QLineEdit>
 
-class SectionsCreateBeamPanel : public QWidget
+class SectionsModifyBeamPanel : public QWidget
 {
   Q_OBJECT
   
 public:
-  explicit SectionsCreateBeamPanel(QWidget *parent = 0);
-  ~SectionsCreateBeamPanel();
+  explicit SectionsModifyBeamPanel(QWidget *parent = 0);
+  ~SectionsModifyBeamPanel();
 
   bool isInitialized;
   
@@ -37,6 +37,7 @@ private:
   QPushButton* pushButton_apply;
   QHBoxLayout* HBoxLayout_pushButton_apply;
   QSpacerItem* horizontal_spacer_pushButton_apply;
+  QHBoxLayout* HBoxLayout_0;
   QHBoxLayout* HBoxLayout_beam_type;
   QHBoxLayout* HBoxLayout_1;
   QHBoxLayout* HBoxLayout_2;
@@ -52,6 +53,7 @@ private:
   QHBoxLayout* HBoxLayout_12;
   QHBoxLayout* HBoxLayout_13;
   QHBoxLayout* HBoxLayout_14;
+  QLabel* label_0;
   QLabel* label_beam_type;
   QLabel* label_1;
   QLabel* label_2;
@@ -67,6 +69,7 @@ private:
   QLabel* label_12;
   QLabel* label_13;
   QLabel* label_14;
+  QLineEdit* lineEdit_0;
   QComboBox* beam_type;
   QLineEdit* lineEdit_1;
   QLineEdit* lineEdit_2;
@@ -84,4 +87,4 @@ private:
   QLineEdit* lineEdit_14;  
 };
 
-#endif // SECTIONSCREATEBEAMPANEL_HPP
+#endif // SECTIONSMODIFYBEAMPANEL_HPP

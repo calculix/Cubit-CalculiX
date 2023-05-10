@@ -91,6 +91,27 @@ bool ccxSectionBeamModifyCommand::execute(CubitCommandData &data)
 
   data.get_value("section id", section_id);
 
+  if (!data.get_value("block id", block_id_value))
+  {
+    block_id = "";
+    options_marker.push_back(0);
+  }
+  else
+  {
+    block_id = std::to_string(block_id_value);
+    options_marker.push_back(1);
+  }
+  if (!data.get_value("material", material_value))
+  {
+    material = "";
+    options_marker.push_back(0);
+  }
+  else
+  {
+    material = std::to_string(material_value);
+    options_marker.push_back(1);
+  }
+
   if (!data.find_keyword("BEAM_TYPE"))
   {
     beam_type = "";
@@ -113,35 +134,6 @@ bool ccxSectionBeamModifyCommand::execute(CubitCommandData &data)
     }
   }
 
-  if (!data.get_value("block id", block_id_value))
-  {
-    block_id = "";
-    options_marker.push_back(0);
-  }
-  else
-  {
-    block_id = std::to_string(block_id_value);
-    options_marker.push_back(1);
-  }
-  if (!data.get_value("material", material_value))
-  {
-    material = "";
-    options_marker.push_back(0);
-  }
-  else
-  {
-    material = std::to_string(material_value);
-    options_marker.push_back(1);
-  }
-  if (!data.get_string("orientation", orientation))
-  {
-    orientation = "";
-    options_marker.push_back(0);
-  }
-  else
-  {
-    options_marker.push_back(1);
-  }
   if (!data.get_value("parameter1", parameter1_value))
   {
     parameter1 = "";
@@ -202,6 +194,7 @@ bool ccxSectionBeamModifyCommand::execute(CubitCommandData &data)
     parameter6 = std::to_string(parameter6_value);
     options_marker.push_back(1);
   }
+
   if (!data.get_value("x", x_value))
   {
     x = "";
@@ -232,6 +225,17 @@ bool ccxSectionBeamModifyCommand::execute(CubitCommandData &data)
     z = std::to_string(z_value);
     options_marker.push_back(1);
   }
+
+  if (!data.get_string("orientation", orientation))
+  {
+    orientation = "";
+    options_marker.push_back(0);
+  }
+  else
+  {
+    options_marker.push_back(1);
+  }
+
   if (!data.get_value("offset1", offset1_value))
   {
     offset1 = "";

@@ -1,5 +1,5 @@
-#ifndef SECTIONSCREATESHELLPANEL_HPP
-#define SECTIONSCREATESHELLPANEL_HPP
+#ifndef CONSTRAINTSDELETEPANEL_HPP
+#define CONSTRAINTSDELETEPANEL_HPP
 
 #include <QWidget>
 #include <QList>
@@ -15,13 +15,13 @@
 #include <QTableWidget>
 #include <QLineEdit>
 
-class SectionsCreateShellPanel : public QWidget
+class ConstraintsDeletePanel : public QWidget
 {
   Q_OBJECT
   
 public:
-  explicit SectionsCreateShellPanel(QWidget *parent = 0);
-  ~SectionsCreateShellPanel();
+  explicit ConstraintsDeletePanel(QWidget *parent = 0);
+  ~ConstraintsDeletePanel();
 
   bool isInitialized;
   
@@ -38,20 +38,8 @@ private:
   QHBoxLayout* HBoxLayout_pushButton_apply;
   QSpacerItem* horizontal_spacer_pushButton_apply;
   QHBoxLayout* HBoxLayout_1;
-  QHBoxLayout* HBoxLayout_2;
-  QHBoxLayout* HBoxLayout_3;
-  QHBoxLayout* HBoxLayout_4;
-  QHBoxLayout* HBoxLayout_5;
   QLabel* label_1;
-  QLabel* label_2;
-  QLabel* label_3;
-  QLabel* label_4;
-  QLabel* label_5;
   QLineEdit* lineEdit_1;
-  QLineEdit* lineEdit_2;
-  QLineEdit* lineEdit_3;
-  QLineEdit* lineEdit_4;
-  QLineEdit* lineEdit_5;
 };
 
-#endif // SECTIONSCREATESHELLPANEL_HPP
+#endif // CONSTRAINTSDELETEPANEL_HPP

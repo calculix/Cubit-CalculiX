@@ -19,6 +19,19 @@
 #include "SectionsCreateShellPanel.hpp"
 #include "SectionsCreateBeamPanel.hpp"
 #include "SectionsCreateMembranePanel.hpp"
+#include "SectionsModifySolidPanel.hpp"
+#include "SectionsModifyShellPanel.hpp"
+#include "SectionsModifyBeamPanel.hpp"
+#include "SectionsModifyMembranePanel.hpp"
+#include "SectionsDeletePanel.hpp"
+#include "ConstraintsCreateRigidBodyPanel.hpp"
+#include "ConstraintsCreateTiePanel.hpp"
+#include "ConstraintsModifyRigidBodyPanel.hpp"
+#include "ConstraintsModifyTiePanel.hpp"
+#include "ConstraintsDeletePanel.hpp"
+#include "SurfaceInteractionsCreatePanel.hpp"
+#include "SurfaceInteractionsModifyPanel.hpp"
+#include "SurfaceInteractionsDeletePanel.hpp"
 
 #include <QWidget>
 
@@ -117,22 +130,40 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
 
   if(name == "CCXBlocksElementType")
     return new CCXBlocksElementType();
-  
   else if(name == "CCXSectionsCreateSolid")
-    return new SectionsCreateSolid();
-
+    return new SectionsCreateSolidPanel();
   else if(name == "CCXSectionsCreateShell")
-    return new SectionsCreateShell();
-
+    return new SectionsCreateShellPanel();
   else if(name == "CCXSectionsCreateBeam")
-    return new SectionsCreateBeam();
-
+    return new SectionsCreateBeamPanel();
   else if(name == "CCXSectionsCreateMembrane")
-    return new SectionsCreateMembrane();
-
-  else if(name == "CCXRigidBodyCreate")
-    return new SectionsCreateSolid();
-
+    return new SectionsCreateMembranePanel();
+  else if(name == "CCXSectionsModifySolid")
+    return new SectionsModifySolidPanel();
+  else if(name == "CCXSectionsModifyShell")
+    return new SectionsModifyShellPanel();
+  else if(name == "CCXSectionsModifyBeam")
+    return new SectionsModifyBeamPanel();
+  else if(name == "CCXSectionsModifyMembrane")
+    return new SectionsModifyMembranePanel();
+  else if(name == "CCXSectionsDelete")
+    return new SectionsDeletePanel();
+  else if(name == "CCXConstraintsCreateRigidBody")
+    return new ConstraintsCreateRigidBodyPanel();
+  else if(name == "CCXConstraintsCreateTie")
+    return new ConstraintsCreateTiePanel();
+  else if(name == "CCXConstraintsModifyRigidBody")
+    return new ConstraintsModifyRigidBodyPanel();
+  else if(name == "CCXConstraintsModifyTie")
+    return new ConstraintsModifyTiePanel();
+  else if(name == "CCXConstraintsDelete")
+    return new ConstraintsDeletePanel();
+  else if(name == "CCXSurfaceInteractionsCreate")
+    return new SurfaceInteractionsCreatePanel();
+  else if(name == "CCXSurfaceInteractionsModify")
+    return new SurfaceInteractionsModifyPanel();
+  else if(name == "CCXSurfaceInteractionsDelete")
+    return new SurfaceInteractionsDeletePanel();
   else
     return NULL;
 }

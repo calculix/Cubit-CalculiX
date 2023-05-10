@@ -16,7 +16,7 @@ sideset 2 add surface 2
 undo group end
 nodeset 1 add surface 1
 ccx create surfaceinteraction name test1_1 exponential c0 1.0 p0 2.0
-ccx create surfaceinteraction name test1_2 exponential c0 1.0 p0 2.0
+ccx create surfaceinteraction name test1_2 linear slopeK 1 sigmaINF 2 c0 3
 ccx create surfaceinteraction name test1_3 exponential c0 1.0 p0 2.0
 ccx create surfaceinteraction name test2_1 linear slopeK 1 sigmaINF 2 c0 3
 ccx create surfaceinteraction name test2_2 linear slopeK 1 sigmaINF 2 c0 3
@@ -61,5 +61,6 @@ ccx create contactpair surfaceinteraction 6 massless master 1 slave 2
 #export ccx "test_contact.inp"
 create contact autoselect
 #ccx create contactpair from cubitcontactpair surfaceinteraction 1
+
 
 

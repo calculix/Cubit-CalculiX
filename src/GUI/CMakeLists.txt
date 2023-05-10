@@ -59,6 +59,8 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/StepsFieldOutputsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/JobsTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/JobsTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/PanelTable.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/PanelTable.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CCXBlocksElementTypePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CCXBlocksElementTypePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MaterialManagement.hpp
@@ -87,6 +89,32 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/SectionsCreateBeamPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/SectionsCreateMembranePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/SectionsCreateMembranePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/SectionsModifySolidPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/SectionsModifySolidPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/SectionsModifyShellPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/SectionsModifyShellPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/SectionsModifyBeamPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/SectionsModifyBeamPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/SectionsModifyMembranePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/SectionsModifyMembranePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/SectionsDeletePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/SectionsDeletePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ConstraintsCreateRigidBodyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ConstraintsCreateRigidBodyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ConstraintsCreateTiePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ConstraintsCreateTiePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ConstraintsModifyRigidBodyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ConstraintsModifyRigidBodyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ConstraintsModifyTiePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ConstraintsModifyTiePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ConstraintsDeletePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ConstraintsDeletePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/SurfaceInteractionsCreatePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/SurfaceInteractionsCreatePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/SurfaceInteractionsModifyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/SurfaceInteractionsModifyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/SurfaceInteractionsDeletePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/SurfaceInteractionsDeletePanel.cpp
     )
 
 set(UI

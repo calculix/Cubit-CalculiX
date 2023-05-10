@@ -19,6 +19,7 @@ public:
   bool set_ccx_element_type(int block_id, std::string ccx_element_type); // sets the ccx element type for a block
   std::string get_ccx_element_type(int block_id); // gets the ccx element type for a block
   std::string get_block_name(int block_id); // gets the block name
+  std::string get_material_name(int material_id); // gets the material name
   std::string get_nodeset_name(int nodeset_id); // gets the nodeset name
   std::string get_sideset_name(int sideset_id); // gets the sideset name
   std::string get_surfaceinteraction_name(int surfaceinteraction_id); // gets the surfaceinteraction name

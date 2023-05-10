@@ -56,7 +56,15 @@ void cmdPanelManager::clear()
     my_markers.push_back("CCXSectionsModifyShell");
     my_markers.push_back("CCXSectionsModifyBeam");
     my_markers.push_back("CCXSectionsModifyMembrane");
-    my_markers.push_back("CCXRigidBodyCreate");
+    my_markers.push_back("CCXSectionsDelete");
+    my_markers.push_back("CCXConstraintsCreateRigidBody");
+    my_markers.push_back("CCXConstraintsCreateTie");
+    my_markers.push_back("CCXConstraintsModifyRigidBody");
+    my_markers.push_back("CCXConstraintsModifyTie");
+    my_markers.push_back("CCXConstraintsDelete");
+    my_markers.push_back("CCXSurfaceInteractionsCreate");
+    my_markers.push_back("CCXSurfaceInteractionsModify");
+    my_markers.push_back("CCXSurfaceInteractionsDelete");
 
     // For each marker, we want to get the navigation node and assign the node
     // to use this factory to get widgets as needed.
@@ -126,27 +134,27 @@ void cmdPanelManager::initialize_from_code()
   model->setNodeMarker(node, "CCXSectionsDelete");
   //##
   root_node = model->getMarkedNode("CCXSectionsCreate");
-  node = model->addNode("Create Solid Section", root_node);
+  node = model->addNode("Solid Section", root_node);
   model->setNodeMarker(node, "CCXSectionsCreateSolid");
-  node = model->addNode("Create Shell Section", root_node);
+  node = model->addNode("Shell Section", root_node);
   model->setNodeMarker(node, "CCXSectionsCreateShell");
-  node = model->addNode("Create Beam Section", root_node);
+  node = model->addNode("Beam Section", root_node);
   model->setNodeMarker(node, "CCXSectionsCreateBeam");
-  node = model->addNode("Create Membrane Section", root_node);
+  node = model->addNode("CMembrane Section", root_node);
   model->setNodeMarker(node, "CCXSectionsCreateMembrane");
   //##
   root_node = model->getMarkedNode("CCXSectionsModify");
-  node = model->addNode("Modify Solid Section", root_node);
+  node = model->addNode("Solid Section", root_node);
   model->setNodeMarker(node, "CCXSectionsModifySolid");
-  node = model->addNode("Modify Shell Section", root_node);
+  node = model->addNode("Shell Section", root_node);
   model->setNodeMarker(node, "CCXSectionsModifyShell");
-  node = model->addNode("Modify Beam Section", root_node);
+  node = model->addNode("Beam Section", root_node);
   model->setNodeMarker(node, "CCXSectionsModifyBeam");
-  node = model->addNode("Modify Membrane Section", root_node);
+  node = model->addNode("Membrane Section", root_node);
   model->setNodeMarker(node, "CCXSectionsModifyMembrane");
 
   //##############################
-  // add Constraint Nodes
+  // add Constraints Nodes
   // add new Node between FEA/Create and FEAConstraintCreate
   root_node = model->getNode("FEA/Create");
   node = model->addNode("Constraints", root_node);
@@ -160,10 +168,49 @@ void cmdPanelManager::initialize_from_code()
   root_node->insertChild(root_node->childCount()+1,node);
   NodeIconPointer = node->getIcon();
   root_node->setIcon(NodeIconPointer);
-  // add Constraint Node
+  // add Constraint Nodes
   root_node = model->getMarkedNode("FEAConstraintCreateNavigation");
   node = model->addNode("CCX Rigid Body", root_node);
-  model->setNodeMarker(node, "CCXRigidBodyCreate");
+  model->setNodeMarker(node, "CCXConstraintsCreateRigidBody");
+  node = model->addNode("CCX Tie", root_node);
+  model->setNodeMarker(node, "CCXConstraintsCreateTie");
+  // add new Node between FEA/Modify and FEAConstraintModify
+  root_node = model->getNode("FEA/Modify");
+  node = model->addNode("Constraints", root_node);
+  model->setNodeMarker(node, "FEAConstraintModifyNavigation");
+  //node->setUseComboForChildren(true);
+  // set new Parent to FEAConstraintModify and remove from old
+  node = model->getMarkedNode("FEAConstraintModify");
+  root_node->removeChild(root_node->getChildIndex(node));
+  root_node = model->getMarkedNode("FEAConstraintModifyNavigation");
+  node->setParent(root_node);
+  root_node->insertChild(root_node->childCount()+1,node);
+  NodeIconPointer = node->getIcon();
+  root_node->setIcon(NodeIconPointer);
+  // add Constraint Nodes
+  root_node = model->getMarkedNode("FEAConstraintModifyNavigation");
+  node = model->addNode("CCX Rigid Body", root_node);
+  model->setNodeMarker(node, "CCXConstraintsModifyRigidBody");
+  node = model->addNode("CCX Tie", root_node);
+  model->setNodeMarker(node, "CCXConstraintsModifyTie");
+  root_node = model->getNode("FEA/Delete");
+  node = model->addNode("CCX Delete", root_node);
+  model->setNodeMarker(node, "FEADeleteNavigation");
+  root_node = model->getMarkedNode("FEADeleteNavigation");
+  node = model->addNode("Delete Constraint", root_node);
+  model->setNodeMarker(node, "CCXConstraintsDelete");
+
+  //##############################
+  // add SurfaceInteractions Nodes
+  root_node = model->getNode("FEA/Create");
+  node = model->addNode("CCX Surface Interactions", root_node);
+  model->setNodeMarker(node, "CCXSurfaceInteractionsCreate");
+  root_node = model->getNode("FEA/Modify");
+  node = model->addNode("CCX Surface Interactions", root_node);
+  model->setNodeMarker(node, "CCXSurfaceInteractionsModify");
+  root_node = model->getMarkedNode("FEADeleteNavigation");
+  node = model->addNode("Delete Surface Interaction", root_node);
+  model->setNodeMarker(node, "CCXSurfaceInteractionsDelete");
 }
 
 void cmdPanelManager::associate_panels_with_nodes()
@@ -186,7 +233,15 @@ void cmdPanelManager::associate_panels_with_nodes()
   my_markers.push_back("CCXSectionsModifyShell");
   my_markers.push_back("CCXSectionsModifyBeam");
   my_markers.push_back("CCXSectionsModifyMembrane");
-  my_markers.push_back("CCXRigidBodyCreate");
+  my_markers.push_back("CCXSectionsDelete");
+  my_markers.push_back("CCXConstraintsCreateRigidBody");
+  my_markers.push_back("CCXConstraintsCreateTie");
+  my_markers.push_back("CCXConstraintsModifyRigidBody");
+  my_markers.push_back("CCXConstraintsModifyTie");
+  my_markers.push_back("CCXConstraintsDelete");
+  my_markers.push_back("CCXSurfaceInteractionsCreate");
+  my_markers.push_back("CCXSurfaceInteractionsModify");
+  my_markers.push_back("CCXSurfaceInteractionsDelete");
 
   // For each marker, we want to get the navigation node and assign the node
   // to use this factory to get widgets as needed.

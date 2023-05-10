@@ -1,4 +1,4 @@
-#include "SectionsCreateBeamPanel.hpp"
+#include "SectionsModifyBeamPanel.hpp"
 
 #include "CubitInterface.hpp"
 #include "Broker.hpp"
@@ -6,7 +6,7 @@
 #include "ScriptTranslator.hpp"
 
 
-SectionsCreateBeamPanel::SectionsCreateBeamPanel(QWidget *parent) :
+SectionsModifyBeamPanel::SectionsModifyBeamPanel(QWidget *parent) :
   QWidget(parent),
   isInitialized(false)
 {
@@ -17,6 +17,7 @@ SectionsCreateBeamPanel::SectionsCreateBeamPanel(QWidget *parent) :
   GridLayout = new QGridLayout(this);
   VBoxLayout = new QVBoxLayout();
   vertical_spacer = new QSpacerItem(1,1,QSizePolicy::Minimum,QSizePolicy::Expanding);
+  HBoxLayout_0 = new QHBoxLayout();
   HBoxLayout_beam_type = new QHBoxLayout();
   HBoxLayout_1 = new QHBoxLayout();
   HBoxLayout_2 = new QHBoxLayout();
@@ -32,6 +33,7 @@ SectionsCreateBeamPanel::SectionsCreateBeamPanel(QWidget *parent) :
   HBoxLayout_12 = new QHBoxLayout();
   HBoxLayout_13 = new QHBoxLayout();
   HBoxLayout_14 = new QHBoxLayout();
+  label_0 = new QLabel();
   label_beam_type = new QLabel();
   label_1 = new QLabel();
   label_2 = new QLabel();
@@ -47,6 +49,7 @@ SectionsCreateBeamPanel::SectionsCreateBeamPanel(QWidget *parent) :
   label_12 = new QLabel();
   label_13 = new QLabel();
   label_14 = new QLabel();
+  label_0->setFixedWidth(labelWidth);
   label_beam_type->setFixedWidth(labelWidth);
   label_1->setFixedWidth(labelWidth);
   label_2->setFixedWidth(labelWidth);
@@ -62,6 +65,7 @@ SectionsCreateBeamPanel::SectionsCreateBeamPanel(QWidget *parent) :
   label_12->setFixedWidth(labelWidth);
   label_13->setFixedWidth(labelWidth);
   label_14->setFixedWidth(labelWidth);
+  label_0->setText("Section ID");
   label_beam_type->setText("Beam Type");
   label_1->setText("Block ID");
   label_2->setText("Material ID");
@@ -77,7 +81,9 @@ SectionsCreateBeamPanel::SectionsCreateBeamPanel(QWidget *parent) :
   label_12->setText("Orientation Name");
   label_13->setText("Offset 1");
   label_14->setText("Offset 2");
+  lineEdit_0 = new QLineEdit();
   beam_type = new QComboBox();
+  beam_type->addItem("");
   beam_type->addItem("RECT");
   beam_type->addItem("CIRC");
   beam_type->addItem("PIPE");
@@ -96,17 +102,18 @@ SectionsCreateBeamPanel::SectionsCreateBeamPanel(QWidget *parent) :
   lineEdit_12 = new QLineEdit();
   lineEdit_13 = new QLineEdit();
   lineEdit_14 = new QLineEdit();
-  //lineEdit_1->setPlaceholderText("Optional");
-  //lineEdit_2->setPlaceholderText("Optional");
-  //lineEdit_3->setPlaceholderText("Optional");
-  //lineEdit_4->setPlaceholderText("Optional");
+  //lineEdit_0->setPlaceholderText("Optional");
+  lineEdit_1->setPlaceholderText("Optional");
+  lineEdit_2->setPlaceholderText("Optional");
+  lineEdit_3->setPlaceholderText("Optional");
+  lineEdit_4->setPlaceholderText("Optional");
   lineEdit_5->setPlaceholderText("only for BOX");
   lineEdit_6->setPlaceholderText("only for BOX");
   lineEdit_7->setPlaceholderText("only for BOX");
   lineEdit_8->setPlaceholderText("only for BOX");
-  //lineEdit_9->setPlaceholderText("Optional");
-  //lineEdit_10->setPlaceholderText("Optional");
-  //lineEdit_11->setPlaceholderText("Optional");
+  lineEdit_9->setPlaceholderText("Optional");
+  lineEdit_10->setPlaceholderText("Optional");
+  lineEdit_11->setPlaceholderText("Optional");
   lineEdit_12->setPlaceholderText("Optional");
   lineEdit_13->setPlaceholderText("Optional");
   lineEdit_14->setPlaceholderText("Optional");
@@ -117,6 +124,7 @@ SectionsCreateBeamPanel::SectionsCreateBeamPanel(QWidget *parent) :
   
   // Layout
   GridLayout->addLayout(VBoxLayout,0,0, Qt::AlignTop);
+  VBoxLayout->addLayout(HBoxLayout_0);
   VBoxLayout->addLayout(HBoxLayout_beam_type);
   VBoxLayout->addLayout(HBoxLayout_1);
   VBoxLayout->addLayout(HBoxLayout_2);
@@ -135,6 +143,8 @@ SectionsCreateBeamPanel::SectionsCreateBeamPanel(QWidget *parent) :
   VBoxLayout->addItem(vertical_spacer);
   VBoxLayout->addLayout(HBoxLayout_pushButton_apply);
 
+  HBoxLayout_0->addWidget(label_0);
+  HBoxLayout_0->addWidget(lineEdit_0);
   HBoxLayout_beam_type->addWidget(label_beam_type);
   HBoxLayout_beam_type->addWidget(beam_type);
   HBoxLayout_1->addWidget(label_1);
@@ -173,40 +183,77 @@ SectionsCreateBeamPanel::SectionsCreateBeamPanel(QWidget *parent) :
   isInitialized = true;
 }
 
-SectionsCreateBeamPanel::~SectionsCreateBeamPanel()
+SectionsModifyBeamPanel::~SectionsModifyBeamPanel()
 {}
 
-void SectionsCreateBeamPanel::on_pushButton_apply_clicked(bool)
+void SectionsModifyBeamPanel::on_pushButton_apply_clicked(bool)
 {
   QStringList commands;
   QString command = "";
 
-  if ((lineEdit_1->text()!="") && (lineEdit_2->text()!=""))
+  if ((lineEdit_0->text()!=""))
   {
-    command.append("ccx create section beam beam_type ");
-    if (beam_type->currentIndex()==0)
+    command.append("ccx modify section beam " + lineEdit_0->text());
+    
+    
+    if (beam_type->currentIndex()==1)
     {
-      command.append("rect ");
-    }else if (beam_type->currentIndex()==1)
-    {
-      command.append("circ ");
+      command.append(" beam_type rect ");
     }else if (beam_type->currentIndex()==2)
     {
-      command.append("pipe ");
+      command.append(" beam_type circ ");
     }else if (beam_type->currentIndex()==3)
     {
-      command.append("box ");
+      command.append(" beam_type pipe ");
+    }else if (beam_type->currentIndex()==4)
+    {
+      command.append(" beam_type box ");
     }
     
-    command.append("block " + lineEdit_1->text() + " material " + lineEdit_2->text() + " parameter1 " + lineEdit_3->text()  + " parameter2 " + lineEdit_4->text() + " ");
- 
-    if (beam_type->currentIndex()==3)
+    if (lineEdit_1->text()!="")
     {
-      command.append("parameter3 " + lineEdit_5->text() + " parameter4 " + lineEdit_6->text() + " parameter5 " + lineEdit_7->text() + " parameter6 " + lineEdit_8->text() + " ");
+      command.append(" block " + lineEdit_1->text());
     }
-
-    command.append(" x " + lineEdit_9->text() + " y " + lineEdit_10->text() + " z " + lineEdit_11->text() + " ");
-
+    if (lineEdit_2->text()!="")
+    {
+      command.append(" material " + lineEdit_2->text());
+    }
+    if (lineEdit_3->text()!="")
+    {
+      command.append(" parameter1 " + lineEdit_3->text());
+    }
+    if (lineEdit_4->text()!="")
+    {
+      command.append(" parameter2 " + lineEdit_4->text());
+    }
+    if (lineEdit_5->text()!="")
+    {
+      command.append(" parameter3 " + lineEdit_5->text());
+    }
+    if (lineEdit_6->text()!="")
+    {
+      command.append(" parameter4 " + lineEdit_6->text());
+    }
+    if (lineEdit_7->text()!="")
+    {
+      command.append(" parameter5 " + lineEdit_7->text());
+    }
+    if (lineEdit_8->text()!="")
+    {
+      command.append(" parameter6 " + lineEdit_8->text());
+    }
+    if (lineEdit_9->text()!="")
+    {
+      command.append(" x " + lineEdit_9->text());
+    }
+    if (lineEdit_10->text()!="")
+    {
+      command.append(" y " + lineEdit_10->text());
+    }
+    if (lineEdit_11->text()!="")
+    {
+      command.append(" z " + lineEdit_11->text());
+    }
     if (lineEdit_12->text()!="")
     {
       command.append(" orientation \"" + lineEdit_12->text() + "\"");
@@ -225,6 +272,7 @@ void SectionsCreateBeamPanel::on_pushButton_apply_clicked(bool)
   {
     commands.push_back(command);
     beam_type->setCurrentIndex(0);
+    lineEdit_0->setText("");
     lineEdit_1->setText("");
     lineEdit_2->setText("");
     lineEdit_3->setText("");

@@ -1,4 +1,4 @@
-#include "SectionsCreateSolidPanel.hpp"
+#include "SectionsModifySolidPanel.hpp"
 
 #include "CubitInterface.hpp"
 #include "Broker.hpp"
@@ -6,7 +6,7 @@
 #include "ScriptTranslator.hpp"
 
 
-SectionsCreateSolidPanel::SectionsCreateSolidPanel(QWidget *parent) :
+SectionsModifySolidPanel::SectionsModifySolidPanel(QWidget *parent) :
   QWidget(parent),
   isInitialized(false)
 {
@@ -17,28 +17,34 @@ SectionsCreateSolidPanel::SectionsCreateSolidPanel(QWidget *parent) :
   GridLayout = new QGridLayout(this);
   VBoxLayout = new QVBoxLayout();
   vertical_spacer = new QSpacerItem(1,1,QSizePolicy::Minimum,QSizePolicy::Expanding);
+  HBoxLayout_0 = new QHBoxLayout();
   HBoxLayout_1 = new QHBoxLayout();
   HBoxLayout_2 = new QHBoxLayout();
   HBoxLayout_3 = new QHBoxLayout();
   HBoxLayout_4 = new QHBoxLayout();
+  label_0 = new QLabel();
   label_1 = new QLabel();
   label_2 = new QLabel();
   label_3 = new QLabel();
   label_4 = new QLabel();
+  label_0->setFixedWidth(labelWidth);
   label_1->setFixedWidth(labelWidth);
   label_2->setFixedWidth(labelWidth);
   label_3->setFixedWidth(labelWidth);
   label_4->setFixedWidth(labelWidth);
+  label_0->setText("Section ID");
   label_1->setText("Block ID");
   label_2->setText("Material ID");
   label_3->setText("Orientation Name");
   label_4->setText("Thickness");
+  lineEdit_0 = new QLineEdit();
   lineEdit_1 = new QLineEdit();
   lineEdit_2 = new QLineEdit();
   lineEdit_3 = new QLineEdit();
   lineEdit_4 = new QLineEdit();
-  //lineEdit_1->setPlaceholderText("Optional");
-  //lineEdit_2->setPlaceholderText("Optional");
+  //lineEdit_0->setPlaceholderText("Optional");
+  lineEdit_1->setPlaceholderText("Optional");
+  lineEdit_2->setPlaceholderText("Optional");
   lineEdit_3->setPlaceholderText("Optional");
   lineEdit_4->setPlaceholderText("Optional");
   pushButton_apply = new QPushButton();
@@ -48,6 +54,7 @@ SectionsCreateSolidPanel::SectionsCreateSolidPanel(QWidget *parent) :
   
   // Layout
   GridLayout->addLayout(VBoxLayout,0,0, Qt::AlignTop);
+  VBoxLayout->addLayout(HBoxLayout_0);
   VBoxLayout->addLayout(HBoxLayout_1);
   VBoxLayout->addLayout(HBoxLayout_2);
   VBoxLayout->addLayout(HBoxLayout_3);
@@ -55,6 +62,8 @@ SectionsCreateSolidPanel::SectionsCreateSolidPanel(QWidget *parent) :
   VBoxLayout->addItem(vertical_spacer);
   VBoxLayout->addLayout(HBoxLayout_pushButton_apply);
 
+  HBoxLayout_0->addWidget(label_0);
+  HBoxLayout_0->addWidget(lineEdit_0);
   HBoxLayout_1->addWidget(label_1);
   HBoxLayout_1->addWidget(lineEdit_1);
   HBoxLayout_2->addWidget(label_2);
@@ -72,17 +81,26 @@ SectionsCreateSolidPanel::SectionsCreateSolidPanel(QWidget *parent) :
   isInitialized = true;
 }
 
-SectionsCreateSolidPanel::~SectionsCreateSolidPanel()
+SectionsModifySolidPanel::~SectionsModifySolidPanel()
 {}
 
-void SectionsCreateSolidPanel::on_pushButton_apply_clicked(bool)
+void SectionsModifySolidPanel::on_pushButton_apply_clicked(bool)
 {
   QStringList commands;
   QString command = "";
 
-  if ((lineEdit_1->text()!="") && (lineEdit_2->text()!=""))
+  if ((lineEdit_0->text()!=""))
   {
-    command.append("ccx create section solid block " + lineEdit_1->text() + " material " + lineEdit_2->text());
+    command.append("ccx modify section solid " + lineEdit_0->text());
+
+    if (lineEdit_1->text()!="")
+    {
+      command.append(" block " + lineEdit_1->text());
+    }
+    if (lineEdit_2->text()!="")
+    {
+      command.append(" material " + lineEdit_2->text());
+    }
     if (lineEdit_3->text()!="")
     {
       command.append(" orientation \"" + lineEdit_3->text() + "\"");
@@ -96,6 +114,7 @@ void SectionsCreateSolidPanel::on_pushButton_apply_clicked(bool)
   if (command != "")
   {
     commands.push_back(command);
+    lineEdit_0->setText("");
     lineEdit_1->setText("");
     lineEdit_2->setText("");
     lineEdit_3->setText("");

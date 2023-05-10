@@ -16,6 +16,8 @@ class NodesetTree;
 class SidesetTree;
 class MaterialTree;
 class SectionsTree;
+class ConstraintsTree;
+class SurfaceInteractionsTree;
 class QTreeWidgetItem;
 class MaterialManagement;
 

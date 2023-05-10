@@ -6,7 +6,7 @@
 #include "ScriptTranslator.hpp"
 
 
-SectionsCreateShell::SectionsCreateShell(QWidget *parent) :
+SectionsCreateShellPanel::SectionsCreateShellPanel(QWidget *parent) :
   QWidget(parent),
   isInitialized(false)
 {
@@ -81,10 +81,10 @@ SectionsCreateShell::SectionsCreateShell(QWidget *parent) :
   isInitialized = true;
 }
 
-SectionsCreateShell::~SectionsCreateShell()
+SectionsCreateShellPanel::~SectionsCreateShellPanel()
 {}
 
-void SectionsCreateShell::on_pushButton_apply_clicked(bool)
+void SectionsCreateShellPanel::on_pushButton_apply_clicked(bool)
 {
   QStringList commands;
   QString command = "";

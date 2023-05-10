@@ -1,4 +1,4 @@
-#include "SectionsCreateSolidPanel.hpp"
+#include "SectionsModifyMembranePanel.hpp"
 
 #include "CubitInterface.hpp"
 #include "Broker.hpp"
@@ -6,7 +6,7 @@
 #include "ScriptTranslator.hpp"
 
 
-SectionsCreateSolidPanel::SectionsCreateSolidPanel(QWidget *parent) :
+SectionsModifyMembranePanel::SectionsModifyMembranePanel(QWidget *parent) :
   QWidget(parent),
   isInitialized(false)
 {
@@ -17,30 +17,42 @@ SectionsCreateSolidPanel::SectionsCreateSolidPanel(QWidget *parent) :
   GridLayout = new QGridLayout(this);
   VBoxLayout = new QVBoxLayout();
   vertical_spacer = new QSpacerItem(1,1,QSizePolicy::Minimum,QSizePolicy::Expanding);
+  HBoxLayout_0 = new QHBoxLayout();
   HBoxLayout_1 = new QHBoxLayout();
   HBoxLayout_2 = new QHBoxLayout();
   HBoxLayout_3 = new QHBoxLayout();
   HBoxLayout_4 = new QHBoxLayout();
+  HBoxLayout_5 = new QHBoxLayout();
+  label_0 = new QLabel();
   label_1 = new QLabel();
   label_2 = new QLabel();
   label_3 = new QLabel();
   label_4 = new QLabel();
+  label_5 = new QLabel();
+  label_0->setFixedWidth(labelWidth);
   label_1->setFixedWidth(labelWidth);
   label_2->setFixedWidth(labelWidth);
   label_3->setFixedWidth(labelWidth);
   label_4->setFixedWidth(labelWidth);
+  label_5->setFixedWidth(labelWidth);
+  label_0->setText("Section ID");
   label_1->setText("Block ID");
   label_2->setText("Material ID");
   label_3->setText("Orientation Name");
   label_4->setText("Thickness");
+  label_5->setText("Offset");
+  lineEdit_0 = new QLineEdit();
   lineEdit_1 = new QLineEdit();
   lineEdit_2 = new QLineEdit();
   lineEdit_3 = new QLineEdit();
   lineEdit_4 = new QLineEdit();
-  //lineEdit_1->setPlaceholderText("Optional");
-  //lineEdit_2->setPlaceholderText("Optional");
+  lineEdit_5 = new QLineEdit();
+  //lineEdit_0->setPlaceholderText("Optional");
+  lineEdit_1->setPlaceholderText("Optional");
+  lineEdit_2->setPlaceholderText("Optional");
   lineEdit_3->setPlaceholderText("Optional");
   lineEdit_4->setPlaceholderText("Optional");
+  lineEdit_5->setPlaceholderText("Optional");
   pushButton_apply = new QPushButton();
   pushButton_apply->setText("Apply");
   HBoxLayout_pushButton_apply = new QHBoxLayout();
@@ -48,13 +60,17 @@ SectionsCreateSolidPanel::SectionsCreateSolidPanel(QWidget *parent) :
   
   // Layout
   GridLayout->addLayout(VBoxLayout,0,0, Qt::AlignTop);
+  VBoxLayout->addLayout(HBoxLayout_0);
   VBoxLayout->addLayout(HBoxLayout_1);
   VBoxLayout->addLayout(HBoxLayout_2);
   VBoxLayout->addLayout(HBoxLayout_3);
   VBoxLayout->addLayout(HBoxLayout_4);
+  VBoxLayout->addLayout(HBoxLayout_5);
   VBoxLayout->addItem(vertical_spacer);
   VBoxLayout->addLayout(HBoxLayout_pushButton_apply);
 
+  HBoxLayout_0->addWidget(label_0);
+  HBoxLayout_0->addWidget(lineEdit_0);
   HBoxLayout_1->addWidget(label_1);
   HBoxLayout_1->addWidget(lineEdit_1);
   HBoxLayout_2->addWidget(label_2);
@@ -63,6 +79,8 @@ SectionsCreateSolidPanel::SectionsCreateSolidPanel(QWidget *parent) :
   HBoxLayout_3->addWidget(lineEdit_3);
   HBoxLayout_4->addWidget(label_4);
   HBoxLayout_4->addWidget(lineEdit_4);
+  HBoxLayout_5->addWidget(label_5);
+  HBoxLayout_5->addWidget(lineEdit_5);
 
   HBoxLayout_pushButton_apply->addItem(horizontal_spacer_pushButton_apply);
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
@@ -72,34 +90,45 @@ SectionsCreateSolidPanel::SectionsCreateSolidPanel(QWidget *parent) :
   isInitialized = true;
 }
 
-SectionsCreateSolidPanel::~SectionsCreateSolidPanel()
+SectionsModifyMembranePanel::~SectionsModifyMembranePanel()
 {}
 
-void SectionsCreateSolidPanel::on_pushButton_apply_clicked(bool)
+void SectionsModifyMembranePanel::on_pushButton_apply_clicked(bool)
 {
   QStringList commands;
   QString command = "";
 
-  if ((lineEdit_1->text()!="") && (lineEdit_2->text()!=""))
+  if ((lineEdit_0->text()!=""))
   {
-    command.append("ccx create section solid block " + lineEdit_1->text() + " material " + lineEdit_2->text());
-    if (lineEdit_3->text()!="")
+    command.append("ccx modify section membrane " + lineEdit_0->text());
+
+    if (lineEdit_1->text()!="")
     {
-      command.append(" orientation \"" + lineEdit_3->text() + "\"");
+      command.append(" block " + lineEdit_1->text());
+    }
+    if (lineEdit_2->text()!="")
+    {
+      command.append(" material " + lineEdit_2->text());
     }
     if (lineEdit_4->text()!="")
     {
       command.append(" thickness " + lineEdit_4->text());
+    }
+    if (lineEdit_5->text()!="")
+    {
+      command.append(" offset " + lineEdit_5->text());
     }
   }
   
   if (command != "")
   {
     commands.push_back(command);
+    lineEdit_0->setText("");
     lineEdit_1->setText("");
     lineEdit_2->setText("");
     lineEdit_3->setText("");
     lineEdit_4->setText("");
+    lineEdit_5->setText("");
   }
   
   // We must send the Cubit commands through the Claro framework, so first we need to translate

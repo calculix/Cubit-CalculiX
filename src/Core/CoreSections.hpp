@@ -40,7 +40,7 @@ public:
   // beam_section_data[0][0] shell_section_id
   // beam_section_data[0][1] block_id
   // beam_section_data[0][2] material_id
-  // beam_section_data[0][3] beam_type_id
+  // beam_section_data[0][3] beam_type
   // beam_section_data[0][4] Parameter 1
   // beam_section_data[0][5] Parameter 2
   // beam_section_data[0][6] Parameter 3

@@ -60,6 +60,11 @@ std::string CalculiXCoreInterface::get_block_name(int block_id)
   return ccx_core.get_block_name(block_id);
 }
 
+std::string CalculiXCoreInterface::get_material_name(int material_id)
+{
+  return ccx_core.get_material_name(material_id);
+}
+
 std::string CalculiXCoreInterface::get_nodeset_name(int nodeset_id)
 {
   return ccx_core.get_nodeset_name(nodeset_id);

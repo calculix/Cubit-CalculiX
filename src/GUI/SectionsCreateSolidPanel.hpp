@@ -1,5 +1,5 @@
-#ifndef SECTIONSCREATESOLID_HPP
-#define SECTIONSCREATESOLID_HPP
+#ifndef SECTIONSCREATESOLIDPANEL_HPP
+#define SECTIONSCREATESOLIDPANEL_HPP
 
 #include <QWidget>
 #include <QList>
@@ -15,13 +15,13 @@
 #include <QTableWidget>
 #include <QLineEdit>
 
-class SectionsCreateSolid : public QWidget
+class SectionsCreateSolidPanel : public QWidget
 {
   Q_OBJECT
   
 public:
-  explicit SectionsCreateSolid(QWidget *parent = 0);
-  ~SectionsCreateSolid();
+  explicit SectionsCreateSolidPanel(QWidget *parent = 0);
+  ~SectionsCreateSolidPanel();
 
   bool isInitialized;
   
@@ -51,4 +51,4 @@ private:
   QLineEdit* lineEdit_4;
 };
 
-#endif // SECTIONSCREATESOLID_HPP
+#endif // SECTIONSCREATESOLIDPANEL_HPP

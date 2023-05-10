@@ -1,4 +1,4 @@
-#include "SectionsCreateSolidPanel.hpp"
+#include "ConstraintsCreateTiePanel.hpp"
 
 #include "CubitInterface.hpp"
 #include "Broker.hpp"
@@ -6,7 +6,7 @@
 #include "ScriptTranslator.hpp"
 
 
-SectionsCreateSolidPanel::SectionsCreateSolidPanel(QWidget *parent) :
+ConstraintsCreateTiePanel::ConstraintsCreateTiePanel(QWidget *parent) :
   QWidget(parent),
   isInitialized(false)
 {
@@ -29,17 +29,17 @@ SectionsCreateSolidPanel::SectionsCreateSolidPanel(QWidget *parent) :
   label_2->setFixedWidth(labelWidth);
   label_3->setFixedWidth(labelWidth);
   label_4->setFixedWidth(labelWidth);
-  label_1->setText("Block ID");
-  label_2->setText("Material ID");
-  label_3->setText("Orientation Name");
-  label_4->setText("Thickness");
+  label_1->setText("Name");
+  label_2->setText("Master");
+  label_3->setText("Slave");
+  label_4->setText("Position Tolerance");
   lineEdit_1 = new QLineEdit();
   lineEdit_2 = new QLineEdit();
   lineEdit_3 = new QLineEdit();
   lineEdit_4 = new QLineEdit();
   //lineEdit_1->setPlaceholderText("Optional");
-  //lineEdit_2->setPlaceholderText("Optional");
-  lineEdit_3->setPlaceholderText("Optional");
+  lineEdit_2->setPlaceholderText("Sideset ID");
+  lineEdit_3->setPlaceholderText("Sideset ID");
   lineEdit_4->setPlaceholderText("Optional");
   pushButton_apply = new QPushButton();
   pushButton_apply->setText("Apply");
@@ -72,24 +72,20 @@ SectionsCreateSolidPanel::SectionsCreateSolidPanel(QWidget *parent) :
   isInitialized = true;
 }
 
-SectionsCreateSolidPanel::~SectionsCreateSolidPanel()
+ConstraintsCreateTiePanel::~ConstraintsCreateTiePanel()
 {}
 
-void SectionsCreateSolidPanel::on_pushButton_apply_clicked(bool)
+void ConstraintsCreateTiePanel::on_pushButton_apply_clicked(bool)
 {
   QStringList commands;
   QString command = "";
 
-  if ((lineEdit_1->text()!="") && (lineEdit_2->text()!=""))
+  if ((lineEdit_1->text()!="") && (lineEdit_2->text()!="") && (lineEdit_3->text()!=""))
   {
-    command.append("ccx create section solid block " + lineEdit_1->text() + " material " + lineEdit_2->text());
-    if (lineEdit_3->text()!="")
-    {
-      command.append(" orientation \"" + lineEdit_3->text() + "\"");
-    }
+    command.append("ccx create constraint tie name \"" + lineEdit_1->text() + "\" master " + lineEdit_2->text() + " slave " + lineEdit_3->text());
     if (lineEdit_4->text()!="")
     {
-      command.append(" thickness " + lineEdit_4->text());
+      command.append(" position tolerance " + lineEdit_4->text());
     }
   }
   

@@ -38,20 +38,3 @@ volume all size 100
 mesh vertex all
 
 #export ccx "test_output.inp"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

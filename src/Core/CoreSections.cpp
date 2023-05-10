@@ -517,7 +517,7 @@ std::string CoreSections::print_data()
     str_return.append(shell_section_data[i][0] + " " + shell_section_data[i][1] + " " + shell_section_data[i][2] + " " + shell_section_data[i][3] + " " + shell_section_data[i][4] + " " + shell_section_data[i][5] + " \n");
   }
 
-  str_return.append("\n CoreSections shell_section_data: \n");
+  str_return.append("\n CoreSections beam_section_data: \n");
   str_return.append("beam_section_id,block_id,material,beam_type,parameter1,parameter2,parameter3,parameter4,parameter5,parameter6,x,y,z,orientation,offset1,offset2 \n");
 
   for (size_t i = 0; i < beam_section_data.size(); i++)
