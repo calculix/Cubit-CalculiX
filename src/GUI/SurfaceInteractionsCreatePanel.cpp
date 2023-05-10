@@ -16,7 +16,7 @@ SurfaceInteractionsCreatePanel::SurfaceInteractionsCreatePanel(QWidget *parent) 
   int labelWidth = 120;
   //this->setMinimumSize(1000,300);
   frame_1 = new QFrame();
-  frame_1->setMinimumSize(1,200);
+  frame_1->setMinimumSize(1,300);
   frame_1->setLineWidth(1);
   frame_1->setMidLineWidth(0);
   frame_1->setFrameStyle(QFrame::Box | QFrame::Raised);
@@ -24,6 +24,7 @@ SurfaceInteractionsCreatePanel::SurfaceInteractionsCreatePanel(QWidget *parent) 
   VBoxLayout = new QVBoxLayout();
   vertical_spacer = new QSpacerItem(1,1,QSizePolicy::Minimum,QSizePolicy::Expanding);
   horizontal_spacer_1 = new QSpacerItem(1,1,QSizePolicy::Expanding,QSizePolicy::Minimum);
+  HBoxLayout_frame = new QHBoxLayout(frame_1);
   HBoxLayout_1 = new QHBoxLayout();
   HBoxLayout_2 = new QHBoxLayout();
   HBoxLayout_3 = new QHBoxLayout();
@@ -63,7 +64,7 @@ SurfaceInteractionsCreatePanel::SurfaceInteractionsCreatePanel(QWidget *parent) 
   label_4->setText("c0");
   label_5->setText("p0");
   label_6->setText("slope K");
-  label_7->setText("sigmaInf");
+  label_7->setText("sigmaINF");
   label_8->setText("c0");
   label_9->setText("slope K");
   lineEdit_1 = new QLineEdit();
@@ -95,7 +96,8 @@ SurfaceInteractionsCreatePanel::SurfaceInteractionsCreatePanel(QWidget *parent) 
   HBoxLayout_3->addWidget(label_3);
   HBoxLayout_3->addWidget(comboBox_1);
 
-  widget_1 =  new QWidget(frame_1);
+
+  widget_1 =  new QWidget();
   VBoxLayout_1 = new QVBoxLayout(widget_1);
   vertical_spacer_1 = new QSpacerItem(1,1,QSizePolicy::Minimum,QSizePolicy::Expanding);
   VBoxLayout_1->addLayout(HBoxLayout_4);
@@ -106,7 +108,7 @@ SurfaceInteractionsCreatePanel::SurfaceInteractionsCreatePanel(QWidget *parent) 
   HBoxLayout_5->addWidget(lineEdit_5);
   VBoxLayout_1->addItem(vertical_spacer_1);
 
-  widget_2 =  new QWidget(frame_1);
+  widget_2 =  new QWidget();
   VBoxLayout_2 = new QVBoxLayout(widget_2);
   vertical_spacer_2 = new QSpacerItem(1,1,QSizePolicy::Minimum,QSizePolicy::Expanding);
   VBoxLayout_2->addLayout(HBoxLayout_6);
@@ -120,9 +122,13 @@ SurfaceInteractionsCreatePanel::SurfaceInteractionsCreatePanel(QWidget *parent) 
   HBoxLayout_8->addWidget(lineEdit_8);
   VBoxLayout_2->addItem(vertical_spacer_2);
 
-  widget_3 =  new PanelTable(frame_1);
-  
-  widget_4 =  new QWidget(frame_1);
+  widget_3 =  new PanelTable(nullptr);
+  matrix.clear();
+  widget_3->update({"pressure","overclosure"},matrix);
+  //widget_3->setColumnWidth(0,150);
+  widget_3->setMinimumSize(200,280);
+
+  widget_4 =  new QWidget();
   VBoxLayout_3 = new QVBoxLayout(widget_4);
   vertical_spacer_3 = new QSpacerItem(1,1,QSizePolicy::Minimum,QSizePolicy::Expanding);
   VBoxLayout_3->addLayout(HBoxLayout_9);
@@ -130,9 +136,13 @@ SurfaceInteractionsCreatePanel::SurfaceInteractionsCreatePanel(QWidget *parent) 
   HBoxLayout_9->addWidget(lineEdit_9);
   VBoxLayout_3->addItem(vertical_spacer_3);
 
-  widget_5 =  new QWidget(frame_1);
+  widget_5 =  new QWidget();
 
-
+  HBoxLayout_frame->addWidget(widget_1);
+  HBoxLayout_frame->addWidget(widget_2);
+  HBoxLayout_frame->addWidget(widget_3);
+  HBoxLayout_frame->addWidget(widget_4);
+  HBoxLayout_frame->addWidget(widget_5);
 
   HBoxLayout_pushButton_apply->addItem(horizontal_spacer_pushButton_apply);
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
@@ -157,25 +167,55 @@ void SurfaceInteractionsCreatePanel::on_pushButton_apply_clicked(bool)
 {
   QStringList commands;
   QString command = "";
-/*
-  if ((lineEdit_1->text()!="") && (lineEdit_1->isEnabled()))
+
+  if ((lineEdit_1->text()!=""))
   {
-    command.append("ccx create constraint rigid body block " + lineEdit_1->text());
-    command.append(" vertex " + lineEdit_3->text());
-  }else if ((lineEdit_2->text()!="") && (lineEdit_2->isEnabled()))
-  {
-    command.append("ccx create constraint rigid body nodeset " + lineEdit_2->text());
-    command.append(" vertex " + lineEdit_3->text());
+    if (comboBox_1->currentIndex()==0)
+    {
+      command.append("ccx create surfaceinteraction name \"" + lineEdit_1->text() + "\"");
+      command.append(" exponential c0 " + lineEdit_4->text() + " p0 " + lineEdit_5->text());
+    }else if (comboBox_1->currentIndex()==1)
+    {
+      command.append("ccx create surfaceinteraction name \"" + lineEdit_1->text() + "\"");
+      command.append(" linear slopeK " + lineEdit_6->text() + " sigmaINF " + lineEdit_7->text() + " c0 " + lineEdit_8->text());
+    }else if (comboBox_1->currentIndex()==2)
+    {
+      command.append("ccx create surfaceinteraction name \"" + lineEdit_1->text() + "\"");
+      command.append(" tabular pressure_overclosure ");
+      matrix = widget_3->getMatrix();
+      for (size_t i = 0; i < matrix.size(); i++)
+      {
+        for (size_t ii = 0; ii < matrix[i].size(); ii++)
+        {
+          command.append(QString::number(matrix[i][ii]) + " ");
+        }
+      }
+    }else if (comboBox_1->currentIndex()==3)
+    {
+      command.append("ccx create surfaceinteraction name \"" + lineEdit_1->text() + "\"");
+      command.append(" tied slopeK " + lineEdit_9->text());
+    }else if (comboBox_1->currentIndex()==4)
+    {
+      command.append("ccx create surfaceinteraction name \"" + lineEdit_1->text() + "\" hard");
+    }
   }
   
   if (command != "")
   {
     commands.push_back(command);
+    comboBox_1->setCurrentIndex(0);
     lineEdit_1->setText("");
-    lineEdit_2->setText("");
-    lineEdit_3->setText("");
+    lineEdit_4->setText("");
+    lineEdit_5->setText("");
+    lineEdit_6->setText("");
+    lineEdit_7->setText("");
+    lineEdit_8->setText("");
+    lineEdit_9->setText("");
+    matrix.clear();
+    widget_3->update({"pressure","overclosure"},matrix);
+  
   }
-  */
+  
   // We must send the Cubit commands through the Claro framework, so first we need to translate
   // the commands into the python form that Claro will understand.
   ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");

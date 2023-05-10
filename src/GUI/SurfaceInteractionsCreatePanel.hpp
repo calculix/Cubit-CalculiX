@@ -35,6 +35,7 @@ private slots:
 
 private:
   std::string log;
+  std::vector<std::vector<double>> matrix;
   
   QFrame*      frame_1;
   QGridLayout* GridLayout;
@@ -50,6 +51,7 @@ private:
   QHBoxLayout* HBoxLayout_pushButton_apply;
   QSpacerItem* horizontal_spacer_1;
   QSpacerItem* horizontal_spacer_pushButton_apply;
+  QHBoxLayout* HBoxLayout_frame;
   QHBoxLayout* HBoxLayout_1;
   QHBoxLayout* HBoxLayout_2;
   QHBoxLayout* HBoxLayout_3;

@@ -9,8 +9,10 @@ PanelTable::PanelTable(QWidget* parent):
   if(isInitialized)
     return;
   
-  this->setMinimumSize(200,200);
-  
+  //this->setMinimumSize(200,200);
+  this->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+  //this->verticalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
   // Signals
   QObject::connect(this, SIGNAL(currentItemChanged(QTableWidgetItem*, QTableWidgetItem*)),this,  SLOT(currentItemChanged(QTableWidgetItem*,QTableWidgetItem*)));
   QObject::connect(this, SIGNAL(currentCellChanged(int,int,int,int)),this,  SLOT(currentCellChanged(int,int,int,int)));
@@ -23,35 +25,32 @@ PanelTable::~PanelTable()
 {
 }
 
-void PanelTable::update(std::vector<std::vector<double>> matrix)
+void PanelTable::update(QStringList columns,std::vector<std::vector<double>> matrix)
 {
   bool_update=true;
   this->setRowCount(0);
-  /*
-  if (this->group=="CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE")
-  {
-    this->setColumnCount(3);
-    this->setHorizontalHeaderLabels({"Young's Modulus","Poisson's ratio","Temperature"});
-    this->setColumnWidth(0,150);
-  }
+  
+  this->setColumnCount(columns.count());
+  this->setHorizontalHeaderLabels(columns);
+  //this->setColumnWidth(0,150);
 
   verticalHeaderLabels = QStringList();
   this->matrix = matrix;
-  property_matrix_gui = material->getMatrixPropertyGUI(group);
+  //property_matrix_gui = material->getMatrixPropertyGUI(group);
   //inser data from material
-  for (size_t i = 0; i < property_matrix_gui.size(); i++)
+  for (size_t i = 0; i < matrix.size(); i++)
   {
-    this->insertNewRow(property_matrix_gui[i]);
+    this->insertNewRow(matrix[i]);
   }
   
   // insert last row
   this->insertLastRow();
-  */
+  
   bool_update = false;
 }
 
 
-std::vector<std::vector<double>> PanelTable::getMatrixPropertyGUI()
+std::vector<std::vector<double>> PanelTable::getMatrix()
 {
   std::vector<std::vector<double>> matrix_return;
   std::vector<double> matrix_row;
@@ -177,18 +176,4 @@ void PanelTable::cellChanged(int row,int column)
     }
     this->setVerticalHeaderLabels(verticalHeaderLabels);
   }
-
-  /*
-  log = "matrix gui \n";
-  std::vector<std::vector<double>> matrix = this->getMatrixPropertyGUI();
-  for (size_t i = 0; i < matrix.size(); i++)
-  {
-    for (size_t ii = 0; ii < matrix[i].size(); ii++)
-    {
-      log.append(std::to_string(matrix[i][ii]) + " ");
-    }
-    log.append(" \n");
-  }
-  PRINT_INFO("%s", log.c_str()); 
-  */
 }
