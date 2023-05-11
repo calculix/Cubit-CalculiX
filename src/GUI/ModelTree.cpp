@@ -7,6 +7,8 @@
 #include "SectionsTree.hpp"
 #include "ConstraintsTree.hpp"
 #include "SurfaceInteractionsTree.hpp"
+#include "ContactPairsTree.hpp"
+#include "AmplitudesTree.hpp"
 #include "MaterialManagement.hpp"
 #include "CalculiXCoreInterface.hpp"
 
@@ -83,6 +85,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
     SectionsTree* SectionsTreeItem;
     ConstraintsTree* ConstraintsTreeItem;
     SurfaceInteractionsTree* SurfaceInteractionsTreeItem;
+    ContactPairsTree* ContactPairsTreeItem;
+    AmplitudesTree* AmplitudesTreeItem;
+
     if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item))
     {
       if (BlocksTreeItem->text(1).toStdString()=="")
@@ -166,6 +171,30 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 6;
+      }
+    }else if (ContactPairsTreeItem = dynamic_cast<ContactPairsTree*>(item))
+    {
+      if (ContactPairsTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Contact Pair",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);      
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 7;
+      }
+    }else if (AmplitudesTreeItem = dynamic_cast<AmplitudesTree*>(item))
+    {
+      if (AmplitudesTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Amplitude",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);      
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 8;
       }
     }else 
     {
@@ -276,6 +305,40 @@ void ModelTree::showContextMenu(const QPoint &pos)
 
         contextMenuAction[0][0] = 6;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+      } else if (ContactPairsTreeItem = dynamic_cast<ContactPairsTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Contact Pair",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Modify Contact Pair",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+        QAction action3("Delete Contact Pair",this);
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 7;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+      } else if (AmplitudesTreeItem = dynamic_cast<AmplitudesTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Amplitude",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Modify Amplitude",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+        QAction action3("Delete Amplitude",this);
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 8;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
       }
     }
   }
@@ -290,6 +353,8 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   SectionsTree* SectionsTreeItem;
   ConstraintsTree* ConstraintsTreeItem;
   SurfaceInteractionsTree* SurfaceInteractionsTreeItem;
+  ContactPairsTree* ContactPairsTreeItem;
+  AmplitudesTree* AmplitudesTreeItem;
 
   if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item))
   {
@@ -333,6 +398,18 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     {
       this->setWidgetInCmdPanelMarker("CCXSurfaceInteractionsCreate");
     }
+  }else if (ContactPairsTreeItem = dynamic_cast<ContactPairsTree*>(item))
+  {
+    if (ContactPairsTreeItem->text(1).toStdString()=="")
+    {
+      this->setWidgetInCmdPanelMarker("CCXContactPairsCreate");
+    }
+  }else if (AmplitudesTreeItem = dynamic_cast<AmplitudesTree*>(item))
+  {
+    if (AmplitudesTreeItem->text(1).toStdString()=="")
+    {
+      this->setWidgetInCmdPanelMarker("CCXAmplitudesCreate");
+    }
   } else {
     if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item->parent()))
     {
@@ -355,6 +432,12 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     } else if (SurfaceInteractionsTreeItem = dynamic_cast<SurfaceInteractionsTree*>(item->parent()))
     {
       this->setWidgetInCmdPanelMarker("CCXSurfaceInteractionsModify");
+    } else if (ContactPairsTreeItem = dynamic_cast<ContactPairsTree*>(item->parent()))
+    {
+      this->setWidgetInCmdPanelMarker("CCXContactPairsModify");
+    } else if (AmplitudesTreeItem = dynamic_cast<AmplitudesTree*>(item->parent()))
+    {
+      this->setWidgetInCmdPanelMarker("CCXAmplitudesModify");
     }
   }
 }
@@ -450,6 +533,30 @@ void ModelTree::execContextMenuAction(){
       {
         this->setWidgetInCmdPanelMarker("CCXSurfaceInteractionsDelete");
       }  
+    }else if (contextMenuAction[0][0]==7) //ContactPairsTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("CCXContactPairsCreate");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        this->setWidgetInCmdPanelMarker("CCXContactPairsModify");
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXContactPairsDelete");
+      }  
+    }else if (contextMenuAction[0][0]==8) //AmplitudesTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("CCXAmplitudesCreate");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        this->setWidgetInCmdPanelMarker("CCXAmplitudesModify");
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXAmplitudesDelete");
+      }  
     }
   }
   contextMenuAction[0][0]=-1;
@@ -469,6 +576,11 @@ void ModelTree::ContextMenuAction2(){
 
 void ModelTree::ContextMenuAction3(){
   contextMenuAction[0][1]=2;
+  this->execContextMenuAction();
+}
+
+void ModelTree::ContextMenuAction4(){
+  contextMenuAction[0][1]=3;
   this->execContextMenuAction();
 }
 

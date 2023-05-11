@@ -15,6 +15,7 @@ MaterialManagementTable::MaterialManagementTable(QWidget* parent, QString group_
   //delegator = new QAbstractItemDelegate();
   //this->setItemDelegateForColumn(0,delegator);
   this->setMinimumSize(750,200);
+  //this->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
   
   // Signals
   QObject::connect(this, SIGNAL(currentItemChanged(QTableWidgetItem*, QTableWidgetItem*)),this,  SLOT(currentItemChanged(QTableWidgetItem*,QTableWidgetItem*)));

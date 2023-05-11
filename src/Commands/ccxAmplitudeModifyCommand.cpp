@@ -19,7 +19,7 @@ std::vector<std::string> ccxAmplitudeModifyCommand::get_syntax()
   syntax.append("[time_amplitude <value:label='time_amplitude',help='<time_amplitude>'>...] " );
   syntax.append("[shiftx <value:label='shiftx',help='<shiftx>'>] ");
   syntax.append("[shifty <value:label='shifty',help='<shifty>'>] ");
-  syntax.append("[totaltime] ");
+  syntax.append("[{totaltime_yes|totaltime_no}] ");
   
   syntax_list.push_back(syntax);
   
@@ -29,7 +29,7 @@ std::vector<std::string> ccxAmplitudeModifyCommand::get_syntax()
 std::vector<std::string> ccxAmplitudeModifyCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx modify amplitude <amplitude id> [name <name>] [time_amplitude <time_amplitude>...] [shiftx <value>] [shifty <value>] [totaltime]"; 
+  help[0] = "ccx modify amplitude <amplitude id> [name <name>] [time_amplitude <time_amplitude>...] [shiftx <value>] [shifty <value>] [{totaltime_yes|totaltime_no}]"; 
 
   return help;
 }
@@ -112,11 +112,15 @@ bool ccxAmplitudeModifyCommand::execute(CubitCommandData &data)
   }
   options.push_back(shifty);
 
-  if (data.find_keyword("TOTALTIME"))
+  if (data.find_keyword("TOTALTIME_YES"))
   {
     options.push_back("1");
     options_marker.push_back(1);
-  } else
+  }else if (data.find_keyword("TOTALTIME_NO"))
+  {
+    options.push_back("-1");
+    options_marker.push_back(1);
+  }else
   {
     options.push_back("-1");
     options_marker.push_back(0);

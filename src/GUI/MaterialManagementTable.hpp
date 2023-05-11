@@ -7,6 +7,7 @@
 #include <QTableWidget>
 #include <QTableWidgetItem>
 #include <QAbstractItemDelegate>
+#include <QHeaderView>
 
 class MaterialManagementItem;
 

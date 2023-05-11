@@ -65,6 +65,12 @@ void cmdPanelManager::clear()
     my_markers.push_back("CCXSurfaceInteractionsCreate");
     my_markers.push_back("CCXSurfaceInteractionsModify");
     my_markers.push_back("CCXSurfaceInteractionsDelete");
+    my_markers.push_back("CCXContactPairsCreate");
+    my_markers.push_back("CCXContactPairsModify");
+    my_markers.push_back("CCXContactPairsDelete");
+    my_markers.push_back("CCXAmplitudesCreate");
+    my_markers.push_back("CCXAmplitudesModify");
+    my_markers.push_back("CCXAmplitudesDelete");
 
     // For each marker, we want to get the navigation node and assign the node
     // to use this factory to get widgets as needed.
@@ -159,7 +165,6 @@ void cmdPanelManager::initialize_from_code()
   root_node = model->getNode("FEA/Create");
   node = model->addNode("Constraints", root_node);
   model->setNodeMarker(node, "FEAConstraintCreateNavigation");
-  //node->setUseComboForChildren(true);
   // set new Parent to FEAConstraintCreate and remove from old
   node = model->getMarkedNode("FEAConstraintCreate");
   root_node->removeChild(root_node->getChildIndex(node));
@@ -178,7 +183,6 @@ void cmdPanelManager::initialize_from_code()
   root_node = model->getNode("FEA/Modify");
   node = model->addNode("Constraints", root_node);
   model->setNodeMarker(node, "FEAConstraintModifyNavigation");
-  //node->setUseComboForChildren(true);
   // set new Parent to FEAConstraintModify and remove from old
   node = model->getMarkedNode("FEAConstraintModify");
   root_node->removeChild(root_node->getChildIndex(node));
@@ -211,6 +215,56 @@ void cmdPanelManager::initialize_from_code()
   root_node = model->getMarkedNode("FEADeleteNavigation");
   node = model->addNode("Delete Surface Interaction", root_node);
   model->setNodeMarker(node, "CCXSurfaceInteractionsDelete");
+  
+  //##############################
+  // add ContactPairs Nodes
+  // add new Node between FEA/Create and FEAContactPairCreate
+  root_node = model->getNode("FEA/Create");
+  node = model->addNode("Contact Pairs", root_node);
+  model->setNodeMarker(node, "FEAContactPairCreateNavigation");
+  // set new Parent to FEAContactPairCreate and remove from old
+  node = model->getMarkedNode("FEAContactPairCreate");
+  root_node->removeChild(root_node->getChildIndex(node));
+  root_node = model->getMarkedNode("FEAContactPairCreateNavigation");
+  node->setParent(root_node);
+  root_node->insertChild(root_node->childCount()+1,node);
+  NodeIconPointer = node->getIcon();
+  root_node->setIcon(NodeIconPointer);
+  // add Constraint Nodes
+  root_node = model->getMarkedNode("FEAContactPairCreateNavigation");
+  node = model->addNode("CCX Contact Pairs", root_node);
+  model->setNodeMarker(node, "CCXContactPairsCreate");
+  // add new Node between FEA/Modify and FEAContactPairModify
+  root_node = model->getNode("FEA/Modify");
+  node = model->addNode("Contact Pairs", root_node);
+  model->setNodeMarker(node, "FEAContactPairModifyNavigation");
+  // set new Parent to FEAContactPairModify and remove from old
+  node = model->getMarkedNode("FEAContactPairModify");
+  root_node->removeChild(root_node->getChildIndex(node));
+  root_node = model->getMarkedNode("FEAContactPairModifyNavigation");
+  node->setParent(root_node);
+  root_node->insertChild(root_node->childCount()+1,node);
+  NodeIconPointer = node->getIcon();
+  root_node->setIcon(NodeIconPointer);
+  // add Constraint Nodes
+  root_node = model->getMarkedNode("FEAContactPairModifyNavigation");
+  node = model->addNode("CCX Contact Pairs", root_node);
+  model->setNodeMarker(node, "CCXContactPairsModify");
+  root_node = model->getMarkedNode("FEADeleteNavigation");
+  node = model->addNode("Delete Contact Pair", root_node);
+  model->setNodeMarker(node, "CCXContactPairsDelete");
+
+  //##############################
+  // add Amplitudes Nodes
+  root_node = model->getNode("FEA/Create");
+  node = model->addNode("CCX Amplitudes", root_node);
+  model->setNodeMarker(node, "CCXAmplitudesCreate");
+  root_node = model->getNode("FEA/Modify");
+  node = model->addNode("CCX Amplitudes", root_node);
+  model->setNodeMarker(node, "CCXAmplitudesModify");
+  root_node = model->getMarkedNode("FEADeleteNavigation");
+  node = model->addNode("Delete Amplitude", root_node);
+  model->setNodeMarker(node, "CCXAmplitudesDelete");
 }
 
 void cmdPanelManager::associate_panels_with_nodes()
@@ -242,6 +296,12 @@ void cmdPanelManager::associate_panels_with_nodes()
   my_markers.push_back("CCXSurfaceInteractionsCreate");
   my_markers.push_back("CCXSurfaceInteractionsModify");
   my_markers.push_back("CCXSurfaceInteractionsDelete");
+  my_markers.push_back("CCXContactPairsCreate");
+  my_markers.push_back("CCXContactPairsModify");
+  my_markers.push_back("CCXContactPairsDelete");
+  my_markers.push_back("CCXAmplitudesCreate");
+  my_markers.push_back("CCXAmplitudesModify");
+  my_markers.push_back("CCXAmplitudesDelete");
 
   // For each marker, we want to get the navigation node and assign the node
   // to use this factory to get widgets as needed.

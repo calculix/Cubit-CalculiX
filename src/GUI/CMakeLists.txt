@@ -115,6 +115,18 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/SurfaceInteractionsModifyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/SurfaceInteractionsDeletePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/SurfaceInteractionsDeletePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ContactPairsCreatePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ContactPairsCreatePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ContactPairsModifyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ContactPairsModifyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ContactPairsDeletePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ContactPairsDeletePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/AmplitudesCreatePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/AmplitudesCreatePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/AmplitudesModifyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/AmplitudesModifyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/AmplitudesDeletePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/AmplitudesDeletePanel.cpp
     )
 
 set(UI

@@ -18,6 +18,8 @@ class MaterialTree;
 class SectionsTree;
 class ConstraintsTree;
 class SurfaceInteractionsTree;
+class ContactPairsTree;
+class AmplitudesTree;
 class QTreeWidgetItem;
 class MaterialManagement;
 
@@ -52,6 +54,7 @@ public slots:
   void ContextMenuAction1();
   void ContextMenuAction2();
   void ContextMenuAction3();
+  void ContextMenuAction4();
   void ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column);
 };
 

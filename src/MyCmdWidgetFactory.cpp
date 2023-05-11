@@ -32,6 +32,12 @@
 #include "SurfaceInteractionsCreatePanel.hpp"
 #include "SurfaceInteractionsModifyPanel.hpp"
 #include "SurfaceInteractionsDeletePanel.hpp"
+#include "ContactPairsCreatePanel.hpp"
+#include "ContactPairsModifyPanel.hpp"
+#include "ContactPairsDeletePanel.hpp"
+#include "AmplitudesCreatePanel.hpp"
+#include "AmplitudesModifyPanel.hpp"
+#include "AmplitudesDeletePanel.hpp"
 
 #include <QWidget>
 
@@ -164,6 +170,18 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
     return new SurfaceInteractionsModifyPanel();
   else if(name == "CCXSurfaceInteractionsDelete")
     return new SurfaceInteractionsDeletePanel();
+  else if(name == "CCXContactPairsCreate")
+    return new ContactPairsCreatePanel();
+  else if(name == "CCXContactPairsModify")
+    return new ContactPairsModifyPanel();
+  else if(name == "CCXContactPairsDelete")
+    return new ContactPairsDeletePanel();
+  else if(name == "CCXAmplitudesCreate")
+    return new AmplitudesCreatePanel();
+  else if(name == "CCXAmplitudesModify")
+    return new AmplitudesModifyPanel();
+  else if(name == "CCXAmplitudesDelete")
+    return new AmplitudesDeletePanel();
   else
     return NULL;
 }
