@@ -71,6 +71,18 @@ void cmdPanelManager::clear()
     my_markers.push_back("CCXAmplitudesCreate");
     my_markers.push_back("CCXAmplitudesModify");
     my_markers.push_back("CCXAmplitudesDelete");
+    my_markers.push_back("CCXLoadsForcesModify");
+    my_markers.push_back("CCXLoadsPressuresModify");
+    my_markers.push_back("CCXBCsDisplacementsModify");
+    my_markers.push_back("CCXBCsTemperaturesModify");
+    //my_markers.push_back("CCXOutputs");
+    //my_markers.push_back("CCXHistoryOutputs");
+    my_markers.push_back("CCXHistoryOutputsCreate");
+    //my_markers.push_back("CCXHistoryOutputsModify");
+    my_markers.push_back("CCXHistoryOutputsModifyNode");
+    my_markers.push_back("CCXHistoryOutputsModifyElement");
+    my_markers.push_back("CCXHistoryOutputsModifyContact");
+    my_markers.push_back("CCXHistoryOutputsDelete");
 
     // For each marker, we want to get the navigation node and assign the node
     // to use this factory to get widgets as needed.
@@ -265,6 +277,100 @@ void cmdPanelManager::initialize_from_code()
   root_node = model->getMarkedNode("FEADeleteNavigation");
   node = model->addNode("Delete Amplitude", root_node);
   model->setNodeMarker(node, "CCXAmplitudesDelete");
+
+  //##############################
+  // add LoadsForces Nodes
+  // add new Node between FEA/Modify and FEAForceModify
+  root_node = model->getNode("FEA/Modify");
+  node = model->addNode("Force", root_node);
+  model->setNodeMarker(node, "FEAForceModifyNavigation");
+  node = model->getMarkedNode("FEAForceModify");
+  root_node->removeChild(root_node->getChildIndex(node));
+  root_node = model->getMarkedNode("FEAForceModifyNavigation");
+  node->setParent(root_node);
+  root_node->insertChild(root_node->childCount()+1,node);
+  NodeIconPointer = node->getIcon();
+  root_node->setIcon(NodeIconPointer);
+  root_node = model->getMarkedNode("FEAForceModifyNavigation");
+  node = model->addNode("CCX Force", root_node);
+  model->setNodeMarker(node, "CCXLoadsForcesModify");
+
+  //##############################
+  // add LoadsPressures Nodes
+  // add new Node between FEA/Modify and FEAPressureModify
+  root_node = model->getNode("FEA/Modify");
+  node = model->addNode("Pressure", root_node);
+  model->setNodeMarker(node, "FEAPressureModifyNavigation");
+  node = model->getMarkedNode("FEAPressureModify");
+  root_node->removeChild(root_node->getChildIndex(node));
+  root_node = model->getMarkedNode("FEAPressureModifyNavigation");
+  node->setParent(root_node);
+  root_node->insertChild(root_node->childCount()+1,node);
+  NodeIconPointer = node->getIcon();
+  root_node->setIcon(NodeIconPointer);
+  root_node = model->getMarkedNode("FEAPressureModifyNavigation");
+  node = model->addNode("CCX Pressure", root_node);
+  model->setNodeMarker(node, "CCXLoadsPressuresModify");
+
+  //##############################
+  // add BCsDisplacements Nodes
+  // add new Node between FEA/Modify and FEADisplacementModify
+  root_node = model->getNode("FEA/Modify");
+  node = model->addNode("Displacement", root_node);
+  model->setNodeMarker(node, "FEADisplacementModifyNavigation");
+  node = model->getMarkedNode("FEADisplacementModify");
+  root_node->removeChild(root_node->getChildIndex(node));
+  root_node = model->getMarkedNode("FEADisplacementModifyNavigation");
+  node->setParent(root_node);
+  root_node->insertChild(root_node->childCount()+1,node);
+  NodeIconPointer = node->getIcon();
+  root_node->setIcon(NodeIconPointer);
+  root_node = model->getMarkedNode("FEADisplacementModifyNavigation");
+  node = model->addNode("CCX Displacement", root_node);
+  model->setNodeMarker(node, "CCXBCsDisplacementsModify");
+
+  //##############################
+  // add BCsTemperatures Nodes
+  // add new Node between FEA/Modify and FEADTemperatureModify
+  root_node = model->getNode("FEA/Modify");
+  node = model->addNode("Temperature", root_node);
+  model->setNodeMarker(node, "FEATemperatureModifyNavigation");
+  node = model->getMarkedNode("FEATemperatureModify");
+  root_node->removeChild(root_node->getChildIndex(node));
+  root_node = model->getMarkedNode("FEATemperatureModifyNavigation");
+  node->setParent(root_node);
+  root_node->insertChild(root_node->childCount()+1,node);
+  NodeIconPointer = node->getIcon();
+  root_node->setIcon(NodeIconPointer);
+  root_node = model->getMarkedNode("FEATemperatureModifyNavigation");
+  node = model->addNode("CCX Temperature", root_node);
+  model->setNodeMarker(node, "CCXBCsTemperaturesModify");
+
+  //##############################
+  // add History Outputs Nodes
+  root_node = model->addNode("CCX Outputs", model->getRoot());
+  root_node->setTitle("CCX Outputs");
+  model->setNodeMarker(root_node, "CCXOutputs");  
+  root_node = model->getMarkedNode("CCXOutputs");
+  node = model->addNode("History", root_node);
+  model->setNodeMarker(node, "CCXHistoryOutputs");
+
+  root_node = model->getMarkedNode("CCXHistoryOutputs");
+  node = model->addNode("Create", root_node);
+  model->setNodeMarker(node, "CCXHistoryOutputsCreate");
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXHistoryOutputsModify");
+  node = model->addNode("Delete", root_node);
+  model->setNodeMarker(node, "CCXHistoryOutputsDelete");
+
+  root_node = model->getMarkedNode("CCXHistoryOutputsModify");
+  node = model->addNode("Node", root_node);
+  model->setNodeMarker(node, "CCXHistoryOutputsModifyNode");
+  node = model->addNode("Element", root_node);
+  model->setNodeMarker(node, "CCXHistoryOutputsModifyElement");
+  node = model->addNode("Contact", root_node);
+  model->setNodeMarker(node, "CCXHistoryOutputsModifyContact");
+  
 }
 
 void cmdPanelManager::associate_panels_with_nodes()
@@ -302,6 +408,18 @@ void cmdPanelManager::associate_panels_with_nodes()
   my_markers.push_back("CCXAmplitudesCreate");
   my_markers.push_back("CCXAmplitudesModify");
   my_markers.push_back("CCXAmplitudesDelete");
+  my_markers.push_back("CCXLoadsForcesModify");
+  my_markers.push_back("CCXLoadsPressuresModify");
+  my_markers.push_back("CCXBCsDisplacementsModify");
+  my_markers.push_back("CCXBCsTemperaturesModify");
+  //my_markers.push_back("CCXOutputs");
+  //my_markers.push_back("CCXHistoryOutputs");
+  my_markers.push_back("CCXHistoryOutputsCreate");
+  //my_markers.push_back("CCXHistoryOutputsModify");
+  my_markers.push_back("CCXHistoryOutputsModifyNode");
+  my_markers.push_back("CCXHistoryOutputsModifyElement");
+  my_markers.push_back("CCXHistoryOutputsModifyContact");
+  my_markers.push_back("CCXHistoryOutputsDelete");
 
   // For each marker, we want to get the navigation node and assign the node
   // to use this factory to get widgets as needed.
@@ -313,3 +431,4 @@ void cmdPanelManager::associate_panels_with_nodes()
       node->setFactory(myFactory);
   }
 }
+

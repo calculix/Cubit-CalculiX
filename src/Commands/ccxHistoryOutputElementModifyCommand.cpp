@@ -49,7 +49,7 @@ std::vector<std::string> ccxHistoryOutputElementModifyCommand::get_syntax_help()
   std::vector<std::string> help(1);
   help[0] = "ccx ";
   help[0].append("modify historyoutput <output id> ");
-  help[0].append("node ");
+  help[0].append("element ");
   help[0].append("[name <name>] " );
   help[0].append("[block <block id>] ");
   help[0].append("[frequency <frequency>] ");

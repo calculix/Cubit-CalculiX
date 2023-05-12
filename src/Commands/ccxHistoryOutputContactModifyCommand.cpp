@@ -47,7 +47,7 @@ std::vector<std::string> ccxHistoryOutputContactModifyCommand::get_syntax_help()
   std::vector<std::string> help(1);
   help[0] = "ccx ";
   help[0].append("modify historyoutput <output id> ");
-  help[0].append("node ");
+  help[0].append("contact ");
   help[0].append("[name <name>] " );
   help[0].append("[contactpair <contactpair id>] ");
   help[0].append("[frequency <frequency>] ");

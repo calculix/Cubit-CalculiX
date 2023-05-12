@@ -9,6 +9,14 @@
 #include "SurfaceInteractionsTree.hpp"
 #include "ContactPairsTree.hpp"
 #include "AmplitudesTree.hpp"
+#include "LoadsTree.hpp"
+#include "LoadsForcesTree.hpp"
+#include "LoadsPressuresTree.hpp"
+#include "BCsTree.hpp"
+#include "BCsDisplacementsTree.hpp"
+#include "BCsTemperaturesTree.hpp"
+#include "HistoryOutputsTree.hpp"
+
 #include "MaterialManagement.hpp"
 #include "CalculiXCoreInterface.hpp"
 
@@ -87,6 +95,11 @@ void ModelTree::showContextMenu(const QPoint &pos)
     SurfaceInteractionsTree* SurfaceInteractionsTreeItem;
     ContactPairsTree* ContactPairsTreeItem;
     AmplitudesTree* AmplitudesTreeItem;
+    LoadsForcesTree* LoadsForcesTreeItem;
+    LoadsPressuresTree* LoadsPressuresTreeItem;
+    BCsDisplacementsTree* BCsDisplacementsTreeItem;
+    BCsTemperaturesTree* BCsTemperaturesTreeItem;
+    HistoryOutputsTree* HistoryOutputsTreeItem;
 
     if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item))
     {
@@ -195,6 +208,66 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 8;
+      }
+    }else if (LoadsForcesTreeItem = dynamic_cast<LoadsForcesTree*>(item))
+    {
+      if (LoadsForcesTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Force",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);      
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 9;
+      }
+    }else if (LoadsPressuresTreeItem = dynamic_cast<LoadsPressuresTree*>(item))
+    {
+      if (LoadsPressuresTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Pressure",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);      
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 10;
+      }
+    }else if (BCsDisplacementsTreeItem = dynamic_cast<BCsDisplacementsTree*>(item))
+    {
+      if (BCsDisplacementsTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Displacement",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);      
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 11;
+      }
+    }else if (BCsTemperaturesTreeItem = dynamic_cast<BCsTemperaturesTree*>(item))
+    {
+      if (BCsTemperaturesTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Temperature",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);      
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 12;
+      }
+    }else if (HistoryOutputsTreeItem = dynamic_cast<HistoryOutputsTree*>(item))
+    {
+      if (HistoryOutputsTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create History Output",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);      
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 13;
       }
     }else 
     {
@@ -339,6 +412,103 @@ void ModelTree::showContextMenu(const QPoint &pos)
 
         contextMenuAction[0][0] = 8;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+      } else if (LoadsForcesTreeItem = dynamic_cast<LoadsForcesTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Force",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Modify Force",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+        QAction action3("CCX Modify Force",this);
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+        QAction action4("Delete Force",this);
+        connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action4);
+
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 9;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+      } else if (LoadsPressuresTreeItem = dynamic_cast<LoadsPressuresTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Pressure",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Modify Pressure",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+        QAction action3("CCX Modify Pressure",this);
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+        QAction action4("Delete Pressure",this);
+        connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action4);
+
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 10;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+      } else if (BCsDisplacementsTreeItem = dynamic_cast<BCsDisplacementsTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Displacement",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Modify Displacement",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+        QAction action3("CCX Modify Displacement",this);
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+        QAction action4("Delete Displacement",this);
+        connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action4);
+
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 11;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+      }else if (BCsTemperaturesTreeItem = dynamic_cast<BCsTemperaturesTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Temperature",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Modify Temperature",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+        QAction action3("CCX Modify Temperature",this);
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+        QAction action4("Delete Temperature",this);
+        connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action4);
+
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 12;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+      }else if (HistoryOutputsTreeItem = dynamic_cast<HistoryOutputsTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create History Output",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Modify History Output",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+        QAction action3("Delete History Output",this);
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 13;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
       }
     }
   }
@@ -355,6 +525,11 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   SurfaceInteractionsTree* SurfaceInteractionsTreeItem;
   ContactPairsTree* ContactPairsTreeItem;
   AmplitudesTree* AmplitudesTreeItem;
+  LoadsForcesTree* LoadsForcesTreeItem;
+  LoadsPressuresTree* LoadsPressuresTreeItem;
+  BCsDisplacementsTree* BCsDisplacementsTreeItem;
+  BCsTemperaturesTree* BCsTemperaturesTreeItem;
+  HistoryOutputsTree* HistoryOutputsTreeItem;
 
   if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item))
   {
@@ -410,6 +585,36 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     {
       this->setWidgetInCmdPanelMarker("CCXAmplitudesCreate");
     }
+  }else if (LoadsForcesTreeItem = dynamic_cast<LoadsForcesTree*>(item))
+  {
+    if (LoadsForcesTreeItem->text(1).toStdString()=="")
+    {
+      this->setWidgetInCmdPanelMarker("FEAForceCreate");
+    }
+  }else if (LoadsPressuresTreeItem = dynamic_cast<LoadsPressuresTree*>(item))
+  {
+    if (LoadsPressuresTreeItem->text(1).toStdString()=="")
+    {
+      this->setWidgetInCmdPanelMarker("FEAPressureCreate");
+    }
+  }else if (BCsDisplacementsTreeItem = dynamic_cast<BCsDisplacementsTree*>(item))
+  {
+    if (BCsDisplacementsTreeItem->text(1).toStdString()=="")
+    {
+      this->setWidgetInCmdPanelMarker("FEADisplacementCreate");
+    }
+  }else if (BCsTemperaturesTreeItem = dynamic_cast<BCsTemperaturesTree*>(item))
+  {
+    if (BCsTemperaturesTreeItem->text(1).toStdString()=="")
+    {
+      this->setWidgetInCmdPanelMarker("FEATemperatureCreate");
+    }
+  }else if (HistoryOutputsTreeItem = dynamic_cast<HistoryOutputsTree*>(item))
+  {
+    if (HistoryOutputsTreeItem->text(1).toStdString()=="")
+    {
+      this->setWidgetInCmdPanelMarker("CCXHistoryOutputsCreate");
+    }
   } else {
     if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item->parent()))
     {
@@ -438,6 +643,21 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     } else if (AmplitudesTreeItem = dynamic_cast<AmplitudesTree*>(item->parent()))
     {
       this->setWidgetInCmdPanelMarker("CCXAmplitudesModify");
+    } else if (LoadsForcesTreeItem = dynamic_cast<LoadsForcesTree*>(item->parent()))
+    {
+      this->setWidgetInCmdPanelMarker("FEAForceModify");
+    } else if (LoadsPressuresTreeItem = dynamic_cast<LoadsPressuresTree*>(item->parent()))
+    {
+      this->setWidgetInCmdPanelMarker("FEAPressureModify");
+    } else if (BCsDisplacementsTreeItem = dynamic_cast<BCsDisplacementsTree*>(item->parent()))
+    {
+      this->setWidgetInCmdPanelMarker("FEADisplacementModify");
+    } else if (BCsTemperaturesTreeItem = dynamic_cast<BCsTemperaturesTree*>(item->parent()))
+    {
+      this->setWidgetInCmdPanelMarker("FEATemperatureModify");
+    } else if (HistoryOutputsTreeItem = dynamic_cast<HistoryOutputsTree*>(item->parent()))
+    {
+      this->setWidgetInCmdPanelMarker("CCXHistoryOutputsModify");
     }
   }
 }
@@ -556,6 +776,78 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==2) //Action3
       {
         this->setWidgetInCmdPanelMarker("CCXAmplitudesDelete");
+      }  
+    }else if (contextMenuAction[0][0]==9) //LoadsForcesTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("FEAForceCreate");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        this->setWidgetInCmdPanelMarker("FEAForceModify");
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsForcesModify");
+      }else if (contextMenuAction[0][1]==3) //Action4
+      {
+        this->setWidgetInCmdPanelMarker("FEAForceDelete");
+      }  
+    }else if (contextMenuAction[0][0]==10) //LoadsPressuresTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("FEAPressureCreate");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        this->setWidgetInCmdPanelMarker("FEAPressureModify");
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsPressuresModify");
+      }else if (contextMenuAction[0][1]==3) //Action4
+      {
+        this->setWidgetInCmdPanelMarker("FEAPressureDelete");
+      }  
+    }else if (contextMenuAction[0][0]==11) //BCsDisplacementsTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("FEADisplacementCreate");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        this->setWidgetInCmdPanelMarker("FEADisplacementModify");
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXBCsDisplacementsModify");
+      }else if (contextMenuAction[0][1]==3) //Action4
+      {
+        this->setWidgetInCmdPanelMarker("FEADisplacementDelete");
+      }  
+    }else if (contextMenuAction[0][0]==12) //BCsTemperaturesTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("FEATemperatureCreate");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        this->setWidgetInCmdPanelMarker("FEATemperatureModify");
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXBCsTemperaturesModify");
+      }else if (contextMenuAction[0][1]==3) //Action4
+      {
+        this->setWidgetInCmdPanelMarker("FEATemperatureDelete");
+      }  
+    }else if (contextMenuAction[0][0]==13) //HistoryOutputsTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("CCXHistoryOutputsCreate");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        this->setWidgetInCmdPanelMarker("CCXHistoryOutputsModify");
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXHistoryOutputsDelete");
       }  
     }
   }

@@ -20,6 +20,13 @@ class ConstraintsTree;
 class SurfaceInteractionsTree;
 class ContactPairsTree;
 class AmplitudesTree;
+class LoadsTree;
+class LoadsForcesTree;
+class LoadsPressuresTree;
+class BCsTree;
+class BCsDisplacementsTree;
+class BCsTemperaturesTree;
+class HistoryOutputsTree;
 class QTreeWidgetItem;
 class MaterialManagement;
 

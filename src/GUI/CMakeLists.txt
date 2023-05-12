@@ -127,6 +127,24 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/AmplitudesModifyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/AmplitudesDeletePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/AmplitudesDeletePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsForcesModifyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsForcesModifyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsPressuresModifyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsPressuresModifyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/BCsDisplacementsModifyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/BCsDisplacementsModifyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/BCsTemperaturesModifyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/BCsTemperaturesModifyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/HistoryOutputsCreatePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/HistoryOutputsCreatePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/HistoryOutputsModifyNodePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/HistoryOutputsModifyNodePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/HistoryOutputsModifyElementPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/HistoryOutputsModifyElementPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/HistoryOutputsModifyContactPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/HistoryOutputsModifyContactPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/HistoryOutputsDeletePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/HistoryOutputsDeletePanel.cpp
     )
 
 set(UI

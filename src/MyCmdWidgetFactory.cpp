@@ -38,6 +38,15 @@
 #include "AmplitudesCreatePanel.hpp"
 #include "AmplitudesModifyPanel.hpp"
 #include "AmplitudesDeletePanel.hpp"
+#include "LoadsForcesModifyPanel.hpp"
+#include "LoadsPressuresModifyPanel.hpp"
+#include "BCsDisplacementsModifyPanel.hpp"
+#include "BCsTemperaturesModifyPanel.hpp"
+#include "HistoryOutputsCreatePanel.hpp"
+#include "HistoryOutputsModifyNodePanel.hpp"
+#include "HistoryOutputsModifyElementPanel.hpp"
+#include "HistoryOutputsModifyContactPanel.hpp"
+#include "HistoryOutputsDeletePanel.hpp"
 
 #include <QWidget>
 
@@ -182,6 +191,24 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
     return new AmplitudesModifyPanel();
   else if(name == "CCXAmplitudesDelete")
     return new AmplitudesDeletePanel();
+  else if(name == "CCXLoadsForcesModify")
+    return new LoadsForcesModifyPanel();
+  else if(name == "CCXLoadsPressuresModify")
+    return new LoadsPressuresModifyPanel();
+  else if(name == "CCXBCsDisplacementsModify")
+    return new BCsDisplacementsModifyPanel();
+  else if(name == "CCXBCsTemperaturesModify")
+    return new BCsTemperaturesModifyPanel();
+  else if(name == "CCXHistoryOutputsCreate")
+    return new HistoryOutputsCreatePanel();
+  else if(name == "CCXHistoryOutputsModifyNode")
+    return new HistoryOutputsModifyNodePanel();
+  else if(name == "CCXHistoryOutputsModifyElement")
+    return new HistoryOutputsModifyElementPanel();
+  else if(name == "CCXHistoryOutputsModifyContact")
+    return new HistoryOutputsModifyContactPanel();
+  else if(name == "CCXHistoryOutputsDelete")
+    return new HistoryOutputsDeletePanel();
   else
     return NULL;
 }
