@@ -1,5 +1,5 @@
 #include "HistoryOutputsModifyNodePanel.hpp"
-#include "PanelTable.hpp"
+#include "CalculiXCoreInterface.hpp"
 
 #include "CubitInterface.hpp"
 #include "Broker.hpp"
@@ -13,13 +13,11 @@ HistoryOutputsModifyNodePanel::HistoryOutputsModifyNodePanel(QWidget *parent) :
 {
   if(isInitialized)
     return;
+  CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
+  keys = ccx_iface->get_historyoutput_node_keys();
+
   int labelWidth = 120;
   //this->setMinimumSize(1000,300);
-  frame_5 = new QFrame();
-  frame_5->setMinimumSize(1,300);
-  frame_5->setLineWidth(1);
-  frame_5->setMidLineWidth(0);
-  frame_5->setFrameStyle(QFrame::Box | QFrame::Raised);
   GridLayout = new QGridLayout(this);
   VBoxLayout = new QVBoxLayout();
   vertical_spacer = new QSpacerItem(1,1,QSizePolicy::Minimum,QSizePolicy::Expanding);
@@ -28,43 +26,62 @@ HistoryOutputsModifyNodePanel::HistoryOutputsModifyNodePanel(QWidget *parent) :
   HBoxLayout_2 = new QHBoxLayout();
   HBoxLayout_3 = new QHBoxLayout();
   HBoxLayout_4 = new QHBoxLayout();
-  HBoxLayout_5 = new QHBoxLayout(frame_5);
+  HBoxLayout_5 = new QHBoxLayout();
+  HBoxLayout_6 = new QHBoxLayout();
   label_0 = new QLabel();
   label_1 = new QLabel();
   label_2 = new QLabel();
   label_3 = new QLabel();
   label_4 = new QLabel();
+  label_5 = new QLabel();
+  label_6 = new QLabel(); 
   label_0->setFixedWidth(labelWidth);
   label_1->setFixedWidth(labelWidth);
   label_2->setFixedWidth(labelWidth);
   label_3->setFixedWidth(labelWidth);
   label_4->setFixedWidth(labelWidth);
-  label_0->setText("Amplitude ID");
+  label_5->setFixedWidth(labelWidth);
+  label_6->setFixedWidth(labelWidth);
+  label_0->setText("History Output ID");
   label_1->setText("Name");
-  label_2->setText("Shift x");
-  label_3->setText("Shift y");
-  label_4->setText("Time=TotalTime");
+  label_2->setText("Nodeset ID");
+  label_3->setText("Frequency");
+  label_4->setText("FrequencyF");
+  label_5->setText("Totals");
+  label_6->setText("Global");
   lineEdit_0 = new QLineEdit();
   lineEdit_1 = new QLineEdit();
   lineEdit_2 = new QLineEdit();
   lineEdit_3 = new QLineEdit();
-  checkBox_4 = new QCheckBox();
+  lineEdit_4 = new QLineEdit();
   lineEdit_1->setPlaceholderText("Optional");
   lineEdit_2->setPlaceholderText("Optional");
   lineEdit_3->setPlaceholderText("Optional");
-  
+  lineEdit_4->setPlaceholderText("Optional");
+  comboBox_5 = new QComboBox();
+  comboBox_5->addItem("");
+  comboBox_5->addItem("YES");
+  comboBox_5->addItem("ONLY");
+  comboBox_5->addItem("NO");
+  comboBox_6 = new QComboBox();
+  comboBox_6->addItem("");
+  comboBox_6->addItem("YES");
+  comboBox_6->addItem("NO");
+
+  for (size_t i = 0; i < keys.size(); i++)
+  {
+    HBoxLayout_keys.push_back(new QHBoxLayout());
+    label_keys.push_back(new QLabel());
+    label_keys[label_keys.size()-1]->setFixedWidth(labelWidth);
+    label_keys[label_keys.size()-1]->setText(QString::fromStdString(keys[i]));
+    checkBox_keys.push_back(new QCheckBox());
+  }
 
   pushButton_apply = new QPushButton();
   pushButton_apply->setText("Apply");
   HBoxLayout_pushButton_apply = new QHBoxLayout();
   horizontal_spacer_pushButton_apply = new QSpacerItem(1,1,QSizePolicy::Expanding,QSizePolicy::Minimum);
   
-  widget_5 =  new PanelTable(nullptr);
-  matrix.clear();
-  widget_5->update({"Time","Amplitude"},matrix);
-  //widget_3->setColumnWidth(0,150);
-  widget_5->setMinimumSize(200,160);
-
   // Layout
   GridLayout->addLayout(VBoxLayout,0,0, Qt::AlignTop);
   VBoxLayout->addLayout(HBoxLayout_0);
@@ -72,7 +89,12 @@ HistoryOutputsModifyNodePanel::HistoryOutputsModifyNodePanel(QWidget *parent) :
   VBoxLayout->addLayout(HBoxLayout_2);
   VBoxLayout->addLayout(HBoxLayout_3);
   VBoxLayout->addLayout(HBoxLayout_4);
-  VBoxLayout->addWidget(frame_5);
+  VBoxLayout->addLayout(HBoxLayout_5);
+  VBoxLayout->addLayout(HBoxLayout_6);
+  for (size_t i = 0; i < HBoxLayout_keys.size(); i++)
+  {
+    VBoxLayout->addLayout(HBoxLayout_keys[i]);
+  }
   VBoxLayout->addItem(vertical_spacer);
   VBoxLayout->addLayout(HBoxLayout_pushButton_apply);
 
@@ -85,16 +107,21 @@ HistoryOutputsModifyNodePanel::HistoryOutputsModifyNodePanel(QWidget *parent) :
   HBoxLayout_3->addWidget(label_3);
   HBoxLayout_3->addWidget(lineEdit_3);
   HBoxLayout_4->addWidget(label_4);
-  HBoxLayout_4->addWidget(checkBox_4);
-  HBoxLayout_5->addWidget(widget_5);
-  
+  HBoxLayout_4->addWidget(lineEdit_4);
+  HBoxLayout_5->addWidget(label_5);
+  HBoxLayout_5->addWidget(comboBox_5);
+  HBoxLayout_6->addWidget(label_6);
+  HBoxLayout_6->addWidget(comboBox_6);
+  for (size_t i = 0; i < HBoxLayout_keys.size(); i++)
+  {
+    HBoxLayout_keys[i]->addWidget(label_keys[i]);
+    HBoxLayout_keys[i]->addWidget(checkBox_keys[i]);
+  }
+    
   HBoxLayout_pushButton_apply->addItem(horizontal_spacer_pushButton_apply);
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
-
-  widget_5->show();
-  checkBox_4->setChecked(false);
 
   isInitialized = true;
 }
@@ -106,53 +133,99 @@ void HistoryOutputsModifyNodePanel::on_pushButton_apply_clicked(bool)
 {
   QStringList commands;
   QString command = "";
-  matrix = widget_5->getMatrix();
+  bool key_on = false;
+  bool key_off = false;
 
   if ((lineEdit_0->text()!=""))
   {
-    command.append("ccx modify amplitude "+ lineEdit_0->text());
-    
-    if (lineEdit_1->text()!="")
+    command.append("ccx modify historyoutput " +lineEdit_0->text() + " node");
+
+    if (lineEdit_1->text() != "")
     {
-      command.append(" name \"" +lineEdit_1->text() + "\"");
+      command.append(" name \"" + lineEdit_1->text() + "\"");
     }
-    if (matrix.size()!=0)
+    if (lineEdit_2->text() != "")
     {
-      command.append(" time_amplitude ");
-      for (size_t i = 0; i < matrix.size(); i++)
+      command.append(" nodeset " + lineEdit_2->text());
+    }
+    if (lineEdit_3->text() != "")
+    {
+      command.append(" frequency " + lineEdit_3->text());
+    }
+    if (lineEdit_4->text() != "")
+    {
+      command.append(" frequencyf " + lineEdit_4->text());
+    }
+    if (comboBox_5->currentIndex()==1)
+    {
+      command.append(" totals_yes");
+    }else if (comboBox_5->currentIndex()==2)
+    {
+      command.append(" totals_only");
+    }else if (comboBox_5->currentIndex()==3)
+    {
+      command.append(" totals_no");
+    }
+    if (comboBox_6->currentIndex()==1)
+    {
+      command.append(" global_yes");
+    }else if (comboBox_6->currentIndex()==2)
+    {
+      command.append(" global_no");
+    }
+    commands.push_back(command);
+
+    for (size_t i = 0; i < checkBox_keys.size(); i++)
+    {
+      if (checkBox_keys[i]->isChecked())
       {
-        for (size_t ii = 0; ii < matrix[i].size(); ii++)
-        {
-          command.append(QString::number(matrix[i][ii]) + " ");
-        }
+        key_on = true;
+      }
+      if (!checkBox_keys[i]->isChecked())
+      {
+        key_off = true;
       }
     }
-    if (lineEdit_2->text()!="")
+    
+    if (key_on)
     {
-      command.append(" shiftx " +lineEdit_2->text());
+      command = "ccx modify historyoutput " +lineEdit_0->text() + " node key_on ";
+      for (size_t i = 0; i < checkBox_keys.size(); i++)
+      {
+        if (checkBox_keys[i]->isChecked())
+        {
+          command.append(label_keys[i]->text() + " ");
+        }
+      }
+      commands.push_back(command);
     }
-    if (lineEdit_3->text()!="")
+    if (key_off)
     {
-      command.append(" shifty " +lineEdit_3->text());
-    }
-    if((checkBox_4->isChecked()))
-    {
-      command.append(" totaltime_yes");
-    }else{
-      command.append(" totaltime_no");
+      command = "ccx modify historyoutput " +lineEdit_0->text() + " node key_off ";
+      for (size_t i = 0; i < checkBox_keys.size(); i++)
+      {
+        if (!checkBox_keys[i]->isChecked())
+        {
+          command.append(label_keys[i]->text() + " ");
+        }
+      }
+      commands.push_back(command);
     }
   }
   
   if (command != "")
   {
-    commands.push_back(command);
     lineEdit_0->setText("");
     lineEdit_1->setText("");
     lineEdit_2->setText("");
     lineEdit_3->setText("");
-    checkBox_4->setChecked(false);
-    matrix.clear();
-    widget_5->update({"Time","Amplitude"},matrix);
+    lineEdit_4->setText("");
+    comboBox_5->setCurrentIndex(0);
+    comboBox_6->setCurrentIndex(0);
+    for (size_t i = 0; i < checkBox_keys.size(); i++)
+    {
+      checkBox_keys[i]->setChecked(false);
+    }
   }
   
   // We must send the Cubit commands through the Claro framework, so first we need to translate

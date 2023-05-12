@@ -17,7 +17,7 @@
 #include <QRadioButton>
 #include <QCheckBox>
 
-class PanelTable;
+class CalculiXCoreInterface;
 
 class HistoryOutputsModifyNodePanel : public QWidget
 {
@@ -34,9 +34,9 @@ private slots:
 
 private:
   std::string log;
-  std::vector<std::vector<double>> matrix;
-
-  QFrame*      frame_5;
+  CalculiXCoreInterface *ccx_iface;
+  std::vector<std::string> get_historyoutput_node_keys();
+  std::vector<std::string> keys;
   QGridLayout* GridLayout;
   QVBoxLayout* VBoxLayout;
   QSpacerItem* vertical_spacer;
@@ -49,18 +49,24 @@ private:
   QHBoxLayout* HBoxLayout_3;
   QHBoxLayout* HBoxLayout_4;
   QHBoxLayout* HBoxLayout_5;
+  QHBoxLayout* HBoxLayout_6;
+  std::vector<QHBoxLayout*> HBoxLayout_keys;
   QLabel* label_0;
   QLabel* label_1;
   QLabel* label_2;
   QLabel* label_3;
   QLabel* label_4;
+  QLabel* label_5;
+  QLabel* label_6;
+  std::vector<QLabel*> label_keys;
   QLineEdit* lineEdit_0;
   QLineEdit* lineEdit_1;
   QLineEdit* lineEdit_2;
   QLineEdit* lineEdit_3;
   QLineEdit* lineEdit_4;
-  QCheckBox* checkBox_4;
-  PanelTable* widget_5;
+  QComboBox* comboBox_5;
+  QComboBox* comboBox_6;
+  std::vector<QCheckBox*> checkBox_keys;
 };
 
 #endif // HISTORYOUTPUTSMODIFYNODEPANEL_HPP

@@ -20,7 +20,7 @@ HistoryOutputsDeletePanel::HistoryOutputsDeletePanel(QWidget *parent) :
   HBoxLayout_1 = new QHBoxLayout();
   label_1 = new QLabel();
   label_1->setFixedWidth(labelWidth);
-  label_1->setText("Amplitude ID");
+  label_1->setText("History Output ID");
   lineEdit_1 = new QLineEdit();
   //lineEdit_1->setPlaceholderText("Optional");
   pushButton_apply = new QPushButton();
@@ -55,7 +55,7 @@ void HistoryOutputsDeletePanel::on_pushButton_apply_clicked(bool)
 
   if ((lineEdit_1->text()!=""))
   {
-    command.append("ccx delete amplitude " + lineEdit_1->text());
+    command.append("ccx delete historyoutput " + lineEdit_1->text());
   }
   
   if (command != "")

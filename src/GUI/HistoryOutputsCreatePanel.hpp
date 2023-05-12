@@ -17,8 +17,6 @@
 #include <QRadioButton>
 #include <QCheckBox>
 
-class PanelTable;
-
 class HistoryOutputsCreatePanel : public QWidget
 {
   Q_OBJECT
@@ -34,9 +32,7 @@ private slots:
 
 private:
   std::string log;
-  std::vector<std::vector<double>> matrix;
 
-  QFrame*      frame_5;
   QGridLayout* GridLayout;
   QVBoxLayout* VBoxLayout;
   QSpacerItem* vertical_spacer;
@@ -45,19 +41,10 @@ private:
   QSpacerItem* horizontal_spacer_pushButton_apply;
   QHBoxLayout* HBoxLayout_1;
   QHBoxLayout* HBoxLayout_2;
-  QHBoxLayout* HBoxLayout_3;
-  QHBoxLayout* HBoxLayout_4;
-  QHBoxLayout* HBoxLayout_5;
   QLabel* label_1;
   QLabel* label_2;
-  QLabel* label_3;
-  QLabel* label_4;
   QLineEdit* lineEdit_1;
-  QLineEdit* lineEdit_2;
-  QLineEdit* lineEdit_3;
-  QLineEdit* lineEdit_4;
-  QCheckBox* checkBox_4;
-  PanelTable* widget_5;
+  QComboBox* comboBox_2;
 };
 
 #endif // HISTORYOUTPUTSCREATEPANEL_HPP
