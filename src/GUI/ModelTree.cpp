@@ -16,6 +16,8 @@
 #include "BCsDisplacementsTree.hpp"
 #include "BCsTemperaturesTree.hpp"
 #include "HistoryOutputsTree.hpp"
+#include "FieldOutputsTree.hpp"
+#include "InitialConditionsTree.hpp"
 
 #include "MaterialManagement.hpp"
 #include "CalculiXCoreInterface.hpp"
@@ -100,6 +102,8 @@ void ModelTree::showContextMenu(const QPoint &pos)
     BCsDisplacementsTree* BCsDisplacementsTreeItem;
     BCsTemperaturesTree* BCsTemperaturesTreeItem;
     HistoryOutputsTree* HistoryOutputsTreeItem;
+    FieldOutputsTree* FieldOutputsTreeItem;
+    InitialConditionsTree* InitialConditionsTreeItem;
 
     if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item))
     {
@@ -268,6 +272,30 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 13;
+      }
+    }else if (FieldOutputsTreeItem = dynamic_cast<FieldOutputsTree*>(item))
+    {
+      if (FieldOutputsTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Field Output",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);      
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 14;
+      }
+    }else if (InitialConditionsTreeItem = dynamic_cast<InitialConditionsTree*>(item))
+    {
+      if (InitialConditionsTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Initial Condition",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);      
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 15;
       }
     }else 
     {
@@ -509,6 +537,40 @@ void ModelTree::showContextMenu(const QPoint &pos)
 
         contextMenuAction[0][0] = 13;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+      }else if (FieldOutputsTreeItem = dynamic_cast<FieldOutputsTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Field Output",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Modify Field Output",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+        QAction action3("Delete Field Output",this);
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 14;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+      }else if (InitialConditionsTreeItem = dynamic_cast<InitialConditionsTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Initial Condition",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Modify Initial Condition",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+        QAction action3("Delete Initial Condition",this);
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 15;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
       }
     }
   }
@@ -530,6 +592,8 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   BCsDisplacementsTree* BCsDisplacementsTreeItem;
   BCsTemperaturesTree* BCsTemperaturesTreeItem;
   HistoryOutputsTree* HistoryOutputsTreeItem;
+  FieldOutputsTree* FieldOutputsTreeItem;
+  InitialConditionsTree* InitialConditionsTreeItem;
 
   if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item))
   {
@@ -615,6 +679,18 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     {
       this->setWidgetInCmdPanelMarker("CCXHistoryOutputsCreate");
     }
+  }else if (FieldOutputsTreeItem = dynamic_cast<FieldOutputsTree*>(item))
+  {
+    if (FieldOutputsTreeItem->text(1).toStdString()=="")
+    {
+      this->setWidgetInCmdPanelMarker("CCXFieldOutputsCreate");
+    }
+  }else if (InitialConditionsTreeItem = dynamic_cast<InitialConditionsTree*>(item))
+  {
+    if (InitialConditionsTreeItem->text(1).toStdString()=="")
+    {
+      this->setWidgetInCmdPanelMarker("CCXInitialConditionsCreate");
+    }
   } else {
     if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item->parent()))
     {
@@ -658,6 +734,12 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     } else if (HistoryOutputsTreeItem = dynamic_cast<HistoryOutputsTree*>(item->parent()))
     {
       this->setWidgetInCmdPanelMarker("CCXHistoryOutputsModify");
+    } else if (FieldOutputsTreeItem = dynamic_cast<FieldOutputsTree*>(item->parent()))
+    {
+      this->setWidgetInCmdPanelMarker("CCXFieldOutputsModify");
+    } else if (InitialConditionsTreeItem = dynamic_cast<InitialConditionsTree*>(item->parent()))
+    {
+      this->setWidgetInCmdPanelMarker("CCXInitialConditionsModify");
     }
   }
 }
@@ -848,6 +930,30 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==2) //Action3
       {
         this->setWidgetInCmdPanelMarker("CCXHistoryOutputsDelete");
+      }  
+    }else if (contextMenuAction[0][0]==14) //FieldOutputsTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("CCXFieldOutputsCreate");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        this->setWidgetInCmdPanelMarker("CCXFieldOutputsModify");
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXFieldOutputsDelete");
+      }  
+    }else if (contextMenuAction[0][0]==15) //InitialConditionsTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("CCXInitialConditionsCreate");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        this->setWidgetInCmdPanelMarker("CCXInitialConditionsModify");
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXInitialConditionsDelete");
       }  
     }
   }

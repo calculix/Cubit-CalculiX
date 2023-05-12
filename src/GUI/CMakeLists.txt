@@ -145,6 +145,22 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/HistoryOutputsModifyContactPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/HistoryOutputsDeletePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/HistoryOutputsDeletePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/FieldOutputsCreatePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/FieldOutputsCreatePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/FieldOutputsModifyNodePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/FieldOutputsModifyNodePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/FieldOutputsModifyElementPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/FieldOutputsModifyElementPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/FieldOutputsModifyContactPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/FieldOutputsModifyContactPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/FieldOutputsDeletePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/FieldOutputsDeletePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/InitialConditionsCreatePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/InitialConditionsCreatePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/InitialConditionsModifyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/InitialConditionsModifyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/InitialConditionsDeletePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/InitialConditionsDeletePanel.cpp
     )
 
 set(UI

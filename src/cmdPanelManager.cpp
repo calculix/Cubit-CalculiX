@@ -75,14 +75,19 @@ void cmdPanelManager::clear()
     my_markers.push_back("CCXLoadsPressuresModify");
     my_markers.push_back("CCXBCsDisplacementsModify");
     my_markers.push_back("CCXBCsTemperaturesModify");
-    //my_markers.push_back("CCXOutputs");
-    //my_markers.push_back("CCXHistoryOutputs");
     my_markers.push_back("CCXHistoryOutputsCreate");
-    //my_markers.push_back("CCXHistoryOutputsModify");
     my_markers.push_back("CCXHistoryOutputsModifyNode");
     my_markers.push_back("CCXHistoryOutputsModifyElement");
     my_markers.push_back("CCXHistoryOutputsModifyContact");
     my_markers.push_back("CCXHistoryOutputsDelete");
+    my_markers.push_back("CCXFieldOutputsCreate");
+    my_markers.push_back("CCXFieldOutputsModifyNode");
+    my_markers.push_back("CCXFieldOutputsModifyElement");
+    my_markers.push_back("CCXFieldOutputsModifyContact");
+    my_markers.push_back("CCXFieldOutputsDelete");
+    my_markers.push_back("CCXInitialConditionsCreate");
+    my_markers.push_back("CCXInitialConditionsModify");
+    my_markers.push_back("CCXInitialConditionsDelete");
 
     // For each marker, we want to get the navigation node and assign the node
     // to use this factory to get widgets as needed.
@@ -371,6 +376,40 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Contact", root_node);
   model->setNodeMarker(node, "CCXHistoryOutputsModifyContact");
   
+  //##############################
+  // add Field Outputs Nodes
+  root_node = model->getMarkedNode("CCXOutputs");
+  node = model->addNode("Field", root_node);
+  model->setNodeMarker(node, "CCXFieldOutputs");
+
+  root_node = model->getMarkedNode("CCXFieldOutputs");
+  node = model->addNode("Create", root_node);
+  model->setNodeMarker(node, "CCXFieldOutputsCreate");
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXFieldOutputsModify");
+  node = model->addNode("Delete", root_node);
+  model->setNodeMarker(node, "CCXFieldOutputsDelete");
+
+  root_node = model->getMarkedNode("CCXFieldOutputsModify");
+  node = model->addNode("Node", root_node);
+  model->setNodeMarker(node, "CCXFieldOutputsModifyNode");
+  node = model->addNode("Element", root_node);
+  model->setNodeMarker(node, "CCXFieldOutputsModifyElement");
+  node = model->addNode("Contact", root_node);
+  model->setNodeMarker(node, "CCXFieldOutputsModifyContact");
+  
+  //##############################
+  // add Initial Conditions Nodes
+  root_node = model->addNode("CCX Initial Conditions", model->getRoot());
+  root_node->setTitle("CCX Initial Conditions");
+  model->setNodeMarker(root_node, "CCXInitialConditions");  
+  root_node = model->getMarkedNode("CCXInitialConditions");
+  node = model->addNode("Create", root_node);
+  model->setNodeMarker(node, "CCXInitialConditionsCreate");
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXInitialConditionsModify");
+  node = model->addNode("Delete", root_node);
+  model->setNodeMarker(node, "CCXInitialConditionsDelete");
 }
 
 void cmdPanelManager::associate_panels_with_nodes()
@@ -412,15 +451,19 @@ void cmdPanelManager::associate_panels_with_nodes()
   my_markers.push_back("CCXLoadsPressuresModify");
   my_markers.push_back("CCXBCsDisplacementsModify");
   my_markers.push_back("CCXBCsTemperaturesModify");
-  //my_markers.push_back("CCXOutputs");
-  //my_markers.push_back("CCXHistoryOutputs");
   my_markers.push_back("CCXHistoryOutputsCreate");
-  //my_markers.push_back("CCXHistoryOutputsModify");
   my_markers.push_back("CCXHistoryOutputsModifyNode");
   my_markers.push_back("CCXHistoryOutputsModifyElement");
   my_markers.push_back("CCXHistoryOutputsModifyContact");
   my_markers.push_back("CCXHistoryOutputsDelete");
-
+  my_markers.push_back("CCXFieldOutputsCreate");
+  my_markers.push_back("CCXFieldOutputsModifyNode");
+  my_markers.push_back("CCXFieldOutputsModifyElement");
+  my_markers.push_back("CCXFieldOutputsModifyContact");
+  my_markers.push_back("CCXFieldOutputsDelete");
+  my_markers.push_back("CCXInitialConditionsCreate");
+  my_markers.push_back("CCXInitialConditionsModify");
+  my_markers.push_back("CCXInitialConditionsDelete");
   // For each marker, we want to get the navigation node and assign the node
   // to use this factory to get widgets as needed.
   NavigationModel* model = Claro::instance()->navigation_model();

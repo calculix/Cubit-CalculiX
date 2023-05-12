@@ -1,5 +1,5 @@
-#ifndef HISTORYOUTPUTSMODIFYNODEPANEL_HPP
-#define HISTORYOUTPUTSMODIFYNODEPANEL_HPP
+#ifndef FIELDOUTPUTSMODIFYCONTACTPANEL_HPP
+#define FIELDOUTPUTSMODIFYCONTACTPANEL_HPP
 
 #include <QWidget>
 #include <QList>
@@ -19,13 +19,13 @@
 
 class CalculiXCoreInterface;
 
-class HistoryOutputsModifyNodePanel : public QWidget
+class FieldOutputsModifyContactPanel : public QWidget
 {
   Q_OBJECT
   
 public:
-  explicit HistoryOutputsModifyNodePanel(QWidget *parent = 0);
-  ~HistoryOutputsModifyNodePanel();
+  explicit FieldOutputsModifyContactPanel(QWidget *parent = 0);
+  ~FieldOutputsModifyContactPanel();
 
   bool isInitialized;
   
@@ -47,25 +47,19 @@ private:
   QHBoxLayout* HBoxLayout_2;
   QHBoxLayout* HBoxLayout_3;
   QHBoxLayout* HBoxLayout_4;
-  QHBoxLayout* HBoxLayout_5;
-  QHBoxLayout* HBoxLayout_6;
   std::vector<QHBoxLayout*> HBoxLayout_keys;
   QLabel* label_0;
   QLabel* label_1;
   QLabel* label_2;
   QLabel* label_3;
   QLabel* label_4;
-  QLabel* label_5;
-  QLabel* label_6;
   std::vector<QLabel*> label_keys;
   QLineEdit* lineEdit_0;
   QLineEdit* lineEdit_1;
   QLineEdit* lineEdit_2;
-  QLineEdit* lineEdit_3;
-  QLineEdit* lineEdit_4;
-  QComboBox* comboBox_5;
-  QComboBox* comboBox_6;
+  QComboBox* comboBox_3;
+  QComboBox* comboBox_4;
   std::vector<QCheckBox*> checkBox_keys;
 };
 
-#endif // HISTORYOUTPUTSMODIFYNODEPANEL_HPP
+#endif // FIELDOUTPUTSMODIFYCONTACTPANEL_HPP

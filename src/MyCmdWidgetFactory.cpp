@@ -47,6 +47,14 @@
 #include "HistoryOutputsModifyElementPanel.hpp"
 #include "HistoryOutputsModifyContactPanel.hpp"
 #include "HistoryOutputsDeletePanel.hpp"
+#include "FieldOutputsCreatePanel.hpp"
+#include "FieldOutputsModifyNodePanel.hpp"
+#include "FieldOutputsModifyElementPanel.hpp"
+#include "FieldOutputsModifyContactPanel.hpp"
+#include "FieldOutputsDeletePanel.hpp"
+#include "InitialConditionsCreatePanel.hpp"
+#include "InitialConditionsModifyPanel.hpp"
+#include "InitialConditionsDeletePanel.hpp"
 
 #include <QWidget>
 
@@ -209,6 +217,22 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
     return new HistoryOutputsModifyContactPanel();
   else if(name == "CCXHistoryOutputsDelete")
     return new HistoryOutputsDeletePanel();
+  else if(name == "CCXFieldOutputsCreate")
+    return new FieldOutputsCreatePanel();
+  else if(name == "CCXFieldOutputsModifyNode")
+    return new FieldOutputsModifyNodePanel();
+  else if(name == "CCXFieldOutputsModifyElement")
+    return new FieldOutputsModifyElementPanel();
+  else if(name == "CCXFieldOutputsModifyContact")
+    return new FieldOutputsModifyContactPanel();
+  else if(name == "CCXFieldOutputsDelete")
+    return new FieldOutputsDeletePanel();
+  else if(name == "CCXInitialConditionsCreate")
+    return new InitialConditionsCreatePanel();
+  else if(name == "CCXInitialConditionsModify")
+    return new InitialConditionsModifyPanel();
+  else if(name == "CCXInitialConditionsDelete")
+    return new InitialConditionsDeletePanel();
   else
     return NULL;
 }

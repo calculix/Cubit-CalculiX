@@ -27,6 +27,8 @@ class BCsTree;
 class BCsDisplacementsTree;
 class BCsTemperaturesTree;
 class HistoryOutputsTree;
+class FieldOutputsTree;
+class InitialConditionsTree;
 class QTreeWidgetItem;
 class MaterialManagement;
 
