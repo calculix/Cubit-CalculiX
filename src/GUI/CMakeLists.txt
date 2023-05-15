@@ -161,6 +161,28 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/InitialConditionsModifyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/InitialConditionsDeletePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/InitialConditionsDeletePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/InitialConditionsCreatePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsCreatePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsModifyParameterPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsModifyParameterPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsModifyStaticPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsModifyStaticPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsModifyFrequencyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsModifyFrequencyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsModifyBucklePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsModifyBucklePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsModifyHeatTransferPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsModifyHeatTransferPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsModifyCoupledTemperatureDisplacementPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsModifyCoupledTemperatureDisplacementPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsModifyUncoupledTemperatureDisplacementPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsModifyUncoupledTemperatureDisplacementPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsDeletePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsDeletePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsManagement.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsManagement.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsManagementItem.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsManagementItem.cpp
     )
 
 set(UI

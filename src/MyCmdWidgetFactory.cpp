@@ -55,6 +55,15 @@
 #include "InitialConditionsCreatePanel.hpp"
 #include "InitialConditionsModifyPanel.hpp"
 #include "InitialConditionsDeletePanel.hpp"
+#include "StepsCreatePanel.hpp"
+#include "StepsModifyParameterPanel.hpp"
+#include "StepsModifyStaticPanel.hpp"
+#include "StepsModifyFrequencyPanel.hpp"
+#include "StepsModifyBucklePanel.hpp"
+#include "StepsModifyHeatTransferPanel.hpp"
+#include "StepsModifyCoupledTemperatureDisplacementPanel.hpp"
+#include "StepsModifyUncoupledTemperatureDisplacementPanel.hpp"
+#include "StepsDeletePanel.hpp"
 
 #include <QWidget>
 
@@ -233,6 +242,24 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
     return new InitialConditionsModifyPanel();
   else if(name == "CCXInitialConditionsDelete")
     return new InitialConditionsDeletePanel();
+  else if(name == "CCXStepsCreate")
+    return new StepsCreatePanel();
+  else if(name == "CCXStepsModifyParameter")
+    return new StepsModifyParameterPanel();
+  else if(name == "CCXStepsModifyStatic")
+    return new StepsModifyStaticPanel();
+  else if(name == "CCXStepsModifyFrequency")
+    return new StepsModifyFrequencyPanel();
+  else if(name == "CCXStepsModifyBuckle")
+    return new StepsModifyBucklePanel();
+  else if(name == "CCXStepsModifyHeatTransfer")
+    return new StepsModifyHeatTransferPanel();
+  else if(name == "CCXStepsModifyCoupledTemperatureDisplacement")
+    return new StepsModifyCoupledTemperatureDisplacementPanel();
+  else if(name == "CCXStepsModifyUncoupledTemperatureDisplacement")
+    return new StepsModifyUncoupledTemperatureDisplacementPanel();
+  else if(name == "CCXStepsDelete")
+    return new StepsDeletePanel();
   else
     return NULL;
 }

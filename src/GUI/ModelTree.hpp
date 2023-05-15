@@ -15,6 +15,7 @@ class BlocksTree;
 class NodesetTree;
 class SidesetTree;
 class MaterialTree;
+class MaterialManagement;
 class SectionsTree;
 class ConstraintsTree;
 class SurfaceInteractionsTree;
@@ -29,8 +30,18 @@ class BCsTemperaturesTree;
 class HistoryOutputsTree;
 class FieldOutputsTree;
 class InitialConditionsTree;
+class StepsTree;
+class StepsLoadsTree;
+class StepsLoadsForcesTree;
+class StepsLoadsPressuresTree;
+class StepsBCsTree;
+class StepsBCsDisplacementsTree;
+class StepsBCsTemperaturesTree;
+class StepsHistoryOutputsTree;
+class StepsFieldOutputsTree;
+class StepsManagement;
 class QTreeWidgetItem;
-class MaterialManagement;
+
 
 class NavigationModel;
 
@@ -51,6 +62,7 @@ public:
   Claro* gui;
   CommandButtonPanel* cmdpanel;
   MaterialManagement* myMaterialManagement;
+  StepsManagement* myStepsManagement;
   std::vector<std::vector<int>> contextMenuAction;
 
   void setWidgetInCmdPanelMarker(QString name); // set Widget in CommandPanel
@@ -64,6 +76,8 @@ public slots:
   void ContextMenuAction2();
   void ContextMenuAction3();
   void ContextMenuAction4();
+  void ContextMenuAction5();
+  void ContextMenuAction6();
   void ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column);
 };
 

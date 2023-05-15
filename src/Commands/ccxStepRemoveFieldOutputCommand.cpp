@@ -24,7 +24,7 @@ std::vector<std::string> ccxStepRemoveFieldOutputCommand::get_syntax()
 std::vector<std::string> ccxStepRemoveFieldOutputCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx step <step id> add fieldoutput <fieldoutput id>..."; 
+  help[0] = "ccx step <step id> remove fieldoutput <fieldoutput id>..."; 
 
   return help;
 }

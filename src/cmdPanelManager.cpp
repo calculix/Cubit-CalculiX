@@ -88,6 +88,15 @@ void cmdPanelManager::clear()
     my_markers.push_back("CCXInitialConditionsCreate");
     my_markers.push_back("CCXInitialConditionsModify");
     my_markers.push_back("CCXInitialConditionsDelete");
+    my_markers.push_back("CCXStepsCreate");
+    my_markers.push_back("CCXStepsModifyParameter");
+    my_markers.push_back("CCXStepsModifyStatic");
+    my_markers.push_back("CCXStepsModifyFrequency");
+    my_markers.push_back("CCXStepsModifyBuckle");
+    my_markers.push_back("CCXStepsModifyHeatTransfer");
+    my_markers.push_back("CCXStepsModifyCoupledTemperatureDisplacement");
+    my_markers.push_back("CCXStepsModifyUncoupledTemperatureDisplacement");
+    my_markers.push_back("CCXStepsDelete");
 
     // For each marker, we want to get the navigation node and assign the node
     // to use this factory to get widgets as needed.
@@ -353,11 +362,11 @@ void cmdPanelManager::initialize_from_code()
 
   //##############################
   // add History Outputs Nodes
-  root_node = model->addNode("CCX Outputs", model->getRoot());
-  root_node->setTitle("CCX Outputs");
-  model->setNodeMarker(root_node, "CCXOutputs");  
-  root_node = model->getMarkedNode("CCXOutputs");
-  node = model->addNode("History", root_node);
+  root_node = model->addNode("CCX", model->getRoot());
+  root_node->setTitle("CCX");
+  model->setNodeMarker(root_node, "CCX");  
+  root_node = model->getMarkedNode("CCX");
+  node = model->addNode("History Outputs", root_node);
   model->setNodeMarker(node, "CCXHistoryOutputs");
 
   root_node = model->getMarkedNode("CCXHistoryOutputs");
@@ -378,8 +387,8 @@ void cmdPanelManager::initialize_from_code()
   
   //##############################
   // add Field Outputs Nodes
-  root_node = model->getMarkedNode("CCXOutputs");
-  node = model->addNode("Field", root_node);
+  root_node = model->getMarkedNode("CCX");
+  node = model->addNode("Field Outputs", root_node);
   model->setNodeMarker(node, "CCXFieldOutputs");
 
   root_node = model->getMarkedNode("CCXFieldOutputs");
@@ -400,9 +409,11 @@ void cmdPanelManager::initialize_from_code()
   
   //##############################
   // add Initial Conditions Nodes
-  root_node = model->addNode("CCX Initial Conditions", model->getRoot());
-  root_node->setTitle("CCX Initial Conditions");
-  model->setNodeMarker(root_node, "CCXInitialConditions");  
+  root_node = model->getMarkedNode("CCX");
+  node = model->addNode("Initial Conditions", root_node);
+  node->setTitle("Initial Conditions");
+  model->setNodeMarker(node, "CCXInitialConditions");  
+
   root_node = model->getMarkedNode("CCXInitialConditions");
   node = model->addNode("Create", root_node);
   model->setNodeMarker(node, "CCXInitialConditionsCreate");
@@ -410,6 +421,37 @@ void cmdPanelManager::initialize_from_code()
   model->setNodeMarker(node, "CCXInitialConditionsModify");
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXInitialConditionsDelete");
+
+  //##############################
+  // add Steps Nodes
+  root_node = model->getMarkedNode("CCX");
+  node = model->addNode("Steps", root_node);
+  node->setTitle("Steps");
+  model->setNodeMarker(node, "CCXSteps");  
+
+  root_node = model->getMarkedNode("CCXSteps");
+  node = model->addNode("Create", root_node);
+  model->setNodeMarker(node, "CCXStepsCreate");
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXStepsModify");
+  node = model->addNode("Delete", root_node);
+  model->setNodeMarker(node, "CCXStepsDelete");
+  
+  root_node = model->getMarkedNode("CCXStepsModify");
+  node = model->addNode("Parameter", root_node);
+  model->setNodeMarker(node, "CCXStepsModifyParameter");
+  node = model->addNode("Static", root_node);
+  model->setNodeMarker(node, "CCXStepsModifyStatic");
+  node = model->addNode("Frequency", root_node);
+  model->setNodeMarker(node, "CCXStepsModifyFrequency");
+  node = model->addNode("Buckle", root_node);
+  model->setNodeMarker(node, "CCXStepsModifyBuckle");
+  node = model->addNode("Heat Transfer", root_node);
+  model->setNodeMarker(node, "CCXStepsModifyHeatTransfer");
+  node = model->addNode("Coupled Temperature Displacement", root_node);
+  model->setNodeMarker(node, "CCXStepsModifyCoupledTemperatureDisplacement");
+  node = model->addNode("Uncoupled Temperature Displacement", root_node);
+  model->setNodeMarker(node, "CCXStepsModifyUncoupledTemperatureDisplacement");
 }
 
 void cmdPanelManager::associate_panels_with_nodes()
@@ -464,6 +506,15 @@ void cmdPanelManager::associate_panels_with_nodes()
   my_markers.push_back("CCXInitialConditionsCreate");
   my_markers.push_back("CCXInitialConditionsModify");
   my_markers.push_back("CCXInitialConditionsDelete");
+  my_markers.push_back("CCXStepsCreate");
+  my_markers.push_back("CCXStepsModifyParameter");
+  my_markers.push_back("CCXStepsModifyStatic");
+  my_markers.push_back("CCXStepsModifyFrequency");
+  my_markers.push_back("CCXStepsModifyBuckle");
+  my_markers.push_back("CCXStepsModifyHeatTransfer");
+  my_markers.push_back("CCXStepsModifyCoupledTemperatureDisplacement");
+  my_markers.push_back("CCXStepsModifyUncoupledTemperatureDisplacement");
+  my_markers.push_back("CCXStepsDelete");
   // For each marker, we want to get the navigation node and assign the node
   // to use this factory to get widgets as needed.
   NavigationModel* model = Claro::instance()->navigation_model();
