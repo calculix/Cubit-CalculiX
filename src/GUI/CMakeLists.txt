@@ -181,8 +181,6 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/StepsDeletePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsManagement.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsManagement.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/StepsManagementItem.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/StepsManagementItem.cpp
     )
 
 set(UI

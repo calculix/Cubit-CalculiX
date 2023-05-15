@@ -18,7 +18,6 @@
 #include <QStringList>
 
 class CalculiXCoreInterface;
-class StepsManagementItem;
 
 class StepsManagement : public QWidget
 {
@@ -32,6 +31,14 @@ public:
   
   void clear(); // remove all data
   void update();
+  void addStep(QString step_id, QString step_name); // adds a new step to the tree
+  void removeStep(QTreeWidgetItem *step); // removes the step from to the tree
+  int get_child_id(std::string step_id); // check if the item for the given step_id exists, returns the id or -1 if failed;
+  void createItems(QTreeWidgetItem *step); // creates the list items for selected step
+  void removeItems(); // removes current tree items
+  void switchItem(QTreeWidgetItem* source, QTreeWidgetItem* target); // switches the current item from src tree to target tree
+  void selectItem(QTreeWidgetItem* item); // unselect all list items except the given
+  
 
 private slots:
   void on_pushButton_ok_clicked(bool);
@@ -39,9 +46,13 @@ private slots:
   void on_pushButton_close_clicked(bool);
   void on_pushButton_add_clicked(bool);
   void on_pushButton_remove_clicked(bool);
+  void step_clicked(QTreeWidgetItem* item, int column);
+  void step_changed(QTreeWidgetItem* current_item, QTreeWidgetItem* prev_item);
+  
   
 private:
   std::string log;
+  QTreeWidgetItem* current_step_item;
   QGridLayout* gridLayout;
   QHBoxLayout* boxLayout_window;
   QVBoxLayout* boxLayout_steps_1;
@@ -75,6 +86,10 @@ private:
   QTreeWidgetItem* tree_used_bcs_temperatures;
   QTreeWidgetItem* tree_used_historyoutputs;
   QTreeWidgetItem* tree_used_fieldoutputs;
+  
+  std::vector<QTreeWidgetItem*> available_trees;
+  std::vector<QTreeWidgetItem*> used_trees;
+
 };
 
 #endif // STEPSMANAGEMENT_HPP

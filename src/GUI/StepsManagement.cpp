@@ -1,6 +1,5 @@
 #include "StepsManagement.hpp"
 #include "CalculiXCoreInterface.hpp"
-#include "StepsManagementItem.hpp"
 
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
@@ -13,7 +12,7 @@ StepsManagement::StepsManagement()
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
 
   // main window
-  //this->setGeometry(0,0,700,570);
+  this->setGeometry(0,0,700,570);
   this->setWindowTitle("Steps Management");
 
   gridLayout = new QGridLayout(this);
@@ -123,15 +122,30 @@ StepsManagement::StepsManagement()
   tree_used_historyoutputs->setText(0,"History Outputs");
   tree_used_fieldoutputs = new QTreeWidgetItem(tree_used);
   tree_used_fieldoutputs->setText(0,"Field Outputs");
+
+  available_trees.push_back(tree_available_loads_forces);
+  available_trees.push_back(tree_available_loads_pressures);
+  available_trees.push_back(tree_available_bcs_displacements);
+  available_trees.push_back(tree_available_bcs_temperatures);
+  available_trees.push_back(tree_available_historyoutputs);
+  available_trees.push_back(tree_available_fieldoutputs);
+
+  used_trees.push_back(tree_used_loads_forces);
+  used_trees.push_back(tree_used_loads_pressures);
+  used_trees.push_back(tree_used_bcs_displacements);
+  used_trees.push_back(tree_used_bcs_temperatures);
+  used_trees.push_back(tree_used_historyoutputs);
+  used_trees.push_back(tree_used_fieldoutputs);
   
-  /*
   // Signals
   QObject::connect(pushButton_ok, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_ok_clicked(bool)));
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
   QObject::connect(pushButton_close, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_close_clicked(bool)));
   QObject::connect(pushButton_add, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_add_clicked(bool)));
   QObject::connect(pushButton_remove, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_remove_clicked(bool)));
-  */
+  QObject::connect(tree_steps, SIGNAL(itemClicked(QTreeWidgetItem*, int)),this,  SLOT(step_clicked(QTreeWidgetItem*, int)));
+  QObject::connect(tree_steps, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),this,  SLOT(step_changed(QTreeWidgetItem*,QTreeWidgetItem*)));
+  
   // Update list items and data
   this->update();
 }
@@ -141,41 +155,36 @@ StepsManagement::~StepsManagement()
 
 void StepsManagement::clear()
 {
-  /*
-  // Remove all of our tree items from material tree.
-  while (tree_material->topLevelItemCount()>0)
+  // Remove all of our tree items from steps tree.
+  while (tree_steps->topLevelItemCount()>0)
   {
-    tree_material->removeItemWidget(tree_material->topLevelItem(0),0);
+    tree_steps->removeItemWidget(tree_steps->topLevelItem(0),0);
   }
-  */
 }
 
 void StepsManagement::update()
 {
-  /*
-  std::vector<std::vector<std::string>> material_tree_data;
-  material_tree_data = ccx_iface->get_material_tree_data(); 
+  std::vector<std::vector<std::string>> steps_tree_data;
+  steps_tree_data = ccx_iface->get_steps_tree_data(); 
 
-  StepsManagementItem *temp_child;
+  QTreeWidgetItem *temp_child;
   int ChildId;
   std::string str_check;
   bool erase_item;
 
-  for (size_t i = 0; i < material_tree_data.size(); i++)
+  for (size_t i = 0; i < steps_tree_data.size(); i++)
   {
-    // check if material already exists as item
+    // check if step already exists as item
     
-    ChildId = this->get_child_id(material_tree_data[i][0]);
+    ChildId = this->get_child_id(steps_tree_data[i][0]);
 
     if (ChildId == -1)
     {
-      this->addMaterial(QString::fromStdString(material_tree_data[i][0]), QString::fromStdString(material_tree_data[i][1]));  
+      this->addStep(QString::fromStdString(steps_tree_data[i][0]), QString::fromStdString(steps_tree_data[i][1]));  
     }else{
       // modify name if necessary
-      temp_child = dynamic_cast<StepsManagementItem*>(tree_material->topLevelItem(ChildId));
-      
-      str_check = material_tree_data[i][1];    
-
+      temp_child = tree_steps->topLevelItem(ChildId);
+      str_check = steps_tree_data[i][1];    
       if (temp_child->text(0).toStdString() != str_check)
       {
         temp_child->setText(0, QString::fromStdString(str_check));
@@ -184,34 +193,230 @@ void StepsManagement::update()
   }
 
   // check if item has been removed
-
-  for (size_t i = tree_material->topLevelItemCount(); i > 0; i--)
+  for (size_t i = tree_steps->topLevelItemCount(); i > 0; i--)
   { 
     erase_item = true;
-    temp_child = dynamic_cast<StepsManagementItem*>(tree_material->topLevelItem(i-1));
-
-    for (size_t ii = 0; ii < material_tree_data.size(); ii++)
+    temp_child = tree_steps->topLevelItem(i-1);
+    for (size_t ii = 0; ii < steps_tree_data.size(); ii++)
     {    
-      if (temp_child->text(1).toStdString()==material_tree_data[ii][0])
+      if (temp_child->text(1).toStdString()==steps_tree_data[ii][0])
       {
         erase_item = false;
         break;
       }
     }
-
     if (erase_item)
     {
-      this->removeMaterial(temp_child);
+      this->removeStep(temp_child);
     }
   }
+}
 
-  // update childs
-  for (size_t i = tree_material->topLevelItemCount(); i > 0; i--)
-  { 
-    temp_child = dynamic_cast<StepsManagementItem*>(tree_material->topLevelItem(i-1));
-    temp_child->update();
+void StepsManagement::addStep(QString step_id, QString step_name)
+{
+  QTreeWidgetItem* StepsTreeChild = new QTreeWidgetItem(tree_steps);
+  StepsTreeChild->setText(1,step_id);
+  StepsTreeChild->setText(0,step_name);
+}
+
+void StepsManagement::removeStep(QTreeWidgetItem *step)
+{
+  tree_steps->removeItemWidget(step,0);
+  delete step;
+}
+
+int StepsManagement::get_child_id(std::string step_id)
+{
+  int int_return;
+  int_return = -1;
+
+  QTreeWidgetItem *temp_child;
+  for (size_t i = 0; i < tree_steps->topLevelItemCount(); i++)
+  {
+    temp_child = tree_steps->topLevelItem(i);
+    //log = temp_child->text(1).toStdString() + " == " + step_id + " child ids \n";
+    //PRINT_INFO("%s", log.c_str());
+    
+    if (temp_child->text(1).toStdString()==step_id)
+    {
+      int_return = i;
+      break;
+    }
+  }
+  return int_return;
+}
+
+void StepsManagement::createItems(QTreeWidgetItem *step)
+{  
+  std::vector<std::vector<std::vector<std::string>>> available;
+  std::vector<std::vector<std::vector<std::string>>> used;
+
+  available.push_back(ccx_iface->get_loadsforces_tree_data());
+  available.push_back(ccx_iface->get_loadspressures_tree_data());
+  available.push_back(ccx_iface->get_bcsdisplacements_tree_data());
+  available.push_back(ccx_iface->get_bcstemperatures_tree_data());
+  available.push_back(ccx_iface->get_historyoutputs_tree_data());
+  available.push_back(ccx_iface->get_fieldoutputs_tree_data());
+
+  used.push_back(ccx_iface->get_steps_loadsforces_tree_data(step->text(1).toInt()));
+  used.push_back(ccx_iface->get_steps_loadspressures_tree_data(step->text(1).toInt()));
+  used.push_back(ccx_iface->get_steps_bcsdisplacements_tree_data(step->text(1).toInt()));
+  used.push_back(ccx_iface->get_steps_bcstemperatures_tree_data(step->text(1).toInt()));
+  used.push_back(ccx_iface->get_steps_historyoutputs_tree_data(step->text(1).toInt()));
+  used.push_back(ccx_iface->get_steps_fieldoutputs_tree_data(step->text(1).toInt()));
+
+  for (size_t i = 0; i < available.size(); i++)
+  {
+    for (size_t ii = 0; ii < available[i].size(); ii++)
+    {
+      QTreeWidgetItem* temp_child;
+      temp_child = new QTreeWidgetItem(available_trees[i]);
+      temp_child->setText(1,QString::fromStdString(available[i][ii][0]));
+      temp_child->setText(0,QString::fromStdString(available[i][ii][1]));
+    }
+    available_trees[i]->setExpanded(true);
+  }
+  tree_available_loads->setExpanded(true);
+  tree_available_bcs->setExpanded(true);
+
+  for (size_t i = 0; i < used.size(); i++)
+  {
+    for (size_t ii = 0; ii < used[i].size(); ii++)
+    {
+      QTreeWidgetItem* temp_child;
+      temp_child = new QTreeWidgetItem(used_trees[i]);
+      temp_child->setText(1,QString::fromStdString(used[i][ii][0]));
+      temp_child->setText(0,QString::fromStdString(used[i][ii][1]));
+    }
+    used_trees[i]->setExpanded(true);
+  }
+  tree_used_loads->setExpanded(true);
+  tree_used_bcs->setExpanded(true);
+
+  // remove used items from available items
+  for (size_t i = 0; i < used.size(); i++)
+  {
+    for (size_t ii = 0; ii < used_trees[i]->childCount(); ii++)
+    {
+      for (size_t iii = 0; iii < available_trees[i]->childCount(); iii++)
+      {
+        if (used_trees[i]->child(ii)->text(1)==available_trees[i]->child(iii)->text(1))
+        {
+          available_trees[i]->removeChild(available_trees[i]->child(iii));
+        }
+      }
+    }
+  }  
+}
+
+void StepsManagement::removeItems()
+{
+  for (size_t i = 0; i < available_trees.size(); i++)
+  {
+    // Remove all of our tree items.
+    while (available_trees[i]->childCount()>0)
+    {
+      available_trees[i]->removeChild(available_trees[i]->child(0));
+    }
+  }
+  for (size_t i = 0; i < used_trees.size(); i++)
+  {
+    // Remove all of our tree items.
+    while (used_trees[i]->childCount()>0)
+    {
+      used_trees[i]->removeChild(used_trees[i]->child(0));
+    }
+  }
+}
+
+void StepsManagement::switchItem(QTreeWidgetItem* source, QTreeWidgetItem* target)
+{
+  /*
+  if(source->currentItem()){
+    QListWidgetItem* newItem = source->currentItem()->clone();
+    target->addItem(newItem);
+    target->setCurrentItem(newItem);
+    delete source->currentItem();
+    this->selectListItem(newItem);
+    this->loadWidget(newItem);
+    source->sortItems();
+    target->sortItems();
+
+    if (newItem->text()=="Elastic")
+    {
+      if (current_material_item->getScalarPropertyGUI("CCX_ELASTIC_USE_CARD")==0)
+      {
+        current_material_item->setScalarPropertyGUI("CCX_ELASTIC_USE_CARD", 1);
+      }else{
+        current_material_item->setScalarPropertyGUI("CCX_ELASTIC_USE_CARD", 0);
+      }
+    }else if (newItem->text()=="Plastic")
+    {
+      if (current_material_item->getScalarPropertyGUI("CCX_PLASTIC_USE_CARD")==0)
+      {
+        current_material_item->setScalarPropertyGUI("CCX_PLASTIC_USE_CARD", 1);
+      }else{
+        current_material_item->setScalarPropertyGUI("CCX_PLASTIC_USE_CARD", 0);
+      }
+    }else if (newItem->text()=="Density")
+    {
+      if (current_material_item->getScalarPropertyGUI("CCX_DENSITY_USE_CARD")==0)
+      {
+        current_material_item->setScalarPropertyGUI("CCX_DENSITY_USE_CARD", 1);
+      }else{
+        current_material_item->setScalarPropertyGUI("CCX_DENSITY_USE_CARD", 0);
+      }
+    }else if (newItem->text()=="Specific heat")
+    {
+      if (current_material_item->getScalarPropertyGUI("CCX_SPECIFIC_HEAT_USE_CARD")==0)
+      {
+        current_material_item->setScalarPropertyGUI("CCX_SPECIFIC_HEAT_USE_CARD", 1);
+      }else{
+        current_material_item->setScalarPropertyGUI("CCX_SPECIFIC_HEAT_USE_CARD", 0);
+      }
+    }else if (newItem->text()=="Expansion")
+    {
+      if (current_material_item->getScalarPropertyGUI("CCX_EXPANSION_USE_CARD")==0)
+      {
+        current_material_item->setScalarPropertyGUI("CCX_EXPANSION_USE_CARD", 1);
+      }else{
+        current_material_item->setScalarPropertyGUI("CCX_EXPANSION_USE_CARD", 0);
+      }
+    }else if (newItem->text()=="Conductivity")
+    {
+      if (current_material_item->getScalarPropertyGUI("CCX_CONDUCTIVITY_USE_CARD")==0)
+      {
+        current_material_item->setScalarPropertyGUI("CCX_CONDUCTIVITY_USE_CARD", 1);
+      }else{
+        current_material_item->setScalarPropertyGUI("CCX_CONDUCTIVITY_USE_CARD", 0);
+      } 
+    }
   }
   */
+}
+
+void StepsManagement::selectItem(QTreeWidgetItem* item)
+{
+  /*
+  QTreeWidgetItem* temp_item;
+
+  for (size_t i = 0; i < list_available->count(); i++)
+  {
+    temp_item = list_available->item(i);
+    if (temp_item != item)
+    {
+      temp_item->setSelected(false);
+    }
+  }
+  for (size_t i = 0; i < list_used->count(); i++)
+  {
+    temp_item = list_used->item(i);
+    if (temp_item != item)
+    {
+      temp_item->setSelected(false);
+    }
+  }
+  */ 
 }
 
 void StepsManagement::on_pushButton_ok_clicked(bool)
@@ -229,7 +434,7 @@ void StepsManagement::on_pushButton_apply_clicked(bool)
   QString command;
   QString command_prefix;
 
-  StepsManagementItem *temp_child;
+  QTreeWidgetItem *temp_child;
 /*
   for (size_t i = 0; i < tree_material->topLevelItemCount(); i++)
   {
@@ -308,4 +513,22 @@ void StepsManagement::on_pushButton_remove_clicked(bool)
   //log = " clicked remove \n";
   //PRINT_INFO("%s", log.c_str());
   //switchListItem(list_used, list_available);
+}
+
+void StepsManagement::step_clicked(QTreeWidgetItem* item, int column)
+{
+  current_step_item = item;
+  if (item!=NULL)
+  {    
+    this->removeItems();
+    this->createItems(item);
+  }
+}
+
+void StepsManagement::step_changed(QTreeWidgetItem* current_item, QTreeWidgetItem* prev_item)
+{
+  if (current_item!=nullptr)
+  {
+    this->step_clicked(current_item,0);
+  }
 }
