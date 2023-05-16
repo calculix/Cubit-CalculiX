@@ -1512,3 +1512,8 @@ void ModelTree::update(){
   myMaterialManagement->update();
   myStepsManagement->update();
 }
+
+void ModelTree::clear(){
+  myMaterialManagement->clear();
+  myStepsManagement->clear();
+}

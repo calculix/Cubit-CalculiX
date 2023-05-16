@@ -36,9 +36,7 @@ public:
   int get_child_id(std::string step_id); // check if the item for the given step_id exists, returns the id or -1 if failed;
   void createItems(QTreeWidgetItem *step); // creates the list items for selected step
   void removeItems(); // removes current tree items
-  void switchItem(QTreeWidgetItem* source, QTreeWidgetItem* target); // switches the current item from src tree to target tree
-  void selectItem(QTreeWidgetItem* item); // unselect all list items except the given
-  
+  void switchItem(QTreeWidgetItem* currentItem, QTreeWidgetItem* source, QTreeWidgetItem* target); // switches the current item from src tree to target tree
 
 private slots:
   void on_pushButton_ok_clicked(bool);
@@ -48,7 +46,8 @@ private slots:
   void on_pushButton_remove_clicked(bool);
   void step_clicked(QTreeWidgetItem* item, int column);
   void step_changed(QTreeWidgetItem* current_item, QTreeWidgetItem* prev_item);
-  
+  void available_doubleclicked(QTreeWidgetItem* item, int column);
+  void used_doubleclicked(QTreeWidgetItem* item, int column);
   
 private:
   std::string log;
@@ -89,7 +88,6 @@ private:
   
   std::vector<QTreeWidgetItem*> available_trees;
   std::vector<QTreeWidgetItem*> used_trees;
-
 };
 
 #endif // STEPSMANAGEMENT_HPP

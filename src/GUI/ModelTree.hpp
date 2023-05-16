@@ -69,6 +69,7 @@ public:
   void setWidgetInCmdPanelPath(QString name); // set Widget in CommandPanel
   void execContextMenuAction();
   void update();
+  void clear();
 
 public slots:
   void showContextMenu(const QPoint &pos);

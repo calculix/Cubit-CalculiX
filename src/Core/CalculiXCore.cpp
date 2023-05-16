@@ -2373,6 +2373,10 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadsforces_tree_d
   int step_data_id;
   std::vector<int> loads_ids;
   step_data_id = steps->get_steps_data_id_from_step_id(step_id);
+  if (step_data_id==-1)
+  {
+    return loadsforces_tree_data;
+  }
   loads_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[step_data_id][5]);
 
   for (size_t i = 0; i < loads_ids.size(); i++)
@@ -2400,6 +2404,10 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadspressures_tre
   int step_data_id;
   std::vector<int> loads_ids;
   step_data_id = steps->get_steps_data_id_from_step_id(step_id);
+  if (step_data_id==-1)
+  {
+    return loadspressures_tree_data;
+  }
   loads_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[step_data_id][5]);
 
   for (size_t i = 0; i < loads_ids.size(); i++)
@@ -2427,6 +2435,10 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_bcsdisplacements_t
   int step_data_id;
   std::vector<int> bcs_ids;
   step_data_id = steps->get_steps_data_id_from_step_id(step_id);
+  if (step_data_id==-1)
+  {
+    return bcsdisplacements_tree_data;
+  }
   bcs_ids = steps->get_bc_data_ids_from_bcs_id(steps->steps_data[step_data_id][6]);
 
   for (size_t i = 0; i < bcs_ids.size(); i++)
@@ -2454,6 +2466,10 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_bcstemperatures_tr
   int step_data_id;
   std::vector<int> bcs_ids;
   step_data_id = steps->get_steps_data_id_from_step_id(step_id);
+  if (step_data_id==-1)
+  {
+    return bcstemperatures_tree_data;
+  }
   bcs_ids = steps->get_bc_data_ids_from_bcs_id(steps->steps_data[step_data_id][6]);
 
   for (size_t i = 0; i < bcs_ids.size(); i++)
@@ -2481,6 +2497,10 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_historyoutputs_tre
   int step_data_id;
   std::vector<int> historyoutputs_ids;
   step_data_id = steps->get_steps_data_id_from_step_id(step_id);
+  if (step_data_id==-1)
+  {
+    return outputs_tree_data;
+  }
   historyoutputs_ids = steps->get_historyoutput_data_ids_from_historyoutputs_id(steps->steps_data[step_data_id][7]);
   
   for (size_t i = 0; i < historyoutputs_ids.size(); i++)
@@ -2521,6 +2541,10 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_fieldoutputs_tree_
   int step_data_id;
   std::vector<int> fieldoutputs_ids;
   step_data_id = steps->get_steps_data_id_from_step_id(step_id);
+  if (step_data_id==-1)
+  {
+    return outputs_tree_data;
+  }
   fieldoutputs_ids = steps->get_fieldoutput_data_ids_from_fieldoutputs_id(steps->steps_data[step_data_id][8]);
   
   for (size_t i = 0; i < fieldoutputs_ids.size(); i++)

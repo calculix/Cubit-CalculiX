@@ -201,6 +201,7 @@ void CCXDockWindowModelTree::update()
 void CCXDockWindowModelTree::reset()
 {
   // reset, our trees, so clear all child items
+  myModelTree->clear();
   myBlocksTree->clear(); 
   myNodesetTree->clear(); 
   mySidesetTree->clear(); 

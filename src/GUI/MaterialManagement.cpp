@@ -159,10 +159,11 @@ MaterialManagement::~MaterialManagement()
 void MaterialManagement::clear()
 {
   // Remove all of our tree items from material tree.
-  while (tree_material->topLevelItemCount()>0)
+  /*while (tree_material->topLevelItemCount()>0)
   {
     tree_material->removeItemWidget(tree_material->topLevelItem(0),0);
   }
+  this->removeListItems();*/
 }
 
 void MaterialManagement::update()
