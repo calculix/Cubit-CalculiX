@@ -137,14 +137,15 @@ bool CoreJobs::run_job(int job_id)
       }
     }
 
-    programm = "/home/user/Downloads/ccx_2.20";
+    //programm = "/home/user/Downloads/ccx_2.20";
+    programm = "/bin/gedit";
     //programm = "ccx_2.19_MT";
     //working_dir = "/home/user/Downloads/";
     //arguments[0] = programm;
-    //arguments[0] = NULL;
-    arguments[0] = "-i";
-    arguments[1] = filepath.substr(0, filepath.size()-4);
-    arguments[2] = NULL;
+    arguments[0] = NULL;
+    //arguments[0] = "-i";
+    //arguments[1] = filepath.substr(0, filepath.size()-4);
+    //arguments[2] = NULL;
     
     CubitProcessHandler.set_program(programm);
     //CubitProcessHandler.set_working_dir(working_dir);
@@ -154,16 +155,33 @@ bool CoreJobs::run_job(int job_id)
     //process_id = CubitProcessHandler.start(programm, arguments, false);
     CubitProcessHandler.start();
     process_id = CubitProcessHandler.pid();
-    output = CubitProcessHandler.read_output_channel(-1);
-    int_wait = CubitProcessHandler.wait(process_id);
-    log = " Path to executable ";
-    //log.append(working_dir.str() + temp.str() + "\n");
-    log.append(temp.str() + "\n");
-    log.append(" Process ID " + std::to_string(process_id) + " \n");
-    log.append(" Output " + output.str() + " \n");
-    log.append(" Wait Exit Code " + std::to_string(int_wait) + " \n");
-    //log.append(" Exit Code " + std::to_string(CubitProcessHandler.exit_code()) + " \n");
-    PRINT_INFO("%s", log.c_str());
+    if (process_id!=0)
+    {      
+      log = " Path to executable ";
+      //log.append(working_dir.str() + temp.str() + "\n");
+      log.append(temp.str() + "\n");
+      log.append(" Process ID " + std::to_string(process_id) + " \n");
+      PRINT_INFO("%s", log.c_str());
+
+      bool loop=true;
+//    while (loop)
+      {
+        output = CubitProcessHandler.read_output_channel(-1);
+        log = " Output " + output.str() + " \n";
+        log.append(" Exit Code " + std::to_string(CubitProcessHandler.exit_code()) + " \n");
+        PRINT_INFO("%s", log.c_str());
+        if (CubitProcessHandler.can_read_output())
+        {
+          loop = false;
+        }
+        output = "";
+      }
+      int_wait = CubitProcessHandler.wait(process_id);
+      
+      log = " Wait Exit Code " + std::to_string(int_wait) + " \n";
+      log.append(" Exit Code " + std::to_string(CubitProcessHandler.exit_code()) + " \n");
+      PRINT_INFO("%s", log.c_str());
+    }
 
     return true;
   } else {
