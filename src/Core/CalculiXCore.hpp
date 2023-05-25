@@ -18,7 +18,7 @@ class CoreFieldOutputs;
 class CoreInitialConditions;
 class CoreSteps;
 class CoreJobs;
-class CoreSimulation;
+class CoreTimer;
 
 class MeshExportInterface;
 class MaterialInterface;
@@ -126,6 +126,7 @@ public:
   bool modify_job(int job_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a job
   bool delete_job(int job_id); // delete job
   bool run_job(int job_id); // runs job
+  bool check_jobs(); // checks for changes of job processes
   std::vector<std::vector<std::string>> get_blocks_tree_data(); // gets the data from core blocks to build the tree
   std::vector<std::vector<std::string>> get_nodeset_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_sideset_tree_data(); // gets the data from core to build the tree
@@ -177,6 +178,7 @@ public:
   CoreInitialConditions *initialconditions;
   CoreSteps *steps;
   CoreJobs *jobs;
+  CoreTimer *timer;
   MeshExportInterface *me_iface;
   MaterialInterface *mat_iface;
 };

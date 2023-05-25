@@ -189,6 +189,15 @@ bool CoreJobs::run_job(int job_id)
   }
 }
 
+bool CoreJobs::check_jobs()
+{
+  std::string log;
+  
+  log = "CHECK JOBS \n";
+  PRINT_INFO("%s", log.c_str());
+
+  return true;
+}
 
 int CoreJobs::get_jobs_data_id_from_job_id(int job_id)
 { 

@@ -26,12 +26,13 @@
 #include "CoreInitialConditions.hpp"
 #include "CoreSteps.hpp"
 #include "CoreJobs.hpp"
+#include "CoreTimer.hpp"
 
 CalculiXCore::CalculiXCore():
   cb(NULL),mat(NULL),sections(NULL),constraints(NULL),referencepoints(NULL),surfaceinteractions(NULL),
   contactpairs(NULL),amplitudes(NULL),loadsforces(NULL),loadspressures(NULL),bcsdisplacements(NULL),
   bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL), initialconditions(NULL), steps(NULL),
-  jobs(NULL)
+  jobs(NULL),timer(NULL)
 {
   init();
 }
@@ -72,6 +73,8 @@ CalculiXCore::~CalculiXCore()
     delete steps;
   if(jobs)
     delete jobs;
+  if(timer)
+    delete timer;
 }
 
 bool CalculiXCore::print_to_log(std::string str_log)
@@ -175,6 +178,9 @@ bool CalculiXCore::init()
     jobs = new CoreJobs;
   
   jobs->init();
+
+  if(!timer)
+    timer = new CoreTimer;
 
   if (use_ccx_logfile)
   {
@@ -1497,6 +1503,11 @@ bool CalculiXCore::delete_job(int job_id)
 bool CalculiXCore::run_job(int job_id)
 {
   return jobs->run_job(job_id);
+}
+
+bool CalculiXCore::check_jobs()
+{
+  return jobs->check_jobs();
 }
 
 std::string CalculiXCore::get_material_export_data() // gets the export data from materials core

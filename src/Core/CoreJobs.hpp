@@ -28,6 +28,7 @@ public:
   bool delete_job(int job_id); // deletes job from jobs_data
   bool add_job(int job_id, std::string name, std::string filepath); // adds new job to jobs_data
   bool run_job(int job_id); // runs job
+  bool check_jobs(); // checks for changes of job processes
   int  get_jobs_data_id_from_job_id(int job_id); // searches for the job_id in the jobs_data and returns the indices or -1 if it fails
   std::string print_data(); // prints out the jobs_data
 

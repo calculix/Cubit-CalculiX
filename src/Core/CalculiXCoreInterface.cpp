@@ -425,6 +425,11 @@ bool CalculiXCoreInterface::run_job(int job_id)
   return ccx_core.run_job(job_id);
 }
 
+bool CalculiXCoreInterface::check_jobs()
+{
+  return ccx_core.check_jobs();
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_blocks_tree_data()
 { 
   return ccx_core.get_blocks_tree_data();
