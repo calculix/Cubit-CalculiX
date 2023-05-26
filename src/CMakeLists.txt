@@ -59,6 +59,8 @@ set(CCXCOMP_SRCS
     CCXDockWindowModelTree.hpp
     ExportManager.cpp
     ExportManager.hpp
+    UserOptions.cpp
+    UserOptions.hpp
     loadCalculiXComp.cpp)
 
 set(CCXPLUGIN_SRCS

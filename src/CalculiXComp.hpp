@@ -46,6 +46,10 @@ private:
   void setup_observers(int withGUI);
   void cleanup_observers();
 
+  // Add User Options
+  void restore_settings();
+  void save_settings();
+
   MenuManager*    myMenus;
   ToolbarManager* myToolbars;
   cmdPanelManager*   mycmdPanels;

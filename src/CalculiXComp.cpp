@@ -8,6 +8,8 @@
 #include "cmdPanelManager.hpp"
 #include "CCXDockWindowModelTree.hpp"
 #include "ToolbarManager.hpp"
+#include "UserOptions.hpp"
+//#include "ConfigFile.hpp"
 
 // Default constructor. Remember to include the component name (should match
 // the module name in mycomp.i).
@@ -51,6 +53,7 @@ void CalculiXComp::start_up(int withGUI)
     setup_command_panels();
     setup_CCXDockWindowModelTree(); // command panels has to be setup before dockwindow
     add_exports();
+    restore_settings();
     boolwithGUI = true;
   }
 
@@ -65,7 +68,7 @@ void CalculiXComp::clean_up()
   cleanup_CCXDockWindowModelTree();
   cleanup_exports();
   cleanup_observers();
-
+  save_settings();
   // Let the framework know you are done.
   clean_up_complete();
 }
@@ -188,4 +191,28 @@ void CalculiXComp::cleanup_observers()
     delete mListener;
     mListener = NULL;
   }
+}
+
+void CalculiXComp::restore_settings()
+{
+  /*ConfigFile config("somecomp", true, false);
+  config.begin_group("/process");
+  {
+    UserOptions::mNumProcesses = config.read_num_entry("number", 1);
+    config.read_entry("name", UserOptions::mProcessName);
+  }
+  config.end_group()*/
+}
+
+void CalculiXComp::save_settings()
+{
+  /*
+  ConfigFile config("somecomp", false, true);
+  config.begin_group("/process");
+  {
+    config.write_entry("number", UserOptions::mNumProcesses);
+    config.write_entry("name", UserOptions::mProcessName);
+  }
+  config.end_group()
+  */
 }
