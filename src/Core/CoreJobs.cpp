@@ -34,7 +34,8 @@ bool CoreJobs::update()
 bool CoreJobs::reset()
 {
   jobs_data.clear();
-  
+  CubitProcessHandler.clear();
+
   init();
   return true;
 }
@@ -87,7 +88,7 @@ bool CoreJobs::modify_job(int job_id, std::vector<std::string> options, std::vec
 
 bool CoreJobs::add_job(int job_id, std::string name, std::string filepath)
 {
-  std::vector<std::string> v = {std::to_string(job_id), name, filepath, "-1", "-1"};      
+  std::vector<std::string> v = {std::to_string(job_id), name, filepath, "-1", "-1",""};      
   jobs_data.push_back(v);
   return true;
 }
@@ -105,22 +106,37 @@ bool CoreJobs::delete_job(int job_id)
 }
 
 bool CoreJobs::run_job(int job_id)
-{
+{  
   std::string filepath;
   std::string log;
   std::string command;
   pid_t process_id;
   int int_wait;
-  CubitProcess CubitProcessHandler;
+  int CubitProcessHandler_data_id;
   CubitString programm;
   CubitString working_dir;
   CubitString temp;
   CubitString output;
   std::vector<CubitString> arguments(3);
+
   int job_data_id;
   job_data_id = get_jobs_data_id_from_job_id(job_id);
   if (job_data_id != -1)
   {
+    // create or get cubitprocess
+    CubitProcessHandler_data_id = get_CubitProcessHandler_data_id_from_process_id(std::stoi(jobs_data[job_data_id][4]));
+    if (CubitProcessHandler_data_id == -1)
+    {
+      CubitProcess newCubitProcess;
+      CubitProcessHandler.push_back(newCubitProcess);
+      CubitProcessHandler_data_id = CubitProcessHandler.size()-1;
+    }else{
+      CubitProcessHandler[CubitProcessHandler_data_id].kill();
+      log = "Kill Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " if already running \n";
+      jobs_data[job_data_id][5] = "";
+      PRINT_INFO("%s", log.c_str());
+    }
+
     if (jobs_data[job_data_id][2]!="")
     {
       filepath = jobs_data[job_data_id][2];
@@ -137,52 +153,35 @@ bool CoreJobs::run_job(int job_id)
       }
     }
 
-    //programm = "/home/user/Downloads/ccx_2.20";
-    programm = "/bin/gedit";
-    //programm = "ccx_2.19_MT";
+    
+    //programm = "/bin/gedit";
+    //arguments[0] = filepath;
+    //arguments[1] = NULL;
+    programm = "/home/user/Downloads/ccx_2.20";
     //working_dir = "/home/user/Downloads/";
     //arguments[0] = programm;
-    arguments[0] = NULL;
-    //arguments[0] = "-i";
-    //arguments[1] = filepath.substr(0, filepath.size()-4);
-    //arguments[2] = NULL;
+    arguments[0] = "-i";
+    arguments[1] = filepath.substr(0, filepath.size()-4);
+    arguments[2] = NULL;
     
-    CubitProcessHandler.set_program(programm);
+    
+    CubitProcessHandler[CubitProcessHandler_data_id].set_program(programm);
     //CubitProcessHandler.set_working_dir(working_dir);
-    CubitProcessHandler.set_arguments(arguments);
-    CubitProcessHandler.set_channel_mode(CubitProcess::ChannelMode::MergedChannels);
-    temp = CubitProcessHandler.find_executable(programm);
+    CubitProcessHandler[CubitProcessHandler_data_id].set_arguments(arguments);
+    CubitProcessHandler[CubitProcessHandler_data_id].set_channel_mode(CubitProcess::ChannelMode::MergedChannels);
+    temp = CubitProcessHandler[CubitProcessHandler_data_id].find_executable(programm);
     //process_id = CubitProcessHandler.start(programm, arguments, false);
-    CubitProcessHandler.start();
-    process_id = CubitProcessHandler.pid();
+    CubitProcessHandler[CubitProcessHandler_data_id].start();
+    process_id = CubitProcessHandler[CubitProcessHandler_data_id].pid();
     if (process_id!=0)
-    {      
+    { 
+      jobs_data[job_data_id][4] = std::to_string(process_id);
       log = " Path to executable ";
-      //log.append(working_dir.str() + temp.str() + "\n");
+      log.append(working_dir.str() + temp.str() + "\n");
       log.append(temp.str() + "\n");
-      log.append(" Process ID " + std::to_string(process_id) + " \n");
-      PRINT_INFO("%s", log.c_str());
-
-      bool loop=true;
-//    while (loop)
-      {
-        output = CubitProcessHandler.read_output_channel(-1);
-        log = " Output " + output.str() + " \n";
-        log.append(" Exit Code " + std::to_string(CubitProcessHandler.exit_code()) + " \n");
-        PRINT_INFO("%s", log.c_str());
-        if (CubitProcessHandler.can_read_output())
-        {
-          loop = false;
-        }
-        output = "";
-      }
-      int_wait = CubitProcessHandler.wait(process_id);
-      
-      log = " Wait Exit Code " + std::to_string(int_wait) + " \n";
-      log.append(" Exit Code " + std::to_string(CubitProcessHandler.exit_code()) + " \n");
+      log = " Output " + output.str() + " \n";
       PRINT_INFO("%s", log.c_str());
     }
-
     return true;
   } else {
     return false;
@@ -192,9 +191,33 @@ bool CoreJobs::run_job(int job_id)
 bool CoreJobs::check_jobs()
 {
   std::string log;
+  CubitString output;
   
-  log = "CHECK JOBS \n";
-  PRINT_INFO("%s", log.c_str());
+  int CubitProcessHandler_data_id;
+  
+  for (size_t i = 0; i < jobs_data.size(); i++)
+  {
+    // create or get cubitprocess
+    CubitProcessHandler_data_id = get_CubitProcessHandler_data_id_from_process_id(std::stoi(jobs_data[i][4]));
+        
+    if (CubitProcessHandler_data_id != -1)
+    {
+      /*log = "Job ID " + jobs_data[i][0] + " \n";
+      log.append("Job PID " + jobs_data[i][4] + " \n");
+      log.append("PID " + std::to_string(CubitProcessHandler[CubitProcessHandler_data_id].pid()) + " \n");
+      log.append("CubitProcessHandler_data_id " + std::to_string(CubitProcessHandler_data_id) + " \n");
+      PRINT_INFO("%s", log.c_str());*/
+
+      if (CubitProcessHandler[CubitProcessHandler_data_id].can_read_output())
+      { 
+        output = CubitProcessHandler[CubitProcessHandler_data_id].read_output_channel(1);
+        log = " Output " + output.str() + " \n";
+        PRINT_INFO("%s", log.c_str());
+        jobs_data[i][5] = jobs_data[i][5] + output.str();
+        output = "";
+      }
+    }
+  }
 
   return true;
 }
@@ -212,15 +235,31 @@ int CoreJobs::get_jobs_data_id_from_job_id(int job_id)
   return return_int;
 }
 
+int CoreJobs::get_CubitProcessHandler_data_id_from_process_id(int process_id)
+{ 
+  int return_int = -1;
+  
+  for (size_t i = 0; i < CubitProcessHandler.size(); i++)
+  {
+    if (process_id == CubitProcessHandler[i].pid())
+    {
+      return_int = i;
+    }  
+  }
+  
+  return return_int;
+}
+
 std::string CoreJobs::print_data()
 {
   std::string str_return;
   str_return = "\n CoreJobs jobs_data: \n";
-  str_return.append("job_id, name, filepath, status, process id \n");
+  str_return.append("job_id, name, filepath, status, process id, output \n");
 
   for (size_t i = 0; i < jobs_data.size(); i++)
   {
     str_return.append(jobs_data[i][0] + " " + jobs_data[i][1] + " " + jobs_data[i][2] + " " + jobs_data[i][3] + " " + jobs_data[i][4] + " \n");
+    str_return.append(jobs_data[i][5] + " \n");
   }
 
   return str_return;

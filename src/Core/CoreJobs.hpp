@@ -2,6 +2,7 @@
 #define COREJOBS_HPP
 
 class CalculiXCoreInterface;
+class CubitProcess;
 
 class CoreJobs
 {
@@ -16,6 +17,9 @@ public:
   // jobs_data[0][2] filepath
   // jobs_data[0][3] status -1 no process, 1 process running, 2 process finished, 3 process killed
   // jobs_data[0][4] process id
+  // jobs_data[0][5] Output
+
+  std::vector<CubitProcess> CubitProcessHandler;
 
   bool is_initialized = false;
 
@@ -30,6 +34,7 @@ public:
   bool run_job(int job_id); // runs job
   bool check_jobs(); // checks for changes of job processes
   int  get_jobs_data_id_from_job_id(int job_id); // searches for the job_id in the jobs_data and returns the indices or -1 if it fails
+  int  get_CubitProcessHandler_data_id_from_process_id(int process_id); // searches for the CubitProcessHandler_id in the CubitProcessHandler and returns the indices or -1 if it fails
   std::string print_data(); // prints out the jobs_data
 
   CalculiXCoreInterface *ccx_iface;

@@ -15,6 +15,5 @@ CoreTimer::~CoreTimer()
 
 void CoreTimer::timeoutaction()
 {
-
   ccx_iface->check_jobs();
 }
