@@ -8,8 +8,8 @@
 #include "cmdPanelManager.hpp"
 #include "CCXDockWindowModelTree.hpp"
 #include "ToolbarManager.hpp"
-#include "UserOptions.hpp"
-//#include "ConfigFile.hpp"
+#include "loadUserOptions.hpp"
+#include "ConfigFile.hpp"
 
 // Default constructor. Remember to include the component name (should match
 // the module name in mycomp.i).
@@ -195,24 +195,24 @@ void CalculiXComp::cleanup_observers()
 
 void CalculiXComp::restore_settings()
 {
-  /*ConfigFile config("somecomp", true, false);
-  config.begin_group("/process");
-  {
-    UserOptions::mNumProcesses = config.read_num_entry("number", 1);
-    config.read_entry("name", UserOptions::mProcessName);
-  }
-  config.end_group()*/
+  ConfigFile config;
+  config.read_entry("PathSolver", ccx_uo.mPathSolver);
+  ccx_uo.mPathSolverName = "Path to CalculiX Solver";
+  config.read_num_entry("SolverThreads", ccx_uo.mSolverThreads);
+  ccx_uo.mSolverThreadsName = "Number of Threads";
+  config.read_entry("PathCGX", ccx_uo.mPathCGX);
+  ccx_uo.mPathCGXName = "Path to CGX";
+  config.read_entry("PathParaView", ccx_uo.mPathParaView);
+  ccx_uo.mPathParaViewName = "Path to ParaView";
 }
 
 void CalculiXComp::save_settings()
 {
-  /*
-  ConfigFile config("somecomp", false, true);
-  config.begin_group("/process");
-  {
-    config.write_entry("number", UserOptions::mNumProcesses);
-    config.write_entry("name", UserOptions::mProcessName);
-  }
-  config.end_group()
-  */
+  ConfigFile config;
+  
+  config.clear();
+  config.write_entry("PathSolver", ccx_uo.mPathSolver);
+  config.write_num_entry("SolverThreads", ccx_uo.mSolverThreads);
+  config.write_entry("PathCGX", ccx_uo.mPathCGX);
+  config.write_entry("PathParaView", ccx_uo.mPathParaView);
 }

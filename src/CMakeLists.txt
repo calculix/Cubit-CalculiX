@@ -39,12 +39,17 @@ add_subdirectory(GUI)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/EventObservers)
 add_subdirectory(EventObservers)
 
+# Include our UserOptions code
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/UserOptions)
+add_subdirectory(UserOptions)
+
 qt5_wrap_ui(ui_src ${GUI_UI})
 
 set(CCXCOMP_SRCS
     CalculiXComp.cpp
     CalculiXComp.hpp
     ${EO_COMP_SRC}
+    ${UO_COMP_SRC}
     ${GUI_SRC}
     ${ui_src}
     MenuManager.cpp
@@ -59,8 +64,6 @@ set(CCXCOMP_SRCS
     CCXDockWindowModelTree.hpp
     ExportManager.cpp
     ExportManager.hpp
-    UserOptions.cpp
-    UserOptions.hpp
     loadCalculiXComp.cpp)
 
 set(CCXPLUGIN_SRCS
@@ -92,6 +95,3 @@ endif()
 if(POLICY CMP0071)
   cmake_policy(SET CMP0071 NEW)
 endif()
-
-
-

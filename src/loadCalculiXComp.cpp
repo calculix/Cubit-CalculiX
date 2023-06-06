@@ -7,7 +7,7 @@ COMPONENT_PLUGIN;
 
 PLUGIN_PRINT_VERSION
 {
-  Broker::command << "CalculiXComp Version 1.1.0\n";
+  Broker::command << "CalculiXComp Version 23.06\n";
 }
 
 PLUGIN_PRINT_OPTIONS
