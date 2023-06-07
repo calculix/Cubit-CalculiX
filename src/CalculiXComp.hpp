@@ -8,6 +8,7 @@ class ToolbarManager;
 class cmdPanelManager;
 class ExportManager;
 class CCXDockWindowModelTree;
+class UserOptionsPanel;
 
 class Observer;
 
@@ -49,12 +50,16 @@ private:
   // Add User Options
   void restore_settings();
   void save_settings();
+  // load Panel
+  void load_options();
+  void unload_options();
 
   MenuManager*    myMenus;
   ToolbarManager* myToolbars;
   cmdPanelManager*   mycmdPanels;
   ExportManager*  myExportManager;
   CCXDockWindowModelTree* myCCXDockWindowModelTree;
+  UserOptionsPanel* mUserOptionsPanel;
 
   Observer* mListener;
 };

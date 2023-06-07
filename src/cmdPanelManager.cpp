@@ -3,6 +3,7 @@
 #include "NavigationModel.hpp"
 #include "NavigationNode.hpp"
 #include "MyCmdWidgetFactory.hpp"
+#include <iostream>
 
 #include <QAction>
 #include <QIcon>
@@ -133,29 +134,31 @@ void cmdPanelManager::initialize_from_code()
   
   NavigationNode* root_node;
   NavigationNode* node;
+
+  // CCX Root Node
+  root_node = model->addNode("CCX", model->getRoot());
+  root_node->setTitle("CCX");
+  model->setNodeMarker(root_node, "CCX"); 
+
   //##############################
   // add BlocksTree Nodes
-  // add new Node between Exodus/Block and ExodusElementTypeBlock
-  root_node = model->getNode("Exodus/Block");
-  node = model->addNode("Element Types", root_node);
-  model->setNodeMarker(node, "ElementTypeBlockNavigation");
-  // set new Parent to ExodusElementTypeBlock and remove from old
-  node = model->getMarkedNode("ExodusElementTypeBlock");
-  root_node->removeChild(root_node->getChildIndex(node));
-  root_node = model->getMarkedNode("ElementTypeBlockNavigation");
-  node->setParent(root_node);
-  root_node->insertChild(root_node->childCount()+1,node);
-  NodeIconPointer = node->getIcon();
-  root_node->setIcon(NodeIconPointer);
+  root_node = model->getMarkedNode("CCX");
+  node = model->addNode("Blocks", root_node);
+  model->setNodeMarker(node, "CCXBlocks");
+
+  root_node = model->getMarkedNode("CCXBlocks");
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXBlocksModify");
+  
   // add Element Type Node
-  root_node = model->getMarkedNode("ElementTypeBlockNavigation");
+  root_node = model->getMarkedNode("CCXBlocksModify");
   node = model->addNode("CCX Element Types", root_node);
   model->setNodeMarker(node, "CCXBlocksElementType");
 
   //##############################
   // add Materials and Section Nodes
-  root_node = model->getNode("Exodus");
-  node = model->addNode("CCX Sections", root_node);
+  root_node = model->getMarkedNode("CCX");
+  node = model->addNode("Sections", root_node);
   model->setNodeMarker(node, "CCXSections");
   root_node = model->getMarkedNode("CCXSections");
   node = model->addNode("Create", root_node);
@@ -172,7 +175,7 @@ void cmdPanelManager::initialize_from_code()
   model->setNodeMarker(node, "CCXSectionsCreateShell");
   node = model->addNode("Beam Section", root_node);
   model->setNodeMarker(node, "CCXSectionsCreateBeam");
-  node = model->addNode("CMembrane Section", root_node);
+  node = model->addNode("Membrane Section", root_node);
   model->setNodeMarker(node, "CCXSectionsCreateMembrane");
   //##
   root_node = model->getMarkedNode("CCXSectionsModify");
@@ -187,184 +190,155 @@ void cmdPanelManager::initialize_from_code()
 
   //##############################
   // add Constraints Nodes
-  // add new Node between FEA/Create and FEAConstraintCreate
-  root_node = model->getNode("FEA/Create");
+  root_node = model->getMarkedNode("CCX");
+  
   node = model->addNode("Constraints", root_node);
-  model->setNodeMarker(node, "FEAConstraintCreateNavigation");
-  // set new Parent to FEAConstraintCreate and remove from old
-  node = model->getMarkedNode("FEAConstraintCreate");
-  root_node->removeChild(root_node->getChildIndex(node));
-  root_node = model->getMarkedNode("FEAConstraintCreateNavigation");
-  node->setParent(root_node);
-  root_node->insertChild(root_node->childCount()+1,node);
-  NodeIconPointer = node->getIcon();
-  root_node->setIcon(NodeIconPointer);
-  // add Constraint Nodes
-  root_node = model->getMarkedNode("FEAConstraintCreateNavigation");
-  node = model->addNode("CCX Rigid Body", root_node);
+  model->setNodeMarker(node, "CCXConstraints");
+  root_node = model->getMarkedNode("CCXConstraints");
+  node = model->addNode("Create", root_node);
+  model->setNodeMarker(node, "CCXConstraintsCreate");
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXConstraintsModify");
+  node = model->addNode("Delete", root_node);
+  model->setNodeMarker(node, "CCXConstraintsDelete");
+
+  root_node = model->getMarkedNode("CCXConstraintsCreate");
+  node = model->addNode("Rigid Body", root_node);
   model->setNodeMarker(node, "CCXConstraintsCreateRigidBody");
-  node = model->addNode("CCX Tie", root_node);
+  node = model->addNode("Tie", root_node);
   model->setNodeMarker(node, "CCXConstraintsCreateTie");
-  // add new Node between FEA/Modify and FEAConstraintModify
-  root_node = model->getNode("FEA/Modify");
-  node = model->addNode("Constraints", root_node);
-  model->setNodeMarker(node, "FEAConstraintModifyNavigation");
-  // set new Parent to FEAConstraintModify and remove from old
-  node = model->getMarkedNode("FEAConstraintModify");
-  root_node->removeChild(root_node->getChildIndex(node));
-  root_node = model->getMarkedNode("FEAConstraintModifyNavigation");
-  node->setParent(root_node);
-  root_node->insertChild(root_node->childCount()+1,node);
-  NodeIconPointer = node->getIcon();
-  root_node->setIcon(NodeIconPointer);
-  // add Constraint Nodes
-  root_node = model->getMarkedNode("FEAConstraintModifyNavigation");
-  node = model->addNode("CCX Rigid Body", root_node);
+  root_node = model->getMarkedNode("CCXConstraintsModify");
+  node = model->addNode("Rigid Body", root_node);
   model->setNodeMarker(node, "CCXConstraintsModifyRigidBody");
-  node = model->addNode("CCX Tie", root_node);
+  node = model->addNode("Tie", root_node);
   model->setNodeMarker(node, "CCXConstraintsModifyTie");
-  root_node = model->getNode("FEA/Delete");
-  node = model->addNode("CCX Delete", root_node);
-  model->setNodeMarker(node, "FEADeleteNavigation");
-  root_node = model->getMarkedNode("FEADeleteNavigation");
-  node = model->addNode("Delete Constraint", root_node);
+  root_node = model->getMarkedNode("CCXConstraintsDelete");
+  node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXConstraintsDelete");
 
   //##############################
   // add SurfaceInteractions Nodes
-  root_node = model->getNode("FEA/Create");
-  node = model->addNode("CCX Surface Interactions", root_node);
+  root_node = model->getMarkedNode("CCX");
+  node = model->addNode("Surface Interactions", root_node);
+  model->setNodeMarker(node, "CCXSurfaceInteractions");
+  root_node = model->getMarkedNode("CCXSurfaceInteractions");
+  node = model->addNode("Create", root_node);
   model->setNodeMarker(node, "CCXSurfaceInteractionsCreate");
-  root_node = model->getNode("FEA/Modify");
-  node = model->addNode("CCX Surface Interactions", root_node);
+  node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXSurfaceInteractionsModify");
-  root_node = model->getMarkedNode("FEADeleteNavigation");
-  node = model->addNode("Delete Surface Interaction", root_node);
+  node = model->addNode("Delete", root_node);
+  model->setNodeMarker(node, "CCXSurfaceInteractionsDelete");
+
+  root_node = model->getMarkedNode("CCXSurfaceInteractionsCreate");
+  node = model->addNode("Create", root_node);
+  model->setNodeMarker(node, "CCXSurfaceInteractionsCreate");
+  root_node = model->getMarkedNode("CCXSurfaceInteractionsModify");
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXSurfaceInteractionsModify");
+  root_node = model->getMarkedNode("CCXSurfaceInteractionsDelete");
+  node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXSurfaceInteractionsDelete");
   
   //##############################
   // add ContactPairs Nodes
-  // add new Node between FEA/Create and FEAContactPairCreate
-  root_node = model->getNode("FEA/Create");
+  root_node = model->getNode("CCX");
   node = model->addNode("Contact Pairs", root_node);
-  model->setNodeMarker(node, "FEAContactPairCreateNavigation");
-  // set new Parent to FEAContactPairCreate and remove from old
-  node = model->getMarkedNode("FEAContactPairCreate");
-  root_node->removeChild(root_node->getChildIndex(node));
-  root_node = model->getMarkedNode("FEAContactPairCreateNavigation");
-  node->setParent(root_node);
-  root_node->insertChild(root_node->childCount()+1,node);
-  NodeIconPointer = node->getIcon();
-  root_node->setIcon(NodeIconPointer);
-  // add Constraint Nodes
-  root_node = model->getMarkedNode("FEAContactPairCreateNavigation");
-  node = model->addNode("CCX Contact Pairs", root_node);
+  model->setNodeMarker(node, "CCXContactPairs");
+  root_node = model->getMarkedNode("CCXContactPairs");
+  node = model->addNode("Create", root_node);
   model->setNodeMarker(node, "CCXContactPairsCreate");
-  // add new Node between FEA/Modify and FEAContactPairModify
-  root_node = model->getNode("FEA/Modify");
-  node = model->addNode("Contact Pairs", root_node);
-  model->setNodeMarker(node, "FEAContactPairModifyNavigation");
-  // set new Parent to FEAContactPairModify and remove from old
-  node = model->getMarkedNode("FEAContactPairModify");
-  root_node->removeChild(root_node->getChildIndex(node));
-  root_node = model->getMarkedNode("FEAContactPairModifyNavigation");
-  node->setParent(root_node);
-  root_node->insertChild(root_node->childCount()+1,node);
-  NodeIconPointer = node->getIcon();
-  root_node->setIcon(NodeIconPointer);
-  // add Constraint Nodes
-  root_node = model->getMarkedNode("FEAContactPairModifyNavigation");
-  node = model->addNode("CCX Contact Pairs", root_node);
+  node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXContactPairsModify");
-  root_node = model->getMarkedNode("FEADeleteNavigation");
-  node = model->addNode("Delete Contact Pair", root_node);
+  node = model->addNode("Delete", root_node);
+  model->setNodeMarker(node, "CCXContactPairsDelete");
+
+  root_node = model->getMarkedNode("CCXContactPairsCreate");
+  node = model->addNode("Create", root_node);
+  model->setNodeMarker(node, "CCXContactPairsCreate");
+  root_node = model->getMarkedNode("CCXContactPairsModify");
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXContactPairsModify");
+  root_node = model->getMarkedNode("CCXContactPairsDelete");
+  node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXContactPairsDelete");
 
   //##############################
   // add Amplitudes Nodes
-  root_node = model->getNode("FEA/Create");
-  node = model->addNode("CCX Amplitudes", root_node);
+  root_node = model->getNode("CCX");
+  node = model->addNode("Amplitudes", root_node);
+  model->setNodeMarker(node, "CCXAmplitudes");
+  root_node = model->getMarkedNode("CCXAmplitudes");
+  node = model->addNode("Create", root_node);
+  model->setNodeMarker(node, "CCXAmplitudesCreateNode");
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXAmplitudesModifyNode");
+  node = model->addNode("Delete", root_node);
+  model->setNodeMarker(node, "CCXAmplitudesDeleteNode");
+
+  root_node = model->getMarkedNode("CCXAmplitudesCreateNode");
+  node = model->addNode("Create", root_node);
   model->setNodeMarker(node, "CCXAmplitudesCreate");
-  root_node = model->getNode("FEA/Modify");
-  node = model->addNode("CCX Amplitudes", root_node);
+  root_node = model->getMarkedNode("CCXAmplitudesModifyNode");
+  node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXAmplitudesModify");
-  root_node = model->getMarkedNode("FEADeleteNavigation");
-  node = model->addNode("Delete Amplitude", root_node);
+  root_node = model->getMarkedNode("CCXAmplitudesDeleteNode");
+  node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXAmplitudesDelete");
 
   //##############################
   // add LoadsForces Nodes
-  // add new Node between FEA/Modify and FEAForceModify
-  root_node = model->getNode("FEA/Modify");
+  root_node = model->getNode("CCX");
   node = model->addNode("Force", root_node);
-  model->setNodeMarker(node, "FEAForceModifyNavigation");
-  node = model->getMarkedNode("FEAForceModify");
-  root_node->removeChild(root_node->getChildIndex(node));
-  root_node = model->getMarkedNode("FEAForceModifyNavigation");
-  node->setParent(root_node);
-  root_node->insertChild(root_node->childCount()+1,node);
-  NodeIconPointer = node->getIcon();
-  root_node->setIcon(NodeIconPointer);
-  root_node = model->getMarkedNode("FEAForceModifyNavigation");
-  node = model->addNode("CCX Force", root_node);
+  model->setNodeMarker(node, "CCXLoadsForces");
+  root_node = model->getMarkedNode("CCXLoadsForces");
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXLoadsForcesModifyNode");
+
+  root_node = model->getMarkedNode("CCXLoadsForcesModifyNode");
+  node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXLoadsForcesModify");
 
   //##############################
   // add LoadsPressures Nodes
-  // add new Node between FEA/Modify and FEAPressureModify
-  root_node = model->getNode("FEA/Modify");
+  root_node = model->getNode("CCX");
   node = model->addNode("Pressure", root_node);
-  model->setNodeMarker(node, "FEAPressureModifyNavigation");
-  node = model->getMarkedNode("FEAPressureModify");
-  root_node->removeChild(root_node->getChildIndex(node));
-  root_node = model->getMarkedNode("FEAPressureModifyNavigation");
-  node->setParent(root_node);
-  root_node->insertChild(root_node->childCount()+1,node);
-  NodeIconPointer = node->getIcon();
-  root_node->setIcon(NodeIconPointer);
-  root_node = model->getMarkedNode("FEAPressureModifyNavigation");
-  node = model->addNode("CCX Pressure", root_node);
+  model->setNodeMarker(node, "CCXLoadsPressures");
+  root_node = model->getMarkedNode("CCXLoadsPressures");
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXLoadsPressuresModifyNode");
+
+  root_node = model->getMarkedNode("CCXLoadsPressuresModifyNode");
+  node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXLoadsPressuresModify");
 
   //##############################
   // add BCsDisplacements Nodes
-  // add new Node between FEA/Modify and FEADisplacementModify
-  root_node = model->getNode("FEA/Modify");
+  root_node = model->getNode("CCX");
   node = model->addNode("Displacement", root_node);
-  model->setNodeMarker(node, "FEADisplacementModifyNavigation");
-  node = model->getMarkedNode("FEADisplacementModify");
-  root_node->removeChild(root_node->getChildIndex(node));
-  root_node = model->getMarkedNode("FEADisplacementModifyNavigation");
-  node->setParent(root_node);
-  root_node->insertChild(root_node->childCount()+1,node);
-  NodeIconPointer = node->getIcon();
-  root_node->setIcon(NodeIconPointer);
-  root_node = model->getMarkedNode("FEADisplacementModifyNavigation");
-  node = model->addNode("CCX Displacement", root_node);
+  model->setNodeMarker(node, "CCXBCsDisplacements");
+  root_node = model->getMarkedNode("CCXBCsDisplacements");
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXBCsDisplacementsModifyNode");
+
+  root_node = model->getMarkedNode("CCXBCsDisplacementsModifyNode");
+  node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXBCsDisplacementsModify");
 
   //##############################
   // add BCsTemperatures Nodes
-  // add new Node between FEA/Modify and FEADTemperatureModify
-  root_node = model->getNode("FEA/Modify");
+  root_node = model->getNode("CCX");
   node = model->addNode("Temperature", root_node);
-  model->setNodeMarker(node, "FEATemperatureModifyNavigation");
-  node = model->getMarkedNode("FEATemperatureModify");
-  root_node->removeChild(root_node->getChildIndex(node));
-  root_node = model->getMarkedNode("FEATemperatureModifyNavigation");
-  node->setParent(root_node);
-  root_node->insertChild(root_node->childCount()+1,node);
-  NodeIconPointer = node->getIcon();
-  root_node->setIcon(NodeIconPointer);
-  root_node = model->getMarkedNode("FEATemperatureModifyNavigation");
-  node = model->addNode("CCX Temperature", root_node);
+  model->setNodeMarker(node, "CCXBCsTemperatures");
+  root_node = model->getMarkedNode("CCXBCsTemperatures");
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXBCsTemperaturesModifyNode");
+
+  root_node = model->getMarkedNode("CCXBCsTemperaturesModifyNode");
+  node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXBCsTemperaturesModify");
 
   //##############################
-  // add History Outputs Nodes
-  root_node = model->addNode("CCX", model->getRoot());
-  root_node->setTitle("CCX");
-  model->setNodeMarker(root_node, "CCX");  
+  // add History Outputs Nodes 
   root_node = model->getMarkedNode("CCX");
   node = model->addNode("History Outputs", root_node);
   model->setNodeMarker(node, "CCXHistoryOutputs");

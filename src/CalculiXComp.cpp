@@ -1,15 +1,21 @@
 #include "CalculiXComp.hpp"
 
+#include "Claro.hpp"
 #include "Broker.hpp"
 #include "ComponentInfo.hpp"
 #include "ExportManager.hpp"
 #include "MenuManager.hpp"
 #include "Observer.hpp"
+#include "OptionsPanel.hpp"
+
 #include "cmdPanelManager.hpp"
 #include "CCXDockWindowModelTree.hpp"
 #include "ToolbarManager.hpp"
 #include "loadUserOptions.hpp"
 #include "ConfigFile.hpp"
+#include "UserOptionsPanel.hpp"
+#include "iostream"
+
 
 // Default constructor. Remember to include the component name (should match
 // the module name in mycomp.i).
@@ -54,6 +60,7 @@ void CalculiXComp::start_up(int withGUI)
     setup_CCXDockWindowModelTree(); // command panels has to be setup before dockwindow
     add_exports();
     restore_settings();
+    load_options();
     boolwithGUI = true;
   }
 
@@ -69,6 +76,7 @@ void CalculiXComp::clean_up()
   cleanup_exports();
   cleanup_observers();
   save_settings();
+  unload_options();
   // Let the framework know you are done.
   clean_up_complete();
 }
@@ -215,4 +223,26 @@ void CalculiXComp::save_settings()
   config.write_num_entry("SolverThreads", ccx_uo.mSolverThreads);
   config.write_entry("PathCGX", ccx_uo.mPathCGX);
   config.write_entry("PathParaView", ccx_uo.mPathParaView);
+}
+
+void CalculiXComp::load_options()
+{
+  if(Claro::instance())
+  {
+    mUserOptionsPanel = new UserOptionsPanel();
+    OptionsPanel *options = Claro::instance()->options();
+    options->add_panel("CalculiX", mUserOptionsPanel);
+    QObject::connect(options, SIGNAL(refreshSettings()),mUserOptionsPanel,  SLOT(refresh_settings()));
+    QObject::connect(options, SIGNAL(saveSettings()),mUserOptionsPanel,  SLOT(save_settings()));
+  }
+}
+
+void CalculiXComp::unload_options()
+{
+  if(Claro::instance())
+  {
+    OptionsPanel *options = Claro::instance()->options();
+    options->remove_panel("CalculiX");
+    delete mUserOptionsPanel;
+  }
 }

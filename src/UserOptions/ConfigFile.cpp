@@ -27,7 +27,10 @@ void ConfigFile::read_entry(std::string option, QString &value)
             if (line.find(option) != std::string::npos)
             {
                 //std::cout << line.substr(option.length()+1) << "\n";
-                value = QString::fromStdString(line.substr(option.length()+1));
+                if (line.substr(option.length(),1)=="=")
+                {
+                    value = QString::fromStdString(line.substr(option.length()+1));
+                }
             }
         }
         input_file.close();
@@ -44,8 +47,11 @@ void ConfigFile::read_num_entry(std::string option, int &value)
         {
             if (line.find(option) != std::string::npos)
             {
+                if (line.substr(option.length(),1)=="=")
+                {
+                    value = std::stoi(line.substr(option.length()+1));
+                }
                 //std::cout << line.substr(option.length()+1) << "\n";
-                value = std::stoi(line.substr(option.length()+1));
             }
         }
         input_file.close();
