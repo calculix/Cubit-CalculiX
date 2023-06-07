@@ -430,6 +430,26 @@ bool CalculiXCoreInterface::check_jobs()
   return ccx_core.check_jobs();
 }
 
+bool CalculiXCoreInterface::wait_job(int job_id)
+{
+  return ccx_core.wait_job(job_id);
+}
+
+bool CalculiXCoreInterface::result_ccx2paraview_job(int job_id)
+{
+  return ccx_core.result_ccx2paraview_job(job_id);
+}
+
+bool CalculiXCoreInterface::result_cgx_job(int job_id)
+{
+  return ccx_core.result_cgx_job(job_id);
+}
+
+bool CalculiXCoreInterface::result_paraview_job(int job_id)
+{
+  return ccx_core.result_paraview_job(job_id);
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_blocks_tree_data()
 { 
   return ccx_core.get_blocks_tree_data();

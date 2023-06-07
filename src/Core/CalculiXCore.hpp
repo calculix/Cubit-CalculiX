@@ -127,6 +127,10 @@ public:
   bool delete_job(int job_id); // delete job
   bool run_job(int job_id); // runs job
   bool check_jobs(); // checks for changes of job processes
+  bool wait_job(int job_id); // runs job
+  bool result_ccx2paraview_job(int job_id); // converts the result with ccx2paraview
+  bool result_cgx_job(int job_id); // opens the results with cgx
+  bool result_paraview_job(int job_id); // opens the results with paraview
   std::vector<std::vector<std::string>> get_blocks_tree_data(); // gets the data from core blocks to build the tree
   std::vector<std::vector<std::string>> get_nodeset_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_sideset_tree_data(); // gets the data from core to build the tree

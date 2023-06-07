@@ -1510,6 +1510,26 @@ bool CalculiXCore::check_jobs()
   return jobs->check_jobs();
 }
 
+bool CalculiXCore::wait_job(int job_id)
+{
+  return jobs->wait_job(job_id);
+}
+
+bool CalculiXCore::result_ccx2paraview_job(int job_id)
+{
+  return jobs->result_ccx2paraview_job(job_id);
+}
+
+bool CalculiXCore::result_cgx_job(int job_id)
+{
+  return jobs->result_cgx_job(job_id);
+}
+
+bool CalculiXCore::result_paraview_job(int job_id)
+{
+  return jobs->result_paraview_job(job_id);
+}
+
 std::string CalculiXCore::get_material_export_data() // gets the export data from materials core
 {
   return mat->get_material_export();

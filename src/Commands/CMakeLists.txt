@@ -167,4 +167,12 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxJobDeleteCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxRunJobCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxRunJobCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxWaitJobCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxWaitJobCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxResultccx2paraviewJobCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxResultccx2paraviewJobCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxResultCGXJobCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxResultCGXJobCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxResultParaViewJobCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxResultParaViewJobCommand.hpp
     PARENT_SCOPE)

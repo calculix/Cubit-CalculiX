@@ -212,6 +212,8 @@ void CalculiXComp::restore_settings()
   ccx_uo.mPathCGXName = "Path to CGX";
   config.read_entry("PathParaView", ccx_uo.mPathParaView);
   ccx_uo.mPathParaViewName = "Path to ParaView";
+  config.read_entry("Pathccx2paraview", ccx_uo.mPathccx2paraview);
+  ccx_uo.mPathccx2paraviewName = "Path to ccx2paraview";
 }
 
 void CalculiXComp::save_settings()
@@ -223,6 +225,7 @@ void CalculiXComp::save_settings()
   config.write_num_entry("SolverThreads", ccx_uo.mSolverThreads);
   config.write_entry("PathCGX", ccx_uo.mPathCGX);
   config.write_entry("PathParaView", ccx_uo.mPathParaView);
+  config.write_entry("Pathccx2paraview", ccx_uo.mPathccx2paraview);
 }
 
 void CalculiXComp::load_options()

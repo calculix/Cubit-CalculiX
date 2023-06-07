@@ -82,6 +82,10 @@
 #include "ccxJobModifyCommand.hpp"
 #include "ccxJobDeleteCommand.hpp"
 #include "ccxRunJobCommand.hpp"
+#include "ccxWaitJobCommand.hpp"
+#include "ccxResultccx2paraviewJobCommand.hpp"
+#include "ccxResultCGXJobCommand.hpp"
+#include "ccxResultParaViewJobCommand.hpp"
 
 //! This macro is required to identify this as a valid Cubit plugin. The plugin
 //! will NOT be loaded if this macro is not present.
@@ -179,6 +183,10 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxJobModifyCommand");
   keys.push_back("ccxJobDeleteCommand");
   keys.push_back("ccxRunJobCommand");
+  keys.push_back("ccxWaitJobCommand");
+  keys.push_back("ccxResultccx2paraviewJobCommand");
+  keys.push_back("ccxResultCGXJobCommand");
+  keys.push_back("ccxResultParaViewJobCommand");
 
   return keys;
 }
@@ -436,6 +444,18 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxRunJobCommand")
     return new ccxRunJobCommand();
+  
+  else if(key == "ccxWaitJobCommand")
+    return new ccxWaitJobCommand();
+
+  else if(key == "ccxResultccx2paraviewJobCommand")
+    return new ccxResultccx2paraviewJobCommand();
+  
+  else if(key == "ccxResultCGXJobCommand")
+    return new ccxResultCGXJobCommand();
+
+  else if(key == "ccxResultParaViewJobCommand")
+    return new ccxResultParaViewJobCommand();
 
   return NULL;
 }

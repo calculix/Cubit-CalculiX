@@ -188,6 +188,32 @@ bool CoreJobs::run_job(int job_id)
   }
 }
 
+bool CoreJobs::wait_job(int job_id)
+{  
+  std::string log;
+  CubitString output;
+  
+  int jobs_data_id=-1;
+  int CubitProcessHandler_data_id;
+  
+  jobs_data_id = get_jobs_data_id_from_job_id(job_id);
+
+  if (jobs_data_id != -1)
+  {
+    CubitProcessHandler_data_id = get_CubitProcessHandler_data_id_from_process_id(std::stoi(jobs_data[jobs_data_id][4]));
+    if (CubitProcessHandler_data_id != -1)
+    {
+      log = " Waiting for Job " + jobs_data[jobs_data_id][2] + " to Exit \n";
+      PRINT_INFO("%s", log.c_str());
+      CubitProcessHandler[CubitProcessHandler_data_id].wait();
+      log = " Job Finished with Exit Code " + std::to_string(CubitProcessHandler[CubitProcessHandler_data_id].exit_code()) + " \n";
+      PRINT_INFO("%s", log.c_str());
+    }
+  }
+
+  return true;
+}
+
 bool CoreJobs::check_jobs()
 {
   std::string log;
@@ -219,6 +245,21 @@ bool CoreJobs::check_jobs()
     }
   }
 
+  return true;
+}
+
+bool CoreJobs::result_ccx2paraview_job(int job_id)
+{
+  return true;
+}
+
+bool CoreJobs::result_cgx_job(int job_id)
+{
+  return true;
+}
+
+bool CoreJobs::result_paraview_job(int job_id)
+{
   return true;
 }
 

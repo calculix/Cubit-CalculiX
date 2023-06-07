@@ -40,19 +40,23 @@ private:
   QVBoxLayout* VBoxLayout_2;
   QVBoxLayout* VBoxLayout_3;
   QVBoxLayout* VBoxLayout_4;
+  QVBoxLayout* VBoxLayout_5;
   QSpacerItem* vertical_spacer;
   QHBoxLayout* HBoxLayout_1;
   QHBoxLayout* HBoxLayout_2;
   QHBoxLayout* HBoxLayout_3;
   QHBoxLayout* HBoxLayout_4;
+  QHBoxLayout* HBoxLayout_5;
   QLabel* label_1;
   QLabel* label_2;
   QLabel* label_3;
   QLabel* label_4;
+  QLabel* label_5;
   QLineEdit* lineEdit_1;
   QLineEdit* lineEdit_2;
   QLineEdit* lineEdit_3;
   QLineEdit* lineEdit_4;
+  QLineEdit* lineEdit_5;
 };
 
 #endif // USEROPTIONSPANEL_HPP
