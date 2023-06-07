@@ -152,6 +152,3 @@ ccx create job name jobname2 filepath "/home/user/test_achse.inp"
 
 ccx run job 1
 ccx run job 2
-
-
-

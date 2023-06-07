@@ -7,6 +7,9 @@
 #include "CubitProcess.hpp"
 #include "CubitString.hpp"
 
+#include <stdlib.h>
+#include <unistd.h>
+#include "loadUserOptions.hpp"
 
 CoreJobs::CoreJobs()
 {}
@@ -119,6 +122,15 @@ bool CoreJobs::run_job(int job_id)
   CubitString output;
   std::vector<CubitString> arguments(3);
 
+  if (access(ccx_uo.mPathSolver.toStdString().c_str(), X_OK) == 0) 
+  {
+    setenv("OMP_NUM_THREADS",std::to_string(ccx_uo.mSolverThreads).c_str(),1);
+  }else{
+    log = "CCX Solver not found! checked path \"" + ccx_uo.mPathSolver.toStdString() + "\" \n";
+    PRINT_INFO("%s", log.c_str());    
+    return false;
+  }
+
   int job_data_id;
   job_data_id = get_jobs_data_id_from_job_id(job_id);
   if (job_data_id != -1)
@@ -157,7 +169,7 @@ bool CoreJobs::run_job(int job_id)
     //programm = "/bin/gedit";
     //arguments[0] = filepath;
     //arguments[1] = NULL;
-    programm = "/home/user/Downloads/ccx_2.20";
+    programm = ccx_uo.mPathSolver.toStdString().c_str();
     //working_dir = "/home/user/Downloads/";
     //arguments[0] = programm;
     arguments[0] = "-i";
@@ -250,16 +262,44 @@ bool CoreJobs::check_jobs()
 
 bool CoreJobs::result_ccx2paraview_job(int job_id)
 {
+  std::string log;
+
+  if (access(ccx_uo.mPathccx2paraview.toStdString().c_str(), F_OK) == 0) 
+  {
+  }else{
+    log = "ccx2paraview not found! checked path \"" + ccx_uo.mPathccx2paraview.toStdString() + "\" \n";
+    PRINT_INFO("%s", log.c_str());    
+    return false;
+  }
+
   return true;
 }
 
 bool CoreJobs::result_cgx_job(int job_id)
 {
+  std::string log;
+
+  if (access(ccx_uo.mPathCGX.toStdString().c_str(), X_OK) == 0) 
+  {
+  }else{
+    log = "CGX not found! checked path \"" + ccx_uo.mPathCGX.toStdString() + "\" \n";
+    PRINT_INFO("%s", log.c_str());    
+    return false;
+  }
   return true;
 }
 
 bool CoreJobs::result_paraview_job(int job_id)
 {
+  std::string log;
+
+  if (access(ccx_uo.mPathParaView.toStdString().c_str(), X_OK) == 0) 
+  {
+  }else{
+    log = "ParaView not found! checked path \"" + ccx_uo.mPathParaView.toStdString() + "\" \n";
+    PRINT_INFO("%s", log.c_str());    
+    return false;
+  }
   return true;
 }
 
