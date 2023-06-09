@@ -414,8 +414,10 @@ bool CoreJobs::result_ccx2paraview_job(int job_id)
     if (std::stoi(jobs_data[job_data_id][3])>1)
     {
       filepath = jobs_data[job_data_id][1] + ".frd";
-      cmd.push_back("import os");
-      cmd.push_back("os.system(\"python3 " + ccx_uo.mPathccx2paraview.toStdString() + " " +  filepath + " vtk\")");
+      cmd.push_back("import subprocess");
+      cmd.push_back("print('Converting Results...')");
+      cmd.push_back("returned_value = subprocess.call(\"python3 " + ccx_uo.mPathccx2paraview.toStdString() + " " +  filepath + " vtk\",shell=True)");
+      cmd.push_back("if returned_value==0: print('Finished')\nelse:print('Error occurred!')");
       PyBroker::run_script(cmd);
     }  
   }
@@ -486,8 +488,18 @@ bool CoreJobs::result_cgx_job(int job_id)
 }
 
 bool CoreJobs::result_paraview_job(int job_id)
-{
+{  
+  std::string filepath;
+  std::string arg;
   std::string log;
+  std::string command;
+  pid_t process_id;
+  int CubitProcessHandler_data_id;
+  CubitString programm;
+  CubitString working_dir;
+  CubitString temp;
+  CubitString output;
+  std::vector<CubitString> arguments(3);
 
   if (access(ccx_uo.mPathParaView.toStdString().c_str(), X_OK) == 0) 
   {
@@ -496,7 +508,51 @@ bool CoreJobs::result_paraview_job(int job_id)
     PRINT_INFO("%s", log.c_str());    
     return false;
   }
-  return true;
+
+  int job_data_id;
+  job_data_id = get_jobs_data_id_from_job_id(job_id);
+  if (job_data_id != -1)
+  {    
+    if (std::stoi(jobs_data[job_data_id][3])>1)
+    {
+      CubitProcess newCubitProcess;
+      CubitProcessHandler.push_back(newCubitProcess);
+      CubitProcessHandler_data_id = CubitProcessHandler.size()-1;
+
+      filepath = jobs_data[job_data_id][1] + ".vtk";
+      if (access(filepath.c_str(), W_OK) != 0) 
+      {
+        filepath = jobs_data[job_data_id][1] + "...vtk";
+      }
+
+      arg = "--data=" + filepath;
+      programm = ccx_uo.mPathParaView.toStdString().c_str();
+      arguments[0] = arg;
+      arguments[1] = NULL;
+      
+      CubitProcessHandler[CubitProcessHandler_data_id].set_program(programm);
+      CubitProcessHandler[CubitProcessHandler_data_id].set_arguments(arguments);
+      CubitProcessHandler[CubitProcessHandler_data_id].set_channel_mode(CubitProcess::ChannelMode::MergedChannels);
+      CubitProcessHandler[CubitProcessHandler_data_id].find_executable(programm);
+      CubitProcessHandler[CubitProcessHandler_data_id].start();
+      process_id = CubitProcessHandler[CubitProcessHandler_data_id].pid();
+      if (process_id!=0)
+      { 
+        log = "Opening Results with Paraview for Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + "\n";
+        log.append(filepath +  " \n");
+        log.append(arg +  " \n");
+        PRINT_INFO("%s", log.c_str());
+        return true;
+      }
+    } else {
+      log = "Job has not been finished or killed. \n";
+      PRINT_INFO("%s", log.c_str());
+      return false;
+    }
+  } else {
+    return false;
+  }
+  return true;  
 }
 
 int CoreJobs::get_jobs_data_id_from_job_id(int job_id)
