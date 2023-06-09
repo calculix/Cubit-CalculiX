@@ -37,7 +37,8 @@
         "type_traits": "cpp",
         "utility": "cpp",
         "typeinfo": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "csignal": "cpp"
     },
     "cmake.configureOnOpen": false
 }

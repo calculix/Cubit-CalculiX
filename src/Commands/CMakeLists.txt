@@ -175,4 +175,6 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxResultCGXJobCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxResultParaViewJobCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxResultParaViewJobCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxKillJobCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxKillJobCommand.hpp
     PARENT_SCOPE)

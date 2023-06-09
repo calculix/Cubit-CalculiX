@@ -1510,9 +1510,19 @@ bool CalculiXCore::check_jobs()
   return jobs->check_jobs();
 }
 
+bool CalculiXCore::check_results()
+{
+  return jobs->check_results();
+}
+
 bool CalculiXCore::wait_job(int job_id)
 {
   return jobs->wait_job(job_id);
+}
+
+bool CalculiXCore::kill_job(int job_id)
+{
+  return jobs->kill_job(job_id);
 }
 
 bool CalculiXCore::result_ccx2paraview_job(int job_id)
