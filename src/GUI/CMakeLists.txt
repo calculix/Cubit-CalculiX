@@ -189,6 +189,10 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/JobsDeletePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/JobsActionsPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/JobsActionsPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/JobsMonitor.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/JobsMonitor.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/GUITimer.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/GUITimer.cpp
     )
 
 set(UI

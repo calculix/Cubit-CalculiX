@@ -460,6 +460,11 @@ bool CalculiXCoreInterface::result_paraview_job(int job_id)
   return ccx_core.result_paraview_job(job_id);
 }
 
+std::vector<std::string> CalculiXCoreInterface::get_job_data(int job_id)
+{
+  return ccx_core.get_job_data(job_id);
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_blocks_tree_data()
 { 
   return ccx_core.get_blocks_tree_data();

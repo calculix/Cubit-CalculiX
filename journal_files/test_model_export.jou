@@ -151,6 +151,7 @@ ccx create job name jobname1
 ccx create job name jobname2 filepath "/home/user/test_achse.inp"
 
 ccx run job 1
-ccx run job 2
+#ccx run job 2
 #ccx result ccx2paraview job 2
+
 

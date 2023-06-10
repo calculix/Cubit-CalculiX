@@ -16,7 +16,6 @@
 #include "UserOptionsPanel.hpp"
 #include "iostream"
 
-
 // Default constructor. Remember to include the component name (should match
 // the module name in mycomp.i).
 CalculiXComp::CalculiXComp() :

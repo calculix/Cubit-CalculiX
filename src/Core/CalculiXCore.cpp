@@ -1540,6 +1540,11 @@ bool CalculiXCore::result_paraview_job(int job_id)
   return jobs->result_paraview_job(job_id);
 }
 
+std::vector<std::string> CalculiXCore::get_job_data(int job_id)
+{
+  return jobs->get_job_data(job_id);
+}
+
 std::string CalculiXCore::get_material_export_data() // gets the export data from materials core
 {
   return mat->get_material_export();

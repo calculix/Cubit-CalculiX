@@ -30,12 +30,17 @@
 #include "StepsFieldOutputsTree.hpp"
 #include "StepsManagement.hpp"
 #include "JobsTree.hpp"
+#include "JobsMonitor.hpp"
 
 #include "CalculiXCoreInterface.hpp"
 
 #include "Claro.hpp"
+#include "Broker.hpp"
+#include "ScriptTranslator.hpp"
 #include "NavigationModel.hpp"
 #include "NavigationNode.hpp"
+#include <QString>
+#include <QStringList>
 
 #include "MyCmdWidgetFactory.hpp"
 #include "CommandButtonPanel.hpp"
@@ -49,6 +54,7 @@ ModelTree::ModelTree(QDockWidget* parent):QTreeWidget(parent)
   nav_model = gui->navigation_model();
   myMaterialManagement = new MaterialManagement();
   myStepsManagement = new StepsManagement();
+  myJobsMonitor = new JobsMonitor();
 
   /*
   if (nav_model)
@@ -898,6 +904,18 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action3("Delete Job",this);
         connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
         contextMenu.addAction(&action3);
+        QAction action4("Job Monitor",this);
+        connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
+        contextMenu.addAction(&action4);
+        QAction action5("Result CGX",this);
+        connect(&action5, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
+        contextMenu.addAction(&action5);
+        QAction action6("ccx2paraview",this);
+        connect(&action6, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
+        contextMenu.addAction(&action6);
+        QAction action7("Result ParaView",this);
+        connect(&action7, SIGNAL(triggered()),this,SLOT(ContextMenuAction7()));
+        contextMenu.addAction(&action7);
 
         contextMenu.exec(mapToGlobal(pos));
 
@@ -1171,7 +1189,9 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
       myStepsManagement->show();
     } else if (JobsTreeItem = dynamic_cast<JobsTree*>(item->parent()))
     {
-      this->setWidgetInCmdPanelMarker("CCXJobsModify");
+      myJobsMonitor->show();
+      myJobsMonitor->setJob(std::stoi(item->text(1).toStdString()));
+      myJobsMonitor->update();
     }
   }
 }
@@ -1524,7 +1544,57 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==2) //Action3
       {
         this->setWidgetInCmdPanelMarker("CCXJobsDelete");
-      }  
+      }else if (contextMenuAction[0][1]==3) //Action4
+      {
+        myJobsMonitor->show();
+        myJobsMonitor->setJob(contextMenuAction[0][2]);
+        myJobsMonitor->update();
+      }else if (contextMenuAction[0][1]==4) //Action5
+      {
+        QStringList commands;
+        QString command = "";
+
+        ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");
+        if(cubit_translator)
+        {
+          command = "ccx result cgx job " + QString::number(contextMenuAction[0][2]);
+          commands.push_back(command);
+          for(int i = 0; i < commands.size(); i++)
+            cubit_translator->decode(commands[i]);
+          // Send the translated commands
+          Claro::instance()->send_gui_commands(commands);
+        }
+      }else if (contextMenuAction[0][1]==5) //Action6
+      {
+        QStringList commands;
+        QString command = "";
+
+        ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");
+        if(cubit_translator)
+        {
+          command = "ccx result ccx2paraview job " + QString::number(contextMenuAction[0][2]);
+          commands.push_back(command);
+          for(int i = 0; i < commands.size(); i++)
+            cubit_translator->decode(commands[i]);
+          // Send the translated commands
+          Claro::instance()->send_gui_commands(commands);
+        }
+      }else if (contextMenuAction[0][1]==6) //Action7
+      {
+        QStringList commands;
+        QString command = "";
+
+        ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");
+        if(cubit_translator)
+        {
+          command = "ccx result paraview job " + QString::number(contextMenuAction[0][2]);
+          commands.push_back(command);
+          for(int i = 0; i < commands.size(); i++)
+            cubit_translator->decode(commands[i]);
+          // Send the translated commands
+          Claro::instance()->send_gui_commands(commands);
+        }
+      }
     }
   }
   contextMenuAction[0][0]=-1;
@@ -1562,12 +1632,19 @@ void ModelTree::ContextMenuAction6(){
   this->execContextMenuAction();
 }
 
+void ModelTree::ContextMenuAction7(){
+  contextMenuAction[0][1]=6;
+  this->execContextMenuAction();
+}
+
 void ModelTree::update(){
   myMaterialManagement->update();
   myStepsManagement->update();
+  myJobsMonitor->update();
 }
 
 void ModelTree::clear(){
   myMaterialManagement->clear();
   myStepsManagement->clear();
+  myJobsMonitor->clear();
 }

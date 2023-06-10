@@ -41,6 +41,7 @@ class StepsHistoryOutputsTree;
 class StepsFieldOutputsTree;
 class StepsManagement;
 class JobsTree;
+class JobsMonitor;
 class QTreeWidgetItem;
 
 
@@ -64,6 +65,7 @@ public:
   CommandButtonPanel* cmdpanel;
   MaterialManagement* myMaterialManagement;
   StepsManagement* myStepsManagement;
+  JobsMonitor* myJobsMonitor;
   std::vector<std::vector<int>> contextMenuAction;
 
   void setWidgetInCmdPanelMarker(QString name); // set Widget in CommandPanel
@@ -80,6 +82,7 @@ public slots:
   void ContextMenuAction4();
   void ContextMenuAction5();
   void ContextMenuAction6();
+  void ContextMenuAction7();
   void ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column);
 };
 

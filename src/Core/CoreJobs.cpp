@@ -540,6 +540,19 @@ int CoreJobs::get_CubitProcessHandler_data_id_from_process_id(int process_id)
   return return_int;
 }
 
+std::vector<std::string> CoreJobs::get_job_data(int job_id)
+{
+  int job_data_id;
+  job_data_id = get_jobs_data_id_from_job_id(job_id);
+  if (job_data_id != -1)
+  {
+    return jobs_data[job_data_id];
+  }else{
+    std::vector<std::string> tmp;
+    return tmp;
+  }
+}
+
 std::string CoreJobs::print_data()
 {
   std::string str_return;

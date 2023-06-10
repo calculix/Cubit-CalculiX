@@ -19,4 +19,3 @@ PLUGIN_REGISTER_COMPONENTS
   // Add the component to the framework.
   Broker::instance()->register_component(new CalculiXComp());
 }
-
