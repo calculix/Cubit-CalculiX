@@ -29,6 +29,7 @@
 #include "StepsHistoryOutputsTree.hpp"
 #include "StepsFieldOutputsTree.hpp"
 #include "StepsManagement.hpp"
+#include "JobsTree.hpp"
 
 #include "CalculiXCoreInterface.hpp"
 
@@ -124,6 +125,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
     StepsBCsTemperaturesTree* StepsBCsTemperaturesTreeItem;
     StepsHistoryOutputsTree* StepsHistoryOutputsTreeItem;
     StepsFieldOutputsTree* StepsFieldOutputsTreeItem;
+    JobsTree* JobsTreeItem;
 
     if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item))
     {
@@ -425,6 +427,18 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 24;
+      }
+    }else if (JobsTreeItem = dynamic_cast<JobsTree*>(item))
+    {
+      if (JobsTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Job",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);      
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 25;
       }
     }else 
     {
@@ -872,6 +886,24 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenuAction[0][0] = 24;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
       }
+      else if (JobsTreeItem = dynamic_cast<JobsTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Job",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Modify Job",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+        QAction action3("Delete Job",this);
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 25;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+      }
     }
   }
 }
@@ -903,6 +935,7 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   StepsBCsTemperaturesTree* StepsBCsTemperaturesTreeItem;
   StepsHistoryOutputsTree* StepsHistoryOutputsTreeItem;
   StepsFieldOutputsTree* StepsFieldOutputsTreeItem;  
+  JobsTree* JobsTreeItem;
 
   if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item))
   {
@@ -1054,6 +1087,12 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     {
       myStepsManagement->show();
     }
+  }else if (JobsTreeItem = dynamic_cast<JobsTree*>(item))
+  {
+    if (JobsTreeItem->text(1).toStdString()=="")
+    {
+      this->setWidgetInCmdPanelMarker("CCXJobsCreate");
+    }
   } else {
     if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item->parent()))
     {
@@ -1130,6 +1169,9 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     } else if (StepsFieldOutputsTreeItem = dynamic_cast<StepsFieldOutputsTree*>(item->parent()))
     {
       myStepsManagement->show();
+    } else if (JobsTreeItem = dynamic_cast<JobsTree*>(item->parent()))
+    {
+      this->setWidgetInCmdPanelMarker("CCXJobsModify");
     }
   }
 }
@@ -1470,6 +1512,18 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==3) //Action4
       {
         myStepsManagement->show();
+      }  
+    }else if (contextMenuAction[0][0]==25) //JobsTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("CCXJobsCreate");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        this->setWidgetInCmdPanelMarker("CCXJobsModify");
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXJobsDelete");
       }  
     }
   }

@@ -181,6 +181,14 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/StepsDeletePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsManagement.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsManagement.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/JobsCreatePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/JobsCreatePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/JobsModifyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/JobsModifyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/JobsDeletePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/JobsDeletePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/JobsActionsPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/JobsActionsPanel.cpp
     )
 
 set(UI

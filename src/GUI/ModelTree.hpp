@@ -40,6 +40,7 @@ class StepsBCsTemperaturesTree;
 class StepsHistoryOutputsTree;
 class StepsFieldOutputsTree;
 class StepsManagement;
+class JobsTree;
 class QTreeWidgetItem;
 
 

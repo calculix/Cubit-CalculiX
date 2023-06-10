@@ -98,6 +98,10 @@ void cmdPanelManager::clear()
     my_markers.push_back("CCXStepsModifyCoupledTemperatureDisplacement");
     my_markers.push_back("CCXStepsModifyUncoupledTemperatureDisplacement");
     my_markers.push_back("CCXStepsDelete");
+    my_markers.push_back("CCXJobsCreate");
+    my_markers.push_back("CCXJobsModify");
+    my_markers.push_back("CCXJobsDelete");
+    my_markers.push_back("CCXJobsActions");
 
     // For each marker, we want to get the navigation node and assign the node
     // to use this factory to get widgets as needed.
@@ -426,6 +430,23 @@ void cmdPanelManager::initialize_from_code()
   model->setNodeMarker(node, "CCXStepsModifyCoupledTemperatureDisplacement");
   node = model->addNode("Uncoupled Temperature Displacement", root_node);
   model->setNodeMarker(node, "CCXStepsModifyUncoupledTemperatureDisplacement");
+
+  //##############################
+  // add Jobs Nodes
+  root_node = model->getMarkedNode("CCX");
+  node = model->addNode("Jobs", root_node);
+  node->setTitle("Jobs");
+  model->setNodeMarker(node, "CCXJobs");  
+
+  root_node = model->getMarkedNode("CCXJobs");
+  node = model->addNode("Create", root_node);
+  model->setNodeMarker(node, "CCXJobsCreate");
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXJobsModify");
+  node = model->addNode("Delete", root_node);
+  model->setNodeMarker(node, "CCXJobsDelete");
+  node = model->addNode("Actions", root_node);
+  model->setNodeMarker(node, "CCXJobsActions");
 }
 
 void cmdPanelManager::associate_panels_with_nodes()
@@ -489,6 +510,10 @@ void cmdPanelManager::associate_panels_with_nodes()
   my_markers.push_back("CCXStepsModifyCoupledTemperatureDisplacement");
   my_markers.push_back("CCXStepsModifyUncoupledTemperatureDisplacement");
   my_markers.push_back("CCXStepsDelete");
+  my_markers.push_back("CCXJobsCreate");
+  my_markers.push_back("CCXJobsModify");
+  my_markers.push_back("CCXJobsDelete");
+  my_markers.push_back("CCXJobsActions");
   // For each marker, we want to get the navigation node and assign the node
   // to use this factory to get widgets as needed.
   NavigationModel* model = Claro::instance()->navigation_model();

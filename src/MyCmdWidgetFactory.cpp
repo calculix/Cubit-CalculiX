@@ -64,6 +64,10 @@
 #include "StepsModifyCoupledTemperatureDisplacementPanel.hpp"
 #include "StepsModifyUncoupledTemperatureDisplacementPanel.hpp"
 #include "StepsDeletePanel.hpp"
+#include "JobsCreatePanel.hpp"
+#include "JobsModifyPanel.hpp"
+#include "JobsDeletePanel.hpp"
+#include "JobsActionsPanel.hpp"
 
 #include <QWidget>
 
@@ -260,6 +264,14 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
     return new StepsModifyUncoupledTemperatureDisplacementPanel();
   else if(name == "CCXStepsDelete")
     return new StepsDeletePanel();
+  else if(name == "CCXJobsCreate")
+    return new JobsCreatePanel();
+  else if(name == "CCXJobsModify")
+    return new JobsModifyPanel();
+  else if(name == "CCXJobsDelete")
+    return new JobsDeletePanel();
+  else if(name == "CCXJobsActions")
+    return new JobsActionsPanel();
   else
     return NULL;
 }
