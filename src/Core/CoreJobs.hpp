@@ -18,6 +18,7 @@ public:
   // jobs_data[0][3] status -1 no process, 1 process running, 2 process finished, 3 process killed, 4 process finished with errors
   // jobs_data[0][4] process id
   // jobs_data[0][5] Output
+  // jobs_data[0][6] converted with ccx2paraview -1 false, 1 true
 
   std::vector<CubitProcess> CubitProcessHandler;
 
@@ -35,7 +36,7 @@ public:
   bool wait_job(int job_id); // waits until the jobs exits
   bool kill_job(int job_id); // kill the jobs exits
   bool check_jobs(); // checks for changes of job processes
-  bool check_results(); // checks for changes of results processes
+  bool check_zombie(); // checks for zombie processes
   bool result_ccx2paraview_job(int job_id); // converts the result with ccx2paraview
   bool result_cgx_job(int job_id); // opens the results with cgx
   bool result_paraview_job(int job_id); // opens the results with paraview

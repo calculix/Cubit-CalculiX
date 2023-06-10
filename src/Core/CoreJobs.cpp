@@ -4,6 +4,7 @@
 #include "CubitMessage.hpp"
 
 #include "PyBroker.hpp"
+
 #include "CubitProcess.hpp"
 #include "CubitString.hpp"
 
@@ -94,7 +95,7 @@ bool CoreJobs::modify_job(int job_id, std::vector<std::string> options, std::vec
 
 bool CoreJobs::add_job(int job_id, std::string name, std::string filepath)
 {
-  std::vector<std::string> v = {std::to_string(job_id), name, filepath, "-1", "-1",""};      
+  std::vector<std::string> v = {std::to_string(job_id), name, filepath, "-1", "-1","","-1"};      
   jobs_data.push_back(v);
   return true;
 }
@@ -193,6 +194,7 @@ bool CoreJobs::run_job(int job_id)
     { 
       jobs_data[job_data_id][4] = std::to_string(process_id);
       jobs_data[job_data_id][3] = "1";
+      jobs_data[job_data_id][6] = "-1";
       /*
       log = " Path to executable ";
       log.append(working_dir.str() + temp.str() + "\n");
@@ -211,7 +213,7 @@ bool CoreJobs::wait_job(int job_id)
 {  
   std::string log;
   CubitString output;
-  int errorcode;
+  int status=-1;
   
   int jobs_data_id=-1;
   int CubitProcessHandler_data_id;
@@ -227,19 +229,22 @@ bool CoreJobs::wait_job(int job_id)
       
       log = " Waiting for Job " + jobs_data[jobs_data_id][2] + " to Exit \n";
       PRINT_INFO("%s", log.c_str());
-      
-      output = CubitProcessHandler[CubitProcessHandler_data_id].read_output_channel(-1);
-      if (output != "")
+          
+      while (0 == kill(std::stoi(jobs_data[jobs_data_id][4]),0))
       {
-        log = " Output " + output.str() + " \n";
-        PRINT_INFO("%s", log.c_str());
-        jobs_data[jobs_data_id][5] = jobs_data[jobs_data_id][5] + output.str();
-        output = "";
-      }      
+        output = CubitProcessHandler[CubitProcessHandler_data_id].read_output_channel(-1);
+        if (output != "")
+        {
+          log = " Output " + output.str() + " \n";
+          PRINT_INFO("%s", log.c_str());
+          jobs_data[jobs_data_id][5] = jobs_data[jobs_data_id][5] + output.str();
+          output = "";
+        }
+        waitpid(std::stoi(jobs_data[jobs_data_id][4]), &status,WNOHANG);      
+      }
 
-      CubitProcessHandler[CubitProcessHandler_data_id].wait();
-      errorcode = CubitProcessHandler[CubitProcessHandler_data_id].exit_code();
-      if (errorcode!=0)
+      //errorcode = CubitProcessHandler[CubitProcessHandler_data_id].exit_code();
+      if (status!=0)
       {
         log = "Job " + jobs_data[jobs_data_id][1] + " with ID " + jobs_data[jobs_data_id][0] + " exited with errors! \n";
         //log.append(" Exit Code " + std::to_string(errorcode) + " \n");
@@ -352,7 +357,7 @@ bool CoreJobs::check_jobs()
   return true;
 }
 
-bool CoreJobs::check_results()
+bool CoreJobs::check_zombie()
 {
   std::string log;
   CubitString output;
@@ -413,12 +418,17 @@ bool CoreJobs::result_ccx2paraview_job(int job_id)
   {
     if (std::stoi(jobs_data[job_data_id][3])>1)
     {
+      std::string shellstr;
+      shellstr = "rm " + jobs_data[job_data_id][1] + "*vtk";
+      system(shellstr.c_str());
+
       filepath = jobs_data[job_data_id][1] + ".frd";
       cmd.push_back("import subprocess");
-      cmd.push_back("print('Converting Results...')");
+      cmd.push_back("print('Converting Results... GUI may freeze. This can take some time.')");
       cmd.push_back("returned_value = subprocess.call(\"python3 " + ccx_uo.mPathccx2paraview.toStdString() + " " +  filepath + " vtk\",shell=True)");
       cmd.push_back("if returned_value==0: print('Finished')\nelse:print('Error occurred!')");
       PyBroker::run_script(cmd);
+      jobs_data[job_data_id][6] = "1";
     }  
   }
 
@@ -430,13 +440,6 @@ bool CoreJobs::result_cgx_job(int job_id)
   std::string filepath;
   std::string log;
   std::string command;
-  pid_t process_id;
-  int CubitProcessHandler_data_id;
-  CubitString programm;
-  CubitString working_dir;
-  CubitString temp;
-  CubitString output;
-  std::vector<CubitString> arguments(3);
 
   if (access(ccx_uo.mPathCGX.toStdString().c_str(), X_OK) == 0) 
   {
@@ -454,32 +457,13 @@ bool CoreJobs::result_cgx_job(int job_id)
     {
       filepath = jobs_data[job_data_id][1] + ".frd";
 
-      CubitProcess newCubitProcess;
-      CubitProcessHandler.push_back(newCubitProcess);
-      CubitProcessHandler_data_id = CubitProcessHandler.size()-1;
+      std::string shellstr;
+      shellstr = "nohup " + ccx_uo.mPathCGX.toStdString() + " " + filepath + " &";
+      system(shellstr.c_str());
 
-      programm = ccx_uo.mPathCGX.toStdString().c_str();
-      arguments[0] = filepath;
-      arguments[1] = NULL;
-      
-      CubitProcessHandler[CubitProcessHandler_data_id].set_program(programm);
-      CubitProcessHandler[CubitProcessHandler_data_id].set_arguments(arguments);
-      CubitProcessHandler[CubitProcessHandler_data_id].set_channel_mode(CubitProcess::ChannelMode::MergedChannels);
-      CubitProcessHandler[CubitProcessHandler_data_id].find_executable(programm);
-      //process_id = CubitProcessHandler.start(programm, arguments, false);
-      CubitProcessHandler[CubitProcessHandler_data_id].start();
-      process_id = CubitProcessHandler[CubitProcessHandler_data_id].pid();
-      if (process_id!=0)
-      { 
-        log = "Opening Results with CGX for Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + "\n";
-        log.append(filepath +  " \n");
-        PRINT_INFO("%s", log.c_str());
-        return true;
-      }
-    } else {
-      log = "Job has not been finished or killed. \n";
+      log = "Opening Results with CGX for Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + "\n";
+      //log.append(filepath +  " \n");
       PRINT_INFO("%s", log.c_str());
-      return false;
     }
   } else {
     return false;
@@ -490,16 +474,8 @@ bool CoreJobs::result_cgx_job(int job_id)
 bool CoreJobs::result_paraview_job(int job_id)
 {  
   std::string filepath;
-  std::string arg;
   std::string log;
   std::string command;
-  pid_t process_id;
-  int CubitProcessHandler_data_id;
-  CubitString programm;
-  CubitString working_dir;
-  CubitString temp;
-  CubitString output;
-  std::vector<CubitString> arguments(3);
 
   if (access(ccx_uo.mPathParaView.toStdString().c_str(), X_OK) == 0) 
   {
@@ -513,41 +489,22 @@ bool CoreJobs::result_paraview_job(int job_id)
   job_data_id = get_jobs_data_id_from_job_id(job_id);
   if (job_data_id != -1)
   {    
-    if (std::stoi(jobs_data[job_data_id][3])>1)
-    {
-      CubitProcess newCubitProcess;
-      CubitProcessHandler.push_back(newCubitProcess);
-      CubitProcessHandler_data_id = CubitProcessHandler.size()-1;
-
+    if ((std::stoi(jobs_data[job_data_id][3])>1) && (jobs_data[job_data_id][6] == "1"))
+    {      
       filepath = jobs_data[job_data_id][1] + ".vtk";
       if (access(filepath.c_str(), W_OK) != 0) 
       {
         filepath = jobs_data[job_data_id][1] + "...vtk";
       }
 
-      arg = "--data=" + filepath;
-      programm = ccx_uo.mPathParaView.toStdString().c_str();
-      arguments[0] = arg;
-      arguments[1] = NULL;
-      
-      CubitProcessHandler[CubitProcessHandler_data_id].set_program(programm);
-      CubitProcessHandler[CubitProcessHandler_data_id].set_arguments(arguments);
-      CubitProcessHandler[CubitProcessHandler_data_id].set_channel_mode(CubitProcess::ChannelMode::MergedChannels);
-      CubitProcessHandler[CubitProcessHandler_data_id].find_executable(programm);
-      CubitProcessHandler[CubitProcessHandler_data_id].start();
-      process_id = CubitProcessHandler[CubitProcessHandler_data_id].pid();
-      if (process_id!=0)
-      { 
-        log = "Opening Results with Paraview for Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + "\n";
-        log.append(filepath +  " \n");
-        log.append(arg +  " \n");
-        PRINT_INFO("%s", log.c_str());
-        return true;
-      }
-    } else {
-      log = "Job has not been finished or killed. \n";
+      std::string shellstr;
+      shellstr = "nohup " + ccx_uo.mPathParaView.toStdString() + " --data=" + filepath + " &";
+      system(shellstr.c_str());
+
+      log = "Opening Results with Paraview for Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + "\n";
+      //log.append(filepath +  " \n");
+      //log.append(arg +  " \n");
       PRINT_INFO("%s", log.c_str());
-      return false;
     }
   } else {
     return false;

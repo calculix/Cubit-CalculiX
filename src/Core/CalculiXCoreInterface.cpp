@@ -430,9 +430,9 @@ bool CalculiXCoreInterface::check_jobs()
   return ccx_core.check_jobs();
 }
 
-bool CalculiXCoreInterface::check_results()
+bool CalculiXCoreInterface::check_zombie()
 {
-  return ccx_core.check_results();
+  return ccx_core.check_zombie();
 }
 
 bool CalculiXCoreInterface::wait_job(int job_id)

@@ -127,7 +127,7 @@ public:
   bool delete_job(int job_id); // delete job
   bool run_job(int job_id); // runs job
   bool check_jobs(); // checks for changes of job processes
-  bool check_results(); // checks for changes of result processes
+  bool check_zombie(); // checks for zombie processes
   bool wait_job(int job_id); // runs job
   bool kill_job(int job_id); // runs job
   bool result_ccx2paraview_job(int job_id); // converts the result with ccx2paraview
