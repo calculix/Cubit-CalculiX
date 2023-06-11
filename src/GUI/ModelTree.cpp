@@ -1189,6 +1189,7 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
       myStepsManagement->show();
     } else if (JobsTreeItem = dynamic_cast<JobsTree*>(item->parent()))
     {
+      myJobsMonitor->close();
       myJobsMonitor->show();
       myJobsMonitor->setJob(std::stoi(item->text(1).toStdString()));
       myJobsMonitor->update();
@@ -1546,6 +1547,7 @@ void ModelTree::execContextMenuAction(){
         this->setWidgetInCmdPanelMarker("CCXJobsDelete");
       }else if (contextMenuAction[0][1]==3) //Action4
       {
+        myJobsMonitor->close();
         myJobsMonitor->show();
         myJobsMonitor->setJob(contextMenuAction[0][2]);
         myJobsMonitor->update();

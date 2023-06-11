@@ -18,14 +18,12 @@ JobsMonitor::JobsMonitor()
   this->setGeometry(0,0,800,800);
   this->setWindowTitle("Jobs Monitor");
   int buttonWidth = 133;
-  
+
   gridLayout = new QGridLayout(this);
   boxLayout_window = new QHBoxLayout();
-  HboxLayout_info_1 = new QHBoxLayout();
-  HboxLayout_info_2 = new QHBoxLayout();
-  gridLayout->addLayout(boxLayout_window,2,0, Qt::AlignRight);
-  gridLayout->addLayout(HboxLayout_info_1,0,0, Qt::AlignTop);
-  gridLayout->addLayout(HboxLayout_info_2,1,0, Qt::AlignTop);
+  boxLayout_tab = new QHBoxLayout();
+  gridLayout->addLayout(boxLayout_window,1,0, Qt::AlignRight);
+  gridLayout->addLayout(boxLayout_tab,0,0, Qt::AlignTop);
   
   // buttons
   pushButton_run = new QPushButton();
@@ -58,16 +56,21 @@ JobsMonitor::JobsMonitor()
   pushButton_close->setFixedWidth(buttonWidth);
   boxLayout_window->addWidget(pushButton_close);
   
-  // labels
-  label_console_output = new QLabel();
-  //label_material->setGeometry(10,10,80,16);
-  label_console_output->setText("Console Output:");
-  HboxLayout_info_1->addWidget(label_console_output);
-  
   // textarea
-  QTextEdit_output = new QTextEdit();
-  QTextEdit_output->setReadOnly(true);
-  HboxLayout_info_2->addWidget(QTextEdit_output);
+  QTextEdit_console = new QTextEdit();
+  QTextEdit_console->setReadOnly(true);
+  QTextEdit_cvg = new QTextEdit();
+  QTextEdit_cvg->setReadOnly(true);
+  QTextEdit_sta = new QTextEdit();
+  QTextEdit_sta->setReadOnly(true);
+
+  //tab widget
+  TabWidget = new QTabWidget();
+  TabWidget->addTab(QTextEdit_console,"Console Output");
+  TabWidget->addTab(QTextEdit_cvg,"*.cvg");
+  TabWidget->addTab(QTextEdit_sta,"*.sta");
+  boxLayout_tab->addWidget(TabWidget);
+
   
   // Signals
   QObject::connect(pushButton_run, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_run_clicked(bool)));
@@ -106,15 +109,30 @@ void JobsMonitor::update()
   // jobs_data[0][2] filepath
   // jobs_data[0][3] status -1 no process, 1 process running, 2 process finished, 3 process killed, 4 process finished with errors
   // jobs_data[0][4] process id
-  // jobs_data[0][5] Output
+  // jobs_data[0][5] Output Console
   // jobs_data[0][6] converted with ccx2paraview -1 false, 1 true
+  // jobs_data[0][7] .cvg
+  // jobs_data[0][8] .sta
 
   if (job_data.size()!=0)
   {
     //log = " job id " + std::to_string(current_job_id) + " \n";
     //PRINT_INFO("%s", log.c_str());
 
-    QTextEdit_output->setText(QString::fromStdString(job_data[5]));
+    this->setWindowTitle("Jobs Monitor - " + QString::fromStdString(job_data[1]));
+
+    if (QTextEdit_console->toPlainText()!=QString::fromStdString(job_data[5]))
+    {
+      QTextEdit_console->setText(QString::fromStdString(job_data[5]));
+    }
+    if (QTextEdit_cvg->toPlainText()!=QString::fromStdString(job_data[7]))
+    {
+      QTextEdit_cvg->setText(QString::fromStdString(job_data[7]));
+    }
+    if (QTextEdit_sta->toPlainText()!=QString::fromStdString(job_data[8]))
+    {
+      QTextEdit_sta->setText(QString::fromStdString(job_data[8]));
+    }
 
     if (std::stoi(job_data[3])==-1)
     {
@@ -151,6 +169,7 @@ void JobsMonitor::update()
       }
     }
   }else{
+    this->setWindowTitle("Jobs Monitor");
     pushButton_run->setEnabled(false);
     pushButton_kill->setEnabled(false);
     pushButton_result_cgx->setEnabled(false);

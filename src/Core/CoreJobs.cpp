@@ -13,6 +13,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <fstream>
+#include <iostream>
 #include "loadUserOptions.hpp"
 
 CoreJobs::CoreJobs()
@@ -95,7 +97,7 @@ bool CoreJobs::modify_job(int job_id, std::vector<std::string> options, std::vec
 
 bool CoreJobs::add_job(int job_id, std::string name, std::string filepath)
 {
-  std::vector<std::string> v = {std::to_string(job_id), name, filepath, "-1", "-1","","-1"};      
+  std::vector<std::string> v = {std::to_string(job_id), name, filepath, "-1", "-1","","-1","",""};      
   jobs_data.push_back(v);
   return true;
 }
@@ -188,6 +190,8 @@ bool CoreJobs::run_job(int job_id)
     CubitProcessHandler[CubitProcessHandler_data_id].set_channel_mode(CubitProcess::ChannelMode::MergedChannels);
     temp = CubitProcessHandler[CubitProcessHandler_data_id].find_executable(programm);
     jobs_data[job_data_id][5] = "";
+    jobs_data[job_data_id][7] = "";
+    jobs_data[job_data_id][8] = "";
     CubitProcessHandler[CubitProcessHandler_data_id].start();
     process_id = CubitProcessHandler[CubitProcessHandler_data_id].pid();
     if (process_id!=0)
@@ -236,9 +240,10 @@ bool CoreJobs::wait_job(int job_id)
         if (output != "")
         {
           log = " Output " + output.str() + " \n";
-          PRINT_INFO("%s", log.c_str());
+          //PRINT_INFO("%s", log.c_str());
           jobs_data[jobs_data_id][5] = jobs_data[jobs_data_id][5] + output.str();
           output = "";
+          get_cvgsta(std::stoi(jobs_data[jobs_data_id][0]));
         }
         waitpid(std::stoi(jobs_data[jobs_data_id][4]), &status,WNOHANG);      
       }
@@ -321,9 +326,10 @@ bool CoreJobs::check_jobs()
           if (output != "")
           {
             log = " Output " + output.str() + " \n";
-            PRINT_INFO("%s", log.c_str());
+            //PRINT_INFO("%s", log.c_str());
             jobs_data[i][5] = jobs_data[i][5] + output.str();
             output = "";
+            get_cvgsta(std::stoi(jobs_data[i][0]));
           }
         }
         
@@ -354,6 +360,47 @@ bool CoreJobs::check_jobs()
     }
   }
 
+  return true;
+}
+
+bool CoreJobs::get_cvgsta(int job_id)
+{
+  int jobs_data_id=-1;
+  
+  jobs_data_id = get_jobs_data_id_from_job_id(job_id);
+
+  if (jobs_data_id != -1)
+  {
+    std::string cvg = "";
+    std::string sta = "";
+    std::string cvgline = "";
+    std::string staline = "";
+    std::ifstream cvgfile;
+    std::ifstream stafile;
+    cvgfile.open(jobs_data[jobs_data_id][1] + ".cvg");
+    stafile.open(jobs_data[jobs_data_id][1] + ".sta");
+    if (cvgfile.is_open())
+    {
+      while (cvgfile)
+      {
+        std::getline(cvgfile,cvgline);
+        cvg.append(cvgline + "\n");
+      }
+
+      jobs_data[jobs_data_id][7] = cvg;
+    }
+    if (stafile.is_open())
+    {
+      while (stafile)
+      {
+        std::getline(stafile,staline);
+        sta.append(staline + "\n");
+      }
+      jobs_data[jobs_data_id][8] = sta;
+    }
+    cvgfile.close();
+    stafile.close();
+  }
   return true;
 }
 
@@ -563,6 +610,9 @@ std::string CoreJobs::print_data()
   {
     str_return.append(jobs_data[i][0] + " " + jobs_data[i][1] + " " + jobs_data[i][2] + " " + jobs_data[i][3] + " " + jobs_data[i][4] + " \n");
     str_return.append(jobs_data[i][5] + " \n");
+    str_return.append(jobs_data[i][6] + " \n");
+    str_return.append(jobs_data[i][7] + " \n");
+    str_return.append(jobs_data[i][8] + " \n");
   }
 
   return str_return;

@@ -17,6 +17,8 @@
 #include <QString>
 #include <QStringList>
 #include <QTextEdit>
+#include <QTabWidget>
+
 
 class CalculiXCoreInterface;
 class GUITimer;
@@ -47,18 +49,19 @@ private slots:
 private:
   std::string log;
   int current_job_id=-1;
+  QTabWidget* TabWidget;
   QGridLayout* gridLayout;
   QHBoxLayout* boxLayout_window;
-  QHBoxLayout* HboxLayout_info_1;
-  QHBoxLayout* HboxLayout_info_2;
+  QHBoxLayout* boxLayout_tab;
   QPushButton* pushButton_run;
   QPushButton* pushButton_kill;
   QPushButton* pushButton_result_cgx;
   QPushButton* pushButton_result_ccx2paraview;
   QPushButton* pushButton_result_paraview;
   QPushButton* pushButton_close;
-  QLabel* label_console_output;
-  QTextEdit* QTextEdit_output;
+  QTextEdit* QTextEdit_console;
+  QTextEdit* QTextEdit_cvg;
+  QTextEdit* QTextEdit_sta;
   GUITimer *timer;
 };
 
