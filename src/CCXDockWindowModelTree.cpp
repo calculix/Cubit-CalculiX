@@ -3,6 +3,7 @@
 #include "ClaroViewMenu.hpp"
 #include <iostream>
 #include "ModelTree.hpp"
+#include "Highlight.hpp"
 #include "BlocksTree.hpp"
 #include "NodesetTree.hpp"
 #include "SidesetTree.hpp"
@@ -70,6 +71,7 @@ void CCXDockWindowModelTree::initialize()
   myModelTree->header()->setMinimumSectionSize(25);
   myModelTree->header()->resizeSection(0, 180);
   myModelTree->header()->resizeSection(1, 25);
+  myHighlight = new Highlight(myModelTree);
   
   myBlocksTree = new BlocksTree(myModelTree);
   myBlocksTree->initialize();
@@ -162,6 +164,7 @@ void CCXDockWindowModelTree::clear()
     delete myInitialConditionsTree;
     delete myStepsTree;
     delete myJobsTree;
+    delete myHighlight;
     delete myModelTree;
     delete dock;
     isInitialized = false;  

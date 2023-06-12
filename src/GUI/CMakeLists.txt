@@ -193,10 +193,8 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/JobsMonitor.cpp
     ${CMAKE_CURRENT_LIST_DIR}/GUITimer.hpp
     ${CMAKE_CURRENT_LIST_DIR}/GUITimer.cpp
-    )
-
-set(UI
-    ${CMAKE_CURRENT_LIST_DIR}/CCXBlocksElementTypePanel.ui
+    ${CMAKE_CURRENT_LIST_DIR}/Highlight.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/Highlight.cpp
     )
 
 # Add the parent scope so that our parent cmake list can use them

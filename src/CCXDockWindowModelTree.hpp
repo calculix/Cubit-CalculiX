@@ -12,6 +12,7 @@ class ClaroViewMenu;
 #include <QHeaderView>
 
 class ModelTree;
+class Highlight;
 class BlocksTree;
 class NodesetTree;
 class SidesetTree;
@@ -58,6 +59,7 @@ private:
   ClaroViewMenu* ViewMenu;
   QDockWidget *dock;
   ModelTree *myModelTree;
+  Highlight *myHighlight;
   BlocksTree *myBlocksTree; //Blocks aka Element sets root item
   NodesetTree *myNodesetTree; //Node sets root item
   SidesetTree *mySidesetTree; //Side sets root item

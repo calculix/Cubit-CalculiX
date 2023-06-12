@@ -6,13 +6,13 @@ CoreBlocks::CoreBlocks()
   // define the ccx element types
   // volume
   ccx_element_types.push_back("C3D4");
-  //ccx_element_types.push_back("C3D6");
+  ccx_element_types.push_back("C3D6"); //wedge 6
   ccx_element_types.push_back("C3D8");
   ccx_element_types.push_back("C3D8R");
   ccx_element_types.push_back("C3D8I");
   ccx_element_types.push_back("C3D10");
-  //ccx_element_types.push_back("C3D10T");
-  //ccx_element_types.push_back("C3D15");
+  ccx_element_types.push_back("C3D10T");
+  ccx_element_types.push_back("C3D15"); //wedge 15
   ccx_element_types.push_back("C3D20");
   ccx_element_types.push_back("C3D20R");
   //shell
@@ -23,14 +23,13 @@ CoreBlocks::CoreBlocks()
   ccx_element_types.push_back("S8");
   ccx_element_types.push_back("S8R");
   //membrane
-  /*
   ccx_element_types.push_back("M3D3");
   ccx_element_types.push_back("M3D4");
   ccx_element_types.push_back("M3D4R");
   ccx_element_types.push_back("M3D6");
   ccx_element_types.push_back("M3D8");
   ccx_element_types.push_back("M3D8R");
-  */
+  
   // plane stress
   ccx_element_types.push_back("CPS3");
   ccx_element_types.push_back("CPS4");
@@ -66,7 +65,6 @@ CoreBlocks::CoreBlocks()
   //ccx_element_types.push_back("SPRINGA");
 
   // define the cubit element types
-  
   cubit_element_types.push_back("SPHERE");
   cubit_element_types.push_back("SPRING");
   cubit_element_types.push_back("BAR");
@@ -107,6 +105,8 @@ CoreBlocks::CoreBlocks()
   cubit_element_types.push_back("TETRA14");
   cubit_element_types.push_back("TETRA15");
   cubit_element_types.push_back("WEDGE");
+  cubit_element_types.push_back("WEDGE6");
+  cubit_element_types.push_back("WEDGE15");
   cubit_element_types.push_back("HEXSHELL");
   cubit_element_types.push_back("PYRAMID");
   cubit_element_types.push_back("PYRAMID5");
@@ -144,6 +144,9 @@ CoreBlocks::CoreBlocks()
   cubit_ccx_element_types_conversion.push_back(std::make_pair("HEX","C3D8R"));
   cubit_ccx_element_types_conversion.push_back(std::make_pair("HEX8","C3D8"));
   cubit_ccx_element_types_conversion.push_back(std::make_pair("HEX20","C3D20"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("WEDGE","C3D6"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("WEDGE6","C3D6"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("WEDGE15","C3D15"));
 }
 
 CoreBlocks::~CoreBlocks()

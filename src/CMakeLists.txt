@@ -43,7 +43,7 @@ add_subdirectory(EventObservers)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/UserOptions)
 add_subdirectory(UserOptions)
 
-qt5_wrap_ui(ui_src ${GUI_UI})
+#qt5_wrap_ui(ui_src ${GUI_UI})
 
 set(CCXCOMP_SRCS
     CalculiXComp.cpp
@@ -51,7 +51,7 @@ set(CCXCOMP_SRCS
     ${EO_COMP_SRC}
     ${UO_COMP_SRC}
     ${GUI_SRC}
-    ${ui_src}
+    #${ui_src}
     MenuManager.cpp
     MenuManager.hpp
     ToolbarManager.cpp
