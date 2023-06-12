@@ -1545,6 +1545,137 @@ std::vector<std::string> CalculiXCore::get_job_data(int job_id)
   return jobs->get_job_data(job_id);
 }
 
+std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string entity, int id)
+{
+  std::vector<std::vector<std::string>> entities;
+  std::vector<std::string> v;
+
+  if (entity=="block")
+  {
+    int data_id;
+    data_id = cb->get_blocks_data_id_from_block_id(id);
+    if (data_id!=-1)
+    {
+      std::vector<int> returned_group_list;
+		  std::vector<int> returned_node_list;
+		  std::vector<int> returned_sphere_list;
+		  std::vector<int> returned_edge_list;
+		  std::vector<int> returned_tri_list;
+		  std::vector<int> returned_face_list;
+		  std::vector<int> returned_pyramid_list;
+		  std::vector<int> returned_tet_list;
+		  std::vector<int> returned_hex_list;
+		  std::vector<int> returned_wedge_list;
+		  std::vector<int> returned_volume_list;
+		  std::vector<int> returned_surface_list;
+		  std::vector<int> returned_curve_list;
+		  std::vector<int> returned_vertex_list;
+
+      CubitInterface::get_block_children(id,
+		  returned_group_list,
+		  returned_node_list,
+		  returned_sphere_list,
+		  returned_edge_list,
+		  returned_tri_list,
+		  returned_face_list,
+		  returned_pyramid_list,
+		  returned_tet_list,
+		  returned_hex_list,
+		  returned_wedge_list,
+		  returned_volume_list,
+		  returned_surface_list,
+		  returned_curve_list,
+		  returned_vertex_list); 	
+
+      for (size_t i = 0; i < returned_edge_list.size(); i++)
+      {
+        entities.push_back({"edge",std::to_string(returned_edge_list[i])});
+      }      
+      for (size_t i = 0; i < returned_tri_list.size(); i++)
+      {
+        entities.push_back({"tri",std::to_string(returned_tri_list[i])});
+      }
+      for (size_t i = 0; i < returned_face_list.size(); i++)
+      {
+        entities.push_back({"face",std::to_string(returned_face_list[i])});
+      }
+		  for (size_t i = 0; i < returned_pyramid_list.size(); i++)
+      {
+        entities.push_back({"pyramid",std::to_string(returned_pyramid_list[i])});
+      }
+		  for (size_t i = 0; i < returned_tet_list.size(); i++)
+      {
+        entities.push_back({"tet",std::to_string(returned_tet_list[i])});
+      }
+      for (size_t i = 0; i < returned_hex_list.size(); i++)
+      {
+        entities.push_back({"hex",std::to_string(returned_hex_list[i])});
+      }
+      for (size_t i = 0; i < returned_wedge_list.size(); i++)
+      {
+        entities.push_back({"wedge",std::to_string(returned_wedge_list[i])});
+      }
+      for (size_t i = 0; i < returned_volume_list.size(); i++)
+      {
+        entities.push_back({"volume",std::to_string(returned_volume_list[i])});
+      }
+      for (size_t i = 0; i < returned_surface_list.size(); i++)
+      {
+        entities.push_back({"surface",std::to_string(returned_surface_list[i])});
+      }
+      for (size_t i = 0; i < returned_curve_list.size(); i++)
+      {
+        entities.push_back({"curve",std::to_string(returned_curve_list[i])});
+      }
+      for (size_t i = 0; i < returned_vertex_list.size(); i++)
+      {
+        entities.push_back({"vertex",std::to_string(returned_vertex_list[i])});
+      }
+    } 
+  }else if (entity=="nodeset")
+  {
+    
+  }else if (entity=="sideset")
+  {
+    
+  }else if (entity=="material")
+  {
+    
+  }else if (entity=="section")
+  {
+    
+  }else if (entity=="constraint")
+  {
+    
+  }else if (entity=="surfaceinteraction")
+  {
+    
+  }else if (entity=="contactpair")
+  {
+    
+  }else if (entity=="amplitude")
+  {
+    
+  }else if (entity=="loadsforce")
+  {
+    
+  }else if (entity=="loadspressure")
+  {
+    
+  }else if (entity=="bcsdisplacement")
+  {
+    
+  }else if (entity=="bcstemperature")
+  {
+    
+  }else if (entity=="initialcondition")
+  {
+    
+  }
+    
+  return entities;
+}
+
 std::string CalculiXCore::get_material_export_data() // gets the export data from materials core
 {
   return mat->get_material_export();

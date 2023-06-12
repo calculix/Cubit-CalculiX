@@ -106,6 +106,7 @@ public:
   bool result_cgx_job(int job_id); // opens the results with cgx
   bool result_paraview_job(int job_id); // opens the results with paraview
   std::vector<std::string> get_job_data(int job_id);
+  std::vector<std::vector<std::string>> get_entities(std::string entity, int id);
 
   // GUI
   std::vector<std::vector<std::string>> get_blocks_tree_data(); // gets the data from core blocks to build the tree

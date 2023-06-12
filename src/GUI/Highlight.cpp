@@ -48,13 +48,14 @@ Highlight::Highlight(ModelTree* parent):QWidget(parent)
 
   success = connect(parent, SIGNAL(itemClicked(QTreeWidgetItem*, int)),
           this, SLOT(ModelTreeItemClicked(QTreeWidgetItem*, int)));
-  
+  /*
   if (success)
   {
     std::string log;
     log = "connected signals and slots\n";
     PRINT_INFO("%s", log.c_str()); 
   }
+  */
 }
 
 Highlight::~Highlight()
@@ -90,252 +91,98 @@ void Highlight::ModelTreeItemClicked(QTreeWidgetItem* item, int column)
   StepsFieldOutputsTree* StepsFieldOutputsTreeItem;  
   JobsTree* JobsTreeItem;
 
-  CubitInterface::clear_highlight();
-  CubitInterface::highlight("block",1);
-  std::string log;
-  log = "item clicked\n";
-  PRINT_INFO("%s", log.c_str()); 
+  std::vector<std::vector<std::string>> entities;
 
-/*
-  if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item))
+  CubitInterface::clear_highlight();
+    
+  //std::string log;
+  //log = "item clicked\n";
+  //PRINT_INFO("%s", log.c_str()); 
+
+  if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item->parent()))
   {
-    if (BlocksTreeItem->text(1).toStdString()=="")
-    {
-      this->setWidgetInCmdPanelMarker("BlocksCCXElementType");
-    }
-  }else if (NodesetTreeItem = dynamic_cast<NodesetTree*>(item))
+    entities = ccx_iface->get_entities("block",std::stoi(item->text(1).toStdString()));
+  } else if (NodesetTreeItem = dynamic_cast<NodesetTree*>(item->parent()))
   {
-    if (NodesetTreeItem->text(1).toStdString()=="")
-    {
-      this->setWidgetInCmdPanelMarker("ExodusCreateNodeset");
-    }
-  }else if (SidesetTreeItem = dynamic_cast<SidesetTree*>(item))
+    entities = ccx_iface->get_entities("nodeset",std::stoi(item->text(1).toStdString()));
+  } else if (SidesetTreeItem = dynamic_cast<SidesetTree*>(item->parent()))
   {
-    if (SidesetTreeItem->text(1).toStdString()=="")
-    {
-      this->setWidgetInCmdPanelMarker("ExodusCreateSideset");
-    }
-  }else if (MaterialTreeItem = dynamic_cast<MaterialTree*>(item))
+    entities = ccx_iface->get_entities("sideset",std::stoi(item->text(1).toStdString()));
+  } else if (MaterialTreeItem = dynamic_cast<MaterialTree*>(item->parent()))
   {
-    if (MaterialTreeItem->text(1).toStdString()=="")
-    {
-      myMaterialManagement->show();
-    }
-  }else if (SectionsTreeItem = dynamic_cast<SectionsTree*>(item))
+    entities = ccx_iface->get_entities("material",std::stoi(item->text(1).toStdString()));
+  } else if (SectionsTreeItem = dynamic_cast<SectionsTree*>(item->parent()))
   {
-    if (SectionsTreeItem->text(1).toStdString()=="")
-    {
-      this->setWidgetInCmdPanelMarker("CCXSectionsCreate");
-    }
-  }else if (ConstraintsTreeItem = dynamic_cast<ConstraintsTree*>(item))
+    entities = ccx_iface->get_entities("section",std::stoi(item->text(1).toStdString()));
+  } else if (ConstraintsTreeItem = dynamic_cast<ConstraintsTree*>(item->parent()))
   {
-    if (ConstraintsTreeItem->text(1).toStdString()=="")
-    {
-      this->setWidgetInCmdPanelMarker("CCXConstraintsCreateRigidBody");
-    }
-  }else if (SurfaceInteractionsTreeItem = dynamic_cast<SurfaceInteractionsTree*>(item))
+    entities = ccx_iface->get_entities("constraint",std::stoi(item->text(1).toStdString()));
+  } else if (SurfaceInteractionsTreeItem = dynamic_cast<SurfaceInteractionsTree*>(item->parent()))
   {
-    if (SurfaceInteractionsTreeItem->text(1).toStdString()=="")
-    {
-      this->setWidgetInCmdPanelMarker("CCXSurfaceInteractionsCreate");
-    }
-  }else if (ContactPairsTreeItem = dynamic_cast<ContactPairsTree*>(item))
+    entities = ccx_iface->get_entities("surfaceinteraction",std::stoi(item->text(1).toStdString()));
+  } else if (ContactPairsTreeItem = dynamic_cast<ContactPairsTree*>(item->parent()))
   {
-    if (ContactPairsTreeItem->text(1).toStdString()=="")
-    {
-      this->setWidgetInCmdPanelMarker("CCXContactPairsCreate");
-    }
-  }else if (AmplitudesTreeItem = dynamic_cast<AmplitudesTree*>(item))
+    entities = ccx_iface->get_entities("contactpair",std::stoi(item->text(1).toStdString()));
+  } else if (AmplitudesTreeItem = dynamic_cast<AmplitudesTree*>(item->parent()))
   {
-    if (AmplitudesTreeItem->text(1).toStdString()=="")
-    {
-      this->setWidgetInCmdPanelMarker("CCXAmplitudesCreate");
-    }
-  }else if (LoadsForcesTreeItem = dynamic_cast<LoadsForcesTree*>(item))
+    entities = ccx_iface->get_entities("amplitude",std::stoi(item->text(1).toStdString()));
+  } else if (LoadsForcesTreeItem = dynamic_cast<LoadsForcesTree*>(item->parent()))
   {
-    if (LoadsForcesTreeItem->text(1).toStdString()=="")
-    {
-      this->setWidgetInCmdPanelMarker("FEAForceCreate");
-    }
-  }else if (LoadsPressuresTreeItem = dynamic_cast<LoadsPressuresTree*>(item))
+    entities = ccx_iface->get_entities("loadsforce",std::stoi(item->text(1).toStdString()));
+  } else if (LoadsPressuresTreeItem = dynamic_cast<LoadsPressuresTree*>(item->parent()))
   {
-    if (LoadsPressuresTreeItem->text(1).toStdString()=="")
-    {
-      this->setWidgetInCmdPanelMarker("FEAPressureCreate");
-    }
-  }else if (BCsDisplacementsTreeItem = dynamic_cast<BCsDisplacementsTree*>(item))
+    entities = ccx_iface->get_entities("loadspressure",std::stoi(item->text(1).toStdString()));
+  } else if (BCsDisplacementsTreeItem = dynamic_cast<BCsDisplacementsTree*>(item->parent()))
   {
-    if (BCsDisplacementsTreeItem->text(1).toStdString()=="")
-    {
-      this->setWidgetInCmdPanelMarker("FEADisplacementCreate");
-    }
-  }else if (BCsTemperaturesTreeItem = dynamic_cast<BCsTemperaturesTree*>(item))
+    entities = ccx_iface->get_entities("bcsdisplacement",std::stoi(item->text(1).toStdString()));
+  } else if (BCsTemperaturesTreeItem = dynamic_cast<BCsTemperaturesTree*>(item->parent()))
   {
-    if (BCsTemperaturesTreeItem->text(1).toStdString()=="")
-    {
-      this->setWidgetInCmdPanelMarker("FEATemperatureCreate");
-    }
-  }else if (HistoryOutputsTreeItem = dynamic_cast<HistoryOutputsTree*>(item))
+    entities = ccx_iface->get_entities("bcsdisplacement",std::stoi(item->text(1).toStdString()));
+  } else if (HistoryOutputsTreeItem = dynamic_cast<HistoryOutputsTree*>(item->parent()))
   {
-    if (HistoryOutputsTreeItem->text(1).toStdString()=="")
-    {
-      this->setWidgetInCmdPanelMarker("CCXHistoryOutputsCreate");
-    }
-  }else if (FieldOutputsTreeItem = dynamic_cast<FieldOutputsTree*>(item))
+
+  } else if (FieldOutputsTreeItem = dynamic_cast<FieldOutputsTree*>(item->parent()))
   {
-    if (FieldOutputsTreeItem->text(1).toStdString()=="")
-    {
-      this->setWidgetInCmdPanelMarker("CCXFieldOutputsCreate");
-    }
-  }else if (InitialConditionsTreeItem = dynamic_cast<InitialConditionsTree*>(item))
+
+  } else if (InitialConditionsTreeItem = dynamic_cast<InitialConditionsTree*>(item->parent()))
   {
-    if (InitialConditionsTreeItem->text(1).toStdString()=="")
-    {
-      this->setWidgetInCmdPanelMarker("CCXInitialConditionsCreate");
-    }
-  }else if (StepsTreeItem = dynamic_cast<StepsTree*>(item))
+    entities = ccx_iface->get_entities("initialcondition",std::stoi(item->text(1).toStdString()));  
+  } else if (StepsTreeItem = dynamic_cast<StepsTree*>(item->parent()))
   {
-    if (StepsTreeItem->text(1).toStdString()=="")
-    {
-      this->setWidgetInCmdPanelMarker("CCXStepsCreate");
-    }
-  }else if (StepsLoadsTreeItem = dynamic_cast<StepsLoadsTree*>(item))
+      
+  } else if (StepsLoadsTreeItem = dynamic_cast<StepsLoadsTree*>(item->parent()))
   {
-    if (StepsLoadsTreeItem->text(1).toStdString()=="")
-    {
-      myStepsManagement->show();
-    }
-  }else if (StepsLoadsForcesTreeItem = dynamic_cast<StepsLoadsForcesTree*>(item))
+      
+  } else if (StepsLoadsForcesTreeItem = dynamic_cast<StepsLoadsForcesTree*>(item->parent()))
   {
-    if (StepsLoadsForcesTreeItem->text(1).toStdString()=="")
-    {
-      myStepsManagement->show();
-    }
-  }else if (StepsLoadsPressuresTreeItem = dynamic_cast<StepsLoadsPressuresTree*>(item))
+    entities = ccx_iface->get_entities("loadsforce",std::stoi(item->text(1).toStdString()));  
+  } else if (StepsLoadsPressuresTreeItem = dynamic_cast<StepsLoadsPressuresTree*>(item->parent()))
   {
-    if (StepsLoadsPressuresTreeItem->text(1).toStdString()=="")
-    {
-      myStepsManagement->show();
-    }
-  }else if (StepsBCsTreeItem = dynamic_cast<StepsBCsTree*>(item))
+    entities = ccx_iface->get_entities("loadspressure",std::stoi(item->text(1).toStdString()));  
+  } else if (StepsBCsTreeItem = dynamic_cast<StepsBCsTree*>(item->parent()))
   {
-    if (StepsBCsTreeItem->text(1).toStdString()=="")
-    {
-      myStepsManagement->show();
-    }
-  }else if (StepsBCsDisplacementsTreeItem = dynamic_cast<StepsBCsDisplacementsTree*>(item))
+    
+  } else if (StepsBCsDisplacementsTreeItem = dynamic_cast<StepsBCsDisplacementsTree*>(item->parent()))
   {
-    if (StepsBCsDisplacementsTreeItem->text(1).toStdString()=="")
-    {
-      myStepsManagement->show();
-    }
-  }else if (StepsBCsTemperaturesTreeItem = dynamic_cast<StepsBCsTemperaturesTree*>(item))
+    entities = ccx_iface->get_entities("loadsdisplacement",std::stoi(item->text(1).toStdString()));
+  } else if (StepsBCsTemperaturesTreeItem = dynamic_cast<StepsBCsTemperaturesTree*>(item->parent()))
   {
-    if (StepsBCsTemperaturesTreeItem->text(1).toStdString()=="")
-    {
-      myStepsManagement->show();
-    }
-  }else if (StepsHistoryOutputsTreeItem = dynamic_cast<StepsHistoryOutputsTree*>(item))
+    entities = ccx_iface->get_entities("loadstemperature",std::stoi(item->text(1).toStdString()));
+  } else if (StepsHistoryOutputsTreeItem = dynamic_cast<StepsHistoryOutputsTree*>(item->parent()))
   {
-    if (StepsHistoryOutputsTreeItem->text(1).toStdString()=="")
-    {
-      myStepsManagement->show();
-    }
-  }else if (StepsFieldOutputsTreeItem = dynamic_cast<StepsFieldOutputsTree*>(item))
+      
+  } else if (StepsFieldOutputsTreeItem = dynamic_cast<StepsFieldOutputsTree*>(item->parent()))
   {
-    if (StepsFieldOutputsTreeItem->text(1).toStdString()=="")
-    {
-      myStepsManagement->show();
-    }
-  }else if (JobsTreeItem = dynamic_cast<JobsTree*>(item))
+      
+  } else if (JobsTreeItem = dynamic_cast<JobsTree*>(item->parent()))
   {
-    if (JobsTreeItem->text(1).toStdString()=="")
-    {
-      this->setWidgetInCmdPanelMarker("CCXJobsCreate");
-    }
-  } else {
-    if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("BlocksCCXElementType");
-    } else if (NodesetTreeItem = dynamic_cast<NodesetTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("ExodusRemoveContentsNodeset");
-    } else if (SidesetTreeItem = dynamic_cast<SidesetTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("ExodusRemoveContentsSideset");
-    } else if (MaterialTreeItem = dynamic_cast<MaterialTree*>(item->parent()))
-    {
-      myMaterialManagement->show();
-    } else if (SectionsTreeItem = dynamic_cast<SectionsTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXSectionsModfiy");
-    } else if (ConstraintsTreeItem = dynamic_cast<ConstraintsTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXConstraintsModifyRigidBody");
-    } else if (SurfaceInteractionsTreeItem = dynamic_cast<SurfaceInteractionsTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXSurfaceInteractionsModify");
-    } else if (ContactPairsTreeItem = dynamic_cast<ContactPairsTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXContactPairsModify");
-    } else if (AmplitudesTreeItem = dynamic_cast<AmplitudesTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXAmplitudesModify");
-    } else if (LoadsForcesTreeItem = dynamic_cast<LoadsForcesTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("FEAForceModify");
-    } else if (LoadsPressuresTreeItem = dynamic_cast<LoadsPressuresTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("FEAPressureModify");
-    } else if (BCsDisplacementsTreeItem = dynamic_cast<BCsDisplacementsTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("FEADisplacementModify");
-    } else if (BCsTemperaturesTreeItem = dynamic_cast<BCsTemperaturesTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("FEATemperatureModify");
-    } else if (HistoryOutputsTreeItem = dynamic_cast<HistoryOutputsTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXHistoryOutputsModify");
-    } else if (FieldOutputsTreeItem = dynamic_cast<FieldOutputsTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXFieldOutputsModify");
-    } else if (InitialConditionsTreeItem = dynamic_cast<InitialConditionsTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXInitialConditionsModify");
-    } else if (StepsTreeItem = dynamic_cast<StepsTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXStepsModify");
-    } else if (StepsLoadsTreeItem = dynamic_cast<StepsLoadsTree*>(item->parent()))
-    {
-      myStepsManagement->show();
-    } else if (StepsLoadsForcesTreeItem = dynamic_cast<StepsLoadsForcesTree*>(item->parent()))
-    {
-      myStepsManagement->show();
-    } else if (StepsLoadsPressuresTreeItem = dynamic_cast<StepsLoadsPressuresTree*>(item->parent()))
-    {
-      myStepsManagement->show();
-    } else if (StepsBCsTreeItem = dynamic_cast<StepsBCsTree*>(item->parent()))
-    {
-      myStepsManagement->show();
-    } else if (StepsBCsDisplacementsTreeItem = dynamic_cast<StepsBCsDisplacementsTree*>(item->parent()))
-    {
-      myStepsManagement->show();
-    } else if (StepsBCsTemperaturesTreeItem = dynamic_cast<StepsBCsTemperaturesTree*>(item->parent()))
-    {
-      myStepsManagement->show();
-    } else if (StepsHistoryOutputsTreeItem = dynamic_cast<StepsHistoryOutputsTree*>(item->parent()))
-    {
-      myStepsManagement->show();
-    } else if (StepsFieldOutputsTreeItem = dynamic_cast<StepsFieldOutputsTree*>(item->parent()))
-    {
-      myStepsManagement->show();
-    } else if (JobsTreeItem = dynamic_cast<JobsTree*>(item->parent()))
-    {
-      myJobsMonitor->close();
-      myJobsMonitor->show();
-      myJobsMonitor->setJob(std::stoi(item->text(1).toStdString()));
-      myJobsMonitor->update();
-    }
+      
   }
-  */
+
+  for (size_t i = 0; i < entities.size(); i++)
+  {
+    CubitInterface::highlight(entities[i][0],std::stoi(entities[i][1]));
+  }
+
+  CubitInterface::flush_graphics();
 }
