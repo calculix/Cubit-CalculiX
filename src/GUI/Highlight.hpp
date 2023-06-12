@@ -3,6 +3,7 @@
 #define HIGHLIGHT_HPP
 
 #include <QWidget>
+#include <QList>
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
 
@@ -51,9 +52,11 @@ public:
   ~Highlight();
 
   CalculiXCoreInterface* ccx_iface;
+  QList<QTreeWidgetItem*> selected;
 
 public slots:
   void ModelTreeItemClicked(QTreeWidgetItem* item, int column);
+  void ModelTreeItemSelectionChanged();
 };
 
 #endif // HIGHLIGHT_HPP

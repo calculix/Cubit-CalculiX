@@ -48,6 +48,8 @@ Highlight::Highlight(ModelTree* parent):QWidget(parent)
 
   success = connect(parent, SIGNAL(itemClicked(QTreeWidgetItem*, int)),
           this, SLOT(ModelTreeItemClicked(QTreeWidgetItem*, int)));
+  success = connect(parent, SIGNAL(itemSelectionChanged()),
+          this, SLOT(ModelTreeItemSelectionChanged()));        
   /*
   if (success)
   {
@@ -60,6 +62,15 @@ Highlight::Highlight(ModelTree* parent):QWidget(parent)
 
 Highlight::~Highlight()
 {
+}
+
+void Highlight::ModelTreeItemSelectionChanged()
+{
+  selected = dynamic_cast<ModelTree*>(this->parent())->selectedItems();
+  for (size_t i = 0; i < selected.size(); i++)
+  {
+    ModelTreeItemClicked(selected[i],0);
+  }  
 }
 
 void Highlight::ModelTreeItemClicked(QTreeWidgetItem* item, int column)
@@ -137,7 +148,7 @@ void Highlight::ModelTreeItemClicked(QTreeWidgetItem* item, int column)
     entities = ccx_iface->get_entities("bcsdisplacement",std::stoi(item->text(1).toStdString()));
   } else if (BCsTemperaturesTreeItem = dynamic_cast<BCsTemperaturesTree*>(item->parent()))
   {
-    entities = ccx_iface->get_entities("bcsdisplacement",std::stoi(item->text(1).toStdString()));
+    entities = ccx_iface->get_entities("bcstemperature",std::stoi(item->text(1).toStdString()));
   } else if (HistoryOutputsTreeItem = dynamic_cast<HistoryOutputsTree*>(item->parent()))
   {
 
@@ -164,10 +175,10 @@ void Highlight::ModelTreeItemClicked(QTreeWidgetItem* item, int column)
     
   } else if (StepsBCsDisplacementsTreeItem = dynamic_cast<StepsBCsDisplacementsTree*>(item->parent()))
   {
-    entities = ccx_iface->get_entities("loadsdisplacement",std::stoi(item->text(1).toStdString()));
+    entities = ccx_iface->get_entities("bcsdisplacement",std::stoi(item->text(1).toStdString()));
   } else if (StepsBCsTemperaturesTreeItem = dynamic_cast<StepsBCsTemperaturesTree*>(item->parent()))
   {
-    entities = ccx_iface->get_entities("loadstemperature",std::stoi(item->text(1).toStdString()));
+    entities = ccx_iface->get_entities("bcstemperature",std::stoi(item->text(1).toStdString()));
   } else if (StepsHistoryOutputsTreeItem = dynamic_cast<StepsHistoryOutputsTree*>(item->parent()))
   {
       
@@ -179,10 +190,11 @@ void Highlight::ModelTreeItemClicked(QTreeWidgetItem* item, int column)
       
   }
 
+  CubitInterface::flush_graphics();
+
   for (size_t i = 0; i < entities.size(); i++)
   {
-    CubitInterface::highlight(entities[i][0],std::stoi(entities[i][1]));
+    std::string cmd = "highlight " + entities[i][0] + " " + entities[i][1];
+    CubitInterface::silent_cmd(cmd.c_str());
   }
-
-  CubitInterface::flush_graphics();
 }
