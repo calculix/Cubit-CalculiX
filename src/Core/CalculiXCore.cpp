@@ -1,4 +1,5 @@
 #include "CalculiXCore.hpp"
+#include <unistd.h>
 #include <fstream>
 #include <chrono>
 #include <ctime>
@@ -27,6 +28,7 @@
 #include "CoreSteps.hpp"
 #include "CoreJobs.hpp"
 #include "CoreTimer.hpp"
+#include "loadUserOptions.hpp"
 
 CalculiXCore::CalculiXCore():
   cb(NULL),mat(NULL),sections(NULL),constraints(NULL),referencepoints(NULL),surfaceinteractions(NULL),
@@ -1652,6 +1654,38 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
   }
     
   return entities;
+}
+
+QIcon* CalculiXCore::getIcon(std::string name)
+{
+  QIcon* icon = new QIcon();
+  std::string filepath = "";
+
+  filepath = ccx_uo.mPathIcons.toStdString() + name + ".svg";
+
+  if (access(filepath.c_str(), F_OK) == 0) 
+  {
+    icon = new QIcon(QString::fromStdString(filepath));
+  }else{
+  }
+
+  return icon;
+}
+
+QIcon CalculiXCore::getIcon2(std::string name)
+{
+  QIcon icon;
+  std::string filepath = "";
+
+  filepath = ccx_uo.mPathIcons.toStdString() + name + ".svg";
+
+  if (access(filepath.c_str(), F_OK) == 0) 
+  {
+    icon = QIcon(QString::fromStdString(filepath));
+  }else{
+  }
+
+  return icon;
 }
 
 std::string CalculiXCore::get_material_export_data() // gets the export data from materials core

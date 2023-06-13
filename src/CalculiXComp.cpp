@@ -14,7 +14,7 @@
 #include "loadUserOptions.hpp"
 #include "ConfigFile.hpp"
 #include "UserOptionsPanel.hpp"
-#include "iostream"
+#include <iostream>
 
 // Default constructor. Remember to include the component name (should match
 // the module name in mycomp.i).
@@ -51,6 +51,7 @@ CalculiXComp::~CalculiXComp()
 
 void CalculiXComp::start_up(int withGUI)
 {
+  restore_settings();
   if(withGUI)
   {
     //setup_menus();
@@ -58,11 +59,9 @@ void CalculiXComp::start_up(int withGUI)
     setup_command_panels();
     setup_CCXDockWindowModelTree(); // command panels has to be setup before dockwindow
     add_exports();
-    restore_settings();
     load_options();
     boolwithGUI = true;
   }
-
   setup_observers(withGUI);
 }
 
@@ -213,6 +212,8 @@ void CalculiXComp::restore_settings()
   ccx_uo.mPathParaViewName = "Path to ParaView";
   config.read_entry("Pathccx2paraview", ccx_uo.mPathccx2paraview);
   ccx_uo.mPathccx2paraviewName = "Path to ccx2paraview";
+  config.read_entry("PathIcons", ccx_uo.mPathIcons);
+  ccx_uo.mPathIconsName = "Path to Icons";
 }
 
 void CalculiXComp::save_settings()
@@ -225,6 +226,7 @@ void CalculiXComp::save_settings()
   config.write_entry("PathCGX", ccx_uo.mPathCGX);
   config.write_entry("PathParaView", ccx_uo.mPathParaView);
   config.write_entry("Pathccx2paraview", ccx_uo.mPathccx2paraview);
+  config.write_entry("PathIcons", ccx_uo.mPathIcons);
 }
 
 void CalculiXComp::load_options()

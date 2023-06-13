@@ -19,7 +19,7 @@ void StepsBCsTree::initialize(int step_id_init)
 
   QTreeWidgetItem::setText(0,"BCs");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-  
+  this->setIcon(0,ccx_iface->getIcon2("StepsBCsTree"));
   isInitialized = true;
   step_id = step_id_init;
 

@@ -43,6 +43,9 @@ add_subdirectory(EventObservers)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/UserOptions)
 add_subdirectory(UserOptions)
 
+# copy our icons to build directory
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Icons/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Icons/)
+
 #qt5_wrap_ui(ui_src ${GUI_UI})
 
 set(CCXCOMP_SRCS

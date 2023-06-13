@@ -17,7 +17,7 @@ void LoadsPressuresTree::initialize()
 
   QTreeWidgetItem::setText(0,"Pressures");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-  
+  this->setIcon(0,ccx_iface->getIcon2("LoadsPressuresTree"));
   isInitialized = true;
 }
 
@@ -93,6 +93,8 @@ void LoadsPressuresTree::addLoad(QString load_id, QString load_name)
   LoadTreeChild->setText(0, load_name);
     
   LoadTreeChild->setText(1, load_id);
+
+  LoadTreeChild->setIcon(0,ccx_iface->getIcon2("LoadsPressuresTree"));
 
   this->addChild(LoadTreeChild);
 }

@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QTreeWidgetItem>
+#include <QIcon>
 
 class CalculiXCoreInterface;
 class StepsLoadsForcesTree;

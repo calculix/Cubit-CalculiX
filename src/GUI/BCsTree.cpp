@@ -16,6 +16,6 @@ void BCsTree::initialize()
 
   QTreeWidgetItem::setText(0,"BCs");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-  
+  this->setIcon(0,ccx_iface->getIcon2("BCsTree"));
   isInitialized = true;
 }

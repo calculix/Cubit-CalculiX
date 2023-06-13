@@ -17,7 +17,7 @@ void JobsTree::initialize()
 
   QTreeWidgetItem::setText(0,"Jobs");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-  
+  this->setIcon(0,ccx_iface->getIcon2("JobsTree")); 
   isInitialized = true;
 }
 
@@ -93,6 +93,8 @@ void JobsTree::addJob(QString job_id, QString job_name)
   JobTreeChild->setText(0, job_name);
     
   JobTreeChild->setText(1, job_id);
+
+  JobTreeChild->setIcon(0,ccx_iface->getIcon2("JobsTree")); 
 
   this->addChild(JobTreeChild);
 }

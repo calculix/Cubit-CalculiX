@@ -18,7 +18,7 @@ void SectionsTree::initialize()
 
   QTreeWidgetItem::setText(0,"Sections");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-  
+  this->setIcon(0,ccx_iface->getIcon2("SectionsTree"));
   isInitialized = true;
 }
 
@@ -94,6 +94,8 @@ void SectionsTree::addSection(QString section_id, QString section_name)
   SectionTreeChild->setText(0, section_name);
     
   SectionTreeChild->setText(1, section_id);
+
+  SectionTreeChild->setIcon(0,ccx_iface->getIcon2("SectionsTree"));
 
   this->addChild(SectionTreeChild);
 }

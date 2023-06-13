@@ -18,7 +18,7 @@ void SidesetTree::initialize()
 
   QTreeWidgetItem::setText(0,"Side Sets");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-  
+  this->setIcon(0,ccx_iface->getIcon2("SidesetTree"));
   isInitialized = true;
 }
 
@@ -94,6 +94,8 @@ void SidesetTree::addSideset(QString sideset_id, QString sideset_name)
   SidesetTreeChild->setText(0, sideset_name);
     
   SidesetTreeChild->setText(1, sideset_id);
+
+  SidesetTreeChild->setIcon(0,ccx_iface->getIcon2("SidesetTree"));
 
   this->addChild(SidesetTreeChild);
 }

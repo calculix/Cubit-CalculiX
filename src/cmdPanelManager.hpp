@@ -9,7 +9,13 @@
 #ifndef CMDPANELMANAGER_HPP
 #define CMDPANELMANAGER_HPP
 
+#include <QAction>
+#include <QIcon>
+#include <QStringList>
+#include <QString>
+
 class MyCmdWidgetFactory;
+class CalculiXCoreInterface;
 
 class cmdPanelManager
 {
@@ -27,6 +33,8 @@ public:
 private:
   bool isInitialized;
   MyCmdWidgetFactory* myFactory;
+  CalculiXCoreInterface* ccx_iface;
+
 
   // Two examples of how to initialize command panel navigation buttons.
   void initialize_from_xml();

@@ -1,6 +1,8 @@
 #ifndef CALCULIXCOREINTERFACE_HPP
 #define CALCULIXCOREINTERFACE_HPP
 
+#include <QIcon>
+
 class MeshExportInterface;
 
 class CalculiXCoreInterface
@@ -109,6 +111,8 @@ public:
   std::vector<std::vector<std::string>> get_entities(std::string entity, int id);
 
   // GUI
+  QIcon* getIcon(std::string name);
+  QIcon getIcon2(std::string name);
   std::vector<std::vector<std::string>> get_blocks_tree_data(); // gets the data from core blocks to build the tree
   std::vector<std::vector<std::string>> get_nodeset_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_sideset_tree_data(); // gets the data from core to build the tree

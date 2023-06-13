@@ -18,7 +18,7 @@ void SurfaceInteractionsTree::initialize()
 
   QTreeWidgetItem::setText(0,"Surface Interactions");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-  
+  this->setIcon(0,ccx_iface->getIcon2("SurfaceInteractionsTree"));
   isInitialized = true;
 }
 
@@ -94,6 +94,8 @@ void SurfaceInteractionsTree::addSurfaceInteraction(QString surfaceinteraction_i
   SurfaceInteractionTreeChild->setText(0, surfaceinteraction_name);
     
   SurfaceInteractionTreeChild->setText(1, surfaceinteraction_id);
+
+  SurfaceInteractionTreeChild->setIcon(0,ccx_iface->getIcon2("SurfaceInteractionsTree"));
 
   this->addChild(SurfaceInteractionTreeChild);
 }

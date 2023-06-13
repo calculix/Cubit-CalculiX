@@ -19,6 +19,7 @@ void StepsLoadsTree::initialize(int step_id_init)
 
   QTreeWidgetItem::setText(0,"Loads");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
+  this->setIcon(0,ccx_iface->getIcon2("StepsLoadsTree"));  
   
   isInitialized = true;
   step_id = step_id_init;

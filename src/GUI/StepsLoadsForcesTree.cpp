@@ -17,7 +17,7 @@ void StepsLoadsForcesTree::initialize(int step_id_init)
 
   QTreeWidgetItem::setText(0,"Forces");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-  
+  this->setIcon(0,ccx_iface->getIcon2("StepsLoadsForcesTree"));
   isInitialized = true;
   step_id = step_id_init;
 }
@@ -94,6 +94,8 @@ void StepsLoadsForcesTree::addLoad(QString load_id, QString load_name)
   LoadTreeChild->setText(0, load_name);
     
   LoadTreeChild->setText(1, load_id);
+
+  LoadTreeChild->setIcon(0,ccx_iface->getIcon2("StepsLoadsForcesTree"));
 
   this->addChild(LoadTreeChild);
 }

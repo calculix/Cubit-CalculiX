@@ -17,7 +17,7 @@ void StepsFieldOutputsTree::initialize(int step_id_init)
 
   QTreeWidgetItem::setText(0,"Field Outputs");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-  
+  this->setIcon(0,ccx_iface->getIcon2("StepsFieldOutputsTree"));
   isInitialized = true;
   step_id = step_id_init;
 }
@@ -94,6 +94,8 @@ void StepsFieldOutputsTree::addOutput(QString output_id, QString output_name)
   OutputTreeChild->setText(0, output_name);
     
   OutputTreeChild->setText(1, output_id);
+
+  OutputTreeChild->setIcon(0,ccx_iface->getIcon2("StepsFieldOutputsTree"));
 
   this->addChild(OutputTreeChild);
 }

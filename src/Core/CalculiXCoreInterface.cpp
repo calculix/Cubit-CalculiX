@@ -467,7 +467,17 @@ std::vector<std::string> CalculiXCoreInterface::get_job_data(int job_id)
 
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_entities(std::string entity, int id)
 {
-    return ccx_core.get_entities(entity,id);
+  return ccx_core.get_entities(entity,id);
+}
+
+QIcon* CalculiXCoreInterface::getIcon(std::string name)
+{
+  return ccx_core.getIcon(name);
+}
+
+QIcon CalculiXCoreInterface::getIcon2(std::string name)
+{
+  return ccx_core.getIcon2(name);
 }
 
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_blocks_tree_data()

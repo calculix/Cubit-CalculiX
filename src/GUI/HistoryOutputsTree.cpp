@@ -17,7 +17,7 @@ void HistoryOutputsTree::initialize()
 
   QTreeWidgetItem::setText(0,"History Outputs");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-  
+  this->setIcon(0,ccx_iface->getIcon2("HistoryOutputsTree")); 
   isInitialized = true;
 }
 
@@ -93,6 +93,8 @@ void HistoryOutputsTree::addOutput(QString output_id, QString output_name)
   OutputTreeChild->setText(0, output_name);
     
   OutputTreeChild->setText(1, output_id);
+
+  OutputTreeChild->setIcon(0,ccx_iface->getIcon2("HistoryOutputsTree")); 
 
   this->addChild(OutputTreeChild);
 }

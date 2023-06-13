@@ -18,7 +18,7 @@ void NodesetTree::initialize()
 
   QTreeWidgetItem::setText(0,"Node Sets");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-  
+  this->setIcon(0,ccx_iface->getIcon2("NodesetTree"));
   isInitialized = true;
 }
 
@@ -94,6 +94,8 @@ void NodesetTree::addNodeset(QString nodeset_id, QString nodeset_name)
   NodesetTreeChild->setText(0, nodeset_name);
     
   NodesetTreeChild->setText(1, nodeset_id);
+
+  NodesetTreeChild->setIcon(0,ccx_iface->getIcon2("NodesetTree"));
 
   this->addChild(NodesetTreeChild);
 }

@@ -17,7 +17,7 @@ void AmplitudesTree::initialize()
 
   QTreeWidgetItem::setText(0,"Amplitudes");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-  
+  this->setIcon(0,ccx_iface->getIcon2("AmplitudesTree")); 
   isInitialized = true;
 }
 
@@ -93,6 +93,8 @@ void AmplitudesTree::addAmplitude(QString amplitude_id, QString amplitude_name)
   AmplitudeTreeChild->setText(0, amplitude_name);
     
   AmplitudeTreeChild->setText(1, amplitude_id);
+
+  AmplitudeTreeChild->setIcon(0,ccx_iface->getIcon2("AmplitudesTree"));
 
   this->addChild(AmplitudeTreeChild);
 }

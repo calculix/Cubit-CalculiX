@@ -20,21 +20,25 @@ UserOptionsPanel::UserOptionsPanel(QWidget *parent) :
   HBoxLayout_3 = new QHBoxLayout();
   HBoxLayout_4 = new QHBoxLayout();
   HBoxLayout_5 = new QHBoxLayout();
+  HBoxLayout_6 = new QHBoxLayout();
   label_1 = new QLabel();
   label_2 = new QLabel();
   label_3 = new QLabel();
   label_4 = new QLabel();
   label_5 = new QLabel();
+  label_6 = new QLabel();
   label_1->setFixedWidth(labelWidth);
   label_2->setFixedWidth(labelWidth);
   label_3->setFixedWidth(labelWidth);
   label_4->setFixedWidth(labelWidth);
   label_5->setFixedWidth(labelWidth);
+  label_6->setFixedWidth(labelWidth);
   lineEdit_1 = new QLineEdit();
   lineEdit_2 = new QLineEdit();
   lineEdit_3 = new QLineEdit();
   lineEdit_4 = new QLineEdit();
   lineEdit_5 = new QLineEdit();
+  lineEdit_6 = new QLineEdit();
 
   // Layout
   GridLayout->addLayout(VBoxLayout,0,0, Qt::AlignTop);
@@ -43,6 +47,7 @@ UserOptionsPanel::UserOptionsPanel(QWidget *parent) :
   VBoxLayout->addLayout(HBoxLayout_3);
   VBoxLayout->addLayout(HBoxLayout_4);
   VBoxLayout->addLayout(HBoxLayout_5);
+  VBoxLayout->addLayout(HBoxLayout_6);
   VBoxLayout->addItem(vertical_spacer);
 
   HBoxLayout_1->addWidget(label_1);
@@ -55,6 +60,8 @@ UserOptionsPanel::UserOptionsPanel(QWidget *parent) :
   HBoxLayout_4->addWidget(lineEdit_4);
   HBoxLayout_5->addWidget(label_5);
   HBoxLayout_5->addWidget(lineEdit_5);
+  HBoxLayout_6->addWidget(label_6);
+  HBoxLayout_6->addWidget(lineEdit_6);
 
   isInitialized = true;
 }
@@ -69,12 +76,14 @@ void UserOptionsPanel::refresh_settings()
   label_3->setText(ccx_uo.mPathCGXName);
   label_4->setText(ccx_uo.mPathParaViewName);
   label_5->setText(ccx_uo.mPathccx2paraviewName);
+  label_6->setText(ccx_uo.mPathIconsName);
 
   lineEdit_1->setText(ccx_uo.mPathSolver);
   lineEdit_2->setText(QString::number(ccx_uo.mSolverThreads));
   lineEdit_3->setText(ccx_uo.mPathCGX);
   lineEdit_4->setText(ccx_uo.mPathParaView);
   lineEdit_5->setText(ccx_uo.mPathccx2paraview);
+  lineEdit_6->setText(ccx_uo.mPathIcons);
 }
 
 void UserOptionsPanel::save_settings()
@@ -84,4 +93,5 @@ void UserOptionsPanel::save_settings()
   ccx_uo.mPathCGX = lineEdit_3->text();
   ccx_uo.mPathParaView = lineEdit_4->text();
   ccx_uo.mPathccx2paraview = lineEdit_5->text();
+  ccx_uo.mPathIcons = lineEdit_6->text();
 }

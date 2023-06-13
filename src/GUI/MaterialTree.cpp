@@ -18,7 +18,7 @@ void MaterialTree::initialize()
 
   QTreeWidgetItem::setText(0,"Material");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-  
+  this->setIcon(0,ccx_iface->getIcon2("MaterialTree"));
   isInitialized = true;
 }
 
@@ -94,6 +94,8 @@ void MaterialTree::addMaterial(QString material_id, QString material_name)
   MaterialTreeChild->setText(0, material_name);
     
   MaterialTreeChild->setText(1, material_id);
+
+  MaterialTreeChild->setIcon(0,ccx_iface->getIcon2("MaterialTree"));
 
   this->addChild(MaterialTreeChild);
 }

@@ -18,7 +18,7 @@ void BlocksTree::initialize()
 
   QTreeWidgetItem::setText(0,"Element Sets");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-  
+  this->setIcon(0,ccx_iface->getIcon2("BlocksTree"));  
   isInitialized = true;
 }
 
@@ -105,7 +105,7 @@ void BlocksTree::addBlock(QString block_id, QString block_name, QString element_
   }
     
   BlocksTreeChild->setText(1, block_id);
-
+  BlocksTreeChild->setIcon(0,ccx_iface->getIcon2("BlocksTree"));
   this->addChild(BlocksTreeChild);
 }
 

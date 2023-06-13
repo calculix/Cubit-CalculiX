@@ -18,7 +18,7 @@ void ConstraintsTree::initialize()
 
   QTreeWidgetItem::setText(0,"Constraints");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-  
+  this->setIcon(0,ccx_iface->getIcon2("ConstraintsTree"));
   isInitialized = true;
 }
 
@@ -94,6 +94,8 @@ void ConstraintsTree::addConstraint(QString constraint_id, QString constraint_na
   ConstraintTreeChild->setText(0, constraint_name);
     
   ConstraintTreeChild->setText(1, constraint_id);
+
+  ConstraintTreeChild->setIcon(0,ccx_iface->getIcon2("ConstraintsTree"));
 
   this->addChild(ConstraintTreeChild);
 }

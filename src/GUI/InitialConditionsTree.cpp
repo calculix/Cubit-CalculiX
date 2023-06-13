@@ -17,7 +17,7 @@ void InitialConditionsTree::initialize()
 
   QTreeWidgetItem::setText(0,"Initial Conditions");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-  
+  this->setIcon(0,ccx_iface->getIcon2("InitialConditionsTree")); 
   isInitialized = true;
 }
 
@@ -93,6 +93,8 @@ void InitialConditionsTree::addInitialCondition(QString initialcondition_id, QSt
   InitialConditionTreeChild->setText(0, initialcondition_name);
     
   InitialConditionTreeChild->setText(1, initialcondition_id);
+
+  InitialConditionTreeChild->setIcon(0,ccx_iface->getIcon2("InitialConditionsTree")); 
 
   this->addChild(InitialConditionTreeChild);
 }

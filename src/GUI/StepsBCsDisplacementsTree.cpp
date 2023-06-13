@@ -17,7 +17,7 @@ void StepsBCsDisplacementsTree::initialize(int step_id_init)
 
   QTreeWidgetItem::setText(0,"Displacements");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-  
+  this->setIcon(0,ccx_iface->getIcon2("StepsBCsDisplacementsTree"));
   isInitialized = true;
   step_id = step_id_init;
 }
@@ -94,6 +94,8 @@ void StepsBCsDisplacementsTree::addBC(QString bc_id, QString bc_name)
   BCTreeChild->setText(0, bc_name);
     
   BCTreeChild->setText(1, bc_id);
+
+  BCTreeChild->setIcon(0,ccx_iface->getIcon2("StepsBCsDisplacementsTree"));
 
   this->addChild(BCTreeChild);
 }

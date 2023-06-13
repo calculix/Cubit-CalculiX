@@ -20,7 +20,7 @@ void StepsTree::initialize()
 
   QTreeWidgetItem::setText(0,"Steps");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-  
+  this->setIcon(0,ccx_iface->getIcon2("StepsTree")); 
   isInitialized = true;
 }
 
@@ -109,6 +109,8 @@ void StepsTree::addStep(QString step_id, QString step_name)
   StepTreeChild->setText(0, step_name);
     
   StepTreeChild->setText(1, step_id);
+
+  StepTreeChild->setIcon(0,ccx_iface->getIcon2("StepsTree")); 
 
   StepsLoadsTree *StepsLoadsChild = new StepsLoadsTree(StepTreeChild);
   StepsLoadsChild->initialize(step_id.toInt());

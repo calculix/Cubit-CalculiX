@@ -17,7 +17,7 @@ void FieldOutputsTree::initialize()
 
   QTreeWidgetItem::setText(0,"Field Outputs");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-  
+  this->setIcon(0,ccx_iface->getIcon2("FieldOutputsTree")); 
   isInitialized = true;
 }
 
@@ -93,6 +93,8 @@ void FieldOutputsTree::addOutput(QString output_id, QString output_name)
   OutputTreeChild->setText(0, output_name);
     
   OutputTreeChild->setText(1, output_id);
+
+  OutputTreeChild->setIcon(0,ccx_iface->getIcon2("FieldOutputsTree"));
 
   this->addChild(OutputTreeChild);
 }

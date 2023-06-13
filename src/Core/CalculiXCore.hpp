@@ -1,6 +1,9 @@
 #ifndef CALCULIXCORE_HPP
 #define CALCULIXCORE_HPP
 
+#include <QIcon>
+#include <QString>
+
 class CoreBlocks;
 class CoreMaterials;
 class CoreSections;
@@ -135,6 +138,8 @@ public:
   bool result_paraview_job(int job_id); // opens the results with paraview
   std::vector<std::string> get_job_data(int job_id);
   std::vector<std::vector<std::string>> get_entities(std::string entity, int id); // get entitties for highlight
+  QIcon* getIcon(std::string name);
+  QIcon getIcon2(std::string name);
   std::vector<std::vector<std::string>> get_blocks_tree_data(); // gets the data from core blocks to build the tree
   std::vector<std::vector<std::string>> get_nodeset_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_sideset_tree_data(); // gets the data from core to build the tree

@@ -17,7 +17,7 @@ void ContactPairsTree::initialize()
 
   QTreeWidgetItem::setText(0,"Contact Pairs");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-  
+  this->setIcon(0,ccx_iface->getIcon2("ContactPairsTree")); 
   isInitialized = true;
 }
 
@@ -93,6 +93,8 @@ void ContactPairsTree::addContactPair(QString contactpair_id, QString contactpai
   ContactPairTreeChild->setText(0, contactpair_name);
     
   ContactPairTreeChild->setText(1, contactpair_id);
+
+  ContactPairTreeChild->setIcon(0,ccx_iface->getIcon2("ContactPairsTree")); 
 
   this->addChild(ContactPairTreeChild);
 }
