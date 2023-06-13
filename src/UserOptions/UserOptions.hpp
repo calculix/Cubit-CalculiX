@@ -6,8 +6,8 @@
 class UserOptions
 {
   public:
-    UserOptions(){}
-    ~UserOptions(){}
+    UserOptions();
+    ~UserOptions();
   public:
     QString mPathSolver;
     QString mPathSolverName;
