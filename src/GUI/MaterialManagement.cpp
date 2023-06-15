@@ -232,6 +232,7 @@ void MaterialManagement::addMaterial(QString material_id, QString material_name)
 {
   MaterialManagementItem *MaterialTreeChild = new MaterialManagementItem(tree_material);
   MaterialTreeChild->initialize(material_id, material_name);
+  MaterialTreeChild->setIcon(0,ccx_iface->getIcon2("MaterialTree"));
 }
 
 void MaterialManagement::removeMaterial(MaterialManagementItem *material)

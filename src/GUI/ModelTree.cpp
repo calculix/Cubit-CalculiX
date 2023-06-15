@@ -959,7 +959,7 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   {
     if (BlocksTreeItem->text(1).toStdString()=="")
     {
-      this->setWidgetInCmdPanelMarker("BlocksCCXElementType");
+      this->setWidgetInCmdPanelMarker("CCXBlocksModify");
     }
   }else if (NodesetTreeItem = dynamic_cast<NodesetTree*>(item))
   {
@@ -1114,7 +1114,7 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   } else {
     if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item->parent()))
     {
-      this->setWidgetInCmdPanelMarker("BlocksCCXElementType");
+      this->setWidgetInCmdPanelMarker("CCXBlocksModify");
     } else if (NodesetTreeItem = dynamic_cast<NodesetTree*>(item->parent()))
     {
       this->setWidgetInCmdPanelMarker("ExodusRemoveContentsNodeset");
@@ -1220,7 +1220,7 @@ void ModelTree::execContextMenuAction(){
     {
       if (contextMenuAction[0][1]==0) //Action1
       {
-        this->setWidgetInCmdPanelMarker("CCXBlocksElementType");
+        this->setWidgetInCmdPanelMarker("CCXBlocksModify");
       }
     }else if (contextMenuAction[0][0]==1) //NodesetTree
     {

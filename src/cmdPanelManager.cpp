@@ -47,7 +47,7 @@ void cmdPanelManager::clear()
 
     // Remove the factory reference from my navigation nodes
     QStringList my_markers;
-    my_markers.push_back("CCXBlocksElementType");
+    my_markers.push_back("CCXBlocksModify");
     my_markers.push_back("CCXSectionsCreateSolid");
     my_markers.push_back("CCXSectionsCreateShell");
     my_markers.push_back("CCXSectionsCreateBeam");
@@ -143,6 +143,7 @@ void cmdPanelManager::initialize_from_code()
   root_node->setTitle("CCX");
   root_node->setIcon(ccx_iface->getIcon("CCX"));
   model->setNodeMarker(root_node, "CCX"); 
+  model->updateNode(root_node); 
 
   //##############################
   // add BlocksTree Nodes
@@ -155,12 +156,6 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXBlocksModify");
   node->setIcon(ccx_iface->getIcon("CCXBlocksModify"));
-
-  // add Element Type Node
-  root_node = model->getMarkedNode("CCXBlocksModify");
-  node = model->addNode("CCX Element Types", root_node);
-  model->setNodeMarker(node, "CCXBlocksElementType");
-  node->setIcon(ccx_iface->getIcon("CCXBlocksElementType"));
 
   //##############################
   // add Materials and Section Nodes
@@ -239,10 +234,10 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Tie", root_node);
   model->setNodeMarker(node, "CCXConstraintsModifyTie");
   node->setIcon(ccx_iface->getIcon("CCXConstraintsModifyTie"));
-  root_node = model->getMarkedNode("CCXConstraintsDelete");
+  /*root_node = model->getMarkedNode("CCXConstraintsDelete");
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXConstraintsDelete");
-  node->setIcon(ccx_iface->getIcon("CCXConstraintsDelete"));
+  node->setIcon(ccx_iface->getIcon("CCXConstraintsDelete"));*/
 
   //##############################
   // add SurfaceInteractions Nodes
@@ -492,7 +487,7 @@ void cmdPanelManager::associate_panels_with_nodes()
   // we did not include our root marker because we do not need to create a
   // command panel for it.
   QStringList my_markers;
-  my_markers.push_back("CCXBlocksElementType");
+  my_markers.push_back("CCXBlocksModify");
   my_markers.push_back("CCXSectionsCreateSolid");
   my_markers.push_back("CCXSectionsCreateShell");
   my_markers.push_back("CCXSectionsCreateBeam");

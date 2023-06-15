@@ -1,5 +1,6 @@
 #include "JobsTree.hpp"
 #include "CalculiXCoreInterface.hpp"
+#include "GUITimer.hpp"
 
 JobsTree::JobsTree(QTreeWidget* parent):
   QTreeWidgetItem (parent),
@@ -19,6 +20,8 @@ void JobsTree::initialize()
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
   this->setIcon(0,ccx_iface->getIcon2("JobsTree")); 
   isInitialized = true;
+  timer = new GUITimer();
+  QObject::connect(timer, SIGNAL(timeout()), this, SLOT(update_icon()));
 }
 
 void JobsTree::update()
@@ -122,4 +125,45 @@ int JobsTree::get_child_id(std::string job_id)
     }
   }
   return int_return;
+}
+
+void JobsTree::update_icon()
+{
+  std::vector<std::vector<std::string>> jobs_tree_data;
+  std::vector<std::string> job_data;
+  jobs_tree_data = ccx_iface->get_jobs_tree_data();
+  
+  QTreeWidgetItem *temp_child;
+  int ChildId;
+
+  for (size_t i = 0; i < jobs_tree_data.size(); i++)
+  {
+    // check if job already exists as item
+    
+    ChildId = this->get_child_id(jobs_tree_data[i][0]);
+
+    if (ChildId != -1)
+    {
+      temp_child = this->child(ChildId);
+      job_data = ccx_iface->get_job_data(std::stoi(jobs_tree_data[i][0]));    
+
+      // jobs_data[0][3] status -1 no process, 1 process running, 2 process finished, 3 process killed, 4 process finished with errors
+      if (job_data[3] == "-1")
+      {
+        temp_child->setIcon(0,ccx_iface->getIcon2("JobsTree_no_process"));
+      }else if (job_data[3] == "1")
+      {
+        temp_child->setIcon(0,ccx_iface->getIcon2("JobsTree_running"));
+      }else if (job_data[3] == "2")
+      {
+        temp_child->setIcon(0,ccx_iface->getIcon2("JobsTree_finished"));
+      }else if (job_data[3] == "3")
+      {
+        temp_child->setIcon(0,ccx_iface->getIcon2("JobsTree_killed"));
+      }else if (job_data[3] == "4")
+      {
+        temp_child->setIcon(0,ccx_iface->getIcon2("JobsTree_error"));
+      }
+    }
+  }
 }

@@ -164,7 +164,7 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
   // We don't worry about setting the widget parent here because it is
   // set in the getWidget() function.
 
-  if(name == "CCXBlocksElementType")
+  if(name == "CCXBlocksModify")
     return new CCXBlocksElementType();
   else if(name == "CCXSectionsCreateSolid")
     return new SectionsCreateSolidPanel();

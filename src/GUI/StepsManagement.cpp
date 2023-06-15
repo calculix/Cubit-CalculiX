@@ -91,37 +91,53 @@ StepsManagement::StepsManagement()
 
   tree_available_loads = new QTreeWidgetItem(tree_available);
   tree_available_loads->setText(0,"Loads");
+  tree_available_loads->setIcon(0,ccx_iface->getIcon2("StepsLoadsTree"));
   tree_available_loads_forces = new QTreeWidgetItem(tree_available_loads);
   tree_available_loads_forces->setText(0,"Forces");
+  tree_available_loads_forces->setIcon(0,ccx_iface->getIcon2("StepsLoadsForcesTree"));
   tree_available_loads_pressures = new QTreeWidgetItem(tree_available_loads);
   tree_available_loads_pressures->setText(0,"Pressures");
+  tree_available_loads_pressures->setIcon(0,ccx_iface->getIcon2("StepsLoadsPressuresTree"));
   tree_available_bcs = new QTreeWidgetItem(tree_available);
   tree_available_bcs->setText(0,"BCs");
+  tree_available_bcs->setIcon(0,ccx_iface->getIcon2("StepsBCsTree"));
   tree_available_bcs_displacements = new QTreeWidgetItem(tree_available_bcs);
   tree_available_bcs_displacements->setText(0,"Displacements");
+  tree_available_bcs_displacements->setIcon(0,ccx_iface->getIcon2("StepsBCsDisplacementsTree"));
   tree_available_bcs_temperatures = new QTreeWidgetItem(tree_available_bcs);
   tree_available_bcs_temperatures->setText(0,"Temperatures");
+  tree_available_bcs_temperatures->setIcon(0,ccx_iface->getIcon2("StepsBCsTemperaturesTree"));
   tree_available_historyoutputs = new QTreeWidgetItem(tree_available);
   tree_available_historyoutputs->setText(0,"History Outputs");
+  tree_available_historyoutputs->setIcon(0,ccx_iface->getIcon2("StepsHistoryOutputsTree"));
   tree_available_fieldoutputs = new QTreeWidgetItem(tree_available);
   tree_available_fieldoutputs->setText(0,"Field Outputs");
+  tree_available_fieldoutputs->setIcon(0,ccx_iface->getIcon2("StepsFieldOutputsTree"));
 
   tree_used_loads = new QTreeWidgetItem(tree_used);
   tree_used_loads->setText(0,"Loads");
+  tree_used_loads->setIcon(0,ccx_iface->getIcon2("StepsLoadsTree"));
   tree_used_loads_forces = new QTreeWidgetItem(tree_used_loads);
   tree_used_loads_forces->setText(0,"Forces");
+  tree_used_loads_forces->setIcon(0,ccx_iface->getIcon2("StepsLoadsForcesTree"));
   tree_used_loads_pressures = new QTreeWidgetItem(tree_used_loads);
   tree_used_loads_pressures->setText(0,"Pressures");
+  tree_used_loads_pressures->setIcon(0,ccx_iface->getIcon2("StepsLoadsPressuresTree"));
   tree_used_bcs = new QTreeWidgetItem(tree_used);
   tree_used_bcs->setText(0,"BCs");
+  tree_used_bcs->setIcon(0,ccx_iface->getIcon2("StepsBCsTree"));
   tree_used_bcs_displacements = new QTreeWidgetItem(tree_used_bcs);
   tree_used_bcs_displacements->setText(0,"Displacements");
+  tree_used_bcs_displacements->setIcon(0,ccx_iface->getIcon2("StepsBCsDisplacementsTree"));
   tree_used_bcs_temperatures = new QTreeWidgetItem(tree_used_bcs);
   tree_used_bcs_temperatures->setText(0,"Temperatures");
+  tree_used_bcs_temperatures->setIcon(0,ccx_iface->getIcon2("StepsBCsTemperaturesTree"));
   tree_used_historyoutputs = new QTreeWidgetItem(tree_used);
   tree_used_historyoutputs->setText(0,"History Outputs");
+  tree_used_historyoutputs->setIcon(0,ccx_iface->getIcon2("StepsHistoryOutputsTree"));
   tree_used_fieldoutputs = new QTreeWidgetItem(tree_used);
   tree_used_fieldoutputs->setText(0,"Field Outputs");
+  tree_used_fieldoutputs->setIcon(0,ccx_iface->getIcon2("StepsFieldOutputsTree"));
 
   available_trees.push_back(tree_available_loads_forces);
   available_trees.push_back(tree_available_loads_pressures);
@@ -223,6 +239,7 @@ void StepsManagement::addStep(QString step_id, QString step_name)
   QTreeWidgetItem* StepsTreeChild = new QTreeWidgetItem(tree_steps);
   StepsTreeChild->setText(1,step_id);
   StepsTreeChild->setText(0,step_name);
+  StepsTreeChild->setIcon(0,ccx_iface->getIcon2("StepsTree"));
 }
 
 void StepsManagement::removeStep(QTreeWidgetItem *step)
@@ -284,6 +301,25 @@ void StepsManagement::createItems(QTreeWidgetItem *step)
       temp_child = new QTreeWidgetItem(available_trees[i]);
       temp_child->setText(1,QString::fromStdString(available[i][ii][0]));
       temp_child->setText(0,QString::fromStdString(available[i][ii][1]));
+      if (i==0)
+      {
+        temp_child->setIcon(0,ccx_iface->getIcon2("StepsLoadsForcesTree"));
+      }else if (i==1)
+      {
+        temp_child->setIcon(0,ccx_iface->getIcon2("StepsLoadsPressuresTree"));
+      }else if (i==2)
+      {
+        temp_child->setIcon(0,ccx_iface->getIcon2("StepsBCsDisplacementsTree"));
+      }else if (i==3)
+      {
+        temp_child->setIcon(0,ccx_iface->getIcon2("StepsBCsTemperaturesTree"));
+      }else if (i==4)
+      {
+        temp_child->setIcon(0,ccx_iface->getIcon2("StepsHistoryOutputsTree"));
+      }else if (i==5)
+      {
+        temp_child->setIcon(0,ccx_iface->getIcon2("StepsFieldOutputsTree"));
+      }
     }
     available_trees[i]->setExpanded(true);
   }
@@ -298,6 +334,25 @@ void StepsManagement::createItems(QTreeWidgetItem *step)
       temp_child = new QTreeWidgetItem(used_trees[i]);
       temp_child->setText(1,QString::fromStdString(used[i][ii][0]));
       temp_child->setText(0,QString::fromStdString(used[i][ii][1]));
+      if (i==0)
+      {
+        temp_child->setIcon(0,ccx_iface->getIcon2("StepsLoadsForcesTree"));
+      }else if (i==1)
+      {
+        temp_child->setIcon(0,ccx_iface->getIcon2("StepsLoadsPressuresTree"));
+      }else if (i==2)
+      {
+        temp_child->setIcon(0,ccx_iface->getIcon2("StepsBCsDisplacementsTree"));
+      }else if (i==3)
+      {
+        temp_child->setIcon(0,ccx_iface->getIcon2("StepsBCsTemperaturesTree"));
+      }else if (i==4)
+      {
+        temp_child->setIcon(0,ccx_iface->getIcon2("StepsHistoryOutputsTree"));
+      }else if (i==5)
+      {
+        temp_child->setIcon(0,ccx_iface->getIcon2("StepsFieldOutputsTree"));
+      }
     }
     used_trees[i]->setExpanded(true);
   }
