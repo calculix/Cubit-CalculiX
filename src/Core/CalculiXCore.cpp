@@ -1937,7 +1937,7 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
             steps_export_list.push_back(str_temp);
             for (size_t iv = 0; iv < bc_attribs.size(); iv++)
             { 
-              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iv].first+1) + "," + std::to_string(bc_attribs[iv].second);
+              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iv].first+1) + "," + std::to_string(bc_attribs[iv].first+1) + "," + std::to_string(bc_attribs[iv].second);
               steps_export_list.push_back(str_temp);
             }
             for (size_t iv = 0; iv < rigidbody_vertex_list.size(); iv++)
@@ -1947,7 +1947,7 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
                 referencepoints_nodesets = referencepoints->get_referencepoints_nodesets(rigidbody_vertex_list[iv]);
                 for (size_t v = 3; v < bc_attribs.size(); v++)
                 { 
-                  str_temp = referencepoints_nodesets[1] + "," + std::to_string(bc_attribs[v].first-2) + "," + std::to_string(bc_attribs[v].second);
+                  str_temp = referencepoints_nodesets[1] + "," + std::to_string(bc_attribs[v].first-2) + "," + std::to_string(bc_attribs[v].first-2) + "," + std::to_string(bc_attribs[v].second);
                   steps_export_list.push_back(str_temp);
                 }
               }
@@ -1965,7 +1965,7 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
             steps_export_list.push_back(str_temp);
             for (size_t iv = 0; iv < bc_attribs.size(); iv++)
             { 
-              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + ",11," + std::to_string(bc_attribs[iv].second);
+              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + ",11,11," + std::to_string(bc_attribs[iv].second);
               steps_export_list.push_back(str_temp);
             }
           }  

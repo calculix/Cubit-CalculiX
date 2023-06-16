@@ -411,6 +411,7 @@ std::string CoreFieldOutputs::get_output_export(int output_id) // get a list of 
   std::vector<int> rigidbody_vertex_list;
   std::vector<std::string> referencepoints_nodesets;
   rigidbody_vertex_list = ccx_iface->get_rigidbody_vertex_list();
+  bool first_key = true;
 
   
   output_data_id = get_outputs_data_id_from_output_id(output_id);
@@ -480,13 +481,15 @@ std::string CoreFieldOutputs::get_output_export(int output_id) // get a list of 
         str_temp = "";
         for (size_t i = 11; i < 11 + node_keys.size(); i++)
         {
-          if (i!=11)
-          {
-            str_temp.append(",");
-          }
+          
           if (node_data[sub_data_id][i]!="")
           {
+            if ((i!=11)&&(first_key==false))
+            {
+              str_temp.append(",");
+            }
             str_temp.append(node_data[sub_data_id][i]);
+            first_key = false;
           }
         }
         outputs_export_list.push_back(str_temp);
@@ -555,13 +558,14 @@ std::string CoreFieldOutputs::get_output_export(int output_id) // get a list of 
         str_temp = "";
         for (size_t i = 11; i < 11 + element_keys.size(); i++)
         {
-          if (i!=11)
-          {
-            str_temp.append(",");
-          }
           if (element_data[sub_data_id][i]!="")
           {
+            if ((i!=11)&&(first_key==false))
+            {
+              str_temp.append(",");
+            }
             str_temp.append(element_data[sub_data_id][i]);
+            first_key = false;
           }
         }
         outputs_export_list.push_back(str_temp);
@@ -592,13 +596,14 @@ std::string CoreFieldOutputs::get_output_export(int output_id) // get a list of 
     str_temp = "";
     for (size_t i = 5; i < 5 + contact_keys.size(); i++)
     {
-      if (i!=5)
-      {
-        str_temp.append(",");
-      }
       if (contact_data[sub_data_id][i]!="")
       {
+        if ((i!=5)&&(first_key==false))
+        {
+          str_temp.append(",");
+        }
         str_temp.append(contact_data[sub_data_id][i]);
+        first_key =  false;
       }
     }
     outputs_export_list.push_back(str_temp);

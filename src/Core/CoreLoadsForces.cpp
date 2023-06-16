@@ -194,7 +194,7 @@ std::string CoreLoadsForces::get_load_parameter_export(int load_id)
   load_data_id = get_loads_data_id_from_load_id(load_id);
   if (loads_data[load_data_id][1]==0)
   {
-    str_temp.append(",OP=MOD");
+    //str_temp.append(",OP=MOD");
   }else if (loads_data[load_data_id][1]==1)
   {
     str_temp.append(",OP=NEW");

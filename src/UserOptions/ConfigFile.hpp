@@ -9,7 +9,7 @@ class ConfigFile
     ConfigFile();
     ~ConfigFile();
 
-  std::string filename = "ccx.cfg";
+  std::string filename;
 
   void clear();
   void read_entry(std::string option, QString &value);

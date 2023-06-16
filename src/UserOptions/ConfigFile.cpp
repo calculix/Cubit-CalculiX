@@ -1,10 +1,17 @@
 #include "ConfigFile.hpp"
 
+#include "Broker.hpp"
 #include <fstream>
 #include <iostream>
 
 ConfigFile::ConfigFile()
-{}
+{
+    //QString buffer;
+    //Broker::instance()->get_root_directory(buffer);
+    //std::cout << buffer.toStdString() << "\n";
+    //filename = buffer.toStdString() + "/ccx.cfg";
+    filename = "ccx.cfg";
+}
 
 ConfigFile::~ConfigFile()
 {}

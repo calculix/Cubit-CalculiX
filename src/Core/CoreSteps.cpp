@@ -1018,6 +1018,11 @@ std::string CoreSteps::get_step_export(int step_id)
     {
       str_temp.append(","); 
     }
+    if (str_temp==",,,,")
+    {
+      str_temp = "";
+    }
+    
     steps_export_list.push_back(str_temp);
   }
   else if (steps_data[steps_data_id][3]==3)

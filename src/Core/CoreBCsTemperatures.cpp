@@ -194,7 +194,7 @@ std::string CoreBCsTemperatures::get_bc_parameter_export(int bc_id)
   bc_data_id = get_bcs_data_id_from_bc_id(bc_id);
   if (bcs_data[bc_data_id][1]==0)
   {
-    str_temp.append(",OP=MOD");
+    //str_temp.append(",OP=MOD");
   }else if (bcs_data[bc_data_id][1]==1)
   {
     str_temp.append(",OP=NEW");

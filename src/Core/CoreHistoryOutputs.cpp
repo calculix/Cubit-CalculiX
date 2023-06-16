@@ -381,6 +381,7 @@ std::string CoreHistoryOutputs::get_output_export(int output_id) // get a list o
   std::vector<int> rigidbody_vertex_list;
   std::vector<std::string> referencepoints_nodesets;
   rigidbody_vertex_list = ccx_iface->get_rigidbody_vertex_list();
+  bool first_key = true;
 
   
   output_data_id = get_outputs_data_id_from_output_id(output_id);
@@ -437,13 +438,14 @@ std::string CoreHistoryOutputs::get_output_export(int output_id) // get a list o
         str_temp = "";
         for (size_t i = 7; i < 7 + node_keys.size(); i++)
         {
-          if (i!=7)
-          {
-            str_temp.append(",");
-          }
           if (node_data[sub_data_id][i]!="")
           {
+            if ((i!=7)&&(first_key==false))
+            {
+              str_temp.append(",");
+            }
             str_temp.append(node_data[sub_data_id][i]);
+            first_key = false;
           }
         }
         outputs_export_list.push_back(str_temp);
@@ -485,13 +487,14 @@ std::string CoreHistoryOutputs::get_output_export(int output_id) // get a list o
     str_temp = "";
     for (size_t i = 7; i < 7 + element_keys.size(); i++)
     {
-      if (i!=7)
-      {
-        str_temp.append(",");
-      }
       if (element_data[sub_data_id][i]!="")
       {
+        if ((i!=7)&&(first_key==false))
+        {
+          str_temp.append(",");
+        }
         str_temp.append(element_data[sub_data_id][i]);
+        first_key = false;
       }
     }
     outputs_export_list.push_back(str_temp);
@@ -528,13 +531,14 @@ std::string CoreHistoryOutputs::get_output_export(int output_id) // get a list o
     str_temp = "";
     for (size_t i = 6; i < 6 + contact_keys.size(); i++)
     {
-      if (i!=6)
-      {
-        str_temp.append(",");
-      }
       if (contact_data[sub_data_id][i]!="")
       {
+        if ((i!=6)&&(first_key==false))
+        {
+          str_temp.append(",");
+        }
         str_temp.append(contact_data[sub_data_id][i]);
+        first_key = false;
       }
     }
     outputs_export_list.push_back(str_temp);
