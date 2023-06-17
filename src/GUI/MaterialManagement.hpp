@@ -49,6 +49,7 @@ public:
   void switchListItem(QListWidget* source, QListWidget* target); // switches the current item from sry list to target list
   void selectListItem(QListWidgetItem* item); // unselect all list items except the given
   void loadWidget(QListWidgetItem* item); // load Widget for given list item
+  void setMaterial(QString material_id);
   void printproperties(); // prints out material with all properties
   // cards
 

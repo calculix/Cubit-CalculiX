@@ -132,6 +132,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
     StepsHistoryOutputsTree* StepsHistoryOutputsTreeItem;
     StepsFieldOutputsTree* StepsFieldOutputsTreeItem;
     JobsTree* JobsTreeItem;
+    QTreeWidgetItem* TreeItem;
 
     if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item))
     {
@@ -954,6 +955,7 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   StepsHistoryOutputsTree* StepsHistoryOutputsTreeItem;
   StepsFieldOutputsTree* StepsFieldOutputsTreeItem;  
   JobsTree* JobsTreeItem;
+  QTreeWidgetItem* TreeItem;
 
   if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item))
   {
@@ -1060,49 +1062,89 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   }else if (StepsLoadsTreeItem = dynamic_cast<StepsLoadsTree*>(item))
   {
     if (StepsLoadsTreeItem->text(1).toStdString()=="")
-    {
+    { 
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
       myStepsManagement->show();
     }
   }else if (StepsLoadsForcesTreeItem = dynamic_cast<StepsLoadsForcesTree*>(item))
   {
     if (StepsLoadsForcesTreeItem->text(1).toStdString()=="")
     {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
       myStepsManagement->show();
     }
   }else if (StepsLoadsPressuresTreeItem = dynamic_cast<StepsLoadsPressuresTree*>(item))
   {
     if (StepsLoadsPressuresTreeItem->text(1).toStdString()=="")
     {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
       myStepsManagement->show();
     }
   }else if (StepsBCsTreeItem = dynamic_cast<StepsBCsTree*>(item))
   {
     if (StepsBCsTreeItem->text(1).toStdString()=="")
     {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
       myStepsManagement->show();
     }
   }else if (StepsBCsDisplacementsTreeItem = dynamic_cast<StepsBCsDisplacementsTree*>(item))
   {
     if (StepsBCsDisplacementsTreeItem->text(1).toStdString()=="")
     {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
       myStepsManagement->show();
     }
   }else if (StepsBCsTemperaturesTreeItem = dynamic_cast<StepsBCsTemperaturesTree*>(item))
   {
     if (StepsBCsTemperaturesTreeItem->text(1).toStdString()=="")
     {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
       myStepsManagement->show();
     }
   }else if (StepsHistoryOutputsTreeItem = dynamic_cast<StepsHistoryOutputsTree*>(item))
   {
     if (StepsHistoryOutputsTreeItem->text(1).toStdString()=="")
     {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
       myStepsManagement->show();
     }
   }else if (StepsFieldOutputsTreeItem = dynamic_cast<StepsFieldOutputsTree*>(item))
   {
     if (StepsFieldOutputsTreeItem->text(1).toStdString()=="")
     {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
       myStepsManagement->show();
     }
   }else if (JobsTreeItem = dynamic_cast<JobsTree*>(item))
@@ -1123,6 +1165,8 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
       this->setWidgetInCmdPanelMarker("ExodusRemoveContentsSideset");
     } else if (MaterialTreeItem = dynamic_cast<MaterialTree*>(item->parent()))
     {
+      myMaterialManagement->setMaterial(item->text(1));
+      myMaterialManagement->close();
       myMaterialManagement->show();
     } else if (SectionsTreeItem = dynamic_cast<SectionsTree*>(item->parent()))
     {
@@ -1165,27 +1209,67 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
       this->setWidgetInCmdPanelMarker("CCXStepsModify");
     } else if (StepsLoadsTreeItem = dynamic_cast<StepsLoadsTree*>(item->parent()))
     {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
       myStepsManagement->show();
     } else if (StepsLoadsForcesTreeItem = dynamic_cast<StepsLoadsForcesTree*>(item->parent()))
     {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
       myStepsManagement->show();
     } else if (StepsLoadsPressuresTreeItem = dynamic_cast<StepsLoadsPressuresTree*>(item->parent()))
     {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
       myStepsManagement->show();
     } else if (StepsBCsTreeItem = dynamic_cast<StepsBCsTree*>(item->parent()))
     {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
       myStepsManagement->show();
     } else if (StepsBCsDisplacementsTreeItem = dynamic_cast<StepsBCsDisplacementsTree*>(item->parent()))
     {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
       myStepsManagement->show();
     } else if (StepsBCsTemperaturesTreeItem = dynamic_cast<StepsBCsTemperaturesTree*>(item->parent()))
     {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
       myStepsManagement->show();
     } else if (StepsHistoryOutputsTreeItem = dynamic_cast<StepsHistoryOutputsTree*>(item->parent()))
     {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
       myStepsManagement->show();
     } else if (StepsFieldOutputsTreeItem = dynamic_cast<StepsFieldOutputsTree*>(item->parent()))
     {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
       myStepsManagement->show();
     } else if (JobsTreeItem = dynamic_cast<JobsTree*>(item->parent()))
     {

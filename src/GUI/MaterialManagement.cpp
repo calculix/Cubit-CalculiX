@@ -554,6 +554,21 @@ void MaterialManagement::loadWidget(QListWidgetItem* item)
   }
 }
 
+void MaterialManagement::setMaterial(QString material_id)
+{
+  MaterialManagementItem* current_item;
+  int ChildId;
+  ChildId = get_child_id(material_id.toStdString());
+  if (ChildId!=-1)
+  {
+    current_item = dynamic_cast<MaterialManagementItem*>(tree_material->topLevelItem(ChildId));
+    if (current_item!=NULL)
+    {
+      tree_material->setCurrentItem(current_item);
+    }
+  }
+}
+
 void MaterialManagement::on_pushButton_ok_clicked(bool)
 {
   //log = " clicked ok \n";

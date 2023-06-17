@@ -410,6 +410,21 @@ void StepsManagement::switchItem(QTreeWidgetItem* currentItem, QTreeWidgetItem* 
   } 
 }
 
+void StepsManagement::setStep(QString step_id)
+{
+  QTreeWidgetItem* current_item;
+  int ChildId;
+  ChildId = get_child_id(step_id.toStdString());
+  if (ChildId!=-1)
+  {
+    current_item = tree_steps->topLevelItem(ChildId);
+    if (current_item!=NULL)
+    {
+      tree_steps->setCurrentItem(current_item);
+    }
+  }
+}
+
 void StepsManagement::on_pushButton_ok_clicked(bool)
 {
   //log = " clicked ok \n";

@@ -37,6 +37,7 @@ public:
   void createItems(QTreeWidgetItem *step); // creates the list items for selected step
   void removeItems(); // removes current tree items
   void switchItem(QTreeWidgetItem* currentItem, QTreeWidgetItem* source, QTreeWidgetItem* target); // switches the current item from src tree to target tree
+  void setStep(QString step_id);
 
 private slots:
   void on_pushButton_ok_clicked(bool);

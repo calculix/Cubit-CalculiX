@@ -9,6 +9,7 @@
 #include "ScriptTranslator.hpp"
 #include <QString>
 #include <QStringList>
+#include <QScrollBar>
 
 JobsMonitor::JobsMonitor()
 {
@@ -124,14 +125,17 @@ void JobsMonitor::update()
     if (QTextEdit_console->toPlainText()!=QString::fromStdString(job_data[5]))
     {
       QTextEdit_console->setText(QString::fromStdString(job_data[5]));
+      QTextEdit_console->verticalScrollBar()->setValue(QTextEdit_console->verticalScrollBar()->maximum());
     }
     if (QTextEdit_cvg->toPlainText()!=QString::fromStdString(job_data[7]))
     {
       QTextEdit_cvg->setText(QString::fromStdString(job_data[7]));
+      QTextEdit_cvg->verticalScrollBar()->setValue(QTextEdit_cvg->verticalScrollBar()->maximum());
     }
     if (QTextEdit_sta->toPlainText()!=QString::fromStdString(job_data[8]))
     {
       QTextEdit_sta->setText(QString::fromStdString(job_data[8]));
+      QTextEdit_sta->verticalScrollBar()->setValue(QTextEdit_sta->verticalScrollBar()->maximum());
     }
 
     if (std::stoi(job_data[3])==-1)
