@@ -1,28 +1,133 @@
-<?xml version="1.0" ?>
-
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
-<svg width="800px" height="800px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
 
-<title/>
-
-<g id="Complete">
-
-<g id="align-left">
-
-<g>
-
-<polygon fill="#ffffff" points="12.9 18 4.1 18 4.1 18 12.9 18 12.9 18" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-
-<polygon fill="#ffffff" points="20 14 4 14 4 14 20 14 20 14" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-
-<polygon fill="#ffffff" points="12.9 10 4.1 10 4.1 10 12.9 10 12.9 10" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-
-<polygon fill="#ffffff" points="20 6 4 6 4 6 20 6 20 6" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-
-</g>
-
-</g>
-
-</g>
-
+<svg
+   width="48"
+   height="48"
+   viewBox="0 0 1.44 1.44"
+   version="1.1"
+   id="svg32"
+   sodipodi:docname="CCXSurfaceInteractions.svg"
+   inkscape:version="1.1.2 (b8e25be833, 2022-02-05)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs36">
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect1551"
+       is_visible="true"
+       lpeversion="1" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect1547"
+       is_visible="true"
+       lpeversion="1" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect1543"
+       is_visible="true"
+       lpeversion="1" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect1539"
+       is_visible="true"
+       lpeversion="1" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect1262"
+       is_visible="true"
+       lpeversion="1" />
+    <inkscape:path-effect
+       effect="rough_hatches"
+       id="path-effect903"
+       is_visible="true"
+       lpeversion="1"
+       direction="24,19 , 11.704797,8.5608856"
+       dist_rdm="75;1"
+       growth="0"
+       do_bend="false"
+       bender="24,24 , 5,0"
+       bottom_edge_variation="0;1"
+       top_edge_variation="0;1"
+       bottom_tgt_variation="0;1"
+       top_tgt_variation="0;1"
+       scale_bf="1"
+       scale_bb="1"
+       scale_tf="1"
+       scale_tb="1"
+       top_smth_variation="0;1"
+       bottom_smth_variation="0;1"
+       fat_output="true"
+       stroke_width_top="1"
+       stroke_width_bottom="1"
+       front_thickness="1"
+       back_thickness="1" />
+  </defs>
+  <sodipodi:namedview
+     id="namedview34"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="true"
+     inkscape:zoom="16"
+     inkscape:cx="21.0625"
+     inkscape:cy="12.875"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg32"
+     inkscape:pageshadow="2">
+    <inkscape:grid
+       type="xygrid"
+       id="grid1599" />
+  </sodipodi:namedview>
+  <title
+     id="title18" />
+  <rect
+     style="fill:none;stroke:#000000;stroke-width:0.06;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     id="rect1658"
+     width="1.1691133"
+     height="1.1691132"
+     x="0.13544337"
+     y="0.85544336" />
+  <ellipse
+     style="fill:none;stroke:#000000;stroke-width:0.06;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+     id="path928"
+     cx="0.73821872"
+     cy="-0.11656009"
+     rx="0.63696533"
+     ry="0.63696516" />
+  <path
+     style="fill:none;stroke:#ff0000;stroke-width:0.03px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     d="m 0.33,0.51 c -0.0157407,-1.2103e-4 -0.0314311,0.006308 -0.0425617,0.0174383 C 0.27630757,0.53856895 0.26987897,0.55425929 0.27,0.57 c 8.717e-5,0.0113364 0.003427,0.022472 0.008359,0.0326799 0.004931,0.0102079 0.0114282,0.0195743 0.0181505,0.0287029 C 0.30995382,0.64964009 0.32480485,0.66792978 0.33,0.69 c 0.004632,0.0196761 7.4929e-4,0.0412054 -0.0104634,0.0580244 C 0.30832397,0.76484341 0.28994397,0.77670758 0.27,0.78"
+     id="path1537"
+     inkscape:path-effect="#path-effect1539"
+     inkscape:original-d="M 0.33,0.51 C 0.30878,0.53253 0.29003,0.55003 0.27,0.57 0.24997,0.58997 0.31003,0.65003 0.33,0.69 0.34997,0.72997 0.29003,0.75003 0.27,0.78" />
+  <path
+     style="fill:none;stroke:#ff0000;stroke-width:0.03px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     d="m 0.6,0.57 c -0.0225225,0.0353926 -0.0332175,0.0781724 -0.03,0.12 0.00245,0.0318472 0.0128515,0.0630524 0.03,0.09"
+     id="path1541"
+     inkscape:path-effect="#path-effect1543"
+     inkscape:original-d="M 0.6,0.57 C 0.58628,0.60878 0.58003,0.65003 0.57,0.69 0.55997,0.72997 0.59003,0.75003 0.6,0.78" />
+  <path
+     style="fill:none;stroke:#ff0000;stroke-width:0.03px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     d="m 0.9,0.57 c 0.0171485,0.0269477 0.0275502,0.0581528 0.03,0.09 0.003218,0.0418276 -0.007477,0.0846074 -0.03,0.12"
+     id="path1545"
+     inkscape:path-effect="#path-effect1547"
+     inkscape:original-d="M 0.9,0.57 C 0.908155,0.60378 0.92003,0.63003 0.93,0.66 0.93997,0.68997 0.91003,0.74003 0.9,0.78" />
+  <path
+     style="fill:none;stroke:#ff0000;stroke-width:0.03px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     d="m 1.08,0.54 c 0.015612,3.4232e-4 0.031001,0.006915 0.042043,0.0179571 C 1.1330847,0.56899901 1.1396577,0.58438818 1.14,0.6 c 3.492e-4,0.0159245 -0.00548,0.0313112 -0.012121,0.0457876 C 1.1212346,0.66026407 1.1136212,0.67448877 1.11,0.69 c -0.00378,0.0162053 -0.00299,0.0334541 0.00228,0.0492411 C 1.117539,0.75502819 1.1272503,0.7693057 1.14,0.78"
+     id="path1549"
+     inkscape:path-effect="#path-effect1551"
+     inkscape:original-d="M 1.08,0.54 C 1.10003,0.55503 1.12003,0.58003 1.14,0.6 1.15997,0.61997 1.12003,0.66003 1.11,0.69 1.09997,0.71997 1.13003,0.75003 1.14,0.78" />
 </svg>

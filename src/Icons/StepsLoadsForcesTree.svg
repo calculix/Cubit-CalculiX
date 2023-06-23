@@ -1,28 +1,137 @@
-<?xml version="1.0" ?>
-
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
-<svg width="800px" height="800px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
 
-<title/>
-
-<g id="Complete">
-
-<g id="align-left">
-
-<g>
-
-<polygon fill="#ffffff" points="12.9 18 4.1 18 4.1 18 12.9 18 12.9 18" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-
-<polygon fill="#ffffff" points="20 14 4 14 4 14 20 14 20 14" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-
-<polygon fill="#ffffff" points="12.9 10 4.1 10 4.1 10 12.9 10 12.9 10" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-
-<polygon fill="#ffffff" points="20 6 4 6 4 6 20 6 20 6" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-
-</g>
-
-</g>
-
-</g>
-
+<svg
+   width="48"
+   height="48"
+   viewBox="0 0 1.44 1.44"
+   version="1.1"
+   id="svg32"
+   sodipodi:docname="CCXLoadsForces.svg"
+   inkscape:version="1.1.2 (b8e25be833, 2022-02-05)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs36">
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect1318"
+       is_visible="true"
+       lpeversion="1" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect1314"
+       is_visible="true"
+       lpeversion="1" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect1277"
+       is_visible="true"
+       lpeversion="1" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect1277-5"
+       is_visible="true"
+       lpeversion="1" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect1314-9"
+       is_visible="true"
+       lpeversion="1" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect1318-3"
+       is_visible="true"
+       lpeversion="1" />
+  </defs>
+  <sodipodi:namedview
+     id="namedview34"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="true"
+     inkscape:zoom="21.263158"
+     inkscape:cx="17.871287"
+     inkscape:cy="25.913366"
+     inkscape:window-width="1920"
+     inkscape:window-height="1057"
+     inkscape:window-x="-1928"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg32"
+     inkscape:pageshadow="2">
+    <inkscape:grid
+       type="xygrid"
+       id="grid1599" />
+  </sodipodi:namedview>
+  <title
+     id="title18" />
+  <path
+     style="fill:none;stroke:#000000;stroke-width:0.06;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+     d="M 1.23,0.15 V 1.29"
+     id="path3857" />
+  <path
+     style="fill:none;stroke:#000000;stroke-width:0.06;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+     d="M 1.23,1.29 H 1.44"
+     id="path3987" />
+  <path
+     style="fill:none;stroke:#000000;stroke-width:0.06;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+     d="M 1.23,0.15 H 1.47"
+     id="path3985" />
+  <ellipse
+     style="fill:#e50000;fill-opacity:1;stroke:#e50000;stroke-width:0.102111;stroke-linecap:round;stroke-opacity:1"
+     id="path4002"
+     cx="1.23"
+     cy="0.15000004"
+     rx="0.0989445"
+     ry="0.098944537" />
+  <ellipse
+     style="fill:#e50000;fill-opacity:1;stroke:#e50000;stroke-width:0.102111;stroke-linecap:round;stroke-opacity:1"
+     id="path4002-6"
+     cx="1.23"
+     cy="1.29"
+     rx="0.09894453"
+     ry="0.098944515" />
+  <path
+     style="fill:none;stroke:#ff0000;stroke-width:0.06;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+     d="M 0.15,0.15 H 0.93"
+     id="path1275"
+     inkscape:path-effect="#path-effect1277"
+     inkscape:original-d="m 0.15,0.15 c 0.26003001,3e-5 0.52002999,3e-5 0.78,0" />
+  <path
+     style="fill:none;stroke:#ff0000;stroke-width:0.06;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 0.99,0.15 0.87,0.06"
+     id="path1312"
+     inkscape:path-effect="#path-effect1314"
+     inkscape:original-d="M 0.99,0.15 C 0.95003001,0.12003 0.91002999,0.09003 0.87,0.06" />
+  <path
+     style="fill:none;stroke:#ff0000;stroke-width:0.06;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 0.99,0.15 0.87,0.24"
+     id="path1316"
+     inkscape:path-effect="#path-effect1318"
+     inkscape:original-d="M 0.99,0.15 C 0.95003,0.18003 0.91003,0.21003 0.87,0.24" />
+  <path
+     style="fill:none;stroke:#ff0000;stroke-width:0.06;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 0.15,1.305 H 0.93"
+     id="path1275-8"
+     inkscape:path-effect="#path-effect1277-5"
+     inkscape:original-d="m 0.15,1.305 c 0.26003001,3e-5 0.52002999,3e-5 0.78,0" />
+  <path
+     style="fill:none;stroke:#ff0000;stroke-width:0.06;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 0.99,1.305 0.87,1.215"
+     id="path1312-4"
+     inkscape:path-effect="#path-effect1314-9"
+     inkscape:original-d="m 0.99,1.305 c -0.03997,-0.02997 -0.07997,-0.05997 -0.12,-0.09" />
+  <path
+     style="fill:none;stroke:#ff0000;stroke-width:0.06;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 0.99,1.305 0.87,1.395"
+     id="path1316-0"
+     inkscape:path-effect="#path-effect1318-3"
+     inkscape:original-d="M 0.99,1.305 C 0.95003,1.33503 0.91003,1.36503 0.87,1.395" />
 </svg>
