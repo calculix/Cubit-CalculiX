@@ -320,7 +320,7 @@ bool CoreJobs::check_jobs()
       if (std::stoi(jobs_data[i][3])==1)
       {
         // check for output
-        if (CubitProcessHandler[CubitProcessHandler_data_id].can_read_output())
+        while (CubitProcessHandler[CubitProcessHandler_data_id].can_read_output())
         { 
           output = CubitProcessHandler[CubitProcessHandler_data_id].read_output_channel(1);
           if (output != "")
@@ -332,7 +332,7 @@ bool CoreJobs::check_jobs()
             get_cvgsta(std::stoi(jobs_data[i][0]));
           }
         }
-        
+
         //solver processes still running?
         int status;
         waitpid(std::stoi(jobs_data[i][4]), &status,WNOHANG);

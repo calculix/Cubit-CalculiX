@@ -7,7 +7,7 @@
    viewBox="0 0 1.44 1.44"
    version="1.1"
    id="svg32"
-   sodipodi:docname="Blank.svg"
+   sodipodi:docname="CCXJobs.svg"
    inkscape:version="1.1.2 (b8e25be833, 2022-02-05)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -16,30 +16,65 @@
   <defs
      id="defs36">
     <inkscape:path-effect
-       effect="rough_hatches"
-       id="path-effect903"
+       effect="spiro"
+       id="path-effect1056"
        is_visible="true"
-       lpeversion="1"
-       direction="24,19 , 11.704797,8.5608856"
-       dist_rdm="75;1"
-       growth="0"
-       do_bend="false"
-       bender="24,24 , 5,0"
-       bottom_edge_variation="0;1"
-       top_edge_variation="0;1"
-       bottom_tgt_variation="0;1"
-       top_tgt_variation="0;1"
-       scale_bf="1"
-       scale_bb="1"
-       scale_tf="1"
-       scale_tb="1"
-       top_smth_variation="0;1"
-       bottom_smth_variation="0;1"
-       fat_output="true"
-       stroke_width_top="1"
-       stroke_width_bottom="1"
-       front_thickness="1"
-       back_thickness="1" />
+       lpeversion="1" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect1052"
+       is_visible="true"
+       lpeversion="1" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect1555"
+       is_visible="true"
+       lpeversion="1" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect1358"
+       is_visible="true"
+       lpeversion="1" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect1354"
+       is_visible="true"
+       lpeversion="1" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect1350"
+       is_visible="true"
+       lpeversion="1" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect1056-2"
+       is_visible="true"
+       lpeversion="1" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect1056-22"
+       is_visible="true"
+       lpeversion="1" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect1056-21"
+       is_visible="true"
+       lpeversion="1" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect1052-7"
+       is_visible="true"
+       lpeversion="1" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect1052-0"
+       is_visible="true"
+       lpeversion="1" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect1052-4"
+       is_visible="true"
+       lpeversion="1" />
   </defs>
   <sodipodi:namedview
      id="namedview34"
@@ -52,7 +87,7 @@
      inkscape:deskcolor="#d1d1d1"
      showgrid="true"
      inkscape:zoom="16.9375"
-     inkscape:cx="23.498155"
+     inkscape:cx="23.97048"
      inkscape:cy="24.088561"
      inkscape:window-width="1920"
      inkscape:window-height="1057"
@@ -67,4 +102,66 @@
   </sodipodi:namedview>
   <title
      id="title18" />
+  <rect
+     style="fill:none;stroke:#000000;stroke-width:0.06;stroke-linecap:round;paint-order:fill markers stroke"
+     id="rect935"
+     width="0.89999998"
+     height="1.2"
+     x="0.27000001"
+     y="0.11999999" />
+  <path
+     style="fill:none;stroke:#000000;stroke-width:0.06;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 0.39,0.45 H 0.45"
+     id="path1050"
+     inkscape:path-effect="#path-effect1052"
+     inkscape:original-d="m 0.39,0.45 c 0.02003,3e-5 0.04003,3e-5 0.06,0" />
+  <path
+     style="fill:none;stroke:#000000;stroke-width:0.06;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 0.39,0.69 H 0.45"
+     id="path1050-1"
+     inkscape:path-effect="#path-effect1052-7"
+     inkscape:original-d="m 0.39,0.69 c 0.02003,3e-5 0.04003,3e-5 0.06,0" />
+  <path
+     style="fill:none;stroke:#000000;stroke-width:0.0618466;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 0.54,0.4509233 H 1.05"
+     id="path1054"
+     inkscape:path-effect="#path-effect1056"
+     inkscape:original-d="m 0.54,0.4509233 c 0.17003186,3e-5 0.34003189,3e-5 0.51,0" />
+  <path
+     style="fill:none;stroke:#000000;stroke-width:0.0618466;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 0.54,0.69092329 H 1.05"
+     id="path1054-6"
+     inkscape:path-effect="#path-effect1056-2"
+     inkscape:original-d="m 0.54,0.69092329 c 0.1700319,3e-5 0.3400319,3e-5 0.51,0" />
+  <path
+     style="fill:none;stroke:#000000;stroke-width:0.0618466;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 0.54,0.93092329 H 1.05"
+     id="path1054-66"
+     inkscape:path-effect="#path-effect1056-22"
+     inkscape:original-d="m 0.54,0.93092329 c 0.17003186,3e-5 0.34003189,3e-5 0.51,0" />
+  <path
+     style="fill:none;stroke:#000000;stroke-width:0.0618466;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 0.54,1.1709233 H 1.05"
+     id="path1054-9"
+     inkscape:path-effect="#path-effect1056-21"
+     inkscape:original-d="m 0.54,1.1709233 c 0.17003186,3e-5 0.34003189,3e-5 0.51,0" />
+  <path
+     style="fill:none;stroke:#000000;stroke-width:0.06;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 0.39,0.93 H 0.45"
+     id="path1050-2"
+     inkscape:path-effect="#path-effect1052-0"
+     inkscape:original-d="m 0.39,0.93 c 0.02003,3e-5 0.04003,3e-5 0.06,0" />
+  <path
+     style="fill:none;stroke:#000000;stroke-width:0.06;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 0.39,1.17 H 0.45"
+     id="path1050-10"
+     inkscape:path-effect="#path-effect1052-4"
+     inkscape:original-d="m 0.39,1.17 c 0.02003,3e-5 0.04003,3e-5 0.06,0" />
+  <rect
+     style="fill:none;stroke:#000000;stroke-width:0.06;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;paint-order:fill markers stroke"
+     id="rect1302"
+     width="0.30000001"
+     height="0.12"
+     x="0.56999999"
+     y="0.12" />
 </svg>

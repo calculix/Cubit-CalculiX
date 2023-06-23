@@ -149,6 +149,7 @@ void cmdPanelManager::initialize_from_code()
   // add BlocksTree Nodes
   root_node = model->getMarkedNode("CCX");
   node = model->addNode("Blocks", root_node);
+  node->setTitle("Blocks");
   model->setNodeMarker(node, "CCXBlocks");
   node->setIcon(ccx_iface->getIcon("CCXBlocks"));
 
@@ -161,6 +162,7 @@ void cmdPanelManager::initialize_from_code()
   // add Materials and Section Nodes
   root_node = model->getMarkedNode("CCX");
   node = model->addNode("Sections", root_node);
+  node->setTitle("Sections");
   model->setNodeMarker(node, "CCXSections");
   node->setIcon(ccx_iface->getIcon("CCXSections"));
   root_node = model->getMarkedNode("CCXSections");
@@ -205,8 +207,8 @@ void cmdPanelManager::initialize_from_code()
   //##############################
   // add Constraints Nodes
   root_node = model->getMarkedNode("CCX");
-  
   node = model->addNode("Constraints", root_node);
+  node->setTitle("Constraints");
   model->setNodeMarker(node, "CCXConstraints");
   root_node = model->getMarkedNode("CCXConstraints");
   node->setIcon(ccx_iface->getIcon("CCXConstraints"));
@@ -243,6 +245,7 @@ void cmdPanelManager::initialize_from_code()
   // add SurfaceInteractions Nodes
   root_node = model->getMarkedNode("CCX");
   node = model->addNode("Surface Interactions", root_node);
+  node->setTitle("Surface Interactions");
   model->setNodeMarker(node, "CCXSurfaceInteractions");
   node->setIcon(ccx_iface->getIcon("CCXSurfaceInteractions"));
   root_node = model->getMarkedNode("CCXSurfaceInteractions");
@@ -258,8 +261,9 @@ void cmdPanelManager::initialize_from_code()
 
   //##############################
   // add ContactPairs Nodes
-  root_node = model->getNode("CCX");
+  root_node = model->getMarkedNode("CCX");
   node = model->addNode("Contact Pairs", root_node);
+  node->setTitle("Contact Pairs");
   model->setNodeMarker(node, "CCXContactPairs");
   node->setIcon(ccx_iface->getIcon("CCXContactPairs"));
   root_node = model->getMarkedNode("CCXContactPairs");
@@ -275,8 +279,9 @@ void cmdPanelManager::initialize_from_code()
 
   //##############################
   // add Amplitudes Nodes
-  root_node = model->getNode("CCX");
+  root_node = model->getMarkedNode("CCX");
   node = model->addNode("Amplitudes", root_node);
+  node->setTitle("Amplitudes");
   model->setNodeMarker(node, "CCXAmplitudes");
   node->setIcon(ccx_iface->getIcon("CCXAmplitudes"));
   root_node = model->getMarkedNode("CCXAmplitudes");
@@ -291,8 +296,16 @@ void cmdPanelManager::initialize_from_code()
   node->setIcon(ccx_iface->getIcon("CCXAmplitudesDelete"));
 
   //##############################
+  // add Loads Nodes
+  root_node = model->getMarkedNode("CCX");
+  node = model->addNode("Loads", root_node);
+  node->setTitle("Loads");
+  model->setNodeMarker(node, "CCXLoads");
+  node->setIcon(ccx_iface->getIcon("CCXLoads"));
+
+  //##############################
   // add LoadsForces Nodes
-  root_node = model->getNode("CCX");
+  root_node = model->getMarkedNode("CCXLoads");
   node = model->addNode("Force", root_node);
   model->setNodeMarker(node, "CCXLoadsForces");
   node->setIcon(ccx_iface->getIcon("CCXLoadsForces"));
@@ -303,7 +316,7 @@ void cmdPanelManager::initialize_from_code()
 
   //##############################
   // add LoadsPressures Nodes
-  root_node = model->getNode("CCX");
+  root_node = model->getMarkedNode("CCXLoads");
   node = model->addNode("Pressure", root_node);
   model->setNodeMarker(node, "CCXLoadsPressures");
   node->setIcon(ccx_iface->getIcon("CCXLoadsPressures"));
@@ -313,8 +326,16 @@ void cmdPanelManager::initialize_from_code()
   node->setIcon(ccx_iface->getIcon("CCXLoadsPressuresModify"));
 
   //##############################
+  // add BCs Nodes
+  root_node = model->getMarkedNode("CCX");
+  node = model->addNode("BCs", root_node);
+  node->setTitle("BCs");
+  model->setNodeMarker(node, "CCXBCs");
+  node->setIcon(ccx_iface->getIcon("CCXBCs"));
+
+  //##############################
   // add BCsDisplacements Nodes
-  root_node = model->getNode("CCX");
+  root_node = model->getMarkedNode("CCXBCs");
   node = model->addNode("Displacement", root_node);
   model->setNodeMarker(node, "CCXBCsDisplacements");
   node->setIcon(ccx_iface->getIcon("CCXBCsDisplacements"));
@@ -325,7 +346,7 @@ void cmdPanelManager::initialize_from_code()
 
   //##############################
   // add BCsTemperatures Nodes
-  root_node = model->getNode("CCX");
+  root_node = model->getMarkedNode("CCXBCs");
   node = model->addNode("Temperature", root_node);
   model->setNodeMarker(node, "CCXBCsTemperatures");
   node->setIcon(ccx_iface->getIcon("CCXBCsTemperatures"));
@@ -338,6 +359,7 @@ void cmdPanelManager::initialize_from_code()
   // add History Outputs Nodes 
   root_node = model->getMarkedNode("CCX");
   node = model->addNode("History Outputs", root_node);
+  node->setTitle("History Outputs");
   model->setNodeMarker(node, "CCXHistoryOutputs");
   node->setIcon(ccx_iface->getIcon("CCXHistoryOutputs"));
 
@@ -367,6 +389,7 @@ void cmdPanelManager::initialize_from_code()
   // add Field Outputs Nodes
   root_node = model->getMarkedNode("CCX");
   node = model->addNode("Field Outputs", root_node);
+  node->setTitle("Field Outputs");
   model->setNodeMarker(node, "CCXFieldOutputs");
   node->setIcon(ccx_iface->getIcon("CCXFieldOutputs"));
 
