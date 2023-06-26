@@ -155,6 +155,11 @@ void cmdPanelManager::initialize_from_code()
 
   root_node = model->getMarkedNode("CCXBlocks");
   node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXBlocksModifyDummy");
+  node->setIcon(ccx_iface->getIcon("CCXBlocksModify"));
+
+  root_node = model->getMarkedNode("CCXBlocksModifyDummy");
+  node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXBlocksModify");
   node->setIcon(ccx_iface->getIcon("CCXBlocksModify"));
 

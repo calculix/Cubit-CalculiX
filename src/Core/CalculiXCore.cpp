@@ -1843,7 +1843,7 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
   std::vector<int> rigidbody_vertex_list;
   std::vector<std::string> referencepoints_nodesets;
   rigidbody_vertex_list = get_rigidbody_vertex_list();
-
+    
   //loop over all steps
   for (size_t i = 0; i < steps->steps_data.size(); i++)
   { 
@@ -1981,7 +1981,7 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
       str_temp = historyoutputs->get_output_export(steps->historyoutputs_data[sub_data_ids[ii]][1]);
       steps_export_list.push_back(str_temp);
     }
-
+    
     // Field Outputs
     sub_data_ids = steps->get_fieldoutput_data_ids_from_fieldoutputs_id(steps->steps_data[i][8]);
 
@@ -1990,7 +1990,7 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
       str_temp = fieldoutputs->get_output_export(steps->fieldoutputs_data[sub_data_ids[ii]][1]);
       steps_export_list.push_back(str_temp);
     }
-
+    
     str_temp = "*END STEP";
     steps_export_list.push_back(str_temp);
   }

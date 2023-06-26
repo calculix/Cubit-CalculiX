@@ -609,7 +609,7 @@ bool CoreSteps::add_buckle(std::string buckle_id)
 
 bool CoreSteps::add_heattransfer(std::string heattransfer_id)
 {
-  std::vector<std::string> v = {heattransfer_id,"","","","","","","","","","","","",""};
+  std::vector<std::string> v = {heattransfer_id,"","","","","","","","","","","","","","","",""};
   
   heattransfer_data.push_back(v);
   
@@ -1153,45 +1153,112 @@ std::string CoreSteps::get_step_export(int step_id)
     {
       str_temp.append(",TIME RESET"); 
     }
+    if (heattransfer_data[sub_data_id][9]!="")
+    {
+      str_temp.append(",TOTAL TIME AT START=" + heattransfer_data[sub_data_id][9]); 
+    }
     steps_export_list.push_back(str_temp);
     // second line
     str_temp = "";
-    if (heattransfer_data[sub_data_id][9]!="")
+    if (heattransfer_data[sub_data_id][4]!="") // if FREQUENCY
     {
-      str_temp.append(heattransfer_data[sub_data_id][9]); 
-    }
-    if (heattransfer_data[sub_data_id][10]!="")
+      if (heattransfer_data[sub_data_id][14]!="")
+      {
+        str_temp.append(heattransfer_data[sub_data_id][14]); 
+      }
+      else
+      {
+        str_temp.append(""); 
+      }
+      if (heattransfer_data[sub_data_id][15]!="")
+      {
+        str_temp.append("," + heattransfer_data[sub_data_id][15]); 
+      }
+      else
+      {
+        str_temp.append(","); 
+      }
+      if (heattransfer_data[sub_data_id][16]!="")
+      {
+        str_temp.append("," + heattransfer_data[sub_data_id][16]); 
+      }
+      else
+      {
+        str_temp.append(","); 
+      }
+    }else if (heattransfer_data[sub_data_id][5]!="") // if MODAL DYNAMIC
     {
-      str_temp.append("," + heattransfer_data[sub_data_id][10]); 
+      if (heattransfer_data[sub_data_id][10]!="")
+      {
+        str_temp.append(heattransfer_data[sub_data_id][10]); 
+      }
+      else
+      {
+        str_temp.append(""); 
+      }
+      if (heattransfer_data[sub_data_id][11]!="")
+      {
+        str_temp.append("," + heattransfer_data[sub_data_id][11]); 
+      }
+      else
+      {
+        str_temp.append(","); 
+      }
+    }else{ // if NOT Frequency or modal dynamic
+      if (heattransfer_data[sub_data_id][10]!="")
+      {
+        str_temp.append(heattransfer_data[sub_data_id][10]); 
+      }
+      else
+      {
+        str_temp.append(""); 
+      }
+      if (heattransfer_data[sub_data_id][11]!="")
+      {
+        str_temp.append("," + heattransfer_data[sub_data_id][11]); 
+      }
+      else
+      {
+        str_temp.append(","); 
+      }
+      if (heattransfer_data[sub_data_id][12]!="")
+      {
+        if (heattransfer_data[sub_data_id][2]!="")
+        {
+          //str_temp.append("," + heattransfer_data[sub_data_id][12]); 
+        }else{
+          str_temp.append("," + heattransfer_data[sub_data_id][12]); 
+        }
+      }
+      else
+      {
+        if (heattransfer_data[sub_data_id][2]!="")
+        {
+          //str_temp.append(","); 
+        }else{
+          str_temp.append(","); 
+        }
+      }
+      if (heattransfer_data[sub_data_id][13]!="")
+      {
+        if (heattransfer_data[sub_data_id][2]!="")
+        {
+          //str_temp.append("," + heattransfer_data[sub_data_id][13]); 
+        }else{
+          str_temp.append("," + heattransfer_data[sub_data_id][13]); 
+        }
+      }
+      else
+      {
+        if (heattransfer_data[sub_data_id][2]!="")
+        {
+          //str_temp.append(",");
+        }else{
+          str_temp.append(","); 
+        }
+      }
     }
-    else
-    {
-      str_temp.append(","); 
-    }
-    if (heattransfer_data[sub_data_id][11]!="")
-    {
-      str_temp.append("," + heattransfer_data[sub_data_id][11]); 
-    }
-    else
-    {
-      str_temp.append(","); 
-    }
-    if (heattransfer_data[sub_data_id][12]!="")
-    {
-      str_temp.append("," + heattransfer_data[sub_data_id][12]); 
-    }
-    else
-    {
-      str_temp.append(","); 
-    }
-    if (heattransfer_data[sub_data_id][13]!="")
-    {
-      str_temp.append("," + heattransfer_data[sub_data_id][13]); 
-    }
-    else
-    {
-      str_temp.append(","); 
-    }
+
     steps_export_list.push_back(str_temp);
   }
   else if (steps_data[steps_data_id][3]==6)
@@ -1407,11 +1474,11 @@ std::string CoreSteps::print_data()
   }
 
   str_return.append("\n CoreSteps heattransfer_data: \n");
-  str_return.append("heattransfer_id, solver, direct, steady state, frequency, modal dynamic, storage, deltmx, time reset, total time at start, initial time increment, time period of the step, minimum time increment allowed, maximum time increment allowed \n");
+  str_return.append("heattransfer_id, solver, direct, steady state, frequency, modal dynamic, storage, deltmx, time reset, total time at start, initial time increment, time period of the step, minimum time increment allowed, maximum time increment allowed,number of eigenfrequencies desired,lower value,upper value \n");
 
   for (size_t i = 0; i < heattransfer_data.size(); i++)
   {
-    str_return.append(heattransfer_data[i][0] + " " + heattransfer_data[i][1] + " " + heattransfer_data[i][2] + " " + heattransfer_data[i][3] + " " + heattransfer_data[i][4] + " " + heattransfer_data[i][5] + " " + heattransfer_data[i][6] + " " + heattransfer_data[i][7] + " " + heattransfer_data[i][8] + " " + heattransfer_data[i][9] + " " + heattransfer_data[i][10] + " " + heattransfer_data[i][11] + " " + heattransfer_data[i][12] + " " + heattransfer_data[i][13] + " \n");
+    str_return.append(heattransfer_data[i][0] + " " + heattransfer_data[i][1] + " " + heattransfer_data[i][2] + " " + heattransfer_data[i][3] + " " + heattransfer_data[i][4] + " " + heattransfer_data[i][5] + " " + heattransfer_data[i][6] + " " + heattransfer_data[i][7] + " " + heattransfer_data[i][8] + " " + heattransfer_data[i][9] + " " + heattransfer_data[i][10] + " " + heattransfer_data[i][11] + " " + heattransfer_data[i][12] + " " + heattransfer_data[i][13] + " " + heattransfer_data[i][14] + " " + heattransfer_data[i][15] + " " + heattransfer_data[i][16] + " \n");
   }
 
   str_return.append("\n CoreSteps coupledtd_data: \n");

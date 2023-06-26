@@ -320,6 +320,7 @@ bool CoreJobs::check_jobs()
       if (std::stoi(jobs_data[i][3])==1)
       {
         // check for output
+        int ic=0;
         while (CubitProcessHandler[CubitProcessHandler_data_id].can_read_output())
         { 
           output = CubitProcessHandler[CubitProcessHandler_data_id].read_output_channel(1);
@@ -330,7 +331,15 @@ bool CoreJobs::check_jobs()
             jobs_data[i][5] = jobs_data[i][5] + output.str();
             output = "";
             get_cvgsta(std::stoi(jobs_data[i][0]));
+          }else{
+            ic+=1;
           }
+          
+          // break out of loop, so that output reading doesn't freeze gui
+          if (ic==10)
+          {
+            break;
+          }          
         }
 
         //solver processes still running?

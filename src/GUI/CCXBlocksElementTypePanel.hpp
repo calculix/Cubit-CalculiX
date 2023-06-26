@@ -20,13 +20,13 @@
 
 class PickWidget;
 
-class CCXBlocksElementType : public QWidget
+class CCXBlocksElementTypePanel : public QWidget
 {
   Q_OBJECT
   
 public:
-  explicit CCXBlocksElementType(QWidget *parent = 0);
-  ~CCXBlocksElementType();
+  explicit CCXBlocksElementTypePanel(QWidget *parent = 0);
+  ~CCXBlocksElementTypePanel();
 
   bool isInitialized;
   

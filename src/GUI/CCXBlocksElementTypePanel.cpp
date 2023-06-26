@@ -7,7 +7,7 @@
 #include "PickWidget.hpp"
 
 
-CCXBlocksElementType::CCXBlocksElementType(QWidget *parent) :
+CCXBlocksElementTypePanel::CCXBlocksElementTypePanel(QWidget *parent) :
   QWidget(parent)
 {
  if(isInitialized)
@@ -324,10 +324,10 @@ CCXBlocksElementType::CCXBlocksElementType(QWidget *parent) :
   isInitialized = true;
 }
 
-CCXBlocksElementType::~CCXBlocksElementType()
+CCXBlocksElementTypePanel::~CCXBlocksElementTypePanel()
 {}
 
-void CCXBlocksElementType::on_pushButton_apply_clicked(bool)
+void CCXBlocksElementTypePanel::on_pushButton_apply_clicked(bool)
 {
   QStringList commands;
   QString command = "";

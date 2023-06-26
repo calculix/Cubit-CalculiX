@@ -165,7 +165,7 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
   // set in the getWidget() function.
 
   if(name == "CCXBlocksModify")
-    return new CCXBlocksElementType();
+    return new CCXBlocksElementTypePanel();
   else if(name == "CCXSectionsCreateSolid")
     return new SectionsCreateSolidPanel();
   else if(name == "CCXSectionsCreateShell")

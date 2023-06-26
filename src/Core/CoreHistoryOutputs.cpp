@@ -396,12 +396,56 @@ std::string CoreHistoryOutputs::get_output_export(int output_id) // get a list o
     {
       nodeset_id = std::stoi(node_data[sub_data_id][1]);
     }
-    for (size_t i = 0; i < rigidbody_vertex_list.size()+1; i++)
+    str_temp = "*NODE PRINT, NSET=";
+    if (node_data[sub_data_id][1]=="")
     {
-      if ((ccx_iface->check_vertex_in_nodeset_exists(rigidbody_vertex_list[i],nodeset_id))||(i==rigidbody_vertex_list.size()))
+      str_temp = "** No NSET defined for History Output ID " + std::to_string(output_id);
+      return str_temp;
+    }
+    str_temp.append(ccx_iface->get_nodeset_name(nodeset_id));
+    if (node_data[sub_data_id][2]!="")
+    {
+      str_temp.append(", FREQUENCY=" + node_data[sub_data_id][2]);
+    }
+    if (node_data[sub_data_id][3]!="")
+    {
+      str_temp.append(", FREQUENCYF=" + node_data[sub_data_id][3]);
+    }
+    if (node_data[sub_data_id][4]!="")
+    {
+      str_temp.append(", TOTALS=" + node_data[sub_data_id][4]);
+    }
+    if (node_data[sub_data_id][5]!="")
+    {
+      str_temp.append(", GLOBAL=" + node_data[sub_data_id][5]);
+    }
+
+    // TIME POINTS not implemented yet
+    outputs_export_list.push_back(str_temp);
+
+    //second line
+    str_temp = "";
+    for (size_t i = 7; i < 7 + node_keys.size(); i++)
+    {
+      if (node_data[sub_data_id][i]!="")
+      {
+        if ((i!=7)&&(first_key==false))
+        {
+          str_temp.append(",");
+        }
+        str_temp.append(node_data[sub_data_id][i]);
+        first_key = false;
+      }
+    }
+    outputs_export_list.push_back(str_temp);
+    
+    // RIGID BODY VERTEX
+    for (size_t i = 0; i < rigidbody_vertex_list.size(); i++)
+    {
+      if ((ccx_iface->check_vertex_in_nodeset_exists(rigidbody_vertex_list[i],nodeset_id))||(i+1==rigidbody_vertex_list.size()))
       {
         str_temp = "*NODE PRINT, NSET=";
-        if (i==rigidbody_vertex_list.size())
+        if (i+1==rigidbody_vertex_list.size())
         {
           if (node_data[sub_data_id][1]=="")
           {

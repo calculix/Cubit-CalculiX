@@ -102,6 +102,9 @@ public:
   // heattransfer_data[0][11] time period of the step
   // heattransfer_data[0][12] minimum time increment allowed
   // heattransfer_data[0][13] maximum time increment allowed
+  // heattransfer_data[0][14] number of eigenfrequencies desired
+  // heattransfer_data[0][15] lower value
+  // heattransfer_data[0][16] upper value
 
   //COUPLED TEMPERATURE-DISPLACEMENT
   std::vector<std::vector<std::string>> coupledtd_data;

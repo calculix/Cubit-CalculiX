@@ -464,27 +464,28 @@ bool ccxExportCommand::write_nodesets(std::ofstream& output_file,MeshExportInter
 
     std::vector<int> ids;
 
-    while( (num_nodes = iface->get_nodeset_node_ids(nodeset,start_index,buf_size,ids)) > 0)
-    {
-
-    //counter to know when the next line should begin
     int ic;
     ic=0;
 
-    for (int j = 0; j < num_nodes; j++)
+    while( (num_nodes = iface->get_nodeset_node_ids(nodeset,start_index,buf_size,ids)) > 0)
     {
-      ic += 1;
-      if (j!=num_nodes-1){
-        output_file << ids[j] << ", ";
-      } else {
-        output_file << ids[j];
+      //counter to know when the next line should begin
+
+      for (int j = 0; j < num_nodes; j++)
+      {
+        ic += 1;
+        if (j!=num_nodes-1){
+          output_file << ids[j] << ", ";
+        } else {
+          output_file << ids[j];
+        }
+        if (ic == 5) {
+          output_file << "\n";
+          ic = 0;
+        }
       }
-      if (ic == 5) {
-        output_file << "\n";
-        ic = 0;
-      }
-    }
-    start_index += num_nodes;
+      //output_file << "\n---------> " << start_index << "\n";
+      start_index += num_nodes;
     }
     output_file << std::endl;
   }

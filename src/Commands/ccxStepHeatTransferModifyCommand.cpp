@@ -29,6 +29,9 @@ std::vector<std::string> ccxStepHeatTransferModifyCommand::get_syntax()
   syntax.append("[timeperiodofstep <value:label='timeperiodofstep',help='<timeperiodofstep>'>] ");
   syntax.append("[minimumtimeincrement <value:label='minimumtimeincrement',help='<minimumtimeincrement>'>] ");
   syntax.append("[maximumtimeincrement <value:label='maximumtimeincrement',help='<maximumtimeincrement>'>] ");
+  syntax.append("[eigenfrequencies <value:label='eigenfrequencies',help='<eigenfrequencies>'>] ");
+  syntax.append("[lower <value:label='lower',help='<lower>'>] ");
+  syntax.append("[upper <value:label='upper',help='<upper>'>] ");
 
   syntax_list.push_back(syntax);
 
@@ -55,6 +58,9 @@ std::vector<std::string> ccxStepHeatTransferModifyCommand::get_syntax_help()
   help[0].append("[timeperiodofstep <value>] ");
   help[0].append("[minimumtimeincrement <value>] ");
   help[0].append("[maximumtimeincrement <value>] ");
+  help[0].append("[eigenfrequencies <value>] ");
+  help[0].append("[lower <value>] ");
+  help[0].append("[upper <value>] ");
 
   return help;
 }
@@ -93,6 +99,12 @@ bool ccxStepHeatTransferModifyCommand::execute(CubitCommandData &data)
   std::string minimumtimeincrement;
   double maximumtimeincrement_value;
   std::string maximumtimeincrement;
+  int eigenfrequencies_value;
+  std::string eigenfrequencies;
+  int lower_value;
+  std::string lower;
+  int upper_value;
+  std::string upper;
   
   data.get_value("step id", step_id);
 
@@ -286,6 +298,41 @@ bool ccxStepHeatTransferModifyCommand::execute(CubitCommandData &data)
     options_marker.push_back(1);
   }
   options.push_back(maximumtimeincrement);
+  if (!data.get_value("eigenfrequencies", eigenfrequencies_value))
+  {
+    eigenfrequencies = "";
+    options_marker.push_back(0);
+  }
+  else
+  {
+    eigenfrequencies = std::to_string(eigenfrequencies_value);
+    options_marker.push_back(1);
+  }
+  options.push_back(eigenfrequencies);
+
+  if (!data.get_value("lower", lower_value))
+  {
+    lower = "";
+    options_marker.push_back(0);
+  }
+  else
+  {
+    lower = std::to_string(lower_value);
+    options_marker.push_back(1);
+  }
+  options.push_back(lower);
+
+  if (!data.get_value("upper", upper_value))
+  {
+    upper = "";
+    options_marker.push_back(0);
+  }
+  else
+  {
+    upper = std::to_string(upper_value);
+    options_marker.push_back(1);
+  }
+  options.push_back(upper);
 
   if (!ccx_iface.modify_step(step_id, 5, options, options_marker))
   {
