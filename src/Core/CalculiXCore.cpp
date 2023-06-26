@@ -2459,11 +2459,10 @@ std::vector<std::vector<std::string>> CalculiXCore::get_initialconditions_tree_d
     std::string initialcondition_name;
     int sub_id;
     std::string bc_id;
-    
-    sub_id = initialconditions->get_displacement_data_id_from_displacement_id(initialconditions->initialconditions_data[i][2]);
 
     if (initialconditions->initialconditions_data[i][1]==1)
     {
+      sub_id = initialconditions->get_displacement_data_id_from_displacement_id(initialconditions->initialconditions_data[i][2]);
       bc_id = initialconditions->displacement_data[sub_id][1];
       if (bc_id == "")
       {
@@ -2484,6 +2483,7 @@ std::vector<std::vector<std::string>> CalculiXCore::get_initialconditions_tree_d
       initialcondition_name = initialcondition_name + " (Displacement)";
     }else if (initialconditions->initialconditions_data[i][1]==2)
     { 
+      sub_id = initialconditions->get_temperature_data_id_from_temperature_id(initialconditions->initialconditions_data[i][2]);
       bc_id = initialconditions->temperature_data[sub_id][1];
       if (bc_id == "")
       {
