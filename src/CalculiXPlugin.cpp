@@ -45,6 +45,7 @@
 #include "ccxAmplitudeDeleteCommand.hpp"
 #include "ccxLoadsForcesModifyCommand.hpp"
 #include "ccxLoadsPressuresModifyCommand.hpp"
+#include "ccxLoadsHeatfluxesModifyCommand.hpp"
 #include "ccxBCsDisplacementsModifyCommand.hpp"
 #include "ccxBCsTemperaturesModifyCommand.hpp"
 #include "ccxHistoryOutputCreateCommand.hpp"
@@ -147,6 +148,7 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxAmplitudeDeleteCommand");
   keys.push_back("ccxLoadsForcesModifyCommand");
   keys.push_back("ccxLoadsPressuresModifyCommand");
+  keys.push_back("ccxLoadsHeatfluxesModifyCommand");
   keys.push_back("ccxBCsDisplacementsModifyCommand");
   keys.push_back("ccxBCsTemperaturesModifyCommand");
   keys.push_back("ccxHistoryOutputCreateCommand");
@@ -335,6 +337,9 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxLoadsPressuresModifyCommand")
     return new ccxLoadsPressuresModifyCommand();
+
+  else if(key == "ccxLoadsHeatfluxesModifyCommand")
+    return new ccxLoadsHeatfluxesModifyCommand();
 
   else if(key == "ccxBCsDisplacementsModifyCommand")
     return new ccxBCsDisplacementsModifyCommand();

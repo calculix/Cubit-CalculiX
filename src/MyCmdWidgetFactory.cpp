@@ -40,6 +40,7 @@
 #include "AmplitudesDeletePanel.hpp"
 #include "LoadsForcesModifyPanel.hpp"
 #include "LoadsPressuresModifyPanel.hpp"
+#include "LoadsHeatfluxesModifyPanel.hpp"
 #include "BCsDisplacementsModifyPanel.hpp"
 #include "BCsTemperaturesModifyPanel.hpp"
 #include "HistoryOutputsCreatePanel.hpp"
@@ -216,6 +217,8 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
     return new LoadsForcesModifyPanel();
   else if(name == "CCXLoadsPressuresModify")
     return new LoadsPressuresModifyPanel();
+  else if(name == "CCXLoadsHeatfluxesModify")
+    return new LoadsHeatfluxesModifyPanel();
   else if(name == "CCXBCsDisplacementsModify")
     return new BCsDisplacementsModifyPanel();
   else if(name == "CCXBCsTemperaturesModify")

@@ -18,6 +18,7 @@ std::vector<std::string> ccxStepAddLoadCommand::get_syntax()
   syntax.append("add load ");
   syntax.append("[force <value:label='force id',help='<force id>'>...] " );
   syntax.append("[pressure <value:label='pressure id',help='<pressure id>'>...] " );
+  syntax.append("[heatflux <value:label='heatflux id',help='<heatflux id>'>...] " );
   syntax_list.push_back(syntax);
   
   return syntax_list;
@@ -26,7 +27,7 @@ std::vector<std::string> ccxStepAddLoadCommand::get_syntax()
 std::vector<std::string> ccxStepAddLoadCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx step <step id> add load [force <force id>...] [pressure <pressure id>...]"; 
+  help[0] = "ccx step <step id> add load [force <force id>...] [pressure <pressure id>...] [heatflux <heatflux id>...]"; 
 
   return help;
 }
@@ -46,11 +47,13 @@ bool ccxStepAddLoadCommand::execute(CubitCommandData &data)
   int step_id;
   std::vector<int> force_ids;
   std::vector<int> pressure_ids;
+  std::vector<int> heatflux_ids;
 
   data.get_value("step id", step_id);
 
   data.get_values("force id", force_ids);
   data.get_values("pressure id", pressure_ids);
+  data.get_values("heatflux id", heatflux_ids);
    
   if (!ccx_iface.step_add_loads(step_id, 1, force_ids))
   {
@@ -62,6 +65,11 @@ bool ccxStepAddLoadCommand::execute(CubitCommandData &data)
     output = "Failed adding Pressure!\n";
     PRINT_ERROR(output.c_str());
   }
-    
+  if (!ccx_iface.step_add_loads(step_id, 3, heatflux_ids))
+  {
+    output = "Failed adding Heatflux!\n";
+    PRINT_ERROR(output.c_str());
+  }
+
   return true;
 }

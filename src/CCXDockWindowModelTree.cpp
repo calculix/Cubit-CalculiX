@@ -16,6 +16,7 @@
 #include "LoadsTree.hpp"
 #include "LoadsForcesTree.hpp"
 #include "LoadsPressuresTree.hpp"
+#include "LoadsHeatfluxesTree.hpp"
 #include "BCsTree.hpp"
 #include "BCsDisplacementsTree.hpp"
 #include "BCsTemperaturesTree.hpp"
@@ -97,6 +98,8 @@ void CCXDockWindowModelTree::initialize()
   myLoadsForcesTree->initialize();
   myLoadsPressuresTree = new LoadsPressuresTree(myLoadsTree);
   myLoadsPressuresTree->initialize();
+  myLoadsHeatfluxesTree = new LoadsHeatfluxesTree(myLoadsTree);
+  myLoadsHeatfluxesTree->initialize();
   myBCsTree = new BCsTree(myModelTree);
   myBCsTree->initialize();
   myBCsDisplacementsTree = new BCsDisplacementsTree(myBCsTree);
@@ -155,6 +158,7 @@ void CCXDockWindowModelTree::clear()
     delete myAmplitudesTree;
     delete myLoadsForcesTree;
     delete myLoadsPressuresTree;
+    delete myLoadsHeatfluxesTree;
     delete myLoadsTree;
     delete myBCsTemperaturesTree;
     delete myBCsDisplacementsTree;
@@ -191,6 +195,7 @@ void CCXDockWindowModelTree::update()
   //myLoadsTree->update();
   myLoadsForcesTree->update();
   myLoadsPressuresTree->update();
+  myLoadsHeatfluxesTree->update();
   //myBCsTree->update();
   myBCsDisplacementsTree->update();
   myBCsTemperaturesTree->update();
@@ -217,6 +222,7 @@ void CCXDockWindowModelTree::reset()
   //myLoadsTree->clear();
   myLoadsForcesTree->clear();
   myLoadsPressuresTree->clear();
+  myLoadsHeatfluxesTree->clear();
   //myBCsTree->clear();
   myBCsDisplacementsTree->clear();
   myBCsTemperaturesTree->clear();

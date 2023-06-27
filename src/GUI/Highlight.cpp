@@ -15,6 +15,7 @@
 #include "LoadsTree.hpp"
 #include "LoadsForcesTree.hpp"
 #include "LoadsPressuresTree.hpp"
+#include "LoadsHeatfluxesTree.hpp"
 #include "BCsTree.hpp"
 #include "BCsDisplacementsTree.hpp"
 #include "BCsTemperaturesTree.hpp"
@@ -25,6 +26,7 @@
 #include "StepsLoadsTree.hpp"
 #include "StepsLoadsForcesTree.hpp"
 #include "StepsLoadsPressuresTree.hpp"
+#include "StepsLoadsHeatfluxesTree.hpp"
 #include "StepsBCsTree.hpp"
 #include "StepsBCsDisplacementsTree.hpp"
 #include "StepsBCsTemperaturesTree.hpp"
@@ -86,6 +88,7 @@ void Highlight::ModelTreeItemClicked(QTreeWidgetItem* item, int column)
   AmplitudesTree* AmplitudesTreeItem;
   LoadsForcesTree* LoadsForcesTreeItem;
   LoadsPressuresTree* LoadsPressuresTreeItem;
+  LoadsHeatfluxesTree* LoadsHeatfluxesTreeItem;
   BCsDisplacementsTree* BCsDisplacementsTreeItem;
   BCsTemperaturesTree* BCsTemperaturesTreeItem;
   HistoryOutputsTree* HistoryOutputsTreeItem;
@@ -95,6 +98,7 @@ void Highlight::ModelTreeItemClicked(QTreeWidgetItem* item, int column)
   StepsLoadsTree* StepsLoadsTreeItem;
   StepsLoadsForcesTree* StepsLoadsForcesTreeItem;
   StepsLoadsPressuresTree* StepsLoadsPressuresTreeItem;
+  StepsLoadsHeatfluxesTree* StepsLoadsHeatfluxesTreeItem;
   StepsBCsTree* StepsBCsTreeItem;
   StepsBCsDisplacementsTree* StepsBCsDisplacementsTreeItem;
   StepsBCsTemperaturesTree* StepsBCsTemperaturesTreeItem;
@@ -143,6 +147,9 @@ void Highlight::ModelTreeItemClicked(QTreeWidgetItem* item, int column)
   } else if (LoadsPressuresTreeItem = dynamic_cast<LoadsPressuresTree*>(item->parent()))
   {
     entities = ccx_iface->get_entities("loadspressure",std::stoi(item->text(1).toStdString()));
+  } else if (LoadsHeatfluxesTreeItem = dynamic_cast<LoadsHeatfluxesTree*>(item->parent()))
+  {
+    entities = ccx_iface->get_entities("loadsheatflux",std::stoi(item->text(1).toStdString()));
   } else if (BCsDisplacementsTreeItem = dynamic_cast<BCsDisplacementsTree*>(item->parent()))
   {
     entities = ccx_iface->get_entities("bcsdisplacement",std::stoi(item->text(1).toStdString()));
@@ -170,6 +177,9 @@ void Highlight::ModelTreeItemClicked(QTreeWidgetItem* item, int column)
   } else if (StepsLoadsPressuresTreeItem = dynamic_cast<StepsLoadsPressuresTree*>(item->parent()))
   {
     entities = ccx_iface->get_entities("loadspressure",std::stoi(item->text(1).toStdString()));  
+  } else if (StepsLoadsHeatfluxesTreeItem = dynamic_cast<StepsLoadsHeatfluxesTree*>(item->parent()))
+  {
+    entities = ccx_iface->get_entities("loadsheatflux",std::stoi(item->text(1).toStdString()));  
   } else if (StepsBCsTreeItem = dynamic_cast<StepsBCsTree*>(item->parent()))
   {
     

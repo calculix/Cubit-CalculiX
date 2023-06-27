@@ -8,6 +8,7 @@
 class CalculiXCoreInterface;
 class StepsLoadsForcesTree;
 class StepsLoadsPressuresTree;
+class StepsLoadsHeatfluxesTree;
 
 class StepsLoadsTree : public QObject, public QTreeWidgetItem
 {
@@ -30,6 +31,7 @@ private:
   CalculiXCoreInterface *ccx_iface;
   StepsLoadsForcesTree *myStepsLoadsForcesTree;
   StepsLoadsPressuresTree *myStepsLoadsPressuresTree;
+  StepsLoadsHeatfluxesTree *myStepsLoadsHeatfluxesTree;
 };
 
 #endif // STEPSLOADSTREE_HPP

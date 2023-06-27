@@ -93,6 +93,8 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsForcesModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsPressuresModifyCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsPressuresModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsHeatfluxesModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsHeatfluxesModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxBCsDisplacementsModifyCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxBCsDisplacementsModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxBCsTemperaturesModifyCommand.cpp

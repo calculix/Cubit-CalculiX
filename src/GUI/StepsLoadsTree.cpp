@@ -1,6 +1,7 @@
 #include "StepsLoadsTree.hpp"
 #include "StepsLoadsForcesTree.hpp"
 #include "StepsLoadsPressuresTree.hpp"
+#include "StepsLoadsHeatfluxesTree.hpp"
 #include "CalculiXCoreInterface.hpp"
 
 StepsLoadsTree::StepsLoadsTree(QTreeWidgetItem* parent):
@@ -28,12 +29,15 @@ void StepsLoadsTree::initialize(int step_id_init)
   myStepsLoadsForcesTree->initialize(step_id);
   myStepsLoadsPressuresTree = new StepsLoadsPressuresTree(this);
   myStepsLoadsPressuresTree->initialize(step_id);
+  myStepsLoadsHeatfluxesTree = new StepsLoadsHeatfluxesTree(this);
+  myStepsLoadsHeatfluxesTree->initialize(step_id);
 }
 
 void StepsLoadsTree::update()
 {
   myStepsLoadsForcesTree->update();
   myStepsLoadsPressuresTree->update();
+  myStepsLoadsHeatfluxesTree->update();
 }
 
 void StepsLoadsTree::clear()

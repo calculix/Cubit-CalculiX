@@ -72,6 +72,7 @@ private:
   QTreeWidgetItem* tree_available_loads;
   QTreeWidgetItem* tree_available_loads_forces;
   QTreeWidgetItem* tree_available_loads_pressures;
+  QTreeWidgetItem* tree_available_loads_heatfluxes;
   QTreeWidgetItem* tree_available_bcs;
   QTreeWidgetItem* tree_available_bcs_displacements;
   QTreeWidgetItem* tree_available_bcs_temperatures;
@@ -81,6 +82,7 @@ private:
   QTreeWidgetItem* tree_used_loads;
   QTreeWidgetItem* tree_used_loads_forces;
   QTreeWidgetItem* tree_used_loads_pressures;
+  QTreeWidgetItem* tree_used_loads_heatfluxes;
   QTreeWidgetItem* tree_used_bcs;
   QTreeWidgetItem* tree_used_bcs_displacements;
   QTreeWidgetItem* tree_used_bcs_temperatures;

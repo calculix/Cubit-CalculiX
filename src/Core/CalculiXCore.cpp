@@ -21,6 +21,7 @@
 #include "CoreAmplitudes.hpp"
 #include "CoreLoadsForces.hpp"
 #include "CoreLoadsPressures.hpp"
+#include "CoreLoadsHeatfluxes.hpp"
 #include "CoreBCsDisplacements.hpp"
 #include "CoreBCsTemperatures.hpp"
 #include "CoreHistoryOutputs.hpp"
@@ -33,9 +34,9 @@
 
 CalculiXCore::CalculiXCore():
   cb(NULL),mat(NULL),sections(NULL),constraints(NULL),referencepoints(NULL),surfaceinteractions(NULL),
-  contactpairs(NULL),amplitudes(NULL),loadsforces(NULL),loadspressures(NULL),bcsdisplacements(NULL),
-  bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL), initialconditions(NULL), steps(NULL),
-  jobs(NULL),timer(NULL)
+  contactpairs(NULL),amplitudes(NULL),loadsforces(NULL),loadspressures(NULL),loadsheatfluxes(NULL),
+  bcsdisplacements(NULL),bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL),
+  initialconditions(NULL), steps(NULL),jobs(NULL),timer(NULL)
 {
   init();
 }
@@ -62,6 +63,8 @@ CalculiXCore::~CalculiXCore()
     delete loadsforces;
   if(loadspressures)
     delete loadspressures;
+  if(loadsheatfluxes)
+    delete loadsheatfluxes;
   if(bcsdisplacements)
     delete bcsdisplacements;
   if(bcstemperatures)
@@ -147,6 +150,11 @@ bool CalculiXCore::init()
   
   loadspressures->init();
 
+  if(!loadsheatfluxes)
+    loadsheatfluxes = new CoreLoadsHeatfluxes;
+  
+  loadsheatfluxes->init();
+
   if(!bcsdisplacements)
     bcsdisplacements = new CoreBCsDisplacements;
   
@@ -200,6 +208,7 @@ bool CalculiXCore::update()
   //mat->update();
   loadsforces->update();
   loadspressures->update();
+  loadsheatfluxes->update();
   bcsdisplacements->update();
   bcstemperatures->update();
   
@@ -233,6 +242,7 @@ bool CalculiXCore::reset()
   amplitudes->reset();
   loadsforces->reset();
   loadspressures->reset();
+  loadsheatfluxes->reset();
   bcsdisplacements->reset();
   bcstemperatures->reset();
   historyoutputs->reset();
@@ -474,6 +484,25 @@ std::string CalculiXCore::autocleanup()
     {
       print_log = sub_bool;
       loadspressures->loads_data[i-1][2]=-1;
+    }
+  }
+  // LOADS HEATFLUXES
+  for (size_t i = loadsheatfluxes->loads_data.size(); i > 0; i--)
+  { 
+    sub_bool = false;
+    if (loadsheatfluxes->loads_data[i-1][2]!=-1)
+    {
+      if (!check_amplitude_exists(loadsheatfluxes->loads_data[i-1][2]))
+      {
+        log.append("Amplitude ID " + std::to_string(loadsheatfluxes->loads_data[i-1][2]) + " doesn't exist.\n");
+        log.append("Amplitude Reference from Load Heatflux ID " + std::to_string(loadsheatfluxes->loads_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      loadsheatfluxes->loads_data[i-1][2]=-1;
     }
   }
   // BCS DISPLACEMENTS
@@ -757,6 +786,7 @@ std::string CalculiXCore::print_data()
   str_return.append(amplitudes->print_data());
   str_return.append(loadsforces->print_data());
   str_return.append(loadspressures->print_data());
+  str_return.append(loadsheatfluxes->print_data());
   str_return.append(bcsdisplacements->print_data());
   str_return.append(bcstemperatures->print_data());
   str_return.append(historyoutputs->print_data());
@@ -1089,6 +1119,11 @@ int CalculiXCore::get_bc_fea_type(std::vector<std::pair<int, double>> bc_attribs
       //Pressure
       return 6;
     }
+    if ((bc_attribs[i].first > 37) && (bc_attribs[i].first < 41))
+    {
+      //Heatflux
+      return 7;
+    }
   }
   return -1;
 }
@@ -1346,6 +1381,11 @@ bool CalculiXCore::modify_loadsforces(int force_id, std::vector<std::string> opt
 bool CalculiXCore::modify_loadspressures(int pressure_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
   return loadspressures->modify_load(pressure_id,options,options_marker);
+}
+
+bool CalculiXCore::modify_loadsheatfluxes(int heatflux_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return loadsheatfluxes->modify_load(heatflux_id,options,options_marker);
 }
 
 bool CalculiXCore::modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker)
@@ -1643,6 +1683,9 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
   }else if (entity=="loadspressure")
   {
     entities.push_back({"pressure",std::to_string(id)});
+  }else if (entity=="loadsheatflux")
+  {
+    entities.push_back({"heatflux",std::to_string(id)});
   }else if (entity=="bcsdisplacement")
   {
     entities.push_back({"displacement",std::to_string(id)});
@@ -1911,6 +1954,24 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
               steps_export_list.push_back(str_temp);
 
               str_temp = temp_list[iv][1] + ",P" + temp_list[iv][2] + "," + std::to_string(bc_attribs[0].second);
+              steps_export_list.push_back(str_temp);
+            }
+          }  
+        }
+        // HEATFLUX DFLUX 
+        if ((get_bc_fea_type(bc_attribs)==7) && (steps->loads_data[iii][1]==3))
+        {
+          //if (steps->bcs_data[iii][2]==me_iface->id_from_handle(bc_handles[ii]))
+          {
+            me_iface->get_bc_sideset(bc_handles[ii],sideset);
+            temp_list = get_sideset_face(me_iface->id_from_handle(sideset));
+            for (size_t iv = 0; iv < temp_list.size(); iv++)
+            {              
+              str_temp = "*DFLUX";
+              str_temp.append(loadsheatfluxes->get_load_parameter_export(steps->loads_data[iii][2]));
+              steps_export_list.push_back(str_temp);
+
+              str_temp = temp_list[iv][1] + ",S" + temp_list[iv][2] + "," + std::to_string(bc_attribs[0].second);
               steps_export_list.push_back(str_temp);
             }
           }  
@@ -2341,6 +2402,28 @@ std::vector<std::vector<std::string>> CalculiXCore::get_loadspressures_tree_data
   return loadspressures_tree_data;
 }
 
+std::vector<std::vector<std::string>> CalculiXCore::get_loadsheatfluxes_tree_data()
+{ 
+  std::vector<std::vector<std::string>> loadsheatfluxes_tree_data;
+  
+  for (size_t i = 0; i < loadsheatfluxes->loads_data.size(); i++)
+  {
+    std::vector<std::string> loadsheatfluxes_tree_data_set;
+    std::string name;
+    
+    name = CubitInterface::get_bc_name(CI_BCTYPE_HEATFLUX,loadsheatfluxes->loads_data[i][0]);
+    if (name == "")
+    {
+      name = "Heatflux_" + std::to_string(loadsheatfluxes->loads_data[i][0]);
+    }
+    
+    loadsheatfluxes_tree_data_set.push_back(std::to_string(loadsheatfluxes->loads_data[i][0])); //load_id
+    loadsheatfluxes_tree_data_set.push_back(name); 
+    loadsheatfluxes_tree_data.push_back(loadsheatfluxes_tree_data_set);
+  }
+  return loadsheatfluxes_tree_data;
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_bcsdisplacements_tree_data()
 { 
   std::vector<std::vector<std::string>> bcsdisplacements_tree_data;
@@ -2617,6 +2700,37 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadspressures_tre
     }
   }
   return loadspressures_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadsheatfluxes_tree_data(int step_id)
+{ 
+  std::vector<std::vector<std::string>> loadsheatfluxes_tree_data;
+  int step_data_id;
+  std::vector<int> loads_ids;
+  step_data_id = steps->get_steps_data_id_from_step_id(step_id);
+  if (step_data_id==-1)
+  {
+    return loadsheatfluxes_tree_data;
+  }
+  loads_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[step_data_id][5]);
+
+  for (size_t i = 0; i < loads_ids.size(); i++)
+  {
+    std::vector<std::string> loadsheatfluxes_tree_data_set;
+    std::string name;
+    if (steps->loads_data[loads_ids[i]][1]==3)
+    {
+      name = CubitInterface::get_bc_name(CI_BCTYPE_HEATFLUX,steps->loads_data[loads_ids[i]][2]);
+      if (name == "")
+      {
+        name = "Heatflux_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+      }
+      loadsheatfluxes_tree_data_set.push_back(std::to_string(steps->loads_data[loads_ids[i]][2])); //load_id
+      loadsheatfluxes_tree_data_set.push_back(name); 
+      loadsheatfluxes_tree_data.push_back(loadsheatfluxes_tree_data_set);  
+    }
+  }
+  return loadsheatfluxes_tree_data;
 }
 
 std::vector<std::vector<std::string>> CalculiXCore::get_steps_bcsdisplacements_tree_data(int step_id)

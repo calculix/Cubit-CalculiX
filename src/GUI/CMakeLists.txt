@@ -27,6 +27,8 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/LoadsForcesTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsPressuresTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsPressuresTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsHeatfluxesTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsHeatfluxesTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsDisplacementsTree.cpp
@@ -47,6 +49,8 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsForcesTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsPressuresTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsPressuresTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsHeatfluxesTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsHeatfluxesTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsBCsTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsBCsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsBCsDisplacementsTree.cpp
@@ -131,6 +135,8 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/LoadsForcesModifyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsPressuresModifyPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsPressuresModifyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsHeatfluxesModifyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsHeatfluxesModifyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsDisplacementsModifyPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsDisplacementsModifyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsTemperaturesModifyPanel.hpp

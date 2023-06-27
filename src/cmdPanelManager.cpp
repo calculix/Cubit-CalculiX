@@ -73,6 +73,7 @@ void cmdPanelManager::clear()
     my_markers.push_back("CCXAmplitudesDelete");
     my_markers.push_back("CCXLoadsForcesModify");
     my_markers.push_back("CCXLoadsPressuresModify");
+    my_markers.push_back("CCXLoadsHeatfluxesModify");
     my_markers.push_back("CCXBCsDisplacementsModify");
     my_markers.push_back("CCXBCsTemperaturesModify");
     my_markers.push_back("CCXHistoryOutputsCreate");
@@ -331,6 +332,17 @@ void cmdPanelManager::initialize_from_code()
   node->setIcon(ccx_iface->getIcon("CCXLoadsPressuresModify"));
 
   //##############################
+  // add LoadsHeatfluxes Nodes
+  root_node = model->getMarkedNode("CCXLoads");
+  node = model->addNode("Heatflux", root_node);
+  model->setNodeMarker(node, "CCXLoadsHeatfluxes");
+  node->setIcon(ccx_iface->getIcon("CCXLoadsHeatfluxes"));
+  root_node = model->getMarkedNode("CCXLoadsHeatfluxes");
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXLoadsHeatfluxesModify");
+  node->setIcon(ccx_iface->getIcon("CCXLoadsHeatfluxesModify"));
+
+  //##############################
   // add BCs Nodes
   root_node = model->getMarkedNode("CCX");
   node = model->addNode("BCs", root_node);
@@ -541,6 +553,7 @@ void cmdPanelManager::associate_panels_with_nodes()
   my_markers.push_back("CCXAmplitudesDelete");
   my_markers.push_back("CCXLoadsForcesModify");
   my_markers.push_back("CCXLoadsPressuresModify");
+  my_markers.push_back("CCXLoadsHeatfluxesModify");
   my_markers.push_back("CCXBCsDisplacementsModify");
   my_markers.push_back("CCXBCsTemperaturesModify");
   my_markers.push_back("CCXHistoryOutputsCreate");

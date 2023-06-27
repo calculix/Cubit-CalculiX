@@ -54,6 +54,9 @@ private:
   QHBoxLayout* HBoxLayout_13;
   QHBoxLayout* HBoxLayout_14;
   QHBoxLayout* HBoxLayout_15;
+  QHBoxLayout* HBoxLayout_16;
+  QHBoxLayout* HBoxLayout_17;
+  QHBoxLayout* HBoxLayout_18;
   QLabel* label_1;
   QLabel* label_2;
   QLabel* label_3;
@@ -69,6 +72,9 @@ private:
   QLabel* label_13;
   QLabel* label_14;
   QLabel* label_15;
+  QLabel* label_16;
+  QLabel* label_17;
+  QLabel* label_18;
   QLineEdit* lineEdit_1;
   QLineEdit* lineEdit_2;
   QComboBox* comboBox_3;
@@ -84,6 +90,9 @@ private:
   QLineEdit* lineEdit_13;
   QLineEdit* lineEdit_14;
   QLineEdit* lineEdit_15;
+  QLineEdit* lineEdit_16;
+  QLineEdit* lineEdit_17;
+  QLineEdit* lineEdit_18;
 };
 
 #endif // STEPSMODIFYHEATTRANSFERPANEL_HPP
