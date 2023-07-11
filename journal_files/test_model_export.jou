@@ -53,8 +53,8 @@ create temperature  on surface 6  value 66
 modify temperature 2 name 'temp' 
 ccx modify temperature 2 op new amplitude 1 timedelay -55.1
 
-ccx create constraint rigid body nodeset 1 vertex 9
-ccx create constraint rigid body nodeset 5 vertex 10
+ccx create constraint rigid body nodeset 1 ref 9 rot 9
+ccx create constraint rigid body nodeset 5 ref 10 rot 10
 
 ccx create historyoutput name test_name1 node
 ccx create historyoutput name test_name2 element
@@ -153,14 +153,23 @@ mesh vol 1
 mesh surf all
 mesh vertex all
 
+
+ccx create customline name testname1 before elset item_id 1 cline 'block before 1'
+ccx create customline name testname2 begin export cline 'export begin'
+ccx create customline name testname3 end export cline 'export end' 
+
+#ccx modify customline 1 name 'asdasd'
+
 export ccx "test_export.inp"
 
 ccx create job name jobname1
 ccx create job name jobname2 filepath "/home/user/test_achse.inp"
 
-ccx run job 1
+#ccx run job 1
 #ccx run job 2
 #ccx result ccx2paraview job 2
+
+
 
 
 

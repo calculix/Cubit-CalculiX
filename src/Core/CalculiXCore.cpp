@@ -2919,6 +2919,12 @@ std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_
       {
         all_ids.push_back(std::stoi(jobs->jobs_data[i][0]));
       }
+    } else if (parse_type=="customline")
+    {
+      for (size_t i = 0; i < customlines->customlines_data.size(); i++)
+      {
+        all_ids.push_back(std::stoi(customlines->customlines_data[i][0]));
+      }
     }
   }
 

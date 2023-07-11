@@ -66,15 +66,12 @@ bool CoreCustomLines::modify_customline(int customline_id, std::vector<std::stri
   {
     return false;
   } else {
-    // name
-    if (options_marker[0]==1)
+    for (size_t i = 0; i < options.size(); i++)
     {
-      customlines_data[customlines_data_id][1] = options[0];
-    }
-    // filepath
-    if (options_marker[1]==1)
-    {
-      customlines_data[customlines_data_id][2] = options[1];
+      if (options_marker[i]==1)
+      {
+        customlines_data[customlines_data_id][i+1] = options[i];
+      }
     }
     return true;
   }

@@ -16,33 +16,33 @@ std::vector<std::string> ccxCustomLineDeleteCommand::get_syntax()
   for (size_t syn_i = 1; syn_i < 6; syn_i++)
   {
     std::string syntax = "ccx ";
-    syntax.append("delete job ");
+    syntax.append("delete customline ");
     
     if (syn_i==1)
     {
-      syntax.append("<value:label='job id',help='<job id>'>... ");
+      syntax.append("<value:label='customline id',help='<customline id>'>... ");
     }else if (syn_i==2)
     {
-      syntax.append("<string:type='unquoted',number='1',label='job id',help='<job id>'>");
+      syntax.append("<string:type='unquoted',number='1',label='customline id',help='<customline id>'>");
       // to catch all or an quoted input string
     }else if (syn_i==3)
     { 
-      // all except <job id>...
+      // all except <customline id>...
       syntax.append("all except ");
-      syntax.append("<value:label='job id except'>... ");
+      syntax.append("<value:label='customline id except'>... ");
     }else if (syn_i==4)
     {
-      // all except <job id> to <job id 2>
+      // all except <customline id> to <customline id 2>
       syntax.append("all except ");
-      syntax.append("<value:label='job id s1'>");
+      syntax.append("<value:label='customline id s1'>");
       syntax.append("to ");
-      syntax.append("<value:label='job id s2'>");
+      syntax.append("<value:label='customline id s2'>");
     }else if (syn_i==5)
     {
-      // <job id> to <job id 2>
-      syntax.append("<value:label='job id s1'>");
+      // <customline id> to <customline id 2>
+      syntax.append("<value:label='customline id s1'>");
       syntax.append("to ");
-      syntax.append("<value:label='job id s2'>");
+      syntax.append("<value:label='customline id s2'>");
     }
     
     syntax_list.push_back(syntax);
@@ -54,7 +54,7 @@ std::vector<std::string> ccxCustomLineDeleteCommand::get_syntax()
 std::vector<std::string> ccxCustomLineDeleteCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx delete job <job_id>";
+  help[0] = "ccx delete customline <customline_id>";
   help[1]=" ";
   help[2]=" ";
   help[3]=" ";
@@ -74,59 +74,59 @@ bool ccxCustomLineDeleteCommand::execute(CubitCommandData &data)
   CalculiXCoreInterface ccx_iface;
 
   std::string output;
-  std::vector<int> job_ids;
-  int job_id_s1;
-  int job_id_s2;
-  std::vector<std::string> jobs_string;
+  std::vector<int> customline_ids;
+  int customline_id_s1;
+  int customline_id_s2;
+  std::vector<std::string> customlines_string;
 
-  std::string job_string = " ";
+  std::string customline_string = " ";
   
-  data.get_value("job id s1", job_id_s1);
-  data.get_value("job id s2", job_id_s2);
+  data.get_value("customline id s1", customline_id_s1);
+  data.get_value("customline id s2", customline_id_s2);
 
   //check which syntax was given and put everything into the parser
 
   if ((data.find_keyword("ALL") && data.find_keyword("EXCEPT") && !data.find_keyword("TO")))
   {
-    if(data.get_values("job id except", job_ids))
+    if(data.get_values("customline id except", customline_ids))
     {
-      job_string.append("all except");
-      for (size_t i = 0; i < job_ids.size(); i++)
+      customline_string.append("all except");
+      for (size_t i = 0; i < customline_ids.size(); i++)
       {
-        job_string.append(" " + std::to_string(job_ids[i]) + " ");
+        customline_string.append(" " + std::to_string(customline_ids[i]) + " ");
       }
     }
   }else if ((data.find_keyword("ALL") && data.find_keyword("EXCEPT") && data.find_keyword("TO")))
   {
-    job_string.append("all except " + std::to_string(job_id_s1) + " to " + std::to_string(job_id_s2));
+    customline_string.append("all except " + std::to_string(customline_id_s1) + " to " + std::to_string(customline_id_s2));
   }else if ((!data.find_keyword("ALL") && !data.find_keyword("EXCEPT") && data.find_keyword("TO")))
   {
-    job_string.append(std::to_string(job_id_s1) + " to " + std::to_string(job_id_s2));
-  }else if(data.get_strings("job id", jobs_string))
+    customline_string.append(std::to_string(customline_id_s1) + " to " + std::to_string(customline_id_s2));
+  }else if(data.get_strings("customline id", customlines_string))
   {
-    for (size_t i = 0; i < jobs_string.size(); i++)
+    for (size_t i = 0; i < customlines_string.size(); i++)
     {
-      job_string.append(jobs_string[i]);
+      customline_string.append(customlines_string[i]);
     }
   }
   
-  if(!data.get_values("job id", job_ids))
+  if(!data.get_values("customline id", customline_ids))
   {   
-    job_ids = ccx_iface.parser("job", job_string);
+    customline_ids = ccx_iface.parser("customline", customline_string);
   }
 
-  if (job_ids.size()==0)
+  if (customline_ids.size()==0)
   {
     PRINT_ERROR("No entity found.\n");
     return false;
   }
 
-  for (size_t i = 0; i < job_ids.size(); i++)
+  for (size_t i = 0; i < customline_ids.size(); i++)
   {    
-    if (!ccx_iface.delete_job(job_ids[i]))
+    if (!ccx_iface.delete_customline(customline_ids[i]))
     {
       //PRINT_INFO("%s", output.c_str());  
-      output = "Failed with ID " + std::to_string(job_ids[i]) + "!\n";
+      output = "Failed with ID " + std::to_string(customline_ids[i]) + "!\n";
       PRINT_ERROR(output.c_str());
     } 
   }  
