@@ -430,6 +430,26 @@ std::vector<std::string> CalculiXCoreInterface::get_job_data(int job_id)
   return ccx_core.get_job_data(job_id);
 }
 
+bool CalculiXCoreInterface::create_customline(std::vector<std::string> options)
+{
+  return ccx_core.create_customline(options);
+}
+
+bool CalculiXCoreInterface::modify_customline(int customline_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return ccx_core.modify_customline(customline_id, options, options_marker);
+}
+
+bool CalculiXCoreInterface::delete_customline(int customline_id)
+{
+  return ccx_core.delete_customline(customline_id);
+}
+
+std::vector<std::string> CalculiXCoreInterface::get_customline_data(std::string position,std::string keyword,int keyword_id)
+{
+  return ccx_core.get_customline_data(position,keyword,keyword_id);
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_entities(std::string entity, int id)
 {
   return ccx_core.get_entities(entity,id);

@@ -799,6 +799,7 @@ std::string CalculiXCore::print_data()
   str_return.append(initialconditions->print_data());
   str_return.append(steps->print_data());
   str_return.append(jobs->print_data());
+  str_return.append(customlines->print_data());
 
   return str_return;
 }
@@ -1551,6 +1552,26 @@ bool CalculiXCore::result_paraview_job(int job_id)
 std::vector<std::string> CalculiXCore::get_job_data(int job_id)
 {
   return jobs->get_job_data(job_id);
+}
+
+bool CalculiXCore::create_customline(std::vector<std::string> options)
+{
+  return customlines->create_customline(options);
+}
+
+bool CalculiXCore::modify_customline(int customline_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return customlines->modify_customline(customline_id, options, options_marker);
+}
+
+bool CalculiXCore::delete_customline(int customline_id)
+{
+  return customlines->delete_customline(customline_id);
+}
+
+std::vector<std::string> CalculiXCore::get_customline_data(std::string position,std::string keyword,int keyword_id)
+{
+  return customlines->get_customline_data(position,keyword,keyword_id);
 }
 
 std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string entity, int id)

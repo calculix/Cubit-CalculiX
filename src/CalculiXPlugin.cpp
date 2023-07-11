@@ -88,6 +88,9 @@
 #include "ccxResultCGXJobCommand.hpp"
 #include "ccxResultParaViewJobCommand.hpp"
 #include "ccxKillJobCommand.hpp"
+#include "ccxCustomLineCreateCommand.hpp"
+#include "ccxCustomLineModifyCommand.hpp"
+#include "ccxCustomLineDeleteCommand.hpp"
 
 //! This macro is required to identify this as a valid Cubit plugin. The plugin
 //! will NOT be loaded if this macro is not present.
@@ -191,6 +194,9 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxResultccx2paraviewJobCommand");
   keys.push_back("ccxResultCGXJobCommand");
   keys.push_back("ccxResultParaViewJobCommand");
+  keys.push_back("ccxCustomLineCreateCommand");
+  keys.push_back("ccxCustomLineModifyCommand");
+  keys.push_back("ccxCustomLineDeleteCommand");
 
   return keys;
 }
@@ -466,6 +472,15 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxKillJobCommand")
     return new ccxKillJobCommand();
+
+  else if(key == "ccxCustomLineCreateCommand")
+    return new ccxCustomLineCreateCommand();
+
+  else if(key == "ccxCustomLineModifyCommand")
+    return new ccxCustomLineModifyCommand();
+  
+  else if(key == "ccxCustomLineDeleteCommand")
+    return new ccxCustomLineDeleteCommand();
 
   return NULL;
 }

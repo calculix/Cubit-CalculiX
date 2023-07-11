@@ -179,4 +179,10 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxResultParaViewJobCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxKillJobCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxKillJobCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxCustomLineCreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxCustomLineCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxCustomLineModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxCustomLineModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxCustomLineDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxCustomLineDeleteCommand.hpp
     PARENT_SCOPE)

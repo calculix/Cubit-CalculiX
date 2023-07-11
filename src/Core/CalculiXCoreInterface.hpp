@@ -101,7 +101,11 @@ public:
   bool result_cgx_job(int job_id); // opens the results with cgx
   bool result_paraview_job(int job_id); // opens the results with paraview
   std::vector<std::string> get_job_data(int job_id);
+  bool create_customline(std::vector<std::string> options); // adds a new customline
+  bool modify_customline(int customline_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a customline
+  bool delete_customline(int customline_id); // delete customline
   std::vector<std::vector<std::string>> get_entities(std::string entity, int id);
+  std::vector<std::string> get_customline_data(std::string position,std::string keyword,int keyword_id);
 
   // GUI
   QIcon* getIcon(std::string name);
