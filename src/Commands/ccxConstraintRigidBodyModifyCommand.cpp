@@ -16,8 +16,8 @@ std::vector<std::string> ccxConstraintRigidBodyModifyCommand::get_syntax()
   std::string syntax = "ccx ";
   syntax.append("modify constraint rigid body <value:label='constraint id',help='<constraint id>'>");
   syntax.append("[{nodeset|block} <value:label='entity id',help='<entity id>'>] ");
-  syntax.append("[vertex <value:label='vertex',help='<vertex>'>]");
-
+  syntax.append("[ref <value:label='ref',help='<ref vertex>'>] ");
+  syntax.append("[rot <value:label='rot',help='<rot vertex>'>] ");
   syntax_list.push_back(syntax);
 
   return syntax_list;
@@ -26,7 +26,7 @@ std::vector<std::string> ccxConstraintRigidBodyModifyCommand::get_syntax()
 std::vector<std::string> ccxConstraintRigidBodyModifyCommand::get_syntax_help()
 {
   std::vector<std::string> help(1);
-  help[0] = "ccx modify constraint rigid body <constraint id> [{nodeset|block} <entity id>] [vertex <vertex>]";
+  help[0] = "ccx modify constraint rigid body <constraint id> [{nodeset|block} <entity id>] [ref <vertex>] [rot <vertex>]";
 
   return help;
 }
@@ -46,8 +46,10 @@ bool ccxConstraintRigidBodyModifyCommand::execute(CubitCommandData &data)
 
   std::vector<std::string> options;
   std::vector<int> options_marker;
-  int vertex_value;
-  std::string vertex;
+  int ref_vertex_value;
+  int rot_vertex_value;
+  std::string ref_vertex;
+  std::string rot_vertex;
   int entity_id_value;
   std::string entity_id;
   int constraint_id;
@@ -80,19 +82,31 @@ bool ccxConstraintRigidBodyModifyCommand::execute(CubitCommandData &data)
     options_marker.push_back(1);
   }
     
-  if (!data.get_value("vertex", vertex_value))
+  if (!data.get_value("ref", ref_vertex_value))
   {
-    vertex = "";
+    ref_vertex = "";
     options_marker.push_back(0);
   }
   else
   {
-    vertex = std::to_string(vertex_value);
+    ref_vertex = std::to_string(ref_vertex_value);
     options_marker.push_back(1);
   }
   
+  if (!data.get_value("rot", rot_vertex_value))
+  {
+    rot_vertex = "";
+    options_marker.push_back(0);
+  }
+  else
+  {
+    rot_vertex = std::to_string(rot_vertex_value);
+    options_marker.push_back(1);
+  }
+
   options.push_back(entity_id);
-  options.push_back(vertex);
+  options.push_back(ref_vertex);
+  options.push_back(rot_vertex);
 
   if (!ccx_iface.modify_constraint("RIGIDBODY",constraint_id,options,options_marker))
   {

@@ -60,7 +60,7 @@ bool CoreConstraints::create_constraint(std::string constraint_type, std::vector
       sub_constraint_id = std::stoi(rigidbody_constraint_data[sub_constraint_last][0]) + 1;
     }
     constraint_type_value = 1;
-    this->add_rigidbody_constraint(std::to_string(sub_constraint_id), options[0], options[1], options[2]);
+    this->add_rigidbody_constraint(std::to_string(sub_constraint_id), options[0], options[1], options[2], options[3]);
   } else if (constraint_type=="TIE")
   {
     if (tie_constraint_data.size()==0)
@@ -144,9 +144,9 @@ bool CoreConstraints::add_constraint(int constraint_id, int constraint_type, int
   return true;
 }
 
-bool CoreConstraints::add_rigidbody_constraint(std::string rigid_body_constraint_id, std::string entity_type, std::string type_id,std::string vertex)
+bool CoreConstraints::add_rigidbody_constraint(std::string rigid_body_constraint_id, std::string entity_type, std::string type_id,std::string vertex_ref,std::string vertex_rot)
 {
-  std::vector<std::string> v = {rigid_body_constraint_id,entity_type,type_id,vertex};
+  std::vector<std::string> v = {rigid_body_constraint_id,entity_type,type_id,vertex_ref,vertex_rot};
       
   rigidbody_constraint_data.push_back(v);
   
@@ -223,6 +223,12 @@ int CoreConstraints::get_tie_constraint_data_id_from_tie_constraint_id(int tie_c
   return return_int;
 }
 
+int CoreConstraints::get_node_id_from_vertex_id(int vertex_id)
+{
+  int node_id = CubitInterface::get_vertex_node(vertex_id);
+  return node_id;
+}
+
 std::string CoreConstraints::get_constraint_export() // get a list of the CalculiX constraint exports
 {
   std::vector<std::string> constraints_export_list;
@@ -251,10 +257,10 @@ std::string CoreConstraints::get_constraint_export() // get a list of the Calcul
       }
 
       str_temp.append(", REF NODE=");
-      str_temp.append(std::to_string(ccx_iface->referencepoints_get_ref_from_vertex_id(std::stoi(rigidbody_constraint_data[sub_constraint_data_id][3]))));
+      str_temp.append(std::to_string(get_node_id_from_vertex_id(std::stoi(rigidbody_constraint_data[sub_constraint_data_id][3]))));
       
       str_temp.append(", ROT NODE=");
-      str_temp.append(std::to_string(ccx_iface->referencepoints_get_rot_from_vertex_id(std::stoi(rigidbody_constraint_data[sub_constraint_data_id][3]))));
+      str_temp.append(std::to_string(get_node_id_from_vertex_id(std::stoi(rigidbody_constraint_data[sub_constraint_data_id][4]))));
       constraints_export_list.push_back(str_temp);
     }
     // TIE
@@ -297,6 +303,7 @@ std::vector<int> CoreConstraints::get_rigidbody_vertex_list()
   for (size_t i = 0; i < rigidbody_constraint_data.size(); i++)
   {
     vertices.push_back(std::stoi(rigidbody_constraint_data[i][3]));
+    vertices.push_back(std::stoi(rigidbody_constraint_data[i][4]));
   }
   
   return vertices;

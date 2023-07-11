@@ -23,8 +23,9 @@ public:
   // rigidbody_constraint_data[0][0] rigidbody_constraint_id
   // rigidbody_constraint_data[0][1] type 1:nodeset 2:block
   // rigidbody_constraint_data[0][2] type id
-  // rigidbody_constraint_data[0][3] vertex
-  // rigidbody_constraint_data[0][4] option: 
+  // rigidbody_constraint_data[0][3] vertex REF
+  // rigidbody_constraint_data[0][4] vertex ROT
+  // rigidbody_constraint_data[0][5] option: 
   
   std::vector<std::vector<std::string>> tie_constraint_data; // type 2
   // tie_constraint_data[0][0] tie_constraint_id
@@ -43,11 +44,12 @@ public:
   bool modify_constraint(std::string constraint_type, int constraint_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a constraint
   bool delete_constraint(int constraint_id); // deletes constraint from constraints_data
   bool add_constraint(int constraint_id, int constraint_type, int constraint_type_id); // adds new constraint to constraints_data
-  bool add_rigidbody_constraint(std::string rigid_body_constraint_id, std::string entity_type, std::string type_id,std::string vertex); // adds new rigid_body to rigidbody_constraint_data
+  bool add_rigidbody_constraint(std::string rigid_body_constraint_id, std::string entity_type, std::string type_id,std::string vertex_ref,std::string vertex_rot); // adds new rigid_body to rigidbody_constraint_data
   bool add_tie_constraint(std::string tie_constraint_id, std::string name, std::string master,std::string slave,std::string position_tolerance); // adds new tie to tie_constraint_data
   int  get_constraints_data_id_from_constraint_id(int constraint_id); // searches for the constraint_id in the constraints_data and returns the indices or -1 if it fails
   int  get_rigidbody_constraint_data_id_from_rigidbody_constraint_id(int rigidbody_constraint_id); // searches for the rigidbody_constraint_id in the rigidbody_constraint_data and returns the indices or -1 if it fails
   int  get_tie_constraint_data_id_from_tie_constraint_id(int tie_constraint_id); // searches for the tie_constraint_id in the tie_constraint_data and returns the indices or -1 if it fails
+  int  get_node_id_from_vertex_id(int vertex_id); // get node_id for the vertex_id  and returns -1 if it fails
   std::string get_constraint_export(); // get CalculiX constraint exports
   std::vector<int> get_rigidbody_vertex_list(); // get list of rigid body vertices
   std::string print_data(); // prints out the blocks_data

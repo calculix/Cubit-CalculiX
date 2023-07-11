@@ -47,16 +47,19 @@ private:
   QHBoxLayout* HBoxLayout_1;
   QHBoxLayout* HBoxLayout_2;
   QHBoxLayout* HBoxLayout_3;
+  QHBoxLayout* HBoxLayout_4;
   QRadioButton* radioButton_1;
   QRadioButton* radioButton_2;
   QLabel* label_0;
   QLabel* label_1;
   QLabel* label_2;
   QLabel* label_3;
+  QLabel* label_4;
   QLineEdit* lineEdit_0;
   QLineEdit* lineEdit_1;
   QLineEdit* lineEdit_2;
   QLineEdit* lineEdit_3;
+  QLineEdit* lineEdit_4;
 };
 
 #endif // CONSTRAINTSMODIFYRIGIDBODYPANEL_HPP

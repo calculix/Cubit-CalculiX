@@ -408,9 +408,6 @@ std::string CoreFieldOutputs::get_output_export(int output_id) // get a list of 
   int output_data_id;
   int sub_data_id;
   int nodeset_id = -1;
-  std::vector<int> rigidbody_vertex_list;
-  std::vector<std::string> referencepoints_nodesets;
-  rigidbody_vertex_list = ccx_iface->get_rigidbody_vertex_list();
   bool first_key = true;
   
   output_data_id = get_outputs_data_id_from_output_id(output_id);
@@ -483,76 +480,6 @@ std::string CoreFieldOutputs::get_output_export(int output_id) // get a list of 
     }
     outputs_export_list.push_back(str_temp);    
 
-    // RIGID BODY VERTEX
-    for (size_t i = 0; i < rigidbody_vertex_list.size(); i++)
-    {
-      if ((ccx_iface->check_vertex_in_nodeset_exists(rigidbody_vertex_list[i],nodeset_id))||(i+1==rigidbody_vertex_list.size()))
-      {
-        str_temp = "*NODE FILE";
-        if (i+1==rigidbody_vertex_list.size())
-        {
-          if (node_data[sub_data_id][1]!="")
-          {
-            str_temp.append(", NSET=" + ccx_iface->get_nodeset_name(nodeset_id));
-          }
-        }else{
-          referencepoints_nodesets = ccx_iface->get_referencepoints_nodesets(rigidbody_vertex_list[i]);
-          str_temp.append(", NSET=" + referencepoints_nodesets[1]);
-        }
-        if (node_data[sub_data_id][2]!="")
-        {
-          str_temp.append(", FREQUENCY=" + node_data[sub_data_id][2]);
-        }
-        if (node_data[sub_data_id][3]!="")
-        {
-          str_temp.append(", FREQUENCYF=" + node_data[sub_data_id][3]);
-        }
-        if (node_data[sub_data_id][4]!="")
-        {
-          str_temp.append(", TOTALS=" + node_data[sub_data_id][4]);
-        }
-        if (node_data[sub_data_id][5]!="")
-        {
-          str_temp.append(", GLOBAL=" + node_data[sub_data_id][5]);
-        }
-        if (node_data[sub_data_id][6]!="")
-        {
-          str_temp.append(", " + node_data[sub_data_id][6]);
-        }
-        if (node_data[sub_data_id][7]!="")
-        {
-          str_temp.append(", " + node_data[sub_data_id][7]);
-        }
-        // TIME POINTS not implemented yet
-        if (node_data[sub_data_id][9]!="")
-        {
-          str_temp.append(", " + node_data[sub_data_id][9]);
-        }
-        if (node_data[sub_data_id][10]!="")
-        {
-          str_temp.append(", " + node_data[sub_data_id][10]);
-        }
-
-        outputs_export_list.push_back(str_temp);
-
-        //second line
-        str_temp = "";
-        for (size_t i = 11; i < 11 + node_keys.size(); i++)
-        {
-          
-          if (node_data[sub_data_id][i]!="")
-          {
-            if ((i!=11)&&(first_key==false))
-            {
-              str_temp.append(",");
-            }
-            str_temp.append(node_data[sub_data_id][i]);
-            first_key = false;
-          }
-        }
-        outputs_export_list.push_back(str_temp);
-      }
-    }
   }else if (outputs_data[output_data_id][2]==2)
   { 
     sub_data_id = get_element_data_id_from_element_id(outputs_data[output_data_id][3]);
@@ -617,76 +544,6 @@ std::string CoreFieldOutputs::get_output_export(int output_id) // get a list of 
       }
     }
     outputs_export_list.push_back(str_temp);
-    
-    //RIGID BODY VERTEX
-    for (size_t i = 0; i < rigidbody_vertex_list.size(); i++)
-    {
-      if ((ccx_iface->check_vertex_in_nodeset_exists(rigidbody_vertex_list[i],nodeset_id))||(i+1==rigidbody_vertex_list.size()))
-      {
-        str_temp = "*EL FILE";
-        if (i+1==rigidbody_vertex_list.size())
-        {
-          if (element_data[sub_data_id][1]!="")
-          {
-            str_temp.append(", NSET=" + ccx_iface->get_nodeset_name(nodeset_id));
-          }
-        }else{
-          referencepoints_nodesets = ccx_iface->get_referencepoints_nodesets(rigidbody_vertex_list[i]);
-          str_temp.append(", NSET=" + referencepoints_nodesets[1]);
-        }
-        if (element_data[sub_data_id][2]!="")
-        {
-          str_temp.append(", FREQUENCY=" + element_data[sub_data_id][2]);
-        }
-        if (element_data[sub_data_id][3]!="")
-        {
-          str_temp.append(", FREQUENCYF=" + element_data[sub_data_id][3]);
-        }
-        if (element_data[sub_data_id][4]!="")
-        {
-          str_temp.append(", GLOBAL=" + element_data[sub_data_id][4]);
-        }
-        if (element_data[sub_data_id][5]!="")
-        {
-          str_temp.append(", " + element_data[sub_data_id][5]);
-        }
-        if (element_data[sub_data_id][6]!="")
-        {
-          str_temp.append(", " + element_data[sub_data_id][6]);
-        }
-        if (element_data[sub_data_id][7]!="")
-        {
-          str_temp.append(", " + element_data[sub_data_id][7]);
-        }
-        // TIME POINTS not implemented yet
-        if (element_data[sub_data_id][9]!="")
-        {
-          str_temp.append(", " + element_data[sub_data_id][9]);
-        }
-        if (element_data[sub_data_id][10]!="")
-        {
-          str_temp.append(", " + element_data[sub_data_id][10]);
-        }
-
-        outputs_export_list.push_back(str_temp);
-
-        //second line
-        str_temp = "";
-        for (size_t i = 11; i < 11 + element_keys.size(); i++)
-        {
-          if (element_data[sub_data_id][i]!="")
-          {
-            if ((i!=11)&&(first_key==false))
-            {
-              str_temp.append(",");
-            }
-            str_temp.append(element_data[sub_data_id][i]);
-            first_key = false;
-          }
-        }
-        outputs_export_list.push_back(str_temp);
-      }
-    }
   }else if (outputs_data[output_data_id][2]==3)
   {
     sub_data_id = get_contact_data_id_from_contact_id(outputs_data[output_data_id][3]);

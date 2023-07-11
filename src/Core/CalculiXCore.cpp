@@ -15,7 +15,6 @@
 #include "CoreMaterials.hpp"
 #include "CoreSections.hpp"
 #include "CoreConstraints.hpp"
-#include "CoreReferencePoints.hpp"
 #include "CoreSurfaceInteractions.hpp"
 #include "CoreContactPairs.hpp"
 #include "CoreAmplitudes.hpp"
@@ -33,7 +32,7 @@
 #include "loadUserOptions.hpp"
 
 CalculiXCore::CalculiXCore():
-  cb(NULL),mat(NULL),sections(NULL),constraints(NULL),referencepoints(NULL),surfaceinteractions(NULL),
+  cb(NULL),mat(NULL),sections(NULL),constraints(NULL),surfaceinteractions(NULL),
   contactpairs(NULL),amplitudes(NULL),loadsforces(NULL),loadspressures(NULL),loadsheatfluxes(NULL),
   bcsdisplacements(NULL),bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL),
   initialconditions(NULL), steps(NULL),jobs(NULL),timer(NULL)
@@ -51,8 +50,6 @@ CalculiXCore::~CalculiXCore()
     delete sections;
   if(constraints)
     delete constraints;
-  if(referencepoints)
-    delete referencepoints;
   if(surfaceinteractions)
     delete surfaceinteractions;
   if(contactpairs)
@@ -119,11 +116,6 @@ bool CalculiXCore::init()
     constraints = new CoreConstraints;
   
   constraints->init();
-
-  if(!referencepoints)
-    referencepoints = new CoreReferencePoints;
-  
-  referencepoints->init();
 
   if(!surfaceinteractions)
     surfaceinteractions = new CoreSurfaceInteractions;
@@ -236,7 +228,6 @@ bool CalculiXCore::reset()
   //mat->reset();
   sections->reset();
   constraints->reset();
-  referencepoints->reset();
   surfaceinteractions->reset();
   contactpairs->reset();
   amplitudes->reset();
@@ -379,6 +370,12 @@ std::string CalculiXCore::autocleanup()
       if (!check_vertex_exists(std::stoi(constraints->rigidbody_constraint_data[sub_data_id][3])))
       {
         log.append("Vertex ID " + constraints->rigidbody_constraint_data[sub_data_id][3] + " doesn't exist.\n");
+        log.append("Constraint ID " + std::to_string(constraints->constraints_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+      if (!check_vertex_exists(std::stoi(constraints->rigidbody_constraint_data[sub_data_id][4])))
+      {
+        log.append("Vertex ID " + constraints->rigidbody_constraint_data[sub_data_id][4] + " doesn't exist.\n");
         log.append("Constraint ID " + std::to_string(constraints->constraints_data[i-1][0]) + " will be deleted.\n");
         sub_bool = true;
       }
@@ -780,7 +777,6 @@ std::string CalculiXCore::print_data()
   str_return.append(cb->print_data());
   str_return.append(sections->print_data());
   str_return.append(constraints->print_data());
-  str_return.append(referencepoints->print_data());
   str_return.append(surfaceinteractions->print_data());
   str_return.append(contactpairs->print_data());
   str_return.append(amplitudes->print_data());
@@ -1212,46 +1208,6 @@ bool CalculiXCore::create_constraint_tie_from_cubitcontactpair(std::string name,
   } 
   
   return true;
-}
-
-std::vector<int> CalculiXCore::get_rigidbody_vertex_list()
-{
-  return constraints->get_rigidbody_vertex_list();
-}
-
-bool CalculiXCore::referencepoints_update_on_export(int max_node_id)
-{
-  return referencepoints->update_on_export(max_node_id);
-}
-
-bool CalculiXCore::referencepoints_reset_on_export()
-{
-  return referencepoints->reset();
-}
-
-std::vector<std::string> CalculiXCore::get_referencepoints_nodesets(int vertex_id)
-{
-  return referencepoints->get_referencepoints_nodesets(vertex_id);
-}
-
-std::string CalculiXCore::get_referencepoints_export()
-{
-  return referencepoints->get_referencepoints_export();
-}
-
-std::string CalculiXCore::get_referencepoints_export_nodesets()
-{
-  return referencepoints->get_referencepoints_export_nodesets();
-}
-
-int CalculiXCore::referencepoints_get_ref_from_vertex_id(int vertex_id)
-{
-  return referencepoints->get_ref_from_vertex_id(vertex_id);
-}
-
-int CalculiXCore::referencepoints_get_rot_from_vertex_id(int vertex_id)
-{
-  return referencepoints->get_rot_from_vertex_id(vertex_id);
 }
 
 bool CalculiXCore::add_sideset_face(std::string sideset_id, std::string sideset_name, std::string face)
@@ -1776,9 +1732,6 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
   std::vector<BCEntityHandle> bc_handles;
   BCEntityHandle bc_handle;
   std::vector<MeshExportBCData> bc_attribs; 
-  std::vector<int> rigidbody_vertex_list;
-  std::vector<std::string> referencepoints_nodesets;
-  rigidbody_vertex_list = get_rigidbody_vertex_list();
 
   //loop over all initialconditions
   for (size_t i = 0; i < initialconditions->initialconditions_data.size(); i++)
@@ -1812,18 +1765,6 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
               initialconditions_export_list.push_back(str_temp);
             }
 
-            for (size_t iii = 0; iii < rigidbody_vertex_list.size(); iii++)
-            {
-              if (check_vertex_in_nodeset_exists(rigidbody_vertex_list[iii],me_iface->id_from_handle(nodeset)))
-              { 
-                referencepoints_nodesets = referencepoints->get_referencepoints_nodesets(rigidbody_vertex_list[iii]);
-                for (size_t iv = 3; iv < bc_attribs.size(); iv++)
-                { 
-                  str_temp = referencepoints_nodesets[1] + "," + std::to_string(bc_attribs[iv].first-2) + "," + std::to_string(bc_attribs[iv].second);
-                  initialconditions_export_list.push_back(str_temp);
-                }
-              }
-            }
           }
         }
       }else if ((get_bc_fea_type(bc_attribs)==4) && (initialconditions->initialconditions_data[i][1]==2))
@@ -1883,9 +1824,6 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
   std::vector<BCEntityHandle> bc_handles;
   BCEntityHandle bc_handle;
   std::vector<MeshExportBCData> bc_attribs; 
-  std::vector<int> rigidbody_vertex_list;
-  std::vector<std::string> referencepoints_nodesets;
-  rigidbody_vertex_list = get_rigidbody_vertex_list();
     
   //loop over all steps
   for (size_t i = 0; i < steps->steps_data.size(); i++)
@@ -1925,18 +1863,6 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
             {
               str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(iv+3) + "," + std::to_string(bc_attribs[iv+4].second*bc_attribs[4].second);
               steps_export_list.push_back(str_temp);
-            }
-            for (size_t iv = 0; iv < rigidbody_vertex_list.size(); iv++)
-            {
-              if (check_vertex_in_nodeset_exists(rigidbody_vertex_list[iv],me_iface->id_from_handle(nodeset)))
-              { 
-                referencepoints_nodesets = referencepoints->get_referencepoints_nodesets(rigidbody_vertex_list[iv]);
-                for (size_t v = 1; v < 4; v++)
-                { 
-                  str_temp = referencepoints_nodesets[1] + "," + std::to_string(v) + "," + std::to_string(bc_attribs[v+4].second*bc_attribs[4].second);
-                  steps_export_list.push_back(str_temp);
-                }
-              }
             }
           }  
         }
@@ -2000,18 +1926,6 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
             { 
               str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iv].first+1) + "," + std::to_string(bc_attribs[iv].first+1) + "," + std::to_string(bc_attribs[iv].second);
               steps_export_list.push_back(str_temp);
-            }
-            for (size_t iv = 0; iv < rigidbody_vertex_list.size(); iv++)
-            {
-              if (check_vertex_in_nodeset_exists(rigidbody_vertex_list[iv],me_iface->id_from_handle(nodeset)))
-              { 
-                referencepoints_nodesets = referencepoints->get_referencepoints_nodesets(rigidbody_vertex_list[iv]);
-                for (size_t v = 3; v < bc_attribs.size(); v++)
-                { 
-                  str_temp = referencepoints_nodesets[1] + "," + std::to_string(bc_attribs[v].first-2) + "," + std::to_string(bc_attribs[v].first-2) + "," + std::to_string(bc_attribs[v].second);
-                  steps_export_list.push_back(str_temp);
-                }
-              }
             }
           }  
         }

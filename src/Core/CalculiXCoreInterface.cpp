@@ -155,46 +155,6 @@ bool CalculiXCoreInterface::create_constraint_tie_from_cubitcontactpair(std::str
   return ccx_core.create_constraint_tie_from_cubitcontactpair(name, position_tolerance);
 }
 
-std::vector<int> CalculiXCoreInterface::get_rigidbody_vertex_list()
-{
-  return ccx_core.get_rigidbody_vertex_list();
-}
-
-bool CalculiXCoreInterface::referencepoints_update_on_export(int max_node_id)
-{
-  return ccx_core.referencepoints_update_on_export(max_node_id);
-}
-
-bool CalculiXCoreInterface::referencepoints_reset_on_export()
-{
-  return ccx_core.referencepoints_reset_on_export();
-}
-
-std::vector<std::string> CalculiXCoreInterface::get_referencepoints_nodesets(int vertex_id)
-{
-  return ccx_core.get_referencepoints_nodesets(vertex_id);
-}
-
-std::string CalculiXCoreInterface::get_referencepoints_export()
-{
-  return ccx_core.get_referencepoints_export();
-}
-
-std::string CalculiXCoreInterface::get_referencepoints_export_nodesets()
-{
-  return ccx_core.get_referencepoints_export_nodesets();
-}
-
-int CalculiXCoreInterface::referencepoints_get_ref_from_vertex_id(int vertex_id)
-{
-  return ccx_core.referencepoints_get_ref_from_vertex_id(vertex_id);
-}
-
-int CalculiXCoreInterface::referencepoints_get_rot_from_vertex_id(int vertex_id)
-{
-  return ccx_core.referencepoints_get_rot_from_vertex_id(vertex_id);
-}
-
 bool CalculiXCoreInterface::add_sideset_face(std::string sideset_id, std::string sideset_name, std::string face)
 {
   return ccx_core.add_sideset_face(sideset_id, sideset_name, face);

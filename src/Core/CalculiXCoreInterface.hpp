@@ -46,14 +46,6 @@ public:
   bool modify_constraint(std::string constraint_type,int constraint_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a constraint  
   bool delete_constraint(int constraint_id); // delete constraint
   bool create_constraint_tie_from_cubitcontactpair(std::string name, std::string position_tolerance); // create constraint tie from cubit contact pairs
-  std::vector<int> get_rigidbody_vertex_list(); // get list of rigid body vertices
-  bool referencepoints_update_on_export(int max_node_id); // update reference points
-  bool referencepoints_reset_on_export(); // reset reference points
-  std::vector<std::string> get_referencepoints_nodesets(int vertex_id); // get reference points nodeset for given vertex
-  std::string get_referencepoints_export(); // export reference points
-  std::string get_referencepoints_export_nodesets(); // export reference points
-  int  referencepoints_get_ref_from_vertex_id(int vertex_id); // get ref_node for the vertex_id  and returns -1 if it fails
-  int  referencepoints_get_rot_from_vertex_id(int vertex_id); // get ref_node for the vertex_id  and returns -1 if it fails
   bool add_sideset_face(std::string sideset_id, std::string sideset_name, std::string face); // gets the sideset/elset name and face
   std::vector<std::vector<std::string>> get_sideset_face(int sideset_id); // gets the sideset/elset name and face
   bool create_surfaceinteraction(std::string surfacebehavior_type, std::vector<std::string> options, std::vector<std::vector<std::string>> options2); // adds a new surfaceinteraction

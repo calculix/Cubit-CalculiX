@@ -45,7 +45,8 @@ std::vector<std::string> ccxConstraintRigidBodyCreateCommand::get_syntax()
       syntax.append("<value:label='block id s2'>");
     }
     
-    syntax.append("vertex <value:label='vertex',help='<vertex>'>");
+    syntax.append(" ref <value:label='ref',help='<ref vertex>'>");
+    syntax.append(" rot <value:label='rot',help='<rot vertex>'>");
   
     syntax_list.push_back(syntax);
   }
@@ -57,7 +58,7 @@ std::vector<std::string> ccxConstraintRigidBodyCreateCommand::get_syntax()
 std::vector<std::string> ccxConstraintRigidBodyCreateCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx create constraint rigid body block <block id> vertex <vertex id>";
+  help[0] = "ccx create constraint rigid body block <block id> ref <vertex id> rot <vertex id>";
   help[1]=" ";
   help[2]=" ";
   help[3]=" ";
@@ -81,8 +82,10 @@ bool ccxConstraintRigidBodyCreateCommand::execute(CubitCommandData &data)
   std::string output;
 
   std::vector<std::string> options;
-  int vertex_value;
-  std::string vertex;
+  int ref_vertex_value;
+  int rot_vertex_value;
+  std::string ref_vertex;
+  std::string rot_vertex;
   std::string block;
   std::vector<int> block_ids;
   int block_id_s1;
@@ -91,15 +94,24 @@ bool ccxConstraintRigidBodyCreateCommand::execute(CubitCommandData &data)
 
   std::string block_string = " ";
   
-  if (!data.get_value("vertex", vertex_value))
+  if (!data.get_value("ref", ref_vertex_value))
   {
-    vertex = "";
+    ref_vertex = "";
   }
   else
   {
-    vertex = std::to_string(vertex_value);
+    ref_vertex = std::to_string(ref_vertex_value);
   }
   
+  if (!data.get_value("rot", rot_vertex_value))
+  {
+    rot_vertex = "";
+  }
+  else
+  {
+    rot_vertex = std::to_string(rot_vertex_value);
+  }
+
   data.get_value("block id s1", block_id_s1);
   data.get_value("block id s2", block_id_s2);
 
@@ -153,7 +165,8 @@ bool ccxConstraintRigidBodyCreateCommand::execute(CubitCommandData &data)
     options.push_back("2"); // entity type   
     block = std::to_string(block_ids[i]);
     options.push_back(block);
-    options.push_back(vertex);
+    options.push_back(ref_vertex);
+    options.push_back(rot_vertex);
 
     if (!ccx_iface.create_constraint("RIGIDBODY",options))
     {

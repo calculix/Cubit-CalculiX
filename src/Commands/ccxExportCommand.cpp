@@ -93,9 +93,6 @@ bool ccxExportCommand::execute(CubitCommandData &data)
   CubitInterface::release_interface(iface);
   CubitInterface::release_interface(material_iface);
 
-  // clear reference points data
-  ccx_iface.referencepoints_reset_on_export();
-
   return result;
 }
 
@@ -342,10 +339,6 @@ bool ccxExportCommand::write_nodes(std::ofstream& output_file,MeshExportInterfac
   }
   start += number_found;
 
-  // add needed nodes for reference points
-  ccx_iface.referencepoints_update_on_export(max_node_id);
-  
-  output_file << ccx_iface.get_referencepoints_export();  
   output_file << "** \n";
 
   return true;
@@ -489,8 +482,6 @@ bool ccxExportCommand::write_nodesets(std::ofstream& output_file,MeshExportInter
     }
     output_file << std::endl;
   }
-
-  output_file << ccx_iface.get_referencepoints_export_nodesets();
 
   output_file << "** \n";
   return true;

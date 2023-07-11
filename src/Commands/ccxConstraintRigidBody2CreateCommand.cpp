@@ -45,7 +45,8 @@ std::vector<std::string> ccxConstraintRigidBody2CreateCommand::get_syntax()
       syntax.append("<value:label='nodeset id s2'>");
     }
     
-    syntax.append("vertex <value:label='vertex',help='<vertex>'>");
+    syntax.append(" ref <value:label='ref',help='<ref vertex>'>");
+    syntax.append(" rot <value:label='rot',help='<rot vertex>'>");
   
     syntax_list.push_back(syntax);
   }
@@ -57,7 +58,7 @@ std::vector<std::string> ccxConstraintRigidBody2CreateCommand::get_syntax()
 std::vector<std::string> ccxConstraintRigidBody2CreateCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx create constraint rigid body nodeset <nodeset id> vertex <vertex id>";
+  help[0] = "ccx create constraint rigid body nodeset <nodeset id> ref <vertex id> rot <vertex id>";
   help[1]=" ";
   help[2]=" ";
   help[3]=" ";
@@ -81,8 +82,10 @@ bool ccxConstraintRigidBody2CreateCommand::execute(CubitCommandData &data)
   std::string output;
 
   std::vector<std::string> options;
-  int vertex_value;
-  std::string vertex;
+  int ref_vertex_value;
+  int rot_vertex_value;
+  std::string ref_vertex;
+  std::string rot_vertex;
   std::string nodeset;
   std::vector<int> nodeset_ids;
   int nodeset_id_s1;
@@ -91,13 +94,22 @@ bool ccxConstraintRigidBody2CreateCommand::execute(CubitCommandData &data)
 
   std::string nodeset_string = " ";
   
-  if (!data.get_value("vertex", vertex_value))
+  if (!data.get_value("ref", ref_vertex_value))
   {
-    vertex = "";
+    ref_vertex = "";
   }
   else
   {
-    vertex = std::to_string(vertex_value);
+    ref_vertex = std::to_string(ref_vertex_value);
+  }
+  
+  if (!data.get_value("rot", rot_vertex_value))
+  {
+    rot_vertex = "";
+  }
+  else
+  {
+    rot_vertex = std::to_string(rot_vertex_value);
   }
   
   data.get_value("nodeset id s1", nodeset_id_s1);
@@ -155,7 +167,8 @@ bool ccxConstraintRigidBody2CreateCommand::execute(CubitCommandData &data)
     options.push_back("1"); // entity type   
     nodeset = std::to_string(nodeset_ids[i]);
     options.push_back(nodeset);
-    options.push_back(vertex);
+    options.push_back(ref_vertex);
+    options.push_back(rot_vertex);
 
     if (!ccx_iface.create_constraint("RIGIDBODY",options))
     {

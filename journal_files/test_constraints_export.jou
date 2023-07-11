@@ -10,9 +10,13 @@ block 2 add volume 2
 block 3 add volume 3
 block 4 add volume 4
 create vertex 0 0 0 
+create vertex 0 0 0
 create vertex 0 1 0 
+create vertex 0 1 0
 create vertex 0 1 2 
+create vertex 0 1 2
 create vertex 6 1 2 
+create vertex 6 1 2
 
 nodeset 1 add surface 13  
 nodeset 2 add surface 17  
@@ -20,21 +24,22 @@ nodeset 2 add surface 17
 sideset 1 add surface 5  
 sideset 2 add surface 3  
 
-ccx create constraint rigid body block all vertex 33
-ccx create constraint rigid body block 2 vertex 34
-ccx create constraint rigid body block 3 vertex 35
-ccx create constraint rigid body block 4 vertex 36
+ccx create constraint rigid body block all ref 33 rot 34
+ccx create constraint rigid body block 2 ref 35 rot 36
+ccx create constraint rigid body block 3 ref 37 rot 38
+ccx create constraint rigid body block 4 ref 39 rot 40
 
-ccx create constraint rigid body nodeset all vertex 33
-ccx create constraint rigid body nodeset 2 vertex 34
-ccx create constraint rigid body nodeset all vertex 35
-ccx create constraint rigid body nodeset 1 vertex 36
+ccx create constraint rigid body nodeset all ref 33 rot 34
+ccx create constraint rigid body nodeset 2 ref 35 rot 36
+ccx create constraint rigid body nodeset all ref 37 rot 38
+ccx create constraint rigid body nodeset 1 ref 39 rot 40
 
 ccx create constraint tie name "testname1" master 1 slave 2
 ccx create constraint tie name "testname2" master 99 slave 100 position tolerance 88
 
 volume all size 100
-#mesh vol all
+mesh vol all
 mesh vertex all
 
-#export ccx "test_output.inp"
+export ccx "test_output.inp"
+

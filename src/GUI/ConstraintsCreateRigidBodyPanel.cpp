@@ -25,22 +25,27 @@ ConstraintsCreateRigidBodyPanel::ConstraintsCreateRigidBodyPanel(QWidget *parent
   HBoxLayout_1 = new QHBoxLayout();
   HBoxLayout_2 = new QHBoxLayout();
   HBoxLayout_3 = new QHBoxLayout();
+  HBoxLayout_4 = new QHBoxLayout();
   radioButton_1 = new QRadioButton();
   radioButton_1->setChecked(true);
   radioButton_2 = new QRadioButton();
   label_1 = new QLabel();
   label_2 = new QLabel();
   label_3 = new QLabel();
+  label_4 = new QLabel();
   label_1->setFixedWidth(labelWidth-30);
   label_2->setFixedWidth(labelWidth-30);
   label_3->setFixedWidth(labelWidth);
+  label_4->setFixedWidth(labelWidth);
   label_1->setText("Block ID");
   label_2->setText("Nodeset ID");
-  label_3->setText("Vertex ID");
+  label_3->setText("REF Vertex ID");
+  label_4->setText("ROT Vertex ID");
   lineEdit_1 = new QLineEdit();
   lineEdit_2 = new QLineEdit();
   lineEdit_2->setDisabled(true);
   lineEdit_3 = new QLineEdit();
+  lineEdit_4 = new QLineEdit();
   //lineEdit_1->setPlaceholderText("Optional");
   //lineEdit_2->setPlaceholderText("Optional");
   //lineEdit_3->setPlaceholderText("Optional");
@@ -55,6 +60,7 @@ ConstraintsCreateRigidBodyPanel::ConstraintsCreateRigidBodyPanel(QWidget *parent
   VBoxLayout_1->addLayout(HBoxLayout_1);
   VBoxLayout_1->addLayout(HBoxLayout_2);
   VBoxLayout->addLayout(HBoxLayout_3);
+  VBoxLayout->addLayout(HBoxLayout_4);
   VBoxLayout->addItem(vertical_spacer);
   VBoxLayout->addLayout(HBoxLayout_pushButton_apply);
   
@@ -67,6 +73,8 @@ ConstraintsCreateRigidBodyPanel::ConstraintsCreateRigidBodyPanel(QWidget *parent
   HBoxLayout_2->addWidget(lineEdit_2);
   HBoxLayout_3->addWidget(label_3);
   HBoxLayout_3->addWidget(lineEdit_3);
+  HBoxLayout_4->addWidget(label_4);
+  HBoxLayout_4->addWidget(lineEdit_4);
 
   HBoxLayout_pushButton_apply->addItem(horizontal_spacer_pushButton_apply);
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
@@ -89,11 +97,13 @@ void ConstraintsCreateRigidBodyPanel::on_pushButton_apply_clicked(bool)
   if ((lineEdit_1->text()!="") && (lineEdit_1->isEnabled()))
   {
     command.append("ccx create constraint rigid body block " + lineEdit_1->text());
-    command.append(" vertex " + lineEdit_3->text());
+    command.append(" ref " + lineEdit_3->text());
+    command.append(" rot " + lineEdit_4->text());
   }else if ((lineEdit_2->text()!="") && (lineEdit_2->isEnabled()))
   {
     command.append("ccx create constraint rigid body nodeset " + lineEdit_2->text());
-    command.append(" vertex " + lineEdit_3->text());
+    command.append(" ref " + lineEdit_3->text());
+    command.append(" rot " + lineEdit_4->text());
   }
   
   if (command != "")
@@ -102,6 +112,7 @@ void ConstraintsCreateRigidBodyPanel::on_pushButton_apply_clicked(bool)
     lineEdit_1->setText("");
     lineEdit_2->setText("");
     lineEdit_3->setText("");
+    lineEdit_4->setText("");
   }
   
   // We must send the Cubit commands through the Claro framework, so first we need to translate
