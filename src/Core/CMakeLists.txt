@@ -43,4 +43,6 @@ set(CORE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/CoreJobs.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreTimer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreTimer.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreCustomLines.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreCustomLines.hpp
     PARENT_SCOPE)

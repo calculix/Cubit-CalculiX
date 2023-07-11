@@ -29,13 +29,14 @@
 #include "CoreSteps.hpp"
 #include "CoreJobs.hpp"
 #include "CoreTimer.hpp"
+#include "CoreCustomLines.hpp"
 #include "loadUserOptions.hpp"
 
 CalculiXCore::CalculiXCore():
   cb(NULL),mat(NULL),sections(NULL),constraints(NULL),surfaceinteractions(NULL),
   contactpairs(NULL),amplitudes(NULL),loadsforces(NULL),loadspressures(NULL),loadsheatfluxes(NULL),
   bcsdisplacements(NULL),bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL),
-  initialconditions(NULL), steps(NULL),jobs(NULL),timer(NULL)
+  initialconditions(NULL), steps(NULL),jobs(NULL),timer(NULL),customlines(NULL)
 {
   init();
 }
@@ -78,6 +79,8 @@ CalculiXCore::~CalculiXCore()
     delete jobs;
   if(timer)
     delete timer;
+  if(customlines)
+    delete customlines;
 }
 
 bool CalculiXCore::print_to_log(std::string str_log)
@@ -185,6 +188,11 @@ bool CalculiXCore::init()
   if(!timer)
     timer = new CoreTimer;
 
+  if(!customlines)
+    customlines = new CoreCustomLines;
+  
+  customlines->init();
+
   if (use_ccx_logfile)
   {
     print_to_log("CalculiXCore Initialization!");
@@ -241,6 +249,7 @@ bool CalculiXCore::reset()
   initialconditions->reset();
   steps->reset();
   jobs->reset();
+  customlines->reset();
 
   sideset_face_data.clear();
   //print_to_log("RESET");

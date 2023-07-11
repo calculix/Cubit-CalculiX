@@ -22,6 +22,7 @@ class CoreInitialConditions;
 class CoreSteps;
 class CoreJobs;
 class CoreTimer;
+class CoreCustomLines;
 
 class MeshExportInterface;
 class MaterialInterface;
@@ -188,6 +189,7 @@ public:
   CoreSteps *steps;
   CoreJobs *jobs;
   CoreTimer *timer;
+  CoreCustomLines *customlines;
   MeshExportInterface *me_iface;
   MaterialInterface *mat_iface;
 };
