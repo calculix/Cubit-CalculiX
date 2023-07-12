@@ -5,6 +5,7 @@
 #include "CubitMessage.hpp"
 #include "CalculiXCoreInterface.hpp"
 #include <fstream>
+#include <unistd.h>
 
 ccxExportCommand::ccxExportCommand()
 {}
@@ -55,10 +56,17 @@ bool ccxExportCommand::execute(CubitCommandData &data)
   // wanted to overwrite an existing file. This will return true if the overwrite option
   // was specified in the command
 
-  //bool overwrite = data.find_keyword("overwrite");
+  bool overwrite = data.find_keyword("overwrite");
 
-  // TODO: check if the given file exists. If it does and 'overwrite' was not specified,
-  // print an error and return from this function.
+  // check if file already exists
+  if (!overwrite)
+  {
+    if (access(filename.c_str(), F_OK) == 0)
+    {
+      PRINT_ERROR("Output File already exists!\n");
+    }
+    return false; 
+  }
 
   // Get the MeshExport interface from CubitInterface
   iface = dynamic_cast<MeshExportInterface*>(CubitInterface::get_interface("MeshExport"));
