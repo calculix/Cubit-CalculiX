@@ -661,6 +661,14 @@ std::string CoreSurfaceInteractions::get_surfaceinteraction_export() // get a li
   //loop over all surface interactions
   for (size_t i = 0; i < surfaceinteractions_data.size(); i++)
   { 
+    // CUSTOMLINE START
+    std::vector<std::string> customline = ccx_iface->get_customline_data("BEFORE","SURFACEINTERACTION",surfaceinteractions_data[i][0]);
+    for (size_t icl = 0; icl < customline.size(); icl++)
+    {
+      surfaceinteractions_export_list.push_back(customline[icl]);
+    }
+    // CUSTOMLINE END
+
     // NAME
     str_temp = "*SURFACE INTERACTION,NAME=";
     sub_data_id = get_surfaceinteraction_name_data_id_from_surfaceinteraction_name_id(surfaceinteractions_data[i][1]);
@@ -774,6 +782,13 @@ std::string CoreSurfaceInteractions::get_surfaceinteraction_export() // get a li
       str_temp.append(friction_data[sub_data_id][2]);
       surfaceinteractions_export_list.push_back(str_temp);
     }
+    // CUSTOMLINE START
+    customline = ccx_iface->get_customline_data("AFTER","SURFACEINTERACTION",surfaceinteractions_data[i][0]);
+    for (size_t icl = 0; icl < customline.size(); icl++)
+    {
+      surfaceinteractions_export_list.push_back(customline[icl]);
+    }
+    // CUSTOMLINE END
   }
   
   std::string surfaceinteractions_export;

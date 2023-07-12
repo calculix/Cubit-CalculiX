@@ -2,6 +2,7 @@
 #define COREMATERIALS_HPP
 
 class MaterialInterface;
+class CalculiXCoreInterface;
 
 class CoreMaterials
 {
@@ -32,6 +33,7 @@ public:
   std::string get_material_name(int material_id); // gets material name
 
   MaterialInterface *mat_iface;
+  CalculiXCoreInterface *ccx_iface;
 };
 
 #endif // COREMATERIALS_HPP

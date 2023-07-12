@@ -244,6 +244,14 @@ std::string CoreContactPairs::get_contactpair_export() // get a list of the Calc
   //loop over all contactpairs
   for (size_t i = 0; i < contactpairs_data.size(); i++)
   { 
+    // CUSTOMLINE START
+    std::vector<std::string> customline = ccx_iface->get_customline_data("BEFORE","CONTACTPAIR",contactpairs_data[i][0]);
+    for (size_t icl = 0; icl < customline.size(); icl++)
+    {
+      contactpairs_export_list.push_back(customline[icl]);
+    }
+    // CUSTOMLINE END
+
     str_temp = "*CONTACT PAIR, INTERACTION=";
     str_temp.append(ccx_iface->get_surfaceinteraction_name(contactpairs_data[i][1]));
 
@@ -293,6 +301,14 @@ std::string CoreContactPairs::get_contactpair_export() // get a list of the Calc
     str_temp.append(",");
     str_temp.append(ccx_iface->get_sideset_name(contactpairs_data[i][3]));
     contactpairs_export_list.push_back(str_temp);
+
+    // CUSTOMLINE START
+    customline = ccx_iface->get_customline_data("AFTER","CONTACTPAIR",contactpairs_data[i][0]);
+    for (size_t icl = 0; icl < customline.size(); icl++)
+    {
+      contactpairs_export_list.push_back(customline[icl]);
+    }
+    // CUSTOMLINE END
   }
   
   std::string contactpair_export;

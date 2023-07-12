@@ -354,6 +354,13 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
   //loop over all sections
   for (size_t i = 0; i < sections_data.size(); i++)
   { 
+    // CUSTOMLINE START
+    std::vector<std::string> customline = ccx_iface->get_customline_data("BEFORE","SECTION",sections_data[i][0]);
+    for (size_t icl = 0; icl < customline.size(); icl++)
+    {
+      sections_export_list.push_back(customline[icl]);
+    }
+    // CUSTOMLINE END
 
     // SOLID
     if (sections_data[i][1] == 1)
@@ -478,6 +485,13 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
         sections_export_list.push_back(membrane_section_data[sub_section_data_id][4]);
       }    
     }
+    // CUSTOMLINE START
+    customline = ccx_iface->get_customline_data("AFTER","SECTION",sections_data[i][0]);
+    for (size_t icl = 0; icl < customline.size(); icl++)
+    {
+      sections_export_list.push_back(customline[icl]);
+    }
+    // CUSTOMLINE END
   }
 
   std::string section_export;

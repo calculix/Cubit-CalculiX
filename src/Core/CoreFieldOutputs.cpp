@@ -414,7 +414,15 @@ std::string CoreFieldOutputs::get_output_export(int output_id) // get a list of 
 
   sub_data_id = get_name_data_id_from_name_id(outputs_data[output_data_id][1]);
   output_name = name_data[sub_data_id][1];
-  
+
+  // CUSTOMLINE START
+  std::vector<std::string> customline = ccx_iface->get_customline_data("BEFORE","FIELDOUTPUT",output_id);
+  for (size_t icl = 0; icl < customline.size(); icl++)
+  {
+    outputs_export_list.push_back(customline[icl]);
+  }
+  // CUSTOMLINE END
+
   if (outputs_data[output_data_id][2]==1)
   {
     sub_data_id = get_node_data_id_from_node_id(outputs_data[output_data_id][3]);
@@ -581,6 +589,14 @@ std::string CoreFieldOutputs::get_output_export(int output_id) // get a list of 
     }
     outputs_export_list.push_back(str_temp);
   }
+
+  // CUSTOMLINE START
+  customline = ccx_iface->get_customline_data("AFTER","FIELDOUTPUT",output_id);
+  for (size_t icl = 0; icl < customline.size(); icl++)
+  {
+    outputs_export_list.push_back(customline[icl]);
+  }
+  // CUSTOMLINE END
   
   std::string output_export;
 

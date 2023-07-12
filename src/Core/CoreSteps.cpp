@@ -900,6 +900,14 @@ std::string CoreSteps::get_step_export(int step_id)
 
   steps_data_id = get_steps_data_id_from_step_id(step_id);
 
+  // CUSTOMLINE START
+  std::vector<std::string> customline = ccx_iface->get_customline_data("BEFORE","STEP_BEGIN",step_id);
+  for (size_t icl = 0; icl < customline.size(); icl++)
+  {
+    steps_export_list.push_back(customline[icl]);
+  }
+  // CUSTOMLINE END
+
   // name
   sub_data_id = get_name_data_id_from_name_id(steps_data[steps_data_id][1]);
   str_temp = "**** STEP " + std::to_string(step_id) + " NAME: " + name_data[sub_data_id][1];
@@ -947,6 +955,15 @@ std::string CoreSteps::get_step_export(int step_id)
     str_temp.append(",SHOCK SMOOTHING=" + parameter_data[sub_data_id][7]); 
   }
   steps_export_list.push_back(str_temp);
+
+  // CUSTOMLINE START
+  customline = ccx_iface->get_customline_data("AFTER","STEP_BEGIN",step_id);
+  for (size_t icl = 0; icl < customline.size(); icl++)
+  {
+    steps_export_list.push_back(customline[icl]);
+  }
+  // CUSTOMLINE END
+
 
   // STEPTYPE
   if (steps_data[steps_data_id][3]==1)

@@ -240,9 +240,15 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
   }
 
   // first blood ... no i mean first line
-  output_file << "*HEADING \n";
-  output_file << "Cubit2CalculiX with CalculiX Plugin \n";
-  output_file << "** \n";
+  std::vector<std::string> customline = ccx_iface.get_customline_data("BEGIN","EXPORT",-1);
+  for (size_t icl = 0; icl < customline.size(); icl++)
+  {
+    output_file << customline[icl] << "\n";
+  }
+
+  //output_file << "*HEADING \n";
+  //output_file << "Cubit2CalculiX with CalculiX Plugin \n";
+  //output_file << "** \n";
 
   // Write the nodes
   result = write_nodes(output_file, iface, ccx_iface);
@@ -270,7 +276,12 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
   result = write_initialconditions(output_file, ccx_iface);
   result = write_steps(output_file, ccx_iface);
 
-
+  customline = ccx_iface.get_customline_data("END","EXPORT",-1);
+  for (size_t icl = 0; icl < customline.size(); icl++)
+  {
+    output_file << customline[icl] << "\n";
+  }
+  
   return result;
 }
 
@@ -384,6 +395,15 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
       int block_id = blocks[i];
       block_name = ccx_iface.get_block_name(block_id);
       element_type_name = ccx_iface.get_ccx_element_type(block_id);
+
+      // CUSTOMLINE START
+      std::vector<std::string> customline = ccx_iface.get_customline_data("BEFORE","ELSET",block_id);
+      for (size_t icl = 0; icl < customline.size(); icl++)
+      {
+        output_file << customline[icl] << "\n";
+      }
+      // CUSTOMLINE END
+
       output_file << "*ELEMENT, TYPE=" << element_type_name << ", ELSET=" << block_name << "\n";
 
       while( (num_elems = iface->get_block_elements(start_index, buf_size, block, element_type, handles)) > 0)
@@ -427,6 +447,13 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
         }
         start_index += num_elems;
       }
+      // CUSTOMLINE START
+      customline = ccx_iface.get_customline_data("AFTER","ELSET",block_id);
+      for (size_t icl = 0; icl < customline.size(); icl++)
+      {
+        output_file << customline[icl] << "\n";
+      }
+      // CUSTOMLINE END
     }
   }
 
@@ -457,6 +484,14 @@ bool ccxExportCommand::write_nodesets(std::ofstream& output_file,MeshExportInter
     if (nodeset_name == "") {
       nodeset_name = "Nodeset_" + std::to_string(iface->id_from_handle(nodeset));
     }
+
+    // CUSTOMLINE START
+    std::vector<std::string> customline = ccx_iface.get_customline_data("BEFORE","NSET",iface->id_from_handle(nodeset));
+    for (size_t icl = 0; icl < customline.size(); icl++)
+    {
+      output_file << customline[icl] << "\n";
+    }
+    // CUSTOMLINE END
 
     output_file << "*NSET, NSET=" << nodeset_name << " \n";
 
@@ -489,6 +524,14 @@ bool ccxExportCommand::write_nodesets(std::ofstream& output_file,MeshExportInter
       start_index += num_nodes;
     }
     output_file << std::endl;
+
+    // CUSTOMLINE START
+    customline = ccx_iface.get_customline_data("AFTER","NSET",iface->id_from_handle(nodeset));
+    for (size_t icl = 0; icl < customline.size(); icl++)
+    {
+      output_file << customline[icl] << "\n";
+    }
+    // CUSTOMLINE END
   }
 
   output_file << "** \n";
@@ -520,6 +563,14 @@ bool ccxExportCommand::write_sidesets(std::ofstream& output_file, MeshExportInte
       sideset_name = "Surface_" + std::to_string(iface->id_from_handle(sideset));
     }
 
+    // CUSTOMLINE START
+    std::vector<std::string> customline = ccx_iface.get_customline_data("BEFORE","SIDESET",iface->id_from_handle(sideset));
+    for (size_t icl = 0; icl < customline.size(); icl++)
+    {
+      output_file << customline[icl] << "\n";
+    }
+    // CUSTOMLINE END
+
     int num_elems;
     int start_index = 0;
     int element_count = 0;
@@ -532,8 +583,8 @@ bool ccxExportCommand::write_sidesets(std::ofstream& output_file, MeshExportInte
     // count all elements in sideset
     while( (num_elems = iface->get_sideset_sides(sideset,start_index,buf_size,element_ids,element_type,side_ids)) > 0)
     {
-    start_index += num_elems;
-    element_count += num_elems;
+      start_index += num_elems;
+      element_count += num_elems;
     }
 
     int element_id;
@@ -615,6 +666,13 @@ bool ccxExportCommand::write_sidesets(std::ofstream& output_file, MeshExportInte
           output_file << sideset_name << ("_S" + std::to_string(sw)) << ", " << ("S" + std::to_string(sw)) << " \n";
         }
     }
+    // CUSTOMLINE START
+    customline = ccx_iface.get_customline_data("AFTER","SIDESET",iface->id_from_handle(sideset));
+    for (size_t icl = 0; icl < customline.size(); icl++)
+    {
+      output_file << customline[icl] << "\n";
+    }
+    // CUSTOMLINE END
     output_file << std::endl;
   }
 

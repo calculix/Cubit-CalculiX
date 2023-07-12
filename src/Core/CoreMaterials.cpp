@@ -1,7 +1,7 @@
 #include "CoreMaterials.hpp"
 #include "CubitInterface.hpp"
 #include "MaterialInterface.hpp"
-
+#include "CalculiXCoreInterface.hpp"
 
 
 CoreMaterials::CoreMaterials()
@@ -17,6 +17,7 @@ bool CoreMaterials::init()
     return false; // already initialized
   }else{
     mat_iface = dynamic_cast<MaterialInterface*>(CubitInterface::get_interface("Material"));
+    CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
 
     MaterialInterface::PropertyGroup grp;
     MaterialInterface::Property prop;
@@ -197,8 +198,24 @@ std::string CoreMaterials::get_material_export() // get a list of the CalculiX M
 
     if (std::find(group_list.begin(), group_list.end(), group_name) != group_list.end())
     {
+      // CUSTOMLINE START
+      std::vector<std::string> customline = ccx_iface->get_customline_data("BEFORE","MATERIAL",mat_iface->get_material_id(material));
+      for (size_t icl = 0; icl < customline.size(); icl++)
+      {
+        materials_export_list.push_back(customline[icl]);
+      }
+      // CUSTOMLINE END
+
       materials_export_list.push_back("*MATERIAL, NAME=" + material_name_list[i]); //material_name
       materials_export_list.push_back(this->get_material_cards_export(material_name_list[i],group_name));
+
+      // CUSTOMLINE START
+      customline = ccx_iface->get_customline_data("AFTER","MATERIAL",mat_iface->get_material_id(material));
+      for (size_t icl = 0; icl < customline.size(); icl++)
+      {
+        materials_export_list.push_back(customline[icl]);
+      }
+      // CUSTOMLINE END
     }
   }
 

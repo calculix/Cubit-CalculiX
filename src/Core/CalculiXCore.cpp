@@ -1109,8 +1109,8 @@ int CalculiXCore::get_bc_fea_type(std::vector<std::pair<int, double>> bc_attribs
       //Acceleration
       return 3;
     }
-    //if ((bc_attribs[i].first > 17) && (bc_attribs[i].first < 23))
-    if (bc_attribs[i].first == 22)
+    if ((bc_attribs[i].first > 17) && (bc_attribs[i].first < 23))
+    //if (bc_attribs[i].first == 22)
     {
       //Temperature
       return 4;
@@ -1680,9 +1680,19 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
     entities.push_back({"temperature",std::to_string(id)});
   }else if (entity=="initialcondition")
   {
+    int data_id = initialconditions->get_initialconditions_data_id_from_initialcondition_id(id);
+    int sub_data_id;
     
+    if (initialconditions->initialconditions_data[data_id][1]==1)
+    {
+      sub_data_id = initialconditions->get_displacement_data_id_from_displacement_id(initialconditions->initialconditions_data[data_id][2]);
+      entities.push_back({"displacement",initialconditions->displacement_data[sub_data_id][1]});
+    }else if (initialconditions->initialconditions_data[data_id][1]==2)
+    {
+      sub_data_id = initialconditions->get_temperature_data_id_from_temperature_id(initialconditions->initialconditions_data[data_id][2]);
+      entities.push_back({"temperature",initialconditions->temperature_data[sub_data_id][1]});
+    }
   }
-    
   return entities;
 }
 
@@ -1775,6 +1785,14 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
       bc_set_id = me_iface->id_from_handle(bc_set);
     }
 
+    // CUSTOMLINE START
+    std::vector<std::string> customline = customlines->get_customline_data("BEFORE","INITIALCONDITION",initialconditions->initialconditions_data[i][0]);
+    for (size_t icl = 0; icl < customline.size(); icl++)
+    {
+      initialconditions_export_list.push_back(customline[icl]);
+    }
+    // CUSTOMLINE END
+
     for (size_t ii = 0; ii < bc_handles.size(); ii++)
     {  
       me_iface->get_bc_attributes(bc_handles[ii],bc_attribs);
@@ -1817,6 +1835,13 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
       }
       bc_attribs.clear();
     }
+    // CUSTOMLINE START
+    customline = customlines->get_customline_data("AFTER","INITIALCONDITION",initialconditions->initialconditions_data[i][0]);
+    for (size_t icl = 0; icl < customline.size(); icl++)
+    {
+      initialconditions_export_list.push_back(customline[icl]);
+    }
+    // CUSTOMLINE END
   }
   
   if (bc_set_id!=-1)
@@ -1854,7 +1879,8 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
   std::vector<BCEntityHandle> bc_handles;
   BCEntityHandle bc_handle;
   std::vector<MeshExportBCData> bc_attribs; 
-    
+  std::vector<std::string> customline;
+
   //loop over all steps
   for (size_t i = 0; i < steps->steps_data.size(); i++)
   { 
@@ -1876,13 +1902,21 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
       for (size_t iii = 0; iii < sub_data_ids.size(); iii++)
       { 
         // FORCE CLOAD
-        if ((get_bc_fea_type(bc_attribs)==5) && (steps->loads_data[iii][1]==1))
+        if ((get_bc_fea_type(bc_attribs)==5) && (steps->loads_data[sub_data_ids[iii]][1]==1))
         {
-          //if (steps->bcs_data[iii][2]==me_iface->id_from_handle(bc_handles[ii]))
+          if (steps->loads_data[sub_data_ids[iii]][2]==me_iface->id_from_handle(bc_handles[ii]))
           {
+            // CUSTOMLINE START
+            customline = customlines->get_customline_data("BEFORE","FORCE",steps->loads_data[sub_data_ids[iii]][2]);
+            for (size_t icl = 0; icl < customline.size(); icl++)
+            {
+              steps_export_list.push_back(customline[icl]);
+            }
+            // CUSTOMLINE END
+            
             me_iface->get_bc_nodeset(bc_handles[ii],nodeset);
             str_temp = "*CLOAD";
-            str_temp.append(loadsforces->get_load_parameter_export(steps->loads_data[iii][2]));
+            str_temp.append(loadsforces->get_load_parameter_export(steps->loads_data[sub_data_ids[iii]][2]));
             steps_export_list.push_back(str_temp);
             for (size_t iv = 1; iv < 4; iv++)
             {
@@ -1894,41 +1928,74 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
               str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(iv+3) + "," + std::to_string(bc_attribs[iv+4].second*bc_attribs[4].second);
               steps_export_list.push_back(str_temp);
             }
+            // CUSTOMLINE START
+            customline = customlines->get_customline_data("AFTER","FORCE",steps->loads_data[sub_data_ids[iii]][2]);
+            for (size_t icl = 0; icl < customline.size(); icl++)
+            {
+              steps_export_list.push_back(customline[icl]);
+            }
+            // CUSTOMLINE END
           }  
         }
         // PRESSURE DLOAD 
-        if ((get_bc_fea_type(bc_attribs)==6) && (steps->loads_data[iii][1]==2))
+        if ((get_bc_fea_type(bc_attribs)==6) && (steps->loads_data[sub_data_ids[iii]][1]==2))
         {
-          //if (steps->bcs_data[iii][2]==me_iface->id_from_handle(bc_handles[ii]))
+          if (steps->loads_data[sub_data_ids[iii]][2]==me_iface->id_from_handle(bc_handles[ii]))
           {
+            // CUSTOMLINE START
+            customline = customlines->get_customline_data("BEFORE","PRESSURE",steps->loads_data[sub_data_ids[iii]][2]);
+            for (size_t icl = 0; icl < customline.size(); icl++)
+            {
+              steps_export_list.push_back(customline[icl]);
+            }
+            // CUSTOMLINE END
+            
             me_iface->get_bc_sideset(bc_handles[ii],sideset);
             temp_list = get_sideset_face(me_iface->id_from_handle(sideset));
             for (size_t iv = 0; iv < temp_list.size(); iv++)
             {              
               str_temp = "*DLOAD";
-              str_temp.append(loadspressures->get_load_parameter_export(steps->loads_data[iii][2]));
+              str_temp.append(loadspressures->get_load_parameter_export(steps->loads_data[sub_data_ids[iii]][2]));
               steps_export_list.push_back(str_temp);
 
               str_temp = temp_list[iv][1] + ",P" + temp_list[iv][2] + "," + std::to_string(bc_attribs[0].second);
               steps_export_list.push_back(str_temp);
             }
+            // CUSTOMLINE START
+            customline = customlines->get_customline_data("AFTER","PRESSURE",steps->loads_data[sub_data_ids[iii]][2]);
+            for (size_t icl = 0; icl < customline.size(); icl++)
+            {
+              steps_export_list.push_back(customline[icl]);
+            }
           }  
         }
-        // HEATFLUX DFLUX 
-        if ((get_bc_fea_type(bc_attribs)==7) && (steps->loads_data[iii][1]==3))
+        // HEATFLUX DFLUX
+        if ((get_bc_fea_type(bc_attribs)==7) && (steps->loads_data[sub_data_ids[iii]][1]==3))
         {
-          //if (steps->bcs_data[iii][2]==me_iface->id_from_handle(bc_handles[ii]))
+          if (steps->loads_data[sub_data_ids[iii]][2]==me_iface->id_from_handle(bc_handles[ii]))
           {
+            // CUSTOMLINE START
+            customline = customlines->get_customline_data("BEFORE","HEATFLUX",steps->loads_data[sub_data_ids[iii]][2]);
+            for (size_t icl = 0; icl < customline.size(); icl++)
+            {
+              steps_export_list.push_back(customline[icl]);
+            }
             me_iface->get_bc_sideset(bc_handles[ii],sideset);
             temp_list = get_sideset_face(me_iface->id_from_handle(sideset));
             for (size_t iv = 0; iv < temp_list.size(); iv++)
             {              
               str_temp = "*DFLUX";
-              str_temp.append(loadsheatfluxes->get_load_parameter_export(steps->loads_data[iii][2]));
+              str_temp.append(loadsheatfluxes->get_load_parameter_export(steps->loads_data[sub_data_ids[iii]][2]));
               steps_export_list.push_back(str_temp);
 
               str_temp = temp_list[iv][1] + ",S" + temp_list[iv][2] + "," + std::to_string(bc_attribs[0].second);
               steps_export_list.push_back(str_temp);
+            }
+            // CUSTOMLINE START
+            customline = customlines->get_customline_data("AFTER","HEATFLUX",steps->loads_data[sub_data_ids[iii]][2]);
+            for (size_t icl = 0; icl < customline.size(); icl++)
+            {
+              steps_export_list.push_back(customline[icl]);
             }
           }  
         }
@@ -1944,35 +2011,63 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
       for (size_t iii = 0; iii < sub_data_ids.size(); iii++)
       { 
         // DISPLACEMENT
-        if ((get_bc_fea_type(bc_attribs)==1) && (steps->bcs_data[iii][1]==1))
+        if ((get_bc_fea_type(bc_attribs)==1) && (steps->bcs_data[sub_data_ids[iii]][1]==1))
         {
-          if (steps->bcs_data[iii][2]==me_iface->id_from_handle(bc_handles[ii]))
-          {
+          if (steps->bcs_data[sub_data_ids[iii]][2]==me_iface->id_from_handle(bc_handles[ii]))
+          { 
+            // CUSTOMLINE START
+            customline = customlines->get_customline_data("BEFORE","DISPLACEMENT",steps->bcs_data[sub_data_ids[iii]][2]);
+            for (size_t icl = 0; icl < customline.size(); icl++)
+            {
+              steps_export_list.push_back(customline[icl]);
+            }
+            // CUSTOMLINE END
             me_iface->get_bc_nodeset(bc_handles[ii],nodeset);
             str_temp = "*BOUNDARY";
-            str_temp.append(bcsdisplacements->get_bc_parameter_export(steps->bcs_data[iii][2]));
+            str_temp.append(bcsdisplacements->get_bc_parameter_export(steps->bcs_data[sub_data_ids[iii]][2]));
             steps_export_list.push_back(str_temp);
             for (size_t iv = 0; iv < bc_attribs.size(); iv++)
             { 
               str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iv].first+1) + "," + std::to_string(bc_attribs[iv].first+1) + "," + std::to_string(bc_attribs[iv].second);
               steps_export_list.push_back(str_temp);
             }
+            // CUSTOMLINE START
+            customline = customlines->get_customline_data("AFTER","DISPLACEMENT",steps->bcs_data[sub_data_ids[iii]][2]);
+            for (size_t icl = 0; icl < customline.size(); icl++)
+            {
+              steps_export_list.push_back(customline[icl]);
+            }
+            // CUSTOMLINE END
           }  
         }
         // TEMPERATURE
-        if ((get_bc_fea_type(bc_attribs)==4) && (steps->bcs_data[iii][1]==2))
+        if ((get_bc_fea_type(bc_attribs)==4) && (steps->bcs_data[sub_data_ids[iii]][1]==2))
         {
-          if (steps->bcs_data[iii][2]==me_iface->id_from_handle(bc_handles[ii]))
+          if (steps->bcs_data[sub_data_ids[iii]][2]==me_iface->id_from_handle(bc_handles[ii]))
           {
+            // CUSTOMLINE START
+            customline = customlines->get_customline_data("BEFORE","TEMPERATURE",steps->bcs_data[sub_data_ids[iii]][2]);
+            for (size_t icl = 0; icl < customline.size(); icl++)
+            {
+              steps_export_list.push_back(customline[icl]);
+            }
+            // CUSTOMLINE END
             me_iface->get_bc_nodeset(bc_handles[ii],nodeset);
             str_temp = "*BOUNDARY";
-            str_temp.append(bcstemperatures->get_bc_parameter_export(steps->bcs_data[iii][2]));
+            str_temp.append(bcstemperatures->get_bc_parameter_export(steps->bcs_data[sub_data_ids[iii]][2]));
             steps_export_list.push_back(str_temp);
             for (size_t iv = 0; iv < bc_attribs.size(); iv++)
             { 
               str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + ",11,11," + std::to_string(bc_attribs[iv].second);
               steps_export_list.push_back(str_temp);
             }
+            // CUSTOMLINE START
+            customline = customlines->get_customline_data("AFTER","TEMPERATURE",steps->bcs_data[sub_data_ids[iii]][2]);
+            for (size_t icl = 0; icl < customline.size(); icl++)
+            {
+              steps_export_list.push_back(customline[icl]);
+            }
+            // CUSTOMLINE END
           }  
         }
       }
@@ -1996,8 +2091,22 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
       steps_export_list.push_back(str_temp);
     }
     
+    // CUSTOMLINE START
+    customline = customlines->get_customline_data("BEFORE","STEP_END",steps->steps_data[i][0]);
+    for (size_t icl = 0; icl < customline.size(); icl++)
+    {
+      steps_export_list.push_back(customline[icl]);
+    }
+    // CUSTOMLINE END
     str_temp = "*END STEP";
     steps_export_list.push_back(str_temp);
+    // CUSTOMLINE START
+    customline = customlines->get_customline_data("AFTER","STEP_END",steps->steps_data[i][0]);
+    for (size_t icl = 0; icl < customline.size(); icl++)
+    {
+      steps_export_list.push_back(customline[icl]);
+    }
+    // CUSTOMLINE END
   }
   
   if (bc_set_id!=-1)

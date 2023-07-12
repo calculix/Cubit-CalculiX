@@ -347,6 +347,14 @@ std::string CoreAmplitudes::get_amplitude_export() // get a list of the CalculiX
   //loop over all amplitudes
   for (size_t i = 0; i < amplitudes_data.size(); i++)
   { 
+    // CUSTOMLINE START
+    std::vector<std::string> customline = ccx_iface->get_customline_data("BEFORE","AMPLITUDE",amplitudes_data[i][0]);
+    for (size_t icl = 0; icl < customline.size(); icl++)
+    {
+      amplitudes_export_list.push_back(customline[icl]);
+    }
+    // CUSTOMLINE END
+
     str_temp = "*AMPLITUDE, NAME=";
     sub_data_id = get_name_amplitude_data_id_from_name_amplitude_id(amplitudes_data[i][1]);
     str_temp.append(name_amplitude_data[sub_data_id][1]);
@@ -399,6 +407,14 @@ std::string CoreAmplitudes::get_amplitude_export() // get a list of the CalculiX
       }
     }
     amplitudes_export_list.push_back(str_temp);
+
+    // CUSTOMLINE START
+    customline = ccx_iface->get_customline_data("AFTER","AMPLITUDE",amplitudes_data[i][0]);
+    for (size_t icl = 0; icl < customline.size(); icl++)
+    {
+      amplitudes_export_list.push_back(customline[icl]);
+    }
+    // CUSTOMLINE END
   }
   
   std::string amplitude_export;

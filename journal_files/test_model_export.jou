@@ -45,6 +45,10 @@ modify displacement 2 add vertex 10
 create surface circle radius 1 zplane 
 create temperature  on surface 7  middle 1 gradient 22 
 
+create heatflux  on surface 1  value 11
+create heatflux  on surface 2  value 22
+create heatflux  on surface 3  value 33
+create heatflux  on surface 4  value 44
 create temperature  on volume 1  value 22
 create temperature  on surface 6  value 33
 create temperature  on surface 6  value 44
@@ -89,11 +93,11 @@ ccx create initialcondition displacement
 ccx create initialcondition temperature
 ccx create initialcondition displacement
 ccx create initialcondition temperature
-ccx modify initialcondition 1 displacement bc_id 2
-ccx modify initialcondition 5 displacement bc_id 1
+ccx modify initialcondition 1 displacement bc_id 1
+ccx modify initialcondition 5 displacement bc_id 2
 ccx modify initialcondition 3 displacement bc_id 3
-ccx modify initialcondition 2 temperature bc_id 1
-ccx modify initialcondition 4 temperature bc_id 2
+ccx modify initialcondition 2 temperature bc_id 6
+ccx modify initialcondition 4 temperature bc_id 1
 ccx modify initialcondition 6 temperature bc_id 3
 
 ccx create step name stepname1 noanalysis
@@ -122,6 +126,9 @@ ccx step 5 add bc displacement 1 2 temperature 1 2
 ccx step 6 add bc displacement 1 2 temperature 1 2
 ccx step 7 add bc displacement 1 2 temperature 1 2
 ccx step 4 remove bc displacement 1 99 temperature 2
+
+ccx step 1 add load heatflux 1 2 3
+ccx step 7 add load heatflux 1 2 3
 
 ccx step 1 add historyoutput 1 2 3
 ccx step 2 add historyoutput 1 2 3
@@ -155,6 +162,36 @@ mesh vertex all
 
 
 ccx create customline name testname1 before elset item_id 1 cline 'block before 1'
+ccx create customline name testname1 after elset item_id 1 cline 'block before 1'
+ccx create customline name testname1 before nset item_id 1 cline 'block before 1'
+ccx create customline name testname1 after nset item_id 1 cline 'block before 1'
+ccx create customline name testname1 before sideset item_id 1 cline 'block before 1'
+ccx create customline name testname1 after sideset item_id 1 cline 'block before 1'
+ccx create customline name testname1 before material item_id 1 cline 'material 1'
+ccx create customline name testname1 after material item_id 1 cline 'material 2'
+ccx create customline name testname1 before section item_id 1 cline 'section 1'
+ccx create customline name testname1 after section item_id 1 cline 'section 2'
+ccx create customline name testname1 before constraint item_id 2 cline 'constraint 1'
+ccx create customline name testname1 after constraint item_id 2 cline 'constraint 2'
+ccx create customline name testname1 before surfaceinteraction item_id 1 cline 'surfaceinteraction 1'
+ccx create customline name testname1 after surfaceinteraction item_id 1 cline 'surfaceinteraction 2'
+ccx create customline name testname1 after contactpair item_id 2 cline 'contactpair 2'
+ccx create customline name testname1 after amplitude item_id 3 cline 'amplitude 1'
+ccx create customline name testname1 after initialcondition item_id 3 cline '#####init 1'
+
+ccx create customline name testname1 before step_begin item_id 3 cline '#####init 1'
+ccx create customline name testname1 after step_begin item_id 3 cline '#####init 1'
+ccx create customline name testname1 before step_end item_id 7 cline '#####init 1'
+ccx create customline name testname1 after step_end item_id 7 cline '#####init 1'
+
+
+ccx create customline name testname1 before force item_id 1 cline '#####init 1'
+ccx create customline name testname1 before pressure item_id 1 cline '#####init 1'
+ccx create customline name testname1 before heatflux item_id 1 cline 'woooow'
+ccx create customline name testname1 before displacement item_id 1 cline '#####init 1'
+ccx create customline name testname1 before temperature item_id 1 cline '#####init 1'
+
+
 ccx create customline name testname2 begin export cline 'export begin'
 ccx create customline name testname3 end export cline 'export end' 
 
@@ -168,7 +205,6 @@ ccx create job name jobname2 filepath "/home/user/test_achse.inp"
 #ccx run job 1
 #ccx run job 2
 #ccx result ccx2paraview job 2
-
 
 
 

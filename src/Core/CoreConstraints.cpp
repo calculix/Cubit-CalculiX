@@ -239,6 +239,14 @@ std::string CoreConstraints::get_constraint_export() // get a list of the Calcul
   //loop over all constraints
   for (size_t i = 0; i < constraints_data.size(); i++)
   { 
+    // CUSTOMLINE START
+    std::vector<std::string> customline = ccx_iface->get_customline_data("BEFORE","CONSTRAINT",constraints_data[i][0]);
+    for (size_t icl = 0; icl < customline.size(); icl++)
+    {
+      constraints_export_list.push_back(customline[icl]);
+    }
+    // CUSTOMLINE END
+
     // RIGID BODY
     if (constraints_data[i][1] == 1)
     {
@@ -285,6 +293,13 @@ std::string CoreConstraints::get_constraint_export() // get a list of the Calcul
       str_temp.append(ccx_iface->get_sideset_name(std::stoi(tie_constraint_data[sub_constraint_data_id][3])));
       constraints_export_list.push_back(str_temp);
     }
+    // CUSTOMLINE START
+    customline = ccx_iface->get_customline_data("AFTER","CONSTRAINT",constraints_data[i][0]);
+    for (size_t icl = 0; icl < customline.size(); icl++)
+    {
+      constraints_export_list.push_back(customline[icl]);
+    }
+    // CUSTOMLINE END
   }
 
   std::string constraint_export;
