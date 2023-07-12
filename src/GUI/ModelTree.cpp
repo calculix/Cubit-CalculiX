@@ -32,6 +32,7 @@
 #include "StepsFieldOutputsTree.hpp"
 #include "StepsManagement.hpp"
 #include "JobsTree.hpp"
+#include "CustomLinesTree.hpp"
 #include "JobsMonitor.hpp"
 
 #include "CalculiXCoreInterface.hpp"
@@ -135,6 +136,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
     StepsBCsTemperaturesTree* StepsBCsTemperaturesTreeItem;
     StepsHistoryOutputsTree* StepsHistoryOutputsTreeItem;
     StepsFieldOutputsTree* StepsFieldOutputsTreeItem;
+    CustomLinesTree* CustomLinesTreeItem;
     JobsTree* JobsTreeItem;
     QTreeWidgetItem* TreeItem;
 
@@ -463,6 +465,18 @@ void ModelTree::showContextMenu(const QPoint &pos)
 
         contextMenuAction[0][0] = 26;
       }
+    }else if (CustomLinesTreeItem = dynamic_cast<CustomLinesTree*>(item))
+    {
+      if (CustomLinesTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Custom Line",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);      
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 27;
+      }
     }else if (JobsTreeItem = dynamic_cast<JobsTree*>(item))
     {
       if (JobsTreeItem->text(1).toStdString()=="")
@@ -473,7 +487,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenu.addAction(&action1);      
         contextMenu.exec(mapToGlobal(pos));
 
-        contextMenuAction[0][0] = 27;
+        contextMenuAction[0][0] = 28;
       }
     }else 
     {
@@ -964,6 +978,24 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenuAction[0][0] = 26;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
       }
+      else if (CustomLinesTreeItem = dynamic_cast<CustomLinesTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Custom Line",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Modify Custom Line",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+        QAction action3("Delete Custom Line",this);
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 27;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+      }
       else if (JobsTreeItem = dynamic_cast<JobsTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -991,7 +1023,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
 
         contextMenu.exec(mapToGlobal(pos));
 
-        contextMenuAction[0][0] = 27;
+        contextMenuAction[0][0] = 28;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
       }
     }
@@ -1027,6 +1059,7 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   StepsBCsTemperaturesTree* StepsBCsTemperaturesTreeItem;
   StepsHistoryOutputsTree* StepsHistoryOutputsTreeItem;
   StepsFieldOutputsTree* StepsFieldOutputsTreeItem;  
+  CustomLinesTree* CustomLinesTreeItem;
   JobsTree* JobsTreeItem;
   QTreeWidgetItem* TreeItem;
 
@@ -1237,6 +1270,12 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
       myStepsManagement->close();
       myStepsManagement->show();
     }
+  }else if (CustomLinesTreeItem = dynamic_cast<CustomLinesTree*>(item))
+  {
+    if (CustomLinesTreeItem->text(1).toStdString()=="")
+    {
+      this->setWidgetInCmdPanelMarker("CCXCustomLinesCreate");
+    }
   }else if (JobsTreeItem = dynamic_cast<JobsTree*>(item))
   {
     if (JobsTreeItem->text(1).toStdString()=="")
@@ -1372,6 +1411,9 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
       }
       myStepsManagement->close();
       myStepsManagement->show();
+    } else if (CustomLinesTreeItem = dynamic_cast<CustomLinesTree*>(item->parent()))
+    {
+      this->setWidgetInCmdPanelMarker("CCXCustomLinesModify");
     } else if (JobsTreeItem = dynamic_cast<JobsTree*>(item->parent()))
     {
       myJobsMonitor->close();
@@ -1752,7 +1794,19 @@ void ModelTree::execContextMenuAction(){
       {
         myStepsManagement->show();
       }  
-    }else if (contextMenuAction[0][0]==27) //JobsTree
+    }else if (contextMenuAction[0][0]==27) //CustomLinesTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("CCXCustomLinesCreate");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        this->setWidgetInCmdPanelMarker("CCXCustomLinesModify");
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXCustomLinesDelete");
+      }  
+    }else if (contextMenuAction[0][0]==28) //JobsTree
     {
       if (contextMenuAction[0][1]==0) //Action1
       {

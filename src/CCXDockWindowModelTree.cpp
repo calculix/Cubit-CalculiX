@@ -24,6 +24,7 @@
 #include "FieldOutputsTree.hpp"
 #include "InitialConditionsTree.hpp"
 #include "StepsTree.hpp"
+#include "CustomLinesTree.hpp"
 #include "JobsTree.hpp"
 
 
@@ -114,6 +115,8 @@ void CCXDockWindowModelTree::initialize()
   myInitialConditionsTree->initialize();
   myStepsTree = new StepsTree(myModelTree);
   myStepsTree->initialize();
+  myCustomLinesTree = new CustomLinesTree(myModelTree);
+  myCustomLinesTree->initialize();
   myJobsTree = new JobsTree(myModelTree);
   myJobsTree->initialize();
 
@@ -167,6 +170,7 @@ void CCXDockWindowModelTree::clear()
     delete myFieldOutputsTree;
     delete myInitialConditionsTree;
     delete myStepsTree;
+    delete myCustomLinesTree;
     delete myJobsTree;
     delete myHighlight;
     delete myModelTree;
@@ -203,6 +207,7 @@ void CCXDockWindowModelTree::update()
   myFieldOutputsTree->update();
   myInitialConditionsTree->update();
   myStepsTree->update();
+  myCustomLinesTree->update();
   myJobsTree->update();
 }
 
@@ -230,5 +235,6 @@ void CCXDockWindowModelTree::reset()
   myFieldOutputsTree->clear();
   myInitialConditionsTree->clear();
   myStepsTree->clear();
+  myCustomLinesTree->clear();
   myJobsTree->clear();
 }

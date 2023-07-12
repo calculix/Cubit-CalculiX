@@ -16,7 +16,7 @@ std::vector<std::string> ccxCustomLineModifyCommand::get_syntax()
   std::string syntax = "ccx ";
   syntax.append("modify customline <value:label='customline id',help='<customline id>'>");
   syntax.append("[name <string:type='unquoted', number='1', label='name', help='<name>'>] ");
-  syntax.append("[{before|after}] ");
+  syntax.append("[{before|after|begin|end}] ");
   syntax.append("[{elset|nset|sideset|material|section|");
   syntax.append("constraint|surfaceinteraction|contactpair|amplitude|");
   syntax.append("force|pressure|heatflux|displacement|temperature|");

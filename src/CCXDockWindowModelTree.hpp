@@ -33,6 +33,7 @@ class HistoryOutputsTree;
 class FieldOutputsTree;
 class InitialConditionsTree;
 class StepsTree;
+class CustomLinesTree;
 class JobsTree;
 
 class CCXDockWindowModelTree
@@ -81,6 +82,7 @@ private:
   FieldOutputsTree *myFieldOutputsTree; //HistoryOutputs root item
   InitialConditionsTree *myInitialConditionsTree; //InitialConditions root item
   StepsTree *myStepsTree; //Steps root item
+  CustomLinesTree *myCustomLinesTree; //CustomLines root item
   JobsTree *myJobsTree; //Jobs root item
   
   QSettings *settings;

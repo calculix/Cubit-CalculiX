@@ -595,6 +595,11 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_fieldoutp
   return ccx_core.get_steps_fieldoutputs_tree_data(step_id);
 }
 
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_customlines_tree_data()
+{ 
+  return ccx_core.get_customlines_tree_data();
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_jobs_tree_data()
 { 
   return ccx_core.get_jobs_tree_data();

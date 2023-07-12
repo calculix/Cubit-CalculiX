@@ -2827,6 +2827,22 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_fieldoutputs_tree_
   return outputs_tree_data;
 }
 
+std::vector<std::vector<std::string>> CalculiXCore::get_customlines_tree_data()
+{ 
+  std::vector<std::vector<std::string>> customlines_tree_data;
+  
+  for (size_t i = 0; i < customlines->customlines_data.size(); i++)
+  {
+    std::vector<std::string> customlines_tree_data_set;
+    
+    customlines_tree_data_set.push_back(customlines->customlines_data[i][0]); //customline_id
+    customlines_tree_data_set.push_back(customlines->customlines_data[i][1] + " (" + customlines->customlines_data[i][2] + " " + customlines->customlines_data[i][3] + " " + customlines->customlines_data[i][4] + ")"); //customline_name
+    customlines_tree_data.push_back(customlines_tree_data_set);
+  }
+
+  return customlines_tree_data;
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_jobs_tree_data()
 { 
   std::vector<std::vector<std::string>> jobs_tree_data;

@@ -61,6 +61,8 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/StepsHistoryOutputsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsFieldOutputsTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsFieldOutputsTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CustomLinesTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CustomLinesTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/JobsTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/JobsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/PanelTable.hpp
@@ -187,6 +189,12 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/StepsDeletePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsManagement.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsManagement.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/CustomLinesCreatePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CustomLinesCreatePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/CustomLinesModifyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CustomLinesModifyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/CustomLinesDeletePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CustomLinesDeletePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/JobsCreatePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/JobsCreatePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/JobsModifyPanel.hpp

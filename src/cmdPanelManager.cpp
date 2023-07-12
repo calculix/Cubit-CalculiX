@@ -98,6 +98,9 @@ void cmdPanelManager::clear()
     my_markers.push_back("CCXStepsModifyCoupledTemperatureDisplacement");
     my_markers.push_back("CCXStepsModifyUncoupledTemperatureDisplacement");
     my_markers.push_back("CCXStepsDelete");
+    my_markers.push_back("CCXCustomLinesCreate");
+    my_markers.push_back("CCXCustomLinesModify");
+    my_markers.push_back("CCXCustomLinesDelete");
     my_markers.push_back("CCXJobsCreate");
     my_markers.push_back("CCXJobsModify");
     my_markers.push_back("CCXJobsDelete");
@@ -496,6 +499,25 @@ void cmdPanelManager::initialize_from_code()
   //##############################
   // add Jobs Nodes
   root_node = model->getMarkedNode("CCX");
+  node = model->addNode("Custom Lines", root_node);
+  node->setTitle("Custom Lines");
+  model->setNodeMarker(node, "CCXCustomLines");  
+  node->setIcon(ccx_iface->getIcon("CCXCustomLines"));
+
+  root_node = model->getMarkedNode("CCXCustomLines");
+  node = model->addNode("Create", root_node);
+  model->setNodeMarker(node, "CCXCustomLinesCreate");
+  node->setIcon(ccx_iface->getIcon("CCXCustomLinesCreate"));
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXCustomLinesModify");
+  node->setIcon(ccx_iface->getIcon("CCXCustomLinesModify"));
+  node = model->addNode("Delete", root_node);
+  model->setNodeMarker(node, "CCXCustomLinesDelete");
+  node->setIcon(ccx_iface->getIcon("CCXCustomLinesDelete"));
+
+  //##############################
+  // add Jobs Nodes
+  root_node = model->getMarkedNode("CCX");
   node = model->addNode("Jobs", root_node);
   node->setTitle("Jobs");
   model->setNodeMarker(node, "CCXJobs");  
@@ -578,6 +600,9 @@ void cmdPanelManager::associate_panels_with_nodes()
   my_markers.push_back("CCXStepsModifyCoupledTemperatureDisplacement");
   my_markers.push_back("CCXStepsModifyUncoupledTemperatureDisplacement");
   my_markers.push_back("CCXStepsDelete");
+  my_markers.push_back("CCXCustomLinesCreate");
+  my_markers.push_back("CCXCustomLinesModify");
+  my_markers.push_back("CCXCustomLinesDelete");
   my_markers.push_back("CCXJobsCreate");
   my_markers.push_back("CCXJobsModify");
   my_markers.push_back("CCXJobsDelete");
