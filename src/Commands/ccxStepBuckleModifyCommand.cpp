@@ -124,7 +124,7 @@ bool ccxStepBuckleModifyCommand::execute(CubitCommandData &data)
   }
   else
   {
-    accuracy = std::to_string(accuracy_value);
+    accuracy = ccx_iface.to_string_scientific(accuracy_value);
     options_marker.push_back(1);
   }
   options.push_back(accuracy);

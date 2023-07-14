@@ -274,6 +274,7 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
   result = write_contactpairs(output_file, ccx_iface);
   result = write_amplitudes(output_file, ccx_iface);
   result = write_initialconditions(output_file, ccx_iface);
+  result = write_hbcs(output_file, ccx_iface);
   result = write_steps(output_file, ccx_iface);
 
   customline = ccx_iface.get_customline_data("END","EXPORT",-1);
@@ -720,6 +721,12 @@ bool ccxExportCommand::write_amplitudes(std::ofstream& output_file, CalculiXCore
 bool ccxExportCommand::write_initialconditions(std::ofstream& output_file, CalculiXCoreInterface ccx_iface)
 {
   output_file << ccx_iface.get_initialcondition_export_data();
+  return true;
+}
+
+bool ccxExportCommand::write_hbcs(std::ofstream& output_file, CalculiXCoreInterface ccx_iface)
+{
+  output_file << ccx_iface.get_hbc_export_data();
   return true;
 }
 

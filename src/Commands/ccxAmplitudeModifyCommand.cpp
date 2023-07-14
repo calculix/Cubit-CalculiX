@@ -69,8 +69,8 @@ bool ccxAmplitudeModifyCommand::execute(CubitCommandData &data)
     for (size_t i = 0; i < amplitudevalues.size(); i+=2)
     {
       std::vector<std::string> amplitude(2);
-      amplitude[0] = std::to_string(amplitudevalues[i]);
-      amplitude[1] = std::to_string(amplitudevalues[i+1]);
+      amplitude[0] = ccx_iface.to_string_scientific(amplitudevalues[i]);
+      amplitude[1] = ccx_iface.to_string_scientific(amplitudevalues[i+1]);
       options2.push_back(amplitude);
       amplitude.clear();
     }
@@ -95,7 +95,7 @@ bool ccxAmplitudeModifyCommand::execute(CubitCommandData &data)
   }
   else
   {
-    shiftx = std::to_string(shiftx_value);
+    shiftx = ccx_iface.to_string_scientific(shiftx_value);
     options_marker.push_back(1);
   }
   options.push_back(shiftx);
@@ -107,7 +107,7 @@ bool ccxAmplitudeModifyCommand::execute(CubitCommandData &data)
   }
   else
   {
-    shifty = std::to_string(shifty_value);
+    shifty = ccx_iface.to_string_scientific(shifty_value);
     options_marker.push_back(1);
   }
   options.push_back(shifty);

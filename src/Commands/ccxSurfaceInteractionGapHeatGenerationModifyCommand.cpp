@@ -66,7 +66,7 @@ bool ccxSurfaceInteractionGapHeatGenerationModifyCommand::execute(CubitCommandDa
     options_marker.push_back(0);
   }else
   {
-    heat_conversion_factor = std::to_string(heat_conversion_factor_value);
+    heat_conversion_factor = ccx_iface.to_string_scientific(heat_conversion_factor_value);
     options_marker.push_back(1);
   }
   if (!data.get_value("surface_weighing_factor", surface_weighing_factor_value))
@@ -75,7 +75,7 @@ bool ccxSurfaceInteractionGapHeatGenerationModifyCommand::execute(CubitCommandDa
     options_marker.push_back(0);
   }else
   {
-    surface_weighing_factor = std::to_string(surface_weighing_factor_value);
+    surface_weighing_factor = ccx_iface.to_string_scientific(surface_weighing_factor_value);
     options_marker.push_back(1);
   }
   if (!data.get_value("differential_tangential_velocity", differential_tangential_velocity_value))
@@ -84,7 +84,7 @@ bool ccxSurfaceInteractionGapHeatGenerationModifyCommand::execute(CubitCommandDa
     options_marker.push_back(0);
   }else
   {
-    differential_tangential_velocity = std::to_string(differential_tangential_velocity_value);
+    differential_tangential_velocity = ccx_iface.to_string_scientific(differential_tangential_velocity_value);
     options_marker.push_back(1);
   }
   

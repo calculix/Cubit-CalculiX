@@ -63,8 +63,8 @@ bool ccxSurfaceInteractionTabularModifyCommand::execute(CubitCommandData &data)
     for (size_t i = 0; i < pressure_overclosure_values.size(); i+=2)
     {
       std::vector<std::string> pressure_overclosure(2);
-      pressure_overclosure[0] = std::to_string(pressure_overclosure_values[i]);
-      pressure_overclosure[1] = std::to_string(pressure_overclosure_values[i+1]);
+      pressure_overclosure[0] = ccx_iface.to_string_scientific(pressure_overclosure_values[i]);
+      pressure_overclosure[1] = ccx_iface.to_string_scientific(pressure_overclosure_values[i+1]);
       options2.push_back(pressure_overclosure);
       pressure_overclosure.clear();
     }

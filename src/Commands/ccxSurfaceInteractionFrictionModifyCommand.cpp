@@ -63,7 +63,7 @@ bool ccxSurfaceInteractionFrictionModifyCommand::execute(CubitCommandData &data)
     options_marker.push_back(0);
   }else
   {
-    mu = std::to_string(mu_value);
+    mu = ccx_iface.to_string_scientific(mu_value);
     options_marker.push_back(1);
   }
   if (!data.get_value("lambda", lambda_value))
@@ -72,7 +72,7 @@ bool ccxSurfaceInteractionFrictionModifyCommand::execute(CubitCommandData &data)
     options_marker.push_back(0);
   }else
   {
-    lambda = std::to_string(lambda_value);
+    lambda = ccx_iface.to_string_scientific(lambda_value);
     options_marker.push_back(1);
   }
     

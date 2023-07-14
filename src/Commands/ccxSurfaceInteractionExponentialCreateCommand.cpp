@@ -57,8 +57,8 @@ bool ccxSurfaceInteractionExponentialCreateCommand::execute(CubitCommandData &da
   data.get_string("name", name);
   data.get_value("c0", c0_value);
   data.get_value("p0", p0_value);
-  c0 = std::to_string(c0_value);
-  p0 = std::to_string(p0_value);
+  c0 = ccx_iface.to_string_scientific(c0_value);
+  p0 = ccx_iface.to_string_scientific(p0_value);
 
   options.push_back(name);
   options.push_back(c0);

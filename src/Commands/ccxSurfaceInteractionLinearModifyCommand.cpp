@@ -67,7 +67,7 @@ bool ccxSurfaceInteractionLinearModifyCommand::execute(CubitCommandData &data)
     options_marker.push_back(0);
   }else
   {
-    slopeK = std::to_string(slopeK_value);
+    slopeK = ccx_iface.to_string_scientific(slopeK_value);
     options_marker.push_back(1);
   }
   if (!data.get_value("sigmaINF", sigmaINF_value))
@@ -76,7 +76,7 @@ bool ccxSurfaceInteractionLinearModifyCommand::execute(CubitCommandData &data)
     options_marker.push_back(0);
   }else
   {
-    sigmaINF = std::to_string(sigmaINF_value);
+    sigmaINF = ccx_iface.to_string_scientific(sigmaINF_value);
     options_marker.push_back(1);
   }
   if (!data.get_value("c0", c0_value))
@@ -85,7 +85,7 @@ bool ccxSurfaceInteractionLinearModifyCommand::execute(CubitCommandData &data)
     options_marker.push_back(0);
   }else
   {
-    c0 = std::to_string(c0_value);
+    c0 = ccx_iface.to_string_scientific(c0_value);
     options_marker.push_back(1);
   }
   

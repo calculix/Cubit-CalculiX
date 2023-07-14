@@ -17,6 +17,7 @@ public:
   std::string print_data();
   bool log_str(std::string str_log);
   std::vector<int> parser(std::string parse_type, std::string parse_string);
+  std::string to_string_scientific(double value); // converts a double to string with scientific notation
   std::vector<std::string> get_ccx_element_types(); // returns all supported ccx element types
   bool set_ccx_element_type(int block_id, std::string ccx_element_type); // sets the ccx element type for a block
   std::string get_ccx_element_type(int block_id); // gets the ccx element type for a block
@@ -38,6 +39,7 @@ public:
   std::string get_contactpair_export_data(); // gets the export data from contactpairs core
   std::string get_amplitude_export_data(); // gets the export data from amplitudes core
   std::string get_initialcondition_export_data(); // gets the export data from core
+  std::string get_hbc_export_data(); // gets the export data from core
   std::string get_step_export_data(); // gets the export data from core
   bool create_section(std::string section_type,int block_id, int material_id, std::vector<std::string> options); // adds a new section
   bool modify_section(std::string section_type,int section_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a section  
@@ -78,6 +80,8 @@ public:
   bool create_initialcondition(std::vector<std::string> options); // adds a new initialcondition
   bool modify_initialcondition(int initialcondition_id, int modify_type, std::vector<std::string> options, std::vector<int> options_marker); // modify a initialcondition
   bool delete_initialcondition(int initialcondition_id); // delete initialcondition
+  bool hbc_add_bcs(int bcs_id, int bc_type, std::vector<int> bc_ids); // adds bcs to bcs_data
+  bool hbc_remove_bcs(int bcs_id, int bc_type, std::vector<int> bc_ids); // removes bcs from bcs_data
   bool create_step(std::vector<std::string> options); // adds a new step
   bool modify_step(int step_id, int modify_type, std::vector<std::string> options, std::vector<int> options_marker); // modify a step
   bool delete_step(int step_id); // delete step

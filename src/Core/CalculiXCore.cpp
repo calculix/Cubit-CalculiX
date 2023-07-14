@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <chrono>
 #include <ctime>
 #include <algorithm>
@@ -26,6 +27,7 @@
 #include "CoreHistoryOutputs.hpp"
 #include "CoreFieldOutputs.hpp"
 #include "CoreInitialConditions.hpp"
+#include "CoreHBCs.hpp"
 #include "CoreSteps.hpp"
 #include "CoreJobs.hpp"
 #include "CoreTimer.hpp"
@@ -36,7 +38,7 @@ CalculiXCore::CalculiXCore():
   cb(NULL),mat(NULL),sections(NULL),constraints(NULL),surfaceinteractions(NULL),
   contactpairs(NULL),amplitudes(NULL),loadsforces(NULL),loadspressures(NULL),loadsheatfluxes(NULL),
   bcsdisplacements(NULL),bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL),
-  initialconditions(NULL), steps(NULL),jobs(NULL),timer(NULL),customlines(NULL)
+  initialconditions(NULL), hbcs(NULL), steps(NULL),jobs(NULL),timer(NULL),customlines(NULL)
 {
   init();
 }
@@ -73,6 +75,8 @@ CalculiXCore::~CalculiXCore()
     delete fieldoutputs;
   if(initialconditions)
     delete initialconditions;
+  if(hbcs)
+    delete hbcs;
   if(steps)
     delete steps;
   if(jobs)
@@ -175,6 +179,11 @@ bool CalculiXCore::init()
   
   initialconditions->init();
 
+  if(!hbcs)
+    hbcs = new CoreHBCs;
+  
+  hbcs->init();
+
   if(!steps)
     steps = new CoreSteps;
   
@@ -247,6 +256,7 @@ bool CalculiXCore::reset()
   historyoutputs->reset();
   fieldoutputs->reset();
   initialconditions->reset();
+  hbcs->reset();
   steps->reset();
   jobs->reset();
   customlines->reset();
@@ -797,11 +807,22 @@ std::string CalculiXCore::print_data()
   str_return.append(historyoutputs->print_data());
   str_return.append(fieldoutputs->print_data());
   str_return.append(initialconditions->print_data());
+  str_return.append(hbcs->print_data());
   str_return.append(steps->print_data());
   str_return.append(jobs->print_data());
   str_return.append(customlines->print_data());
 
   return str_return;
+}
+
+std::string  CalculiXCore::to_string_scientific(double value)
+{
+  std::string output;
+  std::ostringstream ss;
+  ss.precision(6);
+  ss << std::scientific << value;
+  output = ss.str();
+  return output;
 }
 
 std::vector<std::string> CalculiXCore::get_ccx_element_types()
@@ -1439,6 +1460,16 @@ bool CalculiXCore::delete_initialcondition(int initialcondition_id)
   return initialconditions->delete_initialcondition(initialcondition_id);
 }
 
+bool CalculiXCore::hbc_add_bcs(int bcs_id, int bc_type, std::vector<int> bc_ids)
+{
+  return hbcs->add_bcs(bcs_id, bc_type, bc_ids);
+}
+
+bool CalculiXCore::hbc_remove_bcs(int bcs_id, int bc_type, std::vector<int> bc_ids)
+{
+  return hbcs->remove_bcs(bcs_id, bc_type, bc_ids);
+}
+
 bool CalculiXCore::create_step(std::vector<std::string> options)
 {
   return steps->create_step(options);
@@ -1809,7 +1840,7 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
             initialconditions_export_list.push_back(str_temp);
             for (size_t iii = 0; iii < bc_attribs.size(); iii++)
             { 
-              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iii].first+1) + "," + std::to_string(bc_attribs[iii].second);
+              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iii].first+1) + "," + to_string_scientific(bc_attribs[iii].second);
               initialconditions_export_list.push_back(str_temp);
             }
 
@@ -1827,7 +1858,7 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
             initialconditions_export_list.push_back(str_temp);
             for (size_t iii = 0; iii < bc_attribs.size(); iii++)
             { 
-              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iii].second);
+              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + to_string_scientific(bc_attribs[iii].second);
               initialconditions_export_list.push_back(str_temp);
             }
           }
@@ -1860,6 +1891,89 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
   }
 
   return initialcondition_export;
+}
+
+std::string CalculiXCore::get_hbc_export_data() // gets the export data from core
+{
+  std::vector<std::string> hbcs_export_list;
+  hbcs_export_list.push_back("********************************** H B C s ****************************");
+  std::string str_temp;
+  std::vector<std::vector<std::string>> temp_list;
+  std::string log;
+  int sub_data_id;
+  std::vector<int> sub_data_ids;
+  std::string command;
+  int bc_set_id=-1;
+  BCSetHandle bc_set;
+  NodesetHandle nodeset;
+  SidesetHandle sideset;
+  std::vector<BCEntityHandle> bc_handles;
+  BCEntityHandle bc_handle;
+  std::vector<MeshExportBCData> bc_attribs; 
+
+  log = "Creating BCSet for exporting Homogeneous Boundary Conditions.\n";
+  PRINT_INFO("%s", log.c_str());
+  me_iface->create_default_bcset(0,true,true,true,bc_set);
+  bc_set_id = me_iface->id_from_handle(bc_set);
+
+    
+  // BCs
+  me_iface->get_bc_restraints(bc_set, bc_handles);
+  sub_data_ids = hbcs->get_bc_data_ids_from_bcs_id(0);
+  for (size_t ii = 0; ii < bc_handles.size(); ii++)
+  {  
+    me_iface->get_bc_attributes(bc_handles[ii],bc_attribs);
+    for (size_t iii = 0; iii < sub_data_ids.size(); iii++)
+    { 
+      // DISPLACEMENT
+      if ((get_bc_fea_type(bc_attribs)==1) && (hbcs->bcs_data[sub_data_ids[iii]][1]==1))
+      {
+        if (hbcs->bcs_data[sub_data_ids[iii]][2]==me_iface->id_from_handle(bc_handles[ii]))
+        { 
+          me_iface->get_bc_nodeset(bc_handles[ii],nodeset);
+          str_temp = "*BOUNDARY";
+          str_temp.append(bcsdisplacements->get_bc_parameter_export(hbcs->bcs_data[sub_data_ids[iii]][2]));
+          hbcs_export_list.push_back(str_temp);
+          for (size_t iv = 0; iv < bc_attribs.size(); iv++)
+          { 
+            //str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iv].first+1) + "," + std::to_string(bc_attribs[iv].first+1) + "," + to_string_scientific(bc_attribs[iv].second);
+            str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iv].first+1) + "," + std::to_string(bc_attribs[iv].first+1);
+            hbcs_export_list.push_back(str_temp);
+          }
+        }  
+      }
+      // TEMPERATURE
+      if ((get_bc_fea_type(bc_attribs)==4) && (hbcs->bcs_data[sub_data_ids[iii]][1]==2))
+      {
+        if (hbcs->bcs_data[sub_data_ids[iii]][2]==me_iface->id_from_handle(bc_handles[ii]))
+        {
+          me_iface->get_bc_nodeset(bc_handles[ii],nodeset);
+          str_temp = "*BOUNDARY";
+          str_temp.append(bcstemperatures->get_bc_parameter_export(hbcs->bcs_data[sub_data_ids[iii]][2]));
+          hbcs_export_list.push_back(str_temp);
+          for (size_t iv = 0; iv < bc_attribs.size(); iv++)
+          { 
+            str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + ",11,11";
+            hbcs_export_list.push_back(str_temp);
+          }
+        }  
+      }
+    }
+    bc_attribs.clear();
+  }
+  
+  log = "Deleting BCSet HBCs Export.\n";
+  PRINT_INFO("%s", log.c_str());
+  command = "delete bcset " + std::to_string(bc_set_id);
+  CubitInterface::cmd(command.c_str());
+
+  std::string hbc_export;
+
+  for (size_t i = 0; i < hbcs_export_list.size(); i++)
+  {
+    hbc_export.append(hbcs_export_list[i] + "\n");
+  }
+  return hbc_export;
 }
 
 std::string CalculiXCore::get_step_export_data() // gets the export data from core
@@ -1920,12 +2034,12 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
             steps_export_list.push_back(str_temp);
             for (size_t iv = 1; iv < 4; iv++)
             {
-              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(iv) + "," + std::to_string(bc_attribs[iv].second*bc_attribs[0].second);
+              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(iv) + "," + to_string_scientific(bc_attribs[iv].second*bc_attribs[0].second);
               steps_export_list.push_back(str_temp);
             }
             for (size_t iv = 1; iv < 4; iv++)
             {
-              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(iv+3) + "," + std::to_string(bc_attribs[iv+4].second*bc_attribs[4].second);
+              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(iv+3) + "," + to_string_scientific(bc_attribs[iv+4].second*bc_attribs[4].second);
               steps_export_list.push_back(str_temp);
             }
             // CUSTOMLINE START
@@ -1958,7 +2072,7 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
               str_temp.append(loadspressures->get_load_parameter_export(steps->loads_data[sub_data_ids[iii]][2]));
               steps_export_list.push_back(str_temp);
 
-              str_temp = temp_list[iv][1] + ",P" + temp_list[iv][2] + "," + std::to_string(bc_attribs[0].second);
+              str_temp = temp_list[iv][1] + ",P" + temp_list[iv][2] + "," + to_string_scientific(bc_attribs[0].second);
               steps_export_list.push_back(str_temp);
             }
             // CUSTOMLINE START
@@ -1988,7 +2102,7 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
               str_temp.append(loadsheatfluxes->get_load_parameter_export(steps->loads_data[sub_data_ids[iii]][2]));
               steps_export_list.push_back(str_temp);
 
-              str_temp = temp_list[iv][1] + ",S" + temp_list[iv][2] + "," + std::to_string(bc_attribs[0].second);
+              str_temp = temp_list[iv][1] + ",S" + temp_list[iv][2] + "," + to_string_scientific(bc_attribs[0].second);
               steps_export_list.push_back(str_temp);
             }
             // CUSTOMLINE START
@@ -2028,7 +2142,7 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
             steps_export_list.push_back(str_temp);
             for (size_t iv = 0; iv < bc_attribs.size(); iv++)
             { 
-              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iv].first+1) + "," + std::to_string(bc_attribs[iv].first+1) + "," + std::to_string(bc_attribs[iv].second);
+              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iv].first+1) + "," + std::to_string(bc_attribs[iv].first+1) + "," + to_string_scientific(bc_attribs[iv].second);
               steps_export_list.push_back(str_temp);
             }
             // CUSTOMLINE START
@@ -2058,7 +2172,7 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
             steps_export_list.push_back(str_temp);
             for (size_t iv = 0; iv < bc_attribs.size(); iv++)
             { 
-              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + ",11,11," + std::to_string(bc_attribs[iv].second);
+              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + ",11,11," + to_string_scientific(bc_attribs[iv].second);
               steps_export_list.push_back(str_temp);
             }
             // CUSTOMLINE START

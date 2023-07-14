@@ -15,9 +15,11 @@ modify material "s235" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TE
 modify material "s235" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
 modify material "s235" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
 modify material "s235" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+modify material "s235" scalar_properties "CCX_DENSITY_USE_CARD" 1
+modify material "s235" matrix_property "CCX_DENSITY_DENSITY" 7.9e-10 0 
 ccx create section solid block 1 material 1
 
-ccx create amplitude name amp1 time_amplitude 0 1 2 3 
+ccx create amplitude name amp1 time_amplitude 0 1 2 3 4 5 6 7 8 9 10 11 12 13
 ccx create amplitude name amp2 time_amplitude 0 1 2 3 
 ccx create amplitude name amp3 time_amplitude 0 1 2 3 
 
@@ -45,7 +47,7 @@ modify displacement 2 add vertex 10
 create surface circle radius 1 zplane 
 create temperature  on surface 7  middle 1 gradient 22 
 
-create heatflux  on surface 1  value 11
+create heatflux  on surface 1 2 3 4  value 11
 create heatflux  on surface 2  value 22
 create heatflux  on surface 3  value 33
 create heatflux  on surface 4  value 44
@@ -195,6 +197,9 @@ ccx create customline name testname1 before temperature item_id 1 cline '#####in
 ccx create customline name testname2 begin export cline 'export begin'
 ccx create customline name testname3 end export cline 'export end' 
 
+ccx hbc add bc displacement 1 2 temperature 2 3
+
+
 #ccx modify customline 1 name 'asdasd'
 
 export ccx "test_export.inp" overwrite
@@ -205,6 +210,10 @@ ccx create job name jobname2 filepath "/home/user/test_achse.inp"
 #ccx run job 1
 #ccx run job 2
 #ccx result ccx2paraview job 2
+
+
+
+
 
 
 

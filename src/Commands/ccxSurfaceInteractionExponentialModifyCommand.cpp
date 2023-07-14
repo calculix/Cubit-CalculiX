@@ -62,7 +62,7 @@ bool ccxSurfaceInteractionExponentialModifyCommand::execute(CubitCommandData &da
     options_marker.push_back(0);
   }else
   {
-    c0 = std::to_string(c0_value);
+    c0 = ccx_iface.to_string_scientific(c0_value);
     options_marker.push_back(1);
   }
   if (!data.get_value("p0", p0_value))
@@ -71,7 +71,7 @@ bool ccxSurfaceInteractionExponentialModifyCommand::execute(CubitCommandData &da
     options_marker.push_back(0);
   }else
   {
-    p0 = std::to_string(p0_value);
+    p0 = ccx_iface.to_string_scientific(p0_value);
     options_marker.push_back(1);
   }
 

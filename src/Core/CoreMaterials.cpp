@@ -264,9 +264,9 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
 
             for (size_t i = 0; i < prop_matrix.size(); i++)
             {
-              material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][2]) + "\n");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + "\n");
             }
           }
         }
@@ -282,16 +282,16 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
 
             for (size_t i = 0; i < prop_matrix.size(); i++)
             {
-              material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][2]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][3]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][4]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][5]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][6]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][7]) + ",\n");
-              material_cards_export.append(std::to_string(prop_matrix[i][8]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][9]) + "\n");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][3]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][4]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][5]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][6]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][7]) + ",\n");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][8]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][9]) + "\n");
             }
           }
         }
@@ -307,16 +307,16 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
 
             for (size_t i = 0; i < prop_matrix.size(); i++)
             {
-              material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][2]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][3]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][4]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][5]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][6]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][7]) + ",\n");
-              material_cards_export.append(std::to_string(prop_matrix[i][8]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][9]) + "\n");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][3]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][4]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][5]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][6]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][7]) + ",\n");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][8]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][9]) + "\n");
             }
           }
         }
@@ -332,28 +332,28 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
 
             for (size_t i = 0; i < prop_matrix.size(); i++)
             {
-              material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][2]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][3]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][4]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][5]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][6]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][7]) + ",\n");
-              material_cards_export.append(std::to_string(prop_matrix[i][8]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][9]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][10]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][11]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][12]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][13]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][14]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][15]) + ",\n");
-              material_cards_export.append(std::to_string(prop_matrix[i][16]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][17]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][18]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][19]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][20]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][21]) + "\n");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][3]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][4]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][5]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][6]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][7]) + ",\n");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][8]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][9]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][10]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][11]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][12]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][13]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][14]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][15]) + ",\n");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][16]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][17]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][18]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][19]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][20]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][21]) + "\n");
             }
           }
         }
@@ -378,9 +378,9 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
 
             for (size_t i = 0; i < prop_matrix.size(); i++)
             {
-              material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][2]) + "\n");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + "\n");
             }
           }
         }
@@ -396,9 +396,9 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
 
             for (size_t i = 0; i < prop_matrix.size(); i++)
             {
-              material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][2]) + "\n");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + "\n");
             }
           }
         }
@@ -420,8 +420,8 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
 
         for (size_t i = 0; i < prop_matrix.size(); i++)
         {
-          material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][1]) + "\n");
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + "\n");
         }
       }
     }
@@ -441,8 +441,8 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
 
         for (size_t i = 0; i < prop_matrix.size(); i++)
         {
-          material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
-          material_cards_export.append(std::to_string(prop_matrix[i][1]) + "\n");
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + "\n");
         }
       }
     }
@@ -464,7 +464,7 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
             prop_zero = mat_iface->get_property(material_card[1] + "ZERO_USE_CARD");
             if (mat_iface->get_material_property_value(material, prop_zero, prop_scalar))
             {
-              material_cards_export.append("*EXPANSION,TYPE=ISO,ZERO=" + std::to_string(prop_scalar) + "\n");
+              material_cards_export.append("*EXPANSION,TYPE=ISO,ZERO=" + ccx_iface->to_string_scientific(prop_scalar) + "\n");
             }else
             {
               material_cards_export.append("*EXPANSION,TYPE=ISO\n");
@@ -475,8 +475,8 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
 
             for (size_t i = 0; i < prop_matrix.size(); i++)
             {
-              material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][1]) + "\n");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + "\n");
             }
           }
         }
@@ -490,7 +490,7 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
             prop_zero = mat_iface->get_property(material_card[1] + "ZERO_USE_CARD");
             if (mat_iface->get_material_property_value(material, prop_zero, prop_scalar))
             {
-              material_cards_export.append("*EXPANSION,TYPE=ORTHO,ZERO=" + std::to_string(prop_scalar) + "\n");
+              material_cards_export.append("*EXPANSION,TYPE=ORTHO,ZERO=" + ccx_iface->to_string_scientific(prop_scalar) + "\n");
             }else
             {
               material_cards_export.append("*EXPANSION,TYPE=ORTHO\n");
@@ -501,10 +501,10 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
 
             for (size_t i = 0; i < prop_matrix.size(); i++)
             {
-              material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][2]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][3]) + "\n");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][3]) + "\n");
             }
           }
         }
@@ -518,7 +518,7 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
             prop_zero = mat_iface->get_property(material_card[1] + "ZERO_USE_CARD");
             if (mat_iface->get_material_property_value(material, prop_zero, prop_scalar))
             {
-              material_cards_export.append("*EXPANSION,TYPE=ANISO,ZERO=" + std::to_string(prop_scalar) + "\n");
+              material_cards_export.append("*EXPANSION,TYPE=ANISO,ZERO=" + ccx_iface->to_string_scientific(prop_scalar) + "\n");
             }else
             {
               material_cards_export.append("*EXPANSION,TYPE=ANISO\n");
@@ -529,13 +529,13 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
 
             for (size_t i = 0; i < prop_matrix.size(); i++)
             {
-              material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][2]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][3]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][4]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][5]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][6]) + "\n");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][3]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][4]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][5]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][6]) + "\n");
             }
           }
         }
@@ -563,8 +563,8 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
 
             for (size_t i = 0; i < prop_matrix.size(); i++)
             {
-              material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][1]) + "\n");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + "\n");
             }
           }
         }
@@ -581,10 +581,10 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
 
             for (size_t i = 0; i < prop_matrix.size(); i++)
             {
-              material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][2]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][3]) + "\n");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][3]) + "\n");
             }
           }
         }
@@ -601,13 +601,13 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
 
             for (size_t i = 0; i < prop_matrix.size(); i++)
             {
-              material_cards_export.append(std::to_string(prop_matrix[i][0]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][1]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][2]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][3]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][4]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][5]) + ",");
-              material_cards_export.append(std::to_string(prop_matrix[i][6]) + "\n");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][3]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][4]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][5]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][6]) + "\n");
             }
           }
         }

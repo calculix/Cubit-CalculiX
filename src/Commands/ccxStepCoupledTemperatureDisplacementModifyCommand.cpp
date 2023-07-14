@@ -206,7 +206,7 @@ bool ccxStepCoupledTemperatureDisplacementModifyCommand::execute(CubitCommandDat
   }
   else
   {
-    totaltimeatstart = std::to_string(totaltimeatstart_value);
+    totaltimeatstart = ccx_iface.to_string_scientific(totaltimeatstart_value);
     options_marker.push_back(1);
   }
   options.push_back(totaltimeatstart);
@@ -232,7 +232,7 @@ bool ccxStepCoupledTemperatureDisplacementModifyCommand::execute(CubitCommandDat
   }
   else
   {
-    initialtimeincrement = std::to_string(initialtimeincrement_value);
+    initialtimeincrement = ccx_iface.to_string_scientific(initialtimeincrement_value);
     options_marker.push_back(1);
   }
   options.push_back(initialtimeincrement);
@@ -244,7 +244,7 @@ bool ccxStepCoupledTemperatureDisplacementModifyCommand::execute(CubitCommandDat
   }
   else
   {
-    timeperiodofstep = std::to_string(timeperiodofstep_value);
+    timeperiodofstep = ccx_iface.to_string_scientific(timeperiodofstep_value);
     options_marker.push_back(1);
   }
   options.push_back(timeperiodofstep);
@@ -256,7 +256,7 @@ bool ccxStepCoupledTemperatureDisplacementModifyCommand::execute(CubitCommandDat
   }
   else
   {
-    minimumtimeincrement = std::to_string(minimumtimeincrement_value);
+    minimumtimeincrement = ccx_iface.to_string_scientific(minimumtimeincrement_value);
     options_marker.push_back(1);
   }
   options.push_back(minimumtimeincrement);
@@ -268,7 +268,7 @@ bool ccxStepCoupledTemperatureDisplacementModifyCommand::execute(CubitCommandDat
   }
   else
   {
-    maximumtimeincrement = std::to_string(maximumtimeincrement_value);
+    maximumtimeincrement = ccx_iface.to_string_scientific(maximumtimeincrement_value);
     options_marker.push_back(1);
   }
   options.push_back(maximumtimeincrement);
@@ -280,7 +280,7 @@ bool ccxStepCoupledTemperatureDisplacementModifyCommand::execute(CubitCommandDat
   }
   else
   {
-    initialtimeincrementcfd = std::to_string(initialtimeincrementcfd_value);
+    initialtimeincrementcfd = ccx_iface.to_string_scientific(initialtimeincrementcfd_value);
     options_marker.push_back(1);
   }
   options.push_back(initialtimeincrementcfd);

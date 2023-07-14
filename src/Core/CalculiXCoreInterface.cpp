@@ -35,6 +35,11 @@ std::vector<int> CalculiXCoreInterface::parser(std::string parse_type, std::stri
   return ccx_core.parser(parse_type, parse_string);
 }
 
+std::string  CalculiXCoreInterface::to_string_scientific(double value)
+{
+  return ccx_core.to_string_scientific(value);
+}
+
 std::vector<std::string> CalculiXCoreInterface::get_ccx_element_types()
 { 
   return ccx_core.get_ccx_element_types();
@@ -313,6 +318,16 @@ bool CalculiXCoreInterface::modify_initialcondition(int initialcondition_id, int
 bool CalculiXCoreInterface::delete_initialcondition(int initialcondition_id)
 {
   return ccx_core.delete_initialcondition(initialcondition_id);
+}
+
+bool CalculiXCoreInterface::hbc_add_bcs(int bcs_id, int bc_type, std::vector<int> bc_ids)
+{
+  return ccx_core.hbc_add_bcs(bcs_id, bc_type, bc_ids);
+}
+
+bool CalculiXCoreInterface::hbc_remove_bcs(int bcs_id, int bc_type, std::vector<int> bc_ids)
+{
+  return ccx_core.hbc_remove_bcs(bcs_id, bc_type, bc_ids);
 }
 
 bool CalculiXCoreInterface::create_step(std::vector<std::string> options)
@@ -638,6 +653,11 @@ std::string CalculiXCoreInterface::get_amplitude_export_data() // gets the expor
 std::string CalculiXCoreInterface::get_initialcondition_export_data() // gets the export data from core
 {
   return ccx_core.get_initialcondition_export_data();
+}
+
+std::string CalculiXCoreInterface::get_hbc_export_data() // gets the export data from core
+{
+  return ccx_core.get_hbc_export_data();
 }
 
 std::string CalculiXCoreInterface::get_step_export_data() // gets the export data from core

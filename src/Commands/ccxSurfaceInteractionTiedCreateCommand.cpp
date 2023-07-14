@@ -53,7 +53,7 @@ bool ccxSurfaceInteractionTiedCreateCommand::execute(CubitCommandData &data)
   
   data.get_string("name", name);
   data.get_value("slopeK", slopeK_value);
-  slopeK = std::to_string(slopeK_value);
+  slopeK = ccx_iface.to_string_scientific(slopeK_value);
 
   options.push_back(name);
   options.push_back(slopeK);

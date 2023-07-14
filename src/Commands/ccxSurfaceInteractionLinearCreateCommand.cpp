@@ -59,11 +59,11 @@ bool ccxSurfaceInteractionLinearCreateCommand::execute(CubitCommandData &data)
 
   data.get_string("name", name);
   data.get_value("slopeK", slopeK_value);
-  slopeK = std::to_string(slopeK_value);
+  slopeK = ccx_iface.to_string_scientific(slopeK_value);
   data.get_value("sigmaINF", sigmaINF_value);
-  sigmaINF = std::to_string(sigmaINF_value);
+  sigmaINF = ccx_iface.to_string_scientific(sigmaINF_value);
   data.get_value("c0", c0_value);
-  c0 = std::to_string(c0_value);
+  c0 = ccx_iface.to_string_scientific(c0_value);
 
   options.push_back(name);
   options.push_back(slopeK);

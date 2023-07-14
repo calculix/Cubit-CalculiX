@@ -62,6 +62,8 @@
 #include "ccxInitialConditionDisplacementModifyCommand.hpp"
 #include "ccxInitialConditionTemperatureModifyCommand.hpp"
 #include "ccxInitialConditionDeleteCommand.hpp"
+#include "ccxHBCAddBCCommand.hpp"
+#include "ccxHBCRemoveBCCommand.hpp"
 #include "ccxStepCreateCommand.hpp"
 #include "ccxStepAddLoadCommand.hpp"
 #include "ccxStepAddBCCommand.hpp"
@@ -168,6 +170,8 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxInitialConditionDisplacementModifyCommand");
   keys.push_back("ccxInitialConditionTemperatureModifyCommand");
   keys.push_back("ccxInitialConditionDeleteCommand");
+  keys.push_back("ccxHBCAddBCCommand");
+  keys.push_back("ccxHBCRemoveBCCommand");
   keys.push_back("ccxStepCreateCommand");
   keys.push_back("ccxStepAddLoadCommand");
   keys.push_back("ccxStepAddBCCommand");
@@ -394,6 +398,12 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxInitialConditionDeleteCommand")
     return new ccxInitialConditionDeleteCommand();
+
+  else if(key == "ccxHBCAddBCCommand")
+    return new ccxHBCAddBCCommand();
+
+  else if(key == "ccxHBCRemoveBCCommand")
+    return new ccxHBCRemoveBCCommand();
 
   else if(key == "ccxStepCreateCommand")
     return new ccxStepCreateCommand();

@@ -171,7 +171,7 @@ bool CoreJobs::run_job(int job_id)
       log = "Exporting Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " to \n";
       log.append(filepath +  " \n");
       PRINT_INFO("%s", log.c_str());
-      command = "export ccx \"" + filepath + "\"";
+      command = "export ccx \"" + filepath + "\" overwrite";
       CubitInterface::cmd(command.c_str());
       if (CubitInterface::was_last_cmd_undoable())
       {

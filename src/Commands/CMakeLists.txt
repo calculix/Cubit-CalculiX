@@ -127,6 +127,10 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxInitialConditionTemperatureModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxInitialConditionDeleteCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxInitialConditionDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxHBCAddBCCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxHBCAddBCCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxHBCRemoveBCCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxHBCRemoveBCCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepCreateCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepCreateCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepAddLoadCommand.cpp

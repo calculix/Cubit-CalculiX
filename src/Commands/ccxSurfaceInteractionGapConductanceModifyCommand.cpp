@@ -61,9 +61,9 @@ bool ccxSurfaceInteractionGapConductanceModifyCommand::execute(CubitCommandData 
     for (size_t i = 0; i < conductance_contactpressure_temperature_values.size(); i+=3)
     {
       std::vector<std::string> conductance_contactpressure_temperature(3);
-      conductance_contactpressure_temperature[0] = std::to_string(conductance_contactpressure_temperature_values[i]);
-      conductance_contactpressure_temperature[1] = std::to_string(conductance_contactpressure_temperature_values[i+1]);
-      conductance_contactpressure_temperature[2] = std::to_string(conductance_contactpressure_temperature_values[i+2]);
+      conductance_contactpressure_temperature[0] = ccx_iface.to_string_scientific(conductance_contactpressure_temperature_values[i]);
+      conductance_contactpressure_temperature[1] = ccx_iface.to_string_scientific(conductance_contactpressure_temperature_values[i+1]);
+      conductance_contactpressure_temperature[2] = ccx_iface.to_string_scientific(conductance_contactpressure_temperature_values[i+2]);
       options2.push_back(conductance_contactpressure_temperature);
       conductance_contactpressure_temperature.clear();
     }
