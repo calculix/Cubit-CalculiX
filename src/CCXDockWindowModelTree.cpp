@@ -23,6 +23,9 @@
 #include "HistoryOutputsTree.hpp"
 #include "FieldOutputsTree.hpp"
 #include "InitialConditionsTree.hpp"
+#include "HBCsTree.hpp"
+#include "HBCsDisplacementsTree.hpp"
+#include "HBCsTemperaturesTree.hpp"
 #include "StepsTree.hpp"
 #include "CustomLinesTree.hpp"
 #include "JobsTree.hpp"
@@ -113,6 +116,12 @@ void CCXDockWindowModelTree::initialize()
   myFieldOutputsTree->initialize();
   myInitialConditionsTree = new InitialConditionsTree(myModelTree);
   myInitialConditionsTree->initialize();
+  myHBCsTree = new HBCsTree(myModelTree);
+  myHBCsTree->initialize();
+  myHBCsDisplacementsTree = new HBCsDisplacementsTree(myHBCsTree);
+  myHBCsDisplacementsTree->initialize();
+  myHBCsTemperaturesTree = new HBCsTemperaturesTree(myHBCsTree);
+  myHBCsTemperaturesTree->initialize();
   myStepsTree = new StepsTree(myModelTree);
   myStepsTree->initialize();
   myCustomLinesTree = new CustomLinesTree(myModelTree);
@@ -169,6 +178,9 @@ void CCXDockWindowModelTree::clear()
     delete myHistoryOutputsTree;
     delete myFieldOutputsTree;
     delete myInitialConditionsTree;
+    delete myHBCsTemperaturesTree;
+    delete myHBCsDisplacementsTree;
+    delete myHBCsTree;
     delete myStepsTree;
     delete myCustomLinesTree;
     delete myJobsTree;
@@ -206,6 +218,9 @@ void CCXDockWindowModelTree::update()
   myHistoryOutputsTree->update();
   myFieldOutputsTree->update();
   myInitialConditionsTree->update();
+  //myHBCsTree->update();
+  myHBCsDisplacementsTree->update();
+  myHBCsTemperaturesTree->update();
   myStepsTree->update();
   myCustomLinesTree->update();
   myJobsTree->update();
@@ -234,6 +249,9 @@ void CCXDockWindowModelTree::reset()
   myHistoryOutputsTree->clear();
   myFieldOutputsTree->clear();
   myInitialConditionsTree->clear();
+  //myHBCsTree->clear();
+  myHBCsDisplacementsTree->clear();
+  myHBCsTemperaturesTree->clear();
   myStepsTree->clear();
   myCustomLinesTree->clear();
   myJobsTree->clear();

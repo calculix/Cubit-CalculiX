@@ -132,6 +132,8 @@ public:
   std::vector<std::vector<std::string>> get_historyoutputs_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_fieldoutputs_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_initialconditions_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_hbcsdisplacements_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_hbcstemperatures_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_loadsforces_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_loadspressures_tree_data(int step_id); // gets the data from core to build the tree

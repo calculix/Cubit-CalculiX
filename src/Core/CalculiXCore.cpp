@@ -2763,6 +2763,58 @@ std::vector<std::vector<std::string>> CalculiXCore::get_initialconditions_tree_d
   return initialconditions_tree_data;
 }
 
+std::vector<std::vector<std::string>> CalculiXCore::get_hbcsdisplacements_tree_data()
+{ 
+  std::vector<std::vector<std::string>> bcsdisplacements_tree_data;
+  std::vector<int> bcs_ids;
+  
+  bcs_ids = hbcs->get_bc_data_ids_from_bcs_id(0);
+
+  for (size_t i = 0; i < bcs_ids.size(); i++)
+  {
+    std::vector<std::string> bcsdisplacements_tree_data_set;
+    std::string name;
+    if (hbcs->bcs_data[bcs_ids[i]][1]==1)
+    {
+      name = CubitInterface::get_bc_name(CI_BCTYPE_DISPLACEMENT,hbcs->bcs_data[bcs_ids[i]][2]);
+      if (name == "")
+      {
+        name = "Displacement_" + std::to_string(hbcs->bcs_data[bcs_ids[i]][2]);
+      }
+      bcsdisplacements_tree_data_set.push_back(std::to_string(hbcs->bcs_data[bcs_ids[i]][2])); //bc_id
+      bcsdisplacements_tree_data_set.push_back(name); 
+      bcsdisplacements_tree_data.push_back(bcsdisplacements_tree_data_set);  
+    }
+  }
+  return bcsdisplacements_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_hbcstemperatures_tree_data()
+{ 
+  std::vector<std::vector<std::string>> bcstemperatures_tree_data;
+  std::vector<int> bcs_ids;
+  
+  bcs_ids = hbcs->get_bc_data_ids_from_bcs_id(0);
+
+  for (size_t i = 0; i < bcs_ids.size(); i++)
+  {
+    std::vector<std::string> bcstemperatures_tree_data_set;
+    std::string name;
+    if (hbcs->bcs_data[bcs_ids[i]][1]==2)
+    {
+      name = CubitInterface::get_bc_name(CI_BCTYPE_TEMPERATURE,hbcs->bcs_data[bcs_ids[i]][2]);
+      if (name == "")
+      {
+        name = "Temperature_" + std::to_string(hbcs->bcs_data[bcs_ids[i]][2]);
+      }
+      bcstemperatures_tree_data_set.push_back(std::to_string(hbcs->bcs_data[bcs_ids[i]][2])); //bc_id
+      bcstemperatures_tree_data_set.push_back(name); 
+      bcstemperatures_tree_data.push_back(bcstemperatures_tree_data_set);  
+    }
+  }
+  return bcstemperatures_tree_data;
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_steps_tree_data()
 { 
   std::vector<std::vector<std::string>> steps_tree_data;

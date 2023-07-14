@@ -41,6 +41,12 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/FieldOutputsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/InitialConditionsTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/InitialConditionsTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/HBCsTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/HBCsTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/HBCsDisplacementsTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/HBCsDisplacementsTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/HBCsTemperaturesTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/HBCsTemperaturesTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsTree.cpp
@@ -170,6 +176,8 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/InitialConditionsDeletePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/InitialConditionsDeletePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/InitialConditionsCreatePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/HBCsManagement.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/HBCsManagement.cpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsCreatePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsModifyParameterPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsModifyParameterPanel.cpp

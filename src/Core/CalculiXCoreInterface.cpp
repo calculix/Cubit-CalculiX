@@ -570,6 +570,16 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_initialconditio
   return ccx_core.get_initialconditions_tree_data();
 }
 
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_hbcsdisplacements_tree_data()
+{ 
+  return ccx_core.get_hbcsdisplacements_tree_data();
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_hbcstemperatures_tree_data()
+{ 
+  return ccx_core.get_hbcstemperatures_tree_data();
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_tree_data()
 { 
   return ccx_core.get_steps_tree_data();

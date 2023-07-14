@@ -31,6 +31,10 @@ class BCsTemperaturesTree;
 class HistoryOutputsTree;
 class FieldOutputsTree;
 class InitialConditionsTree;
+class HBCsTree;
+class HBCsDisplacementsTree;
+class HBCsTemperaturesTree;
+class HBCsManagement;
 class StepsTree;
 class StepsLoadsTree;
 class StepsLoadsForcesTree;
@@ -67,6 +71,7 @@ public:
   Claro* gui;
   CommandButtonPanel* cmdpanel;
   MaterialManagement* myMaterialManagement;
+  HBCsManagement* myHBCsManagement;
   StepsManagement* myStepsManagement;
   JobsMonitor* myJobsMonitor;
   std::vector<std::vector<int>> contextMenuAction;

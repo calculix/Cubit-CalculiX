@@ -32,6 +32,9 @@ class BCsTemperaturesTree;
 class HistoryOutputsTree;
 class FieldOutputsTree;
 class InitialConditionsTree;
+class HBCsTree;
+class HBCsDisplacementsTree;
+class HBCsTemperaturesTree;
 class StepsTree;
 class CustomLinesTree;
 class JobsTree;
@@ -81,6 +84,9 @@ private:
   HistoryOutputsTree *myHistoryOutputsTree; //HistoryOutputs root item
   FieldOutputsTree *myFieldOutputsTree; //HistoryOutputs root item
   InitialConditionsTree *myInitialConditionsTree; //InitialConditions root item
+  HBCsTree *myHBCsTree; //BCs root item
+  HBCsDisplacementsTree *myHBCsDisplacementsTree; //Displacements root item
+  HBCsTemperaturesTree *myHBCsTemperaturesTree; //Temperature root item
   StepsTree *myStepsTree; //Steps root item
   CustomLinesTree *myCustomLinesTree; //CustomLines root item
   JobsTree *myJobsTree; //Jobs root item
