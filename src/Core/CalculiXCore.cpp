@@ -22,6 +22,7 @@
 #include "CoreLoadsForces.hpp"
 #include "CoreLoadsPressures.hpp"
 #include "CoreLoadsHeatfluxes.hpp"
+#include "CoreLoadsGravity.hpp"
 #include "CoreBCsDisplacements.hpp"
 #include "CoreBCsTemperatures.hpp"
 #include "CoreHistoryOutputs.hpp"
@@ -37,6 +38,7 @@
 CalculiXCore::CalculiXCore():
   cb(NULL),mat(NULL),sections(NULL),constraints(NULL),surfaceinteractions(NULL),
   contactpairs(NULL),amplitudes(NULL),loadsforces(NULL),loadspressures(NULL),loadsheatfluxes(NULL),
+  loadsgravity(NULL),
   bcsdisplacements(NULL),bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL),
   initialconditions(NULL), hbcs(NULL), steps(NULL),jobs(NULL),timer(NULL),customlines(NULL)
 {
@@ -65,6 +67,8 @@ CalculiXCore::~CalculiXCore()
     delete loadspressures;
   if(loadsheatfluxes)
     delete loadsheatfluxes;
+  if(loadsgravity)
+    delete loadsgravity;
   if(bcsdisplacements)
     delete bcsdisplacements;
   if(bcstemperatures)
@@ -153,6 +157,11 @@ bool CalculiXCore::init()
     loadsheatfluxes = new CoreLoadsHeatfluxes;
   
   loadsheatfluxes->init();
+
+  if(!loadsgravity)
+    loadsgravity = new CoreLoadsGravity;
+  
+  loadsgravity->init();
 
   if(!bcsdisplacements)
     bcsdisplacements = new CoreBCsDisplacements;
@@ -251,6 +260,7 @@ bool CalculiXCore::reset()
   loadsforces->reset();
   loadspressures->reset();
   loadsheatfluxes->reset();
+  loadsgravity->reset();
   bcsdisplacements->reset();
   bcstemperatures->reset();
   historyoutputs->reset();
@@ -521,6 +531,37 @@ std::string CalculiXCore::autocleanup()
       loadsheatfluxes->loads_data[i-1][2]=-1;
     }
   }
+  // LOADS GRAVITY
+  for (size_t i = loadsgravity->loads_data.size(); i > 0; i--)
+  { 
+    sub_bool = false;
+    if (loadsgravity->loads_data[i-1][2]!=-1)
+    {
+      if (!check_amplitude_exists(loadsgravity->loads_data[i-1][2]))
+      {
+        log.append("Amplitude ID " + std::to_string(loadsgravity->loads_data[i-1][2]) + " doesn't exist.\n");
+        log.append("Amplitude Reference from Load Gravity ID " + std::to_string(loadsgravity->loads_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      loadsgravity->loads_data[i-1][2]=-1;
+    }
+    sub_bool = false;
+    if (!check_block_exists(loadsgravity->loads_data[i-1][4]))
+      {
+        log.append("Block ID " + std::to_string(loadsgravity->loads_data[i-1][4]) + " doesn't exist.\n");
+        log.append("Gravity ID " + std::to_string(loadsgravity->loads_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      loadsgravity->delete_load(loadsgravity->loads_data[i-1][0]);
+    }
+  }
   // BCS DISPLACEMENTS
   for (size_t i = bcsdisplacements->bcs_data.size(); i > 0; i--)
   { 
@@ -694,6 +735,33 @@ std::string CalculiXCore::autocleanup()
       print_log = sub_bool;
     }
   }
+  // HBCS
+  sub_data_ids = hbcs->get_bc_data_ids_from_bcs_id(0);
+  for (size_t ii = sub_data_ids.size(); ii > 0; ii--)
+  {
+    // Displacement 
+    if (hbcs->bcs_data[sub_data_ids[ii-1]][1]==1)
+    {
+      if (!check_bc_exists(hbcs->bcs_data[sub_data_ids[ii-1]][2],4))
+      {
+        log.append("BC Displacement ID " + std::to_string(hbcs->bcs_data[sub_data_ids[ii-1]][2]) + " doesn't exist.\n");
+        log.append("BC Displacement Reference from HBC will be deleted.\n");
+        sub_bool = true;
+        hbcs->remove_bcs(0, 1, {hbcs->bcs_data[sub_data_ids[ii-1]][2]});
+      }
+    }
+    // Temperature
+    if (hbcs->bcs_data[sub_data_ids[ii-1]][1]==2)
+    {
+      if (!check_bc_exists(hbcs->bcs_data[sub_data_ids[ii-1]][2],5))
+      {
+        log.append("BC Temperature ID " + std::to_string(hbcs->bcs_data[sub_data_ids[ii-1]][2]) + " doesn't exist.\n");
+        log.append("BC Temperature Reference from HBC will be deleted.\n");
+        sub_bool = true;
+        hbcs->remove_bcs(0, 2, {hbcs->bcs_data[sub_data_ids[ii-1]][2]});
+      }
+    }
+  }
   // STEPS
   for (size_t i = steps->steps_data.size(); i > 0; i--)
   { 
@@ -802,6 +870,7 @@ std::string CalculiXCore::print_data()
   str_return.append(loadsforces->print_data());
   str_return.append(loadspressures->print_data());
   str_return.append(loadsheatfluxes->print_data());
+  str_return.append(loadsgravity->print_data());
   str_return.append(bcsdisplacements->print_data());
   str_return.append(bcstemperatures->print_data());
   str_return.append(historyoutputs->print_data());
@@ -1375,6 +1444,20 @@ bool CalculiXCore::modify_loadsheatfluxes(int heatflux_id, std::vector<std::stri
   return loadsheatfluxes->modify_load(heatflux_id,options,options_marker);
 }
 
+bool CalculiXCore::create_loadsgravity(std::vector<std::string> options)
+{
+  return loadsgravity->create_load(options);
+}
+bool CalculiXCore::modify_loadsgravity(int gravity_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return loadsgravity->modify_load(gravity_id,options,options_marker);
+}
+
+bool CalculiXCore::delete_loadsgravity(int gravity_id)
+{
+  return loadsgravity->delete_load(gravity_id);
+}
+
 bool CalculiXCore::modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
   return bcsdisplacements->modify_bc(displacement_id,options,options_marker);
@@ -1703,6 +1786,13 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
   }else if (entity=="loadsheatflux")
   {
     entities.push_back({"heatflux",std::to_string(id)});
+  }else if (entity=="loadsgravity")
+  {
+    data_id = loadsgravity->get_loads_data_id_from_load_id(id);
+    if (data_id!=-1)
+    {
+      entities.push_back({"block",std::to_string(loadsgravity->loads_data[data_id][4])});
+    }
   }else if (entity=="bcsdisplacement")
   {
     entities.push_back({"displacement",std::to_string(id)});
@@ -1723,6 +1813,12 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
       sub_data_id = initialconditions->get_temperature_data_id_from_temperature_id(initialconditions->initialconditions_data[data_id][2]);
       entities.push_back({"temperature",initialconditions->temperature_data[sub_data_id][1]});
     }
+  }else if (entity=="hbcsdisplacement")
+  {
+    entities.push_back({"displacement",std::to_string(id)});
+  }else if (entity=="hbcstemperature")
+  {
+    entities.push_back({"temperature",std::to_string(id)});
   }
   return entities;
 }
@@ -2591,6 +2687,24 @@ std::vector<std::vector<std::string>> CalculiXCore::get_loadsheatfluxes_tree_dat
   return loadsheatfluxes_tree_data;
 }
 
+std::vector<std::vector<std::string>> CalculiXCore::get_loadsgravity_tree_data()
+{ 
+  std::vector<std::vector<std::string>> loadsgravity_tree_data;
+  
+  for (size_t i = 0; i < loadsgravity->loads_data.size(); i++)
+  {
+    std::vector<std::string> loadsgravity_tree_data_set;
+    std::string name;
+    
+    name = "Gravity on Block: " + get_block_name(loadsgravity->loads_data[i][4]);
+    
+    loadsgravity_tree_data_set.push_back(std::to_string(loadsgravity->loads_data[i][0])); //load_id
+    loadsgravity_tree_data_set.push_back(name); 
+    loadsgravity_tree_data.push_back(loadsgravity_tree_data_set);
+  }
+  return loadsgravity_tree_data;
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_bcsdisplacements_tree_data()
 { 
   std::vector<std::vector<std::string>> bcsdisplacements_tree_data;
@@ -3179,6 +3293,12 @@ std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_
       for (size_t i = 0; i < amplitudes->amplitudes_data.size(); i++)
       {
         all_ids.push_back(amplitudes->amplitudes_data[i][0]);
+      }
+    } else if (parse_type=="loadsgravity")
+    {
+      for (size_t i = 0; i < loadsgravity->loads_data.size(); i++)
+      {
+        all_ids.push_back(loadsgravity->loads_data[i][0]);
       }
     } else if (parse_type=="historyoutput")
     {

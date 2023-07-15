@@ -95,6 +95,12 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsPressuresModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsHeatfluxesModifyCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsHeatfluxesModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsGravityCreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsGravityCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsGravityModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsGravityModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsGravityDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsGravityDeleteCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxBCsDisplacementsModifyCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxBCsDisplacementsModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxBCsTemperaturesModifyCommand.cpp

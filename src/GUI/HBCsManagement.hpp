@@ -31,8 +31,8 @@ public:
   
   void clear(); // remove all data
   void update();
-  void addHBC(QString hbc_id, QString hbc_name); // adds a new step to the tree
-  void removeHBC(QTreeWidgetItem *hbc); // removes the step from to the tree
+  void addHBC(QString hbc_id, QString hbc_name); // adds a new hbc to the tree
+  void removeHBC(QTreeWidgetItem *hbc); // removes the hbc from to the tree
   int get_child_id(std::string hbc_id); // check if the item for the given hbc_id exists, returns the id or -1 if failed;
   void createItems(QTreeWidgetItem *hbc); // creates the list items for selected hbc
   void removeItems(); // removes current tree items

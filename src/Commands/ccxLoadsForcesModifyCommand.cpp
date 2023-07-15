@@ -14,7 +14,7 @@ std::vector<std::string> ccxLoadsForcesModifyCommand::get_syntax()
   std::vector<std::string> syntax_list;
 
   std::string syntax = "ccx ";
-  syntax.append("modify force <value:label='force id',help='<force id>'>");
+  syntax.append("modify force <value:label='force id',help='<force id>'> ");
   syntax.append("[op {mod | new}] " );
   syntax.append("[amplitude <value:label='amplitude id',help='<amplitude id>'>] ");
   syntax.append("[timedelay <value:label='timedelay',help='<timedelay>'>] ");
@@ -26,7 +26,7 @@ std::vector<std::string> ccxLoadsForcesModifyCommand::get_syntax()
 
 std::vector<std::string> ccxLoadsForcesModifyCommand::get_syntax_help()
 {
-  std::vector<std::string> help(5);
+  std::vector<std::string> help(1);
   help[0] = "ccx modify force <force id> [op {mod | new}] [amplitude <amplitude id>] [timedelay <value>]"; 
 
   return help;

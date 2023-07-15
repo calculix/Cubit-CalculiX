@@ -14,6 +14,7 @@ class CoreAmplitudes;
 class CoreLoadsForces;
 class CoreLoadsPressures;
 class CoreLoadsHeatfluxes;
+class CoreLoadsGravity;
 class CoreBCsDisplacements;
 class CoreBCsTemperatures;
 class CoreHistoryOutputs;
@@ -94,6 +95,9 @@ public:
   bool modify_loadsforces(int force_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a force
   bool modify_loadspressures(int pressure_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a pressure
   bool modify_loadsheatfluxes(int heatflux_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a heatflux
+  bool create_loadsgravity(std::vector<std::string> options); // adds a new gravity load
+  bool modify_loadsgravity(int gravity_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a gravity
+  bool delete_loadsgravity(int gravity_id); // delete gravity load
   bool modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a displacement
   bool modify_bcstemperatures(int temperature_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a temperature
   bool create_historyoutput(std::vector<std::string> options); // adds a new output
@@ -156,6 +160,7 @@ public:
   std::vector<std::vector<std::string>> get_loadsforces_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_loadspressures_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_loadsheatfluxes_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_loadsgravity_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_bcsdisplacements_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_bcstemperatures_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_historyoutputs_tree_data(); // gets the data from core to build the tree
@@ -193,6 +198,7 @@ public:
   CoreLoadsForces *loadsforces;
   CoreLoadsPressures *loadspressures;
   CoreLoadsHeatfluxes *loadsheatfluxes;
+  CoreLoadsGravity *loadsgravity;
   CoreBCsDisplacements *bcsdisplacements;
   CoreBCsTemperatures *bcstemperatures;
   CoreHistoryOutputs *historyoutputs;

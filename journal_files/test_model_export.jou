@@ -200,6 +200,10 @@ ccx create customline name testname3 end export cline 'export end'
 ccx hbc add bc displacement 1 2 temperature 2 3
 
 
+ccx create gravity 455454 block 1 direction  0 2 3
+ccx create gravity 455454 block 1 direction  0 2 3
+ccx create gravity 455454 block 1 direction  0 2 3
+
 #ccx modify customline 1 name 'asdasd'
 
 export ccx "test_export.inp" overwrite
@@ -210,6 +214,7 @@ ccx create job name jobname2 filepath "/home/user/test_achse.inp"
 #ccx run job 1
 #ccx run job 2
 #ccx result ccx2paraview job 2
+
 
 
 
