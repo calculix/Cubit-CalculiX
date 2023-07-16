@@ -27,6 +27,7 @@ class LoadsForcesTree;
 class LoadsPressuresTree;
 class LoadsHeatfluxesTree;
 class LoadsGravityTree;
+class LoadsCentrifugalTree;
 class BCsTree;
 class BCsDisplacementsTree;
 class BCsTemperaturesTree;
@@ -80,6 +81,7 @@ private:
   LoadsPressuresTree *myLoadsPressuresTree; //Pressures root item
   LoadsHeatfluxesTree *myLoadsHeatfluxesTree; //Heatfluxes root item
   LoadsGravityTree *myLoadsGravityTree; //Gravity root item
+  LoadsCentrifugalTree *myLoadsCentrifugalTree; //Centrifugal root item
   BCsTree *myBCsTree; //BCs root item
   BCsDisplacementsTree *myBCsDisplacementsTree; //Displacements root item
   BCsTemperaturesTree *myBCsTemperaturesTree; //Temperature root item

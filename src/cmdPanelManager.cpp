@@ -77,6 +77,9 @@ void cmdPanelManager::clear()
     my_markers.push_back("CCXLoadsGravityCreate");
     my_markers.push_back("CCXLoadsGravityModify");
     my_markers.push_back("CCXLoadsGravityDelete");
+    my_markers.push_back("CCXLoadsCentrifugalCreate");
+    my_markers.push_back("CCXLoadsCentrifugalModify");
+    my_markers.push_back("CCXLoadsCentrifugalDelete");
     my_markers.push_back("CCXBCsDisplacementsModify");
     my_markers.push_back("CCXBCsTemperaturesModify");
     my_markers.push_back("CCXHistoryOutputsCreate");
@@ -366,6 +369,23 @@ void cmdPanelManager::initialize_from_code()
   node->setIcon(ccx_iface->getIcon("CCXLoadsGravityDelete"));
 
   //##############################
+  // add LoadsCentrifugal Nodes
+  root_node = model->getMarkedNode("CCXLoads");
+  node = model->addNode("Centrifugal", root_node);
+  model->setNodeMarker(node, "CCXLoadsCentrifugal");
+  node->setIcon(ccx_iface->getIcon("CCXLoadsCentrifugal"));
+  root_node = model->getMarkedNode("CCXLoadsCentrifugal");
+  node = model->addNode("Create", root_node);
+  model->setNodeMarker(node, "CCXLoadsCentrifugalCreate");
+  node->setIcon(ccx_iface->getIcon("CCXLoadsCentrifugalCreate"));
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXLoadsCentrifugalModify");
+  node->setIcon(ccx_iface->getIcon("CCXLoadsCentrifugalModify"));
+  node = model->addNode("Delete", root_node);
+  model->setNodeMarker(node, "CCXLoadsCentrifugalDelete");
+  node->setIcon(ccx_iface->getIcon("CCXLoadsCentrifugalDelete"));
+
+  //##############################
   // add BCs Nodes
   root_node = model->getMarkedNode("CCX");
   node = model->addNode("BCs", root_node);
@@ -599,6 +619,9 @@ void cmdPanelManager::associate_panels_with_nodes()
   my_markers.push_back("CCXLoadsGravityCreate");
   my_markers.push_back("CCXLoadsGravityModify");
   my_markers.push_back("CCXLoadsGravityDelete");
+  my_markers.push_back("CCXLoadsCentrifugalCreate");
+  my_markers.push_back("CCXLoadsCentrifugalModify");
+  my_markers.push_back("CCXLoadsCentrifugalDelete");
   my_markers.push_back("CCXBCsDisplacementsModify");
   my_markers.push_back("CCXBCsTemperaturesModify");
   my_markers.push_back("CCXHistoryOutputsCreate");

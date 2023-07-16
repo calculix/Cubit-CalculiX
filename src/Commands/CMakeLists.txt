@@ -101,6 +101,12 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsGravityModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsGravityDeleteCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsGravityDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsCentrifugalCreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsCentrifugalCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsCentrifugalModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsCentrifugalModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsCentrifugalDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsCentrifugalDeleteCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxBCsDisplacementsModifyCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxBCsDisplacementsModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxBCsTemperaturesModifyCommand.cpp

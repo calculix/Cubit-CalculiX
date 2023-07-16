@@ -239,6 +239,7 @@ bool CalculiXCoreInterface::create_loadsgravity(std::vector<std::string> options
 {
   return ccx_core.create_loadsgravity(options);
 }
+
 bool CalculiXCoreInterface::modify_loadsgravity(int gravity_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
   return ccx_core.modify_loadsgravity(gravity_id,options,options_marker);
@@ -247,6 +248,21 @@ bool CalculiXCoreInterface::modify_loadsgravity(int gravity_id, std::vector<std:
 bool CalculiXCoreInterface::delete_loadsgravity(int gravity_id)
 {
   return ccx_core.delete_loadsgravity(gravity_id);
+}
+
+bool CalculiXCoreInterface::create_loadscentrifugal(std::vector<std::string> options)
+{
+  return ccx_core.create_loadscentrifugal(options);
+}
+
+bool CalculiXCoreInterface::modify_loadscentrifugal(int centrifugal_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return ccx_core.modify_loadscentrifugal(centrifugal_id,options,options_marker);
+}
+
+bool CalculiXCoreInterface::delete_loadscentrifugal(int centrifugal_id)
+{
+  return ccx_core.delete_loadscentrifugal(centrifugal_id);
 }
 
 bool CalculiXCoreInterface::modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker)
@@ -562,6 +578,11 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_loadsheatfluxes
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_loadsgravity_tree_data()
 { 
   return ccx_core.get_loadsgravity_tree_data();
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_loadscentrifugal_tree_data()
+{ 
+  return ccx_core.get_loadscentrifugal_tree_data();
 }
 
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_bcsdisplacements_tree_data()

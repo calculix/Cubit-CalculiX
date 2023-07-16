@@ -204,6 +204,14 @@ ccx create gravity 455454 block 1 direction  0 2 3
 ccx create gravity 455454 block 1 direction  0 2 3
 ccx create gravity 455454 block 1 direction  0 2 3
 
+ccx create centrifugal 455454 block 1 coordinate 1 2 3 direction  0 2 3
+ccx create centrifugal 455454 block 1 coordinate 1 2 3 direction  0 2 3
+ccx create centrifugal 455454 block 1 coordinate 1 2 3 direction  0 2 3
+
+#ccx modify gravity 1 magnitude 455454 block 1 direction  0 2 3
+
+#ccx modify centrifugal 1 magnitude 455454 block 1 coordinate 1 2 3 direction  0 2 3
+
 #ccx modify customline 1 name 'asdasd'
 
 export ccx "test_export.inp" overwrite
@@ -214,13 +222,4 @@ ccx create job name jobname2 filepath "/home/user/test_achse.inp"
 #ccx run job 1
 #ccx run job 2
 #ccx result ccx2paraview job 2
-
-
-
-
-
-
-
-
-
 

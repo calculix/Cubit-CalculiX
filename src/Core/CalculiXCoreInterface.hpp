@@ -66,6 +66,9 @@ public:
   bool create_loadsgravity(std::vector<std::string> options); // adds a new gravity load
   bool modify_loadsgravity(int gravity_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a gravity
   bool delete_loadsgravity(int gravity_id); // delete gravity load
+  bool create_loadscentrifugal(std::vector<std::string> options); // adds a new centrifugal load
+  bool modify_loadscentrifugal(int centrifugal_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a centrifugal
+  bool delete_loadscentrifugal(int centrifugal_id); // delete centrifugal load
   bool modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a displacement
   bool modify_bcstemperatures(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a temperature
   bool create_historyoutput(std::vector<std::string> options); // adds a new output
@@ -131,6 +134,7 @@ public:
   std::vector<std::vector<std::string>> get_loadspressures_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_loadsheatfluxes_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_loadsgravity_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_loadscentrifugal_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_bcsdisplacements_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_bcstemperatures_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_historyoutputs_tree_data(); // gets the data from core to build the tree

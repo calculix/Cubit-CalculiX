@@ -31,6 +31,8 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/LoadsHeatfluxesTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsGravityTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsGravityTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsCentrifugalTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsCentrifugalTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsDisplacementsTree.cpp
@@ -153,6 +155,12 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/LoadsGravityModifyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsGravityDeletePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsGravityDeletePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsCentrifugalCreatePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsCentrifugalCreatePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsCentrifugalModifyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsCentrifugalModifyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsCentrifugalDeletePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsCentrifugalDeletePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsDisplacementsModifyPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsDisplacementsModifyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsTemperaturesModifyPanel.hpp

@@ -58,7 +58,7 @@ void CalculiXComp::start_up(int withGUI)
     //setup_toolbars();
     setup_command_panels();
     setup_CCXDockWindowModelTree(); // command panels has to be setup before dockwindow
-    add_exports();
+    //add_exports();
     load_options();
     boolwithGUI = true;
   }
@@ -71,7 +71,7 @@ void CalculiXComp::clean_up()
   //cleanup_toolbars();
   cleanup_command_panels();
   cleanup_CCXDockWindowModelTree();
-  cleanup_exports();
+  //cleanup_exports();
   cleanup_observers();
   save_settings();
   unload_options();

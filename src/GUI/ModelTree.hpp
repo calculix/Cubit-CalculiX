@@ -26,6 +26,7 @@ class LoadsForcesTree;
 class LoadsPressuresTree;
 class LoadsHeatfluxesTree;
 class LoadsGravityTree;
+class LoadsCentrifugalTree;
 class BCsTree;
 class BCsDisplacementsTree;
 class BCsTemperaturesTree;

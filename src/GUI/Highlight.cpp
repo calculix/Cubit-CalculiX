@@ -17,6 +17,7 @@
 #include "LoadsPressuresTree.hpp"
 #include "LoadsHeatfluxesTree.hpp"
 #include "LoadsGravityTree.hpp"
+#include "LoadsCentrifugalTree.hpp"
 #include "BCsTree.hpp"
 #include "BCsDisplacementsTree.hpp"
 #include "BCsTemperaturesTree.hpp"
@@ -94,6 +95,7 @@ void Highlight::ModelTreeItemClicked(QTreeWidgetItem* item, int column)
   LoadsPressuresTree* LoadsPressuresTreeItem;
   LoadsHeatfluxesTree* LoadsHeatfluxesTreeItem;
   LoadsGravityTree* LoadsGravityTreeItem;
+  LoadsCentrifugalTree* LoadsCentrifugalTreeItem;
   BCsDisplacementsTree* BCsDisplacementsTreeItem;
   BCsTemperaturesTree* BCsTemperaturesTreeItem;
   HistoryOutputsTree* HistoryOutputsTreeItem;
@@ -161,6 +163,9 @@ void Highlight::ModelTreeItemClicked(QTreeWidgetItem* item, int column)
   } else if (LoadsGravityTreeItem = dynamic_cast<LoadsGravityTree*>(item->parent()))
   {
     entities = ccx_iface->get_entities("loadsgravity",std::stoi(item->text(1).toStdString()));
+  } else if (LoadsCentrifugalTreeItem = dynamic_cast<LoadsCentrifugalTree*>(item->parent()))
+  {
+    entities = ccx_iface->get_entities("loadscentrifugal",std::stoi(item->text(1).toStdString()));
   } else if (BCsDisplacementsTreeItem = dynamic_cast<BCsDisplacementsTree*>(item->parent()))
   {
     entities = ccx_iface->get_entities("bcsdisplacement",std::stoi(item->text(1).toStdString()));

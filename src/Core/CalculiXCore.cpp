@@ -23,6 +23,7 @@
 #include "CoreLoadsPressures.hpp"
 #include "CoreLoadsHeatfluxes.hpp"
 #include "CoreLoadsGravity.hpp"
+#include "CoreLoadsCentrifugal.hpp"
 #include "CoreBCsDisplacements.hpp"
 #include "CoreBCsTemperatures.hpp"
 #include "CoreHistoryOutputs.hpp"
@@ -38,7 +39,7 @@
 CalculiXCore::CalculiXCore():
   cb(NULL),mat(NULL),sections(NULL),constraints(NULL),surfaceinteractions(NULL),
   contactpairs(NULL),amplitudes(NULL),loadsforces(NULL),loadspressures(NULL),loadsheatfluxes(NULL),
-  loadsgravity(NULL),
+  loadsgravity(NULL),loadscentrifugal(NULL),
   bcsdisplacements(NULL),bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL),
   initialconditions(NULL), hbcs(NULL), steps(NULL),jobs(NULL),timer(NULL),customlines(NULL)
 {
@@ -69,6 +70,8 @@ CalculiXCore::~CalculiXCore()
     delete loadsheatfluxes;
   if(loadsgravity)
     delete loadsgravity;
+  if(loadscentrifugal)
+    delete loadscentrifugal;
   if(bcsdisplacements)
     delete bcsdisplacements;
   if(bcstemperatures)
@@ -162,6 +165,11 @@ bool CalculiXCore::init()
     loadsgravity = new CoreLoadsGravity;
   
   loadsgravity->init();
+
+  if(!loadscentrifugal)
+    loadscentrifugal = new CoreLoadsCentrifugal;
+  
+  loadscentrifugal->init();
 
   if(!bcsdisplacements)
     bcsdisplacements = new CoreBCsDisplacements;
@@ -261,6 +269,7 @@ bool CalculiXCore::reset()
   loadspressures->reset();
   loadsheatfluxes->reset();
   loadsgravity->reset();
+  loadscentrifugal->reset();
   bcsdisplacements->reset();
   bcstemperatures->reset();
   historyoutputs->reset();
@@ -560,6 +569,37 @@ std::string CalculiXCore::autocleanup()
     {
       print_log = sub_bool;
       loadsgravity->delete_load(loadsgravity->loads_data[i-1][0]);
+    }
+  }
+  // LOADS CENTRIFUGAL
+  for (size_t i = loadscentrifugal->loads_data.size(); i > 0; i--)
+  { 
+    sub_bool = false;
+    if (loadscentrifugal->loads_data[i-1][2]!=-1)
+    {
+      if (!check_amplitude_exists(loadscentrifugal->loads_data[i-1][2]))
+      {
+        log.append("Amplitude ID " + std::to_string(loadscentrifugal->loads_data[i-1][2]) + " doesn't exist.\n");
+        log.append("Amplitude Reference from Load Centrigual ID " + std::to_string(loadscentrifugal->loads_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      loadscentrifugal->loads_data[i-1][2]=-1;
+    }
+    sub_bool = false;
+    if (!check_block_exists(loadscentrifugal->loads_data[i-1][4]))
+      {
+        log.append("Block ID " + std::to_string(loadscentrifugal->loads_data[i-1][4]) + " doesn't exist.\n");
+        log.append("Centrifugal ID " + std::to_string(loadscentrifugal->loads_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      loadscentrifugal->delete_load(loadscentrifugal->loads_data[i-1][0]);
     }
   }
   // BCS DISPLACEMENTS
@@ -871,6 +911,7 @@ std::string CalculiXCore::print_data()
   str_return.append(loadspressures->print_data());
   str_return.append(loadsheatfluxes->print_data());
   str_return.append(loadsgravity->print_data());
+  str_return.append(loadscentrifugal->print_data());
   str_return.append(bcsdisplacements->print_data());
   str_return.append(bcstemperatures->print_data());
   str_return.append(historyoutputs->print_data());
@@ -1448,6 +1489,7 @@ bool CalculiXCore::create_loadsgravity(std::vector<std::string> options)
 {
   return loadsgravity->create_load(options);
 }
+
 bool CalculiXCore::modify_loadsgravity(int gravity_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
   return loadsgravity->modify_load(gravity_id,options,options_marker);
@@ -1456,6 +1498,20 @@ bool CalculiXCore::modify_loadsgravity(int gravity_id, std::vector<std::string> 
 bool CalculiXCore::delete_loadsgravity(int gravity_id)
 {
   return loadsgravity->delete_load(gravity_id);
+}
+
+bool CalculiXCore::create_loadscentrifugal(std::vector<std::string> options)
+{
+  return loadscentrifugal->create_load(options);
+}
+bool CalculiXCore::modify_loadscentrifugal(int centrifugal_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return loadscentrifugal->modify_load(centrifugal_id,options,options_marker);
+}
+
+bool CalculiXCore::delete_loadscentrifugal(int centrifugal_id)
+{
+  return loadscentrifugal->delete_load(centrifugal_id);
 }
 
 bool CalculiXCore::modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker)
@@ -1792,6 +1848,13 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
     if (data_id!=-1)
     {
       entities.push_back({"block",std::to_string(loadsgravity->loads_data[data_id][4])});
+    }
+  }else if (entity=="loadscentrifugal")
+  {
+    data_id = loadscentrifugal->get_loads_data_id_from_load_id(id);
+    if (data_id!=-1)
+    {
+      entities.push_back({"block",std::to_string(loadscentrifugal->loads_data[data_id][4])});
     }
   }else if (entity=="bcsdisplacement")
   {
@@ -2705,6 +2768,24 @@ std::vector<std::vector<std::string>> CalculiXCore::get_loadsgravity_tree_data()
   return loadsgravity_tree_data;
 }
 
+std::vector<std::vector<std::string>> CalculiXCore::get_loadscentrifugal_tree_data()
+{ 
+  std::vector<std::vector<std::string>> loadscentrifugal_tree_data;
+  
+  for (size_t i = 0; i < loadscentrifugal->loads_data.size(); i++)
+  {
+    std::vector<std::string> loadscentrifugal_tree_data_set;
+    std::string name;
+    
+    name = "Centrifugal on Block: " + get_block_name(loadscentrifugal->loads_data[i][4]);
+    
+    loadscentrifugal_tree_data_set.push_back(std::to_string(loadscentrifugal->loads_data[i][0])); //load_id
+    loadscentrifugal_tree_data_set.push_back(name); 
+    loadscentrifugal_tree_data.push_back(loadscentrifugal_tree_data_set);
+  }
+  return loadscentrifugal_tree_data;
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_bcsdisplacements_tree_data()
 { 
   std::vector<std::vector<std::string>> bcsdisplacements_tree_data;
@@ -3299,6 +3380,12 @@ std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_
       for (size_t i = 0; i < loadsgravity->loads_data.size(); i++)
       {
         all_ids.push_back(loadsgravity->loads_data[i][0]);
+      }
+    } else if (parse_type=="loadscentrifugal")
+    {
+      for (size_t i = 0; i < loadscentrifugal->loads_data.size(); i++)
+      {
+        all_ids.push_back(loadscentrifugal->loads_data[i][0]);
       }
     } else if (parse_type=="historyoutput")
     {

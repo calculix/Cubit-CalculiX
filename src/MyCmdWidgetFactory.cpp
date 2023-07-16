@@ -44,6 +44,9 @@
 #include "LoadsGravityCreatePanel.hpp"
 #include "LoadsGravityModifyPanel.hpp"
 #include "LoadsGravityDeletePanel.hpp"
+#include "LoadsCentrifugalCreatePanel.hpp"
+#include "LoadsCentrifugalModifyPanel.hpp"
+#include "LoadsCentrifugalDeletePanel.hpp"
 #include "BCsDisplacementsModifyPanel.hpp"
 #include "BCsTemperaturesModifyPanel.hpp"
 #include "HistoryOutputsCreatePanel.hpp"
@@ -231,6 +234,12 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
     return new LoadsGravityModifyPanel();
   else if(name == "CCXLoadsGravityDelete")
     return new LoadsGravityDeletePanel();
+  else if(name == "CCXLoadsCentrifugalCreate")
+    return new LoadsCentrifugalCreatePanel();
+  else if(name == "CCXLoadsCentrifugalModify")
+    return new LoadsCentrifugalModifyPanel();
+  else if(name == "CCXLoadsCentrifugalDelete")
+    return new LoadsCentrifugalDeletePanel();
   else if(name == "CCXBCsDisplacementsModify")
     return new BCsDisplacementsModifyPanel();
   else if(name == "CCXBCsTemperaturesModify")
