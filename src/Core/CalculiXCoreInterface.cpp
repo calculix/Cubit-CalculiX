@@ -640,6 +640,16 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_loadsheat
   return ccx_core.get_steps_loadsheatfluxes_tree_data(step_id);
 }
 
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_loadsgravity_tree_data(int step_id)
+{ 
+  return ccx_core.get_steps_loadsgravity_tree_data(step_id);
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_loadscentrifugal_tree_data(int step_id)
+{ 
+  return ccx_core.get_steps_loadscentrifugal_tree_data(step_id);
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_bcsdisplacements_tree_data(int step_id)
 { 
   return ccx_core.get_steps_bcsdisplacements_tree_data(step_id);

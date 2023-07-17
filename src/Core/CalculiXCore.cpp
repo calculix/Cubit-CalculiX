@@ -832,6 +832,39 @@ std::string CalculiXCore::autocleanup()
           steps->remove_loads(steps->steps_data[i-1][0], 2, {steps->loads_data[sub_data_ids[ii-1]][2]});
         }
       }
+      // Heatflux
+      if (steps->loads_data[sub_data_ids[ii-1]][1]==3)
+      {
+        if (!check_bc_exists(steps->loads_data[sub_data_ids[ii-1]][2],8))
+        {
+          log.append("Load Heatflux ID " + std::to_string(steps->loads_data[sub_data_ids[ii-1]][2]) + " doesn't exist.\n");
+          log.append("Load Heatflux Reference from Step ID " + std::to_string(steps->steps_data[i-1][0]) + " will be deleted.\n");
+          sub_bool = true;
+          steps->remove_loads(steps->steps_data[i-1][0], 3, {steps->loads_data[sub_data_ids[ii-1]][2]});
+        }
+      }
+      // Gravity
+      if (steps->loads_data[sub_data_ids[ii-1]][1]==4)
+      {
+        if (!check_bc_exists(steps->loads_data[sub_data_ids[ii-1]][2],9))
+        {
+          log.append("Load Gravity ID " + std::to_string(steps->loads_data[sub_data_ids[ii-1]][2]) + " doesn't exist.\n");
+          log.append("Load Gravity Reference from Step ID " + std::to_string(steps->steps_data[i-1][0]) + " will be deleted.\n");
+          sub_bool = true;
+          steps->remove_loads(steps->steps_data[i-1][0], 4, {steps->loads_data[sub_data_ids[ii-1]][2]});
+        }
+      }
+      // Centrifugal
+      if (steps->loads_data[sub_data_ids[ii-1]][1]==5)
+      {
+        if (!check_bc_exists(steps->loads_data[sub_data_ids[ii-1]][2],10))
+        {
+          log.append("Load Centrifugal ID " + std::to_string(steps->loads_data[sub_data_ids[ii-1]][2]) + " doesn't exist.\n");
+          log.append("Load Centrifugal Reference from Step ID " + std::to_string(steps->steps_data[i-1][0]) + " will be deleted.\n");
+          sub_bool = true;
+          steps->remove_loads(steps->steps_data[i-1][0], 5, {steps->loads_data[sub_data_ids[ii-1]][2]});
+        }
+      }
     }
     // STEP BCS
     sub_data_ids = steps->get_bc_data_ids_from_bcs_id(steps->steps_data[i-1][6]);
@@ -1111,6 +1144,21 @@ bool CalculiXCore::check_bc_exists(int bc_id,int BCType)
   }else if (BCType == 7)
   {
     ids = CubitInterface::get_bc_id_list(CI_BCTYPE_PRESSURE);
+  }else if (BCType == 8) // heaftlux
+  {
+    ids = CubitInterface::get_bc_id_list(CI_BCTYPE_HEATFLUX);
+  }else if (BCType == 9) // gravity
+  {
+    for (size_t i = 0; i < loadsgravity->loads_data.size(); i++)
+    {
+      ids.push_back(loadsgravity->loads_data[i][0]);
+    }
+  }else if (BCType == 10) // centrifugal
+  {
+    for (size_t i = 0; i < loadscentrifugal->loads_data.size(); i++)
+    {
+      ids.push_back(loadscentrifugal->loads_data[i][0]);
+    }
   }
   
   for (size_t i = 0; i < ids.size(); i++)
@@ -2069,6 +2117,7 @@ std::string CalculiXCore::get_hbc_export_data() // gets the export data from cor
   std::vector<BCEntityHandle> bc_handles;
   BCEntityHandle bc_handle;
   std::vector<MeshExportBCData> bc_attribs; 
+  std::vector<std::string> customline;
 
   log = "Creating BCSet for exporting Homogeneous Boundary Conditions.\n";
   PRINT_INFO("%s", log.c_str());
@@ -2089,6 +2138,13 @@ std::string CalculiXCore::get_hbc_export_data() // gets the export data from cor
       {
         if (hbcs->bcs_data[sub_data_ids[iii]][2]==me_iface->id_from_handle(bc_handles[ii]))
         { 
+          // CUSTOMLINE START
+          customline = customlines->get_customline_data("BEFORE","DISPLACEMENT",hbcs->bcs_data[sub_data_ids[iii]][2]);
+          for (size_t icl = 0; icl < customline.size(); icl++)
+          {
+            hbcs_export_list.push_back(customline[icl]);
+          }
+          // CUSTOMLINE END
           me_iface->get_bc_nodeset(bc_handles[ii],nodeset);
           str_temp = "*BOUNDARY";
           str_temp.append(bcsdisplacements->get_bc_parameter_export(hbcs->bcs_data[sub_data_ids[iii]][2]));
@@ -2099,6 +2155,13 @@ std::string CalculiXCore::get_hbc_export_data() // gets the export data from cor
             str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iv].first+1) + "," + std::to_string(bc_attribs[iv].first+1);
             hbcs_export_list.push_back(str_temp);
           }
+          // CUSTOMLINE START
+          customline = customlines->get_customline_data("AFTER","DISPLACEMENT",hbcs->bcs_data[sub_data_ids[iii]][2]);
+          for (size_t icl = 0; icl < customline.size(); icl++)
+          {
+            hbcs_export_list.push_back(customline[icl]);
+          }
+          // CUSTOMLINE END
         }  
       }
       // TEMPERATURE
@@ -2106,6 +2169,13 @@ std::string CalculiXCore::get_hbc_export_data() // gets the export data from cor
       {
         if (hbcs->bcs_data[sub_data_ids[iii]][2]==me_iface->id_from_handle(bc_handles[ii]))
         {
+          // CUSTOMLINE START
+          customline = customlines->get_customline_data("BEFORE","TEMPERATURE",hbcs->bcs_data[sub_data_ids[iii]][2]);
+          for (size_t icl = 0; icl < customline.size(); icl++)
+          {
+            hbcs_export_list.push_back(customline[icl]);
+          }
+          // CUSTOMLINE END
           me_iface->get_bc_nodeset(bc_handles[ii],nodeset);
           str_temp = "*BOUNDARY";
           str_temp.append(bcstemperatures->get_bc_parameter_export(hbcs->bcs_data[sub_data_ids[iii]][2]));
@@ -2115,6 +2185,13 @@ std::string CalculiXCore::get_hbc_export_data() // gets the export data from cor
             str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + ",11,11";
             hbcs_export_list.push_back(str_temp);
           }
+          // CUSTOMLINE START
+          customline = customlines->get_customline_data("AFTER","TEMPERATURE",hbcs->bcs_data[sub_data_ids[iii]][2]);
+          for (size_t icl = 0; icl < customline.size(); icl++)
+          {
+            hbcs_export_list.push_back(customline[icl]);
+          }
+          // CUSTOMLINE END
         }  
       }
     }
@@ -2274,6 +2351,62 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
         }
       }
       bc_attribs.clear();
+    }
+    // GRAVITY DLOAD
+    for (size_t ii = 0; ii < loadsgravity->loads_data.size(); ii++)
+    {  
+      for (size_t iii = 0; iii < sub_data_ids.size(); iii++)
+      { 
+        if ((steps->loads_data[sub_data_ids[iii]][1]==4) && (steps->loads_data[sub_data_ids[iii]][2]==loadsgravity->loads_data[ii][0]))
+        {
+          // CUSTOMLINE START
+          customline = customlines->get_customline_data("BEFORE","GRAVITY",steps->loads_data[sub_data_ids[iii]][2]);
+          for (size_t icl = 0; icl < customline.size(); icl++)
+          {
+            steps_export_list.push_back(customline[icl]);
+          }
+          // CUSTOMLINE END
+
+          str_temp = loadsgravity->get_load_export(steps->loads_data[sub_data_ids[iii]][2]);
+          steps_export_list.push_back(str_temp);
+
+          // CUSTOMLINE START
+          customline = customlines->get_customline_data("AFTER","GRAVITY",steps->loads_data[sub_data_ids[iii]][2]);
+          for (size_t icl = 0; icl < customline.size(); icl++)
+          {
+            steps_export_list.push_back(customline[icl]);
+          }
+          // CUSTOMLINE END
+        }
+      }
+    }
+    // CENTRIFUGAL DLOAD
+    for (size_t ii = 0; ii < loadscentrifugal->loads_data.size(); ii++)
+    {  
+      for (size_t iii = 0; iii < sub_data_ids.size(); iii++)
+      { 
+        if ((steps->loads_data[sub_data_ids[iii]][1]==5) && (steps->loads_data[sub_data_ids[iii]][2]==loadscentrifugal->loads_data[ii][0]))
+        {
+          // CUSTOMLINE START
+          customline = customlines->get_customline_data("BEFORE","CENTRIFUGAL",steps->loads_data[sub_data_ids[iii]][2]);
+          for (size_t icl = 0; icl < customline.size(); icl++)
+          {
+            steps_export_list.push_back(customline[icl]);
+          }
+          // CUSTOMLINE END
+
+          str_temp = loadscentrifugal->get_load_export(steps->loads_data[sub_data_ids[iii]][2]);
+          steps_export_list.push_back(str_temp);
+
+          // CUSTOMLINE START
+          customline = customlines->get_customline_data("AFTER","CENTRIFUGAL",steps->loads_data[sub_data_ids[iii]][2]);
+          for (size_t icl = 0; icl < customline.size(); icl++)
+          {
+            steps_export_list.push_back(customline[icl]);
+          }
+          // CUSTOMLINE END
+        }
+      }
     }
     // BCs
     me_iface->get_bc_restraints(bc_set, bc_handles);
@@ -2759,7 +2892,7 @@ std::vector<std::vector<std::string>> CalculiXCore::get_loadsgravity_tree_data()
     std::vector<std::string> loadsgravity_tree_data_set;
     std::string name;
     
-    name = "Gravity on Block: " + get_block_name(loadsgravity->loads_data[i][4]);
+    name = "Gravity_" + std::to_string(loadsgravity->loads_data[i][0]);
     
     loadsgravity_tree_data_set.push_back(std::to_string(loadsgravity->loads_data[i][0])); //load_id
     loadsgravity_tree_data_set.push_back(name); 
@@ -2777,7 +2910,7 @@ std::vector<std::vector<std::string>> CalculiXCore::get_loadscentrifugal_tree_da
     std::vector<std::string> loadscentrifugal_tree_data_set;
     std::string name;
     
-    name = "Centrifugal on Block: " + get_block_name(loadscentrifugal->loads_data[i][4]);
+    name = "Centrifugal_" + std::to_string(loadscentrifugal->loads_data[i][0]);
     
     loadscentrifugal_tree_data_set.push_back(std::to_string(loadscentrifugal->loads_data[i][0])); //load_id
     loadscentrifugal_tree_data_set.push_back(name); 
@@ -3145,6 +3278,62 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadsheatfluxes_tr
     }
   }
   return loadsheatfluxes_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadsgravity_tree_data(int step_id)
+{ 
+  std::vector<std::vector<std::string>> loadsgravity_tree_data;
+  int step_data_id;
+  std::vector<int> loads_ids;
+  step_data_id = steps->get_steps_data_id_from_step_id(step_id);
+  if (step_data_id==-1)
+  {
+    return loadsgravity_tree_data;
+  }
+  loads_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[step_data_id][5]);
+
+  for (size_t i = 0; i < loads_ids.size(); i++)
+  {
+    std::vector<std::string> loadsgravity_tree_data_set;
+    std::string name;
+    if (steps->loads_data[loads_ids[i]][1]==4)
+    { 
+      name = "Gravity_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+    
+      loadsgravity_tree_data_set.push_back(std::to_string(steps->loads_data[loads_ids[i]][2])); //load_id
+      loadsgravity_tree_data_set.push_back(name); 
+      loadsgravity_tree_data.push_back(loadsgravity_tree_data_set);  
+    }
+  }
+  return loadsgravity_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadscentrifugal_tree_data(int step_id)
+{ 
+  std::vector<std::vector<std::string>> loadscentrifugal_tree_data;
+  int step_data_id;
+  std::vector<int> loads_ids;
+  step_data_id = steps->get_steps_data_id_from_step_id(step_id);
+  if (step_data_id==-1)
+  {
+    return loadscentrifugal_tree_data;
+  }
+  loads_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[step_data_id][5]);
+
+  for (size_t i = 0; i < loads_ids.size(); i++)
+  {
+    std::vector<std::string> loadscentrifugal_tree_data_set;
+    std::string name;
+    if (steps->loads_data[loads_ids[i]][1]==5)
+    { 
+      name = "Centrifugal_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+    
+      loadscentrifugal_tree_data_set.push_back(std::to_string(steps->loads_data[loads_ids[i]][2])); //load_id
+      loadscentrifugal_tree_data_set.push_back(name); 
+      loadscentrifugal_tree_data.push_back(loadscentrifugal_tree_data_set);  
+    }
+  }
+  return loadscentrifugal_tree_data;
 }
 
 std::vector<std::vector<std::string>> CalculiXCore::get_steps_bcsdisplacements_tree_data(int step_id)

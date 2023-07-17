@@ -61,6 +61,10 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsPressuresTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsHeatfluxesTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsHeatfluxesTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsGravityTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsGravityTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsCentrifugalTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsCentrifugalTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsBCsTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsBCsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsBCsDisplacementsTree.cpp

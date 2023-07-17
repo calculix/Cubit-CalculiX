@@ -101,6 +101,12 @@ StepsManagement::StepsManagement()
   tree_available_loads_heatfluxes = new QTreeWidgetItem(tree_available_loads);
   tree_available_loads_heatfluxes->setText(0,"Heatfluxes");
   tree_available_loads_heatfluxes->setIcon(0,ccx_iface->getIcon2("StepsLoadsHeatfluxesTree"));
+  tree_available_loads_gravity = new QTreeWidgetItem(tree_available_loads);
+  tree_available_loads_gravity->setText(0,"Gravity");
+  tree_available_loads_gravity->setIcon(0,ccx_iface->getIcon2("StepsLoadsGravityTree"));
+  tree_available_loads_centrifugal = new QTreeWidgetItem(tree_available_loads);
+  tree_available_loads_centrifugal->setText(0,"Centrifugal");
+  tree_available_loads_centrifugal->setIcon(0,ccx_iface->getIcon2("StepsLoadsCentrifugalTree"));
   tree_available_bcs = new QTreeWidgetItem(tree_available);
   tree_available_bcs->setText(0,"BCs");
   tree_available_bcs->setIcon(0,ccx_iface->getIcon2("StepsBCsTree"));
@@ -129,6 +135,12 @@ StepsManagement::StepsManagement()
   tree_used_loads_heatfluxes = new QTreeWidgetItem(tree_used_loads);
   tree_used_loads_heatfluxes->setText(0,"Heatfluxes");
   tree_used_loads_heatfluxes->setIcon(0,ccx_iface->getIcon2("StepsLoadsHeatfluxesTree"));
+  tree_used_loads_gravity = new QTreeWidgetItem(tree_used_loads);
+  tree_used_loads_gravity->setText(0,"Gravity");
+  tree_used_loads_gravity->setIcon(0,ccx_iface->getIcon2("StepsLoadsGravityTree"));
+  tree_used_loads_centrifugal = new QTreeWidgetItem(tree_used_loads);
+  tree_used_loads_centrifugal->setText(0,"Centrifugal");
+  tree_used_loads_centrifugal->setIcon(0,ccx_iface->getIcon2("StepsLoadsCentrifugalTree"));
   tree_used_bcs = new QTreeWidgetItem(tree_used);
   tree_used_bcs->setText(0,"BCs");
   tree_used_bcs->setIcon(0,ccx_iface->getIcon2("StepsBCsTree"));
@@ -148,6 +160,8 @@ StepsManagement::StepsManagement()
   available_trees.push_back(tree_available_loads_forces);
   available_trees.push_back(tree_available_loads_pressures);
   available_trees.push_back(tree_available_loads_heatfluxes);
+  available_trees.push_back(tree_available_loads_gravity);
+  available_trees.push_back(tree_available_loads_centrifugal);
   available_trees.push_back(tree_available_bcs_displacements);
   available_trees.push_back(tree_available_bcs_temperatures);
   available_trees.push_back(tree_available_historyoutputs);
@@ -156,6 +170,8 @@ StepsManagement::StepsManagement()
   used_trees.push_back(tree_used_loads_forces);
   used_trees.push_back(tree_used_loads_pressures);
   used_trees.push_back(tree_used_loads_heatfluxes);
+  used_trees.push_back(tree_used_loads_gravity);
+  used_trees.push_back(tree_used_loads_centrifugal);
   used_trees.push_back(tree_used_bcs_displacements);
   used_trees.push_back(tree_used_bcs_temperatures);
   used_trees.push_back(tree_used_historyoutputs);
@@ -290,6 +306,8 @@ void StepsManagement::createItems(QTreeWidgetItem *step)
   available.push_back(ccx_iface->get_loadsforces_tree_data());
   available.push_back(ccx_iface->get_loadspressures_tree_data());
   available.push_back(ccx_iface->get_loadsheatfluxes_tree_data());
+  available.push_back(ccx_iface->get_loadsgravity_tree_data());
+  available.push_back(ccx_iface->get_loadscentrifugal_tree_data());
   available.push_back(ccx_iface->get_bcsdisplacements_tree_data());
   available.push_back(ccx_iface->get_bcstemperatures_tree_data());
   available.push_back(ccx_iface->get_historyoutputs_tree_data());
@@ -298,6 +316,8 @@ void StepsManagement::createItems(QTreeWidgetItem *step)
   used.push_back(ccx_iface->get_steps_loadsforces_tree_data(step->text(1).toInt()));
   used.push_back(ccx_iface->get_steps_loadspressures_tree_data(step->text(1).toInt()));
   used.push_back(ccx_iface->get_steps_loadsheatfluxes_tree_data(step->text(1).toInt()));
+  used.push_back(ccx_iface->get_steps_loadsgravity_tree_data(step->text(1).toInt()));
+  used.push_back(ccx_iface->get_steps_loadscentrifugal_tree_data(step->text(1).toInt()));
   used.push_back(ccx_iface->get_steps_bcsdisplacements_tree_data(step->text(1).toInt()));
   used.push_back(ccx_iface->get_steps_bcstemperatures_tree_data(step->text(1).toInt()));
   used.push_back(ccx_iface->get_steps_historyoutputs_tree_data(step->text(1).toInt()));
@@ -322,14 +342,20 @@ void StepsManagement::createItems(QTreeWidgetItem *step)
         temp_child->setIcon(0,ccx_iface->getIcon2("StepsLoadsHeatfluxesTree"));
       }else if (i==3)
       {
-        temp_child->setIcon(0,ccx_iface->getIcon2("StepsBCsDisplacementsTree"));
+        temp_child->setIcon(0,ccx_iface->getIcon2("StepsLoadsGravityTree"));
       }else if (i==4)
       {
-        temp_child->setIcon(0,ccx_iface->getIcon2("StepsBCsTemperaturesTree"));
+        temp_child->setIcon(0,ccx_iface->getIcon2("StepsLoadsCentrifugalTree"));
       }else if (i==5)
       {
-        temp_child->setIcon(0,ccx_iface->getIcon2("StepsHistoryOutputsTree"));
+        temp_child->setIcon(0,ccx_iface->getIcon2("StepsBCsDisplacementsTree"));
       }else if (i==6)
+      {
+        temp_child->setIcon(0,ccx_iface->getIcon2("StepsBCsTemperaturesTree"));
+      }else if (i==7)
+      {
+        temp_child->setIcon(0,ccx_iface->getIcon2("StepsHistoryOutputsTree"));
+      }else if (i==8)
       {
         temp_child->setIcon(0,ccx_iface->getIcon2("StepsFieldOutputsTree"));
       }
@@ -358,14 +384,20 @@ void StepsManagement::createItems(QTreeWidgetItem *step)
         temp_child->setIcon(0,ccx_iface->getIcon2("StepsLoadsHeatfluxesTree"));
       }else if (i==3)
       {
-        temp_child->setIcon(0,ccx_iface->getIcon2("StepsBCsDisplacementsTree"));
+        temp_child->setIcon(0,ccx_iface->getIcon2("StepsLoadsGravityTree"));
       }else if (i==4)
       {
-        temp_child->setIcon(0,ccx_iface->getIcon2("StepsBCsTemperaturesTree"));
+        temp_child->setIcon(0,ccx_iface->getIcon2("StepsLoadsCentrifugalTree"));
       }else if (i==5)
       {
-        temp_child->setIcon(0,ccx_iface->getIcon2("StepsHistoryOutputsTree"));
+        temp_child->setIcon(0,ccx_iface->getIcon2("StepsBCsDisplacementsTree"));
       }else if (i==6)
+      {
+        temp_child->setIcon(0,ccx_iface->getIcon2("StepsBCsTemperaturesTree"));
+      }else if (i==7)
+      {
+        temp_child->setIcon(0,ccx_iface->getIcon2("StepsHistoryOutputsTree"));
+      }else if (i==8)
       {
         temp_child->setIcon(0,ccx_iface->getIcon2("StepsFieldOutputsTree"));
       }
@@ -466,6 +498,8 @@ void StepsManagement::on_pushButton_apply_clicked(bool)
   used.push_back(ccx_iface->get_steps_loadsforces_tree_data(current_step_item->text(1).toInt()));
   used.push_back(ccx_iface->get_steps_loadspressures_tree_data(current_step_item->text(1).toInt()));
   used.push_back(ccx_iface->get_steps_loadsheatfluxes_tree_data(current_step_item->text(1).toInt()));
+  used.push_back(ccx_iface->get_steps_loadsgravity_tree_data(current_step_item->text(1).toInt()));
+  used.push_back(ccx_iface->get_steps_loadscentrifugal_tree_data(current_step_item->text(1).toInt()));
   used.push_back(ccx_iface->get_steps_bcsdisplacements_tree_data(current_step_item->text(1).toInt()));
   used.push_back(ccx_iface->get_steps_bcstemperatures_tree_data(current_step_item->text(1).toInt()));
   used.push_back(ccx_iface->get_steps_historyoutputs_tree_data(current_step_item->text(1).toInt()));
@@ -474,6 +508,8 @@ void StepsManagement::on_pushButton_apply_clicked(bool)
   command_prefix.push_back("ccx step " + current_step_item->text(1) + " add load force ");
   command_prefix.push_back("ccx step " + current_step_item->text(1) + " add load pressure ");
   command_prefix.push_back("ccx step " + current_step_item->text(1) + " add load heatflux ");
+  command_prefix.push_back("ccx step " + current_step_item->text(1) + " add load gravity ");
+  command_prefix.push_back("ccx step " + current_step_item->text(1) + " add load centrifugal ");
   command_prefix.push_back("ccx step " + current_step_item->text(1) + " add bc displacement ");
   command_prefix.push_back("ccx step " + current_step_item->text(1) + " add bc temperature ");
   command_prefix.push_back("ccx step " + current_step_item->text(1) + " add historyoutput ");
@@ -481,6 +517,8 @@ void StepsManagement::on_pushButton_apply_clicked(bool)
   command_prefix.push_back("ccx step " + current_step_item->text(1) + " remove load force ");
   command_prefix.push_back("ccx step " + current_step_item->text(1) + " remove load pressure ");
   command_prefix.push_back("ccx step " + current_step_item->text(1) + " remove load heatflux ");
+  command_prefix.push_back("ccx step " + current_step_item->text(1) + " remove load gravity ");
+  command_prefix.push_back("ccx step " + current_step_item->text(1) + " remove load centrifugal ");
   command_prefix.push_back("ccx step " + current_step_item->text(1) + " remove bc displacement ");
   command_prefix.push_back("ccx step " + current_step_item->text(1) + " remove bc temperature ");
   command_prefix.push_back("ccx step " + current_step_item->text(1) + " remove historyoutput ");
@@ -519,8 +557,8 @@ void StepsManagement::on_pushButton_apply_clicked(bool)
         }
       }
       if (!found)
-      {
-        command = command_prefix[i+7] + QString::fromStdString(used[i][ii][0]);
+      { // prefix shift for remove
+        command = command_prefix[i+9] + QString::fromStdString(used[i][ii][0]);
         commands.push_back(command);
       }
     }

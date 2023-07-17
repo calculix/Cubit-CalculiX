@@ -42,6 +42,8 @@ class StepsLoadsTree;
 class StepsLoadsForcesTree;
 class StepsLoadsPressuresTree;
 class StepsLoadsHeatfluxesTree;
+class StepsLoadsGravityTree;
+class StepsLoadsCentrifugalTree;
 class StepsBCsTree;
 class StepsBCsDisplacementsTree;
 class StepsBCsTemperaturesTree;

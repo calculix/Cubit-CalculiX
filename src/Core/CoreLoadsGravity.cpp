@@ -291,7 +291,7 @@ std::string CoreLoadsGravity::get_load_export(int load_id)
 {
   int load_data_id;
   int sub_data_id;
-  std::string str_temp = "";
+  std::string str_temp = "*DLOAD";
   load_data_id = get_loads_data_id_from_load_id(load_id);
   if (loads_data[load_data_id][1]==0)
   {
@@ -309,6 +309,17 @@ std::string CoreLoadsGravity::get_load_export(int load_id)
   {
     str_temp.append(",TIME DELAY=" + time_delay_data[sub_data_id][1]);
   }
+  str_temp.append("\n");
+  
+  // second line
+  str_temp.append(ccx_iface->get_block_name(loads_data[load_data_id][4]) + ",GRAV,");
+  
+  sub_data_id = get_magnitude_data_id_from_magnitude_id(loads_data[load_data_id][6]);
+  str_temp.append(magnitude_data[sub_data_id][1] + ",");
+  
+  sub_data_id = get_direction_data_id_from_direction_id(loads_data[load_data_id][5]);
+  str_temp.append(direction_data[sub_data_id][1] + "," + direction_data[sub_data_id][2] + "," + direction_data[sub_data_id][3]);
+
   return str_temp;
 }
 

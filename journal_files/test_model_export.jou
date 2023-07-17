@@ -208,6 +208,8 @@ ccx create centrifugal 455454 block 1 coordinate 1 2 3 direction  0 2 3
 ccx create centrifugal 455454 block 1 coordinate 1 2 3 direction  0 2 3
 ccx create centrifugal 455454 block 1 coordinate 1 2 3 direction  0 2 3
 
+ccx step 1 add load gravity 1 2 3 centrifugal 1 2 3
+
 #ccx modify gravity 1 magnitude 455454 block 1 direction  0 2 3
 
 #ccx modify centrifugal 1 magnitude 455454 block 1 coordinate 1 2 3 direction  0 2 3
@@ -222,4 +224,5 @@ ccx create job name jobname2 filepath "/home/user/test_achse.inp"
 #ccx run job 1
 #ccx run job 2
 #ccx result ccx2paraview job 2
+
 

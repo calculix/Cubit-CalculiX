@@ -31,6 +31,8 @@
 #include "StepsLoadsForcesTree.hpp"
 #include "StepsLoadsPressuresTree.hpp"
 #include "StepsLoadsHeatfluxesTree.hpp"
+#include "StepsLoadsGravityTree.hpp"
+#include "StepsLoadsCentrifugalTree.hpp"
 #include "StepsBCsTree.hpp"
 #include "StepsBCsDisplacementsTree.hpp"
 #include "StepsBCsTemperaturesTree.hpp"
@@ -143,6 +145,8 @@ void ModelTree::showContextMenu(const QPoint &pos)
     StepsLoadsForcesTree* StepsLoadsForcesTreeItem;
     StepsLoadsPressuresTree* StepsLoadsPressuresTreeItem;
     StepsLoadsHeatfluxesTree* StepsLoadsHeatfluxesTreeItem;
+    StepsLoadsGravityTree* StepsLoadsGravityTreeItem;
+    StepsLoadsCentrifugalTree* StepsLoadsCentrifugalTreeItem;
     StepsBCsTree* StepsBCsTreeItem;
     StepsBCsDisplacementsTree* StepsBCsDisplacementsTreeItem;
     StepsBCsTemperaturesTree* StepsBCsTemperaturesTreeItem;
@@ -447,7 +451,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
       { 
         QMenu contextMenu("Context Menu",this);
         QAction action1("Steps Management",this);
-        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action1);      
         contextMenu.exec(mapToGlobal(pos));
 
@@ -459,7 +463,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
       { 
         QMenu contextMenu("Context Menu",this);
         QAction action1("Steps Management",this);
-        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action1);      
         contextMenu.exec(mapToGlobal(pos));
 
@@ -471,11 +475,35 @@ void ModelTree::showContextMenu(const QPoint &pos)
       { 
         QMenu contextMenu("Context Menu",this);
         QAction action1("Steps Management",this);
-        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action1);      
         contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 26;
+      }
+    }else if (StepsLoadsGravityTreeItem = dynamic_cast<StepsLoadsGravityTree*>(item))
+    {
+      if (StepsLoadsGravityTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Steps Management",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
+        contextMenu.addAction(&action1);
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 27;
+      }
+    }else if (StepsLoadsCentrifugalTreeItem = dynamic_cast<StepsLoadsCentrifugalTree*>(item))
+    {
+      if (StepsLoadsCentrifugalTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Steps Management",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
+        contextMenu.addAction(&action1);      
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 28;
       }
     }else if (StepsBCsTreeItem = dynamic_cast<StepsBCsTree*>(item))
     {
@@ -487,7 +515,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenu.addAction(&action1);      
         contextMenu.exec(mapToGlobal(pos));
 
-        contextMenuAction[0][0] = 27;
+        contextMenuAction[0][0] = 29;
       }
     }else if (StepsBCsDisplacementsTreeItem = dynamic_cast<StepsBCsDisplacementsTree*>(item))
     {
@@ -495,11 +523,11 @@ void ModelTree::showContextMenu(const QPoint &pos)
       { 
         QMenu contextMenu("Context Menu",this);
         QAction action1("Steps Management",this);
-        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action1);      
         contextMenu.exec(mapToGlobal(pos));
 
-        contextMenuAction[0][0] = 28;
+        contextMenuAction[0][0] = 30;
       }
     }else if (StepsBCsTemperaturesTreeItem = dynamic_cast<StepsBCsTemperaturesTree*>(item))
     {
@@ -507,11 +535,11 @@ void ModelTree::showContextMenu(const QPoint &pos)
       { 
         QMenu contextMenu("Context Menu",this);
         QAction action1("Steps Management",this);
-        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action1);      
         contextMenu.exec(mapToGlobal(pos));
 
-        contextMenuAction[0][0] = 29;
+        contextMenuAction[0][0] = 31;
       }
     }else if (StepsHistoryOutputsTreeItem = dynamic_cast<StepsHistoryOutputsTree*>(item))
     {
@@ -519,11 +547,11 @@ void ModelTree::showContextMenu(const QPoint &pos)
       { 
         QMenu contextMenu("Context Menu",this);
         QAction action1("Steps Management",this);
-        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
         contextMenu.addAction(&action1);      
         contextMenu.exec(mapToGlobal(pos));
 
-        contextMenuAction[0][0] = 30;
+        contextMenuAction[0][0] = 32;
       }
     }else if (StepsFieldOutputsTreeItem = dynamic_cast<StepsFieldOutputsTree*>(item))
     {
@@ -531,11 +559,11 @@ void ModelTree::showContextMenu(const QPoint &pos)
       { 
         QMenu contextMenu("Context Menu",this);
         QAction action1("Steps Management",this);
-        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
         contextMenu.addAction(&action1);      
         contextMenu.exec(mapToGlobal(pos));
 
-        contextMenuAction[0][0] = 31;
+        contextMenuAction[0][0] = 33;
       }
     }else if (CustomLinesTreeItem = dynamic_cast<CustomLinesTree*>(item))
     {
@@ -547,7 +575,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenu.addAction(&action1);      
         contextMenu.exec(mapToGlobal(pos));
 
-        contextMenuAction[0][0] = 32;
+        contextMenuAction[0][0] = 34;
       }
     }else if (JobsTreeItem = dynamic_cast<JobsTree*>(item))
     {
@@ -559,7 +587,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenu.addAction(&action1);      
         contextMenu.exec(mapToGlobal(pos));
 
-        contextMenuAction[0][0] = 33;
+        contextMenuAction[0][0] = 35;
       }
     }else 
     {
@@ -1043,6 +1071,46 @@ void ModelTree::showContextMenu(const QPoint &pos)
 
         contextMenuAction[0][0] = 26;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+      } else if (StepsLoadsGravityTreeItem = dynamic_cast<StepsLoadsGravityTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Gravity",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Modify Gravity",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+        QAction action3("Delete Gravity",this);
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+        QAction action4("Steps Management",this);
+        connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
+        contextMenu.addAction(&action4);
+
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 27;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+      } else if (StepsLoadsCentrifugalTreeItem = dynamic_cast<StepsLoadsCentrifugalTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Centrifugal",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Modify Centrifugal",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+        QAction action3("Delete Centrifugal",this);
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+        QAction action4("Steps Management",this);
+        connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
+        contextMenu.addAction(&action4);
+
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 28;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
       }else if (StepsBCsTreeItem = dynamic_cast<StepsBCsTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -1052,7 +1120,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
         
         contextMenu.exec(mapToGlobal(pos));
 
-        contextMenuAction[0][0] = 27;
+        contextMenuAction[0][0] = 29;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
       }else if (StepsBCsDisplacementsTreeItem = dynamic_cast<StepsBCsDisplacementsTree*>(item->parent()))
       {
@@ -1075,7 +1143,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
 
         contextMenu.exec(mapToGlobal(pos));
 
-        contextMenuAction[0][0] = 28;
+        contextMenuAction[0][0] = 30;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
       }else if (StepsBCsTemperaturesTreeItem = dynamic_cast<StepsBCsTemperaturesTree*>(item->parent()))
       {
@@ -1098,7 +1166,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
 
         contextMenu.exec(mapToGlobal(pos));
 
-        contextMenuAction[0][0] = 29;
+        contextMenuAction[0][0] = 31;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
       }else if (StepsHistoryOutputsTreeItem = dynamic_cast<StepsHistoryOutputsTree*>(item->parent()))
       {
@@ -1118,7 +1186,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
 
         contextMenu.exec(mapToGlobal(pos));
 
-        contextMenuAction[0][0] = 30;
+        contextMenuAction[0][0] = 32;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
       }else if (StepsFieldOutputsTreeItem = dynamic_cast<StepsFieldOutputsTree*>(item->parent()))
       {
@@ -1138,7 +1206,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
 
         contextMenu.exec(mapToGlobal(pos));
 
-        contextMenuAction[0][0] = 31;
+        contextMenuAction[0][0] = 33;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
       }
       else if (CustomLinesTreeItem = dynamic_cast<CustomLinesTree*>(item->parent()))
@@ -1156,7 +1224,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
 
         contextMenu.exec(mapToGlobal(pos));
 
-        contextMenuAction[0][0] = 32;
+        contextMenuAction[0][0] = 34;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
       }
       else if (JobsTreeItem = dynamic_cast<JobsTree*>(item->parent()))
@@ -1186,7 +1254,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
 
         contextMenu.exec(mapToGlobal(pos));
 
-        contextMenuAction[0][0] = 33;
+        contextMenuAction[0][0] = 35;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
       }
     }
@@ -1222,6 +1290,8 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   StepsLoadsForcesTree* StepsLoadsForcesTreeItem;
   StepsLoadsPressuresTree* StepsLoadsPressuresTreeItem;
   StepsLoadsHeatfluxesTree* StepsLoadsHeatfluxesTreeItem;
+  StepsLoadsGravityTree* StepsLoadsGravityTreeItem;
+  StepsLoadsCentrifugalTree* StepsLoadsCentrifugalTreeItem;
   StepsBCsTree* StepsBCsTreeItem;
   StepsBCsDisplacementsTree* StepsBCsDisplacementsTreeItem;
   StepsBCsTemperaturesTree* StepsBCsTemperaturesTreeItem;
@@ -1416,6 +1486,28 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
       myStepsManagement->close();
       myStepsManagement->show();
     }
+  }else if (StepsLoadsGravityTreeItem = dynamic_cast<StepsLoadsGravityTree*>(item))
+  {
+    if (StepsLoadsGravityTreeItem->text(1).toStdString()=="")
+    {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
+      myStepsManagement->show();
+    }
+  }else if (StepsLoadsCentrifugalTreeItem = dynamic_cast<StepsLoadsCentrifugalTree*>(item))
+  {
+    if (StepsLoadsCentrifugalTreeItem->text(1).toStdString()=="")
+    {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
+      myStepsManagement->show();
+    }
   }else if (StepsBCsTreeItem = dynamic_cast<StepsBCsTree*>(item))
   {
     if (StepsBCsTreeItem->text(1).toStdString()=="")
@@ -1583,6 +1675,22 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
       myStepsManagement->close();
       myStepsManagement->show();
     } else if (StepsLoadsHeatfluxesTreeItem = dynamic_cast<StepsLoadsHeatfluxesTree*>(item->parent()))
+    {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
+      myStepsManagement->show();
+    } else if (StepsLoadsGravityTreeItem = dynamic_cast<StepsLoadsGravityTree*>(item->parent()))
+    {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
+      myStepsManagement->show();
+    } else if (StepsLoadsCentrifugalTreeItem = dynamic_cast<StepsLoadsCentrifugalTree*>(item->parent()))
     {
       if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
       {
@@ -2007,13 +2115,43 @@ void ModelTree::execContextMenuAction(){
       {
         myStepsManagement->show();
       }
-    }else if (contextMenuAction[0][0]==27) //StepsBCsTree
+    }else if (contextMenuAction[0][0]==27) //StepsLoadsGravityTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsGravityCreate");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsGravityModify");
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsGravityDelete");
+      }else if (contextMenuAction[0][1]==3) //Action4
+      {
+        myStepsManagement->show();
+      }  
+    }else if (contextMenuAction[0][0]==28) //StepsLoadsCentrifugalTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsCentrifugalCreate");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsCentrifugalModify");
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsCentrifugalDelete");
+      }else if (contextMenuAction[0][1]==3) //Action4
+      {
+        myStepsManagement->show();
+      }    
+    }else if (contextMenuAction[0][0]==29) //StepsBCsTree
     {
       if (contextMenuAction[0][1]==0) //Action1
       {
         myStepsManagement->show();
       }  
-    }else if (contextMenuAction[0][0]==28) //StepsBCsDisplacementsTree
+    }else if (contextMenuAction[0][0]==30) //StepsBCsDisplacementsTree
     {
       if (contextMenuAction[0][1]==0) //Action1
       {
@@ -2031,7 +2169,7 @@ void ModelTree::execContextMenuAction(){
       {
         myStepsManagement->show();
       }  
-    }else if (contextMenuAction[0][0]==29) //StepsBCsTemperaturesTree
+    }else if (contextMenuAction[0][0]==31) //StepsBCsTemperaturesTree
     {
       if (contextMenuAction[0][1]==0) //Action1
       {
@@ -2049,7 +2187,7 @@ void ModelTree::execContextMenuAction(){
       {
         myStepsManagement->show();
       }
-    }else if (contextMenuAction[0][0]==30) //StepsHistoryOutputsTree
+    }else if (contextMenuAction[0][0]==32) //StepsHistoryOutputsTree
     {
       if (contextMenuAction[0][1]==0) //Action1
       {
@@ -2064,7 +2202,7 @@ void ModelTree::execContextMenuAction(){
       {
         myStepsManagement->show();
       }
-    }else if (contextMenuAction[0][0]==31) //StepsFieldOutputsTree
+    }else if (contextMenuAction[0][0]==33) //StepsFieldOutputsTree
     {
       if (contextMenuAction[0][1]==0) //Action1
       {
@@ -2079,7 +2217,7 @@ void ModelTree::execContextMenuAction(){
       {
         myStepsManagement->show();
       }  
-    }else if (contextMenuAction[0][0]==32) //CustomLinesTree
+    }else if (contextMenuAction[0][0]==34) //CustomLinesTree
     {
       if (contextMenuAction[0][1]==0) //Action1
       {
@@ -2091,7 +2229,7 @@ void ModelTree::execContextMenuAction(){
       {
         this->setWidgetInCmdPanelMarker("CCXCustomLinesDelete");
       }  
-    }else if (contextMenuAction[0][0]==33) //JobsTree
+    }else if (contextMenuAction[0][0]==35) //JobsTree
     {
       if (contextMenuAction[0][1]==0) //Action1
       {
