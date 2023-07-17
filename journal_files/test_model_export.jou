@@ -190,6 +190,8 @@ ccx create customline name testname1 after step_end item_id 7 cline '#####init 1
 ccx create customline name testname1 before force item_id 1 cline '#####init 1'
 ccx create customline name testname1 before pressure item_id 1 cline '#####init 1'
 ccx create customline name testname1 before heatflux item_id 1 cline 'woooow'
+ccx create customline name testname1 before gravity item_id 1 cline 'gravity!!!!'
+ccx create customline name testname1 before centrifugal item_id 1 cline 'centrifugal!!!!!'
 ccx create customline name testname1 before displacement item_id 1 cline '#####init 1'
 ccx create customline name testname1 before temperature item_id 1 cline '#####init 1'
 
@@ -224,5 +226,6 @@ ccx create job name jobname2 filepath "/home/user/test_achse.inp"
 #ccx run job 1
 #ccx run job 2
 #ccx result ccx2paraview job 2
+
 
 

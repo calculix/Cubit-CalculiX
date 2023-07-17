@@ -181,6 +181,8 @@ void CustomLinesModifyPanel::on_comboBox_index_changed(int index)
     comboBox_3->addItem("force");
     comboBox_3->addItem("pressure");
     comboBox_3->addItem("heatflux");
+    comboBox_3->addItem("gravity");
+    comboBox_3->addItem("centrifugal");
     comboBox_3->addItem("displacement");
     comboBox_3->addItem("temperature");
     comboBox_3->addItem("historyoutput");
