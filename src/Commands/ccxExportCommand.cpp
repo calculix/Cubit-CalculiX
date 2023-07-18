@@ -64,8 +64,8 @@ bool ccxExportCommand::execute(CubitCommandData &data)
     if (access(filename.c_str(), F_OK) == 0)
     {
       PRINT_ERROR("Output File already exists!\n");
+      return false;
     }
-    return false; 
   }
 
   // Get the MeshExport interface from CubitInterface
