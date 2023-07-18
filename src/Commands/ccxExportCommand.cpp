@@ -429,17 +429,28 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
               // different node numbering for hex20
               if (element_type[0] == 42) {
                 if (j >= 12 && j<=15) {
-                  output_file << conn[j+4] << ", ";
+                  output_file << conn[j+4];
                 } else if (j >= 16 && j<=19) {
-                  output_file << conn[j-4] << ", ";
+                  output_file << conn[j-4];
                 } else {
-                  output_file << conn[j] << ", ";
+                  output_file << conn[j];
                 }
-              } else {
-                output_file << conn[j] << ", ";
+              } else if (element_type[0] == 50) {  // different node numbering for wedge15
+                if (j >= 9 && j<=11) {
+                  output_file << conn[j+3];
+                } else if (j >= 12 && j<=14) {
+                  output_file << conn[j-3];
+                } else {
+                  output_file << conn[j];
+                }
+              }else {
+                output_file << conn[j];
               }
-
-              if (j == 14) {
+              if (!(j == num_nodes-1))
+              {
+                output_file << ", ";
+              }
+              if ((j == 14) && element_type[0] == 42) {
                 output_file << "\n";
               }
             }
