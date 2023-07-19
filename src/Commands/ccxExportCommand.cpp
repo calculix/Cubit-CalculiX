@@ -196,6 +196,19 @@ int ccxExportCommand::get_side(int element_type,int side)
     } else if (side==6){
       s_return=2;
     }
+  } else if ((element_type>=49) && (element_type<=50)) {
+    // WEDGE
+    if (side==1) {
+      s_return=1;
+    } else if (side==2) {
+      s_return=4;
+    } else if (side==3){
+      s_return=5;
+    } else if (side==4){
+      s_return=3;
+    } else if (side==5){
+      s_return=2;
+    }
   } else {
     s_return = side;
   }
@@ -422,7 +435,7 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
             std::vector<int> conn(27);
             int num_nodes = iface->get_connectivity(handles[i], conn);
 
-            //output_file << (int) element_type[i] << " " << ids[i] << " " << block_id << " ";
+            //output_file << "DEBUG:" << (int) element_type[i] << " " << ids[i] << " " << block_id << "\n";
             output_file << ids[i] << ", ";
             for (int j = 0; j < num_nodes; j++)
             {

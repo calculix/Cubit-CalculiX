@@ -558,7 +558,7 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
             
             material_cards_export.append("*CONDUCTIVITY,TYPE=ISO\n");
             
-            prop = mat_iface->get_property(material_card[1] + "ISO_A_TEMPERATURE");
+            prop = mat_iface->get_property(material_card[1] + "ISO_K_TEMPERATURE");
             mat_iface->get_material_property_value(material, prop, prop_matrix);
 
             for (size_t i = 0; i < prop_matrix.size(); i++)
