@@ -1,0 +1,154 @@
+reset
+# creating geometry
+#blank
+create surface rectangle width 100e-3 height 1e-3 zplane 
+move Surface 1 x 50e-3 y 0.5e-3 include_merged 
+#punch
+create surface rectangle width 60e-3 height 60e-3 zplane 
+move Surface 2 x 30e-3 y 31e-3 include_merged
+create surface rectangle width 60e-3 height 60e-3 zplane 
+move Surface 3 x 29e-3 y 32e-3 include_merged
+subtract surface 3 from surface 2
+tweak vertex 8 14 fillet radius 5e-3 
+#holder
+create surface rectangle width 50e-3 height 60e-3 zplane 
+move Surface 5 x 86e-3 y 31e-3 include_merged
+create surface rectangle width 50e-3 height 60e-3 zplane 
+move Surface 6 x 87e-3 y 32e-3 include_merged
+subtract surface 6 from surface 5
+tweak vertex 22 29 fillet radius 5e-3 
+#die
+create surface rectangle width 50e-3 height 60e-3 zplane 
+move Surface 8 x 86e-3 y -30e-3 include_merged
+create surface rectangle width 50e-3 height 60e-3 zplane 
+move Surface 9 x 87e-3 y -31e-3 include_merged
+subtract surface 9 from surface 8
+tweak vertex 36 44 fillet radius 5e-3
+
+#surface normal in wrong direction
+#reverse surface all
+
+# vertices to act as reference points
+create vertex center curve 18 
+create vertex center curve 18
+create vertex center curve 32 
+create vertex center curve 32
+create vertex center curve 46
+create vertex center curve 46
+
+#material
+create material "Steel" property_group "CalculiX-FEA"
+modify material "Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 2e+11 0.3 0 
+modify material "Steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_PLASTIC_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 4e+08 0 0 4.2e+08 0.02 0 5e+08 0.2 0 6e+08 0.5 0 
+
+create material "Steel_dummy" property_group "CalculiX-FEA"
+modify material "Steel_dummy" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "Steel_dummy" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "Steel_dummy" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 2e+11 0.3 0 
+
+#blocks and mesh
+block 1 add surface 1
+block 1 name "Blank"
+block 2 add surface 4
+block 2 name "Part_Punch"
+block 3 add surface 7
+block 3 name "Part_Holder"
+block 4 add surface 10
+block 4 name "Part_Die"
+block all element type quad4
+ccx block all element_type CPE4
+#surface all scheme trimesh
+#block all element type tri3
+#ccx block all element_type CPE3
+surface 1 size 0.5e-3
+mesh surface all
+mesh vertex all
+
+#sections
+ccx create section solid block 1 material 1
+ccx create section solid block 2 material 2
+ccx create section solid block 3 material 2
+ccx create section solid block 4 material 2
+
+#nodesets
+nodeset 1 add curve 18 14 13  
+nodeset 2 add curve 27 32 28  
+nodeset 3 add curve 42 46 41  
+
+#constraints
+ccx create constraint rigid body nodeset 1 ref 50 rot 51
+ccx create constraint rigid body nodeset 2 ref 52 rot 53
+ccx create constraint rigid body nodeset 3 ref 54 rot 55
+
+#sidesets
+sideset 1 add curve 1 3
+sideset 1 name "Blank"
+sideset 2 add curve 17 7 8  
+sideset 2 name "Part_Punch"
+sideset 3 add curve 21 31 20  
+sideset 3 name "Part_Holder"
+sideset 4 add curve 33 45 34  
+sideset 4 name "Part_Die"
+
+
+#contact
+ccx create surfaceinteraction name "ContactType" hard
+ccx modify surfaceinteraction 1 friction mu 0.1 lambda 5000
+ccx create contactpair surfaceinteraction 1 surfacetosurface master 2 slave 1
+ccx create contactpair surfaceinteraction 1 surfacetosurface master 3 slave 1
+ccx create contactpair surfaceinteraction 1 surfacetosurface master 4 slave 1
+ccx modify contactpair 1 surfacetosurface adjust 0.01
+ccx modify contactpair 2 surfacetosurface adjust 0.01
+ccx modify contactpair 3 surfacetosurface adjust 0.01
+
+#hbcs
+create displacement name "blank_symmetrie" on curve 2 dof 1 dof 3 fix
+create displacement name 'punch_ref' on vertex 50  dof 1 fix
+create displacement name 'punch_rot' on vertex 51  dof 1 fix
+create displacement name 'holder_ref' on vertex 52  dof 1 fix
+create displacement name 'holder_rot' on vertex 53  dof 1 fix
+create displacement name 'die_ref' on vertex 54  dof 1 dof 2 fix
+create displacement name 'die_rot' on vertex 55  dof 1 fix
+ccx hbc add bc displacement 1 2 3 4 5 6 7
+
+#loads
+create force name "holder_force" on vertex 52  force value -44000 direction 0 1 0
+create displacement name 'move_punch' on vertex 50  dof 2 fix -1e2
+
+#outputs
+ccx create fieldoutput name "nout" node
+ccx modify fieldoutput 1 node
+ccx modify fieldoutput 1 node key_on RF U 
+ccx modify fieldoutput 1 node key_off CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF NT PNT POT PRF PS PSF PT PTF PU RFL SEN TS TSF TT TTF TURB V VF 
+ccx create fieldoutput name "eout" element
+ccx modify fieldoutput 2 element
+ccx modify fieldoutput 2 element key_on E PEEQ S 
+ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFL HFLF MAXE MAXS ME PHS SF SMID SNEG SPOS SVF SDV THE ZZS 
+ccx create fieldoutput name "cout" contact
+ccx modify fieldoutput 3 contact
+ccx modify fieldoutput 3 contact key_on CDIS CSTR 
+ccx modify fieldoutput 3 contact key_off CELS PCON 
+
+#steps
+
+ccx create step name "hold" static
+ccx modify step 1 parameter nlgeom_yes
+ccx modify step 1 static solver pardiso initialtimeincrement 0.05 timeperiodofstep 1 minimumtimeincrement 1e-6 maximumtimeincrement 0.1
+ccx step 1 add load force 1
+ccx step 1 add fieldoutput 1 2 3
+
+ccx create step name "move_punch" static
+ccx modify step 2 parameter nlgeom_yes
+ccx modify step 2 static solver pardiso initialtimeincrement 0.05 timeperiodofstep 1 minimumtimeincrement 1e-6 maximumtimeincrement 0.1
+ccx step 2 add bc displacement 8
+ccx step 2 add fieldoutput 1 2 3
+
+export ccx "forming.inp" overwrite
+ccx create job name "forming" filepath "forming.inp"
+
