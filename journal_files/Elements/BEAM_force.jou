@@ -1,0 +1,90 @@
+reset
+create curve location 0 0 0 location 100 0 0
+create curve location 0 100 0 location 100 100 0
+create curve location 0 200 0 location 100 200 0
+create curve location 0 300 0 location 100 300 0
+block 1 add curve 1
+block 2 add curve 2
+block 3 add curve 3
+block 4 add curve 4
+
+curve 1 2 3 4 size 10
+
+create material "Steel" property_group "CalculiX-FEA"
+modify material "Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0 
+modify material "Steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_DENSITY_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_DENSITY_DENSITY" 0.0078 0 
+modify material "Steel" scalar_properties "CCX_SPECIFIC_HEAT_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_SPECIFIC_HEAT_SPECIFIC_HEAT" 0.5 0 
+modify material "Steel" scalar_properties "CCX_EXPANSION_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 1.2e-05 0 
+modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_CONDUCTIVITY_ISO_K_TEMPERATURE" 52 0 
+
+ccx create section beam beam_type rect block 1 material 1 parameter1 10 parameter2 5  x 0 y 0 z 1 
+ccx create section beam beam_type circ block 2 material 1 parameter1 10 parameter2 10  x 0 y 0 z 1 
+ccx create section beam beam_type pipe block 3 material 1 parameter1 10 parameter2 1  x 0 y 0 z 1 
+ccx create section beam beam_type box block 4 material 1 parameter1 5 parameter2 10 parameter3 1 parameter4 1 parameter5 1 parameter6 1  x 0 y 0 z 1 
+
+#ccx create section beam beam_type rect block 2 material 1 parameter1 10 parameter2 5  x 0 y 0 z 1 
+#ccx create section beam beam_type rect block 3 material 1 parameter1 10 parameter2 5  x 0 y 0 z 1 
+#ccx create section beam beam_type rect block 4 material 1 parameter1 10 parameter2 5  x 0 y 0 z 1 
+
+create displacement  on vertex 1 3 5 7  dof 1 dof 2 dof 3 dof 4 dof 5 dof 6 fix  
+
+create force on vertex 2 4 6 8 force value 100 direction 0 0 -1
+
+ccx create fieldoutput name "nodes" node
+ccx create fieldoutput name "elements" element
+
+ccx modify fieldoutput 1 node last_iterations_on
+ccx modify fieldoutput 1 node key_on RF U 
+ccx modify fieldoutput 1 node key_off CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF PNT POT PRF PS PSF PT PTF PU RFL SEN TS TSF TT TTF TURB V VF NT 
+
+ccx modify fieldoutput 2 element last_iterations_on
+ccx modify fieldoutput 2 element key_on E ERR  S 
+ccx modify fieldoutput 2 element key_off CEEQ HFL ECD EMFB EMFE ENER HER HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS 
+
+ccx hbc add bc displacement 1
+
+ccx create step name "Load" static
+#ccx modify step 1 parameter nlgeom_yes
+#ccx modify step 1 static solver pardiso initialtimeincrement 0.1 timeperiodofstep 1 minimumtimeincrement 1e-6 maximumtimeincrement 0.1
+ccx step 1 add load force 1
+ccx step 1 add fieldoutput 1
+ccx step 1 add fieldoutput 2
+
+
+#B31
+block all element type beam2
+ccx block all element_type B31
+mesh curve all
+export ccx "B31_force.inp" overwrite
+ccx create job name "B31_force" filepath "B31_force.inp"
+
+#B31R
+ccx block all element_type B31R
+export ccx "B31R_force.inp" overwrite
+ccx create job name "B31R_force" filepath "B31R_force.inp"
+
+#B32
+delete mesh
+block all element type beam3
+ccx block all element_type B32
+mesh curve all
+export ccx "B32_force.inp" overwrite
+ccx create job name "B32_force" filepath "B32_force.inp"
+
+#B32R
+ccx block all element_type B32R
+export ccx "B32R_force.inp" overwrite
+ccx create job name "B32R_force" filepath "B32R_force.inp"
+
+#ccx run job 1
+
+

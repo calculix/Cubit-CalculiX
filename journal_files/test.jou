@@ -1,9 +1,0 @@
-ccx use logfile core on
-reset
-
-
-ccx create initialcondition temperature
-ccx create initialcondition displacement
-
-
-

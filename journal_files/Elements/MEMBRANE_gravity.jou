@@ -1,0 +1,117 @@
+reset
+create surface rectangle width 100 height 100 zplane 
+block 1 add surface 1
+
+surface 1 size 10
+
+create material "Steel" property_group "CalculiX-FEA"
+modify material "Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0 
+modify material "Steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_DENSITY_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_DENSITY_DENSITY" 0.0078 0 
+modify material "Steel" scalar_properties "CCX_SPECIFIC_HEAT_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_SPECIFIC_HEAT_SPECIFIC_HEAT" 0.5 0 
+modify material "Steel" scalar_properties "CCX_EXPANSION_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 1.2e-05 0 
+modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_CONDUCTIVITY_ISO_K_TEMPERATURE" 52 0 
+
+ccx create section membrane block 1 material 1
+ccx modify section membrane 1 thickness 1
+
+nodeset 1 add curve 2
+nodeset 2 add curve 4
+
+create displacement  on nodeset 1 dof 1 dof 2 dof 3 fix 
+create displacement  on nodeset 2 dof 1 dof 2 dof 3 fix
+
+ccx create gravity 9.81 block 1 direction 0 0 -1
+
+ccx create fieldoutput name "nodes" node
+ccx create fieldoutput name "elements" element
+
+ccx modify fieldoutput 1 node last_iterations_on
+ccx modify fieldoutput 1 node key_on RF U 
+ccx modify fieldoutput 1 node key_off CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF PNT POT PRF PS PSF PT PTF PU RFL SEN TS TSF TT TTF TURB V VF NT 
+
+ccx modify fieldoutput 2 element last_iterations_on
+ccx modify fieldoutput 2 element key_on E ERR  S 
+ccx modify fieldoutput 2 element key_off CEEQ HFL ECD EMFB EMFE ENER HER HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS 
+
+ccx create historyoutput name "x0_node" node
+ccx create historyoutput name "xl_node" node
+ccx create historyoutput name "elements" element
+ccx modify historyoutput 1 node nodeset 1 totals_yes
+ccx modify historyoutput 1 node key_on U RF 
+ccx modify historyoutput 1 node key_off TSF TTF PN PSF PTF MACH CP VF DEPF TURB MF RFL NT 
+ccx modify historyoutput 2 node nodeset 2 totals_yes
+ccx modify historyoutput 2 node key_on U RF 
+ccx modify historyoutput 2 node key_off TSF TTF PN PSF PTF MACH CP VF DEPF TURB MF RFL NT 
+ccx modify historyoutput 3 element block 1
+ccx modify historyoutput 3 element key_on S E  
+ccx modify historyoutput 3 element key_off SVF HFL ME PEEQ CEEQ ENER SDV HFLF COORD ELSE ELKE EVOL EMAS EBHE CENT 
+
+ccx hbc add bc displacement 1 2
+
+ccx create step name "Load" static
+#ccx modify step 1 parameter nlgeom_yes
+#ccx modify step 1 static solver pardiso initialtimeincrement 0.001 timeperiodofstep 1 minimumtimeincrement 1e-6 maximumtimeincrement 0.1
+ccx step 1 add load gravity 1
+ccx step 1 add historyoutput 1
+ccx step 1 add historyoutput 2
+ccx step 1 add fieldoutput 1
+ccx step 1 add fieldoutput 2
+
+
+#M3D4
+block 1 element type shell4
+ccx block 1 element_type M3D4
+mesh surface all
+mesh vertex all
+export ccx "M3D4_gravity.inp" overwrite
+ccx create job name "M3D4_gravity" filepath "M3D4_gravity.inp"
+
+#M3D4R
+ccx block 1 element_type M3D4R
+export ccx "M3D4R_gravity.inp" overwrite
+ccx create job name "M3D4R_gravity" filepath "M3D4R_gravity.inp"
+
+#M3D8
+delete mesh
+block 1 element type shell8
+ccx block 1 element_type M3D8
+mesh surface all
+mesh vertex all
+export ccx "M3D8_gravity.inp" overwrite
+ccx create job name "M3D8_gravity" filepath "M3D8_gravity.inp"
+
+#M3D8R
+ccx block 1 element_type M3D8R
+export ccx "M3D8R_gravity.inp" overwrite
+ccx create job name "M3D8R_gravity" filepath "M3D8R_gravity.inp"
+
+#M3D3
+delete mesh
+volume 1 scheme tetmesh
+block 1 element type trishell3
+ccx block 1 element_type M3D3
+mesh surface all
+mesh vertex all
+export ccx "M3D3_gravity.inp" overwrite
+ccx create job name "M3D3_gravity" filepath "M3D3_gravity.inp"
+
+#M3D6
+delete mesh
+block 1 element type trishell6
+ccx block 1 element_type M3D6
+mesh surface all
+mesh vertex all
+export ccx "M3D6_gravity.inp" overwrite
+ccx create job name "M3D6_gravity" filepath "M3D6_gravity.inp"
+
+#ccx run job 1
+

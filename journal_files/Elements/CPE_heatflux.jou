@@ -1,0 +1,104 @@
+reset
+create surface rectangle width 100 height 100 zplane 
+move Surface 1 x 100 y 0 z 0 include_merged 
+block 1 add surface 1
+
+surface 1 size 10
+
+create material "Steel" property_group "CalculiX-FEA"
+modify material "Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0 
+modify material "Steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_DENSITY_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_DENSITY_DENSITY" 0.0078 0 
+modify material "Steel" scalar_properties "CCX_SPECIFIC_HEAT_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_SPECIFIC_HEAT_SPECIFIC_HEAT" 0.5 0 
+modify material "Steel" scalar_properties "CCX_EXPANSION_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 1.2e-05 0 
+modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_CONDUCTIVITY_ISO_K_TEMPERATURE" 52 0 
+
+ccx create section solid block 1 material 1
+
+create temperature on surface 1 value 220
+create heatflux on curve 4 value 15
+
+ccx create fieldoutput name "nodes" node
+ccx create fieldoutput name "elements" element
+
+ccx modify fieldoutput 1 node last_iterations_on
+ccx modify fieldoutput 1 node key_on NT
+ccx modify fieldoutput 1 node key_off CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF PNT POT PRF PS PSF PT PTF PU RFL SEN TS TSF TT TTF TURB V VF U RF
+
+ccx modify fieldoutput 2 element last_iterations_on
+ccx modify fieldoutput 2 element key_on E ERR  S 
+ccx modify fieldoutput 2 element key_off CEEQ HFL ECD EMFB EMFE ENER HER HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS 
+
+ccx create initialcondition temperature
+ccx modify initialcondition 1 temperature bc_id 1
+
+ccx create step name "Load" heattransfer
+ccx modify step 1 heattransfer solver pardiso initialtimeincrement 0.1 timeperiodofstep 10 minimumtimeincrement 0.1 maximumtimeincrement 1
+ccx step 1 add load heatflux 1
+ccx step 1 add fieldoutput 1
+ccx step 1 add fieldoutput 2
+
+
+#CPE4
+block 1 element type quad4
+ccx block 1 element_type CPE4
+mesh surface all
+mesh vertex all
+export ccx "CPE4_heatflux.inp" overwrite
+ccx create job name "CPE4_heatflux" filepath "CPE4_heatflux.inp"
+
+#CPE4R
+ccx block 1 element_type CPE4R
+export ccx "CPE4R_heatflux.inp" overwrite
+ccx create job name "CPE4R_heatflux" filepath "CPE4R_heatflux.inp"
+
+#CPE8
+delete mesh
+block 1 element type quad8
+ccx block 1 element_type CPE8
+mesh surface all
+mesh vertex all
+export ccx "CPE8_heatflux.inp" overwrite
+ccx create job name "CPE8_heatflux" filepath "CPE8_heatflux.inp"
+
+#CPE8R
+ccx block 1 element_type CPE8R
+export ccx "CPE8R_heatflux.inp" overwrite
+ccx create job name "CPE8R_heatflux" filepath "CPE8R_heatflux.inp"
+
+#CPE3
+delete mesh
+volume 1 scheme tetmesh
+block 1 element type tri3
+ccx block 1 element_type CPE3
+mesh surface all
+mesh vertex all
+export ccx "CPE3_heatflux.inp" overwrite
+ccx create job name "CPE3_heatflux" filepath "CPE3_heatflux.inp"
+
+#CPE6
+delete mesh
+block 1 element type tri6
+ccx block 1 element_type CPE6
+mesh surface all
+mesh vertex all
+export ccx "CPE6_heatflux.inp" overwrite
+ccx create job name "CPE6_heatflux" filepath "CPE6_heatflux.inp"
+
+#ccx run job 1
+
+
+
+
+
+
+
+

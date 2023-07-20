@@ -448,7 +448,7 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
         str_temp.append(beam_section_data[sub_section_data_id][13]);
       }
       sections_export_list.push_back(str_temp);
-      if (str_temp.append(beam_section_data[sub_section_data_id][3])=="BOX")
+      if (beam_section_data[sub_section_data_id][3]=="BOX")
       {
         sections_export_list.push_back(beam_section_data[sub_section_data_id][4] + ", " + beam_section_data[sub_section_data_id][5] + ", " + beam_section_data[sub_section_data_id][6] + ", " + beam_section_data[sub_section_data_id][7] + ", " + beam_section_data[sub_section_data_id][8] + ", " + beam_section_data[sub_section_data_id][9]);
       }else{

@@ -1,0 +1,107 @@
+reset
+create surface circle radius 100 zplane 
+create surface circle radius 20 zplane 
+subtract surface 2 from surface 1
+
+block 1 add surface 3
+
+surface 3 size 10
+
+create material "Steel" property_group "CalculiX-FEA"
+modify material "Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0 
+modify material "Steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_DENSITY_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_DENSITY_DENSITY" 0.0078 0 
+modify material "Steel" scalar_properties "CCX_SPECIFIC_HEAT_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_SPECIFIC_HEAT_SPECIFIC_HEAT" 0.5 0 
+modify material "Steel" scalar_properties "CCX_EXPANSION_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 1.2e-05 0 
+modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_CONDUCTIVITY_ISO_K_TEMPERATURE" 52 0 
+
+ccx create section shell block 1 material 1
+ccx modify section shell 1 thickness 1
+
+
+nodeset 1 add curve 3
+
+create vertex 0 0 0 
+create vertex 0 0 0 
+
+ccx create constraint rigid body nodeset 1 ref 4 rot 5
+
+create displacement  on vertex 4  dof 1 dof 2 dof 3 fix  
+create displacement  on vertex 5  dof 1 dof 2 dof 3 fix  
+
+ccx create centrifugal 100 block 1 coordinate 0 0 0 direction 0 0 1
+
+ccx create fieldoutput name "nodes" node
+ccx create fieldoutput name "elements" element
+
+ccx modify fieldoutput 1 node last_iterations_on
+ccx modify fieldoutput 1 node key_on U RF
+ccx modify fieldoutput 1 node key_off CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF PNT POT PRF PS PSF PT PTF PU RFL SEN TS TSF TT TTF TURB V VF NT
+
+ccx modify fieldoutput 2 element last_iterations_on
+ccx modify fieldoutput 2 element key_on E ERR  S 
+ccx modify fieldoutput 2 element key_off CEEQ HFL ECD EMFB EMFE ENER HER HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS 
+
+ccx hbc add bc displacement 1 2
+
+ccx create step name "Load" static
+ccx step 1 add load centrifugal 1
+ccx step 1 add fieldoutput 1
+ccx step 1 add fieldoutput 2
+
+
+#S4
+block 1 element type shell4
+ccx block 1 element_type S4
+mesh surface all
+mesh vertex all
+export ccx "S4_centrifugal.inp" overwrite
+ccx create job name "S4_centrifugal" filepath "S4_centrifugal.inp"
+
+#S4R
+ccx block 1 element_type S4R
+export ccx "S4R_centrifugal.inp" overwrite
+ccx create job name "S4R_centrifugal" filepath "S4R_centrifugal.inp"
+
+#S8
+delete mesh
+block 1 element type shell8
+ccx block 1 element_type S8
+mesh surface all
+mesh vertex all
+export ccx "S8_centrifugal.inp" overwrite
+ccx create job name "S8_centrifugal" filepath "S8_centrifugal.inp"
+
+#S8R
+ccx block 1 element_type S8R
+export ccx "S8R_centrifugal.inp" overwrite
+ccx create job name "S8R_centrifugal" filepath "S8R_centrifugal.inp"
+
+#S3
+delete mesh
+volume 1 scheme tetmesh
+block 1 element type trishell3
+ccx block 1 element_type S3
+mesh surface all
+mesh vertex all
+export ccx "S3_centrifugal.inp" overwrite
+ccx create job name "S3_centrifugal" filepath "S3_centrifugal.inp"
+
+#S6
+delete mesh
+block 1 element type trishell6
+ccx block 1 element_type S6
+mesh surface all
+mesh vertex all
+export ccx "S6_centrifugal.inp" overwrite
+ccx create job name "S6_centrifugal" filepath "S6_centrifugal.inp"
+
+#ccx run job 1

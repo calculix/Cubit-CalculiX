@@ -160,9 +160,9 @@ bool CalculiXCoreInterface::create_constraint_tie_from_cubitcontactpair(std::str
   return ccx_core.create_constraint_tie_from_cubitcontactpair(name, position_tolerance);
 }
 
-bool CalculiXCoreInterface::add_sideset_face(std::string sideset_id, std::string sideset_name, std::string face)
+bool CalculiXCoreInterface::add_sideset_face(std::string sideset_id, std::string sideset_name, std::string face, std::string element_type)
 {
-  return ccx_core.add_sideset_face(sideset_id, sideset_name, face);
+  return ccx_core.add_sideset_face(sideset_id, sideset_name, face, element_type);
 }
 
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_sideset_face(int sideset_id)

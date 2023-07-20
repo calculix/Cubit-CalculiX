@@ -1,3 +1,0 @@
-ccx use logfile core on
-ccx use autocleanup on
-reset

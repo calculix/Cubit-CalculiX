@@ -143,15 +143,15 @@ int ccxExportCommand::get_side(int element_type,int side)
   } else if ((element_type>=11) && (element_type<=14)) {
     // TRI
     if (side==1) {
-      s_return=3;
-    } else if (side==2) {
-      s_return=4;
-    } else if (side==3){
-      s_return=5;
-    } else if (side==4){
       s_return=1;
-    } else if (side==5){
+    } else if (side==2) {
       s_return=2;
+    } else if (side==3){
+      s_return=3;
+    } else if (side==4){
+      s_return=5;
+    } else if (side==5){
+      s_return=4;
     }
   } else if ((element_type>=15) && (element_type<=18)) {
     // TRISHELL
@@ -184,17 +184,17 @@ int ccxExportCommand::get_side(int element_type,int side)
   } else if ((element_type>=23) && (element_type<=27)) {
     // QUAD
     if (side==1) {
-      s_return=3;
-    } else if (side==2) {
-      s_return=4;
-    } else if (side==3){
-      s_return=5;
-    } else if (side==4){
-      s_return=6;
-    } else if (side==5){
       s_return=1;
-    } else if (side==6){
+    } else if (side==2) {
       s_return=2;
+    } else if (side==3){
+      s_return=3;
+    } else if (side==4){
+      s_return=4;
+    } else if (side==5){
+      s_return=6;
+    } else if (side==6){
+      s_return=5;
     }
   } else if ((element_type>=49) && (element_type<=50)) {
     // WEDGE
@@ -435,7 +435,7 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
             std::vector<int> conn(27);
             int num_nodes = iface->get_connectivity(handles[i], conn);
 
-            //output_file << "DEBUG:" << (int) element_type[i] << " " << ids[i] << " " << block_id << "\n";
+            //output_file << "**DEBUG:" << (int) element_type[i] << " " << ids[i] << " " << block_id << "\n";
             output_file << ids[i] << ", ";
             for (int j = 0; j < num_nodes; j++)
             {
@@ -453,6 +453,14 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
                   output_file << conn[j+3];
                 } else if (j >= 12 && j<=14) {
                   output_file << conn[j-3];
+                } else {
+                  output_file << conn[j];
+                }
+              } else if ((element_type[0] == 6)||(element_type[0] == 3)||(element_type[0] == 9)) {  // different node numbering for beam3, bar3, truss3
+                if (j >= 2 && j<=2) {
+                  output_file << conn[j-1];
+                } else if (j >= 1 && j<=1) {
+                  output_file << conn[j+1];
                 } else {
                   output_file << conn[j];
                 }
@@ -651,7 +659,7 @@ bool ccxExportCommand::write_sidesets(std::ofstream& output_file, MeshExportInte
           output_file << "*ELSET, ELSET=" << sideset_name << ("_S" + std::to_string(sw)) << " \n";
           bool_first=false;
           // add elset to storage, for later use by cards like dload
-          ccx_iface.add_sideset_face(std::to_string(iface->id_from_handle(sideset)), sideset_name + "_S" + std::to_string(sw), std::to_string(sw));
+          ccx_iface.add_sideset_face(std::to_string(iface->id_from_handle(sideset)), sideset_name + "_S" + std::to_string(sw), std::to_string(sw),std::to_string(element_type_all[0]));
         }
         ic=0;
         for (int j = 0; j < element_count; j++)

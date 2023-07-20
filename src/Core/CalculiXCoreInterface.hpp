@@ -48,7 +48,7 @@ public:
   bool modify_constraint(std::string constraint_type,int constraint_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a constraint  
   bool delete_constraint(int constraint_id); // delete constraint
   bool create_constraint_tie_from_cubitcontactpair(std::string name, std::string position_tolerance); // create constraint tie from cubit contact pairs
-  bool add_sideset_face(std::string sideset_id, std::string sideset_name, std::string face); // gets the sideset/elset name and face
+  bool add_sideset_face(std::string sideset_id, std::string sideset_name, std::string face, std::string element_type); // gets the sideset/elset name and face
   std::vector<std::vector<std::string>> get_sideset_face(int sideset_id); // gets the sideset/elset name and face
   bool create_surfaceinteraction(std::string surfacebehavior_type, std::vector<std::string> options, std::vector<std::vector<std::string>> options2); // adds a new surfaceinteraction
   bool modify_surfaceinteraction(std::string modify_type, int surfaceinteraction_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2); // modifies a surfaceinteraction

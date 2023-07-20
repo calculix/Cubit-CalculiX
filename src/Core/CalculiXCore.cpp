@@ -1399,9 +1399,9 @@ bool CalculiXCore::create_constraint_tie_from_cubitcontactpair(std::string name,
   return true;
 }
 
-bool CalculiXCore::add_sideset_face(std::string sideset_id, std::string sideset_name, std::string face)
+bool CalculiXCore::add_sideset_face(std::string sideset_id, std::string sideset_name, std::string face, std::string element_type)
 {
-  std::vector<std::string> v = {sideset_id, sideset_name, face};
+  std::vector<std::string> v = {sideset_id, sideset_name, face, element_type};
   
   sideset_face_data.push_back(v);
   
@@ -1415,7 +1415,7 @@ std::vector<std::vector<std::string>> CalculiXCore::get_sideset_face(int sideset
   {
     if (sideset_face_data[i][0]==std::to_string(sideset_id))
     {
-        return_data.push_back({sideset_face_data[i][0],sideset_face_data[i][1],sideset_face_data[i][2]});
+        return_data.push_back({sideset_face_data[i][0],sideset_face_data[i][1],sideset_face_data[i][2],sideset_face_data[i][3]});
     }  
   }
   return return_data;
@@ -2302,14 +2302,41 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
             
             me_iface->get_bc_sideset(bc_handles[ii],sideset);
             temp_list = get_sideset_face(me_iface->id_from_handle(sideset));
-            for (size_t iv = 0; iv < temp_list.size(); iv++)
-            {              
-              str_temp = "*DLOAD";
-              str_temp.append(loadspressures->get_load_parameter_export(steps->loads_data[sub_data_ids[iii]][2]));
-              steps_export_list.push_back(str_temp);
+            int element_type = std::stoi(temp_list[0][3]);
+            // check if shell element
+            if ((element_type>=15) && (element_type<=22))
+            {
+              for (size_t iv = 0; iv < temp_list.size(); iv++)
+              {              
+                str_temp = "*DLOAD";
+                str_temp.append(loadspressures->get_load_parameter_export(steps->loads_data[sub_data_ids[iii]][2]));
+                steps_export_list.push_back(str_temp);
+                // check if edge load or not
+                if (std::stoi(temp_list[0][2])>2)
+                {
+                  int edge = std::stoi(temp_list[iv][2])-2;
+                  str_temp = temp_list[iv][1] + ",EDNOR" + std::to_string(edge) + "," + to_string_scientific(bc_attribs[0].second);
+                }else{
+                  // check direction of load, invert +- if necessary
+                  if (std::stoi(temp_list[0][2])==1) // negativ normal direction->invert load
+                  {
+                    str_temp = temp_list[iv][1] + ",P," + to_string_scientific(bc_attribs[0].second*(-1));
+                  }else{
+                    str_temp = temp_list[iv][1] + ",P," + to_string_scientific(bc_attribs[0].second);
+                  }
+                }
+                steps_export_list.push_back(str_temp);
+              }
+            }else{
+              for (size_t iv = 0; iv < temp_list.size(); iv++)
+              {              
+                str_temp = "*DLOAD";
+                str_temp.append(loadspressures->get_load_parameter_export(steps->loads_data[sub_data_ids[iii]][2]));
+                steps_export_list.push_back(str_temp);
 
-              str_temp = temp_list[iv][1] + ",P" + temp_list[iv][2] + "," + to_string_scientific(bc_attribs[0].second);
-              steps_export_list.push_back(str_temp);
+                str_temp = temp_list[iv][1] + ",P" + temp_list[iv][2] + "," + to_string_scientific(bc_attribs[0].second);
+                steps_export_list.push_back(str_temp);
+              }
             }
             // CUSTOMLINE START
             customline = customlines->get_customline_data("AFTER","PRESSURE",steps->loads_data[sub_data_ids[iii]][2]);
