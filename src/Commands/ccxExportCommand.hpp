@@ -59,6 +59,7 @@ protected:
   bool write_hbcs(std::ofstream& output_file,CalculiXCoreInterface ccx_iface);
   bool write_steps(std::ofstream& output_file,CalculiXCoreInterface ccx_iface);
   int get_side(int element_type,int side);
+  std::vector<int> check_facedirection(int element_type, int num_nodes,std::vector<int> conn,CalculiXCoreInterface ccx_iface); // check if calculix will throw an negative jacobian error. only for quad and tri, 
 };
 
 #endif // CCXEXPORTCOMMAND_HPP

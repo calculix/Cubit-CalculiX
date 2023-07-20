@@ -216,6 +216,80 @@ int ccxExportCommand::get_side(int element_type,int side)
   return s_return;
 }
 
+std::vector<int> ccxExportCommand::check_facedirection(int element_type, int num_nodes,std::vector<int> conn,CalculiXCoreInterface ccx_iface)
+{
+  std::vector<int> return_conn(27);
+  return_conn = conn;
+  std::vector<double> norm(3);
+  std::vector<double> v1(3);
+  std::vector<double> v2(3);
+  std::vector<double> v3(3);
+  std::string out;
+  
+
+  if ((element_type>=11) && (element_type<=14)) {
+    // TRI
+    std::vector<std::array<double,3>> coords;
+    for (size_t i = 0; i < num_nodes; i++)
+    {
+      std::array<double,3> tmp_coords = CubitInterface::get_nodal_coordinates(conn[i]);
+      coords.push_back(tmp_coords);
+    }
+    v1[0] = coords[1][0]-coords[0][0];
+    v1[1] = coords[1][1]-coords[0][1];
+    v1[1] = coords[1][2]-coords[0][2];
+    v2[0] = coords[2][0]-coords[0][0];
+    v2[1] = coords[2][1]-coords[0][1];
+    v2[1] = coords[2][2]-coords[0][2];
+
+    norm[0] = v1[1] * v2[2] - v1[2] * v2[1];
+    norm[1] = v1[2] * v2[0] - v1[0] * v2[2];
+    norm[2] = v1[0] * v2[1] - v1[1] * v2[0];
+
+    out = "\n zzzzz = " + ccx_iface.to_string_scientific(norm[2]) + "\n";
+    PRINT_WARNING(out.c_str());
+
+    if (norm[2] <= 0)
+    {
+        return_conn[0] = conn[0];
+        return_conn[1] = conn[2];
+        return_conn[2] = conn[1];
+    }
+  
+  } else if ((element_type>=23) && (element_type<=27)) {
+    // QUAD
+    std::vector<std::array<double,3>> coords;
+    for (size_t i = 0; i < num_nodes; i++)
+    {
+      std::array<double,3> tmp_coords = CubitInterface::get_nodal_coordinates(conn[i]);
+      coords.push_back(tmp_coords);
+    }
+    v1[0] = coords[1][0]-coords[0][0];
+    v1[1] = coords[1][1]-coords[0][1];
+    v1[1] = coords[1][2]-coords[0][2];
+    v2[0] = coords[3][0]-coords[0][0];
+    v2[1] = coords[3][1]-coords[0][1];
+    v2[1] = coords[3][2]-coords[0][2];
+
+    norm[0] = v1[1] * v2[2] - v1[2] * v2[1];
+    norm[1] = v1[2] * v2[0] - v1[0] * v2[2];
+    norm[2] = v1[0] * v2[1] - v1[1] * v2[0];
+
+    //out = "\n zzzzz = " + ccx_iface.to_string_scientific(norm[2]) + "\n";
+    //PRINT_WARNING(out.c_str());
+
+    if (norm[2] <= 0)
+    {
+        //return_conn[0] = conn[0];
+        //return_conn[1] = conn[3];
+        //return_conn[2] = conn[2];
+        //return_conn[3] = conn[1];
+    }
+  }
+  
+  return return_conn;
+}
+
 bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterface *iface, MaterialInterface *material_iface, CalculiXCoreInterface ccx_iface)
 {
   bool result;
@@ -436,6 +510,10 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
             int num_nodes = iface->get_connectivity(handles[i], conn);
 
             //output_file << "**DEBUG:" << (int) element_type[i] << " " << ids[i] << " " << block_id << "\n";
+            
+            //check if facedirection of element will be positive in z, otherwise ccx jacobian will be negative, if not reorder
+            conn = check_facedirection(element_type[0], num_nodes, conn,ccx_iface);
+            
             output_file << ids[i] << ", ";
             for (int j = 0; j < num_nodes; j++)
             {
