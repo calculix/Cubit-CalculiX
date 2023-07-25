@@ -6,7 +6,7 @@ Full Model definitions for CalculiX can be done with Cubit as Preprocessor.
 Here you can find the source code and a build for linux.
 If you want to build the component yourself, i would recommend using Centos 7.
 As far as i know, that's the distro on which cubit is build.
-
+ 
 This component was build for Cubit 2022.4! 
 
 Tested with Cubit 2022.4 on Ubuntu 22.04
@@ -33,10 +33,6 @@ Definition of:
 - Adding Customlines before/after Keywords
 
 - Export of Calculix Model
-
-# Upcoming soon
-I am currently working on a deeper integration of calculix to cubit. So that a complete model definition can be done with cubit.
-When the alpha is ready i will release it here.
 
 # Installation
 
