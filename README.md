@@ -42,6 +42,8 @@ Download the build directory and point within Cubit to the Direcetory.
 
 Restart Cubit.
 
+![Alt text](/doc/Setup_00.png?raw=true "Add Component")
+
 The Cubit Window should now show "Coreform Cubit 2022.4 -- with CalculiX" in the Title.
 
 - Tools->Options->CalculiX
@@ -50,15 +52,19 @@ Now you have fill in the Paths to CCX, CGX, Paraview, ccx2paraview, the icons fr
 
 Restart Cubit.
 
+![Alt text](/doc/Setup_01.png?raw=true "Setup Options")
+
 Enable Model Tree
 
 - View->CalculiX Model Tree
 
+![Alt text](/doc/Setup_02.png?raw=true "Show Model Tree")
+
 Try to open and run the journal file "first_run.jou"
 
+If everything works. It should compute a beam and automatically open the results with cgx and paraview.
 
-![Alt text](/doc/Setup_00.png?raw=true "Optional Title")
-
+![Alt text](/doc/Setup_03.png?raw=true "After First Run")
 
 # todo list
 - documentation
