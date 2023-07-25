@@ -48,7 +48,7 @@ The Cubit Window should now show "Coreform Cubit 2022.4 -- with CalculiX" in the
 
 - Tools->Options->CalculiX
 
-Now you have fill in the Paths to CCX, CGX, Paraview, ccx2paraview, the icons from the build and give a number for the wanted threads for the solver.
+Now you have to fill in the Paths to CCX, CGX, Paraview, ccx2paraview, the icons from the build and give a number for the wanted threads for the solver.
 
 Restart Cubit.
 
