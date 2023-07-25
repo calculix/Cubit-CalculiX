@@ -34,6 +34,10 @@ Definition of:
 
 - Export of Calculix Model
 
+# Upcoming soon
+I am currently working on a deeper integration of calculix to cubit. So that a complete model definition can be done with cubit.
+When the alpha is ready i will release it here.
+
 # Installation
 
 Download the build directory and point within Cubit to the Direcetory.
@@ -69,3 +73,4 @@ If everything works. It should compute a beam and automatically open the results
 # todo list
 - documentation
 - *.dat file reader
+
