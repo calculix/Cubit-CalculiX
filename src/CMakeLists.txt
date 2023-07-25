@@ -1,8 +1,7 @@
 project(Cubit-CalculiX)
 
 set(CMAKE_PREFIX_PATH
-"/opt/Coreform-Cubit-2022.4/bin"
-"C:/Program Files/Coreform Cubit 2022.4/bin")
+"/opt/Coreform-Cubit-2022.4/bin")
 
 cmake_minimum_required(VERSION 3.1)
 
