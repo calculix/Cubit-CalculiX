@@ -57,6 +57,8 @@ Enable Model Tree
 Try to open and run the journal file "first_run.jou"
 
 
+![Alt text](/doc/Setup_00.png?raw=true "Optional Title")
+
 
 # todo list
 - documentation
