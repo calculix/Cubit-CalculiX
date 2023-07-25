@@ -1,0 +1,65 @@
+reset
+#beam geometry
+create brick x 100 y 10 z 10
+block 1 add volume 1
+
+# node sets
+nodeset 1 add surface 4  
+nodeset 1 name "x0"
+nodeset 2 add surface 6  
+nodeset 2 name "xl"
+
+# material
+create material "Steel" property_group "CalculiX-FEA"
+modify material "Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0 
+modify material "Steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+
+# section
+ccx create section solid block 1 material 1
+
+# vertices for ref and rot node
+create vertex location on surface 6  center  
+create vertex location on surface 6  center  
+
+# rigid body constraint
+ccx create constraint rigid body nodeset 2 ref 9 rot 10
+
+# load 
+create force  on vertex 9 force value 100 direction 0 -1 0
+
+# bc
+create displacement  on nodeset 1  dof 1 dof 2 dof 3 fix 0 
+
+# outputs
+ccx create fieldoutput name "node_output" node
+ccx modify fieldoutput 1 node
+ccx modify fieldoutput 1 node key_on RF U 
+ccx modify fieldoutput 1 node key_off CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF NT PNT POT PRF PS PSF PT PTF PU RFL SEN TS TSF TT TTF TURB V VF 
+ccx create fieldoutput name "element_output" element
+ccx modify fieldoutput 2 element
+ccx modify fieldoutput 2 element key_on E S 
+ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFL HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS 
+
+# steps
+ccx create step name "Static" static
+ccx step 1 add load force 1
+ccx step 1 add bc displacement 1
+ccx step 1 add fieldoutput 1 2
+
+# mesh
+block 1 element type HEX20
+volume 1 size 5
+mesh vertex all
+mesh volume all
+
+# jobs
+ccx create job name "first_run"
+ccx run job 1
+ccx wait job 1
+ccx result cgx job 1
+ccx result ccx2paraview job 1
+ccx result paraview job 1

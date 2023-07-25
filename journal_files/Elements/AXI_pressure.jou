@@ -1,0 +1,132 @@
+reset
+create surface rectangle width 100 height 100 zplane 
+move Surface 1 x 100 y 0 z 0 include_merged 
+block 1 add surface 1
+
+surface 1 size 10
+
+create material "Steel" property_group "CalculiX-FEA"
+modify material "Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0 
+modify material "Steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_DENSITY_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_DENSITY_DENSITY" 0.0078 0 
+modify material "Steel" scalar_properties "CCX_SPECIFIC_HEAT_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_SPECIFIC_HEAT_SPECIFIC_HEAT" 0.5 0 
+modify material "Steel" scalar_properties "CCX_EXPANSION_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 1.2e-05 0 
+modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_CONDUCTIVITY_ISO_K_TEMPERATURE" 52 0 
+
+ccx create section solid block 1 material 1
+
+nodeset 1 add curve 2
+nodeset 2 add curve 4
+
+create vertex on curve 2 midpoint 
+create vertex on curve 2 midpoint 
+create vertex on curve 4 midpoint 
+create vertex on curve 4 midpoint 
+
+ccx create constraint rigid body nodeset 1 ref 5 rot 6
+ccx create constraint rigid body nodeset 2 ref 7 rot 8
+
+create displacement  on vertex 5 dof 1 dof 2 dof 3 fix 
+create displacement  on vertex 6 dof 1 dof 2 dof 3 fix
+
+create displacement  on vertex 7 dof 2 dof 3 fix 
+create displacement  on vertex 8 dof 1 dof 2 dof 3 fix
+
+create pressure on curve 4 magnitude 10
+
+ccx create fieldoutput name "nodes" node
+ccx create fieldoutput name "elements" element
+
+ccx modify fieldoutput 1 node last_iterations_on
+ccx modify fieldoutput 1 node key_on RF U 
+ccx modify fieldoutput 1 node key_off CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF PNT POT PRF PS PSF PT PTF PU RFL SEN TS TSF TT TTF TURB V VF NT 
+
+ccx modify fieldoutput 2 element last_iterations_on
+ccx modify fieldoutput 2 element key_on E ERR  S 
+ccx modify fieldoutput 2 element key_off CEEQ HFL ECD EMFB EMFE ENER HER HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS 
+
+ccx create historyoutput name "node_1" node
+ccx create historyoutput name "node_2" node
+ccx create historyoutput name "elements" element
+ccx modify historyoutput 1 node nodeset 1 totals_yes
+ccx modify historyoutput 1 node key_on U RF 
+ccx modify historyoutput 1 node key_off TSF TTF PN PSF PTF MACH CP VF DEPF TURB MF RFL NT 
+ccx modify historyoutput 2 node nodeset 2 totals_yes
+ccx modify historyoutput 2 node key_on U RF 
+ccx modify historyoutput 2 node key_off TSF TTF PN PSF PTF MACH CP VF DEPF TURB MF RFL NT 
+ccx modify historyoutput 3 element block 1
+ccx modify historyoutput 3 element key_on S E  
+ccx modify historyoutput 3 element key_off SVF HFL ME PEEQ CEEQ ENER SDV HFLF COORD ELSE ELKE EVOL EMAS EBHE CENT 
+
+ccx hbc add bc displacement 1 2 3 4
+
+ccx create step name "Load" static
+#ccx modify step 1 parameter nlgeom_yes
+#ccx modify step 1 static solver pardiso initialtimeincrement 0.1 timeperiodofstep 1 minimumtimeincrement 1e-6 maximumtimeincrement 0.1
+ccx step 1 add load pressure 1
+ccx step 1 add historyoutput 1
+ccx step 1 add historyoutput 2
+ccx step 1 add fieldoutput 1
+ccx step 1 add fieldoutput 2
+
+
+#CAX4
+block 1 element type quad4
+ccx block 1 element_type CAX4
+mesh surface all
+mesh vertex all
+export ccx "CAX4_pressure.inp" overwrite
+ccx create job name "CAX4_pressure" filepath "CAX4_pressure.inp"
+
+#CAX4R
+ccx block 1 element_type CAX4R
+export ccx "CAX4R_pressure.inp" overwrite
+ccx create job name "CAX4R_pressure" filepath "CAX4R_pressure.inp"
+
+#CAX8
+delete mesh
+block 1 element type quad8
+ccx block 1 element_type CAX8
+mesh surface all
+mesh vertex all
+export ccx "CAX8_pressure.inp" overwrite
+ccx create job name "CAX8_pressure" filepath "CAX8_pressure.inp"
+
+#CAX8R
+ccx block 1 element_type CAX8R
+export ccx "CAX8R_pressure.inp" overwrite
+ccx create job name "CAX8R_pressure" filepath "CAX8R_pressure.inp"
+
+#CAX3
+delete mesh
+volume 1 scheme tetmesh
+block 1 element type tri3
+ccx block 1 element_type CAX3
+mesh surface all
+mesh vertex all
+export ccx "CAX3_pressure.inp" overwrite
+ccx create job name "CAX3_pressure" filepath "CAX3_pressure.inp"
+
+#CAX6
+delete mesh
+block 1 element type tri6
+ccx block 1 element_type CAX6
+mesh surface all
+mesh vertex all
+export ccx "CAX6_pressure.inp" overwrite
+ccx create job name "CAX6_pressure" filepath "CAX6_pressure.inp"
+
+#ccx run job 1
+
+
+
+
+
