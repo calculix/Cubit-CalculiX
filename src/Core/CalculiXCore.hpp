@@ -52,6 +52,7 @@ public:
   std::vector<int> extractIntegers(std::string str);
   std::vector<std::string> get_ccx_element_types(); // returns all supported ccx element types;
   std::string get_ccx_element_type(int block_id); // gets the ccx element type for a block
+  std::string get_cubit_element_type_entity(std::string cubit_element_type); // gets the string for a cubit element type
   std::string get_block_name(int block_id); // gets the block name
   std::string get_material_name(int material_id); // gets the material name
   std::string get_nodeset_name(int nodeset_id); // gets the nodeset name

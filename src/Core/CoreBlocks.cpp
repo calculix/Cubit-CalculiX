@@ -65,57 +65,56 @@ CoreBlocks::CoreBlocks()
   //ccx_element_types.push_back("SPRINGA");
 
   // define the cubit element types
-  cubit_element_types.push_back("SPHERE");
-  cubit_element_types.push_back("SPRING");
-  cubit_element_types.push_back("BAR");
-  cubit_element_types.push_back("BAR2");
-  cubit_element_types.push_back("BAR3");
-  cubit_element_types.push_back("BEAM");
-  cubit_element_types.push_back("BEAM2");
-  cubit_element_types.push_back("BEAM3");
-  cubit_element_types.push_back("TRUSS");
-  cubit_element_types.push_back("TRUSS2");
-  cubit_element_types.push_back("TRUSS3");
-  cubit_element_types.push_back("QUAD");
-  cubit_element_types.push_back("QUAD4");
-  cubit_element_types.push_back("QUAD5");
-  cubit_element_types.push_back("QUAD8");
-  cubit_element_types.push_back("QUAD9");
-  cubit_element_types.push_back("SHELL");
-  cubit_element_types.push_back("SHELL4");
-  cubit_element_types.push_back("SHELL8");
-  cubit_element_types.push_back("SHELL9");
-  cubit_element_types.push_back("TRI");
-  cubit_element_types.push_back("TRI3");
-  cubit_element_types.push_back("TRI6");
-  cubit_element_types.push_back("TRI7");
-  cubit_element_types.push_back("TRISHELL");
-  cubit_element_types.push_back("TRISHELL3");
-  cubit_element_types.push_back("TRISHELL6");
-  cubit_element_types.push_back("TRISHELL7");
-  cubit_element_types.push_back("HEX");
-  cubit_element_types.push_back("HEX8");
-  cubit_element_types.push_back("HEX9");
-  cubit_element_types.push_back("HEX20");
-  cubit_element_types.push_back("HEX27");
-  cubit_element_types.push_back("TETRA");
-  cubit_element_types.push_back("TETRA4");
-  cubit_element_types.push_back("TETRA8");
-  cubit_element_types.push_back("TETRA10");
-  cubit_element_types.push_back("TETRA14");
-  cubit_element_types.push_back("TETRA15");
-  cubit_element_types.push_back("WEDGE");
-  cubit_element_types.push_back("WEDGE6");
-  cubit_element_types.push_back("WEDGE15");
-  cubit_element_types.push_back("HEXSHELL");
-  cubit_element_types.push_back("PYRAMID");
-  cubit_element_types.push_back("PYRAMID5");
-  cubit_element_types.push_back("PYRAMID8");
-  cubit_element_types.push_back("PYRAMID13");
-  cubit_element_types.push_back("PYRAMID18");
+  cubit_element_types.push_back("SPHERE");// 0
+  cubit_element_types.push_back("SPRING");// 1
+  cubit_element_types.push_back("BAR");   // 2
+  cubit_element_types.push_back("BAR2");  // 3
+  cubit_element_types.push_back("BAR3");  // 4
+  cubit_element_types.push_back("BEAM");  // 5
+  cubit_element_types.push_back("BEAM2"); // 6
+  cubit_element_types.push_back("BEAM3"); // 7
+  cubit_element_types.push_back("TRUSS"); // 8
+  cubit_element_types.push_back("TRUSS2");// 9
+  cubit_element_types.push_back("TRUSS3");// 10
+  cubit_element_types.push_back("QUAD");  // 11
+  cubit_element_types.push_back("QUAD4"); // 12
+  cubit_element_types.push_back("QUAD5"); // 13
+  cubit_element_types.push_back("QUAD8"); // 14
+  cubit_element_types.push_back("QUAD9"); // 15
+  cubit_element_types.push_back("SHELL"); // 16
+  cubit_element_types.push_back("SHELL4");// 17
+  cubit_element_types.push_back("SHELL8");// 18
+  cubit_element_types.push_back("SHELL9");// 19
+  cubit_element_types.push_back("TRI");   // 20
+  cubit_element_types.push_back("TRI3");  // 21
+  cubit_element_types.push_back("TRI6");  // 22
+  cubit_element_types.push_back("TRI7");  // 23
+  cubit_element_types.push_back("TRISHELL");  // 24
+  cubit_element_types.push_back("TRISHELL3"); // 25
+  cubit_element_types.push_back("TRISHELL6"); // 26
+  cubit_element_types.push_back("TRISHELL7"); // 27
+  cubit_element_types.push_back("HEX");       // 28
+  cubit_element_types.push_back("HEX8");      // 29
+  cubit_element_types.push_back("HEX9");      // 30
+  cubit_element_types.push_back("HEX20");     // 31
+  cubit_element_types.push_back("HEX27");     // 32
+  cubit_element_types.push_back("TETRA");     // 33
+  cubit_element_types.push_back("TETRA4");    // 34
+  cubit_element_types.push_back("TETRA8");    // 35
+  cubit_element_types.push_back("TETRA10");   // 36
+  cubit_element_types.push_back("TETRA14");   // 37
+  cubit_element_types.push_back("TETRA15");   // 38
+  cubit_element_types.push_back("WEDGE");     // 39
+  cubit_element_types.push_back("WEDGE6");    // 40
+  cubit_element_types.push_back("WEDGE15");   // 41
+  cubit_element_types.push_back("HEXSHELL");  // 42
+  cubit_element_types.push_back("PYRAMID");   // 43
+  cubit_element_types.push_back("PYRAMID5");  // 44
+  cubit_element_types.push_back("PYRAMID8");  // 45
+  cubit_element_types.push_back("PYRAMID13"); // 46
+  cubit_element_types.push_back("PYRAMID18"); // 47
 
   // cubit 2 ccx standard element conversion
-
   cubit_ccx_element_types_conversion.push_back(std::make_pair("HEX","C3D8R"));
   cubit_ccx_element_types_conversion.push_back(std::make_pair("BAR","B21"));
   cubit_ccx_element_types_conversion.push_back(std::make_pair("BAR2","B21"));
@@ -138,15 +137,48 @@ CoreBlocks::CoreBlocks()
   cubit_ccx_element_types_conversion.push_back(std::make_pair("QUAD","CPE4R"));
   cubit_ccx_element_types_conversion.push_back(std::make_pair("QUAD4","CPE4"));
   cubit_ccx_element_types_conversion.push_back(std::make_pair("QUAD8","CPE8R"));
-  cubit_ccx_element_types_conversion.push_back(std::make_pair("Tetra","C3D4"));
-  cubit_ccx_element_types_conversion.push_back(std::make_pair("Tetra4","C3D4"));
-  cubit_ccx_element_types_conversion.push_back(std::make_pair("Tetra10","C3D10"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("TETRA","C3D4"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("TETRA4","C3D4"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("TETRA10","C3D10"));
   cubit_ccx_element_types_conversion.push_back(std::make_pair("HEX","C3D8R"));
   cubit_ccx_element_types_conversion.push_back(std::make_pair("HEX8","C3D8"));
   cubit_ccx_element_types_conversion.push_back(std::make_pair("HEX20","C3D20"));
   cubit_ccx_element_types_conversion.push_back(std::make_pair("WEDGE","C3D6"));
   cubit_ccx_element_types_conversion.push_back(std::make_pair("WEDGE6","C3D6"));
   cubit_ccx_element_types_conversion.push_back(std::make_pair("WEDGE15","C3D15"));
+
+  // cubit 2 entity conversion
+  cubit_entity_element_types_conversion.push_back(std::make_pair("HEX","hex"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("BAR","edge"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("BAR2","edge"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("BEAM","edge"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("BEAM2","edge"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("BEAM3","edge"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("TRUSS","edge"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("TRUSS2","edge"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("TRUSS3","edge"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("SPRING","edge"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("TRI","tri"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("TRI3","tri"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("TRI6","tri"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("TRISHELL","tri"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("TRISHELL3","tri"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("TRISHELL6","tri"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("SHELL","quad"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("SHELL4","quad"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("SHELL8","quad"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("QUAD","quad"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("QUAD4","quad"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("QUAD8","quad"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("TETRA","tet"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("TETRA4","tet"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("TETRA10","tet"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("HEX","hex"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("HEX8","hex"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("HEX20","hex"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("WEDGE","wedge"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("WEDGE6","wedge"));
+  cubit_entity_element_types_conversion.push_back(std::make_pair("WEDGE15","wedge"));
 }
 
 CoreBlocks::~CoreBlocks()
@@ -382,4 +414,17 @@ std::string CoreBlocks::get_ccx_element_type_name(int block_id)
   }
   
   return str_return;
+}
+
+std::string CoreBlocks::get_cubit_element_type_entity_name(std::string cubit_element_type)
+{  
+  std::string return_str = "";
+  for (size_t i = 0; i < cubit_entity_element_types_conversion.size(); i++)
+  {
+    if (cubit_entity_element_types_conversion[i].first==cubit_element_type)
+    {
+        return cubit_entity_element_types_conversion[i].second;
+    }  
+  }
+  return return_str;
 }

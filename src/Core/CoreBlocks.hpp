@@ -16,6 +16,7 @@ public:
   std::vector<std::string> ccx_element_types; // all possible element types, the index from the vector will also be the element "id"
   std::vector<std::string> cubit_element_types; // all possible element types, the index from the vector will also be the element "id"
   std::vector<std::pair<std::string,std::string>> cubit_ccx_element_types_conversion; // standard element conversion from cubit to ccx, "-1" if not supported
+  std::vector<std::pair<std::string,std::string>> cubit_entity_element_types_conversion; // to get the standard entity type to fetch the global id
 
   bool is_initialized = false;
 
@@ -34,6 +35,7 @@ public:
   int get_cubit_element_type_id(std::string cubit_element_type); // returns the index for the cubit element type
   int get_standard_ccx_element_type_id(std::string cubit_element_type); // returns the index for the standard conversion ccx element type
   std::string get_ccx_element_type_name(int block_id); // returns the name of the ccx element type
+  std::string get_cubit_element_type_entity_name(std::string cubit_element_type); // returns the name of the cubit element type
   std::string print_data(); // prints out the blocks_data
 };
 
