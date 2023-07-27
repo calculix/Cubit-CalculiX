@@ -6,7 +6,7 @@ Full Model definitions for CalculiX can be done with Cubit as Preprocessor.
 Here you can find the source code and a build for linux.
 If you want to build the component yourself, i would recommend using Centos 7.
 As far as i know, that's the distro on which cubit is build.
-
+ 
 This component was build for Cubit 2022.4! 
 
 Tested with Cubit 2022.4 on Ubuntu 22.04
@@ -69,3 +69,4 @@ If everything works. It should compute a beam and automatically open the results
 # todo list
 - documentation
 - *.dat file reader
+
