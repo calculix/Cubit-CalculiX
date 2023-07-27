@@ -60,6 +60,11 @@ std::string CalculiXCoreInterface::get_ccx_element_type(int block_id)
   return ccx_core.get_ccx_element_type(block_id);
 }
 
+std::string CalculiXCoreInterface::get_cubit_element_type_entity(std::string cubit_element_type)
+{
+  return ccx_core.get_cubit_element_type_entity(cubit_element_type);
+}
+
 std::string CalculiXCoreInterface::get_block_name(int block_id)
 {
   return ccx_core.get_block_name(block_id);

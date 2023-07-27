@@ -385,6 +385,8 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
   std::vector<int> blocks;
   blocks = ccx_iface.get_blocks();
 
+  std::string current_element_type = ""; // to detect changes of element type in blocks. especially hex and wedge
+
   // Get a batch of elements in an initialized block
   int buf_size = 100;
   std::vector<ElementType>   element_type(buf_size);
@@ -392,6 +394,7 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
 
   // define name variable
   std::string element_type_name;
+  std::string cubit_element_type_entity;
   std::string block_name;
 
   // Elements in a buffer set will be of the same element type and in the same block
@@ -402,8 +405,10 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
     //BlockHandle block = blocks[i];
     BlockHandle block;
     iface->get_block_handle(blocks[i], block);
+    current_element_type = CubitInterface::get_block_element_type(blocks[i]);
 
-    if (CubitInterface::get_block_element_type(blocks[i]) != "SPHERE") // check if cubit element type from block is sphere
+
+    if (current_element_type != "SPHERE") // check if cubit element type from block is sphere
     {         
       // write only once per block
       int block_id = blocks[i];
@@ -427,15 +432,26 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
         iface->get_element_ids(num_elems, handles, ids);
 
         // skip if element type is 0 (SPHERE), that element type doesn´t exist in CalculiX
-        if (element_type[0] != 0) 
+        // skip if block element type is different from requested elements, hex and wedge mix
+        if ((element_type[0] != 0) && (current_element_type==iface->get_element_type_name(element_type[0])))
         {
+          // convert ids from element_id to global_element_id
+          cubit_element_type_entity = iface->get_element_type_name(element_type[0]);
+          cubit_element_type_entity = ccx_iface.get_cubit_element_type_entity(cubit_element_type_entity);
+          
+          //rewrite to global element ids
+          for (size_t i = 0; i < ids.size(); i++)
+          {
+            ids[i] = CubitInterface::get_global_element_id(cubit_element_type_entity,ids[i]);
+          }
+
           // Write out the connectivity
           for (int i = 0; i < num_elems; i++)
           {
             std::vector<int> conn(27);
             int num_nodes = iface->get_connectivity(handles[i], conn);
 
-            //output_file << "**DEBUG:" << (int) element_type[i] << " " << ids[i] << " " << block_id << "\n";
+            //output_file << "**DEBUG:"<<  iface->get_element_type_name(element_type[i]) << "   " << (int) element_type[i] << " " << ids[i] << " " << block_id << "\n";
                         
             output_file << ids[i] << ", ";
             for (int j = 0; j < num_nodes; j++)
