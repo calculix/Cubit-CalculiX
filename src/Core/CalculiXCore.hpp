@@ -74,6 +74,9 @@ public:
   int get_bc_fea_type(std::vector<std::pair<int, double>> bc_attribs);
   bool set_ccx_element_type(int block_id, std::string ccx_element_type); // sets the ccx element type for a block
   std::vector<int> get_blocks(); // gets the block ids from core blocks
+  int get_ccx_element_side(int element_type,int side); // gets the ccx element side for the given cubit element side
+  bool add_sideset_face(std::string sideset_id, std::string sideset_name, std::string face, std::string element_type); // gets the sideset/elset name and face
+  std::vector<std::vector<std::string>> get_sideset_face(int sideset_id); // gets the sideset/elset name and face
   bool create_section(std::string section_type,int block_id, int material_id, std::vector<std::string> options); // adds a new section
   bool modify_section(std::string section_type,int section_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a section
   bool delete_section(int section_id); // adds a new section
@@ -82,8 +85,6 @@ public:
   bool delete_constraint(int constraint_id); // adds a new constraint
   bool create_constraint_tie_from_cubitcontactpair(std::string name, std::string position_tolerance); // create constraint tie from cubit contact pairs
   std::vector<int> get_rigidbody_vertex_list(); // get list of rigid body vertices
-  bool add_sideset_face(std::string sideset_id, std::string sideset_name, std::string face, std::string element_type); // gets the sideset/elset name and face
-  std::vector<std::vector<std::string>> get_sideset_face(int sideset_id); // gets the sideset/elset name and face
   bool create_surfaceinteraction(std::string surfacebehavior_type, std::vector<std::string> options, std::vector<std::vector<std::string>> options2); // adds a new surfaceinteraction
   bool modify_surfaceinteraction(std::string modify_type, int surfaceinteraction_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2); // modifies a surfaceinteraction
   bool delete_surfaceinteraction(int surfaceinteraction_id); // delete surface interaction

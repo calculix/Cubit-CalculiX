@@ -1329,6 +1329,133 @@ std::vector<int> CalculiXCore::get_blocks()
   return blocks;
 }
 
+int CalculiXCore::get_ccx_element_side(int element_type,int side)
+{
+  int s_return = -1;
+  if ((element_type>=39) && (element_type<=43)) {
+    // HEX
+    if (side==1) {
+      s_return=3;
+    } else if (side==2) {
+      s_return=4;
+    } else if (side==3){
+      s_return=5;
+    } else if (side==4){
+      s_return=6;
+    } else if (side==5){
+      s_return=1;
+    } else if (side==6){
+      s_return=2;
+    }
+  } else if ((element_type>=28) && (element_type<=33)) {
+    // TETRA
+    if (side==1) {
+      s_return=2;
+    } else if (side==2) {
+      s_return=3;
+    } else if (side==3){
+      s_return=4;
+    } else if (side==4){
+      s_return=1;
+    }
+  } else if ((element_type>=11) && (element_type<=14)) {
+    // TRI
+    if (side==1) {
+      s_return=1;
+    } else if (side==2) {
+      s_return=2;
+    } else if (side==3){
+      s_return=3;
+    } else if (side==4){
+      s_return=5;
+    } else if (side==5){
+      s_return=4;
+    }
+  } else if ((element_type>=15) && (element_type<=18)) {
+    // TRISHELL
+    if (side==1) {
+      s_return=2;
+    } else if (side==2) {
+      s_return=1;
+    } else if (side==3){
+      s_return=3;
+    } else if (side==4){
+      s_return=4;
+    } else if (side==5){
+      s_return=5;
+    }
+  } else if ((element_type>=19) && (element_type<=22)) {
+    // SHELL
+    if (side==1) {
+      s_return=2;
+    } else if (side==2) {
+      s_return=1;
+    } else if (side==3){
+      s_return=3;
+    } else if (side==4){
+      s_return=4;
+    } else if (side==5){
+      s_return=5;
+    } else if (side==6){
+      s_return=6;
+    }
+  } else if ((element_type>=23) && (element_type<=27)) {
+    // QUAD
+    if (side==1) {
+      s_return=1;
+    } else if (side==2) {
+      s_return=2;
+    } else if (side==3){
+      s_return=3;
+    } else if (side==4){
+      s_return=4;
+    } else if (side==5){
+      s_return=6;
+    } else if (side==6){
+      s_return=5;
+    }
+  } else if ((element_type>=48) && (element_type<=50)) {
+    // WEDGE
+    if (side==1) {
+      s_return=3;
+    } else if (side==2) {
+      s_return=4;
+    } else if (side==3){
+      s_return=5;
+    } else if (side==4){
+      s_return=1;
+    } else if (side==5){
+      s_return=2;
+    }
+  } else {
+    s_return = side;
+  }
+
+  return s_return;
+}
+
+bool CalculiXCore::add_sideset_face(std::string sideset_id, std::string sideset_name, std::string face, std::string element_type)
+{
+  std::vector<std::string> v = {sideset_id, sideset_name, face, element_type};
+  
+  sideset_face_data.push_back(v);
+  
+  return true;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_sideset_face(int sideset_id)
+{
+  std::vector<std::vector<std::string>> return_data;
+  for (size_t i = 0; i < sideset_face_data.size(); i++)
+  {
+    if (sideset_face_data[i][0]==std::to_string(sideset_id))
+    {
+        return_data.push_back({sideset_face_data[i][0],sideset_face_data[i][1],sideset_face_data[i][2],sideset_face_data[i][3]});
+    }  
+  }
+  return return_data;
+}
+
 bool CalculiXCore::create_section(std::string section_type,int block_id, int material_id, std::vector<std::string> options)
 {
   return sections->create_section(section_type, block_id, material_id, options);
@@ -1402,28 +1529,6 @@ bool CalculiXCore::create_constraint_tie_from_cubitcontactpair(std::string name,
   } 
   
   return true;
-}
-
-bool CalculiXCore::add_sideset_face(std::string sideset_id, std::string sideset_name, std::string face, std::string element_type)
-{
-  std::vector<std::string> v = {sideset_id, sideset_name, face, element_type};
-  
-  sideset_face_data.push_back(v);
-  
-  return true;
-}
-
-std::vector<std::vector<std::string>> CalculiXCore::get_sideset_face(int sideset_id)
-{
-  std::vector<std::vector<std::string>> return_data;
-  for (size_t i = 0; i < sideset_face_data.size(); i++)
-  {
-    if (sideset_face_data[i][0]==std::to_string(sideset_id))
-    {
-        return_data.push_back({sideset_face_data[i][0],sideset_face_data[i][1],sideset_face_data[i][2],sideset_face_data[i][3]});
-    }  
-  }
-  return return_data;
 }
 
 bool CalculiXCore::create_surfaceinteraction(std::string surfacebehavior_type, std::vector<std::string> options, std::vector<std::vector<std::string>> options2)

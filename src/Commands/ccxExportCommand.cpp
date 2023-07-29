@@ -111,111 +111,6 @@ bool ccxExportCommand::open_file(const std::string& file, std::ofstream& output_
   return true;
 }
 
-int ccxExportCommand::get_side(int element_type,int side)
-{
-  int s_return;
-  if ((element_type>=39) && (element_type<=43)) {
-    // HEX
-    if (side==1) {
-      s_return=3;
-    } else if (side==2) {
-      s_return=4;
-    } else if (side==3){
-      s_return=5;
-    } else if (side==4){
-      s_return=6;
-    } else if (side==5){
-      s_return=1;
-    } else if (side==6){
-      s_return=2;
-    }
-  } else if ((element_type>=28) && (element_type<=33)) {
-    // TETRA
-    if (side==1) {
-      s_return=2;
-    } else if (side==2) {
-      s_return=3;
-    } else if (side==3){
-      s_return=4;
-    } else if (side==4){
-      s_return=1;
-    }
-  } else if ((element_type>=11) && (element_type<=14)) {
-    // TRI
-    if (side==1) {
-      s_return=1;
-    } else if (side==2) {
-      s_return=2;
-    } else if (side==3){
-      s_return=3;
-    } else if (side==4){
-      s_return=5;
-    } else if (side==5){
-      s_return=4;
-    }
-  } else if ((element_type>=15) && (element_type<=18)) {
-    // TRISHELL
-    if (side==1) {
-      s_return=2;
-    } else if (side==2) {
-      s_return=1;
-    } else if (side==3){
-      s_return=3;
-    } else if (side==4){
-      s_return=4;
-    } else if (side==5){
-      s_return=5;
-    }
-  } else if ((element_type>=19) && (element_type<=22)) {
-    // SHELL
-    if (side==1) {
-      s_return=2;
-    } else if (side==2) {
-      s_return=1;
-    } else if (side==3){
-      s_return=3;
-    } else if (side==4){
-      s_return=4;
-    } else if (side==5){
-      s_return=5;
-    } else if (side==6){
-      s_return=6;
-    }
-  } else if ((element_type>=23) && (element_type<=27)) {
-    // QUAD
-    if (side==1) {
-      s_return=1;
-    } else if (side==2) {
-      s_return=2;
-    } else if (side==3){
-      s_return=3;
-    } else if (side==4){
-      s_return=4;
-    } else if (side==5){
-      s_return=6;
-    } else if (side==6){
-      s_return=5;
-    }
-  } else if ((element_type>=49) && (element_type<=50)) {
-    // WEDGE
-    if (side==1) {
-      s_return=1;
-    } else if (side==2) {
-      s_return=4;
-    } else if (side==3){
-      s_return=5;
-    } else if (side==4){
-      s_return=3;
-    } else if (side==5){
-      s_return=2;
-    }
-  } else {
-    s_return = side;
-  }
-
-  return s_return;
-}
-
 bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterface *iface, MaterialInterface *material_iface, CalculiXCoreInterface ccx_iface)
 {
   bool result;
@@ -628,6 +523,8 @@ bool ccxExportCommand::write_sidesets(std::ofstream& output_file, MeshExportInte
     std::vector<ElementHandle> element_ids;
     std::vector<int> side_ids;
     std::vector<ElementType> element_type;
+    std::string cubit_element_type_entity;
+    std::vector<int>::iterator it;
 
 
     // count all elements in sideset
@@ -639,83 +536,115 @@ bool ccxExportCommand::write_sidesets(std::ofstream& output_file, MeshExportInte
 
     int element_id;
     std::vector<int> side_ids_all(element_count);
+    std::vector<int> ccx_side_ids_all(element_count);
     std::vector<int> element_ids_all(element_count);
     std::vector<int> element_type_all(element_count);
+    std::vector<int> sideset_element_types;
 
     start_index = 0;
     while( (num_elems = iface->get_sideset_sides(sideset,start_index,buf_size,element_ids,element_type,side_ids)) > 0)
     {
-
-    // get all elements in sideset
-    for (int j = 0; j < num_elems; j++)
+      // get all elements in sideset
+      for (int j = 0; j < num_elems; j++)
       {
-      iface->get_element_id(element_ids[j],element_id);
-      element_ids_all[start_index + j] = element_id;
-      element_type_all[start_index + j] = element_type[j];
-      side_ids_all[start_index + j] = side_ids[j];
+        iface->get_element_id(element_ids[j],element_id);
+        //element_ids_all[start_index + j] = element_id;
+        element_type_all[start_index + j] = element_type[j];
+        side_ids_all[start_index + j] = side_ids[j];
+        ccx_side_ids_all[start_index + j] = ccx_iface.get_ccx_element_side(element_type[j], side_ids[j]);
+
+        // convert ids from element_id to global_element_id
+        cubit_element_type_entity = iface->get_element_type_name(element_type[j]);
+        cubit_element_type_entity = ccx_iface.get_cubit_element_type_entity(cubit_element_type_entity);
+        element_ids_all[start_index + j] = CubitInterface::get_global_element_id(cubit_element_type_entity,element_id);
+        
+        // check if element type is already recognized for this sideset
+        it = std::find(sideset_element_types.begin(), sideset_element_types.end(), element_type[j]);
+        if (it == sideset_element_types.end())
+        {
+          sideset_element_types.push_back(element_type[j]);
+        }
       }
     start_index += num_elems;
     }
 
     //counter to know when the next line should begin
     int ic;
-    // surface id to write
-    int sw;
-    std::vector<int>::iterator it;
+    //std::vector<int>::iterator it;
     bool bool_first;
-    bool_first=true;
-    // loop for every possible side
-    for (int s = 1; s < 7; s++)
+    bool_first = true;
+    bool bool_one_element_type;
+    if (sideset_element_types.size()==1)
     {
-      // Check if side number is in vector
-      it = std::find(side_ids_all.begin(), side_ids_all.end(), s);
-      if (it != side_ids_all.end())
+      bool_one_element_type = true;
+    }else{
+      bool_one_element_type = false;
+    }
+    
+    // check how many different element types there are
+    // an loop over them
+    for (size_t i_types = 0; i_types < sideset_element_types.size(); i_types++)
+    {
+      // begin loop element_types
+      // loop for every possible ccx side
+      for (int s = 1; s < 7; s++)
       {
-        if (bool_first) {
-          sw = get_side(element_type_all[0], s);
-          output_file << "*ELSET, ELSET=" << sideset_name << ("_S" + std::to_string(sw)) << " \n";
-          bool_first=false;
-          // add elset to storage, for later use by cards like dload
-          ccx_iface.add_sideset_face(std::to_string(iface->id_from_handle(sideset)), sideset_name + "_S" + std::to_string(sw), std::to_string(sw),std::to_string(element_type_all[0]));
-        }
-        ic=0;
-        for (int j = 0; j < element_count; j++)
+        // begin loop sides
+        // Check if side number is in vector
+        it = std::find(ccx_side_ids_all.begin(), ccx_side_ids_all.end(), s);
+        if ((it != ccx_side_ids_all.end()))
         {
-          //only write when it´s the right side
-          if (s==side_ids_all[j]) {
-            ic += 1;
-            //output_file << element_ids_all[j] << ", " << side_ids_all[j] << "\n ";
-            output_file << element_ids_all[j] << ", ";
-            if (ic == 6) {
-              output_file << "\n";
-              ic = 0;
+          ic=0;
+          for (int j = 0; j < element_count; j++)
+          {
+            //only write when it´s the right side and the right element type
+            if ((s==ccx_side_ids_all[j])&&(sideset_element_types[i_types]==element_type_all[j])) {
+              if (bool_first) {
+                bool_first=false;
+                // add elset to storage, for later use by cards like dload
+                if (bool_one_element_type)
+                {
+                  output_file << "*ELSET, ELSET=" << sideset_name << ("_S" + std::to_string(s)) << " \n";
+                  ccx_iface.add_sideset_face(std::to_string(iface->id_from_handle(sideset)), sideset_name + "_S" + std::to_string(s), std::to_string(s),std::to_string(element_type_all[0]));
+                }else{
+                  output_file << "*ELSET, ELSET=" << sideset_name << ("_" + std::to_string(sideset_element_types[i_types]) + "_S" + std::to_string(s)) << " \n";
+                  ccx_iface.add_sideset_face(std::to_string(iface->id_from_handle(sideset)), sideset_name + "_" + std::to_string(sideset_element_types[i_types]) + "_S" + std::to_string(s), std::to_string(s),std::to_string(sideset_element_types[i_types]));
+                }
+              }
+              ic += 1;
+              //output_file << element_ids_all[j] << ", " << side_ids_all[j] << "\n ";
+              output_file << element_ids_all[j] << ", ";
+              if (ic == 6) {
+                output_file << "\n";
+                ic = 0;
+              }
             }
           }
+          if (ic!=0){
+            output_file << std::endl;
+          }
         }
-        if (ic!=0){
-          output_file << std::endl;
-        }
+        bool_first=true;
+        // end loop sides
       }
-      bool_first=true;
+      // end loop element_types
     }
+
+    std::vector<std::vector<std::string>> temp_list;
+    temp_list = ccx_iface.get_sideset_face(iface->id_from_handle(sideset));
+
     // write surface card for sideset
     //output_file << "*SURFACE, NAME=";
-    for (int s = 1; s < 7; s++)
+    
+    for (size_t i = 0; i < temp_list.size(); i++)
     {
       if (bool_first) {
         output_file << "*SURFACE, NAME=" << sideset_name << " \n";
         bool_first=false;
       }
-      // Check if side number is in vector
-      it = std::find(side_ids_all.begin(), side_ids_all.end(), s);
-      if (it != side_ids_all.end())
-        {
-          // VERY IMPORTANT, Calulix hast different side numbering than cubit!!
-          sw = get_side(element_type_all[0], s);
-
-          output_file << sideset_name << ("_S" + std::to_string(sw)) << ", " << ("S" + std::to_string(sw)) << " \n";
-        }
+      output_file << temp_list[i][1] << ", " << "S" << temp_list[i][2] << " \n";
     }
+    
     // CUSTOMLINE START
     customline = ccx_iface.get_customline_data("AFTER","SIDESET",iface->id_from_handle(sideset));
     for (size_t icl = 0; icl < customline.size(); icl++)

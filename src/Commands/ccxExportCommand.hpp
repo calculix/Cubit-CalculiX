@@ -58,7 +58,6 @@ protected:
   bool write_initialconditions(std::ofstream& output_file,CalculiXCoreInterface ccx_iface);
   bool write_hbcs(std::ofstream& output_file,CalculiXCoreInterface ccx_iface);
   bool write_steps(std::ofstream& output_file,CalculiXCoreInterface ccx_iface);
-  int get_side(int element_type,int side);
 };
 
 #endif // CCXEXPORTCOMMAND_HPP
