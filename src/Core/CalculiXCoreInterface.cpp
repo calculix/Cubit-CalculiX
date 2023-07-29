@@ -130,6 +130,21 @@ std::vector<int> CalculiXCoreInterface::get_blocks()
   return ccx_core.get_blocks();
 }
 
+int CalculiXCoreInterface::get_ccx_element_side(int element_type,int side)
+{
+  return ccx_core.get_ccx_element_side(element_type,side);
+}
+
+bool CalculiXCoreInterface::add_sideset_face(std::string sideset_id, std::string sideset_name, std::string face, std::string element_type)
+{
+  return ccx_core.add_sideset_face(sideset_id, sideset_name, face, element_type);
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_sideset_face(int sideset_id)
+{
+  return ccx_core.get_sideset_face(sideset_id);
+}
+
 bool CalculiXCoreInterface::create_section(std::string section_type,int block_id, int material_id, std::vector<std::string> options)
 {
   return ccx_core.create_section(section_type,block_id,material_id,options);
@@ -163,16 +178,6 @@ bool CalculiXCoreInterface::delete_constraint(int constraint_id)
 bool CalculiXCoreInterface::create_constraint_tie_from_cubitcontactpair(std::string name, std::string position_tolerance)
 {
   return ccx_core.create_constraint_tie_from_cubitcontactpair(name, position_tolerance);
-}
-
-bool CalculiXCoreInterface::add_sideset_face(std::string sideset_id, std::string sideset_name, std::string face, std::string element_type)
-{
-  return ccx_core.add_sideset_face(sideset_id, sideset_name, face, element_type);
-}
-
-std::vector<std::vector<std::string>> CalculiXCoreInterface::get_sideset_face(int sideset_id)
-{
-  return ccx_core.get_sideset_face(sideset_id);
 }
 
 bool CalculiXCoreInterface::create_surfaceinteraction(std::string surfacebehavior_type, std::vector<std::string> options, std::vector<std::vector<std::string>> options2)
