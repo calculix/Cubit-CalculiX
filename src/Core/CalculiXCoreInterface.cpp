@@ -485,6 +485,21 @@ std::vector<std::string> CalculiXCoreInterface::get_job_data(int job_id)
   return ccx_core.get_job_data(job_id);
 }
 
+bool CalculiXCoreInterface::create_result(int job_id)
+{
+  return ccx_core.create_result(job_id);
+}
+
+bool CalculiXCoreInterface::delete_result(int job_id)
+{
+  return ccx_core.delete_result(job_id);
+}
+
+bool CalculiXCoreInterface::load_result(int job_id)
+{
+  return ccx_core.load_result(job_id);
+}
+
 bool CalculiXCoreInterface::create_customline(std::vector<std::string> options)
 {
   return ccx_core.create_customline(options);

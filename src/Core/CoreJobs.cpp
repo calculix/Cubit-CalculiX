@@ -70,6 +70,7 @@ bool CoreJobs::create_job(std::vector<std::string> options)
   }
 
   this->add_job(job_id, options[0], options[1]);
+  ccx_iface->create_result(job_id);
   return true;
 }
 
@@ -110,6 +111,7 @@ bool CoreJobs::delete_job(int job_id)
     return false;
   } else {
     jobs_data.erase(jobs_data.begin() + jobs_data_id);
+    ccx_iface->delete_result(job_id);
     return true;
   }
 }
@@ -255,11 +257,13 @@ bool CoreJobs::wait_job(int job_id)
         //log.append(" Exit Code " + std::to_string(errorcode) + " \n");
         PRINT_INFO("%s", log.c_str());
         jobs_data[jobs_data_id][3] = "4";
+        ccx_iface->load_result(job_id);
       }else{
         log = "Job " + jobs_data[jobs_data_id][1] + " with ID " + jobs_data[jobs_data_id][0] + " finished! \n";
         //log.append(" Exit Code " + std::to_string(errorcode) + " \n");
         PRINT_INFO("%s", log.c_str());
         jobs_data[jobs_data_id][3] = "2";
+        ccx_iface->load_result(job_id);
       }
       CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
     }
@@ -355,6 +359,7 @@ bool CoreJobs::check_jobs()
           //log.append(" Exit Code " + std::to_string(CubitProcessHandler[CubitProcessHandler_data_id].exit_code()) + " \n");
           PRINT_INFO("%s", log.c_str());
           jobs_data[i][3] = "4";
+          ccx_iface->load_result(std::stoi(jobs_data[i][0]));
           CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
         }else if ((0 != kill(std::stoi(jobs_data[i][4]),0)) && (status==0)) // if process doesn't exist and exited without error
         {
@@ -363,6 +368,7 @@ bool CoreJobs::check_jobs()
           //log.append(" Exit Code " + std::to_string(CubitProcessHandler[CubitProcessHandler_data_id].exit_code()) + " \n");
           PRINT_INFO("%s", log.c_str());
           jobs_data[i][3] = "2";
+          ccx_iface->load_result(std::stoi(jobs_data[i][0]));
           CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
         }
       }

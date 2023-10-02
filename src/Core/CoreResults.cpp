@@ -34,6 +34,7 @@ bool CoreResults::reset()
 {
   results_data.clear();
   frd_data.clear();
+  dat_data.clear();
 
   init();
   return true;
@@ -56,28 +57,42 @@ bool CoreResults::create_result(int job_id)
   else
   {
     result_last = results_data.size() - 1;
-    result_id = std::stoi(results_data[result_last][0]) + 1;
+    result_id = results_data[result_last][0] + 1;
   }
 
-  this->add_job(result_id, job_id, frd_data.size());
+  this->add_result(result_id, job_id, frd_data.size(), dat_data.size());
   return true;
 }
 
-bool CoreResults::add_result(int result_id, int job_id, int frd_id)
+bool CoreResults::add_result(int result_id, int job_id, int frd_id, int dat_id)
 {
-  std::vector<std::int> v = {result_id, job_id, frd_id};
-  jobs_data.push_back(v);
+  std::vector<int> v = {result_id, job_id, frd_id, dat_id};
+  results_data.push_back(v);
   return true;
 }
 
 bool CoreResults::delete_result(int job_id)
 {
-  int jobs_data_id = get_jobs_data_id_from_job_id(job_id);
-  if (jobs_data_id == -1)
+  int results_data_id = get_results_data_id_from_job_id(job_id);
+  if (results_data_id == -1)
   {
     return false;
   } else {
-    jobs_data.erase(jobs_data.begin() + jobs_data_id);
+    results_data.erase(results_data.begin() + results_data_id);
+    return true;
+  }
+}
+
+bool CoreResults::load_result(int job_id)
+{
+  std::string log;
+  int results_data_id = get_results_data_id_from_job_id(job_id);
+  if (results_data_id == -1)
+  {
+    return false;
+  } else {
+    log = "Loading results for Job ID " + std::to_string(results_data[results_data_id][1]) + " \n";
+    PRINT_INFO("%s", log.c_str());
     return true;
   }
 }
@@ -85,9 +100,9 @@ bool CoreResults::delete_result(int job_id)
 int CoreResults::get_results_data_id_from_job_id(int job_id)
 { 
   int return_int = -1;
-  for (size_t i = 0; i < jobs_data.size(); i++)
+  for (size_t i = 0; i < results_data.size(); i++)
   {
-    if (jobs_data[i][0]==std::to_string(job_id))
+    if (results_data[i][1]==job_id)
     {
       return_int = i;
     }  
@@ -98,16 +113,12 @@ int CoreResults::get_results_data_id_from_job_id(int job_id)
 std::string CoreResults::print_data()
 {
   std::string str_return;
-  str_return = "\n CoreJobs jobs_data: \n";
-  str_return.append("job_id, name, filepath, status, process id, output \n");
+  str_return = "\n CoreResults results_data: \n";
+  str_return.append("result_id, job_id, frd_id, dat_id \n");
 
-  for (size_t i = 0; i < jobs_data.size(); i++)
+  for (size_t i = 0; i < results_data.size(); i++)
   {
-    str_return.append(jobs_data[i][0] + " " + jobs_data[i][1] + " " + jobs_data[i][2] + " " + jobs_data[i][3] + " " + jobs_data[i][4] + " \n");
-    str_return.append(jobs_data[i][5] + " \n");
-    str_return.append(jobs_data[i][6] + " \n");
-    str_return.append(jobs_data[i][7] + " \n");
-    str_return.append(jobs_data[i][8] + " \n");
+    str_return.append(std::to_string(results_data[i][0]) + " " + std::to_string(results_data[i][1]) + " " + std::to_string(results_data[i][2]) + " " + std::to_string(results_data[i][3]) +  " \n");
   }
 
   return str_return;

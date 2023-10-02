@@ -11,12 +11,16 @@ public:
   ~CoreResults();
 
   std::vector<std::vector<int>> results_data;
-  // jobs_data[0][0] result_id
-  // jobs_data[0][1] job_id
-  // jobs_data[0][2] frd_id data id of frd reader writer object
+  // results_data[0][0] result_id
+  // results_data[0][1] job_id
+  // results_data[0][2] frd_id data id of frd reader writer object
+  // results_data[0][3] dat_id data id of dat file reader object
 
   std::vector<std::string> frd_data;
-  // jobs_data[0] frd reader writer object
+  // frd_data[0] frd reader writer object
+
+  std::vector<std::string> dat_data;
+  // dat_data[0] dat file reader object
 
   bool is_initialized = false;
 
@@ -26,7 +30,8 @@ public:
   bool check_initialized(); // check if object is initialized
   bool create_result(int job_id); // adds new results data for a job
   bool delete_result(int job_id); // deletes results from results_data and deletes frd object
-  bool add_result(int result_id, int job_id, int frd_id)
+  bool add_result(int result_id, int job_id, int frd_id, int dat_id);
+  bool load_result(int job_id); // loads the results for the job if possible
   int  get_results_data_id_from_job_id(int job_id); // searches for the job_id in the results_data and returns the indices or -1 if it fails
   std::string print_data(); // prints out the results_data
 

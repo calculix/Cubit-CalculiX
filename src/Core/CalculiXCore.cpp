@@ -32,6 +32,7 @@
 #include "CoreHBCs.hpp"
 #include "CoreSteps.hpp"
 #include "CoreJobs.hpp"
+#include "CoreResults.hpp"
 #include "CoreTimer.hpp"
 #include "CoreCustomLines.hpp"
 #include "loadUserOptions.hpp"
@@ -41,7 +42,7 @@ CalculiXCore::CalculiXCore():
   contactpairs(NULL),amplitudes(NULL),loadsforces(NULL),loadspressures(NULL),loadsheatfluxes(NULL),
   loadsgravity(NULL),loadscentrifugal(NULL),
   bcsdisplacements(NULL),bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL),
-  initialconditions(NULL), hbcs(NULL), steps(NULL),jobs(NULL),timer(NULL),customlines(NULL)
+  initialconditions(NULL), hbcs(NULL), steps(NULL),jobs(NULL),results(NULL),timer(NULL),customlines(NULL)
 {
   init();
 }
@@ -88,6 +89,8 @@ CalculiXCore::~CalculiXCore()
     delete steps;
   if(jobs)
     delete jobs;
+  if(results)
+    delete results;
   if(timer)
     delete timer;
   if(customlines)
@@ -211,6 +214,11 @@ bool CalculiXCore::init()
   
   jobs->init();
 
+  if(!results)
+    results = new CoreResults;
+  
+  results->init();
+
   if(!timer)
     timer = new CoreTimer;
 
@@ -278,6 +286,7 @@ bool CalculiXCore::reset()
   hbcs->reset();
   steps->reset();
   jobs->reset();
+  results->reset();
   customlines->reset();
 
   sideset_face_data.clear();
@@ -953,6 +962,7 @@ std::string CalculiXCore::print_data()
   str_return.append(hbcs->print_data());
   str_return.append(steps->print_data());
   str_return.append(jobs->print_data());
+  str_return.append(results->print_data());
   str_return.append(customlines->print_data());
 
   return str_return;
@@ -1880,6 +1890,21 @@ bool CalculiXCore::result_paraview_job(int job_id)
 std::vector<std::string> CalculiXCore::get_job_data(int job_id)
 {
   return jobs->get_job_data(job_id);
+}
+
+bool CalculiXCore::create_result(int job_id)
+{
+  return results->create_result(job_id);
+}
+
+bool CalculiXCore::delete_result(int job_id)
+{
+  return results->delete_result(job_id);
+}
+
+bool CalculiXCore::load_result(int job_id)
+{
+  return results->load_result(job_id);
 }
 
 bool CalculiXCore::create_customline(std::vector<std::string> options)

@@ -95,6 +95,7 @@
 #include "ccxResultccx2paraviewJobCommand.hpp"
 #include "ccxResultCGXJobCommand.hpp"
 #include "ccxResultParaViewJobCommand.hpp"
+#include "ccxResultLoadJobCommand.hpp"
 #include "ccxKillJobCommand.hpp"
 #include "ccxCustomLineCreateCommand.hpp"
 #include "ccxCustomLineModifyCommand.hpp"
@@ -210,6 +211,7 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxResultccx2paraviewJobCommand");
   keys.push_back("ccxResultCGXJobCommand");
   keys.push_back("ccxResultParaViewJobCommand");
+  keys.push_back("ccxResultLoadJobCommand");
   keys.push_back("ccxCustomLineCreateCommand");
   keys.push_back("ccxCustomLineModifyCommand");
   keys.push_back("ccxCustomLineDeleteCommand");
@@ -509,6 +511,9 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxResultParaViewJobCommand")
     return new ccxResultParaViewJobCommand();
+
+  else if(key == "ccxResultLoadJobCommand")
+    return new ccxResultLoadJobCommand();
 
   else if(key == "ccxKillJobCommand")
     return new ccxKillJobCommand();
