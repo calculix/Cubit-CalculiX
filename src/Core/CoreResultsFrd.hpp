@@ -46,11 +46,12 @@ public:
   // 2 STRESS
   // 3 TOSTRAIN
   // 4 ERROR
+  // 5 FORC
   // steps[0][3] result data id
   std::vector<double> steps_time;
   // steps_time[0] step time
   std::vector<std::vector<std::vector<double>>> result_disp;
-  //result_disp[step][node][component]
+  //result_disp[result data id][node][component]
   //result_disp[0][0][0] D1
   //result_disp[0][0][1] D2
   //result_disp[0][0][2] D3
@@ -77,6 +78,7 @@ public:
   bool read_element(std::vector<std::string> line); // processing the elements data
   bool read_parameter_header(std::vector<std::string> line); // processing the parameter header
   bool check_current_step_id_exists(int step_id); // checks if the current step is already created
+  bool read_disp(std::vector<std::string> line); // processing the disp results for a step
   bool print_data(); // prints the data to the console
 
   CalculiXCoreInterface *ccx_iface;

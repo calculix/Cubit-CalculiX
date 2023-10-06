@@ -3,6 +3,7 @@
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 
+#include <cmath>
 #include <fstream>
 #include <iostream>
 #include "loadUserOptions.hpp"
@@ -96,7 +97,13 @@ bool CoreResultsFrd::read()
         this->read_element(frd_array);
       } else if (current_read_mode == 3)
       {
-        //this->read_parameter_header(frd_array);
+        this->read_parameter_header(frd_array);
+      } else if (current_read_mode == 101) // DISP
+      {
+        this->read_disp(frd_array);
+      } else if (current_read_mode == 9999)
+      {
+        break;
       }
 
       for (size_t i = 0; i < frd_array.size(); i++)
@@ -108,10 +115,9 @@ bool CoreResultsFrd::read()
     }
   }
   frd.close();
-  
   PRINT_INFO("%s", log.c_str());
   print_data();
-  
+
   return true;
 }
 
@@ -165,7 +171,10 @@ std::vector<std::string> CoreResultsFrd::split_line(std::string frdline)
 
 bool CoreResultsFrd::check_mode(std::vector<std::string> line)
 {
-  if (current_read_mode == 0)
+  if (line[0] == "9999") // file finished
+  {
+    current_read_mode = 9999;
+  }else if (current_read_mode == 0)
   {
     if (line[0] == "2C")
     {
@@ -183,14 +192,14 @@ bool CoreResultsFrd::check_mode(std::vector<std::string> line)
     {
       current_read_mode = 3; // result blocks
     }
-  }
-  else if ((current_read_mode == 3)||(current_read_mode > 9)) // switch to parameter mode
+  }else if ((current_read_mode == 3)||(current_read_mode > 9)) // switch to parameter mode
   {
     if (line[0] == "-3")
     {
       current_read_mode = 3;
     }
   }
+
   return true;
 }
 
@@ -316,7 +325,12 @@ bool CoreResultsFrd::read_parameter_header(std::vector<std::string> line)
   {
     if (line[1] == "DISP")
     {
-      result_type_data_id = result_disp.size();
+      std::vector<std::vector<double>> tmp_disp;
+      std::vector<std::vector<int>> tmp_disp_nodes;
+      result_disp.push_back(tmp_disp);
+      result_disp_nodes.push_back(tmp_disp_nodes);
+      
+      result_type_data_id = result_disp.size()-1;
       steps.push_back({current_step_id,current_step_time_id,1,result_type_data_id});
       current_read_mode = 101;
     }
@@ -334,6 +348,32 @@ bool CoreResultsFrd::check_current_step_id_exists(int step_id)
     }
   }
   return false;
+}
+
+bool CoreResultsFrd::read_disp(std::vector<std::string> line)
+{
+  int node_id;
+  std::vector<double> disp_comp(4);
+  int result_disp_node_data_id = -1;
+  
+  if (line[0] == "-1")
+  {
+    node_id = std::stoi(line[1]);
+
+    disp_comp[0] = std::stod(line[2]);
+    disp_comp[1] = std::stod(line[3]);
+    disp_comp[2] = std::stod(line[4]);
+    // compute ALL
+    disp_comp[3] = std::sqrt(disp_comp[0]*disp_comp[0]+disp_comp[1]*disp_comp[1]+disp_comp[2]*disp_comp[2]);
+
+    result_disp[result_disp.size()-1].push_back(disp_comp);
+
+    result_disp_node_data_id = result_disp[result_disp.size()-1].size()-1;
+
+    result_disp_nodes[result_disp_nodes.size()-1].push_back({node_id,result_disp_node_data_id});
+  }
+
+  return true;
 }
 
 bool CoreResultsFrd::print_data()
@@ -392,20 +432,27 @@ bool CoreResultsFrd::print_data()
       log.append("\n");
     }
   }
-  /*if (steps.size()>0)
+  if (steps.size()>0)
   {
     for (size_t i = 0; i < steps.size(); i++)
     {
-      log.append(std::to_string(steps[i][0]) + " ## " + std::to_string(steps[i][1]) + " ## " + std::to_string(steps[i][2]) + " ## " + std::to_string(steps[i][3]) + " #---# ");
-      
-      //for (size_t ii = 0; ii < elements_connectivity[elements[i][2]].size(); ii++)
-      //{
-//        log.append(std::to_string(elements_connectivity[elements[i][2]][ii]) + " ");
-  //    }
-
+      log.append("step " + std::to_string(steps[i][0]) + " ## " + std::to_string(steps[i][1]) + " ## " + std::to_string(steps[i][2]) + " ## " + std::to_string(steps[i][3]) + " \n");
+      log.append("steptime " + std::to_string(steps_time[steps[i][1]]) + " \n");
       log.append("\n");
+      if (steps[i][2] == 1)
+      {
+        for (size_t ii = 0; ii < result_disp_nodes[steps[i][3]].size(); ii++)
+        {
+          log.append(std::to_string(result_disp_nodes[steps[i][3]][ii][0]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_disp[steps[i][3]][ii][0]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_disp[steps[i][3]][ii][1]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_disp[steps[i][3]][ii][2]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_disp[steps[i][3]][ii][3]));
+          log.append("\n");
+        }
+      }
     }
-  }*/
+  }
 
   PRINT_INFO("%s", log.c_str());
   return true;
