@@ -44,6 +44,10 @@ bool CoreResultsFrd::clear()
   nodes_coords.clear();
   elements.clear();
   elements_connectivity.clear();
+  steps.clear();
+  steps_time.clear();
+  result_disp.clear();
+  result_disp_nodes.clear();
   return true;
 }
 
@@ -90,9 +94,11 @@ bool CoreResultsFrd::read()
       } else if (current_read_mode == 2)
       {
         this->read_element(frd_array);
+      } else if (current_read_mode == 3)
+      {
+        //this->read_parameter_header(frd_array);
       }
-      
-      
+
       for (size_t i = 0; i < frd_array.size(); i++)
       {
         //log.append(std::to_string(current_read_mode) + "#");
@@ -175,6 +181,13 @@ bool CoreResultsFrd::check_mode(std::vector<std::string> line)
   {
     if (line[0] == "-3")
     {
+      current_read_mode = 3; // result blocks
+    }
+  }
+  else if ((current_read_mode == 3)||(current_read_mode > 9)) // switch to parameter mode
+  {
+    if (line[0] == "-3")
+    {
       current_read_mode = 3;
     }
   }
@@ -242,6 +255,7 @@ bool CoreResultsFrd::read_element(std::vector<std::string> line)
 {
   int element_id;
   int element_type;
+  int material_id;
   std::vector<int> connectivity;
   int elements_connectivity_data_id = -1;
   
@@ -249,7 +263,8 @@ bool CoreResultsFrd::read_element(std::vector<std::string> line)
   {
     element_id = std::stoi(line[1]);
     element_type = std::stoi(line[2]);
-    elements.push_back({element_id,element_type,elements_connectivity_data_id});
+    material_id = std::stoi(line[4]);
+    elements.push_back({element_id,element_type,elements_connectivity_data_id,material_id});
   }else if (line[0] == "-2")
   {
     if (elements[elements.size()-1][2] == -1)
@@ -273,6 +288,52 @@ bool CoreResultsFrd::read_element(std::vector<std::string> line)
     }
   }
   return true;
+}
+
+bool CoreResultsFrd::read_parameter_header(std::vector<std::string> line)
+{
+  int step_id;
+  double step_time;
+  int result_type_data_id = -1;
+  
+  if (line[0] == "1PSTEP")
+  {
+    step_id = std::stoi(line[2]);
+    if (!check_current_step_id_exists(step_id))
+    {
+      current_step_id = step_id;
+    }
+  } else if (line[0] == "100CL")
+  {
+    step_id = std::stoi(line[6]);
+    step_time = std::stod(line[2]);
+    if (!check_current_step_id_exists(step_id))
+    {
+      steps_time.push_back(step_time);
+      current_step_time_id = steps_time.size()-1;
+    }
+  } else if (line[0] == "-4") // choosing result type
+  {
+    if (line[1] == "DISP")
+    {
+      result_type_data_id = result_disp.size();
+      steps.push_back({current_step_id,current_step_time_id,1,result_type_data_id});
+      current_read_mode = 101;
+    }
+  }
+  return true;
+}
+
+bool CoreResultsFrd::check_current_step_id_exists(int step_id)
+{
+  for (size_t i = 0; i < steps.size(); i++)
+  {
+    if (steps[i][0]==step_id)
+    {
+      return true;
+    }
+  }
+  return false;
 }
 
 bool CoreResultsFrd::print_data()
@@ -331,6 +392,20 @@ bool CoreResultsFrd::print_data()
       log.append("\n");
     }
   }
+  /*if (steps.size()>0)
+  {
+    for (size_t i = 0; i < steps.size(); i++)
+    {
+      log.append(std::to_string(steps[i][0]) + " ## " + std::to_string(steps[i][1]) + " ## " + std::to_string(steps[i][2]) + " ## " + std::to_string(steps[i][3]) + " #---# ");
+      
+      //for (size_t ii = 0; ii < elements_connectivity[elements[i][2]].size(); ii++)
+      //{
+//        log.append(std::to_string(elements_connectivity[elements[i][2]][ii]) + " ");
+  //    }
+
+      log.append("\n");
+    }
+  }*/
 
   PRINT_INFO("%s", log.c_str());
   return true;
