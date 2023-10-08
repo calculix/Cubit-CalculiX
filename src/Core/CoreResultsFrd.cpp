@@ -2,7 +2,9 @@
 #include "CalculiXCoreInterface.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
+#include "ProgressTool.hpp"
 
+#include <chrono>
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -49,6 +51,12 @@ bool CoreResultsFrd::clear()
   steps_time.clear();
   result_disp.clear();
   result_disp_nodes.clear();
+  result_stress.clear();
+  result_stress_nodes.clear();
+  result_tostrain.clear();
+  result_tostrain_nodes.clear();
+  result_error.clear();
+  result_error_nodes.clear();
   return true;
 }
 
@@ -60,6 +68,9 @@ bool CoreResultsFrd::check_initialized()
 
 bool CoreResultsFrd::read()
 {
+  int maxlines = 0;
+  int currentline = 0;
+  ProgressTool progressbar;
   std::string log;
   log = "reading results " + filepath + " for Job ID " + std::to_string(job_id) + " \n";
   PRINT_INFO("%s", log.c_str());
@@ -76,11 +87,37 @@ bool CoreResultsFrd::read()
 
   if (frd.is_open())
   {
+    // scan file for number of lines
+    progressbar.start(0,100,"Scanning Results");
+    while (std::getline(frd,frdline))
+    { 
+      ++maxlines;
+      if(frd.eof()){
+        break;
+      }
+    }
+    progressbar.end();
+    frd.close();
+    frd.open(this->filepath);
+
+    progressbar.start(0,100,"Reading Results");
+    auto t_start = std::chrono::high_resolution_clock::now();
+    
     log = "";
     while (frd)
     {
       std::getline(frd,frdline);
-
+      ++currentline;
+  
+      const auto t_end = std::chrono::high_resolution_clock::now();
+      int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+      if (duration > 500)
+      {
+        progressbar.percent(double(currentline)/double(maxlines));
+        progressbar.check_interrupt();
+        t_start = std::chrono::high_resolution_clock::now();
+      }
+      
       frd_array = this->split_line(frdline);
 
       // first lets check if the mode is still valid
@@ -101,21 +138,33 @@ bool CoreResultsFrd::read()
       } else if (current_read_mode == 101) // DISP
       {
         this->read_disp(frd_array);
-      } else if (current_read_mode == 9999)
+      } else if (current_read_mode == 102) // STRESS
+      {
+        this->read_stress(frd_array);
+      } else if (current_read_mode == 103) // TOSTRAIN
+      {
+        this->read_tostrain(frd_array);
+      } else if (current_read_mode == 104) // ERROR
+      {
+        this->read_error(frd_array);
+      } else if ((current_read_mode == 9999)||(frd.eof()))
       {
         break;
       }
 
+      /*
       for (size_t i = 0; i < frd_array.size(); i++)
       {
         //log.append(std::to_string(current_read_mode) + "#");
         log.append(frd_array[i] + " ");
       }
       log.append("\n");
+      */
     }
   }
   frd.close();
-  PRINT_INFO("%s", log.c_str());
+  progressbar.end();
+  //PRINT_INFO("%s", log.c_str());
   print_data();
 
   return true;
@@ -228,7 +277,20 @@ bool CoreResultsFrd::read_header(std::vector<std::string> line)
     header.push_back(tmp);
   }else if ((line[0] == "1UMAT"))
   {
-    size_t name_pos = line[1].find_first_not_of("0123456789");
+    //size_t name_pos = line[1].find_first_not_of("0123456789");
+    //tmp.push_back(line[1].substr(0, name_pos));
+    //tmp.push_back(line[1].substr(name_pos, line[1].length() - name_pos));
+    size_t name_pos = 1;
+    if ((tmp.size()>9)&&(tmp.size()<100)) //10-99
+    {
+      name_pos = 2;
+    }else if ((tmp.size()>99)&&(tmp.size()<1000)) //100-999
+    {
+      name_pos = 3;
+    }else if (tmp.size()>1000) // 1000-inf
+    {
+      name_pos = line[1].find_first_not_of("0123456789");
+    }
     tmp.push_back(line[1].substr(0, name_pos));
     tmp.push_back(line[1].substr(name_pos, line[1].length() - name_pos));
     materials.push_back(tmp);
@@ -308,19 +370,15 @@ bool CoreResultsFrd::read_parameter_header(std::vector<std::string> line)
   if (line[0] == "1PSTEP")
   {
     step_id = std::stoi(line[2]);
-    if (!check_current_step_id_exists(step_id))
-    {
-      current_step_id = step_id;
-    }
+    //if (!check_current_step_id_exists(step_id))
+    current_step_id = step_id;
   } else if (line[0] == "100CL")
   {
     step_id = std::stoi(line[6]);
     step_time = std::stod(line[2]);
-    if (!check_current_step_id_exists(step_id))
-    {
-      steps_time.push_back(step_time);
-      current_step_time_id = steps_time.size()-1;
-    }
+    //if (!check_current_step_id_exists(step_id))
+    steps_time.push_back(step_time);
+    current_step_time_id = steps_time.size()-1;
   } else if (line[0] == "-4") // choosing result type
   {
     if (line[1] == "DISP")
@@ -333,6 +391,36 @@ bool CoreResultsFrd::read_parameter_header(std::vector<std::string> line)
       result_type_data_id = result_disp.size()-1;
       steps.push_back({current_step_id,current_step_time_id,1,result_type_data_id});
       current_read_mode = 101;
+    } else if (line[1] == "STRESS")
+    {
+      std::vector<std::vector<double>> tmp_stress;
+      std::vector<std::vector<int>> tmp_stress_nodes;
+      result_stress.push_back(tmp_stress);
+      result_stress_nodes.push_back(tmp_stress_nodes);
+      
+      result_type_data_id = result_stress.size()-1;
+      steps.push_back({current_step_id,current_step_time_id,2,result_type_data_id});
+      current_read_mode = 102;
+    } else if (line[1] == "TOSTRAIN")
+    {
+      std::vector<std::vector<double>> tmp_tostrain;
+      std::vector<std::vector<int>> tmp_tostrain_nodes;
+      result_tostrain.push_back(tmp_tostrain);
+      result_tostrain_nodes.push_back(tmp_tostrain_nodes);
+      
+      result_type_data_id = result_tostrain.size()-1;
+      steps.push_back({current_step_id,current_step_time_id,3,result_type_data_id});
+      current_read_mode = 103;
+    } else if (line[1] == "ERROR")
+    {
+      std::vector<std::vector<double>> tmp_error;
+      std::vector<std::vector<int>> tmp_error_nodes;
+      result_error.push_back(tmp_error);
+      result_error_nodes.push_back(tmp_error_nodes);
+      
+      result_type_data_id = result_error.size()-1;
+      steps.push_back({current_step_id,current_step_time_id,4,result_type_data_id});
+      current_read_mode = 104;
     }
   }
   return true;
@@ -376,6 +464,84 @@ bool CoreResultsFrd::read_disp(std::vector<std::string> line)
   return true;
 }
 
+bool CoreResultsFrd::read_stress(std::vector<std::string> line)
+{
+  int node_id;
+  std::vector<double> stress_comp(6);
+  int result_stress_node_data_id = -1;
+  
+  if (line[0] == "-1")
+  {
+    node_id = std::stoi(line[1]);
+
+    stress_comp[0] = std::stod(line[2]);
+    stress_comp[1] = std::stod(line[3]);
+    stress_comp[2] = std::stod(line[4]);
+    stress_comp[3] = std::stod(line[5]);
+    stress_comp[4] = std::stod(line[6]);
+    stress_comp[5] = std::stod(line[7]);
+    // compute ALL
+    //disp_comp[3] = std::sqrt(disp_comp[0]*disp_comp[0]+disp_comp[1]*disp_comp[1]+disp_comp[2]*disp_comp[2]);
+
+    result_stress[result_stress.size()-1].push_back(stress_comp);
+
+    result_stress_node_data_id = result_stress[result_stress.size()-1].size()-1;
+
+    result_stress_nodes[result_stress_nodes.size()-1].push_back({node_id,result_stress_node_data_id});
+  }
+
+  return true;
+}
+
+bool CoreResultsFrd::read_tostrain(std::vector<std::string> line)
+{
+  int node_id;
+  std::vector<double> tostrain_comp(6);
+  int result_tostrain_node_data_id = -1;
+  
+  if (line[0] == "-1")
+  {
+    node_id = std::stoi(line[1]);
+
+    tostrain_comp[0] = std::stod(line[2]);
+    tostrain_comp[1] = std::stod(line[3]);
+    tostrain_comp[2] = std::stod(line[4]);
+    tostrain_comp[3] = std::stod(line[5]);
+    tostrain_comp[4] = std::stod(line[6]);
+    tostrain_comp[5] = std::stod(line[7]);
+
+    result_tostrain[result_tostrain.size()-1].push_back(tostrain_comp);
+
+    result_tostrain_node_data_id = result_tostrain[result_tostrain.size()-1].size()-1;
+
+    result_tostrain_nodes[result_tostrain_nodes.size()-1].push_back({node_id,result_tostrain_node_data_id});
+  }
+
+  return true;
+}
+
+bool CoreResultsFrd::read_error(std::vector<std::string> line)
+{
+  int node_id;
+  std::vector<double> error_comp(1);
+  int result_error_node_data_id = -1;
+  
+  if (line[0] == "-1")
+  {
+    node_id = std::stoi(line[1]);
+
+    error_comp[0] = std::stod(line[2]);
+    
+    result_error[result_error.size()-1].push_back(error_comp);
+
+    result_error_node_data_id = result_error[result_error.size()-1].size()-1;
+
+    result_error_nodes[result_error_nodes.size()-1].push_back({node_id,result_error_node_data_id});
+  }
+
+  return true;
+}
+
 bool CoreResultsFrd::print_data()
 {
   std::string log;
@@ -409,7 +575,8 @@ bool CoreResultsFrd::print_data()
 
   if (nodes.size()>0)
   {
-    for (size_t i = 0; i < nodes.size(); i++)
+    //for (size_t i = 0; i < nodes.size(); i++)
+    for (size_t i = nodes.size()-1; i < nodes.size(); i++)
     {
       log.append(std::to_string(nodes[i][0]) + " ## " + std::to_string(nodes[i][1]) + " ## x ");
       log.append(std::to_string(nodes_coords[nodes[i][1]][0]) + " ## y " + std::to_string(nodes_coords[nodes[i][1]][1]) + " ## z " + std::to_string(nodes_coords[nodes[i][1]][2]));
@@ -420,7 +587,8 @@ bool CoreResultsFrd::print_data()
 
   if (elements.size()>0)
   {
-    for (size_t i = 0; i < elements.size(); i++)
+    //for (size_t i = 0; i < elements.size(); i++)
+    for (size_t i = elements.size()-1; i < elements.size(); i++)
     {
       log.append(std::to_string(elements[i][0]) + " ## " + std::to_string(elements[i][1]) + " ## " + std::to_string(elements[i][2]) + " #---# ");
       
@@ -438,10 +606,10 @@ bool CoreResultsFrd::print_data()
     {
       log.append("step " + std::to_string(steps[i][0]) + " ## " + std::to_string(steps[i][1]) + " ## " + std::to_string(steps[i][2]) + " ## " + std::to_string(steps[i][3]) + " \n");
       log.append("steptime " + std::to_string(steps_time[steps[i][1]]) + " \n");
-      log.append("\n");
       if (steps[i][2] == 1)
       {
-        for (size_t ii = 0; ii < result_disp_nodes[steps[i][3]].size(); ii++)
+        //for (size_t ii = 0; ii < result_disp_nodes[steps[i][3]].size(); ii++)
+        for (size_t ii = result_disp_nodes[steps[i][3]].size()-1; ii < result_disp_nodes[steps[i][3]].size(); ii++)
         {
           log.append(std::to_string(result_disp_nodes[steps[i][3]][ii][0]) + " ");
           log.append(ccx_iface->to_string_scientific(result_disp[steps[i][3]][ii][0]) + " ");
@@ -450,7 +618,42 @@ bool CoreResultsFrd::print_data()
           log.append(ccx_iface->to_string_scientific(result_disp[steps[i][3]][ii][3]));
           log.append("\n");
         }
+      }else if (steps[i][2] == 2)
+      {
+        for (size_t ii = result_stress_nodes[steps[i][3]].size()-1; ii < result_stress_nodes[steps[i][3]].size(); ii++)
+        {
+          log.append(std::to_string(result_stress_nodes[steps[i][3]][ii][0]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_stress[steps[i][3]][ii][0]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_stress[steps[i][3]][ii][1]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_stress[steps[i][3]][ii][2]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_stress[steps[i][3]][ii][3]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_stress[steps[i][3]][ii][4]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_stress[steps[i][3]][ii][5]));
+          log.append("\n");
+        }
+      }else if (steps[i][2] == 3)
+      {
+        for (size_t ii = result_tostrain_nodes[steps[i][3]].size()-1; ii < result_tostrain_nodes[steps[i][3]].size(); ii++)
+        {
+          log.append(std::to_string(result_tostrain_nodes[steps[i][3]][ii][0]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_tostrain[steps[i][3]][ii][0]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_tostrain[steps[i][3]][ii][1]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_tostrain[steps[i][3]][ii][2]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_tostrain[steps[i][3]][ii][3]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_tostrain[steps[i][3]][ii][4]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_tostrain[steps[i][3]][ii][5]));
+          log.append("\n");
+        }
+      }else if (steps[i][2] == 4)
+      {
+        for (size_t ii = result_error_nodes[steps[i][3]].size()-1; ii < result_error_nodes[steps[i][3]].size(); ii++)
+        {
+          log.append(std::to_string(result_error_nodes[steps[i][3]][ii][0]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_error[steps[i][3]][ii][0]));
+          log.append("\n");
+        }
       }
+      log.append("\n");
     }
   }
 

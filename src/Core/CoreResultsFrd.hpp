@@ -60,7 +60,40 @@ public:
   //result_disp_nodes[step][node][connection]
   //result_disp_nodes[0][0][0] node_id
   //result_disp_nodes[0][0][1] result_disp_node_data_id
-  
+  std::vector<std::vector<std::vector<double>>> result_stress;
+  //result_stress[result data id][node][component]
+  //result_stress[0][0][0] SXX
+  //result_stress[0][0][1] SYY
+  //result_stress[0][0][2] SZZ
+  //result_stress[0][0][3] SXY
+  //result_stress[0][0][4] SYZ
+  //result_stress[0][0][5] SZX
+  std::vector<std::vector<std::vector<int>>> result_stress_nodes;
+  //result_stress_nodes[step][node][connection]
+  //result_stress_nodes[0][0][0] node_id
+  //result_stress_nodes[0][0][1] result_stress_node_data_id
+  std::vector<std::vector<std::vector<double>>> result_tostrain;
+  //result_tostrain[result data id][node][component]
+  //result_tostrain[0][0][0] EXX
+  //result_tostrain[0][0][1] EYY
+  //result_tostrain[0][0][2] EZZ
+  //result_tostrain[0][0][3] EXY
+  //result_tostrain[0][0][4] EYZ
+  //result_tostrain[0][0][5] EZX
+  std::vector<std::vector<std::vector<int>>> result_tostrain_nodes;
+  //result_tostrain_nodes[step][node][connection]
+  //result_tostrain_nodes[0][0][0] node_id
+  //result_tostrain_nodes[0][0][1] result_tostrain_node_data_id
+  std::vector<std::vector<std::vector<double>>> result_error;
+  //result_error[result data id][node][component]
+  //result_error[0][0][0] str(%)
+  std::vector<std::vector<std::vector<int>>> result_error_nodes;
+  //result_error_nodes[step][node][connection]
+  //result_error_nodes[0][0][0] node_id
+  //result_error_nodes[0][0][1] result_error_node_data_id
+
+
+
   int job_id = -1;
   std::string filepath = "";
   bool is_initialized = false;
@@ -79,6 +112,9 @@ public:
   bool read_parameter_header(std::vector<std::string> line); // processing the parameter header
   bool check_current_step_id_exists(int step_id); // checks if the current step is already created
   bool read_disp(std::vector<std::string> line); // processing the disp results for a step
+  bool read_stress(std::vector<std::string> line); // processing the stress results for a step
+  bool read_tostrain(std::vector<std::string> line); // processing the tostrain results for a step
+  bool read_error(std::vector<std::string> line); // processing the error results for a step
   bool print_data(); // prints the data to the console
 
   CalculiXCoreInterface *ccx_iface;
