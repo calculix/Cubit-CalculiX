@@ -8,7 +8,6 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
-#include "loadUserOptions.hpp"
 
 CoreResultsFrd::CoreResultsFrd()
 {}
@@ -140,21 +139,22 @@ bool CoreResultsFrd::read()
       {
         break;
       }
-
+      
       /*
+      log="";
       for (size_t i = 0; i < frd_array.size(); i++)
       {
         //log.append(std::to_string(current_read_mode) + "#");
         log.append(frd_array[i] + " ");
       }
       log.append("\n");
-      */
+      ccx_iface->log_str(log);*/
     }
   }
   frd.close();
   progressbar.end();
   //PRINT_INFO("%s", log.c_str());
-  //print_data();
+  print_data();
 
   return true;
 }
@@ -402,11 +402,9 @@ bool CoreResultsFrd::read_parameter_header(std::vector<std::string> line)
     result_blocks.push_back({current_result_block,current_step,current_step_increment,current_total_increment,current_total_time_id,result_block_type_data_id,result_block_data_id});
     current_read_mode = 4;
 
-    if (current_read_mode > 4) // write new set of component names
-    {
-      std::vector<std::string> tmp_result_block_components;
-      result_block_components.push_back(tmp_result_block_components);
-    }
+    // write new set of component names
+    std::vector<std::string> tmp_result_block_components;
+    result_block_components.push_back(tmp_result_block_components);
   }
   return true;
 }
@@ -441,11 +439,6 @@ bool CoreResultsFrd::read_nodal_result_block(std::vector<std::string> line)
 
     if (result_block_components[result_block_components.size()-1][n_comp-1] == "ALL")
     {
-      for (size_t i = 0; i < n_comp; i++)
-      {
-        result_comp[i] = std::stod(line[i+2]);
-      }
-    }else{
       for (size_t i = 0; i < n_comp-1; i++)
       {
         result_comp[i] = std::stod(line[i+2]);
@@ -457,6 +450,11 @@ bool CoreResultsFrd::read_nodal_result_block(std::vector<std::string> line)
         tmp_all = result_comp[i]*result_comp[i];
       }
       result_comp[n_comp-1] = std::sqrt(tmp_all);
+    }else{
+      for (size_t i = 0; i < n_comp; i++)
+      {
+        result_comp[i] = std::stod(line[i+2]);
+      }
     }
         
     result_block_data[result_block_data.size()-1].push_back(result_comp);
