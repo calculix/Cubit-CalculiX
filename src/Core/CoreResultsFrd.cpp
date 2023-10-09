@@ -49,6 +49,7 @@ bool CoreResultsFrd::clear()
   elements_connectivity.clear();
   steps.clear();
   steps_time.clear();
+  steps_result_components.clear();
   result_disp.clear();
   result_disp_nodes.clear();
   result_stress.clear();
@@ -57,6 +58,18 @@ bool CoreResultsFrd::clear()
   result_tostrain_nodes.clear();
   result_error.clear();
   result_error_nodes.clear();
+  result_forc.clear();
+  result_forc_nodes.clear();
+  result_ndtemp.clear();
+  result_ndtemp_nodes.clear();
+  result_mestrain.clear();
+  result_mestrain_nodes.clear();
+  result_pe.clear();
+  result_pe_nodes.clear();
+  result_ener.clear();
+  result_ener_nodes.clear();
+  result_contact.clear();
+  result_contact_nodes.clear();
   return true;
 }
 
@@ -147,6 +160,24 @@ bool CoreResultsFrd::read()
       } else if (current_read_mode == 104) // ERROR
       {
         this->read_error(frd_array);
+      } else if (current_read_mode == 105) // FORC
+      {
+        this->read_forc(frd_array);
+      } else if (current_read_mode == 106) // NDTEMP
+      {
+        this->read_ndtemp(frd_array);
+      } else if (current_read_mode == 107) // MESTRAIN
+      {
+        this->read_mestrain(frd_array);
+      } else if (current_read_mode == 108) // PE
+      {
+        this->read_pe(frd_array);
+      } else if (current_read_mode == 109) // ENER
+      {
+        this->read_ener(frd_array);
+      } else if (current_read_mode == 110) // CONTACT
+      {
+        this->read_contact(frd_array);
       } else if ((current_read_mode == 9999)||(frd.eof()))
       {
         break;
@@ -380,7 +411,7 @@ bool CoreResultsFrd::read_parameter_header(std::vector<std::string> line)
     steps_time.push_back(step_time);
     current_step_time_id = steps_time.size()-1;
   } else if (line[0] == "-4") // choosing result type
-  {
+  {    
     if (line[1] == "DISP")
     {
       std::vector<std::vector<double>> tmp_disp;
@@ -421,6 +452,71 @@ bool CoreResultsFrd::read_parameter_header(std::vector<std::string> line)
       result_type_data_id = result_error.size()-1;
       steps.push_back({current_step_id,current_step_time_id,4,result_type_data_id});
       current_read_mode = 104;
+    } else if (line[1] == "FORC")
+    {
+      std::vector<std::vector<double>> tmp_forc;
+      std::vector<std::vector<int>> tmp_forc_nodes;
+      result_forc.push_back(tmp_forc);
+      result_forc_nodes.push_back(tmp_forc_nodes);
+      
+      result_type_data_id = result_forc.size()-1;
+      steps.push_back({current_step_id,current_step_time_id,5,result_type_data_id});
+      current_read_mode = 105;
+    } else if (line[1] == "NDTEMP")
+    {
+      std::vector<std::vector<double>> tmp_ndtemp;
+      std::vector<std::vector<int>> tmp_ndtemp_nodes;
+      result_ndtemp.push_back(tmp_ndtemp);
+      result_ndtemp_nodes.push_back(tmp_ndtemp_nodes);
+      
+      result_type_data_id = result_ndtemp.size()-1;
+      steps.push_back({current_step_id,current_step_time_id,6,result_type_data_id});
+      current_read_mode = 106;
+    } else if (line[1] == "MESTRAIN")
+    {
+      std::vector<std::vector<double>> tmp_mestrain;
+      std::vector<std::vector<int>> tmp_mestrain_nodes;
+      result_mestrain.push_back(tmp_mestrain);
+      result_mestrain_nodes.push_back(tmp_mestrain_nodes);
+      
+      result_type_data_id = result_mestrain.size()-1;
+      steps.push_back({current_step_id,current_step_time_id,7,result_type_data_id});
+      current_read_mode = 107;
+    } else if (line[1] == "PE")
+    {
+      std::vector<std::vector<double>> tmp_pe;
+      std::vector<std::vector<int>> tmp_pe_nodes;
+      result_pe.push_back(tmp_pe);
+      result_pe_nodes.push_back(tmp_pe_nodes);
+      
+      result_type_data_id = result_pe.size()-1;
+      steps.push_back({current_step_id,current_step_time_id,8,result_type_data_id});
+      current_read_mode = 108;
+    } else if (line[1] == "ENER")
+    {
+      std::vector<std::vector<double>> tmp_ener;
+      std::vector<std::vector<int>> tmp_ener_nodes;
+      result_ener.push_back(tmp_ener);
+      result_ener_nodes.push_back(tmp_ener_nodes);
+      
+      result_type_data_id = result_ener.size()-1;
+      steps.push_back({current_step_id,current_step_time_id,9,result_type_data_id});
+      current_read_mode = 109;
+    } else if (line[1] == "CONTACT")
+    {
+      std::vector<std::vector<double>> tmp_contact;
+      std::vector<std::vector<int>> tmp_contact_nodes;
+      result_contact.push_back(tmp_contact);
+      result_contact_nodes.push_back(tmp_contact_nodes);
+      
+      result_type_data_id = result_contact.size()-1;
+      steps.push_back({current_step_id,current_step_time_id,10,result_type_data_id});
+      current_read_mode = 110;
+    }
+    if (current_read_mode > 9) // write new set of component names
+    {
+      std::vector<std::string> tmp_steps_result_components;
+      steps_result_components.push_back(tmp_steps_result_components);
     }
   }
   return true;
@@ -459,6 +555,9 @@ bool CoreResultsFrd::read_disp(std::vector<std::string> line)
     result_disp_node_data_id = result_disp[result_disp.size()-1].size()-1;
 
     result_disp_nodes[result_disp_nodes.size()-1].push_back({node_id,result_disp_node_data_id});
+  }else if (line[0] == "-5")
+  {
+    steps_result_components[steps_result_components.size()-1].push_back(line[1]);
   }
 
   return true;
@@ -488,6 +587,9 @@ bool CoreResultsFrd::read_stress(std::vector<std::string> line)
     result_stress_node_data_id = result_stress[result_stress.size()-1].size()-1;
 
     result_stress_nodes[result_stress_nodes.size()-1].push_back({node_id,result_stress_node_data_id});
+  }else if (line[0] == "-5")
+  {
+    steps_result_components[steps_result_components.size()-1].push_back(line[1]);
   }
 
   return true;
@@ -515,6 +617,9 @@ bool CoreResultsFrd::read_tostrain(std::vector<std::string> line)
     result_tostrain_node_data_id = result_tostrain[result_tostrain.size()-1].size()-1;
 
     result_tostrain_nodes[result_tostrain_nodes.size()-1].push_back({node_id,result_tostrain_node_data_id});
+  }else if (line[0] == "-5")
+  {
+    steps_result_components[steps_result_components.size()-1].push_back(line[1]);
   }
 
   return true;
@@ -537,6 +642,173 @@ bool CoreResultsFrd::read_error(std::vector<std::string> line)
     result_error_node_data_id = result_error[result_error.size()-1].size()-1;
 
     result_error_nodes[result_error_nodes.size()-1].push_back({node_id,result_error_node_data_id});
+  }else if (line[0] == "-5")
+  {
+    steps_result_components[steps_result_components.size()-1].push_back(line[1]);
+  }
+
+  return true;
+}
+
+bool CoreResultsFrd::read_forc(std::vector<std::string> line)
+{
+  int node_id;
+  std::vector<double> forc_comp(4);
+  int result_forc_node_data_id = -1;
+  
+  if (line[0] == "-1")
+  {
+    node_id = std::stoi(line[1]);
+
+    forc_comp[0] = std::stod(line[2]);
+    forc_comp[1] = std::stod(line[3]);
+    forc_comp[2] = std::stod(line[4]);
+    // compute ALL
+    forc_comp[3] = std::sqrt(forc_comp[0]*forc_comp[0]+forc_comp[1]*forc_comp[1]+forc_comp[2]*forc_comp[2]);
+
+    result_forc[result_forc.size()-1].push_back(forc_comp);
+
+    result_forc_node_data_id = result_forc[result_forc.size()-1].size()-1;
+
+    result_forc_nodes[result_forc_nodes.size()-1].push_back({node_id,result_forc_node_data_id});
+  }else if (line[0] == "-5")
+  {
+    steps_result_components[steps_result_components.size()-1].push_back(line[1]);
+  }
+
+  return true;
+}
+
+
+bool CoreResultsFrd::read_ndtemp(std::vector<std::string> line)
+{
+  int node_id;
+  std::vector<double> ndtemp_comp(1);
+  int result_ndtemp_node_data_id = -1;
+  
+  if (line[0] == "-1")
+  {
+    node_id = std::stoi(line[1]);
+
+    ndtemp_comp[0] = std::stod(line[2]);
+    
+    result_ndtemp[result_ndtemp.size()-1].push_back(ndtemp_comp);
+
+    result_ndtemp_node_data_id = result_ndtemp[result_ndtemp.size()-1].size()-1;
+
+    result_ndtemp_nodes[result_ndtemp_nodes.size()-1].push_back({node_id,result_ndtemp_node_data_id});
+  }else if (line[0] == "-5")
+  {
+    steps_result_components[steps_result_components.size()-1].push_back(line[1]);
+  }
+
+  return true;
+}
+
+bool CoreResultsFrd::read_mestrain(std::vector<std::string> line)
+{
+  int node_id;
+  std::vector<double> mestrain_comp(6);
+  int result_mestrain_node_data_id = -1;
+  
+  if (line[0] == "-1")
+  {
+    node_id = std::stoi(line[1]);
+
+    mestrain_comp[0] = std::stod(line[2]);
+    mestrain_comp[1] = std::stod(line[3]);
+    mestrain_comp[2] = std::stod(line[4]);
+    mestrain_comp[3] = std::stod(line[5]);
+    mestrain_comp[4] = std::stod(line[6]);
+    mestrain_comp[5] = std::stod(line[7]);
+
+    result_mestrain[result_mestrain.size()-1].push_back(mestrain_comp);
+
+    result_mestrain_node_data_id = result_mestrain[result_mestrain.size()-1].size()-1;
+
+    result_mestrain_nodes[result_mestrain_nodes.size()-1].push_back({node_id,result_mestrain_node_data_id});
+  }else if (line[0] == "-5")
+  {
+    steps_result_components[steps_result_components.size()-1].push_back(line[1]);
+  }
+
+  return true;
+}
+
+bool CoreResultsFrd::read_pe(std::vector<std::string> line)
+{
+  int node_id;
+  std::vector<double> pe_comp(1);
+  int result_pe_node_data_id = -1;
+  
+  if (line[0] == "-1")
+  {
+    node_id = std::stoi(line[1]);
+
+    pe_comp[0] = std::stod(line[2]);
+    
+    result_pe[result_pe.size()-1].push_back(pe_comp);
+
+    result_pe_node_data_id = result_pe[result_pe.size()-1].size()-1;
+
+    result_pe_nodes[result_pe_nodes.size()-1].push_back({node_id,result_pe_node_data_id});
+  }else if (line[0] == "-5")
+  {
+    steps_result_components[steps_result_components.size()-1].push_back(line[1]);
+  }
+
+  return true;
+}
+
+bool CoreResultsFrd::read_ener(std::vector<std::string> line)
+{
+  int node_id;
+  std::vector<double> ener_comp(1);
+  int result_ener_node_data_id = -1;
+  
+  if (line[0] == "-1")
+  {
+    node_id = std::stoi(line[1]);
+
+    ener_comp[0] = std::stod(line[2]);
+    
+    result_ener[result_ener.size()-1].push_back(ener_comp);
+
+    result_ener_node_data_id = result_ener[result_ener.size()-1].size()-1;
+
+    result_ener_nodes[result_ener_nodes.size()-1].push_back({node_id,result_ener_node_data_id});
+  }else if (line[0] == "-5")
+  {
+    steps_result_components[steps_result_components.size()-1].push_back(line[1]);
+  }
+
+  return true;
+}
+
+bool CoreResultsFrd::read_contact(std::vector<std::string> line)
+{
+  int node_id;
+  int n_comp = steps_result_components[steps_result_components.size()-1].size();
+  std::vector<double> contact_comp(n_comp);
+  int result_contact_node_data_id = -1;
+  
+  if (line[0] == "-1")
+  {
+    node_id = std::stoi(line[1]);
+
+    for (size_t i = 0; i < n_comp; i++)
+    {
+      contact_comp[i] = std::stod(line[i+2]);
+    }
+    
+    result_contact[result_contact.size()-1].push_back(contact_comp);
+
+    result_contact_node_data_id = result_contact[result_contact.size()-1].size()-1;
+
+    result_contact_nodes[result_contact_nodes.size()-1].push_back({node_id,result_contact_node_data_id});
+  }else if (line[0] == "-5")
+  {
+    steps_result_components[steps_result_components.size()-1].push_back(line[1]);
   }
 
   return true;
@@ -606,6 +878,13 @@ bool CoreResultsFrd::print_data()
     {
       log.append("step " + std::to_string(steps[i][0]) + " ## " + std::to_string(steps[i][1]) + " ## " + std::to_string(steps[i][2]) + " ## " + std::to_string(steps[i][3]) + " \n");
       log.append("steptime " + std::to_string(steps_time[steps[i][1]]) + " \n");
+      log.append("component names ");
+      for (size_t ii = 0; ii < steps_result_components[i].size(); ii++)
+      {
+        log.append(steps_result_components[i][ii] + " ");
+      }
+      log.append("\n");
+
       if (steps[i][2] == 1)
       {
         //for (size_t ii = 0; ii < result_disp_nodes[steps[i][3]].size(); ii++)
@@ -650,6 +929,65 @@ bool CoreResultsFrd::print_data()
         {
           log.append(std::to_string(result_error_nodes[steps[i][3]][ii][0]) + " ");
           log.append(ccx_iface->to_string_scientific(result_error[steps[i][3]][ii][0]));
+          log.append("\n");
+        }
+      }else if (steps[i][2] == 5)
+      {
+        for (size_t ii = result_forc_nodes[steps[i][3]].size()-1; ii < result_forc_nodes[steps[i][3]].size(); ii++)
+        {
+          log.append(std::to_string(result_forc_nodes[steps[i][3]][ii][0]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_forc[steps[i][3]][ii][0]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_forc[steps[i][3]][ii][1]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_forc[steps[i][3]][ii][2]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_forc[steps[i][3]][ii][3]));
+          log.append("\n");
+        }
+      }else if (steps[i][2] == 6)
+      {
+        for (size_t ii = result_ndtemp_nodes[steps[i][3]].size()-1; ii < result_ndtemp_nodes[steps[i][3]].size(); ii++)
+        {
+          log.append(std::to_string(result_ndtemp_nodes[steps[i][3]][ii][0]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_ndtemp[steps[i][3]][ii][0]));
+          log.append("\n");
+        }
+      }else if (steps[i][2] == 7)
+      {
+        for (size_t ii = result_mestrain_nodes[steps[i][3]].size()-1; ii < result_mestrain_nodes[steps[i][3]].size(); ii++)
+        {
+          log.append(std::to_string(result_mestrain_nodes[steps[i][3]][ii][0]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_mestrain[steps[i][3]][ii][0]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_mestrain[steps[i][3]][ii][1]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_mestrain[steps[i][3]][ii][2]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_mestrain[steps[i][3]][ii][3]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_mestrain[steps[i][3]][ii][4]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_mestrain[steps[i][3]][ii][5]));
+          log.append("\n");
+        }
+      }else if (steps[i][2] == 8)
+      {
+        for (size_t ii = result_pe_nodes[steps[i][3]].size()-1; ii < result_pe_nodes[steps[i][3]].size(); ii++)
+        {
+          log.append(std::to_string(result_pe_nodes[steps[i][3]][ii][0]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_pe[steps[i][3]][ii][0]));
+          log.append("\n");
+        }
+      }else if (steps[i][2] == 9)
+      {
+        for (size_t ii = result_ener_nodes[steps[i][3]].size()-1; ii < result_ener_nodes[steps[i][3]].size(); ii++)
+        {
+          log.append(std::to_string(result_ener_nodes[steps[i][3]][ii][0]) + " ");
+          log.append(ccx_iface->to_string_scientific(result_ener[steps[i][3]][ii][0]));
+          log.append("\n");
+        }
+      }else if (steps[i][2] == 10)
+      {
+        for (size_t ii = result_contact_nodes[steps[i][3]].size()-1; ii < result_contact_nodes[steps[i][3]].size(); ii++)
+        {
+          log.append(std::to_string(result_contact_nodes[steps[i][3]][ii][0]) + " ");
+          for (size_t iii = 0; iii < steps_result_components[i].size(); iii++)
+          {
+            log.append(ccx_iface->to_string_scientific(result_contact[steps[i][3]][ii][iii]) + " ");
+          }
           log.append("\n");
         }
       }
