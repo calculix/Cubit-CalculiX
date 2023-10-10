@@ -16,15 +16,14 @@ public:
   int current_read_mode = 0; //0 result block header 1 result block header
 
   int current_result_block = -1;
-  int current_total_increment = -1;
   int current_total_time_id = -1;
 
   std::vector<std::vector<int>> result_blocks;
   // result_blocks[0][0] result block
-  // result_blocks[0][3] total increment
-  // result_blocks[0][4] total time data id
-  // result_blocks[0][5] result block type
-  // result_blocks[0][6] result block data id
+  // result_blocks[0][1] total time data id
+  // result_blocks[0][2] result block type
+  // result_blocks[0][3] result block set
+  // result_blocks[0][4] result block data id
 
   std::vector<double> total_times;
   // total_time[0] total time
@@ -61,6 +60,11 @@ public:
   bool read(); // reads the dat file
   std::vector<std::string> split_line(std::string line); // splits the line to a vector
   bool is_number(std::string number); // check if string is a positive number, for check of first column
+  bool is_whitespace(std::string line); // check if line consists only of whitespace
+  bool check_mode(std::vector<std::string> line); // checks if the current read mode is still valid or others should be used
+  bool read_header(std::vector<std::string> line); // processing the result block header
+  int get_current_result_block_type(std::string result_type); // gets result_block_type
+  int get_current_result_block_set(std::string result_set); // gets result_block_set
 
   CalculiXCoreInterface *ccx_iface;
 };

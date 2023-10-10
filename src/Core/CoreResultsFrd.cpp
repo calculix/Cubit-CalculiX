@@ -154,7 +154,7 @@ bool CoreResultsFrd::read()
   frd.close();
   progressbar.end();
   //PRINT_INFO("%s", log.c_str());
-  print_data();
+  //print_data();
 
   return true;
 }
