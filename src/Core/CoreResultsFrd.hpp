@@ -77,7 +77,7 @@ public:
   int job_id = -1;
   std::string filepath = "";
   bool is_initialized = false;
-  int current_read_mode = 0; //0 header 1 nodal data 2 element data 3 parameter data
+  int current_read_mode = 0; //0 header 1 nodal data 2 element data 3 parameter data 4 result block
 
   bool init(int job_id); // initialize
   bool reset(); // delete all data and initialize afterwards
