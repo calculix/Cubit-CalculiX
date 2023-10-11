@@ -189,6 +189,8 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxWaitJobCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxResultLoadJobCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxResultLoadJobCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxResultConvertJobCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxResultConvertJobCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxResultccx2paraviewJobCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxResultccx2paraviewJobCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxResultCGXJobCommand.cpp

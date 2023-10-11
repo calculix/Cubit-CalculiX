@@ -53,6 +53,8 @@ set(CORE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/CoreResultsFrd.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreResultsDat.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreResultsDat.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreResultsVtkWriter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreResultsVtkWriter.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreTimer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreTimer.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreCustomLines.cpp

@@ -505,6 +505,11 @@ bool CalculiXCoreInterface::load_result(int job_id)
   return ccx_core.load_result(job_id);
 }
 
+bool CalculiXCoreInterface::convert_result(int job_id)
+{
+  return ccx_core.convert_result(job_id);
+}
+
 bool CalculiXCoreInterface::create_customline(std::vector<std::string> options)
 {
   return ccx_core.create_customline(options);
