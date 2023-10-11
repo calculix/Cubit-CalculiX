@@ -978,6 +978,20 @@ std::string  CalculiXCore::to_string_scientific(double value)
   return output;
 }
 
+double  CalculiXCore::string_scientific_to_double(std::string value)
+{
+  double output;
+  if (value[0] == '-') // check if negative
+  {
+    value.replace(0,1, "");
+    output = std::stod(value);
+    output = -1*output;
+  } else {
+    output = std::stod(value);
+  }
+  return output;
+}
+
 std::vector<std::string> CalculiXCore::get_ccx_element_types()
 { 
   return cb->get_ccx_element_types();

@@ -13,7 +13,7 @@ public:
   int job_id = -1;
   std::string filepath = "";
   bool is_initialized = false;
-  int current_read_mode = 0; //0 result block header 1 result block header
+  int current_read_mode = -1; //1 result header 2 result line
 
   int current_result_block = -1;
   int current_total_time_id = -1;
@@ -49,9 +49,10 @@ public:
   //result_block_data[0][0][0] component...
 
   std::vector<std::vector<std::vector<int>>> result_block_c1_data; //column 1 = c1
-  //result_block_node_data[step][node/element][connection]
-  //result_block_node_data[0][0][0] c1 
-  //result_block_node_data[0][0][1] result_block_c1_data_id
+  //result_block_c1_data[step][node/element][connection]
+  //result_block_c1_data[0][0][0] c1 
+  //result_block_c1_data[0][0][1] result_block_c1_data_id
+  //result_block_c1_data[0][0][2] type 1 node 2 element
 
   bool init(int job_id); // initialize
   bool reset(); // delete all data and initialize afterwards
@@ -61,10 +62,13 @@ public:
   std::vector<std::string> split_line(std::string line); // splits the line to a vector
   bool is_number(std::string number); // check if string is a positive number, for check of first column
   bool is_whitespace(std::string line); // check if line consists only of whitespace
+  std::string erase_whitespace(std::string line); // erases all whitespaces
   bool check_mode(std::vector<std::string> line); // checks if the current read mode is still valid or others should be used
   bool read_header(std::vector<std::string> line); // processing the result block header
+  bool read_line(std::vector<std::string> line); // processing the result lines
   int get_current_result_block_type(std::string result_type); // gets result_block_type
   int get_current_result_block_set(std::string result_set); // gets result_block_set
+  bool print_data(); // prints the data to the console
 
   CalculiXCoreInterface *ccx_iface;
 };

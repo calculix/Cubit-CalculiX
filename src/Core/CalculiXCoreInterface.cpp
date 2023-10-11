@@ -40,6 +40,11 @@ std::string  CalculiXCoreInterface::to_string_scientific(double value)
   return ccx_core.to_string_scientific(value);
 }
 
+double CalculiXCoreInterface::string_scientific_to_double(std::string value)
+{
+  return ccx_core.string_scientific_to_double(value);
+}
+
 std::vector<std::string> CalculiXCoreInterface::get_ccx_element_types()
 { 
   return ccx_core.get_ccx_element_types();

@@ -18,6 +18,7 @@ public:
   bool log_str(std::string str_log);
   std::vector<int> parser(std::string parse_type, std::string parse_string);
   std::string to_string_scientific(double value); // converts a double to string with scientific notation
+  double string_scientific_to_double(std::string value); // converts a string with scientific notation to double
   std::vector<std::string> get_ccx_element_types(); // returns all supported ccx element types
   bool set_ccx_element_type(int block_id, std::string ccx_element_type); // sets the ccx element type for a block
   std::string get_ccx_element_type(int block_id); // gets the ccx element type for a block

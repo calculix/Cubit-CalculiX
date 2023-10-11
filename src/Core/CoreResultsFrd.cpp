@@ -148,7 +148,9 @@ bool CoreResultsFrd::read()
         log.append(frd_array[i] + " ");
       }
       log.append("\n");
-      ccx_iface->log_str(log);*/
+      PRINT_INFO("%s", log.c_str());
+      */
+      //ccx_iface->log_str(log);
     }
   }
   frd.close();
@@ -188,7 +190,7 @@ std::vector<std::string> CoreResultsFrd::split_line(std::string frdline)
   while (beginSpace != std::string::npos)
   {
     size_t range = 1;
-    if ((frdline[beginSpace-1] != 'E') && (beginSpace !=0))
+    if ((frdline[beginSpace-1] != 'E') && (frdline[beginSpace-1] != ' ') && (beginSpace !=0))
     {
       frdline.replace(beginSpace,range, " -");
     }
@@ -298,9 +300,9 @@ bool CoreResultsFrd::read_node(std::vector<std::string> line)
   {
     node_id = std::stoi(line[1]);
 
-    node_coords[0] = std::stod(line[2]);
-    node_coords[1] = std::stod(line[3]);
-    node_coords[2] = std::stod(line[4]);
+    node_coords[0] = ccx_iface->string_scientific_to_double(line[2]);
+    node_coords[1] = ccx_iface->string_scientific_to_double(line[3]);
+    node_coords[2] = ccx_iface->string_scientific_to_double(line[4]);
 
     nodes_coords.push_back(node_coords);
     int nodes_coords_data_id = nodes_coords.size()-1;
@@ -382,11 +384,11 @@ bool CoreResultsFrd::read_parameter_header(std::vector<std::string> line)
 
   } else if (line[0] == "100CL")
   {
-    total_time = std::stod(line[2]);
+    total_time = ccx_iface->string_scientific_to_double(line[2]);
     total_times.push_back(total_time);
     current_total_time_id = total_times.size()-1;
 
-    total_increment = std::stod(line[5]);
+    total_increment = ccx_iface->string_scientific_to_double(line[5]);
     current_total_increment = total_increment;
 
   } else if (line[0] == "-4") // getting result type
@@ -441,7 +443,7 @@ bool CoreResultsFrd::read_nodal_result_block(std::vector<std::string> line)
     {
       for (size_t i = 0; i < n_comp-1; i++)
       {
-        result_comp[i] = std::stod(line[i+2]);
+        result_comp[i] = ccx_iface->string_scientific_to_double(line[i+2]);
       }
       
       double tmp_all = 0;
@@ -453,7 +455,7 @@ bool CoreResultsFrd::read_nodal_result_block(std::vector<std::string> line)
     }else{
       for (size_t i = 0; i < n_comp; i++)
       {
-        result_comp[i] = std::stod(line[i+2]);
+        result_comp[i] = ccx_iface->string_scientific_to_double(line[i+2]);
       }
     }
         
