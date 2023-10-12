@@ -74,6 +74,207 @@ bool CoreResultsVtkWriter::write()
 
 bool CoreResultsVtkWriter::write_vtpc()
 {
+  std::string output = "";
+  std::string output_nodes_ids = "";
+  std::string output_nodes = "";
+  std::string output_elements_ids = "";
+  std::string output_element_connectivity = "";
+  std::string output_element_offsets = "";
+  std::string output_element_types = "";
+  int min_node_id = -1;
+  int max_node_id = -1;
+  int min_element_id = -1;
+  int max_element_id = -1;
+  ProgressTool progressbar;
+  std::string log;
+  log = "writing results " + filepath + " for Job ID " + std::to_string(job_id) + " \n";
+  PRINT_INFO("%s", log.c_str());
+  
+  // clear all data before reading and check results
+  this->clear();
+  this->checkResults();
+
+  progressbar.start(0,100,"Writing Results to ParaView Format - Preparing Nodes and Elements");
+  auto t_start = std::chrono::high_resolution_clock::now();
+
+  // write nodes
+  output_nodes.append(this->level_whitespace(3) + "<Points>\n");
+  output_nodes.append(this->level_whitespace(4) + "<DataArray type=\"Float32\" Name=\"Points\" NumberOfComponents=\"3\" format=\"ascii\">\n");
+  for (size_t i = 0; i < frd->nodes.size(); i++)
+  {
+    output_nodes.append(this->level_whitespace(5));
+    output_nodes.append(ccx_iface->to_string_scientific(frd->nodes_coords[frd->nodes[i][1]][0]) + " ");
+    output_nodes.append(ccx_iface->to_string_scientific(frd->nodes_coords[frd->nodes[i][1]][1]) + " ");
+    output_nodes.append(ccx_iface->to_string_scientific(frd->nodes_coords[frd->nodes[i][1]][2]) + "\n");
+    
+    if (i==0)
+    {
+      min_node_id = frd->nodes[i][0];
+      max_node_id = frd->nodes[i][0];
+    }
+    if (frd->nodes[i][0]<min_node_id)
+    {
+      min_node_id=frd->nodes[i][0];
+    }
+    if (frd->nodes[i][0]>max_node_id)
+    {
+      max_node_id=frd->nodes[i][0];
+    }    
+
+    output_nodes_ids.append(this->level_whitespace(5));
+    output_nodes_ids.append(std::to_string(frd->nodes[i][0]) + "\n");
+
+    //update progress bar
+    const auto t_end = std::chrono::high_resolution_clock::now();
+    int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+    ++currentDataRow;
+    if (duration > 500)
+    {
+      progressbar.percent(double(currentDataRow)/double(maxDataRows));
+      progressbar.check_interrupt();
+      t_start = std::chrono::high_resolution_clock::now();
+    }
+  }
+  output_nodes.append(this->level_whitespace(4) + "</DataArray>\n");
+  output_nodes.append(this->level_whitespace(3) + "</Points>\n");
+  // write elements
+  for (size_t i = 0; i < frd->elements.size(); i++)
+  {
+
+    if (i==0)
+    {
+      min_element_id = frd->elements[i][0];
+      max_element_id = frd->elements[i][0];
+    }
+    if (frd->elements[i][0]<min_element_id)
+    {
+      min_element_id=frd->elements[i][0];
+    }
+    if (frd->elements[i][0]>max_element_id)
+    {
+      max_element_id=frd->elements[i][0];
+    }
+
+    output_elements_ids.append(this->level_whitespace(5));
+    output_elements_ids.append(std::to_string(frd->elements[i][0]) + "\n");
+
+    output_element_connectivity.append(this->level_whitespace(5));
+    output_element_connectivity.append(this->get_element_connectivity_vtk(frd->elements[i][2],frd->elements[i][1]) + "\n");
+
+    output_element_offsets.append(this->level_whitespace(5));
+    output_element_offsets.append(this->get_element_offset_vtk(frd->elements[i][2]) + "\n");
+
+    output_element_types.append(this->level_whitespace(5));
+    output_element_types.append(this->get_element_type_vtk(frd->elements[i][1]) + "\n");
+    //update progress bar
+    const auto t_end = std::chrono::high_resolution_clock::now();
+    int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+    ++currentDataRow;
+    if (duration > 500)
+    {
+      progressbar.percent(double(currentDataRow)/double(maxDataRows));
+      progressbar.check_interrupt();
+      t_start = std::chrono::high_resolution_clock::now();
+    }
+  }
+
+  progressbar.end();
+  progressbar.start(0,100,"Writing Results to ParaView Format");
+  t_start = std::chrono::high_resolution_clock::now();
+
+  for (size_t i = 0; i < max_increments; i++)
+  { 
+    output = "";
+    ++current_increment;
+    // write header
+    output.append(this->level_whitespace(0) + "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt64\">\n");
+    output.append(this->level_whitespace(1) + "<UnstructuredGrid>\n");
+    output.append(this->level_whitespace(2) + "<Piece NumberOfPoints=\"" + std::to_string(frd->nodes.size()) + "\" NumberOfCells=\"" + std::to_string(frd->elements.size()) + "\">\n");  
+    output.append(this->level_whitespace(3) + "<PointData GlobalIds=\"ids\">\n");
+    //node ids
+    output.append(this->level_whitespace(4) + "<DataArray type=\"Int64\" IdType=\"1\" Name=\"ids\" format=\"ascii\" RangeMin=\"" + std::to_string(min_node_id) + "\" RangeMax=\"" + std::to_string(max_node_id)+ "\">\n");
+    output.append(output_nodes_ids);
+    output.append(this->level_whitespace(4) + "</DataArray>\n");
+  
+     //write result blocks
+    std::vector<int> data_ids = this->get_result_blocks_data_ids(); // get data ids for result blocks in current increment
+    
+    for (size_t ii = 0; ii < data_ids.size(); ii++)
+    {
+      rangeMin = 0;
+      rangeMax = 0;
+      std::vector<int> node_data_ids = this->get_result_block_node_data_id(data_ids[ii]);
+
+      // skip if nodes from point data is different than nodes number, like for data from CELS
+      if (node_data_ids.size()==frd->nodes.size())
+      {
+        // header
+        output.append(this->level_whitespace(4) + "<DataArray type=\"Float64\" ");
+        output.append("Name=\"" + frd->result_block_type[frd->result_blocks[data_ids[ii]][5]] + "\" ");
+        output.append("NumberOfComponents=\"" + std::to_string(frd->result_block_components[frd->result_blocks[data_ids[ii]][6]].size()) + "\" ");
+        for (size_t iii = 0; iii < frd->result_block_components[frd->result_blocks[data_ids[ii]][6]].size(); iii++)
+        {
+          output.append("ComponentName"+ std::to_string(iii) + " =\"" + frd->result_block_components[frd->result_blocks[data_ids[ii]][6]][iii] +"\" ");
+        }
+        output.append("format=\"ascii\" RangeMin=\"" + std::to_string(rangeMin) + "\" RangeMax=\"" + std::to_string(rangeMin) + "\">\n");
+        
+        for (size_t iii = 0; iii < node_data_ids.size(); iii++)
+        {
+          output.append(this->level_whitespace(5) + this->get_result_data(data_ids[ii], node_data_ids[iii]) + "\n");
+        }
+
+        // footer
+        output.append(this->level_whitespace(4) + "</DataArray>\n");
+
+        //update progress bar
+        const auto t_end = std::chrono::high_resolution_clock::now();
+        int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+        //currentDataRow += frd->result_block_data[data_ids[ii]].size();
+        if (duration > 500)
+        {
+          progressbar.percent(double(current_increment)/double(max_increments));
+          progressbar.check_interrupt();
+          t_start = std::chrono::high_resolution_clock::now();
+        }
+      }
+    }
+
+    output.append(this->level_whitespace(3) + "</PointData>\n");
+    //element ids
+    output.append(this->level_whitespace(3) + "<CellData GlobalIds=\"ids\">\n");
+    output.append(this->level_whitespace(4) + "<DataArray type=\"Int64\" IdType=\"1\" Name=\"ids\" format=\"ascii\" RangeMin=\"" + std::to_string(min_element_id) + "\" RangeMax=\"" + std::to_string(max_element_id)+ "\">\n");
+    output.append(output_elements_ids);
+    output.append(this->level_whitespace(4) + "</DataArray>\n");
+    output.append(this->level_whitespace(3) + "</CellData>\n");
+    //append nodes and elements
+    output.append(output_nodes);
+    output.append(this->level_whitespace(3) + "<Cells>\n");
+    output.append(this->level_whitespace(4) + "<DataArray type=\"Int64\" Name=\"connectivity\" format=\"ascii\">\n");
+    output.append(output_element_connectivity);
+    output.append(this->level_whitespace(4) + "</DataArray>\n");
+    output.append(this->level_whitespace(4) + "<DataArray type=\"Int64\" Name=\"offsets\" format=\"ascii\">\n");
+    output.append(output_element_offsets);
+    output.append(this->level_whitespace(4) + "</DataArray>\n");
+    output.append(this->level_whitespace(4) + "<DataArray type=\"UInt8\" Name=\"types\" format=\"ascii\">\n");
+    output.append(output_element_types);
+    output.append(this->level_whitespace(4) + "</DataArray>\n");
+    output.append(this->level_whitespace(3) + "</Cells>\n");
+
+    // write footer
+    output.append(this->level_whitespace(2) + "</Piece>\n");  
+    output.append(this->level_whitespace(1) + "</UnstructuredGrid>\n");
+    output.append(this->level_whitespace(0) + "</VTKFile>\n");
+
+    if (max_increments==1)
+    {
+      this->write_to_file(filepath + ".vtu",output);
+    }else{
+      this->write_to_file(filepath + "." + std::to_string(current_increment) +  ".vtu",output);
+    }
+  }
+  
+  progressbar.end();
+
   return true;
 }
 
