@@ -464,7 +464,11 @@ bool CoreResultsFrd::read_nodal_result_block(std::vector<std::string> line)
     result_block_node_data[result_block_node_data.size()-1].push_back({node_id,result_block_node_data_id});
   }else if (line[0] == "-5")
   {
-    result_block_components[result_block_components.size()-1].push_back(line[1]);
+    // ignore "ALL"
+    if (line[1] != "ALL")
+    {
+      result_block_components[result_block_components.size()-1].push_back(line[1]);
+    }
   }
 
   return true;
