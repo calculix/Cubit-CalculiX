@@ -24,6 +24,11 @@ public:
   double rangeMax = 0;
   std::string current_filepath_vtu = "";
   std::string current_filepath_vtpc = "";
+  std::vector<std::string> filepath_vtu; // to store the filepaths
+  std::vector<std::string> part_names; // to store the parts name
+  std::vector<int> part_ids; // to store the parts ids
+
+
 
   bool init(int job_id,CoreResultsFrd* frd,CoreResultsDat* dat); // initialize
   bool reset(); // delete all data and initialize afterwards
@@ -44,8 +49,11 @@ public:
   std::string get_element_connectivity_vtk(int element_connectivity_data_id, int element_type); // gets the connectivity already converted to vtk format
   std::string get_element_type_vtk(int element_type); // gets the element type already converted to vtk format
   std::string get_element_offset_vtk(int element_connectivity_data_id); // gets the element offset already converted to vtk format
+  std::string get_increment(); // gets the current increment in the format 00x
   std::vector<int> get_result_blocks_data_ids(); // gets the result blocks data ids for the current increment
+  std::vector<int> get_result_blocks_data_ids_linked(); // gets the result blocks data ids for the current increment from frd_all
   std::vector<int> get_result_block_node_data_id(int result_blocks_data_id); // gets the result blocks node data ids for the current block
+  std::vector<int> get_result_block_node_data_id_linked(int result_blocks_data_id); // gets the result blocks node data ids for the current block from frd_all
   std::string get_result_data(int data_id, int node_data_id); // gets the result data for a node
   bool link_nodes(std::vector<int> node_ids); // links the ids from frd/dat all
   bool link_elements(std::vector<int> element_ids); // links the ids from frd/dat all
