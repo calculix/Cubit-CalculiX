@@ -75,6 +75,16 @@ std::string CalculiXCoreInterface::get_block_name(int block_id)
   return ccx_core.get_block_name(block_id);
 }
 
+std::vector<int> CalculiXCoreInterface::get_block_node_ids(int block_id)
+{
+  return ccx_core.get_block_node_ids(block_id);
+}
+
+std::vector<int> CalculiXCoreInterface::get_block_element_ids(int block_id)
+{
+  return ccx_core.get_block_element_ids(block_id);
+}
+
 std::string CalculiXCoreInterface::get_material_name(int material_id)
 {
   return ccx_core.get_material_name(material_id);

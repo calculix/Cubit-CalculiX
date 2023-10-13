@@ -1039,6 +1039,66 @@ std::string CalculiXCore::get_block_name(int block_id)
   return block_name;
 }
 
+std::vector<int> CalculiXCore::get_block_node_ids(int block_id)
+{
+  return CubitInterface::get_block_nodes(block_id);
+}
+
+std::vector<int> CalculiXCore::get_block_element_ids(int block_id)
+{
+  std::string current_element_type = ""; // to detect changes of element type in blocks. especially hex and wedge
+  std::vector<int> return_ids;
+
+  // Get a batch of elements in an initialized block
+  int buf_size = 100;
+  std::vector<ElementType>   element_type(buf_size);
+  std::vector<ElementHandle> handles(buf_size);
+
+  // define name variable
+  std::string element_type_name;
+  std::string cubit_element_type_entity;
+
+  // Elements in a buffer set will be of the same element type and in the same block
+  
+  int num_elems;
+  int start_index = 0;
+  BlockHandle block;
+  me_iface->get_block_handle(block_id, block);
+  current_element_type = CubitInterface::get_block_element_type(block_id);
+
+  if (current_element_type != "SPHERE") // check if cubit element type from block is sphere
+  {         
+    // write only once per block
+    element_type_name = this->get_ccx_element_type(block_id);
+
+    while( (num_elems = me_iface->get_block_elements(start_index, buf_size, block, element_type, handles)) > 0)
+    {
+      // Get ids for the element handles
+      std::vector<int> ids(num_elems);
+      me_iface->get_element_ids(num_elems, handles, ids);
+
+      // skip if element type is 0 (SPHERE), that element type doesn´t exist in CalculiX
+      // skip if block element type is different from requested elements, hex and wedge mix
+      if ((element_type[0] != 0) && (current_element_type==me_iface->get_element_type_name(element_type[0])))
+      {
+        // convert ids from element_id to global_element_id
+        cubit_element_type_entity = me_iface->get_element_type_name(element_type[0]);
+        cubit_element_type_entity = this->get_cubit_element_type_entity(cubit_element_type_entity);
+        
+        //rewrite to global element ids
+        for (size_t i = 0; i < ids.size(); i++)
+        {
+          ids[i] = CubitInterface::get_global_element_id(cubit_element_type_entity,ids[i]);
+          return_ids.push_back(ids[i]);
+        }
+
+      }
+      start_index += num_elems;
+    }
+  }
+  return return_ids;
+}
+
 std::string CalculiXCore::get_material_name(int material_id)
 {
   std::string material_name;
