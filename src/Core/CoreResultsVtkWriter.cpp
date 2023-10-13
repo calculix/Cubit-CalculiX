@@ -278,7 +278,7 @@ bool CoreResultsVtkWriter::write_vtu_linked()
     output_elements_ids.append(std::to_string(frd->elements[i][0]) + "\n");
 
     output_element_connectivity.append(this->level_whitespace(5));
-    output_element_connectivity.append(this->get_element_connectivity_vtk(frd->elements[i][2],frd->elements[i][1]) + "\n");
+    output_element_connectivity.append(this->get_element_connectivity_vtk_linked(frd->elements[i][2],frd->elements[i][1]) + "\n");
 
     output_element_offsets.append(this->level_whitespace(5));
     output_element_offsets.append(this->get_element_offset_vtk(frd->elements[i][2]) + "\n");
@@ -659,6 +659,40 @@ std::string CoreResultsVtkWriter::get_element_connectivity_vtk(int element_conne
   return str_result;
 }
 
+std::string CoreResultsVtkWriter::get_element_connectivity_vtk_linked(int element_connectivity_data_id, int element_type) // gets the connectivity already converted to vtk format
+{
+  std::string str_result = "";
+
+  std::vector<int> result_connectivity;
+
+  if (element_type == 4)
+  {
+    result_connectivity = frd->elements_connectivity[element_connectivity_data_id];
+    //switch positions    
+    result_connectivity[12] = frd->elements_connectivity[element_connectivity_data_id][16];
+    result_connectivity[13] = frd->elements_connectivity[element_connectivity_data_id][17];
+    result_connectivity[14] = frd->elements_connectivity[element_connectivity_data_id][18];
+    result_connectivity[15] = frd->elements_connectivity[element_connectivity_data_id][19];
+    result_connectivity[16] = frd->elements_connectivity[element_connectivity_data_id][12];
+    result_connectivity[17] = frd->elements_connectivity[element_connectivity_data_id][13];
+    result_connectivity[18] = frd->elements_connectivity[element_connectivity_data_id][14];
+    result_connectivity[19] = frd->elements_connectivity[element_connectivity_data_id][15];
+  }else{
+    result_connectivity = frd->elements_connectivity[element_connectivity_data_id];
+  }
+  
+  for (size_t i = 0; i < result_connectivity.size(); i++)
+  {
+    result_connectivity[i] = this->getParaviewNode(result_connectivity[i]);
+    str_result.append(std::to_string(result_connectivity[i]));
+    if (i!=result_connectivity.size()-1)
+    {
+      str_result.append(" ");
+    }
+  }
+  return str_result;
+}
+
 std::string CoreResultsVtkWriter::get_element_type_vtk(int element_type) // gets the element type already converted to vtk format
 {
   std::string str_result = "type ";
@@ -683,6 +717,18 @@ std::string CoreResultsVtkWriter::get_element_offset_vtk(int element_connectivit
   str_result = std::to_string(this->current_offset);
 
   return str_result;
+}
+
+int CoreResultsVtkWriter::getParaviewNode(int frd_node_id)
+{
+  for (size_t i = 0; i < frd->nodes.size(); i++)
+  {
+    if (frd->nodes[i][0] == frd_node_id)
+    {
+      return i;
+    }
+  }
+  return -1;
 }
 
 bool CoreResultsVtkWriter::checkResults()
