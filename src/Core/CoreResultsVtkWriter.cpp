@@ -56,7 +56,25 @@ bool CoreResultsVtkWriter::clear()
   system(shellstr.c_str());
   shellstr = "rm " + filepath + "*vtpc";
   system(shellstr.c_str());
-  
+
+  for (size_t i = 0; i < vec_frd.size(); i++)
+  {
+    delete vec_frd[i];
+  }
+  for (size_t i = 0; i < vec_dat.size(); i++)
+  {
+    delete vec_dat[i];
+  } 
+
+  vec_frd.clear();
+  vec_dat.clear();
+
+  block_ids.clear();
+  block_node_ids.clear();
+  block_element_ids.clear();
+  nodeset_ids.clear();
+  nodeset_node_ids.clear();
+
   return true;
 }
 
@@ -88,11 +106,6 @@ bool CoreResultsVtkWriter::write_linked()
   int nparts = 0;
   int current_part = 0;
   ProgressTool progressbar;
-  std::vector<int> block_ids;
-  std::vector<std::vector<int>> block_node_ids;
-  std::vector<std::vector<int>> block_element_ids;
-  std::vector<int> nodeset_ids;
-  std::vector<std::vector<int>> nodeset_node_ids;
 
   // clear all data before reading and check results
   this->clear();
@@ -107,7 +120,6 @@ bool CoreResultsVtkWriter::write_linked()
   }
   nparts += block_ids.size();
 
-  /*
   // nodesets
   nodeset_ids = CubitInterface::get_nodeset_id_list();
   for (size_t i = 0; i < nodeset_ids.size(); i++)
@@ -115,10 +127,29 @@ bool CoreResultsVtkWriter::write_linked()
     nodeset_node_ids.push_back(CubitInterface::get_nodeset_nodes_inclusive(nodeset_ids[i]));
   }
   nparts += nodeset_ids.size();    
-  */
 
   progressbar.start(0,100,"Writing Results to ParaView Format - Linked Mode");
   auto t_start = std::chrono::high_resolution_clock::now();
+
+  // prepare frd and dat
+  for (size_t i = 0; i < nparts-1; i++)
+  {
+    CoreResultsFrd* tmp_frd;
+    CoreResultsDat* tmp_dat;
+
+    tmp_frd = new CoreResultsFrd();
+    tmp_frd->init(job_id);
+    tmp_dat = new CoreResultsDat();
+    tmp_dat->init(job_id);
+
+    frd.push_back(tmp_frd);
+    dat.push_back(tmp_dat);
+  }
+
+  //link nodes
+  this->link_nodes();
+  //link elements
+  this->link_elements();
 
   for (size_t i = 0; i < max_increments; i++)
   {
@@ -142,11 +173,6 @@ bool CoreResultsVtkWriter::write_linked()
 
       frd = tmp_frd;
       dat = tmp_dat;
-
-      //link nodes
-      this->link_nodes(block_node_ids[ii]);
-      //link elements
-      this->link_elements(block_element_ids[ii]);
 
       //std::string log;
       //log = "nparts " + std::to_string(nparts) + " block " + std::to_string(block_ids[ii])+ " block size" + std::to_string(block_ids.size())+" ci " + std::to_string(current_increment) + " \n";
@@ -937,7 +963,7 @@ std::string CoreResultsVtkWriter::get_result_data(int data_id, int node_data_id)
   return str_result;  
 }
 
-bool CoreResultsVtkWriter::link_nodes(std::vector<int> node_ids)
+bool CoreResultsVtkWriter::link_nodes()
 {
   for (size_t i = 0; i < frd_all->nodes.size(); i++)
   {
@@ -990,7 +1016,7 @@ bool CoreResultsVtkWriter::link_nodes(std::vector<int> node_ids)
   return true;
 }
 
-bool CoreResultsVtkWriter::link_elements(std::vector<int> element_ids)
+bool CoreResultsVtkWriter::link_elements()
 {
   for (size_t i = 0; i < frd_all->elements.size(); i++)
   {
