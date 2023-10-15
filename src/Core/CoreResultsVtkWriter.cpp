@@ -91,6 +91,8 @@ bool CoreResultsVtkWriter::write_linked()
   std::vector<int> block_ids;
   std::vector<std::vector<int>> block_node_ids;
   std::vector<std::vector<int>> block_element_ids;
+  std::vector<int> nodeset_ids;
+  std::vector<std::vector<int>> nodeset_node_ids;
 
   // clear all data before reading and check results
   this->clear();
@@ -98,16 +100,24 @@ bool CoreResultsVtkWriter::write_linked()
 
   // blocks
   block_ids = ccx_iface->get_blocks();
-  
   for (size_t i = 0; i < block_ids.size(); i++)
   {
     block_node_ids.push_back(ccx_iface->get_block_node_ids(block_ids[i]));
     block_element_ids.push_back(ccx_iface->get_block_element_ids(block_ids[i]));
   }
-
   nparts += block_ids.size();
 
-  progressbar.start(0,100,"Writing Results to ParaView Format");
+  /*
+  // nodesets
+  nodeset_ids = CubitInterface::get_nodeset_id_list();
+  for (size_t i = 0; i < nodeset_ids.size(); i++)
+  {
+    nodeset_node_ids.push_back(CubitInterface::get_nodeset_nodes_inclusive(nodeset_ids[i]));
+  }
+  nparts += nodeset_ids.size();    
+  */
+
+  progressbar.start(0,100,"Writing Results to ParaView Format - Linked Mode");
   auto t_start = std::chrono::high_resolution_clock::now();
 
   for (size_t i = 0; i < max_increments; i++)
@@ -153,7 +163,38 @@ bool CoreResultsVtkWriter::write_linked()
       delete tmp_frd;
       delete tmp_dat;
     }
-    
+
+    /*
+    for (size_t ii = 0; ii < nodeset_ids.size(); ii++)
+    {
+      ++current_part;
+      CoreResultsFrd* tmp_frd;
+      CoreResultsDat* tmp_dat;
+
+      tmp_frd = new CoreResultsFrd();
+      tmp_frd->init(job_id);
+      tmp_dat = new CoreResultsDat();
+      tmp_dat->init(job_id);
+
+      frd = tmp_frd;
+      dat = tmp_dat;
+
+      //link nodes
+      this->link_nodes(nodeset_node_ids[ii]);
+      
+      current_filepath_vtu = filepath + "." + std::to_string(current_part) + "." + this->get_increment() + ".vtu";
+      
+      this->write_vtu_linked();
+
+      filepath_vtu.push_back(current_filepath_vtu);
+      part_ids.push_back(current_part);
+      part_names.push_back(ccx_iface->get_nodeset_name(nodeset_ids[ii]));
+
+      delete tmp_frd;
+      delete tmp_dat;
+    }
+    */
+
     current_filepath_vtpc = filepath + "." + this->get_increment() + ".vtpc";
     this->write_vtpc();
 
@@ -185,27 +226,17 @@ bool CoreResultsVtkWriter::write_vtpc()
     output.append(this->level_whitespace(2) + "</Partitions>\n");
   }
   output.append(this->level_whitespace(1) + "</vtkPartitionedDataSetCollection>\n");
+  output.append(this->level_whitespace(1) + "<FieldData>\n");
+  output.append(this->level_whitespace(2) + "<DataArray type=\"Float64\" Name=\"TimeValue\" NumberOfTuples=\"1\">\n");
+  output.append(this->level_whitespace(3) + this->get_increment_time() + "\n");
+  output.append(this->level_whitespace(2) + "</DataArray>\n");
+  output.append(this->level_whitespace(1) + "</FieldData>\n");
   output.append(this->level_whitespace(0) + "</VTKFile>\n");
-  /*
-    <DataAssembly encoding="base64">
-      PD94bWwgdmVyc2lvbj0iMS4wIj8+CjxJT1NTIHR5cGU9InZ0a0RhdGFBc3NlbWJseSIgdmVyc2lvbj0iMS4wIiBpZD0iMCI+CiAgPGVsZW1lbnRfYmxvY2tzIGlkPSIxIj4KICAgIDxibG9ja18xIGlkPSIyIiBsYWJlbD0iYmxvY2tfMSI+CiAgICAgIDxkYXRhc2V0IGlkPSIwIiAvPgogICAgPC9ibG9ja18xPgogIDwvZWxlbWVudF9ibG9ja3M+CiAgPG5vZGVfc2V0cyBpZD0iMyI+CiAgICA8bm9kZWxpc3RfMSBpZD0iNCIgbGFiZWw9Im5vZGVsaXN0XzEiPgogICAgICA8ZGF0YXNldCBpZD0iMSIgLz4KICAgIDwvbm9kZWxpc3RfMT4KICA8L25vZGVfc2V0cz4KICA8c2lkZV9zZXRzIGlkPSI1Ij4KICAgIDxzdXJmYWNlXzEgaWQ9IjYiIGxhYmVsPSJzdXJmYWNlXzEiPgogICAgICA8ZGF0YXNldCBpZD0iMiIgLz4KICAgIDwvc3VyZmFjZV8xPgogIDwvc2lkZV9zZXRzPgo8L0lPU1M+Cg==
-    </DataAssembly>
-  </vtkPartitionedDataSetCollection>
-<FieldData>
-    <Array type="String" Name="Information Records" NumberOfTuples="0" format="ascii">
-    </Array>
-    <Array type="String" Name="QA Records" NumberOfComponents="4" ComponentName0="Code Name" ComponentName1="QA Descriptor" ComponentName2="Date" ComponentName3="Time" NumberOfTuples="1" format="ascii">
-      67 85 66 73 84 0 50 48 50 51 46 49 48 0 49 48 47 49 49 47 50 48 50 51 0 49 52 58 49 50 58 52 52 0
-    </Array>
-  </FieldData>
-</VTKFile>
-  */
 
   this->write_to_file(current_filepath_vtpc,output);
 
   return true;
 }
-
 
 bool CoreResultsVtkWriter::write_vtu_linked()
 {
@@ -286,7 +317,6 @@ bool CoreResultsVtkWriter::write_vtu_linked()
     output_element_types.append(this->level_whitespace(5));
     output_element_types.append(this->get_element_type_vtk(frd->elements[i][1]) + "\n");
   }
-
   
   for (size_t i = 0; i < 1; i++)
   { 
@@ -313,6 +343,7 @@ bool CoreResultsVtkWriter::write_vtu_linked()
       // skip if nodes from point data is different than nodes number, like for data from CELS
       if (node_data_ids.size()==frd->nodes.size())
       {
+        current_time = frd->total_times[frd->result_blocks[data_ids[ii]][4]];
         // header
         output.append(this->level_whitespace(4) + "<DataArray type=\"Float64\" ");
         output.append("Name=\"" + frd->result_block_type[frd->result_blocks[data_ids[ii]][5]] + "\" ");
@@ -470,7 +501,7 @@ bool CoreResultsVtkWriter::write_vtu_unlinked()
   }
 
   progressbar.end();
-  progressbar.start(0,100,"Writing Results to ParaView Format");
+  progressbar.start(0,100,"Writing Results to ParaView Format - Unlinked Mode");
   t_start = std::chrono::high_resolution_clock::now();
 
   for (size_t i = 0; i < max_increments; i++)
@@ -499,6 +530,7 @@ bool CoreResultsVtkWriter::write_vtu_unlinked()
       // skip if nodes from point data is different than nodes number, like for data from CELS
       if (node_data_ids.size()==frd->nodes.size())
       {
+        current_time = frd->total_times[frd->result_blocks[data_ids[ii]][4]];
         // header
         output.append(this->level_whitespace(4) + "<DataArray type=\"Float64\" ");
         output.append("Name=\"" + frd->result_block_type[frd->result_blocks[data_ids[ii]][5]] + "\" ");
@@ -624,6 +656,12 @@ std::string CoreResultsVtkWriter::get_increment()
   }
   
   return increment;
+}
+
+std::string CoreResultsVtkWriter::get_increment_time()
+{
+  std::string time = std::to_string(current_time); 
+  return time;
 }
 
 std::string CoreResultsVtkWriter::get_element_connectivity_vtk(int element_connectivity_data_id, int element_type) // gets the connectivity already converted to vtk format

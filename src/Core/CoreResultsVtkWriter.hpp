@@ -18,6 +18,7 @@ public:
   int current_offset = 0;
   int max_increments = 0;
   int current_increment = 0;
+  double current_time = 0;
   int maxDataRows = 0;
   int currentDataRow = 0;
   double rangeMin = 0;
@@ -50,6 +51,7 @@ public:
   std::string get_element_offset_vtk(int element_connectivity_data_id); // gets the element offset already converted to vtk format
   int getParaviewNode(int frd_node_id); // gets the paraview node id for frd node id
   std::string get_increment(); // gets the current increment in the format 00x
+  std::string get_increment_time(); // gets the current increment time value
   std::vector<int> get_result_blocks_data_ids(); // gets the result blocks data ids for the current increment
   std::vector<int> get_result_blocks_data_ids_linked(); // gets the result blocks data ids for the current increment from frd_all
   std::vector<int> get_result_block_node_data_id(int result_blocks_data_id); // gets the result blocks node data ids for the current block
