@@ -5,6 +5,7 @@
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "ProgressTool.hpp"
+#include "MeshExportInterface.hpp"
 
 #include <chrono>
 #include <cmath>
@@ -35,6 +36,8 @@ bool CoreResultsVtkWriter::init(int job_id,CoreResultsFrd* frd,CoreResultsDat* d
     this->dat_all = dat;
 
     progressbar = new ProgressTool();
+    me_iface = dynamic_cast<MeshExportInterface*>(CubitInterface::get_interface("MeshExport"));
+    me_iface->initialize_export();
 
     is_initialized = true;  
     return true;
@@ -79,7 +82,11 @@ bool CoreResultsVtkWriter::clear()
   block_element_ids.clear();
   nodeset_ids.clear();
   nodeset_node_ids.clear();
-
+  sideset_ids.clear();
+  sideset_node_ids.clear();
+  sideset_elements.clear();
+  sideset_elements_type.clear();
+  sideset_elements_connectivity.clear();
   return true;
 }
 
@@ -130,6 +137,16 @@ bool CoreResultsVtkWriter::write_linked()
     part_names.push_back(ccx_iface->get_nodeset_name(nodeset_ids[i]));
   }
   nparts += nodeset_ids.size();    
+
+  // sidesets
+  // prepare sidesets
+  this->prepare_sidesets();
+
+  for (size_t i = 0; i < sideset_ids.size(); i++)
+  {
+    part_names.push_back(ccx_iface->get_nodeset_name(sideset_ids[i]));
+  }
+  nparts += sideset_ids.size();
 
   progressbar->start(0,100,"Writing Results to ParaView Format - Linked Mode");
   auto t_start = std::chrono::high_resolution_clock::now();
@@ -1132,5 +1149,102 @@ bool CoreResultsVtkWriter::link_elements()
     }
   }
 
+  return true;
+}
+
+bool CoreResultsVtkWriter::prepare_sidesets()
+{
+  //sideset_ids;
+  //sideset_node_ids;
+  //sideset_elements;
+  //sideset_elements[sideset id][0] element id
+  //sideset_elements_connectivity;
+  //sideset_elements_connectivity[sideset id][element][0] node 1
+  
+  // Get the list of sidesets
+  std::vector<SidesetHandle> sidesets;
+  me_iface->get_sideset_list(sidesets);
+
+  // Get a batch of elements from the sideset
+  int buf_size = 100;
+
+  // loop over the sidesets
+  for (size_t i = 0; i < sidesets.size(); i++)
+  {
+    SidesetHandle sideset = sidesets[i];
+
+    sideset_ids.push_back(me_iface->id_from_handle(sideset));
+    std::vector<int> tmp_sideset_elements;
+    sideset_elements.push_back(tmp_sideset_elements);
+    std::vector<std::vector<int>> tmp_sideset_elements_connectivity; 
+    sideset_elements_connectivity.push_back(tmp_sideset_elements_connectivity);
+
+    int num_elems;
+    int start_index = 0;
+    int element_count = 0;
+
+    std::vector<ElementHandle> element_ids;
+    std::vector<int> side_ids;
+    std::vector<ElementType> element_type;
+    std::string cubit_element_type_entity;
+    std::vector<int>::iterator it;
+
+
+    // count all elements in sideset
+    while( (num_elems = me_iface->get_sideset_sides(sideset,start_index,buf_size,element_ids,element_type,side_ids)) > 0)
+    {
+      start_index += num_elems;
+      element_count += num_elems;
+    }
+
+    int element_id;
+    std::vector<int> side_ids_all(element_count);
+    std::vector<int> ccx_side_ids_all(element_count);
+    std::vector<int> element_ids_all(element_count);
+    std::vector<int> element_type_all(element_count);
+
+    start_index = 0;
+    while( (num_elems = me_iface->get_sideset_sides(sideset,start_index,buf_size,element_ids,element_type,side_ids)) > 0)
+    {
+      // get all elements in sideset
+      for (int j = 0; j < num_elems; j++)
+      {
+        me_iface->get_element_id(element_ids[j],element_id);
+        //element_ids_all[start_index + j] = element_id;
+        element_type_all[start_index + j] = element_type[j];
+        side_ids_all[start_index + j] = side_ids[j];
+        ccx_side_ids_all[start_index + j] = ccx_iface->get_ccx_element_side(element_type[j], side_ids[j]);
+
+        // convert ids from element_id to global_element_id
+        cubit_element_type_entity = me_iface->get_element_type_name(element_type[j]);
+        cubit_element_type_entity = ccx_iface->get_cubit_element_type_entity(cubit_element_type_entity);
+        element_ids_all[start_index + j] = CubitInterface::get_global_element_id(cubit_element_type_entity,element_id);
+
+        // prepare data for frd
+        int num_node;
+        std::vector<int> indices;
+
+        sideset_elements[i].push_back(element_ids_all[start_index + j]);
+        sideset_elements_type[i].push_back(element_type[j]);
+        me_iface->get_nodes_per_side(element_type[j],side_ids_all[start_index + j],num_node);
+        me_iface->get_node_indices_per_side(element_type[j],side_ids_all[start_index + j],indices);
+
+        int nodes_per_element;
+        me_iface->get_nodes_per_element(element_type[j],nodes_per_element);
+        std::vector<int> conn(nodes_per_element);        
+        me_iface->get_connectivity(element_ids[j], conn);
+
+        std::vector<int> tmp_connectivity; 
+        
+        for (size_t k = 0; k < indices.size(); k++)
+        {
+          tmp_connectivity.push_back(conn[indices[k]]); 
+        }
+        sideset_elements_connectivity[i].push_back(tmp_connectivity);
+      }
+    start_index += num_elems;
+    }
+  }
+ 
   return true;
 }

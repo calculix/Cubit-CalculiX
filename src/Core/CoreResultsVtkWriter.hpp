@@ -5,6 +5,7 @@ class CalculiXCoreInterface;
 class CoreResultsFrd;
 class CoreResultsDat;
 class ProgressTool;
+class MeshExportInterface;
 
 class CoreResultsVtkWriter
 {
@@ -36,6 +37,13 @@ public:
   std::vector<std::vector<int>> block_element_ids;
   std::vector<int> nodeset_ids;
   std::vector<std::vector<int>> nodeset_node_ids;
+  std::vector<int> sideset_ids;
+  std::vector<std::vector<int>> sideset_node_ids;
+  std::vector<std::vector<int>> sideset_elements;
+  //sideset_elements[sideset id][element][0] element id
+  std::vector<std::vector<int>> sideset_elements_type;
+  std::vector<std::vector<std::vector<int>>> sideset_elements_connectivity;
+  //sideset_elements_connectivity[sideset id][element][0] node 1
 
   bool init(int job_id,CoreResultsFrd* frd,CoreResultsDat* dat); // initialize
   bool reset(); // delete all data and initialize afterwards
@@ -67,6 +75,7 @@ public:
   std::string get_result_data(int data_id, int node_data_id); // gets the result data for a node
   bool link_nodes(); // links the ids from frd/dat all
   bool link_elements(); // links the ids from frd/dat all
+  bool prepare_sidesets(); // gets all data for the sidesets
 
   ProgressTool *progressbar; // progressbar
   CalculiXCoreInterface *ccx_iface;
@@ -76,6 +85,7 @@ public:
   std::vector<CoreResultsDat*> vec_dat; // the storage of dat files that will be written
   CoreResultsFrd *frd_all; // the input frd file that will be written
   CoreResultsDat *dat_all; // the input dat file that will be written
+  MeshExportInterface *me_iface;
 };
 
 #endif // CORERESULTSVTKWRITER_HPP
