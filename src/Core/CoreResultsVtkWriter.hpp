@@ -4,6 +4,7 @@
 class CalculiXCoreInterface;
 class CoreResultsFrd;
 class CoreResultsDat;
+class ProgressTool;
 
 class CoreResultsVtkWriter
 {
@@ -11,7 +12,7 @@ class CoreResultsVtkWriter
 public:
   CoreResultsVtkWriter();
   ~CoreResultsVtkWriter();
-  
+    
   int job_id = -1;
   std::string filepath = "";
   bool is_initialized = false;
@@ -23,6 +24,8 @@ public:
   int currentDataRow = 0;
   double rangeMin = 0;
   double rangeMax = 0;
+  int nparts = 0;
+  int current_part = 0;
   std::string current_filepath_vtu = "";
   std::string current_filepath_vtpc = "";
   std::vector<std::string> filepath_vtu; // to store the filepaths
@@ -65,6 +68,7 @@ public:
   bool link_nodes(); // links the ids from frd/dat all
   bool link_elements(); // links the ids from frd/dat all
 
+  ProgressTool *progressbar; // progressbar
   CalculiXCoreInterface *ccx_iface;
   CoreResultsFrd *frd; // the current frd file that will be written
   CoreResultsDat *dat; // the current frd file that will be written
