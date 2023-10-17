@@ -51,7 +51,6 @@ set(CCXCOMP_SRCS
     CalculiXComp.cpp
     CalculiXComp.hpp
     ${EO_COMP_SRC}
-    ${UO_COMP_SRC}
     ${GUI_SRC}
     #${ui_src}
     MenuManager.cpp
@@ -72,11 +71,14 @@ set(CCXPLUGIN_SRCS
     CalculiXPlugin.cpp
     CalculiXPlugin.hpp
     ${CMD_SRC}
-    ${CORE_SRC})
+    ${CORE_SRC}
+    ${UO_COMP_SRC})
 
 add_library(calculix_plugin SHARED ${CCXPLUGIN_SRCS})
+set_target_properties(calculix_plugin PROPERTIES SUFFIX ".ccm")
 target_link_libraries(calculix_plugin cubiti cubit_util)
 target_link_libraries(calculix_plugin clarofw Qt5::Widgets)
+set_target_properties(calculix_plugin PROPERTIES AUTOMOC 1)
 #set_target_properties(calculix_plugin PROPERTIES CMAKE_POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 
 add_library(calculix_comp SHARED ${CCXCOMP_SRCS})
