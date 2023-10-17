@@ -1,7 +1,7 @@
 project(Cubit-CalculiX)
 
-set(CMAKE_PREFIX_PATH
-"/opt/Coreform-Cubit-2022.4/bin")
+#set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2022.4/bin")
+set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2023.8/cmake")
 
 cmake_minimum_required(VERSION 3.1)
 
@@ -76,6 +76,7 @@ set(CCXPLUGIN_SRCS
 
 add_library(calculix_plugin SHARED ${CCXPLUGIN_SRCS})
 target_link_libraries(calculix_plugin cubiti cubit_util)
+target_link_libraries(calculix_plugin clarofw Qt5::Widgets)
 #set_target_properties(calculix_plugin PROPERTIES CMAKE_POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 
 add_library(calculix_comp SHARED ${CCXCOMP_SRCS})
@@ -85,8 +86,8 @@ set_target_properties(calculix_comp PROPERTIES AUTOMOC 1)
 
 target_link_libraries(calculix_comp Qt5::Widgets)
 
-#target_link_libraries(calculix_comp calculix_plugin)
-target_link_libraries(calculix_plugin calculix_comp)
+target_link_libraries(calculix_comp calculix_plugin)
+#target_link_libraries(calculix_plugin calculix_comp)
 
 if(POLICY CMP0078)
   cmake_policy(SET CMP0078 NEW)

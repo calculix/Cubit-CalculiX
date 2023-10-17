@@ -3,6 +3,8 @@
 
 #include <QIcon>
 #include <QString>
+#include <vector>
+#include <string>
 
 class CoreBlocks;
 class CoreMaterials;

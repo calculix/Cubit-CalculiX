@@ -144,7 +144,7 @@ bool CoreResultsVtkWriter::write_linked()
 
   for (size_t i = 0; i < sideset_ids.size(); i++)
   {
-    part_names.push_back(ccx_iface->get_nodeset_name(sideset_ids[i]));
+    part_names.push_back(ccx_iface->get_sideset_name(sideset_ids[i]));
   }
   nparts += sideset_ids.size();
 
@@ -948,6 +948,7 @@ bool CoreResultsVtkWriter::link_nodes()
   int current_part = 0;
   std::vector<std::vector<int>> tmp_block_node_ids = block_node_ids;
   std::vector<std::vector<int>> tmp_nodeset_node_ids = nodeset_node_ids;
+  std::vector<std::vector<int>> tmp_sideset_node_ids = sideset_node_ids;
 
   progressbar->start(0,100,"Writing Results to ParaView Format - Linking Nodes");
   auto t_start = std::chrono::high_resolution_clock::now();
@@ -987,6 +988,22 @@ bool CoreResultsVtkWriter::link_nodes()
         }
       }
     }
+    //sidesets
+    for (size_t ii = 0; ii < sideset_ids.size(); ii++)
+    {
+      ++current_part;
+      for (size_t iii = 0; iii < tmp_sideset_node_ids[ii].size(); iii++)
+      {
+        if (frd_all->nodes[i][0]==tmp_sideset_node_ids[ii][iii])
+        {
+          vec_frd[current_part]->nodes.push_back(frd_all->nodes[i]);
+          vec_frd[current_part]->nodes_coords.push_back(frd_all->nodes_coords[i]);
+          vec_frd[current_part]->nodes[vec_frd[current_part]->nodes.size()-1][1] = vec_frd[current_part]->nodes_coords.size()-1;
+          tmp_sideset_node_ids[ii].erase(tmp_sideset_node_ids[ii].begin() + iii);
+          --iii;
+        }
+      }
+    }
     //update progress bar
     const auto t_end = std::chrono::high_resolution_clock::now();
     int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
@@ -1019,7 +1036,8 @@ bool CoreResultsVtkWriter::link_nodes()
     {
       tmp_block_node_ids = block_node_ids;
       tmp_nodeset_node_ids = nodeset_node_ids;
-      
+      tmp_sideset_node_ids = sideset_node_ids;
+
       std::vector<int> node_data_ids = this->get_result_block_node_data_id_linked(data_ids[ii]);
       for (size_t iii = 0; iii < nparts; iii++)
       {
@@ -1060,6 +1078,22 @@ bool CoreResultsVtkWriter::link_nodes()
               vec_frd[current_part]->result_block_node_data[data_ids[ii]].push_back(frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]]);
               vec_frd[current_part]->result_block_node_data[data_ids[ii]][vec_frd[current_part]->result_block_node_data[data_ids[ii]].size()-1][1] = vec_frd[current_part]->result_block_data[data_ids[ii]].size()-1;
               tmp_nodeset_node_ids[iv].erase(tmp_nodeset_node_ids[iv].begin() + v);
+              --v;
+            }
+          }
+        }
+        //sidesets
+        for (size_t iv = 0; iv < sideset_ids.size(); iv++)
+        {
+          ++current_part;
+          for (size_t v = 0; v < tmp_sideset_node_ids[iv].size(); v++)
+          {
+            if (frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]==tmp_sideset_node_ids[iv][v])
+            {
+              vec_frd[current_part]->result_block_data[data_ids[ii]].push_back(frd_all->result_block_data[data_ids[ii]][node_data_ids[iii]]);
+              vec_frd[current_part]->result_block_node_data[data_ids[ii]].push_back(frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]]);
+              vec_frd[current_part]->result_block_node_data[data_ids[ii]][vec_frd[current_part]->result_block_node_data[data_ids[ii]].size()-1][1] = vec_frd[current_part]->result_block_data[data_ids[ii]].size()-1;
+              tmp_sideset_node_ids[iv].erase(tmp_sideset_node_ids[iv].begin() + v);
               --v;
             }
           }
@@ -1143,24 +1177,48 @@ bool CoreResultsVtkWriter::link_elements()
     //currentDataRow += frd->result_block_data[data_ids[ii]].size();
     if (duration > 500)
     {
-      progressbar->percent(double(i)/double(frd_all->elements.size()-1));
+      progressbar->percent(double(i)/double(frd->elements.size()-1));
       progressbar->check_interrupt();
       t_start = std::chrono::high_resolution_clock::now();
     }
   }
+  progressbar->end();
+
+  progressbar->start(0,100,"Writing Results to ParaView Format - Linking Sidesets");
+  t_start = std::chrono::high_resolution_clock::now();             
+
+  //std::string log;
+  //log = "geht " + std::to_string(i) + " \n";
+  //ccx_iface->log_str(log);
+
+  //sidesets
+  for (size_t i = 0; i < sideset_ids.size(); i++)
+  {
+    ++current_part;
+    for (size_t ii = 0; ii < sideset_node_ids[i].size(); ii++)
+    {
+      vec_frd[current_part]->elements.push_back({sideset_node_ids[i][ii],99,int(ii),0});
+      vec_frd[current_part]->elements_connectivity.push_back({sideset_node_ids[i][ii]});
+      vec_frd[current_part]->elements[vec_frd[current_part]->elements.size()-1][2] = vec_frd[current_part]->elements_connectivity.size()-1;
+    }
+    //update progress bar
+    const auto t_end = std::chrono::high_resolution_clock::now();
+    int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+    //currentDataRow += frd->result_block_data[data_ids[ii]].size();
+    if (duration > 500)
+    {
+      progressbar->percent(double(i)/double(frd->elements.size()-1));
+      progressbar->check_interrupt();
+      t_start = std::chrono::high_resolution_clock::now();
+    }
+  }
+  progressbar->end();
 
   return true;
 }
 
 bool CoreResultsVtkWriter::prepare_sidesets()
 {
-  //sideset_ids;
-  //sideset_node_ids;
-  //sideset_elements;
-  //sideset_elements[sideset id][0] element id
-  //sideset_elements_connectivity;
-  //sideset_elements_connectivity[sideset id][element][0] node 1
-  
   // Get the list of sidesets
   std::vector<SidesetHandle> sidesets;
   me_iface->get_sideset_list(sidesets);
@@ -1171,11 +1229,16 @@ bool CoreResultsVtkWriter::prepare_sidesets()
   // loop over the sidesets
   for (size_t i = 0; i < sidesets.size(); i++)
   {
+
     SidesetHandle sideset = sidesets[i];
 
     sideset_ids.push_back(me_iface->id_from_handle(sideset));
+    std::vector<int> tmp_sideset_node_ids;
+    sideset_node_ids.push_back(tmp_sideset_node_ids);
     std::vector<int> tmp_sideset_elements;
     sideset_elements.push_back(tmp_sideset_elements);
+    std::vector<int> tmp_sideset_elements_type;
+    sideset_elements_type.push_back(tmp_sideset_elements_type);
     std::vector<std::vector<int>> tmp_sideset_elements_connectivity; 
     sideset_elements_connectivity.push_back(tmp_sideset_elements_connectivity);
 
@@ -1187,8 +1250,6 @@ bool CoreResultsVtkWriter::prepare_sidesets()
     std::vector<int> side_ids;
     std::vector<ElementType> element_type;
     std::string cubit_element_type_entity;
-    std::vector<int>::iterator it;
-
 
     // count all elements in sideset
     while( (num_elems = me_iface->get_sideset_sides(sideset,start_index,buf_size,element_ids,element_type,side_ids)) > 0)
@@ -1220,14 +1281,16 @@ bool CoreResultsVtkWriter::prepare_sidesets()
         cubit_element_type_entity = ccx_iface->get_cubit_element_type_entity(cubit_element_type_entity);
         element_ids_all[start_index + j] = CubitInterface::get_global_element_id(cubit_element_type_entity,element_id);
 
-        // prepare data for frd
-        int num_node;
-        std::vector<int> indices;
+        // prepare data for linking
+        int num_node = 0;
 
-        sideset_elements[i].push_back(element_ids_all[start_index + j]);
+        sideset_elements[i].push_back(element_id);
         sideset_elements_type[i].push_back(element_type[j]);
-        me_iface->get_nodes_per_side(element_type[j],side_ids_all[start_index + j],num_node);
-        me_iface->get_node_indices_per_side(element_type[j],side_ids_all[start_index + j],indices);
+        
+        me_iface->get_nodes_per_side(element_type[j],side_ids[j],num_node);
+        
+        std::vector<int> indices(num_node);
+        me_iface->get_node_indices_per_side(element_type[j],side_ids[j],indices);
 
         int nodes_per_element;
         me_iface->get_nodes_per_element(element_type[j],nodes_per_element);
@@ -1236,6 +1299,10 @@ bool CoreResultsVtkWriter::prepare_sidesets()
 
         std::vector<int> tmp_connectivity; 
         
+        std::string log;
+        log = " element_id " + std::to_string(element_id) + " element_type " + std::to_string(element_type[j]) + " side_id " + std::to_string(side_ids[j]) + " indices.size() " + std::to_string(indices.size()) + " num_node " + std::to_string(num_node) + " \n";
+        PRINT_INFO("%s", log.c_str());
+
         for (size_t k = 0; k < indices.size(); k++)
         {
           tmp_connectivity.push_back(conn[indices[k]]); 
@@ -1243,6 +1310,30 @@ bool CoreResultsVtkWriter::prepare_sidesets()
         sideset_elements_connectivity[i].push_back(tmp_connectivity);
       }
     start_index += num_elems;
+    }
+    // filter out all nodes
+    std::vector<int>::iterator it;
+    for (size_t ii = 0; ii < sideset_elements_connectivity[i].size(); ii++)
+    {
+      std::string log;
+      log = "first " + std::to_string(i) + " size " + std::to_string(sideset_elements_connectivity[i][ii].size()) + " \n";
+      PRINT_INFO("%s", log.c_str());
+
+      for (size_t iii = 0; iii < sideset_elements_connectivity[i][ii].size(); iii++)
+      {
+        std::string log;
+        log = "second " + std::to_string(iii) + " \n";
+        PRINT_INFO("%s", log.c_str());
+        
+        it = std::find(sideset_node_ids[i].begin(), sideset_node_ids[i].end(), sideset_elements_connectivity[i][ii][iii]);
+        if (it==sideset_node_ids[i].end())
+        {  
+          std::string log;
+          log = "geht " + std::to_string(iii) + " \n";
+          PRINT_INFO("%s", log.c_str());
+          sideset_node_ids[i].push_back(sideset_elements_connectivity[i][ii][iii]);
+        }
+      }
     }
   }
  

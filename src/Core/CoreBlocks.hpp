@@ -1,6 +1,9 @@
 #ifndef COREBLOCKS_HPP
 #define COREBLOCKS_HPP
 
+#include <vector>
+#include <string>
+
 class CoreBlocks
 {
 

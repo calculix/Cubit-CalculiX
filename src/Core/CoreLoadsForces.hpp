@@ -1,6 +1,9 @@
 #ifndef CORELOADSFORCES_HPP
 #define CORELOADSFORCES_HPP
 
+#include <vector>
+#include <string>
+
 class CalculiXCoreInterface;
 
 class CoreLoadsForces

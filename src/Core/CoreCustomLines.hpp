@@ -1,6 +1,9 @@
 #ifndef CORECUSTOMLINES_HPP
 #define CORECUSTOMLINES_HPP
 
+#include <vector>
+#include <string>
+
 class CalculiXCoreInterface;
 
 class CoreCustomLines

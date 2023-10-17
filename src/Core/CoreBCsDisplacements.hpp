@@ -1,6 +1,9 @@
 #ifndef COREBCSDISPLACEMENTS_HPP
 #define COREBCSDISPLACEMENTS_HPP
 
+#include <vector>
+#include <string>
+
 class CalculiXCoreInterface;
 
 class CoreBCsDisplacements

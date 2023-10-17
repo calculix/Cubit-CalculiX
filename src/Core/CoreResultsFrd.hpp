@@ -1,6 +1,9 @@
 #ifndef CORERESULTSFRD_HPP
 #define CORERESULTSFRD_HPP
 
+#include <vector>
+#include <string>
+
 class CalculiXCoreInterface;
 
 class CoreResultsFrd

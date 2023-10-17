@@ -1,6 +1,9 @@
 #ifndef COREFIELDOUTPUTS_HPP
 #define COREFIELDOUTPUTS_HPP
 
+#include <vector>
+#include <string>
+
 class CalculiXCoreInterface;
 
 class CoreFieldOutputs

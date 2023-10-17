@@ -1307,11 +1307,22 @@ bool CalculiXCore::check_sideset_exists(int sideset_id)
 
 bool CalculiXCore::check_vertex_exists(int vertex_id)
 {
-  if (!CubitCoreformInterface::is_entity(CubitCoreformInterface::CubitCoreformInterfaceEntityType::VERTEX,vertex_id))
+  std::vector<int> vertex_list = CubitCoreformInterface::get_entities(CubitCoreformInterface::CubitCoreformInterfaceEntityType::VERTEX);
+  for (size_t i = 0; i < vertex_list.size(); i++)
+  {
+    if (vertex_list[i]==vertex_id)
+    {
+      return true;
+    }
+  }
+  return false;
+
+  /*if (!CubitCoreformInterface::is_entity(CubitCoreformInterface::CubitCoreformInterfaceEntityType::VERTEX,vertex_id))
   {
     return false;
   }
   return true;
+  */
 }
 
 bool CalculiXCore::check_surfaceinteraction_exists(int surfaceinteraction_id)

@@ -1,6 +1,9 @@
 #ifndef CORERESULTSVTKWRITER_HPP
 #define CORERESULTSVTKWRITER_HPP
 
+#include <vector>
+#include <string>
+
 class CalculiXCoreInterface;
 class CoreResultsFrd;
 class CoreResultsDat;

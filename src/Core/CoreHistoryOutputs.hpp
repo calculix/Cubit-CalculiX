@@ -1,6 +1,9 @@
 #ifndef COREHISTORYOUTPUTS_HPP
 #define COREHISTORYOUTPUTS_HPP
 
+#include <vector>
+#include <string>
+
 class CalculiXCoreInterface;
 
 class CoreHistoryOutputs

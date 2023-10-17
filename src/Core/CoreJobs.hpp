@@ -1,6 +1,9 @@
 #ifndef COREJOBS_HPP
 #define COREJOBS_HPP
 
+#include <vector>
+#include <string>
+
 class CalculiXCoreInterface;
 class CubitProcess;
 

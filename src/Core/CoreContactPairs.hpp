@@ -1,6 +1,9 @@
 #ifndef CORECONTACTPAIRS_HPP
 #define CORECONTACTPAIRS_HPP
 
+#include <vector>
+#include <string>
+
 class CalculiXCoreInterface;
 
 class CoreContactPairs

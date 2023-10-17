@@ -1,6 +1,9 @@
 #ifndef COREMATERIALS_HPP
 #define COREMATERIALS_HPP
 
+#include <vector>
+#include <string>
+
 class MaterialInterface;
 class CalculiXCoreInterface;
 
