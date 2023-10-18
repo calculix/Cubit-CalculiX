@@ -2,6 +2,7 @@ project(Cubit-CalculiX)
 
 #set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2022.4/bin")
 #set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2023.4/cmake")
+#set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2023.6/cmake")
 #set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2023.8/cmake")
 set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2023.10/cmake")
 

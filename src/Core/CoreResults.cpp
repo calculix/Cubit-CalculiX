@@ -119,7 +119,7 @@ bool CoreResults::load_result(int job_id)
   }
 }
 
-bool CoreResults::convert_result(int job_id)
+int CoreResults::convert_result(int job_id)
 {
   std::string log;
   int results_data_id = get_results_data_id_from_job_id(job_id);
@@ -130,7 +130,7 @@ bool CoreResults::convert_result(int job_id)
 
   if (results_data_id == -1)
   {
-    return false;
+    return -1;
   } else {
     log = "Converting results for Job ID " + std::to_string(results_data[results_data_id][1]) + " \n";
     PRINT_INFO("%s", log.c_str());
@@ -139,7 +139,7 @@ bool CoreResults::convert_result(int job_id)
     //frd_data[frd_data_id].read();
     //dat_data[dat_data_id].read();
 
-    return true;
+    return vtkWriter.write_mode;
   }
 }
 

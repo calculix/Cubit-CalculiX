@@ -515,7 +515,7 @@ bool CalculiXCoreInterface::load_result(int job_id)
   return ccx_core.load_result(job_id);
 }
 
-bool CalculiXCoreInterface::convert_result(int job_id)
+int CalculiXCoreInterface::convert_result(int job_id)
 {
   return ccx_core.convert_result(job_id);
 }

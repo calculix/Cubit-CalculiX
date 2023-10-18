@@ -18,6 +18,7 @@ public:
   ~CoreResultsVtkWriter();
     
   int job_id = -1;
+  int write_mode = -1; //1 linked //2 unlinked
   std::string filepath = "";
   bool is_initialized = false;
   int current_offset = 0;

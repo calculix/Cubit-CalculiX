@@ -231,8 +231,6 @@ bool CoreJobs::wait_job(int job_id)
     CubitProcessHandler_data_id = get_CubitProcessHandler_data_id_from_process_id(std::stoi(jobs_data[jobs_data_id][4]));
     if (CubitProcessHandler_data_id != -1)
     {
-      
-      
       log = " Waiting for Job " + jobs_data[jobs_data_id][2] + " to Exit \n";
       PRINT_INFO("%s", log.c_str());
           
@@ -258,12 +256,14 @@ bool CoreJobs::wait_job(int job_id)
         PRINT_INFO("%s", log.c_str());
         jobs_data[jobs_data_id][3] = "4";
         ccx_iface->load_result(job_id);
+        jobs_data[jobs_data_id][6] = std::to_string(ccx_iface->convert_result(job_id));
       }else{
         log = "Job " + jobs_data[jobs_data_id][1] + " with ID " + jobs_data[jobs_data_id][0] + " finished! \n";
         //log.append(" Exit Code " + std::to_string(errorcode) + " \n");
         PRINT_INFO("%s", log.c_str());
         jobs_data[jobs_data_id][3] = "2";
         ccx_iface->load_result(job_id);
+        jobs_data[jobs_data_id][6] = std::to_string(ccx_iface->convert_result(job_id));
       }
       CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
     }
@@ -360,6 +360,7 @@ bool CoreJobs::check_jobs()
           PRINT_INFO("%s", log.c_str());
           jobs_data[i][3] = "4";
           ccx_iface->load_result(std::stoi(jobs_data[i][0]));
+          jobs_data[i][6] = std::to_string(ccx_iface->convert_result(std::stoi(jobs_data[i][0])));
           CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
         }else if ((0 != kill(std::stoi(jobs_data[i][4]),0)) && (status==0)) // if process doesn't exist and exited without error
         {
@@ -369,6 +370,7 @@ bool CoreJobs::check_jobs()
           PRINT_INFO("%s", log.c_str());
           jobs_data[i][3] = "2";
           ccx_iface->load_result(std::stoi(jobs_data[i][0]));
+          jobs_data[i][6] = std::to_string(ccx_iface->convert_result(std::stoi(jobs_data[i][0])));
           CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
         }
       }
@@ -490,7 +492,7 @@ bool CoreJobs::result_ccx2paraview_job(int job_id)
       cmd.push_back("returned_value = subprocess.call(\"python3 " + ccx_uo.mPathccx2paraview.toStdString() + " " +  filepath + " vtk\",shell=True)");
       cmd.push_back("if returned_value==0: print('Finished')\nelse:print('Error occurred!')");
       PyBroker::run_script(cmd);
-      jobs_data[job_data_id][6] = "1";
+      jobs_data[job_data_id][6] = "3";
     }  
   }
 
@@ -550,8 +552,42 @@ bool CoreJobs::result_paraview_job(int job_id)
   int job_data_id;
   job_data_id = get_jobs_data_id_from_job_id(job_id);
   if (job_data_id != -1)
-  {    
+  { 
     if ((std::stoi(jobs_data[job_data_id][3])>1) && (jobs_data[job_data_id][6] == "1"))
+    {      
+      filepath = jobs_data[job_data_id][1] + ".0001.vtpc";
+      if (access(filepath.c_str(), W_OK) != 0) 
+      {
+        filepath = jobs_data[job_data_id][1] + "...vtpc";
+      }
+
+      std::string shellstr;
+      shellstr = "nohup " + ccx_uo.mPathParaView.toStdString() + " --data=" + filepath + " &";
+      system(shellstr.c_str());
+
+      log = "Opening Results with Paraview for Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + "\n";
+      //log.append(filepath +  " \n");
+      //log.append(arg +  " \n");
+      PRINT_INFO("%s", log.c_str());
+    }
+    if ((std::stoi(jobs_data[job_data_id][3])>1) && (jobs_data[job_data_id][6] == "2"))
+    {      
+      filepath = jobs_data[job_data_id][1] + ".vtu";
+      if (access(filepath.c_str(), W_OK) != 0) 
+      {
+        filepath = jobs_data[job_data_id][1] + "...vtu";
+      }
+
+      std::string shellstr;
+      shellstr = "nohup " + ccx_uo.mPathParaView.toStdString() + " --data=" + filepath + " &";
+      system(shellstr.c_str());
+
+      log = "Opening Results with Paraview for Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + "\n";
+      //log.append(filepath +  " \n");
+      //log.append(arg +  " \n");
+      PRINT_INFO("%s", log.c_str());
+    }   
+    if ((std::stoi(jobs_data[job_data_id][3])>1) && (jobs_data[job_data_id][6] == "3"))
     {      
       filepath = jobs_data[job_data_id][1] + ".vtk";
       if (access(filepath.c_str(), W_OK) != 0) 
