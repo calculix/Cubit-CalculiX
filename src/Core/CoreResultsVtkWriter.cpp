@@ -1370,3 +1370,157 @@ bool CoreResultsVtkWriter::prepare_sidesets()
  
   return true;
 }
+
+std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int element_id, int ip)
+{
+  std::vector<double> ip_coords(3) = 0;
+  std::vector<double> shape_functions;
+  int element_type = 0;
+  double xi = 0;
+  double eta = 0;
+  double zeta = 0;
+
+  //get integration point in iso space
+
+  if (element_type == 1)
+  {
+    if (ip == 1)
+    {
+      xi = 0.333;
+      eta = 0.333;
+      zeta = 0.333;
+    }
+  }else if (element_type == 4)
+  {
+    if (ip == 1)
+    {
+      xi = 0.5;
+      eta = 0.333;
+      zeta = 0.333;
+    }else if (ip == 2)
+    {
+      xi = 0.333;
+      eta = 0.333;
+      zeta = 0.333;
+    }else if (ip == 3)
+    {
+      xi = 0.333;
+      eta = 0.333;
+      zeta = 0.333;
+    }
+    
+  }
+  
+  //compute shape funcitons IMPORTANT FROM CCX SOURCE CODE YOU HAVE TO MATCH THE NODE ORDER LATER!!!
+  if (element_type == 1) // tri linear
+  {
+    shape_functions.push_back(1-xi-eta);
+    shape_functions.push_back(xi);
+    shape_functions.push_back(eta);
+  }else if (element_type == 2) // quad linear
+  {
+    shape_functions.push_back((1-xi)(1-eta)/4);
+    shape_functions.push_back((1+xi)(1-eta)/4);
+    shape_functions.push_back((1+xi)(1+eta)/4);
+    shape_functions.push_back((1-xi)(1+eta)/4);
+  }else if (element_type == 3) // tet linear
+  {
+    shape_functions.push_back(1-xi-eta-zeta);
+    shape_functions.push_back(xi);
+    shape_functions.push_back(eta);
+    shape_functions.push_back(zeta);
+  }else if (element_type == 4) // tri quadratic
+  {
+    shape_functions.push_back(2*(0.5-xi-eta)*(1-xi-eta));
+    shape_functions.push_back(xi*(2*xi-1));
+    shape_functions.push_back(eta*(2*eta-1));
+    shape_functions.push_back(4*xi*(1-xi-eta));
+    shape_functions.push_back(4*xi*eta);
+    shape_functions.push_back(4*eta*(1-xi-eta));
+  }else if (element_type == 5) // wedge linear
+  {
+    shape_functions.push_back(0.5*(1-xi-eta)*(1-zeta));
+    shape_functions.push_back(0.5*xi*(1-zeta));
+    shape_functions.push_back(0.5*eta*(1-zeta));
+    shape_functions.push_back(0.5*(1-xi-eta)*(1+zeta));
+    shape_functions.push_back(0.5*xi*(1+zeta));
+    shape_functions.push_back(0.5*eta*(1+zeta));
+  }else if (element_type == 6) // hex linear
+  {
+    shape_functions.push_back((1-xi)*(1-eta)*(1-zeta)/8);
+    shape_functions.push_back((1+xi)*(1-eta)*(1-zeta)/8);
+    shape_functions.push_back((1+xi)*(1+eta)*(1-zeta)/8);
+    shape_functions.push_back((1-xi)*(1+eta)*(1-zeta)/8);
+    shape_functions.push_back((1-xi)*(1-eta)*(1+zeta)/8);
+    shape_functions.push_back((1+xi)*(1-eta)*(1+zeta)/8);
+    shape_functions.push_back((1+xi)*(1+eta)*(1+zeta)/8);
+    shape_functions.push_back((1-xi)*(1+eta)*(1+zeta)/8);
+  }else if (element_type == 7) // quad quadratic
+  {
+    shape_functions.push_back((1-xi)(1-eta)(-xi-eta-1)/4);
+    shape_functions.push_back((1+xi)(1-eta)(xi-eta-1)/4);
+    shape_functions.push_back((1+xi)(1+eta)(xi+eta-1)/4);
+    shape_functions.push_back((1-xi)(1+eta)(-xi+eta-1)/4);
+    shape_functions.push_back((1+xi)(1-xi)(1-eta)/2);
+    shape_functions.push_back((1+xi)(1+eta)(1-eta)/2);
+    shape_functions.push_back((1+xi)(1-xi)(1+eta)/2);
+    shape_functions.push_back((1-xi)(1+eta)(1-eta)/2);
+  }else if (element_type == 8) // tet quadratic
+  {
+    shape_functions.push_back((2*(1-xi-eta-zeta)-1)*(1-xi-eta-zeta));
+    shape_functions.push_back(xi*(2*xi-1));
+    shape_functions.push_back(eta*(2*eta-1));
+    shape_functions.push_back(zeta*(2*zeta-1));
+    shape_functions.push_back(4*xi*(1-xi-eta-zeta));
+    shape_functions.push_back(4*xi*eta);
+    shape_functions.push_back(4*eta*(1-xi-eta-zeta));
+    shape_functions.push_back(4*zeta*(1-xi-eta-zeta));
+    shape_functions.push_back(4*xi*zeta);
+    shape_functions.push_back(4*eta*zeta);
+  }else if (element_type == 9) // wedge quadratic
+  {
+    shape_functions.push_back(0.5*(1-xi-eta)*(1-zeta)*(2*xi+2*eta+zeta));
+    shape_functions.push_back(0.5*xi*(1-zeta)*(2*xi-2-zeta));
+    shape_functions.push_back(0.5*eta*(1-zeta)*(2*eta-2-zeta));
+    shape_functions.push_back(0.5*(1-xi-eta)*(1+zeta)*(2*xi+2*eta-zeta));
+    shape_functions.push_back(0.5*xi*(1+zeta)*(2*xi-2+zeta));
+    shape_functions.push_back(0.5*eta*(1+zeta)*(2*eta-2+zeta));
+    shape_functions.push_back(2*xi*(1-xi-eta)*(1-zeta));
+    shape_functions.push_back(2*xi*eta*(1-zeta));
+    shape_functions.push_back(2*eta*(1-xi-eta)*(1-zeta));
+    shape_functions.push_back(2*xi*(1-xi-eta)*(1+zeta));
+    shape_functions.push_back(2*xi*eta*(1+zeta));
+    shape_functions.push_back(2*eta*(1-xi-eta)*(1+zeta));
+    shape_functions.push_back((1-xi-eta)*(1-zeta*zeta));
+    shape_functions.push_back(xi*(1-zeta*zeta));
+    shape_functions.push_back(eta*(1-zeta*zeta));
+  }else if (element_type == 10) // hex quadratic
+  {
+    shape_functions.push_back(-(1-xi)*(1-eta)*(1-zeta)*((1+xi)+(1+eta)+ze)/8);
+    shape_functions.push_back(-(1+xi)*(1-eta)*(1-zeta)*((1-xi)+(1+eta)+ze)/8);
+    shape_functions.push_back(-(1+xi)*(1+eta)*(1-zeta)*((1-xi)+(1-eta)+ze)/8);
+    shape_functions.push_back(-(1-xi)*(1+eta)*(1-zeta)*((1+xi)+(1-eta)+ze)/8);
+    shape_functions.push_back(-(1-xi)*(1-eta)*(1+zeta)*((1+xi)+(1+eta)-ze)/8);
+    shape_functions.push_back(-(1+xi)*(1-eta)*(1+zeta)*((1-xi)+(1+eta)-ze)/8);
+    shape_functions.push_back(-(1+xi)*(1+eta)*(1+zeta)*((1-xi)+(1-eta)-ze)/8);
+    shape_functions.push_back(-(1-xi)*(1+eta)*(1+zeta)*((1+xi)+(1-eta)-ze)/8);
+    shape_functions.push_back((1-xi)*(1+xi)/4*(1-eta)*(1-zeta));
+    shape_functions.push_back((1-eta)*(1+eta)/4*(1+xi)*(1-zeta));
+    shape_functions.push_back((1-xi)*(1+xi)/4*(1+eta)*(1-zeta));
+    shape_functions.push_back((1-eta)*(1+eta)/4*(1-xi)*(1-zeta));
+    shape_functions.push_back((1-xi)*(1+xi)/4*(1-eta)*(1+zeta));
+    shape_functions.push_back((1-eta)*(1+eta)/4*(1+xi)*(1+zeta));
+    shape_functions.push_back((1-xi)*(1+xi)/4*(1+eta)*(1+zeta));
+    shape_functions.push_back((1-eta)*(1+eta)/4*(1-xi)*(1+zeta));
+    shape_functions.push_back((1-zeta)*(1+zeta)/4*(1-xi)*(1-eta));
+    shape_functions.push_back((1-zeta)*(1+zeta)/4*(1+xi)*(1-eta));
+    shape_functions.push_back((1-zeta)*(1+zeta)/4*(1+xi)*(1+eta));
+    shape_functions.push_back((1-zeta)*(1+zeta)/4*(1-xi)*(1+eta));
+  }else{
+
+  }
+  
+  // MATCHING NODE ORDER!!!
+
+  return ip_coords;
+}
