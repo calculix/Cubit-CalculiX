@@ -1371,9 +1371,10 @@ bool CoreResultsVtkWriter::prepare_sidesets()
   return true;
 }
 
-std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int element_id, int ip)
+std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int element_id, int ip, int ipmax)
 {
   std::vector<double> ip_coords(3) = 0;
+  std::vector<std::vector<double>> ip_iso_coords;
   std::vector<double> shape_functions;
   int element_type = 0;
   double xi = 0;
@@ -1382,34 +1383,132 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
 
   //get integration point in iso space
 
-  if (element_type == 1)
-  {
-    if (ip == 1)
+  if (element_type == 2) //quad 
+  { 
+    if (ipmax == 1)
     {
-      xi = 0.333;
-      eta = 0.333;
-      zeta = 0.333;
+      ip_iso_coords.push_back({0,0,0});
+    }else if (ipmax == 4)
+    {
+      ip_iso_coords.push_back({-0.577350269189626,-0.577350269189626,0});
+      ip_iso_coords.push_back({0.577350269189626,-0.577350269189626,0});
+      ip_iso_coords.push_back({-0.577350269189626,0.577350269189626,0});
+      ip_iso_coords.push_back({0.577350269189626,0.577350269189626,0});
+    }else if (ipmax == 9)
+    {
+      ip_iso_coords.push_back({-0.774596669241483,-0.774596669241483,0});
+      ip_iso_coords.push_back({-0,-0.774596669241483,0});
+      ip_iso_coords.push_back({0.774596669241483,-0.774596669241483,0});
+      ip_iso_coords.push_back({-0.774596669241483,0,0});
+      ip_iso_coords.push_back({-0,0,0});
+      ip_iso_coords.push_back({0.774596669241483,0,0});
+      ip_iso_coords.push_back({-0.774596669241483,0.774596669241483,0});
+      ip_iso_coords.push_back({-0,0.774596669241483,0});
+      ip_iso_coords.push_back({0.774596669241483,0.774596669241483,0});
     }
-  }else if (element_type == 4)
+  }else if (element_type == 3) // triangle
   {
-    if (ip == 1)
+    if (ipmax == 1)
     {
-      xi = 0.5;
-      eta = 0.333;
-      zeta = 0.333;
-    }else if (ip == 2)
+      ip_iso_coords.push_back({0.333333333333333,0.333333333333333,0});
+    }else if (ipmax == 3)
     {
-      xi = 0.333;
-      eta = 0.333;
-      zeta = 0.333;
-    }else if (ip == 3)
+      ip_iso_coords.push_back({0.166666666666667,0.166666666666667,0});
+      ip_iso_coords.push_back({0.666666666666667,0.166666666666667,0});
+      ip_iso_coords.push_back({0.166666666666667,0.666666666666667,0});
+    }else if (ipmax == 7)
     {
-      xi = 0.333;
-      eta = 0.333;
-      zeta = 0.333;
+      ip_iso_coords.push_back({0.333333333333333,0.333333333333333,0});
+      ip_iso_coords.push_back({0.797426985353087,0.101286507323456,0});
+      ip_iso_coords.push_back({0.101286507323456,0.797426985353087,0});
+      ip_iso_coords.push_back({0.101286507323456,0.101286507323456,0});
+      ip_iso_coords.push_back({0.470142064105115,0.059715871789770,0});
+      ip_iso_coords.push_back({0.059715871789770,0.470142064105115,0});
+      ip_iso_coords.push_back({0.470142064105115,0.470142064105115,0});
     }
-    
+  }else if (element_type == 4) // hex
+  {
+    if (ipmax == 1)
+    {
+      ip_iso_coords.push_back({0,0,0});
+    }else if (ipmax == 8)
+    {
+      ip_iso_coords.push_back({0,0,0});
+      ip_iso_coords.push_back({0,0,0});
+      ip_iso_coords.push_back({0,0,0});
+      ip_iso_coords.push_back({0,0,0});
+      ip_iso_coords.push_back({0,0,0});
+      ip_iso_coords.push_back({0,0,0});
+      ip_iso_coords.push_back({0,0,0});
+      ip_iso_coords.push_back({0,0,0});
+    }else if (ipmax == 27)
+    {
+      ip_iso_coords.push_back({0,0,0});
+    }
   }
+
+gauss3d1: hex, 1-point integration (1 integration point)
+!     gauss3d2: hex, 2-point integration (8 integration points)
+!     gauss3d3: hex, 3-point integration (27 integration points)
+!     
+gauss3d1=reshape((/0.d0,0.d0,0.d0/),(/3,1/))
+!
+!     the order of the Gauss points in gauss3d2 is important
+!     and should not be changed (used to accelerate the code
+!     for CAX8R axisymmetric elements in e_c3d_th.f)
+!
+      gauss3d2=reshape((/
+     &  -0.577350269189626d0,-0.577350269189626d0,-0.577350269189626d0,
+     &  0.577350269189626d0,-0.577350269189626d0,-0.577350269189626d0,
+     &  -0.577350269189626d0,0.577350269189626d0,-0.577350269189626d0,
+     &  0.577350269189626d0,0.577350269189626d0,-0.577350269189626d0,
+     &  -0.577350269189626d0,-0.577350269189626d0,0.577350269189626d0,
+     &  0.577350269189626d0,-0.577350269189626d0,0.577350269189626d0,
+     &  -0.577350269189626d0,0.577350269189626d0,0.577350269189626d0,
+     &  0.577350269189626d0,0.577350269189626d0,0.577350269189626d0/),
+     &  (/3,8/))
+!
+      gauss3d3=reshape((/
+     & -0.774596669241483d0,-0.774596669241483d0,-0.774596669241483d0,
+     & 0.d0,-0.774596669241483d0,-0.774596669241483d0,
+     & 0.774596669241483d0,-0.774596669241483d0,-0.774596669241483d0,
+     & -0.774596669241483d0,0.d0,-0.774596669241483d0,
+     & 0.d0,0.d0,-0.774596669241483d0,
+     & 0.774596669241483d0,0.d0,-0.774596669241483d0,
+     & -0.774596669241483d0,0.774596669241483d0,-0.774596669241483d0,
+     & 0.d0,0.774596669241483d0,-0.774596669241483d0,
+     & 0.774596669241483d0,0.774596669241483d0,-0.774596669241483d0,
+     & -0.774596669241483d0,-0.774596669241483d0,0.d0,
+     & 0.d0,-0.774596669241483d0,0.d0,
+     & 0.774596669241483d0,-0.774596669241483d0,0.d0,
+     & -0.774596669241483d0,0.d0,0.d0,
+     & 0.d0,0.d0,0.d0,
+     & 0.774596669241483d0,0.d0,0.d0,
+     & -0.774596669241483d0,0.774596669241483d0,0.d0,
+     & 0.d0,0.774596669241483d0,0.d0,
+     & 0.774596669241483d0,0.774596669241483d0,0.d0,
+     & -0.774596669241483d0,-0.774596669241483d0,0.774596669241483d0,
+     & 0.d0,-0.774596669241483d0,0.774596669241483d0,
+     & 0.774596669241483d0,-0.774596669241483d0,0.774596669241483d0,
+     & -0.774596669241483d0,0.d0,0.774596669241483d0,
+     & 0.d0,0.d0,0.774596669241483d0,
+     & 0.774596669241483d0,0.d0,0.774596669241483d0,
+     & -0.774596669241483d0,0.774596669241483d0,0.774596669241483d0,
+     & 0.d0,0.774596669241483d0,0.774596669241483d0,
+     & 0.774596669241483d0,0.774596669241483d0,0.774596669241483d0/),
+     &  (/3,27/))
+!
+
+
+
+
+
+
+
+
+  xi = ip_iso_coords[ip-1][0];
+  eta = ip_iso_coords[ip-1][1];
+  zeta = ip_iso_coords[ip-1][2];
   
   //compute shape funcitons IMPORTANT FROM CCX SOURCE CODE YOU HAVE TO MATCH THE NODE ORDER LATER!!!
   if (element_type == 1) // tri linear
