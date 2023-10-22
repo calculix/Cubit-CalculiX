@@ -30,6 +30,7 @@ public:
   double rangeMin = 0;
   double rangeMax = 0;
   int nparts = 0;
+  int nparts_dat = 0; // number of parts from dat file
   int current_part = 0;
   std::string current_filepath_vtu = "";
   std::string current_filepath_vtpc = "";
@@ -64,6 +65,7 @@ public:
   bool checkResults(); // get # of increments from frd and dat
   bool checkLinkPossible(); // checks if the linking of results to the current cubit model is possible
   bool checkResultsLinked(); // get # of increments from frd and dat
+  bool checkDatTimeValueExists(double total_time); // checks if the dat totaltime exists
   std::string level_whitespace(int level); // gets the whitespace for the level in the xml file
   std::string get_element_connectivity_vtk(int element_connectivity_data_id, int element_type); // gets the connectivity already converted to vtk format
   std::string get_element_connectivity_vtk_linked(int element_connectivity_data_id, int element_type); // gets the connectivity already converted to vtk format
@@ -72,6 +74,8 @@ public:
   int getParaviewNode(int frd_node_id); // gets the paraview node id for frd node id
   std::string get_increment(); // gets the current increment in the format 00x
   std::string get_increment_time(); // gets the current increment time value
+  int get_step_increment(double total_time); // gets the step increment from a time value from .dat
+  int get_max_step_increment(); // gets the max step increment from .dat
   std::vector<int> get_result_blocks_data_ids(); // gets the result blocks data ids for the current increment
   std::vector<int> get_result_blocks_data_ids_linked(); // gets the result blocks data ids for the current increment from frd_all
   std::vector<int> get_result_block_node_data_id(int result_blocks_data_id); // gets the result blocks node data ids for the current block
@@ -79,15 +83,15 @@ public:
   std::string get_result_data(int data_id, int node_data_id); // gets the result data for a node
   bool link_nodes(); // links the ids from frd/dat all
   bool link_elements(); // links the ids from frd/dat all
+  bool link_dat(); // links the dat
   bool prepare_sidesets(); // gets all data for the sidesets
   std::vector<double> get_integration_point_coordinates(int element_type, int ip, int ipmax, std::vector<std::vector<double>> nodes_coords); // computes the integration point coordinates for the given element and ip point number
 
   ProgressTool *progressbar; // progressbar
   CalculiXCoreInterface *ccx_iface;
   CoreResultsFrd *frd; // the current frd file that will be written
-  CoreResultsDat *dat; // the current frd file that will be written
+  CoreResultsDat *dat; // the current dat file that will be written
   std::vector<CoreResultsFrd*> vec_frd; // the storage of frd files that will be written
-  std::vector<CoreResultsDat*> vec_dat; // the storage of dat files that will be written
   CoreResultsFrd *frd_all; // the input frd file that will be written
   CoreResultsDat *dat_all; // the input dat file that will be written
   MeshExportInterface *me_iface;
