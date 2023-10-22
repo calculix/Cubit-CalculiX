@@ -80,7 +80,7 @@ public:
   bool link_nodes(); // links the ids from frd/dat all
   bool link_elements(); // links the ids from frd/dat all
   bool prepare_sidesets(); // gets all data for the sidesets
-  std::vector<double> get_integration_point_coordinates(int element_id, int ip, int ipmax); // computes the integration point coordinates for the given element and ip point number
+  std::vector<double> get_integration_point_coordinates(int element_type, int ip, int ipmax, std::vector<std::vector<double>> nodes_coords); // computes the integration point coordinates for the given element and ip point number
 
   ProgressTool *progressbar; // progressbar
   CalculiXCoreInterface *ccx_iface;
