@@ -140,10 +140,10 @@ ccx create fieldoutput name "eout" element
 ccx modify fieldoutput 2 element frequency 20
 ccx modify fieldoutput 2 element key_on E PEEQ S 
 ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFL HFLF MAXE MAXS ME PHS SF SMID SNEG SPOS SVF SDV THE ZZS 
-ccx create fieldoutput name "cout" contact
-ccx modify fieldoutput 3 contact frequency 20
-ccx modify fieldoutput 3 contact key_on CDIS CSTR 
-ccx modify fieldoutput 3 contact key_off CELS PCON 
+#ccx create fieldoutput name "cout" contact
+#ccx modify fieldoutput 3 contact frequency 20
+#ccx modify fieldoutput 3 contact key_on CDIS CSTR 
+#ccx modify fieldoutput 3 contact key_off CELS PCON 
 
 #steps
 
@@ -165,6 +165,4 @@ ccx modify step 3 static solver pardiso initialtimeincrement 0.00125 timeperiodo
 ccx step 3 add bc displacement 4
 ccx step 3 add fieldoutput 1 2 3
 
-export ccx "forming.inp" overwrite
-ccx create job name "forming" filepath "forming.inp"
-
+#ccx create job name "forming" filepath "forming.inp"

@@ -67,6 +67,8 @@ public:
   bool checkLinkPossible(); // checks if the linking of results to the current cubit model is possible
   bool checkResultsLinked(); // get # of increments from frd and dat
   bool checkDatTimeValueExists(double total_time); // checks if the dat totaltime exists
+  bool checkFrdBlockDispExists(std::string block_name); // checks if there exists displacement data for the block
+  int getFrdBlockId(std::string block_name); // checks if there exists block in the frd for the block in the dat and returns the data id
   std::string level_whitespace(int level); // gets the whitespace for the level in the xml file
   bool rewrite_connectivity_unlinked(); // rewrites the nodenumbers in the connectivity for unlinked mode
   std::string get_element_connectivity_vtk(int element_connectivity_data_id, int element_type); // gets the connectivity already converted to vtk format

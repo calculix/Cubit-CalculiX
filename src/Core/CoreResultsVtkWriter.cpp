@@ -968,6 +968,79 @@ bool CoreResultsVtkWriter::checkDatTimeValueExists(double total_time)
   return false;
 }
 
+bool CoreResultsVtkWriter::checkFrdBlockDispExists(std::string block_name)
+{
+  std::string block_name_cubit;
+  // blocks
+  for (size_t i = 0; i < block_ids.size(); i++)
+  {
+    block_name_cubit = ccx_iface->get_block_name(block_ids[i]);
+
+    if (block_name_cubit.length()!=block_name.length())
+    {
+      return false;
+    }
+    
+    // make all lower case
+    for(auto& c : block_name)
+    {
+      c = tolower(c);
+    }
+    for(auto& c : block_name_cubit)
+    {
+      c = tolower(c);
+    }
+
+    if (block_name_cubit == block_name)
+    {
+      // search for disp in current increment
+      frd = vec_frd[i];
+      std::vector<int> data_ids = this->get_result_blocks_data_ids();
+      for (size_t ii = 0; ii < data_ids.size(); ii++)
+      {
+        if (frd->result_block_type[frd->result_blocks[data_ids[ii]][5]]=="DISP")
+        {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+int CoreResultsVtkWriter::getFrdBlockId(std::string block_name)
+{
+  std::string block_name_cubit;
+  // blocks
+  for (size_t i = 0; i < block_ids.size(); i++)
+  {
+    block_name_cubit = ccx_iface->get_block_name(block_ids[i]);
+
+    if (block_name_cubit.length()!=block_name.length())
+    {
+      return false;
+    }
+    
+    // make all lower case
+    for(auto& c : block_name)
+    {
+      c = tolower(c);
+    }
+    for(auto& c : block_name_cubit)
+    {
+      c = tolower(c);
+    }
+
+    if (block_name_cubit == block_name)
+    {
+      return i;
+    }
+  }
+
+  return -1;
+}
+
 std::vector<int> CoreResultsVtkWriter::get_currentincrement_result_blocks_data()
 {
   std::vector<int> result_blocks_data;
@@ -1682,8 +1755,16 @@ bool CoreResultsVtkWriter::link_dat()
       }
       
       // add displacement result block for elements
-      // check if was element results
-      if (dat_all->result_block_c1_data[dat_all->result_blocks[data_ids[data_ids.size()-1]][4]][0][2] == 2)       
+      bool create_disp = false;
+      // check if was element results and if for the block there is displacement data
+      if ((dat_all->result_block_c1_data[dat_all->result_blocks[data_ids[data_ids.size()-1]][4]][0][2] == 2)&&(this->checkFrdBlockDispExists(dat_all->result_block_set[i])))
+      {
+        create_disp = true;        
+      }else{
+        create_disp = false;
+      }
+
+      if (create_disp)       
       {
         int current_result_block_data_id;
         //inser dummies
@@ -2229,10 +2310,201 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
 
 std::vector<std::vector<double>> CoreResultsVtkWriter::compute_integration_points_displacements(int set_id)
 {
+  int block_id;
+  std::vector<std::vector<int>> ip_nodes;
+  //ip_nodes[0][0] ip number
+  //ip_nodes[0][0] element id
+  std::vector<std::vector<double>> ip_nodes_coords;
+  std::vector<std::vector<double>> ip_nodes_coords_displaced;
   std::vector<std::vector<double>> displacements;
+  std::vector<std::vector<double>> nodes_displacements;
   std::vector<std::vector<int>> tmp_element_id_type_connectivity;
 
-  //first get all nodes out of the elements needed.
+  block_id = this->getFrdBlockId(dat_all->result_block_set[set_id]);
+  // quit if no block is found...should not happen but hey
+  if (block_id == -1)
+  {
+    return displacements;
+  }
+  
+  frd = vec_frd[block_id];
+
+  //first get all nodes coords and their displacements
+  
+  std::vector<int> data_ids = this->get_result_blocks_data_ids(); // get data ids for result blocks in current increment  
+  for (size_t i = 0; i < data_ids.size(); i++)
+  {
+    std::vector<int> node_data_ids = this->get_result_block_node_data_id(data_ids[i]);
+    // skip if nodes from point data is different than nodes number, like for data from CELS
+    if (node_data_ids.size()==frd->nodes.size())
+    {
+      if (frd->result_block_type[frd->result_blocks[data_ids[i]][5]]=="DISP")
+      {
+        for (size_t ii = 0; ii < node_data_ids.size(); ii++)
+        {
+          std::vector<double> result_component;
+          result_component = frd->result_block_data[data_ids[i]][node_data_ids[ii]];
+          nodes_displacements.push_back(result_component);
+        }
+      }
+    }
+  }
+
+  // get a result block for the elements and ips
+  data_ids = this->get_dat_result_blocks_data_ids_linked(set_id);
+  int data_id = data_ids[0];
+
+  //compute the ip coords
+  int ip_max = 0;
+  int ip = 0;
+  int ip_last = 0;
+  int element_id = 0;
+  int element_id_last = 0;
+  bool flush_data = false;
+  bool only_one_ip = true;
+  std::vector<std::vector<int>> tmp_ip_nodes;
+  std::vector<std::vector<double>> tmp_ip_nodes_coords;
+  std::vector<std::vector<double>> tmp_ip_nodes_coords_displaced;
+  tmp_ip_nodes.clear();
+  tmp_ip_nodes_coords.clear();
+  tmp_ip_nodes_coords_displaced.clear();
+  tmp_element_id_type_connectivity = element_id_type_connectivity;
+
+  element_id_last = int(dat_all->result_block_data[dat_all->result_blocks[data_id][4]][dat_all->result_block_c1_data[dat_all->result_blocks[data_id][4]][0][1]][0]);
+
+  for (size_t i = 0; i < dat_all->result_block_c1_data[dat_all->result_blocks[data_id][4]].size(); i++)
+  {
+    ip = int(dat_all->result_block_data[dat_all->result_blocks[data_id][4]][dat_all->result_block_c1_data[dat_all->result_blocks[data_id][4]][i][1]][1]);
+    if (ip!=1)
+    {
+      only_one_ip = false;
+    }
+  }
+
+  for (size_t i = 0; i < dat_all->result_block_c1_data[dat_all->result_blocks[data_id][4]].size(); i++)
+  {
+    ip = int(dat_all->result_block_data[dat_all->result_blocks[data_id][4]][dat_all->result_block_c1_data[dat_all->result_blocks[data_id][4]][i][1]][1]);
+    element_id = int(dat_all->result_block_data[dat_all->result_blocks[data_id][4]][dat_all->result_block_c1_data[dat_all->result_blocks[data_id][4]][i][1]][0]);
+
+    //std::string log;
+    //log = " iteration " + std::to_string(iii) + " element_id " + std::to_string(element_id) + " element_id_last " + std::to_string(element_id_last) + " ip " + std::to_string(ip) + " ip_last " + std::to_string(ip_last) + " \n";
+    //ccx_iface->log_str(log);
+    //PRINT_INFO("%s", log.c_str());
+
+    if (!only_one_ip)
+    {
+      if (ip_last == ip)
+      {
+        ip_max = ip;
+        flush_data = true; // only 1 ip point
+      }else if (ip < ip_last) // element changed
+      {
+        //ip_max = ip;
+        flush_data = true;
+      }else if (i == (dat_all->result_block_c1_data[dat_all->result_blocks[data_id][4]].size()-1)) // last one
+      {
+        flush_data = true;
+        ip_max = ip;
+        ip_nodes.push_back({ip,element_id});
+        tmp_ip_nodes.push_back({ip,element_id});
+        tmp_ip_nodes_coords.push_back({0,0,0});
+        tmp_ip_nodes_coords_displaced.push_back({0,0,0});
+        ip_last = ip;
+      }else{
+        ip_max = ip;
+      }
+    }else{
+      ip = 1;
+      ip_max = 1;
+      ip_nodes.push_back({ip,element_id});
+      tmp_ip_nodes.push_back({ip,element_id});
+      tmp_ip_nodes_coords.push_back({0,0,0});
+      tmp_ip_nodes_coords_displaced.push_back({0,0,0});
+    }
+    
+    if ((flush_data)||only_one_ip)
+    {
+      //get element type and connectivity
+      std::vector<int> element_type_connectivity;
+
+      for (size_t ii = 0; ii < tmp_element_id_type_connectivity.size(); ii++)
+      {
+        if (tmp_element_id_type_connectivity[ii][0]==tmp_ip_nodes[0][1])
+        {
+          for (size_t iii = 1; iii < tmp_element_id_type_connectivity[ii].size(); iii++)
+          {
+            element_type_connectivity.push_back(tmp_element_id_type_connectivity[ii][iii]);
+          }
+          tmp_element_id_type_connectivity.erase(tmp_element_id_type_connectivity.begin() + ii);
+        }
+      }
+      
+      std::vector<std::vector<double>> nodes_coords;
+      std::vector<std::vector<double>> nodes_coords_displaced;
+      for (size_t ii = 1; ii < element_type_connectivity.size(); ii++)
+      {
+        std::array<double,3> node_coords = CubitInterface::get_nodal_coordinates(element_type_connectivity[ii]);
+        nodes_coords.push_back({node_coords[0],node_coords[1],node_coords[2]});
+        nodes_coords_displaced.push_back({node_coords[0],node_coords[1],node_coords[2]});
+        //connect with displacements
+        for (size_t iii = 0; iii < frd->nodes.size(); iii++)
+        {
+          if (frd->nodes[iii][0]==element_type_connectivity[ii])
+          {
+            nodes_coords_displaced[nodes_coords_displaced.size()-1][0] += nodes_displacements[iii][0];
+            nodes_coords_displaced[nodes_coords_displaced.size()-1][1] += nodes_displacements[iii][1];
+            nodes_coords_displaced[nodes_coords_displaced.size()-1][2] += nodes_displacements[iii][2];
+            iii = frd->nodes.size();
+          }
+        }
+      }
+
+      // element changed, flush current element data, reset and one step back              
+      for (size_t ii = 0; ii < tmp_ip_nodes.size(); ii++)
+      {
+        //std::string log;
+        //log = " inner element_id " + std::to_string(tmp_ip_nodes[iv][1]) + " ip " + std::to_string(tmp_ip_nodes[iv][0]) + " ";
+        //ccx_iface->log_str(log);
+        //PRINT_INFO("%s", log.c_str());
+        tmp_ip_nodes_coords[ii] = this->get_integration_point_coordinates(element_type_connectivity[0], tmp_ip_nodes[ii][0], ip_max, nodes_coords);
+        ip_nodes_coords.push_back(tmp_ip_nodes_coords[ii]);
+        tmp_ip_nodes_coords_displaced[ii] = this->get_integration_point_coordinates(element_type_connectivity[0], tmp_ip_nodes[ii][0], ip_max, nodes_coords_displaced);
+        ip_nodes_coords_displaced.push_back(tmp_ip_nodes_coords_displaced[ii]);
+      }
+      //reset
+      ip_max = 0;
+      ip_last = 0;
+      tmp_ip_nodes.clear();
+      tmp_ip_nodes_coords.clear();
+      tmp_ip_nodes_coords_displaced.clear();
+      flush_data = false;
+    }
+    if (i == (dat_all->result_block_c1_data[dat_all->result_blocks[data_id][4]].size()-1)) // last one
+    {
+    }else{
+      if (!only_one_ip)
+      {
+        ip_nodes.push_back({ip,element_id});
+        tmp_ip_nodes.push_back({ip,element_id});
+        tmp_ip_nodes_coords.push_back({0,0,0});
+        tmp_ip_nodes_coords_displaced.push_back({0,0,0});
+        ip_last = ip;
+        element_id_last = element_id;
+        ip_max = ip;
+      }
+    }
+  } 
+
+  std::vector<double> tmp_disp(3);
+  // compute actual displacements
+  for (size_t i = 0; i < ip_nodes_coords.size(); i++)
+  {
+    tmp_disp[0] = ip_nodes_coords_displaced[i][0] - ip_nodes_coords[i][0];
+    tmp_disp[1] = ip_nodes_coords_displaced[i][1] - ip_nodes_coords[i][1];
+    tmp_disp[2] = ip_nodes_coords_displaced[i][2] - ip_nodes_coords[i][2];
+    displacements.push_back(tmp_disp);
+  }
+  
 
   return displacements;
 }
