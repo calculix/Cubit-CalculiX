@@ -1020,6 +1020,70 @@ std::string CalculiXCore::get_cubit_element_type_entity(std::string cubit_elemen
   return cb->get_cubit_element_type_entity_name(cubit_element_type);
 }
 
+std::vector<std::vector<int>> CalculiXCore::get_element_id_type_connectivity()
+{
+  std::vector<std::vector<int>> id_type_connectivity;
+  std::vector<int> tmp_id_type_connectivity;
+  // Get Block id's
+  std::vector<int> blocks;
+  blocks = this->get_blocks();
+
+  // Get a batch of elements in an initialized block
+  int buf_size = 100;
+  std::vector<ElementType>   element_type(buf_size);
+  std::vector<ElementHandle> handles(buf_size);
+
+  // define name variable
+  std::string element_type_name;
+  std::string cubit_element_type_entity;
+  std::string block_name;
+
+  // Elements in a buffer set will be of the same element type and in the same block
+  for (size_t i = 0; i < blocks.size(); i++)
+  {
+    int num_elems;
+    int start_index = 0;
+    //BlockHandle block = blocks[i];
+    BlockHandle block;
+    me_iface->get_block_handle(blocks[i], block);
+
+    // write only once per block
+    int block_id = blocks[i];
+  
+    while( (num_elems = me_iface->get_block_elements(start_index, buf_size, block, element_type, handles)) > 0)
+    {
+      // Get ids for the element handles
+      std::vector<int> ids(num_elems);
+      me_iface->get_element_ids(num_elems, handles, ids);
+
+      // convert ids from element_id to global_element_id
+      cubit_element_type_entity = me_iface->get_element_type_name(element_type[0]);
+      cubit_element_type_entity = this->get_cubit_element_type_entity(cubit_element_type_entity);
+
+      //rewrite to global element ids
+      for (size_t ii = 0; ii < ids.size(); ii++)
+      {
+        ids[ii] = CubitInterface::get_global_element_id(cubit_element_type_entity,ids[ii]);
+        
+        tmp_id_type_connectivity.clear();
+        tmp_id_type_connectivity.push_back(ids[ii]);
+        tmp_id_type_connectivity.push_back(element_type[ii]);
+        int num_nodes;
+        me_iface->get_nodes_per_element(element_type[ii],num_nodes);
+        std::vector<int> conn(num_nodes);
+        me_iface->get_connectivity(handles[ii],conn);
+        for (size_t iii = 0; iii < conn.size(); iii++)
+        {
+          tmp_id_type_connectivity.push_back(conn[iii]);
+        }
+        id_type_connectivity.push_back(tmp_id_type_connectivity);
+      }
+      start_index += num_elems;
+    }
+  }
+  return id_type_connectivity;
+}
+
 std::string CalculiXCore::get_block_name(int block_id)
 {
   std::string block_name;

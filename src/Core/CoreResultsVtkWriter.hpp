@@ -49,6 +49,7 @@ public:
   std::vector<std::vector<int>> sideset_elements_type;
   std::vector<std::vector<std::vector<int>>> sideset_elements_connectivity;
   //sideset_elements_connectivity[sideset id][element][0] node 1
+  std::vector<std::vector<int>> element_id_type_connectivity; // to store the element data
 
   bool init(int job_id,CoreResultsFrd* frd,CoreResultsDat* dat); // initialize
   bool reset(); // delete all data and initialize afterwards
@@ -67,6 +68,7 @@ public:
   bool checkResultsLinked(); // get # of increments from frd and dat
   bool checkDatTimeValueExists(double total_time); // checks if the dat totaltime exists
   std::string level_whitespace(int level); // gets the whitespace for the level in the xml file
+  bool rewrite_connectivity_unlinked(); // rewrites the nodenumbers in the connectivity for unlinked mode
   std::string get_element_connectivity_vtk(int element_connectivity_data_id, int element_type); // gets the connectivity already converted to vtk format
   std::string get_element_connectivity_vtk_linked(int element_connectivity_data_id, int element_type); // gets the connectivity already converted to vtk format
   std::string get_element_type_vtk(int element_type); // gets the element type already converted to vtk format
@@ -76,16 +78,19 @@ public:
   std::string get_increment_time(); // gets the current increment time value
   int get_step_increment(double total_time); // gets the step increment from a time value from .dat
   int get_max_step_increment(); // gets the max step increment from .dat
+  std::vector<int> get_currentincrement_result_blocks_data(); // gets the result blocks data from frd to fuse with dat data
   std::vector<int> get_result_blocks_data_ids(); // gets the result blocks data ids for the current increment
   std::vector<int> get_result_blocks_data_ids_linked(); // gets the result blocks data ids for the current increment from frd_all
+  std::vector<int> get_dat_result_blocks_data_ids_linked(int set_id); // gets the result blocks data ids for the current increment from dat_all
   std::vector<int> get_result_block_node_data_id(int result_blocks_data_id); // gets the result blocks node data ids for the current block
-  std::vector<int> get_result_block_node_data_id_linked(int result_blocks_data_id); // gets the result blocks node data ids for the current block from frd_all
+  std::vector<int> get_result_block_node_data_id_linked(int result_blocks_data_id); // gets the result blocks node data ids for the current block and set from frd_all
   std::string get_result_data(int data_id, int node_data_id); // gets the result data for a node
   bool link_nodes(); // links the ids from frd/dat all
   bool link_elements(); // links the ids from frd/dat all
   bool link_dat(); // links the dat
   bool prepare_sidesets(); // gets all data for the sidesets
   std::vector<double> get_integration_point_coordinates(int element_type, int ip, int ipmax, std::vector<std::vector<double>> nodes_coords); // computes the integration point coordinates for the given element and ip point number
+  std::vector<std::vector<double>> compute_integration_points_displacements(int set_id);
 
   ProgressTool *progressbar; // progressbar
   CalculiXCoreInterface *ccx_iface;

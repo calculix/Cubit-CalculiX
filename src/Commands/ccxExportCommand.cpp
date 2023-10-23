@@ -335,20 +335,20 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
           cubit_element_type_entity = ccx_iface.get_cubit_element_type_entity(cubit_element_type_entity);
           
           //rewrite to global element ids
-          for (size_t i = 0; i < ids.size(); i++)
+          for (size_t ii = 0; ii < ids.size(); ii++)
           {
-            ids[i] = CubitInterface::get_global_element_id(cubit_element_type_entity,ids[i]);
+            ids[ii] = CubitInterface::get_global_element_id(cubit_element_type_entity,ids[ii]);
           }
 
           // Write out the connectivity
-          for (int i = 0; i < num_elems; i++)
+          for (int ii = 0; ii < num_elems; ii++)
           {
             std::vector<int> conn(27);
-            int num_nodes = iface->get_connectivity(handles[i], conn);
+            int num_nodes = iface->get_connectivity(handles[ii], conn);
 
             //output_file << "**DEBUG:"<<  iface->get_element_type_name(element_type[i]) << "   " << (int) element_type[i] << " " << ids[i] << " " << block_id << "\n";
                         
-            output_file << ids[i] << ", ";
+            output_file << ids[ii] << ", ";
             for (int j = 0; j < num_nodes; j++)
             {
               // different node numbering for hex20

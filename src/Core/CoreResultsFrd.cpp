@@ -95,6 +95,14 @@ bool CoreResultsFrd::read()
     }
     progressbar.end();
     frd.close();
+
+    if (maxlines<10)
+    {
+      // must be no data in the frd
+      return false;
+    }
+    
+
     frd.open(this->filepath);
 
     progressbar.start(0,100,"Reading Results FRD");

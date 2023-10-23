@@ -255,8 +255,9 @@ bool CoreJobs::wait_job(int job_id)
         //log.append(" Exit Code " + std::to_string(errorcode) + " \n");
         PRINT_INFO("%s", log.c_str());
         jobs_data[jobs_data_id][3] = "4";
-        ccx_iface->load_result(job_id);
-        jobs_data[jobs_data_id][6] = std::to_string(ccx_iface->convert_result(job_id));
+        //ccx_iface->load_result(job_id);
+        //jobs_data[jobs_data_id][6] = std::to_string(ccx_iface->convert_result(job_id));
+        jobs_data[jobs_data_id][6] = -1;
       }else{
         log = "Job " + jobs_data[jobs_data_id][1] + " with ID " + jobs_data[jobs_data_id][0] + " finished! \n";
         //log.append(" Exit Code " + std::to_string(errorcode) + " \n");
@@ -359,8 +360,9 @@ bool CoreJobs::check_jobs()
           //log.append(" Exit Code " + std::to_string(CubitProcessHandler[CubitProcessHandler_data_id].exit_code()) + " \n");
           PRINT_INFO("%s", log.c_str());
           jobs_data[i][3] = "4";
-          ccx_iface->load_result(std::stoi(jobs_data[i][0]));
-          jobs_data[i][6] = std::to_string(ccx_iface->convert_result(std::stoi(jobs_data[i][0])));
+          //ccx_iface->load_result(std::stoi(jobs_data[i][0]));
+          //jobs_data[i][6] = std::to_string(ccx_iface->convert_result(std::stoi(jobs_data[i][0])));
+          jobs_data[i][6] = -1;
           CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
         }else if ((0 != kill(std::stoi(jobs_data[i][4]),0)) && (status==0)) // if process doesn't exist and exited without error
         {

@@ -29,7 +29,7 @@ public:
   // result_blocks[0][4] result block data id
 
   std::vector<double> total_times;
-  // total_time[0] total time
+  // total_times[0] total time
 
   std::vector<std::vector<std::string>> result_block_components;
   // result_block_components[0][0] component 1

@@ -70,6 +70,11 @@ std::string CalculiXCoreInterface::get_cubit_element_type_entity(std::string cub
   return ccx_core.get_cubit_element_type_entity(cubit_element_type);
 }
 
+std::vector<std::vector<int>> CalculiXCoreInterface::get_element_id_type_connectivity()
+{
+  return ccx_core.get_element_id_type_connectivity();
+}
+
 std::string CalculiXCoreInterface::get_block_name(int block_id)
 {
   return ccx_core.get_block_name(block_id);

@@ -391,6 +391,13 @@ bool CoreResultsDat::read_line(std::vector<std::string> line)
   } else {                   // nodal results
     bool_node = true;
     c1_type = 1;
+    
+    //check if last component really is a number, shells ... so random
+    if (line[line.size()-1][0]=='_')
+    {
+      bool_node = false;
+      c1_type = 2;
+    }
   }
   
   std::vector<double> result_comp(n_comp);

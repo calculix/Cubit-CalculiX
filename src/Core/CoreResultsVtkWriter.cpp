@@ -478,6 +478,7 @@ bool CoreResultsVtkWriter::write_vtu_unlinked()
   output_nodes.append(this->level_whitespace(4) + "</DataArray>\n");
   output_nodes.append(this->level_whitespace(3) + "</Points>\n");
   // write elements
+  this->rewrite_connectivity_unlinked(); // correct the node ids from ccx to vtk in the connectivity
   for (size_t i = 0; i < frd->elements.size(); i++)
   {
 
@@ -716,6 +717,24 @@ int CoreResultsVtkWriter::get_max_step_increment()
   return increment;
 }
 
+bool CoreResultsVtkWriter::rewrite_connectivity_unlinked()
+{  
+  for (size_t i = 0; i < frd->nodes.size(); i++)
+  {
+    for (size_t ii = 0; ii < frd->elements_connectivity.size(); ii++)
+    {
+      for (size_t iii = 0; iii < frd->elements_connectivity[ii].size(); iii++)
+      {
+        if (frd->elements_connectivity[ii][iii]==frd->nodes[i][0])
+        {
+          frd->elements_connectivity[ii][iii] = i;
+        }
+      }
+    }
+  }
+  return true;
+}
+
 std::string CoreResultsVtkWriter::get_element_connectivity_vtk(int element_connectivity_data_id, int element_type) // gets the connectivity already converted to vtk format
 {
   std::string str_result = "";
@@ -740,7 +759,7 @@ std::string CoreResultsVtkWriter::get_element_connectivity_vtk(int element_conne
   
   for (size_t i = 0; i < result_connectivity.size(); i++)
   {
-    str_result.append(std::to_string(result_connectivity[i]-1)); // node numbers starts with id 0
+    str_result.append(std::to_string(result_connectivity[i]));
     if (i!=result_connectivity.size()-1)
     {
       str_result.append(" ");
@@ -811,6 +830,12 @@ std::string CoreResultsVtkWriter::get_element_offset_vtk(int element_connectivit
 
 int CoreResultsVtkWriter::getParaviewNode(int frd_node_id)
 {
+  // if dat file integration point data, no correct node will be found
+  if (current_part > nparts-nparts_dat - 1)
+  {
+    return frd_node_id;
+  }
+
   for (size_t i = 0; i < frd->nodes.size(); i++)
   {
     if (frd->nodes[i][0] == frd_node_id)
@@ -818,6 +843,7 @@ int CoreResultsVtkWriter::getParaviewNode(int frd_node_id)
       return i;
     }
   }
+  
   return -1;
 }
 
@@ -858,6 +884,11 @@ bool CoreResultsVtkWriter::checkLinkPossible()
 {
   std::string log;
 
+  if (frd->nodes.size()==0)
+  {
+    return false;
+  }
+  
   for (size_t i = 0; i < frd->nodes.size(); i++)
   {
     if (!CubitInterface::get_node_exists(frd->nodes[i][0]))
@@ -888,29 +919,40 @@ bool CoreResultsVtkWriter::checkLinkPossible()
     PRINT_INFO("%s", log.c_str());
     return false;
   }
-  if (dat_all->result_blocks.size()!=0)
+
+  if (nparts_dat!=0) // if dat exists in .dat file
   {
-    //check if for every frd timestep that there is a dat timestep
-    for (size_t i = 0; i < frd_all->total_times.size(); i++)
+    if (dat_all->result_blocks.size()!=0)
     {
-      if (!checkDatTimeValueExists(frd_all->total_times[i]))
+      //check if for every frd timestep that there is a dat timestep
+      for (size_t i = 0; i < frd_all->total_times.size(); i++)
       {
-        log = "Linking Failed! Not for every .frd time value a .dat time value exists.\n";
-        PRINT_INFO("%s", log.c_str());
-        return false;
+        if (!checkDatTimeValueExists(frd_all->total_times[i]))
+        {
+          log = "Linking Failed! Not for every .frd time value a .dat time value exists.\n";
+          PRINT_INFO("%s", log.c_str());
+          return false;
+        }
       }
+    }
+    max_increments = 0;
+    //get max increments
+    for (size_t i = 0; i < frd_all->result_blocks.size(); i++)
+    {
+      if (max_increments<frd_all->result_blocks[i][3])
+      {
+        max_increments = frd_all->result_blocks[i][3];
+      }
+    }
+
+    if (max_increments!=this->get_max_step_increment())
+    {
+      log = "Linking Failed! Different number of increments in .frd (" + std::to_string(max_increments) + ") and .dat (" + std::to_string(get_max_step_increment()) + ") \n";
+      PRINT_INFO("%s", log.c_str());
+      return false;
     }
   }
   
-  /*
-  if (max_increments!=get_max_step_increment())
-  {
-    log = "Linking Failed! Different number of increments in .frd and .dat .\n";
-    PRINT_INFO("%s", log.c_str());
-    return false;
-  }
-  */
-
   return true;
 }
 
@@ -924,6 +966,27 @@ bool CoreResultsVtkWriter::checkDatTimeValueExists(double total_time)
     }
   }
   return false;
+}
+
+std::vector<int> CoreResultsVtkWriter::get_currentincrement_result_blocks_data()
+{
+  std::vector<int> result_blocks_data;
+  // result_blocks[0][1] step
+  // result_blocks[0][2] step increment
+  // result_blocks[0][3] total increment
+
+  for (size_t i = 0; i < frd->result_blocks.size(); i++)
+  {
+    if (current_increment == frd->result_blocks[i][3])
+    {
+      result_blocks_data.push_back(frd->result_blocks[i][1]);
+      result_blocks_data.push_back(frd->result_blocks[i][2]);
+      result_blocks_data.push_back(frd->result_blocks[i][3]);
+
+      return result_blocks_data;
+    }
+  }
+  return {0,0,0};
 }
 
 std::vector<int> CoreResultsVtkWriter::get_result_blocks_data_ids()
@@ -947,6 +1010,20 @@ std::vector<int> CoreResultsVtkWriter::get_result_blocks_data_ids_linked()
   for (size_t i = 0; i < frd_all->result_blocks.size(); i++)
   {
     if (current_increment == frd_all->result_blocks[i][3])
+    {
+      data_ids.push_back(i);
+    }
+  }
+  return data_ids;
+}
+
+std::vector<int> CoreResultsVtkWriter::get_dat_result_blocks_data_ids_linked(int set_id)
+{
+  std::vector<int> data_ids;
+  
+  for (size_t i = 0; i < dat_all->result_blocks.size(); i++)
+  {
+    if ((current_increment == this->get_step_increment(dat_all->total_times[dat_all->result_blocks[i][1]]))&&(set_id==dat_all->result_blocks[i][3]))
     {
       data_ids.push_back(i);
     }
@@ -1338,183 +1415,317 @@ bool CoreResultsVtkWriter::link_elements()
 
 bool CoreResultsVtkWriter::link_dat()
 {
+  std::vector<std::vector<int>> ip_nodes;
+  //ip_nodes[0][0] ip number
+  //ip_nodes[0][0] element id
+  std::vector<std::vector<double>> ip_nodes_coords;
   
-  current_part = nparts - nparts_dat +1 ;
+  element_id_type_connectivity = ccx_iface->get_element_id_type_connectivity();
+  std::vector<std::vector<int>> tmp_element_id_type_connectivity;
 
-  for (size_t i = nparts - nparts_dat ; i < nparts; i++)
+  //get nodes and elements
+  current_part = nparts - nparts_dat - 1;
+  for (size_t i = 0 ; i < nparts_dat; i++)
   {
-
-  }
-
-  for (size_t i = 0; i < max_increments; i++)
-  {
-    for (size_t ii = nparts - nparts_dat ; ii < nparts; ii++)
+    ++current_part;
+    ip_nodes.clear();
+    ip_nodes_coords.clear();
+    for (size_t ii = 0; ii < dat_all->result_blocks.size(); ii++)
     {
-      std::vector<int> tmp_result_blocks;
-      std::vector<std::string> tmp_result_block_components;
-
-      vec_frd[ii]->result_blocks.push_back(tmp_result_blocks);
-      //vec_frd[ii]->total_times = frd_all->total_times;
-      vec_frd[ii]->result_block_components.push_back(tmp_result_block_components);
-      //vec_frd[ii]->result_block_type = frd_all->result_block_type;
-
-      std::vector<std::vector<double>> tmp_result_block_data;
-      std::vector<std::vector<int>> tmp_result_block_node_data;   
-      vec_frd[ii]->result_block_data.push_back(tmp_result_block_data);
-      vec_frd[ii]->result_block_node_data.push_back(tmp_result_block_node_data);
-    }
-  }
-
-  //std::vector<std::vector<int>> result_blocks;
-  // result_blocks[0][0] result block
-  // result_blocks[0][1] step
-  // result_blocks[0][2] step increment
-  // result_blocks[0][3] total increment
-  // result_blocks[0][4] total time data id
-  // result_blocks[0][5] result block type
-  // result_blocks[0][6] result block data id
-
-  //std::vector<double> total_times;
-  // total_time[0] total time
-
-  //std::vector<std::vector<std::string>> result_block_components;
-  // result_block_components[0][0] component 1
-  // result_block_components[0][1] component 2
-  // result_block_components[0][2] .....
-
-  //std::vector<std::string> result_block_type;
-  // result_block_type[0] disp
-  // result_block_type[1] stress
-  // result_block_type[2] forc
-
-
-  /*
-
-  progressbar->start(0,100,"Writing Results to ParaView Format - Linking .dat");
-  auto t_start = std::chrono::high_resolution_clock::now();
-
-  //creating nodes
-  for (size_t i = nparts - nparts_dat; i < nparts; i++)
-  {
-    //if nodal value
-    for (size_t ii = 0; ii < block_ids.size(); ii++)
-    {
-      ++current_part;
-      for (size_t iii = 0; iii < tmp_block_node_ids[ii].size(); iii++)
+      if (dat_all->result_blocks[ii][3]==i)
       {
-        if (frd_all->nodes[i][0]==tmp_block_node_ids[ii][iii])
+        // create nodes
+        if (dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][0][2] == 1) // nodeset
         {
-          vec_frd[current_part]->nodes.push_back(frd_all->nodes[i]);
-          vec_frd[current_part]->nodes_coords.push_back(frd_all->nodes_coords[i]);
-          vec_frd[current_part]->nodes[vec_frd[current_part]->nodes.size()-1][1] = vec_frd[current_part]->nodes_coords.size()-1;
-          tmp_block_node_ids[ii].erase(tmp_block_node_ids[ii].begin() + iii);
-          --iii;
+          for (size_t iii = 0; iii < dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]].size(); iii++)
+          {
+            vec_frd[current_part]->nodes.push_back({dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][iii][0],0});
+            std::array<double,3> node_coords = CubitInterface::get_nodal_coordinates(dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][iii][0]);
+            vec_frd[current_part]->nodes_coords.push_back({node_coords[0],node_coords[1],node_coords[2]});
+            vec_frd[current_part]->nodes[vec_frd[current_part]->nodes.size()-1][1] = vec_frd[current_part]->nodes_coords.size()-1;
+          }
+        }else{  // element set
+          int ip_max = 0;
+          int ip = 0;
+          int ip_last = 0;
+          int element_id = 0;
+          int element_id_last = 0;
+          bool flush_data = false;
+          bool only_one_ip = true;
+          std::vector<std::vector<int>> tmp_ip_nodes;
+          std::vector<std::vector<double>> tmp_ip_nodes_coords;
+          tmp_ip_nodes.clear();
+          tmp_ip_nodes_coords.clear();
+          tmp_element_id_type_connectivity = element_id_type_connectivity;
+
+          element_id_last = int(dat_all->result_block_data[dat_all->result_blocks[ii][4]][dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][0][1]][0]);
+
+          for (size_t iii = 0; iii < dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]].size(); iii++)
+          {
+            ip = int(dat_all->result_block_data[dat_all->result_blocks[ii][4]][dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][iii][1]][1]);
+            if (ip!=1)
+            {
+              only_one_ip = false;
+            }
+          }
+
+          for (size_t iii = 0; iii < dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]].size(); iii++)
+          {
+            ip = int(dat_all->result_block_data[dat_all->result_blocks[ii][4]][dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][iii][1]][1]);
+            element_id = int(dat_all->result_block_data[dat_all->result_blocks[ii][4]][dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][iii][1]][0]);
+
+            //std::string log;
+            //log = " iteration " + std::to_string(iii) + " element_id " + std::to_string(element_id) + " element_id_last " + std::to_string(element_id_last) + " ip " + std::to_string(ip) + " ip_last " + std::to_string(ip_last) + " \n";
+            //ccx_iface->log_str(log);
+            //PRINT_INFO("%s", log.c_str());
+
+            if (!only_one_ip)
+            {
+              if (ip_last == ip)
+              {
+                ip_max = ip;
+                flush_data = true; // only 1 ip point
+              }else if (ip < ip_last) // element changed
+              {
+                //ip_max = ip;
+                flush_data = true;
+              }else if (iii == (dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]].size()-1)) // last one
+              {
+                flush_data = true;
+                ip_max = ip;
+                ip_nodes.push_back({ip,element_id});
+                tmp_ip_nodes.push_back({ip,element_id});
+                tmp_ip_nodes_coords.push_back({0,0,0});
+                ip_last = ip;
+              }else{
+                ip_max = ip;
+              }
+            }else{
+              ip = 1;
+              ip_max = 1;
+              ip_nodes.push_back({ip,element_id});
+              tmp_ip_nodes.push_back({ip,element_id});
+              tmp_ip_nodes_coords.push_back({0,0,0});
+            }
+            
+            if ((flush_data)||only_one_ip)
+            {
+              //get element type and connectivity
+              std::vector<int> element_type_connectivity;
+
+              for (size_t v = 0; v < tmp_element_id_type_connectivity.size(); v++)
+              {
+                if (tmp_element_id_type_connectivity[v][0]==tmp_ip_nodes[0][1])
+                {
+                  for (size_t vi = 1; vi < tmp_element_id_type_connectivity[v].size(); vi++)
+                  {
+                    element_type_connectivity.push_back(tmp_element_id_type_connectivity[v][vi]);
+                  }
+                  tmp_element_id_type_connectivity.erase(tmp_element_id_type_connectivity.begin() + v);
+                }
+              }
+              
+              std::vector<std::vector<double>> nodes_coords;
+              for (size_t v = 1; v < element_type_connectivity.size(); v++)
+              {
+                std::array<double,3> node_coords = CubitInterface::get_nodal_coordinates(element_type_connectivity[v]);
+                nodes_coords.push_back({node_coords[0],node_coords[1],node_coords[2]});
+              }
+
+              // element changed, flush current element data, reset and one step back              
+              for (size_t iv = 0; iv < tmp_ip_nodes.size(); iv++)
+              {
+                //std::string log;
+                //log = " inner element_id " + std::to_string(tmp_ip_nodes[iv][1]) + " ip " + std::to_string(tmp_ip_nodes[iv][0]) + " ";
+                //ccx_iface->log_str(log);
+                //PRINT_INFO("%s", log.c_str());
+                tmp_ip_nodes_coords[iv] = this->get_integration_point_coordinates(element_type_connectivity[0], tmp_ip_nodes[iv][0], ip_max, nodes_coords);
+                ip_nodes_coords.push_back(tmp_ip_nodes_coords[iv]);
+                vec_frd[current_part]->nodes.push_back({tmp_ip_nodes[iv][0],0});
+                vec_frd[current_part]->nodes_coords.push_back(tmp_ip_nodes_coords[iv]);
+                vec_frd[current_part]->nodes[vec_frd[current_part]->nodes.size()-1][1] = vec_frd[current_part]->nodes_coords.size()-1;
+              }
+              //reset
+              ip_max = 0;
+              ip_last = 0;
+              tmp_ip_nodes.clear();
+              tmp_ip_nodes_coords.clear();
+              flush_data = false;
+            }
+            if (iii == (dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]].size()-1)) // last one
+            {
+            }else{
+              if (!only_one_ip)
+              {
+                ip_nodes.push_back({ip,element_id});
+                tmp_ip_nodes.push_back({ip,element_id});
+                tmp_ip_nodes_coords.push_back({0,0,0});
+                ip_last = ip;
+                element_id_last = element_id;
+                ip_max = ip;
+              }
+            }
+          }
         }
+      
+        // elements
+        if (dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][0][2] == 1) // nodeset
+        {
+          for (size_t iii = 0; iii < vec_frd[current_part]->nodes.size(); iii++)
+          {
+            vec_frd[current_part]->elements.push_back({vec_frd[current_part]->nodes[iii][0],99,int(iii),0});
+            //vec_frd[current_part]->elements_connectivity.push_back({vec_frd[current_part]->nodes[iii][0]});
+            vec_frd[current_part]->elements_connectivity.push_back({int(iii)});
+            vec_frd[current_part]->elements[vec_frd[current_part]->elements.size()-1][2] = vec_frd[current_part]->elements_connectivity.size()-1;
+          }
+        }else{       // element set
+          for (size_t iii = 0; iii < vec_frd[current_part]->nodes.size(); iii++)
+          {
+            vec_frd[current_part]->elements.push_back({ip_nodes[iii][1],99,int(iii),0});
+            vec_frd[current_part]->elements_connectivity.push_back({int(iii)});
+            vec_frd[current_part]->elements[vec_frd[current_part]->elements.size()-1][2] = vec_frd[current_part]->elements_connectivity.size()-1;
+          }
+        }
+        // to skip rest and go for the next set
+        ii = dat_all->result_blocks.size();
       }
-    }
-    //update progress bar
-    const auto t_end = std::chrono::high_resolution_clock::now();
-    int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
-    //currentDataRow += frd->result_block_data[data_ids[ii]].size();
-    if (duration > 500)
-    {
-      progressbar->percent(double(i)/double(frd_all->nodes.size()-1));
-      progressbar->check_interrupt();
-      t_start = std::chrono::high_resolution_clock::now();
     }
   }
-  progressbar->end();
 
-
-  progressbar->start(0,100,"Writing Results to ParaView Format - Linking Nodal Results");
-  t_start = std::chrono::high_resolution_clock::now();
-
-  for (size_t i = 0; i < max_increments; i++)
+  //get the data for the sets
+  current_part = nparts - nparts_dat - 1;
+  for (size_t i = 0 ; i < nparts_dat; i++)
   {
-    ++current_increment;
-    std::vector<int> data_ids = this->get_result_blocks_data_ids_linked(); // get data ids for result blocks
-    for (size_t ii = 0; ii < data_ids.size(); ii++)
+    ++current_part;
+    current_increment = 0;
+    for (size_t ii = 0; ii < max_increments; ii++)
     {
-      tmp_block_node_ids = block_node_ids;
-      tmp_nodeset_node_ids = nodeset_node_ids;
-      tmp_sideset_node_ids = sideset_node_ids;
+      ++current_increment;
+      std::vector<int> data_ids = this->get_dat_result_blocks_data_ids_linked(i);
 
-      std::vector<int> node_data_ids = this->get_result_block_node_data_id_linked(data_ids[ii]);
-      for (size_t iii = 0; iii < nparts-nparts_dat; iii++)
-      {
-        std::vector<std::vector<double>> tmp_result_block_data;
-        std::vector<std::vector<int>> tmp_result_block_node_data;   
-        vec_frd[iii]->result_block_data.push_back(tmp_result_block_data);
-        vec_frd[iii]->result_block_node_data.push_back(tmp_result_block_node_data);
-      }
-
-      for (size_t iii = 0; iii < node_data_ids.size(); iii++)
+      for (size_t iii = 0; iii < data_ids.size(); iii++)
       { 
-        current_part = -1;
-        //blocks    
-        for (size_t iv = 0; iv < block_ids.size(); iv++)
+        //std::string log;
+        //log = " i " + std::to_string(i) + " ii " + std::to_string(ii) + + " iii " + std::to_string(iii) + " data_ids " + std::to_string(data_ids[iii]) + " data_ids.size()-1 " + std::to_string(data_ids.size()-1) + " ";
+        //ccx_iface->log_str(log);
+        //PRINT_INFO("%s", log.c_str());
+        std::vector<int> tmp_dummy = this->get_currentincrement_result_blocks_data();
+        //insert the dummies
+        std::vector<int> tmp_result_blocks(7);
+        vec_frd[current_part]->result_blocks.push_back(tmp_result_blocks);
+        // result_blocks[0][0] result block
+        vec_frd[current_part]->result_blocks[vec_frd[current_part]->result_blocks.size()-1][0] = vec_frd[current_part]->result_blocks.size()-1;
+        // result_blocks[0][1] step
+        // result_blocks[0][2] step increment
+        // result_blocks[0][3] total increment
+        vec_frd[current_part]->result_blocks[vec_frd[current_part]->result_blocks.size()-1][1] = tmp_dummy[0];
+        vec_frd[current_part]->result_blocks[vec_frd[current_part]->result_blocks.size()-1][2] = tmp_dummy[1];
+        vec_frd[current_part]->result_blocks[vec_frd[current_part]->result_blocks.size()-1][3] = tmp_dummy[2];
+        // result_blocks[0][4] total time data id
+        vec_frd[current_part]->total_times.push_back(dat_all->total_times[dat_all->result_blocks[data_ids[iii]][1]]);
+        vec_frd[current_part]->result_blocks[vec_frd[current_part]->result_blocks.size()-1][4] = vec_frd[current_part]->total_times.size()-1;
+        // result_blocks[0][5] result block type
+        if (iii == 0)
         {
-          ++current_part;
-          for (size_t v = 0; v < tmp_block_node_ids[iv].size(); v++)
+          for (size_t iv = 0; iv < dat_all->result_block_type.size(); iv++)
           {
-            if (frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]==tmp_block_node_ids[iv][v])
+            vec_frd[current_part]->result_block_type.push_back(".dat: " + dat_all->result_block_type[iv]);
+          }
+        }
+        vec_frd[current_part]->result_blocks[vec_frd[current_part]->result_blocks.size()-1][5] = dat_all->result_blocks[data_ids[iii]][2];
+        //std::vector<std::vector<std::string>> result_block_components;
+        std::vector<std::string> tmp_comp_data;
+        for (size_t iv = 0; iv < dat_all->result_block_components[data_ids[iii]].size(); iv++)
+        { 
+          if (dat_all->result_block_c1_data[dat_all->result_blocks[data_ids[iii]][4]][0][2] == 1) // nodeset
+          { 
+            tmp_comp_data.push_back(dat_all->result_block_components[data_ids[iii]][iv]);
+          }else{
+            if (iv > 1)
             {
-              vec_frd[current_part]->result_block_data[data_ids[ii]].push_back(frd_all->result_block_data[data_ids[ii]][node_data_ids[iii]]);
-              vec_frd[current_part]->result_block_node_data[data_ids[ii]].push_back(frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]]);
-              vec_frd[current_part]->result_block_node_data[data_ids[ii]][vec_frd[current_part]->result_block_node_data[data_ids[ii]].size()-1][1] = vec_frd[current_part]->result_block_data[data_ids[ii]].size()-1;
-              tmp_block_node_ids[iv].erase(tmp_block_node_ids[iv].begin() + v);
-              --v;
+              tmp_comp_data.push_back(dat_all->result_block_components[data_ids[iii]][iv]);
             }
           }
         }
-        //nodesets
-        for (size_t iv = 0; iv < nodeset_ids.size(); iv++)
+        vec_frd[current_part]->result_block_components.push_back(tmp_comp_data);
+        // result_blocks[0][6] result block data id
+        std::vector<std::vector<double>> tmp_result_block_data;
+        std::vector<std::vector<int>> tmp_result_block_node_data;
+        vec_frd[current_part]->result_block_data.push_back(tmp_result_block_data);
+        vec_frd[current_part]->result_block_node_data.push_back(tmp_result_block_node_data);
+        vec_frd[current_part]->result_blocks[vec_frd[current_part]->result_blocks.size()-1][6] = vec_frd[current_part]->result_block_data.size()-1;
+        // nodes data
+        if (dat_all->result_block_c1_data[dat_all->result_blocks[data_ids[iii]][4]][0][2] == 1) // nodeset
         {
-          ++current_part;
-          for (size_t v = 0; v < tmp_nodeset_node_ids[iv].size(); v++)
+          for (size_t iv = 0; iv < dat_all->result_block_c1_data[dat_all->result_blocks[data_ids[iii]][4]].size(); iv++)
           {
-            if (frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]==tmp_nodeset_node_ids[iv][v])
+            std::vector<double> tmp_node_data;
+            for (size_t v = 0; v < dat_all->result_block_data[data_ids[iii]][dat_all->result_block_c1_data[dat_all->result_blocks[data_ids[iii]][4]][iv][1]].size(); v++)
             {
-              vec_frd[current_part]->result_block_data[data_ids[ii]].push_back(frd_all->result_block_data[data_ids[ii]][node_data_ids[iii]]);
-              vec_frd[current_part]->result_block_node_data[data_ids[ii]].push_back(frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]]);
-              vec_frd[current_part]->result_block_node_data[data_ids[ii]][vec_frd[current_part]->result_block_node_data[data_ids[ii]].size()-1][1] = vec_frd[current_part]->result_block_data[data_ids[ii]].size()-1;
-              tmp_nodeset_node_ids[iv].erase(tmp_nodeset_node_ids[iv].begin() + v);
-              --v;
+              tmp_node_data.push_back(dat_all->result_block_data[data_ids[iii]][dat_all->result_block_c1_data[dat_all->result_blocks[data_ids[iii]][4]][iv][1]][v]);
             }
+            vec_frd[current_part]->result_block_data[vec_frd[current_part]->result_block_data.size()-1].push_back(tmp_node_data);
+            vec_frd[current_part]->result_block_node_data[vec_frd[current_part]->result_block_data.size()-1].push_back({int(iv),int(iv)});
           }
-        }
-        //sidesets
-        for (size_t iv = 0; iv < sideset_ids.size(); iv++)
-        {
-          ++current_part;
-          for (size_t v = 0; v < tmp_sideset_node_ids[iv].size(); v++)
+        }else{  // elements data
+          for (size_t iv = 0; iv < dat_all->result_block_c1_data[dat_all->result_blocks[data_ids[iii]][4]].size(); iv++)
           {
-            if (frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]==tmp_sideset_node_ids[iv][v])
+            std::vector<double> tmp_node_data;
+            for (size_t v = 2; v < dat_all->result_block_data[data_ids[iii]][dat_all->result_block_c1_data[dat_all->result_blocks[data_ids[iii]][4]][iv][1]].size(); v++)
             {
-              vec_frd[current_part]->result_block_data[data_ids[ii]].push_back(frd_all->result_block_data[data_ids[ii]][node_data_ids[iii]]);
-              vec_frd[current_part]->result_block_node_data[data_ids[ii]].push_back(frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]]);
-              vec_frd[current_part]->result_block_node_data[data_ids[ii]][vec_frd[current_part]->result_block_node_data[data_ids[ii]].size()-1][1] = vec_frd[current_part]->result_block_data[data_ids[ii]].size()-1;
-              tmp_sideset_node_ids[iv].erase(tmp_sideset_node_ids[iv].begin() + v);
-              --v;
+              tmp_node_data.push_back(dat_all->result_block_data[data_ids[iii]][dat_all->result_block_c1_data[dat_all->result_blocks[data_ids[iii]][4]][iv][1]][v]);
             }
+            vec_frd[current_part]->result_block_data[vec_frd[current_part]->result_block_data.size()-1].push_back(tmp_node_data);
+            vec_frd[current_part]->result_block_node_data[vec_frd[current_part]->result_block_data.size()-1].push_back({int(iv),int(iv)});
           }
         }
       }
-    }
-    //update progress bar
-    const auto t_end = std::chrono::high_resolution_clock::now();
-    int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
-    //currentDataRow += frd->result_block_data[data_ids[ii]].size();
-    if (duration > 500)
-    {
-      progressbar->percent(double(current_increment)/double(max_increments));
-      progressbar->check_interrupt();
-      t_start = std::chrono::high_resolution_clock::now();
+      
+      // add displacement result block for elements
+      // check if was element results
+      if (dat_all->result_block_c1_data[dat_all->result_blocks[data_ids[data_ids.size()-1]][4]][0][2] == 2)       
+      {
+        int current_result_block_data_id;
+        //inser dummies
+        std::vector<int> tmp_dummy = this->get_currentincrement_result_blocks_data();
+        //insert the dummies
+        std::vector<int> tmp_result_blocks(7);
+        vec_frd[current_part]->result_blocks.push_back(tmp_result_blocks);
+        // result_blocks[0][0] result block
+        vec_frd[current_part]->result_blocks[vec_frd[current_part]->result_blocks.size()-1][0] = vec_frd[current_part]->result_blocks.size()-1;
+        current_result_block_data_id = vec_frd[current_part]->result_blocks.size()-1;
+        // result_blocks[0][1] step
+        // result_blocks[0][2] step increment
+        // result_blocks[0][3] total increment
+        vec_frd[current_part]->result_blocks[current_result_block_data_id][1] = tmp_dummy[0];
+        vec_frd[current_part]->result_blocks[current_result_block_data_id][2] = tmp_dummy[1];
+        vec_frd[current_part]->result_blocks[current_result_block_data_id][3] = tmp_dummy[2];
+        // result_blocks[0][4] total time data id
+        vec_frd[current_part]->total_times.push_back(dat_all->total_times[dat_all->result_blocks[data_ids[data_ids.size()-1]][1]]);
+        vec_frd[current_part]->result_blocks[current_result_block_data_id][4] = vec_frd[current_part]->total_times.size()-1;
+        // result_blocks[0][5] result block type
+        vec_frd[current_part]->result_block_type.push_back(".dat: disp. int. pts.");
+        vec_frd[current_part]->result_blocks[current_result_block_data_id][5] = vec_frd[current_part]->result_block_type.size()-1;
+        //std::vector<std::vector<std::string>> result_block_components;
+        vec_frd[current_part]->result_block_components.push_back({"D1","D2","D3"});
+        // result_blocks[0][6] result block data id
+        std::vector<std::vector<double>> tmp_result_block_data;
+        std::vector<std::vector<int>> tmp_result_block_node_data;
+        vec_frd[current_part]->result_block_data.push_back(tmp_result_block_data);
+        vec_frd[current_part]->result_block_node_data.push_back(tmp_result_block_node_data);
+        vec_frd[current_part]->result_blocks[current_result_block_data_id][6] = vec_frd[current_part]->result_block_data.size()-1;
+        // elements data
+        std::vector<std::vector<double>> displacements;
+        displacements = this->compute_integration_points_displacements(i);
+        for (size_t iii = 0; iii < displacements.size(); iii++)
+        {
+          vec_frd[current_part]->result_block_data[vec_frd[current_part]->result_block_data.size()-1].push_back({displacements[iii][0],displacements[iii][1],displacements[iii][2]});
+          vec_frd[current_part]->result_block_node_data[vec_frd[current_part]->result_block_data.size()-1].push_back({int(iii),int(iii)});
+        }
+      }
+      
     }
   }
-  progressbar->end();
-  current_increment = 0;
-  */
   return true;
 }
 
@@ -1629,15 +1840,23 @@ bool CoreResultsVtkWriter::prepare_sidesets()
 std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int element_type, int ip, int ipmax, std::vector<std::vector<double>> nodes_coords)
 {
   std::vector<double> ip_coords(3);
+  ip_coords[0] = 0;
+  ip_coords[1] = 0;
+  ip_coords[2] = 0;
   std::vector<std::vector<double>> ip_iso_coords;
   std::vector<double> shape_functions;
   double xi = 0;
   double eta = 0;
   double zeta = 0;
 
+  //std::string log;
+  //log = "get_integration_point_coordinates element_type " + std::to_string(element_type) + " ip " + std::to_string(ip) + " ipmax " + std::to_string(ipmax) + " \n";
+  //ccx_iface->log_str(log);
+  //PRINT_INFO("%s", log.c_str());
+  
   //get integration point in iso space
 
-  if (element_type == 2) //quad 
+  if ((element_type>=23) && (element_type<=27)) //quad 
   { 
     if (ipmax == 1)
     {
@@ -1659,8 +1878,47 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
       ip_iso_coords.push_back({-0.774596669241483,0.774596669241483,0});
       ip_iso_coords.push_back({-0,0.774596669241483,0});
       ip_iso_coords.push_back({0.774596669241483,0.774596669241483,0});
+    }else if (ipmax == 8)
+    {
+      ip_iso_coords.push_back({-0.577350269189626,-0.577350269189626,-0.577350269189626});
+      ip_iso_coords.push_back({0.577350269189626,-0.577350269189626,-0.577350269189626});
+      ip_iso_coords.push_back({-0.577350269189626,0.577350269189626,-0.577350269189626});
+      ip_iso_coords.push_back({0.577350269189626,0.577350269189626,-0.577350269189626});
+      ip_iso_coords.push_back({-0.577350269189626,-0.577350269189626,0.577350269189626});
+      ip_iso_coords.push_back({0.577350269189626,-0.577350269189626,0.577350269189626});
+      ip_iso_coords.push_back({-0.577350269189626,0.577350269189626,0.577350269189626});
+      ip_iso_coords.push_back({0.577350269189626,0.577350269189626,0.577350269189626});
+    }else if (ipmax == 27)
+    {
+      ip_iso_coords.push_back({-0.774596669241483,-0.774596669241483,-0.774596669241483});
+      ip_iso_coords.push_back({0,-0.774596669241483,-0.774596669241483});
+      ip_iso_coords.push_back({0.774596669241483,-0.774596669241483,-0.774596669241483});
+      ip_iso_coords.push_back({-0.774596669241483,0,-0.774596669241483});
+      ip_iso_coords.push_back({0,0,-0.774596669241483});
+      ip_iso_coords.push_back({0.774596669241483,0,-0.774596669241483});
+      ip_iso_coords.push_back({-0.774596669241483,0.774596669241483,-0.774596669241483});
+      ip_iso_coords.push_back({0,0.774596669241483,-0.774596669241483});
+      ip_iso_coords.push_back({0.774596669241483,0.774596669241483,-0.774596669241483});
+      ip_iso_coords.push_back({-0.774596669241483,-0.774596669241483,0});
+      ip_iso_coords.push_back({0,-0.774596669241483,0});
+      ip_iso_coords.push_back({0.774596669241483,-0.774596669241483,0});
+      ip_iso_coords.push_back({-0.774596669241483,0,0});
+      ip_iso_coords.push_back({0,0,0});
+      ip_iso_coords.push_back({0.774596669241483,0,0});
+      ip_iso_coords.push_back({-0.774596669241483,0.774596669241483,0});
+      ip_iso_coords.push_back({0,0.774596669241483,0});
+      ip_iso_coords.push_back({0.774596669241483,0.774596669241483,0});
+      ip_iso_coords.push_back({-0.774596669241483,-0.774596669241483,0.774596669241483});
+      ip_iso_coords.push_back({0,-0.774596669241483,0.774596669241483});
+      ip_iso_coords.push_back({0.774596669241483,-0.774596669241483,0.774596669241483});
+      ip_iso_coords.push_back({-0.774596669241483,0,0.774596669241483});
+      ip_iso_coords.push_back({0,0,0.774596669241483});
+      ip_iso_coords.push_back({0.774596669241483,0,0.774596669241483});
+      ip_iso_coords.push_back({-0.774596669241483,0.774596669241483,0.774596669241483});
+      ip_iso_coords.push_back({0,0.774596669241483,0.774596669241483});
+      ip_iso_coords.push_back({0.774596669241483,0.774596669241483,0.774596669241483});
     }
-  }else if (element_type == 3) // triangle
+  }else if ((element_type>=11) && (element_type<=14)) // triangle
   {
     if (ipmax == 1)
     {
@@ -1679,8 +1937,23 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
       ip_iso_coords.push_back({0.470142064105115,0.059715871789770,0});
       ip_iso_coords.push_back({0.059715871789770,0.470142064105115,0});
       ip_iso_coords.push_back({0.470142064105115,0.470142064105115,0});
+    }else if (ipmax == 2)
+    {
+      ip_iso_coords.push_back({0.333333333333333,0.333333333333333,-0.577350269189626});
+      ip_iso_coords.push_back({0.333333333333333,0.333333333333333,0.577350269189626});
+    }else if (ipmax == 9)
+    {
+      ip_iso_coords.push_back({0.166666666666667,0.166666666666667,-0.774596669241483});
+      ip_iso_coords.push_back({0.666666666666667,0.166666666666667,-0.774596669241483});
+      ip_iso_coords.push_back({0.166666666666667,0.666666666666667,-0.774596669241483});
+      ip_iso_coords.push_back({0.166666666666667,0.166666666666667,0});
+      ip_iso_coords.push_back({0.666666666666667,0.166666666666667,0});
+      ip_iso_coords.push_back({0.166666666666667,0.666666666666667,0});
+      ip_iso_coords.push_back({0.166666666666667,0.166666666666667,0.774596669241483});
+      ip_iso_coords.push_back({0.666666666666667,0.166666666666667,0.774596669241483});
+      ip_iso_coords.push_back({0.166666666666667,0.666666666666667,0.774596669241483});
     }
-  }else if (element_type == 4) // hex
+  }else if ((element_type>=39) && (element_type<=43)) // hex
   {
     if (ipmax == 1)
     {
@@ -1725,7 +1998,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
       ip_iso_coords.push_back({0,0.774596669241483,0.774596669241483});
       ip_iso_coords.push_back({0.774596669241483,0.774596669241483,0.774596669241483});
     }
-  }else if (element_type == 5) // tet
+  }else if ((element_type>=28) && (element_type<=33)) // tet
   {
     if (ipmax == 1)
     {
@@ -1754,7 +2027,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
       ip_iso_coords.push_back({0.056350832689629,0.443649167310371,0.056350832689629});
       ip_iso_coords.push_back({0.443649167310371,0.056350832689629,0.443649167310371});  
     }
-  }else if (element_type == 6) // tet
+  }else if ((element_type>=48) && (element_type<=50)) // wedge
   {
     if (ipmax == 2)
     {
@@ -1772,31 +2045,54 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
       ip_iso_coords.push_back({0.666666666666667,0.166666666666667,0.774596669241483});
       ip_iso_coords.push_back({0.166666666666667,0.666666666666667,0.774596669241483});
     }
+  }else{
+    for (size_t i = 0; i < ip; i++)
+    {
+      ip_iso_coords.push_back({0,0,0});
+    }
   }
 
   xi = ip_iso_coords[ip-1][0];
   eta = ip_iso_coords[ip-1][1];
   zeta = ip_iso_coords[ip-1][2];
   
-  //compute shape funcitons IMPORTANT FROM CCX SOURCE CODE YOU HAVE TO MATCH THE NODE ORDER LATER!!!
-  if (element_type == 1) // tri linear
+  /*
+  if ((element_type>=39) && (element_type<=43)) {
+    // HEX
+  } else if ((element_type>=28) && (element_type<=33)) {
+    // TETRA
+  } else if ((element_type>=11) && (element_type<=14)) {
+    // TRI
+  } else if ((element_type>=15) && (element_type<=18)) {
+    // TRISHELL
+  } else if ((element_type>=19) && (element_type<=22)) {
+    // SHELL
+  } else if ((element_type>=23) && (element_type<=27)) {
+    // QUAD
+  } else if ((element_type>=48) && (element_type<=50)) {
+    // WEDGE
+  }
+  */
+
+  //compute shape functions IMPORTANT FROM CCX SOURCE CODE YOU HAVE TO MATCH THE NODE ORDER LATER!!!
+  if ((element_type == 11)||(element_type == 12)) // tri linear
   {
     shape_functions.push_back(1-xi-eta);
     shape_functions.push_back(xi);
     shape_functions.push_back(eta);
-  }else if (element_type == 2) // quad linear
+  }else if ((element_type == 23)||(element_type == 24)) // quad linear
   {
     shape_functions.push_back((1-xi)*(1-eta)/4);
     shape_functions.push_back((1+xi)*(1-eta)/4);
     shape_functions.push_back((1+xi)*(1+eta)/4);
     shape_functions.push_back((1-xi)*(1+eta)/4);
-  }else if (element_type == 3) // tet linear
+  }else if ((element_type == 28)||(element_type == 29)) // tet linear
   {
     shape_functions.push_back(1-xi-eta-zeta);
     shape_functions.push_back(xi);
     shape_functions.push_back(eta);
     shape_functions.push_back(zeta);
-  }else if (element_type == 4) // tri quadratic
+  }else if (element_type == 13) // tri quadratic
   {
     shape_functions.push_back(2*(0.5-xi-eta)*(1-xi-eta));
     shape_functions.push_back(xi*(2*xi-1));
@@ -1804,7 +2100,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
     shape_functions.push_back(4*xi*(1-xi-eta));
     shape_functions.push_back(4*xi*eta);
     shape_functions.push_back(4*eta*(1-xi-eta));
-  }else if (element_type == 5) // wedge linear
+  }else if ((element_type == 48)||(element_type == 49)) // wedge linear
   {
     shape_functions.push_back(0.5*(1-xi-eta)*(1-zeta));
     shape_functions.push_back(0.5*xi*(1-zeta));
@@ -1812,7 +2108,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
     shape_functions.push_back(0.5*(1-xi-eta)*(1+zeta));
     shape_functions.push_back(0.5*xi*(1+zeta));
     shape_functions.push_back(0.5*eta*(1+zeta));
-  }else if (element_type == 6) // hex linear
+  }else if ((element_type == 39)||(element_type == 40)) // hex linear
   {
     shape_functions.push_back((1-xi)*(1-eta)*(1-zeta)/8);
     shape_functions.push_back((1+xi)*(1-eta)*(1-zeta)/8);
@@ -1822,7 +2118,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
     shape_functions.push_back((1+xi)*(1-eta)*(1+zeta)/8);
     shape_functions.push_back((1+xi)*(1+eta)*(1+zeta)/8);
     shape_functions.push_back((1-xi)*(1+eta)*(1+zeta)/8);
-  }else if (element_type == 7) // quad quadratic
+  }else if (element_type == 26) // quad quadratic
   {
     shape_functions.push_back((1-xi)*(1-eta)*(-xi-eta-1)/4);
     shape_functions.push_back((1+xi)*(1-eta)*(xi-eta-1)/4);
@@ -1832,7 +2128,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
     shape_functions.push_back((1+xi)*(1+eta)*(1-eta)/2);
     shape_functions.push_back((1+xi)*(1-xi)*(1+eta)/2);
     shape_functions.push_back((1-xi)*(1+eta)*(1-eta)/2);
-  }else if (element_type == 8) // tet quadratic
+  }else if (element_type == 31) // tet quadratic
   {
     shape_functions.push_back((2*(1-xi-eta-zeta)-1)*(1-xi-eta-zeta));
     shape_functions.push_back(xi*(2*xi-1));
@@ -1844,7 +2140,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
     shape_functions.push_back(4*zeta*(1-xi-eta-zeta));
     shape_functions.push_back(4*xi*zeta);
     shape_functions.push_back(4*eta*zeta);
-  }else if (element_type == 9) // wedge quadratic
+  }else if (element_type == 50) // wedge quadratic
   {
     shape_functions.push_back(0.5*(1-xi-eta)*(1-zeta)*(2*xi+2*eta+zeta));
     shape_functions.push_back(0.5*xi*(1-zeta)*(2*xi-2-zeta));
@@ -1861,7 +2157,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
     shape_functions.push_back((1-xi-eta)*(1-zeta*zeta));
     shape_functions.push_back(xi*(1-zeta*zeta));
     shape_functions.push_back(eta*(1-zeta*zeta));
-  }else if (element_type == 10) // hex quadratic
+  }else if (element_type == 42) // hex quadratic
   {
     shape_functions.push_back(-(1-xi)*(1-eta)*(1-zeta)*((1+xi)+(1+eta)+zeta)/8);
     shape_functions.push_back(-(1+xi)*(1-eta)*(1-zeta)*((1-xi)+(1+eta)+zeta)/8);
@@ -1883,11 +2179,60 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
     shape_functions.push_back((1-zeta)*(1+zeta)/4*(1+xi)*(1-eta));
     shape_functions.push_back((1-zeta)*(1+zeta)/4*(1+xi)*(1+eta));
     shape_functions.push_back((1-zeta)*(1+zeta)/4*(1-xi)*(1+eta));
-  }else{
+  }
 
+  // MATCHING NODE ORDER!!!
+  std::vector<std::vector<double>> conn = nodes_coords;
+
+  for (int j = 0; j < nodes_coords.size(); j++)
+  {
+    // different node numbering for hex20
+    if (element_type == 42) {
+      if (j >= 12 && j<=15) {
+        nodes_coords[j] = conn[j+4];
+      } else if (j >= 16 && j<=19) {
+        nodes_coords[j] = conn[j-4];
+      } else {
+        nodes_coords[j] = conn[j];
+      }
+    } else if (element_type == 50) {  // different node numbering for wedge15
+      if (j >= 9 && j<=11) {
+        nodes_coords[j] = conn[j+3];
+      } else if (j >= 12 && j<=14) {
+        nodes_coords[j] = conn[j-3];
+      } else {
+        nodes_coords[j] = conn[j];
+      }
+    }
+  }
+
+  if ((shape_functions.size()!=0)&&(shape_functions.size()==nodes_coords.size()))
+  {
+    ip_coords[0] = 0;
+    ip_coords[1] = 0;
+    ip_coords[2] = 0;
+
+    for (size_t i = 0; i < shape_functions.size(); i++)
+    {
+      ip_coords[0] += shape_functions[i]*nodes_coords[i][0];
+      ip_coords[1] += shape_functions[i]*nodes_coords[i][1];
+      ip_coords[2] += shape_functions[i]*nodes_coords[i][2];
+    }
+  }else{
+    ip_coords[0] = 0;
+    ip_coords[1] = 0;
+    ip_coords[2] = 0;
   }
   
-  // MATCHING NODE ORDER!!!
-
   return ip_coords;
+}
+
+std::vector<std::vector<double>> CoreResultsVtkWriter::compute_integration_points_displacements(int set_id)
+{
+  std::vector<std::vector<double>> displacements;
+  std::vector<std::vector<int>> tmp_element_id_type_connectivity;
+
+  //first get all nodes out of the elements needed.
+
+  return displacements;
 }
