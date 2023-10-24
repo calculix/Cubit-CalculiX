@@ -16,7 +16,7 @@
 #include <QComboBox>
 #include <QString>
 #include <QStringList>
-#include <QTextEdit>
+#include <QPlainTextEdit>
 #include <QTabWidget>
 
 
@@ -59,9 +59,9 @@ private:
   QPushButton* pushButton_result_convert;
   QPushButton* pushButton_result_paraview;
   QPushButton* pushButton_close;
-  QTextEdit* QTextEdit_console;
-  QTextEdit* QTextEdit_cvg;
-  QTextEdit* QTextEdit_sta;
+  QPlainTextEdit* QPlainTextEdit_console;
+  QPlainTextEdit* QPlainTextEdit_cvg;
+  QPlainTextEdit* QPlainTextEdit_sta;
   GUITimer *timer;
 };
 

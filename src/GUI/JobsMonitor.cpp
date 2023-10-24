@@ -59,18 +59,18 @@ JobsMonitor::JobsMonitor()
   boxLayout_window->addWidget(pushButton_close);
   
   // textarea
-  QTextEdit_console = new QTextEdit();
-  QTextEdit_console->setReadOnly(true);
-  QTextEdit_cvg = new QTextEdit();
-  QTextEdit_cvg->setReadOnly(true);
-  QTextEdit_sta = new QTextEdit();
-  QTextEdit_sta->setReadOnly(true);
+  QPlainTextEdit_console = new QPlainTextEdit();
+  QPlainTextEdit_console->setReadOnly(true);
+  QPlainTextEdit_cvg = new QPlainTextEdit();
+  QPlainTextEdit_cvg->setReadOnly(true);
+  QPlainTextEdit_sta = new QPlainTextEdit();
+  QPlainTextEdit_sta->setReadOnly(true);
 
   //tab widget
   TabWidget = new QTabWidget();
-  TabWidget->addTab(QTextEdit_console,"Console Output");
-  TabWidget->addTab(QTextEdit_cvg,"*.cvg");
-  TabWidget->addTab(QTextEdit_sta,"*.sta");
+  TabWidget->addTab(QPlainTextEdit_console,"Console Output");
+  TabWidget->addTab(QPlainTextEdit_cvg,"*.cvg");
+  TabWidget->addTab(QPlainTextEdit_sta,"*.sta");
   boxLayout_tab->addWidget(TabWidget);
 
   
@@ -105,7 +105,13 @@ void JobsMonitor::update_slot()
 void JobsMonitor::update()
 {
   std::vector<std::string> job_data;
+  std::vector<std::string> console_output;
+  std::vector<std::string> cvg;
+  std::vector<std::string> sta;
   job_data = ccx_iface->get_job_data(current_job_id);
+  console_output = ccx_iface->get_job_console_output(current_job_id);
+  cvg = ccx_iface->get_job_cvg(current_job_id);
+  sta = ccx_iface->get_job_sta(current_job_id);
 
   // jobs_data[0][1] name
   // jobs_data[0][2] filepath
@@ -123,24 +129,55 @@ void JobsMonitor::update()
 
     this->setWindowTitle("Jobs Monitor - " + QString::fromStdString(job_data[1]));
     
-    /*
-    if (QTextEdit_console->toPlainText()!=QString::fromStdString(job_data[5]))
+    // check if job has been restarted
+    if (QPlainTextEdit_console->blockCount() > console_output.size())
     {
-      QTextEdit_console->setText(QString::fromStdString(job_data[5]));
-      QTextEdit_console->verticalScrollBar()->setValue(QTextEdit_console->verticalScrollBar()->maximum());
+      QPlainTextEdit_console->clear();
     }
-    if (QTextEdit_cvg->toPlainText()!=QString::fromStdString(job_data[7]))
+    if (QPlainTextEdit_cvg->blockCount() > cvg.size())
     {
-      QTextEdit_cvg->setText(QString::fromStdString(job_data[7]));
-      QTextEdit_cvg->verticalScrollBar()->setValue(QTextEdit_cvg->verticalScrollBar()->maximum());
+      QPlainTextEdit_cvg->clear();
     }
-    if (QTextEdit_sta->toPlainText()!=QString::fromStdString(job_data[8]))
+    if (QPlainTextEdit_sta->blockCount() > sta.size())
     {
-      QTextEdit_sta->setText(QString::fromStdString(job_data[8]));
-      QTextEdit_sta->verticalScrollBar()->setValue(QTextEdit_sta->verticalScrollBar()->maximum());
+      QPlainTextEdit_sta->clear();
     }
-    */
 
+
+    if (QPlainTextEdit_console->blockCount() < console_output.size())
+    {
+      if (QPlainTextEdit_console->toPlainText().toStdString()=="")
+      {
+        QPlainTextEdit_console->appendPlainText(QString::fromStdString(console_output[0]));  
+      }
+      for (size_t i = QPlainTextEdit_console->blockCount(); i < console_output.size(); i++)
+      {
+        QPlainTextEdit_console->appendPlainText(QString::fromStdString(console_output[i]));  
+      }
+    }
+    if (QPlainTextEdit_cvg->blockCount() < cvg.size())
+    {
+      if (QPlainTextEdit_cvg->toPlainText().toStdString()=="")
+      {
+        QPlainTextEdit_cvg->appendPlainText(QString::fromStdString(cvg[0]));  
+      }
+      for (size_t i = QPlainTextEdit_cvg->blockCount(); i < cvg.size(); i++)
+      {
+        QPlainTextEdit_cvg->appendPlainText(QString::fromStdString(cvg[i]));  
+      }
+    }
+    if (QPlainTextEdit_sta->blockCount() < sta.size())
+    {
+      if (QPlainTextEdit_sta->toPlainText().toStdString()=="")
+      {
+        QPlainTextEdit_sta->appendPlainText(QString::fromStdString(sta[0]));  
+      }
+      for (size_t i = QPlainTextEdit_sta->blockCount(); i < sta.size(); i++)
+      {
+        QPlainTextEdit_sta->appendPlainText(QString::fromStdString(sta[i]));  
+      }
+    }
+    
     if (std::stoi(job_data[3])==-1)
     {
       pushButton_run->setEnabled(true);
