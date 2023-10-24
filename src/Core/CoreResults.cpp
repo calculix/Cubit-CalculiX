@@ -135,6 +135,7 @@ int CoreResults::convert_result(int job_id)
     PRINT_INFO("%s", log.c_str());
     vtkWriter.init(job_id,&frd_data[frd_data_id],&dat_data[dat_data_id]);
     vtkWriter.write();
+    ccx_iface->set_job_conversion(job_id,vtkWriter.write_mode); // used for manual conversion, twice is better than once
 
     return vtkWriter.write_mode;
   }

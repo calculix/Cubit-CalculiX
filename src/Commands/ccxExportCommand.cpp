@@ -4,14 +4,19 @@
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "CalculiXCoreInterface.hpp"
+#include "ProgressTool.hpp"
 #include <fstream>
 #include <unistd.h>
 
 ccxExportCommand::ccxExportCommand()
-{}
+{
+  progressbar = new ProgressTool();
+}
 
 ccxExportCommand::~ccxExportCommand()
-{}
+{
+  delete progressbar;
+}
 
 std::vector<std::string> ccxExportCommand::get_syntax()
 {
@@ -158,32 +163,49 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
   //output_file << "Cubit2CalculiX with CalculiX Plugin \n";
   //output_file << "** \n";
 
+  progressbar->start(0,13,"Writing CCX .inp File");
+
   // Write the nodes
   result = write_nodes(output_file, iface, ccx_iface);
+  progressbar->step();
 
   // Write the elements/connectivity
   result = write_connectivity(output_file, iface, ccx_iface);
+  progressbar->step();
 
   // Write the blocks
   //result = write_blocks(output_file, iface, ccx_iface);
 
   // Write the nodesets
   result = write_nodesets(output_file, iface, ccx_iface);
+  progressbar->step();
 
   // Write the sidesets
   result = write_sidesets(output_file, iface, ccx_iface);
+  progressbar->step();
 
   // Write the materials and sections
   result = write_materials(output_file, ccx_iface);
+  progressbar->step();
   result = write_sections(output_file, ccx_iface);
+  progressbar->step();
   
   result = write_constraints(output_file, ccx_iface);
+  progressbar->step();
   result = write_surfaceinteractions(output_file, ccx_iface);
+  progressbar->step();
   result = write_contactpairs(output_file, ccx_iface);
+  progressbar->step();
   result = write_amplitudes(output_file, ccx_iface);
+  progressbar->step();
   result = write_initialconditions(output_file, ccx_iface);
+  progressbar->step();
   result = write_hbcs(output_file, ccx_iface);
+  progressbar->step();
   result = write_steps(output_file, ccx_iface);
+  progressbar->step();
+
+  progressbar->end();
 
   customline = ccx_iface.get_customline_data("END","EXPORT",-1);
   for (size_t icl = 0; icl < customline.size(); icl++)
@@ -265,7 +287,6 @@ bool ccxExportCommand::write_nodes(std::ofstream& output_file,MeshExportInterfac
                    ycoords[vect_sort[i].second] << ",  " <<
                    zcoords[vect_sort[i].second] << "\n";
   }
-  start += number_found;
 
   output_file << "** \n";
 

@@ -42,7 +42,7 @@ private slots:
   void on_pushButton_run_clicked(bool);
   void on_pushButton_kill_clicked(bool);
   void on_pushButton_result_cgx_clicked(bool);
-  //void on_pushButton_result_ccx2paraview_clicked(bool);
+  void on_pushButton_result_convert_clicked(bool);
   void on_pushButton_result_paraview_clicked(bool);
   void on_pushButton_close_clicked(bool);
   
@@ -56,7 +56,7 @@ private:
   QPushButton* pushButton_run;
   QPushButton* pushButton_kill;
   QPushButton* pushButton_result_cgx;
-  //QPushButton* pushButton_result_ccx2paraview;
+  QPushButton* pushButton_result_convert;
   QPushButton* pushButton_result_paraview;
   QPushButton* pushButton_close;
   QTextEdit* QTextEdit_console;

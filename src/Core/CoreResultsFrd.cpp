@@ -89,11 +89,10 @@ bool CoreResultsFrd::read()
     while (std::getline(frd,frdline))
     { 
       ++maxlines;
-      if(frd.eof()){
+      if((frd.eof())){
         break;
       }
     }
-    progressbar.end();
     frd.close();
 
     if (maxlines<10)
@@ -101,8 +100,38 @@ bool CoreResultsFrd::read()
       // must be no data in the frd
       return false;
     }
-    
 
+    std::vector<std::string> job_data = ccx_iface->get_job_data(job_id);
+    //if process is still running quit
+    if (job_data[3] == "1")
+    {
+      return false;
+    }
+
+    // check if last line has 9999 in it, if not then add, otherwise on error frd data it crashes
+    if ((job_data[3] == "3")||(job_data[3] == "4")||(job_data[3] == "-1"))
+    {
+      
+      frd.open(this->filepath);
+      for (size_t i = 0; i < maxlines; i++)
+      {
+        std::getline(frd,frdline);
+        if (i == maxlines-1)
+        {
+          frd.close();
+          frd_array = this->split_line(frdline);
+          if (frd_array[0] != "9999")
+          {
+            frd.close(); 
+            std::ofstream log(this->filepath, std::ios_base::app | std::ios_base::out);
+            log << "9999\n";
+          }
+        }
+      }
+    }
+
+    progressbar.end();  
+    
     frd.open(this->filepath);
 
     progressbar.start(0,100,"Reading Results FRD");

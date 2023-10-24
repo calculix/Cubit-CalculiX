@@ -6,6 +6,7 @@
 class MeshExportInterface;
 class MaterialInterface;
 class CalculiXCoreInterface;
+class ProgressTool;
 
 /*!
  * \brief The ccxExportCommand class implements a calculix export command.
@@ -58,6 +59,8 @@ protected:
   bool write_initialconditions(std::ofstream& output_file,CalculiXCoreInterface ccx_iface);
   bool write_hbcs(std::ofstream& output_file,CalculiXCoreInterface ccx_iface);
   bool write_steps(std::ofstream& output_file,CalculiXCoreInterface ccx_iface);
+
+  ProgressTool *progressbar; // progressbar
 };
 
 #endif // CCXEXPORTCOMMAND_HPP

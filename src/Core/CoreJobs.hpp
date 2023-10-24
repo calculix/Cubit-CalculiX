@@ -48,6 +48,7 @@ public:
   bool result_paraview_job(int job_id); // opens the results with paraview
   int  get_jobs_data_id_from_job_id(int job_id); // searches for the job_id in the jobs_data and returns the indices or -1 if it fails
   int  get_CubitProcessHandler_data_id_from_process_id(int process_id); // searches for the CubitProcessHandler_id in the CubitProcessHandler and returns the indices or -1 if it fails
+  bool set_job_conversion(int job_id, int conversion); // sets the paraview conversion value for the job
   std::vector<std::string> get_job_data(int job_id);
   std::string print_data(); // prints out the jobs_data
 

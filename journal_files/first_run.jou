@@ -29,7 +29,7 @@ create vertex location on surface 6  center
 ccx create constraint rigid body nodeset 2 ref 9 rot 10
 
 # load 
-create force  on vertex 9 force value 100 direction 0 -1 0
+create force  on vertex 9 force value 10000 direction 0 -1 0
 
 # bc
 create displacement  on nodeset 1  dof 1 dof 2 dof 3 fix 0 
@@ -43,16 +43,28 @@ ccx create fieldoutput name "element_output" element
 ccx modify fieldoutput 2 element
 ccx modify fieldoutput 2 element key_on E S 
 ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFL HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS 
+ccx create historyoutput name "node_output" node
+ccx create historyoutput name "element_output" element
+ccx modify historyoutput 1 node nodeset 3
+ccx modify historyoutput 1 node key_on U RF 
+ccx modify historyoutput 1 node key_off NT TSF TTF PN PSF PTF MACH CP VF DEPF TURB MF RFL 
+ccx modify historyoutput 2 element block 1
+ccx modify historyoutput 2 element key_on S E 
+ccx modify historyoutput 2 element key_off SVF ME PEEQ CEEQ ENER SDV HFL HFLF COORD ELSE ELKE EVOL EMAS EBHE CENT 
+
 
 # steps
 ccx create step name "Static" static
+ccx modify step 1 parameter nlgeom_yes
+ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.1 timeperiodofstep 1 minimumtimeincrement 0.01 maximumtimeincrement 0.1
 ccx step 1 add load force 1
 ccx step 1 add bc displacement 1
 ccx step 1 add fieldoutput 1 2
+ccx step 1 add historyoutput 1 2
 
 # mesh
 block 1 element type HEX20
-volume 1 size 5
+volume 1 size auto factor 10
 mesh vertex all
 mesh volume all
 
@@ -61,5 +73,4 @@ ccx create job name "first_run"
 ccx run job 1
 ccx wait job 1
 ccx result cgx job 1
-ccx result ccx2paraview job 1
 ccx result paraview job 1

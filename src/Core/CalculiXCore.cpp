@@ -984,10 +984,22 @@ double  CalculiXCore::string_scientific_to_double(std::string value)
   if (value[0] == '-') // check if negative
   {
     value.replace(0,1, "");
-    output = std::stod(value);
-    output = -1*output;
+    //check if is INF
+    if (value=="INF")
+    {
+      output = -1.255070e+29;
+    }else{
+      output = std::stod(value);
+      output = -1*output;
+    }
   } else {
-    output = std::stod(value);
+    //check if is INF
+    if (value=="INF")
+    {
+      output = 1.255070e+29;
+    }else{
+      output = std::stod(value);
+    }
   }
   return output;
 }
@@ -2044,6 +2056,11 @@ bool CalculiXCore::wait_job(int job_id)
 bool CalculiXCore::kill_job(int job_id)
 {
   return jobs->kill_job(job_id);
+}
+
+bool CalculiXCore::set_job_conversion(int job_id, int conversion)
+{
+  return jobs->set_job_conversion(job_id,conversion);
 }
 
 bool CalculiXCore::result_ccx2paraview_job(int job_id)

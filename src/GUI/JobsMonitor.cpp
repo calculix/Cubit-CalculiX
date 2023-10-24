@@ -42,12 +42,11 @@ JobsMonitor::JobsMonitor()
   pushButton_result_cgx->setFixedWidth(buttonWidth);
   boxLayout_window->addWidget(pushButton_result_cgx);
 
-  /*
-  pushButton_result_ccx2paraview = new QPushButton();
-  pushButton_result_ccx2paraview->setText("ccx2paraview");
-  pushButton_result_ccx2paraview->setFixedWidth(buttonWidth);
-  boxLayout_window->addWidget(pushButton_result_ccx2paraview);
-  */
+  
+  pushButton_result_convert = new QPushButton();
+  pushButton_result_convert->setText("convert");
+  pushButton_result_convert->setFixedWidth(buttonWidth);
+  boxLayout_window->addWidget(pushButton_result_convert);
 
   pushButton_result_paraview = new QPushButton();
   pushButton_result_paraview->setText("Result ParaView");
@@ -79,7 +78,7 @@ JobsMonitor::JobsMonitor()
   QObject::connect(pushButton_run, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_run_clicked(bool)));
   QObject::connect(pushButton_kill, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_kill_clicked(bool)));
   QObject::connect(pushButton_result_cgx, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_result_cgx_clicked(bool)));
-  //QObject::connect(pushButton_result_ccx2paraview, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_result_ccx2paraview_clicked(bool)));
+  QObject::connect(pushButton_result_convert, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_result_convert_clicked(bool)));
   QObject::connect(pushButton_result_paraview, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_result_paraview_clicked(bool)));
   QObject::connect(pushButton_close, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_close_clicked(bool)));
   
@@ -113,7 +112,7 @@ void JobsMonitor::update()
   // jobs_data[0][3] status -1 no process, 1 process running, 2 process finished, 3 process killed, 4 process finished with errors
   // jobs_data[0][4] process id
   // jobs_data[0][5] Output Console
-  // jobs_data[0][6] converted with ccx2paraview -1 false, 1 true
+  // jobs_data[0][6] converted -1 false, 1 true
   // jobs_data[0][7] .cvg
   // jobs_data[0][8] .sta
 
@@ -123,7 +122,7 @@ void JobsMonitor::update()
     //PRINT_INFO("%s", log.c_str());
 
     this->setWindowTitle("Jobs Monitor - " + QString::fromStdString(job_data[1]));
-
+    
     if (QTextEdit_console->toPlainText()!=QString::fromStdString(job_data[5]))
     {
       QTextEdit_console->setText(QString::fromStdString(job_data[5]));
@@ -145,27 +144,27 @@ void JobsMonitor::update()
       pushButton_run->setEnabled(true);
       pushButton_kill->setEnabled(false);
       pushButton_result_cgx->setEnabled(false);
-      //pushButton_result_ccx2paraview->setEnabled(false);
+      pushButton_result_convert->setEnabled(false);
       pushButton_result_paraview->setEnabled(false);
     }else if (std::stoi(job_data[3])==1)
     {
       pushButton_run->setEnabled(false);
       pushButton_kill->setEnabled(true);
       pushButton_result_cgx->setEnabled(false);
-      //pushButton_result_ccx2paraview->setEnabled(false);
+      pushButton_result_convert->setEnabled(false);
       pushButton_result_paraview->setEnabled(false);
     }else if (std::stoi(job_data[3])>1)
     {
       pushButton_run->setEnabled(true);
       pushButton_kill->setEnabled(false);
       pushButton_result_cgx->setEnabled(true);
-      /*if (std::stoi(job_data[6])==-1)
+      if (std::stoi(job_data[6])==-1)
       {
-        pushButton_result_ccx2paraview->setEnabled(true);
+        pushButton_result_convert->setEnabled(true);
       }else
       {
-        pushButton_result_ccx2paraview->setEnabled(false);
-      }*/
+        pushButton_result_convert->setEnabled(false);
+      }
       if (std::stoi(job_data[6])>0)
       {
         pushButton_result_paraview->setEnabled(true);
@@ -179,7 +178,7 @@ void JobsMonitor::update()
     pushButton_run->setEnabled(false);
     pushButton_kill->setEnabled(false);
     pushButton_result_cgx->setEnabled(false);
-    //pushButton_result_ccx2paraview->setEnabled(false);
+    pushButton_result_convert->setEnabled(false);
     pushButton_result_paraview->setEnabled(false);
   }
 }
@@ -239,8 +238,8 @@ void JobsMonitor::on_pushButton_result_cgx_clicked(bool)
     Claro::instance()->send_gui_commands(commands);
   }
 }
-/*
-void JobsMonitor::on_pushButton_result_ccx2paraview_clicked(bool)
+
+void JobsMonitor::on_pushButton_result_convert_clicked(bool)
 {
   QStringList commands;
   QString command = "";
@@ -248,7 +247,9 @@ void JobsMonitor::on_pushButton_result_ccx2paraview_clicked(bool)
   ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");
   if(cubit_translator)
   {
-    command = "ccx result ccx2paraview job " + QString::number(current_job_id);
+    command = "ccx result load job " + QString::number(current_job_id);
+    commands.push_back(command);
+    command = "ccx result convert job " + QString::number(current_job_id);
     commands.push_back(command);
     for(int i = 0; i < commands.size(); i++)
     cubit_translator->decode(commands[i]);
@@ -256,7 +257,7 @@ void JobsMonitor::on_pushButton_result_ccx2paraview_clicked(bool)
     Claro::instance()->send_gui_commands(commands);
   }
 }
-*/
+
 void JobsMonitor::on_pushButton_result_paraview_clicked(bool)
 {
   QStringList commands;

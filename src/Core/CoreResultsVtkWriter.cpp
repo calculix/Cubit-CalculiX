@@ -39,6 +39,8 @@ bool CoreResultsVtkWriter::init(int job_id,CoreResultsFrd* frd,CoreResultsDat* d
     me_iface = dynamic_cast<MeshExportInterface*>(CubitInterface::get_interface("MeshExport"));
     me_iface->initialize_export();
 
+    nparts_dat += dat_all->result_block_set.size(); // already looked here, or no check if the dat file can be linked will be made
+
     is_initialized = true;  
     return true;
   }
@@ -183,7 +185,6 @@ bool CoreResultsVtkWriter::write_linked()
   this->link_elements();
   //link dat
   this->link_dat();
-
   progressbar->start(0,100,"Writing Results to ParaView Format - Linked Mode");
   t_start = std::chrono::high_resolution_clock::now();
 
@@ -204,6 +205,7 @@ bool CoreResultsVtkWriter::write_linked()
 
       //std::string log;
       //log = "nparts " + std::to_string(nparts) + " block " + std::to_string(block_ids[ii])+ " block size" + std::to_string(block_ids.size())+" ci " + std::to_string(current_increment) + " \n";
+      //ccx_iface->log_str(log);
       //PRINT_INFO("%s", log.c_str());
       
       current_filepath_vtu = filepath + "." + std::to_string(current_part) + "." + this->get_increment() + ".vtu";
@@ -270,8 +272,9 @@ bool CoreResultsVtkWriter::write_vtu_linked()
   int max_node_id = -1;
   int min_element_id = -1;
   int max_element_id = -1;
-  //std::string log;
+  std::string log;
   //log = "writing results " + filepath + " for Job ID " + std::to_string(job_id) + " \n";
+  //ccx_iface->log_str(log);
   //PRINT_INFO("%s", log.c_str());
   
   // clear all data before reading and check results
@@ -427,8 +430,9 @@ bool CoreResultsVtkWriter::write_vtu_unlinked()
   int min_element_id = -1;
   int max_element_id = -1;
   std::string log;
-  log = "writing results " + filepath + " for Job ID " + std::to_string(job_id) + " \n";
-  PRINT_INFO("%s", log.c_str());
+  //log = "writing results " + filepath + " for Job ID " + std::to_string(job_id) + " \n";
+  //ccx_iface->log_str(log);
+  //PRINT_INFO("%s", log.c_str());
   
   // clear all data before reading and check results
   this->clear();
@@ -930,6 +934,7 @@ bool CoreResultsVtkWriter::checkLinkPossible()
         if (!checkDatTimeValueExists(frd_all->total_times[i]))
         {
           log = "Linking Failed! Not for every .frd time value a .dat time value exists.\n";
+          log.append("Time " + std::to_string(frd_all->total_times[i]) + " wasn't found in the .dat file.\n");
           PRINT_INFO("%s", log.c_str());
           return false;
         }
@@ -939,10 +944,12 @@ bool CoreResultsVtkWriter::checkLinkPossible()
     //get max increments
     for (size_t i = 0; i < frd_all->result_blocks.size(); i++)
     {
-      if (max_increments<frd_all->result_blocks[i][3])
+      if (max_increments < frd_all->result_blocks[i][3])
       {
         max_increments = frd_all->result_blocks[i][3];
       }
+        log = ".frd (" + std::to_string(max_increments) + ")\n";
+        ccx_iface->log_str(log);
     }
 
     if (max_increments!=this->get_max_step_increment())
@@ -960,7 +967,8 @@ bool CoreResultsVtkWriter::checkDatTimeValueExists(double total_time)
 {
   for (size_t i = 0; i < dat_all->total_times.size(); i++)
   {
-    if (dat_all->total_times[i]==total_time)
+    // .dat times have different accuracy than in the .frd file *facepalm*
+    if (ccx_iface->to_string_scientific(dat_all->total_times[i])==ccx_iface->to_string_scientific(total_time))
     {
       return true;
     }
@@ -1496,6 +1504,9 @@ bool CoreResultsVtkWriter::link_dat()
   element_id_type_connectivity = ccx_iface->get_element_id_type_connectivity();
   std::vector<std::vector<int>> tmp_element_id_type_connectivity;
 
+  progressbar->start(0,100,"Writing Results to ParaView Format - Linking .dat: Nodes and Integrationpoints");
+  auto t_start = std::chrono::high_resolution_clock::now();
+
   //get nodes and elements
   current_part = nparts - nparts_dat - 1;
   for (size_t i = 0 ; i < nparts_dat; i++)
@@ -1663,7 +1674,21 @@ bool CoreResultsVtkWriter::link_dat()
         ii = dat_all->result_blocks.size();
       }
     }
+    //update progress bar
+    const auto t_end = std::chrono::high_resolution_clock::now();
+    int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+    //currentDataRow += frd->result_block_data[data_ids[ii]].size();
+    if (duration > 500)
+    {
+      progressbar->percent(double(i)/double(nparts_dat));
+      progressbar->check_interrupt();
+      t_start = std::chrono::high_resolution_clock::now();
+    }
   }
+  progressbar->end();
+
+  progressbar->start(0,100,"Writing Results to ParaView Format - Linking .dat: processing result data");
+  t_start = std::chrono::high_resolution_clock::now();
 
   //get the data for the sets
   current_part = nparts - nparts_dat - 1;
@@ -1679,7 +1704,7 @@ bool CoreResultsVtkWriter::link_dat()
       for (size_t iii = 0; iii < data_ids.size(); iii++)
       { 
         //std::string log;
-        //log = " i " + std::to_string(i) + " ii " + std::to_string(ii) + + " iii " + std::to_string(iii) + " data_ids " + std::to_string(data_ids[iii]) + " data_ids.size()-1 " + std::to_string(data_ids.size()-1) + " ";
+        //log = " part i " + std::to_string(i) + " increment ii " + std::to_string(ii) + " max_increment " + std::to_string(max_increments) + " - " + std::to_string(this->get_max_step_increment()) + " data_ids iii " + std::to_string(iii) + " data_ids " + std::to_string(data_ids[iii]) + " data_ids.size()-1 " + std::to_string(data_ids.size()-1) + " ";
         //ccx_iface->log_str(log);
         //PRINT_INFO("%s", log.c_str());
         std::vector<int> tmp_dummy = this->get_currentincrement_result_blocks_data();
@@ -1804,9 +1829,20 @@ bool CoreResultsVtkWriter::link_dat()
           vec_frd[current_part]->result_block_node_data[vec_frd[current_part]->result_block_data.size()-1].push_back({int(iii),int(iii)});
         }
       }
-      
+      //update progress bar
+      const auto t_end = std::chrono::high_resolution_clock::now();
+      int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+      //currentDataRow += frd->result_block_data[data_ids[ii]].size();
+      if (duration > 500)
+      {
+        progressbar->percent(double(current_increment)/double(max_increments));
+        progressbar->check_interrupt();
+        t_start = std::chrono::high_resolution_clock::now();
+      }  
     }
   }
+  progressbar->end();
+
   return true;
 }
 

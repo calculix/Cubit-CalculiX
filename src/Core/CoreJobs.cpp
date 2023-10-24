@@ -257,7 +257,7 @@ bool CoreJobs::wait_job(int job_id)
         jobs_data[jobs_data_id][3] = "4";
         //ccx_iface->load_result(job_id);
         //jobs_data[jobs_data_id][6] = std::to_string(ccx_iface->convert_result(job_id));
-        jobs_data[jobs_data_id][6] = -1;
+        jobs_data[jobs_data_id][6] = "-1";
       }else{
         log = "Job " + jobs_data[jobs_data_id][1] + " with ID " + jobs_data[jobs_data_id][0] + " finished! \n";
         //log.append(" Exit Code " + std::to_string(errorcode) + " \n");
@@ -329,7 +329,7 @@ bool CoreJobs::check_jobs()
         while (CubitProcessHandler[CubitProcessHandler_data_id].can_read_output())
         { 
           output = CubitProcessHandler[CubitProcessHandler_data_id].read_output_channel(1);
-          if (output != "")
+          if ((output != ""))
           {
             log = " Output " + output.str() + " \n";
             //PRINT_INFO("%s", log.c_str());
@@ -362,7 +362,7 @@ bool CoreJobs::check_jobs()
           jobs_data[i][3] = "4";
           //ccx_iface->load_result(std::stoi(jobs_data[i][0]));
           //jobs_data[i][6] = std::to_string(ccx_iface->convert_result(std::stoi(jobs_data[i][0])));
-          jobs_data[i][6] = -1;
+          jobs_data[i][6] = "-1";
           CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
         }else if ((0 != kill(std::stoi(jobs_data[i][4]),0)) && (status==0)) // if process doesn't exist and exited without error
         {
@@ -556,13 +556,16 @@ bool CoreJobs::result_paraview_job(int job_id)
   if (job_data_id != -1)
   { 
     if ((std::stoi(jobs_data[job_data_id][3])>1) && (jobs_data[job_data_id][6] == "1"))
-    {      
-      filepath = jobs_data[job_data_id][1] + ".0001.vtpc";
-      if (access(filepath.c_str(), W_OK) != 0) 
+    { 
+          
+      filepath = jobs_data[job_data_id][1] + ".0002.vtpc"; // if more than one file
+      if (access(filepath.c_str(), W_OK) == 0) 
       {
         filepath = jobs_data[job_data_id][1] + "...vtpc";
+      }else{
+        filepath = jobs_data[job_data_id][1] + ".0001.vtpc";
       }
-
+      
       std::string shellstr;
       shellstr = "nohup " + ccx_uo.mPathParaView.toStdString() + " --data=" + filepath + " &";
       system(shellstr.c_str());
@@ -653,17 +656,30 @@ std::vector<std::string> CoreJobs::get_job_data(int job_id)
   }
 }
 
+bool CoreJobs::set_job_conversion(int job_id, int conversion)
+{
+  int job_data_id;
+  job_data_id = get_jobs_data_id_from_job_id(job_id);
+  if (job_data_id != -1)
+  {
+    jobs_data[job_data_id][6] = std::to_string(conversion);
+    return true;
+  }else{
+    return false;
+  }
+  return false;
+}
+
 std::string CoreJobs::print_data()
 {
   std::string str_return;
   str_return = "\n CoreJobs jobs_data: \n";
-  str_return.append("job_id, name, filepath, status, process id, output \n");
+  str_return.append("job_id, name, filepath, status, process id,converted to paraview, output \n");
 
   for (size_t i = 0; i < jobs_data.size(); i++)
   {
-    str_return.append(jobs_data[i][0] + " " + jobs_data[i][1] + " " + jobs_data[i][2] + " " + jobs_data[i][3] + " " + jobs_data[i][4] + " \n");
+    str_return.append(jobs_data[i][0] + " " + jobs_data[i][1] + " " + jobs_data[i][2] + " " + jobs_data[i][3] + " " + jobs_data[i][4] + " " + jobs_data[i][6] + " \n");
     str_return.append(jobs_data[i][5] + " \n");
-    str_return.append(jobs_data[i][6] + " \n");
     str_return.append(jobs_data[i][7] + " \n");
     str_return.append(jobs_data[i][8] + " \n");
   }
