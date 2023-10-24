@@ -61,10 +61,13 @@ JobsMonitor::JobsMonitor()
   // textarea
   QPlainTextEdit_console = new QPlainTextEdit();
   QPlainTextEdit_console->setReadOnly(true);
+  QPlainTextEdit_console->setMaximumBlockCount(maximumBlockCount);
   QPlainTextEdit_cvg = new QPlainTextEdit();
   QPlainTextEdit_cvg->setReadOnly(true);
+  QPlainTextEdit_cvg->setMaximumBlockCount(maximumBlockCount);
   QPlainTextEdit_sta = new QPlainTextEdit();
   QPlainTextEdit_sta->setReadOnly(true);
+  QPlainTextEdit_sta->setMaximumBlockCount(maximumBlockCount);
 
   //tab widget
   TabWidget = new QTabWidget();
@@ -132,26 +135,30 @@ void JobsMonitor::update()
     // check if job has been restarted
     if (QPlainTextEdit_console->blockCount() > console_output.size())
     {
+      total_block_count_console_output = 0;
       QPlainTextEdit_console->clear();
     }
     if (QPlainTextEdit_cvg->blockCount() > cvg.size())
     {
+      total_block_count_cvg = 0;
       QPlainTextEdit_cvg->clear();
     }
     if (QPlainTextEdit_sta->blockCount() > sta.size())
     {
+      total_block_count_sta = 0;
       QPlainTextEdit_sta->clear();
     }
-
 
     if (QPlainTextEdit_console->blockCount() < console_output.size())
     {
       if (QPlainTextEdit_console->toPlainText().toStdString()=="")
       {
-        QPlainTextEdit_console->appendPlainText(QString::fromStdString(console_output[0]));  
+        QPlainTextEdit_console->appendPlainText(QString::fromStdString(console_output[0]));
+        ++total_block_count_console_output;  
       }
-      for (size_t i = QPlainTextEdit_console->blockCount(); i < console_output.size(); i++)
+      for (size_t i = total_block_count_console_output; i < console_output.size(); i++)
       {
+        ++total_block_count_console_output;
         QPlainTextEdit_console->appendPlainText(QString::fromStdString(console_output[i]));  
       }
     }
@@ -160,9 +167,11 @@ void JobsMonitor::update()
       if (QPlainTextEdit_cvg->toPlainText().toStdString()=="")
       {
         QPlainTextEdit_cvg->appendPlainText(QString::fromStdString(cvg[0]));  
+        ++total_block_count_cvg;
       }
-      for (size_t i = QPlainTextEdit_cvg->blockCount(); i < cvg.size(); i++)
+      for (size_t i = total_block_count_cvg; i < cvg.size(); i++)
       {
+        ++total_block_count_cvg;
         QPlainTextEdit_cvg->appendPlainText(QString::fromStdString(cvg[i]));  
       }
     }
@@ -171,9 +180,11 @@ void JobsMonitor::update()
       if (QPlainTextEdit_sta->toPlainText().toStdString()=="")
       {
         QPlainTextEdit_sta->appendPlainText(QString::fromStdString(sta[0]));  
+        ++total_block_count_sta;
       }
-      for (size_t i = QPlainTextEdit_sta->blockCount(); i < sta.size(); i++)
+      for (size_t i = total_block_count_sta; i < sta.size(); i++)
       {
+        ++total_block_count_sta;
         QPlainTextEdit_sta->appendPlainText(QString::fromStdString(sta[i]));  
       }
     }

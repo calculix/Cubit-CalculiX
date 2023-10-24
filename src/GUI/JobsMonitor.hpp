@@ -49,6 +49,10 @@ private slots:
 private:
   std::string log;
   int current_job_id=-1;
+  int maximumBlockCount=2000;
+  int total_block_count_console_output = 0;
+  int total_block_count_cvg = 0;
+  int total_block_count_sta = 0;
   QTabWidget* TabWidget;
   QGridLayout* gridLayout;
   QHBoxLayout* boxLayout_window;
