@@ -948,8 +948,6 @@ bool CoreResultsVtkWriter::checkLinkPossible()
       {
         max_increments = frd_all->result_blocks[i][3];
       }
-        log = ".frd (" + std::to_string(max_increments) + ")\n";
-        ccx_iface->log_str(log);
     }
 
     if (max_increments!=this->get_max_step_increment())

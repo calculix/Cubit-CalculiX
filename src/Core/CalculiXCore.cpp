@@ -2083,6 +2083,21 @@ std::vector<std::string> CalculiXCore::get_job_data(int job_id)
   return jobs->get_job_data(job_id);
 }
 
+std::vector<std::string> CalculiXCore::get_job_console_output(int job_id)
+{
+  return jobs->get_job_console_output(job_id);
+}
+
+std::vector<std::string> CalculiXCore::get_job_cvg(int job_id)
+{
+  return jobs->get_job_cvg(job_id);
+}
+
+std::vector<std::string> CalculiXCore::get_job_sta(int job_id)
+{
+  return jobs->get_job_sta(job_id);
+}
+
 bool CalculiXCore::create_result(int job_id)
 {
   return results->create_result(job_id);

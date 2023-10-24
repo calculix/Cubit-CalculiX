@@ -123,6 +123,7 @@ void JobsMonitor::update()
 
     this->setWindowTitle("Jobs Monitor - " + QString::fromStdString(job_data[1]));
     
+    /*
     if (QTextEdit_console->toPlainText()!=QString::fromStdString(job_data[5]))
     {
       QTextEdit_console->setText(QString::fromStdString(job_data[5]));
@@ -138,6 +139,7 @@ void JobsMonitor::update()
       QTextEdit_sta->setText(QString::fromStdString(job_data[8]));
       QTextEdit_sta->verticalScrollBar()->setValue(QTextEdit_sta->verticalScrollBar()->maximum());
     }
+    */
 
     if (std::stoi(job_data[3])==-1)
     {

@@ -118,6 +118,9 @@ public:
   bool result_cgx_job(int job_id); // opens the results with cgx
   bool result_paraview_job(int job_id); // opens the results with paraview
   std::vector<std::string> get_job_data(int job_id);
+  std::vector<std::string> get_job_console_output(int job_id);
+  std::vector<std::string> get_job_cvg(int job_id);
+  std::vector<std::string> get_job_sta(int job_id);
   bool create_result(int job_id); // adds a new result for job
   bool delete_result(int job_id); // delete result for job
   bool load_result(int job_id); // load result for job
