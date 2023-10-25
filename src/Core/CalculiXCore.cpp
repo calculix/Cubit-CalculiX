@@ -6,6 +6,7 @@
 #include <chrono>
 #include <ctime>
 #include <algorithm>
+#include <cmath>
 #include "CubitInterface.hpp"
 #include "CubitCoreformInterface.hpp"
 #include "CubitMessage.hpp"
@@ -2116,6 +2117,34 @@ bool CalculiXCore::load_result(int job_id)
 int CalculiXCore::convert_result(int job_id)
 {
   return results->convert_result(job_id);
+}
+
+double CalculiXCore::compute_von_mises_stress(std::vector<double> vec)
+{
+  double von_mises = 0;
+
+  von_mises = std::sqrt(0.5*(
+    (vec[0]-vec[1])*(vec[0]-vec[1])
+    +(vec[1]-vec[2])*(vec[1]-vec[2])
+    +(vec[2]-vec[0])*(vec[2]-vec[0]))
+    +3*(vec[3]*vec[3]+vec[4]*vec[4]+vec[5]*vec[5]) 
+    );
+
+  return von_mises;
+}
+
+double CalculiXCore::compute_von_mises_strain(std::vector<double> vec)
+{
+  double von_mises = 0;
+
+  von_mises = 2./3. * std::sqrt(0.5*(
+    (vec[0]-vec[1])*(vec[0]-vec[1])
+    +(vec[1]-vec[2])*(vec[1]-vec[2])
+    +(vec[2]-vec[0])*(vec[2]-vec[0]))
+    +3*(vec[3]*vec[3]+vec[4]*vec[4]+vec[5]*vec[5]) 
+    );
+  
+  return von_mises;
 }
 
 bool CalculiXCore::create_customline(std::vector<std::string> options)

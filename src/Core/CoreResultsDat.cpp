@@ -156,6 +156,67 @@ bool CoreResultsDat::read()
   }
   dat.close();
   progressbar.end();
+
+  // for stress/strain data compute extra components
+  progressbar.start(0,100,"Reading Results DAT: pre-defined calculations");
+  auto t_start = std::chrono::high_resolution_clock::now();
+
+  for (size_t i = 0; i < result_blocks.size(); i++)
+  {
+
+    //log = "i " + std::to_string(i) + " type '" + result_block_type[result_blocks[i][2]] + "'\n";
+    //PRINT_INFO("%s", log.c_str());
+
+    //stresses
+    if (this->erase_whitespace(result_block_type[result_blocks[i][2]])=="stresses") 
+    {
+      // add components
+      result_block_components[result_blocks[i][4]].push_back("mises");
+
+      // compute values      
+      for (size_t ii = 0; ii < result_block_data[result_blocks[i][4]].size(); ii++)
+      {
+        result_block_data[result_blocks[i][4]][ii].push_back(ccx_iface->compute_von_mises_stress({
+        result_block_data[result_blocks[i][4]][ii][2],
+        result_block_data[result_blocks[i][4]][ii][3],
+        result_block_data[result_blocks[i][4]][ii][4],
+        result_block_data[result_blocks[i][4]][ii][5],
+        result_block_data[result_blocks[i][4]][ii][6],
+        result_block_data[result_blocks[i][4]][ii][7]}));
+      }
+    }
+
+    //strains
+    if (this->erase_whitespace(result_block_type[result_blocks[i][2]])=="strains") 
+    {
+      // add components
+      result_block_components[result_blocks[i][4]].push_back("mises");
+
+      // compute values      
+      for (size_t ii = 0; ii < result_block_data[result_blocks[i][4]].size(); ii++)
+      {
+        result_block_data[result_blocks[i][4]][ii].push_back(ccx_iface->compute_von_mises_strain({
+        result_block_data[result_blocks[i][4]][ii][2],
+        result_block_data[result_blocks[i][4]][ii][3],
+        result_block_data[result_blocks[i][4]][ii][4],
+        result_block_data[result_blocks[i][4]][ii][5],
+        result_block_data[result_blocks[i][4]][ii][6],
+        result_block_data[result_blocks[i][4]][ii][7]}));
+      }
+    }
+     
+    const auto t_end = std::chrono::high_resolution_clock::now();
+    int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+    if (duration > 500)
+    {
+      progressbar.percent(double(i+1)/double(result_blocks.size()));
+      progressbar.check_interrupt();
+      t_start = std::chrono::high_resolution_clock::now();
+    }
+  }
+  
+  progressbar.end();
+
   //PRINT_INFO("%s", log.c_str());
   //print_data();
   return true;

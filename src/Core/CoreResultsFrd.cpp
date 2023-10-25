@@ -470,12 +470,31 @@ bool CoreResultsFrd::read_nodal_result_block(std::vector<std::string> line)
   if (line[0] == "-1")
   {
     int node_id;
-    int n_comp = result_block_components[result_block_components.size()-1].size();
-    std::vector<double> result_comp(n_comp);
+    int n_comp = 0;
     int result_block_node_data_id = -1;
 
     node_id = std::stoi(line[1]);
+    
+    // add components if needed    
+    if (result_block_type[result_blocks[result_blocks.size()-1][5]] == "STRESS")
+    {
+      if (result_block_data[result_block_data.size()-1].size()==0)
+      {
+        result_block_components[result_block_components.size()-1].push_back("MISES");
+      }
+    }
+    if (result_block_type[result_blocks[result_blocks.size()-1][5]] == "TOSTRAIN")
+    {
+      if (result_block_data[result_block_data.size()-1].size()==0)
+      {
+        result_block_components[result_block_components.size()-1].push_back("MISES");
+      }
+    }
 
+    n_comp = result_block_components[result_block_components.size()-1].size();
+    std::vector<double> result_comp(n_comp);
+    
+    /*
     if (result_block_components[result_block_components.size()-1][n_comp-1] == "ALL")
     {
       for (size_t i = 0; i < n_comp-1; i++)
@@ -489,9 +508,23 @@ bool CoreResultsFrd::read_nodal_result_block(std::vector<std::string> line)
         tmp_all = result_comp[i]*result_comp[i];
       }
       result_comp[n_comp-1] = std::sqrt(tmp_all);
-    }else{
-      for (size_t i = 0; i < n_comp; i++)
+    }else{ */
+
+    for (size_t i = 0; i < n_comp; i++)
+    {
+      if ((result_block_type[result_blocks[result_blocks.size()-1][5]] == "STRESS") && (i > 5))
       {
+        if (i == 6)
+        {
+          result_comp[i] = ccx_iface->compute_von_mises_stress({result_comp[0],result_comp[1],result_comp[2],result_comp[3],result_comp[4],result_comp[5]});
+        }
+      }else if ((result_block_type[result_blocks[result_blocks.size()-1][5]] == "TOSTRAIN") && (i > 5))
+      {
+        if (i == 6)
+        {
+          result_comp[i] = ccx_iface->compute_von_mises_strain({result_comp[0],result_comp[1],result_comp[2],result_comp[3],result_comp[4],result_comp[5]});
+        }
+      }else{
         result_comp[i] = ccx_iface->string_scientific_to_double(line[i+2]);
       }
     }

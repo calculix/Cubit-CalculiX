@@ -545,6 +545,16 @@ int CalculiXCoreInterface::convert_result(int job_id)
   return ccx_core.convert_result(job_id);
 }
 
+double CalculiXCoreInterface::compute_von_mises_stress(std::vector<double> vec)
+{
+  return ccx_core.compute_von_mises_stress(vec);
+}
+
+double CalculiXCoreInterface::compute_von_mises_strain(std::vector<double> vec)
+{
+  return ccx_core.compute_von_mises_strain(vec);
+}
+
 bool CalculiXCoreInterface::create_customline(std::vector<std::string> options)
 {
   return ccx_core.create_customline(options);
