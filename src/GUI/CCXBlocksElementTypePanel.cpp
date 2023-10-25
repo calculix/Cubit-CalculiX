@@ -8,7 +8,8 @@
 
 
 CCXBlocksElementTypePanel::CCXBlocksElementTypePanel(QWidget *parent) :
-  QWidget(parent)
+  QWidget(parent),
+  isInitialized(false)
 {
  if(isInitialized)
     return;
