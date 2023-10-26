@@ -134,7 +134,7 @@ bool CoreResultsVtkWriter::write_linked()
   {
     block_node_ids.push_back(ccx_iface->get_block_node_ids(block_ids[i]));
     block_element_ids.push_back(ccx_iface->get_block_element_ids(block_ids[i]));
-    part_names.push_back(ccx_iface->get_block_name(block_ids[i]));
+    part_names.push_back("Block: " + ccx_iface->get_block_name(block_ids[i]));
   }
   nparts += block_ids.size();
 
@@ -143,7 +143,7 @@ bool CoreResultsVtkWriter::write_linked()
   for (size_t i = 0; i < nodeset_ids.size(); i++)
   {
     nodeset_node_ids.push_back(CubitInterface::get_nodeset_nodes_inclusive(nodeset_ids[i]));
-    part_names.push_back(ccx_iface->get_nodeset_name(nodeset_ids[i]));
+    part_names.push_back("Nodeset: " + ccx_iface->get_nodeset_name(nodeset_ids[i]));
   }
   nparts += nodeset_ids.size();    
 
@@ -153,7 +153,7 @@ bool CoreResultsVtkWriter::write_linked()
 
   for (size_t i = 0; i < sideset_ids.size(); i++)
   {
-    part_names.push_back(ccx_iface->get_sideset_name(sideset_ids[i]));
+    part_names.push_back("Sideset: " + ccx_iface->get_sideset_name(sideset_ids[i]));
   }
   nparts += sideset_ids.size();
 
@@ -1914,7 +1914,7 @@ bool CoreResultsVtkWriter::prepare_sidesets()
         sideset_elements[i].push_back(element_id);
         sideset_elements_type[i].push_back(element_type[j]);
         
-        me_iface->get_nodes_per_side(element_type[j],side_ids[j],num_node);
+        me_iface->get_nodes_per_side(element_type[j],side_ids[j]-1,num_node);
         
         std::vector<int> indices(num_node);
         me_iface->get_node_indices_per_side(element_type[j],side_ids[j]-1,indices);
