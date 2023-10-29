@@ -11,6 +11,7 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <bits/stdc++.h> 
 
 CoreResultsVtkWriter::CoreResultsVtkWriter()
 {}
@@ -1526,7 +1527,8 @@ bool CoreResultsVtkWriter::link_dat()
             vec_frd[current_part]->nodes_coords.push_back({node_coords[0],node_coords[1],node_coords[2]});
             vec_frd[current_part]->nodes[vec_frd[current_part]->nodes.size()-1][1] = vec_frd[current_part]->nodes_coords.size()-1;
           }
-        }else{  // element set
+        }else if(dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][0][2] == 2) // elements with integration points
+        {  // element set
           int ip_max = 0;
           int ip = 0;
           int ip_last = 0;
@@ -1648,6 +1650,63 @@ bool CoreResultsVtkWriter::link_dat()
               }
             }
           }
+        }else if(dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][0][2] == 3) // elements
+        {  // element set
+          int element_id = 0;
+          tmp_element_id_type_connectivity = element_id_type_connectivity;
+          
+          std::vector<int> element_type_connectivity;
+          std::vector<int> node_ids;
+          
+          for (size_t iii = 0; iii < dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]].size(); iii++)
+          {
+            element_id = int(dat_all->result_block_data[dat_all->result_blocks[ii][4]][dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][iii][1]][0]);
+            //get element type, connectivity and nodes
+            for (size_t iv = 0; iv < tmp_element_id_type_connectivity.size(); iv++)
+            {
+              if (tmp_element_id_type_connectivity[iv][0]==element_id)
+              {
+                for (size_t v = 1; v < tmp_element_id_type_connectivity[iv].size(); v++)
+                {
+                  element_type_connectivity.push_back(tmp_element_id_type_connectivity[iv][v]);
+                  node_ids.push_back(tmp_element_id_type_connectivity[iv][v]);
+                }
+                tmp_element_id_type_connectivity.erase(tmp_element_id_type_connectivity.begin() + iv);
+              }
+            }
+          }
+          //sort and remove duplicate nodes
+          std::sort(node_ids.begin(), node_ids.end());
+          if (node_ids.size() > 1)
+          {
+            for (size_t iii = 1; iii < node_ids.size(); iii++)
+            {
+              if (node_ids[iii-1]==node_ids[iii])
+              {
+                node_ids.erase(node_ids.begin() + iii);
+                --iii;
+              }
+            }
+          }
+          // nodes and coords
+          for (size_t iii = 1; iii < node_ids.size(); iii++)
+          {
+            std::array<double,3> node_coords = CubitInterface::get_nodal_coordinates(node_ids[iii]);
+
+            vec_frd[current_part]->nodes.push_back({node_ids[iii],0});
+            vec_frd[current_part]->nodes_coords.push_back({node_coords[0],node_coords[1],node_coords[2]});
+            vec_frd[current_part]->nodes[vec_frd[current_part]->nodes.size()-1][1] = vec_frd[current_part]->nodes_coords.size()-1;
+          }
+
+          // elements
+          for (size_t iii = 0; iii < dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]].size(); iii++)
+          {
+            element_id = int(dat_all->result_block_data[dat_all->result_blocks[ii][4]][dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][iii][1]][0]);
+
+            //vec_frd[current_part]->elements.push_back({ip_nodes[iii][1],99,int(iii),0});
+            //vec_frd[current_part]->elements_connectivity.push_back({int(iii)});
+            //vec_frd[current_part]->elements[vec_frd[current_part]->elements.size()-1][2] = vec_frd[current_part]->elements_connectivity.size()-1;
+          }
         }
       
         // elements
@@ -1660,7 +1719,8 @@ bool CoreResultsVtkWriter::link_dat()
             vec_frd[current_part]->elements_connectivity.push_back({int(iii)});
             vec_frd[current_part]->elements[vec_frd[current_part]->elements.size()-1][2] = vec_frd[current_part]->elements_connectivity.size()-1;
           }
-        }else{       // element set
+        }else if(dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][0][2] == 2) // elements with integration points
+        { // element set
           for (size_t iii = 0; iii < vec_frd[current_part]->nodes.size(); iii++)
           {
             vec_frd[current_part]->elements.push_back({ip_nodes[iii][1],99,int(iii),0});
@@ -1763,7 +1823,8 @@ bool CoreResultsVtkWriter::link_dat()
             vec_frd[current_part]->result_block_data[vec_frd[current_part]->result_block_data.size()-1].push_back(tmp_node_data);
             vec_frd[current_part]->result_block_node_data[vec_frd[current_part]->result_block_data.size()-1].push_back({int(iv),int(iv)});
           }
-        }else{  // elements data
+        }else if (dat_all->result_block_c1_data[dat_all->result_blocks[data_ids[iii]][4]][0][2] == 2) // elements with integration points
+        {  // elements data
           for (size_t iv = 0; iv < dat_all->result_block_c1_data[dat_all->result_blocks[data_ids[iii]][4]].size(); iv++)
           {
             std::vector<double> tmp_node_data;

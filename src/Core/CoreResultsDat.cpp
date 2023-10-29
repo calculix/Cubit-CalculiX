@@ -346,7 +346,16 @@ bool CoreResultsDat::check_mode(std::vector<std::string> line)
   {
     for (size_t i = 0; i < line.size(); i++)
     {
-      if ((line[i]=="contact")||(line[i]=="statistics")||(line[i]=="surface")||(line[i]=="center")||(line[i]=="shear")||(line[i]=="total"))
+      if (
+        (line[i]=="contact")
+      ||(line[i]=="statistics")
+      ||(line[i]=="surface")
+      ||(line[i]=="center")
+      ||(line[i]=="shear")
+      ||(line[i]=="total")
+      ||(line[i]=="mass")
+      ||(line[i]=="variables")
+      )
       {
         current_read_mode = 10; // skip
         return  true;
@@ -448,7 +457,12 @@ bool CoreResultsDat::read_line(std::vector<std::string> line)
   if (n_comp == line.size()) // elemental results
   {
     bool_node = false;
-    c1_type = 2;
+    if (n_comp == 2)
+    {
+      c1_type = 3; // element data with no integration points
+    }else{
+      c1_type = 2;
+    }
   } else {                   // nodal results
     bool_node = true;
     c1_type = 1;
