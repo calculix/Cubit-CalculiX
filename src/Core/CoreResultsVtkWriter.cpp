@@ -7,7 +7,6 @@
 #include "ProgressTool.hpp"
 #include "MeshExportInterface.hpp"
 
-#include <chrono>
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -152,7 +151,7 @@ bool CoreResultsVtkWriter::write_linked()
   // sidesets
   // prepare sidesets
   this->prepare_sidesets();
-
+  
   for (size_t i = 0; i < sideset_ids.size(); i++)
   {
     part_names.push_back("Sideset: " + ccx_iface->get_sideset_name(sideset_ids[i]));
@@ -1331,10 +1330,12 @@ bool CoreResultsVtkWriter::link_nodes()
 
   for (size_t i = 0; i < max_increments; i++)
   {
+    this->stopwatch("Linking Nodal Results " + std::to_string(i));
     ++current_increment;
     std::vector<int> data_ids = this->get_result_blocks_data_ids_linked(); // get data ids for result blocks
     for (size_t ii = 0; ii < data_ids.size(); ii++)
     {
+      this->stopwatch("Linking Nodal Results 1 " + std::to_string(ii));
       tmp_block_node_ids = block_node_ids;
       tmp_nodeset_node_ids = nodeset_node_ids;
       tmp_sideset_node_ids = sideset_node_ids;
@@ -1350,6 +1351,7 @@ bool CoreResultsVtkWriter::link_nodes()
 
       for (size_t iii = 0; iii < node_data_ids.size(); iii++)
       { 
+        this->stopwatch("Linking Nodal Results 2 " + std::to_string(iii));
         current_part = -1;
         //blocks    
         for (size_t iv = 0; iv < block_ids.size(); iv++)
@@ -1428,6 +1430,7 @@ bool CoreResultsVtkWriter::link_elements()
 
   for (size_t i = 0; i < frd_all->elements.size(); i++)
   {
+    this->stopwatch(std::to_string(i) + " ");
     current_part = -1;
     //blocks
     for (size_t ii = 0; ii < block_ids.size(); ii++)
@@ -1564,6 +1567,7 @@ bool CoreResultsVtkWriter::link_dat()
   current_part = nparts - nparts_dat - 1;
   for (size_t i = 0 ; i < nparts_dat; i++)
   {
+    this->stopwatch(std::to_string(i) + " ");
     ++current_part;
     ip_nodes.clear();
     ip_nodes_coords.clear();
@@ -2677,3 +2681,20 @@ std::vector<std::vector<double>> CoreResultsVtkWriter::compute_integration_point
 
   return displacements;
 }
+
+
+bool CoreResultsVtkWriter::stopwatch(std::string label)
+{
+  const auto t_runtime_end = std::chrono::high_resolution_clock::now();
+  int t_runtime_duration = std::chrono::duration<double, std::milli>(t_runtime_end - t_runtime_start).count();
+  int t_runtime_round_duration = std::chrono::duration<double, std::milli>(t_runtime_end - t_runtime_last).count();
+  
+  t_runtime_last = std::chrono::high_resolution_clock::now();
+  
+  std::string log;
+  log =  label + " " + std::to_string(t_runtime_duration) + " " + std::to_string(t_runtime_round_duration) + "\n";
+  PRINT_INFO("%s", log.c_str());
+
+  return true;
+}
+    
