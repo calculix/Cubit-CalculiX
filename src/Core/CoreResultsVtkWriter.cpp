@@ -1353,7 +1353,7 @@ bool CoreResultsVtkWriter::link_nodes()
       { 
         this->stopwatch("Linking Nodal Results 2 " + std::to_string(iii));
         current_part = -1;
-        //blocks    
+        //blocks
         for (size_t iv = 0; iv < block_ids.size(); iv++)
         {
           ++current_part;
