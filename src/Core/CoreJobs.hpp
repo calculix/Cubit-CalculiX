@@ -6,6 +6,7 @@
 
 class CalculiXCoreInterface;
 class CubitProcess;
+class ProgressTool;
 
 class CoreJobs
 {
@@ -61,6 +62,7 @@ public:
   std::string print_data(); // prints out the jobs_data
 
   CalculiXCoreInterface *ccx_iface;
+  ProgressTool *progressbar; // progressbar
 };
 
 #endif // COREJOBS_HPP

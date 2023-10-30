@@ -7,6 +7,7 @@
 
 #include "CubitProcess.hpp"
 #include "CubitString.hpp"
+#include "ProgressTool.hpp"
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -30,6 +31,7 @@ bool CoreJobs::init()
     return false; // already initialized
   }else{
     CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
+    progressbar = new ProgressTool();
     is_initialized = true;  
     return true;
   }
@@ -250,7 +252,11 @@ bool CoreJobs::wait_job(int job_id)
     {
       log = " Waiting for Job " + jobs_data[jobs_data_id][2] + " to Exit \n";
       PRINT_INFO("%s", log.c_str());
-          
+
+      log = " Waiting for Job " + jobs_data[jobs_data_id][2] + " to Exit";
+      progressbar->start(0,100,log.c_str());
+      auto t_start = std::chrono::high_resolution_clock::now();          
+
       while (0 == kill(std::stoi(jobs_data[jobs_data_id][4]),0))
       {
         output = CubitProcessHandler[CubitProcessHandler_data_id].read_output_channel(-1);
@@ -263,8 +269,19 @@ bool CoreJobs::wait_job(int job_id)
           output = "";
           get_cvgsta(std::stoi(jobs_data[jobs_data_id][0]));
         }
-        waitpid(std::stoi(jobs_data[jobs_data_id][4]), &status,WNOHANG);      
+        waitpid(std::stoi(jobs_data[jobs_data_id][4]), &status,WNOHANG);
+
+        //update progress bar
+        const auto t_end = std::chrono::high_resolution_clock::now();
+        int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+        //currentDataRow += frd->result_block_data[data_ids[ii]].size();
+        if (duration > 500)
+        {
+          progressbar->check_interrupt();
+          t_start = std::chrono::high_resolution_clock::now();
+        }
       }
+      progressbar->end();
 
       //errorcode = CubitProcessHandler[CubitProcessHandler_data_id].exit_code();
       if (status!=0)
