@@ -32,6 +32,7 @@ public:
   int nparts = 0;
   int nparts_dat = 0; // number of parts from dat file
   int current_part = 0;
+  std::vector<bool> current_part_ip_data; // bool if current part has integration point data...needed for vtk connectivity of .dat data
   std::string current_filepath_vtu = "";
   std::string current_filepath_vtpc = "";
   std::vector<std::string> filepath_vtu; // to store the filepaths
@@ -74,6 +75,7 @@ public:
   std::string get_element_connectivity_vtk(int element_connectivity_data_id, int element_type); // gets the connectivity already converted to vtk format
   std::string get_element_connectivity_vtk_linked(int element_connectivity_data_id, int element_type); // gets the connectivity already converted to vtk format
   std::string get_element_type_vtk(int element_type); // gets the element type already converted to vtk format
+  int get_element_type_frd(int element_id); // gets the element type from cubit converted to frd format, searched in the frd data
   std::string get_element_offset_vtk(int element_connectivity_data_id); // gets the element offset already converted to vtk format
   int getParaviewNode(int frd_node_id); // gets the paraview node id for frd node id
   std::string get_increment(); // gets the current increment in the format 00x

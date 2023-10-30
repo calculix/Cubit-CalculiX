@@ -214,6 +214,8 @@ bool CoreResultsDat::read()
       t_start = std::chrono::high_resolution_clock::now();
     }
   }
+
+  this->check_element_sets();
   
   progressbar.end();
 
@@ -527,6 +529,39 @@ int CoreResultsDat::get_current_result_block_set(std::string result_set)
   int data_id = result_block_set.size()-1;
   
   return data_id;
+}
+
+bool CoreResultsDat::check_element_sets()
+{
+  //change set name when there is integration point data
+  for (size_t i = 0; i < result_blocks.size(); i++)
+  {
+    if (result_block_c1_data[result_blocks[i][4]][0][2] == 2)
+    {
+      result_blocks[i][3] = this->get_current_result_block_set("ip_" + result_block_set[result_blocks[i][3]]);
+    }
+  }
+  
+  //delete set name, if they are not used anymore
+  bool unused;
+  for (size_t i = 0; i < result_block_set.size(); i++)
+  {
+    unused = true;
+    for (size_t ii = 0; ii < result_blocks.size(); ii++)
+    {
+      if (result_blocks[ii][3] == i)
+      {
+        unused = false;
+      }
+    }
+    if (unused)
+    {
+      result_block_set.erase(result_block_set.begin() + i);
+      --i;
+    }
+  }
+
+  return true;
 }
 
 bool CoreResultsDat::print_data()

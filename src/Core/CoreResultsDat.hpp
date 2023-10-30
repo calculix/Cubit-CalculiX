@@ -71,6 +71,7 @@ public:
   bool read_line(std::vector<std::string> line); // processing the result lines
   int get_current_result_block_type(std::string result_type); // gets result_block_type
   int get_current_result_block_set(std::string result_set); // gets result_block_set
+  bool check_element_sets(); // checks if the data for the element sets has integration points data or not...if yes set prefix ip_
   bool print_data(); // prints the data to the console
 
   CalculiXCoreInterface *ccx_iface;

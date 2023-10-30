@@ -75,6 +75,7 @@ bool CoreResultsVtkWriter::clear()
   }
   
   vec_frd.clear();
+  current_part_ip_data.clear();
   
   block_ids.clear();
   block_node_ids.clear();
@@ -178,6 +179,8 @@ bool CoreResultsVtkWriter::write_linked()
     tmp_frd->init(job_id);
 
     vec_frd.push_back(tmp_frd);
+
+    current_part_ip_data.push_back(false);
   }
 
   //link nodes
@@ -206,6 +209,7 @@ bool CoreResultsVtkWriter::write_linked()
 
       //std::string log;
       //log = "nparts " + std::to_string(nparts) + " block " + std::to_string(block_ids[ii])+ " block size" + std::to_string(block_ids.size())+" ci " + std::to_string(current_increment) + " \n";
+      //log = "nparts " + std::to_string(nparts) + " cp " + std::to_string(current_part) + " ci " + std::to_string(current_increment) + " \n";
       //ccx_iface->log_str(log);
       //PRINT_INFO("%s", log.c_str());
       
@@ -392,6 +396,40 @@ bool CoreResultsVtkWriter::write_vtu_linked()
     output.append(this->level_whitespace(4) + "<DataArray type=\"Int64\" IdType=\"1\" Name=\"ids\" format=\"ascii\" RangeMin=\"" + std::to_string(min_element_id) + "\" RangeMax=\"" + std::to_string(max_element_id)+ "\">\n");
     output.append(output_elements_ids);
     output.append(this->level_whitespace(4) + "</DataArray>\n");
+    if (current_part > nparts - nparts_dat) // check for possible cell data !!!
+    {
+      if (!current_part_ip_data[current_part])
+      {
+        for (size_t ii = 0; ii < data_ids.size(); ii++)
+        {
+          rangeMin = 0;
+          rangeMax = 0;
+          std::vector<int> node_data_ids = this->get_result_block_node_data_id(data_ids[ii]);
+
+          // skip if nodes from point data is different than nodes number, like for data from CELS
+          if (node_data_ids.size()==frd->elements.size())
+          {
+            current_time = frd->total_times[frd->result_blocks[data_ids[ii]][4]];
+            // header
+            output.append(this->level_whitespace(4) + "<DataArray type=\"Float64\" ");
+            output.append("Name=\"" + frd->result_block_type[frd->result_blocks[data_ids[ii]][5]] + "\" ");
+            output.append("NumberOfComponents=\"" + std::to_string(frd->result_block_components[frd->result_blocks[data_ids[ii]][6]].size()) + "\" ");
+            for (size_t iii = 0; iii < frd->result_block_components[frd->result_blocks[data_ids[ii]][6]].size(); iii++)
+            {
+              output.append("ComponentName"+ std::to_string(iii) + " =\"" + frd->result_block_components[frd->result_blocks[data_ids[ii]][6]][iii] +"\" ");
+            }
+            output.append("format=\"ascii\" RangeMin=\"" + std::to_string(rangeMin) + "\" RangeMax=\"" + std::to_string(rangeMin) + "\">\n");
+            
+            for (size_t iii = 0; iii < node_data_ids.size(); iii++)
+            {
+              output.append(this->level_whitespace(5) + this->get_result_data(data_ids[ii], node_data_ids[iii]) + "\n");
+            }
+            // footer
+            output.append(this->level_whitespace(4) + "</DataArray>\n");
+          }
+        }
+      }
+    }
     output.append(this->level_whitespace(3) + "</CellData>\n");
     //append nodes and elements
     output.append(output_nodes);
@@ -823,6 +861,20 @@ std::string CoreResultsVtkWriter::get_element_type_vtk(int element_type) // gets
   return str_result;
 }
 
+int CoreResultsVtkWriter::get_element_type_frd(int element_id) // gets the element type already converted from cubit to frd format, searched in the frd data
+{
+  std::vector<std::vector<int>> elements;
+
+  for (size_t i = 0; i < frd_all->elements.size(); i++)
+  {
+    if (element_id == frd_all->elements[i][0])
+    {
+      return frd_all->elements[i][1];
+    }
+  }
+  return -1;
+}
+
 std::string CoreResultsVtkWriter::get_element_offset_vtk(int element_connectivity_data_id) // gets the element type already converted to vtk format
 {
   std::string str_result = "offset ";
@@ -836,17 +888,19 @@ std::string CoreResultsVtkWriter::get_element_offset_vtk(int element_connectivit
 int CoreResultsVtkWriter::getParaviewNode(int frd_node_id)
 {
   // if dat file integration point data, no correct node will be found
-  if (current_part > nparts-nparts_dat - 1)
+  //check if a search is needed, like for element data without integration point data
+  
+  if (!current_part_ip_data[current_part])
   {
-    return frd_node_id;
-  }
-
-  for (size_t i = 0; i < frd->nodes.size(); i++)
-  {
-    if (frd->nodes[i][0] == frd_node_id)
+    for (size_t i = 0; i < frd->nodes.size(); i++)
     {
-      return i;
-    }
+      if (frd->nodes[i][0] == frd_node_id)
+      {
+        return i;
+      }
+    }    
+  }else{
+    return frd_node_id;
   }
   
   return -1;
@@ -983,7 +1037,7 @@ bool CoreResultsVtkWriter::checkFrdBlockDispExists(std::string block_name)
   {
     block_name_cubit = ccx_iface->get_block_name(block_ids[i]);
 
-    if (block_name_cubit.length()!=block_name.length())
+    if (block_name_cubit.length()!=block_name.length()-3)
     {
       return false;
     }
@@ -998,7 +1052,7 @@ bool CoreResultsVtkWriter::checkFrdBlockDispExists(std::string block_name)
       c = tolower(c);
     }
 
-    if (block_name_cubit == block_name)
+    if ("ip_" + block_name_cubit == block_name)
     {
       // search for disp in current increment
       frd = vec_frd[i];
@@ -1039,7 +1093,7 @@ int CoreResultsVtkWriter::getFrdBlockId(std::string block_name)
       c = tolower(c);
     }
 
-    if (block_name_cubit == block_name)
+    if ("ip_" + block_name_cubit == block_name)
     {
       return i;
     }
@@ -1520,6 +1574,7 @@ bool CoreResultsVtkWriter::link_dat()
         // create nodes
         if (dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][0][2] == 1) // nodeset
         {
+          current_part_ip_data[current_part] = true; // no search for node ids when writing the connectivity
           for (size_t iii = 0; iii < dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]].size(); iii++)
           {
             vec_frd[current_part]->nodes.push_back({dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][iii][0],0});
@@ -1529,6 +1584,8 @@ bool CoreResultsVtkWriter::link_dat()
           }
         }else if(dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][0][2] == 2) // elements with integration points
         {  // element set
+          current_part_ip_data[current_part] = true; // no search for node ids when writing the connectivity
+
           int ip_max = 0;
           int ip = 0;
           int ip_last = 0;
@@ -1655,20 +1712,21 @@ bool CoreResultsVtkWriter::link_dat()
           int element_id = 0;
           tmp_element_id_type_connectivity = element_id_type_connectivity;
           
-          std::vector<int> element_type_connectivity;
+          std::vector<std::vector<int>> element_type_connectivity;
           std::vector<int> node_ids;
           
           for (size_t iii = 0; iii < dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]].size(); iii++)
           {
             element_id = int(dat_all->result_block_data[dat_all->result_blocks[ii][4]][dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][iii][1]][0]);
+            element_type_connectivity.push_back({});
             //get element type, connectivity and nodes
             for (size_t iv = 0; iv < tmp_element_id_type_connectivity.size(); iv++)
             {
               if (tmp_element_id_type_connectivity[iv][0]==element_id)
               {
-                for (size_t v = 1; v < tmp_element_id_type_connectivity[iv].size(); v++)
+                for (size_t v = 2; v < tmp_element_id_type_connectivity[iv].size(); v++)
                 {
-                  element_type_connectivity.push_back(tmp_element_id_type_connectivity[iv][v]);
+                  element_type_connectivity[element_type_connectivity.size()-1].push_back(tmp_element_id_type_connectivity[iv][v]);
                   node_ids.push_back(tmp_element_id_type_connectivity[iv][v]);
                 }
                 tmp_element_id_type_connectivity.erase(tmp_element_id_type_connectivity.begin() + iv);
@@ -1689,7 +1747,7 @@ bool CoreResultsVtkWriter::link_dat()
             }
           }
           // nodes and coords
-          for (size_t iii = 1; iii < node_ids.size(); iii++)
+          for (size_t iii = 0; iii < node_ids.size(); iii++)
           {
             std::array<double,3> node_coords = CubitInterface::get_nodal_coordinates(node_ids[iii]);
 
@@ -1703,9 +1761,13 @@ bool CoreResultsVtkWriter::link_dat()
           {
             element_id = int(dat_all->result_block_data[dat_all->result_blocks[ii][4]][dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][iii][1]][0]);
 
-            //vec_frd[current_part]->elements.push_back({ip_nodes[iii][1],99,int(iii),0});
-            //vec_frd[current_part]->elements_connectivity.push_back({int(iii)});
-            //vec_frd[current_part]->elements[vec_frd[current_part]->elements.size()-1][2] = vec_frd[current_part]->elements_connectivity.size()-1;
+            vec_frd[current_part]->elements.push_back({element_id,this->get_element_type_frd(element_id),int(iii),0});
+            vec_frd[current_part]->elements_connectivity.push_back({});
+            for (size_t iv = 0; iv < element_type_connectivity[iii].size(); iv++)
+            {
+              vec_frd[current_part]->elements_connectivity[iii].push_back(element_type_connectivity[iii][iv]);
+            }                        
+            vec_frd[current_part]->elements[vec_frd[current_part]->elements.size()-1][2] = vec_frd[current_part]->elements_connectivity.size()-1;
           }
         }
       
@@ -1829,6 +1891,18 @@ bool CoreResultsVtkWriter::link_dat()
           {
             std::vector<double> tmp_node_data;
             for (size_t v = 2; v < dat_all->result_block_data[data_ids[iii]][dat_all->result_block_c1_data[dat_all->result_blocks[data_ids[iii]][4]][iv][1]].size(); v++)
+            {
+              tmp_node_data.push_back(dat_all->result_block_data[data_ids[iii]][dat_all->result_block_c1_data[dat_all->result_blocks[data_ids[iii]][4]][iv][1]][v]);
+            }
+            vec_frd[current_part]->result_block_data[vec_frd[current_part]->result_block_data.size()-1].push_back(tmp_node_data);
+            vec_frd[current_part]->result_block_node_data[vec_frd[current_part]->result_block_data.size()-1].push_back({int(iv),int(iv)});
+          }
+        }else if (dat_all->result_block_c1_data[dat_all->result_blocks[data_ids[iii]][4]][0][2] == 3) // elements
+        {  // elements data // will be switched for cell data in the writer
+          for (size_t iv = 0; iv < dat_all->result_block_c1_data[dat_all->result_blocks[data_ids[iii]][4]].size(); iv++)
+          {
+            std::vector<double> tmp_node_data;
+            for (size_t v = 1; v < dat_all->result_block_data[data_ids[iii]][dat_all->result_block_c1_data[dat_all->result_blocks[data_ids[iii]][4]][iv][1]].size(); v++)
             {
               tmp_node_data.push_back(dat_all->result_block_data[data_ids[iii]][dat_all->result_block_c1_data[dat_all->result_blocks[data_ids[iii]][4]][iv][1]][v]);
             }
