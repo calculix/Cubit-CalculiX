@@ -54,6 +54,13 @@ public:
   std::vector<std::vector<std::vector<int>>> sideset_elements_connectivity;
   //sideset_elements_connectivity[sideset id][element][0] node 1
   std::vector<std::vector<int>> element_id_type_connectivity; // to store the element data
+  std::vector<std::vector<std::vector<int>>> set_ip_nodes;
+  //ip_nodes[0][0] ip number
+  //ip_nodes[0][0] element id
+  std::vector<std::vector<std::vector<double>>> set_ip_nodes_coords;
+  std::vector<std::vector<std::vector<std::vector<double>>>> set_nodes_coords;
+  std::vector<std::vector<std::vector<int>>> set_element_type_connectivity;
+  std::vector<std::vector<int>> set_ipmax;
 
   bool init(int job_id,CoreResultsFrd* frd,CoreResultsDat* dat); // initialize
   bool reset(); // delete all data and initialize afterwards
@@ -70,6 +77,8 @@ public:
   bool checkResults(); // get # of increments from frd and dat
   bool checkLinkPossible(); // checks if the linking of results to the current cubit model is possible
   bool checkResultsLinked(); // get # of increments from frd and dat
+  bool checkLinkNodesFast(); // check if linking of nodes fast is possible
+  bool checkLinkDatFast(); // check if linking of dat fast is possible
   bool checkDatTimeValueExists(double total_time); // checks if the dat totaltime exists
   bool checkFrdBlockDispExists(std::string block_name); // checks if there exists displacement data for the block
   int getFrdBlockId(std::string block_name); // checks if there exists block in the frd for the block in the dat and returns the data id
@@ -93,11 +102,13 @@ public:
   std::vector<int> get_result_block_node_data_id_linked(int result_blocks_data_id); // gets the result blocks node data ids for the current block and set from frd_all
   std::string get_result_data(int data_id, int node_data_id); // gets the result data for a node
   bool link_nodes(); // links the ids from frd/dat all
+  bool link_nodes_fast(); // links the ids from frd/dat all fast...only possible if all node id vectors are of the same size
   bool link_elements(); // links the ids from frd/dat all
   bool link_dat(); // links the dat
   bool prepare_sidesets(); // gets all data for the sidesets
   std::vector<double> get_integration_point_coordinates(int element_type, int ip, int ipmax, std::vector<std::vector<double>> nodes_coords); // computes the integration point coordinates for the given element and ip point number
   std::vector<std::vector<double>> compute_integration_points_displacements(int set_id);
+  std::vector<std::vector<double>> compute_integration_points_displacements_fast(int set_id);
   bool stopwatch(std::string label); // prints out a label, the time difference from the last label print and the total runtime
 
   ProgressTool *progressbar; // progressbar
