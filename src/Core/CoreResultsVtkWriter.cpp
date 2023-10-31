@@ -1777,17 +1777,9 @@ bool CoreResultsVtkWriter::link_dat()
     ip_nodes.clear();
     ip_nodes_coords.clear();
 
-    //std::vector<std::vector<int>> tmp_set_ip_nodes;
-    //std::vector<std::vector<std::vector<double>>> tmp_set_nodes_coords;
-    //std::vector<std::vector<double>> tmp_set_ip_nodes_coords;
-    //std::vector<std::vector<int>> tmp_set_element_type_connectivity;
-    //std::vector<int> tmp_set_ipmax;
-
-    //set_ip_nodes.push_back(tmp_set_ip_nodes);
-    //set_nodes_coords.push_back(tmp_set_nodes_coords);
-    //set_ip_nodes_coords.push_back(tmp_set_ip_nodes_coords);
-    //set_element_type_connectivity.push_back(tmp_set_element_type_connectivity);
-    //set_ipmax.push_back(tmp_set_ipmax);
+    std::vector<std::vector<std::vector<double>>> tmp_set_nodes_coords;
+    std::vector<std::vector<int>> tmp_set_element_type_connectivity;
+    std::vector<int> tmp_set_ipmax;
 
     for (size_t ii = 0; ii < dat_all->result_blocks.size(); ii++)
     {
@@ -1909,9 +1901,9 @@ bool CoreResultsVtkWriter::link_dat()
                 vec_frd[current_part]->nodes[vec_frd[current_part]->nodes.size()-1][1] = vec_frd[current_part]->nodes_coords.size()-1;
                 
                 // save for possible computation of displacements
-                //set_nodes_coords[current_part].push_back(nodes_coords);
-                //set_element_type_connectivity[current_part].push_back(element_type_connectivity);
-                //set_ipmax[current_part].push_back(ip_max);
+                tmp_set_nodes_coords.push_back(nodes_coords);
+                tmp_set_element_type_connectivity.push_back(element_type_connectivity);
+                tmp_set_ipmax.push_back(ip_max);
               }
               //reset
               ip_max = 0;
@@ -2018,8 +2010,12 @@ bool CoreResultsVtkWriter::link_dat()
           }
         }
         // to skip rest and go for the next set
-        //set_ip_nodes.push_back(ip_nodes);
-        //set_ip_nodes_coords.push_back(ip_nodes_coords);
+        set_ip_nodes.push_back(ip_nodes);
+        set_ip_nodes_coords.push_back(ip_nodes_coords);
+        set_nodes_coords.push_back(tmp_set_nodes_coords);
+        set_element_type_connectivity.push_back(tmp_set_element_type_connectivity);
+        set_ipmax.push_back(tmp_set_ipmax);
+
         ii = dat_all->result_blocks.size();
       }
     }
@@ -2214,7 +2210,7 @@ bool CoreResultsVtkWriter::link_dat()
         vec_frd[current_part]->result_blocks[current_result_block_data_id][6] = vec_frd[current_part]->result_block_data.size()-1;
         // elements data
         std::vector<std::vector<double>> displacements;
-        linkdatfast = false;
+
         if (linkdatfast)
         {
           displacements = this->compute_integration_points_displacements_fast(i);
@@ -2948,12 +2944,12 @@ std::vector<std::vector<double>> CoreResultsVtkWriter::compute_integration_point
 {
   int block_id;
 
-  std::vector<std::vector<double>> ip_nodes_coords = set_ip_nodes_coords[current_part];
+  std::vector<std::vector<double>> ip_nodes_coords = set_ip_nodes_coords[set_id];
   std::vector<std::vector<double>> ip_nodes_coords_displaced;
   std::vector<std::vector<double>> displacements;
   std::vector<std::vector<double>> nodes_displacements;
-  std::vector<std::vector<std::vector<double>>> nodes_coords = set_nodes_coords[current_part];
-  std::vector<std::vector<std::vector<double>>> nodes_coords_displaced = set_nodes_coords[current_part];
+  std::vector<std::vector<std::vector<double>>> nodes_coords = set_nodes_coords[set_id];
+  std::vector<std::vector<std::vector<double>>> nodes_coords_displaced = set_nodes_coords[set_id];
 
   block_id = this->getFrdBlockId(dat_all->result_block_set[set_id]);
   // quit if no block is found...should not happen but hey
@@ -2963,7 +2959,7 @@ std::vector<std::vector<double>> CoreResultsVtkWriter::compute_integration_point
   }
   
   frd = vec_frd[block_id];
-/*
+
   //first get all nodes coords and their displacements
   std::vector<int> data_ids = this->get_result_blocks_data_ids(); // get data ids for result blocks in current increment  
   for (size_t i = 0; i < data_ids.size(); i++)
@@ -2985,15 +2981,15 @@ std::vector<std::vector<double>> CoreResultsVtkWriter::compute_integration_point
   }
 
   //compute integration point displacements
-  
-  for (size_t i = 1; i < set_element_type_connectivity[current_part].size(); i++)
+ /* 
+  for (size_t i = 0; i < set_element_type_connectivity[set_id].size(); i++)
   {
-    for (size_t ii = 1; ii < set_element_type_connectivity[current_part][i].size(); ii++)
+    for (size_t ii = 1; ii < set_element_type_connectivity[set_id][i].size(); ii++)
     {
       //connect with displacements
       for (size_t iii = 0; iii < frd->nodes.size(); iii++)
       {
-        if (frd->nodes[iii][0]==set_element_type_connectivity[current_part][i][ii])
+        if (frd->nodes[iii][0]==set_element_type_connectivity[set_id][i][ii])
         {
           nodes_coords_displaced[i][nodes_coords_displaced.size()-1][0] += nodes_displacements[iii][0];
           nodes_coords_displaced[i][nodes_coords_displaced.size()-1][1] += nodes_displacements[iii][1];
@@ -3003,11 +2999,11 @@ std::vector<std::vector<double>> CoreResultsVtkWriter::compute_integration_point
       }
     }
   }
-
-  for (size_t i = 0; i < set_ip_nodes[current_part].size(); i++)
+/*
+  for (size_t i = 0; i < set_ip_nodes[set_id].size(); i++)
   {
     std::vector<double> tmp_ip_nodes_coords_displaced;
-    tmp_ip_nodes_coords_displaced = this->get_integration_point_coordinates(set_element_type_connectivity[current_part][i][0], set_ip_nodes[current_part][i][0], set_ipmax[current_part][i], nodes_coords_displaced[i]);
+    tmp_ip_nodes_coords_displaced = this->get_integration_point_coordinates(set_element_type_connectivity[set_id][i][0], set_ip_nodes[set_id][i][0], set_ipmax[set_id][i], nodes_coords_displaced[i]);
     ip_nodes_coords_displaced.push_back(tmp_ip_nodes_coords_displaced);
   }
 */
@@ -3018,9 +3014,9 @@ std::vector<std::vector<double>> CoreResultsVtkWriter::compute_integration_point
   // compute actual displacements
   for (size_t i = 0; i < ip_nodes_coords.size(); i++)
   {
- //   tmp_disp[0] = ip_nodes_coords_displaced[i][0] - ip_nodes_coords[i][0];
- //   tmp_disp[1] = ip_nodes_coords_displaced[i][1] - ip_nodes_coords[i][1];
- //   tmp_disp[2] = ip_nodes_coords_displaced[i][2] - ip_nodes_coords[i][2];
+  //  tmp_disp[0] = ip_nodes_coords_displaced[i][0] - ip_nodes_coords[i][0];
+  //  tmp_disp[1] = ip_nodes_coords_displaced[i][1] - ip_nodes_coords[i][1];
+  //  tmp_disp[2] = ip_nodes_coords_displaced[i][2] - ip_nodes_coords[i][2];
     displacements.push_back(tmp_disp);
   }
 
