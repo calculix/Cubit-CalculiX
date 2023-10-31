@@ -295,6 +295,8 @@ bool CoreResultsVtkWriter::write_vtu_linked()
   this->clearLinked();
   this->checkResultsLinked();
 
+  this->stopwatch("#");
+
   // write nodes
   output_nodes.append(this->level_whitespace(3) + "<Points>\n");
   output_nodes.append(this->level_whitespace(4) + "<DataArray type=\"Float32\" Name=\"Points\" NumberOfComponents=\"3\" format=\"ascii\">\n");
@@ -324,6 +326,7 @@ bool CoreResultsVtkWriter::write_vtu_linked()
   }
   output_nodes.append(this->level_whitespace(4) + "</DataArray>\n");
   output_nodes.append(this->level_whitespace(3) + "</Points>\n");
+  this->stopwatch("##");
   // write elements
   for (size_t i = 0; i < frd->elements.size(); i++)
   {
@@ -353,7 +356,7 @@ bool CoreResultsVtkWriter::write_vtu_linked()
     output_element_types.append(this->level_whitespace(5));
     output_element_types.append(this->get_element_type_vtk(frd->elements[i][1]) + "\n");
   }
-  
+  this->stopwatch("###");
   for (size_t i = 0; i < 1; i++)
   { 
     output = "";
@@ -369,7 +372,7 @@ bool CoreResultsVtkWriter::write_vtu_linked()
   
      //write result blocks
     std::vector<int> data_ids = this->get_result_blocks_data_ids(); // get data ids for result blocks in current increment
-    
+    this->stopwatch("####");
     for (size_t ii = 0; ii < data_ids.size(); ii++)
     {
       rangeMin = 0;
@@ -398,7 +401,7 @@ bool CoreResultsVtkWriter::write_vtu_linked()
         output.append(this->level_whitespace(4) + "</DataArray>\n");
       }
     }
-
+    this->stopwatch("#####");
     output.append(this->level_whitespace(3) + "</PointData>\n");
     //element ids
     output.append(this->level_whitespace(3) + "<CellData GlobalIds=\"ids\">\n");
@@ -439,6 +442,7 @@ bool CoreResultsVtkWriter::write_vtu_linked()
         }
       }
     }
+    this->stopwatch("######");
     output.append(this->level_whitespace(3) + "</CellData>\n");
     //append nodes and elements
     output.append(output_nodes);
@@ -970,7 +974,7 @@ bool CoreResultsVtkWriter::checkLinkPossible()
   {
     if (!CubitInterface::get_element_exists(frd->elements[i][0]))
     { 
-      log = "Linking Failed! Element " + std::to_string(frd->elements[i][0]) + " does'nt exist in Cubit.\n";
+      log = "Linking Failed! Element " + std::to_string(frd->elements[i][0]) + " doesn't exist in Cubit.\n";
       PRINT_INFO("%s", log.c_str());
       return false;
     }
@@ -2034,7 +2038,9 @@ bool CoreResultsVtkWriter::link_dat()
 
   progressbar->start(0,100,"Writing Results to ParaView Format - Linking .dat: processing result data");
   t_start = std::chrono::high_resolution_clock::now();
-
+  progressbar->percent(double(0)/double(max_increments));
+  progressbar->check_interrupt();
+  
   //get the data for the sets
   current_part = nparts - nparts_dat - 1;
   for (size_t i = 0 ; i < nparts_dat; i++)
@@ -2947,6 +2953,7 @@ std::vector<std::vector<double>> CoreResultsVtkWriter::compute_integration_point
   std::vector<std::vector<double>> ip_nodes_coords = set_ip_nodes_coords[set_id];
   std::vector<std::vector<double>> ip_nodes_coords_displaced;
   std::vector<std::vector<double>> displacements;
+  std::vector<int> nodes;
   std::vector<std::vector<double>> nodes_displacements;
   std::vector<std::vector<std::vector<double>>> nodes_coords = set_nodes_coords[set_id];
   std::vector<std::vector<std::vector<double>>> nodes_coords_displaced = set_nodes_coords[set_id];
@@ -2974,39 +2981,61 @@ std::vector<std::vector<double>> CoreResultsVtkWriter::compute_integration_point
         {
           std::vector<double> result_component;
           result_component = frd->result_block_data[data_ids[i]][node_data_ids[ii]];
+          nodes.push_back(frd->nodes[ii][0]);
           nodes_displacements.push_back(result_component);
         }
       }
     }
   }
 
+  // sorting for faster search
+  auto p = sort_permutation(nodes);
+  
+  this->apply_permutation(nodes, p);
+  this->apply_permutation(nodes_displacements, p);
+
   //compute integration point displacements
- /* 
+  //this->stopwatch("#");
   for (size_t i = 0; i < set_element_type_connectivity[set_id].size(); i++)
   {
     for (size_t ii = 1; ii < set_element_type_connectivity[set_id][i].size(); ii++)
     {
+      auto lower = std::lower_bound(nodes.begin(), nodes.end(), set_element_type_connectivity[set_id][i][ii]);
+
       //connect with displacements
-      for (size_t iii = 0; iii < frd->nodes.size(); iii++)
-      {
-        if (frd->nodes[iii][0]==set_element_type_connectivity[set_id][i][ii])
+      if (lower!=nodes.end())
+      { 
+        //do that for all ip of the element
+        if (set_ipmax[set_id][i]==1)
         {
-          nodes_coords_displaced[i][nodes_coords_displaced.size()-1][0] += nodes_displacements[iii][0];
-          nodes_coords_displaced[i][nodes_coords_displaced.size()-1][1] += nodes_displacements[iii][1];
-          nodes_coords_displaced[i][nodes_coords_displaced.size()-1][2] += nodes_displacements[iii][2];
-          iii = frd->nodes.size();
+          nodes_coords_displaced[i][ii-1][0] += nodes_displacements[lower-nodes.begin()][0];
+          nodes_coords_displaced[i][ii-1][1] += nodes_displacements[lower-nodes.begin()][1];
+          nodes_coords_displaced[i][ii-1][2] += nodes_displacements[lower-nodes.begin()][2];
+        }else{
+          for (size_t iv = 0; iv < set_ipmax[set_id][i]; iv++)
+          {
+            nodes_coords_displaced[i+iv][ii-1][0] += nodes_displacements[lower-nodes.begin()][0];
+            nodes_coords_displaced[i+iv][ii-1][1] += nodes_displacements[lower-nodes.begin()][1];
+            nodes_coords_displaced[i+iv][ii-1][2] += nodes_displacements[lower-nodes.begin()][2];
+          }
         }
-      }
+      }  
+    }
+    if (set_ipmax[set_id][i]!=1)
+    {
+      i+=set_ipmax[set_id][i]-1;
     }
   }
-/*
+  //this->stopwatch("##");
+
   for (size_t i = 0; i < set_ip_nodes[set_id].size(); i++)
   {
     std::vector<double> tmp_ip_nodes_coords_displaced;
     tmp_ip_nodes_coords_displaced = this->get_integration_point_coordinates(set_element_type_connectivity[set_id][i][0], set_ip_nodes[set_id][i][0], set_ipmax[set_id][i], nodes_coords_displaced[i]);
     ip_nodes_coords_displaced.push_back(tmp_ip_nodes_coords_displaced);
   }
-*/
+  //this->stopwatch("###");
+
   std::vector<double> tmp_disp(3);
   tmp_disp[0] = 0;
   tmp_disp[1] = 0;
@@ -3014,9 +3043,9 @@ std::vector<std::vector<double>> CoreResultsVtkWriter::compute_integration_point
   // compute actual displacements
   for (size_t i = 0; i < ip_nodes_coords.size(); i++)
   {
-  //  tmp_disp[0] = ip_nodes_coords_displaced[i][0] - ip_nodes_coords[i][0];
-  //  tmp_disp[1] = ip_nodes_coords_displaced[i][1] - ip_nodes_coords[i][1];
-  //  tmp_disp[2] = ip_nodes_coords_displaced[i][2] - ip_nodes_coords[i][2];
+    tmp_disp[0] = ip_nodes_coords_displaced[i][0] - ip_nodes_coords[i][0];
+    tmp_disp[1] = ip_nodes_coords_displaced[i][1] - ip_nodes_coords[i][1];
+    tmp_disp[2] = ip_nodes_coords_displaced[i][2] - ip_nodes_coords[i][2];
     displacements.push_back(tmp_disp);
   }
 
@@ -3038,4 +3067,40 @@ bool CoreResultsVtkWriter::stopwatch(std::string label)
 
   return true;
 }
-    
+
+//sorting of vectors
+template <typename T> 
+std::vector<std::size_t> CoreResultsVtkWriter::sort_permutation(
+    const std::vector<T>& vec)
+{
+    std::vector<std::size_t> p(vec.size());
+    std::iota(p.begin(), p.end(), 0);
+    std::sort(p.begin(), p.end());
+
+    return p;
+}
+
+template <typename T> 
+void CoreResultsVtkWriter::apply_permutation(
+    std::vector<T>& vec,
+    const std::vector<std::size_t>& p)
+{
+    std::vector<bool> done(vec.size());
+    for (std::size_t i = 0; i < vec.size(); ++i)
+    {
+        if (done[i])
+        {
+            continue;
+        }
+        done[i] = true;
+        std::size_t prev_j = i;
+        std::size_t j = p[i];
+        while (i != j)
+        {
+            std::swap(vec[prev_j], vec[j]);
+            done[j] = true;
+            prev_j = j;
+            j = p[j];
+        }
+    }
+}
