@@ -91,12 +91,16 @@ bool CoreResultsVtkWriter::clear()
   set_nodes_coords.clear();
   set_element_type_connectivity.clear();
   set_ipmax.clear();
+  linked_nodes.clear();
+  linked_nodes_data_id.clear();
   return true;
 }
 
 bool CoreResultsVtkWriter::clearLinked()
 {
   current_offset = 0;
+  linked_nodes.clear();
+  linked_nodes_data_id.clear();
   return true;
 }
 
@@ -169,6 +173,8 @@ bool CoreResultsVtkWriter::write_linked()
   //dat file
   nparts += dat_all->result_block_set.size();
   nparts_dat += dat_all->result_block_set.size();
+  //this->stopwatch(std::to_string(nparts_dat));
+  
   for (size_t i = 0; i < nparts_dat; i++)
   {
     part_names.push_back(".dat: " + dat_all->result_block_set[i]);
@@ -295,8 +301,6 @@ bool CoreResultsVtkWriter::write_vtu_linked()
   this->clearLinked();
   this->checkResultsLinked();
 
-  this->stopwatch("#");
-
   // write nodes
   output_nodes.append(this->level_whitespace(3) + "<Points>\n");
   output_nodes.append(this->level_whitespace(4) + "<DataArray type=\"Float32\" Name=\"Points\" NumberOfComponents=\"3\" format=\"ascii\">\n");
@@ -323,10 +327,18 @@ bool CoreResultsVtkWriter::write_vtu_linked()
 
     output_nodes_ids.append(this->level_whitespace(5));
     output_nodes_ids.append(std::to_string(frd->nodes[i][0]) + "\n");
+
+    linked_nodes.push_back(frd->nodes[i][0]);
+    linked_nodes_data_id.push_back(i);
   }
   output_nodes.append(this->level_whitespace(4) + "</DataArray>\n");
   output_nodes.append(this->level_whitespace(3) + "</Points>\n");
-  this->stopwatch("##");
+
+  // sorting for faster search
+  auto p = sort_permutation(linked_nodes);
+  this->apply_permutation(linked_nodes, p);
+  this->apply_permutation(linked_nodes_data_id, p);
+
   // write elements
   for (size_t i = 0; i < frd->elements.size(); i++)
   {
@@ -356,7 +368,7 @@ bool CoreResultsVtkWriter::write_vtu_linked()
     output_element_types.append(this->level_whitespace(5));
     output_element_types.append(this->get_element_type_vtk(frd->elements[i][1]) + "\n");
   }
-  this->stopwatch("###");
+
   for (size_t i = 0; i < 1; i++)
   { 
     output = "";
@@ -372,7 +384,7 @@ bool CoreResultsVtkWriter::write_vtu_linked()
   
      //write result blocks
     std::vector<int> data_ids = this->get_result_blocks_data_ids(); // get data ids for result blocks in current increment
-    this->stopwatch("####");
+    
     for (size_t ii = 0; ii < data_ids.size(); ii++)
     {
       rangeMin = 0;
@@ -401,7 +413,6 @@ bool CoreResultsVtkWriter::write_vtu_linked()
         output.append(this->level_whitespace(4) + "</DataArray>\n");
       }
     }
-    this->stopwatch("#####");
     output.append(this->level_whitespace(3) + "</PointData>\n");
     //element ids
     output.append(this->level_whitespace(3) + "<CellData GlobalIds=\"ids\">\n");
@@ -442,7 +453,6 @@ bool CoreResultsVtkWriter::write_vtu_linked()
         }
       }
     }
-    this->stopwatch("######");
     output.append(this->level_whitespace(3) + "</CellData>\n");
     //append nodes and elements
     output.append(output_nodes);
@@ -905,13 +915,20 @@ int CoreResultsVtkWriter::getParaviewNode(int frd_node_id)
   
   if (!current_part_ip_data[current_part])
   {
+    auto lower = std::lower_bound(linked_nodes.begin(), linked_nodes.end(), frd_node_id);
+    //connect with displacements
+    if (lower!=linked_nodes.end())
+    {
+      return linked_nodes_data_id[lower - linked_nodes.begin()];
+    }
+    /*
     for (size_t i = 0; i < frd->nodes.size(); i++)
     {
       if (frd->nodes[i][0] == frd_node_id)
       {
         return i;
       }
-    }    
+    }*/    
   }else{
     return frd_node_id;
   }
@@ -1487,6 +1504,26 @@ bool CoreResultsVtkWriter::link_nodes_fast()
   std::vector<std::vector<int>> tmp_nodeset_node_ids = nodeset_node_ids;
   std::vector<std::vector<int>> tmp_sideset_node_ids = sideset_node_ids;
 
+  // sorting for faster search
+  //blocks
+  for (size_t i = 0; i < block_ids.size(); i++)
+  {
+    auto p = sort_permutation(tmp_block_node_ids[i]);
+    this->apply_permutation(tmp_block_node_ids[i], p);
+  }
+  //nodesets
+  for (size_t i = 0; i < nodeset_ids.size(); i++)
+  { 
+    auto p = sort_permutation(tmp_nodeset_node_ids[i]);
+    this->apply_permutation(tmp_nodeset_node_ids[i], p);
+  }
+  //sidesets
+  for (size_t i = 0; i < sideset_ids.size(); i++)
+  { 
+    auto p = sort_permutation(tmp_sideset_node_ids[i]);
+    this->apply_permutation(tmp_sideset_node_ids[i], p);
+  }
+
   progressbar->start(0,100,"Writing Results to ParaView Format - Linking Nodes FAST");
   auto t_start = std::chrono::high_resolution_clock::now();
 
@@ -1524,29 +1561,24 @@ bool CoreResultsVtkWriter::link_nodes_fast()
     for (size_t ii = 0; ii < block_ids.size(); ii++)
     {
       ++current_part;
-      for (size_t iii = 0; iii < tmp_block_node_ids[ii].size(); iii++)
-      {
-        if (frd_all->nodes[i][0]==tmp_block_node_ids[ii][iii])
+      auto lower = std::lower_bound(tmp_block_node_ids[ii].begin(), tmp_block_node_ids[ii].end(), frd_all->nodes[i][0]);
+      if (lower!=tmp_block_node_ids[ii].end())
+      {  
+        vec_frd[current_part]->nodes.push_back(frd_all->nodes[i]);
+        vec_frd[current_part]->nodes_coords.push_back(frd_all->nodes_coords[i]);
+        vec_frd[current_part]->nodes[vec_frd[current_part]->nodes.size()-1][1] = vec_frd[current_part]->nodes_coords.size()-1;
+        
+        current_increment = 0;
+        for (size_t iv = 0; iv < max_increments; iv++)
         {
-          vec_frd[current_part]->nodes.push_back(frd_all->nodes[i]);
-          vec_frd[current_part]->nodes_coords.push_back(frd_all->nodes_coords[i]);
-          vec_frd[current_part]->nodes[vec_frd[current_part]->nodes.size()-1][1] = vec_frd[current_part]->nodes_coords.size()-1;
-          
-          current_increment = 0;
-          for (size_t iv = 0; iv < max_increments; iv++)
+          ++current_increment;
+          std::vector<int> data_ids = this->get_result_blocks_data_ids_linked(); // get data ids for result blocks
+          for (size_t v = 0; v < data_ids.size(); v++)
           {
-            ++current_increment;
-            std::vector<int> data_ids = this->get_result_blocks_data_ids_linked(); // get data ids for result blocks
-            for (size_t v = 0; v < data_ids.size(); v++)
-            {
-              vec_frd[current_part]->result_block_data[data_ids[v]].push_back(frd_all->result_block_data[data_ids[v]][i]);
-              vec_frd[current_part]->result_block_node_data[data_ids[v]].push_back(frd_all->result_block_node_data[data_ids[v]][i]);
-              vec_frd[current_part]->result_block_node_data[data_ids[v]][vec_frd[current_part]->result_block_node_data[data_ids[v]].size()-1][1] = vec_frd[current_part]->result_block_data[data_ids[v]].size()-1;
-            }
+            vec_frd[current_part]->result_block_data[data_ids[v]].push_back(frd_all->result_block_data[data_ids[v]][i]);
+            vec_frd[current_part]->result_block_node_data[data_ids[v]].push_back(frd_all->result_block_node_data[data_ids[v]][i]);
+            vec_frd[current_part]->result_block_node_data[data_ids[v]][vec_frd[current_part]->result_block_node_data[data_ids[v]].size()-1][1] = vec_frd[current_part]->result_block_data[data_ids[v]].size()-1;
           }
-
-          tmp_block_node_ids[ii].erase(tmp_block_node_ids[ii].begin() + iii);
-          --iii;
         }
       }
     }
@@ -1771,12 +1803,11 @@ bool CoreResultsVtkWriter::link_dat()
 
   progressbar->start(0,100,"Writing Results to ParaView Format - Linking .dat: Nodes and Integrationpoints");
   auto t_start = std::chrono::high_resolution_clock::now();
-
+  
   //get nodes and elements
   current_part = nparts - nparts_dat - 1;
   for (size_t i = 0 ; i < nparts_dat; i++)
   {
-    //this->stopwatch(std::to_string(i) + " ");
     ++current_part;
     ip_nodes.clear();
     ip_nodes_coords.clear();

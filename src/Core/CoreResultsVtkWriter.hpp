@@ -61,6 +61,8 @@ public:
   std::vector<std::vector<std::vector<std::vector<double>>>> set_nodes_coords;
   std::vector<std::vector<std::vector<int>>> set_element_type_connectivity;
   std::vector<std::vector<int>> set_ipmax;
+  std::vector<int> linked_nodes;
+  std::vector<int> linked_nodes_data_id;
 
   bool init(int job_id,CoreResultsFrd* frd,CoreResultsDat* dat); // initialize
   bool reset(); // delete all data and initialize afterwards

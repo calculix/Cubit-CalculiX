@@ -556,8 +556,16 @@ bool CoreResultsDat::check_element_sets()
     }
     if (unused)
     {
+      std::vector<std::string> set = result_block_set;
+
       result_block_set.erase(result_block_set.begin() + i);
       --i;
+
+      //rewrite the set id in the blocks!!!
+      for (size_t ii = 0; ii < result_blocks.size(); ii++)
+      {
+        result_blocks[ii][3] = this->get_current_result_block_set(set[result_blocks[ii][3]]);
+      }
     }
   }
 
