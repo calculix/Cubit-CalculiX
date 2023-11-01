@@ -68,6 +68,7 @@ public:
   std::string erase_whitespace(std::string line); // erases all whitespaces
   bool check_mode(std::vector<std::string> line); // checks if the current read mode is still valid or others should be used
   bool read_header(std::vector<std::string> line); // processing the result block header
+  bool header_emas(std::vector<std::string> line); // processing emas header
   bool read_line(std::vector<std::string> line); // processing the result lines
   int get_current_result_block_type(std::string result_type); // gets result_block_type
   int get_current_result_block_set(std::string result_set); // gets result_block_set

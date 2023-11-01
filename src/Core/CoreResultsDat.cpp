@@ -138,6 +138,9 @@ bool CoreResultsDat::read()
       } else if (current_read_mode == 10)
       {
       //  Buckling, skip block
+      } else if (current_read_mode == 11)
+      {
+        this->header_emas(dat_array);
       }
       
       /*if (!this->is_number(dat_array[0]))
@@ -346,6 +349,11 @@ bool CoreResultsDat::check_mode(std::vector<std::string> line)
     }
   } else if (!this->is_number(line[0]))
   {
+    if (line[0]=="mass")
+    {
+      current_read_mode = 11; // read header line for EMAS
+      return  true;
+    }
     for (size_t i = 0; i < line.size(); i++)
     {
       if (
@@ -355,7 +363,7 @@ bool CoreResultsDat::check_mode(std::vector<std::string> line)
       ||(line[i]=="center")
       ||(line[i]=="shear")
       ||(line[i]=="total")
-      ||(line[i]=="mass")
+      //||(line[i]=="mass")
       ||(line[i]=="variables")
       )
       {
@@ -449,6 +457,59 @@ bool CoreResultsDat::read_header(std::vector<std::string> line)
   return true;
 }
 
+
+bool CoreResultsDat::header_emas(std::vector<std::string> line)
+{
+  double total_time;
+  std::string block_set;
+  std::string block_type;
+  int result_block_data_id;
+  int result_block_type_data_id;
+  int result_block_set_data_id;
+
+  int search = -1;
+  for (size_t i = 0; i < line.size(); i++)
+  {
+    if (line[i]=="set")
+    {
+      search = i;
+    }
+  } 
+  block_set = line[search + 1];
+  total_time = ccx_iface->string_scientific_to_double(line[line.size()-1]);
+  total_times.push_back(total_time);
+  current_total_time_id = total_times.size()-1;
+
+  block_type = "emas";
+  std::vector<std::string> tmp_result_block_components;
+
+  tmp_result_block_components.push_back("element");
+  tmp_result_block_components.push_back("mass");
+  tmp_result_block_components.push_back("xx");
+  tmp_result_block_components.push_back("yy");
+  tmp_result_block_components.push_back("zz");
+  tmp_result_block_components.push_back("xy");
+  tmp_result_block_components.push_back("xz");
+  tmp_result_block_components.push_back("yz");
+
+  // write new set of component names
+  result_block_components.push_back(tmp_result_block_components);
+
+  std::vector<std::vector<double>> tmp_result_block_data;
+  std::vector<std::vector<int>> tmp_result_block_c1_data;
+  result_block_data.push_back(tmp_result_block_data);
+  result_block_c1_data.push_back(tmp_result_block_c1_data);
+    
+  current_result_block = result_blocks.size()-1;
+  result_block_data_id = result_block_data.size()-1;
+  result_block_type_data_id = this->get_current_result_block_type(block_type);
+  result_block_set_data_id = this->get_current_result_block_set(block_set);
+  
+  result_blocks.push_back({current_result_block,current_total_time_id,result_block_type_data_id,result_block_set_data_id,result_block_data_id});
+ 
+  return true;
+}
+
 bool CoreResultsDat::read_line(std::vector<std::string> line)
 {
   bool bool_node;
@@ -460,6 +521,9 @@ bool CoreResultsDat::read_line(std::vector<std::string> line)
   {
     bool_node = false;
     if (n_comp == 2)
+    {
+      c1_type = 3; // element data with no integration points
+    }else if (result_block_type[result_blocks[result_blocks.size()-1][2]]=="emas")
     {
       c1_type = 3; // element data with no integration points
     }else{

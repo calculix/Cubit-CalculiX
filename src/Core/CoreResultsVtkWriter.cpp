@@ -95,11 +95,18 @@ bool CoreResultsVtkWriter::clear()
 
 bool CoreResultsVtkWriter::clear_files()
 {
+  /*
   // erase all files
   std::string shellstr;
   shellstr = "rm " + filepath + "*vtu";
   system(shellstr.c_str());
   shellstr = "rm " + filepath + "*vtpc";
+  system(shellstr.c_str());
+  */
+
+  // remove dir
+  std::string shellstr;
+  shellstr = "rm -r " + filepath + "/";
   system(shellstr.c_str());
 
   return true;
@@ -147,6 +154,11 @@ bool CoreResultsVtkWriter::write_linked()
   this->clear();
   this->clear_files();
   this->checkResults();
+
+  //create dir if not exists
+  std::string shellstr;
+  shellstr = "mkdir " + filepath;
+  system(shellstr.c_str());
 
   // blocks
   block_ids = ccx_iface->get_blocks();
@@ -238,11 +250,11 @@ bool CoreResultsVtkWriter::write_linked()
       //ccx_iface->log_str(log);
       //PRINT_INFO("%s", log.c_str());
       
-      current_filepath_vtu = filepath + "." + std::to_string(current_part) + "." + this->get_increment() + ".vtu";
+      current_filepath_vtu = filepath + "/" + filepath + "." + std::to_string(current_part) + "." + this->get_increment() + ".vtu";
       
       this->write_vtu_linked();
 
-      filepath_vtu.push_back(current_filepath_vtu);
+      filepath_vtu.push_back(filepath + "." + std::to_string(current_part) + "." + this->get_increment() + ".vtu");
       part_ids.push_back(current_part);
 
       //update progress bar
@@ -256,7 +268,7 @@ bool CoreResultsVtkWriter::write_linked()
         t_start = std::chrono::high_resolution_clock::now();
       }
     }
-    current_filepath_vtpc = filepath + "." + this->get_increment() + ".vtpc";
+    current_filepath_vtpc = filepath + "/" + filepath + "." + this->get_increment() + ".vtpc";
     this->write_vtpc();
   }
   progressbar->end();
@@ -430,7 +442,8 @@ bool CoreResultsVtkWriter::write_vtu_linked()
     output.append(this->level_whitespace(4) + "<DataArray type=\"Int64\" IdType=\"1\" Name=\"ids\" format=\"ascii\" RangeMin=\"" + std::to_string(min_element_id) + "\" RangeMax=\"" + std::to_string(max_element_id)+ "\">\n");
     output.append(output_elements_ids);
     output.append(this->level_whitespace(4) + "</DataArray>\n");
-    if (current_part > nparts - nparts_dat) // check for possible cell data !!!
+    
+    if (current_part > nparts - nparts_dat - 1) // check for possible cell data !!!
     {
       if (!current_part_ip_data[current_part])
       {
@@ -520,6 +533,11 @@ bool CoreResultsVtkWriter::write_vtu_unlinked()
   this->clear();
   this->clear_files();
   this->checkResults();
+
+  //create dir if not exists
+  std::string shellstr;
+  shellstr = "mkdir " + filepath;
+  system(shellstr.c_str());
 
   progressbar->start(0,100,"Preparing Nodes and Elements");
   auto t_start = std::chrono::high_resolution_clock::now();
@@ -696,9 +714,9 @@ bool CoreResultsVtkWriter::write_vtu_unlinked()
 
     if (max_increments==1)
     {
-      this->write_to_file(filepath + ".vtu",output);
+      this->write_to_file(filepath + "/" + filepath + ".vtu",output);
     }else{
-      this->write_to_file(filepath + "." + this->get_increment() +  ".vtu",output);
+      this->write_to_file(filepath + "/" + filepath + "." + this->get_increment() +  ".vtu",output);
     }
   }
   
@@ -848,10 +866,20 @@ std::string CoreResultsVtkWriter::get_element_connectivity_vtk(int element_conne
     result_connectivity[17] = frd->elements_connectivity[element_connectivity_data_id][13];
     result_connectivity[18] = frd->elements_connectivity[element_connectivity_data_id][14];
     result_connectivity[19] = frd->elements_connectivity[element_connectivity_data_id][15];
+  }else if (element_type == 5)
+  {
+    result_connectivity = frd->elements_connectivity[element_connectivity_data_id];
+    //switch positions    
+    result_connectivity[9] = frd->elements_connectivity[element_connectivity_data_id][12];
+    result_connectivity[10] = frd->elements_connectivity[element_connectivity_data_id][13];
+    result_connectivity[11] = frd->elements_connectivity[element_connectivity_data_id][14];
+    result_connectivity[12] = frd->elements_connectivity[element_connectivity_data_id][9];
+    result_connectivity[13] = frd->elements_connectivity[element_connectivity_data_id][10];
+    result_connectivity[14] = frd->elements_connectivity[element_connectivity_data_id][11];
   }else{
     result_connectivity = frd->elements_connectivity[element_connectivity_data_id];
   }
-  
+
   for (size_t i = 0; i < result_connectivity.size(); i++)
   {
     str_result.append(std::to_string(result_connectivity[i]));
@@ -881,6 +909,16 @@ std::string CoreResultsVtkWriter::get_element_connectivity_vtk_linked(int elemen
     result_connectivity[17] = frd->elements_connectivity[element_connectivity_data_id][13];
     result_connectivity[18] = frd->elements_connectivity[element_connectivity_data_id][14];
     result_connectivity[19] = frd->elements_connectivity[element_connectivity_data_id][15];
+  }else if (element_type == 5)
+  {
+    result_connectivity = frd->elements_connectivity[element_connectivity_data_id];
+    //switch positions    
+    result_connectivity[9] = frd->elements_connectivity[element_connectivity_data_id][12];
+    result_connectivity[10] = frd->elements_connectivity[element_connectivity_data_id][13];
+    result_connectivity[11] = frd->elements_connectivity[element_connectivity_data_id][14];
+    result_connectivity[12] = frd->elements_connectivity[element_connectivity_data_id][9];
+    result_connectivity[13] = frd->elements_connectivity[element_connectivity_data_id][10];
+    result_connectivity[14] = frd->elements_connectivity[element_connectivity_data_id][11];
   }else{
     result_connectivity = frd->elements_connectivity[element_connectivity_data_id];
   }
@@ -1011,7 +1049,7 @@ bool CoreResultsVtkWriter::checkLinkPossible()
   {
     if (!CubitInterface::get_node_exists(frd->nodes[i][0]))
     {
-      log = "Linking Failed! Node " + std::to_string(frd->nodes[i][0]) + " does'nt exist in Cubit.\n";
+      log = "Linking Failed! Node " + std::to_string(frd->nodes[i][0]) + " doesn't exist in Cubit.\n";
       PRINT_INFO("%s", log.c_str());
       return false;
     }
@@ -2237,7 +2275,13 @@ bool CoreResultsVtkWriter::link_dat()
           if (dat_all->result_block_c1_data[dat_all->result_blocks[data_ids[iii]][4]][0][2] == 1) // nodeset
           { 
             tmp_comp_data.push_back(dat_all->result_block_components[data_ids[iii]][iv]);
-          }else{
+          }else if (dat_all->result_block_c1_data[dat_all->result_blocks[data_ids[iii]][4]][0][2] == 3) // elset without ip
+          {
+            if (iv > 0)
+            {
+              tmp_comp_data.push_back(dat_all->result_block_components[data_ids[iii]][iv]);
+            }
+          }else{ // elset with ip
             if (iv > 1)
             {
               tmp_comp_data.push_back(dat_all->result_block_components[data_ids[iii]][iv]);
@@ -2522,14 +2566,14 @@ bool CoreResultsVtkWriter::prepare_sidesets()
 std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int element_type, int ip, int ipmax, std::vector<std::vector<double>> nodes_coords)
 {
   std::vector<double> ip_coords(3);
-  ip_coords[0] = 0;
-  ip_coords[1] = 0;
-  ip_coords[2] = 0;
+  ip_coords[0] = 0.;
+  ip_coords[1] = 0.;
+  ip_coords[2] = 0.;
   std::vector<std::vector<double>> ip_iso_coords;
   std::vector<double> shape_functions;
-  double xi = 0;
-  double eta = 0;
-  double zeta = 0;
+  double xi = 0.;
+  double eta = 0.;
+  double zeta = 0.;
 
   //std::string log;
   //log = "get_integration_point_coordinates element_type " + std::to_string(element_type) + " ip " + std::to_string(ip) + " ipmax " + std::to_string(ipmax) + " \n";
@@ -2542,24 +2586,24 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
   { 
     if (ipmax == 1)
     {
-      ip_iso_coords.push_back({0,0,0});
+      ip_iso_coords.push_back({0.,0.,0.});
     }else if (ipmax == 4)
     {
-      ip_iso_coords.push_back({-0.577350269189626,-0.577350269189626,0});
-      ip_iso_coords.push_back({0.577350269189626,-0.577350269189626,0});
-      ip_iso_coords.push_back({-0.577350269189626,0.577350269189626,0});
-      ip_iso_coords.push_back({0.577350269189626,0.577350269189626,0});
+      ip_iso_coords.push_back({-0.577350269189626,-0.577350269189626,0.});
+      ip_iso_coords.push_back({0.577350269189626,-0.577350269189626,0.});
+      ip_iso_coords.push_back({-0.577350269189626,0.577350269189626,0.});
+      ip_iso_coords.push_back({0.577350269189626,0.577350269189626,0.});
     }else if (ipmax == 9)
     {
-      ip_iso_coords.push_back({-0.774596669241483,-0.774596669241483,0});
-      ip_iso_coords.push_back({-0,-0.774596669241483,0});
-      ip_iso_coords.push_back({0.774596669241483,-0.774596669241483,0});
-      ip_iso_coords.push_back({-0.774596669241483,0,0});
-      ip_iso_coords.push_back({-0,0,0});
-      ip_iso_coords.push_back({0.774596669241483,0,0});
-      ip_iso_coords.push_back({-0.774596669241483,0.774596669241483,0});
-      ip_iso_coords.push_back({-0,0.774596669241483,0});
-      ip_iso_coords.push_back({0.774596669241483,0.774596669241483,0});
+      ip_iso_coords.push_back({-0.774596669241483,-0.774596669241483,0.});
+      ip_iso_coords.push_back({-0.,-0.774596669241483,0.});
+      ip_iso_coords.push_back({0.774596669241483,-0.774596669241483,0.});
+      ip_iso_coords.push_back({-0.774596669241483,0.,0.});
+      ip_iso_coords.push_back({-0.,0.,0.});
+      ip_iso_coords.push_back({0.774596669241483,0.,0.});
+      ip_iso_coords.push_back({-0.774596669241483,0.774596669241483,0.});
+      ip_iso_coords.push_back({-0,0.774596669241483,0.});
+      ip_iso_coords.push_back({0.774596669241483,0.774596669241483,0.});
     }else if (ipmax == 8)
     {
       ip_iso_coords.push_back({-0.577350269189626,-0.577350269189626,-0.577350269189626});
@@ -2573,52 +2617,52 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
     }else if (ipmax == 27)
     {
       ip_iso_coords.push_back({-0.774596669241483,-0.774596669241483,-0.774596669241483});
-      ip_iso_coords.push_back({0,-0.774596669241483,-0.774596669241483});
+      ip_iso_coords.push_back({0.,-0.774596669241483,-0.774596669241483});
       ip_iso_coords.push_back({0.774596669241483,-0.774596669241483,-0.774596669241483});
-      ip_iso_coords.push_back({-0.774596669241483,0,-0.774596669241483});
-      ip_iso_coords.push_back({0,0,-0.774596669241483});
-      ip_iso_coords.push_back({0.774596669241483,0,-0.774596669241483});
+      ip_iso_coords.push_back({-0.774596669241483,0.,-0.774596669241483});
+      ip_iso_coords.push_back({0.,0.,-0.774596669241483});
+      ip_iso_coords.push_back({0.774596669241483,0.,-0.774596669241483});
       ip_iso_coords.push_back({-0.774596669241483,0.774596669241483,-0.774596669241483});
-      ip_iso_coords.push_back({0,0.774596669241483,-0.774596669241483});
+      ip_iso_coords.push_back({0.,0.774596669241483,-0.774596669241483});
       ip_iso_coords.push_back({0.774596669241483,0.774596669241483,-0.774596669241483});
-      ip_iso_coords.push_back({-0.774596669241483,-0.774596669241483,0});
-      ip_iso_coords.push_back({0,-0.774596669241483,0});
-      ip_iso_coords.push_back({0.774596669241483,-0.774596669241483,0});
-      ip_iso_coords.push_back({-0.774596669241483,0,0});
-      ip_iso_coords.push_back({0,0,0});
-      ip_iso_coords.push_back({0.774596669241483,0,0});
-      ip_iso_coords.push_back({-0.774596669241483,0.774596669241483,0});
-      ip_iso_coords.push_back({0,0.774596669241483,0});
-      ip_iso_coords.push_back({0.774596669241483,0.774596669241483,0});
+      ip_iso_coords.push_back({-0.774596669241483,-0.774596669241483,0.});
+      ip_iso_coords.push_back({0.,-0.774596669241483,0.});
+      ip_iso_coords.push_back({0.774596669241483,-0.774596669241483,0.});
+      ip_iso_coords.push_back({-0.774596669241483,0.,0.});
+      ip_iso_coords.push_back({0.,0.,0.});
+      ip_iso_coords.push_back({0.774596669241483,0.,0.});
+      ip_iso_coords.push_back({-0.774596669241483,0.774596669241483,0.});
+      ip_iso_coords.push_back({0.,0.774596669241483,0.});
+      ip_iso_coords.push_back({0.774596669241483,0.774596669241483,0.});
       ip_iso_coords.push_back({-0.774596669241483,-0.774596669241483,0.774596669241483});
-      ip_iso_coords.push_back({0,-0.774596669241483,0.774596669241483});
+      ip_iso_coords.push_back({0.,-0.774596669241483,0.774596669241483});
       ip_iso_coords.push_back({0.774596669241483,-0.774596669241483,0.774596669241483});
-      ip_iso_coords.push_back({-0.774596669241483,0,0.774596669241483});
-      ip_iso_coords.push_back({0,0,0.774596669241483});
-      ip_iso_coords.push_back({0.774596669241483,0,0.774596669241483});
+      ip_iso_coords.push_back({-0.774596669241483,0.,0.774596669241483});
+      ip_iso_coords.push_back({0.,0.,0.774596669241483});
+      ip_iso_coords.push_back({0.774596669241483,0.,0.774596669241483});
       ip_iso_coords.push_back({-0.774596669241483,0.774596669241483,0.774596669241483});
-      ip_iso_coords.push_back({0,0.774596669241483,0.774596669241483});
+      ip_iso_coords.push_back({0.,0.774596669241483,0.774596669241483});
       ip_iso_coords.push_back({0.774596669241483,0.774596669241483,0.774596669241483});
     }
   }else if ((element_type>=11) && (element_type<=14)) // triangle
   {
     if (ipmax == 1)
     {
-      ip_iso_coords.push_back({0.333333333333333,0.333333333333333,0});
+      ip_iso_coords.push_back({0.333333333333333,0.333333333333333,0.});
     }else if (ipmax == 3)
     {
-      ip_iso_coords.push_back({0.166666666666667,0.166666666666667,0});
-      ip_iso_coords.push_back({0.666666666666667,0.166666666666667,0});
-      ip_iso_coords.push_back({0.166666666666667,0.666666666666667,0});
+      ip_iso_coords.push_back({0.166666666666667,0.166666666666667,0.});
+      ip_iso_coords.push_back({0.666666666666667,0.166666666666667,0.});
+      ip_iso_coords.push_back({0.166666666666667,0.666666666666667,0.});
     }else if (ipmax == 7)
     {
-      ip_iso_coords.push_back({0.333333333333333,0.333333333333333,0});
-      ip_iso_coords.push_back({0.797426985353087,0.101286507323456,0});
-      ip_iso_coords.push_back({0.101286507323456,0.797426985353087,0});
-      ip_iso_coords.push_back({0.101286507323456,0.101286507323456,0});
-      ip_iso_coords.push_back({0.470142064105115,0.059715871789770,0});
-      ip_iso_coords.push_back({0.059715871789770,0.470142064105115,0});
-      ip_iso_coords.push_back({0.470142064105115,0.470142064105115,0});
+      ip_iso_coords.push_back({0.333333333333333,0.333333333333333,0.});
+      ip_iso_coords.push_back({0.797426985353087,0.101286507323456,0.});
+      ip_iso_coords.push_back({0.101286507323456,0.797426985353087,0.});
+      ip_iso_coords.push_back({0.101286507323456,0.101286507323456,0.});
+      ip_iso_coords.push_back({0.470142064105115,0.059715871789770,0.});
+      ip_iso_coords.push_back({0.059715871789770,0.470142064105115,0.});
+      ip_iso_coords.push_back({0.470142064105115,0.470142064105115,0.});
     }else if (ipmax == 2)
     {
       ip_iso_coords.push_back({0.333333333333333,0.333333333333333,-0.577350269189626});
@@ -2628,9 +2672,9 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
       ip_iso_coords.push_back({0.166666666666667,0.166666666666667,-0.774596669241483});
       ip_iso_coords.push_back({0.666666666666667,0.166666666666667,-0.774596669241483});
       ip_iso_coords.push_back({0.166666666666667,0.666666666666667,-0.774596669241483});
-      ip_iso_coords.push_back({0.166666666666667,0.166666666666667,0});
-      ip_iso_coords.push_back({0.666666666666667,0.166666666666667,0});
-      ip_iso_coords.push_back({0.166666666666667,0.666666666666667,0});
+      ip_iso_coords.push_back({0.166666666666667,0.166666666666667,0.});
+      ip_iso_coords.push_back({0.666666666666667,0.166666666666667,0.});
+      ip_iso_coords.push_back({0.166666666666667,0.666666666666667,0.});
       ip_iso_coords.push_back({0.166666666666667,0.166666666666667,0.774596669241483});
       ip_iso_coords.push_back({0.666666666666667,0.166666666666667,0.774596669241483});
       ip_iso_coords.push_back({0.166666666666667,0.666666666666667,0.774596669241483});
@@ -2639,7 +2683,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
   {
     if (ipmax == 1)
     {
-      ip_iso_coords.push_back({0,0,0});
+      ip_iso_coords.push_back({0.,0.,0.});
     }else if (ipmax == 8)
     {
       ip_iso_coords.push_back({-0.577350269189626,-0.577350269189626,-0.577350269189626});
@@ -2653,31 +2697,31 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
     }else if (ipmax == 27)
     {
       ip_iso_coords.push_back({-0.774596669241483,-0.774596669241483,-0.774596669241483});
-      ip_iso_coords.push_back({0,-0.774596669241483,-0.774596669241483});
+      ip_iso_coords.push_back({0.,-0.774596669241483,-0.774596669241483});
       ip_iso_coords.push_back({0.774596669241483,-0.774596669241483,-0.774596669241483});
-      ip_iso_coords.push_back({-0.774596669241483,0,-0.774596669241483});
-      ip_iso_coords.push_back({0,0,-0.774596669241483});
-      ip_iso_coords.push_back({0.774596669241483,0,-0.774596669241483});
+      ip_iso_coords.push_back({-0.774596669241483,0.,-0.774596669241483});
+      ip_iso_coords.push_back({0.,0.,-0.774596669241483});
+      ip_iso_coords.push_back({0.774596669241483,0.,-0.774596669241483});
       ip_iso_coords.push_back({-0.774596669241483,0.774596669241483,-0.774596669241483});
-      ip_iso_coords.push_back({0,0.774596669241483,-0.774596669241483});
+      ip_iso_coords.push_back({0.,0.774596669241483,-0.774596669241483});
       ip_iso_coords.push_back({0.774596669241483,0.774596669241483,-0.774596669241483});
-      ip_iso_coords.push_back({-0.774596669241483,-0.774596669241483,0});
-      ip_iso_coords.push_back({0,-0.774596669241483,0});
-      ip_iso_coords.push_back({0.774596669241483,-0.774596669241483,0});
-      ip_iso_coords.push_back({-0.774596669241483,0,0});
-      ip_iso_coords.push_back({0,0,0});
-      ip_iso_coords.push_back({0.774596669241483,0,0});
-      ip_iso_coords.push_back({-0.774596669241483,0.774596669241483,0});
-      ip_iso_coords.push_back({0,0.774596669241483,0});
-      ip_iso_coords.push_back({0.774596669241483,0.774596669241483,0});
+      ip_iso_coords.push_back({-0.774596669241483,-0.774596669241483,0.});
+      ip_iso_coords.push_back({0.,-0.774596669241483,0.});
+      ip_iso_coords.push_back({0.774596669241483,-0.774596669241483,0.});
+      ip_iso_coords.push_back({-0.774596669241483,0.,0.});
+      ip_iso_coords.push_back({0.,0.,0.});
+      ip_iso_coords.push_back({0.774596669241483,0.,0.});
+      ip_iso_coords.push_back({-0.774596669241483,0.774596669241483,0.});
+      ip_iso_coords.push_back({0.,0.774596669241483,0.});
+      ip_iso_coords.push_back({0.774596669241483,0.774596669241483,0.});
       ip_iso_coords.push_back({-0.774596669241483,-0.774596669241483,0.774596669241483});
-      ip_iso_coords.push_back({0,-0.774596669241483,0.774596669241483});
+      ip_iso_coords.push_back({0.,-0.774596669241483,0.774596669241483});
       ip_iso_coords.push_back({0.774596669241483,-0.774596669241483,0.774596669241483});
-      ip_iso_coords.push_back({-0.774596669241483,0,0.774596669241483});
-      ip_iso_coords.push_back({0,0,0.774596669241483});
-      ip_iso_coords.push_back({0.774596669241483,0,0.774596669241483});
+      ip_iso_coords.push_back({-0.774596669241483,0.,0.774596669241483});
+      ip_iso_coords.push_back({0.,0.,0.774596669241483});
+      ip_iso_coords.push_back({0.774596669241483,0.,0.774596669241483});
       ip_iso_coords.push_back({-0.774596669241483,0.774596669241483,0.774596669241483});
-      ip_iso_coords.push_back({0,0.774596669241483,0.774596669241483});
+      ip_iso_coords.push_back({0.,0.774596669241483,0.774596669241483});
       ip_iso_coords.push_back({0.774596669241483,0.774596669241483,0.774596669241483});
     }
   }else if ((element_type>=28) && (element_type<=33)) // tet
@@ -2720,9 +2764,9 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
       ip_iso_coords.push_back({0.166666666666667,0.166666666666667,-0.774596669241483});
       ip_iso_coords.push_back({0.666666666666667,0.166666666666667,-0.774596669241483});
       ip_iso_coords.push_back({0.166666666666667,0.666666666666667,-0.774596669241483});
-      ip_iso_coords.push_back({0.166666666666667,0.166666666666667,0});
-      ip_iso_coords.push_back({0.666666666666667,0.166666666666667,0});
-      ip_iso_coords.push_back({0.166666666666667,0.666666666666667,0});
+      ip_iso_coords.push_back({0.166666666666667,0.166666666666667,0.});
+      ip_iso_coords.push_back({0.666666666666667,0.166666666666667,0.});
+      ip_iso_coords.push_back({0.166666666666667,0.666666666666667,0.});
       ip_iso_coords.push_back({0.166666666666667,0.166666666666667,0.774596669241483});
       ip_iso_coords.push_back({0.666666666666667,0.166666666666667,0.774596669241483});
       ip_iso_coords.push_back({0.166666666666667,0.666666666666667,0.774596669241483});
@@ -2730,7 +2774,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
   }else{
     for (size_t i = 0; i < ip; i++)
     {
-      ip_iso_coords.push_back({0,0,0});
+      ip_iso_coords.push_back({0.,0.,0.});
     }
   }
 
@@ -2759,108 +2803,108 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
   //compute shape functions IMPORTANT FROM CCX SOURCE CODE YOU HAVE TO MATCH THE NODE ORDER LATER!!!
   if ((element_type == 11)||(element_type == 12)) // tri linear
   {
-    shape_functions.push_back(1-xi-eta);
+    shape_functions.push_back(1.-xi-eta);
     shape_functions.push_back(xi);
     shape_functions.push_back(eta);
   }else if ((element_type == 23)||(element_type == 24)) // quad linear
   {
-    shape_functions.push_back((1-xi)*(1-eta)/4);
-    shape_functions.push_back((1+xi)*(1-eta)/4);
-    shape_functions.push_back((1+xi)*(1+eta)/4);
-    shape_functions.push_back((1-xi)*(1+eta)/4);
+    shape_functions.push_back((1.-xi)*(1.-eta)/4.);
+    shape_functions.push_back((1.+xi)*(1.-eta)/4.);
+    shape_functions.push_back((1.+xi)*(1.+eta)/4.);
+    shape_functions.push_back((1.-xi)*(1.+eta)/4.);
   }else if ((element_type == 28)||(element_type == 29)) // tet linear
   {
-    shape_functions.push_back(1-xi-eta-zeta);
+    shape_functions.push_back(1.-xi-eta-zeta);
     shape_functions.push_back(xi);
     shape_functions.push_back(eta);
     shape_functions.push_back(zeta);
   }else if (element_type == 13) // tri quadratic
   {
-    shape_functions.push_back(2*(0.5-xi-eta)*(1-xi-eta));
-    shape_functions.push_back(xi*(2*xi-1));
-    shape_functions.push_back(eta*(2*eta-1));
-    shape_functions.push_back(4*xi*(1-xi-eta));
-    shape_functions.push_back(4*xi*eta);
-    shape_functions.push_back(4*eta*(1-xi-eta));
+    shape_functions.push_back(2.*(0.5-xi-eta)*(1.-xi-eta));
+    shape_functions.push_back(xi*(2.*xi-1.));
+    shape_functions.push_back(eta*(2.*eta-1.));
+    shape_functions.push_back(4.*xi*(1.-xi-eta));
+    shape_functions.push_back(4.*xi*eta);
+    shape_functions.push_back(4.*eta*(1.-xi-eta));
   }else if ((element_type == 48)||(element_type == 49)) // wedge linear
   {
-    shape_functions.push_back(0.5*(1-xi-eta)*(1-zeta));
-    shape_functions.push_back(0.5*xi*(1-zeta));
-    shape_functions.push_back(0.5*eta*(1-zeta));
-    shape_functions.push_back(0.5*(1-xi-eta)*(1+zeta));
-    shape_functions.push_back(0.5*xi*(1+zeta));
-    shape_functions.push_back(0.5*eta*(1+zeta));
+    shape_functions.push_back(0.5*(1.-xi-eta)*(1.-zeta));
+    shape_functions.push_back(0.5*xi*(1.-zeta));
+    shape_functions.push_back(0.5*eta*(1.-zeta));
+    shape_functions.push_back(0.5*(1.-xi-eta)*(1.+zeta));
+    shape_functions.push_back(0.5*xi*(1.+zeta));
+    shape_functions.push_back(0.5*eta*(1.+zeta));
   }else if ((element_type == 39)||(element_type == 40)) // hex linear
   {
-    shape_functions.push_back((1-xi)*(1-eta)*(1-zeta)/8);
-    shape_functions.push_back((1+xi)*(1-eta)*(1-zeta)/8);
-    shape_functions.push_back((1+xi)*(1+eta)*(1-zeta)/8);
-    shape_functions.push_back((1-xi)*(1+eta)*(1-zeta)/8);
-    shape_functions.push_back((1-xi)*(1-eta)*(1+zeta)/8);
-    shape_functions.push_back((1+xi)*(1-eta)*(1+zeta)/8);
-    shape_functions.push_back((1+xi)*(1+eta)*(1+zeta)/8);
-    shape_functions.push_back((1-xi)*(1+eta)*(1+zeta)/8);
+    shape_functions.push_back((1.-xi)*(1.-eta)*(1.-zeta)/8.);
+    shape_functions.push_back((1.+xi)*(1.-eta)*(1.-zeta)/8.);
+    shape_functions.push_back((1.+xi)*(1.+eta)*(1.-zeta)/8.);
+    shape_functions.push_back((1.-xi)*(1.+eta)*(1.-zeta)/8.);
+    shape_functions.push_back((1.-xi)*(1.-eta)*(1.+zeta)/8.);
+    shape_functions.push_back((1.+xi)*(1.-eta)*(1.+zeta)/8.);
+    shape_functions.push_back((1.+xi)*(1.+eta)*(1.+zeta)/8.);
+    shape_functions.push_back((1.-xi)*(1.+eta)*(1.+zeta)/8.);
   }else if (element_type == 26) // quad quadratic
   {
-    shape_functions.push_back((1-xi)*(1-eta)*(-xi-eta-1)/4);
-    shape_functions.push_back((1+xi)*(1-eta)*(xi-eta-1)/4);
-    shape_functions.push_back((1+xi)*(1+eta)*(xi+eta-1)/4);
-    shape_functions.push_back((1-xi)*(1+eta)*(-xi+eta-1)/4);
-    shape_functions.push_back((1+xi)*(1-xi)*(1-eta)/2);
-    shape_functions.push_back((1+xi)*(1+eta)*(1-eta)/2);
-    shape_functions.push_back((1+xi)*(1-xi)*(1+eta)/2);
-    shape_functions.push_back((1-xi)*(1+eta)*(1-eta)/2);
+    shape_functions.push_back((1.-xi)*(1.-eta)*(-xi-eta-1.)/4.);
+    shape_functions.push_back((1.+xi)*(1.-eta)*(xi-eta-1.)/4.);
+    shape_functions.push_back((1.+xi)*(1.+eta)*(xi+eta-1.)/4.);
+    shape_functions.push_back((1.-xi)*(1.+eta)*(-xi+eta-1.)/4.);
+    shape_functions.push_back((1.+xi)*(1-xi)*(1.-eta)/2.);
+    shape_functions.push_back((1.+xi)*(1.+eta)*(1.-eta)/2.);
+    shape_functions.push_back((1.+xi)*(1.-xi)*(1.+eta)/2.);
+    shape_functions.push_back((1.-xi)*(1.+eta)*(1.-eta)/2.);
   }else if (element_type == 31) // tet quadratic
   {
-    shape_functions.push_back((2*(1-xi-eta-zeta)-1)*(1-xi-eta-zeta));
-    shape_functions.push_back(xi*(2*xi-1));
-    shape_functions.push_back(eta*(2*eta-1));
-    shape_functions.push_back(zeta*(2*zeta-1));
-    shape_functions.push_back(4*xi*(1-xi-eta-zeta));
-    shape_functions.push_back(4*xi*eta);
-    shape_functions.push_back(4*eta*(1-xi-eta-zeta));
-    shape_functions.push_back(4*zeta*(1-xi-eta-zeta));
-    shape_functions.push_back(4*xi*zeta);
-    shape_functions.push_back(4*eta*zeta);
+    shape_functions.push_back((2.*(1.-xi-eta-zeta)-1.)*(1.-xi-eta-zeta));
+    shape_functions.push_back(xi*(2.*xi-1.));
+    shape_functions.push_back(eta*(2.*eta-1.));
+    shape_functions.push_back(zeta*(2.*zeta-1.));
+    shape_functions.push_back(4.*xi*(1.-xi-eta-zeta));
+    shape_functions.push_back(4.*xi*eta);
+    shape_functions.push_back(4.*eta*(1.-xi-eta-zeta));
+    shape_functions.push_back(4.*zeta*(1.-xi-eta-zeta));
+    shape_functions.push_back(4.*xi*zeta);
+    shape_functions.push_back(4.*eta*zeta);
   }else if (element_type == 50) // wedge quadratic
   {
-    shape_functions.push_back(0.5*(1-xi-eta)*(1-zeta)*(2*xi+2*eta+zeta));
-    shape_functions.push_back(0.5*xi*(1-zeta)*(2*xi-2-zeta));
-    shape_functions.push_back(0.5*eta*(1-zeta)*(2*eta-2-zeta));
-    shape_functions.push_back(0.5*(1-xi-eta)*(1+zeta)*(2*xi+2*eta-zeta));
-    shape_functions.push_back(0.5*xi*(1+zeta)*(2*xi-2+zeta));
-    shape_functions.push_back(0.5*eta*(1+zeta)*(2*eta-2+zeta));
-    shape_functions.push_back(2*xi*(1-xi-eta)*(1-zeta));
-    shape_functions.push_back(2*xi*eta*(1-zeta));
-    shape_functions.push_back(2*eta*(1-xi-eta)*(1-zeta));
-    shape_functions.push_back(2*xi*(1-xi-eta)*(1+zeta));
-    shape_functions.push_back(2*xi*eta*(1+zeta));
-    shape_functions.push_back(2*eta*(1-xi-eta)*(1+zeta));
-    shape_functions.push_back((1-xi-eta)*(1-zeta*zeta));
-    shape_functions.push_back(xi*(1-zeta*zeta));
-    shape_functions.push_back(eta*(1-zeta*zeta));
+    shape_functions.push_back(-0.5*(1.-xi-eta)*(1.-zeta)*((2.*xi)+(2.*eta)+zeta));
+    shape_functions.push_back(0.5*xi*(1.-zeta)*((2.*xi)-2.-zeta));
+    shape_functions.push_back(0.5*eta*(1.-zeta)*((2.*eta)-2.-zeta));
+    shape_functions.push_back(-0.5*(1.-xi-eta)*(1.+zeta)*((2.*xi)+(2.*eta)-zeta));
+    shape_functions.push_back(0.5*xi*(1.+zeta)*((2.*xi)-2.+zeta));
+    shape_functions.push_back(0.5*eta*(1.+zeta)*((2.*eta)-2.+zeta));
+    shape_functions.push_back(2.*xi*(1.-xi-eta)*(1.-zeta));
+    shape_functions.push_back(2.*xi*eta*(1.-zeta));
+    shape_functions.push_back(2.*eta*(1.-xi-eta)*(1.-zeta));
+    shape_functions.push_back(2.*xi*(1.-xi-eta)*(1.+zeta));
+    shape_functions.push_back(2.*xi*eta*(1.+zeta));
+    shape_functions.push_back(2.*eta*(1.-xi-eta)*(1.+zeta));
+    shape_functions.push_back((1.-xi-eta)*(1.-(zeta*zeta)));
+    shape_functions.push_back(xi*(1.-(zeta*zeta)));
+    shape_functions.push_back(eta*(1.-(zeta*zeta)));
   }else if (element_type == 42) // hex quadratic
   {
-    shape_functions.push_back(-(1-xi)*(1-eta)*(1-zeta)*((1+xi)+(1+eta)+zeta)/8);
-    shape_functions.push_back(-(1+xi)*(1-eta)*(1-zeta)*((1-xi)+(1+eta)+zeta)/8);
-    shape_functions.push_back(-(1+xi)*(1+eta)*(1-zeta)*((1-xi)+(1-eta)+zeta)/8);
-    shape_functions.push_back(-(1-xi)*(1+eta)*(1-zeta)*((1+xi)+(1-eta)+zeta)/8);
-    shape_functions.push_back(-(1-xi)*(1-eta)*(1+zeta)*((1+xi)+(1+eta)-zeta)/8);
-    shape_functions.push_back(-(1+xi)*(1-eta)*(1+zeta)*((1-xi)+(1+eta)-zeta)/8);
-    shape_functions.push_back(-(1+xi)*(1+eta)*(1+zeta)*((1-xi)+(1-eta)-zeta)/8);
-    shape_functions.push_back(-(1-xi)*(1+eta)*(1+zeta)*((1+xi)+(1-eta)-zeta)/8);
-    shape_functions.push_back((1-xi)*(1+xi)/4*(1-eta)*(1-zeta));
-    shape_functions.push_back((1-eta)*(1+eta)/4*(1+xi)*(1-zeta));
-    shape_functions.push_back((1-xi)*(1+xi)/4*(1+eta)*(1-zeta));
-    shape_functions.push_back((1-eta)*(1+eta)/4*(1-xi)*(1-zeta));
-    shape_functions.push_back((1-xi)*(1+xi)/4*(1-eta)*(1+zeta));
-    shape_functions.push_back((1-eta)*(1+eta)/4*(1+xi)*(1+zeta));
-    shape_functions.push_back((1-xi)*(1+xi)/4*(1+eta)*(1+zeta));
-    shape_functions.push_back((1-eta)*(1+eta)/4*(1-xi)*(1+zeta));
-    shape_functions.push_back((1-zeta)*(1+zeta)/4*(1-xi)*(1-eta));
-    shape_functions.push_back((1-zeta)*(1+zeta)/4*(1+xi)*(1-eta));
-    shape_functions.push_back((1-zeta)*(1+zeta)/4*(1+xi)*(1+eta));
-    shape_functions.push_back((1-zeta)*(1+zeta)/4*(1-xi)*(1+eta));
+    shape_functions.push_back(-(1.-xi)*(1.-eta)*(1.-zeta)*((1.+xi)+(1.+eta)+zeta)/8.);
+    shape_functions.push_back(-(1.+xi)*(1.-eta)*(1.-zeta)*((1.-xi)+(1.+eta)+zeta)/8.);
+    shape_functions.push_back(-(1.+xi)*(1.+eta)*(1.-zeta)*((1.-xi)+(1.-eta)+zeta)/8.);
+    shape_functions.push_back(-(1.-xi)*(1.+eta)*(1.-zeta)*((1.+xi)+(1.-eta)+zeta)/8.);
+    shape_functions.push_back(-(1.-xi)*(1.-eta)*(1.+zeta)*((1.+xi)+(1.+eta)-zeta)/8.);
+    shape_functions.push_back(-(1.+xi)*(1.-eta)*(1.+zeta)*((1.-xi)+(1.+eta)-zeta)/8.);
+    shape_functions.push_back(-(1.+xi)*(1.+eta)*(1.+zeta)*((1.-xi)+(1.-eta)-zeta)/8.);
+    shape_functions.push_back(-(1.-xi)*(1.+eta)*(1.+zeta)*((1.+xi)+(1.-eta)-zeta)/8.);
+    shape_functions.push_back((1.-xi)*(1.+xi)/4.*(1.-eta)*(1.-zeta));
+    shape_functions.push_back((1.-eta)*(1.+eta)/4.*(1.+xi)*(1.-zeta));
+    shape_functions.push_back((1.-xi)*(1.+xi)/4.*(1.+eta)*(1.-zeta));
+    shape_functions.push_back((1.-eta)*(1.+eta)/4.*(1.-xi)*(1.-zeta));
+    shape_functions.push_back((1.-xi)*(1.+xi)/4.*(1.-eta)*(1.+zeta));
+    shape_functions.push_back((1.-eta)*(1.+eta)/4.*(1.+xi)*(1.+zeta));
+    shape_functions.push_back((1.-xi)*(1.+xi)/4.*(1.+eta)*(1.+zeta));
+    shape_functions.push_back((1.-eta)*(1.+eta)/4.*(1.-xi)*(1.+zeta));
+    shape_functions.push_back((1.-zeta)*(1.+zeta)/4.*(1.-xi)*(1.-eta));
+    shape_functions.push_back((1.-zeta)*(1.+zeta)/4.*(1.+xi)*(1.-eta));
+    shape_functions.push_back((1.-zeta)*(1.+zeta)/4.*(1.+xi)*(1.+eta));
+    shape_functions.push_back((1.-zeta)*(1.+zeta)/4.*(1.-xi)*(1.+eta));
   }
 
   // MATCHING NODE ORDER!!!

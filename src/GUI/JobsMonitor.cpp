@@ -133,7 +133,7 @@ void JobsMonitor::update()
     this->setWindowTitle("Jobs Monitor - " + QString::fromStdString(job_data[1]));
     
     // check if job has been restarted
-    if (QPlainTextEdit_console->blockCount() > console_output.size())
+    if (total_block_count_console_output > console_output.size())
     {
       total_block_count_console_output = 0;
       QPlainTextEdit_console->clear();

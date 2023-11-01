@@ -608,12 +608,12 @@ bool CoreJobs::result_paraview_job(int job_id)
     if ((std::stoi(jobs_data[job_data_id][3])>1) && (jobs_data[job_data_id][6] == "1"))
     { 
           
-      filepath = jobs_data[job_data_id][1] + ".0002.vtpc"; // if more than one file
+      filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".0002.vtpc"; // if more than one file
       if (access(filepath.c_str(), W_OK) == 0) 
       {
-        filepath = jobs_data[job_data_id][1] + "...vtpc";
+        filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + "...vtpc";
       }else{
-        filepath = jobs_data[job_data_id][1] + ".0001.vtpc";
+        filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".0001.vtpc";
       }
       
       std::string shellstr;
@@ -627,10 +627,10 @@ bool CoreJobs::result_paraview_job(int job_id)
     }
     if ((std::stoi(jobs_data[job_data_id][3])>1) && (jobs_data[job_data_id][6] == "2"))
     {      
-      filepath = jobs_data[job_data_id][1] + ".vtu";
+      filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".vtu";
       if (access(filepath.c_str(), W_OK) != 0) 
       {
-        filepath = jobs_data[job_data_id][1] + "...vtu";
+        filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + "...vtu";
       }
 
       std::string shellstr;
