@@ -125,7 +125,7 @@ int CoreResults::convert_result(int job_id)
   int results_data_id = get_results_data_id_from_job_id(job_id);
   int frd_data_id = get_frd_data_id_from_job_id(job_id);
   int dat_data_id = get_dat_data_id_from_job_id(job_id);
-  CoreResultsVtkWriter vtkWriter;
+  CoreResultsVtkWriter* vtkWriter = new CoreResultsVtkWriter();
 
   if (results_data_id == -1)
   {
@@ -133,11 +133,14 @@ int CoreResults::convert_result(int job_id)
   } else {
     log = "Converting results for Job ID " + std::to_string(results_data[results_data_id][1]) + " \n";
     PRINT_INFO("%s", log.c_str());
-    vtkWriter.init(job_id,&frd_data[frd_data_id],&dat_data[dat_data_id]);
-    vtkWriter.write();
-    ccx_iface->set_job_conversion(job_id,vtkWriter.write_mode); // used for manual conversion, twice is better than once
+    vtkWriter->init(job_id,&frd_data[frd_data_id],&dat_data[dat_data_id]);
+    vtkWriter->write();
+    int write_mode = vtkWriter->write_mode;
+    ccx_iface->set_job_conversion(job_id,write_mode); // used for manual conversion, twice is better than once
 
-    return vtkWriter.write_mode;
+    delete vtkWriter;
+
+    return write_mode;
   }
 }
 

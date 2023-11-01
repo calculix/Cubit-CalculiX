@@ -16,7 +16,9 @@ CoreResultsVtkWriter::CoreResultsVtkWriter()
 {}
 
 CoreResultsVtkWriter::~CoreResultsVtkWriter()
-{}
+{
+  this->clear();
+}
 
 bool CoreResultsVtkWriter::init(int job_id,CoreResultsFrd* frd,CoreResultsDat* dat)
 {
@@ -96,6 +98,19 @@ bool CoreResultsVtkWriter::clear()
   return true;
 }
 
+
+bool CoreResultsVtkWriter::clear_files()
+{
+  // erase all files
+  std::string shellstr;
+  shellstr = "rm " + filepath + "*vtu";
+  system(shellstr.c_str());
+  shellstr = "rm " + filepath + "*vtpc";
+  system(shellstr.c_str());
+
+  return true;
+}
+
 bool CoreResultsVtkWriter::clearLinked()
 {
   current_offset = 0;
@@ -136,6 +151,7 @@ bool CoreResultsVtkWriter::write_linked()
 {
   // clear all data before reading and check results
   this->clear();
+  this->clear_files();
   this->checkResults();
 
   // blocks
@@ -234,21 +250,20 @@ bool CoreResultsVtkWriter::write_linked()
 
       filepath_vtu.push_back(current_filepath_vtu);
       part_ids.push_back(current_part);
-    }
 
+      //update progress bar
+      const auto t_end = std::chrono::high_resolution_clock::now();
+      int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+      //currentDataRow += frd->result_block_data[data_ids[ii]].size();
+      if (duration > 500)
+      {
+        progressbar->percent(double(current_increment*nparts + ii)/double(max_increments*nparts));
+        progressbar->check_interrupt();
+        t_start = std::chrono::high_resolution_clock::now();
+      }
+    }
     current_filepath_vtpc = filepath + "." + this->get_increment() + ".vtpc";
     this->write_vtpc();
-
-    //update progress bar
-    const auto t_end = std::chrono::high_resolution_clock::now();
-    int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
-    //currentDataRow += frd->result_block_data[data_ids[ii]].size();
-    if (duration > 500)
-    {
-      progressbar->percent(double(current_increment)/double(max_increments));
-      progressbar->check_interrupt();
-      t_start = std::chrono::high_resolution_clock::now();
-    }
   }
   progressbar->end();
   return true;
@@ -275,6 +290,8 @@ bool CoreResultsVtkWriter::write_vtpc()
   output.append(this->level_whitespace(0) + "</VTKFile>\n");
 
   this->write_to_file(current_filepath_vtpc,output);
+
+  output = "";
 
   return true;
 }
@@ -475,6 +492,15 @@ bool CoreResultsVtkWriter::write_vtu_linked()
 
     this->write_to_file(current_filepath_vtu,output);    
   }
+
+  output = "";
+  output_nodes_ids = "";
+  output_nodes = "";
+  output_elements_ids = "";
+  output_element_connectivity = "";
+  output_element_offsets = "";
+  output_element_types = "";
+
   return true;
 }
 
@@ -498,9 +524,10 @@ bool CoreResultsVtkWriter::write_vtu_unlinked()
   
   // clear all data before reading and check results
   this->clear();
+  this->clear_files();
   this->checkResults();
 
-  progressbar->start(0,100,"Writing Results to ParaView Format - Preparing Nodes and Elements");
+  progressbar->start(0,100,"Preparing Nodes and Elements");
   auto t_start = std::chrono::high_resolution_clock::now();
 
   // write nodes
@@ -682,6 +709,14 @@ bool CoreResultsVtkWriter::write_vtu_unlinked()
   }
   
   progressbar->end();
+
+  output = "";
+  output_nodes_ids = "";
+  output_nodes = "";
+  output_elements_ids = "";
+  output_element_connectivity = "";
+  output_element_offsets = "";
+  output_element_types = "";
 
   return true;
 }
@@ -1330,7 +1365,7 @@ bool CoreResultsVtkWriter::link_nodes()
   std::vector<std::vector<int>> tmp_nodeset_node_ids = nodeset_node_ids;
   std::vector<std::vector<int>> tmp_sideset_node_ids = sideset_node_ids;
 
-  progressbar->start(0,100,"Writing Results to ParaView Format - Linking Nodes");
+  progressbar->start(0,100,"Linking Nodes");
   auto t_start = std::chrono::high_resolution_clock::now();
 
   for (size_t i = 0; i < frd_all->nodes.size(); i++)
@@ -1405,7 +1440,7 @@ bool CoreResultsVtkWriter::link_nodes()
     vec_frd[i]->result_block_type = frd_all->result_block_type;
   }
 
-  progressbar->start(0,100,"Writing Results to ParaView Format - Linking Nodal Results");
+  progressbar->start(0,100,"Linking Nodal Results");
   t_start = std::chrono::high_resolution_clock::now();
 
   for (size_t i = 0; i < max_increments; i++)
@@ -1508,23 +1543,20 @@ bool CoreResultsVtkWriter::link_nodes_fast()
   //blocks
   for (size_t i = 0; i < block_ids.size(); i++)
   {
-    auto p = sort_permutation(tmp_block_node_ids[i]);
-    this->apply_permutation(tmp_block_node_ids[i], p);
+    std::sort(tmp_block_node_ids[i].begin(), tmp_block_node_ids[i].end());
   }
   //nodesets
   for (size_t i = 0; i < nodeset_ids.size(); i++)
   { 
-    auto p = sort_permutation(tmp_nodeset_node_ids[i]);
-    this->apply_permutation(tmp_nodeset_node_ids[i], p);
+    std::sort(tmp_nodeset_node_ids[i].begin(), tmp_nodeset_node_ids[i].end());
   }
   //sidesets
   for (size_t i = 0; i < sideset_ids.size(); i++)
   { 
-    auto p = sort_permutation(tmp_sideset_node_ids[i]);
-    this->apply_permutation(tmp_sideset_node_ids[i], p);
+    std::sort(tmp_sideset_node_ids[i].begin(), tmp_sideset_node_ids[i].end());
   }
 
-  progressbar->start(0,100,"Writing Results to ParaView Format - Linking Nodes FAST");
+  progressbar->start(0,100,"Linking Nodes FAST");
   auto t_start = std::chrono::high_resolution_clock::now();
 
   //prepare empty arrays
@@ -1561,9 +1593,9 @@ bool CoreResultsVtkWriter::link_nodes_fast()
     for (size_t ii = 0; ii < block_ids.size(); ii++)
     {
       ++current_part;
-      auto lower = std::lower_bound(tmp_block_node_ids[ii].begin(), tmp_block_node_ids[ii].end(), frd_all->nodes[i][0]);
+      auto lower = std::lower_bound(tmp_block_node_ids[ii].begin(), tmp_block_node_ids[ii].end(), frd_all->nodes[i][0]);  
       if (lower!=tmp_block_node_ids[ii].end())
-      {  
+      {
         vec_frd[current_part]->nodes.push_back(frd_all->nodes[i]);
         vec_frd[current_part]->nodes_coords.push_back(frd_all->nodes_coords[i]);
         vec_frd[current_part]->nodes[vec_frd[current_part]->nodes.size()-1][1] = vec_frd[current_part]->nodes_coords.size()-1;
@@ -1666,7 +1698,7 @@ bool CoreResultsVtkWriter::link_elements()
   current_part = 0;
   std::vector<std::vector<int>> tmp_block_element_ids = block_element_ids;
 
-  progressbar->start(0,100,"Writing Results to ParaView Format - Linking Blocks");
+  progressbar->start(0,100,"Linking Blocks");
   auto t_start = std::chrono::high_resolution_clock::now();             
 
   for (size_t i = 0; i < frd_all->elements.size(); i++)
@@ -1703,7 +1735,7 @@ bool CoreResultsVtkWriter::link_elements()
   }
   progressbar->end();
 
-  progressbar->start(0,100,"Writing Results to ParaView Format - Linking Nodesets");
+  progressbar->start(0,100,"Linking Nodesets");
   t_start = std::chrono::high_resolution_clock::now();             
 
   //nodesets
@@ -1729,7 +1761,7 @@ bool CoreResultsVtkWriter::link_elements()
   }
   progressbar->end();
 
-  progressbar->start(0,100,"Writing Results to ParaView Format - Linking Sidesets");
+  progressbar->start(0,100,"Linking Sidesets");
   t_start = std::chrono::high_resolution_clock::now();             
 
   //std::string log;
@@ -1799,11 +1831,31 @@ bool CoreResultsVtkWriter::link_dat()
   std::vector<std::vector<double>> ip_nodes_coords;
   
   element_id_type_connectivity = ccx_iface->get_element_id_type_connectivity();
-  std::vector<std::vector<int>> tmp_element_id_type_connectivity;
+  std::vector<int> tmp_element_id;
+  std::vector<int> tmp_element_type;
+  std::vector<std::vector<int>> tmp_element_connectivity;
 
-  progressbar->start(0,100,"Writing Results to ParaView Format - Linking .dat: Nodes and Integrationpoints");
-  auto t_start = std::chrono::high_resolution_clock::now();
+  //split for faster searching!
+  for (size_t i = 0; i < element_id_type_connectivity.size(); i++)
+  {
+    tmp_element_id.push_back(element_id_type_connectivity[i][0]);
+    tmp_element_type.push_back(element_id_type_connectivity[i][1]);
+    tmp_element_connectivity.push_back({});
+    for (size_t ii = 2; ii < element_id_type_connectivity[i].size(); ii++)
+    {
+      tmp_element_connectivity[tmp_element_connectivity.size()-1].push_back(element_id_type_connectivity[i][ii]);
+    }    
+  }
   
+  // sorting for faster search
+  auto p = sort_permutation(tmp_element_id);
+  
+  this->apply_permutation(tmp_element_id, p);
+  this->apply_permutation(tmp_element_type, p);
+  this->apply_permutation(tmp_element_connectivity, p);
+
+  std::string bar = "";
+  auto t_start = std::chrono::high_resolution_clock::now();
   //get nodes and elements
   current_part = nparts - nparts_dat - 1;
   for (size_t i = 0 ; i < nparts_dat; i++)
@@ -1815,7 +1867,7 @@ bool CoreResultsVtkWriter::link_dat()
     std::vector<std::vector<std::vector<double>>> tmp_set_nodes_coords;
     std::vector<std::vector<int>> tmp_set_element_type_connectivity;
     std::vector<int> tmp_set_ipmax;
-
+    //this->stopwatch("start");
     for (size_t ii = 0; ii < dat_all->result_blocks.size(); ii++)
     {
       if (dat_all->result_blocks[ii][3]==i)
@@ -1823,6 +1875,9 @@ bool CoreResultsVtkWriter::link_dat()
         // create nodes
         if (dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][0][2] == 1) // nodeset
         {
+          bar = "Linking .dat: Set " + std::to_string(i) + " Nodes";
+          progressbar->start(0,100,bar.c_str());
+          t_start = std::chrono::high_resolution_clock::now();
           current_part_ip_data[current_part] = true; // no search for node ids when writing the connectivity
           for (size_t iii = 0; iii < dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]].size(); iii++)
           {
@@ -1830,7 +1885,20 @@ bool CoreResultsVtkWriter::link_dat()
             std::array<double,3> node_coords = CubitInterface::get_nodal_coordinates(dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][iii][0]);
             vec_frd[current_part]->nodes_coords.push_back({node_coords[0],node_coords[1],node_coords[2]});
             vec_frd[current_part]->nodes[vec_frd[current_part]->nodes.size()-1][1] = vec_frd[current_part]->nodes_coords.size()-1;
+
+            //update progress bar
+            const auto t_end = std::chrono::high_resolution_clock::now();
+            int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+            //currentDataRow += frd->result_block_data[data_ids[ii]].size();
+            if (duration > 500)
+            {
+              progressbar->percent(double(iii)/double(dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]].size()));
+              progressbar->check_interrupt();
+              t_start = std::chrono::high_resolution_clock::now();
+            }
           }
+          progressbar->end();
+          //this->stopwatch("nodeset");
         }else if(dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][0][2] == 2) // elements with integration points
         {  // element set
           current_part_ip_data[current_part] = true; // no search for node ids when writing the connectivity
@@ -1846,7 +1914,6 @@ bool CoreResultsVtkWriter::link_dat()
           std::vector<std::vector<double>> tmp_ip_nodes_coords;
           tmp_ip_nodes.clear();
           tmp_ip_nodes_coords.clear();
-          tmp_element_id_type_connectivity = element_id_type_connectivity;
 
           element_id_last = int(dat_all->result_block_data[dat_all->result_blocks[ii][4]][dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][0][1]][0]);
 
@@ -1859,6 +1926,9 @@ bool CoreResultsVtkWriter::link_dat()
             }
           }
 
+          bar = "Linking .dat: Set " + std::to_string(i) + " Elements with IP";
+          progressbar->start(0,100,bar.c_str());
+          t_start = std::chrono::high_resolution_clock::now();
           for (size_t iii = 0; iii < dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]].size(); iii++)
           {
             ip = int(dat_all->result_block_data[dat_all->result_blocks[ii][4]][dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][iii][1]][1]);
@@ -1902,7 +1972,7 @@ bool CoreResultsVtkWriter::link_dat()
             {
               //get element type and connectivity
               std::vector<int> element_type_connectivity;
-
+              /*
               for (size_t v = 0; v < tmp_element_id_type_connectivity.size(); v++)
               {
                 if (tmp_element_id_type_connectivity[v][0]==tmp_ip_nodes[0][1])
@@ -1914,7 +1984,16 @@ bool CoreResultsVtkWriter::link_dat()
                   tmp_element_id_type_connectivity.erase(tmp_element_id_type_connectivity.begin() + v);
                 }
               }
-              
+              */
+
+              auto lower = std::lower_bound(tmp_element_id.begin(), tmp_element_id.end(), tmp_ip_nodes[0][1]);
+              //connect with displacements
+              if (lower!=tmp_element_id.end())
+              { 
+                element_type_connectivity.push_back(tmp_element_type[lower-tmp_element_id.begin()]);
+                element_type_connectivity.insert(element_type_connectivity.end(), tmp_element_connectivity[lower-tmp_element_id.begin()].begin(), tmp_element_connectivity[lower-tmp_element_id.begin()].end());                
+              }
+
               std::vector<std::vector<double>> nodes_coords;
               for (size_t v = 1; v < element_type_connectivity.size(); v++)
               {
@@ -1960,20 +2039,36 @@ bool CoreResultsVtkWriter::link_dat()
                 ip_max = ip;
               }
             }
+            
+            //update progress bar
+            const auto t_end = std::chrono::high_resolution_clock::now();
+            int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+            //currentDataRow += frd->result_block_data[data_ids[ii]].size();
+            if (duration > 500)
+            {
+              progressbar->percent(double(iii)/double(dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]].size()));
+              progressbar->check_interrupt();
+              t_start = std::chrono::high_resolution_clock::now();
+            }
           }
+          progressbar->end();
+          //this->stopwatch("elset ip");
         }else if(dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][0][2] == 3) // elements
         {  // element set
           int element_id = 0;
-          tmp_element_id_type_connectivity = element_id_type_connectivity;
           
           std::vector<std::vector<int>> element_type_connectivity;
           std::vector<int> node_ids;
           
+          bar = "Linking .dat: Set " + std::to_string(i) + " Elements";
+          progressbar->start(0,100,bar.c_str());
+          t_start = std::chrono::high_resolution_clock::now();
           for (size_t iii = 0; iii < dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]].size(); iii++)
           {
             element_id = int(dat_all->result_block_data[dat_all->result_blocks[ii][4]][dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][iii][1]][0]);
             element_type_connectivity.push_back({});
             //get element type, connectivity and nodes
+            /*
             for (size_t iv = 0; iv < tmp_element_id_type_connectivity.size(); iv++)
             {
               if (tmp_element_id_type_connectivity[iv][0]==element_id)
@@ -1986,7 +2081,28 @@ bool CoreResultsVtkWriter::link_dat()
                 tmp_element_id_type_connectivity.erase(tmp_element_id_type_connectivity.begin() + iv);
               }
             }
+            */
+            auto lower = std::lower_bound(tmp_element_id.begin(), tmp_element_id.end(), element_id);
+            //connect with displacements
+            if (lower!=tmp_element_id.end())
+            { 
+              //element_type_connectivity[element_type_connectivity.size()-1].push_back(tmp_element_type[lower-tmp_element_id.begin()]);
+              element_type_connectivity[element_type_connectivity.size()-1].insert(element_type_connectivity[element_type_connectivity.size()-1].end(), tmp_element_connectivity[lower-tmp_element_id.begin()].begin(), tmp_element_connectivity[lower-tmp_element_id.begin()].end());
+              node_ids.insert(node_ids.end(), tmp_element_connectivity[lower-tmp_element_id.begin()].begin(), tmp_element_connectivity[lower-tmp_element_id.begin()].end());
+            }
+            //update progress bar
+            const auto t_end = std::chrono::high_resolution_clock::now();
+            int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+            //currentDataRow += frd->result_block_data[data_ids[ii]].size();
+            if (duration > 500)
+            {
+              progressbar->percent(double(iii)/double(dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]].size()));
+              progressbar->check_interrupt();
+              t_start = std::chrono::high_resolution_clock::now();
+            }
           }
+          progressbar->end();
+          
           //sort and remove duplicate nodes
           std::sort(node_ids.begin(), node_ids.end());
           if (node_ids.size() > 1)
@@ -2023,6 +2139,7 @@ bool CoreResultsVtkWriter::link_dat()
             }                        
             vec_frd[current_part]->elements[vec_frd[current_part]->elements.size()-1][2] = vec_frd[current_part]->elements_connectivity.size()-1;
           }
+          //this->stopwatch("elset");
         }
       
         // elements
@@ -2035,6 +2152,7 @@ bool CoreResultsVtkWriter::link_dat()
             vec_frd[current_part]->elements_connectivity.push_back({int(iii)});
             vec_frd[current_part]->elements[vec_frd[current_part]->elements.size()-1][2] = vec_frd[current_part]->elements_connectivity.size()-1;
           }
+          //this->stopwatch("elements nodeset");
         }else if(dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][0][2] == 2) // elements with integration points
         { // element set
           for (size_t iii = 0; iii < vec_frd[current_part]->nodes.size(); iii++)
@@ -2043,6 +2161,7 @@ bool CoreResultsVtkWriter::link_dat()
             vec_frd[current_part]->elements_connectivity.push_back({int(iii)});
             vec_frd[current_part]->elements[vec_frd[current_part]->elements.size()-1][2] = vec_frd[current_part]->elements_connectivity.size()-1;
           }
+          //this->stopwatch("elements elset ip");
         }
         // to skip rest and go for the next set
         set_ip_nodes.push_back(ip_nodes);
@@ -2054,20 +2173,9 @@ bool CoreResultsVtkWriter::link_dat()
         ii = dat_all->result_blocks.size();
       }
     }
-    //update progress bar
-    const auto t_end = std::chrono::high_resolution_clock::now();
-    int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
-    //currentDataRow += frd->result_block_data[data_ids[ii]].size();
-    if (duration > 500)
-    {
-      progressbar->percent(double(i)/double(nparts_dat));
-      progressbar->check_interrupt();
-      t_start = std::chrono::high_resolution_clock::now();
-    }
   }
-  progressbar->end();
 
-  progressbar->start(0,100,"Writing Results to ParaView Format - Linking .dat: processing result data");
+  progressbar->start(0,100,"Linking .dat: processing result data");
   t_start = std::chrono::high_resolution_clock::now();
   progressbar->percent(double(0)/double(max_increments));
   progressbar->check_interrupt();
@@ -2188,7 +2296,7 @@ bool CoreResultsVtkWriter::link_dat()
   progressbar->end();
 
 
-  progressbar->start(0,100,"Writing Results to ParaView Format - Linking .dat: computing ip displacements");
+  progressbar->start(0,100,"Linking .dat: computing ip displacements");
   t_start = std::chrono::high_resolution_clock::now();
 
   bool linkdatfast = checkLinkDatFast();
@@ -2286,6 +2394,8 @@ bool CoreResultsVtkWriter::prepare_sidesets()
   // Get a batch of elements from the sideset
   int buf_size = 100;
 
+
+
   // loop over the sidesets
   for (size_t i = 0; i < sidesets.size(); i++)
   {
@@ -2323,6 +2433,9 @@ bool CoreResultsVtkWriter::prepare_sidesets()
     std::vector<int> ccx_side_ids_all(element_count);
     std::vector<int> element_ids_all(element_count);
     std::vector<int> element_type_all(element_count);
+
+    progressbar->start(0,100,"Preparing Sidesets");
+    auto t_start = std::chrono::high_resolution_clock::now();
 
     start_index = 0;
     while( (num_elems = me_iface->get_sideset_sides(sideset,start_index,buf_size,element_ids,element_type,side_ids)) > 0)
@@ -2365,8 +2478,20 @@ bool CoreResultsVtkWriter::prepare_sidesets()
         }
         sideset_elements_connectivity[i].push_back(tmp_connectivity);
       }
-    start_index += num_elems;
+      start_index += num_elems;
+      //update progress bar
+      const auto t_end = std::chrono::high_resolution_clock::now();
+      int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+      //currentDataRow += frd->result_block_data[data_ids[ii]].size();
+      if (duration > 500)
+      {
+        progressbar->percent(double(start_index)/double(element_count));
+        progressbar->check_interrupt();
+        t_start = std::chrono::high_resolution_clock::now();
+      }
     }
+    progressbar->end();
+    
     // filter out all nodes
     std::vector<int>::iterator it;
     for (size_t ii = 0; ii < sideset_elements_connectivity[i].size(); ii++)

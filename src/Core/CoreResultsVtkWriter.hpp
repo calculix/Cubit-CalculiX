@@ -56,7 +56,7 @@ public:
   std::vector<std::vector<int>> element_id_type_connectivity; // to store the element data
   std::vector<std::vector<std::vector<int>>> set_ip_nodes;
   //ip_nodes[0][0] ip number
-  //ip_nodes[0][0] element id
+  //ip_nodes[0][1] element id
   std::vector<std::vector<std::vector<double>>> set_ip_nodes_coords;
   std::vector<std::vector<std::vector<std::vector<double>>>> set_nodes_coords;
   std::vector<std::vector<std::vector<int>>> set_element_type_connectivity;
@@ -67,6 +67,7 @@ public:
   bool init(int job_id,CoreResultsFrd* frd,CoreResultsDat* dat); // initialize
   bool reset(); // delete all data and initialize afterwards
   bool clear(); // clear all stored result data
+  bool clear_files(); // clear all stored result data
   bool clearLinked(); // clear all stored result data
   bool check_initialized(); // check if object is initialized
   bool write(); // write to paraview file formats
