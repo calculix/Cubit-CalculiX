@@ -144,16 +144,20 @@ ccx modify fieldoutput 2 element key_on E PEEQ S
 ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFL HFLF MAXE MAXS ME PHS SF SMID SNEG SPOS SVF SDV THE ZZS 
 ccx create fieldoutput name "cout" contact
 ccx modify fieldoutput 3 contact frequency 5
-ccx modify fieldoutput 3 contact key_on CDIS CSTR 
-ccx modify fieldoutput 3 contact key_off CELS PCON 
+ccx modify fieldoutput 3 contact key_on CDIS CSTR CELS
+ccx modify fieldoutput 3 contact key_off PCON
 ccx create historyoutput name "node_output" node
 ccx create historyoutput name "element_output" element
+ccx create historyoutput name "contact_output" contact
 ccx modify historyoutput 1 node nodeset 2 frequency 5
 ccx modify historyoutput 1 node key_on U RF 
 ccx modify historyoutput 1 node key_off NT TSF TTF PN PSF PTF MACH CP VF DEPF TURB MF RFL 
 ccx modify historyoutput 2 element block 1 frequency 5
 ccx modify historyoutput 2 element key_on S E PEEQ ENER ELSE ELKE EVOL EMAS EBHE CENT 
 ccx modify historyoutput 2 element key_off SVF ME CEEQ SDV HFL HFLF COORD
+ccx modify historyoutput 3 contact contactpair 1 frequency 5
+ccx modify historyoutput 3 contact key_on CDIS CSTR CELS CNUM CF CFN CFS 
+ccx modify historyoutput 3 contact key_off
 
 #steps
 
@@ -162,21 +166,21 @@ ccx modify step 1 parameter nlgeom_yes
 ccx modify step 1 static initialtimeincrement 0.1 timeperiodofstep 1 minimumtimeincrement 1e-6 maximumtimeincrement 0.1
 ccx step 1 add bc displacement 1 3 5 6
 ccx step 1 add fieldoutput 1 2 3
-ccx step 1 add historyoutput 1 2
+ccx step 1 add historyoutput 1 2 3
 
 ccx create step name "release_blank" static
 ccx modify step 2 parameter nlgeom_yes
 ccx modify step 2 static initialtimeincrement 0.1 timeperiodofstep 1 minimumtimeincrement 1e-6 maximumtimeincrement 0.1
 ccx step 2 add bc displacement 2 3 5 6
 ccx step 2 add fieldoutput 1 2 3
-ccx step 2 add historyoutput 1 2
+ccx step 2 add historyoutput 1 2 3
 
 ccx create step name "move_punch" static
 ccx modify step 3 parameter nlgeom_yes inc 1000
 ccx modify step 3 static initialtimeincrement 0.00125 timeperiodofstep 1 minimumtimeincrement 1e-6 maximumtimeincrement 0.0025
 ccx step 3 add bc displacement 4
 ccx step 3 add fieldoutput 1 2 3
-ccx step 3 add historyoutput 1 2
+ccx step 3 add historyoutput 1 2 3
 
 ccx create job name "forming"
 #ccx run job 1

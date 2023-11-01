@@ -59,13 +59,7 @@ bool CoreResultsVtkWriter::clear()
 {
   current_offset = 0;
   current_increment = 0;
-  // erase all files
-  std::string shellstr;
-  shellstr = "rm " + filepath + "*vtu";
-  system(shellstr.c_str());
-  shellstr = "rm " + filepath + "*vtpc";
-  system(shellstr.c_str());
-
+  
   nparts = 0;
   nparts_dat = 0;
   part_names.clear();
@@ -1244,6 +1238,13 @@ std::vector<int> CoreResultsVtkWriter::get_result_blocks_data_ids()
   {
     if (current_increment == frd->result_blocks[i][3])
     {
+      /*
+      //check if result block type is not supported
+      if (frd->result_block_type[frd->result_blocks[i][5]]!="CELS")
+      {
+        data_ids.push_back(i);
+      }
+      */
       data_ids.push_back(i);
     }
   }
@@ -1258,6 +1259,14 @@ std::vector<int> CoreResultsVtkWriter::get_result_blocks_data_ids_linked()
   {
     if (current_increment == frd_all->result_blocks[i][3])
     {
+      //check if result block type is not supported
+      /*
+      //check if result block type is not supported
+      if (frd->result_block_type[frd->result_blocks[i][5]]!="CELS")
+      {
+        data_ids.push_back(i);
+      }
+      */
       data_ids.push_back(i);
     }
   }
