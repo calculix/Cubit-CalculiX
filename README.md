@@ -43,7 +43,7 @@ Download the build directory and point within Cubit to the Direcetory.
 
 Restart Cubit.
 
-![Alt text](/doc/Setup_00.png?raw=true "Add Component")
+![Add Component](/doc/Setup_00.png?raw=true "Add Component")
 
 The Cubit Window should now show "Coreform Cubit 2022.4 -- with CalculiX" in the Title.
 
@@ -53,39 +53,40 @@ Now you have to fill in the Paths to CCX, CGX, Paraview, ccx2paraview, the icons
 
 Restart Cubit.
 
-![Alt text](/doc/Setup_01.png?raw=true "Setup Options")
+![Setup Options](/doc/Setup_01.png?raw=true "Setup Options")
 
 Enable Model Tree
 
 - View->CalculiX Model Tree
 
-![Alt text](/doc/Setup_02.png?raw=true "Show Model Tree")
+![Show Model Tree](/doc/Setup_02.png?raw=true "Show Model Tree")
 
 Try to open and run the journal file "first_run.jou"
 
 If everything works. It should compute a beam and automatically open the results with cgx and paraview.
 
-![Alt text](/doc/Setup_03.png?raw=true "After First Run")
+![After First Run](/doc/Setup_03.png?raw=true "After First Run")
 
 # Postprocessing
 
 After the run with CalculiX the results should be loaded and converted automatically. If a Job exited with errors you can try to convert it over the Button in the Job Monitor.
-![Alt text](/doc/postprocessing_01.png?raw=true "convert")
+![convert](/doc/postprocessing_01.png?raw=true "convert")
 
+The mises stresses and strains will be precalculated for the S and E keys.
 If the preprocessing was done in cubit and the results can be linked. Then the data from the .frd and .dat can be viewed with paraview. If a linking is not successful, then only .frd will be converted to vtu.
 In paraview you can see the linked and computed results with the multiblock inspector.
 
-![Alt text](/doc/postprocessing_02.png?raw=true "multiblock inspector")
+![multiblock inspector](/doc/postprocessing_02.png?raw=true "multiblock inspector")
 
 If integration point data was requested in the .dat, the converter computes the location of the integration points and links the results. The integration point number and the element id can be queried with paraview.
 
-![Alt text](/doc/postprocessing_03.png?raw=true "integration points")
+![integration points](/doc/postprocessing_03.png?raw=true "integration points")
 
 When there are displacements in the frd file for requested blocks in the .dat. The displacements of the integration points will also be computed.
 
 If integration point data was requested in the .dat, the converter computes the location of the integration points and links the results. The integration point number and the element id can be queried with paraview.
 
-![Alt text](/doc/postprocessing_04.png?raw=true "integration points displacements")
+![integration points displacements](/doc/postprocessing_04.png?raw=true "integration points displacements")
 
 current limitations of the converter:
 - CELS key ignored
@@ -102,7 +103,7 @@ The displacements from an .frd can be scaled and projected to the nodes in cubit
 Otherwise linking fails and no projection will be done. If a step is choosen, it will project the last available increment with displacement data.
 When choosing the totalincrement the related displacements will be used.
 
-![Alt text](/doc/projection_01.png?raw=true "projection of displacements")
+![projection of displacements](/doc/projection_01.png?raw=true "projection of displacements")
 
 # known issues
 If you want to build the component yourself, i would recommend using ubuntu 22.04 . If some symbols are missing try another OS.

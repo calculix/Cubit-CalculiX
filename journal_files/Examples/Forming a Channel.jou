@@ -183,6 +183,4 @@ ccx step 3 add fieldoutput 1 2 3
 ccx step 3 add historyoutput 1 2 3
 
 ccx create job name "forming"
-#ccx run job 1
-ccx result load job 1
-ccx result convert job 1
+ccx run job 1
