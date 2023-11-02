@@ -70,23 +70,25 @@ If everything works. It should compute a beam and automatically open the results
 # Postprocessing
 
 After the run with CalculiX the results should be loaded and converted automatically. If a Job exited with errors you can try to convert it over the Button in the Job Monitor.
-![convert](/doc/postprocessing_01.png?raw=true "convert")
 
 The mises stresses and strains will be precalculated for the S and E keys.
-If the preprocessing was done in cubit and the results can be linked. Then the data from the .frd and .dat can be viewed with paraview. If a linking is not successful, then only .frd will be converted to vtu.
+If the preprocessing was done in cubit and the results can be linked. Then the data from the .frd and .dat can be viewed with paraview. When the linking fails, the .frd will be converted to vtu.
 In paraview you can see the linked and computed results with the multiblock inspector.
 
-![multiblock inspector](/doc/postprocessing_02.png?raw=true "multiblock inspector")
+![multiblock inspector](/doc/postprocessing_01.png?raw=true "multiblock inspector")
 
-If integration point data was requested in the .dat, the converter computes the location of the integration points and links the results. The integration point number and the element id can be queried with paraview.
+If integration point data was requested in the .dat, the converter computes the location of the integration points and links the results. The integration point number and the element id can be queried with paraview. The element id can be found in the cell data. The ip number in the point data.
 
-![integration points](/doc/postprocessing_03.png?raw=true "integration points")
+![integration points](/doc/postprocessing_02.png?raw=true "integration points")
+
+![elements id](/doc/postprocessing_03.png?raw=true "element id")
+
+![ip number](/doc/postprocessing_04.png?raw=true "ip number")
 
 When there are displacements in the frd file for requested blocks in the .dat. The displacements of the integration points will also be computed.
 
-If integration point data was requested in the .dat, the converter computes the location of the integration points and links the results. The integration point number and the element id can be queried with paraview.
 
-![integration points displacements](/doc/postprocessing_04.png?raw=true "integration points displacements")
+![integration points displacements](/doc/postprocessing_05.png?raw=true "integration points displacements")
 
 current limitations of the converter:
 - CELS key ignored
