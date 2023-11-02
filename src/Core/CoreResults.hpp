@@ -8,6 +8,7 @@ class CalculiXCoreInterface;
 class CoreResultsFrd;
 class CoreResultsDat;
 class CoreResultsVtkWriter;
+class CoreResultsProject;
 
 class CoreResults
 {
@@ -40,6 +41,7 @@ public:
   bool add_result(int result_id, int job_id, int frd_id, int dat_id);
   bool load_result(int job_id); // loads the results for the job if possible
   int convert_result(int job_id); // convert the results for the job if possible
+  bool project_result(int job_id,int step,int totalincrement,double scale); // project disp result for job for specific step or increment
   int  get_results_data_id_from_job_id(int job_id); // searches for the job_id in the results_data and returns the indices or -1 if it fails
   int  get_frd_data_id_from_job_id(int job_id); // searches for the frd_id in the frd_data and returns the indices or -1 if it fails
   int  get_dat_data_id_from_job_id(int job_id); // searches for the dat_id in the dat_data and returns the indices or -1 if it fails

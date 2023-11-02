@@ -1072,6 +1072,7 @@ bool CoreResultsVtkWriter::checkLinkPossible()
   if (CubitInterface::get_element_count()!=frd->elements.size()+CubitInterface::get_list_of_free_ref_entities("vertex").size())
   {
     log = "Linking Failed! Wrong number of Elements.\n";
+    //log.append("Cubit " + std::to_string(CubitInterface::get_element_count()) + " FRD " + std::to_string(frd->elements.size()+CubitInterface::get_list_of_free_ref_entities("vertex").size()) +  "\n");
     PRINT_INFO("%s", log.c_str());
     return false;
   }

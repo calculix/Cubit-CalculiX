@@ -2119,6 +2119,11 @@ int CalculiXCore::convert_result(int job_id)
   return results->convert_result(job_id);
 }
 
+bool CalculiXCore::project_result(int job_id,int step,int totalincrement,double scale)
+{
+  return results->project_result(job_id,step,totalincrement,scale);
+}
+
 double CalculiXCore::compute_von_mises_stress(std::vector<double> vec)
 {
   double von_mises = 0;

@@ -2,6 +2,7 @@
 #include "CoreResultsFrd.hpp"
 #include "CoreResultsDat.hpp"
 #include "CoreResultsVtkWriter.hpp"
+#include "CoreResultsProject.hpp"
 #include "CalculiXCoreInterface.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
@@ -141,6 +142,38 @@ int CoreResults::convert_result(int job_id)
     delete vtkWriter;
 
     return write_mode;
+  }
+}
+
+bool CoreResults::project_result(int job_id, int step, int totalincrement,double scale)
+{
+  std::string log;
+  int results_data_id = get_results_data_id_from_job_id(job_id);
+  int frd_data_id = get_frd_data_id_from_job_id(job_id);
+  int dat_data_id = get_dat_data_id_from_job_id(job_id);
+  CoreResultsProject* projector = new CoreResultsProject();
+
+  if (results_data_id == -1)
+  {
+    return false;
+  } else {
+    if (step!=-1)
+    {
+      log = "Project results for Job ID " + std::to_string(results_data[results_data_id][1]) + " for Step " + std::to_string(step) + " \n";
+    }else{
+      log = "Project results for Job ID " + std::to_string(results_data[results_data_id][1]) + " for total increment " + std::to_string(totalincrement) + " \n";
+    }
+    PRINT_INFO("%s", log.c_str());
+    projector->init(&frd_data[frd_data_id]);
+    if (!projector->project(step,totalincrement,scale))
+    {
+      delete projector;
+      return false;
+    }
+
+    delete projector;
+
+    return true;
   }
 }
 

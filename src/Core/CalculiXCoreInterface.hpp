@@ -125,6 +125,7 @@ public:
   bool delete_result(int job_id); // delete result for job
   bool load_result(int job_id); // load result for job
   int convert_result(int job_id); // convert result for job
+  bool project_result(int job_id,int step,int totalincrement,double scale); // project disp result for job for specific step or increment
   double compute_von_mises_stress(std::vector<double> vec); // computes the von mises stress/strain for a vector of values
   double compute_von_mises_strain(std::vector<double> vec); // computes the von mises stress/strain for a vector of values
   bool create_customline(std::vector<std::string> options); // adds a new customline

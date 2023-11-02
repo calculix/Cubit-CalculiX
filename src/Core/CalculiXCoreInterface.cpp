@@ -545,6 +545,11 @@ int CalculiXCoreInterface::convert_result(int job_id)
   return ccx_core.convert_result(job_id);
 }
 
+bool CalculiXCoreInterface::project_result(int job_id,int step,int totalincrement,double scale)
+{
+  return ccx_core.project_result(job_id,step,totalincrement,scale);
+}
+
 double CalculiXCoreInterface::compute_von_mises_stress(std::vector<double> vec)
 {
   return ccx_core.compute_von_mises_stress(vec);
