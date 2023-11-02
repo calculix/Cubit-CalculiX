@@ -99,7 +99,7 @@ current limitations of the converter:
 
 # Projection of Displacements
 
-with the command "ccx result project job '<job_id>' {step '<step>' | totalincrement '<totalincrement>'} [scale '<scale>']"
+with the command "ccx result project job 'job_id' {step 'step' | totalincrement 'totalincrement'} [scale 'scale']"
 
 The displacements from an .frd can be scaled and projected to the nodes in cubit. It has to be .frd where the mesh is ident with the one in cubit.
 Otherwise linking fails and no projection will be done. If a step is choosen, it will project the last available increment with displacement data.
