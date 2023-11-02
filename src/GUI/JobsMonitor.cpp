@@ -42,10 +42,11 @@ JobsMonitor::JobsMonitor()
   pushButton_result_cgx->setFixedWidth(buttonWidth);
   boxLayout_window->addWidget(pushButton_result_cgx);
 
-  pushButton_result_ccx2paraview = new QPushButton();
-  pushButton_result_ccx2paraview->setText("ccx2paraview");
-  pushButton_result_ccx2paraview->setFixedWidth(buttonWidth);
-  boxLayout_window->addWidget(pushButton_result_ccx2paraview);
+  
+  pushButton_result_convert = new QPushButton();
+  pushButton_result_convert->setText("convert");
+  pushButton_result_convert->setFixedWidth(buttonWidth);
+  boxLayout_window->addWidget(pushButton_result_convert);
 
   pushButton_result_paraview = new QPushButton();
   pushButton_result_paraview->setText("Result ParaView");
@@ -58,18 +59,21 @@ JobsMonitor::JobsMonitor()
   boxLayout_window->addWidget(pushButton_close);
   
   // textarea
-  QTextEdit_console = new QTextEdit();
-  QTextEdit_console->setReadOnly(true);
-  QTextEdit_cvg = new QTextEdit();
-  QTextEdit_cvg->setReadOnly(true);
-  QTextEdit_sta = new QTextEdit();
-  QTextEdit_sta->setReadOnly(true);
+  QPlainTextEdit_console = new QPlainTextEdit();
+  QPlainTextEdit_console->setReadOnly(true);
+  QPlainTextEdit_console->setMaximumBlockCount(maximumBlockCount);
+  QPlainTextEdit_cvg = new QPlainTextEdit();
+  QPlainTextEdit_cvg->setReadOnly(true);
+  QPlainTextEdit_cvg->setMaximumBlockCount(maximumBlockCount);
+  QPlainTextEdit_sta = new QPlainTextEdit();
+  QPlainTextEdit_sta->setReadOnly(true);
+  QPlainTextEdit_sta->setMaximumBlockCount(maximumBlockCount);
 
   //tab widget
   TabWidget = new QTabWidget();
-  TabWidget->addTab(QTextEdit_console,"Console Output");
-  TabWidget->addTab(QTextEdit_cvg,"*.cvg");
-  TabWidget->addTab(QTextEdit_sta,"*.sta");
+  TabWidget->addTab(QPlainTextEdit_console,"Console Output");
+  TabWidget->addTab(QPlainTextEdit_cvg,"*.cvg");
+  TabWidget->addTab(QPlainTextEdit_sta,"*.sta");
   boxLayout_tab->addWidget(TabWidget);
 
   
@@ -77,7 +81,7 @@ JobsMonitor::JobsMonitor()
   QObject::connect(pushButton_run, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_run_clicked(bool)));
   QObject::connect(pushButton_kill, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_kill_clicked(bool)));
   QObject::connect(pushButton_result_cgx, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_result_cgx_clicked(bool)));
-  QObject::connect(pushButton_result_ccx2paraview, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_result_ccx2paraview_clicked(bool)));
+  QObject::connect(pushButton_result_convert, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_result_convert_clicked(bool)));
   QObject::connect(pushButton_result_paraview, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_result_paraview_clicked(bool)));
   QObject::connect(pushButton_close, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_close_clicked(bool)));
   
@@ -104,14 +108,20 @@ void JobsMonitor::update_slot()
 void JobsMonitor::update()
 {
   std::vector<std::string> job_data;
+  std::vector<std::string> console_output;
+  std::vector<std::string> cvg;
+  std::vector<std::string> sta;
   job_data = ccx_iface->get_job_data(current_job_id);
+  console_output = ccx_iface->get_job_console_output(current_job_id);
+  cvg = ccx_iface->get_job_cvg(current_job_id);
+  sta = ccx_iface->get_job_sta(current_job_id);
 
   // jobs_data[0][1] name
   // jobs_data[0][2] filepath
   // jobs_data[0][3] status -1 no process, 1 process running, 2 process finished, 3 process killed, 4 process finished with errors
   // jobs_data[0][4] process id
   // jobs_data[0][5] Output Console
-  // jobs_data[0][6] converted with ccx2paraview -1 false, 1 true
+  // jobs_data[0][6] converted -1 false, 1 true
   // jobs_data[0][7] .cvg
   // jobs_data[0][8] .sta
 
@@ -121,36 +131,77 @@ void JobsMonitor::update()
     //PRINT_INFO("%s", log.c_str());
 
     this->setWindowTitle("Jobs Monitor - " + QString::fromStdString(job_data[1]));
+    
+    // check if job has been restarted
+    if (total_block_count_console_output > console_output.size())
+    {
+      total_block_count_console_output = 0;
+      QPlainTextEdit_console->clear();
+    }
+    if (QPlainTextEdit_cvg->blockCount() > cvg.size())
+    {
+      total_block_count_cvg = 0;
+      QPlainTextEdit_cvg->clear();
+    }
+    if (QPlainTextEdit_sta->blockCount() > sta.size())
+    {
+      total_block_count_sta = 0;
+      QPlainTextEdit_sta->clear();
+    }
 
-    if (QTextEdit_console->toPlainText()!=QString::fromStdString(job_data[5]))
+    if (QPlainTextEdit_console->blockCount() < console_output.size())
     {
-      QTextEdit_console->setText(QString::fromStdString(job_data[5]));
-      QTextEdit_console->verticalScrollBar()->setValue(QTextEdit_console->verticalScrollBar()->maximum());
+      if (QPlainTextEdit_console->toPlainText().toStdString()=="")
+      {
+        QPlainTextEdit_console->appendPlainText(QString::fromStdString(console_output[0]));
+        ++total_block_count_console_output;  
+      }
+      for (size_t i = total_block_count_console_output; i < console_output.size(); i++)
+      {
+        ++total_block_count_console_output;
+        QPlainTextEdit_console->appendPlainText(QString::fromStdString(console_output[i]));  
+      }
     }
-    if (QTextEdit_cvg->toPlainText()!=QString::fromStdString(job_data[7]))
+    if (QPlainTextEdit_cvg->blockCount() < cvg.size())
     {
-      QTextEdit_cvg->setText(QString::fromStdString(job_data[7]));
-      QTextEdit_cvg->verticalScrollBar()->setValue(QTextEdit_cvg->verticalScrollBar()->maximum());
+      if (QPlainTextEdit_cvg->toPlainText().toStdString()=="")
+      {
+        QPlainTextEdit_cvg->appendPlainText(QString::fromStdString(cvg[0]));  
+        ++total_block_count_cvg;
+      }
+      for (size_t i = total_block_count_cvg; i < cvg.size(); i++)
+      {
+        ++total_block_count_cvg;
+        QPlainTextEdit_cvg->appendPlainText(QString::fromStdString(cvg[i]));  
+      }
     }
-    if (QTextEdit_sta->toPlainText()!=QString::fromStdString(job_data[8]))
+    if (QPlainTextEdit_sta->blockCount() < sta.size())
     {
-      QTextEdit_sta->setText(QString::fromStdString(job_data[8]));
-      QTextEdit_sta->verticalScrollBar()->setValue(QTextEdit_sta->verticalScrollBar()->maximum());
+      if (QPlainTextEdit_sta->toPlainText().toStdString()=="")
+      {
+        QPlainTextEdit_sta->appendPlainText(QString::fromStdString(sta[0]));  
+        ++total_block_count_sta;
+      }
+      for (size_t i = total_block_count_sta; i < sta.size(); i++)
+      {
+        ++total_block_count_sta;
+        QPlainTextEdit_sta->appendPlainText(QString::fromStdString(sta[i]));  
+      }
     }
-
+    
     if (std::stoi(job_data[3])==-1)
     {
       pushButton_run->setEnabled(true);
       pushButton_kill->setEnabled(false);
       pushButton_result_cgx->setEnabled(false);
-      pushButton_result_ccx2paraview->setEnabled(false);
+      pushButton_result_convert->setEnabled(false);
       pushButton_result_paraview->setEnabled(false);
     }else if (std::stoi(job_data[3])==1)
     {
       pushButton_run->setEnabled(false);
       pushButton_kill->setEnabled(true);
       pushButton_result_cgx->setEnabled(false);
-      pushButton_result_ccx2paraview->setEnabled(false);
+      pushButton_result_convert->setEnabled(false);
       pushButton_result_paraview->setEnabled(false);
     }else if (std::stoi(job_data[3])>1)
     {
@@ -159,12 +210,12 @@ void JobsMonitor::update()
       pushButton_result_cgx->setEnabled(true);
       if (std::stoi(job_data[6])==-1)
       {
-        pushButton_result_ccx2paraview->setEnabled(true);
+        pushButton_result_convert->setEnabled(true);
       }else
       {
-        pushButton_result_ccx2paraview->setEnabled(false);
+        pushButton_result_convert->setEnabled(false);
       }
-      if (std::stoi(job_data[6])==1)
+      if (std::stoi(job_data[6])>0)
       {
         pushButton_result_paraview->setEnabled(true);
       }else
@@ -177,7 +228,7 @@ void JobsMonitor::update()
     pushButton_run->setEnabled(false);
     pushButton_kill->setEnabled(false);
     pushButton_result_cgx->setEnabled(false);
-    pushButton_result_ccx2paraview->setEnabled(false);
+    pushButton_result_convert->setEnabled(false);
     pushButton_result_paraview->setEnabled(false);
   }
 }
@@ -238,7 +289,7 @@ void JobsMonitor::on_pushButton_result_cgx_clicked(bool)
   }
 }
 
-void JobsMonitor::on_pushButton_result_ccx2paraview_clicked(bool)
+void JobsMonitor::on_pushButton_result_convert_clicked(bool)
 {
   QStringList commands;
   QString command = "";
@@ -246,7 +297,9 @@ void JobsMonitor::on_pushButton_result_ccx2paraview_clicked(bool)
   ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");
   if(cubit_translator)
   {
-    command = "ccx result ccx2paraview job " + QString::number(current_job_id);
+    command = "ccx result load job " + QString::number(current_job_id);
+    commands.push_back(command);
+    command = "ccx result convert job " + QString::number(current_job_id);
     commands.push_back(command);
     for(int i = 0; i < commands.size(); i++)
     cubit_translator->decode(commands[i]);

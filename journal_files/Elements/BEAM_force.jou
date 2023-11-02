@@ -86,5 +86,3 @@ export ccx "B32R_force.inp" overwrite
 ccx create job name "B32R_force" filepath "B32R_force.inp"
 
 #ccx run job 1
-
-

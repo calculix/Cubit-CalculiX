@@ -6,6 +6,7 @@
 #include <chrono>
 #include <ctime>
 #include <algorithm>
+#include <cmath>
 #include "CubitInterface.hpp"
 #include "CubitCoreformInterface.hpp"
 #include "CubitMessage.hpp"
@@ -32,6 +33,7 @@
 #include "CoreHBCs.hpp"
 #include "CoreSteps.hpp"
 #include "CoreJobs.hpp"
+#include "CoreResults.hpp"
 #include "CoreTimer.hpp"
 #include "CoreCustomLines.hpp"
 #include "loadUserOptions.hpp"
@@ -41,7 +43,7 @@ CalculiXCore::CalculiXCore():
   contactpairs(NULL),amplitudes(NULL),loadsforces(NULL),loadspressures(NULL),loadsheatfluxes(NULL),
   loadsgravity(NULL),loadscentrifugal(NULL),
   bcsdisplacements(NULL),bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL),
-  initialconditions(NULL), hbcs(NULL), steps(NULL),jobs(NULL),timer(NULL),customlines(NULL)
+  initialconditions(NULL), hbcs(NULL), steps(NULL),jobs(NULL),results(NULL),timer(NULL),customlines(NULL)
 {
   init();
 }
@@ -88,6 +90,8 @@ CalculiXCore::~CalculiXCore()
     delete steps;
   if(jobs)
     delete jobs;
+  if(results)
+    delete results;
   if(timer)
     delete timer;
   if(customlines)
@@ -211,6 +215,11 @@ bool CalculiXCore::init()
   
   jobs->init();
 
+  if(!results)
+    results = new CoreResults;
+  
+  results->init();
+
   if(!timer)
     timer = new CoreTimer;
 
@@ -278,6 +287,7 @@ bool CalculiXCore::reset()
   hbcs->reset();
   steps->reset();
   jobs->reset();
+  results->reset();
   customlines->reset();
 
   sideset_face_data.clear();
@@ -953,6 +963,7 @@ std::string CalculiXCore::print_data()
   str_return.append(hbcs->print_data());
   str_return.append(steps->print_data());
   str_return.append(jobs->print_data());
+  str_return.append(results->print_data());
   str_return.append(customlines->print_data());
 
   return str_return;
@@ -965,6 +976,32 @@ std::string  CalculiXCore::to_string_scientific(double value)
   ss.precision(6);
   ss << std::scientific << value;
   output = ss.str();
+  return output;
+}
+
+double  CalculiXCore::string_scientific_to_double(std::string value)
+{
+  double output;
+  if (value[0] == '-') // check if negative
+  {
+    value.replace(0,1, "");
+    //check if is INF
+    if (value=="INF")
+    {
+      output = -1.255070e+29;
+    }else{
+      output = std::stod(value);
+      output = -1*output;
+    }
+  } else {
+    //check if is INF
+    if (value=="INF")
+    {
+      output = 1.255070e+29;
+    }else{
+      output = std::stod(value);
+    }
+  }
   return output;
 }
 
@@ -996,6 +1033,70 @@ std::string CalculiXCore::get_cubit_element_type_entity(std::string cubit_elemen
   return cb->get_cubit_element_type_entity_name(cubit_element_type);
 }
 
+std::vector<std::vector<int>> CalculiXCore::get_element_id_type_connectivity()
+{
+  std::vector<std::vector<int>> id_type_connectivity;
+  std::vector<int> tmp_id_type_connectivity;
+  // Get Block id's
+  std::vector<int> blocks;
+  blocks = this->get_blocks();
+
+  // Get a batch of elements in an initialized block
+  int buf_size = 100;
+  std::vector<ElementType>   element_type(buf_size);
+  std::vector<ElementHandle> handles(buf_size);
+
+  // define name variable
+  std::string element_type_name;
+  std::string cubit_element_type_entity;
+  std::string block_name;
+
+  // Elements in a buffer set will be of the same element type and in the same block
+  for (size_t i = 0; i < blocks.size(); i++)
+  {
+    int num_elems;
+    int start_index = 0;
+    //BlockHandle block = blocks[i];
+    BlockHandle block;
+    me_iface->get_block_handle(blocks[i], block);
+
+    // write only once per block
+    int block_id = blocks[i];
+  
+    while( (num_elems = me_iface->get_block_elements(start_index, buf_size, block, element_type, handles)) > 0)
+    {
+      // Get ids for the element handles
+      std::vector<int> ids(num_elems);
+      me_iface->get_element_ids(num_elems, handles, ids);
+
+      // convert ids from element_id to global_element_id
+      cubit_element_type_entity = me_iface->get_element_type_name(element_type[0]);
+      cubit_element_type_entity = this->get_cubit_element_type_entity(cubit_element_type_entity);
+
+      //rewrite to global element ids
+      for (size_t ii = 0; ii < ids.size(); ii++)
+      {
+        ids[ii] = CubitInterface::get_global_element_id(cubit_element_type_entity,ids[ii]);
+        
+        tmp_id_type_connectivity.clear();
+        tmp_id_type_connectivity.push_back(ids[ii]);
+        tmp_id_type_connectivity.push_back(element_type[ii]);
+        int num_nodes;
+        me_iface->get_nodes_per_element(element_type[ii],num_nodes);
+        std::vector<int> conn(num_nodes);
+        me_iface->get_connectivity(handles[ii],conn);
+        for (size_t iii = 0; iii < conn.size(); iii++)
+        {
+          tmp_id_type_connectivity.push_back(conn[iii]);
+        }
+        id_type_connectivity.push_back(tmp_id_type_connectivity);
+      }
+      start_index += num_elems;
+    }
+  }
+  return id_type_connectivity;
+}
+
 std::string CalculiXCore::get_block_name(int block_id)
 {
   std::string block_name;
@@ -1013,6 +1114,91 @@ std::string CalculiXCore::get_block_name(int block_id)
     block_name = "Block_" + std::to_string(block_id);
   }
   return block_name;
+}
+
+std::vector<int> CalculiXCore::get_block_node_ids(int block_id)
+{
+  //std::vector<int> node_ids;
+  //node_ids = CubitInterface::get_block_nodes(block_id);
+  std::vector< int > returned_node_list;
+  std::vector< int > returned_sphere_list;
+  std::vector< int > returned_edge_list;
+  std::vector< int > returned_tri_list;
+  std::vector< int > returned_face_list;
+  std::vector< int > returned_pyramid_list;
+  std::vector< int > returned_wedge_list;
+  std::vector< int > returned_tet_list;
+  std::vector< int > returned_hex_list;
+
+
+
+  CubitInterface::get_block_elements_and_nodes(block_id,
+		returned_node_list,
+		returned_sphere_list,
+		returned_edge_list,
+		returned_tri_list,
+		returned_face_list,
+		returned_pyramid_list,
+		returned_wedge_list,
+		returned_tet_list,
+		returned_hex_list 
+	); 	
+  return returned_node_list;
+}
+
+std::vector<int> CalculiXCore::get_block_element_ids(int block_id)
+{
+  std::string current_element_type = ""; // to detect changes of element type in blocks. especially hex and wedge
+  std::vector<int> return_ids;
+
+  // Get a batch of elements in an initialized block
+  int buf_size = 100;
+  std::vector<ElementType>   element_type(buf_size);
+  std::vector<ElementHandle> handles(buf_size);
+
+  // define name variable
+  std::string element_type_name;
+  std::string cubit_element_type_entity;
+
+  // Elements in a buffer set will be of the same element type and in the same block
+  
+  int num_elems;
+  int start_index = 0;
+  BlockHandle block;
+  me_iface->get_block_handle(block_id, block);
+  current_element_type = CubitInterface::get_block_element_type(block_id);
+
+  if (current_element_type != "SPHERE") // check if cubit element type from block is sphere
+  {         
+    // write only once per block
+    element_type_name = this->get_ccx_element_type(block_id);
+
+    while( (num_elems = me_iface->get_block_elements(start_index, buf_size, block, element_type, handles)) > 0)
+    {
+      // Get ids for the element handles
+      std::vector<int> ids(num_elems);
+      me_iface->get_element_ids(num_elems, handles, ids);
+
+      // skip if element type is 0 (SPHERE), that element type doesn´t exist in CalculiX
+      // skip if block element type is different from requested elements, hex and wedge mix
+      if ((element_type[0] != 0) && (current_element_type==me_iface->get_element_type_name(element_type[0])))
+      {
+        // convert ids from element_id to global_element_id
+        cubit_element_type_entity = me_iface->get_element_type_name(element_type[0]);
+        cubit_element_type_entity = this->get_cubit_element_type_entity(cubit_element_type_entity);
+        
+        //rewrite to global element ids
+        for (size_t i = 0; i < ids.size(); i++)
+        {
+          ids[i] = CubitInterface::get_global_element_id(cubit_element_type_entity,ids[i]);
+          return_ids.push_back(ids[i]);
+        }
+
+      }
+      start_index += num_elems;
+    }
+  }
+  return return_ids;
 }
 
 std::string CalculiXCore::get_material_name(int material_id)
@@ -1198,11 +1384,22 @@ bool CalculiXCore::check_sideset_exists(int sideset_id)
 
 bool CalculiXCore::check_vertex_exists(int vertex_id)
 {
-  if (!CubitCoreformInterface::is_entity(CubitCoreformInterface::CubitCoreformInterfaceEntityType::VERTEX,vertex_id))
+  std::vector<int> vertex_list = CubitCoreformInterface::get_entities(CubitCoreformInterface::CubitCoreformInterfaceEntityType::VERTEX);
+  for (size_t i = 0; i < vertex_list.size(); i++)
+  {
+    if (vertex_list[i]==vertex_id)
+    {
+      return true;
+    }
+  }
+  return false;
+
+  /*if (!CubitCoreformInterface::is_entity(CubitCoreformInterface::CubitCoreformInterfaceEntityType::VERTEX,vertex_id))
   {
     return false;
   }
   return true;
+  */
 }
 
 bool CalculiXCore::check_surfaceinteraction_exists(int surfaceinteraction_id)
@@ -1862,6 +2059,11 @@ bool CalculiXCore::kill_job(int job_id)
   return jobs->kill_job(job_id);
 }
 
+bool CalculiXCore::set_job_conversion(int job_id, int conversion)
+{
+  return jobs->set_job_conversion(job_id,conversion);
+}
+
 bool CalculiXCore::result_ccx2paraview_job(int job_id)
 {
   return jobs->result_ccx2paraview_job(job_id);
@@ -1880,6 +2082,74 @@ bool CalculiXCore::result_paraview_job(int job_id)
 std::vector<std::string> CalculiXCore::get_job_data(int job_id)
 {
   return jobs->get_job_data(job_id);
+}
+
+std::vector<std::string> CalculiXCore::get_job_console_output(int job_id)
+{
+  return jobs->get_job_console_output(job_id);
+}
+
+std::vector<std::string> CalculiXCore::get_job_cvg(int job_id)
+{
+  return jobs->get_job_cvg(job_id);
+}
+
+std::vector<std::string> CalculiXCore::get_job_sta(int job_id)
+{
+  return jobs->get_job_sta(job_id);
+}
+
+bool CalculiXCore::create_result(int job_id)
+{
+  return results->create_result(job_id);
+}
+
+bool CalculiXCore::delete_result(int job_id)
+{
+  return results->delete_result(job_id);
+}
+
+bool CalculiXCore::load_result(int job_id)
+{
+  return results->load_result(job_id);
+}
+
+int CalculiXCore::convert_result(int job_id)
+{
+  return results->convert_result(job_id);
+}
+
+bool CalculiXCore::project_result(int job_id,int step,int totalincrement,double scale)
+{
+  return results->project_result(job_id,step,totalincrement,scale);
+}
+
+double CalculiXCore::compute_von_mises_stress(std::vector<double> vec)
+{
+  double von_mises = 0;
+
+  von_mises = std::sqrt(0.5*(
+    (vec[0]-vec[1])*(vec[0]-vec[1])
+    +(vec[1]-vec[2])*(vec[1]-vec[2])
+    +(vec[2]-vec[0])*(vec[2]-vec[0]))
+    +3*(vec[3]*vec[3]+vec[4]*vec[4]+vec[5]*vec[5]) 
+    );
+
+  return von_mises;
+}
+
+double CalculiXCore::compute_von_mises_strain(std::vector<double> vec)
+{
+  double von_mises = 0;
+
+  von_mises = 2./3. * std::sqrt(0.5*(
+    (vec[0]-vec[1])*(vec[0]-vec[1])
+    +(vec[1]-vec[2])*(vec[1]-vec[2])
+    +(vec[2]-vec[0])*(vec[2]-vec[0]))
+    +3*(vec[3]*vec[3]+vec[4]*vec[4]+vec[5]*vec[5]) 
+    );
+  
+  return von_mises;
 }
 
 bool CalculiXCore::create_customline(std::vector<std::string> options)

@@ -1,6 +1,9 @@
 #ifndef COREHBCS_HPP
 #define COREHBCS_HPP
 
+#include <vector>
+#include <string>
+
 class CalculiXCoreInterface;
 
 class CoreHBCs

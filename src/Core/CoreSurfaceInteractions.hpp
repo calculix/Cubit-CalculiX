@@ -1,6 +1,9 @@
 #ifndef CORESURFACEINTERACTIONS_HPP
 #define CORESURFACEINTERACTIONS_HPP
 
+#include <vector>
+#include <string>
+
 class CalculiXCoreInterface;
 
 class CoreSurfaceInteractions

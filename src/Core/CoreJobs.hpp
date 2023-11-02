@@ -1,8 +1,12 @@
 #ifndef COREJOBS_HPP
 #define COREJOBS_HPP
 
+#include <vector>
+#include <string>
+
 class CalculiXCoreInterface;
 class CubitProcess;
+class ProgressTool;
 
 class CoreJobs
 {
@@ -17,10 +21,14 @@ public:
   // jobs_data[0][2] filepath
   // jobs_data[0][3] status -1 no process, 1 process running, 2 process finished, 3 process killed, 4 process finished with errors
   // jobs_data[0][4] process id
-  // jobs_data[0][5] Output Console
-  // jobs_data[0][6] converted with ccx2paraview -1 false, 1 true
-  // jobs_data[0][7] .cvg
-  // jobs_data[0][8] .sta
+  // jobs_data[0][5] Output Console data id
+  // jobs_data[0][6] converted to paraview -1 false, 1 true linked, 2 true unlinked, 3 ccx2paraview
+  // jobs_data[0][7] .cvg data id
+  // jobs_data[0][8] .sta data id
+
+  std::vector<std::vector<std::string>> output_console;
+  std::vector<std::vector<std::string>> cvg;
+  std::vector<std::vector<std::string>> sta;
 
   std::vector<CubitProcess> CubitProcessHandler;
 
@@ -45,10 +53,16 @@ public:
   bool result_paraview_job(int job_id); // opens the results with paraview
   int  get_jobs_data_id_from_job_id(int job_id); // searches for the job_id in the jobs_data and returns the indices or -1 if it fails
   int  get_CubitProcessHandler_data_id_from_process_id(int process_id); // searches for the CubitProcessHandler_id in the CubitProcessHandler and returns the indices or -1 if it fails
+  bool set_job_conversion(int job_id, int conversion); // sets the paraview conversion value for the job
   std::vector<std::string> get_job_data(int job_id);
+  std::vector<std::string> get_job_console_output(int job_id);
+  std::vector<std::string> get_job_cvg(int job_id);
+  std::vector<std::string> get_job_sta(int job_id);
+  bool is_whitespace(std::string line); // check if line consists only of whitespace
   std::string print_data(); // prints out the jobs_data
 
   CalculiXCoreInterface *ccx_iface;
+  ProgressTool *progressbar; // progressbar
 };
 
 #endif // COREJOBS_HPP

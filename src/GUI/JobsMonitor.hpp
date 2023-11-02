@@ -16,7 +16,7 @@
 #include <QComboBox>
 #include <QString>
 #include <QStringList>
-#include <QTextEdit>
+#include <QPlainTextEdit>
 #include <QTabWidget>
 
 
@@ -42,13 +42,17 @@ private slots:
   void on_pushButton_run_clicked(bool);
   void on_pushButton_kill_clicked(bool);
   void on_pushButton_result_cgx_clicked(bool);
-  void on_pushButton_result_ccx2paraview_clicked(bool);
+  void on_pushButton_result_convert_clicked(bool);
   void on_pushButton_result_paraview_clicked(bool);
   void on_pushButton_close_clicked(bool);
   
 private:
   std::string log;
   int current_job_id=-1;
+  int maximumBlockCount=2000;
+  int total_block_count_console_output = 0;
+  int total_block_count_cvg = 0;
+  int total_block_count_sta = 0;
   QTabWidget* TabWidget;
   QGridLayout* gridLayout;
   QHBoxLayout* boxLayout_window;
@@ -56,12 +60,12 @@ private:
   QPushButton* pushButton_run;
   QPushButton* pushButton_kill;
   QPushButton* pushButton_result_cgx;
-  QPushButton* pushButton_result_ccx2paraview;
+  QPushButton* pushButton_result_convert;
   QPushButton* pushButton_result_paraview;
   QPushButton* pushButton_close;
-  QTextEdit* QTextEdit_console;
-  QTextEdit* QTextEdit_cvg;
-  QTextEdit* QTextEdit_sta;
+  QPlainTextEdit* QPlainTextEdit_console;
+  QPlainTextEdit* QPlainTextEdit_cvg;
+  QPlainTextEdit* QPlainTextEdit_sta;
   GUITimer *timer;
 };
 

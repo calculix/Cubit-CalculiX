@@ -1,6 +1,9 @@
 #ifndef COREAMPLITUDES_HPP
 #define COREAMPLITUDES_HPP
 
+#include <vector>
+#include <string>
+
 class CalculiXCoreInterface;
 
 class CoreAmplitudes

@@ -1,6 +1,9 @@
 #ifndef CORESECTIONS_HPP
 #define CORESECTIONS_HPP
 
+#include <vector>
+#include <string>
+
 class CalculiXCoreInterface;
 
 class CoreSections

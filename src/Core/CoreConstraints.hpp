@@ -1,6 +1,9 @@
 #ifndef CORECONSTRAINTS_HPP
 #define CORECONSTRAINTS_HPP
 
+#include <vector>
+#include <string>
+
 class CalculiXCoreInterface;
 
 class CoreConstraints

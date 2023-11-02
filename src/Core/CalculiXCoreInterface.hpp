@@ -18,11 +18,15 @@ public:
   bool log_str(std::string str_log);
   std::vector<int> parser(std::string parse_type, std::string parse_string);
   std::string to_string_scientific(double value); // converts a double to string with scientific notation
+  double string_scientific_to_double(std::string value); // converts a string with scientific notation to double
   std::vector<std::string> get_ccx_element_types(); // returns all supported ccx element types
   bool set_ccx_element_type(int block_id, std::string ccx_element_type); // sets the ccx element type for a block
   std::string get_ccx_element_type(int block_id); // gets the ccx element type for a block
   std::string get_cubit_element_type_entity(std::string cubit_element_type); // gets the string for a cubit element type
+  std::vector<std::vector<int>> get_element_id_type_connectivity(); // gets the element id , type and connectivity all elements
   std::string get_block_name(int block_id); // gets the block name
+  std::vector<int> get_block_node_ids(int block_id); // gets the block node ids
+  std::vector<int> get_block_element_ids(int block_id); // gets the block global element ids
   std::string get_material_name(int material_id); // gets the material name
   std::string get_nodeset_name(int nodeset_id); // gets the nodeset name
   std::string get_sideset_name(int sideset_id); // gets the sideset name
@@ -109,10 +113,21 @@ public:
   bool check_zombie(); // checks for zombie processes
   bool wait_job(int job_id); // runs job
   bool kill_job(int job_id); // runs job
+  bool set_job_conversion(int job_id, int conversion); // sets the paraview conversion value for the job
   bool result_ccx2paraview_job(int job_id); // converts the result with ccx2paraview
   bool result_cgx_job(int job_id); // opens the results with cgx
   bool result_paraview_job(int job_id); // opens the results with paraview
   std::vector<std::string> get_job_data(int job_id);
+  std::vector<std::string> get_job_console_output(int job_id);
+  std::vector<std::string> get_job_cvg(int job_id);
+  std::vector<std::string> get_job_sta(int job_id);
+  bool create_result(int job_id); // adds a new result for job
+  bool delete_result(int job_id); // delete result for job
+  bool load_result(int job_id); // load result for job
+  int convert_result(int job_id); // convert result for job
+  bool project_result(int job_id,int step,int totalincrement,double scale); // project disp result for job for specific step or increment
+  double compute_von_mises_stress(std::vector<double> vec); // computes the von mises stress/strain for a vector of values
+  double compute_von_mises_strain(std::vector<double> vec); // computes the von mises stress/strain for a vector of values
   bool create_customline(std::vector<std::string> options); // adds a new customline
   bool modify_customline(int customline_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a customline
   bool delete_customline(int customline_id); // delete customline

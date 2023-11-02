@@ -1,6 +1,9 @@
 #ifndef CORELOADSGRAVITY_HPP
 #define CORELOADSGRAVITY_HPP
 
+#include <vector>
+#include <string>
+
 class CalculiXCoreInterface;
 
 class CoreLoadsGravity

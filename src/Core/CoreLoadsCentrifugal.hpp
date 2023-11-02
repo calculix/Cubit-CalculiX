@@ -1,6 +1,9 @@
 #ifndef CORELOADSCENTRIFUGAL_HPP
 #define CORELOADSCENTRIFUGAL_HPP
 
+#include <vector>
+#include <string>
+
 class CalculiXCoreInterface;
 
 class CoreLoadsCentrifugal

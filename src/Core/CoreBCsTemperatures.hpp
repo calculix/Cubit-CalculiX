@@ -1,6 +1,9 @@
 #ifndef COREBCSTEMPERATURES_HPP
 #define COREBCSTEMPERATURES_HPP
 
+#include <vector>
+#include <string>
+
 class CalculiXCoreInterface;
 
 class CoreBCsTemperatures

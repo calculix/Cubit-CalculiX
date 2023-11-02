@@ -1,6 +1,8 @@
 #ifndef CORETIMER_HPP
 #define CORETIMER_HPP
 
+#include <vector>
+#include <string>
 #include <QTimer>
 
 class CalculiXCoreInterface;

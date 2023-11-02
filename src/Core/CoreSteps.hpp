@@ -1,6 +1,9 @@
 #ifndef CORESTEPS_HPP
 #define CORESTEPS_HPP
 
+#include <vector>
+#include <string>
+
 class CalculiXCoreInterface;
 
 class CoreSteps

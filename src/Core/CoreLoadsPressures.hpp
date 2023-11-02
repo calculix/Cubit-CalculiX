@@ -1,6 +1,9 @@
 #ifndef CORELOADSPRESSURES_HPP
 #define CORELOADSPRESSURES_HPP
 
+#include <vector>
+#include <string>
+
 class CalculiXCoreInterface;
 
 class CoreLoadsPressures

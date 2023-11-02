@@ -1,6 +1,9 @@
 #ifndef CORELOADSHEATFLUXES_HPP
 #define CORELOADSHEATFLUXES_HPP
 
+#include <vector>
+#include <string>
+
 class CalculiXCoreInterface;
 
 class CoreLoadsHeatfluxes

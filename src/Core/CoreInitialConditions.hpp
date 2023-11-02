@@ -1,6 +1,9 @@
 #ifndef COREINITIALCONDITIONS_HPP
 #define COREINITIALCONDITIONS_HPP
 
+#include <vector>
+#include <string>
+
 class CalculiXCoreInterface;
 
 class CoreInitialConditions

@@ -1,7 +1,10 @@
 project(Cubit-CalculiX)
 
-set(CMAKE_PREFIX_PATH
-"/opt/Coreform-Cubit-2022.4/bin")
+#set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2022.4/bin")
+#set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2023.4/cmake")
+#set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2023.6/cmake")
+set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2023.8/cmake")
+#set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2023.10/cmake")
 
 cmake_minimum_required(VERSION 3.1)
 
@@ -51,9 +54,9 @@ set(CCXCOMP_SRCS
     CalculiXComp.cpp
     CalculiXComp.hpp
     ${EO_COMP_SRC}
-    ${UO_COMP_SRC}
     ${GUI_SRC}
     #${ui_src}
+    ${UO_COMP_SRC}
     MenuManager.cpp
     MenuManager.hpp
     ToolbarManager.cpp
@@ -75,7 +78,10 @@ set(CCXPLUGIN_SRCS
     ${CORE_SRC})
 
 add_library(calculix_plugin SHARED ${CCXPLUGIN_SRCS})
+set_target_properties(calculix_plugin PROPERTIES SUFFIX ".ccm")
 target_link_libraries(calculix_plugin cubiti cubit_util)
+#target_link_libraries(calculix_plugin clarofw Qt5::Widgets)
+#set_target_properties(calculix_plugin PROPERTIES AUTOMOC 1)
 #set_target_properties(calculix_plugin PROPERTIES CMAKE_POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
 
 add_library(calculix_comp SHARED ${CCXCOMP_SRCS})

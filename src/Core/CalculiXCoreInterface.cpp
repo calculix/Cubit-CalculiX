@@ -40,6 +40,11 @@ std::string  CalculiXCoreInterface::to_string_scientific(double value)
   return ccx_core.to_string_scientific(value);
 }
 
+double CalculiXCoreInterface::string_scientific_to_double(std::string value)
+{
+  return ccx_core.string_scientific_to_double(value);
+}
+
 std::vector<std::string> CalculiXCoreInterface::get_ccx_element_types()
 { 
   return ccx_core.get_ccx_element_types();
@@ -65,9 +70,24 @@ std::string CalculiXCoreInterface::get_cubit_element_type_entity(std::string cub
   return ccx_core.get_cubit_element_type_entity(cubit_element_type);
 }
 
+std::vector<std::vector<int>> CalculiXCoreInterface::get_element_id_type_connectivity()
+{
+  return ccx_core.get_element_id_type_connectivity();
+}
+
 std::string CalculiXCoreInterface::get_block_name(int block_id)
 {
   return ccx_core.get_block_name(block_id);
+}
+
+std::vector<int> CalculiXCoreInterface::get_block_node_ids(int block_id)
+{
+  return ccx_core.get_block_node_ids(block_id);
+}
+
+std::vector<int> CalculiXCoreInterface::get_block_element_ids(int block_id)
+{
+  return ccx_core.get_block_element_ids(block_id);
 }
 
 std::string CalculiXCoreInterface::get_material_name(int material_id)
@@ -465,6 +485,11 @@ bool CalculiXCoreInterface::kill_job(int job_id)
   return ccx_core.kill_job(job_id);
 }
 
+bool CalculiXCoreInterface::set_job_conversion(int job_id, int conversion)
+{
+  return ccx_core.set_job_conversion(job_id,conversion);
+}
+
 bool CalculiXCoreInterface::result_ccx2paraview_job(int job_id)
 {
   return ccx_core.result_ccx2paraview_job(job_id);
@@ -483,6 +508,56 @@ bool CalculiXCoreInterface::result_paraview_job(int job_id)
 std::vector<std::string> CalculiXCoreInterface::get_job_data(int job_id)
 {
   return ccx_core.get_job_data(job_id);
+}
+
+std::vector<std::string> CalculiXCoreInterface::get_job_console_output(int job_id)
+{
+  return ccx_core.get_job_console_output(job_id);
+}
+
+std::vector<std::string> CalculiXCoreInterface::get_job_cvg(int job_id)
+{
+  return ccx_core.get_job_cvg(job_id);
+}
+
+std::vector<std::string> CalculiXCoreInterface::get_job_sta(int job_id)
+{
+  return ccx_core.get_job_sta(job_id);
+}
+
+bool CalculiXCoreInterface::create_result(int job_id)
+{
+  return ccx_core.create_result(job_id);
+}
+
+bool CalculiXCoreInterface::delete_result(int job_id)
+{
+  return ccx_core.delete_result(job_id);
+}
+
+bool CalculiXCoreInterface::load_result(int job_id)
+{
+  return ccx_core.load_result(job_id);
+}
+
+int CalculiXCoreInterface::convert_result(int job_id)
+{
+  return ccx_core.convert_result(job_id);
+}
+
+bool CalculiXCoreInterface::project_result(int job_id,int step,int totalincrement,double scale)
+{
+  return ccx_core.project_result(job_id,step,totalincrement,scale);
+}
+
+double CalculiXCoreInterface::compute_von_mises_stress(std::vector<double> vec)
+{
+  return ccx_core.compute_von_mises_stress(vec);
+}
+
+double CalculiXCoreInterface::compute_von_mises_strain(std::vector<double> vec)
+{
+  return ccx_core.compute_von_mises_strain(vec);
 }
 
 bool CalculiXCoreInterface::create_customline(std::vector<std::string> options)
