@@ -18,6 +18,11 @@ CoreResultsVtkWriter::CoreResultsVtkWriter()
 CoreResultsVtkWriter::~CoreResultsVtkWriter()
 {
   this->clear();
+
+  this->frd = nullptr;
+  this->dat = nullptr;
+  this->frd_all = nullptr;
+  this->dat_all = nullptr;
 }
 
 bool CoreResultsVtkWriter::init(int job_id,CoreResultsFrd* frd,CoreResultsDat* dat)
