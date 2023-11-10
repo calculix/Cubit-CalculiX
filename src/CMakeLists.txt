@@ -8,7 +8,7 @@ project(Cubit-CalculiX)
 set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2023.8/cmake")
 #set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2023.10/cmake")
 #set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2023.11/cmake")
-set(CMAKE_PREFIX_PATH "C:/Program Files/Coreform Cubit 2023.8/cmake")
+#set(CMAKE_PREFIX_PATH "C:/Program Files/Coreform Cubit 2023.8/cmake")
 #set(CMAKE_PREFIX_PATH "C:/Program Files/Coreform Cubit 2023.11/cmake")
 
 # On Linux, we need to add some addition compiler flags to get our static
