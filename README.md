@@ -2,13 +2,13 @@
 Hey ho that´s the CalculiX Component for coreform cubit!
 
 Full Model definitions for CalculiX can be done with Cubit as Preprocessor.
-After the run with CalculiX the results will automatically converted for Paraview.
+After the run with CalculiX the results will be automatically converted for Paraview.
 
 Here you can find the source code and a build for linux.
  
 This component was build with Cubit 2023.8! 
 
-Tested with Cubit 2023.8 and 2023.10 on Ubuntu 22.04
+Tested with Cubit 2023.8 and 2023.11 on Ubuntu 22.04
 
 # Key Features
 Definition of:

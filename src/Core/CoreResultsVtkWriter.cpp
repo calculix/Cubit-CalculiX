@@ -18,6 +18,11 @@ CoreResultsVtkWriter::CoreResultsVtkWriter()
 CoreResultsVtkWriter::~CoreResultsVtkWriter()
 {
   this->clear();
+
+  this->frd = nullptr;
+  this->dat = nullptr;
+  this->frd_all = nullptr;
+  this->dat_all = nullptr;
 }
 
 bool CoreResultsVtkWriter::init(int job_id,CoreResultsFrd* frd,CoreResultsDat* dat)
@@ -1666,61 +1671,51 @@ bool CoreResultsVtkWriter::link_nodes_fast()
     for (size_t ii = 0; ii < nodeset_ids.size(); ii++)
     {
       ++current_part;
-      for (size_t iii = 0; iii < tmp_nodeset_node_ids[ii].size(); iii++)
+      auto lower = std::lower_bound(tmp_nodeset_node_ids[ii].begin(), tmp_nodeset_node_ids[ii].end(), frd_all->nodes[i][0]);  
+      if (lower!=tmp_nodeset_node_ids[ii].end())
       {
-        if (frd_all->nodes[i][0]==tmp_nodeset_node_ids[ii][iii])
+        vec_frd[current_part]->nodes.push_back(frd_all->nodes[i]);
+        vec_frd[current_part]->nodes_coords.push_back(frd_all->nodes_coords[i]);
+        vec_frd[current_part]->nodes[vec_frd[current_part]->nodes.size()-1][1] = vec_frd[current_part]->nodes_coords.size()-1;
+        
+        current_increment = 0;
+        for (size_t iv = 0; iv < max_increments; iv++)
         {
-          vec_frd[current_part]->nodes.push_back(frd_all->nodes[i]);
-          vec_frd[current_part]->nodes_coords.push_back(frd_all->nodes_coords[i]);
-          vec_frd[current_part]->nodes[vec_frd[current_part]->nodes.size()-1][1] = vec_frd[current_part]->nodes_coords.size()-1;
-          
-          current_increment = 0;
-          for (size_t iv = 0; iv < max_increments; iv++)
+          ++current_increment;
+          std::vector<int> data_ids = this->get_result_blocks_data_ids_linked(); // get data ids for result blocks
+          for (size_t v = 0; v < data_ids.size(); v++)
           {
-            ++current_increment;
-            std::vector<int> data_ids = this->get_result_blocks_data_ids_linked(); // get data ids for result blocks
-            for (size_t v = 0; v < data_ids.size(); v++)
-            {
-              vec_frd[current_part]->result_block_data[data_ids[v]].push_back(frd_all->result_block_data[data_ids[v]][i]);
-              vec_frd[current_part]->result_block_node_data[data_ids[v]].push_back(frd_all->result_block_node_data[data_ids[v]][i]);
-              vec_frd[current_part]->result_block_node_data[data_ids[v]][vec_frd[current_part]->result_block_node_data[data_ids[v]].size()-1][1] = vec_frd[current_part]->result_block_data[data_ids[v]].size()-1;
-            }
+            vec_frd[current_part]->result_block_data[data_ids[v]].push_back(frd_all->result_block_data[data_ids[v]][i]);
+            vec_frd[current_part]->result_block_node_data[data_ids[v]].push_back(frd_all->result_block_node_data[data_ids[v]][i]);
+            vec_frd[current_part]->result_block_node_data[data_ids[v]][vec_frd[current_part]->result_block_node_data[data_ids[v]].size()-1][1] = vec_frd[current_part]->result_block_data[data_ids[v]].size()-1;
           }
-          
-          tmp_nodeset_node_ids[ii].erase(tmp_nodeset_node_ids[ii].begin() + iii);
-          --iii;
         }
-      }
+      }  
     }
     //sidesets
     for (size_t ii = 0; ii < sideset_ids.size(); ii++)
     {
       ++current_part;
-      for (size_t iii = 0; iii < tmp_sideset_node_ids[ii].size(); iii++)
+      auto lower = std::lower_bound(tmp_sideset_node_ids[ii].begin(), tmp_sideset_node_ids[ii].end(), frd_all->nodes[i][0]);  
+      if (lower!=tmp_sideset_node_ids[ii].end())
       {
-        if (frd_all->nodes[i][0]==tmp_sideset_node_ids[ii][iii])
+        vec_frd[current_part]->nodes.push_back(frd_all->nodes[i]);
+        vec_frd[current_part]->nodes_coords.push_back(frd_all->nodes_coords[i]);
+        vec_frd[current_part]->nodes[vec_frd[current_part]->nodes.size()-1][1] = vec_frd[current_part]->nodes_coords.size()-1;
+        
+        current_increment = 0;
+        for (size_t iv = 0; iv < max_increments; iv++)
         {
-          vec_frd[current_part]->nodes.push_back(frd_all->nodes[i]);
-          vec_frd[current_part]->nodes_coords.push_back(frd_all->nodes_coords[i]);
-          vec_frd[current_part]->nodes[vec_frd[current_part]->nodes.size()-1][1] = vec_frd[current_part]->nodes_coords.size()-1;
-          
-          current_increment = 0;
-          for (size_t iv = 0; iv < max_increments; iv++)
+          ++current_increment;
+          std::vector<int> data_ids = this->get_result_blocks_data_ids_linked(); // get data ids for result blocks
+          for (size_t v = 0; v < data_ids.size(); v++)
           {
-            ++current_increment;
-            std::vector<int> data_ids = this->get_result_blocks_data_ids_linked(); // get data ids for result blocks
-            for (size_t v = 0; v < data_ids.size(); v++)
-            {
-              vec_frd[current_part]->result_block_data[data_ids[v]].push_back(frd_all->result_block_data[data_ids[v]][i]);
-              vec_frd[current_part]->result_block_node_data[data_ids[v]].push_back(frd_all->result_block_node_data[data_ids[v]][i]);
-              vec_frd[current_part]->result_block_node_data[data_ids[v]][vec_frd[current_part]->result_block_node_data[data_ids[v]].size()-1][1] = vec_frd[current_part]->result_block_data[data_ids[v]].size()-1;
-            }
+            vec_frd[current_part]->result_block_data[data_ids[v]].push_back(frd_all->result_block_data[data_ids[v]][i]);
+            vec_frd[current_part]->result_block_node_data[data_ids[v]].push_back(frd_all->result_block_node_data[data_ids[v]][i]);
+            vec_frd[current_part]->result_block_node_data[data_ids[v]][vec_frd[current_part]->result_block_node_data[data_ids[v]].size()-1][1] = vec_frd[current_part]->result_block_data[data_ids[v]].size()-1;
           }
-          
-          tmp_sideset_node_ids[ii].erase(tmp_sideset_node_ids[ii].begin() + iii);
-          --iii;
         }
-      }
+      }  
     }
     //update progress bar
     const auto t_end = std::chrono::high_resolution_clock::now();
@@ -1746,6 +1741,13 @@ bool CoreResultsVtkWriter::link_elements()
   current_part = 0;
   std::vector<std::vector<int>> tmp_block_element_ids = block_element_ids;
 
+  // sorting for faster search
+  //blocks
+  for (size_t i = 0; i < block_ids.size(); i++)
+  {
+    std::sort(tmp_block_element_ids[i].begin(), tmp_block_element_ids[i].end());
+  }
+
   progressbar->start(0,100,"Linking Blocks");
   auto t_start = std::chrono::high_resolution_clock::now();             
 
@@ -1757,16 +1759,13 @@ bool CoreResultsVtkWriter::link_elements()
     for (size_t ii = 0; ii < block_ids.size(); ii++)
     {
       ++current_part;
-      for (size_t iii = 0; iii < tmp_block_element_ids[ii].size(); iii++)
+      
+      auto lower = std::lower_bound(tmp_block_element_ids[ii].begin(), tmp_block_element_ids[ii].end(), frd_all->elements[i][0]);  
+      if (lower!=tmp_block_element_ids[ii].end())
       {
-        if (frd_all->elements[i][0]==tmp_block_element_ids[ii][iii])
-        {
           vec_frd[current_part]->elements.push_back(frd_all->elements[i]);
           vec_frd[current_part]->elements_connectivity.push_back(frd_all->elements_connectivity[i]);
           vec_frd[current_part]->elements[vec_frd[current_part]->elements.size()-1][2] = vec_frd[current_part]->elements_connectivity.size()-1;
-          tmp_block_element_ids[ii].erase(tmp_block_element_ids[ii].begin() + iii);
-          --iii;
-        }
       }
     }
     
