@@ -1418,6 +1418,23 @@ bool CoreResultsVtkWriter::link_nodes()
   std::vector<std::vector<int>> tmp_nodeset_node_ids = nodeset_node_ids;
   std::vector<std::vector<int>> tmp_sideset_node_ids = sideset_node_ids;
 
+  // sorting for faster search
+  //blocks
+  for (size_t i = 0; i < block_ids.size(); i++)
+  {
+    std::sort(tmp_block_node_ids[i].begin(), tmp_block_node_ids[i].end());
+  }
+  //nodesets
+  for (size_t i = 0; i < nodeset_ids.size(); i++)
+  { 
+    std::sort(tmp_nodeset_node_ids[i].begin(), tmp_nodeset_node_ids[i].end());
+  }
+  //sidesets
+  for (size_t i = 0; i < sideset_ids.size(); i++)
+  { 
+    std::sort(tmp_sideset_node_ids[i].begin(), tmp_sideset_node_ids[i].end());
+  }
+
   progressbar->start(0,100,"Linking Nodes");
   auto t_start = std::chrono::high_resolution_clock::now();
 
@@ -1428,48 +1445,36 @@ bool CoreResultsVtkWriter::link_nodes()
     for (size_t ii = 0; ii < block_ids.size(); ii++)
     {
       ++current_part;
-      for (size_t iii = 0; iii < tmp_block_node_ids[ii].size(); iii++)
+      auto lower = std::lower_bound(tmp_block_node_ids[ii].begin(), tmp_block_node_ids[ii].end(), frd_all->nodes[i][0]);  
+      if (lower!=tmp_block_node_ids[ii].end())
       {
-        if (frd_all->nodes[i][0]==tmp_block_node_ids[ii][iii])
-        {
-          vec_frd[current_part]->nodes.push_back(frd_all->nodes[i]);
-          vec_frd[current_part]->nodes_coords.push_back(frd_all->nodes_coords[i]);
-          vec_frd[current_part]->nodes[vec_frd[current_part]->nodes.size()-1][1] = vec_frd[current_part]->nodes_coords.size()-1;
-          tmp_block_node_ids[ii].erase(tmp_block_node_ids[ii].begin() + iii);
-          --iii;
-        }
+        vec_frd[current_part]->nodes.push_back(frd_all->nodes[i]);
+        vec_frd[current_part]->nodes_coords.push_back(frd_all->nodes_coords[i]);
+        vec_frd[current_part]->nodes[vec_frd[current_part]->nodes.size()-1][1] = vec_frd[current_part]->nodes_coords.size()-1;
       }
     }
     //nodesets
     for (size_t ii = 0; ii < nodeset_ids.size(); ii++)
     {
       ++current_part;
-      for (size_t iii = 0; iii < tmp_nodeset_node_ids[ii].size(); iii++)
+      auto lower = std::lower_bound(tmp_nodeset_node_ids[ii].begin(), tmp_nodeset_node_ids[ii].end(), frd_all->nodes[i][0]);  
+      if (lower!=tmp_nodeset_node_ids[ii].end())
       {
-        if (frd_all->nodes[i][0]==tmp_nodeset_node_ids[ii][iii])
-        {
-          vec_frd[current_part]->nodes.push_back(frd_all->nodes[i]);
-          vec_frd[current_part]->nodes_coords.push_back(frd_all->nodes_coords[i]);
-          vec_frd[current_part]->nodes[vec_frd[current_part]->nodes.size()-1][1] = vec_frd[current_part]->nodes_coords.size()-1;
-          tmp_nodeset_node_ids[ii].erase(tmp_nodeset_node_ids[ii].begin() + iii);
-          --iii;
-        }
+        vec_frd[current_part]->nodes.push_back(frd_all->nodes[i]);
+        vec_frd[current_part]->nodes_coords.push_back(frd_all->nodes_coords[i]);
+        vec_frd[current_part]->nodes[vec_frd[current_part]->nodes.size()-1][1] = vec_frd[current_part]->nodes_coords.size()-1;
       }
     }
     //sidesets
     for (size_t ii = 0; ii < sideset_ids.size(); ii++)
     {
       ++current_part;
-      for (size_t iii = 0; iii < tmp_sideset_node_ids[ii].size(); iii++)
+      auto lower = std::lower_bound(tmp_sideset_node_ids[ii].begin(), tmp_sideset_node_ids[ii].end(), frd_all->nodes[i][0]);  
+      if (lower!=tmp_sideset_node_ids[ii].end())
       {
-        if (frd_all->nodes[i][0]==tmp_sideset_node_ids[ii][iii])
-        {
-          vec_frd[current_part]->nodes.push_back(frd_all->nodes[i]);
-          vec_frd[current_part]->nodes_coords.push_back(frd_all->nodes_coords[i]);
-          vec_frd[current_part]->nodes[vec_frd[current_part]->nodes.size()-1][1] = vec_frd[current_part]->nodes_coords.size()-1;
-          tmp_sideset_node_ids[ii].erase(tmp_sideset_node_ids[ii].begin() + iii);
-          --iii;
-        }
+        vec_frd[current_part]->nodes.push_back(frd_all->nodes[i]);
+        vec_frd[current_part]->nodes_coords.push_back(frd_all->nodes_coords[i]);
+        vec_frd[current_part]->nodes[vec_frd[current_part]->nodes.size()-1][1] = vec_frd[current_part]->nodes_coords.size()-1;
       }
     }
     //update progress bar
@@ -1522,48 +1527,36 @@ bool CoreResultsVtkWriter::link_nodes()
         for (size_t iv = 0; iv < block_ids.size(); iv++)
         {
           ++current_part;
-          for (size_t v = 0; v < tmp_block_node_ids[iv].size(); v++)
+          auto lower = std::lower_bound(tmp_block_node_ids[iv].begin(), tmp_block_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]);  
+          if (lower!=tmp_block_node_ids[iv].end())
           {
-            if (frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]==tmp_block_node_ids[iv][v])
-            {
-              vec_frd[current_part]->result_block_data[data_ids[ii]].push_back(frd_all->result_block_data[data_ids[ii]][node_data_ids[iii]]);
-              vec_frd[current_part]->result_block_node_data[data_ids[ii]].push_back(frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]]);
-              vec_frd[current_part]->result_block_node_data[data_ids[ii]][vec_frd[current_part]->result_block_node_data[data_ids[ii]].size()-1][1] = vec_frd[current_part]->result_block_data[data_ids[ii]].size()-1;
-              tmp_block_node_ids[iv].erase(tmp_block_node_ids[iv].begin() + v);
-              --v;
-            }
+            vec_frd[current_part]->result_block_data[data_ids[ii]].push_back(frd_all->result_block_data[data_ids[ii]][node_data_ids[iii]]);
+            vec_frd[current_part]->result_block_node_data[data_ids[ii]].push_back(frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]]);
+            vec_frd[current_part]->result_block_node_data[data_ids[ii]][vec_frd[current_part]->result_block_node_data[data_ids[ii]].size()-1][1] = vec_frd[current_part]->result_block_data[data_ids[ii]].size()-1;
           }
         }
         //nodesets
         for (size_t iv = 0; iv < nodeset_ids.size(); iv++)
         {
           ++current_part;
-          for (size_t v = 0; v < tmp_nodeset_node_ids[iv].size(); v++)
+          auto lower = std::lower_bound(tmp_nodeset_node_ids[iv].begin(), tmp_nodeset_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]);  
+          if (lower!=tmp_nodeset_node_ids[iv].end())
           {
-            if (frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]==tmp_nodeset_node_ids[iv][v])
-            {
-              vec_frd[current_part]->result_block_data[data_ids[ii]].push_back(frd_all->result_block_data[data_ids[ii]][node_data_ids[iii]]);
-              vec_frd[current_part]->result_block_node_data[data_ids[ii]].push_back(frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]]);
-              vec_frd[current_part]->result_block_node_data[data_ids[ii]][vec_frd[current_part]->result_block_node_data[data_ids[ii]].size()-1][1] = vec_frd[current_part]->result_block_data[data_ids[ii]].size()-1;
-              tmp_nodeset_node_ids[iv].erase(tmp_nodeset_node_ids[iv].begin() + v);
-              --v;
-            }
+            vec_frd[current_part]->result_block_data[data_ids[ii]].push_back(frd_all->result_block_data[data_ids[ii]][node_data_ids[iii]]);
+            vec_frd[current_part]->result_block_node_data[data_ids[ii]].push_back(frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]]);
+            vec_frd[current_part]->result_block_node_data[data_ids[ii]][vec_frd[current_part]->result_block_node_data[data_ids[ii]].size()-1][1] = vec_frd[current_part]->result_block_data[data_ids[ii]].size()-1;
           }
         }
         //sidesets
         for (size_t iv = 0; iv < sideset_ids.size(); iv++)
         {
           ++current_part;
-          for (size_t v = 0; v < tmp_sideset_node_ids[iv].size(); v++)
+          auto lower = std::lower_bound(tmp_sideset_node_ids[iv].begin(), tmp_sideset_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]);  
+          if (lower!=tmp_nodeset_node_ids[iv].end())
           {
-            if (frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]==tmp_sideset_node_ids[iv][v])
-            {
-              vec_frd[current_part]->result_block_data[data_ids[ii]].push_back(frd_all->result_block_data[data_ids[ii]][node_data_ids[iii]]);
-              vec_frd[current_part]->result_block_node_data[data_ids[ii]].push_back(frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]]);
-              vec_frd[current_part]->result_block_node_data[data_ids[ii]][vec_frd[current_part]->result_block_node_data[data_ids[ii]].size()-1][1] = vec_frd[current_part]->result_block_data[data_ids[ii]].size()-1;
-              tmp_sideset_node_ids[iv].erase(tmp_sideset_node_ids[iv].begin() + v);
-              --v;
-            }
+            vec_frd[current_part]->result_block_data[data_ids[ii]].push_back(frd_all->result_block_data[data_ids[ii]][node_data_ids[iii]]);
+            vec_frd[current_part]->result_block_node_data[data_ids[ii]].push_back(frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]]);
+            vec_frd[current_part]->result_block_node_data[data_ids[ii]][vec_frd[current_part]->result_block_node_data[data_ids[ii]].size()-1][1] = vec_frd[current_part]->result_block_data[data_ids[ii]].size()-1;
           }
         }
       }
