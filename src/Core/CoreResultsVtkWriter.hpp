@@ -22,6 +22,7 @@ public:
   int write_mode = -1; //1 linked //2 unlinked
   std::string filepath = "";
   bool is_initialized = false;
+  bool write_partial = false; // try to write out partial result blocks. like for using *modelchange keyword
   int current_offset = 0;
   int max_increments = 0;
   int current_increment = 0;
@@ -104,6 +105,7 @@ public:
   std::vector<int> get_result_block_node_data_id(int result_blocks_data_id); // gets the result blocks node data ids for the current block
   std::vector<int> get_result_block_node_data_id_linked(int result_blocks_data_id); // gets the result blocks node data ids for the current block and set from frd_all
   std::string get_result_data(int data_id, int node_data_id); // gets the result data for a node
+  std::string get_result_data_partial(int data_id, int node_data_id, int component_size); // gets the result data for a node if exists or return zero value
   bool link_nodes(); // links the ids from frd/dat all
   bool link_nodes_fast(); // links the ids from frd/dat all fast...only possible if all node id vectors are of the same size
   bool link_elements(); // links the ids from frd/dat all

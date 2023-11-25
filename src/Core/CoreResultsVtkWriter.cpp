@@ -439,6 +439,39 @@ bool CoreResultsVtkWriter::write_vtu_linked()
         }
         // footer
         output.append(this->level_whitespace(4) + "</DataArray>\n");
+      }else{
+        if (write_partial)
+        {
+          log = "Partial " + frd->result_block_type[frd->result_blocks[data_ids[ii]][5]] + " - current increment " + std::to_string(current_increment) + " - current part " + std::to_string(current_part) + " \n";
+          PRINT_INFO("%s", log.c_str());
+
+          current_time = frd->total_times[frd->result_blocks[data_ids[ii]][4]];
+          // header
+          int component_size = frd->result_block_components[frd->result_blocks[data_ids[ii]][6]].size();
+          output.append(this->level_whitespace(4) + "<DataArray type=\"Float64\" ");
+          output.append("Name=\"" + frd->result_block_type[frd->result_blocks[data_ids[ii]][5]] + "\" ");
+          output.append("NumberOfComponents=\"" + std::to_string(frd->result_block_components[frd->result_blocks[data_ids[ii]][6]].size()) + "\" ");
+          
+          for (size_t iii = 0; iii < frd->result_block_components[frd->result_blocks[data_ids[ii]][6]].size(); iii++)
+          {
+            output.append("ComponentName"+ std::to_string(iii) + " =\"" + frd->result_block_components[frd->result_blocks[data_ids[ii]][6]][iii] +"\" ");
+          }
+          output.append("format=\"ascii\" RangeMin=\"" + std::to_string(rangeMin) + "\" RangeMax=\"" + std::to_string(rangeMin) + "\">\n");
+          
+          int node_data_id = -1;
+
+          for (size_t iii = 0; iii < frd->nodes.size(); iii++)
+          {
+            node_data_id = -1; // get node data id for node id if possible
+            output.append(this->level_whitespace(5) + this->get_result_data_partial(data_ids[ii], node_data_id, component_size) + "\n");
+          }
+          // footer
+          output.append(this->level_whitespace(4) + "</DataArray>\n");
+        }else{
+          log = "WARNING! Result data skipped for Result Block " + frd->result_block_type[frd->result_blocks[data_ids[ii]][5]] + " - current increment " + std::to_string(current_increment) + " - current part " + std::to_string(current_part) + " \n";
+          log.append("node_data_ids.size() = " + std::to_string(node_data_ids.size()) + " != frd->nodes.size() = " + std::to_string(frd->nodes.size()) + "\n");
+          PRINT_INFO("%s", log.c_str());
+        }
       }
     }
     output.append(this->level_whitespace(3) + "</PointData>\n");
@@ -688,6 +721,10 @@ bool CoreResultsVtkWriter::write_vtu_unlinked()
           progressbar->check_interrupt();
           t_start = std::chrono::high_resolution_clock::now();
         }
+      }else{
+        log = "WARNING! Result data skipped for Result Block " + frd->result_block_type[frd->result_blocks[data_ids[ii]][5]] + " - current increment " + std::to_string(current_increment) + " \n";
+        log.append("node_data_ids.size() = " + std::to_string(node_data_ids.size()) + " != frd->nodes.size() = " + std::to_string(frd->nodes.size()) + "\n");
+        PRINT_INFO("%s", log.c_str());
       }
     }
 
@@ -1407,6 +1444,45 @@ std::string CoreResultsVtkWriter::get_result_data(int data_id, int node_data_id)
       str_result.append(" ");
     }
   }
+  return str_result;  
+}
+
+std::string CoreResultsVtkWriter::get_result_data_partial(int data_id, int node_data_id, int component_size)
+{
+  std::string str_result = "";
+  std::vector<double> result_component;
+
+  if (node_data_id == -1)
+  {
+    for (size_t i = 0; i < component_size; i++)
+    {
+      str_result.append(ccx_iface->to_string_scientific(0.));
+      if (i!=component_size-1)
+      {
+        str_result.append(" ");
+      }
+    }
+  }else{
+    result_component = frd->result_block_data[data_id][node_data_id];
+    for (size_t i = 0; i < result_component.size(); i++)
+    {
+      if (result_component[i]<rangeMin)
+      {
+        rangeMin=result_component[i];
+      }
+      if (result_component[i]>rangeMax)
+      {
+        rangeMax=result_component[i];
+      }
+
+      str_result.append(ccx_iface->to_string_scientific(result_component[i]));
+      if (i!=result_component.size()-1)
+      {
+        str_result.append(" ");
+      }
+    }
+  }
+  
   return str_result;  
 }
 
