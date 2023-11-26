@@ -442,9 +442,9 @@ bool CoreResultsVtkWriter::write_vtu_linked()
       }else{
         if (write_partial)
         {
-          log = "Partial " + frd->result_block_type[frd->result_blocks[data_ids[ii]][5]] + " - current increment " + std::to_string(current_increment) + " - current part " + std::to_string(current_part) + " \n";
-          PRINT_INFO("%s", log.c_str());
-
+          //log = "Partial " + frd->result_block_type[frd->result_blocks[data_ids[ii]][5]] + " - current increment " + std::to_string(current_increment) + " - current part " + std::to_string(current_part) + " \n";
+          //PRINT_INFO("%s", log.c_str());
+          
           current_time = frd->total_times[frd->result_blocks[data_ids[ii]][4]];
           // header
           int component_size = frd->result_block_components[frd->result_blocks[data_ids[ii]][6]].size();
@@ -458,18 +458,32 @@ bool CoreResultsVtkWriter::write_vtu_linked()
           }
           output.append("format=\"ascii\" RangeMin=\"" + std::to_string(rangeMin) + "\" RangeMax=\"" + std::to_string(rangeMin) + "\">\n");
           
-          int node_data_id = -1;
+          // sorting variables
+          int node_data_id = -1;          
+          std::vector<int> node_ids = this->get_result_block_node_id(data_ids[ii]);
+          std::vector<int> tmp_node_data_ids = node_data_ids;
+          // sorting for faster search
+          auto p = sort_permutation(node_ids);
+          this->apply_permutation(node_ids, p);
+          this->apply_permutation(tmp_node_data_ids, p);
 
           for (size_t iii = 0; iii < frd->nodes.size(); iii++)
           {
-            node_data_id = -1; // get node data id for node id if possible
+            //check if there exists results for the node id
+            auto lower = std::lower_bound(node_ids.begin(), node_ids.end(), frd->nodes[iii][0]);
+            if (lower!=node_ids.end())
+            {
+              node_data_id = tmp_node_data_ids[lower-node_ids.begin()];
+            }else{
+              node_data_id = -1;
+            }
             output.append(this->level_whitespace(5) + this->get_result_data_partial(data_ids[ii], node_data_id, component_size) + "\n");
           }
           // footer
           output.append(this->level_whitespace(4) + "</DataArray>\n");
         }else{
           log = "WARNING! Result data skipped for Result Block " + frd->result_block_type[frd->result_blocks[data_ids[ii]][5]] + " - current increment " + std::to_string(current_increment) + " - current part " + std::to_string(current_part) + " \n";
-          log.append("node_data_ids.size() = " + std::to_string(node_data_ids.size()) + " != frd->nodes.size() = " + std::to_string(frd->nodes.size()) + "\n");
+          log.append("node_data_ids.size() = " + std::to_string(node_data_ids.size()) + " != frd->nodes.size() = " + std::to_string(frd->nodes.size()) + " try it again with Option [Partial]\n");
           PRINT_INFO("%s", log.c_str());
         }
       }
@@ -711,20 +725,53 @@ bool CoreResultsVtkWriter::write_vtu_unlinked()
         // footer
         output.append(this->level_whitespace(4) + "</DataArray>\n");
 
-        //update progress bar
-        const auto t_end = std::chrono::high_resolution_clock::now();
-        int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
-        //currentDataRow += frd->result_block_data[data_ids[ii]].size();
-        if (duration > 500)
-        {
-          progressbar->percent(double(current_increment)/double(max_increments));
-          progressbar->check_interrupt();
-          t_start = std::chrono::high_resolution_clock::now();
-        }
       }else{
-        log = "WARNING! Result data skipped for Result Block " + frd->result_block_type[frd->result_blocks[data_ids[ii]][5]] + " - current increment " + std::to_string(current_increment) + " \n";
-        log.append("node_data_ids.size() = " + std::to_string(node_data_ids.size()) + " != frd->nodes.size() = " + std::to_string(frd->nodes.size()) + "\n");
-        PRINT_INFO("%s", log.c_str());
+        if (write_partial)
+        {
+          //log = "Partial " + frd->result_block_type[frd->result_blocks[data_ids[ii]][5]] + " - current increment " + std::to_string(current_increment) + " \n";
+          //PRINT_INFO("%s", log.c_str());
+          
+          current_time = frd->total_times[frd->result_blocks[data_ids[ii]][4]];
+          // header
+          int component_size = frd->result_block_components[frd->result_blocks[data_ids[ii]][6]].size();
+          output.append(this->level_whitespace(4) + "<DataArray type=\"Float64\" ");
+          output.append("Name=\"" + frd->result_block_type[frd->result_blocks[data_ids[ii]][5]] + "\" ");
+          output.append("NumberOfComponents=\"" + std::to_string(frd->result_block_components[frd->result_blocks[data_ids[ii]][6]].size()) + "\" ");
+          
+          for (size_t iii = 0; iii < frd->result_block_components[frd->result_blocks[data_ids[ii]][6]].size(); iii++)
+          {
+            output.append("ComponentName"+ std::to_string(iii) + " =\"" + frd->result_block_components[frd->result_blocks[data_ids[ii]][6]][iii] +"\" ");
+          }
+          output.append("format=\"ascii\" RangeMin=\"" + std::to_string(rangeMin) + "\" RangeMax=\"" + std::to_string(rangeMin) + "\">\n");
+          
+          // sorting variables
+          int node_data_id = -1;          
+          std::vector<int> node_ids = this->get_result_block_node_id(data_ids[ii]);
+          std::vector<int> tmp_node_data_ids = node_data_ids;
+          // sorting for faster search
+          auto p = sort_permutation(node_ids);
+          this->apply_permutation(node_ids, p);
+          this->apply_permutation(tmp_node_data_ids, p);
+
+          for (size_t iii = 0; iii < frd->nodes.size(); iii++)
+          {
+            //check if there exists results for the node id
+            auto lower = std::lower_bound(node_ids.begin(), node_ids.end(), frd->nodes[iii][0]);
+            if (lower!=node_ids.end())
+            {
+              node_data_id = tmp_node_data_ids[lower-node_ids.begin()];
+            }else{
+              node_data_id = -1;
+            }
+            output.append(this->level_whitespace(5) + this->get_result_data_partial(data_ids[ii], node_data_id, component_size) + "\n");
+          }
+          // footer
+          output.append(this->level_whitespace(4) + "</DataArray>\n");
+        }else{
+          log = "WARNING! Result data skipped for Result Block " + frd->result_block_type[frd->result_blocks[data_ids[ii]][5]] + " - current increment " + std::to_string(current_increment) + " \n";
+          log.append("node_data_ids.size() = " + std::to_string(node_data_ids.size()) + " != frd->nodes.size() = " + std::to_string(frd->nodes.size()) + "\n");
+          PRINT_INFO("%s", log.c_str());
+        }
       }
     }
 
@@ -759,6 +806,17 @@ bool CoreResultsVtkWriter::write_vtu_unlinked()
       this->write_to_file(filepath + "/" + filepath + ".vtu",output);
     }else{
       this->write_to_file(filepath + "/" + filepath + "." + this->get_increment() +  ".vtu",output);
+    }
+
+    //update progress bar
+    const auto t_end = std::chrono::high_resolution_clock::now();
+    int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+    //currentDataRow += frd->result_block_data[data_ids[ii]].size();
+    if (duration > 500)
+    {
+      progressbar->percent(double(current_increment)/double(max_increments));
+      progressbar->check_interrupt();
+      t_start = std::chrono::high_resolution_clock::now();
     }
   }
   
@@ -874,6 +932,7 @@ int CoreResultsVtkWriter::get_max_step_increment()
 
 bool CoreResultsVtkWriter::rewrite_connectivity_unlinked()
 {  
+  /*
   for (size_t i = 0; i < frd->nodes.size(); i++)
   {
     for (size_t ii = 0; ii < frd->elements_connectivity.size(); ii++)
@@ -887,6 +946,35 @@ bool CoreResultsVtkWriter::rewrite_connectivity_unlinked()
       }
     }
   }
+  */
+
+  std::vector<int> tmp_node_ids;
+  std::vector<int> tmp_node_data_ids;
+  
+  for (size_t i = 0; i < frd->nodes.size(); i++)
+  {
+    tmp_node_ids.push_back(frd->nodes[i][0]);
+    tmp_node_data_ids.push_back(i);
+  }
+  
+  // sorting for faster search
+  auto p = sort_permutation(tmp_node_ids);
+  this->apply_permutation(tmp_node_ids, p);
+  this->apply_permutation(tmp_node_data_ids, p);
+  
+  for (size_t i = 0; i < frd->elements_connectivity.size(); i++)
+  {
+    for (size_t ii = 0; ii < frd->elements_connectivity[ii].size(); ii++)
+    {
+      //check if there exists results for the node id
+      auto lower = std::lower_bound(tmp_node_ids.begin(), tmp_node_ids.end(), frd->elements_connectivity[i][ii]);
+      if (lower!=tmp_node_ids.end())
+      {
+        frd->elements_connectivity[i][ii] = tmp_node_data_ids[lower-tmp_node_ids.begin()];
+      }
+    }
+  }
+
   return true;
 }
 
@@ -1414,6 +1502,32 @@ std::vector<int> CoreResultsVtkWriter::get_result_block_node_data_id_linked(int 
       }else{
         last_node_id = frd_all->result_block_node_data[result_blocks_data_id][i][0];
         data_ids.push_back(frd_all->result_block_node_data[result_blocks_data_id][i][1]);
+      }
+    }
+  }
+  return data_ids;
+}
+
+std::vector<int> CoreResultsVtkWriter::get_result_block_node_id(int result_blocks_data_id)
+{
+  std::vector<int> data_ids;
+  int current_node_id = 0;
+  int last_node_id = 0;
+  
+  for (size_t i = 0; i < frd->result_block_node_data[result_blocks_data_id].size(); i++)
+  {
+    current_node_id = frd->result_block_node_data[result_blocks_data_id][i][0];
+    if(i==0)
+    {
+      last_node_id = frd->result_block_node_data[result_blocks_data_id][i][0];
+      data_ids.push_back(frd->result_block_node_data[result_blocks_data_id][i][0]);
+    }else{
+      if (last_node_id == current_node_id)
+      {
+        data_ids[data_ids.size()-1] = frd->result_block_node_data[result_blocks_data_id][i][0];
+      }else{
+        last_node_id = frd->result_block_node_data[result_blocks_data_id][i][0];
+        data_ids.push_back(frd->result_block_node_data[result_blocks_data_id][i][0]);
       }
     }
   }

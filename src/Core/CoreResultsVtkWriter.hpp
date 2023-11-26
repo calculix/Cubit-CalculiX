@@ -104,6 +104,7 @@ public:
   std::vector<int> get_dat_result_blocks_data_ids_linked(int set_id); // gets the result blocks data ids for the current increment from dat_all
   std::vector<int> get_result_block_node_data_id(int result_blocks_data_id); // gets the result blocks node data ids for the current block
   std::vector<int> get_result_block_node_data_id_linked(int result_blocks_data_id); // gets the result blocks node data ids for the current block and set from frd_all
+  std::vector<int> get_result_block_node_id(int result_blocks_data_id); // gets the result blocks node data ids for the current block
   std::string get_result_data(int data_id, int node_data_id); // gets the result data for a node
   std::string get_result_data_partial(int data_id, int node_data_id, int component_size); // gets the result data for a node if exists or return zero value
   bool link_nodes(); // links the ids from frd/dat all
