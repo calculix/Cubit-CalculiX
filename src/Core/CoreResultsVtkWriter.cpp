@@ -400,6 +400,8 @@ bool CoreResultsVtkWriter::write_vtu_linked()
   for (size_t i = 0; i < 1; i++)
   { 
     output = "";
+    std::vector<int> partial_node_ids;
+
     // write header
     output.append(this->level_whitespace(0) + "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt64\">\n");
     output.append(this->level_whitespace(1) + "<UnstructuredGrid>\n");
@@ -470,15 +472,19 @@ bool CoreResultsVtkWriter::write_vtu_linked()
           for (size_t iii = 0; iii < frd->nodes.size(); iii++)
           {
             //check if there exists results for the node id
-            auto lower = std::lower_bound(node_ids.begin(), node_ids.end(), frd->nodes[iii][0]);
-            if (lower!=node_ids.end())
+            if (std::binary_search(node_ids.begin(), node_ids.end(), frd->nodes[iii][0]))
             {
+              auto lower = std::lower_bound(node_ids.begin(), node_ids.end(), frd->nodes[iii][0]);
               node_data_id = tmp_node_data_ids[lower-node_ids.begin()];
             }else{
               node_data_id = -1;
+              partial_node_ids.push_back(frd->nodes[iii][0]);
             }
             output.append(this->level_whitespace(5) + this->get_result_data_partial(data_ids[ii], node_data_id, component_size) + "\n");
           }
+          //erase duplicates in partial_node_ids
+          std::sort(partial_node_ids.begin(),partial_node_ids.end() );
+          partial_node_ids.erase(std::unique(partial_node_ids.begin(), partial_node_ids.end()), partial_node_ids.end());
           // footer
           output.append(this->level_whitespace(4) + "</DataArray>\n");
         }else{
@@ -529,6 +535,43 @@ bool CoreResultsVtkWriter::write_vtu_linked()
         }
       }
     }
+    // insert marking of PARTIAL Cells
+    if (write_partial)
+    {
+      std::vector<int> partial_element(frd->elements_connectivity.size(),0);
+      // sorting for faster search
+      auto p = sort_permutation(partial_node_ids);
+      this->apply_permutation(partial_node_ids, p);
+
+      //check if element contains a partial node
+      for (size_t ii = 0; ii < frd->elements_connectivity.size(); ii++)
+      {
+        for (size_t iii = 0; iii < frd->elements_connectivity[ii].size(); iii++)
+        {
+          //check if there exists a partial node id
+          if (std::binary_search(partial_node_ids.begin(), partial_node_ids.end(), frd->elements_connectivity[ii][iii]))
+          {
+            partial_element[ii] = 1;
+            iii = frd->elements_connectivity[ii].size();
+          }
+        }
+      }
+      //write out partial cell data
+      // header
+      output.append(this->level_whitespace(4) + "<DataArray type=\"Int64\" ");
+      output.append("Name=\"Partial\" ");
+      output.append("NumberOfComponents=\"1\" ");
+      output.append("ComponentName1 =\"Partial\" ");
+      output.append("format=\"ascii\" RangeMin=\"0\" RangeMax=\"1\">\n");
+      
+      for (size_t ii = 0; ii < partial_element.size(); ii++)
+      {
+        output.append(this->level_whitespace(5) + std::to_string(partial_element[ii]) + "\n");
+      }
+      // footer
+      output.append(this->level_whitespace(4) + "</DataArray>\n");
+    }
+    // end PARTIAL
     output.append(this->level_whitespace(3) + "</CellData>\n");
     //append nodes and elements
     output.append(output_nodes);
@@ -684,6 +727,8 @@ bool CoreResultsVtkWriter::write_vtu_unlinked()
   { 
     output = "";
     ++current_increment;
+    std::vector<int> partial_node_ids;
+
     // write header
     output.append(this->level_whitespace(0) + "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt64\">\n");
     output.append(this->level_whitespace(1) + "<UnstructuredGrid>\n");
@@ -748,6 +793,7 @@ bool CoreResultsVtkWriter::write_vtu_unlinked()
           int node_data_id = -1;          
           std::vector<int> node_ids = this->get_result_block_node_id(data_ids[ii]);
           std::vector<int> tmp_node_data_ids = node_data_ids;
+          
           // sorting for faster search
           auto p = sort_permutation(node_ids);
           this->apply_permutation(node_ids, p);
@@ -756,15 +802,19 @@ bool CoreResultsVtkWriter::write_vtu_unlinked()
           for (size_t iii = 0; iii < frd->nodes.size(); iii++)
           {
             //check if there exists results for the node id
-            auto lower = std::lower_bound(node_ids.begin(), node_ids.end(), frd->nodes[iii][0]);
-            if (lower!=node_ids.end())
+            if (std::binary_search(node_ids.begin(), node_ids.end(), frd->nodes[iii][0]))
             {
+              auto lower = std::lower_bound(node_ids.begin(), node_ids.end(), frd->nodes[iii][0]);
               node_data_id = tmp_node_data_ids[lower-node_ids.begin()];
             }else{
               node_data_id = -1;
+              partial_node_ids.push_back(frd->nodes[iii][0]);
             }
             output.append(this->level_whitespace(5) + this->get_result_data_partial(data_ids[ii], node_data_id, component_size) + "\n");
           }
+          //erase duplicates in partial_node_ids
+          std::sort(partial_node_ids.begin(),partial_node_ids.end() );
+          partial_node_ids.erase(std::unique(partial_node_ids.begin(), partial_node_ids.end()), partial_node_ids.end());
           // footer
           output.append(this->level_whitespace(4) + "</DataArray>\n");
         }else{
@@ -781,6 +831,43 @@ bool CoreResultsVtkWriter::write_vtu_unlinked()
     output.append(this->level_whitespace(4) + "<DataArray type=\"Int64\" IdType=\"1\" Name=\"ids\" format=\"ascii\" RangeMin=\"" + std::to_string(min_element_id) + "\" RangeMax=\"" + std::to_string(max_element_id)+ "\">\n");
     output.append(output_elements_ids);
     output.append(this->level_whitespace(4) + "</DataArray>\n");
+    // insert marking of PARTIAL Cells
+    if (write_partial)
+    {
+      std::vector<int> partial_element(frd->elements_connectivity.size(),0);
+      // sorting for faster search
+      auto p = sort_permutation(partial_node_ids);
+      this->apply_permutation(partial_node_ids, p);
+
+      //check if element contains a partial node
+      for (size_t ii = 0; ii < frd->elements_connectivity.size(); ii++)
+      {
+        for (size_t iii = 0; iii < frd->elements_connectivity[ii].size(); iii++)
+        {
+          //check if there exists a partial node id
+          if (std::binary_search(partial_node_ids.begin(), partial_node_ids.end(), frd->elements_connectivity[ii][iii]))
+          {
+            partial_element[ii] = 1;
+            iii = frd->elements_connectivity[ii].size();
+          }
+        }
+      }
+      //write out partial cell data
+      // header
+      output.append(this->level_whitespace(4) + "<DataArray type=\"Int64\" ");
+      output.append("Name=\"Partial\" ");
+      output.append("NumberOfComponents=\"1\" ");
+      output.append("ComponentName1 =\"Partial\" ");
+      output.append("format=\"ascii\" RangeMin=\"0\" RangeMax=\"1\">\n");
+      
+      for (size_t ii = 0; ii < partial_element.size(); ii++)
+      {
+        output.append(this->level_whitespace(5) + std::to_string(partial_element[ii]) + "\n");
+      }
+      // footer
+      output.append(this->level_whitespace(4) + "</DataArray>\n");
+    }
+    // end PARTIAL
     output.append(this->level_whitespace(3) + "</CellData>\n");
     //append nodes and elements
     output.append(output_nodes);
@@ -932,22 +1019,6 @@ int CoreResultsVtkWriter::get_max_step_increment()
 
 bool CoreResultsVtkWriter::rewrite_connectivity_unlinked()
 {  
-  /*
-  for (size_t i = 0; i < frd->nodes.size(); i++)
-  {
-    for (size_t ii = 0; ii < frd->elements_connectivity.size(); ii++)
-    {
-      for (size_t iii = 0; iii < frd->elements_connectivity[ii].size(); iii++)
-      {
-        if (frd->elements_connectivity[ii][iii]==frd->nodes[i][0])
-        {
-          frd->elements_connectivity[ii][iii] = i;
-        }
-      }
-    }
-  }
-  */
-
   std::vector<int> tmp_node_ids;
   std::vector<int> tmp_node_data_ids;
   
