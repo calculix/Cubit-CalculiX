@@ -2114,9 +2114,9 @@ bool CalculiXCore::load_result(int job_id)
   return results->load_result(job_id);
 }
 
-int CalculiXCore::convert_result(int job_id)
+int CalculiXCore::convert_result(int job_id, int option)
 {
-  return results->convert_result(job_id);
+  return results->convert_result(job_id, option);
 }
 
 bool CalculiXCore::project_result(int job_id,int step,int totalincrement,double scale)

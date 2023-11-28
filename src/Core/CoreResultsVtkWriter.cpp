@@ -400,6 +400,8 @@ bool CoreResultsVtkWriter::write_vtu_linked()
   for (size_t i = 0; i < 1; i++)
   { 
     output = "";
+    std::vector<int> partial_node_ids;
+
     // write header
     output.append(this->level_whitespace(0) + "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt64\">\n");
     output.append(this->level_whitespace(1) + "<UnstructuredGrid>\n");
@@ -439,6 +441,57 @@ bool CoreResultsVtkWriter::write_vtu_linked()
         }
         // footer
         output.append(this->level_whitespace(4) + "</DataArray>\n");
+      }else{
+        if (write_partial)
+        {
+          //log = "Partial " + frd->result_block_type[frd->result_blocks[data_ids[ii]][5]] + " - current increment " + std::to_string(current_increment) + " - current part " + std::to_string(current_part) + " \n";
+          //PRINT_INFO("%s", log.c_str());
+          
+          current_time = frd->total_times[frd->result_blocks[data_ids[ii]][4]];
+          // header
+          int component_size = frd->result_block_components[frd->result_blocks[data_ids[ii]][6]].size();
+          output.append(this->level_whitespace(4) + "<DataArray type=\"Float64\" ");
+          output.append("Name=\"" + frd->result_block_type[frd->result_blocks[data_ids[ii]][5]] + "\" ");
+          output.append("NumberOfComponents=\"" + std::to_string(frd->result_block_components[frd->result_blocks[data_ids[ii]][6]].size()) + "\" ");
+          
+          for (size_t iii = 0; iii < frd->result_block_components[frd->result_blocks[data_ids[ii]][6]].size(); iii++)
+          {
+            output.append("ComponentName"+ std::to_string(iii) + " =\"" + frd->result_block_components[frd->result_blocks[data_ids[ii]][6]][iii] +"\" ");
+          }
+          output.append("format=\"ascii\" RangeMin=\"" + std::to_string(rangeMin) + "\" RangeMax=\"" + std::to_string(rangeMin) + "\">\n");
+          
+          // sorting variables
+          int node_data_id = -1;          
+          std::vector<int> node_ids = this->get_result_block_node_id(data_ids[ii]);
+          std::vector<int> tmp_node_data_ids = node_data_ids;
+          // sorting for faster search
+          auto p = sort_permutation(node_ids);
+          this->apply_permutation(node_ids, p);
+          this->apply_permutation(tmp_node_data_ids, p);
+
+          for (size_t iii = 0; iii < frd->nodes.size(); iii++)
+          {
+            //check if there exists results for the node id
+            if (std::binary_search(node_ids.begin(), node_ids.end(), frd->nodes[iii][0]))
+            {
+              auto lower = std::lower_bound(node_ids.begin(), node_ids.end(), frd->nodes[iii][0]);
+              node_data_id = tmp_node_data_ids[lower-node_ids.begin()];
+            }else{
+              node_data_id = -1;
+              partial_node_ids.push_back(frd->nodes[iii][0]);
+            }
+            output.append(this->level_whitespace(5) + this->get_result_data_partial(data_ids[ii], node_data_id, component_size) + "\n");
+          }
+          //erase duplicates in partial_node_ids
+          std::sort(partial_node_ids.begin(),partial_node_ids.end() );
+          partial_node_ids.erase(std::unique(partial_node_ids.begin(), partial_node_ids.end()), partial_node_ids.end());
+          // footer
+          output.append(this->level_whitespace(4) + "</DataArray>\n");
+        }else{
+          log = "WARNING! Result data skipped for Result Block " + frd->result_block_type[frd->result_blocks[data_ids[ii]][5]] + " - current increment " + std::to_string(current_increment) + " - current part " + std::to_string(current_part) + " \n";
+          log.append("node_data_ids.size() = " + std::to_string(node_data_ids.size()) + " != frd->nodes.size() = " + std::to_string(frd->nodes.size()) + " try it again with Option [Partial]\n");
+          PRINT_INFO("%s", log.c_str());
+        }
       }
     }
     output.append(this->level_whitespace(3) + "</PointData>\n");
@@ -482,6 +535,43 @@ bool CoreResultsVtkWriter::write_vtu_linked()
         }
       }
     }
+    // insert marking of PARTIAL Cells
+    if (write_partial)
+    {
+      std::vector<int> partial_element(frd->elements_connectivity.size(),0);
+      // sorting for faster search
+      auto p = sort_permutation(partial_node_ids);
+      this->apply_permutation(partial_node_ids, p);
+
+      //check if element contains a partial node
+      for (size_t ii = 0; ii < frd->elements_connectivity.size(); ii++)
+      {
+        for (size_t iii = 0; iii < frd->elements_connectivity[ii].size(); iii++)
+        {
+          //check if there exists a partial node id
+          if (std::binary_search(partial_node_ids.begin(), partial_node_ids.end(), frd->elements_connectivity[ii][iii]))
+          {
+            partial_element[ii] = 1;
+            iii = frd->elements_connectivity[ii].size();
+          }
+        }
+      }
+      //write out partial cell data
+      // header
+      output.append(this->level_whitespace(4) + "<DataArray type=\"Int64\" ");
+      output.append("Name=\"Partial\" ");
+      output.append("NumberOfComponents=\"1\" ");
+      output.append("ComponentName1 =\"Partial\" ");
+      output.append("format=\"ascii\" RangeMin=\"0\" RangeMax=\"1\">\n");
+      
+      for (size_t ii = 0; ii < partial_element.size(); ii++)
+      {
+        output.append(this->level_whitespace(5) + std::to_string(partial_element[ii]) + "\n");
+      }
+      // footer
+      output.append(this->level_whitespace(4) + "</DataArray>\n");
+    }
+    // end PARTIAL
     output.append(this->level_whitespace(3) + "</CellData>\n");
     //append nodes and elements
     output.append(output_nodes);
@@ -637,6 +727,8 @@ bool CoreResultsVtkWriter::write_vtu_unlinked()
   { 
     output = "";
     ++current_increment;
+    std::vector<int> partial_node_ids;
+
     // write header
     output.append(this->level_whitespace(0) + "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt64\">\n");
     output.append(this->level_whitespace(1) + "<UnstructuredGrid>\n");
@@ -678,15 +770,57 @@ bool CoreResultsVtkWriter::write_vtu_unlinked()
         // footer
         output.append(this->level_whitespace(4) + "</DataArray>\n");
 
-        //update progress bar
-        const auto t_end = std::chrono::high_resolution_clock::now();
-        int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
-        //currentDataRow += frd->result_block_data[data_ids[ii]].size();
-        if (duration > 500)
+      }else{
+        if (write_partial)
         {
-          progressbar->percent(double(current_increment)/double(max_increments));
-          progressbar->check_interrupt();
-          t_start = std::chrono::high_resolution_clock::now();
+          //log = "Partial " + frd->result_block_type[frd->result_blocks[data_ids[ii]][5]] + " - current increment " + std::to_string(current_increment) + " \n";
+          //PRINT_INFO("%s", log.c_str());
+          
+          current_time = frd->total_times[frd->result_blocks[data_ids[ii]][4]];
+          // header
+          int component_size = frd->result_block_components[frd->result_blocks[data_ids[ii]][6]].size();
+          output.append(this->level_whitespace(4) + "<DataArray type=\"Float64\" ");
+          output.append("Name=\"" + frd->result_block_type[frd->result_blocks[data_ids[ii]][5]] + "\" ");
+          output.append("NumberOfComponents=\"" + std::to_string(frd->result_block_components[frd->result_blocks[data_ids[ii]][6]].size()) + "\" ");
+          
+          for (size_t iii = 0; iii < frd->result_block_components[frd->result_blocks[data_ids[ii]][6]].size(); iii++)
+          {
+            output.append("ComponentName"+ std::to_string(iii) + " =\"" + frd->result_block_components[frd->result_blocks[data_ids[ii]][6]][iii] +"\" ");
+          }
+          output.append("format=\"ascii\" RangeMin=\"" + std::to_string(rangeMin) + "\" RangeMax=\"" + std::to_string(rangeMin) + "\">\n");
+          
+          // sorting variables
+          int node_data_id = -1;          
+          std::vector<int> node_ids = this->get_result_block_node_id(data_ids[ii]);
+          std::vector<int> tmp_node_data_ids = node_data_ids;
+          
+          // sorting for faster search
+          auto p = sort_permutation(node_ids);
+          this->apply_permutation(node_ids, p);
+          this->apply_permutation(tmp_node_data_ids, p);
+
+          for (size_t iii = 0; iii < frd->nodes.size(); iii++)
+          {
+            //check if there exists results for the node id
+            if (std::binary_search(node_ids.begin(), node_ids.end(), frd->nodes[iii][0]))
+            {
+              auto lower = std::lower_bound(node_ids.begin(), node_ids.end(), frd->nodes[iii][0]);
+              node_data_id = tmp_node_data_ids[lower-node_ids.begin()];
+            }else{
+              node_data_id = -1;
+              partial_node_ids.push_back(frd->nodes[iii][0]);
+            }
+            output.append(this->level_whitespace(5) + this->get_result_data_partial(data_ids[ii], node_data_id, component_size) + "\n");
+          }
+          //erase duplicates in partial_node_ids
+          std::sort(partial_node_ids.begin(),partial_node_ids.end() );
+          partial_node_ids.erase(std::unique(partial_node_ids.begin(), partial_node_ids.end()), partial_node_ids.end());
+          // footer
+          output.append(this->level_whitespace(4) + "</DataArray>\n");
+        }else{
+          log = "WARNING! Result data skipped for Result Block " + frd->result_block_type[frd->result_blocks[data_ids[ii]][5]] + " - current increment " + std::to_string(current_increment) + " \n";
+          log.append("node_data_ids.size() = " + std::to_string(node_data_ids.size()) + " != frd->nodes.size() = " + std::to_string(frd->nodes.size()) + "\n");
+          PRINT_INFO("%s", log.c_str());
         }
       }
     }
@@ -697,6 +831,43 @@ bool CoreResultsVtkWriter::write_vtu_unlinked()
     output.append(this->level_whitespace(4) + "<DataArray type=\"Int64\" IdType=\"1\" Name=\"ids\" format=\"ascii\" RangeMin=\"" + std::to_string(min_element_id) + "\" RangeMax=\"" + std::to_string(max_element_id)+ "\">\n");
     output.append(output_elements_ids);
     output.append(this->level_whitespace(4) + "</DataArray>\n");
+    // insert marking of PARTIAL Cells
+    if (write_partial)
+    {
+      std::vector<int> partial_element(frd->elements_connectivity.size(),0);
+      // sorting for faster search
+      auto p = sort_permutation(partial_node_ids);
+      this->apply_permutation(partial_node_ids, p);
+
+      //check if element contains a partial node
+      for (size_t ii = 0; ii < frd->elements_connectivity.size(); ii++)
+      {
+        for (size_t iii = 0; iii < frd->elements_connectivity[ii].size(); iii++)
+        {
+          //check if there exists a partial node id
+          if (std::binary_search(partial_node_ids.begin(), partial_node_ids.end(), frd->elements_connectivity[ii][iii]))
+          {
+            partial_element[ii] = 1;
+            iii = frd->elements_connectivity[ii].size();
+          }
+        }
+      }
+      //write out partial cell data
+      // header
+      output.append(this->level_whitespace(4) + "<DataArray type=\"Int64\" ");
+      output.append("Name=\"Partial\" ");
+      output.append("NumberOfComponents=\"1\" ");
+      output.append("ComponentName1 =\"Partial\" ");
+      output.append("format=\"ascii\" RangeMin=\"0\" RangeMax=\"1\">\n");
+      
+      for (size_t ii = 0; ii < partial_element.size(); ii++)
+      {
+        output.append(this->level_whitespace(5) + std::to_string(partial_element[ii]) + "\n");
+      }
+      // footer
+      output.append(this->level_whitespace(4) + "</DataArray>\n");
+    }
+    // end PARTIAL
     output.append(this->level_whitespace(3) + "</CellData>\n");
     //append nodes and elements
     output.append(output_nodes);
@@ -722,6 +893,17 @@ bool CoreResultsVtkWriter::write_vtu_unlinked()
       this->write_to_file(filepath + "/" + filepath + ".vtu",output);
     }else{
       this->write_to_file(filepath + "/" + filepath + "." + this->get_increment() +  ".vtu",output);
+    }
+
+    //update progress bar
+    const auto t_end = std::chrono::high_resolution_clock::now();
+    int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+    //currentDataRow += frd->result_block_data[data_ids[ii]].size();
+    if (duration > 500)
+    {
+      progressbar->percent(double(current_increment)/double(max_increments));
+      progressbar->check_interrupt();
+      t_start = std::chrono::high_resolution_clock::now();
     }
   }
   
@@ -837,19 +1019,33 @@ int CoreResultsVtkWriter::get_max_step_increment()
 
 bool CoreResultsVtkWriter::rewrite_connectivity_unlinked()
 {  
+  std::vector<int> tmp_node_ids;
+  std::vector<int> tmp_node_data_ids;
+  
   for (size_t i = 0; i < frd->nodes.size(); i++)
   {
-    for (size_t ii = 0; ii < frd->elements_connectivity.size(); ii++)
+    tmp_node_ids.push_back(frd->nodes[i][0]);
+    tmp_node_data_ids.push_back(i);
+  }
+  
+  // sorting for faster search
+  auto p = sort_permutation(tmp_node_ids);
+  this->apply_permutation(tmp_node_ids, p);
+  this->apply_permutation(tmp_node_data_ids, p);
+  
+  for (size_t i = 0; i < frd->elements_connectivity.size(); i++)
+  {
+    for (size_t ii = 0; ii < frd->elements_connectivity[ii].size(); ii++)
     {
-      for (size_t iii = 0; iii < frd->elements_connectivity[ii].size(); iii++)
+      //check if there exists results for the node id
+      auto lower = std::lower_bound(tmp_node_ids.begin(), tmp_node_ids.end(), frd->elements_connectivity[i][ii]);
+      if (lower!=tmp_node_ids.end())
       {
-        if (frd->elements_connectivity[ii][iii]==frd->nodes[i][0])
-        {
-          frd->elements_connectivity[ii][iii] = i;
-        }
+        frd->elements_connectivity[i][ii] = tmp_node_data_ids[lower-tmp_node_ids.begin()];
       }
     }
   }
+
   return true;
 }
 
@@ -1383,6 +1579,32 @@ std::vector<int> CoreResultsVtkWriter::get_result_block_node_data_id_linked(int 
   return data_ids;
 }
 
+std::vector<int> CoreResultsVtkWriter::get_result_block_node_id(int result_blocks_data_id)
+{
+  std::vector<int> data_ids;
+  int current_node_id = 0;
+  int last_node_id = 0;
+  
+  for (size_t i = 0; i < frd->result_block_node_data[result_blocks_data_id].size(); i++)
+  {
+    current_node_id = frd->result_block_node_data[result_blocks_data_id][i][0];
+    if(i==0)
+    {
+      last_node_id = frd->result_block_node_data[result_blocks_data_id][i][0];
+      data_ids.push_back(frd->result_block_node_data[result_blocks_data_id][i][0]);
+    }else{
+      if (last_node_id == current_node_id)
+      {
+        data_ids[data_ids.size()-1] = frd->result_block_node_data[result_blocks_data_id][i][0];
+      }else{
+        last_node_id = frd->result_block_node_data[result_blocks_data_id][i][0];
+        data_ids.push_back(frd->result_block_node_data[result_blocks_data_id][i][0]);
+      }
+    }
+  }
+  return data_ids;
+}
+
 std::string CoreResultsVtkWriter::get_result_data(int data_id, int node_data_id)
 {
   std::string str_result = "";
@@ -1407,6 +1629,45 @@ std::string CoreResultsVtkWriter::get_result_data(int data_id, int node_data_id)
       str_result.append(" ");
     }
   }
+  return str_result;  
+}
+
+std::string CoreResultsVtkWriter::get_result_data_partial(int data_id, int node_data_id, int component_size)
+{
+  std::string str_result = "";
+  std::vector<double> result_component;
+
+  if (node_data_id == -1)
+  {
+    for (size_t i = 0; i < component_size; i++)
+    {
+      str_result.append(ccx_iface->to_string_scientific(0.));
+      if (i!=component_size-1)
+      {
+        str_result.append(" ");
+      }
+    }
+  }else{
+    result_component = frd->result_block_data[data_id][node_data_id];
+    for (size_t i = 0; i < result_component.size(); i++)
+    {
+      if (result_component[i]<rangeMin)
+      {
+        rangeMin=result_component[i];
+      }
+      if (result_component[i]>rangeMax)
+      {
+        rangeMax=result_component[i];
+      }
+
+      str_result.append(ccx_iface->to_string_scientific(result_component[i]));
+      if (i!=result_component.size()-1)
+      {
+        str_result.append(" ");
+      }
+    }
+  }
+  
   return str_result;  
 }
 

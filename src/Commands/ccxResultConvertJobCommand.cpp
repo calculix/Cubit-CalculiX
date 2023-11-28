@@ -14,7 +14,7 @@ std::vector<std::string> ccxResultConvertJobCommand::get_syntax()
   std::vector<std::string> syntax_list;
 
   std::string syntax = "ccx ";
-  syntax.append("result convert job <value:label='job_id',help='<job_id>'>");
+  syntax.append("result convert job <value:label='job_id',help='<job_id>'> [partial]");
   syntax_list.push_back(syntax);
   
   return syntax_list;
@@ -23,7 +23,7 @@ std::vector<std::string> ccxResultConvertJobCommand::get_syntax()
 std::vector<std::string> ccxResultConvertJobCommand::get_syntax_help()
 {
   std::vector<std::string> help(1);
-  help[0] = "ccx result convert job <job_id>"; 
+  help[0] = "ccx result convert job <job_id> [partial]"; 
 
   return help;
 }
@@ -41,10 +41,17 @@ bool ccxResultConvertJobCommand::execute(CubitCommandData &data)
   std::string output;
 
   int job_id;
+  int option;
 
   data.get_value("job_id", job_id);
 
-  if (!ccx_iface.convert_result(job_id))
+  if (data.find_keyword("PARTIAL")){
+    option = 1;
+  }else{
+    option = -1;
+  }
+
+  if (!ccx_iface.convert_result(job_id,option))
   {
     output = "Failed!\n";
     PRINT_ERROR(output.c_str());

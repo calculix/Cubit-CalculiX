@@ -149,12 +149,12 @@ void JobsMonitor::update()
       QPlainTextEdit_sta->clear();
     }
 
-    if (QPlainTextEdit_console->blockCount() < console_output.size())
+    if (total_block_count_console_output < console_output.size())
     {
       if (QPlainTextEdit_console->toPlainText().toStdString()=="")
       {
         QPlainTextEdit_console->appendPlainText(QString::fromStdString(console_output[0]));
-        ++total_block_count_console_output;  
+        ++total_block_count_console_output;
       }
       for (size_t i = total_block_count_console_output; i < console_output.size(); i++)
       {

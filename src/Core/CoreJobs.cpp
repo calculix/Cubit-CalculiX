@@ -299,7 +299,7 @@ bool CoreJobs::wait_job(int job_id)
         PRINT_INFO("%s", log.c_str());
         jobs_data[jobs_data_id][3] = "2";
         ccx_iface->load_result(job_id);
-        jobs_data[jobs_data_id][6] = std::to_string(ccx_iface->convert_result(job_id));
+        jobs_data[jobs_data_id][6] = std::to_string(ccx_iface->convert_result(job_id,-1));
       }
       CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
     }
@@ -377,7 +377,7 @@ bool CoreJobs::check_jobs()
           }
           
           // break out of loop, so that output reading doesn't freeze gui
-          if (ic==10)
+          if (ic==100)
           {
             break;
           }          
@@ -408,7 +408,7 @@ bool CoreJobs::check_jobs()
           PRINT_INFO("%s", log.c_str());
           jobs_data[i][3] = "2";
           ccx_iface->load_result(std::stoi(jobs_data[i][0]));
-          jobs_data[i][6] = std::to_string(ccx_iface->convert_result(std::stoi(jobs_data[i][0])));
+          jobs_data[i][6] = std::to_string(ccx_iface->convert_result(std::stoi(jobs_data[i][0]),-1));
           CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
         }
       }
