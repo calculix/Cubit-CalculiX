@@ -57,12 +57,12 @@ mesh volume 14 19 6 9 18 12 3 22
 mesh volume 7 10 16 20 4 5 8 11 13 15 17 21
 
 ## Refine mesh via remeshing
-delete mesh
-volume all size 1
-paver cleanup extend
-mesh surface 207
-mesh volume all
-volume 2 smooth scheme equipotential free
+#delete mesh
+#volume all size 1
+#paver cleanup extend
+#mesh surface 207
+#mesh volume all
+#volume 2 smooth scheme equipotential free
 
 ## create vertex for rigid body constraints
 
@@ -84,6 +84,8 @@ nodeset 2 add surface 111
 nodeset 2 name "nset_rb1"
 nodeset 3 add surface 115
 nodeset 3 name "nset_rb2"
+nodeset 4 add surface 35 38 98 148 321 313 359 363 286 284 329 325 375 309 368 305
+nodeset 4 name "nset_all"
 
 #sidesets
 sideset 1 add surface 208  
@@ -124,16 +126,18 @@ ccx create constraint rigid body nodeset 2 ref 449 rot 450
 ccx create constraint rigid body nodeset 3 ref 451 rot 452
 
 # surface interaction
-ccx create surfaceinteraction name "hard_contact" hard
+#ccx create surfaceinteraction name "hard_contact" hard
+ccx create surfaceinteraction name "ContactType" linear slopeK 1e6 sigmaINF 3 c0 1e-2
+ccx modify surfaceinteraction 1 friction mu 0.1 lambda 1
 
 # contactpairs
-#ccx create contactpair surfaceinteraction 1 surfacetosurface master 1 slave 6 adjust 0
-#ccx create contactpair surfaceinteraction 1 surfacetosurface master 10 slave 8 adjust 0
-#ccx create contactpair surfaceinteraction 1 surfacetosurface master 10 slave 9 adjust 0
-#ccx create contactpair surfaceinteraction 1 surfacetosurface master 2 slave 7 adjust 0
-#ccx create contactpair surfaceinteraction 1 surfacetosurface master 3 slave 7 adjust 0
-#ccx create contactpair surfaceinteraction 1 surfacetosurface master 4 slave 7 adjust 0
-#ccx create contactpair surfaceinteraction 1 surfacetosurface master 5 slave 7 adjust 0
+ccx create contactpair surfaceinteraction 1 surfacetosurface master 1 slave 6 adjust 0.2
+ccx create contactpair surfaceinteraction 1 surfacetosurface master 10 slave 8 adjust 0.2
+ccx create contactpair surfaceinteraction 1 surfacetosurface master 10 slave 9 adjust 0.2
+ccx create contactpair surfaceinteraction 1 surfacetosurface master 2 slave 7 adjust 0.2
+ccx create contactpair surfaceinteraction 1 surfacetosurface master 3 slave 7 adjust 0.2
+ccx create contactpair surfaceinteraction 1 surfacetosurface master 4 slave 7 adjust 0.2
+ccx create contactpair surfaceinteraction 1 surfacetosurface master 5 slave 7 adjust 0.2
 
 # load
 create force name 'load' on vertex 449 451 force value 100 direction 0 -1 0
@@ -141,7 +145,9 @@ ccx modify force 1 op new
 
 # bc
 create displacement name "disp_fix" on nodeset 1 dof all fix 0 
-create displacement name "disp_contact" on nodeset 4 dof 2 fix -0.3
+ccx modify displacement 1 op new
+create displacement name "disp_contact" on nodeset 5 dof 2 fix -0.3
+create displacement name "disp_fix_all" on nodeset 4 dof all fix 0 
 
 # outputs
 ccx create fieldoutput name "fo_node" node
@@ -157,11 +163,11 @@ ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFL HFL
 ccx create step name "contact" static
 #ccx modify step 1 parameter nlgeom_yes
 #ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.01 timeperiodofstep 1 minimumtimeincrement 0.0001 maximumtimeincrement 0.1
-#ccx step 1 add bc displacement 1 2
+ccx step 1 add bc displacement 3
 ccx step 1 add fieldoutput 1 2
 ccx create step name "loading" static
-#ccx modify step 2 parameter nlgeom_yes
-#ccx modify step 2 static totaltimeatstart 0 initialtimeincrement 0.01 timeperiodofstep 1 minimumtimeincrement 0.0001 maximumtimeincrement 0.1
+ccx modify step 2 parameter nlgeom_yes
+ccx modify step 2 static totaltimeatstart 0 initialtimeincrement 0.01 timeperiodofstep 1 minimumtimeincrement 0.0001 maximumtimeincrement 0.1
 ccx step 2 add load force 1
 ccx step 2 add bc displacement 1
 ccx step 2 add fieldoutput 1 2
