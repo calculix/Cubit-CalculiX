@@ -1,0 +1,171 @@
+## from the coreform webinar
+## Import geometry 
+reset
+import acis "/home/user/git/Cubit-CalculiX/journal_files/Examples/Door_Lock_Assembly.sat" nofreesurfaces attributes_on  separate_bodies 
+
+## Mesh Volume 2 (Large Hinge)
+### Composite the source and target surfaces
+composite create surface 85 168 161 154 146 162 163 155 167 171 172 165 182 175 181 180 81 188 189 193 118 130 131 144 145 132 136 138 114 105 110 113 95 91 102 100  keep angle 15 
+composite create surface 86 87 152 153 150 159 160 158 164 156 169 173 176 184 177 186 174 185 187 190 191 192 125 126 122 129 121 119 141 135 137 142 117 109 106 103  keep angle 15 
+
+### Assign Sweep and Mesh
+volume 2  redistribute nodes off 
+volume 2  scheme Sweep  source surface 206    target surface 207   sweep transform least squares 
+volume 2  autosmooth target on  fixed imprints off  smart smooth off 
+mesh volume 2 
+
+## Mesh Volume 1 (Small Hinge)
+### Composite the source and target surfaces
+composite create surface 72 77 58 67 37 34 28 23 40 50  keep angle 15 
+composite create surface 70 74 79 56 80 42 51 21 29 43  keep angle 15 
+
+### Composite linking surfaces that have unsweepable topology
+composite create surface 27 25 33  keep angle 15 
+composite create surface 31 30 22  keep angle 15 
+composite create surface 36 20 19  keep angle 15 
+composite create surface 32 24 26  keep angle 15 
+
+### Composite linking surfaces that are small / ignorable
+composite create surface 68 66  keep angle 15 
+composite create surface 60 75  keep angle 15 
+
+### Assign Sweep and Mesh
+volume 1  redistribute nodes off 
+volume 1  scheme Sweep  source surface 208    target surface 209   sweep transform least squares 
+volume 1  autosmooth target on  fixed imprints off  smart smooth off 
+mesh volume 1 
+
+## Mesh volume 3 (Pin)
+### Webcut for meshability
+webcut volume 3  sweep surface 203  perpendicular inward through_all 
+webcut volume 3  sweep surface 199  perpendicular inward through_all 
+webcut volume 3  with loop curve 487  
+webcut volume 3  with loop curve 488  
+webcut volume 4 6 7 5 3  with plane normal to curve 484  fraction .5 from start 
+webcut volume 4 6 11 7 8 9 12 10 5 3  with plane normal to curve 593  fraction .5 from start 
+
+### Due to our comprehensive webcutting no imprinting is needed; we only need to merge
+merge volume 14 4 19 16 6 11 7 8 15 9 18 12 10 5 3 13 22 21 20 17  
+draw surface in volume 14 4 19 16 6 11 7 8 15 9 18 12 10 5 3 13 22 21 20 17  with is_merged # Draws the surfaces that are merged
+display  # Reset graphics
+
+### Assign polyhedron scheme where needed and mesh
+volume 14 19 6 9 18 12 3 22 scheme polyhedron 
+mesh volume 14 19 6 9 18 12 3 22
+
+### Mesh remaining volumes in pin
+mesh volume 7 10 16 20 4 5 8 11 13 15 17 21
+
+## Refine mesh via remeshing
+delete mesh
+volume all size 1
+paver cleanup extend
+mesh surface 207
+mesh volume all
+volume 2 smooth scheme equipotential free
+
+## create vertex for rigid body constraints
+
+create vertex location on surface 111  center  
+create vertex location on surface 111  center  
+create vertex location on surface 115  center  
+create vertex location on surface 115  center  
+mesh vertex all
+
+## blocks
+block 1 add vol 1
+block 2 add vol 2
+block 3 add vol all except 1 2
+
+#nodesets
+nodeset 1 add surface 6 17  
+nodeset 1 name "nset_fix"
+nodeset 2 add surface 111  
+nodeset 2 name "nset_rb1"
+nodeset 3 add surface 115
+nodeset 3 name "nset_rb2"
+
+#sidesets
+sideset 1 add surface 208  
+sideset 1 name "contact_exterior_1"
+sideset 2 add surface 35  
+sideset 2 name "contact_hole_1"
+sideset 3 add surface 38  
+sideset 3 name "contact_hole_2"
+sideset 4 add surface 98  
+sideset 4 name "contact_hole_3"
+sideset 5 add surface 148  
+sideset 5 name "contact_hole_4"
+sideset 6 add surface 206  
+sideset 6 name "contact_exterior_2"
+sideset 7 add surface 321 313 359 363  
+sideset 7 name "bolt_cylinder"
+sideset 8 add surface 286 284 329 325  
+sideset 8 name "bolt_1"
+sideset 9 add surface 375 309 368 305  
+sideset 9 name "bolt_2"
+sideset 10 add surface 207 
+sideset 10 name "contact_exterior_3"
+
+#material
+create material "Steel" property_group "CalculiX-FEA"
+modify material "Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0 
+modify material "Steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+
+#sections
+ccx create section solid block all material 1
+
+#rigid body
+ccx create constraint rigid body nodeset 2 ref 449 rot 450
+ccx create constraint rigid body nodeset 3 ref 451 rot 452
+
+# surface interaction
+ccx create surfaceinteraction name "hard_contact" hard
+
+# contactpairs
+#ccx create contactpair surfaceinteraction 1 surfacetosurface master 1 slave 6 adjust 0
+#ccx create contactpair surfaceinteraction 1 surfacetosurface master 10 slave 8 adjust 0
+#ccx create contactpair surfaceinteraction 1 surfacetosurface master 10 slave 9 adjust 0
+#ccx create contactpair surfaceinteraction 1 surfacetosurface master 2 slave 7 adjust 0
+#ccx create contactpair surfaceinteraction 1 surfacetosurface master 3 slave 7 adjust 0
+#ccx create contactpair surfaceinteraction 1 surfacetosurface master 4 slave 7 adjust 0
+#ccx create contactpair surfaceinteraction 1 surfacetosurface master 5 slave 7 adjust 0
+
+# load
+create force name 'load' on vertex 449 451 force value 100 direction 0 -1 0
+ccx modify force 1 op new
+
+# bc
+create displacement name "disp_fix" on nodeset 1 dof all fix 0 
+create displacement name "disp_contact" on nodeset 4 dof 2 fix -0.3
+
+# outputs
+ccx create fieldoutput name "fo_node" node
+ccx create fieldoutput name "fo_element" element
+ccx modify fieldoutput 1 node
+ccx modify fieldoutput 1 node key_on RF U 
+ccx modify fieldoutput 1 node key_off CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF NT PNT POT PRF PS PSF PT PTF PU RFL SEN TS TSF TT TTF TURB V VF 
+ccx modify fieldoutput 2 element
+ccx modify fieldoutput 2 element key_on E S 
+ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFL HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS 
+
+# steps
+ccx create step name "contact" static
+#ccx modify step 1 parameter nlgeom_yes
+#ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.01 timeperiodofstep 1 minimumtimeincrement 0.0001 maximumtimeincrement 0.1
+#ccx step 1 add bc displacement 1 2
+ccx step 1 add fieldoutput 1 2
+ccx create step name "loading" static
+#ccx modify step 2 parameter nlgeom_yes
+#ccx modify step 2 static totaltimeatstart 0 initialtimeincrement 0.01 timeperiodofstep 1 minimumtimeincrement 0.0001 maximumtimeincrement 0.1
+ccx step 2 add load force 1
+ccx step 2 add bc displacement 1
+ccx step 2 add fieldoutput 1 2
+
+
+# jobs
+ccx create job name "door_lock"

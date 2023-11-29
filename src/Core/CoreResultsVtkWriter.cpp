@@ -1706,8 +1706,9 @@ bool CoreResultsVtkWriter::link_nodes()
     for (size_t ii = 0; ii < block_ids.size(); ii++)
     {
       ++current_part;
-      auto lower = std::lower_bound(tmp_block_node_ids[ii].begin(), tmp_block_node_ids[ii].end(), frd_all->nodes[i][0]);  
-      if (lower!=tmp_block_node_ids[ii].end())
+      //auto lower = std::lower_bound(tmp_block_node_ids[ii].begin(), tmp_block_node_ids[ii].end(), frd_all->nodes[i][0]);  
+      //if (lower!=tmp_block_node_ids[ii].end())
+      if (std::binary_search(tmp_block_node_ids[ii].begin(), tmp_block_node_ids[ii].end(), frd_all->nodes[i][0]))
       {
         vec_frd[current_part]->nodes.push_back(frd_all->nodes[i]);
         vec_frd[current_part]->nodes_coords.push_back(frd_all->nodes_coords[i]);
@@ -1718,8 +1719,9 @@ bool CoreResultsVtkWriter::link_nodes()
     for (size_t ii = 0; ii < nodeset_ids.size(); ii++)
     {
       ++current_part;
-      auto lower = std::lower_bound(tmp_nodeset_node_ids[ii].begin(), tmp_nodeset_node_ids[ii].end(), frd_all->nodes[i][0]);  
-      if (lower!=tmp_nodeset_node_ids[ii].end())
+      //auto lower = std::lower_bound(tmp_nodeset_node_ids[ii].begin(), tmp_nodeset_node_ids[ii].end(), frd_all->nodes[i][0]);  
+      //if (lower!=tmp_nodeset_node_ids[ii].end())
+      if (std::binary_search(tmp_nodeset_node_ids[ii].begin(), tmp_nodeset_node_ids[ii].end(), frd_all->nodes[i][0]))
       {
         vec_frd[current_part]->nodes.push_back(frd_all->nodes[i]);
         vec_frd[current_part]->nodes_coords.push_back(frd_all->nodes_coords[i]);
@@ -1730,8 +1732,9 @@ bool CoreResultsVtkWriter::link_nodes()
     for (size_t ii = 0; ii < sideset_ids.size(); ii++)
     {
       ++current_part;
-      auto lower = std::lower_bound(tmp_sideset_node_ids[ii].begin(), tmp_sideset_node_ids[ii].end(), frd_all->nodes[i][0]);  
-      if (lower!=tmp_sideset_node_ids[ii].end())
+      //auto lower = std::lower_bound(tmp_sideset_node_ids[ii].begin(), tmp_sideset_node_ids[ii].end(), frd_all->nodes[i][0]);  
+      //if (lower!=tmp_sideset_node_ids[ii].end())
+      if (std::binary_search(tmp_sideset_node_ids[ii].begin(), tmp_sideset_node_ids[ii].end(), frd_all->nodes[i][0]))
       {
         vec_frd[current_part]->nodes.push_back(frd_all->nodes[i]);
         vec_frd[current_part]->nodes_coords.push_back(frd_all->nodes_coords[i]);
@@ -1788,8 +1791,9 @@ bool CoreResultsVtkWriter::link_nodes()
         for (size_t iv = 0; iv < block_ids.size(); iv++)
         {
           ++current_part;
-          auto lower = std::lower_bound(tmp_block_node_ids[iv].begin(), tmp_block_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]);  
-          if (lower!=tmp_block_node_ids[iv].end())
+          //auto lower = std::lower_bound(tmp_block_node_ids[iv].begin(), tmp_block_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]);  
+          //if (lower!=tmp_block_node_ids[iv].end())
+          if (std::binary_search(tmp_block_node_ids[iv].begin(), tmp_block_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]))
           {
             vec_frd[current_part]->result_block_data[data_ids[ii]].push_back(frd_all->result_block_data[data_ids[ii]][node_data_ids[iii]]);
             vec_frd[current_part]->result_block_node_data[data_ids[ii]].push_back(frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]]);
@@ -1800,8 +1804,9 @@ bool CoreResultsVtkWriter::link_nodes()
         for (size_t iv = 0; iv < nodeset_ids.size(); iv++)
         {
           ++current_part;
-          auto lower = std::lower_bound(tmp_nodeset_node_ids[iv].begin(), tmp_nodeset_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]);  
-          if (lower!=tmp_nodeset_node_ids[iv].end())
+          //auto lower = std::lower_bound(tmp_nodeset_node_ids[iv].begin(), tmp_nodeset_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]);  
+          //if (lower!=tmp_nodeset_node_ids[iv].end())
+          if (std::binary_search(tmp_nodeset_node_ids[iv].begin(), tmp_nodeset_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]))
           {
             vec_frd[current_part]->result_block_data[data_ids[ii]].push_back(frd_all->result_block_data[data_ids[ii]][node_data_ids[iii]]);
             vec_frd[current_part]->result_block_node_data[data_ids[ii]].push_back(frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]]);
@@ -1812,8 +1817,9 @@ bool CoreResultsVtkWriter::link_nodes()
         for (size_t iv = 0; iv < sideset_ids.size(); iv++)
         {
           ++current_part;
-          auto lower = std::lower_bound(tmp_sideset_node_ids[iv].begin(), tmp_sideset_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]);  
-          if (lower!=tmp_nodeset_node_ids[iv].end())
+          //auto lower = std::lower_bound(tmp_sideset_node_ids[iv].begin(), tmp_sideset_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]);  
+          //if (lower!=tmp_nodeset_node_ids[iv].end())
+          if (std::binary_search(tmp_sideset_node_ids[iv].begin(), tmp_sideset_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]))
           {
             vec_frd[current_part]->result_block_data[data_ids[ii]].push_back(frd_all->result_block_data[data_ids[ii]][node_data_ids[iii]]);
             vec_frd[current_part]->result_block_node_data[data_ids[ii]].push_back(frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]]);
@@ -1900,8 +1906,9 @@ bool CoreResultsVtkWriter::link_nodes_fast()
     for (size_t ii = 0; ii < block_ids.size(); ii++)
     {
       ++current_part;
-      auto lower = std::lower_bound(tmp_block_node_ids[ii].begin(), tmp_block_node_ids[ii].end(), frd_all->nodes[i][0]);  
-      if (lower!=tmp_block_node_ids[ii].end())
+      //auto lower = std::lower_bound(tmp_block_node_ids[ii].begin(), tmp_block_node_ids[ii].end(), frd_all->nodes[i][0]);  
+      //if (lower!=tmp_block_node_ids[ii].end())
+      if (std::binary_search(tmp_block_node_ids[ii].begin(), tmp_block_node_ids[ii].end(), frd_all->nodes[i][0]))
       {
         vec_frd[current_part]->nodes.push_back(frd_all->nodes[i]);
         vec_frd[current_part]->nodes_coords.push_back(frd_all->nodes_coords[i]);
@@ -1925,8 +1932,9 @@ bool CoreResultsVtkWriter::link_nodes_fast()
     for (size_t ii = 0; ii < nodeset_ids.size(); ii++)
     {
       ++current_part;
-      auto lower = std::lower_bound(tmp_nodeset_node_ids[ii].begin(), tmp_nodeset_node_ids[ii].end(), frd_all->nodes[i][0]);  
-      if (lower!=tmp_nodeset_node_ids[ii].end())
+      //auto lower = std::lower_bound(tmp_nodeset_node_ids[ii].begin(), tmp_nodeset_node_ids[ii].end(), frd_all->nodes[i][0]);  
+      //if (lower!=tmp_nodeset_node_ids[ii].end())
+      if (std::binary_search(tmp_nodeset_node_ids[ii].begin(), tmp_nodeset_node_ids[ii].end(), frd_all->nodes[i][0]))
       {
         vec_frd[current_part]->nodes.push_back(frd_all->nodes[i]);
         vec_frd[current_part]->nodes_coords.push_back(frd_all->nodes_coords[i]);
@@ -1950,8 +1958,9 @@ bool CoreResultsVtkWriter::link_nodes_fast()
     for (size_t ii = 0; ii < sideset_ids.size(); ii++)
     {
       ++current_part;
-      auto lower = std::lower_bound(tmp_sideset_node_ids[ii].begin(), tmp_sideset_node_ids[ii].end(), frd_all->nodes[i][0]);  
-      if (lower!=tmp_sideset_node_ids[ii].end())
+      //auto lower = std::lower_bound(tmp_sideset_node_ids[ii].begin(), tmp_sideset_node_ids[ii].end(), frd_all->nodes[i][0]);  
+      //if (lower!=tmp_sideset_node_ids[ii].end())
+      if (std::binary_search(tmp_sideset_node_ids[ii].begin(), tmp_sideset_node_ids[ii].end(), frd_all->nodes[i][0]))
       {
         vec_frd[current_part]->nodes.push_back(frd_all->nodes[i]);
         vec_frd[current_part]->nodes_coords.push_back(frd_all->nodes_coords[i]);
