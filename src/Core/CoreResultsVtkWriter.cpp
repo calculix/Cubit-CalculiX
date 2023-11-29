@@ -249,11 +249,15 @@ bool CoreResultsVtkWriter::write_linked()
 
       frd = vec_frd[current_part];
 
-      //std::string log;
-      //log = "nparts " + std::to_string(nparts) + " block " + std::to_string(block_ids[ii])+ " block size" + std::to_string(block_ids.size())+" ci " + std::to_string(current_increment) + " \n";
-      //log = "nparts " + std::to_string(nparts) + " cp " + std::to_string(current_part) + " ci " + std::to_string(current_increment) + " \n";
-      //ccx_iface->log_str(log);
-      //PRINT_INFO("%s", log.c_str());
+      /*
+      if (ii<block_ids.size())
+      {
+        std::string log;
+        log = "nparts " + std::to_string(nparts) + " block " + std::to_string(block_ids[ii])+ " block_node_ids size " + std::to_string(block_node_ids[ii].size())+" ci " + std::to_string(current_increment) + " \n";
+        //log = "nparts " + std::to_string(nparts) + " cp " + std::to_string(current_part) + " ci " + std::to_string(current_increment) + " \n";
+        //ccx_iface->log_str(log);
+        PRINT_INFO("%s", log.c_str());
+      }*/
       
       current_filepath_vtu = filepath + "/" + filepath + "." + std::to_string(current_part) + "." + this->get_increment() + ".vtu";
       
@@ -1038,9 +1042,11 @@ bool CoreResultsVtkWriter::rewrite_connectivity_unlinked()
     for (size_t ii = 0; ii < frd->elements_connectivity[ii].size(); ii++)
     {
       //check if there exists results for the node id
-      auto lower = std::lower_bound(tmp_node_ids.begin(), tmp_node_ids.end(), frd->elements_connectivity[i][ii]);
-      if (lower!=tmp_node_ids.end())
+      //auto lower = std::lower_bound(tmp_node_ids.begin(), tmp_node_ids.end(), frd->elements_connectivity[i][ii]);
+      //if (lower!=tmp_node_ids.end())
+      if (std::binary_search(tmp_node_ids.begin(), tmp_node_ids.end(), frd->elements_connectivity[i][ii]))
       {
+        auto lower = std::lower_bound(tmp_node_ids.begin(), tmp_node_ids.end(), frd->elements_connectivity[i][ii]);
         frd->elements_connectivity[i][ii] = tmp_node_data_ids[lower-tmp_node_ids.begin()];
       }
     }
@@ -1183,10 +1189,12 @@ int CoreResultsVtkWriter::getParaviewNode(int frd_node_id)
   
   if (!current_part_ip_data[current_part])
   {
-    auto lower = std::lower_bound(linked_nodes.begin(), linked_nodes.end(), frd_node_id);
     //connect with displacements
-    if (lower!=linked_nodes.end())
+    //auto lower = std::lower_bound(linked_nodes.begin(), linked_nodes.end(), frd_node_id);
+    //if (lower!=linked_nodes.end())    
+    if (std::binary_search(linked_nodes.begin(), linked_nodes.end(), frd_node_id))
     {
+      auto lower = std::lower_bound(linked_nodes.begin(), linked_nodes.end(), frd_node_id);
       return linked_nodes_data_id[lower - linked_nodes.begin()];
     }
     /*
@@ -2023,8 +2031,9 @@ bool CoreResultsVtkWriter::link_elements()
     {
       ++current_part;
       
-      auto lower = std::lower_bound(tmp_block_element_ids[ii].begin(), tmp_block_element_ids[ii].end(), frd_all->elements[i][0]);  
-      if (lower!=tmp_block_element_ids[ii].end())
+      //auto lower = std::lower_bound(tmp_block_element_ids[ii].begin(), tmp_block_element_ids[ii].end(), frd_all->elements[i][0]);  
+      //if (lower!=tmp_block_element_ids[ii].end())
+      if (std::binary_search(tmp_block_element_ids[ii].begin(), tmp_block_element_ids[ii].end(), frd_all->elements[i][0]))
       {
           vec_frd[current_part]->elements.push_back(frd_all->elements[i]);
           vec_frd[current_part]->elements_connectivity.push_back(frd_all->elements_connectivity[i]);
@@ -2296,10 +2305,12 @@ bool CoreResultsVtkWriter::link_dat()
               }
               */
 
-              auto lower = std::lower_bound(tmp_element_id.begin(), tmp_element_id.end(), tmp_ip_nodes[0][1]);
               //connect with displacements
-              if (lower!=tmp_element_id.end())
+              //auto lower = std::lower_bound(tmp_element_id.begin(), tmp_element_id.end(), tmp_ip_nodes[0][1]);
+              //if (lower!=tmp_element_id.end())
+              if (std::binary_search(tmp_element_id.begin(), tmp_element_id.end(), tmp_ip_nodes[0][1]))
               { 
+                auto lower = std::lower_bound(tmp_element_id.begin(), tmp_element_id.end(), tmp_ip_nodes[0][1]);
                 element_type_connectivity.push_back(tmp_element_type[lower-tmp_element_id.begin()]);
                 element_type_connectivity.insert(element_type_connectivity.end(), tmp_element_connectivity[lower-tmp_element_id.begin()].begin(), tmp_element_connectivity[lower-tmp_element_id.begin()].end());                
               }
@@ -2392,10 +2403,12 @@ bool CoreResultsVtkWriter::link_dat()
               }
             }
             */
-            auto lower = std::lower_bound(tmp_element_id.begin(), tmp_element_id.end(), element_id);
             //connect with displacements
-            if (lower!=tmp_element_id.end())
+            //auto lower = std::lower_bound(tmp_element_id.begin(), tmp_element_id.end(), element_id);
+            //if (lower!=tmp_element_id.end())
+            if (std::binary_search(tmp_element_id.begin(), tmp_element_id.end(), element_id))
             { 
+              auto lower = std::lower_bound(tmp_element_id.begin(), tmp_element_id.end(), element_id);
               //element_type_connectivity[element_type_connectivity.size()-1].push_back(tmp_element_type[lower-tmp_element_id.begin()]);
               element_type_connectivity[element_type_connectivity.size()-1].insert(element_type_connectivity[element_type_connectivity.size()-1].end(), tmp_element_connectivity[lower-tmp_element_id.begin()].begin(), tmp_element_connectivity[lower-tmp_element_id.begin()].end());
               node_ids.insert(node_ids.end(), tmp_element_connectivity[lower-tmp_element_id.begin()].begin(), tmp_element_connectivity[lower-tmp_element_id.begin()].end());
@@ -3472,11 +3485,13 @@ std::vector<std::vector<double>> CoreResultsVtkWriter::compute_integration_point
   {
     for (size_t ii = 1; ii < set_element_type_connectivity[set_id][i].size(); ii++)
     {
-      auto lower = std::lower_bound(nodes.begin(), nodes.end(), set_element_type_connectivity[set_id][i][ii]);
+      //auto lower = std::lower_bound(nodes.begin(), nodes.end(), set_element_type_connectivity[set_id][i][ii]);
 
       //connect with displacements
-      if (lower!=nodes.end())
+      //if (lower!=nodes.end())
+      if (std::binary_search(nodes.begin(), nodes.end(), set_element_type_connectivity[set_id][i][ii]))
       { 
+        auto lower = std::lower_bound(nodes.begin(), nodes.end(), set_element_type_connectivity[set_id][i][ii]);
         //do that for all ip of the element
         if (set_ipmax[set_id][i]==1)
         {
