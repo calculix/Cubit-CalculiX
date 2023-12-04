@@ -57,12 +57,12 @@ mesh volume 14 19 6 9 18 12 3 22
 mesh volume 7 10 16 20 4 5 8 11 13 15 17 21
 
 ## Refine mesh via remeshing
-delete mesh
-volume all size 0.8
-paver cleanup extend
-mesh surface 207
-mesh volume all
-volume 2 smooth scheme equipotential free
+#delete mesh
+#volume all size 0.8
+#paver cleanup extend
+#mesh surface 207
+#mesh volume all
+#volume 2 smooth scheme equipotential free
 
 ## create vertex for rigid body constraints
 
@@ -180,3 +180,6 @@ ccx step 2 add fieldoutput 1 2 3
 
 # jobs
 ccx create job name "door_lock"
+
+#ccx result load job 1
+#ccx result convert job 1

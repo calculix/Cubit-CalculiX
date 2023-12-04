@@ -1779,9 +1779,9 @@ bool CoreResultsVtkWriter::link_nodes()
     std::vector<int> data_ids = this->get_result_blocks_data_ids_linked(); // get data ids for result blocks
     for (size_t ii = 0; ii < data_ids.size(); ii++)
     {
-      tmp_block_node_ids = block_node_ids;
-      tmp_nodeset_node_ids = nodeset_node_ids;
-      tmp_sideset_node_ids = sideset_node_ids;
+      //tmp_block_node_ids = block_node_ids;
+      //tmp_nodeset_node_ids = nodeset_node_ids;
+      //tmp_sideset_node_ids = sideset_node_ids;
 
       std::vector<int> node_data_ids = this->get_result_block_node_data_id_linked(data_ids[ii]);
       for (size_t iii = 0; iii < nparts-nparts_dat; iii++)
@@ -1791,6 +1791,10 @@ bool CoreResultsVtkWriter::link_nodes()
         vec_frd[iii]->result_block_data.push_back(tmp_result_block_data);
         vec_frd[iii]->result_block_node_data.push_back(tmp_result_block_node_data);
       }
+
+      //std::string log;
+      //log = " node_data_ids.size() " + std::to_string(node_data_ids.size()) + " block_node_ids[0].size() " + std::to_string(block_node_ids[0].size()) +" \n";
+      //PRINT_INFO("%s", log.c_str());
 
       for (size_t iii = 0; iii < node_data_ids.size(); iii++)
       { 
