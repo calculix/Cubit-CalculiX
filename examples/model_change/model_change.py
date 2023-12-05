@@ -150,11 +150,11 @@ cubit.cmd("modify temperature 1 value 100")
 
 # field outputs
 cubit.cmd('ccx create fieldoutput name "fo_node" node')
-cubit.cmd('ccx modify fieldoutput 1 node')
+cubit.cmd('ccx modify fieldoutput 1 node frequency 10')
 cubit.cmd('ccx modify fieldoutput 1 node key_on NT')
 cubit.cmd('ccx modify fieldoutput 1 node key_off CP U DEPF DEPT DTF HCRI KEQ MACH MAXU MF PNT POT PRF PS PSF PT PTF PU RF RFL SEN TS TSF TT TTF TURB V VF ')
 cubit.cmd('ccx create fieldoutput name "fo_element" element')
-cubit.cmd('ccx modify fieldoutput 2 element')
+cubit.cmd('ccx modify fieldoutput 2 element frequency 10')
 cubit.cmd('ccx modify fieldoutput 2 element key_on HFL')
 cubit.cmd('ccx modify fieldoutput 2 element key_off CEEQ S E ECD EMFB EMFE ENER ERR HER HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS ')
 
@@ -176,6 +176,7 @@ for v in volume_list:
 cs = 2
 volume_list = cubit.get_entities("volume")
 for v in volume_list:
+# if v > 1 and v < 3:
  if v > 1:
   cs = cs + 1
   cubit.cmd(f"ccx create step name 'heat_{cs}' heattransfer")
@@ -192,3 +193,10 @@ for v in volume_list:
   cubit.cmd(f"ccx step {cs} add fieldoutput 1 2")
 
 cubit.cmd("ccx create job name 'model_change'")
+
+print("ccx run job 1 no_conversion")
+command = ("ccx result convert job 1 block ")
+for v in volume_list:
+ command = command + str(v) + " "
+command = command + " partial"
+print(command)

@@ -25,7 +25,7 @@ CoreResultsVtkWriter::~CoreResultsVtkWriter()
   this->dat_all = nullptr;
 }
 
-bool CoreResultsVtkWriter::init(int job_id,CoreResultsFrd* frd,CoreResultsDat* dat)
+bool CoreResultsVtkWriter::init(int job_id,CoreResultsFrd* frd,CoreResultsDat* dat,std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids)
 {
   if (is_initialized)
   {
@@ -41,6 +41,14 @@ bool CoreResultsVtkWriter::init(int job_id,CoreResultsFrd* frd,CoreResultsDat* d
     this->dat = dat;
     this->frd_all = frd;
     this->dat_all = dat;
+    this->block_ids = block_ids;
+    this->nodeset_ids = nodeset_ids;
+    this->sideset_ids = sideset_ids;
+
+    //sort ids
+    std::sort(this->block_ids.begin(),this->block_ids.end());
+    std::sort(this->nodeset_ids.begin(),this->nodeset_ids.end());
+    std::sort(this->sideset_ids.begin(),this->sideset_ids.end());
 
     progressbar = new ProgressTool();
     me_iface = dynamic_cast<MeshExportInterface*>(CubitInterface::get_interface("MeshExport"));
@@ -56,7 +64,8 @@ bool CoreResultsVtkWriter::init(int job_id,CoreResultsFrd* frd,CoreResultsDat* d
 bool CoreResultsVtkWriter::reset()
 {
   clear();
-  init(-1,nullptr,nullptr);
+  std::vector<int> tmp_vector;
+  init(-1,nullptr,nullptr,tmp_vector,tmp_vector,tmp_vector);
   return true;
 }
 
@@ -77,12 +86,12 @@ bool CoreResultsVtkWriter::clear()
   vec_frd.clear();
   current_part_ip_data.clear();
   
-  block_ids.clear();
+  //block_ids.clear();
   block_node_ids.clear();
   block_element_ids.clear();
-  nodeset_ids.clear();
+  //nodeset_ids.clear();
   nodeset_node_ids.clear();
-  sideset_ids.clear();
+  //sideset_ids.clear();
   sideset_node_ids.clear();
   sideset_elements.clear();
   sideset_elements_type.clear();
@@ -166,7 +175,7 @@ bool CoreResultsVtkWriter::write_linked()
   system(shellstr.c_str());
 
   // blocks
-  block_ids = ccx_iface->get_blocks();
+  //block_ids = ccx_iface->get_blocks();
   for (size_t i = 0; i < block_ids.size(); i++)
   {
     block_node_ids.push_back(ccx_iface->get_block_node_ids(block_ids[i]));
@@ -174,20 +183,21 @@ bool CoreResultsVtkWriter::write_linked()
     part_names.push_back("Block: " + ccx_iface->get_block_name(block_ids[i]));
   }
   nparts += block_ids.size();
-
+  //this->stopwatch("blocks.size " + std::to_string(block_ids.size()));
   // nodesets
-  nodeset_ids = CubitInterface::get_nodeset_id_list();
+  //nodeset_ids = CubitInterface::get_nodeset_id_list();
   for (size_t i = 0; i < nodeset_ids.size(); i++)
   {
     nodeset_node_ids.push_back(CubitInterface::get_nodeset_nodes_inclusive(nodeset_ids[i]));
     part_names.push_back("Nodeset: " + ccx_iface->get_nodeset_name(nodeset_ids[i]));
   }
   nparts += nodeset_ids.size();    
-
+  //this->stopwatch("nodeset.size " + std::to_string(nodeset_ids.size()));
   // sidesets
   // prepare sidesets
   this->prepare_sidesets();
-  
+  //this->stopwatch("sideset.size " + std::to_string(sideset_ids.size()));
+
   for (size_t i = 0; i < sideset_ids.size(); i++)
   {
     part_names.push_back("Sideset: " + ccx_iface->get_sideset_name(sideset_ids[i]));
@@ -487,7 +497,7 @@ bool CoreResultsVtkWriter::write_vtu_linked()
             output.append(this->level_whitespace(5) + this->get_result_data_partial(data_ids[ii], node_data_id, component_size) + "\n");
           }
           //erase duplicates in partial_node_ids
-          std::sort(partial_node_ids.begin(),partial_node_ids.end() );
+          std::sort(partial_node_ids.begin(),partial_node_ids.end());
           partial_node_ids.erase(std::unique(partial_node_ids.begin(), partial_node_ids.end()), partial_node_ids.end());
           // footer
           output.append(this->level_whitespace(4) + "</DataArray>\n");
@@ -969,9 +979,9 @@ std::string CoreResultsVtkWriter::get_increment()
 {
   std::string increment = std::to_string(current_increment);
   std::string zeros = "";
-  if(increment.length()!=3)
+  if(increment.length()!=5)
   {  
-    for (size_t i = increment.length(); i < 4; i++)
+    for (size_t i = increment.length(); i < 6; i++)
     {
       zeros.append("0");
     }
@@ -1805,11 +1815,15 @@ bool CoreResultsVtkWriter::link_nodes()
           ++current_part;
           //auto lower = std::lower_bound(tmp_block_node_ids[iv].begin(), tmp_block_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]);  
           //if (lower!=tmp_block_node_ids[iv].end())
-          if (std::binary_search(tmp_block_node_ids[iv].begin(), tmp_block_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]))
+          //check if already filled
+          if (tmp_block_node_ids[iv].size()!=vec_frd[current_part]->result_block_node_data[data_ids[ii]].size())
           {
-            vec_frd[current_part]->result_block_data[data_ids[ii]].push_back(frd_all->result_block_data[data_ids[ii]][node_data_ids[iii]]);
-            vec_frd[current_part]->result_block_node_data[data_ids[ii]].push_back(frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]]);
-            vec_frd[current_part]->result_block_node_data[data_ids[ii]][vec_frd[current_part]->result_block_node_data[data_ids[ii]].size()-1][1] = vec_frd[current_part]->result_block_data[data_ids[ii]].size()-1;
+            if (std::binary_search(tmp_block_node_ids[iv].begin(), tmp_block_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]))
+            {
+              vec_frd[current_part]->result_block_data[data_ids[ii]].push_back(frd_all->result_block_data[data_ids[ii]][node_data_ids[iii]]);
+              vec_frd[current_part]->result_block_node_data[data_ids[ii]].push_back(frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]]);
+              vec_frd[current_part]->result_block_node_data[data_ids[ii]][vec_frd[current_part]->result_block_node_data[data_ids[ii]].size()-1][1] = vec_frd[current_part]->result_block_data[data_ids[ii]].size()-1;
+            }
           }
         }
         //nodesets
@@ -1818,11 +1832,15 @@ bool CoreResultsVtkWriter::link_nodes()
           ++current_part;
           //auto lower = std::lower_bound(tmp_nodeset_node_ids[iv].begin(), tmp_nodeset_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]);  
           //if (lower!=tmp_nodeset_node_ids[iv].end())
-          if (std::binary_search(tmp_nodeset_node_ids[iv].begin(), tmp_nodeset_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]))
+          //check if already filled
+          if (tmp_nodeset_node_ids[iv].size()!=vec_frd[current_part]->result_block_node_data[data_ids[ii]].size())
           {
-            vec_frd[current_part]->result_block_data[data_ids[ii]].push_back(frd_all->result_block_data[data_ids[ii]][node_data_ids[iii]]);
-            vec_frd[current_part]->result_block_node_data[data_ids[ii]].push_back(frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]]);
-            vec_frd[current_part]->result_block_node_data[data_ids[ii]][vec_frd[current_part]->result_block_node_data[data_ids[ii]].size()-1][1] = vec_frd[current_part]->result_block_data[data_ids[ii]].size()-1;
+            if (std::binary_search(tmp_nodeset_node_ids[iv].begin(), tmp_nodeset_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]))
+            {
+              vec_frd[current_part]->result_block_data[data_ids[ii]].push_back(frd_all->result_block_data[data_ids[ii]][node_data_ids[iii]]);
+              vec_frd[current_part]->result_block_node_data[data_ids[ii]].push_back(frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]]);
+              vec_frd[current_part]->result_block_node_data[data_ids[ii]][vec_frd[current_part]->result_block_node_data[data_ids[ii]].size()-1][1] = vec_frd[current_part]->result_block_data[data_ids[ii]].size()-1;
+            }
           }
         }
         //sidesets
@@ -1831,11 +1849,15 @@ bool CoreResultsVtkWriter::link_nodes()
           ++current_part;
           //auto lower = std::lower_bound(tmp_sideset_node_ids[iv].begin(), tmp_sideset_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]);  
           //if (lower!=tmp_nodeset_node_ids[iv].end())
-          if (std::binary_search(tmp_sideset_node_ids[iv].begin(), tmp_sideset_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]))
+          //check if already filled
+          if (tmp_sideset_node_ids[iv].size()!=vec_frd[current_part]->result_block_node_data[data_ids[ii]].size())
           {
-            vec_frd[current_part]->result_block_data[data_ids[ii]].push_back(frd_all->result_block_data[data_ids[ii]][node_data_ids[iii]]);
-            vec_frd[current_part]->result_block_node_data[data_ids[ii]].push_back(frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]]);
-            vec_frd[current_part]->result_block_node_data[data_ids[ii]][vec_frd[current_part]->result_block_node_data[data_ids[ii]].size()-1][1] = vec_frd[current_part]->result_block_data[data_ids[ii]].size()-1;
+            if (std::binary_search(tmp_sideset_node_ids[iv].begin(), tmp_sideset_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]))
+            {
+              vec_frd[current_part]->result_block_data[data_ids[ii]].push_back(frd_all->result_block_data[data_ids[ii]][node_data_ids[iii]]);
+              vec_frd[current_part]->result_block_node_data[data_ids[ii]].push_back(frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]]);
+              vec_frd[current_part]->result_block_node_data[data_ids[ii]][vec_frd[current_part]->result_block_node_data[data_ids[ii]].size()-1][1] = vec_frd[current_part]->result_block_data[data_ids[ii]].size()-1;
+            }
           }
         }
       }
@@ -2727,7 +2749,8 @@ bool CoreResultsVtkWriter::prepare_sidesets()
   // Get a batch of elements from the sideset
   int buf_size = 100;
 
-
+  // counter nodesets
+  int cs = -1;
 
   // loop over the sidesets
   for (size_t i = 0; i < sidesets.size(); i++)
@@ -2735,108 +2758,130 @@ bool CoreResultsVtkWriter::prepare_sidesets()
 
     SidesetHandle sideset = sidesets[i];
 
-    sideset_ids.push_back(me_iface->id_from_handle(sideset));
-    std::vector<int> tmp_sideset_node_ids;
-    sideset_node_ids.push_back(tmp_sideset_node_ids);
-    std::vector<int> tmp_sideset_elements;
-    sideset_elements.push_back(tmp_sideset_elements);
-    std::vector<int> tmp_sideset_elements_type;
-    sideset_elements_type.push_back(tmp_sideset_elements_type);
-    std::vector<std::vector<int>> tmp_sideset_elements_connectivity; 
-    sideset_elements_connectivity.push_back(tmp_sideset_elements_connectivity);
+    //sideset_ids.push_back(me_iface->id_from_handle(sideset));
 
-    int num_elems;
-    int start_index = 0;
-    int element_count = 0;
+    if (std::binary_search(sideset_ids.begin(), sideset_ids.end(), me_iface->id_from_handle(sideset)))
+    {   
+      ++cs;
+      std::vector<int> tmp_sideset_node_ids;
+      sideset_node_ids.push_back(tmp_sideset_node_ids);
+      std::vector<int> tmp_sideset_elements;
+      sideset_elements.push_back(tmp_sideset_elements);
+      std::vector<int> tmp_sideset_elements_type;
+      sideset_elements_type.push_back(tmp_sideset_elements_type);
+      std::vector<std::vector<int>> tmp_sideset_elements_connectivity; 
+      sideset_elements_connectivity.push_back(tmp_sideset_elements_connectivity);
 
-    std::vector<ElementHandle> element_ids;
-    std::vector<int> side_ids;
-    std::vector<ElementType> element_type;
-    std::string cubit_element_type_entity;
+      int num_elems;
+      int start_index = 0;
+      int element_count = 0;
 
-    // count all elements in sideset
-    while( (num_elems = me_iface->get_sideset_sides(sideset,start_index,buf_size,element_ids,element_type,side_ids)) > 0)
-    {
-      start_index += num_elems;
-      element_count += num_elems;
-    }
+      std::vector<ElementHandle> element_ids;
+      std::vector<int> side_ids;
+      std::vector<ElementType> element_type;
+      std::string cubit_element_type_entity;
 
-    int element_id;
-    std::vector<int> side_ids_all(element_count);
-    std::vector<int> ccx_side_ids_all(element_count);
-    std::vector<int> element_ids_all(element_count);
-    std::vector<int> element_type_all(element_count);
-
-    progressbar->start(0,100,"Preparing Sidesets");
-    auto t_start = std::chrono::high_resolution_clock::now();
-
-    start_index = 0;
-    while( (num_elems = me_iface->get_sideset_sides(sideset,start_index,buf_size,element_ids,element_type,side_ids)) > 0)
-    {
-      // get all elements in sideset
-      for (int j = 0; j < num_elems; j++)
+      // count all elements in sideset
+      while( (num_elems = me_iface->get_sideset_sides(sideset,start_index,buf_size,element_ids,element_type,side_ids)) > 0)
       {
-        me_iface->get_element_id(element_ids[j],element_id);
-        //element_ids_all[start_index + j] = element_id;
-        element_type_all[start_index + j] = element_type[j];
-        side_ids_all[start_index + j] = side_ids[j];
-        ccx_side_ids_all[start_index + j] = ccx_iface->get_ccx_element_side(element_type[j], side_ids[j]);
+        start_index += num_elems;
+        element_count += num_elems;
+      }
 
-        // convert ids from element_id to global_element_id
-        cubit_element_type_entity = me_iface->get_element_type_name(element_type[j]);
-        cubit_element_type_entity = ccx_iface->get_cubit_element_type_entity(cubit_element_type_entity);
-        element_ids_all[start_index + j] = CubitInterface::get_global_element_id(cubit_element_type_entity,element_id);
+      int element_id;
+      std::vector<int> side_ids_all(element_count);
+      std::vector<int> ccx_side_ids_all(element_count);
+      std::vector<int> element_ids_all(element_count);
+      std::vector<int> element_type_all(element_count);
 
-        // prepare data for linking
-        int num_node = 0;
+      progressbar->start(0,100,"Preparing Sidesets");
+      auto t_start = std::chrono::high_resolution_clock::now();
 
-        sideset_elements[i].push_back(element_id);
-        sideset_elements_type[i].push_back(element_type[j]);
-        
-        me_iface->get_nodes_per_side(element_type[j],side_ids[j]-1,num_node);
-        
-        std::vector<int> indices(num_node);
-        me_iface->get_node_indices_per_side(element_type[j],side_ids[j]-1,indices);
-
-        int nodes_per_element;
-        me_iface->get_nodes_per_element(element_type[j],nodes_per_element);
-        std::vector<int> conn(nodes_per_element);        
-        me_iface->get_connectivity(element_ids[j], conn);
-        
-        std::vector<int> tmp_connectivity; 
-
-        for (size_t k = 0; k < indices.size(); k++)
+      start_index = 0;
+      while( (num_elems = me_iface->get_sideset_sides(sideset,start_index,buf_size,element_ids,element_type,side_ids)) > 0)
+      {
+        // get all elements in sideset
+        for (int j = 0; j < num_elems; j++)
         {
-          tmp_connectivity.push_back(conn[indices[k]]); 
-        }
-        sideset_elements_connectivity[i].push_back(tmp_connectivity);
-      }
-      start_index += num_elems;
-      //update progress bar
-      const auto t_end = std::chrono::high_resolution_clock::now();
-      int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
-      //currentDataRow += frd->result_block_data[data_ids[ii]].size();
-      if (duration > 500)
-      {
-        progressbar->percent(double(start_index)/double(element_count));
-        progressbar->check_interrupt();
-        t_start = std::chrono::high_resolution_clock::now();
-      }
-    }
-    progressbar->end();
+          me_iface->get_element_id(element_ids[j],element_id);
+          //element_ids_all[start_index + j] = element_id;
+          element_type_all[start_index + j] = element_type[j];
+          side_ids_all[start_index + j] = side_ids[j];
+          ccx_side_ids_all[start_index + j] = ccx_iface->get_ccx_element_side(element_type[j], side_ids[j]);
+
+          // convert ids from element_id to global_element_id
+          cubit_element_type_entity = me_iface->get_element_type_name(element_type[j]);
+          cubit_element_type_entity = ccx_iface->get_cubit_element_type_entity(cubit_element_type_entity);
+          element_ids_all[start_index + j] = CubitInterface::get_global_element_id(cubit_element_type_entity,element_id);
     
-    // filter out all nodes
-    std::vector<int>::iterator it;
-    for (size_t ii = 0; ii < sideset_elements_connectivity[i].size(); ii++)
-    {
-      for (size_t iii = 0; iii < sideset_elements_connectivity[i][ii].size(); iii++)
-      {       
-        it = std::find(sideset_node_ids[i].begin(), sideset_node_ids[i].end(), sideset_elements_connectivity[i][ii][iii]);
-        if (it==sideset_node_ids[i].end())
-        {  
-          sideset_node_ids[i].push_back(sideset_elements_connectivity[i][ii][iii]);
+      
+          // prepare data for linking
+          int num_node = 0;
+
+          sideset_elements[cs].push_back(element_id);
+          sideset_elements_type[cs].push_back(element_type[j]);
+
+          me_iface->get_nodes_per_side(element_type[j],side_ids[j]-1,num_node);
+
+          std::vector<int> indices(num_node);
+          me_iface->get_node_indices_per_side(element_type[j],side_ids[j]-1,indices);
+
+      
+          int nodes_per_element;
+          me_iface->get_nodes_per_element(element_type[j],nodes_per_element);
+          std::vector<int> conn(nodes_per_element);        
+          me_iface->get_connectivity(element_ids[j], conn);
+          
+          std::vector<int> tmp_connectivity; 
+
+          for (size_t k = 0; k < indices.size(); k++)
+          {
+            tmp_connectivity.push_back(conn[indices[k]]); 
+          }
+          sideset_elements_connectivity[cs].push_back(tmp_connectivity);
+        }
+        start_index += num_elems;
+        //update progress bar
+        const auto t_end = std::chrono::high_resolution_clock::now();
+        int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+        //currentDataRow += frd->result_block_data[data_ids[ii]].size();
+        if (duration > 500)
+        {
+          progressbar->percent(double(start_index)/double(element_count));
+          progressbar->check_interrupt();
+          t_start = std::chrono::high_resolution_clock::now();
         }
       }
+      progressbar->end();
+    
+      /*
+      // filter out all nodes
+      std::vector<int>::iterator it;
+      for (size_t ii = 0; ii < sideset_elements_connectivity[i].size(); ii++)
+      {
+        for (size_t iii = 0; iii < sideset_elements_connectivity[i][ii].size(); iii++)
+        {       
+          it = std::find(sideset_node_ids[i].begin(), sideset_node_ids[i].end(), sideset_elements_connectivity[i][ii][iii]);
+          if (it==sideset_node_ids[i].end())
+          {  
+            sideset_node_ids[i].push_back(sideset_elements_connectivity[i][ii][iii]);
+          }
+        }
+      }
+      */
+
+      //get all nodes in a sideset
+      for (size_t ii = 0; ii < sideset_elements_connectivity[cs].size(); ii++)
+      {
+        for (size_t iii = 0; iii < sideset_elements_connectivity[cs][ii].size(); iii++)
+        {
+          sideset_node_ids[cs].push_back(sideset_elements_connectivity[cs][ii][iii]);
+        }
+      }
+      
+      //erase duplicates in sideset_node_ids
+      std::sort(sideset_node_ids[cs].begin(),sideset_node_ids[cs].end());
+      sideset_node_ids[cs].erase(std::unique(sideset_node_ids[cs].begin(), sideset_node_ids[cs].end()), sideset_node_ids[cs].end());
     }
   }
  

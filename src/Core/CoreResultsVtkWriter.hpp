@@ -65,7 +65,7 @@ public:
   std::vector<int> linked_nodes;
   std::vector<int> linked_nodes_data_id;
 
-  bool init(int job_id,CoreResultsFrd* frd,CoreResultsDat* dat); // initialize
+  bool init(int job_id,CoreResultsFrd* frd,CoreResultsDat* dat,std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids); // initialize
   bool reset(); // delete all data and initialize afterwards
   bool clear(); // clear all stored result data
   bool clear_files(); // clear all stored result data
