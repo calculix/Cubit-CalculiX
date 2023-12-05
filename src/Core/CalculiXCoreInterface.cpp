@@ -120,6 +120,21 @@ std::string CalculiXCoreInterface::get_amplitude_name(int amplitude_id)
   return ccx_core.get_amplitude_name(amplitude_id);
 }
 
+bool CalculiXCoreInterface::check_block_exists(int block_id)
+{
+  return ccx_core.check_block_exists(block_id);
+}
+
+bool CalculiXCoreInterface::check_nodeset_exists(int nodeset_id)
+{
+  return ccx_core.check_nodeset_exists(nodeset_id);
+}
+
+bool CalculiXCoreInterface::check_sideset_exists(int sideset_id)
+{
+  return ccx_core.check_sideset_exists(sideset_id);
+}
+
 bool CalculiXCoreInterface::check_vertex_in_nodeset_exists(int vertex_id,int nodeset_id)
 {
   return ccx_core.check_vertex_in_nodeset_exists(vertex_id,nodeset_id);
@@ -460,9 +475,9 @@ bool CalculiXCoreInterface::delete_job(int job_id)
   return ccx_core.delete_job(job_id);
 }
 
-bool CalculiXCoreInterface::run_job(int job_id)
+bool CalculiXCoreInterface::run_job(int job_id, int option)
 {
-  return ccx_core.run_job(job_id);
+  return ccx_core.run_job(job_id, option);
 }
 
 bool CalculiXCoreInterface::check_jobs()
@@ -540,9 +555,9 @@ bool CalculiXCoreInterface::load_result(int job_id)
   return ccx_core.load_result(job_id);
 }
 
-int CalculiXCoreInterface::convert_result(int job_id, int option)
+int CalculiXCoreInterface::convert_result(int job_id, int option, std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids)
 {
-  return ccx_core.convert_result(job_id, option);
+  return ccx_core.convert_result(job_id, option, block_ids, nodeset_ids, sideset_ids);
 }
 
 bool CalculiXCoreInterface::project_result(int job_id,int step,int totalincrement,double scale)

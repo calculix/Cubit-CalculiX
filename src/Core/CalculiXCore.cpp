@@ -2034,9 +2034,9 @@ bool CalculiXCore::delete_job(int job_id)
   return jobs->delete_job(job_id);
 }
 
-bool CalculiXCore::run_job(int job_id)
+bool CalculiXCore::run_job(int job_id, int option)
 {
-  return jobs->run_job(job_id);
+  return jobs->run_job(job_id,option);
 }
 
 bool CalculiXCore::check_jobs()
@@ -2114,9 +2114,9 @@ bool CalculiXCore::load_result(int job_id)
   return results->load_result(job_id);
 }
 
-int CalculiXCore::convert_result(int job_id, int option)
+int CalculiXCore::convert_result(int job_id, int option, std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids)
 {
-  return results->convert_result(job_id, option);
+  return results->convert_result(job_id, option, block_ids, nodeset_ids, sideset_ids);
 }
 
 bool CalculiXCore::project_result(int job_id,int step,int totalincrement,double scale)

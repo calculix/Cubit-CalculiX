@@ -25,6 +25,7 @@ public:
   // jobs_data[0][6] converted to paraview -1 false, 1 true linked, 2 true unlinked, 3 ccx2paraview
   // jobs_data[0][7] .cvg data id
   // jobs_data[0][8] .sta data id
+  // jobs_data[0][9] auto conversion 1, no conversion -1
 
   std::vector<std::vector<std::string>> output_console;
   std::vector<std::vector<std::string>> cvg;
@@ -42,7 +43,7 @@ public:
   bool modify_job(int job_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a job
   bool delete_job(int job_id); // deletes job from jobs_data
   bool add_job(int job_id, std::string name, std::string filepath); // adds new job to jobs_data
-  bool run_job(int job_id); // runs job
+  bool run_job(int job_id, int option); // runs job
   bool wait_job(int job_id); // waits until the jobs exits
   bool kill_job(int job_id); // kill the jobs exits
   bool check_jobs(); // checks for changes of job processes

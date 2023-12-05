@@ -103,7 +103,7 @@ bool CoreJobs::modify_job(int job_id, std::vector<std::string> options, std::vec
 
 bool CoreJobs::add_job(int job_id, std::string name, std::string filepath)
 {
-  std::vector<std::string> v = {std::to_string(job_id), name, filepath, "-1", "-1","","-1","",""};      
+  std::vector<std::string> v = {std::to_string(job_id), name, filepath, "-1", "-1","","-1","","","1"};      
   jobs_data.push_back(v);
   
   std::vector<std::string> tmp_output_console;
@@ -134,7 +134,7 @@ bool CoreJobs::delete_job(int job_id)
   }
 }
 
-bool CoreJobs::run_job(int job_id)
+bool CoreJobs::run_job(int job_id,int option)
 {  
   std::string filepath;
   std::string log;
@@ -220,6 +220,7 @@ bool CoreJobs::run_job(int job_id)
       jobs_data[job_data_id][4] = std::to_string(process_id);
       jobs_data[job_data_id][3] = "1";
       jobs_data[job_data_id][6] = "-1";
+      jobs_data[job_data_id][9] = std::to_string(option);
       /*
       log = " Path to executable ";
       log.append(working_dir.str() + temp.str() + "\n");
@@ -299,7 +300,10 @@ bool CoreJobs::wait_job(int job_id)
         PRINT_INFO("%s", log.c_str());
         jobs_data[jobs_data_id][3] = "2";
         ccx_iface->load_result(job_id);
-        jobs_data[jobs_data_id][6] = std::to_string(ccx_iface->convert_result(job_id,-1));
+        if (jobs_data[jobs_data_id][9] == "1") 
+        {
+          jobs_data[jobs_data_id][6] = std::to_string(ccx_iface->convert_result(job_id,-1,ccx_iface->get_blocks(),CubitInterface::get_nodeset_id_list(),CubitInterface::get_sideset_id_list()));
+        }
       }
       CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
     }
@@ -408,7 +412,10 @@ bool CoreJobs::check_jobs()
           PRINT_INFO("%s", log.c_str());
           jobs_data[i][3] = "2";
           ccx_iface->load_result(std::stoi(jobs_data[i][0]));
-          jobs_data[i][6] = std::to_string(ccx_iface->convert_result(std::stoi(jobs_data[i][0]),-1));
+          if (jobs_data[i][9] == "1") 
+          {
+            jobs_data[i][6] = std::to_string(ccx_iface->convert_result(std::stoi(jobs_data[i][0]),-1,ccx_iface->get_blocks(),CubitInterface::get_nodeset_id_list(),CubitInterface::get_sideset_id_list()));
+          }
           CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
         }
       }
@@ -608,12 +615,12 @@ bool CoreJobs::result_paraview_job(int job_id)
     if ((std::stoi(jobs_data[job_data_id][3])>1) && (jobs_data[job_data_id][6] == "1"))
     { 
           
-      filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".0002.vtpc"; // if more than one file
+      filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".000002.vtpc"; // if more than one file
       if (access(filepath.c_str(), W_OK) == 0) 
       {
         filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + "...vtpc";
       }else{
-        filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".0001.vtpc";
+        filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".000001.vtpc";
       }
       
       std::string shellstr;

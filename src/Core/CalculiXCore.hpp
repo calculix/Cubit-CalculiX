@@ -144,7 +144,7 @@ public:
   bool create_job(std::vector<std::string> options); // adds a new job
   bool modify_job(int job_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a job
   bool delete_job(int job_id); // delete job
-  bool run_job(int job_id); // runs job
+  bool run_job(int job_id, int option); // runs job
   bool check_jobs(); // checks for changes of job processes
   bool check_zombie(); // checks for zombie processes
   bool wait_job(int job_id); // runs job
@@ -160,7 +160,7 @@ public:
   bool create_result(int job_id); // adds a new result for job
   bool delete_result(int job_id); // delete result for job
   bool load_result(int job_id); // load result for job
-  int convert_result(int job_id, int option); // convert result for job
+  int convert_result(int job_id, int option, std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids); // convert result for job
   bool project_result(int job_id,int step,int totalincrement,double scale); // project disp result for job for specific step or increment
   double compute_von_mises_stress(std::vector<double> vec); // computes the von mises stress/strain for a vector of values
   double compute_von_mises_strain(std::vector<double> vec); // computes the von mises stress/strain for a vector of values
