@@ -2,6 +2,7 @@
 #!python
 #!python
 #!python
+#!python
 from numpy import cos,sin,arccos
 import numpy as np
 import cubit
@@ -175,9 +176,6 @@ for v in volume_list:
  if v >1:
   cubit.cmd(f"ccx create customline name '{v}' after step_begin item_id 2 cline 'Block_{v}'")
 
-totaltimeatstart = 2
-timeperiodofstep = 10
-
 cs = 2
 volume_list = cubit.get_entities("volume")
 for v in volume_list:
@@ -185,17 +183,15 @@ for v in volume_list:
  if v > 1:
   cs = cs + 1
   cubit.cmd(f"ccx create step name 'heat_{cs}' heattransfer")
-  cubit.cmd(f"ccx modify step {cs} heattransfer totaltimeatstart {totaltimeatstart} initialtimeincrement 10 timeperiodofstep {timeperiodofstep} minimumtimeincrement 1e-5 maximumtimeincrement 10")
+  cubit.cmd(f"ccx modify step {cs} heattransfer initialtimeincrement 10 timeperiodofstep 10 minimumtimeincrement 1e-5 maximumtimeincrement 10")
   cubit.cmd(f"ccx step {cs} add load heatflux {v}")
   cubit.cmd(f"ccx step {cs} add bc temperature {v}")
   cubit.cmd(f"ccx step {cs} add fieldoutput 1 2")
   cubit.cmd(f"ccx create customline name 'step_{cs}_top' after step_begin item_id {cs} cline '*MODEL CHANGE,TYPE=ELEMENT,ADD'")
   cubit.cmd(f"ccx create customline name '{v}' after step_begin item_id {cs} cline 'Block_{v}'")
   cs = cs + 1
-  totaltimeatstart = timeperiodofstep
-  timeperiodofstep = timeperiodofstep + 100
   cubit.cmd(f"ccx create step name 'heat_{cs}' heattransfer")
-  cubit.cmd(f"ccx modify step {cs} heattransfer totaltimeatstart {totaltimeatstart} initialtimeincrement 10 timeperiodofstep {timeperiodofstep} minimumtimeincrement 1e-5 maximumtimeincrement 10")
+  cubit.cmd(f"ccx modify step {cs} heattransfer initialtimeincrement 10 timeperiodofstep 100 minimumtimeincrement 1e-5 maximumtimeincrement 10")
   cubit.cmd(f"ccx step {cs} add load heatflux {v}")
   cubit.cmd(f"ccx step {cs} add fieldoutput 1 2")
   totaltimeatstart = timeperiodofstep
@@ -209,4 +205,5 @@ for v in volume_list:
  command = command + str(v) + " "
 command = command + " partial"
 print(command)
+
 
