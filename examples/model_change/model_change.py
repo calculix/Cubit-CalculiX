@@ -144,7 +144,7 @@ cubit.cmd('ccx create section solid block all material 1')
 #heatflux and initial temperature
 volume_list = cubit.get_entities("volume")
 for v in volume_list:
- cubit.cmd(f"create heatflux  on sideset {v} value -15")
+ cubit.cmd(f"create heatflux  on sideset {v} value -7.5")
  #cubit.cmd(f"ccx modify heatflux {v} op new")
  cubit.cmd(f"create temperature on volume {v} value 2000")
  cubit.cmd(f"ccx modify temperature {v} op new")
@@ -153,11 +153,11 @@ cubit.cmd("modify temperature 1 value 100")
 
 # field outputs
 cubit.cmd('ccx create fieldoutput name "fo_node" node')
-cubit.cmd('ccx modify fieldoutput 1 node frequency 10')
+cubit.cmd('ccx modify fieldoutput 1 node frequency 1')
 cubit.cmd('ccx modify fieldoutput 1 node key_on NT')
 cubit.cmd('ccx modify fieldoutput 1 node key_off CP U DEPF DEPT DTF HCRI KEQ MACH MAXU MF PNT POT PRF PS PSF PT PTF PU RF RFL SEN TS TSF TT TTF TURB V VF ')
 cubit.cmd('ccx create fieldoutput name "fo_element" element')
-cubit.cmd('ccx modify fieldoutput 2 element frequency 10')
+cubit.cmd('ccx modify fieldoutput 2 element frequency 1')
 cubit.cmd('ccx modify fieldoutput 2 element key_on HFL')
 cubit.cmd('ccx modify fieldoutput 2 element key_off CEEQ S E ECD EMFB EMFE ENER ERR HER HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS ')
 
@@ -191,7 +191,7 @@ for v in volume_list:
   cubit.cmd(f"ccx create customline name '{v}' after step_begin item_id {cs} cline 'Block_{v}'")
   cs = cs + 1
   cubit.cmd(f"ccx create step name 'heat_{cs}' heattransfer")
-  cubit.cmd(f"ccx modify step {cs} heattransfer initialtimeincrement 10 timeperiodofstep 100 minimumtimeincrement 1e-5 maximumtimeincrement 10")
+  cubit.cmd(f"ccx modify step {cs} heattransfer initialtimeincrement 10 timeperiodofstep 50 minimumtimeincrement 1e-5 maximumtimeincrement 10")
   cubit.cmd(f"ccx step {cs} add load heatflux {v}")
   cubit.cmd(f"ccx step {cs} add fieldoutput 1 2")
   totaltimeatstart = timeperiodofstep
