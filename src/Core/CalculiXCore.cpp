@@ -1118,8 +1118,7 @@ std::string CalculiXCore::get_block_name(int block_id)
 
 std::vector<int> CalculiXCore::get_block_node_ids(int block_id)
 {
-  //std::vector<int> node_ids;
-  //node_ids = CubitInterface::get_block_nodes(block_id);
+  
   std::vector< int > returned_node_list;
   std::vector< int > returned_sphere_list;
   std::vector< int > returned_edge_list;
@@ -1129,8 +1128,6 @@ std::vector<int> CalculiXCore::get_block_node_ids(int block_id)
   std::vector< int > returned_wedge_list;
   std::vector< int > returned_tet_list;
   std::vector< int > returned_hex_list;
-
-
 
   CubitInterface::get_block_elements_and_nodes(block_id,
 		returned_node_list,
@@ -1143,6 +1140,31 @@ std::vector<int> CalculiXCore::get_block_node_ids(int block_id)
 		returned_tet_list,
 		returned_hex_list 
 	); 	
+  
+/*
+  std::vector< int > returned_group_list;
+  std::vector< int > returned_volume_list;
+  std::vector< int > returned_surface_list;
+  std::vector< int > returned_curve_list; 
+  std::vector< int > returned_vertex_list;
+
+  CubitInterface::get_block_children(block_id,
+   returned_group_list,
+   returned_node_list,
+   returned_sphere_list,
+   returned_edge_list,
+   returned_tri_list,
+   returned_face_list,
+   returned_pyramid_list,
+   returned_tet_list,
+   returned_hex_list,
+   returned_wedge_list,
+   returned_volume_list,
+   returned_surface_list,
+   returned_curve_list,
+   returned_vertex_list
+  );
+*/
   return returned_node_list;
 }
 
