@@ -2,6 +2,8 @@
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "CalculiXCoreInterface.hpp"
+//#include "MeshExportInterface.hpp"
+//#include "CubitEntity.hpp"
 
 ccxResultConvertJobCommand::ccxResultConvertJobCommand()
 {}
@@ -16,6 +18,7 @@ std::vector<std::string> ccxResultConvertJobCommand::get_syntax()
   std::string syntax = "ccx ";
   syntax.append("result convert job <value:label='job_id',help='<job_id>'> [partial] ");
   syntax.append("[block <value:label='block_ids',help='<block_ids>'>...] " );
+  //syntax.append("[block <entities:type='<block:label='mBlockList'>...'>] ");
   syntax.append("[nodeset <value:label='nodeset_ids',help='<nodeset_ids>'>...] " );
   syntax.append("[sideset <value:label='sideset_ids',help='<sideset_ids>'>...] " );
   syntax_list.push_back(syntax);
@@ -28,6 +31,7 @@ std::vector<std::string> ccxResultConvertJobCommand::get_syntax_help()
   std::vector<std::string> help(1);
   help[0] = "ccx result convert job <job_id> [partial] "; 
   help[0].append("[block <block_ids>...] " );
+  //help[0].append("[block <entities:type='<block:label='mBlockList'>'>] ");
   help[0].append("[nodeset <nodeset_ids>...] " );
   help[0].append("[sideset <sideset_ids>...] " );
 
@@ -60,6 +64,7 @@ bool ccxResultConvertJobCommand::execute(CubitCommandData &data)
     option = -1;
   }
 
+
   if (data.find_keyword("BLOCK")){
     data.get_values("block_ids", block_ids);
   }else{
@@ -68,7 +73,17 @@ bool ccxResultConvertJobCommand::execute(CubitCommandData &data)
       block_ids = ccx_iface.get_blocks();
     }
   }
-  
+
+/*
+  //std::vector<ElementOutputGroup*> block_entities;
+  std::vector<CubitEntity*> block_entities;
+    if (data.get_entity_list("mBlockList", block_entities)) {
+        for (size_t i = 0; i < block_entities.size(); i++)
+        {
+          block_ids.push_back(block_entities[i]->id());
+        }
+  }
+*/
   if (data.find_keyword("NODESET")){
     data.get_values("nodeset_ids", nodeset_ids);
   }else{

@@ -1,0 +1,106 @@
+reset
+create brick x 40 y 20 z 5
+volume 1 copy move x 20 z -5.001
+
+create cylinder height 11 radius 4
+move volume 3 x 10 z -2.5 include_merged
+
+create cylinder height 4 radius 6
+move volume 4 x 10 z 4.501 include_merged
+
+create cylinder height 4 radius 6
+move volume 5 x 10 z -9.502 include_merged
+
+subtract volume 4 from volume 3  keep_tool 
+subtract volume 5  from volume 3  keep_tool 
+
+create cylinder height 20 radius 4.25
+move volume 6 x 10 z -2.5 include_merged
+
+subtract volume 6 from volume 1 2
+
+imprint vol all
+merge vol all
+
+block 1 add vol 1
+block 2 add vol 2
+block 3 add vol 3 to 5
+
+nodeset 1 add surface 4  
+nodeset 1 name "plate_1"
+nodeset 2 add surface 12  
+nodeset 2 name "plate_2"
+
+
+sideset 1 add surface 30  
+sideset 1 name "plate_1_top"
+sideset 2 add surface 31  
+sideset 2 name "plate_1_bottom"
+sideset 3 add surface 33  
+sideset 3 name "plate_2_top"
+sideset 4 add surface 34  
+sideset 4 name "plate_2_bottom"
+sideset 5 add surface 36
+sideset 5 name "bolt_top"
+sideset 6 add surface 38  
+sideset 6 name "bolt_bottom"
+
+create material "steel" property_group "CalculiX-FEA"
+modify material "steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 2.1e+5 0.3 0 
+modify material "steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_DENSITY_USE_CARD" 1
+modify material "steel" matrix_property "CCX_DENSITY_DENSITY" 7.85e-09 0 
+modify material "steel" scalar_properties "CCX_EXPANSION_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "steel" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 1.2e-05 0 
+modify material "steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+
+ccx create section solid block all material 1
+
+ccx create surfaceinteraction name "interaction" linear slopeK 1e+7 sigmaINF 1 c0 1e-3
+ccx create contactpair surfaceinteraction 1 surfacetosurface master 1 slave 5
+ccx create contactpair surfaceinteraction 1 surfacetosurface master 2 slave 3
+ccx create contactpair surfaceinteraction 1 surfacetosurface master 4 slave 6
+
+create temperature  on volume all value 0
+ccx create initialcondition temperature
+ccx modify initialcondition 1 temperature bc_id 1
+
+#preload
+create temperature  on volume 3 value -50
+
+# plate bc
+create displacement name "plate_1" on nodeset 1 dof 1 dof 2 dof 3 fix 0
+create displacement name "plate_2" on nodeset 2 dof 1 dof 2 dof 3 fix 0
+
+ccx create fieldoutput name "fo_1" node
+ccx create fieldoutput name "fo_2" element
+ccx create fieldoutput name "fo_3" contact
+ccx modify fieldoutput 1 node
+ccx modify fieldoutput 1 node key_on RF U  NT
+ccx modify fieldoutput 1 node key_off CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF PNT POT PRF PS PSF PT PTF PU RFL SEN TS TSF TT TTF TURB V VF 
+ccx modify fieldoutput 2 element
+ccx modify fieldoutput 2 element key_on E S 
+ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFL HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS 
+ccx modify fieldoutput 3 contact
+ccx modify fieldoutput 3 contact key_on CDIS CSTR CELS 
+ccx modify fieldoutput 3 contact key_off PCON 
+
+ccx create step name "preload" static
+ccx modify step 1 parameter nlgeom_yes
+ccx modify step 1 static initialtimeincrement 0.5 timeperiodofstep 1 minimumtimeincrement 1e-5 maximumtimeincrement 0.5
+ccx step 1 add fieldoutput 1 2 3
+#ccx step 1 add bc temperature 2
+ccx step 1 add bc displacement 1 2
+
+ccx create customline name "preload_1" before fieldoutput item_id 1 cline "*Temperature"
+ccx create customline name "preload_2" before fieldoutput item_id 1 cline "nodeset_4,-60.0"
+
+ccx create job name "bolted_connection"
+
+mesh vol all
+#ccx run job 1 no_conversion
+#ccx wait job 1
+#ccx result convert job 1 partial
