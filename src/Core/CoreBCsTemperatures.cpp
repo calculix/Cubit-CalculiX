@@ -54,7 +54,7 @@ bool CoreBCsTemperatures::update()
       time_delay_id = sub_id;
       this->add_time_delay(std::to_string(sub_id), "");
 
-      add_bc(bc_id, 0 , -1, time_delay_id);
+      add_bc(bc_id, 0 , -1, time_delay_id, 0);
     }
   }
 
@@ -94,9 +94,9 @@ bool CoreBCsTemperatures::check_initialized()
   return is_initialized;
 }
 
-bool CoreBCsTemperatures::add_bc(int bc_id, int op_mode, int amplitude_id, int time_delay_id)
+bool CoreBCsTemperatures::add_bc(int bc_id, int op_mode, int amplitude_id, int time_delay_id, int keyword_type)
 {
-  std::vector<int> v = {bc_id, op_mode, amplitude_id, time_delay_id};
+  std::vector<int> v = {bc_id, op_mode, amplitude_id, time_delay_id, keyword_type};
       
   bcs_data.push_back(v);
 
@@ -128,6 +128,11 @@ bool CoreBCsTemperatures::modify_bc(int bc_id, std::vector<std::string> options,
     {
       sub_data_id = get_time_delay_data_id_from_time_delay_id(bcs_data[bcs_data_id][3]);
       time_delay_data[sub_data_id][1] = options[2];
+    }
+    // keyword_type
+    if (options_marker[3]==1)
+    {
+      bcs_data[bcs_data_id][4] = std::stoi(options[3]);
     }
     return true;
   }
@@ -211,15 +216,22 @@ std::string CoreBCsTemperatures::get_bc_parameter_export(int bc_id)
   return str_temp;
 }
 
+int CoreBCsTemperatures::get_bc_keyword_type(int bc_id)
+{
+  int bc_data_id;
+  bc_data_id = get_bcs_data_id_from_bc_id(bc_id);
+  return bcs_data[bc_data_id][4];
+}
+
 std::string CoreBCsTemperatures::print_data()
 {
   std::string str_return;
   str_return = "\n CoreBCsTemperatures bcs_data: \n";
-  str_return.append("bc_id, OP MODE, amplitude_id, time_delay_id \n");
+  str_return.append("bc_id, OP MODE, amplitude_id, time_delay_id, keyword_type \n");
 
   for (size_t i = 0; i < bcs_data.size(); i++)
   {
-    str_return.append(std::to_string(bcs_data[i][0]) + " " + std::to_string(bcs_data[i][1]) + " " + std::to_string(bcs_data[i][2]) + " " + std::to_string(bcs_data[i][3]) + " \n");
+    str_return.append(std::to_string(bcs_data[i][0]) + " " + std::to_string(bcs_data[i][1]) + " " + std::to_string(bcs_data[i][2]) + " " + std::to_string(bcs_data[i][3]) + " " + std::to_string(bcs_data[i][4]) + " \n");
   }
 
   str_return.append("\n CoreBCsTemperatures time_delay_data: \n");

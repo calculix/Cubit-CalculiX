@@ -238,7 +238,7 @@ bool CoreResultsVtkWriter::write_linked()
     this->link_nodes();
   }
   //link elements
-  this->link_elements();
+  this->link_elements();  
   //link dat
   this->link_dat();
   progressbar->start(0,100,"Writing Results to ParaView Format - Linked Mode");
@@ -1380,13 +1380,13 @@ bool CoreResultsVtkWriter::checkLinkDatFast()
   return true;
 }
 
-
 bool CoreResultsVtkWriter::checkDatTimeValueExists(double total_time)
 {
+
   for (size_t i = 0; i < dat_all->total_times.size(); i++)
   {
     // .dat times have different accuracy than in the .frd file *facepalm*
-    if (ccx_iface->to_string_scientific(dat_all->total_times[i])==ccx_iface->to_string_scientific(total_time))
+    if (ccx_iface->to_string_scientific(dat_all->total_times[i],5)==ccx_iface->to_string_scientific(total_time,5))
     {
       return true;
     }
@@ -2194,7 +2194,7 @@ bool CoreResultsVtkWriter::link_dat()
   
   // sorting for faster search
   auto p = sort_permutation(tmp_element_id);
-  
+
   this->apply_permutation(tmp_element_id, p);
   this->apply_permutation(tmp_element_type, p);
   this->apply_permutation(tmp_element_connectivity, p);
@@ -2208,7 +2208,7 @@ bool CoreResultsVtkWriter::link_dat()
     ++current_part;
     ip_nodes.clear();
     ip_nodes_coords.clear();
-
+    
     std::vector<std::vector<std::vector<double>>> tmp_set_nodes_coords;
     std::vector<std::vector<int>> tmp_set_element_type_connectivity;
     std::vector<int> tmp_set_ipmax;
@@ -2270,7 +2270,7 @@ bool CoreResultsVtkWriter::link_dat()
               only_one_ip = false;
             }
           }
-
+          
           bar = "Linking .dat: Set " + std::to_string(i) + " Elements with IP";
           progressbar->start(0,100,bar.c_str());
           t_start = std::chrono::high_resolution_clock::now();
@@ -2490,7 +2490,7 @@ bool CoreResultsVtkWriter::link_dat()
           }
           //this->stopwatch("elset");
         }
-      
+
         // elements
         if (dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][0][2] == 1) // nodeset
         {
@@ -3611,7 +3611,8 @@ std::vector<std::size_t> CoreResultsVtkWriter::sort_permutation(
 {
     std::vector<std::size_t> p(vec.size());
     std::iota(p.begin(), p.end(), 0);
-    std::sort(p.begin(), p.end());
+    std::sort(p.begin(), p.end(),
+        [&](std::size_t i, std::size_t j){ return vec[i] < vec[j]; });
 
     return p;
 }

@@ -21,18 +21,22 @@ BCsTemperaturesModifyPanel::BCsTemperaturesModifyPanel(QWidget *parent) :
   HBoxLayout_1 = new QHBoxLayout();
   HBoxLayout_2 = new QHBoxLayout();
   HBoxLayout_3 = new QHBoxLayout();
+  HBoxLayout_4 = new QHBoxLayout();
   label_0 = new QLabel();
   label_1 = new QLabel();
   label_2 = new QLabel();
   label_3 = new QLabel();
+  label_4 = new QLabel();
   label_0->setFixedWidth(labelWidth);
   label_1->setFixedWidth(labelWidth);
   label_2->setFixedWidth(labelWidth);
   label_3->setFixedWidth(labelWidth);
+  label_4->setFixedWidth(labelWidth);
   label_0->setText("Temperature ID");
   label_1->setText("OP");
   label_2->setText("Amplitude ID");
   label_3->setText("Time Delay");
+  label_4->setText("Keyword Type");
   lineEdit_0 = new QLineEdit();
   comboBox_1 = new QComboBox();
   comboBox_1->addItem("");
@@ -42,6 +46,10 @@ BCsTemperaturesModifyPanel::BCsTemperaturesModifyPanel(QWidget *parent) :
   lineEdit_3 = new QLineEdit();
   lineEdit_2->setPlaceholderText("Optional");
   lineEdit_3->setPlaceholderText("Optional");
+  comboBox_4 = new QComboBox();
+  comboBox_4->addItem("");
+  comboBox_4->addItem("*BOUNDARY");
+  comboBox_4->addItem("*TEMPERATURE");
   
   pushButton_apply = new QPushButton();
   pushButton_apply->setText("Apply");
@@ -54,6 +62,7 @@ BCsTemperaturesModifyPanel::BCsTemperaturesModifyPanel(QWidget *parent) :
   VBoxLayout->addLayout(HBoxLayout_1);
   VBoxLayout->addLayout(HBoxLayout_2);
   VBoxLayout->addLayout(HBoxLayout_3);
+  VBoxLayout->addLayout(HBoxLayout_4);
   VBoxLayout->addItem(vertical_spacer);
   VBoxLayout->addLayout(HBoxLayout_pushButton_apply);
 
@@ -65,6 +74,8 @@ BCsTemperaturesModifyPanel::BCsTemperaturesModifyPanel(QWidget *parent) :
   HBoxLayout_2->addWidget(lineEdit_2);
   HBoxLayout_3->addWidget(label_3);
   HBoxLayout_3->addWidget(lineEdit_3);
+  HBoxLayout_4->addWidget(label_4);
+  HBoxLayout_4->addWidget(comboBox_4);
   
   HBoxLayout_pushButton_apply->addItem(horizontal_spacer_pushButton_apply);
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
@@ -98,6 +109,14 @@ void BCsTemperaturesModifyPanel::on_pushButton_apply_clicked(bool)
     {
       command.append(" timedelay " +lineEdit_3->text());
     }
+    if (comboBox_4->currentIndex()==1)
+    {
+      command.append(" keyword_type boundary");
+    }
+    if (comboBox_4->currentIndex()==2)
+    {
+      command.append(" keyword_type temp");
+    }
   }
   
   if (command != "")
@@ -107,6 +126,7 @@ void BCsTemperaturesModifyPanel::on_pushButton_apply_clicked(bool)
     comboBox_1->setCurrentIndex(0);
     lineEdit_2->setText("");
     lineEdit_3->setText("");
+    comboBox_4->setCurrentIndex(0);
   }
   
   // We must send the Cubit commands through the Claro framework, so first we need to translate

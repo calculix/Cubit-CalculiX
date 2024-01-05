@@ -1,5 +1,6 @@
 #include "CalculiXPlugin.hpp"
 #include "ccxVersionCommand.hpp"
+#include "ccxResetCommand.hpp"
 #include "ccxExportCommand.hpp"
 #include "ccxUseAutoCleanupCommand.hpp"
 #include "ccxUseLogCoreCommand.hpp"
@@ -117,6 +118,7 @@ std::vector<std::string> CalculiXPlugin::get_keys()
 {
   std::vector<std::string> keys;
   keys.push_back("ccxVersionCommand");
+  keys.push_back("ccxResetCommand");
   keys.push_back("ccxExportCommand");
   keys.push_back("ccxUseAutoCleanupCommand");
   keys.push_back("ccxUseLogCoreCommand");
@@ -230,6 +232,9 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   if(key == "ccxVersionCommand")
     return new ccxVersionCommand();
+  
+  else if(key == "ccxResetCommand")
+    return new ccxResetCommand();
 
   else if(key == "ccxExportCommand")
     return new ccxExportCommand();

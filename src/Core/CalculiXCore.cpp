@@ -969,17 +969,17 @@ std::string CalculiXCore::print_data()
   return str_return;
 }
 
-std::string  CalculiXCore::to_string_scientific(double value)
+std::string  CalculiXCore::to_string_scientific(double value, int precision)
 {
   std::string output;
   std::ostringstream ss;
-  ss.precision(6);
+  ss.precision(precision);
   ss << std::scientific << value;
   output = ss.str();
   return output;
 }
 
-double  CalculiXCore::string_scientific_to_double(std::string value)
+double  CalculiXCore::string_scientific_to_double(std::string value, int precision)
 {
   double output;
   if (value[0] == '-') // check if negative
@@ -1002,6 +1002,9 @@ double  CalculiXCore::string_scientific_to_double(std::string value)
       output = std::stod(value);
     }
   }
+  //apply precision
+  output = std::stod(this->to_string_scientific(output,precision));
+
   return output;
 }
 
@@ -1118,8 +1121,7 @@ std::string CalculiXCore::get_block_name(int block_id)
 
 std::vector<int> CalculiXCore::get_block_node_ids(int block_id)
 {
-  //std::vector<int> node_ids;
-  //node_ids = CubitInterface::get_block_nodes(block_id);
+  
   std::vector< int > returned_node_list;
   std::vector< int > returned_sphere_list;
   std::vector< int > returned_edge_list;
@@ -1129,8 +1131,6 @@ std::vector<int> CalculiXCore::get_block_node_ids(int block_id)
   std::vector< int > returned_wedge_list;
   std::vector< int > returned_tet_list;
   std::vector< int > returned_hex_list;
-
-
 
   CubitInterface::get_block_elements_and_nodes(block_id,
 		returned_node_list,
@@ -1143,6 +1143,31 @@ std::vector<int> CalculiXCore::get_block_node_ids(int block_id)
 		returned_tet_list,
 		returned_hex_list 
 	); 	
+  
+/*
+  std::vector< int > returned_group_list;
+  std::vector< int > returned_volume_list;
+  std::vector< int > returned_surface_list;
+  std::vector< int > returned_curve_list; 
+  std::vector< int > returned_vertex_list;
+
+  CubitInterface::get_block_children(block_id,
+   returned_group_list,
+   returned_node_list,
+   returned_sphere_list,
+   returned_edge_list,
+   returned_tri_list,
+   returned_face_list,
+   returned_pyramid_list,
+   returned_tet_list,
+   returned_hex_list,
+   returned_wedge_list,
+   returned_volume_list,
+   returned_surface_list,
+   returned_curve_list,
+   returned_vertex_list
+  );
+*/
   return returned_node_list;
 }
 
@@ -2866,13 +2891,31 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
             }
             // CUSTOMLINE END
             me_iface->get_bc_nodeset(bc_handles[ii],nodeset);
-            str_temp = "*BOUNDARY";
+            if (bcstemperatures->get_bc_keyword_type(steps->bcs_data[sub_data_ids[iii]][2]) == 0) // *BOUNDARY
+            {
+              str_temp = "*BOUNDARY";
+            }else if (bcstemperatures->get_bc_keyword_type(steps->bcs_data[sub_data_ids[iii]][2]) == 1) // *TEMPERATURE
+            {
+              str_temp = "*TEMPERATURE";
+            }else{
+              str_temp = "*SOMETHING WENT WRONG";
+            }
             str_temp.append(bcstemperatures->get_bc_parameter_export(steps->bcs_data[sub_data_ids[iii]][2]));
-            steps_export_list.push_back(str_temp);
-            for (size_t iv = 0; iv < bc_attribs.size(); iv++)
-            { 
-              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + ",11,11," + to_string_scientific(bc_attribs[iv].second);
-              steps_export_list.push_back(str_temp);
+            steps_export_list.push_back(str_temp);            
+            if (bcstemperatures->get_bc_keyword_type(steps->bcs_data[sub_data_ids[iii]][2]) == 0) // *BOUNDARY
+            {
+              for (size_t iv = 0; iv < bc_attribs.size(); iv++)
+              { 
+                str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + ",11,11," + to_string_scientific(bc_attribs[iv].second);
+                steps_export_list.push_back(str_temp);
+              }
+            }else if (bcstemperatures->get_bc_keyword_type(steps->bcs_data[sub_data_ids[iii]][2]) == 1) // *TEMPERATURE
+            {
+              for (size_t iv = 0; iv < bc_attribs.size(); iv++)
+              { 
+                str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + to_string_scientific(bc_attribs[iv].second);
+                steps_export_list.push_back(str_temp);
+              }
             }
             // CUSTOMLINE START
             customline = customlines->get_customline_data("AFTER","TEMPERATURE",steps->bcs_data[sub_data_ids[iii]][2]);
@@ -3125,7 +3168,8 @@ std::vector<std::vector<std::string>> CalculiXCore::get_constraints_tree_data()
     std::string constraint_name;
     std::string entity_name;
     std::string entity_id;
-    std::string vertex;
+    std::string vertex_ref;
+    std::string vertex_rot;
 
     int sub_constraint_data_id;
 
@@ -3142,8 +3186,9 @@ std::vector<std::vector<std::string>> CalculiXCore::get_constraints_tree_data()
       }
       
       entity_id = constraints->rigidbody_constraint_data[sub_constraint_data_id][2];
-      vertex = constraints->rigidbody_constraint_data[sub_constraint_data_id][3];
-      constraint_name = "Rigid Body ("+ entity_name + entity_id + "| Vertex " + vertex + ")";
+      vertex_ref = constraints->rigidbody_constraint_data[sub_constraint_data_id][3];
+      vertex_rot = constraints->rigidbody_constraint_data[sub_constraint_data_id][4];
+      constraint_name = "Rigid Body ("+ entity_name + entity_id + "| v_ref " + vertex_ref + "| v_rot " + vertex_rot + ")";
     } else if (constraints->constraints_data[i][1] == 2)
     {
       sub_constraint_data_id = constraints->get_tie_constraint_data_id_from_tie_constraint_id(constraints->constraints_data[i][2]);

@@ -35,14 +35,14 @@ std::vector<int> CalculiXCoreInterface::parser(std::string parse_type, std::stri
   return ccx_core.parser(parse_type, parse_string);
 }
 
-std::string  CalculiXCoreInterface::to_string_scientific(double value)
+std::string  CalculiXCoreInterface::to_string_scientific(double value, int precision)
 {
-  return ccx_core.to_string_scientific(value);
+  return ccx_core.to_string_scientific(value, precision);
 }
 
-double CalculiXCoreInterface::string_scientific_to_double(std::string value)
+double CalculiXCoreInterface::string_scientific_to_double(std::string value, int precision)
 {
-  return ccx_core.string_scientific_to_double(value);
+  return ccx_core.string_scientific_to_double(value, precision);
 }
 
 std::vector<std::string> CalculiXCoreInterface::get_ccx_element_types()

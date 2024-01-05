@@ -2,6 +2,8 @@
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "CalculiXCoreInterface.hpp"
+//#include "MeshExportInterface.hpp"
+//#include "CubitEntity.hpp"
 
 ccxResultConvertJobCommand::ccxResultConvertJobCommand()
 {}
@@ -60,6 +62,7 @@ bool ccxResultConvertJobCommand::execute(CubitCommandData &data)
     option = -1;
   }
 
+
   if (data.find_keyword("BLOCK")){
     data.get_values("block_ids", block_ids);
   }else{
@@ -68,7 +71,7 @@ bool ccxResultConvertJobCommand::execute(CubitCommandData &data)
       block_ids = ccx_iface.get_blocks();
     }
   }
-  
+
   if (data.find_keyword("NODESET")){
     data.get_values("nodeset_ids", nodeset_ids);
   }else{
