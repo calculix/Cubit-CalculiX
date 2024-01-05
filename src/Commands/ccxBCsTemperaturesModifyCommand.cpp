@@ -18,6 +18,7 @@ std::vector<std::string> ccxBCsTemperaturesModifyCommand::get_syntax()
   syntax.append("[op {mod | new}] " );
   syntax.append("[amplitude <value:label='amplitude id',help='<amplitude id>'>] ");
   syntax.append("[timedelay <value:label='timedelay',help='<timedelay>'>] ");
+  syntax.append("[keyword_type {boundary | temp}]" );
   
   syntax_list.push_back(syntax);
   
@@ -27,7 +28,7 @@ std::vector<std::string> ccxBCsTemperaturesModifyCommand::get_syntax()
 std::vector<std::string> ccxBCsTemperaturesModifyCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx modify temperature <temperature id> [op {mod | new}] [amplitude <amplitude id>] [timedelay <value>]"; 
+  help[0] = "ccx modify temperature <temperature id> [op {mod | new}] [amplitude <amplitude id>] [timedelay <value>] [keyword_type {boundary | temp}]"; 
 
   return help;
 }
@@ -90,7 +91,22 @@ bool ccxBCsTemperaturesModifyCommand::execute(CubitCommandData &data)
     options_marker.push_back(1);
   }
   options.push_back(timedelay);
-  
+
+  if (data.find_keyword("KEYWORD_TYPE")){
+    if (data.find_keyword("BOUNDARY")){
+      options_marker.push_back(1);
+      options.push_back("0");
+    }else if (data.find_keyword("TEMP"))
+    {
+      options_marker.push_back(1);
+      options.push_back("1");
+    }
+  }else{
+      options_marker.push_back(0);
+      options.push_back("0");
+  }
+
+
   if (!ccx_iface.modify_bcstemperatures(temperature_id, options, options_marker))
   {
     output = "Failed!\n";

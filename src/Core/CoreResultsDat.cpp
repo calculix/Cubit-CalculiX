@@ -476,7 +476,7 @@ bool CoreResultsDat::header_emas(std::vector<std::string> line)
     }
   } 
   block_set = line[search + 1];
-  total_time = ccx_iface->string_scientific_to_double(line[line.size()-1]);
+  total_time = ccx_iface->string_scientific_to_double(line[line.size()-1],5);
   total_times.push_back(total_time);
   current_total_time_id = total_times.size()-1;
 

@@ -25,12 +25,12 @@ merge vol all
 block 1 add vol 1
 block 2 add vol 2
 block 3 add vol 3 to 5
+#block all element type hex20
 
 nodeset 1 add surface 4  
 nodeset 1 name "plate_1"
 nodeset 2 add surface 12  
 nodeset 2 name "plate_2"
-
 
 sideset 1 add surface 30  
 sideset 1 name "plate_1_top"
@@ -44,6 +44,10 @@ sideset 5 add surface 36
 sideset 5 name "bolt_top"
 sideset 6 add surface 38  
 sideset 6 name "bolt_bottom"
+sideset 7 add surface 25  
+sideset 7 name "bolt_shaft"
+sideset 8 add surface 29 32
+sideset 8 name "plates_holes"
 
 create material "steel" property_group "CalculiX-FEA"
 modify material "steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
@@ -55,14 +59,17 @@ modify material "steel" matrix_property "CCX_DENSITY_DENSITY" 7.85e-09 0
 modify material "steel" scalar_properties "CCX_EXPANSION_USE_CARD" 1
 modify material "steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
 modify material "steel" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 1.2e-05 0 
-modify material "steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_PLASTIC_USE_CARD" 1
+modify material "steel" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 235 0 0 
 
 ccx create section solid block all material 1
 
 ccx create surfaceinteraction name "interaction" linear slopeK 1e+7 sigmaINF 1 c0 1e-3
+ccx modify surfaceinteraction 1 friction mu 0.1 lambda 500
 ccx create contactpair surfaceinteraction 1 surfacetosurface master 1 slave 5
 ccx create contactpair surfaceinteraction 1 surfacetosurface master 2 slave 3
 ccx create contactpair surfaceinteraction 1 surfacetosurface master 4 slave 6
+ccx create contactpair surfaceinteraction 1 surfacetosurface master 7 slave 8
 
 create temperature  on volume all value 0
 ccx create initialcondition temperature
@@ -70,10 +77,26 @@ ccx modify initialcondition 1 temperature bc_id 1
 
 #preload
 create temperature  on volume 3 value -50
+ccx modify temperature 2 keyword_type temp
 
 # plate bc
-create displacement name "plate_1" on nodeset 1 dof 1 dof 2 dof 3 fix 0
-create displacement name "plate_2" on nodeset 2 dof 1 dof 2 dof 3 fix 0
+create displacement name "plate_1_fix" on nodeset 1 dof 1 dof 2 dof 3 fix 0
+create displacement name "plate_2_fix" on nodeset 2 dof 1 dof 2 dof 3 fix 0
+create displacement name "plate_1_pull" on nodeset 1 dof 1 fix -0.35
+create displacement name "plate_2_pull" on nodeset 2 dof 1 fix 0.35
+
+ccx create historyoutput name "ho_1" element
+ccx modify historyoutput 1 element block 1
+ccx modify historyoutput 1 element key_on S E 
+ccx modify historyoutput 1 element key_off SVF ME PEEQ CEEQ ENER SDV HFL HFLF COORD ELSE ELKE EVOL EMAS EBHE CENT 
+ccx create historyoutput name "ho_2" element
+ccx modify historyoutput 2 element block 2
+ccx modify historyoutput 2 element key_on S E 
+ccx modify historyoutput 2 element key_off SVF ME PEEQ CEEQ ENER SDV HFL HFLF COORD ELSE ELKE EVOL EMAS EBHE CENT 
+ccx create historyoutput name "ho_3" element
+ccx modify historyoutput 3 element block 3
+ccx modify historyoutput 3 element key_on S E 
+ccx modify historyoutput 3 element key_off SVF ME PEEQ CEEQ ENER SDV HFL HFLF COORD ELSE ELKE EVOL EMAS EBHE CENT 
 
 ccx create fieldoutput name "fo_1" node
 ccx create fieldoutput name "fo_2" element
@@ -90,17 +113,27 @@ ccx modify fieldoutput 3 contact key_off PCON
 
 ccx create step name "preload" static
 ccx modify step 1 parameter nlgeom_yes
-ccx modify step 1 static initialtimeincrement 0.5 timeperiodofstep 1 minimumtimeincrement 1e-5 maximumtimeincrement 0.5
+ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.5 timeperiodofstep 1 minimumtimeincrement 1e-5 maximumtimeincrement 0.5
 ccx step 1 add fieldoutput 1 2 3
-#ccx step 1 add bc temperature 2
+#ccx step 1 add historyoutput 1 2 3
+ccx step 1 add bc temperature 2
 ccx step 1 add bc displacement 1 2
 
-ccx create customline name "preload_1" before fieldoutput item_id 1 cline "*Temperature"
-ccx create customline name "preload_2" before fieldoutput item_id 1 cline "nodeset_4,-60.0"
+ccx create step name "load" static
+ccx modify step 2 parameter nlgeom_yes
+ccx modify step 2 static totaltimeatstart 1 initialtimeincrement 0.01 timeperiodofstep 1 minimumtimeincrement 1e-5 maximumtimeincrement 0.02
+ccx step 2 add fieldoutput 1 2 3
+#ccx step 1 add historyoutput 1 2 3
+ccx step 2 add bc displacement 3 4
 
 ccx create job name "bolted_connection"
 
+vol all size 1
 mesh vol all
 #ccx run job 1 no_conversion
 #ccx wait job 1
-#ccx result convert job 1 partial
+#ccx result load job 1
+#ccx use logfile core on
+#ccx result convert job 1 partial block 1 2 3
+
+
