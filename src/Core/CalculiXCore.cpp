@@ -2675,13 +2675,20 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
             steps_export_list.push_back(str_temp);
             for (size_t iv = 1; iv < 4; iv++)
             {
-              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(iv) + "," + to_string_scientific(bc_attribs[iv].second*bc_attribs[0].second);
-              steps_export_list.push_back(str_temp);
+              //check if zero component
+              if (bc_attribs[iv].second*bc_attribs[0].second != 0.0)
+              {
+                str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(iv) + "," + to_string_scientific(bc_attribs[iv].second*bc_attribs[0].second);
+                steps_export_list.push_back(str_temp);
+              }              
             }
             for (size_t iv = 1; iv < 4; iv++)
             {
-              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(iv+3) + "," + to_string_scientific(bc_attribs[iv+4].second*bc_attribs[4].second);
-              steps_export_list.push_back(str_temp);
+              if (bc_attribs[iv+4].second*bc_attribs[4].second != 0.0)
+              {
+                str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(iv+3) + "," + to_string_scientific(bc_attribs[iv+4].second*bc_attribs[4].second);
+                steps_export_list.push_back(str_temp);
+              }
             }
             // CUSTOMLINE START
             customline = customlines->get_customline_data("AFTER","FORCE",steps->loads_data[sub_data_ids[iii]][2]);
