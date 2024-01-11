@@ -2,7 +2,7 @@ reset
 create curve arc radius 200 center location 0 0 0 normal 0 0 1 start angle 0 stop angle 360 
 sweep curve 1 vector 0 0 1  distance 400
 
-surface 1 size 10
+surface 1 size 30
 mesh surface 1
 
 block 1 add surface 1
@@ -63,7 +63,11 @@ ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.05 timeperiod
 ccx step 1 add bc displacement 1 2
 ccx step 1 add fieldoutput 1 2
 
-ccx result project job 1 step 5
+ccx result project job 1 totalincrement 2 scale 1
+ccx result project job 1 totalincrement 3 scale 0.5
+ccx result project job 1 totalincrement 4 scale 0.25
+ccx result project job 1 totalincrement 5 scale 0.125
+ccx result project job 1 totalincrement 6 scale 0.0625
 
 ccx create job name "nonlinear"
 ccx run job 2
