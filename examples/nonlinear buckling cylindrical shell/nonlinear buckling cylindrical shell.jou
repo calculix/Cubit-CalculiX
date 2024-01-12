@@ -27,7 +27,8 @@ modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
 
 ccx create section shell block 1 material 1 thickness 2 offset 0
 
-create force  on nodeset 2 force value 1 direction 0 0 -1
+create force  on nodeset 2 force value -1 direction 0 0 1
+
 create displacement on nodeset 1 dof 1 dof 2 dof 3 dof 4 dof 5 dof 6 fix 0
 create displacement on nodeset 2 dof 1 dof 2 dof 4 dof 5 dof 6 fix 0
 #modify displacement 2 dof 3 fix -5
@@ -42,7 +43,7 @@ ccx modify fieldoutput 2 element key_on E S
 ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFL HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS 
 
 ccx create step name "buckle" buckle
-ccx modify step 1 buckle bucklingfactors 5 accuracy 1e-8
+ccx modify step 1 buckle bucklingfactors 1 accuracy 1e-8
 ccx step 1 add load force 1
 ccx step 1 add bc displacement 1 2
 ccx step 1 add fieldoutput 1 2
@@ -55,19 +56,19 @@ ccx delete step 1
 
 modify material "Steel" scalar_properties "CCX_PLASTIC_USE_CARD" 1
 modify material "Steel" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 4e+2 0 0 4.2e+2 0.02 0 5e+2 0.2 0 6e+2 0.5 0 
-modify displacement 2 dof 3 fix -20
+modify displacement 2 dof 3 fix -50
 
 ccx create step name "nonlinear" static
 ccx modify step 1 parameter nlgeom_yes
-ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.05 timeperiodofstep 1 minimumtimeincrement 1e-5 maximumtimeincrement 0.1
+ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.01 timeperiodofstep 1 minimumtimeincrement 1e-5 maximumtimeincrement 0.1
 ccx step 1 add bc displacement 1 2
 ccx step 1 add fieldoutput 1 2
 
 ccx result project job 1 totalincrement 2 scale 1
-ccx result project job 1 totalincrement 3 scale 0.5
-ccx result project job 1 totalincrement 4 scale 0.25
-ccx result project job 1 totalincrement 5 scale 0.125
-ccx result project job 1 totalincrement 6 scale 0.0625
+#ccx result project job 1 totalincrement 3 scale 0.5
+#ccx result project job 1 totalincrement 4 scale 0.25
+#ccx result project job 1 totalincrement 5 scale 0.125
+#ccx result project job 1 totalincrement 6 scale 0.0625
 
 ccx create job name "nonlinear"
 ccx run job 2
