@@ -2203,7 +2203,8 @@ std::vector<double> CalculiXCore::compute_principal_stresses(std::vector<double>
   m(2,2) = vec[2];
   
   // compute eigenvalues
-  Eigen::EigenSolver<Eigen::Matrix3d> es(m);
+  //Eigen::EigenSolver<Eigen::Matrix3d> es(m);
+  Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> es(m);
   // get eigenvalues, only real parts should be here
 
   for (size_t i = 0; i < 3; i++)
@@ -2261,7 +2262,8 @@ std::vector<double> CalculiXCore::compute_principal_strains(std::vector<double> 
   m(2,2) = vec[2];
   
   // compute eigenvalues
-  Eigen::EigenSolver<Eigen::Matrix3d> es(m);
+  //Eigen::EigenSolver<Eigen::Matrix3d> es(m);
+  Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> es(m);
   // get eigenvalues, only real parts should be here
   for (size_t i = 0; i < 3; i++)
   {
