@@ -251,12 +251,14 @@ bool CoreJobs::wait_job(int job_id)
     CubitProcessHandler_data_id = get_CubitProcessHandler_data_id_from_process_id(std::stoi(jobs_data[jobs_data_id][4]));
     if (CubitProcessHandler_data_id != -1)
     {
-      log = " Waiting for Job " + jobs_data[jobs_data_id][2] + " to Exit \n";
+      log = " Waiting for Job " + jobs_data[jobs_data_id][1] + " to Exit \n";
       PRINT_INFO("%s", log.c_str());
 
-      log = " Waiting for Job " + jobs_data[jobs_data_id][2] + " to Exit";
+      log = " Waiting for Job " + jobs_data[jobs_data_id][1] + " to Exit";
       progressbar->start(0,100,log.c_str());
       auto t_start = std::chrono::high_resolution_clock::now();          
+
+      jobs_data[jobs_data_id][3] = "5"; // mark the job for waiting
 
       while (0 == kill(std::stoi(jobs_data[jobs_data_id][4]),0))
       {

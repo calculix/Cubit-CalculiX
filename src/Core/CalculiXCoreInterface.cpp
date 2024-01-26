@@ -575,6 +575,16 @@ double CalculiXCoreInterface::compute_von_mises_strain(std::vector<double> vec)
   return ccx_core.compute_von_mises_strain(vec);
 }
 
+std::vector<double> CalculiXCoreInterface::compute_principal_stresses(std::vector<double> vec)
+{
+  return ccx_core.compute_principal_stresses(vec);
+}
+
+std::vector<double> CalculiXCoreInterface::compute_principal_strains(std::vector<double> vec)
+{
+  return ccx_core.compute_principal_strains(vec);
+}
+
 bool CalculiXCoreInterface::create_customline(std::vector<std::string> options)
 {
   return ccx_core.create_customline(options);

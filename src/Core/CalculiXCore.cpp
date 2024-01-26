@@ -7,6 +7,7 @@
 #include <ctime>
 #include <algorithm>
 #include <cmath>
+
 #include "CubitInterface.hpp"
 #include "CubitCoreformInterface.hpp"
 #include "CubitMessage.hpp"
@@ -37,6 +38,8 @@
 #include "CoreTimer.hpp"
 #include "CoreCustomLines.hpp"
 #include "loadUserOptions.hpp"
+
+#include <Utility/Eigen/Eigenvalues>
 
 CalculiXCore::CalculiXCore():
   cb(NULL),mat(NULL),sections(NULL),constraints(NULL),surfaceinteractions(NULL),
@@ -2177,6 +2180,123 @@ double CalculiXCore::compute_von_mises_strain(std::vector<double> vec)
   return von_mises;
 }
 
+std::vector<double> CalculiXCore::compute_principal_stresses(std::vector<double> vec)
+{
+  std::vector<double> ps;
+  
+  // vec[0] = SXX
+  // vec[1] = SYY
+  // vec[2] = SZZ
+  // vec[3] = SXY
+  // vec[4] = SYZ
+  // vec[5] = SZX
+
+  Eigen::Matrix3d m;
+  m(0,0) = vec[0];
+  m(1,0) = vec[3];
+  m(2,0) = vec[5];
+  m(0,1) = vec[3];
+  m(1,1) = vec[1];
+  m(2,1) = vec[4];
+  m(0,2) = vec[5];
+  m(1,2) = vec[4];
+  m(2,2) = vec[2];
+  
+  // compute eigenvalues
+  //Eigen::EigenSolver<Eigen::Matrix3d> es(m);
+  Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> es(m);
+  // get eigenvalues, only real parts should be here
+
+  for (size_t i = 0; i < 3; i++)
+  {
+    std::complex<double> lambda = es.eigenvalues()[i];
+    ps.push_back(lambda.real());
+  }
+  // sort values
+  std::sort(std::begin(ps), std::end(ps), std::greater<double>{});
+  //std::sort(std::begin(ps), std::end(ps));
+
+  // get worst ps
+  double worstPS = 0.0;
+  for (size_t i = 0; i < 3; i++)
+  {
+    if (std::fabs(worstPS) < std::fabs(ps[i]))
+    {
+      worstPS = ps[i];
+    }
+  }
+  ps.push_back(worstPS);
+
+  //ps.push_back(0.0);
+  //ps.push_back(0.0);
+  //ps.push_back(0.0);
+  //ps.push_back(0.0);
+
+  //std::string log;
+  //log = std::to_string(ps[0]) + " " + std::to_string(ps[1]) + " " + std::to_string(ps[2]) + " "+ std::to_string(ps[3]) + "\n";
+  //PRINT_INFO("%s", log.c_str());  
+
+  return ps;
+}
+
+std::vector<double> CalculiXCore::compute_principal_strains(std::vector<double> vec)
+{
+  std::vector<double> pe;
+  
+  // vec[0] = EXX
+  // vec[1] = EYY
+  // vec[2] = EZZ
+  // vec[3] = EXY
+  // vec[4] = EYZ
+  // vec[5] = EZX
+
+  Eigen::Matrix3d m;
+  m(0,0) = vec[0];
+  m(1,0) = vec[3];
+  m(2,0) = vec[5];
+  m(0,1) = vec[3];
+  m(1,1) = vec[1];
+  m(2,1) = vec[4];
+  m(0,2) = vec[5];
+  m(1,2) = vec[4];
+  m(2,2) = vec[2];
+  
+  // compute eigenvalues
+  //Eigen::EigenSolver<Eigen::Matrix3d> es(m);
+  Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> es(m);
+  // get eigenvalues, only real parts should be here
+  for (size_t i = 0; i < 3; i++)
+  {
+    std::complex<double> lambda = es.eigenvalues()[i];
+    pe.push_back(lambda.real());
+  } 
+  // sort values
+  std::sort(std::begin(pe), std::end(pe), std::greater<double>{});
+  //std::sort(std::begin(pe), std::end(pe));
+
+  // get worst pe
+  double worstPE = 0.0;
+  for (size_t i = 0; i < 3; i++)
+  {
+    if (std::fabs(worstPE) < std::fabs(pe[i]))
+    {
+      worstPE = pe[i];
+    }
+  }
+  pe.push_back(worstPE);
+
+  //std::string log;
+  //log = std::to_string(pe[0]) + " " + std::to_string(pe[1]) + " " + std::to_string(pe[2]) + " "+ std::to_string(pe[3]) + "\n";
+  //PRINT_INFO("%s", log.c_str());
+
+  //pe.push_back(0.0);
+  //pe.push_back(0.0);
+  //pe.push_back(0.0);
+  //pe.push_back(0.0);
+
+  return pe;
+}
+
 bool CalculiXCore::create_customline(std::vector<std::string> options)
 {
   return customlines->create_customline(options);
@@ -2675,13 +2795,20 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
             steps_export_list.push_back(str_temp);
             for (size_t iv = 1; iv < 4; iv++)
             {
-              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(iv) + "," + to_string_scientific(bc_attribs[iv].second*bc_attribs[0].second);
-              steps_export_list.push_back(str_temp);
+              //check if zero component
+              if (bc_attribs[iv].second*bc_attribs[0].second != 0.0)
+              {
+                str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(iv) + "," + to_string_scientific(bc_attribs[iv].second*bc_attribs[0].second);
+                steps_export_list.push_back(str_temp);
+              }              
             }
             for (size_t iv = 1; iv < 4; iv++)
             {
-              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(iv+3) + "," + to_string_scientific(bc_attribs[iv+4].second*bc_attribs[4].second);
-              steps_export_list.push_back(str_temp);
+              if (bc_attribs[iv+4].second*bc_attribs[4].second != 0.0)
+              {
+                str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(iv+3) + "," + to_string_scientific(bc_attribs[iv+4].second*bc_attribs[4].second);
+                steps_export_list.push_back(str_temp);
+              }
             }
             // CUSTOMLINE START
             customline = customlines->get_customline_data("AFTER","FORCE",steps->loads_data[sub_data_ids[iii]][2]);

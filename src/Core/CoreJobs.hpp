@@ -19,7 +19,7 @@ public:
   // jobs_data[0][0] job_id
   // jobs_data[0][1] name
   // jobs_data[0][2] filepath
-  // jobs_data[0][3] status -1 no process, 1 process running, 2 process finished, 3 process killed, 4 process finished with errors
+  // jobs_data[0][3] status -1 no process, 1 process running, 2 process finished, 3 process killed, 4 process finished with errors, 5 process running currently waiting
   // jobs_data[0][4] process id
   // jobs_data[0][5] Output Console data id
   // jobs_data[0][6] converted to paraview -1 false, 1 true linked, 2 true unlinked, 3 ccx2paraview

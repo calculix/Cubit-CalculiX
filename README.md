@@ -28,7 +28,7 @@ Definition of:
 - Field Outputs (NODE FILE, EL FILE, CONTACT FILE)
 - STEPS (Static, Frequency, Buckle, Heat Transfer, Coupled Temperature Displacement, Uncoupled Temperature Displacement, No Analysis)
 - Creation and Running of Jobs
-- Conversion of Results to Paraview (.frd and .dat: nodal, element and integration points results)
+- Conversion of Results to Paraview (.frd and .dat: nodal, element and integration points results, auto calculating von Mises and Principal Stresses)
 - Projection of Displacements from .frd to mesh
 - Opening of Results with CGX or Paraview
 - Adding Customlines before/after Keywords
@@ -91,10 +91,9 @@ When there are displacements in the frd file for requested blocks in the .dat. T
 ![integration points displacements](/doc/postprocessing_05.png?raw=true "integration points displacements")
 
 current limitations of the converter:
-- CELS key ignored
-- contact print card ignored
 - totals ignored
-- buckling .dat ignored
+- buckling in .dat ignored
+- contact print card ignored
 - only links for complete nodal and element data
 
 # Projection of Displacements

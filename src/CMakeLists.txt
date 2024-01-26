@@ -48,6 +48,10 @@ add_subdirectory(EventObservers)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/UserOptions)
 add_subdirectory(UserOptions)
 
+# Include our Utility code
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Utiliy)
+add_subdirectory(Utility)
+
 # copy our icons to build directory
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Icons/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Icons/)
 
@@ -78,7 +82,8 @@ set(CCXPLUGIN_SRCS
     CalculiXPlugin.cpp
     CalculiXPlugin.hpp
     ${CMD_SRC}
-    ${CORE_SRC})
+    ${CORE_SRC}
+    ${UTILITY_SRC})
 
 add_library(calculix_plugin SHARED ${CCXPLUGIN_SRCS})
 set_target_properties(calculix_plugin PROPERTIES SUFFIX ".ccm")

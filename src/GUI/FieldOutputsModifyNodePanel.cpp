@@ -144,8 +144,9 @@ FieldOutputsModifyNodePanel::FieldOutputsModifyNodePanel(QWidget *parent) :
   HBoxLayout_3->addWidget(lineEdit_3);
   HBoxLayout_4->addWidget(label_4);
   HBoxLayout_4->addWidget(lineEdit_4);
-  HBoxLayout_5->addWidget(label_5);
-  HBoxLayout_5->addWidget(comboBox_5);
+  // hide totals parameter
+  //HBoxLayout_5->addWidget(label_5);
+  //HBoxLayout_5->addWidget(comboBox_5);
   HBoxLayout_6->addWidget(label_6);
   HBoxLayout_6->addWidget(comboBox_6);
   HBoxLayout_7->addWidget(label_7);

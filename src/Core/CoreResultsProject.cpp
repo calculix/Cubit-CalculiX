@@ -61,6 +61,14 @@ bool CoreResultsProject::project(int step, int totalincrement,double scale)
     data_id = get_result_blocks_data_id_totalincrement(totalincrement);
   }
 
+  if (data_id == -1) // step or increment not found
+  {
+    log = "Requested data set not found.\n";
+    PRINT_INFO("%s", log.c_str());
+    return false;
+  }
+  
+
   //this->stopwatch("start");
 
   progressbar->start(0,100,"Projecting Displacements");
