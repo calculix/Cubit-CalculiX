@@ -93,6 +93,7 @@ When there are displacements in the frd file for requested blocks in the .dat. T
 current limitations of the converter:
 - totals ignored
 - buckling in .dat ignored
+- contact print card ignored
 - only links for complete nodal and element data
 
 # Projection of Displacements

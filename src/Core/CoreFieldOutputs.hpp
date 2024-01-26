@@ -34,7 +34,7 @@ public:
   // node_data[0][1] nodeset_id NSET      option[0]...
   // node_data[0][2] FREQUENCY
   // node_data[0][3] FREQUENCYF
-  // node_data[0][4] TOTALS
+  // node_data[0][4] TOTALS // bug shouldn't be here
   // node_data[0][5] GLOBAL
   // node_data[0][6] OUTPUT
   // node_data[0][7] OUTPUT ALL

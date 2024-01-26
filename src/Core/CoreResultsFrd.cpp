@@ -485,6 +485,7 @@ bool CoreResultsFrd::read_nodal_result_block(std::vector<std::string> line)
         result_block_components[result_block_components.size()-1].push_back("PS2");
         result_block_components[result_block_components.size()-1].push_back("PS3");
         result_block_components[result_block_components.size()-1].push_back("worstPS");
+        result_block_components[result_block_components.size()-1].push_back("maxShear");
       }
     }
     if (result_block_type[result_blocks[result_blocks.size()-1][5]] == "TOSTRAIN")
@@ -496,6 +497,7 @@ bool CoreResultsFrd::read_nodal_result_block(std::vector<std::string> line)
         result_block_components[result_block_components.size()-1].push_back("PS2");
         result_block_components[result_block_components.size()-1].push_back("PS3");
         result_block_components[result_block_components.size()-1].push_back("worstPS");
+        result_block_components[result_block_components.size()-1].push_back("maxShear");
       }
     }
 
@@ -534,6 +536,7 @@ bool CoreResultsFrd::read_nodal_result_block(std::vector<std::string> line)
           result_comp[i+1] = ps[1];
           result_comp[i+2] = ps[2];
           result_comp[i+3] = ps[3];
+          result_comp[i+4] = 0.5 * std::max({ps[0]-ps[2],ps[0]-ps[1],ps[1]-ps[2]});
         }
       }else if ((result_block_type[result_blocks[result_blocks.size()-1][5]] == "TOSTRAIN") && (i > 5))
       {
@@ -549,6 +552,7 @@ bool CoreResultsFrd::read_nodal_result_block(std::vector<std::string> line)
           result_comp[i+1] = pe[1];
           result_comp[i+2] = pe[2];
           result_comp[i+3] = pe[3];
+          result_comp[i+4] = 0.5 * std::max({pe[0]-pe[2],pe[0]-pe[1],pe[1]-pe[2]});
         }
       }else{
         result_comp[i] = ccx_iface->string_scientific_to_double(line[i+2]);

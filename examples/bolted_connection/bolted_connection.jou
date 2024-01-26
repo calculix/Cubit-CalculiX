@@ -86,7 +86,7 @@ create displacement name "plate_1_pull" on nodeset 1 dof 1 fix -0.35
 create displacement name "plate_2_pull" on nodeset 2 dof 1 fix 0.35
 
 ccx create historyoutput name "ho_1" element
-ccx modify historyoutput 1 element block 1
+ccx modify historyoutput 1 element block 1 totals_yes
 ccx modify historyoutput 1 element key_on S E 
 ccx modify historyoutput 1 element key_off SVF ME PEEQ CEEQ ENER SDV HFL HFLF COORD ELSE ELKE EVOL EMAS EBHE CENT 
 ccx create historyoutput name "ho_2" element
@@ -94,9 +94,16 @@ ccx modify historyoutput 2 element block 2
 ccx modify historyoutput 2 element key_on S E 
 ccx modify historyoutput 2 element key_off SVF ME PEEQ CEEQ ENER SDV HFL HFLF COORD ELSE ELKE EVOL EMAS EBHE CENT 
 ccx create historyoutput name "ho_3" element
-ccx modify historyoutput 3 element block 3
+ccx modify historyoutput 3 element block 3 
 ccx modify historyoutput 3 element key_on S E 
-ccx modify historyoutput 3 element key_off SVF ME PEEQ CEEQ ENER SDV HFL HFLF COORD ELSE ELKE EVOL EMAS EBHE CENT 
+ccx modify historyoutput 3 element key_off SVF ME PEEQ CEEQ ENER SDV HFL HFLF COORD ELSE ELKE EVOL EMAS EBHE CENT
+ccx create historyoutput name "ho_4" contact
+ccx modify historyoutput 4 contact contactpair 1 totals_yes
+ccx modify historyoutput 4 contact key_on CDIS CSTR CELS CNUM CF CFN CFS 
+ccx create historyoutput name "ho_5" node
+ccx modify historyoutput 5 node nodeset 1 totals_yes
+ccx modify historyoutput 5 node key_on U RF 
+ccx modify historyoutput 5 node key_off NT TSF TTF PN PSF PTF MACH CP VF DEPF TURB MF RFL 
 
 ccx create fieldoutput name "fo_1" node
 ccx create fieldoutput name "fo_2" element
@@ -115,7 +122,7 @@ ccx create step name "preload" static
 ccx modify step 1 parameter nlgeom_yes
 ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.5 timeperiodofstep 1 minimumtimeincrement 1e-5 maximumtimeincrement 0.5
 ccx step 1 add fieldoutput 1 2 3
-ccx step 1 add historyoutput 1 2 3
+ccx step 1 add historyoutput 1 2 3 4 5
 ccx step 1 add bc temperature 2
 ccx step 1 add bc displacement 1 2
 
@@ -123,7 +130,7 @@ ccx create step name "load" static
 ccx modify step 2 parameter nlgeom_yes
 ccx modify step 2 static totaltimeatstart 1 initialtimeincrement 0.01 timeperiodofstep 1 minimumtimeincrement 1e-5 maximumtimeincrement 0.02
 ccx step 2 add fieldoutput 1 2 3
-ccx step 1 add historyoutput 1 2 3
+ccx step 1 add historyoutput 1 2 3 4 5
 ccx step 2 add bc displacement 3 4
 
 ccx create job name "bolted_connection"
@@ -135,6 +142,9 @@ mesh vol all
 #ccx result load job 1
 #ccx use logfile core on
 #ccx result convert job 1 partial block 1 2 3
+
+
+
 
 
 

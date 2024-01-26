@@ -22,7 +22,7 @@ std::vector<std::string> ccxFieldOutputNodeModifyCommand::get_syntax()
   syntax.append("[nodeset <value:label='nodeset id',help='<nodeset id>'>] ");
   syntax.append("[frequency <value:label='frequency',help='<frequency>'>] ");
   syntax.append("[frequencyf <value:label='frequencyf',help='<frequencyf>'>] ");
-  syntax.append("[{totals_yes|totals_only|totals_no}] ");
+  //syntax.append("[{totals_yes|totals_only|totals_no}] ");
   syntax.append("[{global_yes|global_no}] ");
   syntax.append("[{output_2d|output_3d|output_off}] ");
   syntax.append("[{output_all_on|output_all_off}] ");
@@ -55,7 +55,7 @@ std::vector<std::string> ccxFieldOutputNodeModifyCommand::get_syntax_help()
   help[0].append("[nodeset <nodeset id>] ");
   help[0].append("[frequency <frequency>] ");
   help[0].append("[frequencyf <frequencyf>] ");
-  help[0].append("[{totals_yes|totals_only|totals_no}] ");
+  //help[0].append("[{totals_yes|totals_only|totals_no}] ");
   help[0].append("[{global_yes|global_no}] ");
   help[0].append("[{output_2d|output_3d|output_off}] ");
   help[0].append("[{output_all_on|output_all_off}] ");

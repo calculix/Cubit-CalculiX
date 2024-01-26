@@ -192,6 +192,7 @@ bool CoreResultsDat::read()
       result_block_components[result_blocks[i][4]].push_back("PS2");
       result_block_components[result_blocks[i][4]].push_back("PS3");
       result_block_components[result_blocks[i][4]].push_back("worstPS");
+      result_block_components[result_blocks[i][4]].push_back("maxShear");
 
       // compute values
       for (size_t ii = 0; ii < result_block_data[result_blocks[i][4]].size(); ii++)
@@ -208,6 +209,7 @@ bool CoreResultsDat::read()
         result_block_data[result_blocks[i][4]][ii].push_back(ps[1]);
         result_block_data[result_blocks[i][4]][ii].push_back(ps[2]);
         result_block_data[result_blocks[i][4]][ii].push_back(ps[3]);
+        result_block_data[result_blocks[i][4]][ii].push_back(0.5 * std::max({ps[0]-ps[2],ps[0]-ps[1],ps[1]-ps[2]}));
       }
     }
 
@@ -234,6 +236,7 @@ bool CoreResultsDat::read()
       result_block_components[result_blocks[i][4]].push_back("PE2");
       result_block_components[result_blocks[i][4]].push_back("PE3");
       result_block_components[result_blocks[i][4]].push_back("worstPE");
+      result_block_components[result_blocks[i][4]].push_back("maxShear");
 
       // compute values
       for (size_t ii = 0; ii < result_block_data[result_blocks[i][4]].size(); ii++)
@@ -250,6 +253,7 @@ bool CoreResultsDat::read()
         result_block_data[result_blocks[i][4]][ii].push_back(pe[1]);
         result_block_data[result_blocks[i][4]][ii].push_back(pe[2]);
         result_block_data[result_blocks[i][4]][ii].push_back(pe[3]);
+        result_block_data[result_blocks[i][4]][ii].push_back(0.5 * std::max({pe[0]-pe[2],pe[0]-pe[1],pe[1]-pe[2]}));
       }
     }
      
