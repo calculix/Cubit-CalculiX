@@ -1386,10 +1386,16 @@ bool CoreResultsVtkWriter::checkDatTimeValueExists(double total_time)
   for (size_t i = 0; i < dat_all->total_times.size(); i++)
   {
     // .dat times have different accuracy than in the .frd file *facepalm*
-    if (ccx_iface->to_string_scientific(dat_all->total_times[i],5)==ccx_iface->to_string_scientific(total_time,5))
+    // this will lead to some rounding errors and so on, so we have to check rounded up and down if theres a match
+    if (ccx_iface->to_string_scientific(double(int(dat_all->total_times[i]*100000))/100000,5)==ccx_iface->to_string_scientific(total_time,5))
     {
       return true;
-    }
+    }else if (ccx_iface->to_string_scientific(dat_all->total_times[i],5)==ccx_iface->to_string_scientific(total_time,5))
+    {
+      return true;
+    }//else{
+    //  this->stopwatch(ccx_iface->to_string_scientific(double(int(dat_all->total_times[i]*100000))/100000,5) + " != " + ccx_iface->to_string_scientific(total_time,5));
+    //}
   }
   return false;
 }

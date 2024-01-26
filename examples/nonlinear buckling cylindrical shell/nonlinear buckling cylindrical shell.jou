@@ -42,11 +42,17 @@ ccx modify fieldoutput 2 element output_2d
 ccx modify fieldoutput 2 element key_on E S 
 ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFL HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS 
 
+ccx create historyoutput name "ho_1" element
+ccx modify historyoutput 1 element block 1
+ccx modify historyoutput 1 element key_on S E 
+ccx modify historyoutput 1 element key_off SVF ME PEEQ CEEQ ENER SDV HFL HFLF COORD ELSE ELKE EVOL EMAS EBHE CENT 
+
 ccx create step name "buckle" buckle
 ccx modify step 1 buckle bucklingfactors 1 accuracy 1e-8
 ccx step 1 add load force 1
 ccx step 1 add bc displacement 1 2
 ccx step 1 add fieldoutput 1 2
+ccx step 1 add historyoutput 1
 
 ccx create job name "buckle"
 ccx run job 1
@@ -63,6 +69,7 @@ ccx modify step 1 parameter nlgeom_yes
 ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.01 timeperiodofstep 1 minimumtimeincrement 1e-5 maximumtimeincrement 0.1
 ccx step 1 add bc displacement 1 2
 ccx step 1 add fieldoutput 1 2
+ccx step 1 add historyoutput 1
 
 ccx result project job 1 totalincrement 2 scale 1
 #ccx result project job 1 totalincrement 3 scale 0.5
@@ -71,4 +78,4 @@ ccx result project job 1 totalincrement 2 scale 1
 #ccx result project job 1 totalincrement 6 scale 0.0625
 
 ccx create job name "nonlinear"
-ccx run job 2
+#ccx run job 2

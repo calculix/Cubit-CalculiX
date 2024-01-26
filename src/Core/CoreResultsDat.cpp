@@ -166,7 +166,6 @@ bool CoreResultsDat::read()
 
   for (size_t i = 0; i < result_blocks.size(); i++)
   {
-
     //log = "i " + std::to_string(i) + " type '" + result_block_type[result_blocks[i][2]] + "'\n";
     //PRINT_INFO("%s", log.c_str());
 
@@ -176,7 +175,7 @@ bool CoreResultsDat::read()
       // add components
       result_block_components[result_blocks[i][4]].push_back("mises");
 
-      // compute values      
+      // compute values
       for (size_t ii = 0; ii < result_block_data[result_blocks[i][4]].size(); ii++)
       {
         result_block_data[result_blocks[i][4]][ii].push_back(ccx_iface->compute_von_mises_stress({
@@ -186,6 +185,29 @@ bool CoreResultsDat::read()
         result_block_data[result_blocks[i][4]][ii][5],
         result_block_data[result_blocks[i][4]][ii][6],
         result_block_data[result_blocks[i][4]][ii][7]}));
+      }
+
+      // add components
+      result_block_components[result_blocks[i][4]].push_back("PS1");
+      result_block_components[result_blocks[i][4]].push_back("PS2");
+      result_block_components[result_blocks[i][4]].push_back("PS3");
+      result_block_components[result_blocks[i][4]].push_back("worstPS");
+
+      // compute values
+      for (size_t ii = 0; ii < result_block_data[result_blocks[i][4]].size(); ii++)
+      {
+        std::vector<double> ps = ccx_iface->compute_principal_stresses({
+        result_block_data[result_blocks[i][4]][ii][2],
+        result_block_data[result_blocks[i][4]][ii][3],
+        result_block_data[result_blocks[i][4]][ii][4],
+        result_block_data[result_blocks[i][4]][ii][5],
+        result_block_data[result_blocks[i][4]][ii][6],
+        result_block_data[result_blocks[i][4]][ii][7]});
+
+        result_block_data[result_blocks[i][4]][ii].push_back(ps[0]);
+        result_block_data[result_blocks[i][4]][ii].push_back(ps[1]);
+        result_block_data[result_blocks[i][4]][ii].push_back(ps[2]);
+        result_block_data[result_blocks[i][4]][ii].push_back(ps[3]);
       }
     }
 
@@ -205,6 +227,29 @@ bool CoreResultsDat::read()
         result_block_data[result_blocks[i][4]][ii][5],
         result_block_data[result_blocks[i][4]][ii][6],
         result_block_data[result_blocks[i][4]][ii][7]}));
+      }
+
+      // add components
+      result_block_components[result_blocks[i][4]].push_back("PE1");
+      result_block_components[result_blocks[i][4]].push_back("PE2");
+      result_block_components[result_blocks[i][4]].push_back("PE3");
+      result_block_components[result_blocks[i][4]].push_back("worstPE");
+
+      // compute values
+      for (size_t ii = 0; ii < result_block_data[result_blocks[i][4]].size(); ii++)
+      {
+        std::vector<double> pe = ccx_iface->compute_principal_strains({
+        result_block_data[result_blocks[i][4]][ii][2],
+        result_block_data[result_blocks[i][4]][ii][3],
+        result_block_data[result_blocks[i][4]][ii][4],
+        result_block_data[result_blocks[i][4]][ii][5],
+        result_block_data[result_blocks[i][4]][ii][6],
+        result_block_data[result_blocks[i][4]][ii][7]});
+
+        result_block_data[result_blocks[i][4]][ii].push_back(pe[0]);
+        result_block_data[result_blocks[i][4]][ii].push_back(pe[1]);
+        result_block_data[result_blocks[i][4]][ii].push_back(pe[2]);
+        result_block_data[result_blocks[i][4]][ii].push_back(pe[3]);
       }
     }
      

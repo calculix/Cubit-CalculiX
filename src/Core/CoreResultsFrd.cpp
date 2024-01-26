@@ -481,6 +481,10 @@ bool CoreResultsFrd::read_nodal_result_block(std::vector<std::string> line)
       if (result_block_data[result_block_data.size()-1].size()==0)
       {
         result_block_components[result_block_components.size()-1].push_back("MISES");
+        result_block_components[result_block_components.size()-1].push_back("PS1");
+        result_block_components[result_block_components.size()-1].push_back("PS2");
+        result_block_components[result_block_components.size()-1].push_back("PS3");
+        result_block_components[result_block_components.size()-1].push_back("worstPS");
       }
     }
     if (result_block_type[result_blocks[result_blocks.size()-1][5]] == "TOSTRAIN")
@@ -488,6 +492,10 @@ bool CoreResultsFrd::read_nodal_result_block(std::vector<std::string> line)
       if (result_block_data[result_block_data.size()-1].size()==0)
       {
         result_block_components[result_block_components.size()-1].push_back("MISES");
+        result_block_components[result_block_components.size()-1].push_back("PS1");
+        result_block_components[result_block_components.size()-1].push_back("PS2");
+        result_block_components[result_block_components.size()-1].push_back("PS3");
+        result_block_components[result_block_components.size()-1].push_back("worstPS");
       }
     }
 
@@ -518,11 +526,29 @@ bool CoreResultsFrd::read_nodal_result_block(std::vector<std::string> line)
         {
           result_comp[i] = ccx_iface->compute_von_mises_stress({result_comp[0],result_comp[1],result_comp[2],result_comp[3],result_comp[4],result_comp[5]});
         }
+        // compute principal stress
+        if (i == 7) 
+        {
+          std::vector<double> ps = ccx_iface->compute_principal_stresses({result_comp[0],result_comp[1],result_comp[2],result_comp[3],result_comp[4],result_comp[5]});
+          result_comp[i] = ps[0];
+          result_comp[i+1] = ps[1];
+          result_comp[i+2] = ps[2];
+          result_comp[i+3] = ps[3];
+        }
       }else if ((result_block_type[result_blocks[result_blocks.size()-1][5]] == "TOSTRAIN") && (i > 5))
       {
         if (i == 6)
         {
           result_comp[i] = ccx_iface->compute_von_mises_strain({result_comp[0],result_comp[1],result_comp[2],result_comp[3],result_comp[4],result_comp[5]});
+        }
+        // compute principal strains
+        if (i == 7) 
+        {
+          std::vector<double> pe = ccx_iface->compute_principal_strains({result_comp[0],result_comp[1],result_comp[2],result_comp[3],result_comp[4],result_comp[5]});
+          result_comp[i] = pe[0];
+          result_comp[i+1] = pe[1];
+          result_comp[i+2] = pe[2];
+          result_comp[i+3] = pe[3];
         }
       }else{
         result_comp[i] = ccx_iface->string_scientific_to_double(line[i+2]);

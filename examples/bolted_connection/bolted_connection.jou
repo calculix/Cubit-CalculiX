@@ -115,7 +115,7 @@ ccx create step name "preload" static
 ccx modify step 1 parameter nlgeom_yes
 ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.5 timeperiodofstep 1 minimumtimeincrement 1e-5 maximumtimeincrement 0.5
 ccx step 1 add fieldoutput 1 2 3
-#ccx step 1 add historyoutput 1 2 3
+ccx step 1 add historyoutput 1 2 3
 ccx step 1 add bc temperature 2
 ccx step 1 add bc displacement 1 2
 
@@ -123,18 +123,20 @@ ccx create step name "load" static
 ccx modify step 2 parameter nlgeom_yes
 ccx modify step 2 static totaltimeatstart 1 initialtimeincrement 0.01 timeperiodofstep 1 minimumtimeincrement 1e-5 maximumtimeincrement 0.02
 ccx step 2 add fieldoutput 1 2 3
-#ccx step 1 add historyoutput 1 2 3
+ccx step 1 add historyoutput 1 2 3
 ccx step 2 add bc displacement 3 4
 
 ccx create job name "bolted_connection"
 
-vol all size 1
+#vol all size 1
 mesh vol all
 #ccx run job 1 no_conversion
 #ccx wait job 1
 #ccx result load job 1
 #ccx use logfile core on
 #ccx result convert job 1 partial block 1 2 3
+
+
 
 
 
