@@ -2993,8 +2993,28 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
             steps_export_list.push_back(str_temp);
             for (size_t iv = 0; iv < bc_attribs.size(); iv++)
             { 
-              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iv].first+1) + "," + std::to_string(bc_attribs[iv].first+1) + "," + to_string_scientific(bc_attribs[iv].second);
+              //SKIP IF FIXED
+              if (!bcsdisplacements->check_dof_fixed(steps->bcs_data[sub_data_ids[iii]][2],bc_attribs[iv].first+1))
+              {
+                str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iv].first+1) + "," + std::to_string(bc_attribs[iv].first+1) + "," + to_string_scientific(bc_attribs[iv].second);
+                steps_export_list.push_back(str_temp);
+              }
+            }
+            //FIXED DOFS
+            if (bcsdisplacements->check_fixed(steps->bcs_data[sub_data_ids[iii]][2]))
+            {
+              str_temp = "*BOUNDARY";
+              str_temp.append(bcsdisplacements->get_bc_parameter_fixed_export(steps->bcs_data[sub_data_ids[iii]][2]));
               steps_export_list.push_back(str_temp);
+              for (size_t iv = 0; iv < bc_attribs.size(); iv++)
+              { 
+                //SKIP IF NOT FIXED
+                if (bcsdisplacements->check_dof_fixed(steps->bcs_data[sub_data_ids[iii]][2],bc_attribs[iv].first+1))
+                {
+                  str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iv].first+1) + "," + std::to_string(bc_attribs[iv].first+1);
+                  steps_export_list.push_back(str_temp);
+                }
+              }
             }
             // CUSTOMLINE START
             customline = customlines->get_customline_data("AFTER","DISPLACEMENT",steps->bcs_data[sub_data_ids[iii]][2]);

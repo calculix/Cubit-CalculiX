@@ -54,7 +54,7 @@ bool CoreBCsDisplacements::update()
       time_delay_id = sub_id;
       this->add_time_delay(std::to_string(sub_id), "");
 
-      add_bc(bc_id, 0 , -1, time_delay_id);
+      add_bc(bc_id, 0 , -1, time_delay_id,0,0,0,0,0,0);
     }
   }
 
@@ -94,9 +94,9 @@ bool CoreBCsDisplacements::check_initialized()
   return is_initialized;
 }
 
-bool CoreBCsDisplacements::add_bc(int bc_id, int op_mode, int amplitude_id, int time_delay_id)
+bool CoreBCsDisplacements::add_bc(int bc_id, int op_mode, int amplitude_id, int time_delay_id, int fixed_dof_1, int fixed_dof_2, int fixed_dof_3, int fixed_dof_4, int fixed_dof_5, int fixed_dof_6)
 {
-  std::vector<int> v = {bc_id, op_mode, amplitude_id, time_delay_id};
+  std::vector<int> v = {bc_id, op_mode, amplitude_id, time_delay_id, fixed_dof_1, fixed_dof_2, fixed_dof_3, fixed_dof_4, fixed_dof_5, fixed_dof_6};
       
   bcs_data.push_back(v);
 
@@ -129,6 +129,37 @@ bool CoreBCsDisplacements::modify_bc(int bc_id, std::vector<std::string> options
       sub_data_id = get_time_delay_data_id_from_time_delay_id(bcs_data[bcs_data_id][3]);
       time_delay_data[sub_data_id][1] = options[2];
     }
+    // fixed dof 1
+    if (options_marker[3]==1)
+    {
+      bcs_data[bcs_data_id][4] = std::stoi(options[3]);
+    }
+    // fixed dof 2
+    if (options_marker[4]==1)
+    {
+      bcs_data[bcs_data_id][5] = std::stoi(options[4]);
+    }
+    // fixed dof 3
+    if (options_marker[5]==1)
+    {
+      bcs_data[bcs_data_id][6] = std::stoi(options[5]);
+    }
+    // fixed dof 4
+    if (options_marker[6]==1)
+    {
+      bcs_data[bcs_data_id][7] = std::stoi(options[6]);
+    }
+    // fixed dof 5
+    if (options_marker[7]==1)
+    {
+      bcs_data[bcs_data_id][8] = std::stoi(options[7]);
+    }
+    // fixed dof 6
+    if (options_marker[8]==1)
+    {
+      bcs_data[bcs_data_id][9] = std::stoi(options[8]);
+    }
+
     return true;
   }
 }
@@ -211,15 +242,80 @@ std::string CoreBCsDisplacements::get_bc_parameter_export(int bc_id)
   return str_temp;
 }
 
+std::string CoreBCsDisplacements::get_bc_parameter_fixed_export(int bc_id)
+{
+  int bc_data_id;
+  int sub_data_id;
+  std::string str_temp = "";
+  bc_data_id = get_bcs_data_id_from_bc_id(bc_id);
+  if (bcs_data[bc_data_id][1]==0)
+  {
+    //str_temp.append(",OP=MOD");
+  }else if (bcs_data[bc_data_id][1]==1)
+  {
+    str_temp.append(",OP=NEW");
+  }
+  if (bcs_data[bc_data_id][2]!=-1)
+  {
+    str_temp.append(",AMPLITUDE=" + ccx_iface->get_amplitude_name(bcs_data[bc_data_id][2]));
+  }
+  sub_data_id = get_time_delay_data_id_from_time_delay_id(bcs_data[bc_data_id][3]);
+  if (time_delay_data[sub_data_id][1]!="")
+  {
+    str_temp.append(",TIME DELAY=" + time_delay_data[sub_data_id][1]);
+  }
+  str_temp.append(",FIXED");
+  return str_temp;
+}
+
+bool CoreBCsDisplacements::check_fixed(int bc_id)
+{
+  int bc_data_id;
+  bc_data_id = get_bcs_data_id_from_bc_id(bc_id);
+  if (bcs_data[bc_data_id][4]==1)
+  { 
+    return true;
+  }else if (bcs_data[bc_data_id][5]==1)
+  { 
+    return true;
+  }else if (bcs_data[bc_data_id][6]==1)
+  { 
+    return true;
+  }else if (bcs_data[bc_data_id][7]==1)
+  { 
+    return true;
+  }else if (bcs_data[bc_data_id][8]==1)
+  { 
+    return true;
+  }else if (bcs_data[bc_data_id][9]==1)
+  { 
+    return true;
+  }else{
+    return false;
+  }
+}
+
+bool CoreBCsDisplacements::check_dof_fixed(int bc_id, int dof)
+{
+  int bc_data_id;
+  bc_data_id = get_bcs_data_id_from_bc_id(bc_id);
+  if (bcs_data[bc_data_id][dof + 3]==1)
+  { 
+    return true;
+  }else{
+    return false;
+  }
+}
+
 std::string CoreBCsDisplacements::print_data()
 {
   std::string str_return;
   str_return = "\n CoreBCsDisplacements bcs_data: \n";
-  str_return.append("bc_id, OP MODE, amplitude_id, time_delay_id \n");
+  str_return.append("bc_id, OP MODE, amplitude_id, time_delay_id, fixed dof 1, fixed dof 2, fixed dof 3, fixed dof 4, fixed dof 5, fixed dof 6 \n");
 
   for (size_t i = 0; i < bcs_data.size(); i++)
   {
-    str_return.append(std::to_string(bcs_data[i][0]) + " " + std::to_string(bcs_data[i][1]) + " " + std::to_string(bcs_data[i][2]) + " " + std::to_string(bcs_data[i][3]) + " \n");
+    str_return.append(std::to_string(bcs_data[i][0]) + " " + std::to_string(bcs_data[i][1]) + " " + std::to_string(bcs_data[i][2]) + " " + std::to_string(bcs_data[i][3]) + " " + std::to_string(bcs_data[i][4]) + " " + std::to_string(bcs_data[i][5]) + " " + std::to_string(bcs_data[i][6]) + " " + std::to_string(bcs_data[i][7]) + " " + std::to_string(bcs_data[i][8]) + " " + std::to_string(bcs_data[i][9]) + " \n");
   }
 
   str_return.append("\n CoreBCsDisplacements time_delay_data: \n");
