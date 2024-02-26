@@ -18,6 +18,12 @@ std::vector<std::string> ccxBCsDisplacementsModifyCommand::get_syntax()
   syntax.append("[op {mod | new}] " );
   syntax.append("[amplitude <value:label='amplitude id',help='<amplitude id>'>] ");
   syntax.append("[timedelay <value:label='timedelay',help='<timedelay>'>] ");
+  syntax.append("[{fixed_1 | unfixed_1}] ");
+  syntax.append("[{fixed_2 | unfixed_2}] ");
+  syntax.append("[{fixed_3 | unfixed_3}] ");
+  syntax.append("[{fixed_4 | unfixed_4}] ");
+  syntax.append("[{fixed_5 | unfixed_5}] ");
+  syntax.append("[{fixed_6 | unfixed_6}] ");
   
   syntax_list.push_back(syntax);
   
@@ -27,7 +33,7 @@ std::vector<std::string> ccxBCsDisplacementsModifyCommand::get_syntax()
 std::vector<std::string> ccxBCsDisplacementsModifyCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx modify displacement <displacement id> [op {mod | new}] [amplitude <amplitude id>] [timedelay <value>]"; 
+  help[0] = "ccx modify displacement <displacement id> [op {mod | new}] [amplitude <amplitude id>] [timedelay <value>] [{fixed_1|unfixed_1}] [{fixed_2|unfixed_2}] [{fixed_3|unfixed_3}] [{fixed_4|unfixed_4}] [{fixed_5|unfixed_5}] [{fixed_6|unfixed_6}]"; 
 
   return help;
 }
@@ -90,6 +96,86 @@ bool ccxBCsDisplacementsModifyCommand::execute(CubitCommandData &data)
     options_marker.push_back(1);
   }
   options.push_back(timedelay);
+  
+  if (data.find_keyword("FIXED_1"))
+  {
+    options_marker.push_back(1);
+    options.push_back("1");
+  }else if (data.find_keyword("UNFIXED_1"))
+  {
+    options_marker.push_back(1);
+    options.push_back("0");
+  }
+  else
+  {
+    options_marker.push_back(0);
+    options.push_back("0");
+  }
+  if (data.find_keyword("FIXED_2"))
+  {
+    options_marker.push_back(1);
+    options.push_back("1");
+  }else if (data.find_keyword("UNFIXED_2"))
+  {
+    options_marker.push_back(1);
+    options.push_back("0");
+  }else
+  {
+    options_marker.push_back(0);
+    options.push_back("0");
+  }
+  if (data.find_keyword("FIXED_3"))
+  {
+    options_marker.push_back(1);
+    options.push_back("1");
+  }else if (data.find_keyword("UNFIXED_3"))
+  {
+    options_marker.push_back(1);
+    options.push_back("0");
+  }else
+  {
+    options_marker.push_back(0);
+    options.push_back("0");
+  }
+  if (data.find_keyword("FIXED_4"))
+  {
+    options_marker.push_back(1);
+    options.push_back("1");
+  }else if (data.find_keyword("UNFIXED_4"))
+  {
+    options_marker.push_back(1);
+    options.push_back("0");
+  }else
+  {
+    options_marker.push_back(0);
+    options.push_back("0");
+  }
+  if (data.find_keyword("FIXED_5"))
+  {
+    options_marker.push_back(1);
+    options.push_back("1");
+  }else if (data.find_keyword("UNFIXED_5"))
+  {
+    options_marker.push_back(1);
+    options.push_back("0");
+  }else
+  {
+    options_marker.push_back(0);
+    options.push_back("0");
+  }
+  if (data.find_keyword("FIXED_6"))
+  {
+    options_marker.push_back(1);
+    options.push_back("1");
+  }else if (data.find_keyword("UNFIXED_6"))
+  {
+    options_marker.push_back(1);
+    options.push_back("0");
+  }else
+  {
+    options_marker.push_back(0);
+    options.push_back("0");
+  }
   
   if (!ccx_iface.modify_bcsdisplacements(displacement_id, options, options_marker))
   {
