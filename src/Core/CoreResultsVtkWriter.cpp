@@ -1018,6 +1018,7 @@ int CoreResultsVtkWriter::get_step_increment(double total_time)
 
 int CoreResultsVtkWriter::get_max_step_increment()
 {
+  // for dat file
   int increment = 0;
   double last_total_time = 0;
   for (size_t i = 0; i < dat_all->total_times.size(); i++)
@@ -1026,6 +1027,19 @@ int CoreResultsVtkWriter::get_max_step_increment()
     {
       ++increment;
     }
+    
+    /*
+    if (ccx_iface->to_string_scientific(double(int(dat_all->total_times[i]*100000))/100000,5)!=ccx_iface->to_string_scientific(double(int(last_total_time*100000))/100000,5))
+    {
+      this->stopwatch(ccx_iface->to_string_scientific(double(int(dat_all->total_times[i]*100000))/100000,5));
+      ++increment;
+    }else if (ccx_iface->to_string_scientific(dat_all->total_times[i],5)!=ccx_iface->to_string_scientific(last_total_time,5))
+    {
+      this->stopwatch(ccx_iface->to_string_scientific(dat_all->total_times[i],5));
+      ++increment;
+    }
+    */
+
     last_total_time = dat_all->total_times[i];
   }
   return increment;
