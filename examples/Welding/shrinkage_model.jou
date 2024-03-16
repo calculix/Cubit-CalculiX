@@ -1,0 +1,123 @@
+# the model is a rebuild of https://github.com/calculix/CalculiX-Examples/tree/master/Thermal/Thermal%20distortion but without contact definitions
+
+reset
+
+#{tf = 10}
+#{bf = 100}
+#{length = 500}
+#{tw = 10}
+#{hw = 100}
+#{a = 7}
+#{dls = 25}
+
+# flange
+create brick x {bf} y {tf} z {length/2}
+# web
+create brick x {tw/2} y {hw} z {length/2}
+# seam
+create brick x {a/sqrt(2)} y {a/sqrt(2)} z {length/2-dls}
+webcut volume 3 with plane xplane offset 0 rotate 45 about z center 0 0 0  
+delete volume 3
+compress
+
+#move to position
+move Vertex 7  location 0 0 0 include_merged 
+move Vertex 15  location 0 {tf} 0 include_merged 
+move Vertex 18  location {tw/2} {tf} 0 include_merged 
+
+
+#we will first merge all together and mesh and then unmerge the web and the flange
+imprint vol all
+merge vol all
+#vol all size auto factor 5
+mesh vol all
+#unmerge all
+unmerge vol all
+#reconnect with seam
+merge vol 1 3
+merge vol 2 3
+
+#create blocks
+block 1 add volume 1
+block 1 name "flange"
+block 2 add volume 2
+block 2 name "web"
+block 3 add volume 3
+block 3 name "seam"
+
+#block all element type hex8
+#hex 20 is way more accurate, you can play with the auto size factor and hex8 to see the difference
+block all element type hex20 
+# hex20 will be c3d20 but can also be modified
+#ccx block all element_type C3D20R
+
+# create nodesets for boundary conditions
+nodeset 1 add surface 10 4  
+nodeset 1 name "symm_x"
+nodeset 2 add surface 2 8 16  
+nodeset 2 name "symm_z"
+nodeset 3 add vertex 7  
+nodeset 3 name "fixed_y"
+nodeset 4 add volume 3
+nodeset 4 name "seam_temp"
+nodeset 5 add volume all
+nodeset 5 name "initial_temp"
+
+#material
+create material "steel" property_group "CalculiX-FEA"
+modify material "steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0 
+modify material "steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_DENSITY_USE_CARD" 1
+modify material "steel" matrix_property "CCX_DENSITY_DENSITY" 7.9e-06 0 
+modify material "steel" scalar_properties "CCX_SPECIFIC_HEAT_USE_CARD" 1
+modify material "steel" matrix_property "CCX_SPECIFIC_HEAT_SPECIFIC_HEAT" 5e+08 0 
+modify material "steel" scalar_properties "CCX_EXPANSION_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "steel" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 1.2e-05 0 
+modify material "steel" scalar_properties "CCX_CONDUCTIVITY_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+modify material "steel" matrix_property "CCX_CONDUCTIVITY_ISO_K_TEMPERATURE" 50 0 
+
+#sections
+ccx create section solid block all material 1
+
+#boundary conditions
+create temperature on nodeset 5 value 0 #will be used as initial condition
+create temperature  on nodeset 4 value -1000 #our seam temperature
+ccx modify temperature 2 keyword_type temp
+create displacement  on nodeset 1 dof 1 dof 6 fix 0 #x symm
+create displacement  on nodeset 2 dof 3 dof 4 fix 0 #z symm
+create displacement  on nodeset 3 dof 2 fix 0 dof 5 #fixed point in y
+
+#initial conditions
+ccx create initialcondition temperature
+ccx modify initialcondition 1 temperature bc_id 1
+
+#outputs
+ccx create fieldoutput name "fo_node" node
+ccx modify fieldoutput 1 node
+ccx modify fieldoutput 1 node key_on U NT
+ccx modify fieldoutput 1 node key_off CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF PNT POT PRF PS PSF PT PTF PU RF RFL SEN TS TSF TT TTF TURB V VF 
+ccx create fieldoutput name "fo_element" element
+ccx modify fieldoutput 2 element
+ccx modify fieldoutput 2 element key_on E S 
+ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFL HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS 
+
+# add homogeneous bc
+ccx hbc add bc displacement 1
+ccx hbc add bc displacement 2
+ccx hbc add bc displacement 3
+
+# create step
+ccx create step name "static" static
+ccx step 1 add bc temperature 2
+ccx step 1 add fieldoutput 1
+ccx step 1 add fieldoutput 2
+
+#job
+ccx create job name "shrinkage_model"
+ccx run job 1
+ccx wait job 1
+ccx result paraview job 1
