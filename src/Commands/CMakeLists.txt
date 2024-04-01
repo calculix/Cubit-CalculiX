@@ -195,8 +195,6 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxResultConvertJobCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxResultProjectJobCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxResultProjectJobCommand.hpp    
-    ${CMAKE_CURRENT_LIST_DIR}/ccxResultccx2paraviewJobCommand.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/ccxResultccx2paraviewJobCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxResultCGXJobCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxResultCGXJobCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxResultParaViewJobCommand.cpp

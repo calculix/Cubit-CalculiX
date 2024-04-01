@@ -1,5 +1,4 @@
 #!python
-#!python
 from numpy import cos,sin,arccos
 import numpy as np
 import cubit

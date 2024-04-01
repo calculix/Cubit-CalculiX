@@ -22,7 +22,7 @@ public:
   // jobs_data[0][3] status -1 no process, 1 process running, 2 process finished, 3 process killed, 4 process finished with errors, 5 process running currently waiting
   // jobs_data[0][4] process id
   // jobs_data[0][5] Output Console data id
-  // jobs_data[0][6] converted to paraview -1 false, 1 true linked, 2 true unlinked, 3 ccx2paraview
+  // jobs_data[0][6] converted to paraview -1 false, 1 true linked, 2 true unlinked
   // jobs_data[0][7] .cvg data id
   // jobs_data[0][8] .sta data id
   // jobs_data[0][9] auto conversion 1, no conversion -1
@@ -49,7 +49,7 @@ public:
   bool check_jobs(); // checks for changes of job processes
   bool get_cvgsta(int job_id); // gets filedata of .cvg and .sta
   bool check_zombie(); // checks for zombie processes
-  bool result_ccx2paraview_job(int job_id); // converts the result with ccx2paraview
+  //bool result_ccx2paraview_job(int job_id); // converts the result with ccx2paraview
   bool result_cgx_job(int job_id); // opens the results with cgx
   bool result_paraview_job(int job_id); // opens the results with paraview
   int  get_jobs_data_id_from_job_id(int job_id); // searches for the job_id in the jobs_data and returns the indices or -1 if it fails

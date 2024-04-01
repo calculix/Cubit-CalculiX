@@ -1,3 +1,5 @@
+#!cubit
+
 # the model is a rebuild of https://github.com/calculix/CalculiX-Examples/tree/master/Thermal/Thermal%20distortion but without contact definitions
 
 reset

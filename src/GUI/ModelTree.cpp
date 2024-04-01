@@ -1246,12 +1246,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action5("Result CGX",this);
         connect(&action5, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action5);
-        QAction action6("ccx2paraview",this);
+        QAction action6("Result ParaView",this);
         connect(&action6, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
         contextMenu.addAction(&action6);
-        QAction action7("Result ParaView",this);
-        connect(&action7, SIGNAL(triggered()),this,SLOT(ContextMenuAction7()));
-        contextMenu.addAction(&action7);
 
         contextMenu.exec(mapToGlobal(pos));
 
@@ -2249,16 +2246,12 @@ void ModelTree::execContextMenuAction(){
         myJobsMonitor->update();
       }else if (contextMenuAction[0][1]==4) //Action5
       {
-        std::string command = "ccx result cgx job " + contextMenuAction[0][2];   
+        std::string command = "ccx result cgx job " + std::to_string(contextMenuAction[0][2]);   
         CubitInterface::cmd(command.c_str());
 
       }else if (contextMenuAction[0][1]==5) //Action6
       {
-        std::string command = "ccx result ccx2paraview job " + contextMenuAction[0][2];   
-        CubitInterface::cmd(command.c_str());
-      }else if (contextMenuAction[0][1]==6) //Action7
-      {
-        std::string command = "ccx result paraview job " + contextMenuAction[0][2];   
+        std::string command = "ccx result paraview job " + std::to_string(contextMenuAction[0][2]);   
         CubitInterface::cmd(command.c_str());
       }
     }

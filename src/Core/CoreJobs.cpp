@@ -521,48 +521,6 @@ bool CoreJobs::check_zombie()
   return true;
 }
 
-bool CoreJobs::result_ccx2paraview_job(int job_id)
-{
-  std::string log;
-  std::string filepath;
-  std::vector<std::string> cmd;
-
-  if (access(ccx_uo.mPathccx2paraview.toStdString().c_str(), F_OK) == 0) 
-  {
-  }else{
-    log = "ccx2paraview not found! checked path \"" + ccx_uo.mPathccx2paraview.toStdString() + "\" \n";
-    PRINT_INFO("%s", log.c_str());    
-    return false;
-  }
-
-  int job_data_id;
-  job_data_id = get_jobs_data_id_from_job_id(job_id);
-  if (job_data_id != -1)
-  {
-    if (std::stoi(jobs_data[job_data_id][3])>1)
-    {
-      std::string shellstr;
-      shellstr = "rm " + jobs_data[job_data_id][1] + "*vtk";
-      system(shellstr.c_str());
-
-
-      std::function< void(std::string)> history;
-
-      filepath = jobs_data[job_data_id][1] + ".frd";
-      cmd.push_back("#!python");
-      cmd.push_back("import subprocess");
-      cmd.push_back("print('Converting Results... GUI may freeze. This can take some time.')");
-      cmd.push_back("returned_value = subprocess.call(\"python3 " + ccx_uo.mPathccx2paraview.toStdString() + " " +  filepath + " vtk\",shell=True)");
-      cmd.push_back("if returned_value==0: print('Finished')\nelse:print('Error occurred!')");
-      cmd.push_back("#!cubit");
-      CubitInterface::cubit_or_python_cmds(cmd,history);
-      jobs_data[job_data_id][6] = "3";
-    } 
-  }
-
-  return true;
-}
-
 bool CoreJobs::result_cgx_job(int job_id)
 {
   std::string filepath;
@@ -643,23 +601,6 @@ bool CoreJobs::result_paraview_job(int job_id)
       if (access(filepath.c_str(), W_OK) != 0) 
       {
         filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + "...vtu";
-      }
-
-      std::string shellstr;
-      shellstr = "nohup " + ccx_uo.mPathParaView.toStdString() + " --data=" + filepath + " &";
-      system(shellstr.c_str());
-
-      log = "Opening Results with Paraview for Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + "\n";
-      //log.append(filepath +  " \n");
-      //log.append(arg +  " \n");
-      PRINT_INFO("%s", log.c_str());
-    }   
-    if ((std::stoi(jobs_data[job_data_id][3])>1) && (jobs_data[job_data_id][6] == "3"))
-    {      
-      filepath = jobs_data[job_data_id][1] + ".vtk";
-      if (access(filepath.c_str(), W_OK) != 0) 
-      {
-        filepath = jobs_data[job_data_id][1] + "...vtk";
       }
 
       std::string shellstr;

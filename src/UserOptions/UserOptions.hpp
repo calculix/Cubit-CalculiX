@@ -17,8 +17,6 @@ class UserOptions
     QString mPathCGXName;
     QString mPathParaView;
     QString mPathParaViewName;
-    QString mPathccx2paraview;
-    QString mPathccx2paraviewName;
     QString mPathIcons;
     QString mPathIconsName;
 };

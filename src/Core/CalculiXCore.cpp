@@ -2092,11 +2092,6 @@ bool CalculiXCore::set_job_conversion(int job_id, int conversion)
   return jobs->set_job_conversion(job_id,conversion);
 }
 
-bool CalculiXCore::result_ccx2paraview_job(int job_id)
-{
-  return jobs->result_ccx2paraview_job(job_id);
-}
-
 bool CalculiXCore::result_cgx_job(int job_id)
 {
   return jobs->result_cgx_job(job_id);

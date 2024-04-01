@@ -41,12 +41,6 @@ JobsActionsPanel::JobsActionsPanel(QWidget *parent) :
   HBoxLayout_pushButton_result_cgx = new QHBoxLayout();
   horizontal_spacer_pushButton_result_cgx = new QSpacerItem(1,1,QSizePolicy::Expanding,QSizePolicy::Minimum);
 
-  pushButton_result_ccx2paraview = new QPushButton();
-  pushButton_result_ccx2paraview->setText("ccx2paraview");
-  pushButton_result_ccx2paraview->setFixedWidth(buttonWidth);
-  HBoxLayout_pushButton_result_ccx2paraview = new QHBoxLayout();
-  horizontal_spacer_pushButton_result_ccx2paraview = new QSpacerItem(1,1,QSizePolicy::Expanding,QSizePolicy::Minimum);
-
   pushButton_result_paraview = new QPushButton();
   pushButton_result_paraview->setText("Result Paraview");
   pushButton_result_paraview->setFixedWidth(buttonWidth);
@@ -61,7 +55,6 @@ JobsActionsPanel::JobsActionsPanel(QWidget *parent) :
   VBoxLayout->addLayout(HBoxLayout_pushButton_run);
   VBoxLayout->addLayout(HBoxLayout_pushButton_kill);
   VBoxLayout->addLayout(HBoxLayout_pushButton_result_cgx);
-  VBoxLayout->addLayout(HBoxLayout_pushButton_result_ccx2paraview);
   VBoxLayout->addLayout(HBoxLayout_pushButton_result_paraview);
   VBoxLayout->addItem(vertical_spacer);
 
@@ -77,16 +70,12 @@ JobsActionsPanel::JobsActionsPanel(QWidget *parent) :
   HBoxLayout_pushButton_result_cgx->addItem(horizontal_spacer_pushButton_result_cgx);
   HBoxLayout_pushButton_result_cgx->addWidget(pushButton_result_cgx);
 
-  HBoxLayout_pushButton_result_ccx2paraview->addItem(horizontal_spacer_pushButton_result_ccx2paraview);
-  HBoxLayout_pushButton_result_ccx2paraview->addWidget(pushButton_result_ccx2paraview);
-
   HBoxLayout_pushButton_result_paraview->addItem(horizontal_spacer_pushButton_result_paraview);
   HBoxLayout_pushButton_result_paraview->addWidget(pushButton_result_paraview);
 
   QObject::connect(pushButton_run, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_run_clicked(bool)));
   QObject::connect(pushButton_kill, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_kill_clicked(bool)));
   QObject::connect(pushButton_result_cgx, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_result_cgx_clicked(bool)));
-  QObject::connect(pushButton_result_ccx2paraview, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_result_ccx2paraview_clicked(bool)));
   QObject::connect(pushButton_result_paraview, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_result_paraview_clicked(bool)));
 
   isInitialized = true;
@@ -154,29 +143,6 @@ void JobsActionsPanel::on_pushButton_result_cgx_clicked(bool)
     commands.push_back(command);
     lineEdit_1->setText("");
   }
-  
-  for (size_t i = 0; i < commands.size(); i++)
-  {
-    CubitInterface::cmd(commands[i].toStdString().c_str());
-  }
-}
-
-void JobsActionsPanel::on_pushButton_result_ccx2paraview_clicked(bool)
-{
-  QStringList commands;
-  QString command = "";
-
-  if ((lineEdit_1->text()!=""))
-  {
-    command.append("ccx result ccx2paraview job " + lineEdit_1->text());
-  }
-  
-  if (command != "")
-  {
-    commands.push_back(command);
-    lineEdit_1->setText("");
-  }
-  
   
   for (size_t i = 0; i < commands.size(); i++)
   {

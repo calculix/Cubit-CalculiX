@@ -1,3 +1,5 @@
+#!cubit
+
 reset
 create cylinder height 1 radius 2
 create cylinder height 1 radius 0.996
