@@ -12,6 +12,8 @@
 
 #include <QObject>
 
+class ExportHandler;
+
 class ExportManager : public QObject
 {
   Q_OBJECT
@@ -33,6 +35,8 @@ public slots:
   //!   already indicated they wish to overwrite it.
   //! \param filter The specific filter that was selected.
   void handle_export(const QString& filename, const QString& filter);
+private:
+  ExportHandler* mExportHandler;
 };
 
 #endif // EXPORTMANAGER_HPP

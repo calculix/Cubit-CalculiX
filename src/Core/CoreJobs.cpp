@@ -3,8 +3,6 @@
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 
-#include "PyBroker.hpp"
-
 #include "CubitProcess.hpp"
 #include "CubitString.hpp"
 #include "ProgressTool.hpp"
@@ -547,14 +545,19 @@ bool CoreJobs::result_ccx2paraview_job(int job_id)
       shellstr = "rm " + jobs_data[job_data_id][1] + "*vtk";
       system(shellstr.c_str());
 
+
+      std::function< void(std::string)> history;
+
       filepath = jobs_data[job_data_id][1] + ".frd";
+      cmd.push_back("#!python");
       cmd.push_back("import subprocess");
       cmd.push_back("print('Converting Results... GUI may freeze. This can take some time.')");
       cmd.push_back("returned_value = subprocess.call(\"python3 " + ccx_uo.mPathccx2paraview.toStdString() + " " +  filepath + " vtk\",shell=True)");
       cmd.push_back("if returned_value==0: print('Finished')\nelse:print('Error occurred!')");
-      PyBroker::run_script(cmd);
+      cmd.push_back("#!cubit");
+      CubitInterface::cubit_or_python_cmds(cmd,history);
       jobs_data[job_data_id][6] = "3";
-    }  
+    } 
   }
 
   return true;

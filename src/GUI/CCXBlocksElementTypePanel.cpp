@@ -3,7 +3,6 @@
 #include "CubitInterface.hpp"
 #include "Broker.hpp"
 #include "Claro.hpp"
-#include "ScriptTranslator.hpp"
 #include "PickWidget.hpp"
 
 
@@ -350,7 +349,7 @@ void CCXBlocksElementTypePanel::on_pushButton_apply_clicked(bool)
     commands.push_back(command);
     PickWidget_1->setText("");
   }
-
+  /*
   // We must send the Cubit commands through the Claro framework, so first we need to translate
   // the commands into the python form that Claro will understand.
   ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");
@@ -361,5 +360,10 @@ void CCXBlocksElementTypePanel::on_pushButton_apply_clicked(bool)
 
     // Send the translated commands
     Claro::instance()->send_gui_commands(commands);
+  }
+  */
+  for (size_t i = 0; i < commands.size(); i++)
+  {
+    CubitInterface::cmd(commands[i].toStdString().c_str());
   }
 }

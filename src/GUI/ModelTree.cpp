@@ -43,11 +43,12 @@
 #include "CustomLinesTree.hpp"
 #include "JobsMonitor.hpp"
 
+
+#include "CubitInterface.hpp"
 #include "CalculiXCoreInterface.hpp"
 
 #include "Claro.hpp"
 #include "Broker.hpp"
-#include "ScriptTranslator.hpp"
 #include "NavigationModel.hpp"
 #include "NavigationNode.hpp"
 #include <QString>
@@ -2248,49 +2249,17 @@ void ModelTree::execContextMenuAction(){
         myJobsMonitor->update();
       }else if (contextMenuAction[0][1]==4) //Action5
       {
-        QStringList commands;
-        QString command = "";
+        std::string command = "ccx result cgx job " + contextMenuAction[0][2];   
+        CubitInterface::cmd(command.c_str());
 
-        ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");
-        if(cubit_translator)
-        {
-          command = "ccx result cgx job " + QString::number(contextMenuAction[0][2]);
-          commands.push_back(command);
-          for(int i = 0; i < commands.size(); i++)
-            cubit_translator->decode(commands[i]);
-          // Send the translated commands
-          Claro::instance()->send_gui_commands(commands);
-        }
       }else if (contextMenuAction[0][1]==5) //Action6
       {
-        QStringList commands;
-        QString command = "";
-
-        ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");
-        if(cubit_translator)
-        {
-          command = "ccx result ccx2paraview job " + QString::number(contextMenuAction[0][2]);
-          commands.push_back(command);
-          for(int i = 0; i < commands.size(); i++)
-            cubit_translator->decode(commands[i]);
-          // Send the translated commands
-          Claro::instance()->send_gui_commands(commands);
-        }
+        std::string command = "ccx result ccx2paraview job " + contextMenuAction[0][2];   
+        CubitInterface::cmd(command.c_str());
       }else if (contextMenuAction[0][1]==6) //Action7
       {
-        QStringList commands;
-        QString command = "";
-
-        ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");
-        if(cubit_translator)
-        {
-          command = "ccx result paraview job " + QString::number(contextMenuAction[0][2]);
-          commands.push_back(command);
-          for(int i = 0; i < commands.size(); i++)
-            cubit_translator->decode(commands[i]);
-          // Send the translated commands
-          Claro::instance()->send_gui_commands(commands);
-        }
+        std::string command = "ccx result paraview job " + contextMenuAction[0][2];   
+        CubitInterface::cmd(command.c_str());
       }
     }
   }

@@ -1,3 +1,4 @@
+#!cubit
 reset
 #beam geometry
 create brick x 100 y 10 z 10
