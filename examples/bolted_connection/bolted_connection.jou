@@ -1,3 +1,5 @@
+#!cubit
+
 reset
 create brick x 40 y 20 z 5
 volume 1 copy move x 20 z -5.001
@@ -142,11 +144,3 @@ mesh vol all
 #ccx result load job 1
 #ccx use logfile core on
 #ccx result convert job 1 partial block 1 2 3
-
-
-
-
-
-
-
-

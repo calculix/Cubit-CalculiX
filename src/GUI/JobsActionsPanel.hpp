@@ -29,7 +29,6 @@ private slots:
   void on_pushButton_run_clicked(bool);
   void on_pushButton_kill_clicked(bool);
   void on_pushButton_result_cgx_clicked(bool);
-  void on_pushButton_result_ccx2paraview_clicked(bool);
   void on_pushButton_result_paraview_clicked(bool);
 
 private:
@@ -47,9 +46,6 @@ private:
   QPushButton* pushButton_result_cgx;
   QHBoxLayout* HBoxLayout_pushButton_result_cgx;
   QSpacerItem* horizontal_spacer_pushButton_result_cgx;
-  QPushButton* pushButton_result_ccx2paraview;
-  QHBoxLayout* HBoxLayout_pushButton_result_ccx2paraview;
-  QSpacerItem* horizontal_spacer_pushButton_result_ccx2paraview;
   QPushButton* pushButton_result_paraview;
   QHBoxLayout* HBoxLayout_pushButton_result_paraview;
   QSpacerItem* horizontal_spacer_pushButton_result_paraview;

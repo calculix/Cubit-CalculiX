@@ -4,7 +4,6 @@
 #include "CubitInterface.hpp"
 #include "Broker.hpp"
 #include "Claro.hpp"
-#include "ScriptTranslator.hpp"
 
 
 InitialConditionsModifyPanel::InitialConditionsModifyPanel(QWidget *parent) :
@@ -98,16 +97,9 @@ void InitialConditionsModifyPanel::on_pushButton_apply_clicked(bool)
     comboBox_2->setCurrentIndex(0);
     lineEdit_3->setText("");
   }
-  
-  // We must send the Cubit commands through the Claro framework, so first we need to translate
-  // the commands into the python form that Claro will understand.
-  ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");
-  if(cubit_translator)
-  {
-    for(int i = 0; i < commands.size(); i++)
-      cubit_translator->decode(commands[i]);
 
-    // Send the translated commands
-    Claro::instance()->send_gui_commands(commands);
+  for (size_t i = 0; i < commands.size(); i++)
+  {
+    CubitInterface::cmd(commands[i].toStdString().c_str());
   }
 }

@@ -61,4 +61,6 @@ set(CORE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/CoreTimer.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreCustomLines.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreCustomLines.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreDraw.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreDraw.hpp
     PARENT_SCOPE)

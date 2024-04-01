@@ -150,7 +150,6 @@ public:
   bool wait_job(int job_id); // runs job
   bool kill_job(int job_id); // runs job
   bool set_job_conversion(int job_id, int conversion); // sets the paraview conversion value for the job
-  bool result_ccx2paraview_job(int job_id); // converts the result with ccx2paraview
   bool result_cgx_job(int job_id); // opens the results with cgx
   bool result_paraview_job(int job_id); // opens the results with paraview
   std::vector<std::string> get_job_data(int job_id);

@@ -505,11 +505,6 @@ bool CalculiXCoreInterface::set_job_conversion(int job_id, int conversion)
   return ccx_core.set_job_conversion(job_id,conversion);
 }
 
-bool CalculiXCoreInterface::result_ccx2paraview_job(int job_id)
-{
-  return ccx_core.result_ccx2paraview_job(job_id);
-}
-
 bool CalculiXCoreInterface::result_cgx_job(int job_id)
 {
   return ccx_core.result_cgx_job(job_id);

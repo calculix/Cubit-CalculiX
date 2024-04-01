@@ -4,7 +4,6 @@
 #include "CubitInterface.hpp"
 #include "Broker.hpp"
 #include "Claro.hpp"
-#include "ScriptTranslator.hpp"
 
 
 StepsModifyBucklePanel::StepsModifyBucklePanel(QWidget *parent) :
@@ -158,15 +157,8 @@ void StepsModifyBucklePanel::on_pushButton_apply_clicked(bool)
     lineEdit_7->setText("");
   }
   
-  // We must send the Cubit commands through the Claro framework, so first we need to translate
-  // the commands into the python form that Claro will understand.
-  ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");
-  if(cubit_translator)
+  for (size_t i = 0; i < commands.size(); i++)
   {
-    for(int i = 0; i < commands.size(); i++)
-      cubit_translator->decode(commands[i]);
-
-    // Send the translated commands
-    Claro::instance()->send_gui_commands(commands);
+    CubitInterface::cmd(commands[i].toStdString().c_str());
   }
 }

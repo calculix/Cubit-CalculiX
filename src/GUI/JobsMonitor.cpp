@@ -6,7 +6,6 @@
 #include "CubitMessage.hpp"
 #include "Broker.hpp"
 #include "Claro.hpp"
-#include "ScriptTranslator.hpp"
 #include <QString>
 #include <QStringList>
 #include <QScrollBar>
@@ -240,89 +239,32 @@ void JobsMonitor::setJob(int job_id)
 
 void JobsMonitor::on_pushButton_run_clicked(bool)
 {
-  QStringList commands;
-  QString command = "";
-
-  ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");
-  if(cubit_translator)
-  {
-    command = "ccx run job " + QString::number(current_job_id);
-    commands.push_back(command);
-    for(int i = 0; i < commands.size(); i++)
-    cubit_translator->decode(commands[i]);
-    // Send the translated commands
-    Claro::instance()->send_gui_commands(commands);
-  }
+  std::string command = "ccx run job " + std::to_string(current_job_id);
+  CubitInterface::cmd(command.c_str());
 }
 
 void JobsMonitor::on_pushButton_kill_clicked(bool)
 {
-  QStringList commands;
-  QString command = "";
-
-  ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");
-  if(cubit_translator)
-  {
-    command = "ccx kill job " + QString::number(current_job_id);
-    commands.push_back(command);
-    for(int i = 0; i < commands.size(); i++)
-    cubit_translator->decode(commands[i]);
-    // Send the translated commands
-    Claro::instance()->send_gui_commands(commands);
-  }
+  std::string command = "ccx kill job " + std::to_string(current_job_id);
+  CubitInterface::cmd(command.c_str());
 }
 
 void JobsMonitor::on_pushButton_result_cgx_clicked(bool)
 {
-  QStringList commands;
-  QString command = "";
-
-  ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");
-  if(cubit_translator)
-  {
-    command = "ccx result cgx job " + QString::number(current_job_id);
-    commands.push_back(command);
-    for(int i = 0; i < commands.size(); i++)
-    cubit_translator->decode(commands[i]);
-      // Send the translated commands
-    Claro::instance()->send_gui_commands(commands);
-  }
+  std::string command = "ccx result cgx job " + std::to_string(current_job_id);
+  CubitInterface::cmd(command.c_str());
 }
 
 void JobsMonitor::on_pushButton_result_convert_clicked(bool)
 {
-  QStringList commands;
-  QString command = "";
-
-  ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");
-  if(cubit_translator)
-  {
-    command = "ccx result load job " + QString::number(current_job_id);
-    commands.push_back(command);
-    command = "ccx result convert job " + QString::number(current_job_id);
-    commands.push_back(command);
-    for(int i = 0; i < commands.size(); i++)
-    cubit_translator->decode(commands[i]);
-    // Send the translated commands
-    Claro::instance()->send_gui_commands(commands);
-  }
+  std::string command = "ccx result load job " + std::to_string(current_job_id);
+  CubitInterface::cmd(command.c_str());
 }
 
 void JobsMonitor::on_pushButton_result_paraview_clicked(bool)
 {
-  QStringList commands;
-  QString command = "";
-
-  ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");
-  if(cubit_translator)
-  {
-    command = "ccx result paraview job " + QString::number(current_job_id);
-    commands.push_back(command);
-    for(int i = 0; i < commands.size(); i++)
-    cubit_translator->decode(commands[i]);
-    // Send the translated commands
-    Claro::instance()->send_gui_commands(commands);
-  }
+  std::string command = "ccx result paraview job " + std::to_string(current_job_id);
+  CubitInterface::cmd(command.c_str());
 }
 
 void JobsMonitor::on_pushButton_close_clicked(bool)

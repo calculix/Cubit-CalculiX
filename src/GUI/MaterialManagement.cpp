@@ -12,7 +12,6 @@
 #include "CubitMessage.hpp"
 #include "Broker.hpp"
 #include "Claro.hpp"
-#include "ScriptTranslator.hpp"
 
 MaterialManagement::MaterialManagement()
 {
@@ -629,16 +628,9 @@ void MaterialManagement::on_pushButton_apply_clicked(bool)
     }
   }
 
-  // We must send the Cubit commands through the Claro framework, so first we need to translate
-  // the commands into the python form that Claro will understand.
-  ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");
-  if(cubit_translator)
+  for (size_t i = 0; i < commands.size(); i++)
   {
-    for(int i = 0; i < commands.size(); i++)
-      cubit_translator->decode(commands[i]);
-
-    // Send the translated commands
-    Claro::instance()->send_gui_commands(commands);
+    CubitInterface::cmd(commands[i].toStdString().c_str());
   }
 }
 
@@ -654,23 +646,21 @@ void MaterialManagement::on_pushButton_new_clicked(bool)
   //log = " clicked new \n";
   //PRINT_INFO("%s", log.c_str());
   
-  QStringList commands;
+  //QStringList commands;
+  std::vector<std::string> commands;
   bool ok;  
   QString name = QInputDialog::getText(0, "Create Material",
                                          "Material Name:", QLineEdit::Normal,
                                          "", &ok);
   if (ok && !name.isEmpty()){
-    commands.push_back("create material \"" + name + "\" property_group \"CalculiX-FEA\"");
+    //commands.push_back("create material \"" + name + "\" property_group \"CalculiX-FEA\"");
+    //commands.push_back();
+    commands.push_back("create material \"" + name.toStdString() + "\" property_group \"CalculiX-FEA\"");
   }
 
-  ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");
-  if(cubit_translator)
+  for (size_t i = 0; i < commands.size(); i++)
   {
-    for(int i = 0; i < commands.size(); i++)
-      cubit_translator->decode(commands[i]);
-
-    // Send the translated commands
-    Claro::instance()->send_gui_commands(commands);
+    CubitInterface::cmd(commands[i].c_str());
   }
 }
 
@@ -678,25 +668,23 @@ void MaterialManagement::on_pushButton_delete_clicked(bool)
 {
   //log = " clicked delete \n";
   //PRINT_INFO("%s", log.c_str());
-  QStringList commands;
+  //QStringList commands;
+  std::vector<std::string> commands;
   
   QMessageBox::StandardButton msgbox;
   msgbox = QMessageBox::question(this,"Delete Material","Delete Material " + current_material_item->material_name_qstring + "?", QMessageBox::Yes | QMessageBox::No);
   
   if (msgbox == QMessageBox::Yes)
   {
-    commands.push_back("delete material " + current_material_item->material_id_qstring);
+    //commands.push_back("delete material " + current_material_item->material_id_qstring);
+    commands.push_back("delete material " + current_material_item->material_id_qstring.toStdString());
   }
 
-  ScriptTranslator* cubit_translator = Broker::instance()->get_translator("Cubit");
-  if(cubit_translator)
+  for (size_t i = 0; i < commands.size(); i++)
   {
-    for(int i = 0; i < commands.size(); i++)
-      cubit_translator->decode(commands[i]);
-
-    // Send the translated commands
-    Claro::instance()->send_gui_commands(commands);
+    CubitInterface::cmd(commands[i].c_str());
   }
+
   this->removeListItems();
   
   elastic_widget->hide();

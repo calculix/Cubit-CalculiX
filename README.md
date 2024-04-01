@@ -6,9 +6,9 @@ After the run with CalculiX the results will be automatically converted for Para
 
 Here you can find the source code and a build for linux.
  
-This component was build with Cubit 2023.8! 
+This component was build with Cubit 2024.3! 
 
-Tested with Cubit 2023.8 and 2023.11 on Ubuntu 22.04
+Tested with Cubit 2024.3 on Ubuntu 22.04
 
 # Key Features
 Definition of:

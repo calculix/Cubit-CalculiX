@@ -10,13 +10,32 @@
 #include "Claro.hpp"
 #include "ClaroFileMenu.hpp"
 #include "CommandWindow.hpp"
+#include "ImportExportHandler.hpp"
+
+class ExportHandler : public ImportExportHandler
+{
+public:
+  ExportManager* mIO;
+  ExportHandler(ExportManager* io)
+    : ImportExportHandler("mycomp"), mIO(io)
+  {}
+
+  void io_handler(const QString& fileName, const QString& filter)
+  {
+    mIO->handle_export(fileName, filter);
+  }
+};
 
 ExportManager::ExportManager(QObject *parent) :
   QObject(parent)
-{}
+{
+  mExportHandler = new ExportHandler(this);
+}
 
 ExportManager::~ExportManager()
-{}
+{
+  delete mExportHandler;
+}
 
 void ExportManager::add_export_types()
 {
@@ -29,12 +48,8 @@ void ExportManager::add_export_types()
     // Add my filters to the export dialog. Note that you can add multiple
     // export filters at once by separating the list with semicolons.
     QString filter_names = "MyExport (*.me);;AnotherExport (*.ae)";
-    QObject *filter = file_menu->add_export(filter_names.toUtf8().data(),
-                                            "mycomp");
-
-    // Connect the filter to the method that will handle the export
-    connect(filter, SIGNAL(filterSelected(const QString&, const QString&)),
-            this, SLOT(handle_export(const QString&, const QString&)));
+    mExportHandler->mFilters = filter_names;
+    file_menu->add_export(mExportHandler);
   }
 }
 
