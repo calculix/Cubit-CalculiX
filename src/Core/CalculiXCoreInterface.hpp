@@ -175,7 +175,7 @@ public:
   std::vector<std::vector<std::string>> get_steps_fieldoutputs_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_customlines_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_jobs_tree_data(); // gets the data from core to build the tree
-
+  bool draw_all(); // draw all loads and bcs
 
   MeshExportInterface *me_iface;
 };

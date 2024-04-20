@@ -38,6 +38,7 @@
 #include "CoreTimer.hpp"
 #include "CoreCustomLines.hpp"
 #include "loadUserOptions.hpp"
+#include "CoreDraw.hpp"
 
 #include <Utility/Eigen/Eigenvalues>
 
@@ -46,7 +47,8 @@ CalculiXCore::CalculiXCore():
   contactpairs(NULL),amplitudes(NULL),loadsforces(NULL),loadspressures(NULL),loadsheatfluxes(NULL),
   loadsgravity(NULL),loadscentrifugal(NULL),
   bcsdisplacements(NULL),bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL),
-  initialconditions(NULL), hbcs(NULL), steps(NULL),jobs(NULL),results(NULL),timer(NULL),customlines(NULL)
+  initialconditions(NULL), hbcs(NULL), steps(NULL),jobs(NULL),results(NULL),timer(NULL),customlines(NULL),
+  draw(NULL)
 {
   init();
 }
@@ -99,6 +101,8 @@ CalculiXCore::~CalculiXCore()
     delete timer;
   if(customlines)
     delete customlines;
+  if(draw)
+    delete draw;
 }
 
 bool CalculiXCore::print_to_log(std::string str_log)
@@ -231,6 +235,11 @@ bool CalculiXCore::init()
   
   customlines->init();
 
+  if(!draw)
+    draw = new CoreDraw;
+  
+  draw->init();
+
   if (use_ccx_logfile)
   {
     print_to_log("CalculiXCore Initialization!");
@@ -292,6 +301,7 @@ bool CalculiXCore::reset()
   jobs->reset();
   results->reset();
   customlines->reset();
+  //draw->reset();
 
   sideset_face_data.clear();
   //print_to_log("RESET");
@@ -4264,4 +4274,9 @@ std::vector<int> CalculiXCore::extractIntegers(std::string str)
         temp = "";
     }
     return ids;
+}
+
+bool CalculiXCore::draw_all() // draw all bc and loads
+{
+  return draw->draw_all();
 }

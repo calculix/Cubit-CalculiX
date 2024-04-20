@@ -829,3 +829,8 @@ std::string CalculiXCoreInterface::get_step_export_data() // gets the export dat
 {
   return ccx_core.get_step_export_data();
 }
+
+bool CalculiXCoreInterface::draw_all() // draw all bc and loads
+{
+  return ccx_core.draw_all();
+}

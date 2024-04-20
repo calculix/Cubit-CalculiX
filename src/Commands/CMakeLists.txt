@@ -15,6 +15,8 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxPrintCoreCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLogCoreCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLogCoreCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxDrawCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxDrawCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxBlockElementTypeCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxBlockElementTypeCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxSectionDeleteCommand.cpp

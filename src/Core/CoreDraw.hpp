@@ -8,18 +8,19 @@ class CalculiXCoreInterface;
 
 // class for drawing of loads and bcs
 
-//draw polygon location pos -1 -1 0 location pos 1 -1 0 location pos 1 1 0 location pos -1 1 0 color yellow no_flush
-//draw line location pos -1 0 0 location pos 1 0 0 color blue no_flush
-//draw line location pos 0 -1 0 location pos 0 1 0 color blue no_flush
-//draw location pos 0 0 0 color red no_flush
-//graphics flush 
-
 class CoreDraw
 {
 
 public:
   CoreDraw();
   ~CoreDraw();
+
+  bool is_initialized = false;
+
+  bool init(); // initialize
+  std::vector<double> rotate(std::vector<double> coord, std::vector<double> direction);
+  bool draw_arrow(std::vector<double> center, std::vector<double> direction, std::string color, double size); //draw an arrow from a center point, vector, color, size
+  bool draw_all(); // draw all loads and bcs
 
   CalculiXCoreInterface *ccx_iface;
 };

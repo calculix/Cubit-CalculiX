@@ -29,6 +29,7 @@ class CoreJobs;
 class CoreResults;
 class CoreTimer;
 class CoreCustomLines;
+class CoreDraw;
 
 class MeshExportInterface;
 class MaterialInterface;
@@ -215,7 +216,8 @@ public:
   std::string get_initialcondition_export_data(); // gets the export data from core
   std::string get_hbc_export_data(); // gets the export data from core
   std::string get_step_export_data(); // gets the export data from core
-  
+  bool draw_all(); // draw all loads and bcs
+
   CoreBlocks *cb;
   CoreMaterials *mat;
   CoreSections *sections;
@@ -239,6 +241,7 @@ public:
   CoreResults *results;
   CoreTimer *timer;
   CoreCustomLines *customlines;
+  CoreDraw *draw;
   MeshExportInterface *me_iface;
   MaterialInterface *mat_iface;
 };
