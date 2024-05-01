@@ -23,6 +23,8 @@ subtract volume 6 from volume 1 2
 
 imprint vol all
 merge vol all
+#vol all size 1
+mesh vol all
 
 block 1 add vol 1
 block 2 add vol 2
@@ -57,7 +59,7 @@ modify material "steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
 modify material "steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 2.1e+5 0.3 0 
 modify material "steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
 modify material "steel" scalar_properties "CCX_DENSITY_USE_CARD" 1
-modify material "steel" matrix_property "CCX_DENSITY_DENSITY" 7.85e-09 0 
+modify material "steel" matrix_property "CCX_DENSITY_DENSITY" 7.85e-06 0 
 modify material "steel" scalar_properties "CCX_EXPANSION_USE_CARD" 1
 modify material "steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
 modify material "steel" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 1.2e-05 0 
@@ -137,10 +139,10 @@ ccx step 2 add bc displacement 3 4
 
 ccx create job name "bolted_connection"
 
-#vol all size 1
-mesh vol all
+
 #ccx run job 1 no_conversion
 #ccx wait job 1
 #ccx result load job 1
 #ccx use logfile core on
 #ccx result convert job 1 partial block 1 2 3
+

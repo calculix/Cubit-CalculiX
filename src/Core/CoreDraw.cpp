@@ -2,6 +2,7 @@
 #include "CubitInterface.hpp"
 #include <cmath>
 #include "CalculiXCoreInterface.hpp"
+#include "CubitMessage.hpp"
 
 CoreDraw::CoreDraw()
 {}
@@ -25,11 +26,13 @@ bool CoreDraw::init()
 std::vector<double> CoreDraw::rotate(std::vector<double> coord, std::vector<double> vec_a, std::vector<double> vec_b)
 {
     // https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
+    std::string log;
     std::vector<double> tmp_coord = {0,0,0};
-    std::vector<std::vector<double>> r_mat;
-    r_mat.push_back({1,0,0});
-    r_mat.push_back({0,1,0});
-    r_mat.push_back({0,0,1});
+    std::vector<double> vec_k = {0,0,0};
+    std::vector<std::vector<double>> mat_r;
+    mat_r.push_back({1,0,0});
+    mat_r.push_back({0,1,0});
+    mat_r.push_back({0,0,1});
 
     double sinus = 0;
     double cosinus = 0;
@@ -37,20 +40,66 @@ std::vector<double> CoreDraw::rotate(std::vector<double> coord, std::vector<doub
     //first compute the unit vectors
     vec_a = unit_vector(vec_a);
     vec_b = unit_vector(vec_b);
+    
+    //define rotation axis
+    vec_k = cross_product(vec_a, vec_b);
+    vec_k = unit_vector(vec_k);
 
+    log = "vec_a = " + std::to_string(vec_a[0]) + " " + std::to_string(vec_a[1]) + " " + std::to_string(vec_a[2]) + " " +"\n";
+    log.append("vec_b = " + std::to_string(vec_b[0]) + " " + std::to_string(vec_b[1]) + " " + std::to_string(vec_b[2]) + " " +"\n");
+    log.append("vec_k = " + std::to_string(vec_k[0]) + " " + std::to_string(vec_k[1]) + " " + std::to_string(vec_k[2]) + " " +"\n");
+    
     //sinus cosinus
-    sinus = magnitude(cross_product(vec_b, vec_a));
+    sinus = magnitude(cross_product(vec_a, vec_b));
     cosinus = inner_product(vec_a, vec_b);
 
+    log.append("sinus = " + std::to_string(sinus) +"\n");
+    log.append("cosinus = " + std::to_string(cosinus) +"\n");
+
     //cross product matrix
-    std::vector<std::vector<double>> k_mat = cross_product_matrix(vec_b,vec_a);
-    std::vector<std::vector<double>> k2_mat = mult_matrix(k_mat,k_mat);
+    std::vector<std::vector<double>> mat_k = cross_product_matrix(vec_k);
+    std::vector<std::vector<double>> mat_k2 = mult_matrix(mat_k,mat_k);
+    
+    log.append("mat_k = \n");
+    for (size_t i = 0; i < 3; i++)
+    {
+        for (size_t ii = 0; ii < 3; ii++)
+        {
+            log.append(std::to_string(mat_k[i][ii]) + " ");
+        }
+        log.append("\n");
+    }
+    log.append("mat_k2 = \n");
+    for (size_t i = 0; i < 3; i++)
+    {
+        for (size_t ii = 0; ii < 3; ii++)
+        {
+            log.append(std::to_string(mat_k2[i][ii]) + " ");
+        }
+        log.append("\n");
+    }
 
     // rotation matrix
-    r_mat = add_matrix(r_mat, mult_matrix_scalar(k_mat,sinus));
-    r_mat = add_matrix(r_mat, mult_matrix_scalar(k2_mat, 1 - cosinus));
 
-    tmp_coord = mult_matrix_vector(r_mat,coord);
+    mat_r = add_matrix(mat_r, mult_matrix_scalar(mat_k,sinus));
+    mat_r = add_matrix(mat_r, mult_matrix_scalar(mat_k2, 1 - cosinus));
+
+    tmp_coord = mult_matrix_vector(mat_r,coord);
+
+    log.append("mat_r = \n");
+    for (size_t i = 0; i < 3; i++)
+    {
+        for (size_t ii = 0; ii < 3; ii++)
+        {
+            log.append(std::to_string(mat_r[i][ii]) + " ");
+        }
+        log.append("\n");
+    }
+
+    log.append("coord = " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " " +"\n");
+    log.append("tmp_coord = " + std::to_string(tmp_coord[0]) + " " + std::to_string(tmp_coord[1]) + " " + std::to_string(tmp_coord[2]) + " " +"\n");
+    log.append("*********************************************\n");
+    PRINT_INFO("%s", log.c_str());
 
     return tmp_coord;
 }
@@ -86,13 +135,13 @@ std::vector<double> CoreDraw::cross_product(std::vector<double> vec_a, std::vect
     return output;
 }
 
-std::vector<std::vector<double>> CoreDraw::cross_product_matrix(std::vector<double> vec_a, std::vector<double> vec_b)
+std::vector<std::vector<double>> CoreDraw::cross_product_matrix(std::vector<double> vec)
 {
     std::vector<std::vector<double>> output;
 
-    output.push_back({0,-vec_a[2],vec_a[1]});
-    output.push_back({vec_a[2],0,-vec_a[0]});
-    output.push_back({-vec_a[1],vec_a[0],0});
+    output.push_back({0,-vec[2],vec[1]});
+    output.push_back({vec[2],0,-vec[0]});
+    output.push_back({-vec[1],vec[0],0});
 
     return output;
 }
@@ -180,7 +229,7 @@ std::vector<double> CoreDraw::mult_matrix_vector(std::vector<std::vector<double>
     }
     return output;
 }
-bool CoreDraw::draw_arrow(std::vector<double> start_point, std::vector<double> direction, bool inverse_head, std::string color, double size)
+bool CoreDraw::draw_arrow(std::vector<double> start_point, std::vector<double> direction, bool from_start_point, std::string color, double size)
 {
     std::vector<std::string> commands;
     std::string cmd;
@@ -200,16 +249,44 @@ bool CoreDraw::draw_arrow(std::vector<double> start_point, std::vector<double> d
     arrow_end_coord[1] = start_point[1] + arrow_direction[1]*size;
     arrow_end_coord[2] = start_point[2] + arrow_direction[2]*size;
 
+    //arrow tip and rotation
     for (size_t i = 0; i < npolygon; i++)
     {
         std::vector<double> coord(3);
-        coord[0]= radius*cos(2*pi/npolygon*i);
-        coord[1]= radius*sin(2*pi/npolygon*i);
-        coord[2]= 0.3;
-        coord = rotate(coord,{0.,0.,1.},arrow_direction);
+        coord[0]= 0.3*size;
+        coord[1]= radius*cos(2*pi/npolygon*i)*size;
+        coord[2]= radius*sin(2*pi/npolygon*i)*size;
+        coord = rotate(coord,{1.,0.,0.},arrow_direction);
         polygon_coords.push_back(coord);
     }
+    //translate arrow head to starting point
+    for (size_t i = 0; i < npolygon; i++)
+    {
+        polygon_coords[i][0] += arrow_start_coord[0];
+        polygon_coords[i][1] += arrow_start_coord[1];
+        polygon_coords[i][2] += arrow_start_coord[2];
+    }
 
+    // translate arrow if it should not point on starting point
+    // we translate away the full arrow length in arrow direction
+    if (from_start_point)
+    {
+        arrow_start_coord[0] = start_point[0] - arrow_direction[0]*size;
+        arrow_start_coord[1] = start_point[1] - arrow_direction[1]*size;
+        arrow_start_coord[2] = start_point[2] - arrow_direction[2]*size;
+
+        arrow_end_coord[0] = start_point[0];
+        arrow_end_coord[1] = start_point[1];
+        arrow_end_coord[2] = start_point[2];
+
+        for (size_t i = 0; i < npolygon; i++)
+        {
+            polygon_coords[i][0] -= arrow_end_coord[0] - arrow_start_coord[0];
+            polygon_coords[i][1] -= arrow_end_coord[1] - arrow_start_coord[1];
+            polygon_coords[i][2] -= arrow_end_coord[2] - arrow_start_coord[2];
+        }
+    }
+    
     // draw arrow head
     for (size_t i = 0; i < npolygon; i++)
     {
@@ -251,11 +328,17 @@ bool CoreDraw::draw_all()
 
     this->draw_arrow(start_point, direction, false, color, size);
 
-
-    start_point = {1,1,1};
+    start_point = {0,0,0};
     direction = {0.1,1,0.3};
     color = "blue";
-    size = 2;
-    //this->draw_arrow(start_point, direction, true, color, size);
+    size = 1;
+    this->draw_arrow(start_point, direction, true, color, size);
+
+    start_point = {0,0,0};
+    direction = {-1,-1,0};
+    color = "green";
+    size = 1;
+    this->draw_arrow(start_point, direction, false, color, size);
+
     return true;
 }
