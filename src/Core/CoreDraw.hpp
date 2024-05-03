@@ -30,6 +30,8 @@ public:
   std::vector<double> mult_matrix_vector(std::vector<std::vector<double>> mat, std::vector<double> vec); //multiplicate 3x3 matrix with 3x1 vector
   
   bool draw_arrow(std::vector<double> start_point, std::vector<double> direction, bool from_start_point, std::string color, double size); //draw an arrow from a center point, vector, color, size
+  bool draw_dof(std::vector<double> coord, int dof, std::string color, double size); //draw dof (1,2,3,4,5,6,11) symbol at coord, color, size
+  
   bool draw_all(); // draw all loads and bcs
 
   CalculiXCoreInterface *ccx_iface;

@@ -45,21 +45,21 @@ std::vector<double> CoreDraw::rotate(std::vector<double> coord, std::vector<doub
     vec_k = cross_product(vec_a, vec_b);
     vec_k = unit_vector(vec_k);
 
-    log = "vec_a = " + std::to_string(vec_a[0]) + " " + std::to_string(vec_a[1]) + " " + std::to_string(vec_a[2]) + " " +"\n";
-    log.append("vec_b = " + std::to_string(vec_b[0]) + " " + std::to_string(vec_b[1]) + " " + std::to_string(vec_b[2]) + " " +"\n");
-    log.append("vec_k = " + std::to_string(vec_k[0]) + " " + std::to_string(vec_k[1]) + " " + std::to_string(vec_k[2]) + " " +"\n");
+    //log = "vec_a = " + std::to_string(vec_a[0]) + " " + std::to_string(vec_a[1]) + " " + std::to_string(vec_a[2]) + " " +"\n";
+    //log.append("vec_b = " + std::to_string(vec_b[0]) + " " + std::to_string(vec_b[1]) + " " + std::to_string(vec_b[2]) + " " +"\n");
+    //log.append("vec_k = " + std::to_string(vec_k[0]) + " " + std::to_string(vec_k[1]) + " " + std::to_string(vec_k[2]) + " " +"\n");
     
     //sinus cosinus
     sinus = magnitude(cross_product(vec_a, vec_b));
     cosinus = inner_product(vec_a, vec_b);
 
-    log.append("sinus = " + std::to_string(sinus) +"\n");
-    log.append("cosinus = " + std::to_string(cosinus) +"\n");
+    //log.append("sinus = " + std::to_string(sinus) +"\n");
+    //log.append("cosinus = " + std::to_string(cosinus) +"\n");
 
     //cross product matrix
     std::vector<std::vector<double>> mat_k = cross_product_matrix(vec_k);
     std::vector<std::vector<double>> mat_k2 = mult_matrix(mat_k,mat_k);
-    
+    /*
     log.append("mat_k = \n");
     for (size_t i = 0; i < 3; i++)
     {
@@ -78,7 +78,7 @@ std::vector<double> CoreDraw::rotate(std::vector<double> coord, std::vector<doub
         }
         log.append("\n");
     }
-
+    */
     // rotation matrix
 
     mat_r = add_matrix(mat_r, mult_matrix_scalar(mat_k,sinus));
@@ -86,6 +86,7 @@ std::vector<double> CoreDraw::rotate(std::vector<double> coord, std::vector<doub
 
     tmp_coord = mult_matrix_vector(mat_r,coord);
 
+    /*
     log.append("mat_r = \n");
     for (size_t i = 0; i < 3; i++)
     {
@@ -100,6 +101,7 @@ std::vector<double> CoreDraw::rotate(std::vector<double> coord, std::vector<doub
     log.append("tmp_coord = " + std::to_string(tmp_coord[0]) + " " + std::to_string(tmp_coord[1]) + " " + std::to_string(tmp_coord[2]) + " " +"\n");
     log.append("*********************************************\n");
     PRINT_INFO("%s", log.c_str());
+    */
 
     return tmp_coord;
 }
@@ -229,6 +231,7 @@ std::vector<double> CoreDraw::mult_matrix_vector(std::vector<std::vector<double>
     }
     return output;
 }
+
 bool CoreDraw::draw_arrow(std::vector<double> start_point, std::vector<double> direction, bool from_start_point, std::string color, double size)
 {
     std::vector<std::string> commands;
@@ -319,26 +322,229 @@ bool CoreDraw::draw_arrow(std::vector<double> start_point, std::vector<double> d
     return true;
 }
 
+bool CoreDraw::draw_dof(std::vector<double> coord, int dof, std::string color, double size)
+{
+    std::vector<std::string> commands;
+    std::string cmd;
+    int npolygon = 4;
+    double radius = 0.1;
+    double pi = 3.14159265359;
+    std::vector<std::vector<double>> polygon_coords;
+    std::vector<double> draw_coord(3);
+    draw_coord = coord;
+
+    if (dof>3)
+    {
+        npolygon = 10;
+    }
+    
+    if (dof==1)
+    {
+        //arrow tip
+        for (size_t i = 0; i < npolygon; i++)
+        {
+            std::vector<double> tmp_coord(3);
+            tmp_coord[0]= -0.2*size;
+            tmp_coord[1]= radius*cos(2*pi/npolygon*i)*size;
+            tmp_coord[2]= radius*sin(2*pi/npolygon*i)*size;
+            polygon_coords.push_back(tmp_coord);
+        }
+        //translate arrow head to starting point
+        for (size_t i = 0; i < npolygon; i++)
+        {
+            draw_coord[0] = coord[0] + -0.05*size;
+            polygon_coords[i][0] += draw_coord[0];
+            polygon_coords[i][1] += draw_coord[1];
+            polygon_coords[i][2] += draw_coord[2];
+        }
+    }else if (dof==2)
+    {
+        //arrow tip
+        for (size_t i = 0; i < npolygon; i++)
+        {
+            std::vector<double> tmp_coord(3);
+            tmp_coord[0]= radius*sin(2*pi/npolygon*i)*size;
+            tmp_coord[1]= -0.2*size;
+            tmp_coord[2]= radius*cos(2*pi/npolygon*i)*size;
+            polygon_coords.push_back(tmp_coord);
+        }
+        //translate arrow head to starting point
+        for (size_t i = 0; i < npolygon; i++)
+        {
+            draw_coord[1] = coord[1] + -0.05*size;
+            polygon_coords[i][0] += draw_coord[0];
+            polygon_coords[i][1] += draw_coord[1];
+            polygon_coords[i][2] += draw_coord[2];
+        }
+    }else if (dof==3)
+    {
+        //arrow tip
+        for (size_t i = 0; i < npolygon; i++)
+        {
+            std::vector<double> tmp_coord(3);
+            tmp_coord[0]= radius*cos(2*pi/npolygon*i)*size;
+            tmp_coord[1]= radius*sin(2*pi/npolygon*i)*size;
+            tmp_coord[2]= -0.2*size;
+            polygon_coords.push_back(tmp_coord);
+        }
+        //translate arrow head to starting point
+        for (size_t i = 0; i < npolygon; i++)
+        {
+            draw_coord[2] = coord[2] + -0.05*size;
+            polygon_coords[i][0] += draw_coord[0];
+            polygon_coords[i][1] += draw_coord[1];
+            polygon_coords[i][2] += draw_coord[2];
+        }
+    }else if (dof==4)
+    {
+        //arrow tip
+        for (size_t i = 0; i < npolygon; i++)
+        {
+            std::vector<double> tmp_coord(3);
+            tmp_coord[0]= -0.1*size;
+            tmp_coord[1]= radius*cos(2*pi/npolygon*i)*size;
+            tmp_coord[2]= radius*sin(2*pi/npolygon*i)*size;
+            polygon_coords.push_back(tmp_coord);
+        }
+        //translate arrow head to starting point
+        for (size_t i = 0; i < npolygon; i++)
+        {
+            draw_coord[0] = coord[0] + -0.25*size;
+            polygon_coords[i][0] += draw_coord[0];
+            polygon_coords[i][1] += draw_coord[1];
+            polygon_coords[i][2] += draw_coord[2];
+        }
+    }else if (dof==5)
+    {
+        //arrow tip
+        for (size_t i = 0; i < npolygon; i++)
+        {
+            std::vector<double> tmp_coord(3);
+            tmp_coord[0]= radius*sin(2*pi/npolygon*i)*size;
+            tmp_coord[1]= -0.1*size;
+            tmp_coord[2]= radius*cos(2*pi/npolygon*i)*size;
+            polygon_coords.push_back(tmp_coord);
+        }
+        //translate arrow head to starting point
+        for (size_t i = 0; i < npolygon; i++)
+        {
+            draw_coord[1] = coord[1] + -0.25*size;
+            polygon_coords[i][0] += draw_coord[0];
+            polygon_coords[i][1] += draw_coord[1];
+            polygon_coords[i][2] += draw_coord[2];
+        }
+    }else if (dof==6)
+    {
+        //arrow tip
+        for (size_t i = 0; i < npolygon; i++)
+        {
+            std::vector<double> tmp_coord(3);
+            tmp_coord[0]= radius*cos(2*pi/npolygon*i)*size;
+            tmp_coord[1]= radius*sin(2*pi/npolygon*i)*size;
+            tmp_coord[2]= -0.1*size;
+            polygon_coords.push_back(tmp_coord);
+        }
+        //translate arrow head to starting point
+        for (size_t i = 0; i < npolygon; i++)
+        {
+            draw_coord[2] = coord[2] + -0.25*size;
+            polygon_coords[i][0] += draw_coord[0];
+            polygon_coords[i][1] += draw_coord[1];
+            polygon_coords[i][2] += draw_coord[2];
+        }
+    }else if (dof==11)
+    {
+        /* code */
+    }else{
+        std::string log = "dof " + std::to_string(dof) + " not supported";
+        PRINT_INFO("%s", log.c_str());        
+    }
+        
+    if (dof < 7)
+    {    
+        // draw dof 1,2,3,4,5,6
+        for (size_t i = 0; i < npolygon; i++)
+        {
+            if (i==npolygon-1)
+            {
+                commands.push_back("draw polygon location pos " + std::to_string(draw_coord[0]) + " " + std::to_string(draw_coord[1]) + " " + std::to_string(draw_coord[2]) + " location pos " + std::to_string(polygon_coords[i][0]) + " " + std::to_string(polygon_coords[i][1]) + " " + std::to_string(polygon_coords[i][2]) + " location pos " + std::to_string(polygon_coords[0][0]) + " " + std::to_string(polygon_coords[0][1]) + " " + std::to_string(polygon_coords[0][2]) + " color " + color + " no_flush");
+            }else{
+                commands.push_back("draw polygon location pos " + std::to_string(draw_coord[0]) + " " + std::to_string(draw_coord[1]) + " " + std::to_string(draw_coord[2]) + " location pos " + std::to_string(polygon_coords[i][0]) + " " + std::to_string(polygon_coords[i][1]) + " " + std::to_string(polygon_coords[i][2]) + " location pos " + std::to_string(polygon_coords[i+1][0]) + " " + std::to_string(polygon_coords[i+1][1]) + " " + std::to_string(polygon_coords[i+1][2]) + " color " + color + " no_flush");
+            }
+        }
+        cmd = "draw polygon";
+        for (size_t i = 0; i < npolygon; i++)
+        {
+            cmd = cmd + " location pos " + std::to_string(polygon_coords[i][0]) + " " + std::to_string(polygon_coords[i][1]) + " " + std::to_string(polygon_coords[i][2]);
+        }
+
+        cmd = cmd + " color " + color + " no_flush";
+        commands.push_back(cmd);   
+    }else if (dof==11)
+    {
+        /* code */
+    }
+    // draw line
+    commands.push_back("draw line location pos " + std::to_string(draw_coord[0]) + " " + std::to_string(draw_coord[1]) + " " + std::to_string(draw_coord[2]) + " location pos " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " color " + color + " no_flush");
+    commands.push_back("graphics flush"); 
+    
+    
+    for (size_t i = 0; i < commands.size(); i++)
+    {
+        CubitInterface::silent_cmd(commands[i].c_str());
+    }
+
+    return true;
+}
+
+
 bool CoreDraw::draw_all()
 {
     std::vector<double> start_point = {0,0,0};
     std::vector<double> direction = {1,1,1};
+    std::vector<double> coord = {0,0,0};
     std::string color = "red";
     double size = 1;
 
-    this->draw_arrow(start_point, direction, false, color, size);
+    //this->draw_arrow(start_point, direction, false, color, size);
 
     start_point = {0,0,0};
     direction = {0.1,1,0.3};
     color = "blue";
     size = 1;
-    this->draw_arrow(start_point, direction, true, color, size);
+    //this->draw_arrow(start_point, direction, true, color, size);
 
     start_point = {0,0,0};
     direction = {-1,-1,0};
     color = "green";
     size = 1;
-    this->draw_arrow(start_point, direction, false, color, size);
+    //this->draw_arrow(start_point, direction, false, color, size);
+
+    coord = {1,0,0};
+    color = "blue";
+    size = 1;
+    this->draw_dof(coord, 1, color, size);
+    coord = {1,0,0};
+    color = "yellow";
+    size = 2;
+    this->draw_dof(coord, 2, color, size);
+    coord = {1,0,0};
+    color = "red";
+    size = 3;
+    //this->draw_dof(coord, 3, color, size);
+    coord = {1,0,0};
+    color = "blue";
+    size = 1;
+    this->draw_dof(coord, 4, color, size);
+    coord = {1,0,0};
+    color = "yellow";
+    size = 2;
+    this->draw_dof(coord, 5, color, size);
+    coord = {1,0,0};
+    color = "red";
+    size = 3;
+    this->draw_dof(coord, 6, color, size);
+
 
     return true;
 }
