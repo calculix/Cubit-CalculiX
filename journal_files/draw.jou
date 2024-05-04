@@ -1,0 +1,13 @@
+#!cubit
+reset
+create brick x 1
+create brick x 1
+create brick x 1
+create brick x 1
+
+move vol 2 x 1.5
+move vol 3 y 1.5
+move vol 4 x 1.5 y 1.5
+
+
+ccx draw

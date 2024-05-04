@@ -497,6 +497,95 @@ bool CoreDraw::draw_dof(std::vector<double> coord, int dof, std::string color, d
     return true;
 }
 
+bool draw_load_force(int id)
+{
+    return true;
+}
+
+bool draw_load_pressure(int id)
+{
+    return true;
+}
+
+bool draw_load_heatflux(int id)
+{
+    return true;
+}
+
+bool draw_load_gravity(int id)
+{
+    return true;
+}
+
+bool draw_load_centrifugal(int id)
+{
+    return true;
+}
+
+bool draw_bc_displacement(int id)
+{
+    return true;
+}
+
+bool draw_bc_temperature(int id)
+{
+    return true;
+}
+
+bool CoreDraw::draw_loads()
+{
+    std::vector<std::vector<std::string>> tmp_load_ids;
+    
+    tmp_load_ids = ccx_iface->get_loadsforces_tree_data();    
+    for (size_t i = 0; i < tmp_load_ids.size(); i++)
+    {
+        draw_load_force(std::stoi(tmp_load_ids[i][1]));
+    }
+
+    tmp_load_ids = ccx_iface->get_loadspressures_tree_data();
+    for (size_t i = 0; i < tmp_load_ids.size(); i++)
+    {
+        draw_load_pressure(std::stoi(tmp_load_ids[i][1]));
+    }
+
+    tmp_load_ids = ccx_iface->get_loadsheatfluxes_tree_data();
+    for (size_t i = 0; i < tmp_load_ids.size(); i++)
+    {
+        draw_load_heatflux(std::stoi(tmp_load_ids[i][1]));
+    }
+
+    tmp_load_ids = ccx_iface->get_loadsgravity_tree_data();
+    for (size_t i = 0; i < tmp_load_ids.size(); i++)
+    {
+        draw_load_gravity(std::stoi(tmp_load_ids[i][1]));
+    }
+
+    tmp_load_ids = ccx_iface->get_loadscentrifugal_tree_data();
+    for (size_t i = 0; i < tmp_load_ids.size(); i++)
+    {
+        draw_load_centrifugal(std::stoi(tmp_load_ids[i][1]));
+    }
+    return true;
+}
+
+bool CoreDraw::draw_bcs()
+{
+    std::vector<std::vector<std::string>> tmp_bc_ids;
+    
+    tmp_bc_ids = ccx_iface->get_bcsdisplacements_tree_data();    
+    for (size_t i = 0; i < tmp_bc_ids.size(); i++)
+    {
+        draw_bc_displacement(std::stoi(tmp_bc_ids[i][1]));
+    }
+
+    tmp_bc_ids = ccx_iface->get_bcstemperatures_tree_data();    
+    for (size_t i = 0; i < tmp_bc_ids.size(); i++)
+    {
+        draw_bc_temperature(std::stoi(tmp_bc_ids[i][1]));
+    }
+
+    return true;
+}
 
 bool CoreDraw::draw_all()
 {

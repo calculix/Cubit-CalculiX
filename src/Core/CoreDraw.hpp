@@ -6,6 +6,7 @@
 
 class CalculiXCoreInterface;
 
+// why it's not in the gui section, because we control it over the commands
 // class for drawing of loads and bcs
 
 class CoreDraw
@@ -32,6 +33,16 @@ public:
   bool draw_arrow(std::vector<double> start_point, std::vector<double> direction, bool from_start_point, std::string color, double size); //draw an arrow from a center point, vector, color, size
   bool draw_dof(std::vector<double> coord, int dof, std::string color, double size); //draw dof (1,2,3,4,5,6,11) symbol at coord, color, size
   
+  bool draw_load_force(int id); // draw load force with id
+  bool draw_load_pressure(int id); // draw load pressure with id
+  bool draw_load_heatflux(int id); // draw load heatflux with id
+  bool draw_load_gravity(int id); // draw load gravity with id
+  bool draw_load_centrifugal(int id); // draw centrifugal load with id
+  bool draw_bc_displacement(int id); // draw bc displacement
+  bool draw_bc_temperature(int id); // draw bc temperature
+
+  bool draw_loads(); // draw all loads
+  bool draw_bcs(); // draw all bcs
   bool draw_all(); // draw all loads and bcs
 
   CalculiXCoreInterface *ccx_iface;
