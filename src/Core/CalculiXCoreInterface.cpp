@@ -605,6 +605,12 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_entities(std::s
   return ccx_core.get_entities(entity,id);
 }
 
+std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_load_force(int id)
+{
+  return ccx_core.get_draw_data_for_load_force(id);
+}
+
+
 QIcon* CalculiXCoreInterface::getIcon(std::string name)
 {
   return ccx_core.getIcon(name);

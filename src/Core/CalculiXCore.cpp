@@ -2464,6 +2464,61 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
   return entities;
 }
 
+std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_force(int id)
+{
+  int bc_set_id=-1;
+  BCSetHandle bc_set;
+  NodesetHandle nodeset;
+  std::string command;
+  std::vector<BCEntityHandle> bc_handles;
+  BCEntityHandle bc_handle;
+  std::vector<MeshExportBCData> bc_attribs;
+  std::vector<std::vector<double>> draw_data;
+  std::vector<int> nodes;
+
+  me_iface->create_default_bcset(0,true,true,true,bc_set);
+  bc_set_id = me_iface->id_from_handle(bc_set);
+
+  me_iface->get_bc_loads(bc_set, bc_handles);
+  for (size_t i = 0; i < bc_handles.size(); i++)
+  {  
+    me_iface->get_bc_attributes(bc_handles[i],bc_attribs); 
+    if ((get_bc_fea_type(bc_attribs)==5))
+    {
+      if (id==me_iface->id_from_handle(bc_handles[i]))
+      {     
+        me_iface->get_bc_nodeset(bc_handles[i],nodeset);
+        
+        nodes = CubitInterface::get_nodeset_nodes_inclusive(me_iface->id_from_handle(nodeset)); 	
+        
+        for (size_t ii = 0; ii < nodes.size(); ii++)
+        {
+          std::array<double,3> coord = CubitInterface::get_nodal_coordinates(nodes[ii]);
+          std::vector<double> data;
+          
+          data.push_back(coord[0]);
+          data.push_back(coord[1]);
+          data.push_back(coord[2]);
+          data.push_back(bc_attribs[1].second*bc_attribs[0].second);
+          data.push_back(bc_attribs[2].second*bc_attribs[0].second);
+          data.push_back(bc_attribs[3].second*bc_attribs[0].second);
+          draw_data.push_back(data);
+
+          data[3] = bc_attribs[5].second*bc_attribs[4].second;
+          data[4] = bc_attribs[6].second*bc_attribs[4].second;
+          data[5] = bc_attribs[7].second*bc_attribs[4].second;
+          draw_data.push_back(data);
+        }
+      }
+    }
+  }
+
+  command = "delete bcset " + std::to_string(bc_set_id);
+  CubitInterface::silent_cmd_without_running_journal_lines(command.c_str());
+
+  return draw_data;
+}
+
 QIcon* CalculiXCore::getIcon(std::string name)
 {
   QIcon* icon = new QIcon();
@@ -2805,7 +2860,7 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
               {
                 str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(iv) + "," + to_string_scientific(bc_attribs[iv].second*bc_attribs[0].second);
                 steps_export_list.push_back(str_temp);
-              }              
+              }
             }
             for (size_t iv = 1; iv < 4; iv++)
             {

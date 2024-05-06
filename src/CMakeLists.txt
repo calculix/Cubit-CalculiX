@@ -24,6 +24,9 @@ find_package(Cubit REQUIRED CONFIG)
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 
+# python for our swig wrapping
+include_directories("/opt/Coreform-Cubit-2024.3/bin/python3/include/python3.10")
+
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}
@@ -77,7 +80,9 @@ set(CCXCOMP_SRCS
     CCXDockWindowModelTree.hpp
     ExportManager.cpp
     ExportManager.hpp
-    loadCalculiXComp.cpp)
+    loadCalculiXComp.cpp
+    )
+    #CalculiXCoreInterface_wrap.cxx)
 
 set(CCXPLUGIN_SRCS
     CalculiXPlugin.cpp

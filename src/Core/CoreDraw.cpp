@@ -234,6 +234,12 @@ std::vector<double> CoreDraw::mult_matrix_vector(std::vector<std::vector<double>
 
 bool CoreDraw::draw_arrow(std::vector<double> start_point, std::vector<double> direction, bool from_start_point, std::string color, double size)
 {
+    //skip if zero vector
+    if (direction[0]==0 && direction[1]==0 && direction[2]==0)
+    {
+        return true;
+    }
+    
     std::vector<std::string> commands;
     std::string cmd;
     int npolygon = 10;
@@ -497,104 +503,106 @@ bool CoreDraw::draw_dof(std::vector<double> coord, int dof, std::string color, d
     return true;
 }
 
-bool draw_load_force(int id)
+bool CoreDraw::draw_load_force(int id, double size)
+{
+    std::vector<std::vector<double>> draw_data;
+    draw_data = ccx_iface->get_draw_data_for_load_force(id);
+
+    return true;
+}
+
+bool CoreDraw::draw_load_pressure(int id, double size)
 {
     return true;
 }
 
-bool draw_load_pressure(int id)
+bool CoreDraw::draw_load_heatflux(int id, double size)
 {
     return true;
 }
 
-bool draw_load_heatflux(int id)
+bool CoreDraw::draw_load_gravity(int id, double size)
 {
     return true;
 }
 
-bool draw_load_gravity(int id)
+bool CoreDraw::draw_load_centrifugal(int id, double size)
 {
     return true;
 }
 
-bool draw_load_centrifugal(int id)
+bool CoreDraw::draw_bc_displacement(int id, double size)
 {
     return true;
 }
 
-bool draw_bc_displacement(int id)
+bool CoreDraw::draw_bc_temperature(int id, double size)
 {
     return true;
 }
 
-bool draw_bc_temperature(int id)
-{
-    return true;
-}
-
-bool CoreDraw::draw_loads()
+bool CoreDraw::draw_loads(double size)
 {
     std::vector<std::vector<std::string>> tmp_load_ids;
     
     tmp_load_ids = ccx_iface->get_loadsforces_tree_data();    
     for (size_t i = 0; i < tmp_load_ids.size(); i++)
     {
-        draw_load_force(std::stoi(tmp_load_ids[i][1]));
+        draw_load_force(std::stoi(tmp_load_ids[i][1]), size);
     }
 
     tmp_load_ids = ccx_iface->get_loadspressures_tree_data();
     for (size_t i = 0; i < tmp_load_ids.size(); i++)
     {
-        draw_load_pressure(std::stoi(tmp_load_ids[i][1]));
+        draw_load_pressure(std::stoi(tmp_load_ids[i][1]), size);
     }
 
     tmp_load_ids = ccx_iface->get_loadsheatfluxes_tree_data();
     for (size_t i = 0; i < tmp_load_ids.size(); i++)
     {
-        draw_load_heatflux(std::stoi(tmp_load_ids[i][1]));
+        draw_load_heatflux(std::stoi(tmp_load_ids[i][1]), size);
     }
 
     tmp_load_ids = ccx_iface->get_loadsgravity_tree_data();
     for (size_t i = 0; i < tmp_load_ids.size(); i++)
     {
-        draw_load_gravity(std::stoi(tmp_load_ids[i][1]));
+        draw_load_gravity(std::stoi(tmp_load_ids[i][1]), size);
     }
 
     tmp_load_ids = ccx_iface->get_loadscentrifugal_tree_data();
     for (size_t i = 0; i < tmp_load_ids.size(); i++)
     {
-        draw_load_centrifugal(std::stoi(tmp_load_ids[i][1]));
+        draw_load_centrifugal(std::stoi(tmp_load_ids[i][1]), size);
     }
     return true;
 }
 
-bool CoreDraw::draw_bcs()
+bool CoreDraw::draw_bcs(double size)
 {
     std::vector<std::vector<std::string>> tmp_bc_ids;
     
     tmp_bc_ids = ccx_iface->get_bcsdisplacements_tree_data();    
     for (size_t i = 0; i < tmp_bc_ids.size(); i++)
     {
-        draw_bc_displacement(std::stoi(tmp_bc_ids[i][1]));
+        draw_bc_displacement(std::stoi(tmp_bc_ids[i][1]), size);
     }
 
     tmp_bc_ids = ccx_iface->get_bcstemperatures_tree_data();    
     for (size_t i = 0; i < tmp_bc_ids.size(); i++)
     {
-        draw_bc_temperature(std::stoi(tmp_bc_ids[i][1]));
+        draw_bc_temperature(std::stoi(tmp_bc_ids[i][1]), size);
     }
 
     return true;
 }
 
-bool CoreDraw::draw_all()
+bool CoreDraw::draw_all(double size)
 {
     std::vector<double> start_point = {0,0,0};
     std::vector<double> direction = {1,1,1};
     std::vector<double> coord = {0,0,0};
     std::string color = "red";
-    double size = 1;
-
+ 
     //this->draw_arrow(start_point, direction, false, color, size);
 
     start_point = {0,0,0};
@@ -634,6 +642,8 @@ bool CoreDraw::draw_all()
     size = 3;
     this->draw_dof(coord, 6, color, size);
 
+    this->draw_bcs(size);
+    this->draw_loads(size);
 
     return true;
 }

@@ -171,6 +171,9 @@ public:
   bool delete_customline(int customline_id); // delete customline
   std::vector<std::string> get_customline_data(std::string position,std::string keyword,int keyword_id);
   std::vector<std::vector<std::string>> get_entities(std::string entity, int id); // get entitties for highlight
+  std::vector<std::vector<double>> get_draw_data_for_load_force(int id); // returns coord(3) and magnitude(3) std::vector<double>
+  
+  //GUI
   QIcon* getIcon(std::string name);
   QIcon getIcon2(std::string name);
   std::vector<std::vector<std::string>> get_blocks_tree_data(); // gets the data from core blocks to build the tree

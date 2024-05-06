@@ -33,17 +33,17 @@ public:
   bool draw_arrow(std::vector<double> start_point, std::vector<double> direction, bool from_start_point, std::string color, double size); //draw an arrow from a center point, vector, color, size
   bool draw_dof(std::vector<double> coord, int dof, std::string color, double size); //draw dof (1,2,3,4,5,6,11) symbol at coord, color, size
   
-  bool draw_load_force(int id); // draw load force with id
-  bool draw_load_pressure(int id); // draw load pressure with id
-  bool draw_load_heatflux(int id); // draw load heatflux with id
-  bool draw_load_gravity(int id); // draw load gravity with id
-  bool draw_load_centrifugal(int id); // draw centrifugal load with id
-  bool draw_bc_displacement(int id); // draw bc displacement
-  bool draw_bc_temperature(int id); // draw bc temperature
+  bool draw_load_force(int id, double size = 1); // draw load force with id
+  bool draw_load_pressure(int id, double size = 1); // draw load pressure with id
+  bool draw_load_heatflux(int id, double size = 1); // draw load heatflux with id
+  bool draw_load_gravity(int id, double size = 1); // draw load gravity with id
+  bool draw_load_centrifugal(int id, double size = 1); // draw centrifugal load with id
+  bool draw_bc_displacement(int id, double size = 1); // draw bc displacement
+  bool draw_bc_temperature(int id, double size = 1); // draw bc temperature
 
-  bool draw_loads(); // draw all loads
-  bool draw_bcs(); // draw all bcs
-  bool draw_all(); // draw all loads and bcs
+  bool draw_loads(double size = 1); // draw all loads
+  bool draw_bcs(double size = 1); // draw all bcs
+  bool draw_all(double size = 1); // draw all loads and bcs
 
   CalculiXCoreInterface *ccx_iface;
 };

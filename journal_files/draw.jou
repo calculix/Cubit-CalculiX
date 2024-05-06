@@ -9,5 +9,7 @@ move vol 2 x 1.5
 move vol 3 y 1.5
 move vol 4 x 1.5 y 1.5
 
+create force on surface 17 force value 1 moment value 3 direction 0 0 1
+
 
 ccx draw
