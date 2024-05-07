@@ -1,7 +1,18 @@
 #ifndef CALCULIXPYTHONINTERFACE_HPP
 #define CALCULIXPYTHONINTERFACE_HPP
 
-/* don't forget to wrap with 'swig -python -c++ CalculiXPythonInterface.i'  */
+/* don't forget to wrap with 'swig -python -c++ CalculiXPythonInterface.i'  
+
+and replace Python.h with
+
+#pragma push_macro("slots")
+#undef slots
+#include "Python.h"
+#pragma pop_macro("slots")
+
+
+
+*/
 
 //class CalculiXCoreInterface;
 

@@ -172,10 +172,20 @@ template <typename T> T SwigValueInit() {
 #if defined(_DEBUG) && defined(SWIG_PYTHON_INTERPRETER_NO_DEBUG)
 /* Use debug wrappers with the Python release dll */
 # undef _DEBUG
-# include <Python.h>
+//# include <Python.h>
+#pragma push_macro("slots")
+#undef slots
+#include "Python.h"
+#pragma pop_macro("slots")
+
 # define _DEBUG 1
 #else
-# include <Python.h>
+//# include <Python.h>
+#pragma push_macro("slots")
+#undef slots
+#include "Python.h"
+#pragma pop_macro("slots")
+
 #endif
 
 /* -----------------------------------------------------------------------------
