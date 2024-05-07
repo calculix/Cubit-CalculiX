@@ -61,6 +61,13 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Icons/ DESTINATION ${CMAKE_CURRENT_BINARY_
 
 #qt5_wrap_ui(ui_src ${GUI_UI})
 
+set(CCXPLUGIN_SRCS
+    CalculiXPlugin.cpp
+    CalculiXPlugin.hpp
+    ${CMD_SRC}
+    ${CORE_SRC}
+    ${UTILITY_SRC})
+
 set(CCXCOMP_SRCS
     CalculiXComp.cpp
     CalculiXComp.hpp
@@ -82,14 +89,7 @@ set(CCXCOMP_SRCS
     ExportManager.hpp
     loadCalculiXComp.cpp
     )
-    #CalculiXCoreInterface_wrap.cxx)
-
-set(CCXPLUGIN_SRCS
-    CalculiXPlugin.cpp
-    CalculiXPlugin.hpp
-    ${CMD_SRC}
-    ${CORE_SRC}
-    ${UTILITY_SRC})
+    
 
 add_library(calculix_plugin SHARED ${CCXPLUGIN_SRCS})
 set_target_properties(calculix_plugin PROPERTIES SUFFIX ".ccm")
@@ -103,10 +103,9 @@ set_target_properties(calculix_comp PROPERTIES SUFFIX ".ccl")
 target_link_libraries(calculix_comp clarogui navigation pickwidget cubiti clarofw)
 set_target_properties(calculix_comp PROPERTIES AUTOMOC 1)
 
-target_link_libraries(calculix_comp Qt5::Widgets)
-
 #target_link_libraries(calculix_comp calculix_plugin)
 target_link_libraries(calculix_plugin calculix_comp)
+target_link_libraries(calculix_comp Qt5::Widgets)
 
 if(POLICY CMP0078)
   cmake_policy(SET CMP0078 NEW)

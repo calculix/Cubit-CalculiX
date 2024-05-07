@@ -5,6 +5,9 @@ set(CORE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/CalculiXCore.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CalculiXCoreInterface.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CalculiXCoreInterface.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CalculiXPythonInterface.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/CalculiXPythonInterface.hpp
+    #${CMAKE_CURRENT_LIST_DIR}/CalculiXPythonInterface_wrap.cxx
     ${CMAKE_CURRENT_LIST_DIR}/loadCalculiXCore.cpp
     ${CMAKE_CURRENT_LIST_DIR}/loadCalculiXCore.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreBlocks.cpp
