@@ -56,8 +56,15 @@ add_subdirectory(UserOptions)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Utiliy)
 add_subdirectory(Utility)
 
+# Include our Python Interface code
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface)
+add_subdirectory(PythonInterface)
+
 # copy our icons to build directory
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Icons/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Icons/)
+
+# copy pythoninterface to build directory
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface/calculix_pythoninterface.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
 
 #qt5_wrap_ui(ui_src ${GUI_UI})
 
@@ -67,6 +74,9 @@ set(CCXPLUGIN_SRCS
     ${CMD_SRC}
     ${CORE_SRC}
     ${UTILITY_SRC})
+
+set(CCXPYTHONINTERFACE_SRCS
+    ${PYTHONINTERFACE_SRC})
 
 set(CCXCOMP_SRCS
     CalculiXComp.cpp
@@ -89,7 +99,6 @@ set(CCXCOMP_SRCS
     ExportManager.hpp
     loadCalculiXComp.cpp
     )
-    
 
 add_library(calculix_plugin SHARED ${CCXPLUGIN_SRCS})
 set_target_properties(calculix_plugin PROPERTIES SUFFIX ".ccm")
@@ -102,6 +111,10 @@ add_library(calculix_comp SHARED ${CCXCOMP_SRCS})
 set_target_properties(calculix_comp PROPERTIES SUFFIX ".ccl")
 target_link_libraries(calculix_comp clarogui navigation pickwidget cubiti clarofw)
 set_target_properties(calculix_comp PROPERTIES AUTOMOC 1)
+
+add_library(calculix_pythoninterface SHARED ${CCXPYTHONINTERFACE_SRCS})
+set_target_properties(calculix_pythoninterface PROPERTIES SUFFIX ".so" PREFIX "_")
+target_link_libraries(calculix_pythoninterface calculix_plugin cubiti cubit_util)
 
 #target_link_libraries(calculix_comp calculix_plugin)
 target_link_libraries(calculix_plugin calculix_comp)
