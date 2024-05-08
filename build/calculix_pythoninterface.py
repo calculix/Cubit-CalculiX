@@ -61,6 +61,624 @@ class _SwigNonDynamicMeta(type):
     __setattr__ = _swig_setattr_nondynamic_class_variable(type.__setattr__)
 
 
+class SwigPyIterator(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+
+    def __init__(self, *args, **kwargs):
+        raise AttributeError("No constructor defined - class is abstract")
+    __repr__ = _swig_repr
+    __swig_destroy__ = _calculix_pythoninterface.delete_SwigPyIterator
+
+    def value(self):
+        return _calculix_pythoninterface.SwigPyIterator_value(self)
+
+    def incr(self, n=1):
+        return _calculix_pythoninterface.SwigPyIterator_incr(self, n)
+
+    def decr(self, n=1):
+        return _calculix_pythoninterface.SwigPyIterator_decr(self, n)
+
+    def distance(self, x):
+        return _calculix_pythoninterface.SwigPyIterator_distance(self, x)
+
+    def equal(self, x):
+        return _calculix_pythoninterface.SwigPyIterator_equal(self, x)
+
+    def copy(self):
+        return _calculix_pythoninterface.SwigPyIterator_copy(self)
+
+    def next(self):
+        return _calculix_pythoninterface.SwigPyIterator_next(self)
+
+    def __next__(self):
+        return _calculix_pythoninterface.SwigPyIterator___next__(self)
+
+    def previous(self):
+        return _calculix_pythoninterface.SwigPyIterator_previous(self)
+
+    def advance(self, n):
+        return _calculix_pythoninterface.SwigPyIterator_advance(self, n)
+
+    def __eq__(self, x):
+        return _calculix_pythoninterface.SwigPyIterator___eq__(self, x)
+
+    def __ne__(self, x):
+        return _calculix_pythoninterface.SwigPyIterator___ne__(self, x)
+
+    def __iadd__(self, n):
+        return _calculix_pythoninterface.SwigPyIterator___iadd__(self, n)
+
+    def __isub__(self, n):
+        return _calculix_pythoninterface.SwigPyIterator___isub__(self, n)
+
+    def __add__(self, n):
+        return _calculix_pythoninterface.SwigPyIterator___add__(self, n)
+
+    def __sub__(self, *args):
+        return _calculix_pythoninterface.SwigPyIterator___sub__(self, *args)
+    def __iter__(self):
+        return self
+
+# Register SwigPyIterator in _calculix_pythoninterface:
+_calculix_pythoninterface.SwigPyIterator_swigregister(SwigPyIterator)
+
+class vectori(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+
+    def iterator(self):
+        return _calculix_pythoninterface.vectori_iterator(self)
+    def __iter__(self):
+        return self.iterator()
+
+    def __nonzero__(self):
+        return _calculix_pythoninterface.vectori___nonzero__(self)
+
+    def __bool__(self):
+        return _calculix_pythoninterface.vectori___bool__(self)
+
+    def __len__(self):
+        return _calculix_pythoninterface.vectori___len__(self)
+
+    def __getslice__(self, i, j):
+        return _calculix_pythoninterface.vectori___getslice__(self, i, j)
+
+    def __setslice__(self, *args):
+        return _calculix_pythoninterface.vectori___setslice__(self, *args)
+
+    def __delslice__(self, i, j):
+        return _calculix_pythoninterface.vectori___delslice__(self, i, j)
+
+    def __delitem__(self, *args):
+        return _calculix_pythoninterface.vectori___delitem__(self, *args)
+
+    def __getitem__(self, *args):
+        return _calculix_pythoninterface.vectori___getitem__(self, *args)
+
+    def __setitem__(self, *args):
+        return _calculix_pythoninterface.vectori___setitem__(self, *args)
+
+    def pop(self):
+        return _calculix_pythoninterface.vectori_pop(self)
+
+    def append(self, x):
+        return _calculix_pythoninterface.vectori_append(self, x)
+
+    def empty(self):
+        return _calculix_pythoninterface.vectori_empty(self)
+
+    def size(self):
+        return _calculix_pythoninterface.vectori_size(self)
+
+    def swap(self, v):
+        return _calculix_pythoninterface.vectori_swap(self, v)
+
+    def begin(self):
+        return _calculix_pythoninterface.vectori_begin(self)
+
+    def end(self):
+        return _calculix_pythoninterface.vectori_end(self)
+
+    def rbegin(self):
+        return _calculix_pythoninterface.vectori_rbegin(self)
+
+    def rend(self):
+        return _calculix_pythoninterface.vectori_rend(self)
+
+    def clear(self):
+        return _calculix_pythoninterface.vectori_clear(self)
+
+    def get_allocator(self):
+        return _calculix_pythoninterface.vectori_get_allocator(self)
+
+    def pop_back(self):
+        return _calculix_pythoninterface.vectori_pop_back(self)
+
+    def erase(self, *args):
+        return _calculix_pythoninterface.vectori_erase(self, *args)
+
+    def __init__(self, *args):
+        _calculix_pythoninterface.vectori_swiginit(self, _calculix_pythoninterface.new_vectori(*args))
+
+    def push_back(self, x):
+        return _calculix_pythoninterface.vectori_push_back(self, x)
+
+    def front(self):
+        return _calculix_pythoninterface.vectori_front(self)
+
+    def back(self):
+        return _calculix_pythoninterface.vectori_back(self)
+
+    def assign(self, n, x):
+        return _calculix_pythoninterface.vectori_assign(self, n, x)
+
+    def resize(self, *args):
+        return _calculix_pythoninterface.vectori_resize(self, *args)
+
+    def insert(self, *args):
+        return _calculix_pythoninterface.vectori_insert(self, *args)
+
+    def reserve(self, n):
+        return _calculix_pythoninterface.vectori_reserve(self, n)
+
+    def capacity(self):
+        return _calculix_pythoninterface.vectori_capacity(self)
+    __swig_destroy__ = _calculix_pythoninterface.delete_vectori
+
+# Register vectori in _calculix_pythoninterface:
+_calculix_pythoninterface.vectori_swigregister(vectori)
+
+class vectorf(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+
+    def iterator(self):
+        return _calculix_pythoninterface.vectorf_iterator(self)
+    def __iter__(self):
+        return self.iterator()
+
+    def __nonzero__(self):
+        return _calculix_pythoninterface.vectorf___nonzero__(self)
+
+    def __bool__(self):
+        return _calculix_pythoninterface.vectorf___bool__(self)
+
+    def __len__(self):
+        return _calculix_pythoninterface.vectorf___len__(self)
+
+    def __getslice__(self, i, j):
+        return _calculix_pythoninterface.vectorf___getslice__(self, i, j)
+
+    def __setslice__(self, *args):
+        return _calculix_pythoninterface.vectorf___setslice__(self, *args)
+
+    def __delslice__(self, i, j):
+        return _calculix_pythoninterface.vectorf___delslice__(self, i, j)
+
+    def __delitem__(self, *args):
+        return _calculix_pythoninterface.vectorf___delitem__(self, *args)
+
+    def __getitem__(self, *args):
+        return _calculix_pythoninterface.vectorf___getitem__(self, *args)
+
+    def __setitem__(self, *args):
+        return _calculix_pythoninterface.vectorf___setitem__(self, *args)
+
+    def pop(self):
+        return _calculix_pythoninterface.vectorf_pop(self)
+
+    def append(self, x):
+        return _calculix_pythoninterface.vectorf_append(self, x)
+
+    def empty(self):
+        return _calculix_pythoninterface.vectorf_empty(self)
+
+    def size(self):
+        return _calculix_pythoninterface.vectorf_size(self)
+
+    def swap(self, v):
+        return _calculix_pythoninterface.vectorf_swap(self, v)
+
+    def begin(self):
+        return _calculix_pythoninterface.vectorf_begin(self)
+
+    def end(self):
+        return _calculix_pythoninterface.vectorf_end(self)
+
+    def rbegin(self):
+        return _calculix_pythoninterface.vectorf_rbegin(self)
+
+    def rend(self):
+        return _calculix_pythoninterface.vectorf_rend(self)
+
+    def clear(self):
+        return _calculix_pythoninterface.vectorf_clear(self)
+
+    def get_allocator(self):
+        return _calculix_pythoninterface.vectorf_get_allocator(self)
+
+    def pop_back(self):
+        return _calculix_pythoninterface.vectorf_pop_back(self)
+
+    def erase(self, *args):
+        return _calculix_pythoninterface.vectorf_erase(self, *args)
+
+    def __init__(self, *args):
+        _calculix_pythoninterface.vectorf_swiginit(self, _calculix_pythoninterface.new_vectorf(*args))
+
+    def push_back(self, x):
+        return _calculix_pythoninterface.vectorf_push_back(self, x)
+
+    def front(self):
+        return _calculix_pythoninterface.vectorf_front(self)
+
+    def back(self):
+        return _calculix_pythoninterface.vectorf_back(self)
+
+    def assign(self, n, x):
+        return _calculix_pythoninterface.vectorf_assign(self, n, x)
+
+    def resize(self, *args):
+        return _calculix_pythoninterface.vectorf_resize(self, *args)
+
+    def insert(self, *args):
+        return _calculix_pythoninterface.vectorf_insert(self, *args)
+
+    def reserve(self, n):
+        return _calculix_pythoninterface.vectorf_reserve(self, n)
+
+    def capacity(self):
+        return _calculix_pythoninterface.vectorf_capacity(self)
+    __swig_destroy__ = _calculix_pythoninterface.delete_vectorf
+
+# Register vectorf in _calculix_pythoninterface:
+_calculix_pythoninterface.vectorf_swigregister(vectorf)
+
+class vectord(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+
+    def iterator(self):
+        return _calculix_pythoninterface.vectord_iterator(self)
+    def __iter__(self):
+        return self.iterator()
+
+    def __nonzero__(self):
+        return _calculix_pythoninterface.vectord___nonzero__(self)
+
+    def __bool__(self):
+        return _calculix_pythoninterface.vectord___bool__(self)
+
+    def __len__(self):
+        return _calculix_pythoninterface.vectord___len__(self)
+
+    def __getslice__(self, i, j):
+        return _calculix_pythoninterface.vectord___getslice__(self, i, j)
+
+    def __setslice__(self, *args):
+        return _calculix_pythoninterface.vectord___setslice__(self, *args)
+
+    def __delslice__(self, i, j):
+        return _calculix_pythoninterface.vectord___delslice__(self, i, j)
+
+    def __delitem__(self, *args):
+        return _calculix_pythoninterface.vectord___delitem__(self, *args)
+
+    def __getitem__(self, *args):
+        return _calculix_pythoninterface.vectord___getitem__(self, *args)
+
+    def __setitem__(self, *args):
+        return _calculix_pythoninterface.vectord___setitem__(self, *args)
+
+    def pop(self):
+        return _calculix_pythoninterface.vectord_pop(self)
+
+    def append(self, x):
+        return _calculix_pythoninterface.vectord_append(self, x)
+
+    def empty(self):
+        return _calculix_pythoninterface.vectord_empty(self)
+
+    def size(self):
+        return _calculix_pythoninterface.vectord_size(self)
+
+    def swap(self, v):
+        return _calculix_pythoninterface.vectord_swap(self, v)
+
+    def begin(self):
+        return _calculix_pythoninterface.vectord_begin(self)
+
+    def end(self):
+        return _calculix_pythoninterface.vectord_end(self)
+
+    def rbegin(self):
+        return _calculix_pythoninterface.vectord_rbegin(self)
+
+    def rend(self):
+        return _calculix_pythoninterface.vectord_rend(self)
+
+    def clear(self):
+        return _calculix_pythoninterface.vectord_clear(self)
+
+    def get_allocator(self):
+        return _calculix_pythoninterface.vectord_get_allocator(self)
+
+    def pop_back(self):
+        return _calculix_pythoninterface.vectord_pop_back(self)
+
+    def erase(self, *args):
+        return _calculix_pythoninterface.vectord_erase(self, *args)
+
+    def __init__(self, *args):
+        _calculix_pythoninterface.vectord_swiginit(self, _calculix_pythoninterface.new_vectord(*args))
+
+    def push_back(self, x):
+        return _calculix_pythoninterface.vectord_push_back(self, x)
+
+    def front(self):
+        return _calculix_pythoninterface.vectord_front(self)
+
+    def back(self):
+        return _calculix_pythoninterface.vectord_back(self)
+
+    def assign(self, n, x):
+        return _calculix_pythoninterface.vectord_assign(self, n, x)
+
+    def resize(self, *args):
+        return _calculix_pythoninterface.vectord_resize(self, *args)
+
+    def insert(self, *args):
+        return _calculix_pythoninterface.vectord_insert(self, *args)
+
+    def reserve(self, n):
+        return _calculix_pythoninterface.vectord_reserve(self, n)
+
+    def capacity(self):
+        return _calculix_pythoninterface.vectord_capacity(self)
+    __swig_destroy__ = _calculix_pythoninterface.delete_vectord
+
+# Register vectord in _calculix_pythoninterface:
+_calculix_pythoninterface.vectord_swigregister(vectord)
+
+class vectors(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+
+    def iterator(self):
+        return _calculix_pythoninterface.vectors_iterator(self)
+    def __iter__(self):
+        return self.iterator()
+
+    def __nonzero__(self):
+        return _calculix_pythoninterface.vectors___nonzero__(self)
+
+    def __bool__(self):
+        return _calculix_pythoninterface.vectors___bool__(self)
+
+    def __len__(self):
+        return _calculix_pythoninterface.vectors___len__(self)
+
+    def __getslice__(self, i, j):
+        return _calculix_pythoninterface.vectors___getslice__(self, i, j)
+
+    def __setslice__(self, *args):
+        return _calculix_pythoninterface.vectors___setslice__(self, *args)
+
+    def __delslice__(self, i, j):
+        return _calculix_pythoninterface.vectors___delslice__(self, i, j)
+
+    def __delitem__(self, *args):
+        return _calculix_pythoninterface.vectors___delitem__(self, *args)
+
+    def __getitem__(self, *args):
+        return _calculix_pythoninterface.vectors___getitem__(self, *args)
+
+    def __setitem__(self, *args):
+        return _calculix_pythoninterface.vectors___setitem__(self, *args)
+
+    def pop(self):
+        return _calculix_pythoninterface.vectors_pop(self)
+
+    def append(self, x):
+        return _calculix_pythoninterface.vectors_append(self, x)
+
+    def empty(self):
+        return _calculix_pythoninterface.vectors_empty(self)
+
+    def size(self):
+        return _calculix_pythoninterface.vectors_size(self)
+
+    def swap(self, v):
+        return _calculix_pythoninterface.vectors_swap(self, v)
+
+    def begin(self):
+        return _calculix_pythoninterface.vectors_begin(self)
+
+    def end(self):
+        return _calculix_pythoninterface.vectors_end(self)
+
+    def rbegin(self):
+        return _calculix_pythoninterface.vectors_rbegin(self)
+
+    def rend(self):
+        return _calculix_pythoninterface.vectors_rend(self)
+
+    def clear(self):
+        return _calculix_pythoninterface.vectors_clear(self)
+
+    def get_allocator(self):
+        return _calculix_pythoninterface.vectors_get_allocator(self)
+
+    def pop_back(self):
+        return _calculix_pythoninterface.vectors_pop_back(self)
+
+    def erase(self, *args):
+        return _calculix_pythoninterface.vectors_erase(self, *args)
+
+    def __init__(self, *args):
+        _calculix_pythoninterface.vectors_swiginit(self, _calculix_pythoninterface.new_vectors(*args))
+
+    def push_back(self, x):
+        return _calculix_pythoninterface.vectors_push_back(self, x)
+
+    def front(self):
+        return _calculix_pythoninterface.vectors_front(self)
+
+    def back(self):
+        return _calculix_pythoninterface.vectors_back(self)
+
+    def assign(self, n, x):
+        return _calculix_pythoninterface.vectors_assign(self, n, x)
+
+    def resize(self, *args):
+        return _calculix_pythoninterface.vectors_resize(self, *args)
+
+    def insert(self, *args):
+        return _calculix_pythoninterface.vectors_insert(self, *args)
+
+    def reserve(self, n):
+        return _calculix_pythoninterface.vectors_reserve(self, n)
+
+    def capacity(self):
+        return _calculix_pythoninterface.vectors_capacity(self)
+    __swig_destroy__ = _calculix_pythoninterface.delete_vectors
+
+# Register vectors in _calculix_pythoninterface:
+_calculix_pythoninterface.vectors_swigregister(vectors)
+
+class pairi_i(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+
+    def __init__(self, *args):
+        _calculix_pythoninterface.pairi_i_swiginit(self, _calculix_pythoninterface.new_pairi_i(*args))
+    first = property(_calculix_pythoninterface.pairi_i_first_get, _calculix_pythoninterface.pairi_i_first_set)
+    second = property(_calculix_pythoninterface.pairi_i_second_get, _calculix_pythoninterface.pairi_i_second_set)
+    def __len__(self):
+        return 2
+    def __repr__(self):
+        return str((self.first, self.second))
+    def __getitem__(self, index): 
+        if not (index % 2):
+            return self.first
+        else:
+            return self.second
+    def __setitem__(self, index, val):
+        if not (index % 2):
+            self.first = val
+        else:
+            self.second = val
+    __swig_destroy__ = _calculix_pythoninterface.delete_pairi_i
+
+# Register pairi_i in _calculix_pythoninterface:
+_calculix_pythoninterface.pairi_i_swigregister(pairi_i)
+
+class VectorPairi(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+
+    def iterator(self):
+        return _calculix_pythoninterface.VectorPairi_iterator(self)
+    def __iter__(self):
+        return self.iterator()
+
+    def __nonzero__(self):
+        return _calculix_pythoninterface.VectorPairi___nonzero__(self)
+
+    def __bool__(self):
+        return _calculix_pythoninterface.VectorPairi___bool__(self)
+
+    def __len__(self):
+        return _calculix_pythoninterface.VectorPairi___len__(self)
+
+    def __getslice__(self, i, j):
+        return _calculix_pythoninterface.VectorPairi___getslice__(self, i, j)
+
+    def __setslice__(self, *args):
+        return _calculix_pythoninterface.VectorPairi___setslice__(self, *args)
+
+    def __delslice__(self, i, j):
+        return _calculix_pythoninterface.VectorPairi___delslice__(self, i, j)
+
+    def __delitem__(self, *args):
+        return _calculix_pythoninterface.VectorPairi___delitem__(self, *args)
+
+    def __getitem__(self, *args):
+        return _calculix_pythoninterface.VectorPairi___getitem__(self, *args)
+
+    def __setitem__(self, *args):
+        return _calculix_pythoninterface.VectorPairi___setitem__(self, *args)
+
+    def pop(self):
+        return _calculix_pythoninterface.VectorPairi_pop(self)
+
+    def append(self, x):
+        return _calculix_pythoninterface.VectorPairi_append(self, x)
+
+    def empty(self):
+        return _calculix_pythoninterface.VectorPairi_empty(self)
+
+    def size(self):
+        return _calculix_pythoninterface.VectorPairi_size(self)
+
+    def swap(self, v):
+        return _calculix_pythoninterface.VectorPairi_swap(self, v)
+
+    def begin(self):
+        return _calculix_pythoninterface.VectorPairi_begin(self)
+
+    def end(self):
+        return _calculix_pythoninterface.VectorPairi_end(self)
+
+    def rbegin(self):
+        return _calculix_pythoninterface.VectorPairi_rbegin(self)
+
+    def rend(self):
+        return _calculix_pythoninterface.VectorPairi_rend(self)
+
+    def clear(self):
+        return _calculix_pythoninterface.VectorPairi_clear(self)
+
+    def get_allocator(self):
+        return _calculix_pythoninterface.VectorPairi_get_allocator(self)
+
+    def pop_back(self):
+        return _calculix_pythoninterface.VectorPairi_pop_back(self)
+
+    def erase(self, *args):
+        return _calculix_pythoninterface.VectorPairi_erase(self, *args)
+
+    def __init__(self, *args):
+        _calculix_pythoninterface.VectorPairi_swiginit(self, _calculix_pythoninterface.new_VectorPairi(*args))
+
+    def push_back(self, x):
+        return _calculix_pythoninterface.VectorPairi_push_back(self, x)
+
+    def front(self):
+        return _calculix_pythoninterface.VectorPairi_front(self)
+
+    def back(self):
+        return _calculix_pythoninterface.VectorPairi_back(self)
+
+    def assign(self, n, x):
+        return _calculix_pythoninterface.VectorPairi_assign(self, n, x)
+
+    def resize(self, *args):
+        return _calculix_pythoninterface.VectorPairi_resize(self, *args)
+
+    def insert(self, *args):
+        return _calculix_pythoninterface.VectorPairi_insert(self, *args)
+
+    def reserve(self, n):
+        return _calculix_pythoninterface.VectorPairi_reserve(self, n)
+
+    def capacity(self):
+        return _calculix_pythoninterface.VectorPairi_capacity(self)
+    __swig_destroy__ = _calculix_pythoninterface.delete_VectorPairi
+
+# Register VectorPairi in _calculix_pythoninterface:
+_calculix_pythoninterface.VectorPairi_swigregister(VectorPairi)
+
 class CalculiXPythonInterface(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
@@ -69,10 +687,19 @@ class CalculiXPythonInterface(object):
         _calculix_pythoninterface.CalculiXPythonInterface_swiginit(self, _calculix_pythoninterface.new_CalculiXPythonInterface())
     __swig_destroy__ = _calculix_pythoninterface.delete_CalculiXPythonInterface
 
-    def help(self) -> "void":
+    def help(self):
         return _calculix_pythoninterface.CalculiXPythonInterface_help(self)
 
-    def to_string_scientific(self, value: "double", precision: "int"=6) -> "std::string":
+    def test_int(self):
+        return _calculix_pythoninterface.CalculiXPythonInterface_test_int(self)
+
+    def test_double(self):
+        return _calculix_pythoninterface.CalculiXPythonInterface_test_double(self)
+
+    def test_string(self):
+        return _calculix_pythoninterface.CalculiXPythonInterface_test_string(self)
+
+    def to_string_scientific(self, value, precision=6):
         return _calculix_pythoninterface.CalculiXPythonInterface_to_string_scientific(self, value, precision)
     ccx_iface = property(_calculix_pythoninterface.CalculiXPythonInterface_ccx_iface_get, _calculix_pythoninterface.CalculiXPythonInterface_ccx_iface_set)
 

@@ -24,7 +24,24 @@ void CalculiXPythonInterface::help()
   std::cout << log;
 }
 
+int CalculiXPythonInterface::test_int()
+{
+  return 1;
+}
+
+double CalculiXPythonInterface::test_double()
+{
+  return 2.2;
+}
+
+std::string CalculiXPythonInterface::test_string()
+{
+ return "test string";
+}
+  
+
 std::string CalculiXPythonInterface::to_string_scientific(double value, int precision)
 {
-  return ccx_iface->to_string_scientific(value, precision);
+  //return ccx_iface->to_string_scientific(value, precision);
+  return "string return";
 }

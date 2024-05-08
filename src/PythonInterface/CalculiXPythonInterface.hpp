@@ -18,6 +18,10 @@ cubit:
 import sys
 sys.path.append('/home/user/git/Cubit-CalculiX/build')
 import calculix_pythoninterface as ccx
+print(ccx.CalculiXPythonInterface.to_string_scientific(1.5,3))
+print(ccx.CalculiXPythonInterface.test_int())
+print(ccx.CalculiXPythonInterface.test_double())
+print(ccx.CalculiXPythonInterface.test_string())
 */
 
 class CalculiXCoreInterface;
@@ -30,6 +34,9 @@ public:
   ~CalculiXPythonInterface();
 	
   void help(); // prints out python interface help
+  int test_int(); // test int datatype
+  double test_double(); // test double datatype
+  std::string test_string(); // test string datatype
   std::string to_string_scientific(double value, int precision = 6); // converts a double to string with scientific notation, with optional precision
   
   CalculiXCoreInterface *ccx_iface;
