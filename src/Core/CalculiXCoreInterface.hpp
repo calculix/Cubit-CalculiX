@@ -14,6 +14,7 @@ public:
 	
   bool set_use_ccx_autocleanup(bool bool_use);
   bool set_use_ccx_logfile(bool bool_use);
+  bool init_pythoninterface();
   std::string print_data();
   bool log_str(std::string str_log);
   std::vector<int> parser(std::string parse_type, std::string parse_string);

@@ -244,7 +244,39 @@ bool CalculiXCore::init()
   {
     print_to_log("CalculiXCore Initialization!");
   }
+
+  this->bool_init = true;
+  this->bool_init_pythoninterface = false;
+
   return true;
+}
+
+bool CalculiXCore::init_pythoninterface()
+{
+  // init_pythoninterface(); needs to be initialized after the cubit is fully loaded; 
+  // will be initialized with the core timer on its first evocation
+
+  if (!this->bool_init_pythoninterface)
+  {
+    std::vector<std::string> command;
+    command.push_back("#!python");
+    command.push_back("import sys");
+    command.push_back("sys.path.append('" + ccx_uo.mPathPythonInterface.toStdString() + "')");
+    command.push_back("from calculix_pythoninterface import *");
+    command.push_back("ccx = CalculiXPythonInterface()");
+    command.push_back("#!cubit");
+    
+    for (size_t i = 0; i < command.size(); i++)
+    {
+      //CubitInterface::silent_cmd_without_running_journal_lines(command[i].c_str());
+      CubitInterface::cubit_or_python_cmd(command[i].c_str());
+    }
+
+    this->bool_init_pythoninterface = true;
+    return true;
+  }
+
+  return false;
 }
 
 bool CalculiXCore::update()

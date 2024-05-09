@@ -41,12 +41,15 @@ public:
   CalculiXCore();
   ~CalculiXCore();
 
+  bool bool_init = false;
+  bool bool_init_pythoninterface = false;
   bool use_ccx_logfile = false;
   bool use_ccx_autocleanup = true;
   std::vector<std::vector<std::string>> sideset_face_data;
 
   bool print_to_log(std::string str_log);
-  bool init();
+  bool init(); // init all core objects
+  bool init_pythoninterface(); // init python interface
   bool update(); // updates everything to catch changes in the entities
   bool reset(); // delete all data and init new
   std::string autocleanup(); // cleans up the core data

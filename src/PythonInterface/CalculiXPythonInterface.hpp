@@ -17,11 +17,13 @@ cubit:
 #!python
 import sys
 sys.path.append('/home/user/git/Cubit-CalculiX/build')
-import calculix_pythoninterface as ccx
-print(ccx.CalculiXPythonInterface.to_string_scientific(1.5,3))
-print(ccx.CalculiXPythonInterface.test_int())
-print(ccx.CalculiXPythonInterface.test_double())
-print(ccx.CalculiXPythonInterface.test_string())
+from calculix_pythoninterface import *
+ccx = CalculiXPythonInterface()
+ccx.help()
+ccx.to_string_scientific(1.5,3)
+ccx.test_int()
+ccx.test_double()
+ccx.test_string()
 */
 
 class CalculiXCoreInterface;

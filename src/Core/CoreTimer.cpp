@@ -17,4 +17,8 @@ void CoreTimer::timeoutaction()
 {
   ccx_iface->check_jobs();
   //ccx_iface->check_zombie();
+  if (!this->bool_init_pythoninterface)
+  {
+    this->bool_init_pythoninterface = ccx_iface->init_pythoninterface();
+  }
 }

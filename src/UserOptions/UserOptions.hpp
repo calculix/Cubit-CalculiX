@@ -19,6 +19,8 @@ class UserOptions
     QString mPathParaViewName;
     QString mPathIcons;
     QString mPathIconsName;
+    QString mPathPythonInterface;
+    QString mPathPythonInterfaceName;
 };
 
 #endif // USEROPTIONS_HPP

@@ -2,8 +2,6 @@
 #include "CalculiXCoreInterface.hpp"
 #include "CubitMessage.hpp"
 
-#include <iostream>
-
 CalculiXPythonInterface::CalculiXPythonInterface()
 {
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -19,19 +17,21 @@ CalculiXPythonInterface::~CalculiXPythonInterface()
 void CalculiXPythonInterface::help()
 {
   std::string log = "CalculiX Python Interface HELP:\n";
+  log.append("write some help here....\n");
+  log.append("write some help here....\n");
+  log.append("write some help here....\n");
+  log.append("write some help here....\n");
   PRINT_INFO("%s", log.c_str());
-
-  std::cout << log;
 }
 
 int CalculiXPythonInterface::test_int()
 {
-  return 1;
+  return 999;
 }
 
 double CalculiXPythonInterface::test_double()
 {
-  return 2.2;
+  return 1.125359;
 }
 
 std::string CalculiXPythonInterface::test_string()
@@ -42,6 +42,5 @@ std::string CalculiXPythonInterface::test_string()
 
 std::string CalculiXPythonInterface::to_string_scientific(double value, int precision)
 {
-  //return ccx_iface->to_string_scientific(value, precision);
-  return "string return";
+  return ccx_iface->to_string_scientific(value, precision);
 }

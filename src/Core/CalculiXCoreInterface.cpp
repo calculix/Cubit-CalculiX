@@ -19,6 +19,11 @@ bool CalculiXCoreInterface::set_use_ccx_logfile(bool bool_use)
   return true;
 }
 
+bool CalculiXCoreInterface::init_pythoninterface()
+{
+  return ccx_core.init_pythoninterface();
+}
+
 std::string CalculiXCoreInterface::print_data()
 {
   return ccx_core.print_data();
