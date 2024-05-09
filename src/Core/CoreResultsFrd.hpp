@@ -95,6 +95,8 @@ public:
   bool read_parameter_header(std::vector<std::string> line); // processing the parameter header
   int get_current_result_block_type(std::string result_type); // gets result_block_type
   bool read_nodal_result_block(std::vector<std::string> line); // processing the nodal result block
+  std::vector<std::string> get_result_block_components_from_result_block_type(std::string result_block_type); // get components from block
+  int get_result_block_component_id(int result_block_type_id,std::string result_block_component); // get component id
   bool print_data(); // prints the data to the console
 
   CalculiXCoreInterface *ccx_iface;

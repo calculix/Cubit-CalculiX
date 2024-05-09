@@ -13,17 +13,11 @@ and replace Python.h with, if compiling fails because of qt
 #include "Python.h"
 #pragma pop_macro("slots")
 
-cubit:
+
 #!python
-import sys
-sys.path.append('/home/user/git/Cubit-CalculiX/build')
-from calculix_pythoninterface import *
-ccx = CalculiXPythonInterface()
-ccx.help()
-ccx.to_string_scientific(1.5,3)
-ccx.test_int()
-ccx.test_double()
-ccx.test_string()
+ccx.frd_get_result_block_types(1)
+ccx.frd_get_result_block_components(1, "DISP")
+
 */
 
 class CalculiXCoreInterface;
@@ -36,11 +30,16 @@ public:
   ~CalculiXPythonInterface();
 	
   void help(); // prints out python interface help
-  int test_int(); // test int datatype
-  double test_double(); // test double datatype
-  std::string test_string(); // test string datatype
-  std::string to_string_scientific(double value, int precision = 6); // converts a double to string with scientific notation, with optional precision
-  
+    
+  //QUERY results
+  //FRD results
+  std::vector<std::string> frd_get_result_block_types(int job_id); // returns a list of all result block types
+  std::vector<std::string> frd_get_result_block_components(int job_id, std::string result_block_type); // returns a list of all result block components for a block type
+  std::vector<int> frd_get_total_increments(int job_id); // returns a list of the total increments
+  std::vector<int> frd_get_node_ids_between_limits(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double lower_limit,double upper_limit); // returns the global node ids within the limit
+  //std::vector<int> frd_get_node_value(int job_id,int node_id, int total_increment,std::string result_block_type,std::string result_block_component); // returns the global node id value
+  //DAT results
+
   CalculiXCoreInterface *ccx_iface;
 };
 

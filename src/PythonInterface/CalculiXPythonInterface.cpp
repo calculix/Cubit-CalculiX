@@ -24,23 +24,22 @@ void CalculiXPythonInterface::help()
   PRINT_INFO("%s", log.c_str());
 }
 
-int CalculiXPythonInterface::test_int()
+std::vector<std::string> CalculiXPythonInterface::frd_get_result_block_types(int job_id)
 {
-  return 999;
+  return ccx_iface->frd_get_result_block_types(job_id);
 }
 
-double CalculiXPythonInterface::test_double()
+std::vector<std::string> CalculiXPythonInterface::frd_get_result_block_components(int job_id, std::string result_block_type)
 {
-  return 1.125359;
+  return ccx_iface->frd_get_result_block_components(job_id, result_block_type);
 }
 
-std::string CalculiXPythonInterface::test_string()
+std::vector<int> CalculiXPythonInterface::frd_get_total_increments(int job_id)
 {
- return "test string";
+  return ccx_iface->frd_get_total_increments(job_id);
 }
-  
 
-std::string CalculiXPythonInterface::to_string_scientific(double value, int precision)
+std::vector<int> CalculiXPythonInterface::frd_get_node_ids_between_limits(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double lower_limit,double upper_limit)
 {
-  return ccx_iface->to_string_scientific(value, precision);
+  return ccx_iface->frd_get_node_ids_between_limits(job_id,total_increment,result_block_type,result_block_component,lower_limit,upper_limit);
 }

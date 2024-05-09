@@ -15942,192 +15942,177 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_test_int(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_frd_get_result_block_types(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
+  int arg2 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
-  PyObject *swig_obj[1] ;
-  int result;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject *swig_obj[2] ;
+  std::vector< std::string,std::allocator< std::string > > result;
   
-  if (!args) SWIG_fail;
-  swig_obj[0] = args;
+  if (!SWIG_Python_UnpackTuple(args, "CalculiXPythonInterface_frd_get_result_block_types", 2, 2, swig_obj)) SWIG_fail;
   res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_CalculiXPythonInterface, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXPythonInterface_test_int" "', argument " "1"" of type '" "CalculiXPythonInterface *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXPythonInterface_frd_get_result_block_types" "', argument " "1"" of type '" "CalculiXPythonInterface *""'"); 
   }
   arg1 = reinterpret_cast< CalculiXPythonInterface * >(argp1);
-  result = (int)(arg1)->test_int();
-  resultobj = SWIG_From_int(static_cast< int >(result));
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CalculiXPythonInterface_frd_get_result_block_types" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  result = (arg1)->frd_get_result_block_types(arg2);
+  resultobj = swig::from(static_cast< std::vector< std::string,std::allocator< std::string > > >(result));
   return resultobj;
 fail:
   return NULL;
 }
 
 
-SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_test_double(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_frd_get_result_block_components(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
+  int arg2 ;
+  std::string arg3 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
-  PyObject *swig_obj[1] ;
-  double result;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject *swig_obj[3] ;
+  std::vector< std::string,std::allocator< std::string > > result;
   
-  if (!args) SWIG_fail;
-  swig_obj[0] = args;
+  if (!SWIG_Python_UnpackTuple(args, "CalculiXPythonInterface_frd_get_result_block_components", 3, 3, swig_obj)) SWIG_fail;
   res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_CalculiXPythonInterface, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXPythonInterface_test_double" "', argument " "1"" of type '" "CalculiXPythonInterface *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXPythonInterface_frd_get_result_block_components" "', argument " "1"" of type '" "CalculiXPythonInterface *""'"); 
   }
   arg1 = reinterpret_cast< CalculiXPythonInterface * >(argp1);
-  result = (double)(arg1)->test_double();
-  resultobj = SWIG_From_double(static_cast< double >(result));
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CalculiXPythonInterface_frd_get_result_block_components" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  {
+    std::string *ptr = (std::string *)0;
+    int res = SWIG_AsPtr_std_string(swig_obj[2], &ptr);
+    if (!SWIG_IsOK(res) || !ptr) {
+      SWIG_exception_fail(SWIG_ArgError((ptr ? res : SWIG_TypeError)), "in method '" "CalculiXPythonInterface_frd_get_result_block_components" "', argument " "3"" of type '" "std::string""'"); 
+    }
+    arg3 = *ptr;
+    if (SWIG_IsNewObj(res)) delete ptr;
+  }
+  result = (arg1)->frd_get_result_block_components(arg2,arg3);
+  resultobj = swig::from(static_cast< std::vector< std::string,std::allocator< std::string > > >(result));
   return resultobj;
 fail:
   return NULL;
 }
 
 
-SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_test_string(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_frd_get_total_increments(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
+  int arg2 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
-  PyObject *swig_obj[1] ;
-  std::string result;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject *swig_obj[2] ;
+  std::vector< int,std::allocator< int > > result;
   
-  if (!args) SWIG_fail;
-  swig_obj[0] = args;
+  if (!SWIG_Python_UnpackTuple(args, "CalculiXPythonInterface_frd_get_total_increments", 2, 2, swig_obj)) SWIG_fail;
   res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_CalculiXPythonInterface, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXPythonInterface_test_string" "', argument " "1"" of type '" "CalculiXPythonInterface *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXPythonInterface_frd_get_total_increments" "', argument " "1"" of type '" "CalculiXPythonInterface *""'"); 
   }
   arg1 = reinterpret_cast< CalculiXPythonInterface * >(argp1);
-  result = (arg1)->test_string();
-  resultobj = SWIG_From_std_string(static_cast< std::string >(result));
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CalculiXPythonInterface_frd_get_total_increments" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  result = (arg1)->frd_get_total_increments(arg2);
+  resultobj = swig::from(static_cast< std::vector< int,std::allocator< int > > >(result));
   return resultobj;
 fail:
   return NULL;
 }
 
 
-SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_to_string_scientific__SWIG_0(PyObject *SWIGUNUSEDPARM(self), Py_ssize_t nobjs, PyObject **swig_obj) {
+SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_frd_get_node_ids_between_limits(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
-  double arg2 ;
+  int arg2 ;
   int arg3 ;
+  std::string arg4 ;
+  std::string arg5 ;
+  double arg6 ;
+  double arg7 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
-  double val2 ;
+  int val2 ;
   int ecode2 = 0 ;
   int val3 ;
   int ecode3 = 0 ;
-  std::string result;
+  double val6 ;
+  int ecode6 = 0 ;
+  double val7 ;
+  int ecode7 = 0 ;
+  PyObject *swig_obj[7] ;
+  std::vector< int,std::allocator< int > > result;
   
-  if ((nobjs < 3) || (nobjs > 3)) SWIG_fail;
+  if (!SWIG_Python_UnpackTuple(args, "CalculiXPythonInterface_frd_get_node_ids_between_limits", 7, 7, swig_obj)) SWIG_fail;
   res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_CalculiXPythonInterface, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXPythonInterface_to_string_scientific" "', argument " "1"" of type '" "CalculiXPythonInterface *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXPythonInterface_frd_get_node_ids_between_limits" "', argument " "1"" of type '" "CalculiXPythonInterface *""'"); 
   }
   arg1 = reinterpret_cast< CalculiXPythonInterface * >(argp1);
-  ecode2 = SWIG_AsVal_double(swig_obj[1], &val2);
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CalculiXPythonInterface_to_string_scientific" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CalculiXPythonInterface_frd_get_node_ids_between_limits" "', argument " "2"" of type '" "int""'");
   } 
-  arg2 = static_cast< double >(val2);
+  arg2 = static_cast< int >(val2);
   ecode3 = SWIG_AsVal_int(swig_obj[2], &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "CalculiXPythonInterface_to_string_scientific" "', argument " "3"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "CalculiXPythonInterface_frd_get_node_ids_between_limits" "', argument " "3"" of type '" "int""'");
   } 
   arg3 = static_cast< int >(val3);
-  result = (arg1)->to_string_scientific(arg2,arg3);
-  resultobj = SWIG_From_std_string(static_cast< std::string >(result));
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_to_string_scientific__SWIG_1(PyObject *SWIGUNUSEDPARM(self), Py_ssize_t nobjs, PyObject **swig_obj) {
-  PyObject *resultobj = 0;
-  CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
-  double arg2 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  double val2 ;
-  int ecode2 = 0 ;
-  std::string result;
-  
-  if ((nobjs < 2) || (nobjs > 2)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_CalculiXPythonInterface, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXPythonInterface_to_string_scientific" "', argument " "1"" of type '" "CalculiXPythonInterface *""'"); 
+  {
+    std::string *ptr = (std::string *)0;
+    int res = SWIG_AsPtr_std_string(swig_obj[3], &ptr);
+    if (!SWIG_IsOK(res) || !ptr) {
+      SWIG_exception_fail(SWIG_ArgError((ptr ? res : SWIG_TypeError)), "in method '" "CalculiXPythonInterface_frd_get_node_ids_between_limits" "', argument " "4"" of type '" "std::string""'"); 
+    }
+    arg4 = *ptr;
+    if (SWIG_IsNewObj(res)) delete ptr;
   }
-  arg1 = reinterpret_cast< CalculiXPythonInterface * >(argp1);
-  ecode2 = SWIG_AsVal_double(swig_obj[1], &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CalculiXPythonInterface_to_string_scientific" "', argument " "2"" of type '" "double""'");
+  {
+    std::string *ptr = (std::string *)0;
+    int res = SWIG_AsPtr_std_string(swig_obj[4], &ptr);
+    if (!SWIG_IsOK(res) || !ptr) {
+      SWIG_exception_fail(SWIG_ArgError((ptr ? res : SWIG_TypeError)), "in method '" "CalculiXPythonInterface_frd_get_node_ids_between_limits" "', argument " "5"" of type '" "std::string""'"); 
+    }
+    arg5 = *ptr;
+    if (SWIG_IsNewObj(res)) delete ptr;
+  }
+  ecode6 = SWIG_AsVal_double(swig_obj[5], &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "CalculiXPythonInterface_frd_get_node_ids_between_limits" "', argument " "6"" of type '" "double""'");
   } 
-  arg2 = static_cast< double >(val2);
-  result = (arg1)->to_string_scientific(arg2);
-  resultobj = SWIG_From_std_string(static_cast< std::string >(result));
+  arg6 = static_cast< double >(val6);
+  ecode7 = SWIG_AsVal_double(swig_obj[6], &val7);
+  if (!SWIG_IsOK(ecode7)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode7), "in method '" "CalculiXPythonInterface_frd_get_node_ids_between_limits" "', argument " "7"" of type '" "double""'");
+  } 
+  arg7 = static_cast< double >(val7);
+  result = (arg1)->frd_get_node_ids_between_limits(arg2,arg3,arg4,arg5,arg6,arg7);
+  resultobj = swig::from(static_cast< std::vector< int,std::allocator< int > > >(result));
   return resultobj;
 fail:
   return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_to_string_scientific(PyObject *self, PyObject *args) {
-  Py_ssize_t argc;
-  PyObject *argv[4] = {
-    0
-  };
-  
-  if (!(argc = SWIG_Python_UnpackTuple(args, "CalculiXPythonInterface_to_string_scientific", 0, 3, argv))) SWIG_fail;
-  --argc;
-  if (argc == 2) {
-    int _v;
-    void *vptr = 0;
-    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_CalculiXPythonInterface, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      {
-        int res = SWIG_AsVal_double(argv[1], NULL);
-        _v = SWIG_CheckState(res);
-      }
-      if (_v) {
-        return _wrap_CalculiXPythonInterface_to_string_scientific__SWIG_1(self, argc, argv);
-      }
-    }
-  }
-  if (argc == 3) {
-    int _v;
-    void *vptr = 0;
-    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_CalculiXPythonInterface, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      {
-        int res = SWIG_AsVal_double(argv[1], NULL);
-        _v = SWIG_CheckState(res);
-      }
-      if (_v) {
-        {
-          int res = SWIG_AsVal_int(argv[2], NULL);
-          _v = SWIG_CheckState(res);
-        }
-        if (_v) {
-          return _wrap_CalculiXPythonInterface_to_string_scientific__SWIG_0(self, argc, argv);
-        }
-      }
-    }
-  }
-  
-fail:
-  SWIG_Python_RaiseOrModifyTypeError("Wrong number or type of arguments for overloaded function 'CalculiXPythonInterface_to_string_scientific'.\n"
-    "  Possible C/C++ prototypes are:\n"
-    "    CalculiXPythonInterface::to_string_scientific(double,int)\n"
-    "    CalculiXPythonInterface::to_string_scientific(double)\n");
-  return 0;
 }
 
 
@@ -16400,10 +16385,10 @@ static PyMethodDef SwigMethods[] = {
 	 { "new_CalculiXPythonInterface", _wrap_new_CalculiXPythonInterface, METH_NOARGS, NULL},
 	 { "delete_CalculiXPythonInterface", _wrap_delete_CalculiXPythonInterface, METH_O, NULL},
 	 { "CalculiXPythonInterface_help", _wrap_CalculiXPythonInterface_help, METH_O, NULL},
-	 { "CalculiXPythonInterface_test_int", _wrap_CalculiXPythonInterface_test_int, METH_O, NULL},
-	 { "CalculiXPythonInterface_test_double", _wrap_CalculiXPythonInterface_test_double, METH_O, NULL},
-	 { "CalculiXPythonInterface_test_string", _wrap_CalculiXPythonInterface_test_string, METH_O, NULL},
-	 { "CalculiXPythonInterface_to_string_scientific", _wrap_CalculiXPythonInterface_to_string_scientific, METH_VARARGS, NULL},
+	 { "CalculiXPythonInterface_frd_get_result_block_types", _wrap_CalculiXPythonInterface_frd_get_result_block_types, METH_VARARGS, NULL},
+	 { "CalculiXPythonInterface_frd_get_result_block_components", _wrap_CalculiXPythonInterface_frd_get_result_block_components, METH_VARARGS, NULL},
+	 { "CalculiXPythonInterface_frd_get_total_increments", _wrap_CalculiXPythonInterface_frd_get_total_increments, METH_VARARGS, NULL},
+	 { "CalculiXPythonInterface_frd_get_node_ids_between_limits", _wrap_CalculiXPythonInterface_frd_get_node_ids_between_limits, METH_VARARGS, NULL},
 	 { "CalculiXPythonInterface_ccx_iface_set", _wrap_CalculiXPythonInterface_ccx_iface_set, METH_VARARGS, NULL},
 	 { "CalculiXPythonInterface_ccx_iface_get", _wrap_CalculiXPythonInterface_ccx_iface_get, METH_O, NULL},
 	 { "CalculiXPythonInterface_swigregister", CalculiXPythonInterface_swigregister, METH_O, NULL},

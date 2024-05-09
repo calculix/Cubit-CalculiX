@@ -140,6 +140,15 @@ public:
   std::vector<std::string> get_customline_data(std::string position,std::string keyword,int keyword_id);
   std::vector<std::vector<double>> get_draw_data_for_load_force(int id); // returns coord(3) and magnitude(3) std::vector<double>
 
+  //QUERY results
+  //FRD results
+  std::vector<std::string> frd_get_result_block_types(int job_id); // returns a list of all result block types
+  std::vector<std::string> frd_get_result_block_components(int job_id, std::string result_block_type); // returns a list of all result block components for a block type
+  std::vector<int> frd_get_total_increments(int job_id); // returns a list of the total increments
+  std::vector<int> frd_get_node_ids_between_limits(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double lower_limit,double upper_limit); // returns the global node ids within the limit
+  //DAT results
+
+
   // GUI
   QIcon* getIcon(std::string name);
   QIcon getIcon2(std::string name);

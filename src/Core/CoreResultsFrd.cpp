@@ -574,6 +574,40 @@ bool CoreResultsFrd::read_nodal_result_block(std::vector<std::string> line)
   return true;
 }
 
+std::vector<std::string> CoreResultsFrd::get_result_block_components_from_result_block_type(std::string result_block_type)
+{
+  // on first match write out the components for the first matching result block
+  std::vector<std::string> components;
+  for (size_t i = 0; i < this->result_block_type.size(); i++)
+  {
+    if (this->result_block_type[i]==result_block_type)
+    {
+      components = this->result_block_components[i];
+      return components;
+    }
+  }
+  
+  return components;
+}
+
+int CoreResultsFrd::get_result_block_component_id(int result_block_type_id,std::string result_block_component)
+{
+  int component_id = -1;
+  std::vector<std::string> components;
+  components = get_result_block_components_from_result_block_type(this->result_block_type[result_block_type_id]);
+
+  for (size_t i = 0; i < components.size(); i++)
+  {
+    if (components[i]==result_block_component)
+    {
+      component_id = i;
+    }
+  }
+    
+  return component_id;
+}
+
+
 bool CoreResultsFrd::print_data()
 {
   std::string log;

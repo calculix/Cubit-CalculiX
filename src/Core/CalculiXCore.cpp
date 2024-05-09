@@ -35,6 +35,8 @@
 #include "CoreSteps.hpp"
 #include "CoreJobs.hpp"
 #include "CoreResults.hpp"
+#include "CoreResultsFrd.hpp"
+#include "CoreResultsDat.hpp"
 #include "CoreTimer.hpp"
 #include "CoreCustomLines.hpp"
 #include "loadUserOptions.hpp"
@@ -2549,6 +2551,122 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_force(int 
   CubitInterface::silent_cmd_without_running_journal_lines(command.c_str());
 
   return draw_data;
+}
+
+std::vector<std::string> CalculiXCore::frd_get_result_block_types(int job_id)
+{
+  std::vector<std::string> tmp;
+
+  int results_data_id = results->get_results_data_id_from_job_id(job_id);
+  int frd_data_id = results->get_frd_data_id_from_job_id(job_id);
+
+  if (results_data_id == -1)
+  {
+    return tmp;
+  }
+
+  tmp = results->frd_data[frd_data_id].result_block_type;
+      
+  return tmp;
+}
+
+std::vector<std::string> CalculiXCore::frd_get_result_block_components(int job_id, std::string result_block_type)
+{
+  std::vector<std::string> tmp;
+
+  int results_data_id = results->get_results_data_id_from_job_id(job_id);
+  int frd_data_id = results->get_frd_data_id_from_job_id(job_id);
+
+  if (results_data_id == -1)
+  {
+    return tmp;
+  }
+
+  tmp = results->frd_data[frd_data_id].get_result_block_components_from_result_block_type(result_block_type);
+      
+  return tmp;
+}
+
+
+std::vector<int> CalculiXCore::frd_get_total_increments(int job_id)
+{
+  std::vector<int> tmp;
+
+  int results_data_id = results->get_results_data_id_from_job_id(job_id);
+  int frd_data_id = results->get_frd_data_id_from_job_id(job_id);
+
+  if (results_data_id == -1)
+  {
+    return tmp;
+  }
+
+  for (size_t i = 0; i < results->frd_data[frd_data_id].result_blocks.size(); i++)
+  {
+    if (i==0)
+    {
+      tmp.push_back(results->frd_data[frd_data_id].result_blocks[i][3]);
+    }else{
+      // don't use double entries
+      if (tmp[tmp.size()-1]!=results->frd_data[frd_data_id].result_blocks[i][3])
+      {
+        tmp.push_back(results->frd_data[frd_data_id].result_blocks[i][3]);
+      }
+    }    
+  }
+  
+  return tmp;
+}
+
+std::vector<int> CalculiXCore::frd_get_node_ids_between_limits(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double lower_limit,double upper_limit)
+{
+  //ccx.frd_get_node_ids_between_limits(1,1,"STRESS","MISES",0,2)
+  std::vector<int> tmp; 
+
+  int results_data_id = results->get_results_data_id_from_job_id(job_id);
+  int frd_data_id = results->get_frd_data_id_from_job_id(job_id);
+
+  if (results_data_id == -1)
+  {
+    return tmp;
+  }
+
+  for (size_t i = 0; i < results->frd_data[frd_data_id].result_blocks.size(); i++)
+  {
+    //check for right total increment
+    if (results->frd_data[frd_data_id].result_blocks[i][3] == total_increment)
+    {
+      //check for right result_block_type
+      int frd_result_block_type_data_id = results->frd_data[frd_data_id].result_blocks[i][5];
+      std::string frd_result_block_type = results->frd_data[frd_data_id].result_block_type[frd_result_block_type_data_id];
+
+      if (frd_result_block_type == result_block_type)
+      {
+        //check for right result_block_component
+        int result_block_data_id = results->frd_data[frd_data_id].result_blocks[i][6];
+        int component_id = results->frd_data[frd_data_id].get_result_block_component_id(frd_result_block_type_data_id,result_block_component);
+        if (component_id != -1)
+        {
+          // loop over all nodes in result block
+          for (size_t ii = 0; ii < results->frd_data[frd_data_id].result_block_node_data[i].size(); ii++)
+          {
+            //result_block_node_data[0][0][0] node_id
+            //result_block_node_data[0][0][1] result_block_node_data_id
+
+             //result_block_data[result block data id][node][component]
+            //result_block_data[0][0][0] component...
+            int node_id = results->frd_data[frd_data_id].result_block_node_data[i][ii][0];
+            int node_data_id = results->frd_data[frd_data_id].result_block_node_data[i][ii][1];
+            double value = results->frd_data[frd_data_id].result_block_data[i][node_data_id][component_id];
+            if ((value >= lower_limit)&&(value <= upper_limit))
+            {
+              tmp.push_back(node_id);
+            }            
+          }
+        }
+      }
+    }
+  }
+  return tmp;
 }
 
 QIcon* CalculiXCore::getIcon(std::string name)
