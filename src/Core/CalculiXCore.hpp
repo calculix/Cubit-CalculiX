@@ -189,6 +189,8 @@ public:
   std::vector<std::vector<double>> get_draw_data_for_load_heatflux(int id); // returns coord(3) and magnitude(3) std::vector<double>
   std::vector<std::vector<double>> get_draw_data_for_load_gravity(int id); // returns coord(3) and magnitude(3) std::vector<double>
   std::vector<std::vector<double>> get_draw_data_for_load_centrifugal(int id); // returns coord(3) and magnitude(3) std::vector<double>
+  std::vector<std::vector<double>> get_draw_data_for_bc_displacement(int id); // returns coord(3) and dof
+  std::vector<std::vector<double>> get_draw_data_for_bc_temperature(int id); // returns coord(3) and dof
   bool draw_all(double size); // draw all loads and bcs
   
   //GUI

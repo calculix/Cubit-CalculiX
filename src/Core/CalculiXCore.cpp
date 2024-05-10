@@ -2891,6 +2891,96 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_centrifuga
   return draw_data;
 }
 
+std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_bc_displacement(int id) // returns coord(3) and dof
+{
+  int bc_set_id=-1;
+  BCSetHandle bc_set;
+  NodesetHandle nodeset;
+  std::string command;
+  std::vector<BCEntityHandle> bc_handles;
+  BCEntityHandle bc_handle;
+  std::vector<std::vector<double>> draw_data;
+
+  me_iface->create_default_bcset(0,true,true,true,bc_set);
+  bc_set_id = me_iface->id_from_handle(bc_set);
+
+  me_iface->get_bc_restraints(bc_set, bc_handles);
+  for (size_t i = 0; i < bc_handles.size(); i++)
+  {  
+    std::vector<MeshExportBCData> bc_attribs;
+    me_iface->get_bc_attributes(bc_handles[i],bc_attribs); 
+    if ((get_bc_fea_type(bc_attribs)==1))
+    {
+      if (id==me_iface->id_from_handle(bc_handles[i]))
+      {     
+        me_iface->get_bc_nodeset(bc_handles[i],nodeset);
+        std::vector<std::vector<double>> coords = get_nodeset_entities_coords(me_iface->id_from_handle(nodeset));
+        
+        for (size_t ii = 0; ii < coords.size(); ii++)
+        {   
+          for (size_t iii = 0; iii < bc_attribs.size(); iii++)
+          {
+            std::vector<double> data;            
+            data.push_back(coords[ii][0]);
+            data.push_back(coords[ii][1]);
+            data.push_back(coords[ii][2]);
+            data.push_back(bc_attribs[iii].first+1);
+            draw_data.push_back(data);
+            data.clear();          
+          }
+        }
+      }
+    }
+  }
+
+  return draw_data;
+}
+
+std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_bc_temperature(int id) // returns coord(3) and dof
+{
+  int bc_set_id=-1;
+  BCSetHandle bc_set;
+  NodesetHandle nodeset;
+  std::string command;
+  std::vector<BCEntityHandle> bc_handles;
+  BCEntityHandle bc_handle;
+  std::vector<std::vector<double>> draw_data;
+
+  me_iface->create_default_bcset(0,true,true,true,bc_set);
+  bc_set_id = me_iface->id_from_handle(bc_set);
+
+  me_iface->get_bc_restraints(bc_set, bc_handles);
+  for (size_t i = 0; i < bc_handles.size(); i++)
+  {  
+    std::vector<MeshExportBCData> bc_attribs;
+    me_iface->get_bc_attributes(bc_handles[i],bc_attribs); 
+    if ((get_bc_fea_type(bc_attribs)==4))
+    {
+      if (id==me_iface->id_from_handle(bc_handles[i]))
+      {     
+        me_iface->get_bc_nodeset(bc_handles[i],nodeset);
+        std::vector<std::vector<double>> coords = get_nodeset_entities_coords(me_iface->id_from_handle(nodeset));
+        
+        for (size_t ii = 0; ii < coords.size(); ii++)
+        {   
+          for (size_t iii = 0; iii < bc_attribs.size(); iii++)
+          {
+            std::vector<double> data;            
+            data.push_back(coords[ii][0]);
+            data.push_back(coords[ii][1]);
+            data.push_back(coords[ii][2]);
+            data.push_back(11);
+            draw_data.push_back(data);
+            data.clear();          
+          }
+        }
+      }
+    }
+  }
+  
+  return draw_data;
+}  
+
 bool CalculiXCore::draw_all(double size) // draw all bc and loads
 {
   return draw->draw_all(size);

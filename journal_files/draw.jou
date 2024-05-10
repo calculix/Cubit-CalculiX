@@ -26,10 +26,18 @@ block 1 add volume 1
 ccx create gravity 234 block 1 direction 1 2 3
 ccx create centrifugal 123123 block 1 coordinate -1 -2 -2 direction 4 4 0
 
+create displacement  on volume 1 dof 1 dof 6 fix 21 
+create displacement  on volume 2 dof all fix  1
+create temperature on volume 4 value 21
+
 vol all size auto factor 5
 mesh vol all
+
+create temperature on vertex 1 2 3 4 value 21
+
 
 create pressure on face 601 magnitude 99
 
 ccx draw size 0.8
+
 

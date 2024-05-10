@@ -16,7 +16,6 @@ and if compiling fails because of qt replace Python.h with
 #!python
 ccx.frd_get_result_block_types(1)
 ccx.frd_get_result_block_components(1, "DISP")
-
 */
 
 class CalculiXCoreInterface;

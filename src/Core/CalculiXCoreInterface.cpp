@@ -670,6 +670,16 @@ std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_load_c
   return ccx_core.get_draw_data_for_load_centrifugal(id);
 }
 
+std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_bc_displacement(int id) // returns coord(3) and dof
+{
+  return ccx_core.get_draw_data_for_bc_displacement(id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_bc_temperature(int id) // returns coord(3) and dof
+{
+  return ccx_core.get_draw_data_for_bc_temperature(id);
+}  
+
 bool CalculiXCoreInterface::draw_all(double size) // draw all bc and loads
 {
   return ccx_core.draw_all(size);

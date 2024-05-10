@@ -607,15 +607,14 @@ bool CoreDraw::draw_dof(std::vector<double> coord, int dof, std::string color, d
         }
 
         cmd = cmd + " color " + color + " no_flush";
-        commands.push_back(cmd);   
+        commands.push_back(cmd);
+        // draw line
+        commands.push_back("draw line location pos " + std::to_string(draw_coord[0]) + " " + std::to_string(draw_coord[1]) + " " + std::to_string(draw_coord[2]) + " location pos " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " color " + color + " no_flush");
     }else if (dof==11)
     {
-        /* code */
+        commands.push_back("draw location " +  std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " color " + color + " no_flush");
     }
-    // draw line
-    commands.push_back("draw line location pos " + std::to_string(draw_coord[0]) + " " + std::to_string(draw_coord[1]) + " " + std::to_string(draw_coord[2]) + " location pos " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " color " + color + " no_flush");
-    commands.push_back("graphics flush"); 
-    
+    commands.push_back("graphics flush");
     
     for (size_t i = 0; i < commands.size(); i++)
     {
@@ -694,11 +693,27 @@ bool CoreDraw::draw_load_centrifugal(int id, double size)
 
 bool CoreDraw::draw_bc_displacement(int id, double size)
 {
+    std::vector<std::vector<double>> draw_data;
+    draw_data = ccx_iface->get_draw_data_for_bc_displacement(id);
+    
+    for (size_t i = 0; i < draw_data.size(); i++)
+    {
+        draw_dof({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, draw_data[i][3], "coral", size);
+    }
+
     return true;
 }
 
 bool CoreDraw::draw_bc_temperature(int id, double size)
 {
+    std::vector<std::vector<double>> draw_data;
+    draw_data = ccx_iface->get_draw_data_for_bc_temperature(id);
+    
+    for (size_t i = 0; i < draw_data.size(); i++)
+    {
+        draw_dof({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, draw_data[i][3], "red", size);
+    }
+
     return true;
 }
 
@@ -759,55 +774,8 @@ bool CoreDraw::draw_bcs(double size)
 
 bool CoreDraw::draw_all(double size)
 {
-
     this->draw_bcs(size);
     this->draw_loads(size);
-
-    std::vector<double> start_point = {0,0,0};
-    std::vector<double> direction = {1,1,1};
-    std::vector<double> coord = {0,0,0};
-    std::string color = "red";
- 
-    //this->draw_arrow(start_point, direction, false, color, size);
-
-    start_point = {0,0,0};
-    direction = {0.1,1,0.3};
-    color = "blue";
-    size = 1;
-    //this->draw_arrow(start_point, direction, true, color, size);
-
-    start_point = {0,0,0};
-    direction = {-1,-1,0};
-    color = "green";
-    size = 1;
-    //this->draw_arrow(start_point, direction, false, color, size);
-
-    coord = {1,0,0};
-    color = "blue";
-    size = 1;
-    this->draw_dof(coord, 1, color, size);
-    coord = {1,0,0};
-    color = "yellow";
-    size = 2;
-    this->draw_dof(coord, 2, color, size);
-    coord = {1,0,0};
-    color = "red";
-    size = 3;
-    //this->draw_dof(coord, 3, color, size);
-    coord = {1,0,0};
-    color = "blue";
-    size = 1;
-    this->draw_dof(coord, 4, color, size);
-    coord = {1,0,0};
-    color = "yellow";
-    size = 2;
-    this->draw_dof(coord, 5, color, size);
-    coord = {1,0,0};
-    color = "red";
-    size = 3;
-    this->draw_dof(coord, 6, color, size);
-
     
-
     return true;
 }
