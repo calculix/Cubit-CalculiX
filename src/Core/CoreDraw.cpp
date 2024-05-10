@@ -26,6 +26,22 @@ bool CoreDraw::init()
 std::vector<double> CoreDraw::rotate(std::vector<double> coord, std::vector<double> vec_a, std::vector<double> vec_b)
 {
     // https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
+    
+    // if vector is parallel and the same direction return coord    
+    if ((vec_a[0]==vec_b[0])&&(vec_a[1]==vec_b[1])&&(vec_a[2]==vec_b[2]))
+    {
+        return coord;
+    }
+
+    // if vector is parallel and the opposite direction return inverse coord
+    if ((vec_a[0]==-vec_b[0])&&(vec_a[1]==-vec_b[1])&&(vec_a[2]==-vec_b[2]))
+    {
+        coord[0] = coord[0] * (-1);
+        coord[1] = coord[1] * (-1);
+        coord[2] = coord[2] * (-1);
+        return coord;
+    }
+    
     std::string log;
     std::vector<double> tmp_coord = {0,0,0};
     std::vector<double> vec_k = {0,0,0};
@@ -239,6 +255,15 @@ bool CoreDraw::draw_arrow(std::vector<double> start_point, std::vector<double> d
     {
         return true;
     }
+
+    //delete sign of zero
+    for (size_t i = 0; i < direction.size(); i++)
+    {
+        if (direction[i]==0)
+        {
+            direction[i]=0;
+        }
+    }
     
     std::vector<std::string> commands;
     std::string cmd;
@@ -265,6 +290,103 @@ bool CoreDraw::draw_arrow(std::vector<double> start_point, std::vector<double> d
         coord[0]= 0.3*size;
         coord[1]= radius*cos(2*pi/npolygon*i)*size;
         coord[2]= radius*sin(2*pi/npolygon*i)*size;
+        coord = rotate(coord,{1.,0.,0.},arrow_direction);
+        polygon_coords.push_back(coord);
+    }
+    //translate arrow head to starting point
+    for (size_t i = 0; i < npolygon; i++)
+    {
+        polygon_coords[i][0] += arrow_start_coord[0];
+        polygon_coords[i][1] += arrow_start_coord[1];
+        polygon_coords[i][2] += arrow_start_coord[2];
+    }
+
+    // translate arrow if it should not point on starting point
+    // we translate away the full arrow length in arrow direction
+    if (from_start_point)
+    {
+        arrow_start_coord[0] = start_point[0] - arrow_direction[0]*size;
+        arrow_start_coord[1] = start_point[1] - arrow_direction[1]*size;
+        arrow_start_coord[2] = start_point[2] - arrow_direction[2]*size;
+
+        arrow_end_coord[0] = start_point[0];
+        arrow_end_coord[1] = start_point[1];
+        arrow_end_coord[2] = start_point[2];
+
+        for (size_t i = 0; i < npolygon; i++)
+        {
+            polygon_coords[i][0] -= arrow_end_coord[0] - arrow_start_coord[0];
+            polygon_coords[i][1] -= arrow_end_coord[1] - arrow_start_coord[1];
+            polygon_coords[i][2] -= arrow_end_coord[2] - arrow_start_coord[2];
+        }
+    }
+    
+    // draw arrow head
+    for (size_t i = 0; i < npolygon; i++)
+    {
+        if (i==npolygon-1)
+        {
+            commands.push_back("draw polygon location pos " + std::to_string(arrow_start_coord[0]) + " " + std::to_string(arrow_start_coord[1]) + " " + std::to_string(arrow_start_coord[2]) + " location pos " + std::to_string(polygon_coords[i][0]) + " " + std::to_string(polygon_coords[i][1]) + " " + std::to_string(polygon_coords[i][2]) + " location pos " + std::to_string(polygon_coords[0][0]) + " " + std::to_string(polygon_coords[0][1]) + " " + std::to_string(polygon_coords[0][2]) + " color " + color + " no_flush");
+        }else{
+            commands.push_back("draw polygon location pos " + std::to_string(arrow_start_coord[0]) + " " + std::to_string(arrow_start_coord[1]) + " " + std::to_string(arrow_start_coord[2]) + " location pos " + std::to_string(polygon_coords[i][0]) + " " + std::to_string(polygon_coords[i][1]) + " " + std::to_string(polygon_coords[i][2]) + " location pos " + std::to_string(polygon_coords[i+1][0]) + " " + std::to_string(polygon_coords[i+1][1]) + " " + std::to_string(polygon_coords[i+1][2]) + " color " + color + " no_flush");
+        }
+    }
+    cmd = "draw polygon";
+    for (size_t i = 0; i < npolygon; i++)
+    {
+        cmd = cmd + " location pos " + std::to_string(polygon_coords[i][0]) + " " + std::to_string(polygon_coords[i][1]) + " " + std::to_string(polygon_coords[i][2]);
+    }
+
+    cmd = cmd + " color " + color + " no_flush";
+    commands.push_back(cmd);
+
+    // draw arrow line
+    commands.push_back("draw line location pos " + std::to_string(arrow_end_coord[0]) + " " + std::to_string(arrow_end_coord[1]) + " " + std::to_string(arrow_end_coord[2]) + " location pos " + std::to_string(arrow_start_coord[0]) + " " + std::to_string(arrow_start_coord[1]) + " " + std::to_string(arrow_start_coord[2]) + " color " + color + " no_flush");
+    commands.push_back("graphics flush"); 
+    
+    for (size_t i = 0; i < commands.size(); i++)
+    {
+        CubitInterface::silent_cmd(commands[i].c_str());
+        //commands[i].append("\n");
+        //PRINT_INFO("%s", commands[i].c_str());
+    }
+
+    return true;
+}
+
+bool CoreDraw::draw_arrow_flat(std::vector<double> start_point, std::vector<double> direction, bool from_start_point, std::string color, double size)
+{
+    //skip if zero vector
+    if (direction[0]==0 && direction[1]==0 && direction[2]==0)
+    {
+        return true;
+    }
+    
+    std::vector<std::string> commands;
+    std::string cmd;
+    int npolygon = 10;
+    double radius = 0.1;
+    double pi = 3.14159265359;
+    std::vector<std::vector<double>> polygon_coords;
+    std::vector<double> arrow_start_coord(3);
+    std::vector<double> arrow_end_coord(3);
+    std::vector<double> arrow_direction = unit_vector(direction); //compute unit vector for direction
+
+    arrow_start_coord[0] = start_point[0];
+    arrow_start_coord[1] = start_point[1];
+    arrow_start_coord[2] = start_point[2];
+
+    arrow_end_coord[0] = start_point[0] + arrow_direction[0]*size;
+    arrow_end_coord[1] = start_point[1] + arrow_direction[1]*size;
+    arrow_end_coord[2] = start_point[2] + arrow_direction[2]*size;
+
+    //arrow tip and rotation
+    for (size_t i = 0; i < npolygon; i++)
+    {
+        std::vector<double> coord(3);
+        coord[0]= 0.1*size;
+        coord[1]= radius*cos(2*pi/npolygon*i)*size*1.1;
+        coord[2]= radius*sin(2*pi/npolygon*i)*size*1.1;
         coord = rotate(coord,{1.,0.,0.},arrow_direction);
         polygon_coords.push_back(coord);
     }
@@ -507,27 +629,66 @@ bool CoreDraw::draw_load_force(int id, double size)
 {
     std::vector<std::vector<double>> draw_data;
     draw_data = ccx_iface->get_draw_data_for_load_force(id);
+    
+    for (size_t i = 0; i < draw_data.size(); i++)
+    {
+        draw_arrow({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, {draw_data[i][3],draw_data[i][4],draw_data[i][5]}, false, "green", size);
+        i+=1;
+        draw_arrow_flat({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, {draw_data[i][3],draw_data[i][4],draw_data[i][5]}, false, "seagreen", size);
+    }
 
     return true;
 }
 
 bool CoreDraw::draw_load_pressure(int id, double size)
 {
+    std::vector<std::vector<double>> draw_data;
+    draw_data = ccx_iface->get_draw_data_for_load_pressure(id);
+    
+    for (size_t i = 0; i < draw_data.size(); i++)
+    {
+        draw_arrow({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, {draw_data[i][3],draw_data[i][4],draw_data[i][5]}, false, "lightskyblue", size);
+    }
+
     return true;
 }
 
 bool CoreDraw::draw_load_heatflux(int id, double size)
 {
+    std::vector<std::vector<double>> draw_data;
+    draw_data = ccx_iface->get_draw_data_for_load_heatflux(id);
+    
+    for (size_t i = 0; i < draw_data.size(); i++)
+    {
+        draw_arrow({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, {draw_data[i][3],draw_data[i][4],draw_data[i][5]}, false, "purple", size);
+    }
+
     return true;
 }
 
 bool CoreDraw::draw_load_gravity(int id, double size)
 {
+    std::vector<std::vector<double>> draw_data;
+    draw_data = ccx_iface->get_draw_data_for_load_gravity(id);
+    
+    for (size_t i = 0; i < draw_data.size(); i++)
+    {
+        draw_arrow({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, {draw_data[i][3],draw_data[i][4],draw_data[i][5]}, false, "brown", size);
+    }
+
     return true;
 }
 
 bool CoreDraw::draw_load_centrifugal(int id, double size)
 {
+    std::vector<std::vector<double>> draw_data;
+    draw_data = ccx_iface->get_draw_data_for_load_centrifugal(id);
+    
+    for (size_t i = 0; i < draw_data.size(); i++)
+    {
+        draw_arrow({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, {draw_data[i][3],draw_data[i][4],draw_data[i][5]}, false, "khaki", size);
+    }
+
     return true;
 }
 
@@ -543,54 +704,54 @@ bool CoreDraw::draw_bc_temperature(int id, double size)
 
 bool CoreDraw::draw_loads(double size)
 {
-    std::vector<std::vector<std::string>> tmp_load_ids;
+    std::vector<int> tmp_load_ids;
     
-    tmp_load_ids = ccx_iface->get_loadsforces_tree_data();    
+    tmp_load_ids = ccx_iface->get_loadsforces_ids();    
     for (size_t i = 0; i < tmp_load_ids.size(); i++)
     {
-        draw_load_force(std::stoi(tmp_load_ids[i][1]), size);
+        draw_load_force(tmp_load_ids[i], size);
     }
 
-    tmp_load_ids = ccx_iface->get_loadspressures_tree_data();
+    tmp_load_ids = ccx_iface->get_loadspressures_ids();
     for (size_t i = 0; i < tmp_load_ids.size(); i++)
     {
-        draw_load_pressure(std::stoi(tmp_load_ids[i][1]), size);
+        draw_load_pressure(tmp_load_ids[i], size);
     }
 
-    tmp_load_ids = ccx_iface->get_loadsheatfluxes_tree_data();
+    tmp_load_ids = ccx_iface->get_loadsheatfluxes_ids();
     for (size_t i = 0; i < tmp_load_ids.size(); i++)
     {
-        draw_load_heatflux(std::stoi(tmp_load_ids[i][1]), size);
+        draw_load_heatflux(tmp_load_ids[i], size);
     }
 
-    tmp_load_ids = ccx_iface->get_loadsgravity_tree_data();
+    tmp_load_ids = ccx_iface->get_loadsgravity_ids();
     for (size_t i = 0; i < tmp_load_ids.size(); i++)
     {
-        draw_load_gravity(std::stoi(tmp_load_ids[i][1]), size);
+        draw_load_gravity(tmp_load_ids[i], size);
     }
 
-    tmp_load_ids = ccx_iface->get_loadscentrifugal_tree_data();
+    tmp_load_ids = ccx_iface->get_loadscentrifugal_ids();
     for (size_t i = 0; i < tmp_load_ids.size(); i++)
     {
-        draw_load_centrifugal(std::stoi(tmp_load_ids[i][1]), size);
+        draw_load_centrifugal(tmp_load_ids[i], size);
     }
     return true;
 }
 
 bool CoreDraw::draw_bcs(double size)
 {
-    std::vector<std::vector<std::string>> tmp_bc_ids;
+    std::vector<int> tmp_bc_ids;
     
-    tmp_bc_ids = ccx_iface->get_bcsdisplacements_tree_data();    
+    tmp_bc_ids = ccx_iface->get_bcsdisplacements_ids();    
     for (size_t i = 0; i < tmp_bc_ids.size(); i++)
     {
-        draw_bc_displacement(std::stoi(tmp_bc_ids[i][1]), size);
+        draw_bc_displacement(tmp_bc_ids[i], size);
     }
 
-    tmp_bc_ids = ccx_iface->get_bcstemperatures_tree_data();    
+    tmp_bc_ids = ccx_iface->get_bcstemperatures_ids();    
     for (size_t i = 0; i < tmp_bc_ids.size(); i++)
     {
-        draw_bc_temperature(std::stoi(tmp_bc_ids[i][1]), size);
+        draw_bc_temperature(tmp_bc_ids[i], size);
     }
 
     return true;
@@ -598,6 +759,10 @@ bool CoreDraw::draw_bcs(double size)
 
 bool CoreDraw::draw_all(double size)
 {
+
+    this->draw_bcs(size);
+    this->draw_loads(size);
+
     std::vector<double> start_point = {0,0,0};
     std::vector<double> direction = {1,1,1};
     std::vector<double> coord = {0,0,0};
@@ -642,8 +807,7 @@ bool CoreDraw::draw_all(double size)
     size = 3;
     this->draw_dof(coord, 6, color, size);
 
-    this->draw_bcs(size);
-    this->draw_loads(size);
+    
 
     return true;
 }

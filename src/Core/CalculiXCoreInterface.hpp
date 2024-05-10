@@ -34,6 +34,13 @@ public:
   std::string get_surfaceinteraction_name(int surfaceinteraction_id); // gets the surfaceinteraction name
   std::vector<std::string> get_contactpair_master_slave(int contactpair_id); // gets the contactpair master and slave name
   std::string get_amplitude_name(int amplitude_id); // gets the surfaceinteraction name
+  std::vector<int> get_loadsforces_ids(); // get all load forces ids
+  std::vector<int> get_loadspressures_ids(); // get all load pressure ids
+  std::vector<int> get_loadsheatfluxes_ids(); // get all load heatflux ids
+  std::vector<int> get_loadsgravity_ids(); // get all load gravity ids
+  std::vector<int> get_loadscentrifugal_ids(); // get all load centrifugal ids
+  std::vector<int> get_bcsdisplacements_ids(); // get all bc displacement ids
+  std::vector<int> get_bcstemperatures_ids(); // get all bc temperature ids
   bool check_block_exists(int block_id);
   bool check_nodeset_exists(int nodeset_id);
   bool check_sideset_exists(int sideset_id);
@@ -138,7 +145,13 @@ public:
   bool delete_customline(int customline_id); // delete customline
   std::vector<std::vector<std::string>> get_entities(std::string entity, int id);
   std::vector<std::string> get_customline_data(std::string position,std::string keyword,int keyword_id);
+  //draw
   std::vector<std::vector<double>> get_draw_data_for_load_force(int id); // returns coord(3) and magnitude(3) std::vector<double>
+  std::vector<std::vector<double>> get_draw_data_for_load_pressure(int id); // returns coord(3) and magnitude(3) std::vector<double>
+  std::vector<std::vector<double>> get_draw_data_for_load_heatflux(int id); // returns coord(3) and magnitude(3) std::vector<double>
+  std::vector<std::vector<double>> get_draw_data_for_load_gravity(int id); // returns coord(3) and magnitude(3) std::vector<double>
+  std::vector<std::vector<double>> get_draw_data_for_load_centrifugal(int id); // returns coord(3) and magnitude(3) std::vector<double>
+  bool draw_all(double size); // draw all loads and bcs
 
   //QUERY results
   //FRD results
@@ -188,7 +201,6 @@ public:
   std::vector<std::vector<std::string>> get_steps_fieldoutputs_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_customlines_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_jobs_tree_data(); // gets the data from core to build the tree
-  bool draw_all(); // draw all loads and bcs
 
   MeshExportInterface *me_iface;
 };

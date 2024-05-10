@@ -1303,6 +1303,124 @@ std::string CalculiXCore::get_nodeset_name(int nodeset_id)
   return nodeset_name;
 }
 
+std::vector<std::vector<double>> CalculiXCore::get_nodeset_entities_coords(int nodeset_id)
+{
+  std::vector<std::vector<double>> tmp;
+
+  std::vector< int > returned_node_list;
+	std::vector< int > returned_volume_list;
+	std::vector< int > returned_surface_list;
+	std::vector< int > returned_curve_list;
+	std::vector< int > returned_vertex_list;
+
+  CubitInterface::get_nodeset_children(nodeset_id,returned_node_list,returned_volume_list,returned_surface_list,returned_curve_list,returned_vertex_list);
+
+  for (size_t i = 0; i < returned_node_list.size(); i++)
+  {
+    std::array<double,3> coord = CubitInterface::get_nodal_coordinates(returned_node_list[i]);
+    tmp.push_back({coord[0],coord[1],coord[2]});
+  }
+  
+  for (size_t i = 0; i < returned_volume_list.size(); i++)
+  {
+    std::array<double,3> coord = CubitInterface::get_center_point("volume",returned_volume_list[i]);
+    tmp.push_back({coord[0],coord[1],coord[2]});
+  }
+
+  for (size_t i = 0; i < returned_surface_list.size(); i++)
+  {
+    std::array<double,3> coord = CubitInterface::get_center_point("surface",returned_surface_list[i]);
+    tmp.push_back({coord[0],coord[1],coord[2]});
+  }
+
+  for (size_t i = 0; i < returned_curve_list.size(); i++)
+  {
+    std::array<double,3> coord = CubitInterface::get_center_point("curve",returned_curve_list[i]);
+    tmp.push_back({coord[0],coord[1],coord[2]});
+  }
+
+  for (size_t i = 0; i < returned_vertex_list.size(); i++)
+  {
+    std::array<double,3> coord = CubitInterface::get_center_point("vertex",returned_vertex_list[i]);
+    tmp.push_back({coord[0],coord[1],coord[2]});
+  }
+
+  
+  return tmp;
+}
+
+std::vector<std::vector<double>> CalculiXCore::get_sideset_entities_coords(int sideset_id)
+{
+  std::vector<std::vector<double>> tmp;
+
+  std::vector< int > returned_face_list;
+	std::vector< int > returned_surface_list;
+	std::vector< int > returned_curve_list;
+
+  CubitInterface::get_sideset_children(sideset_id,returned_face_list,returned_surface_list,returned_curve_list);
+
+  for (size_t i = 0; i < returned_face_list.size(); i++)
+  {
+    std::array<double,3> coord = CubitInterface::get_center_point("face",returned_face_list[i]);
+    tmp.push_back({coord[0],coord[1],coord[2]});
+  }
+  
+  for (size_t i = 0; i < returned_surface_list.size(); i++)
+  {
+    std::array<double,3> coord = CubitInterface::get_center_point("surface",returned_surface_list[i]);
+    tmp.push_back({coord[0],coord[1],coord[2]});
+  }
+
+  for (size_t i = 0; i < returned_curve_list.size(); i++)
+  {
+    std::array<double,3> coord = CubitInterface::get_center_point("curve",returned_curve_list[i]);
+    tmp.push_back({coord[0],coord[1],coord[2]});
+  }
+
+  return tmp;
+}
+
+std::vector<std::vector<double>> CalculiXCore::get_sideset_entities_coords_normals(int sideset_id)
+{
+  std::vector<std::vector<double>> tmp;
+
+  std::vector< int > returned_face_list;
+	std::vector< int > returned_surface_list;
+	std::vector< int > returned_curve_list;
+
+  CubitInterface::get_sideset_children(sideset_id,returned_face_list,returned_surface_list,returned_curve_list);
+
+  /*
+  for (size_t i = 0; i < returned_face_list.size(); i++)
+  {
+    std::array<double,3> coord = CubitInterface::get_center_point("face",returned_face_list[i]);
+    std::array<double,3> normal = CubitInterface::get_surface_normal_at_coord(-1,coord);
+    if (!((normal[0]==0)&&(normal[1]==0)&&(normal[2]==0)))
+    {
+      tmp.push_back({coord[0],coord[1],coord[2],normal[0],normal[1],normal[2]});
+    }
+  }
+  */
+  
+  for (size_t i = 0; i < returned_surface_list.size(); i++)
+  {
+    std::array<double,3> coord = CubitInterface::get_center_point("surface",returned_surface_list[i]);
+    std::array<double,3> normal = CubitInterface::get_surface_normal(returned_surface_list[i]);
+    tmp.push_back({coord[0],coord[1],coord[2],normal[0],normal[1],normal[2]});
+  }
+
+  /*
+  for (size_t i = 0; i < returned_curve_list.size(); i++)
+  {
+    std::array<double,3> coord = CubitInterface::get_center_point("curve",returned_curve_list[i]);
+    std::array<double,3> normal = CubitInterface::get_surface_normal(returned_surface_list[i]);
+    tmp.push_back({coord[0],coord[1],coord[2],normal[0],normal[1],normal[2]});
+  }
+  */
+  
+  return tmp;
+}
+
 std::string CalculiXCore::get_sideset_name(int sideset_id)
 {
   std::string sideset_name;
@@ -1378,6 +1496,78 @@ std::string CalculiXCore::get_amplitude_name(int amplitude_id)
   }
 
   return amplitude_name;
+}
+
+std::vector<int> CalculiXCore::get_loadsforces_ids()
+{
+  std::vector<int> tmp;
+  for (size_t i = 0; i < loadsforces->loads_data.size(); i++)
+  {
+    tmp.push_back(loadsforces->loads_data[i][0]);
+  }
+  return tmp;
+}
+
+
+std::vector<int> CalculiXCore::get_loadspressures_ids()
+{
+  std::vector<int> tmp;
+  for (size_t i = 0; i < loadspressures->loads_data.size(); i++)
+  {
+    tmp.push_back(loadspressures->loads_data[i][0]);
+  }
+  return tmp;
+}
+
+
+std::vector<int> CalculiXCore::get_loadsheatfluxes_ids()
+{
+  std::vector<int> tmp;
+  for (size_t i = 0; i < loadsheatfluxes->loads_data.size(); i++)
+  {
+    tmp.push_back(loadsheatfluxes->loads_data[i][0]);
+  }
+  return tmp;
+}
+
+std::vector<int> CalculiXCore::get_loadsgravity_ids()
+{
+  std::vector<int> tmp;
+  for (size_t i = 0; i < loadsgravity->loads_data.size(); i++)
+  {
+    tmp.push_back(loadsgravity->loads_data[i][0]);
+  }
+  return tmp;
+}
+
+std::vector<int> CalculiXCore::get_loadscentrifugal_ids()
+{
+  std::vector<int> tmp;
+  for (size_t i = 0; i < loadscentrifugal->loads_data.size(); i++)
+  {
+    tmp.push_back(loadscentrifugal->loads_data[i][0]);
+  }
+  return tmp;
+}
+
+std::vector<int> CalculiXCore::get_bcsdisplacements_ids()
+{
+  std::vector<int> tmp;
+  for (size_t i = 0; i < bcsdisplacements->bcs_data.size(); i++)
+  {
+    tmp.push_back(bcsdisplacements->bcs_data[i][0]);
+  }
+  return tmp;
+}
+
+std::vector<int> CalculiXCore::get_bcstemperatures_ids()
+{
+  std::vector<int> tmp;
+  for (size_t i = 0; i < bcstemperatures->bcs_data.size(); i++)
+  {
+    tmp.push_back(bcstemperatures->bcs_data[i][0]);
+  }
+  return tmp;
 }
 
 bool CalculiXCore::check_block_exists(int block_id)
@@ -2506,9 +2696,7 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_force(int 
   std::string command;
   std::vector<BCEntityHandle> bc_handles;
   BCEntityHandle bc_handle;
-  std::vector<MeshExportBCData> bc_attribs;
   std::vector<std::vector<double>> draw_data;
-  std::vector<int> nodes;
 
   me_iface->create_default_bcset(0,true,true,true,bc_set);
   bc_set_id = me_iface->id_from_handle(bc_set);
@@ -2516,6 +2704,7 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_force(int 
   me_iface->get_bc_loads(bc_set, bc_handles);
   for (size_t i = 0; i < bc_handles.size(); i++)
   {  
+    std::vector<MeshExportBCData> bc_attribs;
     me_iface->get_bc_attributes(bc_handles[i],bc_attribs); 
     if ((get_bc_fea_type(bc_attribs)==5))
     {
@@ -2523,16 +2712,15 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_force(int 
       {     
         me_iface->get_bc_nodeset(bc_handles[i],nodeset);
         
-        nodes = CubitInterface::get_nodeset_nodes_inclusive(me_iface->id_from_handle(nodeset)); 	
+        std::vector<std::vector<double>> coords = get_nodeset_entities_coords(me_iface->id_from_handle(nodeset));
         
-        for (size_t ii = 0; ii < nodes.size(); ii++)
+        for (size_t ii = 0; ii < coords.size(); ii++)
         {
-          std::array<double,3> coord = CubitInterface::get_nodal_coordinates(nodes[ii]);
           std::vector<double> data;
           
-          data.push_back(coord[0]);
-          data.push_back(coord[1]);
-          data.push_back(coord[2]);
+          data.push_back(coords[ii][0]);
+          data.push_back(coords[ii][1]);
+          data.push_back(coords[ii][2]);
           data.push_back(bc_attribs[1].second*bc_attribs[0].second);
           data.push_back(bc_attribs[2].second*bc_attribs[0].second);
           data.push_back(bc_attribs[3].second*bc_attribs[0].second);
@@ -2542,15 +2730,170 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_force(int 
           data[4] = bc_attribs[6].second*bc_attribs[4].second;
           data[5] = bc_attribs[7].second*bc_attribs[4].second;
           draw_data.push_back(data);
+
+          data.clear();
         }
       }
     }
   }
 
-  command = "delete bcset " + std::to_string(bc_set_id);
-  CubitInterface::silent_cmd_without_running_journal_lines(command.c_str());
+  //command.append("delete bcset " + std::to_string(bc_set_id));
+  //CubitInterface::silent_cmd_without_running_journal_lines(command.c_str());
 
   return draw_data;
+}
+
+std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_pressure(int id)
+{
+  int bc_set_id=-1;
+  BCSetHandle bc_set;
+  SidesetHandle sideset;
+  std::string command;
+  std::vector<BCEntityHandle> bc_handles;
+  BCEntityHandle bc_handle;
+  std::vector<std::vector<double>> draw_data;
+
+  me_iface->create_default_bcset(0,true,true,true,bc_set);
+  bc_set_id = me_iface->id_from_handle(bc_set);
+
+  me_iface->get_bc_loads(bc_set, bc_handles);
+  for (size_t i = 0; i < bc_handles.size(); i++)
+  {  
+    std::vector<MeshExportBCData> bc_attribs;
+    me_iface->get_bc_attributes(bc_handles[i],bc_attribs); 
+    if ((get_bc_fea_type(bc_attribs)==6))
+    {
+      if (id==me_iface->id_from_handle(bc_handles[i]))
+      {     
+        me_iface->get_bc_sideset(bc_handles[i],sideset);
+        std::vector<std::vector<double>> coords_normals = get_sideset_entities_coords_normals(me_iface->id_from_handle(sideset));
+        
+        for (size_t ii = 0; ii < coords_normals.size(); ii++)
+        {
+          std::vector<double> data;
+          
+          data.push_back(coords_normals[ii][0]);
+          data.push_back(coords_normals[ii][1]);
+          data.push_back(coords_normals[ii][2]);
+          data.push_back(coords_normals[ii][3]);
+          data.push_back(coords_normals[ii][4]);
+          data.push_back(coords_normals[ii][5]);
+          draw_data.push_back(data);
+          data.clear();
+        }
+      }
+    }
+  }
+
+  return draw_data;
+}
+
+std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_heatflux(int id)
+{
+  int bc_set_id=-1;
+  BCSetHandle bc_set;
+  SidesetHandle sideset;
+  std::string command;
+  std::vector<BCEntityHandle> bc_handles;
+  BCEntityHandle bc_handle;
+  std::vector<std::vector<double>> draw_data;
+
+  me_iface->create_default_bcset(0,true,true,true,bc_set);
+  bc_set_id = me_iface->id_from_handle(bc_set);
+
+  me_iface->get_bc_loads(bc_set, bc_handles);
+  for (size_t i = 0; i < bc_handles.size(); i++)
+  {  
+    std::vector<MeshExportBCData> bc_attribs;
+    me_iface->get_bc_attributes(bc_handles[i],bc_attribs); 
+    if ((get_bc_fea_type(bc_attribs)==7))
+    {
+      if (id==me_iface->id_from_handle(bc_handles[i]))
+      {     
+        me_iface->get_bc_sideset(bc_handles[i],sideset);
+        std::vector<std::vector<double>> coords_normals = get_sideset_entities_coords_normals(me_iface->id_from_handle(sideset));
+        
+        for (size_t ii = 0; ii < coords_normals.size(); ii++)
+        {
+          std::vector<double> data;
+          
+          data.push_back(coords_normals[ii][0]);
+          data.push_back(coords_normals[ii][1]);
+          data.push_back(coords_normals[ii][2]);
+          data.push_back(coords_normals[ii][3]);
+          data.push_back(coords_normals[ii][4]);
+          data.push_back(coords_normals[ii][5]);
+          draw_data.push_back(data);
+          data.clear();
+        }
+      }
+    }
+  }
+
+  return draw_data;
+}
+
+
+std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_gravity(int id)
+{
+  std::vector<std::vector<double>> draw_data;
+
+  for (size_t i = 0; i < loadsgravity->loads_data.size(); i++)
+  {
+    // check for right id
+    if (id==loadsgravity->loads_data[i][0])
+    { 
+      int direction_data_id = loadsgravity->get_direction_data_id_from_direction_id(loadsgravity->loads_data[i][5]);
+
+      std::vector<double> data;
+      
+      data.push_back(0);
+      data.push_back(0);
+      data.push_back(0);
+      data.push_back(string_scientific_to_double(loadsgravity->direction_data[direction_data_id][1]));
+      data.push_back(string_scientific_to_double(loadsgravity->direction_data[direction_data_id][2]));
+      data.push_back(string_scientific_to_double(loadsgravity->direction_data[direction_data_id][3]));
+      draw_data.push_back(data);
+      data.clear();
+    }
+
+  }
+
+  return draw_data;
+}
+
+std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_centrifugal(int id)
+{
+  std::vector<std::vector<double>> draw_data;
+
+  for (size_t i = 0; i < loadsgravity->loads_data.size(); i++)
+  {
+    // check for right id
+    if (id==loadsgravity->loads_data[i][0])
+    { 
+      int direction_data_id = loadscentrifugal->get_direction_data_id_from_direction_id(loadscentrifugal->loads_data[i][5]);
+      int coordinate_data_id = loadscentrifugal->get_coordinate_data_id_from_coordinate_id(loadscentrifugal->loads_data[i][7]);
+
+      std::vector<double> data;
+      
+      data.push_back(string_scientific_to_double(loadscentrifugal->coordinate_data[coordinate_data_id][1]));
+      data.push_back(string_scientific_to_double(loadscentrifugal->coordinate_data[coordinate_data_id][2]));
+      data.push_back(string_scientific_to_double(loadscentrifugal->coordinate_data[coordinate_data_id][3]));
+      data.push_back(string_scientific_to_double(loadscentrifugal->direction_data[direction_data_id][1]));
+      data.push_back(string_scientific_to_double(loadscentrifugal->direction_data[direction_data_id][2]));
+      data.push_back(string_scientific_to_double(loadscentrifugal->direction_data[direction_data_id][3]));
+      draw_data.push_back(data);
+      data.clear();
+    }
+
+  }
+
+  return draw_data;
+}
+
+bool CalculiXCore::draw_all(double size) // draw all bc and loads
+{
+  return draw->draw_all(size);
 }
 
 std::vector<std::string> CalculiXCore::frd_get_result_block_types(int job_id)
@@ -4560,9 +4903,4 @@ std::vector<int> CalculiXCore::extractIntegers(std::string str)
         temp = "";
     }
     return ids;
-}
-
-bool CalculiXCore::draw_all() // draw all bc and loads
-{
-  return draw->draw_all();
 }

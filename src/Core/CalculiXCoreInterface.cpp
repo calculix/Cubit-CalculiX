@@ -125,6 +125,41 @@ std::string CalculiXCoreInterface::get_amplitude_name(int amplitude_id)
   return ccx_core.get_amplitude_name(amplitude_id);
 }
 
+std::vector<int> CalculiXCoreInterface::get_loadsforces_ids()
+{
+  return ccx_core.get_loadsforces_ids();
+}
+
+std::vector<int> CalculiXCoreInterface::get_loadspressures_ids()
+{
+  return ccx_core.get_loadspressures_ids();
+}
+
+std::vector<int> CalculiXCoreInterface::get_loadsheatfluxes_ids()
+{
+  return ccx_core.get_loadsheatfluxes_ids();
+}
+
+std::vector<int> CalculiXCoreInterface::get_loadsgravity_ids()
+{
+  return ccx_core.get_loadsgravity_ids();
+}
+
+std::vector<int> CalculiXCoreInterface::get_loadscentrifugal_ids()
+{
+  return ccx_core.get_loadscentrifugal_ids();
+}
+
+std::vector<int> CalculiXCoreInterface::get_bcsdisplacements_ids()
+{
+  return ccx_core.get_bcsdisplacements_ids();
+}
+
+std::vector<int> CalculiXCoreInterface::get_bcstemperatures_ids()
+{
+  return ccx_core.get_bcstemperatures_ids();
+}
+
 bool CalculiXCoreInterface::check_block_exists(int block_id)
 {
   return ccx_core.check_block_exists(block_id);
@@ -615,6 +650,31 @@ std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_load_f
   return ccx_core.get_draw_data_for_load_force(id);
 }
 
+std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_load_pressure(int id)
+{
+  return ccx_core.get_draw_data_for_load_pressure(id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_load_heatflux(int id)
+{
+  return ccx_core.get_draw_data_for_load_heatflux(id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_load_gravity(int id)
+{
+  return ccx_core.get_draw_data_for_load_gravity(id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_load_centrifugal(int id)
+{
+  return ccx_core.get_draw_data_for_load_centrifugal(id);
+}
+
+bool CalculiXCoreInterface::draw_all(double size) // draw all bc and loads
+{
+  return ccx_core.draw_all(size);
+}
+
 std::vector<std::string> CalculiXCoreInterface::frd_get_result_block_types(int job_id)
 {
   return ccx_core.frd_get_result_block_types(job_id);
@@ -868,9 +928,4 @@ std::string CalculiXCoreInterface::get_hbc_export_data() // gets the export data
 std::string CalculiXCoreInterface::get_step_export_data() // gets the export data from core
 {
   return ccx_core.get_step_export_data();
-}
-
-bool CalculiXCoreInterface::draw_all() // draw all bc and loads
-{
-  return ccx_core.draw_all();
 }

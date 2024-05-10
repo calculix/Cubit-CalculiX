@@ -67,10 +67,20 @@ public:
   std::vector<int> get_block_element_ids(int block_id); // gets the block global element ids
   std::string get_material_name(int material_id); // gets the material name
   std::string get_nodeset_name(int nodeset_id); // gets the nodeset name
+  std::vector<std::vector<double>> get_nodeset_entities_coords(int nodeset_id); // gets the nodeset entities coordinates
   std::string get_sideset_name(int sideset_id); // gets the sideset name
+  std::vector<std::vector<double>> get_sideset_entities_coords(int sideset_id); // gets the sideset entities coordinates
+  std::vector<std::vector<double>> get_sideset_entities_coords_normals(int sideset_id); // gets the sideset entities coordinates and its normals
   std::string get_surfaceinteraction_name(int surfaceinteraction_id); // gets the surfaceinteraction name
   std::vector<std::string> get_contactpair_master_slave(int contactpair_id); // gets the contactpair master and slave name
   std::string get_amplitude_name(int amplitude_id); // gets the amplitude name
+  std::vector<int> get_loadsforces_ids(); // get all load forces ids
+  std::vector<int> get_loadspressures_ids(); // get all load pressure ids
+  std::vector<int> get_loadsheatfluxes_ids(); // get all load heatflux ids
+  std::vector<int> get_loadsgravity_ids(); // get all load gravity ids
+  std::vector<int> get_loadscentrifugal_ids(); // get all load centrifugal ids
+  std::vector<int> get_bcsdisplacements_ids(); // get all bc displacement ids
+  std::vector<int> get_bcstemperatures_ids(); // get all bc temperature ids
   bool check_block_exists(int block_id);
   bool check_bc_exists(int bc_id,int BCType); // checks if the id for the bc type exists
   bool check_nodeset_exists(int nodeset_id);
@@ -175,6 +185,11 @@ public:
   std::vector<std::string> get_customline_data(std::string position,std::string keyword,int keyword_id);
   std::vector<std::vector<std::string>> get_entities(std::string entity, int id); // get entitties for highlight
   std::vector<std::vector<double>> get_draw_data_for_load_force(int id); // returns coord(3) and magnitude(3) std::vector<double>
+  std::vector<std::vector<double>> get_draw_data_for_load_pressure(int id); // returns coord(3) and magnitude(3) std::vector<double>
+  std::vector<std::vector<double>> get_draw_data_for_load_heatflux(int id); // returns coord(3) and magnitude(3) std::vector<double>
+  std::vector<std::vector<double>> get_draw_data_for_load_gravity(int id); // returns coord(3) and magnitude(3) std::vector<double>
+  std::vector<std::vector<double>> get_draw_data_for_load_centrifugal(int id); // returns coord(3) and magnitude(3) std::vector<double>
+  bool draw_all(double size); // draw all loads and bcs
   
   //GUI
   QIcon* getIcon(std::string name);
@@ -222,7 +237,6 @@ public:
   std::string get_initialcondition_export_data(); // gets the export data from core
   std::string get_hbc_export_data(); // gets the export data from core
   std::string get_step_export_data(); // gets the export data from core
-  bool draw_all(); // draw all loads and bcs
 
   //QUERY results
   //FRD results

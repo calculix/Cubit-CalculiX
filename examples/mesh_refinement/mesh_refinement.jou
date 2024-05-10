@@ -88,7 +88,7 @@ mesh volume all
 
 #!python
 #max refinement levels
-ref_max = 3
+ref_max = 2
 
 for i in range(ref_max):
   cubit.cmd(f"ccx create job name 'mesh_refinement_{i+1}'")
@@ -106,3 +106,4 @@ cubit.cmd(f"ccx run job {ref_max+1}")
 cubit.cmd(f"ccx wait job {ref_max+1}")
 
 print("finished!")
+
