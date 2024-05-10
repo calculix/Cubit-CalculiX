@@ -176,14 +176,12 @@ template <typename T> T SwigValueInit() {
 #undef slots
 #include "Python.h"
 #pragma pop_macro("slots")
-
 # define _DEBUG 1
 #else
 #pragma push_macro("slots")
 #undef slots
 #include "Python.h"
 #pragma pop_macro("slots")
-
 #endif
 
 /* -----------------------------------------------------------------------------
@@ -16044,6 +16042,44 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_frd_get_time_from_total_increment(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
+  int arg2 ;
+  int arg3 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
+  PyObject *swig_obj[3] ;
+  double result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "CalculiXPythonInterface_frd_get_time_from_total_increment", 3, 3, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_CalculiXPythonInterface, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXPythonInterface_frd_get_time_from_total_increment" "', argument " "1"" of type '" "CalculiXPythonInterface *""'"); 
+  }
+  arg1 = reinterpret_cast< CalculiXPythonInterface * >(argp1);
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CalculiXPythonInterface_frd_get_time_from_total_increment" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  ecode3 = SWIG_AsVal_int(swig_obj[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "CalculiXPythonInterface_frd_get_time_from_total_increment" "', argument " "3"" of type '" "int""'");
+  } 
+  arg3 = static_cast< int >(val3);
+  result = (double)(arg1)->frd_get_time_from_total_increment(arg2,arg3);
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_frd_get_node_ids_between_limits(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
@@ -16512,6 +16548,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "CalculiXPythonInterface_frd_get_result_block_types", _wrap_CalculiXPythonInterface_frd_get_result_block_types, METH_VARARGS, NULL},
 	 { "CalculiXPythonInterface_frd_get_result_block_components", _wrap_CalculiXPythonInterface_frd_get_result_block_components, METH_VARARGS, NULL},
 	 { "CalculiXPythonInterface_frd_get_total_increments", _wrap_CalculiXPythonInterface_frd_get_total_increments, METH_VARARGS, NULL},
+	 { "CalculiXPythonInterface_frd_get_time_from_total_increment", _wrap_CalculiXPythonInterface_frd_get_time_from_total_increment, METH_VARARGS, NULL},
 	 { "CalculiXPythonInterface_frd_get_node_ids_between_limits", _wrap_CalculiXPythonInterface_frd_get_node_ids_between_limits, METH_VARARGS, NULL},
 	 { "CalculiXPythonInterface_frd_get_node_value", _wrap_CalculiXPythonInterface_frd_get_node_value, METH_VARARGS, NULL},
 	 { "CalculiXPythonInterface_frd_get_node_values", _wrap_CalculiXPythonInterface_frd_get_node_values, METH_VARARGS, NULL},

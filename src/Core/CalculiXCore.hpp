@@ -193,6 +193,18 @@ public:
   std::vector<std::vector<double>> get_draw_data_for_bc_temperature(int id); // returns coord(3) and dof
   bool draw_all(double size); // draw all loads and bcs
   
+  //QUERY results
+  //FRD results
+  std::vector<std::string> frd_get_result_block_types(int job_id); // returns a list of all result block types
+  std::vector<std::string> frd_get_result_block_components(int job_id, std::string result_block_type); // returns a list of all result block components for a block type
+  std::vector<int> frd_get_total_increments(int job_id); // returns a list of the total increments
+  double frd_get_time_from_total_increment(int job_id, int total_increment); // returns a the time for a total increment
+  std::vector<int> frd_get_node_ids_between_limits(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double lower_limit,double upper_limit); // returns the global node ids within the limit
+  double frd_get_node_value(int job_id,int node_id, int total_increment,std::string result_block_type,std::string result_block_component); // returns the queried node_id value
+  std::vector<double> frd_get_node_values(int job_id,int node_id, int total_increment,std::string result_block_type); // returns the queried node_id values
+  //DAT results
+
+
   //GUI
   QIcon* getIcon(std::string name);
   QIcon getIcon2(std::string name);
@@ -239,17 +251,6 @@ public:
   std::string get_initialcondition_export_data(); // gets the export data from core
   std::string get_hbc_export_data(); // gets the export data from core
   std::string get_step_export_data(); // gets the export data from core
-
-  //QUERY results
-  //FRD results
-  std::vector<std::string> frd_get_result_block_types(int job_id); // returns a list of all result block types
-  std::vector<std::string> frd_get_result_block_components(int job_id, std::string result_block_type); // returns a list of all result block components for a block type
-  std::vector<int> frd_get_total_increments(int job_id); // returns a list of the total increments
-  std::vector<int> frd_get_node_ids_between_limits(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double lower_limit,double upper_limit); // returns the global node ids within the limit
-  double frd_get_node_value(int job_id,int node_id, int total_increment,std::string result_block_type,std::string result_block_component); // returns the queried node_id value
-  std::vector<double> frd_get_node_values(int job_id,int node_id, int total_increment,std::string result_block_type); // returns the queried node_id values
-  //DAT results
-
 
   CoreBlocks *cb;
   CoreMaterials *mat;

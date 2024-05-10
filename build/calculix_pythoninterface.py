@@ -69,52 +69,52 @@ class SwigPyIterator(object):
     __repr__ = _swig_repr
     __swig_destroy__ = _calculix_pythoninterface.delete_SwigPyIterator
 
-    def value(self) -> "PyObject *":
+    def value(self):
         return _calculix_pythoninterface.SwigPyIterator_value(self)
 
-    def incr(self, n: "size_t"=1) -> "swig::SwigPyIterator *":
+    def incr(self, n=1):
         return _calculix_pythoninterface.SwigPyIterator_incr(self, n)
 
-    def decr(self, n: "size_t"=1) -> "swig::SwigPyIterator *":
+    def decr(self, n=1):
         return _calculix_pythoninterface.SwigPyIterator_decr(self, n)
 
-    def distance(self, x: "SwigPyIterator") -> "ptrdiff_t":
+    def distance(self, x):
         return _calculix_pythoninterface.SwigPyIterator_distance(self, x)
 
-    def equal(self, x: "SwigPyIterator") -> "bool":
+    def equal(self, x):
         return _calculix_pythoninterface.SwigPyIterator_equal(self, x)
 
-    def copy(self) -> "swig::SwigPyIterator *":
+    def copy(self):
         return _calculix_pythoninterface.SwigPyIterator_copy(self)
 
-    def next(self) -> "PyObject *":
+    def next(self):
         return _calculix_pythoninterface.SwigPyIterator_next(self)
 
-    def __next__(self) -> "PyObject *":
+    def __next__(self):
         return _calculix_pythoninterface.SwigPyIterator___next__(self)
 
-    def previous(self) -> "PyObject *":
+    def previous(self):
         return _calculix_pythoninterface.SwigPyIterator_previous(self)
 
-    def advance(self, n: "ptrdiff_t") -> "swig::SwigPyIterator *":
+    def advance(self, n):
         return _calculix_pythoninterface.SwigPyIterator_advance(self, n)
 
-    def __eq__(self, x: "SwigPyIterator") -> "bool":
+    def __eq__(self, x):
         return _calculix_pythoninterface.SwigPyIterator___eq__(self, x)
 
-    def __ne__(self, x: "SwigPyIterator") -> "bool":
+    def __ne__(self, x):
         return _calculix_pythoninterface.SwigPyIterator___ne__(self, x)
 
-    def __iadd__(self, n: "ptrdiff_t") -> "swig::SwigPyIterator &":
+    def __iadd__(self, n):
         return _calculix_pythoninterface.SwigPyIterator___iadd__(self, n)
 
-    def __isub__(self, n: "ptrdiff_t") -> "swig::SwigPyIterator &":
+    def __isub__(self, n):
         return _calculix_pythoninterface.SwigPyIterator___isub__(self, n)
 
-    def __add__(self, n: "ptrdiff_t") -> "swig::SwigPyIterator *":
+    def __add__(self, n):
         return _calculix_pythoninterface.SwigPyIterator___add__(self, n)
 
-    def __sub__(self, *args) -> "ptrdiff_t":
+    def __sub__(self, *args):
         return _calculix_pythoninterface.SwigPyIterator___sub__(self, *args)
     def __iter__(self):
         return self
@@ -126,102 +126,102 @@ class vectori(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
 
-    def iterator(self) -> "swig::SwigPyIterator *":
+    def iterator(self):
         return _calculix_pythoninterface.vectori_iterator(self)
     def __iter__(self):
         return self.iterator()
 
-    def __nonzero__(self) -> "bool":
+    def __nonzero__(self):
         return _calculix_pythoninterface.vectori___nonzero__(self)
 
-    def __bool__(self) -> "bool":
+    def __bool__(self):
         return _calculix_pythoninterface.vectori___bool__(self)
 
-    def __len__(self) -> "std::vector< int >::size_type":
+    def __len__(self):
         return _calculix_pythoninterface.vectori___len__(self)
 
-    def __getslice__(self, i: "std::vector< int >::difference_type", j: "std::vector< int >::difference_type") -> "std::vector< int,std::allocator< int > > *":
+    def __getslice__(self, i, j):
         return _calculix_pythoninterface.vectori___getslice__(self, i, j)
 
-    def __setslice__(self, *args) -> "void":
+    def __setslice__(self, *args):
         return _calculix_pythoninterface.vectori___setslice__(self, *args)
 
-    def __delslice__(self, i: "std::vector< int >::difference_type", j: "std::vector< int >::difference_type") -> "void":
+    def __delslice__(self, i, j):
         return _calculix_pythoninterface.vectori___delslice__(self, i, j)
 
-    def __delitem__(self, *args) -> "void":
+    def __delitem__(self, *args):
         return _calculix_pythoninterface.vectori___delitem__(self, *args)
 
-    def __getitem__(self, *args) -> "std::vector< int >::value_type const &":
+    def __getitem__(self, *args):
         return _calculix_pythoninterface.vectori___getitem__(self, *args)
 
-    def __setitem__(self, *args) -> "void":
+    def __setitem__(self, *args):
         return _calculix_pythoninterface.vectori___setitem__(self, *args)
 
-    def pop(self) -> "std::vector< int >::value_type":
+    def pop(self):
         return _calculix_pythoninterface.vectori_pop(self)
 
-    def append(self, x: "std::vector< int >::value_type const &") -> "void":
+    def append(self, x):
         return _calculix_pythoninterface.vectori_append(self, x)
 
-    def empty(self) -> "bool":
+    def empty(self):
         return _calculix_pythoninterface.vectori_empty(self)
 
-    def size(self) -> "std::vector< int >::size_type":
+    def size(self):
         return _calculix_pythoninterface.vectori_size(self)
 
-    def swap(self, v: "vectori") -> "void":
+    def swap(self, v):
         return _calculix_pythoninterface.vectori_swap(self, v)
 
-    def begin(self) -> "std::vector< int >::iterator":
+    def begin(self):
         return _calculix_pythoninterface.vectori_begin(self)
 
-    def end(self) -> "std::vector< int >::iterator":
+    def end(self):
         return _calculix_pythoninterface.vectori_end(self)
 
-    def rbegin(self) -> "std::vector< int >::reverse_iterator":
+    def rbegin(self):
         return _calculix_pythoninterface.vectori_rbegin(self)
 
-    def rend(self) -> "std::vector< int >::reverse_iterator":
+    def rend(self):
         return _calculix_pythoninterface.vectori_rend(self)
 
-    def clear(self) -> "void":
+    def clear(self):
         return _calculix_pythoninterface.vectori_clear(self)
 
-    def get_allocator(self) -> "std::vector< int >::allocator_type":
+    def get_allocator(self):
         return _calculix_pythoninterface.vectori_get_allocator(self)
 
-    def pop_back(self) -> "void":
+    def pop_back(self):
         return _calculix_pythoninterface.vectori_pop_back(self)
 
-    def erase(self, *args) -> "std::vector< int >::iterator":
+    def erase(self, *args):
         return _calculix_pythoninterface.vectori_erase(self, *args)
 
     def __init__(self, *args):
         _calculix_pythoninterface.vectori_swiginit(self, _calculix_pythoninterface.new_vectori(*args))
 
-    def push_back(self, x: "std::vector< int >::value_type const &") -> "void":
+    def push_back(self, x):
         return _calculix_pythoninterface.vectori_push_back(self, x)
 
-    def front(self) -> "std::vector< int >::value_type const &":
+    def front(self):
         return _calculix_pythoninterface.vectori_front(self)
 
-    def back(self) -> "std::vector< int >::value_type const &":
+    def back(self):
         return _calculix_pythoninterface.vectori_back(self)
 
-    def assign(self, n: "std::vector< int >::size_type", x: "std::vector< int >::value_type const &") -> "void":
+    def assign(self, n, x):
         return _calculix_pythoninterface.vectori_assign(self, n, x)
 
-    def resize(self, *args) -> "void":
+    def resize(self, *args):
         return _calculix_pythoninterface.vectori_resize(self, *args)
 
-    def insert(self, *args) -> "void":
+    def insert(self, *args):
         return _calculix_pythoninterface.vectori_insert(self, *args)
 
-    def reserve(self, n: "std::vector< int >::size_type") -> "void":
+    def reserve(self, n):
         return _calculix_pythoninterface.vectori_reserve(self, n)
 
-    def capacity(self) -> "std::vector< int >::size_type":
+    def capacity(self):
         return _calculix_pythoninterface.vectori_capacity(self)
     __swig_destroy__ = _calculix_pythoninterface.delete_vectori
 
@@ -232,102 +232,102 @@ class vectorf(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
 
-    def iterator(self) -> "swig::SwigPyIterator *":
+    def iterator(self):
         return _calculix_pythoninterface.vectorf_iterator(self)
     def __iter__(self):
         return self.iterator()
 
-    def __nonzero__(self) -> "bool":
+    def __nonzero__(self):
         return _calculix_pythoninterface.vectorf___nonzero__(self)
 
-    def __bool__(self) -> "bool":
+    def __bool__(self):
         return _calculix_pythoninterface.vectorf___bool__(self)
 
-    def __len__(self) -> "std::vector< float >::size_type":
+    def __len__(self):
         return _calculix_pythoninterface.vectorf___len__(self)
 
-    def __getslice__(self, i: "std::vector< float >::difference_type", j: "std::vector< float >::difference_type") -> "std::vector< float,std::allocator< float > > *":
+    def __getslice__(self, i, j):
         return _calculix_pythoninterface.vectorf___getslice__(self, i, j)
 
-    def __setslice__(self, *args) -> "void":
+    def __setslice__(self, *args):
         return _calculix_pythoninterface.vectorf___setslice__(self, *args)
 
-    def __delslice__(self, i: "std::vector< float >::difference_type", j: "std::vector< float >::difference_type") -> "void":
+    def __delslice__(self, i, j):
         return _calculix_pythoninterface.vectorf___delslice__(self, i, j)
 
-    def __delitem__(self, *args) -> "void":
+    def __delitem__(self, *args):
         return _calculix_pythoninterface.vectorf___delitem__(self, *args)
 
-    def __getitem__(self, *args) -> "std::vector< float >::value_type const &":
+    def __getitem__(self, *args):
         return _calculix_pythoninterface.vectorf___getitem__(self, *args)
 
-    def __setitem__(self, *args) -> "void":
+    def __setitem__(self, *args):
         return _calculix_pythoninterface.vectorf___setitem__(self, *args)
 
-    def pop(self) -> "std::vector< float >::value_type":
+    def pop(self):
         return _calculix_pythoninterface.vectorf_pop(self)
 
-    def append(self, x: "std::vector< float >::value_type const &") -> "void":
+    def append(self, x):
         return _calculix_pythoninterface.vectorf_append(self, x)
 
-    def empty(self) -> "bool":
+    def empty(self):
         return _calculix_pythoninterface.vectorf_empty(self)
 
-    def size(self) -> "std::vector< float >::size_type":
+    def size(self):
         return _calculix_pythoninterface.vectorf_size(self)
 
-    def swap(self, v: "vectorf") -> "void":
+    def swap(self, v):
         return _calculix_pythoninterface.vectorf_swap(self, v)
 
-    def begin(self) -> "std::vector< float >::iterator":
+    def begin(self):
         return _calculix_pythoninterface.vectorf_begin(self)
 
-    def end(self) -> "std::vector< float >::iterator":
+    def end(self):
         return _calculix_pythoninterface.vectorf_end(self)
 
-    def rbegin(self) -> "std::vector< float >::reverse_iterator":
+    def rbegin(self):
         return _calculix_pythoninterface.vectorf_rbegin(self)
 
-    def rend(self) -> "std::vector< float >::reverse_iterator":
+    def rend(self):
         return _calculix_pythoninterface.vectorf_rend(self)
 
-    def clear(self) -> "void":
+    def clear(self):
         return _calculix_pythoninterface.vectorf_clear(self)
 
-    def get_allocator(self) -> "std::vector< float >::allocator_type":
+    def get_allocator(self):
         return _calculix_pythoninterface.vectorf_get_allocator(self)
 
-    def pop_back(self) -> "void":
+    def pop_back(self):
         return _calculix_pythoninterface.vectorf_pop_back(self)
 
-    def erase(self, *args) -> "std::vector< float >::iterator":
+    def erase(self, *args):
         return _calculix_pythoninterface.vectorf_erase(self, *args)
 
     def __init__(self, *args):
         _calculix_pythoninterface.vectorf_swiginit(self, _calculix_pythoninterface.new_vectorf(*args))
 
-    def push_back(self, x: "std::vector< float >::value_type const &") -> "void":
+    def push_back(self, x):
         return _calculix_pythoninterface.vectorf_push_back(self, x)
 
-    def front(self) -> "std::vector< float >::value_type const &":
+    def front(self):
         return _calculix_pythoninterface.vectorf_front(self)
 
-    def back(self) -> "std::vector< float >::value_type const &":
+    def back(self):
         return _calculix_pythoninterface.vectorf_back(self)
 
-    def assign(self, n: "std::vector< float >::size_type", x: "std::vector< float >::value_type const &") -> "void":
+    def assign(self, n, x):
         return _calculix_pythoninterface.vectorf_assign(self, n, x)
 
-    def resize(self, *args) -> "void":
+    def resize(self, *args):
         return _calculix_pythoninterface.vectorf_resize(self, *args)
 
-    def insert(self, *args) -> "void":
+    def insert(self, *args):
         return _calculix_pythoninterface.vectorf_insert(self, *args)
 
-    def reserve(self, n: "std::vector< float >::size_type") -> "void":
+    def reserve(self, n):
         return _calculix_pythoninterface.vectorf_reserve(self, n)
 
-    def capacity(self) -> "std::vector< float >::size_type":
+    def capacity(self):
         return _calculix_pythoninterface.vectorf_capacity(self)
     __swig_destroy__ = _calculix_pythoninterface.delete_vectorf
 
@@ -338,102 +338,102 @@ class vectord(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
 
-    def iterator(self) -> "swig::SwigPyIterator *":
+    def iterator(self):
         return _calculix_pythoninterface.vectord_iterator(self)
     def __iter__(self):
         return self.iterator()
 
-    def __nonzero__(self) -> "bool":
+    def __nonzero__(self):
         return _calculix_pythoninterface.vectord___nonzero__(self)
 
-    def __bool__(self) -> "bool":
+    def __bool__(self):
         return _calculix_pythoninterface.vectord___bool__(self)
 
-    def __len__(self) -> "std::vector< double >::size_type":
+    def __len__(self):
         return _calculix_pythoninterface.vectord___len__(self)
 
-    def __getslice__(self, i: "std::vector< double >::difference_type", j: "std::vector< double >::difference_type") -> "std::vector< double,std::allocator< double > > *":
+    def __getslice__(self, i, j):
         return _calculix_pythoninterface.vectord___getslice__(self, i, j)
 
-    def __setslice__(self, *args) -> "void":
+    def __setslice__(self, *args):
         return _calculix_pythoninterface.vectord___setslice__(self, *args)
 
-    def __delslice__(self, i: "std::vector< double >::difference_type", j: "std::vector< double >::difference_type") -> "void":
+    def __delslice__(self, i, j):
         return _calculix_pythoninterface.vectord___delslice__(self, i, j)
 
-    def __delitem__(self, *args) -> "void":
+    def __delitem__(self, *args):
         return _calculix_pythoninterface.vectord___delitem__(self, *args)
 
-    def __getitem__(self, *args) -> "std::vector< double >::value_type const &":
+    def __getitem__(self, *args):
         return _calculix_pythoninterface.vectord___getitem__(self, *args)
 
-    def __setitem__(self, *args) -> "void":
+    def __setitem__(self, *args):
         return _calculix_pythoninterface.vectord___setitem__(self, *args)
 
-    def pop(self) -> "std::vector< double >::value_type":
+    def pop(self):
         return _calculix_pythoninterface.vectord_pop(self)
 
-    def append(self, x: "std::vector< double >::value_type const &") -> "void":
+    def append(self, x):
         return _calculix_pythoninterface.vectord_append(self, x)
 
-    def empty(self) -> "bool":
+    def empty(self):
         return _calculix_pythoninterface.vectord_empty(self)
 
-    def size(self) -> "std::vector< double >::size_type":
+    def size(self):
         return _calculix_pythoninterface.vectord_size(self)
 
-    def swap(self, v: "vectord") -> "void":
+    def swap(self, v):
         return _calculix_pythoninterface.vectord_swap(self, v)
 
-    def begin(self) -> "std::vector< double >::iterator":
+    def begin(self):
         return _calculix_pythoninterface.vectord_begin(self)
 
-    def end(self) -> "std::vector< double >::iterator":
+    def end(self):
         return _calculix_pythoninterface.vectord_end(self)
 
-    def rbegin(self) -> "std::vector< double >::reverse_iterator":
+    def rbegin(self):
         return _calculix_pythoninterface.vectord_rbegin(self)
 
-    def rend(self) -> "std::vector< double >::reverse_iterator":
+    def rend(self):
         return _calculix_pythoninterface.vectord_rend(self)
 
-    def clear(self) -> "void":
+    def clear(self):
         return _calculix_pythoninterface.vectord_clear(self)
 
-    def get_allocator(self) -> "std::vector< double >::allocator_type":
+    def get_allocator(self):
         return _calculix_pythoninterface.vectord_get_allocator(self)
 
-    def pop_back(self) -> "void":
+    def pop_back(self):
         return _calculix_pythoninterface.vectord_pop_back(self)
 
-    def erase(self, *args) -> "std::vector< double >::iterator":
+    def erase(self, *args):
         return _calculix_pythoninterface.vectord_erase(self, *args)
 
     def __init__(self, *args):
         _calculix_pythoninterface.vectord_swiginit(self, _calculix_pythoninterface.new_vectord(*args))
 
-    def push_back(self, x: "std::vector< double >::value_type const &") -> "void":
+    def push_back(self, x):
         return _calculix_pythoninterface.vectord_push_back(self, x)
 
-    def front(self) -> "std::vector< double >::value_type const &":
+    def front(self):
         return _calculix_pythoninterface.vectord_front(self)
 
-    def back(self) -> "std::vector< double >::value_type const &":
+    def back(self):
         return _calculix_pythoninterface.vectord_back(self)
 
-    def assign(self, n: "std::vector< double >::size_type", x: "std::vector< double >::value_type const &") -> "void":
+    def assign(self, n, x):
         return _calculix_pythoninterface.vectord_assign(self, n, x)
 
-    def resize(self, *args) -> "void":
+    def resize(self, *args):
         return _calculix_pythoninterface.vectord_resize(self, *args)
 
-    def insert(self, *args) -> "void":
+    def insert(self, *args):
         return _calculix_pythoninterface.vectord_insert(self, *args)
 
-    def reserve(self, n: "std::vector< double >::size_type") -> "void":
+    def reserve(self, n):
         return _calculix_pythoninterface.vectord_reserve(self, n)
 
-    def capacity(self) -> "std::vector< double >::size_type":
+    def capacity(self):
         return _calculix_pythoninterface.vectord_capacity(self)
     __swig_destroy__ = _calculix_pythoninterface.delete_vectord
 
@@ -444,102 +444,102 @@ class vectors(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
 
-    def iterator(self) -> "swig::SwigPyIterator *":
+    def iterator(self):
         return _calculix_pythoninterface.vectors_iterator(self)
     def __iter__(self):
         return self.iterator()
 
-    def __nonzero__(self) -> "bool":
+    def __nonzero__(self):
         return _calculix_pythoninterface.vectors___nonzero__(self)
 
-    def __bool__(self) -> "bool":
+    def __bool__(self):
         return _calculix_pythoninterface.vectors___bool__(self)
 
-    def __len__(self) -> "std::vector< std::string >::size_type":
+    def __len__(self):
         return _calculix_pythoninterface.vectors___len__(self)
 
-    def __getslice__(self, i: "std::vector< std::string >::difference_type", j: "std::vector< std::string >::difference_type") -> "std::vector< std::string,std::allocator< std::string > > *":
+    def __getslice__(self, i, j):
         return _calculix_pythoninterface.vectors___getslice__(self, i, j)
 
-    def __setslice__(self, *args) -> "void":
+    def __setslice__(self, *args):
         return _calculix_pythoninterface.vectors___setslice__(self, *args)
 
-    def __delslice__(self, i: "std::vector< std::string >::difference_type", j: "std::vector< std::string >::difference_type") -> "void":
+    def __delslice__(self, i, j):
         return _calculix_pythoninterface.vectors___delslice__(self, i, j)
 
-    def __delitem__(self, *args) -> "void":
+    def __delitem__(self, *args):
         return _calculix_pythoninterface.vectors___delitem__(self, *args)
 
-    def __getitem__(self, *args) -> "std::vector< std::string >::value_type const &":
+    def __getitem__(self, *args):
         return _calculix_pythoninterface.vectors___getitem__(self, *args)
 
-    def __setitem__(self, *args) -> "void":
+    def __setitem__(self, *args):
         return _calculix_pythoninterface.vectors___setitem__(self, *args)
 
-    def pop(self) -> "std::vector< std::string >::value_type":
+    def pop(self):
         return _calculix_pythoninterface.vectors_pop(self)
 
-    def append(self, x: "std::vector< std::string >::value_type const &") -> "void":
+    def append(self, x):
         return _calculix_pythoninterface.vectors_append(self, x)
 
-    def empty(self) -> "bool":
+    def empty(self):
         return _calculix_pythoninterface.vectors_empty(self)
 
-    def size(self) -> "std::vector< std::string >::size_type":
+    def size(self):
         return _calculix_pythoninterface.vectors_size(self)
 
-    def swap(self, v: "vectors") -> "void":
+    def swap(self, v):
         return _calculix_pythoninterface.vectors_swap(self, v)
 
-    def begin(self) -> "std::vector< std::string >::iterator":
+    def begin(self):
         return _calculix_pythoninterface.vectors_begin(self)
 
-    def end(self) -> "std::vector< std::string >::iterator":
+    def end(self):
         return _calculix_pythoninterface.vectors_end(self)
 
-    def rbegin(self) -> "std::vector< std::string >::reverse_iterator":
+    def rbegin(self):
         return _calculix_pythoninterface.vectors_rbegin(self)
 
-    def rend(self) -> "std::vector< std::string >::reverse_iterator":
+    def rend(self):
         return _calculix_pythoninterface.vectors_rend(self)
 
-    def clear(self) -> "void":
+    def clear(self):
         return _calculix_pythoninterface.vectors_clear(self)
 
-    def get_allocator(self) -> "std::vector< std::string >::allocator_type":
+    def get_allocator(self):
         return _calculix_pythoninterface.vectors_get_allocator(self)
 
-    def pop_back(self) -> "void":
+    def pop_back(self):
         return _calculix_pythoninterface.vectors_pop_back(self)
 
-    def erase(self, *args) -> "std::vector< std::string >::iterator":
+    def erase(self, *args):
         return _calculix_pythoninterface.vectors_erase(self, *args)
 
     def __init__(self, *args):
         _calculix_pythoninterface.vectors_swiginit(self, _calculix_pythoninterface.new_vectors(*args))
 
-    def push_back(self, x: "std::vector< std::string >::value_type const &") -> "void":
+    def push_back(self, x):
         return _calculix_pythoninterface.vectors_push_back(self, x)
 
-    def front(self) -> "std::vector< std::string >::value_type const &":
+    def front(self):
         return _calculix_pythoninterface.vectors_front(self)
 
-    def back(self) -> "std::vector< std::string >::value_type const &":
+    def back(self):
         return _calculix_pythoninterface.vectors_back(self)
 
-    def assign(self, n: "std::vector< std::string >::size_type", x: "std::vector< std::string >::value_type const &") -> "void":
+    def assign(self, n, x):
         return _calculix_pythoninterface.vectors_assign(self, n, x)
 
-    def resize(self, *args) -> "void":
+    def resize(self, *args):
         return _calculix_pythoninterface.vectors_resize(self, *args)
 
-    def insert(self, *args) -> "void":
+    def insert(self, *args):
         return _calculix_pythoninterface.vectors_insert(self, *args)
 
-    def reserve(self, n: "std::vector< std::string >::size_type") -> "void":
+    def reserve(self, n):
         return _calculix_pythoninterface.vectors_reserve(self, n)
 
-    def capacity(self) -> "std::vector< std::string >::size_type":
+    def capacity(self):
         return _calculix_pythoninterface.vectors_capacity(self)
     __swig_destroy__ = _calculix_pythoninterface.delete_vectors
 
@@ -577,102 +577,102 @@ class VectorPairi(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
 
-    def iterator(self) -> "swig::SwigPyIterator *":
+    def iterator(self):
         return _calculix_pythoninterface.VectorPairi_iterator(self)
     def __iter__(self):
         return self.iterator()
 
-    def __nonzero__(self) -> "bool":
+    def __nonzero__(self):
         return _calculix_pythoninterface.VectorPairi___nonzero__(self)
 
-    def __bool__(self) -> "bool":
+    def __bool__(self):
         return _calculix_pythoninterface.VectorPairi___bool__(self)
 
-    def __len__(self) -> "std::vector< std::pair< int,int > >::size_type":
+    def __len__(self):
         return _calculix_pythoninterface.VectorPairi___len__(self)
 
-    def __getslice__(self, i: "std::vector< std::pair< int,int > >::difference_type", j: "std::vector< std::pair< int,int > >::difference_type") -> "std::vector< std::pair< int,int >,std::allocator< std::pair< int,int > > > *":
+    def __getslice__(self, i, j):
         return _calculix_pythoninterface.VectorPairi___getslice__(self, i, j)
 
-    def __setslice__(self, *args) -> "void":
+    def __setslice__(self, *args):
         return _calculix_pythoninterface.VectorPairi___setslice__(self, *args)
 
-    def __delslice__(self, i: "std::vector< std::pair< int,int > >::difference_type", j: "std::vector< std::pair< int,int > >::difference_type") -> "void":
+    def __delslice__(self, i, j):
         return _calculix_pythoninterface.VectorPairi___delslice__(self, i, j)
 
-    def __delitem__(self, *args) -> "void":
+    def __delitem__(self, *args):
         return _calculix_pythoninterface.VectorPairi___delitem__(self, *args)
 
-    def __getitem__(self, *args) -> "std::vector< std::pair< int,int > >::value_type const &":
+    def __getitem__(self, *args):
         return _calculix_pythoninterface.VectorPairi___getitem__(self, *args)
 
-    def __setitem__(self, *args) -> "void":
+    def __setitem__(self, *args):
         return _calculix_pythoninterface.VectorPairi___setitem__(self, *args)
 
-    def pop(self) -> "std::vector< std::pair< int,int > >::value_type":
+    def pop(self):
         return _calculix_pythoninterface.VectorPairi_pop(self)
 
-    def append(self, x: "pairi_i") -> "void":
+    def append(self, x):
         return _calculix_pythoninterface.VectorPairi_append(self, x)
 
-    def empty(self) -> "bool":
+    def empty(self):
         return _calculix_pythoninterface.VectorPairi_empty(self)
 
-    def size(self) -> "std::vector< std::pair< int,int > >::size_type":
+    def size(self):
         return _calculix_pythoninterface.VectorPairi_size(self)
 
-    def swap(self, v: "VectorPairi") -> "void":
+    def swap(self, v):
         return _calculix_pythoninterface.VectorPairi_swap(self, v)
 
-    def begin(self) -> "std::vector< std::pair< int,int > >::iterator":
+    def begin(self):
         return _calculix_pythoninterface.VectorPairi_begin(self)
 
-    def end(self) -> "std::vector< std::pair< int,int > >::iterator":
+    def end(self):
         return _calculix_pythoninterface.VectorPairi_end(self)
 
-    def rbegin(self) -> "std::vector< std::pair< int,int > >::reverse_iterator":
+    def rbegin(self):
         return _calculix_pythoninterface.VectorPairi_rbegin(self)
 
-    def rend(self) -> "std::vector< std::pair< int,int > >::reverse_iterator":
+    def rend(self):
         return _calculix_pythoninterface.VectorPairi_rend(self)
 
-    def clear(self) -> "void":
+    def clear(self):
         return _calculix_pythoninterface.VectorPairi_clear(self)
 
-    def get_allocator(self) -> "std::vector< std::pair< int,int > >::allocator_type":
+    def get_allocator(self):
         return _calculix_pythoninterface.VectorPairi_get_allocator(self)
 
-    def pop_back(self) -> "void":
+    def pop_back(self):
         return _calculix_pythoninterface.VectorPairi_pop_back(self)
 
-    def erase(self, *args) -> "std::vector< std::pair< int,int > >::iterator":
+    def erase(self, *args):
         return _calculix_pythoninterface.VectorPairi_erase(self, *args)
 
     def __init__(self, *args):
         _calculix_pythoninterface.VectorPairi_swiginit(self, _calculix_pythoninterface.new_VectorPairi(*args))
 
-    def push_back(self, x: "pairi_i") -> "void":
+    def push_back(self, x):
         return _calculix_pythoninterface.VectorPairi_push_back(self, x)
 
-    def front(self) -> "std::vector< std::pair< int,int > >::value_type const &":
+    def front(self):
         return _calculix_pythoninterface.VectorPairi_front(self)
 
-    def back(self) -> "std::vector< std::pair< int,int > >::value_type const &":
+    def back(self):
         return _calculix_pythoninterface.VectorPairi_back(self)
 
-    def assign(self, n: "std::vector< std::pair< int,int > >::size_type", x: "pairi_i") -> "void":
+    def assign(self, n, x):
         return _calculix_pythoninterface.VectorPairi_assign(self, n, x)
 
-    def resize(self, *args) -> "void":
+    def resize(self, *args):
         return _calculix_pythoninterface.VectorPairi_resize(self, *args)
 
-    def insert(self, *args) -> "void":
+    def insert(self, *args):
         return _calculix_pythoninterface.VectorPairi_insert(self, *args)
 
-    def reserve(self, n: "std::vector< std::pair< int,int > >::size_type") -> "void":
+    def reserve(self, n):
         return _calculix_pythoninterface.VectorPairi_reserve(self, n)
 
-    def capacity(self) -> "std::vector< std::pair< int,int > >::size_type":
+    def capacity(self):
         return _calculix_pythoninterface.VectorPairi_capacity(self)
     __swig_destroy__ = _calculix_pythoninterface.delete_VectorPairi
 
@@ -687,25 +687,28 @@ class CalculiXPythonInterface(object):
         _calculix_pythoninterface.CalculiXPythonInterface_swiginit(self, _calculix_pythoninterface.new_CalculiXPythonInterface())
     __swig_destroy__ = _calculix_pythoninterface.delete_CalculiXPythonInterface
 
-    def help(self) -> "void":
+    def help(self):
         return _calculix_pythoninterface.CalculiXPythonInterface_help(self)
 
-    def frd_get_result_block_types(self, job_id: "int") -> "std::vector< std::string,std::allocator< std::string > >":
+    def frd_get_result_block_types(self, job_id):
         return _calculix_pythoninterface.CalculiXPythonInterface_frd_get_result_block_types(self, job_id)
 
-    def frd_get_result_block_components(self, job_id: "int", result_block_type: "std::string") -> "std::vector< std::string,std::allocator< std::string > >":
+    def frd_get_result_block_components(self, job_id, result_block_type):
         return _calculix_pythoninterface.CalculiXPythonInterface_frd_get_result_block_components(self, job_id, result_block_type)
 
-    def frd_get_total_increments(self, job_id: "int") -> "std::vector< int,std::allocator< int > >":
+    def frd_get_total_increments(self, job_id):
         return _calculix_pythoninterface.CalculiXPythonInterface_frd_get_total_increments(self, job_id)
 
-    def frd_get_node_ids_between_limits(self, job_id: "int", total_increment: "int", result_block_type: "std::string", result_block_component: "std::string", lower_limit: "double", upper_limit: "double") -> "std::vector< int,std::allocator< int > >":
+    def frd_get_time_from_total_increment(self, job_id, total_increment):
+        return _calculix_pythoninterface.CalculiXPythonInterface_frd_get_time_from_total_increment(self, job_id, total_increment)
+
+    def frd_get_node_ids_between_limits(self, job_id, total_increment, result_block_type, result_block_component, lower_limit, upper_limit):
         return _calculix_pythoninterface.CalculiXPythonInterface_frd_get_node_ids_between_limits(self, job_id, total_increment, result_block_type, result_block_component, lower_limit, upper_limit)
 
-    def frd_get_node_value(self, job_id: "int", node_id: "int", total_increment: "int", result_block_type: "std::string", result_block_component: "std::string") -> "double":
+    def frd_get_node_value(self, job_id, node_id, total_increment, result_block_type, result_block_component):
         return _calculix_pythoninterface.CalculiXPythonInterface_frd_get_node_value(self, job_id, node_id, total_increment, result_block_type, result_block_component)
 
-    def frd_get_node_values(self, job_id: "int", node_id: "int", total_increment: "int", result_block_type: "std::string") -> "std::vector< double,std::allocator< double > >":
+    def frd_get_node_values(self, job_id, node_id, total_increment, result_block_type):
         return _calculix_pythoninterface.CalculiXPythonInterface_frd_get_node_values(self, job_id, node_id, total_increment, result_block_type)
     ccx_iface = property(_calculix_pythoninterface.CalculiXPythonInterface_ccx_iface_get, _calculix_pythoninterface.CalculiXPythonInterface_ccx_iface_set)
 

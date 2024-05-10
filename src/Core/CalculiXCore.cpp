@@ -3050,6 +3050,30 @@ std::vector<int> CalculiXCore::frd_get_total_increments(int job_id)
   return tmp;
 }
 
+double CalculiXCore::frd_get_time_from_total_increment(int job_id, int total_increment)
+{
+  double tmp = -1;
+
+  int results_data_id = results->get_results_data_id_from_job_id(job_id);
+  int frd_data_id = results->get_frd_data_id_from_job_id(job_id);
+
+  if (results_data_id == -1)
+  {
+    return tmp;
+  }
+
+  for (size_t i = 0; i < results->frd_data[frd_data_id].result_blocks.size(); i++)
+  {
+    if (total_increment==results->frd_data[frd_data_id].result_blocks[i][3])
+    {
+      tmp = results->frd_data[frd_data_id].total_times[results->frd_data[frd_data_id].result_blocks[i][4]];
+      return tmp;
+    }
+  }
+  
+  return tmp;
+}
+
 std::vector<int> CalculiXCore::frd_get_node_ids_between_limits(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double lower_limit,double upper_limit)
 {
   std::vector<int> tmp; 

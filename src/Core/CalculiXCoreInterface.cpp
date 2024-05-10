@@ -700,6 +700,11 @@ std::vector<int> CalculiXCoreInterface::frd_get_total_increments(int job_id)
   return ccx_core.frd_get_total_increments(job_id);
 }
 
+double CalculiXCoreInterface::frd_get_time_from_total_increment(int job_id, int total_increment)
+{
+  return ccx_core.frd_get_time_from_total_increment(job_id, total_increment);
+}
+
 std::vector<int> CalculiXCoreInterface::frd_get_node_ids_between_limits(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double lower_limit,double upper_limit)
 {
   return ccx_core.frd_get_node_ids_between_limits(job_id,total_increment,result_block_type,result_block_component,lower_limit,upper_limit);
