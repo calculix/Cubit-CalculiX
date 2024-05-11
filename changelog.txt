@@ -3,3 +3,5 @@
 2024-05-01 started with Draw functionality and python interface
 2024-05-09 first successfull loading of the python interface
 2024-05-10 working on draw loads and bcs
+2024-05-11 working python interface, write out elements with value difference over a limit
+
