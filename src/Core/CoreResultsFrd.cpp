@@ -191,6 +191,25 @@ bool CoreResultsFrd::read()
     }
   }
   frd.close();
+
+  // sorting for faster search
+  for (size_t i = 0; i < result_block_node_data.size(); i++)
+  {
+    std::vector<int> tmp_node_ids;
+    std::vector<int> tmp_node_data_ids;
+
+    for (size_t ii = 0; ii < result_block_node_data[i].size(); ii++)
+    {
+      tmp_node_ids.push_back(result_block_node_data[i][ii][0]);
+      tmp_node_data_ids.push_back(result_block_node_data[i][ii][1]);
+    }  
+    auto p = sort_permutation(tmp_node_ids);
+    this->apply_permutation(tmp_node_ids, p);
+    this->apply_permutation(tmp_node_data_ids, p);
+    sorted_node_ids.push_back(tmp_node_ids);
+    sorted_node_data_ids.push_back(tmp_node_data_ids);
+  }
+
   progressbar.end();
   //PRINT_INFO("%s", log.c_str());
   //print_data();
@@ -703,4 +722,43 @@ bool CoreResultsFrd::print_data()
 
   PRINT_INFO("%s", log.c_str());
   return true;
+}
+
+
+//sorting of vectors
+template <typename T> 
+std::vector<std::size_t> CoreResultsFrd::sort_permutation(
+    const std::vector<T>& vec)
+{
+    std::vector<std::size_t> p(vec.size());
+    std::iota(p.begin(), p.end(), 0);
+    std::sort(p.begin(), p.end(),
+        [&](std::size_t i, std::size_t j){ return vec[i] < vec[j]; });
+
+    return p;
+}
+
+template <typename T> 
+void CoreResultsFrd::apply_permutation(
+    std::vector<T>& vec,
+    const std::vector<std::size_t>& p)
+{
+    std::vector<bool> done(vec.size());
+    for (std::size_t i = 0; i < vec.size(); ++i)
+    {
+        if (done[i])
+        {
+            continue;
+        }
+        done[i] = true;
+        std::size_t prev_j = i;
+        std::size_t j = p[i];
+        while (i != j)
+        {
+            std::swap(vec[prev_j], vec[j]);
+            done[j] = true;
+            prev_j = j;
+            j = p[j];
+        }
+    }
 }

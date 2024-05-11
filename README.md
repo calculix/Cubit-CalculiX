@@ -27,13 +27,14 @@ Definition of:
 - History Outputs (NODE PRINT, EL PRINT, CONTACT PRINT)
 - Field Outputs (NODE FILE, EL FILE, CONTACT FILE)
 - STEPS (Static, Frequency, Buckle, Heat Transfer, Coupled Temperature Displacement, Uncoupled Temperature Displacement, No Analysis)
+- Adding Customlines before/after Keywords
+- Export of Calculix Model
 - Creation and Running of Jobs
 - Conversion of Results to Paraview (.frd and .dat: nodal, element and integration points results, auto calculating von Mises and Principal Stresses)
 - Projection of Displacements from .frd to mesh
 - Opening of Results with CGX or Paraview
-- Adding Customlines before/after Keywords
-
-- Export of Calculix Model
+- Displaying of loads and boundary conditions
+- Python Interface to query the result files. This can be used to run convergence studies or do mesh refinement based on the results. 
 
 # Installation
 

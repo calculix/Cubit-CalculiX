@@ -106,4 +106,3 @@ cubit.cmd(f"ccx run job {ref_max+1}")
 cubit.cmd(f"ccx wait job {ref_max+1}")
 
 print("finished!")
-

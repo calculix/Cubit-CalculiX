@@ -16154,6 +16154,72 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_frd_get_element_ids_over_limit(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
+  int arg2 ;
+  int arg3 ;
+  std::string arg4 ;
+  std::string arg5 ;
+  double arg6 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
+  double val6 ;
+  int ecode6 = 0 ;
+  PyObject *swig_obj[6] ;
+  std::vector< int,std::allocator< int > > result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "CalculiXPythonInterface_frd_get_element_ids_over_limit", 6, 6, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_CalculiXPythonInterface, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXPythonInterface_frd_get_element_ids_over_limit" "', argument " "1"" of type '" "CalculiXPythonInterface *""'"); 
+  }
+  arg1 = reinterpret_cast< CalculiXPythonInterface * >(argp1);
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CalculiXPythonInterface_frd_get_element_ids_over_limit" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  ecode3 = SWIG_AsVal_int(swig_obj[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "CalculiXPythonInterface_frd_get_element_ids_over_limit" "', argument " "3"" of type '" "int""'");
+  } 
+  arg3 = static_cast< int >(val3);
+  {
+    std::string *ptr = (std::string *)0;
+    int res = SWIG_AsPtr_std_string(swig_obj[3], &ptr);
+    if (!SWIG_IsOK(res) || !ptr) {
+      SWIG_exception_fail(SWIG_ArgError((ptr ? res : SWIG_TypeError)), "in method '" "CalculiXPythonInterface_frd_get_element_ids_over_limit" "', argument " "4"" of type '" "std::string""'"); 
+    }
+    arg4 = *ptr;
+    if (SWIG_IsNewObj(res)) delete ptr;
+  }
+  {
+    std::string *ptr = (std::string *)0;
+    int res = SWIG_AsPtr_std_string(swig_obj[4], &ptr);
+    if (!SWIG_IsOK(res) || !ptr) {
+      SWIG_exception_fail(SWIG_ArgError((ptr ? res : SWIG_TypeError)), "in method '" "CalculiXPythonInterface_frd_get_element_ids_over_limit" "', argument " "5"" of type '" "std::string""'"); 
+    }
+    arg5 = *ptr;
+    if (SWIG_IsNewObj(res)) delete ptr;
+  }
+  ecode6 = SWIG_AsVal_double(swig_obj[5], &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "CalculiXPythonInterface_frd_get_element_ids_over_limit" "', argument " "6"" of type '" "double""'");
+  } 
+  arg6 = static_cast< double >(val6);
+  result = (arg1)->frd_get_element_ids_over_limit(arg2,arg3,arg4,arg5,arg6);
+  resultobj = swig::from(static_cast< std::vector< int,std::allocator< int > > >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_frd_get_node_value(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
@@ -16550,6 +16616,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "CalculiXPythonInterface_frd_get_total_increments", _wrap_CalculiXPythonInterface_frd_get_total_increments, METH_VARARGS, NULL},
 	 { "CalculiXPythonInterface_frd_get_time_from_total_increment", _wrap_CalculiXPythonInterface_frd_get_time_from_total_increment, METH_VARARGS, NULL},
 	 { "CalculiXPythonInterface_frd_get_node_ids_between_limits", _wrap_CalculiXPythonInterface_frd_get_node_ids_between_limits, METH_VARARGS, NULL},
+	 { "CalculiXPythonInterface_frd_get_element_ids_over_limit", _wrap_CalculiXPythonInterface_frd_get_element_ids_over_limit, METH_VARARGS, NULL},
 	 { "CalculiXPythonInterface_frd_get_node_value", _wrap_CalculiXPythonInterface_frd_get_node_value, METH_VARARGS, NULL},
 	 { "CalculiXPythonInterface_frd_get_node_values", _wrap_CalculiXPythonInterface_frd_get_node_values, METH_VARARGS, NULL},
 	 { "CalculiXPythonInterface_ccx_iface_set", _wrap_CalculiXPythonInterface_ccx_iface_set, METH_VARARGS, NULL},

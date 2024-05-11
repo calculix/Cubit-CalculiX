@@ -705,6 +705,9 @@ class CalculiXPythonInterface(object):
     def frd_get_node_ids_between_limits(self, job_id, total_increment, result_block_type, result_block_component, lower_limit, upper_limit):
         return _calculix_pythoninterface.CalculiXPythonInterface_frd_get_node_ids_between_limits(self, job_id, total_increment, result_block_type, result_block_component, lower_limit, upper_limit)
 
+    def frd_get_element_ids_over_limit(self, job_id, total_increment, result_block_type, result_block_component, limit):
+        return _calculix_pythoninterface.CalculiXPythonInterface_frd_get_element_ids_over_limit(self, job_id, total_increment, result_block_type, result_block_component, limit)
+
     def frd_get_node_value(self, job_id, node_id, total_increment, result_block_type, result_block_component):
         return _calculix_pythoninterface.CalculiXPythonInterface_frd_get_node_value(self, job_id, node_id, total_increment, result_block_type, result_block_component)
 

@@ -77,6 +77,11 @@ public:
   //result_block_node_data[0][0][0] node_id
   //result_block_node_data[0][0][1] result_block_node_data_id
   
+  // sorted vectors for faster results search
+  // will probably be used for python interface queries
+  std::vector<std::vector<int>> sorted_node_ids;
+  std::vector<std::vector<int>> sorted_node_data_ids;
+
   int job_id = -1;
   std::string filepath = "";
   bool is_initialized = false;
@@ -98,6 +103,10 @@ public:
   std::vector<std::string> get_result_block_components_from_result_block_type(std::string result_block_type); // get components from block
   int get_result_block_component_id(int result_block_type_id,std::string result_block_component); // get component id
   bool print_data(); // prints the data to the console
+
+  template <typename T>  std::vector<std::size_t> sort_permutation(const std::vector<T>& vec);
+  template <typename T> void apply_permutation(std::vector<T>& vec,const std::vector<std::size_t>& p);
+
 
   CalculiXCoreInterface *ccx_iface;
 };

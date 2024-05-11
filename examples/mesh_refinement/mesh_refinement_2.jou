@@ -1,0 +1,108 @@
+#!cubit
+reset
+#beam geometry
+create brick x 10 y 1 z 0.2
+
+create Cylinder height 2 radius 1 
+create Cylinder height 2 radius 0.5 
+create Cylinder height 2 radius 0.25
+
+move volume 2 y -0.9
+move volume 3 x 3 y 0.45
+move volume 4 x -3 y -0.6
+
+subtract volume 2 from volume 1 
+subtract volume 3 from volume 1 
+subtract volume 4 from volume 1 
+
+block 1 add volume 1
+
+# node sets
+nodeset 1 add surface 4  
+nodeset 1 name "x0"
+nodeset 2 add surface 6  
+nodeset 2 name "xl"
+
+# material
+create material "Steel" property_group "CalculiX-FEA"
+modify material "Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0 
+modify material "Steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+
+# section
+ccx create section solid block 1 material 1
+
+# vertices for ref and rot node
+create vertex location on surface 6 center  
+create vertex location on surface 6 center  
+
+# rigid body constraint
+ccx create constraint rigid body nodeset 2 ref 27 rot 28
+
+# load 
+create force  on vertex 27 force value 0.5 direction 0 -1 0
+
+# bc
+create displacement  on nodeset 1  dof 1 dof 2 dof 3 fix 0 
+
+# outputs
+ccx create fieldoutput name "node_output" node
+ccx modify fieldoutput 1 node
+ccx modify fieldoutput 1 node key_on RF U 
+ccx modify fieldoutput 1 node key_off CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF NT PNT POT PRF PS PSF PT PTF PU RFL SEN TS TSF TT TTF TURB V VF 
+ccx create fieldoutput name "element_output" element
+ccx modify fieldoutput 2 element
+ccx modify fieldoutput 2 element key_on E S ERR
+ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER HER HFL HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS 
+ccx create historyoutput name "node_output" node
+ccx create historyoutput name "element_output" element
+ccx modify historyoutput 1 node nodeset 3
+ccx modify historyoutput 1 node key_on U RF 
+ccx modify historyoutput 1 node key_off NT TSF TTF PN PSF PTF MACH CP VF DEPF TURB MF RFL 
+ccx modify historyoutput 2 element block 1
+ccx modify historyoutput 2 element key_on S E 
+ccx modify historyoutput 2 element key_off SVF ME PEEQ CEEQ ENER SDV HFL HFLF COORD ELSE ELKE EVOL EMAS EBHE CENT 
+
+
+# steps
+ccx create step name "Static" static
+#ccx modify step 1 parameter nlgeom_yes
+#ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.1 timeperiodofstep 1 minimumtimeincrement 0.01 maximumtimeincrement 0.1
+ccx step 1 add load force 1
+ccx step 1 add bc displacement 1
+ccx step 1 add fieldoutput 1 2
+#ccx step 1 add historyoutput 1 2
+
+# mesh
+block 1 element type HEX8
+volume 1 size auto factor 6
+mesh vertex all
+mesh volume all
+
+# jobs
+#ccx create job name "mesh_refinement"
+#ccx run job 1
+
+#!python
+#max refinement levels
+ref_max = 2
+
+for i in range(ref_max):
+  cubit.cmd(f"ccx create job name 'mesh_refinement_{i+1}'")
+  cubit.cmd(f"ccx run job {i+1}")
+  cubit.cmd(f"ccx wait job {i+1}")
+  element_ids = ccx.frd_get_element_ids_over_limit(i+1,1,"STRESS","MISES",50)
+  element_ids_list = ' '.join([str(id) for id in element_ids])
+  cubit.cmd(f"refine hex {element_ids_list} numsplit 1 bias 1.0 depth 1 smooth")
+  cubit.cmd(f"volume 1 smooth scheme condition number beta 2 cpu 0.5")
+  cubit.cmd(f"smooth volume 1")
+
+cubit.cmd(f"ccx create job name 'mesh_refinement_{ref_max+1}'")
+cubit.cmd(f"ccx run job {ref_max+1}")
+cubit.cmd(f"ccx wait job {ref_max+1}")
+
+print("finished!")
+

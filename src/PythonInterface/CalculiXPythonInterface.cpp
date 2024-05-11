@@ -22,6 +22,7 @@ void CalculiXPythonInterface::help()
   log.append("std::vector<int> frd_get_total_increments(int job_id); // returns a list of the total increments\n");
   log.append("double frd_get_time_from_total_increment(int job_id, int total_increment); // returns a the time for a total increment\n");
   log.append("std::vector<int> frd_get_node_ids_between_limits(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double lower_limit,double upper_limit); // returns the global node ids within the limit\n");
+  log.append("std::vector<int> frd_get_element_ids_over_limit(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double limit); // returns the global element ids where the largest difference between nodal values exceeds the limit\n");
   log.append("double frd_get_node_value(int job_id,int node_id, int total_increment,std::string result_block_type,std::string result_block_component); // returns the queried node_id value\n");
   log.append("std::vector<double> frd_get_node_values(int job_id,int node_id, int total_increment,std::string result_block_type); // returns the queried node_id values\n");
   PRINT_INFO("%s", log.c_str());
@@ -50,6 +51,11 @@ double CalculiXPythonInterface::frd_get_time_from_total_increment(int job_id, in
 std::vector<int> CalculiXPythonInterface::frd_get_node_ids_between_limits(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double lower_limit,double upper_limit)
 {
   return ccx_iface->frd_get_node_ids_between_limits(job_id,total_increment,result_block_type,result_block_component,lower_limit,upper_limit);
+}
+
+std::vector<int> CalculiXPythonInterface::frd_get_element_ids_over_limit(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double limit)
+{
+  return ccx_iface->frd_get_element_ids_over_limit(job_id,total_increment,result_block_type,result_block_component,limit);
 }
 
 double CalculiXPythonInterface::frd_get_node_value(int job_id,int node_id, int total_increment,std::string result_block_type,std::string result_block_component)

@@ -710,6 +710,11 @@ std::vector<int> CalculiXCoreInterface::frd_get_node_ids_between_limits(int job_
   return ccx_core.frd_get_node_ids_between_limits(job_id,total_increment,result_block_type,result_block_component,lower_limit,upper_limit);
 }
 
+std::vector<int> CalculiXCoreInterface::frd_get_element_ids_over_limit(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double limit)
+{
+  return ccx_core.frd_get_element_ids_over_limit(job_id,total_increment,result_block_type,result_block_component,limit);
+}
+
 double CalculiXCoreInterface::frd_get_node_value(int job_id,int node_id, int total_increment,std::string result_block_type,std::string result_block_component)
 {
   return ccx_core.frd_get_node_value(job_id,node_id,total_increment,result_block_type,result_block_component);
