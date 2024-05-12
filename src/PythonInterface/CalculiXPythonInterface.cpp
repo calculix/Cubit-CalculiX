@@ -22,6 +22,11 @@ void CalculiXPythonInterface::help()
   log.append("std::vector<int> frd_get_total_increments(int job_id); // returns a list of the total increments\n");
   log.append("double frd_get_time_from_total_increment(int job_id, int total_increment); // returns a the time for a total increment\n");
   log.append("std::vector<int> frd_get_node_ids_between_limits(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double lower_limit,double upper_limit); // returns the global node ids within the limit\n");
+  log.append("std::vector<int> frd_get_node_ids_smaller_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value); // returns the global node ids smaller than the value\n");
+  log.append("std::vector<int> frd_get_node_ids_greater_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value); // returns the global node ids greater than the value\n");
+  log.append("std::vector<int> frd_get_element_ids_between_values(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double lower_value,double upper_value); // returns the global element ids within the values\n");
+  log.append("std::vector<int> frd_get_element_ids_smaller_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value); // returns the global element ids smaller than the values\n");
+  log.append("std::vector<int> frd_get_element_ids_greater_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value); // returns the global element ids greater than the values\n");
   log.append("std::vector<int> frd_get_element_ids_over_limit(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double limit); // returns the global element ids where the largest difference between nodal values exceeds the limit\n");
   log.append("double frd_get_node_value(int job_id,int node_id, int total_increment,std::string result_block_type,std::string result_block_component); // returns the queried node_id value\n");
   log.append("std::vector<double> frd_get_node_values(int job_id,int node_id, int total_increment,std::string result_block_type); // returns the queried node_id values\n");
@@ -48,9 +53,34 @@ double CalculiXPythonInterface::frd_get_time_from_total_increment(int job_id, in
   return ccx_iface->frd_get_time_from_total_increment(job_id,total_increment);
 }
 
-std::vector<int> CalculiXPythonInterface::frd_get_node_ids_between_limits(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double lower_limit,double upper_limit)
+std::vector<int> CalculiXPythonInterface::frd_get_node_ids_between_values(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double lower_value,double upper_value)
 {
-  return ccx_iface->frd_get_node_ids_between_limits(job_id,total_increment,result_block_type,result_block_component,lower_limit,upper_limit);
+  return ccx_iface->frd_get_node_ids_between_values(job_id,total_increment,result_block_type,result_block_component,lower_value,upper_value);
+}
+
+std::vector<int> CalculiXPythonInterface::frd_get_node_ids_smaller_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value)
+{
+  return ccx_iface->frd_get_node_ids_smaller_value(job_id,total_increment,result_block_type,result_block_component,value);
+}
+
+std::vector<int> CalculiXPythonInterface::frd_get_node_ids_greater_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value)
+{
+  return ccx_iface->frd_get_node_ids_greater_value(job_id,total_increment,result_block_type,result_block_component,value);
+}
+
+std::vector<int> CalculiXPythonInterface::frd_get_element_ids_between_values(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double lower_value,double upper_value)
+{
+  return ccx_iface->frd_get_element_ids_between_values(job_id,total_increment,result_block_type,result_block_component,lower_value,upper_value);
+}
+
+std::vector<int> CalculiXPythonInterface::frd_get_element_ids_smaller_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value)
+{
+  return ccx_iface->frd_get_element_ids_smaller_value(job_id,total_increment,result_block_type,result_block_component,value);
+}
+
+std::vector<int> CalculiXPythonInterface::frd_get_element_ids_greater_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value)
+{
+  return ccx_iface->frd_get_element_ids_greater_value(job_id,total_increment,result_block_type,result_block_component,value);
 }
 
 std::vector<int> CalculiXPythonInterface::frd_get_element_ids_over_limit(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double limit)

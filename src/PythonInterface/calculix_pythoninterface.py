@@ -702,8 +702,23 @@ class CalculiXPythonInterface(object):
     def frd_get_time_from_total_increment(self, job_id, total_increment):
         return _calculix_pythoninterface.CalculiXPythonInterface_frd_get_time_from_total_increment(self, job_id, total_increment)
 
-    def frd_get_node_ids_between_limits(self, job_id, total_increment, result_block_type, result_block_component, lower_limit, upper_limit):
-        return _calculix_pythoninterface.CalculiXPythonInterface_frd_get_node_ids_between_limits(self, job_id, total_increment, result_block_type, result_block_component, lower_limit, upper_limit)
+    def frd_get_node_ids_between_values(self, job_id, total_increment, result_block_type, result_block_component, lower_value, upper_value):
+        return _calculix_pythoninterface.CalculiXPythonInterface_frd_get_node_ids_between_values(self, job_id, total_increment, result_block_type, result_block_component, lower_value, upper_value)
+
+    def frd_get_node_ids_smaller_value(self, job_id, total_increment, result_block_type, result_block_component, value):
+        return _calculix_pythoninterface.CalculiXPythonInterface_frd_get_node_ids_smaller_value(self, job_id, total_increment, result_block_type, result_block_component, value)
+
+    def frd_get_node_ids_greater_value(self, job_id, total_increment, result_block_type, result_block_component, value):
+        return _calculix_pythoninterface.CalculiXPythonInterface_frd_get_node_ids_greater_value(self, job_id, total_increment, result_block_type, result_block_component, value)
+
+    def frd_get_element_ids_between_values(self, job_id, total_increment, result_block_type, result_block_component, lower_value, upper_value):
+        return _calculix_pythoninterface.CalculiXPythonInterface_frd_get_element_ids_between_values(self, job_id, total_increment, result_block_type, result_block_component, lower_value, upper_value)
+
+    def frd_get_element_ids_smaller_value(self, job_id, total_increment, result_block_type, result_block_component, value):
+        return _calculix_pythoninterface.CalculiXPythonInterface_frd_get_element_ids_smaller_value(self, job_id, total_increment, result_block_type, result_block_component, value)
+
+    def frd_get_element_ids_greater_value(self, job_id, total_increment, result_block_type, result_block_component, value):
+        return _calculix_pythoninterface.CalculiXPythonInterface_frd_get_element_ids_greater_value(self, job_id, total_increment, result_block_type, result_block_component, value)
 
     def frd_get_element_ids_over_limit(self, job_id, total_increment, result_block_type, result_block_component, limit):
         return _calculix_pythoninterface.CalculiXPythonInterface_frd_get_element_ids_over_limit(self, job_id, total_increment, result_block_type, result_block_component, limit)
