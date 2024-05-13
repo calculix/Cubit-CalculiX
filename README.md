@@ -60,13 +60,13 @@ Enable Model Tree
 
 - View->CalculiX Model Tree
 
-![Show Model Tree](/doc/Setup_02.png?raw=true "Show Model Tree")
+![Show Model Tree](/readme_docs/Setup_02.png?raw=true "Show Model Tree")
 
 Try to open and run the journal file "first_run.jou"
 
 If everything works. It should compute a beam and automatically open the results with cgx and paraview.
 
-![After First Run](/doc/Setup_03.png?raw=true "After First Run")
+![After First Run](/readme_docs/Setup_03.png?raw=true "After First Run")
 
 # Postprocessing
 
@@ -76,20 +76,20 @@ The mises stresses and strains will be precalculated for the S and E keys.
 If the preprocessing was done in cubit and the results can be linked. Then the data from the .frd and .dat can be viewed with paraview. When the linking fails, the .frd will be converted to vtu.
 In paraview you can see the linked and computed results with the multiblock inspector.
 
-![multiblock inspector](/doc/postprocessing_01.png?raw=true "multiblock inspector")
+![multiblock inspector](/readme_docs/postprocessing_01.png?raw=true "multiblock inspector")
 
 If integration point data was requested in the .dat, the converter computes the location of the integration points and links the results. The integration point number and the element id can be queried with paraview. The element id can be found in the cell data. The ip number in the point data.
 
-![integration points](/doc/postprocessing_02.png?raw=true "integration points")
+![integration points](/readme_docs/postprocessing_02.png?raw=true "integration points")
 
-![elements id](/doc/postprocessing_03.png?raw=true "element id")
+![elements id](/readme_docs/postprocessing_03.png?raw=true "element id")
 
-![ip number](/doc/postprocessing_04.png?raw=true "ip number")
+![ip number](/readme_docs/postprocessing_04.png?raw=true "ip number")
 
 When there are displacements in the frd file for requested blocks in the .dat. The displacements of the integration points will also be computed.
 
 
-![integration points displacements](/doc/postprocessing_05.png?raw=true "integration points displacements")
+![integration points displacements](/readme_docs/postprocessing_05.png?raw=true "integration points displacements")
 
 current limitations of the converter:
 - totals ignored
@@ -105,7 +105,7 @@ The displacements from an .frd can be scaled and projected to the nodes in cubit
 Otherwise linking fails and no projection will be done. If a step is choosen, it will project the last available increment with displacement data.
 When choosing the totalincrement the related displacements will be used.
 
-![projection of displacements](/doc/projection_01.png?raw=true "projection of displacements")
+![projection of displacements](/readme_docs/projection_01.png?raw=true "projection of displacements")
 
 # known issues
 If you want to build the component yourself, i would recommend using ubuntu 22.04 . If some symbols are missing try another OS.
