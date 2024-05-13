@@ -73,6 +73,10 @@ public:
   int get_current_result_block_type(std::string result_type); // gets result_block_type
   int get_current_result_block_set(std::string result_set); // gets result_block_set
   bool check_element_sets(); // checks if the data for the element sets has integration points data or not...if yes set prefix ip_
+  std::vector<std::string> get_result_block_components_from_result_block_type(std::string result_block_type); // get components from block type
+  int get_result_block_component_id(int result_block_type_id,std::string result_block_component); // get component id
+  int get_result_block_type_data_id(std::string result_block_type); // returns the result_block_type_data_id or returns -1 
+  int get_result_block_set_data_id(std::string result_block_set); // returns the result_block_set_data_id or returns -1 
   bool print_data(); // prints the data to the console
 
   CalculiXCoreInterface *ccx_iface;

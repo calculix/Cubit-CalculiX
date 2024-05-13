@@ -3619,6 +3619,146 @@ std::vector<double> CalculiXCore::frd_get_node_values(int job_id,int node_id, in
   return tmp;
 }
 
+std::vector<std::string> CalculiXCore::dat_get_result_block_types(int job_id)
+{
+  std::vector<std::string> tmp;
+  int results_data_id = results->get_results_data_id_from_job_id(job_id);
+  int dat_data_id = results->get_dat_data_id_from_job_id(job_id);
+
+  if (results_data_id == -1)
+  {
+    return tmp;
+  }
+
+  tmp = results->dat_data[dat_data_id].result_block_type;
+      
+  return tmp;
+}
+
+std::vector<std::string> CalculiXCore::dat_get_result_block_set(int job_id)
+{
+  std::vector<std::string> tmp;
+  int results_data_id = results->get_results_data_id_from_job_id(job_id);
+  int dat_data_id = results->get_dat_data_id_from_job_id(job_id);
+
+  if (results_data_id == -1)
+  {
+    return tmp;
+  }
+
+  tmp = results->dat_data[dat_data_id].result_block_set;
+      
+  return tmp;
+}
+
+std::vector<std::string> CalculiXCore::dat_get_result_block_components(int job_id, std::string result_block_type)
+{
+  std::vector<std::string> tmp;
+  int results_data_id = results->get_results_data_id_from_job_id(job_id);
+  int dat_data_id = results->get_dat_data_id_from_job_id(job_id);
+
+  if (results_data_id == -1)
+  {
+    return tmp;
+  }
+
+  tmp = results->dat_data[dat_data_id].get_result_block_components_from_result_block_type(result_block_type);
+
+  return tmp;
+}
+
+std::vector<double> CalculiXCore::dat_get_result_block_times(int job_id, std::string result_block_type, std::string result_block_set)
+{
+  std::vector<double> tmp;
+  int result_block_type_data_id = -1;
+  int result_block_set_data_id = -1;
+  int results_data_id = results->get_results_data_id_from_job_id(job_id);
+  int dat_data_id = results->get_dat_data_id_from_job_id(job_id);
+
+  if (results_data_id == -1)
+  {
+    return tmp;
+  }
+
+  result_block_type_data_id = results->dat_data[dat_data_id].get_result_block_type_data_id(result_block_type);
+  result_block_set_data_id = results->dat_data[dat_data_id].get_result_block_set_data_id(result_block_set);
+
+  for (size_t i = 0; i < results->dat_data[dat_data_id].result_blocks.size(); i++)
+  {
+    if ((results->dat_data[dat_data_id].result_blocks[i][2]==result_block_type_data_id)&&(results->dat_data[dat_data_id].result_blocks[i][3]==result_block_set_data_id))
+    {
+      tmp.push_back(results->dat_data[dat_data_id].total_times[results->dat_data[dat_data_id].result_blocks[i][1]]);
+    }
+  }
+  return tmp;
+}
+
+std::vector<int> CalculiXCore::dat_get_node_ids_between_values(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double lower_value,double upper_value)
+{
+  std::vector<int> tmp;
+  return tmp;
+}
+
+std::vector<int> CalculiXCore::dat_get_node_ids_smaller_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value)
+{
+  std::vector<int> tmp;
+  return tmp;
+}
+
+std::vector<int> CalculiXCore::dat_get_node_ids_greater_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value)
+{
+  std::vector<int> tmp;
+  return tmp;
+}
+
+std::vector<int> CalculiXCore::dat_get_element_ids_between_values(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double lower_value,double upper_value)
+{
+  std::vector<int> tmp;
+  return tmp;
+}
+
+std::vector<int> CalculiXCore::dat_get_element_ids_smaller_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value)
+{
+  std::vector<int> tmp;
+  return tmp;
+}
+
+std::vector<int> CalculiXCore::dat_get_element_ids_greater_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value)
+{
+  std::vector<int> tmp;
+  return tmp;
+}
+
+std::vector<int> CalculiXCore::dat_get_element_ids_over_limit(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double limit)
+{
+  std::vector<int> tmp;
+  return tmp;
+}
+
+double CalculiXCore::dat_get_node_value(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component)
+{
+  double tmp;
+  return tmp;
+}
+
+std::vector<double> CalculiXCore::dat_get_node_values(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set)
+{
+  std::vector<double> tmp;
+  return tmp;
+}
+
+std::vector<double> CalculiXCore::dat_get_element_values_for_component(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component)
+{
+  std::vector<double> tmp;
+  return tmp;
+}
+
+std::vector<std::vector<double>> CalculiXCore::dat_get_element_values(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set)
+{
+  std::vector<std::vector<double>> tmp;
+  return tmp;
+}
+
 QIcon* CalculiXCore::getIcon(std::string name)
 {
   QIcon* icon = new QIcon();

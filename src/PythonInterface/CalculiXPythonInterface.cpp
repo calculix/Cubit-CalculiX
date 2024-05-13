@@ -17,6 +17,7 @@ CalculiXPythonInterface::~CalculiXPythonInterface()
 void CalculiXPythonInterface::help()
 {
   std::string log = "CalculiX Python Interface HELP:\n";
+  log.append("Interactions with FRD Results:\n");
   log.append("std::vector<std::string> frd_get_result_block_types(int job_id); // returns a list of all result block types \n");
   log.append("std::vector<std::string> frd_get_result_block_components(int job_id, std::string result_block_type); // returns a list of all result block components for a block type\n");
   log.append("std::vector<int> frd_get_total_increments(int job_id); // returns a list of the total increments\n");
@@ -30,6 +31,22 @@ void CalculiXPythonInterface::help()
   log.append("std::vector<int> frd_get_element_ids_over_limit(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double limit); // returns the global element ids where the largest difference between nodal values exceeds the limit\n");
   log.append("double frd_get_node_value(int job_id,int node_id, int total_increment,std::string result_block_type,std::string result_block_component); // returns the queried node_id value\n");
   log.append("std::vector<double> frd_get_node_values(int job_id,int node_id, int total_increment,std::string result_block_type); // returns the queried node_id values\n");
+  log.append("Interactions with DAT Results:\n");
+  log.append("std::vector<std::string> dat_get_result_block_types(int job_id); // returns a list of all result block types\n");
+  log.append("std::vector<std::string> dat_get_result_block_set(int job_id); // returns a list of all result block set\n");
+  log.append("std::vector<std::string> dat_get_result_block_components(int job_id, std::string result_block_type); // returns a list of all result block components for a block type and set\n");
+  log.append("std::vector<double> dat_get_result_block_times(int job_id, std::string result_block_type, std::string result_block_set); // returns a list of all result block components for a block type and set\n");
+  log.append("std::vector<int> dat_get_node_ids_between_values(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double lower_value,double upper_value); // returns the global node ids within the values\n");
+  log.append("std::vector<int> dat_get_node_ids_smaller_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value); // returns the global node ids smaller than the value\n");
+  log.append("std::vector<int> dat_get_node_ids_greater_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value); // returns the global node ids greater than the value\n");
+  log.append("std::vector<int> dat_get_element_ids_between_values(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double lower_value,double upper_value); // returns the global element ids within the values\n");
+  log.append("std::vector<int> dat_get_element_ids_smaller_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value); // returns the global element ids smaller than the values\n");
+  log.append("std::vector<int> dat_get_element_ids_greater_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value); // returns the global element ids greater than the values  \n");
+  log.append("std::vector<int> dat_get_element_ids_over_limit(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double limit); // returns the global element ids where the largest difference between integration point values exceeds the limit\n");
+  log.append("double dat_get_node_value(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component); // returns the queried node_id value\n");
+  log.append("std::vector<double> dat_get_node_values(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set); // returns the queried node_id values\n");
+  log.append("std::vector<double> dat_get_element_values_for_component(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component); // returns the queried element integration point values for a component\n");
+  log.append("std::vector<std::vector<double>> dat_get_element_values(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set); // returns the queried element integration point values for all components\n");
   PRINT_INFO("%s", log.c_str());
 }
 
@@ -96,4 +113,79 @@ double CalculiXPythonInterface::frd_get_node_value(int job_id,int node_id, int t
 std::vector<double> CalculiXPythonInterface::frd_get_node_values(int job_id,int node_id, int total_increment,std::string result_block_type)
 {
   return ccx_iface->frd_get_node_values(job_id,node_id,total_increment,result_block_type);
+}
+
+std::vector<std::string> CalculiXPythonInterface::dat_get_result_block_types(int job_id)
+{
+  return ccx_iface->dat_get_result_block_types(job_id);
+}
+
+std::vector<std::string> CalculiXPythonInterface::dat_get_result_block_set(int job_id)
+{
+  return ccx_iface->dat_get_result_block_set(job_id);
+}
+
+std::vector<std::string> CalculiXPythonInterface::dat_get_result_block_components(int job_id, std::string result_block_type)
+{
+  return ccx_iface->dat_get_result_block_components(job_id, result_block_type);
+}
+
+std::vector<double> CalculiXPythonInterface::dat_get_result_block_times(int job_id, std::string result_block_type, std::string result_block_set)
+{
+  return ccx_iface->dat_get_result_block_times(job_id, result_block_type, result_block_set);
+}
+
+std::vector<int> CalculiXPythonInterface::dat_get_node_ids_between_values(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double lower_value,double upper_value)
+{
+  return ccx_iface->dat_get_node_ids_between_values(job_id,time,result_block_type,result_block_set,result_block_component,lower_value,upper_value);
+}
+
+std::vector<int> CalculiXPythonInterface::dat_get_node_ids_smaller_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value)
+{
+  return ccx_iface->dat_get_node_ids_smaller_value(job_id,time,result_block_type,result_block_set,result_block_component,value);
+}
+
+std::vector<int> CalculiXPythonInterface::dat_get_node_ids_greater_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value)
+{
+  return ccx_iface->dat_get_node_ids_greater_value(job_id,time,result_block_type,result_block_set,result_block_component,value);
+}
+
+std::vector<int> CalculiXPythonInterface::dat_get_element_ids_between_values(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double lower_value,double upper_value)
+{
+  return ccx_iface->dat_get_element_ids_between_values(job_id,time,result_block_type,result_block_set,result_block_component,lower_value,upper_value);
+}
+
+std::vector<int> CalculiXPythonInterface::dat_get_element_ids_smaller_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value)
+{
+  return ccx_iface->dat_get_element_ids_smaller_value(job_id,time,result_block_type,result_block_set,result_block_component,value);
+}
+
+std::vector<int> CalculiXPythonInterface::dat_get_element_ids_greater_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value)
+{
+  return ccx_iface->dat_get_element_ids_greater_value(job_id,time,result_block_type,result_block_set,result_block_component,value);
+}
+
+std::vector<int> CalculiXPythonInterface::dat_get_element_ids_over_limit(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double limit)
+{
+  return ccx_iface->dat_get_element_ids_over_limit(job_id,time,result_block_type,result_block_set,result_block_component,limit);
+}
+
+double CalculiXPythonInterface::dat_get_node_value(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component)
+{
+  return ccx_iface->dat_get_node_value(job_id,node_id,time,result_block_type,result_block_set,result_block_component);
+}
+
+std::vector<double> CalculiXPythonInterface::dat_get_node_values(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set)
+{
+  return ccx_iface->dat_get_node_values(job_id,node_id,time,result_block_type,result_block_set);
+}
+
+std::vector<double> CalculiXPythonInterface::dat_get_element_values_for_component(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component)
+{
+  return ccx_iface->dat_get_element_values_for_component(job_id,node_id,time,result_block_type,result_block_set,result_block_component);
+}
+
+std::vector<std::vector<double>> CalculiXPythonInterface::dat_get_element_values(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set)
+{
+  return ccx_iface->dat_get_element_values(job_id,node_id,time,result_block_type,result_block_set);
 }

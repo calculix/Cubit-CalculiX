@@ -728,6 +728,51 @@ class CalculiXPythonInterface(object):
 
     def frd_get_node_values(self, job_id, node_id, total_increment, result_block_type):
         return _calculix_pythoninterface.CalculiXPythonInterface_frd_get_node_values(self, job_id, node_id, total_increment, result_block_type)
+
+    def dat_get_result_block_types(self, job_id):
+        return _calculix_pythoninterface.CalculiXPythonInterface_dat_get_result_block_types(self, job_id)
+
+    def dat_get_result_block_set(self, job_id):
+        return _calculix_pythoninterface.CalculiXPythonInterface_dat_get_result_block_set(self, job_id)
+
+    def dat_get_result_block_components(self, job_id, result_block_type):
+        return _calculix_pythoninterface.CalculiXPythonInterface_dat_get_result_block_components(self, job_id, result_block_type)
+
+    def dat_get_result_block_times(self, job_id, result_block_type, result_block_set):
+        return _calculix_pythoninterface.CalculiXPythonInterface_dat_get_result_block_times(self, job_id, result_block_type, result_block_set)
+
+    def dat_get_node_ids_between_values(self, job_id, time, result_block_type, result_block_set, result_block_component, lower_value, upper_value):
+        return _calculix_pythoninterface.CalculiXPythonInterface_dat_get_node_ids_between_values(self, job_id, time, result_block_type, result_block_set, result_block_component, lower_value, upper_value)
+
+    def dat_get_node_ids_smaller_value(self, job_id, time, result_block_type, result_block_set, result_block_component, value):
+        return _calculix_pythoninterface.CalculiXPythonInterface_dat_get_node_ids_smaller_value(self, job_id, time, result_block_type, result_block_set, result_block_component, value)
+
+    def dat_get_node_ids_greater_value(self, job_id, time, result_block_type, result_block_set, result_block_component, value):
+        return _calculix_pythoninterface.CalculiXPythonInterface_dat_get_node_ids_greater_value(self, job_id, time, result_block_type, result_block_set, result_block_component, value)
+
+    def dat_get_element_ids_between_values(self, job_id, time, result_block_type, result_block_set, result_block_component, lower_value, upper_value):
+        return _calculix_pythoninterface.CalculiXPythonInterface_dat_get_element_ids_between_values(self, job_id, time, result_block_type, result_block_set, result_block_component, lower_value, upper_value)
+
+    def dat_get_element_ids_smaller_value(self, job_id, time, result_block_type, result_block_set, result_block_component, value):
+        return _calculix_pythoninterface.CalculiXPythonInterface_dat_get_element_ids_smaller_value(self, job_id, time, result_block_type, result_block_set, result_block_component, value)
+
+    def dat_get_element_ids_greater_value(self, job_id, time, result_block_type, result_block_set, result_block_component, value):
+        return _calculix_pythoninterface.CalculiXPythonInterface_dat_get_element_ids_greater_value(self, job_id, time, result_block_type, result_block_set, result_block_component, value)
+
+    def dat_get_element_ids_over_limit(self, job_id, time, result_block_type, result_block_set, result_block_component, limit):
+        return _calculix_pythoninterface.CalculiXPythonInterface_dat_get_element_ids_over_limit(self, job_id, time, result_block_type, result_block_set, result_block_component, limit)
+
+    def dat_get_node_value(self, job_id, node_id, time, result_block_type, result_block_set, result_block_component):
+        return _calculix_pythoninterface.CalculiXPythonInterface_dat_get_node_value(self, job_id, node_id, time, result_block_type, result_block_set, result_block_component)
+
+    def dat_get_node_values(self, job_id, node_id, time, result_block_type, result_block_set):
+        return _calculix_pythoninterface.CalculiXPythonInterface_dat_get_node_values(self, job_id, node_id, time, result_block_type, result_block_set)
+
+    def dat_get_element_values_for_component(self, job_id, node_id, time, result_block_type, result_block_set, result_block_component):
+        return _calculix_pythoninterface.CalculiXPythonInterface_dat_get_element_values_for_component(self, job_id, node_id, time, result_block_type, result_block_set, result_block_component)
+
+    def dat_get_element_values(self, job_id, node_id, time, result_block_type, result_block_set):
+        return _calculix_pythoninterface.CalculiXPythonInterface_dat_get_element_values(self, job_id, node_id, time, result_block_type, result_block_set)
     ccx_iface = property(_calculix_pythoninterface.CalculiXPythonInterface_ccx_iface_get, _calculix_pythoninterface.CalculiXPythonInterface_ccx_iface_set)
 
 # Register CalculiXPythonInterface in _calculix_pythoninterface:

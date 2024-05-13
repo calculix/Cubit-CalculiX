@@ -685,6 +685,73 @@ bool CoreResultsDat::check_element_sets()
   return true;
 }
 
+std::vector<std::string> CoreResultsDat::get_result_block_components_from_result_block_type(std::string result_block_type)
+{
+  // on first match write out the components for the first matching result block
+  std::vector<std::string> components;
+  for (size_t i = 0; i < this->result_block_type.size(); i++)
+  {
+    if (this->result_block_type[i]==result_block_type)
+    {
+      components = this->result_block_components[i];
+      return components;
+    }
+  }
+  
+  return components;
+}
+
+int CoreResultsDat::get_result_block_component_id(int result_block_type_id,std::string result_block_component)
+{
+  int component_id = -1;
+  std::vector<std::string> components;
+  components = get_result_block_components_from_result_block_type(this->result_block_type[result_block_type_id]);
+
+  for (size_t i = 0; i < components.size(); i++)
+  {
+    if (components[i]==result_block_component)
+    {
+      component_id = i;
+    }
+  }
+    
+  return component_id;
+}
+
+int CoreResultsDat::get_result_block_type_data_id(std::string result_block_type)
+{
+  int result_block_type_data_id = -1;
+
+  for (size_t i = 0; i < result_block_type.size(); i++)
+  {
+    if (this->result_block_type[i]==result_block_type)
+    {
+      result_block_type_data_id = i;
+      return result_block_type_data_id;
+    }
+  }
+
+  return result_block_type_data_id;
+}
+
+int CoreResultsDat::get_result_block_set_data_id(std::string result_block_set)
+{
+  int result_block_set_data_id = -1;
+
+  for (size_t i = 0; i < result_block_set.size(); i++)
+  {
+    if (this->result_block_set[i]==result_block_set)
+    {
+      result_block_set_data_id = i;
+      return result_block_set_data_id;
+    }
+  }
+
+  return result_block_set_data_id;
+}
+
+
+
 bool CoreResultsDat::print_data()
 {
   std::string log;
