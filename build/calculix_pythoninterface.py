@@ -768,11 +768,11 @@ class CalculiXPythonInterface(object):
     def dat_get_node_values(self, job_id, node_id, time, result_block_type, result_block_set):
         return _calculix_pythoninterface.CalculiXPythonInterface_dat_get_node_values(self, job_id, node_id, time, result_block_type, result_block_set)
 
-    def dat_get_element_values_for_component(self, job_id, node_id, time, result_block_type, result_block_set, result_block_component):
-        return _calculix_pythoninterface.CalculiXPythonInterface_dat_get_element_values_for_component(self, job_id, node_id, time, result_block_type, result_block_set, result_block_component)
+    def dat_get_element_values_for_component(self, job_id, element_id, time, result_block_type, result_block_set, result_block_component):
+        return _calculix_pythoninterface.CalculiXPythonInterface_dat_get_element_values_for_component(self, job_id, element_id, time, result_block_type, result_block_set, result_block_component)
 
-    def dat_get_element_values(self, job_id, node_id, time, result_block_type, result_block_set):
-        return _calculix_pythoninterface.CalculiXPythonInterface_dat_get_element_values(self, job_id, node_id, time, result_block_type, result_block_set)
+    def dat_get_element_values(self, job_id, element_id, time, result_block_type, result_block_set):
+        return _calculix_pythoninterface.CalculiXPythonInterface_dat_get_element_values(self, job_id, element_id, time, result_block_type, result_block_set)
     ccx_iface = property(_calculix_pythoninterface.CalculiXPythonInterface_ccx_iface_get, _calculix_pythoninterface.CalculiXPythonInterface_ccx_iface_set)
 
 # Register CalculiXPythonInterface in _calculix_pythoninterface:

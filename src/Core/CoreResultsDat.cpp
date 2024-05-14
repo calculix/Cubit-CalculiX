@@ -268,7 +268,29 @@ bool CoreResultsDat::read()
   }
 
   this->check_element_sets();
-  
+
+  // sorting for faster search
+  for (size_t i = 0; i < result_block_c1_data.size(); i++)
+  {
+    std::vector<int> tmp_c1;
+    std::vector<int> tmp_result_block_c1_data_id;
+    std::vector<int> tmp_result_block_c1_data_type;
+
+    for (size_t ii = 0; ii < result_block_c1_data[i].size(); ii++)
+    {
+      tmp_c1.push_back(result_block_c1_data[i][ii][0]);
+      tmp_result_block_c1_data_id.push_back(result_block_c1_data[i][ii][1]);
+      tmp_result_block_c1_data_type.push_back(result_block_c1_data[i][ii][2]);
+    }  
+    auto p = sort_permutation(tmp_c1);
+    this->apply_permutation(tmp_c1, p);
+    this->apply_permutation(tmp_result_block_c1_data_id, p);
+    this->apply_permutation(tmp_result_block_c1_data_type, p);
+    sorted_c1.push_back(tmp_c1);
+    sorted_result_block_c1_data_id.push_back(tmp_result_block_c1_data_id);
+    sorted_result_block_c1_data_type.push_back(tmp_result_block_c1_data_type);
+  }
+
   progressbar.end();
 
   //PRINT_INFO("%s", log.c_str());
@@ -795,4 +817,43 @@ bool CoreResultsDat::print_data()
 
   PRINT_INFO("%s", log.c_str());
   return true;
+}
+
+
+//sorting of vectors
+template <typename T> 
+std::vector<std::size_t> CoreResultsDat::sort_permutation(
+    const std::vector<T>& vec)
+{
+    std::vector<std::size_t> p(vec.size());
+    std::iota(p.begin(), p.end(), 0);
+    std::sort(p.begin(), p.end(),
+        [&](std::size_t i, std::size_t j){ return vec[i] < vec[j]; });
+
+    return p;
+}
+
+template <typename T> 
+void CoreResultsDat::apply_permutation(
+    std::vector<T>& vec,
+    const std::vector<std::size_t>& p)
+{
+    std::vector<bool> done(vec.size());
+    for (std::size_t i = 0; i < vec.size(); ++i)
+    {
+        if (done[i])
+        {
+            continue;
+        }
+        done[i] = true;
+        std::size_t prev_j = i;
+        std::size_t j = p[i];
+        while (i != j)
+        {
+            std::swap(vec[prev_j], vec[j]);
+            done[j] = true;
+            prev_j = j;
+            j = p[j];
+        }
+    }
 }

@@ -815,14 +815,14 @@ std::vector<double> CalculiXCoreInterface::dat_get_node_values(int job_id,int no
   return ccx_core.dat_get_node_values(job_id,node_id,time,result_block_type,result_block_set);
 }
 
-std::vector<double> CalculiXCoreInterface::dat_get_element_values_for_component(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component)
+std::vector<double> CalculiXCoreInterface::dat_get_element_values_for_component(int job_id,int element_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component)
 {
-  return ccx_core.dat_get_element_values_for_component(job_id,node_id,time,result_block_type,result_block_set,result_block_component);
+  return ccx_core.dat_get_element_values_for_component(job_id,element_id,time,result_block_type,result_block_set,result_block_component);
 }
 
-std::vector<std::vector<double>> CalculiXCoreInterface::dat_get_element_values(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set)
+std::vector<std::vector<double>> CalculiXCoreInterface::dat_get_element_values(int job_id,int element_id, double time,std::string result_block_type,std::string result_block_set)
 {
-  return ccx_core.dat_get_element_values(job_id,node_id,time,result_block_type,result_block_set);
+  return ccx_core.dat_get_element_values(job_id,element_id,time,result_block_type,result_block_set);
 }
 
 QIcon* CalculiXCoreInterface::getIcon(std::string name)
