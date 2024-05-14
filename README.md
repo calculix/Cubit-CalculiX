@@ -108,8 +108,9 @@ When choosing the totalincrement the related displacements will be used.
 ![projection of displacements](/readme_docs/projection_01.png?raw=true "projection of displacements")
 
 # known issues
-If you want to build the component yourself, i would recommend using ubuntu 22.04 . If some symbols are missing try another OS.
-It can happen that you've got a Cubit which was build on a different OS. For example building the component for Cubit 2022.4 only worked with centos 7.
+- Can not open results for Paraview 5.12.0 out of Cubit. Please use Paraview 5.11.* 
+
+- If you want to build the component yourself, i would recommend using ubuntu 22.04 . If some symbols are missing try another OS. It can happen that you've got a Cubit which was build on a different OS. For example building the component for Cubit 2022.4 only worked with centos 7.
 
 # todo list
 - documentation
