@@ -44,7 +44,7 @@ Download the build directory and point within Cubit to the Direcetory.
 
 Restart Cubit.
 
-![Add Component](/doc/Setup_00.png?raw=true "Add Component")
+![Add Component](/readme_docs/Setup_00.png?raw=true "Add Component")
 
 The Cubit Window should now show "Coreform Cubit 2022.4 -- with CalculiX" in the Title.
 
@@ -54,7 +54,7 @@ Now you have to fill in the Paths to CCX, CGX, Paraview, ccx2paraview, the icons
 
 Restart Cubit.
 
-![Setup Options](/doc/Setup_01.png?raw=true "Setup Options")
+![Setup Options](/readme_docs/Setup_01.png?raw=true "Setup Options")
 
 Enable Model Tree
 
