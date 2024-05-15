@@ -82,6 +82,7 @@ ccx modify initialcondition 1 temperature bc_id 1
 #preload
 create temperature  on volume 3 value -50
 ccx modify temperature 2 keyword_type temp
+ccx modify temperature 1 keyword_type temp
 
 # plate bc
 create displacement name "plate_1_fix" on nodeset 1 dof 1 dof 2 dof 3 fix 0
@@ -127,7 +128,7 @@ ccx modify step 1 parameter nlgeom_yes
 ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.5 timeperiodofstep 1 minimumtimeincrement 1e-5 maximumtimeincrement 0.5
 ccx step 1 add fieldoutput 1 2 3
 ccx step 1 add historyoutput 1 2 3 4 5
-ccx step 1 add bc temperature 2
+ccx step 1 add bc temperature 1 2
 ccx step 1 add bc displacement 1 2
 
 ccx create step name "load" static
@@ -145,4 +146,5 @@ ccx create job name "bolted_connection"
 #ccx result load job 1
 #ccx use logfile core on
 #ccx result convert job 1 partial block 1 2 3
+
 
