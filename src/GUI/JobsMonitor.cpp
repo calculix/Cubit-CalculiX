@@ -259,6 +259,8 @@ void JobsMonitor::on_pushButton_result_convert_clicked(bool)
 {
   std::string command = "ccx result load job " + std::to_string(current_job_id);
   CubitInterface::cmd(command.c_str());
+  command = "ccx result convert job " + std::to_string(current_job_id);
+  CubitInterface::cmd(command.c_str());
 }
 
 void JobsMonitor::on_pushButton_result_paraview_clicked(bool)
