@@ -25,7 +25,8 @@ public:
   ~CalculiXPythonInterface();
 	
   void help(); // prints out python interface help
-    
+  //JOBS
+  int get_job_status(int job_id); //status -2 no job -1 no process, 1 process running, 2 process finished, 3 process killed, 4 process finished with errors, 5 process running currently waiting
   //QUERY results
   //FRD results
   std::vector<std::string> frd_get_result_block_types(int job_id); // returns a list of all result block types

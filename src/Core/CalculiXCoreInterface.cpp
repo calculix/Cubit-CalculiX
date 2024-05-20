@@ -575,6 +575,11 @@ std::vector<std::string> CalculiXCoreInterface::get_job_sta(int job_id)
   return ccx_core.get_job_sta(job_id);
 }
 
+int CalculiXCoreInterface::get_job_status(int job_id)
+{
+  return ccx_core.get_job_status(job_id);
+}
+
 bool CalculiXCoreInterface::create_result(int job_id)
 {
   return ccx_core.create_result(job_id);
@@ -590,9 +595,9 @@ bool CalculiXCoreInterface::load_result(int job_id)
   return ccx_core.load_result(job_id);
 }
 
-int CalculiXCoreInterface::convert_result(int job_id, int option, std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids)
+int CalculiXCoreInterface::convert_result(int job_id, std::vector<int> options, std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids)
 {
-  return ccx_core.convert_result(job_id, option, block_ids, nodeset_ids, sideset_ids);
+  return ccx_core.convert_result(job_id, options, block_ids, nodeset_ids, sideset_ids);
 }
 
 bool CalculiXCoreInterface::project_result(int job_id,int step,int totalincrement,double scale)

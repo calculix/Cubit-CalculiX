@@ -131,10 +131,11 @@ public:
   std::vector<std::string> get_job_console_output(int job_id);
   std::vector<std::string> get_job_cvg(int job_id);
   std::vector<std::string> get_job_sta(int job_id);
+  int get_job_status(int job_id);
   bool create_result(int job_id); // adds a new result for job
   bool delete_result(int job_id); // delete result for job
   bool load_result(int job_id); // load result for job
-  int convert_result(int job_id, int option, std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids); // convert result for job
+  int convert_result(int job_id, std::vector<int> options, std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids); // convert result for job
   bool project_result(int job_id,int step,int totalincrement,double scale); // project disp result for job for specific step or increment
   double compute_von_mises_stress(std::vector<double> vec); // computes the von mises stress/strain for a vector of values
   double compute_von_mises_strain(std::vector<double> vec); // computes the von mises stress/strain for a vector of values

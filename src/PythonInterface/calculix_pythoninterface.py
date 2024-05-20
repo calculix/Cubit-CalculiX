@@ -690,6 +690,9 @@ class CalculiXPythonInterface(object):
     def help(self):
         return _calculix_pythoninterface.CalculiXPythonInterface_help(self)
 
+    def get_job_status(self, job_id):
+        return _calculix_pythoninterface.CalculiXPythonInterface_get_job_status(self, job_id)
+
     def frd_get_result_block_types(self, job_id):
         return _calculix_pythoninterface.CalculiXPythonInterface_frd_get_result_block_types(self, job_id)
 

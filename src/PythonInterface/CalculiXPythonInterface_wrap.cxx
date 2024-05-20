@@ -15943,6 +15943,36 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_get_job_status(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject *swig_obj[2] ;
+  int result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "CalculiXPythonInterface_get_job_status", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_CalculiXPythonInterface, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXPythonInterface_get_job_status" "', argument " "1"" of type '" "CalculiXPythonInterface *""'"); 
+  }
+  arg1 = reinterpret_cast< CalculiXPythonInterface * >(argp1);
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CalculiXPythonInterface_get_job_status" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  result = (int)(arg1)->get_job_status(arg2);
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_frd_get_result_block_types(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
@@ -17932,6 +17962,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "new_CalculiXPythonInterface", _wrap_new_CalculiXPythonInterface, METH_NOARGS, NULL},
 	 { "delete_CalculiXPythonInterface", _wrap_delete_CalculiXPythonInterface, METH_O, NULL},
 	 { "CalculiXPythonInterface_help", _wrap_CalculiXPythonInterface_help, METH_O, NULL},
+	 { "CalculiXPythonInterface_get_job_status", _wrap_CalculiXPythonInterface_get_job_status, METH_VARARGS, NULL},
 	 { "CalculiXPythonInterface_frd_get_result_block_types", _wrap_CalculiXPythonInterface_frd_get_result_block_types, METH_VARARGS, NULL},
 	 { "CalculiXPythonInterface_frd_get_result_block_components", _wrap_CalculiXPythonInterface_frd_get_result_block_components, METH_VARARGS, NULL},
 	 { "CalculiXPythonInterface_frd_get_total_increments", _wrap_CalculiXPythonInterface_frd_get_total_increments, METH_VARARGS, NULL},

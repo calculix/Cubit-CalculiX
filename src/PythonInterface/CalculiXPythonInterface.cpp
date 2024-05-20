@@ -17,6 +17,8 @@ CalculiXPythonInterface::~CalculiXPythonInterface()
 void CalculiXPythonInterface::help()
 {
   std::string log = "CalculiX Python Interface HELP:\n";
+  log.append("Interactions with Jobs\n");
+  log.append("int get_job_status(int job_id); //status -2 no job -1 no process, 1 process running, 2 process finished, 3 process killed, 4 process finished with errors, 5 process running currently waiting \n");
   log.append("Interactions with FRD Results:\n");
   log.append("std::vector<std::string> frd_get_result_block_types(int job_id); // returns a list of all result block types \n");
   log.append("std::vector<std::string> frd_get_result_block_components(int job_id, std::string result_block_type); // returns a list of all result block components for a block type\n");
@@ -48,6 +50,11 @@ void CalculiXPythonInterface::help()
   log.append("std::vector<double> dat_get_element_values_for_component(int job_id,int element_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component); // returns the queried element integration point values for a component\n");
   log.append("std::vector<std::vector<double>> dat_get_element_values(int job_id,int element_id, double time,std::string result_block_type,std::string result_block_set); // returns the queried element integration point values for all components\n");
   PRINT_INFO("%s", log.c_str());
+}
+
+int CalculiXPythonInterface::get_job_status(int job_id)
+{
+  return ccx_iface->get_job_status(job_id);
 }
 
 std::vector<std::string> CalculiXPythonInterface::frd_get_result_block_types(int job_id)

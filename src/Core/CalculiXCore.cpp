@@ -2356,6 +2356,11 @@ std::vector<std::string> CalculiXCore::get_job_sta(int job_id)
   return jobs->get_job_sta(job_id);
 }
 
+int CalculiXCore::get_job_status(int job_id)
+{
+  return jobs->get_job_status(job_id);
+}
+
 bool CalculiXCore::create_result(int job_id)
 {
   return results->create_result(job_id);
@@ -2371,9 +2376,9 @@ bool CalculiXCore::load_result(int job_id)
   return results->load_result(job_id);
 }
 
-int CalculiXCore::convert_result(int job_id, int option, std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids)
+int CalculiXCore::convert_result(int job_id, std::vector<int> options, std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids)
 {
-  return results->convert_result(job_id, option, block_ids, nodeset_ids, sideset_ids);
+  return results->convert_result(job_id, options, block_ids, nodeset_ids, sideset_ids);
 }
 
 bool CalculiXCore::project_result(int job_id,int step,int totalincrement,double scale)

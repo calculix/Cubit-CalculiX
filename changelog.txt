@@ -6,3 +6,5 @@
 2024-05-11 working python interface, write out elements with value difference over a limit
 2024-05-13 begin with python interface for the .dat results
 2024-05-17 working on python interface for the .dat results
+2024-05-20 new python interface function to get job status
+2024-05-20 working on new convert option
