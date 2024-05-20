@@ -36,9 +36,22 @@ Definition of:
 - Displaying of loads and boundary conditions
 - Python Interface to query the result files. This can be used to run convergence studies or do mesh refinement based on the results. 
 
+# How to
+To get an overview of all new commands type
+
+ccx ?
+
+in cubit mode (#!cubit)
+
+For the functions of the python interface type
+
+ccx.help()
+
+in python mode (#!python)
+
 # Installation
 
-Download the build directory and point within Cubit to the Direcetory.
+Download the build directory and point within Cubit to the Directory.
 
 - Tools->Plugins->Add
 
@@ -108,7 +121,7 @@ When choosing the totalincrement the related displacements will be used.
 ![projection of displacements](/readme_docs/projection_01.png?raw=true "projection of displacements")
 
 # known issues
-- Can not open results for Paraview 5.12.0 out of Cubit. Please use Paraview 5.11.* 
+- Can not open results for Paraview 5.12.0 out of Cubit. Please use Paraview 5.11.* See https://gitlab.kitware.com/paraview/paraview/-/issues/22614
 
 - If you want to build the component yourself, i would recommend using ubuntu 22.04 . If some symbols are missing try another OS. It can happen that you've got a Cubit which was build on a different OS. For example building the component for Cubit 2022.4 only worked with centos 7.
 
