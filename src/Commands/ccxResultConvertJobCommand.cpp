@@ -16,7 +16,7 @@ std::vector<std::string> ccxResultConvertJobCommand::get_syntax()
   std::vector<std::string> syntax_list;
 
   std::string syntax = "ccx ";
-  syntax.append("result convert job <value:label='job_id',help='<job_id>'> [partial] [frd] [dat] ");
+  syntax.append("result convert job <value:label='job_id',help='<job_id>'> [partial] [frd] ");
   syntax.append("[block <value:label='block_ids',help='<block_ids>'>...] " );
   syntax.append("[nodeset <value:label='nodeset_ids',help='<nodeset_ids>'>...] " );
   syntax.append("[sideset <value:label='sideset_ids',help='<sideset_ids>'>...] " );
@@ -28,7 +28,7 @@ std::vector<std::string> ccxResultConvertJobCommand::get_syntax()
 std::vector<std::string> ccxResultConvertJobCommand::get_syntax_help()
 {
   std::vector<std::string> help(1);
-  help[0] = "ccx result convert job <job_id> [partial] [frd] [dat] ";
+  help[0] = "ccx result convert job <job_id> [partial] [frd] ";
   help[0].append("[block <block_ids>...] " );
   help[0].append("[nodeset <nodeset_ids>...] " );
   help[0].append("[sideset <sideset_ids>...] " );

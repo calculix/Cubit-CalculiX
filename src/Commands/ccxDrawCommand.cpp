@@ -44,7 +44,20 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
   
   if (!data.get_value("size_value", size_value))
   {
-    size_value = 1;
+    std::array<double,10> vector_list;
+    std::vector<int> ids = CubitInterface::parse_cubit_list("vertex", "all");
+    if (ids.size()!=0)
+    {
+      vector_list = CubitInterface::get_total_bounding_box("vertex", ids);
+    }else{
+      std::vector<int> ids = CubitInterface::parse_cubit_list("node", "all");
+      vector_list = CubitInterface::get_total_bounding_box("node", ids);
+    }
+    size_value = (vector_list[2]+vector_list[5]+vector_list[8])/3;
+    if (size_value <= 0)
+    {
+      size_value = 1;
+    }
   }
   
   if (!ccx_iface.draw_all(size_value))

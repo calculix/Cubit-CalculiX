@@ -776,6 +776,9 @@ bool CoreDraw::draw_all(double size)
 {
     this->draw_bcs(size);
     this->draw_loads(size);
-    
+
+    std::string log = "Loads and BCs drawn with size " + std::to_string(size) +"\n";
+    PRINT_INFO("%s", log.c_str());
+
     return true;
 }
