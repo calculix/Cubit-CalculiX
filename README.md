@@ -49,6 +49,13 @@ ccx.help()
 
 in python mode (#!python)
 
+# Examples
+[<img
+  src="examples/bolted_connection/example.gif"
+  width="200"
+  title="Simple bolted connection">
+](examples/bolted_connection/)
+
 # Installation
 
 Download the build directory and point within Cubit to the Directory.
@@ -63,7 +70,7 @@ The Cubit Window should now show "Coreform Cubit 2022.4 -- with CalculiX" in the
 
 - Tools->Options->CalculiX
 
-Now you have to fill in the Paths to CCX, CGX, Paraview, ccx2paraview, the icons from the build and give a number for the wanted threads for the solver.
+Now you have to fill in the Paths to CCX, CGX, Paraview, the icons from the build, the directory for the python interface and give a number for the wanted threads for the solver.
 
 Restart Cubit.
 
