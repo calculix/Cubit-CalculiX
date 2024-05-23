@@ -142,10 +142,13 @@ volume_list = cubit.get_entities("volume")
 for v in volume_list:
  cubit.cmd(f"create heatflux  on sideset {v} value -7.5")
  #cubit.cmd(f"ccx modify heatflux {v} op new")
- cubit.cmd(f"create temperature on volume {v} value 2000")
+ if v == 1:
+  cubit.cmd(f"create temperature on volume all value 100")
+ else:
+  cubit.cmd(f"create temperature on volume {v} value 2000")
  cubit.cmd(f"ccx modify temperature {v} op new")
 
-cubit.cmd("modify temperature 1 value 100")
+#cubit.cmd("modify temperature 1 value 100")
 
 # field outputs
 cubit.cmd('ccx create fieldoutput name "fo_node" node')
@@ -161,8 +164,9 @@ cubit.cmd('ccx modify fieldoutput 2 element key_off CEEQ S E ECD EMFB EMFE ENER 
 cubit.cmd("ccx create initialcondition temperature")
 cubit.cmd(f"ccx modify initialcondition {1} temperature bc_id {1}")
 
-cubit.cmd("ccx create step name 'dummy_step' static")
+cubit.cmd("ccx create step name 'dummy_step' heattransfer")
 cubit.cmd("ccx step 1 add fieldoutput 1 2")
+cubit.cmd("ccx step 1 add bc temperature 1")
 cubit.cmd("ccx create step name 'deacivate_step' static")
 cubit.cmd("ccx step 2 add fieldoutput 1 2")
 cubit.cmd("ccx modify step 2 parameter nlgeom_yes")

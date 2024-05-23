@@ -51,10 +51,50 @@ in python mode (#!python)
 
 # Examples
 [<img
+  src="examples/first_run.gif"
+  width="400"
+  title="First run example">
+](examples/)
+[<img
   src="examples/bolted_connection/example.gif"
   width="400"
   title="Simple bolted connection">
 ](examples/bolted_connection/)
+[<img
+  src="examples/snap_fit/example.gif"
+  width="400"
+  title="Simple snap fit">
+](examples/snap_fit/)
+[<img
+  src="examples/contact_press_fitting/example.png"
+  width="400"
+  title="Contact press fitting">
+](examples/contact_press_fitting/)
+[<img
+  src="examples/mesh_refinement/example.png"
+  width="400"
+  title="Mesh refinement">
+](examples/mesh_refinement/)
+[<img
+  src="examples/model_change/example.gif"
+  width="400"
+  title="Custom Key Words - Model Change">
+](examples/model_change/)
+[<img
+  src="examples/nonlinear_buckling_cylindrical_shell/example.gif"
+  width="400"
+  title="Buckling cylindrical shell">
+](examples/nonlinear_buckling_cylindrical_shell/)
+[<img
+  src="examples/simple_convergence_study/example.png"
+  width="400"
+  title="Simple convergence study">
+](examples/simple_convergence_study/)
+[<img
+  src="examples/Welding/shrinkage_model/example.gif"
+  width="400"
+  title="Shrinkage model">
+](examples/Welding/shringage_model/)
 
 # Installation
 

@@ -113,6 +113,8 @@ ccx hbc add bc displacement 3
 
 # create step
 ccx create step name "static" static
+#ccx modify step 1 parameter nlgeom_yes
+#ccx modify step 1 static direct_yes totaltimeatstart 0 initialtimeincrement 0.05 timeperiodofstep 1 minimumtimeincrement 0.01 maximumtimeincrement 0.05
 ccx step 1 add bc temperature 1 2
 ccx step 1 add fieldoutput 1
 ccx step 1 add fieldoutput 2
@@ -122,3 +124,4 @@ ccx create job name "shrinkage_model"
 ccx run job 1
 ccx wait job 1
 ccx result paraview job 1
+
