@@ -8,3 +8,4 @@
 2024-05-17 working on python interface for the .dat results
 2024-05-20 new python interface function to get job status
 2024-05-20 working on new convert option
+2024-05-23 updating readme
