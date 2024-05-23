@@ -52,7 +52,7 @@ in python mode (#!python)
 # Examples
 [<img
   src="examples/bolted_connection/example.gif"
-  width="200"
+  width="400"
   title="Simple bolted connection">
 ](examples/bolted_connection/)
 
