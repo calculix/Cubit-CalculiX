@@ -57,6 +57,12 @@ public:
   //result_block_c1_data[0][0][1] result_block_c1_data_id
   //result_block_c1_data[0][0][2] type 1 node 2 element
 
+  // sorted vectors for faster results search
+  // will probably be used for python interface queries
+  std::vector<std::vector<int>> sorted_c1;
+  std::vector<std::vector<int>> sorted_result_block_c1_data_id;
+  std::vector<std::vector<int>> sorted_result_block_c1_data_type;
+
   bool init(int job_id); // initialize
   bool reset(); // delete all data and initialize afterwards
   bool check_initialized(); // check if object is initialized
@@ -73,7 +79,14 @@ public:
   int get_current_result_block_type(std::string result_type); // gets result_block_type
   int get_current_result_block_set(std::string result_set); // gets result_block_set
   bool check_element_sets(); // checks if the data for the element sets has integration points data or not...if yes set prefix ip_
+  std::vector<std::string> get_result_block_components_from_result_block_type(std::string result_block_type); // get components from block type
+  int get_result_block_component_id(int result_block_type_id,std::string result_block_component); // get component id
+  int get_result_block_type_data_id(std::string result_block_type); // returns the result_block_type_data_id or returns -1 
+  int get_result_block_set_data_id(std::string result_block_set); // returns the result_block_set_data_id or returns -1 
   bool print_data(); // prints the data to the console
+
+  template <typename T>  std::vector<std::size_t> sort_permutation(const std::vector<T>& vec);
+  template <typename T> void apply_permutation(std::vector<T>& vec,const std::vector<std::size_t>& p);
 
   CalculiXCoreInterface *ccx_iface;
 };

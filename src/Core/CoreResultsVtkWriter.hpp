@@ -23,6 +23,8 @@ public:
   std::string filepath = "";
   bool is_initialized = false;
   bool write_partial = false; // try to write out partial result blocks. like for using *modelchange keyword
+  bool write_frd = true; // write frd results
+  bool write_dat = true; // write dat results
   int current_offset = 0;
   int max_increments = 0;
   int current_increment = 0;

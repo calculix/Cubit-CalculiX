@@ -16,7 +16,7 @@ std::vector<std::string> ccxResultConvertJobCommand::get_syntax()
   std::vector<std::string> syntax_list;
 
   std::string syntax = "ccx ";
-  syntax.append("result convert job <value:label='job_id',help='<job_id>'> [partial] ");
+  syntax.append("result convert job <value:label='job_id',help='<job_id>'> [partial] [frd] ");
   syntax.append("[block <value:label='block_ids',help='<block_ids>'>...] " );
   syntax.append("[nodeset <value:label='nodeset_ids',help='<nodeset_ids>'>...] " );
   syntax.append("[sideset <value:label='sideset_ids',help='<sideset_ids>'>...] " );
@@ -28,7 +28,7 @@ std::vector<std::string> ccxResultConvertJobCommand::get_syntax()
 std::vector<std::string> ccxResultConvertJobCommand::get_syntax_help()
 {
   std::vector<std::string> help(1);
-  help[0] = "ccx result convert job <job_id> [partial] "; 
+  help[0] = "ccx result convert job <job_id> [partial] [frd] ";
   help[0].append("[block <block_ids>...] " );
   help[0].append("[nodeset <nodeset_ids>...] " );
   help[0].append("[sideset <sideset_ids>...] " );
@@ -49,7 +49,7 @@ bool ccxResultConvertJobCommand::execute(CubitCommandData &data)
   std::string output;
 
   int job_id;
-  int option;
+  std::vector<int> options;
   std::vector<int> block_ids;
   std::vector<int> nodeset_ids;
   std::vector<int> sideset_ids;
@@ -57,11 +57,22 @@ bool ccxResultConvertJobCommand::execute(CubitCommandData &data)
   data.get_value("job_id", job_id);
 
   if (data.find_keyword("PARTIAL")){
-    option = 1;
+    options.push_back(1);
   }else{
-    option = -1;
+    options.push_back(-1);
   }
 
+  if (data.find_keyword("FRD")){
+    options.push_back(1);
+  }else{
+    options.push_back(-1);
+  }
+
+  if (data.find_keyword("DAT")){
+    options.push_back(1);
+  }else{
+    options.push_back(-1);
+  }
 
   if (data.find_keyword("BLOCK")){
     data.get_values("block_ids", block_ids);
@@ -119,7 +130,7 @@ bool ccxResultConvertJobCommand::execute(CubitCommandData &data)
     }
   }
   
-  if (!ccx_iface.convert_result(job_id,option,block_ids,nodeset_ids,sideset_ids))
+  if (!ccx_iface.convert_result(job_id,options,block_ids,nodeset_ids,sideset_ids))
   {
     output = "Failed!\n";
     PRINT_ERROR(output.c_str());

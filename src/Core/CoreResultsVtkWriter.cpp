@@ -207,9 +207,12 @@ bool CoreResultsVtkWriter::write_linked()
   progressbar->start(0,100,"Writing Results to ParaView Format - Linked Mode");
   auto t_start = std::chrono::high_resolution_clock::now();
 
-  //dat file
-  nparts += dat_all->result_block_set.size();
-  nparts_dat += dat_all->result_block_set.size();
+  if (write_dat)
+  {
+    //dat file
+    nparts += dat_all->result_block_set.size();
+    nparts_dat += dat_all->result_block_set.size();
+  }
   //this->stopwatch(std::to_string(nparts_dat));
   
   for (size_t i = 0; i < nparts_dat; i++)
@@ -239,8 +242,11 @@ bool CoreResultsVtkWriter::write_linked()
   }
   //link elements
   this->link_elements();  
-  //link dat
-  this->link_dat();
+  if (write_dat)
+  {
+    //link dat
+    this->link_dat();
+  }
   progressbar->start(0,100,"Writing Results to ParaView Format - Linked Mode");
   t_start = std::chrono::high_resolution_clock::now();
 
@@ -1310,7 +1316,7 @@ bool CoreResultsVtkWriter::checkLinkPossible()
     return false;
   }
 
-  if (nparts_dat!=0) // if dat exists in .dat file
+  if ((nparts_dat!=0)&&write_dat) // if dat exists in .dat file
   {
     if (dat_all->result_blocks.size()!=0)
     {

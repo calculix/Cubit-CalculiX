@@ -59,6 +59,7 @@ public:
   std::vector<std::string> get_job_console_output(int job_id);
   std::vector<std::string> get_job_cvg(int job_id);
   std::vector<std::string> get_job_sta(int job_id);
+  int get_job_status(int job_id); //status -2 no job -1 no process, 1 process running, 2 process finished, 3 process killed, 4 process finished with errors, 5 process running currently waiting
   bool is_whitespace(std::string line); // check if line consists only of whitespace
   std::string print_data(); // prints out the jobs_data
 

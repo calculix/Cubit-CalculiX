@@ -1,5 +1,3 @@
-#!cubit
-
 # the model is a rebuild of https://github.com/calculix/CalculiX-Examples/tree/master/Thermal/Thermal%20distortion but without contact definitions
 
 reset
@@ -88,6 +86,7 @@ ccx create section solid block all material 1
 #boundary conditions
 create temperature on nodeset 5 value 0 #will be used as initial condition
 create temperature  on nodeset 4 value -1000 #our seam temperature
+ccx modify temperature 1 keyword_type temp
 ccx modify temperature 2 keyword_type temp
 create displacement  on nodeset 1 dof 1 dof 6 fix 0 #x symm
 create displacement  on nodeset 2 dof 3 dof 4 fix 0 #z symm
@@ -114,7 +113,9 @@ ccx hbc add bc displacement 3
 
 # create step
 ccx create step name "static" static
-ccx step 1 add bc temperature 2
+#ccx modify step 1 parameter nlgeom_yes
+#ccx modify step 1 static direct_yes totaltimeatstart 0 initialtimeincrement 0.05 timeperiodofstep 1 minimumtimeincrement 0.01 maximumtimeincrement 0.05
+ccx step 1 add bc temperature 1 2
 ccx step 1 add fieldoutput 1
 ccx step 1 add fieldoutput 2
 
@@ -123,3 +124,4 @@ ccx create job name "shrinkage_model"
 ccx run job 1
 ccx wait job 1
 ccx result paraview job 1
+

@@ -302,7 +302,7 @@ bool CoreJobs::wait_job(int job_id)
         ccx_iface->load_result(job_id);
         if (jobs_data[jobs_data_id][9] == "1") 
         {
-          jobs_data[jobs_data_id][6] = std::to_string(ccx_iface->convert_result(job_id,-1,ccx_iface->get_blocks(),CubitInterface::get_nodeset_id_list(),CubitInterface::get_sideset_id_list()));
+          jobs_data[jobs_data_id][6] = std::to_string(ccx_iface->convert_result(job_id,{-1,-1,-1},ccx_iface->get_blocks(),CubitInterface::get_nodeset_id_list(),CubitInterface::get_sideset_id_list()));
         }
       }
       CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
@@ -414,7 +414,7 @@ bool CoreJobs::check_jobs()
           ccx_iface->load_result(std::stoi(jobs_data[i][0]));
           if (jobs_data[i][9] == "1") 
           {
-            jobs_data[i][6] = std::to_string(ccx_iface->convert_result(std::stoi(jobs_data[i][0]),-1,ccx_iface->get_blocks(),CubitInterface::get_nodeset_id_list(),CubitInterface::get_sideset_id_list()));
+            jobs_data[i][6] = std::to_string(ccx_iface->convert_result(std::stoi(jobs_data[i][0]),{-1,-1,-1},ccx_iface->get_blocks(),CubitInterface::get_nodeset_id_list(),CubitInterface::get_sideset_id_list()));
           }
           CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
         }
@@ -696,6 +696,18 @@ std::vector<std::string> CoreJobs::get_job_sta(int job_id)
     std::vector<std::string> tmp;
     return tmp;
   }
+}
+
+int CoreJobs::get_job_status(int job_id)
+{
+  int job_data_id;
+  int job_status = -2;
+  job_data_id = get_jobs_data_id_from_job_id(job_id);
+  if (job_data_id != -1)
+  {
+    job_status = std::stoi(jobs_data[job_data_id][3]);
+  }
+  return job_status;
 }
 
 bool CoreJobs::set_job_conversion(int job_id, int conversion)

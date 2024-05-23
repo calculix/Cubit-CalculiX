@@ -212,6 +212,8 @@ void CalculiXComp::restore_settings()
   ccx_uo.mPathParaViewName = "Path to ParaView";
   config.read_entry("PathIcons", ccx_uo.mPathIcons);
   ccx_uo.mPathIconsName = "Path to Icons";
+  config.read_entry("PathPythonInterface", ccx_uo.mPathPythonInterface);
+  ccx_uo.mPathPythonInterfaceName = "Path to Python Interface";
 }
 
 void CalculiXComp::save_settings()
@@ -224,6 +226,7 @@ void CalculiXComp::save_settings()
   config.write_entry("PathCGX", ccx_uo.mPathCGX);
   config.write_entry("PathParaView", ccx_uo.mPathParaView);
   config.write_entry("PathIcons", ccx_uo.mPathIcons);
+  config.write_entry("PathPythonInterface", ccx_uo.mPathPythonInterface);
 }
 
 void CalculiXComp::load_options()

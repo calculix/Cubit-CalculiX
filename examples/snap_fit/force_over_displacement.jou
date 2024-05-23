@@ -1,0 +1,39 @@
+#!python
+import numpy
+import matplotlib.pyplot as plt
+
+
+vertex_id = cubit.get_last_id("vertex")
+vertex_id -= 1
+job_id = 1
+node_id = cubit.get_vertex_node(vertex_id)
+
+ftimes = ccx.dat_get_result_block_times(1,"forces ","NODESET_3")
+fvalues = []
+dtimes = ccx.dat_get_result_block_times(1,"displacements ","NODESET_3")
+dvalues = []
+
+for time in ftimes:
+  fx = ccx.dat_get_node_value(1,node_id,time,"forces ","NODESET_3","fx")
+  fvalues.append(fx)
+
+for time in dtimes:
+  vx = ccx.dat_get_node_value(1,node_id,time,"displacements ","NODESET_3","vx")
+  dvalues.append(vx)
+
+
+print(ftimes)
+print(fvalues)
+print(dtimes)
+print(dvalues)
+
+# Data for plotting
+x_data = numpy.asarray(dvalues)
+y_data = numpy.asarray(fvalues)
+
+fig, ax = plt.subplots()
+ax.plot(x_data, y_data)
+
+ax.set(xlabel='vx', ylabel='fx',title='force over displacement for node ' + str(node_id))
+ax.grid()
+plt.show()

@@ -19,6 +19,11 @@ bool CalculiXCoreInterface::set_use_ccx_logfile(bool bool_use)
   return true;
 }
 
+bool CalculiXCoreInterface::init_pythoninterface()
+{
+  return ccx_core.init_pythoninterface();
+}
+
 std::string CalculiXCoreInterface::print_data()
 {
   return ccx_core.print_data();
@@ -118,6 +123,41 @@ std::vector<std::string> CalculiXCoreInterface::get_contactpair_master_slave(int
 std::string CalculiXCoreInterface::get_amplitude_name(int amplitude_id)
 {
   return ccx_core.get_amplitude_name(amplitude_id);
+}
+
+std::vector<int> CalculiXCoreInterface::get_loadsforces_ids()
+{
+  return ccx_core.get_loadsforces_ids();
+}
+
+std::vector<int> CalculiXCoreInterface::get_loadspressures_ids()
+{
+  return ccx_core.get_loadspressures_ids();
+}
+
+std::vector<int> CalculiXCoreInterface::get_loadsheatfluxes_ids()
+{
+  return ccx_core.get_loadsheatfluxes_ids();
+}
+
+std::vector<int> CalculiXCoreInterface::get_loadsgravity_ids()
+{
+  return ccx_core.get_loadsgravity_ids();
+}
+
+std::vector<int> CalculiXCoreInterface::get_loadscentrifugal_ids()
+{
+  return ccx_core.get_loadscentrifugal_ids();
+}
+
+std::vector<int> CalculiXCoreInterface::get_bcsdisplacements_ids()
+{
+  return ccx_core.get_bcsdisplacements_ids();
+}
+
+std::vector<int> CalculiXCoreInterface::get_bcstemperatures_ids()
+{
+  return ccx_core.get_bcstemperatures_ids();
 }
 
 bool CalculiXCoreInterface::check_block_exists(int block_id)
@@ -535,6 +575,11 @@ std::vector<std::string> CalculiXCoreInterface::get_job_sta(int job_id)
   return ccx_core.get_job_sta(job_id);
 }
 
+int CalculiXCoreInterface::get_job_status(int job_id)
+{
+  return ccx_core.get_job_status(job_id);
+}
+
 bool CalculiXCoreInterface::create_result(int job_id)
 {
   return ccx_core.create_result(job_id);
@@ -550,9 +595,9 @@ bool CalculiXCoreInterface::load_result(int job_id)
   return ccx_core.load_result(job_id);
 }
 
-int CalculiXCoreInterface::convert_result(int job_id, int option, std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids)
+int CalculiXCoreInterface::convert_result(int job_id, std::vector<int> options, std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids)
 {
-  return ccx_core.convert_result(job_id, option, block_ids, nodeset_ids, sideset_ids);
+  return ccx_core.convert_result(job_id, options, block_ids, nodeset_ids, sideset_ids);
 }
 
 bool CalculiXCoreInterface::project_result(int job_id,int step,int totalincrement,double scale)
@@ -603,6 +648,186 @@ std::vector<std::string> CalculiXCoreInterface::get_customline_data(std::string 
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_entities(std::string entity, int id)
 {
   return ccx_core.get_entities(entity,id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_load_force(int id)
+{
+  return ccx_core.get_draw_data_for_load_force(id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_load_pressure(int id)
+{
+  return ccx_core.get_draw_data_for_load_pressure(id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_load_heatflux(int id)
+{
+  return ccx_core.get_draw_data_for_load_heatflux(id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_load_gravity(int id)
+{
+  return ccx_core.get_draw_data_for_load_gravity(id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_load_centrifugal(int id)
+{
+  return ccx_core.get_draw_data_for_load_centrifugal(id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_bc_displacement(int id) // returns coord(3) and dof
+{
+  return ccx_core.get_draw_data_for_bc_displacement(id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_bc_temperature(int id) // returns coord(3) and dof
+{
+  return ccx_core.get_draw_data_for_bc_temperature(id);
+}  
+
+bool CalculiXCoreInterface::draw_all(double size) // draw all bc and loads
+{
+  return ccx_core.draw_all(size);
+}
+
+std::vector<std::string> CalculiXCoreInterface::frd_get_result_block_types(int job_id)
+{
+  return ccx_core.frd_get_result_block_types(job_id);
+}
+
+std::vector<std::string> CalculiXCoreInterface::frd_get_result_block_components(int job_id, std::string result_block_type)
+{
+  return ccx_core.frd_get_result_block_components(job_id, result_block_type);
+}
+
+std::vector<int> CalculiXCoreInterface::frd_get_total_increments(int job_id)
+{
+  return ccx_core.frd_get_total_increments(job_id);
+}
+
+double CalculiXCoreInterface::frd_get_time_from_total_increment(int job_id, int total_increment)
+{
+  return ccx_core.frd_get_time_from_total_increment(job_id, total_increment);
+}
+
+std::vector<int> CalculiXCoreInterface::frd_get_node_ids_between_values(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double lower_value,double upper_value)
+{
+  return ccx_core.frd_get_node_ids_between_values(job_id,total_increment,result_block_type,result_block_component,lower_value,upper_value);
+}
+
+std::vector<int> CalculiXCoreInterface::frd_get_node_ids_smaller_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value)
+{
+  return ccx_core.frd_get_node_ids_smaller_value(job_id,total_increment,result_block_type,result_block_component,value);
+}
+
+std::vector<int> CalculiXCoreInterface::frd_get_node_ids_greater_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value)
+{
+  return ccx_core.frd_get_node_ids_greater_value(job_id,total_increment,result_block_type,result_block_component,value);
+}
+
+std::vector<int> CalculiXCoreInterface::frd_get_element_ids_between_values(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double lower_value,double upper_value)
+{
+  return ccx_core.frd_get_element_ids_between_values(job_id,total_increment,result_block_type,result_block_component,lower_value,upper_value);
+}
+
+std::vector<int> CalculiXCoreInterface::frd_get_element_ids_smaller_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value)
+{
+  return ccx_core.frd_get_element_ids_smaller_value(job_id,total_increment,result_block_type,result_block_component,value);
+}
+
+std::vector<int> CalculiXCoreInterface::frd_get_element_ids_greater_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value)
+{
+  return ccx_core.frd_get_element_ids_greater_value(job_id,total_increment,result_block_type,result_block_component,value);
+}
+
+std::vector<int> CalculiXCoreInterface::frd_get_element_ids_over_limit(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double limit)
+{
+  return ccx_core.frd_get_element_ids_over_limit(job_id,total_increment,result_block_type,result_block_component,limit);
+}
+
+double CalculiXCoreInterface::frd_get_node_value(int job_id,int node_id, int total_increment,std::string result_block_type,std::string result_block_component)
+{
+  return ccx_core.frd_get_node_value(job_id,node_id,total_increment,result_block_type,result_block_component);
+}
+
+std::vector<double> CalculiXCoreInterface::frd_get_node_values(int job_id,int node_id, int total_increment,std::string result_block_type)
+{
+  return ccx_core.frd_get_node_values(job_id,node_id,total_increment,result_block_type);
+}
+
+std::vector<std::string> CalculiXCoreInterface::dat_get_result_block_types(int job_id)
+{
+  return ccx_core.dat_get_result_block_types(job_id);
+}
+
+std::vector<std::string> CalculiXCoreInterface::dat_get_result_block_set(int job_id)
+{
+  return ccx_core.dat_get_result_block_set(job_id);
+}
+
+std::vector<std::string> CalculiXCoreInterface::dat_get_result_block_components(int job_id, std::string result_block_type)
+{
+  return ccx_core.dat_get_result_block_components(job_id, result_block_type);
+}
+
+std::vector<double> CalculiXCoreInterface::dat_get_result_block_times(int job_id, std::string result_block_type, std::string result_block_set)
+{
+  return ccx_core.dat_get_result_block_times(job_id, result_block_type, result_block_set);
+}
+
+std::vector<int> CalculiXCoreInterface::dat_get_node_ids_between_values(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double lower_value,double upper_value)
+{
+  return ccx_core.dat_get_node_ids_between_values(job_id,time,result_block_type,result_block_set,result_block_component,lower_value,upper_value);
+}
+
+std::vector<int> CalculiXCoreInterface::dat_get_node_ids_smaller_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value)
+{
+  return ccx_core.dat_get_node_ids_smaller_value(job_id,time,result_block_type,result_block_set,result_block_component,value);
+}
+
+std::vector<int> CalculiXCoreInterface::dat_get_node_ids_greater_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value)
+{
+  return ccx_core.dat_get_node_ids_greater_value(job_id,time,result_block_type,result_block_set,result_block_component,value);
+}
+
+std::vector<int> CalculiXCoreInterface::dat_get_element_ids_between_values(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double lower_value,double upper_value)
+{
+  return ccx_core.dat_get_element_ids_between_values(job_id,time,result_block_type,result_block_set,result_block_component,lower_value,upper_value);
+}
+
+std::vector<int> CalculiXCoreInterface::dat_get_element_ids_smaller_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value)
+{
+  return ccx_core.dat_get_element_ids_smaller_value(job_id,time,result_block_type,result_block_set,result_block_component,value);
+}
+
+std::vector<int> CalculiXCoreInterface::dat_get_element_ids_greater_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value)
+{
+  return ccx_core.dat_get_element_ids_greater_value(job_id,time,result_block_type,result_block_set,result_block_component,value);
+}
+
+std::vector<int> CalculiXCoreInterface::dat_get_element_ids_over_limit(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double limit)
+{
+  return ccx_core.dat_get_element_ids_over_limit(job_id,time,result_block_type,result_block_set,result_block_component,limit);
+}
+
+double CalculiXCoreInterface::dat_get_node_value(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component)
+{
+  return ccx_core.dat_get_node_value(job_id,node_id,time,result_block_type,result_block_set,result_block_component);
+}
+
+std::vector<double> CalculiXCoreInterface::dat_get_node_values(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set)
+{
+  return ccx_core.dat_get_node_values(job_id,node_id,time,result_block_type,result_block_set);
+}
+
+std::vector<double> CalculiXCoreInterface::dat_get_element_values_for_component(int job_id,int element_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component)
+{
+  return ccx_core.dat_get_element_values_for_component(job_id,element_id,time,result_block_type,result_block_set,result_block_component);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::dat_get_element_values(int job_id,int element_id, double time,std::string result_block_type,std::string result_block_set)
+{
+  return ccx_core.dat_get_element_values(job_id,element_id,time,result_block_type,result_block_set);
 }
 
 QIcon* CalculiXCoreInterface::getIcon(std::string name)

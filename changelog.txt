@@ -1,2 +1,11 @@
 2024-04-01 deprecating ccx2paraview
 2024-04-01 Update from Cubit 2023.11 to 2024.3
+2024-05-01 started with Draw functionality and python interface
+2024-05-09 first successfull loading of the python interface
+2024-05-10 working on draw loads and bcs
+2024-05-11 working python interface, write out elements with value difference over a limit
+2024-05-13 begin with python interface for the .dat results
+2024-05-17 working on python interface for the .dat results
+2024-05-20 new python interface function to get job status
+2024-05-20 working on new convert option
+2024-05-23 updating readme

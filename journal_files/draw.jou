@@ -1,0 +1,43 @@
+#!cubit
+reset
+label off
+create brick x 1
+create brick x 1
+create brick x 1
+create brick x 1
+
+move vol 2 x 1.5
+move vol 3 y 1.5
+move vol 4 x 1.5 y 1.5
+
+create force on surface 17 force value 1 direction 0 1 0
+create force on surface 23 force value 0 moment value 3 direction 1 1 1
+create force on surface 23 force value 1 direction 0 1 0
+
+create pressure on surface 1 magnitude 22
+create pressure on curve 1 magnitude 22
+
+create heatflux  on surface 12  value 21 
+create heatflux  on surface 10  value 21 
+create heatflux  on surface 11  value 12
+
+block 1 add volume 1
+
+ccx create gravity 234 block 1 direction 1 2 3
+ccx create centrifugal 123123 block 1 coordinate -1 -2 -2 direction 4 4 0
+
+create displacement  on volume 1 dof 1 dof 6 fix 21 
+create displacement  on volume 2 dof all fix  1
+create temperature on volume 4 value 21
+
+vol all size auto factor 5
+mesh vol all
+
+create temperature on vertex 1 2 3 4 value 21
+
+
+create pressure on face 601 magnitude 99
+
+ccx draw size 0.8
+
+

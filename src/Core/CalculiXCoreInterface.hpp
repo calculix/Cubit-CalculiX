@@ -14,6 +14,7 @@ public:
 	
   bool set_use_ccx_autocleanup(bool bool_use);
   bool set_use_ccx_logfile(bool bool_use);
+  bool init_pythoninterface();
   std::string print_data();
   bool log_str(std::string str_log);
   std::vector<int> parser(std::string parse_type, std::string parse_string);
@@ -33,6 +34,13 @@ public:
   std::string get_surfaceinteraction_name(int surfaceinteraction_id); // gets the surfaceinteraction name
   std::vector<std::string> get_contactpair_master_slave(int contactpair_id); // gets the contactpair master and slave name
   std::string get_amplitude_name(int amplitude_id); // gets the surfaceinteraction name
+  std::vector<int> get_loadsforces_ids(); // get all load forces ids
+  std::vector<int> get_loadspressures_ids(); // get all load pressure ids
+  std::vector<int> get_loadsheatfluxes_ids(); // get all load heatflux ids
+  std::vector<int> get_loadsgravity_ids(); // get all load gravity ids
+  std::vector<int> get_loadscentrifugal_ids(); // get all load centrifugal ids
+  std::vector<int> get_bcsdisplacements_ids(); // get all bc displacement ids
+  std::vector<int> get_bcstemperatures_ids(); // get all bc temperature ids
   bool check_block_exists(int block_id);
   bool check_nodeset_exists(int nodeset_id);
   bool check_sideset_exists(int sideset_id);
@@ -123,10 +131,11 @@ public:
   std::vector<std::string> get_job_console_output(int job_id);
   std::vector<std::string> get_job_cvg(int job_id);
   std::vector<std::string> get_job_sta(int job_id);
+  int get_job_status(int job_id);
   bool create_result(int job_id); // adds a new result for job
   bool delete_result(int job_id); // delete result for job
   bool load_result(int job_id); // load result for job
-  int convert_result(int job_id, int option, std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids); // convert result for job
+  int convert_result(int job_id, std::vector<int> options, std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids); // convert result for job
   bool project_result(int job_id,int step,int totalincrement,double scale); // project disp result for job for specific step or increment
   double compute_von_mises_stress(std::vector<double> vec); // computes the von mises stress/strain for a vector of values
   double compute_von_mises_strain(std::vector<double> vec); // computes the von mises stress/strain for a vector of values
@@ -137,6 +146,47 @@ public:
   bool delete_customline(int customline_id); // delete customline
   std::vector<std::vector<std::string>> get_entities(std::string entity, int id);
   std::vector<std::string> get_customline_data(std::string position,std::string keyword,int keyword_id);
+  //draw
+  std::vector<std::vector<double>> get_draw_data_for_load_force(int id); // returns coord(3) and magnitude(3) std::vector<double>
+  std::vector<std::vector<double>> get_draw_data_for_load_pressure(int id); // returns coord(3) and magnitude(3) std::vector<double>
+  std::vector<std::vector<double>> get_draw_data_for_load_heatflux(int id); // returns coord(3) and magnitude(3) std::vector<double>
+  std::vector<std::vector<double>> get_draw_data_for_load_gravity(int id); // returns coord(3) and magnitude(3) std::vector<double>
+  std::vector<std::vector<double>> get_draw_data_for_load_centrifugal(int id); // returns coord(3) and magnitude(3) std::vector<double>
+  std::vector<std::vector<double>> get_draw_data_for_bc_displacement(int id); // returns coord(3) and dof
+  std::vector<std::vector<double>> get_draw_data_for_bc_temperature(int id); // returns coord(3) and dof
+  bool draw_all(double size); // draw all loads and bcs
+
+  //QUERY results
+  //FRD results
+  std::vector<std::string> frd_get_result_block_types(int job_id); // returns a list of all result block types
+  std::vector<std::string> frd_get_result_block_components(int job_id, std::string result_block_type); // returns a list of all result block components for a block type
+  std::vector<int> frd_get_total_increments(int job_id); // returns a list of the total increments
+  double frd_get_time_from_total_increment(int job_id, int total_increment); // returns a the time for a total increment
+  std::vector<int> frd_get_node_ids_between_values(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double lower_value,double upper_value); // returns the global node ids within the values
+  std::vector<int> frd_get_node_ids_smaller_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value); // returns the global node ids smaller than the value
+  std::vector<int> frd_get_node_ids_greater_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value); // returns the global node ids greater than the value
+  std::vector<int> frd_get_element_ids_between_values(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double lower_value,double upper_value); // returns the global element ids within the values
+  std::vector<int> frd_get_element_ids_smaller_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value); // returns the global element ids smaller than the values
+  std::vector<int> frd_get_element_ids_greater_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value); // returns the global element ids greater than the values  
+  std::vector<int> frd_get_element_ids_over_limit(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double limit); // returns the global element ids where the largest difference between nodal values exceeds the limit
+  double frd_get_node_value(int job_id,int node_id, int total_increment,std::string result_block_type,std::string result_block_component); // returns the queried node_id value
+  std::vector<double> frd_get_node_values(int job_id,int node_id, int total_increment,std::string result_block_type); // returns the queried node_id values
+  //DAT results
+  std::vector<std::string> dat_get_result_block_types(int job_id); // returns a list of all result block types
+  std::vector<std::string> dat_get_result_block_set(int job_id); // returns a list of all result block set
+  std::vector<std::string> dat_get_result_block_components(int job_id, std::string result_block_type); // returns a list of all result block components for a block type and set
+  std::vector<double> dat_get_result_block_times(int job_id, std::string result_block_type, std::string result_block_set); // returns a list of all result block components for a block type and set
+  std::vector<int> dat_get_node_ids_between_values(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double lower_value,double upper_value); // returns the global node ids within the values
+  std::vector<int> dat_get_node_ids_smaller_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value); // returns the global node ids smaller than the value
+  std::vector<int> dat_get_node_ids_greater_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value); // returns the global node ids greater than the value
+  std::vector<int> dat_get_element_ids_between_values(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double lower_value,double upper_value); // returns the global element ids within the values
+  std::vector<int> dat_get_element_ids_smaller_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value); // returns the global element ids smaller than the values
+  std::vector<int> dat_get_element_ids_greater_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value); // returns the global element ids greater than the values  
+  std::vector<int> dat_get_element_ids_over_limit(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double limit); // returns the global element ids where the largest difference between element values exceeds the limit
+  double dat_get_node_value(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component); // returns the queried node_id value
+  std::vector<double> dat_get_node_values(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set); // returns the queried node_id values
+  std::vector<double> dat_get_element_values_for_component(int job_id,int element_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component); // returns the queried element integration point values for a component
+  std::vector<std::vector<double>> dat_get_element_values(int job_id,int element_id, double time,std::string result_block_type,std::string result_block_set); // returns the queried element integration point values for all components
 
   // GUI
   QIcon* getIcon(std::string name);
@@ -175,7 +225,6 @@ public:
   std::vector<std::vector<std::string>> get_steps_fieldoutputs_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_customlines_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_jobs_tree_data(); // gets the data from core to build the tree
-
 
   MeshExportInterface *me_iface;
 };

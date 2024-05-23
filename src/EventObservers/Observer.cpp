@@ -10,7 +10,7 @@
 
 Observer::Observer()
 {
-  CalculiXCoreInterface *ccx_iface =  new CalculiXCoreInterface; 
+  CalculiXCoreInterface *ccx_iface =  new CalculiXCoreInterface;
 }
 
 Observer::~Observer()
@@ -22,6 +22,7 @@ void Observer::notify_model_reset()
   ccx_iface->core_reset();
   ccx_comp->reset();
 }
+
 void Observer::notify_command_complete()
 {
   ccx_iface->core_update();

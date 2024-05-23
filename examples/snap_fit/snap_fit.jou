@@ -1,0 +1,140 @@
+#!cubit
+reset
+create vertex 0 0 0
+create vertex 0 15 0
+create vertex 2 15 0
+create vertex 2 8.34 0
+create vertex 20 8.34 0
+create vertex 20 9.84 0
+create vertex 21.9 9.84 0
+create vertex 26 7.46 0
+create vertex 26 6.66 0
+create vertex 2 6.66 0
+create vertex 2 0 0
+
+create vertex 24.168 9.85 0
+create vertex 30.168 9.85 0
+create vertex 30.168 8.35 0
+create vertex 24.168 8.35 0
+
+create curve polyline vertex 1 to 11,1 
+create curve polyline vertex 12 to 15,12
+create surface curve 1 to 11
+create surface curve 12 to 15
+tweak vertex 15 fillet radius 0.6
+tweak vertex 14 fillet radius 0.6
+tweak vertex 6 fillet radius 0.1
+tweak vertex 7 fillet radius 0.1
+sweep surface 1 2 direction 0 0 1 distance 5 
+compress
+
+curve 52 21 interval 1
+curve 52 21 scheme equal
+mesh curve 52 21
+curve 49 57 interval 8
+curve 49 57 scheme equal
+mesh curve 49 57
+curve 45 interval 4
+curve 45 scheme equal
+mesh curve 45
+curve 41 interval 8
+curve 41 scheme equal
+mesh curve 41
+Curve 39 43 20 46 size 0.1
+mesh vol all
+
+block 1 add volume 1
+block 2 add volume 2
+block all element type hex20
+
+nodeset 1 add surface 8
+nodeset 2 add volume 2
+
+sideset 1 add surface 17 18 21 22
+sideset 2 add surface 3 15 14 13 12 
+
+create material "ABS" property_group "CalculiX-FEA"
+modify material "ABS" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "ABS" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "ABS" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 2000 0.394 0
+modify material "ABS" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+modify material "ABS" scalar_properties "CCX_DENSITY_USE_CARD" 1
+modify material "ABS" matrix_property "CCX_DENSITY_DENSITY" 1.02e-09 0
+modify material "ABS" scalar_properties "CCX_SPECIFIC_HEAT_USE_CARD" 1
+modify material "ABS" matrix_property "CCX_SPECIFIC_HEAT_SPECIFIC_HEAT" 1386000000 0
+modify material "ABS" scalar_properties "CCX_EXPANSION_USE_CARD" 1
+modify material "ABS" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "ABS" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 7.4e-05 0
+modify material "ABS" scalar_properties "CCX_CONDUCTIVITY_USE_CARD" 1
+modify material "ABS" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+modify material "ABS" matrix_property "CCX_CONDUCTIVITY_ISO_K_TEMPERATURE" 0.2256 0
+
+ccx create section solid block all material 1
+
+create vertex location on surface 8 center
+create vertex location on surface 8 center
+
+mesh vertex all
+
+#!python
+vertex_id = cubit.get_last_id("vertex")
+cubit.cmd(f"ccx create constraint rigid body nodeset 1 ref {vertex_id-1} rot {vertex_id}")
+cubit.cmd(f"nodeset 3 add vertex {vertex_id-1}")
+cubit.cmd(f"nodeset 4 add vertex {vertex_id}")
+
+#!cubit
+ccx create surfaceinteraction name "SurfaceInteraction1" linear slopek 80000 sigmainf 1e-06 c0 0.001
+ccx create contactpair surfaceinteraction 1 surfacetosurface master 1 slave 2
+ccx modify surfaceinteraction 1 friction mu 0.1 lambda 40000
+
+create displacement on nodeset 2 dof 1 dof 2 dof 3 fix 0
+create displacement on nodeset 3 dof 1 dof 2 dof 3 fix 0
+modify displacement 2 dof 1 fix 9.27
+create displacement on nodeset 4 dof 1 dof 2 dof 3 fix 0
+create displacement on nodeset 3 dof 1 dof 2 dof 3 fix 0
+modify displacement 4 dof 1 fix 10.3
+
+ccx create fieldoutput name "fo_node" node
+ccx create fieldoutput name "fo_element" element
+ccx create fieldoutput name "fo_contact" contact
+ccx modify fieldoutput 1 node
+ccx modify fieldoutput 1 node key_on u
+ccx modify fieldoutput 1 node key_off cp depf dept dtf hcri keq mach maxu mf nt pnt pot prf ps psf pt ptf pu rf rfl sen ts tsf tt ttf turb v vf
+ccx modify fieldoutput 2 element
+ccx modify fieldoutput 2 element key_on e s
+ccx modify fieldoutput 2 element key_off ceeq ecd emfb emfe ener err her hfl hflf maxe maxs me peeq phs sf smid sneg spos svf sdv the zzs
+ccx modify fieldoutput 3 contact
+ccx modify fieldoutput 3 contact key_on cdis cstr cels
+ccx modify fieldoutput 3 contact key_off pcon
+
+ccx create historyoutput name "ho_1" node
+ccx modify historyoutput 1 node nodeset 3
+ccx modify historyoutput 1 node key_on rf u
+ccx modify historyoutput 1 node key_off nt tsf ttf pn psf ptf mach cp vf depf turb mf rfl
+
+ccx create step name "move_1" static
+ccx modify step 1 parameter inc 500
+ccx modify step 1 parameter nlgeom_yes
+ccx modify step 1 static solver pardiso totaltimeatstart 0 initialtimeincrement 1e-05 timeperiodofstep 0.90 minimumtimeincrement 1e-08 maximumtimeincrement 1e-2
+ccx step 1 add bc displacement 1
+ccx step 1 add bc displacement 2
+ccx step 1 add bc displacement 3
+ccx step 1 add fieldoutput 1
+ccx step 1 add fieldoutput 2
+ccx step 1 add fieldoutput 3
+ccx step 1 add historyoutput 1
+
+ccx create step name "move_2" static
+ccx modify step 2 parameter inc 500
+ccx modify step 2 parameter nlgeom_yes
+ccx modify step 2 static solver pardiso totaltimeatstart 0.90 initialtimeincrement 1e-05 timeperiodofstep 0.1 minimumtimeincrement 1e-08 maximumtimeincrement 1e-3
+ccx step 2 add bc displacement 4
+ccx step 2 add fieldoutput 1
+ccx step 2 add fieldoutput 2
+ccx step 2 add fieldoutput 3
+ccx step 2 add historyoutput 1
+
+ccx create job name "snap_fit"
+#ccx run job 1 no_conversion
+#ccx result convert job 1 partial frd
+
