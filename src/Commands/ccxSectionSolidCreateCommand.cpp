@@ -47,7 +47,7 @@ std::vector<std::string> ccxSectionSolidCreateCommand::get_syntax()
     }
     
     syntax.append("material <value:label='material',help='<material>'> ");
-    syntax.append("[orientation <string:type='unquoted', number='1', label='orientation', help='<orientation_name>'>] ");
+    syntax.append("[orientation <value:type='orientation' ,help='<orientation_id>'>] ");
     syntax.append("[thickness <value:label='thickness',help='<thickness>'>]");
     
     syntax_list.push_back(syntax);
@@ -60,7 +60,7 @@ std::vector<std::string> ccxSectionSolidCreateCommand::get_syntax()
 std::vector<std::string> ccxSectionSolidCreateCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx create section solid block <block id> material <material id> [orientation <orientation_name>] [thickness <thickness>]";
+  help[0] = "ccx create section solid block <block id> material <material id> [orientation <orientation_id>] [thickness <thickness>]";
   help[1]=" ";
   help[2]=" ";
   help[3]=" ";
@@ -84,6 +84,7 @@ bool ccxSectionSolidCreateCommand::execute(CubitCommandData &data)
   std::string output;
 
   int material_id;
+  int orientation_value;
   std::string orientation;
   std::vector<std::string> options;
   double thickness_value;
@@ -96,9 +97,13 @@ bool ccxSectionSolidCreateCommand::execute(CubitCommandData &data)
   std::string block_string = " ";
   
   data.get_value("material", material_id);
-  if (!data.get_string("orientation", orientation))
+  if (!data.get_value("orientation", orientation_value))
   {
     orientation = "";
+  }
+  else
+  {
+    orientation = std::to_string(orientation_value);
   }
   if (!data.get_value("thickness", thickness_value))
   {

@@ -51,14 +51,14 @@ std::vector<std::string> ccxSectionBeamCreateCommand::get_syntax()
     syntax.append("material <value:label='material',help='<material>'> ");
     syntax.append("parameter1 <value:label='parameter1',help='<parameter1>'> "); // first line
     syntax.append("parameter2 <value:label='parameter2',help='<parameter2>'> ");
-    syntax.append("[parameter3 <value:label='parameter3',help='<parameter3>'> ");
+    syntax.append("parameter3 <value:label='parameter3',help='<parameter3>'> ");
     syntax.append("parameter4 <value:label='parameter4',help='<parameter4>'> ");
     syntax.append("parameter5 <value:label='parameter5',help='<parameter5>'> ");
     syntax.append("parameter6 <value:label='parameter6',help='<parameter6>'>] ");
     syntax.append("x <value:label='x',help='<x>'> "); //second line
     syntax.append("y <value:label='y',help='<y>'> ");
     syntax.append("z <value:label='z',help='<z>'> ");
-    syntax.append("[orientation <string:type='unquoted', number='1', label='orientation', help='<orientation_name>'>] ");
+    syntax.append("[orientation <value:type='orientation' ,help='<orientation_id>'>] ");
     syntax.append("[offset1 <value:label='offset1',help='<offset1>'>] ");
     syntax.append("[offset2 <value:label='offset2',help='<offset2>'>] ");
     
@@ -72,7 +72,7 @@ std::vector<std::string> ccxSectionBeamCreateCommand::get_syntax()
 std::vector<std::string> ccxSectionBeamCreateCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx create section beam beam_type {rect|circ|box|pipe} block <block id> material <material id> parameter1 <parameter1> parameter2 <parameter2> [parameter3 <parameter3> parameter4 <parameter4> parameter5 <parameter5> parameter6 <parameter6>] x <x> y <y> z <z> [orientation <orientation_name>] [offset1 <offset1>] [offset2 <offset2>]";
+  help[0] = "ccx create section beam beam_type {rect|circ|box|pipe} block <block id> material <material id> parameter1 <parameter1> parameter2 <parameter2> [parameter3 <parameter3> parameter4 <parameter4> parameter5 <parameter5> parameter6 <parameter6>] x <x> y <y> z <z> [orientation <orientation_id>] [offset1 <offset1>] [offset2 <offset2>]";
   help[1]=" ";
   help[2]=" ";
   help[3]=" ";
@@ -97,6 +97,7 @@ bool ccxSectionBeamCreateCommand::execute(CubitCommandData &data)
 
   std::string beam_type;
   int material_id;
+  int orientation_value;
   std::string orientation;
   std::vector<std::string> options;
   double parameter1_value;
@@ -143,9 +144,13 @@ bool ccxSectionBeamCreateCommand::execute(CubitCommandData &data)
   }
   
   data.get_value("material", material_id);
-  if (!data.get_string("orientation", orientation))
+  if (!data.get_value("orientation", orientation_value))
   {
     orientation = "";
+  }
+  else
+  {
+    orientation = std::to_string(orientation_value);
   }
   if (!data.get_value("parameter1", parameter1_value))
   {

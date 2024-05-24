@@ -28,7 +28,7 @@ public:
   // solid_section_data[0][0] solid_section_id
   // solid_section_data[0][1] block_id
   // solid_section_data[0][2] material
-  // solid_section_data[0][3] option: orientation
+  // solid_section_data[0][3] option: orientation id
   // solid_section_data[0][4] option: thickness
   
   std::vector<std::vector<std::string>> shell_section_data; // type 2
@@ -53,7 +53,7 @@ public:
   // beam_section_data[0][10] x
   // beam_section_data[0][11] y
   // beam_section_data[0][12] z
-  // beam_section_data[0][13] option: orientation
+  // beam_section_data[0][13] option: orientation id
   // beam_section_data[0][14] option: offset1
   // beam_section_data[0][15] option: offset2
 
@@ -61,7 +61,7 @@ public:
   // membrane_section_data[0][0] shell_section_id
   // membrane_section_data[0][1] block_id
   // membrane_section_data[0][2] material_id
-  // membrane_section_data[0][3] option: orientation
+  // membrane_section_data[0][3] option: orientation id
   // membrane_section_data[0][4] option: thickness
   // membrane_section_data[0][5] option: offset
 

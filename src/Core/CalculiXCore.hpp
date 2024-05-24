@@ -13,6 +13,7 @@ class CoreConstraints;
 class CoreSurfaceInteractions;
 class CoreContactPairs;
 class CoreAmplitudes;
+class CoreOrientations;
 class CoreLoadsForces;
 class CoreLoadsPressures;
 class CoreLoadsHeatfluxes;
@@ -281,6 +282,7 @@ public:
   CoreSurfaceInteractions *surfaceinteractions;
   CoreContactPairs *contactpairs;
   CoreAmplitudes *amplitudes;
+  CoreOrientations *orientations;
   CoreLoadsForces *loadsforces;
   CoreLoadsPressures *loadspressures;
   CoreLoadsHeatfluxes *loadsheatfluxes;

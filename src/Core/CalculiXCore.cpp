@@ -21,6 +21,7 @@
 #include "CoreSurfaceInteractions.hpp"
 #include "CoreContactPairs.hpp"
 #include "CoreAmplitudes.hpp"
+#include "CoreOrientations.hpp"
 #include "CoreLoadsForces.hpp"
 #include "CoreLoadsPressures.hpp"
 #include "CoreLoadsHeatfluxes.hpp"
@@ -46,7 +47,7 @@
 
 CalculiXCore::CalculiXCore():
   cb(NULL),mat(NULL),sections(NULL),constraints(NULL),surfaceinteractions(NULL),
-  contactpairs(NULL),amplitudes(NULL),loadsforces(NULL),loadspressures(NULL),loadsheatfluxes(NULL),
+  contactpairs(NULL),amplitudes(NULL),orientations(NULL),loadsforces(NULL),loadspressures(NULL),loadsheatfluxes(NULL),
   loadsgravity(NULL),loadscentrifugal(NULL),
   bcsdisplacements(NULL),bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL),
   initialconditions(NULL), hbcs(NULL), steps(NULL),jobs(NULL),results(NULL),timer(NULL),customlines(NULL),
@@ -71,6 +72,8 @@ CalculiXCore::~CalculiXCore()
     delete contactpairs;
   if(amplitudes)
     delete amplitudes;
+  if(orientations)
+    delete orientations;  
   if(loadsforces)
     delete loadsforces;
   if(loadspressures)
@@ -158,7 +161,12 @@ bool CalculiXCore::init()
     amplitudes = new CoreAmplitudes;
   
   amplitudes->init();
+
+  if(!orientations)
+    orientations = new CoreOrientations;
   
+  orientations->init();
+
   if(!loadsforces)
     loadsforces = new CoreLoadsForces;
   
@@ -320,6 +328,7 @@ bool CalculiXCore::reset()
   surfaceinteractions->reset();
   contactpairs->reset();
   amplitudes->reset();
+  orientations->reset();
   loadsforces->reset();
   loadspressures->reset();
   loadsheatfluxes->reset();
@@ -997,6 +1006,7 @@ std::string CalculiXCore::print_data()
   str_return.append(surfaceinteractions->print_data());
   str_return.append(contactpairs->print_data());
   str_return.append(amplitudes->print_data());
+  str_return.append(orientations->print_data());
   str_return.append(loadsforces->print_data());
   str_return.append(loadspressures->print_data());
   str_return.append(loadsheatfluxes->print_data());
