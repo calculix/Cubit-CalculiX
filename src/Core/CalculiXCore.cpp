@@ -73,7 +73,7 @@ CalculiXCore::~CalculiXCore()
   if(amplitudes)
     delete amplitudes;
   if(orientations)
-    delete orientations;  
+    delete orientations;
   if(loadsforces)
     delete loadsforces;
   if(loadspressures)
@@ -2095,6 +2095,21 @@ bool CalculiXCore::modify_amplitude(int amplitude_id, std::vector<std::string> o
 bool CalculiXCore::delete_amplitude(int amplitude_id)
 {
   return amplitudes->delete_amplitude(amplitude_id);
+}
+
+bool CalculiXCore::create_orientation(std::vector<std::string> options, std::vector<std::vector<std::string>> options2)
+{
+  return orientations->create_orientation(options, options2);
+}
+
+bool CalculiXCore::modify_orientation(int orientation_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2)
+{
+  return orientations->modify_orientation(orientation_id, options, options_marker, options2);
+}
+
+bool CalculiXCore::delete_orientation(int orientation_id)
+{
+  return orientations->delete_orientation(orientation_id);
 }
 
 bool CalculiXCore::modify_loadsforces(int force_id, std::vector<std::string> options, std::vector<int> options_marker)
@@ -6015,6 +6030,12 @@ std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_
       for (size_t i = 0; i < amplitudes->amplitudes_data.size(); i++)
       {
         all_ids.push_back(amplitudes->amplitudes_data[i][0]);
+      }
+    } else if (parse_type=="orientation")
+    {
+      for (size_t i = 0; i < orientations->orientations_data.size(); i++)
+      {
+        all_ids.push_back(orientations->orientations_data[i][0]);
       }
     } else if (parse_type=="loadsgravity")
     {

@@ -41,80 +41,58 @@ bool CoreOrientations::check_initialized()
 {
   return is_initialized;
 }
-/*
-bool CoreOrientations::create_amplitude(std::vector<std::string> options, std::vector<std::vector<std::string>> options2)
+
+bool CoreOrientations::create_orientation(std::vector<std::string> options, std::vector<std::vector<std::string>> options2)
 {
-  int amplitude_id;
-  int amplitude_last;
+  int orientation_id;
+  int orientation_last;
   int sub_id;
   int sub_last;
   int name_id;
-  int shiftx_id;
-  int shifty_id;
-  int time_type;
-  int amplitudevalues_id;
+  int system_type;
+  int distribution_id;
+  int a_id;
+  int b_id;
+  int local_axis;
+  int rotation_id;
   
-  if (amplitudes_data.size()==0)
+  if (orientations_data.size()==0)
   {
-    amplitude_id = 1;
+    orientation_id = 1;
   }
   else
   {
-    amplitude_last = amplitudes_data.size() - 1;
-    amplitude_id = amplitudes_data[amplitude_last][0] + 1;
+    orientation_last = orientations_data.size() - 1;
+    orientation_id = orientations_data[orientation_last][0] + 1;
   }
 
   // name
-  if (name_amplitude_data.size()==0)
+  if (name_data.size()==0)
   {
     sub_id = 1;
   }
   else
   {
-    sub_last = name_amplitude_data.size() - 1;
-    sub_id = std::stoi(name_amplitude_data[sub_last][0]) + 1;
+    sub_last = name_data.size() - 1;
+    sub_id = std::stoi(name_data[sub_last][0]) + 1;
   }
   name_id = sub_id;
-  this->add_name_amplitude(std::to_string(sub_id), options[0]);
+  this->add_name(std::to_string(sub_id), options[0]);
 
-  // shiftx
-  if (shiftx_amplitude_data.size()==0)
-  {
-    sub_id = 1;
-  }
-  else
-  {
-    sub_last = shiftx_amplitude_data.size() - 1;
-    sub_id = std::stoi(shiftx_amplitude_data[sub_last][0]) + 1;
-  }
-  shiftx_id = sub_id;
-  this->add_shiftx_amplitude(std::to_string(sub_id), options[1]);
-  
-  // shifty
-  if (shifty_amplitude_data.size()==0)
-  {
-    sub_id = 1;
-  }
-  else
-  {
-    sub_last = shifty_amplitude_data.size() - 1;
-    sub_id = std::stoi(shifty_amplitude_data[sub_last][0]) + 1;
-  }
-  shifty_id = sub_id;
-  this->add_shifty_amplitude(std::to_string(sub_id), options[2]);
-  
-  time_type = std::stoi(options[3]);
-  
-  if (amplitudevalues_amplitude_data.size()==0)
+  system_type = std::stoi(options[1]);
+  distribution_id = std::stoi(options[2]);
+
+  //a
+  if (a_data.size()==0)
   {
     sub_id = 1;
   }
   else
   {
     sub_id = 1;
-    for (size_t i = 0; i < amplitudevalues_amplitude_data.size(); i++)
+    for (size_t i = 0; i < a_data.size(); i++)
     {
-      sub_last = std::stoi(amplitudevalues_amplitude_data[i][0]);
+      sub_last = std::stoi(a_data[i][0]);
       if (sub_id < sub_last)
       {
         sub_id = sub_last;
@@ -122,161 +100,195 @@ bool CoreOrientations::create_amplitude(std::vector<std::string> options, std::v
     }
     sub_id = sub_id + 1;
   }
-  amplitudevalues_id = sub_id;
-  for (size_t i = 0; i < options2.size(); i++)
+  a_id = sub_id;
+  this->add_a(std::to_string(a_id), options2[3][0], options2[3][1], options2[3][2]);
+  
+  //b
+  if (b_data.size()==0)
   {
-    this->add_amplitudevalues_amplitude(std::to_string(amplitudevalues_id), options2[i][0], options2[i][1]);
+    sub_id = 1;
   }
+  else
+  {
+    sub_id = 1;
+    for (size_t i = 0; i < b_data.size(); i++)
+    {
+      sub_last = std::stoi(b_data[i][0]);
+      if (sub_id < sub_last)
+      {
+        sub_id = sub_last;
+      }
+    }
+    sub_id = sub_id + 1;
+  }
+  b_id = sub_id;
+  this->add_b(std::to_string(b_id), options2[4][0], options2[4][1], options2[4][2]);
 
-  this->add_amplitude(amplitude_id, name_id, shiftx_id, shifty_id, time_type, amplitudevalues_id);
+  local_axis = std::stoi(options[5]);
+
+  //rotation_id
+  if (rotation_data.size()==0)
+  {
+    sub_id = 1;
+  }
+  else
+  {
+    sub_id = 1;
+    for (size_t i = 0; i < rotation_data.size(); i++)
+    {
+      sub_last = std::stoi(rotation_data[i][0]);
+      if (sub_id < sub_last)
+      {
+        sub_id = sub_last;
+      }
+    }
+    sub_id = sub_id + 1;
+  }
+  rotation_id = sub_id;
+  this->add_rotation(std::to_string(rotation_id), options2[5][0]);
+
+  this->add_orientation(orientation_id, name_id, system_type, distribution_id, a_id, b_id, local_axis, rotation_id);
   return true;
 }
 
-bool CoreAmplitudes::modify_amplitude(int amplitude_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2)
+bool CoreOrientations::modify_orientation(int orientation_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2)
 {
   int sub_data_id;
-  std::vector<int> sub_data_ids;
-  int amplitudes_data_id = get_amplitudes_data_id_from_amplitude_id(amplitude_id);
+  int orientations_data_id = get_orientations_data_id_from_orientation_id(orientation_id);
   
-  if (amplitudes_data_id == -1)
+  if (orientations_data_id == -1)
   {
     return false;
   } else {
     // name
     if (options_marker[0]==1)
     {
-      sub_data_id = get_name_amplitude_data_id_from_name_amplitude_id(amplitudes_data[amplitudes_data_id][1]);
-      name_amplitude_data[sub_data_id][1] = options[0];
+      sub_data_id = get_name_data_id_from_name_id(orientations_data[orientations_data_id][1]);
+      name_data[sub_data_id][1] = options[0];
     }
-    // shiftx
+    // system_type
     if (options_marker[1]==1)
     {
-      sub_data_id = get_shiftx_amplitude_data_id_from_shiftx_amplitude_id(amplitudes_data[amplitudes_data_id][2]);
-      shiftx_amplitude_data[sub_data_id][1] = options[1];
+      orientations_data[orientations_data_id][2] = std::stoi(options[1]);
     }
-    // shifty
+    // distribution_id
     if (options_marker[2]==1)
     {
-      sub_data_id = get_shifty_amplitude_data_id_from_shifty_amplitude_id(amplitudes_data[amplitudes_data_id][3]);
-      shifty_amplitude_data[sub_data_id][1] = options[2];
+      orientations_data[orientations_data_id][3] = std::stoi(options[2]);
     }
-    // time_type
+    // a values
+    sub_data_id = get_a_data_id_from_a_id(orientations_data[orientations_data_id][4]);
     if (options_marker[3]==1)
     {
-      amplitudes_data[amplitudes_data_id][4] = std::stoi(options[3]);
+      a_data[sub_data_id][1] = options2[3][0];
+      a_data[sub_data_id][2] = options2[3][1];
+      a_data[sub_data_id][3] = options2[3][2];
     }
-    // amplitude values
-    sub_data_ids = get_amplitudevalues_amplitude_data_ids_from_amplitudevalues_amplitude_id(amplitudes_data[amplitudes_data_id][5]);
-    if (options2.size()!=0)
+    // b values
+    sub_data_id = get_b_data_id_from_b_id(orientations_data[orientations_data_id][5]);
+    if (options_marker[4]==1)
     {
-      if (options2.size()==sub_data_ids.size())
-      {
-        for (size_t i = 0; i < options2.size(); i++)
-        {
-          amplitudevalues_amplitude_data[sub_data_ids[i]][0] = std::to_string(amplitudes_data[amplitudes_data_id][5]);
-          amplitudevalues_amplitude_data[sub_data_ids[i]][1] = options2[i][0];
-          amplitudevalues_amplitude_data[sub_data_ids[i]][2] = options2[i][1];
-        }
-      }else{
-        // first delete and then make a push back
-        // delete from back to begin so that we don't have to care about mismatching id's
-        for (size_t i = sub_data_ids.size(); i > 0; i--)
-        {
-          amplitudevalues_amplitude_data.erase(amplitudevalues_amplitude_data.begin() + sub_data_ids[i-1]);
-        }
-        
-        for (size_t i = 0; i < options2.size(); i++)
-        {
-          add_amplitudevalues_amplitude(std::to_string(amplitudes_data[amplitudes_data_id][5]),options2[i][0],options2[i][1]);
-        }
-      }
+      b_data[sub_data_id][1] = options2[4][0];
+      b_data[sub_data_id][2] = options2[4][1];
+      b_data[sub_data_id][3] = options2[4][2];
     }
+    // local_axis
+    if (options_marker[5]==1)
+    {
+      orientations_data[orientations_data_id][6] = std::stoi(options[5]);
+    }
+    // rotation angle
+    sub_data_id = get_rotation_data_id_from_rotation_id(orientations_data[orientations_data_id][7]);
+    if (options_marker[6]==1)
+    {
+      rotation_data[sub_data_id][1] = options2[6][0];
+    }
+
     return true;
   }
 }
 
-bool CoreAmplitudes::add_amplitude(int amplitude_id, int name_id, int shiftx, int shifty, int time_type, int amplitudevalues_id)
+bool CoreOrientations::add_orientation(int orientation_id, int name_id, int system_type, int distribution_id, int a_id, int b_id, int local_axis, int rotation_id)
 {
-  std::vector<int> v = {amplitude_id, name_id, shiftx, shifty, time_type, amplitudevalues_id};
+  std::vector<int> v = {orientation_id, name_id, system_type, distribution_id, a_id, b_id, local_axis, rotation_id};
       
-  amplitudes_data.push_back(v);
+  orientations_data.push_back(v);
 
   return true;
 }
 
-bool CoreAmplitudes::add_name_amplitude(std::string name_amplitude_id, std::string name)
+bool CoreOrientations::add_name(std::string name_id, std::string name)
 {
-  std::vector<std::string> v = {name_amplitude_id, name};
+  std::vector<std::string> v = {name_id, name};
   
-  name_amplitude_data.push_back(v);
+  name_data.push_back(v);
   
   return true;
 }
 
-bool CoreAmplitudes::add_shiftx_amplitude(std::string shiftx_amplitude_id, std::string shiftx_value)
+bool CoreOrientations::add_a(std::string a_id, std::string x, std::string y, std::string z)
 {
-  std::vector<std::string> v = {shiftx_amplitude_id, shiftx_value};
+  std::vector<std::string> v = {a_id, x, y, z};
   
-  shiftx_amplitude_data.push_back(v);
+  a_data.push_back(v);
   
   return true;
 }
 
-bool CoreAmplitudes::add_shifty_amplitude(std::string shifty_amplitude_id, std::string shifty_value)
+bool CoreOrientations::add_b(std::string b_id, std::string x, std::string y, std::string z)
 {
-  std::vector<std::string> v = {shifty_amplitude_id, shifty_value};
+  std::vector<std::string> v = {b_id, x, y, z};
   
-  shifty_amplitude_data.push_back(v);
+  b_data.push_back(v);
   
   return true;
 }
 
-bool CoreAmplitudes::add_amplitudevalues_amplitude(std::string amplitudevalues_amplitude_id, std::string amplitudevalues_value1, std::string amplitudevalues_value2)
+bool CoreOrientations::add_rotation(std::string rotation_id, std::string angle)
 {
-  std::vector<std::string> v = {amplitudevalues_amplitude_id, amplitudevalues_value1, amplitudevalues_value2};
+  std::vector<std::string> v = {rotation_id, angle};
   
-  amplitudevalues_amplitude_data.push_back(v);
+  rotation_data.push_back(v);
   
   return true;
 }
 
-bool CoreAmplitudes::delete_amplitude(int amplitude_id)
+bool CoreOrientations::delete_orientation(int orientation_id)
 {
   int sub_data_id;
   std::vector<int> sub_data_ids;
-  int amplitudes_data_id = get_amplitudes_data_id_from_amplitude_id(amplitude_id);
-  if (amplitudes_data_id == -1)
+  int orientations_data_id = get_orientations_data_id_from_orientation_id(orientation_id);
+  if (orientations_data_id == -1)
   {
     return false;
   } else {
-    sub_data_id = get_name_amplitude_data_id_from_name_amplitude_id(amplitudes_data[amplitudes_data_id][1]);
+    sub_data_id = get_name_data_id_from_name_id(orientations_data[orientations_data_id][1]);
     if (sub_data_id != -1){
-      name_amplitude_data.erase(name_amplitude_data.begin() + sub_data_id);  
+      name_data.erase(name_data.begin() + sub_data_id);  
     }
-    sub_data_id = get_shiftx_amplitude_data_id_from_shiftx_amplitude_id(amplitudes_data[amplitudes_data_id][2]);
+    sub_data_id = get_a_data_id_from_a_id(orientations_data[orientations_data_id][4]);
     if (sub_data_id != -1){
-      shiftx_amplitude_data.erase(shiftx_amplitude_data.begin() + sub_data_id);  
+      a_data.erase(a_data.begin() + sub_data_id);  
     }
-    sub_data_id = get_shifty_amplitude_data_id_from_shifty_amplitude_id(amplitudes_data[amplitudes_data_id][3]);
+    sub_data_id = get_b_data_id_from_b_id(orientations_data[orientations_data_id][5]);
     if (sub_data_id != -1){
-      shifty_amplitude_data.erase(shifty_amplitude_data.begin() + sub_data_id);  
+      b_data.erase(b_data.begin() + sub_data_id);  
     }
-    sub_data_ids = get_amplitudevalues_amplitude_data_ids_from_amplitudevalues_amplitude_id(amplitudes_data[amplitudes_data_id][5]);
-    for (size_t i = sub_data_ids.size(); i > 0; i--)
-    {
-      amplitudevalues_amplitude_data.erase(amplitudevalues_amplitude_data.begin() + sub_data_ids[i-1]);
+    sub_data_id = get_rotation_data_id_from_rotation_id(orientations_data[orientations_data_id][7]);
+    if (sub_data_id != -1){
+      rotation_data.erase(rotation_data.begin() + sub_data_id);  
     }
-    amplitudes_data.erase(amplitudes_data.begin() + amplitudes_data_id);
+    orientations_data.erase(orientations_data.begin() + orientations_data_id);
     return true;
   }
 }
 
-int CoreAmplitudes::get_amplitudes_data_id_from_amplitude_id(int amplitude_id)
+int CoreOrientations::get_orientations_data_id_from_orientation_id(int orientation_id)
 { 
   int return_int = -1;
-  for (size_t i = 0; i < amplitudes_data.size(); i++)
+  for (size_t i = 0; i < orientations_data.size(); i++)
   {
-    if (amplitudes_data[i][0]==amplitude_id)
+    if (orientations_data[i][0]==orientation_id)
     {
         return_int = i;
     }  
@@ -284,12 +296,12 @@ int CoreAmplitudes::get_amplitudes_data_id_from_amplitude_id(int amplitude_id)
   return return_int;
 }
 
-int CoreAmplitudes::get_name_amplitude_data_id_from_name_amplitude_id(int name_amplitude_id)
+int CoreOrientations::get_name_data_id_from_name_id(int name_id)
 { 
   int return_int = -1;
-  for (size_t i = 0; i < name_amplitude_data.size(); i++)
+  for (size_t i = 0; i < name_data.size(); i++)
   {
-    if (name_amplitude_data[i][0]==std::to_string(name_amplitude_id))
+    if (name_data[i][0]==std::to_string(name_id))
     {
         return_int = i;
     }  
@@ -297,12 +309,12 @@ int CoreAmplitudes::get_name_amplitude_data_id_from_name_amplitude_id(int name_a
   return return_int;
 }
 
-int CoreAmplitudes::get_shiftx_amplitude_data_id_from_shiftx_amplitude_id(int shiftx_amplitude_id)
+int CoreOrientations::get_a_data_id_from_a_id(int a_id)
 { 
   int return_int = -1;
-  for (size_t i = 0; i < shiftx_amplitude_data.size(); i++)
+  for (size_t i = 0; i < a_data.size(); i++)
   {
-    if (shiftx_amplitude_data[i][0]==std::to_string(shiftx_amplitude_id))
+    if (a_data[i][0]==std::to_string(a_id))
     {
         return_int = i;
     }  
@@ -310,12 +322,12 @@ int CoreAmplitudes::get_shiftx_amplitude_data_id_from_shiftx_amplitude_id(int sh
   return return_int;
 }
 
-int CoreAmplitudes::get_shifty_amplitude_data_id_from_shifty_amplitude_id(int shifty_amplitude_id)
+int CoreOrientations::get_b_data_id_from_b_id(int b_id)
 { 
   int return_int = -1;
-  for (size_t i = 0; i < shifty_amplitude_data.size(); i++)
+  for (size_t i = 0; i < b_data.size(); i++)
   {
-    if (shifty_amplitude_data[i][0]==std::to_string(shifty_amplitude_id))
+    if (b_data[i][0]==std::to_string(b_id))
     {
         return_int = i;
     }  
@@ -323,22 +335,23 @@ int CoreAmplitudes::get_shifty_amplitude_data_id_from_shifty_amplitude_id(int sh
   return return_int;
 }
 
-std::vector<int> CoreAmplitudes::get_amplitudevalues_amplitude_data_ids_from_amplitudevalues_amplitude_id(int amplitudevalues_amplitude_id)
+int CoreOrientations::get_rotation_data_id_from_rotation_id(int rotation_id)
 { 
-  std::vector<int> return_int;
-  for (size_t i = 0; i < amplitudevalues_amplitude_data.size(); i++)
+  int return_int = -1;
+  for (size_t i = 0; i < rotation_data.size(); i++)
   {
-    if (amplitudevalues_amplitude_data[i][0]==std::to_string(amplitudevalues_amplitude_id))
+    if (rotation_data[i][0]==std::to_string(rotation_id))
     {
-        return_int.push_back(i);
+        return_int = i;
     }  
   }
   return return_int;
 }
 
-std::string CoreAmplitudes::get_amplitude_export() // get a list of the CalculiX amplitude exports
+std::string CoreOrientations::get_orientation_export() // get a list of the CalculiX orienation exports
 {
   std::vector<std::string> amplitudes_export_list;
+  /*
   amplitudes_export_list.push_back("********************************** A M P L I T U D E S ****************************");
   std::string str_temp;
   int sub_data_id;
@@ -423,53 +436,52 @@ std::string CoreAmplitudes::get_amplitude_export() // get a list of the CalculiX
   {
     amplitude_export.append(amplitudes_export_list[i] + "\n");
   }
-
-  return amplitude_export;
+  */
+  return "**Orienations Export";
 }
 
-std::string CoreAmplitudes::print_data()
+std::string CoreOrientations::print_data()
 {
   std::string str_return;
-  str_return = "\n CoreAmplitudes amplitudes_data: \n";
-  str_return.append("amplitude_id, name_id, shiftx_id, shifty_id, time_type \n");
+  str_return = "\n CoreOrientations orientations_data: \n";
+  str_return.append("orientation_id, name_id, system_type, distribution_id, a_id, b_id, local_axis, rotation_id \n");
 
-  for (size_t i = 0; i < amplitudes_data.size(); i++)
+  for (size_t i = 0; i < orientations_data.size(); i++)
   {
-    str_return.append(std::to_string(amplitudes_data[i][0]) + " " + std::to_string(amplitudes_data[i][1]) + " " + std::to_string(amplitudes_data[i][2]) + " " + std::to_string(amplitudes_data[i][3]) + " " + std::to_string(amplitudes_data[i][4]) + " \n");
+    str_return.append(std::to_string(orientations_data[i][0]) + " " + std::to_string(orientations_data[i][1]) + " " + std::to_string(orientations_data[i][2]) + " " + std::to_string(orientations_data[i][3]) + " " + std::to_string(orientations_data[i][4]) + " " + std::to_string(orientations_data[i][5]) + " " + std::to_string(orientations_data[i][6]) + " " + std::to_string(orientations_data[i][7]) + " \n");
   }
 
-  str_return.append("\n CoreAmplitudes name_amplitude_data: \n");
-  str_return.append("name_amplitude_id, name \n");
+  str_return.append("\n CoreOrientations name_data: \n");
+  str_return.append("name_id, name \n");
 
-  for (size_t i = 0; i < name_amplitude_data.size(); i++)
+  for (size_t i = 0; i < name_data.size(); i++)
   {
-    str_return.append(name_amplitude_data[i][0] + " " + name_amplitude_data[i][1] + " \n");
+    str_return.append(name_data[i][0] + " " + name_data[i][1] + " \n");
   }
 
-  str_return.append("\n CoreAmplitudes shiftx_amplitude_data: \n");
-  str_return.append("shiftx_amplitude_id, shiftx_value \n");
+  str_return.append("\n CoreOrientations a_data: \n");
+  str_return.append("a_id, x, y, z \n");
 
-  for (size_t i = 0; i < shiftx_amplitude_data.size(); i++)
+  for (size_t i = 0; i < a_data.size(); i++)
   {
-    str_return.append(shiftx_amplitude_data[i][0] + " " + shiftx_amplitude_data[i][1] + " \n");
-  }
- 
-  str_return.append("\n CoreAmplitudes shifty_amplitude_data: \n");
-  str_return.append("shifty_amplitude_id, shifty_value \n");
-
-  for (size_t i = 0; i < shifty_amplitude_data.size(); i++)
-  {
-    str_return.append(shifty_amplitude_data[i][0] + " " + shifty_amplitude_data[i][1] + " \n");
+    str_return.append(a_data[i][0] + " " + a_data[i][1] + " " + a_data[i][2] + " " + a_data[i][3] + " \n");
   }
 
-  str_return.append("\n CoreAmplitudes amplitudevalues_amplitude_data: \n");
-  str_return.append("amplitudevalues_amplitude_id, amplitudevalues_value1, amplitudevalues_value2 \n");
+  str_return.append("\n CoreOrientations b_data: \n");
+  str_return.append("b_id, x, y, z \n");
 
-  for (size_t i = 0; i < amplitudevalues_amplitude_data.size(); i++)
+  for (size_t i = 0; i < b_data.size(); i++)
   {
-    str_return.append(amplitudevalues_amplitude_data[i][0] + " " + amplitudevalues_amplitude_data[i][1] + " " + amplitudevalues_amplitude_data[i][2] + " \n");
+    str_return.append(b_data[i][0] + " " + b_data[i][1] + " " + b_data[i][2] + " " + b_data[i][3] + " \n");
+  }
+
+  str_return.append("\n CoreOrientations rotation_data: \n");
+  str_return.append("rotation_id, angle \n");
+
+  for (size_t i = 0; i < rotation_data.size(); i++)
+  {
+    str_return.append(rotation_data[i][0] + " " + rotation_data[i][1] + " \n");
   }
 
   return str_return;
 }
-*/

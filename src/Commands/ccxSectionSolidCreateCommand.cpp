@@ -47,7 +47,7 @@ std::vector<std::string> ccxSectionSolidCreateCommand::get_syntax()
     }
     
     syntax.append("material <value:label='material',help='<material>'> ");
-    syntax.append("[orientation <value:type='orientation' ,help='<orientation_id>'>] ");
+    syntax.append("[orientation <value:label='orientation' ,help='<orientation_id>'>] ");
     syntax.append("[thickness <value:label='thickness',help='<thickness>'>]");
     
     syntax_list.push_back(syntax);

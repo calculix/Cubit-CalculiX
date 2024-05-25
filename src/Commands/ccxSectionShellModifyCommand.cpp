@@ -17,7 +17,7 @@ std::vector<std::string> ccxSectionShellModifyCommand::get_syntax()
   syntax.append("modify section shell <value:label='section id',help='<section id>'>");
   syntax.append("[block <value:label='block id',help='<block id>'>] ");
   syntax.append("[material <value:label='material',help='<material>'>] ");
-  syntax.append("[orientation <value:type='orientation' ,help='<orientation_id>'>] ");
+  syntax.append("[orientation <value:label='orientation' ,help='<orientation_id>'>] ");
   syntax.append("[thickness <value:label='thickness',help='<thickness>'>]");
   syntax.append("[offset <value:label='offset',help='<offset>'>]");
 

@@ -93,6 +93,12 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxAmplitudeModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxAmplitudeDeleteCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxAmplitudeDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxOrientationCreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxOrientationCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxOrientationModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxOrientationModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxOrientationDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxOrientationDeleteCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsForcesModifyCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsForcesModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsPressuresModifyCommand.cpp

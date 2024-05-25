@@ -305,6 +305,21 @@ bool CalculiXCoreInterface::delete_amplitude(int amplitude_id)
   return ccx_core.delete_amplitude(amplitude_id);
 }
 
+bool CalculiXCoreInterface::create_orientation(std::vector<std::string> options, std::vector<std::vector<std::string>> options2)
+{
+  return ccx_core.create_orientation(options, options2);
+}
+
+bool CalculiXCoreInterface::modify_orientation(int orientation_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2)
+{
+  return ccx_core.modify_orientation(orientation_id, options, options_marker, options2);
+}
+
+bool CalculiXCoreInterface::delete_orientation(int orientation_id)
+{
+  return ccx_core.delete_orientation(orientation_id);
+}
+
 bool CalculiXCoreInterface::modify_loadsforces(int force_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
   return ccx_core.modify_loadsforces(force_id,options,options_marker);

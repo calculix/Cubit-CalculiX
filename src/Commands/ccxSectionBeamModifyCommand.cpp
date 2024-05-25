@@ -27,7 +27,7 @@ std::vector<std::string> ccxSectionBeamModifyCommand::get_syntax()
   syntax.append("[x <value:label='x',help='<x>'>] ");
   syntax.append("[y <value:label='y',help='<y>'>] ");
   syntax.append("[z <value:label='z',help='<z>'>] ");
-  syntax.append("[orientation <value:type='orientation' ,help='<orientation_id>'>] ");
+  syntax.append("[orientation <value:label='orientation' ,help='<orientation_id>'>] ");
   syntax.append("[offset1 <value:label='offset1',help='<offset1>'>] ");
   syntax.append("[offset2 <value:label='offset2',help='<offset2>'>] ");
     

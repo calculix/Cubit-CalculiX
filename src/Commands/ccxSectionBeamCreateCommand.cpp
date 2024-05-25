@@ -51,14 +51,14 @@ std::vector<std::string> ccxSectionBeamCreateCommand::get_syntax()
     syntax.append("material <value:label='material',help='<material>'> ");
     syntax.append("parameter1 <value:label='parameter1',help='<parameter1>'> "); // first line
     syntax.append("parameter2 <value:label='parameter2',help='<parameter2>'> ");
-    syntax.append("parameter3 <value:label='parameter3',help='<parameter3>'> ");
+    syntax.append("[parameter3 <value:label='parameter3',help='<parameter3>'> ");
     syntax.append("parameter4 <value:label='parameter4',help='<parameter4>'> ");
     syntax.append("parameter5 <value:label='parameter5',help='<parameter5>'> ");
     syntax.append("parameter6 <value:label='parameter6',help='<parameter6>'>] ");
     syntax.append("x <value:label='x',help='<x>'> "); //second line
     syntax.append("y <value:label='y',help='<y>'> ");
     syntax.append("z <value:label='z',help='<z>'> ");
-    syntax.append("[orientation <value:type='orientation' ,help='<orientation_id>'>] ");
+    syntax.append("[orientation <value:label='orientation' ,help='<orientation_id>'>] ");
     syntax.append("[offset1 <value:label='offset1',help='<offset1>'>] ");
     syntax.append("[offset2 <value:label='offset2',help='<offset2>'>] ");
     
