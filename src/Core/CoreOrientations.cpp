@@ -81,7 +81,6 @@ bool CoreOrientations::create_orientation(std::vector<std::string> options, std:
 
   system_type = std::stoi(options[1]);
   distribution_id = std::stoi(options[2]);
-
   //a
   if (a_data.size()==0)
   {
@@ -125,7 +124,7 @@ bool CoreOrientations::create_orientation(std::vector<std::string> options, std:
   this->add_b(std::to_string(b_id), options2[4][0], options2[4][1], options2[4][2]);
 
   local_axis = std::stoi(options[5]);
-
+  
   //rotation_id
   if (rotation_data.size()==0)
   {
@@ -145,6 +144,7 @@ bool CoreOrientations::create_orientation(std::vector<std::string> options, std:
     sub_id = sub_id + 1;
   }
   rotation_id = sub_id;
+  
   this->add_rotation(std::to_string(rotation_id), options2[5][0]);
 
   this->add_orientation(orientation_id, name_id, system_type, distribution_id, a_id, b_id, local_axis, rotation_id);
@@ -199,9 +199,9 @@ bool CoreOrientations::modify_orientation(int orientation_id, std::vector<std::s
     }
     // rotation angle
     sub_data_id = get_rotation_data_id_from_rotation_id(orientations_data[orientations_data_id][7]);
-    if (options_marker[6]==1)
+    if (options_marker[5]==1)
     {
-      rotation_data[sub_data_id][1] = options2[6][0];
+      rotation_data[sub_data_id][1] = options2[5][0];
     }
 
     return true;
@@ -350,94 +350,69 @@ int CoreOrientations::get_rotation_data_id_from_rotation_id(int rotation_id)
 
 std::string CoreOrientations::get_orientation_export() // get a list of the CalculiX orienation exports
 {
-  std::vector<std::string> amplitudes_export_list;
-  /*
-  amplitudes_export_list.push_back("********************************** A M P L I T U D E S ****************************");
+  std::vector<std::string> orientations_export_list;
+  orientations_export_list.push_back("********************************** O R I E N T A T I O N S ****************************");
   std::string str_temp;
   int sub_data_id;
   std::vector<int> sub_data_ids;
   
-  //loop over all amplitudes
-  for (size_t i = 0; i < amplitudes_data.size(); i++)
+  //loop over all orientations
+  for (size_t i = 0; i < orientations_data.size(); i++)
   { 
     // CUSTOMLINE START
-    std::vector<std::string> customline = ccx_iface->get_customline_data("BEFORE","AMPLITUDE",amplitudes_data[i][0]);
+    std::vector<std::string> customline = ccx_iface->get_customline_data("BEFORE","ORIENTATION",orientations_data[i][0]);
     for (size_t icl = 0; icl < customline.size(); icl++)
     {
-      amplitudes_export_list.push_back(customline[icl]);
+      orientations_export_list.push_back(customline[icl]);
     }
     // CUSTOMLINE END
 
-    str_temp = "*AMPLITUDE, NAME=";
-    sub_data_id = get_name_amplitude_data_id_from_name_amplitude_id(amplitudes_data[i][1]);
-    str_temp.append(name_amplitude_data[sub_data_id][1]);
-    //shiftx
-    sub_data_id = get_shiftx_amplitude_data_id_from_shiftx_amplitude_id(amplitudes_data[i][2]);
-    if(shiftx_amplitude_data[sub_data_id][1]!="")
-    {
-      str_temp.append(", SHIFTX=");
-      str_temp.append(shiftx_amplitude_data[sub_data_id][1]);
-    }
-    //shifty
-    sub_data_id = get_shifty_amplitude_data_id_from_shifty_amplitude_id(amplitudes_data[i][3]);
-    if(shifty_amplitude_data[sub_data_id][1]!="")
-    {
-      str_temp.append(", SHIFTY=");
-      str_temp.append(shifty_amplitude_data[sub_data_id][1]);
-    }
-    // time_type
-    if (amplitudes_data[i][4]==1)
-    {
-      str_temp.append(", TIME=TOTAL TIME"); 
-    }
+    str_temp = "*ORIENTATION, NAME=";
+    sub_data_id = get_name_data_id_from_name_id(orientations_data[i][1]);
+    str_temp.append(name_data[sub_data_id][1]);
     
-    amplitudes_export_list.push_back(str_temp);
+    //system type
+    if (orientations_data[i][2]==2)
+    {
+      str_temp.append(",SYSTEM=CYLINDRICAL");
+    }
+    orientations_export_list.push_back(str_temp);
+
+    // first line
+    str_temp = "";
+    sub_data_id = get_a_data_id_from_a_id(orientations_data[i][4]);
+    str_temp.append(a_data[sub_data_id][1] + "," + a_data[sub_data_id][2] + "," + a_data[sub_data_id][3]);
+    sub_data_id = get_b_data_id_from_b_id(orientations_data[i][5]);
+    str_temp.append("," + b_data[sub_data_id][1] + "," + b_data[sub_data_id][2] + "," + b_data[sub_data_id][3]);
+    orientations_export_list.push_back(str_temp);
 
     // second line
-    // time_amplitude
-
-    sub_data_ids = get_amplitudevalues_amplitude_data_ids_from_amplitudevalues_amplitude_id(amplitudes_data[i][5]);
-    // second lines
-    str_temp = "";
-    int ii = 0;
-    for (size_t i = 0; i < sub_data_ids.size(); i++)
+    // distribution not needed
+    if (orientations_data[i][6]!=-1)
     {
-      if ((i != 0) && (ii!=0))
-      {
-        str_temp.append(",");
-      }
-      ii = ii + 1;
-      
-      str_temp.append(amplitudevalues_amplitude_data[sub_data_ids[i]][1]);
-      str_temp.append(",");
-      str_temp.append(amplitudevalues_amplitude_data[sub_data_ids[i]][2]);
-      if (ii == 4)
-      {
-        ii = 0;
-        str_temp.append(",");
-        amplitudes_export_list.push_back(str_temp);
-        str_temp = "";
-      }
+      str_temp = "";
+      sub_data_id = get_rotation_data_id_from_rotation_id(orientations_data[i][7]);
+      str_temp.append(std::to_string(orientations_data[i][7]) + "," + rotation_data[sub_data_id][1]);
+      orientations_export_list.push_back(str_temp);
     }
-    amplitudes_export_list.push_back(str_temp);
 
     // CUSTOMLINE START
-    customline = ccx_iface->get_customline_data("AFTER","AMPLITUDE",amplitudes_data[i][0]);
+    customline = ccx_iface->get_customline_data("AFTER","ORIENTATION",orientations_data[i][0]);
     for (size_t icl = 0; icl < customline.size(); icl++)
     {
-      amplitudes_export_list.push_back(customline[icl]);
+      orientations_export_list.push_back(customline[icl]);
     }
     // CUSTOMLINE END
   }
   
-  std::string amplitude_export;
+  std::string orientation_export;
 
-  for (size_t i = 0; i < amplitudes_export_list.size(); i++)
+  for (size_t i = 0; i < orientations_export_list.size(); i++)
   {
-    amplitude_export.append(amplitudes_export_list[i] + "\n");
+    orientation_export.append(orientations_export_list[i] + "\n");
   }
-  */
-  return "**Orienations Export";
+  
+  return orientation_export;
 }
 
 std::string CoreOrientations::print_data()

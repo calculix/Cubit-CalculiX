@@ -18,7 +18,7 @@ std::vector<std::string> ccxCustomLineModifyCommand::get_syntax()
   syntax.append("[name <string:type='unquoted', number='1', label='name', help='<name>'>] ");
   syntax.append("[{before|after|begin|end}] ");
   syntax.append("[{elset|nset|sideset|material|section|");
-  syntax.append("constraint|surfaceinteraction|contactpair|amplitude|");
+  syntax.append("constraint|surfaceinteraction|contactpair|amplitude|orientation|");
   syntax.append("force|pressure|heatflux|gravity|centrifugal|displacement|temperature|");
   syntax.append("historyoutput|fieldoutput|initialcondition|step_begin|step_end|export}] ");
   syntax.append("[item_id <value:label='item_id',help='<item_id>'>] ");
@@ -36,7 +36,7 @@ std::vector<std::string> ccxCustomLineModifyCommand::get_syntax_help()
   help[0].append("[name <name>] ");
   help[0].append("[{before|after|begin|end}] ");
   help[0].append("[{elset|nset|sideset|material|section|");
-  help[0].append("constraint|surfaceinteraction|contactpair|amplitude|");
+  help[0].append("constraint|surfaceinteraction|contactpair|amplitude|orientation|");
   help[0].append("force|pressure|heatflux|gravity|centrifugal|displacement|temperature|");
   help[0].append("historyoutput|fieldoutput|initialcondition|step_begin|step_end|export}] ");
   help[0].append("[item_id <item_id>] ");
@@ -133,6 +133,10 @@ bool ccxCustomLineModifyCommand::execute(CubitCommandData &data)
   } else if (data.find_keyword("AMPLITUDE"))
   {
     options.push_back("AMPLITUDE");
+    options_marker.push_back(1);
+  } else if (data.find_keyword("ORIENTATION"))
+  {
+    options.push_back("ORIENTATION");
     options_marker.push_back(1);
   }else if (data.find_keyword("FORCE"))
   {

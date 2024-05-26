@@ -372,10 +372,11 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
       str_temp.append(", ELSET=");
       str_temp.append(ccx_iface->get_block_name(std::stoi(solid_section_data[sub_section_data_id][1])));
       
-      if (solid_section_data[sub_section_data_id][3]!="")
+      
+      if (ccx_iface->check_orientation_exists(std::stoi(solid_section_data[sub_section_data_id][3])))
       {
         str_temp.append(", ORIENTATION=");
-        str_temp.append(solid_section_data[sub_section_data_id][3]);
+        str_temp.append(ccx_iface->get_orientation_name(std::stoi(solid_section_data[sub_section_data_id][3])));
       }
 
       sections_export_list.push_back(str_temp);
@@ -395,10 +396,10 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
       str_temp.append(", ELSET=");
       str_temp.append(ccx_iface->get_block_name(std::stoi(shell_section_data[sub_section_data_id][1])));
       
-      if (shell_section_data[sub_section_data_id][3]!="")
+      if (ccx_iface->check_orientation_exists(std::stoi(shell_section_data[sub_section_data_id][3])))
       {
         str_temp.append(", ORIENTATION=");
-        str_temp.append(shell_section_data[sub_section_data_id][3]);
+        str_temp.append(ccx_iface->get_orientation_name(std::stoi(shell_section_data[sub_section_data_id][3])));
       }
 
       if (shell_section_data[sub_section_data_id][5]!="")
@@ -442,11 +443,12 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
         str_temp.append(beam_section_data[sub_section_data_id][15]);
       }
 
-      if (beam_section_data[sub_section_data_id][13]!="")
+      if (ccx_iface->check_orientation_exists(std::stoi(beam_section_data[sub_section_data_id][13])))
       {
         str_temp.append(", ORIENTATION=");
-        str_temp.append(beam_section_data[sub_section_data_id][13]);
+        str_temp.append(ccx_iface->get_orientation_name(std::stoi(beam_section_data[sub_section_data_id][13])));
       }
+
       sections_export_list.push_back(str_temp);
       if (beam_section_data[sub_section_data_id][3]=="BOX")
       {
@@ -466,10 +468,10 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
       str_temp.append(", ELSET=");
       str_temp.append(ccx_iface->get_block_name(std::stoi(membrane_section_data[sub_section_data_id][1])));
       
-      if (membrane_section_data[sub_section_data_id][3]!="")
+      if (ccx_iface->check_orientation_exists(std::stoi(membrane_section_data[sub_section_data_id][3])))
       {
         str_temp.append(", ORIENTATION=");
-        str_temp.append(membrane_section_data[sub_section_data_id][3]);
+        str_temp.append(ccx_iface->get_orientation_name(std::stoi(membrane_section_data[sub_section_data_id][3])));
       }
 
       if (membrane_section_data[sub_section_data_id][5]!="")

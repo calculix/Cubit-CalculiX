@@ -163,7 +163,7 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
   //output_file << "Cubit2CalculiX with CalculiX Plugin \n";
   //output_file << "** \n";
 
-  progressbar->start(0,13,"Writing CCX .inp File");
+  progressbar->start(0,14,"Writing CCX .inp File");
 
   // Write the nodes
   result = write_nodes(output_file, iface, ccx_iface);
@@ -186,6 +186,8 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
 
   // Write the materials and sections
   result = write_materials(output_file, ccx_iface);
+  progressbar->step();
+  result = write_orientations(output_file, ccx_iface);
   progressbar->step();
   result = write_sections(output_file, ccx_iface);
   progressbar->step();
@@ -714,6 +716,12 @@ bool ccxExportCommand::write_contactpairs(std::ofstream& output_file, CalculiXCo
 bool ccxExportCommand::write_amplitudes(std::ofstream& output_file, CalculiXCoreInterface ccx_iface)
 {
   output_file << ccx_iface.get_amplitude_export_data();
+  return true;
+}
+
+bool ccxExportCommand::write_orientations(std::ofstream& output_file, CalculiXCoreInterface ccx_iface)
+{
+  output_file << ccx_iface.get_orientation_export_data();
   return true;
 }
 

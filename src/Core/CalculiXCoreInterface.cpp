@@ -125,6 +125,11 @@ std::string CalculiXCoreInterface::get_amplitude_name(int amplitude_id)
   return ccx_core.get_amplitude_name(amplitude_id);
 }
 
+std::string CalculiXCoreInterface::get_orientation_name(int orientation_id)
+{
+  return ccx_core.get_orientation_name(orientation_id);
+}
+
 std::vector<int> CalculiXCoreInterface::get_loadsforces_ids()
 {
   return ccx_core.get_loadsforces_ids();
@@ -178,6 +183,11 @@ bool CalculiXCoreInterface::check_sideset_exists(int sideset_id)
 bool CalculiXCoreInterface::check_vertex_in_nodeset_exists(int vertex_id,int nodeset_id)
 {
   return ccx_core.check_vertex_in_nodeset_exists(vertex_id,nodeset_id);
+}
+
+bool CalculiXCoreInterface::check_orientation_exists(int orientation_id)
+{
+  return ccx_core.check_orientation_exists(orientation_id);
 }
 
 bool CalculiXCoreInterface::core_update()
@@ -905,6 +915,11 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_amplitudes_tree
   return ccx_core.get_amplitudes_tree_data();
 }
 
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_orientations_tree_data()
+{ 
+  return ccx_core.get_orientations_tree_data();
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_loadsforces_tree_data()
 { 
   return ccx_core.get_loadsforces_tree_data();
@@ -1053,6 +1068,11 @@ std::string CalculiXCoreInterface::get_contactpair_export_data() // gets the exp
 std::string CalculiXCoreInterface::get_amplitude_export_data() // gets the export data from amplitudes core
 {
   return ccx_core.get_amplitude_export_data();
+}
+
+std::string CalculiXCoreInterface::get_orientation_export_data() // gets the export data from orientation core
+{
+  return ccx_core.get_orientation_export_data();
 }
 
 std::string CalculiXCoreInterface::get_initialcondition_export_data() // gets the export data from core

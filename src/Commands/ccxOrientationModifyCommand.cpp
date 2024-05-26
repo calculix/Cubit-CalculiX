@@ -44,39 +44,21 @@ std::vector<std::string> ccxOrientationModifyCommand::get_help()
 bool ccxOrientationModifyCommand::execute(CubitCommandData &data)
 {
   CalculiXCoreInterface ccx_iface;
-/*
+
   std::string output;
   std::vector<std::string> options;  
-  std::vector<int> options_marker;
   std::vector<std::vector<std::string>> options2;
+  std::vector<int> options_marker;
   int orientation_id;
-  double shiftx_value;
-  double shifty_value;
   std::string name;
-  std::string shiftx;
-  std::string shifty;
-  std::vector<double> orientationvalues;
+  int system_type;
+  std::vector<std::string> dummy;
+  std::vector<double> a_values;
+  std::vector<double> b_values;
+  double angle_value;
 
   data.get_value("orientation id", orientation_id);
 
-  data.get_values("time_orientation", orientationvalues);
-  
-  if (orientationvalues.size() % 2 != 0)
-  {
-    output = "Failed! numbers count is not even!\n";
-    PRINT_ERROR(output.c_str());
-    return false;
-  }else{
-    for (size_t i = 0; i < orientationvalues.size(); i+=2)
-    {
-      std::vector<std::string> orientation(2);
-      orientation[0] = ccx_iface.to_string_scientific(orientationvalues[i]);
-      orientation[1] = ccx_iface.to_string_scientific(orientationvalues[i+1]);
-      options2.push_back(orientation);
-      orientation.clear();
-    }
-  }
-  
   if (!data.get_string("name", name))
   {
     name = "";
@@ -87,45 +69,102 @@ bool ccxOrientationModifyCommand::execute(CubitCommandData &data)
     options_marker.push_back(1);
   }
   options.push_back(name);
+  options2.push_back(dummy);
 
-
-  if (!data.get_value("shiftx", shiftx_value))
-  {
-    shiftx = "";
-    options_marker.push_back(0);
-  }
-  else
-  {
-    shiftx = ccx_iface.to_string_scientific(shiftx_value);
-    options_marker.push_back(1);
-  }
-  options.push_back(shiftx);
-
-  if (!data.get_value("shifty", shifty_value))
-  {
-    shifty = "";
-    options_marker.push_back(0);
-  }
-  else
-  {
-    shifty = ccx_iface.to_string_scientific(shifty_value);
-    options_marker.push_back(1);
-  }
-  options.push_back(shifty);
-
-  if (data.find_keyword("TOTALTIME_YES"))
+  if (data.find_keyword("SYSTEM_TYPE_R"))
   {
     options.push_back("1");
     options_marker.push_back(1);
-  }else if (data.find_keyword("TOTALTIME_NO"))
+  } else if (data.find_keyword("SYSTEM_TYPE_C"))
   {
-    options.push_back("-1");
+    options.push_back("2");
     options_marker.push_back(1);
-  }else
+  }else  
   {
     options.push_back("-1");
     options_marker.push_back(0);
   }
+  options2.push_back(dummy);
+
+  //distribution dummy
+  options.push_back("-1");
+  options2.push_back(dummy);
+  options_marker.push_back(0);
+
+  data.get_values("a_coord", a_values);
+  data.get_values("b_coord", b_values);
+  
+  if (a_values.size()!=0)
+  {
+    if (a_values.size() != 3)
+    {
+      output = "Failed! a_coord needs 3 values!\n";
+      PRINT_ERROR(output.c_str());
+      return false;
+    }else{
+      std::vector<std::string> a_coord(3);
+      a_coord[0] = ccx_iface.to_string_scientific(a_values[0]);
+      a_coord[1] = ccx_iface.to_string_scientific(a_values[1]);
+      a_coord[2] = ccx_iface.to_string_scientific(a_values[2]);
+      options2.push_back(a_coord);
+      options.push_back("");
+      options_marker.push_back(1);
+    }
+  }else{
+    options.push_back("-1");
+    options2.push_back(dummy);
+    options_marker.push_back(0);
+  }
+  
+  if (b_values.size()!=0)
+  {
+    if (b_values.size() != 3)
+    {
+      output = "Failed! b_coord needs 3 values!\n";
+      PRINT_ERROR(output.c_str());
+      return false;
+    }else{
+      std::vector<std::string> b_coord(3);
+      b_coord[0] = ccx_iface.to_string_scientific(b_values[0]);
+      b_coord[1] = ccx_iface.to_string_scientific(b_values[1]);
+      b_coord[2] = ccx_iface.to_string_scientific(b_values[2]);
+      options2.push_back(b_coord);
+      options.push_back("");
+      options_marker.push_back(1);
+    }
+  }else{
+    options.push_back("-1");
+    options2.push_back(dummy);
+    options_marker.push_back(0);
+  }
+
+  if (data.find_keyword("LOCAL_AXIS_X"))
+  {
+    options.push_back("1");
+    options_marker.push_back(1);
+  } else if (data.find_keyword("LOCAL_AXIS_Y"))
+  {
+    options.push_back("2");
+    options_marker.push_back(1);
+  } else if (data.find_keyword("LOCAL_AXIS_Z"))
+  {
+    options.push_back("3");
+    options_marker.push_back(1);
+  }else  
+  {
+    options.push_back("-1");
+    options_marker.push_back(0);
+  }
+  std::vector<std::string> angle(1);
+  if (!data.get_value("angle", angle_value))
+  {
+    angle[0] = "0";
+  }
+  else
+  {
+    angle[0] = ccx_iface.to_string_scientific(angle_value);    
+  }
+  options2.push_back(angle);
   
   if (!ccx_iface.modify_orientation(orientation_id, options, options_marker,options2))
   {
@@ -133,6 +172,7 @@ bool ccxOrientationModifyCommand::execute(CubitCommandData &data)
     PRINT_ERROR(output.c_str());
   }
   options.clear();
-    */
+  options2.clear();
+  
   return true;
 }

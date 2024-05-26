@@ -13,6 +13,7 @@
 #include "SurfaceInteractionsTree.hpp"
 #include "ContactPairsTree.hpp"
 #include "AmplitudesTree.hpp"
+#include "OrientationsTree.hpp"
 #include "LoadsTree.hpp"
 #include "LoadsForcesTree.hpp"
 #include "LoadsPressuresTree.hpp"
@@ -98,6 +99,8 @@ void CCXDockWindowModelTree::initialize()
   myContactPairsTree->initialize();
   myAmplitudesTree = new AmplitudesTree(myModelTree);
   myAmplitudesTree->initialize();
+  myOrientationsTree = new OrientationsTree(myModelTree);
+  myOrientationsTree->initialize();
   myLoadsTree = new LoadsTree(myModelTree);
   myLoadsTree->initialize();
   myLoadsForcesTree = new LoadsForcesTree(myLoadsTree);
@@ -174,6 +177,7 @@ void CCXDockWindowModelTree::clear()
     delete mySurfaceInteractionsTree;
     delete myContactPairsTree;
     delete myAmplitudesTree;
+    delete myOrientationsTree;
     delete myLoadsForcesTree;
     delete myLoadsPressuresTree;
     delete myLoadsHeatfluxesTree;
@@ -216,6 +220,7 @@ void CCXDockWindowModelTree::update()
   mySurfaceInteractionsTree->update();
   myContactPairsTree->update();
   myAmplitudesTree->update();
+  myOrientationsTree->update();
   //myLoadsTree->update();
   myLoadsForcesTree->update();
   myLoadsPressuresTree->update();
@@ -249,6 +254,7 @@ void CCXDockWindowModelTree::reset()
   mySurfaceInteractionsTree->clear();
   myContactPairsTree->clear();
   myAmplitudesTree->clear();
+  myOrientationsTree->clear();
   //myLoadsTree->clear();
   myLoadsForcesTree->clear();
   myLoadsPressuresTree->clear();

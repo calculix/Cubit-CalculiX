@@ -360,6 +360,7 @@ std::string CalculiXCore::autocleanup()
   int sub_data_id;
   std::vector<int> sub_data_ids;
   bool sub_bool;
+  bool sub_bool_ref;
 
   std::string output;
 
@@ -370,6 +371,7 @@ std::string CalculiXCore::autocleanup()
   for (size_t i = sections->sections_data.size(); i > 0; i--)
   { 
     sub_bool = false;
+    sub_bool_ref = false;
     // SOLID
     if (sections->sections_data[i-1][1] == 1)
     {
@@ -385,6 +387,16 @@ std::string CalculiXCore::autocleanup()
         log.append("Block ID " + sections->solid_section_data[sub_data_id][1] + " doesn't exist.\n");
         log.append("Section ID " + std::to_string(sections->sections_data[i-1][0]) + " will be deleted.\n");
         sub_bool = true;
+      }
+      if (sections->solid_section_data[sub_data_id][3]!="-1")
+      {
+        if (!check_orientation_exists(std::stoi(sections->solid_section_data[sub_data_id][3])))
+        {
+          log.append("Orientation ID " + sections->solid_section_data[sub_data_id][3] + " doesn't exist.\n");
+          log.append("Orientation Reference from Section ID " + std::to_string(sections->sections_data[i-1][0]) + " will be deleted.\n");
+          sections->solid_section_data[sub_data_id][3]="-1";
+          sub_bool_ref = true;
+        }
       }
     }
     // SHELL
@@ -403,6 +415,16 @@ std::string CalculiXCore::autocleanup()
         log.append("Section ID " + std::to_string(sections->sections_data[i-1][0]) + " will be deleted.\n");
         sub_bool = true;
       }
+      if (sections->shell_section_data[sub_data_id][3]!="-1")
+      {
+        if (!check_orientation_exists(std::stoi(sections->shell_section_data[sub_data_id][3])))
+        {
+          log.append("Orientation ID " + sections->shell_section_data[sub_data_id][3] + " doesn't exist.\n");
+          log.append("Orientation Reference from Section ID " + std::to_string(sections->sections_data[i-1][0]) + " will be deleted.\n");
+          sections->shell_section_data[sub_data_id][3]="-1";
+          sub_bool_ref = true;
+        }
+      }
     }
     // BEAM
     if (sections->sections_data[i-1][1] == 3) 
@@ -419,6 +441,16 @@ std::string CalculiXCore::autocleanup()
         log.append("Block ID " + sections->beam_section_data[sub_data_id][1] + " doesn't exist.\n");
         log.append("Section ID " + std::to_string(sections->sections_data[i-1][0]) + " will be deleted.\n");
         sub_bool = true;
+      }
+      if (sections->beam_section_data[sub_data_id][13]!="-1")
+      {
+        if (!check_orientation_exists(std::stoi(sections->beam_section_data[sub_data_id][13])))
+        {
+          log.append("Orientation ID " + sections->beam_section_data[sub_data_id][13] + " doesn't exist.\n");
+          log.append("Orientation Reference from Section ID " + std::to_string(sections->sections_data[i-1][0]) + " will be deleted.\n");
+          sections->beam_section_data[sub_data_id][13]="-1";
+          sub_bool_ref = true;
+        }
       }
     }
     // MEMBRANE
@@ -437,11 +469,25 @@ std::string CalculiXCore::autocleanup()
         log.append("Section ID " + std::to_string(sections->sections_data[i-1][0]) + " will be deleted.\n");
         sub_bool = true;
       }
+      if (sections->membrane_section_data[sub_data_id][3]!="-1")
+      {
+        if (!check_orientation_exists(std::stoi(sections->membrane_section_data[sub_data_id][3])))
+        {
+          log.append("Orientation ID " + sections->membrane_section_data[sub_data_id][3] + " doesn't exist.\n");
+          log.append("Orientation Reference from Section ID " + std::to_string(sections->sections_data[i-1][0]) + " will be deleted.\n");
+          sections->membrane_section_data[sub_data_id][3]="-1";
+          sub_bool_ref = true;
+        }
+      }
     }
-    if (sub_bool)
+
+    if (sub_bool || sub_bool_ref)
     {
-      print_log = sub_bool;
-      sections->delete_section(sections->sections_data[i-1][0]);
+      print_log = true;
+      if (sub_bool)
+      {
+        sections->delete_section(sections->sections_data[i-1][0]);
+      }
     }
   }
 
@@ -1508,6 +1554,25 @@ std::string CalculiXCore::get_amplitude_name(int amplitude_id)
   return amplitude_name;
 }
 
+std::string CalculiXCore::get_orientation_name(int orientation_id)
+{
+  std::string name="";
+  int orientation_data_id;
+  int name_id;
+  int name_data_id;
+
+  orientation_data_id = orientations->get_orientations_data_id_from_orientation_id(orientation_id);
+
+  if (orientation_id != -1)
+  {
+    name_id = orientations->orientations_data[orientation_data_id][1];
+    name_data_id = orientations->get_name_data_id_from_name_id(name_id);
+    name = orientations->name_data[name_data_id][1];
+  }
+
+  return name;
+}
+
 std::vector<int> CalculiXCore::get_loadsforces_ids()
 {
   std::vector<int> tmp;
@@ -1701,6 +1766,17 @@ bool CalculiXCore::check_amplitude_exists(int amplitude_id)
   int amplitude_data_id;
   amplitude_data_id = amplitudes->get_amplitudes_data_id_from_amplitude_id(amplitude_id);
   if (amplitude_data_id == -1)
+  {
+    return false;
+  }
+  return true;
+}
+
+bool CalculiXCore::check_orientation_exists(int orientation_id)
+{
+  int orientation_data_id;
+  orientation_data_id = orientations->get_orientations_data_id_from_orientation_id(orientation_id);
+  if (orientation_data_id == -1)
   {
     return false;
   }
@@ -2663,6 +2739,9 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
       }  
     }
   }else if (entity=="amplitude")
+  {
+    
+  }else if (entity=="orientation")
   {
     
   }else if (entity=="loadsforce")
@@ -4389,6 +4468,11 @@ std::string CalculiXCore::get_amplitude_export_data() // gets the export data fr
   return amplitudes->get_amplitude_export();
 }
 
+std::string CalculiXCore::get_orientation_export_data() // gets the export data from orientation core
+{
+  return orientations->get_orientation_export();
+}
+
 std::string CalculiXCore::get_initialcondition_export_data() // gets the export data from core
 {
   std::vector<std::string> initialconditions_export_list;
@@ -5282,6 +5366,27 @@ std::vector<std::vector<std::string>> CalculiXCore::get_amplitudes_tree_data()
   }
 
   return amplitudes_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_orientations_tree_data()
+{ 
+  std::vector<std::vector<std::string>> orientations_tree_data;
+  
+  for (size_t i = 0; i < orientations->orientations_data.size(); i++)
+  {
+    std::vector<std::string> orientations_tree_data_set;
+    std::string name;
+    int name_data_id;
+
+    name_data_id = orientations->get_name_data_id_from_name_id(orientations->orientations_data[i][1]);
+    name = orientations->name_data[name_data_id][1];
+    
+    orientations_tree_data_set.push_back(std::to_string(orientations->orientations_data[i][0])); //orientation_id
+    orientations_tree_data_set.push_back(name); //name
+    orientations_tree_data.push_back(orientations_tree_data_set);
+  }
+
+  return orientations_tree_data;
 }
 
 std::vector<std::vector<std::string>> CalculiXCore::get_loadsforces_tree_data()

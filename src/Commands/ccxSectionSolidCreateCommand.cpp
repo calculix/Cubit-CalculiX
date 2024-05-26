@@ -99,7 +99,7 @@ bool ccxSectionSolidCreateCommand::execute(CubitCommandData &data)
   data.get_value("material", material_id);
   if (!data.get_value("orientation", orientation_value))
   {
-    orientation = "";
+    orientation = "-1";
   }
   else
   {

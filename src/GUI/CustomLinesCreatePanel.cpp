@@ -145,6 +145,7 @@ void CustomLinesCreatePanel::on_comboBox_index_changed(int index)
     comboBox_3->addItem("surfaceinteraction");
     comboBox_3->addItem("contactpair");
     comboBox_3->addItem("amplitude");
+    comboBox_3->addItem("orientation");
     comboBox_3->addItem("force");
     comboBox_3->addItem("pressure");
     comboBox_3->addItem("heatflux");

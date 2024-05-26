@@ -75,6 +75,7 @@ public:
   std::string get_surfaceinteraction_name(int surfaceinteraction_id); // gets the surfaceinteraction name
   std::vector<std::string> get_contactpair_master_slave(int contactpair_id); // gets the contactpair master and slave name
   std::string get_amplitude_name(int amplitude_id); // gets the amplitude name
+  std::string get_orientation_name(int orientation_id); // gets the orientation name
   std::vector<int> get_loadsforces_ids(); // get all load forces ids
   std::vector<int> get_loadspressures_ids(); // get all load pressure ids
   std::vector<int> get_loadsheatfluxes_ids(); // get all load heatflux ids
@@ -90,6 +91,7 @@ public:
   bool check_surfaceinteraction_exists(int surfaceinteraction_id);
   bool check_contactpair_exists(int contactpair_id);
   bool check_amplitude_exists(int amplitude_id);
+  bool check_orientation_exists(int orientation_id);
   bool check_historyoutput_exists(int historyoutput_id);
   bool check_fieldoutput_exists(int fieldoutput_id);
   bool check_vertex_in_nodeset_exists(int vertex_id,int nodeset_id); // checks if the vertex exists in the nodeset
@@ -244,6 +246,7 @@ public:
   std::vector<std::vector<std::string>> get_surfaceinteractions_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_contactpairs_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_amplitudes_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_orientations_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_loadsforces_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_loadspressures_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_loadsheatfluxes_tree_data(); // gets the data from core to build the tree
@@ -274,6 +277,7 @@ public:
   std::string get_surfaceinteraction_export_data(); // gets the export data from surfaceinteractions core
   std::string get_contactpair_export_data(); // gets the export data from contactpairs core
   std::string get_amplitude_export_data(); // gets the export data from amplitudes core
+  std::string get_orientation_export_data(); // gets the export data from orientation core
   std::string get_initialcondition_export_data(); // gets the export data from core
   std::string get_hbc_export_data(); // gets the export data from core
   std::string get_step_export_data(); // gets the export data from core

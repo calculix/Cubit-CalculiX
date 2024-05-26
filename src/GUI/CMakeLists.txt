@@ -21,6 +21,8 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/ContactPairsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/AmplitudesTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/AmplitudesTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/OrientationsTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/OrientationsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsForcesTree.cpp
@@ -147,6 +149,12 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/AmplitudesModifyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/AmplitudesDeletePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/AmplitudesDeletePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/OrientationsCreatePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/OrientationsCreatePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/OrientationsModifyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/OrientationsModifyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/OrientationsDeletePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/OrientationsDeletePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsForcesModifyPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsForcesModifyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsPressuresModifyPanel.hpp

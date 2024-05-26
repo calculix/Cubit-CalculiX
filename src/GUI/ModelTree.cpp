@@ -10,6 +10,7 @@
 #include "SurfaceInteractionsTree.hpp"
 #include "ContactPairsTree.hpp"
 #include "AmplitudesTree.hpp"
+#include "OrientationsTree.hpp"
 #include "LoadsTree.hpp"
 #include "LoadsForcesTree.hpp"
 #include "LoadsPressuresTree.hpp"
@@ -128,6 +129,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
     SurfaceInteractionsTree* SurfaceInteractionsTreeItem;
     ContactPairsTree* ContactPairsTreeItem;
     AmplitudesTree* AmplitudesTreeItem;
+    OrientationsTree* OrientationsTreeItem;
     LoadsForcesTree* LoadsForcesTreeItem;
     LoadsPressuresTree* LoadsPressuresTreeItem;
     LoadsHeatfluxesTree* LoadsHeatfluxesTreeItem;
@@ -264,6 +266,18 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 8;
+      }
+    }else if (OrientationsTreeItem = dynamic_cast<OrientationsTree*>(item))
+    {
+      if (OrientationsTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Orientation",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);      
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 36;
       }
     }else if (LoadsForcesTreeItem = dynamic_cast<LoadsForcesTree*>(item))
     {
@@ -732,6 +746,23 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 8;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+      } else if (OrientationsTreeItem = dynamic_cast<OrientationsTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Orientation",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Modify Orientation",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+        QAction action3("Delete Orientation",this);
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+
+        contextMenu.exec(mapToGlobal(pos));
+
+        contextMenuAction[0][0] = 36;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
       } else if (LoadsForcesTreeItem = dynamic_cast<LoadsForcesTree*>(item->parent()))
       {
@@ -1270,6 +1301,7 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   SurfaceInteractionsTree* SurfaceInteractionsTreeItem;
   ContactPairsTree* ContactPairsTreeItem;
   AmplitudesTree* AmplitudesTreeItem;
+  OrientationsTree* OrientationsTreeItem;
   LoadsForcesTree* LoadsForcesTreeItem;
   LoadsPressuresTree* LoadsPressuresTreeItem;
   LoadsHeatfluxesTree* LoadsHeatfluxesTreeItem;
@@ -1352,6 +1384,12 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     if (AmplitudesTreeItem->text(1).toStdString()=="")
     {
       this->setWidgetInCmdPanelMarker("CCXAmplitudesCreate");
+    }
+  }else if (OrientationsTreeItem = dynamic_cast<OrientationsTree*>(item))
+  {
+    if (OrientationsTreeItem->text(1).toStdString()=="")
+    {
+      this->setWidgetInCmdPanelMarker("CCXOrientationsCreate");
     }
   }else if (LoadsForcesTreeItem = dynamic_cast<LoadsForcesTree*>(item))
   {
@@ -1603,6 +1641,9 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     } else if (AmplitudesTreeItem = dynamic_cast<AmplitudesTree*>(item->parent()))
     {
       this->setWidgetInCmdPanelMarker("CCXAmplitudesModify");
+    } else if (OrientationsTreeItem = dynamic_cast<OrientationsTree*>(item->parent()))
+    {
+      this->setWidgetInCmdPanelMarker("CCXOrientationsModify");
     } else if (LoadsForcesTreeItem = dynamic_cast<LoadsForcesTree*>(item->parent()))
     {
       this->setWidgetInCmdPanelMarker("FEAForceModify");
@@ -1863,6 +1904,18 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==2) //Action3
       {
         this->setWidgetInCmdPanelMarker("CCXAmplitudesDelete");
+      }  
+    }else if (contextMenuAction[0][0]==36) //OrientationsTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("CCXOrientationsCreate");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        this->setWidgetInCmdPanelMarker("CCXOrientationsModify");
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXOrientationsDelete");
       }  
     }else if (contextMenuAction[0][0]==9) //LoadsForcesTree
     {

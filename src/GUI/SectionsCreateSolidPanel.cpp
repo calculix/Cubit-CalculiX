@@ -30,7 +30,7 @@ SectionsCreateSolidPanel::SectionsCreateSolidPanel(QWidget *parent) :
   label_4->setFixedWidth(labelWidth);
   label_1->setText("Block ID");
   label_2->setText("Material ID");
-  label_3->setText("Orientation Name");
+  label_3->setText("Orientation ID");
   label_4->setText("Thickness");
   lineEdit_1 = new QLineEdit();
   lineEdit_2 = new QLineEdit();
@@ -84,7 +84,7 @@ void SectionsCreateSolidPanel::on_pushButton_apply_clicked(bool)
     command.append("ccx create section solid block " + lineEdit_1->text() + " material " + lineEdit_2->text());
     if (lineEdit_3->text()!="")
     {
-      command.append(" orientation \"" + lineEdit_3->text() + "\"");
+      command.append(" orientation " + lineEdit_3->text());
     }
     if (lineEdit_4->text()!="")
     {
