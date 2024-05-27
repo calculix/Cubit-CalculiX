@@ -1,0 +1,92 @@
+reset
+#ccx use logfile core on
+ccx create orientation name or1 system_type_r a_coord 1 0 0 b_coord 0 1 0 local_axis_y angle 0
+ccx create orientation name or2 system_type_r a_coord 1 0 0 b_coord 0 1 0 local_axis_y angle 0
+ccx create orientation name or3 system_type_r a_coord 1 0 0 b_coord 0 1 0 local_axis_y angle 90
+
+create brick x 50 y 5 z 10
+
+webcut volume 1 with plane yplane offset 2
+webcut volume 1 with plane yplane offset -2
+
+nodeset 1 add surface 16 23 21   
+
+block 1 add vol 1
+block 2 add vol 2
+block 3 add vol 3
+
+
+create material "mat1" property_group "CalculiX-FEA"
+modify material "mat1" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "mat1" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "mat1" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0
+modify material "mat1" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+modify material "mat1" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "mat1" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+
+create material "mat2" property_group "CalculiX-FEA"
+modify material "mat2" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "mat2" scalar_properties "CCX_ELASTIC_EC_USE_CARD" 1
+modify material "mat2" matrix_property "CCX_ELASTIC_EC_CONSTANTS_VS_TEMPERATURE" 210000 21000 21 0.3 0.3 0.001 80000 80000 80 0
+modify material "mat2" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+modify material "mat2" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "mat2" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+
+
+#ccx create section solid block 1 material 1 
+#ccx create section solid block 2 material 1 
+#ccx create section solid block 3 material 2 orientation 1
+
+ccx create section solid block 1 material 2 orientation 1
+ccx create section solid block 2 material 2 orientation 2
+ccx create section solid block 3 material 2 orientation 3
+
+
+create displacement on nodeset 1 dof 1 dof 2 dof 3 fix 0 
+
+create pressure  on surface 5  magnitude 1 
+
+ccx create fieldoutput name "foe" element
+ccx modify fieldoutput 1 element
+ccx modify fieldoutput 1 element key_on e s
+ccx modify fieldoutput 1 element key_off ceeq ecd emfb emfe ener err her hfl hflf maxe maxs me peeq phs sf smid sneg spos svf sdv the zzs
+
+ccx create fieldoutput name "fon" node
+ccx modify fieldoutput 2 node
+ccx modify fieldoutput 2 node key_on rf u
+ccx modify fieldoutput 2 node key_off cp depf dept dtf hcri keq mach maxu mf nt pnt pot prf ps psf pt ptf pu rfl sen ts tsf tt ttf turb v vf
+
+
+merge vol all
+vol all size 1
+#vol all scheme tetmesh
+#block all element type TETRA10
+#block all element type hex20
+#ccx block all element_type C3D20R
+curve 28 36  interval 2
+curve 28 36  scheme equal
+mesh curve 28 36 
+
+mesh vol all
+
+# for no bleeding we need to tie them together
+set unmerge duplicate_mesh on
+unmerge volume all
+sideset 2 add surface 12
+sideset 3 add surface 7 
+sideset 4 add surface 22
+sideset 5 add surface 17
+ccx create constraint tie name "vol_2_3" master 2 slave 3
+ccx create constraint tie name "vol_3_1" master 4 slave 5
+
+ccx create step name "static" static
+ccx step 1 add bc displacement 1
+ccx step 1 add load pressure 1
+ccx step 1 add fieldoutput 1 2
+
+ccx create job name "test"
+ccx run job 1 no_conversion
+ccx wait job 1
+ccx result load job 1
+ccx result convert job 1
+ccx result paraview job 1

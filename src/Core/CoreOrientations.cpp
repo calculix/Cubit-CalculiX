@@ -392,7 +392,7 @@ std::string CoreOrientations::get_orientation_export() // get a list of the Calc
     {
       str_temp = "";
       sub_data_id = get_rotation_data_id_from_rotation_id(orientations_data[i][7]);
-      str_temp.append(std::to_string(orientations_data[i][7]) + "," + rotation_data[sub_data_id][1]);
+      str_temp.append(std::to_string(orientations_data[i][6]) + "," + rotation_data[sub_data_id][1]);
       orientations_export_list.push_back(str_temp);
     }
 

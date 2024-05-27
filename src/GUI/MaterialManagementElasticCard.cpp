@@ -30,8 +30,8 @@ MaterialManagementElasticCard::MaterialManagementElasticCard(QWidget* parent, Ma
   
   table_isotropic = new MaterialManagementTable(nullptr,"CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE");
   table_orthotropic = new MaterialManagementTable(nullptr,"CCX_ELASTIC_ORTHO_CONSTANTS_VS_TEMPERATURE");
-  table_anisotropic = new MaterialManagementTable(nullptr,"CCX_ELASTIC_EC_CONSTANTS_VS_TEMPERATURE");
-  table_ec = new MaterialManagementTable(nullptr,"CCX_ELASTIC_ANISO_CONSTANTS_VS_TEMPERATURE");
+  table_anisotropic = new MaterialManagementTable(nullptr,"CCX_ELASTIC_ANISO_CONSTANTS_VS_TEMPERATURE");
+  table_ec = new MaterialManagementTable(nullptr,"CCX_ELASTIC_EC_CONSTANTS_VS_TEMPERATURE");
   
   // Layout
   GridLayout->addLayout(HBoxLayout,0,0, Qt::AlignTop);
