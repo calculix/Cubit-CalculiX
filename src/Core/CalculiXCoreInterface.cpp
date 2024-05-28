@@ -165,6 +165,11 @@ std::vector<int> CalculiXCoreInterface::get_bcstemperatures_ids()
   return ccx_core.get_bcstemperatures_ids();
 }
 
+std::vector<int> CalculiXCoreInterface::get_orientations_ids()
+{
+  return ccx_core.get_orientations_ids();
+}
+
 bool CalculiXCoreInterface::check_block_exists(int block_id)
 {
   return ccx_core.check_block_exists(block_id);
@@ -708,6 +713,11 @@ std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_bc_dis
 std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_bc_temperature(int id) // returns coord(3) and dof
 {
   return ccx_core.get_draw_data_for_bc_temperature(id);
+}  
+
+std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_orientation(int id)
+{
+  return ccx_core.get_draw_data_for_orientation(id);
 }  
 
 bool CalculiXCoreInterface::draw_all(double size) // draw all bc and loads

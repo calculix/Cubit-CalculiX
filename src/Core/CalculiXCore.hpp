@@ -66,6 +66,7 @@ public:
   std::string get_block_name(int block_id); // gets the block name
   std::vector<int> get_block_node_ids(int block_id); // gets the block node ids
   std::vector<int> get_block_element_ids(int block_id); // gets the block global element ids
+  std::vector<double> get_block_bounding_box_center(int block_id); // gets the blocks bounding box center
   std::string get_material_name(int material_id); // gets the material name
   std::string get_nodeset_name(int nodeset_id); // gets the nodeset name
   std::vector<std::vector<double>> get_nodeset_entities_coords(int nodeset_id); // gets the nodeset entities coordinates
@@ -83,6 +84,7 @@ public:
   std::vector<int> get_loadscentrifugal_ids(); // get all load centrifugal ids
   std::vector<int> get_bcsdisplacements_ids(); // get all bc displacement ids
   std::vector<int> get_bcstemperatures_ids(); // get all bc temperature ids
+  std::vector<int> get_orientations_ids(); // get all orientation ids
   bool check_block_exists(int block_id);
   bool check_bc_exists(int bc_id,int BCType); // checks if the id for the bc type exists
   bool check_nodeset_exists(int nodeset_id);
@@ -198,7 +200,8 @@ public:
   std::vector<std::vector<double>> get_draw_data_for_load_centrifugal(int id); // returns coord(3) and magnitude(3) std::vector<double>
   std::vector<std::vector<double>> get_draw_data_for_bc_displacement(int id); // returns coord(3) and dof
   std::vector<std::vector<double>> get_draw_data_for_bc_temperature(int id); // returns coord(3) and dof
-  bool draw_all(double size); // draw all loads and bcs
+  std::vector<std::vector<double>> get_draw_data_for_orientation(int id); // returns pairs of 4 for {system_type,local_axis_angle}, coord(3) of section center, a_coord(3) ,b_coord(3)
+  bool draw_all(double size); // draw all loads,bcs,orientations
   
   //QUERY results
   //FRD results

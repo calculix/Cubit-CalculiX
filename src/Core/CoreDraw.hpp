@@ -41,10 +41,12 @@ public:
   bool draw_load_centrifugal(int id, double size = 1); // draw centrifugal load with id
   bool draw_bc_displacement(int id, double size = 1); // draw bc displacement
   bool draw_bc_temperature(int id, double size = 1); // draw bc temperature
+  bool draw_orientation(int id, double size = 1); // draw orientation for all linked section
 
   bool draw_loads(double size = 1); // draw all loads
   bool draw_bcs(double size = 1); // draw all bcs
-  bool draw_all(double size = 1); // draw all loads and bcs
+  bool draw_orientations(double size = 1); // draw all orientations for all linked section
+  bool draw_all(double size = 1); // draw all
 
   CalculiXCoreInterface *ccx_iface;
 };

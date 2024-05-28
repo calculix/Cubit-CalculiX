@@ -42,6 +42,7 @@ public:
   std::vector<int> get_loadscentrifugal_ids(); // get all load centrifugal ids
   std::vector<int> get_bcsdisplacements_ids(); // get all bc displacement ids
   std::vector<int> get_bcstemperatures_ids(); // get all bc temperature ids
+  std::vector<int> get_orientations_ids(); // get all orientation ids
   bool check_block_exists(int block_id);
   bool check_nodeset_exists(int nodeset_id);
   bool check_sideset_exists(int sideset_id);
@@ -160,7 +161,8 @@ public:
   std::vector<std::vector<double>> get_draw_data_for_load_centrifugal(int id); // returns coord(3) and magnitude(3) std::vector<double>
   std::vector<std::vector<double>> get_draw_data_for_bc_displacement(int id); // returns coord(3) and dof
   std::vector<std::vector<double>> get_draw_data_for_bc_temperature(int id); // returns coord(3) and dof
-  bool draw_all(double size); // draw all loads and bcs
+  std::vector<std::vector<double>> get_draw_data_for_orientation(int id); // returns pairs of 4 for {system_type,local_axis_angle}, coord(3) of section center, a_coord(3) ,b_coord(3)
+  bool draw_all(double size); // draw all loads,bcs,orientations
 
   //QUERY results
   //FRD results
