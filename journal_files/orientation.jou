@@ -1,8 +1,8 @@
 reset
 #ccx use logfile core on
-ccx create orientation name or1 system_type_r a_coord 1 0 0 b_coord 0 1 0 local_axis_y angle 0
-ccx create orientation name or2 system_type_r a_coord 1 0 0 b_coord 0 1 0 local_axis_y angle 0
-ccx create orientation name or3 system_type_r a_coord 1 0 0 b_coord 0 1 0 local_axis_y angle 90
+ccx create orientation name or1 system_type_r a_coord 1 1 1 b_coord 0 1 1 local_axis_y angle 0
+ccx create orientation name or2 system_type_c a_coord 0 1 0 b_coord 1 0 1 local_axis_y angle 0
+ccx create orientation name or3 system_type_r a_coord 1 1 1 b_coord 0 1 1 local_axis_y angle 90
 
 create brick x 50 y 5 z 10
 
@@ -85,8 +85,14 @@ ccx step 1 add load pressure 1
 ccx step 1 add fieldoutput 1 2
 
 ccx create job name "test"
-ccx run job 1 no_conversion
-ccx wait job 1
-ccx result load job 1
-ccx result convert job 1
-ccx result paraview job 1
+#ccx run job 1 no_conversion
+#ccx wait job 1
+#ccx result load job 1
+#ccx result convert job 1
+#ccx result paraview job 1
+
+ccx draw
+
+
+
+

@@ -724,15 +724,58 @@ bool CoreDraw::draw_orientation(int id, double size)
     
     for (size_t i = 0; i < draw_data.size(); i++)
     {
-        //draw_dof({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, draw_data[i][3], "red", size);
-        /*
         std::string log = std::to_string(i) + ": " + std::to_string(draw_data[i][0]) + " " + std::to_string(draw_data[i][1]) + " " + std::to_string(draw_data[i][2]) + "\n";
         log.append(std::to_string(i) + ": " + std::to_string(draw_data[i+1][0]) + " " + std::to_string(draw_data[i+1][1]) + " " + std::to_string(draw_data[i+1][2]) + "\n");
         log.append(std::to_string(i) + ": " + std::to_string(draw_data[i+2][0]) + " " + std::to_string(draw_data[i+2][1]) + " " + std::to_string(draw_data[i+2][2]) + "\n");
         log.append(std::to_string(i) + ": " + std::to_string(draw_data[i+3][0]) + " " + std::to_string(draw_data[i+3][1]) + " " + std::to_string(draw_data[i+3][2]) + "\n");
-        i+=3;
         PRINT_INFO("%s", log.c_str());
-        */
+        
+        // center point coordinates
+        std::vector<double> center;
+        center = draw_data[i+1];
+        // axis
+        std::vector<double> x_hat;
+        std::vector<double> y_hat;
+        std::vector<double> z_hat;
+
+        //check if rectangular or cylindrical system
+        if (draw_data[i][0]==1.0)
+        {
+            x_hat = draw_data[i+2];
+            z_hat = this->cross_product(x_hat,draw_data[i+3]);
+            y_hat = this->cross_product(x_hat,z_hat);
+            
+            //rotate about local axis
+            if (draw_data[i][1]==1.0)
+            {
+                /* code */
+            }else if (draw_data[i][1]==2.0)
+            {
+                /* code */
+            }else if (draw_data[i][1]==3.0)
+            {
+                /* code */
+            }
+            //inverse signum
+            for (size_t ii = 0; ii < 3; ii++)
+            {
+                x_hat[ii] = -x_hat[ii];
+                //y_hat[i] = -y_hat[i];
+                z_hat[ii] = -z_hat[ii];
+            }
+            
+            draw_arrow(center, x_hat, true, "green", size);
+            draw_arrow(center, y_hat, true, "yellow", size);
+            draw_arrow(center, z_hat, true, "red", size);   
+        }else if (draw_data[i][0]==2.0)
+        {
+            for (size_t ii = 0; ii < 3; ii++)
+            {
+                z_hat.push_back(draw_data[i+2][ii]-draw_data[i+3][ii]);
+            }
+            draw_arrow_flat(center, z_hat, true, "green", size);   
+        }
+        i+=3;
     }
 
     return true;
