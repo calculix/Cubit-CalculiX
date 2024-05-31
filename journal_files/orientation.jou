@@ -1,8 +1,8 @@
 reset
 #ccx use logfile core on
-ccx create orientation name or1 system_type_r a_coord 1 1 1 b_coord 0 1 1 local_axis_y angle 0
-ccx create orientation name or2 system_type_c a_coord 0 1 0 b_coord 1 0 1 local_axis_y angle 0
-ccx create orientation name or3 system_type_r a_coord 1 1 1 b_coord 0 1 1 local_axis_y angle 90
+ccx create orientation name or1 system_type_r a_coord 1 0 0 b_coord 0 1 0 local_axis_y angle 45
+ccx create orientation name or2 system_type_r a_coord 1 0 0 b_coord 0 1 0 local_axis_y angle -45
+ccx create orientation name or3 system_type_r a_coord 1 0 0 b_coord 0 1 0 local_axis_y angle 0
 
 create brick x 50 y 5 z 10
 
@@ -92,6 +92,13 @@ ccx create job name "test"
 #ccx result paraview job 1
 
 ccx draw
+
+
+
+
+
+
+
 
 
 

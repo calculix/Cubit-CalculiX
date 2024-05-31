@@ -20,11 +20,13 @@ public:
 
   bool init(); // initialize
   std::vector<double> rotate(std::vector<double> coord, std::vector<double> vec_a, std::vector<double> vec_b); // rotates coordinate from vector a to b
+  std::vector<double> rotate_about_axis(std::vector<double> coord, std::vector<double> axis, double angle); // rotates coordinate about an axis with given angle
   std::vector<double> unit_vector(std::vector<double> input);
   double magnitude(std::vector<double> input); //magnitude for a vector with starting point {0,0,0}
   std::vector<double> cross_product(std::vector<double> vec_a, std::vector<double> vec_b);
   std::vector<std::vector<double>> cross_product_matrix(std::vector<double> vec);
   double inner_product(std::vector<double> vec_a, std::vector<double> vec_b);
+  std::vector<double> mult_vector_scalar(std::vector<double> vec, double scalar);
   std::vector<std::vector<double>> mult_matrix(std::vector<std::vector<double>> mat_a, std::vector<std::vector<double>> mat_b); //multiplicate 3x3 matrix with 3x3
   std::vector<std::vector<double>> mult_matrix_scalar(std::vector<std::vector<double>> mat_a, double scalar); //multiplicate 3x3 matrix with scalar
   std::vector<std::vector<double>> add_matrix(std::vector<std::vector<double>> mat_a, std::vector<std::vector<double>> mat_b); //addition of 3x3 matrix

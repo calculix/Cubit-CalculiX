@@ -60,41 +60,15 @@ std::vector<double> CoreDraw::rotate(std::vector<double> coord, std::vector<doub
     //define rotation axis
     vec_k = cross_product(vec_a, vec_b);
     vec_k = unit_vector(vec_k);
-
-    //log = "vec_a = " + std::to_string(vec_a[0]) + " " + std::to_string(vec_a[1]) + " " + std::to_string(vec_a[2]) + " " +"\n";
-    //log.append("vec_b = " + std::to_string(vec_b[0]) + " " + std::to_string(vec_b[1]) + " " + std::to_string(vec_b[2]) + " " +"\n");
-    //log.append("vec_k = " + std::to_string(vec_k[0]) + " " + std::to_string(vec_k[1]) + " " + std::to_string(vec_k[2]) + " " +"\n");
     
     //sinus cosinus
     sinus = magnitude(cross_product(vec_a, vec_b));
     cosinus = inner_product(vec_a, vec_b);
 
-    //log.append("sinus = " + std::to_string(sinus) +"\n");
-    //log.append("cosinus = " + std::to_string(cosinus) +"\n");
-
     //cross product matrix
     std::vector<std::vector<double>> mat_k = cross_product_matrix(vec_k);
     std::vector<std::vector<double>> mat_k2 = mult_matrix(mat_k,mat_k);
-    /*
-    log.append("mat_k = \n");
-    for (size_t i = 0; i < 3; i++)
-    {
-        for (size_t ii = 0; ii < 3; ii++)
-        {
-            log.append(std::to_string(mat_k[i][ii]) + " ");
-        }
-        log.append("\n");
-    }
-    log.append("mat_k2 = \n");
-    for (size_t i = 0; i < 3; i++)
-    {
-        for (size_t ii = 0; ii < 3; ii++)
-        {
-            log.append(std::to_string(mat_k2[i][ii]) + " ");
-        }
-        log.append("\n");
-    }
-    */
+
     // rotation matrix
 
     mat_r = add_matrix(mat_r, mult_matrix_scalar(mat_k,sinus));
@@ -102,22 +76,51 @@ std::vector<double> CoreDraw::rotate(std::vector<double> coord, std::vector<doub
 
     tmp_coord = mult_matrix_vector(mat_r,coord);
 
-    /*
-    log.append("mat_r = \n");
-    for (size_t i = 0; i < 3; i++)
+    return tmp_coord;
+}
+
+std::vector<double> CoreDraw::rotate_about_axis(std::vector<double> coord, std::vector<double> axis, double angle)
+{
+    // https://de.wikipedia.org/wiki/Drehmatrix
+    
+    std::vector<double> n_coord = this->unit_vector(coord);
+    std::vector<double> n_axis = this->unit_vector(axis);
+    std::vector<double> tmp_coord = {0,0,0};
+    std::vector<std::vector<double>> mat_r;
+    mat_r.push_back({0,0,0});
+    mat_r.push_back({0,0,0});
+    mat_r.push_back({0,0,0});
+    double pi = 3.14159265359;
+    double sinus = sin(angle*pi/180);
+    double cosinus = cos(angle*pi/180);
+
+    // if vector is parallel and the same direction with coord return coord    
+    if ((n_coord[0]==n_axis[0])&&(n_coord[1]==n_axis[1])&&(n_coord[2]==n_axis[2]))
     {
-        for (size_t ii = 0; ii < 3; ii++)
-        {
-            log.append(std::to_string(mat_r[i][ii]) + " ");
-        }
-        log.append("\n");
+        return coord;
     }
 
-    log.append("coord = " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " " +"\n");
-    log.append("tmp_coord = " + std::to_string(tmp_coord[0]) + " " + std::to_string(tmp_coord[1]) + " " + std::to_string(tmp_coord[2]) + " " +"\n");
-    log.append("*********************************************\n");
-    PRINT_INFO("%s", log.c_str());
-    */
+    // if vector is parallel and the opposite direction with coord return inverse coord
+    if ((n_coord[0]==-n_axis[0])&&(n_coord[1]==-n_axis[1])&&(n_coord[2]==-n_axis[2]))
+    {
+        coord[0] = coord[0] * (-1);
+        coord[1] = coord[1] * (-1);
+        coord[2] = coord[2] * (-1);
+        return coord;
+    }
+    
+    // rotation matrix
+    mat_r[0][0] = n_axis[0]*n_axis[0]*(1-cosinus)+cosinus;
+    mat_r[0][1] = n_axis[0]*n_axis[1]*(1-cosinus)-n_axis[2]*sinus;
+    mat_r[0][2] = n_axis[0]*n_axis[2]*(1-cosinus)+n_axis[1]*sinus;
+    mat_r[1][0] = n_axis[0]*n_axis[1]*(1-cosinus)+n_axis[2]*sinus;
+    mat_r[1][1] = n_axis[1]*n_axis[1]*(1-cosinus)+cosinus;
+    mat_r[1][2] = n_axis[1]*n_axis[2]*(1-cosinus)-n_axis[0]*sinus;
+    mat_r[2][0] = n_axis[0]*n_axis[2]*(1-cosinus)-n_axis[1]*sinus;
+    mat_r[2][1] = n_axis[1]*n_axis[2]*(1-cosinus)+n_axis[0]*sinus;
+    mat_r[2][2] = n_axis[2]*n_axis[2]*(1-cosinus)+cosinus;
+
+    tmp_coord = mult_matrix_vector(mat_r,coord);
 
     return tmp_coord;
 }
@@ -171,6 +174,18 @@ double CoreDraw::inner_product(std::vector<double> vec_a, std::vector<double> ve
     for (size_t i = 0; i < 3; i++)
     {
         output += vec_a[i]*vec_b[i];
+    }
+
+    return output;
+}
+
+std::vector<double> CoreDraw::mult_vector_scalar(std::vector<double> vec, double scalar)
+{
+    std::vector<double> output(3);
+
+    for (size_t i = 0; i < 3; i++)
+    {
+        output[i] = vec[i]*scalar;
     }
 
     return output;
@@ -724,12 +739,6 @@ bool CoreDraw::draw_orientation(int id, double size)
     
     for (size_t i = 0; i < draw_data.size(); i++)
     {
-        std::string log = std::to_string(i) + ": " + std::to_string(draw_data[i][0]) + " " + std::to_string(draw_data[i][1]) + " " + std::to_string(draw_data[i][2]) + "\n";
-        log.append(std::to_string(i) + ": " + std::to_string(draw_data[i+1][0]) + " " + std::to_string(draw_data[i+1][1]) + " " + std::to_string(draw_data[i+1][2]) + "\n");
-        log.append(std::to_string(i) + ": " + std::to_string(draw_data[i+2][0]) + " " + std::to_string(draw_data[i+2][1]) + " " + std::to_string(draw_data[i+2][2]) + "\n");
-        log.append(std::to_string(i) + ": " + std::to_string(draw_data[i+3][0]) + " " + std::to_string(draw_data[i+3][1]) + " " + std::to_string(draw_data[i+3][2]) + "\n");
-        PRINT_INFO("%s", log.c_str());
-        
         // center point coordinates
         std::vector<double> center;
         center = draw_data[i+1];
@@ -748,19 +757,22 @@ bool CoreDraw::draw_orientation(int id, double size)
             //rotate about local axis
             if (draw_data[i][1]==1.0)
             {
-                /* code */
+                y_hat = this->rotate_about_axis(y_hat,x_hat,draw_data[i][2]);
+                z_hat = this->rotate_about_axis(z_hat,x_hat,draw_data[i][2]);
             }else if (draw_data[i][1]==2.0)
             {
-                /* code */
+                x_hat = this->rotate_about_axis(x_hat,y_hat,-draw_data[i][2]);
+                z_hat = this->rotate_about_axis(z_hat,y_hat,-draw_data[i][2]);
             }else if (draw_data[i][1]==3.0)
             {
-                /* code */
+                x_hat = this->rotate_about_axis(x_hat,z_hat,draw_data[i][2]);
+                y_hat = this->rotate_about_axis(y_hat,z_hat,-draw_data[i][2]);
             }
             //inverse signum
             for (size_t ii = 0; ii < 3; ii++)
             {
                 x_hat[ii] = -x_hat[ii];
-                //y_hat[i] = -y_hat[i];
+                y_hat[i] = -y_hat[i];
                 z_hat[ii] = -z_hat[ii];
             }
             
