@@ -48,7 +48,7 @@ bool CoreBCsTemperatures::update()
       }
       else
       {
-        sub_last = time_delay_data.size() - 1;
+        sub_last = int(time_delay_data.size()) - 1;
         sub_id = std::stoi(time_delay_data[sub_last][0]) + 1;
       }
       time_delay_id = sub_id;
@@ -172,7 +172,7 @@ int CoreBCsTemperatures::get_bcs_data_id_from_bc_id(int bc_id)
   {
     if (bcs_data[i][0]==bc_id)
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -185,7 +185,7 @@ int CoreBCsTemperatures::get_time_delay_data_id_from_time_delay_id(int time_dela
   {
     if (time_delay_data[i][0]==std::to_string(time_delay_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;

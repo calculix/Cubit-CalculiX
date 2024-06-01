@@ -64,7 +64,7 @@ bool CoreSurfaceInteractions::create_surfaceinteraction(std::string surfacebehav
     }
     else
     {
-      sub_surfacebehavior_last = exponential_surfacebehavior_data.size() - 1;
+      sub_surfacebehavior_last = int(exponential_surfacebehavior_data.size()) - 1;
       sub_surfacebehavior_id = std::stoi(exponential_surfacebehavior_data[sub_surfacebehavior_last][0]) + 1;
     }
     surfacebehavior_type_value = 1;
@@ -77,7 +77,7 @@ bool CoreSurfaceInteractions::create_surfaceinteraction(std::string surfacebehav
     }
     else
     {
-      sub_surfacebehavior_last = linear_surfacebehavior_data.size() - 1;
+      sub_surfacebehavior_last = int(linear_surfacebehavior_data.size()) - 1;
       sub_surfacebehavior_id = std::stoi(linear_surfacebehavior_data[sub_surfacebehavior_last][0]) + 1;
     }
     surfacebehavior_type_value = 2;
@@ -114,7 +114,7 @@ bool CoreSurfaceInteractions::create_surfaceinteraction(std::string surfacebehav
     }
     else
     {
-      sub_surfacebehavior_last = tied_surfacebehavior_data.size() - 1;
+      sub_surfacebehavior_last = int(tied_surfacebehavior_data.size()) - 1;
       sub_surfacebehavior_id = std::stoi(tied_surfacebehavior_data[sub_surfacebehavior_last][0]);
       sub_surfacebehavior_id = sub_surfacebehavior_id + 1;
     }
@@ -132,7 +132,7 @@ bool CoreSurfaceInteractions::create_surfaceinteraction(std::string surfacebehav
   }
   else
   {
-    surfaceinteraction_name_last = surfaceinteraction_name_data.size() - 1;
+    surfaceinteraction_name_last = int(surfaceinteraction_name_data.size()) - 1;
     surfaceinteraction_name_id = std::stoi(surfaceinteraction_name_data[surfaceinteraction_name_last][0]) + 1;
   }
   this->add_name(std::to_string(surfaceinteraction_name_id),options[0]);
@@ -143,7 +143,7 @@ bool CoreSurfaceInteractions::create_surfaceinteraction(std::string surfacebehav
   }
   else
   {
-    surfaceinteraction_last = surfaceinteractions_data.size() - 1;
+    surfaceinteraction_last = int(surfaceinteractions_data.size()) - 1;
     surfaceinteraction_id = surfaceinteractions_data[surfaceinteraction_last][0] + 1;
   }
 
@@ -540,7 +540,7 @@ int CoreSurfaceInteractions::get_surfaceinteractions_data_id_from_surfaceinterac
   {
     if (surfaceinteractions_data[i][0]==surfaceinteraction_id)
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -553,7 +553,7 @@ int CoreSurfaceInteractions::get_surfaceinteraction_name_data_id_from_surfaceint
   {
     if (surfaceinteraction_name_data[i][0]==std::to_string(surfaceinteraction_name_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -566,7 +566,7 @@ int CoreSurfaceInteractions::get_exponential_surfacebehavior_data_id_from_expone
   {
     if (exponential_surfacebehavior_data[i][0]==std::to_string(exponential_surfacebehavior_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -579,7 +579,7 @@ int CoreSurfaceInteractions::get_linear_surfacebehavior_data_id_from_linear_surf
   {
     if (linear_surfacebehavior_data[i][0]==std::to_string(linear_surfacebehavior_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -592,7 +592,7 @@ std::vector<int> CoreSurfaceInteractions::get_tabular_surfacebehavior_data_ids_f
   {
     if (tabular_surfacebehavior_data[i][0]==std::to_string(tabular_surfacebehavior_id))
     {
-        return_int.push_back(i);
+        return_int.push_back(int(i));
     }  
   }
   return return_int;
@@ -605,7 +605,7 @@ int CoreSurfaceInteractions::get_tied_surfacebehavior_data_id_from_tied_surfaceb
   {
     if (tied_surfacebehavior_data[i][0]==std::to_string(tied_surfacebehavior_id))
     {
-        return_int = i;
+      return_int = int(i);
     }  
   }
   return return_int;
@@ -618,7 +618,7 @@ std::vector<int> CoreSurfaceInteractions::get_gap_conductance_data_ids_from_gap_
   {
     if (gap_conductance_data[i][0]==std::to_string(gap_conductance_id))
     {
-        return_int.push_back(i);
+      return_int.push_back(int(i));
     }  
   }
   return return_int;
@@ -631,7 +631,7 @@ int CoreSurfaceInteractions::get_gap_heat_generation_data_id_from_gap_heat_gener
   {
     if (gap_heat_generation_data[i][0]==std::to_string(gap_heat_generation_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -644,7 +644,7 @@ int CoreSurfaceInteractions::get_friction_data_id_from_friction_id(int friction_
   {
     if (friction_data[i][0]==std::to_string(friction_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;

@@ -468,13 +468,13 @@ bool CoreResultsDat::read_header(std::vector<std::string> line)
   {
     if (line[i]=="set")
     {
-      search = i;
+      search = int(i);
     }
   } 
   block_set = line[search + 1];
   total_time = ccx_iface->string_scientific_to_double(line[line.size()-1]);
   total_times.push_back(total_time);
-  current_total_time_id = total_times.size()-1;
+  current_total_time_id = int(total_times.size())-1;
 
   block_type = "";
   for (size_t i = 0; i < search-1; i++)
@@ -518,8 +518,8 @@ bool CoreResultsDat::read_header(std::vector<std::string> line)
   result_block_data.push_back(tmp_result_block_data);
   result_block_c1_data.push_back(tmp_result_block_c1_data);
     
-  current_result_block = result_blocks.size()-1;
-  result_block_data_id = result_block_data.size()-1;
+  current_result_block = int(result_blocks.size())-1;
+  result_block_data_id = int(result_block_data.size())-1;
   result_block_type_data_id = this->get_current_result_block_type(block_type);
   result_block_set_data_id = this->get_current_result_block_set(block_set);
   
@@ -543,13 +543,13 @@ bool CoreResultsDat::header_emas(std::vector<std::string> line)
   {
     if (line[i]=="set")
     {
-      search = i;
+      search = int(i);
     }
   } 
   block_set = line[search + 1];
   total_time = ccx_iface->string_scientific_to_double(line[line.size()-1],5);
   total_times.push_back(total_time);
-  current_total_time_id = total_times.size()-1;
+  current_total_time_id = int(total_times.size())-1;
 
   block_type = "emas";
   std::vector<std::string> tmp_result_block_components;
@@ -571,8 +571,8 @@ bool CoreResultsDat::header_emas(std::vector<std::string> line)
   result_block_data.push_back(tmp_result_block_data);
   result_block_c1_data.push_back(tmp_result_block_c1_data);
     
-  current_result_block = result_blocks.size()-1;
-  result_block_data_id = result_block_data.size()-1;
+  current_result_block = int(result_blocks.size())-1;
+  result_block_data_id = int(result_block_data.size())-1;
   result_block_type_data_id = this->get_current_result_block_type(block_type);
   result_block_set_data_id = this->get_current_result_block_set(block_set);
   
@@ -586,7 +586,7 @@ bool CoreResultsDat::read_line(std::vector<std::string> line)
   bool bool_node;
   int c1_id;
   int c1_type;
-  int n_comp = result_block_components[result_block_components.size()-1].size();
+  int n_comp = int(result_block_components[result_block_components.size()-1].size());
   
   if (n_comp == line.size()) // elemental results
   {
@@ -628,7 +628,7 @@ bool CoreResultsDat::read_line(std::vector<std::string> line)
   }
       
   result_block_data[result_block_data.size()-1].push_back(result_comp);
-  result_block_c1_data_id = result_block_data[result_block_data.size()-1].size()-1;
+  result_block_c1_data_id = int(result_block_data[result_block_data.size()-1].size()-1);
   result_block_c1_data[result_block_c1_data.size()-1].push_back({c1_id,result_block_c1_data_id,c1_type});
 
   return true;
@@ -641,11 +641,11 @@ int CoreResultsDat::get_current_result_block_type(std::string result_type)
   {
     if (result_block_type[i]==result_type)
     {
-      return i;
+      return int(i);
     }
   }
   result_block_type.push_back(result_type);
-  int data_id = result_block_type.size()-1;
+  int data_id = int(result_block_type.size())-1;
   
   return data_id;
 }
@@ -657,11 +657,11 @@ int CoreResultsDat::get_current_result_block_set(std::string result_set)
   {
     if (result_block_set[i]==result_set)
     {
-      return i;
+      return int(i);
     }
   }
   result_block_set.push_back(result_set);
-  int data_id = result_block_set.size()-1;
+  int data_id = int(result_block_set.size())-1;
   
   return data_id;
 }
@@ -733,7 +733,7 @@ int CoreResultsDat::get_result_block_component_id(int result_block_type_id,std::
   {
     if (components[i]==result_block_component)
     {
-      component_id = i;
+      component_id = int(i);
     }
   }
     
@@ -748,7 +748,7 @@ int CoreResultsDat::get_result_block_type_data_id(std::string result_block_type)
   {
     if (this->result_block_type[i]==result_block_type)
     {
-      result_block_type_data_id = i;
+      result_block_type_data_id = int(i);
       return result_block_type_data_id;
     }
   }
@@ -764,7 +764,7 @@ int CoreResultsDat::get_result_block_set_data_id(std::string result_block_set)
   {
     if (this->result_block_set[i]==result_block_set)
     {
-      result_block_set_data_id = i;
+      result_block_set_data_id = int(i);
       return result_block_set_data_id;
     }
   }

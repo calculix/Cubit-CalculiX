@@ -60,7 +60,7 @@ bool CoreAmplitudes::create_amplitude(std::vector<std::string> options, std::vec
   }
   else
   {
-    amplitude_last = amplitudes_data.size() - 1;
+    amplitude_last = int(amplitudes_data.size()) - 1;
     amplitude_id = amplitudes_data[amplitude_last][0] + 1;
   }
 
@@ -71,7 +71,7 @@ bool CoreAmplitudes::create_amplitude(std::vector<std::string> options, std::vec
   }
   else
   {
-    sub_last = name_amplitude_data.size() - 1;
+    sub_last = int(name_amplitude_data.size()) - 1;
     sub_id = std::stoi(name_amplitude_data[sub_last][0]) + 1;
   }
   name_id = sub_id;
@@ -84,7 +84,7 @@ bool CoreAmplitudes::create_amplitude(std::vector<std::string> options, std::vec
   }
   else
   {
-    sub_last = shiftx_amplitude_data.size() - 1;
+    sub_last = int(shiftx_amplitude_data.size()) - 1;
     sub_id = std::stoi(shiftx_amplitude_data[sub_last][0]) + 1;
   }
   shiftx_id = sub_id;
@@ -97,7 +97,7 @@ bool CoreAmplitudes::create_amplitude(std::vector<std::string> options, std::vec
   }
   else
   {
-    sub_last = shifty_amplitude_data.size() - 1;
+    sub_last = int(shifty_amplitude_data.size()) - 1;
     sub_id = std::stoi(shifty_amplitude_data[sub_last][0]) + 1;
   }
   shifty_id = sub_id;
@@ -278,7 +278,7 @@ int CoreAmplitudes::get_amplitudes_data_id_from_amplitude_id(int amplitude_id)
   {
     if (amplitudes_data[i][0]==amplitude_id)
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -291,7 +291,7 @@ int CoreAmplitudes::get_name_amplitude_data_id_from_name_amplitude_id(int name_a
   {
     if (name_amplitude_data[i][0]==std::to_string(name_amplitude_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -304,7 +304,7 @@ int CoreAmplitudes::get_shiftx_amplitude_data_id_from_shiftx_amplitude_id(int sh
   {
     if (shiftx_amplitude_data[i][0]==std::to_string(shiftx_amplitude_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -317,7 +317,7 @@ int CoreAmplitudes::get_shifty_amplitude_data_id_from_shifty_amplitude_id(int sh
   {
     if (shifty_amplitude_data[i][0]==std::to_string(shifty_amplitude_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -330,7 +330,7 @@ std::vector<int> CoreAmplitudes::get_amplitudevalues_amplitude_data_ids_from_amp
   {
     if (amplitudevalues_amplitude_data[i][0]==std::to_string(amplitudevalues_amplitude_id))
     {
-        return_int.push_back(i);
+        return_int.push_back(int(i));
     }  
   }
   return return_int;

@@ -1,5 +1,10 @@
 #include "CalculiXCore.hpp"
-#include <unistd.h>
+#ifdef WIN32
+ //#include <windows.h>
+ #include <io.h>
+#else
+ #include <unistd.h>
+#endif
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -2881,7 +2886,6 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_force(int 
   NodesetHandle nodeset;
   std::string command;
   std::vector<BCEntityHandle> bc_handles;
-  BCEntityHandle bc_handle;
   std::vector<std::vector<double>> draw_data;
 
   me_iface->create_default_bcset(0,true,true,true,bc_set);
@@ -2936,7 +2940,6 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_pressure(i
   SidesetHandle sideset;
   std::string command;
   std::vector<BCEntityHandle> bc_handles;
-  BCEntityHandle bc_handle;
   std::vector<std::vector<double>> draw_data;
 
   me_iface->create_default_bcset(0,true,true,true,bc_set);
@@ -2981,7 +2984,6 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_heatflux(i
   SidesetHandle sideset;
   std::string command;
   std::vector<BCEntityHandle> bc_handles;
-  BCEntityHandle bc_handle;
   std::vector<std::vector<double>> draw_data;
 
   me_iface->create_default_bcset(0,true,true,true,bc_set);
@@ -3084,7 +3086,6 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_bc_displacement
   NodesetHandle nodeset;
   std::string command;
   std::vector<BCEntityHandle> bc_handles;
-  BCEntityHandle bc_handle;
   std::vector<std::vector<double>> draw_data;
 
   me_iface->create_default_bcset(0,true,true,true,bc_set);
@@ -3129,7 +3130,6 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_bc_temperature(
   NodesetHandle nodeset;
   std::string command;
   std::vector<BCEntityHandle> bc_handles;
-  BCEntityHandle bc_handle;
   std::vector<std::vector<double>> draw_data;
 
   me_iface->create_default_bcset(0,true,true,true,bc_set);
@@ -3808,7 +3808,7 @@ std::vector<int> CalculiXCore::frd_get_element_ids_over_limit(int job_id,int tot
 
 double CalculiXCore::frd_get_node_value(int job_id,int node_id, int total_increment,std::string result_block_type,std::string result_block_component)
 {
-  double tmp; 
+  double tmp = 0; 
 
   int results_data_id = results->get_results_data_id_from_job_id(job_id);
   int frd_data_id = results->get_frd_data_id_from_job_id(job_id);
@@ -4386,7 +4386,7 @@ std::vector<int> CalculiXCore::dat_get_element_ids_over_limit(int job_id,double 
 
 double CalculiXCore::dat_get_node_value(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component)
 {
-  double tmp;
+  double tmp = 0;
   int result_block_type_data_id = -1;
   int result_block_set_data_id = -1;
   int result_block_component_id = -1;
@@ -4578,11 +4578,19 @@ QIcon* CalculiXCore::getIcon(std::string name)
 
   filepath = ccx_uo.mPathIcons.toStdString() + name + ".svg";
 
-  if (access(filepath.c_str(), F_OK) == 0) 
-  {
-    icon = new QIcon(QString::fromStdString(filepath));
-  }else{
-  }
+  #ifdef WIN32
+    if (_access(filepath.c_str(), 0) == 0)
+    {
+      icon = new QIcon(QString::fromStdString(filepath));
+    }else{
+    }
+  #else
+    if (access(filepath.c_str(), F_OK) == 0) 
+    {
+      icon = new QIcon(QString::fromStdString(filepath));
+    }else{
+    }
+  #endif
 
   return icon;
 }
@@ -4594,11 +4602,19 @@ QIcon CalculiXCore::getIcon2(std::string name)
 
   filepath = ccx_uo.mPathIcons.toStdString() + name + ".svg";
 
-  if (access(filepath.c_str(), F_OK) == 0) 
-  {
-    icon = QIcon(QString::fromStdString(filepath));
-  }else{
-  }
+  #ifdef WIN32
+    if (_access(filepath.c_str(), 0) == 0)
+    {
+      icon = QIcon(QString::fromStdString(filepath));
+    }else{
+    }
+  #else
+    if (access(filepath.c_str(), F_OK) == 0) 
+    {
+      icon = QIcon(QString::fromStdString(filepath));
+    }else{
+    }
+  #endif
 
   return icon;
 }
@@ -4650,7 +4666,6 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
   BCSetHandle bc_set;
   NodesetHandle nodeset;
   std::vector<BCEntityHandle> bc_handles;
-  BCEntityHandle bc_handle;
   std::vector<MeshExportBCData> bc_attribs; 
 
   //loop over all initialconditions
@@ -4749,15 +4764,12 @@ std::string CalculiXCore::get_hbc_export_data() // gets the export data from cor
   std::string str_temp;
   std::vector<std::vector<std::string>> temp_list;
   std::string log;
-  int sub_data_id;
   std::vector<int> sub_data_ids;
   std::string command;
   int bc_set_id=-1;
   BCSetHandle bc_set;
   NodesetHandle nodeset;
-  SidesetHandle sideset;
   std::vector<BCEntityHandle> bc_handles;
-  BCEntityHandle bc_handle;
   std::vector<MeshExportBCData> bc_attribs; 
   std::vector<std::string> customline;
 
@@ -4861,7 +4873,6 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
   std::string str_temp;
   std::vector<std::vector<std::string>> temp_list;
   std::string log;
-  int sub_data_id;
   std::vector<int> sub_data_ids;
   std::string command;
   int bc_set_id=-1;
@@ -4869,7 +4880,6 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
   NodesetHandle nodeset;
   SidesetHandle sideset;
   std::vector<BCEntityHandle> bc_handles;
-  BCEntityHandle bc_handle;
   std::vector<MeshExportBCData> bc_attribs; 
   std::vector<std::string> customline;
 
@@ -5497,8 +5507,7 @@ std::vector<std::vector<std::string>> CalculiXCore::get_contactpairs_tree_data()
   {
     std::vector<std::string> contactpairs_tree_data_set;
     std::string contactpair_name;
-    int contactpair_name_id;
-
+    
     contactpair_name = "Master: ";
     contactpair_name.append(this->get_sideset_name(contactpairs->contactpairs_data[i][3]));
     contactpair_name.append(" | Slave: ");
@@ -6364,7 +6373,7 @@ std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_
     {  
       for (size_t i = input_ids[0]; i < input_ids[1]+1; i++)
       {
-        to_ids.push_back(i);
+        to_ids.push_back(int(i));
       }
     }
   }

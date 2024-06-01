@@ -343,7 +343,7 @@ int CoreBlocks::get_blocks_data_id_from_block_id(int block_id)
   {
     if (blocks_data[i][0]==block_id)
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -356,7 +356,7 @@ int CoreBlocks::get_ccx_element_type_id(std::string ccx_element_type)
   {
     if (ccx_element_types[i]==ccx_element_type)
     {
-        return i;
+        return int(i);
     }  
   }
   return return_int;
@@ -369,7 +369,7 @@ int CoreBlocks::get_cubit_element_type_id(std::string cubit_element_type)
   {
     if (cubit_element_types[i]==cubit_element_type)
     {
-        return i;
+        return int(i);
     }  
   }
   return return_int;

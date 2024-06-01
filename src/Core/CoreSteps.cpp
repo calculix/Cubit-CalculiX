@@ -71,7 +71,7 @@ bool CoreSteps::create_step(std::vector<std::string> options)
   }
   else
   {
-    step_last = steps_data.size() - 1;
+    step_last = int(steps_data.size()) - 1;
     step_id = steps_data[step_last][0] + 1;
   }
 
@@ -82,7 +82,7 @@ bool CoreSteps::create_step(std::vector<std::string> options)
   }
   else
   {
-    sub_last = name_data.size() - 1;
+    sub_last = int(name_data.size()) - 1;
     sub_id = std::stoi(name_data[sub_last][0]) + 1;
   }
   name_id = sub_id;
@@ -95,7 +95,7 @@ bool CoreSteps::create_step(std::vector<std::string> options)
   }
   else
   {
-    sub_last = parameter_data.size() - 1;
+    sub_last = int(parameter_data.size()) - 1;
     sub_id = std::stoi(parameter_data[sub_last][0]) + 1;
   }
   parameter_id = sub_id;
@@ -115,7 +115,7 @@ bool CoreSteps::create_step(std::vector<std::string> options)
     }
     else
     {
-      sub_last = static_data.size() - 1;
+      sub_last = int(static_data.size()) - 1;
       sub_id = std::stoi(static_data[sub_last][0]) + 1;
     }
     step_type_id = sub_id;
@@ -128,7 +128,7 @@ bool CoreSteps::create_step(std::vector<std::string> options)
     }
     else
     {
-      sub_last = frequency_data.size() - 1;
+      sub_last = int(frequency_data.size()) - 1;
       sub_id = std::stoi(frequency_data[sub_last][0]) + 1;
     }
     step_type_id = sub_id;
@@ -141,7 +141,7 @@ bool CoreSteps::create_step(std::vector<std::string> options)
     }
     else
     {
-      sub_last = buckle_data.size() - 1;
+      sub_last = int(buckle_data.size()) - 1;
       sub_id = std::stoi(buckle_data[sub_last][0]) + 1;
     }
     step_type_id = sub_id;
@@ -154,7 +154,7 @@ bool CoreSteps::create_step(std::vector<std::string> options)
     }
     else
     {
-      sub_last = heattransfer_data.size() - 1;
+      sub_last = int(heattransfer_data.size()) - 1;
       sub_id = std::stoi(heattransfer_data[sub_last][0]) + 1;
     }
     step_type_id = sub_id;
@@ -167,7 +167,7 @@ bool CoreSteps::create_step(std::vector<std::string> options)
     }
     else
     {
-      sub_last = coupledtd_data.size() - 1;
+      sub_last = int(coupledtd_data.size()) - 1;
       sub_id = std::stoi(coupledtd_data[sub_last][0]) + 1;
     }
     step_type_id = sub_id;
@@ -180,7 +180,7 @@ bool CoreSteps::create_step(std::vector<std::string> options)
     }
     else
     {
-      sub_last = uncoupledtd_data.size() - 1;
+      sub_last = int(uncoupledtd_data.size()) - 1;
       sub_id = std::stoi(uncoupledtd_data[sub_last][0]) + 1;
     }
     step_type_id = sub_id;
@@ -677,7 +677,7 @@ int CoreSteps::get_steps_data_id_from_step_id(int step_id)
   {
     if (steps_data[i][0]==step_id)
     {
-        return_int = i;
+      return_int = int(i);
     }  
   }
   return return_int;
@@ -690,7 +690,7 @@ int CoreSteps::get_name_data_id_from_name_id(int name_id)
   {
     if (name_data[i][0]==std::to_string(name_id))
     {
-        return_int = i;
+      return_int = int(i);
     }  
   }
   return return_int;
@@ -703,7 +703,7 @@ int CoreSteps::get_parameter_data_id_from_parameter_id(int parameter_id)
   {
     if (parameter_data[i][0]==std::to_string(parameter_id))
     {
-        return_int = i;
+      return_int = int(i);
     }  
   }
   return return_int;
@@ -716,7 +716,7 @@ int CoreSteps::get_static_data_id_from_static_id(int static_id)
   {
     if (static_data[i][0]==std::to_string(static_id))
     {
-        return_int = i;
+      return_int = int(i);
     }  
   }
   return return_int;
@@ -729,7 +729,7 @@ int CoreSteps::get_frequency_data_id_from_frequency_id(int frequency_id)
   {
     if (frequency_data[i][0]==std::to_string(frequency_id))
     {
-        return_int = i;
+      return_int = int(i);
     }  
   }
   return return_int;
@@ -742,7 +742,7 @@ int CoreSteps::get_buckle_data_id_from_buckle_id(int buckle_id)
   {
     if (buckle_data[i][0]==std::to_string(buckle_id))
     {
-        return_int = i;
+      return_int = int(i);
     }  
   }
   return return_int;
@@ -755,7 +755,7 @@ int CoreSteps::get_heattransfer_data_id_from_heattransfer_id(int heattransfer_id
   {
     if (heattransfer_data[i][0]==std::to_string(heattransfer_id))
     {
-        return_int = i;
+      return_int = int(i);
     }  
   }
   return return_int;
@@ -768,7 +768,7 @@ int CoreSteps::get_coupledtd_data_id_from_coupledtd_id(int coupledtd_id)
   {
     if (coupledtd_data[i][0]==std::to_string(coupledtd_id))
     {
-        return_int = i;
+      return_int = int(i);
     }  
   }
   return return_int;
@@ -781,7 +781,7 @@ int CoreSteps::get_uncoupledtd_data_id_from_uncoupledtd_id(int uncoupledtd_id)
   {
     if (uncoupledtd_data[i][0]==std::to_string(uncoupledtd_id))
     {
-        return_int = i;
+      return_int = int(i);
     }  
   }
   return return_int;
@@ -794,7 +794,7 @@ int CoreSteps::get_load_data_id(int loads_id, int load_type,int load_id)
   {
     if ((loads_data[i][0]==loads_id) && (loads_data[i][1]==load_type) && (loads_data[i][2]==load_id))
     {
-        return_int = i;
+      return_int = int(i);
     }  
   }
   return return_int;
@@ -807,7 +807,7 @@ int CoreSteps::get_bc_data_id(int bcs_id, int bc_type,int bc_id)
   {
     if ((bcs_data[i][0]==bcs_id) && (bcs_data[i][1]==bc_type) && (bcs_data[i][2]==bc_id))
     {
-        return_int = i;
+      return_int = int(i);
     }  
   }
   return return_int;
@@ -820,7 +820,7 @@ int CoreSteps::get_historyoutput_data_id(int historyoutputs_id, int historyoutpu
   {
     if ((historyoutputs_data[i][0]==historyoutputs_id) && (historyoutputs_data[i][1]==historyoutput_id))
     {
-        return_int = i;
+      return_int = int(i);
     }  
   }
   return return_int;
@@ -833,7 +833,7 @@ int CoreSteps::get_fieldoutput_data_id(int fieldoutputs_id, int fieldoutput_id)
   {
     if ((fieldoutputs_data[i][0]==fieldoutputs_id) && (fieldoutputs_data[i][1]==fieldoutput_id))
     {
-        return_int = i;
+      return_int = int(i);
     }  
   }
   return return_int;
@@ -846,7 +846,7 @@ std::vector<int> CoreSteps::get_load_data_ids_from_loads_id(int loads_id)
   {
     if (loads_data[i][0]==loads_id)
     {
-        return_int.push_back(i);
+        return_int.push_back(int(i));
     }  
   }
   return return_int;
@@ -859,7 +859,7 @@ std::vector<int> CoreSteps::get_bc_data_ids_from_bcs_id(int bcs_id)
   {
     if (bcs_data[i][0]==bcs_id)
     {
-        return_int.push_back(i);
+        return_int.push_back(int(i));
     }  
   }
   return return_int;
@@ -872,7 +872,7 @@ std::vector<int> CoreSteps::get_historyoutput_data_ids_from_historyoutputs_id(in
   {
     if (historyoutputs_data[i][0]==historyoutputs_id)
     {
-        return_int.push_back(i);
+        return_int.push_back(int(i));
     }  
   }
   return return_int;
@@ -885,7 +885,7 @@ std::vector<int> CoreSteps::get_fieldoutput_data_ids_from_fieldoutputs_id(int fi
   {
     if (fieldoutputs_data[i][0]==fieldoutputs_id)
     {
-        return_int.push_back(i);
+        return_int.push_back(int(i));
     }  
   }
   return return_int;

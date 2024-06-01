@@ -120,7 +120,7 @@ bool CoreFieldOutputs::create_output(std::vector<std::string> options)
   }
   else
   {
-    output_last = outputs_data.size() - 1;
+    output_last = int(outputs_data.size()) - 1;
     output_id = outputs_data[output_last][0] + 1;
   }
   
@@ -131,7 +131,7 @@ bool CoreFieldOutputs::create_output(std::vector<std::string> options)
   }
   else
   {
-    sub_last = name_data.size() - 1;
+    sub_last = int(name_data.size()) - 1;
     sub_id = std::stoi(name_data[sub_last][0]) + 1;
   }
   name_id = sub_id;
@@ -148,7 +148,7 @@ bool CoreFieldOutputs::create_output(std::vector<std::string> options)
     }
     else
     {
-      sub_last = node_data.size() - 1;
+      sub_last = int(node_data.size()) - 1;
       sub_id = std::stoi(node_data[sub_last][0]) + 1;
     }
     //node_id = sub_id;
@@ -161,7 +161,7 @@ bool CoreFieldOutputs::create_output(std::vector<std::string> options)
     }
     else
     {
-      sub_last = element_data.size() - 1;
+      sub_last = int(element_data.size()) - 1;
       sub_id = std::stoi(element_data[sub_last][0]) + 1;
     }
     //element_id = sub_id;
@@ -174,7 +174,7 @@ bool CoreFieldOutputs::create_output(std::vector<std::string> options)
     }
     else
     {
-      sub_last = contact_data.size() - 1;
+      sub_last = int(contact_data.size()) - 1;
       sub_id = std::stoi(contact_data[sub_last][0]) + 1;
     }
     //contact_id = sub_id;
@@ -341,7 +341,7 @@ int CoreFieldOutputs::get_outputs_data_id_from_output_id(int output_id)
   {
     if (outputs_data[i][0]==output_id)
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -354,7 +354,7 @@ int CoreFieldOutputs::get_name_data_id_from_name_id(int name_id)
   {
     if (name_data[i][0]==std::to_string(name_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -367,7 +367,7 @@ int CoreFieldOutputs::get_node_data_id_from_node_id(int node_id)
   {
     if (node_data[i][0]==std::to_string(node_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -380,7 +380,7 @@ int CoreFieldOutputs::get_element_data_id_from_element_id(int element_id)
   {
     if (element_data[i][0]==std::to_string(element_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -393,7 +393,7 @@ int CoreFieldOutputs::get_contact_data_id_from_contact_id(int contact_id)
   {
     if (contact_data[i][0]==std::to_string(contact_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;

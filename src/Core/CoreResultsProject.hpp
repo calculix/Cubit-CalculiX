@@ -19,8 +19,8 @@ public:
 
   bool is_initialized = false;
 
-  std::chrono::time_point<std::chrono::system_clock> t_runtime_start = std::chrono::high_resolution_clock::now();
-  std::chrono::time_point<std::chrono::system_clock> t_runtime_last = std::chrono::high_resolution_clock::now();
+  std::chrono::time_point<std::chrono::high_resolution_clock> t_runtime_start = std::chrono::high_resolution_clock::now();
+  std::chrono::time_point<std::chrono::high_resolution_clock> t_runtime_last = std::chrono::high_resolution_clock::now();
 
   bool init(CoreResultsFrd* frd); // initialize
   bool reset(); // delete all data and initialize afterwards

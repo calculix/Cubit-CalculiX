@@ -62,7 +62,7 @@ bool CoreOrientations::create_orientation(std::vector<std::string> options, std:
   }
   else
   {
-    orientation_last = orientations_data.size() - 1;
+    orientation_last = int(orientations_data.size()) - 1;
     orientation_id = orientations_data[orientation_last][0] + 1;
   }
 
@@ -73,7 +73,7 @@ bool CoreOrientations::create_orientation(std::vector<std::string> options, std:
   }
   else
   {
-    sub_last = name_data.size() - 1;
+    sub_last = int(name_data.size()) - 1;
     sub_id = std::stoi(name_data[sub_last][0]) + 1;
   }
   name_id = sub_id;
@@ -290,7 +290,7 @@ int CoreOrientations::get_orientations_data_id_from_orientation_id(int orientati
   {
     if (orientations_data[i][0]==orientation_id)
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -303,7 +303,7 @@ int CoreOrientations::get_name_data_id_from_name_id(int name_id)
   {
     if (name_data[i][0]==std::to_string(name_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -316,7 +316,7 @@ int CoreOrientations::get_a_data_id_from_a_id(int a_id)
   {
     if (a_data[i][0]==std::to_string(a_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -329,7 +329,7 @@ int CoreOrientations::get_b_data_id_from_b_id(int b_id)
   {
     if (b_data[i][0]==std::to_string(b_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -342,7 +342,7 @@ int CoreOrientations::get_rotation_data_id_from_rotation_id(int rotation_id)
   {
     if (rotation_data[i][0]==std::to_string(rotation_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;

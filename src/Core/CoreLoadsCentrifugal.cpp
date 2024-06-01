@@ -59,7 +59,7 @@ bool CoreLoadsCentrifugal::create_load(std::vector<std::string> options)
   }
   else
   {
-    load_last = loads_data.size() - 1;
+    load_last = int(loads_data.size()) - 1;
     load_id = loads_data[load_last][0] + 1;
   }
 
@@ -76,7 +76,7 @@ bool CoreLoadsCentrifugal::create_load(std::vector<std::string> options)
   }
   else
   {
-    sub_last = time_delay_data.size() - 1;
+    sub_last = int(time_delay_data.size()) - 1;
     sub_id = std::stoi(time_delay_data[sub_last][0]) + 1;
   }
   time_delay_id = sub_id;
@@ -92,7 +92,7 @@ bool CoreLoadsCentrifugal::create_load(std::vector<std::string> options)
   }
   else
   {
-    sub_last = direction_data.size() - 1;
+    sub_last = int(direction_data.size()) - 1;
     sub_id = std::stoi(direction_data[sub_last][0]) + 1;
   }
   direction_id = sub_id;
@@ -105,7 +105,7 @@ bool CoreLoadsCentrifugal::create_load(std::vector<std::string> options)
   }
   else
   {
-    sub_last = magnitude_data.size() - 1;
+    sub_last = int(magnitude_data.size()) - 1;
     sub_id = std::stoi(magnitude_data[sub_last][0]) + 1;
   }
   magnitude_id = sub_id;
@@ -118,7 +118,7 @@ bool CoreLoadsCentrifugal::create_load(std::vector<std::string> options)
   }
   else
   {
-    sub_last = coordinate_data.size() - 1;
+    sub_last = int(coordinate_data.size()) - 1;
     sub_id = std::stoi(coordinate_data[sub_last][0]) + 1;
   }
   coordinate_id = sub_id;
@@ -286,7 +286,7 @@ int CoreLoadsCentrifugal::get_loads_data_id_from_load_id(int load_id)
   {
     if (loads_data[i][0]==load_id)
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -299,7 +299,7 @@ int CoreLoadsCentrifugal::get_time_delay_data_id_from_time_delay_id(int time_del
   {
     if (time_delay_data[i][0]==std::to_string(time_delay_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -312,7 +312,7 @@ int CoreLoadsCentrifugal::get_direction_data_id_from_direction_id(int direction_
   {
     if (direction_data[i][0]==std::to_string(direction_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -325,7 +325,7 @@ int CoreLoadsCentrifugal::get_magnitude_data_id_from_magnitude_id(int magnitude_
   {
     if (magnitude_data[i][0]==std::to_string(magnitude_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -338,7 +338,7 @@ int CoreLoadsCentrifugal::get_coordinate_data_id_from_coordinate_id(int coordina
   {
     if (coordinate_data[i][0]==std::to_string(coordinate_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;

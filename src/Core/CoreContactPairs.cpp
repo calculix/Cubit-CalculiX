@@ -80,7 +80,7 @@ bool CoreContactPairs::create_contactpair(std::vector<std::string> options)
   }
   else
   {
-    contactpair_last = contactpairs_data.size() - 1;
+    contactpair_last = int(contactpairs_data.size()) - 1;
     contactpair_id = contactpairs_data[contactpair_last][0] + 1;
   }
 
@@ -90,7 +90,7 @@ bool CoreContactPairs::create_contactpair(std::vector<std::string> options)
   }
   else
   {
-    sub_last = adjust_contactpair_data.size() - 1;
+    sub_last = int(adjust_contactpair_data.size()) - 1;
     sub_id = std::stoi(adjust_contactpair_data[sub_last][0]) + 1;
   }
   this->add_adjust_contactpair(std::to_string(sub_id), options[4], options[5]);
@@ -214,7 +214,7 @@ int CoreContactPairs::get_contactpairs_data_id_from_contactpair_id(int contactpa
   {
     if (contactpairs_data[i][0]==contactpair_id)
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -227,7 +227,7 @@ int CoreContactPairs::get_adjust_contactpair_data_id_from_adjust_contactpair_id(
   {
     if (adjust_contactpair_data[i][0]==std::to_string(adjust_contactpair_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;

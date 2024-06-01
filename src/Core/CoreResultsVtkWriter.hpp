@@ -36,8 +36,8 @@ public:
   int nparts = 0;
   int nparts_dat = 0; // number of parts from dat file
   int current_part = 0;
-  std::chrono::time_point<std::chrono::system_clock> t_runtime_start = std::chrono::high_resolution_clock::now();
-  std::chrono::time_point<std::chrono::system_clock> t_runtime_last = std::chrono::high_resolution_clock::now();
+  std::chrono::time_point<std::chrono::high_resolution_clock> t_runtime_start = std::chrono::high_resolution_clock::now();
+  std::chrono::time_point<std::chrono::high_resolution_clock> t_runtime_last = std::chrono::high_resolution_clock::now();
   std::vector<bool> current_part_ip_data; // bool if current part has integration point data...needed for vtk connectivity of .dat data
   std::string current_filepath_vtu = "";
   std::string current_filepath_vtpc = "";

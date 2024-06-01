@@ -62,7 +62,7 @@ bool CoreResults::create_result(int job_id)
   }
   else
   {
-    result_last = results_data.size() - 1;
+    result_last = int(results_data.size()) - 1;
     result_id = results_data[result_last][0] + 1;
   }
 
@@ -202,7 +202,7 @@ int CoreResults::get_results_data_id_from_job_id(int job_id)
   {
     if (results_data[i][1]==job_id)
     {
-      return_int = i;
+      return_int = int(i);
     }  
   }
   return return_int;
@@ -216,7 +216,7 @@ int CoreResults::get_frd_data_id_from_job_id(int job_id)
   {
     if (job_id == frd_data[i].job_id)
     {
-      return_int = i;
+      return_int = int(i);
     }  
   }
   
@@ -231,7 +231,7 @@ int CoreResults::get_dat_data_id_from_job_id(int job_id)
   {
     if (job_id == dat_data[i].job_id)
     {
-      return_int = i;
+      return_int = int(i);
     }  
   }
   

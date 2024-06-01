@@ -48,7 +48,7 @@ bool ccxOrientationCreateCommand::execute(CubitCommandData &data)
   std::vector<std::string> options;  
   std::vector<std::vector<std::string>> options2;
   std::string name;
-  int system_type;
+  //int system_type;
   std::vector<std::string> dummy;
   std::vector<double> a_values;
   std::vector<double> b_values;

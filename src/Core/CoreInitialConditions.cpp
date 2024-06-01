@@ -54,7 +54,7 @@ bool CoreInitialConditions::create_initialcondition(std::vector<std::string> opt
   }
   else
   {
-    initialcondition_last = initialconditions_data.size() - 1;
+    initialcondition_last = int(initialconditions_data.size()) - 1;
     initialcondition_id = initialconditions_data[initialcondition_last][0] + 1;
   }
   
@@ -69,7 +69,7 @@ bool CoreInitialConditions::create_initialcondition(std::vector<std::string> opt
     }
     else
     {
-      sub_last = displacement_data.size() - 1;
+      sub_last = int(displacement_data.size()) - 1;
       sub_id = std::stoi(displacement_data[sub_last][0]) + 1;
     }
     this->add_displacement(std::to_string(sub_id));
@@ -81,7 +81,7 @@ bool CoreInitialConditions::create_initialcondition(std::vector<std::string> opt
     }
     else
     {
-      sub_last = temperature_data.size() - 1;
+      sub_last = int(temperature_data.size()) - 1;
       sub_id = std::stoi(temperature_data[sub_last][0]) + 1;
     }
     this->add_temperature(std::to_string(sub_id));
@@ -186,7 +186,7 @@ int CoreInitialConditions::get_initialconditions_data_id_from_initialcondition_i
   {
     if (initialconditions_data[i][0]==initialcondition_id)
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -199,7 +199,7 @@ int CoreInitialConditions::get_displacement_data_id_from_displacement_id(int dis
   {
     if (displacement_data[i][0]==std::to_string(displacement_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -212,7 +212,7 @@ int CoreInitialConditions::get_temperature_data_id_from_temperature_id(int tempe
   {
     if (temperature_data[i][0]==std::to_string(temperature_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;

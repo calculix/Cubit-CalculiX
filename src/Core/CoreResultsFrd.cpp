@@ -361,7 +361,7 @@ bool CoreResultsFrd::read_node(std::vector<std::string> line)
     node_coords[2] = ccx_iface->string_scientific_to_double(line[4]);
 
     nodes_coords.push_back(node_coords);
-    int nodes_coords_data_id = nodes_coords.size()-1;
+    int nodes_coords_data_id = int(nodes_coords.size())-1;
 
     nodes.push_back({node_id,nodes_coords_data_id});
   }
@@ -394,7 +394,7 @@ bool CoreResultsFrd::read_element(std::vector<std::string> line)
       }
       elements_connectivity.push_back(connectivity);
 
-      elements_connectivity_data_id = elements_connectivity.size() - 1;
+      elements_connectivity_data_id = int(elements_connectivity.size()) - 1;
       elements[elements.size()-1][2] = elements_connectivity_data_id;
     }else if (elements[elements.size()-1][2] > -1)
     {
@@ -442,7 +442,7 @@ bool CoreResultsFrd::read_parameter_header(std::vector<std::string> line)
   {
     total_time = ccx_iface->string_scientific_to_double(line[2]);
     total_times.push_back(total_time);
-    current_total_time_id = total_times.size()-1;
+    current_total_time_id = int(total_times.size())-1;
 
     total_increment = ccx_iface->string_scientific_to_double(line[5]);
     current_total_increment = total_increment;
@@ -454,7 +454,7 @@ bool CoreResultsFrd::read_parameter_header(std::vector<std::string> line)
     result_block_data.push_back(tmp_result_block_data);
     result_block_node_data.push_back(tmp_result_block_node_data);
       
-    result_block_data_id = result_block_data.size()-1;
+    result_block_data_id = int(result_block_data.size())-1;
     result_block_type_data_id = this->get_current_result_block_type(line[1]);
     
     result_blocks.push_back({current_result_block,current_step,current_step_increment,current_total_increment,current_total_time_id,result_block_type_data_id,result_block_data_id});
@@ -474,11 +474,11 @@ int CoreResultsFrd::get_current_result_block_type(std::string result_type)
   {
     if (result_block_type[i]==result_type)
     {
-      return i;
+      return int(i);
     }
   }
   result_block_type.push_back(result_type);
-  int data_id = result_block_type.size()-1;
+  int data_id = int(result_block_type.size())-1;
   
   return data_id;
 }
@@ -520,7 +520,7 @@ bool CoreResultsFrd::read_nodal_result_block(std::vector<std::string> line)
       }
     }
 
-    n_comp = result_block_components[result_block_components.size()-1].size();
+    n_comp = int(result_block_components[result_block_components.size()-1].size());
     std::vector<double> result_comp(n_comp);
     
     /*
@@ -579,7 +579,7 @@ bool CoreResultsFrd::read_nodal_result_block(std::vector<std::string> line)
     }
         
     result_block_data[result_block_data.size()-1].push_back(result_comp);
-    result_block_node_data_id = result_block_data[result_block_data.size()-1].size()-1;
+    result_block_node_data_id = int(result_block_data[result_block_data.size()-1].size())-1;
     result_block_node_data[result_block_node_data.size()-1].push_back({node_id,result_block_node_data_id});
   }else if (line[0] == "-5")
   {
@@ -619,7 +619,7 @@ int CoreResultsFrd::get_result_block_component_id(int result_block_type_id,std::
   {
     if (components[i]==result_block_component)
     {
-      component_id = i;
+      component_id = int(i);
     }
   }
     

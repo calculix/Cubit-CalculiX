@@ -7,7 +7,7 @@
 #include "MeshExportInterface.hpp"
 
 #include <cmath>
-#include <bits/stdc++.h> 
+//#include <bits/stdc++.h> 
 
 CoreResultsProject::CoreResultsProject()
 {}
@@ -166,7 +166,7 @@ int CoreResultsProject::get_result_blocks_data_id_step(int step)
   {
     if ((step == frd->result_blocks[i][1])&&(frd->result_block_type[frd->result_blocks[i][5]]=="DISP"))
     {
-      data_id = i;
+      data_id = int(i);
     }
   }
   return data_id;
@@ -180,7 +180,7 @@ int CoreResultsProject::get_result_blocks_data_id_totalincrement(int totalincrem
   {
     if ((totalincrement == frd->result_blocks[i][3])&&(frd->result_block_type[frd->result_blocks[i][5]]=="DISP"))
     {
-      data_id = i;
+      data_id = int(i);
     }
   }
   return data_id;

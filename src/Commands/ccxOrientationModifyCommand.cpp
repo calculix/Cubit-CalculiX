@@ -51,7 +51,7 @@ bool ccxOrientationModifyCommand::execute(CubitCommandData &data)
   std::vector<int> options_marker;
   int orientation_id;
   std::string name;
-  int system_type;
+  //int system_type;
   std::vector<std::string> dummy;
   std::vector<double> a_values;
   std::vector<double> b_values;

@@ -8,10 +8,15 @@
 #include "ProgressTool.hpp"
 
 #include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <signal.h>
+#ifdef WIN32
+ #include <windows.h>
+ #include <io.h>
+#else
+ #include <unistd.h>
+ #include <sys/wait.h>
+ #include <sys/types.h>
+ #include <signal.h>
+#endif
 #include <fstream>
 #include <iostream>
 #include "loadUserOptions.hpp"
@@ -68,7 +73,7 @@ bool CoreJobs::create_job(std::vector<std::string> options)
   }
   else
   {
-    job_last = jobs_data.size() - 1;
+    job_last = int(jobs_data.size()) - 1;
     job_id = std::stoi(jobs_data[job_last][0]) + 1;
   }
 
@@ -137,23 +142,35 @@ bool CoreJobs::run_job(int job_id,int option)
   std::string filepath;
   std::string log;
   std::string command;
-  pid_t process_id;
-  int int_wait;
   int CubitProcessHandler_data_id;
   CubitString programm;
   CubitString working_dir;
   CubitString temp;
   CubitString output;
   std::vector<CubitString> arguments(3);
+  size_t process_id;
+  
 
-  if (access(ccx_uo.mPathSolver.toStdString().c_str(), X_OK) == 0) 
-  {
-    setenv("OMP_NUM_THREADS",std::to_string(ccx_uo.mSolverThreads).c_str(),1);
-  }else{
-    log = "CCX Solver not found! checked path \"" + ccx_uo.mPathSolver.toStdString() + "\" \n";
-    PRINT_INFO("%s", log.c_str());    
-    return false;
-  }
+  #ifdef WIN32
+    if (_access(ccx_uo.mPathSolver.toStdString().c_str(), 0) == 0)
+    {
+      SetEnvironmentVariable("OMP_NUM_THREADS",std::to_string(ccx_uo.mSolverThreads).c_str());
+    }else{
+      log = "CCX Solver not found! checked path \"" + ccx_uo.mPathSolver.toStdString() + "\" \n";
+      PRINT_INFO("%s", log.c_str());    
+      return false;
+    }
+  #else
+    if (access(ccx_uo.mPathSolver.toStdString().c_str(), X_OK) == 0) 
+    {
+      setenv("OMP_NUM_THREADS",std::to_string(ccx_uo.mSolverThreads).c_str(),1);
+    }else{
+      log = "CCX Solver not found! checked path \"" + ccx_uo.mPathSolver.toStdString() + "\" \n";
+      PRINT_INFO("%s", log.c_str());    
+      return false;
+    }
+  #endif
+
 
   int job_data_id;
   job_data_id = get_jobs_data_id_from_job_id(job_id);
@@ -165,7 +182,7 @@ bool CoreJobs::run_job(int job_id,int option)
     {
       CubitProcess newCubitProcess;
       CubitProcessHandler.push_back(newCubitProcess);
-      CubitProcessHandler_data_id = CubitProcessHandler.size()-1;
+      CubitProcessHandler_data_id = int(CubitProcessHandler.size())-1;
     }else{
       log = "Kill Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " if already running \n";
       output_console[std::stoi(jobs_data[job_data_id][5])].clear();
@@ -527,13 +544,23 @@ bool CoreJobs::result_cgx_job(int job_id)
   std::string log;
   std::string command;
 
-  if (access(ccx_uo.mPathCGX.toStdString().c_str(), X_OK) == 0) 
-  {
-  }else{
-    log = "CGX not found! checked path \"" + ccx_uo.mPathCGX.toStdString() + "\" \n";
-    PRINT_INFO("%s", log.c_str());    
-    return false;
-  }
+  #ifdef WIN32
+    if (_access(ccx_uo.mPathCGX.toStdString().c_str(), 0) == 0)
+    {
+    }else{
+      log = "CGX not found! checked path \"" + ccx_uo.mPathCGX.toStdString() + "\" \n";
+      PRINT_INFO("%s", log.c_str());    
+      return false;
+    }
+  #else
+    if (access(ccx_uo.mPathCGX.toStdString().c_str(), X_OK) == 0) 
+    {
+    }else{
+      log = "CGX not found! checked path \"" + ccx_uo.mPathCGX.toStdString() + "\" \n";
+      PRINT_INFO("%s", log.c_str());    
+      return false;
+    }
+  #endif
 
   int job_data_id;
   job_data_id = get_jobs_data_id_from_job_id(job_id);
@@ -563,13 +590,23 @@ bool CoreJobs::result_paraview_job(int job_id)
   std::string log;
   std::string command;
 
-  if (access(ccx_uo.mPathParaView.toStdString().c_str(), X_OK) == 0) 
-  {
-  }else{
-    log = "ParaView not found! checked path \"" + ccx_uo.mPathParaView.toStdString() + "\" \n";
-    PRINT_INFO("%s", log.c_str());    
-    return false;
-  }
+  #ifdef WIN32
+    if (_access(ccx_uo.mPathParaView.toStdString().c_str(), 0) == 0)
+    {
+    }else{
+      log = "ParaView not found! checked path \"" + ccx_uo.mPathParaView.toStdString() + "\" \n";
+      PRINT_INFO("%s", log.c_str());    
+      return false;
+    }
+  #else
+    if (access(ccx_uo.mPathParaView.toStdString().c_str(), X_OK) == 0) 
+    {
+    }else{
+      log = "ParaView not found! checked path \"" + ccx_uo.mPathParaView.toStdString() + "\" \n";
+      PRINT_INFO("%s", log.c_str());    
+      return false;
+    }
+  #endif
 
   int job_data_id;
   job_data_id = get_jobs_data_id_from_job_id(job_id);
@@ -577,7 +614,6 @@ bool CoreJobs::result_paraview_job(int job_id)
   { 
     if ((std::stoi(jobs_data[job_data_id][3])>1) && (jobs_data[job_data_id][6] == "1"))
     { 
-          
       filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".000002.vtpc"; // if more than one file
       if (access(filepath.c_str(), W_OK) == 0) 
       {
@@ -585,7 +621,6 @@ bool CoreJobs::result_paraview_job(int job_id)
       }else{
         filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".000001.vtpc";
       }
-      
       std::string shellstr;
       shellstr = "nohup " + ccx_uo.mPathParaView.toStdString() + " --data=" + filepath + " &";
       system(shellstr.c_str());
@@ -625,7 +660,7 @@ int CoreJobs::get_jobs_data_id_from_job_id(int job_id)
   {
     if (jobs_data[i][0]==std::to_string(job_id))
     {
-      return_int = i;
+      return_int = int(i);
     }  
   }
   return return_int;
@@ -639,7 +674,7 @@ int CoreJobs::get_CubitProcessHandler_data_id_from_process_id(int process_id)
   {
     if (process_id == CubitProcessHandler[i].pid())
     {
-      return_int = i;
+      return_int = int(i);
     }  
   }
   
