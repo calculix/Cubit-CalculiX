@@ -6,7 +6,13 @@
 #include "CalculiXCoreInterface.hpp"
 #include "ProgressTool.hpp"
 #include <fstream>
-#include <unistd.h>
+
+#ifdef WIN32
+ //#include <windows.h>
+ #include <io.h>
+#else
+ #include <unistd.h>
+#endif
 
 ccxExportCommand::ccxExportCommand()
 {
@@ -66,11 +72,19 @@ bool ccxExportCommand::execute(CubitCommandData &data)
   // check if file already exists
   if (!overwrite)
   {
-    if (access(filename.c_str(), F_OK) == 0)
-    {
-      PRINT_ERROR("Output File already exists!\n");
-      return false;
-    }
+    #ifdef WIN32
+      if (_access(filename.c_str(), 0) == 0)
+      {
+        PRINT_ERROR("Output File already exists!\n");
+        return false;
+      }
+    #else
+      if (access(filename.c_str(), F_OK) == 0)
+      {
+        PRINT_ERROR("Output File already exists!\n");
+        return false;
+      }
+    #endif
   }
 
   // Get the MeshExport interface from CubitInterface
