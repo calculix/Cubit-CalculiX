@@ -64,7 +64,7 @@ std::vector<std::vector<double>> PanelTable::getMatrix()
     for (size_t ii = 0; ii < this->columnCount(); ii++)
     {
       QTableWidgetItem* item;
-      item = this->item(i,ii);
+      item = this->item(int(i),int(ii));
       if (item!=NULL)
       {
         if (item->text()!="")
@@ -94,7 +94,7 @@ void PanelTable::insertNewRow(std::vector<double> values)
     QTableWidgetItem* item;
     item = new QTableWidgetItem();
     item->setText(QString::number(values[i]));
-    this->setItem(this->currentRow,i,item);
+    this->setItem(this->currentRow,int(i),item);
   }
 }
 
@@ -109,7 +109,7 @@ void PanelTable::insertLastRow()
     QTableWidgetItem* item;
     item = new QTableWidgetItem();
     item->setText("");
-    this->setItem(this->rowCount()-1,i,item);
+    this->setItem(this->rowCount()-1,int(i),item);
   }
 
   if (verticalHeaderLabels.count()!=0)
@@ -127,7 +127,7 @@ bool PanelTable::checkRowEmtpy(int row)
 
   for (size_t i = 0; i < this->columnCount()-1; i++)
   {
-    item = this->item(row,i);
+    item = this->item(row,int(i));
     if (item!=NULL)
     {
       if (item->text().toDouble()!=0.)
@@ -172,7 +172,7 @@ void PanelTable::cellChanged(int row,int column)
     verticalHeaderLabels.removeAt(row);
     for (size_t i = 0; i < verticalHeaderLabels.count()-1; i++)
     {
-      verticalHeaderLabels[i]=QString::number(i+1);
+      verticalHeaderLabels[int(i)]=QString::number(i+1);
     }
     this->setVerticalHeaderLabels(verticalHeaderLabels);
   }

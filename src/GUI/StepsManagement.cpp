@@ -241,7 +241,7 @@ void StepsManagement::update()
   for (size_t i = tree_steps->topLevelItemCount(); i > 0; i--)
   { 
     erase_item = true;
-    temp_child = tree_steps->topLevelItem(i-1);
+    temp_child = tree_steps->topLevelItem(int(i)-1);
     for (size_t ii = 0; ii < steps_tree_data.size(); ii++)
     {    
       if (temp_child->text(1).toStdString()==steps_tree_data[ii][0])
@@ -279,13 +279,13 @@ int StepsManagement::get_child_id(std::string step_id)
   QTreeWidgetItem *temp_child;
   for (size_t i = 0; i < tree_steps->topLevelItemCount(); i++)
   {
-    temp_child = tree_steps->topLevelItem(i);
+    temp_child = tree_steps->topLevelItem(int(i));
     //log = temp_child->text(1).toStdString() + " == " + step_id + " child ids \n";
     //PRINT_INFO("%s", log.c_str());
     
     if (temp_child->text(1).toStdString()==step_id)
     {
-      int_return = i;
+      int_return = int(i);
       break;
     }
   }
@@ -413,9 +413,9 @@ void StepsManagement::createItems(QTreeWidgetItem *step)
     {
       for (size_t iii = 0; iii < available_trees[i]->childCount(); iii++)
       {
-        if (used_trees[i]->child(ii)->text(1)==available_trees[i]->child(iii)->text(1))
+        if (used_trees[i]->child(int(ii))->text(1)==available_trees[i]->child(int(iii))->text(1))
         {
-          available_trees[i]->removeChild(available_trees[i]->child(iii));
+          available_trees[i]->removeChild(available_trees[i]->child(int(iii)));
         }
       }
     }
@@ -530,14 +530,14 @@ void StepsManagement::on_pushButton_apply_clicked(bool)
       found = false;
       for (size_t iii = 0; iii < used[i].size(); iii++)
       {
-        if (used_trees[i]->child(ii)->text(1)==QString::fromStdString(used[i][iii][0]))
+        if (used_trees[i]->child(int(ii))->text(1)==QString::fromStdString(used[i][iii][0]))
         {
           found = true;
         }
       }
       if (!found)
       {
-        command = command_prefix[i] + used_trees[i]->child(ii)->text(1);
+        command = command_prefix[int(i)] + used_trees[i]->child(int(ii))->text(1);
         commands.push_back(command);
       }
     }
@@ -550,14 +550,14 @@ void StepsManagement::on_pushButton_apply_clicked(bool)
       found = false;
       for (size_t iii = 0; iii < used_trees[i]->childCount(); iii++)
       {
-        if (QString::fromStdString(used[i][ii][0])==used_trees[i]->child(iii)->text(1))
+        if (QString::fromStdString(used[i][ii][0])==used_trees[i]->child(int(iii))->text(1))
         {
           found = true;
         }
       }
       if (!found)
       { // prefix shift for remove
-        command = command_prefix[i+9] + QString::fromStdString(used[i][ii][0]);
+        command = command_prefix[int(i)+9] + QString::fromStdString(used[i][ii][0]);
         commands.push_back(command);
       }
     }
@@ -565,7 +565,7 @@ void StepsManagement::on_pushButton_apply_clicked(bool)
   
   for (size_t i = 0; i < commands.size(); i++)
   {
-    CubitInterface::cmd(commands[i].toStdString().c_str());
+    CubitInterface::cmd(commands[int(i)].toStdString().c_str());
   }
 
   this->update();

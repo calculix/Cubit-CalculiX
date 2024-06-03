@@ -275,30 +275,33 @@ bool CoreJobs::wait_job(int job_id)
 
       jobs_data[jobs_data_id][3] = "5"; // mark the job for waiting
 
-      while (0 == kill(std::stoi(jobs_data[jobs_data_id][4]),0))
-      {
-        output = CubitProcessHandler[CubitProcessHandler_data_id].read_output_channel(-1);
-        if (output != "")
+      #ifdef WIN32
+      #else
+        while (0 == kill(std::stoi(jobs_data[jobs_data_id][4]),0))
         {
-          log = " Output " + output.str() + " \n";
-          //PRINT_INFO("%s", log.c_str());
-          //jobs_data[jobs_data_id][5] = jobs_data[jobs_data_id][5] + output.str();
-          output_console[std::stoi(jobs_data[jobs_data_id][5])].push_back(output.str());
-          output = "";
-          get_cvgsta(std::stoi(jobs_data[jobs_data_id][0]));
-        }
-        waitpid(std::stoi(jobs_data[jobs_data_id][4]), &status,WNOHANG);
+          output = CubitProcessHandler[CubitProcessHandler_data_id].read_output_channel(-1);
+          if (output != "")
+          {
+            log = " Output " + output.str() + " \n";
+            //PRINT_INFO("%s", log.c_str());
+            //jobs_data[jobs_data_id][5] = jobs_data[jobs_data_id][5] + output.str();
+            output_console[std::stoi(jobs_data[jobs_data_id][5])].push_back(output.str());
+            output = "";
+            get_cvgsta(std::stoi(jobs_data[jobs_data_id][0]));
+          }
+          waitpid(std::stoi(jobs_data[jobs_data_id][4]), &status,WNOHANG);
 
-        //update progress bar
-        const auto t_end = std::chrono::high_resolution_clock::now();
-        int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
-        //currentDataRow += frd->result_block_data[data_ids[ii]].size();
-        if (duration > 500)
-        {
-          progressbar->check_interrupt();
-          t_start = std::chrono::high_resolution_clock::now();
+          //update progress bar
+          const auto t_end = std::chrono::high_resolution_clock::now();
+          int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+          //currentDataRow += frd->result_block_data[data_ids[ii]].size();
+          if (duration > 500)
+          {
+            progressbar->check_interrupt();
+            t_start = std::chrono::high_resolution_clock::now();
+          }
         }
-      }
+      #endif
       progressbar->end();
 
       //errorcode = CubitProcessHandler[CubitProcessHandler_data_id].exit_code();
@@ -404,37 +407,40 @@ bool CoreJobs::check_jobs()
           }          
         }
 
-        //solver processes still running?
-        int status;
-        waitpid(std::stoi(jobs_data[i][4]), &status,WNOHANG);
-        //log = " wait Code " + std::to_string(status) + " \n";
-        //PRINT_INFO("%s", log.c_str());
-        
-        if ((0 != kill(std::stoi(jobs_data[i][4]),0)) && (status!=0)) // if process doesn't exist and exited with error
-        {
-          CubitProcessHandler[CubitProcessHandler_data_id].wait();
-          log = "Job " + jobs_data[i][1] + " with ID " + jobs_data[i][0] + " exited with errors! \n";
-          //log.append(" Exit Code " + std::to_string(CubitProcessHandler[CubitProcessHandler_data_id].exit_code()) + " \n");
-          PRINT_INFO("%s", log.c_str());
-          jobs_data[i][3] = "4";
-          //ccx_iface->load_result(std::stoi(jobs_data[i][0]));
-          //jobs_data[i][6] = std::to_string(ccx_iface->convert_result(std::stoi(jobs_data[i][0])));
-          jobs_data[i][6] = "-1";
-          CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
-        }else if ((0 != kill(std::stoi(jobs_data[i][4]),0)) && (status==0)) // if process doesn't exist and exited without error
-        {
-          CubitProcessHandler[CubitProcessHandler_data_id].wait();
-          log = "Job " + jobs_data[i][1] + " with ID " + jobs_data[i][0] + " finished! \n";
-          //log.append(" Exit Code " + std::to_string(CubitProcessHandler[CubitProcessHandler_data_id].exit_code()) + " \n");
-          PRINT_INFO("%s", log.c_str());
-          jobs_data[i][3] = "2";
-          ccx_iface->load_result(std::stoi(jobs_data[i][0]));
-          if (jobs_data[i][9] == "1") 
+        #ifdef WIN32
+        #else
+          //solver processes still running?
+          int status;
+          waitpid(std::stoi(jobs_data[i][4]), &status,WNOHANG);
+          //log = " wait Code " + std::to_string(status) + " \n";
+          //PRINT_INFO("%s", log.c_str());
+          
+          if ((0 != kill(std::stoi(jobs_data[i][4]),0)) && (status!=0)) // if process doesn't exist and exited with error
           {
-            jobs_data[i][6] = std::to_string(ccx_iface->convert_result(std::stoi(jobs_data[i][0]),{-1,-1,-1},ccx_iface->get_blocks(),CubitInterface::get_nodeset_id_list(),CubitInterface::get_sideset_id_list()));
+            CubitProcessHandler[CubitProcessHandler_data_id].wait();
+            log = "Job " + jobs_data[i][1] + " with ID " + jobs_data[i][0] + " exited with errors! \n";
+            //log.append(" Exit Code " + std::to_string(CubitProcessHandler[CubitProcessHandler_data_id].exit_code()) + " \n");
+            PRINT_INFO("%s", log.c_str());
+            jobs_data[i][3] = "4";
+            //ccx_iface->load_result(std::stoi(jobs_data[i][0]));
+            //jobs_data[i][6] = std::to_string(ccx_iface->convert_result(std::stoi(jobs_data[i][0])));
+            jobs_data[i][6] = "-1";
+            CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
+          }else if ((0 != kill(std::stoi(jobs_data[i][4]),0)) && (status==0)) // if process doesn't exist and exited without error
+          {
+            CubitProcessHandler[CubitProcessHandler_data_id].wait();
+            log = "Job " + jobs_data[i][1] + " with ID " + jobs_data[i][0] + " finished! \n";
+            //log.append(" Exit Code " + std::to_string(CubitProcessHandler[CubitProcessHandler_data_id].exit_code()) + " \n");
+            PRINT_INFO("%s", log.c_str());
+            jobs_data[i][3] = "2";
+            ccx_iface->load_result(std::stoi(jobs_data[i][0]));
+            if (jobs_data[i][9] == "1") 
+            {
+              jobs_data[i][6] = std::to_string(ccx_iface->convert_result(std::stoi(jobs_data[i][0]),{-1,-1,-1},ccx_iface->get_blocks(),CubitInterface::get_nodeset_id_list(),CubitInterface::get_sideset_id_list()));
+            }
+            CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
           }
-          CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
-        }
+        #endif
       }
     }
   }
@@ -510,29 +516,32 @@ bool CoreJobs::check_zombie()
     {
       // create or get cubitprocess
       CubitProcessHandler_data_id = get_CubitProcessHandler_data_id_from_process_id(std::stoi(jobs_data[i][4]));
-          
-      if (CubitProcessHandler_data_id == -1)
-      {
-        //result processes still running?
-        int status;
-        waitpid(CubitProcessHandler[ci].pid(), &status,WNOHANG);
-        //log = "Result wait Code " + std::to_string(status) + " \n";
-        //PRINT_INFO("%s", log.c_str());
-          
-        if ((0 != kill(CubitProcessHandler[ci].pid(),0)) && (status!=0)) // if process doesn't exist and exited with error
+
+      #ifdef WIN32
+      #else    
+        if (CubitProcessHandler_data_id == -1)
         {
-          CubitProcessHandler[ci].wait();
-          //log = "Result Exit Code " + std::to_string(CubitProcessHandler[ci].exit_code()) + " \n";
+          //result processes still running?
+          int status;
+          waitpid(CubitProcessHandler[ci].pid(), &status,WNOHANG);
+          //log = "Result wait Code " + std::to_string(status) + " \n";
           //PRINT_INFO("%s", log.c_str());
-          CubitProcessHandler.erase(CubitProcessHandler.begin() + ci);
-        }else if ((0 != kill(CubitProcessHandler[ci].pid(),0)) && (status==0)) // if process doesn't exist and exited without error
-        {
-          CubitProcessHandler[ci].wait();
-          //log = "Result Exit Code " + std::to_string(CubitProcessHandler[ci].exit_code()) + " \n";
-          //PRINT_INFO("%s", log.c_str());
-          CubitProcessHandler.erase(CubitProcessHandler.begin() + ci);
+            
+          if ((0 != kill(CubitProcessHandler[ci].pid(),0)) && (status!=0)) // if process doesn't exist and exited with error
+          {
+            CubitProcessHandler[ci].wait();
+            //log = "Result Exit Code " + std::to_string(CubitProcessHandler[ci].exit_code()) + " \n";
+            //PRINT_INFO("%s", log.c_str());
+            CubitProcessHandler.erase(CubitProcessHandler.begin() + ci);
+          }else if ((0 != kill(CubitProcessHandler[ci].pid(),0)) && (status==0)) // if process doesn't exist and exited without error
+          {
+            CubitProcessHandler[ci].wait();
+            //log = "Result Exit Code " + std::to_string(CubitProcessHandler[ci].exit_code()) + " \n";
+            //PRINT_INFO("%s", log.c_str());
+            CubitProcessHandler.erase(CubitProcessHandler.begin() + ci);
+          }
         }
-      }
+      #endif
     }
   }
   return true;
@@ -614,17 +623,19 @@ bool CoreJobs::result_paraview_job(int job_id)
   { 
     if ((std::stoi(jobs_data[job_data_id][3])>1) && (jobs_data[job_data_id][6] == "1"))
     { 
-      filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".000002.vtpc"; // if more than one file
-      if (access(filepath.c_str(), W_OK) == 0) 
-      {
-        filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + "...vtpc";
-      }else{
-        filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".000001.vtpc";
-      }
-      std::string shellstr;
-      shellstr = "nohup " + ccx_uo.mPathParaView.toStdString() + " --data=" + filepath + " &";
-      system(shellstr.c_str());
-
+      #ifdef WIN32
+      #else
+        filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".000002.vtpc"; // if more than one file
+        if (access(filepath.c_str(), W_OK) == 0) 
+        {
+          filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + "...vtpc";
+        }else{
+          filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".000001.vtpc";
+        }
+        std::string shellstr;
+        shellstr = "nohup " + ccx_uo.mPathParaView.toStdString() + " --data=" + filepath + " &";
+        system(shellstr.c_str());
+      #endif
       log = "Opening Results with Paraview for Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + "\n";
       //log.append(filepath +  " \n");
       //log.append(arg +  " \n");
@@ -632,16 +643,18 @@ bool CoreJobs::result_paraview_job(int job_id)
     }
     if ((std::stoi(jobs_data[job_data_id][3])>1) && (jobs_data[job_data_id][6] == "2"))
     {      
-      filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".vtu";
-      if (access(filepath.c_str(), W_OK) != 0) 
-      {
-        filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + "...vtu";
-      }
+      #ifdef WIN32
+      #else
+        filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".vtu";
+        if (access(filepath.c_str(), W_OK) != 0) 
+        {
+          filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + "...vtu";
+        }
 
-      std::string shellstr;
-      shellstr = "nohup " + ccx_uo.mPathParaView.toStdString() + " --data=" + filepath + " &";
-      system(shellstr.c_str());
-
+        std::string shellstr;
+        shellstr = "nohup " + ccx_uo.mPathParaView.toStdString() + " --data=" + filepath + " &";
+        system(shellstr.c_str());
+      #endif
       log = "Opening Results with Paraview for Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + "\n";
       //log.append(filepath +  " \n");
       //log.append(arg +  " \n");

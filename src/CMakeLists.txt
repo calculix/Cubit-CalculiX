@@ -80,13 +80,15 @@ set(CCXPLUGIN_SRCS
 set(CCXPYTHONINTERFACE_SRCS
     ${PYTHONINTERFACE_SRC})
 
+set(CCXUSEROPTIONS_SRCS
+    ${UO_SRC})
+
 set(CCXCOMP_SRCS
     CalculiXComp.cpp
     CalculiXComp.hpp
     ${EO_COMP_SRC}
     ${GUI_SRC}
     #${ui_src}
-    ${UO_COMP_SRC}
     MenuManager.cpp
     MenuManager.hpp
     ToolbarManager.cpp
@@ -116,6 +118,7 @@ add_library(calculix_comp SHARED ${CCXCOMP_SRCS})
 set_target_properties(calculix_comp PROPERTIES SUFFIX ".ccl")
 target_link_libraries(calculix_comp clarogui navigation pickwidget cubiti clarofw)
 set_target_properties(calculix_comp PROPERTIES AUTOMOC 1)
+target_link_libraries(calculix_comp Qt5::Widgets)
 
 add_library(calculix_pythoninterface SHARED ${CCXPYTHONINTERFACE_SRCS})
 if (UNIX)
@@ -126,14 +129,23 @@ if (WIN32)
 endif (WIN32)
 target_link_libraries(calculix_pythoninterface calculix_plugin cubiti cubit_util)
 
+add_library(calculix_useroptions SHARED ${CCXUSEROPTIONS_SRCS})
 if (UNIX)
- target_link_libraries(calculix_plugin calculix_comp)
+ set_target_properties(calculix_useroptions PROPERTIES SUFFIX ".so")
 endif (UNIX)
 if (WIN32)
- target_link_libraries(calculix_comp calculix_plugin)
+ set_target_properties(calculix_useroptions PROPERTIES SUFFIX ".dll")
 endif (WIN32)
-target_link_libraries(calculix_comp Qt5::Widgets)
+target_link_libraries(calculix_useroptions clarogui cubiti cubit_util Qt5::Widgets)
+set_target_properties(calculix_useroptions PROPERTIES AUTOMOC 1)
 
+if (UNIX)
+ target_link_libraries(calculix_plugin calculix_useroptions calculix_comp)
+endif (UNIX)
+if (WIN32)
+ target_link_libraries(calculix_plugin calculix_useroptions)
+ target_link_libraries(calculix_comp calculix_plugin calculix_useroptions)
+endif (WIN32)
 
 if(POLICY CMP0078)
   cmake_policy(SET CMP0078 NEW)

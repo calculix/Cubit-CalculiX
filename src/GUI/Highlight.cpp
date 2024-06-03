@@ -79,7 +79,7 @@ void Highlight::ModelTreeItemSelectionChanged()
   selected = dynamic_cast<ModelTree*>(this->parent())->selectedItems();
   for (size_t i = 0; i < selected.size(); i++)
   {
-    ModelTreeItemClicked(selected[i],0);
+    ModelTreeItemClicked(selected[int(i)],0);
   }  
 }
 

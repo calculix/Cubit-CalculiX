@@ -141,7 +141,7 @@ void cmdPanelManager::initialize_from_xml()
 
 void cmdPanelManager::initialize_from_code()
 {
-  QIcon *NodeIconPointer;
+  // QIcon *NodeIconPointer;
   // This example shows how to create the command panel navigation buttons (nodes)
   // using the NavigationModel directly.
   NavigationModel* model = Claro::instance()->navigation_model();

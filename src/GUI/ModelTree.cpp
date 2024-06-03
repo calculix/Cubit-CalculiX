@@ -157,7 +157,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
     StepsFieldOutputsTree* StepsFieldOutputsTreeItem;
     CustomLinesTree* CustomLinesTreeItem;
     JobsTree* JobsTreeItem;
-    QTreeWidgetItem* TreeItem;
+    //QTreeWidgetItem* TreeItem;
 
     if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item))
     {

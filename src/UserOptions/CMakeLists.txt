@@ -1,6 +1,6 @@
 project(Cubit-CalculiX_useroptions)
 
-set(UO_COMP_SRC
+set(UO_SRC
     ${CMAKE_CURRENT_LIST_DIR}/UserOptions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/UserOptions.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ConfigFile.cpp
