@@ -639,6 +639,12 @@ bool CoreDraw::draw_dof(std::vector<double> coord, int dof, std::string color, d
     return true;
 }
 
+bool CoreDraw::draw_label(std::vector<double> coord, std::string color, double size)
+{
+    //locate location 0 0 0 "test"
+    return true;
+}
+
 bool CoreDraw::draw_load_force(int id, double size)
 {
     std::vector<std::vector<double>> draw_data;

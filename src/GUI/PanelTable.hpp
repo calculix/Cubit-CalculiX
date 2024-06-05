@@ -23,6 +23,7 @@ public:
   bool checkRowEmtpy(int row); // checks if the columns in the row are empty
 
   bool isInitialized;
+  std::string panel_type = ""; // to specify a panel type, like amplitude, so that zero time data is possible
 private slots:
   void currentItemChanged(QTableWidgetItem* current_item, QTableWidgetItem** prev_item);
   void currentCellChanged(int currentRow,int currentColumn,int previousRow,int previousColumn);

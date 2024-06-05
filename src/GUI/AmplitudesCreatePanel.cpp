@@ -56,6 +56,7 @@ AmplitudesCreatePanel::AmplitudesCreatePanel(QWidget *parent) :
   widget_5 =  new PanelTable(nullptr);
   matrix.clear();
   widget_5->update({"Time","Amplitude"},matrix);
+  widget_5->panel_type = "amplitude";
   //widget_3->setColumnWidth(0,150);
   widget_5->setMinimumSize(200,160);
 
