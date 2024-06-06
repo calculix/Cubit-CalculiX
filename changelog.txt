@@ -20,3 +20,5 @@
 2024-05-29 compilation of windows version
 2024-05-30 compilation of windows version
 2024-06-03 compilation of windows version
+2024-06-06 added reading of buckling values
+2024-06-06 added query of buckling values
