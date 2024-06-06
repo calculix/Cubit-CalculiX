@@ -652,9 +652,9 @@ bool CoreDraw::draw_load_force(int id, double size)
     
     for (size_t i = 0; i < draw_data.size(); i++)
     {
-        draw_arrow({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, {draw_data[i][3],draw_data[i][4],draw_data[i][5]}, false, "green", size);
+        draw_arrow({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, {-draw_data[i][3],-draw_data[i][4],-draw_data[i][5]}, false, "green", size);
         i+=1;
-        draw_arrow_flat({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, {draw_data[i][3],draw_data[i][4],draw_data[i][5]}, false, "seagreen", size);
+        draw_arrow_flat({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, {-draw_data[i][3],-draw_data[i][4],-draw_data[i][5]}, false, "seagreen", size);
     }
 
     return true;
