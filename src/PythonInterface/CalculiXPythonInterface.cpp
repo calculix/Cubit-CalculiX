@@ -49,6 +49,7 @@ void CalculiXPythonInterface::help()
   log.append("std::vector<double> dat_get_node_values(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set); // returns the queried node_id values\n");
   log.append("std::vector<double> dat_get_element_values_for_component(int job_id,int element_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component); // returns the queried element integration point values for a component\n");
   log.append("std::vector<std::vector<double>> dat_get_element_values(int job_id,int element_id, double time,std::string result_block_type,std::string result_block_set); // returns the queried element integration point values for all components\n");
+  log.append("std::vector<std::vector<std::vector<double>>> dat_get_buckle(int job_id); // returns the buckling data for a job\n");
   PRINT_INFO("%s", log.c_str());
 }
 
@@ -195,4 +196,9 @@ std::vector<double> CalculiXPythonInterface::dat_get_element_values_for_componen
 std::vector<std::vector<double>> CalculiXPythonInterface::dat_get_element_values(int job_id,int element_id, double time,std::string result_block_type,std::string result_block_set)
 {
   return ccx_iface->dat_get_element_values(job_id,element_id,time,result_block_type,result_block_set);
+}
+
+std::vector<std::vector<std::vector<double>>> CalculiXPythonInterface::dat_get_buckle(int job_id)
+{
+  return ccx_iface->dat_get_buckle(job_id);
 }

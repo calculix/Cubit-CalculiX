@@ -4571,6 +4571,21 @@ std::vector<std::vector<double>> CalculiXCore::dat_get_element_values(int job_id
   return tmp;
 }
 
+std::vector<std::vector<std::vector<double>>> CalculiXCore::dat_get_buckle(int job_id)
+{
+  std::vector<std::vector<std::vector<double>>> tmp;
+
+  int results_data_id = results->get_results_data_id_from_job_id(job_id);
+  int dat_data_id = results->get_dat_data_id_from_job_id(job_id);
+
+  if (results_data_id == -1)
+  {
+    return tmp;
+  }
+
+  return results->dat_data[dat_data_id].buckle_data;
+}
+
 QIcon* CalculiXCore::getIcon(std::string name)
 {
   QIcon* icon = new QIcon();

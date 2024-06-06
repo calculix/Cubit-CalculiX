@@ -47,6 +47,7 @@ bool CoreResultsDat::clear()
   result_block_set.clear();
   result_block_data.clear();
   result_block_c1_data.clear();
+  buckle_data.clear();
 
   return true;
 }
@@ -137,10 +138,14 @@ bool CoreResultsDat::read()
         this->read_line(dat_array);
       } else if (current_read_mode == 10)
       {
-      //  Buckling, skip block
+        // do nothing here
       } else if (current_read_mode == 11)
       {
         this->header_emas(dat_array);
+      } else if (current_read_mode == 102)
+      {
+        // Buckling, save data extra
+        this->read_line_buckle(dat_array);
       }
       
       /*if (!this->is_number(dat_array[0]))
@@ -409,15 +414,25 @@ bool CoreResultsDat::check_mode(std::vector<std::string> line)
   if ((line[0] == "B")&&(line[1] == "U")) // Buckling!
   {
     current_read_mode = 10;
-  } else if ((line[0]=="MODE")||(line[0]=="FACTOR")) // still buckling
+  } else if (line[0]=="MODE") // still buckling
   {
     current_read_mode = 10; 
+  } else if (line[0]=="FACTOR") // still buckling
+  {
+    current_read_mode = 101;
   } else if (this->is_number(line[0]))
   {
-    if (current_read_mode != 10) // if buckling block, skip
+    if (current_read_mode == 101) // read buckling data
+    {
+      current_read_mode = 102; // read buckling data lines
+      // so we need to add a new data set that can be filled
+      std::vector<std::vector<double>> buckle_data_tmp;
+      this->buckle_data.push_back(buckle_data_tmp);
+    }
+    if ((current_read_mode != 10)&&(current_read_mode != 102)) // skip if should be skipped
     {
       current_read_mode = 2; // read data lines
-    }
+    } 
   } else if (!this->is_number(line[0]))
   {
     if (line[0]=="mass")
@@ -630,6 +645,17 @@ bool CoreResultsDat::read_line(std::vector<std::string> line)
   result_block_data[result_block_data.size()-1].push_back(result_comp);
   result_block_c1_data_id = int(result_block_data[result_block_data.size()-1].size()-1);
   result_block_c1_data[result_block_c1_data.size()-1].push_back({c1_id,result_block_c1_data_id,c1_type});
+
+  return true;
+}
+
+bool CoreResultsDat::read_line_buckle(std::vector<std::string> line)
+{ 
+  std::vector<double> result_comp(2);
+  result_comp[0] = ccx_iface->string_scientific_to_double(line[0]); // mode no
+  result_comp[1] = ccx_iface->string_scientific_to_double(line[1]); // buckling factor
+  
+  this->buckle_data[buckle_data.size()-1].push_back(result_comp);
 
   return true;
 }

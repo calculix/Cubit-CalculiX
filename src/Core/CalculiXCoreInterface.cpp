@@ -865,6 +865,11 @@ std::vector<std::vector<double>> CalculiXCoreInterface::dat_get_element_values(i
   return ccx_core.dat_get_element_values(job_id,element_id,time,result_block_type,result_block_set);
 }
 
+std::vector<std::vector<std::vector<double>>> CalculiXCoreInterface::dat_get_buckle(int job_id)
+{
+  return ccx_core.dat_get_buckle(job_id);
+}
+
 QIcon* CalculiXCoreInterface::getIcon(std::string name)
 {
   return ccx_core.getIcon(name);
