@@ -1,0 +1,214 @@
+#!cubit
+reset
+#!python
+import numpy
+
+rho = 6
+t = 0.1
+b = 0.2
+H = t*rho/2
+phi = 13.08
+radius = H/(1-numpy.cos(numpy.deg2rad(phi)))
+
+cubit.cmd(f"create surface circle radius {radius} zplane")
+cubit.cmd(f"create surface circle radius {radius-t} zplane")
+cubit.cmd(f"subtract surface 2 from surface 1")
+cubit.cmd(f"webcut body 1 with plane xplane offset 0 rotate {phi/2} about z center 0 0 0")
+cubit.cmd(f"webcut body 1 with plane xplane offset 0 rotate {-phi/2} about z center 0 0 0")
+cubit.cmd(f"webcut body 4 with plane xplane")
+
+cubit.cmd(f"delete body all except 4 5")
+cubit.cmd(f"sweep surface 8 9 direction 0 0 1 distance {b}")
+
+#!cubit
+imprint vol all
+merge vol all
+compress
+
+
+block 1 add volume 1 2
+block 1 element type HEX20
+vol all size auto factor 6
+curve 19  interval 1
+curve 19  scheme equal
+mesh vol all
+
+nodeset 1 add surface 9
+nodeset 1 name "fix_1"
+nodeset 2 add surface 4
+nodeset 2 name "fix_2"
+nodeset 3 add surface 6
+nodeset 3 name "load_mid"
+
+create material "steel" property_group "CalculiX-FEA"
+modify material "steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0 
+modify material "steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+
+ccx create section solid block 1 material 1
+
+create vertex on surface 9
+create vertex on surface 9
+create vertex on surface 4
+create vertex on surface 4
+create vertex on surface 6
+create vertex on surface 6
+mesh vertex all
+
+
+ccx create constraint rigid body nodeset 1 ref 13 rot 14
+ccx create constraint rigid body nodeset 2 ref 15 rot 16
+ccx create constraint rigid body nodeset 3 ref 17 rot 18
+
+ccx create amplitude name "load" time_amplitude 0 0 10 10
+#!python
+nodes = cubit.get_nodeset_nodes_inclusive(3)
+cubit.cmd(f"create force on vertex 17 force value 2 direction 0 -1 0")
+#!cubit
+ccx modify force 1 op new amplitude 1
+
+create displacement on vertex 13 dof 1 dof 2 dof 3 fix 0
+create displacement on vertex 14 dof 1 dof 2 fix 0
+create displacement on vertex 15 dof 1 dof 2 dof 3 fix 0
+create displacement on vertex 16 dof 1 dof 2 fix 0
+
+ccx create fieldoutput name "fo_1" node
+ccx modify fieldoutput 1 node key_on rf u
+ccx modify fieldoutput 1 node key_off cp depf dept dtf hcri keq mach maxu mf nt pnt pot prf ps psf pt ptf pu rfl sen ts tsf tt ttf turb v vf
+
+
+#!python
+delta_t = 0.03
+current_time = 0
+current_step = 1
+
+##first buckle to get the normal lba
+#cubit.cmd(f"ccx create step name 'buckle_0' buckle")
+#cubit.cmd(f"ccx modify step {current_step} parameter perturbation_yes")
+#cubit.cmd(f"ccx modify step {current_step} buckle solver pardiso bucklingfactors 5 accuracy 1e-8")
+#cubit.cmd(f"ccx step {current_step} add load force 1")
+#cubit.cmd(f"ccx step {current_step} add bc displacement 1 2 3 4")
+#cubit.cmd(f"ccx step {current_step} add fieldoutput 1")
+#current_step = current_step + 1
+
+for i in range(int(1/delta_t)):
+ cubit.cmd(f"ccx create step name 'load_{i}' static")
+ cubit.cmd(f"ccx modify step {current_step} parameter nlgeom_yes inc 10000")
+ cubit.cmd(f"ccx modify step {current_step} static solver pardiso totaltimeatstart 0 initialtimeincrement {delta_t/10} timeperiodofstep {current_time + delta_t} minimumtimeincrement 1e-10 maximumtimeincrement {delta_t/5}")
+ cubit.cmd(f"ccx step {current_step} add load force 1")
+ cubit.cmd(f"ccx step {current_step} add bc displacement 1 2 3 4")
+ #cubit.cmd(f"ccx step {current_step} add fieldoutput 1")
+ current_step = current_step + 1
+ current_time = current_time + delta_t
+
+ cubit.cmd(f"ccx create step name 'buckle_{i}' buckle")
+ cubit.cmd(f"ccx modify step {current_step} parameter perturbation_yes")
+ cubit.cmd(f"ccx modify step {current_step} buckle solver pardiso bucklingfactors 5 accuracy 1e-8")
+# we will use a force with the current load factor (time)
+ cubit.cmd(f"create force on vertex 17 force value {2 * current_time} direction 0 -1 0")
+ cubit.cmd(f"ccx step {current_step} add load force {i+2}")
+ cubit.cmd(f"ccx step {current_step} add bc displacement 1 2 3 4")
+# cubit.cmd(f"ccx step {current_step} add fieldoutput 1")
+ current_step = current_step + 1
+
+
+
+#!cubit
+ccx create job name "snap_through_arc"
+ccx run job 1 no_conversion
+ccx wait job 1
+ccx result load job 1
+ccx result convert job 1
+
+#!python
+# create a job that outputs without buckling to get good data
+cubit.cmd(f"ccx delete step all")
+cubit.cmd(f"ccx create step name 'load_all' static")
+cubit.cmd(f"ccx modify step 1 parameter nlgeom_yes inc 10000")
+cubit.cmd(f"ccx modify step 1 static solver pardiso totaltimeatstart 0 initialtimeincrement {delta_t/10} timeperiodofstep {current_time} minimumtimeincrement 1e-10 maximumtimeincrement {delta_t/5}")
+cubit.cmd(f"ccx step 1 add load force 1")
+cubit.cmd(f"ccx step 1 add bc displacement 1 2 3 4")
+cubit.cmd(f"ccx step 1 add fieldoutput 1")
+
+#!cubit
+ccx create job name "snap_through_arc_2"
+ccx run job 2 no_conversion
+ccx wait job 2
+ccx result load job 2
+ccx result convert job 2
+
+
+#!python
+import numpy
+import matplotlib.pyplot as plt
+
+buckle_data = ccx.dat_get_buckle(1)
+
+job_id=2
+node_id = cubit.get_closest_node(0,0.1,0.1)
+
+increments = ccx.frd_get_total_increments(job_id)
+times = []
+values = []
+
+for inc in increments:
+  times.append(ccx.frd_get_time_from_total_increment(job_id,inc))
+  x = ccx.frd_get_node_value(job_id,node_id,inc,"DISP","D1")
+  y = ccx.frd_get_node_value(job_id,node_id,inc,"DISP","D2")
+  z = ccx.frd_get_node_value(job_id,node_id,inc,"DISP","D3")
+  values.append(numpy.linalg.norm(numpy.array([x,y,z])))
+
+print(times)
+print(values)
+
+# Data for plotting
+x_data = numpy.asarray(values)
+y_data = numpy.asarray(times)
+
+times_mode_1 = []
+values_mode_1 = []
+disp_mode_1 = []
+times_mode_2 = []
+values_mode_2 = []
+disp_mode_2 = []
+
+current_time = -delta_t
+
+for i in range(len(buckle_data)):
+ if current_time < 0.12:
+  times_mode_1.append(current_time+delta_t)
+  values_mode_1.append(buckle_data[i][0][1])
+  times_mode_2.append(current_time+delta_t)
+  values_mode_2.append(buckle_data[i][1][1])
+ else:
+  times_mode_1.append(current_time+delta_t)
+  values_mode_1.append(buckle_data[i][1][1])
+  times_mode_2.append(current_time+delta_t)
+  values_mode_2.append(buckle_data[i][0][1])
+ current_time = current_time + delta_t
+
+y_mode_1 = numpy.asarray(values_mode_1)
+x_mode_1 = numpy.asarray(times_mode_1) 
+y_mode_2 = numpy.asarray(values_mode_2)
+x_mode_2 = numpy.asarray(times_mode_2) 
+
+fig, ax = plt.subplots()
+#ax.plot(x_data, y_data)
+
+ax.plot(x_mode_1, y_mode_1,label='mode 1')
+ax.plot(x_mode_2, y_mode_2,label='mode 2')
+
+#ax.set_xlim([0, 0.3])
+#ax.set_ylim([0, 20])
+
+#ax.set(xlabel='disp', ylabel='load factor',title=' load factor over Displacement for node ' + str(node_id))
+ax.set(xlabel='load factor', ylabel='buckling factor',title=' buckling factor over load factor')
+ax.grid()
+plt.show()
+
+for i in range(len(buckle_data)):
+ print(buckle_data[i])
+
