@@ -76,6 +76,11 @@ cubit.cmd(f"create force on vertex 17 force value 2 direction 0 -1 0")
 cubit.cmd(f"create displacement on vertex 17 dof 2 fix {load_disp}")
 #!cubit
 ccx modify force 1 op new amplitude 1
+ccx modify displacement 1 op new
+ccx modify displacement 2 op new
+ccx modify displacement 3 op new
+ccx modify displacement 4 op new
+ccx modify displacement 5 op new amplitude 1
 
 ccx create fieldoutput name "fo_1" node
 ccx modify fieldoutput 1 node key_on rf u
@@ -87,7 +92,7 @@ ccx modify historyoutput 1 node key_on u rf
 ccx modify historyoutput 1 node key_off nt tsf ttf pn psf ptf mach cp vf depf turb mf rfl
 
 #!python
-delta_t = 0.25
+delta_t = 0.2
 current_time = 0
 current_step = 1
 
@@ -104,9 +109,10 @@ for i in range(int(1/delta_t)):
  cubit.cmd(f"ccx create step name 'load_{i}' static")
  cubit.cmd(f"ccx modify step {current_step} parameter nlgeom_yes inc 10000")
  cubit.cmd(f"ccx modify step {current_step} static solver pardiso totaltimeatstart 0 initialtimeincrement {delta_t/10} timeperiodofstep {current_time + delta_t} minimumtimeincrement 1e-10 maximumtimeincrement {delta_t/5}")
- #cubit.cmd(f"ccx step {current_step} add load force 1")
- cubit.cmd(f"ccx step {current_step} add bc displacement 1 2 3 4 5")
+ cubit.cmd(f"ccx step {current_step} add load force 1")
+ cubit.cmd(f"ccx step {current_step} add bc displacement 1 2 3 4")
  #cubit.cmd(f"ccx step {current_step} add fieldoutput 1")
+ cubit.cmd(f"ccx step {current_step} add historyoutput 1")
  current_step = current_step + 1
  current_time = current_time + delta_t
 
@@ -114,11 +120,12 @@ for i in range(int(1/delta_t)):
  cubit.cmd(f"ccx modify step {current_step} parameter perturbation_yes")
  cubit.cmd(f"ccx modify step {current_step} buckle solver pardiso bucklingfactors 5 accuracy 1e-8")
  #we will use a force with the current load factor (time)
- #cubit.cmd(f"create force on vertex 17 force value {2 * current_time} direction 0 -1 0")
- cubit.cmd(f"create displacement on vertex 17 dof 2 fix {load_disp * current_time}")
+ cubit.cmd(f"create force on vertex 17 force value {2 * current_time} direction 0 -1 0")
+ #cubit.cmd(f"create force on vertex 17 force value 1 direction 0 -1 0")
+ #cubit.cmd(f"create displacement on vertex 17 dof 2 fix {load_disp * current_time}")
  cubit.cmd(f"ccx step {current_step} add load force {i+2}")
- cubit.cmd(f"ccx step {current_step} add bc displacement 1 2 3 4 5")
- #cubit.cmd(f"ccx step {current_step} add fieldoutput 1")
+ cubit.cmd(f"ccx step {current_step} add bc displacement 1 2 3 4")
+ cubit.cmd(f"ccx step {current_step} add fieldoutput 1")
  current_step = current_step + 1
  print(i)
 
@@ -163,17 +170,6 @@ times = []
 values = []
 fvalues = []
 
-for inc in increments:
-  times.append(ccx.frd_get_time_from_total_increment(job_id,inc))
-  x = ccx.frd_get_node_value(job_id,node_id,inc,"DISP","D1")
-  y = ccx.frd_get_node_value(job_id,node_id,inc,"DISP","D2")
-  z = ccx.frd_get_node_value(job_id,node_id,inc,"DISP","D3")
-  fx =  ccx.frd_get_node_value(job_id,node_id,inc,"FORC","F1")
-  fy =  ccx.frd_get_node_value(job_id,node_id,inc,"FORC","F2") 
-  fz =  ccx.frd_get_node_value(job_id,node_id,inc,"FORC","F3")
-  values.append(numpy.linalg.norm(numpy.array([x,y,z])))
-  fvalues.append(numpy.linalg.norm(numpy.array([fx,fy,fz])))
-
 times = ccx.dat_get_result_block_times(2,'forces ','NODESET_8')
 for time in times:
   x = ccx.dat_get_node_value(job_id,node_id,time,"displacements ","NODESET_8","vx")
@@ -201,35 +197,42 @@ times_mode_2 = []
 values_mode_2 = []
 disp_mode_2 = []
 
-current_time = -delta_t
+times = ccx.dat_get_result_block_times(1,'forces ','NODESET_8')
 
 for i in range(len(buckle_data)):
- if current_time < 0.12:
-  times_mode_1.append(current_time+delta_t)
-  values_mode_1.append(buckle_data[i][0][1])
-  times_mode_2.append(current_time+delta_t)
-  values_mode_2.append(buckle_data[i][1][1])
- else:
-  times_mode_1.append(current_time+delta_t)
-  values_mode_1.append(buckle_data[i][1][1])
-  times_mode_2.append(current_time+delta_t)
-  values_mode_2.append(buckle_data[i][0][1])
- current_time = current_time + delta_t
+ times_mode_1.append(times[i])
+ disp_mode_1.append(-(current_time+delta_t)*load_disp)
+ values_mode_1.append(buckle_data[i][0][1])
+ times_mode_2.append(times[i])
+ values_mode_2.append(buckle_data[i][1][1])
+ disp_mode_2.append(-(current_time+delta_t)*load_disp)
+ x = ccx.dat_get_node_value(1,node_id,times[i],"displacements ","NODESET_8","vx")
+ y = ccx.dat_get_node_value(1,node_id,times[i],"displacements ","NODESET_8","vy")
+ z = ccx.dat_get_node_value(1,node_id,times[i],"displacements ","NODESET_8","vz")
+ fx =  ccx.dat_get_node_value(1,node_id,times[i],"forces ","NODESET_8","fx")
+ fy =  ccx.dat_get_node_value(1,node_id,times[i],"forces ","NODESET_8","fy")
+ fz =  ccx.dat_get_node_value(1,node_id,times[i],"forces ","NODESET_8","fz")
+ disp_mode_1.append(numpy.linalg.norm(numpy.array([x,y,z])))
+ disp_mode_2.append(numpy.linalg.norm(numpy.array([x,y,z])))
+ #fvalues.append(numpy.linalg.norm(numpy.array([fx,fy,fz])))
+
 
 y_mode_1 = numpy.asarray(values_mode_1)
-x_mode_1 = numpy.asarray(times_mode_1) 
+#x_mode_1 = numpy.asarray(times_mode_1)
+x_mode_1 = numpy.asarray(disp_mode_1) 
 y_mode_2 = numpy.asarray(values_mode_2)
-x_mode_2 = numpy.asarray(times_mode_2) 
+#x_mode_2 = numpy.asarray(times_mode_2) 
+x_mode_2 = numpy.asarray(disp_mode_2)
 
 fig, ax = plt.subplots()
 #ax.plot(x_data, y_data)
 ax.plot(x_data, fy_data)
 
-#ax.plot(x_mode_1, y_mode_1,label='mode 1')
-#ax.plot(x_mode_2, y_mode_2,label='mode 2')
+ax.plot(x_mode_1, y_mode_1,label='mode 1')
+ax.plot(x_mode_2, y_mode_2,label='mode 2')
 
 #ax.set_xlim([0, 0.3])
-#ax.set_ylim([0, 20])
+ax.set_ylim([0, 3])
 
 ax.set(xlabel='disp', ylabel='load factor',title=' Force over Displacement for node ' + str(node_id))
 #ax.set(xlabel='disp', ylabel='load factor',title=' load factor over Displacement for node ' + str(node_id))
