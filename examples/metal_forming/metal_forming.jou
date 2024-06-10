@@ -42,22 +42,6 @@ move Surface 16 17 18 y 0.001 include_merged
 #clearance die-blank
 move Surface 20 21 22 y -0.001 include_merged
 
-#material
-create material "Steel" property_group "CalculiX-FEA"
-modify material "Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
-modify material "Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
-modify material "Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 2e+5 0.3 0 
-modify material "Steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
-modify material "Steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
-modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
-modify material "Steel" scalar_properties "CCX_PLASTIC_USE_CARD" 1
-modify material "Steel" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 4e+2 0 0 4.2e+2 0.02 0 5e+2 0.2 0 6e+2 0.5 0 
-
-create material "Steel_dummy" property_group "CalculiX-FEA"
-modify material "Steel_dummy" scalar_properties "CCX_ELASTIC_USE_CARD" 1
-modify material "Steel_dummy" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
-modify material "Steel_dummy" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 2e+5 0.3 0 
-
 #blocks and mesh
 block 1 add surface 1
 block 1 name "Blank"
@@ -80,11 +64,10 @@ curve 17, 18, 31, 32, 45, 46, 48, 54, 56, 62, 64, 70 size 0.2
 curve 17, 18, 31, 32, 45, 46, 48, 54, 56, 62, 64, 70 scheme equal
 
 #imprint merge
-imprint all
-merge all
+imprint surface 12 13 14 16 17 18 20 21 22
+merge surface 12 13 14 16 17 18 20 21 22
 
 mesh surface all
-
 
 #create vertices for reference points
 create vertex x 25 y 35 z 0
@@ -93,6 +76,24 @@ create vertex x 85 y 35 z 0
 create vertex x 85 y 35 z 0
 
 mesh vertex all
+
+
+#material
+create material "Steel" property_group "CalculiX-FEA"
+modify material "Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 2e+5 0.3 0 
+modify material "Steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_PLASTIC_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 4e+2 0 0 4.2e+2 0.02 0 5e+2 0.2 0 6e+2 0.5 0 
+
+create material "Steel_dummy" property_group "CalculiX-FEA"
+modify material "Steel_dummy" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "Steel_dummy" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "Steel_dummy" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 2e+5 0.3 0 
+
 
 #sections
 ccx create section solid block 1 material 1
@@ -146,20 +147,16 @@ create displacement name "blank" on nodeset 1 dof 1 dof 3 fix
 #punch
 create displacement name 'punch_fix_rp1' on nodeset 5 dof 1 dof 2 dof 3 fix
 create displacement name 'punch_fix_rp2' on nodeset 6 dof 1 dof 2 dof 3 fix
-create displacement name 'punch_move_rp1' on nodeset 5  dof 2 fix -40
+create displacement name 'punch_move_rp1' on nodeset 5  dof 2 fix -38
 modify displacement 4 dof 1 fix 0
 modify displacement 4 dof 3 fix 0
 #holder
-create displacement name 'holder_move_rp1' on nodeset 7 dof 2 fix -2.5e-3
+create displacement name 'holder_move_rp1' on nodeset 7 dof 2 fix -2.3e-3
 create displacement name 'holder_move_rp2' on nodeset 8 dof 1 dof 2 dof 3 fix
 modify displacement 5 dof 1 fix 0
 modify displacement 5 dof 3 fix 0
-#create displacement name 'holder_force_rp1' on nodeset 7 dof 1 dof 3 fix
 #die
 create displacement name 'die_fix' on nodeset 4 dof 1 dof 2 dof 3 fix
-
-#loads
-#create force on nodeset 7 force value 100 direction 0 -1 0
 
 #outputs
 ccx create fieldoutput name "nout" node
@@ -177,7 +174,7 @@ ccx modify fieldoutput 3 contact key_off PCON
 ccx create historyoutput name "node_output" node
 ccx create historyoutput name "element_output" element
 ccx create historyoutput name "contact_output" contact
-ccx modify historyoutput 1 node nodeset 2 frequency 5
+ccx modify historyoutput 1 node nodeset 3 frequency 5 totals_yes
 ccx modify historyoutput 1 node key_on U RF 
 ccx modify historyoutput 1 node key_off NT TSF TTF PN PSF PTF MACH CP VF DEPF TURB MF RFL 
 ccx modify historyoutput 2 element block 1 frequency 5
@@ -188,19 +185,17 @@ ccx modify historyoutput 3 contact key_on CDIS CSTR CELS CNUM CF CFN CFS
 ccx modify historyoutput 3 contact key_off
 
 #steps
-
 ccx create step name "hold" static
 ccx modify step 1 parameter nlgeom_yes
-ccx modify step 1 static initialtimeincrement 0.1 timeperiodofstep 1 minimumtimeincrement 1e-6 maximumtimeincrement 0.1
+ccx modify step 1 static initialtimeincrement 0.02 timeperiodofstep 0.1 minimumtimeincrement 1e-6 maximumtimeincrement 0.02
 ccx step 1 add bc displacement 1 2 3 5 6 7
-#ccx step 1 add load force 1
 ccx step 1 add fieldoutput 1 2 3
-#ccx step 1 add historyoutput 1 2 3
+#ccx step 1 add historyoutput 1
 
 ccx create step name "move_punch" static
 ccx modify step 2 parameter nlgeom_yes inc 1000
 ccx modify step 2 static initialtimeincrement 0.00125 timeperiodofstep 1 minimumtimeincrement 1e-6 maximumtimeincrement 0.0025
-ccx step 2 add bc displacement 5
+ccx step 2 add bc displacement 4
 ccx step 2 add fieldoutput 1 2 3
 #ccx step 2 add historyoutput 1 2 3
 
