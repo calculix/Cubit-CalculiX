@@ -128,20 +128,21 @@ bool CalculiXCore::print_to_log(std::string str_log)
 
 bool CalculiXCore::init()
 {
+/*
   me_iface = dynamic_cast<MeshExportInterface*>(CubitInterface::get_interface("MeshExport"));
   me_iface->initialize_export();
   mat_iface = dynamic_cast<MaterialInterface*>(CubitInterface::get_interface("Material"));
-
+*/
   if(!cb)
     cb = new CoreBlocks;
   
   cb->init();
-
+/*
   if(!mat)
     mat = new CoreMaterials;
   
   mat->init();
-  
+*/
   if(!sections)
     sections = new CoreSections;
   
@@ -242,9 +243,6 @@ bool CalculiXCore::init()
   
   results->init();
 
-  if(!timer)
-    timer = new CoreTimer;
-
   if(!customlines)
     customlines = new CoreCustomLines;
   
@@ -255,6 +253,9 @@ bool CalculiXCore::init()
   
   draw->init();
 
+  if(!timer)
+    timer = new CoreTimer;
+
   if (use_ccx_logfile)
   {
     print_to_log("CalculiXCore Initialization!");
@@ -262,6 +263,20 @@ bool CalculiXCore::init()
 
   this->bool_init = true;
   this->bool_init_pythoninterface = false;
+
+  return true;
+}
+
+bool CalculiXCore::init2() // will be done when loading the ccm!
+{ 
+  me_iface = dynamic_cast<MeshExportInterface*>(CubitInterface::get_interface("MeshExport"));
+  me_iface->initialize_export();
+  mat_iface = dynamic_cast<MaterialInterface*>(CubitInterface::get_interface("Material"));
+  
+  if(!mat)
+    mat = new CoreMaterials;
+  
+  mat->init();
 
   return true;
 }

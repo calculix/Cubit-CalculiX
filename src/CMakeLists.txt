@@ -70,35 +70,26 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface/calculix_pythoninterface.p
 
 #qt5_wrap_ui(ui_src ${GUI_UI})
 
-#set(CCXPLUGIN_SRCS
-#    CalculiXPlugin.cpp
-#    CalculiXPlugin.hpp
-#    ${CMD_SRC})
-
-#set(CCXCORE_SRCS
-#    ${CORE_SRC}
-#    ${UTILITY_SRC})
-
-#set(CCXUSEROPTIONS_SRCS
-#    ${UO_SRC}) 
-
 set(CCXPLUGIN_SRCS
     CalculiXPlugin.cpp
     CalculiXPlugin.hpp
-    ${CMD_SRC}
+    ${CMD_SRC})
+
+set(CCXCORE_SRCS
     ${CORE_SRC}
     ${UTILITY_SRC})
 
+set(CCXUSEROPTIONS_SRCS
+    ${UO_SRC}) 
+
 set(CCXPYTHONINTERFACE_SRCS
     ${PYTHONINTERFACE_SRC})
-
 
 set(CCXCOMP_SRCS
     CalculiXComp.cpp
     CalculiXComp.hpp
     ${EO_COMP_SRC}
     ${GUI_SRC}
-    ${UO_SRC}
     MenuManager.cpp
     MenuManager.hpp
     ToolbarManager.cpp
@@ -135,57 +126,36 @@ target_link_libraries(calculix_comp calculix_plugin)
 target_link_libraries(calculix_comp Qt5::Widgets)
 endif (WIN32)
 
-#if (UNIX)
-#add_library(calculix_useroptions SHARED ${CCXUSEROPTIONS_SRCS})
-#set_target_properties(calculix_useroptions PROPERTIES SUFFIX ".so")
-#target_link_libraries(calculix_useroptions clarogui clarofw Qt5::Widgets)
-#set_target_properties(calculix_useroptions PROPERTIES AUTOMOC 1)
-
-#add_library(calculix_plugin SHARED ${CCXPLUGIN_SRCS})
-#set_target_properties(calculix_plugin PROPERTIES SUFFIX ".ccm")
-
-#add_library(calculix_core SHARED ${CCXCORE_SRCS})
-#set_target_properties(calculix_core PROPERTIES SUFFIX ".so")
-#target_link_libraries(calculix_core cubiti cubit_util)
-#target_link_libraries(calculix_core clarofw Qt5::Widgets)
-#set_target_properties(calculix_core PROPERTIES AUTOMOC 1)
-
-#add_library(calculix_comp SHARED ${CCXCOMP_SRCS})
-#set_target_properties(calculix_comp PROPERTIES SUFFIX ".ccl")
-#target_link_libraries(calculix_comp clarogui navigation pickwidget cubiti clarofw Qt5::Widgets)
-#set_target_properties(calculix_comp PROPERTIES AUTOMOC 1)
-
-#add_library(calculix_pythoninterface SHARED ${CCXPYTHONINTERFACE_SRCS})
-#set_target_properties(calculix_pythoninterface PROPERTIES SUFFIX ".so" PREFIX "_")
-#target_link_libraries(calculix_pythoninterface cubiti cubit_util)
-
-#target_link_libraries(calculix_core calculix_useroptions)
-#target_link_libraries(calculix_pythoninterface calculix_core)
-#target_link_libraries(calculix_comp calculix_useroptions)
-#target_link_libraries(calculix_comp calculix_core)
-#target_link_libraries(calculix_plugin calculix_core)
-
-#endif (UNIX)
-
-
 if (UNIX)
-add_library(calculix_plugin SHARED ${CCXPLUGIN_SRCS})
+add_library(calculix_useroptions SHARED ${CCXUSEROPTIONS_SRCS})
+set_target_properties(calculix_useroptions PROPERTIES SUFFIX ".so")
+target_link_libraries(calculix_useroptions clarogui clarofw Qt5::Widgets)
+set_target_properties(calculix_useroptions PROPERTIES AUTOMOC 1)
+
+add_library(calculix_plugin MODULE ${CCXPLUGIN_SRCS})
 set_target_properties(calculix_plugin PROPERTIES SUFFIX ".ccm")
-target_link_libraries(calculix_plugin cubiti cubit_util)
+
+add_library(calculix_core SHARED ${CCXCORE_SRCS})
+set_target_properties(calculix_core PROPERTIES SUFFIX ".so")
+target_link_libraries(calculix_core cubiti cubit_util)
+target_link_libraries(calculix_core clarofw Qt5::Widgets)
+set_target_properties(calculix_core PROPERTIES AUTOMOC 1)
 
 add_library(calculix_comp SHARED ${CCXCOMP_SRCS})
 set_target_properties(calculix_comp PROPERTIES SUFFIX ".ccl")
-target_link_libraries(calculix_comp clarogui navigation pickwidget cubiti clarofw)
+target_link_libraries(calculix_comp clarogui navigation pickwidget cubiti clarofw Qt5::Widgets)
 set_target_properties(calculix_comp PROPERTIES AUTOMOC 1)
 
 add_library(calculix_pythoninterface SHARED ${CCXPYTHONINTERFACE_SRCS})
 set_target_properties(calculix_pythoninterface PROPERTIES SUFFIX ".so" PREFIX "_")
-target_link_libraries(calculix_pythoninterface calculix_plugin cubiti cubit_util)
+target_link_libraries(calculix_pythoninterface cubiti cubit_util)
 
-target_link_libraries(calculix_plugin calculix_comp)
-target_link_libraries(calculix_comp Qt5::Widgets)
+target_link_libraries(calculix_core calculix_useroptions)
+target_link_libraries(calculix_plugin calculix_core)
+target_link_libraries(calculix_pythoninterface calculix_core)
+target_link_libraries(calculix_comp calculix_core)
+
 endif (UNIX)
-
 
 set_property(GLOBAL PROPERTY GLOBAL_DEPENDS_DEBUG_MODE 1)
 if(POLICY CMP0078)

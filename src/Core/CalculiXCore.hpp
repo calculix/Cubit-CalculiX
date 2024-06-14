@@ -50,6 +50,7 @@ public:
 
   bool print_to_log(std::string str_log);
   bool init(); // init all core objects
+  bool init2(); // init material core and interfaces
   bool init_pythoninterface(); // init python interface
   bool update(); // updates everything to catch changes in the entities
   bool reset(); // delete all data and init new

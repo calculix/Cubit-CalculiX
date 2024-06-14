@@ -1,4 +1,6 @@
 #include "CalculiXPlugin.hpp"
+#include "loadCalculiXCore.hpp"
+
 #include "ccxVersionCommand.hpp"
 #include "ccxResetCommand.hpp"
 #include "ccxExportCommand.hpp"
@@ -112,7 +114,9 @@
 CUBIT_PLUGIN(CalculiXPlugin)
 
 CalculiXPlugin::CalculiXPlugin()
-{}
+{
+  ccx_core.init2(); // to init missing material core and interfaces
+}
 
 CalculiXPlugin::~CalculiXPlugin()
 {}

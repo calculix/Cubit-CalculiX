@@ -55,14 +55,15 @@ void CCXDockWindowModelTree::initialize()
 
   QString title;
   
-  std::vector<QString> dock_labels;
+  //std::vector<QString> dock_labels;
   
   title = gui->get_title();
   title = title + " -- with CalculiX";
-  std::cout << title.toStdString();
+  //std::cout << title.toStdString();
   
   gui->set_title(title);
 
+  /*
   ViewMenu->get_dock_labels(dock_labels);
   std::cout << "dock labels \n";
   for (size_t i = 0; i < dock_labels.size(); i++)
@@ -71,7 +72,7 @@ void CCXDockWindowModelTree::initialize()
     std::cout << dock_labels[i].toStdString();
     std::cout << "\n";
   } 
-
+  */
   dock = new QDockWidget(dock_title,gui);
   dock->setAllowedAreas(Qt::AllDockWidgetAreas);
   dock->setObjectName(dock_title);
@@ -141,7 +142,8 @@ void CCXDockWindowModelTree::initialize()
   dock->setWidget(myModelTree);
       
   gui->add_dock_window(dock,"CalculiXComp",Qt::LeftDockWidgetArea,Qt::AllDockWidgetAreas);
-    
+
+  /*
   ViewMenu->add_dock_item(dock->toggleViewAction(),"CalculiXComp");
   std::cout << "dock labels 2 \n";
   ViewMenu->get_dock_labels(dock_labels);
@@ -151,7 +153,7 @@ void CCXDockWindowModelTree::initialize()
     std::cout << dock_labels[i].toStdString();
     std::cout << "\n";
   }
-
+  */
   settings = new QSettings("CalculiXPlugin","CalculiXComp");
   dock->restoreGeometry(settings->value("geometry").toByteArray());
   gui->restoreState(settings->value("state").toByteArray());
