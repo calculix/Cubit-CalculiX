@@ -16,6 +16,8 @@ if (WIN32)
  set(Qt5Widgets_DIR "C:/Qt/5.15.2/msvc2019_64/lib/cmake/Qt5Widgets")
  # python for our swig wrapping
  include_directories("C:/Program Files/Coreform Cubit 2024.3/bin/python3/include/python3.10")
+ include_directories("C:/Program Files/Coreform Cubit 2024.3/bin/python3/include")
+ include_directories("C:/Program Files/Coreform Cubit 2024.3/bin")
 endif (WIN32)
 
 # On Linux, we need to add some addition compiler flags to get our static
