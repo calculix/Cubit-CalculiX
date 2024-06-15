@@ -18,6 +18,8 @@ if (WIN32)
  include_directories("C:/Program Files/Coreform Cubit 2024.3/bin/python3/include/python3.10")
  include_directories("C:/Program Files/Coreform Cubit 2024.3/bin/python3/include")
  include_directories("C:/Program Files/Coreform Cubit 2024.3/bin")
+ include_directories("C:/Program Files/Python310/libs")
+ include_directories("C:/Program Files/Python310")
 endif (WIN32)
 
 # On Linux, we need to add some addition compiler flags to get our static
@@ -31,6 +33,7 @@ ENDIF(CMAKE_SYSTEM_NAME MATCHES "Linux")
 find_package(Cubit REQUIRED CONFIG)
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
+find_package(Python3 REQUIRED)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
@@ -69,7 +72,12 @@ add_subdirectory(PythonInterface)
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Icons/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Icons/)
 
 # copy pythoninterface to build directory
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface/calculix_pythoninterface.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
+if (WIN32)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface/calculix_pythoninterface.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/)
+endif (WIN32)
+if (UNIX)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface/calculix_pythoninterface.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
+endif (UNIX)
 
 #qt5_wrap_ui(ui_src ${GUI_UI})
 
@@ -167,7 +175,6 @@ target_link_libraries(calculix_core calculix_useroptions)
 target_link_libraries(calculix_plugin calculix_core)
 target_link_libraries(calculix_pythoninterface calculix_core)
 target_link_libraries(calculix_comp calculix_core)
-
 endif (UNIX)
 
 set_property(GLOBAL PROPERTY GLOBAL_DEPENDS_DEBUG_MODE 1)
