@@ -624,6 +624,17 @@ bool CoreJobs::result_paraview_job(int job_id)
     if ((std::stoi(jobs_data[job_data_id][3])>1) && (jobs_data[job_data_id][6] == "1"))
     { 
       #ifdef WIN32
+        filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".000002.vtpc"; // if more than one file
+        if (_access(filepath.c_str(), 0) == 0)
+        {
+          filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + "...vtpc";
+        }else{
+          filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".000001.vtpc";
+        }
+        std::string shellstr;
+        shellstr = "\"" + ccx_uo.mPathParaView.toStdString() + "\" --data=" + filepath;
+        system(shellstr.c_str());
+        CreatePro
       #else
         filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".000002.vtpc"; // if more than one file
         if (access(filepath.c_str(), W_OK) == 0) 
@@ -639,18 +650,26 @@ bool CoreJobs::result_paraview_job(int job_id)
       log = "Opening Results with Paraview for Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + "\n";
       //log.append(filepath +  " \n");
       //log.append(arg +  " \n");
+      log.append(shellstr +  " \n");
       PRINT_INFO("%s", log.c_str());
     }
     if ((std::stoi(jobs_data[job_data_id][3])>1) && (jobs_data[job_data_id][6] == "2"))
     {      
       #ifdef WIN32
+        filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".vtu";
+        if (_access(filepath.c_str(), 0) == 0)
+        {
+          filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + "...vtu";
+        }
+        std::string shellstr;
+        shellstr = "\"" + ccx_uo.mPathParaView.toStdString() + "\" --data=" + filepath;
+        system(shellstr.c_str());
       #else
         filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".vtu";
         if (access(filepath.c_str(), W_OK) != 0) 
         {
           filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + "...vtu";
         }
-
         std::string shellstr;
         shellstr = "nohup " + ccx_uo.mPathParaView.toStdString() + " --data=" + filepath + " &";
         system(shellstr.c_str());
@@ -658,6 +677,7 @@ bool CoreJobs::result_paraview_job(int job_id)
       log = "Opening Results with Paraview for Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + "\n";
       //log.append(filepath +  " \n");
       //log.append(arg +  " \n");
+      log.append(shellstr +  " \n");
       PRINT_INFO("%s", log.c_str());
     }
   } else {
