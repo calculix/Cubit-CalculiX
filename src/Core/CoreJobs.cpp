@@ -277,6 +277,38 @@ bool CoreJobs::wait_job(int job_id)
       jobs_data[jobs_data_id][3] = "5"; // mark the job for waiting
 
       #ifdef WIN32
+        HANDLE processhandle;
+        DWORD returnCode{};
+        while (processhandle = OpenProcess(PROCESS_ALL_ACCESS, TRUE, std::stoi(jobs_data[jobs_data_id][4])))
+        {                
+          output = CubitProcessHandler[CubitProcessHandler_data_id].read_output_channel(-1);
+          if (output != "")
+          {
+            log = " Output " + output.str() + " \n";
+            //PRINT_INFO("%s", log.c_str());
+            //jobs_data[jobs_data_id][5] = jobs_data[jobs_data_id][5] + output.str();
+            output_console[std::stoi(jobs_data[jobs_data_id][5])].push_back(output.str());
+            output = "";
+            get_cvgsta(std::stoi(jobs_data[jobs_data_id][0]));
+          }
+          //waitpid(std::stoi(jobs_data[jobs_data_id][4]), &status,WNOHANG);
+
+          //update progress bar
+          const auto t_end = std::chrono::high_resolution_clock::now();
+          int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+          //currentDataRow += frd->result_block_data[data_ids[ii]].size();
+          if (duration > 500)
+          {
+            progressbar->check_interrupt();
+            t_start = std::chrono::high_resolution_clock::now();
+          }
+          if (GetExitCodeProcess(processhandle, &returnCode)) {
+            if (returnCode != STILL_ACTIVE)
+            {break;}
+          }
+        }
+        CubitProcessHandler[CubitProcessHandler_data_id].wait();
+        status = CubitProcessHandler[CubitProcessHandler_data_id].exit_code();
       #else
         while (0 == kill(std::stoi(jobs_data[jobs_data_id][4]),0))
         {
@@ -402,13 +434,50 @@ bool CoreJobs::check_jobs()
           }
           
           // break out of loop, so that output reading doesn't freeze gui
-          if (ic==100)
+          if (ic==250)
           {
             break;
           }          
         }
 
         #ifdef WIN32
+          //solver processes still running?
+          int status;
+          HANDLE processhandle;
+          DWORD returnCode{};
+          processhandle = OpenProcess(PROCESS_ALL_ACCESS, TRUE, std::stoi(jobs_data[i][4]));
+          if (GetExitCodeProcess(processhandle, &returnCode)) {
+            if (returnCode != STILL_ACTIVE)
+            { 
+              CubitProcessHandler[CubitProcessHandler_data_id].wait();
+              status = CubitProcessHandler[CubitProcessHandler_data_id].exit_code();
+            }
+          }
+          if ((returnCode != STILL_ACTIVE) && (status!=0)) // if process doesn't exist and exited with error
+          {
+            CubitProcessHandler[CubitProcessHandler_data_id].wait();
+            log = "Job " + jobs_data[i][1] + " with ID " + jobs_data[i][0] + " exited with errors! \n";
+            //log.append(" Exit Code " + std::to_string(CubitProcessHandler[CubitProcessHandler_data_id].exit_code()) + " \n");
+            PRINT_INFO("%s", log.c_str());
+            jobs_data[i][3] = "4";
+            //ccx_iface->load_result(std::stoi(jobs_data[i][0]));
+            //jobs_data[i][6] = std::to_string(ccx_iface->convert_result(std::stoi(jobs_data[i][0])));
+            jobs_data[i][6] = "-1";
+            CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
+          }else if ((returnCode != STILL_ACTIVE) && (status==0)) // if process doesn't exist and exited without error
+          {
+            CubitProcessHandler[CubitProcessHandler_data_id].wait();
+            log = "Job " + jobs_data[i][1] + " with ID " + jobs_data[i][0] + " finished! \n";
+            //log.append(" Exit Code " + std::to_string(CubitProcessHandler[CubitProcessHandler_data_id].exit_code()) + " \n");
+            PRINT_INFO("%s", log.c_str());
+            jobs_data[i][3] = "2";
+            ccx_iface->load_result(std::stoi(jobs_data[i][0]));
+            if (jobs_data[i][9] == "1") 
+            {
+              jobs_data[i][6] = std::to_string(ccx_iface->convert_result(std::stoi(jobs_data[i][0]),{-1,-1,-1},ccx_iface->get_blocks(),CubitInterface::get_nodeset_id_list(),CubitInterface::get_sideset_id_list()));
+            }
+            CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
+          }
         #else
           //solver processes still running?
           int status;
