@@ -11,6 +11,8 @@
 #ifdef WIN32
  #include <windows.h>
  #include <io.h>
+ #include <stdio.h>
+ #include <tchar.h>
 #else
  #include <unistd.h>
  #include <sys/wait.h>
@@ -218,7 +220,6 @@ bool CoreJobs::run_job(int job_id,int option)
     arguments[0] = "-i";
     arguments[1] = filepath.substr(0, filepath.size()-4);
     arguments[2] = NULL;
-    
     
     CubitProcessHandler[CubitProcessHandler_data_id].set_program(programm);
     CubitProcessHandler[CubitProcessHandler_data_id].set_arguments(arguments);
@@ -578,11 +579,18 @@ bool CoreJobs::result_cgx_job(int job_id)
     if (std::stoi(jobs_data[job_data_id][3])>1)
     {
       filepath = jobs_data[job_data_id][1] + ".frd";
-
-      std::string shellstr;
-      shellstr = "nohup " + ccx_uo.mPathCGX.toStdString() + " " + filepath + " &";
-      system(shellstr.c_str());
-
+      #ifdef WIN32
+        CubitString programm;
+        std::vector<CubitString> arguments(2);
+        programm = ccx_uo.mPathCGX.toStdString().substr(0, ccx_uo.mPathCGX.toStdString().size()-4).c_str();
+        arguments[0] = filepath;
+        arguments[1] = NULL;
+        CubitProcess::start(programm, arguments, false);
+      #else
+        std::string shellstr;
+        shellstr = "nohup " + ccx_uo.mPathCGX.toStdString() + " " + filepath + " &";
+        system(shellstr.c_str());
+      #endif
       log = "Opening Results with CGX for Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + "\n";
       //log.append(filepath +  " \n");
       PRINT_INFO("%s", log.c_str());
@@ -631,10 +639,17 @@ bool CoreJobs::result_paraview_job(int job_id)
         }else{
           filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".000001.vtpc";
         }
-        std::string shellstr;
-        shellstr = "\"" + ccx_uo.mPathParaView.toStdString() + "\" --data=" + filepath;
-        system(shellstr.c_str());
-        CreatePro
+        //std::string shellstr;
+        //shellstr = " \"" + ccx_uo.mPathParaView.toStdString() + "\" --data=" + filepath;
+        //system(shellstr.c_str());
+
+        CubitString programm;
+        std::vector<CubitString> arguments(3);
+        programm = ccx_uo.mPathParaView.toStdString().substr(0, ccx_uo.mPathParaView.toStdString().size()-4).c_str();
+        arguments[0] = "--data";
+        arguments[1] = filepath;
+        arguments[2] = NULL;
+        CubitProcess::start(programm, arguments, false);
       #else
         filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".000002.vtpc"; // if more than one file
         if (access(filepath.c_str(), W_OK) == 0) 
@@ -650,7 +665,7 @@ bool CoreJobs::result_paraview_job(int job_id)
       log = "Opening Results with Paraview for Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + "\n";
       //log.append(filepath +  " \n");
       //log.append(arg +  " \n");
-      log.append(shellstr +  " \n");
+      //log.append(shellstr +  " \n");
       PRINT_INFO("%s", log.c_str());
     }
     if ((std::stoi(jobs_data[job_data_id][3])>1) && (jobs_data[job_data_id][6] == "2"))
@@ -661,9 +676,17 @@ bool CoreJobs::result_paraview_job(int job_id)
         {
           filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + "...vtu";
         }
-        std::string shellstr;
-        shellstr = "\"" + ccx_uo.mPathParaView.toStdString() + "\" --data=" + filepath;
-        system(shellstr.c_str());
+        //std::string shellstr;
+        //shellstr = " \"" + ccx_uo.mPathParaView.toStdString() + "\" --data=" + filepath;
+        //system(shellstr.c_str());
+
+        CubitString programm;
+        std::vector<CubitString> arguments(3);
+        programm = ccx_uo.mPathParaView.toStdString().substr(0, ccx_uo.mPathParaView.toStdString().size()-4).c_str();
+        arguments[0] = "--data";
+        arguments[1] = filepath;
+        arguments[2] = NULL;
+        CubitProcess::start(programm, arguments, false);
       #else
         filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".vtu";
         if (access(filepath.c_str(), W_OK) != 0) 
@@ -677,7 +700,7 @@ bool CoreJobs::result_paraview_job(int job_id)
       log = "Opening Results with Paraview for Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + "\n";
       //log.append(filepath +  " \n");
       //log.append(arg +  " \n");
-      log.append(shellstr +  " \n");
+      //log.append(shellstr +  " \n");
       PRINT_INFO("%s", log.c_str());
     }
   } else {
