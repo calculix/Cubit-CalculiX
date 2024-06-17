@@ -416,31 +416,30 @@ bool CoreJobs::check_jobs()
 
       if (std::stoi(jobs_data[i][3])==1)
       {
-        // check for output
-        int ic=0;
-        while (CubitProcessHandler[CubitProcessHandler_data_id].can_read_output())
-        { 
-          output = CubitProcessHandler[CubitProcessHandler_data_id].read_output_channel(1);
-          if ((output != ""))
-          {
-            log = " Output " + output.str() + " \n";
-            //PRINT_INFO("%s", log.c_str());
-            //jobs_data[i][5] = jobs_data[i][5] + output.str();
-            output_console[std::stoi(jobs_data[i][5])].push_back(output.str());
-            output = "";
-            get_cvgsta(std::stoi(jobs_data[i][0]));
-          }else{
-            ic+=1;
-          }
-          
-          // break out of loop, so that output reading doesn't freeze gui
-          if (ic==250)
-          {
-            break;
-          }          
-        }
-
         #ifdef WIN32
+          // check for output
+          int ic=0;
+          while (CubitProcessHandler[CubitProcessHandler_data_id].can_read_output())
+          { 
+            output = CubitProcessHandler[CubitProcessHandler_data_id].read_output_channel(1);
+            if ((output != ""))
+            {
+              log = " Output " + output.str() + " \n";
+              //PRINT_INFO("%s", log.c_str());
+              //jobs_data[i][5] = jobs_data[i][5] + output.str();
+              output_console[std::stoi(jobs_data[i][5])].push_back(output.str());
+              output = "";
+              get_cvgsta(std::stoi(jobs_data[i][0]));
+            }else{
+              ic+=1;
+            }
+            
+            // break out of loop, so that output reading doesn't freeze gui
+            if (ic==1)
+            {
+              break;
+            }          
+          }
           //solver processes still running?
           int status;
           HANDLE processhandle;
@@ -479,6 +478,29 @@ bool CoreJobs::check_jobs()
             CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
           }
         #else
+          // check for output
+          int ic=0;
+          while (CubitProcessHandler[CubitProcessHandler_data_id].can_read_output())
+          { 
+            output = CubitProcessHandler[CubitProcessHandler_data_id].read_output_channel(1);
+            if ((output != ""))
+            {
+              log = " Output " + output.str() + " \n";
+              //PRINT_INFO("%s", log.c_str());
+              //jobs_data[i][5] = jobs_data[i][5] + output.str();
+              output_console[std::stoi(jobs_data[i][5])].push_back(output.str());
+              output = "";
+              get_cvgsta(std::stoi(jobs_data[i][0]));
+            }else{
+              ic+=1;
+            }
+            
+            // break out of loop, so that output reading doesn't freeze gui
+            if (ic==150)
+            {
+              break;
+            }          
+          }
           //solver processes still running?
           int status;
           waitpid(std::stoi(jobs_data[i][4]), &status,WNOHANG);
