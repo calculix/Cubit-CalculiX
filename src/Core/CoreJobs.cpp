@@ -435,7 +435,7 @@ bool CoreJobs::check_jobs()
             }
             
             // break out of loop, so that output reading doesn't freeze gui
-            if (ic==1)
+            if (ic==3)
             {
               break;
             }          
@@ -496,7 +496,7 @@ bool CoreJobs::check_jobs()
             }
             
             // break out of loop, so that output reading doesn't freeze gui
-            if (ic==150)
+            if (ic==100)
             {
               break;
             }          
