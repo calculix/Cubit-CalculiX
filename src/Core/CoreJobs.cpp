@@ -6,14 +6,12 @@
 #include "CubitProcess.hpp"
 #include "CubitString.hpp"
 #include "ProgressTool.hpp"
-//#include "CubitFile.hpp"
+#include "CubitFile.hpp"
 
 #include <stdlib.h>
 #ifdef WIN32
  #include <windows.h>
  #include <io.h>
- #include <stdio.h>
- #include <tchar.h>
 #else
  #include <unistd.h>
  #include <sys/wait.h>
@@ -415,7 +413,7 @@ bool CoreJobs::check_jobs()
       log.append("CubitProcessHandler_data_id " + std::to_string(CubitProcessHandler_data_id) + " \n");
       PRINT_INFO("%s", log.c_str());*/
 
-/*
+
         CubitFile f;
         f.open("testfile.txt", "w");
         f.close();
@@ -429,14 +427,17 @@ bool CoreJobs::check_jobs()
         proc.set_channel_mode(CubitProcess::MergedChannels);
         proc.start();
         CubitString output_t;
+        int ci = 0;
         while(proc.can_read_output())
         {    
           output_t += proc.read_output_channel();
+          ++ci;
+          log = std::to_string(ci) + " Output_test: " + output_t.str() + " \n";
+          log.append(" length: " + std::to_string(output_t.length()) + " \n");
+          PRINT_INFO("%s", log.c_str());
         }
-        log = " Output_test " + output_t.str() + " \n";
-        PRINT_INFO("%s", log.c_str());
         proc.wait();
-*/
+
 
       if (std::stoi(jobs_data[i][3])==1)
       {
