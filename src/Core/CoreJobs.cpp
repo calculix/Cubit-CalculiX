@@ -398,22 +398,7 @@ bool CoreJobs::check_jobs()
   std::string log;
   CubitString output;
   
-  int CubitProcessHandler_data_id;
-  
-  for (size_t i = 0; i < jobs_data.size(); i++)
-  {
-    // create or get cubitprocess
-    CubitProcessHandler_data_id = get_CubitProcessHandler_data_id_from_process_id(std::stoi(jobs_data[i][4]));
-        
-    if (CubitProcessHandler_data_id != -1)
-    {
-      /*log = "Job ID " + jobs_data[i][0] + " \n";
-      log.append("Job PID " + jobs_data[i][4] + " \n");
-      log.append("PID " + std::to_string(CubitProcessHandler[CubitProcessHandler_data_id].pid()) + " \n");
-      log.append("CubitProcessHandler_data_id " + std::to_string(CubitProcessHandler_data_id) + " \n");
-      PRINT_INFO("%s", log.c_str());*/
-
-
+/*
         CubitFile f;
         f.open("testfile.txt", "w");
         f.close();
@@ -437,6 +422,52 @@ bool CoreJobs::check_jobs()
           PRINT_INFO("%s", log.c_str());
         }
         proc.wait();
+*/
+
+#ifdef _WIN32
+  CubitString app = "cmd";
+  std::vector<CubitString> args = {"/C", "echo output && ping -n 10 127.0.0.1 >NUL"};
+#else
+  CubitString app = "sh";
+  std::vector<CubitString> args = {"-c", "echo output && sleep 10"};
+#endif
+
+  CubitProcess proc;
+  proc.set_program(app);
+  proc.set_arguments(args);
+  proc.set_channel_mode(CubitProcess::MergedChannels);
+  proc.start();
+  //CubitString output; already defined on top
+  int ci;
+  for(ci=0; ci<10 && proc.can_read_output(); ci++)
+  {
+    output += proc.read_output_channel(200);
+  }
+  output.simplify();
+  log = " Output_test: " + output.str() + " \n";
+  log.append(" length: " + std::to_string(output.length()) + " \n");
+  PRINT_INFO("%s", log.c_str());
+  proc.kill();
+  //proc.wait();
+
+/////////////////////////////
+
+
+  int CubitProcessHandler_data_id;
+  
+  for (size_t i = 0; i < jobs_data.size(); i++)
+  {
+    // create or get cubitprocess
+    CubitProcessHandler_data_id = get_CubitProcessHandler_data_id_from_process_id(std::stoi(jobs_data[i][4]));
+        
+    if (CubitProcessHandler_data_id != -1)
+    {
+      /*log = "Job ID " + jobs_data[i][0] + " \n";
+      log.append("Job PID " + jobs_data[i][4] + " \n");
+      log.append("PID " + std::to_string(CubitProcessHandler[CubitProcessHandler_data_id].pid()) + " \n");
+      log.append("CubitProcessHandler_data_id " + std::to_string(CubitProcessHandler_data_id) + " \n");
+      PRINT_INFO("%s", log.c_str());*/
+
 
 
       if (std::stoi(jobs_data[i][3])==1)
