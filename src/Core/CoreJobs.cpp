@@ -422,7 +422,7 @@ bool CoreJobs::check_jobs()
           PRINT_INFO("%s", log.c_str());
         }
         proc.wait();
-*/
+
 
 #ifdef _WIN32
   CubitString app = "cmd";
@@ -449,7 +449,7 @@ bool CoreJobs::check_jobs()
   PRINT_INFO("%s", log.c_str());
   proc.kill();
   //proc.wait();
-
+*/
 /////////////////////////////
 
 
