@@ -555,11 +555,6 @@ bool CalculiXCoreInterface::check_jobs()
   return ccx_core.check_jobs();
 }
 
-bool CalculiXCoreInterface::check_zombie()
-{
-  return ccx_core.check_zombie();
-}
-
 bool CalculiXCoreInterface::wait_job(int job_id)
 {
   return ccx_core.wait_job(job_id);

@@ -7,6 +7,10 @@
 class CalculiXCoreInterface;
 class CubitProcess;
 class ProgressTool;
+#ifdef WIN32
+  //class HANDLE;
+  #include <windows.h>
+#endif
 
 class CoreJobs
 {
@@ -31,8 +35,12 @@ public:
   std::vector<std::vector<std::string>> cvg;
   std::vector<std::vector<std::string>> sta;
 
-  std::vector<CubitProcess> CubitProcessHandler;
-
+  #ifdef WIN32
+    std::vector<HANDLE> ProcessHandler;
+  #else
+    std::vector<CubitProcess> CubitProcessHandler;
+  #endif
+  
   bool is_initialized = false;
 
   bool init(); // initialize
@@ -48,12 +56,15 @@ public:
   bool kill_job(int job_id); // kill the jobs exits
   bool check_jobs(); // checks for changes of job processes
   bool get_cvgsta(int job_id); // gets filedata of .cvg and .sta
-  bool check_zombie(); // checks for zombie processes
   //bool result_ccx2paraview_job(int job_id); // converts the result with ccx2paraview
   bool result_cgx_job(int job_id); // opens the results with cgx
   bool result_paraview_job(int job_id); // opens the results with paraview
   int  get_jobs_data_id_from_job_id(int job_id); // searches for the job_id in the jobs_data and returns the indices or -1 if it fails
-  int  get_CubitProcessHandler_data_id_from_process_id(int process_id); // searches for the CubitProcessHandler_id in the CubitProcessHandler and returns the indices or -1 if it fails
+  #ifdef WIN32
+    int  get_ProcessHandler_data_id_from_process_id(int process_id); // searches for the ProcessHandler_id in the ProcessHandler and returns the indices or -1 if it fails
+  #else
+    int  get_CubitProcessHandler_data_id_from_process_id(int process_id); // searches for the CubitProcessHandler_id in the CubitProcessHandler and returns the indices or -1 if it fails
+  #endif
   bool set_job_conversion(int job_id, int conversion); // sets the paraview conversion value for the job
   std::vector<std::string> get_job_data(int job_id);
   std::vector<std::string> get_job_console_output(int job_id);

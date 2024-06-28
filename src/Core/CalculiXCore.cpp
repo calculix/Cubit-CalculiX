@@ -2504,11 +2504,6 @@ bool CalculiXCore::check_jobs()
   return jobs->check_jobs();
 }
 
-bool CalculiXCore::check_zombie()
-{
-  return jobs->check_zombie();
-}
-
 bool CalculiXCore::wait_job(int job_id)
 {
   return jobs->wait_job(job_id);
