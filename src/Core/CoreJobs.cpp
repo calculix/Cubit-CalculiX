@@ -12,6 +12,7 @@
 #ifdef WIN32
  #include <windows.h>
  #include <io.h>
+ #define BUFSIZE 4096 
 #else
  #include <unistd.h>
  #include <sys/wait.h>
@@ -152,7 +153,6 @@ bool CoreJobs::run_job(int job_id,int option)
     CubitString working_dir;
     CubitString temp;
     CubitString output;
-    std::vector<CubitString> arguments(3);
     size_t process_id;
     if (_access(ccx_uo.mPathSolver.toStdString().c_str(), 0) == 0)
     {
@@ -162,7 +162,126 @@ bool CoreJobs::run_job(int job_id,int option)
       PRINT_INFO("%s", log.c_str());    
       return false;
     }
+
+    int job_data_id;
+    job_data_id = get_jobs_data_id_from_job_id(job_id);
+    if (job_data_id != -1)
+    {
+
+      if (jobs_data[job_data_id][2]!="")
+      {
+        std::string shellstr;
+        shellstr = "cp '" + jobs_data[job_data_id][2] + "' '" +jobs_data[job_data_id][1] + ".inp'";
+        system(shellstr.c_str());
+        filepath = jobs_data[job_data_id][1] + ".inp";
+      } else {
+        filepath = jobs_data[job_data_id][1] + ".inp";
+        log = "Exporting Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " to \n";
+        log.append(filepath +  " \n");
+        PRINT_INFO("%s", log.c_str());
+        command = "export ccx \"" + filepath + "\" overwrite";
+        CubitInterface::cmd(command.c_str());
+        if (CubitInterface::was_last_cmd_undoable())
+        {
+          return false;
+        }
+      }
+
+
+      HANDLE g_hChildStd_OUT_Rd = NULL;
+      HANDLE g_hChildStd_OUT_Wr = NULL;
+      SECURITY_ATTRIBUTES saAttr; 
+      
+      // Set the bInheritHandle flag so pipe handles are inherited. 
     
+      saAttr.nLength = sizeof(SECURITY_ATTRIBUTES); 
+      saAttr.bInheritHandle = TRUE; 
+      saAttr.lpSecurityDescriptor = NULL; 
+
+      // Create a pipe for the child process's STDOUT. 
+      CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &saAttr, 0);
+      SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0);
+
+      PROCESS_INFORMATION piProcInfo; 
+      STARTUPINFO siStartInfo;
+      BOOL bSuccess = FALSE; 
+    
+      // Set up members of the PROCESS_INFORMATION structure. 
+    
+      ZeroMemory( &piProcInfo, sizeof(PROCESS_INFORMATION) );
+    
+      // Set up members of the STARTUPINFO structure. 
+      // This structure specifies the STDIN and STDOUT handles for redirection.
+    
+      ZeroMemory( &siStartInfo, sizeof(STARTUPINFO) );
+      siStartInfo.cb = sizeof(STARTUPINFO); 
+      siStartInfo.hStdError = g_hChildStd_OUT_Wr;
+      siStartInfo.hStdOutput = g_hChildStd_OUT_Wr;
+      siStartInfo.hStdInput = NULL;
+      siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
+    
+      std::string arguments = "\"" + ccx_uo.mPathSolver.toStdString() + "\" -i \"" + filepath.substr(0, filepath.size()-4) + "\"";
+      //arguments = "\"C:\\Windows\\System32\\cmd.exe\" echo output && ping -n 10 127.0.0.1 >NUL";
+      //PRINT_INFO("%s", arguments.c_str()); 
+
+      // Create the child process. 
+        
+      bSuccess = CreateProcess(NULL, 
+          &arguments[0],     // command line 
+          NULL,          // process security attributes 
+          NULL,          // primary thread security attributes 
+          TRUE,          // handles are inherited 
+          0,             // creation flags 
+          NULL,          // use parent's environment 
+          NULL,          // use parent's current directory 
+          &siStartInfo,  // STARTUPINFO pointer 
+          &piProcInfo);  // receives PROCESS_INFORMATION
+
+      // If an error occurs, exit the application. 
+      if ( ! bSuccess )
+      {
+          log = "Running Job Failed! \n";
+          PRINT_INFO("%s", log.c_str()); 
+          return false;
+      }
+      else 
+      {
+          // Close handles to the child process and its primary thread.
+          // Some applications might keep these handles to monitor the status
+          // of the child process, for example. 
+
+          CloseHandle(piProcInfo.hProcess);
+          CloseHandle(piProcInfo.hThread);
+          
+          // Close handles to the stdin and stdout pipes no longer needed by the child process.
+          // If they are not explicitly closed, there is no way to recognize that the child process has ended.
+          
+          CloseHandle(g_hChildStd_OUT_Wr);
+      }
+
+
+      DWORD dwRead, dwWritten; 
+      CHAR chBuf[BUFSIZE]; 
+      //BOOL bSuccess = FALSE;
+      bSuccess = FALSE;
+      HANDLE hParentStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+      for (;;) 
+      { 
+          bSuccess = ReadFile( g_hChildStd_OUT_Rd, chBuf, BUFSIZE, &dwRead, NULL);
+          if( ! bSuccess || dwRead == 0 ) break;
+
+          std::string s(chBuf, dwRead);
+          log = "output: \n" + s + " \n";
+          PRINT_INFO("%s", log.c_str());
+
+          bSuccess = WriteFile(hParentStdOut, chBuf, 
+                              dwRead, &dwWritten, NULL);
+          if (! bSuccess ) break; 
+      }
+      CloseHandle(g_hChildStd_OUT_Rd);
+      return true;
+    }
   #else
     std::string filepath;
     std::string log;
