@@ -54,6 +54,8 @@ bool CoreJobs::reset()
   cvg.clear();
   sta.clear();
   #ifdef WIN32
+    ProcessPipe.clear();
+    ProcessPIDPipePID.clear();
   #else
     CubitProcessHandler.clear();
   #endif
@@ -148,12 +150,11 @@ bool CoreJobs::run_job(int job_id,int option)
     std::string filepath;
     std::string log;
     std::string command;
-    int ProcessHandler_data_id;
     CubitString programm;
     CubitString working_dir;
     CubitString temp;
     CubitString output;
-    size_t process_id;
+    int process_id = 0;
     if (_access(ccx_uo.mPathSolver.toStdString().c_str(), 0) == 0)
     {
       SetEnvironmentVariable("OMP_NUM_THREADS",std::to_string(ccx_uo.mSolverThreads).c_str());
@@ -167,7 +168,26 @@ bool CoreJobs::run_job(int job_id,int option)
     job_data_id = get_jobs_data_id_from_job_id(job_id);
     if (job_data_id != -1)
     {
-
+      /*
+      // create or get cubitprocess
+      CubitProcessHandler_data_id = get_CubitProcessHandler_data_id_from_process_id(std::stoi(jobs_data[job_data_id][4]));
+      if (CubitProcessHandler_data_id == -1)
+      {
+        CubitProcess newCubitProcess;
+        CubitProcessHandler.push_back(newCubitProcess);
+        CubitProcessHandler_data_id = int(CubitProcessHandler.size())-1;
+      }else{
+        log = "Kill Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " if already running \n";
+        output_console[std::stoi(jobs_data[job_data_id][5])].clear();
+        PRINT_INFO("%s", log.c_str());
+        CubitProcessHandler[CubitProcessHandler_data_id].kill();
+        CubitProcessHandler[CubitProcessHandler_data_id].wait();
+        //log = " Job killed with Exit Code " + std::to_string(CubitProcessHandler[CubitProcessHandler_data_id].exit_code()) + " \n";
+        log = " Job killed!\n";
+        PRINT_INFO("%s", log.c_str());
+        jobs_data[job_data_id][3] = "3";
+      }
+      */
       if (jobs_data[job_data_id][2]!="")
       {
         std::string shellstr;
@@ -186,7 +206,6 @@ bool CoreJobs::run_job(int job_id,int option)
           return false;
         }
       }
-
 
       HANDLE g_hChildStd_OUT_Rd = NULL;
       HANDLE g_hChildStd_OUT_Wr = NULL;
@@ -224,8 +243,12 @@ bool CoreJobs::run_job(int job_id,int option)
       //arguments = "\"C:\\Windows\\System32\\cmd.exe\" echo output && ping -n 10 127.0.0.1 >NUL";
       //PRINT_INFO("%s", arguments.c_str()); 
 
-      // Create the child process. 
-        
+      //clear stored data
+      output_console[std::stoi(jobs_data[job_data_id][5])].clear();
+      cvg[std::stoi(jobs_data[job_data_id][7])].clear();
+      sta[std::stoi(jobs_data[job_data_id][8])].clear();
+
+      // Create the child process.         
       bSuccess = CreateProcess(NULL, 
           &arguments[0],     // command line 
           NULL,          // process security attributes 
@@ -243,43 +266,47 @@ bool CoreJobs::run_job(int job_id,int option)
           log = "Running Job Failed! \n";
           PRINT_INFO("%s", log.c_str()); 
           return false;
+      } else
+      {        
+        // Close handles to the child process and its primary thread.
+        // Some applications might keep these handles to monitor the status
+        // of the child process, for example. 
+
+        CloseHandle(piProcInfo.hProcess);
+        CloseHandle(piProcInfo.hThread);
+        
+        // Close handles to the stdin and stdout pipes no longer needed by the child process.
+        // If they are not explicitly closed, there is no way to recognize that the child process has ended.
+        
+        CloseHandle(g_hChildStd_OUT_Wr);
+
+        jobs_data[job_data_id][4] = std::to_string(int(piProcInfo.dwProcessId));
+        jobs_data[job_data_id][3] = "1";
+        jobs_data[job_data_id][6] = "-1";
+        jobs_data[job_data_id][9] = std::to_string(option);
+
+        ProcessPipe.push_back(g_hChildStd_OUT_Rd);
+
+        DWORD dwRead; 
+        CHAR chBuf[BUFSIZE]; 
+        ReadFile(g_hChildStd_OUT_Rd, chBuf, BUFSIZE, &dwRead, NULL);
+        std::string s(chBuf, dwRead);
+        log = "output: \n" + s + " \n";
+        PRINT_INFO("%s", log.c_str());
+            
+
+        PULONG ClientProcessId;
+        GetNamedPipeClientProcessId(g_hChildStd_OUT_Rd,ClientProcessId);
+        std::vector<int> tmp;
+        tmp.push_back(int(piProcInfo.dwProcessId));
+        tmp.push_back(int(ClientProcessId));
+        ProcessPIDPipePID.push_back(tmp);
+        PipePID.push_back(int(ClientProcessId));
+
+        log = "PIPEPID RUN " + std::to_string(int(ClientProcessId))  + " \n";
+        PRINT_INFO("%s", log.c_str());
       }
-      else 
-      {
-          // Close handles to the child process and its primary thread.
-          // Some applications might keep these handles to monitor the status
-          // of the child process, for example. 
 
-          CloseHandle(piProcInfo.hProcess);
-          CloseHandle(piProcInfo.hThread);
-          
-          // Close handles to the stdin and stdout pipes no longer needed by the child process.
-          // If they are not explicitly closed, there is no way to recognize that the child process has ended.
-          
-          CloseHandle(g_hChildStd_OUT_Wr);
-      }
-
-
-      DWORD dwRead, dwWritten; 
-      CHAR chBuf[BUFSIZE]; 
-      //BOOL bSuccess = FALSE;
-      bSuccess = FALSE;
-      HANDLE hParentStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-
-      for (;;) 
-      { 
-          bSuccess = ReadFile( g_hChildStd_OUT_Rd, chBuf, BUFSIZE, &dwRead, NULL);
-          if( ! bSuccess || dwRead == 0 ) break;
-
-          std::string s(chBuf, dwRead);
-          log = "output: \n" + s + " \n";
-          PRINT_INFO("%s", log.c_str());
-
-          bSuccess = WriteFile(hParentStdOut, chBuf, 
-                              dwRead, &dwWritten, NULL);
-          if (! bSuccess ) break; 
-      }
-      CloseHandle(g_hChildStd_OUT_Rd);
       return true;
     }
   #else
@@ -535,89 +562,68 @@ bool CoreJobs::kill_job(int job_id)
 
 bool CoreJobs::check_jobs()
 {
-    
-/*
-        CubitFile f;
-        f.open("testfile.txt", "w");
-        f.close();
-
-        CubitString app = "cmd";
-        std::vector<CubitString> args = {"/c", "dir", "testfile.txt"};
-      
-        CubitProcess proc;
-        proc.set_program(app);
-        proc.set_arguments(args);
-        proc.set_channel_mode(CubitProcess::MergedChannels);
-        proc.start();
-        CubitString output_t;
-        int ci = 0;
-        while(proc.can_read_output())
-        {    
-          output_t += proc.read_output_channel();
-          ++ci;
-          log = std::to_string(ci) + " Output_test: " + output_t.str() + " \n";
-          log.append(" length: " + std::to_string(output_t.length()) + " \n");
-          PRINT_INFO("%s", log.c_str());
-        }
-        proc.wait();
-
-
-#ifdef _WIN32
-  CubitString app = "cmd";
-  std::vector<CubitString> args = {"/C", "echo output && ping -n 10 127.0.0.1 >NUL"};
-#else
-  CubitString app = "sh";
-  std::vector<CubitString> args = {"-c", "echo output && sleep 10"};
-#endif
-
-  CubitProcess proc;
-  proc.set_program(app);
-  proc.set_arguments(args);
-  proc.set_channel_mode(CubitProcess::MergedChannels);
-  proc.set_channel_mode(CubitProcess::ForwardedChannels);
-  proc.start();
-
-  //CubitString output; already defined on top
-  int ci;
-
-  CHAR buffer[4096] = { 0 };
-  DWORD dataSize = 0;
-  HANDLE processhandle;
-  processhandle = OpenProcess(PROCESS_ALL_ACCESS, TRUE, proc.pid());
-
-  for(ci=0; ci<10 && proc.can_read_output(); ci++)
-  {
-    PeekNamedPipe(processhandle, buffer, sizeof(buffer) - 1, nullptr , &dataSize, nullptr);
-    output += buffer;
-    output += proc.read_output_channel(200);
-    
-  }
-  output.simplify();
-  log = " Output_test: " + output.str() + " \n";
-  log.append(" length: " + std::to_string(output.length()) + " \n");
-  PRINT_INFO("%s", log.c_str());
-  proc.kill();
-  //proc.wait();
-*/
-/////////////////////////////
-
 
   #ifdef _WIN32
-  /*
-    HANDLE g_hChildStd_OUT_Rd = NULL;
-          HANDLE g_hChildStd_OUT_Wr = NULL;
-          //HANDLE processhandle;
-          DWORD returnCode{};
-          processhandle = OpenProcess(PROCESS_ALL_ACCESS, TRUE, std::stoi(jobs_data[i][4]));
+    std::string log;
+    CubitString output;
+    int ProcessPipe_data_id;
+    int PipePID;
+  
+    for (size_t i = 0; i < jobs_data.size(); i++)
+    {
+      // get pipe
+      PipePID = get_PipePID_from_ProcessPID(std::stoi(jobs_data[i][4]));            
 
-          SECURITY_ATTRIBUTES saAttr;        
-          saAttr.nLength = sizeof(SECURITY_ATTRIBUTES); 
-          saAttr.bInheritHandle = TRUE; 
-          saAttr.lpSecurityDescriptor = NULL; 
+      if (PipePID != -1)
+      {
+        ProcessPipe_data_id = get_ProcessPipe_data_id_from_PipePID(PipePID);
+
+          log = "PIPEPID " + std::to_string(PipePID) + " \n";
+          log.append("PROCESSPID " + jobs_data[i][4] + " \n");
+          log.append("ProcessPipe_data_id " + std::to_string(ProcessPipe_data_id) + " \n");
+          PRINT_INFO("%s", log.c_str());
+
+        if (ProcessPipe_data_id != -1)
+        {
+          DWORD dwRead; 
+          CHAR chBuf[BUFSIZE];
+          bool success = true; 
+
+          while (success) 
+          { 
+            success = ReadFile(ProcessPipe[ProcessPipe_data_id], chBuf, BUFSIZE, &dwRead, NULL);
+            if (!success)
+            {
+              break;
+            }
+            
+            std::string s(chBuf, dwRead);
+            log = "output: \n" + s + " \n";
+            PRINT_INFO("%s", log.c_str());
+            
+            /*
+            PULONG ClientProcessId;
+            GetNamedPipeClientProcessId(g_hChildStd_OUT_Rd,ClientProcessId);
+            log = "PID pipe: \n" + std::to_string(int(ClientProcessId)) + " \n";
+            PRINT_INFO("%s", log.c_str());
+
+            log = "PID process: \n" + std::to_string(piProcInfo.dwProcessId) + " \n";
+            PRINT_INFO("%s", log.c_str());
+            
+            HANDLE handle = OpenProcess(PROCESS_TERMINATE, FALSE, int(piProcInfo.dwProcessId));
+            if (NULL != handle) {   
+                TerminateProcess(handle, 0);
+                CloseHandle(handle);
+            }*/
+          }
           
-          CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &saAttr, 0);
-
-
+          //CloseHandle(g_hChildStd_OUT_Rd);
+        }
+      }
+    }
+    return true;
+  
+  /*
           // check for output
           int ic=0;
           while (CubitProcessHandler[CubitProcessHandler_data_id].can_read_output())
@@ -758,7 +764,6 @@ bool CoreJobs::check_jobs()
         }
       }
     }
-
     return true;
   #endif
   
@@ -995,16 +1000,37 @@ int CoreJobs::get_jobs_data_id_from_job_id(int job_id)
 }
 
 #ifdef _WIN32
-  int CoreJobs::get_ProcessHandler_data_id_from_process_id(int process_id)
+  int CoreJobs::get_ProcessPipe_data_id_from_PipePID(int PipePID)
   { 
     int return_int = -1;
-    
-    for (size_t i = 0; i < ProcessHandler.size(); i++)
+    for (size_t i = 0; i < this->PipePID.size(); i++)
     {
-      //if (process_id == ProcessHandler[i].pid())
+      /*PULONG ClientProcessId;
+      GetNamedPipeClientProcessId(ProcessPipe[i],ClientProcessId);
+      
+      if (PipePID == int(ClientProcessId))
       {
         return_int = int(i);
-      }  
+      }
+      */
+      
+      if (PipePID == this->PipePID[i])
+      {
+        return_int = int(i);
+      }
+    }
+    return return_int;
+  }
+
+  int CoreJobs::get_PipePID_from_ProcessPID(int ProcessPID)
+  {
+    int return_int = -1;
+    for (size_t i = 0; i < ProcessPIDPipePID.size(); i++)
+    {
+      if (ProcessPID == ProcessPIDPipePID[i][0])
+      {
+        return_int = ProcessPIDPipePID[i][1];
+      }
     }
     return return_int;
   }

@@ -90,7 +90,8 @@
         "expected": "cpp",
         "spanstream": "cpp",
         "stacktrace": "cpp",
-        "xstring": "cpp"
+        "xstring": "cpp",
+        "format": "cpp"
     },
     "cmake.configureOnOpen": false
 }

@@ -36,7 +36,9 @@ public:
   std::vector<std::vector<std::string>> sta;
 
   #ifdef WIN32
-    std::vector<HANDLE> ProcessHandler;
+    std::vector<HANDLE> ProcessPipe;
+    std::vector<std::vector<int>> ProcessPIDPipePID; //links the process PID to the pipe PID 
+    std::vector<int> PipePID; //pipe PID 
   #else
     std::vector<CubitProcess> CubitProcessHandler;
   #endif
@@ -61,7 +63,8 @@ public:
   bool result_paraview_job(int job_id); // opens the results with paraview
   int  get_jobs_data_id_from_job_id(int job_id); // searches for the job_id in the jobs_data and returns the indices or -1 if it fails
   #ifdef WIN32
-    int  get_ProcessHandler_data_id_from_process_id(int process_id); // searches for the ProcessHandler_id in the ProcessHandler and returns the indices or -1 if it fails
+    int  get_ProcessPipe_data_id_from_PipePID(int PipePID); // searches for the Pipe Handle data id in the Processpipe and returns the indices or -1 if it fails
+    int  get_PipePID_from_ProcessPID(int ProcessPID); // searches for the Pipe PID in the ProcessPIDPipePID and returns the PipePID or -1 if it fails
   #else
     int  get_CubitProcessHandler_data_id_from_process_id(int process_id); // searches for the CubitProcessHandler_id in the CubitProcessHandler and returns the indices or -1 if it fails
   #endif
