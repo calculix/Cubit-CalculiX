@@ -12,7 +12,12 @@ CoreTimer::CoreTimer()
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
      
   connect(this, &QTimer::timeout, this, &CoreTimer::timeoutaction);
-  this->start(1000);
+  
+  #ifdef WIN32
+    this->start(250);
+  #else
+    this->start(1000);
+  #endif
 }
 
 CoreTimer::~CoreTimer()
@@ -25,7 +30,7 @@ void CoreTimer::timeoutaction()
   {
     this->bool_init_pythoninterface = ccx_iface->init_pythoninterface();
   //}
-  /*
+  
   Mediator* med = Broker::instance();
   std::vector<ComponentInfo> info;
   med->get_component_list(info);
@@ -44,6 +49,20 @@ void CoreTimer::timeoutaction()
     log.append(" state: " + output.toStdString() + " \n");
     PRINT_INFO("%s", log.c_str());
   }
-  */
+
+  med->get_component_paths(output);
+  log = " paths:\n " + output.toStdString() + " \n";
+  PRINT_INFO("%s", log.c_str());
+
+  CubitString cs(output.toStdString());
+  std::vector<CubitString> paths;
+  cs.tokenize(';', paths );
+  for (size_t i = 0; i < paths.size(); i++)
+  {
+    log = " path: " + paths[i].str() + " \n";
+    PRINT_INFO("%s", log.c_str());
+  }
+  
+
   }
 }

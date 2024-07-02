@@ -12,7 +12,7 @@
 #ifdef WIN32
  #include <windows.h>
  #include <io.h>
- #define BUFSIZE 4096 
+ #define BUFSIZE 25600
 #else
  #include <unistd.h>
  #include <sys/wait.h>
@@ -690,7 +690,7 @@ bool CoreJobs::check_jobs()
             for(;;)
             { 
               DWORD bytesAvail = 0;
-              PeekNamedPipe(ProcessPipe[ProcessPipe_data_id], NULL, 0, NULL, &bytesAvail, NULL);
+              PeekNamedPipe(ProcessPipe[ProcessPipe_data_id], NULL, 0, NULL, &bytesAvail, NULL);  
               if (bytesAvail) {
                   success = ReadFile(ProcessPipe[ProcessPipe_data_id], chBuf, BUFSIZE, &dwRead, NULL);
                   if (!success) {
