@@ -5,6 +5,7 @@
 #include <string>
 #ifdef WIN32
   #include <windows.h>
+  #include <thread>
 #endif
 
 class CalculiXCoreInterface;
@@ -36,8 +37,9 @@ public:
 
   #ifdef WIN32
     std::vector<HANDLE> ProcessPipe;
-    std::vector<std::vector<int>> ProcessPIDPipePID; //links the process PID to the pipe PID 
-    std::vector<int> PipePID; //pipe PID 
+    std::vector<std::vector<int>> PPTID; //links the process PID, pipe PID and ThreadID 
+    std::vector<int> PipePID; //pipe PID
+    std::vector<std::thread> PipeThreads; // threads for reading the pipes
   #else
     std::vector<CubitProcess> CubitProcessHandler;
   #endif
@@ -64,6 +66,7 @@ public:
   #ifdef WIN32
     int  get_ProcessPipe_data_id_from_PipePID(int PipePID); // searches for the Pipe Handle data id in the Processpipe and returns the indices or -1 if it fails
     int  get_PipePID_from_ProcessPID(int ProcessPID); // searches for the Pipe PID in the ProcessPIDPipePID and returns the PipePID or -1 if it fails
+    void read_pipe(int job_id); // make a reading thread for the jobs pipe
   #else
     int  get_CubitProcessHandler_data_id_from_process_id(int process_id); // searches for the CubitProcessHandler_id in the CubitProcessHandler and returns the indices or -1 if it fails
   #endif

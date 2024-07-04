@@ -13,11 +13,8 @@ CoreTimer::CoreTimer()
      
   connect(this, &QTimer::timeout, this, &CoreTimer::timeoutaction);
   
-  #ifdef WIN32
-    this->start(250);
-  #else
-    this->start(1000);
-  #endif
+  this->start(1000);
+  
 }
 
 CoreTimer::~CoreTimer()

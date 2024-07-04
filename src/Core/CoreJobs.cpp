@@ -12,7 +12,7 @@
 #ifdef WIN32
  #include <windows.h>
  #include <io.h>
- #define BUFSIZE 25600
+ #define BUFSIZE 4096
 #else
  #include <unistd.h>
  #include <sys/wait.h>
@@ -22,6 +22,7 @@
 #include <fstream>
 #include <iostream>
 #include "loadUserOptions.hpp"
+
 
 CoreJobs::CoreJobs()
 {}
@@ -55,8 +56,9 @@ bool CoreJobs::reset()
   sta.clear();
   #ifdef WIN32
     ProcessPipe.clear();
-    ProcessPIDPipePID.clear();
+    PPTID.clear();
     PipePID.clear();
+    PipeThreads.clear();
   #else
     CubitProcessHandler.clear();
   #endif
@@ -223,15 +225,6 @@ bool CoreJobs::run_job(int job_id,int option)
       SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0);
       //DWORD mode= PIPE_READMODE_BYTE|PIPE_NOWAIT;
       //SetNamedPipeHandleState(g_hChildStd_OUT_Rd, &mode, NULL, NULL);
-
-      HANDLE hPipe = CreateNamedPipe(TEXT("\\\\.\\pipe\\Pipe"),
-                            PIPE_ACCESS_DUPLEX,
-                            PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,   // FILE_FLAG_FIRST_PIPE_INSTANCE is not needed but forces CreateNamedPipe(..) to fail if the pipe already exists...
-                            1,
-                            1024 * 16,
-                            1024 * 16,
-                            NMPWAIT_USE_DEFAULT_WAIT,
-                            NULL);
       
       PROCESS_INFORMATION piProcInfo; 
       STARTUPINFO siStartInfo;
@@ -313,7 +306,7 @@ bool CoreJobs::run_job(int job_id,int option)
         std::vector<int> tmp;
         tmp.push_back(int(piProcInfo.dwProcessId));
         tmp.push_back(int(ClientProcessId));
-        ProcessPIDPipePID.push_back(tmp);
+        PPTID.push_back(tmp);
         PipePID.push_back(int(ClientProcessId));
 
         /*
@@ -321,6 +314,15 @@ bool CoreJobs::run_job(int job_id,int option)
         PRINT_INFO("%s", log.c_str());
         */
       }
+
+
+      PipeThreads.push_back(std::thread(&CoreJobs::read_pipe, this, job_id));
+
+      std::ostringstream oss;
+      oss << PipeThreads[PipeThreads.size()-1].get_id() << std::endl;
+      log = "CREATED THREAD ID " + oss.str() + " \n";
+      log.append("NUMBER OF PIPE READ THREADS " + std::to_string(PipeThreads.size())  + " \n");
+      PRINT_INFO("%s", log.c_str());
 
       return true;
     }
@@ -493,7 +495,7 @@ bool CoreJobs::wait_job(int job_id)
           PipePID = get_PipePID_from_ProcessPID(std::stoi(jobs_data[jobs_data_id][4]));           
           ProcessPipe_data_id = get_ProcessPipe_data_id_from_PipePID(PipePID);
           ProcessPipe.erase(ProcessPipe.begin() + ProcessPipe_data_id);
-          ProcessPIDPipePID.erase(ProcessPIDPipePID.begin() + ProcessPipe_data_id);
+          PPTID.erase(PPTID.begin() + ProcessPipe_data_id);
           this->PipePID.erase(this->PipePID.begin() + ProcessPipe_data_id);
         }
       }
@@ -629,7 +631,7 @@ bool CoreJobs::kill_job(int job_id)
           PipePID = get_PipePID_from_ProcessPID(std::stoi(jobs_data[jobs_data_id][4]));           
           ProcessPipe_data_id = get_ProcessPipe_data_id_from_PipePID(PipePID);
           ProcessPipe.erase(ProcessPipe.begin() + ProcessPipe_data_id);
-          ProcessPIDPipePID.erase(ProcessPIDPipePID.begin() + ProcessPipe_data_id);
+          PPTID.erase(PPTID.begin() + ProcessPipe_data_id);
           this->PipePID.erase(this->PipePID.begin() + ProcessPipe_data_id);
         }
       }
@@ -692,6 +694,7 @@ bool CoreJobs::check_jobs()
 
           if (ProcessPipe_data_id != -1)
           {
+            /*
             DWORD dwRead; 
             CHAR chBuf[BUFSIZE];
             bool success = true; 
@@ -712,7 +715,7 @@ bool CoreJobs::check_jobs()
                 break;
               }
             }
-            
+            */
             /*
             while (success) 
             {
@@ -744,7 +747,7 @@ bool CoreJobs::check_jobs()
             PipePID = get_PipePID_from_ProcessPID(std::stoi(jobs_data[i][4]));           
             ProcessPipe_data_id = get_ProcessPipe_data_id_from_PipePID(PipePID);
             ProcessPipe.erase(ProcessPipe.begin() + ProcessPipe_data_id);
-            ProcessPIDPipePID.erase(ProcessPIDPipePID.begin() + ProcessPipe_data_id);
+            PPTID.erase(PPTID.begin() + ProcessPipe_data_id);
             this->PipePID.erase(this->PipePID.begin() + ProcessPipe_data_id);
           }
         }
@@ -1106,14 +1109,54 @@ int CoreJobs::get_jobs_data_id_from_job_id(int job_id)
   int CoreJobs::get_PipePID_from_ProcessPID(int ProcessPID)
   {
     int return_int = -1;
-    for (size_t i = 0; i < ProcessPIDPipePID.size(); i++)
+    for (size_t i = 0; i < PPTID.size(); i++)
     {
-      if (ProcessPID == ProcessPIDPipePID[i][0])
+      if (ProcessPID == PPTID[i][0])
       {
-        return_int = ProcessPIDPipePID[i][1];
+        return_int = PPTID[i][1];
       }
     }
     return return_int;
+  }
+
+  void CoreJobs::read_pipe(int job_id)
+  {
+    std::string log;
+    CubitString output;
+    
+    int jobs_data_id=-1;
+    
+    jobs_data_id = get_jobs_data_id_from_job_id(job_id);
+
+    if (jobs_data_id != -1)
+    {
+      HANDLE processhandle;
+      DWORD returnCode{};
+      processhandle = OpenProcess(PROCESS_ALL_ACCESS, TRUE, std::stoi(jobs_data[jobs_data_id][4]));
+      if (GetExitCodeProcess(processhandle, &returnCode)) {
+        if (returnCode == STILL_ACTIVE)
+        { 
+          DWORD dwRead; 
+          CHAR chBuf[BUFSIZE];
+          bool success = true; 
+          int ProcessPipe_data_id;
+          int PipePID;
+          PipePID = get_PipePID_from_ProcessPID(std::stoi(jobs_data[jobs_data_id][4]));           
+          ProcessPipe_data_id = get_ProcessPipe_data_id_from_PipePID(PipePID);
+          
+          while (success) 
+          {
+            success = ReadFile(ProcessPipe[ProcessPipe_data_id], chBuf, BUFSIZE, &dwRead, NULL);
+            if (!success) {
+                break;
+            }
+            std::string output(chBuf, dwRead);
+            output_console[std::stoi(jobs_data[jobs_data_id][5])].push_back(output);
+            get_cvgsta(std::stoi(jobs_data[jobs_data_id][0]));        
+          }
+        }
+      }
+    }
   }
 
 #else
