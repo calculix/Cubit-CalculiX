@@ -3,14 +3,13 @@
 
 #include <vector>
 #include <string>
+#ifdef WIN32
+  #include <windows.h>
+#endif
 
 class CalculiXCoreInterface;
 class CubitProcess;
 class ProgressTool;
-#ifdef WIN32
-  //class HANDLE;
-  #include <windows.h>
-#endif
 
 class CoreJobs
 {

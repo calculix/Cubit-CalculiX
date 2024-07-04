@@ -223,6 +223,15 @@ bool CoreJobs::run_job(int job_id,int option)
       SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0);
       //DWORD mode= PIPE_READMODE_BYTE|PIPE_NOWAIT;
       //SetNamedPipeHandleState(g_hChildStd_OUT_Rd, &mode, NULL, NULL);
+
+      HANDLE hPipe = CreateNamedPipe(TEXT("\\\\.\\pipe\\Pipe"),
+                            PIPE_ACCESS_DUPLEX,
+                            PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,   // FILE_FLAG_FIRST_PIPE_INSTANCE is not needed but forces CreateNamedPipe(..) to fail if the pipe already exists...
+                            1,
+                            1024 * 16,
+                            1024 * 16,
+                            NMPWAIT_USE_DEFAULT_WAIT,
+                            NULL);
       
       PROCESS_INFORMATION piProcInfo; 
       STARTUPINFO siStartInfo;
@@ -1106,6 +1115,7 @@ int CoreJobs::get_jobs_data_id_from_job_id(int job_id)
     }
     return return_int;
   }
+
 #else
   int CoreJobs::get_CubitProcessHandler_data_id_from_process_id(int process_id)
   { 
