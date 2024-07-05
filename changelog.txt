@@ -30,3 +30,5 @@
 2024-06-16 debug python interface import on windows, nohup replacement windows
 2024-06-17 - 2024-07-05 CoreJobs modified for windows
 2024-07-05 Rework Useroptions and include paraview and solver
+
+######### ------  Release 2024.7

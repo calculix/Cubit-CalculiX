@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<!-- Creating a dataset with numerous timesteps.  Each timestep is in a seperatefile. -->
+
+<VTKFile type="Collection" version="0.1"
+         byte_order="LittleEndian"
+         compressor="vtkZLibDataCompressor">
+  <Collection>
+    <DataSet timestep="0" group="" part="0" file="parallelUnstructuredTime0.pvtu"/>
+    <DataSet timestep="1" group="" part="0" file="parallelUnstructuredTime1.pvtu"/>
+  </Collection>
+</VTKFile>

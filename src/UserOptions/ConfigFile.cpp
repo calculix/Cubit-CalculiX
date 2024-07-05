@@ -157,19 +157,39 @@ QString ConfigFile::standard_entry(std::string option)
 
     if (option == "PathSolver")
     {
-        standard_value = QString::fromStdString(componentpath) + "Solver/ccx_dynamic.exe";
+        #ifdef WIN32
+            standard_value = QString::fromStdString(componentpath) + "Solver/ccx_dynamic.exe";
+        #else
+            standard_value = QString::fromStdString(componentpath) + "Solver/ccx_2.21_MT";
+        #endif
     }else if(option == "PathCGX")
     {
-        standard_value = QString::fromStdString(componentpath) + "Postprocessor/CGX/cgx_STATIC.exe";
+        #ifdef WIN32
+            standard_value = QString::fromStdString(componentpath) + "Postprocessor/CGX/cgx_STATIC.exe";
+        #else
+            standard_value = QString::fromStdString(componentpath) + "Postprocessor/CGX/cgx_2.21";
+        #endif
     }else if(option == "PathParaView")
     {
-        standard_value = QString::fromStdString(componentpath) + "Postprocessor/ParaView/bin/paraview.exe";
+        #ifdef WIN32
+            standard_value = QString::fromStdString(componentpath) + "Postprocessor/ParaView/bin/paraview.exe";
+        #else
+            standard_value = QString::fromStdString(componentpath) + "Postprocessor/ParaView/bin/paraview";
+        #endif
     }else if(option == "PathIcons")
     {
-        standard_value = QString::fromStdString(componentpath) + "Icons/";
+        #ifdef WIN32
+            standard_value = QString::fromStdString(componentpath) + "Icons/";
+        #else
+            standard_value = QString::fromStdString(componentpath) + "Icons/";
+        #endif
     }else if(option == "PathPythonInterface")
     {
-        standard_value = QString::fromStdString(componentpath);
+        #ifdef WIN32
+            standard_value = QString::fromStdString(componentpath);
+        #else
+            standard_value = QString::fromStdString(componentpath);
+        #endif
     }
 
     return standard_value;
@@ -181,7 +201,7 @@ int ConfigFile::standard_num_entry(std::string option)
 
     if (option == "SolverThreads")
     {
-        standard_value = 4;
+        standard_value = 8;
     }
     return standard_value;
 }

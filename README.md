@@ -4,11 +4,18 @@ Hey ho that´s the CalculiX Component for coreform cubit!
 Full Model definitions for CalculiX can be done with Cubit as Preprocessor.
 After the run with CalculiX the results will be automatically converted for Paraview.
 
-Here you can find the source code and a build for linux.
- 
+Here you can find the source code.
+
+The builds can be downloaded at our [website](https://www.maschinenbauer.at/open-source/calculix-component-for-coreform-cubit).
+
+Or just use the links.
+
+[Windows Build](https://www.maschinenbauer.at/upload/build-windows-2024-7.zip)
+[Linux Build](https://www.maschinenbauer.at/upload/build-linux-2024-7.zip)
+
 This component was build with Cubit 2024.3! 
 
-Tested with Cubit 2024.3 on Ubuntu 22.04
+Tested with Cubit 2024.3 on Windows 10 and Ubuntu 22.04
 
 # Key Features
 Definition of:
@@ -109,25 +116,17 @@ Restart Cubit.
 
 The Cubit Window should now show "Coreform Cubit 2022.4 -- with CalculiX" in the Title.
 
-- Tools->Options->CalculiX
-
-Now you have to fill in the Paths to CCX, CGX, Paraview, the icons from the build, the directory for the python interface and give a number for the wanted threads for the solver.
-
-Restart Cubit.
-
-![Setup Options](/readme_docs/Setup_01.png?raw=true "Setup Options")
-
-Enable Model Tree
+Now just enable the Model Tree
 
 - View->CalculiX Model Tree
 
-![Show Model Tree](/readme_docs/Setup_02.png?raw=true "Show Model Tree")
+![Show Model Tree](/readme_docs/Setup_01.png?raw=true "Show Model Tree")
 
 Try to open and run the journal file "first_run.jou"
 
 If everything works. It should compute a beam and automatically open the results with cgx and paraview.
 
-![After First Run](/readme_docs/Setup_03.png?raw=true "After First Run")
+![After First Run](/readme_docs/Setup_02.png?raw=true "After First Run")
 
 # Postprocessing
 

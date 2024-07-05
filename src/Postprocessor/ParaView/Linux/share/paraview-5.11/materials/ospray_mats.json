@@ -1,0 +1,857 @@
+{
+    "family": "OSPRay",
+    "version": "0.0",
+    "materials": {
+        "Checker_Alpha": {
+            "type": "OBJMaterial",
+            "textures": {
+                "map_d": "./textures/checker.png"
+            }
+        },
+        "Glass_Thick": {
+            "type": "Glass"
+        },
+        "Glass_Thin": {
+            "type": "ThinGlass"
+        },
+        "Glass_Water": {
+            "type": "Glass",
+            "doubles": {
+                "attenuationColor": [0.00, 0.467, 0.745],
+                "etaInside": [1.33]
+            }
+        },
+        "PBR_Solar_Panels": {
+            "type": "Principled",
+            "textures": {
+                "map_normal": "./textures/Solar_Panel_normal.jpg",
+                "map_baseColor": "./textures/Solar_Panel_basecolor.jpg",
+                "map_roughness": "./textures/Solar_Panel_roughness.jpg",
+                "map_metallic": "./textures/Solar_Panel_metallic.jpg"
+            }
+        },
+        "PBR_Carbon_Fiber": {
+            "type": "Principled",
+            "doubles": {
+                "metallic": [1.00]
+            },
+            "textures": {
+                "map_normal": "./textures/CarbonFiber_normal.jpg",
+                "map_baseColor": "./textures/CarbonFiber_basecolor.jpg",
+                "map_roughness": "./textures/CarbonFiber_roughness.jpg"
+            }
+        },
+        "PBR_Plastic_White": {
+            "type": "Principled",
+            "textures": {
+                "map_baseColor": "./textures/Plastic_White_basecolor.jpg",
+                "map_roughness": "./textures/Plastic_White_roughness.jpg"
+            }
+        },
+        "PBR_Plastic_Dark": {
+            "type": "Principled",
+            "textures": {
+                "map_baseColor": "./textures/Plastic_Dark_basecolor.jpg",
+                "map_roughness": "./textures/Plastic_Dark_roughness.jpg"
+            }
+        },
+        "PBR_Fabric_Green": {
+            "type": "Principled",
+            "textures": {
+                "map_normal": "./textures/Fabric_Green_normal.jpg",
+                "map_baseColor": "./textures/Fabric_Green_basecolor.jpg",
+                "map_roughness": "./textures/Fabric_Green_roughness.jpg"
+            }
+        },
+        "PBR_Fabric_Orange": {
+            "type": "Principled",
+            "textures": {
+                "map_normal": "./textures/Fabric_Orange_normal.jpg",
+                "map_baseColor": "./textures/Fabric_Orange_basecolor.jpg",
+                "map_roughness": "./textures/Fabric_Orange_roughness.jpg"
+            }
+        },
+        "PBR_Fabric_Tan": {
+            "type": "Principled",
+            "textures": {
+                "map_normal": "./textures/Fabric_Burlap_normal.jpg",
+                "map_baseColor": "./textures/Fabric_Burlap_basecolor.jpg",
+                "map_roughness": "./textures/Fabric_Burlap_roughness.jpg"
+            }
+        },
+        "PBR_Fabric_Camo": {
+            "type": "Principled",
+            "textures": {
+                "map_normal": "./textures/Fabric_Camo_normal.jpg",
+                "map_baseColor": "./textures/Fabric_Camo_basecolor.jpg",
+                "map_roughness": "./textures/Fabric_Camo_roughness.jpg"
+            }
+        },
+        "PBR_Camo_Mesh": {
+            "type": "Principled",
+            "textures": {
+                "map_normal": "./textures/Camo_Mesh_normal.jpg",
+                "map_baseColor": "./textures/Camo_Mesh_basecolor.jpg",
+                "map_roughness": "./textures/Camo_Mesh_roughness.jpg",
+                "opacityMap": "./textures/Camo_Mesh_opacity.jpg"
+            }
+        },
+        "PBR_Camo_Dull": {
+            "type": "Principled",
+            "textures": {
+                "map_baseColor": "./textures/Camo_Dull_basecolor.jpg"
+            }
+        },
+        "PBR_Cork": {
+            "type": "Principled",
+            "textures": {
+                "map_normal": "./textures/Cork_normal.jpg",
+                "map_baseColor": "./textures/Cork_basecolor.jpg",
+                "map_roughness": "./textures/Cork_roughness.jpg"
+            }
+        },
+        "PBR_Circuit_Board": {
+            "type": "Principled",
+            "textures": {
+                "map_normal": "./textures/Circuit_Board_normal.png",
+                "map_metallic": "./textures/Circuit_Board_metallic.png",
+                "map_baseColor": "./textures/Circuit_Board_basecolor.png",
+                "map_roughness": "./textures/Circuit_Board_roughness.png"
+            }
+        },
+        "PBR_Silica_Phenolic": {
+            "type": "Principled",
+            "textures": {
+                "map_baseColor": "./textures/Plastic_Orange_basecolor.jpg",
+                "map_roughness": "./textures/Plastic_Orange_roughness.jpg"
+            }
+        },
+        "PBR_Particle_Board": {
+            "type": "Principled",
+            "textures": {
+                "map_normal": "./textures/Particle_Board_001_NRM.jpg",
+                "map_baseColor": "./textures/Particle_Board_001_COLOR.jpg",
+                "map_roughness": "./textures/Particle_Board_001_ROUGH.jpg"
+            }
+        },
+        "PBR_Asphalt": {
+            "type": "Principled",
+            "textures": {
+                "map_normal": "./textures/Asphalt_normal.jpg",
+                "map_baseColor": "./textures/Asphalt_basecolor.jpg",
+                "map_roughness": "./textures/Asphalt_roughness.jpg"
+            }
+        },
+        "PBR_Brick_Wall_1": {
+            "type": "Principled",
+            "textures": {
+                "map_normal": "./textures/Brick_Wall_1_normal.jpg",
+                "map_baseColor": "./textures/Brick_Wall_1_basecolor.jpg",
+                "map_roughness": "./textures/Brick_Wall_1_roughness.jpg"
+            }
+        },
+        "PBR_Brick_Wall_2": {
+            "type": "Principled",
+            "textures": {
+                "map_normal": "./textures/Brick_Wall_2_normal.jpg",
+                "map_baseColor": "./textures/Brick_Wall_2_basecolor.jpg",
+                "map_roughness": "./textures/Brick_Wall_2_roughness.jpg"
+            }
+        },
+        "PBR_Grass": {
+            "type": "Principled",
+            "textures": {
+                "map_normal": "./textures/Grass_normal.jpg",
+                "map_baseColor": "./textures/Grass_basecolor.jpg",
+                "map_roughness": "./textures/Grass_roughness.jpg"
+            }
+        },
+        "PBR_Water": {
+            "type": "Principled",
+            "doubles": {
+                "opacity": [0.65],
+                "baseColor": [0.00, 0.467, 0.745]
+            },
+            "textures": {
+                "map_normal": "./textures/Water_normal.jpg",
+                "map_roughness": "./textures/Water_roughness.jpg"
+            }
+        },
+        "PBR_Ground_Dirt": {
+            "type": "Principled",
+            "textures": {
+                "map_normal": "./textures/Ground_Dirt_normal.jpg",
+                "map_baseColor": "./textures/Ground_Dirt_basecolor.jpg",
+                "map_roughness": "./textures/Ground_Dirt_roughness.jpg"
+            }
+        },
+        "PBR_Ground_Wet": {
+            "type": "Principled",
+            "textures": {
+                "map_normal": "./textures/Ground_Wet_normal.jpg",
+                "map_baseColor": "./textures/Ground_Wet_basecolor.jpg",
+                "map_roughness": "./textures/Ground_Wet_roughness.jpg"
+            }
+        },
+        "PBR_Concrete_1": {
+            "type": "Principled",
+            "textures": {
+                "map_normal": "./textures/Concrete_1_normal.jpg",
+                "map_baseColor": "./textures/Concrete_1_basecolor.jpg",
+                "map_roughness": "./textures/Concrete_1_roughness.jpg"
+            }
+        },
+        "PBR_Concrete_2": {
+            "type": "Principled",
+            "textures": {
+                "map_normal": "./textures/Concrete_2_normal.png",
+                "map_baseColor": "./textures/Concrete_2_basecolor.png"
+            }
+        },
+        "PBR_Sand": {
+            "type": "Principled",
+            "textures": {
+                "map_normal": "./textures/Sand_normal.jpg",
+                "map_baseColor": "./textures/Sand_basecolor.jpg"
+            }
+        },
+        "PBR_Snow": {
+            "type": "Principled",
+            "textures": {
+                "map_normal": "./textures/Snow_normal.jpg",
+                "map_baseColor": "./textures/Snow_basecolor.jpg",
+                "map_roughness": "./textures/Snow_roughness.jpg"
+            }
+        },
+        "Metal_Diamond_Plate": {
+            "type": "Principled",
+            "textures": {
+                "map_normal": "./textures/DiamondPlate_normal.jpg",
+                "map_baseColor": "./textures/DiamondPlate_basecolor.jpg",
+                "map_roughness": "./textures/DiamondPlate_roughness.jpg",
+                "map_metallic": "./textures/DiamondPlate_metalic.jpg"
+            }
+        },
+        "Metal_Scratched": {
+            "type": "Principled",
+            "doubles": {
+                "metallic": [0.8]
+            },
+            "textures": {
+                "map_normal": "./textures/metal000_norm.jpg",
+                "map_baseColor": "./textures/metal000_base.jpg",
+                "map_roughness": "./textures/metal000_base.jpg"
+            }
+        },
+        "Metal_Aluminium_mirror": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [1.34, 0.96, 0.62],
+                "k": [7.47, 6.40, 5.30],
+                "roughness": [0.0]
+            }
+        },
+        "Metal_Aluminium_normal": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [1.34, 0.96, 0.62],
+                "k": [7.47, 6.40, 5.30],
+                "roughness": [0.2]
+            }
+        },
+        "Metal_Aluminium_flat": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [1.34, 0.96, 0.62],
+                "k": [7.47, 6.40, 5.30],
+                "roughness": [0.35]
+            }
+        },
+        "Metal_Aluminium_dull": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [1.34, 0.96, 0.62],
+                "k": [7.47, 6.40, 5.30],
+                "roughness": [0.5]
+            }
+        },
+        "Metal_Aluminium_brushed": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [1.34, 0.96, 0.62],
+                "k": [7.47, 6.40, 5.30]
+            },
+            "textures": {
+                "map_roughness": "./textures/brushed.jpg"
+            }
+        },
+        "Metal_Aluminium_cast": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [1.34, 0.96, 0.62],
+                "k": [7.47, 6.40, 5.30]
+            },
+            "textures": {
+                "map_roughness": "./textures/cast.jpg"
+            }
+        },
+        "Metal_Silver_mirror": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.16, 0.15, 0.14],
+                "k": [3.93, 3.20, 2.38],
+                "roughness": [0.0]
+            }
+        },
+        "Metal_Silver_normal": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.16, 0.15, 0.14],
+                "k": [3.93, 3.20, 2.38],
+                "roughness": [0.2]
+            }
+        },
+        "Metal_Silver_flat": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.16, 0.15, 0.14],
+                "k": [3.93, 3.20, 2.38],
+                "roughness": [0.35]
+            }
+        },
+        "Metal_Silver_dull": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.16, 0.15, 0.14],
+                "k": [3.93, 3.20, 2.38],
+                "roughness": [0.5]
+            }
+        },
+        "Metal_Silver_brushed": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.16, 0.15, 0.14],
+                "k": [3.93, 3.20, 2.38]
+            },
+            "textures": {
+                "map_roughness": "./textures/brushed.jpg"
+            }
+        },
+        "Metal_Silver_cast": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.16, 0.15, 0.14],
+                "k": [3.93, 3.20, 2.38]
+            },
+            "textures": {
+                "map_roughness": "./textures/cast.jpg"
+            }
+        },
+        "Metal_Gold_mirror": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.18, 0.42, 1.37],
+                "k": [3.42, 2.35, 1.77],
+                "roughness": [0.0]
+            }
+        },
+        "Metal_Gold_normal": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.18, 0.42, 1.37],
+                "k": [3.42, 2.35, 1.77],
+                "roughness": [0.2]
+            }
+        },
+        "Metal_Gold_flat": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.18, 0.42, 1.37],
+                "k": [3.42, 2.35, 1.77],
+                "roughness": [0.35]
+            }
+        },
+        "Metal_Gold_dull": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.18, 0.42, 1.37],
+                "k": [3.42, 2.35, 1.77],
+                "roughness": [0.5]
+            }
+        },
+        "Metal_Gold_brushed": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.18, 0.42, 1.37],
+                "k": [3.42, 2.35, 1.77]
+            },
+            "textures": {
+                "map_roughness": "./textures/brushed.jpg"
+            }
+        },
+        "Metal_Gold_cast": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.18, 0.42, 1.37],
+                "k": [3.42, 2.35, 1.77]
+            },
+            "textures": {
+                "map_roughness": "./textures/cast.jpg"
+            }
+        },
+        "Metal_Chromium_mirror": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [3.20, 3.10, 2.30],
+                "k": [3.61, 2.62, 2.29],
+                "roughness": [0.0]
+            }
+        },
+        "Metal_Chromium_normal": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [3.20, 3.10, 2.30],
+                "k": [3.61, 2.62, 2.29],
+                "roughness": [0.2]
+            }
+        },
+        "Metal_Chromium_flat": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [3.20, 3.10, 2.30],
+                "k": [3.61, 2.62, 2.29],
+                "roughness": [0.35]
+            }
+        },
+        "Metal_Chromium_dull": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [3.20, 3.10, 2.30],
+                "k": [3.61, 2.62, 2.29],
+                "roughness": [0.5]
+            }
+        },
+        "Metal_Chromium_brushed": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [3.20, 3.10, 2.30],
+                "k": [3.61, 2.62, 2.29]
+            },
+            "textures": {
+                "map_roughness": "./textures/brushed.jpg"
+            }
+        },
+        "Metal_Chromium_cast": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [3.20, 3.10, 2.30],
+                "k": [3.61, 2.62, 2.29]
+            },
+            "textures": {
+                "map_roughness": "./textures/cast.jpg"
+            }
+        },
+        "Metal_Copper_mirror": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.27, 0.68, 1.32],
+                "k": [3.61, 2.62, 2.29],
+                "roughness": [0.0]
+            }
+        },
+        "Metal_Copper_normal": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.27, 0.68, 1.32],
+                "k": [3.61, 2.62, 2.29],
+                "roughness": [0.2]
+            }
+        },
+        "Metal_Copper_flat": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.27, 0.68, 1.32],
+                "k": [3.61, 2.62, 2.29],
+                "roughness": [0.35]
+            }
+        },
+        "Metal_Copper_dull": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.27, 0.68, 1.32],
+                "k": [3.61, 2.62, 2.29],
+                "roughness": [0.5]
+            }
+        },
+        "Metal_Copper_brushed": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.27, 0.68, 1.32],
+                "k": [3.61, 2.62, 2.29]
+            },
+            "textures": {
+                "map_roughness": "./textures/brushed.jpg"
+            }
+        },
+        "Metal_Copper_cast": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.27, 0.68, 1.32],
+                "k": [3.61, 2.62, 2.29]
+            },
+            "textures": {
+                "map_roughness": "./textures/cast.jpg"
+            }
+        },
+        "Metal_Brass_mirror": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.44, 0.52, 1.09],
+                "k": [3.70, 2.76, 1.83],
+                "roughness": [0.0]
+            }
+        },
+        "Metal_Brass_normal": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.44, 0.52, 1.09],
+                "k": [3.70, 2.76, 1.83],
+                "roughness": [0.2]
+            }
+        },
+        "Metal_Brass_flat": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.44, 0.52, 1.09],
+                "k": [3.70, 2.76, 1.83],
+                "roughness": [0.35]
+            }
+        },
+        "Metal_Brass_dull": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.44, 0.52, 1.09],
+                "k": [3.70, 2.76, 1.83],
+                "roughness": [0.5]
+            }
+        },
+        "Metal_Brass_brushed": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.44, 0.52, 1.09],
+                "k": [3.70, 2.76, 1.83]
+            },
+            "textures": {
+                "map_roughness": "./textures/brushed.jpg"
+            }
+        },
+        "Metal_Brass_cast": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.44, 0.52, 1.09],
+                "k": [3.70, 2.76, 1.83]
+            },
+            "textures": {
+                "map_roughness": "./textures/cast.jpg"
+            }
+        },
+        "Metal_Lead_mirror": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [1.91, 1.83, 1.44],
+                "k": [3.51, 3.40, 3.18],
+                "roughness": [0.0]
+            }
+        },
+        "Metal_Lead_normal": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [1.91, 1.83, 1.44],
+                "k": [3.51, 3.40, 3.18],
+                "roughness": [0.2]
+            }
+        },
+        "Metal_Lead_flat": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [1.91, 1.83, 1.44],
+                "k": [3.51, 3.40, 3.18],
+                "roughness": [0.35]
+            }
+        },
+        "Metal_Lead_dull": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [1.91, 1.83, 1.44],
+                "k": [3.51, 3.40, 3.18],
+                "roughness": [0.5]
+            }
+        },
+        "Metal_Lead_brushed": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [1.91, 1.83, 1.44],
+                "k": [3.51, 3.40, 3.18]
+            },
+            "textures": {
+                "map_roughness": "./textures/brushed.jpg"
+            }
+        },
+        "Metal_Lead_cast": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [1.91, 1.83, 1.44],
+                "k": [3.51, 3.40, 3.18]
+            },
+            "textures": {
+                "map_roughness": "./textures/cast.jpg"
+            }
+        },
+        "Metal_Titanium_mirror": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [2.74, 2.65, 2.51],
+                "k": [3.81, 4.43, 3.39],
+                "roughness": [0.0]
+            }
+        },
+        "Metal_Titanium_normal": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [2.74, 2.65, 2.51],
+                "k": [3.81, 4.43, 3.39],
+                "roughness": [0.2]
+            }
+        },
+        "Metal_Titanium_flat": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [2.74, 2.65, 2.51],
+                "k": [3.81, 4.43, 3.39],
+                "roughness": [0.35]
+            }
+        },
+        "Metal_Titanium_dull": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [2.74, 2.65, 2.51],
+                "k": [3.81, 4.43, 3.39],
+                "roughness": [0.5]
+            }
+        },
+        "Metal_Titanium_brushed": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [2.74, 2.65, 2.51],
+                "k": [3.81, 4.43, 3.39]
+            },
+            "textures": {
+                "map_roughness": "./textures/brushed.jpg"
+            }
+        },
+        "Metal_Titanium_cast": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [2.74, 2.65, 2.51],
+                "k": [3.81, 4.43, 3.39]
+            },
+            "textures": {
+                "map_roughness": "./textures/cast.jpg"
+            }
+        },
+        "Metal_Iron_mirror": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [2.91, 2.95, 2.60],
+                "k": [3.08, 2.93, 2.76],
+                "roughness": [0.0]
+            }
+        },
+        "Metal_Iron_normal": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [2.91, 2.95, 2.60],
+                "k": [3.08, 2.93, 2.76],
+                "roughness": [0.2]
+            }
+        },
+        "Metal_Iron_flat": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [2.91, 2.95, 2.60],
+                "k": [3.08, 2.93, 2.76],
+                "roughness": [0.35]
+            }
+        },
+        "Metal_Iron_dull": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [2.91, 2.95, 2.60],
+                "k": [3.08, 2.93, 2.76],
+                "roughness": [0.5]
+            }
+        },
+        "Metal_Iron_brushed": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [2.91, 2.95, 2.60],
+                "k": [3.08, 2.93, 2.76]
+            },
+            "textures": {
+                "map_roughness": "./textures/brushed.jpg"
+            }
+        },
+        "Metal_Iron_cast": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [2.91, 2.95, 2.60],
+                "k": [3.08, 2.93, 2.76]
+            },
+            "textures": {
+                "map_roughness": "./textures/cast.jpg"
+            }
+        },
+        "Metal_Tungsten_normal": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.92, 1.34, 2.23],
+                "k": [6.86, 5.23, 5.15],
+                "roughness": [0.2]
+            }
+        },
+        "Metal_Tungsten_flat": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.92, 1.34, 2.23],
+                "k": [6.86, 5.23, 5.15],
+                "roughness": [0.35]
+            }
+        },
+        "Metal_Tungsten_dull": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.92, 1.34, 2.23],
+                "k": [6.86, 5.23, 5.15],
+                "roughness": [0.5]
+            }
+        },
+        "Metal_Tungsten_brushed": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.92, 1.34, 2.23],
+                "k": [6.86, 5.23, 5.15]
+            },
+            "textures": {
+                "map_roughness": "./textures/brushed.jpg"
+            }
+        },
+        "Metal_Tungsten_cast": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [0.92, 1.34, 2.23],
+                "k": [6.86, 5.23, 5.15]
+            },
+            "textures": {
+                "map_roughness": "./textures/cast.jpg"
+            }
+        },
+        "Metal_Platinum_mirror": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [2.38, 2.08, 1.85],
+                "k": [4.27, 3.72, 3.14],
+                "roughness": [0.0]
+            }
+        },
+        "Metal_Platinum_normal": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [2.38, 2.08, 1.85],
+                "k": [4.27, 3.72, 3.14],
+                "roughness": [0.2]
+            }
+        },
+        "Metal_Platinum_flat": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [2.38, 2.08, 1.85],
+                "k": [4.27, 3.72, 3.14],
+                "roughness": [0.35]
+            }
+        },
+        "Metal_Platinum_dull": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [2.38, 2.08, 1.85],
+                "k": [4.27, 3.72, 3.14],
+                "roughness": [0.5]
+            }
+        },
+        "Metal_Platinum_brushed": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [2.38, 2.08, 1.85],
+                "k": [4.27, 3.72, 3.14]
+            },
+            "textures": {
+                "map_roughness": "./textures/brushed.jpg"
+            }
+        },
+        "Metal_Platinum_cast": {
+            "type": "Metal",
+            "doubles": {
+                "eta": [2.38, 2.08, 1.85],
+                "k": [4.27, 3.72, 3.14]
+            },
+            "textures": {
+                "map_roughness": "./textures/cast.jpg"
+            }
+        },
+        "Metal_Stainless_Steel_mirror": {
+            "type": "Alloy",
+            "doubles": {
+                "color": [0.8784, 0.8745, 0.8588],
+                "roughness": [0.0]
+            }
+        },
+        "Metal_Stainless_Steel_normal": {
+            "type": "Alloy",
+            "doubles": {
+                "color": [0.8784, 0.8745, 0.8588],
+                "roughness": [0.2]
+            }
+        },
+        "Metal_Stainless_Steel_flat": {
+            "type": "Alloy",
+            "doubles": {
+                "color": [0.8784, 0.8745, 0.8588],
+                "roughness": [0.35]
+            }
+        },
+        "Metal_Stainless_Steel_dull": {
+            "type": "Alloy",
+            "doubles": {
+                "color": [0.8784, 0.8745, 0.8588],
+                "roughness": [0.5]
+            }
+        },
+        "Metal_Stainless_Steel_brushed": {
+            "type": "Alloy",
+            "doubles": {
+                "color": [0.8784, 0.8745, 0.8588]
+            },
+            "textures": {
+                "map_roughness": "./textures/brushed.jpg"
+            }
+        },
+        "Metal_Stainless_Steel_cast": {
+            "type": "Alloy",
+            "doubles": {
+                "color": [0.8784, 0.8745, 0.8588]
+            },
+            "textures": {
+                "map_roughness": "./textures/cast.jpg"
+            }
+        }
+    }
+}

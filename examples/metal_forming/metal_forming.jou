@@ -147,7 +147,7 @@ create displacement name "blank" on nodeset 1 dof 1 dof 3 fix
 #punch
 create displacement name 'punch_fix_rp1' on nodeset 5 dof 1 dof 2 dof 3 fix
 create displacement name 'punch_fix_rp2' on nodeset 6 dof 1 dof 2 dof 3 fix
-create displacement name 'punch_move_rp1' on nodeset 5  dof 2 fix -38
+create displacement name 'punch_move_rp1' on nodeset 5  dof 2 fix -35
 modify displacement 4 dof 1 fix 0
 modify displacement 4 dof 3 fix 0
 #holder
