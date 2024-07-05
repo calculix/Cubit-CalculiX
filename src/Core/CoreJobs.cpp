@@ -184,6 +184,7 @@ bool CoreJobs::run_job(int job_id,int option)
             PRINT_INFO("%s", log.c_str());
             TerminateProcess(processhandle, 1);
             CloseHandle(processhandle);
+            kill_pipe(job_id);
             log = " Job killed!\n";
             PRINT_INFO("%s", log.c_str());
             jobs_data[job_data_id][3] = "3";         
@@ -300,29 +301,27 @@ bool CoreJobs::run_job(int job_id,int option)
         //PRINT_INFO("%s", log.c_str());
         std::string output(chBuf, dwRead);
         output_console[std::stoi(jobs_data[job_data_id][5])].push_back(output);
-                  
+                          
+        PipeThreads.push_back(std::thread(&CoreJobs::read_pipe, this, job_id, PipeThreadsRun.size()));
+        PipeThreadsRun.push_back(true);
+       
+        // write linking of the ids
         PULONG ClientProcessId;
         GetNamedPipeClientProcessId(g_hChildStd_OUT_Rd,ClientProcessId);
+        std::ostringstream oss;
+        oss << PipeThreads[PipeThreads.size()-1].get_id() << std::endl;
         std::vector<int> tmp;
         tmp.push_back(int(piProcInfo.dwProcessId));
         tmp.push_back(int(ClientProcessId));
+        tmp.push_back(std::stoi(oss.str()));
         PPTID.push_back(tmp);
         PipePID.push_back(int(ClientProcessId));
-
         /*
-        log = "PIPEPID RUN " + std::to_string(int(ClientProcessId))  + " \n";
+        log = "CREATED THREAD ID " + oss.str() + " \n";
+        log.append("NUMBER OF PIPE READ THREADS " + std::to_string(PipeThreads.size())  + " \n");
         PRINT_INFO("%s", log.c_str());
         */
       }
-
-
-      PipeThreads.push_back(std::thread(&CoreJobs::read_pipe, this, job_id));
-
-      std::ostringstream oss;
-      oss << PipeThreads[PipeThreads.size()-1].get_id() << std::endl;
-      log = "CREATED THREAD ID " + oss.str() + " \n";
-      log.append("NUMBER OF PIPE READ THREADS " + std::to_string(PipeThreads.size())  + " \n");
-      PRINT_INFO("%s", log.c_str());
 
       return true;
     }
@@ -456,6 +455,7 @@ bool CoreJobs::wait_job(int job_id)
 
           jobs_data[jobs_data_id][3] = "5"; // mark the job for waiting
 
+    	    /*
           DWORD dwRead; 
           CHAR chBuf[BUFSIZE];
           bool success = true; 
@@ -481,6 +481,22 @@ bool CoreJobs::wait_job(int job_id)
             }
           }
           progressbar->end();
+          */
+
+          while (returnCode == STILL_ACTIVE)
+          {
+            GetExitCodeProcess(processhandle, &returnCode);
+            //update progress bar
+            const auto t_end = std::chrono::high_resolution_clock::now();
+            int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+            //currentDataRow += frd->result_block_data[data_ids[ii]].size();
+            if (duration > 500)
+            {
+              progressbar->check_interrupt();
+              t_start = std::chrono::high_resolution_clock::now();
+            }
+          }
+          progressbar->end();
         }
       }
 
@@ -494,6 +510,7 @@ bool CoreJobs::wait_job(int job_id)
           int PipePID;
           PipePID = get_PipePID_from_ProcessPID(std::stoi(jobs_data[jobs_data_id][4]));           
           ProcessPipe_data_id = get_ProcessPipe_data_id_from_PipePID(PipePID);
+          kill_pipe(job_id);
           ProcessPipe.erase(ProcessPipe.begin() + ProcessPipe_data_id);
           PPTID.erase(PPTID.begin() + ProcessPipe_data_id);
           this->PipePID.erase(this->PipePID.begin() + ProcessPipe_data_id);
@@ -679,59 +696,6 @@ bool CoreJobs::check_jobs()
     {
       if (std::stoi(jobs_data[i][3])==1)
       {
-        // get pipe
-        PipePID = get_PipePID_from_ProcessPID(std::stoi(jobs_data[i][4]));            
-
-        if (PipePID != -1)
-        {
-          ProcessPipe_data_id = get_ProcessPipe_data_id_from_PipePID(PipePID);
-          /*
-          log = "PIPEPID " + std::to_string(PipePID) + " \n";
-          log.append("PROCESSPID " + jobs_data[i][4] + " \n");
-          log.append("ProcessPipe_data_id " + std::to_string(ProcessPipe_data_id) + " \n");
-          PRINT_INFO("%s", log.c_str());
-          */
-
-          if (ProcessPipe_data_id != -1)
-          {
-            /*
-            DWORD dwRead; 
-            CHAR chBuf[BUFSIZE];
-            bool success = true; 
-            
-            for(;;)
-            { 
-              DWORD bytesAvail = 0;
-              PeekNamedPipe(ProcessPipe[ProcessPipe_data_id], NULL, 0, NULL, &bytesAvail, NULL);  
-              if (bytesAvail) {
-                  success = ReadFile(ProcessPipe[ProcessPipe_data_id], chBuf, BUFSIZE, &dwRead, NULL);
-                  if (!success) {
-                      break;
-                  }
-                  std::string output(chBuf, dwRead);
-                  output_console[std::stoi(jobs_data[i][5])].push_back(output);
-                  get_cvgsta(std::stoi(jobs_data[i][0]));        
-              }else{
-                break;
-              }
-            }
-            */
-            /*
-            while (success) 
-            {
-              success = ReadFile(ProcessPipe[ProcessPipe_data_id], chBuf, BUFSIZE, &dwRead, NULL);
-                  if (!success) {
-                      break;
-                  }
-                  std::string output(chBuf, dwRead);
-                  output_console[std::stoi(jobs_data[i][5])].push_back(output);
-                  get_cvgsta(std::stoi(jobs_data[i][0]));        
-            }
-            */
-            
-            //CloseHandle(g_hChildStd_OUT_Rd);
-          }
-        }
         //solver processes still running?
         int status;
         HANDLE processhandle;
@@ -746,6 +710,7 @@ bool CoreJobs::check_jobs()
             int PipePID;
             PipePID = get_PipePID_from_ProcessPID(std::stoi(jobs_data[i][4]));           
             ProcessPipe_data_id = get_ProcessPipe_data_id_from_PipePID(PipePID);
+            kill_pipe(std::stoi(jobs_data[i][0]));
             ProcessPipe.erase(ProcessPipe.begin() + ProcessPipe_data_id);
             PPTID.erase(PPTID.begin() + ProcessPipe_data_id);
             this->PipePID.erase(this->PipePID.begin() + ProcessPipe_data_id);
@@ -1119,7 +1084,20 @@ int CoreJobs::get_jobs_data_id_from_job_id(int job_id)
     return return_int;
   }
 
-  void CoreJobs::read_pipe(int job_id)
+  int CoreJobs::get_ThreadID_from_ProcessPID(int ProcessPID)
+  {
+    int return_int = -1;
+    for (size_t i = 0; i < PPTID.size(); i++)
+    {
+      if (ProcessPID == PPTID[i][0])
+      {
+        return_int = PPTID[i][2];
+      }
+    }
+    return return_int;
+  }
+
+  void CoreJobs::read_pipe(int job_id, int bool_data_id)
   {
     std::string log;
     CubitString output;
@@ -1146,6 +1124,10 @@ int CoreJobs::get_jobs_data_id_from_job_id(int job_id)
           
           while (success) 
           {
+            if (!PipeThreadsRun[bool_data_id])
+            {
+              break;
+            }
             success = ReadFile(ProcessPipe[ProcessPipe_data_id], chBuf, BUFSIZE, &dwRead, NULL);
             if (!success) {
                 break;
@@ -1154,6 +1136,52 @@ int CoreJobs::get_jobs_data_id_from_job_id(int job_id)
             output_console[std::stoi(jobs_data[jobs_data_id][5])].push_back(output);
             get_cvgsta(std::stoi(jobs_data[jobs_data_id][0]));        
           }
+        }
+      }
+    }
+  }
+
+  void CoreJobs::kill_pipe(int job_id)
+  {
+    std::string log;
+    CubitString output;
+    int killed_data_id = -1;
+    
+    int jobs_data_id=-1;
+    
+    jobs_data_id = get_jobs_data_id_from_job_id(job_id);
+
+    if (jobs_data_id != -1)
+    {
+      int ThreadID = get_ThreadID_from_ProcessPID(std::stoi(jobs_data[jobs_data_id][4]));   
+      if (ThreadID != -1)
+      {
+        for (size_t i = 0; i < PipeThreads.size(); i++)
+        {
+          std::ostringstream oss;
+          oss << PipeThreads[i].get_id() << std::endl;
+          if (ThreadID == std::stoi(oss.str()))
+          {
+            PipeThreadsRun[i] = false;
+            killed_data_id = int(i);
+          }
+        }
+        if (killed_data_id != -1)
+        {
+          /*
+          log = "kill Thread " + std::to_string(ThreadID) + " \n";
+          log.append("NUMBER OF PIPE READ THREADS " + std::to_string(PipeThreads.size())  + " \n");
+          log.append("NUMBER OF PIPE READ THREADS BOOLS" + std::to_string(PipeThreadsRun.size())  + " \n");
+          log.append("kill Thread " + std::to_string(killed_data_id) + " \n");
+          */
+          PipeThreads[killed_data_id].join();
+          PipeThreads.erase(PipeThreads.begin() + killed_data_id);
+          PipeThreadsRun.erase(PipeThreadsRun.begin() + killed_data_id);
+          /*
+          log.append("NUMBER OF PIPE READ THREADS " + std::to_string(PipeThreads.size())  + " \n");
+          log.append("NUMBER OF PIPE READ THREADS BOOLS" + std::to_string(PipeThreadsRun.size())  + " \n");
+          PRINT_INFO("%s", log.c_str());
+          */
         }
       }
     }

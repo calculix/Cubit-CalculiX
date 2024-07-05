@@ -28,3 +28,5 @@
 2024-06-14 debugging startup of ccl and ccm, changing dependencies in cmake
 2024-06-15 compilation of windows version
 2024-06-16 debug python interface import on windows, nohup replacement windows
+2024-06-17 - 2024-07-05 CoreJobs modified for windows
+2024-07-05 Rework Useroptions and include paraview and solver

@@ -2,6 +2,8 @@
 #define CONFIGFILE_HPP
 
 #include <QString>
+#include <vector>
+#include <string>
 
 class ConfigFile
 {
@@ -9,7 +11,9 @@ class ConfigFile
     ConfigFile();
     ~ConfigFile();
 
+  std::string componentpath;
   std::string filename;
+  std::string filepath;
 
   void clear();
   void read_entry(std::string option, QString &value);
