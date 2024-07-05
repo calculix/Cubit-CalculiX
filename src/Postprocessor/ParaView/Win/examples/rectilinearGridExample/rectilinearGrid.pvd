@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<!-- Rectilinear grid example.  Two timesteps, and each timestep holds two vtr files.-->
+<!--   Note that this dataset will also spread properly across parallel servers. -->
+<!-- Read in two timesteps of a dataset, one file at a time. -->
+
+<VTKFile type="Collection" version="0.1"
+         byte_order="LittleEndian"
+         compressor="vtkZLibDataCompressor">
+  <Collection>
+    <DataSet timestep="0" group="" part="0" file="blockRectilinearGridTime0.pvtr"/>
+    <DataSet timestep="1" group="" part="0" file="blockRectilinearGridTime1.pvtr"/>
+  </Collection>
+</VTKFile>
+

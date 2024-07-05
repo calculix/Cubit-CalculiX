@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<!-- Lets make 8 2d triangles from 13 points -->
+<!-- When we need timesteps, this will be time 1 -->
+<!-- Create some cell data -->
+<!-- Create some points -->
+<!-- Create some cells from the points-->
+
+<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian" compressor="vtkZLibDataCompressor">
+  <UnstructuredGrid>
+    <Piece NumberOfPoints="13" NumberOfCells="8">
+      <CellData>
+        <DataArray type="Float32" Name="temperature" format="ascii">
+          21 23 25 27 29 21 22 20 
+        </DataArray>
+        <DataArray type="Float32" Name="pressure" format="ascii">
+         4 2 6 8 10 12 11 9 
+        </DataArray>
+      </CellData>
+      <Points>
+        <DataArray type="Float32" NumberOfComponents="3" format="ascii">
+          -1 -1 4 -1 -1 4
+          1 -1 4 1 1 4
+          -1 1 4 0 -2 4
+          2 0 4 0 2 4
+          -2 0 4 0 -1 4
+          1 0 4 0 1 4
+          -1 0 4
+        </DataArray>
+      </Points>
+      <Cells>
+        <DataArray type="Int32" Name="connectivity" format="ascii">
+          1 5 9 9 5 2
+          2 6 10 10 6 3
+          11 3 7 11 7 4
+          8 12 4 1 12 8
+        </DataArray>
+        <DataArray type="Int32" Name="offsets" format="ascii">
+          3 6 9 12 15 18
+          21 24
+        </DataArray>
+        <DataArray type="UInt8" Name="types" format="ascii">
+          5 5 5 5 5 5
+          5 5
+        </DataArray>
+      </Cells>
+    </Piece>
+  </UnstructuredGrid>
+</VTKFile>

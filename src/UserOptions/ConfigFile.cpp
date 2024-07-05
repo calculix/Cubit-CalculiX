@@ -7,6 +7,7 @@
 #include <QString>
 #include <fstream>
 #include <iostream>
+#include <algorithm>
 
 ConfigFile::ConfigFile()
 {
@@ -20,16 +21,16 @@ ConfigFile::ConfigFile()
     std::string log;
 
     med->get_component_paths(output);
-    log = " paths:\n " + output.toStdString() + " \n";
-    PRINT_INFO("%s", log.c_str());
+    //log = " paths:\n " + output.toStdString() + " \n";
+    //PRINT_INFO("%s", log.c_str());
 
     CubitString cs(output.toStdString());
     std::vector<CubitString> paths;
     cs.tokenize(';', paths );
     for (size_t i = 0; i < paths.size(); i++)
     {
-        log = " path: " + paths[i].str() + " \n";
-        PRINT_INFO("%s", log.c_str());
+        //log = " path: " + paths[i].str() + " \n";
+        //PRINT_INFO("%s", log.c_str());
 
         componentpath = paths[i].str() + "/";
         filepath = componentpath + "calculix_comp.ccl";
@@ -94,10 +95,16 @@ void ConfigFile::read_entry(std::string option, QString &value)
                 if (line.substr(option.length(),1)=="=")
                 {
                     value = QString::fromStdString(line.substr(option.length()+1));
+                    if (value=="")
+                    {
+                        value = standard_entry(option);
+                    }
                 }
             }
         }
         input_file.close();
+    }else{
+        value = standard_entry(option);
     }
 }
 
@@ -114,11 +121,16 @@ void ConfigFile::read_num_entry(std::string option, int &value)
                 if (line.substr(option.length(),1)=="=")
                 {
                     value = std::stoi(line.substr(option.length()+1));
+                    if (value==0)
+                    {
+                        value = standard_num_entry(option);
+                    }
                 }
-                //std::cout << line.substr(option.length()+1) << "\n";
             }
         }
         input_file.close();
+    }else{
+        value = standard_num_entry(option);
     }
 }
 
@@ -136,4 +148,40 @@ void ConfigFile::write_num_entry(std::string option, int value)
     output_file.open(filepath.c_str(), std::ios_base::app);
     output_file << option << "=" << value  << "\n";
     output_file.close();
+}
+
+
+QString ConfigFile::standard_entry(std::string option)
+{
+    QString standard_value = "";
+
+    if (option == "PathSolver")
+    {
+        standard_value = QString::fromStdString(componentpath) + "Solver/ccx_dynamic.exe";
+    }else if(option == "PathCGX")
+    {
+        standard_value = QString::fromStdString(componentpath) + "Postprocessor/CGX/cgx_STATIC.exe";
+    }else if(option == "PathParaView")
+    {
+        standard_value = QString::fromStdString(componentpath) + "Postprocessor/ParaView/bin/paraview.exe";
+    }else if(option == "PathIcons")
+    {
+        standard_value = QString::fromStdString(componentpath) + "Icons/";
+    }else if(option == "PathPythonInterface")
+    {
+        standard_value = QString::fromStdString(componentpath);
+    }
+
+    return standard_value;
+}
+
+int ConfigFile::standard_num_entry(std::string option)
+{
+    int standard_value = 1;
+
+    if (option == "SolverThreads")
+    {
+        standard_value = 4;
+    }
+    return standard_value;
 }
