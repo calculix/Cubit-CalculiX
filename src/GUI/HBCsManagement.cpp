@@ -167,11 +167,11 @@ int HBCsManagement::get_child_id(std::string hbc_id)
   QTreeWidgetItem *temp_child;
   for (size_t i = 0; i < tree_hbcs->topLevelItemCount(); i++)
   {
-    temp_child = tree_hbcs->topLevelItem(i);
+    temp_child = tree_hbcs->topLevelItem(int(i));
     
     if (temp_child->text(1).toStdString()==hbc_id)
     {
-      int_return = i;
+      int_return = int(i);
       break;
     }
   }
@@ -241,9 +241,9 @@ void HBCsManagement::createItems(QTreeWidgetItem *hbc)
     {
       for (size_t iii = 0; iii < available_trees[i]->childCount(); iii++)
       {
-        if (used_trees[i]->child(ii)->text(1)==available_trees[i]->child(iii)->text(1))
+        if (used_trees[i]->child(int(ii))->text(1)==available_trees[i]->child(int(iii))->text(1))
         {
-          available_trees[i]->removeChild(available_trees[i]->child(iii));
+          available_trees[i]->removeChild(available_trees[i]->child(int(iii)));
         }
       }
     }
@@ -338,14 +338,14 @@ void HBCsManagement::on_pushButton_apply_clicked(bool)
       found = false;
       for (size_t iii = 0; iii < used[i].size(); iii++)
       {
-        if (used_trees[i]->child(ii)->text(1)==QString::fromStdString(used[i][iii][0]))
+        if (used_trees[i]->child(int(ii))->text(1)==QString::fromStdString(used[i][iii][0]))
         {
           found = true;
         }
       }
       if (!found)
       {
-        command = command_prefix[i] + used_trees[i]->child(ii)->text(1);
+        command = command_prefix[int(i)] + used_trees[i]->child(int(ii))->text(1);
         commands.push_back(command);
       }
     }
@@ -358,14 +358,14 @@ void HBCsManagement::on_pushButton_apply_clicked(bool)
       found = false;
       for (size_t iii = 0; iii < used_trees[i]->childCount(); iii++)
       {
-        if (QString::fromStdString(used[i][ii][0])==used_trees[i]->child(iii)->text(1))
+        if (QString::fromStdString(used[i][ii][0])==used_trees[i]->child(int(iii))->text(1))
         {
           found = true;
         }
       }
       if (!found)
       {
-        command = command_prefix[i+2] + QString::fromStdString(used[i][ii][0]);
+        command = command_prefix[int(i)+2] + QString::fromStdString(used[i][ii][0]);
         commands.push_back(command);
       }
     }
@@ -373,7 +373,7 @@ void HBCsManagement::on_pushButton_apply_clicked(bool)
 
   for (size_t i = 0; i < commands.size(); i++)
   {
-    CubitInterface::cmd(commands[i].toStdString().c_str());
+    CubitInterface::cmd(commands[int(i)].toStdString().c_str());
   }
 
   this->update();

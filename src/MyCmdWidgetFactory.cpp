@@ -38,6 +38,9 @@
 #include "AmplitudesCreatePanel.hpp"
 #include "AmplitudesModifyPanel.hpp"
 #include "AmplitudesDeletePanel.hpp"
+#include "OrientationsCreatePanel.hpp"
+#include "OrientationsModifyPanel.hpp"
+#include "OrientationsDeletePanel.hpp"
 #include "LoadsForcesModifyPanel.hpp"
 #include "LoadsPressuresModifyPanel.hpp"
 #include "LoadsHeatfluxesModifyPanel.hpp"
@@ -222,6 +225,12 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
     return new AmplitudesModifyPanel();
   else if(name == "CCXAmplitudesDelete")
     return new AmplitudesDeletePanel();
+  else if(name == "CCXOrientationsCreate")
+    return new OrientationsCreatePanel();
+  else if(name == "CCXOrientationsModify")
+    return new OrientationsModifyPanel();
+  else if(name == "CCXOrientationsDelete")
+    return new OrientationsDeletePanel();
   else if(name == "CCXLoadsForcesModify")
     return new LoadsForcesModifyPanel();
   else if(name == "CCXLoadsPressuresModify")

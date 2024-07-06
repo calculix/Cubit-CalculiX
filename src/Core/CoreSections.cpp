@@ -57,7 +57,7 @@ bool CoreSections::create_section(std::string section_type,int block_id, int mat
     }
     else
     {
-      sub_section_last = solid_section_data.size() - 1;
+      sub_section_last = int(solid_section_data.size()) - 1;
       sub_section_id = std::stoi(solid_section_data[sub_section_last][0]) + 1;
     }
     section_type_value = 1;
@@ -70,7 +70,7 @@ bool CoreSections::create_section(std::string section_type,int block_id, int mat
     }
     else
     {
-      sub_section_last = shell_section_data.size() - 1;
+      sub_section_last = int(shell_section_data.size()) - 1;
       sub_section_id = std::stoi(shell_section_data[sub_section_last][0]) + 1;
     }
     section_type_value = 2;
@@ -83,7 +83,7 @@ bool CoreSections::create_section(std::string section_type,int block_id, int mat
     }
     else
     {
-      sub_section_last = beam_section_data.size() - 1;
+      sub_section_last = int(beam_section_data.size()) - 1;
       sub_section_id = std::stoi(beam_section_data[sub_section_last][0]) + 1;
     }
     section_type_value = 3;
@@ -96,7 +96,7 @@ bool CoreSections::create_section(std::string section_type,int block_id, int mat
     }
     else
     {
-      sub_section_last = membrane_section_data.size() - 1;
+      sub_section_last = int(membrane_section_data.size()) - 1;
       sub_section_id = std::stoi(membrane_section_data[sub_section_last][0]) + 1;
     }
     section_type_value = 4;
@@ -109,7 +109,7 @@ bool CoreSections::create_section(std::string section_type,int block_id, int mat
   }
   else
   {
-    section_last = sections_data.size() - 1;
+    section_last = int(sections_data.size()) - 1;
     section_id = sections_data[section_last][0] + 1;
   }
 
@@ -283,7 +283,7 @@ int CoreSections::get_sections_data_id_from_section_id(int section_id)
   {
     if (sections_data[i][0]==section_id)
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -296,7 +296,7 @@ int CoreSections::get_solid_section_data_id_from_solid_section_id(int solid_sect
   {
     if (solid_section_data[i][0]==std::to_string(solid_section_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -310,7 +310,7 @@ int CoreSections::get_shell_section_data_id_from_shell_section_id(int shell_sect
   {
     if (shell_section_data[i][0]==std::to_string(shell_section_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -324,7 +324,7 @@ int CoreSections::get_beam_section_data_id_from_beam_section_id(int beam_section
   {
     if (beam_section_data[i][0]==std::to_string(beam_section_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -338,7 +338,7 @@ int CoreSections::get_membrane_section_data_id_from_membrane_section_id(int memb
   {
     if (membrane_section_data[i][0]==std::to_string(membrane_section_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -372,10 +372,11 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
       str_temp.append(", ELSET=");
       str_temp.append(ccx_iface->get_block_name(std::stoi(solid_section_data[sub_section_data_id][1])));
       
-      if (solid_section_data[sub_section_data_id][3]!="")
+      
+      if (ccx_iface->check_orientation_exists(std::stoi(solid_section_data[sub_section_data_id][3])))
       {
         str_temp.append(", ORIENTATION=");
-        str_temp.append(solid_section_data[sub_section_data_id][3]);
+        str_temp.append(ccx_iface->get_orientation_name(std::stoi(solid_section_data[sub_section_data_id][3])));
       }
 
       sections_export_list.push_back(str_temp);
@@ -395,10 +396,10 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
       str_temp.append(", ELSET=");
       str_temp.append(ccx_iface->get_block_name(std::stoi(shell_section_data[sub_section_data_id][1])));
       
-      if (shell_section_data[sub_section_data_id][3]!="")
+      if (ccx_iface->check_orientation_exists(std::stoi(shell_section_data[sub_section_data_id][3])))
       {
         str_temp.append(", ORIENTATION=");
-        str_temp.append(shell_section_data[sub_section_data_id][3]);
+        str_temp.append(ccx_iface->get_orientation_name(std::stoi(shell_section_data[sub_section_data_id][3])));
       }
 
       if (shell_section_data[sub_section_data_id][5]!="")
@@ -442,11 +443,12 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
         str_temp.append(beam_section_data[sub_section_data_id][15]);
       }
 
-      if (beam_section_data[sub_section_data_id][13]!="")
+      if (ccx_iface->check_orientation_exists(std::stoi(beam_section_data[sub_section_data_id][13])))
       {
         str_temp.append(", ORIENTATION=");
-        str_temp.append(beam_section_data[sub_section_data_id][13]);
+        str_temp.append(ccx_iface->get_orientation_name(std::stoi(beam_section_data[sub_section_data_id][13])));
       }
+
       sections_export_list.push_back(str_temp);
       if (beam_section_data[sub_section_data_id][3]=="BOX")
       {
@@ -466,10 +468,10 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
       str_temp.append(", ELSET=");
       str_temp.append(ccx_iface->get_block_name(std::stoi(membrane_section_data[sub_section_data_id][1])));
       
-      if (membrane_section_data[sub_section_data_id][3]!="")
+      if (ccx_iface->check_orientation_exists(std::stoi(membrane_section_data[sub_section_data_id][3])))
       {
         str_temp.append(", ORIENTATION=");
-        str_temp.append(membrane_section_data[sub_section_data_id][3]);
+        str_temp.append(ccx_iface->get_orientation_name(std::stoi(membrane_section_data[sub_section_data_id][3])));
       }
 
       if (membrane_section_data[sub_section_data_id][5]!="")

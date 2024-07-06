@@ -1,5 +1,10 @@
 #include "CalculiXCore.hpp"
-#include <unistd.h>
+#ifdef WIN32
+ //#include <windows.h>
+ #include <io.h>
+#else
+ #include <unistd.h>
+#endif
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -21,6 +26,7 @@
 #include "CoreSurfaceInteractions.hpp"
 #include "CoreContactPairs.hpp"
 #include "CoreAmplitudes.hpp"
+#include "CoreOrientations.hpp"
 #include "CoreLoadsForces.hpp"
 #include "CoreLoadsPressures.hpp"
 #include "CoreLoadsHeatfluxes.hpp"
@@ -46,7 +52,7 @@
 
 CalculiXCore::CalculiXCore():
   cb(NULL),mat(NULL),sections(NULL),constraints(NULL),surfaceinteractions(NULL),
-  contactpairs(NULL),amplitudes(NULL),loadsforces(NULL),loadspressures(NULL),loadsheatfluxes(NULL),
+  contactpairs(NULL),amplitudes(NULL),orientations(NULL),loadsforces(NULL),loadspressures(NULL),loadsheatfluxes(NULL),
   loadsgravity(NULL),loadscentrifugal(NULL),
   bcsdisplacements(NULL),bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL),
   initialconditions(NULL), hbcs(NULL), steps(NULL),jobs(NULL),results(NULL),timer(NULL),customlines(NULL),
@@ -71,6 +77,8 @@ CalculiXCore::~CalculiXCore()
     delete contactpairs;
   if(amplitudes)
     delete amplitudes;
+  if(orientations)
+    delete orientations;
   if(loadsforces)
     delete loadsforces;
   if(loadspressures)
@@ -120,20 +128,21 @@ bool CalculiXCore::print_to_log(std::string str_log)
 
 bool CalculiXCore::init()
 {
+/*
   me_iface = dynamic_cast<MeshExportInterface*>(CubitInterface::get_interface("MeshExport"));
   me_iface->initialize_export();
   mat_iface = dynamic_cast<MaterialInterface*>(CubitInterface::get_interface("Material"));
-
+*/
   if(!cb)
     cb = new CoreBlocks;
   
   cb->init();
-
+/*
   if(!mat)
     mat = new CoreMaterials;
   
   mat->init();
-  
+*/
   if(!sections)
     sections = new CoreSections;
   
@@ -158,7 +167,12 @@ bool CalculiXCore::init()
     amplitudes = new CoreAmplitudes;
   
   amplitudes->init();
+
+  if(!orientations)
+    orientations = new CoreOrientations;
   
+  orientations->init();
+
   if(!loadsforces)
     loadsforces = new CoreLoadsForces;
   
@@ -229,9 +243,6 @@ bool CalculiXCore::init()
   
   results->init();
 
-  if(!timer)
-    timer = new CoreTimer;
-
   if(!customlines)
     customlines = new CoreCustomLines;
   
@@ -242,6 +253,9 @@ bool CalculiXCore::init()
   
   draw->init();
 
+  if(!timer)
+    timer = new CoreTimer;
+
   if (use_ccx_logfile)
   {
     print_to_log("CalculiXCore Initialization!");
@@ -249,6 +263,20 @@ bool CalculiXCore::init()
 
   this->bool_init = true;
   this->bool_init_pythoninterface = false;
+
+  return true;
+}
+
+bool CalculiXCore::init2() // will be done when loading the ccm!
+{ 
+  me_iface = dynamic_cast<MeshExportInterface*>(CubitInterface::get_interface("MeshExport"));
+  me_iface->initialize_export();
+  mat_iface = dynamic_cast<MaterialInterface*>(CubitInterface::get_interface("Material"));
+  
+  if(!mat)
+    mat = new CoreMaterials;
+  
+  mat->init();
 
   return true;
 }
@@ -320,6 +348,7 @@ bool CalculiXCore::reset()
   surfaceinteractions->reset();
   contactpairs->reset();
   amplitudes->reset();
+  orientations->reset();
   loadsforces->reset();
   loadspressures->reset();
   loadsheatfluxes->reset();
@@ -351,6 +380,7 @@ std::string CalculiXCore::autocleanup()
   int sub_data_id;
   std::vector<int> sub_data_ids;
   bool sub_bool;
+  bool sub_bool_ref;
 
   std::string output;
 
@@ -361,6 +391,7 @@ std::string CalculiXCore::autocleanup()
   for (size_t i = sections->sections_data.size(); i > 0; i--)
   { 
     sub_bool = false;
+    sub_bool_ref = false;
     // SOLID
     if (sections->sections_data[i-1][1] == 1)
     {
@@ -376,6 +407,16 @@ std::string CalculiXCore::autocleanup()
         log.append("Block ID " + sections->solid_section_data[sub_data_id][1] + " doesn't exist.\n");
         log.append("Section ID " + std::to_string(sections->sections_data[i-1][0]) + " will be deleted.\n");
         sub_bool = true;
+      }
+      if (sections->solid_section_data[sub_data_id][3]!="-1")
+      {
+        if (!check_orientation_exists(std::stoi(sections->solid_section_data[sub_data_id][3])))
+        {
+          log.append("Orientation ID " + sections->solid_section_data[sub_data_id][3] + " doesn't exist.\n");
+          log.append("Orientation Reference from Section ID " + std::to_string(sections->sections_data[i-1][0]) + " will be deleted.\n");
+          sections->solid_section_data[sub_data_id][3]="-1";
+          sub_bool_ref = true;
+        }
       }
     }
     // SHELL
@@ -394,6 +435,16 @@ std::string CalculiXCore::autocleanup()
         log.append("Section ID " + std::to_string(sections->sections_data[i-1][0]) + " will be deleted.\n");
         sub_bool = true;
       }
+      if (sections->shell_section_data[sub_data_id][3]!="-1")
+      {
+        if (!check_orientation_exists(std::stoi(sections->shell_section_data[sub_data_id][3])))
+        {
+          log.append("Orientation ID " + sections->shell_section_data[sub_data_id][3] + " doesn't exist.\n");
+          log.append("Orientation Reference from Section ID " + std::to_string(sections->sections_data[i-1][0]) + " will be deleted.\n");
+          sections->shell_section_data[sub_data_id][3]="-1";
+          sub_bool_ref = true;
+        }
+      }
     }
     // BEAM
     if (sections->sections_data[i-1][1] == 3) 
@@ -410,6 +461,16 @@ std::string CalculiXCore::autocleanup()
         log.append("Block ID " + sections->beam_section_data[sub_data_id][1] + " doesn't exist.\n");
         log.append("Section ID " + std::to_string(sections->sections_data[i-1][0]) + " will be deleted.\n");
         sub_bool = true;
+      }
+      if (sections->beam_section_data[sub_data_id][13]!="-1")
+      {
+        if (!check_orientation_exists(std::stoi(sections->beam_section_data[sub_data_id][13])))
+        {
+          log.append("Orientation ID " + sections->beam_section_data[sub_data_id][13] + " doesn't exist.\n");
+          log.append("Orientation Reference from Section ID " + std::to_string(sections->sections_data[i-1][0]) + " will be deleted.\n");
+          sections->beam_section_data[sub_data_id][13]="-1";
+          sub_bool_ref = true;
+        }
       }
     }
     // MEMBRANE
@@ -428,11 +489,25 @@ std::string CalculiXCore::autocleanup()
         log.append("Section ID " + std::to_string(sections->sections_data[i-1][0]) + " will be deleted.\n");
         sub_bool = true;
       }
+      if (sections->membrane_section_data[sub_data_id][3]!="-1")
+      {
+        if (!check_orientation_exists(std::stoi(sections->membrane_section_data[sub_data_id][3])))
+        {
+          log.append("Orientation ID " + sections->membrane_section_data[sub_data_id][3] + " doesn't exist.\n");
+          log.append("Orientation Reference from Section ID " + std::to_string(sections->sections_data[i-1][0]) + " will be deleted.\n");
+          sections->membrane_section_data[sub_data_id][3]="-1";
+          sub_bool_ref = true;
+        }
+      }
     }
-    if (sub_bool)
+
+    if (sub_bool || sub_bool_ref)
     {
-      print_log = sub_bool;
-      sections->delete_section(sections->sections_data[i-1][0]);
+      print_log = true;
+      if (sub_bool)
+      {
+        sections->delete_section(sections->sections_data[i-1][0]);
+      }
     }
   }
 
@@ -997,6 +1072,7 @@ std::string CalculiXCore::print_data()
   str_return.append(surfaceinteractions->print_data());
   str_return.append(contactpairs->print_data());
   str_return.append(amplitudes->print_data());
+  str_return.append(orientations->print_data());
   str_return.append(loadsforces->print_data());
   str_return.append(loadspressures->print_data());
   str_return.append(loadsheatfluxes->print_data());
@@ -1273,6 +1349,73 @@ std::vector<int> CalculiXCore::get_block_element_ids(int block_id)
   return return_ids;
 }
 
+std::vector<double> CalculiXCore::get_block_bounding_box_center(int block_id)
+{
+  std::vector< int > returned_node_list;
+  std::vector< int > returned_sphere_list;
+  std::vector< int > returned_edge_list;
+  std::vector< int > returned_tri_list;
+  std::vector< int > returned_face_list;
+  std::vector< int > returned_pyramid_list;
+  std::vector< int > returned_wedge_list;
+  std::vector< int > returned_tet_list;
+  std::vector< int > returned_hex_list;
+  std::vector< int > returned_group_list;
+  std::vector< int > returned_volume_list;
+  std::vector< int > returned_surface_list;
+  std::vector< int > returned_curve_list; 
+  std::vector< int > returned_vertex_list;
+  std::vector<double> coord;
+
+  CubitInterface::get_block_children(block_id,
+   returned_group_list,
+   returned_node_list,
+   returned_sphere_list,
+   returned_edge_list,
+   returned_tri_list,
+   returned_face_list,
+   returned_pyramid_list,
+   returned_tet_list,
+   returned_hex_list,
+   returned_wedge_list,
+   returned_volume_list,
+   returned_surface_list,
+   returned_curve_list,
+   returned_vertex_list
+  );
+
+  std::array<double,10> vector_list;
+  std::vector<int> ids = CubitInterface::parse_cubit_list("vertex", "all");
+  if (returned_volume_list.size()!=0)
+  {
+    vector_list = CubitInterface::get_total_bounding_box("volume", returned_volume_list);
+    coord.push_back((vector_list[0]+vector_list[1])/2);
+    coord.push_back((vector_list[3]+vector_list[4])/2);
+    coord.push_back((vector_list[6]+vector_list[7])/2);
+  }else if (returned_surface_list.size()!=0)
+  {
+    vector_list = CubitInterface::get_total_bounding_box("surface", returned_surface_list);
+    coord.push_back((vector_list[0]+vector_list[1])/2);
+    coord.push_back((vector_list[3]+vector_list[4])/2);
+    coord.push_back((vector_list[6]+vector_list[7])/2);
+  }else if (returned_curve_list.size()!=0)
+  {
+    vector_list = CubitInterface::get_total_bounding_box("curve", returned_curve_list);
+    coord.push_back((vector_list[0]+vector_list[1])/2);
+    coord.push_back((vector_list[3]+vector_list[4])/2);
+    coord.push_back((vector_list[6]+vector_list[7])/2);
+  }else if (returned_vertex_list.size()!=0)
+  {
+    vector_list = CubitInterface::get_total_bounding_box("vertex", returned_vertex_list);
+    coord.push_back((vector_list[0]+vector_list[1])/2);
+    coord.push_back((vector_list[3]+vector_list[4])/2);
+    coord.push_back((vector_list[6]+vector_list[7])/2);
+  }
+  
+  return coord;
+}
+
+
 std::string CalculiXCore::get_material_name(int material_id)
 {
   std::string material_name;
@@ -1498,6 +1641,25 @@ std::string CalculiXCore::get_amplitude_name(int amplitude_id)
   return amplitude_name;
 }
 
+std::string CalculiXCore::get_orientation_name(int orientation_id)
+{
+  std::string name="";
+  int orientation_data_id;
+  int name_id;
+  int name_data_id;
+
+  orientation_data_id = orientations->get_orientations_data_id_from_orientation_id(orientation_id);
+
+  if (orientation_id != -1)
+  {
+    name_id = orientations->orientations_data[orientation_data_id][1];
+    name_data_id = orientations->get_name_data_id_from_name_id(name_id);
+    name = orientations->name_data[name_data_id][1];
+  }
+
+  return name;
+}
+
 std::vector<int> CalculiXCore::get_loadsforces_ids()
 {
   std::vector<int> tmp;
@@ -1556,6 +1718,16 @@ std::vector<int> CalculiXCore::get_bcsdisplacements_ids()
   for (size_t i = 0; i < bcsdisplacements->bcs_data.size(); i++)
   {
     tmp.push_back(bcsdisplacements->bcs_data[i][0]);
+  }
+  return tmp;
+}
+
+std::vector<int> CalculiXCore::get_orientations_ids()
+{
+  std::vector<int> tmp;
+  for (size_t i = 0; i < orientations->orientations_data.size(); i++)
+  {
+    tmp.push_back(orientations->orientations_data[i][0]);
   }
   return tmp;
 }
@@ -1691,6 +1863,17 @@ bool CalculiXCore::check_amplitude_exists(int amplitude_id)
   int amplitude_data_id;
   amplitude_data_id = amplitudes->get_amplitudes_data_id_from_amplitude_id(amplitude_id);
   if (amplitude_data_id == -1)
+  {
+    return false;
+  }
+  return true;
+}
+
+bool CalculiXCore::check_orientation_exists(int orientation_id)
+{
+  int orientation_data_id;
+  orientation_data_id = orientations->get_orientations_data_id_from_orientation_id(orientation_id);
+  if (orientation_data_id == -1)
   {
     return false;
   }
@@ -2087,6 +2270,21 @@ bool CalculiXCore::delete_amplitude(int amplitude_id)
   return amplitudes->delete_amplitude(amplitude_id);
 }
 
+bool CalculiXCore::create_orientation(std::vector<std::string> options, std::vector<std::vector<std::string>> options2)
+{
+  return orientations->create_orientation(options, options2);
+}
+
+bool CalculiXCore::modify_orientation(int orientation_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2)
+{
+  return orientations->modify_orientation(orientation_id, options, options_marker, options2);
+}
+
+bool CalculiXCore::delete_orientation(int orientation_id)
+{
+  return orientations->delete_orientation(orientation_id);
+}
+
 bool CalculiXCore::modify_loadsforces(int force_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
   return loadsforces->modify_load(force_id,options,options_marker);
@@ -2304,11 +2502,6 @@ bool CalculiXCore::run_job(int job_id, int option)
 bool CalculiXCore::check_jobs()
 {
   return jobs->check_jobs();
-}
-
-bool CalculiXCore::check_zombie()
-{
-  return jobs->check_zombie();
 }
 
 bool CalculiXCore::wait_job(int job_id)
@@ -2640,6 +2833,9 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
   }else if (entity=="amplitude")
   {
     
+  }else if (entity=="orientation")
+  {
+    
   }else if (entity=="loadsforce")
   {
     entities.push_back({"force",std::to_string(id)});
@@ -2700,7 +2896,6 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_force(int 
   NodesetHandle nodeset;
   std::string command;
   std::vector<BCEntityHandle> bc_handles;
-  BCEntityHandle bc_handle;
   std::vector<std::vector<double>> draw_data;
 
   me_iface->create_default_bcset(0,true,true,true,bc_set);
@@ -2755,7 +2950,6 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_pressure(i
   SidesetHandle sideset;
   std::string command;
   std::vector<BCEntityHandle> bc_handles;
-  BCEntityHandle bc_handle;
   std::vector<std::vector<double>> draw_data;
 
   me_iface->create_default_bcset(0,true,true,true,bc_set);
@@ -2800,7 +2994,6 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_heatflux(i
   SidesetHandle sideset;
   std::string command;
   std::vector<BCEntityHandle> bc_handles;
-  BCEntityHandle bc_handle;
   std::vector<std::vector<double>> draw_data;
 
   me_iface->create_default_bcset(0,true,true,true,bc_set);
@@ -2903,7 +3096,6 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_bc_displacement
   NodesetHandle nodeset;
   std::string command;
   std::vector<BCEntityHandle> bc_handles;
-  BCEntityHandle bc_handle;
   std::vector<std::vector<double>> draw_data;
 
   me_iface->create_default_bcset(0,true,true,true,bc_set);
@@ -2948,7 +3140,6 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_bc_temperature(
   NodesetHandle nodeset;
   std::string command;
   std::vector<BCEntityHandle> bc_handles;
-  BCEntityHandle bc_handle;
   std::vector<std::vector<double>> draw_data;
 
   me_iface->create_default_bcset(0,true,true,true,bc_set);
@@ -2985,6 +3176,94 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_bc_temperature(
   
   return draw_data;
 }  
+
+
+std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_orientation(int id) // returns pairs of 4 for {system_type,local_axis_angle}, coord(3) of section center, a_coord(3) ,b_coord(3)
+{
+  int orientation_data_id = orientations->get_orientations_data_id_from_orientation_id(id);
+  std::vector<std::vector<double>> draw_data;
+  int sub_data_id = -1;
+  std::vector<double> o_data(3);
+  std::vector<double> a_coord(3);
+  std::vector<double> b_coord(3);
+  std::vector<int> linked_blocks;
+
+  // orientations_data[0][0] orientation_id
+  // orientations_data[0][1] name_id              option 0
+  // orientations_data[0][2] system_type          option 1: 1 for rectangular, 2 for cylindrical
+  // orientations_data[0][3] distribution_id      option 2: standard -1 not implemented yet
+  // orientations_data[0][4] a_id                 option 3
+  // orientations_data[0][5] b_id                 option 4
+  // orientations_data[0][6] local axis           option 5: -1 if not used, 1 = x, 2 = y , 3 = z
+  // orientations_data[0][7] rotation_id          option 6
+
+  if (orientation_data_id != -1)
+  {
+    //system_type,local_axis, data
+    o_data[0] = orientations->orientations_data[orientation_data_id][2];
+    o_data[1] = orientations->orientations_data[orientation_data_id][6];
+    sub_data_id = orientations->get_rotation_data_id_from_rotation_id(orientations->orientations_data[orientation_data_id][4]);
+    o_data[2] = this->string_scientific_to_double(orientations->rotation_data[sub_data_id][1]);
+
+    // get a_coord
+    sub_data_id = orientations->get_a_data_id_from_a_id(orientations->orientations_data[orientation_data_id][4]);
+    a_coord[0] = this->string_scientific_to_double(orientations->a_data[sub_data_id][1]);
+    a_coord[1] = this->string_scientific_to_double(orientations->a_data[sub_data_id][2]);
+    a_coord[2] = this->string_scientific_to_double(orientations->a_data[sub_data_id][3]);
+
+    // get b_coord
+    sub_data_id = orientations->get_a_data_id_from_a_id(orientations->orientations_data[orientation_data_id][5]);
+    b_coord[0] = this->string_scientific_to_double(orientations->b_data[sub_data_id][1]);
+    b_coord[1] = this->string_scientific_to_double(orientations->b_data[sub_data_id][2]);
+    b_coord[2] = this->string_scientific_to_double(orientations->b_data[sub_data_id][3]);
+
+    // search if orientation is linked in a section
+    for (size_t i = 0; i < sections->solid_section_data.size(); i++)
+    {
+      if (std::stoi(sections->solid_section_data[i][3])==id)
+      {
+        linked_blocks.push_back(std::stoi(sections->solid_section_data[i][1]));
+      }
+    }
+    for (size_t i = 0; i < sections->shell_section_data.size(); i++)
+    {
+      if (std::stoi(sections->shell_section_data[i][3])==id)
+      {
+        linked_blocks.push_back(std::stoi(sections->shell_section_data[i][1]));
+      }
+    }
+    for (size_t i = 0; i < sections->beam_section_data.size(); i++)
+    {
+      if (std::stoi(sections->beam_section_data[i][13])==id)
+      {
+        linked_blocks.push_back(std::stoi(sections->beam_section_data[i][1]));
+      }
+    }
+    for (size_t i = 0; i < sections->membrane_section_data.size(); i++)
+    {
+      if (std::stoi(sections->membrane_section_data[i][3])==id)
+      {
+        linked_blocks.push_back(std::stoi(sections->membrane_section_data[i][1]));
+      }
+    }
+    
+    // loop over all blocks for center point
+    for (size_t i = 0; i < linked_blocks.size(); i++)
+    {
+      std::vector<double> section_center;
+      section_center = this->get_block_bounding_box_center(linked_blocks[i]);
+      if (section_center.size()!=0)
+      {
+        draw_data.push_back(o_data);
+        draw_data.push_back(section_center);
+        draw_data.push_back(a_coord);
+        draw_data.push_back(b_coord);
+      }
+    }
+  }  
+
+  return draw_data;
+}
 
 bool CalculiXCore::draw_all(double size) // draw all bc and loads
 {
@@ -3539,7 +3818,7 @@ std::vector<int> CalculiXCore::frd_get_element_ids_over_limit(int job_id,int tot
 
 double CalculiXCore::frd_get_node_value(int job_id,int node_id, int total_increment,std::string result_block_type,std::string result_block_component)
 {
-  double tmp; 
+  double tmp = 0; 
 
   int results_data_id = results->get_results_data_id_from_job_id(job_id);
   int frd_data_id = results->get_frd_data_id_from_job_id(job_id);
@@ -4117,7 +4396,7 @@ std::vector<int> CalculiXCore::dat_get_element_ids_over_limit(int job_id,double 
 
 double CalculiXCore::dat_get_node_value(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component)
 {
-  double tmp;
+  double tmp = 0;
   int result_block_type_data_id = -1;
   int result_block_set_data_id = -1;
   int result_block_component_id = -1;
@@ -4302,6 +4581,21 @@ std::vector<std::vector<double>> CalculiXCore::dat_get_element_values(int job_id
   return tmp;
 }
 
+std::vector<std::vector<std::vector<double>>> CalculiXCore::dat_get_buckle(int job_id)
+{
+  std::vector<std::vector<std::vector<double>>> tmp;
+
+  int results_data_id = results->get_results_data_id_from_job_id(job_id);
+  int dat_data_id = results->get_dat_data_id_from_job_id(job_id);
+
+  if (results_data_id == -1)
+  {
+    return tmp;
+  }
+
+  return results->dat_data[dat_data_id].buckle_data;
+}
+
 QIcon* CalculiXCore::getIcon(std::string name)
 {
   QIcon* icon = new QIcon();
@@ -4309,11 +4603,19 @@ QIcon* CalculiXCore::getIcon(std::string name)
 
   filepath = ccx_uo.mPathIcons.toStdString() + name + ".svg";
 
-  if (access(filepath.c_str(), F_OK) == 0) 
-  {
-    icon = new QIcon(QString::fromStdString(filepath));
-  }else{
-  }
+  #ifdef WIN32
+    if (_access(filepath.c_str(), 0) == 0)
+    {
+      icon = new QIcon(QString::fromStdString(filepath));
+    }else{
+    }
+  #else
+    if (access(filepath.c_str(), F_OK) == 0) 
+    {
+      icon = new QIcon(QString::fromStdString(filepath));
+    }else{
+    }
+  #endif
 
   return icon;
 }
@@ -4325,11 +4627,19 @@ QIcon CalculiXCore::getIcon2(std::string name)
 
   filepath = ccx_uo.mPathIcons.toStdString() + name + ".svg";
 
-  if (access(filepath.c_str(), F_OK) == 0) 
-  {
-    icon = QIcon(QString::fromStdString(filepath));
-  }else{
-  }
+  #ifdef WIN32
+    if (_access(filepath.c_str(), 0) == 0)
+    {
+      icon = QIcon(QString::fromStdString(filepath));
+    }else{
+    }
+  #else
+    if (access(filepath.c_str(), F_OK) == 0) 
+    {
+      icon = QIcon(QString::fromStdString(filepath));
+    }else{
+    }
+  #endif
 
   return icon;
 }
@@ -4364,6 +4674,11 @@ std::string CalculiXCore::get_amplitude_export_data() // gets the export data fr
   return amplitudes->get_amplitude_export();
 }
 
+std::string CalculiXCore::get_orientation_export_data() // gets the export data from orientation core
+{
+  return orientations->get_orientation_export();
+}
+
 std::string CalculiXCore::get_initialcondition_export_data() // gets the export data from core
 {
   std::vector<std::string> initialconditions_export_list;
@@ -4376,7 +4691,6 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
   BCSetHandle bc_set;
   NodesetHandle nodeset;
   std::vector<BCEntityHandle> bc_handles;
-  BCEntityHandle bc_handle;
   std::vector<MeshExportBCData> bc_attribs; 
 
   //loop over all initialconditions
@@ -4475,15 +4789,12 @@ std::string CalculiXCore::get_hbc_export_data() // gets the export data from cor
   std::string str_temp;
   std::vector<std::vector<std::string>> temp_list;
   std::string log;
-  int sub_data_id;
   std::vector<int> sub_data_ids;
   std::string command;
   int bc_set_id=-1;
   BCSetHandle bc_set;
   NodesetHandle nodeset;
-  SidesetHandle sideset;
   std::vector<BCEntityHandle> bc_handles;
-  BCEntityHandle bc_handle;
   std::vector<MeshExportBCData> bc_attribs; 
   std::vector<std::string> customline;
 
@@ -4587,7 +4898,6 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
   std::string str_temp;
   std::vector<std::vector<std::string>> temp_list;
   std::string log;
-  int sub_data_id;
   std::vector<int> sub_data_ids;
   std::string command;
   int bc_set_id=-1;
@@ -4595,7 +4905,6 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
   NodesetHandle nodeset;
   SidesetHandle sideset;
   std::vector<BCEntityHandle> bc_handles;
-  BCEntityHandle bc_handle;
   std::vector<MeshExportBCData> bc_attribs; 
   std::vector<std::string> customline;
 
@@ -5223,8 +5532,7 @@ std::vector<std::vector<std::string>> CalculiXCore::get_contactpairs_tree_data()
   {
     std::vector<std::string> contactpairs_tree_data_set;
     std::string contactpair_name;
-    int contactpair_name_id;
-
+    
     contactpair_name = "Master: ";
     contactpair_name.append(this->get_sideset_name(contactpairs->contactpairs_data[i][3]));
     contactpair_name.append(" | Slave: ");
@@ -5257,6 +5565,27 @@ std::vector<std::vector<std::string>> CalculiXCore::get_amplitudes_tree_data()
   }
 
   return amplitudes_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_orientations_tree_data()
+{ 
+  std::vector<std::vector<std::string>> orientations_tree_data;
+  
+  for (size_t i = 0; i < orientations->orientations_data.size(); i++)
+  {
+    std::vector<std::string> orientations_tree_data_set;
+    std::string name;
+    int name_data_id;
+
+    name_data_id = orientations->get_name_data_id_from_name_id(orientations->orientations_data[i][1]);
+    name = orientations->name_data[name_data_id][1];
+    
+    orientations_tree_data_set.push_back(std::to_string(orientations->orientations_data[i][0])); //orientation_id
+    orientations_tree_data_set.push_back(name); //name
+    orientations_tree_data.push_back(orientations_tree_data_set);
+  }
+
+  return orientations_tree_data;
 }
 
 std::vector<std::vector<std::string>> CalculiXCore::get_loadsforces_tree_data()
@@ -6006,6 +6335,12 @@ std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_
       {
         all_ids.push_back(amplitudes->amplitudes_data[i][0]);
       }
+    } else if (parse_type=="orientation")
+    {
+      for (size_t i = 0; i < orientations->orientations_data.size(); i++)
+      {
+        all_ids.push_back(orientations->orientations_data[i][0]);
+      }
     } else if (parse_type=="loadsgravity")
     {
       for (size_t i = 0; i < loadsgravity->loads_data.size(); i++)
@@ -6063,7 +6398,7 @@ std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_
     {  
       for (size_t i = input_ids[0]; i < input_ids[1]+1; i++)
       {
-        to_ids.push_back(i);
+        to_ids.push_back(int(i));
       }
     }
   }

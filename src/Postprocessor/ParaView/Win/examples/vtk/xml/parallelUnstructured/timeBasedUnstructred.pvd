@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<!-- Read in two timesteps of a dataset, one file at a time. -->
+<!-- Timestep 0 are quads, timestep 1 are tris. -->
+
+<VTKFile type="Collection" version="0.1"
+         byte_order="LittleEndian"
+         compressor="vtkZLibDataCompressor">
+  <Collection>
+    <DataSet timestep="2" group="" part="0" file="unstructuredQuadsTime0.vtu"/>
+    <DataSet timestep="3" group="" part="0" file="unstructuredTrisTime1.vtu"/>
+  </Collection>
+</VTKFile>

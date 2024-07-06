@@ -87,7 +87,7 @@ int CoreHBCs::get_bc_data_id(int bcs_id, int bc_type,int bc_id)
   {
     if ((bcs_data[i][0]==bcs_id) && (bcs_data[i][1]==bc_type) && (bcs_data[i][2]==bc_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -100,7 +100,7 @@ std::vector<int> CoreHBCs::get_bc_data_ids_from_bcs_id(int bcs_id)
   {
     if (bcs_data[i][0]==bcs_id)
     {
-        return_int.push_back(i);
+        return_int.push_back(int(i));
     }  
   }
   return return_int;

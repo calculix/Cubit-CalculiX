@@ -1,5 +1,4 @@
 #include "UserOptionsPanel.hpp"
-
 #include "loadUserOptions.hpp"
 
 

@@ -125,6 +125,11 @@ std::string CalculiXCoreInterface::get_amplitude_name(int amplitude_id)
   return ccx_core.get_amplitude_name(amplitude_id);
 }
 
+std::string CalculiXCoreInterface::get_orientation_name(int orientation_id)
+{
+  return ccx_core.get_orientation_name(orientation_id);
+}
+
 std::vector<int> CalculiXCoreInterface::get_loadsforces_ids()
 {
   return ccx_core.get_loadsforces_ids();
@@ -160,6 +165,11 @@ std::vector<int> CalculiXCoreInterface::get_bcstemperatures_ids()
   return ccx_core.get_bcstemperatures_ids();
 }
 
+std::vector<int> CalculiXCoreInterface::get_orientations_ids()
+{
+  return ccx_core.get_orientations_ids();
+}
+
 bool CalculiXCoreInterface::check_block_exists(int block_id)
 {
   return ccx_core.check_block_exists(block_id);
@@ -178,6 +188,11 @@ bool CalculiXCoreInterface::check_sideset_exists(int sideset_id)
 bool CalculiXCoreInterface::check_vertex_in_nodeset_exists(int vertex_id,int nodeset_id)
 {
   return ccx_core.check_vertex_in_nodeset_exists(vertex_id,nodeset_id);
+}
+
+bool CalculiXCoreInterface::check_orientation_exists(int orientation_id)
+{
+  return ccx_core.check_orientation_exists(orientation_id);
 }
 
 bool CalculiXCoreInterface::core_update()
@@ -303,6 +318,21 @@ bool CalculiXCoreInterface::modify_amplitude(int amplitude_id, std::vector<std::
 bool CalculiXCoreInterface::delete_amplitude(int amplitude_id)
 {
   return ccx_core.delete_amplitude(amplitude_id);
+}
+
+bool CalculiXCoreInterface::create_orientation(std::vector<std::string> options, std::vector<std::vector<std::string>> options2)
+{
+  return ccx_core.create_orientation(options, options2);
+}
+
+bool CalculiXCoreInterface::modify_orientation(int orientation_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2)
+{
+  return ccx_core.modify_orientation(orientation_id, options, options_marker, options2);
+}
+
+bool CalculiXCoreInterface::delete_orientation(int orientation_id)
+{
+  return ccx_core.delete_orientation(orientation_id);
 }
 
 bool CalculiXCoreInterface::modify_loadsforces(int force_id, std::vector<std::string> options, std::vector<int> options_marker)
@@ -525,11 +555,6 @@ bool CalculiXCoreInterface::check_jobs()
   return ccx_core.check_jobs();
 }
 
-bool CalculiXCoreInterface::check_zombie()
-{
-  return ccx_core.check_zombie();
-}
-
 bool CalculiXCoreInterface::wait_job(int job_id)
 {
   return ccx_core.wait_job(job_id);
@@ -685,6 +710,11 @@ std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_bc_tem
   return ccx_core.get_draw_data_for_bc_temperature(id);
 }  
 
+std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_orientation(int id)
+{
+  return ccx_core.get_draw_data_for_orientation(id);
+}  
+
 bool CalculiXCoreInterface::draw_all(double size) // draw all bc and loads
 {
   return ccx_core.draw_all(size);
@@ -830,6 +860,11 @@ std::vector<std::vector<double>> CalculiXCoreInterface::dat_get_element_values(i
   return ccx_core.dat_get_element_values(job_id,element_id,time,result_block_type,result_block_set);
 }
 
+std::vector<std::vector<std::vector<double>>> CalculiXCoreInterface::dat_get_buckle(int job_id)
+{
+  return ccx_core.dat_get_buckle(job_id);
+}
+
 QIcon* CalculiXCoreInterface::getIcon(std::string name)
 {
   return ccx_core.getIcon(name);
@@ -888,6 +923,11 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_contactpairs_tr
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_amplitudes_tree_data()
 { 
   return ccx_core.get_amplitudes_tree_data();
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_orientations_tree_data()
+{ 
+  return ccx_core.get_orientations_tree_data();
 }
 
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_loadsforces_tree_data()
@@ -1038,6 +1078,11 @@ std::string CalculiXCoreInterface::get_contactpair_export_data() // gets the exp
 std::string CalculiXCoreInterface::get_amplitude_export_data() // gets the export data from amplitudes core
 {
   return ccx_core.get_amplitude_export_data();
+}
+
+std::string CalculiXCoreInterface::get_orientation_export_data() // gets the export data from orientation core
+{
+  return ccx_core.get_orientation_export_data();
 }
 
 std::string CalculiXCoreInterface::get_initialcondition_export_data() // gets the export data from core

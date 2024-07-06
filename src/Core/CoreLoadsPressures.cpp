@@ -48,7 +48,7 @@ bool CoreLoadsPressures::update()
       }
       else
       {
-        sub_last = time_delay_data.size() - 1;
+        sub_last = int(time_delay_data.size()) - 1;
         sub_id = std::stoi(time_delay_data[sub_last][0]) + 1;
       }
       time_delay_id = sub_id;
@@ -167,7 +167,7 @@ int CoreLoadsPressures::get_loads_data_id_from_load_id(int load_id)
   {
     if (loads_data[i][0]==load_id)
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -180,7 +180,7 @@ int CoreLoadsPressures::get_time_delay_data_id_from_time_delay_id(int time_delay
   {
     if (time_delay_data[i][0]==std::to_string(time_delay_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;

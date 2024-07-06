@@ -1,0 +1,21 @@
+<VTKFile type="PRectilinearGrid" version="1.0" byte_order="LittleEndian" header_type="UInt64">
+  <PRectilinearGrid WholeExtent="0 6 0 3 0 3 " GhostLevel="0" Origin="0 0 0" Spacing="1 1 1">
+    <PPointData>
+      <PDataArray type="Float64" Name="XplusY"/>
+      <PDataArray type="Float64" Name="YtimesZ"/>
+    </PPointData>
+    <PCellData>
+      <PDataArray type="Float64" Name="OneTwo"/>
+    </PCellData>
+    <PCoordinates>
+      <PDataArray type="Float32" Name="X" NumberOfComponents="1" format="ascii"/>
+      <PDataArray type="Float32" Name="Y" NumberOfComponents="1" format="ascii"/>
+      <PDataArray type="Float32" Name="Z" NumberOfComponents="1" format="ascii"/>
+    </PCoordinates>
+
+    <Piece Extent="0 3 0 3 0 3" Source="block0Time1.vtr"/>
+    <Piece Extent="3 6 0 3 0 3" Source="block1Time1.vtr"/>
+  </PRectilinearGrid>
+</VTKFile>
+
+

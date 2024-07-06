@@ -27,7 +27,7 @@ std::vector<std::string> ccxSectionBeamModifyCommand::get_syntax()
   syntax.append("[x <value:label='x',help='<x>'>] ");
   syntax.append("[y <value:label='y',help='<y>'>] ");
   syntax.append("[z <value:label='z',help='<z>'>] ");
-  syntax.append("[orientation <string:type='unquoted', number='1', label='orientation', help='<orientation_name>'>] ");
+  syntax.append("[orientation <value:label='orientation' ,help='<orientation_id>'>] ");
   syntax.append("[offset1 <value:label='offset1',help='<offset1>'>] ");
   syntax.append("[offset2 <value:label='offset2',help='<offset2>'>] ");
     
@@ -39,7 +39,7 @@ std::vector<std::string> ccxSectionBeamModifyCommand::get_syntax()
 std::vector<std::string> ccxSectionBeamModifyCommand::get_syntax_help()
 {
   std::vector<std::string> help(1);
-  help[0] = "ccx modify section beam <section id> [beam_type {rect|circ|box|pipe}] [block <block id>] [material <material id>] [parameter1 <parameter1>] [parameter2 <parameter2>] [parameter3 <parameter3>] [parameter4 <parameter4>] [parameter5 <parameter5>] [parameter6 <parameter6>] [x <x>] [y <y>] [z <z>] [orientation <orientation_name>] [offset1 <offset1>] [offset2 <offset2>]";
+  help[0] = "ccx modify section beam <section id> [beam_type {rect|circ|box|pipe}] [block <block id>] [material <material id>] [parameter1 <parameter1>] [parameter2 <parameter2>] [parameter3 <parameter3>] [parameter4 <parameter4>] [parameter5 <parameter5>] [parameter6 <parameter6>] [x <x>] [y <y>] [z <z>] [orientation <orientation_id>] [offset1 <offset1>] [offset2 <offset2>]";
 
   return help;
 }
@@ -60,6 +60,7 @@ bool ccxSectionBeamModifyCommand::execute(CubitCommandData &data)
   std::string beam_type;
   int material_value;
   std::string material;
+  int orientation_value;
   std::string orientation;
   std::vector<std::string> options;
   std::vector<int> options_marker;
@@ -226,13 +227,14 @@ bool ccxSectionBeamModifyCommand::execute(CubitCommandData &data)
     options_marker.push_back(1);
   }
 
-  if (!data.get_string("orientation", orientation))
+  if (!data.get_value("orientation", orientation_value))
   {
     orientation = "";
     options_marker.push_back(0);
   }
   else
   {
+    orientation = std::to_string(orientation_value);
     options_marker.push_back(1);
   }
 

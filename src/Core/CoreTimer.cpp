@@ -7,7 +7,9 @@ CoreTimer::CoreTimer()
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
      
   connect(this, &QTimer::timeout, this, &CoreTimer::timeoutaction);
+  
   this->start(1000);
+  
 }
 
 CoreTimer::~CoreTimer()
@@ -16,7 +18,6 @@ CoreTimer::~CoreTimer()
 void CoreTimer::timeoutaction()
 {
   ccx_iface->check_jobs();
-  //ccx_iface->check_zombie();
   if (!this->bool_init_pythoninterface)
   {
     this->bool_init_pythoninterface = ccx_iface->init_pythoninterface();

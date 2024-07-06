@@ -3,6 +3,10 @@
 
 #include <vector>
 #include <string>
+#ifdef WIN32
+  #include <windows.h>
+  #include <thread>
+#endif
 
 class CalculiXCoreInterface;
 class CubitProcess;
@@ -31,8 +35,16 @@ public:
   std::vector<std::vector<std::string>> cvg;
   std::vector<std::vector<std::string>> sta;
 
-  std::vector<CubitProcess> CubitProcessHandler;
-
+  #ifdef WIN32
+    std::vector<HANDLE> ProcessPipe;
+    std::vector<std::vector<int>> PPTID; //links the process PID, pipe PID and ThreadID 
+    std::vector<int> PipePID; //pipe PID
+    std::vector<std::thread> PipeThreads; // threads for reading the pipes
+    std::vector<bool> PipeThreadsRun; // bools to keep the threads running
+  #else
+    std::vector<CubitProcess> CubitProcessHandler;
+  #endif
+  
   bool is_initialized = false;
 
   bool init(); // initialize
@@ -48,12 +60,19 @@ public:
   bool kill_job(int job_id); // kill the jobs exits
   bool check_jobs(); // checks for changes of job processes
   bool get_cvgsta(int job_id); // gets filedata of .cvg and .sta
-  bool check_zombie(); // checks for zombie processes
   //bool result_ccx2paraview_job(int job_id); // converts the result with ccx2paraview
   bool result_cgx_job(int job_id); // opens the results with cgx
   bool result_paraview_job(int job_id); // opens the results with paraview
   int  get_jobs_data_id_from_job_id(int job_id); // searches for the job_id in the jobs_data and returns the indices or -1 if it fails
-  int  get_CubitProcessHandler_data_id_from_process_id(int process_id); // searches for the CubitProcessHandler_id in the CubitProcessHandler and returns the indices or -1 if it fails
+  #ifdef WIN32
+    int  get_ProcessPipe_data_id_from_PipePID(int PipePID); // searches for the Pipe Handle data id in the Processpipe and returns the indices or -1 if it fails
+    int  get_PipePID_from_ProcessPID(int ProcessPID); // searches for the Pipe PID in the PPTID and returns the PipePID or -1 if it fails
+    int  get_ThreadID_from_ProcessPID(int ProcessPID); // searches for the Thread ID in the PPTID and returns the Thread ID or -1 if it fails
+    void read_pipe(int job_id,int bool_data_id); // make a reading thread for the jobs pipe
+    void kill_pipe(int job_id); // kill the reading thread for the jobs pipe
+  #else
+    int  get_CubitProcessHandler_data_id_from_process_id(int process_id); // searches for the CubitProcessHandler_id in the CubitProcessHandler and returns the indices or -1 if it fails
+  #endif
   bool set_job_conversion(int job_id, int conversion); // sets the paraview conversion value for the job
   std::vector<std::string> get_job_data(int job_id);
   std::vector<std::string> get_job_console_output(int job_id);

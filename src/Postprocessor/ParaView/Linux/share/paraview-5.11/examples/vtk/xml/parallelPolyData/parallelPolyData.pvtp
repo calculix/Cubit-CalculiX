@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<!-- Read in two files of a dataset -->
+<!-- We are going to make two cubes.  The first comes from triangle data, the second from quad data.  This is done by reading two files. -->
+<!-- We only bring in two data arrays, cell_scalars and cell_normals.-->
+
+<VTKFile type="PPolyData" version="0.1" byte_order="LittleEndian" compressor="vtkZLibDataCompressor">
+  <PPolyData GhostLevel="0">
+    <PCellData Scalars="temperature">
+      <PDataArray type="Float32" Name="cell_scalars" format="ascii"/>
+      <PDataArray type="Float32" Name="cell_normals" format="ascii"/>
+    </PCellData>
+    <PPoints>
+       <PDataArray type="Float32" NumberOfComponents="3" format="ascii"/>
+    </PPoints>
+    <Piece Source="polyDataTris.vtp"/>
+    <Piece Source="polyDataQuads.vtp"/>
+  </PPolyData>
+</VTKFile>

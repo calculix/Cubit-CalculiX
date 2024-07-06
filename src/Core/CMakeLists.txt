@@ -21,6 +21,8 @@ set(CORE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/CoreContactPairs.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreAmplitudes.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreAmplitudes.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreOrientations.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreOrientations.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsForces.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsForces.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsPressures.cpp

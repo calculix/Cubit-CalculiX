@@ -12,6 +12,7 @@
 #include "SurfaceInteractionsTree.hpp"
 #include "ContactPairsTree.hpp"
 #include "AmplitudesTree.hpp"
+#include "OrientationsTree.hpp"
 #include "LoadsTree.hpp"
 #include "LoadsForcesTree.hpp"
 #include "LoadsPressuresTree.hpp"
@@ -78,7 +79,7 @@ void Highlight::ModelTreeItemSelectionChanged()
   selected = dynamic_cast<ModelTree*>(this->parent())->selectedItems();
   for (size_t i = 0; i < selected.size(); i++)
   {
-    ModelTreeItemClicked(selected[i],0);
+    ModelTreeItemClicked(selected[int(i)],0);
   }  
 }
 
@@ -93,6 +94,7 @@ void Highlight::ModelTreeItemClicked(QTreeWidgetItem* item, int column)
   SurfaceInteractionsTree* SurfaceInteractionsTreeItem;
   ContactPairsTree* ContactPairsTreeItem;
   AmplitudesTree* AmplitudesTreeItem;
+  OrientationsTree* OrientationsTreeItem;
   LoadsForcesTree* LoadsForcesTreeItem;
   LoadsPressuresTree* LoadsPressuresTreeItem;
   LoadsHeatfluxesTree* LoadsHeatfluxesTreeItem;
@@ -155,6 +157,9 @@ void Highlight::ModelTreeItemClicked(QTreeWidgetItem* item, int column)
   } else if (AmplitudesTreeItem = dynamic_cast<AmplitudesTree*>(item->parent()))
   {
     entities = ccx_iface->get_entities("amplitude",std::stoi(item->text(1).toStdString()));
+  }else if (OrientationsTreeItem = dynamic_cast<OrientationsTree*>(item->parent()))
+  {
+    entities = ccx_iface->get_entities("orientation",std::stoi(item->text(1).toStdString()));
   } else if (LoadsForcesTreeItem = dynamic_cast<LoadsForcesTree*>(item->parent()))
   {
     entities = ccx_iface->get_entities("loadsforce",std::stoi(item->text(1).toStdString()));

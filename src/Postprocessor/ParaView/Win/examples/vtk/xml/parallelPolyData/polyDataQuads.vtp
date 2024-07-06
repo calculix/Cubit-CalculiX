@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<!-- We are going to make a cube.  This cube will have colored points (nodes), and cell data (elements) -->
+<!-- PolyData - 8 points.  6 polygons (which is 6 sides * 1 quad/side) -->
+<!-- Point - We have 8 points.  XYZ per point.  ascii data. -->
+<!-- PointData - We have data for the points.  Notice 8 points, 8 pieces of data.  -->
+<!-- CellData - we have data on each cell.  In this case, a cell is a quad (4 points), so 6 pieces of data. -->
+<!--   Scalars and normals.-->
+<!-- Polys.  Notice that there are groups of 6 - since there are 6 polys. -->
+<!--   Index into the polys.  4 indexes per poly.  Note that they are 0 based.-->
+<!--   Offsets to the data.  Since we have 4 points/poly, lets offset by 4's.  .-->
+
+<VTKFile type="PolyData" version="0.1">
+  <PolyData>
+    <Piece NumberOfPoints="8" NumberOfPolys="6">
+      <Points>
+        <DataArray type="Float32" NumberOfComponents="3" format="ascii">
+          3 0 0  
+          4 0 0  
+          4 1 0  
+          3 1 0  
+          3 0 1  
+          4 0 1  
+          4 1 1  
+          3 1 1 
+        </DataArray>
+      </Points>
+      <PointData Scalars="my_scalars">
+        <DataArray type="Float32" Name="my_scalars" format="ascii">
+          0 1 2 3 4 5 6 7
+        </DataArray>
+      </PointData>
+
+      <CellData Scalars="cell_scalars" Normals="cell_normals">
+        <DataArray type="Int32" Name="cell_scalars" format="ascii">
+          0 1 2 3 4 5
+        </DataArray>
+        <DataArray type="Float32" Name="cell_normals" NumberOfComponents="3" format="ascii">
+          0 0  1 
+          0 0 -1 
+
+          0 -1 0
+          0  1 0 
+
+          -1 0 0
+           1 0 0
+        </DataArray>
+      </CellData>
+      <Polys>
+        <DataArray type="Int32" Name="connectivity" format="ascii">
+          3 2 1 0
+          4 5 6 7
+
+          0 1 5 4
+          3 2 6 7
+
+          0 4 7 3
+          1 2 6 5
+        </DataArray>
+        <DataArray type="Int32" Name="offsets" format="ascii">
+          4 8 12 16 20 24
+        </DataArray>
+      </Polys>
+    </Piece>
+  </PolyData>
+</VTKFile>

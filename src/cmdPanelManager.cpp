@@ -71,6 +71,9 @@ void cmdPanelManager::clear()
     my_markers.push_back("CCXAmplitudesCreate");
     my_markers.push_back("CCXAmplitudesModify");
     my_markers.push_back("CCXAmplitudesDelete");
+    my_markers.push_back("CCXOrientationsCreate");
+    my_markers.push_back("CCXOrientationsModify");
+    my_markers.push_back("CCXOrientationsDelete");
     my_markers.push_back("CCXLoadsForcesModify");
     my_markers.push_back("CCXLoadsPressuresModify");
     my_markers.push_back("CCXLoadsHeatfluxesModify");
@@ -138,7 +141,7 @@ void cmdPanelManager::initialize_from_xml()
 
 void cmdPanelManager::initialize_from_code()
 {
-  QIcon *NodeIconPointer;
+  // QIcon *NodeIconPointer;
   // This example shows how to create the command panel navigation buttons (nodes)
   // using the NavigationModel directly.
   NavigationModel* model = Claro::instance()->navigation_model();
@@ -309,6 +312,24 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXAmplitudesDelete");
   node->setIcon(ccx_iface->getIcon("CCXAmplitudesDelete"));
+
+  //##############################
+  // add Orientations Nodes
+  root_node = model->getMarkedNode("CCX");
+  node = model->addNode("Orientations", root_node);
+  node->setTitle("Orientations");
+  model->setNodeMarker(node, "CCXOrientations");
+  node->setIcon(ccx_iface->getIcon("CCXOrientations"));
+  root_node = model->getMarkedNode("CCXOrientations");
+  node = model->addNode("Create", root_node);
+  model->setNodeMarker(node, "CCXOrientationsCreate");
+  node->setIcon(ccx_iface->getIcon("CCXOrientationsCreate"));
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXOrientationsModify");
+  node->setIcon(ccx_iface->getIcon("CCXOrientationsModify"));
+  node = model->addNode("Delete", root_node);
+  model->setNodeMarker(node, "CCXOrientationsDelete");
+  node->setIcon(ccx_iface->getIcon("CCXOrientationsDelete"));
 
   //##############################
   // add Loads Nodes
@@ -613,6 +634,9 @@ void cmdPanelManager::associate_panels_with_nodes()
   my_markers.push_back("CCXAmplitudesCreate");
   my_markers.push_back("CCXAmplitudesModify");
   my_markers.push_back("CCXAmplitudesDelete");
+  my_markers.push_back("CCXOrientationsCreate");
+  my_markers.push_back("CCXOrientationsModify");
+  my_markers.push_back("CCXOrientationsDelete");
   my_markers.push_back("CCXLoadsForcesModify");
   my_markers.push_back("CCXLoadsPressuresModify");
   my_markers.push_back("CCXLoadsHeatfluxesModify");

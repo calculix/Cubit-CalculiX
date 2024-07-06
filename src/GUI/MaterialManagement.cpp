@@ -202,7 +202,7 @@ void MaterialManagement::update()
   for (size_t i = tree_material->topLevelItemCount(); i > 0; i--)
   { 
     erase_item = true;
-    temp_child = dynamic_cast<MaterialManagementItem*>(tree_material->topLevelItem(i-1));
+    temp_child = dynamic_cast<MaterialManagementItem*>(tree_material->topLevelItem(int(i)-1));
 
     for (size_t ii = 0; ii < material_tree_data.size(); ii++)
     {    
@@ -222,7 +222,7 @@ void MaterialManagement::update()
   // update childs
   for (size_t i = tree_material->topLevelItemCount(); i > 0; i--)
   { 
-    temp_child = dynamic_cast<MaterialManagementItem*>(tree_material->topLevelItem(i-1));
+    temp_child = dynamic_cast<MaterialManagementItem*>(tree_material->topLevelItem(int(i)-1));
     temp_child->update();
   }
 }
@@ -246,7 +246,7 @@ void MaterialManagement::printproperties()
 
   for (size_t i = 0; i < tree_material->topLevelItemCount(); i++)
   {
-    temp_child = dynamic_cast<MaterialManagementItem*>(tree_material->topLevelItem(i));
+    temp_child = dynamic_cast<MaterialManagementItem*>(tree_material->topLevelItem(int(i)));
     
     log = "########### \n";
     log.append(temp_child->text(1).toStdString() + " child id \n");
@@ -300,14 +300,14 @@ int MaterialManagement::get_child_id(std::string material_id)
 
   for (size_t i = 0; i < tree_material->topLevelItemCount(); i++)
   {
-    temp_child = dynamic_cast<MaterialManagementItem*>(tree_material->topLevelItem(i));
+    temp_child = dynamic_cast<MaterialManagementItem*>(tree_material->topLevelItem(int(i)));
     
     //log = temp_child->text(1).toStdString() + " == " + material_id + " child ids \n";
     //PRINT_INFO("%s", log.c_str());
     
     if (temp_child->text(1).toStdString()==material_id)
     {
-      int_return = i;
+      int_return = int(i);
       break;
     }
   }
@@ -507,7 +507,7 @@ void MaterialManagement::selectListItem(QListWidgetItem* item)
 
   for (size_t i = 0; i < list_available->count(); i++)
   {
-    temp_item = list_available->item(i);
+    temp_item = list_available->item(int(i));
     if (temp_item != item)
     {
       temp_item->setSelected(false);
@@ -515,7 +515,7 @@ void MaterialManagement::selectListItem(QListWidgetItem* item)
   }
   for (size_t i = 0; i < list_used->count(); i++)
   {
-    temp_item = list_used->item(i);
+    temp_item = list_used->item(int(i));
     if (temp_item != item)
     {
       temp_item->setSelected(false);
@@ -587,7 +587,7 @@ void MaterialManagement::on_pushButton_apply_clicked(bool)
 
   for (size_t i = 0; i < tree_material->topLevelItemCount(); i++)
   {
-    temp_child = dynamic_cast<MaterialManagementItem*>(tree_material->topLevelItem(i));
+    temp_child = dynamic_cast<MaterialManagementItem*>(tree_material->topLevelItem(int(i)));
     command_prefix = "modify material \"" + temp_child->material_name_qstring + "\" ";
 
     for (size_t ii = 0; ii < temp_child->properties.size(); ii++)
@@ -630,7 +630,7 @@ void MaterialManagement::on_pushButton_apply_clicked(bool)
 
   for (size_t i = 0; i < commands.size(); i++)
   {
-    CubitInterface::cmd(commands[i].toStdString().c_str());
+    CubitInterface::cmd(commands[int(i)].toStdString().c_str());
   }
 }
 

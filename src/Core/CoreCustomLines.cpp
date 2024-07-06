@@ -50,7 +50,7 @@ bool CoreCustomLines::create_customline(std::vector<std::string> options)
   }
   else
   {
-    customline_last = customlines_data.size() - 1;
+    customline_last = int(customlines_data.size()) - 1;
     customline_id = std::stoi(customlines_data[customline_last][0]) + 1;
   }
 
@@ -103,7 +103,7 @@ int CoreCustomLines::get_customlines_data_id_from_customline_id(int customline_i
   {
     if (customlines_data[i][0]==std::to_string(customline_id))
     {
-      return_int = i;
+      return_int = int(i);
     }  
   }
   return return_int;

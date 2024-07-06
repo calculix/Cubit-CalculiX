@@ -34,7 +34,7 @@ SectionsModifySolidPanel::SectionsModifySolidPanel(QWidget *parent) :
   label_0->setText("Section ID");
   label_1->setText("Block ID");
   label_2->setText("Material ID");
-  label_3->setText("Orientation Name");
+  label_3->setText("Orientation ID");
   label_4->setText("Thickness");
   lineEdit_0 = new QLineEdit();
   lineEdit_1 = new QLineEdit();
@@ -102,7 +102,7 @@ void SectionsModifySolidPanel::on_pushButton_apply_clicked(bool)
     }
     if (lineEdit_3->text()!="")
     {
-      command.append(" orientation \"" + lineEdit_3->text() + "\"");
+      command.append(" orientation " + lineEdit_3->text());
     }
     if (lineEdit_4->text()!="")
     {
@@ -122,6 +122,6 @@ void SectionsModifySolidPanel::on_pushButton_apply_clicked(bool)
   
   for (size_t i = 0; i < commands.size(); i++)
   {
-    CubitInterface::cmd(commands[i].toStdString().c_str());
+    CubitInterface::cmd(commands[int(i)].toStdString().c_str());
   }
 }

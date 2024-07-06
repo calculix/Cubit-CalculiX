@@ -1,0 +1,4 @@
+/* globally accessible and generic utility classes */
+:global(.pv-break-word) {
+  word-break: break-word;
+}

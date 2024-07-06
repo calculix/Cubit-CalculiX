@@ -47,7 +47,7 @@ std::vector<std::string> ccxSectionMembraneCreateCommand::get_syntax()
     }
     
     syntax.append("material <value:label='material',help='<material>'> ");
-    syntax.append("[orientation <string:type='unquoted', number='1', label='orientation', help='<orientation_name>'>] ");
+    syntax.append("[orientation <value:label='orientation' ,help='<orientation_id>'>] ");
     syntax.append("[thickness <value:label='thickness',help='<thickness>'>]");
     syntax.append("[offset <value:label='offset',help='<offset>'>]");
   
@@ -61,7 +61,7 @@ std::vector<std::string> ccxSectionMembraneCreateCommand::get_syntax()
 std::vector<std::string> ccxSectionMembraneCreateCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx create section membrane block <block id> material <material id> [orientation <orientation_name>] [thickness <thickness>] [offset <offset>]";
+  help[0] = "ccx create section membrane block <block id> material <material id> [orientation <orientation_id>] [thickness <thickness>] [offset <offset>]";
   help[1]=" ";
   help[2]=" ";
   help[3]=" ";
@@ -85,6 +85,7 @@ bool ccxSectionMembraneCreateCommand::execute(CubitCommandData &data)
   std::string output;
 
   int material_id;
+  int orientation_value;
   std::string orientation;
   std::vector<std::string> options;
   double thickness_value;
@@ -99,9 +100,13 @@ bool ccxSectionMembraneCreateCommand::execute(CubitCommandData &data)
   std::string block_string = " ";
   
   data.get_value("material", material_id);
-  if (!data.get_string("orientation", orientation))
+  if (!data.get_value("orientation", orientation_value))
   {
-    orientation = "";
+    orientation = "-1";
+  }
+  else
+  {
+    orientation = std::to_string(orientation_value);
   }
   if (!data.get_value("thickness", thickness_value))
   {

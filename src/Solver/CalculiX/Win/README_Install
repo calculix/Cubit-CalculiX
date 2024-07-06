@@ -1,0 +1,113 @@
+This package contains CalculiX 2.21 binaries for ccx and cgx and the
+cad converters for windows originally written by Pascal Mossier
+and tetgen and glut. 
+The source codes are included in http://www.dhondt.de/ccx_2.21.src.tar.bz2
+The source codes are included in http://www.dhondt.de/cgx_2.21.all.tar.bz2
+and http://www.dhondt.de/cgxCadTools.tar.bz2
+ 
+They may be used as they are but they are also well suited to replace the 
+now outdated binaries in the "bConverged CalculiX for Windows" suite.
+(REMARK about the manuals: The user may use the ones from the
+CalculiX web side. Be aware that you may re-define the browser and locations
+using the .cgx file to make them accessible from cgx via the help menu. Please
+consult the cgx manual on how to do that (see Customization).) 
+
+This cgx build allows "read on demand" which is not supported by
+the native bconverged binary. This speeds up the starting time very
+significantly when dealing with big data files.
+
+The binaries were provided by:
+rafal.brzegowy@yahoo.com
+Many thanks!
+
+For stand alone use:
+
+Place the binaries together with the dll's in a location were the system will
+find them (the location has to be in the search path).
+
+For use with the "bConverged CalculiX for Windows" suite:
+
+1)
+Rename cgx.exe of bconverged in
+C:\Program Files (x86)\bConverged\CalculiX\cgx\cgx.exe
+to cgx_bconverged.exe
+Move the desired cgx_xx.exe to that location and rename it to cgx.exe
+
+2)
+Place there also the glut64.dll
+
+The optional user specific ".cgx" configuration file is expected in the
+personal home directory. This directory will be listed in the terminal after
+start-up. It is determined by combining the environment variables "HOMEDRIVE"
+and "HOMEPATH".
+
+3)
+Rename ccx.exe of bconverged in
+C:\Program Files (x86)\bConverged\CalculiX\ccx\ccx.exe
+to ccx_bconverged.exe
+Move the desired ccx_xx.exe to that location and rename it to ccx.exe
+
+Remarks concerning ccx from Rafal Brzegowy:
+
+ccx_dynamic.exe = spooles (static), pastix (static), pardiso (dynamic),
+                  requires one API MKL library
+ccx_static.exe = spooles (static), pastix (static)
+
+Switch pardiso link from dynamic to "Single Dynamic Library", description:
+https://software.intel.com/content/www/us/en/develop/documentation/onemkl-linux-developer-guide/top/linking-your-application-with-the-intel-oneapi-math-kernel-library/linking-in-detail/dynamically-selecting-the-interface-and-threading-layer.html
+
+https://software.intel.com/content/www/us/en/develop/documentation/onemkl-linux-developer-guide/top/linking-your-application-with-the-intel-oneapi-math-kernel-library/linking-quick-start/using-the-single-dynamic-library.html
+
+Base description (http://portal.nacad.ufrj.br/online/intel/mkl/common/mkl_userguide/GUID-7091CAB6-0506-443A-ABA0-CCE2245A1A1C.htm):
+You can simplify your link line through the use of the Intel MKL Single Dynamic
+Library (SDL).
+To use SDL, place libmkl_rt.so on your link line. For example:
+icс application.c -lmkl_rt
+SDL enables you to select the interface and threading library for Intel MKL at
+run time. By default, linking with SDL provides:
+Intel LP64 interface on systems based on the Intel® 64 architectureIntel
+interface on systems based on the IA-32 architectureIntel threading
+
+Best regards Rafal
+
+
+Remarks concerning cgxCadTools:
+
+The cgx distribution includes a step file which can be used to check the
+installation.
+It is included in
+<your install path>/CalculiX/cgx_2.21/examples/cad/halter.stp
+
+To invoke the converter:
+Since OPEN CASCADE needs libstdc++-6.dll (64bit) it is necessary to install
+mingw:
+https://sourceforge.net/projects/mingw-w64/
+Then you need to install the OPEN CASCADE Technology 7.4.0 libraries, either
+from:
+https://www.opencascade.com/content/latest-release
+Or you search the internet for "Download Open CASCADE Technology 7.4.0".
+Or Install opencascade package: $ pacman -S mingw-w64-x86_64-opencascade
+
+Then you start the converter:
+cad2fbd <your install path>/CalculiX/cgx_2.19/examples/cad/halter.stp
+writes: result.fbd
+
+The model can be meshed with the following commands (ignore the errors!):
+cgx -a result.fbd
+mesh all
+# optionally use 'qmsh' to modify the surface mesh (see the manual) then
+mesh all tet
+plot e all
+
+Some additional remarks from Rafal Brzegowy concerning the compilation of the
+cgxCadTools:
+
+1. Add to mingw(msys) prebuild package:
+   $ pacman -S mingw-w64-x86_64-opencascade
+If you want build in Windows, you need to do:
+1. Instal msys2/mingw
+2. Instal base packages: $ pacman -S mingw-w64-x86_64-toolchain
+3. Install opencascade package: $ pacman -S mingw-w64-x86_64-opencascade
+4. Copy my makefile in to the correct src folder, like:
+   Makefile_cad2fbd to cgxCadTools/CadReader/src
+5. Make: make -f Makefile_cad2fbd, make -f Makefile_fbd2cad

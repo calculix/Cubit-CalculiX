@@ -1,0 +1,77 @@
+<VTKFile type="RectilinearGrid" version="1.0" byte_order="LittleEndian" header_type="UInt64">
+  <RectilinearGrid WholeExtent="3 6 0 3 0 3">
+    <FieldData>
+      <DataArray type="Float64" Name="TimeValue" NumberOfTuples="1" format="ascii" RangeMin="1" RangeMax="1">
+        1
+      </DataArray>
+    </FieldData>
+  <Piece Extent="3 6 0 3 0 3">
+    <PointData Scalars="YtimesZ">
+      <DataArray type="Float64" Name="XplusY" format="ascii" RangeMin="1" RangeMax="7.0">
+        4.0 3.0 2.0 1.0 
+        5.0 4.0 3.0 2.0
+        6.0 5.0 4.0 3.0 
+        7.0 6.0 5.0 4.0 
+
+        4.0 3.0 2.0 1.0 
+        5.0 4.0 3.0 2.0
+        6.0 5.0 4.0 3.0 
+        7.0 6.0 5.0 4.0 
+
+        4.0 3.0 2.0 1.0 
+        5.0 4.0 3.0 2.0
+        6.0 5.0 4.0 3.0 
+        7.0 6.0 5.0 4.0 
+
+        4.0 3.0 2.0 1.0 
+        5.0 4.0 3.0 2.0
+        6.0 5.0 4.0 3.0 
+        7.0 6.0 5.0 4.0 
+
+
+      </DataArray>
+      <DataArray type="Float64" Name="YtimesZ" format="ascii" RangeMin="0.5" RangeMax="3.5">
+        0.5 0.5 0.5 0.5
+        0.5 0.5 0.5 0.5
+        0.5 0.5 0.5 0.5
+        0.5 0.5 0.5 0.5
+
+        1.5 1.5 1.5 1.5
+        1.5 1.5 1.5 1.5
+        1.5 1.5 1.5 1.5
+        1.5 1.5 1.5 1.5
+
+        2.5 2.5 2.5 2.5
+        2.5 2.5 2.5 2.5
+        2.5 2.5 2.5 2.5
+        2.5 2.5 2.5 2.5
+
+        3.5 3.5 3.5 3.5
+        3.5 3.5 3.5 3.5
+        3.5 3.5 3.5 3.5
+        3.5 3.5 3.5 3.5
+      </DataArray>
+    </PointData>
+    <CellData Scalars="One">
+      <DataArray type="Float64" Name="OneTwo" format="ascii" RangeMin="2" RangeMax="2">
+        2 2 2 2 2 2
+        2 2 2 2 2 2
+        2 2 2 2 2 2
+        2 2 2 2 2 2
+        2 2 2
+      </DataArray>
+    </CellData>
+    <Coordinates>
+      <DataArray type="Float32" Name="X" format="ascii" RangeMin="1" RangeMax="4">
+        1 2 3 4
+      </DataArray>
+      <DataArray type="Float32" Name="Y" format="ascii" RangeMin="0.1" RangeMax="1">
+        0.1 0.4 0.7 1
+      </DataArray>
+      <DataArray type="Float32" Name="Z" format="ascii" RangeMin="0" RangeMax="0.9">
+        0 0.3 0.6 0.9
+      </DataArray>
+    </Coordinates>
+  </Piece>
+  </RectilinearGrid>
+</VTKFile>

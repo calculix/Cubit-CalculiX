@@ -22,6 +22,7 @@ class ConstraintsTree;
 class SurfaceInteractionsTree;
 class ContactPairsTree;
 class AmplitudesTree;
+class OrientationsTree;
 class LoadsTree;
 class LoadsForcesTree;
 class LoadsPressuresTree;
@@ -76,6 +77,7 @@ private:
   SurfaceInteractionsTree *mySurfaceInteractionsTree; //SurfaceInteractions root item
   ContactPairsTree *myContactPairsTree; //ContactPairs root item
   AmplitudesTree *myAmplitudesTree; //Amplitudes root item
+  OrientationsTree *myOrientationsTree; //Orientations root item
   LoadsTree *myLoadsTree; //Loads root item
   LoadsForcesTree *myLoadsForcesTree; //Forces root item
   LoadsPressuresTree *myLoadsPressuresTree; //Pressures root item

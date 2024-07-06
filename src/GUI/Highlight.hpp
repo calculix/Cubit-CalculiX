@@ -18,6 +18,7 @@ class ConstraintsTree;
 class SurfaceInteractionsTree;
 class ContactPairsTree;
 class AmplitudesTree;
+class OrientationsTree;
 class LoadsTree;
 class LoadsForcesTree;
 class LoadsPressuresTree;

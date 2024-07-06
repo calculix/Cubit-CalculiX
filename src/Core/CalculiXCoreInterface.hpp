@@ -33,7 +33,8 @@ public:
   std::string get_sideset_name(int sideset_id); // gets the sideset name
   std::string get_surfaceinteraction_name(int surfaceinteraction_id); // gets the surfaceinteraction name
   std::vector<std::string> get_contactpair_master_slave(int contactpair_id); // gets the contactpair master and slave name
-  std::string get_amplitude_name(int amplitude_id); // gets the surfaceinteraction name
+  std::string get_amplitude_name(int amplitude_id); // gets the amplitude name
+  std::string get_orientation_name(int orientation_id); // gets the orientation name
   std::vector<int> get_loadsforces_ids(); // get all load forces ids
   std::vector<int> get_loadspressures_ids(); // get all load pressure ids
   std::vector<int> get_loadsheatfluxes_ids(); // get all load heatflux ids
@@ -41,10 +42,12 @@ public:
   std::vector<int> get_loadscentrifugal_ids(); // get all load centrifugal ids
   std::vector<int> get_bcsdisplacements_ids(); // get all bc displacement ids
   std::vector<int> get_bcstemperatures_ids(); // get all bc temperature ids
+  std::vector<int> get_orientations_ids(); // get all orientation ids
   bool check_block_exists(int block_id);
   bool check_nodeset_exists(int nodeset_id);
   bool check_sideset_exists(int sideset_id);
   bool check_vertex_in_nodeset_exists(int vertex_id,int nodeset_id); // checks if the vertex exists in the nodeset
+  bool check_orientation_exists(int orientation_id); // check if orientation exists
   bool core_update(); // lets the core check for updates aka changes from the entities
   bool core_reset(); // reset the whole core to the init level
   std::vector<int> get_blocks(); // gets the block ids from core blocks
@@ -57,6 +60,7 @@ public:
   std::string get_surfaceinteraction_export_data(); // gets the export data from surfaceinteractions core
   std::string get_contactpair_export_data(); // gets the export data from contactpairs core
   std::string get_amplitude_export_data(); // gets the export data from amplitudes core
+  std::string get_orientation_export_data(); // gets the export data from orientations core
   std::string get_initialcondition_export_data(); // gets the export data from core
   std::string get_hbc_export_data(); // gets the export data from core
   std::string get_step_export_data(); // gets the export data from core
@@ -77,6 +81,9 @@ public:
   bool create_amplitude(std::vector<std::string> options, std::vector<std::vector<std::string>> options2); // adds a new amplitude
   bool modify_amplitude(int amplitude_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2); // modify a amplitude
   bool delete_amplitude(int amplitude_id); // delete amplitude
+  bool create_orientation(std::vector<std::string> options, std::vector<std::vector<std::string>> options2); // adds a new orientation
+  bool modify_orientation(int orientation_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2); // modify a orientation
+  bool delete_orientation(int orientation_id); // delete orientation
   bool modify_loadsforces(int force_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a force
   bool modify_loadspressures(int pressure_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a pressure
   bool modify_loadsheatfluxes(int heatflux_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a heatflux
@@ -121,7 +128,6 @@ public:
   bool delete_job(int job_id); // delete job
   bool run_job(int job_id, int option); // runs job
   bool check_jobs(); // checks for changes of job processes
-  bool check_zombie(); // checks for zombie processes
   bool wait_job(int job_id); // runs job
   bool kill_job(int job_id); // runs job
   bool set_job_conversion(int job_id, int conversion); // sets the paraview conversion value for the job
@@ -154,7 +160,8 @@ public:
   std::vector<std::vector<double>> get_draw_data_for_load_centrifugal(int id); // returns coord(3) and magnitude(3) std::vector<double>
   std::vector<std::vector<double>> get_draw_data_for_bc_displacement(int id); // returns coord(3) and dof
   std::vector<std::vector<double>> get_draw_data_for_bc_temperature(int id); // returns coord(3) and dof
-  bool draw_all(double size); // draw all loads and bcs
+  std::vector<std::vector<double>> get_draw_data_for_orientation(int id); // returns pairs of 4 for {system_type,local_axis_angle}, coord(3) of section center, a_coord(3) ,b_coord(3)
+  bool draw_all(double size); // draw all loads,bcs,orientations
 
   //QUERY results
   //FRD results
@@ -169,7 +176,7 @@ public:
   std::vector<int> frd_get_element_ids_smaller_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value); // returns the global element ids smaller than the values
   std::vector<int> frd_get_element_ids_greater_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value); // returns the global element ids greater than the values  
   std::vector<int> frd_get_element_ids_over_limit(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double limit); // returns the global element ids where the largest difference between nodal values exceeds the limit
-  double frd_get_node_value(int job_id,int node_id, int total_increment,std::string result_block_type,std::string result_block_component); // returns the queried node_id value
+  double frd_get_node_value(int job_id,int node_id, int total_increment,std::string result_block_type,std::string result_block_component); // returns the queried node_id value or zero if no value exists
   std::vector<double> frd_get_node_values(int job_id,int node_id, int total_increment,std::string result_block_type); // returns the queried node_id values
   //DAT results
   std::vector<std::string> dat_get_result_block_types(int job_id); // returns a list of all result block types
@@ -183,10 +190,11 @@ public:
   std::vector<int> dat_get_element_ids_smaller_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value); // returns the global element ids smaller than the values
   std::vector<int> dat_get_element_ids_greater_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value); // returns the global element ids greater than the values  
   std::vector<int> dat_get_element_ids_over_limit(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double limit); // returns the global element ids where the largest difference between element values exceeds the limit
-  double dat_get_node_value(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component); // returns the queried node_id value
+  double dat_get_node_value(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component); // returns the queried node_id value or zero if no value exists
   std::vector<double> dat_get_node_values(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set); // returns the queried node_id values
   std::vector<double> dat_get_element_values_for_component(int job_id,int element_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component); // returns the queried element integration point values for a component
   std::vector<std::vector<double>> dat_get_element_values(int job_id,int element_id, double time,std::string result_block_type,std::string result_block_set); // returns the queried element integration point values for all components
+  std::vector<std::vector<std::vector<double>>> dat_get_buckle(int job_id); // returns the buckling data for a job
 
   // GUI
   QIcon* getIcon(std::string name);
@@ -201,6 +209,7 @@ public:
   std::vector<std::vector<std::string>> get_surfaceinteractions_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_contactpairs_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_amplitudes_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_orientations_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_loadsforces_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_loadspressures_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_loadsheatfluxes_tree_data(); // gets the data from core to build the tree

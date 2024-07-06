@@ -60,7 +60,7 @@ void StepsFieldOutputsTree::update()
   for (size_t i = this->childCount(); i > 0; i--)
   { 
     erase_item = true;
-    temp_child = this->child(i-1);
+    temp_child = this->child(int(i)-1);
 
     for (size_t ii = 0; ii < outputs_tree_data.size(); ii++)
     {    
@@ -116,11 +116,11 @@ int StepsFieldOutputsTree::get_child_id(std::string output_id)
   for (size_t i = 0; i < this->childCount(); i++)
   {
     
-    temp_child = this->child(i);
+    temp_child = this->child(int(i));
 
     if (temp_child->text(1).toStdString()==output_id)
     {
-      int_return = i;
+      int_return = int(i);
       break;
     }
   }

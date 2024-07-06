@@ -57,6 +57,11 @@ public:
   //result_block_c1_data[0][0][1] result_block_c1_data_id
   //result_block_c1_data[0][0][2] type 1 node 2 element
 
+  std::vector<std::vector<std::vector<double>>> buckle_data; // contains all buckling data from dat file
+  //buckle_data[set][line][data]
+  //buckle_data[0][0][0] mode no
+  //buckle_data[0][0][1] buckling factor
+
   // sorted vectors for faster results search
   // will probably be used for python interface queries
   std::vector<std::vector<int>> sorted_c1;
@@ -76,6 +81,7 @@ public:
   bool read_header(std::vector<std::string> line); // processing the result block header
   bool header_emas(std::vector<std::string> line); // processing emas header
   bool read_line(std::vector<std::string> line); // processing the result lines
+  bool read_line_buckle(std::vector<std::string> line); // processing the result lines for buckling output
   int get_current_result_block_type(std::string result_type); // gets result_block_type
   int get_current_result_block_set(std::string result_set); // gets result_block_set
   bool check_element_sets(); // checks if the data for the element sets has integration points data or not...if yes set prefix ip_

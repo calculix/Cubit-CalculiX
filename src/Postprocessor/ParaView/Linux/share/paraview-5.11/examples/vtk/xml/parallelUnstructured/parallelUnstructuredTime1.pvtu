@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!-- Create a dataset by bringing in two files. -->
+<!-- When we need timesteps, this will be time 1 -->
+
+<VTKFile type="PUnstructuredGrid" 
+         version="0.1" 
+         byte_order="LittleEndian" 
+         compressor="vtkZLibDataCompressor">
+  <PUnstructuredGrid GhostLevel="0">
+    <PCellData Scalars="temperature">
+      <PDataArray type="Float32" Name="temperature" format="ascii"/>
+      <PDataArray type="Float32" Name="pressure" format="ascii"/>
+    </PCellData>
+    <PPoints>
+       <PDataArray type="Float32" NumberOfComponents="3" format="ascii"/>
+    </PPoints>
+    <Piece Source="unstructuredQuadsTime1.vtu"/>
+    <Piece Source="unstructuredTrisTime1.vtu"/>
+  </PUnstructuredGrid>
+</VTKFile>

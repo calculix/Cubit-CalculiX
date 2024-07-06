@@ -9,3 +9,26 @@
 2024-05-20 new python interface function to get job status
 2024-05-20 working on new convert option
 2024-05-23 updating readme
+2024-05-23 updating Git Repo
+######### ------  Release 2024.5
+
+2024-05-24 orientation keyword
+2024-05-25 orientation keyword
+2024-05-26 orientation keyword
+2024-05-27 compilation of windows version
+2024-05-28 compilation of windows version
+2024-05-29 compilation of windows version
+2024-05-30 compilation of windows version
+2024-06-03 compilation of windows version
+2024-06-06 added reading of buckling values
+2024-06-06 added query of buckling values
+2024-06-11 debugging startup of ccl and ccm, changing dependencies in cmake
+2024-06-12 debugging startup of ccl and ccm, changing dependencies in cmake
+2024-06-13 debugging startup of ccl and ccm, changing dependencies in cmake
+2024-06-14 debugging startup of ccl and ccm, changing dependencies in cmake
+2024-06-15 compilation of windows version
+2024-06-16 debug python interface import on windows, nohup replacement windows
+2024-06-17 - 2024-07-05 CoreJobs modified for windows
+2024-07-05 Rework Useroptions and include paraview and solver
+
+######### ------  Release 2024.7

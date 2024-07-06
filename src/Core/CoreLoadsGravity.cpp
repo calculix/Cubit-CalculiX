@@ -58,7 +58,7 @@ bool CoreLoadsGravity::create_load(std::vector<std::string> options)
   }
   else
   {
-    load_last = loads_data.size() - 1;
+    load_last = int(loads_data.size()) - 1;
     load_id = loads_data[load_last][0] + 1;
   }
 
@@ -75,7 +75,7 @@ bool CoreLoadsGravity::create_load(std::vector<std::string> options)
   }
   else
   {
-    sub_last = time_delay_data.size() - 1;
+    sub_last = int(time_delay_data.size()) - 1;
     sub_id = std::stoi(time_delay_data[sub_last][0]) + 1;
   }
   time_delay_id = sub_id;
@@ -91,7 +91,7 @@ bool CoreLoadsGravity::create_load(std::vector<std::string> options)
   }
   else
   {
-    sub_last = direction_data.size() - 1;
+    sub_last = int(direction_data.size()) - 1;
     sub_id = std::stoi(direction_data[sub_last][0]) + 1;
   }
   direction_id = sub_id;
@@ -104,7 +104,7 @@ bool CoreLoadsGravity::create_load(std::vector<std::string> options)
   }
   else
   {
-    sub_last = magnitude_data.size() - 1;
+    sub_last = int(magnitude_data.size()) - 1;
     sub_id = std::stoi(magnitude_data[sub_last][0]) + 1;
   }
   magnitude_id = sub_id;
@@ -242,7 +242,7 @@ int CoreLoadsGravity::get_loads_data_id_from_load_id(int load_id)
   {
     if (loads_data[i][0]==load_id)
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -255,7 +255,7 @@ int CoreLoadsGravity::get_time_delay_data_id_from_time_delay_id(int time_delay_i
   {
     if (time_delay_data[i][0]==std::to_string(time_delay_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -268,7 +268,7 @@ int CoreLoadsGravity::get_direction_data_id_from_direction_id(int direction_id)
   {
     if (direction_data[i][0]==std::to_string(direction_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -281,7 +281,7 @@ int CoreLoadsGravity::get_magnitude_data_id_from_magnitude_id(int magnitude_id)
   {
     if (magnitude_data[i][0]==std::to_string(magnitude_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;

@@ -1,0 +1,10 @@
+This file comes from https://www.unidata.ucar.edu/software/netcdf/examples/files.html.  
+It is "Sea surface temperatures collected by PCMDI for use by the IPCC"
+
+The land is very warm, and irrelevant.  What is interesting is changes in sea temperature.  
+* Open using the NetCDF reader.
+* Paint by tos.  
+* Change min and max to be 270 to 320.  
+* In the Color Editor, select Use Above Range Color.  This will turn land gray.  
+* Presets Cool to Warm Extended, Yellow-Gray-Blue, Blue-Green-Orange or Rainbow Desaturated really show the data well.
+

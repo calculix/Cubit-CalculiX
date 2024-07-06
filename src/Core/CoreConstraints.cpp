@@ -56,7 +56,7 @@ bool CoreConstraints::create_constraint(std::string constraint_type, std::vector
     }
     else
     {
-      sub_constraint_last = rigidbody_constraint_data.size() - 1;
+      sub_constraint_last = int(rigidbody_constraint_data.size()) - 1;
       sub_constraint_id = std::stoi(rigidbody_constraint_data[sub_constraint_last][0]) + 1;
     }
     constraint_type_value = 1;
@@ -69,7 +69,7 @@ bool CoreConstraints::create_constraint(std::string constraint_type, std::vector
     }
     else
     {
-      sub_constraint_last = tie_constraint_data.size() - 1;
+      sub_constraint_last = int(tie_constraint_data.size()) - 1;
       sub_constraint_id = std::stoi(tie_constraint_data[sub_constraint_last][0]) + 1;
     }
     constraint_type_value = 2;
@@ -82,7 +82,7 @@ bool CoreConstraints::create_constraint(std::string constraint_type, std::vector
   }
   else
   {
-    constraint_last = constraints_data.size() - 1;
+    constraint_last = int(constraints_data.size()) - 1;
     constraint_id = constraints_data[constraint_last][0] + 1;
   }
 
@@ -191,7 +191,7 @@ int CoreConstraints::get_constraints_data_id_from_constraint_id(int constraint_i
   {
     if (constraints_data[i][0]==constraint_id)
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -204,7 +204,7 @@ int CoreConstraints::get_rigidbody_constraint_data_id_from_rigidbody_constraint_
   {
     if (rigidbody_constraint_data[i][0]==std::to_string(rigidbody_constraint_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -217,7 +217,7 @@ int CoreConstraints::get_tie_constraint_data_id_from_tie_constraint_id(int tie_c
   {
     if (tie_constraint_data[i][0]==std::to_string(tie_constraint_id))
     {
-        return_int = i;
+        return_int = int(i);
     }  
   }
   return return_int;

@@ -31,7 +31,7 @@ void CalculiXPythonInterface::help()
   log.append("std::vector<int> frd_get_element_ids_smaller_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value); // returns the global element ids smaller than the values\n");
   log.append("std::vector<int> frd_get_element_ids_greater_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value); // returns the global element ids greater than the values\n");
   log.append("std::vector<int> frd_get_element_ids_over_limit(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double limit); // returns the global element ids where the largest difference between nodal values exceeds the limit\n");
-  log.append("double frd_get_node_value(int job_id,int node_id, int total_increment,std::string result_block_type,std::string result_block_component); // returns the queried node_id value\n");
+  log.append("double frd_get_node_value(int job_id,int node_id, int total_increment,std::string result_block_type,std::string result_block_component); // returns the queried node_id value or zero if no value exists\n");
   log.append("std::vector<double> frd_get_node_values(int job_id,int node_id, int total_increment,std::string result_block_type); // returns the queried node_id values\n");
   log.append("Interactions with DAT Results:\n");
   log.append("std::vector<std::string> dat_get_result_block_types(int job_id); // returns a list of all result block types\n");
@@ -45,10 +45,11 @@ void CalculiXPythonInterface::help()
   log.append("std::vector<int> dat_get_element_ids_smaller_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value); // returns the global element ids smaller than the values\n");
   log.append("std::vector<int> dat_get_element_ids_greater_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value); // returns the global element ids greater than the values  \n");
   log.append("std::vector<int> dat_get_element_ids_over_limit(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double limit); // returns the global element ids where the largest difference between element values exceeds the limit\n");
-  log.append("double dat_get_node_value(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component); // returns the queried node_id value\n");
+  log.append("double dat_get_node_value(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component); // returns the queried node_id value or zero if no value exists\n");
   log.append("std::vector<double> dat_get_node_values(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set); // returns the queried node_id values\n");
   log.append("std::vector<double> dat_get_element_values_for_component(int job_id,int element_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component); // returns the queried element integration point values for a component\n");
   log.append("std::vector<std::vector<double>> dat_get_element_values(int job_id,int element_id, double time,std::string result_block_type,std::string result_block_set); // returns the queried element integration point values for all components\n");
+  log.append("std::vector<std::vector<std::vector<double>>> dat_get_buckle(int job_id); // returns the buckling data for a job\n");
   PRINT_INFO("%s", log.c_str());
 }
 
@@ -195,4 +196,9 @@ std::vector<double> CalculiXPythonInterface::dat_get_element_values_for_componen
 std::vector<std::vector<double>> CalculiXPythonInterface::dat_get_element_values(int job_id,int element_id, double time,std::string result_block_type,std::string result_block_set)
 {
   return ccx_iface->dat_get_element_values(job_id,element_id,time,result_block_type,result_block_set);
+}
+
+std::vector<std::vector<std::vector<double>>> CalculiXPythonInterface::dat_get_buckle(int job_id)
+{
+  return ccx_iface->dat_get_buckle(job_id);
 }

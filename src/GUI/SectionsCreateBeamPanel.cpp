@@ -72,7 +72,7 @@ SectionsCreateBeamPanel::SectionsCreateBeamPanel(QWidget *parent) :
   label_9->setText("x");
   label_10->setText("y");
   label_11->setText("z");
-  label_12->setText("Orientation Name");
+  label_12->setText("Orientation ID");
   label_13->setText("Offset 1");
   label_14->setText("Offset 2");
   beam_type = new QComboBox();
@@ -207,7 +207,7 @@ void SectionsCreateBeamPanel::on_pushButton_apply_clicked(bool)
 
     if (lineEdit_12->text()!="")
     {
-      command.append(" orientation \"" + lineEdit_12->text() + "\"");
+      command.append(" orientation " + lineEdit_12->text());
     }
     if (lineEdit_13->text()!="")
     {
@@ -241,6 +241,6 @@ void SectionsCreateBeamPanel::on_pushButton_apply_clicked(bool)
   
   for (size_t i = 0; i < commands.size(); i++)
   {
-    CubitInterface::cmd(commands[i].toStdString().c_str());
+    CubitInterface::cmd(commands[int(i)].toStdString().c_str());
   }
 }
