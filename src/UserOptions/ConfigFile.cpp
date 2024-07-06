@@ -161,7 +161,7 @@ QString ConfigFile::standard_entry(std::string option)
             standard_value = QString::fromStdString(componentpath) + "Solver/ccx_dynamic.exe";
         #else
             //standard_value = QString::fromStdString(componentpath) + "Solver/ccx_2.21_MT";
-            standard_value = QString::fromStdString(componentpath) + "Solver/ccx_2.21";
+            standard_value = QString::fromStdString(componentpath) + "Solver/ccx_2.19_MT";
         #endif
     }else if(option == "PathCGX")
     {
