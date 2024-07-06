@@ -160,7 +160,8 @@ QString ConfigFile::standard_entry(std::string option)
         #ifdef WIN32
             standard_value = QString::fromStdString(componentpath) + "Solver/ccx_dynamic.exe";
         #else
-            standard_value = QString::fromStdString(componentpath) + "Solver/ccx_2.21_MT";
+            //standard_value = QString::fromStdString(componentpath) + "Solver/ccx_2.21_MT";
+            standard_value = QString::fromStdString(componentpath) + "Solver/ccx_2.21";
         #endif
     }else if(option == "PathCGX")
     {
