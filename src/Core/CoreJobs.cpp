@@ -59,6 +59,7 @@ bool CoreJobs::reset()
     PPTID.clear();
     PipePID.clear();
     PipeThreads.clear();
+    PipeThreadsRun.clear();
   #else
     CubitProcessHandler.clear();
   #endif
@@ -194,10 +195,13 @@ bool CoreJobs::run_job(int job_id,int option)
       
       if (jobs_data[job_data_id][2]!="")
       {
-        std::string shellstr;
-        shellstr = "cp '" + jobs_data[job_data_id][2] + "' '" +jobs_data[job_data_id][1] + ".inp'";
-        system(shellstr.c_str());
+        //std::string shellstr;
+        //shellstr = "cp '" + jobs_data[job_data_id][2] + "' '" + jobs_data[job_data_id][1] + ".inp'";
+        //system(shellstr.c_str());
+        //PRINT_INFO("%s", shellstr.c_str());
+        std::string SourcePath = jobs_data[job_data_id][2];
         filepath = jobs_data[job_data_id][1] + ".inp";
+        CopyFile( SourcePath.c_str(), filepath.c_str(), FALSE );
       } else {
         filepath = jobs_data[job_data_id][1] + ".inp";
         log = "Exporting Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " to \n";
