@@ -67,15 +67,18 @@ JobsMonitor::JobsMonitor()
   QPlainTextEdit_sta = new QPlainTextEdit();
   QPlainTextEdit_sta->setReadOnly(true);
   QPlainTextEdit_sta->setMaximumBlockCount(maximumBlockCount);
+  FRD_widget = new QWidget();
+  DAT_widget = new QWidget();
 
   //tab widget
   TabWidget = new QTabWidget();
   TabWidget->addTab(QPlainTextEdit_console,"Console Output");
   TabWidget->addTab(QPlainTextEdit_cvg,"*.cvg");
   TabWidget->addTab(QPlainTextEdit_sta,"*.sta");
+  TabWidget->addTab(FRD_widget,"*.frd");
+  TabWidget->addTab(DAT_widget,"*.dat");
   boxLayout_tab->addWidget(TabWidget);
 
-  
   // Signals
   QObject::connect(pushButton_run, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_run_clicked(bool)));
   QObject::connect(pushButton_kill, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_kill_clicked(bool)));
