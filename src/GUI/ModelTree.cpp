@@ -779,6 +779,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action4("Delete Force",this);
         connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
         contextMenu.addAction(&action4);
+        QAction action5("Draw Force",this);
+        connect(&action5, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
+        contextMenu.addAction(&action5);
 
         contextMenu.exec(mapToGlobal(pos));
 
@@ -1931,6 +1934,10 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==3) //Action4
       {
         this->setWidgetInCmdPanelMarker("FEAForceDelete");
+      }else if (contextMenuAction[0][1]==4) //Action5
+      {
+        std::string command = "ccx draw load force " + std::to_string(contextMenuAction[0][2]);
+        CubitInterface::cmd(command.c_str());
       }  
     }else if (contextMenuAction[0][0]==10) //LoadsPressuresTree
     {

@@ -3270,6 +3270,101 @@ bool CalculiXCore::draw_all(double size) // draw all bc and loads
   return draw->draw_all(size);
 }
 
+bool CalculiXCore::draw_load_force(std::vector<int> force_ids,double size)
+{
+  for (size_t i = 0; i < force_ids.size(); i++)
+  {
+    draw->draw_load_force(force_ids[i],size);
+  }
+  
+  return true;
+}
+
+bool CalculiXCore::draw_load_pressure(std::vector<int> pressure_ids,double size)
+{
+  for (size_t i = 0; i < pressure_ids.size(); i++)
+  {
+    draw->draw_load_pressure(pressure_ids[i],size);
+  }
+  
+  return true;
+}
+
+bool CalculiXCore::draw_load_heatflux(std::vector<int> heatflux_ids,double size)
+{
+  for (size_t i = 0; i < heatflux_ids.size(); i++)
+  {
+    draw->draw_load_heatflux(heatflux_ids[i],size);
+  }
+  
+  return true;
+}
+
+bool CalculiXCore::draw_load_gravity(std::vector<int> gravity_ids,double size)
+{
+  for (size_t i = 0; i < gravity_ids.size(); i++)
+  {
+    draw->draw_load_gravity(gravity_ids[i],size);
+  }
+  
+  return true;
+}
+
+bool CalculiXCore::draw_load_centrifugal(std::vector<int> centrifugal_ids,double size)
+{
+  for (size_t i = 0; i < centrifugal_ids.size(); i++)
+  {
+    draw->draw_load_centrifugal(centrifugal_ids[i],size);
+  }
+  
+  return true;
+}
+
+bool CalculiXCore::draw_bc_displacement(std::vector<int> displacement_ids,double size)
+{
+  for (size_t i = 0; i < displacement_ids.size(); i++)
+  {
+    draw->draw_bc_displacement(displacement_ids[i],size);
+  }
+  
+  return true;
+}
+
+bool CalculiXCore::draw_bc_temperature(std::vector<int> temperature_ids,double size)
+{
+  for (size_t i = 0; i < temperature_ids.size(); i++)
+  {
+    draw->draw_bc_temperature(temperature_ids[i],size);
+  }
+  
+  return true;
+}
+
+bool CalculiXCore::draw_orientation(std::vector<int> orientation_ids,double size)
+{
+  for (size_t i = 0; i < orientation_ids.size(); i++)
+  {
+    draw->draw_orientation(orientation_ids[i],size);
+  }
+  
+  return true;
+}
+
+bool CalculiXCore::draw_loads(double size) // draw all loads
+{
+  return draw->draw_loads(size);
+}
+
+bool CalculiXCore::draw_bcs(double size) // draw all bc
+{
+  return draw->draw_bcs(size);
+}
+
+bool CalculiXCore::draw_orientations(double size) // draw all orientations
+{
+  return draw->draw_orientations(size);
+}
+
 std::vector<std::string> CalculiXCore::frd_get_result_block_types(int job_id)
 {
   std::vector<std::string> tmp;

@@ -4,7 +4,7 @@
 #include "CubitCommandInterface.hpp"
 
 /*!
- * \brief The Draw command lets you draw the loads and bcs
+ * \brief The Draw command lets you draw the loads, bcs and orientations
  */
 class ccxDrawCommand : public CubitCommand
 {
