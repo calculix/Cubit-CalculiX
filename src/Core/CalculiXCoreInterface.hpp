@@ -162,6 +162,18 @@ public:
   std::vector<std::vector<double>> get_draw_data_for_bc_temperature(int id); // returns coord(3) and dof
   std::vector<std::vector<double>> get_draw_data_for_orientation(int id); // returns pairs of 4 for {system_type,local_axis_angle}, coord(3) of section center, a_coord(3) ,b_coord(3)
   bool draw_all(double size); // draw all loads,bcs,orientations
+  bool draw_load_force(std::vector<int> force_ids,double size); // draw load force
+  bool draw_load_pressure(std::vector<int> pressure_ids,double size); // draw load pressure
+  bool draw_load_heatflux(std::vector<int> heatflux_ids,double size); // draw load heatflux
+  bool draw_load_gravity(std::vector<int> gravity_ids,double size); // draw load gravity
+  bool draw_load_centrifugal(std::vector<int> centrifugal_ids,double size); // draw load centrifugal
+  bool draw_bc_displacement(std::vector<int> displacement_ids,double size); // draw bc displacement
+  bool draw_bc_temperature(std::vector<int> temperature_ids,double size); // draw bc temperature
+  bool draw_orientation(std::vector<int> orientation_ids,double size); // draw orientation
+  bool draw_loads(double size); // draw all loads
+  bool draw_bcs(double size); // draw all bcs
+  bool draw_orientations(double size); // draw all orientations
+
 
   //QUERY results
   //FRD results

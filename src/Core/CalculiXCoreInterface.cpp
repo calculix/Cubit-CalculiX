@@ -720,6 +720,61 @@ bool CalculiXCoreInterface::draw_all(double size) // draw all bc and loads
   return ccx_core.draw_all(size);
 }
 
+bool CalculiXCoreInterface::draw_load_force(std::vector<int> force_ids,double size)
+{
+  return ccx_core.draw_load_force(force_ids,size);
+}
+
+bool CalculiXCoreInterface::draw_load_pressure(std::vector<int> pressure_ids,double size)
+{
+  return ccx_core.draw_load_pressure(pressure_ids,size);
+}
+
+bool CalculiXCoreInterface::draw_load_heatflux(std::vector<int> heatflux_ids,double size)
+{
+  return ccx_core.draw_load_heatflux(heatflux_ids,size);
+}
+
+bool CalculiXCoreInterface::draw_load_gravity(std::vector<int> gravity_ids,double size)
+{
+  return ccx_core.draw_load_gravity(gravity_ids,size);
+}
+
+bool CalculiXCoreInterface::draw_load_centrifugal(std::vector<int> centrifugal_ids,double size)
+{
+  return ccx_core.draw_load_centrifugal(centrifugal_ids,size);
+}
+
+bool CalculiXCoreInterface::draw_bc_displacement(std::vector<int> displacement_ids,double size)
+{
+  return ccx_core.draw_bc_displacement(displacement_ids,size);
+}
+
+bool CalculiXCoreInterface::draw_bc_temperature(std::vector<int> temperature_ids,double size)
+{
+  return ccx_core.draw_bc_temperature(temperature_ids,size);
+}
+
+bool CalculiXCoreInterface::draw_orientation(std::vector<int> orientation_ids,double size)
+{
+  return ccx_core.draw_orientation(orientation_ids,size);
+}
+
+bool CalculiXCoreInterface::draw_loads(double size)
+{
+  return ccx_core.draw_loads(size);
+}
+
+bool CalculiXCoreInterface::draw_bcs(double size)
+{
+  return ccx_core.draw_loads(size);
+}
+
+bool CalculiXCoreInterface::draw_orientations(double size)
+{
+  return ccx_core.draw_orientations(size);
+}
+
 std::vector<std::string> CalculiXCoreInterface::frd_get_result_block_types(int job_id)
 {
   return ccx_core.frd_get_result_block_types(job_id);

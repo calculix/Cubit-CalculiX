@@ -16,6 +16,22 @@ std::vector<std::string> ccxDrawCommand::get_syntax()
   std::string syntax = "ccx ";
   syntax.append("draw");
   syntax.append(" [size <value:label='size_value',help='<size_value>'>]");
+  syntax.append(" [load ");
+  syntax.append(" [force <value:label='force_id',help='<force_id>'>...]");
+  syntax.append(" [pressure <value:label='pressure_id',help='<pressure_id>'>...]");
+  syntax.append(" [heatflux <value:label='heatflux_id',help='<heatflux_id>'>...]");
+  syntax.append(" [gravity <value:label='gravity_id',help='<gravity_id>'>...]");
+  syntax.append(" [centrifugal <value:label='centrifugal_id',help='<centrifugal_id>'>...]");
+  syntax.append("]");
+  syntax.append(" [bc ");
+  syntax.append(" [displacement <value:label='displacement_id',help='<displacement_id>'>...]");
+  syntax.append(" [temperature <value:label='temperature_id',help='<temperature_id>'>...]");
+  syntax.append("]");
+  syntax.append(" [orientation <value:label='orientation_id',help='<orientation_id>'>...]");
+  syntax.append(" [load_all]");
+  syntax.append(" [bc_all]");
+  syntax.append(" [orientation_all]");
+  
   syntax_list.push_back(syntax);
   
   return syntax_list;
@@ -24,7 +40,20 @@ std::vector<std::string> ccxDrawCommand::get_syntax()
 std::vector<std::string> ccxDrawCommand::get_syntax_help()
 {
   std::vector<std::string> help(1);
-  help[0] = "ccx draw [size <size_value>]";
+  help[0] = "ccx ";
+  help[0].append("draw ");
+  help[0].append("[size <size_value>] ");
+  help[0].append("[load [force <force_id>...] ");
+  help[0].append("[pressure <pressure_id>...] ");
+  help[0].append("[heatflux <heatflux_id>...] ");
+  help[0].append("[gravity <gravity_id>...] ");
+  help[0].append("[centrifugal <centrifugal_id>...]] ");
+  help[0].append("[bc [displacement <displacement_id>...] ");
+  help[0].append("[temperature <temperature_id>...]] ");
+  help[0].append("[orientation <orientation_id>...] ");
+  help[0].append("[loads] ");
+  help[0].append("[bcs] ");
+  help[0].append("[orientaions]");
 
   return help;
 }
@@ -41,6 +70,14 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
 
   std::string output;
   double size_value;
+  std::vector<int> force_id;
+  std::vector<int> pressure_id;
+  std::vector<int> heatflux_id;
+  std::vector<int> gravity_id;
+  std::vector<int> centrifugal_id;
+  std::vector<int> displacement_id;
+  std::vector<int> temperature_id;
+  std::vector<int> orientation_id;
   
   if (!data.get_value("size_value", size_value))
   {
@@ -59,12 +96,94 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
       size_value = 1;
     }
   }
-  
-  if (!ccx_iface.draw_all(size_value))
+
+  if (data.find_keyword("LOAD"))
   {
-    output = "Failed ccx draw!\n";
-    PRINT_ERROR(output.c_str());
+    data.get_values("force_id", force_id);
+    data.get_values("pressure_id", pressure_id);
+    data.get_values("heatflux_id", heatflux_id);
+    data.get_values("gravity_id", gravity_id);
+    data.get_values("centrifugal_id", centrifugal_id);
   }
-    
+
+  if (data.find_keyword("BC"))
+  {
+    data.get_values("displacement_id", displacement_id);
+    data.get_values("temperature_id", temperature_id);
+  }
+
+  data.get_values("orientation_id", orientation_id);
+
+  if ((force_id.size()==0)&&(pressure_id.size()==0)&&(heatflux_id.size()==0)&&(gravity_id.size()==0)&&(centrifugal_id.size()==0)&&(displacement_id.size()==0)&&(temperature_id.size()==0)&&(orientation_id.size()==0))
+  {  
+    if (!ccx_iface.draw_all(size_value))
+    {
+      output = "Failed ccx draw!\n";
+      PRINT_ERROR(output.c_str());
+    }
+  }else if (data.find_keyword("LOADS"))
+  {
+    if (!ccx_iface.draw_loads(size_value))
+    {
+      output = "Failed ccx draw loads!\n";
+      PRINT_ERROR(output.c_str());
+    }
+  }else if (data.find_keyword("BCS"))
+  {
+    if (!ccx_iface.draw_bcs(size_value))
+    {
+      output = "Failed ccx draw bcs!\n";
+      PRINT_ERROR(output.c_str());
+    }
+  }else if (data.find_keyword("ORIENTATIONS"))
+  {
+    if (!ccx_iface.draw_orientations(size_value))
+    {
+      output = "Failed ccx draw orientations!\n";
+      PRINT_ERROR(output.c_str());
+    }
+  }else{
+    if (!ccx_iface.draw_load_force(force_id,size_value))
+    {
+      output = "Failed ccx draw load force!\n";
+      PRINT_ERROR(output.c_str());
+    }
+    if (!ccx_iface.draw_load_pressure(pressure_id,size_value))
+    {
+      output = "Failed ccx draw load pressure!\n";
+      PRINT_ERROR(output.c_str());
+    }
+    if (!ccx_iface.draw_load_heatflux(heatflux_id,size_value))
+    {
+      output = "Failed ccx draw load heatflux!\n";
+      PRINT_ERROR(output.c_str());
+    }
+    if (!ccx_iface.draw_load_gravity(gravity_id,size_value))
+    {
+      output = "Failed ccx draw load gravity!\n";
+      PRINT_ERROR(output.c_str());
+    }
+    if (!ccx_iface.draw_load_centrifugal(centrifugal_id,size_value))
+    {
+      output = "Failed ccx draw load centrifugal!\n";
+      PRINT_ERROR(output.c_str());
+    }
+    if (!ccx_iface.draw_bc_displacement(displacement_id,size_value))
+    {
+      output = "Failed ccx draw bc displacement!\n";
+      PRINT_ERROR(output.c_str());
+    }
+    if (!ccx_iface.draw_bc_temperature(temperature_id,size_value))
+    {
+      output = "Failed ccx draw bc temperature!\n";
+      PRINT_ERROR(output.c_str());
+    }
+    if (!ccx_iface.draw_orientation(orientation_id,size_value))
+    {
+      output = "Failed ccx draw orientation!\n";
+      PRINT_ERROR(output.c_str());
+    }
+  }
+  
   return true;
 }
