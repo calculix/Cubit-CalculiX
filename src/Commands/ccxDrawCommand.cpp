@@ -28,9 +28,9 @@ std::vector<std::string> ccxDrawCommand::get_syntax()
   syntax.append(" [temperature <value:label='temperature_id',help='<temperature_id>'>...]");
   syntax.append("]");
   syntax.append(" [orientation <value:label='orientation_id',help='<orientation_id>'>...]");
-  syntax.append(" [load_all]");
-  syntax.append(" [bc_all]");
-  syntax.append(" [orientation_all]");
+  syntax.append(" [loads]");
+  syntax.append(" [bcs]");
+  syntax.append(" [orientations]");
   
   syntax_list.push_back(syntax);
   
