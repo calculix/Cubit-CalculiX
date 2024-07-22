@@ -767,12 +767,47 @@ bool CalculiXCoreInterface::draw_loads(double size)
 
 bool CalculiXCoreInterface::draw_bcs(double size)
 {
-  return ccx_core.draw_loads(size);
+  return ccx_core.draw_bcs(size);
 }
 
 bool CalculiXCoreInterface::draw_orientations(double size)
 {
   return ccx_core.draw_orientations(size);
+}
+
+bool CalculiXCoreInterface::draw_load_forces(double size)
+{
+  return ccx_core.draw_load_forces(size);
+}
+
+bool CalculiXCoreInterface::draw_load_pressures(double size)
+{
+  return ccx_core.draw_load_pressures(size);
+}
+
+bool CalculiXCoreInterface::draw_load_heatfluxes(double size)
+{
+  return ccx_core.draw_load_heatfluxes(size);
+}
+
+bool CalculiXCoreInterface::draw_load_gravities(double size)
+{
+  return ccx_core.draw_load_gravities(size);
+}
+
+bool CalculiXCoreInterface::draw_load_centrifugals(double size)
+{
+  return ccx_core.draw_load_centrifugals(size);
+}
+
+bool CalculiXCoreInterface::draw_bc_displacements(double size)
+{
+  return ccx_core.draw_bc_displacements(size);
+}
+
+bool CalculiXCoreInterface::draw_bc_temperatures(double size)
+{
+  return ccx_core.draw_bc_temperatures(size);
 }
 
 std::vector<std::string> CalculiXCoreInterface::frd_get_result_block_types(int job_id)

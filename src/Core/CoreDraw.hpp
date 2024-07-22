@@ -51,6 +51,14 @@ public:
   bool draw_orientations(double size = 1); // draw all orientations for all linked section
   bool draw_all(double size = 1); // draw all
 
+  bool draw_load_forces(double size = 1); //draw all forces
+  bool draw_load_pressures(double size = 1); //draw all pressures
+  bool draw_load_heatfluxes(double size = 1); //draw all heatfluxes
+  bool draw_load_gravities(double size = 1); //draw all gravities
+  bool draw_load_centrifugals(double size = 1); //draw all centrifugal
+  bool draw_bc_displacements(double size = 1); //draw all displacements
+  bool draw_bc_temperatures(double size = 1); //draw all temperatures
+
   CalculiXCoreInterface *ccx_iface;
 };
 

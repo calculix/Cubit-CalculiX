@@ -73,7 +73,5 @@ mesh volume all
 ccx create job name "first_run"
 ccx run job 1
 ccx wait job 1
-ccx result cgx job 1
-ccx result paraview job 1
-
-
+#ccx result cgx job 1
+#ccx result paraview job 1

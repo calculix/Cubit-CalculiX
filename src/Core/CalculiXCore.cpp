@@ -3365,6 +3365,41 @@ bool CalculiXCore::draw_orientations(double size) // draw all orientations
   return draw->draw_orientations(size);
 }
 
+bool CalculiXCore::draw_load_forces(double size) // draw all forces
+{
+  return draw->draw_load_forces(size);
+}
+
+bool CalculiXCore::draw_load_pressures(double size)
+{
+  return draw->draw_load_pressures(size);
+}
+
+bool CalculiXCore::draw_load_heatfluxes(double size)
+{
+  return draw->draw_load_heatfluxes(size);
+}
+
+bool CalculiXCore::draw_load_gravities(double size)
+{
+  return draw->draw_load_gravities(size);
+}
+
+bool CalculiXCore::draw_load_centrifugals(double size)
+{
+  return draw->draw_load_centrifugals(size);
+}
+
+bool CalculiXCore::draw_bc_displacements(double size)
+{
+  return draw->draw_bc_displacements(size);
+}
+
+bool CalculiXCore::draw_bc_temperatures(double size)
+{
+  return draw->draw_bc_temperatures(size);
+}
+
 std::vector<std::string> CalculiXCore::frd_get_result_block_types(int job_id)
 {
   std::vector<std::string> tmp;

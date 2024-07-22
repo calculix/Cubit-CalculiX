@@ -16,16 +16,16 @@ std::vector<std::string> ccxDrawCommand::get_syntax()
   std::string syntax = "ccx ";
   syntax.append("draw");
   syntax.append(" [size <value:label='size_value',help='<size_value>'>]");
-  syntax.append(" [load ");
-  syntax.append(" [force <value:label='force_id',help='<force_id>'>...]");
-  syntax.append(" [pressure <value:label='pressure_id',help='<pressure_id>'>...]");
-  syntax.append(" [heatflux <value:label='heatflux_id',help='<heatflux_id>'>...]");
-  syntax.append(" [gravity <value:label='gravity_id',help='<gravity_id>'>...]");
-  syntax.append(" [centrifugal <value:label='centrifugal_id',help='<centrifugal_id>'>...]");
+  syntax.append(" [load");
+  syntax.append(" [force {<value:label='force_id',help='<force_id>'>...|all}]");
+  syntax.append(" [pressure {<value:label='pressure_id',help='<pressure_id>'>...|all}]");
+  syntax.append(" [heatflux {<value:label='heatflux_id',help='<heatflux_id>'>...|all}]");
+  syntax.append(" [gravity {<value:label='gravity_id',help='<gravity_id>'>...|all}]");
+  syntax.append(" [centrifugal {<value:label='centrifugal_id',help='<centrifugal_id>'>...|all}]");
   syntax.append("]");
   syntax.append(" [bc ");
-  syntax.append(" [displacement <value:label='displacement_id',help='<displacement_id>'>...]");
-  syntax.append(" [temperature <value:label='temperature_id',help='<temperature_id>'>...]");
+  syntax.append(" [displacement {<value:label='displacement_id',help='<displacement_id>'>...|all}]");
+  syntax.append(" [temperature {<value:label='temperature_id',help='<temperature_id>'>...|all}]");
   syntax.append("]");
   syntax.append(" [orientation <value:label='orientation_id',help='<orientation_id>'>...]");
   syntax.append(" [loads]");
@@ -33,7 +33,7 @@ std::vector<std::string> ccxDrawCommand::get_syntax()
   syntax.append(" [orientations]");
   
   syntax_list.push_back(syntax);
-  
+
   return syntax_list;
 }
 
@@ -43,13 +43,13 @@ std::vector<std::string> ccxDrawCommand::get_syntax_help()
   help[0] = "ccx ";
   help[0].append("draw ");
   help[0].append("[size <size_value>] ");
-  help[0].append("[load [force <force_id>...] ");
-  help[0].append("[pressure <pressure_id>...] ");
-  help[0].append("[heatflux <heatflux_id>...] ");
-  help[0].append("[gravity <gravity_id>...] ");
-  help[0].append("[centrifugal <centrifugal_id>...]] ");
-  help[0].append("[bc [displacement <displacement_id>...] ");
-  help[0].append("[temperature <temperature_id>...]] ");
+  help[0].append("[load [force {<force_id>...|all}] ");
+  help[0].append("[pressure {<pressure_id>...|all}] ");
+  help[0].append("[heatflux {<heatflux_id>...|all}] ");
+  help[0].append("[gravity {<gravity_id>...|all}] ");
+  help[0].append("[centrifugal {<centrifugal_id>...|all}]] ");
+  help[0].append("[bc [displacement {<displacement_id>...|all}] ");
+  help[0].append("[temperature {<temperature_id>...|all}]] ");
   help[0].append("[orientation <orientation_id>...] ");
   help[0].append("[loads] ");
   help[0].append("[bcs] ");
@@ -115,32 +115,80 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
   data.get_values("orientation_id", orientation_id);
 
   if ((force_id.size()==0)&&(pressure_id.size()==0)&&(heatflux_id.size()==0)&&(gravity_id.size()==0)&&(centrifugal_id.size()==0)&&(displacement_id.size()==0)&&(temperature_id.size()==0)&&(orientation_id.size()==0))
-  {  
-    if (!ccx_iface.draw_all(size_value))
-    {
-      output = "Failed ccx draw!\n";
-      PRINT_ERROR(output.c_str());
-    }
-  }else if (data.find_keyword("LOADS"))
   {
-    if (!ccx_iface.draw_loads(size_value))
+    if (data.find_keyword("LOADS"))
     {
-      output = "Failed ccx draw loads!\n";
-      PRINT_ERROR(output.c_str());
+      if (!ccx_iface.draw_loads(size_value))
+      {
+        output = "Failed ccx draw loads!\n";
+        PRINT_ERROR(output.c_str());
+      }
+    }else if (data.find_keyword("BCS"))
+    {
+      if (!ccx_iface.draw_bcs(size_value))
+      {
+        output = "Failed ccx draw bcs!\n";
+        PRINT_ERROR(output.c_str());
+      }
+    }else if (data.find_keyword("ORIENTATIONS"))
+    {
+      if (!ccx_iface.draw_orientations(size_value))
+      {
+        output = "Failed ccx draw orientations!\n";
+        PRINT_ERROR(output.c_str());
+      }
+    }else if (data.find_keyword("FORCE ALL"))
+    {
+      if (!ccx_iface.draw_load_forces(size_value))
+      {
+        output = "Failed ccx draw forces!\n";
+        PRINT_ERROR(output.c_str());
+      }
     }
-  }else if (data.find_keyword("BCS"))
-  {
-    if (!ccx_iface.draw_bcs(size_value))
+    else if (data.find_keyword("PRESSURE ALL"))
     {
-      output = "Failed ccx draw bcs!\n";
-      PRINT_ERROR(output.c_str());
+      if (!ccx_iface.draw_load_pressures(size_value))
+      {
+        output = "Failed ccx draw pressures!\n";
+        PRINT_ERROR(output.c_str());
+      }
     }
-  }else if (data.find_keyword("ORIENTATIONS"))
-  {
-    if (!ccx_iface.draw_orientations(size_value))
+    else if (data.find_keyword("HEATFLUXES ALL"))
     {
-      output = "Failed ccx draw orientations!\n";
-      PRINT_ERROR(output.c_str());
+      if (!ccx_iface.draw_load_heatfluxes(size_value))
+      {
+        output = "Failed ccx draw heatfluxes!\n";
+        PRINT_ERROR(output.c_str());
+      }
+    }else if (data.find_keyword("GRAVITY ALL"))
+    {
+      if (!ccx_iface.draw_load_gravities(size_value))
+      {
+        output = "Failed ccx draw gravities!\n";
+        PRINT_ERROR(output.c_str());
+      }
+    }else if (data.find_keyword("CENTRIFUGAL ALL"))
+    {
+      if (!ccx_iface.draw_load_centrifugals(size_value))
+      {
+        output = "Failed ccx draw centrifugals!\n";
+        PRINT_ERROR(output.c_str());
+      }
+    }else if (data.find_keyword("DISPLACEMENTS ALL"))
+    {
+      if (!ccx_iface.draw_bc_displacements(size_value))
+      {
+        output = "Failed ccx draw displacements!\n";
+        PRINT_ERROR(output.c_str());
+      }
+    }
+    else if (data.find_keyword("TEMPERATURES ALL"))
+    {
+      if (!ccx_iface.draw_bc_temperatures(size_value))
+      {
+        output = "Failed ccx draw temperatures!\n";
+        PRINT_ERROR(output.c_str());
+      }
     }
   }else{
     if (!ccx_iface.draw_load_force(force_id,size_value))
