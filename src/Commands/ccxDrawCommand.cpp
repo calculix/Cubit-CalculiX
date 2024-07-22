@@ -189,6 +189,12 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
         output = "Failed ccx draw temperatures!\n";
         PRINT_ERROR(output.c_str());
       }
+    }else{
+      if (!ccx_iface.draw_all(size_value))
+      {
+        output = "Failed ccx draw!\n";
+        PRINT_ERROR(output.c_str());
+      }
     }
   }else{
     if (!ccx_iface.draw_load_force(force_id,size_value))
