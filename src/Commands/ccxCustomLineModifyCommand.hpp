@@ -4,7 +4,7 @@
 #include "CubitCommandInterface.hpp"
 
 /*!
- * \brief The Job modify command lets you modify your desired Jobs
+ * \brief The CustomLine modify command lets you modify your desired Custom Lines
  */
 class ccxCustomLineModifyCommand : public CubitCommand
 {

@@ -802,6 +802,7 @@ bool CoreDraw::draw_orientation(int id, double size)
 bool CoreDraw::draw_loads(double size)
 {
     std::vector<int> tmp_load_ids;
+    std::vector<int> tmp_bc_ids;
     
     tmp_load_ids = ccx_iface->get_loadsforces_ids();    
     for (size_t i = 0; i < tmp_load_ids.size(); i++)
@@ -875,6 +876,97 @@ bool CoreDraw::draw_all(double size)
 
     std::string log = "Loads and BCs drawn with size " + std::to_string(size) +"\n";
     PRINT_INFO("%s", log.c_str());
+
+    return true;
+}
+
+bool CoreDraw::draw_load_forces(double size)
+{
+    std::vector<int> tmp_load_ids;
+    
+    tmp_load_ids = ccx_iface->get_loadsforces_ids();    
+    for (size_t i = 0; i < tmp_load_ids.size(); i++)
+    {
+        draw_load_force(tmp_load_ids[i], size);
+    }
+
+    return true;
+}
+
+bool CoreDraw::draw_load_pressures(double size)
+{
+    std::vector<int> tmp_load_ids;
+    
+    tmp_load_ids = ccx_iface->get_loadspressures_ids();
+    for (size_t i = 0; i < tmp_load_ids.size(); i++)
+    {
+        draw_load_pressure(tmp_load_ids[i], size);
+    }
+
+    return true;
+}
+
+bool CoreDraw::draw_load_heatfluxes(double size)
+{
+    std::vector<int> tmp_load_ids;
+    
+    tmp_load_ids = ccx_iface->get_loadsheatfluxes_ids();
+    for (size_t i = 0; i < tmp_load_ids.size(); i++)
+    {
+        draw_load_heatflux(tmp_load_ids[i], size);
+    }
+
+    return true;
+}
+
+bool CoreDraw::draw_load_gravities(double size)
+{
+    std::vector<int> tmp_load_ids;
+    
+    tmp_load_ids = ccx_iface->get_loadsgravity_ids();
+    for (size_t i = 0; i < tmp_load_ids.size(); i++)
+    {
+        draw_load_gravity(tmp_load_ids[i], size);
+    }
+
+    return true;
+}
+
+bool CoreDraw::draw_load_centrifugals(double size)
+{
+    std::vector<int> tmp_load_ids;
+    
+    tmp_load_ids = ccx_iface->get_loadscentrifugal_ids();
+    for (size_t i = 0; i < tmp_load_ids.size(); i++)
+    {
+        draw_load_centrifugal(tmp_load_ids[i], size);
+    }
+
+    return true;
+}
+
+bool CoreDraw::draw_bc_displacements(double size)
+{
+    std::vector<int> tmp_bc_ids;
+    
+    tmp_bc_ids = ccx_iface->get_bcsdisplacements_ids();    
+    for (size_t i = 0; i < tmp_bc_ids.size(); i++)
+    {
+        draw_bc_displacement(tmp_bc_ids[i], size);
+    }
+
+    return true;
+}
+
+bool CoreDraw::draw_bc_temperatures(double size)
+{
+    std::vector<int> tmp_bc_ids;
+    
+    tmp_bc_ids = ccx_iface->get_bcstemperatures_ids();    
+    for (size_t i = 0; i < tmp_bc_ids.size(); i++)
+    {
+        draw_bc_temperature(tmp_bc_ids[i], size);
+    }
 
     return true;
 }

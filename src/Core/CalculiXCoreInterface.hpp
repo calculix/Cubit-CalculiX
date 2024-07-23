@@ -173,6 +173,13 @@ public:
   bool draw_loads(double size); // draw all loads
   bool draw_bcs(double size); // draw all bcs
   bool draw_orientations(double size); // draw all orientations
+  bool draw_load_forces(double size); //draw all forces
+  bool draw_load_pressures(double size); //draw all pressures
+  bool draw_load_heatfluxes(double size); //draw all heatfluxes
+  bool draw_load_gravities(double size); //draw all gravities
+  bool draw_load_centrifugals(double size); //draw all centrifugals
+  bool draw_bc_displacements(double size); //draw all displacements
+  bool draw_bc_temperatures(double size); //draw all temperatures
 
 
   //QUERY results
