@@ -306,7 +306,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Create Force",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
-        QAction action2("Draw Forces", this); //needs function Clemens
+        QAction action2("Draw Forces", this);
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
         contextMenu.addAction(&action2);
         
@@ -322,7 +322,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Create Pressure",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
-        QAction action2("Draw Pressures", this); //needs function Clemens
+        QAction action2("Draw Pressures", this);
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
         contextMenu.addAction(&action2);
         contextMenu.exec(mapToGlobal(pos));
@@ -337,7 +337,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Create Heatflux",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
-        QAction action2("Draw Pressures", this); //needs function Clemens
+        QAction action2("Draw Pressures", this);
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
         contextMenu.addAction(&action2);
         contextMenu.exec(mapToGlobal(pos));
@@ -352,7 +352,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Create Gravity",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
-        QAction action2("Draw Gravities", this); //needs function Clemens
+        QAction action2("Draw Gravities", this);
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
         contextMenu.addAction(&action2);
         contextMenu.exec(mapToGlobal(pos));
@@ -367,7 +367,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Create Centrifugal",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
-        QAction action2("Draw Centrifugals", this); //needs function Clemens
+        QAction action2("Draw Centrifugals", this);
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
         contextMenu.addAction(&action2);
         contextMenu.exec(mapToGlobal(pos));
@@ -394,7 +394,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Create Displacement",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
-        QAction action2("Draw Displacements", this); //needs function Clemens
+        QAction action2("Draw Displacements", this);
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
         contextMenu.addAction(&action2);
         contextMenu.exec(mapToGlobal(pos));
@@ -409,7 +409,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Create Temperature",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
-        QAction action2("Draw Temperatures", this); //needs function Clemens
+        QAction action2("Draw Temperatures", this);
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
         contextMenu.addAction(&action2);
         contextMenu.exec(mapToGlobal(pos));
@@ -806,7 +806,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Create Orientation",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
-        QAction action3("Modify Orientation",this); //action 2 is "Draw Orientations"
+        QAction action3("Modify Orientation",this); //action 2 is "Draw Orientation All"
         connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
         contextMenu.addAction(&action3);
         QAction action4("Delete Orientation",this);
@@ -823,7 +823,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Create Force",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
-        QAction action3("Modify Force",this); //action 2 is "Draw Force"
+        QAction action3("Modify Force",this); //action 2 is "Draw Force All"
         connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
         contextMenu.addAction(&action3);
         QAction action4("CCX Modify Force",this);
@@ -846,7 +846,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Create Pressure",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
-        QAction action3("Modify Pressure",this); //action 2 is "Draw Pressure"
+        QAction action3("Modify Pressure",this); //action 2 is "Draw Pressure All"
         connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
         contextMenu.addAction(&action3);
         QAction action4("CCX Modify Pressure",this);
@@ -869,7 +869,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Create Heatflux",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
-        QAction action3("Modify Heatflux",this); //action 2 is "Draw Heatflux"
+        QAction action3("Modify Heatflux",this); //action 2 is "Draw Heatflux All"
         connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
         contextMenu.addAction(&action3);
         QAction action4("CCX Modify Heatflux",this);
@@ -892,7 +892,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Create Gravity",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
-        QAction action3("Modify Gravity",this); //action 2 is "Draw Gravity"
+        QAction action3("Modify Gravity",this); //action 2 is "Draw Gravity All"
         connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
         contextMenu.addAction(&action3);
         QAction action4("Delete Gravity",this);
@@ -912,7 +912,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Create Centrifugal",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
-        QAction action3("Modify Centrifugal",this); //action 2 is "Draw Centrifugal"
+        QAction action3("Modify Centrifugal",this); //action 2 is "Draw Centrifugal All"
         connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
         contextMenu.addAction(&action3);
         QAction action4("Delete Centrifugal",this);
@@ -932,7 +932,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Create Displacement",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
-        QAction action3("Modify Displacement",this); //action 2 is "Draw Displacement"
+        QAction action3("Modify Displacement",this); //action 2 is "Draw Displacement All"
         connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
         contextMenu.addAction(&action3);
         QAction action4("CCX Modify Displacement",this);
@@ -955,7 +955,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Create Temperature",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
-        QAction action3("Modify Temperature",this); //action 2 is "Draw Temperature"
+        QAction action3("Modify Temperature",this); //action 2 is "Draw Temperature All"
         connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
         contextMenu.addAction(&action3);
         QAction action4("CCX Modify Temperature",this);
@@ -1995,7 +1995,7 @@ void ModelTree::execContextMenuAction(){
     {
       if(contextMenuAction[0][1]==0) //Action1
       {
-        std::string command = "ccx draw loads";
+        std::string command = "ccx draw load_all";
         CubitInterface::cmd(command.c_str());
       }
     }else if (contextMenuAction[0][0]==9) //LoadsForcesTree
@@ -2005,7 +2005,7 @@ void ModelTree::execContextMenuAction(){
         this->setWidgetInCmdPanelMarker("FEAForceCreate");
       }else if (contextMenuAction[0][1]==1) //Action2
       {
-        std::string command = "ccx draw load force all";
+        std::string command = "ccx draw load_force_all";
         CubitInterface::cmd(command.c_str());
       }
       else if (contextMenuAction[0][1]==2) //Action3
@@ -2029,7 +2029,7 @@ void ModelTree::execContextMenuAction(){
         this->setWidgetInCmdPanelMarker("FEAPressureCreate");
       }else if (contextMenuAction[0][1]==1) //Action2
       {
-        std::string command = "ccx draw load pressure all";
+        std::string command = "ccx draw load_pressure_all";
         CubitInterface::cmd(command.c_str());
       }else if (contextMenuAction[0][1]==2) //Action3
       {
@@ -2052,7 +2052,7 @@ void ModelTree::execContextMenuAction(){
         this->setWidgetInCmdPanelMarker("FEAHeatfluxCreate");
       }else if (contextMenuAction[0][1]==1) //Action2
       {
-        std::string command = "ccx draw load heatflux all";
+        std::string command = "ccx draw load_heatflux_all";
         CubitInterface::cmd(command.c_str());
       }else if (contextMenuAction[0][1]==2) //Action3
       {
@@ -2075,7 +2075,7 @@ void ModelTree::execContextMenuAction(){
         this->setWidgetInCmdPanelMarker("CCXLoadsGravityCreate");
       }else if (contextMenuAction[0][1]==1) //Action2
       {
-        std::string command = "ccx draw load gravity all";
+        std::string command = "ccx draw load_gravity_all";
         CubitInterface::cmd(command.c_str());
       }else if (contextMenuAction[0][1]==2) //Action3
       {
@@ -2095,7 +2095,7 @@ void ModelTree::execContextMenuAction(){
         this->setWidgetInCmdPanelMarker("CCXLoadsCentrifugalCreate");
       }else if (contextMenuAction[0][1]==1) //Action2
       {
-        std::string command = "ccx draw load centrifugal all";
+        std::string command = "ccx draw load_centrifugal_ all";
         CubitInterface::cmd(command.c_str());
       }else if (contextMenuAction[0][1]==2) //Action3
       {
@@ -2112,7 +2112,7 @@ void ModelTree::execContextMenuAction(){
     {
       if(contextMenuAction[0][1]==0)
       {
-        std::string command = "ccx draw bcs";
+        std::string command = "ccx draw bc_all";
         CubitInterface::cmd(command.c_str());
       }
     }else if (contextMenuAction[0][0]==14) //BCsDisplacementsTree
@@ -2122,7 +2122,7 @@ void ModelTree::execContextMenuAction(){
         this->setWidgetInCmdPanelMarker("FEADisplacementCreate");
       }else if (contextMenuAction[0][1]==1) //Action2
       {
-        std::string command = "ccx draw bc displacement all";
+        std::string command = "ccx draw bc_displacement_all";
         CubitInterface::cmd(command.c_str());
       }else if (contextMenuAction[0][1]==2) //Action3
       {
@@ -2145,7 +2145,7 @@ void ModelTree::execContextMenuAction(){
         this->setWidgetInCmdPanelMarker("FEATemperatureCreate");
       }else if (contextMenuAction[0][1]==1) //Action2
       {
-        std::string command = "ccx draw bc temperature all";
+        std::string command = "ccx draw bc_temperature_all";
         CubitInterface::cmd(command.c_str());
       }else if (contextMenuAction[0][1]==2) //Action3
       {
