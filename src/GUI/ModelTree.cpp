@@ -495,7 +495,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Create Step",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
-        contextMenu.addAction(&action1);      
+        contextMenu.addAction(&action1);
+        QAction action2("Draw Steps",this); //needs function Clemens
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
         contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 22;
@@ -508,7 +511,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Steps Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
-        contextMenu.addAction(&action1);      
+        contextMenu.addAction(&action1);
+        QAction action2("Draw Loads",this); //needs function Clemens; draw only from job
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
         contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 23;
@@ -520,7 +526,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Steps Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
-        contextMenu.addAction(&action1);      
+        contextMenu.addAction(&action1);
+        QAction action2("Draw Forces",this); //needs function Clemens; draw only from job
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
+        contextMenu.addAction(&action2);
         contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 24;
@@ -532,7 +541,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Steps Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
-        contextMenu.addAction(&action1);      
+        contextMenu.addAction(&action1);
+        QAction action2("Draw Pressures",this); //needs function Clemens; draw only from job
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
+        contextMenu.addAction(&action2);
         contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 25;
@@ -544,7 +556,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Steps Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
-        contextMenu.addAction(&action1);      
+        contextMenu.addAction(&action1);
+        QAction action2("Draw Heatfluxes",this); //needs function Clemens; draw only from job
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
+        contextMenu.addAction(&action2);
         contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 26;
@@ -557,6 +572,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Steps Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
         contextMenu.addAction(&action1);
+        QAction action2("Draw Gravities",this); //needs function Clemens; draw only from job
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
+        contextMenu.addAction(&action2);
         contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 27;
@@ -568,7 +586,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Steps Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
-        contextMenu.addAction(&action1);      
+        contextMenu.addAction(&action1);
+        QAction action2("Draw Centrifugals",this); //needs function Clemens; draw only from job
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
+        contextMenu.addAction(&action2);
         contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 28;
@@ -580,7 +601,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Steps Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
-        contextMenu.addAction(&action1);      
+        contextMenu.addAction(&action1);
+        QAction action2("Draw BCs",this); //needs function Clemens; draw only from job
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
         contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 29;
@@ -592,7 +616,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Steps Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
-        contextMenu.addAction(&action1);      
+        contextMenu.addAction(&action1);
+        QAction action2("Draw Displacements",this); //needs function Clemens; draw only from job
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
+        contextMenu.addAction(&action2);
         contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 30;
@@ -604,7 +631,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Steps Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
-        contextMenu.addAction(&action1);      
+        contextMenu.addAction(&action1);
+        QAction action2("Draw Temperatures",this); //needs function Clemens; draw only from job
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
+        contextMenu.addAction(&action2);
         contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 31;
@@ -1092,6 +1122,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action3("Delete Step",this);
         connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
         contextMenu.addAction(&action3);
+        QAction action4("Draw Step",this); //needs funtion Clemens
+        connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
+        contextMenu.addAction(&action4);
 
         contextMenu.exec(mapToGlobal(pos));
 
@@ -1126,6 +1159,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action5("Steps Management",this);
         connect(&action5, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action5);
+        QAction action7("Draw Force",this);
+        connect(&action7, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
+        contextMenu.addAction(&action7);
 
         contextMenu.exec(mapToGlobal(pos));
 
@@ -1149,6 +1185,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action5("Steps Management",this);
         connect(&action5, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action5);
+        QAction action7("Draw Pressure",this);
+        connect(&action7, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
+        contextMenu.addAction(&action7);
 
         contextMenu.exec(mapToGlobal(pos));
 
@@ -1172,6 +1211,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action5("Steps Management",this);
         connect(&action5, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action5);
+        QAction action7("Draw Heatflux",this);
+        connect(&action7, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
+        contextMenu.addAction(&action7);
 
         contextMenu.exec(mapToGlobal(pos));
 
@@ -1192,6 +1234,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action4("Steps Management",this);
         connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
         contextMenu.addAction(&action4);
+        QAction action6("Draw Gravity",this);
+        connect(&action6, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
+        contextMenu.addAction(&action6);
 
         contextMenu.exec(mapToGlobal(pos));
 
@@ -1212,6 +1257,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action4("Steps Management",this);
         connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
         contextMenu.addAction(&action4);
+        QAction action6("Draw Centrifugal",this);
+        connect(&action6, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
+        contextMenu.addAction(&action6);
 
         contextMenu.exec(mapToGlobal(pos));
 
@@ -1246,6 +1294,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action5("Steps Management",this);
         connect(&action5, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action5);
+        QAction action7("Draw Displacement",this);
+        connect(&action7, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
+        contextMenu.addAction(&action7);
 
         contextMenu.exec(mapToGlobal(pos));
 
@@ -1269,6 +1320,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action5("Steps Management",this);
         connect(&action5, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action5);
+        QAction action7("Draw Temperature",this);
+        connect(&action7, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
+        contextMenu.addAction(&action7);
 
         contextMenu.exec(mapToGlobal(pos));
 
@@ -2250,13 +2304,17 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==2) //Action3
       {
         this->setWidgetInCmdPanelMarker("CCXStepsDelete");
-      }  
+      }
     }else if (contextMenuAction[0][0]==23) //StepsLoadsTree
     {
       if (contextMenuAction[0][1]==0) //Action1
       {
         myStepsManagement->show();
-      }
+      }/* else if(contextMenuAction[0][1]==1) //Action2
+      {
+        std::string command = "ccx draw load_all"; //Clemens
+        CubitInterface::cmd(command.c_str());
+      } */
     }else if (contextMenuAction[0][0]==24) //StepsLoadsForcesTree
     {
       if (contextMenuAction[0][1]==0) //Action1
@@ -2274,7 +2332,15 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==4) //Action5
       {
         myStepsManagement->show();
-      }  
+      }/* else if (contextMenuAction[0][1]==5) //Action6
+      {
+        std::string command = "ccx draw load_force_all"; //Clemens
+        CubitInterface::cmd(command.c_str());
+      } */else if (contextMenuAction[0][1]==6) //Action7
+      {
+        std::string command = "ccx draw load_force_all" + std::to_string(contextMenuAction[0][2]);
+        CubitInterface::cmd(command.c_str());
+      }
     }else if (contextMenuAction[0][0]==25) //StepsLoadsPressuresTree
     {
       if (contextMenuAction[0][1]==0) //Action1
@@ -2292,6 +2358,14 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==4) //Action5
       {
         myStepsManagement->show();
+      }/* else if (contextMenuAction[0][1]==5) //Action6
+      {
+        std::string command = "ccx draw load_pressure_all"; //Clemens
+        CubitInterface::cmd(command.c_str());
+      } */else if (contextMenuAction[0][1]==6) //Action7
+      {
+        std::string command = "ccx draw load pressure " + std::to_string(contextMenuAction[0][2]);
+        CubitInterface::cmd(command.c_str());
       }
     }else if (contextMenuAction[0][0]==26) //StepsLoadsHeatfluxesTree
     {
@@ -2310,6 +2384,14 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==4) //Action5
       {
         myStepsManagement->show();
+      }/* else if (contextMenuAction[0][1]==5) //Action6
+      {
+        std::string command = "ccx draw load_heatflux_all"; //Clemens
+        CubitInterface::cmd(command.c_str());
+      } */else if (contextMenuAction[0][1]==6) //Action7
+      {
+        std::string command = "ccx draw load heatflux " + std::to_string(contextMenuAction[0][2]);
+        CubitInterface::cmd(command.c_str());
       }
     }else if (contextMenuAction[0][0]==27) //StepsLoadsGravityTree
     {
@@ -2325,7 +2407,15 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==3) //Action4
       {
         myStepsManagement->show();
-      }  
+      }/* else if (contextMenuAction[0][1]==4) //Action5
+      {
+        std::string command = "ccx draw load_gravity_all"; //Clemens
+        CubitInterface::cmd(command.c_str());
+      } */else if (contextMenuAction[0][1]==5) //Action6
+      {
+        std::string command = "ccx draw load gravity " + std::to_string(contextMenuAction[0][2]);
+        CubitInterface::cmd(command.c_str());
+      }
     }else if (contextMenuAction[0][0]==28) //StepsLoadsCentrifugalTree
     {
       if (contextMenuAction[0][1]==0) //Action1
@@ -2340,13 +2430,25 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==3) //Action4
       {
         myStepsManagement->show();
-      }    
+      }/* else if (contextMenuAction[0][1]==4) //Action5
+      {
+        std::string command = "ccx draw load_centrifugal_all"; //Clemens
+        CubitInterface::cmd(command.c_str());
+      } */else if (contextMenuAction[0][1]==5) //Action6
+      {
+        std::string command = "ccx draw load centrifugal " + std::to_string(contextMenuAction[0][2]);
+        CubitInterface::cmd(command.c_str());
+      }   
     }else if (contextMenuAction[0][0]==29) //StepsBCsTree
     {
       if (contextMenuAction[0][1]==0) //Action1
       {
         myStepsManagement->show();
-      }  
+      }/* else if(contextMenuAction[0][1]==1) //Action2
+      {
+        std::string command = "ccx draw bc_all"; //Clemens
+        CubitInterface::cmd(command.c_str());
+      } */
     }else if (contextMenuAction[0][0]==30) //StepsBCsDisplacementsTree
     {
       if (contextMenuAction[0][1]==0) //Action1
@@ -2364,7 +2466,15 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==4) //Action5
       {
         myStepsManagement->show();
-      }  
+      }/* else if (contextMenuAction[0][1]==5) //Action6
+      {
+        std::string command = "ccx draw bc_displacement_all"; //Clemens
+        CubitInterface::cmd(command.c_str());
+      } */else if (contextMenuAction[0][1]==6) //Action7
+      {
+        std::string command = "ccx draw bc displacement " + std::to_string(contextMenuAction[0][2]);
+        CubitInterface::cmd(command.c_str());
+      }
     }else if (contextMenuAction[0][0]==31) //StepsBCsTemperaturesTree
     {
       if (contextMenuAction[0][1]==0) //Action1
@@ -2382,6 +2492,14 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==4) //Action5
       {
         myStepsManagement->show();
+      }/* else if (contextMenuAction[0][1]==5) //Action6
+      {
+        std::string command = "ccx draw bc_temperature_all"; //Clemens
+        CubitInterface::cmd(command.c_str());
+      } */else if (contextMenuAction[0][1]==6) //Action7
+      {
+        std::string command = "ccx draw bc temperature " + std::to_string(contextMenuAction[0][2]);
+        CubitInterface::cmd(command.c_str());
       }
     }else if (contextMenuAction[0][0]==32) //StepsHistoryOutputsTree
     {
