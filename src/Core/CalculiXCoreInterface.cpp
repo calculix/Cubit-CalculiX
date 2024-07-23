@@ -195,6 +195,11 @@ bool CalculiXCoreInterface::check_orientation_exists(int orientation_id)
   return ccx_core.check_orientation_exists(orientation_id);
 }
 
+bool CalculiXCoreInterface::check_step_exists(int step_id)
+{
+  return ccx_core.check_step_exists(step_id);
+}
+
 bool CalculiXCoreInterface::core_update()
 {
   if (ccx_core.update())

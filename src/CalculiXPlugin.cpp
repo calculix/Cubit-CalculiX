@@ -9,6 +9,7 @@
 #include "ccxPrintCoreCommand.hpp"
 #include "ccxLogCoreCommand.hpp"
 #include "ccxDrawCommand.hpp"
+#include "ccxDrawStepCommand.hpp"
 #include "ccxBlockElementTypeCommand.hpp"
 #include "ccxSectionDeleteCommand.hpp"
 #include "ccxSectionSolidCreateCommand.hpp"
@@ -132,6 +133,7 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxPrintCoreCommand");
   keys.push_back("ccxLogCoreCommand");
   keys.push_back("ccxDrawCommand");
+  keys.push_back("ccxDrawStepCommand");
   keys.push_back("ccxBlockElementTypeCommand");
   keys.push_back("ccxSectionDeleteCommand");
   keys.push_back("ccxSectionSolidCreateCommand");
@@ -263,6 +265,9 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
   
   else if(key == "ccxDrawCommand")
     return new ccxDrawCommand();
+  
+  else if(key == "ccxDrawStepCommand")
+    return new ccxDrawStepCommand();
 
   else if(key == "ccxBlockElementTypeCommand")
     return new ccxBlockElementTypeCommand();

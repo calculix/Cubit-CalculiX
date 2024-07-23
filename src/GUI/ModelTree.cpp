@@ -2149,7 +2149,7 @@ void ModelTree::execContextMenuAction(){
         this->setWidgetInCmdPanelMarker("CCXLoadsCentrifugalCreate");
       }else if (contextMenuAction[0][1]==1) //Action2
       {
-        std::string command = "ccx draw load_centrifugal_ all";
+        std::string command = "ccx draw load_centrifugal_all";
         CubitInterface::cmd(command.c_str());
       }else if (contextMenuAction[0][1]==2) //Action3
       {

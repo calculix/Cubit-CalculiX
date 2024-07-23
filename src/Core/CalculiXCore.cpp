@@ -1880,6 +1880,17 @@ bool CalculiXCore::check_orientation_exists(int orientation_id)
   return true;
 }
 
+bool CalculiXCore::check_step_exists(int step_id)
+{
+  int step_data_id;
+  step_data_id = steps->get_steps_data_id_from_step_id(step_id);
+  if (step_data_id == -1)
+  {
+    return false;
+  }
+  return true;
+}
+
 bool CalculiXCore::check_historyoutput_exists(int historyoutput_id)
 {
   int historyoutput_data_id;

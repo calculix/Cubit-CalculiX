@@ -48,6 +48,7 @@ public:
   bool check_sideset_exists(int sideset_id);
   bool check_vertex_in_nodeset_exists(int vertex_id,int nodeset_id); // checks if the vertex exists in the nodeset
   bool check_orientation_exists(int orientation_id); // check if orientation exists
+  bool check_step_exists(int step_id); // check if step exists
   bool core_update(); // lets the core check for updates aka changes from the entities
   bool core_reset(); // reset the whole core to the init level
   std::vector<int> get_blocks(); // gets the block ids from core blocks
