@@ -1194,3 +1194,8 @@ std::string CalculiXCoreInterface::get_step_export_data() // gets the export dat
 {
   return ccx_core.get_step_export_data();
 }
+
+std::vector<int> CalculiXCoreInterface::get_steps_ids() //gets the step ids from core
+{
+  return ccx_core.get_steps_ids();
+}

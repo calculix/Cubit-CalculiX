@@ -27,7 +27,6 @@ std::vector<std::string> ccxDrawStepCommand::get_syntax()
   syntax.append(" [displacement <value:label='displacement_id',help='<displacement_id>'>...]");
   syntax.append(" [temperature <value:label='temperature_id',help='<temperature_id>'>...]");
   syntax.append("]");
-  syntax.append(" [orientation <value:label='orientation_id',help='<orientation_id>'>...]");
   syntax.append(" [load_all]");
   syntax.append(" [load_force_all]");
   syntax.append(" [load_pressure_all]");
@@ -37,7 +36,6 @@ std::vector<std::string> ccxDrawStepCommand::get_syntax()
   syntax.append(" [bc_all]");
   syntax.append(" [bc_displacement_all]");
   syntax.append(" [bc_temperature_all]");
-  syntax.append(" [orientation_all]");
   
   syntax_list.push_back(syntax);
 
@@ -57,7 +55,6 @@ std::vector<std::string> ccxDrawStepCommand::get_syntax_help()
   help[0].append(" [centrifugal <centrifugal_id>...]]");
   help[0].append(" [bc [displacement <displacement_id>...]");
   help[0].append(" [temperature <temperature_id>...]]");
-  help[0].append(" [orientation <orientation_id>...]");
   help[0].append(" [load_all]");
   help[0].append(" [load_force_all]");
   help[0].append(" [load_pressure_all]");
@@ -67,7 +64,6 @@ std::vector<std::string> ccxDrawStepCommand::get_syntax_help()
   help[0].append(" [bc_all]");
   help[0].append(" [bc_displacement_all]");
   help[0].append(" [bc_temperature_all]");
-  help[0].append(" [orientation_all]");
 
   return help;
 }
@@ -93,7 +89,6 @@ bool ccxDrawStepCommand::execute(CubitCommandData &data)
   std::vector<int> centrifugal_id;
   std::vector<int> displacement_id;
   std::vector<int> temperature_id;
-  std::vector<int> orientation_id;
   
   data.get_value("step_id", step_id);
 
@@ -132,175 +127,129 @@ bool ccxDrawStepCommand::execute(CubitCommandData &data)
       data.get_values("temperature_id", temperature_id);
     }
 
-    data.get_values("orientation_id", orientation_id);
-
     // get step data
     std::vector<std::vector<std::string>> step_loadforces_tree_data = ccx_iface.get_steps_loadsforces_tree_data(step_id);
+    std::vector<std::vector<std::string>> step_loadpressures_tree_data = ccx_iface.get_steps_loadspressures_tree_data(step_id);
+    std::vector<std::vector<std::string>> step_loadheatfluxes_tree_data = ccx_iface.get_steps_loadsheatfluxes_tree_data(step_id);
+    std::vector<std::vector<std::string>> step_loadgravities_tree_data = ccx_iface.get_steps_loadsgravity_tree_data(step_id);
+    std::vector<std::vector<std::string>> step_loadcentrifugals_tree_data = ccx_iface.get_steps_loadscentrifugal_tree_data(step_id);
+    std::vector<std::vector<std::string>> step_bcdisplacements_tree_data = ccx_iface.get_steps_bcsdisplacements_tree_data(step_id);
+    std::vector<std::vector<std::string>> step_bctemperatures_tree_data = ccx_iface.get_steps_bcstemperatures_tree_data(step_id);
     
-    if ((force_id.size()==0)&&(pressure_id.size()==0)&&(heatflux_id.size()==0)&&(gravity_id.size()==0)&&(centrifugal_id.size()==0)&&(displacement_id.size()==0)&&(temperature_id.size()==0)&&(orientation_id.size()==0))
+    if ((force_id.size()==0)&&(pressure_id.size()==0)&&(heatflux_id.size()==0)&&(gravity_id.size()==0)&&(centrifugal_id.size()==0)&&(displacement_id.size()==0)&&(temperature_id.size()==0))
     {
-     bool_draw_all = true;
+      if((!data.find_keyword("LOAD_ALL"))&&(!data.find_keyword("BC_ALL"))&&(!data.find_keyword("LOAD_FORCE_ALL"))&&(!data.find_keyword("LOAD_PRESSURE_ALL"))&&(!data.find_keyword("LOAD_HEATFLUX_ALL"))&&(!data.find_keyword("LOAD_GRAVITY_ALL"))&&(!data.find_keyword("LOAD_CENTRIFUGAL_ALL"))&&(!data.find_keyword("BC_DISPLACEMENT_ALL"))&&(!data.find_keyword("BC_TEMPERATURE_ALL")))
+      {
+        bool_draw_all = true;
+      }
+    }
+
+    if (bool_draw_all)
+    {
+      force_id = convert_tree_data(step_loadforces_tree_data);
+      pressure_id = convert_tree_data(step_loadpressures_tree_data);
+      heatflux_id = convert_tree_data(step_loadheatfluxes_tree_data);
+      gravity_id = convert_tree_data(step_loadgravities_tree_data);
+      centrifugal_id = convert_tree_data(step_loadcentrifugals_tree_data);
+
+      displacement_id = convert_tree_data(step_bcdisplacements_tree_data);
+      temperature_id = convert_tree_data(step_bctemperatures_tree_data);
     }
     
     if (data.find_keyword("LOAD_ALL"))
     {
-      bool_draw_all = false;
-      if (!ccx_iface.draw_loads(size_value))
-      {
-        output = "Failed ccx draw loads!\n";
-        PRINT_ERROR(output.c_str());
-      }
+      force_id = convert_tree_data(step_loadforces_tree_data);
+      pressure_id = convert_tree_data(step_loadpressures_tree_data);
+      heatflux_id = convert_tree_data(step_loadheatfluxes_tree_data);
+      gravity_id = convert_tree_data(step_loadgravities_tree_data);
+      centrifugal_id = convert_tree_data(step_loadcentrifugals_tree_data);
     }
     
     if (data.find_keyword("BC_ALL"))
     {
-      bool_draw_all = false;
-      if (!ccx_iface.draw_bcs(size_value))
-      {
-        output = "Failed ccx draw bcs!\n";
-        PRINT_ERROR(output.c_str());
-      }
-    }
-    if (data.find_keyword("ORIENTATION_ALL"))
-    {
-      bool_draw_all = false;
-      if (!ccx_iface.draw_orientations(size_value))
-      {
-        output = "Failed ccx draw orientations!\n";
-        PRINT_ERROR(output.c_str());
-      }
+      displacement_id = convert_tree_data(step_bcdisplacements_tree_data);
+      temperature_id = convert_tree_data(step_bctemperatures_tree_data);
     }
 
-    //pfusch
     if (data.find_keyword("LOAD_FORCE_ALL"))
     {
-      bool_draw_all = false;
       force_id = convert_tree_data(step_loadforces_tree_data);
-      if (!ccx_iface.draw_load_forces(size_value))
-      {
-        output = "Failed ccx draw forces!\n";
-        PRINT_ERROR(output.c_str());
-      }
     }
 
-    
     if (data.find_keyword("LOAD_PRESSURE_ALL"))
     {
-      bool_draw_all = false;
-      if (!ccx_iface.draw_load_pressures(size_value))
-      {
-        output = "Failed ccx draw pressures!\n";
-        PRINT_ERROR(output.c_str());
-      }
+      pressure_id = convert_tree_data(step_loadpressures_tree_data);
     }
+
     if (data.find_keyword("LOAD_HEATFLUX_ALL"))
     {
-      bool_draw_all = false;
-      if (!ccx_iface.draw_load_heatfluxes(size_value))
-      {
-        output = "Failed ccx draw heatfluxes!\n";
-        PRINT_ERROR(output.c_str());
-      }
+      heatflux_id = convert_tree_data(step_loadheatfluxes_tree_data);
     }
+
     if (data.find_keyword("LOAD_GRAVITY_ALL"))
     {
-      bool_draw_all = false;
-      if (!ccx_iface.draw_load_gravities(size_value))
-      {
-        output = "Failed ccx draw gravities!\n";
-        PRINT_ERROR(output.c_str());
-      }
+      gravity_id = convert_tree_data(step_loadgravities_tree_data);
     }
+
     if (data.find_keyword("LOAD_CENTRIFUGAL_ALL"))
     {
-      bool_draw_all = false;
-      if (!ccx_iface.draw_load_centrifugals(size_value))
-      {
-        output = "Failed ccx draw centrifugals!\n";
-        PRINT_ERROR(output.c_str());
-      }
+      centrifugal_id = convert_tree_data(step_loadcentrifugals_tree_data);
     }
+
     if (data.find_keyword("BC_DISPLACEMENT_ALL"))
     {
-      bool_draw_all = false;
-      if (!ccx_iface.draw_bc_displacements(size_value))
-      {
-        output = "Failed ccx draw displacements!\n";
-        PRINT_ERROR(output.c_str());
-      }
+      displacement_id = convert_tree_data(step_bcdisplacements_tree_data);
     }
+
     if (data.find_keyword("BC_TEMPERATURE_ALL"))
     {
-      bool_draw_all = false;
-      if (!ccx_iface.draw_bc_temperatures(size_value))
-      {
-        output = "Failed ccx draw temperatures!\n";
-        PRINT_ERROR(output.c_str());
-      }
+      temperature_id = convert_tree_data(step_bctemperatures_tree_data);
     }
 
 
     // filter
     force_id = get_ids_in_tree_data(force_id,step_loadforces_tree_data);
-
-
+    pressure_id = get_ids_in_tree_data(pressure_id,step_loadpressures_tree_data);
+    heatflux_id = get_ids_in_tree_data(gravity_id,step_loadheatfluxes_tree_data);
+    gravity_id = get_ids_in_tree_data(gravity_id,step_loadgravities_tree_data);
+    centrifugal_id = get_ids_in_tree_data(centrifugal_id,step_loadcentrifugals_tree_data);
+    displacement_id = get_ids_in_tree_data(displacement_id,step_bcdisplacements_tree_data);
+    temperature_id = get_ids_in_tree_data(temperature_id,step_bctemperatures_tree_data);
 
     if (!ccx_iface.draw_load_force(force_id,size_value))
     {
-      bool_draw_all = false;
       output = "Failed ccx draw load force!\n";
       PRINT_ERROR(output.c_str());
     }
     if (!ccx_iface.draw_load_pressure(pressure_id,size_value))
     {
-      bool_draw_all = false;
       output = "Failed ccx draw load pressure!\n";
       PRINT_ERROR(output.c_str());
     }
     if (!ccx_iface.draw_load_heatflux(heatflux_id,size_value))
     {
-      bool_draw_all = false;
       output = "Failed ccx draw load heatflux!\n";
       PRINT_ERROR(output.c_str());
     }
     if (!ccx_iface.draw_load_gravity(gravity_id,size_value))
     {
-      bool_draw_all = false;
       output = "Failed ccx draw load gravity!\n";
       PRINT_ERROR(output.c_str());
     }
     if (!ccx_iface.draw_load_centrifugal(centrifugal_id,size_value))
     {
-      bool_draw_all = false;
       output = "Failed ccx draw load centrifugal!\n";
       PRINT_ERROR(output.c_str());
     }
     if (!ccx_iface.draw_bc_displacement(displacement_id,size_value))
     {
-      bool_draw_all = false;
       output = "Failed ccx draw bc displacement!\n";
       PRINT_ERROR(output.c_str());
     }
     if (!ccx_iface.draw_bc_temperature(temperature_id,size_value))
     {
-      bool_draw_all = false;
       output = "Failed ccx draw bc temperature!\n";
       PRINT_ERROR(output.c_str());
-    }
-    if (!ccx_iface.draw_orientation(orientation_id,size_value))
-    {
-      bool_draw_all = false;
-      output = "Failed ccx draw orientation!\n";
-      PRINT_ERROR(output.c_str());
-    }
-    
-    if (bool_draw_all)
-    {
-      if (!ccx_iface.draw_all(size_value))
-      {
-        output = "Failed ccx draw!\n";
-        PRINT_ERROR(output.c_str());
-      } 
     }
 
   }else{

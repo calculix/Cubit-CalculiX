@@ -6055,6 +6055,16 @@ std::vector<std::vector<std::string>> CalculiXCore::get_hbcstemperatures_tree_da
   return bcstemperatures_tree_data;
 }
 
+std::vector<int> CalculiXCore::get_steps_ids()
+{
+  std::vector<int> steps_ids;
+  for (size_t i = 0; i < steps->steps_data.size(); i++)
+  {
+    steps_ids.push_back(steps->steps_data[i][0]);
+  }
+  return steps_ids;
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_steps_tree_data()
 { 
   std::vector<std::vector<std::string>> steps_tree_data;

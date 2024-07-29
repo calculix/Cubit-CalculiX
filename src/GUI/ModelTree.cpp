@@ -169,9 +169,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Assign CCX Element Type",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);      
-        contextMenu.exec(mapToGlobal(pos));
-
+        
         contextMenuAction[0][0] = 0;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (NodesetTreeItem = dynamic_cast<NodesetTree*>(item))
     {
@@ -180,10 +180,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Create Nodeset",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
-        contextMenu.addAction(&action1);      
-        contextMenu.exec(mapToGlobal(pos));
+        contextMenu.addAction(&action1);
 
         contextMenuAction[0][0] = 1;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (SidesetTreeItem = dynamic_cast<SidesetTree*>(item))
     {
@@ -192,10 +192,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Create Sideset",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
-        contextMenu.addAction(&action1);      
-        contextMenu.exec(mapToGlobal(pos));
+        contextMenu.addAction(&action1);
 
         contextMenuAction[0][0] = 2;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (MaterialTreeItem = dynamic_cast<MaterialTree*>(item))
     {
@@ -204,10 +204,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Open Material Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
-        contextMenu.addAction(&action1);      
-        contextMenu.exec(mapToGlobal(pos));
+        contextMenu.addAction(&action1);
 
         contextMenuAction[0][0] = 3;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (SectionsTreeItem = dynamic_cast<SectionsTree*>(item))
     {
@@ -216,10 +216,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Create Section",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
-        contextMenu.addAction(&action1);      
-        contextMenu.exec(mapToGlobal(pos));
+        contextMenu.addAction(&action1);
 
         contextMenuAction[0][0] = 4;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (ConstraintsTreeItem = dynamic_cast<ConstraintsTree*>(item))
     {
@@ -228,10 +228,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Create Constraint",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
-        contextMenu.addAction(&action1);      
-        contextMenu.exec(mapToGlobal(pos));
+        contextMenu.addAction(&action1);
 
         contextMenuAction[0][0] = 5;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (SurfaceInteractionsTreeItem = dynamic_cast<SurfaceInteractionsTree*>(item))
     {
@@ -240,10 +240,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Create Surface Interaction",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
-        contextMenu.addAction(&action1);      
-        contextMenu.exec(mapToGlobal(pos));
+        contextMenu.addAction(&action1);
 
         contextMenuAction[0][0] = 6;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (ContactPairsTreeItem = dynamic_cast<ContactPairsTree*>(item))
     {
@@ -252,10 +252,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Create Contact Pair",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
-        contextMenu.addAction(&action1);      
-        contextMenu.exec(mapToGlobal(pos));
+        contextMenu.addAction(&action1);
 
         contextMenuAction[0][0] = 7;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (AmplitudesTreeItem = dynamic_cast<AmplitudesTree*>(item))
     {
@@ -264,10 +264,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Create Amplitude",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
-        contextMenu.addAction(&action1);      
-        contextMenu.exec(mapToGlobal(pos));
+        contextMenu.addAction(&action1);
 
         contextMenuAction[0][0] = 8;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (OrientationsTreeItem = dynamic_cast<OrientationsTree*>(item))
     {
@@ -281,10 +281,8 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
         contextMenu.addAction(&action2);
 
-
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 36;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (LoadsTreeItem = dynamic_cast<LoadsTree*>(item)) 
     {
@@ -293,10 +291,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Draw Loads",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
-        contextMenu.addAction(&action1);      
-        contextMenu.exec(mapToGlobal(pos));
+        contextMenu.addAction(&action1);
 
         contextMenuAction[0][0] = 37;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (LoadsForcesTreeItem = dynamic_cast<LoadsForcesTree*>(item))
     {
@@ -309,10 +307,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action2("Draw Forces", this);
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
         contextMenu.addAction(&action2);
-        
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 9;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (LoadsPressuresTreeItem = dynamic_cast<LoadsPressuresTree*>(item))
     {
@@ -325,9 +322,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action2("Draw Pressures", this);
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
         contextMenu.addAction(&action2);
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 10;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (LoadsHeatfluxesTreeItem = dynamic_cast<LoadsHeatfluxesTree*>(item))
     {
@@ -340,9 +337,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action2("Draw Pressures", this);
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
         contextMenu.addAction(&action2);
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 11;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (LoadsGravityTreeItem = dynamic_cast<LoadsGravityTree*>(item))
     {
@@ -355,9 +352,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action2("Draw Gravities", this);
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
         contextMenu.addAction(&action2);
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 12;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (LoadsCentrifugalTreeItem = dynamic_cast<LoadsCentrifugalTree*>(item))
     {
@@ -370,9 +367,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action2("Draw Centrifugals", this);
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
         contextMenu.addAction(&action2);
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 13;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (BCsTreeItem = dynamic_cast<BCsTree*>(item)) 
     {
@@ -381,10 +378,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Draw Bcs",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
-        contextMenu.addAction(&action1);      
-        contextMenu.exec(mapToGlobal(pos));
+        contextMenu.addAction(&action1);
 
         contextMenuAction[0][0] = 38;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (BCsDisplacementsTreeItem = dynamic_cast<BCsDisplacementsTree*>(item))
     {
@@ -397,9 +394,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action2("Draw Displacements", this);
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
         contextMenu.addAction(&action2);
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 14;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (BCsTemperaturesTreeItem = dynamic_cast<BCsTemperaturesTree*>(item))
     {
@@ -412,9 +409,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action2("Draw Temperatures", this);
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
         contextMenu.addAction(&action2);
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 15;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (HistoryOutputsTreeItem = dynamic_cast<HistoryOutputsTree*>(item))
     {
@@ -423,10 +420,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Create History Output",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
-        contextMenu.addAction(&action1);      
-        contextMenu.exec(mapToGlobal(pos));
+        contextMenu.addAction(&action1);
 
         contextMenuAction[0][0] = 16;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (FieldOutputsTreeItem = dynamic_cast<FieldOutputsTree*>(item))
     {
@@ -435,10 +432,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Create Field Output",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
-        contextMenu.addAction(&action1);      
-        contextMenu.exec(mapToGlobal(pos));
+        contextMenu.addAction(&action1);
 
         contextMenuAction[0][0] = 17;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (InitialConditionsTreeItem = dynamic_cast<InitialConditionsTree*>(item))
     {
@@ -447,10 +444,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Create Initial Condition",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
-        contextMenu.addAction(&action1);      
-        contextMenu.exec(mapToGlobal(pos));
+        contextMenu.addAction(&action1);
 
         contextMenuAction[0][0] = 18;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (HBCsTreeItem = dynamic_cast<HBCsTree*>(item))
     {
@@ -459,10 +456,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("homogeneous BCs Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
-        contextMenu.addAction(&action1);      
-        contextMenu.exec(mapToGlobal(pos));
+        contextMenu.addAction(&action1);
 
         contextMenuAction[0][0] = 19;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (HBCsDisplacementsTreeItem = dynamic_cast<HBCsDisplacementsTree*>(item))
     {
@@ -471,10 +468,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("homogeneous BCs Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
-        contextMenu.addAction(&action1);      
-        contextMenu.exec(mapToGlobal(pos));
+        contextMenu.addAction(&action1);
 
         contextMenuAction[0][0] = 20;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (HBCsTemperaturesTreeItem = dynamic_cast<HBCsTemperaturesTree*>(item))
     {
@@ -483,10 +480,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("homogeneous BCs Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
-        contextMenu.addAction(&action1);      
-        contextMenu.exec(mapToGlobal(pos));
+        contextMenu.addAction(&action1);
 
         contextMenuAction[0][0] = 21;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (StepsTreeItem = dynamic_cast<StepsTree*>(item))
     {
@@ -497,11 +494,11 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
         QAction action2("Draw Steps",this); //needs function Clemens
-        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
         contextMenu.addAction(&action2);
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 22;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }
     else if (StepsLoadsTreeItem = dynamic_cast<StepsLoadsTree*>(item))
@@ -512,12 +509,13 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Steps Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
-        QAction action2("Draw Loads",this); //needs function Clemens; draw only from job
+        QAction action2("Draw Loads",this);
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
         contextMenu.addAction(&action2);
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 23;
+        contextMenuAction[0][2] = std::stoi(item->parent()->text(1).toStdString()); //Step id
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (StepsLoadsForcesTreeItem = dynamic_cast<StepsLoadsForcesTree*>(item))
     {
@@ -527,12 +525,13 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Steps Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action1);
-        QAction action2("Draw Forces",this); //needs function Clemens; draw only from job
+        QAction action2("Draw Forces",this);
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
         contextMenu.addAction(&action2);
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 24;
+        contextMenuAction[0][2] = std::stoi(item->parent()->parent()->text(1).toStdString()); //Step id
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (StepsLoadsPressuresTreeItem = dynamic_cast<StepsLoadsPressuresTree*>(item))
     {
@@ -542,12 +541,13 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Steps Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action1);
-        QAction action2("Draw Pressures",this); //needs function Clemens; draw only from job
+        QAction action2("Draw Pressures",this);
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
         contextMenu.addAction(&action2);
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 25;
+        contextMenuAction[0][2] = std::stoi(item->parent()->parent()->text(1).toStdString()); //Step id
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (StepsLoadsHeatfluxesTreeItem = dynamic_cast<StepsLoadsHeatfluxesTree*>(item))
     {
@@ -557,12 +557,13 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Steps Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action1);
-        QAction action2("Draw Heatfluxes",this); //needs function Clemens; draw only from job
+        QAction action2("Draw Heatfluxes",this);
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
         contextMenu.addAction(&action2);
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 26;
+        contextMenuAction[0][2] = std::stoi(item->parent()->parent()->text(1).toStdString()); //Step id
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (StepsLoadsGravityTreeItem = dynamic_cast<StepsLoadsGravityTree*>(item))
     {
@@ -572,12 +573,13 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Steps Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
         contextMenu.addAction(&action1);
-        QAction action2("Draw Gravities",this); //needs function Clemens; draw only from job
+        QAction action2("Draw Gravities",this);
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action2);
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 27;
+        contextMenuAction[0][2] = std::stoi(item->parent()->parent()->text(1).toStdString()); //Step id
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (StepsLoadsCentrifugalTreeItem = dynamic_cast<StepsLoadsCentrifugalTree*>(item))
     {
@@ -587,12 +589,13 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Steps Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
         contextMenu.addAction(&action1);
-        QAction action2("Draw Centrifugals",this); //needs function Clemens; draw only from job
+        QAction action2("Draw Centrifugals",this);
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action2);
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 28;
+        contextMenuAction[0][2] = std::stoi(item->parent()->parent()->text(1).toStdString()); //Step id
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (StepsBCsTreeItem = dynamic_cast<StepsBCsTree*>(item))
     {
@@ -602,12 +605,13 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Steps Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
-        QAction action2("Draw BCs",this); //needs function Clemens; draw only from job
+        QAction action2("Draw BCs",this);
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
         contextMenu.addAction(&action2);
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 29;
+        contextMenuAction[0][2] = std::stoi(item->parent()->text(1).toStdString()); //Step id
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (StepsBCsDisplacementsTreeItem = dynamic_cast<StepsBCsDisplacementsTree*>(item))
     {
@@ -617,12 +621,13 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Steps Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action1);
-        QAction action2("Draw Displacements",this); //needs function Clemens; draw only from job
+        QAction action2("Draw Displacements",this);
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
         contextMenu.addAction(&action2);
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 30;
+        contextMenuAction[0][2] = std::stoi(item->parent()->parent()->text(1).toStdString()); //Step id
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (StepsBCsTemperaturesTreeItem = dynamic_cast<StepsBCsTemperaturesTree*>(item))
     {
@@ -632,12 +637,13 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Steps Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action1);
-        QAction action2("Draw Temperatures",this); //needs function Clemens; draw only from job
+        QAction action2("Draw Temperatures",this);
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
         contextMenu.addAction(&action2);
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 31;
+        contextMenuAction[0][2] = std::stoi(item->parent()->parent()->text(1).toStdString()); //Step id
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (StepsHistoryOutputsTreeItem = dynamic_cast<StepsHistoryOutputsTree*>(item))
     {
@@ -646,10 +652,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Steps Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
-        contextMenu.addAction(&action1);      
-        contextMenu.exec(mapToGlobal(pos));
+        contextMenu.addAction(&action1);
 
         contextMenuAction[0][0] = 32;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (StepsFieldOutputsTreeItem = dynamic_cast<StepsFieldOutputsTree*>(item))
     {
@@ -658,10 +664,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Steps Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
-        contextMenu.addAction(&action1);      
-        contextMenu.exec(mapToGlobal(pos));
+        contextMenu.addAction(&action1);
 
         contextMenuAction[0][0] = 33;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (CustomLinesTreeItem = dynamic_cast<CustomLinesTree*>(item))
     {
@@ -670,10 +676,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Create Custom Line",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
-        contextMenu.addAction(&action1);      
-        contextMenu.exec(mapToGlobal(pos));
+        contextMenu.addAction(&action1);
 
         contextMenuAction[0][0] = 34;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else if (JobsTreeItem = dynamic_cast<JobsTree*>(item))
     {
@@ -682,10 +688,10 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Create Job",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
-        contextMenu.addAction(&action1);      
-        contextMenu.exec(mapToGlobal(pos));
+        contextMenu.addAction(&action1);
 
         contextMenuAction[0][0] = 35;
+        contextMenu.exec(mapToGlobal(pos));
       }
     }else 
     {
@@ -695,11 +701,11 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QMenu contextMenu("Context Menu",this);
         QAction action1("Assign CCX Element Type",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
-        contextMenu.addAction(&action1);   
-        contextMenu.exec(mapToGlobal(pos));   
+        contextMenu.addAction(&action1);
 
         contextMenuAction[0][0] = 0;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       } else if (NodesetTreeItem = dynamic_cast<NodesetTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -713,10 +719,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
         contextMenu.addAction(&action3);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 1;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       } else if (SidesetTreeItem = dynamic_cast<SidesetTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -730,10 +735,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
         contextMenu.addAction(&action3);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 2;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       } else if (MaterialTreeItem = dynamic_cast<MaterialTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -741,10 +745,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 3;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       } else if (SectionsTreeItem = dynamic_cast<SectionsTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -758,10 +761,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
         contextMenu.addAction(&action3);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 4;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       } else if (ConstraintsTreeItem = dynamic_cast<ConstraintsTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -775,10 +777,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
         contextMenu.addAction(&action3);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 5;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       } else if (SurfaceInteractionsTreeItem = dynamic_cast<SurfaceInteractionsTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -792,10 +793,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
         contextMenu.addAction(&action3);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 6;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       } else if (ContactPairsTreeItem = dynamic_cast<ContactPairsTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -809,10 +809,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
         contextMenu.addAction(&action3);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 7;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       } else if (AmplitudesTreeItem = dynamic_cast<AmplitudesTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -826,10 +825,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
         contextMenu.addAction(&action3);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 8;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       } else if (OrientationsTreeItem = dynamic_cast<OrientationsTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -843,10 +841,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
         contextMenu.addAction(&action4);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 36;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       } else if (LoadsForcesTreeItem = dynamic_cast<LoadsForcesTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -866,10 +863,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action6, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
         contextMenu.addAction(&action6);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 9;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       } else if (LoadsPressuresTreeItem = dynamic_cast<LoadsPressuresTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -889,10 +885,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action6, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
         contextMenu.addAction(&action6);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 10;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       } else if (LoadsHeatfluxesTreeItem = dynamic_cast<LoadsHeatfluxesTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -912,10 +907,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action6, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
         contextMenu.addAction(&action6);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 11;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       } else if (LoadsGravityTreeItem = dynamic_cast<LoadsGravityTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -932,10 +926,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action5, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action5);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 12;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       } else if (LoadsCentrifugalTreeItem = dynamic_cast<LoadsCentrifugalTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -952,10 +945,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action5, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action5);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 13;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       } else if (BCsDisplacementsTreeItem = dynamic_cast<BCsDisplacementsTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -975,10 +967,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action6, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
         contextMenu.addAction(&action6);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 14;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       }else if (BCsTemperaturesTreeItem = dynamic_cast<BCsTemperaturesTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -998,10 +989,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action6, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
         contextMenu.addAction(&action6);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 15;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       }else if (HistoryOutputsTreeItem = dynamic_cast<HistoryOutputsTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -1015,10 +1005,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
         contextMenu.addAction(&action3);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 16;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       }else if (FieldOutputsTreeItem = dynamic_cast<FieldOutputsTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -1032,10 +1021,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
         contextMenu.addAction(&action3);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 17;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       }else if (InitialConditionsTreeItem = dynamic_cast<InitialConditionsTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -1049,21 +1037,19 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
         contextMenu.addAction(&action3);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 18;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       }else if (HBCsTreeItem = dynamic_cast<HBCsTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
         QAction action1("homogeneous BCs Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
-        
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 19;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       }else if (HBCsDisplacementsTreeItem = dynamic_cast<HBCsDisplacementsTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -1083,10 +1069,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action5, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action5);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 20;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       }else if (HBCsTemperaturesTreeItem = dynamic_cast<HBCsTemperaturesTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -1106,10 +1091,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action5, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action5);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 21;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       }else if (StepsTreeItem = dynamic_cast<StepsTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -1122,25 +1106,23 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action3("Delete Step",this);
         connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
         contextMenu.addAction(&action3);
-        QAction action4("Draw Step",this); //needs funtion Clemens
-        connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
+        QAction action4("Draw Step",this);
+        connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action4);
-
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 22;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       }else if (StepsLoadsTreeItem = dynamic_cast<StepsLoadsTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
         QAction action1("Steps Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
-        
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 23;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       }else if (StepsLoadsForcesTreeItem = dynamic_cast<StepsLoadsForcesTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -1160,13 +1142,12 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action5, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action5);
         QAction action7("Draw Force",this);
-        connect(&action7, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
+        connect(&action7, SIGNAL(triggered()),this,SLOT(ContextMenuAction7()));
         contextMenu.addAction(&action7);
-
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 24;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       }else if (StepsLoadsPressuresTreeItem = dynamic_cast<StepsLoadsPressuresTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -1186,13 +1167,12 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action5, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action5);
         QAction action7("Draw Pressure",this);
-        connect(&action7, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
+        connect(&action7, SIGNAL(triggered()),this,SLOT(ContextMenuAction7()));
         contextMenu.addAction(&action7);
-
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 25;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       }else if (StepsLoadsHeatfluxesTreeItem = dynamic_cast<StepsLoadsHeatfluxesTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -1212,13 +1192,12 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action5, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action5);
         QAction action7("Draw Heatflux",this);
-        connect(&action7, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
+        connect(&action7, SIGNAL(triggered()),this,SLOT(ContextMenuAction7()));
         contextMenu.addAction(&action7);
-
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 26;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       } else if (StepsLoadsGravityTreeItem = dynamic_cast<StepsLoadsGravityTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -1235,13 +1214,12 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
         contextMenu.addAction(&action4);
         QAction action6("Draw Gravity",this);
-        connect(&action6, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
+        connect(&action6, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
         contextMenu.addAction(&action6);
-
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 27;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       } else if (StepsLoadsCentrifugalTreeItem = dynamic_cast<StepsLoadsCentrifugalTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -1258,24 +1236,22 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
         contextMenu.addAction(&action4);
         QAction action6("Draw Centrifugal",this);
-        connect(&action6, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
+        connect(&action6, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
         contextMenu.addAction(&action6);
-
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 28;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       }else if (StepsBCsTreeItem = dynamic_cast<StepsBCsTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
         QAction action1("Steps Management",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
-        
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 29;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       }else if (StepsBCsDisplacementsTreeItem = dynamic_cast<StepsBCsDisplacementsTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -1295,13 +1271,12 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action5, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action5);
         QAction action7("Draw Displacement",this);
-        connect(&action7, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
+        connect(&action7, SIGNAL(triggered()),this,SLOT(ContextMenuAction7()));
         contextMenu.addAction(&action7);
-
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 30;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       }else if (StepsBCsTemperaturesTreeItem = dynamic_cast<StepsBCsTemperaturesTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -1321,13 +1296,12 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action5, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
         contextMenu.addAction(&action5);
         QAction action7("Draw Temperature",this);
-        connect(&action7, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
+        connect(&action7, SIGNAL(triggered()),this,SLOT(ContextMenuAction7()));
         contextMenu.addAction(&action7);
-
-        contextMenu.exec(mapToGlobal(pos));
 
         contextMenuAction[0][0] = 31;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       }else if (StepsHistoryOutputsTreeItem = dynamic_cast<StepsHistoryOutputsTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -1344,10 +1318,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
         contextMenu.addAction(&action4);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 32;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       }else if (StepsFieldOutputsTreeItem = dynamic_cast<StepsFieldOutputsTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -1364,10 +1337,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
         contextMenu.addAction(&action4);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 33;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       }
       else if (CustomLinesTreeItem = dynamic_cast<CustomLinesTree*>(item->parent()))
       {
@@ -1382,10 +1354,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
         contextMenu.addAction(&action3);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 34;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       }
       else if (JobsTreeItem = dynamic_cast<JobsTree*>(item->parent()))
       {
@@ -1409,10 +1380,9 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action6, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
         contextMenu.addAction(&action6);
 
-        contextMenu.exec(mapToGlobal(pos));
-
         contextMenuAction[0][0] = 35;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       }
     }
   }
@@ -2304,17 +2274,30 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==2) //Action3
       {
         this->setWidgetInCmdPanelMarker("CCXStepsDelete");
+      }else if (contextMenuAction[0][1]==3) //Action4
+      {
+        std::vector<int> step_ids;
+        step_ids = ccx_iface->get_steps_ids();
+        for (size_t i=0; i < step_ids.size(); i++)
+        {
+          std::string command = "ccx draw step " + std::to_string(step_ids[i]);
+          CubitInterface::cmd(command.c_str());
+        }
+      }else if (contextMenuAction[0][1]==4) //Action5
+      {
+        std::string command = "ccx draw step " + std::to_string(contextMenuAction[0][2]);
+        CubitInterface::cmd(command.c_str());
       }
     }else if (contextMenuAction[0][0]==23) //StepsLoadsTree
     {
       if (contextMenuAction[0][1]==0) //Action1
       {
         myStepsManagement->show();
-      }/* else if(contextMenuAction[0][1]==1) //Action2
+      }else if(contextMenuAction[0][1]==1) //Action2
       {
-        std::string command = "ccx draw load_all"; //Clemens
+        std::string command = "ccx draw step " + std::to_string(contextMenuAction[0][2]) + " load_all";
         CubitInterface::cmd(command.c_str());
-      } */
+      }
     }else if (contextMenuAction[0][0]==24) //StepsLoadsForcesTree
     {
       if (contextMenuAction[0][1]==0) //Action1
@@ -2332,13 +2315,13 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==4) //Action5
       {
         myStepsManagement->show();
-      }/* else if (contextMenuAction[0][1]==5) //Action6
+      }else if (contextMenuAction[0][1]==5) //Action6
       {
-        std::string command = "ccx draw load_force_all"; //Clemens
+        std::string command = "ccx draw step " + std::to_string(contextMenuAction[0][2]) + " load_force_all";
         CubitInterface::cmd(command.c_str());
-      } */else if (contextMenuAction[0][1]==6) //Action7
+      }else if (contextMenuAction[0][1]==6) //Action7
       {
-        std::string command = "ccx draw load_force_all" + std::to_string(contextMenuAction[0][2]);
+        std::string command = "ccx draw load force " + std::to_string(contextMenuAction[0][2]);
         CubitInterface::cmd(command.c_str());
       }
     }else if (contextMenuAction[0][0]==25) //StepsLoadsPressuresTree
@@ -2358,11 +2341,11 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==4) //Action5
       {
         myStepsManagement->show();
-      }/* else if (contextMenuAction[0][1]==5) //Action6
+      }else if (contextMenuAction[0][1]==5) //Action6
       {
-        std::string command = "ccx draw load_pressure_all"; //Clemens
+        std::string command = "ccx draw step " + std::to_string(contextMenuAction[0][2]) + " load_pressure_all";
         CubitInterface::cmd(command.c_str());
-      } */else if (contextMenuAction[0][1]==6) //Action7
+      }else if (contextMenuAction[0][1]==6) //Action7
       {
         std::string command = "ccx draw load pressure " + std::to_string(contextMenuAction[0][2]);
         CubitInterface::cmd(command.c_str());
@@ -2384,11 +2367,11 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==4) //Action5
       {
         myStepsManagement->show();
-      }/* else if (contextMenuAction[0][1]==5) //Action6
+      }else if (contextMenuAction[0][1]==5) //Action6
       {
-        std::string command = "ccx draw load_heatflux_all"; //Clemens
+        std::string command = "ccx draw step " + std::to_string(contextMenuAction[0][2]) + " load_heatflux_all";
         CubitInterface::cmd(command.c_str());
-      } */else if (contextMenuAction[0][1]==6) //Action7
+      }else if (contextMenuAction[0][1]==6) //Action7
       {
         std::string command = "ccx draw load heatflux " + std::to_string(contextMenuAction[0][2]);
         CubitInterface::cmd(command.c_str());
@@ -2407,11 +2390,11 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==3) //Action4
       {
         myStepsManagement->show();
-      }/* else if (contextMenuAction[0][1]==4) //Action5
+      }else if (contextMenuAction[0][1]==4) //Action5
       {
-        std::string command = "ccx draw load_gravity_all"; //Clemens
+        std::string command = "ccx draw step " + std::to_string(contextMenuAction[0][2]) + " load_gravity_all";
         CubitInterface::cmd(command.c_str());
-      } */else if (contextMenuAction[0][1]==5) //Action6
+      }else if (contextMenuAction[0][1]==5) //Action6
       {
         std::string command = "ccx draw load gravity " + std::to_string(contextMenuAction[0][2]);
         CubitInterface::cmd(command.c_str());
@@ -2430,11 +2413,11 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==3) //Action4
       {
         myStepsManagement->show();
-      }/* else if (contextMenuAction[0][1]==4) //Action5
+      }else if (contextMenuAction[0][1]==4) //Action5
       {
-        std::string command = "ccx draw load_centrifugal_all"; //Clemens
+        std::string command = "ccx draw step " + std::to_string(contextMenuAction[0][2]) + " load_centrifugal_all";
         CubitInterface::cmd(command.c_str());
-      } */else if (contextMenuAction[0][1]==5) //Action6
+      }else if (contextMenuAction[0][1]==5) //Action6
       {
         std::string command = "ccx draw load centrifugal " + std::to_string(contextMenuAction[0][2]);
         CubitInterface::cmd(command.c_str());
@@ -2444,11 +2427,11 @@ void ModelTree::execContextMenuAction(){
       if (contextMenuAction[0][1]==0) //Action1
       {
         myStepsManagement->show();
-      }/* else if(contextMenuAction[0][1]==1) //Action2
+      }else if(contextMenuAction[0][1]==1) //Action2
       {
-        std::string command = "ccx draw bc_all"; //Clemens
+        std::string command = "ccx draw step " + std::to_string(contextMenuAction[0][2]) + " bc_all";
         CubitInterface::cmd(command.c_str());
-      } */
+      }
     }else if (contextMenuAction[0][0]==30) //StepsBCsDisplacementsTree
     {
       if (contextMenuAction[0][1]==0) //Action1
@@ -2466,11 +2449,11 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==4) //Action5
       {
         myStepsManagement->show();
-      }/* else if (contextMenuAction[0][1]==5) //Action6
+      }else if (contextMenuAction[0][1]==5) //Action6
       {
-        std::string command = "ccx draw bc_displacement_all"; //Clemens
+        std::string command = "ccx draw step " + std::to_string(contextMenuAction[0][2]) + " bc_displacement_all";
         CubitInterface::cmd(command.c_str());
-      } */else if (contextMenuAction[0][1]==6) //Action7
+      }else if (contextMenuAction[0][1]==6) //Action7
       {
         std::string command = "ccx draw bc displacement " + std::to_string(contextMenuAction[0][2]);
         CubitInterface::cmd(command.c_str());
@@ -2492,11 +2475,11 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==4) //Action5
       {
         myStepsManagement->show();
-      }/* else if (contextMenuAction[0][1]==5) //Action6
+      }else if (contextMenuAction[0][1]==5) //Action6
       {
-        std::string command = "ccx draw bc_temperature_all"; //Clemens
+        std::string command = "ccx draw step " + std::to_string(contextMenuAction[0][2]) + " bc_temperature_all";
         CubitInterface::cmd(command.c_str());
-      } */else if (contextMenuAction[0][1]==6) //Action7
+      }else if (contextMenuAction[0][1]==6) //Action7
       {
         std::string command = "ccx draw bc temperature " + std::to_string(contextMenuAction[0][2]);
         CubitInterface::cmd(command.c_str());
