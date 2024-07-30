@@ -223,9 +223,6 @@ public:
   bool draw_bc_temperatures(double size); //draw all temperatures
 
 
-
-  /*Clemens: cpp noch ändern*/
-
   
   //QUERY results
   //FRD results
@@ -308,6 +305,7 @@ public:
   std::string get_initialcondition_export_data(); // gets the export data from core
   std::string get_hbc_export_data(); // gets the export data from core
   std::string get_step_export_data(); // gets the export data from core
+  std::vector<int> get_steps_ids(); //gets the step ids from core
 
   CoreBlocks *cb;
   CoreMaterials *mat;

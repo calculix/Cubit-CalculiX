@@ -132,7 +132,10 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
 
   if ((force_id.size()==0)&&(pressure_id.size()==0)&&(heatflux_id.size()==0)&&(gravity_id.size()==0)&&(centrifugal_id.size()==0)&&(displacement_id.size()==0)&&(temperature_id.size()==0)&&(orientation_id.size()==0))
   {
-   bool_draw_all = true;
+   if((!data.find_keyword("LOAD_ALL"))&&(!data.find_keyword("BC_ALL"))&&(!data.find_keyword("ORIENTATION_ALL"))&&(!data.find_keyword("LOAD_FORCE_ALL"))&&(!data.find_keyword("LOAD_PRESSURE_ALL"))&&(!data.find_keyword("LOAD_HEATFLUX_ALL"))&&(!data.find_keyword("LOAD_GRAVITY_ALL"))&&(!data.find_keyword("LOAD_CENTRIFUGAL_ALL"))&&(!data.find_keyword("BC_DISPLACEMENT_ALL"))&&(!data.find_keyword("BC_TEMPERATURE_ALL")))
+      {
+        bool_draw_all = true;
+      }
   }
   
   if (data.find_keyword("LOAD_ALL"))
@@ -228,49 +231,41 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
   }
   if (!ccx_iface.draw_load_force(force_id,size_value))
   {
-    bool_draw_all = false;
     output = "Failed ccx draw load force!\n";
     PRINT_ERROR(output.c_str());
   }
   if (!ccx_iface.draw_load_pressure(pressure_id,size_value))
   {
-    bool_draw_all = false;
     output = "Failed ccx draw load pressure!\n";
     PRINT_ERROR(output.c_str());
   }
   if (!ccx_iface.draw_load_heatflux(heatflux_id,size_value))
   {
-    bool_draw_all = false;
     output = "Failed ccx draw load heatflux!\n";
     PRINT_ERROR(output.c_str());
   }
   if (!ccx_iface.draw_load_gravity(gravity_id,size_value))
   {
-    bool_draw_all = false;
     output = "Failed ccx draw load gravity!\n";
     PRINT_ERROR(output.c_str());
   }
   if (!ccx_iface.draw_load_centrifugal(centrifugal_id,size_value))
   {
-    bool_draw_all = false;
     output = "Failed ccx draw load centrifugal!\n";
     PRINT_ERROR(output.c_str());
   }
   if (!ccx_iface.draw_bc_displacement(displacement_id,size_value))
   {
-    bool_draw_all = false;
     output = "Failed ccx draw bc displacement!\n";
     PRINT_ERROR(output.c_str());
   }
   if (!ccx_iface.draw_bc_temperature(temperature_id,size_value))
   {
-    bool_draw_all = false;
     output = "Failed ccx draw bc temperature!\n";
     PRINT_ERROR(output.c_str());
   }
   if (!ccx_iface.draw_orientation(orientation_id,size_value))
   {
-    bool_draw_all = false;
     output = "Failed ccx draw orientation!\n";
     PRINT_ERROR(output.c_str());
   }
