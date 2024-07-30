@@ -14,7 +14,7 @@ std::vector<std::string> ccxDrawStepCommand::get_syntax()
   std::vector<std::string> syntax_list;
 
   std::string syntax = "ccx ";
-  syntax.append("draw step <value:label='step_id',help='<step_id>'>");
+  syntax.append("draw step <value:label='step_id',help='<step_id>'>...");
   syntax.append(" [size <value:label='size_value',help='<size_value>'>]");
   syntax.append(" [load");
   syntax.append(" [force <value:label='force_id',help='<force_id>'>...]");
@@ -46,7 +46,7 @@ std::vector<std::string> ccxDrawStepCommand::get_syntax_help()
 {
   std::vector<std::string> help(1);
   help[0] = "ccx";
-  help[0].append(" draw step <step_id>");
+  help[0].append(" draw step <step_id>...");
   help[0].append(" [size <size_value>]");
   help[0].append(" [load [force <force_id>...]");
   help[0].append(" [pressure <pressure_id>...]");
@@ -210,7 +210,7 @@ bool ccxDrawStepCommand::execute(CubitCommandData &data)
     // filter
     force_id = get_ids_in_tree_data(force_id,step_loadforces_tree_data);
     pressure_id = get_ids_in_tree_data(pressure_id,step_loadpressures_tree_data);
-    heatflux_id = get_ids_in_tree_data(gravity_id,step_loadheatfluxes_tree_data);
+    heatflux_id = get_ids_in_tree_data(heatflux_id,step_loadheatfluxes_tree_data);
     gravity_id = get_ids_in_tree_data(gravity_id,step_loadgravities_tree_data);
     centrifugal_id = get_ids_in_tree_data(centrifugal_id,step_loadcentrifugals_tree_data);
     displacement_id = get_ids_in_tree_data(displacement_id,step_bcdisplacements_tree_data);
