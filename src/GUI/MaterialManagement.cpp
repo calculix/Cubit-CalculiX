@@ -669,6 +669,12 @@ void MaterialManagement::on_pushButton_delete_clicked(bool)
   //log = " clicked delete \n";
   //PRINT_INFO("%s", log.c_str());
   //QStringList commands;
+  
+  if (tree_material->topLevelItemCount()==0)
+  {
+    return;
+  }
+  
   std::vector<std::string> commands;
   
   QMessageBox::StandardButton msgbox;
