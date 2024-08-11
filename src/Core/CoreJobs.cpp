@@ -55,6 +55,26 @@ bool CoreJobs::reset()
   cvg.clear();
   sta.clear();
   #ifdef WIN32
+    //close all threads first
+    /*
+    for (size_t i = 0; i < jobs_data.size(); i++)
+    {
+      HANDLE processhandle;
+      DWORD returnCode{};
+      processhandle = OpenProcess(PROCESS_ALL_ACCESS, TRUE, std::stoi(jobs_data[i][4]));
+      if (GetExitCodeProcess(processhandle, &returnCode)) {
+        if (returnCode == STILL_ACTIVE)
+        { 
+          std::string log;
+          log = "Kill Job " + jobs_data[i][1] + " with ID " + jobs_data[i][0] + " on Reset\n";
+          PRINT_INFO("%s", log.c_str());
+          TerminateProcess(processhandle, 1);
+          CloseHandle(processhandle);
+        }
+      }
+    }
+    */
+    //clear all vectors
     ProcessPipe.clear();
     PPTID.clear();
     PipePID.clear();
