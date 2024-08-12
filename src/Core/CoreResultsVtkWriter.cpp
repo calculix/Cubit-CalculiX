@@ -1328,7 +1328,8 @@ bool CoreResultsVtkWriter::checkLinkPossible()
           log = "Linking Failed! Not for every .frd time value a .dat time value exists.\n";
           log.append("Time " + std::to_string(frd_all->total_times[i]) + " wasn't found in the .dat file.\n");
           PRINT_INFO("%s", log.c_str());
-          return false;
+          //return false;
+          write_dat = false;
         }
       }
     }
@@ -1346,7 +1347,8 @@ bool CoreResultsVtkWriter::checkLinkPossible()
     {
       log = "Linking Failed! Different number of increments in .frd (" + std::to_string(max_increments) + ") and .dat (" + std::to_string(get_max_step_increment()) + ") \n";
       PRINT_INFO("%s", log.c_str());
-      return false;
+      //return false;
+      write_dat = false;
     }
   }
   
