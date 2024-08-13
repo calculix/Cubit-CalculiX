@@ -32,3 +32,4 @@
 2024-07-05 Rework Useroptions and include paraview and solver
 
 ######### ------  Release 2024.7
+2024-08-13 fix cubit crash on reset using windows

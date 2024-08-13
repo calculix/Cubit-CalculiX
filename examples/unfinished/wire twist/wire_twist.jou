@@ -5,7 +5,8 @@ create cylinder height 100 radius 1
 move volume 1 x -1.01
 move volume 2 x 1.01
 
-vol all size auto factor 8
+surface 2 3 5 6 size 0.4
+vol all size 2
 mesh vol all
 
 #create blocks
@@ -69,10 +70,11 @@ ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFL HFL
 # bc
 create displacement  on nodeset 1 dof all fix 0 
 create displacement on vertex 5 dof 1 dof 2 fix 0
-create displacement  on vertex 6 dof 3 fix 10
+create displacement  on vertex 6 dof 3 fix 5
 
 #step
 ccx create step name "twist" static
+ccx modify step 1 parameter inc 10000
 ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.01 timeperiodofstep 10 minimumtimeincrement 1e-05 maximumtimeincrement 0.05
 ccx step 1 add bc displacement 1 2 3
 ccx step 1 add fieldoutput 1 2
@@ -80,4 +82,5 @@ ccx step 1 add fieldoutput 1 2
 #job
 ccx create job name "wire_twist"
 #ccx run job 1
+
 

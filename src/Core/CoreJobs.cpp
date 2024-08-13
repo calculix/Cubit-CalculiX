@@ -50,13 +50,9 @@ bool CoreJobs::update()
 
 bool CoreJobs::reset()
 {
-  jobs_data.clear();  
-  output_console.clear();
-  cvg.clear();
-  sta.clear();
   #ifdef WIN32
-    //close all threads first
-    /*
+    //close all jobs and threads first
+    
     for (size_t i = 0; i < jobs_data.size(); i++)
     {
       HANDLE processhandle;
@@ -70,10 +66,11 @@ bool CoreJobs::reset()
           PRINT_INFO("%s", log.c_str());
           TerminateProcess(processhandle, 1);
           CloseHandle(processhandle);
+          kill_pipe(std::stoi(jobs_data[i][0]));
         }
       }
     }
-    */
+    
     //clear all vectors
     ProcessPipe.clear();
     PPTID.clear();
@@ -83,6 +80,10 @@ bool CoreJobs::reset()
   #else
     CubitProcessHandler.clear();
   #endif
+  jobs_data.clear();  
+  output_console.clear();
+  cvg.clear();
+  sta.clear();
 
   init();
   return true;
@@ -661,6 +662,7 @@ bool CoreJobs::kill_job(int job_id)
           PRINT_INFO("%s", log.c_str());
           TerminateProcess(processhandle, 1);
           CloseHandle(processhandle);
+          kill_pipe(std::stoi(jobs_data[jobs_data_id][0]));
           log = " Job killed!\n";
           PRINT_INFO("%s", log.c_str());
           jobs_data[jobs_data_id][3] = "3";
