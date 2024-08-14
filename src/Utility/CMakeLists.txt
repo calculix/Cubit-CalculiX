@@ -4,5 +4,7 @@ project(Cubit-CalculiX_Utility)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Eigen)
 
 
-set(UTILIY_SRC
+set(UTILITY_SRC
+    ${CMAKE_CURRENT_LIST_DIR}/StopWatch.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StopWatch.hpp
     PARENT_SCOPE)

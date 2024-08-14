@@ -3,6 +3,7 @@
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "ProgressTool.hpp"
+#include "StopWatch.hpp"
 
 #include <chrono>
 #include <cmath>
@@ -62,9 +63,9 @@ bool CoreResultsFrd::check_initialized()
   return is_initialized;
 }
 
-
 bool CoreResultsFrd::read()
 {
+  StopWatch StopWatch;
   int maxlines = 0;
   int currentline = 0;
   ProgressTool progressbar;
@@ -111,7 +112,6 @@ bool CoreResultsFrd::read()
     // check if last line has 9999 in it, if not then add, otherwise on error frd data it crashes
     if ((job_data[3] == "3")||(job_data[3] == "4")||(job_data[3] == "-1"))
     {
-      
       frd.open(this->filepath);
       for (size_t i = 0; i < maxlines; i++)
       {
@@ -156,7 +156,6 @@ bool CoreResultsFrd::read()
 
       // first lets check if the mode is still valid
       this->check_mode(frd_array);
-
       if (current_read_mode == 0)
       {
         this->read_header(frd_array);
@@ -213,6 +212,163 @@ bool CoreResultsFrd::read()
   progressbar.end();
   //PRINT_INFO("%s", log.c_str());
   //print_data();
+
+  StopWatch.total("Duration of reading FRD [ms]: ");
+
+  return true;
+}
+
+bool CoreResultsFrd::read_parallel(int number_of_threads)
+{
+  StopWatch StopWatch;
+  int maxlines = 0;
+  int currentline = 0;
+  ProgressTool progressbar;
+  std::string log;
+  log = "reading results " + filepath + " for Job ID " + std::to_string(job_id) + " \n";
+  PRINT_INFO("%s", log.c_str());
+
+  std::string frdline = "";
+  std::vector<std::string> frd_array;
+  
+  std::ifstream frd;
+  frd.open(this->filepath);
+
+  // clear all data before reading and reset read mode
+  this->clear();
+  current_read_mode = 0;
+
+  if (frd.is_open())
+  {
+    // scan file for number of lines
+    progressbar.start(0,100,"Scanning Results FRD");
+    while (std::getline(frd,frdline))
+    { 
+      ++maxlines;
+      if((frd.eof())){
+        break;
+      }
+    }
+    frd.close();
+
+    if (maxlines<10)
+    {
+      // must be no data in the frd
+      return false;
+    }
+
+    std::vector<std::string> job_data = ccx_iface->get_job_data(job_id);
+    //if process is still running quit
+    if (job_data[3] == "1")
+    {
+      return false;
+    }
+
+    // check if last line has 9999 in it, if not then add, otherwise on error frd data it crashes
+    if ((job_data[3] == "3")||(job_data[3] == "4")||(job_data[3] == "-1"))
+    {
+      frd.open(this->filepath);
+      for (size_t i = 0; i < maxlines; i++)
+      {
+        std::getline(frd,frdline);
+        if (i == maxlines-1)
+        {
+          frd.close();
+          frd_array = this->split_line(frdline);
+          if (frd_array[0] != "9999")
+          {
+            frd.close(); 
+            std::ofstream log(this->filepath, std::ios_base::app | std::ios_base::out);
+            log << "9999\n";
+          }
+        }
+      }
+    }
+
+    progressbar.end();  
+    
+    frd.open(this->filepath);
+
+    progressbar.start(0,100,"Reading Results FRD");
+    auto t_start = std::chrono::high_resolution_clock::now();
+    
+    log = "";
+    while (frd)
+    {
+      std::getline(frd,frdline);
+      ++currentline;
+  
+      const auto t_end = std::chrono::high_resolution_clock::now();
+      int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+      if (duration > 500)
+      {
+        progressbar.percent(double(currentline)/double(maxlines));
+        progressbar.check_interrupt();
+        t_start = std::chrono::high_resolution_clock::now();
+      }
+      
+      frd_array = this->split_line(frdline);
+
+      // first lets check if the mode is still valid
+      this->check_mode(frd_array);
+      if (current_read_mode == 0)
+      {
+        this->read_header(frd_array);
+      } else if (current_read_mode == 1)
+      {
+        this->read_node(frd_array);
+      } else if (current_read_mode == 2)
+      {
+        this->read_element(frd_array);
+      } else if (current_read_mode == 3)
+      {
+        this->read_parameter_header(frd_array);
+      } else if (current_read_mode == 4)
+      {
+        this->read_nodal_result_block(frd_array);
+      } else if ((current_read_mode == 9999)||(frd.eof()))
+      {
+        break;
+      }
+      
+      /*
+      log="";
+      for (size_t i = 0; i < frd_array.size(); i++)
+      {
+        //log.append(std::to_string(current_read_mode) + "#");
+        log.append(frd_array[i] + " ");
+      }
+      log.append("\n");
+      PRINT_INFO("%s", log.c_str());
+      */
+      //ccx_iface->log_str(log);
+    }
+  }
+  frd.close();
+
+  // sorting for faster search
+  for (size_t i = 0; i < result_block_node_data.size(); i++)
+  {
+    std::vector<int> tmp_node_ids;
+    std::vector<int> tmp_node_data_ids;
+
+    for (size_t ii = 0; ii < result_block_node_data[i].size(); ii++)
+    {
+      tmp_node_ids.push_back(result_block_node_data[i][ii][0]);
+      tmp_node_data_ids.push_back(result_block_node_data[i][ii][1]);
+    }  
+    auto p = sort_permutation(tmp_node_ids);
+    this->apply_permutation(tmp_node_ids, p);
+    this->apply_permutation(tmp_node_data_ids, p);
+    sorted_node_ids.push_back(tmp_node_ids);
+    sorted_node_data_ids.push_back(tmp_node_data_ids);
+  }
+
+  progressbar.end();
+  //PRINT_INFO("%s", log.c_str());
+  //print_data();
+
+  StopWatch.total("Duration of reading FRD [ms]: ");
 
   return true;
 }
@@ -295,7 +451,7 @@ bool CoreResultsFrd::check_mode(std::vector<std::string> line)
       current_read_mode = 3;
     }
   }
-
+  
   return true;
 }
 

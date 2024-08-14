@@ -36,8 +36,6 @@ public:
   int nparts = 0;
   int nparts_dat = 0; // number of parts from dat file
   int current_part = 0;
-  std::chrono::time_point<std::chrono::high_resolution_clock> t_runtime_start = std::chrono::high_resolution_clock::now();
-  std::chrono::time_point<std::chrono::high_resolution_clock> t_runtime_last = std::chrono::high_resolution_clock::now();
   std::vector<bool> current_part_ip_data; // bool if current part has integration point data...needed for vtk connectivity of .dat data
   std::string current_filepath_vtu = "";
   std::string current_filepath_vtpc = "";
@@ -117,7 +115,6 @@ public:
   std::vector<double> get_integration_point_coordinates(int element_type, int ip, int ipmax, std::vector<std::vector<double>> nodes_coords); // computes the integration point coordinates for the given element and ip point number
   std::vector<std::vector<double>> compute_integration_points_displacements(int set_id);
   std::vector<std::vector<double>> compute_integration_points_displacements_fast(int set_id);
-  bool stopwatch(std::string label); // prints out a label, the time difference from the last label print and the total runtime
   template <typename T>  std::vector<std::size_t> sort_permutation(const std::vector<T>& vec);
   template <typename T> void apply_permutation(std::vector<T>& vec,const std::vector<std::size_t>& p);
 

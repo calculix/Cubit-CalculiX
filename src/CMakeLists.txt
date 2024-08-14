@@ -57,7 +57,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/UserOptions)
 add_subdirectory(UserOptions)
 
 # Include our Utility code
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Utiliy)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Utility)
 add_subdirectory(Utility)
 
 # Include our Python Interface code

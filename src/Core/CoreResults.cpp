@@ -114,6 +114,7 @@ bool CoreResults::load_result(int job_id)
     //log = "Loading results for Job ID " + std::to_string(results_data[results_data_id][1]) + " \n";
     //PRINT_INFO("%s", log.c_str());
     frd_data[frd_data_id].read();
+    //frd_data[frd_data_id].read_parallel();
     dat_data[dat_data_id].read();
 
     return true;

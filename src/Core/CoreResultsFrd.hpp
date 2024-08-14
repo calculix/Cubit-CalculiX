@@ -92,6 +92,7 @@ public:
   bool clear(); // clear all stored result data
   bool check_initialized(); // check if object is initialized
   bool read(); // reads the frd file
+  bool read_parallel(int number_of_threads); // reads the frd file in parallel for the result blocks
   std::vector<std::string> split_line(std::string frdline); // splits the line to a vector
   bool check_mode(std::vector<std::string> line); // checks if the current read mode is still valid or others should be used
   bool read_header(std::vector<std::string> line); // processing the header data

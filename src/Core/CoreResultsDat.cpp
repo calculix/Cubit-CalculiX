@@ -3,6 +3,7 @@
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "ProgressTool.hpp"
+#include "StopWatch.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -59,6 +60,7 @@ bool CoreResultsDat::check_initialized()
 
 bool CoreResultsDat::read()
 {
+  StopWatch StopWatch;
   int maxlines = 0;
   int currentline = 0;
   ProgressTool progressbar;
@@ -300,6 +302,9 @@ bool CoreResultsDat::read()
 
   //PRINT_INFO("%s", log.c_str());
   //print_data();
+
+  StopWatch.total("Duration of reading DAT [ms]: ");
+
   return true;
 }
 
