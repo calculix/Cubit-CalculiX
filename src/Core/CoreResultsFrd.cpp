@@ -3,11 +3,12 @@
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "ProgressTool.hpp"
+#include "loadUserOptions.hpp"
 #include "StopWatch.hpp"
 
 #include <chrono>
-#include <cmath>
 #include <fstream>
+#include <cmath>
 #include <iostream>
 
 CoreResultsFrd::CoreResultsFrd()
@@ -218,9 +219,12 @@ bool CoreResultsFrd::read()
   return true;
 }
 
-bool CoreResultsFrd::read_parallel(int number_of_threads)
+bool CoreResultsFrd::read_parallel()
 {
   StopWatch StopWatch;
+  int max_threads = ccx_uo.mConverterThreads;
+  std::vector<std::thread> ReadThreads; // vector to contain threads for reading frd
+  
   int maxlines = 0;
   int currentline = 0;
   ProgressTool progressbar;
@@ -287,6 +291,141 @@ bool CoreResultsFrd::read_parallel(int number_of_threads)
 
     progressbar.end();  
     
+    // reading nodes
+    std::vector<int> node_range = this->get_node_range();
+    int number_of_nodes = node_range[1]-node_range[0] + 1;
+
+    if (number_of_nodes < max_threads)
+    {
+      log = "More threads reading available than nodes in frd. Reduce number of threads for the converter!\n";
+      PRINT_INFO("%s", log.c_str());
+      return false;
+    }
+    
+    int nodes_per_thread = int(number_of_nodes/max_threads);
+
+    for (size_t i = 0; i < number_of_nodes; i++)
+    {
+      nodes.push_back({});
+      nodes_coords.push_back({});
+    }
+    
+
+    for (size_t i = 0; i < max_threads; i++)
+    { 
+      int start = 0;
+      int end = 0;
+      int data_start = 0;
+      if (i==max_threads-1)
+      {
+        start = node_range[0]+i*nodes_per_thread;
+        data_start = i*nodes_per_thread;
+        end = node_range[1];
+      }else{
+        start = node_range[0]+i*nodes_per_thread;
+        data_start = i*nodes_per_thread;
+        end = node_range[0]+(i+1)*nodes_per_thread-1;
+      }
+      ReadThreads.push_back(std::thread(&CoreResultsFrd::read_nodes_thread, this, start, end, data_start));
+    }
+
+    // wait till all threads are finished
+    for (size_t i = 0; i < max_threads; i++)
+    { 
+      ReadThreads[i].join();
+    }
+    ReadThreads.clear();
+    log = "Reading nodes finished!\n";
+    PRINT_INFO("%s", log.c_str());
+
+    // reading elements
+    std::vector<int> element_range = this->get_element_range();
+    int number_of_lines = element_range[1]-element_range[0] + 1;
+    int number_of_elements = element_range[2];
+
+    if (number_of_lines < max_threads*2)
+    {
+      log = "More threads reading available than elements in frd. Reduce number of threads for the converter!\n";
+      PRINT_INFO("%s", log.c_str());
+      return false;
+    }
+    
+    int lines_per_thread = int(number_of_lines/max_threads);
+    std::vector<std::vector<int>> thread_ranges;
+    
+    for (size_t i = 0; i < max_threads; i++)
+    {
+      int start = 0;
+      int end = 0;
+      int data_start = 0;
+      if (i==max_threads-1)
+      {
+        start = element_range[0]+i*lines_per_thread;
+        data_start = i*lines_per_thread;
+        end = element_range[1];
+      }else{
+        start = element_range[0]+i*lines_per_thread;
+        data_start = i*lines_per_thread;
+        end = element_range[0]+(i+1)*lines_per_thread-1;
+      }
+      std::vector<int> range = {start,end,data_start};
+      thread_ranges.push_back(range);
+    }
+
+    for (size_t i = 0; i < max_threads; i++)
+    {
+      if (i!=max_threads-1)
+      {
+        if (!check_key("-1",thread_ranges[i][1] + 1))
+        {
+          // if next line isn't the next element move range
+          while (!check_key("-1",thread_ranges[i][1] + 1))
+          {
+            thread_ranges[i][1] = thread_ranges[i][1] + 1;
+            thread_ranges[i+1][0] = thread_ranges[i+1][0] + 1;
+          }
+        }
+      }
+      //log = "range no " + std::to_string(i) + "-" + std::to_string(thread_ranges[i][0]) + "-" + std::to_string(thread_ranges[i][1]) +  " \n";
+      //PRINT_INFO("%s", log.c_str());
+    }
+
+
+    for (size_t i = 0; i < number_of_elements; i++)
+    {
+      elements.push_back({});
+      elements_connectivity.push_back({});
+    }
+        
+    /*
+    for (size_t i = 0; i < max_threads; i++)
+    { 
+      int start = 0;
+      int end = 0;
+      int data_start = 0;
+      if (i==max_threads-1)
+      {
+        start = element_range[0]+i*elements_per_thread;
+        data_start = i*elements_per_thread;
+        end = element_range[1];
+      }else{
+        start = element_range[0]+i*elements_per_thread;
+        data_start = i*elements_per_thread;
+        end = element_range[0]+(i+1)*elements_per_thread-1;
+      }
+      ReadThreads.push_back(std::thread(&CoreResultsFrd::read_elements_thread, this, start, end, data_start));
+    }
+    // wait till all threads are finished
+    for (size_t i = 0; i < max_threads; i++)
+    { 
+      ReadThreads[i].join();
+    }
+    ReadThreads.clear();
+    log = "Reading elements finished!\n";
+    PRINT_INFO("%s", log.c_str());
+    */
+
+    /*  
     frd.open(this->filepath);
 
     progressbar.start(0,100,"Reading Results FRD");
@@ -331,16 +470,7 @@ bool CoreResultsFrd::read_parallel(int number_of_threads)
         break;
       }
       
-      /*
-      log="";
-      for (size_t i = 0; i < frd_array.size(); i++)
-      {
-        //log.append(std::to_string(current_read_mode) + "#");
-        log.append(frd_array[i] + " ");
-      }
-      log.append("\n");
-      PRINT_INFO("%s", log.c_str());
-      */
+
       //ccx_iface->log_str(log);
     }
   }
@@ -362,11 +492,14 @@ bool CoreResultsFrd::read_parallel(int number_of_threads)
     this->apply_permutation(tmp_node_data_ids, p);
     sorted_node_ids.push_back(tmp_node_ids);
     sorted_node_data_ids.push_back(tmp_node_data_ids);
+  */
   }
 
-  progressbar.end();
+  //progressbar.end();
+
   //PRINT_INFO("%s", log.c_str());
   //print_data();
+  
 
   StopWatch.total("Duration of reading FRD [ms]: ");
 
@@ -420,6 +553,34 @@ std::vector<std::string> CoreResultsFrd::split_line(std::string frdline)
   
   return str_array;
 }
+
+std::string CoreResultsFrd::get_key(std::string frdline)
+{
+  frdline = frdline.substr (0,5);
+
+  // trim whitespaces
+  size_t strBegin = frdline.find_first_not_of(" \t\r\f\v\n");
+  if (strBegin != std::string::npos)
+  {
+    size_t strEnd = frdline.find_last_not_of(" \t\r\f\v\n");
+    size_t strRange = strEnd - strBegin + 1;
+    frdline = frdline.substr(strBegin, strRange);
+  }
+  // reduce whitespaces
+  size_t beginSpace = frdline.find_first_of(" \t\r\f\v\n");
+  while (beginSpace != std::string::npos)
+  {
+    size_t endSpace = frdline.find_first_not_of(" \t\r\f\v\n", beginSpace);
+    size_t range = endSpace - beginSpace;
+
+    frdline.replace(beginSpace,range, " ");
+    size_t newStart = beginSpace + 1;
+    beginSpace = frdline.find_first_of(" \t\r\f\v\n",newStart);
+  }
+  
+  return frdline;
+}
+
 
 bool CoreResultsFrd::check_mode(std::vector<std::string> line)
 {
@@ -525,6 +686,57 @@ bool CoreResultsFrd::read_node(std::vector<std::string> line)
   return true;
 }
 
+
+
+bool CoreResultsFrd::read_nodes_thread(int start,int end,int data_start)
+{
+  std::string frdline = "";
+  int ic = 0;
+  int id = 0;
+
+  std::ifstream frd;
+  frd.open(this->filepath);
+  while (std::getline(frd,frdline))
+  { 
+    if ((ic>=start)&&(ic<=end))
+    {
+      
+      std::vector<std::string> line = this->split_line(frdline);
+      
+      int node_id;
+      std::vector<double> node_coords(3);
+      int nodes_coords_data_id = -1;
+      
+      if (line[0] == "-1")
+      {
+        node_id = std::stoi(line[1]);
+
+        node_coords[0] = ccx_iface->string_scientific_to_double(line[2]);
+        node_coords[1] = ccx_iface->string_scientific_to_double(line[3]);
+        node_coords[2] = ccx_iface->string_scientific_to_double(line[4]);
+
+        nodes_coords[data_start+id] = node_coords;
+        nodes[data_start+id] = {node_id,data_start+id};
+        ++id;
+      }
+      /*      
+      std::string log;
+      log = std::to_string(start)+ " -- " + std::to_string(ic) + " -- " + std::to_string(end) + " -- " + std::to_string(data_start+id) +  " \n";
+      PRINT_INFO("%s", log.c_str());
+      */
+    }else if (ic>end)
+    {
+      break;
+    }
+    if((frd.eof())){
+      break;
+    }
+    ++ic;
+  }
+  frd.close();
+  return true;
+}
+
 bool CoreResultsFrd::read_element(std::vector<std::string> line)
 {
   int element_id;
@@ -561,6 +773,57 @@ bool CoreResultsFrd::read_element(std::vector<std::string> line)
       }
     }
   }
+  return true;
+}
+
+bool CoreResultsFrd::read_elements_thread(int start,int end,int data_start)
+{
+  /*
+  std::string frdline = "";
+  int ic = 0;
+  int id = 0;
+
+  std::ifstream frd;
+  frd.open(this->filepath);
+  while (std::getline(frd,frdline))
+  { 
+    if ((ic>=start)&&(ic<=end))
+    {
+      
+      std::vector<std::string> line = this->split_line(frdline);
+      
+      int node_id;
+      std::vector<double> node_coords(3);
+      int nodes_coords_data_id = -1;
+      
+      if (line[0] == "-1")
+      {
+        node_id = std::stoi(line[1]);
+
+        node_coords[0] = ccx_iface->string_scientific_to_double(line[2]);
+        node_coords[1] = ccx_iface->string_scientific_to_double(line[3]);
+        node_coords[2] = ccx_iface->string_scientific_to_double(line[4]);
+
+        nodes_coords[data_start+id] = node_coords;
+        nodes[data_start+id] = {node_id,data_start+id};
+        ++id;
+      }
+      
+      std::string log;
+      log = std::to_string(start)+ " -- " + std::to_string(ic) + " -- " + std::to_string(end) + " -- " + std::to_string(data_start+id) +  " \n";
+      PRINT_INFO("%s", log.c_str());
+
+    }else if (ic>end)
+    {
+      break;
+    }
+    if((frd.eof())){
+      break;
+    }
+    ++ic;
+  }
+  frd.close();
+  */
   return true;
 }
 
@@ -782,6 +1045,110 @@ int CoreResultsFrd::get_result_block_component_id(int result_block_type_id,std::
   return component_id;
 }
 
+std::vector<int> CoreResultsFrd::get_node_range()
+{
+  std::vector<int> tmp;
+  std::string frdline = "";
+  int ic = 0;
+  int start = 0;
+  int end = 0;
+
+  std::ifstream frd;
+  frd.open(this->filepath);
+  while (std::getline(frd,frdline))
+  { 
+    ++ic;
+    std::string key = this->get_key(frdline);
+    if (key=="2")
+    {
+      start = ic;
+    }else if (key=="3")
+    {
+      end = ic-3;
+      break;
+    }
+    if((frd.eof())){
+      break;
+    }
+  }
+  frd.close();
+
+  tmp.push_back(start);
+  tmp.push_back(end);
+
+  return tmp;
+}
+
+std::vector<int> CoreResultsFrd::get_element_range()
+{
+  std::vector<int> tmp;
+  std::string frdline = "";
+  int ic = 0;
+  int start = 0;
+  int end = 0;
+  bool block_started = false;
+  std::string last_key = "-2";
+  int number_of_elements = 0;
+
+  std::ifstream frd;
+  frd.open(this->filepath);
+  while (std::getline(frd,frdline))
+  { 
+    ++ic;
+    std::string key = this->get_key(frdline);
+    if (key=="3")
+    {
+      start = ic;
+      block_started = true;
+    }
+    if (block_started)
+    {
+      if ((last_key=="-2")&&(key=="-1"))
+      {
+        ++number_of_elements;
+      }
+      if (key=="-3")
+      {
+        end = ic-2;
+        break;
+      }
+    }
+    if((frd.eof())){
+      break;
+    }
+  }
+  frd.close();
+
+  tmp.push_back(start);
+  tmp.push_back(end);
+  tmp.push_back(number_of_elements);
+
+  return tmp;
+}
+
+bool CoreResultsFrd::check_key(std::string key, int line)
+{
+  std::string frdline = "";
+  int ic = 0;
+  std::ifstream frd;
+  frd.open(this->filepath);
+  while (std::getline(frd,frdline))
+  { 
+    std::string line_key = this->get_key(frdline);
+    if ((key==line_key)&&(ic==line))
+    {
+      return true;
+      break;
+    }
+    if((frd.eof())){
+      break;
+    }
+    ++ic;
+  }
+  frd.close();
+
+  return false;
+}
 
 bool CoreResultsFrd::print_data()
 {

@@ -203,6 +203,10 @@ int ConfigFile::standard_num_entry(std::string option)
     if (option == "SolverThreads")
     {
         standard_value = 8;
+    }else if (option == "ConverterThreads")
+    {
+        standard_value = 8;
     }
+    
     return standard_value;
 }

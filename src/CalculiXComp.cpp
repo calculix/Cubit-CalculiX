@@ -205,7 +205,9 @@ void CalculiXComp::restore_settings()
   config.read_entry("PathSolver", ccx_uo.mPathSolver);
   ccx_uo.mPathSolverName = "Path to CalculiX Solver";
   config.read_num_entry("SolverThreads", ccx_uo.mSolverThreads);
-  ccx_uo.mSolverThreadsName = "Number of Threads";
+  ccx_uo.mSolverThreadsName = "Solver - Threads";
+  config.read_num_entry("ConverterThreads", ccx_uo.mConverterThreads);
+  ccx_uo.mConverterThreadsName = "Converter - Threads";
   config.read_entry("PathCGX", ccx_uo.mPathCGX);
   ccx_uo.mPathCGXName = "Path to CGX";
   config.read_entry("PathParaView", ccx_uo.mPathParaView);
@@ -223,6 +225,7 @@ void CalculiXComp::save_settings()
   config.clear();
   config.write_entry("PathSolver", ccx_uo.mPathSolver);
   config.write_num_entry("SolverThreads", ccx_uo.mSolverThreads);
+  config.write_num_entry("ConverterThreads", ccx_uo.mConverterThreads);
   config.write_entry("PathCGX", ccx_uo.mPathCGX);
   config.write_entry("PathParaView", ccx_uo.mPathParaView);
   config.write_entry("PathIcons", ccx_uo.mPathIcons);
