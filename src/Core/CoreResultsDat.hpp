@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <thread>
 
 class CalculiXCoreInterface;
 
@@ -62,6 +63,8 @@ public:
   //buckle_data[0][0][0] mode no
   //buckle_data[0][0][1] buckling factor
 
+  std::vector<std::vector<std::vector<std::string>>> dat_arrays; //contains the result block lines
+
   // sorted vectors for faster results search
   // will probably be used for python interface queries
   std::vector<std::vector<int>> sorted_c1;
@@ -73,6 +76,8 @@ public:
   bool check_initialized(); // check if object is initialized
   bool clear(); // clear all stored result data
   bool read(); // reads the dat file
+  bool read_single(); // reads the dat file
+  bool read_parallel(); // reads the dat file
   std::vector<std::string> split_line(std::string line); // splits the line to a vector
   bool is_number(std::string number); // check if string is a positive number, for check of first column
   bool is_whitespace(std::string line); // check if line consists only of whitespace
@@ -82,6 +87,8 @@ public:
   bool header_emas(std::vector<std::string> line); // processing emas header
   bool read_line(std::vector<std::string> line); // processing the result lines
   bool read_line_buckle(std::vector<std::string> line); // processing the result lines for buckling output
+  bool read_lines_thread(int result_block_data_id); // processing the result lines for result block
+  bool compute_predefined(int result_block_data_id); // computing the predefined calculations
   int get_current_result_block_type(std::string result_type); // gets result_block_type
   int get_current_result_block_set(std::string result_set); // gets result_block_set
   bool check_element_sets(); // checks if the data for the element sets has integration points data or not...if yes set prefix ip_
@@ -89,6 +96,7 @@ public:
   int get_result_block_component_id(int result_block_type_id,std::string result_block_component); // get component id
   int get_result_block_type_data_id(std::string result_block_type); // returns the result_block_type_data_id or returns -1 
   int get_result_block_set_data_id(std::string result_block_set); // returns the result_block_set_data_id or returns -1 
+  bool sort_data(int data_id); // sorts the data
   bool print_data(); // prints the data to the console
 
   template <typename T>  std::vector<std::size_t> sort_permutation(const std::vector<T>& vec);

@@ -87,7 +87,7 @@ public:
   std::string filepath = "";
   bool is_initialized = false;
   int current_read_mode = 0; //0 header 1 nodal data 2 element data 3 parameter data 4 result block
-  std::vector<std::string> key; // keys for all lines
+  std::vector<std::string> keys; // keys for all lines
   
   bool init(int job_id); // initialize
   bool reset(); // delete all data and initialize afterwards
@@ -99,6 +99,7 @@ public:
   std::vector<std::string> split_line(std::string frdline); // splits the line to a vector
   std::string get_key(std::string frdline); // gets the frd key, first 6 chars in the line without whitespace
   bool check_mode(std::vector<std::string> line); // checks if the current read mode is still valid or others should be used
+  bool check_mode_by_key(std::string key); // checks if the current read mode is still valid or others should be used
   bool read_header(std::vector<std::string> line); // processing the header data
   bool read_node(std::vector<std::string> line); // processing the nodes data
   bool read_nodes_thread(int start,int end, int data_start); // processing the nodes data
@@ -116,6 +117,7 @@ public:
   void set_element_range_data_start(std::vector<std::vector<int>> &thread_ranges); // scans the ranges and counts the elements in the ranges to set the data_start
   bool insert_key(int start, int end); // inserts the keys for range
   bool check_key(std::string key, int line); // checks if the key is at the given line
+  bool sort_result_block_node_data(int data_id); // sorts the result block node data
   bool print_data(); // prints the data to the console
 
   template <typename T>  std::vector<std::size_t> sort_permutation(const std::vector<T>& vec);

@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <chrono>
+#include <thread>
 
 class CalculiXCoreInterface;
 class CoreResultsFrd;
@@ -26,6 +27,7 @@ public:
   bool write_frd = true; // write frd results
   bool write_dat = true; // write dat results
   int current_offset = 0;
+  std::vector<int> current_offset_thread;
   int max_increments = 0;
   int current_increment = 0;
   double current_time = 0;
@@ -64,23 +66,31 @@ public:
   std::vector<std::vector<int>> set_ipmax;
   std::vector<int> linked_nodes;
   std::vector<int> linked_nodes_data_id;
+  std::vector<std::vector<int>> linked_nodes_thread;
+  std::vector<std::vector<int>> linked_nodes_data_id_thread;
 
   bool init(int job_id,CoreResultsFrd* frd,CoreResultsDat* dat,std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids); // initialize
   bool reset(); // delete all data and initialize afterwards
   bool clear(); // clear all stored result data
   bool clear_files(); // clear all stored result data
   bool clearLinked(); // clear all stored result data
+  bool clearLinked_thread(int thread_part); // clear all stored result data
   bool check_initialized(); // check if object is initialized
   bool write(); // write to paraview file formats
   bool write_linked(); // write part to paraview file formats if linking is possible
+  bool write_linked_parallel(); // write part to paraview file formats if linking is possible
   bool write_vtpc(); // write to paraview file formats
   bool write_vtu_linked(); // write only paraview vtu file format, blocks ect could not be linked
+  bool write_vtu_linked_thread(CoreResultsFrd *frd, int thread_part, std::string thread_filepath_vtu); // write only paraview vtu file format
   bool write_vtu_unlinked(); // write only paraview vtu file format, blocks ect could not be linked
+  bool write_vtu_unlinked_parallel(); // write only paraview vtu file format, blocks ect could not be linked
   bool write_to_file(std::string filepath, std::string &content); // write the content to file
   int getMaxDataRows(); // get # of data rows from frd and dat
+  int getMaxDataRows_thread(int thread_part); // get # of data rows from frd and dat
   bool checkResults(); // get # of increments from frd and dat
   bool checkLinkPossible(); // checks if the linking of results to the current cubit model is possible
   bool checkResultsLinked(); // get # of increments from frd and dat
+  bool checkResultsLinked_thread(int thread_part); // get # of increments from frd and dat
   bool checkLinkNodesFast(); // check if linking of nodes fast is possible
   bool checkLinkDatFast(); // check if linking of dat fast is possible
   bool checkDatTimeValueExists(double total_time); // checks if the dat totaltime exists
@@ -90,10 +100,12 @@ public:
   bool rewrite_connectivity_unlinked(); // rewrites the nodenumbers in the connectivity for unlinked mode
   std::string get_element_connectivity_vtk(int element_connectivity_data_id, int element_type); // gets the connectivity already converted to vtk format
   std::string get_element_connectivity_vtk_linked(int element_connectivity_data_id, int element_type); // gets the connectivity already converted to vtk format
+  std::string get_element_connectivity_vtk_linked_thread(int element_connectivity_data_id, int element_type, int thread_part); // gets the connectivity already converted to vtk format
   std::string get_element_type_vtk(int element_type); // gets the element type already converted to vtk format
   int get_element_type_frd(int element_id); // gets the element type from cubit converted to frd format, searched in the frd data
   std::string get_element_offset_vtk(int element_connectivity_data_id); // gets the element offset already converted to vtk format
   int getParaviewNode(int frd_node_id); // gets the paraview node id for frd node id
+  int getParaviewNode_thread(int frd_node_id,int thread_part); // gets the paraview node id for frd node id
   std::string get_increment(); // gets the current increment in the format 00x
   std::string get_increment_time(); // gets the current increment time value
   int get_step_increment(double total_time); // gets the step increment from a time value from .dat

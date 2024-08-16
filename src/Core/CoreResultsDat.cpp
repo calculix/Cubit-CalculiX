@@ -4,10 +4,10 @@
 #include "CubitMessage.hpp"
 #include "ProgressTool.hpp"
 #include "StopWatch.hpp"
+#include "loadUserOptions.hpp"
 
 #include <fstream>
 #include <iostream>
-#include "loadUserOptions.hpp"
 
 CoreResultsDat::CoreResultsDat()
 {}
@@ -49,6 +49,7 @@ bool CoreResultsDat::clear()
   result_block_data.clear();
   result_block_c1_data.clear();
   buckle_data.clear();
+  dat_arrays.clear();
 
   return true;
 }
@@ -59,6 +60,25 @@ bool CoreResultsDat::check_initialized()
 }
 
 bool CoreResultsDat::read()
+{
+  bool success = false;
+  if (ccx_uo.mConverterThreads > 1)
+  {
+    if (read_parallel())
+    {
+      success = true;
+    }
+  }else{
+    if (read_single())
+    {
+      success = true;
+    }
+  }
+
+  return success;
+}
+
+bool CoreResultsDat::read_single()
 {
   StopWatch StopWatch;
   int maxlines = 0;
@@ -308,6 +328,266 @@ bool CoreResultsDat::read()
   return true;
 }
 
+bool CoreResultsDat::read_parallel()
+{
+  StopWatch StopWatch;
+  int max_threads = ccx_uo.mConverterThreads;
+  std::vector<std::thread> ReadThreads; // vector to contain threads for reading frd
+  int maxlines = 0;
+  int currentline = 0;
+  ProgressTool progressbar;
+  std::string log;
+  log = "reading results " + filepath + " for Job ID " + std::to_string(job_id) + " \n";
+  PRINT_INFO("%s", log.c_str());
+
+  std::string datline = "";
+  std::vector<std::string> dat_array;
+  
+  std::ifstream dat;
+  dat.open(this->filepath);
+
+  // clear all data before reading and reset read mode
+  this->clear();
+  current_read_mode = 0;
+
+  if (dat.is_open())
+  {
+    // scan file for number of lines
+    progressbar.start(0,100,"Scanning Results dat");
+    while (std::getline(dat,datline))
+    { 
+      ++maxlines;
+      if(dat.eof()){
+        break;
+      }
+    }
+    progressbar.end();
+    dat.close();
+    dat.open(this->filepath);
+
+    progressbar.start(0,100,"Reading Result Headers DAT");
+    auto t_start = std::chrono::high_resolution_clock::now();
+    
+    log = "";
+    while (dat)
+    {
+      if ((!std::getline(dat,datline))||(dat.eof()))
+      {
+        break;
+      }
+      ++currentline;
+  
+      const auto t_end = std::chrono::high_resolution_clock::now();
+      int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+      if (duration > 500)
+      {
+        progressbar.percent(double(currentline)/double(maxlines));
+        progressbar.check_interrupt();
+        t_start = std::chrono::high_resolution_clock::now();
+      }
+      
+      // if whitespace line, get next line until not a whitespace line
+      while(this->is_whitespace(datline))
+      {
+        if ((!std::getline(dat,datline))||(dat.eof()))
+        {
+          break;
+        }
+        ++currentline;
+      }
+
+      dat_array = this->split_line(datline);
+      int current_block_data_id = result_blocks.size()-1;
+      
+      //first lets check if the mode is still valid
+      this->check_mode(dat_array);
+
+      if (dat.eof())
+      {
+        break;
+      }else if (current_read_mode == 1)
+      {
+        this->read_header(dat_array);
+      } else if (current_read_mode == 2)
+      {
+        //this->read_line(dat_array);
+        this->dat_arrays[current_block_data_id].push_back(dat_array);
+      } else if (current_read_mode == 10)
+      {
+        // do nothing here
+      } else if (current_read_mode == 11)
+      {
+        this->header_emas(dat_array);
+      } else if (current_read_mode == 102)
+      {
+        // Buckling, save data extra
+        this->read_line_buckle(dat_array);
+      }
+    }
+  }
+  dat.close();
+  progressbar.end();
+
+  // processing data lines
+  /*
+  for (size_t i = 0; i < dat_arrays.size(); i++)
+  {
+    this->read_lines_thread(i);
+  }
+  */
+  int loop_c = 0;
+  int number_of_result_blocks = dat_arrays.size();
+  while (number_of_result_blocks > 0)
+  {
+    if (number_of_result_blocks > max_threads)
+    {
+      for (size_t i = 0; i < max_threads; i++)
+      { 
+        ReadThreads.push_back(std::thread(&CoreResultsDat::read_lines_thread, this,loop_c*max_threads+i));
+      }
+    }else{
+      for (size_t i = 0; i < number_of_result_blocks; i++)
+      { 
+        ReadThreads.push_back(std::thread(&CoreResultsDat::read_lines_thread, this,loop_c*max_threads+i));
+      }
+    }
+    // wait till all threads are finished
+    for (size_t i = 0; i < ReadThreads.size(); i++)
+    { 
+      ReadThreads[i].join();
+    }
+    number_of_result_blocks = number_of_result_blocks - ReadThreads.size();
+    ++loop_c;
+    ReadThreads.clear();
+  }
+
+  /*
+  log = "result_blocks.size() " + std::to_string(result_blocks.size()) + "\n";
+  PRINT_INFO("%s", log.c_str());
+  log = "result_block_data.size() " + std::to_string(result_block_data.size()) + "\n";
+  PRINT_INFO("%s", log.c_str());
+
+  log = "number of blocks " + std::to_string(dat_arrays.size()) + "\n";
+  PRINT_INFO("%s", log.c_str());
+
+  */
+
+  /*
+  for (size_t i = 0; i < result_blocks.size(); i++)
+  {    
+    log = "block id " + std::to_string(i) + " data id " + std::to_string(result_blocks[i][4]) + "\n";
+    PRINT_INFO("%s", log.c_str());
+  }
+  
+  for (size_t i = 0; i < result_block_c1_data.size(); i++)
+  {    
+    //log = "block id " + std::to_string(i) + " type " + std::to_string(result_block_c1_data[i][0][2]) + "\n";
+    log = "block id " + std::to_string(i) + " size " + std::to_string(result_block_c1_data[i].size()) + "\n";
+    PRINT_INFO("%s", log.c_str());
+  }
+  */
+
+  // for stress/strain data compute extra components
+  
+  progressbar.start(0,100,"Reading Results DAT: pre-defined calculations");
+  
+  loop_c = 0;
+  number_of_result_blocks = result_blocks.size();
+  while (number_of_result_blocks > 0)
+  {
+    if (number_of_result_blocks > max_threads)
+    {
+      for (size_t i = 0; i < max_threads; i++)
+      { 
+        ReadThreads.push_back(std::thread(&CoreResultsDat::compute_predefined, this,loop_c*max_threads+i));
+      }
+    }else{
+      for (size_t i = 0; i < number_of_result_blocks; i++)
+      { 
+        ReadThreads.push_back(std::thread(&CoreResultsDat::compute_predefined, this,loop_c*max_threads+i));
+      }
+    }
+    // wait till all threads are finished
+    for (size_t i = 0; i < ReadThreads.size(); i++)
+    { 
+      ReadThreads[i].join();
+    }
+    number_of_result_blocks = number_of_result_blocks - ReadThreads.size();
+    ++loop_c;
+    ReadThreads.clear();
+  }
+  
+  this->check_element_sets();
+  
+  // sorting for faster search
+  /*for (size_t i = 0; i < result_block_c1_data.size(); i++)
+  {
+    std::vector<int> tmp_c1;
+    std::vector<int> tmp_result_block_c1_data_id;
+    std::vector<int> tmp_result_block_c1_data_type;
+
+    for (size_t ii = 0; ii < result_block_c1_data[i].size(); ii++)
+    {
+      tmp_c1.push_back(result_block_c1_data[i][ii][0]);
+      tmp_result_block_c1_data_id.push_back(result_block_c1_data[i][ii][1]);
+      tmp_result_block_c1_data_type.push_back(result_block_c1_data[i][ii][2]);
+    }  
+    auto p = sort_permutation(tmp_c1);
+    this->apply_permutation(tmp_c1, p);
+    this->apply_permutation(tmp_result_block_c1_data_id, p);
+    this->apply_permutation(tmp_result_block_c1_data_type, p);
+    sorted_c1.push_back(tmp_c1);
+    sorted_result_block_c1_data_id.push_back(tmp_result_block_c1_data_id);
+    sorted_result_block_c1_data_type.push_back(tmp_result_block_c1_data_type);
+  }*/
+
+  // sorting for faster search
+  loop_c = 0;
+  number_of_result_blocks = result_block_c1_data.size();
+  for (size_t i = 0; i < result_block_c1_data.size(); i++)
+  {
+    std::vector<int> tmp_c1;
+    std::vector<int> tmp_result_block_c1_data_id;
+    std::vector<int> tmp_result_block_c1_data_type;
+    sorted_c1.push_back(tmp_c1);
+    sorted_result_block_c1_data_id.push_back(tmp_result_block_c1_data_id);
+    sorted_result_block_c1_data_type.push_back(tmp_result_block_c1_data_type);
+  }
+
+  while (number_of_result_blocks > 0)
+  {
+    if (number_of_result_blocks > max_threads)
+    {
+      for (size_t i = 0; i < max_threads; i++)
+      { 
+        ReadThreads.push_back(std::thread(&CoreResultsDat::sort_data, this,loop_c*max_threads+i));
+      }
+    }else{
+      for (size_t i = 0; i < number_of_result_blocks; i++)
+      { 
+        ReadThreads.push_back(std::thread(&CoreResultsDat::sort_data, this,loop_c*max_threads+i));
+      }
+    }
+    // wait till all threads are finished
+    for (size_t i = 0; i < ReadThreads.size(); i++)
+    { 
+      ReadThreads[i].join();
+    }
+    number_of_result_blocks = number_of_result_blocks - ReadThreads.size();
+    ++loop_c;
+    ReadThreads.clear();
+  }
+
+  progressbar.end();
+  
+  //PRINT_INFO("%s", log.c_str());
+  //print_data();
+
+  StopWatch.total("Duration of reading DAT [ms]: ");
+
+  return true;
+}
+
 std::vector<std::string> CoreResultsDat::split_line(std::string line)
 {
   std::vector<std::string> str_array;
@@ -544,6 +824,7 @@ bool CoreResultsDat::read_header(std::vector<std::string> line)
   result_block_set_data_id = this->get_current_result_block_set(block_set);
   
   result_blocks.push_back({current_result_block,current_total_time_id,result_block_type_data_id,result_block_set_data_id,result_block_data_id});
+  dat_arrays.push_back({});
  
   return true;
 }
@@ -597,7 +878,8 @@ bool CoreResultsDat::header_emas(std::vector<std::string> line)
   result_block_set_data_id = this->get_current_result_block_set(block_set);
   
   result_blocks.push_back({current_result_block,current_total_time_id,result_block_type_data_id,result_block_set_data_id,result_block_data_id});
- 
+  dat_arrays.push_back({});
+
   return true;
 }
 
@@ -665,6 +947,160 @@ bool CoreResultsDat::read_line_buckle(std::vector<std::string> line)
   return true;
 }
 
+bool CoreResultsDat::read_lines_thread(int result_block_data_id)
+{
+  for (size_t ib = 0; ib < this->dat_arrays[result_block_data_id].size(); ib++)
+  {
+    std::vector<std::string> line = dat_arrays[result_block_data_id][ib];
+
+    bool bool_node;
+    int c1_id;
+    int c1_type;
+    int n_comp = int(result_block_components[result_block_data_id].size());
+    
+    if (n_comp == line.size()) // elemental results
+    {
+      bool_node = false;
+      if (n_comp == 2)
+      {
+        c1_type = 3; // element data with no integration points
+      }else if (result_block_type[result_blocks[result_block_data_id][2]]=="emas")
+      {
+        c1_type = 3; // element data with no integration points
+      }else{
+        c1_type = 2;
+      }
+    } else {                   // nodal results
+      bool_node = true;
+      c1_type = 1;
+      
+      //check if last component really is a number, shells ... so random
+      if (line[line.size()-1][0]=='_')
+      {
+        bool_node = false;
+        c1_type = 2;
+      }
+    }
+    
+    std::vector<double> result_comp(n_comp);
+    int result_block_c1_data_id = -1;
+
+    c1_id = std::stoi(line[0]);
+
+    for (size_t i = 0; i < n_comp; i++)
+    {
+      if (bool_node)
+      {
+        result_comp[i] = ccx_iface->string_scientific_to_double(line[i+1]);
+      }else{
+        result_comp[i] = ccx_iface->string_scientific_to_double(line[i]);
+      }
+    }
+        
+    result_block_data[result_block_data_id].push_back(result_comp);
+    result_block_c1_data_id = int(result_block_data[result_block_data_id].size()-1);
+    result_block_c1_data[result_block_data_id].push_back({c1_id,result_block_c1_data_id,c1_type});
+  }
+  
+  
+  return true;
+}
+
+bool CoreResultsDat::compute_predefined(int result_block_data_id)
+{
+  int i = result_block_data_id;
+
+  //stresses
+  if (this->erase_whitespace(result_block_type[result_blocks[i][2]])=="stresses") 
+  {
+    // add components
+    result_block_components[result_blocks[i][4]].push_back("mises");
+
+    // compute values
+    for (size_t ii = 0; ii < result_block_data[result_blocks[i][4]].size(); ii++)
+    {
+      result_block_data[result_blocks[i][4]][ii].push_back(ccx_iface->compute_von_mises_stress({
+      result_block_data[result_blocks[i][4]][ii][2],
+      result_block_data[result_blocks[i][4]][ii][3],
+      result_block_data[result_blocks[i][4]][ii][4],
+      result_block_data[result_blocks[i][4]][ii][5],
+      result_block_data[result_blocks[i][4]][ii][6],
+      result_block_data[result_blocks[i][4]][ii][7]}));
+    }
+
+    // add components
+    result_block_components[result_blocks[i][4]].push_back("PS1");
+    result_block_components[result_blocks[i][4]].push_back("PS2");
+    result_block_components[result_blocks[i][4]].push_back("PS3");
+    result_block_components[result_blocks[i][4]].push_back("worstPS");
+    result_block_components[result_blocks[i][4]].push_back("maxShear");
+
+    // compute values
+    for (size_t ii = 0; ii < result_block_data[result_blocks[i][4]].size(); ii++)
+    {
+      std::vector<double> ps = ccx_iface->compute_principal_stresses({
+      result_block_data[result_blocks[i][4]][ii][2],
+      result_block_data[result_blocks[i][4]][ii][3],
+      result_block_data[result_blocks[i][4]][ii][4],
+      result_block_data[result_blocks[i][4]][ii][5],
+      result_block_data[result_blocks[i][4]][ii][6],
+      result_block_data[result_blocks[i][4]][ii][7]});
+
+      result_block_data[result_blocks[i][4]][ii].push_back(ps[0]);
+      result_block_data[result_blocks[i][4]][ii].push_back(ps[1]);
+      result_block_data[result_blocks[i][4]][ii].push_back(ps[2]);
+      result_block_data[result_blocks[i][4]][ii].push_back(ps[3]);
+      result_block_data[result_blocks[i][4]][ii].push_back(0.5 * std::max({ps[0]-ps[2],ps[0]-ps[1],ps[1]-ps[2]}));
+    }
+  }
+
+  //strains
+  if (this->erase_whitespace(result_block_type[result_blocks[i][2]])=="strains") 
+  {
+    // add components
+    result_block_components[result_blocks[i][4]].push_back("mises");
+
+    // compute values      
+    for (size_t ii = 0; ii < result_block_data[result_blocks[i][4]].size(); ii++)
+    {
+      result_block_data[result_blocks[i][4]][ii].push_back(ccx_iface->compute_von_mises_strain({
+      result_block_data[result_blocks[i][4]][ii][2],
+      result_block_data[result_blocks[i][4]][ii][3],
+      result_block_data[result_blocks[i][4]][ii][4],
+      result_block_data[result_blocks[i][4]][ii][5],
+      result_block_data[result_blocks[i][4]][ii][6],
+      result_block_data[result_blocks[i][4]][ii][7]}));
+    }
+
+    // add components
+    result_block_components[result_blocks[i][4]].push_back("PE1");
+    result_block_components[result_blocks[i][4]].push_back("PE2");
+    result_block_components[result_blocks[i][4]].push_back("PE3");
+    result_block_components[result_blocks[i][4]].push_back("worstPE");
+    result_block_components[result_blocks[i][4]].push_back("maxShear");
+
+    // compute values
+    for (size_t ii = 0; ii < result_block_data[result_blocks[i][4]].size(); ii++)
+    {
+      std::vector<double> pe = ccx_iface->compute_principal_strains({
+      result_block_data[result_blocks[i][4]][ii][2],
+      result_block_data[result_blocks[i][4]][ii][3],
+      result_block_data[result_blocks[i][4]][ii][4],
+      result_block_data[result_blocks[i][4]][ii][5],
+      result_block_data[result_blocks[i][4]][ii][6],
+      result_block_data[result_blocks[i][4]][ii][7]});
+
+      result_block_data[result_blocks[i][4]][ii].push_back(pe[0]);
+      result_block_data[result_blocks[i][4]][ii].push_back(pe[1]);
+      result_block_data[result_blocks[i][4]][ii].push_back(pe[2]);
+      result_block_data[result_blocks[i][4]][ii].push_back(pe[3]);
+      result_block_data[result_blocks[i][4]][ii].push_back(0.5 * std::max({pe[0]-pe[2],pe[0]-pe[1],pe[1]-pe[2]}));
+    }
+  }
+
+  return true;
+}
+
 int CoreResultsDat::get_current_result_block_type(std::string result_type)
 {
 
@@ -683,7 +1119,7 @@ int CoreResultsDat::get_current_result_block_type(std::string result_type)
 
 int CoreResultsDat::get_current_result_block_set(std::string result_set)
 {
-
+  int data_id = -1;
   for (size_t i = 0; i < result_block_set.size(); i++)
   {
     if (result_block_set[i]==result_set)
@@ -692,7 +1128,7 @@ int CoreResultsDat::get_current_result_block_set(std::string result_set)
     }
   }
   result_block_set.push_back(result_set);
-  int data_id = int(result_block_set.size())-1;
+  data_id = int(result_block_set.size())-1;
   
   return data_id;
 }
@@ -700,9 +1136,10 @@ int CoreResultsDat::get_current_result_block_set(std::string result_set)
 bool CoreResultsDat::check_element_sets()
 {
   //change set name when there is integration point data
+  
   for (size_t i = 0; i < result_blocks.size(); i++)
   {
-    if (result_block_c1_data[result_blocks[i][4]][0][2] == 2)
+    if (this->result_block_c1_data[result_blocks[i][4]][0][2] == 2)
     {
       result_blocks[i][3] = this->get_current_result_block_set("ip_" + result_block_set[result_blocks[i][3]]);
     }
@@ -734,7 +1171,6 @@ bool CoreResultsDat::check_element_sets()
       }
     }
   }
-
   return true;
 }
 
@@ -803,7 +1239,28 @@ int CoreResultsDat::get_result_block_set_data_id(std::string result_block_set)
   return result_block_set_data_id;
 }
 
+bool CoreResultsDat::sort_data(int data_id)
+{
+  std::vector<int> tmp_c1;
+  std::vector<int> tmp_result_block_c1_data_id;
+  std::vector<int> tmp_result_block_c1_data_type;
 
+  for (size_t i = 0; i < result_block_c1_data[data_id].size(); i++)
+  {
+    tmp_c1.push_back(result_block_c1_data[data_id][i][0]);
+    tmp_result_block_c1_data_id.push_back(result_block_c1_data[data_id][i][1]);
+    tmp_result_block_c1_data_type.push_back(result_block_c1_data[data_id][i][2]);
+  }  
+  auto p = sort_permutation(tmp_c1);
+  this->apply_permutation(tmp_c1, p);
+  this->apply_permutation(tmp_result_block_c1_data_id, p);
+  this->apply_permutation(tmp_result_block_c1_data_type, p);
+  sorted_c1[data_id] = tmp_c1;
+  sorted_result_block_c1_data_id[data_id] = tmp_result_block_c1_data_id;
+  sorted_result_block_c1_data_type[data_id] = tmp_result_block_c1_data_type;
+
+  return true;
+}
 
 bool CoreResultsDat::print_data()
 {
