@@ -34,3 +34,6 @@
 ######### ------  Release 2024.7
 2024-08-13 fix cubit crash on reset using windows
 2024-08-14 work on reading frd in parallel
+2024-08-15 work on reading frd in parallel
+2024-08-16 work on reading dat in parallel
+2024-08-16 work on writing linked vtk in parallel

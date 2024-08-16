@@ -426,6 +426,17 @@ bool CoreResultsVtkWriter::write_linked_parallel()
     int loop_c = 0;
     int number_of_frd = vec_frd.size();
 
+    current_offset_thread.clear();
+    linked_nodes_thread.clear();
+    linked_nodes_data_id_thread.clear();
+    
+    for (size_t i = 0; i < number_of_frd; i++)
+    {
+      current_offset_thread.push_back({});
+      linked_nodes_thread.push_back({});
+      linked_nodes_data_id_thread.push_back({});
+    }
+    
     while (number_of_frd > 0)
     {
       if (number_of_frd > max_threads)
@@ -436,9 +447,6 @@ bool CoreResultsVtkWriter::write_linked_parallel()
           thread_filepath_vtu = filepath + "/" + filepath + "." + std::to_string(loop_c*max_threads+ii) + "." + this->get_increment() + ".vtu";
           filepath_vtu.push_back(filepath + "." + std::to_string(loop_c*max_threads+ii) + "." + this->get_increment() + ".vtu");
           part_ids.push_back(loop_c*max_threads+ii);
-          current_offset_thread.push_back({});
-          linked_nodes_thread.push_back({});
-          linked_nodes_data_id_thread.push_back({});
           
           WriteThreads.push_back(std::thread(&CoreResultsVtkWriter::write_vtu_linked_thread, this,vec_frd[loop_c*max_threads+ii],loop_c*max_threads+ii,thread_filepath_vtu));
         }
@@ -461,10 +469,6 @@ bool CoreResultsVtkWriter::write_linked_parallel()
       number_of_frd = number_of_frd - WriteThreads.size();
       ++loop_c;
       WriteThreads.clear();
-
-      current_offset_thread.clear();
-      linked_nodes_thread.clear();
-      linked_nodes_data_id_thread.clear();
       
       //update progress bar
       const auto t_end = std::chrono::high_resolution_clock::now();
