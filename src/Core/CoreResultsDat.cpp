@@ -27,6 +27,8 @@ bool CoreResultsDat::init(int job_id)
     std::vector<std::string> job_data = ccx_iface->get_job_data(job_id);
     this->filepath = job_data[1] + ".dat";
 
+    progressbar = new ProgressTool();
+
     is_initialized = true;
     return true;
     return true;
@@ -83,7 +85,6 @@ bool CoreResultsDat::read_single()
   StopWatch StopWatch;
   int maxlines = 0;
   int currentline = 0;
-  ProgressTool progressbar;
   std::string log;
   log = "reading results " + filepath + " for Job ID " + std::to_string(job_id) + " \n";
   PRINT_INFO("%s", log.c_str());
@@ -101,7 +102,7 @@ bool CoreResultsDat::read_single()
   if (dat.is_open())
   {
     // scan file for number of lines
-    progressbar.start(0,100,"Scanning Results dat");
+    progressbar->start(0,100,"Scanning Results dat");
     while (std::getline(dat,datline))
     { 
       ++maxlines;
@@ -109,11 +110,11 @@ bool CoreResultsDat::read_single()
         break;
       }
     }
-    progressbar.end();
+    progressbar->end();
     dat.close();
     dat.open(this->filepath);
 
-    progressbar.start(0,100,"Reading Results DAT");
+    progressbar->start(0,100,"Reading Results DAT");
     auto t_start = std::chrono::high_resolution_clock::now();
     
     log = "";
@@ -129,8 +130,8 @@ bool CoreResultsDat::read_single()
       int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
       if (duration > 500)
       {
-        progressbar.percent(double(currentline)/double(maxlines));
-        progressbar.check_interrupt();
+        progressbar->percent(double(currentline)/double(maxlines));
+        progressbar->check_interrupt();
         t_start = std::chrono::high_resolution_clock::now();
       }
       
@@ -185,10 +186,10 @@ bool CoreResultsDat::read_single()
     }
   }
   dat.close();
-  progressbar.end();
+  progressbar->end();
 
   // for stress/strain data compute extra components
-  progressbar.start(0,100,"Reading Results DAT: pre-defined calculations");
+  progressbar->start(0,100,"Reading Results DAT: pre-defined calculations");
   auto t_start = std::chrono::high_resolution_clock::now();
 
   for (size_t i = 0; i < result_blocks.size(); i++)
@@ -288,8 +289,8 @@ bool CoreResultsDat::read_single()
     int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
     if (duration > 500)
     {
-      progressbar.percent(double(i+1)/double(result_blocks.size()));
-      progressbar.check_interrupt();
+      progressbar->percent(double(i+1)/double(result_blocks.size()));
+      progressbar->check_interrupt();
       t_start = std::chrono::high_resolution_clock::now();
     }
   }
@@ -318,7 +319,7 @@ bool CoreResultsDat::read_single()
     sorted_result_block_c1_data_type.push_back(tmp_result_block_c1_data_type);
   }
 
-  progressbar.end();
+  progressbar->end();
 
   //PRINT_INFO("%s", log.c_str());
   //print_data();
@@ -335,7 +336,6 @@ bool CoreResultsDat::read_parallel()
   std::vector<std::thread> ReadThreads; // vector to contain threads for reading frd
   int maxlines = 0;
   int currentline = 0;
-  ProgressTool progressbar;
   std::string log;
   log = "reading results " + filepath + " for Job ID " + std::to_string(job_id) + " \n";
   PRINT_INFO("%s", log.c_str());
@@ -353,7 +353,7 @@ bool CoreResultsDat::read_parallel()
   if (dat.is_open())
   {
     // scan file for number of lines
-    progressbar.start(0,100,"Scanning Results dat");
+    progressbar->start(0,100,"Scanning Results dat");
     while (std::getline(dat,datline))
     { 
       ++maxlines;
@@ -361,11 +361,11 @@ bool CoreResultsDat::read_parallel()
         break;
       }
     }
-    progressbar.end();
+    progressbar->end();
     dat.close();
     dat.open(this->filepath);
 
-    progressbar.start(0,100,"Reading Result Headers DAT");
+    progressbar->start(0,100,"Reading Result Headers DAT");
     auto t_start = std::chrono::high_resolution_clock::now();
     
     log = "";
@@ -381,8 +381,8 @@ bool CoreResultsDat::read_parallel()
       int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
       if (duration > 500)
       {
-        progressbar.percent(double(currentline)/double(maxlines));
-        progressbar.check_interrupt();
+        progressbar->percent(double(currentline)/double(maxlines));
+        progressbar->check_interrupt();
         t_start = std::chrono::high_resolution_clock::now();
       }
       
@@ -426,7 +426,7 @@ bool CoreResultsDat::read_parallel()
     }
   }
   dat.close();
-  progressbar.end();
+  progressbar->end();
 
   // processing data lines
   /*
@@ -489,7 +489,7 @@ bool CoreResultsDat::read_parallel()
 
   // for stress/strain data compute extra components
   
-  progressbar.start(0,100,"Reading Results DAT: pre-defined calculations");
+  progressbar->start(0,100,"Reading Results DAT: pre-defined calculations");
   
   loop_c = 0;
   number_of_result_blocks = result_blocks.size();
@@ -578,7 +578,7 @@ bool CoreResultsDat::read_parallel()
     ReadThreads.clear();
   }
 
-  progressbar.end();
+  progressbar->end();
   
   //PRINT_INFO("%s", log.c_str());
   //print_data();

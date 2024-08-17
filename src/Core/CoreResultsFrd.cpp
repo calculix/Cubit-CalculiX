@@ -29,6 +29,8 @@ bool CoreResultsFrd::init(int job_id)
     std::vector<std::string> job_data = ccx_iface->get_job_data(job_id);
     this->filepath = job_data[1] + ".frd";
 
+    progressbar = new ProgressTool();
+
     is_initialized = true;  
     return true;
   }
@@ -90,7 +92,6 @@ bool CoreResultsFrd::read_single()
   StopWatch StopWatch;
   int maxlines = 0;
   int currentline = 0;
-  ProgressTool progressbar;
   std::string log;
   log = "reading results " + filepath + " for Job ID " + std::to_string(job_id) + " \n";
   PRINT_INFO("%s", log.c_str());
@@ -108,7 +109,7 @@ bool CoreResultsFrd::read_single()
   if (frd.is_open())
   {
     // scan file for number of lines
-    progressbar.start(0,100,"Scanning Results FRD");
+    progressbar->start(0,100,"Scanning Results FRD");
     while (std::getline(frd,frdline))
     { 
       ++maxlines;
@@ -152,11 +153,11 @@ bool CoreResultsFrd::read_single()
       }
     }
 
-    progressbar.end();  
+    progressbar->end();  
     
     frd.open(this->filepath);
 
-    progressbar.start(0,100,"Reading Results FRD");
+    progressbar->start(0,100,"Reading Results FRD");
     auto t_start = std::chrono::high_resolution_clock::now();
     
     log = "";
@@ -169,8 +170,8 @@ bool CoreResultsFrd::read_single()
       int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
       if (duration > 500)
       {
-        progressbar.percent(double(currentline)/double(maxlines));
-        progressbar.check_interrupt();
+        progressbar->percent(double(currentline)/double(maxlines));
+        progressbar->check_interrupt();
         t_start = std::chrono::high_resolution_clock::now();
       }
       
@@ -231,7 +232,7 @@ bool CoreResultsFrd::read_single()
     sorted_node_data_ids.push_back(tmp_node_data_ids);
   }
 
-  progressbar.end();
+  progressbar->end();
   //PRINT_INFO("%s", log.c_str());
   //print_data();
 
@@ -247,7 +248,6 @@ bool CoreResultsFrd::read_parallel()
   std::vector<std::thread> ReadThreads; // vector to contain threads for reading frd
   
   int maxlines = 0;
-  ProgressTool progressbar;
   std::string log;
   log = "reading results " + filepath + " for Job ID " + std::to_string(job_id) + " \n";
   PRINT_INFO("%s", log.c_str());
@@ -267,7 +267,7 @@ bool CoreResultsFrd::read_parallel()
   if (frd.is_open())
   {
     // scan file for number of lines
-    progressbar.start(0,100,"Scanning Results FRD");
+    progressbar->start(0,100,"Scanning Results FRD");
     while (std::getline(frd,frdline))
     { 
       ++maxlines;
@@ -314,7 +314,7 @@ bool CoreResultsFrd::read_parallel()
     }
     //StopWatch.tick("check last line");
 
-    progressbar.end();  
+    progressbar->end();  
 
     //get keys
     std::vector<std::string> tmp(maxlines);
@@ -345,7 +345,7 @@ bool CoreResultsFrd::read_parallel()
     //StopWatch.tick("keys");
 
     //reading header!
-    //progressbar.start(0,100,"Reading Results FRD");
+    //progressbar->start(0,100,"Reading Results FRD");
     //auto t_start = std::chrono::high_resolution_clock::now();
     //StopWatch.tick("reading header");
 
@@ -359,8 +359,8 @@ bool CoreResultsFrd::read_parallel()
       int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
       if (duration > 500)
       {
-        progressbar.percent(double(currentline)/double(maxlines));
-        progressbar.check_interrupt();
+        progressbar->percent(double(currentline)/double(maxlines));
+        progressbar->check_interrupt();
         t_start = std::chrono::high_resolution_clock::now();
       }
       */
@@ -380,7 +380,7 @@ bool CoreResultsFrd::read_parallel()
     frd.close();
     
     // reading nodes
-    progressbar.start(0,100,"Reading Nodes from FRD");
+    progressbar->start(0,100,"Reading Nodes from FRD");
     //StopWatch.tick("Reading nodes");
     std::vector<int> node_range = this->get_node_range();
     int number_of_nodes = node_range[1]-node_range[0] + 1;
@@ -431,7 +431,7 @@ bool CoreResultsFrd::read_parallel()
     PRINT_INFO("%s", log.c_str());
 
     // reading elements
-    progressbar.start(0,100,"Reading Elements from FRD");
+    progressbar->start(0,100,"Reading Elements from FRD");
     //StopWatch.tick("Reading elements");
     std::vector<int> element_range = this->get_element_range();
     int number_of_lines = element_range[1]-element_range[0] + 1;
@@ -516,7 +516,7 @@ bool CoreResultsFrd::read_parallel()
 
     frd.open(this->filepath);
 
-    progressbar.start(0,100,"Reading Headers of Result Blocks FRD");
+    progressbar->start(0,100,"Reading Headers of Result Blocks FRD");
     auto t_start = std::chrono::high_resolution_clock::now();
     
     std::vector<std::vector<int>> result_block_range;
@@ -535,8 +535,8 @@ bool CoreResultsFrd::read_parallel()
         int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
         if (duration > 500)
         {
-          progressbar.percent(double(currentline)/double(maxlines));
-          progressbar.check_interrupt();
+          progressbar->percent(double(currentline)/double(maxlines));
+          progressbar->check_interrupt();
           t_start = std::chrono::high_resolution_clock::now();
         }
         // first lets check if the mode is still valid
@@ -582,7 +582,7 @@ bool CoreResultsFrd::read_parallel()
     int number_of_result_blocks = result_block_range.size();
     int max_number_of_result_blocks = result_block_range.size();
     
-    progressbar.start(0,100,"Reading Result Blocks Data FRD");
+    progressbar->start(0,100,"Reading Result Blocks Data FRD");
     t_start = std::chrono::high_resolution_clock::now();
 
     while (number_of_result_blocks > 0)
@@ -591,8 +591,8 @@ bool CoreResultsFrd::read_parallel()
       int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
       if (duration > 500)
       {
-        progressbar.percent(double(1-number_of_result_blocks)/double(max_number_of_result_blocks));
-        progressbar.check_interrupt();
+        progressbar->percent(double(1-number_of_result_blocks)/double(max_number_of_result_blocks));
+        progressbar->check_interrupt();
         t_start = std::chrono::high_resolution_clock::now();
       }
 
@@ -656,7 +656,7 @@ bool CoreResultsFrd::read_parallel()
     ReadThreads.clear();
   }
 
-  progressbar.end();
+  progressbar->end();
 
   //PRINT_INFO("%s", log.c_str());
   //print_data();
@@ -1566,6 +1566,16 @@ bool CoreResultsFrd::sort_result_block_node_data(int data_id)
   sorted_node_data_ids[data_id] = tmp_node_data_ids;
 
   return true;
+}
+
+void CoreResultsFrd::update_progressbar()
+{
+  int part = 0;
+  for (size_t i = 0; i < progress.size()-1; i++)
+  {
+    part += progress[i];
+  }
+  progressbar->percent(double(part)/double(progress[progress.size()-1]));
 }
 
 bool CoreResultsFrd::print_data()

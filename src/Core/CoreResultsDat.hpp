@@ -102,6 +102,7 @@ public:
   template <typename T>  std::vector<std::size_t> sort_permutation(const std::vector<T>& vec);
   template <typename T> void apply_permutation(std::vector<T>& vec,const std::vector<std::size_t>& p);
 
+  ProgressTool *progressbar; // progressbar
   CalculiXCoreInterface *ccx_iface;
 };
 

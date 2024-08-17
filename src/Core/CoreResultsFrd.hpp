@@ -88,6 +88,7 @@ public:
   bool is_initialized = false;
   int current_read_mode = 0; //0 header 1 nodal data 2 element data 3 parameter data 4 result block
   std::vector<std::string> keys; // keys for all lines
+  std::vector<int> progress; // size max_threads + total
   
   bool init(int job_id); // initialize
   bool reset(); // delete all data and initialize afterwards
@@ -118,12 +119,13 @@ public:
   bool insert_key(int start, int end); // inserts the keys for range
   bool check_key(std::string key, int line); // checks if the key is at the given line
   bool sort_result_block_node_data(int data_id); // sorts the result block node data
+  void update_progressbar(); // updates the percent from the progressbar
   bool print_data(); // prints the data to the console
 
   template <typename T>  std::vector<std::size_t> sort_permutation(const std::vector<T>& vec);
   template <typename T> void apply_permutation(std::vector<T>& vec,const std::vector<std::size_t>& p);
 
-
+  ProgressTool *progressbar; // progressbar
   CalculiXCoreInterface *ccx_iface;
 };
 

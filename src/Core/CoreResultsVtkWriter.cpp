@@ -425,9 +425,11 @@ bool CoreResultsVtkWriter::write_linked_parallel()
   t_start = std::chrono::high_resolution_clock::now();
 
   current_increment = 0;
+  StopWatch StopWatch;
 
   for (size_t i = 0; i < max_increments; i++)
   {
+    //StopWatch.tick("Increment " + std::to_string(i) + " start");
     filepath_vtu.clear();
     part_ids.clear();
 
@@ -453,6 +455,7 @@ bool CoreResultsVtkWriter::write_linked_parallel()
     
     while (number_of_frd > 0)
     {
+      //StopWatch.tick("thread loop " + std::to_string(loop_c) + " start" );
       if (number_of_frd > max_threads)
       {
         for (size_t ii = 0; ii < max_threads; ii++)
@@ -480,6 +483,7 @@ bool CoreResultsVtkWriter::write_linked_parallel()
       { 
         WriteThreads[ii].join();
       }
+      
       number_of_frd = number_of_frd - WriteThreads.size();
       ++loop_c;
       WriteThreads.clear();
@@ -493,9 +497,11 @@ bool CoreResultsVtkWriter::write_linked_parallel()
         progressbar->check_interrupt();
         t_start = std::chrono::high_resolution_clock::now();
       }
+      //StopWatch.tick("thread loop end");
     }
     current_filepath_vtpc = filepath + "/" + filepath + "." + this->get_increment() + ".vtpc";
     this->write_vtpc();
+    //StopWatch.tick("Increment end " + std::to_string(i));
   }
   progressbar->end();
   return true;
@@ -843,6 +849,8 @@ bool CoreResultsVtkWriter::write_vtu_linked_thread(int thread_part, std::string 
   rangeMin_thread[thread_part]=0;
   rangeMax_thread[thread_part]=0;
   std::string log;
+  StopWatch StopWatch;
+  //StopWatch.tick("write part " + std::to_string(thread_part) + " start");
   //log = "writing results " + filepath + " for Job ID " + std::to_string(job_id) + " \n";
   //ccx_iface->log_str(log);
   //PRINT_INFO("%s", log.c_str());
@@ -1126,6 +1134,7 @@ bool CoreResultsVtkWriter::write_vtu_linked_thread(int thread_part, std::string 
   output_element_connectivity = "";
   output_element_offsets = "";
   output_element_types = "";
+  //StopWatch.tick("write part " + std::to_string(thread_part) + " end");
 
   return true;
 }
