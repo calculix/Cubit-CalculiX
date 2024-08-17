@@ -2978,6 +2978,196 @@ bool CoreResultsVtkWriter::link_nodes()
   return true;
 }
 
+bool CoreResultsVtkWriter::link_nodes_thread(int thread_part)
+{
+  current_part = 0;
+  current_increment = 0;
+  std::vector<std::vector<int>> tmp_block_node_ids = block_node_ids;
+  std::vector<std::vector<int>> tmp_nodeset_node_ids = nodeset_node_ids;
+  std::vector<std::vector<int>> tmp_sideset_node_ids = sideset_node_ids;
+
+  // sorting for faster search
+  //blocks
+  for (size_t i = 0; i < block_ids.size(); i++)
+  {
+    std::sort(tmp_block_node_ids[i].begin(), tmp_block_node_ids[i].end());
+  }
+  //nodesets
+  for (size_t i = 0; i < nodeset_ids.size(); i++)
+  { 
+    std::sort(tmp_nodeset_node_ids[i].begin(), tmp_nodeset_node_ids[i].end());
+  }
+  //sidesets
+  for (size_t i = 0; i < sideset_ids.size(); i++)
+  { 
+    std::sort(tmp_sideset_node_ids[i].begin(), tmp_sideset_node_ids[i].end());
+  }
+
+  progressbar->start(0,100,"Linking Nodes");
+  auto t_start = std::chrono::high_resolution_clock::now();
+
+  for (size_t i = 0; i < frd_all->nodes.size(); i++)
+  {
+    current_part = -1;
+    //blocks
+    for (size_t ii = 0; ii < block_ids.size(); ii++)
+    {
+      ++current_part;
+      //auto lower = std::lower_bound(tmp_block_node_ids[ii].begin(), tmp_block_node_ids[ii].end(), frd_all->nodes[i][0]);  
+      //if (lower!=tmp_block_node_ids[ii].end())
+      if (std::binary_search(tmp_block_node_ids[ii].begin(), tmp_block_node_ids[ii].end(), frd_all->nodes[i][0]))
+      {
+        vec_frd[current_part]->nodes.push_back(frd_all->nodes[i]);
+        vec_frd[current_part]->nodes_coords.push_back(frd_all->nodes_coords[i]);
+        vec_frd[current_part]->nodes[vec_frd[current_part]->nodes.size()-1][1] = int(vec_frd[current_part]->nodes_coords.size())-1;
+      }
+    }
+    //nodesets
+    for (size_t ii = 0; ii < nodeset_ids.size(); ii++)
+    {
+      ++current_part;
+      //auto lower = std::lower_bound(tmp_nodeset_node_ids[ii].begin(), tmp_nodeset_node_ids[ii].end(), frd_all->nodes[i][0]);  
+      //if (lower!=tmp_nodeset_node_ids[ii].end())
+      if (std::binary_search(tmp_nodeset_node_ids[ii].begin(), tmp_nodeset_node_ids[ii].end(), frd_all->nodes[i][0]))
+      {
+        vec_frd[current_part]->nodes.push_back(frd_all->nodes[i]);
+        vec_frd[current_part]->nodes_coords.push_back(frd_all->nodes_coords[i]);
+        vec_frd[current_part]->nodes[vec_frd[current_part]->nodes.size()-1][1] = int(vec_frd[current_part]->nodes_coords.size())-1;
+      }
+    }
+    //sidesets
+    for (size_t ii = 0; ii < sideset_ids.size(); ii++)
+    {
+      ++current_part;
+      //auto lower = std::lower_bound(tmp_sideset_node_ids[ii].begin(), tmp_sideset_node_ids[ii].end(), frd_all->nodes[i][0]);  
+      //if (lower!=tmp_sideset_node_ids[ii].end())
+      if (std::binary_search(tmp_sideset_node_ids[ii].begin(), tmp_sideset_node_ids[ii].end(), frd_all->nodes[i][0]))
+      {
+        vec_frd[current_part]->nodes.push_back(frd_all->nodes[i]);
+        vec_frd[current_part]->nodes_coords.push_back(frd_all->nodes_coords[i]);
+        vec_frd[current_part]->nodes[vec_frd[current_part]->nodes.size()-1][1] = int(vec_frd[current_part]->nodes_coords.size())-1;
+      }
+    }
+    //update progress bar
+    const auto t_end = std::chrono::high_resolution_clock::now();
+    int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+    //currentDataRow += frd->result_block_data[data_ids[ii]].size();
+    if (duration > 500)
+    {
+      progressbar->percent(double(i)/double(frd_all->nodes.size()-1));
+      progressbar->check_interrupt();
+      t_start = std::chrono::high_resolution_clock::now();
+    }
+  }
+  progressbar->end();
+
+  for (size_t i = 0; i < nparts-nparts_dat; i++)
+  {
+    vec_frd[i]->result_blocks = frd_all->result_blocks;
+    vec_frd[i]->total_times = frd_all->total_times;
+    vec_frd[i]->result_block_components = frd_all->result_block_components;
+    vec_frd[i]->result_block_type = frd_all->result_block_type;
+  }
+
+  progressbar->start(0,100,"Linking Nodal Results");
+  t_start = std::chrono::high_resolution_clock::now();
+
+  for (size_t i = 0; i < max_increments; i++)
+  {
+    ++current_increment;
+    std::vector<int> data_ids = this->get_result_blocks_data_ids_linked(); // get data ids for result blocks
+    for (size_t ii = 0; ii < data_ids.size(); ii++)
+    {
+      //tmp_block_node_ids = block_node_ids;
+      //tmp_nodeset_node_ids = nodeset_node_ids;
+      //tmp_sideset_node_ids = sideset_node_ids;
+
+      std::vector<int> node_data_ids = this->get_result_block_node_data_id_linked(data_ids[ii]);
+      for (size_t iii = 0; iii < nparts-nparts_dat; iii++)
+      {
+        std::vector<std::vector<double>> tmp_result_block_data;
+        std::vector<std::vector<int>> tmp_result_block_node_data;   
+        vec_frd[iii]->result_block_data.push_back(tmp_result_block_data);
+        vec_frd[iii]->result_block_node_data.push_back(tmp_result_block_node_data);
+      }
+
+      //std::string log;
+      //log = " node_data_ids.size() " + std::to_string(node_data_ids.size()) + " block_node_ids[0].size() " + std::to_string(block_node_ids[0].size()) +" \n";
+      //PRINT_INFO("%s", log.c_str());
+
+      for (size_t iii = 0; iii < node_data_ids.size(); iii++)
+      { 
+        current_part = -1;
+        //blocks
+        for (size_t iv = 0; iv < block_ids.size(); iv++)
+        {
+          ++current_part;
+          //auto lower = std::lower_bound(tmp_block_node_ids[iv].begin(), tmp_block_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]);  
+          //if (lower!=tmp_block_node_ids[iv].end())
+          //check if already filled
+          if (tmp_block_node_ids[iv].size()!=vec_frd[current_part]->result_block_node_data[data_ids[ii]].size())
+          {
+            if (std::binary_search(tmp_block_node_ids[iv].begin(), tmp_block_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]))
+            {
+              vec_frd[current_part]->result_block_data[data_ids[ii]].push_back(frd_all->result_block_data[data_ids[ii]][node_data_ids[iii]]);
+              vec_frd[current_part]->result_block_node_data[data_ids[ii]].push_back(frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]]);
+              vec_frd[current_part]->result_block_node_data[data_ids[ii]][vec_frd[current_part]->result_block_node_data[data_ids[ii]].size()-1][1] = int(vec_frd[current_part]->result_block_data[data_ids[ii]].size())-1;
+            }
+          }
+        }
+        //nodesets
+        for (size_t iv = 0; iv < nodeset_ids.size(); iv++)
+        {
+          ++current_part;
+          //auto lower = std::lower_bound(tmp_nodeset_node_ids[iv].begin(), tmp_nodeset_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]);  
+          //if (lower!=tmp_nodeset_node_ids[iv].end())
+          //check if already filled
+          if (tmp_nodeset_node_ids[iv].size()!=vec_frd[current_part]->result_block_node_data[data_ids[ii]].size())
+          {
+            if (std::binary_search(tmp_nodeset_node_ids[iv].begin(), tmp_nodeset_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]))
+            {
+              vec_frd[current_part]->result_block_data[data_ids[ii]].push_back(frd_all->result_block_data[data_ids[ii]][node_data_ids[iii]]);
+              vec_frd[current_part]->result_block_node_data[data_ids[ii]].push_back(frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]]);
+              vec_frd[current_part]->result_block_node_data[data_ids[ii]][vec_frd[current_part]->result_block_node_data[data_ids[ii]].size()-1][1] = int(vec_frd[current_part]->result_block_data[data_ids[ii]].size())-1;
+            }
+          }
+        }
+        //sidesets
+        for (size_t iv = 0; iv < sideset_ids.size(); iv++)
+        {
+          ++current_part;
+          //auto lower = std::lower_bound(tmp_sideset_node_ids[iv].begin(), tmp_sideset_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]);  
+          //if (lower!=tmp_nodeset_node_ids[iv].end())
+          //check if already filled
+          if (tmp_sideset_node_ids[iv].size()!=vec_frd[current_part]->result_block_node_data[data_ids[ii]].size())
+          {
+            if (std::binary_search(tmp_sideset_node_ids[iv].begin(), tmp_sideset_node_ids[iv].end(), frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]][0]))
+            {
+              vec_frd[current_part]->result_block_data[data_ids[ii]].push_back(frd_all->result_block_data[data_ids[ii]][node_data_ids[iii]]);
+              vec_frd[current_part]->result_block_node_data[data_ids[ii]].push_back(frd_all->result_block_node_data[data_ids[ii]][node_data_ids[iii]]);
+              vec_frd[current_part]->result_block_node_data[data_ids[ii]][vec_frd[current_part]->result_block_node_data[data_ids[ii]].size()-1][1] = int(vec_frd[current_part]->result_block_data[data_ids[ii]].size())-1;
+            }
+          }
+        }
+      }
+    }
+    //update progress bar
+    const auto t_end = std::chrono::high_resolution_clock::now();
+    int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+    //currentDataRow += frd->result_block_data[data_ids[ii]].size();
+    if (duration > 500)
+    {
+      progressbar->percent(double(current_increment)/double(max_increments));
+      progressbar->check_interrupt();
+      t_start = std::chrono::high_resolution_clock::now();
+    }
+  }
+  progressbar->end();
+  current_increment = 0;
+  
+  return true;
+}
+
 bool CoreResultsVtkWriter::link_nodes_fast()
 {
   current_part = 0;

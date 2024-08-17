@@ -1,9 +1,11 @@
 #ifndef CORERESULTSFRD_HPP
 #define CORERESULTSFRD_HPP
 
+#include "ProgressTool.hpp"
 #include <vector>
 #include <string>
 #include <thread>
+#include <chrono>
 
 class CalculiXCoreInterface;
 
@@ -89,6 +91,7 @@ public:
   int current_read_mode = 0; //0 header 1 nodal data 2 element data 3 parameter data 4 result block
   std::vector<std::string> keys; // keys for all lines
   std::vector<int> progress; // size max_threads + total
+  std::chrono::high_resolution_clock::time_point t_start = std::chrono::high_resolution_clock::now();
   
   bool init(int job_id); // initialize
   bool reset(); // delete all data and initialize afterwards
@@ -103,22 +106,23 @@ public:
   bool check_mode_by_key(std::string key); // checks if the current read mode is still valid or others should be used
   bool read_header(std::vector<std::string> line); // processing the header data
   bool read_node(std::vector<std::string> line); // processing the nodes data
-  bool read_nodes_thread(int start,int end, int data_start); // processing the nodes data
+  bool read_nodes_thread(int start,int end, int data_start, int thread_id); // processing the nodes data
   bool read_element(std::vector<std::string> line); // processing the elements data
-  bool read_elements_thread(int start,int end, int data_start); // processing the nodes data
+  bool read_elements_thread(int start,int end, int data_start,int thread_id); // processing the nodes data
   bool read_parameter_header(std::vector<std::string> line); // processing the parameter header
   int get_current_result_block_type(std::string result_type); // gets result_block_type
   bool read_nodal_result_block(std::vector<std::string> line); // processing the nodal result block
   bool read_nodal_result_block_add_components(std::vector<std::string> line); // adds components if needed to the nodal result block
-  bool read_nodal_result_block_thread(int result_block_data_id,int start,int end); // processing the nodal result block in the threads
+  bool read_nodal_result_block_thread(int result_block_data_id,int start,int end,int thread_id); // processing the nodal result block in the threads
   std::vector<std::string> get_result_block_components_from_result_block_type(std::string result_block_type); // get components from block
   int get_result_block_component_id(int result_block_type_id,std::string result_block_component); // get component id
   std::vector<int> get_node_range(); // scans the frd for the node range
   std::vector<int> get_element_range(); // scans the frd for the element range and total number of elements
   void set_element_range_data_start(std::vector<std::vector<int>> &thread_ranges); // scans the ranges and counts the elements in the ranges to set the data_start
-  bool insert_key(int start, int end); // inserts the keys for range
+  bool insert_key_thread(int start, int end,int thread_id); // inserts the keys for range
   bool check_key(std::string key, int line); // checks if the key is at the given line
   bool sort_result_block_node_data(int data_id); // sorts the result block node data
+  int get_result_block_lines(std::vector<std::vector<int>> result_block_range); // computes and returns the maximum line numbers that will be read for the result blocks
   void update_progressbar(); // updates the percent from the progressbar
   bool print_data(); // prints the data to the console
 

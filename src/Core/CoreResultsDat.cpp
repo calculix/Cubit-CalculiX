@@ -2,7 +2,6 @@
 #include "CalculiXCoreInterface.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
-#include "ProgressTool.hpp"
 #include "StopWatch.hpp"
 #include "loadUserOptions.hpp"
 
@@ -115,7 +114,7 @@ bool CoreResultsDat::read_single()
     dat.open(this->filepath);
 
     progressbar->start(0,100,"Reading Results DAT");
-    auto t_start = std::chrono::high_resolution_clock::now();
+    t_start = std::chrono::high_resolution_clock::now();
     
     log = "";
     while (dat)
@@ -190,7 +189,7 @@ bool CoreResultsDat::read_single()
 
   // for stress/strain data compute extra components
   progressbar->start(0,100,"Reading Results DAT: pre-defined calculations");
-  auto t_start = std::chrono::high_resolution_clock::now();
+  t_start = std::chrono::high_resolution_clock::now();
 
   for (size_t i = 0; i < result_blocks.size(); i++)
   {
@@ -366,7 +365,7 @@ bool CoreResultsDat::read_parallel()
     dat.open(this->filepath);
 
     progressbar->start(0,100,"Reading Result Headers DAT");
-    auto t_start = std::chrono::high_resolution_clock::now();
+    t_start = std::chrono::high_resolution_clock::now();
     
     log = "";
     while (dat)
@@ -435,6 +434,11 @@ bool CoreResultsDat::read_parallel()
     this->read_lines_thread(i);
   }
   */
+  progressbar->start(0,100,"Reading Result Blocks DAT");
+
+  this->progress = std::vector<int>(max_threads + 1, 0);
+  progress[max_threads] = get_result_block_lines(dat_arrays);
+
   int loop_c = 0;
   int number_of_result_blocks = dat_arrays.size();
   while (number_of_result_blocks > 0)
@@ -443,15 +447,16 @@ bool CoreResultsDat::read_parallel()
     {
       for (size_t i = 0; i < max_threads; i++)
       { 
-        ReadThreads.push_back(std::thread(&CoreResultsDat::read_lines_thread, this,loop_c*max_threads+i));
+        ReadThreads.push_back(std::thread(&CoreResultsDat::read_lines_thread, this,loop_c*max_threads+i,i));
       }
     }else{
       for (size_t i = 0; i < number_of_result_blocks; i++)
       { 
-        ReadThreads.push_back(std::thread(&CoreResultsDat::read_lines_thread, this,loop_c*max_threads+i));
+        ReadThreads.push_back(std::thread(&CoreResultsDat::read_lines_thread, this,loop_c*max_threads+i,i));
       }
     }
     // wait till all threads are finished
+    /*
     for (size_t i = 0; i < ReadThreads.size(); i++)
     { 
       ReadThreads[i].join();
@@ -459,6 +464,26 @@ bool CoreResultsDat::read_parallel()
     number_of_result_blocks = number_of_result_blocks - ReadThreads.size();
     ++loop_c;
     ReadThreads.clear();
+    */
+
+    int it=0;
+    while (ReadThreads.size()>0)
+    {
+      if (ReadThreads[it].joinable())
+      {
+        ReadThreads[it].join();
+        ReadThreads.erase(ReadThreads.begin() + it);
+        number_of_result_blocks = number_of_result_blocks - 1;
+        it=-1;
+      }
+      if (it==ReadThreads.size())
+      {
+        it=-1;
+      }
+      update_progressbar();
+      ++it;
+    }
+    ++loop_c;
   }
 
   /*
@@ -489,8 +514,11 @@ bool CoreResultsDat::read_parallel()
 
   // for stress/strain data compute extra components
   
-  progressbar->start(0,100,"Reading Results DAT: pre-defined calculations");
+  progressbar->start(0,100,"Computing pre-defined calculations for Results DAT");
   
+  this->progress = std::vector<int>(max_threads + 1, 0);
+  progress[max_threads] = get_result_blocks_predefined();
+
   loop_c = 0;
   number_of_result_blocks = result_blocks.size();
   while (number_of_result_blocks > 0)
@@ -499,15 +527,16 @@ bool CoreResultsDat::read_parallel()
     {
       for (size_t i = 0; i < max_threads; i++)
       { 
-        ReadThreads.push_back(std::thread(&CoreResultsDat::compute_predefined, this,loop_c*max_threads+i));
+        ReadThreads.push_back(std::thread(&CoreResultsDat::compute_predefined, this,loop_c*max_threads+i,i));
       }
     }else{
       for (size_t i = 0; i < number_of_result_blocks; i++)
       { 
-        ReadThreads.push_back(std::thread(&CoreResultsDat::compute_predefined, this,loop_c*max_threads+i));
+        ReadThreads.push_back(std::thread(&CoreResultsDat::compute_predefined, this,loop_c*max_threads+i,i));
       }
     }
     // wait till all threads are finished
+    /*
     for (size_t i = 0; i < ReadThreads.size(); i++)
     { 
       ReadThreads[i].join();
@@ -515,31 +544,28 @@ bool CoreResultsDat::read_parallel()
     number_of_result_blocks = number_of_result_blocks - ReadThreads.size();
     ++loop_c;
     ReadThreads.clear();
+    */
+    int it=0;
+    while (ReadThreads.size()>0)
+    {
+      if (ReadThreads[it].joinable())
+      {
+        ReadThreads[it].join();
+        ReadThreads.erase(ReadThreads.begin() + it);
+        number_of_result_blocks = number_of_result_blocks - 1;
+        it=-1;
+      }
+      if (it==ReadThreads.size())
+      {
+        it=-1;
+      }
+      update_progressbar();
+      ++it;
+    }
+    ++loop_c;
   }
   
   this->check_element_sets();
-  
-  // sorting for faster search
-  /*for (size_t i = 0; i < result_block_c1_data.size(); i++)
-  {
-    std::vector<int> tmp_c1;
-    std::vector<int> tmp_result_block_c1_data_id;
-    std::vector<int> tmp_result_block_c1_data_type;
-
-    for (size_t ii = 0; ii < result_block_c1_data[i].size(); ii++)
-    {
-      tmp_c1.push_back(result_block_c1_data[i][ii][0]);
-      tmp_result_block_c1_data_id.push_back(result_block_c1_data[i][ii][1]);
-      tmp_result_block_c1_data_type.push_back(result_block_c1_data[i][ii][2]);
-    }  
-    auto p = sort_permutation(tmp_c1);
-    this->apply_permutation(tmp_c1, p);
-    this->apply_permutation(tmp_result_block_c1_data_id, p);
-    this->apply_permutation(tmp_result_block_c1_data_type, p);
-    sorted_c1.push_back(tmp_c1);
-    sorted_result_block_c1_data_id.push_back(tmp_result_block_c1_data_id);
-    sorted_result_block_c1_data_type.push_back(tmp_result_block_c1_data_type);
-  }*/
 
   // sorting for faster search
   loop_c = 0;
@@ -947,7 +973,7 @@ bool CoreResultsDat::read_line_buckle(std::vector<std::string> line)
   return true;
 }
 
-bool CoreResultsDat::read_lines_thread(int result_block_data_id)
+bool CoreResultsDat::read_lines_thread(int result_block_data_id, int thread_id)
 {
   for (size_t ib = 0; ib < this->dat_arrays[result_block_data_id].size(); ib++)
   {
@@ -1000,13 +1026,15 @@ bool CoreResultsDat::read_lines_thread(int result_block_data_id)
     result_block_data[result_block_data_id].push_back(result_comp);
     result_block_c1_data_id = int(result_block_data[result_block_data_id].size()-1);
     result_block_c1_data[result_block_data_id].push_back({c1_id,result_block_c1_data_id,c1_type});
+    
+    this->progress[thread_id] = this->progress[thread_id] + 1;
   }
   
   
   return true;
 }
 
-bool CoreResultsDat::compute_predefined(int result_block_data_id)
+bool CoreResultsDat::compute_predefined(int result_block_data_id, int thread_id)
 {
   int i = result_block_data_id;
 
@@ -1052,6 +1080,7 @@ bool CoreResultsDat::compute_predefined(int result_block_data_id)
       result_block_data[result_blocks[i][4]][ii].push_back(ps[3]);
       result_block_data[result_blocks[i][4]][ii].push_back(0.5 * std::max({ps[0]-ps[2],ps[0]-ps[1],ps[1]-ps[2]}));
     }
+    this->progress[thread_id] = this->progress[thread_id] + 1;
   }
 
   //strains
@@ -1096,6 +1125,7 @@ bool CoreResultsDat::compute_predefined(int result_block_data_id)
       result_block_data[result_blocks[i][4]][ii].push_back(pe[3]);
       result_block_data[result_blocks[i][4]][ii].push_back(0.5 * std::max({pe[0]-pe[2],pe[0]-pe[1],pe[1]-pe[2]}));
     }
+    this->progress[thread_id] = this->progress[thread_id] + 1;
   }
 
   return true;
@@ -1260,6 +1290,54 @@ bool CoreResultsDat::sort_data(int data_id)
   sorted_result_block_c1_data_type[data_id] = tmp_result_block_c1_data_type;
 
   return true;
+}
+
+int CoreResultsDat::get_result_block_lines(std::vector<std::vector<std::vector<std::string>>> result_block_lines)
+{
+  int lines = 0;
+  for (size_t i = 0; i < result_block_lines.size(); i++)
+  {
+    lines = lines + result_block_lines[i].size();
+  }
+  return lines;
+}
+int CoreResultsDat::get_result_blocks_predefined()
+{
+  int blocks = 0;
+  for (size_t i = 0; i < result_blocks.size(); i++)
+  {
+    //stresses
+    if ((this->erase_whitespace(result_block_type[result_blocks[i][2]])=="stresses")||(this->erase_whitespace(result_block_type[result_blocks[i][2]])=="strains")) 
+    {
+      ++blocks;
+    }
+  }
+  return blocks;
+}
+
+void CoreResultsDat::update_progressbar()
+{
+  //std::string log;
+  const auto t_end = std::chrono::high_resolution_clock::now();
+  int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+  if (duration > 500)
+  {
+    int part = 0;
+    for (size_t i = 0; i < progress.size()-1; i++)
+    {
+      part += progress[i];
+      
+      //log = "thread " + std::to_string(i) + " lines " + std::to_string(progress[i]) + " \n";
+      //PRINT_INFO("%s", log.c_str());
+    }
+
+    //log = "max lines " + std::to_string(progress[progress.size()-1]) + " \n";
+    //PRINT_INFO("%s", log.c_str());
+
+    progressbar->percent(double(part)/double(progress[progress.size()-1]));
+    progressbar->check_interrupt();
+    t_start = std::chrono::high_resolution_clock::now();
+  }
 }
 
 bool CoreResultsDat::print_data()

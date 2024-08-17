@@ -2,11 +2,9 @@
 #include "CalculiXCoreInterface.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
-#include "ProgressTool.hpp"
 #include "loadUserOptions.hpp"
 #include "StopWatch.hpp"
 
-#include <chrono>
 #include <fstream>
 #include <cmath>
 #include <iostream>
@@ -158,7 +156,7 @@ bool CoreResultsFrd::read_single()
     frd.open(this->filepath);
 
     progressbar->start(0,100,"Reading Results FRD");
-    auto t_start = std::chrono::high_resolution_clock::now();
+    //auto t_start = std::chrono::high_resolution_clock::now();
     
     log = "";
     while (frd)
@@ -314,13 +312,14 @@ bool CoreResultsFrd::read_parallel()
     }
     //StopWatch.tick("check last line");
 
-    progressbar->end();  
-
+    progressbar->start(0,100,"Getting Keys from Results FRD");
     //get keys
     std::vector<std::string> tmp(maxlines);
     this->keys = tmp;
-    
     int keys_per_thread = int(maxlines/max_threads);
+
+    this->progress = std::vector<int>(max_threads + 1, 0);
+    progress[max_threads] = maxlines;
 
     for (size_t i = 0; i < max_threads; i++)
     { 
@@ -334,14 +333,34 @@ bool CoreResultsFrd::read_parallel()
         start = i*keys_per_thread;
         end = (i+1)*keys_per_thread-1;
       }
-      ReadThreads.push_back(std::thread(&CoreResultsFrd::insert_key, this, start, end));
+      ReadThreads.push_back(std::thread(&CoreResultsFrd::insert_key_thread, this, start, end, i));
     }
     // wait till all threads are finished
+    /*
     for (size_t i = 0; i < max_threads; i++)
     { 
       ReadThreads[i].join();
     }
     ReadThreads.clear();
+    */
+
+    int it=0;
+    while (ReadThreads.size()>0)
+    {
+      if (ReadThreads[it].joinable())
+      {
+        ReadThreads[it].join();
+        ReadThreads.erase(ReadThreads.begin() + it);
+        it=-1;
+      }
+      if (it==ReadThreads.size())
+      {
+        it=-1;
+      }
+      update_progressbar();
+      ++it;
+    }
+    
     //StopWatch.tick("keys");
 
     //reading header!
@@ -402,6 +421,9 @@ bool CoreResultsFrd::read_parallel()
     }  
     //StopWatch.tick("dummy vectors");
 
+    this->progress = std::vector<int>(max_threads + 1, 0);
+    progress[max_threads] = number_of_nodes;
+
     for (size_t i = 0; i < max_threads; i++)
     { 
       int start = 0;
@@ -417,15 +439,34 @@ bool CoreResultsFrd::read_parallel()
         data_start = i*nodes_per_thread;
         end = node_range[0]+(i+1)*nodes_per_thread-1;
       }
-      ReadThreads.push_back(std::thread(&CoreResultsFrd::read_nodes_thread, this, start, end, data_start));
+      ReadThreads.push_back(std::thread(&CoreResultsFrd::read_nodes_thread, this, start, end, data_start, i));
     }
 
     // wait till all threads are finished
+    /*
     for (size_t i = 0; i < max_threads; i++)
     { 
       ReadThreads[i].join();
     }
     ReadThreads.clear();
+    */
+    it=0;
+    while (ReadThreads.size()>0)
+    {
+      if (ReadThreads[it].joinable())
+      {
+        ReadThreads[it].join();
+        ReadThreads.erase(ReadThreads.begin() + it);
+        it=-1;
+      }
+      if (it==ReadThreads.size())
+      {
+        it=-1;
+      }
+      update_progressbar();
+      ++it;
+    }
+
     log = "Reading nodes finished!\n";
     
     PRINT_INFO("%s", log.c_str());
@@ -496,17 +537,39 @@ bool CoreResultsFrd::read_parallel()
       elements_connectivity.push_back({});
     }
     //StopWatch.tick("dummy vector");
-            
+    this->progress = std::vector<int>(max_threads + 1, 0);
+    progress[max_threads] = number_of_lines;
+
     for (size_t i = 0; i < max_threads; i++)
     { 
-      ReadThreads.push_back(std::thread(&CoreResultsFrd::read_elements_thread, this, thread_ranges[i][0], thread_ranges[i][1], thread_ranges[i][2]));
+      ReadThreads.push_back(std::thread(&CoreResultsFrd::read_elements_thread, this, thread_ranges[i][0], thread_ranges[i][1], thread_ranges[i][2], i));
     }
     // wait till all threads are finished
+    /*
     for (size_t i = 0; i < max_threads; i++)
     { 
       ReadThreads[i].join();
     }
     ReadThreads.clear();
+    */
+
+    it=0;
+    while (ReadThreads.size()>0)
+    {
+      if (ReadThreads[it].joinable())
+      {
+        ReadThreads[it].join();
+        ReadThreads.erase(ReadThreads.begin() + it);
+        it=-1;
+      }
+      if (it==ReadThreads.size())
+      {
+        it=-1;
+      }
+      update_progressbar();
+      ++it;
+    }
+
     log = "Reading elements finished!\n";
     //StopWatch.tick("element finished");
     PRINT_INFO("%s", log.c_str());
@@ -517,7 +580,7 @@ bool CoreResultsFrd::read_parallel()
     frd.open(this->filepath);
 
     progressbar->start(0,100,"Reading Headers of Result Blocks FRD");
-    auto t_start = std::chrono::high_resolution_clock::now();
+    //auto t_start = std::chrono::high_resolution_clock::now();
     
     std::vector<std::vector<int>> result_block_range;
 
@@ -585,39 +648,51 @@ bool CoreResultsFrd::read_parallel()
     progressbar->start(0,100,"Reading Result Blocks Data FRD");
     t_start = std::chrono::high_resolution_clock::now();
 
+    this->progress = std::vector<int>(max_threads + 1, 0);
+    progress[max_threads] = get_result_block_lines(result_block_range);
+
     while (number_of_result_blocks > 0)
     {
-      const auto t_end = std::chrono::high_resolution_clock::now();
-      int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
-      if (duration > 500)
-      {
-        progressbar->percent(double(1-number_of_result_blocks)/double(max_number_of_result_blocks));
-        progressbar->check_interrupt();
-        t_start = std::chrono::high_resolution_clock::now();
-      }
-
       if (number_of_result_blocks > max_threads)
       {
         for (size_t i = 0; i < max_threads; i++)
         { 
-          ReadThreads.push_back(std::thread(&CoreResultsFrd::read_nodal_result_block_thread, this,int(loop_c*max_threads+i), result_block_range[loop_c*max_threads+i][0], result_block_range[loop_c*max_threads+i][1]));
+          ReadThreads.push_back(std::thread(&CoreResultsFrd::read_nodal_result_block_thread, this,int(loop_c*max_threads+i), result_block_range[loop_c*max_threads+i][0], result_block_range[loop_c*max_threads+i][1],i));
         }
       }else{
         for (size_t i = 0; i < number_of_result_blocks; i++)
         { 
-          ReadThreads.push_back(std::thread(&CoreResultsFrd::read_nodal_result_block_thread, this,int(loop_c*max_threads+i), result_block_range[loop_c*max_threads+i][0], result_block_range[loop_c*max_threads+i][1]));
+          ReadThreads.push_back(std::thread(&CoreResultsFrd::read_nodal_result_block_thread, this,int(loop_c*max_threads+i), result_block_range[loop_c*max_threads+i][0], result_block_range[loop_c*max_threads+i][1],i));
         }
       }
       // wait till all threads are finished
+      /*
       for (size_t i = 0; i < ReadThreads.size(); i++)
       { 
         ReadThreads[i].join();
       }
-      number_of_result_blocks = number_of_result_blocks - ReadThreads.size();
-      ++loop_c;
-      ReadThreads.clear();
+      */
+      it=0;
+      while (ReadThreads.size()>0)
+      {
+        if (ReadThreads[it].joinable())
+        {
+          ReadThreads[it].join();
+          ReadThreads.erase(ReadThreads.begin() + it);
+          number_of_result_blocks = number_of_result_blocks - 1;
+          it=-1;
+        }
+        if (it==ReadThreads.size())
+        {
+          it=-1;
+        }
+        update_progressbar();
+        ++it;
+      }
+      //number_of_result_blocks = number_of_result_blocks - ReadThreads.size();
+      //ReadThreads.clear();
+      ++loop_c;      
     }
-
   }
   frd.close();
 
@@ -883,7 +958,7 @@ bool CoreResultsFrd::read_node(std::vector<std::string> line)
 
 
 
-bool CoreResultsFrd::read_nodes_thread(int start,int end,int data_start)
+bool CoreResultsFrd::read_nodes_thread(int start,int end,int data_start, int thread_id)
 {
   std::string frdline = "";
   int ic = 0;
@@ -918,6 +993,7 @@ bool CoreResultsFrd::read_nodes_thread(int start,int end,int data_start)
       log = std::to_string(start)+ " -- " + std::to_string(ic) + " -- " + std::to_string(end) + " -- " + std::to_string(data_start+id) +  " \n";
       PRINT_INFO("%s", log.c_str());
       */
+      this->progress[thread_id] = this->progress[thread_id] + 1;
     }else if (ic>end)
     {
       break;
@@ -970,7 +1046,7 @@ bool CoreResultsFrd::read_element(std::vector<std::string> line)
   return true;
 }
 
-bool CoreResultsFrd::read_elements_thread(int start,int end,int data_start)
+bool CoreResultsFrd::read_elements_thread(int start,int end,int data_start,int thread_id)
 {
   std::string frdline = "";
   int ic = 0;
@@ -1023,7 +1099,7 @@ bool CoreResultsFrd::read_elements_thread(int start,int end,int data_start)
       //std::string log;
       //log = std::to_string(start)+ " -- " + std::to_string(ic) + " -- " + std::to_string(end) + " -- " + std::to_string(data_start+id) +  " \n";
       //PRINT_INFO("%s", log.c_str());
-
+      this->progress[thread_id] = this->progress[thread_id] + 1;
     }else if (ic>end)
     {
       break;
@@ -1254,7 +1330,7 @@ bool CoreResultsFrd::read_nodal_result_block_add_components(std::vector<std::str
   return true;
 }
 
-bool CoreResultsFrd::read_nodal_result_block_thread(int result_block_data_id,int start,int end)
+bool CoreResultsFrd::read_nodal_result_block_thread(int result_block_data_id,int start,int end, int thread_id)
 {
   std::string frdline = "";
   int ic = 0;
@@ -1335,6 +1411,7 @@ bool CoreResultsFrd::read_nodal_result_block_thread(int result_block_data_id,int
         result_block_node_data[result_block_data_id].push_back({node_id,result_block_node_data_id});
         
       }
+      this->progress[thread_id] = this->progress[thread_id] + 1;
     }else if (ic>end)
     {
       break;
@@ -1469,7 +1546,7 @@ std::vector<int> CoreResultsFrd::get_element_range()
   return tmp;
 }
 
-bool CoreResultsFrd::insert_key(int start, int end)
+bool CoreResultsFrd::insert_key_thread(int start, int end, int thread_id)
 {
   std::string frdline = "";
   int ic = 0;
@@ -1481,6 +1558,7 @@ bool CoreResultsFrd::insert_key(int start, int end)
     if ((ic>=start)&&(ic<=end))
     {      
       this->keys[ic] = this->get_key(frdline);
+      this->progress[thread_id] = this->progress[thread_id] + 1;
     }else if (ic>end)
     {
       break;
@@ -1568,14 +1646,39 @@ bool CoreResultsFrd::sort_result_block_node_data(int data_id)
   return true;
 }
 
+int CoreResultsFrd::get_result_block_lines(std::vector<std::vector<int>> result_block_range)
+{
+  int lines = 0;
+  for (size_t i = 0; i < result_block_range.size(); i++)
+  {
+    lines = lines + result_block_range[i][1] - result_block_range[i][0] + 1;
+  }
+  return lines;
+}
+
 void CoreResultsFrd::update_progressbar()
 {
-  int part = 0;
-  for (size_t i = 0; i < progress.size()-1; i++)
+  //std::string log;
+  const auto t_end = std::chrono::high_resolution_clock::now();
+  int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+  if (duration > 500)
   {
-    part += progress[i];
+    int part = 0;
+    for (size_t i = 0; i < progress.size()-1; i++)
+    {
+      part += progress[i];
+      
+      //log = "thread " + std::to_string(i) + " lines " + std::to_string(progress[i]) + " \n";
+      //PRINT_INFO("%s", log.c_str());
+    }
+
+    //log = "max lines " + std::to_string(progress[progress.size()-1]) + " \n";
+    //PRINT_INFO("%s", log.c_str());
+
+    progressbar->percent(double(part)/double(progress[progress.size()-1]));
+    progressbar->check_interrupt();
+    t_start = std::chrono::high_resolution_clock::now();
   }
-  progressbar->percent(double(part)/double(progress[progress.size()-1]));
 }
 
 bool CoreResultsFrd::print_data()

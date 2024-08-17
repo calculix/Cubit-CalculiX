@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <thread>
+#include "ProgressTool.hpp"
 
 class CalculiXCoreInterface;
 
@@ -21,6 +22,9 @@ public:
 
   int current_result_block = -1;
   int current_total_time_id = -1;
+  
+  std::vector<int> progress; // size max_threads + total
+  std::chrono::high_resolution_clock::time_point t_start = std::chrono::high_resolution_clock::now();
 
   std::vector<std::vector<int>> result_blocks;
   // result_blocks[0][0] result block
@@ -87,8 +91,8 @@ public:
   bool header_emas(std::vector<std::string> line); // processing emas header
   bool read_line(std::vector<std::string> line); // processing the result lines
   bool read_line_buckle(std::vector<std::string> line); // processing the result lines for buckling output
-  bool read_lines_thread(int result_block_data_id); // processing the result lines for result block
-  bool compute_predefined(int result_block_data_id); // computing the predefined calculations
+  bool read_lines_thread(int result_block_data_id, int thread_id); // processing the result lines for result block
+  bool compute_predefined(int result_block_data_id, int thread_id); // computing the predefined calculations
   int get_current_result_block_type(std::string result_type); // gets result_block_type
   int get_current_result_block_set(std::string result_set); // gets result_block_set
   bool check_element_sets(); // checks if the data for the element sets has integration points data or not...if yes set prefix ip_
@@ -97,6 +101,9 @@ public:
   int get_result_block_type_data_id(std::string result_block_type); // returns the result_block_type_data_id or returns -1 
   int get_result_block_set_data_id(std::string result_block_set); // returns the result_block_set_data_id or returns -1 
   bool sort_data(int data_id); // sorts the data
+  int get_result_block_lines(std::vector<std::vector<std::vector<std::string>>> result_block_lines); // computes and returns the maximum line numbers that will be read for the result blocks
+  int get_result_blocks_predefined(); // gets the number of result blocks that are needing a predefined calculation
+  void update_progressbar(); // updates the percent from the progressbar
   bool print_data(); // prints the data to the console
 
   template <typename T>  std::vector<std::size_t> sort_permutation(const std::vector<T>& vec);
