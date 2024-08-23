@@ -219,7 +219,7 @@ bool CoreResultsFrd::read_single()
   for (size_t i = 0; i < nodes.size(); i++)
   {
     tmp_node_ids.push_back(nodes[i][0]);
-    tmp_node_data_ids.push_back(nodes[i][1]);
+    tmp_node_data_ids.push_back(i);
   }  
   auto p = sort_permutation(tmp_node_ids);
   this->apply_permutation(tmp_node_ids, p);
@@ -717,7 +717,7 @@ bool CoreResultsFrd::read_parallel()
   for (size_t i = 0; i < nodes.size(); i++)
   {
     tmp_node_ids.push_back(nodes[i][0]);
-    tmp_node_data_ids.push_back(nodes[i][1]);
+    tmp_node_data_ids.push_back(i);
   }  
   auto p = sort_permutation(tmp_node_ids);
   this->apply_permutation(tmp_node_ids, p);

@@ -46,6 +46,7 @@ public:
   std::vector<std::string> filepath_vtu; // to store the filepaths
   std::vector<std::string> part_names; // to store the parts name
   std::vector<int> part_ids; // to store the parts ids
+  std::vector<int> part_types; // to store the part type 0 Block 1 Nodeset 2 Sideset 3 Dat
   std::vector<int> block_ids;
   std::vector<std::vector<int>> block_node_ids;
   std::vector<std::vector<int>> block_element_ids;
@@ -130,9 +131,11 @@ public:
   bool link_nodes(); // links the ids from frd/dat all
   bool link_nodes_parallel(); // links the ids from frd/dat all
   bool link_nodes_thread(int thread_part, std::vector<int> node_ids); // links the ids from frd/dat all
-  bool link_nodes_result_blocks_thread(int thread_part); // links the result blocks from frd/dat all
+  bool link_nodes_result_blocks_thread(int thread_part, std::vector<int> node_ids,int result_block_data_id); // links the result blocks from frd/dat all
   bool link_nodes_fast(); // links the ids from frd/dat all fast...only possible if all node id vectors are of the same size
   bool link_elements(); // links the ids from frd/dat all
+  bool link_elements_parallel(); // links the ids from frd/dat all
+  bool link_elements_thread(int thread_part); // links the ids from frd/dat all
   bool link_dat(); // links the dat
   bool prepare_sidesets(); // gets all data for the sidesets
   std::vector<double> get_integration_point_coordinates(int element_type, int ip, int ipmax, std::vector<std::vector<double>> nodes_coords); // computes the integration point coordinates for the given element and ip point number

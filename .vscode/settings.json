@@ -88,5 +88,6 @@
         "typeinfo": "cpp",
         "valarray": "cpp",
         "variant": "cpp"
-    }
+    },
+    "git.ignoreLimitWarning": true
 }
