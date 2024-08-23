@@ -3679,10 +3679,10 @@ std::vector<int> CalculiXCore::frd_get_element_ids_between_values(int job_id,int
             {
               int node_id = results->frd_data[frd_data_id].elements_connectivity[element_connectivity_data_id][iii];
               int node_data_id = -1;
-              if (std::binary_search(results->frd_data[frd_data_id].sorted_node_ids[frd_data_id].begin(), results->frd_data[frd_data_id].sorted_node_ids[frd_data_id].end(), node_id))
+              if (std::binary_search(results->frd_data[frd_data_id].sorted_result_node_ids[frd_data_id].begin(), results->frd_data[frd_data_id].sorted_result_node_ids[frd_data_id].end(), node_id))
               {
-                auto lower = std::lower_bound(results->frd_data[frd_data_id].sorted_node_ids[frd_data_id].begin(), results->frd_data[frd_data_id].sorted_node_ids[frd_data_id].end(), node_id);
-                node_data_id = results->frd_data[frd_data_id].sorted_node_data_ids[frd_data_id][lower - results->frd_data[frd_data_id].sorted_node_ids[frd_data_id].begin()];
+                auto lower = std::lower_bound(results->frd_data[frd_data_id].sorted_result_node_ids[frd_data_id].begin(), results->frd_data[frd_data_id].sorted_result_node_ids[frd_data_id].end(), node_id);
+                node_data_id = results->frd_data[frd_data_id].sorted_result_node_data_ids[frd_data_id][lower - results->frd_data[frd_data_id].sorted_result_node_ids[frd_data_id].begin()];
                 values.push_back(results->frd_data[frd_data_id].result_block_data[i][node_data_id][component_id]);
               }
             }
@@ -3759,10 +3759,10 @@ std::vector<int> CalculiXCore::frd_get_element_ids_smaller_value(int job_id,int 
             {
               int node_id = results->frd_data[frd_data_id].elements_connectivity[element_connectivity_data_id][iii];
               int node_data_id = -1;
-              if (std::binary_search(results->frd_data[frd_data_id].sorted_node_ids[frd_data_id].begin(), results->frd_data[frd_data_id].sorted_node_ids[frd_data_id].end(), node_id))
+              if (std::binary_search(results->frd_data[frd_data_id].sorted_result_node_ids[frd_data_id].begin(), results->frd_data[frd_data_id].sorted_result_node_ids[frd_data_id].end(), node_id))
               {
-                auto lower = std::lower_bound(results->frd_data[frd_data_id].sorted_node_ids[frd_data_id].begin(), results->frd_data[frd_data_id].sorted_node_ids[frd_data_id].end(), node_id);
-                node_data_id = results->frd_data[frd_data_id].sorted_node_data_ids[frd_data_id][lower - results->frd_data[frd_data_id].sorted_node_ids[frd_data_id].begin()];
+                auto lower = std::lower_bound(results->frd_data[frd_data_id].sorted_result_node_ids[frd_data_id].begin(), results->frd_data[frd_data_id].sorted_result_node_ids[frd_data_id].end(), node_id);
+                node_data_id = results->frd_data[frd_data_id].sorted_result_node_data_ids[frd_data_id][lower - results->frd_data[frd_data_id].sorted_result_node_ids[frd_data_id].begin()];
                 values.push_back(results->frd_data[frd_data_id].result_block_data[i][node_data_id][component_id]);
               }
             }
@@ -3839,10 +3839,10 @@ std::vector<int> CalculiXCore::frd_get_element_ids_greater_value(int job_id,int 
             {
               int node_id = results->frd_data[frd_data_id].elements_connectivity[element_connectivity_data_id][iii];
               int node_data_id = -1;
-              if (std::binary_search(results->frd_data[frd_data_id].sorted_node_ids[frd_data_id].begin(), results->frd_data[frd_data_id].sorted_node_ids[frd_data_id].end(), node_id))
+              if (std::binary_search(results->frd_data[frd_data_id].sorted_result_node_ids[frd_data_id].begin(), results->frd_data[frd_data_id].sorted_result_node_ids[frd_data_id].end(), node_id))
               {
-                auto lower = std::lower_bound(results->frd_data[frd_data_id].sorted_node_ids[frd_data_id].begin(), results->frd_data[frd_data_id].sorted_node_ids[frd_data_id].end(), node_id);
-                node_data_id = results->frd_data[frd_data_id].sorted_node_data_ids[frd_data_id][lower - results->frd_data[frd_data_id].sorted_node_ids[frd_data_id].begin()];
+                auto lower = std::lower_bound(results->frd_data[frd_data_id].sorted_result_node_ids[frd_data_id].begin(), results->frd_data[frd_data_id].sorted_result_node_ids[frd_data_id].end(), node_id);
+                node_data_id = results->frd_data[frd_data_id].sorted_result_node_data_ids[frd_data_id][lower - results->frd_data[frd_data_id].sorted_result_node_ids[frd_data_id].begin()];
                 values.push_back(results->frd_data[frd_data_id].result_block_data[i][node_data_id][component_id]);
               }
             }
@@ -3919,10 +3919,10 @@ std::vector<int> CalculiXCore::frd_get_element_ids_over_limit(int job_id,int tot
             {
               int node_id = results->frd_data[frd_data_id].elements_connectivity[element_connectivity_data_id][iii];
               int node_data_id = -1;
-              if (std::binary_search(results->frd_data[frd_data_id].sorted_node_ids[frd_data_id].begin(), results->frd_data[frd_data_id].sorted_node_ids[frd_data_id].end(), node_id))
+              if (std::binary_search(results->frd_data[frd_data_id].sorted_result_node_ids[frd_data_id].begin(), results->frd_data[frd_data_id].sorted_result_node_ids[frd_data_id].end(), node_id))
               {
-                auto lower = std::lower_bound(results->frd_data[frd_data_id].sorted_node_ids[frd_data_id].begin(), results->frd_data[frd_data_id].sorted_node_ids[frd_data_id].end(), node_id);
-                node_data_id = results->frd_data[frd_data_id].sorted_node_data_ids[frd_data_id][lower - results->frd_data[frd_data_id].sorted_node_ids[frd_data_id].begin()];
+                auto lower = std::lower_bound(results->frd_data[frd_data_id].sorted_result_node_ids[frd_data_id].begin(), results->frd_data[frd_data_id].sorted_result_node_ids[frd_data_id].end(), node_id);
+                node_data_id = results->frd_data[frd_data_id].sorted_result_node_data_ids[frd_data_id][lower - results->frd_data[frd_data_id].sorted_result_node_ids[frd_data_id].begin()];
                 values.push_back(results->frd_data[frd_data_id].result_block_data[i][node_data_id][component_id]);
               }
             }

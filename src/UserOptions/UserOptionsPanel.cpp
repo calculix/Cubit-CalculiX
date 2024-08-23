@@ -66,8 +66,8 @@ UserOptionsPanel::UserOptionsPanel(QWidget *parent) :
   HBoxLayout_5->addWidget(lineEdit_5);
   HBoxLayout_6->addWidget(label_6);
   HBoxLayout_6->addWidget(lineEdit_6);
-  HBoxLayout_6->addWidget(label_7);
-  HBoxLayout_6->addWidget(lineEdit_7);
+  HBoxLayout_7->addWidget(label_7);
+  HBoxLayout_7->addWidget(lineEdit_7);
 
   isInitialized = true;
 }

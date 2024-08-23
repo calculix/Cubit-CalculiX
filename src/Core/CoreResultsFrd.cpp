@@ -213,21 +213,35 @@ bool CoreResultsFrd::read_single()
   frd.close();
 
   // sorting for faster search
+  std::vector<int> tmp_node_ids;
+  std::vector<int> tmp_node_data_ids;
+
+  for (size_t i = 0; i < nodes.size(); i++)
+  {
+    tmp_node_ids.push_back(nodes[i][0]);
+    tmp_node_data_ids.push_back(nodes[i][1]);
+  }  
+  auto p = sort_permutation(tmp_node_ids);
+  this->apply_permutation(tmp_node_ids, p);
+  this->apply_permutation(tmp_node_data_ids, p);
+  sorted_node_ids = tmp_node_ids;
+  sorted_node_data_ids = tmp_node_data_ids;
+
   for (size_t i = 0; i < result_block_node_data.size(); i++)
   {
-    std::vector<int> tmp_node_ids;
-    std::vector<int> tmp_node_data_ids;
+    std::vector<int> tmp_result_node_ids;
+    std::vector<int> tmp_result_node_data_ids;
 
     for (size_t ii = 0; ii < result_block_node_data[i].size(); ii++)
     {
-      tmp_node_ids.push_back(result_block_node_data[i][ii][0]);
-      tmp_node_data_ids.push_back(result_block_node_data[i][ii][1]);
+      tmp_result_node_ids.push_back(result_block_node_data[i][ii][0]);
+      tmp_result_node_data_ids.push_back(result_block_node_data[i][ii][1]);
     }  
-    auto p = sort_permutation(tmp_node_ids);
-    this->apply_permutation(tmp_node_ids, p);
-    this->apply_permutation(tmp_node_data_ids, p);
-    sorted_node_ids.push_back(tmp_node_ids);
-    sorted_node_data_ids.push_back(tmp_node_data_ids);
+    auto p = sort_permutation(tmp_result_node_ids);
+    this->apply_permutation(tmp_result_node_ids, p);
+    this->apply_permutation(tmp_result_node_data_ids, p);
+    sorted_result_node_ids.push_back(tmp_result_node_ids);
+    sorted_result_node_data_ids.push_back(tmp_result_node_data_ids);
   }
 
   progressbar->end();
@@ -697,14 +711,28 @@ bool CoreResultsFrd::read_parallel()
   frd.close();
 
   // sorting for faster search
+  std::vector<int> tmp_node_ids;
+  std::vector<int> tmp_node_data_ids;
+
+  for (size_t i = 0; i < nodes.size(); i++)
+  {
+    tmp_node_ids.push_back(nodes[i][0]);
+    tmp_node_data_ids.push_back(nodes[i][1]);
+  }  
+  auto p = sort_permutation(tmp_node_ids);
+  this->apply_permutation(tmp_node_ids, p);
+  this->apply_permutation(tmp_node_data_ids, p);
+  sorted_node_ids = tmp_node_ids;
+  sorted_node_data_ids = tmp_node_data_ids;
+
   int loop_c = 0;
   int number_of_result_blocks = result_block_node_data.size();
   for (size_t i = 0; i < result_block_node_data.size(); i++)
   {
-    std::vector<int> tmp_node_ids;
-    std::vector<int> tmp_node_data_ids;
-    sorted_node_ids.push_back(tmp_node_ids);
-    sorted_node_data_ids.push_back(tmp_node_data_ids);
+    std::vector<int> tmp_result_node_ids;
+    std::vector<int> tmp_result_node_data_ids;
+    sorted_result_node_ids.push_back(tmp_result_node_ids);
+    sorted_result_node_data_ids.push_back(tmp_result_node_data_ids);
   }
 
   while (number_of_result_blocks > 0)
@@ -1629,19 +1657,19 @@ void CoreResultsFrd::set_element_range_data_start(std::vector<std::vector<int>> 
 bool CoreResultsFrd::sort_result_block_node_data(int data_id)
 {
   // sorting for faster search
-  std::vector<int> tmp_node_ids;
-  std::vector<int> tmp_node_data_ids;
+  std::vector<int> tmp_result_node_ids;
+  std::vector<int> tmp_result_node_data_ids;
 
   for (size_t i = 0; i < result_block_node_data[data_id].size(); i++)
   {
-    tmp_node_ids.push_back(result_block_node_data[data_id][i][0]);
-    tmp_node_data_ids.push_back(result_block_node_data[data_id][i][1]);
+    tmp_result_node_ids.push_back(result_block_node_data[data_id][i][0]);
+    tmp_result_node_data_ids.push_back(result_block_node_data[data_id][i][1]);
   }  
-  auto p = sort_permutation(tmp_node_ids);
-  this->apply_permutation(tmp_node_ids, p);
-  this->apply_permutation(tmp_node_data_ids, p);
-  sorted_node_ids[data_id] = tmp_node_ids;
-  sorted_node_data_ids[data_id] = tmp_node_data_ids;
+  auto p = sort_permutation(tmp_result_node_ids);
+  this->apply_permutation(tmp_result_node_ids, p);
+  this->apply_permutation(tmp_result_node_data_ids, p);
+  sorted_result_node_ids[data_id] = tmp_result_node_ids;
+  sorted_result_node_data_ids[data_id] = tmp_result_node_data_ids;
 
   return true;
 }

@@ -128,7 +128,9 @@ public:
   std::string get_result_data_partial(int data_id, int node_data_id, int component_size); // gets the result data for a node if exists or return zero value
   std::string get_result_data_partial_thread(int data_id, int node_data_id, int component_size, int thread_part); // gets the result data for a node if exists or return zero value
   bool link_nodes(); // links the ids from frd/dat all
-  bool link_nodes_thread(int thread_part); // links the ids from frd/dat all
+  bool link_nodes_parallel(); // links the ids from frd/dat all
+  bool link_nodes_thread(int thread_part, std::vector<int> node_ids); // links the ids from frd/dat all
+  bool link_nodes_result_blocks_thread(int thread_part); // links the result blocks from frd/dat all
   bool link_nodes_fast(); // links the ids from frd/dat all fast...only possible if all node id vectors are of the same size
   bool link_elements(); // links the ids from frd/dat all
   bool link_dat(); // links the dat

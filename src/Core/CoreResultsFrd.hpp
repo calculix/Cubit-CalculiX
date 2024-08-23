@@ -81,9 +81,12 @@ public:
   //result_block_node_data[0][0][1] result_block_node_data_id
   
   // sorted vectors for faster results search
-  // will probably be used for python interface queries
-  std::vector<std::vector<int>> sorted_node_ids;
-  std::vector<std::vector<int>> sorted_node_data_ids;
+  // will probably be used for python interface queries and vtk writer linking
+  std::vector<int> sorted_node_ids; //frd nodes
+  std::vector<int> sorted_node_data_ids; //frd nodes
+  std::vector<std::vector<int>> sorted_result_node_ids; //result blocks
+  std::vector<std::vector<int>> sorted_result_node_data_ids; //result blocks
+  
   
   int job_id = -1;
   std::string filepath = "";
