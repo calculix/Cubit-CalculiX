@@ -42,3 +42,5 @@
 2024-08-17 work on writing linked vtk in parallel
 2024-08-23 work on writing linked vtk in parallel
 2024-08-24 finished writing linked vtk in parallel
+2024-08-24 thread creation slow in windows -> search for thread pool solution on community request
+ 

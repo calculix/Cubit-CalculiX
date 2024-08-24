@@ -2869,10 +2869,8 @@ bool CoreResultsVtkWriter::link_nodes_parallel()
     }
   }
 
-/*
-  ThreadPool tp;
-  tp.start(max_threads);
-*/
+  //ThreadPool tp;
+  //tp.start(max_threads);
 
   current_increment = 0;
   for (size_t i = 0; i < max_increments; i++)
@@ -2978,8 +2976,8 @@ bool CoreResultsVtkWriter::link_nodes_result_blocks_thread(int thread_part, std:
   }
   /*std::string log;
   log = " thread_part " + std::to_string(thread_part) + " \n";
-  PRINT_INFO("%s", log.c_str());*/
-    
+  PRINT_INFO("%s", log.c_str());
+  */  
   return true;
 }
 
