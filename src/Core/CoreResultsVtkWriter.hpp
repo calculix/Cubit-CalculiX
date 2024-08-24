@@ -71,6 +71,8 @@ public:
   std::vector<int> linked_nodes_data_id;
   std::vector<std::vector<int>> linked_nodes_thread;
   std::vector<std::vector<int>> linked_nodes_data_id_thread;
+  std::vector<int> progress; // size max_threads + total
+  std::chrono::high_resolution_clock::time_point t_start = std::chrono::high_resolution_clock::now();
 
   bool init(int job_id,CoreResultsFrd* frd,CoreResultsDat* dat,std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids); // initialize
   bool reset(); // delete all data and initialize afterwards
@@ -86,7 +88,6 @@ public:
   bool write_vtu_linked(); // write only paraview vtu file format, blocks ect could not be linked
   bool write_vtu_linked_thread(int thread_part, std::string thread_filepath_vtu); // write only paraview vtu file format
   bool write_vtu_unlinked(); // write only paraview vtu file format, blocks ect could not be linked
-  bool write_vtu_unlinked_parallel(); // write only paraview vtu file format, blocks ect could not be linked
   bool write_to_file(std::string filepath, std::string &content); // write the content to file
   int getMaxDataRows(); // get # of data rows from frd and dat
   int getMaxDataRows_thread(int thread_part); // get # of data rows from frd and dat
@@ -98,6 +99,7 @@ public:
   bool checkLinkDatFast(); // check if linking of dat fast is possible
   bool checkDatTimeValueExists(double total_time); // checks if the dat totaltime exists
   bool checkFrdBlockDispExists(std::string block_name); // checks if there exists displacement data for the block
+  bool checkFrdBlockDispExists_thread(std::string block_name, int increment); // checks if there exists displacement data for the block
   int getFrdBlockId(std::string block_name); // checks if there exists block in the frd for the block in the dat and returns the data id
   std::string level_whitespace(int level); // gets the whitespace for the level in the xml file
   bool rewrite_connectivity_unlinked(); // rewrites the nodenumbers in the connectivity for unlinked mode
@@ -115,10 +117,13 @@ public:
   int get_step_increment(double total_time); // gets the step increment from a time value from .dat
   int get_max_step_increment(); // gets the max step increment from .dat
   std::vector<int> get_currentincrement_result_blocks_data(); // gets the result blocks data from frd to fuse with dat data
+  std::vector<int> get_increment_result_blocks_data(int increment); // gets the result blocks data from frd to fuse with dat data
   std::vector<int> get_result_blocks_data_ids(); // gets the result blocks data ids for the current increment
   std::vector<int> get_result_blocks_data_ids_thread(int thread_part); // gets the result blocks data ids for the current increment
+  std::vector<int> get_result_blocks_data_ids_thread_increment(int thread_part, int increment); // gets the result blocks data ids for the increment
   std::vector<int> get_result_blocks_data_ids_linked(); // gets the result blocks data ids for the current increment from frd_all
   std::vector<int> get_dat_result_blocks_data_ids_linked(int set_id); // gets the result blocks data ids for the current increment from dat_all
+  std::vector<int> get_dat_result_blocks_data_ids_linked_thread(int thread_part,int increment); // gets the result blocks data ids for the current increment from dat_all
   std::vector<int> get_result_block_node_data_id(int result_blocks_data_id); // gets the result blocks node data ids for the current block
   std::vector<int> get_result_block_node_data_id_thread(int result_blocks_data_id,int thread_part); // gets the result blocks node data ids for the current block
   std::vector<int> get_result_block_node_data_id_linked(int result_blocks_data_id); // gets the result blocks node data ids for the current block and set from frd_all
@@ -130,17 +135,24 @@ public:
   std::string get_result_data_partial_thread(int data_id, int node_data_id, int component_size, int thread_part); // gets the result data for a node if exists or return zero value
   bool link_nodes(); // links the ids from frd/dat all
   bool link_nodes_parallel(); // links the ids from frd/dat all
-  bool link_nodes_thread(int thread_part, std::vector<int> node_ids); // links the ids from frd/dat all
-  bool link_nodes_result_blocks_thread(int thread_part, std::vector<int> node_ids,int result_block_data_id); // links the result blocks from frd/dat all
+  bool link_nodes_thread(int thread_part, std::vector<int> node_ids, int thread_id); // links the ids from frd/dat all
+  bool link_nodes_result_blocks_thread(int thread_part, std::vector<int> node_ids,int result_block_data_id, int thread_id); // links the result blocks from frd/dat all
   bool link_nodes_fast(); // links the ids from frd/dat all fast...only possible if all node id vectors are of the same size
   bool link_elements(); // links the ids from frd/dat all
   bool link_elements_parallel(); // links the ids from frd/dat all
   bool link_elements_thread(int thread_part); // links the ids from frd/dat all
   bool link_dat(); // links the dat
+  bool link_dat_parallel(); // links the dat
+  bool link_dat_nodes_elements_thread(int thread_part,std::vector<int> tmp_element_id,std::vector<int> tmp_element_type,std::vector<std::vector<int>> tmp_element_connectivity); // links the dat nodes and elements
+  bool link_dat_result_blocks_thread(int thread_part); // links the dat result blocks
+  bool link_dat_compute_ip_thread(int thread_part); // links the dat result blocks
   bool prepare_sidesets(); // gets all data for the sidesets
   std::vector<double> get_integration_point_coordinates(int element_type, int ip, int ipmax, std::vector<std::vector<double>> nodes_coords); // computes the integration point coordinates for the given element and ip point number
   std::vector<std::vector<double>> compute_integration_points_displacements(int set_id);
   std::vector<std::vector<double>> compute_integration_points_displacements_fast(int set_id);
+  std::vector<std::vector<double>> compute_integration_points_displacements_thread(int thread_part,int increment);
+  std::vector<std::vector<double>> compute_integration_points_displacements_fast_thread(int thread_part,int increment);
+  void update_progressbar(); // updates the percent from the progressbar
   template <typename T>  std::vector<std::size_t> sort_permutation(const std::vector<T>& vec);
   template <typename T> void apply_permutation(std::vector<T>& vec,const std::vector<std::size_t>& p);
 

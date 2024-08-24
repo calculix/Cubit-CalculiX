@@ -93,6 +93,7 @@ public:
   bool is_initialized = false;
   int current_read_mode = 0; //0 header 1 nodal data 2 element data 3 parameter data 4 result block
   std::vector<std::string> keys; // keys for all lines
+  std::vector<std::vector<std::vector<std::string>>> frd_arrays; //contains the result block lines
   std::vector<int> progress; // size max_threads + total
   std::chrono::high_resolution_clock::time_point t_start = std::chrono::high_resolution_clock::now();
   
@@ -116,7 +117,7 @@ public:
   int get_current_result_block_type(std::string result_type); // gets result_block_type
   bool read_nodal_result_block(std::vector<std::string> line); // processing the nodal result block
   bool read_nodal_result_block_add_components(std::vector<std::string> line); // adds components if needed to the nodal result block
-  bool read_nodal_result_block_thread(int result_block_data_id,int start,int end,int thread_id); // processing the nodal result block in the threads
+  bool read_nodal_result_block_thread(int result_block_data_id,int thread_id); // processing the nodal result block in the threads
   std::vector<std::string> get_result_block_components_from_result_block_type(std::string result_block_type); // get components from block
   int get_result_block_component_id(int result_block_type_id,std::string result_block_component); // get component id
   std::vector<int> get_node_range(); // scans the frd for the node range
@@ -125,7 +126,7 @@ public:
   bool insert_key_thread(int start, int end,int thread_id); // inserts the keys for range
   bool check_key(std::string key, int line); // checks if the key is at the given line
   bool sort_result_block_node_data(int data_id); // sorts the result block node data
-  int get_result_block_lines(std::vector<std::vector<int>> result_block_range); // computes and returns the maximum line numbers that will be read for the result blocks
+  int get_result_block_lines(); // computes and returns the maximum line numbers that will be read for the result blocks
   void update_progressbar(); // updates the percent from the progressbar
   bool print_data(); // prints the data to the console
 
