@@ -9,6 +9,8 @@
 #include "StopWatch.hpp"
 #include "loadUserOptions.hpp"
 
+#include "ThreadPool.hpp"
+
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -2867,6 +2869,10 @@ bool CoreResultsVtkWriter::link_nodes_parallel()
     }
   }
 
+  ThreadPool tp;
+  tp.start(max_threads);
+  
+
   current_increment = 0;
   for (size_t i = 0; i < max_increments; i++)
   {
@@ -2876,7 +2882,7 @@ bool CoreResultsVtkWriter::link_nodes_parallel()
     {
       int number_of_parts = nparts - nparts_dat;
       int loop_c = 0;
-
+      /*
       while (number_of_parts > 0)
       {
         if (number_of_parts > max_threads)
@@ -2911,8 +2917,16 @@ bool CoreResultsVtkWriter::link_nodes_parallel()
         }
         ++loop_c; 
       }
+      */
+      for (size_t iii = 0; iii < number_of_parts; iii++)
+      {
+        std::function<void()> f = bind(&CoreResultsVtkWriter::link_nodes_result_blocks_thread, this,iii,tmp_part_node_ids[iii],data_ids[ii],0);
+        tp.queueJob(f);
+      }
+      while(tp.busy()){update_progressbar();}
     }
   }
+  tp.stop();
 
   current_increment = 0;
 
@@ -2935,7 +2949,6 @@ bool CoreResultsVtkWriter::link_nodes_thread(int thread_part, std::vector<int> n
       ++progress[thread_id];
     }
   }
-
   return true;
 }
 
@@ -2961,6 +2974,9 @@ bool CoreResultsVtkWriter::link_nodes_result_blocks_thread(int thread_part, std:
       ++progress[thread_id];
     }
   }
+  std::string log;
+  log = " thread_part " + std::to_string(thread_part) + " \n";
+  PRINT_INFO("%s", log.c_str());
     
   return true;
 }
