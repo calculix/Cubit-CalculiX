@@ -10,6 +10,7 @@
 #include "loadUserOptions.hpp"
 
 //#include "ThreadPool.hpp"
+//#include <functional>
 
 #include <cmath>
 #include <fstream>
@@ -424,7 +425,7 @@ bool CoreResultsVtkWriter::write_linked_parallel()
   }else{
     this->link_nodes_parallel();
   }
-  
+
   //link elements
   this->link_elements_parallel();
 
@@ -2869,8 +2870,10 @@ bool CoreResultsVtkWriter::link_nodes_parallel()
     }
   }
 
-  //ThreadPool tp;
-  //tp.start(max_threads);
+  /*
+  ThreadPool tp;
+  tp.start(max_threads);
+  */
 
   current_increment = 0;
   for (size_t i = 0; i < max_increments; i++)
@@ -2916,13 +2919,18 @@ bool CoreResultsVtkWriter::link_nodes_parallel()
         }
         ++loop_c; 
       }
+      
       /*
       for (size_t iii = 0; iii < number_of_parts; iii++)
       {
-        std::function<void()> f = bind(&CoreResultsVtkWriter::link_nodes_result_blocks_thread, this,iii,tmp_part_node_ids[iii],data_ids[ii],0);
+        std::function<void()> f = std::bind(&CoreResultsVtkWriter::link_nodes_result_blocks_thread, this,iii,tmp_part_node_ids[iii],data_ids[ii],0);
         tp.queueJob(f);
       }
-      while(tp.busy()){update_progressbar();}
+      
+      while(tp.busy())
+      {
+        update_progressbar();
+      }
       */
     }
   }
@@ -2970,14 +2978,15 @@ bool CoreResultsVtkWriter::link_nodes_result_blocks_thread(int thread_part, std:
 
       vec_frd[thread_part]->result_block_data[result_block_data_id].push_back(frd_all->result_block_data[result_block_data_id][node_data_id]);
       vec_frd[thread_part]->result_block_node_data[result_block_data_id].push_back(frd_all->result_block_node_data[result_block_data_id][node_data_id]);
-      vec_frd[thread_part]->result_block_node_data[result_block_data_id][vec_frd[thread_part]->result_block_node_data[result_block_data_id].size()-1][1] = int(vec_frd[thread_part]->result_block_data[result_block_data_id].size())-1;
+      vec_frd[thread_part]->result_block_node_data[result_block_data_id][vec_frd[thread_part]->result_block_node_data[result_block_data_id].size()-1][1] = int(vec_frd[thread_part]->result_block_data[result_block_data_id].size())-1;     
       ++progress[thread_id];
     }
   }
-  /*std::string log;
+/*  
+  std::string log;
   log = " thread_part " + std::to_string(thread_part) + " \n";
   PRINT_INFO("%s", log.c_str());
-  */  
+*/    
   return true;
 }
 
