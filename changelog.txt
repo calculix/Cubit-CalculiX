@@ -44,4 +44,5 @@
 2024-08-24 finished writing linked vtk in parallel
 2024-08-24 thread creation slow in windows -> search for thread pool solution on community request
 2024-08-25 thread pool implemented for linking frd result blocks in vtkwriter, still very slow on windows. the useroptions converter threads will be set to 1 for windows
+2024-08-26 thread pool implemented for loading frd dat and writing vtu's -> greatly improves conversion speed on linux
  

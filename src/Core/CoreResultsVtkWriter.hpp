@@ -28,6 +28,7 @@ public:
   bool write_dat = true; // write dat results
   int current_offset = 0;
   std::vector<int> current_offset_thread;
+  std::vector<std::vector<int>> current_offset_threadpool;
   int max_increments = 0;
   int current_increment = 0;
   double current_time = 0;
@@ -37,6 +38,8 @@ public:
   double rangeMax = 0;
   std::vector<double> rangeMin_thread;
   std::vector<double> rangeMax_thread;
+  std::vector<std::vector<double>> rangeMin_threadpool;
+  std::vector<std::vector<double>> rangeMax_threadpool;
   int nparts = 0;
   int nparts_dat = 0; // number of parts from dat file
   int current_part = 0;
@@ -71,6 +74,8 @@ public:
   std::vector<int> linked_nodes_data_id;
   std::vector<std::vector<int>> linked_nodes_thread;
   std::vector<std::vector<int>> linked_nodes_data_id_thread;
+  std::vector<std::vector<std::vector<int>>> linked_nodes_threadpool;
+  std::vector<std::vector<std::vector<int>>> linked_nodes_data_id_threadpool;
   std::vector<int> progress; // size max_threads + total
   std::chrono::high_resolution_clock::time_point t_start = std::chrono::high_resolution_clock::now();
 
@@ -87,6 +92,7 @@ public:
   bool write_vtpc(); // write to paraview file formats
   bool write_vtu_linked(); // write only paraview vtu file format, blocks ect could not be linked
   bool write_vtu_linked_thread(int thread_part, std::string thread_filepath_vtu); // write only paraview vtu file format
+  bool write_vtu_linked_threadpool(int thread_part, std::string thread_filepath_vtu, int increment); // write only paraview vtu file format
   bool write_vtu_unlinked(); // write only paraview vtu file format, blocks ect could not be linked
   bool write_to_file(std::string filepath, std::string &content); // write the content to file
   int getMaxDataRows(); // get # of data rows from frd and dat
@@ -106,13 +112,17 @@ public:
   std::string get_element_connectivity_vtk(int element_connectivity_data_id, int element_type); // gets the connectivity already converted to vtk format
   std::string get_element_connectivity_vtk_linked(int element_connectivity_data_id, int element_type); // gets the connectivity already converted to vtk format
   std::string get_element_connectivity_vtk_linked_thread(int element_connectivity_data_id, int element_type, int thread_part); // gets the connectivity already converted to vtk format
+  std::string get_element_connectivity_vtk_linked_threadpool(int element_connectivity_data_id, int element_type, int thread_part, int increment); // gets the connectivity already converted to vtk format
   std::string get_element_type_vtk(int element_type); // gets the element type already converted to vtk format
   int get_element_type_frd(int element_id); // gets the element type from cubit converted to frd format, searched in the frd data
   std::string get_element_offset_vtk(int element_connectivity_data_id); // gets the element offset already converted to vtk format
   std::string get_element_offset_vtk_thread(int element_connectivity_data_id, int thread_part); // gets the element offset already converted to vtk format
+  std::string get_element_offset_vtk_threadpool(int element_connectivity_data_id, int thread_part, int increment); // gets the element offset already converted to vtk format
   int getParaviewNode(int frd_node_id); // gets the paraview node id for frd node id
   int getParaviewNode_thread(int frd_node_id,int thread_part); // gets the paraview node id for frd node id
+  int getParaviewNode_threadpool(int frd_node_id,int thread_part,int increment); // gets the paraview node id for frd node id
   std::string get_increment(); // gets the current increment in the format 00x
+  std::string get_increment_threadpool(int increment); // gets the current increment in the format 00x
   std::string get_increment_time(); // gets the current increment time value
   int get_step_increment(double total_time); // gets the step increment from a time value from .dat
   int get_max_step_increment(); // gets the max step increment from .dat
@@ -131,8 +141,10 @@ public:
   std::vector<int> get_result_block_node_id_thread(int result_blocks_data_id, int thread_part); // gets the result blocks node data ids for the current block
   std::string get_result_data(int data_id, int node_data_id); // gets the result data for a node
   std::string get_result_data_thread(int data_id, int node_data_id, int thread_part); // gets the result data for a node
+  std::string get_result_data_threadpool(int data_id, int node_data_id, int thread_part, int increment); // gets the result data for a node
   std::string get_result_data_partial(int data_id, int node_data_id, int component_size); // gets the result data for a node if exists or return zero value
   std::string get_result_data_partial_thread(int data_id, int node_data_id, int component_size, int thread_part); // gets the result data for a node if exists or return zero value
+  std::string get_result_data_partial_threadpool(int data_id, int node_data_id, int component_size, int thread_part, int increment); // gets the result data for a node if exists or return zero value
   bool link_nodes(); // links the ids from frd/dat all
   bool link_nodes_parallel(); // links the ids from frd/dat all
   bool link_nodes_thread(int thread_part, std::vector<int> node_ids, int thread_id); // links the ids from frd/dat all

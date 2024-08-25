@@ -5,6 +5,9 @@
 #include "loadUserOptions.hpp"
 #include "StopWatch.hpp"
 
+#include "ThreadPool.hpp"
+#include <functional>
+
 #include <fstream>
 #include <cmath>
 #include <iostream>
@@ -658,7 +661,7 @@ bool CoreResultsFrd::read_parallel()
 
     this->progress = std::vector<int>(max_threads + 1, 0);
     progress[max_threads] = get_result_block_lines();
-
+    /* 
     while (number_of_result_blocks > 0)
     {
       if (number_of_result_blocks > max_threads)
@@ -693,6 +696,21 @@ bool CoreResultsFrd::read_parallel()
       }
       ++loop_c;      
     }
+    */
+
+    ThreadPool tp;
+    tp.start(max_threads);
+    for (size_t i = 0; i < number_of_result_blocks; i++)
+    {
+        std::function<void()> f = std::bind(&CoreResultsFrd::read_nodal_result_block_thread, this,int(i),0);
+        tp.queueJob(f);
+    }
+    while(tp.busy())
+    {
+      update_progressbar();
+    }
+    tp.stop();
+
   }
   frd.close();
 

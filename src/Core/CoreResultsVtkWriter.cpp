@@ -437,11 +437,13 @@ bool CoreResultsVtkWriter::write_linked_parallel()
   progressbar->start(0,100,"Writing Results to ParaView Format - Linked Mode");
   this->t_start = std::chrono::high_resolution_clock::now();
 
+  /*
+
   this->progress = std::vector<int>(max_threads + 1, 0);
   progress[max_threads] = max_increments*nparts;
 
   current_increment = 0;
-  StopWatch StopWatch;
+  //StopWatch StopWatch;
 
   for (size_t i = 0; i < max_increments; i++)
   {
@@ -461,7 +463,7 @@ bool CoreResultsVtkWriter::write_linked_parallel()
     rangeMin_thread.clear();
     rangeMax_thread.clear();
     
-    for (size_t i = 0; i < number_of_frd; i++)
+    for (size_t ii = 0; ii < number_of_frd; ii++)
     {
       current_offset_thread.push_back({});
       linked_nodes_thread.push_back({});
@@ -520,6 +522,77 @@ bool CoreResultsVtkWriter::write_linked_parallel()
     this->write_vtpc();
     //StopWatch.tick("Increment end " + std::to_string(i));
   }
+  */
+
+  this->progress = std::vector<int>(max_threads + 1, 0);
+  progress[max_threads] = max_increments*nparts;
+
+  //write vtpc
+  current_increment = 0;
+  for (size_t i = 0; i < max_increments; i++)
+  {
+    part_ids.clear();
+    filepath_vtu.clear();
+    ++current_increment;
+    for (size_t ii = 0; ii < vec_frd.size(); ii++)
+    {
+      //std::string thread_filepath_vtu;
+      //thread_filepath_vtu = filepath + "/" + filepath + "." + std::to_string(ii) + "." + this->get_increment() + ".vtu";
+      filepath_vtu.push_back(filepath + "." + std::to_string(ii) + "." + this->get_increment() + ".vtu");
+      part_ids.push_back(ii);
+    }
+    current_filepath_vtpc = filepath + "/" + filepath + "." + this->get_increment() + ".vtpc";
+    this->write_vtpc();
+  }
+  filepath_vtu.clear();
+  part_ids.clear();
+
+  current_offset_threadpool.clear();
+  linked_nodes_threadpool.clear();
+  linked_nodes_data_id_threadpool.clear();
+  rangeMin_threadpool.clear();
+  rangeMax_threadpool.clear();
+
+  int increment = 0;
+  for (size_t i = 0; i < max_increments; i++)
+  {
+    ++increment;
+    current_offset_threadpool.push_back({});
+    linked_nodes_threadpool.push_back({});
+    linked_nodes_data_id_threadpool.push_back({});
+    rangeMin_threadpool.push_back({});
+    rangeMax_threadpool.push_back({});
+
+    for (size_t ii = 0; ii < vec_frd.size(); ii++)
+    {
+      current_offset_threadpool[current_offset_threadpool.size()-1].push_back({});
+      linked_nodes_threadpool[linked_nodes_threadpool.size()-1].push_back({});
+      linked_nodes_data_id_threadpool[linked_nodes_data_id_threadpool.size()-1].push_back({});
+      rangeMin_threadpool[rangeMin_threadpool.size()-1].push_back({});
+      rangeMax_threadpool[rangeMax_threadpool.size()-1].push_back({});
+    }
+  }
+  
+  ThreadPool tp;
+  tp.start(max_threads);
+  increment = 0;
+  for (size_t i = 0; i < max_increments; i++)
+  {
+    ++increment;
+    for (size_t ii = 0; ii < vec_frd.size(); ii++)
+    {
+      std::string thread_filepath_vtu;
+      thread_filepath_vtu = filepath + "/" + filepath + "." + std::to_string(ii) + "." + this->get_increment_threadpool(increment) + ".vtu";
+      std::function<void()> f = std::bind(&CoreResultsVtkWriter::write_vtu_linked_threadpool, this,ii,thread_filepath_vtu,increment);
+      tp.queueJob(f);
+    }
+  }
+  while(tp.busy())
+  {
+    update_progressbar();
+  }
+  tp.stop();
+
   progressbar->end();
   return true;
 }
@@ -1156,6 +1229,319 @@ bool CoreResultsVtkWriter::write_vtu_linked_thread(int thread_part, std::string 
   return true;
 }
 
+bool CoreResultsVtkWriter::write_vtu_linked_threadpool(int thread_part, std::string thread_filepath_vtu, int increment)
+{
+  std::string output = "";
+  std::string output_nodes_ids = "";
+  std::string output_nodes = "";
+  std::string output_elements_ids = "";
+  std::string output_element_connectivity = "";
+  std::string output_element_offsets = "";
+  std::string output_element_types = "";
+  int min_node_id = -1;
+  int max_node_id = -1;
+  int min_element_id = -1;
+  int max_element_id = -1;
+  rangeMin_threadpool[increment-1][thread_part]=0;
+  rangeMax_threadpool[increment-1][thread_part]=0;
+  std::string log;
+  StopWatch StopWatch;
+  //StopWatch.tick("write part " + std::to_string(thread_part) + " start");
+  //log = "writing results " + filepath + " for Job ID " + std::to_string(job_id) + " \n";
+  //ccx_iface->log_str(log);
+  //PRINT_INFO("%s", log.c_str());
+  
+  // clear all data before reading and check results
+  //this->clearLinked_thread(thread_part);
+  this->checkResultsLinked_thread(thread_part);
+
+  // write nodes
+  output_nodes.append(this->level_whitespace(3) + "<Points>\n");
+  output_nodes.append(this->level_whitespace(4) + "<DataArray type=\"Float32\" Name=\"Points\" NumberOfComponents=\"3\" format=\"ascii\">\n");
+  for (size_t i = 0; i < vec_frd[thread_part]->nodes.size(); i++)
+  {
+    output_nodes.append(this->level_whitespace(5));
+    output_nodes.append(ccx_iface->to_string_scientific(vec_frd[thread_part]->nodes_coords[vec_frd[thread_part]->nodes[i][1]][0]) + " ");
+    output_nodes.append(ccx_iface->to_string_scientific(vec_frd[thread_part]->nodes_coords[vec_frd[thread_part]->nodes[i][1]][1]) + " ");
+    output_nodes.append(ccx_iface->to_string_scientific(vec_frd[thread_part]->nodes_coords[vec_frd[thread_part]->nodes[i][1]][2]) + "\n");
+    
+    if (i==0)
+    {
+      min_node_id = vec_frd[thread_part]->nodes[i][0];
+      max_node_id = vec_frd[thread_part]->nodes[i][0];
+    }
+    if (vec_frd[thread_part]->nodes[i][0]<min_node_id)
+    {
+      min_node_id=vec_frd[thread_part]->nodes[i][0];
+    }
+    if (vec_frd[thread_part]->nodes[i][0]>max_node_id)
+    {
+      max_node_id=vec_frd[thread_part]->nodes[i][0];
+    }    
+
+    output_nodes_ids.append(this->level_whitespace(5));
+    output_nodes_ids.append(std::to_string(vec_frd[thread_part]->nodes[i][0]) + "\n");
+    
+    //StopWatch.tick("thread_part " + std::to_string(thread_part) + "--" + " increment " + std::to_string(increment) + "-- linked_nodes_threadpool.size() " + std::to_string(linked_nodes_threadpool.size()) + " linked_nodes_threadpool[increment-1].size() " + std::to_string(linked_nodes_threadpool[increment-1].size())+ "--");
+
+    linked_nodes_threadpool[increment-1][thread_part].push_back(vec_frd[thread_part]->nodes[i][0]);    
+    linked_nodes_data_id_threadpool[increment-1][thread_part].push_back(int(i));
+  }
+  output_nodes.append(this->level_whitespace(4) + "</DataArray>\n");
+  output_nodes.append(this->level_whitespace(3) + "</Points>\n");
+
+  // sorting for faster search
+  auto p = sort_permutation(linked_nodes_threadpool[increment-1][thread_part]);
+  this->apply_permutation(linked_nodes_threadpool[increment-1][thread_part], p);
+  this->apply_permutation(linked_nodes_data_id_threadpool[increment-1][thread_part], p);
+
+  // write elements
+  for (size_t i = 0; i < vec_frd[thread_part]->elements.size(); i++)
+  {
+    if (i==0)
+    {
+      min_element_id = vec_frd[thread_part]->elements[i][0];
+      max_element_id = vec_frd[thread_part]->elements[i][0];
+    }
+    if (vec_frd[thread_part]->elements[i][0]<min_element_id)
+    {
+      min_element_id=vec_frd[thread_part]->elements[i][0];
+    }
+    if (vec_frd[thread_part]->elements[i][0]>max_element_id)
+    {
+      max_element_id=vec_frd[thread_part]->elements[i][0];
+    }
+
+    output_elements_ids.append(this->level_whitespace(5));
+    output_elements_ids.append(std::to_string(vec_frd[thread_part]->elements[i][0]) + "\n");
+
+    output_element_connectivity.append(this->level_whitespace(5));
+    output_element_connectivity.append(this->get_element_connectivity_vtk_linked_threadpool(vec_frd[thread_part]->elements[i][2],vec_frd[thread_part]->elements[i][1],thread_part,increment) + "\n");
+
+    output_element_offsets.append(this->level_whitespace(5));
+    output_element_offsets.append(this->get_element_offset_vtk_threadpool(vec_frd[thread_part]->elements[i][2],thread_part,increment) + "\n");
+
+    output_element_types.append(this->level_whitespace(5));
+    output_element_types.append(this->get_element_type_vtk(vec_frd[thread_part]->elements[i][1]) + "\n");
+  }
+
+  for (size_t i = 0; i < 1; i++)
+  { 
+    output = "";
+    std::vector<int> partial_node_ids;
+
+    // write header
+    output.append(this->level_whitespace(0) + "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt64\">\n");
+    output.append(this->level_whitespace(1) + "<UnstructuredGrid>\n");
+    output.append(this->level_whitespace(2) + "<Piece NumberOfPoints=\"" + std::to_string(vec_frd[thread_part]->nodes.size()) + "\" NumberOfCells=\"" + std::to_string(vec_frd[thread_part]->elements.size()) + "\">\n");  
+    output.append(this->level_whitespace(3) + "<PointData GlobalIds=\"ids\">\n");
+    //node ids
+    output.append(this->level_whitespace(4) + "<DataArray type=\"Int64\" IdType=\"1\" Name=\"ids\" format=\"ascii\" RangeMin=\"" + std::to_string(min_node_id) + "\" RangeMax=\"" + std::to_string(max_node_id)+ "\">\n");
+    output.append(output_nodes_ids);
+    output.append(this->level_whitespace(4) + "</DataArray>\n");
+  
+     //write result blocks
+    std::vector<int> data_ids = this->get_result_blocks_data_ids_thread_increment(thread_part,increment);
+    
+    for (size_t ii = 0; ii < data_ids.size(); ii++)
+    {
+      rangeMin_threadpool[increment-1][thread_part] = 0;
+      rangeMax_threadpool[increment-1][thread_part] = 0;
+      std::vector<int> node_data_ids = this->get_result_block_node_data_id_thread(data_ids[ii],thread_part);
+
+      // skip if nodes from point data is different than nodes number, like for data from CELS
+      if (node_data_ids.size()==vec_frd[thread_part]->nodes.size())
+      {
+        current_time = vec_frd[thread_part]->total_times[vec_frd[thread_part]->result_blocks[data_ids[ii]][4]];
+        // header
+        output.append(this->level_whitespace(4) + "<DataArray type=\"Float64\" ");
+        output.append("Name=\"" + vec_frd[thread_part]->result_block_type[vec_frd[thread_part]->result_blocks[data_ids[ii]][5]] + "\" ");
+        output.append("NumberOfComponents=\"" + std::to_string(vec_frd[thread_part]->result_block_components[vec_frd[thread_part]->result_blocks[data_ids[ii]][6]].size()) + "\" ");
+        for (size_t iii = 0; iii < vec_frd[thread_part]->result_block_components[vec_frd[thread_part]->result_blocks[data_ids[ii]][6]].size(); iii++)
+        {
+          output.append("ComponentName"+ std::to_string(iii) + " =\"" + vec_frd[thread_part]->result_block_components[vec_frd[thread_part]->result_blocks[data_ids[ii]][6]][iii] +"\" ");
+        }
+        output.append("format=\"ascii\" RangeMin=\"" + std::to_string(rangeMin_threadpool[increment-1][thread_part]) + "\" RangeMax=\"" + std::to_string(rangeMin_threadpool[increment-1][thread_part]) + "\">\n");
+        
+        for (size_t iii = 0; iii < node_data_ids.size(); iii++)
+        {
+          output.append(this->level_whitespace(5) + this->get_result_data_threadpool(data_ids[ii], node_data_ids[iii], thread_part,increment) + "\n");
+        }
+        // footer
+        output.append(this->level_whitespace(4) + "</DataArray>\n");
+      }else{
+        if (write_partial)
+        {
+          //log = "Partial " + vec_frd[thread_part]->result_block_type[vec_frd[thread_part]->result_blocks[data_ids[ii]][5]] + " - current increment " + std::to_string(current_increment) + " - current part " + std::to_string(current_part) + " \n";
+          //PRINT_INFO("%s", log.c_str());
+          
+          current_time = vec_frd[thread_part]->total_times[vec_frd[thread_part]->result_blocks[data_ids[ii]][4]];
+          // header
+          int component_size = int(vec_frd[thread_part]->result_block_components[vec_frd[thread_part]->result_blocks[data_ids[ii]][6]].size());
+          output.append(this->level_whitespace(4) + "<DataArray type=\"Float64\" ");
+          output.append("Name=\"" + vec_frd[thread_part]->result_block_type[vec_frd[thread_part]->result_blocks[data_ids[ii]][5]] + "\" ");
+          output.append("NumberOfComponents=\"" + std::to_string(vec_frd[thread_part]->result_block_components[vec_frd[thread_part]->result_blocks[data_ids[ii]][6]].size()) + "\" ");
+          
+          for (size_t iii = 0; iii < vec_frd[thread_part]->result_block_components[vec_frd[thread_part]->result_blocks[data_ids[ii]][6]].size(); iii++)
+          {
+            output.append("ComponentName"+ std::to_string(iii) + " =\"" + vec_frd[thread_part]->result_block_components[vec_frd[thread_part]->result_blocks[data_ids[ii]][6]][iii] +"\" ");
+          }
+          output.append("format=\"ascii\" RangeMin=\"" + std::to_string(rangeMin_threadpool[increment-1][thread_part]) + "\" RangeMax=\"" + std::to_string(rangeMin_threadpool[increment-1][thread_part]) + "\">\n");
+          
+          // sorting variables
+          int node_data_id = -1;          
+          std::vector<int> node_ids = this->get_result_block_node_id_thread(data_ids[ii],thread_part);
+          std::vector<int> tmp_node_data_ids = node_data_ids;
+          // sorting for faster search
+          auto p = sort_permutation(node_ids);
+          this->apply_permutation(node_ids, p);
+          this->apply_permutation(tmp_node_data_ids, p);
+
+          for (size_t iii = 0; iii < vec_frd[thread_part]->nodes.size(); iii++)
+          {
+            //check if there exists results for the node id
+            if (std::binary_search(node_ids.begin(), node_ids.end(), vec_frd[thread_part]->nodes[iii][0]))
+            {
+              auto lower = std::lower_bound(node_ids.begin(), node_ids.end(), vec_frd[thread_part]->nodes[iii][0]);
+              node_data_id = tmp_node_data_ids[lower-node_ids.begin()];
+            }else{
+              node_data_id = -1;
+              partial_node_ids.push_back(vec_frd[thread_part]->nodes[iii][0]);
+            }
+            output.append(this->level_whitespace(5) + this->get_result_data_partial_threadpool(data_ids[ii], node_data_id, component_size,thread_part,increment) + "\n");
+          }
+          //erase duplicates in partial_node_ids
+          std::sort(partial_node_ids.begin(),partial_node_ids.end());
+          partial_node_ids.erase(std::unique(partial_node_ids.begin(), partial_node_ids.end()), partial_node_ids.end());
+          // footer
+          output.append(this->level_whitespace(4) + "</DataArray>\n");
+        }else{
+          log = "WARNING! Result data skipped for Result Block " + vec_frd[thread_part]->result_block_type[vec_frd[thread_part]->result_blocks[data_ids[ii]][5]] + " - current increment " + std::to_string(current_increment) + " - current part " + std::to_string(current_part) + " \n";
+          log.append("node_data_ids.size() = " + std::to_string(node_data_ids.size()) + " != vec_frd[thread_part]->nodes.size() = " + std::to_string(vec_frd[thread_part]->nodes.size()) + " try it again with Option [Partial]\n");
+          PRINT_INFO("%s", log.c_str());
+        }
+      }
+    }
+    output.append(this->level_whitespace(3) + "</PointData>\n");
+    //element ids
+    output.append(this->level_whitespace(3) + "<CellData GlobalIds=\"ids\">\n");
+    output.append(this->level_whitespace(4) + "<DataArray type=\"Int64\" IdType=\"1\" Name=\"ids\" format=\"ascii\" RangeMin=\"" + std::to_string(min_element_id) + "\" RangeMax=\"" + std::to_string(max_element_id)+ "\">\n");
+    output.append(output_elements_ids);
+    output.append(this->level_whitespace(4) + "</DataArray>\n");
+    
+    if (thread_part > nparts - nparts_dat - 1) // check for possible cell data !!!
+    {
+      if (!current_part_ip_data[thread_part])
+      {
+        for (size_t ii = 0; ii < data_ids.size(); ii++)
+        {
+          rangeMin_threadpool[increment-1][thread_part] = 0;
+          rangeMax_threadpool[increment-1][thread_part] = 0;
+          std::vector<int> node_data_ids = this->get_result_block_node_data_id_thread(data_ids[ii],thread_part);
+
+          // skip if nodes from point data is different than nodes number, like for data from CELS
+          if (node_data_ids.size()==vec_frd[thread_part]->elements.size())
+          {
+            current_time = vec_frd[thread_part]->total_times[vec_frd[thread_part]->result_blocks[data_ids[ii]][4]];
+            // header
+            output.append(this->level_whitespace(4) + "<DataArray type=\"Float64\" ");
+            output.append("Name=\"" + vec_frd[thread_part]->result_block_type[vec_frd[thread_part]->result_blocks[data_ids[ii]][5]] + "\" ");
+            output.append("NumberOfComponents=\"" + std::to_string(vec_frd[thread_part]->result_block_components[vec_frd[thread_part]->result_blocks[data_ids[ii]][6]].size()) + "\" ");
+            for (size_t iii = 0; iii < vec_frd[thread_part]->result_block_components[vec_frd[thread_part]->result_blocks[data_ids[ii]][6]].size(); iii++)
+            {
+              output.append("ComponentName"+ std::to_string(iii) + " =\"" + vec_frd[thread_part]->result_block_components[vec_frd[thread_part]->result_blocks[data_ids[ii]][6]][iii] +"\" ");
+            }
+            output.append("format=\"ascii\" RangeMin=\"" + std::to_string(rangeMin_threadpool[increment-1][thread_part]) + "\" RangeMax=\"" + std::to_string(rangeMin_threadpool[increment-1][thread_part]) + "\">\n");
+            
+            for (size_t iii = 0; iii < node_data_ids.size(); iii++)
+            {
+              output.append(this->level_whitespace(5) + this->get_result_data_threadpool(data_ids[ii], node_data_ids[iii],thread_part,increment) + "\n");
+            }
+            // footer
+            output.append(this->level_whitespace(4) + "</DataArray>\n");
+          }
+        }
+      }
+    }
+    
+    // insert marking of PARTIAL Cells
+    if (write_partial)
+    {
+      std::vector<int> partial_element(vec_frd[thread_part]->elements_connectivity.size(),0);
+      // sorting for faster search
+      auto p = sort_permutation(partial_node_ids);
+      this->apply_permutation(partial_node_ids, p);
+
+      //check if element contains a partial node
+      for (size_t ii = 0; ii < vec_frd[thread_part]->elements_connectivity.size(); ii++)
+      {
+        for (size_t iii = 0; iii < vec_frd[thread_part]->elements_connectivity[ii].size(); iii++)
+        {
+          //check if there exists a partial node id
+          if (std::binary_search(partial_node_ids.begin(), partial_node_ids.end(), vec_frd[thread_part]->elements_connectivity[ii][iii]))
+          {
+            partial_element[ii] = 1;
+            iii = vec_frd[thread_part]->elements_connectivity[ii].size();
+          }
+        }
+      }
+      //write out partial cell data
+      // header
+      output.append(this->level_whitespace(4) + "<DataArray type=\"Int64\" ");
+      output.append("Name=\"Partial\" ");
+      output.append("NumberOfComponents=\"1\" ");
+      output.append("ComponentName1 =\"Partial\" ");
+      output.append("format=\"ascii\" RangeMin=\"0\" RangeMax=\"1\">\n");
+      
+      for (size_t ii = 0; ii < partial_element.size(); ii++)
+      {
+        output.append(this->level_whitespace(5) + std::to_string(partial_element[ii]) + "\n");
+      }
+      // footer
+      output.append(this->level_whitespace(4) + "</DataArray>\n");
+    }
+    // end PARTIAL
+    output.append(this->level_whitespace(3) + "</CellData>\n");
+    //append nodes and elements
+    output.append(output_nodes);
+    output.append(this->level_whitespace(3) + "<Cells>\n");
+    output.append(this->level_whitespace(4) + "<DataArray type=\"Int64\" Name=\"connectivity\" format=\"ascii\">\n");
+    output.append(output_element_connectivity);
+    output.append(this->level_whitespace(4) + "</DataArray>\n");
+    output.append(this->level_whitespace(4) + "<DataArray type=\"Int64\" Name=\"offsets\" format=\"ascii\">\n");
+    output.append(output_element_offsets);
+    output.append(this->level_whitespace(4) + "</DataArray>\n");
+    output.append(this->level_whitespace(4) + "<DataArray type=\"UInt8\" Name=\"types\" format=\"ascii\">\n");
+    output.append(output_element_types);
+    output.append(this->level_whitespace(4) + "</DataArray>\n");
+    output.append(this->level_whitespace(3) + "</Cells>\n");
+
+    // write footer
+    output.append(this->level_whitespace(2) + "</Piece>\n");  
+    output.append(this->level_whitespace(1) + "</UnstructuredGrid>\n");
+    output.append(this->level_whitespace(0) + "</VTKFile>\n");
+
+    this->write_to_file(thread_filepath_vtu,output);    
+  }
+
+  output = "";
+  output_nodes_ids = "";
+  output_nodes = "";
+  output_elements_ids = "";
+  output_element_connectivity = "";
+  output_element_offsets = "";
+  output_element_types = "";
+  current_offset_threadpool[increment-1][thread_part] = 0;
+  linked_nodes_threadpool[increment-1][thread_part].clear();
+  linked_nodes_data_id_threadpool[increment-1][thread_part].clear();
+  rangeMin_threadpool[increment-1].clear();
+  rangeMax_threadpool[increment-1].clear();
+  ++progress[0];
+  //StopWatch.tick("write part " + std::to_string(thread_part) + " increment "+ std::to_string(increment) + " path " + thread_filepath_vtu);
+
+  return true;
+}
+
 bool CoreResultsVtkWriter::write_vtu_unlinked()
 {
   std::string output = "";
@@ -1537,9 +1923,44 @@ std::string CoreResultsVtkWriter::get_increment()
   return increment;
 }
 
+std::string CoreResultsVtkWriter::get_increment_threadpool(int increment)
+{
+  std::string inc = std::to_string(increment);
+  std::string zeros = "";
+  if(inc.length()!=5)
+  {  
+    for (size_t i = inc.length(); i < 6; i++)
+    {
+      zeros.append("0");
+    }
+    inc = zeros + std::to_string(increment);
+  }
+  
+  return inc;
+}
+
 std::string CoreResultsVtkWriter::get_increment_time()
 {
-  std::string time = std::to_string(current_time); 
+  std::string time = "0";
+
+  for (size_t i = 0; i < frd_all->result_blocks.size(); i++)
+  {
+    if (frd_all->result_blocks[i][3]==current_increment)
+    {
+      current_time = frd_all->total_times[frd_all->result_blocks[i][4]];
+      time = std::to_string(current_time);
+      if (time == "-nan")
+      {
+        return "0";
+      }
+      return time;
+    }
+  }
+  
+  if (time == "-nan")
+  {
+    return "0";
+  }
   return time;
 }
 
@@ -1756,6 +2177,50 @@ std::string CoreResultsVtkWriter::get_element_connectivity_vtk_linked_thread(int
   return str_result;
 }
 
+std::string CoreResultsVtkWriter::get_element_connectivity_vtk_linked_threadpool(int element_connectivity_data_id, int element_type,int thread_part, int increment) // gets the connectivity already converted to vtk format
+{
+  std::string str_result = "";
+
+  std::vector<int> result_connectivity;
+
+  if (element_type == 4)
+  {
+    result_connectivity = vec_frd[thread_part]->elements_connectivity[element_connectivity_data_id];
+    //switch positions    
+    result_connectivity[12] = vec_frd[thread_part]->elements_connectivity[element_connectivity_data_id][16];
+    result_connectivity[13] = vec_frd[thread_part]->elements_connectivity[element_connectivity_data_id][17];
+    result_connectivity[14] = vec_frd[thread_part]->elements_connectivity[element_connectivity_data_id][18];
+    result_connectivity[15] = vec_frd[thread_part]->elements_connectivity[element_connectivity_data_id][19];
+    result_connectivity[16] = vec_frd[thread_part]->elements_connectivity[element_connectivity_data_id][12];
+    result_connectivity[17] = vec_frd[thread_part]->elements_connectivity[element_connectivity_data_id][13];
+    result_connectivity[18] = vec_frd[thread_part]->elements_connectivity[element_connectivity_data_id][14];
+    result_connectivity[19] = vec_frd[thread_part]->elements_connectivity[element_connectivity_data_id][15];
+  }else if (element_type == 5)
+  {
+    result_connectivity = vec_frd[thread_part]->elements_connectivity[element_connectivity_data_id];
+    //switch positions    
+    result_connectivity[9] = vec_frd[thread_part]->elements_connectivity[element_connectivity_data_id][12];
+    result_connectivity[10] = vec_frd[thread_part]->elements_connectivity[element_connectivity_data_id][13];
+    result_connectivity[11] = vec_frd[thread_part]->elements_connectivity[element_connectivity_data_id][14];
+    result_connectivity[12] = vec_frd[thread_part]->elements_connectivity[element_connectivity_data_id][9];
+    result_connectivity[13] = vec_frd[thread_part]->elements_connectivity[element_connectivity_data_id][10];
+    result_connectivity[14] = vec_frd[thread_part]->elements_connectivity[element_connectivity_data_id][11];
+  }else{
+    result_connectivity = vec_frd[thread_part]->elements_connectivity[element_connectivity_data_id];
+  }
+  
+  for (size_t i = 0; i < result_connectivity.size(); i++)
+  {
+    result_connectivity[i] = this->getParaviewNode_threadpool(result_connectivity[i],thread_part,increment);
+    str_result.append(std::to_string(result_connectivity[i]));
+    if (i!=result_connectivity.size()-1)
+    {
+      str_result.append(" ");
+    }
+  }
+  return str_result;
+}
+
 std::string CoreResultsVtkWriter::get_element_type_vtk(int element_type) // gets the element type already converted to vtk format
 {
   std::string str_result = "type ";
@@ -1806,6 +2271,16 @@ std::string CoreResultsVtkWriter::get_element_offset_vtk_thread(int element_conn
   return str_result;
 }
 
+std::string CoreResultsVtkWriter::get_element_offset_vtk_threadpool(int element_connectivity_data_id, int thread_part, int increment) // gets the element type already converted to vtk format
+{
+  std::string str_result = "offset ";
+  this->current_offset_threadpool[increment-1][thread_part] += int(vec_frd[thread_part]->elements_connectivity[element_connectivity_data_id].size());
+  
+  str_result = std::to_string(this->current_offset_threadpool[increment-1][thread_part]);
+
+  return str_result;
+}
+
 int CoreResultsVtkWriter::getParaviewNode(int frd_node_id)
 {
   // if dat file integration point data, no correct node will be found
@@ -1850,6 +2325,36 @@ int CoreResultsVtkWriter::getParaviewNode_thread(int frd_node_id, int thread_par
     {
       auto lower = std::lower_bound(linked_nodes_thread[thread_part].begin(), linked_nodes_thread[thread_part].end(), frd_node_id);
       return linked_nodes_data_id_thread[thread_part][lower - linked_nodes_thread[thread_part].begin()];
+    }
+    /*
+    for (size_t i = 0; i < frd->nodes.size(); i++)
+    {
+      if (frd->nodes[i][0] == frd_node_id)
+      {
+        return i;
+      }
+    }*/    
+  }else{
+    return frd_node_id;
+  }
+  
+  return -1;
+}
+
+int CoreResultsVtkWriter::getParaviewNode_threadpool(int frd_node_id, int thread_part,int increment)
+{
+  // if dat file integration point data, no correct node will be found
+  //check if a search is needed, like for element data without integration point data
+  
+  if (!current_part_ip_data[thread_part])
+  {
+    //connect with displacements
+    //auto lower = std::lower_bound(linked_nodes.begin(), linked_nodes.end(), frd_node_id);
+    //if (lower!=linked_nodes.end())    
+    if (std::binary_search(linked_nodes_threadpool[increment-1][thread_part].begin(), linked_nodes_threadpool[increment-1][thread_part].end(), frd_node_id))
+    {
+      auto lower = std::lower_bound(linked_nodes_threadpool[increment-1][thread_part].begin(), linked_nodes_threadpool[increment-1][thread_part].end(), frd_node_id);
+      return linked_nodes_data_id_threadpool[increment-1][thread_part][lower - linked_nodes_threadpool[increment-1][thread_part].begin()];
     }
     /*
     for (size_t i = 0; i < frd->nodes.size(); i++)
@@ -2503,6 +3008,33 @@ std::string CoreResultsVtkWriter::get_result_data_thread(int data_id, int node_d
   return str_result;  
 }
 
+std::string CoreResultsVtkWriter::get_result_data_threadpool(int data_id, int node_data_id, int thread_part, int increment)
+{
+  std::string str_result = "";
+  std::vector<double> result_component;
+
+  result_component = vec_frd[thread_part]->result_block_data[data_id][node_data_id];
+  
+  for (size_t i = 0; i < result_component.size(); i++)
+  {
+    if (result_component[i]<rangeMin_threadpool[increment-1][thread_part])
+    {
+      rangeMin_threadpool[increment-1][thread_part]=result_component[i];
+    }
+    if (result_component[i]>rangeMax_threadpool[increment-1][thread_part])
+    {
+      rangeMax_threadpool[increment-1][thread_part]=result_component[i];
+    }
+
+    str_result.append(ccx_iface->to_string_scientific(result_component[i]));
+    if (i!=result_component.size()-1)
+    {
+      str_result.append(" ");
+    }
+  }
+  return str_result;  
+}
+
 std::string CoreResultsVtkWriter::get_result_data_partial(int data_id, int node_data_id, int component_size)
 {
   std::string str_result = "";
@@ -2568,6 +3100,45 @@ std::string CoreResultsVtkWriter::get_result_data_partial_thread(int data_id, in
       if (result_component[i]>rangeMax_thread[thread_part])
       {
         rangeMax_thread[thread_part]=result_component[i];
+      }
+
+      str_result.append(ccx_iface->to_string_scientific(result_component[i]));
+      if (i!=result_component.size()-1)
+      {
+        str_result.append(" ");
+      }
+    }
+  }
+  
+  return str_result;  
+}
+
+std::string CoreResultsVtkWriter::get_result_data_partial_threadpool(int data_id, int node_data_id, int component_size, int thread_part, int increment)
+{
+  std::string str_result = "";
+  std::vector<double> result_component;
+
+  if (node_data_id == -1)
+  {
+    for (size_t i = 0; i < component_size; i++)
+    {
+      str_result.append(ccx_iface->to_string_scientific(0.));
+      if (i!=component_size-1)
+      {
+        str_result.append(" ");
+      }
+    }
+  }else{
+    result_component = vec_frd[thread_part]->result_block_data[data_id][node_data_id];
+    for (size_t i = 0; i < result_component.size(); i++)
+    {
+      if (result_component[i]<rangeMin_threadpool[increment-1][thread_part])
+      {
+        rangeMin_threadpool[increment-1][thread_part]=result_component[i];
+      }
+      if (result_component[i]>rangeMax_threadpool[increment-1][thread_part])
+      {
+        rangeMax_threadpool[increment-1][thread_part]=result_component[i];
       }
 
       str_result.append(ccx_iface->to_string_scientific(result_component[i]));

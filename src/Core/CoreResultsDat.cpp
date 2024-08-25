@@ -5,6 +5,9 @@
 #include "StopWatch.hpp"
 #include "loadUserOptions.hpp"
 
+#include "ThreadPool.hpp"
+#include <functional>
+
 #include <fstream>
 #include <iostream>
 
@@ -441,6 +444,7 @@ bool CoreResultsDat::read_parallel()
 
   int loop_c = 0;
   int number_of_result_blocks = dat_arrays.size();
+  /*
   while (number_of_result_blocks > 0)
   {
     if (number_of_result_blocks > max_threads)
@@ -456,16 +460,6 @@ bool CoreResultsDat::read_parallel()
       }
     }
     // wait till all threads are finished
-    /*
-    for (size_t i = 0; i < ReadThreads.size(); i++)
-    { 
-      ReadThreads[i].join();
-    }
-    number_of_result_blocks = number_of_result_blocks - ReadThreads.size();
-    ++loop_c;
-    ReadThreads.clear();
-    */
-
     int it=0;
     while (ReadThreads.size()>0)
     {
@@ -485,6 +479,20 @@ bool CoreResultsDat::read_parallel()
     }
     ++loop_c;
   }
+  */
+
+  ThreadPool tp;
+  tp.start(max_threads);
+  for (size_t i = 0; i < number_of_result_blocks; i++)
+  {
+      std::function<void()> f = std::bind(&CoreResultsDat::read_lines_thread, this,i,0);
+      tp.queueJob(f);
+  }
+  while(tp.busy())
+  {
+    update_progressbar();
+  }
+  tp.stop();
 
   /*
   log = "result_blocks.size() " + std::to_string(result_blocks.size()) + "\n";
@@ -521,6 +529,7 @@ bool CoreResultsDat::read_parallel()
 
   loop_c = 0;
   number_of_result_blocks = result_blocks.size();
+  /*
   while (number_of_result_blocks > 0)
   {
     if (number_of_result_blocks > max_threads)
@@ -536,15 +545,6 @@ bool CoreResultsDat::read_parallel()
       }
     }
     // wait till all threads are finished
-    /*
-    for (size_t i = 0; i < ReadThreads.size(); i++)
-    { 
-      ReadThreads[i].join();
-    }
-    number_of_result_blocks = number_of_result_blocks - ReadThreads.size();
-    ++loop_c;
-    ReadThreads.clear();
-    */
     int it=0;
     while (ReadThreads.size()>0)
     {
@@ -564,6 +564,20 @@ bool CoreResultsDat::read_parallel()
     }
     ++loop_c;
   }
+  */
+
+  ThreadPool tp2;
+  tp2.start(max_threads);
+  for (size_t i = 0; i < number_of_result_blocks; i++)
+  {
+      std::function<void()> f = std::bind(&CoreResultsDat::compute_predefined, this,i,0);
+      tp2.queueJob(f);
+  }
+  while(tp2.busy())
+  {
+    update_progressbar();
+  }
+  tp2.stop();
   
   this->check_element_sets();
 
