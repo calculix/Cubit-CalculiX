@@ -137,6 +137,7 @@ public:
   bool link_nodes_parallel(); // links the ids from frd/dat all
   bool link_nodes_thread(int thread_part, std::vector<int> node_ids, int thread_id); // links the ids from frd/dat all
   bool link_nodes_result_blocks_thread(int thread_part, std::vector<int> node_ids,int result_block_data_id, int thread_id); // links the result blocks from frd/dat all
+  bool link_nodes_result_blocks_threadpool(int thread_part, std::vector<int> node_ids,int result_block_data_id, int thread_id); // links the result blocks from frd/dat all
   bool link_nodes_fast(); // links the ids from frd/dat all fast...only possible if all node id vectors are of the same size
   bool link_elements(); // links the ids from frd/dat all
   bool link_elements_parallel(); // links the ids from frd/dat all

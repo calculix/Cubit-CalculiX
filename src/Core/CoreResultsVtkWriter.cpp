@@ -9,8 +9,8 @@
 #include "StopWatch.hpp"
 #include "loadUserOptions.hpp"
 
-//#include "ThreadPool.hpp"
-//#include <functional>
+#include "ThreadPool.hpp"
+#include <functional>
 
 #include <cmath>
 #include <fstream>
@@ -2870,11 +2870,7 @@ bool CoreResultsVtkWriter::link_nodes_parallel()
     }
   }
 
-  /*
-  ThreadPool tp;
-  tp.start(max_threads);
-  */
-
+/*
   current_increment = 0;
   for (size_t i = 0; i < max_increments; i++)
   {
@@ -2919,24 +2915,54 @@ bool CoreResultsVtkWriter::link_nodes_parallel()
         }
         ++loop_c; 
       }
-      
-      /*
-      for (size_t iii = 0; iii < number_of_parts; iii++)
-      {
-        std::function<void()> f = std::bind(&CoreResultsVtkWriter::link_nodes_result_blocks_thread, this,iii,tmp_part_node_ids[iii],data_ids[ii],0);
-        tp.queueJob(f);
-      }
-      
-      while(tp.busy())
-      {
-        update_progressbar();
-      }
-      */
     }
   }
-  //tp.stop();
-
   current_increment = 0;
+*/
+
+  // create data structure before using threadpool
+  current_increment = 0;
+  for (size_t i = 0; i < max_increments; i++)
+  {
+    ++current_increment;
+    std::vector<int> data_ids = this->get_result_blocks_data_ids_linked(); // get data ids for result blocks
+    for (size_t ii = 0; ii < data_ids.size(); ii++)
+    {
+      int number_of_parts = nparts - nparts_dat;      
+      
+      for (size_t iii = 0; iii < number_of_parts; iii++)
+      {
+        std::vector<std::vector<double>> tmp_result_block_data;
+        std::vector<std::vector<int>> tmp_result_block_node_data;   
+        vec_frd[iii]->result_block_data.push_back(tmp_result_block_data);
+        vec_frd[iii]->result_block_node_data.push_back(tmp_result_block_node_data);
+      }
+    }
+  }
+
+  ThreadPool tp;
+  tp.start(max_threads);
+  
+  current_increment = 0;
+  for (size_t i = 0; i < max_increments; i++)
+  {
+    ++current_increment;
+    std::vector<int> data_ids = this->get_result_blocks_data_ids_linked(); // get data ids for result blocks
+    for (size_t ii = 0; ii < data_ids.size(); ii++)
+    {
+      int number_of_parts = nparts - nparts_dat;
+      for (size_t iii = 0; iii < number_of_parts; iii++)
+      {
+        std::function<void()> f = std::bind(&CoreResultsVtkWriter::link_nodes_result_blocks_threadpool, this,iii,tmp_part_node_ids[iii],data_ids[ii],0);
+        tp.queueJob(f);
+      }
+    }
+  }
+  while(tp.busy())
+  {
+    update_progressbar();
+  }
+  tp.stop();
 
   return true;
 }
@@ -2982,11 +3008,31 @@ bool CoreResultsVtkWriter::link_nodes_result_blocks_thread(int thread_part, std:
       ++progress[thread_id];
     }
   }
-/*  
+
+  return true;
+}
+
+bool CoreResultsVtkWriter::link_nodes_result_blocks_threadpool(int thread_part, std::vector<int> node_ids,int result_block_data_id, int thread_id)
+{  
+  for (size_t i = 0; i < node_ids.size(); i++)
+  {
+    int node_data_id = -1;
+    if (std::binary_search(frd_all->sorted_result_node_ids[result_block_data_id].begin(), frd_all->sorted_result_node_ids[result_block_data_id].end(), node_ids[i]))
+    {
+      auto lower = std::lower_bound(frd_all->sorted_result_node_ids[result_block_data_id].begin(), frd_all->sorted_result_node_ids[result_block_data_id].end(), node_ids[i]);
+      node_data_id = frd_all->sorted_result_node_data_ids[result_block_data_id][lower - frd_all->sorted_result_node_ids[result_block_data_id].begin()];
+
+      vec_frd[thread_part]->result_block_data[result_block_data_id].push_back(frd_all->result_block_data[result_block_data_id][node_data_id]);
+      vec_frd[thread_part]->result_block_node_data[result_block_data_id].push_back(frd_all->result_block_node_data[result_block_data_id][node_data_id]);
+      vec_frd[thread_part]->result_block_node_data[result_block_data_id][vec_frd[thread_part]->result_block_node_data[result_block_data_id].size()-1][1] = int(vec_frd[thread_part]->result_block_data[result_block_data_id].size())-1;     
+      ++progress[thread_id];
+    }
+  }
+  
   std::string log;
   log = " thread_part " + std::to_string(thread_part) + " \n";
   PRINT_INFO("%s", log.c_str());
-*/    
+    
   return true;
 }
 
