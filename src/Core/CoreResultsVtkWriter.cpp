@@ -2864,9 +2864,9 @@ bool CoreResultsVtkWriter::link_nodes_parallel()
   {
     ++current_increment;
     std::vector<int> data_ids = this->get_result_blocks_data_ids_linked();
-    for (size_t i = 0; i < tmp_part_node_ids.size(); i++)
+    for (size_t ii = 0; ii < tmp_part_node_ids.size(); ii++)
     {
-      progress[max_threads] = progress[max_threads] + tmp_part_node_ids[i].size() * data_ids.size();
+      progress[max_threads] = progress[max_threads] + tmp_part_node_ids[ii].size() * data_ids.size();
     }
   }
 
@@ -2942,7 +2942,6 @@ bool CoreResultsVtkWriter::link_nodes_parallel()
 
   ThreadPool tp;
   tp.start(max_threads);
-  
   current_increment = 0;
   for (size_t i = 0; i < max_increments; i++)
   {
@@ -2963,6 +2962,10 @@ bool CoreResultsVtkWriter::link_nodes_parallel()
     update_progressbar();
   }
   tp.stop();
+
+  //std::string log;
+  //log = "linking nodes finished - progress[0] " + std::to_string(progress[0]) + " progress[max] " + std::to_string(progress[max_threads]) + " \n";
+  //PRINT_INFO("%s", log.c_str());
 
   return true;
 }
@@ -3005,8 +3008,8 @@ bool CoreResultsVtkWriter::link_nodes_result_blocks_thread(int thread_part, std:
       vec_frd[thread_part]->result_block_data[result_block_data_id].push_back(frd_all->result_block_data[result_block_data_id][node_data_id]);
       vec_frd[thread_part]->result_block_node_data[result_block_data_id].push_back(frd_all->result_block_node_data[result_block_data_id][node_data_id]);
       vec_frd[thread_part]->result_block_node_data[result_block_data_id][vec_frd[thread_part]->result_block_node_data[result_block_data_id].size()-1][1] = int(vec_frd[thread_part]->result_block_data[result_block_data_id].size())-1;     
-      ++progress[thread_id];
     }
+    ++progress[thread_id];
   }
 
   return true;
@@ -3024,15 +3027,15 @@ bool CoreResultsVtkWriter::link_nodes_result_blocks_threadpool(int thread_part, 
 
       vec_frd[thread_part]->result_block_data[result_block_data_id].push_back(frd_all->result_block_data[result_block_data_id][node_data_id]);
       vec_frd[thread_part]->result_block_node_data[result_block_data_id].push_back(frd_all->result_block_node_data[result_block_data_id][node_data_id]);
-      vec_frd[thread_part]->result_block_node_data[result_block_data_id][vec_frd[thread_part]->result_block_node_data[result_block_data_id].size()-1][1] = int(vec_frd[thread_part]->result_block_data[result_block_data_id].size())-1;     
-      ++progress[thread_id];
+      vec_frd[thread_part]->result_block_node_data[result_block_data_id][vec_frd[thread_part]->result_block_node_data[result_block_data_id].size()-1][1] = int(vec_frd[thread_part]->result_block_data[result_block_data_id].size())-1;
     }
+    ++progress[thread_id];
   }
   
-  std::string log;
-  log = " thread_part " + std::to_string(thread_part) + " \n";
-  PRINT_INFO("%s", log.c_str());
-    
+  //std::string log;
+  //log = " thread_part " + std::to_string(thread_part) + " result_block_data_id " + std::to_string(result_block_data_id)  + " progress[thread_id] " + std::to_string(progress[thread_id]) + " \n";
+  //PRINT_INFO("%s", log.c_str());
+  
   return true;
 }
 
@@ -5778,7 +5781,7 @@ std::vector<std::vector<double>> CoreResultsVtkWriter::compute_integration_point
 
 void CoreResultsVtkWriter::update_progressbar()
 {
-  //std::string log;
+  std::string log;
   const auto t_end = std::chrono::high_resolution_clock::now();
   int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
   if (duration > 500)
@@ -5793,6 +5796,8 @@ void CoreResultsVtkWriter::update_progressbar()
     }
 
     //log = "max lines " + std::to_string(progress[progress.size()-1]) + " \n";
+    //PRINT_INFO("%s", log.c_str());
+    //log = "thread 0  lines " + std::to_string(progress[0]) + " \n";
     //PRINT_INFO("%s", log.c_str());
 
     progressbar->percent(double(part)/double(progress[progress.size()-1]));

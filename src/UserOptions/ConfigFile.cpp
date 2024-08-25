@@ -205,7 +205,11 @@ int ConfigFile::standard_num_entry(std::string option)
         standard_value = 8;
     }else if (option == "ConverterThreads")
     {
-        standard_value = 8;
+        #ifdef WIN32
+            standard_value = 1;
+        #else
+            standard_value = 8;
+        #endif
     }
     
     return standard_value;
