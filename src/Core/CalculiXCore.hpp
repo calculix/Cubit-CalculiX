@@ -31,7 +31,9 @@ class CoreResults;
 class CoreTimer;
 class CoreCustomLines;
 class CoreDraw;
+class PlotChart;
 
+class Claro;
 class MeshExportInterface;
 class MaterialInterface;
 
@@ -47,6 +49,7 @@ public:
   bool use_ccx_logfile = false;
   bool use_ccx_autocleanup = true;
   std::vector<std::vector<std::string>> sideset_face_data;
+  Claro* gui;
 
   bool print_to_log(std::string str_log);
   bool init(); // init all core objects
@@ -175,6 +178,7 @@ public:
   bool set_job_conversion(int job_id, int conversion); // sets the paraview conversion value for the job
   bool result_cgx_job(int job_id); // opens the results with cgx
   bool result_paraview_job(int job_id); // opens the results with paraview
+  bool result_plot_job(int job_id); // plots the results
   std::vector<std::string> get_job_data(int job_id);
   std::vector<std::string> get_job_console_output(int job_id);
   std::vector<std::string> get_job_cvg(int job_id);
@@ -334,6 +338,7 @@ public:
   CoreDraw *draw;
   MeshExportInterface *me_iface;
   MaterialInterface *mat_iface;
+  PlotChart *plotchart;
 };
 
 #endif // CALCULIXCore_HPP

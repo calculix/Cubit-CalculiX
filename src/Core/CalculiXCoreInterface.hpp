@@ -135,6 +135,7 @@ public:
   bool set_job_conversion(int job_id, int conversion); // sets the paraview conversion value for the job
   bool result_cgx_job(int job_id); // opens the results with cgx
   bool result_paraview_job(int job_id); // opens the results with paraview
+  bool result_plot_job(int job_id); // plots the results
   std::vector<std::string> get_job_data(int job_id);
   std::vector<std::string> get_job_console_output(int job_id);
   std::vector<std::string> get_job_cvg(int job_id);

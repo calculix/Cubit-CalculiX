@@ -13,6 +13,8 @@
 #include <algorithm>
 #include <cmath>
 
+
+#include "Claro.hpp"
 #include "CubitInterface.hpp"
 #include "CubitCoreformInterface.hpp"
 #include "CubitMessage.hpp"
@@ -47,6 +49,7 @@
 #include "CoreCustomLines.hpp"
 #include "loadUserOptions.hpp"
 #include "CoreDraw.hpp"
+#include "PlotChart.hpp"
 
 #include <Utility/Eigen/Eigenvalues>
 
@@ -2538,6 +2541,22 @@ bool CalculiXCore::result_cgx_job(int job_id)
 bool CalculiXCore::result_paraview_job(int job_id)
 {
   return jobs->result_paraview_job(job_id);
+}
+
+bool CalculiXCore::result_plot_job(int job_id)
+{
+  
+  std::string log;
+  log = "plotting job "+ std::to_string(job_id) + "\n";
+  PRINT_INFO("%s", log.c_str());
+
+  gui = Claro::instance();
+  plotchart = new PlotChart(nullptr);
+  plotchart->setAttribute(Qt::WA_DeleteOnClose);
+  plotchart->show();
+
+  //return jobs->result_paraview_job(job_id);
+  return true;
 }
 
 std::vector<std::string> CalculiXCore::get_job_data(int job_id)

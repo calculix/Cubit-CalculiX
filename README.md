@@ -13,9 +13,9 @@ Or just use the links.
 [Windows Build](https://www.maschinenbauer.at/upload/build-windows-2024-7.zip)
 [Linux Build](https://www.maschinenbauer.at/upload/build-linux-2024-7.zip)
 
-This component was build with Cubit 2024.3! 
+This component was build with Cubit 2024.8! 
 
-Tested with Cubit 2024.3 on Windows 10 and Ubuntu 22.04
+Tested with Cubit 2024.8 on Windows 10 and Ubuntu 22.04
 
 # Key Features
 Definition of:
