@@ -1,10 +1,13 @@
 #ifndef CALCULIXCORE_HPP
 #define CALCULIXCORE_HPP
 
-#include <QIcon>
-#include <QString>
 #include <vector>
 #include <string>
+#include <QIcon>
+#include <QString>
+#include <QList>
+#include <QWidget>
+
 
 class CoreBlocks;
 class CoreMaterials;
@@ -49,8 +52,8 @@ public:
   bool use_ccx_logfile = false;
   bool use_ccx_autocleanup = true;
   std::vector<std::vector<std::string>> sideset_face_data;
-  Claro* gui;
 
+  bool cmd(std::string cmd); // executes a cubit command with appending to the history
   bool print_to_log(std::string str_log);
   bool init(); // init all core objects
   bool init2(); // init material core and interfaces

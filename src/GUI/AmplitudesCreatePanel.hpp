@@ -17,6 +17,7 @@
 #include <QRadioButton>
 #include <QCheckBox>
 
+class CalculiXCoreInterface;
 class PanelTable;
 
 class AmplitudesCreatePanel : public QWidget
@@ -28,6 +29,7 @@ public:
   ~AmplitudesCreatePanel();
 
   bool isInitialized;
+  CalculiXCoreInterface *ccx_iface;
   
 private slots:
   void on_pushButton_apply_clicked(bool);

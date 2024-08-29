@@ -12,6 +12,7 @@ public:
   CalculiXCoreInterface();
   ~CalculiXCoreInterface();
 	
+  bool cmd(std::string cmd); // executes a cubit command with appending to the history
   bool set_use_ccx_autocleanup(bool bool_use);
   bool set_use_ccx_logfile(bool bool_use);
   bool init_pythoninterface();

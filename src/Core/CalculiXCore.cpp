@@ -13,8 +13,7 @@
 #include <algorithm>
 #include <cmath>
 
-
-#include "Claro.hpp"
+//#include "CubitGuiUtil.hpp"
 #include "CubitInterface.hpp"
 #include "CubitCoreformInterface.hpp"
 #include "CubitMessage.hpp"
@@ -116,6 +115,42 @@ CalculiXCore::~CalculiXCore()
     delete customlines;
   if(draw)
     delete draw;
+}
+
+bool CalculiXCore::cmd(std::string cmd)
+{
+  /*
+  QWidget *mCommandWindowWidget = claro->findChild<QWidget *>("mCommandWindow");;
+  CommandWindow *mCommandWindow = dynamic_cast<CommandWindow*>(mCommandWindowWidget);
+  QWidget *CommandWindow = claro->findChild<QWidget *>("mHistoryWindow");
+  //QWidget *HistoryWindow = claro->findChild<QWidget *>("mHistoryWindow");
+  
+  auto f = [&](const std::string& str_cmd)
+  {
+    //CommandWindow->addExternalCommand(str_cmd.c_str());
+    //HistoryWindow->add_history(str_cmd.c_str());
+    mCommandWindow->insert_command(QString::fromStdString(str_cmd.c_str()));
+  };
+
+  CubitInterface::cubit_or_python_cmds({cmd}, f);
+
+
+  QList<QWidget *> widgets = claro->findChildren<QWidget *>();
+  foreach(QWidget *w, widgets) {
+    if (w->objectName()!="")
+    {
+      log = "object name " + w->objectName().toStdString() + "\n";
+      PRINT_INFO("%s", log.c_str());
+    }
+  }
+
+  */
+
+  //-->>>
+  //CubitGuiUtil::send_cubit_command(cmd.c_str());
+  CubitInterface::cmd(cmd.c_str());
+
+  return true;
 }
 
 bool CalculiXCore::print_to_log(std::string str_log)
@@ -2545,18 +2580,43 @@ bool CalculiXCore::result_paraview_job(int job_id)
 
 bool CalculiXCore::result_plot_job(int job_id)
 {
-  
+  bool plot_possible = false;
+  int node_id = 2;
+  std::vector<int> increments;
+  std::string result_block_type="STRESS";
+  std::string result_block_component="SXX";
+  QString windowtitle = "FRD";
+  QString title = "node id";
+  QString x_axis = QString::fromStdString(result_block_type);
+  QString y_axis = QString::fromStdString(result_block_component);
+  std::vector<double> x_data;
+  std::vector<double> y_data;
+
   std::string log;
   log = "plotting job "+ std::to_string(job_id) + "\n";
   PRINT_INFO("%s", log.c_str());
 
-  gui = Claro::instance();
-  plotchart = new PlotChart(nullptr);
-  plotchart->setAttribute(Qt::WA_DeleteOnClose);
-  plotchart->show();
+  increments = frd_get_total_increments(job_id);
+  //double frd_get_time_from_total_increment(int job_id, int total_increment); // returns a the time for a total increment
 
-  //return jobs->result_paraview_job(job_id);
-  return true;
+  for (size_t i = 0; i < increments.size(); i++)
+  {
+    x_data.push_back(increments[i]);
+    y_data.push_back(frd_get_node_value(job_id,node_id, increments[i], result_block_type,result_block_component));
+  }
+
+  if ((x_data.size()>0)&&(x_data.size()==y_data.size()))
+  {
+    plot_possible = true;
+  }
+    
+  if (plot_possible)
+  {
+    plotchart = new PlotChart(nullptr,windowtitle, title, x_axis, y_axis, x_data, y_data);
+    plotchart->show();
+  }  
+
+  return plot_possible;
 }
 
 std::vector<std::string> CalculiXCore::get_job_data(int job_id)

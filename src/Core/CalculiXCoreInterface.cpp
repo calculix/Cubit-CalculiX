@@ -7,6 +7,11 @@ CalculiXCoreInterface::CalculiXCoreInterface()
 CalculiXCoreInterface::~CalculiXCoreInterface()
 {}
 
+bool CalculiXCoreInterface::cmd(std::string cmd)
+{
+  return ccx_core.cmd(cmd);
+}
+
 bool CalculiXCoreInterface::set_use_ccx_autocleanup(bool bool_use)
 {
   ccx_core.use_ccx_autocleanup = bool_use;

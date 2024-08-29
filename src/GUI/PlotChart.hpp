@@ -7,6 +7,9 @@
 #include <QChart>
 #include <QChartView>
 #include <QLineSeries>
+#include <QGridLayout>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
 
 
 class PlotChart : public QWidget
@@ -14,14 +17,20 @@ class PlotChart : public QWidget
   Q_OBJECT
   
 public:
-  explicit PlotChart(QWidget *parent);
+  explicit PlotChart(QWidget *parent,QString windowtitle, QString title, QString x_axis, QString y_axis, std::vector<double> x_data,  std::vector<double> y_data);
   ~PlotChart();
   
   bool isInitialized=false;
-//private slots:
-  
-//private: 
+  /*QString windowtitle;
+  QString title;
+  QString x_axis;
+  QString y_axis;
+  std::vector<double> x_data;
+  std::vector<double> y_data;*/
 
+  QGridLayout* gridLayout;
+  QHBoxLayout* boxLayout_window;
+  QVBoxLayout* boxLayout_widget;
 };
 
 #endif // PLOTCHART_HPP
