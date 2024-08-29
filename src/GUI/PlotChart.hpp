@@ -7,6 +7,8 @@
 #include <QChart>
 #include <QChartView>
 #include <QLineSeries>
+#include <QList>
+#include <QAbstractAxis> 
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QVBoxLayout>

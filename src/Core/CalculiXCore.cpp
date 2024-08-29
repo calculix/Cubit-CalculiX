@@ -2550,34 +2550,108 @@ bool CalculiXCore::result_paraview_job(int job_id)
   return jobs->result_paraview_job(job_id);
 }
 
-bool CalculiXCore::result_plot_job(int job_id)
-{
+bool CalculiXCore::result_plot_job_frd(int job_id,int x_node_id, std::string x_block_type, std::string x_block_component, bool x_increment,bool x_time,int y_node_id, std::string y_block_type, std::string y_block_component, bool y_increment, bool y_time,QString title,QString x_axis,QString y_axis)
+{ 
   bool plot_possible = false;
-  int node_id = 2;
   std::vector<int> increments;
-  std::string result_block_type="STRESS";
-  std::string result_block_component="SXX";
-  QString windowtitle = "FRD";
-  QString title = "node id";
-  QString x_axis = QString::fromStdString(result_block_type);
-  QString y_axis = QString::fromStdString(result_block_component);
+  std::vector<double> times;
+  QString windowtitle = "FRD Plot";
   std::vector<double> x_data;
   std::vector<double> y_data;
 
-  std::string log;
-  log = "plotting job "+ std::to_string(job_id) + "\n";
-  PRINT_INFO("%s", log.c_str());
+  //std::string log;
+  //log = "plotting job "+ std::to_string(job_id) + "\n";
+  //PRINT_INFO("%s", log.c_str());
 
   increments = frd_get_total_increments(job_id);
-  //double frd_get_time_from_total_increment(int job_id, int total_increment); // returns a the time for a total increment
-
   for (size_t i = 0; i < increments.size(); i++)
   {
-    x_data.push_back(increments[i]);
-    y_data.push_back(frd_get_node_value(job_id,node_id, increments[i], result_block_type,result_block_component));
+    times.push_back(frd_get_time_from_total_increment(job_id,increments[i]));
   }
 
-  if ((x_data.size()>0)&&(x_data.size()==y_data.size()))
+  //x data
+  if (x_increment)
+  {
+    for (size_t i = 0; i < increments.size(); i++)
+    {
+      x_data.push_back(increments[i]);
+    }
+  }
+  if (x_time)
+  {
+    for (size_t i = 0; i < times.size(); i++)
+    {
+      x_data.push_back(times[i]);
+    }
+  }
+  if (x_node_id!=-1)
+  {
+    for (size_t i = 0; i < increments.size(); i++)
+    {
+      x_data.push_back(frd_get_node_value(job_id,x_node_id, increments[i], x_block_type,x_block_component));
+    }
+  }
+
+  //y data
+  if (y_increment)
+  {
+    for (size_t i = 0; i < increments.size(); i++)
+    {
+      y_data.push_back(increments[i]);
+    }
+  }
+  if (y_time)
+  {
+    for (size_t i = 0; i < times.size(); i++)
+    {
+      y_data.push_back(times[i]);
+    }
+  }
+  if (y_node_id!=-1)
+  {
+    for (size_t i = 0; i < increments.size(); i++)
+    {
+      y_data.push_back(frd_get_node_value(job_id,y_node_id, increments[i], y_block_type,y_block_component));
+    }
+  }
+
+  if (x_axis=="")
+  {
+    std::string tmp;
+    if (x_increment)
+    {
+      tmp = "Increment";
+    }
+    if (x_time)
+    {
+      tmp = "Time";
+    }
+    if (x_node_id!=-1)
+    {
+      tmp = "Node ID " + std::to_string(x_node_id) + ", " + x_block_type + "[" + x_block_component + "]";
+    }
+    x_axis = QString::fromStdString(tmp);
+  }
+  if (y_axis=="")
+  {
+    std::string tmp;
+    if (y_increment)
+    {
+      tmp = "Increment";
+    }
+    if (y_time)
+    {
+      tmp = "Time";
+    }
+    if (y_node_id!=-1)
+    {
+      tmp = "Node ID " + std::to_string(y_node_id) + ", " + y_block_type + "[" + y_block_component + "]";
+    }
+    y_axis = QString::fromStdString(tmp);
+  }
+  
+
+  if ((x_data.size()>0)&&(y_data.size()>0)&&(x_data.size()==y_data.size()))
   {
     plot_possible = true;
   }
@@ -2587,6 +2661,14 @@ bool CalculiXCore::result_plot_job(int job_id)
     plotchart = new PlotChart(nullptr,windowtitle, title, x_axis, y_axis, x_data, y_data);
     plotchart->show();
   }  
+
+  return plot_possible;
+}
+
+bool CalculiXCore::result_plot_job_dat(int job_id)
+{
+  bool plot_possible = false;
+  
 
   return plot_possible;
 }

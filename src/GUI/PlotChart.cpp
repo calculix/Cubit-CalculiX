@@ -17,7 +17,7 @@ PlotChart::PlotChart(QWidget* parent,QString windowtitle, QString title, QString
   gridLayout->addLayout(boxLayout_window,1,1, Qt::AlignRight);
 
   QtCharts::QLineSeries *series = new QtCharts::QLineSeries(this);
-
+  series->setPointsVisible();
   for (size_t i = 0; i < x_data.size(); i++)
   {
     series->append(x_data[i], y_data[i]);
@@ -28,6 +28,9 @@ PlotChart::PlotChart(QWidget* parent,QString windowtitle, QString title, QString
   chart->addSeries(series);
   chart->createDefaultAxes();
   chart->setTitle(title);
+  QList<QtCharts::QAbstractAxis*> axes = chart->axes();
+  axes[0]->setTitleText(x_axis);
+  axes[1]->setTitleText(y_axis);
 
   QtCharts::QChartView *chartView = new QtCharts::QChartView(chart,this);
   chartView->setRenderHint(QPainter::Antialiasing);
@@ -35,16 +38,16 @@ PlotChart::PlotChart(QWidget* parent,QString windowtitle, QString title, QString
   this->setAttribute(Qt::WA_DeleteOnClose);
   boxLayout_window->addWidget(chartView);
 
-  std::string log;
-  log = "plotting \n";
-  PRINT_INFO("%s", log.c_str());
+  //std::string log;
+  //log = "plotting \n";
+  //PRINT_INFO("%s", log.c_str());
 
   isInitialized = true;
 }
 
 PlotChart::~PlotChart()
 {
-  std::string log;
-  log = "closing plot for job \n";
-  PRINT_INFO("%s", log.c_str());
+  //std::string log;
+  //log = "closing plot for job \n";
+  //PRINT_INFO("%s", log.c_str());
 }
