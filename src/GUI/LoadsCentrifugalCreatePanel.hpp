@@ -15,6 +15,8 @@
 #include <QTableWidget>
 #include <QLineEdit>
 
+class CalculiXCoreInterface;
+
 class LoadsCentrifugalCreatePanel : public QWidget
 {
   Q_OBJECT
@@ -24,6 +26,7 @@ public:
   ~LoadsCentrifugalCreatePanel();
 
   bool isInitialized;
+  CalculiXCoreInterface *ccx_iface;
   
 private slots:
   void on_pushButton_apply_clicked(bool);

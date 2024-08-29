@@ -1,5 +1,6 @@
 #include "SurfaceInteractionsCreatePanel.hpp"
 #include "PanelTable.hpp"
+#include "CalculiXCoreInterface.hpp"
 
 #include "CubitInterface.hpp"
 #include "Broker.hpp"
@@ -12,6 +13,7 @@ SurfaceInteractionsCreatePanel::SurfaceInteractionsCreatePanel(QWidget *parent) 
 {
   if(isInitialized)
     return;
+  CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
   int labelWidth = 120;
   //this->setMinimumSize(1000,300);
   frame_1 = new QFrame();
@@ -217,7 +219,8 @@ void SurfaceInteractionsCreatePanel::on_pushButton_apply_clicked(bool)
   
   for (size_t i = 0; i < commands.size(); i++)
   {
-    CubitInterface::cmd(commands[int(i)].toStdString().c_str());
+    //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
+    ccx_iface->cmd(commands[int(i)].toStdString());
   }
 }
 

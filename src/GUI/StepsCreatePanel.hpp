@@ -17,6 +17,8 @@
 #include <QRadioButton>
 #include <QCheckBox>
 
+class CalculiXCoreInterface;
+
 class StepsCreatePanel : public QWidget
 {
   Q_OBJECT
@@ -26,6 +28,7 @@ public:
   ~StepsCreatePanel();
 
   bool isInitialized;
+  CalculiXCoreInterface *ccx_iface;
   
 private slots:
   void on_pushButton_apply_clicked(bool);

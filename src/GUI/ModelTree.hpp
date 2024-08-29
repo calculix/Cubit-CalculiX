@@ -1,4 +1,3 @@
-
 #ifndef MODELTREE_HPP
 #define MODELTREE_HPP
 

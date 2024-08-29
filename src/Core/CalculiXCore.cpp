@@ -13,7 +13,7 @@
 #include <algorithm>
 #include <cmath>
 
-//#include "CubitGuiUtil.hpp"
+#include "CubitGuiUtil.hpp"
 #include "CubitInterface.hpp"
 #include "CubitCoreformInterface.hpp"
 #include "CubitMessage.hpp"
@@ -119,36 +119,8 @@ CalculiXCore::~CalculiXCore()
 
 bool CalculiXCore::cmd(std::string cmd)
 {
-  /*
-  QWidget *mCommandWindowWidget = claro->findChild<QWidget *>("mCommandWindow");;
-  CommandWindow *mCommandWindow = dynamic_cast<CommandWindow*>(mCommandWindowWidget);
-  QWidget *CommandWindow = claro->findChild<QWidget *>("mHistoryWindow");
-  //QWidget *HistoryWindow = claro->findChild<QWidget *>("mHistoryWindow");
-  
-  auto f = [&](const std::string& str_cmd)
-  {
-    //CommandWindow->addExternalCommand(str_cmd.c_str());
-    //HistoryWindow->add_history(str_cmd.c_str());
-    mCommandWindow->insert_command(QString::fromStdString(str_cmd.c_str()));
-  };
-
-  CubitInterface::cubit_or_python_cmds({cmd}, f);
-
-
-  QList<QWidget *> widgets = claro->findChildren<QWidget *>();
-  foreach(QWidget *w, widgets) {
-    if (w->objectName()!="")
-    {
-      log = "object name " + w->objectName().toStdString() + "\n";
-      PRINT_INFO("%s", log.c_str());
-    }
-  }
-
-  */
-
-  //-->>>
-  //CubitGuiUtil::send_cubit_command(cmd.c_str());
-  CubitInterface::cmd(cmd.c_str());
+  // all commands send with CubitGuiUtil will get listed in the history
+  CubitGuiUtil::send_cubit_command(cmd.c_str());
 
   return true;
 }

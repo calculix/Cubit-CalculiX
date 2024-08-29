@@ -1,5 +1,6 @@
 #include "StepsModifyParameterPanel.hpp"
 #include "PanelTable.hpp"
+#include "CalculiXCoreInterface.hpp"
 
 #include "CubitInterface.hpp"
 #include "Broker.hpp"
@@ -12,6 +13,7 @@ StepsModifyParameterPanel::StepsModifyParameterPanel(QWidget *parent) :
 {
   if(isInitialized)
     return;
+  CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
   int labelWidth = 135;
   //this->setMinimumSize(1000,300);
   GridLayout = new QGridLayout(this);
@@ -198,6 +200,7 @@ void StepsModifyParameterPanel::on_pushButton_apply_clicked(bool)
   
   for (size_t i = 0; i < commands.size(); i++)
   {
-    CubitInterface::cmd(commands[int(i)].toStdString().c_str());
+    //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
+    ccx_iface->cmd(commands[int(i)].toStdString());
   }
 }

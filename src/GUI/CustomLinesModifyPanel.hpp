@@ -18,6 +18,8 @@
 #include <QCheckBox>
 #include <QString>
 
+class CalculiXCoreInterface;
+
 class CustomLinesModifyPanel : public QWidget
 {
   Q_OBJECT
@@ -27,6 +29,7 @@ public:
   ~CustomLinesModifyPanel();
 
   bool isInitialized;
+  CalculiXCoreInterface *ccx_iface;
   
 private slots:
   void on_pushButton_apply_clicked(bool);

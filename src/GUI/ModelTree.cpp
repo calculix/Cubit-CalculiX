@@ -1,4 +1,3 @@
-
 #include "ModelTree.hpp"
 #include "BlocksTree.hpp"
 #include "NodesetTree.hpp"
@@ -2020,7 +2019,8 @@ void ModelTree::execContextMenuAction(){
       if(contextMenuAction[0][1]==0) //Action1
       {
         std::string command = "ccx draw load_all";
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }
     }else if (contextMenuAction[0][0]==9) //LoadsForcesTree
     {
@@ -2030,7 +2030,8 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==1) //Action2
       {
         std::string command = "ccx draw load_force_all";
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }
       else if (contextMenuAction[0][1]==2) //Action3
       {
@@ -2044,7 +2045,8 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==5) //Action6
       {
         std::string command = "ccx draw load force " + std::to_string(contextMenuAction[0][2]);
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }
     }else if (contextMenuAction[0][0]==10) //LoadsPressuresTree
     {
@@ -2054,7 +2056,8 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==1) //Action2
       {
         std::string command = "ccx draw load_pressure_all";
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }else if (contextMenuAction[0][1]==2) //Action3
       {
         this->setWidgetInCmdPanelMarker("FEAPressureModify");
@@ -2067,7 +2070,8 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==5) //Action6
       {
         std::string command = "ccx draw load pressure " + std::to_string(contextMenuAction[0][2]);
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }
     }else if (contextMenuAction[0][0]==11) //LoadsHeatfluxesTree
     {
@@ -2077,7 +2081,8 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==1) //Action2
       {
         std::string command = "ccx draw load_heatflux_all";
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }else if (contextMenuAction[0][1]==2) //Action3
       {
         this->setWidgetInCmdPanelMarker("FEAHeatfluxModify");
@@ -2090,7 +2095,8 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==5) //Action6
       {
         std::string command = "ccx draw load heatflux " + std::to_string(contextMenuAction[0][2]);
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }
     }else if (contextMenuAction[0][0]==12) //LoadsGravityTree
     {
@@ -2100,7 +2106,8 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==1) //Action2
       {
         std::string command = "ccx draw load_gravity_all";
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }else if (contextMenuAction[0][1]==2) //Action3
       {
         this->setWidgetInCmdPanelMarker("CCXLoadsGravityModify");
@@ -2110,7 +2117,8 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==4) //Action5
       {
         std::string command = "ccx draw load gravity " + std::to_string(contextMenuAction[0][2]);
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }
     }else if (contextMenuAction[0][0]==13) //LoadsCentrifugalTree
     {
@@ -2120,7 +2128,8 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==1) //Action2
       {
         std::string command = "ccx draw load_centrifugal_all";
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }else if (contextMenuAction[0][1]==2) //Action3
       {
         this->setWidgetInCmdPanelMarker("CCXLoadsCentrifugalModify");
@@ -2130,14 +2139,16 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==4) //Action5
       {
         std::string command = "ccx draw load centrifugal " + std::to_string(contextMenuAction[0][2]);
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }
     }else if (contextMenuAction[0][0]==38) //BCsTree
     {
       if(contextMenuAction[0][1]==0)
       {
         std::string command = "ccx draw bc_all";
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }
     }else if (contextMenuAction[0][0]==14) //BCsDisplacementsTree
     {
@@ -2147,7 +2158,8 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==1) //Action2
       {
         std::string command = "ccx draw bc_displacement_all";
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }else if (contextMenuAction[0][1]==2) //Action3
       {
         this->setWidgetInCmdPanelMarker("FEADisplacementModify");
@@ -2160,7 +2172,8 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==5) //Action6
       {
         std::string command = "ccx draw bc displacement " + std::to_string(contextMenuAction[0][2]);
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }
     }else if (contextMenuAction[0][0]==15) //BCsTemperaturesTree
     {
@@ -2170,7 +2183,8 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==1) //Action2
       {
         std::string command = "ccx draw bc_temperature_all";
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }else if (contextMenuAction[0][1]==2) //Action3
       {
         this->setWidgetInCmdPanelMarker("FEATemperatureModify");
@@ -2183,7 +2197,8 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==5) //Action6
       {
         std::string command = "ccx draw bc temperature " + std::to_string(contextMenuAction[0][2]);
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }
     }else if (contextMenuAction[0][0]==16) //HistoryOutputsTree
     {
@@ -2281,12 +2296,14 @@ void ModelTree::execContextMenuAction(){
         for (size_t i=0; i < step_ids.size(); i++)
         {
           std::string command = "ccx draw step " + std::to_string(step_ids[i]);
-          CubitInterface::cmd(command.c_str());
+          //CubitInterface::cmd(command.c_str());
+          ccx_iface->cmd(command);
         }
       }else if (contextMenuAction[0][1]==4) //Action5
       {
         std::string command = "ccx draw step " + std::to_string(contextMenuAction[0][2]);
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }
     }else if (contextMenuAction[0][0]==23) //StepsLoadsTree
     {
@@ -2296,7 +2313,8 @@ void ModelTree::execContextMenuAction(){
       }else if(contextMenuAction[0][1]==1) //Action2
       {
         std::string command = "ccx draw step " + std::to_string(contextMenuAction[0][2]) + " load_all";
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }
     }else if (contextMenuAction[0][0]==24) //StepsLoadsForcesTree
     {
@@ -2318,11 +2336,13 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==5) //Action6
       {
         std::string command = "ccx draw step " + std::to_string(contextMenuAction[0][2]) + " load_force_all";
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }else if (contextMenuAction[0][1]==6) //Action7
       {
         std::string command = "ccx draw load force " + std::to_string(contextMenuAction[0][2]);
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }
     }else if (contextMenuAction[0][0]==25) //StepsLoadsPressuresTree
     {
@@ -2344,11 +2364,13 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==5) //Action6
       {
         std::string command = "ccx draw step " + std::to_string(contextMenuAction[0][2]) + " load_pressure_all";
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }else if (contextMenuAction[0][1]==6) //Action7
       {
         std::string command = "ccx draw load pressure " + std::to_string(contextMenuAction[0][2]);
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }
     }else if (contextMenuAction[0][0]==26) //StepsLoadsHeatfluxesTree
     {
@@ -2370,11 +2392,13 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==5) //Action6
       {
         std::string command = "ccx draw step " + std::to_string(contextMenuAction[0][2]) + " load_heatflux_all";
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }else if (contextMenuAction[0][1]==6) //Action7
       {
         std::string command = "ccx draw load heatflux " + std::to_string(contextMenuAction[0][2]);
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }
     }else if (contextMenuAction[0][0]==27) //StepsLoadsGravityTree
     {
@@ -2393,11 +2417,13 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==4) //Action5
       {
         std::string command = "ccx draw step " + std::to_string(contextMenuAction[0][2]) + " load_gravity_all";
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }else if (contextMenuAction[0][1]==5) //Action6
       {
         std::string command = "ccx draw load gravity " + std::to_string(contextMenuAction[0][2]);
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }
     }else if (contextMenuAction[0][0]==28) //StepsLoadsCentrifugalTree
     {
@@ -2416,11 +2442,13 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==4) //Action5
       {
         std::string command = "ccx draw step " + std::to_string(contextMenuAction[0][2]) + " load_centrifugal_all";
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }else if (contextMenuAction[0][1]==5) //Action6
       {
         std::string command = "ccx draw load centrifugal " + std::to_string(contextMenuAction[0][2]);
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }   
     }else if (contextMenuAction[0][0]==29) //StepsBCsTree
     {
@@ -2430,7 +2458,8 @@ void ModelTree::execContextMenuAction(){
       }else if(contextMenuAction[0][1]==1) //Action2
       {
         std::string command = "ccx draw step " + std::to_string(contextMenuAction[0][2]) + " bc_all";
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }
     }else if (contextMenuAction[0][0]==30) //StepsBCsDisplacementsTree
     {
@@ -2452,11 +2481,13 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==5) //Action6
       {
         std::string command = "ccx draw step " + std::to_string(contextMenuAction[0][2]) + " bc_displacement_all";
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }else if (contextMenuAction[0][1]==6) //Action7
       {
         std::string command = "ccx draw bc displacement " + std::to_string(contextMenuAction[0][2]);
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }
     }else if (contextMenuAction[0][0]==31) //StepsBCsTemperaturesTree
     {
@@ -2478,11 +2509,13 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==5) //Action6
       {
         std::string command = "ccx draw step " + std::to_string(contextMenuAction[0][2]) + " bc_temperature_all";
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }else if (contextMenuAction[0][1]==6) //Action7
       {
         std::string command = "ccx draw bc temperature " + std::to_string(contextMenuAction[0][2]);
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }
     }else if (contextMenuAction[0][0]==32) //StepsHistoryOutputsTree
     {
@@ -2546,12 +2579,13 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==4) //Action5
       {
         std::string command = "ccx result cgx job " + std::to_string(contextMenuAction[0][2]);   
-        CubitInterface::cmd(command.c_str());
-
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }else if (contextMenuAction[0][1]==5) //Action6
       {
         std::string command = "ccx result paraview job " + std::to_string(contextMenuAction[0][2]);   
-        CubitInterface::cmd(command.c_str());
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
       }
     }
   }

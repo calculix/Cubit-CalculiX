@@ -16,6 +16,8 @@
 #include <QLineEdit>
 #include <QRadioButton>
 
+class CalculiXCoreInterface;
+
 class BCsTemperaturesModifyPanel : public QWidget
 {
   Q_OBJECT
@@ -25,6 +27,7 @@ public:
   ~BCsTemperaturesModifyPanel();
 
   bool isInitialized;
+  CalculiXCoreInterface *ccx_iface;
   
 private slots:
   void on_pushButton_apply_clicked(bool);
