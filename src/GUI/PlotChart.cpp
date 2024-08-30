@@ -2,7 +2,7 @@
 
 #include "CubitMessage.hpp"
 
-PlotChart::PlotChart(QWidget* parent,QString windowtitle, QString title, QString x_axis, QString y_axis, std::vector<double> x_data,  std::vector<double> y_data):
+PlotChart::PlotChart(QWidget* parent,QString windowtitle, QString title, QString x_axis, QString y_axis, std::vector<double> x_data,  std::vector<double> y_data,bool save_plot, QString save_filepath):
   QWidget(parent),
   isInitialized(false)
 {
@@ -37,6 +37,11 @@ PlotChart::PlotChart(QWidget* parent,QString windowtitle, QString title, QString
   
   this->setAttribute(Qt::WA_DeleteOnClose);
   boxLayout_window->addWidget(chartView);
+
+  if (save_plot)
+  {
+    chartView->grab().save(save_filepath);
+  }
 
   //std::string log;
   //log = "plotting \n";

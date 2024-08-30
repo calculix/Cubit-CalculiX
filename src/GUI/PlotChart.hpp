@@ -19,7 +19,7 @@ class PlotChart : public QWidget
   Q_OBJECT
   
 public:
-  explicit PlotChart(QWidget *parent,QString windowtitle, QString title, QString x_axis, QString y_axis, std::vector<double> x_data,  std::vector<double> y_data);
+  explicit PlotChart(QWidget *parent,QString windowtitle, QString title, QString x_axis, QString y_axis, std::vector<double> x_data,  std::vector<double> y_data, bool save_plot, QString save_filepath);
   ~PlotChart();
   
   bool isInitialized=false;

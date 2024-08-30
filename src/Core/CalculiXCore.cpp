@@ -2550,7 +2550,7 @@ bool CalculiXCore::result_paraview_job(int job_id)
   return jobs->result_paraview_job(job_id);
 }
 
-bool CalculiXCore::result_plot_job_frd(int job_id,int x_node_id, std::string x_block_type, std::string x_block_component, bool x_increment,bool x_time,int y_node_id, std::string y_block_type, std::string y_block_component, bool y_increment, bool y_time,QString title,QString x_axis,QString y_axis)
+bool CalculiXCore::result_plot_job_frd(int job_id,int x_node_id, std::string x_block_type, std::string x_block_component, bool x_increment,bool x_time,int y_node_id, std::string y_block_type, std::string y_block_component, bool y_increment, bool y_time,QString title,QString x_axis,QString y_axis,bool save, QString save_filepath)
 { 
   bool plot_possible = false;
   std::vector<int> increments;
@@ -2658,8 +2658,12 @@ bool CalculiXCore::result_plot_job_frd(int job_id,int x_node_id, std::string x_b
     
   if (plot_possible)
   {
-    plotchart = new PlotChart(nullptr,windowtitle, title, x_axis, y_axis, x_data, y_data);
+    plotchart = new PlotChart(nullptr,windowtitle, title, x_axis, y_axis, x_data, y_data,save,save_filepath);
     plotchart->show();
+    if (save)
+    {
+      plotchart->close();
+    }
   }  
 
   return plot_possible;
