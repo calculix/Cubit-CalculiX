@@ -150,6 +150,8 @@ bool CoreResultsFrd::read_single()
             frd.close(); 
             std::ofstream log(this->filepath, std::ios_base::app | std::ios_base::out);
             log << "9999\n";
+            ++maxlines;
+            break;
           }
         }
       }
@@ -324,6 +326,8 @@ bool CoreResultsFrd::read_parallel()
             frd.close(); 
             std::ofstream log(this->filepath, std::ios_base::app | std::ios_base::out);
             log << "9999\n";
+            ++maxlines;
+            break;
           }
         }
       }
@@ -378,7 +382,6 @@ bool CoreResultsFrd::read_parallel()
       update_progressbar();
       ++it;
     }
-    
     //StopWatch.tick("keys");
 
     //reading header!

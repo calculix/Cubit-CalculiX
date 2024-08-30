@@ -2,6 +2,7 @@
 #define CCXRESULTPLOTFRDJOBCOMMAND_HPP
 
 #include "CubitCommandInterface.hpp"
+#include <QString>
 
 class ccxResultPlotJobFrdCommand : public CubitCommand
 {

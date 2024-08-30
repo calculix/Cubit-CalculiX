@@ -48,3 +48,4 @@
 2024-08-28 working on chart plot feature
 2024-08-29 Fixing history bug for commands send using gui elements
 2024-08-29 working on chart plot feature
+2024-08-30 bugfix. crash of frd reader when last line doesn't contain 9999
