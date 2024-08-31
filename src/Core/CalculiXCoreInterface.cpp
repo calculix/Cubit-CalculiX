@@ -830,6 +830,11 @@ bool CalculiXCoreInterface::draw_bc_temperatures(double size)
   return ccx_core.draw_bc_temperatures(size);
 }
 
+std::vector<int> CalculiXCoreInterface::frd_get_nodes(int job_id)
+{
+  return ccx_core.frd_get_nodes(job_id);
+}
+
 std::vector<std::string> CalculiXCoreInterface::frd_get_result_block_types(int job_id)
 {
   return ccx_core.frd_get_result_block_types(job_id);

@@ -50,3 +50,4 @@
 2024-08-29 working on chart plot feature
 2024-08-30 bugfix. crash of frd reader when last line doesn't contain 9999
 2024-08-30 added option to save frd plot
+2024-08-31 working on job monitor frd tab

@@ -3548,6 +3548,23 @@ bool CalculiXCore::draw_bc_temperatures(double size)
   return draw->draw_bc_temperatures(size);
 }
 
+std::vector<int> CalculiXCore::frd_get_nodes(int job_id)
+{
+  std::vector<int> tmp;
+
+  int results_data_id = results->get_results_data_id_from_job_id(job_id);
+  int frd_data_id = results->get_frd_data_id_from_job_id(job_id);
+
+  if (results_data_id == -1)
+  {
+    return tmp;
+  }
+
+  tmp = results->frd_data[frd_data_id].sorted_node_ids;
+      
+  return tmp;
+}
+
 std::vector<std::string> CalculiXCore::frd_get_result_block_types(int job_id)
 {
   std::vector<std::string> tmp;
