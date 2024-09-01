@@ -190,6 +190,7 @@ public:
   //QUERY results
   //FRD results
   std::vector<int> frd_get_nodes(int job_id); // returns a list of all nodes
+  bool frd_check_node_exists(int job_id,int node_id); // returns if a node in the frd exists
   std::vector<std::string> frd_get_result_block_types(int job_id); // returns a list of all result block types
   std::vector<std::string> frd_get_result_block_components(int job_id, std::string result_block_type); // returns a list of all result block components for a block type
   std::vector<int> frd_get_total_increments(int job_id); // returns a list of the total increments

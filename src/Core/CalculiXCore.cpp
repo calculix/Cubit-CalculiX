@@ -3565,6 +3565,27 @@ std::vector<int> CalculiXCore::frd_get_nodes(int job_id)
   return tmp;
 }
 
+bool CalculiXCore::frd_check_node_exists(int job_id,int node_id)
+{
+  bool node_exists = false;
+
+  int results_data_id = results->get_results_data_id_from_job_id(job_id);
+  int frd_data_id = results->get_frd_data_id_from_job_id(job_id);
+
+  if (results_data_id == -1)
+  {
+    return node_exists;
+  }
+
+  if (std::binary_search(results->frd_data[frd_data_id].sorted_node_ids.begin(), results->frd_data[frd_data_id].sorted_node_ids.end(), node_id))
+  { 
+    node_exists = true;
+    return node_exists;  
+  }
+
+  return node_exists;
+}
+
 std::vector<std::string> CalculiXCore::frd_get_result_block_types(int job_id)
 {
   std::vector<std::string> tmp;

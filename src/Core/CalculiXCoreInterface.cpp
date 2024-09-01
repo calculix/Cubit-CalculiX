@@ -835,6 +835,11 @@ std::vector<int> CalculiXCoreInterface::frd_get_nodes(int job_id)
   return ccx_core.frd_get_nodes(job_id);
 }
 
+bool CalculiXCoreInterface::frd_check_node_exists(int job_id,int node_id)
+{
+  return ccx_core.frd_check_node_exists(job_id,node_id);
+}  
+
 std::vector<std::string> CalculiXCoreInterface::frd_get_result_block_types(int job_id)
 {
   return ccx_core.frd_get_result_block_types(job_id);
