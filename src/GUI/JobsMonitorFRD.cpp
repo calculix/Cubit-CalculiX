@@ -1,5 +1,6 @@
 #include "JobsMonitorFRD.hpp"
 #include "CalculiXCoreInterface.hpp"
+#include "JobsMonitorFRDPlot.hpp"
 
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
@@ -118,6 +119,9 @@ JobsMonitorFRD::JobsMonitorFRD()
   boxLayout_pages->addWidget(pushButton_prev);
   boxLayout_pages->addWidget(table_counter);
   boxLayout_pages->addWidget(pushButton_next);
+
+  PlotWidget = new JobsMonitorFRDPlot();
+  PlotWidget->hide();
 
   // Signals
   QObject::connect(pushButton_reset, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_reset_clicked(bool)));
@@ -695,9 +699,11 @@ void JobsMonitorFRD::update_result()
 void JobsMonitorFRD::set_current_job_id(int job_id)
 {
   this->current_job_id = job_id;
+  PlotWidget->current_job_id = job_id;
   //std::string log = "Current job id set is " + std::to_string(current_job_id) + "\n";
   //PRINT_INFO("%s", log.c_str());
   this->update();
+  PlotWidget->reset();
 }
 
 void JobsMonitorFRD::addListItem(std::string item_name, QListWidget* parent_list)
@@ -737,7 +743,7 @@ void JobsMonitorFRD::on_pushButton_reset_clicked(bool)
 
 void JobsMonitorFRD::on_pushButton_plot_clicked(bool)
 {
-
+  PlotWidget->show();
 }
 
 void JobsMonitorFRD::on_pushButton_query_results_clicked(bool)

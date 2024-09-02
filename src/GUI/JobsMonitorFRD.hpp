@@ -28,6 +28,7 @@
 #include <QObject>
 
 class CalculiXCoreInterface;
+class JobsMonitorFRDPlot;
 class PickWidget;
 
 class JobsMonitorFRD : public QWidget
@@ -105,6 +106,7 @@ private:
   QSpinBox* textField1;
   QSpinBox* textField2;
   QComboBox* combobox_filter_by_set;
+  JobsMonitorFRDPlot* PlotWidget;
  
   // results
   QTableWidget* table_result;
