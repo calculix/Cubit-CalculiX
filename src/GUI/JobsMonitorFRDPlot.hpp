@@ -16,6 +16,7 @@
 #include <QComboBox>
 #include <QLineEdit>
 #include <QObject>
+#include <QSpacerItem>
 
 class CalculiXCoreInterface;
 class PickWidget;
@@ -38,7 +39,10 @@ private:
   QGridLayout* gridLayout;
   QHBoxLayout* boxLayout_x;
   QHBoxLayout* boxLayout_y;
+  QVBoxLayout* boxLayout_labels; 
   QHBoxLayout* boxLayout_buttons;
+  QSpacerItem* horizontal_spacer_x;
+  QSpacerItem* horizontal_spacer_y;
   QLabel* label_x;
   QLabel* label_y;
   QComboBox* combobox_x_1;
@@ -51,6 +55,14 @@ private:
   QComboBox* combobox_y_2;
   QComboBox* combobox_x_3;
   QComboBox* combobox_y_3;
+  QLabel* label_title;
+  QLabel* label_x_axis;
+  QLabel* label_y_axis;
+  QLabel* label_save_path;
+  QLineEdit* lineEdit_title;
+  QLineEdit* lineEdit_x_axis;
+  QLineEdit* lineEdit_y_axis;
+  QLineEdit* lineEdit_save_path;
   QPushButton* pushButton_reset;
   QPushButton* pushButton_plot;
 

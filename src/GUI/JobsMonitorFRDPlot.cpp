@@ -14,13 +14,18 @@ JobsMonitorFRDPlot::JobsMonitorFRDPlot()
   // main window
   //this->setGeometry(0,0,700,570);
   this->setWindowTitle("FRD Results Plot");
+  int comboBoxWidth = 120;
   gridLayout = new QGridLayout(this);
   boxLayout_x = new QHBoxLayout();
   boxLayout_y = new QHBoxLayout();
+  boxLayout_labels = new QVBoxLayout();
   boxLayout_buttons = new QHBoxLayout();
-  gridLayout->addLayout(boxLayout_x,0,0, Qt::AlignTop);
-  gridLayout->addLayout(boxLayout_y,1,0, Qt::AlignTop);
-  gridLayout->addLayout(boxLayout_buttons,2,0, Qt::AlignRight);
+  gridLayout->addLayout(boxLayout_x,0,0, Qt::AlignLeft);
+  gridLayout->addLayout(boxLayout_y,1,0, Qt::AlignLeft);
+  gridLayout->addLayout(boxLayout_labels,2,0, Qt::AlignTop);
+  gridLayout->addLayout(boxLayout_buttons,3,0, Qt::AlignRight);
+  horizontal_spacer_x = new QSpacerItem(1,1,QSizePolicy::Expanding,QSizePolicy::Minimum);
+  horizontal_spacer_y = new QSpacerItem(1,1,QSizePolicy::Expanding,QSizePolicy::Minimum);
   
   label_x = new QLabel();
   label_x->setText("X Axis:");
@@ -30,11 +35,13 @@ JobsMonitorFRDPlot::JobsMonitorFRDPlot()
   boxLayout_y->addWidget(label_y);
 
   combobox_x_1 = new QComboBox();
+  combobox_x_1->setFixedWidth(comboBoxWidth);
   combobox_x_1->addItem("Node data");
   combobox_x_1->addItem("Increment");
   combobox_x_1->addItem("Time");
 
   combobox_y_1 = new QComboBox();
+  combobox_y_1->setFixedWidth(comboBoxWidth);
   combobox_y_1->addItem("Node data");
   combobox_y_1->addItem("Increment");
   combobox_y_1->addItem("Time");
@@ -53,22 +60,53 @@ JobsMonitorFRDPlot::JobsMonitorFRDPlot()
   PickWidget_node_x = new PickWidget();
   PickWidget_node_x->setPickType(PickWidget::Node);
   PickWidget_node_x->activate();
+  PickWidget_node_x->setFixedWidth(comboBoxWidth);
   boxLayout_x->addWidget(PickWidget_node_x);
   PickWidget_node_y = new PickWidget();
   PickWidget_node_y->setPickType(PickWidget::Node);
   PickWidget_node_y->activate();
+  PickWidget_node_y->setFixedWidth(comboBoxWidth);
   boxLayout_y->addWidget(PickWidget_node_y);
 
   combobox_x_2 = new QComboBox();
+  combobox_x_2->setFixedWidth(comboBoxWidth);
   combobox_y_2 = new QComboBox();
+  combobox_y_2->setFixedWidth(comboBoxWidth);
 
   boxLayout_x->addWidget(combobox_x_2);
   boxLayout_y->addWidget(combobox_y_2);
 
   combobox_x_3 = new QComboBox();
+  combobox_x_3->setFixedWidth(comboBoxWidth);
   combobox_y_3 = new QComboBox();
+  combobox_y_3->setFixedWidth(comboBoxWidth);
   boxLayout_x->addWidget(combobox_x_3);
   boxLayout_y->addWidget(combobox_y_3);
+  boxLayout_x->addItem(horizontal_spacer_x);
+  boxLayout_y->addItem(horizontal_spacer_y);
+
+  //custom labels and save path
+  label_title = new QLabel();
+  label_title->setText("Label Title");
+  label_x_axis = new QLabel();
+  label_x_axis->setText("Label X Axis");
+  label_y_axis = new QLabel();
+  label_y_axis->setText("Label Y Axis");
+  label_save_path = new QLabel();
+  label_save_path->setText("Save Plot to File");
+  lineEdit_title = new QLineEdit();
+  lineEdit_x_axis = new QLineEdit();
+  lineEdit_y_axis = new QLineEdit();
+  lineEdit_save_path = new QLineEdit();
+  lineEdit_save_path->setPlaceholderText("Plot.png");
+  boxLayout_labels->addWidget(label_title);
+  boxLayout_labels->addWidget(lineEdit_title);
+  boxLayout_labels->addWidget(label_x_axis);
+  boxLayout_labels->addWidget(lineEdit_x_axis);
+  boxLayout_labels->addWidget(label_y_axis);
+  boxLayout_labels->addWidget(lineEdit_y_axis);
+  boxLayout_labels->addWidget(label_save_path);
+  boxLayout_labels->addWidget(lineEdit_save_path);
 
   // buttons
   pushButton_reset = new QPushButton();
@@ -110,6 +148,10 @@ void JobsMonitorFRDPlot::reset()
   combobox_y_1->setCurrentIndex(0);
   PickWidget_node_x->setText("");
   PickWidget_node_y->setText("");
+  lineEdit_title->setText("");
+  lineEdit_x_axis->setText("");
+  lineEdit_y_axis->setText("");
+  lineEdit_save_path->setText("");
 }
 
 void JobsMonitorFRDPlot::combobox_x_1_index_changed(int index)
@@ -233,7 +275,22 @@ void JobsMonitorFRDPlot::on_pushButton_plot_clicked(bool)
     cmd.append("y_time ");
   }
   
-  
+  if (lineEdit_title->text()!="")
+  {
+    cmd.append("title " + lineEdit_title->text().toStdString() + " ");
+  }
+  if (lineEdit_x_axis->text()!="")
+  {
+    cmd.append("x_axis " + lineEdit_x_axis->text().toStdString() + " ");
+  }
+  if (lineEdit_y_axis->text()!="")
+  {
+    cmd.append("y_axis " + lineEdit_y_axis->text().toStdString() + " ");
+  }
+  if (lineEdit_save_path->text()!="")
+  {
+    cmd.append("save " + lineEdit_save_path->text().toStdString() + " ");
+  } 
  
   if (push_cmd)
   {
