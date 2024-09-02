@@ -119,7 +119,6 @@ set(CCXCOMP_SRCS
 
 if (WIN32)
 add_library(calculix_useroptions SHARED ${CCXUSEROPTIONS_SRCS})
-#set_target_properties(calculix_useroptions PROPERTIES SUFFIX ".dll")
 target_link_libraries(calculix_useroptions clarogui cubiti clarofw Qt5::Widgets)
 set_target_properties(calculix_useroptions PROPERTIES AUTOMOC 1)
 
@@ -127,7 +126,6 @@ add_library(calculix_plugin MODULE ${CCXPLUGIN_SRCS})
 set_target_properties(calculix_plugin PROPERTIES SUFFIX ".ccm")
 
 add_library(calculix_core SHARED ${CCXCORE_SRCS})
-#set_target_properties(calculix_core PROPERTIES SUFFIX ".dll")
 target_link_libraries(calculix_core cubiti cubit_util)
 target_link_libraries(calculix_core clarogui navigation pickwidget clarofw Qt5::Charts Qt5::Widgets)
 set_target_properties(calculix_core PROPERTIES AUTOMOC 1)
