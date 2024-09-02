@@ -249,6 +249,8 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/GUITimer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/Highlight.hpp
     ${CMAKE_CURRENT_LIST_DIR}/Highlight.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/PlotChart.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/PlotChart.hpp
     )
 
 # Add the parent scope so that our parent cmake list can use them

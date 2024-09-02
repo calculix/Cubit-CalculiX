@@ -216,21 +216,13 @@ void JobsMonitorFRD::update_increment()
   list_increment->clear();
 
   std::vector<int> increments = ccx_iface->frd_get_total_increments(current_job_id);
-  std::vector<std::variant<int, std::string>> total_increments;
-  total_increments.push_back("all");
-  for (int increment : increments)
+  
+  this->addListItem("all", list_increment);
+  for (size_t i = 0; i < increments.size(); i++)
   {
-    total_increments.push_back(increment);
+    this->addListItem(std::to_string(increments[i]),list_increment);
   }
-  for (const auto& item : total_increments)
-  {
-    if (std::holds_alternative<int>(item))
-    {
-      this->addListItem(QString::number(std::get<int>(item)).toStdString(), list_increment);
-    } else {
-      this->addListItem(std::get<std::string>(item), list_increment);
-    }
-  }
+  
   list_increment->item(0)->setSelected(true);
   this->increment_clicked(list_increment->item(0));
 }
@@ -253,10 +245,10 @@ void JobsMonitorFRD::update_filter_by_set(int index)
       std::string name = ccx_iface->get_block_name(block_ids[i]);
       QTableWidgetItem* item_name = new QTableWidgetItem;
       item_name->setData(Qt::DisplayRole, QString::fromStdString(name));
-      table_filter_by_set->setItem(i, 0, item_name);
+      table_filter_by_set->setItem(int(i), 0, item_name);
       QTableWidgetItem* item_id = new QTableWidgetItem;
       item_id->setData(Qt::DisplayRole, QString::number(block_ids[i]));
-      table_filter_by_set->setItem(i, 1, item_id);
+      table_filter_by_set->setItem(int(i), 1, item_id);
     }
   }else if (filter_set=="Nodeset")
   {
@@ -269,10 +261,10 @@ void JobsMonitorFRD::update_filter_by_set(int index)
       std::string name = ccx_iface->get_nodeset_name(nodeset_ids[i]);
       QTableWidgetItem* item_name = new QTableWidgetItem;
       item_name->setData(Qt::DisplayRole, QString::fromStdString(name));
-      table_filter_by_set->setItem(i, 0, item_name);
+      table_filter_by_set->setItem(int(i), 0, item_name);
       QTableWidgetItem* item_id = new QTableWidgetItem;
       item_id->setData(Qt::DisplayRole, QString::number(nodeset_ids[i]));
-      table_filter_by_set->setItem(i, 1, item_id);
+      table_filter_by_set->setItem(int(i), 1, item_id);
     }
   }else if (filter_set=="Sideset")
   {
@@ -285,10 +277,10 @@ void JobsMonitorFRD::update_filter_by_set(int index)
       std::string name = ccx_iface->get_sideset_name(sideset_ids[i]);
       QTableWidgetItem* item_name = new QTableWidgetItem;
       item_name->setData(Qt::DisplayRole, QString::fromStdString(name));
-      table_filter_by_set->setItem(i, 0, item_name);
+      table_filter_by_set->setItem(int(i), 0, item_name);
       QTableWidgetItem* item_id = new QTableWidgetItem;
       item_id->setData(Qt::DisplayRole, QString::number(sideset_ids[i]));
-      table_filter_by_set->setItem(i, 1, item_id);
+      table_filter_by_set->setItem(int(i), 1, item_id);
     }
   }
   
@@ -505,7 +497,7 @@ void JobsMonitorFRD::update_result()
   int start = this->current_page * items_per_page;
   int end = start + this->items_per_page - 1;
   end = std::min(end, int(nodes.size()*increments.size()-1));
-  this->results_size = nodes.size()*increments.size();
+  this->results_size = int(nodes.size()*increments.size());
   if (this->current_page==0)
   {
     pushButton_prev->setDisabled(true);
@@ -612,7 +604,7 @@ void JobsMonitorFRD::update_result()
 
   table_result->setSortingEnabled(true);
   table_result->setRowCount(std::min(50,int(results.size())));
-  table_result->setColumnCount(results[0].size());
+  table_result->setColumnCount(int(results[0].size()));
   table_result->setEditTriggers(QAbstractItemView::NoEditTriggers);
   table_counter->setText(QString::fromStdString("Results " + std::to_string(start+1) + "-" + std::to_string(end+1) + " of " + std::to_string(results_size)));
 
@@ -646,11 +638,11 @@ void JobsMonitorFRD::update_result()
         QString formatted_result_value = QString::number(results[i][ii], 'f', 6);
         QTableWidgetItem* item = new QTableWidgetItem(formatted_result_value);
         item->setData(Qt::DisplayRole, results[i][ii]);
-        table_result->setItem(i, ii, item);
+        table_result->setItem(int(i), int(ii), item);
       } else {
         QTableWidgetItem* item = new QTableWidgetItem;
         item->setData(Qt::DisplayRole, results[i][ii]);
-        table_result->setItem(i, ii, item);
+        table_result->setItem(int(i), int(ii), item);
       }
     }
   }
