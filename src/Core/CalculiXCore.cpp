@@ -1,6 +1,5 @@
 #include "CalculiXCore.hpp"
 #ifdef WIN32
- //#include <windows.h>
  #include <io.h>
 #else
  #include <unistd.h>
@@ -13,7 +12,8 @@
 #include <algorithm>
 #include <cmath>
 
-#ifdef UNIX
+#ifdef WIN32
+#else
   #include "CubitGuiUtil.hpp"
 #endif
 #include "CubitInterface.hpp"
