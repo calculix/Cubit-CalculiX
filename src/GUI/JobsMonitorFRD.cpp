@@ -75,8 +75,8 @@ JobsMonitorFRD::JobsMonitorFRD()
   boxLayout_component->addWidget(list_component);
 
   list_increment = new QListWidget();
-  list_increment->setFrameShape(QFrame::Box);
-  list_increment->setFrameShadow(QFrame::Raised);
+  //list_increment->setFrameShape(QFrame::Box);
+  //list_increment->setFrameShadow(QFrame::Raised);
   boxLayout_increment->addWidget(list_increment);
 
   //filter
@@ -115,10 +115,13 @@ JobsMonitorFRD::JobsMonitorFRD()
   pushButton_next = new QPushButton("Next Results");
   pushButton_prev->setDisabled(true);
   pushButton_next->setDisabled(true);
+  pushButton_export = new QPushButton("Export to CSV");
   boxLayout_widget->addWidget(table_result);
   boxLayout_pages->addWidget(pushButton_prev);
   boxLayout_pages->addWidget(table_counter);
   boxLayout_pages->addWidget(pushButton_next);
+  boxLayout_pages->addWidget(pushButton_export);
+  
 
   PlotWidget = new JobsMonitorFRDPlot();
   PlotWidget->hide();
@@ -135,6 +138,7 @@ JobsMonitorFRD::JobsMonitorFRD()
   QObject::connect(list_increment, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)),this,  SLOT(increment_changed(QListWidgetItem*,QListWidgetItem*)));
   QObject::connect(pushButton_prev, SIGNAL(clicked(bool)), this, SLOT(on_pushButton_previous_clicked(bool)));
   QObject::connect(pushButton_next, SIGNAL(clicked(bool)), this, SLOT(on_pushButton_next_clicked(bool)));
+  QObject::connect(pushButton_export, SIGNAL(clicked(bool)),this, SLOT(on_pushButton_export_clicked(bool)));
   QObject::connect(combobox_filter_by_set, SIGNAL(currentIndexChanged(int)), this, SLOT(update_filter_by_set(int)));
 
   // Update list items and data
@@ -170,6 +174,7 @@ void JobsMonitorFRD::update()
   this->current_result_component = nullptr;
   pushButton_prev->setDisabled(true);
   pushButton_next->setDisabled(true);
+  pushButton_export->setDisabled(true);
   table_counter->setText("");
   combobox_filter_by_set->setCurrentIndex(0);
   table_filter_by_set->setRowCount(0);
@@ -327,93 +332,6 @@ void JobsMonitorFRD::update_result()
   std::vector<int> frd_nodes = ccx_iface->frd_get_nodes(current_job_id);
   table_result->setRowCount(0);
   table_result->setColumnCount(0);
-/*
-  std::string applied_filter = combobox_filter1->currentText().toStdString();
-  
-  if (applied_filter==" ")
-  {
-    //return;
-  }
-  if (this->combobox2_exists==true)
-  {
-    std::string applied_node = combobox_filter2->currentText().toStdString();
-    if (applied_node==" ")
-    {
-      //return;
-    }
-    if (applied_filter=="Block")
-    {
-      std::string name = combobox_filter2->currentText().toStdString();
-      int id = CubitInterface::get_id_from_name(name);
-    } else if (applied_filter=="Sideset")
-    {
-      std::string name = combobox_filter2->currentText().toStdString();
-      int id = CubitInterface::get_id_from_name(name);
-      std::string int_list = "all in sideset " + std::to_string(id);
-      nodes = CubitInterface::parse_cubit_list("node",int_list);
-    } else if (applied_filter=="Nodeset")
-    {
-      std::string name = combobox_filter2->currentText().toStdString();
-      int id = CubitInterface::get_id_from_name(name);
-      nodes = CubitInterface::get_nodeset_nodes_inclusive(id);
-    } else {
-      //return;
-    }
-  }
-  
-  if (this->textFields_exists==true)
-  {
-    QString string_filter_lower = textField1->text();
-    QString string_filter_upper = textField2->text();
-    
-    double filter_lower = string_filter_lower.toInt();
-    double filter_upper = string_filter_upper.toInt();
-
-    if ((!filter_lower==0)&&(!filter_upper==0))
-    {
-      for (size_t i = filter_lower; i <= filter_upper; i++)
-      {
-        nodes.push_back(i);
-      }
-    } else if ((filter_lower==0)&&(!filter_upper==0))
-    {
-      for (size_t i = 1; i <= filter_upper; i++)
-      {
-        nodes.push_back(i);
-      }
-    } else if ((!filter_lower==0)&&(filter_upper==0))
-    {
-      std::vector<int> total_nodes = CubitInterface::get_nodeset_id_list();
-      if(!total_nodes.empty())
-      {
-        auto max_node = std::max_element(total_nodes.begin(), total_nodes.end());
-        int node_max = *max_node;
-        for (size_t i = filter_lower; i <= node_max; i++)
-        {
-          nodes.push_back(i);
-        }
-      } else {
-        //return;
-      }
-    } else if ((filter_lower==0)&&(filter_upper==0))
-    {
-      std::vector<int> total_nodes = CubitInterface::get_nodeset_id_list();
-      if(!total_nodes.empty())
-      {
-        auto max_node = std::max_element(total_nodes.begin(), total_nodes.end());
-        int node_max = *max_node;
-        for (size_t i = 1; i <= node_max; i++)
-        {
-          nodes.push_back(i);
-        }
-      } else {
-        //return;
-      }
-    } else {
-      //return;
-    }
-  }
-*/
 
   // check if filter was chosen
   std::string filter_set = combobox_filter_by_set->currentText().toStdString();
@@ -510,9 +428,8 @@ void JobsMonitorFRD::update_result()
   }else{
     pushButton_next->setDisabled(true);
   }
+  pushButton_export->setEnabled(true);
   
-  
-
   if ((nodes.size()>0)&&(components.size()>0)&&(increments.size()>0)) //check if data can be queried
   {
     int ic = 0;
@@ -542,66 +459,7 @@ void JobsMonitorFRD::update_result()
       }
     }
   }
-  //log = "update result \n";
-  //log.append("start " + std::to_string(start) + " end " + std::to_string(end) + "\n");
-  //log.append("result size " + std::to_string(results.size()) + "\n");
-  //PRINT_INFO("%s", log.c_str());
-  /*
-  if (current_result_component->text().toStdString()=="all")
-  {
-
-  } else {
-    if (current_increment->text().toStdString()=="all")
-    {
-      std::vector<int> increments = ccx_iface->frd_get_total_increments(current_job_id);
-      if (!increments.empty())
-      {
-        for (int i : nodes)
-        {
-          for (int j : increments)
-          {
-            results.push_back({double(i),double(j)});
-          }
-        }
-
-        if (results.size()==0)
-        {
-          return;
-        }
-
-        for (size_t i = 0; i < results.size(); i++)
-        {
-          double increment_time = ccx_iface->frd_get_time_from_total_increment(current_job_id, results[i][0]);
-          results[i].push_back(increment_time);
-
-          double node_result = ccx_iface->frd_get_node_value(current_job_id, results[i][0] , current_increment->text().toInt(), current_result_block->text().toStdString(), current_result_component->text().toStdString());
-          results[i].push_back(node_result);
-        }
-      } else {
-        return;
-      }
-    } else {
-      for (size_t i = 0; i < nodes.size(); i++)
-      {
-        std::vector<double> temp;
-        temp.push_back(nodes[i]);
-        results.push_back(temp);
-      }
-
-      if (results.size()==0)
-      {
-        return;
-      }
-
-      for (size_t i = 0; i < results.size(); i++)
-      {
-        double node_result = ccx_iface->frd_get_node_value(current_job_id, results[i][0] , current_increment->text().toInt(), current_result_block->text().toStdString(), current_result_component->text().toStdString());
-        results[i].push_back(node_result);
-      }
-    }
-  }
-  */
-
+  
   table_result->setSortingEnabled(true);
   table_result->setRowCount(std::min(50,int(results.size())));
   table_result->setColumnCount(int(results[0].size()));
@@ -646,46 +504,6 @@ void JobsMonitorFRD::update_result()
       }
     }
   }
-  
-
-/*
-  for (size_t i = start; i < end; i++)
-  {
-    for (size_t ii = 0; ii < results[0].size(); ii++)
-    {
-      if (current_increment->text().toStdString()=="all")
-      {
-        if (ii > 1)
-        {
-          QString formatted_result_value = QString::number(results[i][ii], 'f', 6);
-
-          QTableWidgetItem* item = new QTableWidgetItem(formatted_result_value);
-          item->setData(Qt::DisplayRole, results[i][ii]);
-          table_result->setItem(i-start, ii, item);
-        } else {
-          QTableWidgetItem* item = new QTableWidgetItem;
-          item->setData(Qt::DisplayRole, results[i][ii]);
-          table_result->setItem(i-start, ii, item);
-        }
-        table_result->setHorizontalHeaderLabels(QStringList() << "Node Id" << "Increment Id" << "Increment Time" << current_result_component->text());
-      } else {
-        if (ii > 1)
-        {
-          QString formatted_result_value = QString::number(results[i][ii], 'f', 6);
-
-          QTableWidgetItem* item = new QTableWidgetItem(formatted_result_value);
-          item->setData(Qt::DisplayRole, results[i][ii]);
-          table_result->setItem(i-start, ii, item);
-        } else {
-          QTableWidgetItem* item = new QTableWidgetItem;
-          item->setData(Qt::DisplayRole, results[i][ii]);
-          table_result->setItem(i-start, ii, item);
-        }
-        table_result->setHorizontalHeaderLabels(QStringList() << "Node Id" << current_result_component->text());
-      }
-    }
-  }
-  */
 }
 
 void JobsMonitorFRD::set_current_job_id(int job_id)
@@ -811,14 +629,181 @@ void JobsMonitorFRD::on_pushButton_next_clicked(bool)
   }
 }
 
-void JobsMonitorFRD::removeWidgetFromLayout(QVBoxLayout* layout, QWidget* widget) {
-  for (int i = 0; i < layout->count(); ++i) {
-    QLayoutItem* item = layout->itemAt(i);
-    if (item->widget() == widget) {
-      layout->takeAt(i);
-      delete item->widget();
-      delete item;
-      break;
+void JobsMonitorFRD::on_pushButton_export_clicked(bool)
+{
+  std::vector<std::string> header;
+  std::vector<std::vector<double>> data;
+
+  for (size_t i = 0; i < table_result->columnCount(); i++)
+  {
+    std::string temp_header = table_result->horizontalHeaderItem(i)->text().toStdString();
+    header.push_back(temp_header);
+  }
+
+  std::string log;
+  if(current_job_id == -1)
+  {
+    log = "Can't export results -> no job set \n";
+    PRINT_INFO("%s", log.c_str());
+    return;
+  }
+  if (this->current_result_block==nullptr)
+  {
+    log = "Can't export results -> no result block set \n";
+    PRINT_INFO("%s", log.c_str());
+    return;
+  }
+  if(this->current_result_component==nullptr)
+  {
+    log = "Can't export results -> no result component set \n";
+    PRINT_INFO("%s", log.c_str());
+    return;
+  }
+  if (current_increment==nullptr)
+  {
+    log = "Can't export results -> no increment set \n";
+    PRINT_INFO("%s", log.c_str());
+    return;
+  }
+
+  std::vector<int> nodes;
+  std::vector<int> frd_nodes = ccx_iface->frd_get_nodes(current_job_id);
+
+  // check if filter was chosen
+  std::string filter_set = combobox_filter_by_set->currentText().toStdString();
+  QTableWidgetItem* filter_item = table_filter_by_set->currentItem();
+  if (filter_item!=nullptr)
+  {
+    int row = filter_item->row();
+    filter_item = table_filter_by_set->item(row,1);
+
+    if (filter_set=="Block")
+    {
+      std::vector<int> node_ids = CubitInterface::parse_cubit_list("node","all in block " + filter_item->text().toStdString());; 
+      for (size_t i = 0; i < node_ids.size(); i++)
+      {
+        if (ccx_iface->frd_check_node_exists(current_job_id, node_ids[i]))
+        {
+          nodes.push_back(node_ids[i]);
+        }
+      }
+    }else if (filter_set=="Nodeset")
+    {
+      std::vector<int> node_ids = CubitInterface::parse_cubit_list("node","all in nodeset " + filter_item->text().toStdString());; 
+      for (size_t i = 0; i < node_ids.size(); i++)
+      {
+        if (ccx_iface->frd_check_node_exists(current_job_id, node_ids[i]))
+        {
+          nodes.push_back(node_ids[i]);
+        }
+      }
+    }else if (filter_set=="Sideset")
+    {
+      std::vector<int> node_ids = CubitInterface::parse_cubit_list("node","all in sideset " + filter_item->text().toStdString());; 
+      for (size_t i = 0; i < node_ids.size(); i++)
+      {
+        if (ccx_iface->frd_check_node_exists(current_job_id, node_ids[i]))
+        {
+          nodes.push_back(node_ids[i]);
+        }
+      }
     }
   }
+
+  int node_id = PickWidget_filter_node_id->text().toInt();
+  if (node_id > 0)
+  {
+    if (ccx_iface->frd_check_node_exists(current_job_id, node_id))
+    {
+        nodes.push_back(node_id);
+    }else
+    {
+      log = "Can't find node id " + std::to_string(node_id) + " in frd data -> reference points for example are not written into frd \n";
+      PRINT_INFO("%s", log.c_str());
+    }  
+  }
+
+  if (nodes.size()==0) // this means no filter for sets was applied
+  {
+    nodes = frd_nodes;
+  }
+
+  //prepare components
+  std::vector<std::string> components;
+  if (current_result_component->text().toStdString()=="all")
+  {
+    components = ccx_iface->frd_get_result_block_components(current_job_id, current_result_block->text().toStdString());
+  }else{
+    components.push_back(current_result_component->text().toStdString());
+  }
+
+  //prepare increments
+  std::vector<int> increments;
+  if (current_increment->text().toStdString()=="all")
+  {
+    increments = ccx_iface->frd_get_total_increments(current_job_id);
+  }else{
+    increments.push_back(current_increment->text().toInt());
+  }
+
+  std::vector<std::vector<double>> results;
+  std::string str_current_result_block = current_result_block->text().toStdString();
+
+  if ((nodes.size()>0)&&(components.size()>0)&&(increments.size()>0)) //check if data can be queried
+  {
+    for (size_t i = 0; i < nodes.size(); i++)
+    {
+      for (size_t ii = 0; ii < increments.size(); ii++)
+      {
+        std::vector<double> tmp_result;
+        double increment_time = ccx_iface->frd_get_time_from_total_increment(current_job_id, increments[ii]);
+        tmp_result.push_back(double(nodes[i]));
+        tmp_result.push_back(double(increments[ii]));
+        tmp_result.push_back(increment_time);
+        for (size_t iii = 0; iii < components.size(); iii++)
+        {
+          double node_result = ccx_iface->frd_get_node_value(current_job_id, nodes[i] , increments[ii], str_current_result_block, components[iii]);
+          tmp_result.push_back(node_result);
+        }
+        results.push_back(tmp_result);
+      }
+    }
+  }
+
+  QString fileName;
+
+  QFileDialog dialog;
+  dialog.setWindowTitle("Save CSV");
+  dialog.setDirectory(QDir::homePath());
+  dialog.setNameFilter("CSV Files (*.csv);;All Files (*)");
+  fileName = dialog.getSaveFileName();
+
+  if(fileName.isEmpty())
+  {
+    log = "File save canceled.\n";
+    PRINT_INFO("%s", log.c_str());
+    return;
+  }
+
+  if (!fileName.endsWith(".csv", Qt::CaseInsensitive)) 
+  {
+    fileName += ".csv";
+  }
+
+  if (QFileInfo::exists(fileName)) 
+  {
+    log = "Filename already existed, maybe without '.csv'. File has been overwritten.\n";
+    PRINT_INFO("%s", log.c_str());
+    return;
+    /* QMessageBox::StandardButton reply;
+    reply = QMessageBox::question(nullptr, "File Exists", "The file already exists. Do you want to overwrite it?", QMessageBox::Yes|QMessageBox::No);
+    if (reply == QMessageBox::No)
+    {
+      return;
+    } */
+  }
+
+  this->ccx_iface->export_to_csv(fileName.toStdString(), header, results);
+
+  return;
 }

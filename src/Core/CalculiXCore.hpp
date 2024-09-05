@@ -233,6 +233,7 @@ public:
 
   
   //QUERY results
+  bool export_to_csv(std::string path_and_name, std::vector<std::string> header, std::vector<std::vector<double>> data); // exports the data to a .csv file, with the header
   //FRD results
   std::vector<int> frd_get_nodes(int job_id); // returns a list of all nodes
   bool frd_check_node_exists(int job_id,int node_id); // returns if a node in the frd exists

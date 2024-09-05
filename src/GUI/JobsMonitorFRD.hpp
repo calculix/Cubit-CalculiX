@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <QComboBox>
 #include <QLineEdit>
+#include <QFileDialog>
 #include <QObject>
 
 class CalculiXCoreInterface;
@@ -57,14 +58,13 @@ public:
   void createListItems(); // creates the list items for selected material
   void removeListItems(); // removes current list items
 
-  void removeWidgetFromLayout(QVBoxLayout* layout, QWidget* widget);
-
 private slots:
   void on_pushButton_reset_clicked(bool);
   void on_pushButton_plot_clicked(bool);
   void on_pushButton_query_results_clicked(bool);
   void on_pushButton_previous_clicked(bool);
   void on_pushButton_next_clicked(bool);
+  void on_pushButton_export_clicked(bool);
   void update_filter_by_set(int index);
   void result_block_clicked(QListWidgetItem* item);
   void result_block_changed(QListWidgetItem* current_item, QListWidgetItem* prev_item);
@@ -90,6 +90,7 @@ private:
   QPushButton* pushButton_query_results;
   QPushButton* pushButton_prev;
   QPushButton* pushButton_next;
+  QPushButton* pushButton_export;
   QLabel* label_result_block;
   QLabel* label_component;
   QLabel* label_increment;

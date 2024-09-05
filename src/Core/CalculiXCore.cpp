@@ -3554,6 +3554,43 @@ bool CalculiXCore::draw_bc_temperatures(double size)
   return draw->draw_bc_temperatures(size);
 }
 
+bool CalculiXCore::export_to_csv(std::string path, std::vector<std::string> header, std::vector<std::vector<double>> data)
+{
+  std::string filename = path; //Clemens change
+  std::ofstream file(filename);
+
+  if(file.is_open())
+  {
+    //header
+    for (size_t i = 0; i < header.size(); ++i)
+    {
+      file << header[i];
+      if (i < header.size() - 1)
+      {
+        file << ","; // add a period between header elements
+      }
+    }
+    file << "\n";
+
+    //data
+    for (size_t i = 0; i < data.size(); ++i)
+    {
+      for (size_t ii = 0; ii < data[i].size(); ++ii)
+      {
+        file << data[i][ii];
+        if (ii < data[i].size() - 1)
+        {
+          file << ","; // add a period between elements in the row
+        }
+      }
+      file << "\n";
+    }
+    file.close();
+  }
+
+  return true;
+}
+
 std::vector<int> CalculiXCore::frd_get_nodes(int job_id)
 {
   std::vector<int> tmp;

@@ -54,3 +54,4 @@
 2024-09-01 working on job monitor frd tab
 2024-09-02 working on job monitor frd tab
 2024-09-04 inlcude missing Qt5Charts libraries into src
+2024-09-05 inlcuding csv export...needs to be rewritten

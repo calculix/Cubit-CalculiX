@@ -830,6 +830,11 @@ bool CalculiXCoreInterface::draw_bc_temperatures(double size)
   return ccx_core.draw_bc_temperatures(size);
 }
 
+bool CalculiXCoreInterface::export_to_csv(std::string path, std::vector<std::string> header, std::vector<std::vector<double>> data)
+{
+  return ccx_core.export_to_csv(path, header, data);
+}
+
 std::vector<int> CalculiXCoreInterface::frd_get_nodes(int job_id)
 {
   return ccx_core.frd_get_nodes(job_id);
