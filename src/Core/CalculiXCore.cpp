@@ -1108,6 +1108,44 @@ std::string CalculiXCore::print_data()
   return str_return;
 }
 
+
+bool CalculiXCore::export_to_csv(std::string path, std::vector<std::string> header, std::vector<std::vector<double>> data)
+{
+  std::string filename = path; //Clemens change
+  std::ofstream file(filename);
+
+  if(file.is_open())
+  {
+    //header
+    for (size_t i = 0; i < header.size(); ++i)
+    {
+      file << header[i];
+      if (i < header.size() - 1)
+      {
+        file << ","; // add a period between header elements
+      }
+    }
+    file << "\n";
+
+    //data
+    for (size_t i = 0; i < data.size(); ++i)
+    {
+      for (size_t ii = 0; ii < data[i].size(); ++ii)
+      {
+        file << data[i][ii];
+        if (ii < data[i].size() - 1)
+        {
+          file << ","; // add a period between elements in the row
+        }
+      }
+      file << "\n";
+    }
+    file.close();
+  }
+
+  return true;
+}
+
 std::string  CalculiXCore::to_string_scientific(double value, int precision)
 {
   std::string output;
@@ -2683,6 +2721,125 @@ bool CalculiXCore::result_plot_job_dat(int job_id)
   return plot_possible;
 }
 
+bool CalculiXCore::result_csv_job_frd(int job_id,int x_node_id, std::string x_block_type, std::string x_block_component, bool x_increment,bool x_time,int y_node_id, std::string y_block_type, std::string y_block_component, bool y_increment, bool y_time,QString title,QString x_axis,QString y_axis,bool save, QString save_filepath)
+{ 
+  bool plot_possible = false;
+  std::vector<int> increments;
+  std::vector<double> times;
+  QString windowtitle = "FRD Plot";
+  std::vector<double> x_data;
+  std::vector<double> y_data;
+
+  //std::string log;
+  //log = "plotting job "+ std::to_string(job_id) + "\n";
+  //PRINT_INFO("%s", log.c_str());
+
+  increments = frd_get_total_increments(job_id);
+  for (size_t i = 0; i < increments.size(); i++)
+  {
+    times.push_back(frd_get_time_from_total_increment(job_id,increments[i]));
+  }
+
+  //x data
+  if (x_increment)
+  {
+    for (size_t i = 0; i < increments.size(); i++)
+    {
+      x_data.push_back(increments[i]);
+    }
+  }
+  if (x_time)
+  {
+    for (size_t i = 0; i < times.size(); i++)
+    {
+      x_data.push_back(times[i]);
+    }
+  }
+  if (x_node_id!=-1)
+  {
+    for (size_t i = 0; i < increments.size(); i++)
+    {
+      x_data.push_back(frd_get_node_value(job_id,x_node_id, increments[i], x_block_type,x_block_component));
+    }
+  }
+
+  //y data
+  if (y_increment)
+  {
+    for (size_t i = 0; i < increments.size(); i++)
+    {
+      y_data.push_back(increments[i]);
+    }
+  }
+  if (y_time)
+  {
+    for (size_t i = 0; i < times.size(); i++)
+    {
+      y_data.push_back(times[i]);
+    }
+  }
+  if (y_node_id!=-1)
+  {
+    for (size_t i = 0; i < increments.size(); i++)
+    {
+      y_data.push_back(frd_get_node_value(job_id,y_node_id, increments[i], y_block_type,y_block_component));
+    }
+  }
+
+  if (x_axis=="")
+  {
+    std::string tmp;
+    if (x_increment)
+    {
+      tmp = "Increment";
+    }
+    if (x_time)
+    {
+      tmp = "Time";
+    }
+    if (x_node_id!=-1)
+    {
+      tmp = "Node ID " + std::to_string(x_node_id) + ", " + x_block_type + "[" + x_block_component + "]";
+    }
+    x_axis = QString::fromStdString(tmp);
+  }
+  if (y_axis=="")
+  {
+    std::string tmp;
+    if (y_increment)
+    {
+      tmp = "Increment";
+    }
+    if (y_time)
+    {
+      tmp = "Time";
+    }
+    if (y_node_id!=-1)
+    {
+      tmp = "Node ID " + std::to_string(y_node_id) + ", " + y_block_type + "[" + y_block_component + "]";
+    }
+    y_axis = QString::fromStdString(tmp);
+  }
+  
+
+  if ((x_data.size()>0)&&(y_data.size()>0)&&(x_data.size()==y_data.size()))
+  {
+    plot_possible = true;
+  }
+    
+  if (plot_possible)
+  {
+    plotchart = new PlotChart(nullptr,windowtitle, title, x_axis, y_axis, x_data, y_data,save,save_filepath);
+    plotchart->show();
+    if (save)
+    {
+      plotchart->close();
+    }
+  }  
+
+  return plot_possible;
+}
+
 std::vector<std::string> CalculiXCore::get_job_data(int job_id)
 {
   return jobs->get_job_data(job_id);
@@ -3552,43 +3709,6 @@ bool CalculiXCore::draw_bc_displacements(double size)
 bool CalculiXCore::draw_bc_temperatures(double size)
 {
   return draw->draw_bc_temperatures(size);
-}
-
-bool CalculiXCore::export_to_csv(std::string path, std::vector<std::string> header, std::vector<std::vector<double>> data)
-{
-  std::string filename = path; //Clemens change
-  std::ofstream file(filename);
-
-  if(file.is_open())
-  {
-    //header
-    for (size_t i = 0; i < header.size(); ++i)
-    {
-      file << header[i];
-      if (i < header.size() - 1)
-      {
-        file << ","; // add a period between header elements
-      }
-    }
-    file << "\n";
-
-    //data
-    for (size_t i = 0; i < data.size(); ++i)
-    {
-      for (size_t ii = 0; ii < data[i].size(); ++ii)
-      {
-        file << data[i][ii];
-        if (ii < data[i].size() - 1)
-        {
-          file << ","; // add a period between elements in the row
-        }
-      }
-      file << "\n";
-    }
-    file.close();
-  }
-
-  return true;
 }
 
 std::vector<int> CalculiXCore::frd_get_nodes(int job_id)
