@@ -18,7 +18,7 @@ public:
   bool init_pythoninterface();
   std::string print_data();
   bool log_str(std::string str_log);
-  bool export_to_csv(std::string path_and_name, std::vector<std::string> header, std::vector<std::vector<double>> data); // exports the data to a .csv file, with the header
+  bool export_to_csv(std::string path_and_name, std::vector<std::string> header, std::vector<std::vector<double>> data,bool overwrite); // exports the data to a .csv file, with the header
   std::vector<int> parser(std::string parse_type, std::string parse_string);
   std::string to_string_scientific(double value, int precision = 6); // converts a double to string with scientific notation, with optional precision
   double string_scientific_to_double(std::string value, int precision = 6); // converts a string with scientific notation to double, with optional precision
@@ -139,7 +139,7 @@ public:
   bool result_paraview_job(int job_id); // opens the results with paraview
   bool result_plot_job_frd(int job_id,int x_node_id, std::string x_block_type, std::string x_block_component, bool x_increment,bool x_time,int y_node_id, std::string y_block_type, std::string y_block_component, bool y_increment, bool y_time,QString title,QString x_axis,QString y_axis,bool save, QString save_filepath); // plots the results
   bool result_plot_job_dat(int job_id); // plots the results
-  bool result_csv_job_frd(int job_id,int x_node_id, std::string x_block_type, std::string x_block_component, bool x_increment,bool x_time,int y_node_id, std::string y_block_type, std::string y_block_component, bool y_increment, bool y_time,QString title,QString x_axis,QString y_axis,bool save, QString save_filepath); // plots the results
+  bool result_csv_job_frd(int job_id,std::string block_type, std::string block_component, std::string increment,int node_id,int block_id,int nodeset_id,int sideset_id, bool overwrite, std::string save_filepath); // save the results to csv
   std::vector<std::string> get_job_data(int job_id);
   std::vector<std::string> get_job_console_output(int job_id);
   std::vector<std::string> get_job_cvg(int job_id);

@@ -16,24 +16,17 @@ std::vector<std::string> ccxResultCSVJobFrdCommand::get_syntax()
   std::string syntax = "ccx ";
   syntax.append("result csv job <value:label='job_id',help='<job_id>'> ");
   syntax.append("frd ");
-  syntax.append("{");
-  syntax.append("x_node_id <value:label='x_node_id',help='<x_node_id>'>");
-  syntax.append("x_block_type <string:type='unquoted', number='1', label='x_block_type', help='<x_block_type>'> " );
-  syntax.append("x_block_component <string:type='unquoted', number='1', label='x_block_component', help='<x_block_component>'> " );
-  syntax.append("|x_increment");
-  syntax.append("|x_time");
-  syntax.append("} ");
-  syntax.append("{");
-  syntax.append("y_node_id <value:label='y_node_id',help='<y_node_id>'>");
-  syntax.append("y_block_type <string:type='unquoted', number='1', label='y_block_type', help='<y_block_type>'> " );
-  syntax.append("y_block_component <string:type='unquoted', number='1', label='y_block_component', help='<y_block_component>'> " );
-  syntax.append("|y_increment");
-  syntax.append("|y_time");
-  syntax.append("} ");
-  syntax.append("[title <string:type='unquoted', number='1', label='title', help='<title>'>] " );
-  syntax.append("[x_axis <string:type='unquoted', number='1', label='x_axis', help='<x_axis>'>] " );
-  syntax.append("[y_axis <string:type='unquoted', number='1', label='y_axis', help='<y_axis>'>] " );
-  syntax.append("[save <string:type='unquoted', number='1', label='save_filepath', help='<save_filepath>'>] " );
+  syntax.append("block_type <string:type='unquoted', number='1', label='block_type', help='<block_type>'> " );
+  syntax.append("block_component <string:type='unquoted', number='1', label='block_component', help='<block_component>'> " );
+  syntax.append("increment <string:type='unquoted', number='1', label='increment', help='<increment>'> " );
+  syntax.append("save <string:type='unquoted', number='1', label='save_filepath', help='<save_filepath>'> " );
+  syntax.append("[overwrite] " );
+  syntax.append("[{");
+  syntax.append("block <value:label='block_id',help='<block_id>'>");
+  syntax.append("|nodeset <value:label='nodeset_id',help='<nodeset_id>'>");
+  syntax.append("|sideset <value:label='sideset_id',help='<sideset_id>'>");
+  syntax.append("}] ");
+  syntax.append("[node_id <value:label='node_id',help='<node_id>'>] ");  
   syntax_list.push_back(syntax);
   
   return syntax_list;
@@ -42,11 +35,18 @@ std::vector<std::string> ccxResultCSVJobFrdCommand::get_syntax()
 std::vector<std::string> ccxResultCSVJobFrdCommand::get_syntax_help()
 {
   std::vector<std::string> help(1);
-  help[0] = "ccx result csv job <job_id> frd {x_node_id <x_node_id> x_block_type <x_block_type> x_block_component <x_block_type>|x_increment|x_time} {y_node_id <y_node_id> y_block_type <y_block_type> y_block_component <y_block_type>|y_increment|y_time}"; 
-  help[0].append("[title <title>] " );
-  help[0].append("[x_axis <x_axis>] " );
-  help[0].append("[y_axis <y_axis>] " );
-  help[0].append("[save <save_filepath>] " );
+  help[0] = "ccx result csv job <job_id> frd "; 
+  help[0].append("block_type <block_type> " );
+  help[0].append("block_component <block_component> " );
+  help[0].append("increment <increment> " );
+  help[0].append("save <save_filepath> " );
+  help[0].append("[overwrite] " );
+  help[0].append("[{");
+  help[0].append("block <block_id>");
+  help[0].append("|nodeset <nodeset_id>");
+  help[0].append("|sideset <sideset_id>");
+  help[0].append("}] ");
+  help[0].append("[node_id <node_id>] ");
 
   return help;
 }
@@ -67,83 +67,54 @@ bool ccxResultCSVJobFrdCommand::execute(CubitCommandData &data)
 
   data.get_value("job_id", job_id);
 
-  int x_node_id=-1;
-  std::string x_block_type="";
-  std::string x_block_component="";
-  bool x_increment = false;
-  bool x_time = false;
-  int y_node_id=-1;
-  std::string y_block_type="";
-  std::string y_block_component="";
-  bool y_increment = false;
-  bool y_time = false;
-  std::string title;
-  std::string x_axis;
-  std::string y_axis;
-  bool save = true;
+  int node_id=-1;
+  int block_id=-1;
+  int nodeset_id=-1;
+  int sideset_id=-1;
+  std::string block_type="";
+  std::string block_component="";
+  std::string increment = "";
+  bool overwrite = false;
   std::string save_filepath;
 
-  if (!data.get_value("x_node_id", x_node_id))
+  if (!data.get_value("node_id", node_id))
   {
-    x_node_id = -1;
+    node_id = -1;
   }
-  if (!data.get_string("x_block_type", x_block_type))
+  if (!data.get_value("block_id", block_id))
   {
-    x_block_type = "";
+    block_id = -1;
   }
-  if (!data.get_string("x_block_component", x_block_component))
+  if (!data.get_value("nodeset_id", nodeset_id))
   {
-    x_block_component = "";
+    nodeset_id = -1;
   }
-  if (data.find_keyword("X_INCREMENT"))
+  if (!data.get_value("sideset_id", sideset_id))
   {
-    x_increment = true;
+    sideset_id = -1;
   }
-  if (data.find_keyword("X_TIME"))
+  if (!data.get_string("block_type", block_type))
   {
-    x_time = true;
+    block_type = "";
   }
-
-  if (!data.get_value("y_node_id", y_node_id))
+  if (!data.get_string("block_component", block_component))
   {
-    y_node_id = -1;
+    block_component = "";
   }
-  if (!data.get_string("y_block_type", y_block_type))
+  if (!data.get_string("increment", increment))
   {
-    y_block_type = "";
+    increment = "";
   }
-  if (!data.get_string("y_block_component", y_block_component))
+  if (data.find_keyword("OVERWRITE"))
   {
-    y_block_component = "";
-  }
-  if (data.find_keyword("Y_INCREMENT"))
-  {
-    y_increment = true;
-  }
-  if (data.find_keyword("Y_TIME"))
-  {
-    y_time = true;
-  }
-
-  if (!data.get_string("title", title))
-  {
-    title = "";
-  }
-  if (!data.get_string("x_axis", x_axis))
-  {
-    x_axis = "";
-  }
-  if (!data.get_string("y_axis", y_axis))
-  {
-    y_axis = "";
+    overwrite = true;
   }
   if (!data.get_string("save_filepath", save_filepath))
   {
     save_filepath = "";
-    save = false;
   }
 
-  if (!ccx_iface.result_plot_job_frd(job_id,x_node_id,x_block_type,x_block_component,x_increment,x_time,y_node_id,y_block_type,y_block_component,y_increment,y_time,QString::fromStdString(title),QString::fromStdString(x_axis),QString::fromStdString(y_axis),save,QString::fromStdString(save_filepath)))
+  if (!ccx_iface.result_csv_job_frd(job_id,block_type,block_component,increment,node_id,block_id,nodeset_id,sideset_id,overwrite,save_filepath))
   {
     output = "Failed!\n";
     PRINT_ERROR(output.c_str());

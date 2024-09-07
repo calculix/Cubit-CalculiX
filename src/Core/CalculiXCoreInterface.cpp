@@ -40,9 +40,9 @@ bool CalculiXCoreInterface::log_str(std::string str_log)
   return true;
 }
 
-bool CalculiXCoreInterface::export_to_csv(std::string path, std::vector<std::string> header, std::vector<std::vector<double>> data)
+bool CalculiXCoreInterface::export_to_csv(std::string path, std::vector<std::string> header, std::vector<std::vector<double>> data,bool overwrite)
 {
-  return ccx_core.export_to_csv(path, header, data);
+  return ccx_core.export_to_csv(path, header, data,overwrite);
 }
 
 std::vector<int> CalculiXCoreInterface::parser(std::string parse_type, std::string parse_string)
@@ -605,9 +605,9 @@ bool CalculiXCoreInterface::result_plot_job_dat(int job_id)
   return ccx_core.result_plot_job_dat(job_id);
 }
 
-bool CalculiXCoreInterface::result_csv_job_frd(int job_id,int x_node_id, std::string x_block_type, std::string x_block_component, bool x_increment,bool x_time,int y_node_id, std::string y_block_type, std::string y_block_component, bool y_increment, bool y_time,QString title,QString x_axis,QString y_axis,bool save, QString save_filepath)
+bool CalculiXCoreInterface::result_csv_job_frd(int job_id,std::string block_type, std::string block_component, std::string increment,int node_id,int block_id,int nodeset_id,int sideset_id, bool overwrite, std::string save_filepath)
 {
-  return ccx_core.result_csv_job_frd(job_id,x_node_id,x_block_type,x_block_component,x_increment,x_time,y_node_id,y_block_type,y_block_component,y_increment,y_time,title,x_axis,y_axis,save, save_filepath);
+  return ccx_core.result_csv_job_frd(job_id, block_type, block_component, increment, node_id, block_id, nodeset_id, sideset_id, overwrite, save_filepath);
 }
 
 std::vector<std::string> CalculiXCoreInterface::get_job_data(int job_id)

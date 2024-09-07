@@ -631,14 +631,15 @@ void JobsMonitorFRD::on_pushButton_next_clicked(bool)
 
 void JobsMonitorFRD::on_pushButton_export_clicked(bool)
 {
-  std::vector<std::string> header;
-  std::vector<std::vector<double>> data;
-
-  for (size_t i = 0; i < table_result->columnCount(); i++)
-  {
-    std::string temp_header = table_result->horizontalHeaderItem(i)->text().toStdString();
-    header.push_back(temp_header);
-  }
+  int node_id=-1;
+  int block_id=-1;
+  int nodeset_id=-1;
+  int sideset_id=-1;
+  std::string block_type="";
+  std::string block_component="";
+  std::string increment = "";
+  bool overwrite = false;
+  std::string save_filepath;
 
   std::string log;
   if(current_job_id == -1)
@@ -666,9 +667,6 @@ void JobsMonitorFRD::on_pushButton_export_clicked(bool)
     return;
   }
 
-  std::vector<int> nodes;
-  std::vector<int> frd_nodes = ccx_iface->frd_get_nodes(current_job_id);
-
   // check if filter was chosen
   std::string filter_set = combobox_filter_by_set->currentText().toStdString();
   QTableWidgetItem* filter_item = table_filter_by_set->currentItem();
@@ -679,96 +677,20 @@ void JobsMonitorFRD::on_pushButton_export_clicked(bool)
 
     if (filter_set=="Block")
     {
-      std::vector<int> node_ids = CubitInterface::parse_cubit_list("node","all in block " + filter_item->text().toStdString());; 
-      for (size_t i = 0; i < node_ids.size(); i++)
-      {
-        if (ccx_iface->frd_check_node_exists(current_job_id, node_ids[i]))
-        {
-          nodes.push_back(node_ids[i]);
-        }
-      }
+      block_id = filter_item->text().toInt();
     }else if (filter_set=="Nodeset")
     {
-      std::vector<int> node_ids = CubitInterface::parse_cubit_list("node","all in nodeset " + filter_item->text().toStdString());; 
-      for (size_t i = 0; i < node_ids.size(); i++)
-      {
-        if (ccx_iface->frd_check_node_exists(current_job_id, node_ids[i]))
-        {
-          nodes.push_back(node_ids[i]);
-        }
-      }
+      nodeset_id = filter_item->text().toInt();
     }else if (filter_set=="Sideset")
     {
-      std::vector<int> node_ids = CubitInterface::parse_cubit_list("node","all in sideset " + filter_item->text().toStdString());; 
-      for (size_t i = 0; i < node_ids.size(); i++)
-      {
-        if (ccx_iface->frd_check_node_exists(current_job_id, node_ids[i]))
-        {
-          nodes.push_back(node_ids[i]);
-        }
-      }
+      sideset_id = filter_item->text().toInt();
     }
   }
 
-  int node_id = PickWidget_filter_node_id->text().toInt();
-  if (node_id > 0)
-  {
-    if (ccx_iface->frd_check_node_exists(current_job_id, node_id))
-    {
-        nodes.push_back(node_id);
-    }else
-    {
-      log = "Can't find node id " + std::to_string(node_id) + " in frd data -> reference points for example are not written into frd \n";
-      PRINT_INFO("%s", log.c_str());
-    }  
-  }
-
-  if (nodes.size()==0) // this means no filter for sets was applied
-  {
-    nodes = frd_nodes;
-  }
-
-  //prepare components
-  std::vector<std::string> components;
-  if (current_result_component->text().toStdString()=="all")
-  {
-    components = ccx_iface->frd_get_result_block_components(current_job_id, current_result_block->text().toStdString());
-  }else{
-    components.push_back(current_result_component->text().toStdString());
-  }
-
-  //prepare increments
-  std::vector<int> increments;
-  if (current_increment->text().toStdString()=="all")
-  {
-    increments = ccx_iface->frd_get_total_increments(current_job_id);
-  }else{
-    increments.push_back(current_increment->text().toInt());
-  }
-
-  std::vector<std::vector<double>> results;
-  std::string str_current_result_block = current_result_block->text().toStdString();
-
-  if ((nodes.size()>0)&&(components.size()>0)&&(increments.size()>0)) //check if data can be queried
-  {
-    for (size_t i = 0; i < nodes.size(); i++)
-    {
-      for (size_t ii = 0; ii < increments.size(); ii++)
-      {
-        std::vector<double> tmp_result;
-        double increment_time = ccx_iface->frd_get_time_from_total_increment(current_job_id, increments[ii]);
-        tmp_result.push_back(double(nodes[i]));
-        tmp_result.push_back(double(increments[ii]));
-        tmp_result.push_back(increment_time);
-        for (size_t iii = 0; iii < components.size(); iii++)
-        {
-          double node_result = ccx_iface->frd_get_node_value(current_job_id, nodes[i] , increments[ii], str_current_result_block, components[iii]);
-          tmp_result.push_back(node_result);
-        }
-        results.push_back(tmp_result);
-      }
-    }
-  }
+  node_id = PickWidget_filter_node_id->text().toInt();
+  block_type = current_result_block->text().toStdString();
+  block_component = current_result_component->text().toStdString();
+  increment = current_increment->text().toStdString();
 
   QString fileName;
 
@@ -792,18 +714,43 @@ void JobsMonitorFRD::on_pushButton_export_clicked(bool)
 
   if (QFileInfo::exists(fileName)) 
   {
-    log = "Filename already existed, maybe without '.csv'. File has been overwritten.\n";
-    PRINT_INFO("%s", log.c_str());
-    return;
-    /* QMessageBox::StandardButton reply;
+    QMessageBox::StandardButton reply;
     reply = QMessageBox::question(nullptr, "File Exists", "The file already exists. Do you want to overwrite it?", QMessageBox::Yes|QMessageBox::No);
-    if (reply == QMessageBox::No)
+    if (reply == QMessageBox::Yes)
     {
-      return;
-    } */
+      overwrite = true;
+    }
   }
 
-  this->ccx_iface->export_to_csv(fileName.toStdString(), header, results);
+  //ccx result csv job <job_id> frd block_type <block_type> block_component <block_component> increment <increment> save <save_filepath> [overwrite] [{block_id <block_id>|nodeset_id <nodeset_id>|sideset_id <sideset_id>}] [node_id <node_id>] 
+  std::string cmd = "";
+  cmd.append("ccx result csv job " + std::to_string(this->current_job_id) + " frd ");
+  cmd.append("block_type \'" + block_type + "\' ");
+  cmd.append("block_component \'" + block_component + "\' ");
+  cmd.append("increment \'" + increment + "\' ");
+  cmd.append("save \'" + fileName.toStdString() + "\' ");
+  if (overwrite)
+  {
+    cmd.append("overwrite ");
+  }
+  if (block_id!=-1)
+  {
+    cmd.append("block " + std::to_string(block_id) + " ");
+  }
+  if (nodeset_id!=-1)
+  {
+    cmd.append("nodeset " + std::to_string(nodeset_id) + " ");
+  }
+  if (sideset_id!=-1)
+  {
+    cmd.append("sideset " + std::to_string(sideset_id) + " ");
+  }
+  if (node_id>0)
+  {
+    cmd.append("node_id " + std::to_string(node_id) + " ");
+  }
+  
+  ccx_iface->cmd(cmd);
 
   return;
 }
