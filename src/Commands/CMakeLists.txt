@@ -208,7 +208,9 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxResultPlotJobDatCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxResultPlotJobDatCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxResultCSVJobFrdCommand.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/ccxResultCSVJobFrdCommand.hpp    
+    ${CMAKE_CURRENT_LIST_DIR}/ccxResultCSVJobFrdCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxResultCSVJobDatCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxResultCSVJobDatCommand.hpp    
     ${CMAKE_CURRENT_LIST_DIR}/ccxResultProjectJobCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxResultProjectJobCommand.hpp    
     ${CMAKE_CURRENT_LIST_DIR}/ccxResultCGXJobCommand.cpp

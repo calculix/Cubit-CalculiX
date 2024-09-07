@@ -2,6 +2,7 @@
 #include "CalculiXCoreInterface.hpp"
 #include "GUITimer.hpp"
 #include "JobsMonitorFRD.hpp"
+#include "JobsMonitorDAT.hpp"
 
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
@@ -69,7 +70,7 @@ JobsMonitor::JobsMonitor()
   QPlainTextEdit_sta->setReadOnly(true);
   QPlainTextEdit_sta->setMaximumBlockCount(maximumBlockCount);
   FRD_widget = new JobsMonitorFRD();
-  DAT_widget = new QWidget();
+  DAT_widget = new JobsMonitorDAT();
 
   //tab widget
   TabWidget = new QTabWidget();
@@ -240,6 +241,7 @@ void JobsMonitor::setJob(int job_id)
 {
   current_job_id = job_id;
   FRD_widget->set_current_job_id(current_job_id);
+  DAT_widget->set_current_job_id(current_job_id);
 }
 
 void JobsMonitor::on_pushButton_run_clicked(bool)

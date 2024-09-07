@@ -2882,6 +2882,149 @@ bool CalculiXCore::result_csv_job_frd(int job_id,std::string block_type, std::st
  return true;
 }
 
+bool CalculiXCore::result_csv_job_dat(int job_id,std::string block_type, std::string block_component, std::string increment,int node_id,int block_id,int nodeset_id,int sideset_id, bool overwrite, std::string save_filepath)
+{ 
+  std::string log;
+  //log = "exporting job "+ std::to_string(job_id) + "\n";
+  //PRINT_INFO("%s", log.c_str());
+
+  if(job_id == -1)
+  {
+    log = "Can't export results -> no job set \n";
+    PRINT_INFO("%s", log.c_str());
+    return false;
+  }
+  if (block_type=="")
+  {
+    log = "Can't export results -> no result block set \n";
+    PRINT_INFO("%s", log.c_str());
+    return false;
+  }
+  if(block_component=="")
+  {
+    log = "Can't export results -> no result component set \n";
+    PRINT_INFO("%s", log.c_str());
+    return false;
+  }
+
+  if (increment=="")
+  {
+    log = "Can't export results -> no increment set \n";
+    PRINT_INFO("%s", log.c_str());
+    return false;
+  }
+
+  std::vector<int> nodes;
+  std::vector<int> frd_nodes = this->frd_get_nodes(job_id);
+
+  // check if filter was chosen
+  if (block_id!=-1)
+  {
+    std::vector<int> node_ids = CubitInterface::parse_cubit_list("node","all in block " + std::to_string(block_id));; 
+    for (size_t i = 0; i < node_ids.size(); i++)
+    {
+      if (this->frd_check_node_exists(job_id, node_ids[i]))
+      {
+        nodes.push_back(node_ids[i]);
+      }
+    }
+  }
+  if (nodeset_id!=-1)
+  {
+    std::vector<int> node_ids = CubitInterface::parse_cubit_list("node","all in nodeset " + std::to_string(nodeset_id));; 
+    for (size_t i = 0; i < node_ids.size(); i++)
+    {
+      if (this->frd_check_node_exists(job_id, node_ids[i]))
+      {
+        nodes.push_back(node_ids[i]);
+      }
+    }
+  }
+  if (sideset_id!=-1)
+  {
+    std::vector<int> node_ids = CubitInterface::parse_cubit_list("node","all in sideset " + std::to_string(sideset_id));; 
+    for (size_t i = 0; i < node_ids.size(); i++)
+    {
+      if (this->frd_check_node_exists(job_id, node_ids[i]))
+      {
+        nodes.push_back(node_ids[i]);
+      }
+    }
+  }
+  
+  if (node_id > 0)
+  {
+    if (this->frd_check_node_exists(job_id, node_id))
+    {
+        nodes.push_back(node_id);
+    }else
+    {
+      log = "Can't find node id " + std::to_string(node_id) + " in frd data -> reference points for example are not written into frd \n";
+      PRINT_INFO("%s", log.c_str());
+    }  
+  }
+
+  if (nodes.size()==0) // this means no filter for sets was applied
+  {
+    nodes = frd_nodes;
+  }
+  
+  //prepare components
+  std::vector<std::string> components;
+  if (block_component=="all")
+  {
+    components = this->frd_get_result_block_components(job_id, block_type);
+  }else{
+    components.push_back(block_component);
+  }
+
+  //prepare increments
+  std::vector<int> increments;
+  if (increment=="all")
+  {
+    increments = this->frd_get_total_increments(job_id);
+  }else{
+    increments.push_back(std::stoi(increment));
+  }
+
+  //get header
+  std::vector<std::string> header;
+  header.push_back("Node ID");
+  header.push_back("Increment");
+  header.push_back("Time");
+  for (size_t ii = 0; ii < components.size(); ii++)
+  {
+    header.push_back(components[ii]);
+  }
+    
+  //get results
+  std::vector<std::vector<double>> results;
+  if ((nodes.size()>0)&&(components.size()>0)&&(increments.size()>0)) //check if data can be queried
+  {
+    for (size_t i = 0; i < nodes.size(); i++)
+    {
+      for (size_t ii = 0; ii < increments.size(); ii++)
+      {
+        std::vector<double> tmp_result;
+        double increment_time = this->frd_get_time_from_total_increment(job_id, increments[ii]);
+        tmp_result.push_back(double(nodes[i]));
+        tmp_result.push_back(double(increments[ii]));
+        tmp_result.push_back(increment_time);
+        for (size_t iii = 0; iii < components.size(); iii++)
+        {
+          double node_result = this->frd_get_node_value(job_id, nodes[i] , increments[ii], block_type, components[iii]);
+          tmp_result.push_back(node_result);
+        }
+        results.push_back(tmp_result);
+      }
+    }
+  }
+  //write csv
+  this->export_to_csv(save_filepath, header, results,overwrite);
+  
+ return true;
+}
+
 std::vector<std::string> CalculiXCore::get_job_data(int job_id)
 {
   return jobs->get_job_data(job_id);

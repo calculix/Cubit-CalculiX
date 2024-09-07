@@ -1,6 +1,6 @@
-#include "JobsMonitorFRD.hpp"
+#include "JobsMonitorDAT.hpp"
 #include "CalculiXCoreInterface.hpp"
-#include "JobsMonitorFRDPlot.hpp"
+#include "JobsMonitorDATPlot.hpp"
 
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
@@ -8,7 +8,7 @@
 #include "Claro.hpp"
 #include "PickWidget.hpp"
 
-JobsMonitorFRD::JobsMonitorFRD()
+JobsMonitorDAT::JobsMonitorDAT()
 {
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
 
@@ -17,20 +17,24 @@ JobsMonitorFRD::JobsMonitorFRD()
   this->setWindowTitle("FRD Results");
   gridLayout = new QGridLayout(this);
   boxLayout_result_block = new QVBoxLayout();
+  boxLayout_result_set = new QVBoxLayout();
   boxLayout_component = new QVBoxLayout();
-  boxLayout_increment = new QVBoxLayout();
+  boxLayout_time = new QVBoxLayout();
   boxLayout_filter =  new  QVBoxLayout() ;
-  boxLayout_filter_by_set = new QVBoxLayout();
+  //boxLayout_filter_by_set = new QVBoxLayout();
   boxLayout_filter_by_node = new QHBoxLayout();
+  vertical_spacer_filter = new QSpacerItem(1,1,QSizePolicy::Minimum,QSizePolicy::Expanding);
+  boxLayout_filter_by_element = new QHBoxLayout();
   boxLayout_result_buttons = new QHBoxLayout();
   boxLayout_widget = new QVBoxLayout();
   boxLayout_pages = new QHBoxLayout();
-  gridLayout->addLayout(boxLayout_result_block,0,0, Qt::AlignTop);
-  gridLayout->addLayout(boxLayout_component,0,1, Qt::AlignTop);
-  gridLayout->addLayout(boxLayout_increment,0,2, Qt::AlignTop);
-  gridLayout->addLayout(boxLayout_filter,0,3, Qt::AlignTop);
-  gridLayout->addLayout(boxLayout_widget,1,0,1,4, Qt::AlignTop);
-  gridLayout->addLayout(boxLayout_pages,2,0,1,4, Qt::AlignTop);
+  gridLayout->addLayout(boxLayout_result_set,0,0, Qt::AlignTop);
+  gridLayout->addLayout(boxLayout_result_block,0,1, Qt::AlignTop);
+  gridLayout->addLayout(boxLayout_component,0,2, Qt::AlignTop);
+  gridLayout->addLayout(boxLayout_time,0,3, Qt::AlignTop);
+  gridLayout->addLayout(boxLayout_filter,0,4, Qt::AlignTop);
+  gridLayout->addLayout(boxLayout_widget,1,0,1,5, Qt::AlignTop);
+  gridLayout->addLayout(boxLayout_pages,2,0,1,5, Qt::AlignTop);
 
   // buttons
   pushButton_reset = new QPushButton();
@@ -48,17 +52,21 @@ JobsMonitorFRD::JobsMonitorFRD()
   label_result_block->setText("Result Blocks");
   boxLayout_result_block->addWidget(label_result_block);
 
+  label_result_set = new QLabel();
+  label_result_set->setText("Result Sets");
+  boxLayout_result_set->addWidget(label_result_set);
+
   label_component = new QLabel();
   label_component->setText("Components");
   boxLayout_component->addWidget(label_component);
 
-  label_increment = new QLabel();
-  label_increment->setText("Increments");
-  boxLayout_increment->addWidget(label_increment);
+  label_time = new QLabel();
+  label_time->setText("Times");
+  boxLayout_time->addWidget(label_time);
 
-  label_filter_by_set = new QLabel();
-  label_filter_by_set->setText("Filter by Set");
-  boxLayout_filter_by_set->addWidget(label_filter_by_set);
+  //label_filter_by_set = new QLabel();
+  //label_filter_by_set->setText("Filter by Set");
+  //boxLayout_filter_by_set->addWidget(label_filter_by_set);
 
   label_filter_by_node = new QLabel();
   label_filter_by_node->setText("Filter by Node");
@@ -66,41 +74,55 @@ JobsMonitorFRD::JobsMonitorFRD()
   label_filter_node_id->setText("Node ID");
   boxLayout_filter_by_node->addWidget(label_filter_node_id);
 
+  label_filter_by_element = new QLabel();
+  label_filter_by_element->setText("Filter by Element");
+  label_filter_element_id = new QLabel();
+  label_filter_element_id->setText("Element ID");
+  boxLayout_filter_by_element->addWidget(label_filter_element_id);
 
   // lists
   list_result_block = new QListWidget();
   boxLayout_result_block->addWidget(list_result_block);
 
+  list_result_set = new QListWidget();
+  boxLayout_result_set->addWidget(list_result_set);
+
   list_component = new QListWidget();
   boxLayout_component->addWidget(list_component);
 
-  list_increment = new QListWidget();
-  //list_increment->setFrameShape(QFrame::Box);
-  //list_increment->setFrameShadow(QFrame::Raised);
-  boxLayout_increment->addWidget(list_increment);
+  list_time = new QListWidget();
+  boxLayout_time->addWidget(list_time);
 
   //filter
-  combobox_filter_by_set = new QComboBox();
-  combobox_filter_by_set->addItem("none");
-  combobox_filter_by_set->addItem(ccx_iface->getIcon2("BlocksTree"),"Block");
-  combobox_filter_by_set->addItem(ccx_iface->getIcon2("NodesetTree"),"Nodeset");
-  combobox_filter_by_set->addItem(ccx_iface->getIcon2("SidesetTree"),"Sideset");
-  boxLayout_filter_by_set->addWidget(combobox_filter_by_set);
-  table_filter_by_set = new QTableWidget();
-  table_filter_by_set->setLineWidth(1);
-  table_filter_by_set->setMidLineWidth(0);
-  table_filter_by_set->setFrameStyle(QFrame::Box | QFrame::Raised);
+  //combobox_filter_by_set = new QComboBox();
+  //combobox_filter_by_set->addItem("none");
+  //combobox_filter_by_set->addItem(ccx_iface->getIcon2("BlocksTree"),"Block");
+  //combobox_filter_by_set->addItem(ccx_iface->getIcon2("NodesetTree"),"Nodeset");
+  //combobox_filter_by_set->addItem(ccx_iface->getIcon2("SidesetTree"),"Sideset");
+  //boxLayout_filter_by_set->addWidget(combobox_filter_by_set);
+  //table_filter_by_set = new QTableWidget();
+  //table_filter_by_set->setLineWidth(1);
+  //table_filter_by_set->setMidLineWidth(0);
+  //table_filter_by_set->setFrameStyle(QFrame::Box | QFrame::Raised);
   
-  boxLayout_filter_by_set->addWidget(table_filter_by_set);
+  //boxLayout_filter_by_set->addWidget(table_filter_by_set);
 
   PickWidget_filter_node_id = new PickWidget();
   PickWidget_filter_node_id->setPickType(PickWidget::Node);
   PickWidget_filter_node_id->activate();
   boxLayout_filter_by_node->addWidget(PickWidget_filter_node_id);
+
+  PickWidget_filter_element_id = new PickWidget();
+  PickWidget_filter_element_id->setPickType(PickWidget::Element);
+  PickWidget_filter_element_id->activate();
+  boxLayout_filter_by_element->addWidget(PickWidget_filter_element_id);
   
-  boxLayout_filter->addLayout(boxLayout_filter_by_set);
+  //boxLayout_filter->addLayout(boxLayout_filter_by_set);
   boxLayout_filter->addWidget(label_filter_by_node);
   boxLayout_filter->addLayout(boxLayout_filter_by_node);
+  boxLayout_filter->addWidget(label_filter_by_element);
+  boxLayout_filter->addLayout(boxLayout_filter_by_element);
+  boxLayout_filter->addItem(vertical_spacer_filter);
   boxLayout_filter->addLayout(boxLayout_result_buttons);
 
   //table
@@ -123,7 +145,7 @@ JobsMonitorFRD::JobsMonitorFRD()
   boxLayout_pages->addWidget(pushButton_export);
   
 
-  PlotWidget = new JobsMonitorFRDPlot();
+  PlotWidget = new JobsMonitorDATPlot();
   PlotWidget->hide();
 
   // Signals
@@ -132,27 +154,28 @@ JobsMonitorFRD::JobsMonitorFRD()
   QObject::connect(pushButton_query_results, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_query_results_clicked(bool)));
   QObject::connect(list_result_block, SIGNAL(itemClicked(QListWidgetItem*)),this,  SLOT(result_block_clicked(QListWidgetItem*)));
   QObject::connect(list_result_block, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)),this,  SLOT(result_block_changed(QListWidgetItem*,QListWidgetItem*)));
+  QObject::connect(list_result_set, SIGNAL(itemClicked(QListWidgetItem*)),this,  SLOT(result_set_clicked(QListWidgetItem*)));
+  QObject::connect(list_result_set, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)),this,  SLOT(result_set_changed(QListWidgetItem*,QListWidgetItem*)));
   QObject::connect(list_component, SIGNAL(itemClicked(QListWidgetItem*)),this,  SLOT(component_clicked(QListWidgetItem*)));
   QObject::connect(list_component, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)),this,  SLOT(component_changed(QListWidgetItem*,QListWidgetItem*)));
-  QObject::connect(list_increment, SIGNAL(itemClicked(QListWidgetItem*)),this,  SLOT(increment_clicked(QListWidgetItem*)));
-  QObject::connect(list_increment, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)),this,  SLOT(increment_changed(QListWidgetItem*,QListWidgetItem*)));
+  QObject::connect(list_time, SIGNAL(itemClicked(QListWidgetItem*)),this,  SLOT(time_clicked(QListWidgetItem*)));
+  QObject::connect(list_time, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)),this,  SLOT(time_changed(QListWidgetItem*,QListWidgetItem*)));
   QObject::connect(pushButton_prev, SIGNAL(clicked(bool)), this, SLOT(on_pushButton_previous_clicked(bool)));
   QObject::connect(pushButton_next, SIGNAL(clicked(bool)), this, SLOT(on_pushButton_next_clicked(bool)));
   QObject::connect(pushButton_export, SIGNAL(clicked(bool)),this, SLOT(on_pushButton_export_clicked(bool)));
-  QObject::connect(combobox_filter_by_set, SIGNAL(currentIndexChanged(int)), this, SLOT(update_filter_by_set(int)));
 
   // Update list items and data
-  this->update();
+  this->update();  
 }
 
-JobsMonitorFRD::~JobsMonitorFRD()
+JobsMonitorDAT::~JobsMonitorDAT()
 {}
 
-void JobsMonitorFRD::clear()
+void JobsMonitorDAT::clear()
 {
 }
 
-void JobsMonitorFRD::update()
+void JobsMonitorDAT::update()
 {
   if (current_job_id ==-1)
   {
@@ -161,7 +184,7 @@ void JobsMonitorFRD::update()
 
   list_result_block->clear();
   list_component->clear();
-  list_increment->clear();
+  list_time->clear();
   table_result->setRowCount(0);
   table_result->setColumnCount(0);
   this->current_result_block = nullptr;
@@ -170,20 +193,44 @@ void JobsMonitorFRD::update()
   pushButton_next->setDisabled(true);
   pushButton_export->setDisabled(true);
   table_counter->setText("");
-  combobox_filter_by_set->setCurrentIndex(0);
-  table_filter_by_set->setRowCount(0);
-  table_filter_by_set->setColumnCount(0);
   PickWidget_filter_node_id->setText("");
+  PickWidget_filter_element_id->setText("");
     
-  std::vector<std::string> result_block_types = ccx_iface->frd_get_result_block_types(current_job_id);
+  std::vector<std::string> result_block_types = ccx_iface->dat_get_result_block_types(current_job_id);
   
   for (size_t i = 0; i < result_block_types.size(); i++)
   {
     this->addListItem(result_block_types[i],list_result_block);
   }
+
+  this->update_set();
+  
+  list_result_block->item(0)->setSelected(true);
+  this->result_block_clicked(list_result_block->item(0));
 }
 
-void JobsMonitorFRD::update_component(std::string result_block)
+void JobsMonitorDAT::update_set()
+{ 
+  if (current_job_id ==-1)
+  {
+    return;
+  }
+  
+  list_result_set->clear();
+  this->current_result_set = nullptr;
+    
+  std::vector<std::string> result_block_sets = ccx_iface->dat_get_result_block_set(current_job_id);
+  
+  for (size_t i = 0; i < result_block_sets.size(); i++)
+  {
+    this->addListItem(result_block_sets[i],list_result_set);
+  }
+
+  list_result_set->item(0)->setSelected(true);
+  this->result_set_clicked(list_result_set->item(0));
+}
+
+void JobsMonitorDAT::update_component(std::string result_block)
 {
   if (current_job_id ==-1)
   {
@@ -191,9 +238,9 @@ void JobsMonitorFRD::update_component(std::string result_block)
   }
   
   list_component->clear();
-  list_increment->clear();
+  list_time->clear();
 
-  std::vector<std::string> components = ccx_iface->frd_get_result_block_components(current_job_id, result_block);
+  std::vector<std::string> components = ccx_iface->dat_get_result_block_components(current_job_id, result_block);
   components.insert(components.begin(), "all");
 
   for (size_t i = 0; i < components.size(); i++)
@@ -205,96 +252,47 @@ void JobsMonitorFRD::update_component(std::string result_block)
   this->component_clicked(list_component->item(0));
 }
 
-void JobsMonitorFRD::update_increment()
+void JobsMonitorDAT::update_time()
 {
   if (current_job_id ==-1)
   {
     return;
   }
-  
-  list_increment->clear();
-
-  std::vector<int> increments = ccx_iface->frd_get_total_increments(current_job_id);
-  
-  this->addListItem("all", list_increment);
-  for (size_t i = 0; i < increments.size(); i++)
+  if (current_result_block==nullptr)
   {
-    this->addListItem(std::to_string(increments[i]),list_increment);
+    return;
+  }
+  if (current_result_set==nullptr)
+  {
+    return;
   }
   
-  list_increment->item(0)->setSelected(true);
-  this->increment_clicked(list_increment->item(0));
+  
+  list_time->clear();
+  std::string result_block;
+  result_block = current_result_block->text().toStdString();
+  std::string result_set;
+  result_set = current_result_set->text().toStdString();
+
+  std::vector<double> times = ccx_iface->dat_get_result_block_times(current_job_id,result_block,result_set);
+  
+  if (times.size()>0)
+  {
+    this->addListItem("all", list_time);
+    for (size_t i = 0; i < times.size(); i++)
+    {
+      this->addListItem(std::to_string(times[i]),list_time);
+    }
+    
+    list_time->item(0)->setSelected(true);
+    this->time_clicked(list_time->item(0));
+  }  
 }
 
-void JobsMonitorFRD::update_filter_by_set(int index)
+
+void JobsMonitorDAT::update_result()
 {
-  std::string filter_set = combobox_filter_by_set->currentText().toStdString();
-
-  table_filter_by_set->setRowCount(0);
-  table_filter_by_set->setColumnCount(0);
-
-  if (filter_set=="Block")
-  {
-    std::vector<int> block_ids = ccx_iface->get_blocks(); 
-    table_filter_by_set->setRowCount(int(block_ids.size()));
-    table_filter_by_set->setColumnCount(2);
-  
-    for (size_t i = 0; i < block_ids.size(); i++)
-    {
-      std::string name = ccx_iface->get_block_name(block_ids[i]);
-      QTableWidgetItem* item_name = new QTableWidgetItem;
-      item_name->setData(Qt::DisplayRole, QString::fromStdString(name));
-      table_filter_by_set->setItem(int(i), 0, item_name);
-      QTableWidgetItem* item_id = new QTableWidgetItem;
-      item_id->setData(Qt::DisplayRole, QString::number(block_ids[i]));
-      table_filter_by_set->setItem(int(i), 1, item_id);
-    }
-  }else if (filter_set=="Nodeset")
-  {
-    std::vector<int> nodeset_ids = CubitInterface::parse_cubit_list("nodeset","all"); 
-    table_filter_by_set->setRowCount(int(nodeset_ids.size()));
-    table_filter_by_set->setColumnCount(2);
-  
-    for (size_t i = 0; i < nodeset_ids.size(); i++)
-    {
-      std::string name = ccx_iface->get_nodeset_name(nodeset_ids[i]);
-      QTableWidgetItem* item_name = new QTableWidgetItem;
-      item_name->setData(Qt::DisplayRole, QString::fromStdString(name));
-      table_filter_by_set->setItem(int(i), 0, item_name);
-      QTableWidgetItem* item_id = new QTableWidgetItem;
-      item_id->setData(Qt::DisplayRole, QString::number(nodeset_ids[i]));
-      table_filter_by_set->setItem(int(i), 1, item_id);
-    }
-  }else if (filter_set=="Sideset")
-  {
-    std::vector<int> sideset_ids = CubitInterface::parse_cubit_list("sideset","all"); 
-    table_filter_by_set->setRowCount(int(sideset_ids.size()));
-    table_filter_by_set->setColumnCount(2);
-
-    for (size_t i = 0; i < sideset_ids.size(); i++)
-    {
-      std::string name = ccx_iface->get_sideset_name(sideset_ids[i]);
-      QTableWidgetItem* item_name = new QTableWidgetItem;
-      item_name->setData(Qt::DisplayRole, QString::fromStdString(name));
-      table_filter_by_set->setItem(int(i), 0, item_name);
-      QTableWidgetItem* item_id = new QTableWidgetItem;
-      item_id->setData(Qt::DisplayRole, QString::number(sideset_ids[i]));
-      table_filter_by_set->setItem(int(i), 1, item_id);
-    }
-  }
-  
-  QStringList header_horizontal;
-  header_horizontal.push_back("Name");
-  header_horizontal.push_back("ID");
-  table_filter_by_set->setHorizontalHeaderLabels(header_horizontal);
-  table_filter_by_set->setSortingEnabled(true);
-  table_filter_by_set->setEditTriggers(QAbstractItemView::NoEditTriggers);
-  
-      
-}
-
-void JobsMonitorFRD::update_result()
-{
+  /*
   std::string log;
   if(current_job_id == -1)
   {
@@ -498,9 +496,10 @@ void JobsMonitorFRD::update_result()
       }
     }
   }
+  */
 }
 
-void JobsMonitorFRD::set_current_job_id(int job_id)
+void JobsMonitorDAT::set_current_job_id(int job_id)
 {
   this->current_job_id = job_id;
   PlotWidget->current_job_id = job_id;
@@ -510,7 +509,7 @@ void JobsMonitorFRD::set_current_job_id(int job_id)
   PlotWidget->reset();
 }
 
-void JobsMonitorFRD::addListItem(std::string item_name, QListWidget* parent_list)
+void JobsMonitorDAT::addListItem(std::string item_name, QListWidget* parent_list)
 {
   QString name;
   name = QString::fromStdString(item_name);
@@ -518,7 +517,7 @@ void JobsMonitorFRD::addListItem(std::string item_name, QListWidget* parent_list
   new_list_item = new QListWidgetItem(name,parent_list);
 }
 
-void JobsMonitorFRD::addTableItem(std::string item_name, QTableWidget* parent_list)
+void JobsMonitorDAT::addTableItem(std::string item_name, QTableWidget* parent_list)
 {
   QString name;
   name = QString::fromStdString(item_name);
@@ -526,17 +525,17 @@ void JobsMonitorFRD::addTableItem(std::string item_name, QTableWidget* parent_li
   new_list_item = new QTableWidgetItem(name);
 }
 
-void JobsMonitorFRD::on_pushButton_reset_clicked(bool)
+void JobsMonitorDAT::on_pushButton_reset_clicked(bool)
 {
   this->update();  
 }
 
-void JobsMonitorFRD::on_pushButton_plot_clicked(bool)
+void JobsMonitorDAT::on_pushButton_plot_clicked(bool)
 {
   PlotWidget->show();
 }
 
-void JobsMonitorFRD::on_pushButton_query_results_clicked(bool)
+void JobsMonitorDAT::on_pushButton_query_results_clicked(bool)
 { // Clemens, dies if not everything chosen
   if(current_job_id == -1)
   {
@@ -548,15 +547,15 @@ void JobsMonitorFRD::on_pushButton_query_results_clicked(bool)
   this->update_result();
 }
 
-void JobsMonitorFRD::result_block_clicked(QListWidgetItem* item)
+void JobsMonitorDAT::result_block_clicked(QListWidgetItem* item)
 {
+ this->current_result_block = item;
  std::string result_block;
  result_block = item->text().toStdString();
- this->update_component(result_block);
- this->current_result_block = item;
+ this->update_component(result_block); 
 }
 
-void JobsMonitorFRD::result_block_changed(QListWidgetItem* current_item, QListWidgetItem* prev_item)
+void JobsMonitorDAT::result_block_changed(QListWidgetItem* current_item, QListWidgetItem* prev_item)
 {
   if (current_item!=nullptr)
   {
@@ -564,13 +563,30 @@ void JobsMonitorFRD::result_block_changed(QListWidgetItem* current_item, QListWi
   }
 }
 
-void JobsMonitorFRD::component_clicked(QListWidgetItem* item)
+void JobsMonitorDAT::result_set_clicked(QListWidgetItem* item)
 {
-  this->update_increment();
-  this->current_result_component = item;
+  this->current_result_set = item;
+  if (current_result_block!=nullptr)
+  {
+    this->result_block_clicked(current_result_block);
+  }
 }
 
-void JobsMonitorFRD::component_changed(QListWidgetItem* current_item, QListWidgetItem* prev_item)
+void JobsMonitorDAT::result_set_changed(QListWidgetItem* current_item, QListWidgetItem* prev_item)
+{
+  if (current_item!=nullptr)
+  {
+    this->result_set_clicked(current_item);
+  }
+}
+
+void JobsMonitorDAT::component_clicked(QListWidgetItem* item)
+{
+  this->current_result_component = item;
+  this->update_time();
+}
+
+void JobsMonitorDAT::component_changed(QListWidgetItem* current_item, QListWidgetItem* prev_item)
 {
   if (current_item!=nullptr)
   {
@@ -578,20 +594,20 @@ void JobsMonitorFRD::component_changed(QListWidgetItem* current_item, QListWidge
   }
 }
 
-void JobsMonitorFRD::increment_clicked(QListWidgetItem* item)
+void JobsMonitorDAT::time_clicked(QListWidgetItem* item)
 {
-  this->current_increment = item;
+  this->current_time = item;
 }
 
-void JobsMonitorFRD::increment_changed(QListWidgetItem* current_item, QListWidgetItem* prev_item)
+void JobsMonitorDAT::time_changed(QListWidgetItem* current_item, QListWidgetItem* prev_item)
 {
   if (current_item!=nullptr)
   {
-    this->increment_clicked(current_item);
+    this->time_clicked(current_item);
   }
 }
 
-void JobsMonitorFRD::on_pushButton_previous_clicked(bool)
+void JobsMonitorDAT::on_pushButton_previous_clicked(bool)
 {
   if (current_page>0)
   {
@@ -600,7 +616,7 @@ void JobsMonitorFRD::on_pushButton_previous_clicked(bool)
   }
 }
 
-void JobsMonitorFRD::on_pushButton_next_clicked(bool)
+void JobsMonitorDAT::on_pushButton_next_clicked(bool)
 {
   if (current_page < std::ceil(results_size/50))
   {
@@ -609,8 +625,9 @@ void JobsMonitorFRD::on_pushButton_next_clicked(bool)
   }
 }
 
-void JobsMonitorFRD::on_pushButton_export_clicked(bool)
+void JobsMonitorDAT::on_pushButton_export_clicked(bool)
 {
+  /*
   int node_id=-1;
   int block_id=-1;
   int nodeset_id=-1;
@@ -731,6 +748,6 @@ void JobsMonitorFRD::on_pushButton_export_clicked(bool)
   }
   
   ccx_iface->cmd(cmd);
-
+*/
   return;
 }

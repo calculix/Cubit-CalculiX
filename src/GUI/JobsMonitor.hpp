@@ -23,6 +23,7 @@
 class CalculiXCoreInterface;
 class GUITimer;
 class JobsMonitorFRD;
+class JobsMonitorDAT;
 
 class JobsMonitor : public QWidget
 {
@@ -68,7 +69,7 @@ private:
   QPlainTextEdit* QPlainTextEdit_cvg;
   QPlainTextEdit* QPlainTextEdit_sta;
   JobsMonitorFRD* FRD_widget;
-  QWidget* DAT_widget;
+  JobsMonitorDAT* DAT_widget;
 
   GUITimer *timer;
 };
