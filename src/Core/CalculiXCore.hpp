@@ -257,6 +257,8 @@ public:
   std::vector<std::string> dat_get_result_block_set(int job_id); // returns a list of all result block set
   std::vector<std::string> dat_get_result_block_components(int job_id, std::string result_block_type); // returns a list of all result block components for a block type and set
   std::vector<double> dat_get_result_block_times(int job_id, std::string result_block_type, std::string result_block_set); // returns a list of all result block components for a block type and set
+  std::vector<int> dat_get_result_block_nodes(int job_id, double time, std::string result_block_type, std::string result_block_set); // returns a list of all result block nodes for a block type and set
+  std::vector<int> dat_get_result_block_elements(int job_id, double time, std::string result_block_type, std::string result_block_set); // returns a list of all result block elements for a block type and set
   std::vector<int> dat_get_node_ids_between_values(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double lower_value,double upper_value); // returns the global node ids within the values
   std::vector<int> dat_get_node_ids_smaller_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value); // returns the global node ids smaller than the value
   std::vector<int> dat_get_node_ids_greater_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value); // returns the global node ids greater than the value

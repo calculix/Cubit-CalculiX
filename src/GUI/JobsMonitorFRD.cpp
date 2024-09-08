@@ -296,6 +296,10 @@ void JobsMonitorFRD::update_filter_by_set(int index)
 void JobsMonitorFRD::update_result()
 {
   std::string log;
+
+  table_result->setRowCount(0);
+  table_result->setColumnCount(0);
+
   if(current_job_id == -1)
   {
     log = "Can't update results -> no job set \n";
@@ -324,9 +328,7 @@ void JobsMonitorFRD::update_result()
 
   std::vector<int> nodes;
   std::vector<int> frd_nodes = ccx_iface->frd_get_nodes(current_job_id);
-  table_result->setRowCount(0);
-  table_result->setColumnCount(0);
-
+  
   // check if filter was chosen
   std::string filter_set = combobox_filter_by_set->currentText().toStdString();
   QTableWidgetItem* filter_item = table_filter_by_set->currentItem();

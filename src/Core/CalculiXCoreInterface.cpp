@@ -940,6 +940,16 @@ std::vector<double> CalculiXCoreInterface::dat_get_result_block_times(int job_id
   return ccx_core.dat_get_result_block_times(job_id, result_block_type, result_block_set);
 }
 
+std::vector<int> CalculiXCoreInterface::dat_get_result_block_nodes(int job_id, double time, std::string result_block_type, std::string result_block_set)
+{
+  return ccx_core.dat_get_result_block_nodes(job_id, time, result_block_type, result_block_set);
+}
+
+std::vector<int> CalculiXCoreInterface::dat_get_result_block_elements(int job_id, double time, std::string result_block_type, std::string result_block_set)
+{
+  return ccx_core.dat_get_result_block_elements(job_id, time, result_block_type, result_block_set);
+}
+
 std::vector<int> CalculiXCoreInterface::dat_get_node_ids_between_values(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double lower_value,double upper_value)
 {
   return ccx_core.dat_get_node_ids_between_values(job_id,time,result_block_type,result_block_set,result_block_component,lower_value,upper_value);

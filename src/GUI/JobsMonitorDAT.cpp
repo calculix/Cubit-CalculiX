@@ -269,6 +269,7 @@ void JobsMonitorDAT::update_time()
   
   
   list_time->clear();
+  this->current_time = nullptr;
   std::string result_block;
   result_block = current_result_block->text().toStdString();
   std::string result_set;
@@ -292,11 +293,20 @@ void JobsMonitorDAT::update_time()
 
 void JobsMonitorDAT::update_result()
 {
-  /*
   std::string log;
+
+  table_result->setRowCount(0);
+  table_result->setColumnCount(0);
+
   if(current_job_id == -1)
   {
     log = "Can't update results -> no job set \n";
+    PRINT_INFO("%s", log.c_str());
+    return;
+  }
+  if (this->current_result_set==nullptr)
+  {
+    log = "Can't update results -> no result_set \n";
     PRINT_INFO("%s", log.c_str());
     return;
   }
@@ -312,136 +322,140 @@ void JobsMonitorDAT::update_result()
     PRINT_INFO("%s", log.c_str());
     return;
   }
-
-  if (current_increment==nullptr)
+  if (current_time==nullptr)
   {
     log = "Can't update results -> no increment set \n";
     PRINT_INFO("%s", log.c_str());
     return;
   }
-
-  std::vector<int> nodes;
-  std::vector<int> frd_nodes = ccx_iface->frd_get_nodes(current_job_id);
-  table_result->setRowCount(0);
-  table_result->setColumnCount(0);
+  if ((PickWidget_filter_node_id->text()!="")&&(PickWidget_filter_element_id->text()!=""))
+  {
+    log = "Can't update results -> Can't filter for Node ID and Element ID at the same time! \n";
+    PRINT_INFO("%s", log.c_str());
+    return;
+  }
 
   // check if filter was chosen
-  std::string filter_set = combobox_filter_by_set->currentText().toStdString();
-  QTableWidgetItem* filter_item = table_filter_by_set->currentItem();
-  if (filter_item!=nullptr)
-  {
-    int row = filter_item->row();
-    filter_item = table_filter_by_set->item(row,1);
-
-    if (filter_set=="Block")
-    {
-      std::vector<int> node_ids = CubitInterface::parse_cubit_list("node","all in block " + filter_item->text().toStdString());; 
-      for (size_t i = 0; i < node_ids.size(); i++)
-      {
-        if (ccx_iface->frd_check_node_exists(current_job_id, node_ids[i]))
-        {
-          nodes.push_back(node_ids[i]);
-        }
-      }
-    }else if (filter_set=="Nodeset")
-    {
-      std::vector<int> node_ids = CubitInterface::parse_cubit_list("node","all in nodeset " + filter_item->text().toStdString());; 
-      for (size_t i = 0; i < node_ids.size(); i++)
-      {
-        if (ccx_iface->frd_check_node_exists(current_job_id, node_ids[i]))
-        {
-          nodes.push_back(node_ids[i]);
-        }
-      }
-    }else if (filter_set=="Sideset")
-    {
-      std::vector<int> node_ids = CubitInterface::parse_cubit_list("node","all in sideset " + filter_item->text().toStdString());; 
-      for (size_t i = 0; i < node_ids.size(); i++)
-      {
-        if (ccx_iface->frd_check_node_exists(current_job_id, node_ids[i]))
-        {
-          nodes.push_back(node_ids[i]);
-        }
-      }
-    }
-  }
-  
   int node_id = PickWidget_filter_node_id->text().toInt();
-  if (node_id > 0)
-  {
-    if (ccx_iface->frd_check_node_exists(current_job_id, node_id))
-    {
-        nodes.push_back(node_id);
-    }else
-    {
-      log = "Can't find node id " + std::to_string(node_id) + " in frd data -> reference points for example are not written into frd \n";
-      PRINT_INFO("%s", log.c_str());
-    }  
-  }
-
-  if (nodes.size()==0) // this means no filter for sets was applied
-  {
-    nodes = frd_nodes;
-  }
+  int element_id = PickWidget_filter_element_id->text().toInt();
   
   //prepare components
   std::vector<std::string> components;
   if (current_result_component->text().toStdString()=="all")
   {
-    components = ccx_iface->frd_get_result_block_components(current_job_id, current_result_block->text().toStdString());
+    components = ccx_iface->dat_get_result_block_components(current_job_id, current_result_block->text().toStdString());
   }else{
     components.push_back(current_result_component->text().toStdString());
   }
 
-  //prepare increments
-  std::vector<int> increments;
-  if (current_increment->text().toStdString()=="all")
+  //prepare times
+  std::vector<double> times;
+  if (current_time->text().toStdString()=="all")
   {
-    increments = ccx_iface->frd_get_total_increments(current_job_id);
+    times = ccx_iface->dat_get_result_block_times(current_job_id,current_result_block->text().toStdString(),current_result_set->text().toStdString());
   }else{
-    increments.push_back(current_increment->text().toInt());
+    times.push_back(current_time->text().toDouble());
+  }
+
+  //get nodes and elements
+  std::vector<int> nodes;
+  std::vector<int> elements;
+
+  if (node_id>0)
+  {
+    nodes.push_back(node_id);
+  }else{
+    nodes = ccx_iface->dat_get_result_block_nodes(current_job_id,times[0],current_result_block->text().toStdString(),current_result_set->text().toStdString());
+  }
+  if (element_id>0)
+  {
+    elements.push_back(element_id);
+  }else{
+    elements = ccx_iface->dat_get_result_block_elements(current_job_id,times[0],current_result_block->text().toStdString(),current_result_set->text().toStdString());
   }
   
-  std::vector<std::vector<double>> results;
+  if ((nodes.size()>0)&&(elements.size()>0))
+  {
+    log = "Can't update results -> Can't request for Nodes and Element Data at the same time! \n";
+    PRINT_INFO("%s", log.c_str());
+    return;
+  }
+
+  //get results
+  std::vector<std::vector<double>> node_results;
+  std::vector<std::vector<double>> element_results;
   std::string str_current_result_block = current_result_block->text().toStdString();
-  int start = this->current_page * items_per_page;
-  int end = start + this->items_per_page - 1;
-  end = std::min(end, int(nodes.size()*increments.size()-1));
-  this->results_size = int(nodes.size()*increments.size());
-  if (this->current_page==0)
+  std::string str_current_result_set = current_result_set->text().toStdString();
+  int start = 0;
+  int end = 0;
+
+  if (nodes.size()>0) // node results
   {
-    pushButton_prev->setDisabled(true);
-  }else{
-    pushButton_prev->setEnabled(true);
+    start = this->current_page * items_per_page;
+    end = start + this->items_per_page - 1;
+    end = std::min(end, int(nodes.size()*times.size()-1));
+    this->results_size = int(nodes.size()*times.size());
+    if (this->current_page==0)
+    {
+      pushButton_prev->setDisabled(true);
+    }else{
+      pushButton_prev->setEnabled(true);
+    }
+    if (end < int(nodes.size()*times.size()-1))
+    {
+      pushButton_next->setEnabled(true);
+    }else{
+      pushButton_next->setDisabled(true);
+    }
+    pushButton_export->setEnabled(true);
   }
-  if (end < int(nodes.size()*increments.size()-1))
+
+  int ipc = 0;
+  if (elements.size()>0) // element results
   {
-    pushButton_next->setEnabled(true);
-  }else{
-    pushButton_next->setDisabled(true);
+    //delete duplicate element ids
+    std::sort(elements.begin(),elements.end());
+    elements.erase(std::unique(elements.begin(), elements.end()), elements.end());
+    std::vector<double> tmp_element = ccx_iface->dat_get_element_values_for_component(current_job_id,elements[0],times[0],str_current_result_block,str_current_result_set,components[0]);
+    ipc = tmp_element.size(); // number of integration points
+
+    start = this->current_page * items_per_page;
+    end = start + this->items_per_page - 1;
+    end = std::min(end, int(elements.size()*ipc*times.size()-1));
+    this->results_size = int(elements.size()*ipc*times.size());
+    if (this->current_page==0)
+    {
+      pushButton_prev->setDisabled(true);
+    }else{
+      pushButton_prev->setEnabled(true);
+    }
+    if (end < int(elements.size()*ipc*times.size()-1))
+    {
+      pushButton_next->setEnabled(true);
+    }else{
+      pushButton_next->setDisabled(true);
+    }
+    pushButton_export->setEnabled(true);
   }
-  pushButton_export->setEnabled(true);
-  
-  if ((nodes.size()>0)&&(components.size()>0)&&(increments.size()>0)) //check if data can be queried
+
+  if ((nodes.size()>0)&&(components.size()>0)&&(times.size()>0)) //check if data can be queried
   {
     int ic = 0;
     for (size_t i = 0; i < nodes.size(); i++)
     {
-      for (size_t ii = 0; ii < increments.size(); ii++)
+      for (size_t ii = 0; ii < times.size(); ii++)
       {
         if ((ic>=start)&&(ic<=end))// check if items are in range
         {
           std::vector<double> tmp_result;
-          double increment_time = ccx_iface->frd_get_time_from_total_increment(current_job_id, increments[ii]);
           tmp_result.push_back(double(nodes[i]));
-          tmp_result.push_back(double(increments[ii]));
-          tmp_result.push_back(increment_time);
+          tmp_result.push_back(double(times[ii]));
           for (size_t iii = 0; iii < components.size(); iii++)
           {
-            double node_result = ccx_iface->frd_get_node_value(current_job_id, nodes[i] , increments[ii], str_current_result_block, components[iii]);
+            double node_result = ccx_iface->dat_get_node_value(current_job_id, nodes[i],times[ii],str_current_result_block,str_current_result_set, components[iii]);
             tmp_result.push_back(node_result);
           }
-          results.push_back(tmp_result);
+          node_results.push_back(tmp_result);
         }
         ++ic;
       }
@@ -451,21 +465,83 @@ void JobsMonitorDAT::update_result()
       }
     }
   }
-  
+
+  if ((elements.size()>0)&&(components.size()>0)&&(times.size()>0)) //check if data can be queried
+  {
+    int ic = 0;
+    for (size_t i = 0; i < elements.size(); i++)
+    {
+      for (size_t ii = 0; ii < times.size(); ii++)
+      { 
+        std::vector<std::vector<double>> tmp_result;
+        for (size_t iii = 0; iii < components.size(); iii++)
+        {
+          std::vector<double> element_result = ccx_iface->dat_get_element_values_for_component(current_job_id, elements[i],times[ii],str_current_result_block,str_current_result_set, components[iii]);
+          if (iii == 0)
+          {
+            for (size_t iv = 0; iv < element_result.size(); iv++)
+            {
+              std::vector<double> tmp;
+              tmp.push_back(double(elements[i]));
+              tmp.push_back(double(times[ii]));
+              tmp.push_back(element_result[iv]);
+              tmp_result.push_back(tmp);
+            }
+          }else{
+            for (size_t iv = 0; iv < element_result.size(); iv++)
+            {
+              tmp_result[iv].push_back(element_result[iv]);
+            }
+          }
+        }
+        for (size_t iii = 0; iii < tmp_result.size(); iii++)
+        {
+          if (((ic>=start)&&(ic<=end)))// check if items are in range
+          {
+            element_results.push_back(tmp_result[iii]);
+          }
+          ++ic;
+          if (ic>end)
+          {
+            break;
+          }
+        }  
+      }
+      if (ic>end)
+      {
+        break;
+      }
+    }
+  }
+
+/*
+  log = "element_results.size() " + std::to_string(element_results.size()) + "\n";
+  PRINT_INFO("%s", log.c_str());
+  log = "element_results[0].size() " + std::to_string(element_results[0].size()) + "\n";
+  PRINT_INFO("%s", log.c_str());
+*/
+
   table_result->setSortingEnabled(true);
-  table_result->setRowCount(std::min(50,int(results.size())));
-  table_result->setColumnCount(int(results[0].size()));
+  if (node_results.size()>0)
+  {
+    table_result->setRowCount(std::min(50,int(node_results.size())));
+    table_result->setColumnCount(int(node_results[0].size()));    
+  }
+  if (element_results.size()>0)
+  {
+    table_result->setRowCount(std::min(50,int(element_results.size())));
+    table_result->setColumnCount(int(element_results[0].size()));    
+  }
   table_result->setEditTriggers(QAbstractItemView::NoEditTriggers);
   table_counter->setText(QString::fromStdString("Results " + std::to_string(start+1) + "-" + std::to_string(end+1) + " of " + std::to_string(results_size)));
 
   //fill table
-  for (size_t i = 0; i < results.size(); i++)
+  for (size_t i = 0; i < node_results.size(); i++)
   {
     if (i==0) // label headers
     {
       QStringList header_horizontal;
       header_horizontal.push_back("Node ID");
-      header_horizontal.push_back("Increment");
       header_horizontal.push_back("Time");
       for (size_t ii = 0; ii < components.size(); ii++)
       {
@@ -481,22 +557,57 @@ void JobsMonitorDAT::update_result()
       table_result->setVerticalHeaderLabels(header_vertical);
     }
     //push data
-    for (size_t ii = 0; ii < results[i].size(); ii++)
+    for (size_t ii = 0; ii < node_results[i].size(); ii++)
     {
       if (ii > 2)
       {
-        QString formatted_result_value = QString::number(results[i][ii], 'f', 6);
+        QString formatted_result_value = QString::number(node_results[i][ii], 'f', 6);
         QTableWidgetItem* item = new QTableWidgetItem(formatted_result_value);
-        item->setData(Qt::DisplayRole, results[i][ii]);
+        item->setData(Qt::DisplayRole, node_results[i][ii]);
         table_result->setItem(int(i), int(ii), item);
       } else {
         QTableWidgetItem* item = new QTableWidgetItem;
-        item->setData(Qt::DisplayRole, results[i][ii]);
+        item->setData(Qt::DisplayRole, node_results[i][ii]);
         table_result->setItem(int(i), int(ii), item);
       }
     }
   }
-  */
+  for (size_t i = 0; i < element_results.size(); i++)
+  {
+    if (i==0) // label headers
+    {
+      QStringList header_horizontal;
+      header_horizontal.push_back("Element ID");
+      header_horizontal.push_back("Time");
+      for (size_t ii = 0; ii < components.size(); ii++)
+      {
+        header_horizontal.push_back(QString::fromStdString(components[ii]));
+      }
+      table_result->setHorizontalHeaderLabels(header_horizontal);
+      
+      QStringList header_vertical;
+      for (size_t ii = start; ii < end+1; ii++)
+      {
+        header_vertical.push_back(QString::number(ii+1));
+      }
+      table_result->setVerticalHeaderLabels(header_vertical);
+    }
+    //push data
+    for (size_t ii = 0; ii < element_results[i].size(); ii++)
+    {
+      if (ii > 2)
+      {
+        QString formatted_result_value = QString::number(element_results[i][ii], 'f', 6);
+        QTableWidgetItem* item = new QTableWidgetItem(formatted_result_value);
+        item->setData(Qt::DisplayRole, element_results[i][ii]);
+        table_result->setItem(int(i), int(ii), item);
+      } else {
+        QTableWidgetItem* item = new QTableWidgetItem;
+        item->setData(Qt::DisplayRole, element_results[i][ii]);
+        table_result->setItem(int(i), int(ii), item);
+      }
+    }
+  }
 }
 
 void JobsMonitorDAT::set_current_job_id(int job_id)

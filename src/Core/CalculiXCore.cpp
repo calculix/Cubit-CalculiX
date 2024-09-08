@@ -4641,6 +4641,90 @@ std::vector<double> CalculiXCore::dat_get_result_block_times(int job_id, std::st
   return tmp;
 }
 
+std::vector<int> CalculiXCore::dat_get_result_block_nodes(int job_id, double time, std::string result_block_type, std::string result_block_set)
+{
+  std::vector<int> tmp;
+  int result_block_type_data_id = -1;
+  int result_block_set_data_id = -1;
+  int result_block_component_id = -1;
+  int results_data_id = results->get_results_data_id_from_job_id(job_id);
+  int dat_data_id = results->get_dat_data_id_from_job_id(job_id);
+
+  if (results_data_id == -1)
+  {
+    return tmp;
+  }
+
+  result_block_type_data_id = results->dat_data[dat_data_id].get_result_block_type_data_id(result_block_type);
+  result_block_set_data_id = results->dat_data[dat_data_id].get_result_block_set_data_id(result_block_set);
+
+  if ((result_block_type_data_id==-1)||(result_block_set_data_id==-1))
+  {
+    return tmp;
+  }
+  
+  for (size_t i = 0; i < results->dat_data[dat_data_id].result_blocks.size(); i++)
+  {
+    if ((results->dat_data[dat_data_id].total_times[results->dat_data[dat_data_id].result_blocks[i][1]]==time)&&(results->dat_data[dat_data_id].result_blocks[i][2]==result_block_type_data_id)&&(results->dat_data[dat_data_id].result_blocks[i][3]==result_block_set_data_id))
+    {
+      int result_block_data_id = results->dat_data[dat_data_id].result_blocks[i][4];
+      
+      for (size_t ii = 0; ii < results->dat_data[dat_data_id].result_block_c1_data[result_block_data_id].size(); ii++)
+      {
+        if (results->dat_data[dat_data_id].result_block_c1_data[result_block_data_id][ii][2]==1) //check if nodal values
+        {
+          int c1 = results->dat_data[dat_data_id].result_block_c1_data[result_block_data_id][ii][0];
+          //int result_block_c1_data_id = results->dat_data[dat_data_id].result_block_c1_data[result_block_data_id][ii][1];
+          tmp.push_back(c1);
+        }
+      }
+    }
+  }
+  return tmp;
+}
+
+std::vector<int> CalculiXCore::dat_get_result_block_elements(int job_id, double time, std::string result_block_type, std::string result_block_set)
+{
+  std::vector<int> tmp;
+  int result_block_type_data_id = -1;
+  int result_block_set_data_id = -1;
+  int result_block_component_id = -1;
+  int results_data_id = results->get_results_data_id_from_job_id(job_id);
+  int dat_data_id = results->get_dat_data_id_from_job_id(job_id);
+
+  if (results_data_id == -1)
+  {
+    return tmp;
+  }
+
+  result_block_type_data_id = results->dat_data[dat_data_id].get_result_block_type_data_id(result_block_type);
+  result_block_set_data_id = results->dat_data[dat_data_id].get_result_block_set_data_id(result_block_set);
+
+  if ((result_block_type_data_id==-1)||(result_block_set_data_id==-1))
+  {
+    return tmp;
+  }
+  
+  for (size_t i = 0; i < results->dat_data[dat_data_id].result_blocks.size(); i++)
+  {
+    if ((results->dat_data[dat_data_id].total_times[results->dat_data[dat_data_id].result_blocks[i][1]]==time)&&(results->dat_data[dat_data_id].result_blocks[i][2]==result_block_type_data_id)&&(results->dat_data[dat_data_id].result_blocks[i][3]==result_block_set_data_id))
+    {
+      int result_block_data_id = results->dat_data[dat_data_id].result_blocks[i][4];
+      
+      for (size_t ii = 0; ii < results->dat_data[dat_data_id].result_block_c1_data[result_block_data_id].size(); ii++)
+      {
+        if (results->dat_data[dat_data_id].result_block_c1_data[result_block_data_id][ii][2]==2) //check if elemental values
+        {
+          int c1 = results->dat_data[dat_data_id].result_block_c1_data[result_block_data_id][ii][0];
+          //int result_block_c1_data_id = results->dat_data[dat_data_id].result_block_c1_data[result_block_data_id][ii][1];
+          tmp.push_back(c1);
+        }
+      }
+    }
+  }
+  return tmp;
+}
+
 std::vector<int> CalculiXCore::dat_get_node_ids_between_values(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double lower_value,double upper_value)
 {
   std::vector<int> tmp;
