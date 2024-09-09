@@ -610,9 +610,9 @@ bool CalculiXCoreInterface::result_csv_job_frd(int job_id,std::string block_type
   return ccx_core.result_csv_job_frd(job_id, block_type, block_component, increment, node_id, block_id, nodeset_id, sideset_id, overwrite, save_filepath);
 }
 
-bool CalculiXCoreInterface::result_csv_job_dat(int job_id,std::string block_type, std::string block_component, std::string increment,int node_id,int block_id,int nodeset_id,int sideset_id, bool overwrite, std::string save_filepath)
+bool CalculiXCoreInterface::result_csv_job_dat(int job_id,std::string block_type,std::string block_set, std::string block_component, std::string time,int node_id,int element_id,bool overwrite, std::string save_filepath)
 {
-  return ccx_core.result_csv_job_dat(job_id, block_type, block_component, increment, node_id, block_id, nodeset_id, sideset_id, overwrite, save_filepath);
+  return ccx_core.result_csv_job_dat(job_id, block_type, block_set, block_component, time, node_id, element_id, overwrite, save_filepath);
 }
 
 std::vector<std::string> CalculiXCoreInterface::get_job_data(int job_id)

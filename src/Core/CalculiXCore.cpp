@@ -2882,7 +2882,7 @@ bool CalculiXCore::result_csv_job_frd(int job_id,std::string block_type, std::st
  return true;
 }
 
-bool CalculiXCore::result_csv_job_dat(int job_id,std::string block_type, std::string block_component, std::string increment,int node_id,int block_id,int nodeset_id,int sideset_id, bool overwrite, std::string save_filepath)
+bool CalculiXCore::result_csv_job_dat(int job_id,std::string block_type,std::string block_set, std::string block_component, std::string time,int node_id,int element_id,bool overwrite, std::string save_filepath)
 { 
   std::string log;
   //log = "exporting job "+ std::to_string(job_id) + "\n";
@@ -2891,6 +2891,12 @@ bool CalculiXCore::result_csv_job_dat(int job_id,std::string block_type, std::st
   if(job_id == -1)
   {
     log = "Can't export results -> no job set \n";
+    PRINT_INFO("%s", log.c_str());
+    return false;
+  }
+  if (block_set=="")
+  {
+    log = "Can't export results -> no result_set \n";
     PRINT_INFO("%s", log.c_str());
     return false;
   }
@@ -2906,121 +2912,144 @@ bool CalculiXCore::result_csv_job_dat(int job_id,std::string block_type, std::st
     PRINT_INFO("%s", log.c_str());
     return false;
   }
-
-  if (increment=="")
+  if (time=="")
   {
     log = "Can't export results -> no increment set \n";
     PRINT_INFO("%s", log.c_str());
     return false;
   }
-
-  std::vector<int> nodes;
-  std::vector<int> frd_nodes = this->frd_get_nodes(job_id);
-
-  // check if filter was chosen
-  if (block_id!=-1)
+  if ((node_id>0)&&(element_id>0))
   {
-    std::vector<int> node_ids = CubitInterface::parse_cubit_list("node","all in block " + std::to_string(block_id));; 
-    for (size_t i = 0; i < node_ids.size(); i++)
-    {
-      if (this->frd_check_node_exists(job_id, node_ids[i]))
-      {
-        nodes.push_back(node_ids[i]);
-      }
-    }
-  }
-  if (nodeset_id!=-1)
-  {
-    std::vector<int> node_ids = CubitInterface::parse_cubit_list("node","all in nodeset " + std::to_string(nodeset_id));; 
-    for (size_t i = 0; i < node_ids.size(); i++)
-    {
-      if (this->frd_check_node_exists(job_id, node_ids[i]))
-      {
-        nodes.push_back(node_ids[i]);
-      }
-    }
-  }
-  if (sideset_id!=-1)
-  {
-    std::vector<int> node_ids = CubitInterface::parse_cubit_list("node","all in sideset " + std::to_string(sideset_id));; 
-    for (size_t i = 0; i < node_ids.size(); i++)
-    {
-      if (this->frd_check_node_exists(job_id, node_ids[i]))
-      {
-        nodes.push_back(node_ids[i]);
-      }
-    }
-  }
-  
-  if (node_id > 0)
-  {
-    if (this->frd_check_node_exists(job_id, node_id))
-    {
-        nodes.push_back(node_id);
-    }else
-    {
-      log = "Can't find node id " + std::to_string(node_id) + " in frd data -> reference points for example are not written into frd \n";
-      PRINT_INFO("%s", log.c_str());
-    }  
-  }
-
-  if (nodes.size()==0) // this means no filter for sets was applied
-  {
-    nodes = frd_nodes;
+    log = "Can't export results -> Can't filter for Node ID and Element ID at the same time! \n";
+    PRINT_INFO("%s", log.c_str());
+    return false;
   }
   
   //prepare components
   std::vector<std::string> components;
   if (block_component=="all")
   {
-    components = this->frd_get_result_block_components(job_id, block_type);
+    components = this->dat_get_result_block_components(job_id, block_type);
   }else{
     components.push_back(block_component);
   }
 
-  //prepare increments
-  std::vector<int> increments;
-  if (increment=="all")
+  //prepare times
+  std::vector<double> times;
+  if (time=="all")
   {
-    increments = this->frd_get_total_increments(job_id);
+    times = this->dat_get_result_block_times(job_id,block_type,block_set);
   }else{
-    increments.push_back(std::stoi(increment));
+    times.push_back(std::stod(time));
   }
 
-  //get header
-  std::vector<std::string> header;
-  header.push_back("Node ID");
-  header.push_back("Increment");
-  header.push_back("Time");
-  for (size_t ii = 0; ii < components.size(); ii++)
+  //get nodes and elements
+  std::vector<int> nodes;
+  std::vector<int> elements;
+
+  if (node_id>0)
   {
-    header.push_back(components[ii]);
+    nodes.push_back(node_id);
+  }else{
+    nodes = this->dat_get_result_block_nodes(job_id,times[0],block_type,block_set);
   }
-    
-  //get results
-  std::vector<std::vector<double>> results;
-  if ((nodes.size()>0)&&(components.size()>0)&&(increments.size()>0)) //check if data can be queried
+  if (element_id>0)
   {
+    elements.push_back(element_id);
+  }else{
+    elements = this->dat_get_result_block_elements(job_id,times[0],block_type,block_set);
+  }
+  
+  if ((nodes.size()>0)&&(elements.size()>0))
+  {
+    log = "Can't export results -> Can't request for Nodes and Element Data at the same time! \n";
+    PRINT_INFO("%s", log.c_str());
+    return false;
+  }
+
+  //get results
+  std::vector<std::vector<double>> node_results;
+  std::vector<std::vector<double>> element_results;
+
+  if ((nodes.size()>0)&&(components.size()>0)&&(times.size()>0)) //check if data can be queried
+  {
+    int ic = 0;
     for (size_t i = 0; i < nodes.size(); i++)
     {
-      for (size_t ii = 0; ii < increments.size(); ii++)
+      for (size_t ii = 0; ii < times.size(); ii++)
       {
         std::vector<double> tmp_result;
-        double increment_time = this->frd_get_time_from_total_increment(job_id, increments[ii]);
         tmp_result.push_back(double(nodes[i]));
-        tmp_result.push_back(double(increments[ii]));
-        tmp_result.push_back(increment_time);
+        tmp_result.push_back(double(times[ii]));
         for (size_t iii = 0; iii < components.size(); iii++)
         {
-          double node_result = this->frd_get_node_value(job_id, nodes[i] , increments[ii], block_type, components[iii]);
+          double node_result = this->dat_get_node_value(job_id, nodes[i],times[ii],block_type,block_set, components[iii]);
           tmp_result.push_back(node_result);
         }
-        results.push_back(tmp_result);
+        node_results.push_back(tmp_result);
       }
     }
   }
-  //write csv
-  this->export_to_csv(save_filepath, header, results,overwrite);
+
+  if ((elements.size()>0)&&(components.size()>0)&&(times.size()>0)) //check if data can be queried
+  {
+    int ic = 0;
+    for (size_t i = 0; i < elements.size(); i++)
+    {
+      for (size_t ii = 0; ii < times.size(); ii++)
+      { 
+        std::vector<std::vector<double>> tmp_result;
+        for (size_t iii = 0; iii < components.size(); iii++)
+        {
+          std::vector<double> element_result = this->dat_get_element_values_for_component(job_id, elements[i],times[ii],block_type,block_set, components[iii]);
+          if (iii == 0)
+          {
+            for (size_t iv = 0; iv < element_result.size(); iv++)
+            {
+              std::vector<double> tmp;
+              tmp.push_back(double(elements[i]));
+              tmp.push_back(double(times[ii]));
+              tmp.push_back(element_result[iv]);
+              tmp_result.push_back(tmp);
+            }
+          }else{
+            for (size_t iv = 0; iv < element_result.size(); iv++)
+            {
+              tmp_result[iv].push_back(element_result[iv]);
+            }
+          }
+        }
+        for (size_t iii = 0; iii < tmp_result.size(); iii++)
+        {
+          element_results.push_back(tmp_result[iii]);
+        }  
+      }
+    }
+  }
+  //get header
+  std::vector<std::string> header;
+  if (node_results.size()>0)
+  {
+    header.push_back("Node ID");
+    header.push_back("Time");
+    for (size_t ii = 0; ii < components.size(); ii++)
+    {
+      header.push_back(components[ii]);
+    }
+    //write csv
+    this->export_to_csv(save_filepath, header, node_results,overwrite);
+  }
+  if (element_results.size()>0)
+  {
+    header.push_back("Element ID");
+    header.push_back("Time");
+    for (size_t ii = 0; ii < components.size(); ii++)
+    {
+      header.push_back(components[ii]);
+    }
+    //write csv
+    this->export_to_csv(save_filepath, header, element_results,overwrite);
+  }
   
  return true;
 }

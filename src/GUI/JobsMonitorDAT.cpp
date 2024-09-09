@@ -738,14 +738,12 @@ void JobsMonitorDAT::on_pushButton_next_clicked(bool)
 
 void JobsMonitorDAT::on_pushButton_export_clicked(bool)
 {
-  /*
   int node_id=-1;
-  int block_id=-1;
-  int nodeset_id=-1;
-  int sideset_id=-1;
+  int element_id=-1;
+  std::string block_set="";
   std::string block_type="";
   std::string block_component="";
-  std::string increment = "";
+  std::string time = "";
   bool overwrite = false;
   std::string save_filepath;
 
@@ -753,6 +751,12 @@ void JobsMonitorDAT::on_pushButton_export_clicked(bool)
   if(current_job_id == -1)
   {
     log = "Can't export results -> no job set \n";
+    PRINT_INFO("%s", log.c_str());
+    return;
+  }
+  if (this->current_result_set==nullptr)
+  {
+    log = "Can't export results -> no result_set \n";
     PRINT_INFO("%s", log.c_str());
     return;
   }
@@ -768,37 +772,26 @@ void JobsMonitorDAT::on_pushButton_export_clicked(bool)
     PRINT_INFO("%s", log.c_str());
     return;
   }
-  if (current_increment==nullptr)
+  if (current_time==nullptr)
   {
     log = "Can't export results -> no increment set \n";
     PRINT_INFO("%s", log.c_str());
     return;
   }
-
-  // check if filter was chosen
-  std::string filter_set = combobox_filter_by_set->currentText().toStdString();
-  QTableWidgetItem* filter_item = table_filter_by_set->currentItem();
-  if (filter_item!=nullptr)
+  if ((PickWidget_filter_node_id->text()!="")&&(PickWidget_filter_element_id->text()!=""))
   {
-    int row = filter_item->row();
-    filter_item = table_filter_by_set->item(row,1);
-
-    if (filter_set=="Block")
-    {
-      block_id = filter_item->text().toInt();
-    }else if (filter_set=="Nodeset")
-    {
-      nodeset_id = filter_item->text().toInt();
-    }else if (filter_set=="Sideset")
-    {
-      sideset_id = filter_item->text().toInt();
-    }
+    log = "Can't export results -> Can't filter for Node ID and Element ID at the same time! \n";
+    PRINT_INFO("%s", log.c_str());
+    return;
   }
 
+  
   node_id = PickWidget_filter_node_id->text().toInt();
+  element_id = PickWidget_filter_element_id->text().toInt();
+  block_set = current_result_set->text().toStdString();
   block_type = current_result_block->text().toStdString();
   block_component = current_result_component->text().toStdString();
-  increment = current_increment->text().toStdString();
+  time = current_time->text().toStdString();
 
   QString fileName;
 
@@ -832,33 +825,25 @@ void JobsMonitorDAT::on_pushButton_export_clicked(bool)
 
   //ccx result csv job <job_id> frd block_type <block_type> block_component <block_component> increment <increment> save <save_filepath> [overwrite] [{block_id <block_id>|nodeset_id <nodeset_id>|sideset_id <sideset_id>}] [node_id <node_id>] 
   std::string cmd = "";
-  cmd.append("ccx result csv job " + std::to_string(this->current_job_id) + " frd ");
+  cmd.append("ccx result csv job " + std::to_string(this->current_job_id) + " dat ");
+  cmd.append("block_set \'" + block_set + "\' ");
   cmd.append("block_type \'" + block_type + "\' ");
   cmd.append("block_component \'" + block_component + "\' ");
-  cmd.append("increment \'" + increment + "\' ");
+  cmd.append("inc_time \'" + time + "\' ");
   cmd.append("save \'" + fileName.toStdString() + "\' ");
   if (overwrite)
   {
     cmd.append("overwrite ");
   }
-  if (block_id!=-1)
-  {
-    cmd.append("block " + std::to_string(block_id) + " ");
-  }
-  if (nodeset_id!=-1)
-  {
-    cmd.append("nodeset " + std::to_string(nodeset_id) + " ");
-  }
-  if (sideset_id!=-1)
-  {
-    cmd.append("sideset " + std::to_string(sideset_id) + " ");
-  }
   if (node_id>0)
   {
     cmd.append("node_id " + std::to_string(node_id) + " ");
   }
-  
+  if (element_id>0)
+  {
+    cmd.append("element_id " + std::to_string(element_id) + " ");
+  }
   ccx_iface->cmd(cmd);
-*/
+
   return;
 }

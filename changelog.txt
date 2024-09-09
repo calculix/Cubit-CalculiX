@@ -57,3 +57,5 @@
 2024-09-05 including csv export...needs to be rewritten
 2024-09-06 make command for csv export
 2024-09-07 csv export for frd
+2024-09-08 working on job monitor dat tab
+2024-09-09 csv export for dat
