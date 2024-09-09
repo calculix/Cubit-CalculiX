@@ -170,7 +170,7 @@ When choosing the totalincrement the related displacements will be used.
 # known issues
 - Can not open results for Paraview 5.12.0 out of Cubit. Please use Paraview 5.11.* See https://gitlab.kitware.com/paraview/paraview/-/issues/22614
 
-- If you want to build the component yourself, i would recommend using ubuntu 22.04 . If some symbols are missing try another OS. It can happen that you've got a Cubit which was build on a different OS. For example building the component for Cubit 2022.4 only worked with centos 7.
+- History Bug on Windows: Currently commands that will be send using the gui won't be recorded into the history tab. This has been fixed for Linux. In the current windows release (2024.8) are some symbols missing. So we have to wait onto the next release to fix this for windows too.
 
 # todo list
 - documentation

@@ -65,10 +65,12 @@ private:
   QLineEdit* lineEdit_save_path;
   QPushButton* pushButton_reset;
   QPushButton* pushButton_plot;
+  QPushButton* pushButton_close;
 
 private slots:
  void on_pushButton_reset_clicked(bool);
  void on_pushButton_plot_clicked(bool);
+ void on_pushButton_close_clicked(bool);
  void combobox_x_1_index_changed(int index);
  void combobox_y_1_index_changed(int index);
  void combobox_x_2_index_changed(int index);

@@ -113,12 +113,16 @@ JobsMonitorFRDPlot::JobsMonitorFRDPlot()
   pushButton_reset->setText("Reset");
   pushButton_plot = new QPushButton();
   pushButton_plot->setText("Plot");
-
-  boxLayout_buttons->addWidget(pushButton_reset);
+  pushButton_close = new QPushButton();
+  pushButton_close->setText("Close");
+  
   boxLayout_buttons->addWidget(pushButton_plot);
+  boxLayout_buttons->addWidget(pushButton_reset);
+  boxLayout_buttons->addWidget(pushButton_close);
   
   QObject::connect(pushButton_reset, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_reset_clicked(bool)));
   QObject::connect(pushButton_plot, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_plot_clicked(bool)));
+  QObject::connect(pushButton_close, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_close_clicked(bool)));
   QObject::connect(combobox_x_1, SIGNAL(currentIndexChanged(int)), this, SLOT(combobox_x_1_index_changed(int)));
   QObject::connect(combobox_y_1, SIGNAL(currentIndexChanged(int)), this, SLOT(combobox_y_1_index_changed(int)));
   QObject::connect(combobox_x_2, SIGNAL(currentIndexChanged(int)), this, SLOT(combobox_x_2_index_changed(int)));
@@ -296,4 +300,9 @@ void JobsMonitorFRDPlot::on_pushButton_plot_clicked(bool)
   {
     ccx_iface->cmd(cmd);
   }
+}
+
+void JobsMonitorFRDPlot::on_pushButton_close_clicked(bool)
+{
+  this->close();
 }

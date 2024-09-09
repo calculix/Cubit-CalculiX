@@ -2753,11 +2753,18 @@ bool CalculiXCore::result_plot_job_dat(int job_id,int x_node_id,int x_element_id
   {
     x_times = this->dat_get_result_block_times(job_id,y_block_type,y_block_set);
     y_times = this->dat_get_result_block_times(job_id,y_block_type,y_block_set);
+    x_data = x_times;
   }
   if (y_time)
   {
     x_times = this->dat_get_result_block_times(job_id,x_block_type,x_block_set);
     y_times = this->dat_get_result_block_times(job_id,x_block_type,x_block_set);
+    y_data = y_times;
+  }
+  if ((!x_time)&&(!y_time))
+  {
+    x_times = this->dat_get_result_block_times(job_id,x_block_type,x_block_set);
+    y_times = this->dat_get_result_block_times(job_id,y_block_type,y_block_set);
   }
 
   //x data
@@ -2773,7 +2780,6 @@ bool CalculiXCore::result_plot_job_dat(int job_id,int x_node_id,int x_element_id
     for (size_t i = 0; i < x_times.size(); i++)
     {
       std::vector<double> element_result = this->dat_get_element_values_for_component(job_id, x_element_id,x_times[i],x_block_type,x_block_set, x_block_component);
-      x_data.push_back(this->dat_get_node_value(job_id, x_node_id,x_times[i],x_block_type,x_block_set, x_block_component));
       for (size_t ii = 0; ii < element_result.size(); ii++)
       {
         if (ii+1==x_element_ip)
@@ -2792,12 +2798,11 @@ bool CalculiXCore::result_plot_job_dat(int job_id,int x_node_id,int x_element_id
       y_data.push_back(this->dat_get_node_value(job_id, y_node_id,y_times[i],y_block_type,y_block_set, y_block_component));
     }
   }
-  if (x_element_id!=-1)
+  if (y_element_id!=-1)
   {
-    for (size_t i = 0; i < x_times.size(); i++)
+    for (size_t i = 0; i < y_times.size(); i++)
     {
       std::vector<double> element_result = this->dat_get_element_values_for_component(job_id, y_element_id,y_times[i],y_block_type,y_block_set, y_block_component);
-      y_data.push_back(this->dat_get_node_value(job_id, y_node_id,y_times[i],y_block_type,y_block_set, y_block_component));
       for (size_t ii = 0; ii < element_result.size(); ii++)
       {
         if (ii+1==y_element_ip)
@@ -2843,6 +2848,17 @@ bool CalculiXCore::result_plot_job_dat(int job_id,int x_node_id,int x_element_id
     y_axis = QString::fromStdString(tmp);
   }
   
+  /*
+  std::string log;
+  log = "x_times.size() "+ std::to_string(x_times.size()) + "\n";
+  PRINT_INFO("%s", log.c_str());
+  log = "y_times.size() "+ std::to_string(y_times.size()) + "\n";
+  PRINT_INFO("%s", log.c_str());
+  log = "x_data.size() "+ std::to_string(x_data.size()) + "\n";
+  PRINT_INFO("%s", log.c_str());
+  log = "y_data.size() "+ std::to_string(y_data.size()) + "\n";
+  PRINT_INFO("%s", log.c_str());
+  */
 
   if ((x_data.size()>0)&&(y_data.size()>0)&&(x_data.size()==y_data.size()))
   {

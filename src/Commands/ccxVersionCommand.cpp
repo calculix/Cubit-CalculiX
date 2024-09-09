@@ -39,7 +39,7 @@ bool ccxVersionCommand::execute(CubitCommandData &data)
 
   std::string output;
 
-  output = "\tCalculiXPlugin Version 2024.7\n";
+  output = "\tCubit-CalculiX Version 2024.9\n";
   PRINT_INFO("%s", output.c_str());
 
   output = "\tCubit Version " + cubit_version + " Build " + build_number + "\n";
