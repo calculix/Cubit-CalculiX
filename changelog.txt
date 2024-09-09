@@ -59,3 +59,4 @@
 2024-09-07 csv export for frd
 2024-09-08 working on job monitor dat tab
 2024-09-09 csv export for dat
+2024-09-09 working on dat plot

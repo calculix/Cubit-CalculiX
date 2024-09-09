@@ -600,9 +600,9 @@ bool CalculiXCoreInterface::result_plot_job_frd(int job_id,int x_node_id, std::s
   return ccx_core.result_plot_job_frd(job_id,x_node_id,x_block_type,x_block_component,x_increment,x_time,y_node_id,y_block_type,y_block_component,y_increment,y_time,title,x_axis,y_axis,save, save_filepath);
 }
 
-bool CalculiXCoreInterface::result_plot_job_dat(int job_id)
+bool CalculiXCoreInterface::result_plot_job_dat(int job_id,int x_node_id,int x_element_id,int x_element_ip, std::string x_block_set,std::string x_block_type, std::string x_block_component, bool x_time,int y_node_id,int y_element_id,int y_element_ip, std::string y_block_set,std::string y_block_type, std::string y_block_component, bool y_time, QString title,QString x_axis,QString y_axis,bool save, QString save_filepath)
 {
-  return ccx_core.result_plot_job_dat(job_id);
+  return ccx_core.result_plot_job_dat(job_id,x_node_id, x_element_id, x_element_ip, x_block_set, x_block_type, x_block_component, x_time,y_node_id,y_element_id,y_element_ip, y_block_set,y_block_type, y_block_component, y_time,title,x_axis,y_axis,save,save_filepath);
 }
 
 bool CalculiXCoreInterface::result_csv_job_frd(int job_id,std::string block_type, std::string block_component, std::string increment,int node_id,int block_id,int nodeset_id,int sideset_id, bool overwrite, std::string save_filepath)
