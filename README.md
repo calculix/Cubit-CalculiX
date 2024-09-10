@@ -14,8 +14,9 @@ Or just use the links.
 [Linux Build](https://www.maschinenbauer.at/upload/build-linux-2024-9.zip)
 
 This component was build with Cubit 2024.8! 
-
 Tested with Cubit 2024.8 on Windows 10 and Ubuntu 22.04
+
+Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/@CubitCalculiX) . We will post videos from examples and updates in the near future.
 
 # Key Features
 Definition of:
