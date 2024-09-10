@@ -35,6 +35,9 @@ find_package(Qt5Widgets REQUIRED)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
+# this will link our libraries with a relative path
+SET(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -156,7 +159,6 @@ endif (WIN32)
 
 if (UNIX)
 add_library(calculix_useroptions SHARED ${CCXUSEROPTIONS_SRCS})
-set_target_properties(calculix_useroptions PROPERTIES SUFFIX ".so")
 target_link_libraries(calculix_useroptions clarogui cubiti clarofw Qt5::Widgets)
 set_target_properties(calculix_useroptions PROPERTIES AUTOMOC 1)
 
