@@ -12,9 +12,8 @@
 #include <algorithm>
 #include <cmath>
 
-#ifdef WIN32
-#else
-  #include "CubitGuiUtil.hpp"
+#ifndef WIN32
+  #include "CubitGuiUtil.hpp"  
 #endif
 #include "CubitInterface.hpp"
 #include "CubitCoreformInterface.hpp"
