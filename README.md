@@ -1,4 +1,4 @@
-# Cubit-CalculiX
+# Cubit-CalculiX 2024.9
 Hey ho that´s the CalculiX Component for coreform cubit!
 
 Full Model definitions for CalculiX can be done with Cubit as Preprocessor.
