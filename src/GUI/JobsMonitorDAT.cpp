@@ -165,7 +165,7 @@ JobsMonitorDAT::JobsMonitorDAT()
   QObject::connect(pushButton_export, SIGNAL(clicked(bool)),this, SLOT(on_pushButton_export_clicked(bool)));
 
   // Update list items and data
-  this->update();  
+  this->update();
 }
 
 JobsMonitorDAT::~JobsMonitorDAT()
@@ -198,6 +198,11 @@ void JobsMonitorDAT::update()
     
   std::vector<std::string> result_block_types = ccx_iface->dat_get_result_block_types(current_job_id);
   
+  if (result_block_types.size() == 0)
+  {
+    return;
+  }
+
   for (size_t i = 0; i < result_block_types.size(); i++)
   {
     this->addListItem(result_block_types[i],list_result_block);
