@@ -1,4 +1,4 @@
-# Cubit-CalculiX
+# Cubit-CalculiX 2024.9
 Hey ho that´s the CalculiX Component for coreform cubit!
 
 Full Model definitions for CalculiX can be done with Cubit as Preprocessor.
@@ -10,12 +10,13 @@ The builds can be downloaded at our [website](https://www.maschinenbauer.at/open
 
 Or just use the links.
 
-[Windows Build](https://www.maschinenbauer.at/upload/build-windows-2024-7.zip)
-[Linux Build](https://www.maschinenbauer.at/upload/build-linux-2024-7.zip)
+[Windows Build](https://www.maschinenbauer.at/upload/build-windows-2024-9.zip)
+[Linux Build](https://www.maschinenbauer.at/upload/build-linux-2024-9.zip)
 
-This component was build with Cubit 2024.3! 
+This component was build with Cubit 2024.8! 
+Tested with Cubit 2024.8 on Windows 10 and Ubuntu 22.04
 
-Tested with Cubit 2024.3 on Windows 10 and Ubuntu 22.04
+Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/@CubitCalculiX) . We will post videos from examples and updates in the near future.
 
 # Key Features
 Definition of:
@@ -41,6 +42,7 @@ Definition of:
 - Conversion of Results to Paraview (.frd and .dat: nodal, element and integration points results, auto calculating von Mises and Principal Stresses)
 - Projection of Displacements from .frd to mesh
 - Opening of Results with CGX or Paraview
+- Results can be viewed, plotted and exported to .csv
 - Displaying of loads and boundary conditions
 - Python Interface to query the result files. This can be used to run convergence studies or do mesh refinement based on the results. 
 
@@ -114,7 +116,7 @@ Restart Cubit.
 
 ![Add Component](/readme_docs/Setup_00.png?raw=true "Add Component")
 
-The Cubit Window should now show "Coreform Cubit 2022.4 -- with CalculiX" in the Title.
+The Cubit Window should now show "Coreform Cubit 202x.x -- with CalculiX" in the Title.
 
 Now just enable the Model Tree
 
@@ -168,9 +170,9 @@ When choosing the totalincrement the related displacements will be used.
 ![projection of displacements](/readme_docs/projection_01.png?raw=true "projection of displacements")
 
 # known issues
-- Can not open results for Paraview 5.12.0 out of Cubit. Please use Paraview 5.11.* See https://gitlab.kitware.com/paraview/paraview/-/issues/22614
+- Can not open results for Paraview 5.12.0 out of Cubit. Please use Paraview 5.11.* or a new Version with a fix. See https://gitlab.kitware.com/paraview/paraview/-/issues/22614
 
-- If you want to build the component yourself, i would recommend using ubuntu 22.04 . If some symbols are missing try another OS. It can happen that you've got a Cubit which was build on a different OS. For example building the component for Cubit 2022.4 only worked with centos 7.
+- History Bug on Windows: Currently commands that will be send using the gui won't be recorded into the history tab. This has been fixed for Linux. In the current windows release (2024.8) are some symbols missing. So we have to wait onto the next release to fix this for windows too.
 
 # todo list
 - documentation

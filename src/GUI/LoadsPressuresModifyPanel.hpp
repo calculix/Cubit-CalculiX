@@ -16,6 +16,8 @@
 #include <QLineEdit>
 #include <QRadioButton>
 
+class CalculiXCoreInterface;
+
 class LoadsPressuresModifyPanel : public QWidget
 {
   Q_OBJECT
@@ -25,6 +27,7 @@ public:
   ~LoadsPressuresModifyPanel();
 
   bool isInitialized;
+  CalculiXCoreInterface *ccx_iface;
   
 private slots:
   void on_pushButton_apply_clicked(bool);

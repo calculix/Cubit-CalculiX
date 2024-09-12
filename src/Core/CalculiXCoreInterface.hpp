@@ -12,11 +12,13 @@ public:
   CalculiXCoreInterface();
   ~CalculiXCoreInterface();
 	
+  bool cmd(std::string cmd); // executes a cubit command with appending to the history
   bool set_use_ccx_autocleanup(bool bool_use);
   bool set_use_ccx_logfile(bool bool_use);
   bool init_pythoninterface();
   std::string print_data();
   bool log_str(std::string str_log);
+  bool export_to_csv(std::string path_and_name, std::vector<std::string> header, std::vector<std::vector<double>> data,bool overwrite); // exports the data to a .csv file, with the header
   std::vector<int> parser(std::string parse_type, std::string parse_string);
   std::string to_string_scientific(double value, int precision = 6); // converts a double to string with scientific notation, with optional precision
   double string_scientific_to_double(std::string value, int precision = 6); // converts a string with scientific notation to double, with optional precision
@@ -48,6 +50,7 @@ public:
   bool check_sideset_exists(int sideset_id);
   bool check_vertex_in_nodeset_exists(int vertex_id,int nodeset_id); // checks if the vertex exists in the nodeset
   bool check_orientation_exists(int orientation_id); // check if orientation exists
+  bool check_step_exists(int step_id); // check if step exists
   bool core_update(); // lets the core check for updates aka changes from the entities
   bool core_reset(); // reset the whole core to the init level
   std::vector<int> get_blocks(); // gets the block ids from core blocks
@@ -64,6 +67,7 @@ public:
   std::string get_initialcondition_export_data(); // gets the export data from core
   std::string get_hbc_export_data(); // gets the export data from core
   std::string get_step_export_data(); // gets the export data from core
+  std::vector<int> get_steps_ids(); //gets the step ids from core
   bool create_section(std::string section_type,int block_id, int material_id, std::vector<std::string> options); // adds a new section
   bool modify_section(std::string section_type,int section_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a section  
   bool delete_section(int section_id); // delete section
@@ -133,6 +137,10 @@ public:
   bool set_job_conversion(int job_id, int conversion); // sets the paraview conversion value for the job
   bool result_cgx_job(int job_id); // opens the results with cgx
   bool result_paraview_job(int job_id); // opens the results with paraview
+  bool result_plot_job_frd(int job_id,int x_node_id, std::string x_block_type, std::string x_block_component, bool x_increment,bool x_time,int y_node_id, std::string y_block_type, std::string y_block_component, bool y_increment, bool y_time,QString title,QString x_axis,QString y_axis,bool save, QString save_filepath); // plots the results
+  bool result_plot_job_dat(int job_id,int x_node_id,int x_element_id,int x_element_ip, std::string x_block_set,std::string x_block_type, std::string x_block_component, bool x_time,int y_node_id,int y_element_id,int y_element_ip, std::string y_block_set,std::string y_block_type, std::string y_block_component, bool y_time,QString title,QString x_axis,QString y_axis,bool save, QString save_filepath); // plots the results
+  bool result_csv_job_frd(int job_id,std::string block_type, std::string block_component, std::string increment,int node_id,int block_id,int nodeset_id,int sideset_id, bool overwrite, std::string save_filepath); // save the results to csv
+  bool result_csv_job_dat(int job_id,std::string block_type,std::string block_set, std::string block_component, std::string time,int node_id,int element_id,bool overwrite, std::string save_filepath); // save the results to csv
   std::vector<std::string> get_job_data(int job_id);
   std::vector<std::string> get_job_console_output(int job_id);
   std::vector<std::string> get_job_cvg(int job_id);
@@ -162,9 +170,30 @@ public:
   std::vector<std::vector<double>> get_draw_data_for_bc_temperature(int id); // returns coord(3) and dof
   std::vector<std::vector<double>> get_draw_data_for_orientation(int id); // returns pairs of 4 for {system_type,local_axis_angle}, coord(3) of section center, a_coord(3) ,b_coord(3)
   bool draw_all(double size); // draw all loads,bcs,orientations
+  bool draw_load_force(std::vector<int> force_ids,double size); // draw load force
+  bool draw_load_pressure(std::vector<int> pressure_ids,double size); // draw load pressure
+  bool draw_load_heatflux(std::vector<int> heatflux_ids,double size); // draw load heatflux
+  bool draw_load_gravity(std::vector<int> gravity_ids,double size); // draw load gravity
+  bool draw_load_centrifugal(std::vector<int> centrifugal_ids,double size); // draw load centrifugal
+  bool draw_bc_displacement(std::vector<int> displacement_ids,double size); // draw bc displacement
+  bool draw_bc_temperature(std::vector<int> temperature_ids,double size); // draw bc temperature
+  bool draw_orientation(std::vector<int> orientation_ids,double size); // draw orientation
+  bool draw_loads(double size); // draw all loads
+  bool draw_bcs(double size); // draw all bcs
+  bool draw_orientations(double size); // draw all orientations
+  bool draw_load_forces(double size); //draw all forces
+  bool draw_load_pressures(double size); //draw all pressures
+  bool draw_load_heatfluxes(double size); //draw all heatfluxes
+  bool draw_load_gravities(double size); //draw all gravities
+  bool draw_load_centrifugals(double size); //draw all centrifugals
+  bool draw_bc_displacements(double size); //draw all displacements
+  bool draw_bc_temperatures(double size); //draw all temperatures
+
 
   //QUERY results
   //FRD results
+  std::vector<int> frd_get_nodes(int job_id); // returns a list of all nodes
+  bool frd_check_node_exists(int job_id,int node_id); // returns if a node in the frd exists
   std::vector<std::string> frd_get_result_block_types(int job_id); // returns a list of all result block types
   std::vector<std::string> frd_get_result_block_components(int job_id, std::string result_block_type); // returns a list of all result block components for a block type
   std::vector<int> frd_get_total_increments(int job_id); // returns a list of the total increments
@@ -182,7 +211,9 @@ public:
   std::vector<std::string> dat_get_result_block_types(int job_id); // returns a list of all result block types
   std::vector<std::string> dat_get_result_block_set(int job_id); // returns a list of all result block set
   std::vector<std::string> dat_get_result_block_components(int job_id, std::string result_block_type); // returns a list of all result block components for a block type and set
-  std::vector<double> dat_get_result_block_times(int job_id, std::string result_block_type, std::string result_block_set); // returns a list of all result block components for a block type and set
+  std::vector<double> dat_get_result_block_times(int job_id, std::string result_block_type, std::string result_block_set); // returns a list of all result block times for a block type and set
+  std::vector<int> dat_get_result_block_nodes(int job_id, double time, std::string result_block_type, std::string result_block_set); // returns a list of all result block nodes for a block type and set
+  std::vector<int> dat_get_result_block_elements(int job_id, double time, std::string result_block_type, std::string result_block_set); // returns a list of all result block elements for a block type and set
   std::vector<int> dat_get_node_ids_between_values(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double lower_value,double upper_value); // returns the global node ids within the values
   std::vector<int> dat_get_node_ids_smaller_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value); // returns the global node ids smaller than the value
   std::vector<int> dat_get_node_ids_greater_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value); // returns the global node ids greater than the value

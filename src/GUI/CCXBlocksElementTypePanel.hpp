@@ -19,6 +19,7 @@
 #include <QTabWidget>
 
 class PickWidget;
+class CalculiXCoreInterface;
 
 class CCXBlocksElementTypePanel : public QWidget
 {
@@ -29,6 +30,7 @@ public:
   ~CCXBlocksElementTypePanel();
 
   bool isInitialized;
+  CalculiXCoreInterface *ccx_iface;
   
 private slots:
   void on_pushButton_apply_clicked(bool);

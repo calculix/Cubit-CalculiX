@@ -15,6 +15,8 @@
 #include <QTableWidget>
 #include <QLineEdit>
 
+class CalculiXCoreInterface;
+
 class SectionsModifyShellPanel : public QWidget
 {
   Q_OBJECT
@@ -24,6 +26,7 @@ public:
   ~SectionsModifyShellPanel();
 
   bool isInitialized;
+  CalculiXCoreInterface *ccx_iface;
   
 private slots:
   void on_pushButton_apply_clicked(bool);

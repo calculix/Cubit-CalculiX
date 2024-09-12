@@ -50,18 +50,40 @@ bool CoreJobs::update()
 
 bool CoreJobs::reset()
 {
-  jobs_data.clear();  
-  output_console.clear();
-  cvg.clear();
-  sta.clear();
   #ifdef WIN32
+    //close all jobs and threads first
+    
+    for (size_t i = 0; i < jobs_data.size(); i++)
+    {
+      HANDLE processhandle;
+      DWORD returnCode{};
+      processhandle = OpenProcess(PROCESS_ALL_ACCESS, TRUE, std::stoi(jobs_data[i][4]));
+      if (GetExitCodeProcess(processhandle, &returnCode)) {
+        if (returnCode == STILL_ACTIVE)
+        { 
+          std::string log;
+          log = "Kill Job " + jobs_data[i][1] + " with ID " + jobs_data[i][0] + " on Reset\n";
+          PRINT_INFO("%s", log.c_str());
+          TerminateProcess(processhandle, 1);
+          CloseHandle(processhandle);
+          kill_pipe(std::stoi(jobs_data[i][0]));
+        }
+      }
+    }
+    
+    //clear all vectors
     ProcessPipe.clear();
     PPTID.clear();
     PipePID.clear();
     PipeThreads.clear();
+    PipeThreadsRun.clear();
   #else
     CubitProcessHandler.clear();
   #endif
+  jobs_data.clear();  
+  output_console.clear();
+  cvg.clear();
+  sta.clear();
 
   init();
   return true;
@@ -194,10 +216,13 @@ bool CoreJobs::run_job(int job_id,int option)
       
       if (jobs_data[job_data_id][2]!="")
       {
-        std::string shellstr;
-        shellstr = "cp '" + jobs_data[job_data_id][2] + "' '" +jobs_data[job_data_id][1] + ".inp'";
-        system(shellstr.c_str());
+        //std::string shellstr;
+        //shellstr = "cp '" + jobs_data[job_data_id][2] + "' '" + jobs_data[job_data_id][1] + ".inp'";
+        //system(shellstr.c_str());
+        //PRINT_INFO("%s", shellstr.c_str());
+        std::string SourcePath = jobs_data[job_data_id][2];
         filepath = jobs_data[job_data_id][1] + ".inp";
+        CopyFile( SourcePath.c_str(), filepath.c_str(), FALSE );
       } else {
         filepath = jobs_data[job_data_id][1] + ".inp";
         log = "Exporting Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " to \n";
@@ -637,6 +662,7 @@ bool CoreJobs::kill_job(int job_id)
           PRINT_INFO("%s", log.c_str());
           TerminateProcess(processhandle, 1);
           CloseHandle(processhandle);
+          kill_pipe(std::stoi(jobs_data[jobs_data_id][0]));
           log = " Job killed!\n";
           PRINT_INFO("%s", log.c_str());
           jobs_data[jobs_data_id][3] = "3";

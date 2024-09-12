@@ -30,5 +30,33 @@
 2024-06-16 debug python interface import on windows, nohup replacement windows
 2024-06-17 - 2024-07-05 CoreJobs modified for windows
 2024-07-05 Rework Useroptions and include paraview and solver
-
 ######### ------  Release 2024.7
+
+2024-08-13 fix cubit crash on reset using windows
+2024-08-14 work on reading frd in parallel
+2024-08-15 work on reading frd in parallel
+2024-08-16 work on reading dat in parallel
+2024-08-16 work on writing linked vtk in parallel
+2024-08-17 work on writing linked vtk in parallel
+2024-08-17 fix progress bar for reading in parallel
+2024-08-17 work on writing linked vtk in parallel
+2024-08-23 work on writing linked vtk in parallel
+2024-08-24 finished writing linked vtk in parallel
+2024-08-24 thread creation slow in windows -> search for thread pool solution on community request
+2024-08-25 thread pool implemented for linking frd result blocks in vtkwriter, still very slow on windows. the useroptions converter threads will be set to 1 for windows
+2024-08-26 thread pool implemented for loading frd dat and writing vtu's -> greatly improves conversion speed on linux
+2024-08-28 working on chart plot feature
+2024-08-29 Fixing history bug for commands send using gui elements
+2024-08-29 working on chart plot feature
+2024-08-30 bugfix. crash of frd reader when last line doesn't contain 9999
+2024-08-30 added option to save frd plot
+2024-08-31 working on job monitor frd tab
+2024-09-01 working on job monitor frd tab
+2024-09-02 working on job monitor frd tab
+2024-09-04 inlcude missing Qt5Charts libraries into src
+2024-09-05 including csv export...needs to be rewritten
+2024-09-06 make command for csv export
+2024-09-07 csv export for frd
+2024-09-08 working on job monitor dat tab
+2024-09-09 csv export for dat
+2024-09-09 working on dat plot

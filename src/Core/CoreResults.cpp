@@ -102,7 +102,7 @@ bool CoreResults::delete_result(int job_id)
 
 bool CoreResults::load_result(int job_id)
 {
-  //std::string log;
+  std::string log;
   int results_data_id = get_results_data_id_from_job_id(job_id);
   int frd_data_id = get_frd_data_id_from_job_id(job_id);
   int dat_data_id = get_dat_data_id_from_job_id(job_id);
@@ -113,8 +113,18 @@ bool CoreResults::load_result(int job_id)
   } else {
     //log = "Loading results for Job ID " + std::to_string(results_data[results_data_id][1]) + " \n";
     //PRINT_INFO("%s", log.c_str());
-    frd_data[frd_data_id].read();
-    dat_data[dat_data_id].read();
+    if (!frd_data[frd_data_id].read())
+    {
+      log = "Can't read FRD! \n";
+      PRINT_INFO("%s", log.c_str());
+      return false;
+    }
+    if (!dat_data[dat_data_id].read())
+    {
+      log = "Can't read DAT! \n";
+      PRINT_INFO("%s", log.c_str());
+      return false;
+    }
 
     return true;
   }
@@ -157,6 +167,7 @@ int CoreResults::convert_result(int job_id, std::vector<int> options, std::vecto
     int write_mode = vtkWriter->write_mode;
     ccx_iface->set_job_conversion(job_id,write_mode); // used for manual conversion, twice is better than once
 
+    vtkWriter->clear(); //clear data
     delete vtkWriter;
 
     return write_mode;

@@ -1,0 +1,86 @@
+#!cubit
+reset
+create cylinder height 100 radius 1
+create cylinder height 100 radius 1
+move volume 1 x -1.01
+move volume 2 x 1.01
+
+surface 2 3 5 6 size 0.4
+vol all size 2
+mesh vol all
+
+#create blocks
+block 1 add volume 1
+block 1 name "wire_1"
+block 2 add volume 2
+block 2 name "wire_2"
+
+block all element type hex20 
+
+#material
+create material "Steel" property_group "CalculiX-FEA"
+modify material "Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 2e+5 0.3 0 
+modify material "Steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_PLASTIC_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 4e+2 0 0 4.2e+2 0.02 0 5e+2 0.2 0 6e+2 0.5 0 
+
+#sections
+ccx create section solid block all material 1
+
+# ref point
+create vertex 0 0 50 
+create vertex 0 0 50
+mesh vertex all
+
+# nodesets
+nodeset 1 add surface 2 5
+nodeset 1 name "fixed_bottom"
+nodeset 2 add surface 3 6
+nodeset 2 name "top"
+
+#sidesets
+sideset 1 add surface 1  
+sideset 1 name "wire_1"
+sideset 2 add surface 4 
+sideset 2 name "wire_2"
+
+#rigid body
+ccx create constraint rigid body nodeset 2 ref 5 rot 6
+
+#contact
+ccx create surfaceinteraction name "ContactType" linear slopeK 1e6 sigmaINF 3 c0 1e-2
+ccx modify surfaceinteraction 1 friction mu 0.1 lambda 1
+
+ccx create contactpair surfaceinteraction 1 surfacetosurface master 1 slave 2
+
+#outputs
+ccx create fieldoutput name "fo_node" node
+ccx modify fieldoutput 1 node
+ccx modify fieldoutput 1 node key_on U
+ccx modify fieldoutput 1 node key_off NT CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF PNT POT PRF PS PSF PT PTF PU RF RFL SEN TS TSF TT TTF TURB V VF 
+ccx create fieldoutput name "fo_element" element
+ccx modify fieldoutput 2 element
+ccx modify fieldoutput 2 element key_on E S 
+ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFL HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS 
+
+# bc
+create displacement  on nodeset 1 dof all fix 0 
+create displacement on vertex 5 dof 1 dof 2 fix 0
+create displacement  on vertex 6 dof 3 fix 5
+
+#step
+ccx create step name "twist" static
+ccx modify step 1 parameter inc 10000
+ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.01 timeperiodofstep 10 minimumtimeincrement 1e-05 maximumtimeincrement 0.05
+ccx step 1 add bc displacement 1 2 3
+ccx step 1 add fieldoutput 1 2
+
+#job
+ccx create job name "wire_twist"
+#ccx run job 1
+
+

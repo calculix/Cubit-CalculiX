@@ -13,8 +13,7 @@ CoreResultsProject::CoreResultsProject()
 {}
 
 CoreResultsProject::~CoreResultsProject()
-{
-}
+{}
 
 bool CoreResultsProject::init(CoreResultsFrd* frd)
 {
@@ -68,15 +67,13 @@ bool CoreResultsProject::project(int step, int totalincrement,double scale)
     return false;
   }
   
-
-  //this->stopwatch("start");
-
   progressbar->start(0,100,"Projecting Displacements");
   auto t_start = std::chrono::high_resolution_clock::now();
 
   log = "Setting node constraint off.\n";
   PRINT_INFO("%s", log.c_str());
 
+  if (!CubitInterface::silent_cmd_without_running_journal_lines("set developer on")){return false;}
   if (!CubitInterface::silent_cmd_without_running_journal_lines("set node constraint off")){return false;}
   
   cmd = "graphics off";
@@ -108,8 +105,7 @@ bool CoreResultsProject::project(int step, int totalincrement,double scale)
   
   cmd = "graphics on";
   CubitInterface::silent_cmd_without_running_journal_lines(cmd.c_str());
-
-  //this->stopwatch("stop");
+  if (!CubitInterface::silent_cmd_without_running_journal_lines("set developer off")){return false;}
 
   return true;
 }
@@ -184,19 +180,4 @@ int CoreResultsProject::get_result_blocks_data_id_totalincrement(int totalincrem
     }
   }
   return data_id;
-}
-
-bool CoreResultsProject::stopwatch(std::string label)
-{
-  const auto t_runtime_end = std::chrono::high_resolution_clock::now();
-  int t_runtime_duration = std::chrono::duration<double, std::milli>(t_runtime_end - t_runtime_start).count();
-  int t_runtime_round_duration = std::chrono::duration<double, std::milli>(t_runtime_end - t_runtime_last).count();
-  
-  t_runtime_last = std::chrono::high_resolution_clock::now();
-  
-  std::string log;
-  log =  label + " " + std::to_string(t_runtime_duration) + " " + std::to_string(t_runtime_round_duration) + "\n";
-  PRINT_INFO("%s", log.c_str());
-
-  return true;
 }

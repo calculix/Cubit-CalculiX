@@ -17,6 +17,8 @@
 #include <QLineEdit>
 #include <QRadioButton>
 
+class CalculiXCoreInterface;
+
 class ConstraintsModifyRigidBodyPanel : public QWidget
 {
   Q_OBJECT
@@ -26,6 +28,7 @@ public:
   ~ConstraintsModifyRigidBodyPanel();
 
   bool isInitialized;
+  CalculiXCoreInterface *ccx_iface;
   
 private slots:
   void on_pushButton_apply_clicked(bool);

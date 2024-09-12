@@ -8,6 +8,13 @@
 #include <fstream>
 #include <iostream>
 #include <algorithm>
+#ifdef WIN32
+ #include <windows.h>
+ #include <io.h>
+#else
+ #include <unistd.h>
+#endif
+
 
 ConfigFile::ConfigFile()
 {
@@ -31,26 +38,30 @@ ConfigFile::ConfigFile()
     {
         //log = " path: " + paths[i].str() + " \n";
         //PRINT_INFO("%s", log.c_str());
-
-        componentpath = paths[i].str() + "/";
-        filepath = componentpath + "calculix_comp.ccl";
-        std::ifstream input_file;
-        input_file.open(filepath.c_str());
-        
-        if (input_file)
-        {
-            filepath = componentpath + filename;
-            break;
-        }
-        /*
-            log = " TRUE \n";
-            PRINT_INFO("%s", log.c_str());
-        }else{
-            log = " FALSE \n";
-            PRINT_INFO("%s", log.c_str());
-        }
-        */
+        #ifdef WIN32
+            componentpath = paths[i].str() + "/";
+            filepath = componentpath + "calculix_comp.ccl";
+            if (_access(filepath.c_str(), 0) == 0)
+            {
+                filepath = componentpath + filename;
+                break;
+            }
+        #else
+            componentpath = paths[i].str() + "/";
+            filepath = componentpath + "libcalculix_comp.ccl";
+            if (access(filepath.c_str(), R_OK) == 0)
+            {
+                filepath = componentpath + filename;
+                break;
+            }
+        #endif
     }
+
+    //for (size_t i = 0; i < paths.size(); i++)
+    //{
+    //    log = " path: " + paths[i].str() + " \n";
+    //    std::cout << log;
+    //}
 
     //std::vector<ComponentInfo> info;
     //med->get_component_list(info);   
@@ -67,8 +78,7 @@ ConfigFile::ConfigFile()
         log.append(" state: " + output.toStdString() + " \n");
         PRINT_INFO("%s", log.c_str());
     }
-    */
-    
+    */    
 }
 
 ConfigFile::~ConfigFile()
@@ -203,6 +213,14 @@ int ConfigFile::standard_num_entry(std::string option)
     if (option == "SolverThreads")
     {
         standard_value = 8;
+    }else if (option == "ConverterThreads")
+    {
+        #ifdef WIN32
+            standard_value = 1;
+        #else
+            standard_value = 8;
+        #endif
     }
+    
     return standard_value;
 }

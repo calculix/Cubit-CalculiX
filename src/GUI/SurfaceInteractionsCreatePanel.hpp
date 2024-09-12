@@ -18,6 +18,7 @@
 #include <QRadioButton>
 
 class PanelTable;
+class CalculiXCoreInterface;
 
 class SurfaceInteractionsCreatePanel : public QWidget
 {
@@ -28,6 +29,7 @@ public:
   ~SurfaceInteractionsCreatePanel();
 
   bool isInitialized;
+  CalculiXCoreInterface *ccx_iface;
   
 private slots:
   void on_pushButton_apply_clicked(bool);

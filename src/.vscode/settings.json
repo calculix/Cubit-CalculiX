@@ -111,5 +111,6 @@
         "xutility": "cpp"
     },
     "cmake.configureOnOpen": false,
-    "git.ignoreLimitWarning": true
+    "git.ignoreLimitWarning": true,
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }

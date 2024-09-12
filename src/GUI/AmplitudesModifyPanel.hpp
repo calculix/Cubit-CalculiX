@@ -18,6 +18,7 @@
 #include <QCheckBox>
 
 class PanelTable;
+class CalculiXCoreInterface;
 
 class AmplitudesModifyPanel : public QWidget
 {
@@ -28,6 +29,7 @@ public:
   ~AmplitudesModifyPanel();
 
   bool isInitialized;
+  CalculiXCoreInterface *ccx_iface;
   
 private slots:
   void on_pushButton_apply_clicked(bool);

@@ -630,7 +630,8 @@ void MaterialManagement::on_pushButton_apply_clicked(bool)
 
   for (size_t i = 0; i < commands.size(); i++)
   {
-    CubitInterface::cmd(commands[int(i)].toStdString().c_str());
+    //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
+    ccx_iface->cmd(commands[int(i)].toStdString());
   }
 }
 
@@ -660,7 +661,8 @@ void MaterialManagement::on_pushButton_new_clicked(bool)
 
   for (size_t i = 0; i < commands.size(); i++)
   {
-    CubitInterface::cmd(commands[i].c_str());
+    //CubitInterface::cmd(commands[i].c_str());
+    ccx_iface->cmd(commands[int(i)]);
   }
 }
 
@@ -669,6 +671,12 @@ void MaterialManagement::on_pushButton_delete_clicked(bool)
   //log = " clicked delete \n";
   //PRINT_INFO("%s", log.c_str());
   //QStringList commands;
+  
+  if (tree_material->topLevelItemCount()==0)
+  {
+    return;
+  }
+  
   std::vector<std::string> commands;
   
   QMessageBox::StandardButton msgbox;
@@ -682,7 +690,8 @@ void MaterialManagement::on_pushButton_delete_clicked(bool)
 
   for (size_t i = 0; i < commands.size(); i++)
   {
-    CubitInterface::cmd(commands[i].c_str());
+    //CubitInterface::cmd(commands[i].c_str());
+    ccx_iface->cmd(commands[int(i)]);
   }
 
   this->removeListItems();

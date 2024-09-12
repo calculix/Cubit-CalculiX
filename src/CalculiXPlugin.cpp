@@ -9,6 +9,7 @@
 #include "ccxPrintCoreCommand.hpp"
 #include "ccxLogCoreCommand.hpp"
 #include "ccxDrawCommand.hpp"
+#include "ccxDrawStepCommand.hpp"
 #include "ccxBlockElementTypeCommand.hpp"
 #include "ccxSectionDeleteCommand.hpp"
 #include "ccxSectionSolidCreateCommand.hpp"
@@ -103,6 +104,10 @@
 #include "ccxResultParaViewJobCommand.hpp"
 #include "ccxResultLoadJobCommand.hpp"
 #include "ccxResultConvertJobCommand.hpp"
+#include "ccxResultPlotJobFrdCommand.hpp"
+#include "ccxResultPlotJobDatCommand.hpp"
+#include "ccxResultCSVJobFrdCommand.hpp"
+#include "ccxResultCSVJobDatCommand.hpp"
 #include "ccxResultProjectJobCommand.hpp"
 #include "ccxKillJobCommand.hpp"
 #include "ccxCustomLineCreateCommand.hpp"
@@ -132,6 +137,7 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxPrintCoreCommand");
   keys.push_back("ccxLogCoreCommand");
   keys.push_back("ccxDrawCommand");
+  keys.push_back("ccxDrawStepCommand");
   keys.push_back("ccxBlockElementTypeCommand");
   keys.push_back("ccxSectionDeleteCommand");
   keys.push_back("ccxSectionSolidCreateCommand");
@@ -227,6 +233,10 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxResultParaViewJobCommand");
   keys.push_back("ccxResultLoadJobCommand");
   keys.push_back("ccxResultConvertJobCommand");
+  keys.push_back("ccxResultPlotJobFrdCommand");
+  keys.push_back("ccxResultPlotJobDatCommand");
+  keys.push_back("ccxResultCSVJobFrdCommand");
+  keys.push_back("ccxResultCSVJobDatCommand");
   keys.push_back("ccxResultProjectJobCommand");
   keys.push_back("ccxCustomLineCreateCommand");
   keys.push_back("ccxCustomLineModifyCommand");
@@ -263,6 +273,9 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
   
   else if(key == "ccxDrawCommand")
     return new ccxDrawCommand();
+  
+  else if(key == "ccxDrawStepCommand")
+    return new ccxDrawStepCommand();
 
   else if(key == "ccxBlockElementTypeCommand")
     return new ccxBlockElementTypeCommand();
@@ -548,6 +561,18 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxResultProjectJobCommand")
     return new ccxResultProjectJobCommand();
+
+  else if(key == "ccxResultPlotJobFrdCommand")
+    return new ccxResultPlotJobFrdCommand();
+
+  else if(key == "ccxResultPlotJobDatCommand")
+    return new ccxResultPlotJobDatCommand();
+
+  else if(key == "ccxResultCSVJobFrdCommand")
+    return new ccxResultCSVJobFrdCommand();
+
+  else if(key == "ccxResultCSVJobDatCommand")
+    return new ccxResultCSVJobDatCommand();
 
   else if(key == "ccxKillJobCommand")
     return new ccxKillJobCommand();

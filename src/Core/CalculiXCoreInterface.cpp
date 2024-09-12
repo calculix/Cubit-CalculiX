@@ -7,6 +7,11 @@ CalculiXCoreInterface::CalculiXCoreInterface()
 CalculiXCoreInterface::~CalculiXCoreInterface()
 {}
 
+bool CalculiXCoreInterface::cmd(std::string cmd)
+{
+  return ccx_core.cmd(cmd);
+}
+
 bool CalculiXCoreInterface::set_use_ccx_autocleanup(bool bool_use)
 {
   ccx_core.use_ccx_autocleanup = bool_use;
@@ -33,6 +38,11 @@ bool CalculiXCoreInterface::log_str(std::string str_log)
 {
   ccx_core.print_to_log(str_log);
   return true;
+}
+
+bool CalculiXCoreInterface::export_to_csv(std::string path, std::vector<std::string> header, std::vector<std::vector<double>> data,bool overwrite)
+{
+  return ccx_core.export_to_csv(path, header, data,overwrite);
 }
 
 std::vector<int> CalculiXCoreInterface::parser(std::string parse_type, std::string parse_string)
@@ -193,6 +203,11 @@ bool CalculiXCoreInterface::check_vertex_in_nodeset_exists(int vertex_id,int nod
 bool CalculiXCoreInterface::check_orientation_exists(int orientation_id)
 {
   return ccx_core.check_orientation_exists(orientation_id);
+}
+
+bool CalculiXCoreInterface::check_step_exists(int step_id)
+{
+  return ccx_core.check_step_exists(step_id);
 }
 
 bool CalculiXCoreInterface::core_update()
@@ -580,6 +595,26 @@ bool CalculiXCoreInterface::result_paraview_job(int job_id)
   return ccx_core.result_paraview_job(job_id);
 }
 
+bool CalculiXCoreInterface::result_plot_job_frd(int job_id,int x_node_id, std::string x_block_type, std::string x_block_component, bool x_increment,bool x_time,int y_node_id, std::string y_block_type, std::string y_block_component, bool y_increment, bool y_time,QString title,QString x_axis,QString y_axis,bool save, QString save_filepath)
+{
+  return ccx_core.result_plot_job_frd(job_id,x_node_id,x_block_type,x_block_component,x_increment,x_time,y_node_id,y_block_type,y_block_component,y_increment,y_time,title,x_axis,y_axis,save, save_filepath);
+}
+
+bool CalculiXCoreInterface::result_plot_job_dat(int job_id,int x_node_id,int x_element_id,int x_element_ip, std::string x_block_set,std::string x_block_type, std::string x_block_component, bool x_time,int y_node_id,int y_element_id,int y_element_ip, std::string y_block_set,std::string y_block_type, std::string y_block_component, bool y_time, QString title,QString x_axis,QString y_axis,bool save, QString save_filepath)
+{
+  return ccx_core.result_plot_job_dat(job_id,x_node_id, x_element_id, x_element_ip, x_block_set, x_block_type, x_block_component, x_time,y_node_id,y_element_id,y_element_ip, y_block_set,y_block_type, y_block_component, y_time,title,x_axis,y_axis,save,save_filepath);
+}
+
+bool CalculiXCoreInterface::result_csv_job_frd(int job_id,std::string block_type, std::string block_component, std::string increment,int node_id,int block_id,int nodeset_id,int sideset_id, bool overwrite, std::string save_filepath)
+{
+  return ccx_core.result_csv_job_frd(job_id, block_type, block_component, increment, node_id, block_id, nodeset_id, sideset_id, overwrite, save_filepath);
+}
+
+bool CalculiXCoreInterface::result_csv_job_dat(int job_id,std::string block_type,std::string block_set, std::string block_component, std::string time,int node_id,int element_id,bool overwrite, std::string save_filepath)
+{
+  return ccx_core.result_csv_job_dat(job_id, block_type, block_set, block_component, time, node_id, element_id, overwrite, save_filepath);
+}
+
 std::vector<std::string> CalculiXCoreInterface::get_job_data(int job_id)
 {
   return ccx_core.get_job_data(job_id);
@@ -720,6 +755,106 @@ bool CalculiXCoreInterface::draw_all(double size) // draw all bc and loads
   return ccx_core.draw_all(size);
 }
 
+bool CalculiXCoreInterface::draw_load_force(std::vector<int> force_ids,double size)
+{
+  return ccx_core.draw_load_force(force_ids,size);
+}
+
+bool CalculiXCoreInterface::draw_load_pressure(std::vector<int> pressure_ids,double size)
+{
+  return ccx_core.draw_load_pressure(pressure_ids,size);
+}
+
+bool CalculiXCoreInterface::draw_load_heatflux(std::vector<int> heatflux_ids,double size)
+{
+  return ccx_core.draw_load_heatflux(heatflux_ids,size);
+}
+
+bool CalculiXCoreInterface::draw_load_gravity(std::vector<int> gravity_ids,double size)
+{
+  return ccx_core.draw_load_gravity(gravity_ids,size);
+}
+
+bool CalculiXCoreInterface::draw_load_centrifugal(std::vector<int> centrifugal_ids,double size)
+{
+  return ccx_core.draw_load_centrifugal(centrifugal_ids,size);
+}
+
+bool CalculiXCoreInterface::draw_bc_displacement(std::vector<int> displacement_ids,double size)
+{
+  return ccx_core.draw_bc_displacement(displacement_ids,size);
+}
+
+bool CalculiXCoreInterface::draw_bc_temperature(std::vector<int> temperature_ids,double size)
+{
+  return ccx_core.draw_bc_temperature(temperature_ids,size);
+}
+
+bool CalculiXCoreInterface::draw_orientation(std::vector<int> orientation_ids,double size)
+{
+  return ccx_core.draw_orientation(orientation_ids,size);
+}
+
+bool CalculiXCoreInterface::draw_loads(double size)
+{
+  return ccx_core.draw_loads(size);
+}
+
+bool CalculiXCoreInterface::draw_bcs(double size)
+{
+  return ccx_core.draw_bcs(size);
+}
+
+bool CalculiXCoreInterface::draw_orientations(double size)
+{
+  return ccx_core.draw_orientations(size);
+}
+
+bool CalculiXCoreInterface::draw_load_forces(double size)
+{
+  return ccx_core.draw_load_forces(size);
+}
+
+bool CalculiXCoreInterface::draw_load_pressures(double size)
+{
+  return ccx_core.draw_load_pressures(size);
+}
+
+bool CalculiXCoreInterface::draw_load_heatfluxes(double size)
+{
+  return ccx_core.draw_load_heatfluxes(size);
+}
+
+bool CalculiXCoreInterface::draw_load_gravities(double size)
+{
+  return ccx_core.draw_load_gravities(size);
+}
+
+bool CalculiXCoreInterface::draw_load_centrifugals(double size)
+{
+  return ccx_core.draw_load_centrifugals(size);
+}
+
+bool CalculiXCoreInterface::draw_bc_displacements(double size)
+{
+  return ccx_core.draw_bc_displacements(size);
+}
+
+bool CalculiXCoreInterface::draw_bc_temperatures(double size)
+{
+  return ccx_core.draw_bc_temperatures(size);
+}
+
+std::vector<int> CalculiXCoreInterface::frd_get_nodes(int job_id)
+{
+  return ccx_core.frd_get_nodes(job_id);
+}
+
+bool CalculiXCoreInterface::frd_check_node_exists(int job_id,int node_id)
+{
+  return ccx_core.frd_check_node_exists(job_id,node_id);
+}  
+
 std::vector<std::string> CalculiXCoreInterface::frd_get_result_block_types(int job_id)
 {
   return ccx_core.frd_get_result_block_types(job_id);
@@ -803,6 +938,16 @@ std::vector<std::string> CalculiXCoreInterface::dat_get_result_block_components(
 std::vector<double> CalculiXCoreInterface::dat_get_result_block_times(int job_id, std::string result_block_type, std::string result_block_set)
 {
   return ccx_core.dat_get_result_block_times(job_id, result_block_type, result_block_set);
+}
+
+std::vector<int> CalculiXCoreInterface::dat_get_result_block_nodes(int job_id, double time, std::string result_block_type, std::string result_block_set)
+{
+  return ccx_core.dat_get_result_block_nodes(job_id, time, result_block_type, result_block_set);
+}
+
+std::vector<int> CalculiXCoreInterface::dat_get_result_block_elements(int job_id, double time, std::string result_block_type, std::string result_block_set)
+{
+  return ccx_core.dat_get_result_block_elements(job_id, time, result_block_type, result_block_set);
 }
 
 std::vector<int> CalculiXCoreInterface::dat_get_node_ids_between_values(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double lower_value,double upper_value)
@@ -1098,4 +1243,9 @@ std::string CalculiXCoreInterface::get_hbc_export_data() // gets the export data
 std::string CalculiXCoreInterface::get_step_export_data() // gets the export data from core
 {
   return ccx_core.get_step_export_data();
+}
+
+std::vector<int> CalculiXCoreInterface::get_steps_ids() //gets the step ids from core
+{
+  return ccx_core.get_steps_ids();
 }

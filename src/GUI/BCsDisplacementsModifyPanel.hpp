@@ -17,6 +17,8 @@
 #include <QLineEdit>
 #include <QRadioButton>
 
+class CalculiXCoreInterface;
+
 class BCsDisplacementsModifyPanel : public QWidget
 {
   Q_OBJECT
@@ -26,6 +28,7 @@ public:
   ~BCsDisplacementsModifyPanel();
 
   bool isInitialized;
+  CalculiXCoreInterface *ccx_iface;
   
 private slots:
   void on_pushButton_apply_clicked(bool);

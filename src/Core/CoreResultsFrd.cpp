@@ -2,11 +2,14 @@
 #include "CalculiXCoreInterface.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
-#include "ProgressTool.hpp"
+#include "loadUserOptions.hpp"
+#include "StopWatch.hpp"
 
-#include <chrono>
-#include <cmath>
+#include "ThreadPool.hpp"
+#include <functional>
+
 #include <fstream>
+#include <cmath>
 #include <iostream>
 
 CoreResultsFrd::CoreResultsFrd()
@@ -26,6 +29,8 @@ bool CoreResultsFrd::init(int job_id)
 
     std::vector<std::string> job_data = ccx_iface->get_job_data(job_id);
     this->filepath = job_data[1] + ".frd";
+
+    progressbar = new ProgressTool();
 
     is_initialized = true;  
     return true;
@@ -53,6 +58,9 @@ bool CoreResultsFrd::clear()
   result_block_type.clear();
   result_block_data.clear();
   result_block_node_data.clear();
+  
+  keys.clear();
+  frd_arrays.clear();
 
   return true;
 }
@@ -62,12 +70,30 @@ bool CoreResultsFrd::check_initialized()
   return is_initialized;
 }
 
-
 bool CoreResultsFrd::read()
 {
+  bool success = false;
+  if (ccx_uo.mConverterThreads > 1)
+  {
+    if (read_parallel())
+    {
+      success = true;
+    }
+  }else{
+    if (read_single())
+    {
+      success = true;
+    }
+  }
+
+  return success;
+}
+
+bool CoreResultsFrd::read_single()
+{
+  StopWatch StopWatch;
   int maxlines = 0;
   int currentline = 0;
-  ProgressTool progressbar;
   std::string log;
   log = "reading results " + filepath + " for Job ID " + std::to_string(job_id) + " \n";
   PRINT_INFO("%s", log.c_str());
@@ -85,7 +111,7 @@ bool CoreResultsFrd::read()
   if (frd.is_open())
   {
     // scan file for number of lines
-    progressbar.start(0,100,"Scanning Results FRD");
+    progressbar->start(0,100,"Scanning Results FRD");
     while (std::getline(frd,frdline))
     { 
       ++maxlines;
@@ -111,7 +137,6 @@ bool CoreResultsFrd::read()
     // check if last line has 9999 in it, if not then add, otherwise on error frd data it crashes
     if ((job_data[3] == "3")||(job_data[3] == "4")||(job_data[3] == "-1"))
     {
-      
       frd.open(this->filepath);
       for (size_t i = 0; i < maxlines; i++)
       {
@@ -125,17 +150,19 @@ bool CoreResultsFrd::read()
             frd.close(); 
             std::ofstream log(this->filepath, std::ios_base::app | std::ios_base::out);
             log << "9999\n";
+            ++maxlines;
+            break;
           }
         }
       }
     }
 
-    progressbar.end();  
+    progressbar->end();  
     
     frd.open(this->filepath);
 
-    progressbar.start(0,100,"Reading Results FRD");
-    auto t_start = std::chrono::high_resolution_clock::now();
+    progressbar->start(0,100,"Reading Results FRD");
+    //auto t_start = std::chrono::high_resolution_clock::now();
     
     log = "";
     while (frd)
@@ -147,8 +174,8 @@ bool CoreResultsFrd::read()
       int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
       if (duration > 500)
       {
-        progressbar.percent(double(currentline)/double(maxlines));
-        progressbar.check_interrupt();
+        progressbar->percent(double(currentline)/double(maxlines));
+        progressbar->check_interrupt();
         t_start = std::chrono::high_resolution_clock::now();
       }
       
@@ -156,7 +183,6 @@ bool CoreResultsFrd::read()
 
       // first lets check if the mode is still valid
       this->check_mode(frd_array);
-
       if (current_read_mode == 0)
       {
         this->read_header(frd_array);
@@ -193,26 +219,560 @@ bool CoreResultsFrd::read()
   frd.close();
 
   // sorting for faster search
+  std::vector<int> tmp_node_ids;
+  std::vector<int> tmp_node_data_ids;
+
+  for (size_t i = 0; i < nodes.size(); i++)
+  {
+    tmp_node_ids.push_back(nodes[i][0]);
+    tmp_node_data_ids.push_back(i);
+  }  
+  auto p = sort_permutation(tmp_node_ids);
+  this->apply_permutation(tmp_node_ids, p);
+  this->apply_permutation(tmp_node_data_ids, p);
+  sorted_node_ids = tmp_node_ids;
+  sorted_node_data_ids = tmp_node_data_ids;
+
   for (size_t i = 0; i < result_block_node_data.size(); i++)
   {
-    std::vector<int> tmp_node_ids;
-    std::vector<int> tmp_node_data_ids;
+    std::vector<int> tmp_result_node_ids;
+    std::vector<int> tmp_result_node_data_ids;
 
     for (size_t ii = 0; ii < result_block_node_data[i].size(); ii++)
     {
-      tmp_node_ids.push_back(result_block_node_data[i][ii][0]);
-      tmp_node_data_ids.push_back(result_block_node_data[i][ii][1]);
+      tmp_result_node_ids.push_back(result_block_node_data[i][ii][0]);
+      tmp_result_node_data_ids.push_back(result_block_node_data[i][ii][1]);
     }  
-    auto p = sort_permutation(tmp_node_ids);
-    this->apply_permutation(tmp_node_ids, p);
-    this->apply_permutation(tmp_node_data_ids, p);
-    sorted_node_ids.push_back(tmp_node_ids);
-    sorted_node_data_ids.push_back(tmp_node_data_ids);
+    auto p = sort_permutation(tmp_result_node_ids);
+    this->apply_permutation(tmp_result_node_ids, p);
+    this->apply_permutation(tmp_result_node_data_ids, p);
+    sorted_result_node_ids.push_back(tmp_result_node_ids);
+    sorted_result_node_data_ids.push_back(tmp_result_node_data_ids);
   }
 
-  progressbar.end();
+  progressbar->end();
   //PRINT_INFO("%s", log.c_str());
   //print_data();
+
+  StopWatch.total("Duration of reading FRD [ms]: ");
+
+  return true;
+}
+
+bool CoreResultsFrd::read_parallel()
+{
+  StopWatch StopWatch;
+  int max_threads = ccx_uo.mConverterThreads;
+  std::vector<std::thread> ReadThreads; // vector to contain threads for reading frd
+  
+  int maxlines = 0;
+  std::string log;
+  log = "reading results " + filepath + " for Job ID " + std::to_string(job_id) + " \n";
+  PRINT_INFO("%s", log.c_str());
+
+  std::string frdline = "";
+  std::vector<std::string> frd_array;
+  
+  std::ifstream frd;
+  frd.open(this->filepath);
+
+  // clear all data before reading and reset read mode
+  this->clear();
+  current_read_mode = 0;
+
+  //StopWatch.tick("start");
+
+  if (frd.is_open())
+  {
+    // scan file for number of lines
+    progressbar->start(0,100,"Scanning Results FRD");
+    while (std::getline(frd,frdline))
+    { 
+      ++maxlines;
+      //this->key.push_back(get_key(frdline));
+      if((frd.eof())){
+        break;
+      }
+    }
+    frd.close();
+    //StopWatch.tick("check");
+
+    if (maxlines<10)
+    {
+      // must be no data in the frd
+      return false;
+    }
+
+    std::vector<std::string> job_data = ccx_iface->get_job_data(job_id);
+    //if process is still running quit
+    if (job_data[3] == "1")
+    {
+      return false;
+    }
+
+    // check if last line has 9999 in it, if not then add, otherwise on error frd data it crashes
+    if ((job_data[3] == "3")||(job_data[3] == "4")||(job_data[3] == "-1"))
+    {
+      frd.open(this->filepath);
+      for (size_t i = 0; i < maxlines; i++)
+      {
+        std::getline(frd,frdline);
+        if (i == maxlines-1)
+        {
+          frd.close();
+          frd_array = this->split_line(frdline);
+          if (frd_array[0] != "9999")
+          {
+            frd.close(); 
+            std::ofstream log(this->filepath, std::ios_base::app | std::ios_base::out);
+            log << "9999\n";
+            ++maxlines;
+            break;
+          }
+        }
+      }
+    }
+    //StopWatch.tick("check last line");
+
+    progressbar->start(0,100,"Getting Keys from Results FRD");
+    //get keys
+    std::vector<std::string> tmp(maxlines);
+    this->keys = tmp;
+    int keys_per_thread = int(maxlines/max_threads);
+
+    this->progress = std::vector<int>(max_threads + 1, 0);
+    progress[max_threads] = maxlines;
+
+    for (size_t i = 0; i < max_threads; i++)
+    { 
+      int start = 0;
+      int end = 0;
+      if (i==max_threads-1)
+      {
+        start = i*keys_per_thread;
+        end = maxlines;
+      }else{
+        start = i*keys_per_thread;
+        end = (i+1)*keys_per_thread-1;
+      }
+      ReadThreads.push_back(std::thread(&CoreResultsFrd::insert_key_thread, this, start, end, i));
+    }
+    // wait till all threads are finished
+    /*
+    for (size_t i = 0; i < max_threads; i++)
+    { 
+      ReadThreads[i].join();
+    }
+    ReadThreads.clear();
+    */
+
+    int it=0;
+    while (ReadThreads.size()>0)
+    {
+      if (ReadThreads[it].joinable())
+      {
+        ReadThreads[it].join();
+        ReadThreads.erase(ReadThreads.begin() + it);
+        it=-1;
+      }
+      if (it==ReadThreads.size())
+      {
+        it=-1;
+      }
+      update_progressbar();
+      ++it;
+    }
+    //StopWatch.tick("keys");
+
+    //reading header!
+    //progressbar->start(0,100,"Reading Results FRD");
+    //auto t_start = std::chrono::high_resolution_clock::now();
+    //StopWatch.tick("reading header");
+
+    frd.open(this->filepath);
+    while (frd)
+    {
+      std::getline(frd,frdline);
+      frd_array = this->split_line(frdline);
+      /*
+      const auto t_end = std::chrono::high_resolution_clock::now();
+      int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+      if (duration > 500)
+      {
+        progressbar->percent(double(currentline)/double(maxlines));
+        progressbar->check_interrupt();
+        t_start = std::chrono::high_resolution_clock::now();
+      }
+      */
+      this->check_mode(frd_array);
+      
+      if (current_read_mode == 0)
+      {
+        this->read_header(frd_array);
+      } else if (current_read_mode == 1)
+      {
+        break;
+      } else if ((current_read_mode == 9999)||(frd.eof()))
+      {
+        break;
+      }
+    }
+    frd.close();
+    
+    // reading nodes
+    progressbar->start(0,100,"Reading Nodes from FRD");
+    //StopWatch.tick("Reading nodes");
+    std::vector<int> node_range = this->get_node_range();
+    int number_of_nodes = node_range[1]-node_range[0] + 1;
+    //StopWatch.tick("get range");
+
+    if (number_of_nodes < max_threads)
+    {
+      log = "More threads reading available than nodes in frd. Reduce number of threads for the converter!\n";
+      PRINT_INFO("%s", log.c_str());
+      return false;
+    }
+    
+    int nodes_per_thread = int(number_of_nodes/max_threads);
+
+    for (size_t i = 0; i < number_of_nodes; i++)
+    {
+      nodes.push_back({});
+      nodes_coords.push_back({});
+    }  
+    //StopWatch.tick("dummy vectors");
+
+    this->progress = std::vector<int>(max_threads + 1, 0);
+    progress[max_threads] = number_of_nodes;
+
+    for (size_t i = 0; i < max_threads; i++)
+    { 
+      int start = 0;
+      int end = 0;
+      int data_start = 0;
+      if (i==max_threads-1)
+      {
+        start = node_range[0]+i*nodes_per_thread;
+        data_start = i*nodes_per_thread;
+        end = node_range[1];
+      }else{
+        start = node_range[0]+i*nodes_per_thread;
+        data_start = i*nodes_per_thread;
+        end = node_range[0]+(i+1)*nodes_per_thread-1;
+      }
+      ReadThreads.push_back(std::thread(&CoreResultsFrd::read_nodes_thread, this, start, end, data_start, i));
+    }
+
+    // wait till all threads are finished
+    /*
+    for (size_t i = 0; i < max_threads; i++)
+    { 
+      ReadThreads[i].join();
+    }
+    ReadThreads.clear();
+    */
+    it=0;
+    while (ReadThreads.size()>0)
+    {
+      if (ReadThreads[it].joinable())
+      {
+        ReadThreads[it].join();
+        ReadThreads.erase(ReadThreads.begin() + it);
+        it=-1;
+      }
+      if (it==ReadThreads.size())
+      {
+        it=-1;
+      }
+      update_progressbar();
+      ++it;
+    }
+
+    log = "Reading nodes finished!\n";
+    
+    PRINT_INFO("%s", log.c_str());
+
+    // reading elements
+    progressbar->start(0,100,"Reading Elements from FRD");
+    //StopWatch.tick("Reading elements");
+    std::vector<int> element_range = this->get_element_range();
+    int number_of_lines = element_range[1]-element_range[0] + 1;
+    int number_of_elements = element_range[2];
+    //StopWatch.tick("elements range");
+
+    if (number_of_lines < max_threads*2)
+    {
+      log = "More threads reading available than elements in frd. Reduce number of threads for the converter!\n";
+      PRINT_INFO("%s", log.c_str());
+      return false;
+    }
+    
+    int lines_per_thread = int(number_of_lines/max_threads);
+    std::vector<std::vector<int>> thread_ranges;
+    
+    for (size_t i = 0; i < max_threads; i++)
+    {
+      int start = 0;
+      int end = 0;
+      int data_start = 0;
+      if (i==max_threads-1)
+      {
+        start = element_range[0]+i*lines_per_thread;
+        data_start = i*lines_per_thread;
+        end = element_range[1];
+      }else{
+        start = element_range[0]+i*lines_per_thread;
+        data_start = i*lines_per_thread;
+        end = element_range[0]+(i+1)*lines_per_thread-1;
+      }
+      std::vector<int> range = {start,end,data_start};
+      thread_ranges.push_back(range);
+    }
+
+    for (size_t i = 0; i < max_threads; i++)
+    {
+      if (i!=max_threads-1)
+      {
+        if (!check_key("-1",thread_ranges[i][1] + 1))
+        {
+          // if next line isn't the next element move range
+          while (!check_key("-1",thread_ranges[i][1] + 1))
+          {
+            thread_ranges[i][1] = thread_ranges[i][1] + 1;
+            thread_ranges[i+1][0] = thread_ranges[i+1][0] + 1;
+          }
+        }
+      }
+      //log = "range no " + std::to_string(i) + "-" + std::to_string(thread_ranges[i][0]) + "-" + std::to_string(thread_ranges[i][1]) +  " \n";
+      //PRINT_INFO("%s", log.c_str());
+    }
+    //StopWatch.tick("check range");
+
+    this->set_element_range_data_start(thread_ranges);
+    
+    //StopWatch.tick("set range");
+
+    for (size_t i = 0; i < number_of_elements; i++)
+    {
+      elements.push_back({});
+      elements_connectivity.push_back({});
+    }
+    //StopWatch.tick("dummy vector");
+    this->progress = std::vector<int>(max_threads + 1, 0);
+    progress[max_threads] = number_of_lines;
+
+    for (size_t i = 0; i < max_threads; i++)
+    { 
+      ReadThreads.push_back(std::thread(&CoreResultsFrd::read_elements_thread, this, thread_ranges[i][0], thread_ranges[i][1], thread_ranges[i][2], i));
+    }
+    // wait till all threads are finished
+    /*
+    for (size_t i = 0; i < max_threads; i++)
+    { 
+      ReadThreads[i].join();
+    }
+    ReadThreads.clear();
+    */
+
+    it=0;
+    while (ReadThreads.size()>0)
+    {
+      if (ReadThreads[it].joinable())
+      {
+        ReadThreads[it].join();
+        ReadThreads.erase(ReadThreads.begin() + it);
+        it=-1;
+      }
+      if (it==ReadThreads.size())
+      {
+        it=-1;
+      }
+      update_progressbar();
+      ++it;
+    }
+
+    log = "Reading elements finished!\n";
+    //StopWatch.tick("element finished");
+    PRINT_INFO("%s", log.c_str());
+
+    // reading result blocks
+    current_read_mode = 3; // start with results blocks
+
+    frd.open(this->filepath);
+
+    progressbar->start(0,100,"Reading Headers of Result Blocks FRD");
+    //auto t_start = std::chrono::high_resolution_clock::now();
+    
+    log = "";
+    int currentline = -1;
+    int last_element_line = thread_ranges[max_threads-1][1];
+    bool new_result_block = true;
+    while (frd)
+    {
+      std::getline(frd,frdline);
+      ++currentline;
+      if (currentline > last_element_line)
+      {
+        const auto t_end = std::chrono::high_resolution_clock::now();
+        int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+        if (duration > 500)
+        {
+          progressbar->percent(double(currentline)/double(maxlines));
+          progressbar->check_interrupt();
+          t_start = std::chrono::high_resolution_clock::now();
+        }
+        // first lets check if the mode is still valid
+        //frd_array = this->split_line(frdline);
+        //this->check_mode(frd_array);
+        this->check_mode_by_key(this->keys[currentline]);
+        
+        if (current_read_mode == 3)
+        {
+          frd_array = this->split_line(frdline);
+          this->read_parameter_header(frd_array);
+          new_result_block = true;
+        } else if (current_read_mode == 4)
+        {
+          frd_array = this->split_line(frdline);
+          if (frd_array[0] == "-5")
+          {  
+            this->read_nodal_result_block(frd_array);
+          }else{
+            if (new_result_block)
+            {
+              new_result_block = false;
+              this->read_nodal_result_block_add_components(frd_array);
+
+              std::vector<std::vector<std::string>> tmp_frd_array;
+              frd_arrays.push_back(tmp_frd_array);
+            }
+            frd_arrays[frd_arrays.size()-1].push_back(frd_array);
+          }
+        } else if ((current_read_mode == 9999)||(frd.eof()))
+        {
+          break;
+        }
+      }
+    }
+    
+    int loop_c = 0;
+    int number_of_result_blocks = frd_arrays.size();
+    int max_number_of_result_blocks = frd_arrays.size();
+    
+    progressbar->start(0,100,"Reading Result Blocks Data FRD");
+    t_start = std::chrono::high_resolution_clock::now();
+
+    this->progress = std::vector<int>(max_threads + 1, 0);
+    progress[max_threads] = get_result_block_lines();
+    /* 
+    while (number_of_result_blocks > 0)
+    {
+      if (number_of_result_blocks > max_threads)
+      {
+        for (size_t i = 0; i < max_threads; i++)
+        { 
+          ReadThreads.push_back(std::thread(&CoreResultsFrd::read_nodal_result_block_thread, this,int(loop_c*max_threads+i),i));
+        }
+      }else{
+        for (size_t i = 0; i < number_of_result_blocks; i++)
+        { 
+          ReadThreads.push_back(std::thread(&CoreResultsFrd::read_nodal_result_block_thread, this,int(loop_c*max_threads+i),i));
+        }
+      }
+      // wait till all threads are finished
+      it=0;
+      while (ReadThreads.size()>0)
+      {
+        if (ReadThreads[it].joinable())
+        {
+          ReadThreads[it].join();
+          ReadThreads.erase(ReadThreads.begin() + it);
+          number_of_result_blocks = number_of_result_blocks - 1;
+          it=-1;
+        }
+        if (it==ReadThreads.size())
+        {
+          it=-1;
+        }
+        update_progressbar();
+        ++it;
+      }
+      ++loop_c;      
+    }
+    */
+
+    ThreadPool tp;
+    tp.start(max_threads);
+    for (size_t i = 0; i < number_of_result_blocks; i++)
+    {
+        std::function<void()> f = std::bind(&CoreResultsFrd::read_nodal_result_block_thread, this,int(i),0);
+        tp.queueJob(f);
+    }
+    while(tp.busy())
+    {
+      update_progressbar();
+    }
+    tp.stop();
+
+  }
+  frd.close();
+
+  // sorting for faster search
+  std::vector<int> tmp_node_ids;
+  std::vector<int> tmp_node_data_ids;
+
+  for (size_t i = 0; i < nodes.size(); i++)
+  {
+    tmp_node_ids.push_back(nodes[i][0]);
+    tmp_node_data_ids.push_back(i);
+  }  
+  auto p = sort_permutation(tmp_node_ids);
+  this->apply_permutation(tmp_node_ids, p);
+  this->apply_permutation(tmp_node_data_ids, p);
+  sorted_node_ids = tmp_node_ids;
+  sorted_node_data_ids = tmp_node_data_ids;
+
+  int loop_c = 0;
+  int number_of_result_blocks = result_block_node_data.size();
+  for (size_t i = 0; i < result_block_node_data.size(); i++)
+  {
+    std::vector<int> tmp_result_node_ids;
+    std::vector<int> tmp_result_node_data_ids;
+    sorted_result_node_ids.push_back(tmp_result_node_ids);
+    sorted_result_node_data_ids.push_back(tmp_result_node_data_ids);
+  }
+
+  while (number_of_result_blocks > 0)
+  {
+    if (number_of_result_blocks > max_threads)
+    {
+      for (size_t i = 0; i < max_threads; i++)
+      { 
+        ReadThreads.push_back(std::thread(&CoreResultsFrd::sort_result_block_node_data, this,loop_c*max_threads+i));
+      }
+    }else{
+      for (size_t i = 0; i < number_of_result_blocks; i++)
+      { 
+        ReadThreads.push_back(std::thread(&CoreResultsFrd::sort_result_block_node_data, this,loop_c*max_threads+i));
+      }
+    }
+    // wait till all threads are finished
+    for (size_t i = 0; i < ReadThreads.size(); i++)
+    { 
+      ReadThreads[i].join();
+    }
+    number_of_result_blocks = number_of_result_blocks - ReadThreads.size();
+    ++loop_c;
+    ReadThreads.clear();
+  }
+
+  progressbar->end();
+
+  //PRINT_INFO("%s", log.c_str());
+  //print_data();
+  
+
+  StopWatch.total("Duration of reading FRD [ms]: ");
 
   return true;
 }
@@ -265,6 +825,34 @@ std::vector<std::string> CoreResultsFrd::split_line(std::string frdline)
   return str_array;
 }
 
+std::string CoreResultsFrd::get_key(std::string frdline)
+{
+  frdline = frdline.substr (0,5);
+
+  // trim whitespaces
+  size_t strBegin = frdline.find_first_not_of(" \t\r\f\v\n");
+  if (strBegin != std::string::npos)
+  {
+    size_t strEnd = frdline.find_last_not_of(" \t\r\f\v\n");
+    size_t strRange = strEnd - strBegin + 1;
+    frdline = frdline.substr(strBegin, strRange);
+  }
+  // reduce whitespaces
+  size_t beginSpace = frdline.find_first_of(" \t\r\f\v\n");
+  while (beginSpace != std::string::npos)
+  {
+    size_t endSpace = frdline.find_first_not_of(" \t\r\f\v\n", beginSpace);
+    size_t range = endSpace - beginSpace;
+
+    frdline.replace(beginSpace,range, " ");
+    size_t newStart = beginSpace + 1;
+    beginSpace = frdline.find_first_of(" \t\r\f\v\n",newStart);
+  }
+  
+  return frdline;
+}
+
+
 bool CoreResultsFrd::check_mode(std::vector<std::string> line)
 {
   if (line[0] == "9999") // file finished
@@ -295,7 +883,41 @@ bool CoreResultsFrd::check_mode(std::vector<std::string> line)
       current_read_mode = 3;
     }
   }
+  
+  return true;
+}
 
+bool CoreResultsFrd::check_mode_by_key(std::string key)
+{
+  if (key == "9999") // file finished
+  {
+    current_read_mode = 9999;
+  }else if (current_read_mode == 0)
+  {
+    if (key == "2")
+    {
+      current_read_mode = 1;
+    }
+  }else if (current_read_mode == 1)
+  {
+    if (key == "3")
+    {
+      current_read_mode = 2;
+    }
+  }else if (current_read_mode == 2)
+  {
+    if (key == "-3")
+    {
+      current_read_mode = 3; // result blocks
+    }
+  }else if (current_read_mode > 2) // switch to parameter mode
+  {
+    if (key == "-3")
+    {
+      current_read_mode = 3;
+    }
+  }
+  
   return true;
 }
 
@@ -369,6 +991,57 @@ bool CoreResultsFrd::read_node(std::vector<std::string> line)
   return true;
 }
 
+
+
+bool CoreResultsFrd::read_nodes_thread(int start,int end,int data_start, int thread_id)
+{
+  std::string frdline = "";
+  int ic = 0;
+  int id = 0;
+
+  std::ifstream frd;
+  frd.open(this->filepath);
+  while (std::getline(frd,frdline))
+  { 
+    if ((ic>=start)&&(ic<=end))
+    {      
+      std::vector<std::string> line = this->split_line(frdline);
+      
+      int node_id;
+      std::vector<double> node_coords(3);
+      int nodes_coords_data_id = -1;
+      
+      if (line[0] == "-1")
+      {
+        node_id = std::stoi(line[1]);
+
+        node_coords[0] = ccx_iface->string_scientific_to_double(line[2]);
+        node_coords[1] = ccx_iface->string_scientific_to_double(line[3]);
+        node_coords[2] = ccx_iface->string_scientific_to_double(line[4]);
+
+        nodes_coords[data_start+id] = node_coords;
+        nodes[data_start+id] = {node_id,data_start+id};
+        ++id;
+      }
+      /*      
+      std::string log;
+      log = std::to_string(start)+ " -- " + std::to_string(ic) + " -- " + std::to_string(end) + " -- " + std::to_string(data_start+id) +  " \n";
+      PRINT_INFO("%s", log.c_str());
+      */
+      this->progress[thread_id] = this->progress[thread_id] + 1;
+    }else if (ic>end)
+    {
+      break;
+    }
+    if((frd.eof())){
+      break;
+    }
+    ++ic;
+  }
+  frd.close();
+  return true;
+}
+
 bool CoreResultsFrd::read_element(std::vector<std::string> line)
 {
   int element_id;
@@ -405,6 +1078,73 @@ bool CoreResultsFrd::read_element(std::vector<std::string> line)
       }
     }
   }
+  return true;
+}
+
+bool CoreResultsFrd::read_elements_thread(int start,int end,int data_start,int thread_id)
+{
+  std::string frdline = "";
+  int ic = 0;
+  int id = -1;
+
+  std::ifstream frd;
+  frd.open(this->filepath);
+  while (std::getline(frd,frdline))
+  { 
+    if ((ic>=start)&&(ic<=end))
+    {
+      std::vector<std::string> line = this->split_line(frdline);
+      
+      int element_id;
+      int element_type;
+      int material_id;
+      std::vector<int> connectivity;
+      int elements_connectivity_data_id = -1;
+      
+      if (line[0] == "-1")
+      {
+        ++id;
+        element_id = std::stoi(line[1]);
+        element_type = std::stoi(line[2]);
+        material_id = std::stoi(line[4]);
+        elements[data_start+id] = {element_id,element_type,elements_connectivity_data_id,material_id};
+      }else if (line[0] == "-2")
+      {
+        if (elements[data_start+id][2] == -1)
+        {
+          for (size_t i = 1; i < line.size(); i++)
+          {
+            int tmp_int = std::stoi(line[i]);
+            connectivity.push_back(tmp_int);
+          }
+          elements_connectivity[data_start+id] = connectivity;
+
+          elements_connectivity_data_id = data_start+id;
+          elements[data_start+id][2] = elements_connectivity_data_id;
+        }else if (elements[data_start+id][2] > -1)
+        {
+          for (size_t i = 1; i < line.size(); i++)
+          {
+            int tmp_int = std::stoi(line[i]);
+            elements_connectivity[elements[data_start+id][2]].push_back(tmp_int);
+          }
+        }
+      }
+      
+      //std::string log;
+      //log = std::to_string(start)+ " -- " + std::to_string(ic) + " -- " + std::to_string(end) + " -- " + std::to_string(data_start+id) +  " \n";
+      //PRINT_INFO("%s", log.c_str());
+      this->progress[thread_id] = this->progress[thread_id] + 1;
+    }else if (ic>end)
+    {
+      break;
+    }
+    if((frd.eof())){
+      break;
+    }
+    ++ic;
+  }
+  frd.close();
   return true;
 }
 
@@ -485,7 +1225,6 @@ int CoreResultsFrd::get_current_result_block_type(std::string result_type)
 
 bool CoreResultsFrd::read_nodal_result_block(std::vector<std::string> line)
 {
-  
   if (line[0] == "-1")
   {
     int node_id;
@@ -593,6 +1332,108 @@ bool CoreResultsFrd::read_nodal_result_block(std::vector<std::string> line)
   return true;
 }
 
+bool CoreResultsFrd::read_nodal_result_block_add_components(std::vector<std::string> line)
+{
+  if (line[0] == "-1")
+  {
+    // add components if needed    
+    if (result_block_type[result_blocks[result_blocks.size()-1][5]] == "STRESS")
+    {
+      if (result_block_data[result_block_data.size()-1].size()==0)
+      {
+        result_block_components[result_block_components.size()-1].push_back("MISES");
+        result_block_components[result_block_components.size()-1].push_back("PS1");
+        result_block_components[result_block_components.size()-1].push_back("PS2");
+        result_block_components[result_block_components.size()-1].push_back("PS3");
+        result_block_components[result_block_components.size()-1].push_back("worstPS");
+        result_block_components[result_block_components.size()-1].push_back("maxShear");
+      }
+    }
+    if (result_block_type[result_blocks[result_blocks.size()-1][5]] == "TOSTRAIN")
+    {
+      if (result_block_data[result_block_data.size()-1].size()==0)
+      {
+        result_block_components[result_block_components.size()-1].push_back("MISES");
+        result_block_components[result_block_components.size()-1].push_back("PS1");
+        result_block_components[result_block_components.size()-1].push_back("PS2");
+        result_block_components[result_block_components.size()-1].push_back("PS3");
+        result_block_components[result_block_components.size()-1].push_back("worstPS");
+        result_block_components[result_block_components.size()-1].push_back("maxShear");
+      }
+    }
+  }
+  return true;
+}
+
+bool CoreResultsFrd::read_nodal_result_block_thread(int result_block_data_id, int thread_id)
+{
+  std::string frdline = "";
+  
+  for (size_t ib = 0; ib < frd_arrays[result_block_data_id].size(); ib++)
+  {    
+    std::vector<std::string> line = this->frd_arrays[result_block_data_id][ib];
+
+    if (line[0] == "-1")
+    {
+      int node_id;
+      int n_comp = 0;
+      int result_block_node_data_id = -1;
+
+      node_id = std::stoi(line[1]);
+      
+      n_comp = result_block_components[result_block_data_id].size();
+      std::vector<double> result_comp(n_comp);
+      
+      for (size_t i = 0; i < n_comp; i++)
+      {          
+        if ((result_block_type[result_blocks[result_block_data_id][5]] == "STRESS") && (i > 5))
+        {
+          if (i == 6)
+          {
+            result_comp[i] = ccx_iface->compute_von_mises_stress({result_comp[0],result_comp[1],result_comp[2],result_comp[3],result_comp[4],result_comp[5]});
+          }
+          // compute principal stress
+          if (i == 7) 
+          {
+            std::vector<double> ps = ccx_iface->compute_principal_stresses({result_comp[0],result_comp[1],result_comp[2],result_comp[3],result_comp[4],result_comp[5]});
+            result_comp[i] = ps[0];
+            result_comp[i+1] = ps[1];
+            result_comp[i+2] = ps[2];
+            result_comp[i+3] = ps[3];
+            result_comp[i+4] = 0.5 * std::max({ps[0]-ps[2],ps[0]-ps[1],ps[1]-ps[2]});
+          }
+        }else if ((result_block_type[result_blocks[result_block_data_id][5]] == "TOSTRAIN") && (i > 5))
+        {
+          if (i == 6)
+          {
+            result_comp[i] = ccx_iface->compute_von_mises_strain({result_comp[0],result_comp[1],result_comp[2],result_comp[3],result_comp[4],result_comp[5]});
+          }
+          // compute principal strains
+          if (i == 7) 
+          {
+            std::vector<double> pe = ccx_iface->compute_principal_strains({result_comp[0],result_comp[1],result_comp[2],result_comp[3],result_comp[4],result_comp[5]});
+            result_comp[i] = pe[0];
+            result_comp[i+1] = pe[1];
+            result_comp[i+2] = pe[2];
+            result_comp[i+3] = pe[3];
+            result_comp[i+4] = 0.5 * std::max({pe[0]-pe[2],pe[0]-pe[1],pe[1]-pe[2]});
+          }
+        }else{
+          result_comp[i] = ccx_iface->string_scientific_to_double(line[i+2]);
+        }
+      }
+      
+      result_block_data[result_block_data_id].push_back(result_comp);
+      result_block_node_data_id = int(result_block_data[result_block_data_id].size())-1;
+      result_block_node_data[result_block_data_id].push_back({node_id,result_block_node_data_id});
+      
+    }
+    this->progress[thread_id] = this->progress[thread_id] + 1;
+  }
+
+  return true;
+}
+
 std::vector<std::string> CoreResultsFrd::get_result_block_components_from_result_block_type(std::string result_block_type)
 {
   // on first match write out the components for the first matching result block
@@ -626,6 +1467,227 @@ int CoreResultsFrd::get_result_block_component_id(int result_block_type_id,std::
   return component_id;
 }
 
+std::vector<int> CoreResultsFrd::get_node_range()
+{
+  std::vector<int> tmp;
+  std::string frdline = "";
+  int ic = 0;
+  int start = 0;
+  int end = 0;
+
+  std::ifstream frd;
+  frd.open(this->filepath);
+  while (std::getline(frd,frdline))
+  { 
+    ++ic;
+    //std::string key = this->get_key(frdline);
+    if (this->keys[ic-1]=="2")
+    {
+      start = ic;
+    }else if (this->keys[ic-1]=="3")
+    {
+      end = ic-3;
+      break;
+    }
+    if((frd.eof())){
+      break;
+    }
+  }
+  frd.close();
+
+  tmp.push_back(start);
+  tmp.push_back(end);
+
+  return tmp;
+}
+
+std::vector<int> CoreResultsFrd::get_element_range()
+{
+  std::vector<int> tmp;
+  std::string frdline = "";
+  int ic = 0;
+  int start = 0;
+  int end = 0;
+  bool block_started = false;
+  std::string last_key = "-2";
+  int number_of_elements = 0;
+
+  std::ifstream frd;
+  frd.open(this->filepath);
+  while (std::getline(frd,frdline))
+  { 
+    ++ic;
+    //std::string key = this->get_key(frdline);
+    std::string log;
+
+    if (this->keys[ic-1]=="3")
+    {
+      start = ic;
+      block_started = true;
+    }
+    if (block_started)
+    {
+      if ((last_key=="-2")&&(this->keys[ic-1]=="-1"))
+      {
+        ++number_of_elements;
+      }
+      if (this->keys[ic-1]=="-3")
+      {
+        end = ic-2;
+        break;
+      }
+      if (start!=ic)
+      {
+        last_key = this->keys[ic-1];
+      }
+    }
+    if((frd.eof())){
+      break;
+    }
+  }
+  frd.close();
+
+  tmp.push_back(start);
+  tmp.push_back(end);
+  tmp.push_back(number_of_elements);
+
+  return tmp;
+}
+
+bool CoreResultsFrd::insert_key_thread(int start, int end, int thread_id)
+{
+  std::string frdline = "";
+  int ic = 0;
+
+  std::ifstream frd;
+  frd.open(this->filepath);
+  while (std::getline(frd,frdline))
+  { 
+    if ((ic>=start)&&(ic<=end))
+    {      
+      this->keys[ic] = this->get_key(frdline);
+      this->progress[thread_id] = this->progress[thread_id] + 1;
+    }else if (ic>end)
+    {
+      break;
+    }
+    if((frd.eof())){
+      break;
+    }
+    ++ic;
+  }
+  frd.close();
+  return true;
+}
+
+bool CoreResultsFrd::check_key(std::string key, int line)
+{
+  if ((this->keys[line]==key))
+  {
+    return true;
+  }
+
+  return false;
+}
+
+void CoreResultsFrd::set_element_range_data_start(std::vector<std::vector<int>> &thread_ranges)
+{
+  int id = 0;
+  for (size_t i = 0; i < thread_ranges.size(); i++)
+  {  
+    std::vector<int> tmp;
+    std::string frdline = "";
+    int ic = 0;
+    bool block_started = false;
+    std::string last_key = "-2";
+    int number_of_elements = 0;
+
+    std::ifstream frd;
+    frd.open(this->filepath);
+    while (std::getline(frd,frdline))
+    { 
+      if ((ic>=thread_ranges[i][0])&&(ic<=thread_ranges[i][1]))
+      {
+        std::string key = this->get_key(frdline);
+        if ((last_key=="-2")&&(key=="-1"))
+        {
+          ++number_of_elements;
+        }
+        last_key = key;
+      }
+      if (ic>thread_ranges[i][1])
+      {
+        break;
+      }   
+      if((frd.eof())){
+        break;
+      }
+      ++ic;
+    }
+    frd.close();
+    thread_ranges[i][2] = id;
+    id = id + number_of_elements;
+    
+    //std::string log;
+    //log = "range no " + std::to_string(i) + "-" + std::to_string(thread_ranges[i][0]) + "-" + std::to_string(thread_ranges[i][1]) + "-" + std::to_string(thread_ranges[i][2]) +  " \n";
+    //PRINT_INFO("%s", log.c_str());
+  }
+}
+
+bool CoreResultsFrd::sort_result_block_node_data(int data_id)
+{
+  // sorting for faster search
+  std::vector<int> tmp_result_node_ids;
+  std::vector<int> tmp_result_node_data_ids;
+
+  for (size_t i = 0; i < result_block_node_data[data_id].size(); i++)
+  {
+    tmp_result_node_ids.push_back(result_block_node_data[data_id][i][0]);
+    tmp_result_node_data_ids.push_back(result_block_node_data[data_id][i][1]);
+  }  
+  auto p = sort_permutation(tmp_result_node_ids);
+  this->apply_permutation(tmp_result_node_ids, p);
+  this->apply_permutation(tmp_result_node_data_ids, p);
+  sorted_result_node_ids[data_id] = tmp_result_node_ids;
+  sorted_result_node_data_ids[data_id] = tmp_result_node_data_ids;
+
+  return true;
+}
+
+int CoreResultsFrd::get_result_block_lines()
+{
+  int lines = 0;
+  for (size_t i = 0; i < frd_arrays.size(); i++)
+  {
+    lines = lines + frd_arrays[i].size();
+  }
+  return lines;
+}
+
+void CoreResultsFrd::update_progressbar()
+{
+  //std::string log;
+  const auto t_end = std::chrono::high_resolution_clock::now();
+  int duration = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+  if (duration > 500)
+  {
+    int part = 0;
+    for (size_t i = 0; i < progress.size()-1; i++)
+    {
+      part += progress[i];
+      
+      //log = "thread " + std::to_string(i) + " lines " + std::to_string(progress[i]) + " \n";
+      //PRINT_INFO("%s", log.c_str());
+    }
+
+    //log = "max lines " + std::to_string(progress[progress.size()-1]) + " \n";
+    //PRINT_INFO("%s", log.c_str());
+
+    progressbar->percent(double(part)/double(progress[progress.size()-1]));
+    progressbar->check_interrupt();
+    t_start = std::chrono::high_resolution_clock::now();
+  }
+}
 
 bool CoreResultsFrd::print_data()
 {
