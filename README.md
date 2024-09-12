@@ -1,3 +1,6 @@
+[![GitHub](https://badgen.net/badge/icon/github?icon=github&label)](https://github.com/calculix/Cubit-CalculiX)
+[![Github All Releases](https://img.shields.io/github/downloads/calculix/Cubit-CalculiX/total.svg)](https://github.com/calculix/Cubit-CalculiX/releases)
+<br/>
 # Cubit-CalculiX 2024.9
 Hey ho that´s the CalculiX Component for coreform cubit!
 
@@ -10,13 +13,25 @@ The builds can be downloaded at our [website](https://www.maschinenbauer.at/open
 
 Or just use the links.
 
-[Windows Build](https://www.maschinenbauer.at/upload/build-windows-2024-9.zip)
-[Linux Build](https://www.maschinenbauer.at/upload/build-linux-2024-9.zip)
+[Windows Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2024.9/build_windows_2024.9.zip)
+[Linux Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2024.9/build_linux_2024.9.zip)
 
 This component was build with Cubit 2024.8! 
 Tested with Cubit 2024.8 on Windows 10 and Ubuntu 22.04
 
 Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/@CubitCalculiX) . We will post videos from examples and updates in the near future.
+
+---
+[Downloads](https://github.com/calculix/Cubit-CalculiX/releases) |
+[Key Features](#key-features) |
+[How to](#how-to) |
+[Examples](#examples) |
+[Installation](#installation) |
+[Postprocessing](#postprocessing) <!-- |
+[Projection of Displacements](#projection-of-displacements) |
+[known issues](#known-issues) |
+[todo list](#todo-list) -->
+---
 
 # Key Features
 Definition of:
