@@ -26,7 +26,7 @@ modify material "Steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
 modify material "Steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
 modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
 modify material "Steel" scalar_properties "CCX_PLASTIC_USE_CARD" 1
-modify material "Steel" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 4e+2 0 0 4.2e+2 0.02 0 5e+2 0.2 0 6e+2 0.5 0 
+modify material "Steel" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 2.35e+2 0 0 
 
 #sections
 ccx create section solid block all material 1
@@ -75,12 +75,10 @@ create displacement  on vertex 6 dof 3 fix 5
 #step
 ccx create step name "twist" static
 ccx modify step 1 parameter inc 10000
-ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.01 timeperiodofstep 10 minimumtimeincrement 1e-05 maximumtimeincrement 0.05
+ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.001 timeperiodofstep 1 minimumtimeincrement 1e-05 maximumtimeincrement 0.005
 ccx step 1 add bc displacement 1 2 3
 ccx step 1 add fieldoutput 1 2
 
 #job
 ccx create job name "wire_twist"
 #ccx run job 1
-
-
