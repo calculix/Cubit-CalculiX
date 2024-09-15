@@ -81,6 +81,8 @@ modify material "steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_T
 modify material "steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
 modify material "steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
 modify material "steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_PLASTIC_USE_CARD" 1
+modify material "steel" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 235 0 0
 
 #section assignment
 ccx create section solid block all material 1
@@ -135,7 +137,7 @@ ccx modify fieldoutput 3 contact key_on cdis cstr cels pcon
 #step
 ccx create step name "static" static
 ccx modify step 1 parameter nlgeom_yes inc 10000
-ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.0001 timeperiodofstep 1 minimumtimeincrement 1e-06 maximumtimeincrement 0.02
+ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.001 timeperiodofstep 1 minimumtimeincrement 1e-06 maximumtimeincrement 0.02
 ccx step 1 add bc displacement 1 2 3
 ccx step 1 add historyoutput 1 2 3
 ccx step 1 add fieldoutput 1 2
