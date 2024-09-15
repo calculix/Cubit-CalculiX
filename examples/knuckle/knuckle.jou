@@ -3,7 +3,8 @@
 #!cubit
 reset
 #import acis "path/to/knuckle.sat" nofreesurfaces heal attributes_on  separate_bodies 
-import acis "C:/Users/norbert/Desktop/GitHub/Cubit-CalculiX/examples/knuckle/knuckle.sat" nofreesurfaces heal attributes_on  separate_bodies 
+#import acis "C:/Users/norbert/Desktop/GitHub/Cubit-CalculiX/examples/knuckle/knuckle.sat" nofreesurfaces heal attributes_on  separate_bodies 
+import acis "/home/user/git/Cubit-CalculiX/examples/knuckle/knuckle.sat" nofreesurfaces heal attributes_on separate_bodies
 
 ## Assign sets
 block 1 vol 1
@@ -131,16 +132,18 @@ ccx create fieldoutput name "fo_element" element
 ccx modify fieldoutput 2 element key_on e s
 ccx modify fieldoutput 2 element key_off ceeq ecd emfb emfe ener err her hfl hflf maxe maxs me peeq phs sf smid sneg spos svf sdv the zzs
 ccx create fieldoutput name "fo_contact" contact
-ccx modify fieldoutput 3 contact
+ccx modify fieldoutput 3 contact contact_elements_on
 ccx modify fieldoutput 3 contact key_on cdis cstr cels pcon
 
 #step
 ccx create step name "static" static
 ccx modify step 1 parameter nlgeom_yes inc 10000
-ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.001 timeperiodofstep 1 minimumtimeincrement 1e-06 maximumtimeincrement 0.02
+ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.02 timeperiodofstep 1 minimumtimeincrement 1e-06 maximumtimeincrement 0.02
 ccx step 1 add bc displacement 1 2 3
 ccx step 1 add historyoutput 1 2 3
-ccx step 1 add fieldoutput 1 2
+ccx step 1 add fieldoutput 1 2 3
 
 #job 
 ccx create job name "knuckle"
+#ccx run job 1 no_conversion
+#ccx result convert job 1 partial
