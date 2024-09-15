@@ -91,6 +91,11 @@ in python mode (#!python)
   title="Simple snap fit">
 ](examples/snap_fit/)
 [<img
+  src="examples/knuckle/example.gif"
+  width="400"
+  title="Knuckle">
+](examples/knuckle/)
+[<img
   src="examples/contact_press_fitting/example.png"
   width="400"
   title="Contact press fitting">
