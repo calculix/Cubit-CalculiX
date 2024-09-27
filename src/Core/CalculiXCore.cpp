@@ -388,6 +388,22 @@ bool CalculiXCore::reset()
   return true;
 }
 
+bool CalculiXCore::read_cub()
+{
+  std::string log = "Reading Cubit-CaluliX data";
+  PRINT_INFO("%s", log.c_str());
+
+  return true;
+}
+
+bool CalculiXCore::save_cub()
+{
+  std::string log = "Saving Cubit-CaluliX data";
+  PRINT_INFO("%s", log.c_str());
+
+  return true;
+}
+
 std::string CalculiXCore::autocleanup()
 {
   std::string log = "";

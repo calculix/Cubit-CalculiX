@@ -230,6 +230,26 @@ bool CalculiXCoreInterface::core_reset()
   }
 }
 
+bool CalculiXCoreInterface::core_read_cub()
+{
+  if (ccx_core.read_cub())
+  {
+    return true;
+  }else{
+    return false;
+  }
+}
+
+bool CalculiXCoreInterface::core_save_cub()
+{
+  if (ccx_core.save_cub())
+  {
+    return true;
+  }else{
+    return false;
+  }
+}
+
 std::vector<int> CalculiXCoreInterface::get_blocks()
 { 
   return ccx_core.get_blocks();
