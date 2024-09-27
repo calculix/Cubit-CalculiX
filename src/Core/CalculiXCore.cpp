@@ -20,7 +20,6 @@
 #include "CubitMessage.hpp"
 #include "MeshExportInterface.hpp"
 #include "MaterialInterface.hpp"
-#include <H5Cpp.h>
 
 #include "CoreBlocks.hpp"
 #include "CoreMaterials.hpp"
@@ -53,6 +52,7 @@
 #include "PlotChart.hpp"
 
 #include <Utility/Eigen/Eigenvalues>
+#include <H5Cpp.h>
 
 CalculiXCore::CalculiXCore():
   cb(NULL),mat(NULL),sections(NULL),constraints(NULL),surfaceinteractions(NULL),
@@ -386,6 +386,9 @@ bool CalculiXCore::reset()
   //print_to_log("RESET");
   //print_to_log(print_data());
 
+  std::string log = "Reset Cubit-CalculiX\n";
+  PRINT_INFO("%s", log.c_str());
+
   return true;
 }
 
@@ -393,9 +396,9 @@ bool CalculiXCore::read_cub(std::string filename)
 {
   std::string log = "Reading Cubit-CaluliX data from \"" + filename + "\"\n";
   PRINT_INFO("%s", log.c_str());
-/*  
-  H5::H5File file(filename,H5F_ACC_RDWR);
   
+  H5::H5File file(filename,H5F_ACC_RDWR);
+ 
   if (!file.attrExists("Cubit-CalculiX"))
   {
     log = "No Cubit-CaluliX data in \"" + filename + "\"\n";
@@ -405,7 +408,7 @@ bool CalculiXCore::read_cub(std::string filename)
     log = "import data\n";
     PRINT_INFO("%s", log.c_str());
   }
-*/
+
   return true;
 }
 

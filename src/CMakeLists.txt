@@ -5,7 +5,8 @@ project(Cubit-CalculiX)
 if (UNIX)
  set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2024.8/cmake")
  # python for our swig wrapping
- include_directories("/opt/Coreform-Cubit-2024.8/bin/python3/include/python3.10")
+ include_directories("/opt/Coreform-Cubit-2024.8/bin/python3/include/python3.10") 
+ set(HDF5_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Utility/HDF5/Linux/1.12.1) 
 endif (UNIX)
 
 if (WIN32)
@@ -33,6 +34,7 @@ find_package(Qt5Core REQUIRED)
 find_package(Qt5Charts REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 find_package(HDF5 REQUIRED COMPONENTS C CXX HL)
+ADD_DEFINITIONS(-DH5_BUILT_AS_DYNAMIC_LIB)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
@@ -93,6 +95,9 @@ if (WIN32)
 endif (WIN32)
 if (UNIX)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Linux/libQt5Charts.so.5 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Linux/libhdf5_cpp.so DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Linux/libhdf5_cpp.so.200 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Linux/libhdf5_cpp.so.200.1.0 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
 endif (UNIX)
 
 set(CCXPLUGIN_SRCS
