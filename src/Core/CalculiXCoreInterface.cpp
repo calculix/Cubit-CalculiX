@@ -230,9 +230,9 @@ bool CalculiXCoreInterface::core_reset()
   }
 }
 
-bool CalculiXCoreInterface::core_read_cub()
+bool CalculiXCoreInterface::core_read_cub(std::string filename)
 {
-  if (ccx_core.read_cub())
+  if (ccx_core.read_cub(filename))
   {
     return true;
   }else{
@@ -240,9 +240,9 @@ bool CalculiXCoreInterface::core_read_cub()
   }
 }
 
-bool CalculiXCoreInterface::core_save_cub()
+bool CalculiXCoreInterface::core_save_cub(std::string filename)
 {
-  if (ccx_core.save_cub())
+  if (ccx_core.save_cub(filename))
   {
     return true;
   }else{

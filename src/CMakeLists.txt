@@ -32,6 +32,7 @@ find_package(Cubit REQUIRED CONFIG)
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Charts REQUIRED)
 find_package(Qt5Widgets REQUIRED)
+find_package(HDF5 REQUIRED COMPONENTS C CXX HL)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
@@ -140,6 +141,7 @@ set_target_properties(calculix_plugin PROPERTIES SUFFIX ".ccm")
 add_library(calculix_core SHARED ${CCXCORE_SRCS})
 target_link_libraries(calculix_core cubiti cubit_util)
 target_link_libraries(calculix_core clarogui navigation pickwidget clarofw Qt5::Charts Qt5::Widgets)
+target_link_libraries(calculix_core HDF5::HDF5)
 set_target_properties(calculix_core PROPERTIES AUTOMOC 1)
 
 add_library(calculix_comp SHARED ${CCXCOMP_SRCS})
@@ -169,6 +171,7 @@ add_library(calculix_core SHARED ${CCXCORE_SRCS})
 set_target_properties(calculix_core PROPERTIES SUFFIX ".so")
 target_link_libraries(calculix_core cubiti cubit_util)
 target_link_libraries(calculix_core clarogui clarofw navigation pickwidget Qt5::Charts Qt5::Widgets)
+target_link_libraries(calculix_core HDF5::HDF5)
 set_target_properties(calculix_core PROPERTIES AUTOMOC 1)
 
 add_library(calculix_comp SHARED ${CCXCOMP_SRCS})
