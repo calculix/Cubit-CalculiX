@@ -8,6 +8,7 @@
 #include <QList>
 #include <QWidget>
 
+#include <H5Cpp.h>
 
 class CoreBlocks;
 class CoreMaterials;
@@ -62,6 +63,9 @@ public:
   bool reset(); // delete all data and init new
   bool read_cub(std::string filename); // read core data from cub
   bool save_cub(std::string filename); // save core data to cub
+  bool cub_read_dataset_int_rank_2(std::string name, H5::H5File *file, std::string groupname, std::vector<std::vector<int>> *data); // read dataset from cub
+  bool cub_write_dataset_int_rank_1(std::string name, H5::H5File *file, std::string groupname, std::vector<int> data); // create dataset in cub
+  bool cub_write_dataset_int_rank_2(std::string name, H5::H5File *file, std::string groupname, std::vector<std::vector<int>> data); // create dataset in cub
   std::string autocleanup(); // cleans up the core data
   std::string print_data();
   bool export_to_csv(std::string path_and_name, std::vector<std::string> header, std::vector<std::vector<double>> data,bool overwrite); // exports the data to a .csv file, with the header

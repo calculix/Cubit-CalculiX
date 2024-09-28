@@ -52,7 +52,6 @@
 #include "PlotChart.hpp"
 
 #include <Utility/Eigen/Eigenvalues>
-#include <H5Cpp.h>
 
 CalculiXCore::CalculiXCore():
   cb(NULL),mat(NULL),sections(NULL),constraints(NULL),surfaceinteractions(NULL),
@@ -352,6 +351,9 @@ bool CalculiXCore::update()
     print_to_log(print_data());
   }
 
+  //std::string log = "Update Cubit-CalculiX\n";
+  //PRINT_INFO("%s", log.c_str());
+
   return true;
 }
 
@@ -394,18 +396,18 @@ bool CalculiXCore::reset()
 
 bool CalculiXCore::read_cub(std::string filename)
 {
-  std::string log = "Reading Cubit-CaluliX data from \"" + filename + "\"\n";
+  std::string log = "Reading Cubit-CalculiX data from \"" + filename + "\"\n";
   PRINT_INFO("%s", log.c_str());
   
-  H5::H5File file(filename,H5F_ACC_RDWR);
+  H5::H5File *file = new H5::H5File(filename,H5F_ACC_RDWR);
  
-  if (!file.attrExists("Cubit-CalculiX"))
+  if (!file->nameExists("Cubit-CalculiX"))
   {
-    log = "No Cubit-CaluliX data in \"" + filename + "\"\n";
+    log = "No Cubit-CalculiX data in \"" + filename + "\"\n";
     PRINT_INFO("%s", log.c_str());
     return true;
   }else{
-    log = "import data\n";
+    log = "import data.....\n";
     PRINT_INFO("%s", log.c_str());
   }
 
@@ -416,20 +418,227 @@ bool CalculiXCore::save_cub(std::string filename)
 {
   std::string log = "Saving Cubit-CaluliX data to \"" + filename + "\"\n";
   PRINT_INFO("%s", log.c_str());
-/*
-  H5::H5File file(filename,H5F_ACC_TRUNC);
+
+  H5::H5File *file = new H5::H5File(filename,H5F_ACC_RDWR);
   
-  if (!file.attrExists("Cubit-CalculiX"))
+  if (!file->nameExists("Cubit-CalculiX"))
   {
-    log = "create group\n";
+
+    file->createGroup("Cubit-CalculiX");
+    file->createGroup("Cubit-CalculiX/Core");
+    file->createGroup("Cubit-CalculiX/Blocks");
+    this->cub_write_dataset_int_rank_2("blocks_data", file,"Cubit-CalculiX/Blocks", cb->blocks_data);
+
+    file->createGroup("Cubit-CalculiX/Materials");
+    file->createGroup("Cubit-CalculiX/Sections");
+    file->createGroup("Cubit-CalculiX/Constraints");
+    file->createGroup("Cubit-CalculiX/SurfaceInteractions");
+    file->createGroup("Cubit-CalculiX/ContactPairs");
+    file->createGroup("Cubit-CalculiX/Amplitudes");
+    file->createGroup("Cubit-CalculiX/Orientations");
+    file->createGroup("Cubit-CalculiX/Loads");
+    file->createGroup("Cubit-CalculiX/Loads/Forces");
+    file->createGroup("Cubit-CalculiX/Loads/Pressures");
+    file->createGroup("Cubit-CalculiX/Loads/HeatFluxes");
+    file->createGroup("Cubit-CalculiX/Loads/Gravity");
+    file->createGroup("Cubit-CalculiX/Loads/Centrifugal");
+    file->createGroup("Cubit-CalculiX/BCs");
+    file->createGroup("Cubit-CalculiX/BCs/Displacements");
+    file->createGroup("Cubit-CalculiX/BCs/Temperatures");
+    file->createGroup("Cubit-CalculiX/HistoryOutputs");
+    file->createGroup("Cubit-CalculiX/FieldOutputs");
+    file->createGroup("Cubit-CalculiX/InitialConditions");
+    file->createGroup("Cubit-CalculiX/HBCs");
+    file->createGroup("Cubit-CalculiX/Steps");
+    file->createGroup("Cubit-CalculiX/Jobs");
+    file->createGroup("Cubit-CalculiX/Results");
+    file->createGroup("Cubit-CalculiX/CustomLines");
+
+
+    log = "Finished saving Cubit-CalculiX data.\n";
     PRINT_INFO("%s", log.c_str());
   }else{
-    log = "group already here, delete and rewrite\n";
+    log = "group already here. Can't write Cubit-CalculiX data into \"" + filename + "\"\n";
     PRINT_INFO("%s", log.c_str());
+    file->close();
+    return false;
   }
-*/
+
+  file->close();
+
   return true;
 }
+
+bool CalculiXCore::cub_read_dataset_int_rank_2(std::string name, H5::H5File *file, std::string groupname, std::vector<std::vector<int>> *data)
+{
+  // Try block to detect exceptions raised by any of the calls inside it
+  try {
+    int rank = 2;
+    if (data->size()!=0)
+    {
+      return true;
+    }
+    /*
+    // Turn off the auto-printing when failure occurs so that we can
+    // handle the errors appropriately
+    H5::Exception::dontPrint();
+
+    H5::Group group(file->openGroup(groupname.c_str()));
+    hsize_t dims[rank]; // dataset dimensions
+    dims[0]              = data.size();
+    dims[1]              = data[0].size();
+    H5::DataSpace *dataspace = new H5::DataSpace(rank, dims);
+    
+    H5::DataSet *dataset = new H5::DataSet(group.createDataSet(name.c_str(), H5::PredType::NATIVE_INT, *dataspace));
+
+    // Write the data to the dataset using default memory space, file
+    // space, and transfer properties.
+    dataset->write(data.data(), H5::PredType::NATIVE_INT);
+
+    // Close all objects.
+    delete dataspace;
+    delete dataset;
+    group.close();
+
+    std::string log = "";
+    for (size_t i = 0; i < data.size(); i++)
+    {
+      for (size_t ii = 0; ii < data[i].size(); ii++)
+      {
+        log.append(std::to_string(data[i][ii]) + " ");
+      }
+      log.append("\n");
+    }
+    PRINT_INFO("%s", log.c_str());
+*/
+  } // end of try block
+
+  // catch failure caused by the H5File operations
+  catch (H5::FileIException error) {
+      error.printErrorStack();
+      return false;
+  }
+
+  // catch failure caused by the DataSet operations
+  catch (H5::DataSetIException error) {
+      error.printErrorStack();
+      return false;
+  }
+
+  return true;
+}
+
+
+bool CalculiXCore::cub_write_dataset_int_rank_1(std::string name, H5::H5File *file,std::string groupname, std::vector<int> data)
+{
+  // Try block to detect exceptions raised by any of the calls inside it
+  try {
+    //check if there is data that can be written
+    if (data.size()==0)
+    {
+      return true;
+    }
+
+    // Turn off the auto-printing when failure occurs so that we can
+    // handle the errors appropriately
+    H5::Exception::dontPrint();
+
+    H5::Group group(file->openGroup(groupname.c_str()));
+    int rank = 1;
+    hsize_t dims[rank]; // dataset dimensions
+    dims[0]              = data.size();
+    H5::DataSpace *dataspace = new H5::DataSpace(rank, dims);
+    
+    H5::DataSet *dataset = new H5::DataSet(group.createDataSet(name.c_str(), H5::PredType::NATIVE_INT, *dataspace));
+
+    // Write the data to the dataset using default memory space, file
+    // space, and transfer properties.
+    dataset->write(data.data(), H5::PredType::NATIVE_INT);
+
+    // Close all objects.
+    delete dataspace;
+    delete dataset;
+    group.close();
+
+  } // end of try block
+
+  // catch failure caused by the H5File operations
+  catch (H5::FileIException error) {
+      error.printErrorStack();
+      return false;
+  }
+
+  // catch failure caused by the DataSet operations
+  catch (H5::DataSetIException error) {
+      error.printErrorStack();
+      return false;
+  }
+
+  return true;
+}
+
+bool CalculiXCore::cub_write_dataset_int_rank_2(std::string name, H5::H5File *file, std::string groupname, std::vector<std::vector<int>> data)
+{
+  // Try block to detect exceptions raised by any of the calls inside it
+  try {
+    int rank = 2;
+    if (data.size()==0)
+    {
+      return true;
+    }
+    if (data[0].size()==0)
+    {
+      return true;
+    }
+    // Turn off the auto-printing when failure occurs so that we can
+    // handle the errors appropriately
+    H5::Exception::dontPrint();
+
+    H5::Group group(file->openGroup(groupname.c_str()));
+    hsize_t dims[rank]; // dataset dimensions
+    dims[0]              = data.size();
+    dims[1]              = data[0].size();
+    H5::DataSpace *dataspace = new H5::DataSpace(rank, dims);
+    
+    H5::DataSet *dataset = new H5::DataSet(group.createDataSet(name.c_str(), H5::PredType::NATIVE_INT, *dataspace));
+
+    // Write the data to the dataset using default memory space, file
+    // space, and transfer properties.
+    dataset->write(data.data(), H5::PredType::NATIVE_INT);
+
+    // Close all objects.
+    delete dataspace;
+    delete dataset;
+    group.close();
+
+    std::string log = "";
+    for (size_t i = 0; i < data.size(); i++)
+    {
+      for (size_t ii = 0; ii < data[i].size(); ii++)
+      {
+        log.append(std::to_string(data[i][ii]) + " ");
+      }
+      log.append("\n");
+    }
+    PRINT_INFO("%s", log.c_str());
+
+  } // end of try block
+
+  // catch failure caused by the H5File operations
+  catch (H5::FileIException error) {
+      error.printErrorStack();
+      return false;
+  }
+
+  // catch failure caused by the DataSet operations
+  catch (H5::DataSetIException error) {
+      error.printErrorStack();
+      return false;
+  }
+
+  return true;
+}
+
 
 std::string CalculiXCore::autocleanup()
 {
