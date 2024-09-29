@@ -62,5 +62,6 @@
 2024-09-09 working on dat plot
 ######### ------  Release 2024.9
 
-2024-09-27 working on reading/saving ccx core data into cub
-2024-09-28 working on reading/saving ccx core data into cub
+2024-09-27 working on reading/saving ccx core data into .cub
+2024-09-28 working on reading/saving ccx core data into .cub
+2024-09-29 working on reading/saving ccx core data into .cub
