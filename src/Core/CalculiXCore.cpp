@@ -409,6 +409,15 @@ bool CalculiXCore::read_cub(std::string filename)
     return true;
   }else{
     cubTool.read_dataset_int_rank_2("blocks_data","Cubit-CalculiX/Blocks", &cb->blocks_data);
+    cubTool.read_dataset_int_rank_2("sections_data","Cubit-CalculiX/Sections", &sections->sections_data);
+    cubTool.read_dataset_string_rank_2("solid_section_data","Cubit-CalculiX/Sections", &sections->solid_section_data);
+    cubTool.read_dataset_string_rank_2("shell_section_data","Cubit-CalculiX/Sections", &sections->shell_section_data);
+    cubTool.read_dataset_string_rank_2("beam_section_data","Cubit-CalculiX/Sections", &sections->beam_section_data);
+    cubTool.read_dataset_string_rank_2("membrane_section_data","Cubit-CalculiX/Sections", &sections->membrane_section_data);
+    cubTool.read_dataset_int_rank_2("constraints_data","Cubit-CalculiX/Constraints", &constraints->constraints_data);
+    cubTool.read_dataset_string_rank_2("rigidbody_constraint_data","Cubit-CalculiX/Constraints", &constraints->rigidbody_constraint_data);
+    cubTool.read_dataset_string_rank_2("tie_constraint_data","Cubit-CalculiX/Constraints", &constraints->tie_constraint_data);
+    
 
     log = "Finished reading Cubit-CalculiX data from \"" + filename + "\"\n";
     PRINT_INFO("%s", log.c_str());
@@ -432,7 +441,15 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_int_rank_2("blocks_data","Cubit-CalculiX/Blocks", cb->blocks_data);
     cubTool.createGroup("Cubit-CalculiX/Materials");
     cubTool.createGroup("Cubit-CalculiX/Sections");
+    cubTool.write_dataset_int_rank_2("sections_data","Cubit-CalculiX/Sections", sections->sections_data);
+    cubTool.write_dataset_string_rank_2("solid_section_data","Cubit-CalculiX/Sections", sections->solid_section_data);
+    cubTool.write_dataset_string_rank_2("shell_section_data","Cubit-CalculiX/Sections", sections->shell_section_data);
+    cubTool.write_dataset_string_rank_2("beam_section_data","Cubit-CalculiX/Sections", sections->beam_section_data);
+    cubTool.write_dataset_string_rank_2("membrane_section_data","Cubit-CalculiX/Sections", sections->membrane_section_data);
     cubTool.createGroup("Cubit-CalculiX/Constraints");
+    cubTool.write_dataset_int_rank_2("constraints_data","Cubit-CalculiX/Constraints", constraints->constraints_data);
+    cubTool.write_dataset_string_rank_2("rigidbody_constraint_data","Cubit-CalculiX/Constraints", constraints->rigidbody_constraint_data);
+    cubTool.write_dataset_string_rank_2("tie_constraint_data","Cubit-CalculiX/Constraints", constraints->tie_constraint_data);
     cubTool.createGroup("Cubit-CalculiX/SurfaceInteractions");
     cubTool.createGroup("Cubit-CalculiX/ContactPairs");
     cubTool.createGroup("Cubit-CalculiX/Amplitudes");
