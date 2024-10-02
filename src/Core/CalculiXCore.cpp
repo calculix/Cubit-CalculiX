@@ -432,7 +432,7 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_string_rank_2("friction_data","Cubit-CalculiX/SurfaceInteractions", &surfaceinteractions->friction_data);
     //ContactPairs
     cubTool.read_dataset_int_rank_2("contactpairs_data","Cubit-CalculiX/ContactPairs", &contactpairs->contactpairs_data);
-    cubTool.read_dataset_string_rank_2("contactpairs_data","Cubit-CalculiX/ContactPairs", &contactpairs->adjust_contactpair_data);
+    cubTool.read_dataset_string_rank_2("adjust_contactpair_data","Cubit-CalculiX/ContactPairs", &contactpairs->adjust_contactpair_data);
     //Amplitudes
     cubTool.read_dataset_int_rank_2("amplitudes_data","Cubit-CalculiX/Amplitudes", &amplitudes->amplitudes_data);
     cubTool.read_dataset_string_rank_2("name_amplitude_data","Cubit-CalculiX/Amplitudes", &amplitudes->name_amplitude_data);
@@ -505,9 +505,37 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_int_rank_2("historyoutputs_data","Cubit-CalculiX/Steps", &steps->historyoutputs_data);
     cubTool.read_dataset_int_rank_2("fieldoutputs_data","Cubit-CalculiX/Steps", &steps->fieldoutputs_data);
     //Jobs
+    if (cubTool.read_dataset_string_rank_2("jobs_data","Cubit-CalculiX/Jobs", &jobs->jobs_data))
+    {
+      if (!cubTool.read_dataset_string_rank_2("output_console","Cubit-CalculiX/Jobs", &jobs->output_console))
+      {
+        std::vector<std::string> tmp_output_console;
+        jobs->output_console.push_back(tmp_output_console);
+        jobs->jobs_data[jobs->jobs_data.size()-1][5] = std::to_string(jobs->output_console.size()-1);
+      }
+      if (!cubTool.read_dataset_string_rank_2("cvg","Cubit-CalculiX/Jobs", &jobs->cvg))
+      {
+        std::vector<std::string> tmp_cvg;
+        jobs->cvg.push_back(tmp_cvg);
+        jobs->jobs_data[jobs->jobs_data.size()-1][7] = std::to_string(jobs->cvg.size()-1);
+      }
+      if (!cubTool.read_dataset_string_rank_2("sta","Cubit-CalculiX/Jobs", &jobs->sta))
+      {
+        std::vector<std::string> tmp_sta;
+        jobs->sta.push_back(tmp_sta);
+        jobs->jobs_data[jobs->jobs_data.size()-1][8] = std::to_string(jobs->sta.size()-1);
+      }
+    }
     //Results
+    cubTool.read_dataset_int_rank_2("results_data","Cubit-CalculiX/Results", &results->results_data);
+    //create empty frd and dat
+    for (size_t i = 0; i < results->results_data.size(); i++)
+    {
+      results->create_frd_dat(results->results_data[i][1]);
+    }
+    
     //CustomLines
-
+    cubTool.read_dataset_string_rank_2("customlines_data","Cubit-CalculiX/CustomLines", &customlines->customlines_data);
 
     log = "Finished reading Cubit-CalculiX data from \"" + filename + "\"\n";
     PRINT_INFO("%s", log.c_str());
@@ -560,7 +588,7 @@ bool CalculiXCore::save_cub(std::string filename)
     //ContactPairs
     cubTool.createGroup("Cubit-CalculiX/ContactPairs");
     cubTool.write_dataset_int_rank_2("contactpairs_data","Cubit-CalculiX/ContactPairs", contactpairs->contactpairs_data);
-    cubTool.write_dataset_string_rank_2("contactpairs_data","Cubit-CalculiX/ContactPairs", contactpairs->adjust_contactpair_data);
+    cubTool.write_dataset_string_rank_2("adjust_contactpair_data","Cubit-CalculiX/ContactPairs", contactpairs->adjust_contactpair_data);
     //Amplitudes
     cubTool.createGroup("Cubit-CalculiX/Amplitudes");
     cubTool.write_dataset_int_rank_2("amplitudes_data","Cubit-CalculiX/Amplitudes", amplitudes->amplitudes_data);
@@ -651,10 +679,19 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_int_rank_2("fieldoutputs_data","Cubit-CalculiX/Steps", steps->fieldoutputs_data);
     //Jobs
     cubTool.createGroup("Cubit-CalculiX/Jobs");
+    cubTool.write_dataset_string_rank_2("jobs_data","Cubit-CalculiX/Jobs", jobs->jobs_data);
+    cubTool.write_dataset_string_rank_2("output_console","Cubit-CalculiX/Jobs", jobs->output_console);
+    cubTool.write_dataset_string_rank_2("cvg","Cubit-CalculiX/Jobs", jobs->cvg);
+    cubTool.write_dataset_string_rank_2("sta","Cubit-CalculiX/Jobs", jobs->sta);
     //Results
     cubTool.createGroup("Cubit-CalculiX/Results");
+    cubTool.write_dataset_int_rank_2("results_data","Cubit-CalculiX/Results", results->results_data);
+    cubTool.createGroup("Cubit-CalculiX/Results/Frd");
+    cubTool.createGroup("Cubit-CalculiX/Results/Dat");
+
     //CustomLines
     cubTool.createGroup("Cubit-CalculiX/CustomLines");
+    cubTool.write_dataset_string_rank_2("customlines_data","Cubit-CalculiX/CustomLines", customlines->customlines_data);
 
     log = "Finished saving Cubit-CalculiX data.\n";
     PRINT_INFO("%s", log.c_str());

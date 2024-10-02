@@ -99,6 +99,7 @@ bool HDF5Tool::read_dataset_int_rank_2(std::string name, std::string groupname, 
     dataspace.close();
     dataset.close();
     group.close();
+    return true;
   } // end of try block
 
   // catch failure caused by the H5File operations
@@ -152,7 +153,7 @@ bool HDF5Tool::write_dataset_int_rank_1(std::string name, std::string groupname,
     delete dataspace;
     delete dataset;
     group.close();
-
+    return true;
   } // end of try block
 
   // catch failure caused by the H5File operations
@@ -223,6 +224,7 @@ bool HDF5Tool::write_dataset_int_rank_2(std::string name, std::string groupname,
     }
     PRINT_INFO("%s", log.c_str());
 */
+    return true;
   } // end of try block
 
   // catch failure caused by the H5File operations
@@ -318,6 +320,7 @@ bool HDF5Tool::read_dataset_string_rank_2(std::string name, std::string groupnam
     dataspace.close();
     dataset.close();
     group.close();
+    return true;
   } // end of try block
 
   // catch failure caused by the H5File operations
@@ -391,6 +394,7 @@ bool HDF5Tool::write_dataset_string_rank_2(std::string name, std::string groupna
     }
     PRINT_INFO("%s", log.c_str());
 */
+    return true;
   } // end of try block
 
   // catch failure caused by the H5File operations

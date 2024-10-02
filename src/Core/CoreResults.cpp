@@ -76,6 +76,20 @@ bool CoreResults::create_result(int job_id)
   return true;
 }
 
+bool CoreResults::create_frd_dat(int job_id)
+{
+  CoreResultsFrd frd;
+  CoreResultsDat dat;
+  
+  // create frd and dat file reader writer object
+  frd_data.push_back(frd);
+  frd_data[frd_data.size()-1].init(job_id);
+  dat_data.push_back(dat);
+  dat_data[dat_data.size()-1].init(job_id);
+
+  return true;
+}
+
 bool CoreResults::add_result(int result_id, int job_id, int frd_id, int dat_id)
 {
   std::vector<int> v = {result_id, job_id, frd_id, dat_id};
