@@ -50,9 +50,11 @@ public:
   bool bool_init_pythoninterface = false;
   bool use_ccx_logfile = false;
   bool use_ccx_autocleanup = true;
+  std::string version = "2024.10";
   std::vector<std::vector<std::string>> sideset_face_data;
 
   bool cmd(std::string cmd); // executes a cubit command with appending to the history
+  std::string get_version(); // gets the component version
   bool print_to_log(std::string str_log);
   bool init(); // init all core objects
   bool init2(); // init material core and interfaces

@@ -5,6 +5,7 @@
 #include <string>
 #include <chrono>
 #include <H5Cpp.h>
+#include <hdf5.h>
 
 class HDF5Tool
 {
@@ -12,7 +13,7 @@ class HDF5Tool
 public:
   HDF5Tool(std::string filename);
   ~HDF5Tool();
-  
+    
   bool nameExists(std::string name);
   bool createGroup(std::string groupname);
 
@@ -20,6 +21,7 @@ public:
   bool read_dataset_int_rank_2(std::string name, std::string groupname, std::vector<std::vector<int>> *data); // read dataset
   bool write_dataset_int_rank_1(std::string name, std::string groupname, std::vector<int> data); // create dataset
   bool write_dataset_int_rank_2(std::string name, std::string groupname, std::vector<std::vector<int>> data); // create dataset
+  bool C_write_dataset_int_rank_2(std::string name, std::string groupname, std::vector<std::vector<int>> data); // create dataset
   //double
 
   //string

@@ -13,6 +13,7 @@ public:
   ~CalculiXCoreInterface();
 	
   bool cmd(std::string cmd); // executes a cubit command with appending to the history
+  std::string get_version(); // gets the component version
   bool set_use_ccx_autocleanup(bool bool_use);
   bool set_use_ccx_logfile(bool bool_use);
   bool init_pythoninterface();

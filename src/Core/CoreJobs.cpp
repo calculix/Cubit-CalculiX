@@ -715,8 +715,8 @@ bool CoreJobs::check_jobs()
   #ifdef _WIN32
     std::string log;
     CubitString output;
-    int ProcessPipe_data_id;
-    int PipePID;
+    //int ProcessPipe_data_id;
+    //int PipePID;
   
     for (size_t i = 0; i < jobs_data.size(); i++)
     {

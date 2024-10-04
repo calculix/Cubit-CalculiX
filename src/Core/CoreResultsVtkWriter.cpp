@@ -539,7 +539,7 @@ bool CoreResultsVtkWriter::write_linked_parallel()
       //std::string thread_filepath_vtu;
       //thread_filepath_vtu = filepath + "/" + filepath + "." + std::to_string(ii) + "." + this->get_increment() + ".vtu";
       filepath_vtu.push_back(filepath + "." + std::to_string(ii) + "." + this->get_increment() + ".vtu");
-      part_ids.push_back(ii);
+      part_ids.push_back(int(ii));
     }
     current_filepath_vtpc = filepath + "/" + filepath + "." + this->get_increment() + ".vtpc";
     this->write_vtpc();
@@ -2629,7 +2629,7 @@ bool CoreResultsVtkWriter::checkFrdBlockDispExists_thread(std::string block_name
     if ("ip_" + block_name_cubit == block_name)
     {
       // search for disp in current increment
-      std::vector<int> data_ids = this->get_result_blocks_data_ids_thread_increment(i,increment);
+      std::vector<int> data_ids = this->get_result_blocks_data_ids_thread_increment(int(i),increment);
       for (size_t ii = 0; ii < data_ids.size(); ii++)
       {
         if (vec_frd[i]->result_block_type[vec_frd[i]->result_blocks[data_ids[ii]][5]]=="DISP")
@@ -3376,7 +3376,7 @@ bool CoreResultsVtkWriter::link_nodes_parallel()
   progress[max_threads] = 0;
   for (size_t i = 0; i < tmp_part_node_ids.size(); i++)
   {
-    progress[max_threads] = progress[max_threads] + tmp_part_node_ids[i].size();
+    progress[max_threads] = progress[max_threads] + int(tmp_part_node_ids[i].size());
   } 
 
   int number_of_parts = nparts - nparts_dat;
@@ -3437,7 +3437,7 @@ bool CoreResultsVtkWriter::link_nodes_parallel()
     std::vector<int> data_ids = this->get_result_blocks_data_ids_linked();
     for (size_t ii = 0; ii < tmp_part_node_ids.size(); ii++)
     {
-      progress[max_threads] = progress[max_threads] + tmp_part_node_ids[ii].size() * data_ids.size();
+      progress[max_threads] = progress[max_threads] + int(tmp_part_node_ids[ii].size()) * int(data_ids.size());
     }
   }
 
@@ -3972,7 +3972,7 @@ bool CoreResultsVtkWriter::link_elements_thread(int thread_part)
     }   
   }else if (part_types[thread_part]==1) //nodesets
   {
-    int nodeset_data_id = thread_part-block_ids.size();
+    int nodeset_data_id = int(thread_part-block_ids.size());
     for (size_t i = 0; i < nodeset_node_ids[nodeset_data_id].size(); i++)
     {
       vec_frd[thread_part]->elements.push_back({nodeset_node_ids[nodeset_data_id][i],99,int(i),0});
@@ -3981,7 +3981,7 @@ bool CoreResultsVtkWriter::link_elements_thread(int thread_part)
     }
   }else if (part_types[thread_part]==2) //sidesets
   {
-    int sideset_data_id = thread_part-block_ids.size()-nodeset_ids.size();
+    int sideset_data_id = int(thread_part-block_ids.size()-nodeset_ids.size());
     for (size_t i = 0; i < sideset_elements_connectivity[sideset_data_id].size(); i++)
     {
       if (sideset_elements_connectivity[sideset_data_id][i].size()==2) // line

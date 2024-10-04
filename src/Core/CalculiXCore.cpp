@@ -131,6 +131,11 @@ bool CalculiXCore::cmd(std::string cmd)
   return true;
 }
 
+std::string CalculiXCore::get_version()
+{ 
+  return this->version;
+}
+
 bool CalculiXCore::print_to_log(std::string str_log)
 {
   std::ofstream output_file;
@@ -559,7 +564,7 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.createGroup("Cubit-CalculiX/Core");
     //Blocks
     cubTool.createGroup("Cubit-CalculiX/Blocks");
-    cubTool.write_dataset_int_rank_2("blocks_data","Cubit-CalculiX/Blocks", cb->blocks_data);
+    cubTool.C_write_dataset_int_rank_2("blocks_data","Cubit-CalculiX/Blocks", cb->blocks_data);
     //Materials
     cubTool.createGroup("Cubit-CalculiX/Materials");
     //Sections

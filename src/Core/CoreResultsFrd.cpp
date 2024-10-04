@@ -225,7 +225,7 @@ bool CoreResultsFrd::read_single()
   for (size_t i = 0; i < nodes.size(); i++)
   {
     tmp_node_ids.push_back(nodes[i][0]);
-    tmp_node_data_ids.push_back(i);
+    tmp_node_data_ids.push_back(int(i));
   }  
   auto p = sort_permutation(tmp_node_ids);
   this->apply_permutation(tmp_node_ids, p);
@@ -349,11 +349,11 @@ bool CoreResultsFrd::read_parallel()
       int end = 0;
       if (i==max_threads-1)
       {
-        start = i*keys_per_thread;
+        start = int(i)*keys_per_thread;
         end = maxlines;
       }else{
-        start = i*keys_per_thread;
-        end = (i+1)*keys_per_thread-1;
+        start = int(i)*keys_per_thread;
+        end = (int(i)+1)*keys_per_thread-1;
       }
       ReadThreads.push_back(std::thread(&CoreResultsFrd::insert_key_thread, this, start, end, i));
     }
@@ -452,13 +452,13 @@ bool CoreResultsFrd::read_parallel()
       int data_start = 0;
       if (i==max_threads-1)
       {
-        start = node_range[0]+i*nodes_per_thread;
-        data_start = i*nodes_per_thread;
+        start = node_range[0]+int(i)*nodes_per_thread;
+        data_start = int(i)*nodes_per_thread;
         end = node_range[1];
       }else{
-        start = node_range[0]+i*nodes_per_thread;
-        data_start = i*nodes_per_thread;
-        end = node_range[0]+(i+1)*nodes_per_thread-1;
+        start = node_range[0]+int(i)*nodes_per_thread;
+        data_start = int(i)*nodes_per_thread;
+        end = node_range[0]+(int(i)+1)*nodes_per_thread-1;
       }
       ReadThreads.push_back(std::thread(&CoreResultsFrd::read_nodes_thread, this, start, end, data_start, i));
     }
@@ -517,13 +517,13 @@ bool CoreResultsFrd::read_parallel()
       int data_start = 0;
       if (i==max_threads-1)
       {
-        start = element_range[0]+i*lines_per_thread;
-        data_start = i*lines_per_thread;
+        start = element_range[0]+int(i)*lines_per_thread;
+        data_start = int(i)*lines_per_thread;
         end = element_range[1];
       }else{
-        start = element_range[0]+i*lines_per_thread;
-        data_start = i*lines_per_thread;
-        end = element_range[0]+(i+1)*lines_per_thread-1;
+        start = element_range[0]+int(i)*lines_per_thread;
+        data_start = int(i)*lines_per_thread;
+        end = element_range[0]+(int(i)+1)*lines_per_thread-1;
       }
       std::vector<int> range = {start,end,data_start};
       thread_ranges.push_back(range);
@@ -656,8 +656,8 @@ bool CoreResultsFrd::read_parallel()
     }
     
     int loop_c = 0;
-    int number_of_result_blocks = frd_arrays.size();
-    int max_number_of_result_blocks = frd_arrays.size();
+    int number_of_result_blocks = int(frd_arrays.size());
+    int max_number_of_result_blocks = int(frd_arrays.size());
     
     progressbar->start(0,100,"Reading Result Blocks Data FRD");
     t_start = std::chrono::high_resolution_clock::now();
@@ -724,7 +724,7 @@ bool CoreResultsFrd::read_parallel()
   for (size_t i = 0; i < nodes.size(); i++)
   {
     tmp_node_ids.push_back(nodes[i][0]);
-    tmp_node_data_ids.push_back(i);
+    tmp_node_data_ids.push_back(int(i));
   }  
   auto p = sort_permutation(tmp_node_ids);
   this->apply_permutation(tmp_node_ids, p);
@@ -733,7 +733,7 @@ bool CoreResultsFrd::read_parallel()
   sorted_node_data_ids = tmp_node_data_ids;
 
   int loop_c = 0;
-  int number_of_result_blocks = result_block_node_data.size();
+  int number_of_result_blocks = int(result_block_node_data.size());
   for (size_t i = 0; i < result_block_node_data.size(); i++)
   {
     std::vector<int> tmp_result_node_ids;
@@ -761,7 +761,7 @@ bool CoreResultsFrd::read_parallel()
     { 
       ReadThreads[i].join();
     }
-    number_of_result_blocks = number_of_result_blocks - ReadThreads.size();
+    number_of_result_blocks = number_of_result_blocks - int(ReadThreads.size());
     ++loop_c;
     ReadThreads.clear();
   }
@@ -1381,7 +1381,7 @@ bool CoreResultsFrd::read_nodal_result_block_thread(int result_block_data_id, in
 
       node_id = std::stoi(line[1]);
       
-      n_comp = result_block_components[result_block_data_id].size();
+      n_comp = int(result_block_components[result_block_data_id].size());
       std::vector<double> result_comp(n_comp);
       
       for (size_t i = 0; i < n_comp; i++)
@@ -1659,7 +1659,7 @@ int CoreResultsFrd::get_result_block_lines()
   int lines = 0;
   for (size_t i = 0; i < frd_arrays.size(); i++)
   {
-    lines = lines + frd_arrays[i].size();
+    lines = lines + int(frd_arrays[i].size());
   }
   return lines;
 }

@@ -12,6 +12,11 @@ bool CalculiXCoreInterface::cmd(std::string cmd)
   return ccx_core.cmd(cmd);
 }
 
+std::string CalculiXCoreInterface::get_version()
+{
+  return ccx_core.get_version();
+}
+
 bool CalculiXCoreInterface::set_use_ccx_autocleanup(bool bool_use)
 {
   ccx_core.use_ccx_autocleanup = bool_use;
