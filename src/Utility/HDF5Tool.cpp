@@ -24,14 +24,14 @@ bool HDF5Tool::createGroup(std::string groupname)
 }
 
 
-bool HDF5Tool::read_dataset_int_rank_2(std::string name, std::string groupname, std::vector<std::vector<int>> *data)
+bool HDF5Tool::read_dataset_int_rank_2(std::string name, std::string groupname, std::vector<std::vector<int>> &data)
 {
   std::string log = "";
 
   // Try block to detect exceptions raised by any of the calls inside it
   try {
     const int rank = 2;
-    if (data->size()!=0)
+    if (data.size()!=0)
     {
       log = "data not empty -> please write an issue on github\n";
       PRINT_INFO("%s", log.c_str());
@@ -63,46 +63,36 @@ bool HDF5Tool::read_dataset_int_rank_2(std::string name, std::string groupname, 
     
     hsize_t dims[rank];
     dataspace.getSimpleExtentDims(dims, NULL);
-/*
-    for (size_t i = 0; i < rank; i++)
+
+    // Read the data from the dataset    
+    std::vector<int> rdata(dims[0]*dims[1]); // buffer for data to read
+
+    dataset.read(rdata.data(), H5::PredType::NATIVE_INT);
+    
+    /* 
+    int getArrayLength = rdata.size();
+    std::string log = "array length " + std::to_string(getArrayLength) + " dims[0] " + std::to_string(dims[0]) + " dims[1] " + std::to_string(dims[1]) + "\n";
+    PRINT_INFO("%s", log.c_str());
+
+    for (size_t i = 0; i < rdata.size(); i++)
     {
-      log = "dims[" + std::to_string(i) + "] = " + std::to_string(dims[i]) + "\n";
+      log = "i " + std::to_string(i) + " rdata[i] " + std::to_string(rdata[i]) + "\n";
       PRINT_INFO("%s", log.c_str());
     }
-*/        
-    // Read the data from the dataset    
-    //int rdata[dims[0]][dims[1]];
-    #ifdef WIN32
-      int **rdata = new int* [dims[0]];
-      for(int i=0;i<dims[0];i++)
-          rdata[i]=new int[dims[1]];
-    #else
-      int rdata[dims[0]][dims[1]];
-    #endif
+    */
     
-    dataset.read(rdata, H5::PredType::NATIVE_INT);
-
     for (size_t i = 0; i < dims[0]; i++)
     { 
       std::vector<int> tmp;
       for (size_t ii = 0; ii < dims[1]; ii++)
       { 
-        tmp.push_back(rdata[i][ii]);
+        tmp.push_back(rdata[dims[1]*i+ii]);
+        //log = "data.size() " + std::to_string(data.size()) + " i " + std::to_string(i) + " rdata[dims[1]*i+ii] " + std::to_string(rdata[dims[1]*i+ii]) + "\n";
+        //PRINT_INFO("%s", log.c_str());
       }
-      data->push_back(tmp);
+      data.push_back(tmp);
     }
-/*
-    std::string log = "";
-    for (size_t i = 0; i < dims[0]; i++)
-    {
-      for (size_t ii = 0; ii < dims[1]; ii++)
-      {
-        log.append(std::to_string(rdata[i][ii]) + " ");
-      }
-      log.append("\n");
-    }
-    PRINT_INFO("%s", log.c_str());
-*/
+    
     // Close all objects.
     dataspace.close();
     dataset.close();
@@ -150,11 +140,7 @@ bool HDF5Tool::write_dataset_int_rank_1(std::string name, std::string groupname,
 
     // Write the data to the dataset using default memory space, file
     // space, and transfer properties.
-    #ifdef WIN32
-      int *wdata = new int [dims[0]];
-    #else
-      int wdata[dims[0]]; // buffer for data to write
-    #endif
+    int *wdata = new int [dims[0]];
     
     for (size_t i = 0; i < data.size(); i++)
     {
@@ -212,23 +198,21 @@ bool HDF5Tool::write_dataset_int_rank_2(std::string name, std::string groupname,
     // Write the data to the dataset using default memory space, file
     // space, and transfer properties.
     
-    //int wdata[dims[0]][dims[1]]; // buffer for data to write
-    int *wdata = new int[dims[0]*dims[1]];
+    int *wdata = new int[dims[0]*dims[1]]; // buffer for data to write
     
     for (size_t i = 0; i < data.size(); i++)
     {
       for (size_t ii = 0; ii < data[i].size(); ii++)
       {
-        //wdata[i][ii] = data[i][ii];
         wdata[dims[1]*i+ii] = data[i][ii];
       }
     }
-    
     dataset->write(wdata, H5::PredType::NATIVE_INT);
         
     // Close all objects.
     delete dataspace;
     delete dataset;
+    delete wdata;
     group.close();
 
 /*
@@ -238,7 +222,6 @@ bool HDF5Tool::write_dataset_int_rank_2(std::string name, std::string groupname,
       for (size_t ii = 0; ii < data[i].size(); ii++)
       {
         log.append(std::to_string(data[i][ii]) + "->");
-        log.append(std::to_string(wdata[i][ii]) + " ");
       }
       log.append("\n");
     }
@@ -262,14 +245,14 @@ bool HDF5Tool::write_dataset_int_rank_2(std::string name, std::string groupname,
   return true;
 }
 
-bool HDF5Tool::read_dataset_string_rank_2(std::string name, std::string groupname, std::vector<std::vector<std::string>> *data)
+bool HDF5Tool::read_dataset_string_rank_2(std::string name, std::string groupname, std::vector<std::vector<std::string>> &data)
 {
   std::string log = "";
 
   // Try block to detect exceptions raised by any of the calls inside it
   try {
     const int rank = 2;
-    if (data->size()!=0)
+    if (data.size()!=0)
     {
       log = "data not empty -> please write an issue on github\n";
       PRINT_INFO("%s", log.c_str());
@@ -303,44 +286,34 @@ bool HDF5Tool::read_dataset_string_rank_2(std::string name, std::string groupnam
     dataspace.getSimpleExtentDims( dims, NULL);
     H5::StrType datatype(H5::PredType::C_S1, H5T_VARIABLE); 
 
-/*
-    for (size_t i = 0; i < rank; i++)
+    std::vector<const char *> rdata(dims[0]*dims[1]); // buffer for data to read
+
+    dataset.read(rdata.data(), datatype);
+
+    /*
+    int getArrayLength = rdata.size();
+    std::string log = "array length " + std::to_string(getArrayLength) + " dims[0] " + std::to_string(dims[0]) + " dims[1] " + std::to_string(dims[1]) + "\n";
+    PRINT_INFO("%s", log.c_str());
+
+    for (size_t i = 0; i < rdata.size(); i++)
     {
-      log = "dims[" + std::to_string(i) + "] = " + std::to_string(dims[i]) + "\n";
+      log = "i " + std::to_string(i) + " rdata[i] " + rdata[i] + "\n";
       PRINT_INFO("%s", log.c_str());
     }
-*/        
-    // Read the data from the dataset
-    #ifdef WIN32
-      char **rdata = new char* [dims[0]];
-      for(int i=0;i<dims[0];i++)
-          rdata[i]=new char[dims[1]];
-    #else
-      const char * rdata[dims[0]][dims[1]];
-    #endif
-    dataset.read(rdata, datatype);
-
+    */
+        
     for (size_t i = 0; i < dims[0]; i++)
     { 
       std::vector<std::string> tmp;
       for (size_t ii = 0; ii < dims[1]; ii++)
       { 
-        tmp.push_back(rdata[i][ii]);
+        tmp.push_back(rdata[dims[1]*i+ii]);
+        //log = "data.size() " + std::to_string(data.size()) + " i " + std::to_string(i) + " rdata[dims[1]*i+ii] " + rdata[dims[1]*i+ii] + "\n";
+        //PRINT_INFO("%s", log.c_str());
       }
-      data->push_back(tmp);
+      data.push_back(tmp);
     }
-/*
-    std::string log = "";
-    for (size_t i = 0; i < dims[0]; i++)
-    {
-      for (size_t ii = 0; ii < dims[1]; ii++)
-      {
-        log.append(std::string(rdata[i][ii]) + " ");
-      }
-      log.append("\n");
-    }
-    PRINT_INFO("%s", log.c_str());
-*/
+    
     // Close all objects.
     dataspace.close();
     dataset.close();
@@ -394,20 +367,16 @@ bool HDF5Tool::write_dataset_string_rank_2(std::string name, std::string groupna
     // Write the data to the dataset using default memory space, file
     // space, and transfer properties.
     
-    #ifdef WIN32
-      const char* wdata[1000][100]; // buffer for data to write
-    #else
-      const char* wdata[dims[0]][dims[1]]; // buffer for data to write
-    #endif
+    std::vector<const char*> wdata;
     for (size_t i = 0; i < data.size(); i++)
     {
       for (size_t ii = 0; ii < data[i].size(); ii++)
       {
-        wdata[i][ii] = data[i][ii].c_str();
+        wdata.push_back(data[i][ii].c_str());
       }
     }
-    dataset->write(wdata, datatype);
-
+    dataset->write(wdata.data(), datatype);
+    
     // Close all objects.
     delete dataspace;
     delete dataset;
