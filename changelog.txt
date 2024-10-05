@@ -69,3 +69,4 @@
 2024-10-02 working on reading/saving ccx core data into .cub
 2024-10-04 working on reading/saving ccx core data into .cub
 2024-10-04 new method to get the component version from the core
+2024-10-05 working on reading/saving ccx core data into .cub

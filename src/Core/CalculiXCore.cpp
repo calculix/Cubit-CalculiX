@@ -564,7 +564,7 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.createGroup("Cubit-CalculiX/Core");
     //Blocks
     cubTool.createGroup("Cubit-CalculiX/Blocks");
-    cubTool.C_write_dataset_int_rank_2("blocks_data","Cubit-CalculiX/Blocks", cb->blocks_data);
+    cubTool.write_dataset_int_rank_2("blocks_data","Cubit-CalculiX/Blocks", cb->blocks_data);
     //Materials
     cubTool.createGroup("Cubit-CalculiX/Materials");
     //Sections

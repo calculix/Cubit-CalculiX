@@ -21,7 +21,6 @@ public:
   bool read_dataset_int_rank_2(std::string name, std::string groupname, std::vector<std::vector<int>> *data); // read dataset
   bool write_dataset_int_rank_1(std::string name, std::string groupname, std::vector<int> data); // create dataset
   bool write_dataset_int_rank_2(std::string name, std::string groupname, std::vector<std::vector<int>> data); // create dataset
-  bool C_write_dataset_int_rank_2(std::string name, std::string groupname, std::vector<std::vector<int>> data); // create dataset
   //double
 
   //string

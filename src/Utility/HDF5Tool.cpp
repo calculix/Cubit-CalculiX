@@ -212,37 +212,33 @@ bool HDF5Tool::write_dataset_int_rank_2(std::string name, std::string groupname,
     // Write the data to the dataset using default memory space, file
     // space, and transfer properties.
     
-    
-    #ifdef WIN32
-      int** wdata = new int*[dims[0]];
-      for (int i = 0; i < dims[0]; i++) 
-      {
-        wdata[i] = new int[dims[1]];
-      }
-    #else
-      int wdata[dims[0]][dims[1]]; // buffer for data to write
-    #endif
+    //int wdata[dims[0]][dims[1]]; // buffer for data to write
+    int *wdata = new int[dims[0]*dims[1]];
     
     for (size_t i = 0; i < data.size(); i++)
     {
       for (size_t ii = 0; ii < data[i].size(); ii++)
       {
-        wdata[i][ii] = data[i][ii];
+        //wdata[i][ii] = data[i][ii];
+        wdata[dims[1]*i+ii] = data[i][ii];
       }
     }
+    
     dataset->write(wdata, H5::PredType::NATIVE_INT);
         
     // Close all objects.
     delete dataspace;
     delete dataset;
     group.close();
+
 /*
     std::string log = "";
     for (size_t i = 0; i < data.size(); i++)
     {
       for (size_t ii = 0; ii < data[i].size(); ii++)
       {
-        log.append(std::to_string(data[i][ii]) + " ");
+        log.append(std::to_string(data[i][ii]) + "->");
+        log.append(std::to_string(wdata[i][ii]) + " ");
       }
       log.append("\n");
     }
@@ -265,90 +261,6 @@ bool HDF5Tool::write_dataset_int_rank_2(std::string name, std::string groupname,
 
   return true;
 }
-
-bool HDF5Tool::C_write_dataset_int_rank_2(std::string name, std::string groupname, std::vector<std::vector<int>> data)
-{
-  // Try block to detect exceptions raised by any of the calls inside it
-  try {
-    const int rank = 2;
-    if (data.size()==0)
-    {
-      return true;
-    }
-    if (data[0].size()==0)
-    {
-      return true;
-    }
-    // Turn off the auto-printing when failure occurs so that we can
-    // handle the errors appropriately
-    H5::Exception::dontPrint();
-
-    H5::Group group(this->file->openGroup(groupname.c_str()));
-    hsize_t dims[rank]; // dataset dimensions
-    dims[0]              = data.size();
-    dims[1]              = data[0].size();
-    H5::DataSpace *dataspace = new H5::DataSpace(rank, dims);
-    
-    H5::DataSet *dataset = new H5::DataSet(group.createDataSet(name.c_str(), H5::PredType::NATIVE_INT, *dataspace));
-
-    // Write the data to the dataset using default memory space, file
-    // space, and transfer properties.
-    
-    
-    #ifdef WIN32
-      int** wdata = new int*[dims[0]];
-      for (int i = 0; i < dims[0]; i++) 
-      {
-        wdata[i] = new int[dims[1]];
-      }
-    #else
-      int wdata[dims[0]][dims[1]]; // buffer for data to write
-    #endif
-    
-    for (size_t i = 0; i < data.size(); i++)
-    {
-      for (size_t ii = 0; ii < data[i].size(); ii++)
-      {
-        wdata[i][ii] = data[i][ii];
-      }
-    }
-    //dataset->write(wdata, H5::PredType::NATIVE_INT);
-    H5Dwrite (dataset->getId(), H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, data.data());
-        
-    // Close all objects.
-    delete dataspace;
-    delete dataset;
-    group.close();
-/*
-    std::string log = "";
-    for (size_t i = 0; i < data.size(); i++)
-    {
-      for (size_t ii = 0; ii < data[i].size(); ii++)
-      {
-        log.append(std::to_string(data[i][ii]) + " ");
-      }
-      log.append("\n");
-    }
-    PRINT_INFO("%s", log.c_str());
-*/
-    return true;
-  } // end of try block
-
-  // catch failure caused by the H5File operations
-  catch (H5::FileIException error) {
-      error.printErrorStack();
-      return false;
-  }
-
-  // catch failure caused by the DataSet operations
-  catch (H5::DataSetIException error) {
-      error.printErrorStack();
-      return false;
-  }
-
-  return true;
-}
-
 
 bool HDF5Tool::read_dataset_string_rank_2(std::string name, std::string groupname, std::vector<std::vector<std::string>> *data)
 {
@@ -413,7 +325,7 @@ bool HDF5Tool::read_dataset_string_rank_2(std::string name, std::string groupnam
       std::vector<std::string> tmp;
       for (size_t ii = 0; ii < dims[1]; ii++)
       { 
-        tmp.push_back(std::to_string(rdata[i][ii]));
+        tmp.push_back(rdata[i][ii]);
       }
       data->push_back(tmp);
     }
