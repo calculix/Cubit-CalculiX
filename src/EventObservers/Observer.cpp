@@ -33,3 +33,19 @@ void Observer::fetch_comp(CalculiXComp *CalculiXComp)
 {
   ccx_comp = CalculiXComp;
 }
+
+
+void Observer::notify_cub_file_read(std::string filename) 
+{
+  ccx_iface->core_read_cub(filename);
+}
+// Notification when a cub file is saved. The flag, is_tmp_file, is true when
+// the file is a temporary file being used by Cubit for some internal operation
+// (for example, undo).
+void Observer::notify_cub_file_saved(std::string filename, bool is_tmp_file) 
+{ 
+  if (!is_tmp_file)
+  {
+    ccx_iface->core_save_cub(filename);
+  }
+}

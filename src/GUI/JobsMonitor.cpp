@@ -43,6 +43,10 @@ JobsMonitor::JobsMonitor()
   pushButton_result_cgx->setFixedWidth(buttonWidth);
   boxLayout_window->addWidget(pushButton_result_cgx);
 
+  pushButton_result_load = new QPushButton();
+  pushButton_result_load->setText("load");
+  pushButton_result_load->setFixedWidth(buttonWidth);
+  boxLayout_window->addWidget(pushButton_result_load);
   
   pushButton_result_convert = new QPushButton();
   pushButton_result_convert->setText("convert");
@@ -85,6 +89,7 @@ JobsMonitor::JobsMonitor()
   QObject::connect(pushButton_run, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_run_clicked(bool)));
   QObject::connect(pushButton_kill, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_kill_clicked(bool)));
   QObject::connect(pushButton_result_cgx, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_result_cgx_clicked(bool)));
+  QObject::connect(pushButton_result_load, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_result_load_clicked(bool)));
   QObject::connect(pushButton_result_convert, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_result_convert_clicked(bool)));
   QObject::connect(pushButton_result_paraview, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_result_paraview_clicked(bool)));
   QObject::connect(pushButton_close, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_close_clicked(bool)));
@@ -193,11 +198,13 @@ void JobsMonitor::update()
       }
     }
     
+    /*
     if (std::stoi(job_data[3])==-1)
     {
       pushButton_run->setEnabled(true);
       pushButton_kill->setEnabled(false);
       pushButton_result_cgx->setEnabled(false);
+      pushButton_result_load->setEnabled(true);
       pushButton_result_convert->setEnabled(false);
       pushButton_result_paraview->setEnabled(false);
     }else if (std::stoi(job_data[3])==1)
@@ -205,6 +212,7 @@ void JobsMonitor::update()
       pushButton_run->setEnabled(false);
       pushButton_kill->setEnabled(true);
       pushButton_result_cgx->setEnabled(false);
+      pushButton_result_load->setEnabled(true);
       pushButton_result_convert->setEnabled(false);
       pushButton_result_paraview->setEnabled(false);
     }else if (std::stoi(job_data[3])>1)
@@ -212,6 +220,7 @@ void JobsMonitor::update()
       pushButton_run->setEnabled(true);
       pushButton_kill->setEnabled(false);
       pushButton_result_cgx->setEnabled(true);
+      pushButton_result_load->setEnabled(true);
       if (std::stoi(job_data[6])==-1)
       {
         pushButton_result_convert->setEnabled(true);
@@ -227,11 +236,19 @@ void JobsMonitor::update()
         pushButton_result_paraview->setEnabled(false);
       }
     }
+    */
+    pushButton_run->setEnabled(true);
+    pushButton_kill->setEnabled(true);
+    pushButton_result_cgx->setEnabled(true);
+    pushButton_result_load->setEnabled(true);
+    pushButton_result_convert->setEnabled(true);
+    pushButton_result_paraview->setEnabled(true);
   }else{
     this->setWindowTitle("Jobs Monitor");
     pushButton_run->setEnabled(false);
     pushButton_kill->setEnabled(false);
     pushButton_result_cgx->setEnabled(false);
+    pushButton_result_load->setEnabled(false);
     pushButton_result_convert->setEnabled(false);
     pushButton_result_paraview->setEnabled(false);
   }
@@ -247,38 +264,38 @@ void JobsMonitor::setJob(int job_id)
 void JobsMonitor::on_pushButton_run_clicked(bool)
 {
   std::string command = "ccx run job " + std::to_string(current_job_id);
-  //CubitInterface::cmd(command.c_str());
   ccx_iface->cmd(command);
 }
 
 void JobsMonitor::on_pushButton_kill_clicked(bool)
 {
   std::string command = "ccx kill job " + std::to_string(current_job_id);
-  //CubitInterface::cmd(command.c_str());
   ccx_iface->cmd(command);
 }
 
 void JobsMonitor::on_pushButton_result_cgx_clicked(bool)
 {
   std::string command = "ccx result cgx job " + std::to_string(current_job_id);
-  //CubitInterface::cmd(command.c_str());
+  ccx_iface->cmd(command);
+}
+
+void JobsMonitor::on_pushButton_result_load_clicked(bool)
+{
+  std::string command = "ccx result load job " + std::to_string(current_job_id);
   ccx_iface->cmd(command);
 }
 
 void JobsMonitor::on_pushButton_result_convert_clicked(bool)
 {
-  std::string command = "ccx result load job " + std::to_string(current_job_id);
-  //CubitInterface::cmd(command.c_str());
-  ccx_iface->cmd(command);
-  command = "ccx result convert job " + std::to_string(current_job_id);
-  //CubitInterface::cmd(command.c_str());
+  //std::string command = "ccx result load job " + std::to_string(current_job_id);
+  //ccx_iface->cmd(command);
+  std::string command = "ccx result convert job " + std::to_string(current_job_id);
   ccx_iface->cmd(command);
 }
 
 void JobsMonitor::on_pushButton_result_paraview_clicked(bool)
 {
   std::string command = "ccx result paraview job " + std::to_string(current_job_id);
-  //CubitInterface::cmd(command.c_str());
   ccx_iface->cmd(command);
 }
 

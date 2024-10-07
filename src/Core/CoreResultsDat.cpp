@@ -399,7 +399,7 @@ bool CoreResultsDat::read_parallel()
       }
 
       dat_array = this->split_line(datline);
-      int current_block_data_id = result_blocks.size()-1;
+      int current_block_data_id = int(result_blocks.size())-1;
       
       //first lets check if the mode is still valid
       this->check_mode(dat_array);
@@ -443,7 +443,7 @@ bool CoreResultsDat::read_parallel()
   progress[max_threads] = get_result_block_lines(dat_arrays);
 
   int loop_c = 0;
-  int number_of_result_blocks = dat_arrays.size();
+  int number_of_result_blocks = int(dat_arrays.size());
   /*
   while (number_of_result_blocks > 0)
   {
@@ -528,7 +528,7 @@ bool CoreResultsDat::read_parallel()
   progress[max_threads] = get_result_blocks_predefined();
 
   loop_c = 0;
-  number_of_result_blocks = result_blocks.size();
+  number_of_result_blocks = int(result_blocks.size());
   /*
   while (number_of_result_blocks > 0)
   {
@@ -583,7 +583,7 @@ bool CoreResultsDat::read_parallel()
 
   // sorting for faster search
   loop_c = 0;
-  number_of_result_blocks = result_block_c1_data.size();
+  number_of_result_blocks = int(result_block_c1_data.size());
   for (size_t i = 0; i < result_block_c1_data.size(); i++)
   {
     std::vector<int> tmp_c1;
@@ -613,7 +613,7 @@ bool CoreResultsDat::read_parallel()
     { 
       ReadThreads[i].join();
     }
-    number_of_result_blocks = number_of_result_blocks - ReadThreads.size();
+    number_of_result_blocks = number_of_result_blocks - int(ReadThreads.size());
     ++loop_c;
     ReadThreads.clear();
   }
@@ -1311,7 +1311,7 @@ int CoreResultsDat::get_result_block_lines(std::vector<std::vector<std::vector<s
   int lines = 0;
   for (size_t i = 0; i < result_block_lines.size(); i++)
   {
-    lines = lines + result_block_lines[i].size();
+    lines = lines + int(result_block_lines[i].size());
   }
   return lines;
 }

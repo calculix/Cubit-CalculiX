@@ -13,6 +13,7 @@ public:
   ~CalculiXCoreInterface();
 	
   bool cmd(std::string cmd); // executes a cubit command with appending to the history
+  std::string get_version(); // gets the component version
   bool set_use_ccx_autocleanup(bool bool_use);
   bool set_use_ccx_logfile(bool bool_use);
   bool init_pythoninterface();
@@ -53,6 +54,8 @@ public:
   bool check_step_exists(int step_id); // check if step exists
   bool core_update(); // lets the core check for updates aka changes from the entities
   bool core_reset(); // reset the whole core to the init level
+  bool core_read_cub(std::string filename); // read core data from cub
+  bool core_save_cub(std::string filename); // save core data to cub
   std::vector<int> get_blocks(); // gets the block ids from core blocks
   int get_ccx_element_side(int element_type,int side); // gets the ccx element side for the given cubit element side
   bool add_sideset_face(std::string sideset_id, std::string sideset_name, std::string face, std::string element_type); // gets the sideset/elset name and face

@@ -1,6 +1,7 @@
 #include "ccxVersionCommand.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
+#include "CalculiXCoreInterface.hpp"
 
 ccxVersionCommand::ccxVersionCommand()
 {}
@@ -30,6 +31,7 @@ std::vector<std::string> ccxVersionCommand::get_help()
 
 bool ccxVersionCommand::execute(CubitCommandData &data)
 {
+  CalculiXCoreInterface ccx_iface;
   std::string cubit_version = CubitInterface::get_version();
   std::string build_number = CubitInterface::get_build_number();
   std::string revision_date = CubitInterface::get_revision_date();
@@ -39,7 +41,7 @@ bool ccxVersionCommand::execute(CubitCommandData &data)
 
   std::string output;
 
-  output = "\tCubit-CalculiX Version 2024.9\n";
+  output = "\tCubit-CalculiX Version " + ccx_iface.get_version() + "\n";
   PRINT_INFO("%s", output.c_str());
 
   output = "\tCubit Version " + cubit_version + " Build " + build_number + "\n";

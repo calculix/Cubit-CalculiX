@@ -12,6 +12,11 @@ bool CalculiXCoreInterface::cmd(std::string cmd)
   return ccx_core.cmd(cmd);
 }
 
+std::string CalculiXCoreInterface::get_version()
+{
+  return ccx_core.get_version();
+}
+
 bool CalculiXCoreInterface::set_use_ccx_autocleanup(bool bool_use)
 {
   ccx_core.use_ccx_autocleanup = bool_use;
@@ -223,6 +228,26 @@ bool CalculiXCoreInterface::core_update()
 bool CalculiXCoreInterface::core_reset()
 {
   if (ccx_core.reset())
+  {
+    return true;
+  }else{
+    return false;
+  }
+}
+
+bool CalculiXCoreInterface::core_read_cub(std::string filename)
+{
+  if (ccx_core.read_cub(filename))
+  {
+    return true;
+  }else{
+    return false;
+  }
+}
+
+bool CalculiXCoreInterface::core_save_cub(std::string filename)
+{
+  if (ccx_core.save_cub(filename))
   {
     return true;
   }else{

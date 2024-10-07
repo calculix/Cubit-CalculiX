@@ -1,0 +1,90 @@
+        SUMMARY OF THE HDF5 CONFIGURATION
+        =================================
+
+General Information:
+-------------------
+                   HDF5 Version: 1.12.1
+                  Configured on: 2021-07-08
+                  Configured by: Visual Studio 16 2019
+                    Host system: Windows-10.0.19041
+              Uname information: Windows
+                       Byte sex: little-endian
+             Installation point: C:/Program
+
+Compiling Options:
+------------------
+                     Build Mode: Release
+              Debugging Symbols: OFF
+                        Asserts: OFF
+                      Profiling: OFF
+             Optimization Level: OFF
+
+Linking Options:
+----------------
+                      Libraries: 
+  Statically Linked Executables: OFF
+                        LDFLAGS: /machine:x64
+                     H5_LDFLAGS: 
+                     AM_LDFLAGS: 
+                Extra libraries: 
+                       Archiver: C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/VC/Tools/MSVC/14.29.30037/bin/Hostx64/x64/lib.exe
+                         Ranlib: 
+
+Languages:
+----------
+                              C: YES
+                     C Compiler: C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/VC/Tools/MSVC/14.29.30037/bin/Hostx64/x64/cl.exe 19.29.30038.1
+                       CPPFLAGS: 
+                    H5_CPPFLAGS: 
+                    AM_CPPFLAGS: 
+                         CFLAGS:   /DWIN32 /D_WINDOWS 
+                      H5_CFLAGS: /W3;/wd4100;/wd4706;/wd4127
+                      AM_CFLAGS: 
+               Shared C Library: YES
+               Static C Library: YES
+
+                        Fortran: True
+               Fortran Compiler: C:/Program Files (x86)/IntelSWTools/compilers_and_libraries_2019/windows/bin/intel64/ifort.exe 19.0.5.20190815
+                  Fortran Flags: /W1 /nologo /fpp /libs:dll /threads
+               H5 Fortran Flags: /warn:all;/stand:f03;/free
+               AM Fortran Flags: 
+         Shared Fortran Library: YES
+         Static Fortran Library: YES
+
+                            C++: True
+                   C++ Compiler: C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/VC/Tools/MSVC/14.29.30037/bin/Hostx64/x64/cl.exe 19.29.30038.1
+                      C++ Flags:   
+                   H5 C++ Flags: /W3;/wd4100;/wd4706;/wd4127
+                   AM C++ Flags: 
+             Shared C++ Library: YES
+             Static C++ Library: YES
+
+                            JAVA: True
+                 JAVA Compiler: C:/jdk-16.0.1/bin/javac.exe 
+
+Features:
+---------
+                   Parallel HDF5: OFF
+Parallel Filtered Dataset Writes: 
+              Large Parallel I/O: 
+              High-level library: ON
+                Build HDF5 Tests: True
+                Build HDF5 Tools: ON
+                    Threadsafety: OFF (recursive RW locks: ) 
+             Default API mapping: v112
+  With deprecated public symbols: ON
+          I/O filters (external):  DEFLATE DECODE ENCODE
+                             MPE: 
+                      Direct VFD: 
+                      Mirror VFD: 
+              (Read-Only) S3 VFD: 
+            (Read-Only) HDFS VFD: 
+                         dmalloc: 
+  Packages w/ extra debug output: 
+                     API Tracing: OFF
+            Using memory checker: OFF
+ Memory allocation sanity checks: OFF
+          Function Stack Tracing: OFF
+                Use file locking: best-effort
+       Strict File Format Checks: OFF
+    Optimization Instrumentation: 

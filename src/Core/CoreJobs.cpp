@@ -144,7 +144,7 @@ bool CoreJobs::add_job(int job_id, std::string name, std::string filepath)
   std::vector<std::string> tmp_output_console;
   output_console.push_back(tmp_output_console);
   std::vector<std::string> tmp_cvg;
-  cvg.push_back(tmp_output_console);
+  cvg.push_back(tmp_cvg);
   std::vector<std::string> tmp_sta;
   sta.push_back(tmp_sta);
   
@@ -715,8 +715,8 @@ bool CoreJobs::check_jobs()
   #ifdef _WIN32
     std::string log;
     CubitString output;
-    int ProcessPipe_data_id;
-    int PipePID;
+    //int ProcessPipe_data_id;
+    //int PipePID;
   
     for (size_t i = 0; i < jobs_data.size(); i++)
     {
@@ -928,7 +928,7 @@ bool CoreJobs::result_cgx_job(int job_id)
   job_data_id = get_jobs_data_id_from_job_id(job_id);
   if (job_data_id != -1)
   {    
-    if (std::stoi(jobs_data[job_data_id][3])>1)
+    //if (std::stoi(jobs_data[job_data_id][3])>1)
     {
       filepath = jobs_data[job_data_id][1] + ".frd";
       #ifdef WIN32
@@ -981,7 +981,8 @@ bool CoreJobs::result_paraview_job(int job_id)
   job_data_id = get_jobs_data_id_from_job_id(job_id);
   if (job_data_id != -1)
   { 
-    if ((std::stoi(jobs_data[job_data_id][3])>1) && (jobs_data[job_data_id][6] == "1"))
+    //if ((std::stoi(jobs_data[job_data_id][3])>1) && (jobs_data[job_data_id][6] == "1"))
+    if ((jobs_data[job_data_id][6] == "1"))
     { 
       #ifdef WIN32
         filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".000002.vtpc"; // if more than one file
@@ -1020,7 +1021,8 @@ bool CoreJobs::result_paraview_job(int job_id)
       //log.append(shellstr +  " \n");
       PRINT_INFO("%s", log.c_str());
     }
-    if ((std::stoi(jobs_data[job_data_id][3])>1) && (jobs_data[job_data_id][6] == "2"))
+    //if ((std::stoi(jobs_data[job_data_id][3])>1) && (jobs_data[job_data_id][6] == "2"))
+    if ((jobs_data[job_data_id][6] == "2"))
     {      
       #ifdef WIN32
         filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".vtu";

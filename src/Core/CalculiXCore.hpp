@@ -8,7 +8,6 @@
 #include <QList>
 #include <QWidget>
 
-
 class CoreBlocks;
 class CoreMaterials;
 class CoreSections;
@@ -51,15 +50,19 @@ public:
   bool bool_init_pythoninterface = false;
   bool use_ccx_logfile = false;
   bool use_ccx_autocleanup = true;
+  std::string version = "2024.10";
   std::vector<std::vector<std::string>> sideset_face_data;
 
   bool cmd(std::string cmd); // executes a cubit command with appending to the history
+  std::string get_version(); // gets the component version
   bool print_to_log(std::string str_log);
   bool init(); // init all core objects
   bool init2(); // init material core and interfaces
   bool init_pythoninterface(); // init python interface
   bool update(); // updates everything to catch changes in the entities
   bool reset(); // delete all data and init new
+  bool read_cub(std::string filename); // read core data from cub
+  bool save_cub(std::string filename); // save core data to cub
   std::string autocleanup(); // cleans up the core data
   std::string print_data();
   bool export_to_csv(std::string path_and_name, std::vector<std::string> header, std::vector<std::vector<double>> data,bool overwrite); // exports the data to a .csv file, with the header

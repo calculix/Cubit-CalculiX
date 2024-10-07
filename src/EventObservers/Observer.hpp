@@ -35,6 +35,10 @@ public:
   void notify_model_reset();
   void notify_command_complete();
   void fetch_comp(CalculiXComp *CalculiXComp);
+
+  //observe saving and loading of cub files
+  void notify_cub_file_read(std::string filename);
+  void notify_cub_file_saved(std::string filename, bool is_tmp_file);
 };
 
 #endif // OBSERVER_HPP

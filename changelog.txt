@@ -60,3 +60,15 @@
 2024-09-08 working on job monitor dat tab
 2024-09-09 csv export for dat
 2024-09-09 working on dat plot
+######### ------  Release 2024.9
+
+2024-09-27 working on reading/saving ccx core data into .cub
+2024-09-28 working on reading/saving ccx core data into .cub
+2024-09-29 working on reading/saving ccx core data into .cub
+2024-10-01 working on reading/saving ccx core data into .cub
+2024-10-02 working on reading/saving ccx core data into .cub
+2024-10-04 working on reading/saving ccx core data into .cub
+2024-10-04 new method to get the component version from the core
+2024-10-05 working on reading/saving ccx core data into .cub
+2024-10-05 found autocleanup issue on windows
+2024-10-07 fixed autocleanup issue on windows
