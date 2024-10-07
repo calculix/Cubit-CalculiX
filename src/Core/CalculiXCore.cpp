@@ -402,9 +402,18 @@ bool CalculiXCore::reset()
 
 bool CalculiXCore::read_cub(std::string filename)
 {
-  std::string log = "Reading Cubit-CalculiX data from \"" + filename + "\"\n";
+  std::string log = "";
+
+  log = "Reading Cubit-CalculiX data from \"" + filename + "\"\n";
   PRINT_INFO("%s", log.c_str());
   
+  if (filename.substr(filename.size() - 4) == ".cub")
+  {
+    log = "Reading from a .cub not supported. Please save your data in a .cub5 file.\n";
+    PRINT_INFO("%s", log.c_str());
+    return false;
+  }
+
   HDF5Tool cubTool(filename);
  
   if (!cubTool.nameExists("Cubit-CalculiX"))
@@ -563,6 +572,13 @@ bool CalculiXCore::save_cub(std::string filename)
 {
   std::string log = "Saving Cubit-CaluliX data to \"" + filename + "\"\n";
   PRINT_INFO("%s", log.c_str());
+
+  if (filename.substr(filename.size() - 4) == ".cub")
+  {
+    log = "Writing to a .cub not supported. Please save your data in a .cub5 file.\n";
+    PRINT_INFO("%s", log.c_str());
+    return false;
+  }
 
   HDF5Tool cubTool(filename);
 
