@@ -543,6 +543,17 @@ bool CalculiXCore::read_cub(std::string filename)
     
     log = "Finished reading Cubit-CalculiX data from \"" + filename + "\"\n";
     PRINT_INFO("%s", log.c_str());
+
+    // check data with autocleanup
+    if (use_ccx_autocleanup)
+    {
+      log = autocleanup();
+      if (log != "")
+      {
+        log.append("Something seems to be wrong with the model or save file import!!! \nNormally CCX Autocleanup shouldn't delete anything after loading from a save file.\n");
+        PRINT_INFO("%s", log.c_str());
+      }
+    }
   }
 
   return true;
@@ -1243,10 +1254,10 @@ std::string CalculiXCore::autocleanup()
     }
   }
   // HBCS
+  // Displacement 
   sub_data_ids = hbcs->get_bc_data_ids_from_bcs_id(0);
   for (size_t ii = sub_data_ids.size(); ii > 0; ii--)
   {
-    // Displacement 
     if (hbcs->bcs_data[sub_data_ids[ii-1]][1]==1)
     {
       if (!check_bc_exists(hbcs->bcs_data[sub_data_ids[ii-1]][2],4))
@@ -1257,7 +1268,11 @@ std::string CalculiXCore::autocleanup()
         hbcs->remove_bcs(0, 1, {hbcs->bcs_data[sub_data_ids[ii-1]][2]});
       }
     }
-    // Temperature
+  }
+  // Temperature
+  sub_data_ids = hbcs->get_bc_data_ids_from_bcs_id(0);
+  for (size_t ii = sub_data_ids.size(); ii > 0; ii--)
+  {
     if (hbcs->bcs_data[sub_data_ids[ii-1]][1]==2)
     {
       if (!check_bc_exists(hbcs->bcs_data[sub_data_ids[ii-1]][2],5))
@@ -1275,10 +1290,10 @@ std::string CalculiXCore::autocleanup()
   { 
     sub_bool = false;
     // STEP LOADS
+    // Force 
     sub_data_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[i-1][5]);
     for (size_t ii = sub_data_ids.size(); ii > 0; ii--)
     {
-      // Force 
       if (steps->loads_data[sub_data_ids[ii-1]][1]==1)
       {
         if (!check_bc_exists(steps->loads_data[sub_data_ids[ii-1]][2],6))
@@ -1289,7 +1304,11 @@ std::string CalculiXCore::autocleanup()
           steps->remove_loads(steps->steps_data[i-1][0], 1, {steps->loads_data[sub_data_ids[ii-1]][2]});
         }
       }
-      // Pressure
+    }
+    // Pressure
+    sub_data_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[i-1][5]);
+    for (size_t ii = sub_data_ids.size(); ii > 0; ii--)
+    {
       if (steps->loads_data[sub_data_ids[ii-1]][1]==2)
       {
         if (!check_bc_exists(steps->loads_data[sub_data_ids[ii-1]][2],7))
@@ -1300,7 +1319,11 @@ std::string CalculiXCore::autocleanup()
           steps->remove_loads(steps->steps_data[i-1][0], 2, {steps->loads_data[sub_data_ids[ii-1]][2]});
         }
       }
-      // Heatflux
+    }
+    // Heatflux
+    sub_data_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[i-1][5]);
+    for (size_t ii = sub_data_ids.size(); ii > 0; ii--)
+    {
       if (steps->loads_data[sub_data_ids[ii-1]][1]==3)
       {
         if (!check_bc_exists(steps->loads_data[sub_data_ids[ii-1]][2],8))
@@ -1311,7 +1334,11 @@ std::string CalculiXCore::autocleanup()
           steps->remove_loads(steps->steps_data[i-1][0], 3, {steps->loads_data[sub_data_ids[ii-1]][2]});
         }
       }
-      // Gravity
+    }
+    // Gravity
+    sub_data_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[i-1][5]);
+    for (size_t ii = sub_data_ids.size(); ii > 0; ii--)
+    {
       if (steps->loads_data[sub_data_ids[ii-1]][1]==4)
       {
         if (!check_bc_exists(steps->loads_data[sub_data_ids[ii-1]][2],9))
@@ -1322,7 +1349,11 @@ std::string CalculiXCore::autocleanup()
           steps->remove_loads(steps->steps_data[i-1][0], 4, {steps->loads_data[sub_data_ids[ii-1]][2]});
         }
       }
-      // Centrifugal
+    }
+    // Centrifugal
+    sub_data_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[i-1][5]);
+    for (size_t ii = sub_data_ids.size(); ii > 0; ii--)
+    {
       if (steps->loads_data[sub_data_ids[ii-1]][1]==5)
       {
         if (!check_bc_exists(steps->loads_data[sub_data_ids[ii-1]][2],10))
@@ -1336,10 +1367,10 @@ std::string CalculiXCore::autocleanup()
     }
     
     // STEP BCS
+    // Displacement 
     sub_data_ids = steps->get_bc_data_ids_from_bcs_id(steps->steps_data[i-1][6]);
     for (size_t ii = sub_data_ids.size(); ii > 0; ii--)
-    {
-      // Displacement 
+    { 
       if (steps->bcs_data[sub_data_ids[ii-1]][1]==1)
       {
         if (!check_bc_exists(steps->bcs_data[sub_data_ids[ii-1]][2],4))
@@ -1350,7 +1381,11 @@ std::string CalculiXCore::autocleanup()
           steps->remove_bcs(steps->steps_data[i-1][0], 1, {steps->bcs_data[sub_data_ids[ii-1]][2]});
         }
       }
-      // Temperature
+    }
+    // Temperature
+    sub_data_ids = steps->get_bc_data_ids_from_bcs_id(steps->steps_data[i-1][6]);
+    for (size_t ii = sub_data_ids.size(); ii > 0; ii--)
+    {
       if (steps->bcs_data[sub_data_ids[ii-1]][1]==2)
       {
         if (!check_bc_exists(steps->bcs_data[sub_data_ids[ii-1]][2],5))
