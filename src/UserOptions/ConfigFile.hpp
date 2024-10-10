@@ -18,10 +18,13 @@ class ConfigFile
   void clear();
   void read_entry(std::string option, QString &value);
   void read_num_entry(std::string option, int &value);
+  void read_bool_entry(std::string option, bool &value);
   void write_entry(std::string option, QString value);
   void write_num_entry(std::string option, int value);
+  void write_bool_entry(std::string option, bool value);
   QString standard_entry(std::string option);
   int standard_num_entry(std::string option);
+  bool standard_bool_entry(std::string option);
 };
 
 #endif // CONFIGFILE_HPP

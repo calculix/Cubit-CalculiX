@@ -21,6 +21,7 @@ UserOptionsPanel::UserOptionsPanel(QWidget *parent) :
   HBoxLayout_5 = new QHBoxLayout();
   HBoxLayout_6 = new QHBoxLayout();
   HBoxLayout_7 = new QHBoxLayout();
+  HBoxLayout_8 = new QHBoxLayout();
   label_1 = new QLabel();
   label_2 = new QLabel();
   label_3 = new QLabel();
@@ -28,6 +29,7 @@ UserOptionsPanel::UserOptionsPanel(QWidget *parent) :
   label_5 = new QLabel();
   label_6 = new QLabel();
   label_7 = new QLabel();
+  label_8 = new QLabel();
   label_1->setFixedWidth(labelWidth);
   label_2->setFixedWidth(labelWidth);
   label_3->setFixedWidth(labelWidth);
@@ -35,6 +37,7 @@ UserOptionsPanel::UserOptionsPanel(QWidget *parent) :
   label_5->setFixedWidth(labelWidth);
   label_6->setFixedWidth(labelWidth);
   label_7->setFixedWidth(labelWidth);
+  label_8->setFixedWidth(labelWidth);
   lineEdit_1 = new QLineEdit();
   lineEdit_2 = new QLineEdit();
   lineEdit_3 = new QLineEdit();
@@ -42,6 +45,7 @@ UserOptionsPanel::UserOptionsPanel(QWidget *parent) :
   lineEdit_5 = new QLineEdit();
   lineEdit_6 = new QLineEdit();
   lineEdit_7 = new QLineEdit();
+  checkBox_8 = new QCheckBox();
 
   // Layout
   GridLayout->addLayout(VBoxLayout,0,0, Qt::AlignTop);
@@ -52,6 +56,7 @@ UserOptionsPanel::UserOptionsPanel(QWidget *parent) :
   VBoxLayout->addLayout(HBoxLayout_5);
   VBoxLayout->addLayout(HBoxLayout_6);
   VBoxLayout->addLayout(HBoxLayout_7);
+  VBoxLayout->addLayout(HBoxLayout_8);
   VBoxLayout->addItem(vertical_spacer);
 
   HBoxLayout_1->addWidget(label_1);
@@ -68,6 +73,8 @@ UserOptionsPanel::UserOptionsPanel(QWidget *parent) :
   HBoxLayout_6->addWidget(lineEdit_6);
   HBoxLayout_7->addWidget(label_7);
   HBoxLayout_7->addWidget(lineEdit_7);
+  HBoxLayout_8->addWidget(label_8);
+  HBoxLayout_8->addWidget(checkBox_8);
 
   isInitialized = true;
 }
@@ -84,6 +91,7 @@ void UserOptionsPanel::refresh_settings()
   label_5->setText(ccx_uo.mPathParaViewName);
   label_6->setText(ccx_uo.mPathIconsName);
   label_7->setText(ccx_uo.mPathPythonInterfaceName);
+  label_8->setText(ccx_uo.mSaveLoadedResultsName);
 
   lineEdit_1->setText(ccx_uo.mPathSolver);
   lineEdit_2->setText(QString::number(ccx_uo.mSolverThreads));
@@ -92,6 +100,8 @@ void UserOptionsPanel::refresh_settings()
   lineEdit_5->setText(ccx_uo.mPathParaView);
   lineEdit_6->setText(ccx_uo.mPathIcons);
   lineEdit_7->setText(ccx_uo.mPathPythonInterface);
+  checkBox_8->setChecked(ccx_uo.mSaveLoadedResults);
+
 }
 
 void UserOptionsPanel::save_settings()
@@ -103,4 +113,5 @@ void UserOptionsPanel::save_settings()
   ccx_uo.mPathParaView = lineEdit_5->text();
   ccx_uo.mPathIcons = lineEdit_6->text();
   ccx_uo.mPathPythonInterface = lineEdit_7->text();
+  ccx_uo.mSaveLoadedResults = checkBox_8->isChecked();
 }
