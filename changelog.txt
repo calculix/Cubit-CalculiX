@@ -73,3 +73,4 @@
 2024-10-05 found autocleanup issue on windows
 2024-10-07 fixed autocleanup issue on windows
 2024-10-10 working on reading/saving ccx core data into .cub
+2024-10-11 working on reading/saving ccx core data into .cub
