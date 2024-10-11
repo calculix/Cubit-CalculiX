@@ -422,6 +422,14 @@ bool CalculiXCore::read_cub(std::string filename)
     PRINT_INFO("%s", log.c_str());
     return true;
   }else{
+    //General
+    std::vector<std::string> general;
+    cubTool.read_dataset_string_rank_1("general","Cubit-CalculiX", general);
+    if (general.size()>0)
+    {
+      log = "Save file was created with Cubit-CalculiX " + general[0] + "\n";
+      PRINT_INFO("%s", log.c_str());
+    }
     //Blocks
     cubTool.read_dataset_int_rank_2("blocks_data","Cubit-CalculiX/Blocks", cb->blocks_data);
     //Sections
@@ -649,88 +657,133 @@ bool CalculiXCore::read_cub(std::string filename)
         }        
       }
     }
-/*
+
     for (size_t i = 0; i < results->dat_data.size(); i++)
     {
       int job_id = results->dat_data[i].job_id;
       std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(job_id) + "/";
-      cubTool.createGroup(group.c_str());
-      cubTool.write_dataset_int_rank_2("result_blocks",group.c_str(), results->dat_data[i].result_blocks);
-      cubTool.write_dataset_double_rank_1("total_times",group.c_str(), results->dat_data[i].total_times);
-      if (results->dat_data[i].result_block_components.size()>0)
+      std::string subgroup = group;
+      if (cubTool.nameExists(group.c_str()))
       {
-        std::string subgroup = group + "result_block_components/";
-        cubTool.createGroup(subgroup.c_str());
-        for (size_t ii = 0; ii < results->dat_data[i].result_block_components.size(); ii++)
+        cubTool.read_dataset_int_rank_2("result_blocks",group.c_str(), results->dat_data[i].result_blocks);
+        cubTool.read_dataset_double_rank_1("total_times",group.c_str(), results->dat_data[i].total_times);
+        subgroup = group + "result_block_components/";
+        if (cubTool.nameExists(subgroup.c_str()))
         {
-          std::string dataset = std::to_string(ii);
-          cubTool.write_dataset_string_rank_1(dataset.c_str(),subgroup.c_str(), results->dat_data[i].result_block_components[ii]);
+          int ii = 0;
+          subgroup = group + "result_block_components/" + std::to_string(ii) +"/";
+          while (cubTool.nameExists(subgroup.c_str()))
+          {
+            std::string dataset = std::to_string(ii);
+            subgroup = group + "result_block_components/";
+            std::vector<std::string> tmp;
+            results->dat_data[i].result_block_components.push_back(tmp);
+            cubTool.read_dataset_string_rank_1(dataset.c_str(),subgroup.c_str(), results->dat_data[i].result_block_components[ii]);
+            ++ii;
+            subgroup = group + "result_block_components/" + std::to_string(ii) +"/";
+          }
         }
-      }
-      cubTool.write_dataset_string_rank_1("result_block_type",group.c_str(), results->dat_data[i].result_block_type);
-      cubTool.write_dataset_string_rank_1("result_block_set",group.c_str(), results->dat_data[i].result_block_set);
-      if (results->dat_data[i].result_block_data.size()>0)
-      {
-        std::string subgroup = group + "result_block_data/";
-        cubTool.createGroup(subgroup.c_str());
-        for (size_t ii = 0; ii < results->dat_data[i].result_block_data.size(); ii++)
+        cubTool.read_dataset_string_rank_1("result_block_type",group.c_str(), results->dat_data[i].result_block_type);
+        cubTool.read_dataset_string_rank_1("result_block_set",group.c_str(), results->dat_data[i].result_block_set);
+        subgroup = group + "result_block_data/";
+        if (cubTool.nameExists(subgroup.c_str()))
         {
-          std::string dataset = std::to_string(ii);
-          cubTool.write_dataset_double_rank_2(dataset.c_str(),subgroup.c_str(), results->dat_data[i].result_block_data[ii]);
+          int ii = 0;
+          subgroup = group + "result_block_data/" + std::to_string(ii) +"/";
+          while (cubTool.nameExists(subgroup.c_str()))
+          {
+            std::string dataset = std::to_string(ii);
+            subgroup = group + "result_block_data/";
+            std::vector<std::vector<double>> tmp;
+            results->dat_data[i].result_block_data.push_back(tmp);
+            cubTool.read_dataset_double_rank_2(dataset.c_str(),subgroup.c_str(), results->dat_data[i].result_block_data[ii]);
+            ++ii;
+            subgroup = group + "result_block_data/" + std::to_string(ii) +"/";
+          }
         }
-      }
-      if (results->dat_data[i].result_block_data.size()>0)
-      {
-        std::string subgroup = group + "result_block_c1_data/";
-        cubTool.createGroup(subgroup.c_str());
-        for (size_t ii = 0; ii < results->dat_data[i].result_block_c1_data.size(); ii++)
+        subgroup = group + "result_block_c1_data/";
+        if (cubTool.nameExists(subgroup.c_str()))
         {
-          std::string dataset = std::to_string(ii);
-          cubTool.write_dataset_int_rank_2(dataset.c_str(),subgroup.c_str(), results->dat_data[i].result_block_c1_data[ii]);
+          int ii = 0;
+          subgroup = group + "result_block_c1_data/" + std::to_string(ii) +"/";
+          while (cubTool.nameExists(subgroup.c_str()))
+          {
+            std::string dataset = std::to_string(ii);
+            subgroup = group + "result_block_c1_data/";
+            std::vector<std::vector<int>> tmp;
+            results->dat_data[i].result_block_c1_data.push_back(tmp);
+            cubTool.read_dataset_int_rank_2(dataset.c_str(),subgroup.c_str(), results->dat_data[i].result_block_c1_data[ii]);
+            ++ii;
+            subgroup = group + "result_block_c1_data/" + std::to_string(ii) +"/";
+          }
         }
-      }
-      if (results->dat_data[i].buckle_data.size()>0)
-      {
-        std::string subgroup = group + "buckle_data/";
-        cubTool.createGroup(subgroup.c_str());
-        for (size_t ii = 0; ii < results->dat_data[i].buckle_data.size(); ii++)
+        subgroup = group + "buckle_data/";
+        if (cubTool.nameExists(subgroup.c_str()))
         {
-          std::string dataset = std::to_string(ii);
-          cubTool.write_dataset_double_rank_2(dataset.c_str(),subgroup.c_str(), results->dat_data[i].buckle_data[ii]);
+          int ii = 0;
+          subgroup = group + "buckle_data/" + std::to_string(ii) +"/";
+          while (cubTool.nameExists(subgroup.c_str()))
+          {
+            std::string dataset = std::to_string(ii);
+            subgroup = group + "buckle_data/";
+            std::vector<std::vector<double>> tmp;
+            results->dat_data[i].buckle_data.push_back(tmp);
+            cubTool.read_dataset_double_rank_2(dataset.c_str(),subgroup.c_str(), results->dat_data[i].buckle_data[ii]);
+            ++ii;
+            subgroup = group + "buckle_data/" + std::to_string(ii) +"/";
+          }
         }
-      }
-      if (results->dat_data[i].sorted_c1.size()>0)
-      {
-        std::string subgroup = group + "sorted_c1/";
-        cubTool.createGroup(subgroup.c_str());
-        for (size_t ii = 0; ii < results->dat_data[i].sorted_c1.size(); ii++)
+        subgroup = group + "sorted_c1/";
+        if (cubTool.nameExists(subgroup.c_str()))
         {
-          std::string dataset = std::to_string(ii);
-          cubTool.write_dataset_int_rank_1(dataset.c_str(),subgroup.c_str(), results->dat_data[i].sorted_c1[ii]);
+          int ii = 0;
+          subgroup = group + "sorted_c1/" + std::to_string(ii) +"/";
+          while (cubTool.nameExists(subgroup.c_str()))
+          {
+            std::string dataset = std::to_string(ii);
+            subgroup = group + "sorted_c1/";
+            std::vector<int> tmp;
+            results->dat_data[i].sorted_c1.push_back(tmp);
+            cubTool.read_dataset_int_rank_1(dataset.c_str(),subgroup.c_str(), results->dat_data[i].sorted_c1[ii]);
+            ++ii;
+            subgroup = group + "sorted_c1/" + std::to_string(ii) +"/";
+          }
         }
-      }
-      if (results->dat_data[i].sorted_c1.size()>0)
-      {
-        std::string subgroup = group + "sorted_result_block_c1_data_id/";
-        cubTool.createGroup(subgroup.c_str());
-        for (size_t ii = 0; ii < results->dat_data[i].sorted_result_block_c1_data_id.size(); ii++)
+        subgroup = group + "sorted_result_block_c1_data_id/";
+        if (cubTool.nameExists(subgroup.c_str()))
         {
-          std::string dataset = std::to_string(ii);
-          cubTool.write_dataset_int_rank_1(dataset.c_str(),subgroup.c_str(), results->dat_data[i].sorted_result_block_c1_data_id[ii]);
+          int ii = 0;
+          subgroup = group + "sorted_result_block_c1_data_id/" + std::to_string(ii) +"/";
+          while (cubTool.nameExists(subgroup.c_str()))
+          {
+            std::string dataset = std::to_string(ii);
+            subgroup = group + "sorted_result_block_c1_data_id/";
+            std::vector<int> tmp;
+            results->dat_data[i].sorted_result_block_c1_data_id.push_back(tmp);
+            cubTool.read_dataset_int_rank_1(dataset.c_str(),subgroup.c_str(), results->dat_data[i].sorted_result_block_c1_data_id[ii]);
+            ++ii;
+            subgroup = group + "sorted_result_block_c1_data_id/" + std::to_string(ii) +"/";
+          }
         }
-      }
-      if (results->dat_data[i].sorted_c1.size()>0)
-      {
-        std::string subgroup = group + "sorted_result_block_c1_data_type/";
-        cubTool.createGroup(subgroup.c_str());
-        for (size_t ii = 0; ii < results->dat_data[i].sorted_result_block_c1_data_type.size(); ii++)
+        subgroup = group + "sorted_result_block_c1_data_type/";
+        if (cubTool.nameExists(subgroup.c_str()))
         {
-          std::string dataset = std::to_string(ii);
-          cubTool.write_dataset_int_rank_1(dataset.c_str(),subgroup.c_str(), results->dat_data[i].sorted_result_block_c1_data_type[ii]);
+          int ii = 0;
+          subgroup = group + "sorted_result_block_c1_data_type/" + std::to_string(ii) +"/";
+          while (cubTool.nameExists(subgroup.c_str()))
+          {
+            std::string dataset = std::to_string(ii);
+            subgroup = group + "sorted_result_block_c1_data_type/";
+            std::vector<int> tmp;
+            results->dat_data[i].sorted_result_block_c1_data_type.push_back(tmp);
+            cubTool.read_dataset_int_rank_1(dataset.c_str(),subgroup.c_str(), results->dat_data[i].sorted_result_block_c1_data_type[ii]);
+            ++ii;
+            subgroup = group + "sorted_result_block_c1_data_type/" + std::to_string(ii) +"/";
+          }
         }
       }
     }
-*/
+
 
     //CustomLines
     cubTool.read_dataset_string_rank_2("customlines_data","Cubit-CalculiX/CustomLines", customlines->customlines_data);
@@ -771,6 +824,9 @@ bool CalculiXCore::save_cub(std::string filename)
   {
     //General
     cubTool.createGroup("Cubit-CalculiX");
+    std::vector<std::string> general;
+    general.push_back(this->version); //version info
+    cubTool.write_dataset_string_rank_1("general","Cubit-CalculiX", general);
     //Core
     cubTool.createGroup("Cubit-CalculiX/Core");
     //Blocks
@@ -962,7 +1018,7 @@ bool CalculiXCore::save_cub(std::string filename)
             cubTool.write_dataset_int_rank_1(dataset.c_str(),subgroup.c_str(), results->frd_data[i].sorted_result_node_ids[ii]);
           }
         }
-        if (results->frd_data[i].sorted_result_node_ids.size()>0)
+        if (results->frd_data[i].sorted_result_node_data_ids.size()>0)
         {
           std::string subgroup = group + "sorted_result_node_data_ids/";
           cubTool.createGroup(subgroup.c_str());
@@ -1002,7 +1058,7 @@ bool CalculiXCore::save_cub(std::string filename)
             cubTool.write_dataset_double_rank_2(dataset.c_str(),subgroup.c_str(), results->dat_data[i].result_block_data[ii]);
           }
         }
-        if (results->dat_data[i].result_block_data.size()>0)
+        if (results->dat_data[i].result_block_c1_data.size()>0)
         {
           std::string subgroup = group + "result_block_c1_data/";
           cubTool.createGroup(subgroup.c_str());
@@ -1032,7 +1088,7 @@ bool CalculiXCore::save_cub(std::string filename)
             cubTool.write_dataset_int_rank_1(dataset.c_str(),subgroup.c_str(), results->dat_data[i].sorted_c1[ii]);
           }
         }
-        if (results->dat_data[i].sorted_c1.size()>0)
+        if (results->dat_data[i].sorted_result_block_c1_data_id.size()>0)
         {
           std::string subgroup = group + "sorted_result_block_c1_data_id/";
           cubTool.createGroup(subgroup.c_str());
@@ -1042,7 +1098,7 @@ bool CalculiXCore::save_cub(std::string filename)
             cubTool.write_dataset_int_rank_1(dataset.c_str(),subgroup.c_str(), results->dat_data[i].sorted_result_block_c1_data_id[ii]);
           }
         }
-        if (results->dat_data[i].sorted_c1.size()>0)
+        if (results->dat_data[i].sorted_result_block_c1_data_type.size()>0)
         {
           std::string subgroup = group + "sorted_result_block_c1_data_type/";
           cubTool.createGroup(subgroup.c_str());
