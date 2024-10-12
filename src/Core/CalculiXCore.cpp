@@ -529,23 +529,18 @@ bool CalculiXCore::read_cub(std::string filename)
     //Jobs
     if (cubTool.read_dataset_string_rank_2("jobs_data","Cubit-CalculiX/Jobs", jobs->jobs_data))
     {
-      if (!cubTool.read_dataset_string_rank_2("output_console","Cubit-CalculiX/Jobs", jobs->output_console))
+      for (size_t i = 0; i < jobs->jobs_data.size(); i++)
       {
         std::vector<std::string> tmp_output_console;
         jobs->output_console.push_back(tmp_output_console);
-        jobs->jobs_data[jobs->jobs_data.size()-1][5] = std::to_string(jobs->output_console.size()-1);
-      }
-      if (!cubTool.read_dataset_string_rank_2("cvg","Cubit-CalculiX/Jobs", jobs->cvg))
-      {
         std::vector<std::string> tmp_cvg;
         jobs->cvg.push_back(tmp_cvg);
-        jobs->jobs_data[jobs->jobs_data.size()-1][7] = std::to_string(jobs->cvg.size()-1);
-      }
-      if (!cubTool.read_dataset_string_rank_2("sta","Cubit-CalculiX/Jobs", jobs->sta))
-      {
         std::vector<std::string> tmp_sta;
         jobs->sta.push_back(tmp_sta);
-        jobs->jobs_data[jobs->jobs_data.size()-1][8] = std::to_string(jobs->sta.size()-1);
+        std::string dataset = std::to_string(i);
+        cubTool.read_dataset_string_rank_1(dataset,"Cubit-CalculiX/Jobs/output_console", jobs->output_console[i]);
+        cubTool.read_dataset_string_rank_1(dataset,"Cubit-CalculiX/Jobs/cvg", jobs->cvg[i]);
+        cubTool.read_dataset_string_rank_1(dataset,"Cubit-CalculiX/Jobs/sta", jobs->sta[i]);
       }
     }
     //Results
@@ -951,10 +946,17 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_int_rank_2("fieldoutputs_data","Cubit-CalculiX/Steps", steps->fieldoutputs_data);
     //Jobs
     cubTool.createGroup("Cubit-CalculiX/Jobs");
+    cubTool.createGroup("Cubit-CalculiX/Jobs/output_console");
+    cubTool.createGroup("Cubit-CalculiX/Jobs/cvg");
+    cubTool.createGroup("Cubit-CalculiX/Jobs/sta");
     cubTool.write_dataset_string_rank_2("jobs_data","Cubit-CalculiX/Jobs", jobs->jobs_data);
-    cubTool.write_dataset_string_rank_2("output_console","Cubit-CalculiX/Jobs", jobs->output_console);
-    cubTool.write_dataset_string_rank_2("cvg","Cubit-CalculiX/Jobs", jobs->cvg);
-    cubTool.write_dataset_string_rank_2("sta","Cubit-CalculiX/Jobs", jobs->sta);
+    for (size_t i = 0; i < jobs->jobs_data.size(); i++)
+    {
+      std::string dataset = std::to_string(i);
+      cubTool.write_dataset_string_rank_1(dataset.c_str(),"Cubit-CalculiX/Jobs/output_console", jobs->output_console[i]);
+      cubTool.write_dataset_string_rank_1(dataset.c_str(),"Cubit-CalculiX/Jobs/cvg", jobs->cvg[i]);
+      cubTool.write_dataset_string_rank_1(dataset.c_str(),"Cubit-CalculiX/Jobs/sta", jobs->sta[i]);
+    }
     //Results
     cubTool.createGroup("Cubit-CalculiX/Results");
     cubTool.write_dataset_int_rank_2("results_data","Cubit-CalculiX/Results", results->results_data);

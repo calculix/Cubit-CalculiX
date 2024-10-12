@@ -435,10 +435,6 @@ bool CoreResultsVtkWriter::write_linked_parallel()
     this->link_dat_parallel();
   }
 
-  std::string log = "geht main loop\n";
-  PRINT_INFO("%s", log.c_str());
-  return false;
-
   progressbar->start(0,100,"Writing Results to ParaView Format - Linked Mode");
   this->t_start = std::chrono::high_resolution_clock::now();
 
@@ -4500,6 +4496,22 @@ bool CoreResultsVtkWriter::link_dat_parallel()
   int number_of_parts = nparts_dat;
   int loop_c = 0;
   int it=0;
+
+  //create space for every part
+  for (size_t i = 0; i < number_of_parts; i++)
+  {
+    std::vector<std::vector<int>> tmp_1;
+    std::vector<std::vector<double>> tmp_2;
+    std::vector<std::vector<std::vector<double>>> tmp_3;
+    std::vector<std::vector<int>> tmp_4;
+    std::vector<int> tmp_5;
+    set_ip_nodes.push_back(tmp_1);
+    set_ip_nodes_coords.push_back(tmp_2);
+    set_nodes_coords.push_back(tmp_3);
+    set_element_type_connectivity.push_back(tmp_4);
+    set_ipmax.push_back(tmp_5);
+  }
+  
   while (number_of_parts > 0)
   {
     if (number_of_parts > max_threads)
@@ -4535,10 +4547,6 @@ bool CoreResultsVtkWriter::link_dat_parallel()
     }
     ++loop_c;
   }
-
-  std::string log = "sub loop\n";
-  PRINT_INFO("%s", log.c_str());
-  return false;
 
   // link result blocks
   progressbar->start(0,100,"Linking DAT: Result Blocks");
@@ -4864,18 +4872,11 @@ bool CoreResultsVtkWriter::link_dat_nodes_elements_thread(int thread_part,std::v
       }
 
       // to skip rest and go for the next set
-      set_ip_nodes.push_back(ip_nodes);
-      set_ip_nodes_coords.push_back(ip_nodes_coords);
-      
-      std::string log = "thread\n";
-      log.append(std::to_string(ii)+ " \n");
-      PRINT_INFO("%s", log.c_str());
-      return false;
-
-      set_nodes_coords.push_back(tmp_set_nodes_coords);
-      
-      set_element_type_connectivity.push_back(tmp_set_element_type_connectivity);
-      set_ipmax.push_back(tmp_set_ipmax);
+      set_ip_nodes[thread_part-(nparts-nparts_dat)] = ip_nodes;
+      set_ip_nodes_coords[thread_part-(nparts-nparts_dat)] = ip_nodes_coords;
+      set_nodes_coords[thread_part-(nparts-nparts_dat)] = tmp_set_nodes_coords;
+      set_element_type_connectivity[thread_part-(nparts-nparts_dat)] = tmp_set_element_type_connectivity;
+      set_ipmax[thread_part-(nparts-nparts_dat)] = tmp_set_ipmax;
 
       ii = dat_all->result_blocks.size();
     }

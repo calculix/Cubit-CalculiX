@@ -832,7 +832,7 @@ bool HDF5Tool::write_dataset_string_rank_2(std::string name, std::string groupna
       }
     }
     dataset->write(wdata.data(), datatype);
-    
+
     // Close all objects.
     delete dataspace;
     delete dataset;
