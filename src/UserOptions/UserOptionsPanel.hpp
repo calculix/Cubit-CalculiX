@@ -16,6 +16,7 @@
 #include <QTableWidget>
 #include <QLineEdit>
 #include <QRadioButton>
+#include <QCheckBox>
 
 class UserOptionsPanel : public QWidget
 {
@@ -43,6 +44,7 @@ private:
   QVBoxLayout* VBoxLayout_5;
   QVBoxLayout* VBoxLayout_6;
   QVBoxLayout* VBoxLayout_7;
+  QVBoxLayout* VBoxLayout_8;
   QSpacerItem* vertical_spacer;
   QHBoxLayout* HBoxLayout_1;
   QHBoxLayout* HBoxLayout_2;
@@ -51,6 +53,7 @@ private:
   QHBoxLayout* HBoxLayout_5;
   QHBoxLayout* HBoxLayout_6;
   QHBoxLayout* HBoxLayout_7;
+  QHBoxLayout* HBoxLayout_8;
   QLabel* label_1;
   QLabel* label_2;
   QLabel* label_3;
@@ -58,6 +61,7 @@ private:
   QLabel* label_5;
   QLabel* label_6;
   QLabel* label_7;
+  QLabel* label_8;
   QLineEdit* lineEdit_1;
   QLineEdit* lineEdit_2;
   QLineEdit* lineEdit_3;
@@ -65,6 +69,7 @@ private:
   QLineEdit* lineEdit_5;
   QLineEdit* lineEdit_6;
   QLineEdit* lineEdit_7;
+  QCheckBox* checkBox_8;
 };
 
 #endif // USEROPTIONSPANEL_HPP

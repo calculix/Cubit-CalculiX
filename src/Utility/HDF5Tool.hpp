@@ -17,13 +17,20 @@ public:
   bool createGroup(std::string groupname);
 
   //int
+  bool read_dataset_int_rank_1(std::string name, std::string groupname, std::vector<int> &data); // read dataset
   bool read_dataset_int_rank_2(std::string name, std::string groupname, std::vector<std::vector<int>> &data); // read dataset
   bool write_dataset_int_rank_1(std::string name, std::string groupname, std::vector<int> data); // create dataset
   bool write_dataset_int_rank_2(std::string name, std::string groupname, std::vector<std::vector<int>> data); // create dataset
   //double
-
+  bool read_dataset_double_rank_1(std::string name, std::string groupname, std::vector<double> &data); // read dataset
+  bool read_dataset_double_rank_2(std::string name, std::string groupname, std::vector<std::vector<double>> &data); // read dataset
+  bool write_dataset_double_rank_1(std::string name, std::string groupname, std::vector<double> data); // create dataset
+  bool write_dataset_double_rank_2(std::string name, std::string groupname, std::vector<std::vector<double>> data); // create dataset
+  
   //string
+  bool read_dataset_string_rank_1(std::string name, std::string groupname, std::vector<std::string> &data); // read dataset
   bool read_dataset_string_rank_2(std::string name, std::string groupname, std::vector<std::vector<std::string>> &data); // read dataset
+  bool write_dataset_string_rank_1(std::string name, std::string groupname, std::vector<std::string> data); // create dataset
   bool write_dataset_string_rank_2(std::string name, std::string groupname, std::vector<std::vector<std::string>> data); // create dataset
 
   H5::H5File *file;

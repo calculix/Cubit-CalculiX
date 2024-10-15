@@ -144,6 +144,42 @@ void ConfigFile::read_num_entry(std::string option, int &value)
     }
 }
 
+void ConfigFile::read_bool_entry(std::string option, bool &value)
+{
+    std::ifstream input_file;
+    QString cfgvalue;
+    input_file.open(filepath.c_str());
+    if (input_file)
+    {
+        for( std::string line; std::getline( input_file, line ); )
+        {
+            if (line.find(option) != std::string::npos)
+            {
+                //std::cout << line.substr(option.length()+1) << "\n";
+                if (line.substr(option.length(),1)=="=")
+                {
+                    cfgvalue = QString::fromStdString(line.substr(option.length()+1));
+                    if (cfgvalue=="")
+                    {
+                        value = standard_bool_entry(option);
+                    }
+                    if (cfgvalue=="true")
+                    {
+                        value = true;
+                    }
+                    if (cfgvalue=="false")
+                    {
+                        value = false;
+                    }
+                }
+            }
+        }
+        input_file.close();
+    }else{
+        value = standard_bool_entry(option);
+    }
+}
+
 void ConfigFile::write_entry(std::string option, QString value)
 {
     std::ofstream output_file;
@@ -160,6 +196,18 @@ void ConfigFile::write_num_entry(std::string option, int value)
     output_file.close();
 }
 
+void ConfigFile::write_bool_entry(std::string option, bool value)
+{
+    std::ofstream output_file;
+    output_file.open(filepath.c_str(), std::ios_base::app);
+    if (value)
+    {
+        output_file << option << "=true\n";
+    }else{
+        output_file << option << "=false\n";
+    }
+    output_file.close();
+}
 
 QString ConfigFile::standard_entry(std::string option)
 {
@@ -220,6 +268,18 @@ int ConfigFile::standard_num_entry(std::string option)
         #else
             standard_value = 8;
         #endif
+    }
+    
+    return standard_value;
+}
+
+bool ConfigFile::standard_bool_entry(std::string option)
+{
+    bool standard_value = true;
+
+    if (option == "mSaveLoadedResults")
+    {
+        standard_value = true;
     }
     
     return standard_value;

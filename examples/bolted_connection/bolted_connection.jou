@@ -31,10 +31,10 @@ block 2 add vol 2
 block 3 add vol 3 to 5
 #block all element type hex20
 
-nodeset 1 add surface 4  
-nodeset 1 name "plate_1"
-nodeset 2 add surface 12  
-nodeset 2 name "plate_2"
+#nodeset 1 add surface 4  
+#nodeset 1 name "plate_1"
+#nodeset 2 add surface 12  
+#nodeset 2 name "plate_2"
 
 sideset 1 add surface 30  
 sideset 1 name "plate_1_top"
@@ -85,10 +85,10 @@ ccx modify temperature 2 keyword_type temp
 ccx modify temperature 1 keyword_type temp
 
 # plate bc
-create displacement name "plate_1_fix" on nodeset 1 dof 1 dof 2 dof 3 fix 0
-create displacement name "plate_2_fix" on nodeset 2 dof 1 dof 2 dof 3 fix 0
-create displacement name "plate_1_pull" on nodeset 1 dof 1 fix -0.35
-create displacement name "plate_2_pull" on nodeset 2 dof 1 fix 0.35
+create displacement name "plate_1_fix" on surface 4 dof 1 dof 2 dof 3 fix 0
+create displacement name "plate_2_fix" on surface 12 dof 1 dof 2 dof 3 fix 0
+create displacement name "plate_1_pull" on surface 4 dof 1 fix -0.35
+create displacement name "plate_2_pull" on surface 12 dof 1 fix 0.35
 
 ccx create historyoutput name "ho_1" element
 ccx modify historyoutput 1 element block 1 totals_yes
@@ -146,7 +146,3 @@ ccx create job name "bolted_connection"
 #ccx result load job 1
 #ccx use logfile core on
 #ccx result convert job 1 partial block 1 2 3
-
-
-
-

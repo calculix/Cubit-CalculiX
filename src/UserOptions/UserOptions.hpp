@@ -23,6 +23,8 @@ class UserOptions
     QString mPathIconsName;
     QString mPathPythonInterface;
     QString mPathPythonInterfaceName;
+    bool mSaveLoadedResults;
+    QString mSaveLoadedResultsName;
 };
 
 #endif // USEROPTIONS_HPP

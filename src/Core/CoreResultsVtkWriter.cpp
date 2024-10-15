@@ -434,95 +434,9 @@ bool CoreResultsVtkWriter::write_linked_parallel()
     //link dat
     this->link_dat_parallel();
   }
+
   progressbar->start(0,100,"Writing Results to ParaView Format - Linked Mode");
   this->t_start = std::chrono::high_resolution_clock::now();
-
-  /*
-
-  this->progress = std::vector<int>(max_threads + 1, 0);
-  progress[max_threads] = max_increments*nparts;
-
-  current_increment = 0;
-  //StopWatch StopWatch;
-
-  for (size_t i = 0; i < max_increments; i++)
-  {
-    //StopWatch.tick("Increment " + std::to_string(i) + " start");
-    filepath_vtu.clear();
-    part_ids.clear();
-
-    ++current_increment;
-    current_part = -1;
-    int loop_c = 0;
-    int number_of_frd = vec_frd.size();
-    int it=0;
-
-    current_offset_thread.clear();
-    linked_nodes_thread.clear();
-    linked_nodes_data_id_thread.clear();
-    rangeMin_thread.clear();
-    rangeMax_thread.clear();
-    
-    for (size_t ii = 0; ii < number_of_frd; ii++)
-    {
-      current_offset_thread.push_back({});
-      linked_nodes_thread.push_back({});
-      linked_nodes_data_id_thread.push_back({});
-      rangeMin_thread.push_back({});
-      rangeMax_thread.push_back({});
-    }
-    
-    while (number_of_frd > 0)
-    {
-      //StopWatch.tick("thread loop " + std::to_string(loop_c) + " start" );
-      if (number_of_frd > max_threads)
-      {
-        for (size_t ii = 0; ii < max_threads; ii++)
-        { 
-          std::string thread_filepath_vtu;
-          thread_filepath_vtu = filepath + "/" + filepath + "." + std::to_string(loop_c*max_threads+ii) + "." + this->get_increment() + ".vtu";
-          filepath_vtu.push_back(filepath + "." + std::to_string(loop_c*max_threads+ii) + "." + this->get_increment() + ".vtu");
-          part_ids.push_back(loop_c*max_threads+ii);
-          
-          WriteThreads.push_back(std::thread(&CoreResultsVtkWriter::write_vtu_linked_thread, this,loop_c*max_threads+ii,thread_filepath_vtu));
-        }
-      }else{
-        for (size_t ii = 0; ii < number_of_frd; ii++)
-        { 
-          std::string thread_filepath_vtu;
-          thread_filepath_vtu = filepath + "/" + filepath + "." + std::to_string(loop_c*max_threads+ii) + "." + this->get_increment() + ".vtu";
-          filepath_vtu.push_back(filepath + "." + std::to_string(loop_c*max_threads+ii) + "." + this->get_increment() + ".vtu");
-          part_ids.push_back(loop_c*max_threads+ii);
-
-          WriteThreads.push_back(std::thread(&CoreResultsVtkWriter::write_vtu_linked_thread, this,loop_c*max_threads+ii,thread_filepath_vtu));
-        }
-      }
-      //StopWatch.tick("thread loop end");
-      it=0;
-      while (WriteThreads.size()>0)
-      {
-        if (WriteThreads[it].joinable())
-        {
-          WriteThreads[it].join();
-          WriteThreads.erase(WriteThreads.begin() + it);
-          ++progress[it];
-          number_of_frd = number_of_frd - 1;
-          it=-1;
-        }
-        if (it==WriteThreads.size())
-        {
-          it=-1;
-        }
-        update_progressbar();
-        ++it;
-      }
-      ++loop_c; 
-    }
-    current_filepath_vtpc = filepath + "/" + filepath + "." + this->get_increment() + ".vtpc";
-    this->write_vtpc();
-    //StopWatch.tick("Increment end " + std::to_string(i));
-  }
-  */
 
   this->progress = std::vector<int>(max_threads + 1, 0);
   progress[max_threads] = max_increments*nparts;
@@ -3366,7 +3280,7 @@ bool CoreResultsVtkWriter::link_nodes_parallel()
   for (size_t i = 0; i < sideset_ids.size(); i++)
   { 
     tmp_part_node_ids.push_back(sideset_node_ids[i]);
-    std::sort(tmp_part_node_ids[block_ids.size()+sideset_ids.size()+i].begin(), tmp_part_node_ids[block_ids.size()+sideset_ids.size()+i].end());
+    std::sort(tmp_part_node_ids[block_ids.size()+nodeset_ids.size()+i].begin(), tmp_part_node_ids[block_ids.size()+nodeset_ids.size()+i].end());
   }
 
   progressbar->start(0,100,"Linking Nodes");
@@ -3440,56 +3354,6 @@ bool CoreResultsVtkWriter::link_nodes_parallel()
       progress[max_threads] = progress[max_threads] + int(tmp_part_node_ids[ii].size()) * int(data_ids.size());
     }
   }
-
-/*
-  current_increment = 0;
-  for (size_t i = 0; i < max_increments; i++)
-  {
-    ++current_increment;
-    std::vector<int> data_ids = this->get_result_blocks_data_ids_linked(); // get data ids for result blocks
-    for (size_t ii = 0; ii < data_ids.size(); ii++)
-    {
-      int number_of_parts = nparts - nparts_dat;
-      int loop_c = 0;
-      
-      while (number_of_parts > 0)
-      {
-        if (number_of_parts > max_threads)
-        {
-          for (size_t iii = 0; iii < max_threads; iii++)
-          {      
-            LinkThreads.push_back(std::thread(&CoreResultsVtkWriter::link_nodes_result_blocks_thread, this,loop_c*max_threads+iii,tmp_part_node_ids[loop_c*max_threads+iii],data_ids[ii],iii));
-          }
-        }else{
-          for (size_t iii = 0; iii < number_of_parts; iii++)
-          { 
-            LinkThreads.push_back(std::thread(&CoreResultsVtkWriter::link_nodes_result_blocks_thread, this,loop_c*max_threads+iii,tmp_part_node_ids[loop_c*max_threads+iii],data_ids[ii],iii));
-          }
-        }
-        // wait till all threads are finished
-        it=0;
-        while (LinkThreads.size()>0)
-        {
-          if (LinkThreads[it].joinable())
-          {
-            LinkThreads[it].join();
-            LinkThreads.erase(LinkThreads.begin() + it);
-            number_of_parts = number_of_parts - 1;
-            it=-1;
-          }
-          if (it==LinkThreads.size())
-          {
-            it=-1;
-          }
-          update_progressbar();
-          ++it;
-        }
-        ++loop_c; 
-      }
-    }
-  }
-  current_increment = 0;
-*/
 
   // create data structure before using threadpool
   current_increment = 0;
@@ -4632,6 +4496,22 @@ bool CoreResultsVtkWriter::link_dat_parallel()
   int number_of_parts = nparts_dat;
   int loop_c = 0;
   int it=0;
+
+  //create space for every part
+  for (size_t i = 0; i < number_of_parts; i++)
+  {
+    std::vector<std::vector<int>> tmp_1;
+    std::vector<std::vector<double>> tmp_2;
+    std::vector<std::vector<std::vector<double>>> tmp_3;
+    std::vector<std::vector<int>> tmp_4;
+    std::vector<int> tmp_5;
+    set_ip_nodes.push_back(tmp_1);
+    set_ip_nodes_coords.push_back(tmp_2);
+    set_nodes_coords.push_back(tmp_3);
+    set_element_type_connectivity.push_back(tmp_4);
+    set_ipmax.push_back(tmp_5);
+  }
+  
   while (number_of_parts > 0)
   {
     if (number_of_parts > max_threads)
@@ -4818,7 +4698,7 @@ bool CoreResultsVtkWriter::link_dat_nodes_elements_thread(int thread_part,std::v
             only_one_ip = false;
           }
         }
-        
+      
         for (size_t iii = 0; iii < dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]].size(); iii++)
         {
           ip = int(dat_all->result_block_data[dat_all->result_blocks[ii][4]][dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][iii][1]][1]);
@@ -4970,7 +4850,6 @@ bool CoreResultsVtkWriter::link_dat_nodes_elements_thread(int thread_part,std::v
           vec_frd[thread_part]->elements[vec_frd[thread_part]->elements.size()-1][2] = int(vec_frd[thread_part]->elements_connectivity.size())-1;
         }
       }
-
       // elements
       if (dat_all->result_block_c1_data[dat_all->result_blocks[ii][4]][0][2] == 1) // nodeset
       {
@@ -4991,12 +4870,13 @@ bool CoreResultsVtkWriter::link_dat_nodes_elements_thread(int thread_part,std::v
         }
         //this->stopwatch("elements elset ip");
       }
+
       // to skip rest and go for the next set
-      set_ip_nodes.push_back(ip_nodes);
-      set_ip_nodes_coords.push_back(ip_nodes_coords);
-      set_nodes_coords.push_back(tmp_set_nodes_coords);
-      set_element_type_connectivity.push_back(tmp_set_element_type_connectivity);
-      set_ipmax.push_back(tmp_set_ipmax);
+      set_ip_nodes[thread_part-(nparts-nparts_dat)] = ip_nodes;
+      set_ip_nodes_coords[thread_part-(nparts-nparts_dat)] = ip_nodes_coords;
+      set_nodes_coords[thread_part-(nparts-nparts_dat)] = tmp_set_nodes_coords;
+      set_element_type_connectivity[thread_part-(nparts-nparts_dat)] = tmp_set_element_type_connectivity;
+      set_ipmax[thread_part-(nparts-nparts_dat)] = tmp_set_ipmax;
 
       ii = dat_all->result_blocks.size();
     }

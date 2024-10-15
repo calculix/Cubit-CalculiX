@@ -216,6 +216,8 @@ void CalculiXComp::restore_settings()
   ccx_uo.mPathIconsName = "Path to Icons";
   config.read_entry("PathPythonInterface", ccx_uo.mPathPythonInterface);
   ccx_uo.mPathPythonInterfaceName = "Path to Python Interface";
+  config.read_bool_entry("SaveLoadedResults", ccx_uo.mSaveLoadedResults);
+  ccx_uo.mSaveLoadedResultsName = "Save loaded FRD and DAT data";
 }
 
 void CalculiXComp::save_settings()
@@ -230,6 +232,7 @@ void CalculiXComp::save_settings()
   config.write_entry("PathParaView", ccx_uo.mPathParaView);
   config.write_entry("PathIcons", ccx_uo.mPathIcons);
   config.write_entry("PathPythonInterface", ccx_uo.mPathPythonInterface);
+  config.write_bool_entry("SaveLoadedResults", ccx_uo.mSaveLoadedResults);
 }
 
 void CalculiXComp::load_options()
