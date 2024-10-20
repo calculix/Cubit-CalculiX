@@ -11,6 +11,7 @@ class ClaroViewMenu;
 #include <QSettings>
 #include <QHeaderView>
 
+class CalculiXCoreInterface;
 class ModelTree;
 class Highlight;
 class BlocksTree;
@@ -98,6 +99,7 @@ private:
   JobsTree *myJobsTree; //Jobs root item
   
   QSettings *settings;
+  CalculiXCoreInterface *ccx_iface;
 };
 
 #endif // CCXDOCKWINDOWMODELTREE

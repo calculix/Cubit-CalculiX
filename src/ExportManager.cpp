@@ -17,7 +17,7 @@ class ExportHandler : public ImportExportHandler
 public:
   ExportManager* mIO;
   ExportHandler(ExportManager* io)
-    : ImportExportHandler("mycomp"), mIO(io)
+    : ImportExportHandler("CalculiXComp"), mIO(io)
   {}
 
   void io_handler(const QString& fileName, const QString& filter)
@@ -47,7 +47,8 @@ void ExportManager::add_export_types()
 
     // Add my filters to the export dialog. Note that you can add multiple
     // export filters at once by separating the list with semicolons.
-    QString filter_names = "MyExport (*.me);;AnotherExport (*.ae)";
+    //QString filter_names = "MyExport (*.me);;AnotherExport (*.ae)";
+    QString filter_names = "CalculiX (*.inp)";
     mExportHandler->mFilters = filter_names;
     file_menu->add_export(mExportHandler);
   }
@@ -59,7 +60,7 @@ void ExportManager::remove_export_types()
   if(gui)
   {
     ClaroFileMenu *file_menu = gui->file_menu();
-    file_menu->remove_component_items("mycomp");
+    file_menu->remove_component_items("CalculiXComp");
   }
 }
 
@@ -77,12 +78,8 @@ void ExportManager::handle_export(const QString &filename, const QString &filter
 
   // Here we can do things specific to the export type, based on the filter
   // that was selected.
-  if(filter.contains("MyExport"))
+  if(filter.contains("CalculiX"))
   {
-    cw->print_data("MyExport is not implemented.\n");
-  }
-  else if(filter.contains("AnotherExport"))
-  {
-    cw->print_data("AnotherExport is not implemented.\n");
+    cw->print_data("CalculiX Export is not implemented. Use Command Line.\n");
   }
 }

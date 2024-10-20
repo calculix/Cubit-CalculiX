@@ -34,7 +34,6 @@ Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/
 ---
 
 # Key Features
-Definition of:
 - Elements Sets
 - Node Sets
 - Side Sets
@@ -59,7 +58,8 @@ Definition of:
 - Opening of Results with CGX or Paraview
 - Results can be viewed, plotted and exported to .csv
 - Displaying of loads and boundary conditions
-- Python Interface to query the result files. This can be used to run convergence studies or do mesh refinement based on the results. 
+- Python Interface to query the result files. This can be used to run convergence studies or do mesh refinement based on the results.
+- The calculix model data and the loaded frd and dat results will be saved and loaded automatically with the standard cubit fileformat .cub5
 
 # How to
 To get an overview of all new commands type
@@ -190,9 +190,10 @@ When choosing the totalincrement the related displacements will be used.
 ![projection of displacements](/readme_docs/projection_01.png?raw=true "projection of displacements")
 
 # known issues
+- See https://github.com/calculix/Cubit-CalculiX/issues for open issues. Not every issue is closed in the available binaries. Please look at the issue and release date.
 - Can not open results for Paraview 5.12.0 out of Cubit. Please use Paraview 5.11.* or a new Version with a fix. See https://gitlab.kitware.com/paraview/paraview/-/issues/22614
 
-- History Bug on Windows: Currently commands that will be send using the gui won't be recorded into the history tab. This has been fixed for Linux. In the current windows release (2024.8) are some symbols missing. So we have to wait onto the next release to fix this for windows too.
+- History Bug on Windows: Currently commands that will be send using the gui won't be recorded into the history tab. This has been fixed for Linux. In the current cubit windows release (2024.8) are some symbols missing. So we have to wait onto the next release to fix this for windows too.
 
 # todo list
 - documentation

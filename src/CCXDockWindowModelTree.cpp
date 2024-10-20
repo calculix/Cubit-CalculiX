@@ -2,6 +2,9 @@
 #include "Claro.hpp"
 #include "ClaroViewMenu.hpp"
 #include <iostream>
+
+#include "CalculiXCoreInterface.hpp"
+
 #include "ModelTree.hpp"
 #include "Highlight.hpp"
 #include "BlocksTree.hpp"
@@ -56,9 +59,11 @@ void CCXDockWindowModelTree::initialize()
   QString title;
   
   //std::vector<QString> dock_labels;
+
+  CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
   
   title = gui->get_title();
-  title = title + " -- with CalculiX";
+  title = title + " -- with Cubit-CalculiX " + QString::fromStdString(ccx_iface->get_version());
   //std::cout << title.toStdString();
   
   gui->set_title(title);

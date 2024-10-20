@@ -86,7 +86,8 @@ if (UNIX)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Icons/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Icons/)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Solver/CalculiX/Linux/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Solver/)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Postprocessor/CGX/Linux/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Postprocessor/CGX/)
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Postprocessor/ParaView/Linux/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Postprocessor/ParaView/)
+ # if missing -> please download paraview binaries from https://www.paraview.org/download/
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../../ParaView-5.13.1-MPI-Linux-Python3.10-x86_64/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Postprocessor/ParaView/)
 endif (UNIX)
 
 # copy missing libraries into build directory
