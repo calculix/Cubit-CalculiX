@@ -87,11 +87,11 @@ ccx create surfaceinteraction name "SurfaceInteraction1" linear slopek 80000 sig
 ccx create contactpair surfaceinteraction 1 surfacetosurface master 1 slave 2
 ccx modify surfaceinteraction 1 friction mu 0.1 lambda 40000
 
-create displacement on nodeset 2 dof 1 dof 2 dof 3 fix 0
-create displacement on nodeset 3 dof 1 dof 2 dof 3 fix 0
+create displacement on volume 2 dof 1 dof 2 dof 3 fix 0
+create displacement on vertex all in nodeset 3 dof 1 dof 2 dof 3 fix 0
 modify displacement 2 dof 1 fix 9.27
-create displacement on nodeset 4 dof 1 dof 2 dof 3 fix 0
-create displacement on nodeset 3 dof 1 dof 2 dof 3 fix 0
+create displacement on vertex all in nodeset 4 dof 1 dof 2 dof 3 fix 0
+create displacement on vertex all in nodeset 3 dof 1 dof 2 dof 3 fix 0
 modify displacement 4 dof 1 fix 10.3
 
 ccx create fieldoutput name "fo_node" node

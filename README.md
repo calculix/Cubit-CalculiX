@@ -1,7 +1,7 @@
 [![GitHub](https://badgen.net/badge/icon/github?icon=github&label)](https://github.com/calculix/Cubit-CalculiX)
 [![Github All Releases](https://img.shields.io/github/downloads/calculix/Cubit-CalculiX/total.svg)](https://github.com/calculix/Cubit-CalculiX/releases)
 <br/>
-# Cubit-CalculiX 2024.9
+# Cubit-CalculiX 2024.10
 Hey ho that´s the CalculiX Component for coreform cubit!
 
 Full Model definitions for CalculiX can be done with Cubit as Preprocessor.
@@ -13,8 +13,8 @@ The builds can be downloaded at our [website](https://www.maschinenbauer.at/open
 
 Or just use the links.
 
-[Windows Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2024.9/build_windows_2024.9.zip)
-[Linux Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2024.9/build_linux_2024.9.zip)
+[Windows Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2024.10/build_windows_2024.10.zip)
+[Linux Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2024.10/build_linux_2024.10.zip)
 
 This component was build with Cubit 2024.8! 
 Tested with Cubit 2024.8 on Windows 10 and Ubuntu 22.04
@@ -136,7 +136,7 @@ Restart Cubit.
 
 ![Add Component](/readme_docs/Setup_00.png?raw=true "Add Component")
 
-The Cubit Window should now show "Coreform Cubit 202x.x -- with CalculiX" in the Title.
+The Cubit Window should now show "Coreform Cubit 202x.x -- with Cubit-CalculiX 202x.x" in the Title.
 
 Now just enable the Model Tree
 
@@ -191,7 +191,6 @@ When choosing the totalincrement the related displacements will be used.
 
 # known issues
 - See https://github.com/calculix/Cubit-CalculiX/issues for open issues. Not every issue is closed in the available binaries. Please look at the issue and release date.
-- Can not open results for Paraview 5.12.0 out of Cubit. Please use Paraview 5.11.* or a new Version with a fix. See https://gitlab.kitware.com/paraview/paraview/-/issues/22614
 
 - History Bug on Windows: Currently commands that will be send using the gui won't be recorded into the history tab. This has been fixed for Linux. In the current cubit windows release (2024.8) are some symbols missing. So we have to wait onto the next release to fix this for windows too.
 
