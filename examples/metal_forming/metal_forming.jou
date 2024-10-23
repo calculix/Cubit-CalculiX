@@ -143,20 +143,20 @@ ccx create contactpair surfaceinteraction 1 surfacetosurface master 4 slave 1
 
 #bcs
 #blank
-create displacement name "blank" on nodeset 1 dof 1 dof 3 fix
+create displacement name "blank" on curve 2 dof 1 dof 3 fix
 #punch
-create displacement name 'punch_fix_rp1' on nodeset 5 dof 1 dof 2 dof 3 fix
-create displacement name 'punch_fix_rp2' on nodeset 6 dof 1 dof 2 dof 3 fix
-create displacement name 'punch_move_rp1' on nodeset 5  dof 2 fix -35
+create displacement name 'punch_fix_rp1' on vertex 68 dof 1 dof 2 dof 3 fix
+create displacement name 'punch_fix_rp2' on vertex 69 dof 1 dof 2 dof 3 fix
+create displacement name 'punch_move_rp1' on vertex 68  dof 2 fix -35
 modify displacement 4 dof 1 fix 0
 modify displacement 4 dof 3 fix 0
 #holder
-create displacement name 'holder_move_rp1' on nodeset 7 dof 2 fix -2.3e-3
-create displacement name 'holder_move_rp2' on nodeset 8 dof 1 dof 2 dof 3 fix
+create displacement name 'holder_move_rp1' on vertex 70 dof 2 fix -2.3e-3
+create displacement name 'holder_move_rp2' on vertex 71 dof 1 dof 2 dof 3 fix
 modify displacement 5 dof 1 fix 0
 modify displacement 5 dof 3 fix 0
 #die
-create displacement name 'die_fix' on nodeset 4 dof 1 dof 2 dof 3 fix
+create displacement name 'die_fix' on surface 20 21 22 dof 1 dof 2 dof 3 fix
 
 #outputs
 ccx create fieldoutput name "nout" node
@@ -201,3 +201,4 @@ ccx step 2 add fieldoutput 1 2 3
 
 ccx create job name "forming"
 #ccx run job 1
+

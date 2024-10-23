@@ -41,10 +41,10 @@ modify material "Alu" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
 #ccx create section shell block 1 material 1 thickness 2 offset 0
 ccx create section shell block 1 material 2 thickness 2 offset 0
 
-create force  on nodeset 2 force value 6e-3 direction 0 0 -1
+create force  on curve 2 force value 6e-3 direction 0 0 -1
 
-create displacement on nodeset 1 dof 1 dof 2 dof 3 dof 4 dof 5 dof 6 fix 0
-create displacement on nodeset 2 dof 1 dof 2 dof 4 dof 5 dof 6 fix 0
+create displacement on curve 1 dof 1 dof 2 dof 3 dof 4 dof 5 dof 6 fix 0
+create displacement on curve 2 dof 1 dof 2 dof 4 dof 5 dof 6 fix 0
 #modify displacement 2 dof 3 fix -5
 
 ccx create fieldoutput name "fo_1" node

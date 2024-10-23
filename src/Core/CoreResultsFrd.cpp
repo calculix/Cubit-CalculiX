@@ -606,7 +606,8 @@ bool CoreResultsFrd::read_parallel()
     log = "";
     int currentline = -1;
     int last_element_line = thread_ranges[max_threads-1][1];
-    bool new_result_block = true;
+    bool new_result_block = false;
+    bool first_nodal_data = true;
     while (frd)
     {
       std::getline(frd,frdline);
@@ -627,24 +628,28 @@ bool CoreResultsFrd::read_parallel()
         this->check_mode_by_key(this->keys[currentline]);
         
         if (current_read_mode == 3)
-        {
+        { 
           frd_array = this->split_line(frdline);
           this->read_parameter_header(frd_array);
           new_result_block = true;
+          first_nodal_data = true;
         } else if (current_read_mode == 4)
         {
           frd_array = this->split_line(frdline);
           if (frd_array[0] == "-5")
           {  
             this->read_nodal_result_block(frd_array);
-          }else{
             if (new_result_block)
             {
               new_result_block = false;
-              this->read_nodal_result_block_add_components(frd_array);
-
               std::vector<std::vector<std::string>> tmp_frd_array;
               frd_arrays.push_back(tmp_frd_array);
+            }
+          }else{
+            if (first_nodal_data)
+            {
+              first_nodal_data = false;
+              this->read_nodal_result_block_add_components(frd_array);
             }
             frd_arrays[frd_arrays.size()-1].push_back(frd_array);
           }
@@ -654,7 +659,15 @@ bool CoreResultsFrd::read_parallel()
         }
       }
     }
-    
+
+    if (result_block_components.size()!=frd_arrays.size())
+    {
+      std::string log = "Something went wrong while reading the headers! Reach out to devs!\n";
+      log.append("result_block_components.size() " + std::to_string(result_block_components.size()) + " != frd_arrays.size() " + std::to_string(frd_arrays.size()) + "\n");
+      PRINT_INFO("%s", log.c_str());
+      return false;
+    }
+
     int loop_c = 0;
     int number_of_result_blocks = int(frd_arrays.size());
     int max_number_of_result_blocks = int(frd_arrays.size());
@@ -1383,7 +1396,7 @@ bool CoreResultsFrd::read_nodal_result_block_thread(int result_block_data_id, in
       
       n_comp = int(result_block_components[result_block_data_id].size());
       std::vector<double> result_comp(n_comp);
-      
+
       for (size_t i = 0; i < n_comp; i++)
       {          
         if ((result_block_type[result_blocks[result_block_data_id][5]] == "STRESS") && (i > 5))
@@ -1428,6 +1441,7 @@ bool CoreResultsFrd::read_nodal_result_block_thread(int result_block_data_id, in
       result_block_node_data[result_block_data_id].push_back({node_id,result_block_node_data_id});
       
     }
+
     this->progress[thread_id] = this->progress[thread_id] + 1;
   }
 

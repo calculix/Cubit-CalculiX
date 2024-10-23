@@ -76,4 +76,6 @@
 2024-10-11 working on reading/saving ccx core data into .cub
 2024-10-12 bug fix crash vtk writer in parallel
 2024-10-12 working on reading/saving ccx core data into .cub
-
+2024-10-19 adding progressbar for saving and reading cub5
+2024-10-20 updating to paraview 5.13.1, due to github large file limit, we need to exclude paraview binaries from the repo, the need to be in a local directory for the build, look at cmake file
+2024-10-21 fixing bug in frd reader. in parallel some blocks without nodal results where skipped while reading the headers which resulted in a crash

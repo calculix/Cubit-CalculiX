@@ -94,7 +94,7 @@ for i in range(ref_max):
   cubit.cmd(f"ccx create job name 'mesh_refinement_{i+1}'")
   cubit.cmd(f"ccx run job {i+1}")
   cubit.cmd(f"ccx wait job {i+1}")
-  node_ids = ccx.frd_get_node_ids_between_limits(i+1,1,"ERROR","STR(%)",50,1000)
+  node_ids = ccx.frd_get_node_ids_between_values(i+1,1,"ERROR","STR(%)",50,1000)
   node_ids_list = ' '.join([str(id) for id in node_ids])
   cubit.cmd(f"refine node {node_ids_list} numsplit 1 bias 1.0 depth 1 smooth")
   cubit.cmd(f"volume 1 smooth scheme condition number beta 2 cpu 0.5")

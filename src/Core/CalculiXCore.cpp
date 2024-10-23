@@ -20,6 +20,7 @@
 #include "CubitMessage.hpp"
 #include "MeshExportInterface.hpp"
 #include "MaterialInterface.hpp"
+#include "ProgressTool.hpp"
 
 #include "CoreBlocks.hpp"
 #include "CoreMaterials.hpp"
@@ -403,6 +404,7 @@ bool CalculiXCore::reset()
 bool CalculiXCore::read_cub(std::string filename)
 {
   std::string log = "";
+  ProgressTool progressbar;
 
   log = "Reading Cubit-CalculiX data from \"" + filename + "\"\n";
   PRINT_INFO("%s", log.c_str());
@@ -422,6 +424,8 @@ bool CalculiXCore::read_cub(std::string filename)
     PRINT_INFO("%s", log.c_str());
     return true;
   }else{
+    progressbar.start(0,23,"Reading Cubit-CalculiX data");
+    progressbar.check_interrupt();
     //General
     std::vector<std::string> general;
     cubTool.read_dataset_string_rank_1("general","Cubit-CalculiX", general);
@@ -432,16 +436,22 @@ bool CalculiXCore::read_cub(std::string filename)
     }
     //Blocks
     cubTool.read_dataset_int_rank_2("blocks_data","Cubit-CalculiX/Blocks", cb->blocks_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //Sections
     cubTool.read_dataset_int_rank_2("sections_data","Cubit-CalculiX/Sections", sections->sections_data);
     cubTool.read_dataset_string_rank_2("solid_section_data","Cubit-CalculiX/Sections", sections->solid_section_data);
     cubTool.read_dataset_string_rank_2("shell_section_data","Cubit-CalculiX/Sections", sections->shell_section_data);
     cubTool.read_dataset_string_rank_2("beam_section_data","Cubit-CalculiX/Sections", sections->beam_section_data);
     cubTool.read_dataset_string_rank_2("membrane_section_data","Cubit-CalculiX/Sections", sections->membrane_section_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //Constraints
     cubTool.read_dataset_int_rank_2("constraints_data","Cubit-CalculiX/Constraints", constraints->constraints_data);
     cubTool.read_dataset_string_rank_2("rigidbody_constraint_data","Cubit-CalculiX/Constraints", constraints->rigidbody_constraint_data);
     cubTool.read_dataset_string_rank_2("tie_constraint_data","Cubit-CalculiX/Constraints", constraints->tie_constraint_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //SurfaceInteractions
     cubTool.read_dataset_int_rank_2("surfaceinteractions_data","Cubit-CalculiX/SurfaceInteractions", surfaceinteractions->surfaceinteractions_data);
     cubTool.read_dataset_string_rank_2("surfaceinteraction_name_data","Cubit-CalculiX/SurfaceInteractions", surfaceinteractions->surfaceinteraction_name_data);
@@ -452,66 +462,96 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_string_rank_2("gap_conductance_data","Cubit-CalculiX/SurfaceInteractions", surfaceinteractions->gap_conductance_data);
     cubTool.read_dataset_string_rank_2("gap_heat_generation_data","Cubit-CalculiX/SurfaceInteractions", surfaceinteractions->gap_heat_generation_data);
     cubTool.read_dataset_string_rank_2("friction_data","Cubit-CalculiX/SurfaceInteractions", surfaceinteractions->friction_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //ContactPairs
     cubTool.read_dataset_int_rank_2("contactpairs_data","Cubit-CalculiX/ContactPairs", contactpairs->contactpairs_data);
     cubTool.read_dataset_string_rank_2("adjust_contactpair_data","Cubit-CalculiX/ContactPairs", contactpairs->adjust_contactpair_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //Amplitudes
     cubTool.read_dataset_int_rank_2("amplitudes_data","Cubit-CalculiX/Amplitudes", amplitudes->amplitudes_data);
     cubTool.read_dataset_string_rank_2("name_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->name_amplitude_data);
     cubTool.read_dataset_string_rank_2("shiftx_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->shiftx_amplitude_data);
     cubTool.read_dataset_string_rank_2("shifty_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->shifty_amplitude_data);
     cubTool.read_dataset_string_rank_2("amplitudevalues_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->amplitudevalues_amplitude_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //Orientations
     cubTool.read_dataset_int_rank_2("orientations_data","Cubit-CalculiX/Orientations", orientations->orientations_data);
     cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/Orientations", orientations->name_data);
     cubTool.read_dataset_string_rank_2("a_data","Cubit-CalculiX/Orientations", orientations->a_data);
     cubTool.read_dataset_string_rank_2("b_data","Cubit-CalculiX/Orientations", orientations->b_data);
     cubTool.read_dataset_string_rank_2("rotation_data","Cubit-CalculiX/Orientations", orientations->rotation_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //LoadsForces
     cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Forces", loadsforces->loads_data);
     cubTool.read_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Forces", loadsforces->time_delay_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //LoadsPressures
     cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Pressures", loadspressures->loads_data);
     cubTool.read_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Pressures", loadspressures->time_delay_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //LoadsHeatFluxes
     cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/HeatFluxes", loadsheatfluxes->loads_data);
     cubTool.read_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/HeatFluxes", loadsheatfluxes->time_delay_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //LoadsGravity
     cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Gravity", loadsgravity->loads_data);
     cubTool.read_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Gravity", loadsgravity->time_delay_data);
     cubTool.read_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Gravity", loadsgravity->direction_data);
     cubTool.read_dataset_string_rank_2("magnitude_data","Cubit-CalculiX/Loads/Gravity", loadsgravity->magnitude_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //LoadsCentrifugal
     cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->loads_data);
     cubTool.read_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->time_delay_data);
     cubTool.read_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->direction_data);
     cubTool.read_dataset_string_rank_2("magnitude_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->magnitude_data);
     cubTool.read_dataset_string_rank_2("coordinate_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->coordinate_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //BCs
     //BCsDisplacements
     cubTool.read_dataset_int_rank_2("bcs_data","Cubit-CalculiX/BCs/Displacements", bcsdisplacements->bcs_data);
     cubTool.read_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/BCs/Displacements", bcsdisplacements->time_delay_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //BCsTemperatures
     cubTool.read_dataset_int_rank_2("bcs_data","Cubit-CalculiX/BCs/Temperatures", bcstemperatures->bcs_data);
     cubTool.read_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/BCs/Temperatures", bcstemperatures->time_delay_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //HistoryOutputs
     cubTool.read_dataset_int_rank_2("outputs_data","Cubit-CalculiX/HistoryOutputs", historyoutputs->outputs_data);
     cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/HistoryOutputs", historyoutputs->name_data);
     cubTool.read_dataset_string_rank_2("node_data","Cubit-CalculiX/HistoryOutputs", historyoutputs->node_data);
     cubTool.read_dataset_string_rank_2("element_data","Cubit-CalculiX/HistoryOutputs", historyoutputs->element_data);
     cubTool.read_dataset_string_rank_2("contact_data","Cubit-CalculiX/HistoryOutputs", historyoutputs->contact_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //FieldOutputs
     cubTool.read_dataset_int_rank_2("outputs_data","Cubit-CalculiX/FieldOutputs", fieldoutputs->outputs_data);
     cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/FieldOutputs", fieldoutputs->name_data);
     cubTool.read_dataset_string_rank_2("node_data","Cubit-CalculiX/FieldOutputs", fieldoutputs->node_data);
     cubTool.read_dataset_string_rank_2("element_data","Cubit-CalculiX/FieldOutputs", fieldoutputs->element_data);
     cubTool.read_dataset_string_rank_2("contact_data","Cubit-CalculiX/FieldOutputs", fieldoutputs->contact_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //InitialConditions
     cubTool.read_dataset_int_rank_2("initialconditions_data","Cubit-CalculiX/InitialConditions", initialconditions->initialconditions_data);
     cubTool.read_dataset_string_rank_2("displacement_data","Cubit-CalculiX/InitialConditions", initialconditions->displacement_data);
     cubTool.read_dataset_string_rank_2("temperature_data","Cubit-CalculiX/InitialConditions", initialconditions->temperature_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //HBCs
     cubTool.read_dataset_int_rank_2("bcs_data","Cubit-CalculiX/HBCs", hbcs->bcs_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //Steps
     cubTool.read_dataset_int_rank_2("steps_data","Cubit-CalculiX/Steps", steps->steps_data);
     cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/Steps", steps->name_data);
@@ -526,6 +566,8 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_int_rank_2("bcs_data","Cubit-CalculiX/Steps", steps->bcs_data);
     cubTool.read_dataset_int_rank_2("historyoutputs_data","Cubit-CalculiX/Steps", steps->historyoutputs_data);
     cubTool.read_dataset_int_rank_2("fieldoutputs_data","Cubit-CalculiX/Steps", steps->fieldoutputs_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //Jobs
     if (cubTool.read_dataset_string_rank_2("jobs_data","Cubit-CalculiX/Jobs", jobs->jobs_data))
     {
@@ -543,8 +585,12 @@ bool CalculiXCore::read_cub(std::string filename)
         cubTool.read_dataset_string_rank_1(dataset,"Cubit-CalculiX/Jobs/sta", jobs->sta[i]);
       }
     }
+    progressbar.step();
+    progressbar.check_interrupt();
     //Results
     cubTool.read_dataset_int_rank_2("results_data","Cubit-CalculiX/Results", results->results_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //create empty frd and dat
     for (size_t i = 0; i < results->results_data.size(); i++)
     {
@@ -778,11 +824,13 @@ bool CalculiXCore::read_cub(std::string filename)
         }
       }
     }
-
-
+    progressbar.step();
+    progressbar.check_interrupt();
     //CustomLines
     cubTool.read_dataset_string_rank_2("customlines_data","Cubit-CalculiX/CustomLines", customlines->customlines_data);
-    
+    progressbar.step();
+    progressbar.check_interrupt();
+    progressbar.end();
     log = "Finished reading Cubit-CalculiX data from \"" + filename + "\"\n";
     PRINT_INFO("%s", log.c_str());
 
@@ -805,6 +853,7 @@ bool CalculiXCore::save_cub(std::string filename)
 {
   std::string log = "Saving Cubit-CaluliX data to \"" + filename + "\"\n";
   PRINT_INFO("%s", log.c_str());
+  ProgressTool progressbar;
 
   if (filename.substr(filename.size() - 4) == ".cub")
   {
@@ -817,6 +866,8 @@ bool CalculiXCore::save_cub(std::string filename)
 
   if (!cubTool.nameExists("Cubit-CalculiX"))
   {
+    progressbar.start(0,23,"Writing Cubit-CalculiX data");
+    progressbar.check_interrupt();
     //General
     cubTool.createGroup("Cubit-CalculiX");
     std::vector<std::string> general;
@@ -827,8 +878,12 @@ bool CalculiXCore::save_cub(std::string filename)
     //Blocks
     cubTool.createGroup("Cubit-CalculiX/Blocks");
     cubTool.write_dataset_int_rank_2("blocks_data","Cubit-CalculiX/Blocks", cb->blocks_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //Materials
     cubTool.createGroup("Cubit-CalculiX/Materials");
+    progressbar.step();
+    progressbar.check_interrupt();
     //Sections
     cubTool.createGroup("Cubit-CalculiX/Sections");
     cubTool.write_dataset_int_rank_2("sections_data","Cubit-CalculiX/Sections", sections->sections_data);
@@ -836,11 +891,15 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_string_rank_2("shell_section_data","Cubit-CalculiX/Sections", sections->shell_section_data);
     cubTool.write_dataset_string_rank_2("beam_section_data","Cubit-CalculiX/Sections", sections->beam_section_data);
     cubTool.write_dataset_string_rank_2("membrane_section_data","Cubit-CalculiX/Sections", sections->membrane_section_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //Constraints
     cubTool.createGroup("Cubit-CalculiX/Constraints");
     cubTool.write_dataset_int_rank_2("constraints_data","Cubit-CalculiX/Constraints", constraints->constraints_data);
     cubTool.write_dataset_string_rank_2("rigidbody_constraint_data","Cubit-CalculiX/Constraints", constraints->rigidbody_constraint_data);
     cubTool.write_dataset_string_rank_2("tie_constraint_data","Cubit-CalculiX/Constraints", constraints->tie_constraint_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //SurfaceInteractions
     cubTool.createGroup("Cubit-CalculiX/SurfaceInteractions");
     cubTool.write_dataset_int_rank_2("surfaceinteractions_data","Cubit-CalculiX/SurfaceInteractions", surfaceinteractions->surfaceinteractions_data);
@@ -852,10 +911,14 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_string_rank_2("gap_conductance_data","Cubit-CalculiX/SurfaceInteractions", surfaceinteractions->gap_conductance_data);
     cubTool.write_dataset_string_rank_2("gap_heat_generation_data","Cubit-CalculiX/SurfaceInteractions", surfaceinteractions->gap_heat_generation_data);
     cubTool.write_dataset_string_rank_2("friction_data","Cubit-CalculiX/SurfaceInteractions", surfaceinteractions->friction_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //ContactPairs
     cubTool.createGroup("Cubit-CalculiX/ContactPairs");
     cubTool.write_dataset_int_rank_2("contactpairs_data","Cubit-CalculiX/ContactPairs", contactpairs->contactpairs_data);
     cubTool.write_dataset_string_rank_2("adjust_contactpair_data","Cubit-CalculiX/ContactPairs", contactpairs->adjust_contactpair_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //Amplitudes
     cubTool.createGroup("Cubit-CalculiX/Amplitudes");
     cubTool.write_dataset_int_rank_2("amplitudes_data","Cubit-CalculiX/Amplitudes", amplitudes->amplitudes_data);
@@ -863,6 +926,8 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_string_rank_2("shiftx_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->shiftx_amplitude_data);
     cubTool.write_dataset_string_rank_2("shifty_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->shifty_amplitude_data);
     cubTool.write_dataset_string_rank_2("amplitudevalues_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->amplitudevalues_amplitude_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //Orientations
     cubTool.createGroup("Cubit-CalculiX/Orientations");
     cubTool.write_dataset_int_rank_2("orientations_data","Cubit-CalculiX/Orientations", orientations->orientations_data);
@@ -870,26 +935,36 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_string_rank_2("a_data","Cubit-CalculiX/Orientations", orientations->a_data);
     cubTool.write_dataset_string_rank_2("b_data","Cubit-CalculiX/Orientations", orientations->b_data);
     cubTool.write_dataset_string_rank_2("rotation_data","Cubit-CalculiX/Orientations", orientations->rotation_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //Loads
     cubTool.createGroup("Cubit-CalculiX/Loads");
     //LoadsForces
     cubTool.createGroup("Cubit-CalculiX/Loads/Forces");
     cubTool.write_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Forces", loadsforces->loads_data);
     cubTool.write_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Forces", loadsforces->time_delay_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //LoadsPressures
     cubTool.createGroup("Cubit-CalculiX/Loads/Pressures");
     cubTool.write_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Pressures", loadspressures->loads_data);
     cubTool.write_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Pressures", loadspressures->time_delay_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //LoadsHeatFluxes
     cubTool.createGroup("Cubit-CalculiX/Loads/HeatFluxes");
     cubTool.write_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/HeatFluxes", loadsheatfluxes->loads_data);
     cubTool.write_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/HeatFluxes", loadsheatfluxes->time_delay_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //LoadsGravity
     cubTool.createGroup("Cubit-CalculiX/Loads/Gravity");
     cubTool.write_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Gravity", loadsgravity->loads_data);
     cubTool.write_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Gravity", loadsgravity->time_delay_data);
     cubTool.write_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Gravity", loadsgravity->direction_data);
     cubTool.write_dataset_string_rank_2("magnitude_data","Cubit-CalculiX/Loads/Gravity", loadsgravity->magnitude_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //LoadsCentrifugal
     cubTool.createGroup("Cubit-CalculiX/Loads/Centrifugal");
     cubTool.write_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->loads_data);
@@ -897,16 +972,22 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->direction_data);
     cubTool.write_dataset_string_rank_2("magnitude_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->magnitude_data);
     cubTool.write_dataset_string_rank_2("coordinate_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->coordinate_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //BCs
     cubTool.createGroup("Cubit-CalculiX/BCs");
     //BCsDisplacements
     cubTool.createGroup("Cubit-CalculiX/BCs/Displacements");
     cubTool.write_dataset_int_rank_2("bcs_data","Cubit-CalculiX/BCs/Displacements", bcsdisplacements->bcs_data);
     cubTool.write_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/BCs/Displacements", bcsdisplacements->time_delay_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //BCsTemperatures
     cubTool.createGroup("Cubit-CalculiX/BCs/Temperatures");
     cubTool.write_dataset_int_rank_2("bcs_data","Cubit-CalculiX/BCs/Temperatures", bcstemperatures->bcs_data);
     cubTool.write_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/BCs/Temperatures", bcstemperatures->time_delay_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //HistoryOutputs
     cubTool.createGroup("Cubit-CalculiX/HistoryOutputs");
     cubTool.write_dataset_int_rank_2("outputs_data","Cubit-CalculiX/HistoryOutputs", historyoutputs->outputs_data);
@@ -914,6 +995,8 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_string_rank_2("node_data","Cubit-CalculiX/HistoryOutputs", historyoutputs->node_data);
     cubTool.write_dataset_string_rank_2("element_data","Cubit-CalculiX/HistoryOutputs", historyoutputs->element_data);
     cubTool.write_dataset_string_rank_2("contact_data","Cubit-CalculiX/HistoryOutputs", historyoutputs->contact_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //FieldOutputs
     cubTool.createGroup("Cubit-CalculiX/FieldOutputs");
     cubTool.write_dataset_int_rank_2("outputs_data","Cubit-CalculiX/FieldOutputs", fieldoutputs->outputs_data);
@@ -921,14 +1004,20 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_string_rank_2("node_data","Cubit-CalculiX/FieldOutputs", fieldoutputs->node_data);
     cubTool.write_dataset_string_rank_2("element_data","Cubit-CalculiX/FieldOutputs", fieldoutputs->element_data);
     cubTool.write_dataset_string_rank_2("contact_data","Cubit-CalculiX/FieldOutputs", fieldoutputs->contact_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //InitialConditions
     cubTool.createGroup("Cubit-CalculiX/InitialConditions");
     cubTool.write_dataset_int_rank_2("initialconditions_data","Cubit-CalculiX/InitialConditions", initialconditions->initialconditions_data);
     cubTool.write_dataset_string_rank_2("displacement_data","Cubit-CalculiX/InitialConditions", initialconditions->displacement_data);
     cubTool.write_dataset_string_rank_2("temperature_data","Cubit-CalculiX/InitialConditions", initialconditions->temperature_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //HBCs
     cubTool.createGroup("Cubit-CalculiX/HBCs");
     cubTool.write_dataset_int_rank_2("bcs_data","Cubit-CalculiX/HBCs", hbcs->bcs_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //Steps
     cubTool.createGroup("Cubit-CalculiX/Steps");
     cubTool.write_dataset_int_rank_2("steps_data","Cubit-CalculiX/Steps", steps->steps_data);
@@ -944,6 +1033,8 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_int_rank_2("bcs_data","Cubit-CalculiX/Steps", steps->bcs_data);
     cubTool.write_dataset_int_rank_2("historyoutputs_data","Cubit-CalculiX/Steps", steps->historyoutputs_data);
     cubTool.write_dataset_int_rank_2("fieldoutputs_data","Cubit-CalculiX/Steps", steps->fieldoutputs_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //Jobs
     cubTool.createGroup("Cubit-CalculiX/Jobs");
     cubTool.createGroup("Cubit-CalculiX/Jobs/output_console");
@@ -957,6 +1048,8 @@ bool CalculiXCore::save_cub(std::string filename)
       cubTool.write_dataset_string_rank_1(dataset.c_str(),"Cubit-CalculiX/Jobs/cvg", jobs->cvg[i]);
       cubTool.write_dataset_string_rank_1(dataset.c_str(),"Cubit-CalculiX/Jobs/sta", jobs->sta[i]);
     }
+    progressbar.step();
+    progressbar.check_interrupt();
     //Results
     cubTool.createGroup("Cubit-CalculiX/Results");
     cubTool.write_dataset_int_rank_2("results_data","Cubit-CalculiX/Results", results->results_data);
@@ -1112,10 +1205,14 @@ bool CalculiXCore::save_cub(std::string filename)
         }
       }
     }
-    
+    progressbar.step();
+    progressbar.check_interrupt();
     //CustomLines
     cubTool.createGroup("Cubit-CalculiX/CustomLines");
     cubTool.write_dataset_string_rank_2("customlines_data","Cubit-CalculiX/CustomLines", customlines->customlines_data);
+    progressbar.step();
+    progressbar.check_interrupt();
+    progressbar.end();
 
     log = "Finished saving Cubit-CalculiX data.\n";
     PRINT_INFO("%s", log.c_str());
