@@ -24,6 +24,7 @@
 
 #include "CoreBlocks.hpp"
 #include "CoreMaterials.hpp"
+#include "CoreMaterialsLibrary.hpp"
 #include "CoreSections.hpp"
 #include "CoreConstraints.hpp"
 #include "CoreSurfaceInteractions.hpp"
@@ -56,7 +57,7 @@
 #include "HDF5Tool.hpp"
 
 CalculiXCore::CalculiXCore():
-  cb(NULL),mat(NULL),sections(NULL),constraints(NULL),surfaceinteractions(NULL),
+  cb(NULL),mat(NULL),mat_library(NULL),sections(NULL),constraints(NULL),surfaceinteractions(NULL),
   contactpairs(NULL),amplitudes(NULL),orientations(NULL),loadsforces(NULL),loadspressures(NULL),loadsheatfluxes(NULL),
   loadsgravity(NULL),loadscentrifugal(NULL),
   bcsdisplacements(NULL),bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL),
@@ -72,6 +73,8 @@ CalculiXCore::~CalculiXCore()
     delete cb;
   if(mat)
     delete mat;
+  if(mat_library)
+    delete mat_library;
   if(sections)
     delete sections;
   if(constraints)
@@ -300,6 +303,11 @@ bool CalculiXCore::init2() // will be done when loading the ccm!
   
   mat->init();
 
+  if(!mat_library)
+    mat_library = new CoreMaterialsLibrary;
+  
+  mat_library->init();
+
   return true;
 }
 
@@ -368,6 +376,7 @@ bool CalculiXCore::reset()
 {
   cb->reset();
   //mat->reset();
+  mat_library->reset();
   sections->reset();
   constraints->reset();
   surfaceinteractions->reset();

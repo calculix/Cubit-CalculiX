@@ -10,6 +10,7 @@
 
 class CoreBlocks;
 class CoreMaterials;
+class CoreMaterialsLibrary;
 class CoreSections;
 class CoreConstraints;
 class CoreSurfaceInteractions;
@@ -327,6 +328,7 @@ public:
 
   CoreBlocks *cb;
   CoreMaterials *mat;
+  CoreMaterialsLibrary *mat_library;
   CoreSections *sections;
   CoreConstraints *constraints;
   CoreSurfaceInteractions *surfaceinteractions;
