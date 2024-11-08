@@ -87,15 +87,15 @@ bool CoreMaterials::init()
     group_properties.push_back({material_card[1] + "ISO_USE_CARD", "1"});
     group_properties_description.push_back("SET 1 TO USE EXPANSION TYPE=ISO CARD");
     group_properties.push_back({material_card[1] + "ISO_A_TEMPERATURE", "4", "2"});
-    group_properties_description.push_back("ISOTROPIC:\n \u03B1,Temperature");
+    group_properties_description.push_back("ISOTROPIC:\n u8\u03B1,Temperature");
     group_properties.push_back({material_card[1] + "ORTHO_USE_CARD", "1"});
     group_properties_description.push_back("SET 1 TO USE EXPANSION TYPE=ORTHO CARD");
     group_properties.push_back({material_card[1] + "ORTHO_CONSTANTS_VS_TEMPERATURE", "4", "4"});
-    group_properties_description.push_back("ORTHOTROPIC:\n\u03B111,\u03B122,\u03B133,TEMPERATURE");
+    group_properties_description.push_back("ORTHOTROPIC:\nu8\u03B111,u8\u03B122,u8\u03B133,TEMPERATURE");
     group_properties.push_back({material_card[1] + "ANISO_USE_CARD", "1"});
     group_properties_description.push_back("SET 1 TO USE EXPANSION TYPE=ANISO CARD");
     group_properties.push_back({material_card[1] + "ANISO_CONSTANTS_VS_TEMPERATURE", "4", "7"});
-    group_properties_description.push_back("ANISOTROPIC:\n\u03B111,\u03B122,\u03B133,\u03B112,\u03B113,\u03B123,TEMPERATURE");
+    group_properties_description.push_back("ANISOTROPIC:\nu8\u03B111,u8\u03B122,u8\u03B133,u8\u03B112,u8\u03B113,u8\u03B123,TEMPERATURE");
     group_properties.push_back({material_card[1] + "ZERO_USE_CARD", "1"});
     group_properties_description.push_back("SET 1 TO USE EXPANSION ZERO=TEMP CARD");
     group_properties.push_back({material_card[1] + "ZERO", "1"});
@@ -109,15 +109,15 @@ bool CoreMaterials::init()
     group_properties.push_back({material_card[1] + "ISO_USE_CARD", "1"});
     group_properties_description.push_back("SET 1 TO USE CONDUCTIVITY TYPE=ISO CARD");
     group_properties.push_back({material_card[1] + "ISO_K_TEMPERATURE", "4", "2"});
-    group_properties_description.push_back("ISOTROPIC:\n \u03BA,Temperature");
+    group_properties_description.push_back("ISOTROPIC:\n u8\u03BA,Temperature");
     group_properties.push_back({material_card[1] + "ORTHO_USE_CARD", "1"});
     group_properties_description.push_back("SET 1 TO USE CONDUCTIVITY TYPE=ORTHO CARD");
     group_properties.push_back({material_card[1] + "ORTHO_CONSTANTS_VS_TEMPERATURE", "4", "4"});
-    group_properties_description.push_back("ORTHOTROPIC:\n\u03BA11,\u03BA22,\u03BA33,TEMPERATURE");
+    group_properties_description.push_back("ORTHOTROPIC:\nu8\u03BA11,u8\u03BA22,u8\u03BA33,TEMPERATURE");
     group_properties.push_back({material_card[1] + "ANISO_USE_CARD", "1"});
     group_properties_description.push_back("SET 1 TO USE CONDUCTIVITY TYPE=ANISO CARD");
     group_properties.push_back({material_card[1] + "ANISO_CONSTANTS_VS_TEMPERATURE", "4", "7"});
-    group_properties_description.push_back("ANISOTROPIC:\n\u03BA11,\u03BA22,\u03BA33,\u03BA12,\u03BA13,\u03BA23,TEMPERATURE");
+    group_properties_description.push_back("ANISOTROPIC:\nu8\u03BA11,u8\u03BA22,u8\u03BA33,u8\u03BA12,u8\u03BA13,u8\u03BA23,TEMPERATURE");
 
     mat_iface->create_group(group_name);
     grp = mat_iface->get_group(group_name);
