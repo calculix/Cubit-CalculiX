@@ -86,15 +86,15 @@ void MaterialManagementTable::update(MaterialManagementItem *material)
   }else if (this->group=="CCX_CONDUCTIVITY_ISO_K_TEMPERATURE")
   {
     this->setColumnCount(2);
-    this->setHorizontalHeaderLabels({"u8\u03BA","Temperature"});
+    this->setHorizontalHeaderLabels({u8"\u03BA","Temperature"});
   }else if (this->group=="CCX_CONDUCTIVITY_ORTHO_CONSTANTS_VS_TEMPERATURE")
   {
     this->setColumnCount(4);
-    this->setHorizontalHeaderLabels({"u8\u03BA11","u8\u03BA22","u8\u03BA33","Temperature"});
+    this->setHorizontalHeaderLabels({u8"\u03BA11",u8"\u03BA22",u8"\u03BA33","Temperature"});
   }else if (this->group=="CCX_CONDUCTIVITY_ANISO_CONSTANTS_VS_TEMPERATURE")
   {
     this->setColumnCount(7);
-    this->setHorizontalHeaderLabels({"u8\u03BA11","u8\u03BA22","u8\u03BA33","u8\u03BA12","u8\u03BA13","u8\u03BA23","Temperature"});
+    this->setHorizontalHeaderLabels({u8"\u03BA11",u8"\u03BA22",u8"\u03BA33",u8"\u03BA12",u8"\u03BA13",u8"\u03BA23","Temperature"});
   }
 
   verticalHeaderLabels = QStringList();
