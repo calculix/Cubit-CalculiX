@@ -74,15 +74,15 @@ void MaterialManagementTable::update(MaterialManagementItem *material)
   }else if (this->group=="CCX_EXPANSION_ISO_A_TEMPERATURE")
   {
     this->setColumnCount(2);
-    this->setHorizontalHeaderLabels({"\u03B1","Temperature"});
+    this->setHorizontalHeaderLabels({u8"\u03B1","Temperature"});
   }else if (this->group=="CCX_EXPANSION_ORTHO_CONSTANTS_VS_TEMPERATURE")
   {
     this->setColumnCount(4);
-    this->setHorizontalHeaderLabels({"\u03B111","\u03B122","\u03B133","Temperature"});
+    this->setHorizontalHeaderLabels({u8"\u03B111",u8"\u03B122",u8"\u03B133","Temperature"});
   }else if (this->group=="CCX_EXPANSION_ANISO_CONSTANTS_VS_TEMPERATURE")
   {
     this->setColumnCount(7);
-    this->setHorizontalHeaderLabels({"\u03B111","\u03B122","\u03B133","\u03B112","\u03B113","\u03B123","Temperature"});
+    this->setHorizontalHeaderLabels({u8"\u03B111",u8"\u03B122",u8"\u03B133",u8"\u03B112",u8"\u03B113",u8"\u03B123","Temperature"});
   }else if (this->group=="CCX_CONDUCTIVITY_ISO_K_TEMPERATURE")
   {
     this->setColumnCount(2);
