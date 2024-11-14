@@ -3,6 +3,19 @@
 
 HDF5Tool::HDF5Tool(std::string filename)
 {
+  //check if hdf5 exists, if not create a new file
+  /*
+    if (_access(filename.c_str(), 0) != 0)
+    {
+      hid_t new_file = H5Fcreate(name, mode, H5P_DEFAULT, H5P_DEFAULT);
+      if (new_file != H5I_INVALID_HID)
+      {
+        H5Fclose(file);
+      }
+    }
+  */
+
+
   this->file = new H5::H5File(filename,H5F_ACC_RDWR);
 }
 

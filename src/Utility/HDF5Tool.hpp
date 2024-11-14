@@ -12,7 +12,7 @@ class HDF5Tool
 public:
   HDF5Tool(std::string filename);
   ~HDF5Tool();
-    
+
   bool nameExists(std::string name);
   bool createGroup(std::string groupname);
 

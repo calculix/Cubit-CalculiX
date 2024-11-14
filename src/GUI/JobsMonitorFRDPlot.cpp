@@ -281,21 +281,26 @@ void JobsMonitorFRDPlot::on_pushButton_plot_clicked(bool)
   
   if (lineEdit_title->text()!="")
   {
-    cmd.append("title " + lineEdit_title->text().toStdString() + " ");
+    cmd.append("title \'" + lineEdit_title->text().toStdString() + "\' ");
   }
   if (lineEdit_x_axis->text()!="")
   {
-    cmd.append("x_axis " + lineEdit_x_axis->text().toStdString() + " ");
+    cmd.append("x_axis \'" + lineEdit_x_axis->text().toStdString() + "\' ");
   }
   if (lineEdit_y_axis->text()!="")
   {
-    cmd.append("y_axis " + lineEdit_y_axis->text().toStdString() + " ");
+    cmd.append("y_axis \'" + lineEdit_y_axis->text().toStdString() + "\' ");
   }
   if (lineEdit_save_path->text()!="")
   {
-    cmd.append("save " + lineEdit_save_path->text().toStdString() + " ");
-  } 
- 
+    if (".png" == lineEdit_save_path->text().toStdString().substr(lineEdit_save_path->text().toStdString().size()-4))
+    {
+      cmd.append("save \'" + lineEdit_save_path->text().toStdString() + "\' ");
+    }else{
+      cmd.append("save \'" + lineEdit_save_path->text().toStdString() + ".png\' ");
+    }
+  }
+
   if (push_cmd)
   {
     ccx_iface->cmd(cmd);

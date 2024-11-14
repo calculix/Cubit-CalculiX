@@ -25,6 +25,8 @@ class UserOptions
     QString mPathPythonInterfaceName;
     bool mSaveLoadedResults;
     QString mSaveLoadedResultsName;
+    QString mPathMaterialLibrary;
+    QString mPathMaterialLibraryName;
 };
 
 #endif // USEROPTIONS_HPP

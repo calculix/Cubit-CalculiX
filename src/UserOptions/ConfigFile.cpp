@@ -249,8 +249,14 @@ QString ConfigFile::standard_entry(std::string option)
         #else
             standard_value = QString::fromStdString(componentpath);
         #endif
+    }else if(option == "PathMaterialLibrary")
+    {
+        #ifdef WIN32
+            standard_value = QString::fromStdString(componentpath) + "libmaterial.hdf5";
+        #else
+            standard_value = QString::fromStdString(componentpath) + "libmaterial.hdf5";
+        #endif
     }
-
     return standard_value;
 }
 

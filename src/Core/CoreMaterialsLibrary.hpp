@@ -25,6 +25,7 @@ public:
   bool update(); // check for changes of the materials library
   bool reset(); // delete all data and initialize afterwards
   bool check_initialized(); // check if object is initialized
+  bool load_library(); // load the library, will create a empty library file if no file is found
   //bool get_groups(); // gets the groups from the library
   //bool get_materials(); // gets the materials from the library
 

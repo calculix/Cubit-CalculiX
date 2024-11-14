@@ -83,4 +83,6 @@
 
 2024-11-08 fixing symbols in the material management on windows
 2024-11-08 working on material library
+2024-11-14 fixing plot labels, adding "" automatically to the plot command
+2024-11-14 working on material library
 
