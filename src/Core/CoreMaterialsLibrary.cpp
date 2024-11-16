@@ -29,7 +29,7 @@ bool CoreMaterialsLibrary::init()
 
 bool CoreMaterialsLibrary::update()
 { 
-    return true;
+  return true;
 }
 
 bool CoreMaterialsLibrary::reset()
@@ -45,10 +45,65 @@ bool CoreMaterialsLibrary::check_initialized()
 
 bool CoreMaterialsLibrary::load_library()
 {
-  //HDF5Tool hdf5Tool(ccx_uo.mPathMaterialLibrary.toStdString().c_str());
+  std::string log = "Loading Material Library File " + ccx_uo.mPathMaterialLibrary.toStdString() + "\n";
+  PRINT_INFO("%s", log.c_str());
 
-  std::string log = "Loading Library\n";
+  HDF5Tool hdf5Tool(ccx_uo.mPathMaterialLibrary.toStdString());
+  
+  return true;
+}
+
+
+bool CoreMaterialsLibrary::create_group(std::string groupname)
+{
+  HDF5Tool hdf5Tool(ccx_uo.mPathMaterialLibrary.toStdString());
+  std::string log = "";
+
+  if (hdf5Tool.nameExists(groupname))
+  {
+    log = "Can't create new group in the Material Library.\n" + groupname + " already exists!\n";
+    PRINT_INFO("%s", log.c_str());
+
+    return false;
+  }
+
+  hdf5Tool.createGroup(groupname);
+  log = "Create new group " + groupname + " in the Material Library.\n";
   PRINT_INFO("%s", log.c_str());
 
   return true;
+}
+
+bool CoreMaterialsLibrary::rename_group(std::string groupname, std::string new_groupname)
+{
+  HDF5Tool hdf5Tool(ccx_uo.mPathMaterialLibrary.toStdString());
+  std::string log = "";
+
+  log = "Rename group " + groupname + " to " + new_groupname + " in the Material Library.\n";
+  PRINT_INFO("%s", log.c_str());
+
+  return true;
+}  
+
+bool CoreMaterialsLibrary::delete_group(std::string groupname)
+{
+  HDF5Tool hdf5Tool(ccx_uo.mPathMaterialLibrary.toStdString());
+  std::string log = "";
+
+  log = "Delete group " + groupname + " from the Material Library.\n";
+  PRINT_INFO("%s", log.c_str());
+
+  return true;
+}  
+
+bool CoreMaterialsLibrary::check_group(std::string groupname)
+{
+  HDF5Tool hdf5Tool(ccx_uo.mPathMaterialLibrary.toStdString());
+
+  if (hdf5Tool.nameExists(groupname))
+  {
+    return true;
+  }
+
+  return false;
 }

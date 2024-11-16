@@ -17,8 +17,6 @@ public:
   CoreMaterialsLibrary();
   ~CoreMaterialsLibrary();
 
-  //
-
   bool is_initialized = false;
 
   bool init(); // initialize
@@ -26,6 +24,12 @@ public:
   bool reset(); // delete all data and initialize afterwards
   bool check_initialized(); // check if object is initialized
   bool load_library(); // load the library, will create a empty library file if no file is found
+  bool create_group(std::string groupname); // create a new group
+  bool rename_group(std::string groupname, std::string new_groupname); // renames a group
+  bool delete_group(std::string groupname); // deletes the group
+  
+  bool check_group(std::string groupname); // check if the group exists
+  
   //bool get_groups(); // gets the groups from the library
   //bool get_materials(); // gets the materials from the library
 

@@ -1,20 +1,39 @@
 #include "HDF5Tool.hpp"
 #include "CubitMessage.hpp"
+#ifdef WIN32
+ #include <windows.h>
+#else
+ #include <unistd.h>
+#endif
 
 HDF5Tool::HDF5Tool(std::string filename)
 {
   //check if hdf5 exists, if not create a new file
-  /*
+  #ifdef WIN32
     if (_access(filename.c_str(), 0) != 0)
     {
-      hid_t new_file = H5Fcreate(name, mode, H5P_DEFAULT, H5P_DEFAULT);
+      std::string log = filename + " not found. An empty HDF5 will be created.\n";
+      PRINT_INFO("%s", log.c_str());
+
+      hid_t new_file = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
       if (new_file != H5I_INVALID_HID)
       {
-        H5Fclose(file);
+        H5Fclose(new_file);
       }
     }
-  */
+  #else
+    if (access(filename.c_str(), W_OK) != 0) 
+    {
+      std::string log = filename + " not found. An empty HDF5 will be created.\n";
+      PRINT_INFO("%s", log.c_str());
 
+      hid_t new_file = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+      if (new_file != H5I_INVALID_HID)
+      {
+        H5Fclose(new_file);
+      }
+    }
+  #endif
 
   this->file = new H5::H5File(filename,H5F_ACC_RDWR);
 }

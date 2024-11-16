@@ -225,4 +225,10 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxCustomLineModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxCustomLineDeleteCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxCustomLineDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryCreateGroupCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryCreateGroupCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryModifyGroupCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryModifyGroupCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryDeleteGroupCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryDeleteGroupCommand.hpp
     PARENT_SCOPE)

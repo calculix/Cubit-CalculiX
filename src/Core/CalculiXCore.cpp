@@ -305,9 +305,9 @@ bool CalculiXCore::init2() // will be done when loading the ccm!
 
   if(!mat_library)
     mat_library = new CoreMaterialsLibrary;
-  
-  mat_library->init();
 
+  this->bool_init2 = true;
+  
   return true;
 }
 
@@ -333,6 +333,22 @@ bool CalculiXCore::init_pythoninterface()
     }
 
     this->bool_init_pythoninterface = true;
+    return true;
+  }
+
+  return false;
+}
+
+bool CalculiXCore::init_materiallibrary()
+{
+  // init_materiallibrary(); needs to be initialized after the cubit is fully loaded; 
+  // will be initialized with the core timer on its first evocation
+
+  if (!this->bool_init_materiallibrary)
+  {
+    mat_library->init();
+
+    this->bool_init_materiallibrary = true;
     return true;
   }
 
@@ -4423,6 +4439,21 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
     entities.push_back({"temperature",std::to_string(id)});
   }
   return entities;
+}
+
+bool CalculiXCore::create_materiallibrary_group(std::string name)
+{
+  return mat_library->create_group(name);
+}
+
+bool CalculiXCore::modify_materiallibrary_group(std::string name, std::string new_name)
+{
+  return mat_library->rename_group(name,new_name);
+}
+
+bool CalculiXCore::delete_materiallibrary_group(std::string name)
+{
+  return mat_library->delete_group(name);
 }
 
 std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_force(int id)

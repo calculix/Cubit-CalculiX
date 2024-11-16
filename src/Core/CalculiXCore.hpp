@@ -48,7 +48,9 @@ public:
   ~CalculiXCore();
 
   bool bool_init = false;
+  bool bool_init2 = false;
   bool bool_init_pythoninterface = false;
+  bool bool_init_materiallibrary = false;
   bool use_ccx_logfile = false;
   bool use_ccx_autocleanup = true;
   std::string version = "2024.10";
@@ -60,6 +62,7 @@ public:
   bool init(); // init all core objects
   bool init2(); // init material core and interfaces
   bool init_pythoninterface(); // init python interface
+  bool init_materiallibrary(); // init material library
   bool update(); // updates everything to catch changes in the entities
   bool reset(); // delete all data and init new
   bool read_cub(std::string filename); // read core data from cub
@@ -209,6 +212,11 @@ public:
   bool delete_customline(int customline_id); // delete customline
   std::vector<std::string> get_customline_data(std::string position,std::string keyword,int keyword_id);
   std::vector<std::vector<std::string>> get_entities(std::string entity, int id); // get entitties for highlight
+  //material library
+  bool create_materiallibrary_group(std::string name);
+  bool modify_materiallibrary_group(std::string name,std::string new_name);
+  bool delete_materiallibrary_group(std::string name);
+  //draw
   std::vector<std::vector<double>> get_draw_data_for_load_force(int id); // returns coord(3) and magnitude(3) std::vector<double>
   std::vector<std::vector<double>> get_draw_data_for_load_pressure(int id); // returns coord(3) and magnitude(3) std::vector<double>
   std::vector<std::vector<double>> get_draw_data_for_load_heatflux(int id); // returns coord(3) and magnitude(3) std::vector<double>

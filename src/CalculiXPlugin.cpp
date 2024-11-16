@@ -113,6 +113,9 @@
 #include "ccxCustomLineCreateCommand.hpp"
 #include "ccxCustomLineModifyCommand.hpp"
 #include "ccxCustomLineDeleteCommand.hpp"
+#include "ccxMaterialLibraryCreateGroupCommand.hpp"
+#include "ccxMaterialLibraryModifyGroupCommand.hpp"
+#include "ccxMaterialLibraryDeleteGroupCommand.hpp"
 
 //! This macro is required to identify this as a valid Cubit plugin. The plugin
 //! will NOT be loaded if this macro is not present.
@@ -241,6 +244,9 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxCustomLineCreateCommand");
   keys.push_back("ccxCustomLineModifyCommand");
   keys.push_back("ccxCustomLineDeleteCommand");
+  keys.push_back("ccxMaterialLibraryCreateGroupCommand");
+  keys.push_back("ccxMaterialLibraryModifyGroupCommand");
+  keys.push_back("ccxMaterialLibraryDeleteGroupCommand");
 
   return keys;
 }
@@ -585,6 +591,15 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
   
   else if(key == "ccxCustomLineDeleteCommand")
     return new ccxCustomLineDeleteCommand();
+
+  else if(key == "ccxMaterialLibraryCreateGroupCommand")
+    return new ccxMaterialLibraryCreateGroupCommand();
+
+  else if(key == "ccxMaterialLibraryModifyGroupCommand")
+    return new ccxMaterialLibraryModifyGroupCommand();
+  
+  else if(key == "ccxMaterialLibraryDeleteGroupCommand")
+    return new ccxMaterialLibraryDeleteGroupCommand();
 
   return NULL;
 }

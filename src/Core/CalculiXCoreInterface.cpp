@@ -34,6 +34,11 @@ bool CalculiXCoreInterface::init_pythoninterface()
   return ccx_core.init_pythoninterface();
 }
 
+bool CalculiXCoreInterface::init_materiallibrary()
+{
+  return ccx_core.init_materiallibrary();
+}
+
 std::string CalculiXCoreInterface::print_data()
 {
   return ccx_core.print_data();
@@ -723,6 +728,21 @@ bool CalculiXCoreInterface::modify_customline(int customline_id, std::vector<std
 bool CalculiXCoreInterface::delete_customline(int customline_id)
 {
   return ccx_core.delete_customline(customline_id);
+}
+
+bool CalculiXCoreInterface::create_materiallibrary_group(std::string name)
+{
+  return ccx_core.create_materiallibrary_group(name);
+}
+
+bool CalculiXCoreInterface::modify_materiallibrary_group(std::string name, std::string new_name)
+{
+  return ccx_core.modify_materiallibrary_group(name,new_name);
+}
+
+bool CalculiXCoreInterface::delete_materiallibrary_group(std::string name)
+{
+  return ccx_core.delete_materiallibrary_group(name);
 }
 
 std::vector<std::string> CalculiXCoreInterface::get_customline_data(std::string position,std::string keyword,int keyword_id)

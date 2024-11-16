@@ -17,6 +17,7 @@ public:
   bool set_use_ccx_autocleanup(bool bool_use);
   bool set_use_ccx_logfile(bool bool_use);
   bool init_pythoninterface();
+  bool init_materiallibrary();
   std::string print_data();
   bool log_str(std::string str_log);
   bool export_to_csv(std::string path_and_name, std::vector<std::string> header, std::vector<std::vector<double>> data,bool overwrite); // exports the data to a .csv file, with the header
@@ -163,6 +164,11 @@ public:
   bool delete_customline(int customline_id); // delete customline
   std::vector<std::vector<std::string>> get_entities(std::string entity, int id);
   std::vector<std::string> get_customline_data(std::string position,std::string keyword,int keyword_id);
+  //material library
+  bool create_materiallibrary_group(std::string name);
+  bool modify_materiallibrary_group(std::string name, std::string new_name);
+  bool delete_materiallibrary_group(std::string name);
+  
   //draw
   std::vector<std::vector<double>> get_draw_data_for_load_force(int id); // returns coord(3) and magnitude(3) std::vector<double>
   std::vector<std::vector<double>> get_draw_data_for_load_pressure(int id); // returns coord(3) and magnitude(3) std::vector<double>
