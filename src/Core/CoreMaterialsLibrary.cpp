@@ -78,7 +78,9 @@ bool CoreMaterialsLibrary::rename_group(std::string groupname, std::string new_g
 {
   HDF5Tool hdf5Tool(ccx_uo.mPathMaterialLibrary.toStdString());
   std::string log = "";
-
+  
+  hdf5Tool.renameGroup(groupname,new_groupname);
+  
   log = "Rename group " + groupname + " to " + new_groupname + " in the Material Library.\n";
   PRINT_INFO("%s", log.c_str());
 
@@ -90,11 +92,72 @@ bool CoreMaterialsLibrary::delete_group(std::string groupname)
   HDF5Tool hdf5Tool(ccx_uo.mPathMaterialLibrary.toStdString());
   std::string log = "";
 
+  hdf5Tool.deleteGroup(groupname);
+  
   log = "Delete group " + groupname + " from the Material Library.\n";
   PRINT_INFO("%s", log.c_str());
 
   return true;
 }  
+
+bool CoreMaterialsLibrary::create_material(std::string name, std::string groupname)
+{
+  HDF5Tool hdf5Tool(ccx_uo.mPathMaterialLibrary.toStdString());
+  std::string log = "";
+
+  std::string material = groupname + "/" + name;
+
+  if (hdf5Tool.nameExists(material))
+  {
+    log = "Can't create new material in the Material Library.\n" + name + " already exists in group " + groupname + "!\n";
+    PRINT_INFO("%s", log.c_str());
+
+    return false;
+  }
+
+  hdf5Tool.createGroup(material);
+  std::vector<int> data(1);
+  data[0] = 1;
+
+  hdf5Tool.write_dataset_int_rank_1(std::string("is_material"), material, data); // create check variable
+
+  log = "Create new material "+ name +" in group " + groupname + " in the Material Library.\n";
+  PRINT_INFO("%s", log.c_str());
+
+  return true;
+}
+
+bool CoreMaterialsLibrary::rename_material(std::string name,std::string new_name, std::string groupname)
+{
+  HDF5Tool hdf5Tool(ccx_uo.mPathMaterialLibrary.toStdString());
+  std::string log = "";
+
+  std::string material = groupname + "/" + name;
+  std::string new_material = groupname + "/" + new_name;
+
+  hdf5Tool.renameGroup(material,new_material);
+  
+  log = "Rename material " + name + " to " + new_name + " in group " + groupname + " in the Material Library.\n";
+  PRINT_INFO("%s", log.c_str());
+
+  return true;
+}  
+
+bool CoreMaterialsLibrary::delete_material(std::string name, std::string groupname)
+{
+  HDF5Tool hdf5Tool(ccx_uo.mPathMaterialLibrary.toStdString());
+  std::string log = "";
+
+  std::string material = groupname + "/" + name;
+
+  hdf5Tool.deleteGroup(material);
+  
+  log = "Delete material " + name + " from group " + groupname + " from the Material Library.\n";
+  PRINT_INFO("%s", log.c_str());
+
+  return true;
+}  
+
 
 bool CoreMaterialsLibrary::check_group(std::string groupname)
 {
@@ -107,3 +170,18 @@ bool CoreMaterialsLibrary::check_group(std::string groupname)
 
   return false;
 }
+
+bool CoreMaterialsLibrary::check_material(std::string name, std::string groupname)
+{
+  HDF5Tool hdf5Tool(ccx_uo.mPathMaterialLibrary.toStdString());
+
+  std::string material = groupname + "/" + name + "/is_material";
+
+  if (hdf5Tool.nameExists(material))
+  {
+    return true;
+  }
+
+  return false;
+}
+

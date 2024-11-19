@@ -745,6 +745,21 @@ bool CalculiXCoreInterface::delete_materiallibrary_group(std::string name)
   return ccx_core.delete_materiallibrary_group(name);
 }
 
+bool CalculiXCoreInterface::create_materiallibrary_material(std::string name, std::string groupname)
+{
+  return ccx_core.create_materiallibrary_material(name, groupname);
+}
+
+bool CalculiXCoreInterface::modify_materiallibrary_material(std::string name, std::string new_name, std::string groupname)
+{
+  return ccx_core.modify_materiallibrary_material(name, new_name, groupname);
+}
+
+bool CalculiXCoreInterface::delete_materiallibrary_material(std::string name, std::string groupname)
+{
+  return ccx_core.delete_materiallibrary_material(name, groupname);
+}
+
 std::vector<std::string> CalculiXCoreInterface::get_customline_data(std::string position,std::string keyword,int keyword_id)
 {
   return ccx_core.get_customline_data(position,keyword,keyword_id);

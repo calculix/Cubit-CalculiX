@@ -27,8 +27,12 @@ public:
   bool create_group(std::string groupname); // create a new group
   bool rename_group(std::string groupname, std::string new_groupname); // renames a group
   bool delete_group(std::string groupname); // deletes the group
-  
+  bool create_material(std::string name, std::string groupname); // create a new material in a group
+  bool rename_material(std::string name, std::string new_name, std::string groupname); // renames a material in a group
+  bool delete_material(std::string name, std::string groupname); // deletes the material from a group
+
   bool check_group(std::string groupname); // check if the group exists
+  bool check_material(std::string name, std::string groupname); // check if the material exists in the group
   
   //bool get_groups(); // gets the groups from the library
   //bool get_materials(); // gets the materials from the library

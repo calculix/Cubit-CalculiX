@@ -231,4 +231,10 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryModifyGroupCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryDeleteGroupCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryDeleteGroupCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryCreateMaterialCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryCreateMaterialCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryModifyMaterialCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryModifyMaterialCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryDeleteMaterialCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryDeleteMaterialCommand.hpp
     PARENT_SCOPE)

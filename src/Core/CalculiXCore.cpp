@@ -4456,6 +4456,21 @@ bool CalculiXCore::delete_materiallibrary_group(std::string name)
   return mat_library->delete_group(name);
 }
 
+bool CalculiXCore::create_materiallibrary_material(std::string name, std::string groupname)
+{
+  return mat_library->create_material(name, groupname);
+}
+
+bool CalculiXCore::modify_materiallibrary_material(std::string name, std::string new_name, std::string groupname)
+{
+  return mat_library->rename_material(name, new_name, groupname);
+}
+
+bool CalculiXCore::delete_materiallibrary_material(std::string name, std::string groupname)
+{
+  return mat_library->delete_material(name, groupname);
+}
+
 std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_force(int id)
 {
   int bc_set_id=-1;

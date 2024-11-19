@@ -55,6 +55,49 @@ bool HDF5Tool::createGroup(std::string groupname)
   return true;
 }
 
+bool HDF5Tool::renameGroup(std::string groupname,std::string new_groupname)
+{
+  if (!this->nameExists(groupname.c_str()))
+  {
+    return false;
+  }
+
+  if (this->nameExists(new_groupname.c_str()))
+  {
+    return false;
+  }
+
+  int result = H5Lmove(this->file->getId(), groupname.c_str(),this->file->getId(), new_groupname.c_str(), H5P_DEFAULT, H5P_DEFAULT);
+  
+  return true;
+}
+
+bool HDF5Tool::deleteGroup(std::string groupname)
+{
+  if (!this->nameExists(groupname.c_str()))
+  {
+    return false;
+  }
+
+  int result = H5Ldelete(this->file->getId(), groupname.c_str(), H5P_DEFAULT);
+  
+  return true;
+}
+
+bool HDF5Tool::deleteDataset(std::string name, std::string groupname)
+{
+  //this->file->createGroup(groupname.c_str());
+  H5::Group group(file->openGroup(groupname.c_str()));
+  if (!group.exists(name.c_str()))
+  {
+    return false;
+  }
+
+  int result = H5Ldelete(group.getId(), name.c_str(), H5P_DEFAULT);
+  
+  return true;
+}
+
 bool HDF5Tool::read_dataset_int_rank_1(std::string name, std::string groupname, std::vector<int> &data)
 {
   std::string log = "";

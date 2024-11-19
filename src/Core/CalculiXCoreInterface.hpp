@@ -168,6 +168,9 @@ public:
   bool create_materiallibrary_group(std::string name);
   bool modify_materiallibrary_group(std::string name, std::string new_name);
   bool delete_materiallibrary_group(std::string name);
+  bool create_materiallibrary_material(std::string name, std::string groupname);
+  bool modify_materiallibrary_material(std::string name, std::string new_name, std::string groupname);
+  bool delete_materiallibrary_material(std::string name, std::string groupname);
   
   //draw
   std::vector<std::vector<double>> get_draw_data_for_load_force(int id); // returns coord(3) and magnitude(3) std::vector<double>
