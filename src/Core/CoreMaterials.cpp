@@ -177,6 +177,29 @@ std::vector<std::string> CoreMaterials::get_group_list() // get a list of the Ca
   return groups;
 }
 
+int CoreMaterials::get_group_property_size(std::string group_property)
+{
+  for (size_t i = 0; i < group_properties.size(); i++)
+  { 
+    if (group_properties[i][0]==group_property)
+    { 
+      if (group_properties[i][1]=="1")
+      {
+        return 1;
+      }else if (group_properties[i][1]=="2")
+      {
+      }else if (group_properties[i][1]=="3")
+      {
+      }else if (group_properties[i][1]=="4")
+      {
+        return std::stoi(group_properties[i][2]);
+      }
+    }
+  }
+
+  return -1;
+}
+
 std::string CoreMaterials::get_material_export() // get a list of the CalculiX Material exports
 {
   std::vector<std::string> materials_export_list;

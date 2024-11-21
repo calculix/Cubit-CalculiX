@@ -237,4 +237,8 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryModifyMaterialCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryDeleteMaterialCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryDeleteMaterialCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryExportMaterialCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryExportMaterialCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryImportMaterialCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryImportMaterialCommand.hpp
     PARENT_SCOPE)

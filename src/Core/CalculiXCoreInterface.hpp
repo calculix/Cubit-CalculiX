@@ -33,6 +33,7 @@ public:
   std::vector<int> get_block_node_ids(int block_id); // gets the block node ids
   std::vector<int> get_block_element_ids(int block_id); // gets the block global element ids
   std::string get_material_name(int material_id); // gets the material name
+  int get_group_property_size(std::string group_property); // gets the size of a material group property 
   std::string get_nodeset_name(int nodeset_id); // gets the nodeset name
   std::string get_sideset_name(int sideset_id); // gets the sideset name
   std::string get_surfaceinteraction_name(int surfaceinteraction_id); // gets the surfaceinteraction name
@@ -166,11 +167,13 @@ public:
   std::vector<std::string> get_customline_data(std::string position,std::string keyword,int keyword_id);
   //material library
   bool create_materiallibrary_group(std::string name);
-  bool modify_materiallibrary_group(std::string name, std::string new_name);
+  bool modify_materiallibrary_group(std::string name, std::string data, int mode);
   bool delete_materiallibrary_group(std::string name);
   bool create_materiallibrary_material(std::string name, std::string groupname);
-  bool modify_materiallibrary_material(std::string name, std::string new_name, std::string groupname);
+  bool modify_materiallibrary_material(std::string name, std::string groupname, std::string data, int mode, std::vector<double> value_data);
   bool delete_materiallibrary_material(std::string name, std::string groupname);
+  bool export_materiallibrary_material(std::string name, std::string groupname, std::string cubit_name);
+  bool import_materiallibrary_material(std::string name, std::string groupname, std::string cubit_name);
   
   //draw
   std::vector<std::vector<double>> get_draw_data_for_load_force(int id); // returns coord(3) and magnitude(3) std::vector<double>

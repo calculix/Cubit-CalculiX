@@ -120,6 +120,11 @@ std::string CalculiXCoreInterface::get_material_name(int material_id)
   return ccx_core.get_material_name(material_id);
 }
 
+int CalculiXCoreInterface::get_group_property_size(std::string group_property)
+{
+  return ccx_core.get_group_property_size(group_property);
+}
+
 std::string CalculiXCoreInterface::get_nodeset_name(int nodeset_id)
 {
   return ccx_core.get_nodeset_name(nodeset_id);
@@ -735,9 +740,9 @@ bool CalculiXCoreInterface::create_materiallibrary_group(std::string name)
   return ccx_core.create_materiallibrary_group(name);
 }
 
-bool CalculiXCoreInterface::modify_materiallibrary_group(std::string name, std::string new_name)
+bool CalculiXCoreInterface::modify_materiallibrary_group(std::string name,  std::string data, int mode)
 {
-  return ccx_core.modify_materiallibrary_group(name,new_name);
+  return ccx_core.modify_materiallibrary_group(name, data, mode);
 }
 
 bool CalculiXCoreInterface::delete_materiallibrary_group(std::string name)
@@ -750,14 +755,24 @@ bool CalculiXCoreInterface::create_materiallibrary_material(std::string name, st
   return ccx_core.create_materiallibrary_material(name, groupname);
 }
 
-bool CalculiXCoreInterface::modify_materiallibrary_material(std::string name, std::string new_name, std::string groupname)
+bool CalculiXCoreInterface::modify_materiallibrary_material(std::string name, std::string groupname, std::string data, int mode, std::vector<double> value_data)
 {
-  return ccx_core.modify_materiallibrary_material(name, new_name, groupname);
+  return ccx_core.modify_materiallibrary_material(name, groupname, data, mode, value_data);
 }
 
 bool CalculiXCoreInterface::delete_materiallibrary_material(std::string name, std::string groupname)
 {
   return ccx_core.delete_materiallibrary_material(name, groupname);
+}
+
+bool CalculiXCoreInterface::export_materiallibrary_material(std::string name, std::string groupname, std::string cubit_name)
+{
+  return ccx_core.export_materiallibrary_material(name, groupname, cubit_name);
+}
+
+bool CalculiXCoreInterface::import_materiallibrary_material(std::string name, std::string groupname, std::string cubit_name)
+{
+  return ccx_core.import_materiallibrary_material(name, groupname, cubit_name);
 }
 
 std::vector<std::string> CalculiXCoreInterface::get_customline_data(std::string position,std::string keyword,int keyword_id)

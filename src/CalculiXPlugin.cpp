@@ -119,6 +119,9 @@
 #include "ccxMaterialLibraryCreateMaterialCommand.hpp"
 #include "ccxMaterialLibraryModifyMaterialCommand.hpp"
 #include "ccxMaterialLibraryDeleteMaterialCommand.hpp"
+#include "ccxMaterialLibraryExportMaterialCommand.hpp"
+#include "ccxMaterialLibraryImportMaterialCommand.hpp"
+
 
 //! This macro is required to identify this as a valid Cubit plugin. The plugin
 //! will NOT be loaded if this macro is not present.
@@ -253,6 +256,8 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxMaterialLibraryCreateMaterialCommand");
   keys.push_back("ccxMaterialLibraryModifyMaterialCommand");
   keys.push_back("ccxMaterialLibraryDeleteMaterialCommand");
+  keys.push_back("ccxMaterialLibraryExportMaterialCommand");
+  keys.push_back("ccxMaterialLibraryImportMaterialCommand");
 
   return keys;
 }
@@ -615,6 +620,12 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
   
   else if(key == "ccxMaterialLibraryDeleteMaterialCommand")
     return new ccxMaterialLibraryDeleteMaterialCommand();
+
+  else if(key == "ccxMaterialLibraryExportMaterialCommand")
+    return new ccxMaterialLibraryExportMaterialCommand();
+
+  else if(key == "ccxMaterialLibraryImportMaterialCommand")
+    return new ccxMaterialLibraryImportMaterialCommand();
 
   return NULL;
 }

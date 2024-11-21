@@ -2386,6 +2386,11 @@ std::string CalculiXCore::get_material_name(int material_id)
   return material_name;
 }
 
+int CalculiXCore::get_group_property_size(std::string group_property)
+{
+  return mat->get_group_property_size(group_property);
+}
+
 std::string CalculiXCore::get_nodeset_name(int nodeset_id)
 {
   std::string nodeset_name;
@@ -4446,9 +4451,9 @@ bool CalculiXCore::create_materiallibrary_group(std::string name)
   return mat_library->create_group(name);
 }
 
-bool CalculiXCore::modify_materiallibrary_group(std::string name, std::string new_name)
+bool CalculiXCore::modify_materiallibrary_group(std::string name,  std::string data, int mode)
 {
-  return mat_library->rename_group(name,new_name);
+  return mat_library->modify_group(name,data,mode);
 }
 
 bool CalculiXCore::delete_materiallibrary_group(std::string name)
@@ -4461,14 +4466,24 @@ bool CalculiXCore::create_materiallibrary_material(std::string name, std::string
   return mat_library->create_material(name, groupname);
 }
 
-bool CalculiXCore::modify_materiallibrary_material(std::string name, std::string new_name, std::string groupname)
+bool CalculiXCore::modify_materiallibrary_material(std::string name, std::string groupname, std::string data, int mode, std::vector<double> value_data)
 {
-  return mat_library->rename_material(name, new_name, groupname);
+  return mat_library->modify_material(name, groupname, data, mode, value_data);
 }
 
 bool CalculiXCore::delete_materiallibrary_material(std::string name, std::string groupname)
 {
   return mat_library->delete_material(name, groupname);
+}
+
+bool CalculiXCore::export_materiallibrary_material(std::string name, std::string groupname, std::string cubit_name)
+{
+  return mat_library->export_material(name, groupname, cubit_name);
+}
+
+bool CalculiXCore::import_materiallibrary_material(std::string name, std::string groupname, std::string cubit_name)
+{
+  return mat_library->import_material(name, groupname, cubit_name);
 }
 
 std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_force(int id)
