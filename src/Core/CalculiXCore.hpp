@@ -57,6 +57,7 @@ public:
   std::vector<std::vector<std::string>> sideset_face_data;
 
   bool cmd(std::string cmd); // executes a cubit command with appending to the history
+  bool silent_cmd(std::string cmd); // executes a cubit command
   std::string get_version(); // gets the component version
   bool print_to_log(std::string str_log);
   bool init(); // init all core objects

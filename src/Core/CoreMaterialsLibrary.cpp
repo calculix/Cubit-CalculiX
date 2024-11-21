@@ -510,6 +510,77 @@ bool CoreMaterialsLibrary::export_material(std::string name, std::string groupna
 
 bool CoreMaterialsLibrary::import_material(std::string name, std::string groupname, std::string cubit_name)
 {
+  HDF5Tool hdf5Tool(ccx_uo.mPathMaterialLibrary.toStdString());
+  std::vector<std::vector<std::string>> group_properties;
+  // material group properties from core
+  std::string log="";
+  std::string material = groupname + "/" + name;
+  MaterialInterface::Material cubit_material;
+  cubit_material = mat_iface->get_material(cubit_name);
+
+  if (cubit_material != NULL)
+  {
+    log = "Material " + cubit_name + " does already exist.\n";
+    PRINT_INFO("%s", log.c_str());
+
+    return false;
+  }
+
+  if (!hdf5Tool.nameExists(material))
+  {
+    log = "Can't create new material.\n" + name + " doesn't exist in group " + groupname + "!\n";
+    PRINT_INFO("%s", log.c_str());
+    return false;
+  }
+
+  if (!hdf5Tool.nameExists(material +"/material"))
+  {
+    log = "Can't create new material.\n" + name + " doesn't exist in group " + groupname + "!\n";
+    PRINT_INFO("%s", log.c_str());
+    return false;
+  }
+  
+  std::vector<std::string> str_data;
+  hdf5Tool.read_dataset_string_rank_1(std::string("PropertyGroup"), material, str_data);
+
+  ccx_iface->silent_cmd("create material \"" + cubit_name + "\" property_group \"" + str_data[0] + "\"");
+
+  // we get the group properties for the Calculix-FEA Type
+  group_properties = ccx_iface->get_material_group_properties();
+
+  for (size_t i = 0; i < group_properties.size(); i++)
+  {
+    if (group_properties[i][1]=="1")
+    {
+      if (hdf5Tool.nameExists(material +"/" + group_properties[i][0]))
+      {
+        std::vector<double> data;
+        hdf5Tool.read_dataset_double_rank_1(group_properties[i][0], material, data);      
+        ccx_iface->silent_cmd("modify material \"" + cubit_name + "\" scalar_properties \"" + group_properties[i][0] + "\" " + std::to_string(data[0]));
+      }
+    }else if (group_properties[i][1]=="4")
+    {
+      if (hdf5Tool.nameExists(material +"/" + group_properties[i][0]))
+      {
+        std::string cmd = "modify material \"" + cubit_name + "\" matrix_property \"" + group_properties[i][0] + "\"";
+        std::vector<std::vector<double>> data;
+        hdf5Tool.read_dataset_double_rank_2(group_properties[i][0], material, data);      
+
+        if (data.size() > 0)
+        {
+          for (size_t ii = 0; ii < data.size(); ii++)
+          {
+            for (size_t iii = 0; iii < data[ii].size(); iii++)
+            {
+              cmd.append(" " + std::to_string(data[ii][iii]));
+            }
+          } 
+          ccx_iface->silent_cmd(cmd);
+        }
+      }
+    }    
+  }
+
   return true;
 }
 

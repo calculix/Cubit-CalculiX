@@ -12,6 +12,11 @@ bool CalculiXCoreInterface::cmd(std::string cmd)
   return ccx_core.cmd(cmd);
 }
 
+bool CalculiXCoreInterface::silent_cmd(std::string cmd)
+{
+  return ccx_core.silent_cmd(cmd);
+}
+
 std::string CalculiXCoreInterface::get_version()
 {
   return ccx_core.get_version();

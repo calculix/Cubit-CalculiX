@@ -135,6 +135,13 @@ bool CalculiXCore::cmd(std::string cmd)
   return true;
 }
 
+bool CalculiXCore::silent_cmd(std::string cmd)
+{
+  CubitInterface::silent_cmd_without_running_journal_lines(cmd.c_str());
+  
+  return true;
+}
+
 std::string CalculiXCore::get_version()
 { 
   return this->version;
