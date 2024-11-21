@@ -1,6 +1,7 @@
 #include "CoreMaterialsLibrary.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
+#include "MaterialInterface.hpp"
 #include "CalculiXCoreInterface.hpp"
 #include "loadUserOptions.hpp"
 #include "HDF5Tool.hpp"
@@ -19,6 +20,7 @@ bool CoreMaterialsLibrary::init()
     return false; // already initialized
   }else{
     CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
+    mat_iface = dynamic_cast<MaterialInterface*>(CubitInterface::get_interface("Material"));
 
     is_initialized = true;
     this->load_library();
@@ -143,11 +145,17 @@ bool CoreMaterialsLibrary::delete_group(std::string groupname)
   HDF5Tool hdf5Tool(ccx_uo.mPathMaterialLibrary.toStdString());
   std::string log = "";
 
-  hdf5Tool.deleteGroup(groupname);
+  if (hdf5Tool.nameExists(groupname))
+  {
+    hdf5Tool.deleteGroup(groupname);
+    log = "Delete group " + groupname + " from the Material Library.\n";
+    PRINT_INFO("%s", log.c_str());
+  }else{
+    log = "Cna't delete group " + groupname + " from the Material Library.\n";
+    PRINT_INFO("%s", log.c_str());
+    return false;
+  }  
   
-  log = "Delete group " + groupname + " from the Material Library.\n";
-  PRINT_INFO("%s", log.c_str());
-
   return true;
 }  
 
@@ -343,16 +351,160 @@ bool CoreMaterialsLibrary::delete_material(std::string name, std::string groupna
 
   std::string material = groupname + "/" + name;
 
-  hdf5Tool.deleteGroup(material);
+  if (hdf5Tool.nameExists(material))
+  {
+    hdf5Tool.deleteGroup(material);
+    log = "Delete material " + name + " from group " + groupname + " from the Material Library.\n";
+    PRINT_INFO("%s", log.c_str());
+  }else{
+    log = "Can't delete material " + name + " from group " + groupname + " from the Material Library.\n";
+    PRINT_INFO("%s", log.c_str());
+    return false;
+  }
   
-  log = "Delete material " + name + " from group " + groupname + " from the Material Library.\n";
-  PRINT_INFO("%s", log.c_str());
-
   return true;
 }  
 
 bool CoreMaterialsLibrary::export_material(std::string name, std::string groupname, std::string cubit_name)
 {
+  HDF5Tool hdf5Tool(ccx_uo.mPathMaterialLibrary.toStdString());
+  std::vector<std::vector<std::string>> group_properties;
+  // material group properties from core
+  std::vector<std::vector<int>> properties;
+  // properties[i][0] group id
+  // properties[i][1] property type 1 scalar, 2 vector, 3 tabular, 4 matrix
+  // properties[i][2] property id
+  std::vector<double> property_scalar;
+  std::vector<std::vector<std::vector<double>>> property_matrix;
+
+  std::string log="";
+
+  MaterialInterface::Material material;
+  MaterialInterface::Property prop;
+  material = mat_iface->get_material(cubit_name);
+  double prop_scalar;
+  MaterialVector prop_vector;
+  MaterialMatrix prop_matrix;
+
+  if (material == NULL)
+  {
+    log = "Material " + cubit_name + " doesn't exist.\n";
+    PRINT_INFO("%s", log.c_str());
+
+    return false;
+  }
+
+  // we get the group properties for the Calculix-FEA Type
+  group_properties = ccx_iface->get_material_group_properties();
+
+  // we build our storages for the material data
+  std::vector<int> property(3);
+  for (size_t i = 0; i < group_properties.size(); i++)
+  {
+    property[0] = int(i);
+    if (group_properties[i][1]=="1")
+    {
+      double tmp_scalar = 0;
+      property[1] = 1;
+      property[2] = int(property_scalar.size());
+      prop = mat_iface->get_property(group_properties[i][0]);
+      if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+      {
+        tmp_scalar = prop_scalar; 
+      }
+      property_scalar.push_back(tmp_scalar);
+    }/*else if (group_properties[i][1]=="2")
+    {
+      std::vector<double> tmp_vector;
+      property[1] = 2;
+      property[2] = int(property_vector.size());
+      prop = mat_iface->get_property(group_properties[i][0]);
+      if (mat_iface->get_material_property_value(material, prop, prop_vector))
+      {
+        tmp_vector = prop_vector; 
+      }
+      property_vector.push_back(tmp_vector);
+    }
+    else if (group_properties[i][1]=="3")
+    {
+      std::vector<std::vector<double>> tmp_tabular;
+      property[1] = 3;
+      property[2] = property_tabular.size();
+      prop = mat_iface->get_property(group_properties[i][0]);
+      if (mat_iface->get_material_property_value(material, prop, prop_tabular))
+      {
+        tmp_tabular = prop_tabular; 
+      }
+      property_tabular.push_back(tmp_tabular);
+    }*/
+    else if (group_properties[i][1]=="4")
+    {
+      std::vector<std::vector<double>> tmp_matrix;
+      property[1] = 4;
+      property[2] = int(property_matrix.size());
+      prop = mat_iface->get_property(group_properties[i][0]);
+      if (mat_iface->get_material_property_value(material, prop, prop_matrix))
+      {
+        tmp_matrix = prop_matrix; 
+      }
+      property_matrix.push_back(tmp_matrix);
+    }
+    properties.push_back(property);
+  }
+
+  /*
+  log = "Material " + cubit_name + "\n";
+  PRINT_INFO("%s", log.c_str());
+
+  for (size_t i = 0; i < group_properties.size(); i++)
+  {
+    log = "property " + group_properties[i][0] + " type " + std::to_string(properties[i][1]) + " \n";
+    PRINT_INFO("%s", log.c_str());
+
+    if (properties[i][1]==1)
+    {
+      log = std::to_string(property_scalar[properties[i][2]]) + " \n";
+      PRINT_INFO("%s", log.c_str());
+    }else if (properties[i][1]==4)
+    {
+      for (size_t ii = 0; ii < property_matrix[properties[i][2]].size(); ii++)
+      {
+        for (size_t iii = 0; iii < property_matrix[properties[i][2]][ii].size(); iii++)
+        {
+          log = std::to_string(property_matrix[properties[i][2]][ii][iii]) + " ";
+          PRINT_INFO("%s", log.c_str());
+        }
+        log = "\n ";
+        PRINT_INFO("%s", log.c_str());
+      }
+    }    
+  }
+  */
+
+  if (!this->create_material(name,groupname))
+  {
+    return false;
+  }
+   
+  for (size_t i = 0; i < group_properties.size(); i++)
+  {
+    if (properties[i][1]==1)
+    {
+      this->modify_material_scalar(name, groupname, group_properties[i][0], {property_scalar[properties[i][2]]});
+    }else if (properties[i][1]==4)
+    {
+      std::vector<double> value_data;
+      for (size_t ii = 0; ii < property_matrix[properties[i][2]].size(); ii++)
+      {
+        for (size_t iii = 0; iii < property_matrix[properties[i][2]][ii].size(); iii++)
+        {
+          value_data.push_back(property_matrix[properties[i][2]][ii][iii]);
+        }
+      }
+      this->modify_material_matrix(name, groupname, group_properties[i][0], value_data);
+    }    
+  }
+
   return true;
 }
 

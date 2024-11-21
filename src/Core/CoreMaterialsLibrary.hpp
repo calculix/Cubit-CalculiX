@@ -9,6 +9,7 @@
 #include <string>
 
 class CalculiXCoreInterface;
+class MaterialInterface;
 
 class CoreMaterialsLibrary
 {
@@ -47,6 +48,7 @@ public:
   //bool get_materials(); // gets the materials from the library
 
   CalculiXCoreInterface *ccx_iface;
+  MaterialInterface *mat_iface;
 };
 
 #endif // COREMATERIALS_HPP
