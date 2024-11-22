@@ -53,7 +53,7 @@ public:
   bool bool_init_materiallibrary = false;
   bool use_ccx_logfile = false;
   bool use_ccx_autocleanup = true;
-  std::string version = "2024.10";
+  std::string version = "2024.11";
   std::vector<std::vector<std::string>> sideset_face_data;
 
   bool cmd(std::string cmd); // executes a cubit command with appending to the history

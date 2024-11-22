@@ -27,16 +27,21 @@ MaterialManagement::MaterialManagement()
   boxLayout_material_cards1 = new QVBoxLayout();
   boxLayout_material_cards2 = new QVBoxLayout();
   boxLayout_material_cards3 = new QVBoxLayout();
+  boxLayout_materiallibrary1 = new QVBoxLayout();
+  boxLayout_materiallibrary2 = new QVBoxLayout();
   boxLayout_widget = new QVBoxLayout();
-  gridLayout->addLayout(boxLayout_window,2,4, Qt::AlignRight);
+  gridLayout->addLayout(boxLayout_window,2,6, Qt::AlignRight);
   gridLayout->addLayout(boxLayout_material1,0,0, Qt::AlignTop);
   gridLayout->addLayout(boxLayout_material2,0,1, Qt::AlignTop);
-  gridLayout->addLayout(boxLayout_material_cards1,0,2, Qt::AlignTop);
-  gridLayout->addLayout(boxLayout_material_cards2,0,3, Qt::AlignTop);
-  gridLayout->addLayout(boxLayout_material_cards3,0,4, Qt::AlignTop);
-  gridLayout->addLayout(boxLayout_widget,1,0,1,5, Qt::AlignTop);
+  gridLayout->addLayout(boxLayout_materiallibrary1,0,2, Qt::AlignTop);
+  gridLayout->addLayout(boxLayout_materiallibrary2,0,3, Qt::AlignTop);
+  gridLayout->addLayout(boxLayout_material_cards1,0,4, Qt::AlignTop);
+  gridLayout->addLayout(boxLayout_material_cards2,0,5, Qt::AlignTop);
+  gridLayout->addLayout(boxLayout_material_cards3,0,6, Qt::AlignTop);
+  gridLayout->addLayout(boxLayout_widget,1,0,1,7, Qt::AlignTop);
   boxLayout_material2->addSpacing(30);
   boxLayout_material_cards2->addSpacing(30);
+  boxLayout_materiallibrary2->addSpacing(30);
 
   // buttons
   pushButton_ok = new QPushButton();
@@ -64,6 +69,14 @@ MaterialManagement::MaterialManagement()
   pushButton_delete->setText("Delete");
   boxLayout_material2->addWidget(pushButton_delete);
   
+  pushButton_rename = new QPushButton();
+  pushButton_rename->setText("Rename");
+  boxLayout_material2->addWidget(pushButton_rename);
+
+  pushButton_export = new QPushButton();
+  pushButton_export->setText("Export");
+  boxLayout_material2->addWidget(pushButton_export);
+
   pushButton_add = new QPushButton();
   //pushButton_add->setGeometry(420,70,21,21);
   pushButton_add->setText(">");
@@ -73,6 +86,42 @@ MaterialManagement::MaterialManagement()
   //pushButton_remove->setGeometry(420,100,21,21);
   pushButton_remove->setText("<");
   boxLayout_material_cards2->addWidget(pushButton_remove);
+
+  //label_materiallibrary_material = new QLabel();
+  //label_materiallibrary_material->setText("Material");
+  //boxLayout_materiallibrary2->addWidget(label_materiallibrary_material);
+
+  pushButton_library_import = new QPushButton();
+  pushButton_library_import->setText("Import");
+  boxLayout_materiallibrary2->addWidget(pushButton_library_import);
+
+  pushButton_library_new = new QPushButton();
+  pushButton_library_new->setText("New");
+  boxLayout_materiallibrary2->addWidget(pushButton_library_new);
+
+  pushButton_library_delete = new QPushButton();
+  pushButton_library_delete->setText("Delete");
+  boxLayout_materiallibrary2->addWidget(pushButton_library_delete);
+  
+  pushButton_library_rename = new QPushButton();
+  pushButton_library_rename->setText("Rename");
+  boxLayout_materiallibrary2->addWidget(pushButton_library_rename);
+
+  label_materiallibrary_group = new QLabel();
+  label_materiallibrary_group->setText("Group");
+  boxLayout_materiallibrary2->addWidget(label_materiallibrary_group);
+
+  pushButton_library_new_group = new QPushButton();
+  pushButton_library_new_group->setText("New");
+  boxLayout_materiallibrary2->addWidget(pushButton_library_new_group);
+
+  pushButton_library_delete_group = new QPushButton();
+  pushButton_library_delete_group->setText("Delete");
+  boxLayout_materiallibrary2->addWidget(pushButton_library_delete_group);
+  
+  pushButton_library_rename_group = new QPushButton();
+  pushButton_library_rename_group->setText("Rename");
+  boxLayout_materiallibrary2->addWidget(pushButton_library_rename_group);
 
   // labels
   label_material = new QLabel();
@@ -90,6 +139,10 @@ MaterialManagement::MaterialManagement()
   label_used->setText("Used Cards");
   boxLayout_material_cards3->addWidget(label_used);
 
+  label_materiallibrary = new QLabel();
+  label_materiallibrary->setText("Library");
+  boxLayout_materiallibrary1->addWidget(label_materiallibrary);
+
   // tree/lists
   tree_material = new QTreeWidget();
   //tree_material->setGeometry(10,30,181,191);
@@ -104,6 +157,11 @@ MaterialManagement::MaterialManagement()
   list_used = new QListWidget();
   //list_used->setGeometry(450,30,111,191);
   boxLayout_material_cards3->addWidget(list_used);
+
+  tree_materiallibrary = new QTreeWidget();
+  tree_materiallibrary->setColumnCount(2);
+  tree_materiallibrary->setHeaderLabels(QStringList() << "Name" << "Description");
+  boxLayout_materiallibrary1->addWidget(tree_materiallibrary);
 
   // card widgets
   card_frame = new QFrame();

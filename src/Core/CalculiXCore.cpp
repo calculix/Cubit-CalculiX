@@ -4329,6 +4329,38 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
     entities.push_back({"sideset",std::to_string(id)});
   }else if (entity=="material")
   {
+    for (size_t i = 0; i < sections->sections_data.size(); i++)
+    {
+      if (sections->sections_data[i][1] == 1)
+      {
+        sub_data_id = sections->get_solid_section_data_id_from_solid_section_id(sections->sections_data[i][2]);
+        if (sections->solid_section_data[sub_data_id][2]==std::to_string(id))
+        {
+          entities.push_back({"block",sections->solid_section_data[sub_data_id][1]});
+        }
+      }else if (sections->sections_data[i][1] == 2)
+      {
+        sub_data_id = sections->get_shell_section_data_id_from_shell_section_id(sections->sections_data[i][2]);
+        if (sections->solid_section_data[sub_data_id][2]==std::to_string(id))
+        {
+          entities.push_back({"block",sections->shell_section_data[sub_data_id][1]});
+        }
+      }else if (sections->sections_data[i][1] == 3)
+      {
+        sub_data_id = sections->get_beam_section_data_id_from_beam_section_id(sections->sections_data[i][2]);
+        if (sections->solid_section_data[sub_data_id][2]==std::to_string(id))
+        {
+          entities.push_back({"block",sections->beam_section_data[sub_data_id][1]});
+        }
+      }else if (sections->sections_data[i][1] == 4)
+      {
+        sub_data_id = sections->get_membrane_section_data_id_from_membrane_section_id(sections->sections_data[i][2]);
+        if (sections->solid_section_data[sub_data_id][2]==std::to_string(id))
+        {
+          entities.push_back({"block",sections->membrane_section_data[sub_data_id][1]});
+        }
+      }
+    }
     
   }else if (entity=="section")
   {
