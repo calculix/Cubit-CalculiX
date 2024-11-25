@@ -44,6 +44,14 @@ public:
   bool check_group(std::string groupname); // check if the group exists
   bool check_material(std::string name, std::string groupname); // check if the material exists in the group
   
+  std::vector<std::vector<std::string>> get_materiallibrary_tree_data(); // returns a tree of the material library
+  //[0][0] name
+  //[0][1] description
+  //[0][2] hdf5 path
+  //[0][3] type: Group, Material
+  std::vector<std::vector<std::string>> get_materiallibrary_material_properties(std::string name, std::string groupname); // returns a list of the material properties and its type, scalar or matrix
+  std::vector<std::vector<double>> get_materiallibrary_material_values(std::string name, std::string groupname, std::string property); // returns a list of the material properties and its type, scalar or matrix
+  
   //bool get_groups(); // gets the groups from the library
   //bool get_materials(); // gets the materials from the library
 

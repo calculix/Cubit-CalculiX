@@ -609,3 +609,29 @@ bool CoreMaterialsLibrary::check_material(std::string name, std::string groupnam
 
   return false;
 }
+
+
+std::vector<std::vector<std::string>> CoreMaterialsLibrary::get_materiallibrary_tree_data()
+{
+  std::vector<std::vector<std::string>> tree_data;
+  //[0][0] name
+  //[0][1] description
+  //[0][2] hdf5 path
+  //[0][3] type: Group, Material
+
+  return tree_data;
+}
+
+std::vector<std::vector<std::string>> CoreMaterialsLibrary::get_materiallibrary_material_properties(std::string name, std::string groupname)
+{
+  std::vector<std::vector<std::string>> properties;
+
+  return properties;
+}
+
+std::vector<std::vector<double>> CoreMaterialsLibrary::get_materiallibrary_material_values(std::string name, std::string groupname, std::string property)
+{
+  std::vector<std::vector<double>> values;
+
+  return values;
+}  

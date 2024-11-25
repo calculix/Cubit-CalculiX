@@ -7299,6 +7299,22 @@ std::vector<std::vector<std::string>> CalculiXCore::get_material_group_propertie
   return mat->group_properties;
 }
 
+
+std::vector<std::vector<std::string>> CalculiXCore::get_materiallibrary_tree_data()
+{ 
+  return mat_library->get_materiallibrary_tree_data();
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_materiallibrary_material_properties(std::string name, std::string group)
+{ 
+  return mat_library->get_materiallibrary_material_properties(name, group);
+}
+
+std::vector<std::vector<double>> CalculiXCore::get_materiallibrary_material_values(std::string name, std::string group, std::string property)
+{
+  return mat_library->get_materiallibrary_material_values(name, group, property);
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_sections_tree_data()
 { 
   std::vector<std::vector<std::string>> sections_tree_data;

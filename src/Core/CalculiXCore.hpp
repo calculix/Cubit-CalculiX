@@ -300,6 +300,9 @@ public:
   std::vector<std::vector<std::string>> get_sideset_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_material_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_material_group_properties(); // gets the data from core to build the item in the material management
+  std::vector<std::vector<std::string>> get_materiallibrary_tree_data(); // gets the data from materiallibrary to build the tree in the material management
+  std::vector<std::vector<std::string>> get_materiallibrary_material_properties(std::string name, std::string group); // gets the material properties from materiallibrary for the material management
+  std::vector<std::vector<double>> get_materiallibrary_material_values(std::string name, std::string group, std::string property); // gets the material values for a property from materiallibrary for the material management
   std::vector<std::vector<std::string>> get_sections_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_constraints_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_surfaceinteractions_tree_data(); // gets the data from core to build the tree
