@@ -614,10 +614,47 @@ bool CoreMaterialsLibrary::check_material(std::string name, std::string groupnam
 std::vector<std::vector<std::string>> CoreMaterialsLibrary::get_materiallibrary_tree_data()
 {
   std::vector<std::vector<std::string>> tree_data;
+  std::vector<std::string> all_groups;
   //[0][0] name
   //[0][1] description
   //[0][2] hdf5 path
   //[0][3] type: Group, Material
+
+  HDF5Tool hdf5Tool(ccx_uo.mPathMaterialLibrary.toStdString());
+  all_groups = hdf5Tool.getGroupsFromFile();
+
+  // for each group returned, check if its a material or not and extract the name by separator "/"
+  for (size_t i = 0; i < all_groups.size(); i++)
+  {
+    std::vector<std::string> tree_item;
+    //[0][0] name
+    //tree_item.push_back(all_groups[i]);
+    tree_item.push_back(all_groups[i].substr(all_groups[i].find_last_of("/") + 1));
+    
+    //[0][1] description
+    std::vector<std::string> str_data;
+    if (hdf5Tool.nameExists(all_groups[i] +"/description"))
+    {
+      hdf5Tool.read_dataset_string_rank_1(std::string("description"), all_groups[i], str_data);
+      tree_item.push_back(str_data[0]);
+    }else{
+      tree_item.push_back("");
+    }
+
+    //[0][2] hdf5 path
+    tree_item.push_back(all_groups[i]);
+
+    //[0][3] type: Group, Material
+    if (hdf5Tool.nameExists(all_groups[i] +"/material"))
+    {
+      tree_item.push_back("Material");
+    }else{
+      tree_item.push_back("Group");
+    }
+
+    tree_data.push_back(tree_item);
+  }
+
 
   return tree_data;
 }

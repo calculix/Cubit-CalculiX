@@ -40,6 +40,8 @@ public:
   
   void clear(); // remove all data
   void update();
+  void update_cubit(); //update cubit materials
+  void update_materiallibrary(); //update library materials
 
   void addMaterial(QString material_id, QString material_name); // adds a new material to the tree
   void removeMaterial(MaterialManagementItem *material); // removes the material from to the tree

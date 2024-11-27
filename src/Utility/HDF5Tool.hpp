@@ -17,6 +17,7 @@ public:
   bool createGroup(std::string groupname);
   bool renameGroup(std::string groupname, std::string new_groupname);
   bool deleteGroup(std::string groupname);
+  std::vector<std::string> getGroupsFromFile(); // gets all group paths from the file
 
   bool deleteDataset(std::string name,std::string groupname);
 

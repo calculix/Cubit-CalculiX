@@ -84,6 +84,47 @@ bool HDF5Tool::deleteGroup(std::string groupname)
   return true;
 }
 
+herr_t op_func(hid_t loc_id, const char* name, const H5O_info_t* info, void *data)
+{
+  auto vec = static_cast<std::vector<std::string>*>(data);
+
+  if (name[0] == '.') /* Root group, do not print '.' */
+  {  //ignore
+    //vec->push_back("/");
+  }
+  else
+  {
+    switch (info->type) {
+        case H5O_TYPE_GROUP:
+            vec->push_back(std::string(name));
+            //printf("%s  (Group)\n", name);
+            break;
+        case H5O_TYPE_DATASET:
+            //printf("%s  (Dataset)\n", name);
+            break;
+        case H5O_TYPE_NAMED_DATATYPE:
+            //printf("%s  (Datatype)\n", name);
+            break;
+        //default:
+            //printf("%s  (Unknown)\n", name);
+    }
+  }
+
+  return 0;
+}
+
+std::vector<std::string> HDF5Tool::getGroupsFromFile()
+{
+  std::vector<std::string> groups;
+
+  bool status = false;
+  status = H5Ovisit(this->file->getId(), H5_INDEX_NAME, H5_ITER_NATIVE, op_func, static_cast<void*>(&groups),H5O_INFO_BASIC);
+
+  return groups;
+}
+
+
+
 bool HDF5Tool::deleteDataset(std::string name, std::string groupname)
 {
   //this->file->createGroup(groupname.c_str());

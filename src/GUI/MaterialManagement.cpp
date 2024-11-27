@@ -225,6 +225,12 @@ void MaterialManagement::clear()
 
 void MaterialManagement::update()
 {
+  this->update_cubit();
+  this->update_materiallibrary();
+}
+
+void MaterialManagement::update_cubit()
+{
   std::vector<std::vector<std::string>> material_tree_data;
   material_tree_data = ccx_iface->get_material_tree_data(); 
 
@@ -283,6 +289,32 @@ void MaterialManagement::update()
     temp_child = dynamic_cast<MaterialManagementItem*>(tree_material->topLevelItem(int(i)-1));
     temp_child->update();
   }
+}
+
+void MaterialManagement::update_materiallibrary()
+{
+
+  //std::vector<std::vector<std::string>> get_materiallibrary_tree_data(); // gets the data from materiallibrary to build the tree in the material management
+  //std::vector<std::vector<std::string>> get_materiallibrary_material_properties(std::string name, std::string group); // gets the material properties from materiallibrary for the material management
+  //std::vector<std::vector<double>> get_materiallibrary_material_values(std::string name, std::string group, std::string property); // gets the material values for a property from materiallibrary for the material management
+  
+  //std::vector<std::vector<std::string>>
+  //std::vector<std::vector<double>>
+
+  std::vector<std::vector<std::string>> materiallibrary_tree_data;
+  materiallibrary_tree_data = ccx_iface->get_materiallibrary_tree_data();
+
+  std::string log = "";
+  for (size_t i = 0; i < materiallibrary_tree_data.size(); i++)
+  {
+    for (size_t ii = 0; ii < materiallibrary_tree_data[i].size(); ii++)
+    {
+      log.append(materiallibrary_tree_data[i][ii] + " ");
+    }
+    
+    log.append("\n");
+  }
+  PRINT_INFO("%s", log.c_str());
 }
 
 void MaterialManagement::addMaterial(QString material_id, QString material_name)
