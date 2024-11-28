@@ -18,7 +18,7 @@ MaterialManagement::MaterialManagement()
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
 
   // main window
-  //this->setGeometry(0,0,700,570);
+  this->setGeometry(0,0,1520,800);
   this->setWindowTitle("Material Management");
   gridLayout = new QGridLayout(this);
   boxLayout_window = new QHBoxLayout();
@@ -147,6 +147,7 @@ MaterialManagement::MaterialManagement()
   tree_material = new QTreeWidget();
   //tree_material->setGeometry(10,30,181,191);
   tree_material->setColumnCount(2);
+  tree_material->setColumnWidth(0, 200);
   tree_material->setHeaderLabels(QStringList() << "Name" << "ID");
   boxLayout_material1->addWidget(tree_material);
 
@@ -160,6 +161,7 @@ MaterialManagement::MaterialManagement()
 
   tree_materiallibrary = new QTreeWidget();
   tree_materiallibrary->setColumnCount(2);
+  tree_materiallibrary->setColumnWidth(0, 200);
   tree_materiallibrary->setHeaderLabels(QStringList() << "Name" << "Description");
   boxLayout_materiallibrary1->addWidget(tree_materiallibrary);
 
@@ -195,8 +197,18 @@ MaterialManagement::MaterialManagement()
   QObject::connect(pushButton_close, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_close_clicked(bool)));
   QObject::connect(pushButton_new, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_new_clicked(bool)));
   QObject::connect(pushButton_delete, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_delete_clicked(bool)));
+  QObject::connect(pushButton_rename, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_rename_clicked(bool)));
+  QObject::connect(pushButton_export, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_export_clicked(bool)));
   QObject::connect(pushButton_add, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_add_clicked(bool)));
   QObject::connect(pushButton_remove, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_remove_clicked(bool)));
+  QObject::connect(pushButton_library_import, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_library_import_clicked(bool)));
+  QObject::connect(pushButton_library_new, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_library_new_clicked(bool)));
+  QObject::connect(pushButton_library_delete, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_library_delete_clicked(bool)));
+  QObject::connect(pushButton_library_rename, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_library_rename_clicked(bool)));
+  QObject::connect(pushButton_library_new_group, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_library_new_group_clicked(bool)));
+  QObject::connect(pushButton_library_delete_group, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_library_delete_group_clicked(bool)));
+  QObject::connect(pushButton_library_rename_group, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_library_rename_group_clicked(bool)));
+  
   QObject::connect(tree_material, SIGNAL(itemClicked(QTreeWidgetItem*, int)),this,  SLOT(material_clicked(QTreeWidgetItem*, int)));
   QObject::connect(tree_material, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),this,  SLOT(material_changed(QTreeWidgetItem*,QTreeWidgetItem*)));
   QObject::connect(list_used, SIGNAL(itemClicked(QListWidgetItem*)),this,  SLOT(material_card_clicked(QListWidgetItem*)));
@@ -289,38 +301,65 @@ void MaterialManagement::update_cubit()
     temp_child = dynamic_cast<MaterialManagementItem*>(tree_material->topLevelItem(int(i)-1));
     temp_child->update();
   }
+
+  tree_material->sortItems(1,Qt::AscendingOrder);
 }
 
 void MaterialManagement::update_materiallibrary()
 {
-
-  //std::vector<std::vector<std::string>> get_materiallibrary_tree_data(); // gets the data from materiallibrary to build the tree in the material management
-  //std::vector<std::vector<std::string>> get_materiallibrary_material_properties(std::string name, std::string group); // gets the material properties from materiallibrary for the material management
-  //std::vector<std::vector<double>> get_materiallibrary_material_values(std::string name, std::string group, std::string property); // gets the material values for a property from materiallibrary for the material management
-  
-  //std::vector<std::vector<std::string>>
-  //std::vector<std::vector<double>>
+  QList<QTreeWidgetItem*> items;
+  MaterialManagementItem *temp_child;
+  bool erase_item;
 
   std::vector<std::vector<std::string>> materiallibrary_tree_data;
   materiallibrary_tree_data = ccx_iface->get_materiallibrary_tree_data();
 
-  std::string log = "";
   for (size_t i = 0; i < materiallibrary_tree_data.size(); i++)
   {
-    for (size_t ii = 0; ii < materiallibrary_tree_data[i].size(); ii++)
+    // check if item already exists
+    if (!this->check_library_item_exists(materiallibrary_tree_data[i][2]))
     {
-      log.append(materiallibrary_tree_data[i][ii] + " ");
+      this->addMateriallibrary(materiallibrary_tree_data[i]);
     }
-    
-    log.append("\n");
   }
-  PRINT_INFO("%s", log.c_str());
+
+  // check if item has been removed
+  items = tree_materiallibrary->findItems(QString("*"), Qt::MatchWrap | Qt::MatchWildcard | Qt::MatchRecursive);
+  for (size_t i = items.count(); i > 0; i--)
+  { 
+    erase_item = true;
+    temp_child = dynamic_cast<MaterialManagementItem*>(items.at(int(i)-1));
+    
+    for (size_t ii = 0; ii < materiallibrary_tree_data.size(); ii++)
+      {    
+        if (temp_child->hdf5path==materiallibrary_tree_data[ii][2])
+        {
+          erase_item = false;
+          break;
+        }
+      }
+
+      if (erase_item)
+      {
+        this->removeMateriallibrary(temp_child);
+      }
+  }
+
+  // update childs
+  items = tree_materiallibrary->findItems(QString("*"), Qt::MatchWrap | Qt::MatchWildcard | Qt::MatchRecursive);
+  for (size_t i = 0; i < items.count(); i++)
+  {
+    temp_child = dynamic_cast<MaterialManagementItem*>(items.at(int(i)));
+    temp_child->update();
+  }
+
+  tree_materiallibrary->sortItems(0,Qt::AscendingOrder);
 }
 
 void MaterialManagement::addMaterial(QString material_id, QString material_name)
 {
   MaterialManagementItem *MaterialTreeChild = new MaterialManagementItem(tree_material);
-  MaterialTreeChild->initialize(material_id, material_name);
+  MaterialTreeChild->initialize_cubit(material_id, material_name);
   MaterialTreeChild->setIcon(0,ccx_iface->getIcon2("MaterialTree"));
 }
 
@@ -402,6 +441,77 @@ int MaterialManagement::get_child_id(std::string material_id)
     }
   }
   return int_return;
+}
+
+bool MaterialManagement::check_library_item_exists(std::string path)
+{
+  QList<QTreeWidgetItem*> items = tree_materiallibrary->findItems(
+            QString("*"), Qt::MatchWrap | Qt::MatchWildcard | Qt::MatchRecursive);
+
+  MaterialManagementItem *temp_child;
+
+  for (size_t i = 0; i < items.count(); i++)
+  {
+    temp_child = dynamic_cast<MaterialManagementItem*>(items.at(int(i)));
+
+    //log = temp_child->hdf5path + " == " + path + " \n";
+    //PRINT_INFO("%s", log.c_str());
+    
+    if (temp_child->hdf5path == path)
+    {
+      return true;
+    }
+  }
+ 
+  return false;
+}
+
+MaterialManagementItem* MaterialManagement::get_library_item(std::string path)
+{
+  QList<QTreeWidgetItem*> items = tree_materiallibrary->findItems(
+            QString("*"), Qt::MatchWrap | Qt::MatchWildcard | Qt::MatchRecursive);
+
+  MaterialManagementItem *temp_child;
+
+  for (size_t i = 0; i < items.count(); i++)
+  {
+    temp_child = dynamic_cast<MaterialManagementItem*>(items.at(int(i)));
+    
+    //log = temp_child->hdf5path + " == " + path + " \n";
+    //PRINT_INFO("%s", log.c_str());
+    
+    if (temp_child->hdf5path == path)
+    {
+      return temp_child;
+    }
+  }
+ 
+  return nullptr;
+}
+
+void MaterialManagement::addMateriallibrary(std::vector<std::string> tree_data)
+{
+  MaterialManagementItem *MaterialTreeChild;
+  MaterialManagementItem *parent = this->get_library_item(tree_data[2].substr(0,tree_data[2].length()-tree_data[0].length()-1));
+
+  if (parent!=nullptr)
+  {
+    MaterialTreeChild = new MaterialManagementItem(parent);
+  }else{
+    MaterialTreeChild = new MaterialManagementItem(tree_materiallibrary);
+  }
+    
+  MaterialTreeChild->initialize_library(tree_data);
+  if (tree_data[3] == "Material")
+  {
+    MaterialTreeChild->setIcon(0,ccx_iface->getIcon2("MaterialTree"));
+  }
+}
+
+void MaterialManagement::removeMateriallibrary(MaterialManagementItem *item)
+{
+  tree_materiallibrary->removeItemWidget(item,0);
+  delete item;
 }
 
 void MaterialManagement::createListItems(MaterialManagementItem *material)
@@ -795,6 +905,16 @@ void MaterialManagement::on_pushButton_delete_clicked(bool)
   
 }
 
+void MaterialManagement::on_pushButton_rename_clicked(bool)
+{
+
+}
+
+void MaterialManagement::on_pushButton_export_clicked(bool)
+{
+
+}
+
 void MaterialManagement::on_pushButton_add_clicked(bool)
 {
   //log = " clicked add \n";
@@ -807,6 +927,43 @@ void MaterialManagement::on_pushButton_remove_clicked(bool)
   //log = " clicked remove \n";
   //PRINT_INFO("%s", log.c_str());
   switchListItem(list_used, list_available);
+}
+
+
+
+void MaterialManagement::on_pushButton_library_import_clicked(bool)
+{
+
+}
+
+void MaterialManagement::on_pushButton_library_new_clicked(bool)
+{
+
+}
+
+void MaterialManagement::on_pushButton_library_delete_clicked(bool)
+{
+
+}
+
+void MaterialManagement::on_pushButton_library_rename_clicked(bool)
+{
+
+}
+
+void MaterialManagement::on_pushButton_library_new_group_clicked(bool)
+{
+
+}
+
+void MaterialManagement::on_pushButton_library_delete_group_clicked(bool)
+{
+
+}
+
+void MaterialManagement::on_pushButton_library_rename_group_clicked(bool)
+{
+
 }
 
 void MaterialManagement::material_clicked(QTreeWidgetItem* item, int column)

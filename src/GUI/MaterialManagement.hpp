@@ -45,7 +45,12 @@ public:
 
   void addMaterial(QString material_id, QString material_name); // adds a new material to the tree
   void removeMaterial(MaterialManagementItem *material); // removes the material from to the tree
-  int get_child_id(std::string material_id); // check if the item for the given material_id exists, returns the id or -1 if failed;
+  int  get_child_id(std::string material_id); // check if the item for the given material_id exists, returns the id or -1 if failed;
+  bool check_library_item_exists(std::string path); // check if the item for the given path exists;
+  MaterialManagementItem* get_library_item(std::string path); // gets the library item from the path, returns null if nothing is found
+  void addMateriallibrary(std::vector<std::string> tree_data); // adds a new item to the tree
+  void removeMateriallibrary(MaterialManagementItem *item); // removes the item from to the tree
+  
   void createListItems(MaterialManagementItem *material); // creates the list items for selected material
   void removeListItems(); // removes current list items
   void switchListItem(QListWidget* source, QListWidget* target); // switches the current item from sry list to target list
@@ -61,8 +66,18 @@ private slots:
   void on_pushButton_close_clicked(bool);
   void on_pushButton_new_clicked(bool);
   void on_pushButton_delete_clicked(bool);
+  void on_pushButton_rename_clicked(bool);
+  void on_pushButton_export_clicked(bool);
   void on_pushButton_add_clicked(bool);
   void on_pushButton_remove_clicked(bool);
+  void on_pushButton_library_import_clicked(bool);
+  void on_pushButton_library_new_clicked(bool);
+  void on_pushButton_library_delete_clicked(bool);
+  void on_pushButton_library_rename_clicked(bool);
+  void on_pushButton_library_new_group_clicked(bool);
+  void on_pushButton_library_delete_group_clicked(bool);
+  void on_pushButton_library_rename_group_clicked(bool);
+
   void material_clicked(QTreeWidgetItem* item, int column);
   void material_changed(QTreeWidgetItem* current_item, QTreeWidgetItem* prev_item);
   // cards

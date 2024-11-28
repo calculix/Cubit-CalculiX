@@ -82,9 +82,9 @@ void CCXDockWindowModelTree::initialize()
   dock->setAllowedAreas(Qt::AllDockWidgetAreas);
   dock->setObjectName(dock_title);
   myModelTree = new ModelTree(dock);
-  myModelTree->header()->setMinimumSectionSize(25);
-  myModelTree->header()->resizeSection(0, 180);
-  myModelTree->header()->resizeSection(1, 25);
+  //myModelTree->header()->setMinimumSectionSize(25);
+  //myModelTree->header()->resizeSection(0, 180);
+  //myModelTree->header()->resizeSection(1, 25);
   myHighlight = new Highlight(myModelTree);
   
   myBlocksTree = new BlocksTree(myModelTree);

@@ -84,8 +84,9 @@ ModelTree::ModelTree(QDockWidget* parent):QTreeWidget(parent)
   }
   */
 
-  this->setColumnCount(2);
+  this->setColumnCount(2);  
   this->setHeaderLabels(QStringList() << "Name" << "ID");
+  this->setColumnWidth(0, 280);
   this->setContextMenuPolicy(Qt::CustomContextMenu);
 
   bool success;

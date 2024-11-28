@@ -600,7 +600,7 @@ bool CoreMaterialsLibrary::check_material(std::string name, std::string groupnam
 {
   HDF5Tool hdf5Tool(ccx_uo.mPathMaterialLibrary.toStdString());
 
-  std::string material = groupname + "/" + name + "/is_material";
+  std::string material = groupname + "/" + name + "/material";
 
   if (hdf5Tool.nameExists(material))
   {

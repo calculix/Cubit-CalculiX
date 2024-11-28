@@ -11,7 +11,7 @@ StepsManagement::StepsManagement()
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
 
   // main window
-  this->setGeometry(0,0,800,800);
+  this->setGeometry(0,0,1100,800);
   this->setWindowTitle("Steps Management");
 
   gridLayout = new QGridLayout(this);
@@ -73,16 +73,19 @@ StepsManagement::StepsManagement()
   tree_steps = new QTreeWidget();
   //tree_material->setGeometry(10,30,181,191);
   tree_steps->setColumnCount(2);
+  tree_steps->setColumnWidth(0, 200);
   tree_steps->setHeaderLabels(QStringList() << "Name" << "ID");
   boxLayout_steps_1->addWidget(tree_steps);
 
   tree_available = new QTreeWidget();
   tree_available->setColumnCount(2);
+  tree_available->setColumnWidth(0, 200);
   tree_available->setHeaderLabels(QStringList() << "Name" << "ID");
   boxLayout_assignment_1->addWidget(tree_available);
 
   tree_used = new QTreeWidget();
   tree_used->setColumnCount(2);
+  tree_used->setColumnWidth(0, 200);
   tree_used->setHeaderLabels(QStringList() << "Name" << "ID");
   //list_available->setGeometry(300,30,111,191);
   boxLayout_assignment_3->addWidget(tree_used);
