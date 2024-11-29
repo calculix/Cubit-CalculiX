@@ -1,0 +1,50 @@
+#!cubit
+reset
+
+ccx create materiallibrary group name "Example Materials"
+ccx modify materiallibrary group name "Example Materials" description "https://github.com/rsmith-nl/calculix-templates/tree/main/materials"
+
+#ccx create materiallibrary group name "Example Materials/PET-foam"
+#ccx create materiallibrary group name "Example Materials/baltekSB50"
+#ccx create materiallibrary group name "Example Materials/divinycellH"
+#ccx create materiallibrary group name "Example Materials/fused-quartz"
+#ccx create materiallibrary group name "Example Materials/granite"
+#ccx create materiallibrary group name "Example Materials/graphite"
+#ccx create materiallibrary group name "Example Materials/honeycomb"
+#ccx create materiallibrary group name "Example Materials/hpl"
+#ccx create materiallibrary group name "Example Materials/laminates-carbon-epoxy"
+#ccx create materiallibrary group name "Example Materials/mycell"
+#ccx create materiallibrary group name "Example Materials/plywood"
+#ccx create materiallibrary group name "Example Materials/pur80"
+#ccx create materiallibrary group name "Example Materials/rohacellG"
+#ccx create materiallibrary group name "Example Materials/rohacryl"
+#ccx create materiallibrary group name "Example Materials/sikablock"
+
+ccx create materiallibrary group name "Example Materials/Aluminium"
+ccx create materiallibrary group name "Example Materials/Ceramics"
+ccx create materiallibrary group name "Example Materials/Metal Alloys"
+ccx create materiallibrary group name "Example Materials/Rubber"
+ccx create materiallibrary group name "Example Materials/Steel"
+
+ccx modify materiallibrary group name "Example Materials/Aluminium" description "SI Units"
+ccx modify materiallibrary group name "Example Materials/Ceramics" description "SI Units"
+ccx modify materiallibrary group name "Example Materials/Metal Alloys" description "SI Units"
+ccx modify materiallibrary group name "Example Materials/Rubber" description "SI Units"
+ccx modify materiallibrary group name "Example Materials/Steel" description "SI Units"
+
+
+ccx create materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium"
+ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 7.1e+10 0.33 293 
+ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium" scalar_properties "CCX_PLASTIC_USE_CARD" 1
+ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 1.5e+08 0.002 293 1.75e+08 0.00506 293 2e+08 0.01131 293 2.25e+08 0.02299 293 2.5e+08 0.04336 293 2.75e+08 0.07698 293 3e+08 0.13 293 
+ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium" scalar_properties "CCX_DENSITY_USE_CARD" 1
+ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium" matrix_property "CCX_DENSITY_DENSITY" 2660 0 
+ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium" scalar_properties "CCX_EXPANSION_USE_CARD" 1
+ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 2.5e-05 293 
+ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+
+

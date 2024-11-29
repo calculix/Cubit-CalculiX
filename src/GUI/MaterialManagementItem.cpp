@@ -118,7 +118,11 @@ void MaterialManagementItem::initialize_library(std::vector<std::string> tree_da
   this->library_name = tree_data[0];
   this->library_description = tree_data[1];
   
-  if (tree_data[2].length()-tree_data[0].length() < 1)
+  if ((tree_data[2].length()-tree_data[0].length() < 1)&&(tree_data[3] == "Material"))
+  {
+    this->library_group = "/";
+    this->library_group_qstring = QString::fromStdString("/");
+  }else if ((tree_data[2].length()-tree_data[0].length() < 1)&&(tree_data[3] == "Group"))
   {
     this->library_group = "";
     this->library_group_qstring = QString::fromStdString("");

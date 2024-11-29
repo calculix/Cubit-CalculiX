@@ -71,7 +71,7 @@ bool CoreMaterialsLibrary::create_group(std::string groupname)
 
   hdf5Tool.createGroup(groupname);
   std::vector<std::string> str_data(1);
-  str_data[0] = "add Description";
+  str_data[0] = "";
 
   hdf5Tool.write_dataset_string_rank_1(std::string("description"), groupname, str_data); // create description dataset
 
@@ -179,7 +179,7 @@ bool CoreMaterialsLibrary::create_material(std::string name, std::string groupna
   data[0] = 1;
 
   std::vector<std::string> str_data(1);
-  str_data[0] = "add Description";
+  str_data[0] = "";
 
   hdf5Tool.write_dataset_int_rank_1(std::string("material"), material, data); // create check variable
   hdf5Tool.write_dataset_string_rank_1(std::string("description"), material, str_data); // create description dataset

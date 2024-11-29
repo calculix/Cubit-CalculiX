@@ -77,6 +77,7 @@ private slots:
   void on_pushButton_library_new_group_clicked(bool);
   void on_pushButton_library_delete_group_clicked(bool);
   void on_pushButton_library_rename_group_clicked(bool);
+  void on_pushButton_library_description_clicked(bool);
 
   void material_clicked(QTreeWidgetItem* item, int column);
   void material_changed(QTreeWidgetItem* current_item, QTreeWidgetItem* prev_item);
@@ -117,12 +118,14 @@ private:
   QPushButton* pushButton_library_new_group;
   QPushButton* pushButton_library_delete_group;
   QPushButton* pushButton_library_rename_group;
+  QPushButton* pushButton_library_description;
   QLabel* label_material;
   QLabel* label_available;
   QLabel* label_used;
   QLabel* label_materiallibrary;
   //QLabel* label_materiallibrary_material;
   QLabel* label_materiallibrary_group;
+  QLabel* label_materiallibrary_description;
   QTreeWidget* tree_material;
   QListWidget* list_available;
   QListWidget* list_used;

@@ -123,6 +123,14 @@ MaterialManagement::MaterialManagement()
   pushButton_library_rename_group->setText("Rename");
   boxLayout_materiallibrary2->addWidget(pushButton_library_rename_group);
 
+  label_materiallibrary_description = new QLabel();
+  label_materiallibrary_description->setText("Description");
+  boxLayout_materiallibrary2->addWidget(label_materiallibrary_description);
+
+  pushButton_library_description = new QPushButton();
+  pushButton_library_description->setText("View/Edit");
+  boxLayout_materiallibrary2->addWidget(pushButton_library_description);
+
   // labels
   label_material = new QLabel();
   //label_material->setGeometry(10,10,80,16);
@@ -208,6 +216,7 @@ MaterialManagement::MaterialManagement()
   QObject::connect(pushButton_library_new_group, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_library_new_group_clicked(bool)));
   QObject::connect(pushButton_library_delete_group, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_library_delete_group_clicked(bool)));
   QObject::connect(pushButton_library_rename_group, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_library_rename_group_clicked(bool)));
+  QObject::connect(pushButton_library_description, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_library_description_clicked(bool)));
   
   QObject::connect(tree_material, SIGNAL(itemClicked(QTreeWidgetItem*, int)),this,  SLOT(material_clicked(QTreeWidgetItem*, int)));
   QObject::connect(tree_material, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),this,  SLOT(material_changed(QTreeWidgetItem*,QTreeWidgetItem*)));
@@ -325,6 +334,19 @@ void MaterialManagement::update_materiallibrary()
     if (!this->check_library_item_exists(materiallibrary_tree_data[i][2]))
     {
       this->addMateriallibrary(materiallibrary_tree_data[i]);
+    }
+    // modify description if necessary
+    temp_child = this->get_library_item(materiallibrary_tree_data[i][2]);
+    
+    if (temp_child != nullptr)
+    {
+      std::string str_check = materiallibrary_tree_data[i][1];
+      if (temp_child->text(1).toStdString() != str_check)
+      {
+        temp_child->setText(1, QString::fromStdString(str_check));
+        temp_child->library_description_qstring = QString::fromStdString(str_check);
+        temp_child->library_description = str_check;
+      }
     }
   }
 
@@ -838,6 +860,54 @@ void MaterialManagement::on_pushButton_apply_clicked(bool)
     }
   }
 
+  QList<QTreeWidgetItem*> items = tree_materiallibrary->findItems(QString("*"), Qt::MatchWrap | Qt::MatchWildcard | Qt::MatchRecursive);
+
+  for (size_t i = 0; i < items.count(); i++)
+  {
+    temp_child = dynamic_cast<MaterialManagementItem*>(items.at(int(i)));
+    if (temp_child->isLibraryMaterial)
+    {
+      command_prefix = "ccx modify materiallibrary material name \"" + temp_child->library_name_qstring + "\" groupname \"" + temp_child->library_group_qstring + "\" ";
+
+      for (size_t ii = 0; ii < temp_child->properties.size(); ii++)
+      {
+        command = "";
+
+        if ((temp_child->properties[ii][1]==1) &&
+            (temp_child->property_scalar[temp_child->properties[ii][2]] != temp_child->property_scalar_gui[temp_child->properties[ii][2]]))
+        {
+          command.append(command_prefix);
+          // scalar
+          command.append("scalar_properties ");
+          // group property
+          command.append("\"" + QString::fromStdString(temp_child->group_properties[temp_child->properties[ii][0]][0]) + "\" ");
+          // value
+          command.append(QString::number(temp_child->property_scalar_gui[temp_child->properties[ii][2]]));
+        } else if ((temp_child->properties[ii][1]==4) &&
+            (temp_child->property_matrix[temp_child->properties[ii][2]] != temp_child->property_matrix_gui[temp_child->properties[ii][2]]))
+        { 
+          command.append(command_prefix);
+          // matrix
+          command.append("matrix_property ");
+          // group property
+          command.append("\"" + QString::fromStdString(temp_child->group_properties[temp_child->properties[ii][0]][0]) + "\" ");
+          // value
+          for (size_t iii = 0; iii < temp_child->property_matrix_gui[temp_child->properties[ii][2]].size(); iii++)
+          {
+            for (size_t iv = 0; iv < temp_child->property_matrix_gui[temp_child->properties[ii][2]][iii].size(); iv++)
+            {
+              command.append(QString::number(temp_child->property_matrix_gui[temp_child->properties[ii][2]][iii][iv]) + " ");
+            }
+          }
+        }
+        if (command != "")
+        {
+          commands.push_back(command);
+        }
+      }
+    }
+  }
+
   for (size_t i = 0; i < commands.size(); i++)
   {
     //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
@@ -941,7 +1011,7 @@ void MaterialManagement::on_pushButton_export_clicked(bool)
   bool ok = false;
   std::vector<std::vector<std::string>> materiallibrary_tree_data;
   QStringList items;
-  items.append(QString::fromStdString("/"));
+  //items.append(QString::fromStdString("/"));
 
   materiallibrary_tree_data = ccx_iface->get_materiallibrary_tree_data();
   for (size_t i = 0; i < materiallibrary_tree_data.size(); i++)
@@ -983,19 +1053,17 @@ void MaterialManagement::on_pushButton_remove_clicked(bool)
   switchListItem(list_used, list_available);
 }
 
-
-
 void MaterialManagement::on_pushButton_library_import_clicked(bool)
 {
   std::vector<std::string> commands;
   bool ok = false;
   
-  if ((current_material_item != nullptr) && current_material_item->isCubit)
+  if ((current_material_item != nullptr) && current_material_item->isLibraryMaterial)
   { 
-    QString text = QInputDialog::getText(this, tr("Import Material"),tr("import with Name "), QLineEdit::Normal, current_material_item->material_name_qstring, &ok);
+    QString text = QInputDialog::getText(this, tr("Import Library Material"),tr("import with Name "), QLineEdit::Normal, current_material_item->library_name_qstring, &ok);
     if (ok && !text.isEmpty())
     {
-      //commands.push_back("ccx export materiallibrary cubit_name \"" + text.toStdString() + "\" name \"" + current_material_item->material_name_qstring.toStdString() + "\" groupname \"" + item.toStdString() + "\"" );
+      commands.push_back("ccx import materiallibrary name \"" + current_material_item->library_name + "\" groupname \"" + current_material_item->library_group + "\" cubit_name \"" + text.toStdString() + "\"" );
     } 
 
     for (size_t i = 0; i < commands.size(); i++)
@@ -1007,32 +1075,209 @@ void MaterialManagement::on_pushButton_library_import_clicked(bool)
 
 void MaterialManagement::on_pushButton_library_new_clicked(bool)
 {
+  std::vector<std::string> commands;
+  bool ok = false;
+  
+  if ((current_material_item != nullptr) && !current_material_item->isCubit)
+  { 
+    QString text = QInputDialog::getText(this, tr("Create Library Material"),tr("Type Name "), QLineEdit::Normal, "", &ok);
+    if (ok && !text.isEmpty())
+    {
+      if (current_material_item->isLibraryGroup)
+      {
+        commands.push_back("ccx create materiallibrary material name \"" + text.toStdString() + "\" groupname \"" + current_material_item->hdf5path + "\"" );
+      }
+      if (current_material_item->isLibraryMaterial)
+      {
+        commands.push_back("ccx create materiallibrary material name \"" + text.toStdString() + "\" groupname \"" + current_material_item->library_group + "\"" );
+      }
+    }
 
+    for (size_t i = 0; i < commands.size(); i++)
+    {
+      ccx_iface->cmd(commands[int(i)]);
+    }
+  }
+  //root material, when nothing is selected
+  if ((current_material_item == nullptr))
+  { 
+    QString text = QInputDialog::getText(this, tr("Create Library Material"),tr("Type Name "), QLineEdit::Normal, "", &ok);
+    if (ok && !text.isEmpty())
+    {
+      commands.push_back("ccx create materiallibrary material name \"" + text.toStdString() + "\" groupname \"/\"" );
+    }
+
+    for (size_t i = 0; i < commands.size(); i++)
+    {
+      ccx_iface->cmd(commands[int(i)]);
+    }
+  }
 }
 
 void MaterialManagement::on_pushButton_library_delete_clicked(bool)
 {
+  std::vector<std::string> commands;
+  if ((current_material_item != nullptr) && current_material_item->isLibraryMaterial)
+  {
+    QMessageBox::StandardButton msgbox;
+    msgbox = QMessageBox::question(this,"Delete Library Material","Delete Material " + current_material_item->library_name_qstring + "?", QMessageBox::Yes | QMessageBox::No);
+    
+    if (msgbox == QMessageBox::Yes)
+    {
+      commands.push_back("ccx delete materiallibrary material name \"" + current_material_item->library_name +"\" groupname \"" + current_material_item->library_group +"\"");
+    }
 
+    for (size_t i = 0; i < commands.size(); i++)
+    {
+      ccx_iface->cmd(commands[int(i)]);
+    }
+
+    this->removeListItems();
+    
+    elastic_widget->hide();
+    plastic_widget->hide();
+    density_widget->hide();
+    specific_heat_widget->hide();
+    expansion_widget->hide();
+    conductivity_widget->hide();
+  }  
 }
 
 void MaterialManagement::on_pushButton_library_rename_clicked(bool)
 {
+  std::vector<std::string> commands;
+  bool ok = false;
+  
+  if ((current_material_item != nullptr) && current_material_item->isLibraryMaterial)
+  { 
+    QString text = QInputDialog::getText(this, tr("Rename Library Material"),tr("Type new Name "), QLineEdit::Normal, current_material_item->library_name_qstring, &ok);
+    if (ok && !text.isEmpty())
+    {
+      commands.push_back("ccx modify materiallibrary material name \"" + current_material_item->library_name + "\" groupname \"" + current_material_item->library_group + "\" new_name \"" + text.toStdString() + "\"" );
+    }
 
+    for (size_t i = 0; i < commands.size(); i++)
+    {
+      ccx_iface->cmd(commands[int(i)]);
+    }
+  }
 }
 
 void MaterialManagement::on_pushButton_library_new_group_clicked(bool)
 {
+  std::vector<std::string> commands;
+  bool ok = false;
+  
+  if ((current_material_item != nullptr) && !current_material_item->isCubit)
+  { 
+    QString text = QInputDialog::getText(this, tr("Create Library Group"),tr("Type Name "), QLineEdit::Normal, "", &ok);
+    if (ok && !text.isEmpty())
+    {
+      if (current_material_item->isLibraryGroup)
+      {
+        commands.push_back("ccx create materiallibrary group name \"" + current_material_item->hdf5path + "/" + text.toStdString() + "\"" );
+      }
+      if (current_material_item->isLibraryMaterial)
+      {
+        commands.push_back("ccx create materiallibrary group name \"" + current_material_item->library_group + "/" + text.toStdString() + "\"" );
+      }
+    }
 
+    for (size_t i = 0; i < commands.size(); i++)
+    {
+      ccx_iface->cmd(commands[int(i)]);
+    }
+  }
+  //root material, when nothing is selected
+  if ((current_material_item == nullptr))
+  { 
+    QString text = QInputDialog::getText(this, tr("Create Library Group"),tr("Type Name "), QLineEdit::Normal, "", &ok);
+    if (ok && !text.isEmpty())
+    {
+      commands.push_back("ccx create materiallibrary group name \"" + text.toStdString() + "\"" );
+    }
+
+    for (size_t i = 0; i < commands.size(); i++)
+    {
+      ccx_iface->cmd(commands[int(i)]);
+    }
+  }
 }
 
 void MaterialManagement::on_pushButton_library_delete_group_clicked(bool)
 {
+  std::vector<std::string> commands;
+  if ((current_material_item != nullptr) && current_material_item->isLibraryGroup)
+  {
+    QMessageBox::StandardButton msgbox;
+    msgbox = QMessageBox::question(this,"Delete Library Group","Delete Group " + current_material_item->library_name_qstring + "?", QMessageBox::Yes | QMessageBox::No);
+    
+    if (msgbox == QMessageBox::Yes)
+    {
+      commands.push_back("ccx delete materiallibrary group name \"" + current_material_item->hdf5path +"\"");
+    }
 
+    for (size_t i = 0; i < commands.size(); i++)
+    {
+      ccx_iface->cmd(commands[int(i)]);
+    }
+
+    this->removeListItems();
+    
+    elastic_widget->hide();
+    plastic_widget->hide();
+    density_widget->hide();
+    specific_heat_widget->hide();
+    expansion_widget->hide();
+    conductivity_widget->hide();
+  }
 }
 
 void MaterialManagement::on_pushButton_library_rename_group_clicked(bool)
 {
+  std::vector<std::string> commands;
+  bool ok = false;
+  
+  if ((current_material_item != nullptr) && current_material_item->isLibraryGroup)
+  { 
+    QString text = QInputDialog::getText(this, tr("Rename Library Group"),tr("Type new Name "), QLineEdit::Normal, current_material_item->library_name_qstring, &ok);
+    if (ok && !text.isEmpty())
+    {
+      commands.push_back("ccx modify materiallibrary group name \"" + current_material_item->hdf5path + "\" new_name \"" + current_material_item->library_group + "/" + text.toStdString() + "\"" );
+    }
 
+    for (size_t i = 0; i < commands.size(); i++)
+    {
+      ccx_iface->cmd(commands[int(i)]);
+    }
+  }
+}
+
+void MaterialManagement::on_pushButton_library_description_clicked(bool)
+{
+  std::vector<std::string> commands;
+  bool ok = false;
+  
+  if ((current_material_item != nullptr) && !current_material_item->isCubit)
+  { 
+    QString text = QInputDialog::getText(this, tr("Edit Library Description"),tr("Edit Description "), QLineEdit::Normal, current_material_item->library_description_qstring, &ok);
+    if (ok && !text.isEmpty())
+    {
+      if (current_material_item->isLibraryGroup)
+      {
+        commands.push_back("ccx modify materiallibrary group name \"" + current_material_item->hdf5path + "\" description \"" + text.toStdString() + "\"" );
+      }
+      if (current_material_item->isLibraryMaterial)
+      {
+        commands.push_back("ccx modify materiallibrary material name \"" + current_material_item->library_name + "\" groupname \"" + current_material_item->library_group + "\" description \"" + text.toStdString() + "\"" );
+      }
+    }
+
+    for (size_t i = 0; i < commands.size(); i++)
+    {
+      ccx_iface->cmd(commands[int(i)]);
+    }
+  }
 }
 
 void MaterialManagement::material_clicked(QTreeWidgetItem* item, int column)
@@ -1050,8 +1295,11 @@ void MaterialManagement::material_clicked(QTreeWidgetItem* item, int column)
   {
     current_material_item = material_item;
     this->removeListItems();
-    this->createListItems(material_item);
-    
+    if ((current_material_item!=nullptr) && !current_material_item->isLibraryGroup)
+    {
+      this->createListItems(material_item);
+    }
+
     elastic_widget->hide();
     plastic_widget->hide();
     density_widget->hide();
