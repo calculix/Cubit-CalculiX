@@ -669,6 +669,31 @@ std::vector<std::vector<std::string>> CoreMaterialsLibrary::get_materiallibrary_
 std::vector<std::vector<double>> CoreMaterialsLibrary::get_materiallibrary_material_values(std::string name, std::string groupname, std::string property)
 {
   std::vector<std::vector<double>> values;
+  std::vector<double> value_data;
+
+  HDF5Tool hdf5Tool(ccx_uo.mPathMaterialLibrary.toStdString());
+  std::string log = "";
+
+  int property_size = ccx_iface->get_group_property_size(property);
+
+  if (property_size == -1)
+  {
+    log = "Material property "+ property + " not found!\n";
+    PRINT_INFO("%s", log.c_str());
+    return values;
+  }
+
+  std::string material = groupname + "/" + name;
+  if (property_size==1) //scalar property
+  {
+    hdf5Tool.read_dataset_double_rank_1(property, material, value_data);   
+    if (value_data.size()>0)
+    {
+      values.push_back(value_data);
+    }
+  }else{
+    hdf5Tool.read_dataset_double_rank_2(property, material, values);   
+  }
 
   return values;
 }  

@@ -80,6 +80,8 @@ private slots:
 
   void material_clicked(QTreeWidgetItem* item, int column);
   void material_changed(QTreeWidgetItem* current_item, QTreeWidgetItem* prev_item);
+  void library_material_clicked(QTreeWidgetItem* item, int column);
+  void library_material_changed(QTreeWidgetItem* current_item, QTreeWidgetItem* prev_item);
   // cards
   void material_card_clicked(QListWidgetItem* item);
   void material_card_doubleclicked(QListWidgetItem* item);

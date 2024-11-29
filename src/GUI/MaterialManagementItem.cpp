@@ -115,11 +115,17 @@ void MaterialManagementItem::initialize_library(std::vector<std::string> tree_da
   //QTreeWidgetItem::setText(3, QString::fromStdString(tree_data[3]));
   this->library_name_qstring = QString::fromStdString(tree_data[0]);
   this->library_description_qstring = QString::fromStdString(tree_data[1]);
-  this->library_group_qstring = QString::fromStdString(tree_data[2].substr(0,tree_data[2].length()-tree_data[0].length()-1));
   this->library_name = tree_data[0];
   this->library_description = tree_data[1];
-  this->library_group = tree_data[2].substr(0,tree_data[2].length()-tree_data[0].length()-1);
   
+  if (tree_data[2].length()-tree_data[0].length() < 1)
+  {
+    this->library_group = "";
+    this->library_group_qstring = QString::fromStdString("");
+  }else{
+    this->library_group = tree_data[2].substr(0,tree_data[2].length()-tree_data[0].length()-1);
+    this->library_group_qstring = QString::fromStdString(tree_data[2].substr(0,tree_data[2].length()-tree_data[0].length()-1));
+  }
 
   this->hdf5path = tree_data[2];
 
@@ -136,7 +142,6 @@ void MaterialManagementItem::initialize_library(std::vector<std::string> tree_da
   {
     isLibraryMaterial = true;
   }
-
 
   if (isLibraryMaterial)
   {
@@ -248,6 +253,40 @@ void MaterialManagementItem::update_cubit()
 
 void MaterialManagementItem::update_library()
 {
+  std::vector<std::vector<double>> tmp_values;
+
+  for (size_t i = 0; i < properties.size(); i++)
+  {
+    if (properties[i][1]==1)
+    {
+      double tmp_scalar=0;
+      tmp_values = ccx_iface->get_materiallibrary_material_values(this->library_name, this->library_group, group_properties[properties[i][0]][0]);
+      if (tmp_values.size()>0)
+      {
+        tmp_scalar = tmp_values[0][0]; 
+      }
+      property_scalar[properties[i][2]] = tmp_scalar;
+    }else if (properties[i][1]==2)
+    {
+      std::vector<double> tmp_vector;
+      tmp_values = ccx_iface->get_materiallibrary_material_values(this->library_name, this->library_group, group_properties[properties[i][0]][0]);
+      if (tmp_values.size()>0)
+      {
+        tmp_vector = tmp_values[0]; 
+      }
+      property_vector[properties[i][2]] = tmp_vector;
+    }
+    else if (properties[i][1]==4)
+    {
+      tmp_values = ccx_iface->get_materiallibrary_material_values(this->library_name, this->library_group, group_properties[properties[i][0]][0]);
+      property_matrix[properties[i][2]] = tmp_values;
+    }
+  }
+
+  property_scalar_gui = property_scalar;
+  //property_vector_gui = property_vector;
+  //property_tabular_gui = property_tabular;
+  property_matrix_gui = property_matrix;
 }
 
 int MaterialManagementItem::get_properties_data_id_from_group(std::string group)
