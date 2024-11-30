@@ -60,6 +60,9 @@
 #include "ccxLoadsCentrifugalCreateCommand.hpp"
 #include "ccxLoadsCentrifugalModifyCommand.hpp"
 #include "ccxLoadsCentrifugalDeleteCommand.hpp"
+#include "ccxLoadsTrajectoryCreateCommand.hpp"
+#include "ccxLoadsTrajectoryModifyCommand.hpp"
+#include "ccxLoadsTrajectoryDeleteCommand.hpp"
 #include "ccxBCsDisplacementsModifyCommand.hpp"
 #include "ccxBCsTemperaturesModifyCommand.hpp"
 #include "ccxHistoryOutputCreateCommand.hpp"
@@ -197,6 +200,9 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxLoadsCentrifugalCreateCommand");
   keys.push_back("ccxLoadsCentrifugalModifyCommand");
   keys.push_back("ccxLoadsCentrifugalDeleteCommand");
+  keys.push_back("ccxLoadsTrajectoryCreateCommand");
+  keys.push_back("ccxLoadsTrajectoryModifyCommand");
+  keys.push_back("ccxLoadsTrajectoryDeleteCommand");
   keys.push_back("ccxBCsDisplacementsModifyCommand");
   keys.push_back("ccxBCsTemperaturesModifyCommand");
   keys.push_back("ccxHistoryOutputCreateCommand");
@@ -444,6 +450,15 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
   else if(key == "ccxLoadsCentrifugalDeleteCommand")
     return new ccxLoadsCentrifugalDeleteCommand();
 
+  else if(key == "ccxLoadsTrajectoryCreateCommand")
+    return new ccxLoadsTrajectoryCreateCommand();
+  
+  else if(key == "ccxLoadsTrajectoryModifyCommand")
+    return new ccxLoadsTrajectoryModifyCommand();
+
+  else if(key == "ccxLoadsTrajectoryDeleteCommand")
+    return new ccxLoadsTrajectoryDeleteCommand();
+    
   else if(key == "ccxBCsDisplacementsModifyCommand")
     return new ccxBCsDisplacementsModifyCommand();
 

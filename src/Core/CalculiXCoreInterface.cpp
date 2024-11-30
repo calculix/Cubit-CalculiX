@@ -185,6 +185,11 @@ std::vector<int> CalculiXCoreInterface::get_loadscentrifugal_ids()
   return ccx_core.get_loadscentrifugal_ids();
 }
 
+std::vector<int> CalculiXCoreInterface::get_loadstrajectory_ids()
+{
+  return ccx_core.get_loadstrajectory_ids();
+}
+
 std::vector<int> CalculiXCoreInterface::get_bcsdisplacements_ids()
 {
   return ccx_core.get_bcsdisplacements_ids();
@@ -433,6 +438,21 @@ bool CalculiXCoreInterface::modify_loadscentrifugal(int centrifugal_id, std::vec
 bool CalculiXCoreInterface::delete_loadscentrifugal(int centrifugal_id)
 {
   return ccx_core.delete_loadscentrifugal(centrifugal_id);
+}
+
+bool CalculiXCoreInterface::create_loadstrajectory(std::vector<std::string> options)
+{
+  return ccx_core.create_loadstrajectory(options);
+}
+
+bool CalculiXCoreInterface::modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return ccx_core.modify_loadstrajectory(trajectory_id,options,options_marker);
+}
+
+bool CalculiXCoreInterface::delete_loadstrajectory(int trajectory_id)
+{
+  return ccx_core.delete_loadstrajectory(trajectory_id);
 }
 
 bool CalculiXCoreInterface::modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker)

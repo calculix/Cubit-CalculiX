@@ -35,6 +35,8 @@ set(CORE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsGravity.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsCentrifugal.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsCentrifugal.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsTrajectory.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsTrajectory.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreBCsDisplacements.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreBCsDisplacements.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreBCsTemperatures.cpp

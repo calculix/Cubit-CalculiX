@@ -36,6 +36,7 @@
 #include "CoreLoadsHeatfluxes.hpp"
 #include "CoreLoadsGravity.hpp"
 #include "CoreLoadsCentrifugal.hpp"
+#include "CoreLoadsTrajectory.hpp"
 #include "CoreBCsDisplacements.hpp"
 #include "CoreBCsTemperatures.hpp"
 #include "CoreHistoryOutputs.hpp"
@@ -59,7 +60,7 @@
 CalculiXCore::CalculiXCore():
   cb(NULL),mat(NULL),mat_library(NULL),sections(NULL),constraints(NULL),surfaceinteractions(NULL),
   contactpairs(NULL),amplitudes(NULL),orientations(NULL),loadsforces(NULL),loadspressures(NULL),loadsheatfluxes(NULL),
-  loadsgravity(NULL),loadscentrifugal(NULL),
+  loadsgravity(NULL),loadscentrifugal(NULL),loadstrajectory(NULL),
   bcsdisplacements(NULL),bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL),
   initialconditions(NULL), hbcs(NULL), steps(NULL),jobs(NULL),results(NULL),timer(NULL),customlines(NULL),
   draw(NULL)
@@ -97,6 +98,8 @@ CalculiXCore::~CalculiXCore()
     delete loadsgravity;
   if(loadscentrifugal)
     delete loadscentrifugal;
+  if(loadstrajectory)
+    delete loadstrajectory;
   if(bcsdisplacements)
     delete bcsdisplacements;
   if(bcstemperatures)
@@ -229,6 +232,11 @@ bool CalculiXCore::init()
     loadscentrifugal = new CoreLoadsCentrifugal;
   
   loadscentrifugal->init();
+
+  if(!loadstrajectory)
+    loadstrajectory = new CoreLoadsTrajectory;
+  
+  loadstrajectory->init();
 
   if(!bcsdisplacements)
     bcsdisplacements = new CoreBCsDisplacements;
@@ -411,6 +419,7 @@ bool CalculiXCore::reset()
   loadsheatfluxes->reset();
   loadsgravity->reset();
   loadscentrifugal->reset();
+  loadstrajectory->reset();
   bcsdisplacements->reset();
   bcstemperatures->reset();
   historyoutputs->reset();
@@ -2684,6 +2693,16 @@ std::vector<int> CalculiXCore::get_loadscentrifugal_ids()
   return tmp;
 }
 
+std::vector<int> CalculiXCore::get_loadstrajectory_ids()
+{
+  std::vector<int> tmp;
+  for (size_t i = 0; i < loadstrajectory->loads_data.size(); i++)
+  {
+    tmp.push_back(loadstrajectory->loads_data[i][0]);
+  }
+  return tmp;
+}
+
 std::vector<int> CalculiXCore::get_bcsdisplacements_ids()
 {
   std::vector<int> tmp;
@@ -3302,6 +3321,7 @@ bool CalculiXCore::create_loadscentrifugal(std::vector<std::string> options)
 {
   return loadscentrifugal->create_load(options);
 }
+
 bool CalculiXCore::modify_loadscentrifugal(int centrifugal_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
   return loadscentrifugal->modify_load(centrifugal_id,options,options_marker);
@@ -3310,6 +3330,21 @@ bool CalculiXCore::modify_loadscentrifugal(int centrifugal_id, std::vector<std::
 bool CalculiXCore::delete_loadscentrifugal(int centrifugal_id)
 {
   return loadscentrifugal->delete_load(centrifugal_id);
+}
+
+bool CalculiXCore::create_loadstrajectory(std::vector<std::string> options)
+{
+  return loadstrajectory->create_load(options);
+}
+
+bool CalculiXCore::modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return loadstrajectory->modify_load(trajectory_id,options,options_marker);
+}
+
+bool CalculiXCore::delete_loadstrajectory(int trajectory_id)
+{
+  return loadstrajectory->delete_load(trajectory_id);
 }
 
 bool CalculiXCore::modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker)
@@ -7298,7 +7333,6 @@ std::vector<std::vector<std::string>> CalculiXCore::get_material_group_propertie
 { 
   return mat->group_properties;
 }
-
 
 std::vector<std::vector<std::string>> CalculiXCore::get_materiallibrary_tree_data()
 { 

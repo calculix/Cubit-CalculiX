@@ -22,6 +22,7 @@ class CoreLoadsPressures;
 class CoreLoadsHeatfluxes;
 class CoreLoadsGravity;
 class CoreLoadsCentrifugal;
+class CoreLoadsTrajectory;
 class CoreBCsDisplacements;
 class CoreBCsTemperatures;
 class CoreHistoryOutputs;
@@ -53,7 +54,7 @@ public:
   bool bool_init_materiallibrary = false;
   bool use_ccx_logfile = false;
   bool use_ccx_autocleanup = true;
-  std::string version = "2024.11";
+  std::string version = "2024.12";
   std::vector<std::vector<std::string>> sideset_face_data;
 
   bool cmd(std::string cmd); // executes a cubit command with appending to the history
@@ -99,6 +100,7 @@ public:
   std::vector<int> get_loadsheatfluxes_ids(); // get all load heatflux ids
   std::vector<int> get_loadsgravity_ids(); // get all load gravity ids
   std::vector<int> get_loadscentrifugal_ids(); // get all load centrifugal ids
+  std::vector<int> get_loadstrajectory_ids(); // get all load trajectory ids
   std::vector<int> get_bcsdisplacements_ids(); // get all bc displacement ids
   std::vector<int> get_bcstemperatures_ids(); // get all bc temperature ids
   std::vector<int> get_orientations_ids(); // get all orientation ids
@@ -151,6 +153,9 @@ public:
   bool create_loadscentrifugal(std::vector<std::string> options); // adds a new centrifugal load
   bool modify_loadscentrifugal(int centrifugal_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a centrifugal
   bool delete_loadscentrifugal(int centrifugal_id); // delete centrifugal load
+  bool create_loadstrajectory(std::vector<std::string> options); // adds a new trajectory load
+  bool modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a trajectory
+  bool delete_loadstrajectory(int trajectory_id); // delete trajectory load
   bool modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a displacement
   bool modify_bcstemperatures(int temperature_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a temperature
   bool create_historyoutput(std::vector<std::string> options); // adds a new output
@@ -359,6 +364,7 @@ public:
   CoreLoadsHeatfluxes *loadsheatfluxes;
   CoreLoadsGravity *loadsgravity;
   CoreLoadsCentrifugal *loadscentrifugal;
+  CoreLoadsTrajectory *loadstrajectory;
   CoreBCsDisplacements *bcsdisplacements;
   CoreBCsTemperatures *bcstemperatures;
   CoreHistoryOutputs *historyoutputs;

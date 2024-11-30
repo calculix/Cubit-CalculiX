@@ -1,0 +1,75 @@
+#//! \brief
+#  //! returns a pair containing the location(s) of the ray intersection and
+#  //! the ids of the entities selected. Note that intersections may only occur
+#  //! with the specific entity type requested.
+#  //!
+##  //! \code
+#  //! loc, ids = cubit.fire_ray([0, 0, 2], [0, 0, -1], "surface", [1,2,3], 1)
+#  //! \endcode
+#  //! \param origin xyz coordinate of ray start point
+#  //! \param direction xyz vector defining ray orientation
+#  //! \param target_type one of vertex, curve, surface, volume, or body
+#  //! \param target_ids one or more entity ids for targets
+#  //! \param max_hits [optional] the number of intersection hits to find. If 0 get all intersections.
+#  //! \param ray_radius [optional] a tolerance on the ray for intersection calculations
+##  //! \return a pair of a vector of hit locations and a vector ids of the type specified in target_type
+#  //! no ids are returned if the intersections are not of the specified type.
+
+
+#1) fire a ray to get the surface and the point on the surface.
+#2) use the point and a tolerance (1.5*the element size??) to create a sphere and find the faces in the sphere on the surface.
+#3) get the centroid of each of the resulting faces and find the one closest to the fire ray point. 
+
+#!python
+def shoot_ray(node_id,direction,sids,search_radius):
+ node_coord = cubit.get_nodal_coordinates(node_id)
+ loc, ids = cubit.fire_ray(node_coord, direction, "surface", sids, 1)
+ if len(loc)>0:
+  cubit.cmd(f"draw location {loc[0][0]} {loc[0][1]} {loc[0][2]} color red")
+  cubit.cmd(f"draw line location {loc[0][0]} {loc[0][1]} {loc[0][2]} location {node_coord[0]} {node_coord[1]} {node_coord[2]} color red")
+  loc[0]
+ else:
+  print(f"nothing hit!")
+
+ selected_face_ids=[]
+ for id in ids:
+  faceids = cubit.parse_cubit_list("face",f"in surface {id}")
+  for faceid in faceids:
+   face_center = cubit.get_center_point("face" , faceid)
+   distance = ((face_center[0]-loc[0][0])**2+(face_center[1]-loc[0][1])**2+(face_center[2]-loc[0][2])**2)**0.5
+   if distance<=search_radius:
+    selected_face_ids.append(faceid)
+ return selected_face_ids
+
+#!cubit
+reset
+create brick x 1 z 0.1
+create curve location 0 0 1 location 0 0.5 1
+
+mesh vol 1
+mesh curve all
+
+#!python
+direction = [0.1, -0.1, -1]
+sids = [1]
+curve_id=13
+search_radius = 0.03
+
+all_face_ids=[]
+node_ids = cubit.parse_cubit_list("node",f"in curve {curve_id}")
+for node_id in node_ids:
+ selected_face_ids = shoot_ray(node_id,direction,sids,search_radius)
+ all_face_ids.append(selected_face_ids)
+
+#cubit.cmd(f"select face {' '.join(str(id) for id in selected_face_ids)}")
+
+switch=False
+for face_set in all_face_ids:
+ if switch:
+  cubit.cmd(f"draw face {' '.join(str(id) for id in face_set)} color red add")
+  switch=False
+ else:
+  cubit.cmd(f"draw face {' '.join(str(id) for id in face_set)} color blue add")
+  switch=True
+
+all_face_ids
