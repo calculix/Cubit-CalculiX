@@ -128,7 +128,7 @@ MaterialManagement::MaterialManagement()
   boxLayout_materiallibrary2->addWidget(label_materiallibrary_description);
 
   pushButton_library_description = new QPushButton();
-  pushButton_library_description->setText("View/Edit");
+  pushButton_library_description->setText("Edit");
   boxLayout_materiallibrary2->addWidget(pushButton_library_description);
 
   // labels
