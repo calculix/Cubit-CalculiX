@@ -712,6 +712,19 @@ bool CoreDraw::draw_load_centrifugal(int id, double size)
     return true;
 }
 
+bool CoreDraw::draw_load_trajectory(int id, double size)
+{
+    std::vector<std::vector<double>> draw_data;
+    //draw_data = ccx_iface->get_draw_data_for_load_trajectory(id);
+    
+    for (size_t i = 0; i < draw_data.size(); i++)
+    {
+        //draw_arrow({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, {draw_data[i][3],draw_data[i][4],draw_data[i][5]}, false, "khaki", size);
+    }
+
+    return true;
+}
+
 bool CoreDraw::draw_bc_displacement(int id, double size)
 {
     std::vector<std::vector<double>> draw_data;
@@ -833,6 +846,12 @@ bool CoreDraw::draw_loads(double size)
     {
         draw_load_centrifugal(tmp_load_ids[i], size);
     }
+
+    tmp_load_ids = ccx_iface->get_loadstrajectory_ids();
+    for (size_t i = 0; i < tmp_load_ids.size(); i++)
+    {
+        draw_load_trajectory(tmp_load_ids[i], size);
+    }
     return true;
 }
 
@@ -940,6 +959,19 @@ bool CoreDraw::draw_load_centrifugals(double size)
     for (size_t i = 0; i < tmp_load_ids.size(); i++)
     {
         draw_load_centrifugal(tmp_load_ids[i], size);
+    }
+
+    return true;
+}
+
+bool CoreDraw::draw_load_trajectories(double size)
+{
+    std::vector<int> tmp_load_ids;
+    
+    tmp_load_ids = ccx_iface->get_loadstrajectory_ids();
+    for (size_t i = 0; i < tmp_load_ids.size(); i++)
+    {
+        draw_load_trajectory(tmp_load_ids[i], size);
     }
 
     return true;

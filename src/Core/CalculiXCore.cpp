@@ -465,7 +465,7 @@ bool CalculiXCore::read_cub(std::string filename)
     PRINT_INFO("%s", log.c_str());
     return true;
   }else{
-    progressbar.start(0,23,"Reading Cubit-CalculiX data");
+    progressbar.start(0,24,"Reading Cubit-CalculiX data");
     progressbar.check_interrupt();
     //General
     std::vector<std::string> general;
@@ -554,6 +554,15 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->direction_data);
     cubTool.read_dataset_string_rank_2("magnitude_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->magnitude_data);
     cubTool.read_dataset_string_rank_2("coordinate_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->coordinate_data);
+    progressbar.step();
+    progressbar.check_interrupt();
+    //LoadsTrajectory
+    cubTool.createGroup("Cubit-CalculiX/Loads/Trajectory");
+    cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->loads_data);
+    cubTool.read_dataset_int_rank_2("fire_ray_surface_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->fire_ray_surface_data);
+    cubTool.read_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->direction_data);
+    cubTool.read_dataset_string_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->magnitude_data);
+    cubTool.read_dataset_string_rank_2("time_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->time_data);
     progressbar.step();
     progressbar.check_interrupt();
     //BCs
@@ -907,7 +916,7 @@ bool CalculiXCore::save_cub(std::string filename)
 
   if (!cubTool.nameExists("Cubit-CalculiX"))
   {
-    progressbar.start(0,23,"Writing Cubit-CalculiX data");
+    progressbar.start(0,24,"Writing Cubit-CalculiX data");
     progressbar.check_interrupt();
     //General
     cubTool.createGroup("Cubit-CalculiX");
@@ -1013,6 +1022,15 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->direction_data);
     cubTool.write_dataset_string_rank_2("magnitude_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->magnitude_data);
     cubTool.write_dataset_string_rank_2("coordinate_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->coordinate_data);
+    progressbar.step();
+    progressbar.check_interrupt();
+    //LoadsTrajectory
+    cubTool.createGroup("Cubit-CalculiX/Loads/Trajectory");
+    cubTool.write_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->loads_data);
+    cubTool.write_dataset_int_rank_2("fire_ray_surface_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->fire_ray_surface_data);
+    cubTool.write_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->direction_data);
+    cubTool.write_dataset_string_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->magnitude_data);
+    cubTool.write_dataset_string_rank_2("time_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->time_data);
     progressbar.step();
     progressbar.check_interrupt();
     //BCs
@@ -1627,6 +1645,28 @@ std::string CalculiXCore::autocleanup()
       loadscentrifugal->delete_load(loadscentrifugal->loads_data[i-1][0]);
     }
   }
+  // LOADS TRAJECTORY
+  for (size_t i = loadstrajectory->loads_data.size(); i > 0; i--)
+  { 
+    sub_bool = false;
+    if (!check_curve_exists(loadstrajectory->loads_data[i-1][2]))
+      {
+        log.append("Curve ID " + std::to_string(loadstrajectory->loads_data[i-1][2]) + " doesn't exist.\n");
+        log.append("Trajectory ID " + std::to_string(loadstrajectory->loads_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    if (!check_vertex_exists(loadstrajectory->loads_data[i-1][3]))
+      {
+        log.append("Vertex ID " + std::to_string(loadstrajectory->loads_data[i-1][3]) + " doesn't exist.\n");
+        log.append("Trajectory ID " + std::to_string(loadstrajectory->loads_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      loadstrajectory->delete_load(loadstrajectory->loads_data[i-1][0]);
+    }
+  }
   // BCS DISPLACEMENTS
   for (size_t i = bcsdisplacements->bcs_data.size(); i > 0; i--)
   { 
@@ -1912,6 +1952,21 @@ std::string CalculiXCore::autocleanup()
         }
       }
     }
+    // Trajectory
+    sub_data_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[i-1][5]);
+    for (size_t ii = sub_data_ids.size(); ii > 0; ii--)
+    {
+      if (steps->loads_data[sub_data_ids[ii-1]][1]==6)
+      {
+        if (!check_bc_exists(steps->loads_data[sub_data_ids[ii-1]][2],11))
+        {
+          log.append("Load Trajectory ID " + std::to_string(steps->loads_data[sub_data_ids[ii-1]][2]) + " doesn't exist.\n");
+          log.append("Load Trajectory Reference from Step ID " + std::to_string(steps->steps_data[i-1][0]) + " will be deleted.\n");
+          sub_bool = true;
+          steps->remove_loads(steps->steps_data[i-1][0], 6, {steps->loads_data[sub_data_ids[ii-1]][2]});
+        }
+      }
+    }
     
     // STEP BCS
     // Displacement 
@@ -1998,6 +2053,7 @@ std::string CalculiXCore::print_data()
   str_return.append(loadsheatfluxes->print_data());
   str_return.append(loadsgravity->print_data());
   str_return.append(loadscentrifugal->print_data());
+  str_return.append(loadstrajectory->print_data());
   str_return.append(bcsdisplacements->print_data());
   str_return.append(bcstemperatures->print_data());
   str_return.append(historyoutputs->print_data());
@@ -2775,6 +2831,12 @@ bool CalculiXCore::check_bc_exists(int bc_id,int BCType)
     {
       ids.push_back(loadscentrifugal->loads_data[i][0]);
     }
+  }else if (BCType == 11) // Trajectory
+  {
+    for (size_t i = 0; i < loadstrajectory->loads_data.size(); i++)
+    {
+      ids.push_back(loadstrajectory->loads_data[i][0]);
+    }
   }
   
   for (size_t i = 0; i < ids.size(); i++)
@@ -2809,22 +2871,38 @@ bool CalculiXCore::check_sideset_exists(int sideset_id)
 
 bool CalculiXCore::check_vertex_exists(int vertex_id)
 {
-  std::vector<int> vertex_list = CubitCoreformInterface::get_entities(CubitCoreformInterface::CubitCoreformInterfaceEntityType::VERTEX);
-  for (size_t i = 0; i < vertex_list.size(); i++)
+  std::vector<int> vertex_list = CubitInterface::parse_cubit_list("vertex",std::to_string(vertex_id));
+  
+  if (vertex_list.size()==1)
   {
-    if (vertex_list[i]==vertex_id)
-    {
-      return true;
-    }
+    return true;
   }
-  return false;
 
-  /*if (!CubitCoreformInterface::is_entity(CubitCoreformInterface::CubitCoreformInterfaceEntityType::VERTEX,vertex_id))
+  return false;
+}
+
+bool CalculiXCore::check_curve_exists(int curve_id)
+{
+  std::vector<int> curve_list = CubitInterface::parse_cubit_list("curve",std::to_string(curve_id));
+  
+  if (curve_list.size()==1)
   {
-    return false;
+    return true;
   }
-  return true;
-  */
+
+  return false;
+}
+
+bool CalculiXCore::check_surface_exists(int surface_id)
+{
+  std::vector<int> surface_list = CubitInterface::parse_cubit_list("surface",std::to_string(surface_id));
+  
+  if (surface_list.size()==1)
+  {
+    return true;
+  }
+
+  return false;
 }
 
 bool CalculiXCore::check_surfaceinteraction_exists(int surfaceinteraction_id)
@@ -3332,14 +3410,14 @@ bool CalculiXCore::delete_loadscentrifugal(int centrifugal_id)
   return loadscentrifugal->delete_load(centrifugal_id);
 }
 
-bool CalculiXCore::create_loadstrajectory(std::vector<std::string> options)
+bool CalculiXCore::create_loadstrajectory(std::vector<std::string> options, std::vector<int> options2)
 {
-  return loadstrajectory->create_load(options);
+  return loadstrajectory->create_load(options, options2);
 }
 
-bool CalculiXCore::modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker)
+bool CalculiXCore::modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2)
 {
-  return loadstrajectory->modify_load(trajectory_id,options,options_marker);
+  return loadstrajectory->modify_load(trajectory_id,options,options_marker, options2);
 }
 
 bool CalculiXCore::delete_loadstrajectory(int trajectory_id)
@@ -4991,6 +5069,16 @@ bool CalculiXCore::draw_load_centrifugal(std::vector<int> centrifugal_ids,double
   return true;
 }
 
+bool CalculiXCore::draw_load_trajectory(std::vector<int> trajectory_ids,double size)
+{
+  for (size_t i = 0; i < trajectory_ids.size(); i++)
+  {
+    draw->draw_load_trajectory(trajectory_ids[i],size);
+  }
+  
+  return true;
+}
+
 bool CalculiXCore::draw_bc_displacement(std::vector<int> displacement_ids,double size)
 {
   for (size_t i = 0; i < displacement_ids.size(); i++)
@@ -5059,6 +5147,11 @@ bool CalculiXCore::draw_load_gravities(double size)
 bool CalculiXCore::draw_load_centrifugals(double size)
 {
   return draw->draw_load_centrifugals(size);
+}
+
+bool CalculiXCore::draw_load_trajectories(double size)
+{
+  return draw->draw_load_trajectories(size);
 }
 
 bool CalculiXCore::draw_bc_displacements(double size)
@@ -8300,6 +8393,12 @@ std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_
       for (size_t i = 0; i < loadscentrifugal->loads_data.size(); i++)
       {
         all_ids.push_back(loadscentrifugal->loads_data[i][0]);
+      }
+    } else if (parse_type=="loadstrajectory")
+    {
+      for (size_t i = 0; i < loadstrajectory->loads_data.size(); i++)
+      {
+        all_ids.push_back(loadstrajectory->loads_data[i][0]);
       }
     } else if (parse_type=="historyoutput")
     {

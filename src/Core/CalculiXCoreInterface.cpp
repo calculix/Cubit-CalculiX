@@ -220,6 +220,21 @@ bool CalculiXCoreInterface::check_sideset_exists(int sideset_id)
   return ccx_core.check_sideset_exists(sideset_id);
 }
 
+bool CalculiXCoreInterface::check_vertex_exists(int vertex_id)
+{
+  return ccx_core.check_vertex_exists(vertex_id);
+}
+
+bool CalculiXCoreInterface::check_curve_exists(int curve_id)
+{
+  return ccx_core.check_curve_exists(curve_id);
+}
+
+bool CalculiXCoreInterface::check_surface_exists(int surface_id)
+{
+  return ccx_core.check_surface_exists(surface_id);
+}
+
 bool CalculiXCoreInterface::check_vertex_in_nodeset_exists(int vertex_id,int nodeset_id)
 {
   return ccx_core.check_vertex_in_nodeset_exists(vertex_id,nodeset_id);
@@ -440,14 +455,14 @@ bool CalculiXCoreInterface::delete_loadscentrifugal(int centrifugal_id)
   return ccx_core.delete_loadscentrifugal(centrifugal_id);
 }
 
-bool CalculiXCoreInterface::create_loadstrajectory(std::vector<std::string> options)
+bool CalculiXCoreInterface::create_loadstrajectory(std::vector<std::string> options, std::vector<int> options2)
 {
-  return ccx_core.create_loadstrajectory(options);
+  return ccx_core.create_loadstrajectory(options, options2);
 }
 
-bool CalculiXCoreInterface::modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker)
+bool CalculiXCoreInterface::modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2)
 {
-  return ccx_core.modify_loadstrajectory(trajectory_id,options,options_marker);
+  return ccx_core.modify_loadstrajectory(trajectory_id,options,options_marker, options2);
 }
 
 bool CalculiXCoreInterface::delete_loadstrajectory(int trajectory_id)
@@ -880,6 +895,11 @@ bool CalculiXCoreInterface::draw_load_centrifugal(std::vector<int> centrifugal_i
   return ccx_core.draw_load_centrifugal(centrifugal_ids,size);
 }
 
+bool CalculiXCoreInterface::draw_load_trajectory(std::vector<int> trajectory_ids,double size)
+{
+  return ccx_core.draw_load_trajectory(trajectory_ids,size);
+}
+
 bool CalculiXCoreInterface::draw_bc_displacement(std::vector<int> displacement_ids,double size)
 {
   return ccx_core.draw_bc_displacement(displacement_ids,size);
@@ -933,6 +953,11 @@ bool CalculiXCoreInterface::draw_load_gravities(double size)
 bool CalculiXCoreInterface::draw_load_centrifugals(double size)
 {
   return ccx_core.draw_load_centrifugals(size);
+}
+
+bool CalculiXCoreInterface::draw_load_trajectories(double size)
+{
+  return ccx_core.draw_load_trajectories(size);
 }
 
 bool CalculiXCoreInterface::draw_bc_displacements(double size)

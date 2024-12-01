@@ -229,7 +229,7 @@ bool CoreLoadsCentrifugal::delete_load(int load_id)
       direction_data.erase(direction_data.begin() + sub_data_id);
     }
     // magnitude
-    sub_data_id = get_magnitude_data_id_from_magnitude_id(loads_data[loads_data_id][5]);
+    sub_data_id = get_magnitude_data_id_from_magnitude_id(loads_data[loads_data_id][6]);
     if (sub_data_id != -1){
       magnitude_data.erase(magnitude_data.begin() + sub_data_id);
     }
@@ -348,7 +348,7 @@ std::string CoreLoadsCentrifugal::get_load_export(int load_id)
 {
   int load_data_id;
   int sub_data_id;
-    std::string str_temp = "*DLOAD";
+  std::string str_temp = "*DLOAD";
   load_data_id = get_loads_data_id_from_load_id(load_id);
   if (loads_data[load_data_id][1]==0)
   {

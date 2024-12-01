@@ -28,8 +28,10 @@ bool CoreLoadsTrajectory::update()
 bool CoreLoadsTrajectory::reset()
 {
   loads_data.clear();
+  fire_ray_surface_data.clear();
   time_data.clear();
   direction_data.clear();
+  magnitude_data.clear();
   init();
   return true;
 }
@@ -38,21 +40,21 @@ bool CoreLoadsTrajectory::check_initialized()
 {
   return is_initialized;
 }
-/*
-bool CoreLoadsTrajectory::create_load(std::vector<std::string> options)
+
+bool CoreLoadsTrajectory::create_load(std::vector<std::string> options, std::vector<int> options2)
 {
   int load_id;
   int load_last;
   int sub_id;
   int sub_last;
   int op_mode;
-  int amplitude_id;
-  int block_id;
-  int time_delay_id;
+  int curve_id;
+  int vertex_id;
+  int fire_ray_surface_id;
   int direction_id;
   int magnitude_id;
-  int coordinate_id;
-  
+  int time_id;
+
   if (loads_data.size()==0)
   {
     load_id = 1;
@@ -66,24 +68,18 @@ bool CoreLoadsTrajectory::create_load(std::vector<std::string> options)
   // OP MODE
   op_mode = std::stoi(options[0]);
   
-  // AMPLITUDE
-  amplitude_id = std::stoi(options[1]);
+  // curve
+  curve_id = std::stoi(options[1]);
 
-  // time_delay
-  if (time_delay_data.size()==0)
-  {
-    sub_id = 1;
-  }
-  else
-  {
-    sub_last = int(time_delay_data.size()) - 1;
-    sub_id = std::stoi(time_delay_data[sub_last][0]) + 1;
-  }
-  time_delay_id = sub_id;
-  this->add_time_delay(std::to_string(sub_id), options[2]);
+  // vertex
+  vertex_id = std::stoi(options[2]);
 
-  // BLOCK
-  block_id = std::stoi(options[3]);
+  // fire ray
+  fire_ray_surface_id = load_id;
+  for (size_t i = 0; i < options2.size(); i++)
+  {
+    this->add_fire_ray_surface(fire_ray_surface_id, options2[i]);
+  }
   
   // direction
   if (direction_data.size()==0)
@@ -96,7 +92,7 @@ bool CoreLoadsTrajectory::create_load(std::vector<std::string> options)
     sub_id = std::stoi(direction_data[sub_last][0]) + 1;
   }
   direction_id = sub_id;
-  this->add_direction(std::to_string(sub_id), options[4], options[5], options[6]);
+  this->add_direction(std::to_string(sub_id), options[3], options[4], options[5]);
 
   // magnitude
   if (magnitude_data.size()==0)
@@ -109,35 +105,35 @@ bool CoreLoadsTrajectory::create_load(std::vector<std::string> options)
     sub_id = std::stoi(magnitude_data[sub_last][0]) + 1;
   }
   magnitude_id = sub_id;
-  this->add_magnitude(std::to_string(sub_id), options[7]);
+  this->add_magnitude(std::to_string(sub_id), options[6]);
 
-  // coordinate
-  if (coordinate_data.size()==0)
+  // time
+  if (time_data.size()==0)
   {
     sub_id = 1;
   }
   else
   {
-    sub_last = int(coordinate_data.size()) - 1;
-    sub_id = std::stoi(coordinate_data[sub_last][0]) + 1;
+    sub_last = int(time_data.size()) - 1;
+    sub_id = std::stoi(time_data[sub_last][0]) + 1;
   }
-  coordinate_id = sub_id;
-  this->add_coordinate(std::to_string(sub_id), options[8], options[9], options[10]);
+  time_id = sub_id;
+  this->add_time(std::to_string(sub_id), options[7], options[8]);
 
-  this->add_load(load_id, op_mode, amplitude_id, time_delay_id, block_id, direction_id, magnitude_id, coordinate_id);
+  this->add_load(load_id, op_mode, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id);
   return true;
 }
 
-bool CoreLoadsTrajectory::add_load(int load_id, int op_mode, int amplitude_id, int time_delay_id, int block_id, int direction_id, int magnitude_id, int coordinate_id)
+bool CoreLoadsTrajectory::add_load(int load_id, int op_mode, int curve_id, int vertex_id, int fire_ray_surface_id, int direction_id, int magnitude_id, int time_id)
 {
-  std::vector<int> v = {load_id, op_mode, amplitude_id, time_delay_id, block_id, direction_id, magnitude_id, coordinate_id};
+  std::vector<int> v = {load_id, op_mode, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id};
       
   loads_data.push_back(v);
 
   return true;
 }
 
-bool CoreLoadsTrajectory::modify_load(int load_id, std::vector<std::string> options, std::vector<int> options_marker)
+bool CoreLoadsTrajectory::modify_load(int load_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2)
 {
   int sub_data_id;
   std::vector<int> sub_data_ids;
@@ -152,21 +148,45 @@ bool CoreLoadsTrajectory::modify_load(int load_id, std::vector<std::string> opti
     {
       loads_data[loads_data_id][1] = std::stoi(options[0]);
     }
-    // AMPLITUDE
+    // curve
     if (options_marker[1]==1)
     {
       loads_data[loads_data_id][2] = std::stoi(options[1]);
     }
-    // time delay
+    // vertex
     if (options_marker[2]==1)
     {
-      sub_data_id = get_time_delay_data_id_from_time_delay_id(loads_data[loads_data_id][3]);
-      time_delay_data[sub_data_id][1] = options[2];
+      loads_data[loads_data_id][3] = std::stoi(options[2]);
     }
-    // BLOCK
+    // fire ray
     if (options_marker[3]==1)
     {
-      loads_data[loads_data_id][4] = std::stoi(options[3]);
+      // surface ids
+      sub_data_ids = get_fire_ray_surface_data_ids_from_fire_ray_surface_id(loads_data[loads_data_id][4]);
+      if (options2.size()!=0)
+      {
+        if (options2.size()==sub_data_ids.size())
+        {
+          for (size_t i = 0; i < options2.size(); i++)
+          {
+            fire_ray_surface_data[sub_data_ids[i]][0] = loads_data[loads_data_id][4];
+            fire_ray_surface_data[sub_data_ids[i]][1] = options2[i];
+          }
+        }else{
+          // first delete and then make a push back
+          // delete from back to begin so that we don't have to care about mismatching id's
+          for (size_t i = sub_data_ids.size(); i > 0; i--)
+          {
+            fire_ray_surface_data.erase(fire_ray_surface_data.begin() + sub_data_ids[i-1]);
+          }
+          
+          for (size_t i = 0; i < options2.size(); i++)
+          {
+            add_fire_ray_surface(loads_data[loads_data_id][4],options2[i]);
+          }
+        }
+      }
+
     }
     // direction
     if (options_marker[4]==1)
@@ -190,21 +210,16 @@ bool CoreLoadsTrajectory::modify_load(int load_id, std::vector<std::string> opti
       sub_data_id = get_magnitude_data_id_from_magnitude_id(loads_data[loads_data_id][6]);
       magnitude_data[sub_data_id][1] = options[7];
     }
-    // coordinate
+    // time
     if (options_marker[8]==1)
     {
-      sub_data_id = get_coordinate_data_id_from_coordinate_id(loads_data[loads_data_id][7]);
-      coordinate_data[sub_data_id][1] = options[8];
+      sub_data_id = get_time_data_id_from_time_id(loads_data[loads_data_id][7]);
+      time_data[sub_data_id][1] = options[8];
     }
     if (options_marker[9]==1)
     {
-      sub_data_id = get_coordinate_data_id_from_coordinate_id(loads_data[loads_data_id][7]);
-      coordinate_data[sub_data_id][1] = options[9];
-    }
-    if (options_marker[10]==1)
-    {
-      sub_data_id = get_coordinate_data_id_from_coordinate_id(loads_data[loads_data_id][7]);
-      coordinate_data[sub_data_id][1] = options[10];
+      sub_data_id = get_time_data_id_from_time_id(loads_data[loads_data_id][7]);
+      time_data[sub_data_id][1] = options[9];
     }
     return true;
   }
@@ -213,15 +228,16 @@ bool CoreLoadsTrajectory::modify_load(int load_id, std::vector<std::string> opti
 bool CoreLoadsTrajectory::delete_load(int load_id)
 {
   int sub_data_id;
+  std::vector<int> sub_data_ids;
   int loads_data_id = get_loads_data_id_from_load_id(load_id);
   if (loads_data_id == -1)
   {
     return false;
   } else {
-    // time delay
-    sub_data_id = get_time_delay_data_id_from_time_delay_id(loads_data[loads_data_id][3]);
+    // time
+    sub_data_id = get_time_data_id_from_time_id(loads_data[loads_data_id][7]);
     if (sub_data_id != -1){
-      time_delay_data.erase(time_delay_data.begin() + sub_data_id);
+      time_data.erase(time_data.begin() + sub_data_id);
     }
     // direction
     sub_data_id = get_direction_data_id_from_direction_id(loads_data[loads_data_id][5]);
@@ -229,25 +245,26 @@ bool CoreLoadsTrajectory::delete_load(int load_id)
       direction_data.erase(direction_data.begin() + sub_data_id);
     }
     // magnitude
-    sub_data_id = get_magnitude_data_id_from_magnitude_id(loads_data[loads_data_id][5]);
+    sub_data_id = get_magnitude_data_id_from_magnitude_id(loads_data[loads_data_id][6]);
     if (sub_data_id != -1){
       magnitude_data.erase(magnitude_data.begin() + sub_data_id);
     }
-    // coordinate
-    sub_data_id = get_coordinate_data_id_from_coordinate_id(loads_data[loads_data_id][7]);
-    if (sub_data_id != -1){
-      coordinate_data.erase(coordinate_data.begin() + sub_data_id);
+    // fire ray surfaces
+    sub_data_ids = get_fire_ray_surface_data_ids_from_fire_ray_surface_id(loads_data[loads_data_id][4]);
+    for (size_t i = sub_data_ids.size(); i > 0; i--)
+    {
+      fire_ray_surface_data.erase(fire_ray_surface_data.begin() + sub_data_ids[i-1]);
     }
     loads_data.erase(loads_data.begin() + loads_data_id);
     return true;
   }
 }
 
-bool CoreLoadsTrajectory::add_time_delay(std::string time_delay_id, std::string time_delay_value)
+bool CoreLoadsTrajectory::add_time(std::string time_id, std::string t_begin, std::string t_end)
 {
-  std::vector<std::string> v = {time_delay_id, time_delay_value};
+  std::vector<std::string> v = {time_id, t_begin, t_end};
       
-  time_delay_data.push_back(v);
+  time_data.push_back(v);
 
   return true;
 }
@@ -270,11 +287,11 @@ bool CoreLoadsTrajectory::add_magnitude(std::string magnitude_id, std::string ma
   return true;
 }
 
-bool CoreLoadsTrajectory::add_coordinate(std::string coordinate_id, std::string x, std::string y, std::string z)
+bool CoreLoadsTrajectory::add_fire_ray_surface(int fire_ray_surface_id, int surface_id)
 {
-  std::vector<std::string> v = {coordinate_id, x, y, z};
+  std::vector<int> v = {fire_ray_surface_id, surface_id};
       
-  coordinate_data.push_back(v);
+  fire_ray_surface_data.push_back(v);
 
   return true;
 }
@@ -292,12 +309,12 @@ int CoreLoadsTrajectory::get_loads_data_id_from_load_id(int load_id)
   return return_int;
 }
 
-int CoreLoadsTrajectory::get_time_delay_data_id_from_time_delay_id(int time_delay_id)
+int CoreLoadsTrajectory::get_time_data_id_from_time_id(int time_id)
 { 
   int return_int = -1;
-  for (size_t i = 0; i < time_delay_data.size(); i++)
+  for (size_t i = 0; i < time_data.size(); i++)
   {
-    if (time_delay_data[i][0]==std::to_string(time_delay_id))
+    if (time_data[i][0]==std::to_string(time_id))
     {
         return_int = int(i);
     }  
@@ -331,14 +348,14 @@ int CoreLoadsTrajectory::get_magnitude_data_id_from_magnitude_id(int magnitude_i
   return return_int;
 }
 
-int CoreLoadsTrajectory::get_coordinate_data_id_from_coordinate_id(int coordinate_id)
+std::vector<int> CoreLoadsTrajectory::get_fire_ray_surface_data_ids_from_fire_ray_surface_id(int fire_surface_id)
 { 
-  int return_int = -1;
-  for (size_t i = 0; i < coordinate_data.size(); i++)
+  std::vector<int> return_int;
+  for (size_t i = 0; i < fire_ray_surface_data.size(); i++)
   {
-    if (coordinate_data[i][0]==std::to_string(coordinate_id))
+    if (fire_ray_surface_data[i][0]==fire_surface_id)
     {
-        return_int = int(i);
+        return_int.push_back(int(i));
     }  
   }
   return return_int;
@@ -346,9 +363,12 @@ int CoreLoadsTrajectory::get_coordinate_data_id_from_coordinate_id(int coordinat
 
 std::string CoreLoadsTrajectory::get_load_export(int load_id)
 {
+  
   int load_data_id;
   int sub_data_id;
-    std::string str_temp = "*DLOAD";
+  std::string str_temp = "**Trajectory";
+  
+  /*
   load_data_id = get_loads_data_id_from_load_id(load_id);
   if (loads_data[load_data_id][1]==0)
   {
@@ -380,6 +400,7 @@ std::string CoreLoadsTrajectory::get_load_export(int load_id)
   sub_data_id = get_direction_data_id_from_direction_id(loads_data[load_data_id][5]);
   str_temp.append(direction_data[sub_data_id][1] + "," + direction_data[sub_data_id][2] + "," + direction_data[sub_data_id][3]);
 
+*/
   return str_temp;
 }
 
@@ -387,19 +408,19 @@ std::string CoreLoadsTrajectory::print_data()
 {
   std::string str_return;
   str_return = "\n CoreLoadsTrajectory loads_data: \n";
-  str_return.append("load_id, OP MODE, amplitude_id, time_delay_id, block_id, direction_id, magnitude_id, coordinate_id \n");
+  str_return.append("load_id, OP MODE, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id \n");
 
   for (size_t i = 0; i < loads_data.size(); i++)
   {
     str_return.append(std::to_string(loads_data[i][0]) + " " + std::to_string(loads_data[i][1]) + " " + std::to_string(loads_data[i][2]) + " " + std::to_string(loads_data[i][3]) + " " + std::to_string(loads_data[i][4]) + " " + std::to_string(loads_data[i][5]) + " " + std::to_string(loads_data[i][6]) + " " + std::to_string(loads_data[i][7]) + " \n");
   }
 
-  str_return.append("\n CoreLoadsTrajectory time_delay_data: \n");
-  str_return.append("time_delay_id, time_delay_value \n");
+  str_return.append("\n CoreLoadsTrajectory time_data: \n");
+  str_return.append("time_id, t_begin, t_end \n");
 
-  for (size_t i = 0; i < time_delay_data.size(); i++)
+  for (size_t i = 0; i < time_data.size(); i++)
   {
-    str_return.append(time_delay_data[i][0] + " " + time_delay_data[i][1] + " \n");
+    str_return.append(time_data[i][0] + " " + time_data[i][1] + " " + time_data[i][2] + " \n");
   }
 
   str_return.append("\n CoreLoadsTrajectory direction_data: \n");
@@ -418,14 +439,13 @@ std::string CoreLoadsTrajectory::print_data()
     str_return.append(magnitude_data[i][0] + " " + magnitude_data[i][1] + " \n");
   }
 
-  str_return.append("\n CoreLoadsTrajectory coordinate_data: \n");
-  str_return.append("coordinate_id, x, y, z \n");
+  str_return.append("\n CoreLoadsTrajectory fire_ray_surface_data: \n");
+  str_return.append("fire_ray_surface_id, surface_id \n");
 
-  for (size_t i = 0; i < coordinate_data.size(); i++)
+  for (size_t i = 0; i < fire_ray_surface_data.size(); i++)
   {
-    str_return.append(coordinate_data[i][0] + " " + coordinate_data[i][1] + " " + coordinate_data[i][2] + " " + coordinate_data[i][3] + " \n");
+    str_return.append(std::to_string(fire_ray_surface_data[i][0]) + " " + std::to_string(fire_ray_surface_data[i][1]) + " \n");
   }
 
   return str_return;
 }
-*/

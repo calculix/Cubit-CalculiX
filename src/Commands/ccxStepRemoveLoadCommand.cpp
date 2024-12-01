@@ -21,6 +21,7 @@ std::vector<std::string> ccxStepRemoveLoadCommand::get_syntax()
   syntax.append("[heatflux <value:label='heatflux id',help='<heatflux id>'>...] " );
   syntax.append("[gravity <value:label='gravity id',help='<gravity id>'>...] " );
   syntax.append("[centrifugal <value:label='centrifugal id',help='<centrifugal id>'>...] " );
+  syntax.append("[trajectory <value:label='trajectory id',help='<trajectory id>'>...] " );
   syntax_list.push_back(syntax);
   
   return syntax_list;
@@ -32,6 +33,7 @@ std::vector<std::string> ccxStepRemoveLoadCommand::get_syntax_help()
   help[0] = "ccx step <step id> remove load [force <force id>...] [pressure <pressure id>...] [heatflux <heatflux id>...] "; 
   help[0].append("[gravity <gravity id>...] ");
   help[0].append("[centrifugal <centrifugal id>...] ");
+  help[0].append("[trajectory <trajectory id>...] ");
 
   return help;
 }
@@ -54,6 +56,7 @@ bool ccxStepRemoveLoadCommand::execute(CubitCommandData &data)
   std::vector<int> heatflux_ids;
   std::vector<int> gravity_ids;
   std::vector<int> centrifugal_ids;
+  std::vector<int> trajectory_ids;
 
   data.get_value("step id", step_id);
 
@@ -62,6 +65,7 @@ bool ccxStepRemoveLoadCommand::execute(CubitCommandData &data)
   data.get_values("heatflux id", heatflux_ids);
   data.get_values("gravity id", gravity_ids);
   data.get_values("centrifugal id", centrifugal_ids);
+  data.get_values("trajectory id", trajectory_ids);
    
   if (!ccx_iface.step_remove_loads(step_id, 1, force_ids))
   {
@@ -86,6 +90,11 @@ bool ccxStepRemoveLoadCommand::execute(CubitCommandData &data)
   if (!ccx_iface.step_remove_loads(step_id, 5, centrifugal_ids))
   {
     output = "Failed removing Centrifugal!\n";
+    PRINT_ERROR(output.c_str());
+  }
+  if (!ccx_iface.step_remove_loads(step_id, 6, trajectory_ids))
+  {
+    output = "Failed removing Trajectory!\n";
     PRINT_ERROR(output.c_str());
   }
   return true;

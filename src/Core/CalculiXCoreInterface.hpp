@@ -53,6 +53,9 @@ public:
   bool check_block_exists(int block_id);
   bool check_nodeset_exists(int nodeset_id);
   bool check_sideset_exists(int sideset_id);
+  bool check_vertex_exists(int vertex_id);
+  bool check_curve_exists(int curve_id);
+  bool check_surface_exists(int surface_id);
   bool check_vertex_in_nodeset_exists(int vertex_id,int nodeset_id); // checks if the vertex exists in the nodeset
   bool check_orientation_exists(int orientation_id); // check if orientation exists
   bool check_step_exists(int step_id); // check if step exists
@@ -104,8 +107,8 @@ public:
   bool create_loadscentrifugal(std::vector<std::string> options); // adds a new centrifugal load
   bool modify_loadscentrifugal(int centrifugal_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a centrifugal
   bool delete_loadscentrifugal(int centrifugal_id); // delete centrifugal load
-  bool create_loadstrajectory(std::vector<std::string> options); // adds a new trajectory load
-  bool modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a trajectory
+  bool create_loadstrajectory(std::vector<std::string> options, std::vector<int> options2); // adds a new trajectory load
+  bool modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2); // modify a trajectory
   bool delete_loadstrajectory(int trajectory_id); // delete trajectory load
   bool modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a displacement
   bool modify_bcstemperatures(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a temperature
@@ -195,6 +198,7 @@ public:
   bool draw_load_heatflux(std::vector<int> heatflux_ids,double size); // draw load heatflux
   bool draw_load_gravity(std::vector<int> gravity_ids,double size); // draw load gravity
   bool draw_load_centrifugal(std::vector<int> centrifugal_ids,double size); // draw load centrifugal
+  bool draw_load_trajectory(std::vector<int> trajectory_ids,double size); // draw load trajectory
   bool draw_bc_displacement(std::vector<int> displacement_ids,double size); // draw bc displacement
   bool draw_bc_temperature(std::vector<int> temperature_ids,double size); // draw bc temperature
   bool draw_orientation(std::vector<int> orientation_ids,double size); // draw orientation
@@ -206,6 +210,7 @@ public:
   bool draw_load_heatfluxes(double size); //draw all heatfluxes
   bool draw_load_gravities(double size); //draw all gravities
   bool draw_load_centrifugals(double size); //draw all centrifugals
+  bool draw_load_trajectories(double size); //draw all trajectories
   bool draw_bc_displacements(double size); //draw all displacements
   bool draw_bc_temperatures(double size); //draw all temperatures
 
