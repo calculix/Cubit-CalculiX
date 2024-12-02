@@ -1,7 +1,8 @@
 #include "HDF5Tool.hpp"
-#include "CubitMessage.hpp"
+#include "CubitMessage.hpp" 
 #ifdef WIN32
  #include <windows.h>
+ #include <io.h>
 #else
  #include <unistd.h>
 #endif
