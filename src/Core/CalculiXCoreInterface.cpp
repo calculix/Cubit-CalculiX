@@ -1240,6 +1240,11 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_loadscentrifuga
   return ccx_core.get_loadscentrifugal_tree_data();
 }
 
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_loadstrajectory_tree_data()
+{ 
+  return ccx_core.get_loadstrajectory_tree_data();
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_bcsdisplacements_tree_data()
 { 
   return ccx_core.get_bcsdisplacements_tree_data();
@@ -1303,6 +1308,11 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_loadsgrav
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_loadscentrifugal_tree_data(int step_id)
 { 
   return ccx_core.get_steps_loadscentrifugal_tree_data(step_id);
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_loadstrajectory_tree_data(int step_id)
+{ 
+  return ccx_core.get_steps_loadstrajectory_tree_data(step_id);
 }
 
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_bcsdisplacements_tree_data(int step_id)

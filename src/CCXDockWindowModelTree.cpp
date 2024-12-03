@@ -23,6 +23,7 @@
 #include "LoadsHeatfluxesTree.hpp"
 #include "LoadsGravityTree.hpp"
 #include "LoadsCentrifugalTree.hpp"
+#include "LoadsTrajectoryTree.hpp"
 #include "BCsTree.hpp"
 #include "BCsDisplacementsTree.hpp"
 #include "BCsTemperaturesTree.hpp"
@@ -119,6 +120,8 @@ void CCXDockWindowModelTree::initialize()
   myLoadsGravityTree->initialize();
   myLoadsCentrifugalTree = new LoadsCentrifugalTree(myLoadsTree);
   myLoadsCentrifugalTree->initialize();
+  myLoadsTrajectoryTree = new LoadsTrajectoryTree(myLoadsTree);
+  myLoadsTrajectoryTree->initialize();
   myBCsTree = new BCsTree(myModelTree);
   myBCsTree->initialize();
   myBCsDisplacementsTree = new BCsDisplacementsTree(myBCsTree);
@@ -190,6 +193,7 @@ void CCXDockWindowModelTree::clear()
     delete myLoadsHeatfluxesTree;
     delete myLoadsGravityTree;
     delete myLoadsCentrifugalTree;
+    delete myLoadsTrajectoryTree;
     delete myLoadsTree;
     delete myBCsTemperaturesTree;
     delete myBCsDisplacementsTree;
@@ -234,6 +238,7 @@ void CCXDockWindowModelTree::update()
   myLoadsHeatfluxesTree->update();
   myLoadsGravityTree->update();
   myLoadsCentrifugalTree->update();
+  myLoadsTrajectoryTree->update();
   //myBCsTree->update();
   myBCsDisplacementsTree->update();
   myBCsTemperaturesTree->update();
@@ -268,6 +273,7 @@ void CCXDockWindowModelTree::reset()
   myLoadsHeatfluxesTree->clear();
   myLoadsGravityTree->clear();
   myLoadsCentrifugalTree->clear();
+  myLoadsTrajectoryTree->clear();
   //myBCsTree->clear();
   myBCsDisplacementsTree->clear();
   myBCsTemperaturesTree->clear();

@@ -7721,6 +7721,24 @@ std::vector<std::vector<std::string>> CalculiXCore::get_loadscentrifugal_tree_da
   return loadscentrifugal_tree_data;
 }
 
+std::vector<std::vector<std::string>> CalculiXCore::get_loadstrajectory_tree_data()
+{ 
+  std::vector<std::vector<std::string>> loadstrajectory_tree_data;
+  
+  for (size_t i = 0; i < loadstrajectory->loads_data.size(); i++)
+  {
+    std::vector<std::string> loadstrajectory_tree_data_set;
+    std::string name;
+    
+    name = "Trajectory_" + std::to_string(loadstrajectory->loads_data[i][0]);
+    
+    loadstrajectory_tree_data_set.push_back(std::to_string(loadstrajectory->loads_data[i][0])); //load_id
+    loadstrajectory_tree_data_set.push_back(name); 
+    loadstrajectory_tree_data.push_back(loadstrajectory_tree_data_set);
+  }
+  return loadstrajectory_tree_data;
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_bcsdisplacements_tree_data()
 { 
   std::vector<std::vector<std::string>> bcsdisplacements_tree_data;
@@ -8146,6 +8164,34 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadscentrifugal_t
     }
   }
   return loadscentrifugal_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadstrajectory_tree_data(int step_id)
+{ 
+  std::vector<std::vector<std::string>> loadstrajectory_tree_data;
+  int step_data_id;
+  std::vector<int> loads_ids;
+  step_data_id = steps->get_steps_data_id_from_step_id(step_id);
+  if (step_data_id==-1)
+  {
+    return loadstrajectory_tree_data;
+  }
+  loads_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[step_data_id][5]);
+
+  for (size_t i = 0; i < loads_ids.size(); i++)
+  {
+    std::vector<std::string> loadstrajectory_tree_data_set;
+    std::string name;
+    if (steps->loads_data[loads_ids[i]][1]==6)
+    { 
+      name = "Trajectory_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+    
+      loadstrajectory_tree_data_set.push_back(std::to_string(steps->loads_data[loads_ids[i]][2])); //load_id
+      loadstrajectory_tree_data_set.push_back(name); 
+      loadstrajectory_tree_data.push_back(loadstrajectory_tree_data_set);  
+    }
+  }
+  return loadstrajectory_tree_data;
 }
 
 std::vector<std::vector<std::string>> CalculiXCore::get_steps_bcsdisplacements_tree_data(int step_id)

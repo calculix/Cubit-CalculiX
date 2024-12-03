@@ -35,6 +35,8 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/LoadsGravityTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsCentrifugalTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsCentrifugalTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsDisplacementsTree.cpp
@@ -67,6 +69,8 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsGravityTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsCentrifugalTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsCentrifugalTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsTrajectoryTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsTrajectoryTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsBCsTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsBCsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsBCsDisplacementsTree.cpp
@@ -173,6 +177,12 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/LoadsCentrifugalModifyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsCentrifugalDeletePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsCentrifugalDeletePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryCreatePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryCreatePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryModifyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryModifyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryDeletePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryDeletePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsDisplacementsModifyPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsDisplacementsModifyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsTemperaturesModifyPanel.hpp

@@ -83,6 +83,9 @@ void cmdPanelManager::clear()
     my_markers.push_back("CCXLoadsCentrifugalCreate");
     my_markers.push_back("CCXLoadsCentrifugalModify");
     my_markers.push_back("CCXLoadsCentrifugalDelete");
+    my_markers.push_back("CCXLoadsTrajectoryCreate");
+    my_markers.push_back("CCXLoadsTrajectoryModify");
+    my_markers.push_back("CCXLoadsTrajectoryDelete");
     my_markers.push_back("CCXBCsDisplacementsModify");
     my_markers.push_back("CCXBCsTemperaturesModify");
     my_markers.push_back("CCXHistoryOutputsCreate");
@@ -407,6 +410,24 @@ void cmdPanelManager::initialize_from_code()
   node->setIcon(ccx_iface->getIcon("CCXLoadsCentrifugalDelete"));
 
   //##############################
+  // add LoadsTrajectory Nodes
+  root_node = model->getMarkedNode("CCXLoads");
+  node = model->addNode("Trajectory", root_node);
+  model->setNodeMarker(node, "CCXLoadsTrajectory");
+  node->setIcon(ccx_iface->getIcon("CCXLoadsTrajectory"));
+  root_node = model->getMarkedNode("CCXLoadsTrajectory");
+  node = model->addNode("Create", root_node);
+  model->setNodeMarker(node, "CCXLoadsTrajectoryCreate");
+  node->setIcon(ccx_iface->getIcon("CCXLoadsTrajectoryCreate"));
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXLoadsTrajectoryModify");
+  node->setIcon(ccx_iface->getIcon("CCXLoadsTrajectoryModify"));
+  node = model->addNode("Delete", root_node);
+  model->setNodeMarker(node, "CCXLoadsTrajectoryDelete");
+  node->setIcon(ccx_iface->getIcon("CCXLoadsTrajectoryDelete"));
+
+
+  //##############################
   // add BCs Nodes
   root_node = model->getMarkedNode("CCX");
   node = model->addNode("BCs", root_node);
@@ -646,6 +667,9 @@ void cmdPanelManager::associate_panels_with_nodes()
   my_markers.push_back("CCXLoadsCentrifugalCreate");
   my_markers.push_back("CCXLoadsCentrifugalModify");
   my_markers.push_back("CCXLoadsCentrifugalDelete");
+  my_markers.push_back("CCXLoadsTrajectoryCreate");
+  my_markers.push_back("CCXLoadsTrajectoryModify");
+  my_markers.push_back("CCXLoadsTrajectoryDelete");
   my_markers.push_back("CCXBCsDisplacementsModify");
   my_markers.push_back("CCXBCsTemperaturesModify");
   my_markers.push_back("CCXHistoryOutputsCreate");

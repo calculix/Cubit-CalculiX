@@ -50,6 +50,9 @@
 #include "LoadsCentrifugalCreatePanel.hpp"
 #include "LoadsCentrifugalModifyPanel.hpp"
 #include "LoadsCentrifugalDeletePanel.hpp"
+#include "LoadsTrajectoryCreatePanel.hpp"
+#include "LoadsTrajectoryModifyPanel.hpp"
+#include "LoadsTrajectoryDeletePanel.hpp"
 #include "BCsDisplacementsModifyPanel.hpp"
 #include "BCsTemperaturesModifyPanel.hpp"
 #include "HistoryOutputsCreatePanel.hpp"
@@ -249,6 +252,12 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
     return new LoadsCentrifugalModifyPanel();
   else if(name == "CCXLoadsCentrifugalDelete")
     return new LoadsCentrifugalDeletePanel();
+  else if(name == "CCXLoadsTrajectoryCreate")
+    return new LoadsTrajectoryCreatePanel();
+  else if(name == "CCXLoadsTrajectoryModify")
+    return new LoadsTrajectoryModifyPanel();
+  else if(name == "CCXLoadsTrajectoryDelete")
+    return new LoadsTrajectoryDeletePanel();
   else if(name == "CCXBCsDisplacementsModify")
     return new BCsDisplacementsModifyPanel();
   else if(name == "CCXBCsTemperaturesModify")

@@ -323,6 +323,7 @@ public:
   std::vector<std::vector<std::string>> get_loadsheatfluxes_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_loadsgravity_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_loadscentrifugal_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_loadstrajectory_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_bcsdisplacements_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_bcstemperatures_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_historyoutputs_tree_data(); // gets the data from core to build the tree
@@ -336,6 +337,7 @@ public:
   std::vector<std::vector<std::string>> get_steps_loadsheatfluxes_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_loadsgravity_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_loadscentrifugal_tree_data(int step_id); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_steps_loadstrajectory_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_bcsdisplacements_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_bcstemperatures_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_historyoutputs_tree_data(int step_id); // gets the data from core to build the tree
