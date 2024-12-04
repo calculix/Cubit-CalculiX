@@ -714,12 +714,46 @@ bool CoreDraw::draw_load_centrifugal(int id, double size)
 
 bool CoreDraw::draw_load_trajectory(int id, double size)
 {
-    std::vector<std::vector<double>> draw_data;
-    //draw_data = ccx_iface->get_draw_data_for_load_trajectory(id);
+    std::vector<int> node_ids;
+    node_ids = ccx_iface->loadstrajectory_get_node_ids(id);
+    std::vector<std::vector<double>> hit_coordinates;
+    hit_coordinates = ccx_iface->loadstrajectory_get_hit_coordinates(id);
+    std::vector<std::vector<int>> face_ids;
+    face_ids = ccx_iface->loadstrajectory_get_face_ids(id);
     
-    for (size_t i = 0; i < draw_data.size(); i++)
+    for (size_t i = 0; i < hit_coordinates.size(); i++)
     {
-        //draw_arrow({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, {draw_data[i][3],draw_data[i][4],draw_data[i][5]}, false, "khaki", size);
+        if (hit_coordinates[i].size()>0)
+        {
+            std::array<double,3> coord = CubitInterface::get_nodal_coordinates(node_ids[i]);
+            ccx_iface->silent_cmd("draw location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " color red");
+            ccx_iface->silent_cmd("draw line location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " location " + std::to_string(hit_coordinates[i][0]) + " " + std::to_string(hit_coordinates[i][1]) + " " + std::to_string(hit_coordinates[i][2]) +  " color red");
+        }
+    }
+    bool switch_color = true;
+    for (size_t i = 0; i < face_ids.size(); i++)
+    {
+        if (face_ids[i].size()>0)
+        {
+            std::string cmd = "draw face ";
+            if (switch_color)
+            {
+                for (size_t ii = 0; ii < face_ids[i].size(); ii++)
+                {
+                    cmd.append(std::to_string(face_ids[i][ii]) + " ");
+                }
+                cmd.append("color red add");
+                switch_color = false;
+            }else{
+                for (size_t ii = 0; ii < face_ids[i].size(); ii++)
+                {
+                    cmd.append(std::to_string(face_ids[i][ii]) + " ");
+                }
+                cmd.append("color blue add");
+                switch_color = true;
+            }
+            ccx_iface->silent_cmd(cmd);    
+        }
     }
 
     return true;

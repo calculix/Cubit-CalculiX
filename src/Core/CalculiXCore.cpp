@@ -1634,11 +1634,11 @@ std::string CalculiXCore::autocleanup()
     }
     sub_bool = false;
     if (!check_block_exists(loadscentrifugal->loads_data[i-1][4]))
-      {
-        log.append("Block ID " + std::to_string(loadscentrifugal->loads_data[i-1][4]) + " doesn't exist.\n");
-        log.append("Centrifugal ID " + std::to_string(loadscentrifugal->loads_data[i-1][0]) + " will be deleted.\n");
-        sub_bool = true;
-      }
+    {
+      log.append("Block ID " + std::to_string(loadscentrifugal->loads_data[i-1][4]) + " doesn't exist.\n");
+      log.append("Centrifugal ID " + std::to_string(loadscentrifugal->loads_data[i-1][0]) + " will be deleted.\n");
+      sub_bool = true;
+    }
     if (sub_bool)
     {
       print_log = sub_bool;
@@ -1650,17 +1650,24 @@ std::string CalculiXCore::autocleanup()
   { 
     sub_bool = false;
     if (!check_curve_exists(loadstrajectory->loads_data[i-1][2]))
-      {
-        log.append("Curve ID " + std::to_string(loadstrajectory->loads_data[i-1][2]) + " doesn't exist.\n");
-        log.append("Trajectory ID " + std::to_string(loadstrajectory->loads_data[i-1][0]) + " will be deleted.\n");
-        sub_bool = true;
-      }
+    {
+      log.append("Curve ID " + std::to_string(loadstrajectory->loads_data[i-1][2]) + " doesn't exist.\n");
+      log.append("Trajectory ID " + std::to_string(loadstrajectory->loads_data[i-1][0]) + " will be deleted.\n");
+      sub_bool = true;
+    }
     if (!check_vertex_exists(loadstrajectory->loads_data[i-1][3]))
-      {
-        log.append("Vertex ID " + std::to_string(loadstrajectory->loads_data[i-1][3]) + " doesn't exist.\n");
-        log.append("Trajectory ID " + std::to_string(loadstrajectory->loads_data[i-1][0]) + " will be deleted.\n");
-        sub_bool = true;
-      }
+    {
+      log.append("Vertex ID " + std::to_string(loadstrajectory->loads_data[i-1][3]) + " doesn't exist.\n");
+      log.append("Trajectory ID " + std::to_string(loadstrajectory->loads_data[i-1][0]) + " will be deleted.\n");
+      sub_bool = true;
+    }
+    std::vector<int> ids = CubitInterface::parse_cubit_list("vertex", std::to_string(loadstrajectory->loads_data[i-1][3]) + " in curve " + std::to_string(loadstrajectory->loads_data[i-1][2])); 
+    if (ids.size()==0)
+    {
+      log.append("Vertex ID " + std::to_string(loadstrajectory->loads_data[i-1][3]) + " doesn't exist in Curve.\n");
+      log.append("Trajectory ID " + std::to_string(loadstrajectory->loads_data[i-1][0]) + " will be deleted.\n");
+      sub_bool = true;
+    }
     if (sub_bool)
     {
       print_log = sub_bool;
@@ -3423,6 +3430,21 @@ bool CalculiXCore::modify_loadstrajectory(int trajectory_id, std::vector<std::st
 bool CalculiXCore::delete_loadstrajectory(int trajectory_id)
 {
   return loadstrajectory->delete_load(trajectory_id);
+}
+
+std::vector<int> CalculiXCore::loadstrajectory_get_node_ids(int trajectory_id)
+{
+  return loadstrajectory->get_node_ids(trajectory_id);
+}
+
+std::vector<std::vector<double>> CalculiXCore::loadstrajectory_get_hit_coordinates(int trajectory_id)
+{
+  return loadstrajectory->get_hit_coordinates(trajectory_id);
+}
+
+std::vector<std::vector<int>> CalculiXCore::loadstrajectory_get_face_ids(int trajectory_id)
+{
+  return loadstrajectory->get_face_ids(trajectory_id);
 }
 
 bool CalculiXCore::modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker)

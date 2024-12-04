@@ -110,6 +110,9 @@ public:
   bool create_loadstrajectory(std::vector<std::string> options, std::vector<int> options2); // adds a new trajectory load
   bool modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2); // modify a trajectory
   bool delete_loadstrajectory(int trajectory_id); // delete trajectory load
+  std::vector<int> loadstrajectory_get_node_ids(int trajectory_id); //returns node ids for curve
+  std::vector<std::vector<double>> loadstrajectory_get_hit_coordinates(int trajectory_id); //returns hit coordinates
+  std::vector<std::vector<int>> loadstrajectory_get_face_ids(int trajectory_id); //returns face ids for the node ids from get_node_ids
   bool modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a displacement
   bool modify_bcstemperatures(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a temperature
   bool create_historyoutput(std::vector<std::string> options); // adds a new output

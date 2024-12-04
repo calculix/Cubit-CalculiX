@@ -16,6 +16,7 @@
 #include "LoadsHeatfluxesTree.hpp"
 #include "LoadsGravityTree.hpp"
 #include "LoadsCentrifugalTree.hpp"
+#include "LoadsTrajectoryTree.hpp"
 #include "BCsTree.hpp"
 #include "BCsDisplacementsTree.hpp"
 #include "BCsTemperaturesTree.hpp"
@@ -33,6 +34,7 @@
 #include "StepsLoadsHeatfluxesTree.hpp"
 #include "StepsLoadsGravityTree.hpp"
 #include "StepsLoadsCentrifugalTree.hpp"
+#include "StepsLoadsTrajectoryTree.hpp"
 #include "StepsBCsTree.hpp"
 #include "StepsBCsDisplacementsTree.hpp"
 #include "StepsBCsTemperaturesTree.hpp"
@@ -117,6 +119,8 @@ ModelTree::~ModelTree()
 
 void ModelTree::showContextMenu(const QPoint &pos)
 {
+  //current highest contextMenuAction[0][0] = 40;
+
   QTreeWidgetItem* item = this->itemAt(pos);
   if (item)
   {   
@@ -136,6 +140,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
     LoadsHeatfluxesTree* LoadsHeatfluxesTreeItem;
     LoadsGravityTree* LoadsGravityTreeItem;
     LoadsCentrifugalTree* LoadsCentrifugalTreeItem;
+    LoadsTrajectoryTree* LoadsTrajectoryTreeItem;
     BCsTree* BCsTreeItem;
     BCsDisplacementsTree* BCsDisplacementsTreeItem;
     BCsTemperaturesTree* BCsTemperaturesTreeItem;
@@ -152,6 +157,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
     StepsLoadsHeatfluxesTree* StepsLoadsHeatfluxesTreeItem;
     StepsLoadsGravityTree* StepsLoadsGravityTreeItem;
     StepsLoadsCentrifugalTree* StepsLoadsCentrifugalTreeItem;
+    StepsLoadsTrajectoryTree* StepsLoadsTrajectoryTreeItem;
     StepsBCsTree* StepsBCsTreeItem;
     StepsBCsDisplacementsTree* StepsBCsDisplacementsTreeItem;
     StepsBCsTemperaturesTree* StepsBCsTemperaturesTreeItem;
@@ -369,6 +375,21 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenu.addAction(&action2);
 
         contextMenuAction[0][0] = 13;
+        contextMenu.exec(mapToGlobal(pos));
+      }
+    }else if (LoadsTrajectoryTreeItem = dynamic_cast<LoadsTrajectoryTree*>(item))
+    {
+      if (LoadsTrajectoryTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Trajectory",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Draw Trajectories", this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+
+        contextMenuAction[0][0] = 39;
         contextMenu.exec(mapToGlobal(pos));
       }
     }else if (BCsTreeItem = dynamic_cast<BCsTree*>(item)) 
@@ -594,6 +615,22 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenu.addAction(&action2);
 
         contextMenuAction[0][0] = 28;
+        contextMenuAction[0][2] = std::stoi(item->parent()->parent()->text(1).toStdString()); //Step id
+        contextMenu.exec(mapToGlobal(pos));
+      }
+    }else if (StepsLoadsTrajectoryTreeItem = dynamic_cast<StepsLoadsTrajectoryTree*>(item))
+    {
+      if (StepsLoadsTrajectoryTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Steps Management",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
+        contextMenu.addAction(&action1);
+        QAction action2("Draw Trajectories",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
+        contextMenu.addAction(&action2);
+
+        contextMenuAction[0][0] = 40;
         contextMenuAction[0][2] = std::stoi(item->parent()->parent()->text(1).toStdString()); //Step id
         contextMenu.exec(mapToGlobal(pos));
       }
@@ -948,6 +985,25 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenuAction[0][0] = 13;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
         contextMenu.exec(mapToGlobal(pos));
+      } else if (LoadsTrajectoryTreeItem = dynamic_cast<LoadsTrajectoryTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Trajectory",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action3("Modify Trajectory",this); //action 2 is "Draw Trajectory All"
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+        QAction action4("Delete Trajectory",this);
+        connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
+        contextMenu.addAction(&action4);
+        QAction action5("Draw Trajectory",this);
+        connect(&action5, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
+        contextMenu.addAction(&action5);
+
+        contextMenuAction[0][0] = 39;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       } else if (BCsDisplacementsTreeItem = dynamic_cast<BCsDisplacementsTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -1242,6 +1298,28 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenuAction[0][0] = 28;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
         contextMenu.exec(mapToGlobal(pos));
+      } else if (StepsLoadsTrajectoryTreeItem = dynamic_cast<StepsLoadsTrajectoryTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Trajectory",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Modify Trajectory",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+        QAction action3("Delete Trajectory",this);
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+        QAction action4("Steps Management",this);
+        connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
+        contextMenu.addAction(&action4);
+        QAction action6("Draw Trajectory",this);
+        connect(&action6, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
+        contextMenu.addAction(&action6);
+
+        contextMenuAction[0][0] = 40;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       }else if (StepsBCsTreeItem = dynamic_cast<StepsBCsTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -1405,6 +1483,7 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   LoadsHeatfluxesTree* LoadsHeatfluxesTreeItem;
   LoadsGravityTree* LoadsGravityTreeItem;
   LoadsCentrifugalTree* LoadsCentrifugalTreeItem;
+  LoadsTrajectoryTree* LoadsTrajectoryTreeItem;
   BCsDisplacementsTree* BCsDisplacementsTreeItem;
   BCsTemperaturesTree* BCsTemperaturesTreeItem;
   HistoryOutputsTree* HistoryOutputsTreeItem;
@@ -1420,6 +1499,7 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   StepsLoadsHeatfluxesTree* StepsLoadsHeatfluxesTreeItem;
   StepsLoadsGravityTree* StepsLoadsGravityTreeItem;
   StepsLoadsCentrifugalTree* StepsLoadsCentrifugalTreeItem;
+  StepsLoadsTrajectoryTree* StepsLoadsTrajectoryTreeItem;
   StepsBCsTree* StepsBCsTreeItem;
   StepsBCsDisplacementsTree* StepsBCsDisplacementsTreeItem;
   StepsBCsTemperaturesTree* StepsBCsTemperaturesTreeItem;
@@ -1518,6 +1598,12 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     if (LoadsCentrifugalTreeItem->text(1).toStdString()=="")
     {
       this->setWidgetInCmdPanelMarker("CCXLoadsCentrifugalCreate");
+    }
+  }else if (LoadsTrajectoryTreeItem = dynamic_cast<LoadsTrajectoryTree*>(item))
+  {
+    if (LoadsTrajectoryTreeItem->text(1).toStdString()=="")
+    {
+      this->setWidgetInCmdPanelMarker("CCXLoadsTrajectoryCreate");
     }
   }else if (BCsDisplacementsTreeItem = dynamic_cast<BCsDisplacementsTree*>(item))
   {
@@ -1642,6 +1728,17 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
       myStepsManagement->close();
       myStepsManagement->show();
     }
+  }else if (StepsLoadsTrajectoryTreeItem = dynamic_cast<StepsLoadsTrajectoryTree*>(item))
+  {
+    if (StepsLoadsTrajectoryTreeItem->text(1).toStdString()=="")
+    {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
+      myStepsManagement->show();
+    }
   }else if (StepsBCsTreeItem = dynamic_cast<StepsBCsTree*>(item))
   {
     if (StepsBCsTreeItem->text(1).toStdString()=="")
@@ -1757,6 +1854,9 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     } else if (LoadsCentrifugalTreeItem = dynamic_cast<LoadsCentrifugalTree*>(item->parent()))
     {
       this->setWidgetInCmdPanelMarker("CCXLoadsCentrifugalModify");
+    } else if (LoadsTrajectoryTreeItem = dynamic_cast<LoadsTrajectoryTree*>(item->parent()))
+    {
+      this->setWidgetInCmdPanelMarker("CCXLoadsTrajectoryModify");
     } else if (BCsDisplacementsTreeItem = dynamic_cast<BCsDisplacementsTree*>(item->parent()))
     {
       this->setWidgetInCmdPanelMarker("FEADisplacementModify");
@@ -1828,6 +1928,14 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
       myStepsManagement->close();
       myStepsManagement->show();
     } else if (StepsLoadsCentrifugalTreeItem = dynamic_cast<StepsLoadsCentrifugalTree*>(item->parent()))
+    {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
+      myStepsManagement->show();
+    } else if (StepsLoadsTrajectoryTreeItem = dynamic_cast<StepsLoadsTrajectoryTree*>(item->parent()))
     {
       if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
       {
@@ -2143,6 +2251,28 @@ void ModelTree::execContextMenuAction(){
         //CubitInterface::cmd(command.c_str());
         ccx_iface->cmd(command);
       }
+    }else if (contextMenuAction[0][0]==39) //LoadsTrajectoryTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsTrajectoryCreate");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        std::string command = "ccx draw load_trajectory_all";
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsTrajectoryModify");
+      }else if (contextMenuAction[0][1]==3) //Action4
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsTrajectoryDelete");
+      }else if (contextMenuAction[0][1]==4) //Action5
+      {
+        std::string command = "ccx draw load trajectory " + std::to_string(contextMenuAction[0][2]);
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
+      }
     }else if (contextMenuAction[0][0]==38) //BCsTree
     {
       if(contextMenuAction[0][1]==0)
@@ -2448,6 +2578,31 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==5) //Action6
       {
         std::string command = "ccx draw load centrifugal " + std::to_string(contextMenuAction[0][2]);
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
+      }   
+    }else if (contextMenuAction[0][0]==40) //StepsLoadsTrajectoryTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsTrajectoryCreate");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsTrajectoryModify");
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsTrajectoryDelete");
+      }else if (contextMenuAction[0][1]==3) //Action4
+      {
+        myStepsManagement->show();
+      }else if (contextMenuAction[0][1]==4) //Action5
+      {
+        std::string command = "ccx draw step " + std::to_string(contextMenuAction[0][2]) + " load_trajectory_all";
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
+      }else if (contextMenuAction[0][1]==5) //Action6
+      {
+        std::string command = "ccx draw load trajectory " + std::to_string(contextMenuAction[0][2]);
         //CubitInterface::cmd(command.c_str());
         ccx_iface->cmd(command);
       }   

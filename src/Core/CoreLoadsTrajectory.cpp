@@ -1,6 +1,8 @@
 #include "CoreLoadsTrajectory.hpp"
 #include "CubitInterface.hpp"
 #include "CalculiXCoreInterface.hpp"
+#include "CubitMessage.hpp"
+#include<cmath>
 
 CoreLoadsTrajectory::CoreLoadsTrajectory()
 {}
@@ -32,6 +34,7 @@ bool CoreLoadsTrajectory::reset()
   time_data.clear();
   direction_data.clear();
   magnitude_data.clear();
+  radius_data.clear();
   init();
   return true;
 }
@@ -54,6 +57,7 @@ bool CoreLoadsTrajectory::create_load(std::vector<std::string> options, std::vec
   int direction_id;
   int magnitude_id;
   int time_id;
+  int radius_id;
 
   if (loads_data.size()==0)
   {
@@ -119,14 +123,27 @@ bool CoreLoadsTrajectory::create_load(std::vector<std::string> options, std::vec
   }
   time_id = sub_id;
   this->add_time(std::to_string(sub_id), options[7], options[8]);
+  
+  // radius
+  if (radius_data.size()==0)
+  {
+    sub_id = 1;
+  }
+  else
+  {
+    sub_last = int(radius_data.size()) - 1;
+    sub_id = std::stoi(radius_data[sub_last][0]) + 1;
+  }
+  radius_id = sub_id;
+  this->add_radius(std::to_string(sub_id), options[9]);
 
-  this->add_load(load_id, op_mode, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id);
+  this->add_load(load_id, op_mode, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id, radius_id);
   return true;
 }
 
-bool CoreLoadsTrajectory::add_load(int load_id, int op_mode, int curve_id, int vertex_id, int fire_ray_surface_id, int direction_id, int magnitude_id, int time_id)
+bool CoreLoadsTrajectory::add_load(int load_id, int op_mode, int curve_id, int vertex_id, int fire_ray_surface_id, int direction_id, int magnitude_id, int time_id, int radius_id)
 {
-  std::vector<int> v = {load_id, op_mode, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id};
+  std::vector<int> v = {load_id, op_mode, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id, radius_id};
       
   loads_data.push_back(v);
 
@@ -221,6 +238,12 @@ bool CoreLoadsTrajectory::modify_load(int load_id, std::vector<std::string> opti
       sub_data_id = get_time_data_id_from_time_id(loads_data[loads_data_id][7]);
       time_data[sub_data_id][1] = options[9];
     }
+    // radius
+    if (options_marker[10]==1)
+    {
+      sub_data_id = get_radius_data_id_from_radius_id(loads_data[loads_data_id][8]);
+      time_data[sub_data_id][1] = options[10];
+    }
     return true;
   }
 }
@@ -238,6 +261,11 @@ bool CoreLoadsTrajectory::delete_load(int load_id)
     sub_data_id = get_time_data_id_from_time_id(loads_data[loads_data_id][7]);
     if (sub_data_id != -1){
       time_data.erase(time_data.begin() + sub_data_id);
+    }
+    // radius
+    sub_data_id = get_radius_data_id_from_radius_id(loads_data[loads_data_id][8]);
+    if (sub_data_id != -1){
+      radius_data.erase(radius_data.begin() + sub_data_id);
     }
     // direction
     sub_data_id = get_direction_data_id_from_direction_id(loads_data[loads_data_id][5]);
@@ -265,6 +293,15 @@ bool CoreLoadsTrajectory::add_time(std::string time_id, std::string t_begin, std
   std::vector<std::string> v = {time_id, t_begin, t_end};
       
   time_data.push_back(v);
+
+  return true;
+}
+
+bool CoreLoadsTrajectory::add_radius(std::string radius_id, std::string radius)
+{
+  std::vector<std::string> v = {radius_id, radius};
+      
+  radius_data.push_back(v);
 
   return true;
 }
@@ -322,6 +359,19 @@ int CoreLoadsTrajectory::get_time_data_id_from_time_id(int time_id)
   return return_int;
 }
 
+int CoreLoadsTrajectory::get_radius_data_id_from_radius_id(int radius_id)
+{ 
+  int return_int = -1;
+  for (size_t i = 0; i < radius_data.size(); i++)
+  {
+    if (radius_data[i][0]==std::to_string(radius_id))
+    {
+      return_int = int(i);
+    }  
+  }
+  return return_int;
+}
+
 int CoreLoadsTrajectory::get_direction_data_id_from_direction_id(int direction_id)
 { 
   int return_int = -1;
@@ -359,6 +409,133 @@ std::vector<int> CoreLoadsTrajectory::get_fire_ray_surface_data_ids_from_fire_ra
     }  
   }
   return return_int;
+}
+
+std::vector<int> CoreLoadsTrajectory::get_fire_ray_surface_ids_from_fire_ray_surface_id(int fire_surface_id)
+{ 
+  std::vector<int> return_int;
+  for (size_t i = 0; i < fire_ray_surface_data.size(); i++)
+  {
+    if (fire_ray_surface_data[i][0]==fire_surface_id)
+    {
+        return_int.push_back(int(fire_ray_surface_data[i][1]));
+    }  
+  }
+  return return_int;
+}
+
+std::vector<int> CoreLoadsTrajectory::get_node_ids(int load_id)
+{
+  std::vector<int> node_ids;
+  int load_data_id = this->get_loads_data_id_from_load_id(load_id);
+
+  if (load_data_id!=-1)
+  {
+    node_ids = CubitInterface::parse_cubit_list("node","in curve " + std::to_string(loads_data[load_data_id][2]));
+  }
+
+  return node_ids;
+}
+
+std::vector<std::vector<double>> CoreLoadsTrajectory::get_hit_coordinates(int load_id)
+{
+  std::vector<std::vector<double>> hit_coordinates;
+  
+  int load_data_id = this->get_loads_data_id_from_load_id(load_id);
+
+  if (load_data_id!=-1)
+  {
+    std::vector<int> node_ids = this->get_node_ids(load_id);
+    std::vector<int> surface_ids = this->get_fire_ray_surface_ids_from_fire_ray_surface_id(loads_data[load_data_id][4]);
+    
+    int direction_data_id = this->get_direction_data_id_from_direction_id(loads_data[load_data_id][5]);
+    int radius_data_id = this->get_radius_data_id_from_radius_id(loads_data[load_data_id][8]);
+    double radius = 0;
+    std::array<double, 3> direction;
+
+    direction[0] = ccx_iface->string_scientific_to_double(direction_data[direction_data_id][1]);
+    direction[1] = ccx_iface->string_scientific_to_double(direction_data[direction_data_id][2]);
+    direction[2] = ccx_iface->string_scientific_to_double(direction_data[direction_data_id][3]); 
+
+    for (size_t i = 0; i < node_ids.size(); i++)
+    {
+      std::vector<double> hit_coord;
+      std::array<double,3> coord = CubitInterface::get_nodal_coordinates(node_ids[i]);
+      std::pair<std::vector<std::array<double, 3>>, std::vector<int>> hit = CubitInterface::fire_ray(coord, direction, "surface", surface_ids, 1, radius);
+
+      if (hit.first.size()>0)
+      {
+        hit_coord.push_back(hit.first[0][0]);
+        hit_coord.push_back(hit.first[0][1]);
+        hit_coord.push_back(hit.first[0][2]);
+      }
+      hit_coordinates.push_back(hit_coord);
+    }
+  }
+
+  return hit_coordinates;
+}
+
+std::vector<std::vector<int>> CoreLoadsTrajectory::get_face_ids(int load_id)
+{
+  std::vector<std::vector<int>> selected_face_ids;
+  
+  int load_data_id = this->get_loads_data_id_from_load_id(load_id);
+
+  if (load_data_id!=-1)
+  {
+    std::vector<int> node_ids = this->get_node_ids(load_id);
+    std::vector<int> surface_ids = this->get_fire_ray_surface_ids_from_fire_ray_surface_id(loads_data[load_data_id][4]);
+    std::vector<int> face_ids;
+    for (size_t i = 0; i < surface_ids.size(); i++)
+    {
+      std::vector<int> tmp_face_ids = CubitInterface::parse_cubit_list("face","in surface " + std::to_string(surface_ids[i]));
+      for (size_t ii = 0; ii < tmp_face_ids.size(); ii++)
+      {
+        face_ids.push_back(tmp_face_ids[ii]);
+      }
+    }
+    
+    int direction_data_id = this->get_direction_data_id_from_direction_id(loads_data[load_data_id][5]);
+    int radius_data_id = this->get_radius_data_id_from_radius_id(loads_data[load_data_id][8]);
+    double radius = 0;
+    std::array<double, 3> direction;
+
+    direction[0] = ccx_iface->string_scientific_to_double(direction_data[direction_data_id][1]);
+    direction[1] = ccx_iface->string_scientific_to_double(direction_data[direction_data_id][2]);
+    direction[2] = ccx_iface->string_scientific_to_double(direction_data[direction_data_id][3]); 
+
+    for (size_t i = 0; i < node_ids.size(); i++)
+    {
+      std::vector<int> tmp_selected_face_ids;
+      std::array<double,3> coord = CubitInterface::get_nodal_coordinates(node_ids[i]);
+      std::pair<std::vector<std::array<double, 3>>, std::vector<int>> hit = CubitInterface::fire_ray(coord, direction, "surface", surface_ids, 1, radius);
+
+      if (radius_data[radius_data_id][1]!="")
+      {
+        radius = ccx_iface->string_scientific_to_double(radius_data[radius_data_id][1]);
+      }
+      
+      if (hit.first.size()>0)
+      {
+        for (size_t ii = 0; ii < face_ids.size(); ii++)
+        {
+          std::array<double,3> center_point;
+          center_point = CubitInterface::get_center_point("face", face_ids[ii]);
+
+          double distance = sqrt(pow(center_point[0]-hit.first[0][0],2)+pow(center_point[1]-hit.first[0][1],2)+pow(center_point[2]-hit.first[0][2],2));
+
+          if (distance <= radius)
+          {
+            tmp_selected_face_ids.push_back(face_ids[ii]);
+          }
+        }
+      }
+      selected_face_ids.push_back(tmp_selected_face_ids);
+    }
+  }
+
+  return selected_face_ids;
 }
 
 std::string CoreLoadsTrajectory::get_load_export(int load_id)

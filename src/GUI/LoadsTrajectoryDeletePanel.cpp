@@ -21,7 +21,7 @@ LoadsTrajectoryDeletePanel::LoadsTrajectoryDeletePanel(QWidget *parent) :
   HBoxLayout_1 = new QHBoxLayout();
   label_1 = new QLabel();
   label_1->setFixedWidth(labelWidth);
-  label_1->setText("Centrifugal ID");
+  label_1->setText("Trajectory ID");
   lineEdit_1 = new QLineEdit();
   //lineEdit_1->setPlaceholderText("Optional");
   pushButton_apply = new QPushButton();
@@ -56,7 +56,7 @@ void LoadsTrajectoryDeletePanel::on_pushButton_apply_clicked(bool)
 
   if ((lineEdit_1->text()!=""))
   {
-    command.append("ccx delete centrifugal " + lineEdit_1->text());
+    command.append("ccx delete trajectory " + lineEdit_1->text());
   }
   
   if (command != "")

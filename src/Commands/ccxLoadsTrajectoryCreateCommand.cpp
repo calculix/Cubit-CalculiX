@@ -24,6 +24,7 @@ std::vector<std::string> ccxLoadsTrajectoryCreateCommand::get_syntax()
   syntax.append("magnitude <value:label='magnitude_value',help='<magnitude_value>'> ");
   syntax.append("time_begin <value:label='time_begin_value',help='<time_begin_value>'> ");
   syntax.append("time_end <value:label='time_end_value',help='<time_end_value>'> ");
+  syntax.append("[radius <value:label='radius_value',help='<radius_value>'>] ");
   syntax.append("[op {mod | new}] " );
   
   syntax_list.push_back(syntax);
@@ -45,6 +46,7 @@ std::vector<std::string> ccxLoadsTrajectoryCreateCommand::get_syntax_help()
   help[0].append("magnitude <magnitude_value> ");
   help[0].append("time_begin <time_begin_value> ");
   help[0].append("time_end <time_end_value> ");
+  help[0].append("[radius <radius_value>] ");
   help[0].append("[op {mod | new}] " );
 
   return help;
@@ -81,6 +83,9 @@ bool ccxLoadsTrajectoryCreateCommand::execute(CubitCommandData &data)
   std::string z;
   double magnitude_value;
   std::string magnitude;
+  std::string radius;
+  double radius_value;
+  
   
   data.get_value("curve_id", curve_id_value);
   curve_id = std::to_string(curve_id_value);
@@ -109,6 +114,13 @@ bool ccxLoadsTrajectoryCreateCommand::execute(CubitCommandData &data)
     }
   }
 
+  if (!data.get_value("radius_value", radius_value))
+  {
+    radius = "";
+  }else{
+    radius = ccx_iface.to_string_scientific(radius_value);
+  }
+
   options.push_back(std::to_string(op_mode));
   options.push_back(curve_id);
   options.push_back(vertex_id);
@@ -118,6 +130,7 @@ bool ccxLoadsTrajectoryCreateCommand::execute(CubitCommandData &data)
   options.push_back(magnitude);
   options.push_back(time_begin);
   options.push_back(time_end);
+  options.push_back(radius);
 
   options2 = surface_id_values;
   

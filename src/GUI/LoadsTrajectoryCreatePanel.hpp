@@ -16,6 +16,7 @@
 #include <QLineEdit>
 
 class CalculiXCoreInterface;
+class PickWidget;
 
 class LoadsTrajectoryCreatePanel : public QWidget
 {
@@ -47,6 +48,8 @@ private:
   QHBoxLayout* HBoxLayout_5;
   QHBoxLayout* HBoxLayout_6;
   QHBoxLayout* HBoxLayout_7;
+  QHBoxLayout* HBoxLayout_8;
+  QHBoxLayout* HBoxLayout_9;
   QLabel* label_1;
   QLabel* label_2;
   QLabel* label_3;
@@ -54,13 +57,17 @@ private:
   QLabel* label_5;
   QLabel* label_6;
   QLabel* label_7;
-  QLineEdit* lineEdit_1;
-  QLineEdit* lineEdit_2;
-  QLineEdit* lineEdit_3;
+  QLabel* label_8;
+  QLabel* label_9;
+  PickWidget* PickWidget_1;
+  PickWidget* PickWidget_2;
+  PickWidget* PickWidget_3;
   QLineEdit* lineEdit_4;
-  QComboBox* comboBox_5;
+  QLineEdit* lineEdit_5;
   QLineEdit* lineEdit_6;
   QLineEdit* lineEdit_7;
+  QLineEdit* lineEdit_8;
+  QComboBox* comboBox_9;
 };
 
 #endif // LOADSTRAJECTORYCREATEPANEL_HPP

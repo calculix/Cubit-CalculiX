@@ -470,6 +470,21 @@ bool CalculiXCoreInterface::delete_loadstrajectory(int trajectory_id)
   return ccx_core.delete_loadstrajectory(trajectory_id);
 }
 
+std::vector<int> CalculiXCoreInterface::loadstrajectory_get_node_ids(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_get_node_ids(trajectory_id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_get_hit_coordinates(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_get_hit_coordinates(trajectory_id);
+}
+  
+std::vector<std::vector<int>> CalculiXCoreInterface::loadstrajectory_get_face_ids(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_get_face_ids(trajectory_id);
+}
+
 bool CalculiXCoreInterface::modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
   return ccx_core.modify_bcsdisplacements(displacement_id,options,options_marker);

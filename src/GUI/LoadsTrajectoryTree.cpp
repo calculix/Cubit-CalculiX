@@ -24,7 +24,7 @@ void LoadsTrajectoryTree::initialize()
 void LoadsTrajectoryTree::update()
 {
   std::vector<std::vector<std::string>> loads_tree_data;
-  loads_tree_data = ccx_iface->get_loadscentrifugal_tree_data(); 
+  loads_tree_data = ccx_iface->get_loadstrajectory_tree_data(); 
 
   QTreeWidgetItem *temp_child;
   int ChildId;

@@ -4,6 +4,7 @@
 #include "CubitInterface.hpp"
 #include "Broker.hpp"
 #include "Claro.hpp"
+#include "PickWidget.hpp"
 
 
 LoadsTrajectoryCreatePanel::LoadsTrajectoryCreatePanel(QWidget *parent) :
@@ -25,6 +26,8 @@ LoadsTrajectoryCreatePanel::LoadsTrajectoryCreatePanel(QWidget *parent) :
   HBoxLayout_5 = new QHBoxLayout();
   HBoxLayout_6 = new QHBoxLayout();
   HBoxLayout_7 = new QHBoxLayout();
+  HBoxLayout_8 = new QHBoxLayout();
+  HBoxLayout_9 = new QHBoxLayout();
   label_1 = new QLabel();
   label_2 = new QLabel();
   label_3 = new QLabel();
@@ -32,6 +35,8 @@ LoadsTrajectoryCreatePanel::LoadsTrajectoryCreatePanel(QWidget *parent) :
   label_5 = new QLabel();
   label_6 = new QLabel();
   label_7 = new QLabel();
+  label_8 = new QLabel();
+  label_9 = new QLabel();
   label_1->setFixedWidth(labelWidth);
   label_2->setFixedWidth(labelWidth);
   label_3->setFixedWidth(labelWidth);
@@ -39,29 +44,40 @@ LoadsTrajectoryCreatePanel::LoadsTrajectoryCreatePanel(QWidget *parent) :
   label_5->setFixedWidth(labelWidth);
   label_6->setFixedWidth(labelWidth);
   label_7->setFixedWidth(labelWidth);
-  label_1->setText("Magnitude");
-  label_2->setText("Block ID");
-  label_3->setText("Coordinate");
+  label_8->setFixedWidth(labelWidth);
+  label_9->setFixedWidth(labelWidth);
+  label_1->setText("Curve");
+  label_2->setText("Vertex ID");
+  label_3->setText("Surface IDs");
   label_4->setText("Direction");
-  label_5->setText("OP");
-  label_6->setText("Amplitude ID");
-  label_7->setText("Time Delay");
-  lineEdit_1 = new QLineEdit();
-  lineEdit_2 = new QLineEdit();
-  lineEdit_3 = new QLineEdit();
+  label_5->setText("Magnitude");
+  label_6->setText("Time Begin");
+  label_7->setText("Time End");
+  label_8->setText("Radius");
+  label_9->setText("OP");
+  PickWidget_1 = new PickWidget();
+  PickWidget_1->setPickType(PickWidget::Curve);
+  PickWidget_1->activate();
+  PickWidget_2 = new PickWidget();
+  PickWidget_2->setPickType(PickWidget::Vertex);
+  PickWidget_2->activate();
+  PickWidget_3 = new PickWidget();
+  PickWidget_3->setPickType(PickWidget::Surface);
+  PickWidget_3->activate();
   lineEdit_4 = new QLineEdit();
-  comboBox_5 = new QComboBox();
-  comboBox_5->addItem("");
-  comboBox_5->addItem("mod");
-  comboBox_5->addItem("new");
+  lineEdit_5 = new QLineEdit();
   lineEdit_6 = new QLineEdit();
   lineEdit_7 = new QLineEdit();
-
-  lineEdit_3->setPlaceholderText("<x> <y> <z>");
+  lineEdit_8 = new QLineEdit();
+  comboBox_9 = new QComboBox();
+  comboBox_9->addItem("");
+  comboBox_9->addItem("mod");
+  comboBox_9->addItem("new");
+  
   lineEdit_4->setPlaceholderText("<x> <y> <z>");
-  lineEdit_6->setPlaceholderText("Optional");
-  lineEdit_7->setPlaceholderText("Optional");
-
+  lineEdit_5->setPlaceholderText("Heatflux Magnitude");
+  lineEdit_8->setPlaceholderText("Optional Search Radius");
+  
   pushButton_apply = new QPushButton();
   pushButton_apply->setText("Apply");
   HBoxLayout_pushButton_apply = new QHBoxLayout();
@@ -76,23 +92,29 @@ LoadsTrajectoryCreatePanel::LoadsTrajectoryCreatePanel(QWidget *parent) :
   VBoxLayout->addLayout(HBoxLayout_5);
   VBoxLayout->addLayout(HBoxLayout_6);
   VBoxLayout->addLayout(HBoxLayout_7);
+  VBoxLayout->addLayout(HBoxLayout_8);
+  VBoxLayout->addLayout(HBoxLayout_9);
   VBoxLayout->addItem(vertical_spacer);
   VBoxLayout->addLayout(HBoxLayout_pushButton_apply);
 
   HBoxLayout_1->addWidget(label_1);
-  HBoxLayout_1->addWidget(lineEdit_1);
+  HBoxLayout_1->addWidget(PickWidget_1);
   HBoxLayout_2->addWidget(label_2);
-  HBoxLayout_2->addWidget(lineEdit_2);
+  HBoxLayout_2->addWidget(PickWidget_2);
   HBoxLayout_3->addWidget(label_3);
-  HBoxLayout_3->addWidget(lineEdit_3);
+  HBoxLayout_3->addWidget(PickWidget_3);
   HBoxLayout_4->addWidget(label_4);
   HBoxLayout_4->addWidget(lineEdit_4);
   HBoxLayout_5->addWidget(label_5);
-  HBoxLayout_5->addWidget(comboBox_5);
+  HBoxLayout_5->addWidget(lineEdit_5);
   HBoxLayout_6->addWidget(label_6);
   HBoxLayout_6->addWidget(lineEdit_6);
   HBoxLayout_7->addWidget(label_7);
   HBoxLayout_7->addWidget(lineEdit_7);
+  HBoxLayout_8->addWidget(label_8);
+  HBoxLayout_8->addWidget(lineEdit_8);
+  HBoxLayout_9->addWidget(label_9);
+  HBoxLayout_9->addWidget(comboBox_9);
 
   HBoxLayout_pushButton_apply->addItem(horizontal_spacer_pushButton_apply);
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
@@ -110,34 +132,46 @@ void LoadsTrajectoryCreatePanel::on_pushButton_apply_clicked(bool)
   QStringList commands;
   QString command = "";
 
-  if ((lineEdit_1->text()!="") && (lineEdit_2->text()!="") && (lineEdit_3->text()!=""))
+  if ((PickWidget_1->text()!="") && (PickWidget_2->text()!="") && (PickWidget_3->text()!="") && (lineEdit_4->text()!="") && (lineEdit_5->text()!="") && (lineEdit_6->text()!="") && (lineEdit_7->text()!=""))
   {
-    command.append("ccx create centrifugal " + lineEdit_1->text() + " block " + lineEdit_2->text() + " coordinate " + lineEdit_3->text() + " direction " + lineEdit_4->text());
+    command.append("ccx create trajectory curve " + PickWidget_1->text() + " vertex " + PickWidget_2->text()); 
+
+    std::string pickwidget_text = PickWidget_3->text().toUtf8().data();
+    std::vector<int> surface_ids = CubitInterface::parse_cubit_list("surface", pickwidget_text);
+    command.append(" surface");
+    for (size_t i = 0; i < surface_ids.size(); i++)
+    {
+      command.append(" " + QString::number(surface_ids[i]));
+    }
     
-    if (comboBox_5->currentIndex()!=0)
+    command.append(" direction " + lineEdit_4->text());
+    command.append(" magnitude " +lineEdit_5->text());
+    command.append(" time_begin " +lineEdit_6->text());
+    command.append(" time_end " +lineEdit_7->text());
+    
+    if (lineEdit_8->text()!="")
     {
-      command.append(" op " + comboBox_5->currentText());
+      command.append(" radius " + lineEdit_7->text());
     }
-    if (lineEdit_6->text()!="")
+
+    if (comboBox_9->currentIndex()!=0)
     {
-      command.append(" amplitude " +lineEdit_6->text());
-    }
-    if (lineEdit_7->text()!="")
-    {
-      command.append(" timedelay " +lineEdit_7->text());
+      command.append(" op " + comboBox_9->currentText());
     }
   }
   
   if (command != "")
   {
     commands.push_back(command);
-    lineEdit_1->setText("");
-    lineEdit_2->setText("");
-    lineEdit_3->setText("");
+    PickWidget_1->setText("");
+    PickWidget_2->setText("");
+    PickWidget_3->setText("");
     lineEdit_4->setText("");
-    comboBox_5->setCurrentIndex(0);
-    lineEdit_6->setText("");
+    lineEdit_5->setText("");
+    lineEdit_6->setText("");    
     lineEdit_7->setText("");
+    lineEdit_8->setText("");
+    comboBox_9->setCurrentIndex(0);
   }
   
   for (size_t i = 0; i < commands.size(); i++)
