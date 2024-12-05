@@ -7464,6 +7464,17 @@ std::vector<std::vector<double>> CalculiXCore::get_materiallibrary_material_valu
   return mat_library->get_materiallibrary_material_values(name, group, property);
 }
 
+bool CalculiXCore::set_hdf5Tool_gui(bool status)
+{
+  return mat_library->set_hdf5Tool_gui(status);
+}
+
+std::vector<std::vector<double>> CalculiXCore::get_materiallibrary_material_values_gui(std::string name, std::string group, std::string property)
+{
+  return mat_library->get_materiallibrary_material_values_gui(name, group, property);
+}
+
+
 std::vector<std::vector<std::string>> CalculiXCore::get_sections_tree_data()
 { 
   std::vector<std::vector<std::string>> sections_tree_data;

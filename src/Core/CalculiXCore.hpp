@@ -315,6 +315,8 @@ public:
   std::vector<std::vector<std::string>> get_materiallibrary_tree_data(); // gets the data from materiallibrary to build the tree in the material management
   std::vector<std::vector<std::string>> get_materiallibrary_material_properties(std::string name, std::string group); // gets the material properties from materiallibrary for the material management
   std::vector<std::vector<double>> get_materiallibrary_material_values(std::string name, std::string group, std::string property); // gets the material values for a property from materiallibrary for the material management
+  bool set_hdf5Tool_gui(bool status); // opens or closes the hdf5Tool_gui
+  std::vector<std::vector<double>> get_materiallibrary_material_values_gui(std::string name, std::string groupname, std::string property); // returns a list of the material properties and its type, scalar or matrix
   std::vector<std::vector<std::string>> get_sections_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_constraints_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_surfaceinteractions_tree_data(); // gets the data from core to build the tree

@@ -259,12 +259,13 @@ void MaterialManagementItem::update_library()
 {
   std::vector<std::vector<double>> tmp_values;
 
+  ccx_iface->set_hdf5Tool_gui(true);
   for (size_t i = 0; i < properties.size(); i++)
   {
     if (properties[i][1]==1)
     {
       double tmp_scalar=0;
-      tmp_values = ccx_iface->get_materiallibrary_material_values(this->library_name, this->library_group, group_properties[properties[i][0]][0]);
+      tmp_values = ccx_iface->get_materiallibrary_material_values_gui(this->library_name, this->library_group, group_properties[properties[i][0]][0]);
       if (tmp_values.size()>0)
       {
         tmp_scalar = tmp_values[0][0]; 
@@ -273,7 +274,7 @@ void MaterialManagementItem::update_library()
     }else if (properties[i][1]==2)
     {
       std::vector<double> tmp_vector;
-      tmp_values = ccx_iface->get_materiallibrary_material_values(this->library_name, this->library_group, group_properties[properties[i][0]][0]);
+      tmp_values = ccx_iface->get_materiallibrary_material_values_gui(this->library_name, this->library_group, group_properties[properties[i][0]][0]);
       if (tmp_values.size()>0)
       {
         tmp_vector = tmp_values[0]; 
@@ -282,10 +283,11 @@ void MaterialManagementItem::update_library()
     }
     else if (properties[i][1]==4)
     {
-      tmp_values = ccx_iface->get_materiallibrary_material_values(this->library_name, this->library_group, group_properties[properties[i][0]][0]);
+      tmp_values = ccx_iface->get_materiallibrary_material_values_gui(this->library_name, this->library_group, group_properties[properties[i][0]][0]);
       property_matrix[properties[i][2]] = tmp_values;
     }
   }
+  ccx_iface->set_hdf5Tool_gui(false);
 
   property_scalar_gui = property_scalar;
   //property_vector_gui = property_vector;

@@ -1200,6 +1200,16 @@ std::vector<std::vector<double>> CalculiXCoreInterface::get_materiallibrary_mate
   return ccx_core.get_materiallibrary_material_values(name, group, property);
 }
 
+bool CalculiXCoreInterface::set_hdf5Tool_gui(bool status)
+{
+  return ccx_core.set_hdf5Tool_gui(status);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::get_materiallibrary_material_values_gui(std::string name, std::string group, std::string property)
+{
+  return ccx_core.get_materiallibrary_material_values_gui(name, group, property);
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_sections_tree_data()
 { 
   return ccx_core.get_sections_tree_data();
