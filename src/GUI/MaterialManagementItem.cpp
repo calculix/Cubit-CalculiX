@@ -199,11 +199,14 @@ void MaterialManagementItem::initialize_library(std::vector<std::string> tree_da
 
 void MaterialManagementItem::update()
 {
-  if (isCubit)
+  if (isInitialized)
   {
-    this->update_cubit();
-  }else{
-    this->update_library();
+    if (isCubit)
+    {
+      this->update_cubit();
+    }else{
+      this->update_library();
+    }
   }
 }
 
@@ -259,35 +262,38 @@ void MaterialManagementItem::update_library()
 {
   std::vector<std::vector<double>> tmp_values;
 
-  ccx_iface->set_hdf5Tool_gui(true);
-  for (size_t i = 0; i < properties.size(); i++)
+  //if (ccx_iface->set_hdf5Tool_gui(true))
   {
-    if (properties[i][1]==1)
+    for (size_t i = 0; i < properties.size(); i++)
     {
-      double tmp_scalar=0;
-      tmp_values = ccx_iface->get_materiallibrary_material_values_gui(this->library_name, this->library_group, group_properties[properties[i][0]][0]);
-      if (tmp_values.size()>0)
+      if (properties[i][1]==1)
       {
-        tmp_scalar = tmp_values[0][0]; 
-      }
-      property_scalar[properties[i][2]] = tmp_scalar;
-    }else if (properties[i][1]==2)
-    {
-      std::vector<double> tmp_vector;
-      tmp_values = ccx_iface->get_materiallibrary_material_values_gui(this->library_name, this->library_group, group_properties[properties[i][0]][0]);
-      if (tmp_values.size()>0)
+        double tmp_scalar=0;
+        tmp_values = ccx_iface->get_materiallibrary_material_values(this->library_name, this->library_group, group_properties[properties[i][0]][0]);
+        if (tmp_values.size()>0)
+        {
+          tmp_scalar = tmp_values[0][0]; 
+        }
+        property_scalar[properties[i][2]] = tmp_scalar;
+      }else if (properties[i][1]==2)
       {
-        tmp_vector = tmp_values[0]; 
+        std::vector<double> tmp_vector;
+        tmp_values = ccx_iface->get_materiallibrary_material_values(this->library_name, this->library_group, group_properties[properties[i][0]][0]);
+        if (tmp_values.size()>0)
+        {
+          tmp_vector = tmp_values[0]; 
+        }
+        property_vector[properties[i][2]] = tmp_vector;
       }
-      property_vector[properties[i][2]] = tmp_vector;
-    }
-    else if (properties[i][1]==4)
-    {
-      tmp_values = ccx_iface->get_materiallibrary_material_values_gui(this->library_name, this->library_group, group_properties[properties[i][0]][0]);
-      property_matrix[properties[i][2]] = tmp_values;
+      else if (properties[i][1]==4)
+      {
+        tmp_values = ccx_iface->get_materiallibrary_material_values(this->library_name, this->library_group, group_properties[properties[i][0]][0]);
+        property_matrix[properties[i][2]] = tmp_values;
+      }
     }
   }
-  ccx_iface->set_hdf5Tool_gui(false);
+  
+  //ccx_iface->set_hdf5Tool_gui(false);
 
   property_scalar_gui = property_scalar;
   //property_vector_gui = property_vector;

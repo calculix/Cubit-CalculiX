@@ -24,7 +24,8 @@ bool CoreMaterialsLibrary::init()
 
     is_initialized = true;
     this->load_library();
-    this->hdf5Tool_gui=nullptr;
+    this->hdf5Tool_gui = nullptr;
+
     return true;
   }
 }
@@ -154,8 +155,7 @@ bool CoreMaterialsLibrary::delete_group(std::string groupname)
     log = "Cna't delete group " + groupname + " from the Material Library.\n";
     PRINT_INFO("%s", log.c_str());
     return false;
-  }  
-  
+  } 
   return true;
 }  
 
@@ -700,15 +700,20 @@ std::vector<std::vector<double>> CoreMaterialsLibrary::get_materiallibrary_mater
 
 bool CoreMaterialsLibrary::set_hdf5Tool_gui(bool status)
 {
-  if (status && (this->hdf5Tool_gui==nullptr))
+  if ((status) && (this->hdf5Tool_gui==nullptr))
   {
+    if (ccx_uo.mPathMaterialLibrary.toStdString() == "")
+    {
+      return false;
+    }
     this->hdf5Tool_gui = new HDF5Tool(ccx_uo.mPathMaterialLibrary.toStdString());
-    return true;
+    return false;
   }
-  if (!status && (this->hdf5Tool_gui!=nullptr))
+
+  if (!(status) && (this->hdf5Tool_gui))
   {
-    delete this->hdf5Tool_gui;
-    this->hdf5Tool_gui=nullptr;
+    this->hdf5Tool_gui->~HDF5Tool();
+    //this->hdf5Tool_gui=nullptr;
     return false;
   }  
   return false;
