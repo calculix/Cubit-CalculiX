@@ -716,6 +716,8 @@ bool CoreLoadsTrajectory::prepare_export()
     }
     */
     watch.tick("prepare trajectory " + std::to_string(loads_data[i][0]) + " filtered " + std::to_string(face_ids.size()) +  " faces");
+    //block core update
+    ccx_iface->set_block_core_update(true);
     //prepare sidesets
     std::vector<int> sideset_ids = CubitInterface::parse_cubit_list("sideset","all");
     if (sideset_ids.size()>0)
@@ -740,6 +742,12 @@ bool CoreLoadsTrajectory::prepare_export()
         last_id_sideset = last_id_sideset + 1;
       }
     }
+    //core update
+    ccx_iface->set_block_core_update(false);
+    ccx_iface->core_update();
+    //block core update
+    ccx_iface->set_block_core_update(true);
+    
     watch.tick("prepare trajectory " + std::to_string(loads_data[i][0]) + " sidesets");
     // prepare amplitudes
     std::vector<int> amplitude_ids = ccx_iface->parser("amplitude","all");
@@ -775,19 +783,34 @@ bool CoreLoadsTrajectory::prepare_export()
       last_id_heatflux = 1;
     }
     int link_id = 0;
+    std::vector<std::string> modify_cmd;
+    //block core update
+    ccx_iface->set_block_core_update(true);
     for (size_t ii = 0; ii < face_ids.size(); ii++)
     {
       if (face_ids[ii].size()>0)
       {
         ccx_iface->silent_cmd("create heatflux on sideset " + std::to_string(heatflux_sidesets[link_id]) + " value " + magnitude_data[magnitude_data_id][1]);
         //ccx_iface->silent_cmd("modify heatflux " + std::to_string(last_id_heatflux) + " name \"Trajectory_" + std::to_string(loads_data[i][0]) + "_" + std::to_string(face_ids[ii][0])+ "_" + std::to_string(times[ii][0])+ "_" + std::to_string(times[ii][1]) + "\"");
-        ccx_iface->silent_cmd("ccx modify heatflux " + std::to_string(last_id_heatflux) + " amplitude " + std::to_string(heatflux_amplitude[link_id]));
+        modify_cmd.push_back("ccx modify heatflux " + std::to_string(last_id_heatflux) + " amplitude " + std::to_string(heatflux_amplitude[link_id]));
+        //ccx_iface->silent_cmd("ccx modify heatflux " + std::to_string(last_id_heatflux) + " amplitude " + std::to_string(heatflux_amplitude[link_id]));
         prepared_heatflux.push_back(last_id_heatflux);
         heatflux.push_back(last_id_heatflux);
         link_id = link_id + 1;
         last_id_heatflux = last_id_heatflux + 1;
       }
     }
+
+    //core update
+    ccx_iface->set_block_core_update(false);
+    ccx_iface->core_update();
+    //block core update
+    ccx_iface->set_block_core_update(true);
+    for (size_t ii = 0; ii < modify_cmd.size(); ii++)
+    {
+      ccx_iface->silent_cmd(modify_cmd[ii]);
+    }
+    
     watch.tick("prepare trajectory " + std::to_string(loads_data[i][0]) + " heatflux");
     //link heatflux to steps
     std::vector<std::vector<std::string>> steps_tree = ccx_iface->get_steps_tree_data();
@@ -809,6 +832,8 @@ bool CoreLoadsTrajectory::prepare_export()
       }
     }
     watch.tick("prepare trajectory " + std::to_string(loads_data[i][0]) + " steps");
+    //resume core update
+    ccx_iface->set_block_core_update(false);
   }
   watch.tick("prepare trajectory end");
   return true;
@@ -821,6 +846,8 @@ bool CoreLoadsTrajectory::clean_export()
   StopWatch watch;
   watch.tick("clean trajectory start");
 
+  //block core update
+  ccx_iface->set_block_core_update(true);
   ids = "";
   int current_step_id=0;
   for (size_t i = 0; i < prepared_step_heatflux.size(); i++)
@@ -869,6 +896,10 @@ bool CoreLoadsTrajectory::clean_export()
   ccx_iface->silent_cmd("ccx delete amplitude " + ids);
   watch.tick("clean trajectory amplitudes");
 
+  //resume core update
+  ccx_iface->set_block_core_update(false);
+  ccx_iface->core_update();
+  
   prepared_sidesets.clear();
   prepared_amplitudes.clear();
   prepared_heatflux.clear();

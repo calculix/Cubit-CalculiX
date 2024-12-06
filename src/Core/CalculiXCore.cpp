@@ -391,6 +391,17 @@ bool CalculiXCore::set_gui_updated(bool status)
   return true;
 }
 
+bool CalculiXCore::block_core_update()
+{
+  return bool_block_core_update;
+}
+
+bool CalculiXCore::set_block_core_update(bool status)
+{
+  bool_block_core_update = status;
+  return true;
+}
+
 bool CalculiXCore::block_gui_update()
 {
   return bool_block_gui_update;

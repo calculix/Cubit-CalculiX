@@ -1,18 +1,18 @@
 #!cubit
 reset
-create brick x 1 y 1 z 0.2
+create brick x 2 y 2 z 0.2
 vol 1 size 0.2
 mesh vol 1
 refine surface 1 numsplit 1 bias 1.0 depth 0
 refine surface 1 numsplit 1 bias 1.0 depth 0
 
 create vertex 1 1 1
-create vertex 0.5 1 1
-create vertex 0.5 0.5 1
-create vertex 0 0.5 1
+create vertex 0.6 1 1
+create vertex 0.6 0.6 1
+create vertex 0 0.8 1
 create vertex 0 0 1
-create vertex -0.5 0 1
-create vertex -0.5 -0.5 1
+create vertex -0.9 0 1
+create vertex -0.6 -0.7 1
 create vertex -1 -0.5 1
 create curve spline location vertex all with is_free delete
 
@@ -76,6 +76,6 @@ ccx step 1 add fieldoutput 1 2
 ccx create job name "trajectory_test"
 
 #export ccx "trajectory_test.inp" overwrite
-ccx run job 1
+#ccx run job 1
 
 ccx draw load trajectory 1

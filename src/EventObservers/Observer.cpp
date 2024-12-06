@@ -39,8 +39,11 @@ void Observer::notify_command_complete()
   { 
     int last_update = this->watch.silent_tick();
     time_iterator = time_iterator + last_update;
-
-    ccx_iface->core_update();
+    
+    if (!ccx_iface->block_core_update())
+    {
+      ccx_iface->core_update();
+    }
     
     /*
     std::string log;

@@ -53,6 +53,7 @@ public:
   bool bool_init_pythoninterface = false;
   bool bool_init_materiallibrary = false;
   bool bool_gui_updated = false;
+  bool bool_block_core_update = false;
   bool bool_block_gui_update = false;
   bool use_ccx_logfile = false;
   bool use_ccx_autocleanup = true;
@@ -70,6 +71,8 @@ public:
   bool init_completed(); // returns true after every init is true otherwise false
   bool gui_updated(); //returns if gui is updated, necessary because of time check in the observer
   bool set_gui_updated(bool status); //sets the bool if the gui was updated
+  bool block_core_update(); //returns the bool if the core should be updated
+  bool set_block_core_update(bool status); //sets the bool if the should be updated
   bool block_gui_update(); //returns the bool if the should be updated
   bool set_block_gui_update(bool status); //sets the bool if the should be updated
   bool update(); // updates everything to catch changes in the entities

@@ -59,6 +59,16 @@ bool CalculiXCoreInterface::set_gui_updated(bool status)
   return ccx_core.set_gui_updated(status);
 }
 
+bool CalculiXCoreInterface::block_core_update()
+{
+  return ccx_core.block_core_update();
+}
+
+bool CalculiXCoreInterface::set_block_core_update(bool status)
+{
+  return ccx_core.set_block_core_update(status);
+}
+
 bool CalculiXCoreInterface::block_gui_update()
 {
   return ccx_core.block_gui_update();

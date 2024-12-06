@@ -21,9 +21,11 @@ public:
   bool init_materiallibrary();
   bool init_completed(); // returns true after every init is true otherwise false
   bool gui_updated(); //returns if gui is updated, necessary because of time check in the observer
-  bool set_gui_updated(bool status); //sets the bool if the gui was updated
-  bool block_gui_update(); //returns the bool if the should be updated
-  bool set_block_gui_update(bool status); //sets the bool if the should be updated
+  bool set_gui_updated(bool status); //sets the bool if core the gui was updated
+  bool block_core_update(); //returns the bool if the core should be updated
+  bool set_block_core_update(bool status); //sets the bool if the should be updated
+  bool block_gui_update(); //returns the bool if the gui should be updated
+  bool set_block_gui_update(bool status); //sets the bool if the gui should be updated
   std::string print_data();
   bool log_str(std::string str_log);
   bool export_to_csv(std::string path_and_name, std::vector<std::string> header, std::vector<std::vector<double>> data,bool overwrite); // exports the data to a .csv file, with the header
