@@ -76,7 +76,7 @@ LoadsTrajectoryCreatePanel::LoadsTrajectoryCreatePanel(QWidget *parent) :
   
   lineEdit_4->setPlaceholderText("<x> <y> <z>");
   lineEdit_5->setPlaceholderText("Heatflux Magnitude");
-  lineEdit_8->setPlaceholderText("Optional Search Radius");
+  lineEdit_8->setPlaceholderText("Ray Radius");
   
   pushButton_apply = new QPushButton();
   pushButton_apply->setText("Apply");
@@ -132,7 +132,7 @@ void LoadsTrajectoryCreatePanel::on_pushButton_apply_clicked(bool)
   QStringList commands;
   QString command = "";
 
-  if ((PickWidget_1->text()!="") && (PickWidget_2->text()!="") && (PickWidget_3->text()!="") && (lineEdit_4->text()!="") && (lineEdit_5->text()!="") && (lineEdit_6->text()!="") && (lineEdit_7->text()!=""))
+  if ((PickWidget_1->text()!="") && (PickWidget_2->text()!="") && (PickWidget_3->text()!="") && (lineEdit_4->text()!="") && (lineEdit_5->text()!="") && (lineEdit_6->text()!="") && (lineEdit_7->text()!="") && (lineEdit_8->text()!=""))
   {
     command.append("ccx create trajectory curve " + PickWidget_1->text() + " vertex " + PickWidget_2->text()); 
 
@@ -148,12 +148,8 @@ void LoadsTrajectoryCreatePanel::on_pushButton_apply_clicked(bool)
     command.append(" magnitude " +lineEdit_5->text());
     command.append(" time_begin " +lineEdit_6->text());
     command.append(" time_end " +lineEdit_7->text());
+    command.append(" radius " + lineEdit_8->text());
     
-    if (lineEdit_8->text()!="")
-    {
-      command.append(" radius " + lineEdit_7->text());
-    }
-
     if (comboBox_9->currentIndex()!=0)
     {
       command.append(" op " + comboBox_9->currentText());

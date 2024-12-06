@@ -10,6 +10,7 @@
 #define OBSERVER_HPP
 
 #include "CubitInterface.hpp"
+#include "StopWatch.hpp"
 
 // The MyObserver class re-implements methods that we are interested in.
 // These methods are called by Cubit in response to events. For example,
@@ -22,6 +23,7 @@
 
 class CalculiXCoreInterface;
 class CalculiXComp;
+class ObserverTimer;
 
 class Observer : public CubitInterface::ObserverBase
 {
@@ -31,8 +33,13 @@ public:
 
   CalculiXCoreInterface *ccx_iface;
   CalculiXComp *ccx_comp;
+  ObserverTimer *timer = nullptr;
+  
+  StopWatch watch;
+  int time_iterator = 0;
 
   void notify_model_reset();
+  void notify_command_start();
   void notify_command_complete();
   void fetch_comp(CalculiXComp *CalculiXComp);
 

@@ -19,6 +19,9 @@ public:
   bool set_use_ccx_logfile(bool bool_use);
   bool init_pythoninterface();
   bool init_materiallibrary();
+  bool init_completed(); // returns true after every init is true otherwise false
+  bool gui_updated(); //returns if gui is updated, necessary because of time check in the observer
+  bool set_gui_updated(bool status); //sets the bool if the gui was updated
   std::string print_data();
   bool log_str(std::string str_log);
   bool export_to_csv(std::string path_and_name, std::vector<std::string> header, std::vector<std::vector<double>> data,bool overwrite); // exports the data to a .csv file, with the header
@@ -113,6 +116,7 @@ public:
   std::vector<int> loadstrajectory_get_node_ids(int trajectory_id); //returns node ids for curve
   std::vector<std::vector<double>> loadstrajectory_get_hit_coordinates(int trajectory_id); //returns hit coordinates
   std::vector<std::vector<int>> loadstrajectory_get_face_ids(int trajectory_id); //returns face ids for the node ids from get_node_ids
+  std::vector<std::vector<double>> loadstrajectory_get_times(int trajectory_id); //returns time begin and end ordered by the node ids from get_node_ids
   bool modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a displacement
   bool modify_bcstemperatures(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a temperature
   bool create_historyoutput(std::vector<std::string> options); // adds a new output
@@ -266,8 +270,6 @@ public:
   std::vector<std::vector<std::string>> get_materiallibrary_tree_data(); // gets the data from materiallibrary to build the tree in the material management
   std::vector<std::vector<std::string>> get_materiallibrary_material_properties(std::string name, std::string group); // gets the material properties from materiallibrary for the material management
   std::vector<std::vector<double>> get_materiallibrary_material_values(std::string name, std::string group, std::string property); // gets the material values for a property from materiallibrary for the material management
-  bool set_hdf5Tool_gui(bool status); // opens or closes the hdf5Tool_gui
-  std::vector<std::vector<double>> get_materiallibrary_material_values_gui(std::string name, std::string groupname, std::string property); // returns a list of the material properties and its type, scalar or matrix
   std::vector<std::vector<std::string>> get_sections_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_constraints_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_surfaceinteractions_tree_data(); // gets the data from core to build the tree

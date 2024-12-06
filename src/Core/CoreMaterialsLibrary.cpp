@@ -24,7 +24,6 @@ bool CoreMaterialsLibrary::init()
 
     is_initialized = true;
     this->load_library();
-    this->hdf5Tool_gui = nullptr;
 
     return true;
   }
@@ -695,59 +694,5 @@ std::vector<std::vector<double>> CoreMaterialsLibrary::get_materiallibrary_mater
     hdf5Tool.read_dataset_double_rank_2(property, material, values);   
   }
 
-  return values;
-}
-
-bool CoreMaterialsLibrary::set_hdf5Tool_gui(bool status)
-{
-  if ((status) && (this->hdf5Tool_gui==nullptr))
-  {
-    if (ccx_uo.mPathMaterialLibrary.toStdString() == "")
-    {
-      return false;
-    }
-    this->hdf5Tool_gui = new HDF5Tool(ccx_uo.mPathMaterialLibrary.toStdString());
-    return false;
-  }
-
-  if (!(status) && (this->hdf5Tool_gui))
-  {
-    this->hdf5Tool_gui->~HDF5Tool();
-    //this->hdf5Tool_gui=nullptr;
-    return false;
-  }  
-  return false;
-}
-
-std::vector<std::vector<double>> CoreMaterialsLibrary::get_materiallibrary_material_values_gui(std::string name, std::string groupname, std::string property)
-{
-  std::vector<std::vector<double>> values;
-  std::vector<double> value_data;
-
-  std::string log = "";
-
-  int property_size = ccx_iface->get_group_property_size(property);
-
-  if (property_size == -1)
-  {
-    log = "Material property "+ property + " not found!\n";
-    PRINT_INFO("%s", log.c_str());
-    return values;
-  }
-
-  std::string material = groupname + "/" + name;
-  if (this->hdf5Tool_gui!=nullptr)
-  {
-    if (property_size==1) //scalar property
-    {
-      this->hdf5Tool_gui->read_dataset_double_rank_1(property, material, value_data);   
-      if (value_data.size()>0)
-      {
-        values.push_back(value_data);
-      }
-    }else{
-      this->hdf5Tool_gui->read_dataset_double_rank_2(property, material, values);   
-    }
-  }
   return values;
 }

@@ -24,7 +24,7 @@ std::vector<std::string> ccxLoadsTrajectoryCreateCommand::get_syntax()
   syntax.append("magnitude <value:label='magnitude_value',help='<magnitude_value>'> ");
   syntax.append("time_begin <value:label='time_begin_value',help='<time_begin_value>'> ");
   syntax.append("time_end <value:label='time_end_value',help='<time_end_value>'> ");
-  syntax.append("[radius <value:label='radius_value',help='<radius_value>'>] ");
+  syntax.append("radius <value:label='radius_value',help='<radius_value>'> ");
   syntax.append("[op {mod | new}] " );
   
   syntax_list.push_back(syntax);
@@ -46,7 +46,7 @@ std::vector<std::string> ccxLoadsTrajectoryCreateCommand::get_syntax_help()
   help[0].append("magnitude <magnitude_value> ");
   help[0].append("time_begin <time_begin_value> ");
   help[0].append("time_end <time_end_value> ");
-  help[0].append("[radius <radius_value>] ");
+  help[0].append("radius <radius_value> ");
   help[0].append("[op {mod | new}] " );
 
   return help;
@@ -100,9 +100,9 @@ bool ccxLoadsTrajectoryCreateCommand::execute(CubitCommandData &data)
   y = ccx_iface.to_string_scientific(y_value);
   data.get_value("z_value", z_value);
   z = ccx_iface.to_string_scientific(z_value);
-  data.get_value("time_begin", time_begin_value);
+  data.get_value("time_begin_value", time_begin_value);
   time_begin = ccx_iface.to_string_scientific(time_begin_value);
-  data.get_value("time_end", time_end_value);
+  data.get_value("time_end_value", time_end_value);
   time_end = ccx_iface.to_string_scientific(time_end_value);
 
   if (data.find_keyword("OP")){
@@ -114,12 +114,8 @@ bool ccxLoadsTrajectoryCreateCommand::execute(CubitCommandData &data)
     }
   }
 
-  if (!data.get_value("radius_value", radius_value))
-  {
-    radius = "";
-  }else{
-    radius = ccx_iface.to_string_scientific(radius_value);
-  }
+  data.get_value("radius_value", radius_value);
+  radius = ccx_iface.to_string_scientific(radius_value);
 
   options.push_back(std::to_string(op_mode));
   options.push_back(curve_id);

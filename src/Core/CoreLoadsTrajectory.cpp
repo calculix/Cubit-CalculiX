@@ -160,6 +160,7 @@ bool CoreLoadsTrajectory::modify_load(int load_id, std::vector<std::string> opti
   {
     return false;
   } else {
+
     // OP MODE
     if (options_marker[0]==1)
     {
@@ -236,13 +237,13 @@ bool CoreLoadsTrajectory::modify_load(int load_id, std::vector<std::string> opti
     if (options_marker[9]==1)
     {
       sub_data_id = get_time_data_id_from_time_id(loads_data[loads_data_id][7]);
-      time_data[sub_data_id][1] = options[9];
+      time_data[sub_data_id][2] = options[9];
     }
     // radius
     if (options_marker[10]==1)
     {
       sub_data_id = get_radius_data_id_from_radius_id(loads_data[loads_data_id][8]);
-      time_data[sub_data_id][1] = options[10];
+      radius_data[sub_data_id][1] = options[10];
     }
     return true;
   }
@@ -536,6 +537,44 @@ std::vector<std::vector<int>> CoreLoadsTrajectory::get_face_ids(int load_id)
   }
 
   return selected_face_ids;
+}
+
+std::vector<std::vector<double>> CoreLoadsTrajectory::get_times(int load_id)
+{
+  std::vector<std::vector<double>> times;
+  
+  int load_data_id = this->get_loads_data_id_from_load_id(load_id);
+
+  if (load_data_id!=-1)
+  {
+    std::vector<int> node_ids = this->get_node_ids(load_id);
+    
+    int time_data_id = this->get_time_data_id_from_time_id(loads_data[load_data_id][7]);
+    
+    double delta_t = (ccx_iface->string_scientific_to_double(time_data[time_data_id][2]) - ccx_iface->string_scientific_to_double(time_data[time_data_id][1]))/double(node_ids.size());
+    
+    double t_begin = ccx_iface->string_scientific_to_double(time_data[time_data_id][1]);
+    double t_end = t_begin + delta_t;
+
+
+    for (size_t i = 0; i < node_ids.size(); i++)
+    {
+      std::vector<double> time;
+
+      time.push_back(t_begin);
+      time.push_back(t_end);
+
+      //std::string log = "t_begin " + std::to_string(t_begin) + " t_end " + std::to_string(t_end) +"\n";
+      //PRINT_INFO("%s", log.c_str());
+
+      times.push_back(time);
+
+      t_begin = t_end;
+      t_end = t_end + delta_t;
+    }
+  }
+
+  return times;
 }
 
 std::string CoreLoadsTrajectory::get_load_export(int load_id)

@@ -33,3 +33,14 @@ bool StopWatch::total(std::string label)
 
   return true;
 }
+
+int StopWatch::silent_tick()
+{
+  const auto t_runtime_end = std::chrono::high_resolution_clock::now();
+  int t_runtime_duration = std::chrono::duration<double, std::milli>(t_runtime_end - t_runtime_start).count();
+  int t_runtime_round_duration = std::chrono::duration<double, std::milli>(t_runtime_end - t_runtime_last).count();
+  
+  t_runtime_last = std::chrono::high_resolution_clock::now();
+
+  return t_runtime_round_duration;
+}

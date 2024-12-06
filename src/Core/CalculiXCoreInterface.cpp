@@ -44,6 +44,21 @@ bool CalculiXCoreInterface::init_materiallibrary()
   return ccx_core.init_materiallibrary();
 }
 
+bool CalculiXCoreInterface::init_completed()
+{
+  return ccx_core.init_completed();
+}
+
+bool CalculiXCoreInterface::gui_updated()
+{
+  return ccx_core.gui_updated();
+}
+
+bool CalculiXCoreInterface::set_gui_updated(bool status)
+{
+  return ccx_core.set_gui_updated(status);
+}
+
 std::string CalculiXCoreInterface::print_data()
 {
   return ccx_core.print_data();
@@ -484,6 +499,11 @@ std::vector<std::vector<int>> CalculiXCoreInterface::loadstrajectory_get_face_id
 {
   return ccx_core.loadstrajectory_get_face_ids(trajectory_id);
 }
+
+std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_get_times(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_get_times(trajectory_id);
+} 
 
 bool CalculiXCoreInterface::modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
@@ -1198,16 +1218,6 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_materiallibrary
 std::vector<std::vector<double>> CalculiXCoreInterface::get_materiallibrary_material_values(std::string name, std::string group, std::string property)
 {
   return ccx_core.get_materiallibrary_material_values(name, group, property);
-}
-
-bool CalculiXCoreInterface::set_hdf5Tool_gui(bool status)
-{
-  return ccx_core.set_hdf5Tool_gui(status);
-}
-
-std::vector<std::vector<double>> CalculiXCoreInterface::get_materiallibrary_material_values_gui(std::string name, std::string group, std::string property)
-{
-  return ccx_core.get_materiallibrary_material_values_gui(name, group, property);
 }
 
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_sections_tree_data()

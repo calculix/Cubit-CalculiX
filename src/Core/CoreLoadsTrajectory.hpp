@@ -73,6 +73,7 @@ public:
   std::vector<int> get_node_ids(int load_id); //returns node ids for curve
   std::vector<std::vector<double>> get_hit_coordinates(int load_id); //returns hit coordinates
   std::vector<std::vector<int>> get_face_ids(int load_id); //returns face ids for the node ids from get_node_ids
+  std::vector<std::vector<double>> get_times(int load_id); //returns time begin and end ordered by the node ids from get_node_ids
   std::string get_load_export(int load_id); // gets the optional parameters for the export
   std::string print_data(); // prints out the loads_data
  

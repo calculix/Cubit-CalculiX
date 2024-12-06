@@ -10,7 +10,6 @@
 
 class CalculiXCoreInterface;
 class MaterialInterface;
-class HDF5Tool;
 
 class CoreMaterialsLibrary
 {
@@ -52,15 +51,12 @@ public:
   //[0][3] type: Group, Material
   std::vector<std::vector<std::string>> get_materiallibrary_material_properties(std::string name, std::string groupname); // returns a list of the material properties and its type, scalar or matrix
   std::vector<std::vector<double>> get_materiallibrary_material_values(std::string name, std::string groupname, std::string property); // returns a list of the material properties and its type, scalar or matrix
-  bool set_hdf5Tool_gui(bool status); // opens or closes the hdf5Tool_gui
-  std::vector<std::vector<double>> get_materiallibrary_material_values_gui(std::string name, std::string groupname, std::string property); // returns a list of the material properties and its type, scalar or matrix
   
   //bool get_groups(); // gets the groups from the library
   //bool get_materials(); // gets the materials from the library
 
   CalculiXCoreInterface *ccx_iface;
   MaterialInterface *mat_iface;
-  HDF5Tool *hdf5Tool_gui; // just to handle gui updates
 };
 
 #endif // COREMATERIALS_HPP

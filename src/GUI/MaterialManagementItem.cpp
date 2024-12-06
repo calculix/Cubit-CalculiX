@@ -3,6 +3,8 @@
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "MaterialInterface.hpp"
+#include "loadUserOptions.hpp"
+#include "HDF5Tool.hpp"
 
 MaterialManagementItem::MaterialManagementItem(QTreeWidget* parent):
   QTreeWidgetItem (parent),
@@ -259,26 +261,81 @@ void MaterialManagementItem::update_cubit()
 }
 
 void MaterialManagementItem::update_library()
-{
-  std::vector<std::vector<double>> tmp_values;
-
-  //if (ccx_iface->set_hdf5Tool_gui(true))
+{ 
+  /* too slow
+  for (size_t i = 0; i < properties.size(); i++)
   {
-    for (size_t i = 0; i < properties.size(); i++)
+    if (properties[i][1]==1)
     {
+      double tmp_scalar=0;
+      tmp_values = ccx_iface->get_materiallibrary_material_values(this->library_name, this->library_group, group_properties[properties[i][0]][0]);
+      if (tmp_values.size()>0)
+      {
+        tmp_scalar = tmp_values[0][0]; 
+      }
+      property_scalar[properties[i][2]] = tmp_scalar;
+    }else if (properties[i][1]==2)
+    {
+      std::vector<double> tmp_vector;
+      tmp_values = ccx_iface->get_materiallibrary_material_values(this->library_name, this->library_group, group_properties[properties[i][0]][0]);
+      if (tmp_values.size()>0)
+      {
+        tmp_vector = tmp_values[0]; 
+      }
+      property_vector[properties[i][2]] = tmp_vector;
+    }
+    else if (properties[i][1]==4)
+    {
+      tmp_values = ccx_iface->get_materiallibrary_material_values(this->library_name, this->library_group, group_properties[properties[i][0]][0]);
+      property_matrix[properties[i][2]] = tmp_values;
+    }
+  }
+  */
+
+  HDF5Tool hdf5Tool(ccx_uo.mPathMaterialLibrary.toStdString());
+  std::string log = "";
+
+  std::string material = this->library_group + "/" + this->library_name;
+
+  for (size_t i = 0; i < properties.size(); i++)
+  {
+    std::string property = group_properties[properties[i][0]][0];
+    int property_size = ccx_iface->get_group_property_size(property);
+    if (property_size == -1)
+    {
+      log = "Material property "+ property + " not found!\n";
+      PRINT_INFO("%s", log.c_str());
       if (properties[i][1]==1)
       {
         double tmp_scalar=0;
-        tmp_values = ccx_iface->get_materiallibrary_material_values(this->library_name, this->library_group, group_properties[properties[i][0]][0]);
-        if (tmp_values.size()>0)
+        property_scalar[properties[i][2]] = tmp_scalar;
+      }
+      if (properties[i][1]==2)
+      {
+        std::vector<double> tmp_vector;
+        property_vector[properties[i][2]] = tmp_vector;
+      }
+      if (properties[i][1]==4)
+      {
+        std::vector<std::vector<double>> tmp_matrix;
+        property_matrix[properties[i][2]] = tmp_matrix;
+      }
+    }else{
+      if (properties[i][1]==1)
+      {
+        double tmp_scalar=0;
+        std::vector<double> tmp_value;
+        hdf5Tool.read_dataset_double_rank_1(property, material, tmp_value);   
+        if (tmp_value.size()>0)
         {
-          tmp_scalar = tmp_values[0][0]; 
+          tmp_scalar = tmp_value[0]; 
         }
         property_scalar[properties[i][2]] = tmp_scalar;
       }else if (properties[i][1]==2)
       {
         std::vector<double> tmp_vector;
-        tmp_values = ccx_iface->get_materiallibrary_material_values(this->library_name, this->library_group, group_properties[properties[i][0]][0]);
+        std::vector<std::vector<double>> tmp_values;
+        hdf5Tool.read_dataset_double_rank_2(property, material, tmp_values);   
         if (tmp_values.size()>0)
         {
           tmp_vector = tmp_values[0]; 
@@ -287,18 +344,17 @@ void MaterialManagementItem::update_library()
       }
       else if (properties[i][1]==4)
       {
-        tmp_values = ccx_iface->get_materiallibrary_material_values(this->library_name, this->library_group, group_properties[properties[i][0]][0]);
+        std::vector<std::vector<double>> tmp_values;
+        hdf5Tool.read_dataset_double_rank_2(property, material, tmp_values);   
         property_matrix[properties[i][2]] = tmp_values;
       }
     }
   }
-  
-  //ccx_iface->set_hdf5Tool_gui(false);
 
   property_scalar_gui = property_scalar;
   //property_vector_gui = property_vector;
   //property_tabular_gui = property_tabular;
-  property_matrix_gui = property_matrix;
+  property_matrix_gui = property_matrix;    
 }
 
 int MaterialManagementItem::get_properties_data_id_from_group(std::string group)

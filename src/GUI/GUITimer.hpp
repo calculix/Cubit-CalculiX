@@ -3,8 +3,6 @@
 
 #include <QTimer>
 
-class CalculiXCoreInterface;
-
 class GUITimer : public QTimer
 {
 

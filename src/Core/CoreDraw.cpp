@@ -720,17 +720,28 @@ bool CoreDraw::draw_load_trajectory(int id, double size)
     hit_coordinates = ccx_iface->loadstrajectory_get_hit_coordinates(id);
     std::vector<std::vector<int>> face_ids;
     face_ids = ccx_iface->loadstrajectory_get_face_ids(id);
-    
+    std::vector<std::vector<double>> times;
+    times = ccx_iface->loadstrajectory_get_times(id);
+    bool switch_color = true;
+
     for (size_t i = 0; i < hit_coordinates.size(); i++)
     {
         if (hit_coordinates[i].size()>0)
         {
             std::array<double,3> coord = CubitInterface::get_nodal_coordinates(node_ids[i]);
-            ccx_iface->silent_cmd("draw location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " color red");
-            ccx_iface->silent_cmd("draw line location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " location " + std::to_string(hit_coordinates[i][0]) + " " + std::to_string(hit_coordinates[i][1]) + " " + std::to_string(hit_coordinates[i][2]) +  " color red");
+            if (switch_color)
+            {
+                ccx_iface->silent_cmd("draw location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " color red");
+                ccx_iface->silent_cmd("draw line location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " location " + std::to_string(hit_coordinates[i][0]) + " " + std::to_string(hit_coordinates[i][1]) + " " + std::to_string(hit_coordinates[i][2]) +  " color red");
+                switch_color = false;
+            }else{
+                ccx_iface->silent_cmd("draw location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " color blue");
+                ccx_iface->silent_cmd("draw line location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " location " + std::to_string(hit_coordinates[i][0]) + " " + std::to_string(hit_coordinates[i][1]) + " " + std::to_string(hit_coordinates[i][2]) +  " color blue");
+                switch_color = true;
+            }
         }
     }
-    bool switch_color = true;
+    switch_color = false;
     for (size_t i = 0; i < face_ids.size(); i++)
     {
         if (face_ids[i].size()>0)
@@ -753,6 +764,16 @@ bool CoreDraw::draw_load_trajectory(int id, double size)
                 switch_color = true;
             }
             ccx_iface->silent_cmd(cmd);    
+        }
+    }
+    for (size_t i = 0; i < times.size(); i++)
+    {
+        if (times[i].size()>0)
+        {
+            std::array<double,3> coord = CubitInterface::get_nodal_coordinates(node_ids[i]);
+            std::string label = "locate location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " ";
+            label.append("\" t_begin " + ccx_iface->to_string_scientific(times[i][0]) + ",t_end " + ccx_iface->to_string_scientific(times[i][1]) + "\"");
+            ccx_iface->cmd(label);
         }
     }
 

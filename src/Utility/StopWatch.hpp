@@ -17,6 +17,7 @@ public:
 
   bool tick(std::string label); // prints out a label, the time difference from the last label print and the total runtime
   bool total(std::string label); // prints out a label and the total runtime
-};
+  int silent_tick(); // returns time difference from the last tick and the total runtime in ms
+  };
 
 #endif // STOPWATCH_HPP

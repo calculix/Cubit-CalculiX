@@ -370,6 +370,27 @@ bool CalculiXCore::init_materiallibrary()
   return false;
 }
 
+bool CalculiXCore::init_completed()
+{
+  if (bool_init && bool_init2 && bool_init_pythoninterface && bool_init_materiallibrary)
+  {
+    return true;
+  }
+
+  return false;
+}
+
+bool CalculiXCore::gui_updated()
+{
+  return bool_gui_updated;
+}
+
+bool CalculiXCore::set_gui_updated(bool status)
+{
+  bool_gui_updated = status;
+  return true;
+}
+
 bool CalculiXCore::update()
 {
   std::string temp_str = "";
@@ -3445,6 +3466,11 @@ std::vector<std::vector<double>> CalculiXCore::loadstrajectory_get_hit_coordinat
 std::vector<std::vector<int>> CalculiXCore::loadstrajectory_get_face_ids(int trajectory_id)
 {
   return loadstrajectory->get_face_ids(trajectory_id);
+}
+
+std::vector<std::vector<double>> CalculiXCore::loadstrajectory_get_times(int trajectory_id)
+{
+  return loadstrajectory->get_times(trajectory_id);
 }
 
 bool CalculiXCore::modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker)
@@ -7463,17 +7489,6 @@ std::vector<std::vector<double>> CalculiXCore::get_materiallibrary_material_valu
 {
   return mat_library->get_materiallibrary_material_values(name, group, property);
 }
-
-bool CalculiXCore::set_hdf5Tool_gui(bool status)
-{
-  return mat_library->set_hdf5Tool_gui(status);
-}
-
-std::vector<std::vector<double>> CalculiXCore::get_materiallibrary_material_values_gui(std::string name, std::string group, std::string property)
-{
-  return mat_library->get_materiallibrary_material_values_gui(name, group, property);
-}
-
 
 std::vector<std::vector<std::string>> CalculiXCore::get_sections_tree_data()
 { 
