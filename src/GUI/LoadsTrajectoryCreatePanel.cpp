@@ -74,6 +74,7 @@ LoadsTrajectoryCreatePanel::LoadsTrajectoryCreatePanel(QWidget *parent) :
   comboBox_9->addItem("mod");
   comboBox_9->addItem("new");
   
+  PickWidget_2->setPlaceholderText("Start Vertex");
   lineEdit_4->setPlaceholderText("<x> <y> <z>");
   lineEdit_5->setPlaceholderText("Heatflux Magnitude");
   lineEdit_8->setPlaceholderText("Ray Radius");

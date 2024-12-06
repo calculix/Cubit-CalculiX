@@ -391,6 +391,17 @@ bool CalculiXCore::set_gui_updated(bool status)
   return true;
 }
 
+bool CalculiXCore::block_gui_update()
+{
+  return bool_block_gui_update;
+}
+
+bool CalculiXCore::set_block_gui_update(bool status)
+{
+  bool_block_gui_update = status;
+  return true;
+}
+
 bool CalculiXCore::update()
 {
   std::string temp_str = "";
@@ -3456,6 +3467,11 @@ bool CalculiXCore::delete_loadstrajectory(int trajectory_id)
 std::vector<int> CalculiXCore::loadstrajectory_get_node_ids(int trajectory_id)
 {
   return loadstrajectory->get_node_ids(trajectory_id);
+}
+
+std::vector<int> CalculiXCore::loadstrajectory_get_edge_ids(int trajectory_id)
+{
+  return loadstrajectory->get_edge_ids(trajectory_id);
 }
 
 std::vector<std::vector<double>> CalculiXCore::loadstrajectory_get_hit_coordinates(int trajectory_id)
@@ -6706,6 +6722,22 @@ QIcon CalculiXCore::getIcon2(std::string name)
   #endif
 
   return icon;
+}
+
+bool CalculiXCore::prepare_export()
+{
+  bool status = true;
+  status = loadstrajectory->prepare_export();
+
+  return status;
+}
+
+bool CalculiXCore::clean_export()
+{
+  bool status = true;
+  status = loadstrajectory->clean_export();
+
+  return status;
 }
 
 std::string CalculiXCore::get_material_export_data() // gets the export data from materials core

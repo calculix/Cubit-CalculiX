@@ -109,6 +109,9 @@ bool ccxExportCommand::execute(CubitCommandData &data)
   // Now we can use the interface as before
   iface->set_use_sequential_ids(false);
 
+  //block ccx gui updates
+  ccx_iface.set_block_gui_update(true);
+
   // Open the file and write to it
   bool result =
       open_file(filename, output_file) && write_file(output_file, iface, material_iface, ccx_iface);
@@ -119,6 +122,9 @@ bool ccxExportCommand::execute(CubitCommandData &data)
   // Make sure that you release the interface after accessing it
   CubitInterface::release_interface(iface);
   CubitInterface::release_interface(material_iface);
+
+  //unblock ccx gui updates
+  ccx_iface.set_block_gui_update(false);
 
   return result;
 }
@@ -133,8 +139,6 @@ bool ccxExportCommand::open_file(const std::string& file, std::ofstream& output_
 bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterface *iface, MaterialInterface *material_iface, CalculiXCoreInterface ccx_iface)
 {
   bool result;
-  // Initialize the exporter
-  iface->initialize_export();
 
   // check if everything is meshed. if no. abort!
   std::vector<std::string> entity_type_list;
@@ -177,7 +181,15 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
   //output_file << "Cubit2CalculiX with CalculiX Plugin \n";
   //output_file << "** \n";
 
-  progressbar->start(0,14,"Writing CCX .inp File");
+  progressbar->start(0,16,"Writing CCX .inp File");
+
+  // prepare export data
+  // trajectory: sidesets,amplitude,dflux
+  result = ccx_iface.prepare_export();
+  progressbar->step();
+
+  // Initialize the exporter
+  iface->initialize_export();
 
   // Write the nodes
   result = write_nodes(output_file, iface, ccx_iface);
@@ -219,6 +231,10 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
   result = write_hbcs(output_file, ccx_iface);
   progressbar->step();
   result = write_steps(output_file, ccx_iface);
+  progressbar->step();
+
+  //clean export data
+  result = ccx_iface.clean_export();
   progressbar->step();
 
   progressbar->end();

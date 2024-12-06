@@ -49,20 +49,22 @@ void Observer::notify_command_complete()
     log =  "observer time_iterator " + std::to_string(time_iterator) + " \n";
     PRINT_INFO("%s", log.c_str());
     */
-
-    if ((last_update>500)||(time_iterator>500))
+    if (!ccx_iface->block_gui_update())
     {
-      ccx_comp->update();
-      ccx_iface->set_gui_updated(true);
-      //log =  "true \n";
-      //PRINT_INFO("%s", log.c_str());
-      time_iterator = 0;
-      timer->stop();
-    }else{
-      ccx_iface->set_gui_updated(false);
-      //log =  "false \n";
-      //PRINT_INFO("%s", log.c_str());
-      timer->start(1000);
+      if ((last_update>500)||(time_iterator>500))
+      {
+        ccx_comp->update();
+        ccx_iface->set_gui_updated(true);
+        //log =  "true \n";
+        //PRINT_INFO("%s", log.c_str());
+        time_iterator = 0;
+        timer->stop();
+      }else{
+        ccx_iface->set_gui_updated(false);
+        //log =  "false \n";
+        //PRINT_INFO("%s", log.c_str());
+        timer->start(1000);
+      }
     }
   }
 }

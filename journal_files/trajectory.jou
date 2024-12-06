@@ -1,75 +1,87 @@
-#//! \brief
-#  //! returns a pair containing the location(s) of the ray intersection and
-#  //! the ids of the entities selected. Note that intersections may only occur
-#  //! with the specific entity type requested.
-#  //!
-##  //! \code
-#  //! loc, ids = cubit.fire_ray([0, 0, 2], [0, 0, -1], "surface", [1,2,3], 1)
-#  //! \endcode
-#  //! \param origin xyz coordinate of ray start point
-#  //! \param direction xyz vector defining ray orientation
-#  //! \param target_type one of vertex, curve, surface, volume, or body
-#  //! \param target_ids one or more entity ids for targets
-#  //! \param max_hits [optional] the number of intersection hits to find. If 0 get all intersections.
-#  //! \param ray_radius [optional] a tolerance on the ray for intersection calculations
-##  //! \return a pair of a vector of hit locations and a vector ids of the type specified in target_type
-#  //! no ids are returned if the intersections are not of the specified type.
-
-
-#1) fire a ray to get the surface and the point on the surface.
-#2) use the point and a tolerance (1.5*the element size??) to create a sphere and find the faces in the sphere on the surface.
-#3) get the centroid of each of the resulting faces and find the one closest to the fire ray point. 
-
-#!python
-def shoot_ray(node_id,direction,sids,search_radius):
- node_coord = cubit.get_nodal_coordinates(node_id)
- loc, ids = cubit.fire_ray(node_coord, direction, "surface", sids, 1)
- if len(loc)>0:
-  cubit.cmd(f"draw location {loc[0][0]} {loc[0][1]} {loc[0][2]} color red")
-  cubit.cmd(f"draw line location {loc[0][0]} {loc[0][1]} {loc[0][2]} location {node_coord[0]} {node_coord[1]} {node_coord[2]} color red")
-  loc[0]
- else:
-  print(f"nothing hit!")
-
- selected_face_ids=[]
- for id in ids:
-  faceids = cubit.parse_cubit_list("face",f"in surface {id}")
-  for faceid in faceids:
-   face_center = cubit.get_center_point("face" , faceid)
-   distance = ((face_center[0]-loc[0][0])**2+(face_center[1]-loc[0][1])**2+(face_center[2]-loc[0][2])**2)**0.5
-   if distance<=search_radius:
-    selected_face_ids.append(faceid)
- return selected_face_ids
-
 #!cubit
 reset
-create brick x 1 z 0.1
-create curve location 0 0 1 location 0 0.5 1
-
+create brick x 1 y 1 z 0.2
+vol 1 size 0.1
 mesh vol 1
-mesh curve all
+refine surface 1 numsplit 1 bias 1.0 depth 0
+#refine surface 1 numsplit 1 bias 1.0 depth 0
 
-#!python
-direction = [0.1, -0.1, -1]
-sids = [1]
-curve_id=13
-search_radius = 0.03
+create vertex 1 1 1
+create vertex 0.5 1 1
+create vertex 0.5 0.5 1
+create vertex 0 0.5 1
+create vertex 0 0 1
+create vertex -0.5 0 1
+create vertex -0.5 -0.5 1
+create vertex -1 -0.5 1
+create curve spline location vertex all with is_free delete
 
-all_face_ids=[]
-node_ids = cubit.parse_cubit_list("node",f"in curve {curve_id}")
-for node_id in node_ids:
- selected_face_ids = shoot_ray(node_id,direction,sids,search_radius)
- all_face_ids.append(selected_face_ids)
+curve 13 size 0.1
+mesh curve 13
 
-#cubit.cmd(f"select face {' '.join(str(id) for id in selected_face_ids)}")
+block 1 add vol 1
 
-switch=False
-for face_set in all_face_ids:
- if switch:
-  cubit.cmd(f"draw face {' '.join(str(id) for id in face_set)} color red add")
-  switch=False
- else:
-  cubit.cmd(f"draw face {' '.join(str(id) for id in face_set)} color blue add")
-  switch=True
+#material
+create material "steel" property_group "CalculiX-FEA"
+modify material "steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0 
+modify material "steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_DENSITY_USE_CARD" 1
+modify material "steel" matrix_property "CCX_DENSITY_DENSITY" 7.9e-06 0 
+modify material "steel" scalar_properties "CCX_SPECIFIC_HEAT_USE_CARD" 1
+modify material "steel" matrix_property "CCX_SPECIFIC_HEAT_SPECIFIC_HEAT" 5e+08 0 
+modify material "steel" scalar_properties "CCX_EXPANSION_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "steel" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 1.2e-05 0 
+modify material "steel" scalar_properties "CCX_CONDUCTIVITY_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+modify material "steel" matrix_property "CCX_CONDUCTIVITY_ISO_K_TEMPERATURE" 50 0 
 
-all_face_ids
+#sections
+ccx create section solid block all material 1
+
+#loads
+ccx create trajectory curve 13 vertex 16 surface 1 direction 0 0 -1 magnitude 10 time_begin 0 time_end 10 radius 0.1
+#ccx modify trajectory 1 vertex 9
+
+#boundary conditions
+create temperature on vol 1 value 293 #will be used as initial condition
+
+#initial conditions
+ccx create initialcondition temperature
+ccx modify initialcondition 1 temperature bc_id 1
+
+#outputs
+ccx create fieldoutput name "fo_node" node
+ccx modify fieldoutput 1 node
+ccx modify fieldoutput 1 node key_on NT
+ccx modify fieldoutput 1 node key_off CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF PNT POT PRF PS PSF PT PTF PU RF RFL SEN TS TSF TT TTF TURB V VF U
+ccx create fieldoutput name "fo_element" element
+ccx modify fieldoutput 2 element
+ccx modify fieldoutput 2 element key_on HFL
+ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS E S 
+
+# add homogeneous bc
+ccx hbc add bc displacement 1
+
+# create step
+ccx create step name "heattransfer" heattransfer
+ccx modify step 1 heattransfer  totaltimeatstart 0 initialtimeincrement 1e-1 timeperiodofstep 10 minimumtimeincrement 1e-5 maximumtimeincrement 1e-1
+ccx step 1 add load trajectory 1
+ccx step 1 add fieldoutput 1 2
+
+#job
+ccx create job name "trajectory_test"
+
+export ccx "trajectory_test.inp" overwrite
+#ccx run job 1
+
+ccx draw load trajectory 1
+
+
+
+
+
+
+

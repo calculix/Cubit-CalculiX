@@ -53,6 +53,7 @@ public:
   bool bool_init_pythoninterface = false;
   bool bool_init_materiallibrary = false;
   bool bool_gui_updated = false;
+  bool bool_block_gui_update = false;
   bool use_ccx_logfile = false;
   bool use_ccx_autocleanup = true;
   std::string version = "2024.12";
@@ -69,6 +70,8 @@ public:
   bool init_completed(); // returns true after every init is true otherwise false
   bool gui_updated(); //returns if gui is updated, necessary because of time check in the observer
   bool set_gui_updated(bool status); //sets the bool if the gui was updated
+  bool block_gui_update(); //returns the bool if the should be updated
+  bool set_block_gui_update(bool status); //sets the bool if the should be updated
   bool update(); // updates everything to catch changes in the entities
   bool reset(); // delete all data and init new
   bool read_cub(std::string filename); // read core data from cub
@@ -163,6 +166,7 @@ public:
   bool modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2); // modify a trajectory
   bool delete_loadstrajectory(int trajectory_id); // delete trajectory load
   std::vector<int> loadstrajectory_get_node_ids(int trajectory_id); //returns node ids for curve
+  std::vector<int> loadstrajectory_get_edge_ids(int trajectory_id); //returns edge ids for curve
   std::vector<std::vector<double>> loadstrajectory_get_hit_coordinates(int trajectory_id); //returns hit coordinates
   std::vector<std::vector<int>> loadstrajectory_get_face_ids(int trajectory_id); //returns face ids for the node ids from get_node_ids
   std::vector<std::vector<double>> loadstrajectory_get_times(int trajectory_id); //returns time begin and end ordered by the node ids from get_node_ids
@@ -352,6 +356,8 @@ public:
   std::vector<std::vector<std::string>> get_steps_fieldoutputs_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_customlines_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_jobs_tree_data(); // gets the data from core to build the tree
+  bool prepare_export(); // prepares data for export like for trajectory
+  bool clean_export(); // cleans data for export like for trajectory
   std::string get_material_export_data(); // gets the export data from materials core
   std::string get_section_export_data(); // gets the export data from sections core
   std::string get_constraint_export_data(); // gets the export data from constraints core

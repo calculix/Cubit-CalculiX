@@ -22,6 +22,8 @@ public:
   bool init_completed(); // returns true after every init is true otherwise false
   bool gui_updated(); //returns if gui is updated, necessary because of time check in the observer
   bool set_gui_updated(bool status); //sets the bool if the gui was updated
+  bool block_gui_update(); //returns the bool if the should be updated
+  bool set_block_gui_update(bool status); //sets the bool if the should be updated
   std::string print_data();
   bool log_str(std::string str_log);
   bool export_to_csv(std::string path_and_name, std::vector<std::string> header, std::vector<std::vector<double>> data,bool overwrite); // exports the data to a .csv file, with the header
@@ -70,6 +72,8 @@ public:
   int get_ccx_element_side(int element_type,int side); // gets the ccx element side for the given cubit element side
   bool add_sideset_face(std::string sideset_id, std::string sideset_name, std::string face, std::string element_type); // gets the sideset/elset name and face
   std::vector<std::vector<std::string>> get_sideset_face(int sideset_id); // gets the sideset/elset name and face
+  bool prepare_export(); // prepares data for export like for trajectory
+  bool clean_export(); // cleans data for export like for trajectory
   std::string get_material_export_data(); // gets the export data from materials core
   std::string get_section_export_data(); // gets the export data from sections core
   std::string get_constraint_export_data(); // gets the export data from constraints core
@@ -114,6 +118,7 @@ public:
   bool modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2); // modify a trajectory
   bool delete_loadstrajectory(int trajectory_id); // delete trajectory load
   std::vector<int> loadstrajectory_get_node_ids(int trajectory_id); //returns node ids for curve
+  std::vector<int> loadstrajectory_get_edge_ids(int trajectory_id); //returns edge ids for curve
   std::vector<std::vector<double>> loadstrajectory_get_hit_coordinates(int trajectory_id); //returns hit coordinates
   std::vector<std::vector<int>> loadstrajectory_get_face_ids(int trajectory_id); //returns face ids for the node ids from get_node_ids
   std::vector<std::vector<double>> loadstrajectory_get_times(int trajectory_id); //returns time begin and end ordered by the node ids from get_node_ids

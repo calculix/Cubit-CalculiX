@@ -47,6 +47,11 @@ public:
   // time_delay_data[0][0] radius_id
   // time_delay_data[0][1] radius
   
+  std::vector<int> prepared_sidesets;
+  std::vector<int> prepared_amplitudes;
+  std::vector<int> prepared_heatflux;
+  std::vector<std::vector<int>> prepared_step_heatflux;
+
   bool is_initialized = false;
 
   bool init(); // initialize
@@ -71,11 +76,17 @@ public:
   std::vector<int> get_fire_ray_surface_ids_from_fire_ray_surface_id(int fire_ray_surface_id); //returns surface ids for fire ray shoot
   
   std::vector<int> get_node_ids(int load_id); //returns node ids for curve
+  std::vector<int> get_edge_ids(int load_id); //returns edge ids for curve
   std::vector<std::vector<double>> get_hit_coordinates(int load_id); //returns hit coordinates
   std::vector<std::vector<int>> get_face_ids(int load_id); //returns face ids for the node ids from get_node_ids
   std::vector<std::vector<double>> get_times(int load_id); //returns time begin and end ordered by the node ids from get_node_ids
-  std::string get_load_export(int load_id); // gets the optional parameters for the export
+  bool prepare_export(); // prepare sidesets, amplitudes, dflux -> will be prepared for ALL trajectories
+  bool clean_export(); // delete prepared
+  std::string get_load_export(int load_id); // gets the optional parameters for the export in the steps
   std::string print_data(); // prints out the loads_data
+
+  template <typename T>  std::vector<std::size_t> sort_permutation(const std::vector<T>& vec);
+  template <typename T> void apply_permutation(std::vector<T>& vec,const std::vector<std::size_t>& p);
  
   CalculiXCoreInterface *ccx_iface;
 };

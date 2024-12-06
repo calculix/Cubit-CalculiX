@@ -59,6 +59,16 @@ bool CalculiXCoreInterface::set_gui_updated(bool status)
   return ccx_core.set_gui_updated(status);
 }
 
+bool CalculiXCoreInterface::block_gui_update()
+{
+  return ccx_core.block_gui_update();
+}
+
+bool CalculiXCoreInterface::set_block_gui_update(bool status)
+{
+  return ccx_core.set_block_gui_update(status);
+}
+
 std::string CalculiXCoreInterface::print_data()
 {
   return ccx_core.print_data();
@@ -488,6 +498,11 @@ bool CalculiXCoreInterface::delete_loadstrajectory(int trajectory_id)
 std::vector<int> CalculiXCoreInterface::loadstrajectory_get_node_ids(int trajectory_id)
 {
   return ccx_core.loadstrajectory_get_node_ids(trajectory_id);
+}
+
+std::vector<int> CalculiXCoreInterface::loadstrajectory_get_edge_ids(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_get_edge_ids(trajectory_id);
 }
 
 std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_get_hit_coordinates(int trajectory_id)
@@ -1378,6 +1393,16 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_customlines_tre
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_jobs_tree_data()
 { 
   return ccx_core.get_jobs_tree_data();
+}
+
+bool CalculiXCoreInterface::prepare_export()
+{
+  return ccx_core.prepare_export();
+}
+
+bool CalculiXCoreInterface::clean_export()
+{
+  return ccx_core.clean_export();
 }
 
 std::string CalculiXCoreInterface::get_material_export_data() // gets the export data from materials core

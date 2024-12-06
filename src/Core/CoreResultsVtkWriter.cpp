@@ -2356,13 +2356,32 @@ bool CoreResultsVtkWriter::checkLinkPossible()
       return false;
     }
   }
-  if (CubitInterface::get_node_count()!=frd->nodes.size()+CubitInterface::get_list_of_free_ref_entities("vertex").size())
+  //check node count for vertex in reference point
+  //check node count for curve in trajectory
+  int free_node_count = 0;
+  free_node_count = CubitInterface::get_list_of_free_ref_entities("vertex").size();
+  std::vector<int> trajectory_ids = ccx_iface->get_loadstrajectory_ids();
+  for (size_t i = 0; i < trajectory_ids.size(); i++)
+  {
+    free_node_count = free_node_count + ccx_iface->loadstrajectory_get_node_ids(trajectory_ids[i]).size();
+  }
+  if (CubitInterface::get_node_count()!=frd->nodes.size()+free_node_count)
   {
     log = "Linking Failed! Wrong number of Nodes.\n";
     PRINT_INFO("%s", log.c_str());
     return false;
   }
-  if (CubitInterface::get_element_count()!=frd->elements.size()+CubitInterface::get_list_of_free_ref_entities("vertex").size())
+
+  //check element count for vertex in reference point
+  //check element count for curve in trajectory
+  int free_element_count = 0;
+  free_element_count = CubitInterface::get_list_of_free_ref_entities("vertex").size();
+  trajectory_ids = ccx_iface->get_loadstrajectory_ids();
+  for (size_t i = 0; i < trajectory_ids.size(); i++)
+  {
+    free_element_count = free_element_count + ccx_iface->loadstrajectory_get_edge_ids(trajectory_ids[i]).size();
+  }
+  if (CubitInterface::get_element_count()!=frd->elements.size()+free_element_count)
   {
     log = "Linking Failed! Wrong number of Elements.\n";
     //log.append("Cubit " + std::to_string(CubitInterface::get_element_count()) + " FRD " + std::to_string(frd->elements.size()+CubitInterface::get_list_of_free_ref_entities("vertex").size()) +  "\n");
