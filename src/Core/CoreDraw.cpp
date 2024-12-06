@@ -733,15 +733,15 @@ bool CoreDraw::draw_load_trajectory(int id, double size)
             {
                 ccx_iface->silent_cmd("draw location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " color red");
                 ccx_iface->silent_cmd("draw line location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " location " + std::to_string(hit_coordinates[i][0]) + " " + std::to_string(hit_coordinates[i][1]) + " " + std::to_string(hit_coordinates[i][2]) +  " color red");
-                switch_color = false;
+                //switch_color = false;
             }else{
                 ccx_iface->silent_cmd("draw location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " color blue");
                 ccx_iface->silent_cmd("draw line location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " location " + std::to_string(hit_coordinates[i][0]) + " " + std::to_string(hit_coordinates[i][1]) + " " + std::to_string(hit_coordinates[i][2]) +  " color blue");
-                switch_color = true;
+                //switch_color = true;
             }
         }
     }
-    switch_color = false;
+    switch_color = true;
     for (size_t i = 0; i < face_ids.size(); i++)
     {
         if (face_ids[i].size()>0)
@@ -754,14 +754,14 @@ bool CoreDraw::draw_load_trajectory(int id, double size)
                     cmd.append(std::to_string(face_ids[i][ii]) + " ");
                 }
                 cmd.append("color red add");
-                switch_color = false;
+                //switch_color = false;
             }else{
                 for (size_t ii = 0; ii < face_ids[i].size(); ii++)
                 {
                     cmd.append(std::to_string(face_ids[i][ii]) + " ");
                 }
                 cmd.append("color blue add");
-                switch_color = true;
+                //switch_color = true;
             }
             ccx_iface->silent_cmd(cmd);    
         }

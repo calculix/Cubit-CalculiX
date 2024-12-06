@@ -1,10 +1,10 @@
 #!cubit
 reset
 create brick x 1 y 1 z 0.2
-vol 1 size 0.1
+vol 1 size 0.2
 mesh vol 1
 refine surface 1 numsplit 1 bias 1.0 depth 0
-#refine surface 1 numsplit 1 bias 1.0 depth 0
+refine surface 1 numsplit 1 bias 1.0 depth 0
 
 create vertex 1 1 1
 create vertex 0.5 1 1
@@ -16,7 +16,7 @@ create vertex -0.5 -0.5 1
 create vertex -1 -0.5 1
 create curve spline location vertex all with is_free delete
 
-curve 13 size 0.1
+curve 13 size 0.02
 mesh curve 13
 
 block 1 add vol 1
@@ -67,6 +67,7 @@ ccx hbc add bc displacement 1
 
 # create step
 ccx create step name "heattransfer" heattransfer
+ccx modify step 1 parameter inc 100000
 ccx modify step 1 heattransfer  totaltimeatstart 0 initialtimeincrement 1e-1 timeperiodofstep 10 minimumtimeincrement 1e-5 maximumtimeincrement 1e-1
 ccx step 1 add load trajectory 1
 ccx step 1 add fieldoutput 1 2
@@ -74,14 +75,7 @@ ccx step 1 add fieldoutput 1 2
 #job
 ccx create job name "trajectory_test"
 
-export ccx "trajectory_test.inp" overwrite
-#ccx run job 1
+#export ccx "trajectory_test.inp" overwrite
+ccx run job 1
 
 ccx draw load trajectory 1
-
-
-
-
-
-
-
