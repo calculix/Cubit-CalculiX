@@ -136,6 +136,18 @@ private:
   QListWidgetItem* list_specific_heat;
   QListWidgetItem* list_expansion;
   QListWidgetItem* list_conductivity;
+  QListWidgetItem* list_deformation_plasticity;
+  QListWidgetItem* list_mohr_coulomb;
+  QListWidgetItem* list_mohr_coulomb_hardening;
+  QListWidgetItem* list_cylclic_hardening;
+  QListWidgetItem* list_rate_dependent;
+  QListWidgetItem* list_creep;
+  QListWidgetItem* list_hyperelastic;
+  QListWidgetItem* list_hyperfoam;
+  QListWidgetItem* list_compression_only;
+  QListWidgetItem* list_tension_only;
+  QListWidgetItem* list_damping;
+
   // cards
   QFrame* card_frame;
   MaterialManagementElasticCard* elastic_widget;

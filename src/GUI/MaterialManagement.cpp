@@ -553,6 +553,17 @@ void MaterialManagement::createListItems(MaterialManagementItem *material)
   bool use_specific_heat = false;
   bool use_expansion = false;
   bool use_conductivity = false;
+  bool use_deformation_plasticity = false;
+  bool use_mohr_coulomb = false;
+  bool use_mohr_coulomb_hardening = false;
+  bool use_cylclic_hardening = false;
+  bool use_rate_dependent = false;
+  bool use_creep = false;
+  bool use_hyperelastic = false;
+  bool use_hyperfoam = false;
+  bool use_compression_only = false;
+  bool use_tension_only = false;
+  bool use_damping = false;
   
   for (size_t i = 0; i < material->properties.size(); i++)
   {
@@ -600,6 +611,83 @@ void MaterialManagement::createListItems(MaterialManagementItem *material)
         use_conductivity = true;
       }
     }
+    if ((material->group_properties[material->properties[i][0]][0]=="CCX_DEFORMATION_PLASTICITY_USE_CARD"))
+    {
+      if (material->property_scalar_gui[material->properties[i][2]]==1)
+      {
+        use_deformation_plasticity = true;
+      }
+    }
+    if ((material->group_properties[material->properties[i][0]][0]=="CCX_MOHR_COULOMB_USE_CARD"))
+    {
+      if (material->property_scalar_gui[material->properties[i][2]]==1)
+      {
+        use_mohr_coulomb = true;
+      }
+    }
+    if ((material->group_properties[material->properties[i][0]][0]=="CCX_MOHR_COULOMB_HARDENING_USE_CARD"))
+    {
+      if (material->property_scalar_gui[material->properties[i][2]]==1)
+      {
+        use_mohr_coulomb_hardening = true;
+      }
+    }
+    if ((material->group_properties[material->properties[i][0]][0]=="CCX_CYCLIC_HARDENING_USE_CARD"))
+    {
+      if (material->property_scalar_gui[material->properties[i][2]]==1)
+      {
+        use_cylclic_hardening = true;
+      }
+    }
+    if ((material->group_properties[material->properties[i][0]][0]=="CCX_RATE_DEPENDENT_USE_CARD"))
+    {
+      if (material->property_scalar_gui[material->properties[i][2]]==1)
+      {
+        use_rate_dependent = true;
+      }
+    }
+    if ((material->group_properties[material->properties[i][0]][0]=="CCX_CREEP_USE_CARD"))
+    {
+      if (material->property_scalar_gui[material->properties[i][2]]==1)
+      {
+        use_creep = true;
+      }
+    }
+    if ((material->group_properties[material->properties[i][0]][0]=="CCX_HYPERELASTIC_USE_CARD"))
+    {
+      if (material->property_scalar_gui[material->properties[i][2]]==1)
+      {
+        use_hyperelastic = true;
+      }
+    }
+    if ((material->group_properties[material->properties[i][0]][0]=="CCX_HYPERFOAM_USE_CARD"))
+    {
+      if (material->property_scalar_gui[material->properties[i][2]]==1)
+      {
+        use_hyperfoam = true;
+      }
+    }
+    if ((material->group_properties[material->properties[i][0]][0]=="CCX_COMPRESSION_ONLY_USE_CARD"))
+    {
+      if (material->property_scalar_gui[material->properties[i][2]]==1)
+      {
+        use_compression_only = true;
+      }
+    }
+    if ((material->group_properties[material->properties[i][0]][0]=="CCX_TENSION_ONLY_USE_CARD"))
+    {
+      if (material->property_scalar_gui[material->properties[i][2]]==1)
+      {
+        use_tension_only = true;
+      }
+    }
+    if ((material->group_properties[material->properties[i][0]][0]=="CCX_DAMPING_USE_CARD"))
+    {
+      if (material->property_scalar_gui[material->properties[i][2]]==1)
+      {
+        use_damping = true;
+      }
+    }
   }
 
   if (use_elastic)
@@ -642,6 +730,83 @@ void MaterialManagement::createListItems(MaterialManagementItem *material)
     list_conductivity = new QListWidgetItem("Conductivity",list_used);
   } else {
     list_conductivity = new QListWidgetItem("Conductivity",list_available);
+  }
+
+  if (use_deformation_plasticity)
+  {
+    list_deformation_plasticity = new QListWidgetItem("Deformation Plasticity",list_used);
+  } else {
+    list_deformation_plasticity = new QListWidgetItem("Deformation Plasticity",list_available);
+  }
+  
+  if (use_mohr_coulomb)
+  {
+    list_mohr_coulomb = new QListWidgetItem("Mohr Coulomb",list_used);
+  } else {
+    list_mohr_coulomb = new QListWidgetItem("Mohr Coulomb",list_available);
+  }
+
+  if (use_mohr_coulomb_hardening)
+  {
+    list_mohr_coulomb_hardening = new QListWidgetItem("Mohr Coulomb Hardening",list_used);
+  } else {
+    list_mohr_coulomb_hardening = new QListWidgetItem("Mohr Coulomb Hardening",list_available);
+  }
+
+  if (use_cylclic_hardening)
+  {
+    list_cylclic_hardening = new QListWidgetItem("Cyclic Hardening",list_used);
+  } else {
+    list_cylclic_hardening = new QListWidgetItem("Cyclic Hardening",list_available);
+  }
+
+  if (use_rate_dependent)
+  {
+    list_rate_dependent = new QListWidgetItem("Rate Dependent",list_used);
+  } else {
+    list_rate_dependent = new QListWidgetItem("Rate Dependent",list_available);
+  }
+
+  if (use_creep)
+  {
+    list_creep = new QListWidgetItem("Creep",list_used);
+  } else {
+    list_creep = new QListWidgetItem("Creep",list_available);
+  }
+
+  if (use_hyperelastic)
+  {
+    list_hyperelastic = new QListWidgetItem("Hyperelastic",list_used);
+  } else {
+    list_hyperelastic = new QListWidgetItem("Hyperelastic",list_available);
+  }
+
+  if (use_hyperfoam)
+  {
+    list_hyperfoam = new QListWidgetItem("Hyperfoam",list_used);
+  } else {
+    list_hyperfoam = new QListWidgetItem("Hyperfoam",list_available);
+  }
+
+  if (use_compression_only)
+  {
+    list_compression_only = new QListWidgetItem("Compression Only",list_used);
+  } else {
+    list_compression_only = new QListWidgetItem("Compression Only",list_available);
+  }
+
+  if (use_tension_only)
+  {
+    list_tension_only = new QListWidgetItem("Tension Only",list_used);
+  } else {
+    list_tension_only = new QListWidgetItem("Tension Only",list_available);
+  }
+
+  if (use_damping)
+  {
+    list_damping = new QListWidgetItem("Damping",list_used);
+  } else {
+    list_damping = new QListWidgetItem("Damping",list_available);
   }
 
   list_available->sortItems();
@@ -728,6 +893,94 @@ void MaterialManagement::switchListItem(QListWidget* source, QListWidget* target
         current_material_item->setScalarPropertyGUI("CCX_CONDUCTIVITY_USE_CARD", 1);
       }else{
         current_material_item->setScalarPropertyGUI("CCX_CONDUCTIVITY_USE_CARD", 0);
+      } 
+    }else if (newItem->text()=="Deformation Plasticity")
+    {
+      if (current_material_item->getScalarPropertyGUI("CCX_DEFORMATION_PLASTICITY_USE_CARD")==0)
+      {
+        current_material_item->setScalarPropertyGUI("CCX_DEFORMATION_PLASTICITY_USE_CARD", 1);
+      }else{
+        current_material_item->setScalarPropertyGUI("CCX_DEFORMATION_PLASTICITY_USE_CARD", 0);
+      } 
+    }else if (newItem->text()=="Mohr Coulomb")
+    {
+      if (current_material_item->getScalarPropertyGUI("CCX_MOHR_COULOMB_USE_CARD")==0)
+      {
+        current_material_item->setScalarPropertyGUI("CCX_MOHR_COULOMB_USE_CARD", 1);
+      }else{
+        current_material_item->setScalarPropertyGUI("CCX_MOHR_COULOMB_USE_CARD", 0);
+      } 
+    }else if (newItem->text()=="Mohr Coulomb Hardening")
+    {
+      if (current_material_item->getScalarPropertyGUI("CCX_MOHR_COULOMB_HARDENING_USE_CARD")==0)
+      {
+        current_material_item->setScalarPropertyGUI("CCX_MOHR_COULOMB_HARDENING_USE_CARD", 1);
+      }else{
+        current_material_item->setScalarPropertyGUI("CCX_MOHR_COULOMB_HARDENING_USE_CARD", 0);
+      } 
+    }else if (newItem->text()=="Cyclic Hardening")
+    {
+      if (current_material_item->getScalarPropertyGUI("CCX_CYCLIC_HARDENING_USE_CARD")==0)
+      {
+        current_material_item->setScalarPropertyGUI("CCX_CYCLIC_HARDENING_USE_CARD", 1);
+      }else{
+        current_material_item->setScalarPropertyGUI("CCX_CYCLIC_HARDENING_USE_CARD", 0);
+      } 
+    }else if (newItem->text()=="Rate Dependent")
+    {
+      if (current_material_item->getScalarPropertyGUI("CCX_RATE_DEPENDENT_USE_CARD")==0)
+      {
+        current_material_item->setScalarPropertyGUI("CCX_RATE_DEPENDENT_USE_CARD", 1);
+      }else{
+        current_material_item->setScalarPropertyGUI("CCX_RATE_DEPENDENT_USE_CARD", 0);
+      } 
+    }else if (newItem->text()=="Creep")
+    {
+      if (current_material_item->getScalarPropertyGUI("CCX_CREEP_USE_CARD")==0)
+      {
+        current_material_item->setScalarPropertyGUI("CCX_CREEP_USE_CARD", 1);
+      }else{
+        current_material_item->setScalarPropertyGUI("CCX_CREEP_USE_CARD", 0);
+      } 
+    }else if (newItem->text()=="Hyperelastic")
+    {
+      if (current_material_item->getScalarPropertyGUI("CCX_HYPERELASTIC_USE_CARD")==0)
+      {
+        current_material_item->setScalarPropertyGUI("CCX_HYPERELASTIC_USE_CARD", 1);
+      }else{
+        current_material_item->setScalarPropertyGUI("CCX_HYPERELASTIC_USE_CARD", 0);
+      } 
+    }else if (newItem->text()=="Hyperfoam")
+    {
+      if (current_material_item->getScalarPropertyGUI("CCX_HYPERFOAM_USE_CARD")==0)
+      {
+        current_material_item->setScalarPropertyGUI("CCX_HYPERFOAM_USE_CARD", 1);
+      }else{
+        current_material_item->setScalarPropertyGUI("CCX_HYPERFOAM_USE_CARD", 0);
+      } 
+    }else if (newItem->text()=="Compression Only")
+    {
+      if (current_material_item->getScalarPropertyGUI("CCX_COMPRESSION_ONLY_USE_CARD")==0)
+      {
+        current_material_item->setScalarPropertyGUI("CCX_COMPRESSION_ONLY_USE_CARD", 1);
+      }else{
+        current_material_item->setScalarPropertyGUI("CCX_COMPRESSION_ONLY_USE_CARD", 0);
+      } 
+    }else if (newItem->text()=="Tension Only")
+    {
+      if (current_material_item->getScalarPropertyGUI("CCX_TENSION_ONLY_USE_CARD")==0)
+      {
+        current_material_item->setScalarPropertyGUI("CCX_TENSION_ONLY_USE_CARD", 1);
+      }else{
+        current_material_item->setScalarPropertyGUI("CCX_TENSION_ONLY_USE_CARD", 0);
+      } 
+    }else if (newItem->text()=="Damping")
+    {
+      if (current_material_item->getScalarPropertyGUI("CCX_DAMPING_USE_CARD")==0)
+      {
+        current_material_item->setScalarPropertyGUI("CCX_DAMPING_USE_CARD", 1);
+      }else{
+        current_material_item->setScalarPropertyGUI("CCX_DAMPING_USE_CARD", 0);
       } 
     }
   }

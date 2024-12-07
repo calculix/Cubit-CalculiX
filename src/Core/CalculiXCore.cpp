@@ -2497,7 +2497,6 @@ std::vector<double> CalculiXCore::get_block_bounding_box_center(int block_id)
   return coord;
 }
 
-
 std::string CalculiXCore::get_material_name(int material_id)
 {
   std::string material_name;
@@ -2506,6 +2505,11 @@ std::string CalculiXCore::get_material_name(int material_id)
   material_name = mat_iface->get_material_name(material);
   
   return material_name;
+}
+
+std::string CalculiXCore::get_material_prefix(std::string material_name)
+{
+  return mat->get_material_prefix(material_name);
 }
 
 int CalculiXCore::get_group_property_size(std::string group_property)
@@ -6751,7 +6755,13 @@ QIcon CalculiXCore::getIcon2(std::string name)
 bool CalculiXCore::prepare_export()
 {
   bool status = true;
-  status = loadstrajectory->prepare_export();
+  std::vector<int> check;
+  
+  check = this->get_loadstrajectory_ids();
+  if (check.size()>0)
+  {
+    status = loadstrajectory->prepare_export();
+  }
 
   return status;
 }
@@ -6759,8 +6769,14 @@ bool CalculiXCore::prepare_export()
 bool CalculiXCore::clean_export()
 {
   bool status = true;
-  status = loadstrajectory->clean_export();
-
+  std::vector<int> check;
+  
+  check = this->get_loadstrajectory_ids();
+  if (check.size()>0)
+  {
+    status = loadstrajectory->clean_export();
+  }
+  
   return status;
 }
 

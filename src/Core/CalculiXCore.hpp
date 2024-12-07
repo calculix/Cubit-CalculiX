@@ -95,6 +95,7 @@ public:
   std::vector<int> get_block_element_ids(int block_id); // gets the block global element ids
   std::vector<double> get_block_bounding_box_center(int block_id); // gets the blocks bounding box center
   std::string get_material_name(int material_id); // gets the material name
+  std::string get_material_prefix(std::string material_name); // gets a prefix for the material name if needed
   int get_group_property_size(std::string group_property); // gets the size of a material group property 
   std::string get_nodeset_name(int nodeset_id); // gets the nodeset name
   std::vector<std::vector<double>> get_nodeset_entities_coords(int nodeset_id); // gets the nodeset entities coordinates

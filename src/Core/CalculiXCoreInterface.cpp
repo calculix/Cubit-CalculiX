@@ -160,6 +160,11 @@ std::string CalculiXCoreInterface::get_material_name(int material_id)
   return ccx_core.get_material_name(material_id);
 }
 
+std::string CalculiXCoreInterface::get_material_prefix(std::string material_name)
+{
+  return ccx_core.get_material_prefix(material_name);
+}
+
 int CalculiXCoreInterface::get_group_property_size(std::string group_property)
 {
   return ccx_core.get_group_property_size(group_property);

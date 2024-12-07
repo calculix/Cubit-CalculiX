@@ -62,6 +62,14 @@ bool CoreMaterials::init()
     group_properties_description.push_back("SET 1 TO USE PLASTIC HARDENING=KINEMATIC CARD");
     group_properties.push_back({material_card[1] + "KIN_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE", "4","3"});
     group_properties_description.push_back("KINEMATIC:\nvon Mises Yield Stress, equivalent plastic-strain, Temperature");
+    group_properties.push_back({material_card[1] + "COMBINED_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE PLASTIC HARDENING=COMBINED CARD");
+    group_properties.push_back({material_card[1] + "COMBINED_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE", "4","3"});
+    group_properties_description.push_back("COMBINED:\nvon Mises Yield Stress, equivalent plastic-strain, Temperature");
+    group_properties.push_back({material_card[1] + "JOHNSON_COOK_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE PLASTIC HARDENING=JOHNSON COOK CARD");
+    group_properties.push_back({material_card[1] + "JOHNSON_COOK", "4","6"});
+    group_properties_description.push_back("JOHNSON_COOK:\nA,B,n,m,Tm,T0");
 
     material_card[0]="DENSITY"; // card name
     material_card[1]="CCX_DENSITY_"; // property prefix
@@ -167,8 +175,105 @@ bool CoreMaterials::init()
     group_properties.push_back({material_card[1] + "CREEP", "4", "4"});
     group_properties_description.push_back(u8"CREEP:\nA,n,m,Temperature");
 
-    //*HYPERELASTIC
-    //*HYPERFOAM
+    material_card[0]="HYPERELASTIC"; // card name
+    material_card[1]="CCX_HYPERELASTIC_"; // property prefix
+    material_cards.push_back(material_card);
+    group_properties.push_back({material_card[1] + "USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE HYPERELASTIC CARD"); // needed for Material Management GUI
+    group_properties.push_back({material_card[1] + "ARRUDA_BOYCE_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE HYPERELASTIC ARRUDA BOYCE CARD");
+    group_properties.push_back({material_card[1] + "ARRUDA_BOYCE", "4", "4"});
+    group_properties_description.push_back("ARRUDA BOYCE:\n\u03BC,\u03BBm,D, Temperature");
+    group_properties.push_back({material_card[1] + "MOONEY_RIVLIN_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE HYPERELASTIC MOONEY RIVLIN CARD");
+    group_properties.push_back({material_card[1] + "MOONEY_RIVLIN", "4", "4"});
+    group_properties_description.push_back("MOONEY RIVLIN:\nC10,C01,D1, Temperature");
+    group_properties.push_back({material_card[1] + "NEO_HOOKE_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE HYPERELASTIC NEO HOOKE CARD");
+    group_properties.push_back({material_card[1] + "NEO_HOOKE", "4", "3"});
+    group_properties_description.push_back("NEO HOOKE:\nC10,D1, Temperature");
+    group_properties.push_back({material_card[1] + "OGDEN_N1_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE HYPERELASTIC OGDEN N1 CARD");
+    group_properties.push_back({material_card[1] + "OGDEN_N1", "4", "4"});
+    group_properties_description.push_back("OGDEN N1:\n\u03BC1,\u03B11,D1, Temperature");
+    group_properties.push_back({material_card[1] + "OGDEN_N2_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE HYPERELASTIC OGDEN N2 CARD");
+    group_properties.push_back({material_card[1] + "OGDEN_N2", "4", "7"});
+    group_properties_description.push_back("OGDEN N2:\n\u03BC1,\u03B11,D1,\u03BC2,\u03B12,D2, Temperature");
+    group_properties.push_back({material_card[1] + "OGDEN_N3_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE HYPERELASTIC OGDEN N3 CARD");
+    group_properties.push_back({material_card[1] + "OGDEN_N3", "4", "10"});
+    group_properties_description.push_back("OGDEN N3:\n\u03BC1,\u03B11,D1,\u03BC2,\u03B12,D2,\u03BC3,\u03B13,D3, Temperature");
+    group_properties.push_back({material_card[1] + "POLYNOMIAL_N1_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE HYPERELASTIC POLYNOMIAL N1 CARD");
+    group_properties.push_back({material_card[1] + "POLYNOMIAL_N1", "4", "4"});
+    group_properties_description.push_back("POLYNOMIAL N1:\nC10,C01,D1, Temperature");
+    group_properties.push_back({material_card[1] + "POLYNOMIAL_N2_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE HYPERELASTIC POLYNOMIAL N2 CARD");
+    group_properties.push_back({material_card[1] + "POLYNOMIAL_N2", "4", "8"});
+    group_properties_description.push_back("POLYNOMIAL N2:\nC10,C01,C20,C11,C02,D1,D2, Temperature");
+    group_properties.push_back({material_card[1] + "POLYNOMIAL_N3_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE HYPERELASTIC POLYNOMIAL N3 CARD");
+    group_properties.push_back({material_card[1] + "POLYNOMIAL_N3", "4", "13"});
+    group_properties_description.push_back("POLYNOMIAL N3:\nC10,C01,C20,C11,C02,C30,C21,C12,C03,D1,D2,D3, Temperature");
+    group_properties.push_back({material_card[1] + "REDUCED_POLYNOMIAL_N1_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE HYPERELASTIC REDUCED POLYNOMIAL N1 CARD");
+    group_properties.push_back({material_card[1] + "REDUCED_POLYNOMIAL_N1", "4", "3"});
+    group_properties_description.push_back("REDUCED POLYNOMIAL N1:\nC10,D1, Temperature");
+    group_properties.push_back({material_card[1] + "REDUCED_POLYNOMIAL_N2_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE HYPERELASTIC REDUCED POLYNOMIAL N2 CARD");
+    group_properties.push_back({material_card[1] + "REDUCED_POLYNOMIAL_N2", "4", "5"});
+    group_properties_description.push_back("REDUCED POLYNOMIAL N2:\nC10,C20,D1,D2, Temperature");
+    group_properties.push_back({material_card[1] + "REDUCED_POLYNOMIAL_N3_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE HYPERELASTIC REDUCED POLYNOMIAL N3 CARD");
+    group_properties.push_back({material_card[1] + "REDUCED_POLYNOMIAL_N3", "4", "7"});
+    group_properties_description.push_back("REDUCED POLYNOMIAL N3:\nC10,C20,C30,D1,D2,D3, Temperature");
+    group_properties.push_back({material_card[1] + "YEOH_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE HYPERELASTIC YEOH CARD");
+    group_properties.push_back({material_card[1] + "YEOH", "4", "7"});
+    group_properties_description.push_back("YEOH:\nC10,C20,C30,D1,D2,D3, Temperature");
+    
+    material_card[0]="HYPERFOAM"; // card name
+    material_card[1]="CCX_HYPERFOAM_"; // property prefix
+    material_cards.push_back(material_card);
+    group_properties.push_back({material_card[1] + "USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE HYPERFOAM CARD"); // needed for Material Management GUI
+    group_properties.push_back({material_card[1] + "HYPERFOAM_N1_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE HYPERFOAM N1 CARD");
+    group_properties.push_back({material_card[1] + "HYPERFOAM_N1", "4", "4"});
+    group_properties_description.push_back("HYPERFOAM N1:\n\u03BC1,\u03B11,\u03BD1, Temperature");
+    group_properties.push_back({material_card[1] + "HYPERFOAM_N2_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE HYPERFOAM N2 CARD");
+    group_properties.push_back({material_card[1] + "HYPERFOAM_N2", "4", "7"});
+    group_properties_description.push_back("HYPERFOAM N2:\n\u03BC1,\u03B11,\u03BC2,\u03B12,\u03BD1,\u03BD2, Temperature");
+    group_properties.push_back({material_card[1] + "HYPERFOAM_N3_USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE HYPERFOAM N3 CARD");
+    group_properties.push_back({material_card[1] + "HYPERFOAM_N3", "4", "10"});
+    group_properties_description.push_back("HYPERFOAM N3:\n\u03BC1,\u03B11,\u03BC2,\u03B12,\u03BC3,\u03B13,\u03BD1,\u03BD2,\u03BD3, Temperature");
+    
+    material_card[0]="COMPRESSION_ONLY"; // card name
+    material_card[1]="CCX_COMPRESSION_ONLY_"; // property prefix
+    material_cards.push_back(material_card);
+    group_properties.push_back({material_card[1] + "USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE COMPRESSION ONLY CARD"); // needed for Material Management GUI
+    group_properties.push_back({material_card[1] + "COMPRESSION_ONLY", "4", "3"});
+    group_properties_description.push_back(u8"COMPRESSION ONLY:\nE,maximum allowed value,Temperature");
+
+    material_card[0]="TENSION_ONLY"; // card name
+    material_card[1]="CCX_TENSION_ONLY_"; // property prefix
+    material_cards.push_back(material_card);
+    group_properties.push_back({material_card[1] + "USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE TENSION ONLY CARD"); // needed for Material Management GUI
+    group_properties.push_back({material_card[1] + "TENSION_ONLY", "4", "3"});
+    group_properties_description.push_back(u8"TENSION ONLY:\nE,maximum allowed value,Temperature");
+
+    material_card[0]="DAMPING"; // card name
+    material_card[1]="CCX_DAMPING_"; // property prefix
+    material_cards.push_back(material_card);
+    group_properties.push_back({material_card[1] + "USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE DAMPING CARD"); // needed for Material Management GUI
+    group_properties.push_back({material_card[1] + "DAMPING", "1"});
+    group_properties_description.push_back(u8"DAMPING:\nStructural");
 
     //*ELECTRICAL CONDUCTIVITY
     //*MAGNETIC PERMEABILITY
@@ -177,11 +282,10 @@ bool CoreMaterials::init()
     //*SPECIFIC GAS CONSTANT
 
     //*USER MATERIAL
-    //*COMPRESSION ONLY
     //*DEPVAR
 
+    //DAMPING
     //JOHNSON COOK? NEEDS CCX 2.22
-
 
 
     mat_iface->create_group(group_name);
@@ -294,7 +398,10 @@ std::string CoreMaterials::get_material_export() // get a list of the CalculiX M
       }
       // CUSTOMLINE END
 
-      materials_export_list.push_back("*MATERIAL, NAME=" + material_name_list[i]); //material_name
+      //check if name needs to be changed, like for compression only
+      std::string prefix = this->get_material_prefix(material_name_list[i]);
+
+      materials_export_list.push_back("*MATERIAL, NAME=" + prefix + material_name_list[i]); //material_name
       materials_export_list.push_back(this->get_material_cards_export(material_name_list[i],group_name));
 
       // CUSTOMLINE START
@@ -487,6 +594,45 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
               material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
               material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
               material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + "\n");
+            }
+          }
+        }
+        prop = mat_iface->get_property(material_card[1] + "COMBINED_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*PLASTIC,HARDENING=COMBINED\n");
+
+            prop = mat_iface->get_property(material_card[1] + "COMBINED_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + "\n");
+            }
+          }
+        }
+        prop = mat_iface->get_property(material_card[1] + "JOHNSON_COOK_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*PLASTIC,HARDENING=JOHNSON COOK\n");
+
+            prop = mat_iface->get_property(material_card[1] + "JOHNSON_COOK");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][3]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][4]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][5]) + "\n");
             }
           }
         }
@@ -836,10 +982,441 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
         }
       }
     }
+    
+    material_card[0]="HYPERELASTIC"; // card name
+    material_card[1]="CCX_HYPERELASTIC_"; // property prefix
+    
+    prop = mat_iface->get_property(material_card[1] + "USE_CARD");
+    if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+    { 
+      if (prop_scalar==1)
+      { 
+        prop = mat_iface->get_property(material_card[1] + "ARRUDA_BOYCE_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*HYPERELASTIC,ARRUDA-BOYCE\n");
 
+            prop = mat_iface->get_property(material_card[1] + "ARRUDA_BOYCE");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
 
-    //*HYPERELASTIC
-    //*HYPERFOAM
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][3]) + "\n");
+            }
+          }
+        }
+
+        prop = mat_iface->get_property(material_card[1] + "MOONEY_RIVLIN_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*HYPERELASTIC,MOONEY-RIVLIN\n");
+
+            prop = mat_iface->get_property(material_card[1] + "MOONEY_RIVLIN");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][3]) + "\n");
+            }
+          }
+        }
+
+        prop = mat_iface->get_property(material_card[1] + "NEO_HOOKE_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*HYPERELASTIC,NEO HOOKE\n");
+
+            prop = mat_iface->get_property(material_card[1] + "NEO_HOOKE");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + "\n");
+            }
+          }
+        }
+
+        prop = mat_iface->get_property(material_card[1] + "OGDEN_N1_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*HYPERELASTIC,OGDEN,N=1\n");
+
+            prop = mat_iface->get_property(material_card[1] + "OGDEN_N1");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][3]) + "\n");
+            }
+          }
+        }
+
+        prop = mat_iface->get_property(material_card[1] + "OGDEN_N2_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*HYPERELASTIC,OGDEN,N=2\n");
+
+            prop = mat_iface->get_property(material_card[1] + "OGDEN_N2");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][3]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][4]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][5]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][6]) + "\n");
+            }
+          }
+        }
+
+        prop = mat_iface->get_property(material_card[1] + "OGDEN_N3_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*HYPERELASTIC,OGDEN,N=3\n");
+
+            prop = mat_iface->get_property(material_card[1] + "OGDEN_N3");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][3]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][4]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][5]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][6]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][7]) + ",\n");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][8]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][9]) + "\n");
+            }
+          }
+        }
+
+        prop = mat_iface->get_property(material_card[1] + "POLYNOMIAL_N1_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*HYPERELASTIC,POLYNOMIAL,N=1\n");
+
+            prop = mat_iface->get_property(material_card[1] + "POLYNOMIAL_N1");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][3]) + "\n");
+            }
+          }
+        }
+
+        prop = mat_iface->get_property(material_card[1] + "POLYNOMIAL_N2_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*HYPERELASTIC,POLYNOMIAL,N=2\n");
+
+            prop = mat_iface->get_property(material_card[1] + "POLYNOMIAL_N2");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][3]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][4]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][5]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][6]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][7]) + "\n");
+            }
+          }
+        }
+
+        prop = mat_iface->get_property(material_card[1] + "POLYNOMIAL_N3_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*HYPERELASTIC,POLYNOMIAL,N=3\n");
+
+            prop = mat_iface->get_property(material_card[1] + "POLYNOMIAL_N3");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][3]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][4]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][5]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][6]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][7]) + ",\n");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][8]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][9]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][10]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][11]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][12]) + "\n");
+            }
+          }
+        }
+
+        prop = mat_iface->get_property(material_card[1] + "REDUCED_POLYNOMIAL_N1_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*HYPERELASTIC,REDUCED_POLYNOMIAL,N=1\n");
+
+            prop = mat_iface->get_property(material_card[1] + "REDUCED_POLYNOMIAL_N1");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + "\n");
+            }
+          }
+        }
+
+        prop = mat_iface->get_property(material_card[1] + "REDUCED_POLYNOMIAL_N2_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*HYPERELASTIC,REDUCED_POLYNOMIAL,N=2\n");
+
+            prop = mat_iface->get_property(material_card[1] + "REDUCED_POLYNOMIAL_N2");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][3]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][4]) + "\n");
+            }
+          }
+        }
+
+        prop = mat_iface->get_property(material_card[1] + "REDUCED_POLYNOMIAL_N3_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*HYPERELASTIC,REDUCED_POLYNOMIAL,N=3\n");
+
+            prop = mat_iface->get_property(material_card[1] + "REDUCED_POLYNOMIAL_N3");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][3]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][4]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][5]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][6]) + "\n");
+            }
+          }
+        }
+
+        prop = mat_iface->get_property(material_card[1] + "YEOH_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*HYPERELASTIC,YEOH\n");
+
+            prop = mat_iface->get_property(material_card[1] + "YEOH");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][3]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][4]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][5]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][6]) + "\n");
+            }
+          }
+        }
+      }
+    }
+    
+    
+    material_card[0]="HYPERFOAM"; // card name
+    material_card[1]="CCX_HYPERFOAM_"; // property prefix
+    
+    prop = mat_iface->get_property(material_card[1] + "USE_CARD");
+    if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+    {
+      if (prop_scalar==1)
+      {
+        prop = mat_iface->get_property(material_card[1] + "HYPERFOAM_N1_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*HYPERFOAM,N=1\n");
+
+            prop = mat_iface->get_property(material_card[1] + "HYPERFOAM_N1");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][3]) + "\n");
+            }
+          }
+        }
+
+        prop = mat_iface->get_property(material_card[1] + "HYPERFOAM_N2_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*HYPERFOAM,N=2\n");
+
+            prop = mat_iface->get_property(material_card[1] + "HYPERFOAM_N2");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][3]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][4]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][5]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][6]) + "\n");
+            }
+          }
+        }
+
+        prop = mat_iface->get_property(material_card[1] + "HYPERFOAM_N3_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          {
+            material_cards_export.append("*HYPERFOAM,N=3\n");
+
+            prop = mat_iface->get_property(material_card[1] + "HYPERFOAM_N3");
+            mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+            for (size_t i = 0; i < prop_matrix.size(); i++)
+            {
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][3]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][4]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][5]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][6]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][7]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][8]) + ",");
+              material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][9]) + "\n");
+            }
+          }
+        }
+      }
+    }
+
+    material_card[0]="COMPRESSION_ONLY"; // card name
+    material_card[1]="CCX_COMPRESSION_ONLY_"; // property prefix
+    
+    prop = mat_iface->get_property(material_card[1] + "USE_CARD");
+    if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+    {
+      if (prop_scalar==1)
+      {
+        material_cards_export.append("*USER MATERIAL,CONSTANTS=2\n");
+
+        prop = mat_iface->get_property(material_card[1] + "COMPRESSION_ONLY");
+        mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+        for (size_t i = 0; i < prop_matrix.size(); i++)
+        {
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + "\n");
+        }
+      }
+    }
+ 
+    material_card[0]="TENSION_ONLY"; // card name
+    material_card[1]="CCX_TENSION_ONLY_"; // property prefix
+    
+    prop = mat_iface->get_property(material_card[1] + "USE_CARD");
+    if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+    {
+      if (prop_scalar==1)
+      {
+        material_cards_export.append("*USER MATERIAL,CONSTANTS=2\n");
+
+        prop = mat_iface->get_property(material_card[1] + "TENSION_ONLY");
+        mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+        for (size_t i = 0; i < prop_matrix.size(); i++)
+        {
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + "\n");
+        }
+      }
+    }
+
+    material_card[0]="DAMPING"; // card name
+    material_card[1]="CCX_DAMPING_"; // property prefix
+    
+    prop = mat_iface->get_property(material_card[1] + "USE_CARD");
+    if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+    {
+      if (prop_scalar==1)
+      {
+        prop = mat_iface->get_property(material_card[1] + "DAMPING");
+        mat_iface->get_material_property_value(material, prop, prop_scalar);
+        material_cards_export.append("*DAMPING,STRUCTURAL=" + std::to_string(prop_scalar) + "\n");
+      }
+    }
 
     //*ELECTRICAL CONDUCTIVITY
     //*MAGNETIC PERMEABILITY
@@ -849,13 +1426,76 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
     //*SPECIFIC GAS CONSTANT
 
     //*USER MATERIAL
-    //*COMPRESSION ONLY
     //*DEPVAR
-
-
 
   } 
   return material_cards_export;
+}
+
+std::string CoreMaterials::get_material_prefix(std::string material_name)
+{ 
+  MaterialInterface::Material material;
+  MaterialInterface::PropertyGroup group;
+  std::string group_name;
+  MaterialInterface::Property prop;
+  material = mat_iface->get_material(material_name);
+  group = mat_iface->get_material_property_group(material);
+  group_name = mat_iface->get_group_name(group);
+  double prop_scalar;
+  MaterialVector prop_vector;
+  MaterialMatrix prop_matrix;
+  std::vector<std::string> material_card(2);
+  std::string prefix="";  
+
+  if (group_name=="CalculiX-FEA")
+  {
+    // check if card is needed and then process the properties
+    material_card[0]="COMPRESSION_ONLY"; // card name
+    material_card[1]="CCX_COMPRESSION_ONLY_"; // property prefix
+    
+    prop = mat_iface->get_property(material_card[1] + "USE_CARD");
+    if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+    {
+      if (prop_scalar==1)
+      {
+        prefix="COMPRESSION_ONLY_";
+        return prefix;
+      }
+    }
+    material_card[0]="TENSION_ONLY"; // card name
+    material_card[1]="CCX_TENSION_ONLY_"; // property prefix
+    
+    prop = mat_iface->get_property(material_card[1] + "USE_CARD");
+    if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+    {
+      if (prop_scalar==1)
+      {
+        prefix="TENSION_ONLY_";
+        return prefix;
+      }
+    }
+
+    material_card[0]="PLASTIC"; // card name
+    material_card[1]="CCX_PLASTIC_"; // property prefix
+    prop = mat_iface->get_property(material_card[1] + "USE_CARD");
+    if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+    { 
+      if (prop_scalar==1)
+      {       
+        prop = mat_iface->get_property(material_card[1] + "JOHNSON_COOK_USE_CARD");
+        if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+        {
+          if (prop_scalar==1)
+          {
+            prefix="JOHNSONCOOK_";
+          return prefix;  
+          }
+        }
+      }
+    }
+ 
+  } 
+  return prefix;
 }
 
 bool CoreMaterials::check_material_exists(int material_id)

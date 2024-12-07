@@ -368,7 +368,10 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
       sub_section_data_id = get_solid_section_data_id_from_solid_section_id(sections_data[i][2]);
 
       str_temp = "*SOLID SECTION, MATERIAL=";
-      str_temp.append(CubitInterface::get_material_name(std::stoi(solid_section_data[sub_section_data_id][2])));
+      //str_temp.append(CubitInterface::get_material_name(std::stoi(solid_section_data[sub_section_data_id][2])));
+      std::string material_name = CubitInterface::get_material_name(std::stoi(solid_section_data[sub_section_data_id][2]));
+      material_name = ccx_iface->get_material_prefix(material_name) + material_name;
+      str_temp.append(material_name); 
       str_temp.append(", ELSET=");
       str_temp.append(ccx_iface->get_block_name(std::stoi(solid_section_data[sub_section_data_id][1])));
       
@@ -392,7 +395,10 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
       sub_section_data_id = get_shell_section_data_id_from_shell_section_id(sections_data[i][2]);
 
       str_temp = "*SHELL SECTION, MATERIAL=";
-      str_temp.append(CubitInterface::get_material_name(std::stoi(shell_section_data[sub_section_data_id][2])));
+      //str_temp.append(CubitInterface::get_material_name(std::stoi(shell_section_data[sub_section_data_id][2])));
+      std::string material_name = CubitInterface::get_material_name(std::stoi(shell_section_data[sub_section_data_id][2]));
+      material_name = ccx_iface->get_material_prefix(material_name) + material_name;
+      str_temp.append(material_name);
       str_temp.append(", ELSET=");
       str_temp.append(ccx_iface->get_block_name(std::stoi(shell_section_data[sub_section_data_id][1])));
       
@@ -421,7 +427,10 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
       sub_section_data_id = get_beam_section_data_id_from_beam_section_id(sections_data[i][2]);
 
       str_temp = "*BEAM SECTION, MATERIAL=";
-      str_temp.append(CubitInterface::get_material_name(std::stoi(beam_section_data[sub_section_data_id][2])));
+      //str_temp.append(CubitInterface::get_material_name(std::stoi(beam_section_data[sub_section_data_id][2])));
+      std::string material_name = CubitInterface::get_material_name(std::stoi(beam_section_data[sub_section_data_id][2]));
+      material_name = ccx_iface->get_material_prefix(material_name) + material_name;
+      str_temp.append(material_name);
       str_temp.append(", ELSET=");
       str_temp.append(ccx_iface->get_block_name(std::stoi(beam_section_data[sub_section_data_id][1])));
       
@@ -464,7 +473,10 @@ std::string CoreSections::get_section_export() // get a list of the CalculiX sec
       sub_section_data_id = get_membrane_section_data_id_from_membrane_section_id(sections_data[i][2]);
 
       str_temp = "*MEMBRANE SECTION, MATERIAL=";
-      str_temp.append(CubitInterface::get_material_name(std::stoi(membrane_section_data[sub_section_data_id][2])));
+      //str_temp.append(CubitInterface::get_material_name(std::stoi(membrane_section_data[sub_section_data_id][2])));
+      std::string material_name = CubitInterface::get_material_name(std::stoi(membrane_section_data[sub_section_data_id][2]));
+      material_name = ccx_iface->get_material_prefix(material_name) + material_name;
+      str_temp.append(material_name);
       str_temp.append(", ELSET=");
       str_temp.append(ccx_iface->get_block_name(std::stoi(membrane_section_data[sub_section_data_id][1])));
       

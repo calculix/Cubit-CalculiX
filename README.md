@@ -44,7 +44,7 @@ Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/
 - Contact Pairs
 - Amplitudes
 - Orientations
-- Loads (CLOAD, DLOAD, DFLUX, GRAVITY, CENTRIF)
+- Loads (CLOAD, DLOAD, DFLUX, GRAVITY, CENTRIF, TRAJECTORY)
 - Boundary Conditions (Displacements, Temperatures)
 - Initial Conditions (Displacements, Temperatures)
 - History Outputs (NODE PRINT, EL PRINT, CONTACT PRINT)
