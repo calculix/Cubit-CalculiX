@@ -101,3 +101,5 @@
 2024-12-04 working on trajectory
 2024-12-05 working on trajectory and speeding up the gui update progress.
 2024-12-06 working on trajectory and speeding up the gui update progress.
+2024-12-07 updating highlight and draw for trajectory
+2024-12-07 start implementing more material keywords

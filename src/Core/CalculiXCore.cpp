@@ -4643,6 +4643,19 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
     {
       entities.push_back({"block",std::to_string(loadscentrifugal->loads_data[data_id][4])});
     }
+  }else if (entity=="loadstrajectory")
+  {
+    data_id = loadstrajectory->get_loads_data_id_from_load_id(id);
+    if (data_id!=-1)
+    {
+      entities.push_back({"curve",std::to_string(loadstrajectory->loads_data[data_id][2])});
+      entities.push_back({"vertex",std::to_string(loadstrajectory->loads_data[data_id][3])});
+      std::vector<int> surface_ids = loadstrajectory->get_fire_ray_surface_ids_from_fire_ray_surface_id(loadstrajectory->loads_data[data_id][4]);
+      for (size_t i = 0; i < surface_ids.size(); i++)
+      {
+        entities.push_back({"surface",std::to_string(surface_ids[i])});
+      }
+    }
   }else if (entity=="bcsdisplacement")
   {
     entities.push_back({"displacement",std::to_string(id)});

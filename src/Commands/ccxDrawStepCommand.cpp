@@ -256,7 +256,7 @@ bool ccxDrawStepCommand::execute(CubitCommandData &data)
       output = "Failed ccx draw load centrifugal!\n";
       PRINT_ERROR(output.c_str());
     }
-    if (!ccx_iface.draw_load_centrifugal(trajectory_id,size_value))
+    if (!ccx_iface.draw_load_trajectory(trajectory_id,size_value))
     {
       output = "Failed ccx draw load trajectory!\n";
       PRINT_ERROR(output.c_str());

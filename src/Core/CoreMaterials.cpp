@@ -119,6 +119,71 @@ bool CoreMaterials::init()
     group_properties.push_back({material_card[1] + "ANISO_CONSTANTS_VS_TEMPERATURE", "4", "7"});
     group_properties_description.push_back(u8"ANISOTROPIC:\n\u03BA11,\u03BA22,\u03BA33,\u03BA12,\u03BA13,\u03BA23,TEMPERATURE");
 
+    material_card[0]="DEFORMATION_PLASTICITY"; // card name
+    material_card[1]="CCX_DEFORMATION_PLASTICITY_"; // property prefix
+    material_cards.push_back(material_card);
+    group_properties.push_back({material_card[1] + "USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE DEFORMATION PLASTICITY CARD"); // needed for Material Management GUI
+    group_properties.push_back({material_card[1] + "RAMBERG_OSGOOD", "4", "6"});
+    group_properties_description.push_back(u8"RAMBERG OSGOOD:\nYoung's Modulus, Poisson's ratio, Yield Stress, Exponent, Yield Offset, Temperature");
+
+    material_card[0]="MOHR_COULOMB"; // card name
+    material_card[1]="CCX_MOHR_COULOMB_"; // property prefix
+    material_cards.push_back(material_card);
+    group_properties.push_back({material_card[1] + "USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE MOHR COULOMB CARD"); // needed for Material Management GUI
+    group_properties.push_back({material_card[1] + "MOHR_COULOMB", "4", "3"});
+    group_properties_description.push_back(u8"MOHR COULOMB:\nFriction angle φ in degrees, Dilation angle ψ in degrees, Temperature");
+
+    material_card[0]="MOHR_COULOMB_HARDENING"; // card name
+    material_card[1]="CCX_MOHR_COULOMB_HARDENING_"; // property prefix
+    material_cards.push_back(material_card);
+    group_properties.push_back({material_card[1] + "USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE MOHR COULOMB HARDENING CARD"); // needed for Material Management GUI
+    group_properties.push_back({material_card[1] + "MOHR_COULOMB_HARDENING", "4", "3"});
+    group_properties_description.push_back(u8"MOHR COULOMB:\nCohesion yield stress c, Equivalent plastic strain, Temperature");
+
+    material_card[0]="CYCLIC_HARDENING"; // card name
+    material_card[1]="CCX_CYCLIC_HARDENING_"; // property prefix
+    material_cards.push_back(material_card);
+    group_properties.push_back({material_card[1] + "USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE CYCLIC HARDENING CARD"); // needed for Material Management GUI
+    group_properties.push_back({material_card[1] + "CYCLIC_HARDENING", "4", "3"});
+    group_properties_description.push_back(u8"CYCLIC HARDENING:\nVon Mises stress, Equivalent plastic strain, Temperature");
+
+    material_card[0]="RATE_DEPENDENT"; // card name
+    material_card[1]="CCX_RATE_DEPENDENT_"; // property prefix
+    material_cards.push_back(material_card);
+    group_properties.push_back({material_card[1] + "USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE RATE DEPENDENT CARD"); // needed for Material Management GUI
+    group_properties.push_back({material_card[1] + "RATE_DEPENDENT", "4", "2"});
+    group_properties_description.push_back(u8"RATE DEPENDENT:\nC, \u03B5_dot_0");
+
+    material_card[0]="CREEP"; // card name
+    material_card[1]="CCX_CREEP_"; // property prefix
+    material_cards.push_back(material_card);
+    group_properties.push_back({material_card[1] + "USE_CARD", "1"});
+    group_properties_description.push_back("SET 1 TO USE CREEP CARD"); // needed for Material Management GUI
+    group_properties.push_back({material_card[1] + "CREEP", "4", "4"});
+    group_properties_description.push_back(u8"CREEP:\nA,n,m,Temperature");
+
+    //*HYPERELASTIC
+    //*HYPERFOAM
+
+    //*ELECTRICAL CONDUCTIVITY
+    //*MAGNETIC PERMEABILITY
+
+    //*FLUID CONSTANTS
+    //*SPECIFIC GAS CONSTANT
+
+    //*USER MATERIAL
+    //*COMPRESSION ONLY
+    //*DEPVAR
+
+    //JOHNSON COOK? NEEDS CCX 2.22
+
+
+
     mat_iface->create_group(group_name);
     grp = mat_iface->get_group(group_name);
     for (size_t i = 0; i < group_properties.size(); i++)
@@ -636,8 +701,160 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
         }
       }
     }
-  } 
 
+    material_card[0]="DEFORMATION_PLASTICITY"; // card name
+    material_card[1]="CCX_DEFORMATION_PLASTICITY_"; // property prefix
+
+    prop = mat_iface->get_property(material_card[1] + "USE_CARD");
+    if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+    {
+      if (prop_scalar==1)
+      {
+        material_cards_export.append("*DEFORMATION PLASTICITY\n");
+
+        prop = mat_iface->get_property(material_card[1] + "RAMBERG_OSGOOD");
+        mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+        for (size_t i = 0; i < prop_matrix.size(); i++)
+        {
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + ",");
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][3]) + ",");
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][4]) + ",");
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][5]) + "\n");
+        }
+      }
+    }
+
+    material_card[0]="MOHR_COULOMB"; // card name
+    material_card[1]="CCX_MOHR_COULOMB_"; // property prefix
+
+    prop = mat_iface->get_property(material_card[1] + "USE_CARD");
+    if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+    {
+      if (prop_scalar==1)
+      {
+        material_cards_export.append("*MOHR COULOMB\n");
+
+        prop = mat_iface->get_property(material_card[1] + "MOHR_COULOMB");
+        mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+        for (size_t i = 0; i < prop_matrix.size(); i++)
+        {
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + "\n");
+        }
+      }
+    }
+
+    material_card[0]="MOHR_COULOMB_HARDENING"; // card name
+    material_card[1]="CCX_MOHR_COULOMB_HARDENING_"; // property prefix
+   
+    prop = mat_iface->get_property(material_card[1] + "USE_CARD");
+    if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+    {
+      if (prop_scalar==1)
+      {
+        material_cards_export.append("*MOHR COULOMB HARDENING\n");
+
+        prop = mat_iface->get_property(material_card[1] + "MOHR_COULOMB_HARDENING");
+        mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+        for (size_t i = 0; i < prop_matrix.size(); i++)
+        {
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + "\n");
+        }
+      }
+    }
+
+    material_card[0]="CYCLIC_HARDENING"; // card name
+    material_card[1]="CCX_CYCLIC_HARDENING_"; // property prefix
+    
+    prop = mat_iface->get_property(material_card[1] + "USE_CARD");
+    if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+    {
+      if (prop_scalar==1)
+      {
+        material_cards_export.append("*CYCLIC HARDENING\n");
+
+        prop = mat_iface->get_property(material_card[1] + "CYCLIC_HARDENING");
+        mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+        for (size_t i = 0; i < prop_matrix.size(); i++)
+        {
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + "\n");
+        }
+      }
+    }
+
+    material_card[0]="RATE_DEPENDENT"; // card name
+    material_card[1]="CCX_RATE_DEPENDENT_"; // property prefix
+    
+    prop = mat_iface->get_property(material_card[1] + "USE_CARD");
+    if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+    {
+      if (prop_scalar==1)
+      {
+        material_cards_export.append("*RATE DEPENDENT,TYPE=JOHNSON COOK\n");
+
+        prop = mat_iface->get_property(material_card[1] + "RATE_DEPENDENT");
+        mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+        for (size_t i = 0; i < prop_matrix.size(); i++)
+        {
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + "\n");
+        }
+      }
+    }
+
+    material_card[0]="CREEP"; // card name
+    material_card[1]="CCX_CREEP_"; // property prefix
+    
+    prop = mat_iface->get_property(material_card[1] + "USE_CARD");
+    if (mat_iface->get_material_property_value(material, prop, prop_scalar))
+    {
+      if (prop_scalar==1)
+      {
+        material_cards_export.append("*CREEP,LAW=NORTON\n");
+
+        prop = mat_iface->get_property(material_card[1] + "CREEP");
+        mat_iface->get_material_property_value(material, prop, prop_matrix);
+
+        for (size_t i = 0; i < prop_matrix.size(); i++)
+        {
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][0]) + ",");
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][1]) + ",");
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][2]) + ",");
+          material_cards_export.append(ccx_iface->to_string_scientific(prop_matrix[i][3]) + "\n");
+        }
+      }
+    }
+
+
+    //*HYPERELASTIC
+    //*HYPERFOAM
+
+    //*ELECTRICAL CONDUCTIVITY
+    //*MAGNETIC PERMEABILITY
+
+
+    //*FLUID CONSTANTS
+    //*SPECIFIC GAS CONSTANT
+
+    //*USER MATERIAL
+    //*COMPRESSION ONLY
+    //*DEPVAR
+
+
+
+  } 
   return material_cards_export;
 }
 
