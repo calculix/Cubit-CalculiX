@@ -27,6 +27,12 @@ class MaterialManagementDensityCard;
 class MaterialManagementSpecificHeatCard;
 class MaterialManagementExpansionCard;
 class MaterialManagementConductivityCard;
+class MaterialManagementDeformationPlasticityCard;
+class MaterialManagementMohrCoulombCard;
+class MaterialManagementMohrCoulombHardeningCard;
+class MaterialManagementCyclicHardeningCard;
+class MaterialManagementRateDependentCard;
+class MaterialManagementCreepCard;
 
 class MaterialManagement : public QWidget
 {
@@ -156,6 +162,13 @@ private:
   MaterialManagementSpecificHeatCard* specific_heat_widget;
   MaterialManagementExpansionCard* expansion_widget;
   MaterialManagementConductivityCard* conductivity_widget;
+  MaterialManagementDeformationPlasticityCard* deformation_plasticity_widget;
+  MaterialManagementMohrCoulombCard* mohr_coulomb_widget;
+  MaterialManagementMohrCoulombHardeningCard* mohr_coulomb_hardening_widget;
+  MaterialManagementCyclicHardeningCard* cyclic_hardening_widget;
+  MaterialManagementRateDependentCard* rate_dependent_widget;
+  MaterialManagementCreepCard*  creep_widget;
+
 };
 
 #endif // MATERIALMANAGEMENT_HPP

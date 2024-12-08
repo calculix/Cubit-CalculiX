@@ -7,6 +7,12 @@
 #include "MaterialManagementSpecificHeatCard.hpp"
 #include "MaterialManagementExpansionCard.hpp"
 #include "MaterialManagementConductivityCard.hpp"
+#include "MaterialManagementDeformationPlasticityCard.hpp"
+#include "MaterialManagementMohrCoulombCard.hpp"
+#include "MaterialManagementMohrCoulombHardeningCard.hpp"
+#include "MaterialManagementCyclicHardeningCard.hpp"
+#include "MaterialManagementRateDependentCard.hpp"
+#include "MaterialManagementCreepCard.hpp"
 
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
@@ -188,6 +194,12 @@ MaterialManagement::MaterialManagement()
   expansion_widget = new MaterialManagementExpansionCard(card_frame,current_material_item);
   specific_heat_widget = new MaterialManagementSpecificHeatCard(card_frame,current_material_item);
   conductivity_widget = new MaterialManagementConductivityCard(card_frame,current_material_item);
+  deformation_plasticity_widget = new MaterialManagementDeformationPlasticityCard(card_frame,current_material_item);
+  mohr_coulomb_widget = new MaterialManagementMohrCoulombCard(card_frame,current_material_item);
+  mohr_coulomb_hardening_widget =  new MaterialManagementMohrCoulombHardeningCard(card_frame,current_material_item);
+  cyclic_hardening_widget = new MaterialManagementCyclicHardeningCard(card_frame,current_material_item);
+  rate_dependent_widget =  new MaterialManagementRateDependentCard(card_frame,current_material_item);
+  creep_widget = new MaterialManagementCreepCard(card_frame,current_material_item);
 
   boxLayout_widget->addWidget(card_frame);
 
@@ -198,6 +210,12 @@ MaterialManagement::MaterialManagement()
   expansion_widget->hide();
   specific_heat_widget->hide();
   conductivity_widget->hide();
+  deformation_plasticity_widget->hide();
+  mohr_coulomb_widget->hide();
+  mohr_coulomb_hardening_widget->hide();
+  cyclic_hardening_widget->hide();
+  rate_dependent_widget->hide();
+  creep_widget->hide();
 
   // Signals
   QObject::connect(pushButton_ok, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_ok_clicked(bool)));
@@ -1016,6 +1034,12 @@ void MaterialManagement::loadWidget(QListWidgetItem* item)
   specific_heat_widget->hide();
   expansion_widget->hide();
   conductivity_widget->hide();
+  deformation_plasticity_widget->hide();
+  mohr_coulomb_widget->hide();
+  mohr_coulomb_hardening_widget->hide();
+  cyclic_hardening_widget->hide();
+  rate_dependent_widget->hide();
+  creep_widget->hide();
 
   if (item->text().toStdString()=="Elastic")
   {
@@ -1035,7 +1059,27 @@ void MaterialManagement::loadWidget(QListWidgetItem* item)
   }else if (item->text().toStdString()=="Conductivity")
   {
     conductivity_widget->show();
+  }else if (item->text().toStdString()=="Deformation Plasticity")
+  {
+    deformation_plasticity_widget->show();
+  }else if (item->text().toStdString()=="Mohr Coulomb")
+  {
+    mohr_coulomb_widget->show();
+  }else if (item->text().toStdString()=="Mohr Coulomb Hardening")
+  {
+    mohr_coulomb_hardening_widget->show();
+  }else if (item->text().toStdString()=="Cyclic Hardening")
+  {
+    cyclic_hardening_widget->show();
+  }else if (item->text().toStdString()=="Rate Dependent")
+  {
+    rate_dependent_widget->show();
+  }else if (item->text().toStdString()=="Creep")
+  {
+    creep_widget->show();
   }
+
+
 }
 
 void MaterialManagement::setMaterial(QString material_id)
@@ -1235,6 +1279,12 @@ void MaterialManagement::on_pushButton_delete_clicked(bool)
   specific_heat_widget->hide();
   expansion_widget->hide();
   conductivity_widget->hide();
+  deformation_plasticity_widget->hide();
+  mohr_coulomb_widget->hide();
+  mohr_coulomb_hardening_widget->hide();
+  cyclic_hardening_widget->hide();
+  rate_dependent_widget->hide();
+  creep_widget->hide();
   
 }
 
@@ -1393,6 +1443,12 @@ void MaterialManagement::on_pushButton_library_delete_clicked(bool)
     specific_heat_widget->hide();
     expansion_widget->hide();
     conductivity_widget->hide();
+    deformation_plasticity_widget->hide();
+    mohr_coulomb_widget->hide();
+    mohr_coulomb_hardening_widget->hide();
+    cyclic_hardening_widget->hide();
+    rate_dependent_widget->hide();
+    creep_widget->hide();
   }  
 }
 
@@ -1483,6 +1539,12 @@ void MaterialManagement::on_pushButton_library_delete_group_clicked(bool)
     specific_heat_widget->hide();
     expansion_widget->hide();
     conductivity_widget->hide();
+    deformation_plasticity_widget->hide();
+    mohr_coulomb_widget->hide();
+    mohr_coulomb_hardening_widget->hide();
+    cyclic_hardening_widget->hide();
+    rate_dependent_widget->hide();
+    creep_widget->hide();
   }
 }
 
@@ -1559,6 +1621,12 @@ void MaterialManagement::material_clicked(QTreeWidgetItem* item, int column)
     specific_heat_widget->hide();
     expansion_widget->hide();
     conductivity_widget->hide();
+    deformation_plasticity_widget->hide();
+    mohr_coulomb_widget->hide();
+    mohr_coulomb_hardening_widget->hide();
+    cyclic_hardening_widget->hide();
+    rate_dependent_widget->hide();
+    creep_widget->hide();
 
     if ((current_material_item!=nullptr) && !current_material_item->isLibraryGroup)
     {
@@ -1568,6 +1636,12 @@ void MaterialManagement::material_clicked(QTreeWidgetItem* item, int column)
       specific_heat_widget->update(material_item);
       expansion_widget->update(material_item);
       conductivity_widget->update(material_item);
+      deformation_plasticity_widget->update(material_item);
+      mohr_coulomb_widget->update(material_item);
+      mohr_coulomb_hardening_widget->update(material_item);
+      cyclic_hardening_widget->update(material_item);
+      rate_dependent_widget->update(material_item);
+      creep_widget->update(material_item);
     }
 
     if (current_material_item->isCubit)

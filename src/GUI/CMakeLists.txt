@@ -107,6 +107,18 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementSpecificHeatCard.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementConductivityCard.hpp
     ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementConductivityCard.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementDeformationPlasticityCard.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementDeformationPlasticityCard.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementMohrCoulombCard.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementMohrCoulombCard.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementMohrCoulombHardeningCard.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementMohrCoulombHardeningCard.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementCyclicHardeningCard.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementCyclicHardeningCard.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementRateDependentCard.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementRateDependentCard.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementCreepCard.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementCreepCard.cpp
     ${CMAKE_CURRENT_LIST_DIR}/SectionsCreateSolidPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/SectionsCreateSolidPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/SectionsCreateShellPanel.hpp

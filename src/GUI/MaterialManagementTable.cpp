@@ -63,6 +63,18 @@ void MaterialManagementTable::update(MaterialManagementItem *material)
     this->setHorizontalHeaderLabels({"von Mises Stress","Plastic Strain","Temperature"});
     this->setColumnWidth(0,150);
     this->setColumnWidth(1,150);
+  }else if (this->group=="CCX_PLASTIC_COMBINED_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE")
+  {
+    this->setColumnCount(3);
+    this->setHorizontalHeaderLabels({"von Mises Stress","Plastic Strain","Temperature"});
+    this->setColumnWidth(0,150);
+    this->setColumnWidth(1,150);
+  }else if (this->group=="CCX_PLASTIC_JOHNSON_COOK")
+  {
+    this->setColumnCount(6);
+    this->setHorizontalHeaderLabels({"A","B","n","m","Tm","T0"});
+    this->setColumnWidth(0,150);
+    this->setColumnWidth(1,150);
   }else if (this->group=="CCX_DENSITY_DENSITY")
   {
     this->setColumnCount(2);
@@ -95,6 +107,46 @@ void MaterialManagementTable::update(MaterialManagementItem *material)
   {
     this->setColumnCount(7);
     this->setHorizontalHeaderLabels({u8"\u03BA11",u8"\u03BA22",u8"\u03BA33",u8"\u03BA12",u8"\u03BA13",u8"\u03BA23","Temperature"});
+  }else if (this->group=="CCX_DEFORMATION_PLASTICITY_RAMBERG_OSGOOD")
+  {
+    this->setColumnCount(6);
+    this->setHorizontalHeaderLabels({"Young's Modulus", "Poisson's ratio", "Yield Stress", "Exponent", "Yield Offset","Temperature"});
+    this->setColumnWidth(0,150);
+    this->setColumnWidth(1,150);
+    this->setColumnWidth(2,150);
+    this->setColumnWidth(3,150);
+    this->setColumnWidth(4,150);
+    this->setColumnWidth(5,150);
+  }else if (this->group=="CCX_MOHR_COULOMB_MOHR_COULOMB")
+  {
+    this->setColumnCount(3);
+    this->setHorizontalHeaderLabels({"Friction angle φ in degrees", "Dilation angle ψ in degrees","Temperature"});
+    this->setColumnWidth(0,300);
+    this->setColumnWidth(1,300);
+    this->setColumnWidth(2,150);
+  }else if (this->group=="CCX_MOHR_COULOMB_HARDENING_MOHR_COULOMB_HARDENING")
+  {
+    this->setColumnCount(3);
+    this->setHorizontalHeaderLabels({"Cohesion yield stress c", "Equivalent plastic strain","Temperature"});
+    this->setColumnWidth(0,300);
+    this->setColumnWidth(1,300);
+    this->setColumnWidth(2,150);
+  }else if (this->group=="CCX_CYCLIC_HARDENING_CYCLIC_HARDENING")
+  {
+    this->setColumnCount(3);
+    this->setHorizontalHeaderLabels({"Von Mises stress", "Equivalent plastic strain","Temperature"});
+    this->setColumnWidth(0,300);
+    this->setColumnWidth(1,300);
+    this->setColumnWidth(2,150);
+  }else if (this->group=="CCX_RATE_DEPENDENT_RATE_DEPENDENT")
+  {
+    this->setColumnCount(2);
+    this->setHorizontalHeaderLabels({"C", u8"\u03B5_dot_0"});
+  }else if (this->group=="CCX_CREEP_CREEP")
+  {
+    this->setColumnCount(4);
+    this->setHorizontalHeaderLabels({"A","n","m","Temperature"});
+    this->setColumnWidth(3,150);
   }
 
   verticalHeaderLabels = QStringList();
