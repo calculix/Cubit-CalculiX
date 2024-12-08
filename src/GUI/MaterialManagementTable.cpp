@@ -147,7 +147,24 @@ void MaterialManagementTable::update(MaterialManagementItem *material)
     this->setColumnCount(4);
     this->setHorizontalHeaderLabels({"A","n","m","Temperature"});
     this->setColumnWidth(3,150);
-  }
+  }else if (this->group=="CCX_COMPRESSION_ONLY_COMPRESSION_ONLY")
+  {
+    this->setColumnCount(3);
+    this->setHorizontalHeaderLabels({"E","maximum allowed value","Temperature"});
+    this->setColumnWidth(1,300);
+    this->setColumnWidth(2,150);
+  }else if (this->group=="CCX_TENSION_ONLY_TENSION_ONLY")
+  {
+    this->setColumnCount(3);
+    this->setHorizontalHeaderLabels({"E","maximum allowed value","Temperature"});
+    this->setColumnWidth(1,300);
+    this->setColumnWidth(2,150);
+  }/*else if (this->group=="CCX_DAMPING_DAMPING")
+  {
+    this->setColumnCount(1);
+    this->setHorizontalHeaderLabels({"Structural"});
+    this->setColumnWidth(0,150);
+  }*/
 
   verticalHeaderLabels = QStringList();
   this->material = material;

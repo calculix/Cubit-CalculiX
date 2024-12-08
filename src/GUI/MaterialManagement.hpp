@@ -33,6 +33,9 @@ class MaterialManagementMohrCoulombHardeningCard;
 class MaterialManagementCyclicHardeningCard;
 class MaterialManagementRateDependentCard;
 class MaterialManagementCreepCard;
+class MaterialManagementCompressionOnlyCard;
+class MaterialManagementTensionOnlyCard;
+class MaterialManagementDampingCard;
 
 class MaterialManagement : public QWidget
 {
@@ -168,6 +171,9 @@ private:
   MaterialManagementCyclicHardeningCard* cyclic_hardening_widget;
   MaterialManagementRateDependentCard* rate_dependent_widget;
   MaterialManagementCreepCard*  creep_widget;
+  MaterialManagementCompressionOnlyCard* compression_only_widget;
+  MaterialManagementTensionOnlyCard* tension_only_widget;
+  MaterialManagementDampingCard* damping_widget;
 
 };
 

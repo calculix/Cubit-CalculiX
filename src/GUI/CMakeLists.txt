@@ -119,6 +119,12 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementRateDependentCard.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementCreepCard.hpp
     ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementCreepCard.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementCompressionOnlyCard.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementCompressionOnlyCard.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementTensionOnlyCard.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementTensionOnlyCard.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementDampingCard.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementDampingCard.cpp
     ${CMAKE_CURRENT_LIST_DIR}/SectionsCreateSolidPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/SectionsCreateSolidPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/SectionsCreateShellPanel.hpp

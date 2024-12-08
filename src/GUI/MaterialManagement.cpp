@@ -13,6 +13,9 @@
 #include "MaterialManagementCyclicHardeningCard.hpp"
 #include "MaterialManagementRateDependentCard.hpp"
 #include "MaterialManagementCreepCard.hpp"
+#include "MaterialManagementCompressionOnlyCard.hpp"
+#include "MaterialManagementTensionOnlyCard.hpp"
+#include "MaterialManagementDampingCard.hpp"
 
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
@@ -200,6 +203,9 @@ MaterialManagement::MaterialManagement()
   cyclic_hardening_widget = new MaterialManagementCyclicHardeningCard(card_frame,current_material_item);
   rate_dependent_widget =  new MaterialManagementRateDependentCard(card_frame,current_material_item);
   creep_widget = new MaterialManagementCreepCard(card_frame,current_material_item);
+  compression_only_widget = new MaterialManagementCompressionOnlyCard(card_frame,current_material_item);
+  tension_only_widget = new MaterialManagementTensionOnlyCard(card_frame,current_material_item);
+  damping_widget = new MaterialManagementDampingCard(card_frame,current_material_item);
 
   boxLayout_widget->addWidget(card_frame);
 
@@ -216,6 +222,9 @@ MaterialManagement::MaterialManagement()
   cyclic_hardening_widget->hide();
   rate_dependent_widget->hide();
   creep_widget->hide();
+  compression_only_widget->hide();
+  tension_only_widget->hide();
+  damping_widget->hide();
 
   // Signals
   QObject::connect(pushButton_ok, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_ok_clicked(bool)));
@@ -1040,6 +1049,9 @@ void MaterialManagement::loadWidget(QListWidgetItem* item)
   cyclic_hardening_widget->hide();
   rate_dependent_widget->hide();
   creep_widget->hide();
+  compression_only_widget->hide();
+  tension_only_widget->hide();
+  damping_widget->hide();
 
   if (item->text().toStdString()=="Elastic")
   {
@@ -1077,8 +1089,16 @@ void MaterialManagement::loadWidget(QListWidgetItem* item)
   }else if (item->text().toStdString()=="Creep")
   {
     creep_widget->show();
+  }else if (item->text().toStdString()=="Compression Only")
+  {
+    compression_only_widget->show();
+  }else if (item->text().toStdString()=="Tension Only")
+  {
+    tension_only_widget->show();
+  }else if (item->text().toStdString()=="Damping")
+  {
+    damping_widget->show();
   }
-
 
 }
 
@@ -1285,6 +1305,9 @@ void MaterialManagement::on_pushButton_delete_clicked(bool)
   cyclic_hardening_widget->hide();
   rate_dependent_widget->hide();
   creep_widget->hide();
+  compression_only_widget->hide();
+  tension_only_widget->hide();
+  damping_widget->hide();
   
 }
 
@@ -1449,6 +1472,10 @@ void MaterialManagement::on_pushButton_library_delete_clicked(bool)
     cyclic_hardening_widget->hide();
     rate_dependent_widget->hide();
     creep_widget->hide();
+    compression_only_widget->hide();
+    tension_only_widget->hide();
+    damping_widget->hide();
+
   }  
 }
 
@@ -1545,6 +1572,10 @@ void MaterialManagement::on_pushButton_library_delete_group_clicked(bool)
     cyclic_hardening_widget->hide();
     rate_dependent_widget->hide();
     creep_widget->hide();
+    compression_only_widget->hide();
+    tension_only_widget->hide();
+    damping_widget->hide();
+
   }
 }
 
@@ -1627,6 +1658,10 @@ void MaterialManagement::material_clicked(QTreeWidgetItem* item, int column)
     cyclic_hardening_widget->hide();
     rate_dependent_widget->hide();
     creep_widget->hide();
+    compression_only_widget->hide();
+    tension_only_widget->hide();
+    damping_widget->hide();
+
 
     if ((current_material_item!=nullptr) && !current_material_item->isLibraryGroup)
     {
@@ -1642,6 +1677,9 @@ void MaterialManagement::material_clicked(QTreeWidgetItem* item, int column)
       cyclic_hardening_widget->update(material_item);
       rate_dependent_widget->update(material_item);
       creep_widget->update(material_item);
+      compression_only_widget->update(material_item);
+      tension_only_widget->update(material_item);
+      damping_widget->update(material_item);
     }
 
     if (current_material_item->isCubit)
