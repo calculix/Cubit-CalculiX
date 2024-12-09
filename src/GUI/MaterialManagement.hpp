@@ -33,6 +33,8 @@ class MaterialManagementMohrCoulombHardeningCard;
 class MaterialManagementCyclicHardeningCard;
 class MaterialManagementRateDependentCard;
 class MaterialManagementCreepCard;
+class MaterialManagementHyperelasticCard;
+class MaterialManagementHyperfoamCard;
 class MaterialManagementCompressionOnlyCard;
 class MaterialManagementTensionOnlyCard;
 class MaterialManagementDampingCard;
@@ -171,6 +173,8 @@ private:
   MaterialManagementCyclicHardeningCard* cyclic_hardening_widget;
   MaterialManagementRateDependentCard* rate_dependent_widget;
   MaterialManagementCreepCard*  creep_widget;
+  MaterialManagementHyperelasticCard*  hyperelastic_widget;
+  MaterialManagementHyperfoamCard*  hyperfoam_widget;
   MaterialManagementCompressionOnlyCard* compression_only_widget;
   MaterialManagementTensionOnlyCard* tension_only_widget;
   MaterialManagementDampingCard* damping_widget;

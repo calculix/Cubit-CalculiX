@@ -147,6 +147,86 @@ void MaterialManagementTable::update(MaterialManagementItem *material)
     this->setColumnCount(4);
     this->setHorizontalHeaderLabels({"A","n","m","Temperature"});
     this->setColumnWidth(3,150);
+  }else if (this->group=="CCX_HYPERELASTIC_ARRUDA_BOYCE")
+  {
+    this->setColumnCount(4);
+    this->setHorizontalHeaderLabels({u8"\u03BC",u8"\u03BBm","D","Temperature"});
+    this->setColumnWidth(3,150);
+  }else if (this->group=="CCX_HYPERELASTIC_MOONEY_RIVLIN")
+  {
+    this->setColumnCount(4);
+    this->setHorizontalHeaderLabels({"C10","C01","D1","Temperature"});
+    this->setColumnWidth(3,150);
+  }else if (this->group=="CCX_HYPERELASTIC_NEO_HOOKE")
+  {
+    this->setColumnCount(3);
+    this->setHorizontalHeaderLabels({"C10","D1","Temperature"});
+    this->setColumnWidth(2,150);
+  }else if (this->group=="CCX_HYPERELASTIC_OGDEN_N1")
+  {
+    this->setColumnCount(4);
+    this->setHorizontalHeaderLabels({u8"\u03BC1",u8"\u03B11","D1","Temperature"});
+    this->setColumnWidth(3,150);
+  }else if (this->group=="CCX_HYPERELASTIC_OGDEN_N2")
+  {
+    this->setColumnCount(7);
+    this->setHorizontalHeaderLabels({u8"\u03BC1",u8"\u03B11","D1",u8"\u03BC2",u8"\u03B12","D2","Temperature"});
+    this->setColumnWidth(6,150);
+  }else if (this->group=="CCX_HYPERELASTIC_OGDEN_N3")
+  {
+    this->setColumnCount(10);
+    this->setHorizontalHeaderLabels({u8"\u03BC1",u8"\u03B11","D1",u8"\u03BC2",u8"\u03B12","D2",u8"\u03BC3",u8"\u03B13","D3","Temperature"});
+    this->setColumnWidth(9,150);
+  }else if (this->group=="CCX_HYPERELASTIC_POLYNOMIAL_N1")
+  {
+    this->setColumnCount(4);
+    this->setHorizontalHeaderLabels({"C10","C01","D1","Temperature"});
+    this->setColumnWidth(3,150);
+  }else if (this->group=="CCX_HYPERELASTIC_POLYNOMIAL_N2")
+  {
+    this->setColumnCount(8);
+    this->setHorizontalHeaderLabels({"C10","C01","C20","C11","C02","D1","D2","Temperature"});
+    this->setColumnWidth(7,150);
+  }else if (this->group=="CCX_HYPERELASTIC_POLYNOMIAL_N3")
+  {
+    this->setColumnCount(13);
+    this->setHorizontalHeaderLabels({"C10","C01","C20","C11","C02","C30","C21","C12","C03","D1","D2","D3","Temperature"});
+    this->setColumnWidth(12,150);
+  }else if (this->group=="CCX_HYPERELASTIC_REDUCED_POLYNOMIAL_N1")
+  {
+    this->setColumnCount(3);
+    this->setHorizontalHeaderLabels({"C10","D1","Temperature"});
+    this->setColumnWidth(2,150);
+  }else if (this->group=="CCX_HYPERELASTIC_REDUCED_POLYNOMIAL_N2")
+  {
+    this->setColumnCount(5);
+    this->setHorizontalHeaderLabels({"C10","C20","D1","D2","Temperature"});
+    this->setColumnWidth(4,150);
+  }else if (this->group=="CCX_HYPERELASTIC_REDUCED_POLYNOMIAL_N3")
+  {
+    this->setColumnCount(7);
+    this->setHorizontalHeaderLabels({"C10","C20","C30","D1","D2","D3","Temperature"});
+    this->setColumnWidth(6,150);
+  }else if (this->group=="CCX_HYPERELASTIC_YEOH")
+  {
+    this->setColumnCount(7);
+    this->setHorizontalHeaderLabels({"C10","C20","C30","D1","D2","D3","Temperature"});
+    this->setColumnWidth(6,150);
+  }else if (this->group=="CCX_HYPERFOAM_HYPERFOAM_N1")
+  {
+    this->setColumnCount(4);
+    this->setHorizontalHeaderLabels({u8"\u03BC1",u8"\u03B11",u8"\u03BD1","Temperature"});
+    this->setColumnWidth(3,150);
+  }else if (this->group=="CCX_HYPERFOAM_HYPERFOAM_N2")
+  {
+    this->setColumnCount(7);
+    this->setHorizontalHeaderLabels({u8"\u03BC1",u8"\u03B11",u8"\u03BC2",u8"\u03B12",u8"\u03BD1",u8"\u03BD2","Temperature"});
+    this->setColumnWidth(6,150);
+  }else if (this->group=="CCX_HYPERFOAM_HYPERFOAM_N3")
+  {
+    this->setColumnCount(10);
+    this->setHorizontalHeaderLabels({u8"\u03BC1",u8"\u03B11",u8"\u03BC2",u8"\u03B12",u8"\u03BC3",u8"\u03B13",u8"\u03BD1",u8"\u03BD2",u8"\u03BD3","Temperature"});
+    this->setColumnWidth(9,150);
   }else if (this->group=="CCX_COMPRESSION_ONLY_COMPRESSION_ONLY")
   {
     this->setColumnCount(3);

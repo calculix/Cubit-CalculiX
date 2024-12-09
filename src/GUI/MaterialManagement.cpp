@@ -13,6 +13,8 @@
 #include "MaterialManagementCyclicHardeningCard.hpp"
 #include "MaterialManagementRateDependentCard.hpp"
 #include "MaterialManagementCreepCard.hpp"
+#include "MaterialManagementHyperelasticCard.hpp"
+#include "MaterialManagementHyperfoamCard.hpp"
 #include "MaterialManagementCompressionOnlyCard.hpp"
 #include "MaterialManagementTensionOnlyCard.hpp"
 #include "MaterialManagementDampingCard.hpp"
@@ -203,6 +205,8 @@ MaterialManagement::MaterialManagement()
   cyclic_hardening_widget = new MaterialManagementCyclicHardeningCard(card_frame,current_material_item);
   rate_dependent_widget =  new MaterialManagementRateDependentCard(card_frame,current_material_item);
   creep_widget = new MaterialManagementCreepCard(card_frame,current_material_item);
+  hyperelastic_widget = new MaterialManagementHyperelasticCard(card_frame,current_material_item);
+  hyperfoam_widget = new MaterialManagementHyperfoamCard(card_frame,current_material_item);
   compression_only_widget = new MaterialManagementCompressionOnlyCard(card_frame,current_material_item);
   tension_only_widget = new MaterialManagementTensionOnlyCard(card_frame,current_material_item);
   damping_widget = new MaterialManagementDampingCard(card_frame,current_material_item);
@@ -222,6 +226,8 @@ MaterialManagement::MaterialManagement()
   cyclic_hardening_widget->hide();
   rate_dependent_widget->hide();
   creep_widget->hide();
+  hyperelastic_widget->hide();
+  hyperfoam_widget->hide();
   compression_only_widget->hide();
   tension_only_widget->hide();
   damping_widget->hide();
@@ -1049,6 +1055,8 @@ void MaterialManagement::loadWidget(QListWidgetItem* item)
   cyclic_hardening_widget->hide();
   rate_dependent_widget->hide();
   creep_widget->hide();
+  hyperelastic_widget->hide();
+  hyperfoam_widget->hide();
   compression_only_widget->hide();
   tension_only_widget->hide();
   damping_widget->hide();
@@ -1089,6 +1097,12 @@ void MaterialManagement::loadWidget(QListWidgetItem* item)
   }else if (item->text().toStdString()=="Creep")
   {
     creep_widget->show();
+  }else if (item->text().toStdString()=="Hyperelastic")
+  {
+    hyperelastic_widget->show();
+  }else if (item->text().toStdString()=="Hyperfoam")
+  {
+    hyperfoam_widget->show();
   }else if (item->text().toStdString()=="Compression Only")
   {
     compression_only_widget->show();
@@ -1099,7 +1113,6 @@ void MaterialManagement::loadWidget(QListWidgetItem* item)
   {
     damping_widget->show();
   }
-
 }
 
 void MaterialManagement::setMaterial(QString material_id)
@@ -1305,6 +1318,8 @@ void MaterialManagement::on_pushButton_delete_clicked(bool)
   cyclic_hardening_widget->hide();
   rate_dependent_widget->hide();
   creep_widget->hide();
+  hyperelastic_widget->hide();
+  hyperfoam_widget->hide();
   compression_only_widget->hide();
   tension_only_widget->hide();
   damping_widget->hide();
@@ -1472,6 +1487,8 @@ void MaterialManagement::on_pushButton_library_delete_clicked(bool)
     cyclic_hardening_widget->hide();
     rate_dependent_widget->hide();
     creep_widget->hide();
+    hyperelastic_widget->hide();
+    hyperfoam_widget->hide();
     compression_only_widget->hide();
     tension_only_widget->hide();
     damping_widget->hide();
@@ -1572,6 +1589,8 @@ void MaterialManagement::on_pushButton_library_delete_group_clicked(bool)
     cyclic_hardening_widget->hide();
     rate_dependent_widget->hide();
     creep_widget->hide();
+    hyperelastic_widget->hide();
+    hyperfoam_widget->hide();
     compression_only_widget->hide();
     tension_only_widget->hide();
     damping_widget->hide();
@@ -1658,6 +1677,8 @@ void MaterialManagement::material_clicked(QTreeWidgetItem* item, int column)
     cyclic_hardening_widget->hide();
     rate_dependent_widget->hide();
     creep_widget->hide();
+    hyperelastic_widget->hide();
+    hyperfoam_widget->hide();
     compression_only_widget->hide();
     tension_only_widget->hide();
     damping_widget->hide();
@@ -1677,6 +1698,8 @@ void MaterialManagement::material_clicked(QTreeWidgetItem* item, int column)
       cyclic_hardening_widget->update(material_item);
       rate_dependent_widget->update(material_item);
       creep_widget->update(material_item);
+      hyperelastic_widget->update(material_item);
+      hyperfoam_widget->update(material_item);
       compression_only_widget->update(material_item);
       tension_only_widget->update(material_item);
       damping_widget->update(material_item);

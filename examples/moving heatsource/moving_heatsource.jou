@@ -1,10 +1,10 @@
 #!cubit
 reset
-create brick x 2 y 2 z 0.2
+create brick x 6 y 6 z 0.1
 vol 1 size 0.1
 mesh vol 1
-refine surface 1 numsplit 1 bias 1.0 depth 0
-refine surface 1 numsplit 1 bias 1.0 depth 0
+#refine surface 1 numsplit 1 bias 1.0 depth 0
+#refine surface 1 numsplit 1 bias 1.0 depth 0
 
 create vertex 1 1 1
 create vertex 0.5 1 1
@@ -18,6 +18,15 @@ create curve spline location vertex all with is_free delete
 
 curve 13 size 0.02
 mesh curve 13
+
+create curve helix zaxis location 1.75 0 0 thread_distance 1 angle 720 right_handed
+create curve helix zaxis location -2.5 0 0 thread_distance 1 angle 720 left_handed
+
+curve 14 size 0.02
+mesh curve 14
+
+curve 15 size 0.02
+mesh curve 15
 
 block 1 add vol 1
 
@@ -43,7 +52,8 @@ ccx create section solid block all material 1
 
 #loads
 ccx create trajectory curve 13 vertex 16 surface 1 direction 0 0 -1 magnitude 50 time_begin 0 time_end 10 radius 0.1
-#ccx modify trajectory 1 vertex 9
+ccx create trajectory curve 14 vertex 18 surface 1 direction 0 0 -1 magnitude 50 time_begin 0 time_end 10 radius 0.1
+ccx create trajectory curve 15 vertex 20 surface 1 direction 0 0 -1 magnitude 50 time_begin 0 time_end 10 radius 0.1
 
 #boundary conditions
 create temperature on vol 1 value 293 #will be used as initial condition
@@ -69,13 +79,13 @@ ccx hbc add bc displacement 1
 ccx create step name "heattransfer" heattransfer
 ccx modify step 1 parameter inc 100000
 ccx modify step 1 heattransfer  totaltimeatstart 0 initialtimeincrement 1e-1 timeperiodofstep 10 minimumtimeincrement 1e-5 maximumtimeincrement 1e-1
-ccx step 1 add load trajectory 1
+ccx step 1 add load trajectory 1 2 3
 ccx step 1 add fieldoutput 1 2
 
 #job
-ccx create job name "trajectory_test"
+ccx create job name "moving_heatsource"
 
-#export ccx "trajectory_test.inp" overwrite
 #ccx run job 1
 
-ccx draw load trajectory 1
+ccx draw load trajectory 1 2 3
+

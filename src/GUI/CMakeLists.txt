@@ -119,6 +119,10 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementRateDependentCard.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementCreepCard.hpp
     ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementCreepCard.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementHyperelasticCard.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementHyperelasticCard.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementHyperfoamCard.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementHyperfoamCard.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementCompressionOnlyCard.hpp
     ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementCompressionOnlyCard.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MaterialManagementTensionOnlyCard.hpp

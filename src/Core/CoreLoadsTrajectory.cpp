@@ -622,6 +622,7 @@ bool CoreLoadsTrajectory::prepare_export()
     face_ids = this->get_face_ids(loads_data[i][0]);    
     std::vector<std::vector<double>> times;
     times = this->get_times(loads_data[i][0]);
+    std::vector<std::vector<std::vector<double>>> amplitude_times;
     int last_id_sideset = 0;
     int last_id_amplitude = 0;
     int last_id_heatflux = 0;
@@ -676,35 +677,29 @@ bool CoreLoadsTrajectory::prepare_export()
     times.clear();
 
     int face_id;
-    std::vector<double> face_times;
+    std::vector<std::vector<double>> face_times;
     for (size_t ii = 0; ii < tmp_face_ids.size(); ii++)
     {
       if (ii==0)
       {
         face_id = tmp_face_ids[ii];
-        face_times = tmp_times[ii];
+        face_times.push_back(tmp_times[ii]);
       }else{
         if (face_id != tmp_face_ids[ii]) //check if its a new face
         {
           face_ids.push_back({face_id});
-          times.push_back(face_times);
+          amplitude_times.push_back(face_times);
+          face_times.clear();
           face_id = tmp_face_ids[ii];
-          face_times = tmp_times[ii];
-        }else{ // check if times needs to be adjusted
-          if (face_times[0] > tmp_times[ii][0])
-          {
-            face_times[0] = tmp_times[ii][0];
-          }
-          if (face_times[1] < tmp_times[ii][1])
-          {
-            face_times[1] = tmp_times[ii][1];
-          }
+          face_times.push_back(tmp_times[ii]);
+        }else{
+          face_times.push_back(tmp_times[ii]);
         }
       }
       if (ii==tmp_face_ids.size()-1)
-      {
+      {        
         face_ids.push_back({face_id});
-        times.push_back(face_times);
+        amplitude_times.push_back(face_times);
       }
     }
 
@@ -722,7 +717,7 @@ bool CoreLoadsTrajectory::prepare_export()
     std::vector<int> sideset_ids = CubitInterface::parse_cubit_list("sideset","all");
     if (sideset_ids.size()>0)
     {
-      last_id_sideset = sideset_ids[sideset_ids.size()-1];
+      last_id_sideset = sideset_ids[sideset_ids.size()-1] + 1;
     }else{
       last_id_sideset = 1;
     }
@@ -736,7 +731,7 @@ bool CoreLoadsTrajectory::prepare_export()
           face.append(std::to_string(face_ids[ii][iii]) + " ");
         }
         ccx_iface->silent_cmd("sideset " + std::to_string(last_id_sideset) + " add face " + face);
-        ccx_iface->silent_cmd("sideset " + std::to_string(last_id_sideset) + " name \"Trajectory_" + std::to_string(loads_data[i][0]) + "_" + std::to_string(face_ids[ii][0]) + "_" + std::to_string(times[ii][0])+ "_" + std::to_string(times[ii][1]) + "\"");
+        ccx_iface->silent_cmd("sideset " + std::to_string(last_id_sideset) + " name \"Trajectory_" + std::to_string(loads_data[i][0]) + "_" + std::to_string(face_ids[ii][0]) + "\"");
         prepared_sidesets.push_back(last_id_sideset);
         heatflux_sidesets.push_back(last_id_sideset);
         last_id_sideset = last_id_sideset + 1;
@@ -753,7 +748,7 @@ bool CoreLoadsTrajectory::prepare_export()
     std::vector<int> amplitude_ids = ccx_iface->parser("amplitude","all");
     if (amplitude_ids.size()>0)
     {
-      last_id_amplitude = amplitude_ids[amplitude_ids.size()-1];
+      last_id_amplitude = amplitude_ids[amplitude_ids.size()-1] + 1;
     }else{
       last_id_amplitude = 1;
     }
@@ -762,12 +757,38 @@ bool CoreLoadsTrajectory::prepare_export()
       if (face_ids[ii].size()>0)
       {
         std::string amplitude = "0 0 ";
-        amplitude.append(std::to_string(times[ii][0]) + " 0 ");
-        amplitude.append(std::to_string(times[ii][0]) + " 1 ");
-        amplitude.append(std::to_string(times[ii][1]) + " 1 ");
-        amplitude.append(std::to_string(times[ii][1]) + " 0 ");
+        for (size_t iii = 0; iii < amplitude_times[ii].size(); iii++)
+        {
+          if (iii==0)
+          {
+            amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " 0 ");
+            amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " 1 ");
+          }
+          //check if next time is the same
+          if (iii<amplitude_times[ii].size()-1)
+          {
+            if (amplitude_times[ii][iii][1]==amplitude_times[ii][iii+1][0])
+            {
+              //don't stop magnitude
+            }else{
+              amplitude.append(std::to_string(amplitude_times[ii][iii][1]) + " 1 ");
+              amplitude.append(std::to_string(amplitude_times[ii][iii][1]) + " 0 ");
+              amplitude.append(std::to_string(amplitude_times[ii][iii+1][0]) + " 0 ");
+              amplitude.append(std::to_string(amplitude_times[ii][iii+1][0]) + " 1 ");
+            }
+          }
+          
+          if (iii==amplitude_times[ii].size()-1)
+          {
+            amplitude.append(std::to_string(amplitude_times[ii][iii][1]) + " 1 ");
+            amplitude.append(std::to_string(amplitude_times[ii][iii][1]) + " 0 ");
+          }
+        }
 
-        ccx_iface->silent_cmd("ccx create amplitude name \"Trajectory_" + std::to_string(loads_data[i][0]) + "_" + std::to_string(face_ids[ii][0]) + "_" + std::to_string(times[ii][0])+ "_" + std::to_string(times[ii][1]) + "\" time_amplitude " + amplitude);
+        //std::string log = std::to_string(amplitude_times[ii].size()) + " " +  amplitude + "\n";
+        //PRINT_INFO("%s", log.c_str());
+
+        ccx_iface->silent_cmd("ccx create amplitude name \"Trajectory_" + std::to_string(loads_data[i][0]) + "_" + std::to_string(face_ids[ii][0]) + "\" time_amplitude " + amplitude);
         prepared_amplitudes.push_back(last_id_amplitude);
         heatflux_amplitude.push_back(last_id_amplitude);
         last_id_amplitude = last_id_amplitude + 1;
@@ -778,7 +799,7 @@ bool CoreLoadsTrajectory::prepare_export()
     std::vector<int> heatflux_ids = CubitInterface::parse_cubit_list("heatflux","all");
     if (heatflux_ids.size()>0)
     {
-      last_id_heatflux = heatflux_ids[heatflux_ids.size()-1];
+      last_id_heatflux = heatflux_ids[heatflux_ids.size()-1] + 1;
     }else{
       last_id_heatflux = 1;
     }

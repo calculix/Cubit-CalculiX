@@ -284,10 +284,6 @@ bool CoreMaterials::init()
     //*USER MATERIAL
     //*DEPVAR
 
-    //DAMPING
-    //JOHNSON COOK? NEEDS CCX 2.22
-
-
     mat_iface->create_group(group_name);
     grp = mat_iface->get_group(group_name);
     for (size_t i = 0; i < group_properties.size(); i++)
