@@ -756,36 +756,67 @@ bool CoreLoadsTrajectory::prepare_export()
     {
       if (face_ids[ii].size()>0)
       {
-        std::string amplitude = "0 0 ";
+        //reorder times
+        std::vector<double> temp;
         for (size_t iii = 0; iii < amplitude_times[ii].size(); iii++)
         {
+          temp.push_back(amplitude_times[ii][iii][0]);
+        }
+        auto p = sort_permutation(temp);
+        this->apply_permutation(amplitude_times[ii], p);   
+        
+        std::string amplitude = "";
+        bool zero_magnitude = false;
+        for (size_t iii = 0; iii < amplitude_times[ii].size(); iii++)
+        {
+        //std::string log = std::to_string(iii) +" "+ std::to_string(amplitude_times[ii][iii][0]) + " " +  std::to_string(amplitude_times[ii][iii][1]) + "\n";
+        //PRINT_INFO("%s", log.c_str());
+
           if (iii==0)
           {
-            amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " 0 ");
-            amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " 1 ");
+            if (amplitude_times[ii][iii][0] == 0.)
+            {
+              amplitude = "0 0 0 1 ";
+            }else{
+              amplitude = "0 0 ";
+              amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " 0 ");
+              amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " 1 ");
+            }
+            zero_magnitude = false;
           }
           //check if next time is the same
           if (iii<amplitude_times[ii].size()-1)
           {
-            if (amplitude_times[ii][iii][1]==amplitude_times[ii][iii+1][0])
+            if (zero_magnitude)
+            {
+              amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " 0 ");
+              amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " 1 ");
+              zero_magnitude = false;
+            }
+            if (pow((amplitude_times[ii][iii][1]-amplitude_times[ii][iii+1][0]),2) < 1e-12)
             {
               //don't stop magnitude
             }else{
               amplitude.append(std::to_string(amplitude_times[ii][iii][1]) + " 1 ");
               amplitude.append(std::to_string(amplitude_times[ii][iii][1]) + " 0 ");
-              amplitude.append(std::to_string(amplitude_times[ii][iii+1][0]) + " 0 ");
-              amplitude.append(std::to_string(amplitude_times[ii][iii+1][0]) + " 1 ");
+              zero_magnitude = true;
             }
           }
           
           if (iii==amplitude_times[ii].size()-1)
           {
+            if (zero_magnitude)
+            {
+              amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " 0 ");
+              amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " 1 ");
+              zero_magnitude = false;
+            }
             amplitude.append(std::to_string(amplitude_times[ii][iii][1]) + " 1 ");
             amplitude.append(std::to_string(amplitude_times[ii][iii][1]) + " 0 ");
           }
         }
 
-        //std::string log = std::to_string(amplitude_times[ii].size()) + " " +  amplitude + "\n";
+        //std::string log = std::to_string(face_ids[ii][0]) + " " + std::to_string(amplitude_times[ii].size()) + " " +  amplitude + "\n";
         //PRINT_INFO("%s", log.c_str());
 
         ccx_iface->silent_cmd("ccx create amplitude name \"Trajectory_" + std::to_string(loads_data[i][0]) + "_" + std::to_string(face_ids[ii][0]) + "\" time_amplitude " + amplitude);
@@ -909,12 +940,15 @@ bool CoreLoadsTrajectory::clean_export()
   ccx_iface->silent_cmd("delete heatflux " + ids);
   watch.tick("clean trajectory heatflux");
 
+  /*
   ids = "";
   for (size_t i = 0; i < prepared_amplitudes.size(); i++)
   {
     ids.append(std::to_string(prepared_amplitudes[i]) + " ");
   }
   ccx_iface->silent_cmd("ccx delete amplitude " + ids);
+  */
+  ccx_iface->delete_amplitudes(prepared_amplitudes);
   watch.tick("clean trajectory amplitudes");
 
   //resume core update

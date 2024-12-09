@@ -558,7 +558,7 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_string_rank_2("name_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->name_amplitude_data);
     cubTool.read_dataset_string_rank_2("shiftx_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->shiftx_amplitude_data);
     cubTool.read_dataset_string_rank_2("shifty_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->shifty_amplitude_data);
-    cubTool.read_dataset_string_rank_2("amplitudevalues_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->amplitudevalues_amplitude_data);
+    cubTool.read_dataset_double_rank_2("amplitudevalues_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->amplitudevalues_amplitude_data);
     progressbar.step();
     progressbar.check_interrupt();
     //Orientations
@@ -1018,7 +1018,7 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_string_rank_2("name_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->name_amplitude_data);
     cubTool.write_dataset_string_rank_2("shiftx_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->shiftx_amplitude_data);
     cubTool.write_dataset_string_rank_2("shifty_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->shifty_amplitude_data);
-    cubTool.write_dataset_string_rank_2("amplitudevalues_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->amplitudevalues_amplitude_data);
+    cubTool.write_dataset_double_rank_2("amplitudevalues_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->amplitudevalues_amplitude_data);
     progressbar.step();
     progressbar.check_interrupt();
     //Orientations
@@ -3402,6 +3402,11 @@ bool CalculiXCore::modify_amplitude(int amplitude_id, std::vector<std::string> o
 bool CalculiXCore::delete_amplitude(int amplitude_id)
 {
   return amplitudes->delete_amplitude(amplitude_id);
+}
+
+bool CalculiXCore::delete_amplitudes(std::vector<int> amplitude_ids)
+{
+  return amplitudes->delete_amplitudes(amplitude_ids);
 }
 
 bool CalculiXCore::create_orientation(std::vector<std::string> options, std::vector<std::vector<std::string>> options2)

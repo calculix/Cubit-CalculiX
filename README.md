@@ -106,6 +106,11 @@ in python mode (#!python)
   title="Mesh refinement">
 ](examples/mesh_refinement/)
 [<img
+  src="examples/moving_heatsource/example.gif"
+  width="400"
+  title="Moving Heatsource">
+](examples/model_change/)
+[<img
   src="examples/model_change/example.gif"
   width="400"
   title="Custom Key Words - Model Change">

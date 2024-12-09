@@ -435,6 +435,11 @@ bool CalculiXCoreInterface::delete_amplitude(int amplitude_id)
   return ccx_core.delete_amplitude(amplitude_id);
 }
 
+bool CalculiXCoreInterface::delete_amplitudes(std::vector<int> amplitude_ids)
+{
+  return ccx_core.delete_amplitudes(amplitude_ids);
+}
+
 bool CalculiXCoreInterface::create_orientation(std::vector<std::string> options, std::vector<std::vector<std::string>> options2)
 {
   return ccx_core.create_orientation(options, options2);

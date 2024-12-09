@@ -154,6 +154,7 @@ public:
   bool create_amplitude(std::vector<std::string> options, std::vector<std::vector<std::string>> options2); // adds a new amplitude
   bool modify_amplitude(int amplitude_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2); // modify a amplitude
   bool delete_amplitude(int amplitude_id); // delete amplitude
+  bool delete_amplitudes(std::vector<int> amplitude_ids); // deletes amplitudes
   bool create_orientation(std::vector<std::string> options, std::vector<std::vector<std::string>> options2); // adds a new orientation
   bool modify_orientation(int orientation_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2); // modify a orientation
   bool delete_orientation(int orientation_id); // delete orientation

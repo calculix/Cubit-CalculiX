@@ -105,4 +105,5 @@
 2024-12-07 start implementing more material keywords
 2024-12-08 working on new materials gui cards
 2024-12-09 working on trajectory bugs, amplidudes core needs a search speed up
+2024-12-09 working on trajectory bugs, amplidudes core speed up for trajectory preparation
 
