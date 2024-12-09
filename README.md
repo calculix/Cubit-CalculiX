@@ -109,7 +109,7 @@ in python mode (#!python)
   src="examples/moving_heatsource/example.gif"
   width="400"
   title="Moving Heatsource">
-](examples/model_change/)
+](examples/moving_heatsource/)
 [<img
   src="examples/model_change/example.gif"
   width="400"
