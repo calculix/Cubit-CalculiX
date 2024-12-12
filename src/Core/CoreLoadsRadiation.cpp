@@ -1,14 +1,14 @@
-#include "CoreLoadsGravity.hpp"
+#include "CoreLoadsRadiation.hpp"
 #include "CubitInterface.hpp"
 #include "CalculiXCoreInterface.hpp"
 
-CoreLoadsGravity::CoreLoadsGravity()
+CoreLoadsRadiation::CoreLoadsRadiation()
 {}
 
-CoreLoadsGravity::~CoreLoadsGravity()
+CoreLoadsRadiation::~CoreLoadsRadiation()
 {}
 
-bool CoreLoadsGravity::init()
+bool CoreLoadsRadiation::init()
 {
   if (is_initialized)
   {
@@ -20,27 +20,26 @@ bool CoreLoadsGravity::init()
   }
 }
 
-bool CoreLoadsGravity::update()
+bool CoreLoadsRadiation::update()
 { 
   return true;
 }
 
-bool CoreLoadsGravity::reset()
+bool CoreLoadsRadiation::reset()
 {
   loads_data.clear();
   time_delay_data.clear();
   direction_data.clear();
-  magnitude_data.clear();
   init();
   return true;
 }
 
-bool CoreLoadsGravity::check_initialized()
+bool CoreLoadsRadiation::check_initialized()
 {
   return is_initialized;
 }
 
-bool CoreLoadsGravity::create_load(std::vector<std::string> options)
+bool CoreLoadsRadiation::create_load(std::vector<std::string> options)
 {
   int load_id;
   int load_last;
@@ -115,7 +114,7 @@ bool CoreLoadsGravity::create_load(std::vector<std::string> options)
   return true;
 }
 
-bool CoreLoadsGravity::add_load(int load_id, int op_mode, int amplitude_id, int time_delay_id, int block_id, int direction_id, int magnitude_id)
+bool CoreLoadsRadiation::add_load(int load_id, int op_mode, int amplitude_id, int time_delay_id, int block_id, int direction_id, int magnitude_id)
 {
   std::vector<int> v = {load_id, op_mode, amplitude_id, time_delay_id, block_id, direction_id, magnitude_id};
       
@@ -124,7 +123,7 @@ bool CoreLoadsGravity::add_load(int load_id, int op_mode, int amplitude_id, int 
   return true;
 }
 
-bool CoreLoadsGravity::modify_load(int load_id, std::vector<std::string> options, std::vector<int> options_marker)
+bool CoreLoadsRadiation::modify_load(int load_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
   int sub_data_id;
   std::vector<int> sub_data_ids;
@@ -181,7 +180,7 @@ bool CoreLoadsGravity::modify_load(int load_id, std::vector<std::string> options
   }
 }
 
-bool CoreLoadsGravity::delete_load(int load_id)
+bool CoreLoadsRadiation::delete_load(int load_id)
 {
   int sub_data_id;
   int loads_data_id = get_loads_data_id_from_load_id(load_id);
@@ -209,7 +208,7 @@ bool CoreLoadsGravity::delete_load(int load_id)
   }
 }
 
-bool CoreLoadsGravity::add_time_delay(std::string time_delay_id, std::string time_delay_value)
+bool CoreLoadsRadiation::add_time_delay(std::string time_delay_id, std::string time_delay_value)
 {
   std::vector<std::string> v = {time_delay_id, time_delay_value};
       
@@ -218,7 +217,7 @@ bool CoreLoadsGravity::add_time_delay(std::string time_delay_id, std::string tim
   return true;
 }
 
-bool CoreLoadsGravity::add_direction(std::string direction_id, std::string x, std::string y, std::string z)
+bool CoreLoadsRadiation::add_direction(std::string direction_id, std::string x, std::string y, std::string z)
 {
   std::vector<std::string> v = {direction_id, x, y, z};
       
@@ -227,7 +226,7 @@ bool CoreLoadsGravity::add_direction(std::string direction_id, std::string x, st
   return true;
 }
 
-bool CoreLoadsGravity::add_magnitude(std::string magnitude_id, std::string magnitude_value)
+bool CoreLoadsRadiation::add_magnitude(std::string magnitude_id, std::string magnitude_value)
 {
   std::vector<std::string> v = {magnitude_id, magnitude_value};
       
@@ -236,7 +235,7 @@ bool CoreLoadsGravity::add_magnitude(std::string magnitude_id, std::string magni
   return true;
 }
 
-int CoreLoadsGravity::get_loads_data_id_from_load_id(int load_id)
+int CoreLoadsRadiation::get_loads_data_id_from_load_id(int load_id)
 { 
   int return_int = -1;
   for (size_t i = 0; i < loads_data.size(); i++)
@@ -249,7 +248,7 @@ int CoreLoadsGravity::get_loads_data_id_from_load_id(int load_id)
   return return_int;
 }
 
-int CoreLoadsGravity::get_time_delay_data_id_from_time_delay_id(int time_delay_id)
+int CoreLoadsRadiation::get_time_delay_data_id_from_time_delay_id(int time_delay_id)
 { 
   int return_int = -1;
   for (size_t i = 0; i < time_delay_data.size(); i++)
@@ -262,7 +261,7 @@ int CoreLoadsGravity::get_time_delay_data_id_from_time_delay_id(int time_delay_i
   return return_int;
 }
 
-int CoreLoadsGravity::get_direction_data_id_from_direction_id(int direction_id)
+int CoreLoadsRadiation::get_direction_data_id_from_direction_id(int direction_id)
 { 
   int return_int = -1;
   for (size_t i = 0; i < direction_data.size(); i++)
@@ -275,7 +274,7 @@ int CoreLoadsGravity::get_direction_data_id_from_direction_id(int direction_id)
   return return_int;
 }
 
-int CoreLoadsGravity::get_magnitude_data_id_from_magnitude_id(int magnitude_id)
+int CoreLoadsRadiation::get_magnitude_data_id_from_magnitude_id(int magnitude_id)
 { 
   int return_int = -1;
   for (size_t i = 0; i < magnitude_data.size(); i++)
@@ -288,7 +287,7 @@ int CoreLoadsGravity::get_magnitude_data_id_from_magnitude_id(int magnitude_id)
   return return_int;
 }
 
-std::string CoreLoadsGravity::get_load_export(int load_id)
+std::string CoreLoadsRadiation::get_load_export(int load_id)
 {
   int load_data_id;
   int sub_data_id;
@@ -324,10 +323,10 @@ std::string CoreLoadsGravity::get_load_export(int load_id)
   return str_temp;
 }
 
-std::string CoreLoadsGravity::print_data()
+std::string CoreLoadsRadiation::print_data()
 {
   std::string str_return;
-  str_return = "\n CoreLoadsGravity loads_data: \n";
+  str_return = "\n CoreLoadsRadiation loads_data: \n";
   str_return.append("load_id, OP MODE, amplitude_id, time_delay_id, block_id, direction_id, magnitude_id \n");
 
   for (size_t i = 0; i < loads_data.size(); i++)
@@ -335,7 +334,7 @@ std::string CoreLoadsGravity::print_data()
     str_return.append(std::to_string(loads_data[i][0]) + " " + std::to_string(loads_data[i][1]) + " " + std::to_string(loads_data[i][2]) + " " + std::to_string(loads_data[i][3]) + " " + std::to_string(loads_data[i][4]) + " " + std::to_string(loads_data[i][5]) + " " + std::to_string(loads_data[i][6]) + " \n");
   }
 
-  str_return.append("\n CoreLoadsGravity time_delay_data: \n");
+  str_return.append("\n CoreLoadsRadiation time_delay_data: \n");
   str_return.append("time_delay_id, time_delay_value \n");
 
   for (size_t i = 0; i < time_delay_data.size(); i++)
@@ -343,7 +342,7 @@ std::string CoreLoadsGravity::print_data()
     str_return.append(time_delay_data[i][0] + " " + time_delay_data[i][1] + " \n");
   }
 
-  str_return.append("\n CoreLoadsGravity direction_data: \n");
+  str_return.append("\n CoreLoadsRadiation direction_data: \n");
   str_return.append("direction_id, x, y, z \n");
 
   for (size_t i = 0; i < direction_data.size(); i++)
@@ -351,7 +350,7 @@ std::string CoreLoadsGravity::print_data()
     str_return.append(direction_data[i][0] + " " + direction_data[i][1] + " " + direction_data[i][2] + " " + direction_data[i][3] + " \n");
   }
   
-  str_return.append("\n CoreLoadsGravity magnitude_data: \n");
+  str_return.append("\n CoreLoadsRadiation magnitude_data: \n");
   str_return.append("magnitude_id, magnitude_value \n");
 
   for (size_t i = 0; i < magnitude_data.size(); i++)

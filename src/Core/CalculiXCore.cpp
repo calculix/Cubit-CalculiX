@@ -36,6 +36,8 @@
 #include "CoreLoadsGravity.hpp"
 #include "CoreLoadsCentrifugal.hpp"
 #include "CoreLoadsTrajectory.hpp"
+#include "CoreLoadsFilm.hpp"
+#include "CoreLoadsRadiation.hpp"
 #include "CoreBCsDisplacements.hpp"
 #include "CoreBCsTemperatures.hpp"
 #include "CoreHistoryOutputs.hpp"
@@ -59,7 +61,7 @@
 CalculiXCore::CalculiXCore():
   cb(NULL),mat(NULL),mat_library(NULL),sections(NULL),constraints(NULL),surfaceinteractions(NULL),
   contactpairs(NULL),amplitudes(NULL),orientations(NULL),loadsforces(NULL),loadspressures(NULL),loadsheatfluxes(NULL),
-  loadsgravity(NULL),loadscentrifugal(NULL),loadstrajectory(NULL),
+  loadsgravity(NULL),loadscentrifugal(NULL),loadstrajectory(NULL),loadsfilm(NULL),loadsradiation(NULL),
   bcsdisplacements(NULL),bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL),
   initialconditions(NULL), hbcs(NULL), steps(NULL),jobs(NULL),results(NULL),timer(NULL),customlines(NULL),
   draw(NULL)
@@ -99,6 +101,10 @@ CalculiXCore::~CalculiXCore()
     delete loadscentrifugal;
   if(loadstrajectory)
     delete loadstrajectory;
+  if(loadsfilm)
+    delete loadsfilm;
+  if(loadsradiation)
+    delete loadsradiation;
   if(bcsdisplacements)
     delete bcsdisplacements;
   if(bcstemperatures)
@@ -236,6 +242,16 @@ bool CalculiXCore::init()
     loadstrajectory = new CoreLoadsTrajectory;
   
   loadstrajectory->init();
+
+  if(!loadsfilm)
+    loadsfilm = new CoreLoadsFilm;
+  
+  loadsfilm->init();
+
+  if(!loadsradiation)
+    loadsradiation = new CoreLoadsRadiation;
+  
+  loadsradiation->init();
 
   if(!bcsdisplacements)
     bcsdisplacements = new CoreBCsDisplacements;
@@ -462,6 +478,8 @@ bool CalculiXCore::reset()
   loadsgravity->reset();
   loadscentrifugal->reset();
   loadstrajectory->reset();
+  loadsfilm->reset();
+  loadsradiation->reset();
   bcsdisplacements->reset();
   bcstemperatures->reset();
   historyoutputs->reset();
@@ -2103,6 +2121,8 @@ std::string CalculiXCore::print_data()
   str_return.append(loadsgravity->print_data());
   str_return.append(loadscentrifugal->print_data());
   str_return.append(loadstrajectory->print_data());
+  str_return.append(loadsfilm->print_data());
+  str_return.append(loadsradiation->print_data());
   str_return.append(bcsdisplacements->print_data());
   str_return.append(bcstemperatures->print_data());
   str_return.append(historyoutputs->print_data());
@@ -3507,6 +3527,36 @@ std::vector<std::vector<double>> CalculiXCore::loadstrajectory_get_times(int tra
 {
   return loadstrajectory->get_times(trajectory_id);
 }
+
+bool CalculiXCore::create_loadsfilm(std::vector<std::string> options)
+{
+  return loadsfilm->create_load(options);
+}
+
+bool CalculiXCore::modify_loadsfilm(int film_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return loadsfilm->modify_load(film_id, options, options_marker);
+}
+
+bool CalculiXCore::delete_loadsfilm(int film_id)
+{
+  return loadsfilm->delete_load(film_id);
+}
+
+bool CalculiXCore::create_loadsradiation(std::vector<std::string> options)
+{
+  return loadsradiation->create_load(options);
+}
+
+bool CalculiXCore::modify_loadsradiation(int radiation_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return loadsradiation->modify_load(radiation_id, options, options_marker);
+}
+
+bool CalculiXCore::delete_loadsradiation(int radiation_id)
+{
+  return loadsradiation->delete_load(radiation_id);
+} 
 
 bool CalculiXCore::modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker)
 {

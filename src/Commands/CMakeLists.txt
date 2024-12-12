@@ -125,6 +125,18 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsTrajectoryModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsTrajectoryDeleteCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsTrajectoryDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsFilmCreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsFilmCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsFilmModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsFilmModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsFilmDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsFilmDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsRadiationCreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsRadiationCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsRadiationModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsRadiationModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsRadiationDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsRadiationDeleteCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxBCsDisplacementsModifyCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxBCsDisplacementsModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxBCsTemperaturesModifyCommand.cpp

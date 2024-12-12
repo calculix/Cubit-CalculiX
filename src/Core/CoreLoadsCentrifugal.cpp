@@ -30,6 +30,8 @@ bool CoreLoadsCentrifugal::reset()
   loads_data.clear();
   time_delay_data.clear();
   direction_data.clear();
+  magnitude_data.clear();
+  coordinate_data.clear();
   init();
   return true;
 }

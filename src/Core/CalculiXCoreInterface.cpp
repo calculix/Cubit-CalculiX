@@ -540,6 +540,36 @@ std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_get_time
   return ccx_core.loadstrajectory_get_times(trajectory_id);
 } 
 
+bool CalculiXCoreInterface::create_loadsfilm(std::vector<std::string> options)
+{
+  return ccx_core.create_loadsfilm(options);
+}
+
+bool CalculiXCoreInterface::modify_loadsfilm(int film_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return ccx_core.modify_loadsfilm(film_id, options, options_marker);
+}
+
+bool CalculiXCoreInterface::delete_loadsfilm(int film_id)
+{
+  return ccx_core.delete_loadsfilm(film_id);
+}
+
+bool CalculiXCoreInterface::create_loadsradiation(std::vector<std::string> options)
+{
+  return ccx_core.create_loadsradiation(options);
+}
+
+bool CalculiXCoreInterface::modify_loadsradiation(int radiation_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return ccx_core.modify_loadsradiation(radiation_id, options, options_marker);
+}
+
+bool CalculiXCoreInterface::delete_loadsradiation(int radiation_id)
+{
+  return ccx_core.delete_loadsradiation(radiation_id);
+} 
+
 bool CalculiXCoreInterface::modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
   return ccx_core.modify_bcsdisplacements(displacement_id,options,options_marker);

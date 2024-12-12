@@ -63,6 +63,12 @@
 #include "ccxLoadsTrajectoryCreateCommand.hpp"
 #include "ccxLoadsTrajectoryModifyCommand.hpp"
 #include "ccxLoadsTrajectoryDeleteCommand.hpp"
+#include "ccxLoadsFilmCreateCommand.hpp"
+#include "ccxLoadsFilmModifyCommand.hpp"
+#include "ccxLoadsFilmDeleteCommand.hpp"
+#include "ccxLoadsRadiationCreateCommand.hpp"
+#include "ccxLoadsRadiationModifyCommand.hpp"
+#include "ccxLoadsRadiationDeleteCommand.hpp"
 #include "ccxBCsDisplacementsModifyCommand.hpp"
 #include "ccxBCsTemperaturesModifyCommand.hpp"
 #include "ccxHistoryOutputCreateCommand.hpp"
@@ -203,6 +209,12 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxLoadsTrajectoryCreateCommand");
   keys.push_back("ccxLoadsTrajectoryModifyCommand");
   keys.push_back("ccxLoadsTrajectoryDeleteCommand");
+  keys.push_back("ccxLoadsFilmCreateCommand");
+  keys.push_back("ccxLoadsFilmModifyCommand");
+  keys.push_back("ccxLoadsFilmDeleteCommand");
+  keys.push_back("ccxLoadsRadiationCreateCommand");
+  keys.push_back("ccxLoadsRadiationModifyCommand");
+  keys.push_back("ccxLoadsRadiationDeleteCommand");
   keys.push_back("ccxBCsDisplacementsModifyCommand");
   keys.push_back("ccxBCsTemperaturesModifyCommand");
   keys.push_back("ccxHistoryOutputCreateCommand");
@@ -458,6 +470,24 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   else if(key == "ccxLoadsTrajectoryDeleteCommand")
     return new ccxLoadsTrajectoryDeleteCommand();
+
+  else if(key == "ccxLoadsFilmCreateCommand")
+    return new ccxLoadsFilmCreateCommand();
+
+  else if(key == "ccxLoadsFilmModifyCommand")
+    return new ccxLoadsFilmModifyCommand();
+
+  else if(key == "ccxLoadsFilmDeleteCommand")
+    return new ccxLoadsFilmDeleteCommand();
+
+  else if(key == "ccxLoadsRadiationCreateCommand")
+    return new ccxLoadsRadiationCreateCommand();
+
+  else if(key == "ccxLoadsRadiationModifyCommand")
+    return new ccxLoadsRadiationModifyCommand();
+
+  else if(key == "ccxLoadsRadiationDeleteCommand")
+    return new ccxLoadsRadiationDeleteCommand();
     
   else if(key == "ccxBCsDisplacementsModifyCommand")
     return new ccxBCsDisplacementsModifyCommand();
