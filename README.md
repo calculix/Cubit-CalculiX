@@ -180,7 +180,7 @@ When there are displacements in the frd file for requested blocks in the .dat. T
 
 current limitations of the converter:
 - totals ignored
-- buckling in .dat ignored
+- buckling in .dat can be queried through the python api
 - contact print card ignored
 - only links for complete nodal and element data
 
@@ -196,8 +196,6 @@ When choosing the totalincrement the related displacements will be used.
 
 # known issues
 - See https://github.com/calculix/Cubit-CalculiX/issues for open issues. Not every issue is closed in the available binaries. Please look at the issue and release date.
-
-- History Bug on Windows: Currently commands that will be send using the gui won't be recorded into the history tab. This has been fixed for Linux. In the current cubit windows release (2024.8) are some symbols missing. So we have to wait onto the next release to fix this for windows too.
 
 # todo list
 - documentation

@@ -12,9 +12,8 @@
 #include <algorithm>
 #include <cmath>
 
-#ifndef WIN32
-  #include "CubitGuiUtil.hpp"  
-#endif
+#include "cubitguicommondll.hpp"
+#include "CubitGuiUtil.hpp"  
 #include "CubitInterface.hpp"
 #include "CubitCoreformInterface.hpp"
 #include "CubitMessage.hpp"
@@ -128,12 +127,12 @@ CalculiXCore::~CalculiXCore()
 
 bool CalculiXCore::cmd(std::string cmd)
 {
-  #ifdef WIN32
-    CubitInterface::cmd(cmd.c_str());
-  #else
+  //#ifdef WIN32
+  //  CubitInterface::cmd(cmd.c_str());
+  //#else
   // all commands send with CubitGuiUtil will get listed in the history
     CubitGuiUtil::send_cubit_command(cmd.c_str());
-  #endif
+  //#endif
   
   return true;
 }

@@ -1,6 +1,7 @@
 #include "CoreSteps.hpp"
 #include "CubitInterface.hpp"
 #include "CalculiXCoreInterface.hpp"
+#include "CubitMessage.hpp"
 
 CoreSteps::CoreSteps()
 {}
