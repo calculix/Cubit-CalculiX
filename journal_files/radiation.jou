@@ -1,0 +1,70 @@
+#!cubit
+ccx use logfile core on
+reset
+
+create brick x 2 y 2 z 1
+vol 1 size 0.2
+mesh vol 1
+
+block 1 add vol 1
+
+#material
+create material "steel" property_group "CalculiX-FEA"
+modify material "steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0 
+modify material "steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_DENSITY_USE_CARD" 1
+modify material "steel" matrix_property "CCX_DENSITY_DENSITY" 7.9e-06 0 
+modify material "steel" scalar_properties "CCX_SPECIFIC_HEAT_USE_CARD" 1
+modify material "steel" matrix_property "CCX_SPECIFIC_HEAT_SPECIFIC_HEAT" 5e+08 0 
+modify material "steel" scalar_properties "CCX_EXPANSION_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "steel" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 1.2e-05 0 
+modify material "steel" scalar_properties "CCX_CONDUCTIVITY_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+modify material "steel" matrix_property "CCX_CONDUCTIVITY_ISO_K_TEMPERATURE" 50 0 
+
+#sections
+ccx create section solid block all material 1
+
+#sideset
+sideset 1 add surface 1
+sideset 2 add surface 2
+
+#loads
+ccx create radiation sideset 1 temperature 293 coefficient 0.1 
+ccx create radiation sideset 2 temperature 20 coefficient 0.1 name "woohooo"
+
+#boundary conditions
+create temperature on vol 1 value 400 #will be used as initial condition
+
+#initial conditions
+ccx create initialcondition temperature
+ccx modify initialcondition 1 temperature bc_id 1
+
+#outputs
+ccx create fieldoutput name "fo_node" node
+ccx modify fieldoutput 1 node
+ccx modify fieldoutput 1 node key_on NT
+ccx modify fieldoutput 1 node key_off CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF PNT POT PRF PS PSF PT PTF PU RF RFL SEN TS TSF TT TTF TURB V VF U
+ccx create fieldoutput name "fo_element" element
+ccx modify fieldoutput 2 element
+ccx modify fieldoutput 2 element key_on HFL
+ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS E S 
+
+# add homogeneous bc
+ccx hbc add bc displacement 1
+
+# create step
+ccx create step name "heattransfer" heattransfer
+ccx modify step 1 parameter inc 100000
+ccx modify step 1 heattransfer  totaltimeatstart 0 initialtimeincrement 1e-1 timeperiodofstep 10 minimumtimeincrement 1e-5 maximumtimeincrement 1e-1
+ccx step 1 add load radiation 1 2
+ccx step 1 add fieldoutput 1 2
+
+#job
+ccx create job name "radiation_test"
+
+#ccx run job 1
+

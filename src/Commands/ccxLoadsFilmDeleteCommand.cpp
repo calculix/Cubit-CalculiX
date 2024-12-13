@@ -16,33 +16,33 @@ std::vector<std::string> ccxLoadsFilmDeleteCommand::get_syntax()
   for (size_t syn_i = 1; syn_i < 6; syn_i++)
   {
     std::string syntax = "ccx ";
-    syntax.append("delete gravity ");
+    syntax.append("delete film ");
     
     if (syn_i==1)
     {
-      syntax.append("<value:label='gravity id',help='<gravity id>'>... ");
+      syntax.append("<value:label='film id',help='<film id>'>... ");
     }else if (syn_i==2)
     {
-      syntax.append("<string:type='unquoted',number='1',label='gravity id',help='<gravity id>'>");
+      syntax.append("<string:type='unquoted',number='1',label='film id',help='<film id>'>");
       // to catch all or an quoted input string
     }else if (syn_i==3)
     { 
-      // all except <gravity id>...
+      // all except <film id>...
       syntax.append("all except ");
-      syntax.append("<value:label='gravity id except'>... ");
+      syntax.append("<value:label='film id except'>... ");
     }else if (syn_i==4)
     {
-      // all except <gravity id> to <gravity id 2>
+      // all except <film id> to <film id 2>
       syntax.append("all except ");
-      syntax.append("<value:label='gravity id s1'>");
+      syntax.append("<value:label='film id s1'>");
       syntax.append("to ");
-      syntax.append("<value:label='gravity id s2'>");
+      syntax.append("<value:label='film id s2'>");
     }else if (syn_i==5)
     {
-      // <gravity id> to <gravity id 2>
-      syntax.append("<value:label='gravity id s1'>");
+      // <film id> to <film id 2>
+      syntax.append("<value:label='film id s1'>");
       syntax.append("to ");
-      syntax.append("<value:label='gravity id s2'>");
+      syntax.append("<value:label='film id s2'>");
     }
     
     syntax_list.push_back(syntax);
@@ -54,7 +54,7 @@ std::vector<std::string> ccxLoadsFilmDeleteCommand::get_syntax()
 std::vector<std::string> ccxLoadsFilmDeleteCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx delete gravity <gravity id>";
+  help[0] = "ccx delete film <film id>";
   help[1]=" ";
   help[2]=" ";
   help[3]=" ";
@@ -77,59 +77,59 @@ bool ccxLoadsFilmDeleteCommand::execute(CubitCommandData &data)
 
   std::string output;
 
-  std::vector<int> gravity_ids;
-  int gravity_id_s1;
-  int gravity_id_s2;
-  std::vector<std::string> gravitys_string;
+  std::vector<int> film_ids;
+  int film_id_s1;
+  int film_id_s2;
+  std::vector<std::string> films_string;
 
-  std::string gravity_string = " ";
+  std::string film_string = " ";
   
-  data.get_value("gravity id s1", gravity_id_s1);
-  data.get_value("gravity id s2", gravity_id_s2);
+  data.get_value("film id s1", film_id_s1);
+  data.get_value("film id s2", film_id_s2);
 
   //check which syntax was given and put everything into the parser
 
   if ((data.find_keyword("ALL") && data.find_keyword("EXCEPT") && !data.find_keyword("TO")))
   {
-    if(data.get_values("gravity id except", gravity_ids))
+    if(data.get_values("film id except", film_ids))
     {
-      gravity_string.append("all except");
-      for (size_t i = 0; i < gravity_ids.size(); i++)
+      film_string.append("all except");
+      for (size_t i = 0; i < film_ids.size(); i++)
       {
-        gravity_string.append(" " + std::to_string(gravity_ids[i]) + " ");
+        film_string.append(" " + std::to_string(film_ids[i]) + " ");
       }
     }
   }else if ((data.find_keyword("ALL") && data.find_keyword("EXCEPT") && data.find_keyword("TO")))
   {
-    gravity_string.append("all except " + std::to_string(gravity_id_s1) + " to " + std::to_string(gravity_id_s2));
+    film_string.append("all except " + std::to_string(film_id_s1) + " to " + std::to_string(film_id_s2));
   }else if ((!data.find_keyword("ALL") && !data.find_keyword("EXCEPT") && data.find_keyword("TO")))
   {
-    gravity_string.append(std::to_string(gravity_id_s1) + " to " + std::to_string(gravity_id_s2));
-  }else if(data.get_strings("gravity id", gravitys_string))
+    film_string.append(std::to_string(film_id_s1) + " to " + std::to_string(film_id_s2));
+  }else if(data.get_strings("film id", films_string))
   {
-    for (size_t i = 0; i < gravitys_string.size(); i++)
+    for (size_t i = 0; i < films_string.size(); i++)
     {
-      gravity_string.append(gravitys_string[i]);
+      film_string.append(films_string[i]);
     }
   }
   
-  if(!data.get_values("gravity id", gravity_ids))
+  if(!data.get_values("film id", film_ids))
   {   
-    gravity_ids = ccx_iface.parser("loadsgravity", gravity_string);
+    film_ids = ccx_iface.parser("loadsfilm", film_string);
   }
 
-  if (gravity_ids.size()==0)
+  if (film_ids.size()==0)
   {
     PRINT_ERROR("No entity found.\n");
     return false;
   }
 
-  for (size_t i = 0; i < gravity_ids.size(); i++)
+  for (size_t i = 0; i < film_ids.size(); i++)
   {    
-    if (!ccx_iface.delete_loadsgravity(gravity_ids[i]))
+    if (!ccx_iface.delete_loadsfilm(film_ids[i]))
     {
       //PRINT_INFO("%s", output.c_str());  
-      output = "Failed with ID " + std::to_string(gravity_ids[i]) + "!\n";
+      output = "Failed with ID " + std::to_string(film_ids[i]) + "!\n";
       PRINT_ERROR(output.c_str());
     } 
   }  

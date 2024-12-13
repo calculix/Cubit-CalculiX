@@ -133,12 +133,12 @@ CalculiXCore::~CalculiXCore()
 
 bool CalculiXCore::cmd(std::string cmd)
 {
-  //#ifdef WIN32
-  //  CubitInterface::cmd(cmd.c_str());
-  //#else
+  #ifdef WIN32
+    CubitInterface::cmd(cmd.c_str());
+  #else
   // all commands send with CubitGuiUtil will get listed in the history
     CubitGuiUtil::send_cubit_command(cmd.c_str());
-  //#endif
+  #endif
   
   return true;
 }
@@ -525,7 +525,7 @@ bool CalculiXCore::read_cub(std::string filename)
     PRINT_INFO("%s", log.c_str());
     return true;
   }else{
-    progressbar.start(0,24,"Reading Cubit-CalculiX data");
+    progressbar.start(0,25,"Reading Cubit-CalculiX data");
     progressbar.check_interrupt();
     //General
     std::vector<std::string> general;
@@ -623,6 +623,26 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->direction_data);
     cubTool.read_dataset_string_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->magnitude_data);
     cubTool.read_dataset_string_rank_2("time_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->time_data);
+    progressbar.step();
+    progressbar.check_interrupt();
+    //LoadsFilm
+    cubTool.createGroup("Cubit-CalculiX/Loads/Film");
+    cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Film", loadsfilm->loads_data);
+    cubTool.read_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Film", loadsfilm->time_delay_data);
+    cubTool.read_dataset_string_rank_2("temperature_data","Cubit-CalculiX/Loads/Film", loadsfilm->temperature_data);
+    cubTool.read_dataset_string_rank_2("coefficient_data","Cubit-CalculiX/Loads/Film", loadsfilm->coefficient_data);
+    cubTool.read_dataset_string_rank_2("film_time_delay_data","Cubit-CalculiX/Loads/Film", loadsfilm->film_time_delay_data);
+    cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Film", loadsfilm->name_data);
+    progressbar.step();
+    progressbar.check_interrupt();
+    //LoadsRadiation
+    cubTool.createGroup("Cubit-CalculiX/Loads/Radiation");
+    cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->loads_data);
+    cubTool.read_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->time_delay_data);
+    cubTool.read_dataset_string_rank_2("temperature_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->temperature_data);
+    cubTool.read_dataset_string_rank_2("coefficient_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->coefficient_data);
+    cubTool.read_dataset_string_rank_2("Radiation_time_delay_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->radiation_time_delay_data);
+    cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->name_data);
     progressbar.step();
     progressbar.check_interrupt();
     //BCs
@@ -976,7 +996,7 @@ bool CalculiXCore::save_cub(std::string filename)
 
   if (!cubTool.nameExists("Cubit-CalculiX"))
   {
-    progressbar.start(0,24,"Writing Cubit-CalculiX data");
+    progressbar.start(0,25,"Writing Cubit-CalculiX data");
     progressbar.check_interrupt();
     //General
     cubTool.createGroup("Cubit-CalculiX");
@@ -1091,6 +1111,26 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->direction_data);
     cubTool.write_dataset_string_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->magnitude_data);
     cubTool.write_dataset_string_rank_2("time_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->time_data);
+    progressbar.step();
+    progressbar.check_interrupt();
+    //LoadsFilm
+    cubTool.createGroup("Cubit-CalculiX/Loads/Film");
+    cubTool.write_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Film", loadsfilm->loads_data);
+    cubTool.write_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Film", loadsfilm->time_delay_data);
+    cubTool.write_dataset_string_rank_2("temperature_data","Cubit-CalculiX/Loads/Film", loadsfilm->temperature_data);
+    cubTool.write_dataset_string_rank_2("coefficient_data","Cubit-CalculiX/Loads/Film", loadsfilm->coefficient_data);
+    cubTool.write_dataset_string_rank_2("film_time_delay_data","Cubit-CalculiX/Loads/Film", loadsfilm->film_time_delay_data);
+    cubTool.write_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Film", loadsfilm->name_data);
+    progressbar.step();
+    progressbar.check_interrupt();
+    //LoadsRadiation
+    cubTool.createGroup("Cubit-CalculiX/Loads/Radiation");
+    cubTool.write_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->loads_data);
+    cubTool.write_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->time_delay_data);
+    cubTool.write_dataset_string_rank_2("temperature_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->temperature_data);
+    cubTool.write_dataset_string_rank_2("coefficient_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->coefficient_data);
+    cubTool.write_dataset_string_rank_2("radiation_time_delay_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->radiation_time_delay_data);
+    cubTool.write_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->name_data);
     progressbar.step();
     progressbar.check_interrupt();
     //BCs
@@ -1734,6 +1774,98 @@ std::string CalculiXCore::autocleanup()
       loadstrajectory->delete_load(loadstrajectory->loads_data[i-1][0]);
     }
   }
+  // LOADS FILM
+  for (size_t i = loadsfilm->loads_data.size(); i > 0; i--)
+  { 
+    sub_bool = false;
+    if (loadsfilm->loads_data[i-1][2]!=-1)
+    {
+      if (!check_amplitude_exists(loadsfilm->loads_data[i-1][2]))
+      {
+        log.append("Amplitude ID " + std::to_string(loadsfilm->loads_data[i-1][2]) + " doesn't exist.\n");
+        log.append("Amplitude Reference from Load Film ID " + std::to_string(loadsfilm->loads_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      loadsfilm->loads_data[i-1][2]=-1;
+    }
+    sub_bool = false;
+    if (loadsfilm->loads_data[i-1][7]!=-1)
+    {
+      if (!check_amplitude_exists(loadsfilm->loads_data[i-1][7]))
+      {
+        log.append("Film Amplitude ID " + std::to_string(loadsfilm->loads_data[i-1][7]) + " doesn't exist.\n");
+        log.append("Film Amplitude Reference from Load Film ID " + std::to_string(loadsfilm->loads_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      loadsfilm->loads_data[i-1][7]=-1;
+    }
+    sub_bool = false;
+    if (!check_sideset_exists(loadsfilm->loads_data[i-1][4]))
+      {
+        log.append("Sideset ID " + std::to_string(loadsfilm->loads_data[i-1][4]) + " doesn't exist.\n");
+        log.append("Film ID " + std::to_string(loadsfilm->loads_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      loadsfilm->delete_load(loadsfilm->loads_data[i-1][0]);
+    }
+  }
+  // RADIATION
+  for (size_t i = loadsradiation->loads_data.size(); i > 0; i--)
+  { 
+    sub_bool = false;
+    if (loadsradiation->loads_data[i-1][2]!=-1)
+    {
+      if (!check_amplitude_exists(loadsradiation->loads_data[i-1][2]))
+      {
+        log.append("Amplitude ID " + std::to_string(loadsradiation->loads_data[i-1][2]) + " doesn't exist.\n");
+        log.append("Amplitude Reference from Load Radiation ID " + std::to_string(loadsradiation->loads_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      loadsradiation->loads_data[i-1][2]=-1;
+    }
+    sub_bool = false;
+    if (loadsradiation->loads_data[i-1][7]!=-1)
+    {
+      if (!check_amplitude_exists(loadsradiation->loads_data[i-1][7]))
+      {
+        log.append("Radiation Amplitude ID " + std::to_string(loadsradiation->loads_data[i-1][7]) + " doesn't exist.\n");
+        log.append("Radiation Amplitude Reference from Load Radiation ID " + std::to_string(loadsradiation->loads_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      loadsradiation->loads_data[i-1][7]=-1;
+    }
+    sub_bool = false;
+    if (!check_sideset_exists(loadsradiation->loads_data[i-1][4]))
+      {
+        log.append("Sideset ID " + std::to_string(loadsradiation->loads_data[i-1][4]) + " doesn't exist.\n");
+        log.append("Radiation ID " + std::to_string(loadsradiation->loads_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      loadsradiation->delete_load(loadsradiation->loads_data[i-1][0]);
+    }
+  }
   // BCS DISPLACEMENTS
   for (size_t i = bcsdisplacements->bcs_data.size(); i > 0; i--)
   { 
@@ -2034,7 +2166,36 @@ std::string CalculiXCore::autocleanup()
         }
       }
     }
-    
+    // Film
+    sub_data_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[i-1][5]);
+    for (size_t ii = sub_data_ids.size(); ii > 0; ii--)
+    {
+      if (steps->loads_data[sub_data_ids[ii-1]][1]==7)
+      {
+        if (!check_bc_exists(steps->loads_data[sub_data_ids[ii-1]][2],12))
+        {
+          log.append("Load Film ID " + std::to_string(steps->loads_data[sub_data_ids[ii-1]][2]) + " doesn't exist.\n");
+          log.append("Load Film Reference from Step ID " + std::to_string(steps->steps_data[i-1][0]) + " will be deleted.\n");
+          sub_bool = true;
+          steps->remove_loads(steps->steps_data[i-1][0], 7, {steps->loads_data[sub_data_ids[ii-1]][2]});
+        }
+      }
+    }
+    // Radiation
+    sub_data_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[i-1][5]);
+    for (size_t ii = sub_data_ids.size(); ii > 0; ii--)
+    {
+      if (steps->loads_data[sub_data_ids[ii-1]][1]==8)
+      {
+        if (!check_bc_exists(steps->loads_data[sub_data_ids[ii-1]][2],13))
+        {
+          log.append("Load Radiation ID " + std::to_string(steps->loads_data[sub_data_ids[ii-1]][2]) + " doesn't exist.\n");
+          log.append("Load Radiation Reference from Step ID " + std::to_string(steps->steps_data[i-1][0]) + " will be deleted.\n");
+          sub_bool = true;
+          steps->remove_loads(steps->steps_data[i-1][0], 8, {steps->loads_data[sub_data_ids[ii-1]][2]});
+        }
+      }
+    }
     // STEP BCS
     // Displacement 
     sub_data_ids = steps->get_bc_data_ids_from_bcs_id(steps->steps_data[i-1][6]);
@@ -2909,6 +3070,18 @@ bool CalculiXCore::check_bc_exists(int bc_id,int BCType)
     for (size_t i = 0; i < loadstrajectory->loads_data.size(); i++)
     {
       ids.push_back(loadstrajectory->loads_data[i][0]);
+    }
+  }else if (BCType == 12) // Film
+  {
+    for (size_t i = 0; i < loadsfilm->loads_data.size(); i++)
+    {
+      ids.push_back(loadsfilm->loads_data[i][0]);
+    }
+  }else if (BCType == 13) // Radiation
+  {
+    for (size_t i = 0; i < loadsradiation->loads_data.size(); i++)
+    {
+      ids.push_back(loadsradiation->loads_data[i][0]);
     }
   }
   
@@ -4713,6 +4886,20 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
       {
         entities.push_back({"surface",std::to_string(surface_ids[i])});
       }
+    }
+  }else if (entity=="loadsfilm")
+  {
+    data_id = loadsfilm->get_loads_data_id_from_load_id(id);
+    if (data_id!=-1)
+    {
+      entities.push_back({"sideset",std::to_string(loadsfilm->loads_data[data_id][4])});
+    }
+  }else if (entity=="loadsradiation")
+  {
+    data_id = loadsradiation->get_loads_data_id_from_load_id(id);
+    if (data_id!=-1)
+    {
+      entities.push_back({"sideset",std::to_string(loadsradiation->loads_data[data_id][4])});
     }
   }else if (entity=="bcsdisplacement")
   {
@@ -7309,6 +7496,92 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
         }
       }
     }
+    // TRAJECTORY WORKS DIFFERENT
+    // FILM
+    for (size_t ii = 0; ii < loadsfilm->loads_data.size(); ii++)
+    {  
+      for (size_t iii = 0; iii < sub_data_ids.size(); iii++)
+      { 
+        if ((steps->loads_data[sub_data_ids[iii]][1]==7) && (steps->loads_data[sub_data_ids[iii]][2]==loadsfilm->loads_data[ii][0]))
+        {
+          // CUSTOMLINE START
+          customline = customlines->get_customline_data("BEFORE","FILM",steps->loads_data[sub_data_ids[iii]][2]);
+          for (size_t icl = 0; icl < customline.size(); icl++)
+          {
+            steps_export_list.push_back(customline[icl]);
+          }
+          // CUSTOMLINE END          
+          
+          temp_list = get_sideset_face(loadsfilm->loads_data[ii][4]);
+          for (size_t iv = 0; iv < temp_list.size(); iv++)
+          {              
+            //get first line
+            int load_data_id = loadsfilm->get_loads_data_id_from_load_id(loadsfilm->loads_data[ii][0]);
+            str_temp = loadsfilm->get_load_export(loadsfilm->loads_data[ii][0]);
+            steps_export_list.push_back(str_temp);
+            
+            int sub_data_id = loadsfilm->get_temperature_data_id_from_temperature_id(loadsfilm->loads_data[load_data_id][5]);
+            std::string temperature = loadsfilm->temperature_data[sub_data_id][1];
+            
+            sub_data_id = loadsfilm->get_coefficient_data_id_from_coefficient_id(loadsfilm->loads_data[load_data_id][6]);
+            std::string coefficient = loadsfilm->coefficient_data[sub_data_id][1];
+
+            str_temp = temp_list[iv][1] + ",F" + temp_list[iv][2] + "," + temperature + "," + coefficient;
+            steps_export_list.push_back(str_temp);
+          }
+
+          // CUSTOMLINE START
+          customline = customlines->get_customline_data("AFTER","FILM",steps->loads_data[sub_data_ids[iii]][2]);
+          for (size_t icl = 0; icl < customline.size(); icl++)
+          {
+            steps_export_list.push_back(customline[icl]);
+          }
+          // CUSTOMLINE END
+        }
+      }
+    }
+    // RADIATION
+    for (size_t ii = 0; ii < loadsradiation->loads_data.size(); ii++)
+    {  
+      for (size_t iii = 0; iii < sub_data_ids.size(); iii++)
+      { 
+        if ((steps->loads_data[sub_data_ids[iii]][1]==8) && (steps->loads_data[sub_data_ids[iii]][2]==loadsradiation->loads_data[ii][0]))
+        {
+          // CUSTOMLINE START
+          customline = customlines->get_customline_data("BEFORE","RADIATION",steps->loads_data[sub_data_ids[iii]][2]);
+          for (size_t icl = 0; icl < customline.size(); icl++)
+          {
+            steps_export_list.push_back(customline[icl]);
+          }
+          // CUSTOMLINE END          
+          temp_list = get_sideset_face(loadsradiation->loads_data[ii][4]);
+          for (size_t iv = 0; iv < temp_list.size(); iv++)
+          {              
+            //get first line
+            int load_data_id = loadsradiation->get_loads_data_id_from_load_id(loadsradiation->loads_data[ii][0]);
+            str_temp = loadsradiation->get_load_export(loadsradiation->loads_data[ii][0]);
+            steps_export_list.push_back(str_temp);
+  
+            int sub_data_id = loadsradiation->get_temperature_data_id_from_temperature_id(loadsradiation->loads_data[load_data_id][5]);
+            std::string temperature = loadsradiation->temperature_data[sub_data_id][1];
+            
+            sub_data_id = loadsradiation->get_coefficient_data_id_from_coefficient_id(loadsradiation->loads_data[load_data_id][6]);
+            std::string coefficient = loadsradiation->coefficient_data[sub_data_id][1];
+
+            str_temp = temp_list[iv][1] + ",R" + temp_list[iv][2] + "," + temperature + "," + coefficient;
+            steps_export_list.push_back(str_temp);
+          }
+
+          // CUSTOMLINE START
+          customline = customlines->get_customline_data("AFTER","RADIATION",steps->loads_data[sub_data_ids[iii]][2]);
+          for (size_t icl = 0; icl < customline.size(); icl++)
+          {
+            steps_export_list.push_back(customline[icl]);
+          }
+          // CUSTOMLINE END
+        }
+      }
+    }
     // BCs
     me_iface->get_bc_restraints(bc_set, bc_handles);
     sub_data_ids = steps->get_bc_data_ids_from_bcs_id(steps->steps_data[i][6]);
@@ -8619,6 +8892,18 @@ std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_
       for (size_t i = 0; i < loadstrajectory->loads_data.size(); i++)
       {
         all_ids.push_back(loadstrajectory->loads_data[i][0]);
+      }
+    } else if (parse_type=="loadsfilm")
+    {
+      for (size_t i = 0; i < loadsfilm->loads_data.size(); i++)
+      {
+        all_ids.push_back(loadsfilm->loads_data[i][0]);
+      }
+    } else if (parse_type=="loadsradiation")
+    {
+      for (size_t i = 0; i < loadsradiation->loads_data.size(); i++)
+      {
+        all_ids.push_back(loadsradiation->loads_data[i][0]);
       }
     } else if (parse_type=="historyoutput")
     {

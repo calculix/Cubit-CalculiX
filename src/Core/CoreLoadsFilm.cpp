@@ -29,8 +29,10 @@ bool CoreLoadsFilm::reset()
 {
   loads_data.clear();
   time_delay_data.clear();
+  film_time_delay_data.clear();
   temperature_data.clear();
   coefficient_data.clear();
+  name_data.clear();
   init();
   return true;
 }
@@ -52,6 +54,9 @@ bool CoreLoadsFilm::create_load(std::vector<std::string> options)
   int time_delay_id;
   int temperature_id;
   int coefficient_id;
+  int film_amplitude_id;
+  int film_time_delay_id;
+  int name_id;
   
   if (loads_data.size()==0)
   {
@@ -111,13 +116,42 @@ bool CoreLoadsFilm::create_load(std::vector<std::string> options)
   coefficient_id = sub_id;
   this->add_coefficient(std::to_string(sub_id), options[5]);
 
-  this->add_load(load_id, op_mode, amplitude_id, time_delay_id, sideset_id, temperature_id, coefficient_id);
+  // FILM AMPLITUDE
+  film_amplitude_id = std::stoi(options[6]);
+
+  // film time_delay
+  if (film_time_delay_data.size()==0)
+  {
+    sub_id = 1;
+  }
+  else
+  {
+    sub_last = int(film_time_delay_data.size()) - 1;
+    sub_id = std::stoi(film_time_delay_data[sub_last][0]) + 1;
+  }
+  film_time_delay_id = sub_id;
+  this->add_film_time_delay(std::to_string(sub_id), options[7]);
+
+  // name
+  if (name_data.size()==0)
+  {
+    sub_id = 1;
+  }
+  else
+  {
+    sub_last = int(name_data.size()) - 1;
+    sub_id = std::stoi(name_data[sub_last][0]) + 1;
+  }
+  name_id = sub_id;
+  this->add_name(std::to_string(sub_id), options[8]);
+
+  this->add_load(load_id, op_mode, amplitude_id, time_delay_id, sideset_id, temperature_id, coefficient_id,film_amplitude_id, film_time_delay_id, name_id);
   return true;
 }
 
-bool CoreLoadsFilm::add_load(int load_id, int op_mode, int amplitude_id, int time_delay_id, int sideset_id, int temperature_id, int coefficient_id)
+bool CoreLoadsFilm::add_load(int load_id, int op_mode, int amplitude_id, int time_delay_id, int sideset_id, int temperature_id, int coefficient_id,int film_amplitude_id, int film_time_delay_id, int name_id)
 {
-  std::vector<int> v = {load_id, op_mode, amplitude_id, time_delay_id, sideset_id, temperature_id, coefficient_id};
+  std::vector<int> v = {load_id, op_mode, amplitude_id, time_delay_id, sideset_id, temperature_id, coefficient_id, film_amplitude_id, film_time_delay_id, name_id};
       
   loads_data.push_back(v);
 
@@ -167,6 +201,23 @@ bool CoreLoadsFilm::modify_load(int load_id, std::vector<std::string> options, s
       sub_data_id = get_coefficient_data_id_from_coefficient_id(loads_data[loads_data_id][6]);
       coefficient_data[sub_data_id][1] = options[5];
     }
+    // FILM AMPLITUDE
+    if (options_marker[6]==1)
+    {
+      loads_data[loads_data_id][7] = std::stoi(options[6]);
+    }
+    // film time delay
+    if (options_marker[7]==1)
+    {
+      sub_data_id = get_film_time_delay_data_id_from_film_time_delay_id(loads_data[loads_data_id][8]);
+      film_time_delay_data[sub_data_id][1] = options[7];
+    }
+    // name
+    if (options_marker[8]==1)
+    {
+      sub_data_id = get_name_data_id_from_name_id(loads_data[loads_data_id][9]);
+      name_data[sub_data_id][1] = options[8];
+    }
     return true;
   }
 }
@@ -194,6 +245,17 @@ bool CoreLoadsFilm::delete_load(int load_id)
     if (sub_data_id != -1){
       coefficient_data.erase(coefficient_data.begin() + sub_data_id);
     }
+    // film time delay
+    sub_data_id = get_film_time_delay_data_id_from_film_time_delay_id(loads_data[loads_data_id][8]);
+    if (sub_data_id != -1){
+      film_time_delay_data.erase(film_time_delay_data.begin() + sub_data_id);
+    }
+    // name
+    sub_data_id = get_name_data_id_from_name_id(loads_data[loads_data_id][9]);
+    if (sub_data_id != -1){
+      name_data.erase(name_data.begin() + sub_data_id);
+    }
+
     loads_data.erase(loads_data.begin() + loads_data_id);
     return true;
   }
@@ -223,6 +285,24 @@ bool CoreLoadsFilm::add_coefficient(std::string coefficient_id, std::string coef
       
   coefficient_data.push_back(v);
 
+  return true;
+}
+
+bool CoreLoadsFilm::add_film_time_delay(std::string film_time_delay_id, std::string film_time_delay_value)
+{
+  std::vector<std::string> v = {film_time_delay_id, film_time_delay_value};
+      
+  film_time_delay_data.push_back(v);
+
+  return true;
+}
+
+bool CoreLoadsFilm::add_name(std::string name_id, std::string name)
+{
+  std::vector<std::string> v = {name_id, name};
+  
+  name_data.push_back(v);
+  
   return true;
 }
 
@@ -278,6 +358,32 @@ int CoreLoadsFilm::get_coefficient_data_id_from_coefficient_id(int coefficient_i
   return return_int;
 }
 
+int CoreLoadsFilm::get_film_time_delay_data_id_from_film_time_delay_id(int film_time_delay_id)
+{ 
+  int return_int = -1;
+  for (size_t i = 0; i < film_time_delay_data.size(); i++)
+  {
+    if (film_time_delay_data[i][0]==std::to_string(film_time_delay_id))
+    {
+        return_int = int(i);
+    }  
+  }
+  return return_int;
+}
+
+int CoreLoadsFilm::get_name_data_id_from_name_id(int name_id)
+{ 
+  int return_int = -1;
+  for (size_t i = 0; i < name_data.size(); i++)
+  {
+    if (name_data[i][0]==std::to_string(name_id))
+    {
+        return_int = int(i);
+    }  
+  }
+  return return_int;
+}
+
 std::string CoreLoadsFilm::get_load_export(int load_id)
 {
   int load_data_id;
@@ -293,23 +399,24 @@ std::string CoreLoadsFilm::get_load_export(int load_id)
   }
   if (loads_data[load_data_id][2]!=-1)
   {
-    str_temp.append(",FILM AMPLITUDE=" + ccx_iface->get_amplitude_name(loads_data[load_data_id][2]));
+    str_temp.append(",AMPLITUDE=" + ccx_iface->get_amplitude_name(loads_data[load_data_id][2]));
   }
   sub_data_id = get_time_delay_data_id_from_time_delay_id(loads_data[load_data_id][3]);
   if (time_delay_data[sub_data_id][1]!="")
   {
-    str_temp.append(",FILM TIME DELAY=" + time_delay_data[sub_data_id][1]);
+    str_temp.append(",TIME DELAY=" + time_delay_data[sub_data_id][1]);
   }
-  str_temp.append("\n");
+  if (loads_data[load_data_id][7]!=-1)
+  {
+    str_temp.append(",FILM AMPLITUDE=" + ccx_iface->get_amplitude_name(loads_data[load_data_id][7]));
+  }
+  sub_data_id = get_film_time_delay_data_id_from_film_time_delay_id(loads_data[load_data_id][8]);
+  if (film_time_delay_data[sub_data_id][1]!="")
+  {
+    str_temp.append(",FILM TIME DELAY=" + film_time_delay_data[sub_data_id][1]);
+  }
+  //str_temp.append("\n");
   
-  // second line
-  str_temp.append(ccx_iface->get_sideset_name(loads_data[load_data_id][4]) + ",GRAV,");
-  
-  sub_data_id = get_temperature_data_id_from_temperature_id(loads_data[load_data_id][5]);
-  str_temp.append(temperature_data[sub_data_id][1] + ",");
-  
-  sub_data_id = get_coefficient_data_id_from_coefficient_id(loads_data[load_data_id][6]);
-  str_temp.append(coefficient_data[sub_data_id][1]);
 
   return str_temp;
 }
@@ -318,11 +425,11 @@ std::string CoreLoadsFilm::print_data()
 {
   std::string str_return;
   str_return = "\n CoreLoadsFilm loads_data: \n";
-  str_return.append("load_id, OP MODE, amplitude_id, time_delay_id, block_id, direction_id, magnitude_id \n");
+  str_return.append("load_id, OP MODE, amplitude_id, time_delay_id, sideset_id, direction_id, magnitude_id,film_amplitude_id, film_time_delay_id,name \n");
 
   for (size_t i = 0; i < loads_data.size(); i++)
   {
-    str_return.append(std::to_string(loads_data[i][0]) + " " + std::to_string(loads_data[i][1]) + " " + std::to_string(loads_data[i][2]) + " " + std::to_string(loads_data[i][3]) + " " + std::to_string(loads_data[i][4]) + " " + std::to_string(loads_data[i][5]) + " " + std::to_string(loads_data[i][6]) + " \n");
+    str_return.append(std::to_string(loads_data[i][0]) + " " + std::to_string(loads_data[i][1]) + " " + std::to_string(loads_data[i][2]) + " " + std::to_string(loads_data[i][3]) + " " + std::to_string(loads_data[i][4]) + " " + std::to_string(loads_data[i][5]) + " " + std::to_string(loads_data[i][6])  + " " + std::to_string(loads_data[i][7])  + " " + std::to_string(loads_data[i][8])  + " " + std::to_string(loads_data[i][9]) + " \n");
   }
 
   str_return.append("\n CoreLoadsFilm time_delay_data: \n");
@@ -347,6 +454,22 @@ std::string CoreLoadsFilm::print_data()
   for (size_t i = 0; i < coefficient_data.size(); i++)
   {
     str_return.append(coefficient_data[i][0] + " " + coefficient_data[i][1] + " \n");
+  }
+
+  str_return.append("\n CoreLoadsFilm film_time_delay_data: \n");
+  str_return.append("film_time_delay_id, film_time_delay_value \n");
+
+  for (size_t i = 0; i < film_time_delay_data.size(); i++)
+  {
+    str_return.append(film_time_delay_data[i][0] + " " + film_time_delay_data[i][1] + " \n");
+  }
+
+  str_return.append("\n CoreLoadsFilm name_data: \n");
+  str_return.append("name_id, name \n");
+
+  for (size_t i = 0; i < name_data.size(); i++)
+  {
+    str_return.append(name_data[i][0] + " " + name_data[i][1] + " \n");
   }
 
   return str_return;

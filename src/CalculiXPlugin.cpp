@@ -288,388 +288,388 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
   if(key == "ccxVersionCommand")
     return new ccxVersionCommand();
   
-  else if(key == "ccxResetCommand")
+  if(key == "ccxResetCommand")
     return new ccxResetCommand();
 
-  else if(key == "ccxExportCommand")
+  if(key == "ccxExportCommand")
     return new ccxExportCommand();
 
-  else if(key == "ccxUseAutoCleanupCommand")
+  if(key == "ccxUseAutoCleanupCommand")
     return new ccxUseAutoCleanupCommand();
   
-  else if(key == "ccxUseLogCoreCommand")
+  if(key == "ccxUseLogCoreCommand")
     return new ccxUseLogCoreCommand();
 
-  else if(key == "ccxPrintCoreCommand")
+  if(key == "ccxPrintCoreCommand")
     return new ccxPrintCoreCommand();
   
-  else if(key == "ccxLogCoreCommand")
+  if(key == "ccxLogCoreCommand")
     return new ccxLogCoreCommand();
   
-  else if(key == "ccxDrawCommand")
+  if(key == "ccxDrawCommand")
     return new ccxDrawCommand();
   
-  else if(key == "ccxDrawStepCommand")
+  if(key == "ccxDrawStepCommand")
     return new ccxDrawStepCommand();
 
-  else if(key == "ccxBlockElementTypeCommand")
+  if(key == "ccxBlockElementTypeCommand")
     return new ccxBlockElementTypeCommand();
 
-  else if(key == "ccxSectionDeleteCommand")
+  if(key == "ccxSectionDeleteCommand")
     return new ccxSectionDeleteCommand();
 
-  else if(key == "ccxSectionSolidCreateCommand")
+  if(key == "ccxSectionSolidCreateCommand")
     return new ccxSectionSolidCreateCommand();
 
-  else if(key == "ccxSectionSolidModifyCommand")
+  if(key == "ccxSectionSolidModifyCommand")
     return new ccxSectionSolidModifyCommand();
 
-  else if(key == "ccxSectionShellCreateCommand")
+  if(key == "ccxSectionShellCreateCommand")
     return new ccxSectionShellCreateCommand();
 
-  else if(key == "ccxSectionShellModifyCommand")
+  if(key == "ccxSectionShellModifyCommand")
     return new ccxSectionShellModifyCommand();
 
-  else if(key == "ccxSectionBeamCreateCommand")
+  if(key == "ccxSectionBeamCreateCommand")
     return new ccxSectionBeamCreateCommand();
 
-  else if(key == "ccxSectionBeamModifyCommand")
+  if(key == "ccxSectionBeamModifyCommand")
     return new ccxSectionBeamModifyCommand();
 
-  else if(key == "ccxSectionMembraneCreateCommand")
+  if(key == "ccxSectionMembraneCreateCommand")
     return new ccxSectionMembraneCreateCommand();
 
-  else if(key == "ccxSectionMembraneModifyCommand")
+  if(key == "ccxSectionMembraneModifyCommand")
     return new ccxSectionMembraneModifyCommand();
 
-  else if(key == "ccxConstraintDeleteCommand")
+  if(key == "ccxConstraintDeleteCommand")
     return new ccxConstraintDeleteCommand();
 
-  else if(key == "ccxConstraintRigidBodyCreateCommand")
+  if(key == "ccxConstraintRigidBodyCreateCommand")
     return new ccxConstraintRigidBodyCreateCommand();
 
-  else if(key == "ccxConstraintRigidBody2CreateCommand")
+  if(key == "ccxConstraintRigidBody2CreateCommand")
     return new ccxConstraintRigidBody2CreateCommand();
   
-  else if(key == "ccxConstraintRigidBodyModifyCommand")
+  if(key == "ccxConstraintRigidBodyModifyCommand")
     return new ccxConstraintRigidBodyModifyCommand();
 
-  else if(key == "ccxConstraintTieCreateCommand")
+  if(key == "ccxConstraintTieCreateCommand")
     return new ccxConstraintTieCreateCommand();
 
-  else if(key == "ccxConstraintTieModifyCommand")
+  if(key == "ccxConstraintTieModifyCommand")
     return new ccxConstraintTieModifyCommand();
 
-  else if(key == "ccxConstraintTieCreateFromCubitContactPairCommand")
+  if(key == "ccxConstraintTieCreateFromCubitContactPairCommand")
     return new ccxConstraintTieCreateFromCubitContactPairCommand();
 
-  else if(key == "ccxSurfaceInteractionExponentialCreateCommand")
+  if(key == "ccxSurfaceInteractionExponentialCreateCommand")
     return new ccxSurfaceInteractionExponentialCreateCommand();
 
-  else if(key == "ccxSurfaceInteractionLinearCreateCommand")
+  if(key == "ccxSurfaceInteractionLinearCreateCommand")
     return new ccxSurfaceInteractionLinearCreateCommand();
   
-  else if(key == "ccxSurfaceInteractionTabularCreateCommand")
+  if(key == "ccxSurfaceInteractionTabularCreateCommand")
     return new ccxSurfaceInteractionTabularCreateCommand();
 
-  else if(key == "ccxSurfaceInteractionTiedCreateCommand")
+  if(key == "ccxSurfaceInteractionTiedCreateCommand")
     return new ccxSurfaceInteractionTiedCreateCommand();
 
-  else if(key == "ccxSurfaceInteractionHardCreateCommand")
+  if(key == "ccxSurfaceInteractionHardCreateCommand")
     return new ccxSurfaceInteractionHardCreateCommand();
 
-  else if(key == "ccxSurfaceInteractionNameModifyCommand")
+  if(key == "ccxSurfaceInteractionNameModifyCommand")
     return new ccxSurfaceInteractionNameModifyCommand();
 
-  else if(key == "ccxSurfaceInteractionExponentialModifyCommand")
+  if(key == "ccxSurfaceInteractionExponentialModifyCommand")
     return new ccxSurfaceInteractionExponentialModifyCommand();
 
-  else if(key == "ccxSurfaceInteractionLinearModifyCommand")
+  if(key == "ccxSurfaceInteractionLinearModifyCommand")
     return new ccxSurfaceInteractionLinearModifyCommand();
 
-  else if(key == "ccxSurfaceInteractionTabularModifyCommand")
+  if(key == "ccxSurfaceInteractionTabularModifyCommand")
     return new ccxSurfaceInteractionTabularModifyCommand();
 
-  else if(key == "ccxSurfaceInteractionTiedModifyCommand")
+  if(key == "ccxSurfaceInteractionTiedModifyCommand")
     return new ccxSurfaceInteractionTiedModifyCommand();
 
-  else if(key == "ccxSurfaceInteractionGapConductanceModifyCommand")
+  if(key == "ccxSurfaceInteractionGapConductanceModifyCommand")
     return new ccxSurfaceInteractionGapConductanceModifyCommand();
 
-  else if(key == "ccxSurfaceInteractionGapHeatGenerationModifyCommand")
+  if(key == "ccxSurfaceInteractionGapHeatGenerationModifyCommand")
     return new ccxSurfaceInteractionGapHeatGenerationModifyCommand();
 
-  else if(key == "ccxSurfaceInteractionFrictionModifyCommand")
+  if(key == "ccxSurfaceInteractionFrictionModifyCommand")
     return new ccxSurfaceInteractionFrictionModifyCommand();
 
-  else if(key == "ccxSurfaceInteractionDeleteCommand")
+  if(key == "ccxSurfaceInteractionDeleteCommand")
     return new ccxSurfaceInteractionDeleteCommand();
 
-  else if(key == "ccxContactPairCreateCommand")
+  if(key == "ccxContactPairCreateCommand")
     return new ccxContactPairCreateCommand();
 
-  else if(key == "ccxContactPairModifyCommand")
+  if(key == "ccxContactPairModifyCommand")
     return new ccxContactPairModifyCommand();
   
-  else if(key == "ccxContactPairDeleteCommand")
+  if(key == "ccxContactPairDeleteCommand")
     return new ccxContactPairDeleteCommand();
   
-  else if(key == "ccxContactPairCreateFromCubitContactPairCommand")
+  if(key == "ccxContactPairCreateFromCubitContactPairCommand")
     return new ccxContactPairCreateFromCubitContactPairCommand();
 
-  else if(key == "ccxAmplitudeCreateCommand")
+  if(key == "ccxAmplitudeCreateCommand")
     return new ccxAmplitudeCreateCommand();
 
-  else if(key == "ccxAmplitudeModifyCommand")
+  if(key == "ccxAmplitudeModifyCommand")
     return new ccxAmplitudeModifyCommand();
 
-  else if(key == "ccxAmplitudeDeleteCommand")
+  if(key == "ccxAmplitudeDeleteCommand")
     return new ccxAmplitudeDeleteCommand();
   
-  else if(key == "ccxOrientationCreateCommand")
+  if(key == "ccxOrientationCreateCommand")
     return new ccxOrientationCreateCommand();
 
-  else if(key == "ccxOrientationModifyCommand")
+  if(key == "ccxOrientationModifyCommand")
     return new ccxOrientationModifyCommand();
 
-  else if(key == "ccxOrientationDeleteCommand")
+  if(key == "ccxOrientationDeleteCommand")
     return new ccxOrientationDeleteCommand();
 
-  else if(key == "ccxLoadsForcesModifyCommand")
+  if(key == "ccxLoadsForcesModifyCommand")
     return new ccxLoadsForcesModifyCommand();
 
-  else if(key == "ccxLoadsPressuresModifyCommand")
+  if(key == "ccxLoadsPressuresModifyCommand")
     return new ccxLoadsPressuresModifyCommand();
 
-  else if(key == "ccxLoadsHeatfluxesModifyCommand")
+  if(key == "ccxLoadsHeatfluxesModifyCommand")
     return new ccxLoadsHeatfluxesModifyCommand();
 
-  else if(key == "ccxLoadsGravityCreateCommand")
+  if(key == "ccxLoadsGravityCreateCommand")
     return new ccxLoadsGravityCreateCommand();
   
-  else if(key == "ccxLoadsGravityModifyCommand")
+  if(key == "ccxLoadsGravityModifyCommand")
     return new ccxLoadsGravityModifyCommand();
 
-  else if(key == "ccxLoadsGravityDeleteCommand")
+  if(key == "ccxLoadsGravityDeleteCommand")
     return new ccxLoadsGravityDeleteCommand();
 
-  else if(key == "ccxLoadsCentrifugalCreateCommand")
+  if(key == "ccxLoadsCentrifugalCreateCommand")
     return new ccxLoadsCentrifugalCreateCommand();
   
-  else if(key == "ccxLoadsCentrifugalModifyCommand")
+  if(key == "ccxLoadsCentrifugalModifyCommand")
     return new ccxLoadsCentrifugalModifyCommand();
 
-  else if(key == "ccxLoadsCentrifugalDeleteCommand")
+  if(key == "ccxLoadsCentrifugalDeleteCommand")
     return new ccxLoadsCentrifugalDeleteCommand();
 
-  else if(key == "ccxLoadsTrajectoryCreateCommand")
+  if(key == "ccxLoadsTrajectoryCreateCommand")
     return new ccxLoadsTrajectoryCreateCommand();
   
-  else if(key == "ccxLoadsTrajectoryModifyCommand")
+  if(key == "ccxLoadsTrajectoryModifyCommand")
     return new ccxLoadsTrajectoryModifyCommand();
 
-  else if(key == "ccxLoadsTrajectoryDeleteCommand")
+  if(key == "ccxLoadsTrajectoryDeleteCommand")
     return new ccxLoadsTrajectoryDeleteCommand();
 
-  else if(key == "ccxLoadsFilmCreateCommand")
+  if(key == "ccxLoadsFilmCreateCommand")
     return new ccxLoadsFilmCreateCommand();
 
-  else if(key == "ccxLoadsFilmModifyCommand")
+  if(key == "ccxLoadsFilmModifyCommand")
     return new ccxLoadsFilmModifyCommand();
 
-  else if(key == "ccxLoadsFilmDeleteCommand")
+  if(key == "ccxLoadsFilmDeleteCommand")
     return new ccxLoadsFilmDeleteCommand();
 
-  else if(key == "ccxLoadsRadiationCreateCommand")
+  if(key == "ccxLoadsRadiationCreateCommand")
     return new ccxLoadsRadiationCreateCommand();
 
-  else if(key == "ccxLoadsRadiationModifyCommand")
+  if(key == "ccxLoadsRadiationModifyCommand")
     return new ccxLoadsRadiationModifyCommand();
 
-  else if(key == "ccxLoadsRadiationDeleteCommand")
+  if(key == "ccxLoadsRadiationDeleteCommand")
     return new ccxLoadsRadiationDeleteCommand();
     
-  else if(key == "ccxBCsDisplacementsModifyCommand")
+  if(key == "ccxBCsDisplacementsModifyCommand")
     return new ccxBCsDisplacementsModifyCommand();
 
-  else if(key == "ccxBCsTemperaturesModifyCommand")
+  if(key == "ccxBCsTemperaturesModifyCommand")
     return new ccxBCsTemperaturesModifyCommand();
   
-  else if(key == "ccxHistoryOutputCreateCommand")
+  if(key == "ccxHistoryOutputCreateCommand")
     return new ccxHistoryOutputCreateCommand();
 
-  else if(key == "ccxHistoryOutputNodeModifyCommand")
+  if(key == "ccxHistoryOutputNodeModifyCommand")
     return new ccxHistoryOutputNodeModifyCommand();
   
-  else if(key == "ccxHistoryOutputElementModifyCommand")
+  if(key == "ccxHistoryOutputElementModifyCommand")
     return new ccxHistoryOutputElementModifyCommand();
   
-  else if(key == "ccxHistoryOutputContactModifyCommand")
+  if(key == "ccxHistoryOutputContactModifyCommand")
     return new ccxHistoryOutputContactModifyCommand();
 
-  else if(key == "ccxHistoryOutputDeleteCommand")
+  if(key == "ccxHistoryOutputDeleteCommand")
     return new ccxHistoryOutputDeleteCommand();
 
-  else if(key == "ccxFieldOutputCreateCommand")
+  if(key == "ccxFieldOutputCreateCommand")
     return new ccxFieldOutputCreateCommand();
 
-  else if(key == "ccxFieldOutputNodeModifyCommand")
+  if(key == "ccxFieldOutputNodeModifyCommand")
     return new ccxFieldOutputNodeModifyCommand();
   
-  else if(key == "ccxFieldOutputElementModifyCommand")
+  if(key == "ccxFieldOutputElementModifyCommand")
     return new ccxFieldOutputElementModifyCommand();
 
-  else if(key == "ccxFieldOutputContactModifyCommand")
+  if(key == "ccxFieldOutputContactModifyCommand")
     return new ccxFieldOutputContactModifyCommand();
 
-  else if(key == "ccxFieldOutputDeleteCommand")
+  if(key == "ccxFieldOutputDeleteCommand")
     return new ccxFieldOutputDeleteCommand();
 
-  else if(key == "ccxInitialConditionCreateCommand")
+  if(key == "ccxInitialConditionCreateCommand")
     return new ccxInitialConditionCreateCommand();
 
-  else if(key == "ccxInitialConditionDisplacementModifyCommand")
+  if(key == "ccxInitialConditionDisplacementModifyCommand")
     return new ccxInitialConditionDisplacementModifyCommand();
 
-  else if(key == "ccxInitialConditionTemperatureModifyCommand")
+  if(key == "ccxInitialConditionTemperatureModifyCommand")
     return new ccxInitialConditionTemperatureModifyCommand();
 
-  else if(key == "ccxInitialConditionDeleteCommand")
+  if(key == "ccxInitialConditionDeleteCommand")
     return new ccxInitialConditionDeleteCommand();
 
-  else if(key == "ccxHBCAddBCCommand")
+  if(key == "ccxHBCAddBCCommand")
     return new ccxHBCAddBCCommand();
 
-  else if(key == "ccxHBCRemoveBCCommand")
+  if(key == "ccxHBCRemoveBCCommand")
     return new ccxHBCRemoveBCCommand();
 
-  else if(key == "ccxStepCreateCommand")
+  if(key == "ccxStepCreateCommand")
     return new ccxStepCreateCommand();
   
-  else if(key == "ccxStepAddLoadCommand")
+  if(key == "ccxStepAddLoadCommand")
     return new ccxStepAddLoadCommand();
 
-  else if(key == "ccxStepAddBCCommand")
+  if(key == "ccxStepAddBCCommand")
     return new ccxStepAddBCCommand();
 
-  else if(key == "ccxStepAddHistoryOutputCommand")
+  if(key == "ccxStepAddHistoryOutputCommand")
     return new ccxStepAddHistoryOutputCommand();
   
-  else if(key == "ccxStepAddFieldOutputCommand")
+  if(key == "ccxStepAddFieldOutputCommand")
     return new ccxStepAddFieldOutputCommand();
 
-  else if(key == "ccxStepRemoveLoadCommand")
+  if(key == "ccxStepRemoveLoadCommand")
     return new ccxStepRemoveLoadCommand();
 
-  else if(key == "ccxStepRemoveBCCommand")
+  if(key == "ccxStepRemoveBCCommand")
     return new ccxStepRemoveBCCommand();
 
-  else if(key == "ccxStepRemoveHistoryOutputCommand")
+  if(key == "ccxStepRemoveHistoryOutputCommand")
     return new ccxStepRemoveHistoryOutputCommand();
   
-  else if(key == "ccxStepRemoveFieldOutputCommand")
+  if(key == "ccxStepRemoveFieldOutputCommand")
     return new ccxStepRemoveFieldOutputCommand();
   
-  else if(key == "ccxStepParameterModifyCommand")
+  if(key == "ccxStepParameterModifyCommand")
     return new ccxStepParameterModifyCommand();
 
-  else if(key == "ccxStepStaticModifyCommand")
+  if(key == "ccxStepStaticModifyCommand")
     return new ccxStepStaticModifyCommand();
 
-  else if(key == "ccxStepFrequencyModifyCommand")
+  if(key == "ccxStepFrequencyModifyCommand")
     return new ccxStepFrequencyModifyCommand();
 
-  else if(key == "ccxStepBuckleModifyCommand")
+  if(key == "ccxStepBuckleModifyCommand")
     return new ccxStepBuckleModifyCommand();
 
-  else if(key == "ccxStepHeatTransferModifyCommand")
+  if(key == "ccxStepHeatTransferModifyCommand")
     return new ccxStepHeatTransferModifyCommand();
 
-  else if(key == "ccxStepCoupledTemperatureDisplacementModifyCommand")
+  if(key == "ccxStepCoupledTemperatureDisplacementModifyCommand")
     return new ccxStepCoupledTemperatureDisplacementModifyCommand();  
 
-  else if(key == "ccxStepUncoupledTemperatureDisplacementModifyCommand")
+  if(key == "ccxStepUncoupledTemperatureDisplacementModifyCommand")
     return new ccxStepUncoupledTemperatureDisplacementModifyCommand();  
 
-  else if(key == "ccxStepDeleteCommand")
+  if(key == "ccxStepDeleteCommand")
     return new ccxStepDeleteCommand();
   
-  else if(key == "ccxJobCreateCommand")
+  if(key == "ccxJobCreateCommand")
     return new ccxJobCreateCommand();
 
-  else if(key == "ccxJobModifyCommand")
+  if(key == "ccxJobModifyCommand")
     return new ccxJobModifyCommand();
   
-  else if(key == "ccxJobDeleteCommand")
+  if(key == "ccxJobDeleteCommand")
     return new ccxJobDeleteCommand();
 
-  else if(key == "ccxRunJobCommand")
+  if(key == "ccxRunJobCommand")
     return new ccxRunJobCommand();
   
-  else if(key == "ccxWaitJobCommand")
+  if(key == "ccxWaitJobCommand")
     return new ccxWaitJobCommand();
   
-  else if(key == "ccxResultCGXJobCommand")
+  if(key == "ccxResultCGXJobCommand")
     return new ccxResultCGXJobCommand();
 
-  else if(key == "ccxResultParaViewJobCommand")
+  if(key == "ccxResultParaViewJobCommand")
     return new ccxResultParaViewJobCommand();
 
-  else if(key == "ccxResultLoadJobCommand")
+  if(key == "ccxResultLoadJobCommand")
     return new ccxResultLoadJobCommand();
 
-  else if(key == "ccxResultConvertJobCommand")
+  if(key == "ccxResultConvertJobCommand")
     return new ccxResultConvertJobCommand();
 
-  else if(key == "ccxResultProjectJobCommand")
+  if(key == "ccxResultProjectJobCommand")
     return new ccxResultProjectJobCommand();
 
-  else if(key == "ccxResultPlotJobFrdCommand")
+  if(key == "ccxResultPlotJobFrdCommand")
     return new ccxResultPlotJobFrdCommand();
 
-  else if(key == "ccxResultPlotJobDatCommand")
+  if(key == "ccxResultPlotJobDatCommand")
     return new ccxResultPlotJobDatCommand();
 
-  else if(key == "ccxResultCSVJobFrdCommand")
+  if(key == "ccxResultCSVJobFrdCommand")
     return new ccxResultCSVJobFrdCommand();
 
-  else if(key == "ccxResultCSVJobDatCommand")
+  if(key == "ccxResultCSVJobDatCommand")
     return new ccxResultCSVJobDatCommand();
 
-  else if(key == "ccxKillJobCommand")
+  if(key == "ccxKillJobCommand")
     return new ccxKillJobCommand();
 
-  else if(key == "ccxCustomLineCreateCommand")
+  if(key == "ccxCustomLineCreateCommand")
     return new ccxCustomLineCreateCommand();
 
-  else if(key == "ccxCustomLineModifyCommand")
+  if(key == "ccxCustomLineModifyCommand")
     return new ccxCustomLineModifyCommand();
   
-  else if(key == "ccxCustomLineDeleteCommand")
+  if(key == "ccxCustomLineDeleteCommand")
     return new ccxCustomLineDeleteCommand();
 
-  else if(key == "ccxMaterialLibraryCreateGroupCommand")
+  if(key == "ccxMaterialLibraryCreateGroupCommand")
     return new ccxMaterialLibraryCreateGroupCommand();
 
-  else if(key == "ccxMaterialLibraryModifyGroupCommand")
+  if(key == "ccxMaterialLibraryModifyGroupCommand")
     return new ccxMaterialLibraryModifyGroupCommand();
   
-  else if(key == "ccxMaterialLibraryDeleteGroupCommand")
+  if(key == "ccxMaterialLibraryDeleteGroupCommand")
     return new ccxMaterialLibraryDeleteGroupCommand();
 
-  else if(key == "ccxMaterialLibraryCreateMaterialCommand")
+  if(key == "ccxMaterialLibraryCreateMaterialCommand")
     return new ccxMaterialLibraryCreateMaterialCommand();
 
-  else if(key == "ccxMaterialLibraryModifyMaterialCommand")
+  if(key == "ccxMaterialLibraryModifyMaterialCommand")
     return new ccxMaterialLibraryModifyMaterialCommand();
   
-  else if(key == "ccxMaterialLibraryDeleteMaterialCommand")
+  if(key == "ccxMaterialLibraryDeleteMaterialCommand")
     return new ccxMaterialLibraryDeleteMaterialCommand();
 
-  else if(key == "ccxMaterialLibraryExportMaterialCommand")
+  if(key == "ccxMaterialLibraryExportMaterialCommand")
     return new ccxMaterialLibraryExportMaterialCommand();
 
-  else if(key == "ccxMaterialLibraryImportMaterialCommand")
+  if(key == "ccxMaterialLibraryImportMaterialCommand")
     return new ccxMaterialLibraryImportMaterialCommand();
 
   return NULL;

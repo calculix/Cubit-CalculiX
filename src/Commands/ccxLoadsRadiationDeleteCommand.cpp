@@ -16,33 +16,33 @@ std::vector<std::string> ccxLoadsRadiationDeleteCommand::get_syntax()
   for (size_t syn_i = 1; syn_i < 6; syn_i++)
   {
     std::string syntax = "ccx ";
-    syntax.append("delete gravity ");
+    syntax.append("delete radiation ");
     
     if (syn_i==1)
     {
-      syntax.append("<value:label='gravity id',help='<gravity id>'>... ");
+      syntax.append("<value:label='radiation id',help='<radiation id>'>... ");
     }else if (syn_i==2)
     {
-      syntax.append("<string:type='unquoted',number='1',label='gravity id',help='<gravity id>'>");
+      syntax.append("<string:type='unquoted',number='1',label='radiation id',help='<radiation id>'>");
       // to catch all or an quoted input string
     }else if (syn_i==3)
     { 
-      // all except <gravity id>...
+      // all except <radiation id>...
       syntax.append("all except ");
-      syntax.append("<value:label='gravity id except'>... ");
+      syntax.append("<value:label='radiation id except'>... ");
     }else if (syn_i==4)
     {
-      // all except <gravity id> to <gravity id 2>
+      // all except <radiation id> to <radiation id 2>
       syntax.append("all except ");
-      syntax.append("<value:label='gravity id s1'>");
+      syntax.append("<value:label='radiation id s1'>");
       syntax.append("to ");
-      syntax.append("<value:label='gravity id s2'>");
+      syntax.append("<value:label='radiation id s2'>");
     }else if (syn_i==5)
     {
-      // <gravity id> to <gravity id 2>
-      syntax.append("<value:label='gravity id s1'>");
+      // <radiation id> to <radiation id 2>
+      syntax.append("<value:label='radiation id s1'>");
       syntax.append("to ");
-      syntax.append("<value:label='gravity id s2'>");
+      syntax.append("<value:label='radiation id s2'>");
     }
     
     syntax_list.push_back(syntax);
@@ -54,7 +54,7 @@ std::vector<std::string> ccxLoadsRadiationDeleteCommand::get_syntax()
 std::vector<std::string> ccxLoadsRadiationDeleteCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx delete gravity <gravity id>";
+  help[0] = "ccx delete radiation <radiation id>";
   help[1]=" ";
   help[2]=" ";
   help[3]=" ";
@@ -77,59 +77,59 @@ bool ccxLoadsRadiationDeleteCommand::execute(CubitCommandData &data)
 
   std::string output;
 
-  std::vector<int> gravity_ids;
-  int gravity_id_s1;
-  int gravity_id_s2;
-  std::vector<std::string> gravitys_string;
+  std::vector<int> radiation_ids;
+  int radiation_id_s1;
+  int radiation_id_s2;
+  std::vector<std::string> radiations_string;
 
-  std::string gravity_string = " ";
+  std::string radiation_string = " ";
   
-  data.get_value("gravity id s1", gravity_id_s1);
-  data.get_value("gravity id s2", gravity_id_s2);
+  data.get_value("radiation id s1", radiation_id_s1);
+  data.get_value("radiation id s2", radiation_id_s2);
 
   //check which syntax was given and put everything into the parser
 
   if ((data.find_keyword("ALL") && data.find_keyword("EXCEPT") && !data.find_keyword("TO")))
   {
-    if(data.get_values("gravity id except", gravity_ids))
+    if(data.get_values("radiation id except", radiation_ids))
     {
-      gravity_string.append("all except");
-      for (size_t i = 0; i < gravity_ids.size(); i++)
+      radiation_string.append("all except");
+      for (size_t i = 0; i < radiation_ids.size(); i++)
       {
-        gravity_string.append(" " + std::to_string(gravity_ids[i]) + " ");
+        radiation_string.append(" " + std::to_string(radiation_ids[i]) + " ");
       }
     }
   }else if ((data.find_keyword("ALL") && data.find_keyword("EXCEPT") && data.find_keyword("TO")))
   {
-    gravity_string.append("all except " + std::to_string(gravity_id_s1) + " to " + std::to_string(gravity_id_s2));
+    radiation_string.append("all except " + std::to_string(radiation_id_s1) + " to " + std::to_string(radiation_id_s2));
   }else if ((!data.find_keyword("ALL") && !data.find_keyword("EXCEPT") && data.find_keyword("TO")))
   {
-    gravity_string.append(std::to_string(gravity_id_s1) + " to " + std::to_string(gravity_id_s2));
-  }else if(data.get_strings("gravity id", gravitys_string))
+    radiation_string.append(std::to_string(radiation_id_s1) + " to " + std::to_string(radiation_id_s2));
+  }else if(data.get_strings("radiation id", radiations_string))
   {
-    for (size_t i = 0; i < gravitys_string.size(); i++)
+    for (size_t i = 0; i < radiations_string.size(); i++)
     {
-      gravity_string.append(gravitys_string[i]);
+      radiation_string.append(radiations_string[i]);
     }
   }
   
-  if(!data.get_values("gravity id", gravity_ids))
+  if(!data.get_values("radiation id", radiation_ids))
   {   
-    gravity_ids = ccx_iface.parser("loadsgravity", gravity_string);
+    radiation_ids = ccx_iface.parser("loadsradiation", radiation_string);
   }
 
-  if (gravity_ids.size()==0)
+  if (radiation_ids.size()==0)
   {
     PRINT_ERROR("No entity found.\n");
     return false;
   }
 
-  for (size_t i = 0; i < gravity_ids.size(); i++)
+  for (size_t i = 0; i < radiation_ids.size(); i++)
   {    
-    if (!ccx_iface.delete_loadsgravity(gravity_ids[i]))
+    if (!ccx_iface.delete_loadsradiation(radiation_ids[i]))
     {
       //PRINT_INFO("%s", output.c_str());  
-      output = "Failed with ID " + std::to_string(gravity_ids[i]) + "!\n";
+      output = "Failed with ID " + std::to_string(radiation_ids[i]) + "!\n";
       PRINT_ERROR(output.c_str());
     } 
   }  
