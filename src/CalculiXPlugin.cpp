@@ -107,6 +107,10 @@
 #include "ccxStepHeatTransferModifyCommand.hpp"
 #include "ccxStepCoupledTemperatureDisplacementModifyCommand.hpp"
 #include "ccxStepUncoupledTemperatureDisplacementModifyCommand.hpp"
+#include "ccxStepDynamicModifyCommand.hpp"
+#include "ccxStepModalDynamicModifyCommand.hpp"
+#include "ccxStepSteadyStateDynamicsModifyCommand.hpp"
+#include "ccxStepComplexFrequencyModifyCommand.hpp"
 #include "ccxStepDeleteCommand.hpp"
 #include "ccxJobCreateCommand.hpp"
 #include "ccxJobModifyCommand.hpp"
@@ -257,6 +261,10 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxStepHeatTransferModifyCommand");
   keys.push_back("ccxStepCoupledTemperatureDisplacementModifyCommand");
   keys.push_back("ccxStepUncoupledTemperatureDisplacementModifyCommand");
+  keys.push_back("ccxStepDynamicModifyCommand");
+  keys.push_back("ccxStepModalDynamicModifyCommand");
+  keys.push_back("ccxStepSteadyStateDynamicsModifyCommand");
+  keys.push_back("ccxStepComplexFrequencyModifyCommand");
   keys.push_back("ccxStepDeleteCommand");
   keys.push_back("ccxJobCreateCommand");
   keys.push_back("ccxJobModifyCommand");
@@ -610,6 +618,18 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   if(key == "ccxStepUncoupledTemperatureDisplacementModifyCommand")
     return new ccxStepUncoupledTemperatureDisplacementModifyCommand();  
+
+  if(key == "ccxStepDynamicModifyCommand")
+    return new ccxStepDynamicModifyCommand();  
+
+  if(key == "ccxStepModalDynamicModifyCommand")
+    return new ccxStepModalDynamicModifyCommand();  
+
+  if(key == "ccxStepSteadyStateDynamicsModifyCommand")
+    return new ccxStepSteadyStateDynamicsModifyCommand();  
+
+  if(key == "ccxStepComplexFrequencyModifyCommand")
+    return new ccxStepComplexFrequencyModifyCommand();  
 
   if(key == "ccxStepDeleteCommand")
     return new ccxStepDeleteCommand();

@@ -213,6 +213,14 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepCoupledTemperatureDisplacementModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepUncoupledTemperatureDisplacementModifyCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepUncoupledTemperatureDisplacementModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepDynamicModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepDynamicModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepModalDynamicModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepModalDynamicModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepSteadyStateDynamicsModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepSteadyStateDynamicsModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepComplexFrequencyModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepComplexFrequencyModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepDeleteCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepDeleteCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxJobCreateCommand.cpp

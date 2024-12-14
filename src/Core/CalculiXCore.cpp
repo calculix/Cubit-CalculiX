@@ -606,11 +606,24 @@ bool CalculiXCore::read_cub(std::string filename)
     progressbar.step();
     progressbar.check_interrupt();
     //Damping
+    damping->damping_data.clear();
     cubTool.read_dataset_string_rank_1("damping_data","Cubit-CalculiX/Damping", damping->damping_data);
+    if (damping->damping_data.size()==0)
+    {
+      damping->damping_data.push_back("");
+      damping->damping_data.push_back("");
+    }
     progressbar.step();
     progressbar.check_interrupt();
     //Physical Constants
+    physicalconstants->physicalconstants_data.clear();
     cubTool.read_dataset_string_rank_1("physicalconstants_data","Cubit-CalculiX/PhysicalConstants", physicalconstants->physicalconstants_data);
+    if (physicalconstants->physicalconstants_data.size()==0)
+    {
+      physicalconstants->physicalconstants_data.push_back("");
+      physicalconstants->physicalconstants_data.push_back("");
+      physicalconstants->physicalconstants_data.push_back("");
+    }
     progressbar.step();
     progressbar.check_interrupt();
     //LoadsForces
@@ -646,7 +659,6 @@ bool CalculiXCore::read_cub(std::string filename)
     progressbar.step();
     progressbar.check_interrupt();
     //LoadsTrajectory
-    cubTool.createGroup("Cubit-CalculiX/Loads/Trajectory");
     cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->loads_data);
     cubTool.read_dataset_int_rank_2("fire_ray_surface_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->fire_ray_surface_data);
     cubTool.read_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->direction_data);
@@ -656,7 +668,6 @@ bool CalculiXCore::read_cub(std::string filename)
     progressbar.step();
     progressbar.check_interrupt();
     //LoadsFilm
-    cubTool.createGroup("Cubit-CalculiX/Loads/Film");
     cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Film", loadsfilm->loads_data);
     cubTool.read_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Film", loadsfilm->time_delay_data);
     cubTool.read_dataset_string_rank_2("temperature_data","Cubit-CalculiX/Loads/Film", loadsfilm->temperature_data);
@@ -666,7 +677,6 @@ bool CalculiXCore::read_cub(std::string filename)
     progressbar.step();
     progressbar.check_interrupt();
     //LoadsRadiation
-    cubTool.createGroup("Cubit-CalculiX/Loads/Radiation");
     cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->loads_data);
     cubTool.read_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->time_delay_data);
     cubTool.read_dataset_string_rank_2("temperature_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->temperature_data);
@@ -722,6 +732,10 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_string_rank_2("heattransfer_data","Cubit-CalculiX/Steps", steps->heattransfer_data);
     cubTool.read_dataset_string_rank_2("coupledtd_data","Cubit-CalculiX/Steps", steps->coupledtd_data);
     cubTool.read_dataset_string_rank_2("uncoupledtd_data","Cubit-CalculiX/Steps", steps->uncoupledtd_data);
+    cubTool.read_dataset_string_rank_2("dynamic_data","Cubit-CalculiX/Steps", steps->dynamic_data);
+    cubTool.read_dataset_string_rank_2("modal_dynamic_data","Cubit-CalculiX/Steps", steps->modal_dynamic_data);
+    cubTool.read_dataset_string_rank_2("steady_state_dynamics_data","Cubit-CalculiX/Steps", steps->steady_state_dynamics_data);
+    cubTool.read_dataset_string_rank_2("complex_frequency_data","Cubit-CalculiX/Steps", steps->complex_frequency_data);
     cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Steps", steps->loads_data);
     cubTool.read_dataset_int_rank_2("bcs_data","Cubit-CalculiX/Steps", steps->bcs_data);
     cubTool.read_dataset_int_rank_2("historyoutputs_data","Cubit-CalculiX/Steps", steps->historyoutputs_data);
@@ -1229,6 +1243,10 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_string_rank_2("heattransfer_data","Cubit-CalculiX/Steps", steps->heattransfer_data);
     cubTool.write_dataset_string_rank_2("coupledtd_data","Cubit-CalculiX/Steps", steps->coupledtd_data);
     cubTool.write_dataset_string_rank_2("uncoupledtd_data","Cubit-CalculiX/Steps", steps->uncoupledtd_data);
+    cubTool.write_dataset_string_rank_2("dynamic_data","Cubit-CalculiX/Steps", steps->dynamic_data);
+    cubTool.write_dataset_string_rank_2("modal_dynamic_data","Cubit-CalculiX/Steps", steps->modal_dynamic_data);
+    cubTool.write_dataset_string_rank_2("steady_state_dynamics_data","Cubit-CalculiX/Steps", steps->steady_state_dynamics_data);
+    cubTool.write_dataset_string_rank_2("complex_frequency_data","Cubit-CalculiX/Steps", steps->complex_frequency_data);
     cubTool.write_dataset_int_rank_2("loads_data","Cubit-CalculiX/Steps", steps->loads_data);
     cubTool.write_dataset_int_rank_2("bcs_data","Cubit-CalculiX/Steps", steps->bcs_data);
     cubTool.write_dataset_int_rank_2("historyoutputs_data","Cubit-CalculiX/Steps", steps->historyoutputs_data);

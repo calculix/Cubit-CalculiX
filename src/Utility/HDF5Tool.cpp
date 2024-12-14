@@ -149,7 +149,7 @@ bool HDF5Tool::read_dataset_int_rank_1(std::string name, std::string groupname, 
     const int rank = 1;
     if (data.size()!=0)
     {
-      log = "data not empty -> please write an issue on github\n";
+      log = name + " data not empty -> please write an issue on github\n";
       PRINT_INFO("%s", log.c_str());
       return false;
     }
@@ -222,7 +222,7 @@ bool HDF5Tool::read_dataset_int_rank_2(std::string name, std::string groupname, 
     const int rank = 2;
     if (data.size()!=0)
     {
-      log = "data not empty -> please write an issue on github\n";
+      log = name + " data not empty -> please write an issue on github\n";
       PRINT_INFO("%s", log.c_str());
       return false;
     }
@@ -498,7 +498,7 @@ bool HDF5Tool::read_dataset_double_rank_1(std::string name, std::string groupnam
     const int rank = 1;
     if (data.size()!=0)
     {
-      log = "data not empty -> please write an issue on github\n";
+      log = name + " data not empty -> please write an issue on github\n";
       PRINT_INFO("%s", log.c_str());
       return false;
     }
@@ -571,7 +571,7 @@ bool HDF5Tool::read_dataset_double_rank_2(std::string name, std::string groupnam
     const int rank = 2;
     if (data.size()!=0)
     {
-      log = "data not empty -> please write an issue on github\n";
+      log = name + " data not empty -> please write an issue on github\n";
       PRINT_INFO("%s", log.c_str());
       return false;
     }
@@ -714,7 +714,7 @@ bool HDF5Tool::read_dataset_string_rank_1(std::string name, std::string groupnam
     const int rank = 1;
     if (data.size()!=0)
     {
-      log = "data not empty -> please write an issue on github\n";
+      log = name + " data not empty -> please write an issue on github\n";
       PRINT_INFO("%s", log.c_str());
       return false;
     }
@@ -786,7 +786,7 @@ bool HDF5Tool::read_dataset_string_rank_2(std::string name, std::string groupnam
     const int rank = 2;
     if (data.size()!=0)
     {
-      log = "data not empty -> please write an issue on github\n";
+      log = name + " data not empty -> please write an issue on github\n";
       PRINT_INFO("%s", log.c_str());
       return false;
     }
