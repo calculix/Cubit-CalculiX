@@ -2,11 +2,23 @@
 ccx use logfile core on
 reset
 
-create brick x 2 y 2 z 1
-vol 1 size 0.2
-mesh vol 1
+create sphere radius 0.5
+create sphere radius 1 inner radius 0.99
+
+webcut volume all except 1 with plane xplane offset 0 
+webcut volume all except 1 with plane yplane offset 0 
+webcut volume all except 1 with plane zplane offset 0 
+imprint vol all
+merge vol all
+vol all size 0.1
+vol 1 size 0.05
+
+mesh vol all
 
 block 1 add vol 1
+block 2 add vol all except 1 4 6 8 2 
+block 3 add vol 4 6 8 2 
+
 
 #material
 create material "steel" property_group "CalculiX-FEA"
@@ -30,18 +42,23 @@ ccx create section solid block all material 1
 
 #sideset
 sideset 1 add surface 1
-sideset 2 add surface 2
+sideset 2 add surface 62 44 38 60 30 32 55 48 
 
 #loads
-ccx create radiation sideset 1 temperature 293 coefficient 0.1 
-ccx create radiation sideset 2 temperature 20 coefficient 0.1 name "woohooo"
+ccx create radiation sideset 1 temperature 293 emissivity 0.5 cavity_radiation_on
+ccx create radiation sideset 2 temperature 293 emissivity 0.3 cavity_radiation_on
 
 #boundary conditions
-create temperature on vol 1 value 400 #will be used as initial condition
+create temperature on vol 1 value 1500 #will be used as initial condition
+create temperature on vol all except 1 value 293 #will be used as initial condition
+
+ccx modify physicalconstants absolute_zero 0 stefan_boltzmann 5.669E-8
 
 #initial conditions
 ccx create initialcondition temperature
 ccx modify initialcondition 1 temperature bc_id 1
+ccx create initialcondition temperature
+ccx modify initialcondition 2 temperature bc_id 2
 
 #outputs
 ccx create fieldoutput name "fo_node" node
@@ -59,12 +76,13 @@ ccx hbc add bc displacement 1
 # create step
 ccx create step name "heattransfer" heattransfer
 ccx modify step 1 parameter inc 100000
-ccx modify step 1 heattransfer  totaltimeatstart 0 initialtimeincrement 1e-1 timeperiodofstep 10 minimumtimeincrement 1e-5 maximumtimeincrement 1e-1
+ccx modify step 1 heattransfer  totaltimeatstart 0 initialtimeincrement 1 timeperiodofstep 20 minimumtimeincrement 1e-5 maximumtimeincrement 1
 ccx step 1 add load radiation 1 2
 ccx step 1 add fieldoutput 1 2
 
 #job
 ccx create job name "radiation_test"
 
-#ccx run job 1
+ccx run job 1
+
 

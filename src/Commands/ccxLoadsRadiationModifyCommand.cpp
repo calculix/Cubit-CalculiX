@@ -17,13 +17,15 @@ std::vector<std::string> ccxLoadsRadiationModifyCommand::get_syntax()
   syntax.append("modify radiation <value:label='radiation id',help='<radiation id>'>");
   syntax.append("[sideset <value:label='sideset id',help='<sideset id>'>] ");
   syntax.append("[temperature <value:label='temperature_value',help='<temperature_value>'>] ");
-  syntax.append("[coefficient <value:label='coefficient_value',help='<coefficient_value>'>] ");
+  syntax.append("[emissivity <value:label='emissivity_value',help='<emissivity_value>'>] ");
   syntax.append("[op {mod | new}] " );
   syntax.append("[amplitude <value:label='amplitude id',help='<amplitude id>'>] ");
   syntax.append("[timedelay <value:label='timedelay',help='<timedelay>'>] ");
   syntax.append("[radiationamplitude <value:label='radiationamplitude id',help='<radiationamplitude id>'>] ");
   syntax.append("[radiationtimedelay <value:label='radiationtimedelay',help='<radiationtimedelay>'>] ");
   syntax.append("[name <string:type='unquoted', number='1', label='name', help='<name>'>] " );
+  syntax.append("[cavity <string:type='unquoted', number='1', label='cavity', help='<cavity>'>] " );
+  syntax.append("[{cavity_radiation_on|cavity_radiation_off}] " );
   
   syntax_list.push_back(syntax);
   
@@ -37,13 +39,15 @@ std::vector<std::string> ccxLoadsRadiationModifyCommand::get_syntax_help()
   help[0].append("modify radiation <radiation id>");
   help[0].append("[sideset <sideset id>] ");
   help[0].append("[temperature <temperature_value>] ");
-  help[0].append("[coefficient <coefficient_value>] ");
+  help[0].append("[emissivity <emissivity_value>] ");
   help[0].append("[op {mod | new}] " );
   help[0].append("[amplitude <amplitude id>] ");
   help[0].append("[timedelay <timedelay>] ");
   help[0].append("[radiationamplitude <radiationamplitude id>] ");
   help[0].append("[radiationtimedelay <radiationtimedelay>] ");
   help[0].append("[name <name>] " );
+  help[0].append("[cavity <cavity>] " );
+  help[0].append("[{cavity_radiation_on|cavity_radiation_off}] " );
 
   return help;
 }
@@ -67,8 +71,8 @@ bool ccxLoadsRadiationModifyCommand::execute(CubitCommandData &data)
   int op_mode = 0;
   double temperature_value;
   std::string temperature;
-  double coefficient_value;
-  std::string coefficient;
+  double emissivity_value;
+  std::string emissivity;
   std::string amplitude_id;
   int amplitude_value;
   std::string timedelay;
@@ -78,6 +82,8 @@ bool ccxLoadsRadiationModifyCommand::execute(CubitCommandData &data)
   std::string radiationtimedelay;
   double radiationtimedelay_value;
   std::string name; 
+  std::string cavity; 
+  std::string cavity_radiation; 
   
   data.get_value("radiation id", radiation_id);
   
@@ -143,17 +149,17 @@ bool ccxLoadsRadiationModifyCommand::execute(CubitCommandData &data)
   }
   options.push_back(temperature);
   
-  if (!data.get_value("coefficient_value", coefficient_value))
+  if (!data.get_value("emissivity_value", emissivity_value))
   {
-    coefficient = "-1";
+    emissivity = "-1";
     options_marker.push_back(0);
   }
   else
   {
-    coefficient = ccx_iface.to_string_scientific(coefficient_value);
+    emissivity = ccx_iface.to_string_scientific(emissivity_value);
     options_marker.push_back(1);
   }
-  options.push_back(coefficient);
+  options.push_back(emissivity);
 
   if (!data.get_value("radiationamplitude id", radiationamplitude_value))
   {
@@ -190,7 +196,29 @@ bool ccxLoadsRadiationModifyCommand::execute(CubitCommandData &data)
   }
   options.push_back(name);
   
-  
+  if (!data.get_string("cavity", cavity))
+  {
+    cavity = "";
+    options_marker.push_back(0);
+  }
+  else
+  {
+    options_marker.push_back(1);
+  }
+  options.push_back(cavity);
+
+  if (data.find_keyword("CAVITY_RADIATION_ON")){
+      options_marker.push_back(1);
+      options.push_back("1");
+  }else if (data.find_keyword("CAVITY_RADIATION_OFF"))
+  {
+    options_marker.push_back(1);
+    options.push_back("0");
+  }else{
+      options_marker.push_back(0);
+      options.push_back("0");
+  }
+
   if (!ccx_iface.modify_loadsradiation(radiation_id ,options , options_marker))
   {
     output = "Failed!\n";

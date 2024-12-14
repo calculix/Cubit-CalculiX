@@ -455,6 +455,26 @@ bool CalculiXCoreInterface::delete_orientation(int orientation_id)
   return ccx_core.delete_orientation(orientation_id);
 }
 
+bool CalculiXCoreInterface::modify_damping(std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return ccx_core.modify_damping(options, options_marker);
+}
+
+bool CalculiXCoreInterface::delete_damping(bool delete_alpha, bool delete_beta)
+{
+  return ccx_core.delete_damping(delete_alpha, delete_beta);
+}
+
+bool CalculiXCoreInterface::modify_physicalconstants(std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return ccx_core.modify_physicalconstants(options, options_marker);
+}
+
+bool CalculiXCoreInterface::delete_physicalconstants(bool delete_absolute_zero, bool delete_stefan_boltzmann, bool delete_newton_gravity)
+{
+  return ccx_core.delete_physicalconstants(delete_absolute_zero, delete_stefan_boltzmann, delete_newton_gravity);
+} 
+
 bool CalculiXCoreInterface::modify_loadsforces(int force_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
   return ccx_core.modify_loadsforces(force_id,options,options_marker);
@@ -1488,6 +1508,16 @@ std::string CalculiXCoreInterface::get_amplitude_export_data() // gets the expor
 std::string CalculiXCoreInterface::get_orientation_export_data() // gets the export data from orientation core
 {
   return ccx_core.get_orientation_export_data();
+}
+
+std::string CalculiXCoreInterface::get_damping_export_data() // gets the export data from damping core
+{
+  return ccx_core.get_damping_export_data();
+}
+
+std::string CalculiXCoreInterface::get_physicalconstants_export_data() // gets the export data from physicalconstants core
+{
+  return ccx_core.get_physicalconstants_export_data();
 }
 
 std::string CalculiXCoreInterface::get_initialcondition_export_data() // gets the export data from core

@@ -25,7 +25,8 @@ std::vector<std::string> ccxLoadsCentrifugalCreateCommand::get_syntax()
   syntax.append("[op {mod | new}] " );
   syntax.append("[amplitude <value:label='amplitude id',help='<amplitude id>'>] ");
   syntax.append("[timedelay <value:label='timedelay',help='<timedelay>'>] ");
-  
+  syntax.append("[name <string:type='unquoted', number='1', label='name', help='<name>'>] " );
+
   syntax_list.push_back(syntax);
   
   return syntax_list;
@@ -42,6 +43,7 @@ std::vector<std::string> ccxLoadsCentrifugalCreateCommand::get_syntax_help()
   help[0].append("[op {mod | new}] " );
   help[0].append("[amplitude <amplitude id>] ");
   help[0].append("[timedelay <timedelay>] ");
+  help[0].append("[name <name>] " );
 
   return help;
 }
@@ -79,6 +81,7 @@ bool ccxLoadsCentrifugalCreateCommand::execute(CubitCommandData &data)
   std::string cx;
   std::string cy;
   std::string cz;
+  std::string name = ""; 
   
   data.get_value("magnitude_value", magnitude_value);
   magnitude = ccx_iface.to_string_scientific(magnitude_value);
@@ -123,6 +126,7 @@ bool ccxLoadsCentrifugalCreateCommand::execute(CubitCommandData &data)
   {
     timedelay = std::to_string(timedelay_value);
   }
+  data.get_string("name", name);
   
   options.push_back(std::to_string(op_mode));
   options.push_back(amplitude_id);
@@ -135,6 +139,7 @@ bool ccxLoadsCentrifugalCreateCommand::execute(CubitCommandData &data)
   options.push_back(cx);
   options.push_back(cy);
   options.push_back(cz);
+  options.push_back(name);
   
   if (!ccx_iface.create_loadscentrifugal(options))
   {

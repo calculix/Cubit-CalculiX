@@ -37,6 +37,7 @@ bool CoreLoadsTrajectory::reset()
   direction_data.clear();
   magnitude_data.clear();
   radius_data.clear();
+  name_data.clear();
   init();
   return true;
 }
@@ -60,6 +61,7 @@ bool CoreLoadsTrajectory::create_load(std::vector<std::string> options, std::vec
   int magnitude_id;
   int time_id;
   int radius_id;
+  int name_id;
 
   if (loads_data.size()==0)
   {
@@ -139,13 +141,26 @@ bool CoreLoadsTrajectory::create_load(std::vector<std::string> options, std::vec
   radius_id = sub_id;
   this->add_radius(std::to_string(sub_id), options[9]);
 
-  this->add_load(load_id, op_mode, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id, radius_id);
+  // name
+  if (name_data.size()==0)
+  {
+    sub_id = 1;
+  }
+  else
+  {
+    sub_last = int(name_data.size()) - 1;
+    sub_id = std::stoi(name_data[sub_last][0]) + 1;
+  }
+  name_id = sub_id;
+  this->add_name(std::to_string(sub_id), options[10]);
+
+  this->add_load(load_id, op_mode, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id, radius_id, name_id);
   return true;
 }
 
-bool CoreLoadsTrajectory::add_load(int load_id, int op_mode, int curve_id, int vertex_id, int fire_ray_surface_id, int direction_id, int magnitude_id, int time_id, int radius_id)
+bool CoreLoadsTrajectory::add_load(int load_id, int op_mode, int curve_id, int vertex_id, int fire_ray_surface_id, int direction_id, int magnitude_id, int time_id, int radius_id, int name_id)
 {
-  std::vector<int> v = {load_id, op_mode, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id, radius_id};
+  std::vector<int> v = {load_id, op_mode, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id, radius_id, name_id};
       
   loads_data.push_back(v);
 
@@ -247,6 +262,12 @@ bool CoreLoadsTrajectory::modify_load(int load_id, std::vector<std::string> opti
       sub_data_id = get_radius_data_id_from_radius_id(loads_data[loads_data_id][8]);
       radius_data[sub_data_id][1] = options[10];
     }
+    // name
+    if (options_marker[11]==1)
+    {
+      sub_data_id = get_name_data_id_from_name_id(loads_data[loads_data_id][9]);
+      name_data[sub_data_id][1] = options[11];
+    }
     return true;
   }
 }
@@ -285,6 +306,11 @@ bool CoreLoadsTrajectory::delete_load(int load_id)
     for (size_t i = sub_data_ids.size(); i > 0; i--)
     {
       fire_ray_surface_data.erase(fire_ray_surface_data.begin() + sub_data_ids[i-1]);
+    }
+    // name
+    sub_data_id = get_name_data_id_from_name_id(loads_data[loads_data_id][9]);
+    if (sub_data_id != -1){
+      name_data.erase(name_data.begin() + sub_data_id);
     }
     loads_data.erase(loads_data.begin() + loads_data_id);
     return true;
@@ -333,6 +359,15 @@ bool CoreLoadsTrajectory::add_fire_ray_surface(int fire_ray_surface_id, int surf
       
   fire_ray_surface_data.push_back(v);
 
+  return true;
+}
+
+bool CoreLoadsTrajectory::add_name(std::string name_id, std::string name)
+{
+  std::vector<std::string> v = {name_id, name};
+  
+  name_data.push_back(v);
+  
   return true;
 }
 
@@ -422,6 +457,19 @@ std::vector<int> CoreLoadsTrajectory::get_fire_ray_surface_ids_from_fire_ray_sur
     if (fire_ray_surface_data[i][0]==fire_surface_id)
     {
         return_int.push_back(int(fire_ray_surface_data[i][1]));
+    }  
+  }
+  return return_int;
+}
+
+int CoreLoadsTrajectory::get_name_data_id_from_name_id(int name_id)
+{ 
+  int return_int = -1;
+  for (size_t i = 0; i < name_data.size(); i++)
+  {
+    if (name_data[i][0]==std::to_string(name_id))
+    {
+        return_int = int(i);
     }  
   }
   return return_int;
@@ -1049,11 +1097,17 @@ std::string CoreLoadsTrajectory::print_data()
     str_return.append(std::to_string(fire_ray_surface_data[i][0]) + " " + std::to_string(fire_ray_surface_data[i][1]) + " \n");
   }
 
+  str_return.append("\n CoreLoadsTrajectory name_data: \n");
+  str_return.append("name_id, name \n");
+
+  for (size_t i = 0; i < name_data.size(); i++)
+  {
+    str_return.append(name_data[i][0] + " " + name_data[i][1] + " \n");
+  }
+
+
   return str_return;
 }
-
-
-
 
 
 //sorting of vectors

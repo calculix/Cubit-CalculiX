@@ -30,6 +30,8 @@
 #include "CoreContactPairs.hpp"
 #include "CoreAmplitudes.hpp"
 #include "CoreOrientations.hpp"
+#include "CoreDamping.hpp"
+#include "CorePhysicalConstants.hpp"
 #include "CoreLoadsForces.hpp"
 #include "CoreLoadsPressures.hpp"
 #include "CoreLoadsHeatfluxes.hpp"
@@ -60,7 +62,8 @@
 
 CalculiXCore::CalculiXCore():
   cb(NULL),mat(NULL),mat_library(NULL),sections(NULL),constraints(NULL),surfaceinteractions(NULL),
-  contactpairs(NULL),amplitudes(NULL),orientations(NULL),loadsforces(NULL),loadspressures(NULL),loadsheatfluxes(NULL),
+  contactpairs(NULL),amplitudes(NULL),orientations(NULL),damping(NULL),physicalconstants(NULL),
+  loadsforces(NULL),loadspressures(NULL),loadsheatfluxes(NULL),
   loadsgravity(NULL),loadscentrifugal(NULL),loadstrajectory(NULL),loadsfilm(NULL),loadsradiation(NULL),
   bcsdisplacements(NULL),bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL),
   initialconditions(NULL), hbcs(NULL), steps(NULL),jobs(NULL),results(NULL),timer(NULL),customlines(NULL),
@@ -89,6 +92,10 @@ CalculiXCore::~CalculiXCore()
     delete amplitudes;
   if(orientations)
     delete orientations;
+  if(damping)
+    delete damping;
+  if(physicalconstants)
+    delete physicalconstants;
   if(loadsforces)
     delete loadsforces;
   if(loadspressures)
@@ -212,6 +219,16 @@ bool CalculiXCore::init()
     orientations = new CoreOrientations;
   
   orientations->init();
+
+  if(!damping)
+    damping = new CoreDamping;
+  
+  damping->init();
+
+  if(!physicalconstants)
+    physicalconstants = new CorePhysicalConstants;
+  
+  physicalconstants->init();
 
   if(!loadsforces)
     loadsforces = new CoreLoadsForces;
@@ -472,6 +489,8 @@ bool CalculiXCore::reset()
   contactpairs->reset();
   amplitudes->reset();
   orientations->reset();
+  damping->reset();
+  physicalconstants->reset();
   loadsforces->reset();
   loadspressures->reset();
   loadsheatfluxes->reset();
@@ -525,7 +544,7 @@ bool CalculiXCore::read_cub(std::string filename)
     PRINT_INFO("%s", log.c_str());
     return true;
   }else{
-    progressbar.start(0,25,"Reading Cubit-CalculiX data");
+    progressbar.start(0,27,"Reading Cubit-CalculiX data");
     progressbar.check_interrupt();
     //General
     std::vector<std::string> general;
@@ -586,6 +605,14 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_string_rank_2("rotation_data","Cubit-CalculiX/Orientations", orientations->rotation_data);
     progressbar.step();
     progressbar.check_interrupt();
+    //Damping
+    cubTool.read_dataset_string_rank_1("damping_data","Cubit-CalculiX/Damping", damping->damping_data);
+    progressbar.step();
+    progressbar.check_interrupt();
+    //Physical Constants
+    cubTool.read_dataset_string_rank_1("physicalconstants_data","Cubit-CalculiX/PhysicalConstants", physicalconstants->physicalconstants_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //LoadsForces
     cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Forces", loadsforces->loads_data);
     cubTool.read_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Forces", loadsforces->time_delay_data);
@@ -606,6 +633,7 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Gravity", loadsgravity->time_delay_data);
     cubTool.read_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Gravity", loadsgravity->direction_data);
     cubTool.read_dataset_string_rank_2("magnitude_data","Cubit-CalculiX/Loads/Gravity", loadsgravity->magnitude_data);
+    cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Gravity", loadsgravity->name_data);
     progressbar.step();
     progressbar.check_interrupt();
     //LoadsCentrifugal
@@ -614,6 +642,7 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->direction_data);
     cubTool.read_dataset_string_rank_2("magnitude_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->magnitude_data);
     cubTool.read_dataset_string_rank_2("coordinate_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->coordinate_data);
+    cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->name_data);
     progressbar.step();
     progressbar.check_interrupt();
     //LoadsTrajectory
@@ -623,6 +652,7 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->direction_data);
     cubTool.read_dataset_string_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->magnitude_data);
     cubTool.read_dataset_string_rank_2("time_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->time_data);
+    cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->name_data);
     progressbar.step();
     progressbar.check_interrupt();
     //LoadsFilm
@@ -640,8 +670,8 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->loads_data);
     cubTool.read_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->time_delay_data);
     cubTool.read_dataset_string_rank_2("temperature_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->temperature_data);
-    cubTool.read_dataset_string_rank_2("coefficient_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->coefficient_data);
-    cubTool.read_dataset_string_rank_2("Radiation_time_delay_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->radiation_time_delay_data);
+    cubTool.read_dataset_string_rank_2("emissivity_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->emissivity_data);
+    cubTool.read_dataset_string_rank_2("radiation_time_delay_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->radiation_time_delay_data);
     cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->name_data);
     progressbar.step();
     progressbar.check_interrupt();
@@ -996,7 +1026,7 @@ bool CalculiXCore::save_cub(std::string filename)
 
   if (!cubTool.nameExists("Cubit-CalculiX"))
   {
-    progressbar.start(0,25,"Writing Cubit-CalculiX data");
+    progressbar.start(0,27,"Writing Cubit-CalculiX data");
     progressbar.check_interrupt();
     //General
     cubTool.createGroup("Cubit-CalculiX");
@@ -1067,6 +1097,14 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_string_rank_2("rotation_data","Cubit-CalculiX/Orientations", orientations->rotation_data);
     progressbar.step();
     progressbar.check_interrupt();
+    //Damping
+    cubTool.write_dataset_string_rank_1("damping_data","Cubit-CalculiX/Damping", damping->damping_data);
+    progressbar.step();
+    progressbar.check_interrupt();
+    //Physical Constants
+    cubTool.write_dataset_string_rank_1("physicalconstants_data","Cubit-CalculiX/PhysicalConstants", physicalconstants->physicalconstants_data);
+    progressbar.step();
+    progressbar.check_interrupt();
     //Loads
     cubTool.createGroup("Cubit-CalculiX/Loads");
     //LoadsForces
@@ -1093,6 +1131,7 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Gravity", loadsgravity->time_delay_data);
     cubTool.write_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Gravity", loadsgravity->direction_data);
     cubTool.write_dataset_string_rank_2("magnitude_data","Cubit-CalculiX/Loads/Gravity", loadsgravity->magnitude_data);
+    cubTool.write_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Gravity", loadsgravity->name_data);
     progressbar.step();
     progressbar.check_interrupt();
     //LoadsCentrifugal
@@ -1102,6 +1141,7 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->direction_data);
     cubTool.write_dataset_string_rank_2("magnitude_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->magnitude_data);
     cubTool.write_dataset_string_rank_2("coordinate_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->coordinate_data);
+    cubTool.write_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->name_data);
     progressbar.step();
     progressbar.check_interrupt();
     //LoadsTrajectory
@@ -1111,6 +1151,7 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->direction_data);
     cubTool.write_dataset_string_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->magnitude_data);
     cubTool.write_dataset_string_rank_2("time_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->time_data);
+    cubTool.write_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->name_data);
     progressbar.step();
     progressbar.check_interrupt();
     //LoadsFilm
@@ -1128,7 +1169,7 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->loads_data);
     cubTool.write_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->time_delay_data);
     cubTool.write_dataset_string_rank_2("temperature_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->temperature_data);
-    cubTool.write_dataset_string_rank_2("coefficient_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->coefficient_data);
+    cubTool.write_dataset_string_rank_2("emissivity_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->emissivity_data);
     cubTool.write_dataset_string_rank_2("radiation_time_delay_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->radiation_time_delay_data);
     cubTool.write_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->name_data);
     progressbar.step();
@@ -2276,6 +2317,8 @@ std::string CalculiXCore::print_data()
   str_return.append(contactpairs->print_data());
   str_return.append(amplitudes->print_data());
   str_return.append(orientations->print_data());
+  str_return.append(damping->print_data());
+  str_return.append(physicalconstants->print_data());
   str_return.append(loadsforces->print_data());
   str_return.append(loadspressures->print_data());
   str_return.append(loadsheatfluxes->print_data());
@@ -3615,6 +3658,26 @@ bool CalculiXCore::delete_orientation(int orientation_id)
 {
   return orientations->delete_orientation(orientation_id);
 }
+
+bool CalculiXCore::modify_damping(std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return damping->modify_damping(options, options_marker);
+}
+
+bool CalculiXCore::delete_damping(bool delete_alpha, bool delete_beta)
+{
+  return damping->delete_damping(delete_alpha, delete_beta);
+}
+
+bool CalculiXCore::modify_physicalconstants(std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return physicalconstants->modify_physicalconstants(options, options_marker);
+}
+
+bool CalculiXCore::delete_physicalconstants(bool delete_absolute_zero, bool delete_stefan_boltzmann, bool delete_newton_gravity)
+{
+  return physicalconstants->delete_physicalconstants(delete_absolute_zero, delete_stefan_boltzmann, delete_newton_gravity);
+} 
 
 bool CalculiXCore::modify_loadsforces(int force_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
@@ -7056,6 +7119,17 @@ std::string CalculiXCore::get_orientation_export_data() // gets the export data 
   return orientations->get_orientation_export();
 }
 
+std::string CalculiXCore::get_damping_export_data() // gets the export data from damping core
+{
+  return damping->get_damping_export_data();
+}
+
+std::string CalculiXCore::get_physicalconstants_export_data() // gets the export data from physicalconstants core
+{
+  return physicalconstants->get_physicalconstants_export_data();
+}
+
+
 std::string CalculiXCore::get_initialcondition_export_data() // gets the export data from core
 {
   std::vector<std::string> initialconditions_export_list;
@@ -7565,10 +7639,15 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
             int sub_data_id = loadsradiation->get_temperature_data_id_from_temperature_id(loadsradiation->loads_data[load_data_id][5]);
             std::string temperature = loadsradiation->temperature_data[sub_data_id][1];
             
-            sub_data_id = loadsradiation->get_coefficient_data_id_from_coefficient_id(loadsradiation->loads_data[load_data_id][6]);
-            std::string coefficient = loadsradiation->coefficient_data[sub_data_id][1];
+            sub_data_id = loadsradiation->get_emissivity_data_id_from_emissivity_id(loadsradiation->loads_data[load_data_id][6]);
+            std::string emissivity = loadsradiation->emissivity_data[sub_data_id][1];
 
-            str_temp = temp_list[iv][1] + ",R" + temp_list[iv][2] + "," + temperature + "," + coefficient;
+            if (loadsradiation->loads_data[load_data_id][11]==1)
+            {
+              str_temp = temp_list[iv][1] + ",R" + temp_list[iv][2] + "CR," + temperature + "," + emissivity;
+            }else{
+              str_temp = temp_list[iv][1] + ",R" + temp_list[iv][2] + "," + temperature + "," + emissivity;
+            }
             steps_export_list.push_back(str_temp);
           }
 

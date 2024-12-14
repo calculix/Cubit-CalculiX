@@ -77,7 +77,6 @@ bool ccxLoadsFilmCreateCommand::execute(CubitCommandData &data)
   double filmtimedelay_value;
   std::string name = ""; 
   
-  
   data.get_value("sideset id", sideset_id_value);
   sideset_id = std::to_string(sideset_id_value);
   data.get_value("temperature_value", temperature_value);

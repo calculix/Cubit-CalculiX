@@ -17,6 +17,8 @@ class CoreSurfaceInteractions;
 class CoreContactPairs;
 class CoreAmplitudes;
 class CoreOrientations;
+class CoreDamping;
+class CorePhysicalConstants;
 class CoreLoadsForces;
 class CoreLoadsPressures;
 class CoreLoadsHeatfluxes;
@@ -160,6 +162,10 @@ public:
   bool create_orientation(std::vector<std::string> options, std::vector<std::vector<std::string>> options2); // adds a new orientation
   bool modify_orientation(int orientation_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2); // modify a orientation
   bool delete_orientation(int orientation_id); // delete orientation
+  bool modify_damping(std::vector<std::string> options, std::vector<int> options_marker); // modify damping
+  bool delete_damping(bool delete_alpha, bool delete_beta); // deletes the values
+  bool modify_physicalconstants(std::vector<std::string> options, std::vector<int> options_marker); // modify physical constants
+  bool delete_physicalconstants(bool delete_absolute_zero, bool delete_stefan_boltzmann, bool delete_newton_gravity); // deletes the values
   bool modify_loadsforces(int force_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a force
   bool modify_loadspressures(int pressure_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a pressure
   bool modify_loadsheatfluxes(int heatflux_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a heatflux
@@ -378,6 +384,8 @@ public:
   std::string get_contactpair_export_data(); // gets the export data from contactpairs core
   std::string get_amplitude_export_data(); // gets the export data from amplitudes core
   std::string get_orientation_export_data(); // gets the export data from orientation core
+  std::string get_damping_export_data(); // gets the export data from damping core
+  std::string get_physicalconstants_export_data(); // gets the export data from physicalconstants core
   std::string get_initialcondition_export_data(); // gets the export data from core
   std::string get_hbc_export_data(); // gets the export data from core
   std::string get_step_export_data(); // gets the export data from core
@@ -392,6 +400,8 @@ public:
   CoreContactPairs *contactpairs;
   CoreAmplitudes *amplitudes;
   CoreOrientations *orientations;
+  CoreDamping *damping;
+  CorePhysicalConstants *physicalconstants;
   CoreLoadsForces *loadsforces;
   CoreLoadsPressures *loadspressures;
   CoreLoadsHeatfluxes *loadsheatfluxes;

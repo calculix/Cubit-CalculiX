@@ -51,6 +51,10 @@
 #include "ccxOrientationCreateCommand.hpp"
 #include "ccxOrientationModifyCommand.hpp"
 #include "ccxOrientationDeleteCommand.hpp"
+#include "ccxDampingModifyCommand.hpp"
+#include "ccxDampingDeleteCommand.hpp"
+#include "ccxPhysicalConstantsModifyCommand.hpp"
+#include "ccxPhysicalConstantsDeleteCommand.hpp"
 #include "ccxLoadsForcesModifyCommand.hpp"
 #include "ccxLoadsPressuresModifyCommand.hpp"
 #include "ccxLoadsHeatfluxesModifyCommand.hpp"
@@ -197,6 +201,10 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxOrientationCreateCommand");
   keys.push_back("ccxOrientationModifyCommand");
   keys.push_back("ccxOrientationDeleteCommand");
+  keys.push_back("ccxDampingModifyCommand");
+  keys.push_back("ccxDampingDeleteCommand");
+  keys.push_back("ccxPhysicalConstantsModifyCommand");
+  keys.push_back("ccxPhysicalConstantsDeleteCommand");
   keys.push_back("ccxLoadsForcesModifyCommand");
   keys.push_back("ccxLoadsPressuresModifyCommand");
   keys.push_back("ccxLoadsHeatfluxesModifyCommand");
@@ -434,6 +442,18 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   if(key == "ccxOrientationDeleteCommand")
     return new ccxOrientationDeleteCommand();
+
+  if(key == "ccxDampingModifyCommand")
+    return new ccxDampingModifyCommand();
+
+  if(key == "ccxDampingDeleteCommand")
+    return new ccxDampingDeleteCommand();
+
+  if(key == "ccxPhysicalConstantsModifyCommand")
+    return new ccxPhysicalConstantsModifyCommand();
+
+  if(key == "ccxPhysicalConstantsDeleteCommand")
+    return new ccxPhysicalConstantsDeleteCommand();
 
   if(key == "ccxLoadsForcesModifyCommand")
     return new ccxLoadsForcesModifyCommand();

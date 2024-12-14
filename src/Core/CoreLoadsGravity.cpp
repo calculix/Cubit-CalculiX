@@ -31,6 +31,7 @@ bool CoreLoadsGravity::reset()
   time_delay_data.clear();
   direction_data.clear();
   magnitude_data.clear();
+  name_data.clear();
   init();
   return true;
 }
@@ -52,6 +53,7 @@ bool CoreLoadsGravity::create_load(std::vector<std::string> options)
   int time_delay_id;
   int direction_id;
   int magnitude_id;
+  int name_id;
   
   if (loads_data.size()==0)
   {
@@ -111,13 +113,26 @@ bool CoreLoadsGravity::create_load(std::vector<std::string> options)
   magnitude_id = sub_id;
   this->add_magnitude(std::to_string(sub_id), options[7]);
 
-  this->add_load(load_id, op_mode, amplitude_id, time_delay_id, block_id, direction_id, magnitude_id);
+  // name
+  if (name_data.size()==0)
+  {
+    sub_id = 1;
+  }
+  else
+  {
+    sub_last = int(name_data.size()) - 1;
+    sub_id = std::stoi(name_data[sub_last][0]) + 1;
+  }
+  name_id = sub_id;
+  this->add_name(std::to_string(sub_id), options[8]);
+
+  this->add_load(load_id, op_mode, amplitude_id, time_delay_id, block_id, direction_id, magnitude_id, name_id);
   return true;
 }
 
-bool CoreLoadsGravity::add_load(int load_id, int op_mode, int amplitude_id, int time_delay_id, int block_id, int direction_id, int magnitude_id)
+bool CoreLoadsGravity::add_load(int load_id, int op_mode, int amplitude_id, int time_delay_id, int block_id, int direction_id, int magnitude_id, int name_id)
 {
-  std::vector<int> v = {load_id, op_mode, amplitude_id, time_delay_id, block_id, direction_id, magnitude_id};
+  std::vector<int> v = {load_id, op_mode, amplitude_id, time_delay_id, block_id, direction_id, magnitude_id, name_id};
       
   loads_data.push_back(v);
 
@@ -177,6 +192,12 @@ bool CoreLoadsGravity::modify_load(int load_id, std::vector<std::string> options
       sub_data_id = get_magnitude_data_id_from_magnitude_id(loads_data[loads_data_id][6]);
       magnitude_data[sub_data_id][1] = options[7];
     }
+    // name
+    if (options_marker[8]==1)
+    {
+      sub_data_id = get_name_data_id_from_name_id(loads_data[loads_data_id][7]);
+      name_data[sub_data_id][1] = options[8];
+    }
     return true;
   }
 }
@@ -200,9 +221,14 @@ bool CoreLoadsGravity::delete_load(int load_id)
       direction_data.erase(direction_data.begin() + sub_data_id);
     }
     // magnitude
-    sub_data_id = get_magnitude_data_id_from_magnitude_id(loads_data[loads_data_id][5]);
+    sub_data_id = get_magnitude_data_id_from_magnitude_id(loads_data[loads_data_id][6]);
     if (sub_data_id != -1){
       magnitude_data.erase(magnitude_data.begin() + sub_data_id);
+    }
+    // name
+    sub_data_id = get_name_data_id_from_name_id(loads_data[loads_data_id][7]);
+    if (sub_data_id != -1){
+      name_data.erase(name_data.begin() + sub_data_id);
     }
     loads_data.erase(loads_data.begin() + loads_data_id);
     return true;
@@ -233,6 +259,15 @@ bool CoreLoadsGravity::add_magnitude(std::string magnitude_id, std::string magni
       
   magnitude_data.push_back(v);
 
+  return true;
+}
+
+bool CoreLoadsGravity::add_name(std::string name_id, std::string name)
+{
+  std::vector<std::string> v = {name_id, name};
+  
+  name_data.push_back(v);
+  
   return true;
 }
 
@@ -281,6 +316,19 @@ int CoreLoadsGravity::get_magnitude_data_id_from_magnitude_id(int magnitude_id)
   for (size_t i = 0; i < magnitude_data.size(); i++)
   {
     if (magnitude_data[i][0]==std::to_string(magnitude_id))
+    {
+        return_int = int(i);
+    }  
+  }
+  return return_int;
+}
+
+int CoreLoadsGravity::get_name_data_id_from_name_id(int name_id)
+{ 
+  int return_int = -1;
+  for (size_t i = 0; i < name_data.size(); i++)
+  {
+    if (name_data[i][0]==std::to_string(name_id))
     {
         return_int = int(i);
     }  
@@ -357,6 +405,14 @@ std::string CoreLoadsGravity::print_data()
   for (size_t i = 0; i < magnitude_data.size(); i++)
   {
     str_return.append(magnitude_data[i][0] + " " + magnitude_data[i][1] + " \n");
+  }
+
+  str_return.append("\n CoreLoadsGravity name_data: \n");
+  str_return.append("name_id, name \n");
+
+  for (size_t i = 0; i < name_data.size(); i++)
+  {
+    str_return.append(name_data[i][0] + " " + name_data[i][1] + " \n");
   }
 
   return str_return;

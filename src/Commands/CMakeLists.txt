@@ -101,6 +101,14 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxOrientationModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxOrientationDeleteCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxOrientationDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxDampingModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxDampingModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxDampingDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxDampingDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxPhysicalConstantsModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxPhysicalConstantsModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxPhysicalConstantsDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxPhysicalConstantsDeleteCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsForcesModifyCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsForcesModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsPressuresModifyCommand.cpp

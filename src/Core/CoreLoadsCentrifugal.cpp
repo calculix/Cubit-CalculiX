@@ -32,6 +32,7 @@ bool CoreLoadsCentrifugal::reset()
   direction_data.clear();
   magnitude_data.clear();
   coordinate_data.clear();
+  name_data.clear();
   init();
   return true;
 }
@@ -54,6 +55,7 @@ bool CoreLoadsCentrifugal::create_load(std::vector<std::string> options)
   int direction_id;
   int magnitude_id;
   int coordinate_id;
+  int name_id;
   
   if (loads_data.size()==0)
   {
@@ -126,13 +128,26 @@ bool CoreLoadsCentrifugal::create_load(std::vector<std::string> options)
   coordinate_id = sub_id;
   this->add_coordinate(std::to_string(sub_id), options[8], options[9], options[10]);
 
-  this->add_load(load_id, op_mode, amplitude_id, time_delay_id, block_id, direction_id, magnitude_id, coordinate_id);
+  // name
+  if (name_data.size()==0)
+  {
+    sub_id = 1;
+  }
+  else
+  {
+    sub_last = int(name_data.size()) - 1;
+    sub_id = std::stoi(name_data[sub_last][0]) + 1;
+  }
+  name_id = sub_id;
+  this->add_name(std::to_string(sub_id), options[11]);
+
+  this->add_load(load_id, op_mode, amplitude_id, time_delay_id, block_id, direction_id, magnitude_id, coordinate_id, name_id);
   return true;
 }
 
-bool CoreLoadsCentrifugal::add_load(int load_id, int op_mode, int amplitude_id, int time_delay_id, int block_id, int direction_id, int magnitude_id, int coordinate_id)
+bool CoreLoadsCentrifugal::add_load(int load_id, int op_mode, int amplitude_id, int time_delay_id, int block_id, int direction_id, int magnitude_id, int coordinate_id, int name_id)
 {
-  std::vector<int> v = {load_id, op_mode, amplitude_id, time_delay_id, block_id, direction_id, magnitude_id, coordinate_id};
+  std::vector<int> v = {load_id, op_mode, amplitude_id, time_delay_id, block_id, direction_id, magnitude_id, coordinate_id, name_id};
       
   loads_data.push_back(v);
 
@@ -208,6 +223,12 @@ bool CoreLoadsCentrifugal::modify_load(int load_id, std::vector<std::string> opt
       sub_data_id = get_coordinate_data_id_from_coordinate_id(loads_data[loads_data_id][7]);
       coordinate_data[sub_data_id][1] = options[10];
     }
+    // name
+    if (options_marker[11]==1)
+    {
+      sub_data_id = get_name_data_id_from_name_id(loads_data[loads_data_id][8]);
+      name_data[sub_data_id][1] = options[11];
+    }
     return true;
   }
 }
@@ -239,6 +260,11 @@ bool CoreLoadsCentrifugal::delete_load(int load_id)
     sub_data_id = get_coordinate_data_id_from_coordinate_id(loads_data[loads_data_id][7]);
     if (sub_data_id != -1){
       coordinate_data.erase(coordinate_data.begin() + sub_data_id);
+    }
+    // name
+    sub_data_id = get_name_data_id_from_name_id(loads_data[loads_data_id][8]);
+    if (sub_data_id != -1){
+      name_data.erase(name_data.begin() + sub_data_id);
     }
     loads_data.erase(loads_data.begin() + loads_data_id);
     return true;
@@ -278,6 +304,15 @@ bool CoreLoadsCentrifugal::add_coordinate(std::string coordinate_id, std::string
       
   coordinate_data.push_back(v);
 
+  return true;
+}
+
+bool CoreLoadsCentrifugal::add_name(std::string name_id, std::string name)
+{
+  std::vector<std::string> v = {name_id, name};
+  
+  name_data.push_back(v);
+  
   return true;
 }
 
@@ -339,6 +374,19 @@ int CoreLoadsCentrifugal::get_coordinate_data_id_from_coordinate_id(int coordina
   for (size_t i = 0; i < coordinate_data.size(); i++)
   {
     if (coordinate_data[i][0]==std::to_string(coordinate_id))
+    {
+        return_int = int(i);
+    }  
+  }
+  return return_int;
+}
+
+int CoreLoadsCentrifugal::get_name_data_id_from_name_id(int name_id)
+{ 
+  int return_int = -1;
+  for (size_t i = 0; i < name_data.size(); i++)
+  {
+    if (name_data[i][0]==std::to_string(name_id))
     {
         return_int = int(i);
     }  
@@ -426,6 +474,14 @@ std::string CoreLoadsCentrifugal::print_data()
   for (size_t i = 0; i < coordinate_data.size(); i++)
   {
     str_return.append(coordinate_data[i][0] + " " + coordinate_data[i][1] + " " + coordinate_data[i][2] + " " + coordinate_data[i][3] + " \n");
+  }
+  
+  str_return.append("\n CoreLoadsCentrifugal name_data: \n");
+  str_return.append("name_id, name \n");
+
+  for (size_t i = 0; i < name_data.size(); i++)
+  {
+    str_return.append(name_data[i][0] + " " + name_data[i][1] + " \n");
   }
 
   return str_return;

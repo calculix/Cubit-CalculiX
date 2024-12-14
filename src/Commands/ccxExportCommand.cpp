@@ -181,7 +181,7 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
   //output_file << "Cubit2CalculiX with CalculiX Plugin \n";
   //output_file << "** \n";
 
-  progressbar->start(0,16,"Writing CCX .inp File");
+  progressbar->start(0,18,"Writing CCX .inp File");
 
   // prepare export data
   // trajectory: sidesets,amplitude,dflux
@@ -218,6 +218,10 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
   result = write_sections(output_file, ccx_iface);
   progressbar->step();
   
+  result = write_damping(output_file, ccx_iface);
+  progressbar->step();
+  result = write_physicalconstants(output_file, ccx_iface);
+  progressbar->step();
   result = write_constraints(output_file, ccx_iface);
   progressbar->step();
   result = write_surfaceinteractions(output_file, ccx_iface);
@@ -752,6 +756,18 @@ bool ccxExportCommand::write_amplitudes(std::ofstream& output_file, CalculiXCore
 bool ccxExportCommand::write_orientations(std::ofstream& output_file, CalculiXCoreInterface ccx_iface)
 {
   output_file << ccx_iface.get_orientation_export_data();
+  return true;
+}
+
+bool ccxExportCommand::write_damping(std::ofstream& output_file,CalculiXCoreInterface ccx_iface)
+{
+  output_file << ccx_iface.get_damping_export_data();
+  return true;
+}
+
+bool ccxExportCommand::write_physicalconstants(std::ofstream& output_file,CalculiXCoreInterface ccx_iface)
+{
+  output_file << ccx_iface.get_physicalconstants_export_data();
   return true;
 }
 

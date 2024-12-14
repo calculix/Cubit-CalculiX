@@ -31,8 +31,9 @@ bool CoreLoadsRadiation::reset()
   time_delay_data.clear();
   radiation_time_delay_data.clear();
   temperature_data.clear();
-  coefficient_data.clear();
+  emissivity_data.clear();
   name_data.clear();
+  cavity_data.clear();
   init();
   return true;
 }
@@ -53,10 +54,12 @@ bool CoreLoadsRadiation::create_load(std::vector<std::string> options)
   int sideset_id;
   int time_delay_id;
   int temperature_id;
-  int coefficient_id;
+  int emissivity_id;
   int radiation_amplitude_id;
   int radiation_time_delay_id;
   int name_id;
+  int cavity_id;
+  int cavityradiation;
   
   if (loads_data.size()==0)
   {
@@ -103,18 +106,18 @@ bool CoreLoadsRadiation::create_load(std::vector<std::string> options)
   temperature_id = sub_id;
   this->add_temperature(std::to_string(sub_id), options[4]);
 
-  // COEFFICIENT
-  if (coefficient_data.size()==0)
+  // emissivity
+  if (emissivity_data.size()==0)
   {
     sub_id = 1;
   }
   else
   {
-    sub_last = int(coefficient_data.size()) - 1;
-    sub_id = std::stoi(coefficient_data[sub_last][0]) + 1;
+    sub_last = int(emissivity_data.size()) - 1;
+    sub_id = std::stoi(emissivity_data[sub_last][0]) + 1;
   }
-  coefficient_id = sub_id;
-  this->add_coefficient(std::to_string(sub_id), options[5]);
+  emissivity_id = sub_id;
+  this->add_emissivity(std::to_string(sub_id), options[5]);
 
   // RADIATION AMPLITUDE
   radiation_amplitude_id = std::stoi(options[6]);
@@ -145,13 +148,29 @@ bool CoreLoadsRadiation::create_load(std::vector<std::string> options)
   name_id = sub_id;
   this->add_name(std::to_string(sub_id), options[8]);
 
-  this->add_load(load_id, op_mode, amplitude_id, time_delay_id, sideset_id, temperature_id, coefficient_id,radiation_amplitude_id, radiation_time_delay_id, name_id);
+  // cavity
+  if (cavity_data.size()==0)
+  {
+    sub_id = 1;
+  }
+  else
+  {
+    sub_last = int(cavity_data.size()) - 1;
+    sub_id = std::stoi(cavity_data[sub_last][0]) + 1;
+  }
+  cavity_id = sub_id;
+  this->add_cavity(std::to_string(sub_id), options[9]);
+
+  // CAVITY RADIATION
+  cavityradiation = std::stoi(options[10]);
+
+  this->add_load(load_id, op_mode, amplitude_id, time_delay_id, sideset_id, temperature_id, emissivity_id,radiation_amplitude_id, radiation_time_delay_id, name_id, cavity_id, cavityradiation);
   return true;
 }
 
-bool CoreLoadsRadiation::add_load(int load_id, int op_mode, int amplitude_id, int time_delay_id, int sideset_id, int temperature_id, int coefficient_id,int radiation_amplitude_id, int radiation_time_delay_id, int name_id)
+bool CoreLoadsRadiation::add_load(int load_id, int op_mode, int amplitude_id, int time_delay_id, int sideset_id, int temperature_id, int emissivity_id,int radiation_amplitude_id, int radiation_time_delay_id, int name_id, int cavity_id, int cavityradiation)
 {
-  std::vector<int> v = {load_id, op_mode, amplitude_id, time_delay_id, sideset_id, temperature_id, coefficient_id, radiation_amplitude_id, radiation_time_delay_id, name_id};
+  std::vector<int> v = {load_id, op_mode, amplitude_id, time_delay_id, sideset_id, temperature_id, emissivity_id, radiation_amplitude_id, radiation_time_delay_id, name_id, cavity_id, cavityradiation};
       
   loads_data.push_back(v);
 
@@ -195,11 +214,11 @@ bool CoreLoadsRadiation::modify_load(int load_id, std::vector<std::string> optio
       sub_data_id = get_temperature_data_id_from_temperature_id(loads_data[loads_data_id][5]);
       temperature_data[sub_data_id][1] = options[4];
     }
-    // COEFFICIENt
+    // emissivity
     if (options_marker[5]==1)
     {
-      sub_data_id = get_coefficient_data_id_from_coefficient_id(loads_data[loads_data_id][6]);
-      coefficient_data[sub_data_id][1] = options[5];
+      sub_data_id = get_emissivity_data_id_from_emissivity_id(loads_data[loads_data_id][6]);
+      emissivity_data[sub_data_id][1] = options[5];
     }
     // RADIATION AMPLITUDE
     if (options_marker[6]==1)
@@ -217,6 +236,17 @@ bool CoreLoadsRadiation::modify_load(int load_id, std::vector<std::string> optio
     {
       sub_data_id = get_name_data_id_from_name_id(loads_data[loads_data_id][9]);
       name_data[sub_data_id][1] = options[8];
+    }
+    // cavity
+    if (options_marker[9]==1)
+    {
+      sub_data_id = get_cavity_data_id_from_cavity_id(loads_data[loads_data_id][10]);
+      cavity_data[sub_data_id][1] = options[9];
+    }
+    // Cavity Radiation
+    if (options_marker[10]==1)
+    {
+      loads_data[loads_data_id][11] = std::stoi(options[10]);
     }
     return true;
   }
@@ -240,10 +270,10 @@ bool CoreLoadsRadiation::delete_load(int load_id)
     if (sub_data_id != -1){
       temperature_data.erase(temperature_data.begin() + sub_data_id);
     }
-    // coefficient
-    sub_data_id = get_coefficient_data_id_from_coefficient_id(loads_data[loads_data_id][6]);
+    // emissivity
+    sub_data_id = get_emissivity_data_id_from_emissivity_id(loads_data[loads_data_id][6]);
     if (sub_data_id != -1){
-      coefficient_data.erase(coefficient_data.begin() + sub_data_id);
+      emissivity_data.erase(emissivity_data.begin() + sub_data_id);
     }
     // radiation time delay
     sub_data_id = get_radiation_time_delay_data_id_from_radiation_time_delay_id(loads_data[loads_data_id][8]);
@@ -254,6 +284,11 @@ bool CoreLoadsRadiation::delete_load(int load_id)
     sub_data_id = get_name_data_id_from_name_id(loads_data[loads_data_id][9]);
     if (sub_data_id != -1){
       name_data.erase(name_data.begin() + sub_data_id);
+    }
+    // cavity
+    sub_data_id = get_cavity_data_id_from_cavity_id(loads_data[loads_data_id][10]);
+    if (sub_data_id != -1){
+      cavity_data.erase(cavity_data.begin() + sub_data_id);
     }
 
     loads_data.erase(loads_data.begin() + loads_data_id);
@@ -279,11 +314,11 @@ bool CoreLoadsRadiation::add_temperature(std::string temperature_id, std::string
   return true;
 }
 
-bool CoreLoadsRadiation::add_coefficient(std::string coefficient_id, std::string coefficient_value)
+bool CoreLoadsRadiation::add_emissivity(std::string emissivity_id, std::string emissivity_value)
 {
-  std::vector<std::string> v = {coefficient_id, coefficient_value};
+  std::vector<std::string> v = {emissivity_id, emissivity_value};
       
-  coefficient_data.push_back(v);
+  emissivity_data.push_back(v);
 
   return true;
 }
@@ -302,6 +337,15 @@ bool CoreLoadsRadiation::add_name(std::string name_id, std::string name)
   std::vector<std::string> v = {name_id, name};
   
   name_data.push_back(v);
+  
+  return true;
+}
+
+bool CoreLoadsRadiation::add_cavity(std::string cavity_id, std::string cavity)
+{
+  std::vector<std::string> v = {cavity_id, cavity};
+  
+  cavity_data.push_back(v);
   
   return true;
 }
@@ -345,12 +389,12 @@ int CoreLoadsRadiation::get_temperature_data_id_from_temperature_id(int temperat
   return return_int;
 }
 
-int CoreLoadsRadiation::get_coefficient_data_id_from_coefficient_id(int coefficient_id)
+int CoreLoadsRadiation::get_emissivity_data_id_from_emissivity_id(int emissivity_id)
 { 
   int return_int = -1;
-  for (size_t i = 0; i < coefficient_data.size(); i++)
+  for (size_t i = 0; i < emissivity_data.size(); i++)
   {
-    if (coefficient_data[i][0]==std::to_string(coefficient_id))
+    if (emissivity_data[i][0]==std::to_string(emissivity_id))
     {
         return_int = int(i);
     }  
@@ -365,7 +409,7 @@ int CoreLoadsRadiation::get_radiation_time_delay_data_id_from_radiation_time_del
   {
     if (radiation_time_delay_data[i][0]==std::to_string(radiation_time_delay_id))
     {
-        return_int = int(i);
+      return_int = int(i);
     }  
   }
   return return_int;
@@ -378,7 +422,20 @@ int CoreLoadsRadiation::get_name_data_id_from_name_id(int name_id)
   {
     if (name_data[i][0]==std::to_string(name_id))
     {
-        return_int = int(i);
+      return_int = int(i);
+    }  
+  }
+  return return_int;
+}
+
+int CoreLoadsRadiation::get_cavity_data_id_from_cavity_id(int cavity_id)
+{ 
+  int return_int = -1;
+  for (size_t i = 0; i < cavity_data.size(); i++)
+  {
+    if (cavity_data[i][0]==std::to_string(cavity_id))
+    {
+      return_int = int(i);
     }  
   }
   return return_int;
@@ -415,6 +472,11 @@ std::string CoreLoadsRadiation::get_load_export(int load_id)
   {
     str_temp.append(",RADIATION TIME DELAY=" + radiation_time_delay_data[sub_data_id][1]);
   }
+  sub_data_id = get_cavity_data_id_from_cavity_id(loads_data[load_data_id][10]);
+  if (cavity_data[sub_data_id][1]!="")
+  {
+    str_temp.append(",CAVITY=" + cavity_data[sub_data_id][1]);
+  }
   //str_temp.append("\n");
   
 
@@ -425,11 +487,11 @@ std::string CoreLoadsRadiation::print_data()
 {
   std::string str_return;
   str_return = "\n CoreLoadsRadiation loads_data: \n";
-  str_return.append("load_id, OP MODE, amplitude_id, time_delay_id, sideset_id, direction_id, magnitude_id,radiation_amplitude_id, radiation_time_delay_id,name \n");
+  str_return.append("load_id, OP MODE, amplitude_id, time_delay_id, sideset_id, direction_id, magnitude_id,radiation_amplitude_id, radiation_time_delay_id,name, cavity_id, cavity_radiation \n");
 
   for (size_t i = 0; i < loads_data.size(); i++)
   {
-    str_return.append(std::to_string(loads_data[i][0]) + " " + std::to_string(loads_data[i][1]) + " " + std::to_string(loads_data[i][2]) + " " + std::to_string(loads_data[i][3]) + " " + std::to_string(loads_data[i][4]) + " " + std::to_string(loads_data[i][5]) + " " + std::to_string(loads_data[i][6])  + " " + std::to_string(loads_data[i][7])  + " " + std::to_string(loads_data[i][8])  + " " + std::to_string(loads_data[i][9]) + " \n");
+    str_return.append(std::to_string(loads_data[i][0]) + " " + std::to_string(loads_data[i][1]) + " " + std::to_string(loads_data[i][2]) + " " + std::to_string(loads_data[i][3]) + " " + std::to_string(loads_data[i][4]) + " " + std::to_string(loads_data[i][5]) + " " + std::to_string(loads_data[i][6])  + " " + std::to_string(loads_data[i][7])  + " " + std::to_string(loads_data[i][8])  + " " + std::to_string(loads_data[i][9])  + " " + std::to_string(loads_data[i][10])  + " " + std::to_string(loads_data[i][11]) + " \n");
   }
 
   str_return.append("\n CoreLoadsRadiation time_delay_data: \n");
@@ -448,12 +510,12 @@ std::string CoreLoadsRadiation::print_data()
     str_return.append(temperature_data[i][0] + " " + temperature_data[i][1] + " \n");
   }
   
-  str_return.append("\n CoreLoadsRadiation coefficient_data: \n");
-  str_return.append("coefficient_id, coefficient_value \n");
+  str_return.append("\n CoreLoadsRadiation emissivity_data: \n");
+  str_return.append("emissivity_id, emissivity_value \n");
 
-  for (size_t i = 0; i < coefficient_data.size(); i++)
+  for (size_t i = 0; i < emissivity_data.size(); i++)
   {
-    str_return.append(coefficient_data[i][0] + " " + coefficient_data[i][1] + " \n");
+    str_return.append(emissivity_data[i][0] + " " + emissivity_data[i][1] + " \n");
   }
 
   str_return.append("\n CoreLoadsRadiation radiation_time_delay_data: \n");

@@ -17,13 +17,15 @@ std::vector<std::string> ccxLoadsRadiationCreateCommand::get_syntax()
   syntax.append("create radiation ");
   syntax.append("sideset <value:label='sideset id',help='<sideset id>'> ");
   syntax.append("temperature <value:label='temperature_value',help='<temperature_value>'> ");
-  syntax.append("coefficient <value:label='coefficient_value',help='<coefficient_value>'> ");
+  syntax.append("emissivity <value:label='emissivity_value',help='<emissivity_value>'> ");
   syntax.append("[op {mod | new}] " );
   syntax.append("[amplitude <value:label='amplitude id',help='<amplitude id>'>] ");
   syntax.append("[timedelay <value:label='timedelay',help='<timedelay>'>] ");
   syntax.append("[radiationamplitude <value:label='radiationamplitude id',help='<radiationamplitude id>'>] ");
   syntax.append("[radiationtimedelay <value:label='radiationtimedelay',help='<radiationtimedelay>'>] ");
   syntax.append("[name <string:type='unquoted', number='1', label='name', help='<name>'>] " );
+  syntax.append("[cavity <string:type='unquoted', number='1', label='cavity', help='<cavity>'>] " );
+  syntax.append("[{cavity_radiation_on|cavity_radiation_off}] " );
   
   syntax_list.push_back(syntax);
   
@@ -37,14 +39,16 @@ std::vector<std::string> ccxLoadsRadiationCreateCommand::get_syntax_help()
   help[0].append("create radiation ");
   help[0].append("sideset <sideset id> ");
   help[0].append("temperature <temperature_value> ");
-  help[0].append("coefficient <coefficient_value> ");
+  help[0].append("emissivity <emissivity_value> ");
   help[0].append("[op {mod | new}] " );
   help[0].append("[amplitude <amplitude id>] ");
   help[0].append("[timedelay <timedelay>] ");
   help[0].append("[radiationamplitude <radiationamplitude id>] ");
   help[0].append("[radiationtimedelay <radiationtimedelay>] ");
   help[0].append("[name <name>] " );
-
+  help[0].append("[cavity <cavity>] " );
+  help[0].append("[{cavity_radiation_on|cavity_radiation_off}] " );
+  
   return help;
 }
 
@@ -65,8 +69,8 @@ bool ccxLoadsRadiationCreateCommand::execute(CubitCommandData &data)
   int op_mode = 0;
   double temperature_value;
   std::string temperature;
-  double coefficient_value;
-  std::string coefficient;
+  double emissivity_value;
+  std::string emissivity;
   std::string amplitude_id;
   int amplitude_value;
   std::string timedelay;
@@ -76,14 +80,16 @@ bool ccxLoadsRadiationCreateCommand::execute(CubitCommandData &data)
   std::string radiationtimedelay;
   double radiationtimedelay_value;
   std::string name = ""; 
+  std::string cavity = "";
+  std::string cavity_radiation = "0"; 
   
   
   data.get_value("sideset id", sideset_id_value);
   sideset_id = std::to_string(sideset_id_value);
   data.get_value("temperature_value", temperature_value);
   temperature = ccx_iface.to_string_scientific(temperature_value);
-  data.get_value("coefficient_value", coefficient_value);
-  coefficient = ccx_iface.to_string_scientific(coefficient_value);
+  data.get_value("emissivity_value", emissivity_value);
+  emissivity = ccx_iface.to_string_scientific(emissivity_value);
   
   if (data.find_keyword("OP")){
     if (data.find_keyword("MOD")){
@@ -130,16 +136,23 @@ bool ccxLoadsRadiationCreateCommand::execute(CubitCommandData &data)
     radiationtimedelay = ccx_iface.to_string_scientific(radiationtimedelay_value);
   }
   data.get_string("name", name);
+  data.get_string("cavity", cavity);
+
+  if (data.find_keyword("CAVITY_RADIATION_ON")){
+    cavity_radiation = "1";
+  }
 
   options.push_back(std::to_string(op_mode));
   options.push_back(amplitude_id);
   options.push_back(timedelay);
   options.push_back(sideset_id);
   options.push_back(temperature);
-  options.push_back(coefficient);
+  options.push_back(emissivity);
   options.push_back(radiationamplitude_id);
   options.push_back(radiationtimedelay);
   options.push_back(name);
+  options.push_back(cavity);
+  options.push_back(cavity_radiation);
   
   if (!ccx_iface.create_loadsradiation(options))
   {
