@@ -108,3 +108,5 @@
 2024-12-09 working on trajectory bugs, amplidudes core speed up for trajectory preparation
 2024-12-12 fixing history bug on windows need to wait for new dev release
 2024-12-13 working on physical constants, damping, film, radiation
+2024-12-14 writing check list. try to fix history bug on windows
+

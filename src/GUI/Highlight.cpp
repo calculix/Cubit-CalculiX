@@ -224,6 +224,9 @@ void Highlight::ModelTreeItemClicked(QTreeWidgetItem* item, int column)
   } else if (StepsLoadsGravityTreeItem = dynamic_cast<StepsLoadsGravityTree*>(item->parent()))
   {
     entities = ccx_iface->get_entities("loadsgravity",std::stoi(item->text(1).toStdString()));  
+  } else if (StepsLoadsCentrifugalTreeItem = dynamic_cast<StepsLoadsCentrifugalTree*>(item->parent()))
+  {
+    entities = ccx_iface->get_entities("loadscentrifugal",std::stoi(item->text(1).toStdString()));  
   } else if (StepsLoadsTrajectoryTreeItem = dynamic_cast<StepsLoadsTrajectoryTree*>(item->parent()))
   {
     entities = ccx_iface->get_entities("loadstrajectory",std::stoi(item->text(1).toStdString()));  

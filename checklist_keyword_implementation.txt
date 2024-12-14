@@ -1,0 +1,28 @@
+this is an unfinished list as to where changes must happen when a new keyword gets included.
+
+• core object
+• new commands
+• register in command plugin
+• in calculixcore:
+ - implement object new coreobject 
+ - init
+ - update
+ - reset
+ - print
+ - read and save cub5
+ - autocleanup
+ - highlight
+ - parser
+ - export data for inp
+ - export data for gui
+• add to custom line -> core, command
+• add to step if necessary -> core, command
+• add to draw if necessary -> core, command
+• include in export command
+• create gui
+ - tree
+ - right click menu
+ - highlight
+ - navigation
+ - panel widgets
+
