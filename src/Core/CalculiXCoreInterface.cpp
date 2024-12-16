@@ -1335,6 +1335,16 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_orientations_tr
   return ccx_core.get_orientations_tree_data();
 }
 
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_damping_tree_data()
+{ 
+  return ccx_core.get_damping_tree_data();
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_physicalconstants_tree_data()
+{ 
+  return ccx_core.get_physicalconstants_tree_data();
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_loadsforces_tree_data()
 { 
   return ccx_core.get_loadsforces_tree_data();

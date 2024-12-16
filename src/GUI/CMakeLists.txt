@@ -23,6 +23,10 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/AmplitudesTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/OrientationsTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/OrientationsTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/DampingTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/DampingTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/PhysicalConstantsTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/PhysicalConstantsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsForcesTree.cpp
@@ -181,6 +185,14 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/OrientationsModifyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/OrientationsDeletePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/OrientationsDeletePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/DampingModifyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/DampingModifyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/DampingDeletePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/DampingDeletePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/PhysicalConstantsModifyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/PhysicalConstantsModifyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/PhysicalConstantsDeletePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/PhysicalConstantsDeletePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsForcesModifyPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsForcesModifyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsPressuresModifyPanel.hpp

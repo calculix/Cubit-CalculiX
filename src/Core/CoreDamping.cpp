@@ -73,10 +73,18 @@ bool CoreDamping::delete_damping(bool delete_alpha, bool delete_beta)
 std::string CoreDamping::get_damping_export_data()
 {
   std::string str_temp = "";
-  
+    
+  // CUSTOMLINE START
+  std::vector<std::string> customline = ccx_iface->get_customline_data("BEFORE","DAMPING",0);
+  for (size_t icl = 0; icl < customline.size(); icl++)
+  {
+    str_temp.append(customline[icl] + "\n");
+  }
+  // CUSTOMLINE END
+
   if ((damping_data[0]!="")||(damping_data[1]!=""))
   {
-    str_temp = "*DAMPING";
+    str_temp.append("*DAMPING");
   }
   if (damping_data[0]!="")
   {
@@ -87,6 +95,14 @@ std::string CoreDamping::get_damping_export_data()
     str_temp.append(",BETA=" + damping_data[1]);
   }
   str_temp.append("\n");
+
+  // CUSTOMLINE START
+  customline = ccx_iface->get_customline_data("AFTER","DAMPING",0);
+  for (size_t icl = 0; icl < customline.size(); icl++)
+  {
+    str_temp.append(customline[icl] + "\n");
+  }
+  // CUSTOMLINE END
   
   return str_temp;
 }

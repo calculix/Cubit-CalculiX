@@ -74,6 +74,10 @@ void cmdPanelManager::clear()
     my_markers.push_back("CCXOrientationsCreate");
     my_markers.push_back("CCXOrientationsModify");
     my_markers.push_back("CCXOrientationsDelete");
+    my_markers.push_back("CCXDampingModify");
+    my_markers.push_back("CCXDampingDelete");
+    my_markers.push_back("CCXPhysicalConstantsModify");
+    my_markers.push_back("CCXPhysicalConstantsDelete");
     my_markers.push_back("CCXLoadsForcesModify");
     my_markers.push_back("CCXLoadsPressuresModify");
     my_markers.push_back("CCXLoadsHeatfluxesModify");
@@ -333,6 +337,36 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXOrientationsDelete");
   node->setIcon(ccx_iface->getIcon("CCXOrientationsDelete"));
+
+  //##############################
+  // add Damping Nodes
+  root_node = model->getMarkedNode("CCX");
+  node = model->addNode("Damping", root_node);
+  node->setTitle("Damping");
+  model->setNodeMarker(node, "CCXDamping");
+  node->setIcon(ccx_iface->getIcon("CCXDamping"));
+  root_node = model->getMarkedNode("CCXDamping");
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXDampingModify");
+  node->setIcon(ccx_iface->getIcon("CCXDampingModify"));
+  node = model->addNode("Delete", root_node);
+  model->setNodeMarker(node, "CCXDampingDelete");
+  node->setIcon(ccx_iface->getIcon("CCXDampingDelete"));
+
+  //##############################
+  // add PhysicalConstants Nodes
+  root_node = model->getMarkedNode("CCX");
+  node = model->addNode("PhysicalConstants", root_node);
+  node->setTitle("Physical Constants");
+  model->setNodeMarker(node, "CCXPhysicalConstants");
+  node->setIcon(ccx_iface->getIcon("CCXPhysicalConstants"));
+  root_node = model->getMarkedNode("CCXPhysicalConstants");
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXPhysicalConstantsModify");
+  node->setIcon(ccx_iface->getIcon("CCXPhysicalConstantsModify"));
+  node = model->addNode("Delete", root_node);
+  model->setNodeMarker(node, "CCXPhysicalConstantsDelete");
+  node->setIcon(ccx_iface->getIcon("CCXPhysicalConstantsDelete"));
 
   //##############################
   // add Loads Nodes
@@ -658,6 +692,10 @@ void cmdPanelManager::associate_panels_with_nodes()
   my_markers.push_back("CCXOrientationsCreate");
   my_markers.push_back("CCXOrientationsModify");
   my_markers.push_back("CCXOrientationsDelete");
+  my_markers.push_back("CCXDampingModify");
+  my_markers.push_back("CCXDampingDelete");
+  my_markers.push_back("CCXPhysicalConstantsModify");
+  my_markers.push_back("CCXPhysicalConstantsDelete");
   my_markers.push_back("CCXLoadsForcesModify");
   my_markers.push_back("CCXLoadsPressuresModify");
   my_markers.push_back("CCXLoadsHeatfluxesModify");

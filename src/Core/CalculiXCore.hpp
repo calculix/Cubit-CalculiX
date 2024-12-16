@@ -349,6 +349,8 @@ public:
   std::vector<std::vector<std::string>> get_contactpairs_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_amplitudes_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_orientations_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_damping_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_physicalconstants_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_loadsforces_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_loadspressures_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_loadsheatfluxes_tree_data(); // gets the data from core to build the tree

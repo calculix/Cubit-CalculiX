@@ -10,6 +10,8 @@
 #include "ContactPairsTree.hpp"
 #include "AmplitudesTree.hpp"
 #include "OrientationsTree.hpp"
+#include "DampingTree.hpp"
+#include "PhysicalConstantsTree.hpp"
 #include "LoadsTree.hpp"
 #include "LoadsForcesTree.hpp"
 #include "LoadsPressuresTree.hpp"
@@ -119,7 +121,7 @@ ModelTree::~ModelTree()
 
 void ModelTree::showContextMenu(const QPoint &pos)
 {
-  //current highest contextMenuAction[0][0] = 40;
+  //current highest contextMenuAction[0][0] = 42;
 
   QTreeWidgetItem* item = this->itemAt(pos);
   if (item)
@@ -134,6 +136,8 @@ void ModelTree::showContextMenu(const QPoint &pos)
     ContactPairsTree* ContactPairsTreeItem;
     AmplitudesTree* AmplitudesTreeItem;
     OrientationsTree* OrientationsTreeItem;
+    DampingTree* DampingTreeItem;
+    PhysicalConstantsTree* PhysicalConstantsTreeItem;
     LoadsTree* LoadsTreeItem;
     LoadsForcesTree* LoadsForcesTreeItem;
     LoadsPressuresTree* LoadsPressuresTreeItem;
@@ -288,6 +292,30 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenu.addAction(&action2);
 
         contextMenuAction[0][0] = 36;
+        contextMenu.exec(mapToGlobal(pos));
+      }
+    }else if (DampingTreeItem = dynamic_cast<DampingTree*>(item))
+    {
+      if (DampingTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Modify Damping",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+
+        contextMenuAction[0][0] = 41;
+        contextMenu.exec(mapToGlobal(pos));
+      }
+    }else if (PhysicalConstantsTreeItem = dynamic_cast<PhysicalConstantsTree*>(item))
+    {
+      if (PhysicalConstantsTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Modify PhysicalConstants",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+
+        contextMenuAction[0][0] = 42;
         contextMenu.exec(mapToGlobal(pos));
       }
     }else if (LoadsTreeItem = dynamic_cast<LoadsTree*>(item)) 
@@ -879,6 +907,32 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenu.addAction(&action4);
 
         contextMenuAction[0][0] = 36;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
+      } else if (DampingTreeItem = dynamic_cast<DampingTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Modify Damping",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Delete Damping",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action2);
+
+        contextMenuAction[0][0] = 41;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
+      } else if (PhysicalConstantsTreeItem = dynamic_cast<PhysicalConstantsTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Modify PhysicalConstants",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Delete PhysicalConstants",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action2);
+
+        contextMenuAction[0][0] = 42;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
         contextMenu.exec(mapToGlobal(pos));
       } else if (LoadsForcesTreeItem = dynamic_cast<LoadsForcesTree*>(item->parent()))
@@ -1478,6 +1532,8 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   ContactPairsTree* ContactPairsTreeItem;
   AmplitudesTree* AmplitudesTreeItem;
   OrientationsTree* OrientationsTreeItem;
+  DampingTree* DampingTreeItem;
+  PhysicalConstantsTree* PhysicalConstantsTreeItem;
   LoadsForcesTree* LoadsForcesTreeItem;
   LoadsPressuresTree* LoadsPressuresTreeItem;
   LoadsHeatfluxesTree* LoadsHeatfluxesTreeItem;
@@ -1568,6 +1624,18 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     if (OrientationsTreeItem->text(1).toStdString()=="")
     {
       this->setWidgetInCmdPanelMarker("CCXOrientationsCreate");
+    }
+  }else if (DampingTreeItem = dynamic_cast<DampingTree*>(item))
+  {
+    if (DampingTreeItem->text(1).toStdString()=="")
+    {
+      this->setWidgetInCmdPanelMarker("CCXDampingModify");
+    }
+  }else if (PhysicalConstantsTreeItem = dynamic_cast<PhysicalConstantsTree*>(item))
+  {
+    if (PhysicalConstantsTreeItem->text(1).toStdString()=="")
+    {
+      this->setWidgetInCmdPanelMarker("CCXPhysicalConstantsModify");
     }
   }else if (LoadsForcesTreeItem = dynamic_cast<LoadsForcesTree*>(item))
   {
@@ -1839,6 +1907,12 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     } else if (OrientationsTreeItem = dynamic_cast<OrientationsTree*>(item->parent()))
     {
       this->setWidgetInCmdPanelMarker("CCXOrientationsModify");
+    } else if (DampingTreeItem = dynamic_cast<DampingTree*>(item->parent()))
+    {
+      this->setWidgetInCmdPanelMarker("CCXDampingModify");
+    } else if (PhysicalConstantsTreeItem = dynamic_cast<PhysicalConstantsTree*>(item->parent()))
+    {
+      this->setWidgetInCmdPanelMarker("CCXPhysicalConstantsModify");
     } else if (LoadsForcesTreeItem = dynamic_cast<LoadsForcesTree*>(item->parent()))
     {
       this->setWidgetInCmdPanelMarker("FEAForceModify");
@@ -2122,6 +2196,24 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==2) //Action3
       {
         this->setWidgetInCmdPanelMarker("CCXOrientationsDelete");
+      }
+    }else if (contextMenuAction[0][0]==41) //DampingTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("CCXDampingModify");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        this->setWidgetInCmdPanelMarker("CCXDampingDelete");
+      }
+    }else if (contextMenuAction[0][0]==42) //PhysicalConstantsTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("CCXPhysicalConstantsModify");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        this->setWidgetInCmdPanelMarker("CCXPhysicalConstantsDelete");
       }
     }else if (contextMenuAction[0][0]==37) //LoadsTree
     {

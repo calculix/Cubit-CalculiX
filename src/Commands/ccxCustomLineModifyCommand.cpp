@@ -19,7 +19,9 @@ std::vector<std::string> ccxCustomLineModifyCommand::get_syntax()
   syntax.append("[{before|after|begin|end}] ");
   syntax.append("[{elset|nset|sideset|material|section|");
   syntax.append("constraint|surfaceinteraction|contactpair|amplitude|orientation|");
-  syntax.append("force|pressure|heatflux|gravity|centrifugal|displacement|temperature|");
+  syntax.append("damping|physicalconstants|");
+  syntax.append("force|pressure|heatflux|gravity|centrifugal|film|radiation|");
+  syntax.append("displacement|temperature|");
   syntax.append("historyoutput|fieldoutput|initialcondition|step_begin|step_end|export}] ");
   syntax.append("[item_id <value:label='item_id',help='<item_id>'>] ");
   syntax.append("[cline <string:type='quoted', number='1', label='cline', help='<custom line>'>] ");
@@ -37,7 +39,9 @@ std::vector<std::string> ccxCustomLineModifyCommand::get_syntax_help()
   help[0].append("[{before|after|begin|end}] ");
   help[0].append("[{elset|nset|sideset|material|section|");
   help[0].append("constraint|surfaceinteraction|contactpair|amplitude|orientation|");
-  help[0].append("force|pressure|heatflux|gravity|centrifugal|displacement|temperature|");
+  help[0].append("damping|physicalconstants|");
+  help[0].append("force|pressure|heatflux|gravity|centrifugal|film|radiation|");
+  help[0].append("displacement|temperature|");
   help[0].append("historyoutput|fieldoutput|initialcondition|step_begin|step_end|export}] ");
   help[0].append("[item_id <item_id>] ");
   help[0].append("[cline <custom line>] ");
@@ -138,6 +142,14 @@ bool ccxCustomLineModifyCommand::execute(CubitCommandData &data)
   {
     options.push_back("ORIENTATION");
     options_marker.push_back(1);
+  } else if (data.find_keyword("DAMPING"))
+  {
+    options.push_back("DAMPING");
+    options_marker.push_back(1);
+  } else if (data.find_keyword("PHYSICALCONSTANTS"))
+  {
+    options.push_back("PHYSICALCONSTANTS");
+    options_marker.push_back(1);
   }else if (data.find_keyword("FORCE"))
   {
     options.push_back("FORCE");
@@ -157,6 +169,14 @@ bool ccxCustomLineModifyCommand::execute(CubitCommandData &data)
   }else if (data.find_keyword("CENTRIFUGAL"))
   {
     options.push_back("CENTRIFUGAL");
+    options_marker.push_back(1);
+  }else if (data.find_keyword("FILM"))
+  {
+    options.push_back("FILM");
+    options_marker.push_back(1);
+  }else if (data.find_keyword("RADIATION"))
+  {
+    options.push_back("RADIATION");
     options_marker.push_back(1);
   }else if (data.find_keyword("DISPLACEMENT"))
   {
@@ -208,6 +228,13 @@ bool ccxCustomLineModifyCommand::execute(CubitCommandData &data)
     else
     {
       item_id = std::to_string(item_id_value);
+      if (data.find_keyword("DAMPING"))
+      {
+        item_id = "0";
+      } else if (data.find_keyword("PHYSICALCONSTANTS"))
+      {
+        item_id = "0";
+      }
       options.push_back(item_id);
       options_marker.push_back(1);
     }

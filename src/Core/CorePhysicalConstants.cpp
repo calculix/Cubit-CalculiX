@@ -80,10 +80,18 @@ bool CorePhysicalConstants::delete_physicalconstants(bool delete_absolute_zero, 
 std::string CorePhysicalConstants::get_physicalconstants_export_data()
 {
   std::string str_temp = "";
+
+  // CUSTOMLINE START
+  std::vector<std::string> customline = ccx_iface->get_customline_data("BEFORE","PHYSICALCONSTANTS",0);
+  for (size_t icl = 0; icl < customline.size(); icl++)
+  {
+    str_temp.append(customline[icl] + "\n");
+  }
+  // CUSTOMLINE END
   
   if ((physicalconstants_data[0]!="")||(physicalconstants_data[1]!="")||(physicalconstants_data[2]!=""))
   {
-    str_temp = "*PHYSICAL CONSTANTS";
+    str_temp.append("*PHYSICAL CONSTANTS");
   }
   if (physicalconstants_data[0]!="")
   {
@@ -98,6 +106,14 @@ std::string CorePhysicalConstants::get_physicalconstants_export_data()
     str_temp.append(",NEWTON GRAVITY=" + physicalconstants_data[2]);
   }
   str_temp.append("\n");
+
+  // CUSTOMLINE START
+  customline = ccx_iface->get_customline_data("AFTER","PHYSICALCONSTANTS",0);
+  for (size_t icl = 0; icl < customline.size(); icl++)
+  {
+    str_temp.append(customline[icl] + "\n");
+  }
+  // CUSTOMLINE END
   
   return str_temp;
 }

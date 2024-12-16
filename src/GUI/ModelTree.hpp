@@ -21,6 +21,8 @@ class SurfaceInteractionsTree;
 class ContactPairsTree;
 class AmplitudesTree;
 class OrientationsTree;
+class DampingTree;
+class PhysicalConstantsTree;
 class LoadsTree;
 class LoadsForcesTree;
 class LoadsPressuresTree;

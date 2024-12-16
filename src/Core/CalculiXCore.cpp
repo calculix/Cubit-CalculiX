@@ -8163,6 +8163,59 @@ std::vector<std::vector<std::string>> CalculiXCore::get_orientations_tree_data()
   return orientations_tree_data;
 }
 
+std::vector<std::vector<std::string>> CalculiXCore::get_damping_tree_data()
+{ 
+  std::vector<std::vector<std::string>> damping_tree_data;
+  
+  if (damping->damping_data.size()==2)
+  {
+    std::vector<std::string> damping_tree_data_set;
+    std::string name;
+    name = "alpha = " + damping->damping_data[0];
+    damping_tree_data_set.push_back("1"); //damping_id
+    damping_tree_data_set.push_back(name); //name
+    damping_tree_data.push_back(damping_tree_data_set);
+    damping_tree_data_set.clear();
+
+    name = "beta = " + damping->damping_data[1];
+    damping_tree_data_set.push_back("2"); //damping_id
+    damping_tree_data_set.push_back(name); //name
+    damping_tree_data.push_back(damping_tree_data_set);
+  }
+  
+  return damping_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_physicalconstants_tree_data()
+{ 
+  std::vector<std::vector<std::string>> physicalconstants_tree_data;
+  
+  if (physicalconstants->physicalconstants_data.size()==3)
+  {
+    std::vector<std::string> physicalconstants_tree_data_set;
+    std::string name;
+    name = "ABSOLUTE ZERO = " + physicalconstants->physicalconstants_data[0];
+    physicalconstants_tree_data_set.push_back("1"); //physicalconstants_id
+    physicalconstants_tree_data_set.push_back(name); //name
+    physicalconstants_tree_data.push_back(physicalconstants_tree_data_set);
+    physicalconstants_tree_data_set.clear();
+
+    name = "STEFAN BOLTZMANN = " + physicalconstants->physicalconstants_data[1];
+    physicalconstants_tree_data_set.push_back("2"); //physicalconstants_id
+    physicalconstants_tree_data_set.push_back(name); //name
+    physicalconstants_tree_data.push_back(physicalconstants_tree_data_set);
+    physicalconstants_tree_data_set.clear();
+
+    name = "NEWTON GRAVITY = " + physicalconstants->physicalconstants_data[2];
+    physicalconstants_tree_data_set.push_back("3"); //physicalconstants_id
+    physicalconstants_tree_data_set.push_back(name); //name
+    physicalconstants_tree_data.push_back(physicalconstants_tree_data_set);
+    physicalconstants_tree_data_set.clear();
+  }
+  
+  return physicalconstants_tree_data;
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_loadsforces_tree_data()
 { 
   std::vector<std::vector<std::string>> loadsforces_tree_data;

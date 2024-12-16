@@ -1,11 +1,12 @@
-#include "CustomLinesModifyPanel.hpp"
+#include "PhysicalConstantsModifyPanel.hpp"
 #include "CalculiXCoreInterface.hpp"
 
 #include "CubitInterface.hpp"
 #include "Broker.hpp"
 #include "Claro.hpp"
 
-CustomLinesModifyPanel::CustomLinesModifyPanel(QWidget *parent) :
+
+PhysicalConstantsModifyPanel::PhysicalConstantsModifyPanel(QWidget *parent) :
   QWidget(parent),
   isInitialized(false)
 {
@@ -23,37 +24,47 @@ CustomLinesModifyPanel::CustomLinesModifyPanel(QWidget *parent) :
   HBoxLayout_3 = new QHBoxLayout();
   HBoxLayout_4 = new QHBoxLayout();
   HBoxLayout_5 = new QHBoxLayout();
+  HBoxLayout_6 = new QHBoxLayout();
   label_0 = new QLabel();
   label_1 = new QLabel();
   label_2 = new QLabel();
   label_3 = new QLabel();
   label_4 = new QLabel();
   label_5 = new QLabel();
+  label_6 = new QLabel();
   label_0->setFixedWidth(labelWidth);
   label_1->setFixedWidth(labelWidth);
   label_2->setFixedWidth(labelWidth);
   label_3->setFixedWidth(labelWidth);
   label_4->setFixedWidth(labelWidth);
   label_5->setFixedWidth(labelWidth);
-  label_0->setText("Custom Line ID");
+  label_6->setFixedWidth(labelWidth);
+  label_0->setText("Orientation");
   label_1->setText("Name");
-  label_2->setText("Position");
-  label_3->setText("Item");
-  label_4->setText("Item ID");
-  label_5->setText("Custom Line");
+  label_2->setText("System Type");
+  label_3->setText("a coord");
+  label_4->setText("b coord");
+  label_5->setText("local axis");
+  label_6->setText("angle");
   lineEdit_0 = new QLineEdit();
   lineEdit_1 = new QLineEdit();
   comboBox_2 = new QComboBox();
-  comboBox_2->addItem("");
-  comboBox_2->addItem("before");
-  comboBox_2->addItem("after");
-  comboBox_2->addItem("begin");
-  comboBox_2->addItem("end");
-  comboBox_3 = new QComboBox();
+  comboBox_2->addItem(" ");
+  comboBox_2->addItem("Rectangular");
+  comboBox_2->addItem("Cylindrical");
+  lineEdit_3 = new QLineEdit();
   lineEdit_4 = new QLineEdit();
-  //lineEdit_1->setPlaceholderText("Optional");
-  //lineEdit_2->setPlaceholderText("Optional");
-  lineEdit_5 = new QLineEdit();
+  comboBox_5 = new QComboBox();
+  comboBox_5->addItem(" ");
+  comboBox_5->addItem("x");
+  comboBox_5->addItem("y");
+  comboBox_5->addItem("z");
+  lineEdit_6 = new QLineEdit();
+
+  lineEdit_1->setPlaceholderText("Optional");
+  lineEdit_3->setPlaceholderText("Optional <x> <y> <z>");
+  lineEdit_4->setPlaceholderText("Optional <x> <y> <z>");
+  lineEdit_6->setPlaceholderText("Optional");
 
   pushButton_apply = new QPushButton();
   pushButton_apply->setText("Apply");
@@ -68,6 +79,7 @@ CustomLinesModifyPanel::CustomLinesModifyPanel(QWidget *parent) :
   VBoxLayout->addLayout(HBoxLayout_3);
   VBoxLayout->addLayout(HBoxLayout_4);
   VBoxLayout->addLayout(HBoxLayout_5);
+  VBoxLayout->addLayout(HBoxLayout_6);
   VBoxLayout->addItem(vertical_spacer);
   VBoxLayout->addLayout(HBoxLayout_pushButton_apply);
 
@@ -78,59 +90,68 @@ CustomLinesModifyPanel::CustomLinesModifyPanel(QWidget *parent) :
   HBoxLayout_2->addWidget(label_2);
   HBoxLayout_2->addWidget(comboBox_2);
   HBoxLayout_3->addWidget(label_3);
-  HBoxLayout_3->addWidget(comboBox_3);
+  HBoxLayout_3->addWidget(lineEdit_3);
   HBoxLayout_4->addWidget(label_4);
   HBoxLayout_4->addWidget(lineEdit_4);
   HBoxLayout_5->addWidget(label_5);
-  HBoxLayout_5->addWidget(lineEdit_5);
-  
+  HBoxLayout_5->addWidget(comboBox_5);
+  HBoxLayout_6->addWidget(label_6);
+  HBoxLayout_6->addWidget(lineEdit_6);
+
   HBoxLayout_pushButton_apply->addItem(horizontal_spacer_pushButton_apply);
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
-  QObject::connect(comboBox_2, SIGNAL(currentIndexChanged(int)),this,  SLOT(on_comboBox_index_changed(int)));
-
-  this->on_comboBox_index_changed(0);
 
   isInitialized = true;
 }
 
-CustomLinesModifyPanel::~CustomLinesModifyPanel()
+PhysicalConstantsModifyPanel::~PhysicalConstantsModifyPanel()
 {}
 
-void CustomLinesModifyPanel::on_pushButton_apply_clicked(bool)
+void PhysicalConstantsModifyPanel::on_pushButton_apply_clicked(bool)
 {
   QStringList commands;
   QString command = "";
 
   if ((lineEdit_0->text()!=""))
   {
-    command.append("ccx modify customline " +lineEdit_0->text());
+    command.append("ccx modify orientation " + lineEdit_0->text());
 
-    if ((lineEdit_1->text()!=""))
+    if (lineEdit_1->text()!="")
     {
-      command.append(" name \"" +lineEdit_1->text() + "\"");
+      command.append(" name " + lineEdit_1->text());
+    }  
+    
+    if (comboBox_2->currentIndex()==1)
+    {
+      command.append(" system_type_r ");
+    }else if (comboBox_2->currentIndex()==2)
+    {
+      command.append(" system_type_c ");
     }
     
-    if (comboBox_2->currentIndex()>0)
+    if (lineEdit_3->text()!="")
     {
-      command.append(" " + comboBox_2->currentText());
+      command.append(" a_coord " + lineEdit_3->text());
     }
 
-    if (comboBox_3->currentIndex()>0)
+    if (lineEdit_4->text()!="")
     {
-      command.append(" " + comboBox_3->currentText());
+      command.append(" b_coord " + lineEdit_4->text());
     }
 
-    if ((lineEdit_4->text()!=""))
+    if (comboBox_5->currentIndex()==1)
     {
-      command.append(" item_id " +lineEdit_4->text());
-    }
-
-    if ((lineEdit_5->text()!=""))
+      command.append(" local_axis_x angle " + lineEdit_6->text());
+    }else if (comboBox_5->currentIndex()==2)
     {
-      command.append(" cline \"" +lineEdit_5->text() + "\"");
+      command.append(" local_axis_y angle " + lineEdit_6->text());
+    }else if (comboBox_5->currentIndex()==3)
+    {
+      command.append(" local_axis_z angle " + lineEdit_6->text());
     }
+    
   }
   
   if (command != "")
@@ -139,57 +160,15 @@ void CustomLinesModifyPanel::on_pushButton_apply_clicked(bool)
     lineEdit_0->setText("");
     lineEdit_1->setText("");
     comboBox_2->setCurrentIndex(0);
-    //comboBox_3->clear();
+    lineEdit_3->setText("");
     lineEdit_4->setText("");
-    lineEdit_5->setText("");
+    comboBox_5->setCurrentIndex(0);
+    lineEdit_6->setText("");
   }
   
   for (size_t i = 0; i < commands.size(); i++)
   {
     //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
     ccx_iface->cmd(commands[int(i)].toStdString());
-  }
-}
-
-void CustomLinesModifyPanel::on_comboBox_index_changed(int index)
-{
-  if (index > 2)
-  {
-    comboBox_3->clear();
-    comboBox_3->addItem("");
-    comboBox_3->addItem("export");
-    lineEdit_4->setText("");
-    lineEdit_5->setText("");
-    lineEdit_4->setEnabled(false);
-  }else{
-    comboBox_3->clear();
-    comboBox_3->addItem("");
-    comboBox_3->addItem("elset");
-    comboBox_3->addItem("nset");
-    comboBox_3->addItem("sideset");
-    comboBox_3->addItem("material");
-    comboBox_3->addItem("section");
-    comboBox_3->addItem("constraint");
-    comboBox_3->addItem("surfaceinteraction");
-    comboBox_3->addItem("contactpair");
-    comboBox_3->addItem("amplitude");
-    comboBox_3->addItem("orientation");
-    comboBox_3->addItem("damping");
-    comboBox_3->addItem("physicalconstants");
-    comboBox_3->addItem("force");
-    comboBox_3->addItem("pressure");
-    comboBox_3->addItem("heatflux");
-    comboBox_3->addItem("gravity");
-    comboBox_3->addItem("centrifugal");
-    comboBox_3->addItem("film");
-    comboBox_3->addItem("radiation");
-    comboBox_3->addItem("displacement");
-    comboBox_3->addItem("temperature");
-    comboBox_3->addItem("historyoutput");
-    comboBox_3->addItem("fieldoutput");
-    comboBox_3->addItem("initialcondition");
-    comboBox_3->addItem("step_begin");
-    comboBox_3->addItem("step_end");
-    lineEdit_4->setEnabled(true);
   }
 }
