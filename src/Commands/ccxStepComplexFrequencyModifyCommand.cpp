@@ -31,7 +31,6 @@ std::vector<std::string> ccxStepComplexFrequencyModifyCommand::get_syntax_help()
   help[0].append("modify step <step id> ");
   help[0].append("complexfrequency ");
   help[0].append("[name <name>] " );
-  help[0].append("[solver {pastix|pardiso|spooles|custom <customsolver>}] ");
   help[0].append("[{coriolis_yes|coriolis_no}] ");
   help[0].append("[number_eigenfrequency <value>] ");
   

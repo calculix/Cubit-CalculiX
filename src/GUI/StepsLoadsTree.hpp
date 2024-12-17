@@ -12,6 +12,8 @@ class StepsLoadsHeatfluxesTree;
 class StepsLoadsGravityTree;
 class StepsLoadsCentrifugalTree;
 class StepsLoadsTrajectoryTree;
+class StepsLoadsFilmTree;
+class StepsLoadsRadiationTree;
 
 class StepsLoadsTree : public QObject, public QTreeWidgetItem
 {
@@ -38,6 +40,8 @@ private:
   StepsLoadsGravityTree *myStepsLoadsGravityTree;
   StepsLoadsCentrifugalTree *myStepsLoadsCentrifugalTree;
   StepsLoadsTrajectoryTree *myStepsLoadsTrajectoryTree;
+  StepsLoadsFilmTree *myStepsLoadsFilmTree;
+  StepsLoadsRadiationTree *myStepsLoadsRadiationTree;
 };
 
 #endif // STEPSLOADSTREE_HPP

@@ -19,6 +19,8 @@
 #include "LoadsGravityTree.hpp"
 #include "LoadsCentrifugalTree.hpp"
 #include "LoadsTrajectoryTree.hpp"
+#include "LoadsFilmTree.hpp"
+#include "LoadsRadiationTree.hpp"
 #include "BCsTree.hpp"
 #include "BCsDisplacementsTree.hpp"
 #include "BCsTemperaturesTree.hpp"
@@ -37,6 +39,8 @@
 #include "StepsLoadsGravityTree.hpp"
 #include "StepsLoadsCentrifugalTree.hpp"
 #include "StepsLoadsTrajectoryTree.hpp"
+#include "StepsLoadsFilmTree.hpp"
+#include "StepsLoadsRadiationTree.hpp"
 #include "StepsBCsTree.hpp"
 #include "StepsBCsDisplacementsTree.hpp"
 #include "StepsBCsTemperaturesTree.hpp"
@@ -121,7 +125,7 @@ ModelTree::~ModelTree()
 
 void ModelTree::showContextMenu(const QPoint &pos)
 {
-  //current highest contextMenuAction[0][0] = 42;
+  //current highest contextMenuAction[0][0] = 46;
 
   QTreeWidgetItem* item = this->itemAt(pos);
   if (item)
@@ -145,6 +149,8 @@ void ModelTree::showContextMenu(const QPoint &pos)
     LoadsGravityTree* LoadsGravityTreeItem;
     LoadsCentrifugalTree* LoadsCentrifugalTreeItem;
     LoadsTrajectoryTree* LoadsTrajectoryTreeItem;
+    LoadsFilmTree* LoadsFilmTreeItem;
+    LoadsRadiationTree* LoadsRadiationTreeItem;
     BCsTree* BCsTreeItem;
     BCsDisplacementsTree* BCsDisplacementsTreeItem;
     BCsTemperaturesTree* BCsTemperaturesTreeItem;
@@ -162,6 +168,8 @@ void ModelTree::showContextMenu(const QPoint &pos)
     StepsLoadsGravityTree* StepsLoadsGravityTreeItem;
     StepsLoadsCentrifugalTree* StepsLoadsCentrifugalTreeItem;
     StepsLoadsTrajectoryTree* StepsLoadsTrajectoryTreeItem;
+    StepsLoadsFilmTree* StepsLoadsFilmTreeItem;
+    StepsLoadsRadiationTree* StepsLoadsRadiationTreeItem;
     StepsBCsTree* StepsBCsTreeItem;
     StepsBCsDisplacementsTree* StepsBCsDisplacementsTreeItem;
     StepsBCsTemperaturesTree* StepsBCsTemperaturesTreeItem;
@@ -368,7 +376,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
         QAction action1("Create Heatflux",this);
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
-        QAction action2("Draw Pressures", this);
+        QAction action2("Draw Heatfluxes", this);
         connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
         contextMenu.addAction(&action2);
 
@@ -418,6 +426,36 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenu.addAction(&action2);
 
         contextMenuAction[0][0] = 39;
+        contextMenu.exec(mapToGlobal(pos));
+      }
+    }else if (LoadsFilmTreeItem = dynamic_cast<LoadsFilmTree*>(item))
+    {
+      if (LoadsFilmTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Film",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Draw Films", this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+
+        contextMenuAction[0][0] = 43;
+        contextMenu.exec(mapToGlobal(pos));
+      }
+    }else if (LoadsRadiationTreeItem = dynamic_cast<LoadsRadiationTree*>(item))
+    {
+      if (LoadsRadiationTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Radiation",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Draw Radiations", this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+
+        contextMenuAction[0][0] = 44;
         contextMenu.exec(mapToGlobal(pos));
       }
     }else if (BCsTreeItem = dynamic_cast<BCsTree*>(item)) 
@@ -659,6 +697,38 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenu.addAction(&action2);
 
         contextMenuAction[0][0] = 40;
+        contextMenuAction[0][2] = std::stoi(item->parent()->parent()->text(1).toStdString()); //Step id
+        contextMenu.exec(mapToGlobal(pos));
+      }
+    }else if (StepsLoadsFilmTreeItem = dynamic_cast<StepsLoadsFilmTree*>(item))
+    {
+      if (StepsLoadsFilmTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Steps Management",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
+        contextMenu.addAction(&action1);
+        QAction action2("Draw Films",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
+        contextMenu.addAction(&action2);
+
+        contextMenuAction[0][0] = 45;
+        contextMenuAction[0][2] = std::stoi(item->parent()->parent()->text(1).toStdString()); //Step id
+        contextMenu.exec(mapToGlobal(pos));
+      }
+    }else if (StepsLoadsRadiationTreeItem = dynamic_cast<StepsLoadsRadiationTree*>(item))
+    {
+      if (StepsLoadsRadiationTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Steps Management",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
+        contextMenu.addAction(&action1);
+        QAction action2("Draw Radiations",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
+        contextMenu.addAction(&action2);
+
+        contextMenuAction[0][0] = 46;
         contextMenuAction[0][2] = std::stoi(item->parent()->parent()->text(1).toStdString()); //Step id
         contextMenu.exec(mapToGlobal(pos));
       }
@@ -916,7 +986,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
         QAction action2("Delete Damping",this);
-        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
         contextMenu.addAction(&action2);
 
         contextMenuAction[0][0] = 41;
@@ -929,7 +999,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
         connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
         contextMenu.addAction(&action1);
         QAction action2("Delete PhysicalConstants",this);
-        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
         contextMenu.addAction(&action2);
 
         contextMenuAction[0][0] = 42;
@@ -1056,6 +1126,44 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenu.addAction(&action5);
 
         contextMenuAction[0][0] = 39;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
+      } else if (LoadsFilmTreeItem = dynamic_cast<LoadsFilmTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Film",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action3("Modify Film",this); //action 2 is "Draw Film All"
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+        QAction action4("Delete Film",this);
+        connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
+        contextMenu.addAction(&action4);
+        QAction action5("Draw Film",this);
+        connect(&action5, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
+        contextMenu.addAction(&action5);
+
+        contextMenuAction[0][0] = 43;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
+      } else if (LoadsRadiationTreeItem = dynamic_cast<LoadsRadiationTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Radiation",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action3("Modify Radiation",this); //action 2 is "Draw Radiation All"
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+        QAction action4("Delete Radiation",this);
+        connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
+        contextMenu.addAction(&action4);
+        QAction action5("Draw Radiation",this);
+        connect(&action5, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
+        contextMenu.addAction(&action5);
+
+        contextMenuAction[0][0] = 44;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
         contextMenu.exec(mapToGlobal(pos));
       } else if (BCsDisplacementsTreeItem = dynamic_cast<BCsDisplacementsTree*>(item->parent()))
@@ -1374,6 +1482,50 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenuAction[0][0] = 40;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
         contextMenu.exec(mapToGlobal(pos));
+      } else if (StepsLoadsFilmTreeItem = dynamic_cast<StepsLoadsFilmTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Film",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Modify Film",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+        QAction action3("Delete Film",this);
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+        QAction action4("Steps Management",this);
+        connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
+        contextMenu.addAction(&action4);
+        QAction action6("Draw Film",this);
+        connect(&action6, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
+        contextMenu.addAction(&action6);
+
+        contextMenuAction[0][0] = 45;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
+      } else if (StepsLoadsRadiationTreeItem = dynamic_cast<StepsLoadsRadiationTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Radiation",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Modify Radiation",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+        QAction action3("Delete Radiation",this);
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+        QAction action4("Steps Management",this);
+        connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
+        contextMenu.addAction(&action4);
+        QAction action6("Draw Radiation",this);
+        connect(&action6, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
+        contextMenu.addAction(&action6);
+
+        contextMenuAction[0][0] = 46;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       }else if (StepsBCsTreeItem = dynamic_cast<StepsBCsTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -1540,6 +1692,8 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   LoadsGravityTree* LoadsGravityTreeItem;
   LoadsCentrifugalTree* LoadsCentrifugalTreeItem;
   LoadsTrajectoryTree* LoadsTrajectoryTreeItem;
+  LoadsFilmTree* LoadsFilmTreeItem;
+  LoadsRadiationTree* LoadsRadiationTreeItem;
   BCsDisplacementsTree* BCsDisplacementsTreeItem;
   BCsTemperaturesTree* BCsTemperaturesTreeItem;
   HistoryOutputsTree* HistoryOutputsTreeItem;
@@ -1556,6 +1710,8 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   StepsLoadsGravityTree* StepsLoadsGravityTreeItem;
   StepsLoadsCentrifugalTree* StepsLoadsCentrifugalTreeItem;
   StepsLoadsTrajectoryTree* StepsLoadsTrajectoryTreeItem;
+  StepsLoadsFilmTree* StepsLoadsFilmTreeItem;
+  StepsLoadsRadiationTree* StepsLoadsRadiationTreeItem;
   StepsBCsTree* StepsBCsTreeItem;
   StepsBCsDisplacementsTree* StepsBCsDisplacementsTreeItem;
   StepsBCsTemperaturesTree* StepsBCsTemperaturesTreeItem;
@@ -1672,6 +1828,18 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     if (LoadsTrajectoryTreeItem->text(1).toStdString()=="")
     {
       this->setWidgetInCmdPanelMarker("CCXLoadsTrajectoryCreate");
+    }
+  }else if (LoadsFilmTreeItem = dynamic_cast<LoadsFilmTree*>(item))
+  {
+    if (LoadsFilmTreeItem->text(1).toStdString()=="")
+    {
+      this->setWidgetInCmdPanelMarker("CCXLoadsFilmCreate");
+    }
+  }else if (LoadsRadiationTreeItem = dynamic_cast<LoadsRadiationTree*>(item))
+  {
+    if (LoadsRadiationTreeItem->text(1).toStdString()=="")
+    {
+      this->setWidgetInCmdPanelMarker("CCXLoadsRadiationCreate");
     }
   }else if (BCsDisplacementsTreeItem = dynamic_cast<BCsDisplacementsTree*>(item))
   {
@@ -1807,6 +1975,28 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
       myStepsManagement->close();
       myStepsManagement->show();
     }
+  }else if (StepsLoadsFilmTreeItem = dynamic_cast<StepsLoadsFilmTree*>(item))
+  {
+    if (StepsLoadsFilmTreeItem->text(1).toStdString()=="")
+    {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
+      myStepsManagement->show();
+    }
+  }else if (StepsLoadsFilmTreeItem = dynamic_cast<StepsLoadsFilmTree*>(item))
+  {
+    if (StepsLoadsFilmTreeItem->text(1).toStdString()=="")
+    {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
+      myStepsManagement->show();
+    }
   }else if (StepsBCsTreeItem = dynamic_cast<StepsBCsTree*>(item))
   {
     if (StepsBCsTreeItem->text(1).toStdString()=="")
@@ -1931,6 +2121,12 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     } else if (LoadsTrajectoryTreeItem = dynamic_cast<LoadsTrajectoryTree*>(item->parent()))
     {
       this->setWidgetInCmdPanelMarker("CCXLoadsTrajectoryModify");
+    } else if (LoadsFilmTreeItem = dynamic_cast<LoadsFilmTree*>(item->parent()))
+    {
+      this->setWidgetInCmdPanelMarker("CCXLoadsFilmModify");
+    } else if (LoadsRadiationTreeItem = dynamic_cast<LoadsRadiationTree*>(item->parent()))
+    {
+      this->setWidgetInCmdPanelMarker("CCXLoadsRadiationModify");
     } else if (BCsDisplacementsTreeItem = dynamic_cast<BCsDisplacementsTree*>(item->parent()))
     {
       this->setWidgetInCmdPanelMarker("FEADisplacementModify");
@@ -2010,6 +2206,22 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
       myStepsManagement->close();
       myStepsManagement->show();
     } else if (StepsLoadsTrajectoryTreeItem = dynamic_cast<StepsLoadsTrajectoryTree*>(item->parent()))
+    {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
+      myStepsManagement->show();
+    } else if (StepsLoadsFilmTreeItem = dynamic_cast<StepsLoadsFilmTree*>(item->parent()))
+    {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
+      myStepsManagement->show();
+    } else if (StepsLoadsRadiationTreeItem = dynamic_cast<StepsLoadsRadiationTree*>(item->parent()))
     {
       if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
       {
@@ -2365,6 +2577,50 @@ void ModelTree::execContextMenuAction(){
         //CubitInterface::cmd(command.c_str());
         ccx_iface->cmd(command);
       }
+    }else if (contextMenuAction[0][0]==43) //LoadsFilmTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsFilmCreate");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        std::string command = "ccx draw load_film_all";
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsFilmModify");
+      }else if (contextMenuAction[0][1]==3) //Action4
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsFilmDelete");
+      }else if (contextMenuAction[0][1]==4) //Action5
+      {
+        std::string command = "ccx draw load film " + std::to_string(contextMenuAction[0][2]);
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
+      }
+    }else if (contextMenuAction[0][0]==44) //LoadsRadiationTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsRadiationCreate");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        std::string command = "ccx draw load_radiation_all";
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsRadiationModify");
+      }else if (contextMenuAction[0][1]==3) //Action4
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsRadiationDelete");
+      }else if (contextMenuAction[0][1]==4) //Action5
+      {
+        std::string command = "ccx draw load radiation " + std::to_string(contextMenuAction[0][2]);
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
+      }
     }else if (contextMenuAction[0][0]==38) //BCsTree
     {
       if(contextMenuAction[0][1]==0)
@@ -2695,6 +2951,56 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==5) //Action6
       {
         std::string command = "ccx draw load trajectory " + std::to_string(contextMenuAction[0][2]);
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
+      }   
+    }else if (contextMenuAction[0][0]==45) //StepsLoadsFilmTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsFilmCreate");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsFilmModify");
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsFilmDelete");
+      }else if (contextMenuAction[0][1]==3) //Action4
+      {
+        myStepsManagement->show();
+      }else if (contextMenuAction[0][1]==4) //Action5
+      {
+        std::string command = "ccx draw step " + std::to_string(contextMenuAction[0][2]) + " load_film_all";
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
+      }else if (contextMenuAction[0][1]==5) //Action6
+      {
+        std::string command = "ccx draw load film " + std::to_string(contextMenuAction[0][2]);
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
+      }   
+    }else if (contextMenuAction[0][0]==46) //StepsLoadsRadiationTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsRadiationCreate");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsRadiationModify");
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsRadiationDelete");
+      }else if (contextMenuAction[0][1]==3) //Action4
+      {
+        myStepsManagement->show();
+      }else if (contextMenuAction[0][1]==4) //Action5
+      {
+        std::string command = "ccx draw step " + std::to_string(contextMenuAction[0][2]) + " load_radiation_all";
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
+      }else if (contextMenuAction[0][1]==5) //Action6
+      {
+        std::string command = "ccx draw load radiation " + std::to_string(contextMenuAction[0][2]);
         //CubitInterface::cmd(command.c_str());
         ccx_iface->cmd(command);
       }   

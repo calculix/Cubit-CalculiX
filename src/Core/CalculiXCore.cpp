@@ -3054,6 +3054,26 @@ std::vector<int> CalculiXCore::get_loadstrajectory_ids()
   return tmp;
 }
 
+std::vector<int> CalculiXCore::get_loadsfilm_ids()
+{
+  std::vector<int> tmp;
+  for (size_t i = 0; i < loadsfilm->loads_data.size(); i++)
+  {
+    tmp.push_back(loadsfilm->loads_data[i][0]);
+  }
+  return tmp;
+}
+
+std::vector<int> CalculiXCore::get_loadsradiation_ids()
+{
+  std::vector<int> tmp;
+  for (size_t i = 0; i < loadsradiation->loads_data.size(); i++)
+  {
+    tmp.push_back(loadsradiation->loads_data[i][0]);
+  }
+  return tmp;
+}
+
 std::vector<int> CalculiXCore::get_bcsdisplacements_ids()
 {
   std::vector<int> tmp;
@@ -5227,10 +5247,10 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_centrifuga
 {
   std::vector<std::vector<double>> draw_data;
 
-  for (size_t i = 0; i < loadsgravity->loads_data.size(); i++)
+  for (size_t i = 0; i < loadscentrifugal->loads_data.size(); i++)
   {
     // check for right id
-    if (id==loadsgravity->loads_data[i][0])
+    if (id==loadscentrifugal->loads_data[i][0])
     { 
       int direction_data_id = loadscentrifugal->get_direction_data_id_from_direction_id(loadscentrifugal->loads_data[i][5]);
       int coordinate_data_id = loadscentrifugal->get_coordinate_data_id_from_coordinate_id(loadscentrifugal->loads_data[i][7]);
@@ -5249,6 +5269,62 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_centrifuga
 
   }
 
+  return draw_data;
+}
+
+std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_film(int id)
+{
+  std::vector<std::vector<double>> draw_data;
+  
+  for (size_t i = 0; i < loadsfilm->loads_data.size(); i++)
+  {
+    // check for right id
+    if (id==loadsfilm->loads_data[i][0])
+    { 
+      std::vector<std::vector<double>> coords_normals = get_sideset_entities_coords_normals(loadsfilm->loads_data[i][4]);
+      for (size_t ii = 0; ii < coords_normals.size(); ii++)
+      {
+        std::vector<double> data;
+        
+        data.push_back(coords_normals[ii][0]);
+        data.push_back(coords_normals[ii][1]);
+        data.push_back(coords_normals[ii][2]);
+        data.push_back(coords_normals[ii][3]);
+        data.push_back(coords_normals[ii][4]);
+        data.push_back(coords_normals[ii][5]);
+        draw_data.push_back(data);
+        data.clear();
+      }
+    }
+  }
+  return draw_data;
+}
+
+std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_radiation(int id)
+{
+  std::vector<std::vector<double>> draw_data;
+  
+  for (size_t i = 0; i < loadsradiation->loads_data.size(); i++)
+  {
+    // check for right id
+    if (id==loadsradiation->loads_data[i][0])
+    { 
+      std::vector<std::vector<double>> coords_normals = get_sideset_entities_coords_normals(loadsradiation->loads_data[i][4]);
+      for (size_t ii = 0; ii < coords_normals.size(); ii++)
+      {
+        std::vector<double> data;
+        
+        data.push_back(coords_normals[ii][0]);
+        data.push_back(coords_normals[ii][1]);
+        data.push_back(coords_normals[ii][2]);
+        data.push_back(coords_normals[ii][3]);
+        data.push_back(coords_normals[ii][4]);
+        data.push_back(coords_normals[ii][5]);
+        draw_data.push_back(data);
+        data.clear();
+      }
+    }
+  }
   return draw_data;
 }
 
@@ -5493,6 +5569,26 @@ bool CalculiXCore::draw_load_trajectory(std::vector<int> trajectory_ids,double s
   return true;
 }
 
+bool CalculiXCore::draw_load_film(std::vector<int> film_ids,double size)
+{
+  for (size_t i = 0; i < film_ids.size(); i++)
+  {
+    draw->draw_load_film(film_ids[i],size);
+  }
+  
+  return true;
+}
+
+bool CalculiXCore::draw_load_radiation(std::vector<int> radiation_ids,double size)
+{
+  for (size_t i = 0; i < radiation_ids.size(); i++)
+  {
+    draw->draw_load_radiation(radiation_ids[i],size);
+  }
+  
+  return true;
+}
+
 bool CalculiXCore::draw_bc_displacement(std::vector<int> displacement_ids,double size)
 {
   for (size_t i = 0; i < displacement_ids.size(); i++)
@@ -5566,6 +5662,16 @@ bool CalculiXCore::draw_load_centrifugals(double size)
 bool CalculiXCore::draw_load_trajectories(double size)
 {
   return draw->draw_load_trajectories(size);
+}
+
+bool CalculiXCore::draw_load_films(double size)
+{
+  return draw->draw_load_films(size);
+}
+
+bool CalculiXCore::draw_load_radiations(double size)
+{
+  return draw->draw_load_radiations(size);
 }
 
 bool CalculiXCore::draw_bc_displacements(double size)
@@ -8291,7 +8397,13 @@ std::vector<std::vector<std::string>> CalculiXCore::get_loadsgravity_tree_data()
     std::vector<std::string> loadsgravity_tree_data_set;
     std::string name;
     
-    name = "Gravity_" + std::to_string(loadsgravity->loads_data[i][0]);
+    int subdata_id = loadsgravity->get_name_data_id_from_name_id(loadsgravity->loads_data[i][7]);
+    if ((subdata_id!=-1)&&(loadsgravity->name_data[subdata_id][1]!=""))
+    {
+      name = loadsgravity->name_data[subdata_id][1];
+    }else{
+      name = "Gravity_" + std::to_string(loadsgravity->loads_data[i][0]);
+    }
     
     loadsgravity_tree_data_set.push_back(std::to_string(loadsgravity->loads_data[i][0])); //load_id
     loadsgravity_tree_data_set.push_back(name); 
@@ -8309,8 +8421,14 @@ std::vector<std::vector<std::string>> CalculiXCore::get_loadscentrifugal_tree_da
     std::vector<std::string> loadscentrifugal_tree_data_set;
     std::string name;
     
-    name = "Centrifugal_" + std::to_string(loadscentrifugal->loads_data[i][0]);
-    
+    int subdata_id = loadscentrifugal->get_name_data_id_from_name_id(loadscentrifugal->loads_data[i][8]);
+    if ((subdata_id!=-1)&&(loadscentrifugal->name_data[subdata_id][1]!=""))
+    {
+      name = loadscentrifugal->name_data[subdata_id][1];
+    }else{
+      name = "Centrifugal_" + std::to_string(loadscentrifugal->loads_data[i][0]);
+    }
+        
     loadscentrifugal_tree_data_set.push_back(std::to_string(loadscentrifugal->loads_data[i][0])); //load_id
     loadscentrifugal_tree_data_set.push_back(name); 
     loadscentrifugal_tree_data.push_back(loadscentrifugal_tree_data_set);
@@ -8327,13 +8445,67 @@ std::vector<std::vector<std::string>> CalculiXCore::get_loadstrajectory_tree_dat
     std::vector<std::string> loadstrajectory_tree_data_set;
     std::string name;
     
-    name = "Trajectory_" + std::to_string(loadstrajectory->loads_data[i][0]);
+    int subdata_id = loadstrajectory->get_name_data_id_from_name_id(loadstrajectory->loads_data[i][9]);
+    if ((subdata_id!=-1)&&(loadstrajectory->name_data[subdata_id][1]!=""))
+    {
+      name = loadstrajectory->name_data[subdata_id][1];
+    }else{
+      name = "Trajectory_" + std::to_string(loadstrajectory->loads_data[i][0]);
+    }
     
     loadstrajectory_tree_data_set.push_back(std::to_string(loadstrajectory->loads_data[i][0])); //load_id
     loadstrajectory_tree_data_set.push_back(name); 
     loadstrajectory_tree_data.push_back(loadstrajectory_tree_data_set);
   }
   return loadstrajectory_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_loadsfilm_tree_data()
+{ 
+  std::vector<std::vector<std::string>> loadsfilm_tree_data;
+  
+  for (size_t i = 0; i < loadsfilm->loads_data.size(); i++)
+  {
+    std::vector<std::string> loadsfilm_tree_data_set;
+    std::string name;
+    
+    int subdata_id = loadsfilm->get_name_data_id_from_name_id(loadsfilm->loads_data[i][9]);
+    if ((subdata_id!=-1)&&(loadsfilm->name_data[subdata_id][1]!=""))
+    {
+      name = loadsfilm->name_data[subdata_id][1];
+    }else{
+      name = "Film_" + std::to_string(loadsfilm->loads_data[i][0]);
+    }
+    
+    loadsfilm_tree_data_set.push_back(std::to_string(loadsfilm->loads_data[i][0])); //load_id
+    loadsfilm_tree_data_set.push_back(name); 
+    loadsfilm_tree_data.push_back(loadsfilm_tree_data_set);
+  }
+  return loadsfilm_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_loadsradiation_tree_data()
+{ 
+  std::vector<std::vector<std::string>> loadsradiation_tree_data;
+  
+  for (size_t i = 0; i < loadsradiation->loads_data.size(); i++)
+  {
+    std::vector<std::string> loadsradiation_tree_data_set;
+    std::string name;
+    
+    int subdata_id = loadsradiation->get_name_data_id_from_name_id(loadsradiation->loads_data[i][9]);
+    if ((subdata_id!=-1)&&(loadsradiation->name_data[subdata_id][1]!=""))
+    {
+      name = loadsradiation->name_data[subdata_id][1];
+    }else{
+      name = "Radiation_" + std::to_string(loadsradiation->loads_data[i][0]);
+    }
+    
+    loadsradiation_tree_data_set.push_back(std::to_string(loadsradiation->loads_data[i][0])); //load_id
+    loadsradiation_tree_data_set.push_back(name); 
+    loadsradiation_tree_data.push_back(loadsradiation_tree_data_set);
+  }
+  return loadsradiation_tree_data;
 }
 
 std::vector<std::vector<std::string>> CalculiXCore::get_bcsdisplacements_tree_data()
@@ -8604,6 +8776,18 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_tree_data()
     }else if (steps->steps_data[i][3]==7)
     {
       step_name = step_name + " (UNCOUPLED TEMPERATURE-DISPLACEMENT)";
+    }else if (steps->steps_data[i][3]==8)
+    {
+      step_name = step_name + " (DYNAMIC)";
+    }else if (steps->steps_data[i][3]==9)
+    {
+      step_name = step_name + " (MODAL DYNAMIC)";
+    }else if (steps->steps_data[i][3]==10)
+    {
+      step_name = step_name + " (STEADY STATE DYNAMICS)";
+    }else if (steps->steps_data[i][3]==11)
+    {
+      step_name = step_name + " (COMPLEX DYNAMIC)";
     }
 
     steps_tree_data_set.push_back(std::to_string(steps->steps_data[i][0])); //step_id
@@ -8725,7 +8909,19 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadsgravity_tree_
     std::string name;
     if (steps->loads_data[loads_ids[i]][1]==4)
     { 
-      name = "Gravity_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+      int loaddata_id = loadsgravity->get_loads_data_id_from_load_id(steps->loads_data[loads_ids[i]][2]);
+      if (loaddata_id!=-1)
+      {
+        int subdata_id = loadsgravity->get_name_data_id_from_name_id(loadsgravity->loads_data[loaddata_id][7]);
+        if ((subdata_id!=-1)&&(loadsgravity->name_data[subdata_id][1]!=""))
+        {
+          name = loadsgravity->name_data[subdata_id][1];
+        }else{
+          name = "Gravity_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+        }
+      }else{
+        name = "Gravity_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+      }
     
       loadsgravity_tree_data_set.push_back(std::to_string(steps->loads_data[loads_ids[i]][2])); //load_id
       loadsgravity_tree_data_set.push_back(name); 
@@ -8753,7 +8949,19 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadscentrifugal_t
     std::string name;
     if (steps->loads_data[loads_ids[i]][1]==5)
     { 
-      name = "Centrifugal_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+      int loaddata_id = loadscentrifugal->get_loads_data_id_from_load_id(steps->loads_data[loads_ids[i]][2]);
+      if (loaddata_id!=-1)
+      {
+        int subdata_id = loadscentrifugal->get_name_data_id_from_name_id(loadscentrifugal->loads_data[loaddata_id][8]);
+        if ((subdata_id!=-1)&&(loadscentrifugal->name_data[subdata_id][1]!=""))
+        {
+          name = loadscentrifugal->name_data[subdata_id][1];
+        }else{
+          name = "Centrifugal_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+        }
+      }else{
+        name = "Centrifugal_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+      }
     
       loadscentrifugal_tree_data_set.push_back(std::to_string(steps->loads_data[loads_ids[i]][2])); //load_id
       loadscentrifugal_tree_data_set.push_back(name); 
@@ -8781,7 +8989,19 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadstrajectory_tr
     std::string name;
     if (steps->loads_data[loads_ids[i]][1]==6)
     { 
-      name = "Trajectory_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+      int loaddata_id = loadstrajectory->get_loads_data_id_from_load_id(steps->loads_data[loads_ids[i]][2]);
+      if (loaddata_id!=-1)
+      {
+        int subdata_id = loadstrajectory->get_name_data_id_from_name_id(loadstrajectory->loads_data[loaddata_id][9]);
+        if ((subdata_id!=-1)&&(loadstrajectory->name_data[subdata_id][1]!=""))
+        {
+          name = loadstrajectory->name_data[subdata_id][1];
+        }else{
+          name = "Trajectory_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+        }
+      }else{
+        name = "Trajectory_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+      }
     
       loadstrajectory_tree_data_set.push_back(std::to_string(steps->loads_data[loads_ids[i]][2])); //load_id
       loadstrajectory_tree_data_set.push_back(name); 
@@ -8790,6 +9010,88 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadstrajectory_tr
   }
   return loadstrajectory_tree_data;
 }
+
+std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadsfilm_tree_data(int step_id)
+{ 
+  std::vector<std::vector<std::string>> loadsfilm_tree_data;
+  int step_data_id;
+  std::vector<int> loads_ids;
+  step_data_id = steps->get_steps_data_id_from_step_id(step_id);
+  if (step_data_id==-1)
+  {
+    return loadsfilm_tree_data;
+  }
+  loads_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[step_data_id][5]);
+
+  for (size_t i = 0; i < loads_ids.size(); i++)
+  {
+    std::vector<std::string> loadsfilm_tree_data_set;
+    std::string name;
+    if (steps->loads_data[loads_ids[i]][1]==7)
+    { 
+      int loaddata_id = loadsfilm->get_loads_data_id_from_load_id(steps->loads_data[loads_ids[i]][2]);
+      if (loaddata_id!=-1)
+      {
+        int subdata_id = loadsfilm->get_name_data_id_from_name_id(loadsfilm->loads_data[loaddata_id][9]);
+        if ((subdata_id!=-1)&&(loadsfilm->name_data[subdata_id][1]!=""))
+        {
+          name = loadsfilm->name_data[subdata_id][1];
+        }else{
+          name = "Film_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+        }
+      }else{
+        name = "Film_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+      }
+    
+      loadsfilm_tree_data_set.push_back(std::to_string(steps->loads_data[loads_ids[i]][2])); //load_id
+      loadsfilm_tree_data_set.push_back(name); 
+      loadsfilm_tree_data.push_back(loadsfilm_tree_data_set);  
+    }
+  }
+  return loadsfilm_tree_data;
+}
+
+
+std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadsradiation_tree_data(int step_id)
+{ 
+  std::vector<std::vector<std::string>> loadsradiation_tree_data;
+  int step_data_id;
+  std::vector<int> loads_ids;
+  step_data_id = steps->get_steps_data_id_from_step_id(step_id);
+  if (step_data_id==-1)
+  {
+    return loadsradiation_tree_data;
+  }
+  loads_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[step_data_id][5]);
+
+  for (size_t i = 0; i < loads_ids.size(); i++)
+  {
+    std::vector<std::string> loadsradiation_tree_data_set;
+    std::string name;
+    if (steps->loads_data[loads_ids[i]][1]==8)
+    { 
+      int loaddata_id = loadsradiation->get_loads_data_id_from_load_id(steps->loads_data[loads_ids[i]][2]);
+      if (loaddata_id!=-1)
+      {
+        int subdata_id = loadsradiation->get_name_data_id_from_name_id(loadsradiation->loads_data[loaddata_id][9]);
+        if ((subdata_id!=-1)&&(loadsradiation->name_data[subdata_id][1]!=""))
+        {
+          name = loadsradiation->name_data[subdata_id][1];
+        }else{
+          name = "Radiation_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+        }
+      }else{
+        name = "Radiation_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+      }
+    
+      loadsradiation_tree_data_set.push_back(std::to_string(steps->loads_data[loads_ids[i]][2])); //load_id
+      loadsradiation_tree_data_set.push_back(name); 
+      loadsradiation_tree_data.push_back(loadsradiation_tree_data_set);  
+    }
+  }
+  return loadsradiation_tree_data;
+}
+
 
 std::vector<std::vector<std::string>> CalculiXCore::get_steps_bcsdisplacements_tree_data(int step_id)
 { 

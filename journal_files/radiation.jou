@@ -45,7 +45,7 @@ sideset 1 add surface 1
 sideset 2 add surface 62 44 38 60 30 32 55 48 
 
 #loads
-ccx create radiation sideset 1 temperature 293 emissivity 0.5 cavity_radiation_on
+ccx create radiation sideset 1 temperature 293 emissivity 0.5 cavity_radiation_on name testname
 ccx create radiation sideset 2 temperature 293 emissivity 0.3 cavity_radiation_on
 
 #boundary conditions
@@ -84,5 +84,6 @@ ccx step 1 add fieldoutput 1 2
 ccx create job name "radiation_test"
 
 ccx run job 1
+
 
 

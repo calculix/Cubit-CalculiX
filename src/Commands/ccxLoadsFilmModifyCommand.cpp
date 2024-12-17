@@ -14,7 +14,7 @@ std::vector<std::string> ccxLoadsFilmModifyCommand::get_syntax()
   std::vector<std::string> syntax_list;
 
   std::string syntax = "ccx ";
-  syntax.append("modify film <value:label='film id',help='<film id>'>");
+  syntax.append("modify film <value:label='film id',help='<film id>'> ");
   syntax.append("[sideset <value:label='sideset id',help='<sideset id>'>] ");
   syntax.append("[temperature <value:label='temperature_value',help='<temperature_value>'>] ");
   syntax.append("[coefficient <value:label='coefficient_value',help='<coefficient_value>'>] ");
@@ -34,7 +34,7 @@ std::vector<std::string> ccxLoadsFilmModifyCommand::get_syntax_help()
 {
   std::vector<std::string> help(1);
   help[0] = "ccx "; 
-  help[0].append("modify film <film id>");
+  help[0].append("modify film <film id> ");
   help[0].append("[sideset <sideset id>] ");
   help[0].append("[temperature <temperature_value>] ");
   help[0].append("[coefficient <coefficient_value>] ");

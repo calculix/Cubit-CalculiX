@@ -58,6 +58,12 @@
 #include "LoadsTrajectoryCreatePanel.hpp"
 #include "LoadsTrajectoryModifyPanel.hpp"
 #include "LoadsTrajectoryDeletePanel.hpp"
+#include "LoadsFilmCreatePanel.hpp"
+#include "LoadsFilmModifyPanel.hpp"
+#include "LoadsFilmDeletePanel.hpp"
+#include "LoadsRadiationCreatePanel.hpp"
+#include "LoadsRadiationModifyPanel.hpp"
+#include "LoadsRadiationDeletePanel.hpp"
 #include "BCsDisplacementsModifyPanel.hpp"
 #include "BCsTemperaturesModifyPanel.hpp"
 #include "HistoryOutputsCreatePanel.hpp"
@@ -81,6 +87,10 @@
 #include "StepsModifyHeatTransferPanel.hpp"
 #include "StepsModifyCoupledTemperatureDisplacementPanel.hpp"
 #include "StepsModifyUncoupledTemperatureDisplacementPanel.hpp"
+#include "StepsModifyDynamicPanel.hpp"
+#include "StepsModifyModalDynamicPanel.hpp"
+#include "StepsModifySteadyStateDynamicsPanel.hpp"
+#include "StepsModifyComplexFrequencyPanel.hpp"
 #include "StepsDeletePanel.hpp"
 #include "CustomLinesCreatePanel.hpp"
 #include "CustomLinesModifyPanel.hpp"
@@ -274,6 +284,18 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
     return new LoadsTrajectoryModifyPanel();
   if(name == "CCXLoadsTrajectoryDelete")
     return new LoadsTrajectoryDeletePanel();
+  if(name == "CCXLoadsFilmCreate")
+    return new LoadsFilmCreatePanel();
+  if(name == "CCXLoadsFilmModify")
+    return new LoadsFilmModifyPanel();
+  if(name == "CCXLoadsFilmDelete")
+    return new LoadsFilmDeletePanel();
+  if(name == "CCXLoadsRadiationCreate")
+    return new LoadsRadiationCreatePanel();
+  if(name == "CCXLoadsRadiationModify")
+    return new LoadsRadiationModifyPanel();
+  if(name == "CCXLoadsRadiationDelete")
+    return new LoadsRadiationDeletePanel();
   if(name == "CCXBCsDisplacementsModify")
     return new BCsDisplacementsModifyPanel();
   if(name == "CCXBCsTemperaturesModify")
@@ -320,6 +342,14 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
     return new StepsModifyCoupledTemperatureDisplacementPanel();
   if(name == "CCXStepsModifyUncoupledTemperatureDisplacement")
     return new StepsModifyUncoupledTemperatureDisplacementPanel();
+  if(name == "CCXStepsModifyDynamic")
+    return new StepsModifyDynamicPanel();
+  if(name == "CCXStepsModifyModalDynamic")
+    return new StepsModifyModalDynamicPanel();
+  if(name == "CCXStepsModifySteadyStateDynamics")
+    return new StepsModifySteadyStateDynamicsPanel();
+  if(name == "CCXStepsModifyComplexFrequency")
+    return new StepsModifyComplexFrequencyPanel();
   if(name == "CCXStepsDelete")
     return new StepsDeletePanel();
   if(name == "CCXCustomLinesCreate")

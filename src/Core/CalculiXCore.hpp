@@ -116,6 +116,8 @@ public:
   std::vector<int> get_loadsgravity_ids(); // get all load gravity ids
   std::vector<int> get_loadscentrifugal_ids(); // get all load centrifugal ids
   std::vector<int> get_loadstrajectory_ids(); // get all load trajectory ids
+  std::vector<int> get_loadsfilm_ids(); // get all load film ids
+  std::vector<int> get_loadsradiation_ids(); // get all load radiation ids
   std::vector<int> get_bcsdisplacements_ids(); // get all bc displacement ids
   std::vector<int> get_bcstemperatures_ids(); // get all bc temperature ids
   std::vector<int> get_orientations_ids(); // get all orientation ids
@@ -268,6 +270,8 @@ public:
   std::vector<std::vector<double>> get_draw_data_for_load_heatflux(int id); // returns coord(3) and magnitude(3) std::vector<double>
   std::vector<std::vector<double>> get_draw_data_for_load_gravity(int id); // returns coord(3) and magnitude(3) std::vector<double>
   std::vector<std::vector<double>> get_draw_data_for_load_centrifugal(int id); // returns coord(3) and magnitude(3) std::vector<double>
+  std::vector<std::vector<double>> get_draw_data_for_load_film(int id); // returns coord(3) and magnitude(3) std::vector<double>
+  std::vector<std::vector<double>> get_draw_data_for_load_radiation(int id); // returns coord(3) and magnitude(3) std::vector<double>
   std::vector<std::vector<double>> get_draw_data_for_bc_displacement(int id); // returns coord(3) and dof
   std::vector<std::vector<double>> get_draw_data_for_bc_temperature(int id); // returns coord(3) and dof
   std::vector<std::vector<double>> get_draw_data_for_orientation(int id); // returns pairs of 4 for {system_type,local_axis_angle}, coord(3) of section center, a_coord(3) ,b_coord(3)
@@ -278,6 +282,8 @@ public:
   bool draw_load_gravity(std::vector<int> gravity_ids,double size); // draw load gravity
   bool draw_load_centrifugal(std::vector<int> centrifugal_ids,double size); // draw load centrifugal
   bool draw_load_trajectory(std::vector<int> trajectory_ids,double size); // draw load trajectory
+  bool draw_load_film(std::vector<int> film_ids,double size); // draw load film
+  bool draw_load_radiation(std::vector<int> radiation_ids,double size); // draw load radiation
   bool draw_bc_displacement(std::vector<int> displacement_ids,double size); // draw bc displacement
   bool draw_bc_temperature(std::vector<int> temperature_ids,double size); // draw bc temperature
   bool draw_orientation(std::vector<int> orientation_ids,double size); // draw orientation
@@ -290,6 +296,8 @@ public:
   bool draw_load_gravities(double size); //draw all gravities
   bool draw_load_centrifugals(double size); //draw all centrifugals
   bool draw_load_trajectories(double size); //draw all trajectories
+  bool draw_load_films(double size); //draw all films
+  bool draw_load_radiations(double size); //draw all radiations
   bool draw_bc_displacements(double size); //draw all displacements
   bool draw_bc_temperatures(double size); //draw all temperatures
 
@@ -357,6 +365,8 @@ public:
   std::vector<std::vector<std::string>> get_loadsgravity_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_loadscentrifugal_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_loadstrajectory_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_loadsfilm_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_loadsradiation_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_bcsdisplacements_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_bcstemperatures_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_historyoutputs_tree_data(); // gets the data from core to build the tree
@@ -371,6 +381,8 @@ public:
   std::vector<std::vector<std::string>> get_steps_loadsgravity_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_loadscentrifugal_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_loadstrajectory_tree_data(int step_id); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_steps_loadsfilm_tree_data(int step_id); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_steps_loadsradiation_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_bcsdisplacements_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_bcstemperatures_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_historyoutputs_tree_data(int step_id); // gets the data from core to build the tree

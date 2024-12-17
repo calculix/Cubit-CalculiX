@@ -90,6 +90,12 @@ void cmdPanelManager::clear()
     my_markers.push_back("CCXLoadsTrajectoryCreate");
     my_markers.push_back("CCXLoadsTrajectoryModify");
     my_markers.push_back("CCXLoadsTrajectoryDelete");
+    my_markers.push_back("CCXLoadsFilmCreate");
+    my_markers.push_back("CCXLoadsFilmModify");
+    my_markers.push_back("CCXLoadsFilmDelete");
+    my_markers.push_back("CCXLoadsRadiationCreate");
+    my_markers.push_back("CCXLoadsRadiationModify");
+    my_markers.push_back("CCXLoadsRadiationDelete");
     my_markers.push_back("CCXBCsDisplacementsModify");
     my_markers.push_back("CCXBCsTemperaturesModify");
     my_markers.push_back("CCXHistoryOutputsCreate");
@@ -113,6 +119,10 @@ void cmdPanelManager::clear()
     my_markers.push_back("CCXStepsModifyHeatTransfer");
     my_markers.push_back("CCXStepsModifyCoupledTemperatureDisplacement");
     my_markers.push_back("CCXStepsModifyUncoupledTemperatureDisplacement");
+    my_markers.push_back("CCXStepsModifyDynamic");
+    my_markers.push_back("CCXStepsModifyModalDynamic");
+    my_markers.push_back("CCXStepsModifySteadyStateDynamics");
+    my_markers.push_back("CCXStepsModifyComplexFrequency");
     my_markers.push_back("CCXStepsDelete");
     my_markers.push_back("CCXCustomLinesCreate");
     my_markers.push_back("CCXCustomLinesModify");
@@ -460,6 +470,39 @@ void cmdPanelManager::initialize_from_code()
   model->setNodeMarker(node, "CCXLoadsTrajectoryDelete");
   node->setIcon(ccx_iface->getIcon("CCXLoadsTrajectoryDelete"));
 
+  //##############################
+  // add LoadsFilm Nodes
+  root_node = model->getMarkedNode("CCXLoads");
+  node = model->addNode("Film", root_node);
+  model->setNodeMarker(node, "CCXLoadsFilm");
+  node->setIcon(ccx_iface->getIcon("CCXLoadsFilm"));
+  root_node = model->getMarkedNode("CCXLoadsFilm");
+  node = model->addNode("Create", root_node);
+  model->setNodeMarker(node, "CCXLoadsFilmCreate");
+  node->setIcon(ccx_iface->getIcon("CCXLoadsFilmCreate"));
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXLoadsFilmModify");
+  node->setIcon(ccx_iface->getIcon("CCXLoadsFilmModify"));
+  node = model->addNode("Delete", root_node);
+  model->setNodeMarker(node, "CCXLoadsFilmDelete");
+  node->setIcon(ccx_iface->getIcon("CCXLoadsFilmDelete"));
+
+  //##############################
+  // add LoadsRadiation Nodes
+  root_node = model->getMarkedNode("CCXLoads");
+  node = model->addNode("Radiation", root_node);
+  model->setNodeMarker(node, "CCXLoadsRadiation");
+  node->setIcon(ccx_iface->getIcon("CCXLoadsRadiation"));
+  root_node = model->getMarkedNode("CCXLoadsRadiation");
+  node = model->addNode("Create", root_node);
+  model->setNodeMarker(node, "CCXLoadsRadiationCreate");
+  node->setIcon(ccx_iface->getIcon("CCXLoadsRadiationCreate"));
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXLoadsRadiationModify");
+  node->setIcon(ccx_iface->getIcon("CCXLoadsRadiationModify"));
+  node = model->addNode("Delete", root_node);
+  model->setNodeMarker(node, "CCXLoadsRadiationDelete");
+  node->setIcon(ccx_iface->getIcon("CCXLoadsRadiationDelete"));
 
   //##############################
   // add BCs Nodes
@@ -611,6 +654,18 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Uncoupled Temperature Displacement", root_node);
   model->setNodeMarker(node, "CCXStepsModifyUncoupledTemperatureDisplacement");
   node->setIcon(ccx_iface->getIcon("CCXStepsModifyUncoupledTemperatureDisplacement"));
+  node = model->addNode("Dynamic", root_node);
+  model->setNodeMarker(node, "CCXStepsModifyDynamic");
+  node->setIcon(ccx_iface->getIcon("CCXStepsModifyDynamic"));
+  node = model->addNode("Modal Dynamic", root_node);
+  model->setNodeMarker(node, "CCXStepsModifyModalDynamic");
+  node->setIcon(ccx_iface->getIcon("CCXStepsModifyModalDynamic"));
+  node = model->addNode("Steady State Dynamics", root_node);
+  model->setNodeMarker(node, "CCXStepsModifySteadyStateDynamics");
+  node->setIcon(ccx_iface->getIcon("CCXStepsModifySteadyStateDynamics"));
+  node = model->addNode("Complex Frequency", root_node);
+  model->setNodeMarker(node, "CCXStepsModifyComplexFrequency");
+  node->setIcon(ccx_iface->getIcon("CCXStepsModifyComplexFrequency"));
 
   //##############################
   // add Jobs Nodes
@@ -708,6 +763,12 @@ void cmdPanelManager::associate_panels_with_nodes()
   my_markers.push_back("CCXLoadsTrajectoryCreate");
   my_markers.push_back("CCXLoadsTrajectoryModify");
   my_markers.push_back("CCXLoadsTrajectoryDelete");
+  my_markers.push_back("CCXLoadsFilmCreate");
+  my_markers.push_back("CCXLoadsFilmModify");
+  my_markers.push_back("CCXLoadsFilmDelete");
+  my_markers.push_back("CCXLoadsRadiationCreate");
+  my_markers.push_back("CCXLoadsRadiationModify");
+  my_markers.push_back("CCXLoadsRadiationDelete");
   my_markers.push_back("CCXBCsDisplacementsModify");
   my_markers.push_back("CCXBCsTemperaturesModify");
   my_markers.push_back("CCXHistoryOutputsCreate");
@@ -731,6 +792,10 @@ void cmdPanelManager::associate_panels_with_nodes()
   my_markers.push_back("CCXStepsModifyHeatTransfer");
   my_markers.push_back("CCXStepsModifyCoupledTemperatureDisplacement");
   my_markers.push_back("CCXStepsModifyUncoupledTemperatureDisplacement");
+  my_markers.push_back("CCXStepsModifyDynamic");
+  my_markers.push_back("CCXStepsModifyModalDynamic");
+  my_markers.push_back("CCXStepsModifySteadyStateDynamics");
+  my_markers.push_back("CCXStepsModifyComplexFrequency");
   my_markers.push_back("CCXStepsDelete");
   my_markers.push_back("CCXCustomLinesCreate");
   my_markers.push_back("CCXCustomLinesModify");

@@ -23,6 +23,8 @@ std::vector<std::string> ccxDrawStepCommand::get_syntax()
   syntax.append(" [gravity <value:label='gravity_id',help='<gravity_id>'>...]");
   syntax.append(" [centrifugal <value:label='centrifugal_id',help='<centrifugal_id>'>...]");
   syntax.append(" [trajectory <value:label='trajectory_id',help='<trajectory_id>'>...]");
+  syntax.append(" [film <value:label='film_id',help='<film_id>'>...]");
+  syntax.append(" [radiation <value:label='radiation_id',help='<radiation_id>'>...]");
   syntax.append("]");
   syntax.append(" [bc ");
   syntax.append(" [displacement <value:label='displacement_id',help='<displacement_id>'>...]");
@@ -35,6 +37,8 @@ std::vector<std::string> ccxDrawStepCommand::get_syntax()
   syntax.append(" [load_gravity_all]");
   syntax.append(" [load_centrifugal_all]");
   syntax.append(" [load_trajectory_all]");
+  syntax.append(" [load_film_all]");
+  syntax.append(" [load_radiation_all]");
   syntax.append(" [bc_all]");
   syntax.append(" [bc_displacement_all]");
   syntax.append(" [bc_temperature_all]");
@@ -56,6 +60,8 @@ std::vector<std::string> ccxDrawStepCommand::get_syntax_help()
   help[0].append(" [gravity <gravity_id>...]");
   help[0].append(" [centrifugal <centrifugal_id>...]]");
   help[0].append(" [trajectory <trajectory_id>...]]");
+  help[0].append(" [film <film_id>...]]");
+  help[0].append(" [radiation <radiation_id>...]]");
   help[0].append(" [bc [displacement <displacement_id>...]");
   help[0].append(" [temperature <temperature_id>...]]");
   help[0].append(" [load_all]");
@@ -65,6 +71,8 @@ std::vector<std::string> ccxDrawStepCommand::get_syntax_help()
   help[0].append(" [load_gravity_all]");
   help[0].append(" [load_centrifugal_all]");
   help[0].append(" [load_trajectory_all]");
+  help[0].append(" [load_film_all]");
+  help[0].append(" [load_radiation_all]");
   help[0].append(" [bc_all]");
   help[0].append(" [bc_displacement_all]");
   help[0].append(" [bc_temperature_all]");
@@ -92,6 +100,8 @@ bool ccxDrawStepCommand::execute(CubitCommandData &data)
   std::vector<int> gravity_id;
   std::vector<int> centrifugal_id;
   std::vector<int> trajectory_id;
+  std::vector<int> film_id;
+  std::vector<int> radiation_id;
   std::vector<int> displacement_id;
   std::vector<int> temperature_id;
   
@@ -125,6 +135,8 @@ bool ccxDrawStepCommand::execute(CubitCommandData &data)
       data.get_values("gravity_id", gravity_id);
       data.get_values("centrifugal_id", centrifugal_id);
       data.get_values("trajectory_id", trajectory_id);
+      data.get_values("film_id", film_id);
+      data.get_values("radiation_id", radiation_id);
     }
 
     if (data.find_keyword("BC"))
@@ -140,12 +152,14 @@ bool ccxDrawStepCommand::execute(CubitCommandData &data)
     std::vector<std::vector<std::string>> step_loadgravities_tree_data = ccx_iface.get_steps_loadsgravity_tree_data(step_id);
     std::vector<std::vector<std::string>> step_loadcentrifugals_tree_data = ccx_iface.get_steps_loadscentrifugal_tree_data(step_id);
     std::vector<std::vector<std::string>> step_loadtrajectory_tree_data = ccx_iface.get_steps_loadstrajectory_tree_data(step_id);
+    std::vector<std::vector<std::string>> step_loadfilm_tree_data = ccx_iface.get_steps_loadsfilm_tree_data(step_id);
+    std::vector<std::vector<std::string>> step_loadradiation_tree_data = ccx_iface.get_steps_loadsradiation_tree_data(step_id);
     std::vector<std::vector<std::string>> step_bcdisplacements_tree_data = ccx_iface.get_steps_bcsdisplacements_tree_data(step_id);
     std::vector<std::vector<std::string>> step_bctemperatures_tree_data = ccx_iface.get_steps_bcstemperatures_tree_data(step_id);
     
-    if ((force_id.size()==0)&&(pressure_id.size()==0)&&(heatflux_id.size()==0)&&(gravity_id.size()==0)&&(centrifugal_id.size()==0)&&(displacement_id.size()==0)&&(temperature_id.size()==0))
+    if ((force_id.size()==0)&&(pressure_id.size()==0)&&(heatflux_id.size()==0)&&(gravity_id.size()==0)&&(centrifugal_id.size()==0)&&(trajectory_id.size()==0)&&(film_id.size()==0)&&(radiation_id.size()==0)&&(displacement_id.size()==0)&&(temperature_id.size()==0))
     {
-      if((!data.find_keyword("LOAD_ALL"))&&(!data.find_keyword("BC_ALL"))&&(!data.find_keyword("LOAD_FORCE_ALL"))&&(!data.find_keyword("LOAD_PRESSURE_ALL"))&&(!data.find_keyword("LOAD_HEATFLUX_ALL"))&&(!data.find_keyword("LOAD_GRAVITY_ALL"))&&(!data.find_keyword("LOAD_CENTRIFUGAL_ALL"))&&(!data.find_keyword("LOAD_TRAJECTORY_ALL"))&&(!data.find_keyword("BC_DISPLACEMENT_ALL"))&&(!data.find_keyword("BC_TEMPERATURE_ALL")))
+      if((!data.find_keyword("LOAD_ALL"))&&(!data.find_keyword("BC_ALL"))&&(!data.find_keyword("LOAD_FORCE_ALL"))&&(!data.find_keyword("LOAD_PRESSURE_ALL"))&&(!data.find_keyword("LOAD_HEATFLUX_ALL"))&&(!data.find_keyword("LOAD_GRAVITY_ALL"))&&(!data.find_keyword("LOAD_CENTRIFUGAL_ALL"))&&(!data.find_keyword("LOAD_TRAJECTORY_ALL"))&&(!data.find_keyword("LOAD_FILM_ALL"))&&(!data.find_keyword("LOAD_RADIATION_ALL"))&&(!data.find_keyword("BC_DISPLACEMENT_ALL"))&&(!data.find_keyword("BC_TEMPERATURE_ALL")))
       {
         bool_draw_all = true;
       }
@@ -159,6 +173,8 @@ bool ccxDrawStepCommand::execute(CubitCommandData &data)
       gravity_id = convert_tree_data(step_loadgravities_tree_data);
       centrifugal_id = convert_tree_data(step_loadcentrifugals_tree_data);
       trajectory_id = convert_tree_data(step_loadtrajectory_tree_data);
+      film_id = convert_tree_data(step_loadfilm_tree_data);
+      radiation_id = convert_tree_data(step_loadradiation_tree_data);
 
       displacement_id = convert_tree_data(step_bcdisplacements_tree_data);
       temperature_id = convert_tree_data(step_bctemperatures_tree_data);
@@ -172,6 +188,8 @@ bool ccxDrawStepCommand::execute(CubitCommandData &data)
       gravity_id = convert_tree_data(step_loadgravities_tree_data);
       centrifugal_id = convert_tree_data(step_loadcentrifugals_tree_data);
       trajectory_id = convert_tree_data(step_loadtrajectory_tree_data);
+      film_id = convert_tree_data(step_loadfilm_tree_data);
+      radiation_id = convert_tree_data(step_loadradiation_tree_data);
     }
     
     if (data.find_keyword("BC_ALL"))
@@ -210,6 +228,16 @@ bool ccxDrawStepCommand::execute(CubitCommandData &data)
       trajectory_id = convert_tree_data(step_loadtrajectory_tree_data);
     }
     
+    if (data.find_keyword("LOAD_FILM_ALL"))
+    {
+      film_id = convert_tree_data(step_loadfilm_tree_data);
+    }
+
+    if (data.find_keyword("LOAD_RADIATION_ALL"))
+    {
+      radiation_id = convert_tree_data(step_loadradiation_tree_data);
+    }
+
     if (data.find_keyword("BC_DISPLACEMENT_ALL"))
     {
       displacement_id = convert_tree_data(step_bcdisplacements_tree_data);
@@ -228,6 +256,8 @@ bool ccxDrawStepCommand::execute(CubitCommandData &data)
     gravity_id = get_ids_in_tree_data(gravity_id,step_loadgravities_tree_data);
     centrifugal_id = get_ids_in_tree_data(centrifugal_id,step_loadcentrifugals_tree_data);
     trajectory_id = get_ids_in_tree_data(trajectory_id,step_loadtrajectory_tree_data);
+    film_id = get_ids_in_tree_data(film_id,step_loadfilm_tree_data);
+    radiation_id = get_ids_in_tree_data(radiation_id,step_loadradiation_tree_data);
     displacement_id = get_ids_in_tree_data(displacement_id,step_bcdisplacements_tree_data);
     temperature_id = get_ids_in_tree_data(temperature_id,step_bctemperatures_tree_data);
 
@@ -259,6 +289,16 @@ bool ccxDrawStepCommand::execute(CubitCommandData &data)
     if (!ccx_iface.draw_load_trajectory(trajectory_id,size_value))
     {
       output = "Failed ccx draw load trajectory!\n";
+      PRINT_ERROR(output.c_str());
+    }
+    if (!ccx_iface.draw_load_film(film_id,size_value))
+    {
+      output = "Failed ccx draw load film!\n";
+      PRINT_ERROR(output.c_str());
+    }
+    if (!ccx_iface.draw_load_radiation(radiation_id,size_value))
+    {
+      output = "Failed ccx draw load radiation!\n";
       PRINT_ERROR(output.c_str());
     }
     if (!ccx_iface.draw_bc_displacement(displacement_id,size_value))

@@ -110,4 +110,7 @@
 2024-12-13 working on physical constants, damping, film, radiation
 2024-12-14 writing check list. try to fix history bug on windows
 2024-12-14 working on core and commands for steps dynamic, modal dynamic, steady state dynamics, complex frequency
-
+2024-12-16 working on damping and physical constants gui
+2024-12-17 working on damping and physical constants gui
+2024-12-17 working on gui for steps dynamic, modal dynamic, steady state dynamics, complex frequency
+2024-12-17 loads film and radiation gui

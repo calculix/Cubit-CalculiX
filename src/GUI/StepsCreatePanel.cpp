@@ -35,6 +35,10 @@ StepsCreatePanel::StepsCreatePanel(QWidget *parent) :
   comboBox_2->addItem("Heat Transfer");  
   comboBox_2->addItem("Coupled Temperature Displacement");
   comboBox_2->addItem("Uncoupled Temperature Displacement");
+  comboBox_2->addItem("Dynamic");
+  comboBox_2->addItem("Modal Dynamic");
+  comboBox_2->addItem("Steady State Dynamics");
+  comboBox_2->addItem("Complex Frequency");
   comboBox_2->addItem("No Analysis");
   //lineEdit_1->setPlaceholderText("Optional");
   
@@ -93,6 +97,18 @@ void StepsCreatePanel::on_pushButton_apply_clicked(bool)
     {
       command.append(" uncoupledtemperaturedisplacement");
     }else if (comboBox_2->currentIndex()==6)
+    {
+      command.append(" dynamic");
+    }else if (comboBox_2->currentIndex()==7)
+    {
+      command.append(" modaldynamic");
+    }else if (comboBox_2->currentIndex()==8)
+    {
+      command.append(" steadystatedynamics");
+    }else if (comboBox_2->currentIndex()==9)
+    {
+      command.append(" complexfrequency");
+    }else if (comboBox_2->currentIndex()==10)
     {
       command.append(" noanalysis");
     }

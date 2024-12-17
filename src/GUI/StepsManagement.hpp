@@ -76,6 +76,8 @@ private:
   QTreeWidgetItem* tree_available_loads_gravity;
   QTreeWidgetItem* tree_available_loads_centrifugal;
   QTreeWidgetItem* tree_available_loads_trajectory;
+  QTreeWidgetItem* tree_available_loads_film;
+  QTreeWidgetItem* tree_available_loads_radiation;
   QTreeWidgetItem* tree_available_bcs;
   QTreeWidgetItem* tree_available_bcs_displacements;
   QTreeWidgetItem* tree_available_bcs_temperatures;
@@ -89,6 +91,8 @@ private:
   QTreeWidgetItem* tree_used_loads_gravity;
   QTreeWidgetItem* tree_used_loads_centrifugal;
   QTreeWidgetItem* tree_used_loads_trajectory;
+  QTreeWidgetItem* tree_used_loads_film;
+  QTreeWidgetItem* tree_used_loads_radiation;
   QTreeWidgetItem* tree_used_bcs;
   QTreeWidgetItem* tree_used_bcs_displacements;
   QTreeWidgetItem* tree_used_bcs_temperatures;

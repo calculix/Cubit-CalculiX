@@ -41,6 +41,10 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/LoadsCentrifugalTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsFilmTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsFilmTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsRadiationTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsRadiationTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsDisplacementsTree.cpp
@@ -75,6 +79,10 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsCentrifugalTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsTrajectoryTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsTrajectoryTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsFilmTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsFilmTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsRadiationTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsRadiationTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsBCsTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsBCsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsBCsDisplacementsTree.cpp
@@ -217,6 +225,18 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryModifyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryDeletePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryDeletePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsFilmCreatePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsFilmCreatePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsFilmModifyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsFilmModifyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsFilmDeletePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsFilmDeletePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsRadiationCreatePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsRadiationCreatePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsRadiationModifyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsRadiationModifyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsRadiationDeletePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsRadiationDeletePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsDisplacementsModifyPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsDisplacementsModifyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsTemperaturesModifyPanel.hpp
@@ -265,6 +285,14 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/StepsModifyCoupledTemperatureDisplacementPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsModifyUncoupledTemperatureDisplacementPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsModifyUncoupledTemperatureDisplacementPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsModifyDynamicPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsModifyDynamicPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsModifyModalDynamicPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsModifyModalDynamicPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsModifySteadyStateDynamicsPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsModifySteadyStateDynamicsPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsModifyComplexFrequencyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsModifyComplexFrequencyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsDeletePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsDeletePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsManagement.hpp

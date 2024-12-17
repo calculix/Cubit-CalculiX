@@ -230,6 +230,16 @@ std::vector<int> CalculiXCoreInterface::get_loadstrajectory_ids()
   return ccx_core.get_loadstrajectory_ids();
 }
 
+std::vector<int> CalculiXCoreInterface::get_loadsfilm_ids()
+{
+  return ccx_core.get_loadsfilm_ids();
+}
+
+std::vector<int> CalculiXCoreInterface::get_loadsradiation_ids()
+{
+  return ccx_core.get_loadsradiation_ids();
+}
+
 std::vector<int> CalculiXCoreInterface::get_bcsdisplacements_ids()
 {
   return ccx_core.get_bcsdisplacements_ids();
@@ -970,6 +980,16 @@ std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_load_c
   return ccx_core.get_draw_data_for_load_centrifugal(id);
 }
 
+std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_load_film(int id)
+{
+  return ccx_core.get_draw_data_for_load_film(id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_load_radiation(int id)
+{
+  return ccx_core.get_draw_data_for_load_radiation(id);
+}
+
 std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_bc_displacement(int id) // returns coord(3) and dof
 {
   return ccx_core.get_draw_data_for_bc_displacement(id);
@@ -1018,6 +1038,16 @@ bool CalculiXCoreInterface::draw_load_centrifugal(std::vector<int> centrifugal_i
 bool CalculiXCoreInterface::draw_load_trajectory(std::vector<int> trajectory_ids,double size)
 {
   return ccx_core.draw_load_trajectory(trajectory_ids,size);
+}
+
+bool CalculiXCoreInterface::draw_load_film(std::vector<int> film_ids,double size)
+{
+  return ccx_core.draw_load_film(film_ids,size);
+}
+
+bool CalculiXCoreInterface::draw_load_radiation(std::vector<int> radiation_ids,double size)
+{
+  return ccx_core.draw_load_radiation(radiation_ids,size);
 }
 
 bool CalculiXCoreInterface::draw_bc_displacement(std::vector<int> displacement_ids,double size)
@@ -1078,6 +1108,16 @@ bool CalculiXCoreInterface::draw_load_centrifugals(double size)
 bool CalculiXCoreInterface::draw_load_trajectories(double size)
 {
   return ccx_core.draw_load_trajectories(size);
+}
+
+bool CalculiXCoreInterface::draw_load_films(double size)
+{
+  return ccx_core.draw_load_films(size);
+}
+
+bool CalculiXCoreInterface::draw_load_radiations(double size)
+{
+  return ccx_core.draw_load_radiations(size);
 }
 
 bool CalculiXCoreInterface::draw_bc_displacements(double size)
@@ -1375,6 +1415,16 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_loadstrajectory
   return ccx_core.get_loadstrajectory_tree_data();
 }
 
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_loadsfilm_tree_data()
+{ 
+  return ccx_core.get_loadsfilm_tree_data();
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_loadsradiation_tree_data()
+{ 
+  return ccx_core.get_loadsradiation_tree_data();
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_bcsdisplacements_tree_data()
 { 
   return ccx_core.get_bcsdisplacements_tree_data();
@@ -1443,6 +1493,16 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_loadscent
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_loadstrajectory_tree_data(int step_id)
 { 
   return ccx_core.get_steps_loadstrajectory_tree_data(step_id);
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_loadsfilm_tree_data(int step_id)
+{ 
+  return ccx_core.get_steps_loadsfilm_tree_data(step_id);
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_loadsradiation_tree_data(int step_id)
+{ 
+  return ccx_core.get_steps_loadsradiation_tree_data(step_id);
 }
 
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_bcsdisplacements_tree_data(int step_id)

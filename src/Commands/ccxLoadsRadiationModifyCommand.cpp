@@ -14,7 +14,7 @@ std::vector<std::string> ccxLoadsRadiationModifyCommand::get_syntax()
   std::vector<std::string> syntax_list;
 
   std::string syntax = "ccx ";
-  syntax.append("modify radiation <value:label='radiation id',help='<radiation id>'>");
+  syntax.append("modify radiation <value:label='radiation id',help='<radiation id>'> ");
   syntax.append("[sideset <value:label='sideset id',help='<sideset id>'>] ");
   syntax.append("[temperature <value:label='temperature_value',help='<temperature_value>'>] ");
   syntax.append("[emissivity <value:label='emissivity_value',help='<emissivity_value>'>] ");
@@ -36,7 +36,7 @@ std::vector<std::string> ccxLoadsRadiationModifyCommand::get_syntax_help()
 {
   std::vector<std::string> help(1);
   help[0] = "ccx "; 
-  help[0].append("modify radiation <radiation id>");
+  help[0].append("modify radiation <radiation id> ");
   help[0].append("[sideset <sideset id>] ");
   help[0].append("[temperature <temperature_value>] ");
   help[0].append("[emissivity <emissivity_value>] ");

@@ -1,6 +1,6 @@
 
-#ifndef STEPSLOADSGRAITYTREE_HPP
-#define STEPSLOADSGRAITYTREE_HPP
+#ifndef STEPSLOADSGRAVITYTREE_HPP
+#define STEPSLOADSGRAVITYTREE_HPP
 
 #include <QObject>
 #include <QTreeWidgetItem>
@@ -34,4 +34,4 @@ private:
   CalculiXCoreInterface *ccx_iface;
 };
 
-#endif // STEPSLOADSGRAITYTREE_HPP
+#endif // STEPSLOADSGRAVITYTREE_HPP
