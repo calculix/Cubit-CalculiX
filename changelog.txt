@@ -117,3 +117,4 @@
 2024-12-18 adding load type and radius vs magnitude to trajectory
 2024-12-19 working on trajectory, adding new python interface methods to query trajectory data
 2024-12-19 finished heatflux trajectory
+2024-12-19 test and creating examples

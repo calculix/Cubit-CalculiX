@@ -778,12 +778,12 @@ bool CoreDraw::draw_load_trajectory(int id, double size)
         std::array<double,3> coord = CubitInterface::get_nodal_coordinates(node_ids[0]);
         std::string label = "locate location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " ";
         label.append("\" t_begin " + ccx_iface->to_string_scientific(times[0][0]) + "\"");
-        ccx_iface->cmd(label);
+        ccx_iface->silent_cmd(label);
 
         coord = CubitInterface::get_nodal_coordinates(node_ids[node_ids.size()-1]);
         label = "locate location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " ";
         label.append("\" t_end " + ccx_iface->to_string_scientific(times[times.size()-1][1]) + "\"");
-        ccx_iface->cmd(label);
+        ccx_iface->silent_cmd(label);
     }
 
     return true;
