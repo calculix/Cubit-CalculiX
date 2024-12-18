@@ -42,7 +42,7 @@ modify material "steel" matrix_property "CCX_CONDUCTIVITY_ISO_K_TEMPERATURE" 50 
 ccx create section solid block all material 1
 
 #loads
-ccx create trajectory curve 13 vertex 16 surface 1 direction 0 0 -1 magnitude 50 time_begin 0 time_end 10 radius 0.1
+ccx create trajectory heatflux curve 13 vertex 16 surface 1 direction 0 0 -1 magnitude 50 30 10 time_begin 0 time_end 10 radius 0.1 0.2 0.3
 
 #boundary conditions
 create temperature on vol 1 value 293 #will be used as initial condition

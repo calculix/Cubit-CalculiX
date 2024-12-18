@@ -24,6 +24,7 @@ public:
   // loads_data[0][7] time_id
   // loads_data[0][8] radius_id
   // loads_data[0][9] name_id
+  // loads_data[0][10] load_type-> 1 heatflux | 2 pressure
 
   std::vector<std::vector<int>> fire_ray_surface_data;
   // fire_ray_surface_data[0][0] fire_ray_surface_id
@@ -35,7 +36,7 @@ public:
   // direction_data[0][2] y
   // direction_data[0][3] z
 
-  std::vector<std::vector<std::string>> magnitude_data;
+  std::vector<std::vector<double>> magnitude_data;
   // magnitude_data[0][0] magnitude_id
   // magnitude_data[0][1] magnitude
 
@@ -44,7 +45,7 @@ public:
   // time_data[0][1] t_begin
   // time_data[0][2] t_end
 
-  std::vector<std::vector<std::string>> radius_data;
+  std::vector<std::vector<double>> radius_data;
   // time_delay_data[0][0] radius_id
   // time_delay_data[0][1] radius
   
@@ -63,20 +64,20 @@ public:
   bool update(); // check for changes of the blocks
   bool reset(); // delete all data and initialize afterwards
   bool check_initialized(); // check if object is initialized
-  bool create_load(std::vector<std::string> options, std::vector<int> options2); // adds new load
-  bool add_load(int load_id, int op_mode, int curve_id, int vertex_id, int fire_ray_surface_id, int direction_id, int magnitude_id, int time_id, int radius_id, int name_id); // adds new load to loads_data
-  bool modify_load(int load_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2); // modify a load
+  bool create_load(std::vector<std::string> options, std::vector<int> options2, std::vector<std::vector<double>> options3); // adds new load
+  bool add_load(int load_id, int op_mode, int curve_id, int vertex_id, int fire_ray_surface_id, int direction_id, int magnitude_id, int time_id, int radius_id, int name_id, int load_type); // adds new load to loads_data
+  bool modify_load(int load_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2, std::vector<std::vector<double>> options3); // modify a load
   bool delete_load(int load_id); // deletes load from loads_data
   bool add_time(std::string time_id, std::string t_begin, std::string t_end); // adds new time to time_data
-  bool add_radius(std::string radius_id, std::string radius); // adds new radius to radius_data
+  bool add_radius(double radius_id, double radius); // adds new radius to radius_data
   bool add_direction(std::string direction_id, std::string x, std::string y, std::string z); // adds new direction to direction_data
-  bool add_magnitude(std::string magnitude_id, std::string magnitude_value); // adds new magnitude to magnitude_data
+  bool add_magnitude(double magnitude_id, double magnitude_value); // adds new magnitude to magnitude_data
   bool add_fire_ray_surface(int fire_ray_surface_id, int surface_id); // adds new surface id to fire_ray_surface_data
   bool add_name(std::string name_id, std::string name); // adds new name to name_data
   int  get_loads_data_id_from_load_id(int load_id); // searches for the load_id in the loads_data and returns the indices or -1 if it fails
   int  get_time_data_id_from_time_id(int time_id); // searches for the time_id in the time_data and returns the indices or -1 if it fails
-  int  get_radius_data_id_from_radius_id(int radius_id); // searches for the radius_id in the radius_data and returns the indices or -1 if it fails
-  int  get_magnitude_data_id_from_magnitude_id(int magnitude_id); // searches for the magnitude_id in the magnitude_data and returns the indices or -1 if it fails
+  std::vector<int> get_radius_data_ids_from_radius_id(int radius_id); // searches for the radius_ids in the radius_data and returns an empty vector if it fails
+  std::vector<int> get_magnitude_data_ids_from_magnitude_id(int magnitude_id); // searches for the magnitude_ids in the magnitude_data and returns an empty vector if it fails
   int  get_direction_data_id_from_direction_id(int direction_id); // searches for the time_delay_id in the direction_data and returns the indices or -1 if it fails
   int  get_name_data_id_from_name_id(int name_id); // searches for the name_id in the name_data and returns the indices or -1 if it fails
   std::vector<int> get_fire_ray_surface_data_ids_from_fire_ray_surface_id(int fire_ray_surface_id); // searches for the fire_ray_surface_id in the fire_ray_surface_data and returns an empty vector if it fails
@@ -85,7 +86,7 @@ public:
   std::vector<int> get_node_ids(int load_id); //returns node ids for curve
   std::vector<int> get_edge_ids(int load_id); //returns edge ids for curve
   std::vector<std::vector<double>> get_hit_coordinates(int load_id); //returns hit coordinates
-  std::vector<std::vector<int>> get_face_ids(int load_id); //returns face ids for the node ids from get_node_ids
+  std::vector<std::vector<std::vector<int>>> get_face_ids(int load_id); //returns face ids for the node ids from get_node_ids per radius
   std::vector<std::vector<double>> get_times(int load_id); //returns time begin and end ordered by the node ids from get_node_ids
   bool prepare_export(); // prepare sidesets, amplitudes, dflux -> will be prepared for ALL trajectories
   bool clean_export(); // delete prepared

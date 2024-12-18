@@ -662,7 +662,8 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->loads_data);
     cubTool.read_dataset_int_rank_2("fire_ray_surface_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->fire_ray_surface_data);
     cubTool.read_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->direction_data);
-    cubTool.read_dataset_string_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->magnitude_data);
+    cubTool.read_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->magnitude_data);
+    cubTool.read_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->radius_data);
     cubTool.read_dataset_string_rank_2("time_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->time_data);
     cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->name_data);
     progressbar.step();
@@ -1163,7 +1164,8 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->loads_data);
     cubTool.write_dataset_int_rank_2("fire_ray_surface_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->fire_ray_surface_data);
     cubTool.write_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->direction_data);
-    cubTool.write_dataset_string_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->magnitude_data);
+    cubTool.write_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->magnitude_data);
+    cubTool.write_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->radius_data);
     cubTool.write_dataset_string_rank_2("time_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->time_data);
     cubTool.write_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->name_data);
     progressbar.step();
@@ -3762,14 +3764,14 @@ bool CalculiXCore::delete_loadscentrifugal(int centrifugal_id)
   return loadscentrifugal->delete_load(centrifugal_id);
 }
 
-bool CalculiXCore::create_loadstrajectory(std::vector<std::string> options, std::vector<int> options2)
+bool CalculiXCore::create_loadstrajectory(std::vector<std::string> options, std::vector<int> options2, std::vector<std::vector<double>> options3)
 {
-  return loadstrajectory->create_load(options, options2);
+  return loadstrajectory->create_load(options, options2, options3);
 }
 
-bool CalculiXCore::modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2)
+bool CalculiXCore::modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2, std::vector<std::vector<double>> options3)
 {
-  return loadstrajectory->modify_load(trajectory_id,options,options_marker, options2);
+  return loadstrajectory->modify_load(trajectory_id,options,options_marker, options2, options3);
 }
 
 bool CalculiXCore::delete_loadstrajectory(int trajectory_id)
@@ -3792,7 +3794,7 @@ std::vector<std::vector<double>> CalculiXCore::loadstrajectory_get_hit_coordinat
   return loadstrajectory->get_hit_coordinates(trajectory_id);
 }
 
-std::vector<std::vector<int>> CalculiXCore::loadstrajectory_get_face_ids(int trajectory_id)
+std::vector<std::vector<std::vector<int>>> CalculiXCore::loadstrajectory_get_face_ids(int trajectory_id)
 {
   return loadstrajectory->get_face_ids(trajectory_id);
 }

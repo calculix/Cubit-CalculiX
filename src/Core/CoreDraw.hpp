@@ -65,6 +65,8 @@ public:
   bool draw_bc_displacements(double size = 1); //draw all displacements
   bool draw_bc_temperatures(double size = 1); //draw all temperatures
 
+  std::string get_color(int color_id); // gets color based on the color id
+
   CalculiXCoreInterface *ccx_iface;
 };
 

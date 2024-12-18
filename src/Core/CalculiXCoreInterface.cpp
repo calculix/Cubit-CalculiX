@@ -530,14 +530,14 @@ bool CalculiXCoreInterface::delete_loadscentrifugal(int centrifugal_id)
   return ccx_core.delete_loadscentrifugal(centrifugal_id);
 }
 
-bool CalculiXCoreInterface::create_loadstrajectory(std::vector<std::string> options, std::vector<int> options2)
+bool CalculiXCoreInterface::create_loadstrajectory(std::vector<std::string> options, std::vector<int> options2, std::vector<std::vector<double>> options3)
 {
-  return ccx_core.create_loadstrajectory(options, options2);
+  return ccx_core.create_loadstrajectory(options, options2, options3);
 }
 
-bool CalculiXCoreInterface::modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2)
+bool CalculiXCoreInterface::modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2, std::vector<std::vector<double>> options3)
 {
-  return ccx_core.modify_loadstrajectory(trajectory_id,options,options_marker, options2);
+  return ccx_core.modify_loadstrajectory(trajectory_id,options,options_marker, options2, options3);
 }
 
 bool CalculiXCoreInterface::delete_loadstrajectory(int trajectory_id)
@@ -560,7 +560,7 @@ std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_get_hit_
   return ccx_core.loadstrajectory_get_hit_coordinates(trajectory_id);
 }
   
-std::vector<std::vector<int>> CalculiXCoreInterface::loadstrajectory_get_face_ids(int trajectory_id)
+std::vector<std::vector<std::vector<int>>> CalculiXCoreInterface::loadstrajectory_get_face_ids(int trajectory_id)
 {
   return ccx_core.loadstrajectory_get_face_ids(trajectory_id);
 }

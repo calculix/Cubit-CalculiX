@@ -114,3 +114,4 @@
 2024-12-17 working on damping and physical constants gui
 2024-12-17 working on gui for steps dynamic, modal dynamic, steady state dynamics, complex frequency
 2024-12-17 loads film and radiation gui
+2024-12-18 adding load type and radius vs magnitude to trajectory
