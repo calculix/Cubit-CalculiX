@@ -71,7 +71,7 @@ LoadsTrajectoryModifyPanel::LoadsTrajectoryModifyPanel(QWidget *parent) :
   comboBox_2 = new QComboBox();
   comboBox_2->addItem("");
   comboBox_2->addItem("Heatflux");
-  comboBox_2->addItem("Pressure");
+  //comboBox_2->addItem("Pressure");
   PickWidget_3 = new PickWidget();
   PickWidget_3->setPickType(PickWidget::Curve);
   PickWidget_3->activate();

@@ -87,7 +87,10 @@ public:
   std::vector<int> get_edge_ids(int load_id); //returns edge ids for curve
   std::vector<std::vector<double>> get_hit_coordinates(int load_id); //returns hit coordinates
   std::vector<std::vector<std::vector<int>>> get_face_ids(int load_id); //returns face ids for the node ids from get_node_ids per radius
+  std::vector<std::vector<std::vector<int>>> get_draw_face_ids(int load_id); //returns face ids for the node ids from get_node_ids per radius already filtered for drawing
   std::vector<std::vector<double>> get_times(int load_id); //returns time begin and end ordered by the node ids from get_node_ids
+  std::vector<std::vector<double>> get_radius(int load_id); //returns radius ordered by the node ids from get_node_ids
+  std::vector<std::vector<double>> get_magnitude(int load_id); //returns magnitude ordered by the node ids from get_node_ids
   bool prepare_export(); // prepare sidesets, amplitudes, dflux -> will be prepared for ALL trajectories
   bool clean_export(); // delete prepared
   std::string get_load_export(int load_id); // gets the optional parameters for the export in the steps

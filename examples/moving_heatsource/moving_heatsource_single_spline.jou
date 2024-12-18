@@ -3,8 +3,6 @@ reset
 create brick x 2 y 2 z 0.1
 vol 1 size 0.1
 mesh vol 1
-refine surface 1 numsplit 1 bias 1.0 depth 0
-#refine surface 1 numsplit 1 bias 1.0 depth 0
 
 create vertex 1 1 1
 create vertex 0.5 1 1
@@ -44,6 +42,28 @@ ccx create section solid block all material 1
 #loads
 ccx create trajectory heatflux curve 13 vertex 16 surface 1 direction 0 0 -1 magnitude 50 30 10 time_begin 0 time_end 10 radius 0.1 0.2 0.3
 
+
+#refinement standard cubit methods
+#refine surface 1 numsplit 1 bias 1.0 depth 0
+#refine surface 1 numsplit 1 bias 1.0 depth 0
+
+# refinement with the use of the python interface
+#!python
+import numpy
+face_ids = ccx.loadstrajectory_get_draw_face_ids(1)
+all_face_ids=[]
+for node in face_ids:
+ for radius in node:
+  for face in radius:
+   all_face_ids.append(face)
+
+all_face_ids=list(numpy.unique(all_face_ids))
+
+if len(all_face_ids)>0:
+ status=cubit.cmd(f"refine hex all in face {' '.join(str(id) for id in all_face_ids)} numsplit 1 bias 1.0 depth 0")
+print(f"refinement {status}")
+#!cubit
+
 #boundary conditions
 create temperature on vol 1 value 293 #will be used as initial condition
 
@@ -77,3 +97,4 @@ ccx create job name "moving_heatsource_single_spline"
 #ccx run job 1
 
 ccx draw load trajectory 1
+

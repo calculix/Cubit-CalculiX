@@ -15,7 +15,8 @@ std::vector<std::string> ccxLoadsTrajectoryCreateCommand::get_syntax()
 
   std::string syntax = "ccx ";
   syntax.append("create trajectory ");
-  syntax.append("{heatflux|pressure} ");
+  //syntax.append("{heatflux|pressure} ");
+  syntax.append("heatflux ");
   syntax.append("curve <value:label='curve_id',help='<curve_id>'> ");
   syntax.append("vertex <value:label='vertex_id',help='<vertex_id>'> ");
   syntax.append("surface <value:label='surface_id',help='<surface_id>'>... ");
@@ -39,7 +40,8 @@ std::vector<std::string> ccxLoadsTrajectoryCreateCommand::get_syntax_help()
   std::vector<std::string> help(1);
   help[0] = "ccx "; 
   help[0].append("create trajectory ");
-  help[0].append("{heatflux|pressure} ");
+  //help[0].append("{heatflux|pressure} ");
+  help[0].append("heatflux ");
   help[0].append("curve <curve_id> ");
   help[0].append("vertex <vertex_id> ");
   help[0].append("surface <surface_id>... ");

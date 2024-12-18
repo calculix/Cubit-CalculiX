@@ -719,7 +719,7 @@ bool CoreDraw::draw_load_trajectory(int id, double size)
     std::vector<std::vector<double>> hit_coordinates;
     hit_coordinates = ccx_iface->loadstrajectory_get_hit_coordinates(id);
     std::vector<std::vector<std::vector<int>>> face_ids;
-    face_ids = ccx_iface->loadstrajectory_get_face_ids(id);
+    face_ids = ccx_iface->loadstrajectory_get_draw_face_ids(id);
     std::vector<std::vector<double>> times;
     times = ccx_iface->loadstrajectory_get_times(id);
     bool switch_color = true;
@@ -743,24 +743,6 @@ bool CoreDraw::draw_load_trajectory(int id, double size)
     }
     
     // draw faces
-    // first we need to sort out overlapping faces for different radius through the timesteps
-    for (size_t i = 0; i < face_ids.size(); i++)
-    {
-      for (size_t ii = 0; ii < face_ids[i].size()-1; ii++)
-      {
-        sort(begin(face_ids[i][ii]), end(face_ids[i][ii]));
-        // loop over all nodes
-        for (size_t ni = 0; ni < face_ids.size(); ni++)
-        {
-            for (size_t iii = ii+1; iii < face_ids[ni].size(); iii++) //loop over all bigger radius
-            { 
-            face_ids[ni][iii].erase( remove_if( begin(face_ids[ni][iii]),end(face_ids[ni][iii]),
-                [&](auto x){return binary_search(begin(face_ids[i][ii]),end(face_ids[i][ii]),x);}), end(face_ids[ni][iii]) );
-            }
-        }
-      }
-    }
-    // finally draw faces
     for (size_t i = 0; i < face_ids.size(); i++) //loop over nodes
     {
         for (size_t ii = 0; ii < face_ids[i].size(); ii++) //loop over radius
@@ -1153,8 +1135,7 @@ bool CoreDraw::draw_bc_temperatures(double size)
 std::string CoreDraw::get_color(int color_id)
 {
     std::vector<std::string> colors;
-    colors.push_back("red");
-    colors.push_back("tomato");
+    colors.push_back("red");    
     colors.push_back("orange");
     colors.push_back("yellow");
     colors.push_back("salmon");
@@ -1171,6 +1152,7 @@ std::string CoreDraw::get_color(int color_id)
     colors.push_back("lightblue");
     colors.push_back("lightgreen");
     colors.push_back("khaki");
+    colors.push_back("tomato");
     colors.push_back("lightskyblue");
     colors.push_back("turquoise");
     colors.push_back("greenyellow");

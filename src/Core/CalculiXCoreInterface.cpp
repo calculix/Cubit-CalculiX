@@ -565,10 +565,25 @@ std::vector<std::vector<std::vector<int>>> CalculiXCoreInterface::loadstrajector
   return ccx_core.loadstrajectory_get_face_ids(trajectory_id);
 }
 
+std::vector<std::vector<std::vector<int>>> CalculiXCoreInterface::loadstrajectory_get_draw_face_ids(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_get_draw_face_ids(trajectory_id);
+}
+
 std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_get_times(int trajectory_id)
 {
   return ccx_core.loadstrajectory_get_times(trajectory_id);
 } 
+
+std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_get_radius(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_get_radius(trajectory_id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_get_magnitude(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_get_magnitude(trajectory_id);
+}
 
 bool CalculiXCoreInterface::create_loadsfilm(std::vector<std::string> options)
 {

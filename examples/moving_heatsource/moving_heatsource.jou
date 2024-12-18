@@ -16,17 +16,13 @@ create vertex -0.5 -0.5 1
 create vertex -1 -0.5 1
 create curve spline location vertex all with is_free delete
 
-curve 13 size 0.02
+curve 13 size 0.08
 mesh curve 13
 
-create curve helix zaxis location 1.75 0 0 thread_distance 1 angle 720 right_handed
-create curve helix zaxis location -2.5 0 0 thread_distance 1 angle 720 left_handed
+create curve helix zaxis location -2.5 0 0 thread_distance 1 angle 400 left_handed
 
-curve 14 size 0.02
+curve 14 size 0.1
 mesh curve 14
-
-curve 15 size 0.02
-mesh curve 15
 
 block 1 add vol 1
 
@@ -51,9 +47,39 @@ modify material "steel" matrix_property "CCX_CONDUCTIVITY_ISO_K_TEMPERATURE" 50 
 ccx create section solid block all material 1
 
 #loads
-ccx create trajectory heatflux curve 13 vertex 16 surface 1 direction 0 0 -1 magnitude 50 30 10 time_begin 0 time_end 10 radius 0.1 0.2 0.3
+ccx create trajectory heatflux curve 13 vertex 16 surface 1 direction 0 0 -1 magnitude 50 30 10 time_begin 0 time_end 10 radius 0.05 0.1 0.2
 ccx create trajectory heatflux curve 14 vertex 18 surface 1 direction 0 0 -1 magnitude 50 30 10 time_begin 0 time_end 10 radius 0.1 0.2 0.3
-ccx create trajectory heatflux curve 15 vertex 20 surface 1 direction 0 0 -1 magnitude 50 30 10 time_begin 0 time_end 10 radius 0.1 0.2 0.3
+
+# refinement with the use of the python interface
+#!python
+import numpy
+face_ids = ccx.loadstrajectory_get_draw_face_ids(1)
+all_face_ids=[]
+for node in face_ids:
+ for radius in node:
+  for face in radius:
+   all_face_ids.append(face)
+
+all_face_ids=list(numpy.unique(all_face_ids))
+
+if len(all_face_ids)>0:
+ status=cubit.cmd(f"refine hex all in face {' '.join(str(id) for id in all_face_ids)} numsplit 1 bias 1.0 depth 0")
+print(f"refinement {status}")
+
+face_ids = ccx.loadstrajectory_get_draw_face_ids(2)
+all_face_ids=[]
+for node in face_ids:
+ for radius in node:
+  for face in radius:
+   all_face_ids.append(face)
+
+all_face_ids=list(numpy.unique(all_face_ids))
+
+if len(all_face_ids)>0:
+ status=cubit.cmd(f"refine hex all in face {' '.join(str(id) for id in all_face_ids)} numsplit 1 bias 1.0 depth 0")
+print(f"refinement {status}")
+#!cubit
+
 
 #boundary conditions
 create temperature on vol 1 value 293 #will be used as initial condition
@@ -79,7 +105,7 @@ ccx hbc add bc displacement 1
 ccx create step name "heattransfer" heattransfer
 ccx modify step 1 parameter inc 100000
 ccx modify step 1 heattransfer  totaltimeatstart 0 initialtimeincrement 1e-1 timeperiodofstep 10 minimumtimeincrement 1e-5 maximumtimeincrement 1e-1
-ccx step 1 add load trajectory 1 2 3
+ccx step 1 add load trajectory 1 2
 ccx step 1 add fieldoutput 1 2
 
 #job
@@ -88,3 +114,6 @@ ccx create job name "moving_heatsource"
 #ccx run job 1
 
 ccx draw load trajectory 1 2 3
+
+
+

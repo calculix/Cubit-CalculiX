@@ -695,7 +695,8 @@ std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectory::get_face_ids(int
 
   if (load_data_id!=-1)
   {
-    std::vector<int> node_ids = this->get_node_ids(load_id);
+    
+    std::vector<std::vector<double>> hit_coordinates = get_hit_coordinates(load_id);
     std::vector<int> surface_ids = this->get_fire_ray_surface_ids_from_fire_ray_surface_id(loads_data[load_data_id][4]);
     std::vector<int> face_ids;
     for (size_t i = 0; i < surface_ids.size(); i++)
@@ -707,46 +708,27 @@ std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectory::get_face_ids(int
       }
     }
     
-    int direction_data_id = this->get_direction_data_id_from_direction_id(loads_data[load_data_id][5]);
     std::vector<int> radius_data_ids = this->get_radius_data_ids_from_radius_id(loads_data[load_data_id][8]);
     
-    //get biggest radius for shooting the ray
-    double max_radius = 0;
-    for (size_t i = 0; i < radius_data_ids.size(); i++)
-    {
-      if (max_radius < radius_data[radius_data_ids[i]][1])
-      {
-        max_radius = radius_data[radius_data_ids[i]][1];
-      }
-    }
-
-    std::array<double, 3> direction;
-
-    direction[0] = ccx_iface->string_scientific_to_double(direction_data[direction_data_id][1]);
-    direction[1] = ccx_iface->string_scientific_to_double(direction_data[direction_data_id][2]);
-    direction[2] = ccx_iface->string_scientific_to_double(direction_data[direction_data_id][3]); 
-
     // get all faces for a radius
-    for (size_t i = 0; i < node_ids.size(); i++) //loop over nodes
+    for (size_t i = 0; i < hit_coordinates.size(); i++) //loop over nodes
     {
       std::vector<std::vector<int>> tmp_face_ids;
       for (size_t ii = 0; ii < radius_data_ids.size(); ii++) //loop over radius
       {
         std::vector<int> tmp_selected_face_ids;
-        std::array<double,3> coord = CubitInterface::get_nodal_coordinates(node_ids[i]);
-        std::pair<std::vector<std::array<double, 3>>, std::vector<int>> hit = CubitInterface::fire_ray(coord, direction, "surface", surface_ids, 1, max_radius);
 
         double radius = 0;
         radius = radius_data[radius_data_ids[ii]][1];
         
-        if (hit.first.size()>0)
+        if (hit_coordinates[i].size()>0)
         {
           for (size_t iii = 0; iii < face_ids.size(); iii++)
           {
             std::array<double,3> center_point;
             center_point = CubitInterface::get_center_point("face", face_ids[iii]);
 
-            double distance = sqrt(pow(center_point[0]-hit.first[0][0],2)+pow(center_point[1]-hit.first[0][1],2)+pow(center_point[2]-hit.first[0][2],2));
+            double distance = sqrt(pow(center_point[0]-hit_coordinates[i][0],2)+pow(center_point[1]-hit_coordinates[i][1],2)+pow(center_point[2]-hit_coordinates[i][2],2));
 
             if (distance <= radius)
             {
@@ -776,6 +758,33 @@ std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectory::get_face_ids(int
   }
 
   return selected_face_ids;
+}
+
+std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectory::get_draw_face_ids(int load_id)
+{
+  std::vector<std::vector<std::vector<int>>> face_ids = this->get_face_ids(load_id);
+  //face_ids[0] order by node
+  //face_ids[0][0] order by radius
+  //face_ids[0][0][0] face ids
+
+  for (size_t i = 0; i < face_ids.size(); i++)
+  {
+    for (size_t ii = 0; ii < face_ids[i].size()-1; ii++)
+    {
+      sort(begin(face_ids[i][ii]), end(face_ids[i][ii]));
+      // loop over all nodes
+      for (size_t ni = 0; ni < face_ids.size(); ni++)
+      {
+          for (size_t iii = ii+1; iii < face_ids[ni].size(); iii++) //loop over all bigger radius
+          { 
+          face_ids[ni][iii].erase( remove_if( begin(face_ids[ni][iii]),end(face_ids[ni][iii]),
+              [&](auto x){return binary_search(begin(face_ids[i][ii]),end(face_ids[i][ii]),x);}), end(face_ids[ni][iii]) );
+          }
+      }
+    }
+  }
+
+  return face_ids;
 }
 
 std::vector<std::vector<double>> CoreLoadsTrajectory::get_times(int load_id)
@@ -816,9 +825,60 @@ std::vector<std::vector<double>> CoreLoadsTrajectory::get_times(int load_id)
   return times;
 }
 
+std::vector<std::vector<double>> CoreLoadsTrajectory::get_radius(int load_id)
+{
+  std::vector<std::vector<double>> node_radius;
+  
+  int load_data_id = this->get_loads_data_id_from_load_id(load_id);
+
+  if (load_data_id!=-1)
+  {
+    std::vector<int> node_ids = this->get_node_ids(load_id);
+    std::vector<int> radius_data_ids = this->get_radius_data_ids_from_radius_id(loads_data[load_data_id][8]);
+
+    for (size_t i = 0; i < node_ids.size(); i++)
+    {
+      std::vector<double> radius;
+
+      for (size_t ii = 0; ii < radius_data_ids.size(); ii++)
+      {
+        radius.push_back(radius_data[radius_data_ids[ii]][1]);
+      }
+      node_radius.push_back(radius);
+    }
+  }
+
+  return node_radius;
+}
+
+std::vector<std::vector<double>> CoreLoadsTrajectory::get_magnitude(int load_id)
+{
+  std::vector<std::vector<double>> node_magnitude;
+  
+  int load_data_id = this->get_loads_data_id_from_load_id(load_id);
+
+  if (load_data_id!=-1)
+  {
+    std::vector<int> node_ids = this->get_node_ids(load_id);
+    std::vector<int> magnitude_data_ids = this->get_magnitude_data_ids_from_magnitude_id(loads_data[load_data_id][8]);
+
+    for (size_t i = 0; i < node_ids.size(); i++)
+    {
+      std::vector<double> magnitude;
+
+      for (size_t ii = 0; ii < magnitude_data_ids.size(); ii++)
+      {
+        magnitude.push_back(magnitude_data[magnitude_data_ids[ii]][1]);
+      }
+      node_magnitude.push_back(magnitude);
+    }
+  }
+
+  return node_magnitude;
+}
+
 bool CoreLoadsTrajectory::prepare_export()
 {
-  /*
   StopWatch watch;
   watch.tick("prepare trajectory start");
 
@@ -826,38 +886,49 @@ bool CoreLoadsTrajectory::prepare_export()
   {
     std::vector<int> node_ids;
     node_ids = this->get_node_ids(loads_data[i][0]);
-    std::vector<std::vector<int>> face_ids;
+    std::vector<std::vector<std::vector<int>>> face_ids;
     face_ids = this->get_face_ids(loads_data[i][0]);    
     std::vector<std::vector<double>> times;
     times = this->get_times(loads_data[i][0]);
+    std::vector<std::vector<double>> magnitude;
+    magnitude = this->get_magnitude(loads_data[i][0]);
+    std::vector<std::vector<double>> radius;
+    radius = this->get_radius(loads_data[i][0]);
+    int name_data_id = this->get_name_data_id_from_name_id(loads_data[i][9]);
+    std::string name = this->name_data[name_data_id][1];
     std::vector<std::vector<std::vector<double>>> amplitude_times;
+    std::vector<std::vector<std::vector<double>>> amplitude_magnitudes;
     int last_id_sideset = 0;
     int last_id_amplitude = 0;
     int last_id_heatflux = 0;
-    int magnitude_data_id = this->get_magnitude_data_id_from_magnitude_id(loads_data[i][6]);
     std::vector<int> heatflux_sidesets; //stores the sideset id for use in heatflux
     std::vector<int> heatflux_amplitude; //stores the amplitude id for use in heatflux
     std::vector<int> heatflux; //stores the heatflux ids from the current trajectory
 
     //check if every vector has the same size, if not, something went wrong
-    if ((node_ids.size() != face_ids.size()) && (face_ids.size() != times.size()))
+    if ((node_ids.size() != face_ids.size()) && (face_ids.size() != times.size()) && (times.size() != magnitude.size()) && (magnitude.size() != radius.size()))
     {
       std::string log = "Something went wrong with preparing export data for TRAJECTORY ID " + std::to_string(loads_data[i][0]) + "\n";
       PRINT_INFO("%s", log.c_str());
       return false;
     }
 
-    //check for overlapping faces and prepare face_ids and times according to it
+    // check for overlapping faces and prepare face_ids,times,magnitude according to it
     // sorting for faster search
     std::vector<int> tmp_face_ids;
     std::vector<std::vector<double>> tmp_times;
+    std::vector<double> tmp_magnitude;
 
-    for (size_t ii = 0; ii < face_ids.size(); ii++)
+    for (size_t ii = 0; ii < face_ids.size(); ii++) //loop over nodes
     {
-      for (size_t iii = 0; iii < face_ids[ii].size(); iii++)
+      for (size_t iii = 0; iii < face_ids[ii].size(); iii++) // loop over radius
       {
-        tmp_face_ids.push_back(face_ids[ii][iii]);
-        tmp_times.push_back(times[ii]);
+        for (size_t iv = 0; iv < face_ids[ii][iii].size(); iv++) // loop over face
+        {
+          tmp_face_ids.push_back(face_ids[ii][iii][iv]);
+          tmp_times.push_back(times[ii]);
+          tmp_magnitude.push_back(magnitude[ii][iii]);
+        }
       }
     }
 
@@ -867,11 +938,12 @@ bool CoreLoadsTrajectory::prepare_export()
       std::string log = "unsorted[ii] " + std::to_string(tmp_face_ids[ii]) + " " + std::to_string(tmp_times[ii][0]) + " " + std::to_string(tmp_times[ii][1]) + "\n";
       PRINT_INFO("%s", log.c_str());
     }
-    *//*
+    */
 
     auto p = sort_permutation(tmp_face_ids);
     this->apply_permutation(tmp_face_ids, p);
     this->apply_permutation(tmp_times, p);
+    this->apply_permutation(tmp_magnitude, p);
     
     /*
     for (size_t ii = 0; ii < tmp_face_ids.size(); ii++)
@@ -879,46 +951,55 @@ bool CoreLoadsTrajectory::prepare_export()
       std::string log = "sorted[ii] " + std::to_string(tmp_face_ids[ii]) + " " + std::to_string(tmp_times[ii][0]) + " " + std::to_string(tmp_times[ii][1]) + "\n";
       PRINT_INFO("%s", log.c_str());
     }
-    *//*
+    */
 
     face_ids.clear();
     times.clear();
+    magnitude.clear();
 
     int face_id;
-    std::vector<std::vector<double>> face_times;
+    std::vector<std::vector<int>> trajectory_face_ids;
+    std::vector<std::vector<double>> face_times; // to get all times when the face is active
+    std::vector<std::vector<double>> face_magnitudes; //saves the magnitude according to the face times
     for (size_t ii = 0; ii < tmp_face_ids.size(); ii++)
     {
       if (ii==0)
       {
         face_id = tmp_face_ids[ii];
         face_times.push_back(tmp_times[ii]);
+        face_magnitudes.push_back({0,tmp_magnitude[ii]});
       }else{
         if (face_id != tmp_face_ids[ii]) //check if its a new face
         {
-          face_ids.push_back({face_id});
+          trajectory_face_ids.push_back({face_id});
           amplitude_times.push_back(face_times);
+          amplitude_magnitudes.push_back(face_magnitudes);
           face_times.clear();
+          face_magnitudes.clear();
           face_id = tmp_face_ids[ii];
           face_times.push_back(tmp_times[ii]);
+          face_magnitudes.push_back({0,tmp_magnitude[ii]});
         }else{
           face_times.push_back(tmp_times[ii]);
+          face_magnitudes.push_back({0,tmp_magnitude[ii]});
         }
       }
       if (ii==tmp_face_ids.size()-1)
       {        
-        face_ids.push_back({face_id});
+        trajectory_face_ids.push_back({face_id});
         amplitude_times.push_back(face_times);
+        amplitude_magnitudes.push_back(face_magnitudes);
       }
     }
 
     /*
-    for (size_t ii = 0; ii < face_ids.size(); ii++)
+    for (size_t ii = 0; ii < trajectory_face_ids.size(); ii++)
     {
-      std::string log = "filtered[ii] " + std::to_string(face_ids[ii][0]) + " " + std::to_string(times[ii][0]) + " " + std::to_string(times[ii][1]) + "\n";
+      std::string log = "filtered[ii] " + std::to_string(trajectory_face_ids[ii][0]) + " " + std::to_string(times[ii][0]) + " " + std::to_string(times[ii][1]) + "\n";
       PRINT_INFO("%s", log.c_str());
     }
-    *//*
-    watch.tick("prepare trajectory " + std::to_string(loads_data[i][0]) + " filtered " + std::to_string(face_ids.size()) +  " faces");
+    */
+    watch.tick("prepare trajectory " + std::to_string(loads_data[i][0]) + " filtered " + std::to_string(trajectory_face_ids.size()) +  " faces");
     //block core update
     ccx_iface->set_block_core_update(true);
     //prepare sidesets
@@ -929,17 +1010,17 @@ bool CoreLoadsTrajectory::prepare_export()
     }else{
       last_id_sideset = 1;
     }
-    for (size_t ii = 0; ii < face_ids.size(); ii++)
+    for (size_t ii = 0; ii < trajectory_face_ids.size(); ii++)
     {
-      if (face_ids[ii].size()>0)
+      if (trajectory_face_ids[ii].size()>0)
       {
         std::string face = "";
-        for (size_t iii = 0; iii < face_ids[ii].size(); iii++)
+        for (size_t iii = 0; iii < trajectory_face_ids[ii].size(); iii++)
         {
-          face.append(std::to_string(face_ids[ii][iii]) + " ");
+          face.append(std::to_string(trajectory_face_ids[ii][iii]) + " ");
         }
         ccx_iface->silent_cmd("sideset " + std::to_string(last_id_sideset) + " add face " + face);
-        ccx_iface->silent_cmd("sideset " + std::to_string(last_id_sideset) + " name \"Trajectory_" + std::to_string(loads_data[i][0]) + "_" + std::to_string(face_ids[ii][0]) + "\"");
+        ccx_iface->silent_cmd("sideset " + std::to_string(last_id_sideset) + " name \"Trajectory_" + std::to_string(loads_data[i][0]) + "_" + name + "_" + std::to_string(trajectory_face_ids[ii][0]) + "\"");
         prepared_sidesets.push_back(last_id_sideset);
         heatflux_sidesets.push_back(last_id_sideset);
         last_id_sideset = last_id_sideset + 1;
@@ -960,35 +1041,36 @@ bool CoreLoadsTrajectory::prepare_export()
     }else{
       last_id_amplitude = 1;
     }
-    for (size_t ii = 0; ii < face_ids.size(); ii++)
+    for (size_t ii = 0; ii < trajectory_face_ids.size(); ii++)
     {
-      if (face_ids[ii].size()>0)
+      if (trajectory_face_ids[ii].size()>0)
       {
-        //reorder times
+        //reorder times and magnitudes
         std::vector<double> temp;
         for (size_t iii = 0; iii < amplitude_times[ii].size(); iii++)
         {
           temp.push_back(amplitude_times[ii][iii][0]);
         }
         auto p = sort_permutation(temp);
-        this->apply_permutation(amplitude_times[ii], p);   
+        this->apply_permutation(amplitude_times[ii], p);
+        this->apply_permutation(amplitude_magnitudes[ii], p);
         
         std::string amplitude = "";
         bool zero_magnitude = false;
+        
         for (size_t iii = 0; iii < amplitude_times[ii].size(); iii++)
         {
-        //std::string log = std::to_string(iii) +" "+ std::to_string(amplitude_times[ii][iii][0]) + " " +  std::to_string(amplitude_times[ii][iii][1]) + "\n";
+        //std::string log = std::to_string(iii) +" "+ std::to_string(amplitude_times[ii][iii][0]) + " " +  std::to_string(amplitude_times[ii][iii][1]) +" "+ std::to_string(amplitude_magnitudes[ii][iii][0]) + " " +  std::to_string(amplitude_magnitudes[ii][iii][1]) + "\n";
         //PRINT_INFO("%s", log.c_str());
-
           if (iii==0)
           {
             if (amplitude_times[ii][iii][0] == 0.)
             {
-              amplitude = "0 0 0 1 ";
+              amplitude = "0 0 0 " + ccx_iface->to_string_scientific(amplitude_magnitudes[ii][iii][1]) + " ";
             }else{
               amplitude = "0 0 ";
               amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " 0 ");
-              amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " 1 ");
+              amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " " + ccx_iface->to_string_scientific(amplitude_magnitudes[ii][iii][1]) + " ");
             }
             zero_magnitude = false;
           }
@@ -998,14 +1080,16 @@ bool CoreLoadsTrajectory::prepare_export()
             if (zero_magnitude)
             {
               amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " 0 ");
-              amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " 1 ");
+              amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " " + ccx_iface->to_string_scientific(amplitude_magnitudes[ii][iii][1]) + " ");
               zero_magnitude = false;
             }
             if (pow((amplitude_times[ii][iii][1]-amplitude_times[ii][iii+1][0]),2) < 1e-12)
             {
-              //don't stop magnitude
+              //don't stop magnitude but adjust magnitude value to next value
+              amplitude.append(std::to_string(amplitude_times[ii][iii][1]) + " " + ccx_iface->to_string_scientific(amplitude_magnitudes[ii][iii][1]) + " ");
+              amplitude.append(std::to_string(amplitude_times[ii][iii][1]) + " " + ccx_iface->to_string_scientific(amplitude_magnitudes[ii][iii+1][1]) + " ");
             }else{
-              amplitude.append(std::to_string(amplitude_times[ii][iii][1]) + " 1 ");
+              amplitude.append(std::to_string(amplitude_times[ii][iii][1]) + " " + ccx_iface->to_string_scientific(amplitude_magnitudes[ii][iii][1]) + " ");
               amplitude.append(std::to_string(amplitude_times[ii][iii][1]) + " 0 ");
               zero_magnitude = true;
             }
@@ -1016,24 +1100,25 @@ bool CoreLoadsTrajectory::prepare_export()
             if (zero_magnitude)
             {
               amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " 0 ");
-              amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " 1 ");
+              amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " " + ccx_iface->to_string_scientific(amplitude_magnitudes[ii][iii][1]) + " ");
               zero_magnitude = false;
             }
-            amplitude.append(std::to_string(amplitude_times[ii][iii][1]) + " 1 ");
+            amplitude.append(std::to_string(amplitude_times[ii][iii][1]) + " " + ccx_iface->to_string_scientific(amplitude_magnitudes[ii][iii][1]) + " ");
             amplitude.append(std::to_string(amplitude_times[ii][iii][1]) + " 0 ");
-          }
+          } 
         }
-
-        //std::string log = std::to_string(face_ids[ii][0]) + " " + std::to_string(amplitude_times[ii].size()) + " " +  amplitude + "\n";
+        //std::string log = std::to_string(trajectory_face_ids[ii][0]) + " " + std::to_string(amplitude_times[ii].size()) + " " +  amplitude + "\n";
         //PRINT_INFO("%s", log.c_str());
 
-        ccx_iface->silent_cmd("ccx create amplitude name \"Trajectory_" + std::to_string(loads_data[i][0]) + "_" + std::to_string(face_ids[ii][0]) + "\" time_amplitude " + amplitude);
+        ccx_iface->silent_cmd("ccx create amplitude name \"Trajectory_" + std::to_string(loads_data[i][0]) + "_" + name + "_"  + std::to_string(trajectory_face_ids[ii][0]) + "\" time_amplitude " + amplitude);
         prepared_amplitudes.push_back(last_id_amplitude);
         heatflux_amplitude.push_back(last_id_amplitude);
         last_id_amplitude = last_id_amplitude + 1;
       }
     }
+    
     watch.tick("prepare trajectory " + std::to_string(loads_data[i][0]) + " amplitudes");
+    
     // prepare heatflux
     std::vector<int> heatflux_ids = CubitInterface::parse_cubit_list("heatflux","all");
     if (heatflux_ids.size()>0)
@@ -1046,12 +1131,12 @@ bool CoreLoadsTrajectory::prepare_export()
     std::vector<std::string> modify_cmd;
     //block core update
     ccx_iface->set_block_core_update(true);
-    for (size_t ii = 0; ii < face_ids.size(); ii++)
+    for (size_t ii = 0; ii < trajectory_face_ids.size(); ii++)
     {
-      if (face_ids[ii].size()>0)
+      if (trajectory_face_ids[ii].size()>0)
       {
-        ccx_iface->silent_cmd("create heatflux on sideset " + std::to_string(heatflux_sidesets[link_id]) + " value " + magnitude_data[magnitude_data_id][1]);
-        //ccx_iface->silent_cmd("modify heatflux " + std::to_string(last_id_heatflux) + " name \"Trajectory_" + std::to_string(loads_data[i][0]) + "_" + std::to_string(face_ids[ii][0])+ "_" + std::to_string(times[ii][0])+ "_" + std::to_string(times[ii][1]) + "\"");
+        ccx_iface->silent_cmd("create heatflux on sideset " + std::to_string(heatflux_sidesets[link_id]) + " value 1");
+        //ccx_iface->silent_cmd("modify heatflux " + std::to_string(last_id_heatflux) + " name \"Trajectory_" + std::to_string(loads_data[i][0]) + "_" + name + "_"  + std::to_string(trajectory_face_ids[ii][0])+ "_" + std::to_string(times[ii][0])+ "_" + std::to_string(times[ii][1]) + "\"");
         modify_cmd.push_back("ccx modify heatflux " + std::to_string(last_id_heatflux) + " amplitude " + std::to_string(heatflux_amplitude[link_id]));
         //ccx_iface->silent_cmd("ccx modify heatflux " + std::to_string(last_id_heatflux) + " amplitude " + std::to_string(heatflux_amplitude[link_id]));
         prepared_heatflux.push_back(last_id_heatflux);
@@ -1094,9 +1179,10 @@ bool CoreLoadsTrajectory::prepare_export()
     watch.tick("prepare trajectory " + std::to_string(loads_data[i][0]) + " steps");
     //resume core update
     ccx_iface->set_block_core_update(false);
+    
   }
   watch.tick("prepare trajectory end");
-  */
+  
   return true;
 }
 

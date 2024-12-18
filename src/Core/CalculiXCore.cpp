@@ -3799,9 +3799,24 @@ std::vector<std::vector<std::vector<int>>> CalculiXCore::loadstrajectory_get_fac
   return loadstrajectory->get_face_ids(trajectory_id);
 }
 
+std::vector<std::vector<std::vector<int>>> CalculiXCore::loadstrajectory_get_draw_face_ids(int trajectory_id)
+{
+  return loadstrajectory->get_draw_face_ids(trajectory_id);
+}
+
 std::vector<std::vector<double>> CalculiXCore::loadstrajectory_get_times(int trajectory_id)
 {
   return loadstrajectory->get_times(trajectory_id);
+}
+
+std::vector<std::vector<double>> CalculiXCore::loadstrajectory_get_radius(int trajectory_id)
+{
+  return loadstrajectory->get_radius(trajectory_id);
+}
+
+std::vector<std::vector<double>> CalculiXCore::loadstrajectory_get_magnitude(int trajectory_id)
+{
+  return loadstrajectory->get_magnitude(trajectory_id);
 }
 
 bool CalculiXCore::create_loadsfilm(std::vector<std::string> options)

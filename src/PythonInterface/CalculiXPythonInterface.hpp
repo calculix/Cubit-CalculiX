@@ -13,6 +13,8 @@ and if compiling fails because of qt replace Python.h with
 #include "Python.h"
 #pragma pop_macro("slots")
 
+in file CalculiXPythonInterface_wrap.cxx
+
 */
 
 class CalculiXCoreInterface;
@@ -59,6 +61,15 @@ public:
   std::vector<double> dat_get_element_values_for_component(int job_id,int element_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component); // returns the queried element integration point values for a component
   std::vector<std::vector<double>> dat_get_element_values(int job_id,int element_id, double time,std::string result_block_type,std::string result_block_set); // returns the queried element integration point values for all components
   std::vector<std::vector<std::vector<double>>> dat_get_buckle(int job_id); // returns the buckling data for a job
+  //Loads Trajectory
+  std::vector<int> loadstrajectory_get_node_ids(int trajectory_id); //returns node ids for curve
+  std::vector<int> loadstrajectory_get_edge_ids(int trajectory_id); //returns edge ids for curve
+  std::vector<std::vector<double>> loadstrajectory_get_hit_coordinates(int trajectory_id); //returns hit coordinates
+  std::vector<std::vector<std::vector<int>>> loadstrajectory_get_face_ids(int trajectory_id); //returns face ids for the node ids from get_node_ids
+  std::vector<std::vector<std::vector<int>>> loadstrajectory_get_draw_face_ids(int trajectory_id); //returns face ids for the node ids from get_node_ids
+  std::vector<std::vector<double>> loadstrajectory_get_times(int trajectory_id); //returns time begin and end ordered by the node ids from get_node_ids
+  std::vector<std::vector<double>> loadstrajectory_get_radius(int trajectory_id); //returns radius ordered by the node ids from get_node_ids
+  std::vector<std::vector<double>> loadstrajectory_get_magnitude(int trajectory_id); //returns magnitude ordered by the node ids from get_node_ids
 
   CalculiXCoreInterface *ccx_iface;
 };
