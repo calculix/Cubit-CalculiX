@@ -77,14 +77,14 @@ void MaterialManagementPlasticCard::update(MaterialManagementItem *material)
     table_johnsoncook->hide();
   }else if (this->material->getScalarPropertyGUI("CCX_PLASTIC_COMBINED_USE_CARD")==1)
   {
-    plastic_type->setCurrentIndex(1);
+    plastic_type->setCurrentIndex(2);
     table_isotropic->hide();
     table_kinematic->hide();
     table_combined->show();
     table_johnsoncook->hide();
   }else if (this->material->getScalarPropertyGUI("CCX_PLASTIC_JOHNSON_COOK_USE_CARD")==1)
   {
-    plastic_type->setCurrentIndex(1);
+    plastic_type->setCurrentIndex(3);
     table_isotropic->hide();
     table_kinematic->hide();
     table_combined->hide();

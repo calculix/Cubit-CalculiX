@@ -126,6 +126,11 @@ in python mode (#!python)
   title="Simple convergence study">
 ](examples/simple_convergence_study/)
 [<img
+  src="examples/tube_impact/example.gif"
+  width="400"
+  title="Tube Impact">
+](examples/tube_impact/)
+[<img
   src="examples/Welding/shrinkage_model/example.gif"
   width="400"
   title="Shrinkage model">

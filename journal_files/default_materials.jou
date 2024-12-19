@@ -1,131 +1,157 @@
 #!cubit
 reset
 
-ccx create materiallibrary group name "Example Materials"
-ccx modify materiallibrary group name "Example Materials" description "https://github.com/rsmith-nl/calculix-templates/tree/main/materials"
+ccx create materiallibrary group name "Example Materials RSMITH"
+ccx modify materiallibrary group name "Example Materials RSMITH" description "https://github.com/rsmith-nl/calculix-templates/tree/main/materials"
 
-#ccx create materiallibrary group name "Example Materials/PET-foam"
-#ccx create materiallibrary group name "Example Materials/baltekSB50"
-#ccx create materiallibrary group name "Example Materials/divinycellH"
-#ccx create materiallibrary group name "Example Materials/fused-quartz"
-#ccx create materiallibrary group name "Example Materials/granite"
-#ccx create materiallibrary group name "Example Materials/graphite"
-#ccx create materiallibrary group name "Example Materials/honeycomb"
-#ccx create materiallibrary group name "Example Materials/hpl"
-#ccx create materiallibrary group name "Example Materials/laminates-carbon-epoxy"
-#ccx create materiallibrary group name "Example Materials/mycell"
-#ccx create materiallibrary group name "Example Materials/plywood"
-#ccx create materiallibrary group name "Example Materials/pur80"
-#ccx create materiallibrary group name "Example Materials/rohacellG"
-#ccx create materiallibrary group name "Example Materials/rohacryl"
-#ccx create materiallibrary group name "Example Materials/Rubber"
-#ccx create materiallibrary group name "Example Materials/sikablock"
+#ccx create materiallibrary group name "Example Materials RSMITH/PET-foam"
+#ccx create materiallibrary group name "Example Materials RSMITH/baltekSB50"
+#ccx create materiallibrary group name "Example Materials RSMITH/divinycellH"
+#ccx create materiallibrary group name "Example Materials RSMITH/fused-quartz"
+#ccx create materiallibrary group name "Example Materials RSMITH/granite"
+#ccx create materiallibrary group name "Example Materials RSMITH/graphite"
+#ccx create materiallibrary group name "Example Materials RSMITH/honeycomb"
+#ccx create materiallibrary group name "Example Materials RSMITH/hpl"
+#ccx create materiallibrary group name "Example Materials RSMITH/laminates-carbon-epoxy"
+#ccx create materiallibrary group name "Example Materials RSMITH/mycell"
+#ccx create materiallibrary group name "Example Materials RSMITH/plywood"
+#ccx create materiallibrary group name "Example Materials RSMITH/pur80"
+#ccx create materiallibrary group name "Example Materials RSMITH/rohacellG"
+#ccx create materiallibrary group name "Example Materials RSMITH/rohacryl"
+#ccx create materiallibrary group name "Example Materials RSMITH/Rubber"
+#ccx create materiallibrary group name "Example Materials RSMITH/sikablock"
 
-ccx create materiallibrary group name "Example Materials/Aluminium"
-ccx create materiallibrary group name "Example Materials/Ceramics"
-ccx create materiallibrary group name "Example Materials/Metal Alloys"
-ccx create materiallibrary group name "Example Materials/Steel"
+ccx create materiallibrary group name "Example Materials RSMITH/Aluminium"
+ccx create materiallibrary group name "Example Materials RSMITH/Ceramics"
+ccx create materiallibrary group name "Example Materials RSMITH/Metal Alloys"
+ccx create materiallibrary group name "Example Materials RSMITH/Steel"
+ccx create materiallibrary group name "Example Materials RSMITH/Rubber"
 
-ccx modify materiallibrary group name "Example Materials/Aluminium" description "SI Units"
-ccx modify materiallibrary group name "Example Materials/Ceramics" description "SI Units"
-ccx modify materiallibrary group name "Example Materials/Metal Alloys" description "SI Units"
-ccx modify materiallibrary group name "Example Materials/Steel" description "SI Units"
+ccx modify materiallibrary group name "Example Materials RSMITH/Aluminium" description "SI Units"
+ccx modify materiallibrary group name "Example Materials RSMITH/Ceramics" description "SI Units"
+ccx modify materiallibrary group name "Example Materials RSMITH/Metal Alloys" description "SI Units"
+ccx modify materiallibrary group name "Example Materials RSMITH/Steel" description "SI Units"
+ccx modify materiallibrary group name "Example Materials RSMITH/Rubber" description "SI Units"
 
+ccx create materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials RSMITH/Aluminium"
+ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials RSMITH/Aluminium" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials RSMITH/Aluminium" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials RSMITH/Aluminium" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 7.1e+10 0.33 293 
+ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials RSMITH/Aluminium" scalar_properties "CCX_PLASTIC_USE_CARD" 1
+ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials RSMITH/Aluminium" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials RSMITH/Aluminium" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 1.5e+08 0.002 293 1.75e+08 0.00506 293 2e+08 0.01131 293 2.25e+08 0.02299 293 2.5e+08 0.04336 293 2.75e+08 0.07698 293 3e+08 0.13 293 
+ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials RSMITH/Aluminium" scalar_properties "CCX_DENSITY_USE_CARD" 1
+ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials RSMITH/Aluminium" matrix_property "CCX_DENSITY_DENSITY" 2660 0 
+ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials RSMITH/Aluminium" scalar_properties "CCX_EXPANSION_USE_CARD" 1
+ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials RSMITH/Aluminium" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials RSMITH/Aluminium" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 2.5e-05 293 
+ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials RSMITH/Aluminium" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
 
-ccx create materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium"
-ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium" scalar_properties "CCX_ELASTIC_USE_CARD" 1
-ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
-ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 7.1e+10 0.33 293 
-ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium" scalar_properties "CCX_PLASTIC_USE_CARD" 1
-ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
-ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 1.5e+08 0.002 293 1.75e+08 0.00506 293 2e+08 0.01131 293 2.25e+08 0.02299 293 2.5e+08 0.04336 293 2.75e+08 0.07698 293 3e+08 0.13 293 
-ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium" scalar_properties "CCX_DENSITY_USE_CARD" 1
-ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium" matrix_property "CCX_DENSITY_DENSITY" 2660 0 
-ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium" scalar_properties "CCX_EXPANSION_USE_CARD" 1
-ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
-ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 2.5e-05 293 
-ccx modify materiallibrary material name "EN_AW_5083_H111" groupname "Example Materials/Aluminium" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
-
-ccx create materiallibrary material name "EN_AW_5754_O" groupname "Example Materials/Aluminium"
-ccx modify materiallibrary material name "EN_AW_5754_O" groupname "Example Materials/Aluminium" scalar_properties "CCX_ELASTIC_USE_CARD" 1
-ccx modify materiallibrary material name "EN_AW_5754_O" groupname "Example Materials/Aluminium" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
-ccx modify materiallibrary material name "EN_AW_5754_O" groupname "Example Materials/Aluminium" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 68e9 0.33 293
-ccx modify materiallibrary material name "EN_AW_5754_O" groupname "Example Materials/Aluminium" scalar_properties "CCX_PLASTIC_USE_CARD" 1
-ccx modify materiallibrary material name "EN_AW_5754_O" groupname "Example Materials/Aluminium" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
-ccx modify materiallibrary material name "EN_AW_5754_O" groupname "Example Materials/Aluminium" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 9e+07 0.002 293 1.1e+08 0.00588 293 1.3e+08 0.01443 293 1.5e+08 0.03114 293 1.7e+08 0.06103 293 1.9e+08 0.11095 293 2.1e+08 0.19 293
-ccx modify materiallibrary material name "EN_AW_5754_O" groupname "Example Materials/Aluminium" scalar_properties "CCX_DENSITY_USE_CARD" 1
-ccx modify materiallibrary material name "EN_AW_5754_O" groupname "Example Materials/Aluminium" matrix_property "CCX_DENSITY_DENSITY" 2700 0 
-ccx modify materiallibrary material name "EN_AW_5754_O" groupname "Example Materials/Aluminium" scalar_properties "CCX_EXPANSION_USE_CARD" 1
-ccx modify materiallibrary material name "EN_AW_5754_O" groupname "Example Materials/Aluminium" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
-ccx modify materiallibrary material name "EN_AW_5754_O" groupname "Example Materials/Aluminium" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 24e-06 293 
-ccx modify materiallibrary material name "EN_AW_5754_O" groupname "Example Materials/Aluminium" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
-
-
-ccx create materiallibrary material name "kyocera-A473" groupname "Example Materials/Ceramics"
-ccx modify materiallibrary material name "kyocera-A473" groupname "Example Materials/Ceramics" scalar_properties "CCX_ELASTIC_USE_CARD" 1
-ccx modify materiallibrary material name "kyocera-A473" groupname "Example Materials/Ceramics" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
-ccx modify materiallibrary material name "kyocera-A473" groupname "Example Materials/Ceramics" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 2.8e+11 0.23 293 
-ccx modify materiallibrary material name "kyocera-A473" groupname "Example Materials/Ceramics" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
-ccx modify materiallibrary material name "kyocera-A473" groupname "Example Materials/Ceramics" scalar_properties "CCX_DENSITY_USE_CARD" 1
-ccx modify materiallibrary material name "kyocera-A473" groupname "Example Materials/Ceramics" matrix_property "CCX_DENSITY_DENSITY" 3600 0 
-ccx modify materiallibrary material name "kyocera-A473" groupname "Example Materials/Ceramics" scalar_properties "CCX_EXPANSION_USE_CARD" 1
-ccx modify materiallibrary material name "kyocera-A473" groupname "Example Materials/Ceramics" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
-ccx modify materiallibrary material name "kyocera-A473" groupname "Example Materials/Ceramics" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 7.2e-06 293 
-ccx modify materiallibrary material name "kyocera-A473" groupname "Example Materials/Ceramics" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+ccx create materiallibrary material name "EN_AW_5754_O" groupname "Example Materials RSMITH/Aluminium"
+ccx modify materiallibrary material name "EN_AW_5754_O" groupname "Example Materials RSMITH/Aluminium" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+ccx modify materiallibrary material name "EN_AW_5754_O" groupname "Example Materials RSMITH/Aluminium" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "EN_AW_5754_O" groupname "Example Materials RSMITH/Aluminium" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 68e9 0.33 293
+ccx modify materiallibrary material name "EN_AW_5754_O" groupname "Example Materials RSMITH/Aluminium" scalar_properties "CCX_PLASTIC_USE_CARD" 1
+ccx modify materiallibrary material name "EN_AW_5754_O" groupname "Example Materials RSMITH/Aluminium" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "EN_AW_5754_O" groupname "Example Materials RSMITH/Aluminium" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 9e+07 0.002 293 1.1e+08 0.00588 293 1.3e+08 0.01443 293 1.5e+08 0.03114 293 1.7e+08 0.06103 293 1.9e+08 0.11095 293 2.1e+08 0.19 293
+ccx modify materiallibrary material name "EN_AW_5754_O" groupname "Example Materials RSMITH/Aluminium" scalar_properties "CCX_DENSITY_USE_CARD" 1
+ccx modify materiallibrary material name "EN_AW_5754_O" groupname "Example Materials RSMITH/Aluminium" matrix_property "CCX_DENSITY_DENSITY" 2700 0 
+ccx modify materiallibrary material name "EN_AW_5754_O" groupname "Example Materials RSMITH/Aluminium" scalar_properties "CCX_EXPANSION_USE_CARD" 1
+ccx modify materiallibrary material name "EN_AW_5754_O" groupname "Example Materials RSMITH/Aluminium" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "EN_AW_5754_O" groupname "Example Materials RSMITH/Aluminium" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 24e-06 293 
+ccx modify materiallibrary material name "EN_AW_5754_O" groupname "Example Materials RSMITH/Aluminium" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
 
 
-ccx create materiallibrary material name "SC211" groupname "Example Materials/Ceramics"
-ccx modify materiallibrary material name "SC211" groupname "Example Materials/Ceramics" scalar_properties "CCX_ELASTIC_USE_CARD" 1
-ccx modify materiallibrary material name "SC211" groupname "Example Materials/Ceramics" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
-ccx modify materiallibrary material name "SC211" groupname "Example Materials/Ceramics" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 430e+9 0.16 293
-ccx modify materiallibrary material name "SC211" groupname "Example Materials/Ceramics" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
-ccx modify materiallibrary material name "SC211" groupname "Example Materials/Ceramics" scalar_properties "CCX_DENSITY_USE_CARD" 1
-ccx modify materiallibrary material name "SC211" groupname "Example Materials/Ceramics" matrix_property "CCX_DENSITY_DENSITY" 3200 0
-ccx modify materiallibrary material name "SC211" groupname "Example Materials/Ceramics" scalar_properties "CCX_EXPANSION_USE_CARD" 1
-ccx modify materiallibrary material name "SC211" groupname "Example Materials/Ceramics" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
-ccx modify materiallibrary material name "SC211" groupname "Example Materials/Ceramics" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 3.7e-06 293 
-ccx modify materiallibrary material name "SC211" groupname "Example Materials/Ceramics" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
-
-ccx create materiallibrary material name "CC331G" groupname "Example Materials/Metal Alloys"
-ccx modify materiallibrary material name "CC331G" groupname "Example Materials/Metal Alloys" scalar_properties "CCX_ELASTIC_USE_CARD" 1
-ccx modify materiallibrary material name "CC331G" groupname "Example Materials/Metal Alloys" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
-ccx modify materiallibrary material name "CC331G" groupname "Example Materials/Metal Alloys" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 1.1e+11 0.34 293 
-ccx modify materiallibrary material name "CC331G" groupname "Example Materials/Metal Alloys" scalar_properties "CCX_PLASTIC_USE_CARD" 1
-ccx modify materiallibrary material name "CC331G" groupname "Example Materials/Metal Alloys" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
-ccx modify materiallibrary material name "CC331G" groupname "Example Materials/Metal Alloys" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 2.4e+08 0.002 293 3.03333e+08 0.00623 293 3.66667e+08 0.01564 293 4.3e+08 0.03388 293 4.93333e+08 0.06598 293 5.56667e+08 0.11857 293 6.2e+08 0.2 293
-ccx modify materiallibrary material name "CC331G" groupname "Example Materials/Metal Alloys" scalar_properties "CCX_DENSITY_USE_CARD" 1
-ccx modify materiallibrary material name "CC331G" groupname "Example Materials/Metal Alloys" matrix_property "CCX_DENSITY_DENSITY" 8700 0 
-ccx modify materiallibrary material name "CC331G" groupname "Example Materials/Metal Alloys" scalar_properties "CCX_EXPANSION_USE_CARD" 1
-ccx modify materiallibrary material name "CC331G" groupname "Example Materials/Metal Alloys" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
-ccx modify materiallibrary material name "CC331G" groupname "Example Materials/Metal Alloys" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 1.8e-05 293 
-ccx modify materiallibrary material name "CC331G" groupname "Example Materials/Metal Alloys" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+ccx create materiallibrary material name "kyocera-A473" groupname "Example Materials RSMITH/Ceramics"
+ccx modify materiallibrary material name "kyocera-A473" groupname "Example Materials RSMITH/Ceramics" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+ccx modify materiallibrary material name "kyocera-A473" groupname "Example Materials RSMITH/Ceramics" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "kyocera-A473" groupname "Example Materials RSMITH/Ceramics" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 2.8e+11 0.23 293 
+ccx modify materiallibrary material name "kyocera-A473" groupname "Example Materials RSMITH/Ceramics" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "kyocera-A473" groupname "Example Materials RSMITH/Ceramics" scalar_properties "CCX_DENSITY_USE_CARD" 1
+ccx modify materiallibrary material name "kyocera-A473" groupname "Example Materials RSMITH/Ceramics" matrix_property "CCX_DENSITY_DENSITY" 3600 0 
+ccx modify materiallibrary material name "kyocera-A473" groupname "Example Materials RSMITH/Ceramics" scalar_properties "CCX_EXPANSION_USE_CARD" 1
+ccx modify materiallibrary material name "kyocera-A473" groupname "Example Materials RSMITH/Ceramics" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "kyocera-A473" groupname "Example Materials RSMITH/Ceramics" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 7.2e-06 293 
+ccx modify materiallibrary material name "kyocera-A473" groupname "Example Materials RSMITH/Ceramics" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
 
 
-ccx create materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials/Steel"
-ccx modify materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials/Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
-ccx modify materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials/Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
-ccx modify materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials/Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 2.1e+11 0.3 293 
-ccx modify materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials/Steel" scalar_properties "CCX_PLASTIC_USE_CARD" 1
-ccx modify materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials/Steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
-ccx modify materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials/Steel" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 211.7e6 0.0000 293 236.2e6 0.0040 293 243.4e6 0.0198 293 432.6e6 0.1817 293
-ccx modify materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials/Steel" scalar_properties "CCX_DENSITY_USE_CARD" 1
-ccx modify materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials/Steel" matrix_property "CCX_DENSITY_DENSITY" 7850 0 
-ccx modify materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials/Steel" scalar_properties "CCX_EXPANSION_USE_CARD" 1
-ccx modify materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials/Steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
-ccx modify materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials/Steel" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 1.2e-05 293 
-ccx modify materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials/Steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+ccx create materiallibrary material name "SC211" groupname "Example Materials RSMITH/Ceramics"
+ccx modify materiallibrary material name "SC211" groupname "Example Materials RSMITH/Ceramics" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+ccx modify materiallibrary material name "SC211" groupname "Example Materials RSMITH/Ceramics" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "SC211" groupname "Example Materials RSMITH/Ceramics" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 430e+9 0.16 293
+ccx modify materiallibrary material name "SC211" groupname "Example Materials RSMITH/Ceramics" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "SC211" groupname "Example Materials RSMITH/Ceramics" scalar_properties "CCX_DENSITY_USE_CARD" 1
+ccx modify materiallibrary material name "SC211" groupname "Example Materials RSMITH/Ceramics" matrix_property "CCX_DENSITY_DENSITY" 3200 0
+ccx modify materiallibrary material name "SC211" groupname "Example Materials RSMITH/Ceramics" scalar_properties "CCX_EXPANSION_USE_CARD" 1
+ccx modify materiallibrary material name "SC211" groupname "Example Materials RSMITH/Ceramics" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "SC211" groupname "Example Materials RSMITH/Ceramics" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 3.7e-06 293 
+ccx modify materiallibrary material name "SC211" groupname "Example Materials RSMITH/Ceramics" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+
+ccx create materiallibrary material name "CC331G" groupname "Example Materials RSMITH/Metal Alloys"
+ccx modify materiallibrary material name "CC331G" groupname "Example Materials RSMITH/Metal Alloys" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+ccx modify materiallibrary material name "CC331G" groupname "Example Materials RSMITH/Metal Alloys" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "CC331G" groupname "Example Materials RSMITH/Metal Alloys" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 1.1e+11 0.34 293 
+ccx modify materiallibrary material name "CC331G" groupname "Example Materials RSMITH/Metal Alloys" scalar_properties "CCX_PLASTIC_USE_CARD" 1
+ccx modify materiallibrary material name "CC331G" groupname "Example Materials RSMITH/Metal Alloys" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "CC331G" groupname "Example Materials RSMITH/Metal Alloys" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 2.4e+08 0.002 293 3.03333e+08 0.00623 293 3.66667e+08 0.01564 293 4.3e+08 0.03388 293 4.93333e+08 0.06598 293 5.56667e+08 0.11857 293 6.2e+08 0.2 293
+ccx modify materiallibrary material name "CC331G" groupname "Example Materials RSMITH/Metal Alloys" scalar_properties "CCX_DENSITY_USE_CARD" 1
+ccx modify materiallibrary material name "CC331G" groupname "Example Materials RSMITH/Metal Alloys" matrix_property "CCX_DENSITY_DENSITY" 8700 0 
+ccx modify materiallibrary material name "CC331G" groupname "Example Materials RSMITH/Metal Alloys" scalar_properties "CCX_EXPANSION_USE_CARD" 1
+ccx modify materiallibrary material name "CC331G" groupname "Example Materials RSMITH/Metal Alloys" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "CC331G" groupname "Example Materials RSMITH/Metal Alloys" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 1.8e-05 293 
+ccx modify materiallibrary material name "CC331G" groupname "Example Materials RSMITH/Metal Alloys" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
 
 
-ccx create materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials/Steel"
-ccx modify materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials/Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
-ccx modify materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials/Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
-ccx modify materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials/Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 2.1e+11 0.3 293 
-ccx modify materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials/Steel" scalar_properties "CCX_PLASTIC_USE_CARD" 1
-ccx modify materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials/Steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
-ccx modify materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials/Steel" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 320.0e6 0.0000 293 357.0e6 0.0040 293 366.1e6 0.0197 293 541.6e6 0.1391 293
-ccx modify materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials/Steel" scalar_properties "CCX_DENSITY_USE_CARD" 1
-ccx modify materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials/Steel" matrix_property "CCX_DENSITY_DENSITY" 7850 0 
-ccx modify materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials/Steel" scalar_properties "CCX_EXPANSION_USE_CARD" 1
-ccx modify materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials/Steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
-ccx modify materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials/Steel" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 1.2e-05 293 
-ccx modify materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials/Steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+ccx create materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials RSMITH/Steel"
+ccx modify materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials RSMITH/Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+ccx modify materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials RSMITH/Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials RSMITH/Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 2.1e+11 0.3 293 
+ccx modify materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials RSMITH/Steel" scalar_properties "CCX_PLASTIC_USE_CARD" 1
+ccx modify materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials RSMITH/Steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials RSMITH/Steel" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 211.7e6 0.0000 293 236.2e6 0.0040 293 243.4e6 0.0198 293 432.6e6 0.1817 293
+ccx modify materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials RSMITH/Steel" scalar_properties "CCX_DENSITY_USE_CARD" 1
+ccx modify materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials RSMITH/Steel" matrix_property "CCX_DENSITY_DENSITY" 7850 0 
+ccx modify materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials RSMITH/Steel" scalar_properties "CCX_EXPANSION_USE_CARD" 1
+ccx modify materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials RSMITH/Steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials RSMITH/Steel" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 1.2e-05 293 
+ccx modify materiallibrary material name "steel_S235_DNV2013" groupname "Example Materials RSMITH/Steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+
+
+ccx create materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials RSMITH/Steel"
+ccx modify materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials RSMITH/Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+ccx modify materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials RSMITH/Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials RSMITH/Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 2.1e+11 0.3 293 
+ccx modify materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials RSMITH/Steel" scalar_properties "CCX_PLASTIC_USE_CARD" 1
+ccx modify materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials RSMITH/Steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials RSMITH/Steel" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 320.0e6 0.0000 293 357.0e6 0.0040 293 366.1e6 0.0197 293 541.6e6 0.1391 293
+ccx modify materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials RSMITH/Steel" scalar_properties "CCX_DENSITY_USE_CARD" 1
+ccx modify materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials RSMITH/Steel" matrix_property "CCX_DENSITY_DENSITY" 7850 0 
+ccx modify materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials RSMITH/Steel" scalar_properties "CCX_EXPANSION_USE_CARD" 1
+ccx modify materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials RSMITH/Steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials RSMITH/Steel" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 1.2e-05 293 
+ccx modify materiallibrary material name "steel_S355_DNV2013" groupname "Example Materials RSMITH/Steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+
+ccx create materiallibrary material name "rubber_55ShoreA" groupname "Example Materials RSMITH/Rubber"
+ccx modify materiallibrary material name "rubber_55ShoreA" groupname "Example Materials RSMITH/Rubber" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "rubber_55ShoreA" groupname "Example Materials RSMITH/Rubber" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "rubber_55ShoreA" groupname "Example Materials RSMITH/Rubber" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "rubber_55ShoreA" groupname "Example Materials RSMITH/Rubber" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "rubber_55ShoreA" groupname "Example Materials RSMITH/Rubber" scalar_properties "CCX_HYPERELASTIC_USE_CARD" 1
+ccx modify materiallibrary material name "rubber_55ShoreA" groupname "Example Materials RSMITH/Rubber" scalar_properties "CCX_HYPERELASTIC_MOONEY_RIVLIN_USE_CARD" 1
+ccx modify materiallibrary material name "rubber_55ShoreA" groupname "Example Materials RSMITH/Rubber" matrix_property "CCX_HYPERELASTIC_MOONEY_RIVLIN" 382000 96000 8.446e-08 0 
+ccx modify materiallibrary material name "rubber_55ShoreA" groupname "Example Materials RSMITH/Rubber" scalar_properties "CCX_HYPERFOAM_HYPERFOAM_N1_USE_CARD" 1
+
+
+ccx create materiallibrary material name "rubber_65ShoreA" groupname "Example Materials RSMITH/Rubber"
+ccx modify materiallibrary material name "rubber_65ShoreA" groupname "Example Materials RSMITH/Rubber" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "rubber_65ShoreA" groupname "Example Materials RSMITH/Rubber" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "rubber_65ShoreA" groupname "Example Materials RSMITH/Rubber" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "rubber_65ShoreA" groupname "Example Materials RSMITH/Rubber" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+ccx modify materiallibrary material name "rubber_65ShoreA" groupname "Example Materials RSMITH/Rubber" scalar_properties "CCX_HYPERELASTIC_USE_CARD" 1
+ccx modify materiallibrary material name "rubber_65ShoreA" groupname "Example Materials RSMITH/Rubber" scalar_properties "CCX_HYPERELASTIC_MOONEY_RIVLIN_USE_CARD" 1
+ccx modify materiallibrary material name "rubber_65ShoreA" groupname "Example Materials RSMITH/Rubber" matrix_property "CCX_HYPERELASTIC_MOONEY_RIVLIN" 586000 147000 8.446e-08 0 
+ccx modify materiallibrary material name "rubber_65ShoreA" groupname "Example Materials RSMITH/Rubber" scalar_properties "CCX_HYPERFOAM_HYPERFOAM_N1_USE_CARD" 1
+
+
+
+
