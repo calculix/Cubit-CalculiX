@@ -40,44 +40,44 @@ Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/
 - Node Sets
 - Side Sets
 - Materials
- - Compression Only
- - Conductivity 
-  - Isotropic
-  - Orthotropic
-  - Anisotropic
- - Creep
- - Cyclic Hardening
- - Damping
- - Deformation Plasticity
- - Density
- - Elastic
-  - Isotropic
-  - Orthotropic
-  - Anisotropic
-  - Engineering Constants
- - Expansion
-  - Isotropic
-  - Orthotropic
-  - Anisotropic
- - Hyperelastic
-  - Arruda-Boyce
-  - Mooney-Rivlin
-  - Neo Hooke
-  - Ogden N=1,2,3
-  - Polynomial N=1,2,3
-  - reduced Polynomial N=1,2,3
-  - Yeoh
- - Hyperfoam N=1,2,3
- - Mohr Coulomb
- - Mohr Coulomb Hardening
- - Plastic
-  - Isotropic
-  - Kinematic
-  - Combined
-  - Johnson Cook
- - Rate Dependent
- - Specific Heat
- - Tension Only
+  - Compression Only
+  - Conductivity 
+    - Isotropic
+    - Orthotropic
+    - Anisotropic
+  - Creep
+  - Cyclic Hardening
+  - Damping
+  - Deformation Plasticity
+  - Density
+  - Elastic
+    - Isotropic
+    - Orthotropic
+    - Anisotropic
+    - Engineering Constants
+  - Expansion
+    - Isotropic
+    - Orthotropic
+    - Anisotropic
+  - Hyperelastic
+    - Arruda-Boyce
+    - Mooney-Rivlin
+    - Neo Hooke
+    - Ogden N=1,2,3
+    - Polynomial N=1,2,3
+    - reduced Polynomial N=1,2,3
+    - Yeoh
+  - Hyperfoam N=1,2,3
+  - Mohr Coulomb
+  - Mohr Coulomb Hardening
+  - Plastic
+    - Isotropic
+    - Kinematic
+    - Combined
+    - Johnson Cook
+  - Rate Dependent
+  - Specific Heat
+  - Tension Only
 - Materiallibrary 
  - easy to use library: materials can be created, modified and deleted and imported from cubit, exported into cubit
  - already contains some default materials
