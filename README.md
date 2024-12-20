@@ -192,10 +192,10 @@ in python mode (#!python)
   title="Contact press fitting">
 ](examples/contact_press_fitting/)
 [<img
-  src="examples/metal_forming/example.png"
+  src="examples/metal_forming/example.gif"
   width="400"
   title="Metal forming">
-](examples/contact_press_fitting/)
+](examples/metal forming/)
 [<img
   src="examples/mesh_refinement/example.png"
   width="400"
