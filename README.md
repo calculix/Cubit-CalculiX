@@ -300,34 +300,34 @@ Build Process for Ubuntu 22.04 and 24.04
 
 1. After a clean installation
    Update and upgrade the system, then install tools required for building:
-   '''
+   ```
    sudo apt update && sudo apt upgrade -y
    sudo apt-get install cmake cmake-gui
    sudo apt-get install build-essential
    sudo apt-get install qtbase5-dev libqt5charts5-dev libqt5widgets5
    sudo apt install libglu1-mesa
-   '''
+   ```
 2. Install Coreform Cubit
    Either download from the [Coreform Website](https://coreform.com/downloads/) or via terminal
-   '''
+   ```
    wget https://f002.backblazeb2.com/file/cubit-downloads/Coreform-Cubit/Releases/Linux/Coreform-Cubit-2024.8%2B52155-Lin64.deb
    sudo apt-get install ./Coreform-Cubit-2024.8+52155-Lin64.deb
-   '''
+   ```
 3. Install Cubit-Calculix
    Clone the Cubit-Calculix repository
-   '''
+   ```
    git clone https://github.com/calculix/Cubit-CalculiX.git
-   '''
+   ```
 4. Build Steps   
    Clean and recreate the build directory, then run CMake and build:
-   '''
+   ```
    rm -rf ~/Cubit-CalculiX/build
    mkdir -p ~/Cubit-CalculiX/build
    cmake -S ~/Cubit-CalculiX/src -B ~/Cubit-CalculiX/build
    cmake --build ~/Cubit-CalculiX/build
    cd ~/Cubit-CalculiX/build
    make -j4
-   '''
+   ```
    
 # known issues
 - See https://github.com/calculix/Cubit-CalculiX/issues for open issues. Not every issue is closed in the available binaries. Please look at the issue and release date.
