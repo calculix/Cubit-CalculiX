@@ -104,6 +104,7 @@ public:
   bool checkLinkNodesFast(); // check if linking of nodes fast is possible
   bool checkLinkDatFast(); // check if linking of dat fast is possible
   bool checkDatTimeValueExists(double total_time); // checks if the dat totaltime exists
+  bool checkDatStepIncrementExists(int step, int increment); // checks if the dat step and increment exists
   bool checkFrdBlockDispExists(std::string block_name); // checks if there exists displacement data for the block
   bool checkFrdBlockDispExists_thread(std::string block_name, int increment); // checks if there exists displacement data for the block
   int getFrdBlockId(std::string block_name); // checks if there exists block in the frd for the block in the dat and returns the data id

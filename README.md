@@ -192,6 +192,11 @@ in python mode (#!python)
   title="Contact press fitting">
 ](examples/contact_press_fitting/)
 [<img
+  src="examples/metal_forming/example.png"
+  width="400"
+  title="Metal forming">
+](examples/contact_press_fitting/)
+[<img
   src="examples/mesh_refinement/example.png"
   width="400"
   title="Mesh refinement">
@@ -226,11 +231,13 @@ in python mode (#!python)
   width="400"
   title="Shrinkage model">
 ](examples/Welding/shringage_model/)
+<!-- 
 [<img
   src="examples/Welding/shrinkage_model_moving_heatsource/example.gif"
   width="400"
   title="Shrinkage model">
 ](examples/Welding/shringage_model_moving_heatsource/)
+-->
 
 # Installation
 

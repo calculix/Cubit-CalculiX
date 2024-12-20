@@ -1,5 +1,6 @@
 # the model is a rebuild of https://github.com/calculix/CalculiX-Examples/tree/master/Thermal/Thermal%20distortion but without contact definitions
 # improved with film, radiation and moving heatsource
+# you will have to play a lot with the heatflux, meshsize and increments to get a more realistic model
 
 #!cubit
 reset
@@ -48,6 +49,7 @@ block 3 add volume 3
 block 3 name "seam"
 
 #block all element type hex8
+#ccx block all element_type C3D8R
 #hex 20 is way more accurate, you can play with the auto size factor and hex8 to see the difference
 block all element type hex20 
 # hex20 will be c3d20 but can also be modified
@@ -99,7 +101,7 @@ create curve vertex 34 35
 curve 53 size 3e-3
 mesh curve 53
 
-ccx create trajectory Heatflux  curve 53  vertex 34  surface 15 21 18 direction -1 -1 0 magnitude 2e+6 2e+5  time_begin 0 time_end 10 radius 5e-3 10e-3  name "heatsource"
+ccx create trajectory Heatflux  curve 53  vertex 34  surface 15 21 18 direction -1 -1 0 magnitude 5e+5 5e+4  time_begin 0 time_end 10 radius 5e-3 10e-3  name "heatsource"
 
 sideset 1 Surface 18 15 17 21 16 8 2 10 4 3 6 11 1 7 
 ccx create film sideset 1 temperature 20 coefficient 15 name "convection"
@@ -137,11 +139,11 @@ ccx modify initialcondition 1 temperature bc_id 1
 
 #outputs
 ccx create fieldoutput name "fo_node" node
-#ccx modify fieldoutput 1 node frequency 25
+ccx modify fieldoutput 1 node frequency 10
 ccx modify fieldoutput 1 node key_on U NT
 ccx modify fieldoutput 1 node key_off CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF PNT POT PRF PS PSF PT PTF PU RF RFL SEN TS TSF TT TTF TURB V VF 
 ccx create fieldoutput name "fo_element" element
-#ccx modify fieldoutput 2 element frequency 25
+ccx modify fieldoutput 2 element frequency 10
 ccx modify fieldoutput 2 element key_on E S HFL
 ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS 
 
@@ -153,16 +155,16 @@ ccx hbc add bc displacement 3
 # create step
 ccx create step name "welding" coupledtemperaturedisplacement
 ccx modify step 1 parameter inc 100000
-#ccx modify step 1 coupledtemperaturedisplacement solver pardiso
-ccx modify step 1 coupledtemperaturedisplacement totaltimeatstart 0 initialtimeincrement 1e-2 timeperiodofstep 10 minimumtimeincrement 1e-6 maximumtimeincrement 1e-2
+ccx modify step 1 coupledtemperaturedisplacement solver pardiso
+ccx modify step 1 coupledtemperaturedisplacement totaltimeatstart 0 initialtimeincrement 1e-1 timeperiodofstep 10 minimumtimeincrement 1e-6 maximumtimeincrement 1e-1
 ccx step 1 add load trajectory 1
 ccx step 1 add fieldoutput 1
 ccx step 1 add fieldoutput 2
 
 ccx create step name "cooling" coupledtemperaturedisplacement
 ccx modify step 2 parameter inc 100000
-#ccx modify step 2 coupledtemperaturedisplacement solver pardiso
-ccx modify step 2 coupledtemperaturedisplacement totaltimeatstart 10 initialtimeincrement 10 timeperiodofstep 3600 minimumtimeincrement 1e-5 maximumtimeincrement 10
+ccx modify step 2 coupledtemperaturedisplacement solver pardiso
+ccx modify step 2 coupledtemperaturedisplacement totaltimeatstart 10 initialtimeincrement 10 timeperiodofstep 1000 minimumtimeincrement 1e-5 maximumtimeincrement 10
 ccx step 2 add load film 1
 ccx step 2 add load radiation 1
 ccx step 2 add fieldoutput 1
@@ -175,5 +177,6 @@ ccx create job name "shrinkage_model"
 #ccx result paraview job 1
 
 ccx draw load trajectory 1
+
 
 

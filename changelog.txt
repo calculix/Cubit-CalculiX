@@ -121,3 +121,4 @@
 2024-12-19 tube impact example
 2024-12-19 working on examples
 2024-12-20 updating readme and examples
+2024-12-20 implementing reading and linking of step and increment data from .dat
