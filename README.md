@@ -1,7 +1,7 @@
 [![GitHub](https://badgen.net/badge/icon/github?icon=github&label)](https://github.com/calculix/Cubit-CalculiX)
 [![Github All Releases](https://img.shields.io/github/downloads/calculix/Cubit-CalculiX/total.svg)](https://github.com/calculix/Cubit-CalculiX/releases)
 <br/>
-# Cubit-CalculiX 2024.10
+# Cubit-CalculiX 2024.12
 Hey ho that´s the CalculiX Component for coreform cubit!
 
 Full Model definitions for CalculiX can be done with Cubit as Preprocessor.
@@ -13,21 +13,23 @@ The builds can be downloaded at our [website](https://www.maschinenbauer.at/open
 
 Or just use the links.
 
-[Windows Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2024.10/build_windows_2024.10.zip)
-[Linux Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2024.10/build_linux_2024.10.zip)
+[Windows Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2024.12/build_windows_2024.12.zip)
+[Linux Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2024.12/build_linux_2024.12.zip)
 
-This component was build with Cubit 2024.8! 
-Tested with Cubit 2024.8 on Windows 10 and Ubuntu 22.04
+This component was build with Cubit 2024.8!
+Tested with Cubit 2024.8 and 2024.12 on Windows 10 and Ubuntu 22.04
 
 Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/@CubitCalculiX) . We will post videos from examples and updates in the near future.
 
 ---
 [Downloads](https://github.com/calculix/Cubit-CalculiX/releases) |
 [Key Features](#key-features) |
-[How to](#how-to) |
+[How to use](#how-to-use) |
 [Examples](#examples) |
 [Installation](#installation) |
-[Postprocessing](#postprocessing) <!-- |
+[Postprocessing](#postprocessing)
+[How to build on linux](#how-to-build-linux)
+<!-- |
 [Projection of Displacements](#projection-of-displacements) |
 [known issues](#known-issues) |
 [todo list](#todo-list) -->
@@ -37,7 +39,48 @@ Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/
 - Elements Sets
 - Node Sets
 - Side Sets
-- Materials (Conductivity, Density, Elastic, Expansion, Plastic, Specific Heat)
+- Materials
+ - Compression Only
+ - Conductivity 
+  - Isotropic
+  - Orthotropic
+  - Anisotropic
+ - Creep
+ - Cyclic Hardening
+ - Damping
+ - Deformation Plasticity
+ - Density
+ - Elastic
+  - Isotropic
+  - Orthotropic
+  - Anisotropic
+  - Engineering Constants
+ - Expansion
+  - Isotropic
+  - Orthotropic
+  - Anisotropic
+ - Hyperelastic
+  - Arruda-Boyce
+  - Mooney-Rivlin
+  - Neo Hooke
+  - Ogden N=1,2,3
+  - Polynomial N=1,2,3
+  - reduced Polynomial N=1,2,3
+  - Yeoh
+ - Hyperfoam N=1,2,3
+ - Mohr Coulomb
+ - Mohr Coulomb Hardening
+ - Plastic
+  - Isotropic
+  - Kinematic
+  - Combined
+  - Johnson Cook
+ - Rate Dependent
+ - Specific Heat
+ - Tension Only
+- Materiallibrary 
+ - easy to use library: materials can be created, modified and deleted and imported from cubit, exported into cubit
+ - already contains some default materials
 - Sections (Solid, Shell, Membrane, Beam)
 - Constraints (Tie, Rigid Body)
 - Surface Interactions
@@ -61,7 +104,7 @@ Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/
 - Python Interface to query the result files. This can be used to run convergence studies or do mesh refinement based on the results.
 - The calculix model data and the loaded frd and dat results will be saved and loaded automatically with the standard cubit fileformat .cub5
 
-# How to
+# How to use
 To get an overview of all new commands type
 
 ccx ?
@@ -203,6 +246,10 @@ Otherwise linking fails and no projection will be done. If a step is choosen, it
 When choosing the totalincrement the related displacements will be used.
 
 ![projection of displacements](/readme_docs/projection_01.png?raw=true "projection of displacements")
+
+# How to build on linux
+
+
 
 # known issues
 - See https://github.com/calculix/Cubit-CalculiX/issues for open issues. Not every issue is closed in the available binaries. Please look at the issue and release date.
