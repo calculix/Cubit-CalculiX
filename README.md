@@ -195,7 +195,7 @@ in python mode (#!python)
   src="examples/metal_forming/example.gif"
   width="400"
   title="Metal forming">
-](examples/metal forming/)
+](examples/metal_forming/)
 [<img
   src="examples/mesh_refinement/example.png"
   width="400"
