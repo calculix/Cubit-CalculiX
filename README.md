@@ -79,24 +79,72 @@ Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/
   - Specific Heat
   - Tension Only
 - Materiallibrary 
- - easy to use library: materials can be created, modified and deleted and imported from cubit, exported into cubit
- - already contains some default materials
-- Sections (Solid, Shell, Membrane, Beam)
-- Constraints (Tie, Rigid Body)
+  - easy to use library: materials can be created, modified and deleted and imported from cubit, exported into cubit
+  - already contains some default materials
+- Sections 
+  - Solid
+  - Shell
+  - Membrane
+  - Beam
+- Constraints
+  - Tie
+  - Rigid Body
 - Surface Interactions
+  - Exponential
+  - Linear
+  - Tabular
+  - Tied
+  - Hard
 - Contact Pairs
+  - Node to Surface
+  - Surface to Surface
+  - Mortar
+  - LinMortar
+  - PgLinMortar
 - Amplitudes
 - Orientations
-- Loads (CLOAD, DLOAD, DFLUX, GRAVITY, CENTRIF, TRAJECTORY)
-- Boundary Conditions (Displacements, Temperatures)
-- Initial Conditions (Displacements, Temperatures)
-- History Outputs (NODE PRINT, EL PRINT, CONTACT PRINT)
-- Field Outputs (NODE FILE, EL FILE, CONTACT FILE)
-- STEPS (Static, Frequency, Buckle, Heat Transfer, Coupled Temperature Displacement, Uncoupled Temperature Displacement, No Analysis)
+- Loads
+  - Forces (CLOAD)
+  - Pressures (DLOAD)
+  - Heatfluxes (DFLUX)
+  - Gravities (GRAVITY)
+  - Centrifugal (CENTRIF)
+  - Trajectories
+    - Heatflux (can be used as moving heatsource)
+- Boundary Conditions
+  - Displacements
+  - Temperatures
+- Initial Conditions
+  - Displacements
+  - Temperatures
+- History Outputs
+  - NODE PRINT
+  - EL PRINT
+  - CONTACT PRINT
+- Field Outputs
+  - NODE FILE
+  - EL FILE
+  - CONTACT FILE
+- STEPS
+  - Static
+  - Frequency
+  - Buckle
+  - Heat Transfer
+  - Coupled Temperature Displacement
+  - Uncoupled Temperature Displacement
+  - Dynamic
+  - Modal Dynamic
+  - Steady State Dynamics
+  - Complex Frequency
+  - No Analysis
 - Adding Customlines before/after Keywords
 - Export of Calculix Model
 - Creation and Running of Jobs
-- Conversion of Results to Paraview (.frd and .dat: nodal, element and integration points results, auto calculating von Mises and Principal Stresses)
+- Conversion of Results to Paraview
+  - .frd nodal results, auto calculating von Mises and Principal Stresses
+  - .dat: nodal, element and integration points results, auto calculating von Mises and Principal Stresses
+  - visualization of single parts with multiblock inspector
+  - visualization of integration point results
 - Projection of Displacements from .frd to mesh
 - Opening of Results with CGX or Paraview
 - Results can be viewed, plotted and exported to .csv
@@ -248,9 +296,39 @@ When choosing the totalincrement the related displacements will be used.
 ![projection of displacements](/readme_docs/projection_01.png?raw=true "projection of displacements")
 
 # How to build on linux
+Build Process for Ubuntu 22.04 and 24.04
 
-
-
+1. After a clean installation
+   Update and upgrade the system, then install tools required for building:
+   '''
+   sudo apt update && sudo apt upgrade -y
+   sudo apt-get install cmake cmake-gui
+   sudo apt-get install build-essential
+   sudo apt-get install qtbase5-dev libqt5charts5-dev libqt5widgets5
+   sudo apt install libglu1-mesa
+   '''
+2. Install Coreform Cubit
+   Either download from the [Coreform Website](https://coreform.com/downloads/) or via terminal
+   '''
+   wget https://f002.backblazeb2.com/file/cubit-downloads/Coreform-Cubit/Releases/Linux/Coreform-Cubit-2024.8%2B52155-Lin64.deb
+   sudo apt-get install ./Coreform-Cubit-2024.8+52155-Lin64.deb
+   '''
+3. Install Cubit-Calculix
+   Clone the Cubit-Calculix repository
+   '''
+   git clone https://github.com/calculix/Cubit-CalculiX.git
+   '''
+4. Build Steps   
+   Clean and recreate the build directory, then run CMake and build:
+   '''
+   rm -rf ~/Cubit-CalculiX/build
+   mkdir -p ~/Cubit-CalculiX/build
+   cmake -S ~/Cubit-CalculiX/src -B ~/Cubit-CalculiX/build
+   cmake --build ~/Cubit-CalculiX/build
+   cd ~/Cubit-CalculiX/build
+   make -j4
+   '''
+   
 # known issues
 - See https://github.com/calculix/Cubit-CalculiX/issues for open issues. Not every issue is closed in the available binaries. Please look at the issue and release date.
 
