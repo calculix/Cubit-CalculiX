@@ -27,8 +27,8 @@ Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/
 [How to use](#how-to-use) |
 [Examples](#examples) |
 [Installation](#installation) |
-[Postprocessing](#postprocessing)
-[How to build on linux](#how-to-build-linux)
+[Postprocessing](#postprocessing) | 
+[How to build on linux](#how-to-build-on-linux)
 <!-- |
 [Projection of Displacements](#projection-of-displacements) |
 [known issues](#known-issues) |
