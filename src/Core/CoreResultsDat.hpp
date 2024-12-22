@@ -22,6 +22,8 @@ public:
 
   int current_result_block = -1;
   int current_total_time_id = -1;
+  int current_step = -1;
+  int current_increment = -1;
   
   std::vector<int> progress; // size max_threads + total
   std::chrono::high_resolution_clock::time_point t_start = std::chrono::high_resolution_clock::now();
@@ -32,6 +34,8 @@ public:
   // result_blocks[0][2] result block type
   // result_blocks[0][3] result block set
   // result_blocks[0][4] result block data id
+  // result_blocks[0][5] step
+  // result_blocks[0][6] step increment
 
   std::vector<double> total_times;
   // total_times[0] total time
@@ -87,6 +91,7 @@ public:
   bool is_whitespace(std::string line); // check if line consists only of whitespace
   std::string erase_whitespace(std::string line); // erases all whitespaces
   bool check_mode(std::vector<std::string> line); // checks if the current read mode is still valid or others should be used
+  bool check_step(std::vector<std::string> line); // checks if the current step or increment should be updated
   bool read_header(std::vector<std::string> line); // processing the result block header
   bool header_emas(std::vector<std::string> line); // processing emas header
   bool read_line(std::vector<std::string> line); // processing the result lines

@@ -45,6 +45,7 @@ private:
   QVBoxLayout* VBoxLayout_6;
   QVBoxLayout* VBoxLayout_7;
   QVBoxLayout* VBoxLayout_8;
+  QVBoxLayout* VBoxLayout_9;
   QSpacerItem* vertical_spacer;
   QHBoxLayout* HBoxLayout_1;
   QHBoxLayout* HBoxLayout_2;
@@ -54,6 +55,7 @@ private:
   QHBoxLayout* HBoxLayout_6;
   QHBoxLayout* HBoxLayout_7;
   QHBoxLayout* HBoxLayout_8;
+  QHBoxLayout* HBoxLayout_9;
   QLabel* label_1;
   QLabel* label_2;
   QLabel* label_3;
@@ -62,6 +64,7 @@ private:
   QLabel* label_6;
   QLabel* label_7;
   QLabel* label_8;
+  QLabel* label_9;
   QLineEdit* lineEdit_1;
   QLineEdit* lineEdit_2;
   QLineEdit* lineEdit_3;
@@ -70,6 +73,7 @@ private:
   QLineEdit* lineEdit_6;
   QLineEdit* lineEdit_7;
   QCheckBox* checkBox_8;
+  QLineEdit* lineEdit_9;
 };
 
 #endif // USEROPTIONSPANEL_HPP

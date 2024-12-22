@@ -11,7 +11,7 @@ HBCsManagement::HBCsManagement()
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
 
   // main window
-  this->setGeometry(0,0,800,800);
+  this->setGeometry(0,0,1100,800);
   this->setWindowTitle("homogeneous Boundary Conditions Management");
 
   gridLayout = new QGridLayout(this);
@@ -73,16 +73,19 @@ HBCsManagement::HBCsManagement()
   tree_hbcs = new QTreeWidget();
   //tree_material->setGeometry(10,30,181,191);
   tree_hbcs->setColumnCount(2);
+  tree_hbcs->setColumnWidth(0, 200);
   tree_hbcs->setHeaderLabels(QStringList() << "Name" << "ID");
   boxLayout_hbcs_1->addWidget(tree_hbcs);
 
   tree_available = new QTreeWidget();
   tree_available->setColumnCount(2);
+  tree_available->setColumnWidth(0, 200);
   tree_available->setHeaderLabels(QStringList() << "Name" << "ID");
   boxLayout_assignment_1->addWidget(tree_available);
 
   tree_used = new QTreeWidget();
   tree_used->setColumnCount(2);
+  tree_used->setColumnWidth(0, 200);
   tree_used->setHeaderLabels(QStringList() << "Name" << "ID");
   //list_available->setGeometry(300,30,111,191);
   boxLayout_assignment_3->addWidget(tree_used);

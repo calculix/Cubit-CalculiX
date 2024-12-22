@@ -190,15 +190,17 @@ ccx modify step 1 parameter nlgeom_yes
 ccx modify step 1 static initialtimeincrement 0.02 timeperiodofstep 0.1 minimumtimeincrement 1e-6 maximumtimeincrement 0.02
 ccx step 1 add bc displacement 1 2 3 5 6 7
 ccx step 1 add fieldoutput 1 2 3
-#ccx step 1 add historyoutput 1
+ccx step 1 add historyoutput 1 2 3
 
 ccx create step name "move_punch" static
 ccx modify step 2 parameter nlgeom_yes inc 1000
 ccx modify step 2 static initialtimeincrement 0.00125 timeperiodofstep 1 minimumtimeincrement 1e-6 maximumtimeincrement 0.0025
 ccx step 2 add bc displacement 4
 ccx step 2 add fieldoutput 1 2 3
-#ccx step 2 add historyoutput 1 2 3
+ccx step 2 add historyoutput 1 2 3
 
 ccx create job name "forming"
 #ccx run job 1
 
+ccx result load job 1
+ccx result convert job 1 partial

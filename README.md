@@ -1,7 +1,7 @@
 [![GitHub](https://badgen.net/badge/icon/github?icon=github&label)](https://github.com/calculix/Cubit-CalculiX)
 [![Github All Releases](https://img.shields.io/github/downloads/calculix/Cubit-CalculiX/total.svg)](https://github.com/calculix/Cubit-CalculiX/releases)
 <br/>
-# Cubit-CalculiX 2024.10
+# Cubit-CalculiX 2024.12
 Hey ho that´s the CalculiX Component for coreform cubit!
 
 Full Model definitions for CalculiX can be done with Cubit as Preprocessor.
@@ -13,10 +13,10 @@ The builds can be downloaded at our [website](https://www.maschinenbauer.at/open
 
 Or just use the links.
 
-[Windows Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2024.10/build_windows_2024.10.zip)
-[Linux Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2024.10/build_linux_2024.10.zip)
+[Windows Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2024.12/build_windows_2024.12.zip)
+[Linux Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2024.12/build_linux_2024.12.zip)
 
-This component was build with Cubit 2024.8! 
+This component was build with Cubit 2024.8!
 Tested with Cubit 2024.8 on Windows 10 and Ubuntu 22.04
 
 Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/@CubitCalculiX) . We will post videos from examples and updates in the near future.
@@ -24,10 +24,12 @@ Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/
 ---
 [Downloads](https://github.com/calculix/Cubit-CalculiX/releases) |
 [Key Features](#key-features) |
-[How to](#how-to) |
+[How to use](#how-to-use) |
 [Examples](#examples) |
 [Installation](#installation) |
-[Postprocessing](#postprocessing) <!-- |
+[Postprocessing](#postprocessing) | 
+[How to build on linux](#how-to-build-on-linux)
+<!-- |
 [Projection of Displacements](#projection-of-displacements) |
 [known issues](#known-issues) |
 [todo list](#todo-list) -->
@@ -37,23 +39,116 @@ Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/
 - Elements Sets
 - Node Sets
 - Side Sets
-- Materials (Conductivity, Density, Elastic, Expansion, Plastic, Specific Heat)
-- Sections (Solid, Shell, Membrane, Beam)
-- Constraints (Tie, Rigid Body)
+- Materials
+  - Compression Only
+  - Conductivity 
+    - Isotropic
+    - Orthotropic
+    - Anisotropic
+  - Creep
+  - Cyclic Hardening
+  - Damping
+  - Deformation Plasticity
+  - Density
+  - Elastic
+    - Isotropic
+    - Orthotropic
+    - Anisotropic
+    - Engineering Constants
+  - Expansion
+    - Isotropic
+    - Orthotropic
+    - Anisotropic
+  - Hyperelastic
+    - Arruda-Boyce
+    - Mooney-Rivlin
+    - Neo Hooke
+    - Ogden N=1,2,3
+    - Polynomial N=1,2,3
+    - reduced Polynomial N=1,2,3
+    - Yeoh
+  - Hyperfoam N=1,2,3
+  - Mohr Coulomb
+  - Mohr Coulomb Hardening
+  - Plastic
+    - Isotropic
+    - Kinematic
+    - Combined
+    - Johnson Cook
+  - Rate Dependent
+  - Specific Heat
+  - Tension Only
+- Materiallibrary 
+  - easy to use library: materials can be created, modified and deleted, imported from cubit and exported into cubit
+  - already contains some default materials
+- Sections 
+  - Solid
+  - Shell
+  - Membrane
+  - Beam
+- Constraints
+  - Tie
+  - Rigid Body
 - Surface Interactions
+  - Exponential
+  - Linear
+  - Tabular
+  - Tied
+  - Hard
 - Contact Pairs
+  - Node to Surface
+  - Surface to Surface
+  - Mortar
+  - LinMortar
+  - PgLinMortar
 - Amplitudes
 - Orientations
-- Loads (CLOAD, DLOAD, DFLUX, GRAVITY, CENTRIF)
-- Boundary Conditions (Displacements, Temperatures)
-- Initial Conditions (Displacements, Temperatures)
-- History Outputs (NODE PRINT, EL PRINT, CONTACT PRINT)
-- Field Outputs (NODE FILE, EL FILE, CONTACT FILE)
-- STEPS (Static, Frequency, Buckle, Heat Transfer, Coupled Temperature Displacement, Uncoupled Temperature Displacement, No Analysis)
+- Damping
+- Physical Constants
+- Loads
+  - Forces (CLOAD)
+  - Pressures (DLOAD)
+  - Heatfluxes (DFLUX)
+  - Gravities (GRAVITY)
+  - Centrifugal (CENTRIF)
+  - Film
+  - Radiation
+  - Trajectories
+    - Heatflux (can be used as moving heatsource)
+- Boundary Conditions
+  - Displacements
+  - Temperatures
+- Initial Conditions
+  - Displacements
+  - Temperatures
+- History Outputs
+  - NODE PRINT
+  - EL PRINT
+  - CONTACT PRINT
+- Field Outputs
+  - NODE FILE
+  - EL FILE
+  - CONTACT FILE
+- STEPS
+  - Static
+  - Frequency
+  - Buckle
+  - Heat Transfer
+  - Coupled Temperature Displacement
+  - Uncoupled Temperature Displacement
+  - Dynamic
+  - Modal Dynamic
+  - Steady State Dynamics
+  - Complex Frequency
+  - No Analysis
 - Adding Customlines before/after Keywords
 - Export of Calculix Model
 - Creation and Running of Jobs
-- Conversion of Results to Paraview (.frd and .dat: nodal, element and integration points results, auto calculating von Mises and Principal Stresses)
+- Conversion of Results to Paraview
+  - .frd nodal results, auto calculating von Mises and Principal Stresses
+  - .dat: nodal, element and integration points results, auto calculating von Mises and Principal Stresses
+  - visualization of single parts with multiblock inspector
+  - visualization of integration point results
 - Projection of Displacements from .frd to mesh
 - Opening of Results with CGX or Paraview
 - Results can be viewed, plotted and exported to .csv
@@ -61,7 +156,7 @@ Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/
 - Python Interface to query the result files. This can be used to run convergence studies or do mesh refinement based on the results.
 - The calculix model data and the loaded frd and dat results will be saved and loaded automatically with the standard cubit fileformat .cub5
 
-# How to
+# How to use
 To get an overview of all new commands type
 
 ccx ?
@@ -101,10 +196,20 @@ in python mode (#!python)
   title="Contact press fitting">
 ](examples/contact_press_fitting/)
 [<img
+  src="examples/metal_forming/example.gif"
+  width="400"
+  title="Metal forming">
+](examples/metal_forming/)
+[<img
   src="examples/mesh_refinement/example.png"
   width="400"
   title="Mesh refinement">
 ](examples/mesh_refinement/)
+[<img
+  src="examples/moving_heatsource/example.gif"
+  width="400"
+  title="Moving Heatsource">
+](examples/moving_heatsource/)
 [<img
   src="examples/model_change/example.gif"
   width="400"
@@ -121,10 +226,22 @@ in python mode (#!python)
   title="Simple convergence study">
 ](examples/simple_convergence_study/)
 [<img
+  src="examples/tube_impact/example.gif"
+  width="400"
+  title="Tube Impact">
+](examples/tube_impact/)
+[<img
   src="examples/Welding/shrinkage_model/example.gif"
   width="400"
   title="Shrinkage model">
 ](examples/Welding/shringage_model/)
+<!-- 
+[<img
+  src="examples/Welding/shrinkage_model_moving_heatsource/example.gif"
+  width="400"
+  title="Shrinkage model">
+](examples/Welding/shringage_model_moving_heatsource/)
+-->
 
 # Installation
 
@@ -175,7 +292,7 @@ When there are displacements in the frd file for requested blocks in the .dat. T
 
 current limitations of the converter:
 - totals ignored
-- buckling in .dat ignored
+- buckling in .dat can be queried through the python api
 - contact print card ignored
 - only links for complete nodal and element data
 
@@ -189,10 +306,42 @@ When choosing the totalincrement the related displacements will be used.
 
 ![projection of displacements](/readme_docs/projection_01.png?raw=true "projection of displacements")
 
+# How to build on linux
+Build Process for Ubuntu 22.04 and 24.04
+
+1. After a clean installation
+   Update and upgrade the system, then install tools required for building:
+   ```
+   sudo apt update && sudo apt upgrade -y
+   sudo apt-get install cmake cmake-gui
+   sudo apt-get install build-essential
+   sudo apt-get install qtbase5-dev libqt5charts5-dev libqt5widgets5
+   sudo apt install libglu1-mesa
+   ```
+2. Install Coreform Cubit
+   Either download from the [Coreform Website](https://coreform.com/downloads/) or via terminal
+   ```
+   wget https://f002.backblazeb2.com/file/cubit-downloads/Coreform-Cubit/Releases/Linux/Coreform-Cubit-2024.8%2B52155-Lin64.deb
+   sudo apt-get install ./Coreform-Cubit-2024.8+52155-Lin64.deb
+   ```
+3. Install Cubit-Calculix
+   Clone the Cubit-Calculix repository
+   ```
+   git clone https://github.com/calculix/Cubit-CalculiX.git
+   ```
+4. Build Steps   
+   Clean and recreate the build directory, then run CMake and build:
+   ```
+   rm -rf ~/Cubit-CalculiX/build
+   mkdir -p ~/Cubit-CalculiX/build
+   cmake -S ~/Cubit-CalculiX/src -B ~/Cubit-CalculiX/build
+   cmake --build ~/Cubit-CalculiX/build
+   cd ~/Cubit-CalculiX/build
+   make -j4
+   ```
+   
 # known issues
 - See https://github.com/calculix/Cubit-CalculiX/issues for open issues. Not every issue is closed in the available binaries. Please look at the issue and release date.
-
-- History Bug on Windows: Currently commands that will be send using the gui won't be recorded into the history tab. This has been fixed for Linux. In the current cubit windows release (2024.8) are some symbols missing. So we have to wait onto the next release to fix this for windows too.
 
 # todo list
 - documentation

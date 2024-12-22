@@ -12,6 +12,7 @@
 #include "NavigationNode.hpp"
 #include "NavigationWidgetCache.hpp"
 #include "Claro.hpp"
+#include "CubitMessage.hpp"
 
 // A list of headers for my command panels.
 #include "CCXBlocksElementTypePanel.hpp"
@@ -41,6 +42,10 @@
 #include "OrientationsCreatePanel.hpp"
 #include "OrientationsModifyPanel.hpp"
 #include "OrientationsDeletePanel.hpp"
+#include "DampingModifyPanel.hpp"
+#include "DampingDeletePanel.hpp"
+#include "PhysicalConstantsModifyPanel.hpp"
+#include "PhysicalConstantsDeletePanel.hpp"
 #include "LoadsForcesModifyPanel.hpp"
 #include "LoadsPressuresModifyPanel.hpp"
 #include "LoadsHeatfluxesModifyPanel.hpp"
@@ -50,6 +55,15 @@
 #include "LoadsCentrifugalCreatePanel.hpp"
 #include "LoadsCentrifugalModifyPanel.hpp"
 #include "LoadsCentrifugalDeletePanel.hpp"
+#include "LoadsTrajectoryCreatePanel.hpp"
+#include "LoadsTrajectoryModifyPanel.hpp"
+#include "LoadsTrajectoryDeletePanel.hpp"
+#include "LoadsFilmCreatePanel.hpp"
+#include "LoadsFilmModifyPanel.hpp"
+#include "LoadsFilmDeletePanel.hpp"
+#include "LoadsRadiationCreatePanel.hpp"
+#include "LoadsRadiationModifyPanel.hpp"
+#include "LoadsRadiationDeletePanel.hpp"
 #include "BCsDisplacementsModifyPanel.hpp"
 #include "BCsTemperaturesModifyPanel.hpp"
 #include "HistoryOutputsCreatePanel.hpp"
@@ -73,6 +87,10 @@
 #include "StepsModifyHeatTransferPanel.hpp"
 #include "StepsModifyCoupledTemperatureDisplacementPanel.hpp"
 #include "StepsModifyUncoupledTemperatureDisplacementPanel.hpp"
+#include "StepsModifyDynamicPanel.hpp"
+#include "StepsModifyModalDynamicPanel.hpp"
+#include "StepsModifySteadyStateDynamicsPanel.hpp"
+#include "StepsModifyComplexFrequencyPanel.hpp"
 #include "StepsDeletePanel.hpp"
 #include "CustomLinesCreatePanel.hpp"
 #include "CustomLinesModifyPanel.hpp"
@@ -177,140 +195,177 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
   // We don't worry about setting the widget parent here because it is
   // set in the getWidget() function.
 
+  //std::string output = "need widget " + name.toStdString() + "\n";
+  //PRINT_INFO("%s", output.c_str());
+
   if(name == "CCXBlocksModify")
     return new CCXBlocksElementTypePanel();
-  else if(name == "CCXSectionsCreateSolid")
+  if(name == "CCXSectionsCreateSolid")
     return new SectionsCreateSolidPanel();
-  else if(name == "CCXSectionsCreateShell")
+  if(name == "CCXSectionsCreateShell")
     return new SectionsCreateShellPanel();
-  else if(name == "CCXSectionsCreateBeam")
+  if(name == "CCXSectionsCreateBeam")
     return new SectionsCreateBeamPanel();
-  else if(name == "CCXSectionsCreateMembrane")
+  if(name == "CCXSectionsCreateMembrane")
     return new SectionsCreateMembranePanel();
-  else if(name == "CCXSectionsModifySolid")
+  if(name == "CCXSectionsModifySolid")
     return new SectionsModifySolidPanel();
-  else if(name == "CCXSectionsModifyShell")
+  if(name == "CCXSectionsModifyShell")
     return new SectionsModifyShellPanel();
-  else if(name == "CCXSectionsModifyBeam")
+  if(name == "CCXSectionsModifyBeam")
     return new SectionsModifyBeamPanel();
-  else if(name == "CCXSectionsModifyMembrane")
+  if(name == "CCXSectionsModifyMembrane")
     return new SectionsModifyMembranePanel();
-  else if(name == "CCXSectionsDelete")
+  if(name == "CCXSectionsDelete")
     return new SectionsDeletePanel();
-  else if(name == "CCXConstraintsCreateRigidBody")
+  if(name == "CCXConstraintsCreateRigidBody")
     return new ConstraintsCreateRigidBodyPanel();
-  else if(name == "CCXConstraintsCreateTie")
+  if(name == "CCXConstraintsCreateTie")
     return new ConstraintsCreateTiePanel();
-  else if(name == "CCXConstraintsModifyRigidBody")
+  if(name == "CCXConstraintsModifyRigidBody")
     return new ConstraintsModifyRigidBodyPanel();
-  else if(name == "CCXConstraintsModifyTie")
+  if(name == "CCXConstraintsModifyTie")
     return new ConstraintsModifyTiePanel();
-  else if(name == "CCXConstraintsDelete")
+  if(name == "CCXConstraintsDelete")
     return new ConstraintsDeletePanel();
-  else if(name == "CCXSurfaceInteractionsCreate")
+  if(name == "CCXSurfaceInteractionsCreate")
     return new SurfaceInteractionsCreatePanel();
-  else if(name == "CCXSurfaceInteractionsModify")
+  if(name == "CCXSurfaceInteractionsModify")
     return new SurfaceInteractionsModifyPanel();
-  else if(name == "CCXSurfaceInteractionsDelete")
+  if(name == "CCXSurfaceInteractionsDelete")
     return new SurfaceInteractionsDeletePanel();
-  else if(name == "CCXContactPairsCreate")
+  if(name == "CCXContactPairsCreate")
     return new ContactPairsCreatePanel();
-  else if(name == "CCXContactPairsModify")
+  if(name == "CCXContactPairsModify")
     return new ContactPairsModifyPanel();
-  else if(name == "CCXContactPairsDelete")
+  if(name == "CCXContactPairsDelete")
     return new ContactPairsDeletePanel();
-  else if(name == "CCXAmplitudesCreate")
+  if(name == "CCXAmplitudesCreate")
     return new AmplitudesCreatePanel();
-  else if(name == "CCXAmplitudesModify")
+  if(name == "CCXAmplitudesModify")
     return new AmplitudesModifyPanel();
-  else if(name == "CCXAmplitudesDelete")
+  if(name == "CCXAmplitudesDelete")
     return new AmplitudesDeletePanel();
-  else if(name == "CCXOrientationsCreate")
+  if(name == "CCXOrientationsCreate")
     return new OrientationsCreatePanel();
-  else if(name == "CCXOrientationsModify")
+  if(name == "CCXOrientationsModify")
     return new OrientationsModifyPanel();
-  else if(name == "CCXOrientationsDelete")
+  if(name == "CCXOrientationsDelete")
     return new OrientationsDeletePanel();
-  else if(name == "CCXLoadsForcesModify")
+  if(name == "CCXDampingModify")
+    return new DampingModifyPanel();
+  if(name == "CCXDampingDelete")
+    return new DampingDeletePanel();
+  if(name == "CCXPhysicalConstantsModify")
+    return new PhysicalConstantsModifyPanel();
+  if(name == "CCXPhysicalConstantsDelete")
+    return new PhysicalConstantsDeletePanel();
+  if(name == "CCXLoadsForcesModify")
     return new LoadsForcesModifyPanel();
-  else if(name == "CCXLoadsPressuresModify")
+  if(name == "CCXLoadsPressuresModify")
     return new LoadsPressuresModifyPanel();
-  else if(name == "CCXLoadsHeatfluxesModify")
+  if(name == "CCXLoadsHeatfluxesModify")
     return new LoadsHeatfluxesModifyPanel();
-  else if(name == "CCXLoadsGravityCreate")
+  if(name == "CCXLoadsGravityCreate")
     return new LoadsGravityCreatePanel();
-  else if(name == "CCXLoadsGravityModify")
+  if(name == "CCXLoadsGravityModify")
     return new LoadsGravityModifyPanel();
-  else if(name == "CCXLoadsGravityDelete")
+  if(name == "CCXLoadsGravityDelete")
     return new LoadsGravityDeletePanel();
-  else if(name == "CCXLoadsCentrifugalCreate")
+  if(name == "CCXLoadsCentrifugalCreate")
     return new LoadsCentrifugalCreatePanel();
-  else if(name == "CCXLoadsCentrifugalModify")
+  if(name == "CCXLoadsCentrifugalModify")
     return new LoadsCentrifugalModifyPanel();
-  else if(name == "CCXLoadsCentrifugalDelete")
+  if(name == "CCXLoadsCentrifugalDelete")
     return new LoadsCentrifugalDeletePanel();
-  else if(name == "CCXBCsDisplacementsModify")
+  if(name == "CCXLoadsTrajectoryCreate")
+    return new LoadsTrajectoryCreatePanel();
+  if(name == "CCXLoadsTrajectoryModify")
+    return new LoadsTrajectoryModifyPanel();
+  if(name == "CCXLoadsTrajectoryDelete")
+    return new LoadsTrajectoryDeletePanel();
+  if(name == "CCXLoadsFilmCreate")
+    return new LoadsFilmCreatePanel();
+  if(name == "CCXLoadsFilmModify")
+    return new LoadsFilmModifyPanel();
+  if(name == "CCXLoadsFilmDelete")
+    return new LoadsFilmDeletePanel();
+  if(name == "CCXLoadsRadiationCreate")
+    return new LoadsRadiationCreatePanel();
+  if(name == "CCXLoadsRadiationModify")
+    return new LoadsRadiationModifyPanel();
+  if(name == "CCXLoadsRadiationDelete")
+    return new LoadsRadiationDeletePanel();
+  if(name == "CCXBCsDisplacementsModify")
     return new BCsDisplacementsModifyPanel();
-  else if(name == "CCXBCsTemperaturesModify")
+  if(name == "CCXBCsTemperaturesModify")
     return new BCsTemperaturesModifyPanel();
-  else if(name == "CCXHistoryOutputsCreate")
+  if(name == "CCXHistoryOutputsCreate")
     return new HistoryOutputsCreatePanel();
-  else if(name == "CCXHistoryOutputsModifyNode")
+  if(name == "CCXHistoryOutputsModifyNode")
     return new HistoryOutputsModifyNodePanel();
-  else if(name == "CCXHistoryOutputsModifyElement")
+  if(name == "CCXHistoryOutputsModifyElement")
     return new HistoryOutputsModifyElementPanel();
-  else if(name == "CCXHistoryOutputsModifyContact")
+  if(name == "CCXHistoryOutputsModifyContact")
     return new HistoryOutputsModifyContactPanel();
-  else if(name == "CCXHistoryOutputsDelete")
+  if(name == "CCXHistoryOutputsDelete")
     return new HistoryOutputsDeletePanel();
-  else if(name == "CCXFieldOutputsCreate")
+  if(name == "CCXFieldOutputsCreate")
     return new FieldOutputsCreatePanel();
-  else if(name == "CCXFieldOutputsModifyNode")
+  if(name == "CCXFieldOutputsModifyNode")
     return new FieldOutputsModifyNodePanel();
-  else if(name == "CCXFieldOutputsModifyElement")
+  if(name == "CCXFieldOutputsModifyElement")
     return new FieldOutputsModifyElementPanel();
-  else if(name == "CCXFieldOutputsModifyContact")
+  if(name == "CCXFieldOutputsModifyContact")
     return new FieldOutputsModifyContactPanel();
-  else if(name == "CCXFieldOutputsDelete")
+  if(name == "CCXFieldOutputsDelete")
     return new FieldOutputsDeletePanel();
-  else if(name == "CCXInitialConditionsCreate")
+  if(name == "CCXInitialConditionsCreate")
     return new InitialConditionsCreatePanel();
-  else if(name == "CCXInitialConditionsModify")
+  if(name == "CCXInitialConditionsModify")
     return new InitialConditionsModifyPanel();
-  else if(name == "CCXInitialConditionsDelete")
+  if(name == "CCXInitialConditionsDelete")
     return new InitialConditionsDeletePanel();
-  else if(name == "CCXStepsCreate")
+  if(name == "CCXStepsCreate")
     return new StepsCreatePanel();
-  else if(name == "CCXStepsModifyParameter")
+  if(name == "CCXStepsModifyParameter")
     return new StepsModifyParameterPanel();
-  else if(name == "CCXStepsModifyStatic")
+  if(name == "CCXStepsModifyStatic")
     return new StepsModifyStaticPanel();
-  else if(name == "CCXStepsModifyFrequency")
+  if(name == "CCXStepsModifyFrequency")
     return new StepsModifyFrequencyPanel();
-  else if(name == "CCXStepsModifyBuckle")
+  if(name == "CCXStepsModifyBuckle")
     return new StepsModifyBucklePanel();
-  else if(name == "CCXStepsModifyHeatTransfer")
+  if(name == "CCXStepsModifyHeatTransfer")
     return new StepsModifyHeatTransferPanel();
-  else if(name == "CCXStepsModifyCoupledTemperatureDisplacement")
+  if(name == "CCXStepsModifyCoupledTemperatureDisplacement")
     return new StepsModifyCoupledTemperatureDisplacementPanel();
-  else if(name == "CCXStepsModifyUncoupledTemperatureDisplacement")
+  if(name == "CCXStepsModifyUncoupledTemperatureDisplacement")
     return new StepsModifyUncoupledTemperatureDisplacementPanel();
-  else if(name == "CCXStepsDelete")
+  if(name == "CCXStepsModifyDynamic")
+    return new StepsModifyDynamicPanel();
+  if(name == "CCXStepsModifyModalDynamic")
+    return new StepsModifyModalDynamicPanel();
+  if(name == "CCXStepsModifySteadyStateDynamics")
+    return new StepsModifySteadyStateDynamicsPanel();
+  if(name == "CCXStepsModifyComplexFrequency")
+    return new StepsModifyComplexFrequencyPanel();
+  if(name == "CCXStepsDelete")
     return new StepsDeletePanel();
-  else if(name == "CCXCustomLinesCreate")
+  if(name == "CCXCustomLinesCreate")
     return new CustomLinesCreatePanel();
-  else if(name == "CCXCustomLinesModify")
+  if(name == "CCXCustomLinesModify")
     return new CustomLinesModifyPanel();
-  else if(name == "CCXCustomLinesDelete")
+  if(name == "CCXCustomLinesDelete")
     return new CustomLinesDeletePanel();
-  else if(name == "CCXJobsCreate")
+  if(name == "CCXJobsCreate")
     return new JobsCreatePanel();
-  else if(name == "CCXJobsModify")
+  if(name == "CCXJobsModify")
     return new JobsModifyPanel();
-  else if(name == "CCXJobsDelete")
+  if(name == "CCXJobsDelete")
     return new JobsDeletePanel();
-  else if(name == "CCXJobsActions")
+  if(name == "CCXJobsActions")
     return new JobsActionsPanel();
-  else
-    return NULL;
+  
+  return NULL;
 }

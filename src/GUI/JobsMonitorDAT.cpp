@@ -422,7 +422,7 @@ void JobsMonitorDAT::update_result()
     std::sort(elements.begin(),elements.end());
     elements.erase(std::unique(elements.begin(), elements.end()), elements.end());
     std::vector<double> tmp_element = ccx_iface->dat_get_element_values_for_component(current_job_id,elements[0],times[0],str_current_result_block,str_current_result_set,components[0]);
-    ipc = tmp_element.size(); // number of integration points
+    ipc = int(tmp_element.size()); // number of integration points
 
     start = this->current_page * items_per_page;
     end = start + this->items_per_page - 1;

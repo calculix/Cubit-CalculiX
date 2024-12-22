@@ -22,6 +22,9 @@ std::vector<std::string> ccxDrawCommand::get_syntax()
   syntax.append(" [heatflux <value:label='heatflux_id',help='<heatflux_id>'>...]");
   syntax.append(" [gravity <value:label='gravity_id',help='<gravity_id>'>...]");
   syntax.append(" [centrifugal <value:label='centrifugal_id',help='<centrifugal_id>'>...]");
+  syntax.append(" [trajectory <value:label='trajectory_id',help='<trajectory_id>'>...]");
+  syntax.append(" [film <value:label='film_id',help='<film_id>'>...]");
+  syntax.append(" [radiation <value:label='radiation_id',help='<radiation_id>'>...]");
   syntax.append("]");
   syntax.append(" [bc ");
   syntax.append(" [displacement <value:label='displacement_id',help='<displacement_id>'>...]");
@@ -34,6 +37,9 @@ std::vector<std::string> ccxDrawCommand::get_syntax()
   syntax.append(" [load_heatflux_all]");
   syntax.append(" [load_gravity_all]");
   syntax.append(" [load_centrifugal_all]");
+  syntax.append(" [load_trajectory_all]");
+  syntax.append(" [load_film_all]");
+  syntax.append(" [load_radiation_all]");
   syntax.append(" [bc_all]");
   syntax.append(" [bc_displacement_all]");
   syntax.append(" [bc_temperature_all]");
@@ -55,6 +61,9 @@ std::vector<std::string> ccxDrawCommand::get_syntax_help()
   help[0].append(" [heatflux <heatflux_id>...]");
   help[0].append(" [gravity <gravity_id>...]");
   help[0].append(" [centrifugal <centrifugal_id>...]]");
+  help[0].append(" [trajectory <trajectory_id>...]]");
+  help[0].append(" [film <film_id>...]]");
+  help[0].append(" [radiation <radiation_id>...]]");
   help[0].append(" [bc [displacement <displacement_id>...]");
   help[0].append(" [temperature <temperature_id>...]]");
   help[0].append(" [orientation <orientation_id>...]");
@@ -64,6 +73,9 @@ std::vector<std::string> ccxDrawCommand::get_syntax_help()
   help[0].append(" [load_heatflux_all]");
   help[0].append(" [load_gravity_all]");
   help[0].append(" [load_centrifugal_all]");
+  help[0].append(" [load_trajectory_all]");
+  help[0].append(" [load_film_all]");
+  help[0].append(" [load_radiation_all]");
   help[0].append(" [bc_all]");
   help[0].append(" [bc_displacement_all]");
   help[0].append(" [bc_temperature_all]");
@@ -90,6 +102,9 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
   std::vector<int> heatflux_id;
   std::vector<int> gravity_id;
   std::vector<int> centrifugal_id;
+  std::vector<int> trajectory_id;
+  std::vector<int> film_id;
+  std::vector<int> radiation_id;
   std::vector<int> displacement_id;
   std::vector<int> temperature_id;
   std::vector<int> orientation_id;
@@ -119,6 +134,9 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
     data.get_values("heatflux_id", heatflux_id);
     data.get_values("gravity_id", gravity_id);
     data.get_values("centrifugal_id", centrifugal_id);
+    data.get_values("trajectory_id", trajectory_id);
+    data.get_values("film_id", film_id);
+    data.get_values("radiation_id", radiation_id);
   }
 
   if (data.find_keyword("BC"))
@@ -130,9 +148,9 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
   data.get_values("orientation_id", orientation_id);
 
 
-  if ((force_id.size()==0)&&(pressure_id.size()==0)&&(heatflux_id.size()==0)&&(gravity_id.size()==0)&&(centrifugal_id.size()==0)&&(displacement_id.size()==0)&&(temperature_id.size()==0)&&(orientation_id.size()==0))
+  if ((force_id.size()==0)&&(pressure_id.size()==0)&&(heatflux_id.size()==0)&&(gravity_id.size()==0)&&(centrifugal_id.size()==0)&&(trajectory_id.size()==0)&&(film_id.size()==0)&&(radiation_id.size()==0)&&(displacement_id.size()==0)&&(temperature_id.size()==0)&&(orientation_id.size()==0))
   {
-   if((!data.find_keyword("LOAD_ALL"))&&(!data.find_keyword("BC_ALL"))&&(!data.find_keyword("ORIENTATION_ALL"))&&(!data.find_keyword("LOAD_FORCE_ALL"))&&(!data.find_keyword("LOAD_PRESSURE_ALL"))&&(!data.find_keyword("LOAD_HEATFLUX_ALL"))&&(!data.find_keyword("LOAD_GRAVITY_ALL"))&&(!data.find_keyword("LOAD_CENTRIFUGAL_ALL"))&&(!data.find_keyword("BC_DISPLACEMENT_ALL"))&&(!data.find_keyword("BC_TEMPERATURE_ALL")))
+   if((!data.find_keyword("LOAD_ALL"))&&(!data.find_keyword("BC_ALL"))&&(!data.find_keyword("ORIENTATION_ALL"))&&(!data.find_keyword("LOAD_FORCE_ALL"))&&(!data.find_keyword("LOAD_PRESSURE_ALL"))&&(!data.find_keyword("LOAD_HEATFLUX_ALL"))&&(!data.find_keyword("LOAD_GRAVITY_ALL"))&&(!data.find_keyword("LOAD_CENTRIFUGAL_ALL"))&&(!data.find_keyword("LOAD_TRAJECTORY_ALL"))&&(!data.find_keyword("LOAD_FILM_ALL"))&&(!data.find_keyword("LOAD_RADIATION_ALL"))&&(!data.find_keyword("BC_DISPLACEMENT_ALL"))&&(!data.find_keyword("BC_TEMPERATURE_ALL")))
       {
         bool_draw_all = true;
       }
@@ -211,6 +229,33 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
       PRINT_ERROR(output.c_str());
     }
   }
+  if (data.find_keyword("LOAD_TRAJECTORY_ALL"))
+  {
+    bool_draw_all = false;
+    if (!ccx_iface.draw_load_trajectories(size_value))
+    {
+      output = "Failed ccx draw trajectories!\n";
+      PRINT_ERROR(output.c_str());
+    }
+  }
+  if (data.find_keyword("LOAD_FILM_ALL"))
+  {
+    bool_draw_all = false;
+    if (!ccx_iface.draw_load_films(size_value))
+    {
+      output = "Failed ccx draw films!\n";
+      PRINT_ERROR(output.c_str());
+    }
+  }
+  if (data.find_keyword("LOAD_RADIATION_ALL"))
+  {
+    bool_draw_all = false;
+    if (!ccx_iface.draw_load_radiations(size_value))
+    {
+      output = "Failed ccx draw radiations!\n";
+      PRINT_ERROR(output.c_str());
+    }
+  }
   if (data.find_keyword("BC_DISPLACEMENT_ALL"))
   {
     bool_draw_all = false;
@@ -252,6 +297,21 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
   if (!ccx_iface.draw_load_centrifugal(centrifugal_id,size_value))
   {
     output = "Failed ccx draw load centrifugal!\n";
+    PRINT_ERROR(output.c_str());
+  }
+  if (!ccx_iface.draw_load_trajectory(trajectory_id,size_value))
+  {
+    output = "Failed ccx draw load trajectory!\n";
+    PRINT_ERROR(output.c_str());
+  }
+  if (!ccx_iface.draw_load_film(film_id,size_value))
+  {
+    output = "Failed ccx draw load film!\n";
+    PRINT_ERROR(output.c_str());
+  }
+  if (!ccx_iface.draw_load_radiation(radiation_id,size_value))
+  {
+    output = "Failed ccx draw load radiation!\n";
     PRINT_ERROR(output.c_str());
   }
   if (!ccx_iface.draw_bc_displacement(displacement_id,size_value))

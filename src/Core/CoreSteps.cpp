@@ -1,6 +1,7 @@
 #include "CoreSteps.hpp"
 #include "CubitInterface.hpp"
 #include "CalculiXCoreInterface.hpp"
+#include "CubitMessage.hpp"
 
 CoreSteps::CoreSteps()
 {}
@@ -36,6 +37,10 @@ bool CoreSteps::reset()
   heattransfer_data.clear();
   coupledtd_data.clear();
   uncoupledtd_data.clear();
+  dynamic_data.clear();
+  modal_dynamic_data.clear();
+  steady_state_dynamics_data.clear();
+  complex_frequency_data.clear();
   loads_data.clear();
   bcs_data.clear();
   historyoutputs_data.clear();
@@ -185,6 +190,58 @@ bool CoreSteps::create_step(std::vector<std::string> options)
     }
     step_type_id = sub_id;
     this->add_uncoupledtd(std::to_string(sub_id));
+  }else if (step_type == 8)
+  {  // dynamic
+    if (dynamic_data.size()==0)
+    {
+      sub_id = 1;
+    }
+    else
+    {
+      sub_last = int(dynamic_data.size()) - 1;
+      sub_id = std::stoi(dynamic_data[sub_last][0]) + 1;
+    }
+    step_type_id = sub_id;
+    this->add_dynamic(std::to_string(sub_id));
+  }else if (step_type == 9)
+  {  // modal dynamic
+    if (modal_dynamic_data.size()==0)
+    {
+      sub_id = 1;
+    }
+    else
+    {
+      sub_last = int(modal_dynamic_data.size()) - 1;
+      sub_id = std::stoi(modal_dynamic_data[sub_last][0]) + 1;
+    }
+    step_type_id = sub_id;
+    this->add_modal_dynamic(std::to_string(sub_id));
+  }else if (step_type == 10)
+  {  // steady state dynamics
+    if (steady_state_dynamics_data.size()==0)
+    {
+      sub_id = 1;
+    }
+    else
+    {
+      sub_last = int(steady_state_dynamics_data.size()) - 1;
+      sub_id = std::stoi(steady_state_dynamics_data[sub_last][0]) + 1;
+    }
+    step_type_id = sub_id;
+    this->add_steady_state_dynamics(std::to_string(sub_id));
+  }else if (step_type == 11)
+  {  // complex frequency
+    if (complex_frequency_data.size()==0)
+    {
+      sub_id = 1;
+    }
+    else
+    {
+      sub_last = int(complex_frequency_data.size()) - 1;
+      sub_id = std::stoi(complex_frequency_data[sub_last][0]) + 1;
+    }
+    step_type_id = sub_id;
+    this->add_complex_frequency(std::to_string(sub_id));
   }
   
   loads_id = step_id;
@@ -286,6 +343,46 @@ bool CoreSteps::modify_step(int step_id, int modify_type, std::vector<std::strin
         if (options_marker[i]==1)
         {
           uncoupledtd_data[sub_data_id][i+1] = options[i];
+        }
+      }
+    }else if ((steps_data[steps_data_id][3]==8) && (steps_data[steps_data_id][3]==modify_type))
+    { // dynamic
+      sub_data_id = get_dynamic_data_id_from_dynamic_id(steps_data[steps_data_id][4]);
+      for (size_t i = 0; i < options.size(); i++)
+      {
+        if (options_marker[i]==1)
+        {
+          dynamic_data[sub_data_id][i+1] = options[i];
+        }
+      }
+    }else if ((steps_data[steps_data_id][3]==9) && (steps_data[steps_data_id][3]==modify_type))
+    { // modal dynamic
+      sub_data_id = get_modal_dynamic_data_id_from_modal_dynamic_id(steps_data[steps_data_id][4]);
+      for (size_t i = 0; i < options.size(); i++)
+      {
+        if (options_marker[i]==1)
+        {
+          modal_dynamic_data[sub_data_id][i+1] = options[i];
+        }
+      }
+    }else if ((steps_data[steps_data_id][3]==10) && (steps_data[steps_data_id][3]==modify_type))
+    { // steady state dynamics
+      sub_data_id = get_steady_state_dynamics_data_id_from_steady_state_dynamics_id(steps_data[steps_data_id][4]);
+      for (size_t i = 0; i < options.size(); i++)
+      {
+        if (options_marker[i]==1)
+        {
+          steady_state_dynamics_data[sub_data_id][i+1] = options[i];
+        }
+      }
+    }else if ((steps_data[steps_data_id][3]==11) && (steps_data[steps_data_id][3]==modify_type))
+    { // complex frequency
+      sub_data_id = get_complex_frequency_data_id_from_complex_frequency_id(steps_data[steps_data_id][4]);
+      for (size_t i = 0; i < options.size(); i++)
+      {
+        if (options_marker[i]==1)
+        {
+          complex_frequency_data[sub_data_id][i+1] = options[i];
         }
       }
     }
@@ -528,6 +625,34 @@ bool CoreSteps::delete_step(int step_id)
         uncoupledtd_data.erase(uncoupledtd_data.begin() + sub_data_id);  
       }
     }
+    if (steps_data[steps_data_id][3]==8)
+    {
+      sub_data_id = get_dynamic_data_id_from_dynamic_id(steps_data[steps_data_id][4]);
+      if (sub_data_id != -1){
+        dynamic_data.erase(dynamic_data.begin() + sub_data_id);  
+      }
+    }
+    if (steps_data[steps_data_id][3]==9)
+    {
+      sub_data_id = get_modal_dynamic_data_id_from_modal_dynamic_id(steps_data[steps_data_id][4]);
+      if (sub_data_id != -1){
+        modal_dynamic_data.erase(modal_dynamic_data.begin() + sub_data_id);  
+      }
+    }
+    if (steps_data[steps_data_id][3]==10)
+    {
+      sub_data_id = get_steady_state_dynamics_data_id_from_steady_state_dynamics_id(steps_data[steps_data_id][4]);
+      if (sub_data_id != -1){
+        steady_state_dynamics_data.erase(steady_state_dynamics_data.begin() + sub_data_id);  
+      }
+    }
+    if (steps_data[steps_data_id][3]==11)
+    {
+      sub_data_id = get_complex_frequency_data_id_from_complex_frequency_id(steps_data[steps_data_id][4]);
+      if (sub_data_id != -1){
+        complex_frequency_data.erase(complex_frequency_data.begin() + sub_data_id);  
+      }
+    }
     sub_data_ids = get_load_data_ids_from_loads_id(steps_data[steps_data_id][5]);
     for (size_t i = sub_data_ids.size(); i > 0; i--)
     {
@@ -630,6 +755,42 @@ bool CoreSteps::add_uncoupledtd(std::string uncoupledtd_id)
   std::vector<std::string> v = {uncoupledtd_id,"","","","","","","","","","","",""};
   
   uncoupledtd_data.push_back(v);
+  
+  return true;
+}
+
+bool CoreSteps::add_dynamic(std::string dynamic_id)
+{
+  std::vector<std::string> v = {dynamic_id,"","","","","","","","","",""};
+  
+  dynamic_data.push_back(v);
+  
+  return true;
+}
+
+bool CoreSteps::add_modal_dynamic(std::string modal_dynamic_id)
+{
+  std::vector<std::string> v = {modal_dynamic_id,"","","","","","","",""};
+  
+  modal_dynamic_data.push_back(v);
+  
+  return true;
+}
+
+bool CoreSteps::add_steady_state_dynamics(std::string steady_state_dynamics_id)
+{
+  std::vector<std::string> v = {steady_state_dynamics_id,"","","","","","","","","",""};
+  
+  steady_state_dynamics_data.push_back(v);
+  
+  return true;
+}
+
+bool CoreSteps::add_complex_frequency(std::string complex_frequency_id)
+{
+  std::vector<std::string> v = {complex_frequency_id,"",""};
+  
+  complex_frequency_data.push_back(v);
   
   return true;
 }
@@ -780,6 +941,58 @@ int CoreSteps::get_uncoupledtd_data_id_from_uncoupledtd_id(int uncoupledtd_id)
   for (size_t i = 0; i < uncoupledtd_data.size(); i++)
   {
     if (uncoupledtd_data[i][0]==std::to_string(uncoupledtd_id))
+    {
+      return_int = int(i);
+    }  
+  }
+  return return_int;
+}
+
+int CoreSteps::get_dynamic_data_id_from_dynamic_id(int dynamic_id)
+{ 
+  int return_int = -1;
+  for (size_t i = 0; i < dynamic_data.size(); i++)
+  {
+    if (dynamic_data[i][0]==std::to_string(dynamic_id))
+    {
+      return_int = int(i);
+    }  
+  }
+  return return_int;
+}
+
+int CoreSteps::get_modal_dynamic_data_id_from_modal_dynamic_id(int modal_dynamic_id)
+{ 
+  int return_int = -1;
+  for (size_t i = 0; i < modal_dynamic_data.size(); i++)
+  {
+    if (modal_dynamic_data[i][0]==std::to_string(modal_dynamic_id))
+    {
+      return_int = int(i);
+    }  
+  }
+  return return_int;
+}
+
+int CoreSteps::get_steady_state_dynamics_data_id_from_steady_state_dynamics_id(int steady_state_dynamics_id)
+{ 
+  int return_int = -1;
+  for (size_t i = 0; i < steady_state_dynamics_data.size(); i++)
+  {
+    if (steady_state_dynamics_data[i][0]==std::to_string(steady_state_dynamics_id))
+    {
+      return_int = int(i);
+    }  
+  }
+  return return_int;
+}
+
+int CoreSteps::get_complex_frequency_data_id_from_complex_frequency_id(int complex_frequency_id)
+{ 
+  int return_int = -1;
+  for (size_t i = 0; i < complex_frequency_data.size(); i++)
+  {
+    if (complex_frequency_data[i][0]==std::to_string(complex_frequency_id))
     {
       return_int = int(i);
     }  
@@ -1424,6 +1637,214 @@ std::string CoreSteps::get_step_export(int step_id)
     }
     steps_export_list.push_back(str_temp);
   }
+  else if (steps_data[steps_data_id][3]==8)
+  {
+    sub_data_id = get_dynamic_data_id_from_dynamic_id(steps_data[steps_data_id][4]);
+    str_temp = "*DYNAMIC";
+    if (dynamic_data[sub_data_id][1]!="")
+    {
+      str_temp.append(",SOLVER=" + dynamic_data[sub_data_id][1]); 
+    }
+    if (dynamic_data[sub_data_id][2]!="")
+    {
+      str_temp.append(",DIRECT"); 
+    }
+    if (dynamic_data[sub_data_id][3]!="")
+    {
+      str_temp.append(",ALPHA=" + dynamic_data[sub_data_id][3]); 
+    }
+    if (dynamic_data[sub_data_id][4]!="")
+    {
+      str_temp.append(",EXPLICIT"); 
+    }
+    if (dynamic_data[sub_data_id][5]!="")
+    {
+      str_temp.append(",RELATIVE TO ABSOLUTE"); 
+    }
+    steps_export_list.push_back(str_temp);
+    // second line
+    str_temp = "";
+    if (dynamic_data[sub_data_id][6]!="")
+    {
+      str_temp.append(dynamic_data[sub_data_id][6]); 
+    }
+    if (dynamic_data[sub_data_id][7]!="")
+    {
+      str_temp.append("," + dynamic_data[sub_data_id][7]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    if (dynamic_data[sub_data_id][8]!="")
+    {
+      str_temp.append("," + dynamic_data[sub_data_id][8]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    if (dynamic_data[sub_data_id][9]!="")
+    {
+      str_temp.append("," + dynamic_data[sub_data_id][9]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    if (dynamic_data[sub_data_id][10]!="")
+    {
+      str_temp.append("," + dynamic_data[sub_data_id][10]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    steps_export_list.push_back(str_temp);
+  }
+  else if (steps_data[steps_data_id][3]==9)
+  {
+    sub_data_id = get_modal_dynamic_data_id_from_modal_dynamic_id(steps_data[steps_data_id][4]);
+    str_temp = "*MODAL DYNAMIC";
+    if (modal_dynamic_data[sub_data_id][1]!="")
+    {
+      str_temp.append(",SOLVER=" + modal_dynamic_data[sub_data_id][1]); 
+    }
+    if (modal_dynamic_data[sub_data_id][2]!="")
+    {
+      str_temp.append(",DIRECT=" + modal_dynamic_data[sub_data_id][2]); 
+    }
+    if (modal_dynamic_data[sub_data_id][3]!="")
+    {
+      str_temp.append(",DELTMX=" + modal_dynamic_data[sub_data_id][3]); 
+    }
+    if (modal_dynamic_data[sub_data_id][4]!="")
+    {
+      str_temp.append(",STEADY STATE"); 
+    }
+    steps_export_list.push_back(str_temp);
+    // second line
+    str_temp = "";
+    if (modal_dynamic_data[sub_data_id][5]!="")
+    {
+      str_temp.append(modal_dynamic_data[sub_data_id][5]); 
+    }
+    if (modal_dynamic_data[sub_data_id][6]!="")
+    {
+      str_temp.append("," + modal_dynamic_data[sub_data_id][6]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    if (modal_dynamic_data[sub_data_id][7]!="")
+    {
+      str_temp.append("," + modal_dynamic_data[sub_data_id][7]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    if (modal_dynamic_data[sub_data_id][8]!="")
+    {
+      str_temp.append("," + modal_dynamic_data[sub_data_id][8]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    steps_export_list.push_back(str_temp);
+  }else if (steps_data[steps_data_id][3]==10)
+  {
+    sub_data_id = get_steady_state_dynamics_data_id_from_steady_state_dynamics_id(steps_data[steps_data_id][4]);
+    str_temp = "*STEADY STATE DYNAMICS";
+    if (steady_state_dynamics_data[sub_data_id][1]!="")
+    {
+      str_temp.append(",SOLVER=" + steady_state_dynamics_data[sub_data_id][1]); 
+    }
+    if (steady_state_dynamics_data[sub_data_id][2]!="")
+    {
+      str_temp.append(",HARMONIC="+ steady_state_dynamics_data[sub_data_id][2]); 
+    }
+    steps_export_list.push_back(str_temp);
+    // second line
+    str_temp = "";
+    if (steady_state_dynamics_data[sub_data_id][3]!="")
+    {
+      str_temp.append(steady_state_dynamics_data[sub_data_id][3]); 
+    }
+    if (steady_state_dynamics_data[sub_data_id][4]!="")
+    {
+      str_temp.append("," + steady_state_dynamics_data[sub_data_id][4]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    if (steady_state_dynamics_data[sub_data_id][5]!="")
+    {
+      str_temp.append("," + steady_state_dynamics_data[sub_data_id][5]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    if (steady_state_dynamics_data[sub_data_id][6]!="")
+    {
+      str_temp.append("," + steady_state_dynamics_data[sub_data_id][6]); 
+    }
+    else
+    {
+      str_temp.append(","); 
+    }
+    //HARMONIC=NO
+    if (steady_state_dynamics_data[sub_data_id][2]=="NO") 
+    {
+      if (steady_state_dynamics_data[sub_data_id][7]!="")
+      {
+        str_temp.append("," + steady_state_dynamics_data[sub_data_id][7]); 
+      }
+      else
+      {
+        str_temp.append(","); 
+      }
+      if (steady_state_dynamics_data[sub_data_id][8]!="")
+      {
+        str_temp.append("," + steady_state_dynamics_data[sub_data_id][8]); 
+      }
+      else
+      {
+        str_temp.append(","); 
+      }
+      if (steady_state_dynamics_data[sub_data_id][9]!="")
+      {
+        str_temp.append("," + steady_state_dynamics_data[sub_data_id][9]); 
+      }
+      else
+      {
+        str_temp.append(","); 
+      }
+    }
+    steps_export_list.push_back(str_temp);
+  }
+  else if (steps_data[steps_data_id][3]==11)
+  {
+    sub_data_id = get_complex_frequency_data_id_from_complex_frequency_id(steps_data[steps_data_id][4]);
+    str_temp = "*COMPLEX FREQUENCY";
+    if (complex_frequency_data[sub_data_id][1]!="")
+    {
+      str_temp.append(",CORIOLIS"); 
+    }
+    steps_export_list.push_back(str_temp);
+    // second line
+    str_temp = "";
+    if (complex_frequency_data[sub_data_id][2]!="")
+    {
+      str_temp.append(complex_frequency_data[sub_data_id][2]); 
+    }
+    steps_export_list.push_back(str_temp);
+  }
+
   std::string step_export;
 
   for (size_t i = 0; i < steps_export_list.size(); i++)
@@ -1512,6 +1933,54 @@ std::string CoreSteps::print_data()
   for (size_t i = 0; i < uncoupledtd_data.size(); i++)
   {
     str_return.append(uncoupledtd_data[i][0] + " " + uncoupledtd_data[i][1] + " " + uncoupledtd_data[i][2] + " " + uncoupledtd_data[i][3] + " " + uncoupledtd_data[i][4] + " " + uncoupledtd_data[i][5] + " " + uncoupledtd_data[i][6] + " " + uncoupledtd_data[i][7] + " " + uncoupledtd_data[i][8] + " " + uncoupledtd_data[i][9] + " " + uncoupledtd_data[i][10] + " " + uncoupledtd_data[i][11] + " " + uncoupledtd_data[i][12] + " \n");
+  }
+
+  str_return.append("\n CoreSteps dynamic_data: \n");
+  str_return.append("dynamic_id, solver,direct,alpha,explicit,relative to absolute,initial time increment,time period of the step,minimum time increment allowed,maximum time increment allowed,initial time increment CFD \n");
+
+  for (size_t i = 0; i < dynamic_data.size(); i++)
+  {
+    for (size_t ii = 0; ii < dynamic_data[i].size(); ii++)
+    {
+      str_return.append(dynamic_data[i][ii] + " ");
+    }
+    str_return.append("\n");
+  }
+
+  str_return.append("\n CoreSteps modal_dynamic_data: \n");
+  str_return.append("modal_dynamic_id,solver,direct,deltmx,steady state,initial time increment,time period of the step / relative error,minimum time increment allowed,maximum time increment allowed \n");
+
+  for (size_t i = 0; i < modal_dynamic_data.size(); i++)
+  {
+    for (size_t ii = 0; ii < modal_dynamic_data[i].size(); ii++)
+    {
+      str_return.append(modal_dynamic_data[i][ii] + " ");
+    }
+    str_return.append("\n");
+  }
+
+  str_return.append("\n CoreSteps steady_state_dynamics_data: \n");
+  str_return.append("steady_state_dynamics_id,solver,harmonic,Lower bound of the frequency range (cycles/time),Upper bound of the frequency range (cycles/time),Number of data points n (default: 20),Bias (default: 3.),Number of Fourier terms n (default: 20),Lower bound of the time range (default: 0.),Upper bound of the time range (default: 1.) \n");
+
+  for (size_t i = 0; i < steady_state_dynamics_data.size(); i++)
+  {
+    for (size_t ii = 0; ii < steady_state_dynamics_data[i].size(); ii++)
+    {
+      str_return.append(steady_state_dynamics_data[i][ii] + " ");
+    }
+    str_return.append("\n");
+  }
+
+  str_return.append("\n CoreSteps complex_frequency_data: \n");
+  str_return.append("complex_frequency_id,coriolis,Number of eigenfrequencies desired \n");
+
+  for (size_t i = 0; i < complex_frequency_data.size(); i++)
+  {
+    for (size_t ii = 0; ii < complex_frequency_data[i].size(); ii++)
+    {
+      str_return.append(complex_frequency_data[i][ii] + " ");
+    }
+    str_return.append("\n");
   }
 
   str_return.append("\n CoreSteps loads_data: \n");

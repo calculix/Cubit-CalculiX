@@ -174,11 +174,15 @@ void CustomLinesModifyPanel::on_comboBox_index_changed(int index)
     comboBox_3->addItem("contactpair");
     comboBox_3->addItem("amplitude");
     comboBox_3->addItem("orientation");
+    comboBox_3->addItem("damping");
+    comboBox_3->addItem("physicalconstants");
     comboBox_3->addItem("force");
     comboBox_3->addItem("pressure");
     comboBox_3->addItem("heatflux");
     comboBox_3->addItem("gravity");
     comboBox_3->addItem("centrifugal");
+    comboBox_3->addItem("film");
+    comboBox_3->addItem("radiation");
     comboBox_3->addItem("displacement");
     comboBox_3->addItem("temperature");
     comboBox_3->addItem("historyoutput");

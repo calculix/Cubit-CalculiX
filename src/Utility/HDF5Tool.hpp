@@ -12,9 +12,14 @@ class HDF5Tool
 public:
   HDF5Tool(std::string filename);
   ~HDF5Tool();
-    
+
   bool nameExists(std::string name);
   bool createGroup(std::string groupname);
+  bool renameGroup(std::string groupname, std::string new_groupname);
+  bool deleteGroup(std::string groupname);
+  std::vector<std::string> getGroupsFromFile(); // gets all group paths from the file
+
+  bool deleteDataset(std::string name,std::string groupname);
 
   //int
   bool read_dataset_int_rank_1(std::string name, std::string groupname, std::vector<int> &data); // read dataset

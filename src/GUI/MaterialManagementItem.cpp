@@ -3,8 +3,15 @@
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "MaterialInterface.hpp"
+#include "loadUserOptions.hpp"
+#include "HDF5Tool.hpp"
 
 MaterialManagementItem::MaterialManagementItem(QTreeWidget* parent):
+  QTreeWidgetItem (parent),
+  isInitialized(false)
+{}
+
+MaterialManagementItem::MaterialManagementItem(QTreeWidgetItem* parent):
   QTreeWidgetItem (parent),
   isInitialized(false)
 {}
@@ -13,7 +20,7 @@ MaterialManagementItem::~MaterialManagementItem()
 {
 }
 
-void MaterialManagementItem::initialize(QString material_id_qstring,QString material_name_qstring)
+void MaterialManagementItem::initialize_cubit(QString material_id_qstring,QString material_name_qstring)
 {
   if(isInitialized)
     return;
@@ -93,9 +100,119 @@ void MaterialManagementItem::initialize(QString material_id_qstring,QString mate
 
   }
   isInitialized = true;
+  isCubit = true;
+  isLibraryGroup = false;
+  isLibraryMaterial = false;
+}
+
+void MaterialManagementItem::initialize_library(std::vector<std::string> tree_data)
+{
+  if(isInitialized)
+    return;
+  CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
+
+  QTreeWidgetItem::setText(0, QString::fromStdString(tree_data[0]));
+  QTreeWidgetItem::setText(1, QString::fromStdString(tree_data[1]));
+  //QTreeWidgetItem::setText(2, QString::fromStdString(tree_data[2]));
+  //QTreeWidgetItem::setText(3, QString::fromStdString(tree_data[3]));
+  this->library_name_qstring = QString::fromStdString(tree_data[0]);
+  this->library_description_qstring = QString::fromStdString(tree_data[1]);
+  this->library_name = tree_data[0];
+  this->library_description = tree_data[1];
+  
+  if ((tree_data[2].length()-tree_data[0].length() < 1)&&(tree_data[3] == "Material"))
+  {
+    this->library_group = "/";
+    this->library_group_qstring = QString::fromStdString("/");
+  }else if ((tree_data[2].length()-tree_data[0].length() < 1)&&(tree_data[3] == "Group"))
+  {
+    this->library_group = "";
+    this->library_group_qstring = QString::fromStdString("");
+  }else{
+    this->library_group = tree_data[2].substr(0,tree_data[2].length()-tree_data[0].length()-1);
+    this->library_group_qstring = QString::fromStdString(tree_data[2].substr(0,tree_data[2].length()-tree_data[0].length()-1));
+  }
+
+  this->hdf5path = tree_data[2];
+
+  isCubit = false;
+  isLibraryGroup = false;
+  isLibraryMaterial = false;
+
+  if (tree_data[3] == "Group")
+  {
+    isLibraryGroup = true;
+  }
+
+  if (tree_data[3] == "Material")
+  {
+    isLibraryMaterial = true;
+  }
+
+  if (isLibraryMaterial)
+  {
+    std::vector<std::vector<double>> tmp_values;
+
+    // we get the group properties for the Calculix-FEA Type
+    group_properties = ccx_iface->get_material_group_properties();
+
+    // we build our storages for the material data
+    std::vector<int> property(3);
+    for (size_t i = 0; i < group_properties.size(); i++)
+    {
+      property[0] = int(i);
+      if (group_properties[i][1]=="1")
+      {
+        double tmp_scalar = 0;
+        property[1] = 1;
+        property[2] = int(property_scalar.size());
+        tmp_values = ccx_iface->get_materiallibrary_material_values(library_name, this->library_group, group_properties[i][0]);
+        if (tmp_values.size()>0)
+        {
+          tmp_scalar = tmp_values[0][0]; 
+        }
+        property_scalar.push_back(tmp_scalar);
+      }else if (group_properties[i][1]=="2")
+      {
+        std::vector<double> tmp_vector;
+        property[1] = 2;
+        property[2] = int(property_vector.size());
+        tmp_values = ccx_iface->get_materiallibrary_material_values(library_name, this->library_group, group_properties[i][0]);
+        if (tmp_values.size()>0)
+        {
+          tmp_vector = tmp_values[0]; 
+        }
+        property_vector.push_back(tmp_vector);
+      }
+      else if (group_properties[i][1]=="4")
+      {
+        //std::vector<std::vector<double>> tmp_matrix;
+        property[1] = 4;
+        property[2] = int(property_matrix.size());
+        tmp_values = ccx_iface->get_materiallibrary_material_values(library_name, this->library_group, group_properties[i][0]);
+        property_matrix.push_back(tmp_values);
+      }
+      properties.push_back(property);
+    }
+  }
+
+  isInitialized = true;
 }
 
 void MaterialManagementItem::update()
+{
+  if (isInitialized)
+  {
+    if (isCubit)
+    {
+      this->update_cubit();
+    }else{
+      this->update_library();
+    }
+  }
+}
+
+void MaterialManagementItem::update_cubit()
 {
   MaterialInterface::Material material;
   MaterialInterface::Property prop;
@@ -141,6 +258,103 @@ void MaterialManagementItem::update()
   //property_vector_gui = property_vector;
   //property_tabular_gui = property_tabular;
   property_matrix_gui = property_matrix;
+}
+
+void MaterialManagementItem::update_library()
+{ 
+  /* too slow
+  for (size_t i = 0; i < properties.size(); i++)
+  {
+    if (properties[i][1]==1)
+    {
+      double tmp_scalar=0;
+      tmp_values = ccx_iface->get_materiallibrary_material_values(this->library_name, this->library_group, group_properties[properties[i][0]][0]);
+      if (tmp_values.size()>0)
+      {
+        tmp_scalar = tmp_values[0][0]; 
+      }
+      property_scalar[properties[i][2]] = tmp_scalar;
+    }else if (properties[i][1]==2)
+    {
+      std::vector<double> tmp_vector;
+      tmp_values = ccx_iface->get_materiallibrary_material_values(this->library_name, this->library_group, group_properties[properties[i][0]][0]);
+      if (tmp_values.size()>0)
+      {
+        tmp_vector = tmp_values[0]; 
+      }
+      property_vector[properties[i][2]] = tmp_vector;
+    }
+    else if (properties[i][1]==4)
+    {
+      tmp_values = ccx_iface->get_materiallibrary_material_values(this->library_name, this->library_group, group_properties[properties[i][0]][0]);
+      property_matrix[properties[i][2]] = tmp_values;
+    }
+  }
+  */
+
+  HDF5Tool hdf5Tool(ccx_uo.mPathMaterialLibrary.toStdString());
+  std::string log = "";
+
+  std::string material = this->library_group + "/" + this->library_name;
+
+  for (size_t i = 0; i < properties.size(); i++)
+  {
+    std::string property = group_properties[properties[i][0]][0];
+    int property_size = ccx_iface->get_group_property_size(property);
+    if (property_size == -1)
+    {
+      log = "Material property "+ property + " not found!\n";
+      PRINT_INFO("%s", log.c_str());
+      if (properties[i][1]==1)
+      {
+        double tmp_scalar=0;
+        property_scalar[properties[i][2]] = tmp_scalar;
+      }
+      if (properties[i][1]==2)
+      {
+        std::vector<double> tmp_vector;
+        property_vector[properties[i][2]] = tmp_vector;
+      }
+      if (properties[i][1]==4)
+      {
+        std::vector<std::vector<double>> tmp_matrix;
+        property_matrix[properties[i][2]] = tmp_matrix;
+      }
+    }else{
+      if (properties[i][1]==1)
+      {
+        double tmp_scalar=0;
+        std::vector<double> tmp_value;
+        hdf5Tool.read_dataset_double_rank_1(property, material, tmp_value);   
+        if (tmp_value.size()>0)
+        {
+          tmp_scalar = tmp_value[0]; 
+        }
+        property_scalar[properties[i][2]] = tmp_scalar;
+      }else if (properties[i][1]==2)
+      {
+        std::vector<double> tmp_vector;
+        std::vector<std::vector<double>> tmp_values;
+        hdf5Tool.read_dataset_double_rank_2(property, material, tmp_values);   
+        if (tmp_values.size()>0)
+        {
+          tmp_vector = tmp_values[0]; 
+        }
+        property_vector[properties[i][2]] = tmp_vector;
+      }
+      else if (properties[i][1]==4)
+      {
+        std::vector<std::vector<double>> tmp_values;
+        hdf5Tool.read_dataset_double_rank_2(property, material, tmp_values);   
+        property_matrix[properties[i][2]] = tmp_values;
+      }
+    }
+  }
+
+  property_scalar_gui = property_scalar;
+  //property_vector_gui = property_vector;
+  //property_tabular_gui = property_tabular;
+  property_matrix_gui = property_matrix;    
 }
 
 int MaterialManagementItem::get_properties_data_id_from_group(std::string group)

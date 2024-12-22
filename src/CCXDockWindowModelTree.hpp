@@ -24,12 +24,17 @@ class SurfaceInteractionsTree;
 class ContactPairsTree;
 class AmplitudesTree;
 class OrientationsTree;
+class DampingTree;
+class PhysicalConstantsTree;
 class LoadsTree;
 class LoadsForcesTree;
 class LoadsPressuresTree;
 class LoadsHeatfluxesTree;
 class LoadsGravityTree;
 class LoadsCentrifugalTree;
+class LoadsTrajectoryTree;
+class LoadsFilmTree;
+class LoadsRadiationTree;
 class BCsTree;
 class BCsDisplacementsTree;
 class BCsTemperaturesTree;
@@ -79,12 +84,17 @@ private:
   ContactPairsTree *myContactPairsTree; //ContactPairs root item
   AmplitudesTree *myAmplitudesTree; //Amplitudes root item
   OrientationsTree *myOrientationsTree; //Orientations root item
+  DampingTree *myDampingTree; //Damping root item
+  PhysicalConstantsTree *myPhysicalConstantsTree; //PhysicalConstants root item
   LoadsTree *myLoadsTree; //Loads root item
   LoadsForcesTree *myLoadsForcesTree; //Forces root item
   LoadsPressuresTree *myLoadsPressuresTree; //Pressures root item
   LoadsHeatfluxesTree *myLoadsHeatfluxesTree; //Heatfluxes root item
   LoadsGravityTree *myLoadsGravityTree; //Gravity root item
   LoadsCentrifugalTree *myLoadsCentrifugalTree; //Centrifugal root item
+  LoadsTrajectoryTree *myLoadsTrajectoryTree; //Trajectory root item
+  LoadsFilmTree *myLoadsFilmTree; //Film root item
+  LoadsRadiationTree *myLoadsRadiationTree; //Radiation root item
   BCsTree *myBCsTree; //BCs root item
   BCsDisplacementsTree *myBCsDisplacementsTree; //Displacements root item
   BCsTemperaturesTree *myBCsTemperaturesTree; //Temperature root item

@@ -149,7 +149,9 @@ bool CoreResultsDat::read_single()
 
       dat_array = this->split_line(datline);
       
-      //first lets check if the mode is still valid
+      //first lets check if the step or increment needs an update
+      this->check_step(dat_array);
+      //second lets check if the mode is still valid
       this->check_mode(dat_array);
 
       if (dat.eof())
@@ -401,7 +403,9 @@ bool CoreResultsDat::read_parallel()
       dat_array = this->split_line(datline);
       int current_block_data_id = int(result_blocks.size())-1;
       
-      //first lets check if the mode is still valid
+      //first lets check if the step or increment needs an update
+      this->check_step(dat_array);
+      //second lets check if the mode is still valid
       this->check_mode(dat_array);
 
       if (dat.eof())
@@ -793,6 +797,37 @@ bool CoreResultsDat::check_mode(std::vector<std::string> line)
   return true;
 }
 
+bool CoreResultsDat::check_step(std::vector<std::string> line)
+{
+  if (line.size()>3)
+  {
+    if ((line[0] == "S")&&(line[1] == "T")&&(line[2] == "E")&&(line[3] == "P")) // STEP
+    {
+      this->current_step = std::stoi(line[4]);
+
+      //std::string log = "STEP " + line[4] + " \n";
+      //PRINT_INFO("%s", log.c_str());
+
+      return true;
+    }
+  }
+  
+  if (line.size()==2)
+  {
+    if ((line[0] == "INCREMENT")) // INCREMENT
+    {
+      this->current_increment = std::stoi(line[1]);
+      
+      //std::string log = "INCREMENT " + line[1] + " \n";
+      //PRINT_INFO("%s", log.c_str());
+
+      return true;
+    }
+  }
+
+  return false;
+}
+
 bool CoreResultsDat::read_header(std::vector<std::string> line)
 {
 
@@ -857,13 +892,18 @@ bool CoreResultsDat::read_header(std::vector<std::string> line)
   std::vector<std::vector<int>> tmp_result_block_c1_data;
   result_block_data.push_back(tmp_result_block_data);
   result_block_c1_data.push_back(tmp_result_block_c1_data);
-    
-  current_result_block = int(result_blocks.size())-1;
+  
+  if (result_blocks.size()==0)
+  {
+    current_result_block = 1;
+  }else{
+    current_result_block = int(result_blocks.size()+1);
+  }
   result_block_data_id = int(result_block_data.size())-1;
   result_block_type_data_id = this->get_current_result_block_type(block_type);
   result_block_set_data_id = this->get_current_result_block_set(block_set);
   
-  result_blocks.push_back({current_result_block,current_total_time_id,result_block_type_data_id,result_block_set_data_id,result_block_data_id});
+  result_blocks.push_back({current_result_block,current_total_time_id,result_block_type_data_id,result_block_set_data_id,result_block_data_id,this->current_step,this->current_increment});
   dat_arrays.push_back({});
  
   return true;
@@ -911,13 +951,18 @@ bool CoreResultsDat::header_emas(std::vector<std::string> line)
   std::vector<std::vector<int>> tmp_result_block_c1_data;
   result_block_data.push_back(tmp_result_block_data);
   result_block_c1_data.push_back(tmp_result_block_c1_data);
-    
-  current_result_block = int(result_blocks.size())-1;
+  
+  if (result_blocks.size()==0)
+  {
+    current_result_block = 1;
+  }else{
+    current_result_block = int(result_blocks.size()+1);
+  }
   result_block_data_id = int(result_block_data.size())-1;
   result_block_type_data_id = this->get_current_result_block_type(block_type);
   result_block_set_data_id = this->get_current_result_block_set(block_set);
-  
-  result_blocks.push_back({current_result_block,current_total_time_id,result_block_type_data_id,result_block_set_data_id,result_block_data_id});
+
+  result_blocks.push_back({current_result_block,current_total_time_id,result_block_type_data_id,result_block_set_data_id,result_block_data_id,this->current_step,this->current_increment});
   dat_arrays.push_back({});
 
   return true;

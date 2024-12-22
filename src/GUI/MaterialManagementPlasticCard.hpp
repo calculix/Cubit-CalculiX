@@ -45,6 +45,8 @@ private:
   QComboBox* plastic_type;
   MaterialManagementTable* table_isotropic;
   MaterialManagementTable* table_kinematic;
+  MaterialManagementTable* table_combined;
+  MaterialManagementTable* table_johnsoncook;
   };
 
 #endif // MATERIALMANAGEMENTPLASTICCARD_HPP

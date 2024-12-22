@@ -30,8 +30,10 @@ public:
   bool reset(); // delete all data and initialize afterwards // just a placeholder right now
   bool check_initialized(); // check if object is initialized
   std::vector<std::string> get_group_list(); // get a list of CalculiX Material Groups
+  int get_group_property_size(std::string group_property); // gets the size of a group property, returns -1 if the group can't be found
   std::string get_material_export(); // get CalculiX Material exports
   std::string get_material_cards_export(std::string material_name, std::string group_name); // get card exports for a material
+  std::string get_material_prefix(std::string material_name); // gets a prefix for the material name if needed
   bool check_material_exists(int material_id); // check if material exists
   std::string get_material_name(int material_id); // gets material name
 

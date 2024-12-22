@@ -22,6 +22,7 @@ std::vector<std::string> ccxLoadsGravityCreateCommand::get_syntax()
   syntax.append("[op {mod | new}] " );
   syntax.append("[amplitude <value:label='amplitude id',help='<amplitude id>'>] ");
   syntax.append("[timedelay <value:label='timedelay',help='<timedelay>'>] ");
+  syntax.append("[name <string:type='unquoted', number='1', label='name', help='<name>'>] " );
   
   syntax_list.push_back(syntax);
   
@@ -38,6 +39,7 @@ std::vector<std::string> ccxLoadsGravityCreateCommand::get_syntax_help()
   help[0].append("[op {mod | new}] " );
   help[0].append("[amplitude <amplitude id>] ");
   help[0].append("[timedelay <timedelay>] ");
+  help[0].append("[name <name>] " );
 
   return help;
 }
@@ -69,6 +71,7 @@ bool ccxLoadsGravityCreateCommand::execute(CubitCommandData &data)
   std::string z;
   double magnitude_value;
   std::string magnitude;
+  std::string name = ""; 
   
   data.get_value("magnitude_value", magnitude_value);
   magnitude = ccx_iface.to_string_scientific(magnitude_value);
@@ -107,6 +110,7 @@ bool ccxLoadsGravityCreateCommand::execute(CubitCommandData &data)
   {
     timedelay = std::to_string(timedelay_value);
   }
+  data.get_string("name", name);
   
   options.push_back(std::to_string(op_mode));
   options.push_back(amplitude_id);
@@ -116,6 +120,7 @@ bool ccxLoadsGravityCreateCommand::execute(CubitCommandData &data)
   options.push_back(y);
   options.push_back(z);
   options.push_back(magnitude);
+  options.push_back(name);
   
   if (!ccx_iface.create_loadsgravity(options))
   {

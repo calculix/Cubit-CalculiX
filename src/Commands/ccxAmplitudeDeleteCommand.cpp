@@ -132,6 +132,7 @@ bool ccxAmplitudeDeleteCommand::execute(CubitCommandData &data)
       output = "Failed with ID " + std::to_string(amplitude_ids[i]) + "!\n";
       PRINT_ERROR(output.c_str());
     } 
-  }  
+  }
+
   return true;
 }

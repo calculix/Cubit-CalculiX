@@ -22,6 +22,10 @@ public:
   // HEAT TRANSFER
   // COUPLED TEMPERATURE-DISPLACEMENT
   // UNCOUPLED TEMPERATURE-DISPLACEMENT
+  // DYNAMIC
+  // MODAL DYNAMIC
+  // STEADY STATE DYNAMICS
+  // COMPLEX FREQUENCY
   // FORCES
   // BCS
 
@@ -33,6 +37,10 @@ public:
   // 5: HEAT TRANSFER
   // 6: COUPLED TEMPERATURE-DISPLACEMENT
   // 7: UNCOUPLED TEMPERATURE-DISPLACEMENT
+  // 8: DYNAMIC
+  // 9: MODAL DYNAMIC
+  //10: STEADY STATE DYNAMICS
+  //11: COMPLEX FREQUENCY
 
   std::vector<std::vector<int>> steps_data; // used to store the connection between a step id and step parameter id
   // steps_data[0][0] step_id
@@ -142,9 +150,55 @@ public:
   // uncoupledtd_data[0][11] minimum time increment allowed
   // uncoupledtd_data[0][12] maximum time increment allowed
 
+  // DYNAMIC
+  std::vector<std::vector<std::string>> dynamic_data;
+  // dynamic_data[0][0] dynamic_id
+  // dynamic_data[0][1] solver
+  // dynamic_data[0][2] direct
+  // dynamic_data[0][3] alpha
+  // dynamic_data[0][4] explicit
+  // dynamic_data[0][5] relative to absolute
+  // dynamic_data[0][6] initial time increment
+  // dynamic_data[0][7] time period of the step
+  // dynamic_data[0][8] minimum time increment allowed
+  // dynamic_data[0][9] maximum time increment allowed
+  // dynamic_data[0][10] initial time increment CFD
+
+  // MODAL DYNAMIC
+  std::vector<std::vector<std::string>> modal_dynamic_data;
+  // modal_dynamic_data[0][0] modal_dynamic_id
+  // modal_dynamic_data[0][1] solver
+  // modal_dynamic_data[0][2] direct
+  // modal_dynamic_data[0][3] deltmx
+  // modal_dynamic_data[0][4] steady state
+  // modal_dynamic_data[0][5] initial time increment
+  // modal_dynamic_data[0][6] time period of the step / relative error
+  // modal_dynamic_data[0][7] minimum time increment allowed
+  // modal_dynamic_data[0][8] maximum time increment allowed
+
+  // STEADY STATE DYNAMICS
+  std::vector<std::vector<std::string>> steady_state_dynamics_data;
+  // steady_state_dynamics_data[0][0] steady_state_dynamics_id
+  // steady_state_dynamics_data[0][1] solver
+  // steady_state_dynamics_data[0][2] harmonic
+  // steady_state_dynamics_data[0][3] Lower bound of the frequency range (cycles/time)
+  // steady_state_dynamics_data[0][4] Upper bound of the frequency range (cycles/time)
+  // steady_state_dynamics_data[0][5] Number of data points n (default: 20)
+  // steady_state_dynamics_data[0][6] Bias (default: 3.)
+  // steady_state_dynamics_data[0][7] Number of Fourier terms n (default: 20)
+  // steady_state_dynamics_data[0][8] Lower bound of the time range (default: 0.)
+  // steady_state_dynamics_data[0][9] Upper bound of the time range (default: 1.)
+  
+  // COMPLEX FREQUENCY
+  std::vector<std::vector<std::string>> complex_frequency_data;
+  // complex_frequency_data[0][0] complex_frequency_id
+  // complex_frequency_data[0][1] coriolis
+  // complex_frequency_data[0][2] Number of eigenfrequencies desired
+  
   std::vector<std::vector<int>> loads_data;
   // forces_data[0][0] loads_id
-  // forces_data[0][1] load_type  // 1: force | 2: pressure | 3: heatflux | 4: gravity | 5: centrifugal
+  // forces_data[0][1] load_type  
+  // 1: force | 2: pressure | 3: heatflux | 4: gravity | 5: centrifugal | 6: trajectory | 7: film  | 8: radiation
   // forces_data[0][2] load_id
 
   std::vector<std::vector<int>> bcs_data;
@@ -186,6 +240,10 @@ public:
   bool add_heattransfer(std::string heattransfer_id); // adds new heattransfer to heattransfer_data
   bool add_coupledtd(std::string coupledtd_id); // adds new coupledtd to coupledtd_data
   bool add_uncoupledtd(std::string uncoupledtd_id); // adds new uncoupledtd to uncoupledtd_data
+  bool add_dynamic(std::string dynamic_id); // adds new dynamic to dynamic_data
+  bool add_modal_dynamic(std::string modal_dynamic_id); // adds new modal_dynamic to modal_dynamic_data
+  bool add_steady_state_dynamics(std::string steady_state_dynamics_id); // adds new steady_state_dynamics to steady_state_dynamics_data
+  bool add_complex_frequency(std::string complex_frequency_id); // adds new complex_frequency to complex_frequency_data
   bool add_load(int loads_id, int load_type, int load_id); // adds new load to loads_data
   bool add_bc(int bcs_id, int bc_type, int bc_id); // adds new bc to bcs_data
   bool add_historyoutput(int historyoutputs_id, int historyoutput_id); // adds new historyoutput to historyoutputs_data
@@ -199,6 +257,10 @@ public:
   int  get_heattransfer_data_id_from_heattransfer_id(int heattransfer_id); // searches for the heattransfer_id in the heattransfer_data and returns the indices or -1 if it fails
   int  get_coupledtd_data_id_from_coupledtd_id(int coupledtd_id); // searches for the coupledtd_id in the coupledtd_data and returns the indices or -1 if it fails
   int  get_uncoupledtd_data_id_from_uncoupledtd_id(int uncoupledtd_id); // searches for the uncoupledtd_id in the uncoupledtd_data and returns the indices or -1 if it fails
+  int  get_dynamic_data_id_from_dynamic_id(int dynamic_id); // searches for the dynamic_id in the dynamic_data and returns the indices or -1 if it fails
+  int  get_modal_dynamic_data_id_from_modal_dynamic_id(int modal_dynamic_id); // searches for the modal_dynamic_id in the modal_dynamic_data and returns the indices or -1 if it fails
+  int  get_steady_state_dynamics_data_id_from_steady_state_dynamics_id(int steady_state_dynamics_id); // searches for the steady_state_dynamics_id in the steady_state_dynamics_data and returns the indices or -1 if it fails
+  int  get_complex_frequency_data_id_from_complex_frequency_id(int complex_frequency_id); // searches for the complex_frequency_id in the complex_frequency_data and returns the indices or -1 if it fails
   int  get_load_data_id(int loads_id, int load_type,int load_id); // searches for the load_id in the load_data and returns the indices or -1 if it fails
   int  get_bc_data_id(int bcs_id, int bc_type, int bc_id); // searches for the bc_id in the bc_data and returns the indices or -1 if it fails
   int  get_historyoutput_data_id(int historyoutputs_id, int historyoutput_id); // searches for the historyoutput_id in the historyoutput_data and returns the indices or -1 if it fails

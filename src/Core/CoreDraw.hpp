@@ -42,6 +42,9 @@ public:
   bool draw_load_heatflux(int id, double size = 1); // draw load heatflux with id
   bool draw_load_gravity(int id, double size = 1); // draw load gravity with id
   bool draw_load_centrifugal(int id, double size = 1); // draw centrifugal load with id
+  bool draw_load_trajectory(int id, double size = 1); // draw trajectory load with id
+  bool draw_load_film(int id, double size = 1); // draw film load with id
+  bool draw_load_radiation(int id, double size = 1); // draw radiation load with id
   bool draw_bc_displacement(int id, double size = 1); // draw bc displacement
   bool draw_bc_temperature(int id, double size = 1); // draw bc temperature
   bool draw_orientation(int id, double size = 1); // draw orientation for all linked section
@@ -56,8 +59,13 @@ public:
   bool draw_load_heatfluxes(double size = 1); //draw all heatfluxes
   bool draw_load_gravities(double size = 1); //draw all gravities
   bool draw_load_centrifugals(double size = 1); //draw all centrifugal
+  bool draw_load_trajectories(double size = 1); //draw all trajectory
+  bool draw_load_films(double size = 1); //draw all film
+  bool draw_load_radiations(double size = 1); //draw all radiation
   bool draw_bc_displacements(double size = 1); //draw all displacements
   bool draw_bc_temperatures(double size = 1); //draw all temperatures
+
+  std::string get_color(int color_id); // gets color based on the color id
 
   CalculiXCoreInterface *ccx_iface;
 };

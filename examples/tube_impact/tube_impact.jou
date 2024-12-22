@@ -1,0 +1,97 @@
+##
+# rebuild of openradioss example
+#  https://openradioss.atlassian.net/wiki/spaces/OPENRADIOSS/pages/54624257/Tubes+Contact+Tutorial+Using+Gmsh
+
+#!cubit
+reset
+## create geometry
+create curve arc radius 25.4 center location 0 0 0 normal 1 0 0 start angle 0 stop angle 360
+sweep curve 1 vector 1 0 0  distance 250
+delete curve 1
+compress
+move Surface 1 x -125
+Surface 1 copy rotate 90 about z
+move Surface 2 z 60
+
+thicken volume in surface 1 2 depth 1
+
+webcut volume 1 with plane yplane offset 0  
+webcut volume 2 with plane xplane offset 0 
+
+imprint vol all
+merge vol all
+
+## create sets
+nodeset 1 add surface 26 29 32 23 
+nodeset 1 name "Top_Tube_Ends"
+nodeset 2 add surface 17 14 11 20 
+nodeset 2 name "Bottom_Tube_Ends"
+nodeset 3 add volume 2 4
+nodeset 3 name "Top_Tube"
+
+sideset 1 add surface 24 31
+sideset 1 name "Top_Tube_Elements"
+sideset 2 add surface 12 19
+sideset 2 name "Bottom_Tube_Elements"
+
+## create blocks
+block 1 add volume 2 4
+block 1 name 'Top_Tube'
+block 2 add volume 1 3
+block 2 name 'Bottom_Tube'
+block all element type hex20
+ccx block all element_type C3D20R
+
+vol all size 6
+mesh vol all
+
+#material
+create material "steel" property_group "CalculiX-FEA"
+modify material "steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0 
+modify material "steel" scalar_properties "CCX_PLASTIC_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_PLASTIC_JOHNSON_COOK_USE_CARD" 1
+modify material "steel" matrix_property "CCX_PLASTIC_JOHNSON_COOK" 350 275 0.36 1 1 1 
+modify material "steel" scalar_properties "CCX_DENSITY_USE_CARD" 1
+modify material "steel" matrix_property "CCX_DENSITY_DENSITY" 7.85e-09 0 
+modify material "steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_RATE_DEPENDENT_USE_CARD" 1
+modify material "steel" matrix_property "CCX_RATE_DEPENDENT_RATE_DEPENDENT" 0.022 1 
+modify material "steel" scalar_properties "CCX_HYPERELASTIC_ARRUDA_BOYCE_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_HYPERFOAM_HYPERFOAM_N1_USE_CARD" 1
+
+ccx create section solid block all material 1
+
+#contact
+ccx create surfaceinteraction name "ContactType" linear slopeK 1e6 sigmaINF 3 c0 1e-2
+ccx modify surfaceinteraction 1 friction mu 0.1 lambda 1
+ccx create contactpair surfaceinteraction 1 surfacetosurface master 2 slave 1
+
+create displacement on nodeset 1 dof 1 dof 2 fix 0
+create displacement on nodeset 2 dof 1 dof 2 dof 3 fix 0
+
+ccx create customline name "setInitialCondition" before step_begin item_id 1 cline "*INITIAL CONDITIONS,TYPE=VELOCITY"
+ccx create customline name "setInitialCondition" before step_begin item_id 1 cline "Top_Tube,3,-20000"
+
+ccx create fieldoutput name "output_node" node
+ccx create fieldoutput name "output_element" element
+ccx modify fieldoutput 1 node frequency 5
+ccx modify fieldoutput 1 node key_on U 
+ccx modify fieldoutput 1 node key_off CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF NT PNT POT PRF PS PSF PT PTF PU RF RFL SEN TS TSF TT TTF TURB V VF 
+ccx modify fieldoutput 2 element frequency 5
+ccx modify fieldoutput 2 element key_on E S
+ccx modify fieldoutput 2 element key_off CEEQ ENER ECD EMFB EMFE ERR HER HFL HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS 
+
+ccx create step name "tube_impact" dynamic
+ccx modify step 1 parameter inc 100000
+#ccx modify step 1 dynamic solver pardiso
+ccx modify step 1 dynamic explicit_yes initialtimeincrement 1e-4 timeperiodofstep 3e-3 minimumtimeincrement 1e-6 maximumtimeincrement 1e-4
+ccx step 1 add bc displacement 1
+ccx step 1 add bc displacement 2
+ccx step 1 add fieldoutput 1
+ccx step 1 add fieldoutput 2
+
+ccx create job name "tube_impact"
+

@@ -25,6 +25,7 @@ LoadsGravityModifyPanel::LoadsGravityModifyPanel(QWidget *parent) :
   HBoxLayout_4 = new QHBoxLayout();
   HBoxLayout_5 = new QHBoxLayout();
   HBoxLayout_6 = new QHBoxLayout();
+  HBoxLayout_7 = new QHBoxLayout();
   label_0 = new QLabel();
   label_1 = new QLabel();
   label_2 = new QLabel();
@@ -32,6 +33,7 @@ LoadsGravityModifyPanel::LoadsGravityModifyPanel(QWidget *parent) :
   label_4 = new QLabel();
   label_5 = new QLabel();
   label_6 = new QLabel();
+  label_7 = new QLabel();
   label_0->setFixedWidth(labelWidth);
   label_1->setFixedWidth(labelWidth);
   label_2->setFixedWidth(labelWidth);
@@ -39,6 +41,7 @@ LoadsGravityModifyPanel::LoadsGravityModifyPanel(QWidget *parent) :
   label_4->setFixedWidth(labelWidth);
   label_5->setFixedWidth(labelWidth);
   label_6->setFixedWidth(labelWidth);
+  label_7->setFixedWidth(labelWidth);
   label_0->setText("Gravity ID");
   label_1->setText("Magnitude");
   label_2->setText("Block ID");
@@ -46,6 +49,7 @@ LoadsGravityModifyPanel::LoadsGravityModifyPanel(QWidget *parent) :
   label_4->setText("OP");
   label_5->setText("Amplitude ID");
   label_6->setText("Time Delay");
+  label_7->setText("Name");
   lineEdit_0 = new QLineEdit();
   lineEdit_1 = new QLineEdit();
   lineEdit_2 = new QLineEdit();
@@ -56,12 +60,14 @@ LoadsGravityModifyPanel::LoadsGravityModifyPanel(QWidget *parent) :
   comboBox_4->addItem("new");
   lineEdit_5 = new QLineEdit();
   lineEdit_6 = new QLineEdit();
+  lineEdit_7 = new QLineEdit();
 
   lineEdit_1->setPlaceholderText("Optional");
   lineEdit_2->setPlaceholderText("Optional");
   lineEdit_3->setPlaceholderText("<x> <y> <z>");
   lineEdit_5->setPlaceholderText("Optional");
   lineEdit_6->setPlaceholderText("Optional");
+  lineEdit_7->setPlaceholderText("Optional");
 
   pushButton_apply = new QPushButton();
   pushButton_apply->setText("Apply");
@@ -71,6 +77,7 @@ LoadsGravityModifyPanel::LoadsGravityModifyPanel(QWidget *parent) :
   // Layout
   GridLayout->addLayout(VBoxLayout,0,0, Qt::AlignTop);
   VBoxLayout->addLayout(HBoxLayout_0);
+  VBoxLayout->addLayout(HBoxLayout_7);
   VBoxLayout->addLayout(HBoxLayout_1);
   VBoxLayout->addLayout(HBoxLayout_2);
   VBoxLayout->addLayout(HBoxLayout_3);
@@ -94,6 +101,8 @@ LoadsGravityModifyPanel::LoadsGravityModifyPanel(QWidget *parent) :
   HBoxLayout_5->addWidget(lineEdit_5);
   HBoxLayout_6->addWidget(label_6);
   HBoxLayout_6->addWidget(lineEdit_6);
+  HBoxLayout_7->addWidget(label_7);
+  HBoxLayout_7->addWidget(lineEdit_7);
 
   HBoxLayout_pushButton_apply->addItem(horizontal_spacer_pushButton_apply);
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
@@ -142,6 +151,10 @@ void LoadsGravityModifyPanel::on_pushButton_apply_clicked(bool)
     {
       command.append(" timedelay " +lineEdit_6->text());
     }
+    if (lineEdit_7->text()!="")
+    {
+      command.append(" name " +lineEdit_7->text());
+    }
   }
   
   if (command != "")
@@ -154,6 +167,7 @@ void LoadsGravityModifyPanel::on_pushButton_apply_clicked(bool)
     comboBox_4->setCurrentIndex(0);
     lineEdit_5->setText("");
     lineEdit_6->setText("");
+    lineEdit_7->setText("");
   }
   
   for (size_t i = 0; i < commands.size(); i++)

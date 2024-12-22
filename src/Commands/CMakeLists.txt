@@ -101,6 +101,14 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxOrientationModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxOrientationDeleteCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxOrientationDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxDampingModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxDampingModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxDampingDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxDampingDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxPhysicalConstantsModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxPhysicalConstantsModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxPhysicalConstantsDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxPhysicalConstantsDeleteCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsForcesModifyCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsForcesModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsPressuresModifyCommand.cpp
@@ -119,6 +127,24 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsCentrifugalModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsCentrifugalDeleteCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsCentrifugalDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsTrajectoryCreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsTrajectoryCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsTrajectoryModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsTrajectoryModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsTrajectoryDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsTrajectoryDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsFilmCreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsFilmCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsFilmModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsFilmModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsFilmDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsFilmDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsRadiationCreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsRadiationCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsRadiationModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsRadiationModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsRadiationDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsRadiationDeleteCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxBCsDisplacementsModifyCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxBCsDisplacementsModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxBCsTemperaturesModifyCommand.cpp
@@ -187,6 +213,14 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepCoupledTemperatureDisplacementModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepUncoupledTemperatureDisplacementModifyCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepUncoupledTemperatureDisplacementModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepDynamicModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepDynamicModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepModalDynamicModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepModalDynamicModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepSteadyStateDynamicsModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepSteadyStateDynamicsModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepComplexFrequencyModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepComplexFrequencyModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepDeleteCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepDeleteCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxJobCreateCommand.cpp
@@ -225,4 +259,20 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxCustomLineModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxCustomLineDeleteCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxCustomLineDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryCreateGroupCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryCreateGroupCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryModifyGroupCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryModifyGroupCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryDeleteGroupCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryDeleteGroupCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryCreateMaterialCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryCreateMaterialCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryModifyMaterialCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryModifyMaterialCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryDeleteMaterialCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryDeleteMaterialCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryExportMaterialCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryExportMaterialCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryImportMaterialCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryImportMaterialCommand.hpp
     PARENT_SCOPE)

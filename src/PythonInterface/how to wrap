@@ -1,0 +1,10 @@
+don't forget to wrap with 'swig -python -py3 -c++ CalculiXPythonInterface.i'  
+
+and if compiling fails because of qt replace Python.h with 
+
+#pragma push_macro("slots")
+#undef slots
+#include "Python.h"
+#pragma pop_macro("slots")
+
+in file CalculiXPythonInterface_wrap.cxx

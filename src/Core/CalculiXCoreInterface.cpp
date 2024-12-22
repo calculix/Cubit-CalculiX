@@ -12,6 +12,11 @@ bool CalculiXCoreInterface::cmd(std::string cmd)
   return ccx_core.cmd(cmd);
 }
 
+bool CalculiXCoreInterface::silent_cmd(std::string cmd)
+{
+  return ccx_core.silent_cmd(cmd);
+}
+
 std::string CalculiXCoreInterface::get_version()
 {
   return ccx_core.get_version();
@@ -32,6 +37,46 @@ bool CalculiXCoreInterface::set_use_ccx_logfile(bool bool_use)
 bool CalculiXCoreInterface::init_pythoninterface()
 {
   return ccx_core.init_pythoninterface();
+}
+
+bool CalculiXCoreInterface::init_materiallibrary()
+{
+  return ccx_core.init_materiallibrary();
+}
+
+bool CalculiXCoreInterface::init_completed()
+{
+  return ccx_core.init_completed();
+}
+
+bool CalculiXCoreInterface::gui_updated()
+{
+  return ccx_core.gui_updated();
+}
+
+bool CalculiXCoreInterface::set_gui_updated(bool status)
+{
+  return ccx_core.set_gui_updated(status);
+}
+
+bool CalculiXCoreInterface::block_core_update()
+{
+  return ccx_core.block_core_update();
+}
+
+bool CalculiXCoreInterface::set_block_core_update(bool status)
+{
+  return ccx_core.set_block_core_update(status);
+}
+
+bool CalculiXCoreInterface::block_gui_update()
+{
+  return ccx_core.block_gui_update();
+}
+
+bool CalculiXCoreInterface::set_block_gui_update(bool status)
+{
+  return ccx_core.set_block_gui_update(status);
 }
 
 std::string CalculiXCoreInterface::print_data()
@@ -115,6 +160,16 @@ std::string CalculiXCoreInterface::get_material_name(int material_id)
   return ccx_core.get_material_name(material_id);
 }
 
+std::string CalculiXCoreInterface::get_material_prefix(std::string material_name)
+{
+  return ccx_core.get_material_prefix(material_name);
+}
+
+int CalculiXCoreInterface::get_group_property_size(std::string group_property)
+{
+  return ccx_core.get_group_property_size(group_property);
+}
+
 std::string CalculiXCoreInterface::get_nodeset_name(int nodeset_id)
 {
   return ccx_core.get_nodeset_name(nodeset_id);
@@ -170,6 +225,21 @@ std::vector<int> CalculiXCoreInterface::get_loadscentrifugal_ids()
   return ccx_core.get_loadscentrifugal_ids();
 }
 
+std::vector<int> CalculiXCoreInterface::get_loadstrajectory_ids()
+{
+  return ccx_core.get_loadstrajectory_ids();
+}
+
+std::vector<int> CalculiXCoreInterface::get_loadsfilm_ids()
+{
+  return ccx_core.get_loadsfilm_ids();
+}
+
+std::vector<int> CalculiXCoreInterface::get_loadsradiation_ids()
+{
+  return ccx_core.get_loadsradiation_ids();
+}
+
 std::vector<int> CalculiXCoreInterface::get_bcsdisplacements_ids()
 {
   return ccx_core.get_bcsdisplacements_ids();
@@ -198,6 +268,21 @@ bool CalculiXCoreInterface::check_nodeset_exists(int nodeset_id)
 bool CalculiXCoreInterface::check_sideset_exists(int sideset_id)
 {
   return ccx_core.check_sideset_exists(sideset_id);
+}
+
+bool CalculiXCoreInterface::check_vertex_exists(int vertex_id)
+{
+  return ccx_core.check_vertex_exists(vertex_id);
+}
+
+bool CalculiXCoreInterface::check_curve_exists(int curve_id)
+{
+  return ccx_core.check_curve_exists(curve_id);
+}
+
+bool CalculiXCoreInterface::check_surface_exists(int surface_id)
+{
+  return ccx_core.check_surface_exists(surface_id);
 }
 
 bool CalculiXCoreInterface::check_vertex_in_nodeset_exists(int vertex_id,int nodeset_id)
@@ -360,6 +445,11 @@ bool CalculiXCoreInterface::delete_amplitude(int amplitude_id)
   return ccx_core.delete_amplitude(amplitude_id);
 }
 
+bool CalculiXCoreInterface::delete_amplitudes(std::vector<int> amplitude_ids)
+{
+  return ccx_core.delete_amplitudes(amplitude_ids);
+}
+
 bool CalculiXCoreInterface::create_orientation(std::vector<std::string> options, std::vector<std::vector<std::string>> options2)
 {
   return ccx_core.create_orientation(options, options2);
@@ -374,6 +464,26 @@ bool CalculiXCoreInterface::delete_orientation(int orientation_id)
 {
   return ccx_core.delete_orientation(orientation_id);
 }
+
+bool CalculiXCoreInterface::modify_damping(std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return ccx_core.modify_damping(options, options_marker);
+}
+
+bool CalculiXCoreInterface::delete_damping(bool delete_alpha, bool delete_beta)
+{
+  return ccx_core.delete_damping(delete_alpha, delete_beta);
+}
+
+bool CalculiXCoreInterface::modify_physicalconstants(std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return ccx_core.modify_physicalconstants(options, options_marker);
+}
+
+bool CalculiXCoreInterface::delete_physicalconstants(bool delete_absolute_zero, bool delete_stefan_boltzmann, bool delete_newton_gravity)
+{
+  return ccx_core.delete_physicalconstants(delete_absolute_zero, delete_stefan_boltzmann, delete_newton_gravity);
+} 
 
 bool CalculiXCoreInterface::modify_loadsforces(int force_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
@@ -419,6 +529,91 @@ bool CalculiXCoreInterface::delete_loadscentrifugal(int centrifugal_id)
 {
   return ccx_core.delete_loadscentrifugal(centrifugal_id);
 }
+
+bool CalculiXCoreInterface::create_loadstrajectory(std::vector<std::string> options, std::vector<int> options2, std::vector<std::vector<double>> options3)
+{
+  return ccx_core.create_loadstrajectory(options, options2, options3);
+}
+
+bool CalculiXCoreInterface::modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2, std::vector<std::vector<double>> options3)
+{
+  return ccx_core.modify_loadstrajectory(trajectory_id,options,options_marker, options2, options3);
+}
+
+bool CalculiXCoreInterface::delete_loadstrajectory(int trajectory_id)
+{
+  return ccx_core.delete_loadstrajectory(trajectory_id);
+}
+
+std::vector<int> CalculiXCoreInterface::loadstrajectory_get_node_ids(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_get_node_ids(trajectory_id);
+}
+
+std::vector<int> CalculiXCoreInterface::loadstrajectory_get_edge_ids(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_get_edge_ids(trajectory_id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_get_hit_coordinates(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_get_hit_coordinates(trajectory_id);
+}
+  
+std::vector<std::vector<std::vector<int>>> CalculiXCoreInterface::loadstrajectory_get_face_ids(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_get_face_ids(trajectory_id);
+}
+
+std::vector<std::vector<std::vector<int>>> CalculiXCoreInterface::loadstrajectory_get_draw_face_ids(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_get_draw_face_ids(trajectory_id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_get_times(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_get_times(trajectory_id);
+} 
+
+std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_get_radius(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_get_radius(trajectory_id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_get_magnitude(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_get_magnitude(trajectory_id);
+}
+
+bool CalculiXCoreInterface::create_loadsfilm(std::vector<std::string> options)
+{
+  return ccx_core.create_loadsfilm(options);
+}
+
+bool CalculiXCoreInterface::modify_loadsfilm(int film_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return ccx_core.modify_loadsfilm(film_id, options, options_marker);
+}
+
+bool CalculiXCoreInterface::delete_loadsfilm(int film_id)
+{
+  return ccx_core.delete_loadsfilm(film_id);
+}
+
+bool CalculiXCoreInterface::create_loadsradiation(std::vector<std::string> options)
+{
+  return ccx_core.create_loadsradiation(options);
+}
+
+bool CalculiXCoreInterface::modify_loadsradiation(int radiation_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return ccx_core.modify_loadsradiation(radiation_id, options, options_marker);
+}
+
+bool CalculiXCoreInterface::delete_loadsradiation(int radiation_id)
+{
+  return ccx_core.delete_loadsradiation(radiation_id);
+} 
 
 bool CalculiXCoreInterface::modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
@@ -725,6 +920,46 @@ bool CalculiXCoreInterface::delete_customline(int customline_id)
   return ccx_core.delete_customline(customline_id);
 }
 
+bool CalculiXCoreInterface::create_materiallibrary_group(std::string name)
+{
+  return ccx_core.create_materiallibrary_group(name);
+}
+
+bool CalculiXCoreInterface::modify_materiallibrary_group(std::string name,  std::string data, int mode)
+{
+  return ccx_core.modify_materiallibrary_group(name, data, mode);
+}
+
+bool CalculiXCoreInterface::delete_materiallibrary_group(std::string name)
+{
+  return ccx_core.delete_materiallibrary_group(name);
+}
+
+bool CalculiXCoreInterface::create_materiallibrary_material(std::string name, std::string groupname)
+{
+  return ccx_core.create_materiallibrary_material(name, groupname);
+}
+
+bool CalculiXCoreInterface::modify_materiallibrary_material(std::string name, std::string groupname, std::string data, int mode, std::vector<double> value_data)
+{
+  return ccx_core.modify_materiallibrary_material(name, groupname, data, mode, value_data);
+}
+
+bool CalculiXCoreInterface::delete_materiallibrary_material(std::string name, std::string groupname)
+{
+  return ccx_core.delete_materiallibrary_material(name, groupname);
+}
+
+bool CalculiXCoreInterface::export_materiallibrary_material(std::string name, std::string groupname, std::string cubit_name)
+{
+  return ccx_core.export_materiallibrary_material(name, groupname, cubit_name);
+}
+
+bool CalculiXCoreInterface::import_materiallibrary_material(std::string name, std::string groupname, std::string cubit_name)
+{
+  return ccx_core.import_materiallibrary_material(name, groupname, cubit_name);
+}
+
 std::vector<std::string> CalculiXCoreInterface::get_customline_data(std::string position,std::string keyword,int keyword_id)
 {
   return ccx_core.get_customline_data(position,keyword,keyword_id);
@@ -758,6 +993,16 @@ std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_load_g
 std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_load_centrifugal(int id)
 {
   return ccx_core.get_draw_data_for_load_centrifugal(id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_load_film(int id)
+{
+  return ccx_core.get_draw_data_for_load_film(id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_load_radiation(int id)
+{
+  return ccx_core.get_draw_data_for_load_radiation(id);
 }
 
 std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_bc_displacement(int id) // returns coord(3) and dof
@@ -803,6 +1048,21 @@ bool CalculiXCoreInterface::draw_load_gravity(std::vector<int> gravity_ids,doubl
 bool CalculiXCoreInterface::draw_load_centrifugal(std::vector<int> centrifugal_ids,double size)
 {
   return ccx_core.draw_load_centrifugal(centrifugal_ids,size);
+}
+
+bool CalculiXCoreInterface::draw_load_trajectory(std::vector<int> trajectory_ids,double size)
+{
+  return ccx_core.draw_load_trajectory(trajectory_ids,size);
+}
+
+bool CalculiXCoreInterface::draw_load_film(std::vector<int> film_ids,double size)
+{
+  return ccx_core.draw_load_film(film_ids,size);
+}
+
+bool CalculiXCoreInterface::draw_load_radiation(std::vector<int> radiation_ids,double size)
+{
+  return ccx_core.draw_load_radiation(radiation_ids,size);
 }
 
 bool CalculiXCoreInterface::draw_bc_displacement(std::vector<int> displacement_ids,double size)
@@ -858,6 +1118,21 @@ bool CalculiXCoreInterface::draw_load_gravities(double size)
 bool CalculiXCoreInterface::draw_load_centrifugals(double size)
 {
   return ccx_core.draw_load_centrifugals(size);
+}
+
+bool CalculiXCoreInterface::draw_load_trajectories(double size)
+{
+  return ccx_core.draw_load_trajectories(size);
+}
+
+bool CalculiXCoreInterface::draw_load_films(double size)
+{
+  return ccx_core.draw_load_films(size);
+}
+
+bool CalculiXCoreInterface::draw_load_radiations(double size)
+{
+  return ccx_core.draw_load_radiations(size);
 }
 
 bool CalculiXCoreInterface::draw_bc_displacements(double size)
@@ -1070,6 +1345,21 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_material_group_
   return ccx_core.get_material_group_properties();
 }
 
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_materiallibrary_tree_data()
+{ 
+  return ccx_core.get_materiallibrary_tree_data();
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_materiallibrary_material_properties(std::string name, std::string group)
+{ 
+  return ccx_core.get_materiallibrary_material_properties(name, group);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::get_materiallibrary_material_values(std::string name, std::string group, std::string property)
+{
+  return ccx_core.get_materiallibrary_material_values(name, group, property);
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_sections_tree_data()
 { 
   return ccx_core.get_sections_tree_data();
@@ -1100,6 +1390,16 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_orientations_tr
   return ccx_core.get_orientations_tree_data();
 }
 
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_damping_tree_data()
+{ 
+  return ccx_core.get_damping_tree_data();
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_physicalconstants_tree_data()
+{ 
+  return ccx_core.get_physicalconstants_tree_data();
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_loadsforces_tree_data()
 { 
   return ccx_core.get_loadsforces_tree_data();
@@ -1123,6 +1423,21 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_loadsgravity_tr
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_loadscentrifugal_tree_data()
 { 
   return ccx_core.get_loadscentrifugal_tree_data();
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_loadstrajectory_tree_data()
+{ 
+  return ccx_core.get_loadstrajectory_tree_data();
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_loadsfilm_tree_data()
+{ 
+  return ccx_core.get_loadsfilm_tree_data();
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_loadsradiation_tree_data()
+{ 
+  return ccx_core.get_loadsradiation_tree_data();
 }
 
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_bcsdisplacements_tree_data()
@@ -1190,6 +1505,21 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_loadscent
   return ccx_core.get_steps_loadscentrifugal_tree_data(step_id);
 }
 
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_loadstrajectory_tree_data(int step_id)
+{ 
+  return ccx_core.get_steps_loadstrajectory_tree_data(step_id);
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_loadsfilm_tree_data(int step_id)
+{ 
+  return ccx_core.get_steps_loadsfilm_tree_data(step_id);
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_loadsradiation_tree_data(int step_id)
+{ 
+  return ccx_core.get_steps_loadsradiation_tree_data(step_id);
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_bcsdisplacements_tree_data(int step_id)
 { 
   return ccx_core.get_steps_bcsdisplacements_tree_data(step_id);
@@ -1218,6 +1548,16 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_customlines_tre
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_jobs_tree_data()
 { 
   return ccx_core.get_jobs_tree_data();
+}
+
+bool CalculiXCoreInterface::prepare_export()
+{
+  return ccx_core.prepare_export();
+}
+
+bool CalculiXCoreInterface::clean_export()
+{
+  return ccx_core.clean_export();
 }
 
 std::string CalculiXCoreInterface::get_material_export_data() // gets the export data from materials core
@@ -1253,6 +1593,16 @@ std::string CalculiXCoreInterface::get_amplitude_export_data() // gets the expor
 std::string CalculiXCoreInterface::get_orientation_export_data() // gets the export data from orientation core
 {
   return ccx_core.get_orientation_export_data();
+}
+
+std::string CalculiXCoreInterface::get_damping_export_data() // gets the export data from damping core
+{
+  return ccx_core.get_damping_export_data();
+}
+
+std::string CalculiXCoreInterface::get_physicalconstants_export_data() // gets the export data from physicalconstants core
+{
+  return ccx_core.get_physicalconstants_export_data();
 }
 
 std::string CalculiXCoreInterface::get_initialcondition_export_data() // gets the export data from core

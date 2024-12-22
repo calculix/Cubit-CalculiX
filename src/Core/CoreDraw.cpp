@@ -712,6 +712,109 @@ bool CoreDraw::draw_load_centrifugal(int id, double size)
     return true;
 }
 
+bool CoreDraw::draw_load_trajectory(int id, double size)
+{
+    std::vector<int> node_ids;
+    node_ids = ccx_iface->loadstrajectory_get_node_ids(id);
+    std::vector<std::vector<double>> hit_coordinates;
+    hit_coordinates = ccx_iface->loadstrajectory_get_hit_coordinates(id);
+    std::vector<std::vector<std::vector<int>>> face_ids;
+    face_ids = ccx_iface->loadstrajectory_get_draw_face_ids(id);
+    std::vector<std::vector<double>> times;
+    times = ccx_iface->loadstrajectory_get_times(id);
+    bool switch_color = true;
+
+    for (size_t i = 0; i < hit_coordinates.size(); i++)
+    {
+        if (hit_coordinates[i].size()>0)
+        {
+            std::array<double,3> coord = CubitInterface::get_nodal_coordinates(node_ids[i]);
+            if (switch_color)
+            {
+                ccx_iface->silent_cmd("draw location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " color red");
+                ccx_iface->silent_cmd("draw line location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " location " + std::to_string(hit_coordinates[i][0]) + " " + std::to_string(hit_coordinates[i][1]) + " " + std::to_string(hit_coordinates[i][2]) +  " color red");
+                //switch_color = false;
+            }else{
+                ccx_iface->silent_cmd("draw location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " color blue");
+                ccx_iface->silent_cmd("draw line location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " location " + std::to_string(hit_coordinates[i][0]) + " " + std::to_string(hit_coordinates[i][1]) + " " + std::to_string(hit_coordinates[i][2]) +  " color blue");
+                //switch_color = true;
+            }
+        }
+    }
+    
+    // draw faces
+    for (size_t i = 0; i < face_ids.size(); i++) //loop over nodes
+    {
+        for (size_t ii = 0; ii < face_ids[i].size(); ii++) //loop over radius
+        {
+            if (face_ids[i][ii].size()!=0)
+            {
+                std::string cmd = "draw face ";
+                for (size_t iii = 0; iii < face_ids[i][ii].size(); iii++)
+                {
+                    cmd.append(std::to_string(face_ids[i][ii][iii]) + " ");
+                }
+                cmd.append("color " + get_color(ii) + " add");
+                
+                ccx_iface->silent_cmd(cmd);
+                //ccx_iface->cmd(cmd);
+            }
+        }
+    }
+    /*
+    for (size_t i = 0; i < times.size(); i++)
+    {
+        if (times[i].size()>0)
+        {
+            std::array<double,3> coord = CubitInterface::get_nodal_coordinates(node_ids[i]);
+            std::string label = "locate location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " ";
+            label.append("\" t_begin " + ccx_iface->to_string_scientific(times[i][0]) + ",t_end " + ccx_iface->to_string_scientific(times[i][1]) + "\"");
+            ccx_iface->cmd(label);
+        }
+    }
+    */
+    if (times.size()>1)
+    {
+        std::array<double,3> coord = CubitInterface::get_nodal_coordinates(node_ids[0]);
+        std::string label = "locate location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " ";
+        label.append("\" t_begin " + ccx_iface->to_string_scientific(times[0][0]) + "\"");
+        ccx_iface->silent_cmd(label);
+
+        coord = CubitInterface::get_nodal_coordinates(node_ids[node_ids.size()-1]);
+        label = "locate location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " ";
+        label.append("\" t_end " + ccx_iface->to_string_scientific(times[times.size()-1][1]) + "\"");
+        ccx_iface->silent_cmd(label);
+    }
+
+    return true;
+}
+
+bool CoreDraw::draw_load_film(int id, double size)
+{
+    std::vector<std::vector<double>> draw_data;
+    draw_data = ccx_iface->get_draw_data_for_load_film(id);
+    
+    for (size_t i = 0; i < draw_data.size(); i++)
+    {
+        draw_arrow({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, {draw_data[i][3],draw_data[i][4],draw_data[i][5]}, false, "indianred", size);
+    }
+
+    return true;
+}
+
+bool CoreDraw::draw_load_radiation(int id, double size)
+{
+    std::vector<std::vector<double>> draw_data;
+    draw_data = ccx_iface->get_draw_data_for_load_radiation(id);
+    
+    for (size_t i = 0; i < draw_data.size(); i++)
+    {
+        draw_arrow({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, {draw_data[i][3],draw_data[i][4],draw_data[i][5]}, false, "tomato", size);
+    }
+
+    return true;
+}
+
 bool CoreDraw::draw_bc_displacement(int id, double size)
 {
     std::vector<std::vector<double>> draw_data;
@@ -833,6 +936,24 @@ bool CoreDraw::draw_loads(double size)
     {
         draw_load_centrifugal(tmp_load_ids[i], size);
     }
+
+    tmp_load_ids = ccx_iface->get_loadstrajectory_ids();
+    for (size_t i = 0; i < tmp_load_ids.size(); i++)
+    {
+        draw_load_trajectory(tmp_load_ids[i], size);
+    }
+
+    tmp_load_ids = ccx_iface->get_loadsfilm_ids();
+    for (size_t i = 0; i < tmp_load_ids.size(); i++)
+    {
+        draw_load_film(tmp_load_ids[i], size);
+    }
+
+    tmp_load_ids = ccx_iface->get_loadsradiation_ids();
+    for (size_t i = 0; i < tmp_load_ids.size(); i++)
+    {
+        draw_load_radiation(tmp_load_ids[i], size);
+    }
     return true;
 }
 
@@ -945,6 +1066,45 @@ bool CoreDraw::draw_load_centrifugals(double size)
     return true;
 }
 
+bool CoreDraw::draw_load_trajectories(double size)
+{
+    std::vector<int> tmp_load_ids;
+    
+    tmp_load_ids = ccx_iface->get_loadstrajectory_ids();
+    for (size_t i = 0; i < tmp_load_ids.size(); i++)
+    {
+        draw_load_trajectory(tmp_load_ids[i], size);
+    }
+
+    return true;
+}
+
+bool CoreDraw::draw_load_films(double size)
+{
+    std::vector<int> tmp_load_ids;
+    
+    tmp_load_ids = ccx_iface->get_loadsfilm_ids();
+    for (size_t i = 0; i < tmp_load_ids.size(); i++)
+    {
+        draw_load_film(tmp_load_ids[i], size);
+    }
+
+    return true;
+}
+
+bool CoreDraw::draw_load_radiations(double size)
+{
+    std::vector<int> tmp_load_ids;
+    
+    tmp_load_ids = ccx_iface->get_loadsradiation_ids();
+    for (size_t i = 0; i < tmp_load_ids.size(); i++)
+    {
+        draw_load_radiation(tmp_load_ids[i], size);
+    }
+
+    return true;
+}
+
 bool CoreDraw::draw_bc_displacements(double size)
 {
     std::vector<int> tmp_bc_ids;
@@ -969,4 +1129,53 @@ bool CoreDraw::draw_bc_temperatures(double size)
     }
 
     return true;
+}
+
+
+std::string CoreDraw::get_color(int color_id)
+{
+    std::vector<std::string> colors;
+    colors.push_back("red");    
+    colors.push_back("orange");
+    colors.push_back("yellow");
+    colors.push_back("salmon");
+    colors.push_back("coral");
+    colors.push_back("pink");
+    colors.push_back("purple");
+    colors.push_back("paleturquoise");
+    colors.push_back("lightsalmon");
+    colors.push_back("springgreen");
+    colors.push_back("slateblue");
+    colors.push_back("sienna");
+    colors.push_back("seagreen");
+    colors.push_back("deepskyblue");
+    colors.push_back("lightblue");
+    colors.push_back("lightgreen");
+    colors.push_back("khaki");
+    colors.push_back("tomato");
+    colors.push_back("lightskyblue");
+    colors.push_back("turquoise");
+    colors.push_back("greenyellow");
+    colors.push_back("powderblue");
+    colors.push_back("mediumturquoise");
+    colors.push_back("skyblue");
+    colors.push_back("lightcyan");
+    colors.push_back("dodgerblue");
+    colors.push_back("aquamarine");
+    colors.push_back("lightgoldenrodyellow");
+    colors.push_back("darkgreen");
+    colors.push_back("lightcoral");
+    colors.push_back("green");
+    colors.push_back("magenta");
+    colors.push_back("cyan");
+    colors.push_back("blue");
+    colors.push_back("white");
+    colors.push_back("brown");
+    colors.push_back("gold");
+    
+    if ((color_id>0)&&(color_id<38))
+    {
+        return colors[color_id];
+    }
+    return colors[0];
 }

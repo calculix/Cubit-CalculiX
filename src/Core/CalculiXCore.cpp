@@ -12,9 +12,8 @@
 #include <algorithm>
 #include <cmath>
 
-#ifndef WIN32
-  #include "CubitGuiUtil.hpp"  
-#endif
+#include "cubitguicommondll.hpp"
+#include "CubitGuiUtil.hpp"  
 #include "CubitInterface.hpp"
 #include "CubitCoreformInterface.hpp"
 #include "CubitMessage.hpp"
@@ -24,17 +23,23 @@
 
 #include "CoreBlocks.hpp"
 #include "CoreMaterials.hpp"
+#include "CoreMaterialsLibrary.hpp"
 #include "CoreSections.hpp"
 #include "CoreConstraints.hpp"
 #include "CoreSurfaceInteractions.hpp"
 #include "CoreContactPairs.hpp"
 #include "CoreAmplitudes.hpp"
 #include "CoreOrientations.hpp"
+#include "CoreDamping.hpp"
+#include "CorePhysicalConstants.hpp"
 #include "CoreLoadsForces.hpp"
 #include "CoreLoadsPressures.hpp"
 #include "CoreLoadsHeatfluxes.hpp"
 #include "CoreLoadsGravity.hpp"
 #include "CoreLoadsCentrifugal.hpp"
+#include "CoreLoadsTrajectory.hpp"
+#include "CoreLoadsFilm.hpp"
+#include "CoreLoadsRadiation.hpp"
 #include "CoreBCsDisplacements.hpp"
 #include "CoreBCsTemperatures.hpp"
 #include "CoreHistoryOutputs.hpp"
@@ -56,9 +61,10 @@
 #include "HDF5Tool.hpp"
 
 CalculiXCore::CalculiXCore():
-  cb(NULL),mat(NULL),sections(NULL),constraints(NULL),surfaceinteractions(NULL),
-  contactpairs(NULL),amplitudes(NULL),orientations(NULL),loadsforces(NULL),loadspressures(NULL),loadsheatfluxes(NULL),
-  loadsgravity(NULL),loadscentrifugal(NULL),
+  cb(NULL),mat(NULL),mat_library(NULL),sections(NULL),constraints(NULL),surfaceinteractions(NULL),
+  contactpairs(NULL),amplitudes(NULL),orientations(NULL),damping(NULL),physicalconstants(NULL),
+  loadsforces(NULL),loadspressures(NULL),loadsheatfluxes(NULL),
+  loadsgravity(NULL),loadscentrifugal(NULL),loadstrajectory(NULL),loadsfilm(NULL),loadsradiation(NULL),
   bcsdisplacements(NULL),bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL),
   initialconditions(NULL), hbcs(NULL), steps(NULL),jobs(NULL),results(NULL),timer(NULL),customlines(NULL),
   draw(NULL)
@@ -72,6 +78,8 @@ CalculiXCore::~CalculiXCore()
     delete cb;
   if(mat)
     delete mat;
+  if(mat_library)
+    delete mat_library;
   if(sections)
     delete sections;
   if(constraints)
@@ -84,6 +92,10 @@ CalculiXCore::~CalculiXCore()
     delete amplitudes;
   if(orientations)
     delete orientations;
+  if(damping)
+    delete damping;
+  if(physicalconstants)
+    delete physicalconstants;
   if(loadsforces)
     delete loadsforces;
   if(loadspressures)
@@ -94,6 +106,12 @@ CalculiXCore::~CalculiXCore()
     delete loadsgravity;
   if(loadscentrifugal)
     delete loadscentrifugal;
+  if(loadstrajectory)
+    delete loadstrajectory;
+  if(loadsfilm)
+    delete loadsfilm;
+  if(loadsradiation)
+    delete loadsradiation;
   if(bcsdisplacements)
     delete bcsdisplacements;
   if(bcstemperatures)
@@ -128,6 +146,13 @@ bool CalculiXCore::cmd(std::string cmd)
   // all commands send with CubitGuiUtil will get listed in the history
     CubitGuiUtil::send_cubit_command(cmd.c_str());
   #endif
+  
+  return true;
+}
+
+bool CalculiXCore::silent_cmd(std::string cmd)
+{
+  CubitInterface::silent_cmd_without_running_journal_lines(cmd.c_str());
   
   return true;
 }
@@ -195,6 +220,16 @@ bool CalculiXCore::init()
   
   orientations->init();
 
+  if(!damping)
+    damping = new CoreDamping;
+  
+  damping->init();
+
+  if(!physicalconstants)
+    physicalconstants = new CorePhysicalConstants;
+  
+  physicalconstants->init();
+
   if(!loadsforces)
     loadsforces = new CoreLoadsForces;
   
@@ -219,6 +254,21 @@ bool CalculiXCore::init()
     loadscentrifugal = new CoreLoadsCentrifugal;
   
   loadscentrifugal->init();
+
+  if(!loadstrajectory)
+    loadstrajectory = new CoreLoadsTrajectory;
+  
+  loadstrajectory->init();
+
+  if(!loadsfilm)
+    loadsfilm = new CoreLoadsFilm;
+  
+  loadsfilm->init();
+
+  if(!loadsradiation)
+    loadsradiation = new CoreLoadsRadiation;
+  
+  loadsradiation->init();
 
   if(!bcsdisplacements)
     bcsdisplacements = new CoreBCsDisplacements;
@@ -300,6 +350,11 @@ bool CalculiXCore::init2() // will be done when loading the ccm!
   
   mat->init();
 
+  if(!mat_library)
+    mat_library = new CoreMaterialsLibrary;
+
+  this->bool_init2 = true;
+  
   return true;
 }
 
@@ -329,6 +384,65 @@ bool CalculiXCore::init_pythoninterface()
   }
 
   return false;
+}
+
+bool CalculiXCore::init_materiallibrary()
+{
+  // init_materiallibrary(); needs to be initialized after the cubit is fully loaded; 
+  // will be initialized with the core timer on its first evocation
+
+  if (!this->bool_init_materiallibrary)
+  {
+    mat_library->init();
+
+    this->bool_init_materiallibrary = true;
+    return true;
+  }
+
+  return false;
+}
+
+bool CalculiXCore::init_completed()
+{
+  if (bool_init && bool_init2 && bool_init_pythoninterface && bool_init_materiallibrary)
+  {
+    return true;
+  }
+
+  return false;
+}
+
+bool CalculiXCore::gui_updated()
+{
+  return bool_gui_updated;
+}
+
+bool CalculiXCore::set_gui_updated(bool status)
+{
+  bool_gui_updated = status;
+  return true;
+}
+
+bool CalculiXCore::block_core_update()
+{
+  return bool_block_core_update;
+}
+
+bool CalculiXCore::set_block_core_update(bool status)
+{
+  bool_block_core_update = status;
+  return true;
+}
+
+bool CalculiXCore::block_gui_update()
+{
+  return bool_block_gui_update;
+}
+
+bool CalculiXCore::set_block_gui_update(bool status)
+{
+  bool_block_gui_update = status;
+  return true;
 }
 
 bool CalculiXCore::update()
@@ -368,17 +482,23 @@ bool CalculiXCore::reset()
 {
   cb->reset();
   //mat->reset();
+  mat_library->reset();
   sections->reset();
   constraints->reset();
   surfaceinteractions->reset();
   contactpairs->reset();
   amplitudes->reset();
   orientations->reset();
+  damping->reset();
+  physicalconstants->reset();
   loadsforces->reset();
   loadspressures->reset();
   loadsheatfluxes->reset();
   loadsgravity->reset();
   loadscentrifugal->reset();
+  loadstrajectory->reset();
+  loadsfilm->reset();
+  loadsradiation->reset();
   bcsdisplacements->reset();
   bcstemperatures->reset();
   historyoutputs->reset();
@@ -424,7 +544,7 @@ bool CalculiXCore::read_cub(std::string filename)
     PRINT_INFO("%s", log.c_str());
     return true;
   }else{
-    progressbar.start(0,23,"Reading Cubit-CalculiX data");
+    progressbar.start(0,27,"Reading Cubit-CalculiX data");
     progressbar.check_interrupt();
     //General
     std::vector<std::string> general;
@@ -474,7 +594,7 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_string_rank_2("name_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->name_amplitude_data);
     cubTool.read_dataset_string_rank_2("shiftx_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->shiftx_amplitude_data);
     cubTool.read_dataset_string_rank_2("shifty_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->shifty_amplitude_data);
-    cubTool.read_dataset_string_rank_2("amplitudevalues_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->amplitudevalues_amplitude_data);
+    cubTool.read_dataset_double_rank_2("amplitudevalues_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->amplitudevalues_amplitude_data);
     progressbar.step();
     progressbar.check_interrupt();
     //Orientations
@@ -483,6 +603,27 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_string_rank_2("a_data","Cubit-CalculiX/Orientations", orientations->a_data);
     cubTool.read_dataset_string_rank_2("b_data","Cubit-CalculiX/Orientations", orientations->b_data);
     cubTool.read_dataset_string_rank_2("rotation_data","Cubit-CalculiX/Orientations", orientations->rotation_data);
+    progressbar.step();
+    progressbar.check_interrupt();
+    //Damping
+    damping->damping_data.clear();
+    cubTool.read_dataset_string_rank_1("damping_data","Cubit-CalculiX/Damping", damping->damping_data);
+    if (damping->damping_data.size()==0)
+    {
+      damping->damping_data.push_back("");
+      damping->damping_data.push_back("");
+    }
+    progressbar.step();
+    progressbar.check_interrupt();
+    //Physical Constants
+    physicalconstants->physicalconstants_data.clear();
+    cubTool.read_dataset_string_rank_1("physicalconstants_data","Cubit-CalculiX/PhysicalConstants", physicalconstants->physicalconstants_data);
+    if (physicalconstants->physicalconstants_data.size()==0)
+    {
+      physicalconstants->physicalconstants_data.push_back("");
+      physicalconstants->physicalconstants_data.push_back("");
+      physicalconstants->physicalconstants_data.push_back("");
+    }
     progressbar.step();
     progressbar.check_interrupt();
     //LoadsForces
@@ -505,6 +646,7 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Gravity", loadsgravity->time_delay_data);
     cubTool.read_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Gravity", loadsgravity->direction_data);
     cubTool.read_dataset_string_rank_2("magnitude_data","Cubit-CalculiX/Loads/Gravity", loadsgravity->magnitude_data);
+    cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Gravity", loadsgravity->name_data);
     progressbar.step();
     progressbar.check_interrupt();
     //LoadsCentrifugal
@@ -513,6 +655,35 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->direction_data);
     cubTool.read_dataset_string_rank_2("magnitude_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->magnitude_data);
     cubTool.read_dataset_string_rank_2("coordinate_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->coordinate_data);
+    cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->name_data);
+    progressbar.step();
+    progressbar.check_interrupt();
+    //LoadsTrajectory
+    cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->loads_data);
+    cubTool.read_dataset_int_rank_2("fire_ray_surface_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->fire_ray_surface_data);
+    cubTool.read_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->direction_data);
+    cubTool.read_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->magnitude_data);
+    cubTool.read_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->radius_data);
+    cubTool.read_dataset_string_rank_2("time_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->time_data);
+    cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->name_data);
+    progressbar.step();
+    progressbar.check_interrupt();
+    //LoadsFilm
+    cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Film", loadsfilm->loads_data);
+    cubTool.read_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Film", loadsfilm->time_delay_data);
+    cubTool.read_dataset_string_rank_2("temperature_data","Cubit-CalculiX/Loads/Film", loadsfilm->temperature_data);
+    cubTool.read_dataset_string_rank_2("coefficient_data","Cubit-CalculiX/Loads/Film", loadsfilm->coefficient_data);
+    cubTool.read_dataset_string_rank_2("film_time_delay_data","Cubit-CalculiX/Loads/Film", loadsfilm->film_time_delay_data);
+    cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Film", loadsfilm->name_data);
+    progressbar.step();
+    progressbar.check_interrupt();
+    //LoadsRadiation
+    cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->loads_data);
+    cubTool.read_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->time_delay_data);
+    cubTool.read_dataset_string_rank_2("temperature_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->temperature_data);
+    cubTool.read_dataset_string_rank_2("emissivity_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->emissivity_data);
+    cubTool.read_dataset_string_rank_2("radiation_time_delay_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->radiation_time_delay_data);
+    cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->name_data);
     progressbar.step();
     progressbar.check_interrupt();
     //BCs
@@ -562,6 +733,10 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_string_rank_2("heattransfer_data","Cubit-CalculiX/Steps", steps->heattransfer_data);
     cubTool.read_dataset_string_rank_2("coupledtd_data","Cubit-CalculiX/Steps", steps->coupledtd_data);
     cubTool.read_dataset_string_rank_2("uncoupledtd_data","Cubit-CalculiX/Steps", steps->uncoupledtd_data);
+    cubTool.read_dataset_string_rank_2("dynamic_data","Cubit-CalculiX/Steps", steps->dynamic_data);
+    cubTool.read_dataset_string_rank_2("modal_dynamic_data","Cubit-CalculiX/Steps", steps->modal_dynamic_data);
+    cubTool.read_dataset_string_rank_2("steady_state_dynamics_data","Cubit-CalculiX/Steps", steps->steady_state_dynamics_data);
+    cubTool.read_dataset_string_rank_2("complex_frequency_data","Cubit-CalculiX/Steps", steps->complex_frequency_data);
     cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Steps", steps->loads_data);
     cubTool.read_dataset_int_rank_2("bcs_data","Cubit-CalculiX/Steps", steps->bcs_data);
     cubTool.read_dataset_int_rank_2("historyoutputs_data","Cubit-CalculiX/Steps", steps->historyoutputs_data);
@@ -866,7 +1041,7 @@ bool CalculiXCore::save_cub(std::string filename)
 
   if (!cubTool.nameExists("Cubit-CalculiX"))
   {
-    progressbar.start(0,23,"Writing Cubit-CalculiX data");
+    progressbar.start(0,27,"Writing Cubit-CalculiX data");
     progressbar.check_interrupt();
     //General
     cubTool.createGroup("Cubit-CalculiX");
@@ -925,7 +1100,7 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_string_rank_2("name_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->name_amplitude_data);
     cubTool.write_dataset_string_rank_2("shiftx_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->shiftx_amplitude_data);
     cubTool.write_dataset_string_rank_2("shifty_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->shifty_amplitude_data);
-    cubTool.write_dataset_string_rank_2("amplitudevalues_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->amplitudevalues_amplitude_data);
+    cubTool.write_dataset_double_rank_2("amplitudevalues_amplitude_data","Cubit-CalculiX/Amplitudes", amplitudes->amplitudevalues_amplitude_data);
     progressbar.step();
     progressbar.check_interrupt();
     //Orientations
@@ -935,6 +1110,14 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_string_rank_2("a_data","Cubit-CalculiX/Orientations", orientations->a_data);
     cubTool.write_dataset_string_rank_2("b_data","Cubit-CalculiX/Orientations", orientations->b_data);
     cubTool.write_dataset_string_rank_2("rotation_data","Cubit-CalculiX/Orientations", orientations->rotation_data);
+    progressbar.step();
+    progressbar.check_interrupt();
+    //Damping
+    cubTool.write_dataset_string_rank_1("damping_data","Cubit-CalculiX/Damping", damping->damping_data);
+    progressbar.step();
+    progressbar.check_interrupt();
+    //Physical Constants
+    cubTool.write_dataset_string_rank_1("physicalconstants_data","Cubit-CalculiX/PhysicalConstants", physicalconstants->physicalconstants_data);
     progressbar.step();
     progressbar.check_interrupt();
     //Loads
@@ -963,6 +1146,7 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Gravity", loadsgravity->time_delay_data);
     cubTool.write_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Gravity", loadsgravity->direction_data);
     cubTool.write_dataset_string_rank_2("magnitude_data","Cubit-CalculiX/Loads/Gravity", loadsgravity->magnitude_data);
+    cubTool.write_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Gravity", loadsgravity->name_data);
     progressbar.step();
     progressbar.check_interrupt();
     //LoadsCentrifugal
@@ -972,6 +1156,38 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->direction_data);
     cubTool.write_dataset_string_rank_2("magnitude_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->magnitude_data);
     cubTool.write_dataset_string_rank_2("coordinate_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->coordinate_data);
+    cubTool.write_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Centrifugal", loadscentrifugal->name_data);
+    progressbar.step();
+    progressbar.check_interrupt();
+    //LoadsTrajectory
+    cubTool.createGroup("Cubit-CalculiX/Loads/Trajectory");
+    cubTool.write_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->loads_data);
+    cubTool.write_dataset_int_rank_2("fire_ray_surface_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->fire_ray_surface_data);
+    cubTool.write_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->direction_data);
+    cubTool.write_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->magnitude_data);
+    cubTool.write_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->radius_data);
+    cubTool.write_dataset_string_rank_2("time_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->time_data);
+    cubTool.write_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->name_data);
+    progressbar.step();
+    progressbar.check_interrupt();
+    //LoadsFilm
+    cubTool.createGroup("Cubit-CalculiX/Loads/Film");
+    cubTool.write_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Film", loadsfilm->loads_data);
+    cubTool.write_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Film", loadsfilm->time_delay_data);
+    cubTool.write_dataset_string_rank_2("temperature_data","Cubit-CalculiX/Loads/Film", loadsfilm->temperature_data);
+    cubTool.write_dataset_string_rank_2("coefficient_data","Cubit-CalculiX/Loads/Film", loadsfilm->coefficient_data);
+    cubTool.write_dataset_string_rank_2("film_time_delay_data","Cubit-CalculiX/Loads/Film", loadsfilm->film_time_delay_data);
+    cubTool.write_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Film", loadsfilm->name_data);
+    progressbar.step();
+    progressbar.check_interrupt();
+    //LoadsRadiation
+    cubTool.createGroup("Cubit-CalculiX/Loads/Radiation");
+    cubTool.write_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->loads_data);
+    cubTool.write_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->time_delay_data);
+    cubTool.write_dataset_string_rank_2("temperature_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->temperature_data);
+    cubTool.write_dataset_string_rank_2("emissivity_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->emissivity_data);
+    cubTool.write_dataset_string_rank_2("radiation_time_delay_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->radiation_time_delay_data);
+    cubTool.write_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Radiation", loadsradiation->name_data);
     progressbar.step();
     progressbar.check_interrupt();
     //BCs
@@ -1029,6 +1245,10 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_string_rank_2("heattransfer_data","Cubit-CalculiX/Steps", steps->heattransfer_data);
     cubTool.write_dataset_string_rank_2("coupledtd_data","Cubit-CalculiX/Steps", steps->coupledtd_data);
     cubTool.write_dataset_string_rank_2("uncoupledtd_data","Cubit-CalculiX/Steps", steps->uncoupledtd_data);
+    cubTool.write_dataset_string_rank_2("dynamic_data","Cubit-CalculiX/Steps", steps->dynamic_data);
+    cubTool.write_dataset_string_rank_2("modal_dynamic_data","Cubit-CalculiX/Steps", steps->modal_dynamic_data);
+    cubTool.write_dataset_string_rank_2("steady_state_dynamics_data","Cubit-CalculiX/Steps", steps->steady_state_dynamics_data);
+    cubTool.write_dataset_string_rank_2("complex_frequency_data","Cubit-CalculiX/Steps", steps->complex_frequency_data);
     cubTool.write_dataset_int_rank_2("loads_data","Cubit-CalculiX/Steps", steps->loads_data);
     cubTool.write_dataset_int_rank_2("bcs_data","Cubit-CalculiX/Steps", steps->bcs_data);
     cubTool.write_dataset_int_rank_2("historyoutputs_data","Cubit-CalculiX/Steps", steps->historyoutputs_data);
@@ -1575,15 +1795,136 @@ std::string CalculiXCore::autocleanup()
     }
     sub_bool = false;
     if (!check_block_exists(loadscentrifugal->loads_data[i-1][4]))
+    {
+      log.append("Block ID " + std::to_string(loadscentrifugal->loads_data[i-1][4]) + " doesn't exist.\n");
+      log.append("Centrifugal ID " + std::to_string(loadscentrifugal->loads_data[i-1][0]) + " will be deleted.\n");
+      sub_bool = true;
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      loadscentrifugal->delete_load(loadscentrifugal->loads_data[i-1][0]);
+    }
+  }
+  // LOADS TRAJECTORY
+  for (size_t i = loadstrajectory->loads_data.size(); i > 0; i--)
+  { 
+    sub_bool = false;
+    if (!check_curve_exists(loadstrajectory->loads_data[i-1][2]))
+    {
+      log.append("Curve ID " + std::to_string(loadstrajectory->loads_data[i-1][2]) + " doesn't exist.\n");
+      log.append("Trajectory ID " + std::to_string(loadstrajectory->loads_data[i-1][0]) + " will be deleted.\n");
+      sub_bool = true;
+    }
+    if (!check_vertex_exists(loadstrajectory->loads_data[i-1][3]))
+    {
+      log.append("Vertex ID " + std::to_string(loadstrajectory->loads_data[i-1][3]) + " doesn't exist.\n");
+      log.append("Trajectory ID " + std::to_string(loadstrajectory->loads_data[i-1][0]) + " will be deleted.\n");
+      sub_bool = true;
+    }
+    std::vector<int> ids = CubitInterface::parse_cubit_list("vertex", std::to_string(loadstrajectory->loads_data[i-1][3]) + " in curve " + std::to_string(loadstrajectory->loads_data[i-1][2])); 
+    if (ids.size()==0)
+    {
+      log.append("Vertex ID " + std::to_string(loadstrajectory->loads_data[i-1][3]) + " doesn't exist in Curve.\n");
+      log.append("Trajectory ID " + std::to_string(loadstrajectory->loads_data[i-1][0]) + " will be deleted.\n");
+      sub_bool = true;
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      loadstrajectory->delete_load(loadstrajectory->loads_data[i-1][0]);
+    }
+  }
+  // LOADS FILM
+  for (size_t i = loadsfilm->loads_data.size(); i > 0; i--)
+  { 
+    sub_bool = false;
+    if (loadsfilm->loads_data[i-1][2]!=-1)
+    {
+      if (!check_amplitude_exists(loadsfilm->loads_data[i-1][2]))
       {
-        log.append("Block ID " + std::to_string(loadscentrifugal->loads_data[i-1][4]) + " doesn't exist.\n");
-        log.append("Centrifugal ID " + std::to_string(loadscentrifugal->loads_data[i-1][0]) + " will be deleted.\n");
+        log.append("Amplitude ID " + std::to_string(loadsfilm->loads_data[i-1][2]) + " doesn't exist.\n");
+        log.append("Amplitude Reference from Load Film ID " + std::to_string(loadsfilm->loads_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      loadsfilm->loads_data[i-1][2]=-1;
+    }
+    sub_bool = false;
+    if (loadsfilm->loads_data[i-1][7]!=-1)
+    {
+      if (!check_amplitude_exists(loadsfilm->loads_data[i-1][7]))
+      {
+        log.append("Film Amplitude ID " + std::to_string(loadsfilm->loads_data[i-1][7]) + " doesn't exist.\n");
+        log.append("Film Amplitude Reference from Load Film ID " + std::to_string(loadsfilm->loads_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      loadsfilm->loads_data[i-1][7]=-1;
+    }
+    sub_bool = false;
+    if (!check_sideset_exists(loadsfilm->loads_data[i-1][4]))
+      {
+        log.append("Sideset ID " + std::to_string(loadsfilm->loads_data[i-1][4]) + " doesn't exist.\n");
+        log.append("Film ID " + std::to_string(loadsfilm->loads_data[i-1][0]) + " will be deleted.\n");
         sub_bool = true;
       }
     if (sub_bool)
     {
       print_log = sub_bool;
-      loadscentrifugal->delete_load(loadscentrifugal->loads_data[i-1][0]);
+      loadsfilm->delete_load(loadsfilm->loads_data[i-1][0]);
+    }
+  }
+  // RADIATION
+  for (size_t i = loadsradiation->loads_data.size(); i > 0; i--)
+  { 
+    sub_bool = false;
+    if (loadsradiation->loads_data[i-1][2]!=-1)
+    {
+      if (!check_amplitude_exists(loadsradiation->loads_data[i-1][2]))
+      {
+        log.append("Amplitude ID " + std::to_string(loadsradiation->loads_data[i-1][2]) + " doesn't exist.\n");
+        log.append("Amplitude Reference from Load Radiation ID " + std::to_string(loadsradiation->loads_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      loadsradiation->loads_data[i-1][2]=-1;
+    }
+    sub_bool = false;
+    if (loadsradiation->loads_data[i-1][7]!=-1)
+    {
+      if (!check_amplitude_exists(loadsradiation->loads_data[i-1][7]))
+      {
+        log.append("Radiation Amplitude ID " + std::to_string(loadsradiation->loads_data[i-1][7]) + " doesn't exist.\n");
+        log.append("Radiation Amplitude Reference from Load Radiation ID " + std::to_string(loadsradiation->loads_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      loadsradiation->loads_data[i-1][7]=-1;
+    }
+    sub_bool = false;
+    if (!check_sideset_exists(loadsradiation->loads_data[i-1][4]))
+      {
+        log.append("Sideset ID " + std::to_string(loadsradiation->loads_data[i-1][4]) + " doesn't exist.\n");
+        log.append("Radiation ID " + std::to_string(loadsradiation->loads_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      loadsradiation->delete_load(loadsradiation->loads_data[i-1][0]);
     }
   }
   // BCS DISPLACEMENTS
@@ -1871,7 +2212,51 @@ std::string CalculiXCore::autocleanup()
         }
       }
     }
-    
+    // Trajectory
+    sub_data_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[i-1][5]);
+    for (size_t ii = sub_data_ids.size(); ii > 0; ii--)
+    {
+      if (steps->loads_data[sub_data_ids[ii-1]][1]==6)
+      {
+        if (!check_bc_exists(steps->loads_data[sub_data_ids[ii-1]][2],11))
+        {
+          log.append("Load Trajectory ID " + std::to_string(steps->loads_data[sub_data_ids[ii-1]][2]) + " doesn't exist.\n");
+          log.append("Load Trajectory Reference from Step ID " + std::to_string(steps->steps_data[i-1][0]) + " will be deleted.\n");
+          sub_bool = true;
+          steps->remove_loads(steps->steps_data[i-1][0], 6, {steps->loads_data[sub_data_ids[ii-1]][2]});
+        }
+      }
+    }
+    // Film
+    sub_data_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[i-1][5]);
+    for (size_t ii = sub_data_ids.size(); ii > 0; ii--)
+    {
+      if (steps->loads_data[sub_data_ids[ii-1]][1]==7)
+      {
+        if (!check_bc_exists(steps->loads_data[sub_data_ids[ii-1]][2],12))
+        {
+          log.append("Load Film ID " + std::to_string(steps->loads_data[sub_data_ids[ii-1]][2]) + " doesn't exist.\n");
+          log.append("Load Film Reference from Step ID " + std::to_string(steps->steps_data[i-1][0]) + " will be deleted.\n");
+          sub_bool = true;
+          steps->remove_loads(steps->steps_data[i-1][0], 7, {steps->loads_data[sub_data_ids[ii-1]][2]});
+        }
+      }
+    }
+    // Radiation
+    sub_data_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[i-1][5]);
+    for (size_t ii = sub_data_ids.size(); ii > 0; ii--)
+    {
+      if (steps->loads_data[sub_data_ids[ii-1]][1]==8)
+      {
+        if (!check_bc_exists(steps->loads_data[sub_data_ids[ii-1]][2],13))
+        {
+          log.append("Load Radiation ID " + std::to_string(steps->loads_data[sub_data_ids[ii-1]][2]) + " doesn't exist.\n");
+          log.append("Load Radiation Reference from Step ID " + std::to_string(steps->steps_data[i-1][0]) + " will be deleted.\n");
+          sub_bool = true;
+          steps->remove_loads(steps->steps_data[i-1][0], 8, {steps->loads_data[sub_data_ids[ii-1]][2]});
+        }
+      }
+    }
     // STEP BCS
     // Displacement 
     sub_data_ids = steps->get_bc_data_ids_from_bcs_id(steps->steps_data[i-1][6]);
@@ -1952,11 +2337,16 @@ std::string CalculiXCore::print_data()
   str_return.append(contactpairs->print_data());
   str_return.append(amplitudes->print_data());
   str_return.append(orientations->print_data());
+  str_return.append(damping->print_data());
+  str_return.append(physicalconstants->print_data());
   str_return.append(loadsforces->print_data());
   str_return.append(loadspressures->print_data());
   str_return.append(loadsheatfluxes->print_data());
   str_return.append(loadsgravity->print_data());
   str_return.append(loadscentrifugal->print_data());
+  str_return.append(loadstrajectory->print_data());
+  str_return.append(loadsfilm->print_data());
+  str_return.append(loadsradiation->print_data());
   str_return.append(bcsdisplacements->print_data());
   str_return.append(bcstemperatures->print_data());
   str_return.append(historyoutputs->print_data());
@@ -2350,7 +2740,6 @@ std::vector<double> CalculiXCore::get_block_bounding_box_center(int block_id)
   return coord;
 }
 
-
 std::string CalculiXCore::get_material_name(int material_id)
 {
   std::string material_name;
@@ -2359,6 +2748,16 @@ std::string CalculiXCore::get_material_name(int material_id)
   material_name = mat_iface->get_material_name(material);
   
   return material_name;
+}
+
+std::string CalculiXCore::get_material_prefix(std::string material_name)
+{
+  return mat->get_material_prefix(material_name);
+}
+
+int CalculiXCore::get_group_property_size(std::string group_property)
+{
+  return mat->get_group_property_size(group_property);
 }
 
 std::string CalculiXCore::get_nodeset_name(int nodeset_id)
@@ -2647,6 +3046,36 @@ std::vector<int> CalculiXCore::get_loadscentrifugal_ids()
   return tmp;
 }
 
+std::vector<int> CalculiXCore::get_loadstrajectory_ids()
+{
+  std::vector<int> tmp;
+  for (size_t i = 0; i < loadstrajectory->loads_data.size(); i++)
+  {
+    tmp.push_back(loadstrajectory->loads_data[i][0]);
+  }
+  return tmp;
+}
+
+std::vector<int> CalculiXCore::get_loadsfilm_ids()
+{
+  std::vector<int> tmp;
+  for (size_t i = 0; i < loadsfilm->loads_data.size(); i++)
+  {
+    tmp.push_back(loadsfilm->loads_data[i][0]);
+  }
+  return tmp;
+}
+
+std::vector<int> CalculiXCore::get_loadsradiation_ids()
+{
+  std::vector<int> tmp;
+  for (size_t i = 0; i < loadsradiation->loads_data.size(); i++)
+  {
+    tmp.push_back(loadsradiation->loads_data[i][0]);
+  }
+  return tmp;
+}
+
 std::vector<int> CalculiXCore::get_bcsdisplacements_ids()
 {
   std::vector<int> tmp;
@@ -2719,6 +3148,24 @@ bool CalculiXCore::check_bc_exists(int bc_id,int BCType)
     {
       ids.push_back(loadscentrifugal->loads_data[i][0]);
     }
+  }else if (BCType == 11) // Trajectory
+  {
+    for (size_t i = 0; i < loadstrajectory->loads_data.size(); i++)
+    {
+      ids.push_back(loadstrajectory->loads_data[i][0]);
+    }
+  }else if (BCType == 12) // Film
+  {
+    for (size_t i = 0; i < loadsfilm->loads_data.size(); i++)
+    {
+      ids.push_back(loadsfilm->loads_data[i][0]);
+    }
+  }else if (BCType == 13) // Radiation
+  {
+    for (size_t i = 0; i < loadsradiation->loads_data.size(); i++)
+    {
+      ids.push_back(loadsradiation->loads_data[i][0]);
+    }
   }
   
   for (size_t i = 0; i < ids.size(); i++)
@@ -2753,22 +3200,38 @@ bool CalculiXCore::check_sideset_exists(int sideset_id)
 
 bool CalculiXCore::check_vertex_exists(int vertex_id)
 {
-  std::vector<int> vertex_list = CubitCoreformInterface::get_entities(CubitCoreformInterface::CubitCoreformInterfaceEntityType::VERTEX);
-  for (size_t i = 0; i < vertex_list.size(); i++)
+  std::vector<int> vertex_list = CubitInterface::parse_cubit_list("vertex",std::to_string(vertex_id));
+  
+  if (vertex_list.size()==1)
   {
-    if (vertex_list[i]==vertex_id)
-    {
-      return true;
-    }
+    return true;
   }
-  return false;
 
-  /*if (!CubitCoreformInterface::is_entity(CubitCoreformInterface::CubitCoreformInterfaceEntityType::VERTEX,vertex_id))
+  return false;
+}
+
+bool CalculiXCore::check_curve_exists(int curve_id)
+{
+  std::vector<int> curve_list = CubitInterface::parse_cubit_list("curve",std::to_string(curve_id));
+  
+  if (curve_list.size()==1)
   {
-    return false;
+    return true;
   }
-  return true;
-  */
+
+  return false;
+}
+
+bool CalculiXCore::check_surface_exists(int surface_id)
+{
+  std::vector<int> surface_list = CubitInterface::parse_cubit_list("surface",std::to_string(surface_id));
+  
+  if (surface_list.size()==1)
+  {
+    return true;
+  }
+
+  return false;
 }
 
 bool CalculiXCore::check_surfaceinteraction_exists(int surfaceinteraction_id)
@@ -3216,6 +3679,11 @@ bool CalculiXCore::delete_amplitude(int amplitude_id)
   return amplitudes->delete_amplitude(amplitude_id);
 }
 
+bool CalculiXCore::delete_amplitudes(std::vector<int> amplitude_ids)
+{
+  return amplitudes->delete_amplitudes(amplitude_ids);
+}
+
 bool CalculiXCore::create_orientation(std::vector<std::string> options, std::vector<std::vector<std::string>> options2)
 {
   return orientations->create_orientation(options, options2);
@@ -3230,6 +3698,26 @@ bool CalculiXCore::delete_orientation(int orientation_id)
 {
   return orientations->delete_orientation(orientation_id);
 }
+
+bool CalculiXCore::modify_damping(std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return damping->modify_damping(options, options_marker);
+}
+
+bool CalculiXCore::delete_damping(bool delete_alpha, bool delete_beta)
+{
+  return damping->delete_damping(delete_alpha, delete_beta);
+}
+
+bool CalculiXCore::modify_physicalconstants(std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return physicalconstants->modify_physicalconstants(options, options_marker);
+}
+
+bool CalculiXCore::delete_physicalconstants(bool delete_absolute_zero, bool delete_stefan_boltzmann, bool delete_newton_gravity)
+{
+  return physicalconstants->delete_physicalconstants(delete_absolute_zero, delete_stefan_boltzmann, delete_newton_gravity);
+} 
 
 bool CalculiXCore::modify_loadsforces(int force_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
@@ -3265,6 +3753,7 @@ bool CalculiXCore::create_loadscentrifugal(std::vector<std::string> options)
 {
   return loadscentrifugal->create_load(options);
 }
+
 bool CalculiXCore::modify_loadscentrifugal(int centrifugal_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
   return loadscentrifugal->modify_load(centrifugal_id,options,options_marker);
@@ -3274,6 +3763,91 @@ bool CalculiXCore::delete_loadscentrifugal(int centrifugal_id)
 {
   return loadscentrifugal->delete_load(centrifugal_id);
 }
+
+bool CalculiXCore::create_loadstrajectory(std::vector<std::string> options, std::vector<int> options2, std::vector<std::vector<double>> options3)
+{
+  return loadstrajectory->create_load(options, options2, options3);
+}
+
+bool CalculiXCore::modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2, std::vector<std::vector<double>> options3)
+{
+  return loadstrajectory->modify_load(trajectory_id,options,options_marker, options2, options3);
+}
+
+bool CalculiXCore::delete_loadstrajectory(int trajectory_id)
+{
+  return loadstrajectory->delete_load(trajectory_id);
+}
+
+std::vector<int> CalculiXCore::loadstrajectory_get_node_ids(int trajectory_id)
+{
+  return loadstrajectory->get_node_ids(trajectory_id);
+}
+
+std::vector<int> CalculiXCore::loadstrajectory_get_edge_ids(int trajectory_id)
+{
+  return loadstrajectory->get_edge_ids(trajectory_id);
+}
+
+std::vector<std::vector<double>> CalculiXCore::loadstrajectory_get_hit_coordinates(int trajectory_id)
+{
+  return loadstrajectory->get_hit_coordinates(trajectory_id);
+}
+
+std::vector<std::vector<std::vector<int>>> CalculiXCore::loadstrajectory_get_face_ids(int trajectory_id)
+{
+  return loadstrajectory->get_face_ids(trajectory_id);
+}
+
+std::vector<std::vector<std::vector<int>>> CalculiXCore::loadstrajectory_get_draw_face_ids(int trajectory_id)
+{
+  return loadstrajectory->get_draw_face_ids(trajectory_id);
+}
+
+std::vector<std::vector<double>> CalculiXCore::loadstrajectory_get_times(int trajectory_id)
+{
+  return loadstrajectory->get_times(trajectory_id);
+}
+
+std::vector<std::vector<double>> CalculiXCore::loadstrajectory_get_radius(int trajectory_id)
+{
+  return loadstrajectory->get_radius(trajectory_id);
+}
+
+std::vector<std::vector<double>> CalculiXCore::loadstrajectory_get_magnitude(int trajectory_id)
+{
+  return loadstrajectory->get_magnitude(trajectory_id);
+}
+
+bool CalculiXCore::create_loadsfilm(std::vector<std::string> options)
+{
+  return loadsfilm->create_load(options);
+}
+
+bool CalculiXCore::modify_loadsfilm(int film_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return loadsfilm->modify_load(film_id, options, options_marker);
+}
+
+bool CalculiXCore::delete_loadsfilm(int film_id)
+{
+  return loadsfilm->delete_load(film_id);
+}
+
+bool CalculiXCore::create_loadsradiation(std::vector<std::string> options)
+{
+  return loadsradiation->create_load(options);
+}
+
+bool CalculiXCore::modify_loadsradiation(int radiation_id, std::vector<std::string> options, std::vector<int> options_marker)
+{
+  return loadsradiation->modify_load(radiation_id, options, options_marker);
+}
+
+bool CalculiXCore::delete_loadsradiation(int radiation_id)
+{
+  return loadsradiation->delete_load(radiation_id);
+} 
 
 bool CalculiXCore::modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
@@ -4292,6 +4866,38 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
     entities.push_back({"sideset",std::to_string(id)});
   }else if (entity=="material")
   {
+    for (size_t i = 0; i < sections->sections_data.size(); i++)
+    {
+      if (sections->sections_data[i][1] == 1)
+      {
+        sub_data_id = sections->get_solid_section_data_id_from_solid_section_id(sections->sections_data[i][2]);
+        if (sections->solid_section_data[sub_data_id][2]==std::to_string(id))
+        {
+          entities.push_back({"block",sections->solid_section_data[sub_data_id][1]});
+        }
+      }else if (sections->sections_data[i][1] == 2)
+      {
+        sub_data_id = sections->get_shell_section_data_id_from_shell_section_id(sections->sections_data[i][2]);
+        if (sections->solid_section_data[sub_data_id][2]==std::to_string(id))
+        {
+          entities.push_back({"block",sections->shell_section_data[sub_data_id][1]});
+        }
+      }else if (sections->sections_data[i][1] == 3)
+      {
+        sub_data_id = sections->get_beam_section_data_id_from_beam_section_id(sections->sections_data[i][2]);
+        if (sections->solid_section_data[sub_data_id][2]==std::to_string(id))
+        {
+          entities.push_back({"block",sections->beam_section_data[sub_data_id][1]});
+        }
+      }else if (sections->sections_data[i][1] == 4)
+      {
+        sub_data_id = sections->get_membrane_section_data_id_from_membrane_section_id(sections->sections_data[i][2]);
+        if (sections->solid_section_data[sub_data_id][2]==std::to_string(id))
+        {
+          entities.push_back({"block",sections->membrane_section_data[sub_data_id][1]});
+        }
+      }
+    }
     
   }else if (entity=="section")
   {
@@ -4386,6 +4992,33 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
     {
       entities.push_back({"block",std::to_string(loadscentrifugal->loads_data[data_id][4])});
     }
+  }else if (entity=="loadstrajectory")
+  {
+    data_id = loadstrajectory->get_loads_data_id_from_load_id(id);
+    if (data_id!=-1)
+    {
+      entities.push_back({"curve",std::to_string(loadstrajectory->loads_data[data_id][2])});
+      entities.push_back({"vertex",std::to_string(loadstrajectory->loads_data[data_id][3])});
+      std::vector<int> surface_ids = loadstrajectory->get_fire_ray_surface_ids_from_fire_ray_surface_id(loadstrajectory->loads_data[data_id][4]);
+      for (size_t i = 0; i < surface_ids.size(); i++)
+      {
+        entities.push_back({"surface",std::to_string(surface_ids[i])});
+      }
+    }
+  }else if (entity=="loadsfilm")
+  {
+    data_id = loadsfilm->get_loads_data_id_from_load_id(id);
+    if (data_id!=-1)
+    {
+      entities.push_back({"sideset",std::to_string(loadsfilm->loads_data[data_id][4])});
+    }
+  }else if (entity=="loadsradiation")
+  {
+    data_id = loadsradiation->get_loads_data_id_from_load_id(id);
+    if (data_id!=-1)
+    {
+      entities.push_back({"sideset",std::to_string(loadsradiation->loads_data[data_id][4])});
+    }
   }else if (entity=="bcsdisplacement")
   {
     entities.push_back({"displacement",std::to_string(id)});
@@ -4414,6 +5047,46 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
     entities.push_back({"temperature",std::to_string(id)});
   }
   return entities;
+}
+
+bool CalculiXCore::create_materiallibrary_group(std::string name)
+{
+  return mat_library->create_group(name);
+}
+
+bool CalculiXCore::modify_materiallibrary_group(std::string name,  std::string data, int mode)
+{
+  return mat_library->modify_group(name,data,mode);
+}
+
+bool CalculiXCore::delete_materiallibrary_group(std::string name)
+{
+  return mat_library->delete_group(name);
+}
+
+bool CalculiXCore::create_materiallibrary_material(std::string name, std::string groupname)
+{
+  return mat_library->create_material(name, groupname);
+}
+
+bool CalculiXCore::modify_materiallibrary_material(std::string name, std::string groupname, std::string data, int mode, std::vector<double> value_data)
+{
+  return mat_library->modify_material(name, groupname, data, mode, value_data);
+}
+
+bool CalculiXCore::delete_materiallibrary_material(std::string name, std::string groupname)
+{
+  return mat_library->delete_material(name, groupname);
+}
+
+bool CalculiXCore::export_materiallibrary_material(std::string name, std::string groupname, std::string cubit_name)
+{
+  return mat_library->export_material(name, groupname, cubit_name);
+}
+
+bool CalculiXCore::import_materiallibrary_material(std::string name, std::string groupname, std::string cubit_name)
+{
+  return mat_library->import_material(name, groupname, cubit_name);
 }
 
 std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_force(int id)
@@ -4591,10 +5264,10 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_centrifuga
 {
   std::vector<std::vector<double>> draw_data;
 
-  for (size_t i = 0; i < loadsgravity->loads_data.size(); i++)
+  for (size_t i = 0; i < loadscentrifugal->loads_data.size(); i++)
   {
     // check for right id
-    if (id==loadsgravity->loads_data[i][0])
+    if (id==loadscentrifugal->loads_data[i][0])
     { 
       int direction_data_id = loadscentrifugal->get_direction_data_id_from_direction_id(loadscentrifugal->loads_data[i][5]);
       int coordinate_data_id = loadscentrifugal->get_coordinate_data_id_from_coordinate_id(loadscentrifugal->loads_data[i][7]);
@@ -4613,6 +5286,62 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_centrifuga
 
   }
 
+  return draw_data;
+}
+
+std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_film(int id)
+{
+  std::vector<std::vector<double>> draw_data;
+  
+  for (size_t i = 0; i < loadsfilm->loads_data.size(); i++)
+  {
+    // check for right id
+    if (id==loadsfilm->loads_data[i][0])
+    { 
+      std::vector<std::vector<double>> coords_normals = get_sideset_entities_coords_normals(loadsfilm->loads_data[i][4]);
+      for (size_t ii = 0; ii < coords_normals.size(); ii++)
+      {
+        std::vector<double> data;
+        
+        data.push_back(coords_normals[ii][0]);
+        data.push_back(coords_normals[ii][1]);
+        data.push_back(coords_normals[ii][2]);
+        data.push_back(coords_normals[ii][3]);
+        data.push_back(coords_normals[ii][4]);
+        data.push_back(coords_normals[ii][5]);
+        draw_data.push_back(data);
+        data.clear();
+      }
+    }
+  }
+  return draw_data;
+}
+
+std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_radiation(int id)
+{
+  std::vector<std::vector<double>> draw_data;
+  
+  for (size_t i = 0; i < loadsradiation->loads_data.size(); i++)
+  {
+    // check for right id
+    if (id==loadsradiation->loads_data[i][0])
+    { 
+      std::vector<std::vector<double>> coords_normals = get_sideset_entities_coords_normals(loadsradiation->loads_data[i][4]);
+      for (size_t ii = 0; ii < coords_normals.size(); ii++)
+      {
+        std::vector<double> data;
+        
+        data.push_back(coords_normals[ii][0]);
+        data.push_back(coords_normals[ii][1]);
+        data.push_back(coords_normals[ii][2]);
+        data.push_back(coords_normals[ii][3]);
+        data.push_back(coords_normals[ii][4]);
+        data.push_back(coords_normals[ii][5]);
+        draw_data.push_back(data);
+        data.clear();
+      }
+    }
+  }
   return draw_data;
 }
 
@@ -4847,6 +5576,36 @@ bool CalculiXCore::draw_load_centrifugal(std::vector<int> centrifugal_ids,double
   return true;
 }
 
+bool CalculiXCore::draw_load_trajectory(std::vector<int> trajectory_ids,double size)
+{
+  for (size_t i = 0; i < trajectory_ids.size(); i++)
+  {
+    draw->draw_load_trajectory(trajectory_ids[i],size);
+  }
+  
+  return true;
+}
+
+bool CalculiXCore::draw_load_film(std::vector<int> film_ids,double size)
+{
+  for (size_t i = 0; i < film_ids.size(); i++)
+  {
+    draw->draw_load_film(film_ids[i],size);
+  }
+  
+  return true;
+}
+
+bool CalculiXCore::draw_load_radiation(std::vector<int> radiation_ids,double size)
+{
+  for (size_t i = 0; i < radiation_ids.size(); i++)
+  {
+    draw->draw_load_radiation(radiation_ids[i],size);
+  }
+  
+  return true;
+}
+
 bool CalculiXCore::draw_bc_displacement(std::vector<int> displacement_ids,double size)
 {
   for (size_t i = 0; i < displacement_ids.size(); i++)
@@ -4915,6 +5674,21 @@ bool CalculiXCore::draw_load_gravities(double size)
 bool CalculiXCore::draw_load_centrifugals(double size)
 {
   return draw->draw_load_centrifugals(size);
+}
+
+bool CalculiXCore::draw_load_trajectories(double size)
+{
+  return draw->draw_load_trajectories(size);
+}
+
+bool CalculiXCore::draw_load_films(double size)
+{
+  return draw->draw_load_films(size);
+}
+
+bool CalculiXCore::draw_load_radiations(double size)
+{
+  return draw->draw_load_radiations(size);
 }
 
 bool CalculiXCore::draw_bc_displacements(double size)
@@ -6423,6 +7197,34 @@ QIcon CalculiXCore::getIcon2(std::string name)
   return icon;
 }
 
+bool CalculiXCore::prepare_export()
+{
+  bool status = true;
+  std::vector<int> check;
+  
+  check = this->get_loadstrajectory_ids();
+  if (check.size()>0)
+  {
+    status = loadstrajectory->prepare_export();
+  }
+
+  return status;
+}
+
+bool CalculiXCore::clean_export()
+{
+  bool status = true;
+  std::vector<int> check;
+  
+  check = this->get_loadstrajectory_ids();
+  if (check.size()>0)
+  {
+    status = loadstrajectory->clean_export();
+  }
+  
+  return status;
+}
+
 std::string CalculiXCore::get_material_export_data() // gets the export data from materials core
 {
   return mat->get_material_export();
@@ -6457,6 +7259,17 @@ std::string CalculiXCore::get_orientation_export_data() // gets the export data 
 {
   return orientations->get_orientation_export();
 }
+
+std::string CalculiXCore::get_damping_export_data() // gets the export data from damping core
+{
+  return damping->get_damping_export_data();
+}
+
+std::string CalculiXCore::get_physicalconstants_export_data() // gets the export data from physicalconstants core
+{
+  return physicalconstants->get_physicalconstants_export_data();
+}
+
 
 std::string CalculiXCore::get_initialcondition_export_data() // gets the export data from core
 {
@@ -6898,6 +7711,97 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
         }
       }
     }
+    // TRAJECTORY WORKS DIFFERENT
+    // FILM
+    for (size_t ii = 0; ii < loadsfilm->loads_data.size(); ii++)
+    {  
+      for (size_t iii = 0; iii < sub_data_ids.size(); iii++)
+      { 
+        if ((steps->loads_data[sub_data_ids[iii]][1]==7) && (steps->loads_data[sub_data_ids[iii]][2]==loadsfilm->loads_data[ii][0]))
+        {
+          // CUSTOMLINE START
+          customline = customlines->get_customline_data("BEFORE","FILM",steps->loads_data[sub_data_ids[iii]][2]);
+          for (size_t icl = 0; icl < customline.size(); icl++)
+          {
+            steps_export_list.push_back(customline[icl]);
+          }
+          // CUSTOMLINE END          
+          
+          temp_list = get_sideset_face(loadsfilm->loads_data[ii][4]);
+          for (size_t iv = 0; iv < temp_list.size(); iv++)
+          {              
+            //get first line
+            int load_data_id = loadsfilm->get_loads_data_id_from_load_id(loadsfilm->loads_data[ii][0]);
+            str_temp = loadsfilm->get_load_export(loadsfilm->loads_data[ii][0]);
+            steps_export_list.push_back(str_temp);
+            
+            int sub_data_id = loadsfilm->get_temperature_data_id_from_temperature_id(loadsfilm->loads_data[load_data_id][5]);
+            std::string temperature = loadsfilm->temperature_data[sub_data_id][1];
+            
+            sub_data_id = loadsfilm->get_coefficient_data_id_from_coefficient_id(loadsfilm->loads_data[load_data_id][6]);
+            std::string coefficient = loadsfilm->coefficient_data[sub_data_id][1];
+
+            str_temp = temp_list[iv][1] + ",F" + temp_list[iv][2] + "," + temperature + "," + coefficient;
+            steps_export_list.push_back(str_temp);
+          }
+
+          // CUSTOMLINE START
+          customline = customlines->get_customline_data("AFTER","FILM",steps->loads_data[sub_data_ids[iii]][2]);
+          for (size_t icl = 0; icl < customline.size(); icl++)
+          {
+            steps_export_list.push_back(customline[icl]);
+          }
+          // CUSTOMLINE END
+        }
+      }
+    }
+    // RADIATION
+    for (size_t ii = 0; ii < loadsradiation->loads_data.size(); ii++)
+    {  
+      for (size_t iii = 0; iii < sub_data_ids.size(); iii++)
+      { 
+        if ((steps->loads_data[sub_data_ids[iii]][1]==8) && (steps->loads_data[sub_data_ids[iii]][2]==loadsradiation->loads_data[ii][0]))
+        {
+          // CUSTOMLINE START
+          customline = customlines->get_customline_data("BEFORE","RADIATION",steps->loads_data[sub_data_ids[iii]][2]);
+          for (size_t icl = 0; icl < customline.size(); icl++)
+          {
+            steps_export_list.push_back(customline[icl]);
+          }
+          // CUSTOMLINE END          
+          temp_list = get_sideset_face(loadsradiation->loads_data[ii][4]);
+          for (size_t iv = 0; iv < temp_list.size(); iv++)
+          {              
+            //get first line
+            int load_data_id = loadsradiation->get_loads_data_id_from_load_id(loadsradiation->loads_data[ii][0]);
+            str_temp = loadsradiation->get_load_export(loadsradiation->loads_data[ii][0]);
+            steps_export_list.push_back(str_temp);
+  
+            int sub_data_id = loadsradiation->get_temperature_data_id_from_temperature_id(loadsradiation->loads_data[load_data_id][5]);
+            std::string temperature = loadsradiation->temperature_data[sub_data_id][1];
+            
+            sub_data_id = loadsradiation->get_emissivity_data_id_from_emissivity_id(loadsradiation->loads_data[load_data_id][6]);
+            std::string emissivity = loadsradiation->emissivity_data[sub_data_id][1];
+
+            if (loadsradiation->loads_data[load_data_id][11]==1)
+            {
+              str_temp = temp_list[iv][1] + ",R" + temp_list[iv][2] + "CR," + temperature + "," + emissivity;
+            }else{
+              str_temp = temp_list[iv][1] + ",R" + temp_list[iv][2] + "," + temperature + "," + emissivity;
+            }
+            steps_export_list.push_back(str_temp);
+          }
+
+          // CUSTOMLINE START
+          customline = customlines->get_customline_data("AFTER","RADIATION",steps->loads_data[sub_data_ids[iii]][2]);
+          for (size_t icl = 0; icl < customline.size(); icl++)
+          {
+            steps_export_list.push_back(customline[icl]);
+          }
+          // CUSTOMLINE END
+        }
+      }
+    }
     // BCs
     me_iface->get_bc_restraints(bc_set, bc_handles);
     sub_data_ids = steps->get_bc_data_ids_from_bcs_id(steps->steps_data[i][6]);
@@ -7190,6 +8094,21 @@ std::vector<std::vector<std::string>> CalculiXCore::get_material_group_propertie
   return mat->group_properties;
 }
 
+std::vector<std::vector<std::string>> CalculiXCore::get_materiallibrary_tree_data()
+{ 
+  return mat_library->get_materiallibrary_tree_data();
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_materiallibrary_material_properties(std::string name, std::string group)
+{ 
+  return mat_library->get_materiallibrary_material_properties(name, group);
+}
+
+std::vector<std::vector<double>> CalculiXCore::get_materiallibrary_material_values(std::string name, std::string group, std::string property)
+{
+  return mat_library->get_materiallibrary_material_values(name, group, property);
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_sections_tree_data()
 { 
   std::vector<std::vector<std::string>> sections_tree_data;
@@ -7367,6 +8286,59 @@ std::vector<std::vector<std::string>> CalculiXCore::get_orientations_tree_data()
   return orientations_tree_data;
 }
 
+std::vector<std::vector<std::string>> CalculiXCore::get_damping_tree_data()
+{ 
+  std::vector<std::vector<std::string>> damping_tree_data;
+  
+  if (damping->damping_data.size()==2)
+  {
+    std::vector<std::string> damping_tree_data_set;
+    std::string name;
+    name = "alpha = " + damping->damping_data[0];
+    damping_tree_data_set.push_back("1"); //damping_id
+    damping_tree_data_set.push_back(name); //name
+    damping_tree_data.push_back(damping_tree_data_set);
+    damping_tree_data_set.clear();
+
+    name = "beta = " + damping->damping_data[1];
+    damping_tree_data_set.push_back("2"); //damping_id
+    damping_tree_data_set.push_back(name); //name
+    damping_tree_data.push_back(damping_tree_data_set);
+  }
+  
+  return damping_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_physicalconstants_tree_data()
+{ 
+  std::vector<std::vector<std::string>> physicalconstants_tree_data;
+  
+  if (physicalconstants->physicalconstants_data.size()==3)
+  {
+    std::vector<std::string> physicalconstants_tree_data_set;
+    std::string name;
+    name = "ABSOLUTE ZERO = " + physicalconstants->physicalconstants_data[0];
+    physicalconstants_tree_data_set.push_back("1"); //physicalconstants_id
+    physicalconstants_tree_data_set.push_back(name); //name
+    physicalconstants_tree_data.push_back(physicalconstants_tree_data_set);
+    physicalconstants_tree_data_set.clear();
+
+    name = "STEFAN BOLTZMANN = " + physicalconstants->physicalconstants_data[1];
+    physicalconstants_tree_data_set.push_back("2"); //physicalconstants_id
+    physicalconstants_tree_data_set.push_back(name); //name
+    physicalconstants_tree_data.push_back(physicalconstants_tree_data_set);
+    physicalconstants_tree_data_set.clear();
+
+    name = "NEWTON GRAVITY = " + physicalconstants->physicalconstants_data[2];
+    physicalconstants_tree_data_set.push_back("3"); //physicalconstants_id
+    physicalconstants_tree_data_set.push_back(name); //name
+    physicalconstants_tree_data.push_back(physicalconstants_tree_data_set);
+    physicalconstants_tree_data_set.clear();
+  }
+  
+  return physicalconstants_tree_data;
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_loadsforces_tree_data()
 { 
   std::vector<std::vector<std::string>> loadsforces_tree_data;
@@ -7442,7 +8414,13 @@ std::vector<std::vector<std::string>> CalculiXCore::get_loadsgravity_tree_data()
     std::vector<std::string> loadsgravity_tree_data_set;
     std::string name;
     
-    name = "Gravity_" + std::to_string(loadsgravity->loads_data[i][0]);
+    int subdata_id = loadsgravity->get_name_data_id_from_name_id(loadsgravity->loads_data[i][7]);
+    if ((subdata_id!=-1)&&(loadsgravity->name_data[subdata_id][1]!=""))
+    {
+      name = loadsgravity->name_data[subdata_id][1];
+    }else{
+      name = "Gravity_" + std::to_string(loadsgravity->loads_data[i][0]);
+    }
     
     loadsgravity_tree_data_set.push_back(std::to_string(loadsgravity->loads_data[i][0])); //load_id
     loadsgravity_tree_data_set.push_back(name); 
@@ -7460,13 +8438,91 @@ std::vector<std::vector<std::string>> CalculiXCore::get_loadscentrifugal_tree_da
     std::vector<std::string> loadscentrifugal_tree_data_set;
     std::string name;
     
-    name = "Centrifugal_" + std::to_string(loadscentrifugal->loads_data[i][0]);
-    
+    int subdata_id = loadscentrifugal->get_name_data_id_from_name_id(loadscentrifugal->loads_data[i][8]);
+    if ((subdata_id!=-1)&&(loadscentrifugal->name_data[subdata_id][1]!=""))
+    {
+      name = loadscentrifugal->name_data[subdata_id][1];
+    }else{
+      name = "Centrifugal_" + std::to_string(loadscentrifugal->loads_data[i][0]);
+    }
+        
     loadscentrifugal_tree_data_set.push_back(std::to_string(loadscentrifugal->loads_data[i][0])); //load_id
     loadscentrifugal_tree_data_set.push_back(name); 
     loadscentrifugal_tree_data.push_back(loadscentrifugal_tree_data_set);
   }
   return loadscentrifugal_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_loadstrajectory_tree_data()
+{ 
+  std::vector<std::vector<std::string>> loadstrajectory_tree_data;
+  
+  for (size_t i = 0; i < loadstrajectory->loads_data.size(); i++)
+  {
+    std::vector<std::string> loadstrajectory_tree_data_set;
+    std::string name;
+    
+    int subdata_id = loadstrajectory->get_name_data_id_from_name_id(loadstrajectory->loads_data[i][9]);
+    if ((subdata_id!=-1)&&(loadstrajectory->name_data[subdata_id][1]!=""))
+    {
+      name = loadstrajectory->name_data[subdata_id][1];
+    }else{
+      name = "Trajectory_" + std::to_string(loadstrajectory->loads_data[i][0]);
+    }
+    
+    loadstrajectory_tree_data_set.push_back(std::to_string(loadstrajectory->loads_data[i][0])); //load_id
+    loadstrajectory_tree_data_set.push_back(name); 
+    loadstrajectory_tree_data.push_back(loadstrajectory_tree_data_set);
+  }
+  return loadstrajectory_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_loadsfilm_tree_data()
+{ 
+  std::vector<std::vector<std::string>> loadsfilm_tree_data;
+  
+  for (size_t i = 0; i < loadsfilm->loads_data.size(); i++)
+  {
+    std::vector<std::string> loadsfilm_tree_data_set;
+    std::string name;
+    
+    int subdata_id = loadsfilm->get_name_data_id_from_name_id(loadsfilm->loads_data[i][9]);
+    if ((subdata_id!=-1)&&(loadsfilm->name_data[subdata_id][1]!=""))
+    {
+      name = loadsfilm->name_data[subdata_id][1];
+    }else{
+      name = "Film_" + std::to_string(loadsfilm->loads_data[i][0]);
+    }
+    
+    loadsfilm_tree_data_set.push_back(std::to_string(loadsfilm->loads_data[i][0])); //load_id
+    loadsfilm_tree_data_set.push_back(name); 
+    loadsfilm_tree_data.push_back(loadsfilm_tree_data_set);
+  }
+  return loadsfilm_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_loadsradiation_tree_data()
+{ 
+  std::vector<std::vector<std::string>> loadsradiation_tree_data;
+  
+  for (size_t i = 0; i < loadsradiation->loads_data.size(); i++)
+  {
+    std::vector<std::string> loadsradiation_tree_data_set;
+    std::string name;
+    
+    int subdata_id = loadsradiation->get_name_data_id_from_name_id(loadsradiation->loads_data[i][9]);
+    if ((subdata_id!=-1)&&(loadsradiation->name_data[subdata_id][1]!=""))
+    {
+      name = loadsradiation->name_data[subdata_id][1];
+    }else{
+      name = "Radiation_" + std::to_string(loadsradiation->loads_data[i][0]);
+    }
+    
+    loadsradiation_tree_data_set.push_back(std::to_string(loadsradiation->loads_data[i][0])); //load_id
+    loadsradiation_tree_data_set.push_back(name); 
+    loadsradiation_tree_data.push_back(loadsradiation_tree_data_set);
+  }
+  return loadsradiation_tree_data;
 }
 
 std::vector<std::vector<std::string>> CalculiXCore::get_bcsdisplacements_tree_data()
@@ -7737,6 +8793,18 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_tree_data()
     }else if (steps->steps_data[i][3]==7)
     {
       step_name = step_name + " (UNCOUPLED TEMPERATURE-DISPLACEMENT)";
+    }else if (steps->steps_data[i][3]==8)
+    {
+      step_name = step_name + " (DYNAMIC)";
+    }else if (steps->steps_data[i][3]==9)
+    {
+      step_name = step_name + " (MODAL DYNAMIC)";
+    }else if (steps->steps_data[i][3]==10)
+    {
+      step_name = step_name + " (STEADY STATE DYNAMICS)";
+    }else if (steps->steps_data[i][3]==11)
+    {
+      step_name = step_name + " (COMPLEX DYNAMIC)";
     }
 
     steps_tree_data_set.push_back(std::to_string(steps->steps_data[i][0])); //step_id
@@ -7858,7 +8926,19 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadsgravity_tree_
     std::string name;
     if (steps->loads_data[loads_ids[i]][1]==4)
     { 
-      name = "Gravity_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+      int loaddata_id = loadsgravity->get_loads_data_id_from_load_id(steps->loads_data[loads_ids[i]][2]);
+      if (loaddata_id!=-1)
+      {
+        int subdata_id = loadsgravity->get_name_data_id_from_name_id(loadsgravity->loads_data[loaddata_id][7]);
+        if ((subdata_id!=-1)&&(loadsgravity->name_data[subdata_id][1]!=""))
+        {
+          name = loadsgravity->name_data[subdata_id][1];
+        }else{
+          name = "Gravity_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+        }
+      }else{
+        name = "Gravity_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+      }
     
       loadsgravity_tree_data_set.push_back(std::to_string(steps->loads_data[loads_ids[i]][2])); //load_id
       loadsgravity_tree_data_set.push_back(name); 
@@ -7886,7 +8966,19 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadscentrifugal_t
     std::string name;
     if (steps->loads_data[loads_ids[i]][1]==5)
     { 
-      name = "Centrifugal_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+      int loaddata_id = loadscentrifugal->get_loads_data_id_from_load_id(steps->loads_data[loads_ids[i]][2]);
+      if (loaddata_id!=-1)
+      {
+        int subdata_id = loadscentrifugal->get_name_data_id_from_name_id(loadscentrifugal->loads_data[loaddata_id][8]);
+        if ((subdata_id!=-1)&&(loadscentrifugal->name_data[subdata_id][1]!=""))
+        {
+          name = loadscentrifugal->name_data[subdata_id][1];
+        }else{
+          name = "Centrifugal_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+        }
+      }else{
+        name = "Centrifugal_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+      }
     
       loadscentrifugal_tree_data_set.push_back(std::to_string(steps->loads_data[loads_ids[i]][2])); //load_id
       loadscentrifugal_tree_data_set.push_back(name); 
@@ -7895,6 +8987,128 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadscentrifugal_t
   }
   return loadscentrifugal_tree_data;
 }
+
+std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadstrajectory_tree_data(int step_id)
+{ 
+  std::vector<std::vector<std::string>> loadstrajectory_tree_data;
+  int step_data_id;
+  std::vector<int> loads_ids;
+  step_data_id = steps->get_steps_data_id_from_step_id(step_id);
+  if (step_data_id==-1)
+  {
+    return loadstrajectory_tree_data;
+  }
+  loads_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[step_data_id][5]);
+
+  for (size_t i = 0; i < loads_ids.size(); i++)
+  {
+    std::vector<std::string> loadstrajectory_tree_data_set;
+    std::string name;
+    if (steps->loads_data[loads_ids[i]][1]==6)
+    { 
+      int loaddata_id = loadstrajectory->get_loads_data_id_from_load_id(steps->loads_data[loads_ids[i]][2]);
+      if (loaddata_id!=-1)
+      {
+        int subdata_id = loadstrajectory->get_name_data_id_from_name_id(loadstrajectory->loads_data[loaddata_id][9]);
+        if ((subdata_id!=-1)&&(loadstrajectory->name_data[subdata_id][1]!=""))
+        {
+          name = loadstrajectory->name_data[subdata_id][1];
+        }else{
+          name = "Trajectory_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+        }
+      }else{
+        name = "Trajectory_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+      }
+    
+      loadstrajectory_tree_data_set.push_back(std::to_string(steps->loads_data[loads_ids[i]][2])); //load_id
+      loadstrajectory_tree_data_set.push_back(name); 
+      loadstrajectory_tree_data.push_back(loadstrajectory_tree_data_set);  
+    }
+  }
+  return loadstrajectory_tree_data;
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadsfilm_tree_data(int step_id)
+{ 
+  std::vector<std::vector<std::string>> loadsfilm_tree_data;
+  int step_data_id;
+  std::vector<int> loads_ids;
+  step_data_id = steps->get_steps_data_id_from_step_id(step_id);
+  if (step_data_id==-1)
+  {
+    return loadsfilm_tree_data;
+  }
+  loads_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[step_data_id][5]);
+
+  for (size_t i = 0; i < loads_ids.size(); i++)
+  {
+    std::vector<std::string> loadsfilm_tree_data_set;
+    std::string name;
+    if (steps->loads_data[loads_ids[i]][1]==7)
+    { 
+      int loaddata_id = loadsfilm->get_loads_data_id_from_load_id(steps->loads_data[loads_ids[i]][2]);
+      if (loaddata_id!=-1)
+      {
+        int subdata_id = loadsfilm->get_name_data_id_from_name_id(loadsfilm->loads_data[loaddata_id][9]);
+        if ((subdata_id!=-1)&&(loadsfilm->name_data[subdata_id][1]!=""))
+        {
+          name = loadsfilm->name_data[subdata_id][1];
+        }else{
+          name = "Film_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+        }
+      }else{
+        name = "Film_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+      }
+    
+      loadsfilm_tree_data_set.push_back(std::to_string(steps->loads_data[loads_ids[i]][2])); //load_id
+      loadsfilm_tree_data_set.push_back(name); 
+      loadsfilm_tree_data.push_back(loadsfilm_tree_data_set);  
+    }
+  }
+  return loadsfilm_tree_data;
+}
+
+
+std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadsradiation_tree_data(int step_id)
+{ 
+  std::vector<std::vector<std::string>> loadsradiation_tree_data;
+  int step_data_id;
+  std::vector<int> loads_ids;
+  step_data_id = steps->get_steps_data_id_from_step_id(step_id);
+  if (step_data_id==-1)
+  {
+    return loadsradiation_tree_data;
+  }
+  loads_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[step_data_id][5]);
+
+  for (size_t i = 0; i < loads_ids.size(); i++)
+  {
+    std::vector<std::string> loadsradiation_tree_data_set;
+    std::string name;
+    if (steps->loads_data[loads_ids[i]][1]==8)
+    { 
+      int loaddata_id = loadsradiation->get_loads_data_id_from_load_id(steps->loads_data[loads_ids[i]][2]);
+      if (loaddata_id!=-1)
+      {
+        int subdata_id = loadsradiation->get_name_data_id_from_name_id(loadsradiation->loads_data[loaddata_id][9]);
+        if ((subdata_id!=-1)&&(loadsradiation->name_data[subdata_id][1]!=""))
+        {
+          name = loadsradiation->name_data[subdata_id][1];
+        }else{
+          name = "Radiation_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+        }
+      }else{
+        name = "Radiation_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+      }
+    
+      loadsradiation_tree_data_set.push_back(std::to_string(steps->loads_data[loads_ids[i]][2])); //load_id
+      loadsradiation_tree_data_set.push_back(name); 
+      loadsradiation_tree_data.push_back(loadsradiation_tree_data_set);  
+    }
+  }
+  return loadsradiation_tree_data;
+}
+
 
 std::vector<std::vector<std::string>> CalculiXCore::get_steps_bcsdisplacements_tree_data(int step_id)
 { 
@@ -8141,6 +9355,24 @@ std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_
       for (size_t i = 0; i < loadscentrifugal->loads_data.size(); i++)
       {
         all_ids.push_back(loadscentrifugal->loads_data[i][0]);
+      }
+    } else if (parse_type=="loadstrajectory")
+    {
+      for (size_t i = 0; i < loadstrajectory->loads_data.size(); i++)
+      {
+        all_ids.push_back(loadstrajectory->loads_data[i][0]);
+      }
+    } else if (parse_type=="loadsfilm")
+    {
+      for (size_t i = 0; i < loadsfilm->loads_data.size(); i++)
+      {
+        all_ids.push_back(loadsfilm->loads_data[i][0]);
+      }
+    } else if (parse_type=="loadsradiation")
+    {
+      for (size_t i = 0; i < loadsradiation->loads_data.size(); i++)
+      {
+        all_ids.push_back(loadsradiation->loads_data[i][0]);
       }
     } else if (parse_type=="historyoutput")
     {

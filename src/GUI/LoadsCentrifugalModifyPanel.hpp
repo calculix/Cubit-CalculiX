@@ -48,6 +48,7 @@ private:
   QHBoxLayout* HBoxLayout_5;
   QHBoxLayout* HBoxLayout_6;
   QHBoxLayout* HBoxLayout_7;
+  QHBoxLayout* HBoxLayout_8;
   QLabel* label_0;
   QLabel* label_1;
   QLabel* label_2;
@@ -56,6 +57,7 @@ private:
   QLabel* label_5;
   QLabel* label_6;
   QLabel* label_7;
+  QLabel* label_8;
   QLineEdit* lineEdit_0;
   QLineEdit* lineEdit_1;
   QLineEdit* lineEdit_2;
@@ -64,6 +66,7 @@ private:
   QComboBox* comboBox_5;
   QLineEdit* lineEdit_6;
   QLineEdit* lineEdit_7;
+  QLineEdit* lineEdit_8;
 };
 
 #endif // LOADSCENTRIFUGALMODIFYPANEL_HPP

@@ -1,8 +1,41 @@
 #include "HDF5Tool.hpp"
-#include "CubitMessage.hpp"
+#include "CubitMessage.hpp" 
+#ifdef WIN32
+ #include <windows.h>
+ #include <io.h>
+#else
+ #include <unistd.h>
+#endif
 
 HDF5Tool::HDF5Tool(std::string filename)
 {
+  //check if hdf5 exists, if not create a new file
+  #ifdef WIN32
+    if (_access(filename.c_str(), 0) != 0)
+    {
+      std::string log = filename + " not found. An empty HDF5 will be created.\n";
+      PRINT_INFO("%s", log.c_str());
+
+      hid_t new_file = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+      if (new_file != H5I_INVALID_HID)
+      {
+        H5Fclose(new_file);
+      }
+    }
+  #else
+    if (access(filename.c_str(), W_OK) != 0) 
+    {
+      std::string log = filename + " not found. An empty HDF5 will be created.\n";
+      PRINT_INFO("%s", log.c_str());
+
+      hid_t new_file = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+      if (new_file != H5I_INVALID_HID)
+      {
+        H5Fclose(new_file);
+      }
+    }
+  #endif
+
   this->file = new H5::H5File(filename,H5F_ACC_RDWR);
 }
 
@@ -23,6 +56,90 @@ bool HDF5Tool::createGroup(std::string groupname)
   return true;
 }
 
+bool HDF5Tool::renameGroup(std::string groupname,std::string new_groupname)
+{
+  if (!this->nameExists(groupname.c_str()))
+  {
+    return false;
+  }
+
+  if (this->nameExists(new_groupname.c_str()))
+  {
+    return false;
+  }
+
+  int result = H5Lmove(this->file->getId(), groupname.c_str(),this->file->getId(), new_groupname.c_str(), H5P_DEFAULT, H5P_DEFAULT);
+  
+  return true;
+}
+
+bool HDF5Tool::deleteGroup(std::string groupname)
+{
+  if (!this->nameExists(groupname.c_str()))
+  {
+    return false;
+  }
+
+  int result = H5Ldelete(this->file->getId(), groupname.c_str(), H5P_DEFAULT);
+  
+  return true;
+}
+
+herr_t op_func(hid_t loc_id, const char* name, const H5O_info_t* info, void *data)
+{
+  auto vec = static_cast<std::vector<std::string>*>(data);
+
+  if (name[0] == '.') /* Root group, do not print '.' */
+  {  //ignore
+    //vec->push_back("/");
+  }
+  else
+  {
+    switch (info->type) {
+        case H5O_TYPE_GROUP:
+            vec->push_back(std::string(name));
+            //printf("%s  (Group)\n", name);
+            break;
+        case H5O_TYPE_DATASET:
+            //printf("%s  (Dataset)\n", name);
+            break;
+        case H5O_TYPE_NAMED_DATATYPE:
+            //printf("%s  (Datatype)\n", name);
+            break;
+        //default:
+            //printf("%s  (Unknown)\n", name);
+    }
+  }
+
+  return 0;
+}
+
+std::vector<std::string> HDF5Tool::getGroupsFromFile()
+{
+  std::vector<std::string> groups;
+
+  bool status = false;
+  status = H5Ovisit(this->file->getId(), H5_INDEX_NAME, H5_ITER_NATIVE, op_func, static_cast<void*>(&groups),H5O_INFO_BASIC);
+
+  return groups;
+}
+
+
+
+bool HDF5Tool::deleteDataset(std::string name, std::string groupname)
+{
+  //this->file->createGroup(groupname.c_str());
+  H5::Group group(file->openGroup(groupname.c_str()));
+  if (!group.exists(name.c_str()))
+  {
+    return false;
+  }
+
+  int result = H5Ldelete(group.getId(), name.c_str(), H5P_DEFAULT);
+  
+  return true;
+}
+
 bool HDF5Tool::read_dataset_int_rank_1(std::string name, std::string groupname, std::vector<int> &data)
 {
   std::string log = "";
@@ -32,7 +149,7 @@ bool HDF5Tool::read_dataset_int_rank_1(std::string name, std::string groupname, 
     const int rank = 1;
     if (data.size()!=0)
     {
-      log = "data not empty -> please write an issue on github\n";
+      log = name + " data not empty -> please write an issue on github\n";
       PRINT_INFO("%s", log.c_str());
       return false;
     }
@@ -105,7 +222,7 @@ bool HDF5Tool::read_dataset_int_rank_2(std::string name, std::string groupname, 
     const int rank = 2;
     if (data.size()!=0)
     {
-      log = "data not empty -> please write an issue on github\n";
+      log = name + " data not empty -> please write an issue on github\n";
       PRINT_INFO("%s", log.c_str());
       return false;
     }
@@ -381,7 +498,7 @@ bool HDF5Tool::read_dataset_double_rank_1(std::string name, std::string groupnam
     const int rank = 1;
     if (data.size()!=0)
     {
-      log = "data not empty -> please write an issue on github\n";
+      log = name + " data not empty -> please write an issue on github\n";
       PRINT_INFO("%s", log.c_str());
       return false;
     }
@@ -454,7 +571,7 @@ bool HDF5Tool::read_dataset_double_rank_2(std::string name, std::string groupnam
     const int rank = 2;
     if (data.size()!=0)
     {
-      log = "data not empty -> please write an issue on github\n";
+      log = name + " data not empty -> please write an issue on github\n";
       PRINT_INFO("%s", log.c_str());
       return false;
     }
@@ -597,7 +714,7 @@ bool HDF5Tool::read_dataset_string_rank_1(std::string name, std::string groupnam
     const int rank = 1;
     if (data.size()!=0)
     {
-      log = "data not empty -> please write an issue on github\n";
+      log = name + " data not empty -> please write an issue on github\n";
       PRINT_INFO("%s", log.c_str());
       return false;
     }
@@ -669,7 +786,7 @@ bool HDF5Tool::read_dataset_string_rank_2(std::string name, std::string groupnam
     const int rank = 2;
     if (data.size()!=0)
     {
-      log = "data not empty -> please write an issue on github\n";
+      log = name + " data not empty -> please write an issue on github\n";
       PRINT_INFO("%s", log.c_str());
       return false;
     }

@@ -1880,19 +1880,34 @@ std::string CoreResultsVtkWriter::get_increment_time()
 
 int CoreResultsVtkWriter::get_step_increment(double total_time)
 {
-  int increment = 0;
+  int dat_max_increments = 0;
+  int step = -1;
+  int increment = -1;
   double last_total_time = 0;
-  for (size_t i = 0; i < dat_all->total_times.size(); i++)
+  if (dat_all->total_times.size()==dat_all->result_blocks.size())
   {
-    if (last_total_time!=dat_all->total_times[i])
+    for (size_t i = 0; i < dat_all->total_times.size(); i++)
     {
-      ++increment;
+      if ((dat_all->result_blocks[i][5]!=step)&&(dat_all->result_blocks[i][6]!=increment))
+      {
+        step = dat_all->result_blocks[i][5];
+        increment = dat_all->result_blocks[i][6];
+        dat_max_increments = dat_max_increments +1;
+      }else if ((dat_all->result_blocks[i][5]==step)&&(dat_all->result_blocks[i][6]!=increment))
+      {
+        increment = dat_all->result_blocks[i][6];
+        dat_max_increments = dat_max_increments +1;
+      }else if ((dat_all->result_blocks[i][5]!=step)&&(dat_all->result_blocks[i][6]==increment))
+      {
+        step = dat_all->result_blocks[i][5];
+        dat_max_increments = dat_max_increments +1;
+      }
+      if (dat_all->total_times[i]==total_time)
+      {
+        return dat_max_increments;
+      }
+      last_total_time = dat_all->total_times[i];
     }
-    if (dat_all->total_times[i]==total_time)
-    {
-      return increment;
-    }
-    last_total_time = dat_all->total_times[i];
   }
   return -1;
 }
@@ -1900,30 +1915,29 @@ int CoreResultsVtkWriter::get_step_increment(double total_time)
 int CoreResultsVtkWriter::get_max_step_increment()
 {
   // for dat file
-  int increment = 0;
-  double last_total_time = 0;
-  for (size_t i = 0; i < dat_all->total_times.size(); i++)
+  int dat_max_increments = 0;
+  int step = -1;
+  int increment = -1;
+  //get max increments
+  for (size_t i = 0; i < dat_all->result_blocks.size(); i++)
   {
-    if (last_total_time!=dat_all->total_times[i])
+    if ((dat_all->result_blocks[i][5]!=step)&&(dat_all->result_blocks[i][6]!=increment))
     {
-      ++increment;
+      step = dat_all->result_blocks[i][5];
+      increment = dat_all->result_blocks[i][6];
+      dat_max_increments = dat_max_increments +1;
+    }else if ((dat_all->result_blocks[i][5]==step)&&(dat_all->result_blocks[i][6]!=increment))
+    {
+      increment = dat_all->result_blocks[i][6];
+      dat_max_increments = dat_max_increments +1;
+    }else if ((dat_all->result_blocks[i][5]!=step)&&(dat_all->result_blocks[i][6]==increment))
+    {
+      step = dat_all->result_blocks[i][5];
+      dat_max_increments = dat_max_increments +1;
     }
-    
-    /*
-    if (ccx_iface->to_string_scientific(double(int(dat_all->total_times[i]*100000))/100000,5)!=ccx_iface->to_string_scientific(double(int(last_total_time*100000))/100000,5))
-    {
-      this->stopwatch(ccx_iface->to_string_scientific(double(int(dat_all->total_times[i]*100000))/100000,5));
-      ++increment;
-    }else if (ccx_iface->to_string_scientific(dat_all->total_times[i],5)!=ccx_iface->to_string_scientific(last_total_time,5))
-    {
-      this->stopwatch(ccx_iface->to_string_scientific(dat_all->total_times[i],5));
-      ++increment;
-    }
-    */
-
-    last_total_time = dat_all->total_times[i];
   }
-  return increment;
+
+  return dat_max_increments;
 }
 
 bool CoreResultsVtkWriter::rewrite_connectivity_unlinked()
@@ -2356,13 +2370,32 @@ bool CoreResultsVtkWriter::checkLinkPossible()
       return false;
     }
   }
-  if (CubitInterface::get_node_count()!=frd->nodes.size()+CubitInterface::get_list_of_free_ref_entities("vertex").size())
+  //check node count for vertex in reference point
+  //check node count for curve in trajectory
+  int free_node_count = 0;
+  free_node_count = CubitInterface::get_list_of_free_ref_entities("vertex").size();
+  std::vector<int> trajectory_ids = ccx_iface->get_loadstrajectory_ids();
+  for (size_t i = 0; i < trajectory_ids.size(); i++)
+  {
+    free_node_count = free_node_count + ccx_iface->loadstrajectory_get_node_ids(trajectory_ids[i]).size();
+  }
+  if (CubitInterface::get_node_count()!=frd->nodes.size()+free_node_count)
   {
     log = "Linking Failed! Wrong number of Nodes.\n";
     PRINT_INFO("%s", log.c_str());
     return false;
   }
-  if (CubitInterface::get_element_count()!=frd->elements.size()+CubitInterface::get_list_of_free_ref_entities("vertex").size())
+
+  //check element count for vertex in reference point
+  //check element count for curve in trajectory
+  int free_element_count = 0;
+  free_element_count = CubitInterface::get_list_of_free_ref_entities("vertex").size();
+  trajectory_ids = ccx_iface->get_loadstrajectory_ids();
+  for (size_t i = 0; i < trajectory_ids.size(); i++)
+  {
+    free_element_count = free_element_count + ccx_iface->loadstrajectory_get_edge_ids(trajectory_ids[i]).size();
+  }
+  if (CubitInterface::get_element_count()!=frd->elements.size()+free_element_count)
   {
     log = "Linking Failed! Wrong number of Elements.\n";
     //log.append("Cubit " + std::to_string(CubitInterface::get_element_count()) + " FRD " + std::to_string(frd->elements.size()+CubitInterface::get_list_of_free_ref_entities("vertex").size()) +  "\n");
@@ -2379,11 +2412,32 @@ bool CoreResultsVtkWriter::checkLinkPossible()
       {
         if (!checkDatTimeValueExists(frd_all->total_times[i]))
         {
-          log = "Linking Failed! Not for every .frd time value a .dat time value exists.\n";
+          log = "Linking times Failed! Not for every .frd time value a .dat time value exists.\n";
           log.append("Time " + std::to_string(frd_all->total_times[i]) + " wasn't found in the .dat file.\n");
           PRINT_INFO("%s", log.c_str());
           //return false;
-          write_dat = false;
+          write_dat = false;          
+        }
+      }
+      if (!write_dat)
+      {
+        log = "Trying to link steps and increments.\n";
+        PRINT_INFO("%s", log.c_str());
+        //check if for every frd step and increment that there is a dat step and increment
+        for (size_t i = 0; i < frd_all->result_blocks.size(); i++)
+        {
+          if (!checkDatStepIncrementExists(frd_all->result_blocks[i][1],frd_all->result_blocks[i][2]))
+          {
+            log = "Linking Failed! Not for every .frd step and increment a .dat step and increment exists.\n";
+            log.append("Step " + std::to_string(frd_all->result_blocks[i][1]) + " increment " + std::to_string(frd_all->result_blocks[i][2]) + " wasn't found in the .dat file.\n");
+            PRINT_INFO("%s", log.c_str());
+            //return false;
+            write_dat = false;
+          }else{
+            log = "Linking Successful!\n";
+            PRINT_INFO("%s", log.c_str());
+            write_dat = true;
+          }
         }
       }
     }
@@ -2396,7 +2450,7 @@ bool CoreResultsVtkWriter::checkLinkPossible()
         max_increments = frd_all->result_blocks[i][3];
       }
     }
-
+    
     if (max_increments!=this->get_max_step_increment())
     {
       log = "Linking Failed! Different number of increments in .frd (" + std::to_string(max_increments) + ") and .dat (" + std::to_string(get_max_step_increment()) + ") \n";
@@ -2458,7 +2512,6 @@ bool CoreResultsVtkWriter::checkLinkDatFast()
 
 bool CoreResultsVtkWriter::checkDatTimeValueExists(double total_time)
 {
-
   for (size_t i = 0; i < dat_all->total_times.size(); i++)
   {
     // .dat times have different accuracy than in the .frd file *facepalm*
@@ -2472,6 +2525,18 @@ bool CoreResultsVtkWriter::checkDatTimeValueExists(double total_time)
     }//else{
     //  this->stopwatch(ccx_iface->to_string_scientific(double(int(dat_all->total_times[i]*100000))/100000,5) + " != " + ccx_iface->to_string_scientific(total_time,5));
     //}
+  }
+  return false;
+}
+
+bool CoreResultsVtkWriter::checkDatStepIncrementExists(int step, int increment)
+{
+  for (size_t i = 0; i < dat_all->result_blocks.size(); i++)
+  {
+    if ((dat_all->result_blocks[i][5]==step) && (dat_all->result_blocks[i][6]==increment))
+    {
+      return true;
+    }
   }
   return false;
 }

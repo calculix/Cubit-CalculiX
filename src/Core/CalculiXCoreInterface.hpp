@@ -13,10 +13,19 @@ public:
   ~CalculiXCoreInterface();
 	
   bool cmd(std::string cmd); // executes a cubit command with appending to the history
+  bool silent_cmd(std::string cmd); // executes a cubit command
   std::string get_version(); // gets the component version
   bool set_use_ccx_autocleanup(bool bool_use);
   bool set_use_ccx_logfile(bool bool_use);
   bool init_pythoninterface();
+  bool init_materiallibrary();
+  bool init_completed(); // returns true after every init is true otherwise false
+  bool gui_updated(); //returns if gui is updated, necessary because of time check in the observer
+  bool set_gui_updated(bool status); //sets the bool if core the gui was updated
+  bool block_core_update(); //returns the bool if the core should be updated
+  bool set_block_core_update(bool status); //sets the bool if the should be updated
+  bool block_gui_update(); //returns the bool if the gui should be updated
+  bool set_block_gui_update(bool status); //sets the bool if the gui should be updated
   std::string print_data();
   bool log_str(std::string str_log);
   bool export_to_csv(std::string path_and_name, std::vector<std::string> header, std::vector<std::vector<double>> data,bool overwrite); // exports the data to a .csv file, with the header
@@ -32,6 +41,8 @@ public:
   std::vector<int> get_block_node_ids(int block_id); // gets the block node ids
   std::vector<int> get_block_element_ids(int block_id); // gets the block global element ids
   std::string get_material_name(int material_id); // gets the material name
+  std::string get_material_prefix(std::string material_name); // gets a prefix for the material name if needed
+  int get_group_property_size(std::string group_property); // gets the size of a material group property 
   std::string get_nodeset_name(int nodeset_id); // gets the nodeset name
   std::string get_sideset_name(int sideset_id); // gets the sideset name
   std::string get_surfaceinteraction_name(int surfaceinteraction_id); // gets the surfaceinteraction name
@@ -43,12 +54,18 @@ public:
   std::vector<int> get_loadsheatfluxes_ids(); // get all load heatflux ids
   std::vector<int> get_loadsgravity_ids(); // get all load gravity ids
   std::vector<int> get_loadscentrifugal_ids(); // get all load centrifugal ids
+  std::vector<int> get_loadstrajectory_ids(); // get all load trajectory ids
+  std::vector<int> get_loadsfilm_ids(); // get all load film ids
+  std::vector<int> get_loadsradiation_ids(); // get all load radiation ids
   std::vector<int> get_bcsdisplacements_ids(); // get all bc displacement ids
   std::vector<int> get_bcstemperatures_ids(); // get all bc temperature ids
   std::vector<int> get_orientations_ids(); // get all orientation ids
   bool check_block_exists(int block_id);
   bool check_nodeset_exists(int nodeset_id);
   bool check_sideset_exists(int sideset_id);
+  bool check_vertex_exists(int vertex_id);
+  bool check_curve_exists(int curve_id);
+  bool check_surface_exists(int surface_id);
   bool check_vertex_in_nodeset_exists(int vertex_id,int nodeset_id); // checks if the vertex exists in the nodeset
   bool check_orientation_exists(int orientation_id); // check if orientation exists
   bool check_step_exists(int step_id); // check if step exists
@@ -60,6 +77,8 @@ public:
   int get_ccx_element_side(int element_type,int side); // gets the ccx element side for the given cubit element side
   bool add_sideset_face(std::string sideset_id, std::string sideset_name, std::string face, std::string element_type); // gets the sideset/elset name and face
   std::vector<std::vector<std::string>> get_sideset_face(int sideset_id); // gets the sideset/elset name and face
+  bool prepare_export(); // prepares data for export like for trajectory
+  bool clean_export(); // cleans data for export like for trajectory
   std::string get_material_export_data(); // gets the export data from materials core
   std::string get_section_export_data(); // gets the export data from sections core
   std::string get_constraint_export_data(); // gets the export data from constraints core
@@ -67,6 +86,8 @@ public:
   std::string get_contactpair_export_data(); // gets the export data from contactpairs core
   std::string get_amplitude_export_data(); // gets the export data from amplitudes core
   std::string get_orientation_export_data(); // gets the export data from orientations core
+  std::string get_damping_export_data(); // gets the export data from damping core
+  std::string get_physicalconstants_export_data(); // gets the export data from physicalconstants core
   std::string get_initialcondition_export_data(); // gets the export data from core
   std::string get_hbc_export_data(); // gets the export data from core
   std::string get_step_export_data(); // gets the export data from core
@@ -88,9 +109,14 @@ public:
   bool create_amplitude(std::vector<std::string> options, std::vector<std::vector<std::string>> options2); // adds a new amplitude
   bool modify_amplitude(int amplitude_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2); // modify a amplitude
   bool delete_amplitude(int amplitude_id); // delete amplitude
+  bool delete_amplitudes(std::vector<int> amplitude_ids); // deletes amplitudes
   bool create_orientation(std::vector<std::string> options, std::vector<std::vector<std::string>> options2); // adds a new orientation
   bool modify_orientation(int orientation_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2); // modify a orientation
   bool delete_orientation(int orientation_id); // delete orientation
+  bool modify_damping(std::vector<std::string> options, std::vector<int> options_marker); // modify damping
+  bool delete_damping(bool delete_alpha, bool delete_beta); // deletes the values
+  bool modify_physicalconstants(std::vector<std::string> options, std::vector<int> options_marker); // modify physical constants
+  bool delete_physicalconstants(bool delete_absolute_zero, bool delete_stefan_boltzmann, bool delete_newton_gravity); // deletes the values
   bool modify_loadsforces(int force_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a force
   bool modify_loadspressures(int pressure_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a pressure
   bool modify_loadsheatfluxes(int heatflux_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a heatflux
@@ -100,6 +126,23 @@ public:
   bool create_loadscentrifugal(std::vector<std::string> options); // adds a new centrifugal load
   bool modify_loadscentrifugal(int centrifugal_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a centrifugal
   bool delete_loadscentrifugal(int centrifugal_id); // delete centrifugal load
+  bool create_loadstrajectory(std::vector<std::string> options, std::vector<int> options2, std::vector<std::vector<double>> options3); // adds a new trajectory load
+  bool modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2, std::vector<std::vector<double>> options3); // modify a trajectory
+  bool delete_loadstrajectory(int trajectory_id); // delete trajectory load
+  std::vector<int> loadstrajectory_get_node_ids(int trajectory_id); //returns node ids for curve
+  std::vector<int> loadstrajectory_get_edge_ids(int trajectory_id); //returns edge ids for curve
+  std::vector<std::vector<double>> loadstrajectory_get_hit_coordinates(int trajectory_id); //returns hit coordinates
+  std::vector<std::vector<std::vector<int>>> loadstrajectory_get_face_ids(int trajectory_id); //returns face ids for the node ids from get_node_ids
+  std::vector<std::vector<std::vector<int>>> loadstrajectory_get_draw_face_ids(int trajectory_id); //returns face ids for the node ids from get_node_ids
+  std::vector<std::vector<double>> loadstrajectory_get_times(int trajectory_id); //returns time begin and end ordered by the node ids from get_node_ids
+  std::vector<std::vector<double>> loadstrajectory_get_radius(int trajectory_id); //returns radius ordered by the node ids from get_node_ids
+  std::vector<std::vector<double>> loadstrajectory_get_magnitude(int trajectory_id); //returns magnitude ordered by the node ids from get_node_ids
+  bool create_loadsfilm(std::vector<std::string> options); // adds a new film load
+  bool modify_loadsfilm(int film_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a film
+  bool delete_loadsfilm(int film_id); // delete film load
+  bool create_loadsradiation(std::vector<std::string> options); // adds a new radiation load
+  bool modify_loadsradiation(int radiation_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a radiation
+  bool delete_loadsradiation(int radiation_id); // delete radiation load
   bool modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a displacement
   bool modify_bcstemperatures(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a temperature
   bool create_historyoutput(std::vector<std::string> options); // adds a new output
@@ -163,12 +206,24 @@ public:
   bool delete_customline(int customline_id); // delete customline
   std::vector<std::vector<std::string>> get_entities(std::string entity, int id);
   std::vector<std::string> get_customline_data(std::string position,std::string keyword,int keyword_id);
+  //material library
+  bool create_materiallibrary_group(std::string name);
+  bool modify_materiallibrary_group(std::string name, std::string data, int mode);
+  bool delete_materiallibrary_group(std::string name);
+  bool create_materiallibrary_material(std::string name, std::string groupname);
+  bool modify_materiallibrary_material(std::string name, std::string groupname, std::string data, int mode, std::vector<double> value_data);
+  bool delete_materiallibrary_material(std::string name, std::string groupname);
+  bool export_materiallibrary_material(std::string name, std::string groupname, std::string cubit_name);
+  bool import_materiallibrary_material(std::string name, std::string groupname, std::string cubit_name);
+  
   //draw
   std::vector<std::vector<double>> get_draw_data_for_load_force(int id); // returns coord(3) and magnitude(3) std::vector<double>
   std::vector<std::vector<double>> get_draw_data_for_load_pressure(int id); // returns coord(3) and magnitude(3) std::vector<double>
   std::vector<std::vector<double>> get_draw_data_for_load_heatflux(int id); // returns coord(3) and magnitude(3) std::vector<double>
   std::vector<std::vector<double>> get_draw_data_for_load_gravity(int id); // returns coord(3) and magnitude(3) std::vector<double>
   std::vector<std::vector<double>> get_draw_data_for_load_centrifugal(int id); // returns coord(3) and magnitude(3) std::vector<double>
+  std::vector<std::vector<double>> get_draw_data_for_load_film(int id); // returns coord(3) and magnitude(3) std::vector<double>
+  std::vector<std::vector<double>> get_draw_data_for_load_radiation(int id); // returns coord(3) and magnitude(3) std::vector<double>
   std::vector<std::vector<double>> get_draw_data_for_bc_displacement(int id); // returns coord(3) and dof
   std::vector<std::vector<double>> get_draw_data_for_bc_temperature(int id); // returns coord(3) and dof
   std::vector<std::vector<double>> get_draw_data_for_orientation(int id); // returns pairs of 4 for {system_type,local_axis_angle}, coord(3) of section center, a_coord(3) ,b_coord(3)
@@ -178,6 +233,9 @@ public:
   bool draw_load_heatflux(std::vector<int> heatflux_ids,double size); // draw load heatflux
   bool draw_load_gravity(std::vector<int> gravity_ids,double size); // draw load gravity
   bool draw_load_centrifugal(std::vector<int> centrifugal_ids,double size); // draw load centrifugal
+  bool draw_load_trajectory(std::vector<int> trajectory_ids,double size); // draw load trajectory
+  bool draw_load_film(std::vector<int> film_ids,double size); // draw load film
+  bool draw_load_radiation(std::vector<int> radiation_ids,double size); // draw load radiation
   bool draw_bc_displacement(std::vector<int> displacement_ids,double size); // draw bc displacement
   bool draw_bc_temperature(std::vector<int> temperature_ids,double size); // draw bc temperature
   bool draw_orientation(std::vector<int> orientation_ids,double size); // draw orientation
@@ -189,9 +247,11 @@ public:
   bool draw_load_heatfluxes(double size); //draw all heatfluxes
   bool draw_load_gravities(double size); //draw all gravities
   bool draw_load_centrifugals(double size); //draw all centrifugals
+  bool draw_load_trajectories(double size); //draw all trajectories
+  bool draw_load_films(double size); //draw all films
+  bool draw_load_radiations(double size); //draw all radiations
   bool draw_bc_displacements(double size); //draw all displacements
   bool draw_bc_temperatures(double size); //draw all temperatures
-
 
   //QUERY results
   //FRD results
@@ -238,17 +298,25 @@ public:
   std::vector<std::vector<std::string>> get_sideset_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_material_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_material_group_properties(); // gets the data from core to build the item in the material management
+  std::vector<std::vector<std::string>> get_materiallibrary_tree_data(); // gets the data from materiallibrary to build the tree in the material management
+  std::vector<std::vector<std::string>> get_materiallibrary_material_properties(std::string name, std::string group); // gets the material properties from materiallibrary for the material management
+  std::vector<std::vector<double>> get_materiallibrary_material_values(std::string name, std::string group, std::string property); // gets the material values for a property from materiallibrary for the material management
   std::vector<std::vector<std::string>> get_sections_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_constraints_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_surfaceinteractions_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_contactpairs_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_amplitudes_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_orientations_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_damping_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_physicalconstants_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_loadsforces_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_loadspressures_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_loadsheatfluxes_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_loadsgravity_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_loadscentrifugal_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_loadstrajectory_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_loadsfilm_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_loadsradiation_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_bcsdisplacements_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_bcstemperatures_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_historyoutputs_tree_data(); // gets the data from core to build the tree
@@ -262,6 +330,9 @@ public:
   std::vector<std::vector<std::string>> get_steps_loadsheatfluxes_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_loadsgravity_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_loadscentrifugal_tree_data(int step_id); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_steps_loadstrajectory_tree_data(int step_id); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_steps_loadsfilm_tree_data(int step_id); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_steps_loadsradiation_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_bcsdisplacements_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_bcstemperatures_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_historyoutputs_tree_data(int step_id); // gets the data from core to build the tree

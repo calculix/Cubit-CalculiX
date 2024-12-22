@@ -1,0 +1,182 @@
+# the model is a rebuild of https://github.com/calculix/CalculiX-Examples/tree/master/Thermal/Thermal%20distortion but without contact definitions
+# improved with film, radiation and moving heatsource
+# you will have to play a lot with the heatflux, meshsize and increments to get a more realistic model
+
+#!cubit
+reset
+
+#{tf = 10e-3}
+#{bf = 100e-3}
+#{length = 500e-3}
+#{tw = 10e-3}
+#{hw = 100e-3}
+#{a = 7e-3}
+#{dls = 25e-3}
+
+# flange
+create brick x {bf} y {tf} z {length/2}
+# web
+create brick x {tw/2} y {hw} z {length/2}
+# seam
+create brick x {a/sqrt(2)} y {a/sqrt(2)} z {length/2-dls}
+webcut volume 3 with plane xplane offset 0 rotate 45 about z center 0 0 0  
+delete volume 3
+compress
+
+#move to position
+move Vertex 7  location 0 0 0 include_merged 
+move Vertex 15  location 0 {tf} 0 include_merged 
+move Vertex 18  location {tw/2} {tf} 0 include_merged 
+
+
+#we will first merge all together and mesh and then unmerge the web and the flange
+imprint vol all
+merge vol all
+#vol all size auto factor 7
+mesh vol all
+#unmerge all
+unmerge vol all
+#reconnect with seam
+merge vol 1 3
+merge vol 2 3
+
+#create blocks
+block 1 add volume 1
+block 1 name "flange"
+block 2 add volume 2
+block 2 name "web"
+block 3 add volume 3
+block 3 name "seam"
+
+#block all element type hex8
+#ccx block all element_type C3D8R
+#hex 20 is way more accurate, you can play with the auto size factor and hex8 to see the difference
+block all element type hex20 
+# hex20 will be c3d20 but can also be modified
+ccx block all element_type C3D20R
+
+# create nodesets for boundary conditions
+nodeset 1 add surface 10 4  
+nodeset 1 name "symm_x"
+nodeset 2 add surface 2 8 16  
+nodeset 2 name "symm_z"
+nodeset 3 add vertex 7  
+nodeset 3 name "fixed_y"
+nodeset 4 add volume 3
+nodeset 4 name "seam_temp"
+nodeset 5 add volume all
+nodeset 5 name "initial_temp"
+
+#material
+create material "X5CrNi189" property_group "CalculiX-FEA"
+modify material "X5CrNi189" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "X5CrNi189" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+modify material "X5CrNi189" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "X5CrNi189" scalar_properties "CCX_DENSITY_USE_CARD" 1
+modify material "X5CrNi189" matrix_property "CCX_DENSITY_DENSITY" 7910 20 7880 90 7840 200 7790 320 7740 430 7690 540 7640 650 7590 760 7540 870 
+modify material "X5CrNi189" scalar_properties "CCX_CONDUCTIVITY_USE_CARD" 1
+modify material "X5CrNi189" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+modify material "X5CrNi189" matrix_property "CCX_CONDUCTIVITY_ISO_K_TEMPERATURE" 11.63 20. 15. 200. 17.5 400. 18. 600.
+modify material "X5CrNi189" scalar_properties "CCX_HYPERELASTIC_ARRUDA_BOYCE_USE_CARD" 1
+modify material "X5CrNi189" scalar_properties "CCX_HYPERFOAM_HYPERFOAM_N1_USE_CARD" 1
+modify material "X5CrNi189" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "X5CrNi189" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 1.99e+11 0.28 24 1.87e+11 0.3 200 1.69e+11 0.28 430 1.63e+11 0.28 480 1.53e+11 0.29 590 1.43e+11 0.28 700 1.27e+11 0.25 820 
+modify material "X5CrNi189" scalar_properties "CCX_EXPANSION_USE_CARD" 1
+modify material "X5CrNi189" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 1.63e-05 100 1.71e-05 300 1.8e-05 500 1.9e-05 700 2e-05 800 
+modify material "X5CrNi189" scalar_properties "CCX_EXPANSION_ZERO_USE_CARD" 1
+modify material "X5CrNi189" scalar_properties "CCX_EXPANSION_ZERO" 20
+modify material "X5CrNi189" scalar_properties "CCX_PLASTIC_USE_CARD" 1
+modify material "X5CrNi189" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 5.5e+08 0. 20. 6.7e+08 0.0966332 20. 1e+09 0.394975 20. 1.015e+09 0.494899 20. 9.95e+08 0.805 20. 5e+08 0. 100. 5.7e+08 0.0970918 100. 7e+08 0.296429 100. 7.9e+08 0.495969 100. 8.2e+08 0.595816 100. 8.25e+08 0.695791 100. 8.2e+08 0.815816 100. 4.1e+08 0. 200. 5.1e+08 0.0971823 200. 6.2e+08 0.296575 200. 6.8e+08 0.496243 200. 7.05e+08 0.596105 200. 7.05e+08 0.806105 200. 4.1e+08 0. 300. 5.1e+08 0.0971823 300. 6.2e+08 0.296575 300. 6.8e+08 0.496243 300. 7.05e+08 0.596105 300. 7.05e+08 0.806105 300. 4.1e+08 0. 400. 5.1e+08 0.0971823 400. 6.2e+08 0.296575 400. 6.8e+08 0.496243 400. 7.05e+08 0.596105 400. 7.05e+08 0.806105 400. 4e+08 0. 500. 4.75e+08 0.0970405 500. 5.3e+08 0.196698 500. 6e+08 0.396262 500. 6.45e+08 0.695981 500. 6.65e+08 0.805857 500. 3.4e+08 0. 600. 4.2e+08 0.0972549 600. 5e+08 0.296732 600. 5.15e+08 0.496634 600. 5.3e+08 0.696536 600. 5.45e+08 0.806438 600. 2.7e+08 0. 700. 3.5e+08 0.0975524 700. 4e+08 0.197203 700. 4.5e+08 0.396853 700. 4.6e+08 0.596783 700. 4.7e+08 0.806713 700. 2.1e+08 0. 800. 2.55e+08 0.0979921 800. 2.95e+08 0.297677 800. 3.15e+08 0.59752 800. 3.3e+08 0.807402 800.
+modify material "X5CrNi189" scalar_properties "CCX_SPECIFIC_HEAT_USE_CARD" 1
+modify material "X5CrNi189" matrix_property "CCX_SPECIFIC_HEAT_SPECIFIC_HEAT" 456 20 490 90 532 200 557 320 574 430 586 540 599 650 620 760 645 870 
+
+#sections
+ccx create section solid block all material 1
+
+
+#moving heatsource
+create vertex 10e-3 15e-3 0
+create vertex 10e-3 15e-3 225e-3
+create curve vertex 34 35
+curve 53 size 3e-3
+mesh curve 53
+
+ccx create trajectory Heatflux  curve 53  vertex 34  surface 15 21 18 direction -1 -1 0 magnitude 5e+5 5e+4  time_begin 0 time_end 10 radius 5e-3 10e-3  name "heatsource"
+
+sideset 1 Surface 18 15 17 21 16 8 2 10 4 3 6 11 1 7 
+ccx create film sideset 1 temperature 20 coefficient 15 name "convection"
+ccx create radiation sideset 1 temperature 20 emissivity 0.5 cavity_radiation_off name "radiation"
+
+ccx modify physicalconstants absolute_zero -273.15 stefan_boltzmann 5.669E-8
+
+
+# refinement with the use of the python interface
+#!python
+import numpy
+face_ids = ccx.loadstrajectory_get_draw_face_ids(1)
+all_face_ids=[]
+for node in face_ids:
+ for radius in node:
+  for face in radius:
+   all_face_ids.append(face)
+
+all_face_ids=list(numpy.unique(all_face_ids))
+
+if len(all_face_ids)>0:
+ #status=cubit.cmd(f"refine hex all in face {' '.join(str(id) for id in all_face_ids)} numsplit 1 bias 1.0 depth 0")
+print(f"refinement {status}")
+#!cubit
+
+#boundary conditions
+create temperature on nodeset 5 value 20 #will be used as initial condition
+create displacement  on nodeset 1 dof 1 dof 6 fix 0 #x symm
+create displacement  on nodeset 2 dof 3 dof 4 fix 0 #z symm
+create displacement  on nodeset 3 dof 2 fix 0 dof 5 #fixed point in y
+
+#initial conditions
+ccx create initialcondition temperature
+ccx modify initialcondition 1 temperature bc_id 1
+
+#outputs
+ccx create fieldoutput name "fo_node" node
+ccx modify fieldoutput 1 node frequency 10
+ccx modify fieldoutput 1 node key_on U NT
+ccx modify fieldoutput 1 node key_off CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF PNT POT PRF PS PSF PT PTF PU RF RFL SEN TS TSF TT TTF TURB V VF 
+ccx create fieldoutput name "fo_element" element
+ccx modify fieldoutput 2 element frequency 10
+ccx modify fieldoutput 2 element key_on E S HFL
+ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS 
+
+# add homogeneous bc
+ccx hbc add bc displacement 1
+ccx hbc add bc displacement 2
+ccx hbc add bc displacement 3
+
+# create step
+ccx create step name "welding" coupledtemperaturedisplacement
+ccx modify step 1 parameter inc 100000
+ccx modify step 1 coupledtemperaturedisplacement solver pardiso
+ccx modify step 1 coupledtemperaturedisplacement totaltimeatstart 0 initialtimeincrement 1e-1 timeperiodofstep 10 minimumtimeincrement 1e-6 maximumtimeincrement 1e-1
+ccx step 1 add load trajectory 1
+ccx step 1 add fieldoutput 1
+ccx step 1 add fieldoutput 2
+
+ccx create step name "cooling" coupledtemperaturedisplacement
+ccx modify step 2 parameter inc 100000
+ccx modify step 2 coupledtemperaturedisplacement solver pardiso
+ccx modify step 2 coupledtemperaturedisplacement totaltimeatstart 10 initialtimeincrement 10 timeperiodofstep 1000 minimumtimeincrement 1e-5 maximumtimeincrement 10
+ccx step 2 add load film 1
+ccx step 2 add load radiation 1
+ccx step 2 add fieldoutput 1
+ccx step 2 add fieldoutput 2
+
+#job
+ccx create job name "shrinkage_model"
+#ccx run job 1
+#ccx wait job 1
+#ccx result paraview job 1
+
+ccx draw load trajectory 1
+
+
+

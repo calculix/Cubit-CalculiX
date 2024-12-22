@@ -25,6 +25,7 @@ LoadsCentrifugalCreatePanel::LoadsCentrifugalCreatePanel(QWidget *parent) :
   HBoxLayout_5 = new QHBoxLayout();
   HBoxLayout_6 = new QHBoxLayout();
   HBoxLayout_7 = new QHBoxLayout();
+  HBoxLayout_8 = new QHBoxLayout();
   label_1 = new QLabel();
   label_2 = new QLabel();
   label_3 = new QLabel();
@@ -32,6 +33,7 @@ LoadsCentrifugalCreatePanel::LoadsCentrifugalCreatePanel(QWidget *parent) :
   label_5 = new QLabel();
   label_6 = new QLabel();
   label_7 = new QLabel();
+  label_8 = new QLabel();
   label_1->setFixedWidth(labelWidth);
   label_2->setFixedWidth(labelWidth);
   label_3->setFixedWidth(labelWidth);
@@ -39,6 +41,7 @@ LoadsCentrifugalCreatePanel::LoadsCentrifugalCreatePanel(QWidget *parent) :
   label_5->setFixedWidth(labelWidth);
   label_6->setFixedWidth(labelWidth);
   label_7->setFixedWidth(labelWidth);
+  label_8->setFixedWidth(labelWidth);
   label_1->setText("Magnitude");
   label_2->setText("Block ID");
   label_3->setText("Coordinate");
@@ -46,6 +49,7 @@ LoadsCentrifugalCreatePanel::LoadsCentrifugalCreatePanel(QWidget *parent) :
   label_5->setText("OP");
   label_6->setText("Amplitude ID");
   label_7->setText("Time Delay");
+  label_8->setText("Name");
   lineEdit_1 = new QLineEdit();
   lineEdit_2 = new QLineEdit();
   lineEdit_3 = new QLineEdit();
@@ -56,11 +60,13 @@ LoadsCentrifugalCreatePanel::LoadsCentrifugalCreatePanel(QWidget *parent) :
   comboBox_5->addItem("new");
   lineEdit_6 = new QLineEdit();
   lineEdit_7 = new QLineEdit();
+  lineEdit_8 = new QLineEdit();
 
   lineEdit_3->setPlaceholderText("<x> <y> <z>");
   lineEdit_4->setPlaceholderText("<x> <y> <z>");
   lineEdit_6->setPlaceholderText("Optional");
   lineEdit_7->setPlaceholderText("Optional");
+  lineEdit_8->setPlaceholderText("Optional");
 
   pushButton_apply = new QPushButton();
   pushButton_apply->setText("Apply");
@@ -69,6 +75,7 @@ LoadsCentrifugalCreatePanel::LoadsCentrifugalCreatePanel(QWidget *parent) :
   
   // Layout
   GridLayout->addLayout(VBoxLayout,0,0, Qt::AlignTop);
+  VBoxLayout->addLayout(HBoxLayout_8);
   VBoxLayout->addLayout(HBoxLayout_1);
   VBoxLayout->addLayout(HBoxLayout_2);
   VBoxLayout->addLayout(HBoxLayout_3);
@@ -93,6 +100,8 @@ LoadsCentrifugalCreatePanel::LoadsCentrifugalCreatePanel(QWidget *parent) :
   HBoxLayout_6->addWidget(lineEdit_6);
   HBoxLayout_7->addWidget(label_7);
   HBoxLayout_7->addWidget(lineEdit_7);
+  HBoxLayout_8->addWidget(label_8);
+  HBoxLayout_8->addWidget(lineEdit_8);
 
   HBoxLayout_pushButton_apply->addItem(horizontal_spacer_pushButton_apply);
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
@@ -126,6 +135,10 @@ void LoadsCentrifugalCreatePanel::on_pushButton_apply_clicked(bool)
     {
       command.append(" timedelay " +lineEdit_7->text());
     }
+    if (lineEdit_8->text()!="")
+    {
+      command.append(" name \"" +lineEdit_8->text() + "\"");
+    }
   }
   
   if (command != "")
@@ -138,6 +151,7 @@ void LoadsCentrifugalCreatePanel::on_pushButton_apply_clicked(bool)
     comboBox_5->setCurrentIndex(0);
     lineEdit_6->setText("");
     lineEdit_7->setText("");
+    lineEdit_8->setText("");
   }
   
   for (size_t i = 0; i < commands.size(); i++)

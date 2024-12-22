@@ -105,6 +105,15 @@ if (UNIX)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Linux/libhdf5_cpp.so.200.1.0 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
 endif (UNIX)
 
+#copy material default library into build directory
+if (WIN32)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/libmaterial.hdf5 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/)
+endif (WIN32)
+if (UNIX)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/libmaterial.hdf5 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
+endif (UNIX)
+
+
 set(CCXPLUGIN_SRCS
     CalculiXPlugin.cpp
     CalculiXPlugin.hpp

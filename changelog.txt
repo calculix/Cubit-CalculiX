@@ -77,5 +77,48 @@
 2024-10-12 bug fix crash vtk writer in parallel
 2024-10-12 working on reading/saving ccx core data into .cub
 2024-10-19 adding progressbar for saving and reading cub5
-2024-10-20 updating to paraview 5.13.1, due to github large file limit, we need to exclude paraview binaries from the repo, the need to be in a local directory for the build, look at cmake file
+2024-10-20 updating to paraview 5.13.1, due to github large file limit, we need to exclude paraview binaries from the repo, they need to be in a local directory for the build, look at cmake file
 2024-10-21 fixing bug in frd reader. in parallel some blocks without nodal results where skipped while reading the headers which resulted in a crash
+######### ------  Release 2024.10
+
+2024-11-08 fixing symbols in the material management on windows
+2024-11-08 working on material library
+2024-11-14 fixing plot labels, adding "" automatically to the plot command
+2024-11-14 working on material library
+2024-11-16 working on material library
+2024-11-19 working on material library
+2024-11-21 working on material library
+2024-11-22 adding materials to the highlighting
+2024-11-22 working on material library gui
+2024-11-25 working on material library gui
+2024-11-27 working on material library gui
+2024-11-28 working on material library gui
+2024-11-29 working on material library gui
+2024-11-30 working on trajectory heatflux loads
+2024-12-01 working on trajectory heatflux loads
+2024-12-02 adding default material library
+2024-12-03 working on trajectory
+2024-12-04 working on trajectory
+2024-12-05 working on trajectory and speeding up the gui update progress.
+2024-12-06 working on trajectory and speeding up the gui update progress.
+2024-12-07 updating highlight and draw for trajectory
+2024-12-07 start implementing more material keywords
+2024-12-08 working on new materials gui cards
+2024-12-09 working on trajectory bugs, amplidudes core needs a search speed up
+2024-12-09 working on trajectory bugs, amplidudes core speed up for trajectory preparation
+2024-12-12 fixing history bug on windows need to wait for new dev release
+2024-12-13 working on physical constants, damping, film, radiation
+2024-12-14 writing check list. try to fix history bug on windows
+2024-12-14 working on core and commands for steps dynamic, modal dynamic, steady state dynamics, complex frequency
+2024-12-16 working on damping and physical constants gui
+2024-12-17 working on damping and physical constants gui
+2024-12-17 working on gui for steps dynamic, modal dynamic, steady state dynamics, complex frequency
+2024-12-17 loads film and radiation gui
+2024-12-18 adding load type and radius vs magnitude to trajectory
+2024-12-19 working on trajectory, adding new python interface methods to query trajectory data
+2024-12-19 finished heatflux trajectory
+2024-12-19 test and creating examples
+2024-12-19 tube impact example
+2024-12-19 working on examples
+2024-12-20 updating readme and examples
+2024-12-20 implementing reading and linking of step and increment data from .dat
