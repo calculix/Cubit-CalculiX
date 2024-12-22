@@ -79,7 +79,7 @@ Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/
   - Specific Heat
   - Tension Only
 - Materiallibrary 
-  - easy to use library: materials can be created, modified and deleted and imported from cubit, exported into cubit
+  - easy to use library: materials can be created, modified and deleted, imported from cubit and exported into cubit
   - already contains some default materials
 - Sections 
   - Solid
