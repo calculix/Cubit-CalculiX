@@ -103,12 +103,16 @@ Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/
   - PgLinMortar
 - Amplitudes
 - Orientations
+- Damping
+- Physical Constants
 - Loads
   - Forces (CLOAD)
   - Pressures (DLOAD)
   - Heatfluxes (DFLUX)
   - Gravities (GRAVITY)
   - Centrifugal (CENTRIF)
+  - Film
+  - Radiation
   - Trajectories
     - Heatflux (can be used as moving heatsource)
 - Boundary Conditions
