@@ -138,4 +138,5 @@
 2025-02-24 working on gui for initial condition stress
 2025-02-26 adding .cub5 save and read for surface traction, equations, section print, initial condition stress
 2025-02-26 working on .dat reader to read section print data
+2025-03-01 working on .sta and .cvg reading
 

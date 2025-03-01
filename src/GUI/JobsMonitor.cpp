@@ -1,6 +1,7 @@
 #include "JobsMonitor.hpp"
 #include "CalculiXCoreInterface.hpp"
 #include "GUITimer.hpp"
+#include "JobsMonitorLiveMonitor.hpp"
 #include "JobsMonitorFRD.hpp"
 #include "JobsMonitorDAT.hpp"
 
@@ -64,6 +65,7 @@ JobsMonitor::JobsMonitor()
   boxLayout_window->addWidget(pushButton_close);
   
   // textarea
+  liveMonitor_widget = new JobsMonitorLiveMonitor();
   QPlainTextEdit_console = new QPlainTextEdit();
   QPlainTextEdit_console->setReadOnly(true);
   QPlainTextEdit_console->setMaximumBlockCount(maximumBlockCount);
@@ -78,6 +80,7 @@ JobsMonitor::JobsMonitor()
 
   //tab widget
   TabWidget = new QTabWidget();
+  TabWidget->addTab(liveMonitor_widget,"Live Monitor"); 
   TabWidget->addTab(QPlainTextEdit_console,"Console Output");
   TabWidget->addTab(QPlainTextEdit_cvg,"*.cvg");
   TabWidget->addTab(QPlainTextEdit_sta,"*.sta");
@@ -197,7 +200,9 @@ void JobsMonitor::update()
         QPlainTextEdit_sta->appendPlainText(QString::fromStdString(sta[i]));  
       }
     }
-    
+
+    //update live Monitor
+    liveMonitor_widget->update(QPlainTextEdit_console->toPlainText(), cvg, sta);
     /*
     if (std::stoi(job_data[3])==-1)
     {

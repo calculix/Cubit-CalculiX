@@ -22,6 +22,7 @@
 
 class CalculiXCoreInterface;
 class GUITimer;
+class JobsMonitorLiveMonitor;
 class JobsMonitorFRD;
 class JobsMonitorDAT;
 
@@ -67,6 +68,7 @@ private:
   QPushButton* pushButton_result_convert;
   QPushButton* pushButton_result_paraview;
   QPushButton* pushButton_close;
+  JobsMonitorLiveMonitor* liveMonitor_widget;
   QPlainTextEdit* QPlainTextEdit_console;
   QPlainTextEdit* QPlainTextEdit_cvg;
   QPlainTextEdit* QPlainTextEdit_sta;
