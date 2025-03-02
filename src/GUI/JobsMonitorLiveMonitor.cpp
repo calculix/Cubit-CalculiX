@@ -60,16 +60,26 @@ void JobsMonitorLiveMonitor::update(QString console, std::vector<std::string> cv
   */
 
   std::vector<std::vector<double>> cvg_table;
-  if (cvg.size()>5)
+  cvg_table.push_back({0.,0.,0.,0.,0.,0.,0.,0.});
+  if (cvg.size()>4)
   {
-    for (size_t i = 5; i < cvg.size(); i++)
+    for (size_t i = 4; i < cvg.size(); i++)
     {
       std::vector<std::string> line = this->split_line(cvg[i]);
-      
-      std::string log = "i " + std::to_string(i) + " line[0] " + line[0] + " \n";
-      PRINT_INFO("%s", log.c_str());
+      std::vector<double> cvg_tmp;
+      cvg_tmp.push_back(std::stod(line[0])); // STEP
+      cvg_tmp.push_back(std::stod(line[1])); // INC
+      cvg_tmp.push_back(std::stod(line[2])); // ATT
+      cvg_tmp.push_back(std::stod(line[3])); // ITER
+      cvg_tmp.push_back(std::stod(line[4])); // CONT EL
+      cvg_tmp.push_back(ccx_iface->string_scientific_to_double(line[5])); // RESID FORCE
+      cvg_tmp.push_back(ccx_iface->string_scientific_to_double(line[6])); // CORR DISP
+      cvg_tmp.push_back(ccx_iface->string_scientific_to_double(line[7])); // RESID FLUX
+      cvg_tmp.push_back(ccx_iface->string_scientific_to_double(line[8])); // CORR TEMP
+      cvg_table.push_back(cvg_tmp);
+      //std::string log = "i " + std::to_string(i) + " line[5] " + line[5] + " \n";
+      //PRINT_INFO("%s", log.c_str());
     }
-    
   }
   
   /*
@@ -83,7 +93,28 @@ void JobsMonitorLiveMonitor::update(QString console, std::vector<std::string> cv
   6 INC TIME
   */
 
-  plot_convergence->update();
+  std::vector<std::vector<double>> sta_table;
+  sta_table.push_back({0.,0.,0.,0.,0.,0.});
+  if (sta.size()>2)
+  {
+    for (size_t i = 2; i < sta.size(); i++)
+    {
+      std::vector<std::string> line = this->split_line(sta[i]);
+      std::vector<double> sta_tmp;
+      sta_tmp.push_back(std::stod(line[0])); // STEP
+      sta_tmp.push_back(std::stod(line[1])); // INC
+      sta_tmp.push_back(std::stod(line[2])); // ATT
+      sta_tmp.push_back(std::stod(line[3])); // ITRS
+      sta_tmp.push_back(ccx_iface->string_scientific_to_double(line[4])); // TOT TIME
+      sta_tmp.push_back(ccx_iface->string_scientific_to_double(line[5])); // STEP TIME
+      sta_tmp.push_back(ccx_iface->string_scientific_to_double(line[6])); // INC TIME
+      sta_table.push_back(sta_tmp);
+      //std::string log = "i " + std::to_string(i) + " line[5] " + line[5] + " \n";
+      //PRINT_INFO("%s", log.c_str());
+    }
+  }
+
+  plot_convergence->update(cvg_table, sta_table);
 }
 
 std::vector<std::string> JobsMonitorLiveMonitor::split_line(std::string line)

@@ -8,7 +8,10 @@
 #include <QChartView>
 #include <QLineSeries>
 #include <QList>
-#include <QAbstractAxis> 
+#include <QAbstractAxis>
+#include <QValueAxis>
+#include <QLogValueAxis>
+#include <QLegend> 
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -30,11 +33,19 @@ public:
   std::vector<double> x_data;
   std::vector<double> y_data;*/
 
-  void update();
+  void update(std::vector<std::vector<double>> cvg_table,std::vector<std::vector<double>> sta_table);
 
   QGridLayout* gridLayout;
   QHBoxLayout* boxLayout_window;
   QVBoxLayout* boxLayout_widget;
+
+  QtCharts::QLineSeries *series_1;
+  QtCharts::QLineSeries *series_2;
+  QtCharts::QLineSeries *series_3;
+
+  QtCharts::QChart *chart;
+  QtCharts::QValueAxis *axisX;
+  QtCharts::QLogValueAxis *axisY;
 };
 
 #endif // JOBSMONITORLIVEMONITORCONVERGENCE_HPP
