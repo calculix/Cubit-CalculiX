@@ -1,6 +1,7 @@
 #include "JobsMonitor.hpp"
 #include "CalculiXCoreInterface.hpp"
 #include "GUITimer.hpp"
+#include "JobsMonitorLiveMonitor.hpp"
 #include "JobsMonitorFRD.hpp"
 #include "JobsMonitorDAT.hpp"
 
@@ -64,6 +65,7 @@ JobsMonitor::JobsMonitor()
   boxLayout_window->addWidget(pushButton_close);
   
   // textarea
+  liveMonitor_widget = new JobsMonitorLiveMonitor();
   QPlainTextEdit_console = new QPlainTextEdit();
   QPlainTextEdit_console->setReadOnly(true);
   QPlainTextEdit_console->setMaximumBlockCount(maximumBlockCount);
@@ -78,6 +80,7 @@ JobsMonitor::JobsMonitor()
 
   //tab widget
   TabWidget = new QTabWidget();
+  TabWidget->addTab(liveMonitor_widget,"Live Monitor"); 
   TabWidget->addTab(QPlainTextEdit_console,"Console Output");
   TabWidget->addTab(QPlainTextEdit_cvg,"*.cvg");
   TabWidget->addTab(QPlainTextEdit_sta,"*.sta");
@@ -140,22 +143,29 @@ void JobsMonitor::update()
     //PRINT_INFO("%s", log.c_str());
 
     this->setWindowTitle("Jobs Monitor - " + QString::fromStdString(job_data[1]));
-    
+    bool clearLiveMonitor = false;
     // check if job has been restarted
     if (total_block_count_console_output > console_output.size())
     {
       total_block_count_console_output = 0;
       QPlainTextEdit_console->clear();
+      clearLiveMonitor = true;
     }
     if (QPlainTextEdit_cvg->blockCount() > cvg.size())
     {
       total_block_count_cvg = 0;
       QPlainTextEdit_cvg->clear();
+      clearLiveMonitor = true;
     }
     if (QPlainTextEdit_sta->blockCount() > sta.size())
     {
       total_block_count_sta = 0;
       QPlainTextEdit_sta->clear();
+      clearLiveMonitor = true;
+    }
+    if (clearLiveMonitor)
+    {
+      liveMonitor_widget->clear();
     }
 
     if (total_block_count_console_output < console_output.size())
@@ -197,7 +207,9 @@ void JobsMonitor::update()
         QPlainTextEdit_sta->appendPlainText(QString::fromStdString(sta[i]));  
       }
     }
-    
+
+    //update live Monitor
+    liveMonitor_widget->update(QPlainTextEdit_console->toPlainText(), cvg, sta);
     /*
     if (std::stoi(job_data[3])==-1)
     {
