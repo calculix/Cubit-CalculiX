@@ -337,6 +337,8 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/JobsMonitorLiveMonitor.cpp
     ${CMAKE_CURRENT_LIST_DIR}/JobsMonitorLiveMonitorConvergence.hpp
     ${CMAKE_CURRENT_LIST_DIR}/JobsMonitorLiveMonitorConvergence.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/JobsMonitorLiveMonitorStatus.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/JobsMonitorLiveMonitorStatus.cpp
     ${CMAKE_CURRENT_LIST_DIR}/JobsMonitorFRD.hpp
     ${CMAKE_CURRENT_LIST_DIR}/JobsMonitorFRD.cpp
     ${CMAKE_CURRENT_LIST_DIR}/JobsMonitorFRDPlot.hpp

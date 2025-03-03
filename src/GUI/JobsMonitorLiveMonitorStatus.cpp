@@ -1,8 +1,8 @@
-#include "JobsMonitorLiveMonitorConvergence.hpp"
+#include "JobsMonitorLiveMonitorStatus.hpp"
 
 #include "CubitMessage.hpp"
 
-JobsMonitorLiveMonitorConvergence::JobsMonitorLiveMonitorConvergence():
+JobsMonitorLiveMonitorStatus::JobsMonitorLiveMonitorStatus():
   isInitialized(false)
 {
   if(isInitialized)
@@ -17,78 +17,91 @@ JobsMonitorLiveMonitorConvergence::JobsMonitorLiveMonitorConvergence():
 
   series_1 = new QtCharts::QLineSeries(this);
   series_1->setPointsVisible(false);
-  series_1->setName("FORCE");
+  series_1->setName("STEP");
   series_2 = new QtCharts::QLineSeries(this);
   series_2->setPointsVisible(false);
-  series_2->setName("DISP");
+  series_2->setName("INC");
   series_3 = new QtCharts::QLineSeries(this);
   series_3->setPointsVisible(false);
-  series_3->setName("FLUX");
+  series_3->setName("ATT");
   series_4 = new QtCharts::QLineSeries(this);
   series_4->setPointsVisible(false);
-  series_4->setName("TEMP");
+  series_4->setName("ITRS");
   series_5 = new QtCharts::QLineSeries(this);
   series_5->setPointsVisible(false);
-  series_5->setName("Contact Elements");
+  series_5->setName("TOT TIME");
+  series_6 = new QtCharts::QLineSeries(this);
+  series_6->setPointsVisible(false);
+  series_6->setName("STEP TIME");
+  series_7 = new QtCharts::QLineSeries(this);
+  series_7->setPointsVisible(false);
+  series_7->setName("INC TIME");
   chart = new QtCharts::QChart();
   //chart->legend()->hide();
   chart->legend()->setVisible(true);
   chart->legend()->setAlignment(Qt::AlignTop);
-  chart->addSeries(series_1);
-  chart->addSeries(series_2);
-  chart->addSeries(series_3);
-  chart->addSeries(series_4);
   //chart->createDefaultAxes();
-  //chart->setTitle("Convergence Information");
+  //chart->setTitle("Status Information");
   chart2 = new QtCharts::QChart();
   //chart2->legend()->hide();
   chart2->legend()->setVisible(true);
   chart2->legend()->setAlignment(Qt::AlignTop);
-  chart2->addSeries(series_5);
+
   axisX = new QtCharts::QValueAxis();
   axisX->setRange(1,1);
   axisX->setMin(1);
   axisX->setMax(1);
+  //axisX->setTickCount(4);
   axisX->setLabelFormat("%u");
-  axisX->setTitleText("Iteration");
+  axisX->setTitleText("Increment");
   axisX2 = new QtCharts::QValueAxis();
   axisX2->setRange(1,1);
   axisX2->setMin(1);
   axisX2->setMax(1);
+  //axisX2->setTickCount(4);
   axisX2->setLabelFormat("%u");
-  axisX2->setTitleText("Iteration");
+  axisX2->setTitleText("Increment");
+  
+  axisY = new QtCharts::QValueAxis();
+  axisY->setMin(0);
+  axisY->setMax(0);
+  //axisY->setTickCount(5);
+  axisY->setLabelFormat("%u");
+  axisY->setTitleText("");
+  
+  axisY2 = new QtCharts::QValueAxis();
+  axisY2->setMin(0);
+  axisY2->setMax(0);
+  //axisY2->setTickCount(5);
+  axisY2->setLabelFormat("%.2e");
+  axisY2->setTitleText("Time");
+  
+  chart->addSeries(series_1);
+  chart->addSeries(series_2);
+  chart->addSeries(series_3);
+  chart->addSeries(series_4);
+  chart2->addSeries(series_5);
+  chart2->addSeries(series_6);
+  chart2->addSeries(series_7);
+  chart->addAxis(axisX,Qt::AlignBottom);
+  chart->addAxis(axisY,Qt::AlignLeft);
+  chart2->addAxis(axisX2,Qt::AlignBottom);
+  chart2->addAxis(axisY2,Qt::AlignLeft);
   series_1->attachAxis(axisX);
   series_2->attachAxis(axisX);
   series_3->attachAxis(axisX);
   series_4->attachAxis(axisX);
   series_5->attachAxis(axisX2);
-  
-  axisY = new QtCharts::QLogValueAxis();
-  //axisY->setLabelFormat("%g");
-  axisY->setTitleText("%");
-  axisY->setLabelFormat("%.0e");
-  axisY->setBase(10.0);
-  axisY->setMin(0);
-  axisY->setMax(0);
-  axisY->setMinorTickCount(0);
-  
-  axisY2 = new QtCharts::QValueAxis();
-  axisY2->setMin(0);
-  axisY2->setMax(0);
-  axisY2->setTitleText("#");
-  //axisY2->setTickCount(5);
-  axisY2->setLabelFormat("%u");
-
+  series_6->attachAxis(axisX2);
+  series_7->attachAxis(axisX2);  
   series_1->attachAxis(axisY);
   series_2->attachAxis(axisY);
   series_3->attachAxis(axisY);
   series_4->attachAxis(axisY);
   series_5->attachAxis(axisY2);
+  series_6->attachAxis(axisY2);
+  series_7->attachAxis(axisY2);
   
-  chart->addAxis(axisX,Qt::AlignBottom);
-  chart->addAxis(axisY,Qt::AlignLeft);
-  chart2->addAxis(axisX2,Qt::AlignBottom);
-  chart2->addAxis(axisY2,Qt::AlignLeft);
   
   QtCharts::QChartView *chartView = new QtCharts::QChartView(chart,this);
   chartView->setRenderHint(QPainter::Antialiasing);
@@ -105,25 +118,29 @@ JobsMonitorLiveMonitorConvergence::JobsMonitorLiveMonitorConvergence():
   isInitialized = true;
 }
 
-JobsMonitorLiveMonitorConvergence::~JobsMonitorLiveMonitorConvergence()
+JobsMonitorLiveMonitorStatus::~JobsMonitorLiveMonitorStatus()
 {
 }
 
-void JobsMonitorLiveMonitorConvergence::clear()
+void JobsMonitorLiveMonitorStatus::clear()
 {
   series_1->clear();
   series_2->clear();
   series_3->clear();
   series_4->clear();
   series_5->clear();
+  series_6->clear();
+  series_7->clear();
   axisX->setRange(1,1);
   axisX->setMin(1);
   axisX->setMax(1);
   axisX2->setRange(1,1);
   axisX2->setMin(1);
   axisX2->setMax(1);
+  axisY->setRange(0,0);
   axisY->setMin(0);
   axisY->setMax(0);
+  axisY2->setRange(0,0);
   axisY2->setMin(0);
   axisY2->setMax(0);
   chart->removeSeries(series_1);
@@ -131,71 +148,57 @@ void JobsMonitorLiveMonitorConvergence::clear()
   chart->removeSeries(series_3);
   chart->removeSeries(series_4);
   chart2->removeSeries(series_5);
+  chart2->removeSeries(series_6);
+  chart2->removeSeries(series_7);
   chart->addSeries(series_1);
   chart->addSeries(series_2);
   chart->addSeries(series_3);
   chart->addSeries(series_4);
   chart2->addSeries(series_5);
+  chart2->addSeries(series_6);
+  chart2->addSeries(series_7);
   series_1->attachAxis(axisX);
   series_2->attachAxis(axisX);
   series_3->attachAxis(axisX);
   series_4->attachAxis(axisX);
   series_5->attachAxis(axisX2);
+  series_6->attachAxis(axisX2);
+  series_7->attachAxis(axisX2);  
   series_1->attachAxis(axisY);
   series_2->attachAxis(axisY);
   series_3->attachAxis(axisY);
   series_4->attachAxis(axisY);
   series_5->attachAxis(axisY2);
+  series_6->attachAxis(axisY2);
+  series_7->attachAxis(axisY2);
 }
 
-void JobsMonitorLiveMonitorConvergence::update(std::vector<std::vector<double>> cvg_table)
+void JobsMonitorLiveMonitorStatus::update(std::vector<std::vector<double>> sta_table)
 {
   /*
-  .cvg
+  .sta
   0 STEP
   1 INC
   2 ATT
-  3 ITER
-  4 CONT EL
-  5 RESID FORCE
-  6 CORR DISP
-  7 RESID FLUX
-  8 CORR TEMP
+  3 ITRS
+  4 TOT TIME
+  5 STEP TIME
+  6 INC TIME
   */
   bool redraw = false;
-  int iter = cvg_table.size();
-  double minValue = 1e-6;
-  if (series_1->count() < cvg_table.size())
+  int inc = sta_table.size();
+  if (series_1->count() < sta_table.size())
   {
-    for (size_t i = series_1->count(); i < cvg_table.size(); i++)
+    for (size_t i = series_1->count(); i < sta_table.size(); i++)
     {
-      if (cvg_table[i][5]==0.0)
-      {
-        series_1->append(i+1,minValue);
-      }else{
-        series_1->append(i+1,cvg_table[i][5]);
-      }
-      if (cvg_table[i][6]==0.0)
-      {
-        series_2->append(i+1,minValue);
-      }else{
-        series_2->append(i+1,cvg_table[i][6]);
-      }
-      if (cvg_table[i][7]==0.0)
-      {
-        series_3->append(i+1,minValue);
-      }else{
-        series_3->append(i+1,cvg_table[i][7]);
-      }
-      if (cvg_table[i][8]==0.0)
-      {
-        series_4->append(i+1,minValue);
-      }else{
-        series_4->append(i+1,cvg_table[i][8]);
-      }
-      
-      series_5->append(i+1,cvg_table[i][4]);
-      //std::string log = "series 1 " + std::to_string(i) + " cvg_table[i][5] " + std::to_string(cvg_table[i][5]) + " \n";
+      series_1->append(i+1,sta_table[i][0]);
+      series_2->append(i+1,sta_table[i][1]);
+      series_3->append(i+1,sta_table[i][2]);
+      series_4->append(i+1,sta_table[i][3]);
+      series_5->append(i+1,sta_table[i][4]);
+      series_6->append(i+1,sta_table[i][5]);
+      series_7->append(i+1,sta_table[i][6]);
+      //std::string log = "series 1 " + std::to_string(i) + " sta_table[i][1] " + std::to_string(sta_table[i][1]) + " \n";
       //PRINT_INFO("%s", log.c_str());
     }
     redraw = true;
@@ -205,69 +208,76 @@ void JobsMonitorLiveMonitorConvergence::update(std::vector<std::vector<double>> 
   {
     double min = 0.0;
     double max = 0.0;
-    for (size_t i = 0; i < cvg_table.size(); i++)
+    for (size_t i = 0; i < sta_table.size(); i++)
     {
-      for (size_t ii = 5; ii < 9; ii++)
+      for (size_t ii = 0; ii < 4; ii++)
       {
-        if (cvg_table[i][ii] < min)
+        if (sta_table[i][ii] < min)
         {
-          min = cvg_table[i][ii];
+          min = sta_table[i][ii];
         }
-        if (cvg_table[i][ii] > max)
+        if (sta_table[i][ii] > max)
         {
-          max = cvg_table[i][ii];
+          max = sta_table[i][ii];
         }
       }
     }
-    axisX->setRange(1,iter);
-    axisX->setMax(iter);
-    if (min==0.0)
-    {
-      min = minValue;
-    }
+    axisX->setRange(1,inc);
+    axisX->setMax(inc);
+    axisY->setRange(min,max);
     axisY->setMin(min);
     axisY->setMax(max);
     
     min = 0.0;
     max = 0.0;
-    for (size_t i = 0; i < cvg_table.size(); i++)
+    for (size_t i = 0; i < sta_table.size(); i++)
     {
-      if (cvg_table[i][4] < min)
+      for (size_t ii = 4; ii < 7; ii++)
       {
-        min = cvg_table[i][4];
-      }
-      if (cvg_table[i][4] > max)
-      {
-        max = cvg_table[i][4];
+        if (sta_table[i][ii] < min)
+        {
+          min = sta_table[i][ii];
+        }
+        if (sta_table[i][ii] > max)
+        {
+          max = sta_table[i][ii];
+        }
       }
     }
-    axisX2->setRange(1,iter);
-    axisX2->setMax(iter);
+    axisX2->setRange(1,inc);
+    axisX2->setMax(inc);
+    axisY2->setRange(min,max); 
     axisY2->setMin(min);
     axisY2->setMax(max);
-    
+
     chart->removeSeries(series_1);
     chart->removeSeries(series_2);
     chart->removeSeries(series_3);
     chart->removeSeries(series_4);
     chart2->removeSeries(series_5);
+    chart2->removeSeries(series_6);
+    chart2->removeSeries(series_7);
     chart->addSeries(series_1);
     chart->addSeries(series_2);
     chart->addSeries(series_3);
     chart->addSeries(series_4);
     chart2->addSeries(series_5);
- 
+    chart2->addSeries(series_6);
+    chart2->addSeries(series_7);
+  
     series_1->attachAxis(axisX);
     series_2->attachAxis(axisX);
     series_3->attachAxis(axisX);
     series_4->attachAxis(axisX);
     series_5->attachAxis(axisX2);
+    series_6->attachAxis(axisX2);
+    series_7->attachAxis(axisX2);  
     series_1->attachAxis(axisY);
     series_2->attachAxis(axisY);
     series_3->attachAxis(axisY);
     series_4->attachAxis(axisY);
     series_5->attachAxis(axisY2);
-    //axisX->applyNiceNumbers();
-    //axisY->applyNiceNumbers();
+    series_6->attachAxis(axisY2);
+    series_7->attachAxis(axisY2);        
   }
 }

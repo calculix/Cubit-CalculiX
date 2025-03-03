@@ -1,6 +1,7 @@
 #include "JobsMonitorLiveMonitor.hpp"
 #include "CalculiXCoreInterface.hpp"
 #include "JobsMonitorLiveMonitorConvergence.hpp"
+#include "JobsMonitorLiveMonitorStatus.hpp"
 
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
@@ -14,22 +15,21 @@ JobsMonitorLiveMonitor::JobsMonitorLiveMonitor()
   // main window
   //this->setGeometry(0,0,700,570);
   this->setWindowTitle("Live Monitor");
-  int comboBoxWidth = 120;
   gridLayout = new QGridLayout(this);
   boxLayout_windows = new QVBoxLayout();
   gridLayout->addLayout(boxLayout_windows,0,0, Qt::AlignLeft);
   
   plot_convergence =  new JobsMonitorLiveMonitorConvergence();
   boxLayout_windows->addWidget(plot_convergence);
-  plot_status =  new JobsMonitorLiveMonitorConvergence();
+  plot_status =  new JobsMonitorLiveMonitorStatus();
   boxLayout_windows->addWidget(plot_status);
-  label_console = new QLabel();
-  label_console->setText("Console Output");
-  boxLayout_windows->addWidget(label_console);
-  QPlainTextEdit_console = new QPlainTextEdit();
-  QPlainTextEdit_console->setReadOnly(true);
-  QPlainTextEdit_console->setMaximumBlockCount(maximumBlockCount);
-  boxLayout_windows->addWidget(QPlainTextEdit_console);
+  //label_console = new QLabel();
+  //label_console->setText("Console Output");
+  //boxLayout_windows->addWidget(label_console);
+  //QPlainTextEdit_console = new QPlainTextEdit();
+  //QPlainTextEdit_console->setReadOnly(true);
+  //QPlainTextEdit_console->setMaximumBlockCount(maximumBlockCount);
+  //boxLayout_windows->addWidget(QPlainTextEdit_console);
   
 }
 
@@ -38,13 +38,15 @@ JobsMonitorLiveMonitor::~JobsMonitorLiveMonitor()
 
 void JobsMonitorLiveMonitor::clear()
 {
+  plot_convergence->clear();
+  plot_status->clear();
 }
 
 void JobsMonitorLiveMonitor::update(QString console, std::vector<std::string> cvg,std::vector<std::string> sta)
 {
   //update console
-  QPlainTextEdit_console->clear();
-  QPlainTextEdit_console->appendPlainText(console);
+  //QPlainTextEdit_console->clear();
+  //QPlainTextEdit_console->appendPlainText(console);
  
   /*
   .cvg
@@ -60,7 +62,7 @@ void JobsMonitorLiveMonitor::update(QString console, std::vector<std::string> cv
   */
 
   std::vector<std::vector<double>> cvg_table;
-  cvg_table.push_back({0.,0.,0.,0.,0.,0.,0.,0.});
+  //cvg_table.push_back({0.,0.,0.,0.,0.,0.,0.,0.});
   if (cvg.size()>4)
   {
     for (size_t i = 4; i < cvg.size(); i++)
@@ -94,7 +96,7 @@ void JobsMonitorLiveMonitor::update(QString console, std::vector<std::string> cv
   */
 
   std::vector<std::vector<double>> sta_table;
-  sta_table.push_back({0.,0.,0.,0.,0.,0.});
+  //sta_table.push_back({0.,0.,0.,0.,0.,0.});
   if (sta.size()>2)
   {
     for (size_t i = 2; i < sta.size(); i++)
@@ -114,7 +116,8 @@ void JobsMonitorLiveMonitor::update(QString console, std::vector<std::string> cv
     }
   }
 
-  plot_convergence->update(cvg_table, sta_table);
+  plot_convergence->update(cvg_table);
+  plot_status->update(sta_table);
 }
 
 std::vector<std::string> JobsMonitorLiveMonitor::split_line(std::string line)

@@ -21,6 +21,7 @@
 
 class CalculiXCoreInterface;
 class JobsMonitorLiveMonitorConvergence;
+class JobsMonitorLiveMonitorStatus;
 
 class JobsMonitorLiveMonitor : public QWidget
 {
@@ -41,10 +42,10 @@ public:
 private:
   QGridLayout* gridLayout;
   QVBoxLayout* boxLayout_windows; 
-  QLabel* label_console;
-  QPlainTextEdit* QPlainTextEdit_console;
+  //QLabel* label_console;
+  //QPlainTextEdit* QPlainTextEdit_console;
   JobsMonitorLiveMonitorConvergence* plot_convergence;
-  JobsMonitorLiveMonitorConvergence* plot_status;
+  JobsMonitorLiveMonitorStatus* plot_status;
 };
 
 #endif // JOBSMONITORLIVEMONITOR_HPP

@@ -143,22 +143,29 @@ void JobsMonitor::update()
     //PRINT_INFO("%s", log.c_str());
 
     this->setWindowTitle("Jobs Monitor - " + QString::fromStdString(job_data[1]));
-    
+    bool clearLiveMonitor = false;
     // check if job has been restarted
     if (total_block_count_console_output > console_output.size())
     {
       total_block_count_console_output = 0;
       QPlainTextEdit_console->clear();
+      clearLiveMonitor = true;
     }
     if (QPlainTextEdit_cvg->blockCount() > cvg.size())
     {
       total_block_count_cvg = 0;
       QPlainTextEdit_cvg->clear();
+      clearLiveMonitor = true;
     }
     if (QPlainTextEdit_sta->blockCount() > sta.size())
     {
       total_block_count_sta = 0;
       QPlainTextEdit_sta->clear();
+      clearLiveMonitor = true;
+    }
+    if (clearLiveMonitor)
+    {
+      liveMonitor_widget->clear();
     }
 
     if (total_block_count_console_output < console_output.size())
