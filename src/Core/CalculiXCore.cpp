@@ -145,12 +145,8 @@ CalculiXCore::~CalculiXCore()
 bool CalculiXCore::cmd(std::string cmd)
 {
   bool status = false;
-  //#ifdef WIN32
-  //  CubitInterface::cmd(cmd.c_str());
-  //#else
   // all commands send with CubitGuiUtil will get listed in the history
   CubitGuiUtil::send_cubit_command(cmd.c_str());
-  //#endif
   status = !CubitInterface::was_last_cmd_undoable();
 
   return status;
@@ -678,7 +674,7 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_int_rank_2("fire_ray_surface_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->fire_ray_surface_data);
     cubTool.read_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->direction_data);
     cubTool.read_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->magnitude_data);
-    cubTool.read_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->radius_data);
+    cubTool.read_dataset_double_rank_2("radius_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->radius_data);
     cubTool.read_dataset_string_rank_2("time_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->time_data);
     cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->name_data);
     progressbar.step();
@@ -1195,7 +1191,7 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_int_rank_2("fire_ray_surface_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->fire_ray_surface_data);
     cubTool.write_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->direction_data);
     cubTool.write_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->magnitude_data);
-    cubTool.write_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->radius_data);
+    cubTool.write_dataset_double_rank_2("radius_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->radius_data);
     cubTool.write_dataset_string_rank_2("time_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->time_data);
     cubTool.write_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->name_data);
     progressbar.step();

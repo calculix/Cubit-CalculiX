@@ -3,15 +3,15 @@ cmake_minimum_required(VERSION 3.5)
 project(Cubit-CalculiX)
 
 if (UNIX)
- set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2025.1/cmake")
+ set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2025.3/cmake")
  # python for our swig wrapping
- include_directories("/opt/Coreform-Cubit-2025.1/bin/python3/include/python3.10") 
+ include_directories("/opt/Coreform-Cubit-2025.3/bin/python3/include/python3.10") 
  set(HDF5_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Utility/HDF5/Linux/1.12.1)
 endif (UNIX)
 
 if (WIN32)
  SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
- set(CMAKE_PREFIX_PATH "C:/Program Files/Coreform Cubit 2025.1/cmake")
+ set(CMAKE_PREFIX_PATH "C:/Program Files/Coreform Cubit 2025.3/cmake")
  set(Qt5_DIR "C:/Qt/5.15.2/msvc2019_64/lib/cmake/Qt5") 
  set(Qt5Core_DIR "C:/Qt/5.15.2/msvc2019_64/lib/cmake/Qt5Core") 
  set(Qt5Charts_DIR "C:/Qt/5.15.2/msvc2019_64/lib/cmake/Qt5Charts")
@@ -92,7 +92,7 @@ if (UNIX)
 endif (UNIX)
 
 # copy missing libraries into build directory
-# Qt5Charts is currently not shipped with Cubit 2024.8
+# Qt5Charts is currently not shipped with Cubit 2025.3
 if (WIN32)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Win/Qt5Charts.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Win/hdf5_cpp.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/)
