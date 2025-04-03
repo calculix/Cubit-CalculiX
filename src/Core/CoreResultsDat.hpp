@@ -94,8 +94,17 @@ public:
   bool check_step(std::vector<std::string> line); // checks if the current step or increment should be updated
   bool read_header(std::vector<std::string> line); // processing the result block header
   bool header_emas(std::vector<std::string> line); // processing emas header
+  bool header_section_1(std::vector<std::string> line); // processing section header 1
+  bool header_section_2(std::vector<std::string> line); // processing section header 2
+  bool header_section_3(std::vector<std::string> line); // processing section header 3
+  bool header_section_4(std::vector<std::string> line); // processing section header 4
+  bool header_section_5(std::vector<std::string> line); // processing section header 5
   bool read_line(std::vector<std::string> line); // processing the result lines
   bool read_line_buckle(std::vector<std::string> line); // processing the result lines for buckling output
+  bool read_line_section_1(std::vector<std::string> line); // processing the result lines for section output
+  bool read_line_section_2(std::vector<std::string> line); // processing the result lines for section output
+  bool read_line_section_3(std::vector<std::string> line); // processing the result lines for section output
+  bool read_line_section_4(std::vector<std::string> line); // processing the result lines for section output
   bool read_lines_thread(int result_block_data_id, int thread_id); // processing the result lines for result block
   bool compute_predefined(int result_block_data_id, int thread_id); // computing the predefined calculations
   int get_current_result_block_type(std::string result_type); // gets result_block_type

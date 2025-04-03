@@ -173,6 +173,33 @@ bool CoreResultsDat::read_single()
       {
         // Buckling, save data extra
         this->read_line_buckle(dat_array);
+      } else if (current_read_mode == 111)
+      {
+        this->header_section_1(dat_array);
+      } else if (current_read_mode == 112)
+      {
+        this->header_section_2(dat_array);
+      } else if (current_read_mode == 114)
+      {
+        this->header_section_3(dat_array);
+      } else if (current_read_mode == 116)
+      {
+        this->header_section_4(dat_array);
+      } else if (current_read_mode == 118)
+      {
+        this->header_section_5(dat_array);
+      } else if (current_read_mode == 113)
+      {
+        this->read_line_section_1(dat_array);
+      } else if (current_read_mode == 115)
+      {
+        this->read_line_section_2(dat_array);
+      } else if (current_read_mode == 117)
+      {
+        this->read_line_section_3(dat_array);
+      } else if (current_read_mode == 119)
+      {
+        this->read_line_section_4(dat_array);
       }
       
       /*if (!this->is_number(dat_array[0]))
@@ -428,6 +455,33 @@ bool CoreResultsDat::read_parallel()
       {
         // Buckling, save data extra
         this->read_line_buckle(dat_array);
+      } else if (current_read_mode == 111)
+      {
+        this->header_section_1(dat_array);
+      } else if (current_read_mode == 112)
+      {
+        this->header_section_2(dat_array);
+      } else if (current_read_mode == 114)
+      {
+        this->header_section_3(dat_array);
+      } else if (current_read_mode == 116)
+      {
+        this->header_section_4(dat_array);
+      } else if (current_read_mode == 118)
+      {
+        this->header_section_5(dat_array);
+      } else if (current_read_mode == 113)
+      {
+        this->read_line_section_1(dat_array);
+      } else if (current_read_mode == 115)
+      {
+        this->read_line_section_2(dat_array);
+      } else if (current_read_mode == 117)
+      {
+        this->read_line_section_3(dat_array);
+      } else if (current_read_mode == 119)
+      {
+        this->read_line_section_4(dat_array);
       }
     }
   }
@@ -749,7 +803,52 @@ bool CoreResultsDat::check_mode(std::vector<std::string> line)
   } else if (line[0]=="FACTOR") // still buckling
   {
     current_read_mode = 101;
-  } else if (this->is_number(line[0]))
+  }
+  
+  //check for section print data
+  if (line.size() > 4)
+  { 
+    if ((line[0]=="statistics")&&(line[1]=="for")&&(line[2]=="surface")&&(line[3]=="set"))
+    {
+      current_read_mode = 111; // read header line for section print
+      return  true;
+    }
+  }
+  if (current_read_mode == 111) // read section header 1
+  {
+    current_read_mode = 112; // read section header 2
+    return  true;
+  } else if (current_read_mode == 112) // read section header 2
+  {
+    current_read_mode = 113; // read section line 1
+    return  true;
+  } else if (current_read_mode == 113) // read section line 1
+  {
+    current_read_mode = 114; // read section header 3
+    return  true;
+  } else if (current_read_mode == 114) // read section header 3
+  {
+    current_read_mode = 115; // read section line 2
+    return  true;
+  } else if (current_read_mode == 115) // read section line 2
+  {
+    current_read_mode = 116; // read section header 4
+    return  true;
+  } else if (current_read_mode == 116) // read section header 4
+  {
+    current_read_mode = 117; // read section line 3
+    return  true;
+  } else if (current_read_mode == 117) // read section line 3
+  {
+    current_read_mode = 118; // read section header 5
+    return  true;
+  } else if (current_read_mode == 118) // read section header 5
+  {
+    current_read_mode = 119; // read section line 4
+    return  true;
+  }
+  
+  if (this->is_number(line[0]))
   {
     if (current_read_mode == 101) // read buckling data
     {
@@ -968,6 +1067,46 @@ bool CoreResultsDat::header_emas(std::vector<std::string> line)
   return true;
 }
 
+bool CoreResultsDat::header_section_1(std::vector<std::string> line)
+{
+  std::string log = "header section 1 " + line[4] + " time " + line[7] + " \n";
+  PRINT_INFO("%s", log.c_str());
+  
+  return true;
+}
+
+bool CoreResultsDat::header_section_2(std::vector<std::string> line)
+{
+  std::string log = "header section 2 \n";
+  PRINT_INFO("%s", log.c_str());
+  
+  return true;
+}
+
+bool CoreResultsDat::header_section_3(std::vector<std::string> line)
+{
+  std::string log = "header section 3 \n";
+  PRINT_INFO("%s", log.c_str());
+  
+  return true;
+}
+
+bool CoreResultsDat::header_section_4(std::vector<std::string> line)
+{
+  std::string log = "header section 4 \n";
+  PRINT_INFO("%s", log.c_str());
+  
+  return true;
+}
+
+bool CoreResultsDat::header_section_5(std::vector<std::string> line)
+{
+  std::string log = "header section 5 \n";
+  PRINT_INFO("%s", log.c_str());
+  
+  return true;
+}
+
 bool CoreResultsDat::read_line(std::vector<std::string> line)
 {
   bool bool_node;
@@ -1029,6 +1168,38 @@ bool CoreResultsDat::read_line_buckle(std::vector<std::string> line)
   
   this->buckle_data[buckle_data.size()-1].push_back(result_comp);
 
+  return true;
+}
+
+bool CoreResultsDat::read_line_section_1(std::vector<std::string> line)
+{
+  std::string log = "read line section 1 \n";
+  PRINT_INFO("%s", log.c_str());
+  
+  return true;
+}
+
+bool CoreResultsDat::read_line_section_2(std::vector<std::string> line)
+{
+  std::string log = "read line section 2 \n";
+  PRINT_INFO("%s", log.c_str());
+  
+  return true;
+}
+
+bool CoreResultsDat::read_line_section_3(std::vector<std::string> line)
+{
+  std::string log = "read line section 3 \n";
+  PRINT_INFO("%s", log.c_str());
+  
+  return true;
+}
+
+bool CoreResultsDat::read_line_section_4(std::vector<std::string> line)
+{
+  std::string log = "read line section 4 \n";
+  PRINT_INFO("%s", log.c_str());
+  
   return true;
 }
 
