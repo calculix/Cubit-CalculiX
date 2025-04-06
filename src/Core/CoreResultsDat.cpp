@@ -53,6 +53,9 @@ bool CoreResultsDat::clear()
   result_block_data.clear();
   result_block_c1_data.clear();
   buckle_data.clear();
+  result_section.clear();
+  result_section_data.clear();
+  result_section_set.clear();
   dat_arrays.clear();
 
   return true;
@@ -1072,37 +1075,47 @@ bool CoreResultsDat::header_section_1(std::vector<std::string> line)
   std::string log = "header section 1 " + line[4] + " time " + line[7] + " \n";
   PRINT_INFO("%s", log.c_str());
   
+  std::vector<int> tmp_result_section(2);
+  tmp_result_section[0] = this->get_current_result_section_set(line[4]);
+  tmp_result_section[0] = result_section_data.size();
+  result_section.push_back(tmp_result_section);
+
+  std::vector<double> tmp_result_section_data(22);
+  tmp_result_section_data[0] = ccx_iface->string_scientific_to_double(line[7]);
+
+  result_section_data.push_back(tmp_result_section_data);
+
   return true;
 }
 
 bool CoreResultsDat::header_section_2(std::vector<std::string> line)
 {
-  std::string log = "header section 2 \n";
-  PRINT_INFO("%s", log.c_str());
+  //std::string log = "header section 2 \n";
+  //PRINT_INFO("%s", log.c_str());
   
   return true;
 }
 
 bool CoreResultsDat::header_section_3(std::vector<std::string> line)
 {
-  std::string log = "header section 3 \n";
-  PRINT_INFO("%s", log.c_str());
+  //std::string log = "header section 3 \n";
+  //PRINT_INFO("%s", log.c_str());
   
   return true;
 }
 
 bool CoreResultsDat::header_section_4(std::vector<std::string> line)
 {
-  std::string log = "header section 4 \n";
-  PRINT_INFO("%s", log.c_str());
+  //std::string log = "header section 4 \n";
+  //PRINT_INFO("%s", log.c_str());
   
   return true;
 }
 
 bool CoreResultsDat::header_section_5(std::vector<std::string> line)
 {
-  std::string log = "header section 5 \n";
-  PRINT_INFO("%s", log.c_str());
+  //std::string log = "header section 5 \n";
+  //PRINT_INFO("%s", log.c_str());
   
   return true;
 }
@@ -1389,6 +1402,22 @@ int CoreResultsDat::get_current_result_block_set(std::string result_set)
   }
   result_block_set.push_back(result_set);
   data_id = int(result_block_set.size())-1;
+  
+  return data_id;
+}
+
+int CoreResultsDat::get_current_result_section_set(std::string result_set)
+{
+  int data_id = -1;
+  for (size_t i = 0; i < result_section_set.size(); i++)
+  {
+    if (result_section_set[i]==result_set)
+    {
+      return int(i);
+    }
+  }
+  result_section_set.push_back(result_set);
+  data_id = int(result_section_set.size())-1;
   
   return data_id;
 }
