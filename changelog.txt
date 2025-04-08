@@ -143,3 +143,5 @@
 2025-03-03 working on .sta and .cvg live monitor
 2025-04-03 working on .dat reader to read section print data
 2025-04-06 working on .dat reader to read section print data
+2025-04-08 working on .dat reader to read section print data
+2025-04-08 adding .dat section print data to save file

@@ -971,6 +971,39 @@ bool CalculiXCore::read_cub(std::string filename)
             subgroup = group + "buckle_data/" + std::to_string(ii) +"/";
           }
         }
+        subgroup = group + "result_section/";
+        if (cubTool.nameExists(subgroup.c_str()))
+        {
+          int ii = 0;
+          subgroup = group + "result_section/" + std::to_string(ii) +"/";
+          while (cubTool.nameExists(subgroup.c_str()))
+          {
+            std::string dataset = std::to_string(ii);
+            subgroup = group + "result_section/";
+            std::vector<int> tmp;
+            results->dat_data[i].result_section.push_back(tmp);
+            cubTool.read_dataset_int_rank_1(dataset.c_str(),subgroup.c_str(), results->dat_data[i].result_section[ii]);
+            ++ii;
+            subgroup = group + "result_section/" + std::to_string(ii) +"/";
+          }
+        }
+        cubTool.read_dataset_string_rank_1("result_section_set",group.c_str(), results->dat_data[i].result_section_set);
+        subgroup = group + "result_section_data/";
+        if (cubTool.nameExists(subgroup.c_str()))
+        {
+          int ii = 0;
+          subgroup = group + "result_section_data/" + std::to_string(ii) +"/";
+          while (cubTool.nameExists(subgroup.c_str()))
+          {
+            std::string dataset = std::to_string(ii);
+            subgroup = group + "result_section_data/";
+            std::vector<double> tmp;
+            results->dat_data[i].result_section_data.push_back(tmp);
+            cubTool.read_dataset_double_rank_1(dataset.c_str(),subgroup.c_str(), results->dat_data[i].result_section_data[ii]);
+            ++ii;
+            subgroup = group + "result_section_data/" + std::to_string(ii) +"/";
+          }
+        }
         subgroup = group + "sorted_c1/";
         if (cubTool.nameExists(subgroup.c_str()))
         {
@@ -1429,6 +1462,27 @@ bool CalculiXCore::save_cub(std::string filename)
           {
             std::string dataset = std::to_string(ii);
             cubTool.write_dataset_double_rank_2(dataset.c_str(),subgroup.c_str(), results->dat_data[i].buckle_data[ii]);
+          }
+        }
+        if (results->dat_data[i].result_section.size()>0)
+        {
+          std::string subgroup = group + "result_section/";
+          cubTool.createGroup(subgroup.c_str());
+          for (size_t ii = 0; ii < results->dat_data[i].result_section.size(); ii++)
+          {
+            std::string dataset = std::to_string(ii);
+            cubTool.write_dataset_int_rank_1(dataset.c_str(),subgroup.c_str(), results->dat_data[i].result_section[ii]);
+          }
+        }
+        cubTool.write_dataset_string_rank_1("result_section_set",group.c_str(), results->dat_data[i].result_section_set);
+        if (results->dat_data[i].result_section_data.size()>0)
+        {
+          std::string subgroup = group + "result_section_data/";
+          cubTool.createGroup(subgroup.c_str());
+          for (size_t ii = 0; ii < results->dat_data[i].result_section_data.size(); ii++)
+          {
+            std::string dataset = std::to_string(ii);
+            cubTool.write_dataset_double_rank_1(dataset.c_str(),subgroup.c_str(), results->dat_data[i].result_section_data[ii]);
           }
         }
         if (results->dat_data[i].sorted_c1.size()>0)

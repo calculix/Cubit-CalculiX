@@ -82,6 +82,35 @@ bool CoreResultsDat::read()
     }
   }
 
+  std::string log = "";
+  for (size_t i = 0; i < result_section_set.size(); i++)
+  {
+    std::string set = result_section_set[i];
+    log.append(set);
+    for (size_t ii = 0; ii < result_section.size(); ii++)
+    {
+      log.append("\n");
+      if (result_section_set[result_section[ii][0]]==set)
+      {
+        for (size_t iii = 0; iii < result_section_data[result_section[ii][1]].size(); iii++)
+        {
+          log.append(ccx_iface->to_string_scientific(result_section_data[result_section[ii][1]][iii]));
+          log.append(" ");
+        }
+      }
+    }
+    
+  }
+  log.append("\n");
+  PRINT_INFO("%s", log.c_str());
+
+
+  for (size_t ii = 0; ii < result_section.size(); ii++)
+  {
+    log = std::to_string(result_section[ii][0]) + " " + std::to_string(result_section[ii][1]) + "\n";
+    PRINT_INFO("%s", log.c_str());  
+  }
+
   return success;
 }
 
@@ -1072,18 +1101,20 @@ bool CoreResultsDat::header_emas(std::vector<std::string> line)
 
 bool CoreResultsDat::header_section_1(std::vector<std::string> line)
 {
-  std::string log = "header section 1 " + line[4] + " time " + line[7] + " \n";
-  PRINT_INFO("%s", log.c_str());
-  
-  std::vector<int> tmp_result_section(2);
-  tmp_result_section[0] = this->get_current_result_section_set(line[4]);
-  tmp_result_section[0] = result_section_data.size();
-  result_section.push_back(tmp_result_section);
+  //std::string log = "header section 1 " + line[4] + " time " + line[7] + " \n";
+  //PRINT_INFO("%s", log.c_str());
+  if (line.size() > 6){
+    std::vector<int> tmp_result_section(2);
+    tmp_result_section[0] = this->get_current_result_section_set(line[4]);
+    tmp_result_section[1] = result_section_data.size();
+    result_section.push_back(tmp_result_section);
 
-  std::vector<double> tmp_result_section_data(22);
-  tmp_result_section_data[0] = ccx_iface->string_scientific_to_double(line[7]);
+    std::vector<double> tmp_result_section_data(22);
+    tmp_result_section_data[0] = ccx_iface->string_scientific_to_double(line[7]);
+    tmp_result_section_data[1] = double(current_increment);
 
-  result_section_data.push_back(tmp_result_section_data);
+    result_section_data.push_back(tmp_result_section_data);
+  }
 
   return true;
 }
@@ -1186,33 +1217,65 @@ bool CoreResultsDat::read_line_buckle(std::vector<std::string> line)
 
 bool CoreResultsDat::read_line_section_1(std::vector<std::string> line)
 {
-  std::string log = "read line section 1 \n";
-  PRINT_INFO("%s", log.c_str());
-  
+  //std::string log = "read line section 1 \n";
+  //PRINT_INFO("%s", log.c_str());
+  if (line.size() == 6){
+    int data_id = result_section_data.size()-1;
+    result_section_data[data_id][2] = ccx_iface->string_scientific_to_double(line[0]);
+    result_section_data[data_id][3] = ccx_iface->string_scientific_to_double(line[1]);
+    result_section_data[data_id][4] = ccx_iface->string_scientific_to_double(line[2]);
+    result_section_data[data_id][5] = ccx_iface->string_scientific_to_double(line[3]);
+    result_section_data[data_id][6] = ccx_iface->string_scientific_to_double(line[4]);
+    result_section_data[data_id][7] = ccx_iface->string_scientific_to_double(line[5]);
+  }
+
   return true;
 }
 
 bool CoreResultsDat::read_line_section_2(std::vector<std::string> line)
 {
-  std::string log = "read line section 2 \n";
-  PRINT_INFO("%s", log.c_str());
-  
+  //std::string log = "read line section 2 \n";
+  //PRINT_INFO("%s", log.c_str());
+  if (line.size() == 6){
+    int data_id = result_section_data.size()-1;
+    result_section_data[data_id][8] = ccx_iface->string_scientific_to_double(line[0]);
+    result_section_data[data_id][9] = ccx_iface->string_scientific_to_double(line[1]);
+    result_section_data[data_id][10] = ccx_iface->string_scientific_to_double(line[2]);
+    result_section_data[data_id][11] = ccx_iface->string_scientific_to_double(line[3]);
+    result_section_data[data_id][12] = ccx_iface->string_scientific_to_double(line[4]);
+    result_section_data[data_id][13] = ccx_iface->string_scientific_to_double(line[5]);
+  }
+
   return true;
 }
 
 bool CoreResultsDat::read_line_section_3(std::vector<std::string> line)
 {
-  std::string log = "read line section 3 \n";
-  PRINT_INFO("%s", log.c_str());
-  
+  //std::string log = "read line section 3 \n";
+  //PRINT_INFO("%s", log.c_str());
+  if (line.size() == 3){
+    int data_id = result_section_data.size()-1;
+    result_section_data[data_id][14] = ccx_iface->string_scientific_to_double(line[0]);
+    result_section_data[data_id][15] = ccx_iface->string_scientific_to_double(line[1]);
+    result_section_data[data_id][16] = ccx_iface->string_scientific_to_double(line[2]);
+  }
+
   return true;
 }
 
 bool CoreResultsDat::read_line_section_4(std::vector<std::string> line)
 {
-  std::string log = "read line section 4 \n";
-  PRINT_INFO("%s", log.c_str());
-  
+  //std::string log = "read line section 4 \n";
+  //PRINT_INFO("%s", log.c_str());
+  if (line.size() == 5){
+    int data_id = result_section_data.size()-1;
+    result_section_data[data_id][17] = ccx_iface->string_scientific_to_double(line[0]);
+    result_section_data[data_id][18] = ccx_iface->string_scientific_to_double(line[1]);
+    result_section_data[data_id][19] = ccx_iface->string_scientific_to_double(line[2]);
+    result_section_data[data_id][20] = ccx_iface->string_scientific_to_double(line[3]);
+    result_section_data[data_id][21] = ccx_iface->string_scientific_to_double(line[4]);
+  }
+
   return true;
 }
 
