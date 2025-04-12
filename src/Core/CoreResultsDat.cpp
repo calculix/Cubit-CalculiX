@@ -31,8 +31,30 @@ bool CoreResultsDat::init(int job_id)
 
     progressbar = new ProgressTool();
 
+    result_section_label.push_back("time");
+    result_section_label.push_back("increment");
+    result_section_label.push_back("total surface force fx");
+    result_section_label.push_back("total surface force fy");
+    result_section_label.push_back("total surface force fz");
+    result_section_label.push_back("moment about the origin mx"); 
+    result_section_label.push_back("moment about the origin my");
+    result_section_label.push_back("moment about the origin mz");
+    result_section_label.push_back("center of gravity 1");
+    result_section_label.push_back("center of gravity 2");
+    result_section_label.push_back("center of gravity 3");
+    result_section_label.push_back("mean normal 1");
+    result_section_label.push_back("mean normal 2");
+    result_section_label.push_back("mean normal 3");
+    result_section_label.push_back("moment about the center of gravity mx");
+    result_section_label.push_back("moment about the center of gravity my");
+    result_section_label.push_back("moment about the center of gravity mz");
+    result_section_label.push_back("area");
+    result_section_label.push_back("normal force");
+    result_section_label.push_back("shear force");
+    result_section_label.push_back("torque moment");
+    result_section_label.push_back("bending moment");
+
     is_initialized = true;
-    return true;
     return true;
   }
 }
@@ -80,35 +102,6 @@ bool CoreResultsDat::read()
     {
       success = true;
     }
-  }
-
-  std::string log = "";
-  for (size_t i = 0; i < result_section_set.size(); i++)
-  {
-    std::string set = result_section_set[i];
-    log.append(set);
-    for (size_t ii = 0; ii < result_section.size(); ii++)
-    {
-      log.append("\n");
-      if (result_section_set[result_section[ii][0]]==set)
-      {
-        for (size_t iii = 0; iii < result_section_data[result_section[ii][1]].size(); iii++)
-        {
-          log.append(ccx_iface->to_string_scientific(result_section_data[result_section[ii][1]][iii]));
-          log.append(" ");
-        }
-      }
-    }
-    
-  }
-  log.append("\n");
-  PRINT_INFO("%s", log.c_str());
-
-
-  for (size_t ii = 0; ii < result_section.size(); ii++)
-  {
-    log = std::to_string(result_section[ii][0]) + " " + std::to_string(result_section[ii][1]) + "\n";
-    PRINT_INFO("%s", log.c_str());  
   }
 
   return success;

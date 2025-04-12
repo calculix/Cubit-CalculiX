@@ -1628,6 +1628,15 @@ class CalculiXPythonInterface(object):
     def dat_get_buckle(self, job_id: "int") -> "std::vector< std::vector< std::vector< double,std::allocator< double > >,std::allocator< std::vector< double,std::allocator< double > > > >,std::allocator< std::vector< std::vector< double,std::allocator< double > >,std::allocator< std::vector< double,std::allocator< double > > > > > >":
         return _calculix_pythoninterface.CalculiXPythonInterface_dat_get_buckle(self, job_id)
 
+    def dat_get_section_set(self, job_id: "int") -> "std::vector< std::string,std::allocator< std::string > >":
+        return _calculix_pythoninterface.CalculiXPythonInterface_dat_get_section_set(self, job_id)
+
+    def dat_get_section_data(self, job_id: "int", section_set: "std::string") -> "std::vector< std::vector< double,std::allocator< double > >,std::allocator< std::vector< double,std::allocator< double > > > >":
+        return _calculix_pythoninterface.CalculiXPythonInterface_dat_get_section_data(self, job_id, section_set)
+
+    def dat_get_section_label(self, job_id: "int") -> "std::vector< std::string,std::allocator< std::string > >":
+        return _calculix_pythoninterface.CalculiXPythonInterface_dat_get_section_label(self, job_id)
+
     def loadstrajectory_get_node_ids(self, trajectory_id: "int") -> "std::vector< int,std::allocator< int > >":
         return _calculix_pythoninterface.CalculiXPythonInterface_loadstrajectory_get_node_ids(self, trajectory_id)
 

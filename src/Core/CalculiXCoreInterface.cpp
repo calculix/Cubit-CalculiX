@@ -1380,6 +1380,21 @@ std::vector<std::vector<std::vector<double>>> CalculiXCoreInterface::dat_get_buc
   return ccx_core.dat_get_buckle(job_id);
 }
 
+std::vector<std::string> CalculiXCoreInterface::dat_get_section_set(int job_id)
+{
+  return ccx_core.dat_get_section_set(job_id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::dat_get_section_data(int job_id, std::string section_set)
+{
+  return ccx_core.dat_get_section_data(job_id, section_set);
+}
+
+std::vector<std::string> CalculiXCoreInterface::dat_get_section_label(int job_id)
+{
+  return ccx_core.dat_get_section_label(job_id);
+}
+
 QIcon* CalculiXCoreInterface::getIcon(std::string name)
 {
   return ccx_core.getIcon(name);

@@ -988,6 +988,7 @@ bool CalculiXCore::read_cub(std::string filename)
           }
         }
         cubTool.read_dataset_string_rank_1("result_section_set",group.c_str(), results->dat_data[i].result_section_set);
+        cubTool.read_dataset_string_rank_1("result_section_label",group.c_str(), results->dat_data[i].result_section_label);
         subgroup = group + "result_section_data/";
         if (cubTool.nameExists(subgroup.c_str()))
         {
@@ -1475,6 +1476,7 @@ bool CalculiXCore::save_cub(std::string filename)
           }
         }
         cubTool.write_dataset_string_rank_1("result_section_set",group.c_str(), results->dat_data[i].result_section_set);
+        cubTool.write_dataset_string_rank_1("result_section_label",group.c_str(), results->dat_data[i].result_section_label);
         if (results->dat_data[i].result_section_data.size()>0)
         {
           std::string subgroup = group + "result_section_data/";
@@ -7481,6 +7483,64 @@ std::vector<std::vector<std::vector<double>>> CalculiXCore::dat_get_buckle(int j
   }
 
   return results->dat_data[dat_data_id].buckle_data;
+}
+
+
+std::vector<std::string> CalculiXCore::dat_get_section_set(int job_id)
+{
+  std::vector<std::string> tmp;
+
+  int results_data_id = results->get_results_data_id_from_job_id(job_id);
+  int dat_data_id = results->get_dat_data_id_from_job_id(job_id);
+
+  if (results_data_id == -1)
+  {
+    return tmp;
+  }
+
+  return results->dat_data[dat_data_id].result_section_set;
+}
+
+std::vector<std::vector<double>> CalculiXCore::dat_get_section_data(int job_id, std::string section_set)
+{
+  std::vector<std::vector<double>> tmp;
+
+  int results_data_id = results->get_results_data_id_from_job_id(job_id);
+  int dat_data_id = results->get_dat_data_id_from_job_id(job_id);
+
+  if (results_data_id == -1)
+  {
+    return tmp;
+  }
+
+  for (size_t i = 0; i < results->dat_data[dat_data_id].result_section.size(); i++)
+  {
+    if (results->dat_data[dat_data_id].result_section_set[results->dat_data[dat_data_id].result_section[i][0]]==section_set)
+    {
+      for (size_t ii = 0; ii < results->dat_data[dat_data_id].result_section_data[results->dat_data[dat_data_id].result_section[i][1]].size(); ii++)
+      {
+        tmp.push_back(results->dat_data[dat_data_id].result_section_data[results->dat_data[dat_data_id].result_section[i][1]]);
+      }
+    }
+  }
+
+  return tmp;
+}
+
+
+std::vector<std::string> CalculiXCore::dat_get_section_label(int job_id)
+{
+  std::vector<std::string> tmp;
+
+  int results_data_id = results->get_results_data_id_from_job_id(job_id);
+  int dat_data_id = results->get_dat_data_id_from_job_id(job_id);
+
+  if (results_data_id == -1)
+  {
+    return tmp;
+  }
+
+  return results->dat_data[dat_data_id].result_section_label;
 }
 
 QIcon* CalculiXCore::getIcon(std::string name)

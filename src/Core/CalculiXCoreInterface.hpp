@@ -303,7 +303,10 @@ public:
   std::vector<double> dat_get_element_values_for_component(int job_id,int element_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component); // returns the queried element integration point values for a component
   std::vector<std::vector<double>> dat_get_element_values(int job_id,int element_id, double time,std::string result_block_type,std::string result_block_set); // returns the queried element integration point values for all components
   std::vector<std::vector<std::vector<double>>> dat_get_buckle(int job_id); // returns the buckling data for a job
-
+  std::vector<std::string> dat_get_section_set(int job_id); // returns the section set for a job
+  std::vector<std::vector<double>> dat_get_section_data(int job_id, std::string section_set); // returns the section set data for a job
+  std::vector<std::string> dat_get_section_label(int job_id); // returns the section labels for a job
+  
   // GUI
   QIcon* getIcon(std::string name);
   QIcon getIcon2(std::string name);

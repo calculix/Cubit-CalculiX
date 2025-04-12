@@ -102,6 +102,8 @@ public:
   //result_section_data[data_id][20] torque moment
   //result_section_data[data_id][21] bending moment
 
+  std::vector<std::string> result_section_label; //contains the labels for the data
+  
   std::vector<std::vector<std::vector<std::string>>> dat_arrays; //contains the result block lines
 
   // sorted vectors for faster results search
