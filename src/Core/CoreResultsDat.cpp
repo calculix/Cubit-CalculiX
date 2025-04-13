@@ -31,8 +31,30 @@ bool CoreResultsDat::init(int job_id)
 
     progressbar = new ProgressTool();
 
+    result_section_label.push_back("time");
+    result_section_label.push_back("increment");
+    result_section_label.push_back("total surface force fx");
+    result_section_label.push_back("total surface force fy");
+    result_section_label.push_back("total surface force fz");
+    result_section_label.push_back("moment about the origin mx"); 
+    result_section_label.push_back("moment about the origin my");
+    result_section_label.push_back("moment about the origin mz");
+    result_section_label.push_back("center of gravity 1");
+    result_section_label.push_back("center of gravity 2");
+    result_section_label.push_back("center of gravity 3");
+    result_section_label.push_back("mean normal 1");
+    result_section_label.push_back("mean normal 2");
+    result_section_label.push_back("mean normal 3");
+    result_section_label.push_back("moment about the center of gravity mx");
+    result_section_label.push_back("moment about the center of gravity my");
+    result_section_label.push_back("moment about the center of gravity mz");
+    result_section_label.push_back("area");
+    result_section_label.push_back("normal force");
+    result_section_label.push_back("shear force");
+    result_section_label.push_back("torque moment");
+    result_section_label.push_back("bending moment");
+
     is_initialized = true;
-    return true;
     return true;
   }
 }
@@ -53,6 +75,9 @@ bool CoreResultsDat::clear()
   result_block_data.clear();
   result_block_c1_data.clear();
   buckle_data.clear();
+  result_section.clear();
+  result_section_data.clear();
+  result_section_set.clear();
   dat_arrays.clear();
 
   return true;
@@ -173,6 +198,33 @@ bool CoreResultsDat::read_single()
       {
         // Buckling, save data extra
         this->read_line_buckle(dat_array);
+      } else if (current_read_mode == 111)
+      {
+        this->header_section_1(dat_array);
+      } else if (current_read_mode == 112)
+      {
+        this->header_section_2(dat_array);
+      } else if (current_read_mode == 114)
+      {
+        this->header_section_3(dat_array);
+      } else if (current_read_mode == 116)
+      {
+        this->header_section_4(dat_array);
+      } else if (current_read_mode == 118)
+      {
+        this->header_section_5(dat_array);
+      } else if (current_read_mode == 113)
+      {
+        this->read_line_section_1(dat_array);
+      } else if (current_read_mode == 115)
+      {
+        this->read_line_section_2(dat_array);
+      } else if (current_read_mode == 117)
+      {
+        this->read_line_section_3(dat_array);
+      } else if (current_read_mode == 119)
+      {
+        this->read_line_section_4(dat_array);
       }
       
       /*if (!this->is_number(dat_array[0]))
@@ -428,6 +480,33 @@ bool CoreResultsDat::read_parallel()
       {
         // Buckling, save data extra
         this->read_line_buckle(dat_array);
+      } else if (current_read_mode == 111)
+      {
+        this->header_section_1(dat_array);
+      } else if (current_read_mode == 112)
+      {
+        this->header_section_2(dat_array);
+      } else if (current_read_mode == 114)
+      {
+        this->header_section_3(dat_array);
+      } else if (current_read_mode == 116)
+      {
+        this->header_section_4(dat_array);
+      } else if (current_read_mode == 118)
+      {
+        this->header_section_5(dat_array);
+      } else if (current_read_mode == 113)
+      {
+        this->read_line_section_1(dat_array);
+      } else if (current_read_mode == 115)
+      {
+        this->read_line_section_2(dat_array);
+      } else if (current_read_mode == 117)
+      {
+        this->read_line_section_3(dat_array);
+      } else if (current_read_mode == 119)
+      {
+        this->read_line_section_4(dat_array);
       }
     }
   }
@@ -749,7 +828,52 @@ bool CoreResultsDat::check_mode(std::vector<std::string> line)
   } else if (line[0]=="FACTOR") // still buckling
   {
     current_read_mode = 101;
-  } else if (this->is_number(line[0]))
+  }
+  
+  //check for section print data
+  if (line.size() > 4)
+  { 
+    if ((line[0]=="statistics")&&(line[1]=="for")&&(line[2]=="surface")&&(line[3]=="set"))
+    {
+      current_read_mode = 111; // read header line for section print
+      return  true;
+    }
+  }
+  if (current_read_mode == 111) // read section header 1
+  {
+    current_read_mode = 112; // read section header 2
+    return  true;
+  } else if (current_read_mode == 112) // read section header 2
+  {
+    current_read_mode = 113; // read section line 1
+    return  true;
+  } else if (current_read_mode == 113) // read section line 1
+  {
+    current_read_mode = 114; // read section header 3
+    return  true;
+  } else if (current_read_mode == 114) // read section header 3
+  {
+    current_read_mode = 115; // read section line 2
+    return  true;
+  } else if (current_read_mode == 115) // read section line 2
+  {
+    current_read_mode = 116; // read section header 4
+    return  true;
+  } else if (current_read_mode == 116) // read section header 4
+  {
+    current_read_mode = 117; // read section line 3
+    return  true;
+  } else if (current_read_mode == 117) // read section line 3
+  {
+    current_read_mode = 118; // read section header 5
+    return  true;
+  } else if (current_read_mode == 118) // read section header 5
+  {
+    current_read_mode = 119; // read section line 4
+    return  true;
+  }
+  
+  if (this->is_number(line[0]))
   {
     if (current_read_mode == 101) // read buckling data
     {
@@ -968,6 +1092,58 @@ bool CoreResultsDat::header_emas(std::vector<std::string> line)
   return true;
 }
 
+bool CoreResultsDat::header_section_1(std::vector<std::string> line)
+{
+  //std::string log = "header section 1 " + line[4] + " time " + line[7] + " \n";
+  //PRINT_INFO("%s", log.c_str());
+  if (line.size() > 6){
+    std::vector<int> tmp_result_section(2);
+    tmp_result_section[0] = this->get_current_result_section_set(line[4]);
+    tmp_result_section[1] = result_section_data.size();
+    result_section.push_back(tmp_result_section);
+
+    std::vector<double> tmp_result_section_data(22);
+    tmp_result_section_data[0] = ccx_iface->string_scientific_to_double(line[7]);
+    tmp_result_section_data[1] = double(current_increment);
+
+    result_section_data.push_back(tmp_result_section_data);
+  }
+
+  return true;
+}
+
+bool CoreResultsDat::header_section_2(std::vector<std::string> line)
+{
+  //std::string log = "header section 2 \n";
+  //PRINT_INFO("%s", log.c_str());
+  
+  return true;
+}
+
+bool CoreResultsDat::header_section_3(std::vector<std::string> line)
+{
+  //std::string log = "header section 3 \n";
+  //PRINT_INFO("%s", log.c_str());
+  
+  return true;
+}
+
+bool CoreResultsDat::header_section_4(std::vector<std::string> line)
+{
+  //std::string log = "header section 4 \n";
+  //PRINT_INFO("%s", log.c_str());
+  
+  return true;
+}
+
+bool CoreResultsDat::header_section_5(std::vector<std::string> line)
+{
+  //std::string log = "header section 5 \n";
+  //PRINT_INFO("%s", log.c_str());
+  
+  return true;
+}
+
 bool CoreResultsDat::read_line(std::vector<std::string> line)
 {
   bool bool_node;
@@ -1028,6 +1204,70 @@ bool CoreResultsDat::read_line_buckle(std::vector<std::string> line)
   result_comp[1] = ccx_iface->string_scientific_to_double(line[1]); // buckling factor
   
   this->buckle_data[buckle_data.size()-1].push_back(result_comp);
+
+  return true;
+}
+
+bool CoreResultsDat::read_line_section_1(std::vector<std::string> line)
+{
+  //std::string log = "read line section 1 \n";
+  //PRINT_INFO("%s", log.c_str());
+  if (line.size() == 6){
+    int data_id = result_section_data.size()-1;
+    result_section_data[data_id][2] = ccx_iface->string_scientific_to_double(line[0]);
+    result_section_data[data_id][3] = ccx_iface->string_scientific_to_double(line[1]);
+    result_section_data[data_id][4] = ccx_iface->string_scientific_to_double(line[2]);
+    result_section_data[data_id][5] = ccx_iface->string_scientific_to_double(line[3]);
+    result_section_data[data_id][6] = ccx_iface->string_scientific_to_double(line[4]);
+    result_section_data[data_id][7] = ccx_iface->string_scientific_to_double(line[5]);
+  }
+
+  return true;
+}
+
+bool CoreResultsDat::read_line_section_2(std::vector<std::string> line)
+{
+  //std::string log = "read line section 2 \n";
+  //PRINT_INFO("%s", log.c_str());
+  if (line.size() == 6){
+    int data_id = result_section_data.size()-1;
+    result_section_data[data_id][8] = ccx_iface->string_scientific_to_double(line[0]);
+    result_section_data[data_id][9] = ccx_iface->string_scientific_to_double(line[1]);
+    result_section_data[data_id][10] = ccx_iface->string_scientific_to_double(line[2]);
+    result_section_data[data_id][11] = ccx_iface->string_scientific_to_double(line[3]);
+    result_section_data[data_id][12] = ccx_iface->string_scientific_to_double(line[4]);
+    result_section_data[data_id][13] = ccx_iface->string_scientific_to_double(line[5]);
+  }
+
+  return true;
+}
+
+bool CoreResultsDat::read_line_section_3(std::vector<std::string> line)
+{
+  //std::string log = "read line section 3 \n";
+  //PRINT_INFO("%s", log.c_str());
+  if (line.size() == 3){
+    int data_id = result_section_data.size()-1;
+    result_section_data[data_id][14] = ccx_iface->string_scientific_to_double(line[0]);
+    result_section_data[data_id][15] = ccx_iface->string_scientific_to_double(line[1]);
+    result_section_data[data_id][16] = ccx_iface->string_scientific_to_double(line[2]);
+  }
+
+  return true;
+}
+
+bool CoreResultsDat::read_line_section_4(std::vector<std::string> line)
+{
+  //std::string log = "read line section 4 \n";
+  //PRINT_INFO("%s", log.c_str());
+  if (line.size() == 5){
+    int data_id = result_section_data.size()-1;
+    result_section_data[data_id][17] = ccx_iface->string_scientific_to_double(line[0]);
+    result_section_data[data_id][18] = ccx_iface->string_scientific_to_double(line[1]);
+    result_section_data[data_id][19] = ccx_iface->string_scientific_to_double(line[2]);
+    result_section_data[data_id][20] = ccx_iface->string_scientific_to_double(line[3]);
+    result_section_data[data_id][21] = ccx_iface->string_scientific_to_double(line[4]);
+  }
 
   return true;
 }
@@ -1218,6 +1458,22 @@ int CoreResultsDat::get_current_result_block_set(std::string result_set)
   }
   result_block_set.push_back(result_set);
   data_id = int(result_block_set.size())-1;
+  
+  return data_id;
+}
+
+int CoreResultsDat::get_current_result_section_set(std::string result_set)
+{
+  int data_id = -1;
+  for (size_t i = 0; i < result_section_set.size(); i++)
+  {
+    if (result_section_set[i]==result_set)
+    {
+      return int(i);
+    }
+  }
+  result_section_set.push_back(result_set);
+  data_id = int(result_section_set.size())-1;
   
   return data_id;
 }

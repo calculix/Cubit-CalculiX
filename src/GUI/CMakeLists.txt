@@ -347,6 +347,10 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/JobsMonitorDAT.cpp
     ${CMAKE_CURRENT_LIST_DIR}/JobsMonitorDATPlot.hpp
     ${CMAKE_CURRENT_LIST_DIR}/JobsMonitorDATPlot.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/JobsMonitorDATSection.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/JobsMonitorDATSection.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/JobsMonitorDATSectionPlot.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/JobsMonitorDATSectionPlot.cpp
     ${CMAKE_CURRENT_LIST_DIR}/GUITimer.hpp
     ${CMAKE_CURRENT_LIST_DIR}/GUITimer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/Highlight.hpp

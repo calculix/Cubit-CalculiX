@@ -4,6 +4,7 @@
 #include "JobsMonitorLiveMonitor.hpp"
 #include "JobsMonitorFRD.hpp"
 #include "JobsMonitorDAT.hpp"
+#include "JobsMonitorDATSection.hpp"
 
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
@@ -77,6 +78,7 @@ JobsMonitor::JobsMonitor()
   QPlainTextEdit_sta->setMaximumBlockCount(maximumBlockCount);
   FRD_widget = new JobsMonitorFRD();
   DAT_widget = new JobsMonitorDAT();
+  DATSection_widget = new JobsMonitorDATSection();
 
   //tab widget
   TabWidget = new QTabWidget();
@@ -86,6 +88,7 @@ JobsMonitor::JobsMonitor()
   TabWidget->addTab(QPlainTextEdit_sta,"*.sta");
   TabWidget->addTab(FRD_widget,"*.frd");
   TabWidget->addTab(DAT_widget,"*.dat");
+  TabWidget->addTab(DATSection_widget,"*.dat Section");
   boxLayout_tab->addWidget(TabWidget);
 
   // Signals
@@ -271,6 +274,7 @@ void JobsMonitor::setJob(int job_id)
   current_job_id = job_id;
   FRD_widget->set_current_job_id(current_job_id);
   DAT_widget->set_current_job_id(current_job_id);
+  DATSection_widget->set_current_job_id(current_job_id);
 }
 
 void JobsMonitor::on_pushButton_run_clicked(bool)

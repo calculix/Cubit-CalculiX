@@ -50,6 +50,9 @@ void CalculiXPythonInterface::help()
   log.append("std::vector<double> dat_get_element_values_for_component(int job_id,int element_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component); // returns the queried element integration point values for a component\n");
   log.append("std::vector<std::vector<double>> dat_get_element_values(int job_id,int element_id, double time,std::string result_block_type,std::string result_block_set); // returns the queried element integration point values for all components\n");
   log.append("std::vector<std::vector<std::vector<double>>> dat_get_buckle(int job_id); // returns the buckling data for a job\n");
+  log.append("std::vector<std::string> dat_get_section_set(int job_id); // returns the section set for a job\n");
+  log.append("std::vector<std::vector<double>> dat_get_section_data(int job_id, std::string section_set); // returns the section set data for a job\n");
+  log.append("std::vector<std::string> dat_get_section_label(int job_id); // returns the section labels for a job");
   log.append("Interactions with Load Trajectory:\n");
   log.append("std::vector<int> loadstrajectory_get_node_ids(int trajectory_id); //returns node ids for curve\n");
   log.append("std::vector<int> loadstrajectory_get_edge_ids(int trajectory_id); //returns edge ids for curve\n");
@@ -210,6 +213,21 @@ std::vector<std::vector<double>> CalculiXPythonInterface::dat_get_element_values
 std::vector<std::vector<std::vector<double>>> CalculiXPythonInterface::dat_get_buckle(int job_id)
 {
   return ccx_iface->dat_get_buckle(job_id);
+}
+
+std::vector<std::string> CalculiXPythonInterface::dat_get_section_set(int job_id)
+{
+  return ccx_iface->dat_get_section_set(job_id);
+}
+
+std::vector<std::vector<double>> CalculiXPythonInterface::dat_get_section_data(int job_id, std::string section_set)
+{
+  return ccx_iface->dat_get_section_data(job_id, section_set);
+}
+
+std::vector<std::string> CalculiXPythonInterface::dat_get_section_label(int job_id)
+{
+  return ccx_iface->dat_get_section_label(job_id);
 }
 
 std::vector<int> CalculiXPythonInterface::loadstrajectory_get_node_ids(int trajectory_id)

@@ -176,6 +176,7 @@ template <typename T> T SwigValueInit() {
 #undef slots
 #include "Python.h"
 #pragma pop_macro("slots")
+
 # define _DEBUG 1
 #else
 #pragma push_macro("slots")
@@ -33378,6 +33379,106 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_dat_get_section_set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject *swig_obj[2] ;
+  std::vector< std::string,std::allocator< std::string > > result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "CalculiXPythonInterface_dat_get_section_set", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_CalculiXPythonInterface, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXPythonInterface_dat_get_section_set" "', argument " "1"" of type '" "CalculiXPythonInterface *""'"); 
+  }
+  arg1 = reinterpret_cast< CalculiXPythonInterface * >(argp1);
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CalculiXPythonInterface_dat_get_section_set" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  result = (arg1)->dat_get_section_set(arg2);
+  resultobj = swig::from(static_cast< std::vector< std::string,std::allocator< std::string > > >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_dat_get_section_data(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
+  int arg2 ;
+  std::string arg3 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject *swig_obj[3] ;
+  std::vector< std::vector< double,std::allocator< double > >,std::allocator< std::vector< double,std::allocator< double > > > > result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "CalculiXPythonInterface_dat_get_section_data", 3, 3, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_CalculiXPythonInterface, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXPythonInterface_dat_get_section_data" "', argument " "1"" of type '" "CalculiXPythonInterface *""'"); 
+  }
+  arg1 = reinterpret_cast< CalculiXPythonInterface * >(argp1);
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CalculiXPythonInterface_dat_get_section_data" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  {
+    std::string *ptr = (std::string *)0;
+    int res = SWIG_AsPtr_std_string(swig_obj[2], &ptr);
+    if (!SWIG_IsOK(res) || !ptr) {
+      SWIG_exception_fail(SWIG_ArgError((ptr ? res : SWIG_TypeError)), "in method '" "CalculiXPythonInterface_dat_get_section_data" "', argument " "3"" of type '" "std::string""'"); 
+    }
+    arg3 = *ptr;
+    if (SWIG_IsNewObj(res)) delete ptr;
+  }
+  result = (arg1)->dat_get_section_data(arg2,arg3);
+  resultobj = swig::from(static_cast< std::vector< std::vector< double,std::allocator< double > >,std::allocator< std::vector< double,std::allocator< double > > > > >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_dat_get_section_label(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject *swig_obj[2] ;
+  std::vector< std::string,std::allocator< std::string > > result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "CalculiXPythonInterface_dat_get_section_label", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_CalculiXPythonInterface, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXPythonInterface_dat_get_section_label" "', argument " "1"" of type '" "CalculiXPythonInterface *""'"); 
+  }
+  arg1 = reinterpret_cast< CalculiXPythonInterface * >(argp1);
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CalculiXPythonInterface_dat_get_section_label" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  result = (arg1)->dat_get_section_label(arg2);
+  resultobj = swig::from(static_cast< std::vector< std::string,std::allocator< std::string > > >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_loadstrajectory_get_node_ids(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
@@ -34197,6 +34298,9 @@ static PyMethodDef SwigMethods[] = {
 	 { "CalculiXPythonInterface_dat_get_element_values_for_component", _wrap_CalculiXPythonInterface_dat_get_element_values_for_component, METH_VARARGS, NULL},
 	 { "CalculiXPythonInterface_dat_get_element_values", _wrap_CalculiXPythonInterface_dat_get_element_values, METH_VARARGS, NULL},
 	 { "CalculiXPythonInterface_dat_get_buckle", _wrap_CalculiXPythonInterface_dat_get_buckle, METH_VARARGS, NULL},
+	 { "CalculiXPythonInterface_dat_get_section_set", _wrap_CalculiXPythonInterface_dat_get_section_set, METH_VARARGS, NULL},
+	 { "CalculiXPythonInterface_dat_get_section_data", _wrap_CalculiXPythonInterface_dat_get_section_data, METH_VARARGS, NULL},
+	 { "CalculiXPythonInterface_dat_get_section_label", _wrap_CalculiXPythonInterface_dat_get_section_label, METH_VARARGS, NULL},
 	 { "CalculiXPythonInterface_loadstrajectory_get_node_ids", _wrap_CalculiXPythonInterface_loadstrajectory_get_node_ids, METH_VARARGS, NULL},
 	 { "CalculiXPythonInterface_loadstrajectory_get_edge_ids", _wrap_CalculiXPythonInterface_loadstrajectory_get_edge_ids, METH_VARARGS, NULL},
 	 { "CalculiXPythonInterface_loadstrajectory_get_hit_coordinates", _wrap_CalculiXPythonInterface_loadstrajectory_get_hit_coordinates, METH_VARARGS, NULL},

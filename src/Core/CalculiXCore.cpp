@@ -971,6 +971,40 @@ bool CalculiXCore::read_cub(std::string filename)
             subgroup = group + "buckle_data/" + std::to_string(ii) +"/";
           }
         }
+        subgroup = group + "result_section/";
+        if (cubTool.nameExists(subgroup.c_str()))
+        {
+          int ii = 0;
+          subgroup = group + "result_section/" + std::to_string(ii) +"/";
+          while (cubTool.nameExists(subgroup.c_str()))
+          {
+            std::string dataset = std::to_string(ii);
+            subgroup = group + "result_section/";
+            std::vector<int> tmp;
+            results->dat_data[i].result_section.push_back(tmp);
+            cubTool.read_dataset_int_rank_1(dataset.c_str(),subgroup.c_str(), results->dat_data[i].result_section[ii]);
+            ++ii;
+            subgroup = group + "result_section/" + std::to_string(ii) +"/";
+          }
+        }
+        cubTool.read_dataset_string_rank_1("result_section_set",group.c_str(), results->dat_data[i].result_section_set);
+        cubTool.read_dataset_string_rank_1("result_section_label",group.c_str(), results->dat_data[i].result_section_label);
+        subgroup = group + "result_section_data/";
+        if (cubTool.nameExists(subgroup.c_str()))
+        {
+          int ii = 0;
+          subgroup = group + "result_section_data/" + std::to_string(ii) +"/";
+          while (cubTool.nameExists(subgroup.c_str()))
+          {
+            std::string dataset = std::to_string(ii);
+            subgroup = group + "result_section_data/";
+            std::vector<double> tmp;
+            results->dat_data[i].result_section_data.push_back(tmp);
+            cubTool.read_dataset_double_rank_1(dataset.c_str(),subgroup.c_str(), results->dat_data[i].result_section_data[ii]);
+            ++ii;
+            subgroup = group + "result_section_data/" + std::to_string(ii) +"/";
+          }
+        }
         subgroup = group + "sorted_c1/";
         if (cubTool.nameExists(subgroup.c_str()))
         {
@@ -1429,6 +1463,28 @@ bool CalculiXCore::save_cub(std::string filename)
           {
             std::string dataset = std::to_string(ii);
             cubTool.write_dataset_double_rank_2(dataset.c_str(),subgroup.c_str(), results->dat_data[i].buckle_data[ii]);
+          }
+        }
+        if (results->dat_data[i].result_section.size()>0)
+        {
+          std::string subgroup = group + "result_section/";
+          cubTool.createGroup(subgroup.c_str());
+          for (size_t ii = 0; ii < results->dat_data[i].result_section.size(); ii++)
+          {
+            std::string dataset = std::to_string(ii);
+            cubTool.write_dataset_int_rank_1(dataset.c_str(),subgroup.c_str(), results->dat_data[i].result_section[ii]);
+          }
+        }
+        cubTool.write_dataset_string_rank_1("result_section_set",group.c_str(), results->dat_data[i].result_section_set);
+        cubTool.write_dataset_string_rank_1("result_section_label",group.c_str(), results->dat_data[i].result_section_label);
+        if (results->dat_data[i].result_section_data.size()>0)
+        {
+          std::string subgroup = group + "result_section_data/";
+          cubTool.createGroup(subgroup.c_str());
+          for (size_t ii = 0; ii < results->dat_data[i].result_section_data.size(); ii++)
+          {
+            std::string dataset = std::to_string(ii);
+            cubTool.write_dataset_double_rank_1(dataset.c_str(),subgroup.c_str(), results->dat_data[i].result_section_data[ii]);
           }
         }
         if (results->dat_data[i].sorted_c1.size()>0)
@@ -4459,6 +4515,139 @@ bool CalculiXCore::result_plot_job_dat(int job_id,int x_node_id,int x_element_id
   return plot_possible;
 }
 
+bool CalculiXCore::result_plot_job_dat_section(int job_id, std::string x_section_set, std::string x_section_component, bool x_time, std::string y_section_set, std::string y_section_component, bool y_time,QString title,QString x_axis,QString y_axis,bool save, QString save_filepath)
+{
+  bool plot_possible = false;
+  std::vector<double> x_times;
+  std::vector<double> y_times;
+  QString windowtitle = "Dat Section Plot";
+  std::vector<double> x_data;
+  std::vector<double> y_data;
+
+  //std::string log;
+  //log = "plotting job "+ std::to_string(job_id) + "\n";
+  //PRINT_INFO("%s", log.c_str());
+
+  if (x_time&&y_time) //can't show time over time
+  {
+    return false;
+  }
+
+  std::vector<std::vector<double>> section_data;
+  std::vector<std::string> components;
+  components = this->dat_get_section_label(job_id);
+  int component_id = -1;
+
+  if (x_time)
+  {
+    // get results
+    section_data = this->dat_get_section_data(job_id,y_section_set);
+
+    //prepare times
+    for (size_t i = 0; i < section_data.size(); i++)
+    {
+      x_times.push_back(section_data[i][0]);
+    }
+
+    x_data = x_times;
+
+    for (size_t i = 0; i < components.size(); i++)
+    {
+      if (components[i]==y_section_component)
+      {
+        component_id = i;
+        break;
+      }
+    }
+  }
+
+  if (y_time)
+  {
+    // get results
+    section_data = this->dat_get_section_data(job_id,x_section_set);
+
+    //prepare times
+    for (size_t i = 0; i < section_data.size(); i++)
+    {
+      y_times.push_back(section_data[i][0]);
+    }
+
+    y_data = y_times;
+
+    for (size_t i = 0; i < components.size(); i++)
+    {
+      if (components[i]==x_section_component)
+      {
+        component_id = i;
+        break;
+      }
+    }
+  }
+
+  if (component_id==-1) //requested component not found
+  {
+    return false;
+  }
+
+  //x data
+  if (!x_time)
+  {
+    for (size_t i = 0; i < section_data.size(); i++)
+    {
+      x_data.push_back(section_data[i][component_id]);
+    }
+  }
+  
+  //y data
+  if (!y_time)
+  {
+    for (size_t i = 0; i < section_data.size(); i++)
+    {
+      y_data.push_back(section_data[i][component_id]);
+    }
+  }
+
+  if (x_axis=="")
+  {
+    std::string tmp;
+    if (x_time)
+    {
+      tmp = "Time";
+    }else{
+      tmp = "Section Set " + x_section_set + " [" + x_section_component + "]";
+    }
+    x_axis = QString::fromStdString(tmp);
+  }
+  if (y_axis=="")
+  {
+    std::string tmp;
+    if (y_time)
+    {
+      tmp = "Time";
+    }else{
+      tmp = "Section Set " + y_section_set + " [" + y_section_component + "]";
+    }
+    y_axis = QString::fromStdString(tmp);
+  }
+
+  if ((x_data.size()>0)&&(y_data.size()>0)&&(x_data.size()==y_data.size()))
+  {
+    plot_possible = true;
+  }
+    
+  if (plot_possible)
+  {
+    plotchart = new PlotChart(nullptr,windowtitle, title, x_axis, y_axis, x_data, y_data,save,save_filepath);
+    plotchart->show();
+    if (save)
+    {
+      plotchart->close();
+    }
+  }
+
+  return plot_possible;
+}
+
 bool CalculiXCore::result_csv_job_frd(int job_id,std::string block_type, std::string block_component, std::string increment,int node_id,int block_id,int nodeset_id,int sideset_id, bool overwrite, std::string save_filepath)
 { 
   std::string log;
@@ -4769,6 +4958,88 @@ bool CalculiXCore::result_csv_job_dat(int job_id,std::string block_type,std::str
     }
     //write csv
     this->export_to_csv(save_filepath, header, element_results,overwrite);
+  }
+  
+ return true;
+}
+
+bool CalculiXCore::result_csv_job_dat_section(int job_id, std::string result_set, std::string time, bool overwrite, std::string save_filepath)
+{ 
+  std::string log;
+
+  if(job_id == -1)
+  {
+    log = "Can't export results -> no job set \n";
+    PRINT_INFO("%s", log.c_str());
+    return false;
+  }
+  if (result_set=="")
+  {
+    log = "Can't export results -> no result_set \n";
+    PRINT_INFO("%s", log.c_str());
+    return false;
+  }
+  if (time=="")
+  {
+    log = "Can't export results -> no increment set \n";
+    PRINT_INFO("%s", log.c_str());
+    return false;
+  }
+  
+  // get results
+  std::vector<std::vector<double>> section_data = this->dat_get_section_data(job_id,result_set);
+
+  //prepare components
+  std::vector<std::string> components;
+  components = this->dat_get_section_label(job_id);
+
+  //prepare times
+  std::vector<double> times;
+  if (time=="all")
+  {
+    for (size_t i = 0; i < section_data.size(); i++)
+    {
+      times.push_back(section_data[i][0]);
+    }
+  }else{
+    times.push_back(std::stod(time));
+  }
+
+  //get results
+  std::vector<std::vector<double>> section_results;
+  
+  if ((section_data.size()>0)&&(components.size()>0)&&(times.size()>0)) //check if data can be queried
+  {
+    bool bool_time = false;
+    for (size_t i = 0; i < section_data.size(); i++)
+    {
+      for (size_t ii = 0; ii < times.size(); ii++)
+      {
+        if (section_data[i][0]==times[ii])
+        {
+          bool_time = true;
+          break;
+        }
+      }
+
+      if (bool_time)// check if items are in range
+      {
+        section_results.push_back(section_data[i]);
+      }
+      bool_time = false;
+    }
+  }
+
+  //get header
+  std::vector<std::string> header;
+  if (section_results.size()>0)
+  {
+    for (size_t ii = 0; ii < components.size(); ii++)
+    {
+      header.push_back(components[ii]);
+    }
+    //write csv
+    this->export_to_csv(save_filepath, header, section_results,overwrite);
   }
   
  return true;
@@ -7427,6 +7698,61 @@ std::vector<std::vector<std::vector<double>>> CalculiXCore::dat_get_buckle(int j
   }
 
   return results->dat_data[dat_data_id].buckle_data;
+}
+
+
+std::vector<std::string> CalculiXCore::dat_get_section_set(int job_id)
+{
+  std::vector<std::string> tmp;
+
+  int results_data_id = results->get_results_data_id_from_job_id(job_id);
+  int dat_data_id = results->get_dat_data_id_from_job_id(job_id);
+
+  if (results_data_id == -1)
+  {
+    return tmp;
+  }
+
+  return results->dat_data[dat_data_id].result_section_set;
+}
+
+std::vector<std::vector<double>> CalculiXCore::dat_get_section_data(int job_id, std::string section_set)
+{
+  std::vector<std::vector<double>> tmp;
+
+  int results_data_id = results->get_results_data_id_from_job_id(job_id);
+  int dat_data_id = results->get_dat_data_id_from_job_id(job_id);
+
+  if (results_data_id == -1)
+  {
+    return tmp;
+  }
+
+  for (size_t i = 0; i < results->dat_data[dat_data_id].result_section.size(); i++)
+  {
+    if (results->dat_data[dat_data_id].result_section_set[results->dat_data[dat_data_id].result_section[i][0]]==section_set)
+    {
+      tmp.push_back(results->dat_data[dat_data_id].result_section_data[results->dat_data[dat_data_id].result_section[i][1]]);
+    }
+  }
+
+  return tmp;
+}
+
+
+std::vector<std::string> CalculiXCore::dat_get_section_label(int job_id)
+{
+  std::vector<std::string> tmp;
+
+  int results_data_id = results->get_results_data_id_from_job_id(job_id);
+  int dat_data_id = results->get_dat_data_id_from_job_id(job_id);
+
+  if (results_data_id == -1)
+  {
+    return tmp;
+  }
+
+  return results->dat_data[dat_data_id].result_section_label;
 }
 
 QIcon* CalculiXCore::getIcon(std::string name)
