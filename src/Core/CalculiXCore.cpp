@@ -4614,7 +4614,7 @@ bool CalculiXCore::result_plot_job_dat_section(int job_id, std::string x_section
     {
       tmp = "Time";
     }else{
-      tmp = "Section Set " + y_section_set + "[" + y_section_component + "]";
+      tmp = "Section Set " + x_section_set + " [" + x_section_component + "]";
     }
     x_axis = QString::fromStdString(tmp);
   }
@@ -4625,7 +4625,7 @@ bool CalculiXCore::result_plot_job_dat_section(int job_id, std::string x_section
     {
       tmp = "Time";
     }else{
-      tmp = "Section Set " + x_section_set + "[" + x_section_component + "]";
+      tmp = "Section Set " + y_section_set + " [" + y_section_component + "]";
     }
     y_axis = QString::fromStdString(tmp);
   }

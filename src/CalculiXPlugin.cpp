@@ -294,6 +294,7 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxResultConvertJobCommand");
   keys.push_back("ccxResultPlotJobFrdCommand");
   keys.push_back("ccxResultPlotJobDatCommand");
+  keys.push_back("ccxResultPlotJobDatSectionCommand");
   keys.push_back("ccxResultCSVJobFrdCommand");
   keys.push_back("ccxResultCSVJobDatCommand");
   keys.push_back("ccxResultCSVJobDatSectionCommand");
