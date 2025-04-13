@@ -130,8 +130,10 @@
 #include "ccxResultConvertJobCommand.hpp"
 #include "ccxResultPlotJobFrdCommand.hpp"
 #include "ccxResultPlotJobDatCommand.hpp"
+#include "ccxResultPlotJobDatSectionCommand.hpp"
 #include "ccxResultCSVJobFrdCommand.hpp"
 #include "ccxResultCSVJobDatCommand.hpp"
+#include "ccxResultCSVJobDatSectionCommand.hpp"
 #include "ccxResultProjectJobCommand.hpp"
 #include "ccxKillJobCommand.hpp"
 #include "ccxCustomLineCreateCommand.hpp"
@@ -294,6 +296,7 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxResultPlotJobDatCommand");
   keys.push_back("ccxResultCSVJobFrdCommand");
   keys.push_back("ccxResultCSVJobDatCommand");
+  keys.push_back("ccxResultCSVJobDatSectionCommand");
   keys.push_back("ccxResultProjectJobCommand");
   keys.push_back("ccxCustomLineCreateCommand");
   keys.push_back("ccxCustomLineModifyCommand");
@@ -704,12 +707,18 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   if(key == "ccxResultPlotJobDatCommand")
     return new ccxResultPlotJobDatCommand();
+  
+  if(key == "ccxResultPlotJobDatSectionCommand")
+    return new ccxResultPlotJobDatSectionCommand();
 
   if(key == "ccxResultCSVJobFrdCommand")
     return new ccxResultCSVJobFrdCommand();
 
   if(key == "ccxResultCSVJobDatCommand")
     return new ccxResultCSVJobDatCommand();
+
+  if(key == "ccxResultCSVJobDatSectionCommand")
+    return new ccxResultCSVJobDatSectionCommand();
 
   if(key == "ccxKillJobCommand")
     return new ccxKillJobCommand();

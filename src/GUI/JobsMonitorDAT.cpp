@@ -14,7 +14,7 @@ JobsMonitorDAT::JobsMonitorDAT()
 
   // main window
   //this->setGeometry(0,0,700,570);
-  this->setWindowTitle("FRD Results");
+  this->setWindowTitle("DAT Results");
   gridLayout = new QGridLayout(this);
   boxLayout_result_block = new QVBoxLayout();
   boxLayout_result_set = new QVBoxLayout();
