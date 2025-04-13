@@ -147,4 +147,4 @@
 2025-04-08 adding .dat section print data to save file
 2025-04-12 adding .dat section print to interfaces
 2025-04-13 adding .dat section print gui
-
+2025-04-13 working on equations from coincident nodes

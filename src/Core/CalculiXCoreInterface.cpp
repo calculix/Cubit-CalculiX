@@ -410,6 +410,11 @@ bool CalculiXCoreInterface::create_constraint_tie_from_cubitcontactpair(std::str
   return ccx_core.create_constraint_tie_from_cubitcontactpair(name, position_tolerance);
 }
 
+bool CalculiXCoreInterface::create_constraint_equation_from_coincident_nodes(std::string name, int group_id, double tolerance, bool dof_1, bool dof_2, bool dof_3)
+{
+  return ccx_core.create_constraint_equation_from_coincident_nodes(name, group_id, tolerance, dof_1, dof_2, dof_3);
+} 
+
 bool CalculiXCoreInterface::create_surfaceinteraction(std::string surfacebehavior_type, std::vector<std::string> options, std::vector<std::vector<std::string>> options2)
 {
   return ccx_core.create_surfaceinteraction(surfacebehavior_type,options,options2);

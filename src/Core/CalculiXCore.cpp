@@ -3839,6 +3839,51 @@ bool CalculiXCore::create_contactpair_from_cubitcontactpair(int surfaceinteracti
   return true;
 }
 
+bool CalculiXCore::create_constraint_equation_from_coincident_nodes(std::string name, int group_id, double tolerance, bool dof_1, bool dof_2, bool dof_3)
+{
+  //get nodes from group
+  std::vector<int> group_node_ids = CubitInterface::parse_cubit_list("node","all in group " + std::to_string(group_id));
+  
+  if (group_node_ids.size() == 0)
+  {
+    std::string log;
+    log = "No Nodes found in Group "+ std::to_string(group_id) + "\n";
+    PRINT_INFO("%s", log.c_str());
+    return false;
+  }
+  
+  std::vector<std::vector<double>> group_node_coordinates;
+
+  // get coordinates for each node
+  for (size_t i = 0; i < group_node_ids.size(); i++)
+  {
+    std::array<double, 3> coords = CubitInterface::get_nodal_coordinates(int(group_node_ids[i]));
+  
+    if (coords.size() > 0)
+    {
+      std::vector<double> data;            
+      data.push_back(coords[0]);
+      data.push_back(coords[1]);
+      data.push_back(coords[2]);
+      group_node_coordinates.push_back(data);
+    }else{
+      std::string log;
+      log = "No Coordinates found for Node "+ std::to_string(int(group_node_ids[i])) + ".\n";
+      PRINT_INFO("%s", log.c_str());
+      return false;
+    }
+  }
+
+  //check each node against each other and create pairs
+  std::vector<std::vector<int>> node_pairs;
+
+  
+
+
+
+  return true;
+}
+
 bool CalculiXCore::create_amplitude(std::vector<std::string> options, std::vector<std::vector<std::string>> options2)
 {
   return amplitudes->create_amplitude(options,options2);
