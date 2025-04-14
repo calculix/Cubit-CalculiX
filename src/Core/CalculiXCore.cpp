@@ -3858,7 +3858,6 @@ bool CalculiXCore::create_constraint_equation_from_coincident_nodes(std::string 
   for (size_t i = 0; i < group_node_ids.size(); i++)
   {
     std::array<double, 3> coords = CubitInterface::get_nodal_coordinates(int(group_node_ids[i]));
-  
     if (coords.size() > 0)
     {
       std::vector<double> data;            
@@ -3876,10 +3875,58 @@ bool CalculiXCore::create_constraint_equation_from_coincident_nodes(std::string 
 
   //check each node against each other and create pairs
   std::vector<std::vector<int>> node_pairs;
-
   
+  for (size_t i = 0; i < group_node_ids.size()-1; i++)
+  {
+    for (size_t ii = i+1; ii < group_node_ids.size(); ii++)
+    {
+      std::vector<double> vec(3);
+      vec[0] = group_node_coordinates[ii][0] - group_node_coordinates[i][0];
+      vec[1] = group_node_coordinates[ii][1] - group_node_coordinates[i][1];
+      vec[2] = group_node_coordinates[ii][2] - group_node_coordinates[i][2];
+      double distance = std::sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+      if (distance <= tolerance)
+      {
+        node_pairs.push_back({group_node_ids[i],group_node_ids[ii]});
+      }
+    }
+  }
 
-
+  /*
+  for (size_t i = 0; i < node_pairs.size(); i++)
+  {
+    std::string log;
+    log = "Pair "+ std::to_string(int(i)) + " " + std::to_string(int(node_pairs[i][0])) + "-" + std::to_string(int(node_pairs[i][1])) + ".\n";
+    PRINT_INFO("%s", log.c_str());
+  }
+  */
+  std::vector<std::string> options;
+  options.push_back(name);
+  
+  for (size_t i = 0; i < node_pairs.size(); i++)
+  {
+    if (dof_1)
+    {
+      std::vector<std::vector<double>> options2;
+      options2.push_back({double(node_pairs[i][0]),1.,1.});
+      options2.push_back({double(node_pairs[i][1]),1.,-1.});
+      this->create_constraint("EQUATION",options,options2);
+    }
+    if (dof_1)
+    {
+      std::vector<std::vector<double>> options2;
+      options2.push_back({double(node_pairs[i][0]),2.,1.});
+      options2.push_back({double(node_pairs[i][1]),2.,-1.});
+      this->create_constraint("EQUATION",options,options2);
+    }
+    if (dof_1)
+    {
+      std::vector<std::vector<double>> options2;
+      options2.push_back({double(node_pairs[i][0]),3.,1.});
+      options2.push_back({double(node_pairs[i][1]),3.,-1.});
+      this->create_constraint("EQUATION",options,options2);
+    } 
+  }
 
   return true;
 }
