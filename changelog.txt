@@ -149,3 +149,5 @@
 2025-04-13 adding .dat section print gui
 2025-04-13 working on equations from coincident nodes
 2025-04-14 working on equations from coincident nodes
+2025-04-17 working on equations from coincident nodes
+2025-04-17 utility gui

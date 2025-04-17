@@ -3900,27 +3900,34 @@ bool CalculiXCore::create_constraint_equation_from_coincident_nodes(std::string 
     PRINT_INFO("%s", log.c_str());
   }
   */
-  std::vector<std::string> options;
-  options.push_back(name);
   
   for (size_t i = 0; i < node_pairs.size(); i++)
   {
     if (dof_1)
     {
+      std::vector<std::string> options;
+      options.push_back(name + " (" + std::to_string(int(node_pairs[i][0])) + "|" + std::to_string(int(node_pairs[i][1])) + "|DOF1)");
+  
       std::vector<std::vector<double>> options2;
       options2.push_back({double(node_pairs[i][0]),1.,1.});
       options2.push_back({double(node_pairs[i][1]),1.,-1.});
       this->create_constraint("EQUATION",options,options2);
     }
-    if (dof_1)
+    if (dof_2)
     {
+      std::vector<std::string> options;
+      options.push_back(name + " (" + std::to_string(int(node_pairs[i][0])) + "|" + std::to_string(int(node_pairs[i][1])) + "|DOF2)");
+  
       std::vector<std::vector<double>> options2;
       options2.push_back({double(node_pairs[i][0]),2.,1.});
       options2.push_back({double(node_pairs[i][1]),2.,-1.});
       this->create_constraint("EQUATION",options,options2);
     }
-    if (dof_1)
+    if (dof_3)
     {
+      std::vector<std::string> options;
+      options.push_back(name + " (" + std::to_string(int(node_pairs[i][0])) + "|" + std::to_string(int(node_pairs[i][1])) + "|DOF3)");
+  
       std::vector<std::vector<double>> options2;
       options2.push_back({double(node_pairs[i][0]),3.,1.});
       options2.push_back({double(node_pairs[i][1]),3.,-1.});

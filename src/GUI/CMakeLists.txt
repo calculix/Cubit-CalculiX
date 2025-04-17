@@ -167,8 +167,12 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/ConstraintsCreateRigidBodyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ConstraintsCreateTiePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ConstraintsCreateTiePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ConstraintsCreateTieFromCubitContactPairPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ConstraintsCreateTieFromCubitContactPairPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ConstraintsCreateEquationPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ConstraintsCreateEquationPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ConstraintsCreateEquationFromGroupPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ConstraintsCreateEquationFromGroupPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ConstraintsModifyRigidBodyPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ConstraintsModifyRigidBodyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ConstraintsModifyTiePanel.hpp
@@ -185,6 +189,8 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/SurfaceInteractionsDeletePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ContactPairsCreatePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ContactPairsCreatePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ContactPairsCreateFromCubitContactPairPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ContactPairsCreateFromCubitContactPairPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ContactPairsModifyPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ContactPairsModifyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ContactPairsDeletePanel.hpp
