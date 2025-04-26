@@ -11,4 +11,6 @@ move vol 4 y -1.5
 mesh vol all
 topology check coincident node volume all tolerance 1.0e-6 draw brief result group 
 
-ccx create constraint equation name "layer" group_id 2 tolerance 1e-5 dof_1 dof_2 dof_3
+#ccx create constraint equation name "layer" group_id 2 tolerance 1e-5 dof_1 dof_2 dof_3
+
+

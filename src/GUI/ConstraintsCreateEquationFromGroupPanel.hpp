@@ -9,7 +9,7 @@
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
-#include <QComboBox>
+#include <QCheckBox>
 #include <QLabel>
 #include <QSpacerItem>
 #include <QTableWidget>
@@ -35,9 +35,6 @@ private slots:
 private:
   std::string log;
 
-  std::vector<std::vector<double>> matrix;
-
-  QFrame*      frame_2;
   QGridLayout* GridLayout;
   QVBoxLayout* VBoxLayout;
   QSpacerItem* vertical_spacer;
@@ -46,9 +43,23 @@ private:
   QSpacerItem* horizontal_spacer_pushButton_apply;
   QHBoxLayout* HBoxLayout_1;
   QHBoxLayout* HBoxLayout_2;
+  QHBoxLayout* HBoxLayout_3;
+  QHBoxLayout* HBoxLayout_4;
+  QHBoxLayout* HBoxLayout_5;
+  QHBoxLayout* HBoxLayout_6;
   QLabel* label_1;
+  QLabel* label_2;
+  QLabel* label_3;
+  QLabel* label_4;
+  QLabel* label_5;
+  QLabel* label_6;
   QLineEdit* lineEdit_1;
-  PanelTable* widget_2;
+  QLineEdit* lineEdit_2;
+  QLineEdit* lineEdit_3;
+  QCheckBox* checkBox_4;
+  QCheckBox* checkBox_5;
+  QCheckBox* checkBox_6;
+  
 };
 
 #endif // CONSTRAINTSCREATEEQUATIONFROMGROUPPANEL_HPP

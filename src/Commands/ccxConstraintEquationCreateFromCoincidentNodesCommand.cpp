@@ -18,7 +18,7 @@ std::vector<std::string> ccxConstraintEquationCreateFromCoincidentNodesCommand::
   syntax.append("name <string:type='unquoted', number='1', label='name', help='<name>'> " );
   syntax.append("group_id <value:label='group_id',help='<group_id>'> " );
   syntax.append("tolerance <value:label='tolerance',help='<tolerance>'> " );
-  syntax.append("dof_1 dof_2 dof_3 " );
+  syntax.append("[dof_1] [dof_2] [dof_3] " );
   syntax_list.push_back(syntax);
 
   return syntax_list;
@@ -27,7 +27,7 @@ std::vector<std::string> ccxConstraintEquationCreateFromCoincidentNodesCommand::
 std::vector<std::string> ccxConstraintEquationCreateFromCoincidentNodesCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx create constraint equation name <name> group_id <group_id> tolerance <tolerance> dof_1 dof_2 dof_3"; 
+  help[0] = "ccx create constraint equation name <name> group_id <group_id> tolerance <tolerance> [dof_1] [dof_2] [dof_3]"; 
 
   return help;
 }
