@@ -22,6 +22,7 @@
 #include "ccxSectionMembraneModifyCommand.hpp"
 #include "ccxConstraintDeleteCommand.hpp"
 #include "ccxConstraintEquationCreateCommand.hpp"
+#include "ccxConstraintEquationCreateFromCoincidentNodesCommand.hpp"
 #include "ccxConstraintEquationModifyCommand.hpp"
 #include "ccxConstraintRigidBodyCreateCommand.hpp"
 #include "ccxConstraintRigidBody2CreateCommand.hpp"
@@ -185,6 +186,7 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxSectionMembraneModifyCommand");
   keys.push_back("ccxConstraintDeleteCommand");
   keys.push_back("ccxConstraintEquationCreateCommand");
+  keys.push_back("ccxConstraintEquationCreateFromCoincidentNodesCommand");
   keys.push_back("ccxConstraintEquationModifyCommand");
   keys.push_back("ccxConstraintRigidBodyCreateCommand");
   keys.push_back("ccxConstraintRigidBody2CreateCommand");
@@ -397,6 +399,9 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
   if(key == "ccxConstraintEquationCreateCommand")
     return new ccxConstraintEquationCreateCommand();
 
+  if(key == "ccxConstraintEquationCreateFromCoincidentNodesCommand")
+    return new ccxConstraintEquationCreateFromCoincidentNodesCommand();
+  
   if(key == "ccxConstraintEquationModifyCommand")
     return new ccxConstraintEquationModifyCommand();
 

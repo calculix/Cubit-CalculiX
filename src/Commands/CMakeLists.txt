@@ -45,6 +45,8 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintEquationCreateCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintEquationModifyCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintEquationModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintEquationCreateFromCoincidentNodesCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintEquationCreateFromCoincidentNodesCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintRigidBodyCreateCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintRigidBodyCreateCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxConstraintRigidBody2CreateCommand.cpp

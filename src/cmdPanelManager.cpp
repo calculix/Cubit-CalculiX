@@ -59,7 +59,9 @@ void cmdPanelManager::clear()
     my_markers.push_back("CCXSectionsDelete");
     my_markers.push_back("CCXConstraintsCreateRigidBody");
     my_markers.push_back("CCXConstraintsCreateTie");
+    my_markers.push_back("CCXConstraintsCreateTieFromCubitContactPair");
     my_markers.push_back("CCXConstraintsCreateEquation");
+    my_markers.push_back("CCXConstraintsCreateEquationFromGroup");
     my_markers.push_back("CCXConstraintsModifyRigidBody");
     my_markers.push_back("CCXConstraintsModifyTie");
     my_markers.push_back("CCXConstraintsModifyEquation");
@@ -68,6 +70,7 @@ void cmdPanelManager::clear()
     my_markers.push_back("CCXSurfaceInteractionsModify");
     my_markers.push_back("CCXSurfaceInteractionsDelete");
     my_markers.push_back("CCXContactPairsCreate");
+    my_markers.push_back("CCXContactPairsCreateFromCubitContactPair");
     my_markers.push_back("CCXContactPairsModify");
     my_markers.push_back("CCXContactPairsDelete");
     my_markers.push_back("CCXAmplitudesCreate");
@@ -264,6 +267,9 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXConstraintsDelete");
   node->setIcon(ccx_iface->getIcon("CCXConstraintsDelete"));
+  node = model->addNode("Utility", root_node);
+  model->setNodeMarker(node, "CCXConstraintsUtility");
+  node->setIcon(ccx_iface->getIcon("CCXConstraintsUtility"));
 
   root_node = model->getMarkedNode("CCXConstraintsCreate");
   node = model->addNode("Rigid Body", root_node);
@@ -289,6 +295,13 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXConstraintsDelete");
   node->setIcon(ccx_iface->getIcon("CCXConstraintsDelete"));*/
+  root_node = model->getMarkedNode("CCXConstraintsUtility");
+  node = model->addNode("Tie from Cubit Contact Pair", root_node);
+  model->setNodeMarker(node, "CCXConstraintsCreateTieFromCubitContactPair");
+  node->setIcon(ccx_iface->getIcon("CCXConstraintsCreateTieFromCubitContactPair"));
+  node = model->addNode("Equation from Group", root_node);
+  model->setNodeMarker(node, "CCXConstraintsCreateEquationFromGroup");
+  node->setIcon(ccx_iface->getIcon("CCXConstraintsCreateEquationFromGroup"));
 
   //##############################
   // add SurfaceInteractions Nodes
@@ -325,7 +338,15 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXContactPairsDelete");
   node->setIcon(ccx_iface->getIcon("CCXContactPairsDelete"));
-
+  node = model->addNode("Utility", root_node);
+  model->setNodeMarker(node, "CCXContactPairsUtility");
+  node->setIcon(ccx_iface->getIcon("CCXContactPairsUtility"));
+  
+  root_node = model->getMarkedNode("CCXContactPairsUtility");
+  node = model->addNode("Create from Cubit Contact Pair", root_node);
+  model->setNodeMarker(node, "CCXContactPairsCreateFromCubitContactPair");
+  node->setIcon(ccx_iface->getIcon("CCXContactPairsCreateFromCubitContactPair"));
+  
   //##############################
   // add Amplitudes Nodes
   root_node = model->getMarkedNode("CCX");
@@ -777,7 +798,9 @@ void cmdPanelManager::associate_panels_with_nodes()
   my_markers.push_back("CCXSectionsDelete");
   my_markers.push_back("CCXConstraintsCreateRigidBody");
   my_markers.push_back("CCXConstraintsCreateTie");
+  my_markers.push_back("CCXConstraintsCreateTieFromCubitContactPair");
   my_markers.push_back("CCXConstraintsCreateEquation");
+  my_markers.push_back("CCXConstraintsCreateEquationFromGroup");
   my_markers.push_back("CCXConstraintsModifyRigidBody");
   my_markers.push_back("CCXConstraintsModifyTie");
   my_markers.push_back("CCXConstraintsModifyEquation");
@@ -788,6 +811,7 @@ void cmdPanelManager::associate_panels_with_nodes()
   my_markers.push_back("CCXContactPairsCreate");
   my_markers.push_back("CCXContactPairsModify");
   my_markers.push_back("CCXContactPairsDelete");
+  my_markers.push_back("CCXContactPairsCreateFromCubitContactPair");
   my_markers.push_back("CCXAmplitudesCreate");
   my_markers.push_back("CCXAmplitudesModify");
   my_markers.push_back("CCXAmplitudesDelete");

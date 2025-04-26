@@ -581,6 +581,8 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_string_rank_2("tie_constraint_data","Cubit-CalculiX/Constraints", constraints->tie_constraint_data);
     cubTool.read_dataset_string_rank_2("equation_constraint_data","Cubit-CalculiX/Constraints", constraints->equation_constraint_data);
     cubTool.read_dataset_double_rank_2("equation_data","Cubit-CalculiX/Constraints", constraints->equation_data);
+    cubTool.read_dataset_string_rank_2("equation_group_constraint_data","Cubit-CalculiX/Constraints", constraints->equation_group_constraint_data);
+    cubTool.read_dataset_double_rank_2("equation_group_data","Cubit-CalculiX/Constraints", constraints->equation_group_data);
     progressbar.step();
     progressbar.check_interrupt();
     //SurfaceInteractions
@@ -1131,6 +1133,8 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_string_rank_2("tie_constraint_data","Cubit-CalculiX/Constraints", constraints->tie_constraint_data);
     cubTool.write_dataset_string_rank_2("equation_constraint_data","Cubit-CalculiX/Constraints", constraints->equation_constraint_data);
     cubTool.write_dataset_double_rank_2("equation_data","Cubit-CalculiX/Constraints", constraints->equation_data);
+    cubTool.write_dataset_string_rank_2("equation_group_constraint_data","Cubit-CalculiX/Constraints", constraints->equation_group_constraint_data);
+    cubTool.write_dataset_double_rank_2("equation_group_data","Cubit-CalculiX/Constraints", constraints->equation_group_data);
     progressbar.step();
     progressbar.check_interrupt();
     //SurfaceInteractions
@@ -3839,6 +3843,92 @@ bool CalculiXCore::create_contactpair_from_cubitcontactpair(int surfaceinteracti
   return true;
 }
 
+bool CalculiXCore::create_constraint_equation_from_coincident_nodes(std::string name, int group_id, double tolerance, bool dof_1, bool dof_2, bool dof_3)
+{
+  //get nodes from group
+  std::vector<int> group_node_ids = CubitInterface::parse_cubit_list("node","all in group " + std::to_string(group_id));
+  
+  if (group_node_ids.size() == 0)
+  {
+    std::string log;
+    log = "No Nodes found in Group "+ std::to_string(group_id) + "\n";
+    PRINT_INFO("%s", log.c_str());
+    return false;
+  }
+  
+  std::vector<std::vector<double>> group_node_coordinates;
+
+  // get coordinates for each node
+  for (size_t i = 0; i < group_node_ids.size(); i++)
+  {
+    std::array<double, 3> coords = CubitInterface::get_nodal_coordinates(int(group_node_ids[i]));
+    if (coords.size() > 0)
+    {
+      std::vector<double> data;            
+      data.push_back(coords[0]);
+      data.push_back(coords[1]);
+      data.push_back(coords[2]);
+      group_node_coordinates.push_back(data);
+    }else{
+      std::string log;
+      log = "No Coordinates found for Node "+ std::to_string(int(group_node_ids[i])) + ".\n";
+      PRINT_INFO("%s", log.c_str());
+      return false;
+    }
+  }
+
+  //check each node against each other and create pairs
+  std::vector<std::vector<int>> node_pairs;
+  
+  for (size_t i = 0; i < group_node_ids.size()-1; i++)
+  {
+    for (size_t ii = i+1; ii < group_node_ids.size(); ii++)
+    {
+      std::vector<double> vec(3);
+      vec[0] = group_node_coordinates[ii][0] - group_node_coordinates[i][0];
+      vec[1] = group_node_coordinates[ii][1] - group_node_coordinates[i][1];
+      vec[2] = group_node_coordinates[ii][2] - group_node_coordinates[i][2];
+      double distance = std::sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+      if (distance <= tolerance)
+      {
+        node_pairs.push_back({group_node_ids[i],group_node_ids[ii]});
+      }
+    }
+  }
+
+  /*
+  for (size_t i = 0; i < node_pairs.size(); i++)
+  {
+    std::string log;
+    log = "Pair "+ std::to_string(int(i)) + " " + std::to_string(int(node_pairs[i][0])) + "-" + std::to_string(int(node_pairs[i][1])) + ".\n";
+    PRINT_INFO("%s", log.c_str());
+  }
+  */
+
+  std::vector<std::string> options;
+  options.push_back(name);
+  std::vector<std::vector<double>> options2;
+
+  for (size_t i = 0; i < node_pairs.size(); i++)
+  {
+    if (dof_1)
+    {
+      options2.push_back({double(node_pairs[i][0]),double(node_pairs[i][1]),1.});
+    }
+    if (dof_2)
+    {
+      options2.push_back({double(node_pairs[i][0]),double(node_pairs[i][1]),2.});
+    }
+    if (dof_3)
+    {
+      options2.push_back({double(node_pairs[i][0]),double(node_pairs[i][1]),3.});
+    } 
+  }
+  this->create_constraint("EQUATIONGROUP",options,options2);
+
+  return true;
+}
+
 bool CalculiXCore::create_amplitude(std::vector<std::string> options, std::vector<std::vector<std::string>> options2)
 {
   return amplitudes->create_amplitude(options,options2);
@@ -5368,6 +5458,18 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
         {
           entities.push_back({"node",std::to_string(int(constraints->equation_data[sub_data_ids[i]][1]))});
         }
+      }else if (constraints->constraints_data[data_id][1] == 4)
+      {
+        sub_data_ids = constraints->get_equation_group_data_ids_from_equation_group_constraint_id(constraints->constraints_data[data_id][2]);
+        std::string node_ids = "";
+        for (size_t i = 0; i < sub_data_ids.size(); i++)
+        {
+          node_ids.append(" ");
+          node_ids.append(std::to_string(int(constraints->equation_group_data[sub_data_ids[i]][1])));
+          node_ids.append(" ");
+          node_ids.append(std::to_string(int(constraints->equation_group_data[sub_data_ids[i]][2])));
+        }
+        entities.push_back({"node",node_ids});
       }
     }
   }else if (entity=="surfaceinteraction")
@@ -8864,6 +8966,11 @@ std::vector<std::vector<std::string>> CalculiXCore::get_constraints_tree_data()
       sub_constraint_data_id = constraints->get_equation_constraint_data_id_from_equation_constraint_id(constraints->constraints_data[i][2]);
       
       constraint_name = "EQUATION (" + constraints->equation_constraint_data[sub_constraint_data_id][1] + ")";
+    } else if (constraints->constraints_data[i][1] == 4)
+    {
+      sub_constraint_data_id = constraints->get_equation_group_constraint_data_id_from_equation_group_constraint_id(constraints->constraints_data[i][2]);
+      
+      constraint_name = "EQUATION GROUP (" + constraints->equation_group_constraint_data[sub_constraint_data_id][1] + ")";
     }
     
     constraints_tree_data_set.push_back(std::to_string(constraints->constraints_data[i][0])); //constraint_id

@@ -27,7 +27,9 @@
 #include "SectionsDeletePanel.hpp"
 #include "ConstraintsCreateRigidBodyPanel.hpp"
 #include "ConstraintsCreateTiePanel.hpp"
+#include "ConstraintsCreateTieFromCubitContactPairPanel.hpp"
 #include "ConstraintsCreateEquationPanel.hpp"
+#include "ConstraintsCreateEquationFromGroupPanel.hpp"
 #include "ConstraintsModifyRigidBodyPanel.hpp"
 #include "ConstraintsModifyTiePanel.hpp"
 #include "ConstraintsModifyEquationPanel.hpp"
@@ -36,6 +38,7 @@
 #include "SurfaceInteractionsModifyPanel.hpp"
 #include "SurfaceInteractionsDeletePanel.hpp"
 #include "ContactPairsCreatePanel.hpp"
+#include "ContactPairsCreateFromCubitContactPairPanel.hpp"
 #include "ContactPairsModifyPanel.hpp"
 #include "ContactPairsDeletePanel.hpp"
 #include "AmplitudesCreatePanel.hpp"
@@ -230,8 +233,12 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
     return new ConstraintsCreateRigidBodyPanel();
   if(name == "CCXConstraintsCreateTie")
     return new ConstraintsCreateTiePanel();
+  if(name == "CCXConstraintsCreateTieFromCubitContactPair")
+    return new ConstraintsCreateTieFromCubitContactPairPanel();
   if(name == "CCXConstraintsCreateEquation")
     return new ConstraintsCreateEquationPanel();
+  if(name == "CCXConstraintsCreateEquationFromGroup")
+    return new ConstraintsCreateEquationFromGroupPanel();
   if(name == "CCXConstraintsModifyRigidBody")
     return new ConstraintsModifyRigidBodyPanel();
   if(name == "CCXConstraintsModifyTie")
@@ -248,6 +255,8 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
     return new SurfaceInteractionsDeletePanel();
   if(name == "CCXContactPairsCreate")
     return new ContactPairsCreatePanel();
+  if(name == "CCXContactPairsCreateFromCubitContactPair")
+    return new ContactPairsCreateFromCubitContactPairPanel();
   if(name == "CCXContactPairsModify")
     return new ContactPairsModifyPanel();
   if(name == "CCXContactPairsDelete")
