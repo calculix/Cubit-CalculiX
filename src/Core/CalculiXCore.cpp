@@ -581,6 +581,8 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_string_rank_2("tie_constraint_data","Cubit-CalculiX/Constraints", constraints->tie_constraint_data);
     cubTool.read_dataset_string_rank_2("equation_constraint_data","Cubit-CalculiX/Constraints", constraints->equation_constraint_data);
     cubTool.read_dataset_double_rank_2("equation_data","Cubit-CalculiX/Constraints", constraints->equation_data);
+    cubTool.read_dataset_string_rank_2("equation_group_constraint_data","Cubit-CalculiX/Constraints", constraints->equation_group_constraint_data);
+    cubTool.read_dataset_double_rank_2("equation_group_data","Cubit-CalculiX/Constraints", constraints->equation_group_data);
     progressbar.step();
     progressbar.check_interrupt();
     //SurfaceInteractions
@@ -1131,6 +1133,8 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_string_rank_2("tie_constraint_data","Cubit-CalculiX/Constraints", constraints->tie_constraint_data);
     cubTool.write_dataset_string_rank_2("equation_constraint_data","Cubit-CalculiX/Constraints", constraints->equation_constraint_data);
     cubTool.write_dataset_double_rank_2("equation_data","Cubit-CalculiX/Constraints", constraints->equation_data);
+    cubTool.write_dataset_string_rank_2("equation_group_constraint_data","Cubit-CalculiX/Constraints", constraints->equation_group_constraint_data);
+    cubTool.write_dataset_double_rank_2("equation_group_data","Cubit-CalculiX/Constraints", constraints->equation_group_data);
     progressbar.step();
     progressbar.check_interrupt();
     //SurfaceInteractions
@@ -3900,40 +3904,27 @@ bool CalculiXCore::create_constraint_equation_from_coincident_nodes(std::string 
     PRINT_INFO("%s", log.c_str());
   }
   */
-  
+
+  std::vector<std::string> options;
+  options.push_back(name);
+  std::vector<std::vector<double>> options2;
+
   for (size_t i = 0; i < node_pairs.size(); i++)
   {
     if (dof_1)
     {
-      std::vector<std::string> options;
-      options.push_back(name + " (" + std::to_string(int(node_pairs[i][0])) + "|" + std::to_string(int(node_pairs[i][1])) + "|DOF1)");
-  
-      std::vector<std::vector<double>> options2;
-      options2.push_back({double(node_pairs[i][0]),1.,1.});
-      options2.push_back({double(node_pairs[i][1]),1.,-1.});
-      this->create_constraint("EQUATION",options,options2);
+      options2.push_back({double(node_pairs[i][0]),double(node_pairs[i][1]),1.});
     }
     if (dof_2)
     {
-      std::vector<std::string> options;
-      options.push_back(name + " (" + std::to_string(int(node_pairs[i][0])) + "|" + std::to_string(int(node_pairs[i][1])) + "|DOF2)");
-  
-      std::vector<std::vector<double>> options2;
-      options2.push_back({double(node_pairs[i][0]),2.,1.});
-      options2.push_back({double(node_pairs[i][1]),2.,-1.});
-      this->create_constraint("EQUATION",options,options2);
+      options2.push_back({double(node_pairs[i][0]),double(node_pairs[i][1]),2.});
     }
     if (dof_3)
     {
-      std::vector<std::string> options;
-      options.push_back(name + " (" + std::to_string(int(node_pairs[i][0])) + "|" + std::to_string(int(node_pairs[i][1])) + "|DOF3)");
-  
-      std::vector<std::vector<double>> options2;
-      options2.push_back({double(node_pairs[i][0]),3.,1.});
-      options2.push_back({double(node_pairs[i][1]),3.,-1.});
-      this->create_constraint("EQUATION",options,options2);
+      options2.push_back({double(node_pairs[i][0]),double(node_pairs[i][1]),3.});
     } 
   }
+  this->create_constraint("EQUATIONGROUP",options,options2);
 
   return true;
 }
@@ -5467,6 +5458,18 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
         {
           entities.push_back({"node",std::to_string(int(constraints->equation_data[sub_data_ids[i]][1]))});
         }
+      }else if (constraints->constraints_data[data_id][1] == 4)
+      {
+        sub_data_ids = constraints->get_equation_group_data_ids_from_equation_group_constraint_id(constraints->constraints_data[data_id][2]);
+        std::string node_ids = "";
+        for (size_t i = 0; i < sub_data_ids.size(); i++)
+        {
+          node_ids.append(" ");
+          node_ids.append(std::to_string(int(constraints->equation_group_data[sub_data_ids[i]][1])));
+          node_ids.append(" ");
+          node_ids.append(std::to_string(int(constraints->equation_group_data[sub_data_ids[i]][2])));
+        }
+        entities.push_back({"node",node_ids});
       }
     }
   }else if (entity=="surfaceinteraction")
@@ -8963,6 +8966,11 @@ std::vector<std::vector<std::string>> CalculiXCore::get_constraints_tree_data()
       sub_constraint_data_id = constraints->get_equation_constraint_data_id_from_equation_constraint_id(constraints->constraints_data[i][2]);
       
       constraint_name = "EQUATION (" + constraints->equation_constraint_data[sub_constraint_data_id][1] + ")";
+    } else if (constraints->constraints_data[i][1] == 4)
+    {
+      sub_constraint_data_id = constraints->get_equation_group_constraint_data_id_from_equation_group_constraint_id(constraints->constraints_data[i][2]);
+      
+      constraint_name = "EQUATION GROUP (" + constraints->equation_group_constraint_data[sub_constraint_data_id][1] + ")";
     }
     
     constraints_tree_data_set.push_back(std::to_string(constraints->constraints_data[i][0])); //constraint_id
