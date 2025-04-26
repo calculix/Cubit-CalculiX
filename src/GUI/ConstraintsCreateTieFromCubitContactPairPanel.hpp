@@ -42,16 +42,10 @@ private:
   QSpacerItem* horizontal_spacer_pushButton_apply;
   QHBoxLayout* HBoxLayout_1;
   QHBoxLayout* HBoxLayout_2;
-  QHBoxLayout* HBoxLayout_3;
-  QHBoxLayout* HBoxLayout_4;
   QLabel* label_1;
   QLabel* label_2;
-  QLabel* label_3;
-  QLabel* label_4;
   QLineEdit* lineEdit_1;
   QLineEdit* lineEdit_2;
-  QLineEdit* lineEdit_3;
-  QLineEdit* lineEdit_4;
-};
+  };
 
 #endif // CONSTRAINTSCREATETIEFROMCUBITCONTACTPAIRPANEL_HPP

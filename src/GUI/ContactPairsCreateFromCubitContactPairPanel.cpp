@@ -22,29 +22,21 @@ ContactPairsCreateFromCubitContactPairPanel::ContactPairsCreateFromCubitContactP
   HBoxLayout_2 = new QHBoxLayout();
   HBoxLayout_3 = new QHBoxLayout();
   HBoxLayout_4 = new QHBoxLayout();
-  HBoxLayout_5 = new QHBoxLayout();
-  HBoxLayout_6 = new QHBoxLayout();
-  radioButton_5 = new QRadioButton();
-  radioButton_5->setChecked(true);
-  radioButton_6 = new QRadioButton();
+  radioButton_3 = new QRadioButton();
+  radioButton_3->setChecked(true);
+  radioButton_4 = new QRadioButton();
   label_1 = new QLabel();
   label_2 = new QLabel();
   label_3 = new QLabel();
   label_4 = new QLabel();
-  label_5 = new QLabel();
-  label_6 = new QLabel();
   label_1->setFixedWidth(labelWidth);
   label_2->setFixedWidth(labelWidth);
-  label_3->setFixedWidth(labelWidth);
-  label_4->setFixedWidth(labelWidth);
-  label_5->setFixedWidth(labelWidth-20);
-  label_6->setFixedWidth(labelWidth-20);
+  label_3->setFixedWidth(labelWidth-20);
+  label_4->setFixedWidth(labelWidth-20);
   label_1->setText("Surface \nIneraction ID");
   label_2->setText("Type");
-  label_3->setText("Master");
-  label_4->setText("Slave");
-  label_5->setText("Adjust");
-  label_6->setText("Adjust Nodeset ID");
+  label_3->setText("Adjust");
+  label_4->setText("Adjust Nodeset ID");
   lineEdit_1 = new QLineEdit();
   comboBox_2 = new QComboBox();
   comboBox_2->addItem("nodetosurface");
@@ -55,14 +47,10 @@ ContactPairsCreateFromCubitContactPairPanel::ContactPairsCreateFromCubitContactP
   comboBox_2->addItem("massless");
   lineEdit_3 = new QLineEdit();
   lineEdit_4 = new QLineEdit();
-  lineEdit_5 = new QLineEdit();
-  lineEdit_6 = new QLineEdit();
   //lineEdit_1->setPlaceholderText("Optional");
-  lineEdit_3->setPlaceholderText("Sideset ID");
-  lineEdit_4->setPlaceholderText("Sideset ID");
-  lineEdit_5->setPlaceholderText("Optional");
-  lineEdit_6->setPlaceholderText("Optional");
-  lineEdit_6->setDisabled(true);
+  lineEdit_3->setPlaceholderText("Optional");
+  lineEdit_4->setPlaceholderText("Optional");
+  lineEdit_4->setDisabled(true);
 
   pushButton_apply = new QPushButton();
   pushButton_apply->setText("Apply");
@@ -75,8 +63,6 @@ ContactPairsCreateFromCubitContactPairPanel::ContactPairsCreateFromCubitContactP
   VBoxLayout->addLayout(HBoxLayout_2);
   VBoxLayout->addLayout(HBoxLayout_3);
   VBoxLayout->addLayout(HBoxLayout_4);
-  VBoxLayout->addLayout(HBoxLayout_5);
-  VBoxLayout->addLayout(HBoxLayout_6);
   VBoxLayout->addItem(vertical_spacer);
   VBoxLayout->addLayout(HBoxLayout_pushButton_apply);
 
@@ -84,23 +70,19 @@ ContactPairsCreateFromCubitContactPairPanel::ContactPairsCreateFromCubitContactP
   HBoxLayout_1->addWidget(lineEdit_1);
   HBoxLayout_2->addWidget(label_2);
   HBoxLayout_2->addWidget(comboBox_2);
+  HBoxLayout_3->addWidget(radioButton_3);
   HBoxLayout_3->addWidget(label_3);
   HBoxLayout_3->addWidget(lineEdit_3);
+  HBoxLayout_4->addWidget(radioButton_4);
   HBoxLayout_4->addWidget(label_4);
   HBoxLayout_4->addWidget(lineEdit_4);
-  HBoxLayout_5->addWidget(radioButton_5);
-  HBoxLayout_5->addWidget(label_5);
-  HBoxLayout_5->addWidget(lineEdit_5);
-  HBoxLayout_6->addWidget(radioButton_6);
-  HBoxLayout_6->addWidget(label_6);
-  HBoxLayout_6->addWidget(lineEdit_6);
   
   HBoxLayout_pushButton_apply->addItem(horizontal_spacer_pushButton_apply);
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
-  QObject::connect(radioButton_5, SIGNAL(toggled(bool)),this,  SLOT(on_radioButton_5_toggled(bool)));
-  QObject::connect(radioButton_6, SIGNAL(toggled(bool)),this,  SLOT(on_radioButton_6_toggled(bool)));
+  QObject::connect(radioButton_3, SIGNAL(toggled(bool)),this,  SLOT(on_radioButton_3_toggled(bool)));
+  QObject::connect(radioButton_4, SIGNAL(toggled(bool)),this,  SLOT(on_radioButton_4_toggled(bool)));
 
   isInitialized = true;
 }
@@ -113,19 +95,17 @@ void ContactPairsCreateFromCubitContactPairPanel::on_pushButton_apply_clicked(bo
   QStringList commands;
   QString command = "";
 
-  if ((lineEdit_1->text()!="") && (lineEdit_3->text()!="") && (lineEdit_4->text()!=""))
+  if ((lineEdit_1->text()!=""))
   {
-    command.append("ccx create contactpair surfaceinteraction " +lineEdit_1->text());
+    command.append("ccx create contactpair from cubitcontactpair surfaceinteraction " +lineEdit_1->text());
     command.append(" " + comboBox_2->currentText());
-    command.append(" master " +lineEdit_3->text());
-    command.append(" slave " +lineEdit_4->text());
     
-    if((lineEdit_5->isEnabled()) && (lineEdit_5->text()!=""))
+    if((lineEdit_3->isEnabled()) && (lineEdit_3->text()!=""))
     {
-      command.append(" adjust " +lineEdit_5->text());
-    }else if ((lineEdit_6->isEnabled()) && (lineEdit_6->text()!=""))
+      command.append(" adjust " +lineEdit_3->text());
+    }else if ((lineEdit_4->isEnabled()) && (lineEdit_4->text()!=""))
     {
-      command.append(" adjust_nodeset " +lineEdit_6->text());
+      command.append(" adjust_nodeset " +lineEdit_4->text());
     }
   }
   
@@ -136,8 +116,6 @@ void ContactPairsCreateFromCubitContactPairPanel::on_pushButton_apply_clicked(bo
     comboBox_2->setCurrentIndex(0);
     lineEdit_3->setText("");
     lineEdit_4->setText("");
-    lineEdit_5->setText("");
-    lineEdit_6->setText("");
   }
   
   for (size_t i = 0; i < commands.size(); i++)
@@ -147,14 +125,14 @@ void ContactPairsCreateFromCubitContactPairPanel::on_pushButton_apply_clicked(bo
   }
 }
 
-void ContactPairsCreateFromCubitContactPairPanel::on_radioButton_5_toggled(bool toggled)
+void ContactPairsCreateFromCubitContactPairPanel::on_radioButton_3_toggled(bool toggled)
 {
-  lineEdit_5->setDisabled(false);
-  lineEdit_6->setDisabled(true);
+  lineEdit_3->setDisabled(false);
+  lineEdit_4->setDisabled(true);
 }
 
-void ContactPairsCreateFromCubitContactPairPanel::on_radioButton_6_toggled(bool toggled)
+void ContactPairsCreateFromCubitContactPairPanel::on_radioButton_4_toggled(bool toggled)
 {
-  lineEdit_5->setDisabled(true);
-  lineEdit_6->setDisabled(false);
+  lineEdit_3->setDisabled(true);
+  lineEdit_4->setDisabled(false);
 }
