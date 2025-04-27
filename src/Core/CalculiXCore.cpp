@@ -3268,6 +3268,19 @@ std::vector<int> CalculiXCore::get_equation_ids()
   return tmp;
 }
 
+std::vector<int> CalculiXCore::get_equationgroup_ids()
+{
+  std::vector<int> tmp;
+  for (size_t i = 0; i < constraints->constraints_data.size(); i++)
+  {
+    if (constraints->constraints_data[i][1]==4)
+    {
+      tmp.push_back(constraints->constraints_data[i][0]);
+    }
+  }
+  return tmp;
+}
+
 std::vector<int> CalculiXCore::get_bcstemperatures_ids()
 {
   std::vector<int> tmp;
@@ -6144,6 +6157,56 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_equation(int id
   return draw_data;
 }
 
+std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_equationgroup(int id)
+{
+  std::vector<std::vector<double>> draw_data;
+  int constraint_data_id;
+  constraint_data_id = constraints->get_constraints_data_id_from_constraint_id(id);
+
+  //check if constraint exists
+  if (constraint_data_id == -1)
+  {
+    return draw_data;
+  }
+  
+  // check if its a equationgroup constraint
+  if (constraints->constraints_data[constraint_data_id][1]!=4)
+  {
+    return draw_data;
+  }  
+
+  // get equation data ids
+  std::vector<int> equationgroup_data_ids = constraints->get_equation_group_data_ids_from_equation_group_constraint_id(constraints->constraints_data[constraint_data_id][2]);
+
+  for (size_t i = 0; i < equationgroup_data_ids.size(); i++)
+  {
+    if (CubitInterface::get_node_exists(int(constraints->equation_group_data[equationgroup_data_ids[i]][1]))&&CubitInterface::get_node_exists(int(constraints->equation_group_data[equationgroup_data_ids[i]][2])))
+    {
+      std::array<double, 3> coords_1 = CubitInterface::get_nodal_coordinates(int(constraints->equation_group_data[equationgroup_data_ids[i]][1]));
+      std::array<double, 3> coords_2 = CubitInterface::get_nodal_coordinates(int(constraints->equation_group_data[equationgroup_data_ids[i]][2]));
+        
+      if ((coords_1.size() > 0) && (coords_2.size() > 0))
+      {
+        std::vector<double> data;            
+        data.push_back(coords_1[0]);
+        data.push_back(coords_1[1]);
+        data.push_back(coords_1[2]);
+        data.push_back(constraints->equation_group_data[equationgroup_data_ids[i]][3]);
+        draw_data.push_back(data);
+        data.clear();
+
+        data.push_back(coords_2[0]);
+        data.push_back(coords_2[1]);
+        data.push_back(coords_2[2]);
+        data.push_back(constraints->equation_group_data[equationgroup_data_ids[i]][3]);
+        draw_data.push_back(data);
+        data.clear();
+      }
+    }
+  }
+  return draw_data;
+}
+
 bool CalculiXCore::draw_all(double size) // draw all bc and loads
 {
   return draw->draw_all(size);
@@ -6279,6 +6342,16 @@ bool CalculiXCore::draw_equation(std::vector<int> equation_ids,double size)
   return true;
 }
 
+bool CalculiXCore::draw_equationgroup(std::vector<int> equationgroup_ids,double size)
+{
+  for (size_t i = 0; i < equationgroup_ids.size(); i++)
+  {
+    draw->draw_equationgroup(equationgroup_ids[i],size);
+  }
+  
+  return true;
+}
+
 bool CalculiXCore::draw_loads(double size) // draw all loads
 {
   return draw->draw_loads(size);
@@ -6297,6 +6370,11 @@ bool CalculiXCore::draw_orientations(double size) // draw all orientations
 bool CalculiXCore::draw_equations(double size) // draw all equations
 {
   return draw->draw_equations(size);
+}
+
+bool CalculiXCore::draw_equationgroups(double size) // draw all equationgroups
+{
+  return draw->draw_equationgroups(size);
 }
 
 bool CalculiXCore::draw_load_forces(double size) // draw all forces

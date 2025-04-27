@@ -270,6 +270,11 @@ std::vector<int> CalculiXCoreInterface::get_equation_ids()
   return ccx_core.get_equation_ids();
 }
 
+std::vector<int> CalculiXCoreInterface::get_equationgroup_ids()
+{
+  return ccx_core.get_equationgroup_ids();
+}
+
 bool CalculiXCoreInterface::check_block_exists(int block_id)
 {
   return ccx_core.check_block_exists(block_id);
@@ -1085,6 +1090,11 @@ std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_equati
   return ccx_core.get_draw_data_for_equation(id);
 }
 
+std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_equationgroup(int id)
+{
+  return ccx_core.get_draw_data_for_equationgroup(id);
+}
+
 bool CalculiXCoreInterface::draw_all(double size) // draw all bc,loads,orientations, equations
 {
   return ccx_core.draw_all(size);
@@ -1155,6 +1165,11 @@ bool CalculiXCoreInterface::draw_equation(std::vector<int> equation_ids,double s
   return ccx_core.draw_equation(equation_ids,size);
 }
 
+bool CalculiXCoreInterface::draw_equationgroup(std::vector<int> equationgroup_ids,double size)
+{
+  return ccx_core.draw_equationgroup(equationgroup_ids,size);
+}
+
 bool CalculiXCoreInterface::draw_loads(double size)
 {
   return ccx_core.draw_loads(size);
@@ -1173,6 +1188,11 @@ bool CalculiXCoreInterface::draw_orientations(double size)
 bool CalculiXCoreInterface::draw_equations(double size)
 {
   return ccx_core.draw_equations(size);
+}
+
+bool CalculiXCoreInterface::draw_equationgroups(double size)
+{
+  return ccx_core.draw_equationgroups(size);
 }
 
 bool CalculiXCoreInterface::draw_load_forces(double size)

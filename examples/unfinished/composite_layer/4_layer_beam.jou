@@ -14,4 +14,10 @@ topology check coincident node volume all tolerance 1.0e-6 draw brief result gro
 
 ccx create constraint equation name "layer" group_id 2 tolerance 1e-5 dof_1 dof_2 dof_3
 
-export ccx "test.inp" overwrite
+move volume 1 y 30
+move volume 2 y 20
+move volume 3 y 10
+
+
+
+ccx draw

@@ -33,6 +33,7 @@ std::vector<std::string> ccxDrawCommand::get_syntax()
   syntax.append("]");
   syntax.append(" [orientation <value:label='orientation_id',help='<orientation_id>'>...]");
   syntax.append(" [equation <value:label='equation_id',help='<equation_id>'>...]");
+  syntax.append(" [equationgroup <value:label='equationgroup_id',help='<equationgroup_id>'>...]");
   syntax.append(" [load_all]");
   syntax.append(" [load_force_all]");
   syntax.append(" [load_pressure_all]");
@@ -48,6 +49,7 @@ std::vector<std::string> ccxDrawCommand::get_syntax()
   syntax.append(" [bc_temperature_all]");
   syntax.append(" [orientation_all]");
   syntax.append(" [equation_all]");
+  syntax.append(" [equationgroup_all]");
   
   syntax_list.push_back(syntax);
 
@@ -73,6 +75,7 @@ std::vector<std::string> ccxDrawCommand::get_syntax_help()
   help[0].append(" [temperature <temperature_id>...]]");
   help[0].append(" [orientation <orientation_id>...]");
   help[0].append(" [equation <equation_id>...]");
+  help[0].append(" [equationgroup <equationgroup_id>...]");
   help[0].append(" [load_all]");
   help[0].append(" [load_force_all]");
   help[0].append(" [load_pressure_all]");
@@ -88,6 +91,7 @@ std::vector<std::string> ccxDrawCommand::get_syntax_help()
   help[0].append(" [bc_temperature_all]");
   help[0].append(" [orientation_all]");
   help[0].append(" [equation_all]");
+  help[0].append(" [equationgroup_all]");
 
   return help;
 }
@@ -118,6 +122,7 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
   std::vector<int> temperature_id;
   std::vector<int> orientation_id;
   std::vector<int> equation_id;
+  std::vector<int> equationgroup_id;
   
   if (!data.get_value("size_value", size_value))
   {
@@ -158,6 +163,7 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
 
   data.get_values("orientation_id", orientation_id);
   data.get_values("equation_id", equation_id);
+  data.get_values("equationgroup_id", equationgroup_id);
 
   if ((force_id.size()==0)&&
       (pressure_id.size()==0)&&
@@ -171,12 +177,14 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
       (displacement_id.size()==0)&&
       (temperature_id.size()==0)&&
       (orientation_id.size()==0)&&
-      (equation_id.size()==0))
+      (equation_id.size()==0)&&
+      (equationgroup_id.size()==0))
   {
    if((!data.find_keyword("LOAD_ALL"))&&
    (!data.find_keyword("BC_ALL"))&&
    (!data.find_keyword("ORIENTATION_ALL"))&&
    (!data.find_keyword("EQUATION_ALL"))&&
+   (!data.find_keyword("EQUATIONGROUP_ALL"))&&
    (!data.find_keyword("LOAD_FORCE_ALL"))&&
    (!data.find_keyword("LOAD_PRESSURE_ALL"))&&
    (!data.find_keyword("LOAD_HEATFLUX_ALL"))&&
@@ -227,6 +235,15 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
     if (!ccx_iface.draw_equations(size_value))
     {
       output = "Failed ccx draw equations!\n";
+      PRINT_ERROR(output.c_str());
+    }
+  }
+  if (data.find_keyword("EQUATIONGROUP_ALL"))
+  {
+    bool_draw_all = false;
+    if (!ccx_iface.draw_equationgroups(size_value))
+    {
+      output = "Failed ccx draw equationgroups!\n";
       PRINT_ERROR(output.c_str());
     }
   }
@@ -392,6 +409,11 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
   if (!ccx_iface.draw_equation(equation_id,size_value))
   {
     output = "Failed ccx draw equation!\n";
+    PRINT_ERROR(output.c_str());
+  }
+  if (!ccx_iface.draw_equationgroup(equationgroup_id,size_value))
+  {
+    output = "Failed ccx draw equationgroup!\n";
     PRINT_ERROR(output.c_str());
   }
   
