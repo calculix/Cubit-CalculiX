@@ -1,57 +1,34 @@
 #!cubit
 reset
 
-import stl "/home/user/git/Cubit-CalculiX/examples/3D_Print/mimic.stl" feature_angle 135.00 merge 
+#import stl "/home/user/git/Cubit-CalculiX/examples/3D_Print/mimic.stl" feature_angle 135.00 merge 
 
-#create frustum height 80 radius 20 top 0
-#move volume 1 z -20
-#Volume 1  copy rotate 180 about x 
-#unite volume 1 2 
-#compress
+create frustum height 80 radius 20 top 0
+move volume 1 z -20
+Volume 1  copy rotate 180 about x 
+unite volume 1 2 
+compress
 
 set developer on
 
 #!python
-layers = 100
-mesh_size = 0.5
+import time
+mesh_size = 2
 
 # volume id for imported stl
 vid = 1
-
-# bounding box volume ids and blocks
-cube_vids = []
 
 vector_list = cubit.get_bounding_box("volume" , vid)
 cubit.cmd(f"move volume {vid} x {-vector_list[0]} y {-vector_list[3]} z {-vector_list[6]}")
 cubit.cmd(f"view bottom")
 
-# from https://forum.coreform.com/t/python-showcase-find-hexes-whose-centroids-are-inside-a-body/1265
-import time
+cubit.cmd(f"sculpt volume 1 processors 4 size {mesh_size} box expand 0 stair 1")
+status = cubit.cmd(f"graphics off")
+cubit.cmd(f"delete block 1")
+
 
 def list_to_str(input_val):
   return " ".join([str(val) for val in input_val])
-
-def boundary_cube(volume_id,size,number_of_layers):
-  #cubit.cmd(f"create brick bounding box Volume {volume_id} tight")
-  bb_list = cubit.get_bounding_box("volume" , volume_id)
-  cubit.cmd(f"create brick x {bb_list[2]} y {bb_list[5]} z {bb_list[8]}")
-  cubit.cmd(f"move volume {cubit.get_last_id('volume')} x {bb_list[2]/2} y {bb_list[5]/2} z {bb_list[8]/2}")
-  #cut into layers
-  bb_vid =  cubit.get_last_id('volume')
-  for i in range(number_of_layers):
-   if i!=0:
-    cubit.cmd(f"webcut volume {bb_vid} with plane zplane offset {bb_list[8]/(number_of_layers)*i}")
-    cube_vids.append(cubit.get_last_id('volume'))
-   if i==number_of_layers-1:
-    cube_vids.append(bb_vid)
-  #cubit.cmd(f"merge vol {' '.join(str(id) for id in cube_vids)}")
-
-  for i in range(len(cube_vids)):
-   cubit.cmd(f"Volume {cube_vids[i]} size {size}")
-   cubit.cmd(f"mesh Volume {cube_vids[i]}")
-   #if refine_level > 0:
-   #  cubit.cmd(f'refine hex all numsplit {refine_level} bias 1.0 depth 1 ')
-  #cubit.cmd("compress")
 
 def create_nodal_coordinates_array():
   nCoord = []
@@ -87,6 +64,21 @@ def vol_hexes_in_body(source_volume_id, target_body_id, block_id):
    cubit.silent_cmd(f"block {block_id} hex {list_to_str(block_hexes)}")
 
 def create_vol_from_hexes():
+  hex_ids = cubit.parse_cubit_list("hex","all")
+  hex_cz = []
+  nCoord = create_nodal_coordinates_array()
+  for hex_id in hex_ids:
+    cx, cy, cz = get_hex_centroid(hex_id, nCoord) 
+    hex_cz.append(cz)
+  hex_cz.sort()
+  hex_cz = list(set(hex_cz))
+  # assign to blocks
+  i=1  
+  for cz in hex_cz:
+   hexes = cubit.parse_cubit_list("hex",f"all with z_coord>={cz - 1e-6} and z_coord<={cz + 1e-6}")
+   status = cubit.silent_cmd(f"block {i} add hex {list_to_str(hexes)}")
+   i = i + 1
+  # create mbg  
   block_ids = cubit.parse_cubit_list("block","all")
   for bid in block_ids:
    t0 = time.perf_counter()
@@ -122,21 +114,8 @@ def create_sidesets_from_blocks():
    t1 = time.perf_counter()
    print(f"Time to create sidesets for block {bid}: {t1 - t0} seconds")
 
-
 ## Script body
-boundary_cube(vid,mesh_size,layers)
-
-for i in range(len(cube_vids)):
- t0 = time.perf_counter()
- vol_hexes_in_body(cube_vids[i], vid, i+1)
- t1 = time.perf_counter()
- print(f"Time to search for hexes in layer {i+1}: {t1 - t0} seconds")
-
-cubit.cmd(f"graphics off")
-
 create_vol_from_hexes()
-
-cubit.silent_cmd(f"delete volume {list_to_str(cube_vids)}")
 
 status = cubit.cmd(f"delete mesh")
 status = cubit.cmd(f"imprint vol all except 1")
@@ -145,8 +124,7 @@ status = cubit.cmd(f"vol all except 1 size {mesh_size}")
 status = cubit.cmd(f"mesh vol all except 1")
 
 print("finished preparing layers")
-print("updating gui")
-cubit.cmd(f"graphics on")
+status = cubit.cmd(f"graphics on")
 
 ## creating sidesets for blocks
 create_sidesets_from_blocks()
@@ -261,6 +239,3 @@ for bid in block_ids:
 command = command + " partial"
 cubit.cmd(command)
 #!cubit
-
-
-
