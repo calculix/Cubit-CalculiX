@@ -190,7 +190,7 @@ in python mode (#!python)
   src="examples/bolted_connection_initial_stress/example.png"
   width="400"
   title="Simple bolted connection Preload STRESS">
-](examples/bolted_connection/)
+](examples/bolted_connection_initial_stress/)
 [<img
   src="examples/snap_fit/example.gif"
   width="400"
