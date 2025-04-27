@@ -1,12 +1,7 @@
 #!cubit
 reset
 
-#import stl "/home/user/cubit/3d_print/Ork_Veteran.stl" feature_angle 135.00 merge 
-#import stl "/home/user/cubit/3d_print/Minotaur.stl" feature_angle 135.00 merge
-#import stl "/home/user/cubit/3d_print/Skull_Rose_-_Paintbrush_Holder-Serev3D.stl" feature_angle 135.00 merge
-#import stl "/home/user/cubit/3d_print/goku_w_base.stl" feature_angle 135.00 merge
-#import acis "/home/user/cubit/3d_print/knuckle.sat" nofreesurfaces heal attributes_on  separate_bodies 
-#Volume 1  rotate 90 about x 
+#import stl "/home/user/git/Cubit-CalculiX/examples/3D_Print/mimic.stl" feature_angle 135.00 merge 
 
 create frustum height 80 radius 20 top 0
 move volume 1 z -20
@@ -268,3 +263,4 @@ for bid in block_ids:
 command = command + " partial"
 cubit.cmd(command)
 #!cubit
+
