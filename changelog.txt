@@ -153,3 +153,4 @@
 2025-04-17 utility gui
 2025-04-26 working on utility gui
 2025-04-27 add equationgroup to draw, compile on windows
+2025-04-27 tinkering on examples, update readme

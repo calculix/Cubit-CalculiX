@@ -31,6 +31,7 @@ InitialConditionsCreatePanel::InitialConditionsCreatePanel(QWidget *parent) :
   comboBox_2 = new QComboBox();
   comboBox_2->addItem("Displacement");
   comboBox_2->addItem("Temperature");
+  comboBox_2->addItem("Stress");
   //lineEdit_1->setPlaceholderText("Optional");
   
   pushButton_apply = new QPushButton();
@@ -76,6 +77,9 @@ void InitialConditionsCreatePanel::on_pushButton_apply_clicked(bool)
     }else if (comboBox_2->currentIndex()==1)
     {
       command.append(" temperature");
+    }else if (comboBox_2->currentIndex()==2)
+    {
+      command.append(" stress");
     }
   //}
   
