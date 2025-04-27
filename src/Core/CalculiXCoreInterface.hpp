@@ -63,6 +63,7 @@ public:
   std::vector<int> get_bcstemperatures_ids(); // get all bc temperature ids
   std::vector<int> get_orientations_ids(); // get all orientation ids
   std::vector<int> get_equation_ids(); // get all equation ids
+  std::vector<int> get_equationgroup_ids(); // get all equation ids
   bool check_block_exists(int block_id);
   bool check_nodeset_exists(int nodeset_id);
   bool check_sideset_exists(int sideset_id);
@@ -240,6 +241,7 @@ public:
   std::vector<std::vector<double>> get_draw_data_for_bc_temperature(int id); // returns coord(3) and dof
   std::vector<std::vector<double>> get_draw_data_for_orientation(int id); // returns pairs of 4 for {system_type,local_axis_angle}, coord(3) of section center, a_coord(3) ,b_coord(3)
   std::vector<std::vector<double>> get_draw_data_for_equation(int id); // returns coord(3) and dof for each variable
+  std::vector<std::vector<double>> get_draw_data_for_equationgroup(int id); // returns coord(3) and dof for each variable
   bool draw_all(double size); // draw all loads,bcs,orientations,equations
   bool draw_load_force(std::vector<int> force_ids,double size); // draw load force
   bool draw_load_pressure(std::vector<int> pressure_ids,double size); // draw load pressure
@@ -254,10 +256,12 @@ public:
   bool draw_bc_temperature(std::vector<int> temperature_ids,double size); // draw bc temperature
   bool draw_orientation(std::vector<int> orientation_ids,double size); // draw orientation
   bool draw_equation(std::vector<int> equation_ids,double size); // draw equation
+  bool draw_equationgroup(std::vector<int> equationgroup_ids,double size); // draw equation
   bool draw_loads(double size); // draw all loads
   bool draw_bcs(double size); // draw all bcs
   bool draw_orientations(double size); // draw all orientations
   bool draw_equations(double size); // draw all equations
+  bool draw_equationgroups(double size); // draw all equationgroups
   bool draw_load_forces(double size); //draw all forces
   bool draw_load_pressures(double size); //draw all pressures
   bool draw_load_heatfluxes(double size); //draw all heatfluxes

@@ -51,11 +51,13 @@ public:
   bool draw_bc_temperature(int id, double size = 1); // draw bc temperature
   bool draw_orientation(int id, double size = 1); // draw orientation for all linked section
   bool draw_equation(int id, double size = 1); // draw equation
+  bool draw_equationgroup(int id, double size = 1); // draw equationgroup
 
   bool draw_loads(double size = 1); // draw all loads
   bool draw_bcs(double size = 1); // draw all bcs
   bool draw_orientations(double size = 1); // draw all orientations for all linked section
   bool draw_equations(double size = 1); // draw all equations
+  bool draw_equationgroups(double size = 1); // draw all equationgroups
   bool draw_all(double size = 1); // draw all
 
   bool draw_load_forces(double size = 1); //draw all forces

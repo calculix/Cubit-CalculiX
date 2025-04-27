@@ -870,7 +870,7 @@ bool CoreDraw::draw_load_trajectory(int id, double size)
                 {
                     cmd.append(std::to_string(face_ids[i][ii][iii]) + " ");
                 }
-                cmd.append("color " + get_color(ii) + " add");
+                cmd.append("color " + get_color(int(ii)) + " add");
                 
                 ccx_iface->silent_cmd(cmd);
                 //ccx_iface->cmd(cmd);
@@ -1049,7 +1049,7 @@ bool CoreDraw::draw_equation(int id, double size)
 
     // draw lines
     std::vector<std::string> commands;
-
+    
     if (draw_data.size()>1)
     {
         for (size_t i = 1; i < draw_data.size(); i++)
@@ -1058,11 +1058,49 @@ bool CoreDraw::draw_equation(int id, double size)
         }
         commands.push_back("graphics flush");
     }
+
+    for (size_t i = 0; i < commands.size(); i++)
+    {
+        ccx_iface->silent_cmd(commands[i]);
+    }
+    
+    return true;
+}
+
+bool CoreDraw::draw_equationgroup(int id, double size)
+{
+    //std::string log = "Equation ID " + std::to_string(id) + "  drawn with size " + std::to_string(size) +"\n";
+    //PRINT_INFO("%s", log.c_str());
+    
+    ccx_iface->set_block_core_update(true);
+    ccx_iface->set_block_gui_update(true);
+
+    std::vector<std::vector<double>> draw_data;
+    draw_data = ccx_iface->get_draw_data_for_equationgroup(id);
+    std::vector<std::string> commands;
+    
+    for (size_t i = 0; i < draw_data.size(); i++)
+    {
+        commands.push_back("draw location pos " + std::to_string(draw_data[i][0]) + " " + std::to_string(draw_data[i][1]) + " " + std::to_string(draw_data[i][2]) + " color yellow no_flush");
+    }
+
+    // draw lines
+    if (draw_data.size()>1)
+    {
+        for (size_t i = 0; i < draw_data.size(); i = i + 2)
+        {
+            commands.push_back("draw line location pos " + std::to_string(draw_data[i][0]) + " " + std::to_string(draw_data[i][1]) + " " + std::to_string(draw_data[i][2]) + " location pos " + std::to_string(draw_data[i+1][0]) + " " + std::to_string(draw_data[i+1][1]) + " " + std::to_string(draw_data[i+1][2]) + " color yellow no_flush");
+        }
+        commands.push_back("graphics flush");
+    }
     
     for (size_t i = 0; i < commands.size(); i++)
     {
         ccx_iface->silent_cmd(commands[i]);
     }
+
+    ccx_iface->set_block_core_update(false);
+    ccx_iface->set_block_gui_update(false);
     
     return true;
 }
@@ -1174,12 +1212,26 @@ bool CoreDraw::draw_equations(double size)
     return true;
 }
 
+bool CoreDraw::draw_equationgroups(double size)
+{
+    std::vector<int> tmp_ids;
+    
+    tmp_ids = ccx_iface->get_equationgroup_ids();    
+    for (size_t i = 0; i < tmp_ids.size(); i++)
+    {
+        draw_equationgroup(tmp_ids[i], size);
+    }
+
+    return true;
+}
+
 bool CoreDraw::draw_all(double size)
 {
     this->draw_bcs(size);
     this->draw_loads(size);
     this->draw_orientations(size);
     this->draw_equations(size);
+    this->draw_equationgroups(size);
 
     std::string log = "Loads, BCs, Orientations and Equations drawn with size " + std::to_string(size) +"\n";
     PRINT_INFO("%s", log.c_str());
