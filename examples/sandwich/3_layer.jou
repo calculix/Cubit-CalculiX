@@ -1,0 +1,37 @@
+#!cubit
+reset
+create brick x 200 y 8 z 100
+webcut volume 1 with plane yplane offset 3
+webcut volume 1 with plane yplane offset -3
+
+
+imprint vol all
+merge vol all
+vol all size auto factor 5
+mesh vol all
+
+unmerge vol all
+
+block 1 add vol 1
+block 1 name "bottom"
+block 2 add vol 2
+block 2 name "top"
+block 3 add vol 3
+block 3 name "core"
+
+ccx import materiallibrary name "steel_S235_DNV2013" groupname "Example Materials RSMITH/Steel" cubit_name "steel_S235_DNV2013"
+ccx import materiallibrary name "EN_AW_5083_H111" groupname "Example Materials RSMITH/Aluminium" cubit_name "EN_AW_5083_H111"
+ccx import materiallibrary name "rubber_65ShoreA" groupname "Example Materials RSMITH/Rubber" cubit_name "rubber_65ShoreA"
+modify material "steel_S235_DNV2013" scalar_properties "CCX_PLASTIC_USE_CARD" 0
+modify material "steel_S235_DNV2013" scalar_properties "CCX_HYPERELASTIC_ARRUDA_BOYCE_USE_CARD" 1
+modify material "steel_S235_DNV2013" scalar_properties "CCX_HYPERFOAM_HYPERFOAM_N1_USE_CARD" 1
+modify material "EN_AW_5083_H111" scalar_properties "CCX_HYPERELASTIC_ARRUDA_BOYCE_USE_CARD" 1
+modify material "EN_AW_5083_H111" scalar_properties "CCX_HYPERFOAM_HYPERFOAM_N1_USE_CARD" 1
+modify material "EN_AW_5083_H111" scalar_properties "CCX_PLASTIC_USE_CARD" 0
+
+ccx create section solid block 1 material 1
+ccx create section solid block 2 material 2
+ccx create section solid block 3 material 3
+
+#topology check coincident node volume all tolerance 1.0e-6 draw brief result group 
+#ccx create constraint equation name "layer" group_id 2 tolerance 1e-5 dof_1 dof_2 dof_3
