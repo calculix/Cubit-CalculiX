@@ -745,6 +745,11 @@ bool CoreConstraints::create_constraint_equation_from_coincident_nodes(std::stri
         z_range.push_back(ii);
       }
       */
+      // filter range
+      // watch.tick("x_min " + std::to_string(x_min) + " x_max "  + std::to_string(x_max));
+      // watch.tick("y_min " + std::to_string(y_min) + " y_max "  + std::to_string(y_max));
+      // watch.tick("z_min " + std::to_string(y_min) + " z_max "  + std::to_string(z_max));
+
       // check for node pairs
       for (size_t ii = x_min; ii < x_max; ii++)
       {
@@ -765,6 +770,7 @@ bool CoreConstraints::create_constraint_equation_from_coincident_nodes(std::stri
                   if (tmp_group_node_ids_x[ii]==tmp_group_node_ids_z[iv])
                   {
                     //add node pair
+                    //watch.tick("pair found");
                     node_pairs.push_back({group_node_ids[i],tmp_group_node_ids_x[ii]});
                   }
                 }
