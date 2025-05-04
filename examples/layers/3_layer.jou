@@ -1,12 +1,12 @@
 #!cubit
 reset
-create brick x 200 y 8 z 50
-webcut volume 1 with plane yplane offset 3
-webcut volume 1 with plane yplane offset -3
+create brick x 20 y 0.9 z 2
+webcut volume 1 with plane yplane offset 0.15
+webcut volume 1 with plane yplane offset -0.15
 
 imprint vol all
 merge vol all
-vol all size auto factor 5
+vol all size auto factor 6
 curve 35 26 43 interval 2
 curve 35 26 43 scheme equal
 mesh vol all
@@ -20,24 +20,25 @@ block 2 name "top"
 block 3 add vol 3
 block 3 name "core"
 
-ccx import materiallibrary name "steel_S235_DNV2013" groupname "Example Materials RSMITH/Steel" cubit_name "steel_S235_DNV2013"
-ccx import materiallibrary name "EN_AW_5083_H111" groupname "Example Materials RSMITH/Aluminium" cubit_name "EN_AW_5083_H111"
 ccx import materiallibrary name "rubber_65ShoreA" groupname "Example Materials RSMITH/Rubber" cubit_name "rubber_65ShoreA"
+ccx import materiallibrary name "steel_S235_DNV2013" groupname "Example Materials RSMITH/Steel" cubit_name "steel_S235_DNV2013"
+ccx import materiallibrary name "EN_AW_5754_O" groupname "Example Materials RSMITH/Aluminium" cubit_name "EN_AW_5754_O"
 modify material "steel_S235_DNV2013" scalar_properties "CCX_PLASTIC_USE_CARD" 0
-modify material "EN_AW_5083_H111" scalar_properties "CCX_PLASTIC_USE_CARD" 0
+modify material "EN_AW_5754_O" scalar_properties "CCX_PLASTIC_USE_CARD" 0
 
-ccx create section solid block 1 material 1
-ccx create section solid block 2 material 2
-ccx create section solid block 3 material 3
+ccx create section solid block 1 material 2
+ccx create section solid block 2 material 3
+ccx create section solid block 3 material 1
 
 topology check coincident node volume all tolerance 1.0e-6 draw brief result group
-group 2 remove node all with x_coord=-100
+draw vol all
+group 2 remove node all with x_coord=-10
 ccx create constraint equation name "layer" group_id 2 tolerance 1e-5 dof_1 dof_2 dof_3
 
 create displacement name 'fix' on surface 16 23 21  dof 1 dof 2 dof 3 fix 0 
 sideset 1 add surface 13 26 19  
 sideset 1 name "load"
-ccx create surfacetraction sideset 1 force_dof_1 0 force_dof_2 -1000 force_dof_3 0 name "Load"
+ccx create surfacetraction sideset 1 force_dof_1 0 force_dof_2 -10 force_dof_3 0 name "Load"
 
 ccx create fieldoutput name "fo_1" node
 ccx modify fieldoutput 1 node
@@ -57,8 +58,7 @@ ccx step 1 add bc displacement 1
 ccx step 1 add fieldoutput 1
 ccx step 1 add fieldoutput 2
 
-ccx create job name "sandwich"
+ccx create job name "3_layers"
 #ccx run job 1
-
 
 

@@ -192,20 +192,21 @@ in python mode (#!python)
   title="Simple bolted connection Preload STRESS">
 ](examples/bolted_connection_initial_stress/)
 [<img
-  src="examples/snap_fit/example.gif"
+  src="examples/contact_press_fitting/example.png"
   width="400"
-  title="Simple snap fit">
-](examples/snap_fit/)
+  title="Contact press fitting">
+](examples/contact_press_fitting/)
+
 [<img
   src="examples/knuckle/example.gif"
   width="400"
   title="Knuckle">
 ](examples/knuckle/)
 [<img
-  src="examples/contact_press_fitting/example.png"
+  src="examples/layers/example.png"
   width="400"
-  title="Contact press fitting">
-](examples/contact_press_fitting/)
+  title="layers">
+](examples/layers/)
 [<img
   src="examples/metal_forming/example.gif"
   width="400"
@@ -236,6 +237,11 @@ in python mode (#!python)
   width="400"
   title="Simple convergence study">
 ](examples/simple_convergence_study/)
+[<img
+  src="examples/snap_fit/example.gif"
+  width="400"
+  title="Simple snap fit">
+](examples/snap_fit/)
 [<img
   src="examples/tube_impact/example.gif"
   width="400"
