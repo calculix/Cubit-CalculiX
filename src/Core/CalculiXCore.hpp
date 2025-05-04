@@ -469,7 +469,7 @@ public:
   CoreDraw *draw;
   MeshExportInterface *me_iface;
   MaterialInterface *mat_iface;
-  PlotChart *plotchart;
+  PlotChart *plotchart; 
 };
 
 #endif // CALCULIXCore_HPP
