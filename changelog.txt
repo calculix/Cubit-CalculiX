@@ -155,3 +155,4 @@
 2025-04-27 add equationgroup to draw, compile on windows
 2025-04-27 tinkering on examples, update readme
 2025-04-28 tinkering on examples, update readme
+2025-05-06 tinkering on examples
