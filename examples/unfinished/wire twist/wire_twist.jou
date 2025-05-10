@@ -5,8 +5,8 @@ create cylinder height 100 radius 1
 move volume 1 x -1.01
 move volume 2 x 1.01
 
-surface 2 3 5 6 size 0.4
-vol all size 2
+surface 2 3 5 6 size 0.8
+vol all size 3
 mesh vol all
 
 #create blocks
@@ -23,10 +23,8 @@ modify material "mat_1" scalar_properties "CCX_ELASTIC_USE_CARD" 1
 modify material "mat_1" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
 modify material "mat_1" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 1.38e+5 0.3 0 
 modify material "mat_1" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
-modify material "mat_1" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
-modify material "mat_1" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
-modify material "mat_1" scalar_properties "CCX_PLASTIC_USE_CARD" 1
-modify material "mat_1" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 1.0e+2 0 0 
+#modify material "mat_1" scalar_properties "CCX_PLASTIC_USE_CARD" 1
+#modify material "mat_1" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 1.0e+2 0 0 
 
 #sections
 ccx create section solid block all material 1
@@ -82,3 +80,5 @@ ccx step 1 add fieldoutput 1 2
 #job
 ccx create job name "wire_twist"
 #ccx run job 1
+
+
