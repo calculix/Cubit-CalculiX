@@ -86,9 +86,13 @@ public:
   int  get_node_id_from_vertex_id(int vertex_id); // get node_id for the vertex_id  and returns -1 if it fails
   std::string get_constraint_export(); // get CalculiX constraint exports
   std::vector<int> get_rigidbody_vertex_list(); // get list of rigid body vertices
+  bool create_constraint_equation_from_coincident_nodes(std::string name, int group_id, double tolerance, bool dof_1, bool dof_2, bool dof_3);
   std::string print_data(); // prints out the blocks_data
 
   CalculiXCoreInterface *ccx_iface;
+
+  template <typename T>  std::vector<std::size_t> sort_permutation(const std::vector<T>& vec);
+  template <typename T> void apply_permutation(std::vector<T>& vec,const std::vector<std::size_t>& p);
 };
 
 #endif // CORECONSTRAINTS_HPP

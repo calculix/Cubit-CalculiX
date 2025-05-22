@@ -1,7 +1,7 @@
 [![GitHub](https://badgen.net/badge/icon/github?icon=github&label)](https://github.com/calculix/Cubit-CalculiX)
 [![Github All Releases](https://img.shields.io/github/downloads/calculix/Cubit-CalculiX/total.svg)](https://github.com/calculix/Cubit-CalculiX/releases)
 <br/>
-# Cubit-CalculiX 2024.12
+# Cubit-CalculiX 2025.5
 Hey ho that´s the CalculiX Component for coreform cubit!
 
 Full Model definitions for CalculiX can be done with Cubit as Preprocessor.
@@ -13,11 +13,11 @@ The builds can be downloaded at our [website](https://www.maschinenbauer.at/open
 
 Or just use the links.
 
-[Windows Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2024.12/build_windows_2024.12.zip)
-[Linux Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2024.12/build_linux_2024.12.zip)
+[Windows Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2024.12/build_windows_2025.5.zip)
+[Linux Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2024.12/build_linux_2025.5.zip)
 
-This component was build with Cubit 2024.8!
-Tested with Cubit 2024.8 on Windows 10 and Ubuntu 22.04
+This component was build with Cubit 2025.3!
+Tested with Cubit 2025.3 on Windows 10 and Ubuntu 22.04
 
 Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/@CubitCalculiX) . We will post videos from examples and updates in the near future.
 
@@ -89,6 +89,8 @@ Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/
 - Constraints
   - Tie
   - Rigid Body
+  - Equation
+  - Equation Group (from coincident Nodes)
 - Surface Interactions
   - Exponential
   - Linear
@@ -115,16 +117,19 @@ Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/
   - Radiation
   - Trajectories
     - Heatflux (can be used as moving heatsource)
+  - Surface Traction
 - Boundary Conditions
   - Displacements
   - Temperatures
 - Initial Conditions
   - Displacements
   - Temperatures
+  - Stress (per Element or Block)
 - History Outputs
   - NODE PRINT
   - EL PRINT
   - CONTACT PRINT
+  - SECTION PRINT
 - Field Outputs
   - NODE FILE
   - EL FILE
@@ -144,6 +149,7 @@ Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/
 - Adding Customlines before/after Keywords
 - Export of Calculix Model
 - Creation and Running of Jobs
+- Live Monitor for Running Jobs
 - Conversion of Results to Paraview
   - .frd nodal results, auto calculating von Mises and Principal Stresses
   - .dat: nodal, element and integration points results, auto calculating von Mises and Principal Stresses
@@ -178,23 +184,29 @@ in python mode (#!python)
 [<img
   src="examples/bolted_connection/example.gif"
   width="400"
-  title="Simple bolted connection">
+  title="Simple bolted connection Preload Temperature">
 ](examples/bolted_connection/)
 [<img
-  src="examples/snap_fit/example.gif"
+  src="examples/bolted_connection_initial_stress/example.png"
   width="400"
-  title="Simple snap fit">
-](examples/snap_fit/)
+  title="Simple bolted connection Preload STRESS">
+](examples/bolted_connection_initial_stress/)
+[<img
+  src="examples/contact_press_fitting/example.png"
+  width="400"
+  title="Contact press fitting">
+](examples/contact_press_fitting/)
+
 [<img
   src="examples/knuckle/example.gif"
   width="400"
   title="Knuckle">
 ](examples/knuckle/)
 [<img
-  src="examples/contact_press_fitting/example.png"
+  src="examples/layers/example.png"
   width="400"
-  title="Contact press fitting">
-](examples/contact_press_fitting/)
+  title="layers">
+](examples/layers/)
 [<img
   src="examples/metal_forming/example.gif"
   width="400"
@@ -225,6 +237,11 @@ in python mode (#!python)
   width="400"
   title="Simple convergence study">
 ](examples/simple_convergence_study/)
+[<img
+  src="examples/snap_fit/example.gif"
+  width="400"
+  title="Simple snap fit">
+](examples/snap_fit/)
 [<img
   src="examples/tube_impact/example.gif"
   width="400"

@@ -80,7 +80,7 @@ if (WIN32)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Solver/CalculiX/Win/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/Solver/)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Postprocessor/CGX/Win/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/Postprocessor/CGX/)
  # if missing -> please download paraview binaries from https://www.paraview.org/download/
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../../ParaView-5.13.1-MPI-Windows-Python3.10-msvc2017-AMD64/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/Postprocessor/ParaView/)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../../ParaView-5.13.3-MPI-Windows-Python3.10-msvc2017-AMD64/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/Postprocessor/ParaView/)
 endif (WIN32)
 if (UNIX)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface/calculix_pythoninterface.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
@@ -88,7 +88,7 @@ if (UNIX)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Solver/CalculiX/Linux/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Solver/)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Postprocessor/CGX/Linux/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Postprocessor/CGX/)
  # if missing -> please download paraview binaries from https://www.paraview.org/download/
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../../ParaView-5.13.1-MPI-Linux-Python3.10-x86_64/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Postprocessor/ParaView/)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../../ParaView-5.13.3-MPI-Linux-Python3.10-x86_64/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Postprocessor/ParaView/)
 endif (UNIX)
 
 # copy missing libraries into build directory

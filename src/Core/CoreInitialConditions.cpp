@@ -90,7 +90,7 @@ bool CoreInitialConditions::create_initialcondition(std::vector<std::string> opt
     this->add_temperature(std::to_string(sub_id));
   }else if (initialcondition_type == 3)
   { // stress
-    if (temperature_data.size()==0)
+    if (stress_data.size()==0)
     {
       sub_id = 1;
     }
