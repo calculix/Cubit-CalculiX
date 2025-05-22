@@ -13,8 +13,8 @@ The builds can be downloaded at our [website](https://www.maschinenbauer.at/open
 
 Or just use the links.
 
-[Windows Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2024.12/build_windows_2024.12.zip)
-[Linux Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2024.12/build_linux_2024.12.zip)
+[Windows Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2024.12/build_windows_2025.5.zip)
+[Linux Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2024.12/build_linux_2025.5.zip)
 
 This component was build with Cubit 2025.3!
 Tested with Cubit 2025.3 on Windows 10 and Ubuntu 22.04
