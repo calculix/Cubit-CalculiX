@@ -233,6 +233,11 @@ in python mode (#!python)
   title="Buckling cylindrical shell">
 ](examples/nonlinear_buckling_cylindrical_shell/)
 [<img
+  src="examples/3D_Print/example.gif"
+  width="400"
+  title="Buckling cylindrical shell">
+](examples/3D_Print/)
+[<img
   src="examples/simple_convergence_study/example.png"
   width="400"
   title="Simple convergence study">

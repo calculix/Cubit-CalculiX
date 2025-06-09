@@ -8,12 +8,13 @@ set developer on
 #####
 
 view bottom
+
+### create begin
 create frustum height 80 radius 20 top 0
 move volume 1 z -20
 Volume 1  copy rotate 180 about x 
 unite volume 1 2
 compress
-
 create cylinder r 2 height 80
 Volume 2 rotate 90 about x 
 Volume 2 move x -20 z -60
@@ -23,10 +24,12 @@ Volume 11 to 19 rotate 90 about z
 Volume all except 1 copy move z 10 repeat 12
 subtract volume all except 1 from volume 1
 compress
+### create end
 
 #!python
 import time
-mesh_size = 2
+mesh_size = 0.8
+delta_t = 10
 
 # volume id for imported stl
 vid = 1
@@ -81,19 +84,33 @@ def create_layers_from_hexes():
   hex_ids = cubit.parse_cubit_list("hex","all")
   hex_cz = []
   nCoord = create_nodal_coordinates_array()
+  i=1
+  m=0
+  n=len(hex_ids)
   for hex_id in hex_ids:
     cx, cy, cz = get_hex_centroid(hex_id, nCoord) 
     hex_cz.append(cz)
+    if i==1000:
+     m = m + i
+     print(f"checked {m} from {n} hex centroids")
+     i=0
+    i = i + 1   
   hex_cz.sort()
   hex_cz = list(set(hex_cz))
+  hex_cz.sort()
   # assign to blocks
   i=1  
   for cz in hex_cz:
+   t0 = time.perf_counter()
    hexes = cubit.parse_cubit_list("hex",f"all with z_coord>={cz - 1e-6} and z_coord<={cz + 1e-6}")
    status = cubit.silent_cmd(f"block {i} add hex {list_to_str(hexes)}")
-   status = cubit.silent_cmd(f"block {i} name 'Layer_{i}'")
+   status = cubit.silent_cmd(f"block {i} name 'Layer_{i}'")   
+   t1 = time.perf_counter()
+   print(f"Time to create Layer {i}: {t1 - t0} seconds")
    i = i + 1   
   print(f"{i-1} Layers for hexes created")
+
+
 
 def create_sidesets_from_blocks():
   block_ids = cubit.parse_cubit_list("block","all")
@@ -102,9 +119,17 @@ def create_sidesets_from_blocks():
    face_ids = cubit.parse_cubit_list("face",f"all in hex all in block {bid}")   
    face_cz = []
    nCoord = create_nodal_coordinates_array()
+#   i=1
+#   m=0
+#   n=len(face_ids)
    for face_id in face_ids:
      cx, cy, cz = get_face_centroid(face_id, nCoord) 
      face_cz.append(cz)
+#     if i==1000:
+#      m = m + i
+#      print(f"checked {m} from {n} face centroids")
+#      i=0
+#     i = i + 1   
    face_cz.sort()
    face_cz = list(set(face_cz))
    face_cz.sort()
@@ -213,7 +238,7 @@ for i in range(len(block_ids)):
  if i > 0:
   cs = cs + 1
   status = cubit.cmd(f"ccx create step name 'add_layer_{block_ids[i]}' heattransfer")
-  status = cubit.cmd(f"ccx modify step {cs} heattransfer initialtimeincrement 10 timeperiodofstep 10 minimumtimeincrement 1e-5 maximumtimeincrement 10")
+  status = cubit.cmd(f"ccx modify step {cs} heattransfer initialtimeincrement {delta_t} timeperiodofstep {delta_t} minimumtimeincrement 1e-5 maximumtimeincrement {delta_t}")
   status = cubit.cmd(f"ccx modify step {cs} parameter inc 100000")  
   status = cubit.cmd(f"ccx step {cs} add load film {i+1}")
   status = cubit.cmd(f"ccx step {cs} add bc temperature {i+2}")
@@ -224,10 +249,10 @@ for i in range(len(block_ids)):
   status = cubit.cmd(f"ccx create step name 'cool_layer_{block_ids[i]}' heattransfer")
   status = cubit.cmd(f"ccx modify step {cs} parameter inc 100000")
   if i == len(block_ids)-1:
-   status = cubit.cmd(f"ccx modify step {cs} heattransfer initialtimeincrement 10 timeperiodofstep 500 minimumtimeincrement 1e-5 maximumtimeincrement 10")
+   status = cubit.cmd(f"ccx modify step {cs} heattransfer initialtimeincrement {delta_t} timeperiodofstep {delta_t*50} minimumtimeincrement 1e-5 maximumtimeincrement {delta_t}")
    status = cubit.cmd(f"ccx create customline name 'remove_temp_bc' after step_begin item_id {cs} cline '*BOUNDARY,OP=NEW'")
   else:
-   status = cubit.cmd(f"ccx modify step {cs} heattransfer initialtimeincrement 10 timeperiodofstep 20 minimumtimeincrement 1e-5 maximumtimeincrement 10")
+   status = cubit.cmd(f"ccx modify step {cs} heattransfer initialtimeincrement {delta_t} timeperiodofstep {delta_t*2} minimumtimeincrement 1e-5 maximumtimeincrement {delta_t}")
   status = cubit.cmd(f"ccx step {cs} add load film {i+1}")
   status = cubit.cmd(f"ccx step {cs} add fieldoutput 1 2")
 
@@ -247,4 +272,3 @@ for bid in block_ids:
 command = command + " partial"
 #cubit.cmd(command)
 #!cubit
-
