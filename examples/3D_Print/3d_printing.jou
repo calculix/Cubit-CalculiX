@@ -1,6 +1,12 @@
 #!cubit
 reset
 
+#####
+# important, we can't create sidesets without having access to inner faces
+set full hex on
+set developer on
+#####
+
 view bottom
 create frustum height 80 radius 20 top 0
 move volume 1 z -20
@@ -18,8 +24,6 @@ Volume all except 1 copy move z 10 repeat 12
 subtract volume all except 1 from volume 1
 compress
 
-set developer on
-
 #!python
 import time
 mesh_size = 2
@@ -32,9 +36,8 @@ cubit.cmd(f"move volume {vid} x {-vector_list[0]} y {-vector_list[3]} z {-vector
 cubit.cmd(f"view bottom")
 
 cubit.cmd(f"sculpt volume 1 processors 4 size {mesh_size} box expand 0 stair 1")
-status = cubit.cmd(f"graphics off")
+#status = cubit.cmd(f"graphics off")
 cubit.cmd(f"delete block 1")
-
 
 def list_to_str(input_val):
   return " ".join([str(val) for val in input_val])
@@ -45,6 +48,20 @@ def create_nodal_coordinates_array():
   for id in node_ids:
     nCoord.append(cubit.get_nodal_coordinates(id))
   return nCoord
+
+def get_face_centroid(face_id, global_node_coords):
+  face_nodes = cubit.get_connectivity("face", face_id)
+  cx=cy=cz=0
+  count = 0
+  for node_id in face_nodes:
+    cx += global_node_coords[node_id-1][0]
+    cy += global_node_coords[node_id-1][1]
+    cz += global_node_coords[node_id-1][2]
+    count += 1
+  cx = cx/count
+  cy = cy/count
+  cz = cz/count
+  return cx, cy, cz
 
 def get_hex_centroid(hex_id, global_node_coords):
   hex_nodes = cubit.get_connectivity("hex", hex_id)
@@ -60,19 +77,7 @@ def get_hex_centroid(hex_id, global_node_coords):
   cz = cz/count
   return cx, cy, cz
 
-def vol_hexes_in_body(source_volume_id, target_body_id, block_id):
-  BODY = cubit.body(target_body_id)
-  vol_hexes = cubit.get_volume_hexes(source_volume_id)
-  block_hexes = []
-  nCoord = create_nodal_coordinates_array()
-  for hex_id in vol_hexes:
-    cx, cy, cz = get_hex_centroid(hex_id, nCoord)   
-    if BODY.point_containment([cx, cy, cz]):
-      block_hexes.append(hex_id)
-  if len(block_hexes)>0:
-   cubit.silent_cmd(f"block {block_id} hex {list_to_str(block_hexes)}")
-
-def create_vol_from_hexes():
+def create_layers_from_hexes():
   hex_ids = cubit.parse_cubit_list("hex","all")
   hex_cz = []
   nCoord = create_nodal_coordinates_array()
@@ -86,74 +91,56 @@ def create_vol_from_hexes():
   for cz in hex_cz:
    hexes = cubit.parse_cubit_list("hex",f"all with z_coord>={cz - 1e-6} and z_coord<={cz + 1e-6}")
    status = cubit.silent_cmd(f"block {i} add hex {list_to_str(hexes)}")
-   i = i + 1
-  # create mbg  
-  block_ids = cubit.parse_cubit_list("block","all")
-  for bid in block_ids:
-   t0 = time.perf_counter()
-   status = cubit.silent_cmd(f"compress")
-   old_vid = cubit.get_last_id('volume')
-   cubit.cmd(f"Create Mesh Geometry block {bid} keep")
-   new_vid = cubit.get_last_id('volume')
-   new_bid = cubit.get_last_id('body')
-   if (old_vid + 1 != new_vid):
-    status = cubit.silent_cmd(f"unite volume {old_vid+1} to {new_vid}")
-    status = cubit.silent_cmd(f"compress")
-    new_bid = cubit.get_last_id('body')
-   status = cubit.silent_cmd(f"block {bid} add body {new_bid}")
-   status = cubit.silent_cmd(f"block {bid} name 'layer_{bid}'")
-   status = cubit.silent_cmd(f"block {bid} remove hex all")
-   t1 = time.perf_counter()
-   print(f"Time to create volumes for hexes in block {bid}: {t1 - t0} seconds")
+   status = cubit.silent_cmd(f"block {i} name 'Layer_{i}'")
+   i = i + 1   
+  print(f"{i-1} Layers for hexes created")
 
 def create_sidesets_from_blocks():
   block_ids = cubit.parse_cubit_list("block","all")
   for bid in block_ids:
    t0 = time.perf_counter()
-   block_volumes = cubit.parse_cubit_list("volume",f"all in block {bid}")
-   if len(block_volumes)>0:
-    bb_list = cubit.get_total_bounding_box("volume" , block_volumes)
+   face_ids = cubit.parse_cubit_list("face",f"all in hex all in block {bid}")   
+   face_cz = []
+   nCoord = create_nodal_coordinates_array()
+   for face_id in face_ids:
+     cx, cy, cz = get_face_centroid(face_id, nCoord) 
+     face_cz.append(cz)
+   face_cz.sort()
+   face_cz = list(set(face_cz))
+   face_cz.sort()
+   if len(face_ids)>0:
     #bottom
-    status = cubit.silent_cmd(f"sideset {cubit.get_sideset_count()+1} add surface all in volume all in block {bid} with z_coord>={bb_list[6]-1e-6} and z_coord<={bb_list[6]+1e-6}")
+    status = cubit.silent_cmd(f"sideset {cubit.get_sideset_count()+1} add face all in hex all in block {bid} with z_coord>={face_cz[0]-1e-6} and z_coord<={face_cz[0]+1e-6}")
     status = cubit.silent_cmd(f"sideset {cubit.get_sideset_count()} name 'layer_{bid}_bottom'")
-    #middle
-    block_surfaces = cubit.parse_cubit_list("surface",f"all in volume all in block {bid} with z_coord>{bb_list[6]} and z_coord<{bb_list[7]}")
-    block_surfaces_not_merged = []
-    for sid in block_surfaces:
-     if not cubit.is_merged("surface",sid):
-      block_surfaces_not_merged.append(sid)
-    status = cubit.silent_cmd(f"sideset {cubit.get_sideset_count()+1} add surface {list_to_str(block_surfaces_not_merged)}")
+    #middle and unmerged faces
+    #block_faces = cubit.parse_cubit_list("face",f"all in hex all in block {bid} with z_coord>{face_cz[0]} and z_coord<{face_cz[2]}")
+    block_faces = cubit.parse_cubit_list("face",f"all in hex all in block {bid}")
+    #check for adjacent hexes
+    unmerged_faces = []
+    for fid in block_faces:
+     hexes = cubit.parse_cubit_list("hex",f"all in face {fid}")
+     if len(hexes)==1:
+      unmerged_faces.append(fid)
+    status = cubit.silent_cmd(f"sideset {cubit.get_sideset_count()+1} add face {list_to_str(unmerged_faces)}")
     status = cubit.silent_cmd(f"sideset {cubit.get_sideset_count()} name 'layer_{bid}_middle'")
-    #bottom
-    status = cubit.silent_cmd(f"sideset {cubit.get_sideset_count()+1} add surface all in volume all in block {bid} with z_coord>={bb_list[7]-1e-6} and z_coord<={bb_list[7]+1e-6}")
+    #top
+    status = cubit.silent_cmd(f"sideset {cubit.get_sideset_count()+1} add face all in hex all in block {bid} with z_coord>={face_cz[2]-1e-6} and z_coord<={face_cz[2]+1e-6}")
     status = cubit.silent_cmd(f"sideset {cubit.get_sideset_count()} name 'layer_{bid}_top'")
    t1 = time.perf_counter()
    print(f"Time to create sidesets for block {bid}: {t1 - t0} seconds")
 
 ## Script body
-create_vol_from_hexes()
-
-status = cubit.cmd(f"delete mesh")
-status = cubit.cmd(f"imprint vol all except 1")
-status = cubit.cmd(f"merge vol all except 1")
-status = cubit.cmd(f"vol all except 1 size {mesh_size}")
-status = cubit.cmd(f"vol all except 1 scheme submap")
-status = cubit.cmd(f"mesh vol all except 1")
-
-bid = cubit.get_last_id('body')
-for i in range(bid-1):
- status = cubit.silent_cmd(f"block {i+1} add body {i+2}")
-
-print("finished preparing layers")
-status = cubit.cmd(f"graphics on")
+create_layers_from_hexes()
 
 ## creating sidesets for blocks
 create_sidesets_from_blocks()
 
+print("finished preparing layers")
+#status = cubit.cmd(f"graphics on")
+
 #!cubit
-draw vol all in block all
-#draw block all
-#draw vol 1 add
+#draw hex all in block all
+draw block all
 
 #material
 create material "solid" property_group "CalculiX-FEA"
@@ -184,7 +171,7 @@ ccx modify fieldoutput 2 element key_on HFL
 ccx modify fieldoutput 2 element key_off CEEQ S E ECD EMFB EMFE ENER ERR HER HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS
 
 # initial conditions
-create temperature on volume all value 240
+create temperature on node all value 240
 ccx modify temperature 1 op new
 ccx create initialcondition temperature
 ccx modify initialcondition 1 temperature bc_id 1
@@ -192,13 +179,14 @@ ccx modify initialcondition 1 temperature bc_id 1
 #!python
 block_ids = cubit.parse_cubit_list("block","all")
 for i in range(len(block_ids)):
-  status = cubit.cmd(f"ccx create film sideset {(i+1)*3-1} temperature 20 coefficient 0.025 name 'layer_{block_ids[i]}'")
-  status = cubit.cmd(f"create temperature on volume all in block {block_ids[i]} value 240")
+  status = cubit.cmd(f"ccx create film sideset {(i+1)*3-1} temperature 20 coefficient 0.0025 name 'layer_{block_ids[i]}'")
+  status = cubit.cmd(f"create temperature on node all in hex all in block {block_ids[i]} value 240")
   status = cubit.cmd(f"ccx modify temperature {i+2} op new")
 
 #!python
 #create dummy steps
 status = cubit.cmd("ccx create step name 'dummy_step' heattransfer")
+status = cubit.cmd(f"ccx modify step 1 heattransfer initialtimeincrement 10 timeperiodofstep 10 minimumtimeincrement 1e-5 maximumtimeincrement 10")
 status = cubit.cmd("ccx step 1 add fieldoutput 1 2")
 status = cubit.cmd("ccx step 1 add bc temperature 1")
 #status = cubit.cmd("ccx create step name 'add_layer_{block_ids[0]}' static")
@@ -236,7 +224,7 @@ for i in range(len(block_ids)):
   status = cubit.cmd(f"ccx create step name 'cool_layer_{block_ids[i]}' heattransfer")
   status = cubit.cmd(f"ccx modify step {cs} parameter inc 100000")
   if i == len(block_ids)-1:
-   status = cubit.cmd(f"ccx modify step {cs} heattransfer initialtimeincrement 10 timeperiodofstep 250 minimumtimeincrement 1e-5 maximumtimeincrement 10")
+   status = cubit.cmd(f"ccx modify step {cs} heattransfer initialtimeincrement 10 timeperiodofstep 500 minimumtimeincrement 1e-5 maximumtimeincrement 10")
    status = cubit.cmd(f"ccx create customline name 'remove_temp_bc' after step_begin item_id {cs} cline '*BOUNDARY,OP=NEW'")
   else:
    status = cubit.cmd(f"ccx modify step {cs} heattransfer initialtimeincrement 10 timeperiodofstep 20 minimumtimeincrement 1e-5 maximumtimeincrement 10")
@@ -248,7 +236,6 @@ cubit.cmd("ccx create job name 'model_change'")
 #!cubit
 delete volume 1
 #ccx run job 1 no_conversion
-draw vol all
 #ccx wait job 1
 #ccx result convert job 1 partial
 
@@ -258,5 +245,6 @@ command = ("ccx result convert job 1 block ")
 for bid in block_ids:
  command = command + str(bid) + " "
 command = command + " partial"
-cubit.cmd(command)
+#cubit.cmd(command)
 #!cubit
+
