@@ -15,7 +15,6 @@
 #include "cubitguicommondll.hpp"
 #include "CubitGuiUtil.hpp"  
 #include "CubitInterface.hpp"
-#include "CubitCoreformInterface.hpp"
 #include "CubitMessage.hpp"
 #include "MeshExportInterface.hpp"
 #include "MaterialInterface.hpp"

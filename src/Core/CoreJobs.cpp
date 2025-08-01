@@ -6,6 +6,7 @@
 #include "CubitProcess.hpp"
 #include "CubitString.hpp"
 #include "ProgressTool.hpp"
+#include "AppUtil.hpp"
 #include "CubitFile.hpp"
 
 #include <stdlib.h>
@@ -37,7 +38,8 @@ bool CoreJobs::init()
     return false; // already initialized
   }else{
     CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-    progressbar = new ProgressTool();
+    mAppUtil = new AppUtil();
+    progressbar = new ProgressTool(mAppUtil);
     is_initialized = true;  
     return true;
   }

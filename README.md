@@ -1,7 +1,7 @@
 [![GitHub](https://badgen.net/badge/icon/github?icon=github&label)](https://github.com/calculix/Cubit-CalculiX)
 [![Github All Releases](https://img.shields.io/github/downloads/calculix/Cubit-CalculiX/total.svg)](https://github.com/calculix/Cubit-CalculiX/releases)
 <br/>
-# Cubit-CalculiX 2025.5
+# Cubit-CalculiX 2025.8
 Hey ho that´s the CalculiX Component for coreform cubit!
 
 Full Model definitions for CalculiX can be done with Cubit as Preprocessor.
@@ -13,11 +13,11 @@ The builds can be downloaded at our [website](https://www.maschinenbauer.at/open
 
 Or just use the links.
 
-[Windows Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2025.5/build_windows_2025.5.zip)
-[Linux Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2025.5/build_linux_2025.5.zip)
+[Windows Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2025.8/build_windows_2025.8.zip)
+[Linux Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2025.8/build_linux_2025.8.zip)
 
-This component was build with Cubit 2025.3!
-Tested with Cubit 2025.3 on Windows 10 and Ubuntu 22.04
+This component was build with Cubit 2025.8!
+Tested with Cubit 2025.8 on Windows 11 and Ubuntu 24.04
 
 Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/@CubitCalculiX) . We will post videos from examples and updates in the near future.
 
