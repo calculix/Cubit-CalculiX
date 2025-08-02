@@ -16,23 +16,23 @@ PlotChart::PlotChart(QWidget* parent,QString windowtitle, QString title, QString
   boxLayout_widget = new QVBoxLayout();
   gridLayout->addLayout(boxLayout_window,1,1, Qt::AlignRight);
 
-  QtCharts::QLineSeries *series = new QtCharts::QLineSeries(this);
+  QLineSeries *series = new QLineSeries(this);
   series->setPointsVisible();
   for (size_t i = 0; i < x_data.size(); i++)
   {
     series->append(x_data[i], y_data[i]);
   }
 
-  QtCharts::QChart *chart = new QtCharts::QChart();
+  QChart *chart = new QChart();
   chart->legend()->hide();
   chart->addSeries(series);
   chart->createDefaultAxes();
   chart->setTitle(title);
-  QList<QtCharts::QAbstractAxis*> axes = chart->axes();
+  QList<QAbstractAxis*> axes = chart->axes();
   axes[0]->setTitleText(x_axis);
   axes[1]->setTitleText(y_axis);
 
-  QtCharts::QChartView *chartView = new QtCharts::QChartView(chart,this);
+  QChartView *chartView = new QChartView(chart,this);
   chartView->setRenderHint(QPainter::Antialiasing);
   
   this->setAttribute(Qt::WA_DeleteOnClose);

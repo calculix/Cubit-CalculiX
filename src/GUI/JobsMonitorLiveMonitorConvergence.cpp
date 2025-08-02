@@ -15,22 +15,22 @@ JobsMonitorLiveMonitorConvergence::JobsMonitorLiveMonitorConvergence():
   boxLayout_widget = new QVBoxLayout();
   gridLayout->addLayout(boxLayout_window,1,1, Qt::AlignRight);
 
-  series_1 = new QtCharts::QLineSeries(this);
+  series_1 = new QLineSeries(this);
   series_1->setPointsVisible(false);
   series_1->setName("FORCE");
-  series_2 = new QtCharts::QLineSeries(this);
+  series_2 = new QLineSeries(this);
   series_2->setPointsVisible(false);
   series_2->setName("DISP");
-  series_3 = new QtCharts::QLineSeries(this);
+  series_3 = new QLineSeries(this);
   series_3->setPointsVisible(false);
   series_3->setName("FLUX");
-  series_4 = new QtCharts::QLineSeries(this);
+  series_4 = new QLineSeries(this);
   series_4->setPointsVisible(false);
   series_4->setName("TEMP");
-  series_5 = new QtCharts::QLineSeries(this);
+  series_5 = new QLineSeries(this);
   series_5->setPointsVisible(false);
   series_5->setName("Contact Elements");
-  chart = new QtCharts::QChart();
+  chart = new QChart();
   //chart->legend()->hide();
   chart->legend()->setVisible(true);
   chart->legend()->setAlignment(Qt::AlignTop);
@@ -40,18 +40,18 @@ JobsMonitorLiveMonitorConvergence::JobsMonitorLiveMonitorConvergence():
   chart->addSeries(series_4);
   //chart->createDefaultAxes();
   //chart->setTitle("Convergence Information");
-  chart2 = new QtCharts::QChart();
+  chart2 = new QChart();
   //chart2->legend()->hide();
   chart2->legend()->setVisible(true);
   chart2->legend()->setAlignment(Qt::AlignTop);
   chart2->addSeries(series_5);
-  axisX = new QtCharts::QValueAxis();
+  axisX = new QValueAxis();
   axisX->setRange(1,1);
   axisX->setMin(1);
   axisX->setMax(1);
   axisX->setLabelFormat("%u");
   axisX->setTitleText("Iteration");
-  axisX2 = new QtCharts::QValueAxis();
+  axisX2 = new QValueAxis();
   axisX2->setRange(1,1);
   axisX2->setMin(1);
   axisX2->setMax(1);
@@ -63,7 +63,7 @@ JobsMonitorLiveMonitorConvergence::JobsMonitorLiveMonitorConvergence():
   series_4->attachAxis(axisX);
   series_5->attachAxis(axisX2);
   
-  axisY = new QtCharts::QLogValueAxis();
+  axisY = new QLogValueAxis();
   //axisY->setLabelFormat("%g");
   axisY->setTitleText("%");
   axisY->setLabelFormat("%.0e");
@@ -72,7 +72,7 @@ JobsMonitorLiveMonitorConvergence::JobsMonitorLiveMonitorConvergence():
   axisY->setMax(0);
   axisY->setMinorTickCount(0);
   
-  axisY2 = new QtCharts::QValueAxis();
+  axisY2 = new QValueAxis();
   axisY2->setMin(0);
   axisY2->setMax(0);
   axisY2->setTitleText("#");
@@ -90,9 +90,9 @@ JobsMonitorLiveMonitorConvergence::JobsMonitorLiveMonitorConvergence():
   chart2->addAxis(axisX2,Qt::AlignBottom);
   chart2->addAxis(axisY2,Qt::AlignLeft);
   
-  QtCharts::QChartView *chartView = new QtCharts::QChartView(chart,this);
+  QChartView *chartView = new QChartView(chart,this);
   chartView->setRenderHint(QPainter::Antialiasing);
-  QtCharts::QChartView *chartView2 = new QtCharts::QChartView(chart2,this);
+  QChartView *chartView2 = new QChartView(chart2,this);
   chartView2->setRenderHint(QPainter::Antialiasing);
   
   this->setAttribute(Qt::WA_DeleteOnClose);

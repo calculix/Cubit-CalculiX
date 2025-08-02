@@ -5,6 +5,7 @@
 #include "CubitMessage.hpp"
 #include "CalculiXCoreInterface.hpp"
 #include "ProgressTool.hpp"
+#include "AppUtil.hpp"
 #include <fstream>
 
 #ifdef WIN32
@@ -16,7 +17,8 @@
 
 ccxExportCommand::ccxExportCommand()
 {
-  progressbar = new ProgressTool();
+  AppUtil au;
+  progressbar = new ProgressTool(au);
 }
 
 ccxExportCommand::~ccxExportCommand()

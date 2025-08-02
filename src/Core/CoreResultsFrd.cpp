@@ -30,7 +30,8 @@ bool CoreResultsFrd::init(int job_id)
     std::vector<std::string> job_data = ccx_iface->get_job_data(job_id);
     this->filepath = job_data[1] + ".frd";
 
-    progressbar = new ProgressTool();
+    AppUtil au;
+    progressbar = new ProgressTool(au);
 
     is_initialized = true;  
     return true;

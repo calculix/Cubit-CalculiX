@@ -34,19 +34,19 @@ public:
   QHBoxLayout* boxLayout_window;
   QVBoxLayout* boxLayout_widget;
 
-  QtCharts::QLineSeries *series_1;
-  QtCharts::QLineSeries *series_2;
-  QtCharts::QLineSeries *series_3;
-  QtCharts::QLineSeries *series_4;
-  QtCharts::QLineSeries *series_5;
+  QLineSeries *series_1;
+  QLineSeries *series_2;
+  QLineSeries *series_3;
+  QLineSeries *series_4;
+  QLineSeries *series_5;
 
-  QtCharts::QChart *chart;
-  QtCharts::QValueAxis *axisX;
-  QtCharts::QLogValueAxis *axisY;
+  QChart *chart;
+  QValueAxis *axisX;
+  QLogValueAxis *axisY;
 
-  QtCharts::QChart *chart2;
-  QtCharts::QValueAxis *axisX2;
-  QtCharts::QValueAxis *axisY2;
+  QChart *chart2;
+  QValueAxis *axisX2;
+  QValueAxis *axisY2;
 };
 
 #endif // JOBSMONITORLIVEMONITORCONVERGENCE_HPP

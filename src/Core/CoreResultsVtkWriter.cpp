@@ -5,6 +5,7 @@
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "ProgressTool.hpp"
+#include "AppUtil.hpp"
 #include "MeshExportInterface.hpp"
 #include "StopWatch.hpp"
 #include "loadUserOptions.hpp"
@@ -55,7 +56,8 @@ bool CoreResultsVtkWriter::init(int job_id,CoreResultsFrd* frd,CoreResultsDat* d
     std::sort(this->nodeset_ids.begin(),this->nodeset_ids.end());
     std::sort(this->sideset_ids.begin(),this->sideset_ids.end());
 
-    progressbar = new ProgressTool();
+    AppUtil au;
+    progressbar = new ProgressTool(au);
     me_iface = dynamic_cast<MeshExportInterface*>(CubitInterface::get_interface("MeshExport"));
     me_iface->initialize_export();
 

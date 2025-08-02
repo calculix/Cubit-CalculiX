@@ -4,6 +4,7 @@
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "ProgressTool.hpp"
+#include "AppUtil.hpp"
 #include "MeshExportInterface.hpp"
 
 #include <cmath>
@@ -25,7 +26,8 @@ bool CoreResultsProject::init(CoreResultsFrd* frd)
 
     this->frd = frd;
 
-    progressbar = new ProgressTool();
+    AppUtil au;
+    progressbar = new ProgressTool(au);
     // otherwise cubitinterface gets false element count!
     me_iface = dynamic_cast<MeshExportInterface*>(CubitInterface::get_interface("MeshExport"));
     me_iface->initialize_export();

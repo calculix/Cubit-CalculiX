@@ -5,6 +5,7 @@
 #include <string>
 #include <thread>
 #include "ProgressTool.hpp"
+#include "AppUtil.hpp"
 
 class CalculiXCoreInterface;
 

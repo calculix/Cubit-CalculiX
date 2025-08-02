@@ -19,6 +19,7 @@
 #include "MeshExportInterface.hpp"
 #include "MaterialInterface.hpp"
 #include "ProgressTool.hpp"
+#include "AppUtil.hpp"
 
 #include "CoreBlocks.hpp"
 #include "CoreMaterials.hpp"
@@ -532,7 +533,8 @@ bool CalculiXCore::reset()
 bool CalculiXCore::read_cub(std::string filename)
 {
   std::string log = "";
-  ProgressTool progressbar;
+  AppUtil au;
+  ProgressTool progressbar(au);
 
   log = "Reading Cubit-CalculiX data from \"" + filename + "\"\n";
   PRINT_INFO("%s", log.c_str());
@@ -1085,7 +1087,8 @@ bool CalculiXCore::save_cub(std::string filename)
 {
   std::string log = "Saving Cubit-CaluliX data to \"" + filename + "\"\n";
   PRINT_INFO("%s", log.c_str());
-  ProgressTool progressbar;
+  AppUtil au;
+  ProgressTool progressbar(au);
 
   if (filename.substr(filename.size() - 4) == ".cub")
   {

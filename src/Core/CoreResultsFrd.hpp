@@ -2,6 +2,7 @@
 #define CORERESULTSFRD_HPP
 
 #include "ProgressTool.hpp"
+#include "AppUtil.hpp"
 #include <vector>
 #include <string>
 #include <thread>
