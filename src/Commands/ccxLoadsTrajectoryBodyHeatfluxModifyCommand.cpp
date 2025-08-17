@@ -1,22 +1,21 @@
-#include "ccxLoadsTrajectoryModifyCommand.hpp"
+#include "ccxLoadsTrajectoryBodyHeatfluxModifyCommand.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "CalculiXCoreInterface.hpp"
 
-ccxLoadsTrajectoryModifyCommand::ccxLoadsTrajectoryModifyCommand()
+ccxLoadsTrajectoryBodyHeatfluxModifyCommand::ccxLoadsTrajectoryBodyHeatfluxModifyCommand()
 {}
 
-ccxLoadsTrajectoryModifyCommand::~ccxLoadsTrajectoryModifyCommand()
+ccxLoadsTrajectoryBodyHeatfluxModifyCommand::~ccxLoadsTrajectoryBodyHeatfluxModifyCommand()
 {}
 
-std::vector<std::string> ccxLoadsTrajectoryModifyCommand::get_syntax()
+std::vector<std::string> ccxLoadsTrajectoryBodyHeatfluxModifyCommand::get_syntax()
 {
   std::vector<std::string> syntax_list;
 
   std::string syntax = "ccx ";
   syntax.append("modify trajectory <value:label='trajectory id',help='<trajectory id>'> ");
-  //syntax.append("[{heatflux|pressure}] ");
-  syntax.append("heatflux ");
+  syntax.append("bodyheatflux ");
   syntax.append("[curve <value:label='curve_id',help='<curve_id>'>] ");
   syntax.append("[vertex <value:label='vertex_id',help='<vertex_id>'>] ");
   syntax.append("[surface <value:label='surface_id',help='<surface_id>'>...] ");
@@ -35,13 +34,12 @@ std::vector<std::string> ccxLoadsTrajectoryModifyCommand::get_syntax()
   return syntax_list;
 }
 
-std::vector<std::string> ccxLoadsTrajectoryModifyCommand::get_syntax_help()
+std::vector<std::string> ccxLoadsTrajectoryBodyHeatfluxModifyCommand::get_syntax_help()
 {
   std::vector<std::string> help(1);
   help[0] = "ccx "; 
   help[0].append("modify trajectory <trajectory_id> ");
-  //help[0].append("[{heatflux|pressure}] ");
-  help[0].append("heatflux ");
+  help[0].append("bodyheatflux ");
   help[0].append("[curve <curve_id>] ");
   help[0].append("[vertex <vertex_id>] ");
   help[0].append("[surface <surface_id>...] ");
@@ -58,13 +56,13 @@ std::vector<std::string> ccxLoadsTrajectoryModifyCommand::get_syntax_help()
   return help;
 }
 
-std::vector<std::string> ccxLoadsTrajectoryModifyCommand::get_help()
+std::vector<std::string> ccxLoadsTrajectoryBodyHeatfluxModifyCommand::get_help()
 {
   std::vector<std::string> help;
   return help;
 }
 
-bool ccxLoadsTrajectoryModifyCommand::execute(CubitCommandData &data)
+bool ccxLoadsTrajectoryBodyHeatfluxModifyCommand::execute(CubitCommandData &data)
 {
   CalculiXCoreInterface ccx_iface;
 
@@ -237,10 +235,11 @@ bool ccxLoadsTrajectoryModifyCommand::execute(CubitCommandData &data)
   }
   options.push_back(name);  
 
-  if (data.find_keyword("HEATFLUX")){
-    load_type = 0;
-    options_marker.push_back(1);
-  }else if (data.find_keyword("PRESSURE"))
+  //if (data.find_keyword("HEATFLUX")){
+  //  load_type = 0;
+  //  options_marker.push_back(1);
+  //}else 
+  if (data.find_keyword("BODYHEATFLUX"))
   {
     load_type = 1;
     options_marker.push_back(1);

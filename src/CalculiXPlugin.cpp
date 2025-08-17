@@ -67,8 +67,10 @@
 #include "ccxLoadsCentrifugalCreateCommand.hpp"
 #include "ccxLoadsCentrifugalModifyCommand.hpp"
 #include "ccxLoadsCentrifugalDeleteCommand.hpp"
-#include "ccxLoadsTrajectoryCreateCommand.hpp"
-#include "ccxLoadsTrajectoryModifyCommand.hpp"
+#include "ccxLoadsTrajectoryHeatfluxCreateCommand.hpp"
+#include "ccxLoadsTrajectoryBodyHeatfluxCreateCommand.hpp"
+#include "ccxLoadsTrajectoryHeatfluxModifyCommand.hpp"
+#include "ccxLoadsTrajectoryBodyHeatfluxModifyCommand.hpp"
 #include "ccxLoadsTrajectoryDeleteCommand.hpp"
 #include "ccxLoadsFilmCreateCommand.hpp"
 #include "ccxLoadsFilmModifyCommand.hpp"
@@ -231,8 +233,10 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxLoadsCentrifugalCreateCommand");
   keys.push_back("ccxLoadsCentrifugalModifyCommand");
   keys.push_back("ccxLoadsCentrifugalDeleteCommand");
-  keys.push_back("ccxLoadsTrajectoryCreateCommand");
-  keys.push_back("ccxLoadsTrajectoryModifyCommand");
+  keys.push_back("ccxLoadsTrajectoryHeatfluxCreateCommand");
+  keys.push_back("ccxLoadsTrajectoryBodyHeatfluxCreateCommand");
+  keys.push_back("ccxLoadsTrajectoryHeatfluxModifyCommand");
+  keys.push_back("ccxLoadsTrajectoryBodyHeatfluxModifyCommand");
   keys.push_back("ccxLoadsTrajectoryDeleteCommand");
   keys.push_back("ccxLoadsFilmCreateCommand");
   keys.push_back("ccxLoadsFilmModifyCommand");
@@ -519,11 +523,17 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
   if(key == "ccxLoadsCentrifugalDeleteCommand")
     return new ccxLoadsCentrifugalDeleteCommand();
 
-  if(key == "ccxLoadsTrajectoryCreateCommand")
-    return new ccxLoadsTrajectoryCreateCommand();
+  if(key == "ccxLoadsTrajectoryHeatfluxCreateCommand")
+    return new ccxLoadsTrajectoryHeatfluxCreateCommand();
   
-  if(key == "ccxLoadsTrajectoryModifyCommand")
-    return new ccxLoadsTrajectoryModifyCommand();
+  if(key == "ccxLoadsTrajectoryBodyHeatfluxCreateCommand")
+    return new ccxLoadsTrajectoryBodyHeatfluxCreateCommand();
+  
+  if(key == "ccxLoadsTrajectoryHeatfluxModifyCommand")
+    return new ccxLoadsTrajectoryHeatfluxModifyCommand();
+
+  if(key == "ccxLoadsTrajectoryBodyHeatfluxModifyCommand")
+    return new ccxLoadsTrajectoryBodyHeatfluxModifyCommand();
 
   if(key == "ccxLoadsTrajectoryDeleteCommand")
     return new ccxLoadsTrajectoryDeleteCommand();

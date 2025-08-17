@@ -1,16 +1,16 @@
-#ifndef CCXLOADSTRAJECTORYCREATECOMMAND_HPP
-#define CCXLOADSTRAJECTORYCREATECOMMAND_HPP
+#ifndef CCXLOADSTRAJECTORYHEATFLUXCREATECOMMAND_HPP
+#define CCXLOADSTRAJECTORYHEATFLUXCREATECOMMAND_HPP
 
 #include "CubitCommandInterface.hpp"
 
 /*!
  * \brief The Loads Trajectory create command lets you create your desired Trajectory Loads
  */
-class ccxLoadsTrajectoryCreateCommand : public CubitCommand
+class ccxLoadsTrajectoryHeatfluxCreateCommand : public CubitCommand
 {
 public:
-  ccxLoadsTrajectoryCreateCommand();
-  ~ccxLoadsTrajectoryCreateCommand();
+  ccxLoadsTrajectoryHeatfluxCreateCommand();
+  ~ccxLoadsTrajectoryHeatfluxCreateCommand();
 
   std::vector<std::string> get_syntax();
   std::vector<std::string> get_syntax_help();
@@ -18,4 +18,4 @@ public:
   bool execute(CubitCommandData &data);
 };
 
-#endif // CCXLOADSTRAJECTORYCREATECOMMAND_HPP
+#endif // CCXLOADSTRAJECTORYHEATFLUXCREATECOMMAND_HPP
