@@ -678,6 +678,7 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->direction_data);
     cubTool.read_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->magnitude_data);
     cubTool.read_dataset_double_rank_2("radius_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->radius_data);
+    cubTool.read_dataset_double_rank_2("depth_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->depth_data);
     cubTool.read_dataset_string_rank_2("time_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->time_data);
     cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->name_data);
     progressbar.step();
@@ -1232,6 +1233,7 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->direction_data);
     cubTool.write_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->magnitude_data);
     cubTool.write_dataset_double_rank_2("radius_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->radius_data);
+    cubTool.write_dataset_double_rank_2("depth_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->depth_data);
     cubTool.write_dataset_string_rank_2("time_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->time_data);
     cubTool.write_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->name_data);
     progressbar.step();

@@ -26,6 +26,7 @@ std::vector<std::string> ccxLoadsTrajectoryBodyHeatfluxCreateCommand::get_syntax
   syntax.append("time_begin <value:label='time_begin_value',help='<time_begin_value>'> ");
   syntax.append("time_end <value:label='time_end_value',help='<time_end_value>'> ");
   syntax.append("radius <value:label='radius_value',help='<radius_value>'>... ");
+  syntax.append("depth <value:label='depth_value',help='<depth_value>'>... ");
   syntax.append("[op {mod | new}] " );
   syntax.append("[name <string:type='unquoted', number='1', label='name', help='<name>'>] " );
     
@@ -50,6 +51,7 @@ std::vector<std::string> ccxLoadsTrajectoryBodyHeatfluxCreateCommand::get_syntax
   help[0].append("time_begin <time_begin_value> ");
   help[0].append("time_end <time_end_value> ");
   help[0].append("radius <radius_value>... ");
+  help[0].append("depth <depth_value>... ");
   help[0].append("[op {mod | new}] " );
   help[0].append("[name <name>] " );
 
@@ -89,6 +91,7 @@ bool ccxLoadsTrajectoryBodyHeatfluxCreateCommand::execute(CubitCommandData &data
   std::string z;
   std::vector<double> magnitude_value;
   std::vector<double> radius_value;
+  std::vector<double> depth_value;
   std::string name = "";  
 
   //if (data.find_keyword("HEATFLUX")){
@@ -126,7 +129,8 @@ bool ccxLoadsTrajectoryBodyHeatfluxCreateCommand::execute(CubitCommandData &data
   }
 
   data.get_values("radius_value", radius_value);
-  
+  data.get_values("depth_value", depth_value);
+
   data.get_string("name", name);
 
   options.push_back(std::to_string(op_mode));
@@ -144,10 +148,11 @@ bool ccxLoadsTrajectoryBodyHeatfluxCreateCommand::execute(CubitCommandData &data
 
   options3.push_back(magnitude_value);
   options3.push_back(radius_value);
+  options3.push_back(depth_value);
 
-  if (options3[0].size()!=options3[1].size())
+  if ((options3[0].size()!=options3[1].size())||(options3[0].size()!=options3[2].size()))
   {
-    output = "Failed! The same number of radius and magnitude values must be used!\n";
+    output = "Failed! The same number of radius, magnitude and depth values must be used!\n";
     PRINT_ERROR(output.c_str());
     return false;
   }

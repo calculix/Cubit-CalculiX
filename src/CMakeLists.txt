@@ -3,9 +3,9 @@ cmake_minimum_required(VERSION 3.5)
 project(Cubit-CalculiX)
 
 if (UNIX)
- set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2025.7/cmake")
+ set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2025.8/cmake")
  # python for our swig wrapping
- include_directories("/opt/Coreform-Cubit-2025.7/bin/python3/include/python3.10") 
+ include_directories("/opt/Coreform-Cubit-2025.8/bin/python3/include/python3.10") 
  set(HDF5_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Utility/HDF5/Linux/1.12.1)
 endif (UNIX)
 

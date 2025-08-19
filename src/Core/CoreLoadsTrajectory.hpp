@@ -46,8 +46,12 @@ public:
   // time_data[0][2] t_end
 
   std::vector<std::vector<double>> radius_data;
-  // time_delay_data[0][0] radius_id
-  // time_delay_data[0][1] radius
+  // radius_data[0][0] radius_id
+  // radius_data[0][1] radius
+
+  std::vector<std::vector<double>> depth_data;
+  // depth_data[0][0] depth_id
+  // depth_data[0][1] depth
   
   std::vector<std::vector<std::string>> name_data;
   // name_data[0][0] name_id
