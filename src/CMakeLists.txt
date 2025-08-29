@@ -12,14 +12,14 @@ endif (UNIX)
 if (WIN32)
  SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
  set(CMAKE_PREFIX_PATH "C:/Program Files/Coreform Cubit 2025.8/cmake")
- set(Qt5_DIR "C:/Qt/5.15.2/msvc2019_64/lib/cmake/Qt5") 
- set(Qt5Core_DIR "C:/Qt/5.15.2/msvc2019_64/lib/cmake/Qt5Core") 
- set(Qt5Charts_DIR "C:/Qt/5.15.2/msvc2019_64/lib/cmake/Qt5Charts")
- set(Qt5Widgets_DIR "C:/Qt/5.15.2/msvc2019_64/lib/cmake/Qt5Widgets")
+ set(Qt6_DIR "C:/Qt/6.8.3/mingw_64/lib/cmake/Qt6") 
+ set(Qt6Core_DIR "C:/Qt/6.8.3/mingw_64/lib/cmake/Qt6Core") 
+ set(Qt6Charts_DIR "C:/Qt/6.8.3/mingw_64/lib/cmake/Qt6Charts")
+ set(Qt6Widgets_DIR "C:/Qt/6.8.3/mingw_64/lib/cmake/Qt6Widgets")
  set(HDF5_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Utility/HDF5/Win/1.12.1) 
  # python for our swig wrapping
- include_directories("C:/Program Files/Python310/include")
- link_directories("C:/Program Files/Python310/libs")
+ include_directories("C:/Program Files/Python313/include")
+ link_directories("C:/Program Files/Python313/libs")
 endif (WIN32)
 
 # On Linux, we need to add some addition compiler flags to get our static
@@ -81,7 +81,7 @@ if (WIN32)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Solver/CalculiX/Win/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/Solver/)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Postprocessor/CGX/Win/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/Postprocessor/CGX/)
  # if missing -> please download paraview binaries from https://www.paraview.org/download/
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../../ParaView-5.13.3-MPI-Windows-Python3.10-msvc2017-AMD64/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/Postprocessor/ParaView/)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../../ParaView-6.0.0-MPI-Windows-Python3.12-msvc2017-AMD64/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/Postprocessor/ParaView/)
 endif (WIN32)
 if (UNIX)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface/calculix_pythoninterface.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
@@ -89,13 +89,13 @@ if (UNIX)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Solver/CalculiX/Linux/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Solver/)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Postprocessor/CGX/Linux/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Postprocessor/CGX/)
  # if missing -> please download paraview binaries from https://www.paraview.org/download/
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../../ParaView-5.13.3-MPI-Linux-Python3.10-x86_64/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Postprocessor/ParaView/)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../../ParaView-6.0.0-MPI-Linux-Python3.12-x86_64/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Postprocessor/ParaView/)
 endif (UNIX)
 
 # copy missing libraries into build directory
-# Qt5Charts is currently not shipped with Cubit 2025.8
+# Qt6Charts is currently not shipped with Cubit 2025.8
 if (WIN32)
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Win/Qt6Charts.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/)
+ #file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Win/Qt6Charts.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Win/hdf5_cpp.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Win/hdf5.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/)
 endif (WIN32)
