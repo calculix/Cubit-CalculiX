@@ -31,10 +31,9 @@ ENDIF(CMAKE_SYSTEM_NAME MATCHES "Linux")
 
 # Get the packages needed to use the SDK
 find_package(Cubit REQUIRED CONFIG)
-find_package(Qt6Core REQUIRED)
-#find_package(Qt6Charts REQUIRED)
+find_package(Qt6 COMPONENTS Core REQUIRED)
 find_package(Qt6 COMPONENTS Charts REQUIRED)
-find_package(Qt6Widgets REQUIRED)
+find_package(Qt6 COMPONENTS Widgets REQUIRED)
 find_package(HDF5 REQUIRED COMPONENTS C CXX HL)
 ADD_DEFINITIONS(-DH5_BUILT_AS_DYNAMIC_LIB)
 
@@ -78,18 +77,10 @@ add_subdirectory(PythonInterface)
 if (WIN32)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface/calculix_pythoninterface.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Icons/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/Icons/)
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Solver/CalculiX/Win/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/Solver/)
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Postprocessor/CGX/Win/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/Postprocessor/CGX/)
- # if missing -> please download paraview binaries from https://www.paraview.org/download/
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../../ParaView-6.0.0-MPI-Windows-Python3.12-msvc2017-AMD64/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/Postprocessor/ParaView/)
 endif (WIN32)
 if (UNIX)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface/calculix_pythoninterface.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Icons/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Icons/)
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Solver/CalculiX/Linux/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Solver/)
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Postprocessor/CGX/Linux/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Postprocessor/CGX/)
- # if missing -> please download paraview binaries from https://www.paraview.org/download/
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../../ParaView-6.0.0-MPI-Linux-Python3.12-x86_64/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Postprocessor/ParaView/)
 endif (UNIX)
 
 # copy missing libraries into build directory
@@ -207,6 +198,20 @@ target_link_libraries(calculix_core calculix_useroptions)
 target_link_libraries(calculix_pythoninterface calculix_core)
 target_link_libraries(calculix_plugin calculix_core)
 target_link_libraries(calculix_comp calculix_core)
+endif (UNIX)
+
+# copy external software
+if (WIN32)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Solver/CalculiX/Win/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/Solver/)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Postprocessor/CGX/Win/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/Postprocessor/CGX/)
+ # if missing -> please download paraview binaries from https://www.paraview.org/download/
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../../ParaView-6.0.0-MPI-Windows-Python3.12-msvc2017-AMD64/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/Postprocessor/ParaView/)
+endif (WIN32)
+if (UNIX)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Solver/CalculiX/Linux/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Solver/)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Postprocessor/CGX/Linux/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Postprocessor/CGX/)
+ # if missing -> please download paraview binaries from https://www.paraview.org/download/
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../../ParaView-6.0.0-MPI-Linux-Python3.12-x86_64/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Postprocessor/ParaView/)
 endif (UNIX)
 
 set_property(GLOBAL PROPERTY GLOBAL_DEPENDS_DEBUG_MODE 1)
