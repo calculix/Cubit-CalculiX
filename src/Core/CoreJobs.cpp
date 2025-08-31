@@ -183,8 +183,12 @@ bool CoreJobs::run_job(int job_id,int option)
     CubitString output;
     int process_id = 0;
     if (_access(ccx_uo.mPathSolver.toStdString().c_str(), 0) == 0)
-    {
-      SetEnvironmentVariable("OMP_NUM_THREADS",std::to_string(ccx_uo.mSolverThreads).c_str());
+    { 
+      //SetEnvironmentVariable("OMP_NUM_THREADS",std::to_string(ccx_uo.mSolverThreads).c_str());
+      int a = ccx_uo.mSolverThreads;
+      wchar_t *buffer = {0};
+      wsprintf(buffer,L"%d", a);
+      SetEnvironmentVariable(L"OMP_NUM_THREADS",buffer);
     }else{
       log = "CCX Solver not found! checked path \"" + ccx_uo.mPathSolver.toStdString() + "\" \n";
       PRINT_INFO("%s", log.c_str());    
