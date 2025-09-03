@@ -186,17 +186,13 @@ bool CoreJobs::run_job(int job_id,int option)
     
     if (_access(ccx_uo.mPathSolver.toStdString().c_str(), 0) == 0)
     { 
-      //SetEnvironmentVariable("OMP_NUM_THREADS",std::to_string(ccx_uo.mSolverThreads).c_str());
-      int a = ccx_uo.mSolverThreads;
-      //wchar_t *buffer = {0};
-      //wsprintf(buffer,L"%d", a);
-      //SetEnvironmentVariable(L"OMP_NUM_THREADS",buffer);
+      SetEnvironmentVariableA("OMP_NUM_THREADS",std::to_string(ccx_uo.mSolverThreads).c_str());
     }else{
       log = "CCX Solver not found! checked path \"" + ccx_uo.mPathSolver.toStdString() + "\" \n";
       PRINT_INFO("%s", log.c_str());    
       return false;
     }   
-    /*
+    
     int job_data_id;
     job_data_id = get_jobs_data_id_from_job_id(job_id);
     if (job_data_id != -1)
@@ -356,10 +352,10 @@ bool CoreJobs::run_job(int job_id,int option)
         log.append("NUMBER OF PIPE READ THREADS " + std::to_string(PipeThreads.size())  + " \n");
         PRINT_INFO("%s", log.c_str());
         */
-    //  }
+      }
 
-    //  return true;
-    //}
+      return true;
+    }
 
   #else
     std::string filepath;
