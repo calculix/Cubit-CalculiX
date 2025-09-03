@@ -18,8 +18,8 @@ if (WIN32)
  set(Qt6Widgets_DIR "C:/Qt/6.8.3/msvc2022_64/lib/cmake/Qt6Widgets")
  set(HDF5_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Utility/HDF5/Win/1.12.1) 
  # python for our swig wrapping
- include_directories("C:/Program Files/Python313/include")
- link_directories("C:/Program Files/Python313/libs")
+ include_directories("C:/Program Files/Python310/include")
+ link_directories("C:/Program Files/Python310/libs")
 endif (WIN32)
 
 # On Linux, we need to add some addition compiler flags to get our static
@@ -86,7 +86,7 @@ endif (UNIX)
 # copy missing libraries into build directory
 # Qt6Charts is currently not shipped with Cubit 2025.8
 if (WIN32)
- #file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Win/Qt6Charts.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Win/Qt6Charts.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Win/hdf5_cpp.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Win/hdf5.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/)
 endif (WIN32)

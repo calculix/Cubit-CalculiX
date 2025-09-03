@@ -182,19 +182,21 @@ bool CoreJobs::run_job(int job_id,int option)
     CubitString temp;
     CubitString output;
     int process_id = 0;
+    
+    
     if (_access(ccx_uo.mPathSolver.toStdString().c_str(), 0) == 0)
     { 
       //SetEnvironmentVariable("OMP_NUM_THREADS",std::to_string(ccx_uo.mSolverThreads).c_str());
       int a = ccx_uo.mSolverThreads;
-      wchar_t *buffer = {0};
-      wsprintf(buffer,L"%d", a);
-      SetEnvironmentVariable(L"OMP_NUM_THREADS",buffer);
+      //wchar_t *buffer = {0};
+      //wsprintf(buffer,L"%d", a);
+      //SetEnvironmentVariable(L"OMP_NUM_THREADS",buffer);
     }else{
       log = "CCX Solver not found! checked path \"" + ccx_uo.mPathSolver.toStdString() + "\" \n";
       PRINT_INFO("%s", log.c_str());    
       return false;
-    }
-
+    }   
+    /*
     int job_data_id;
     job_data_id = get_jobs_data_id_from_job_id(job_id);
     if (job_data_id != -1)
@@ -228,7 +230,7 @@ bool CoreJobs::run_job(int job_id,int option)
         //PRINT_INFO("%s", shellstr.c_str());
         std::string SourcePath = jobs_data[job_data_id][2];
         filepath = jobs_data[job_data_id][1] + ".inp";
-        CopyFile( SourcePath.c_str(), filepath.c_str(), FALSE );
+        CopyFileA( SourcePath.c_str(), filepath.c_str(), FALSE );
       } else {
         filepath = jobs_data[job_data_id][1] + ".inp";
         log = "Exporting Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " to \n";
@@ -277,6 +279,7 @@ bool CoreJobs::run_job(int job_id,int option)
       siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
     
       std::string arguments = "\"" + ccx_uo.mPathSolver.toStdString() + "\" -i \"" + filepath.substr(0, filepath.size()-4) + "\"";
+      std::wstring args = std::wstring(arguments.begin(), arguments.end());
       //arguments = "\"C:\\Windows\\System32\\cmd.exe\" echo output && ping -n 10 127.0.0.1 >NUL";
       //PRINT_INFO("%s", arguments.c_str()); 
 
@@ -287,7 +290,8 @@ bool CoreJobs::run_job(int job_id,int option)
 
       // Create the child process.         
       bSuccess = CreateProcess(NULL, 
-          &arguments[0],     // command line 
+          //&arguments[0],     // command line 
+          &args[0],     // command line 
           NULL,          // process security attributes 
           NULL,          // primary thread security attributes 
           TRUE,          // handles are inherited 
@@ -352,10 +356,11 @@ bool CoreJobs::run_job(int job_id,int option)
         log.append("NUMBER OF PIPE READ THREADS " + std::to_string(PipeThreads.size())  + " \n");
         PRINT_INFO("%s", log.c_str());
         */
-      }
+    //  }
 
-      return true;
-    }
+    //  return true;
+    //}
+
   #else
     std::string filepath;
     std::string log;
