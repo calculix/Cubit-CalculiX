@@ -17,8 +17,7 @@
 
 ccxExportCommand::ccxExportCommand()
 {
-  AppUtil au;
-  progressbar = new ProgressTool(au);
+  progressbar = CubitInterface::app_util().get()->progress_tool();;
 }
 
 ccxExportCommand::~ccxExportCommand()

@@ -38,8 +38,7 @@ bool CoreJobs::init()
     return false; // already initialized
   }else{
     CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-    AppUtil au;
-    progressbar = new ProgressTool(au);
+    progressbar = CubitInterface::app_util().get()->progress_tool();;
     is_initialized = true;  
     return true;
   }

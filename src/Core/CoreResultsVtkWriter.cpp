@@ -56,8 +56,7 @@ bool CoreResultsVtkWriter::init(int job_id,CoreResultsFrd* frd,CoreResultsDat* d
     std::sort(this->nodeset_ids.begin(),this->nodeset_ids.end());
     std::sort(this->sideset_ids.begin(),this->sideset_ids.end());
 
-    AppUtil au;
-    progressbar = new ProgressTool(au);
+    progressbar = CubitInterface::app_util().get()->progress_tool();;
     me_iface = dynamic_cast<MeshExportInterface*>(CubitInterface::get_interface("MeshExport"));
     me_iface->initialize_export();
 
@@ -5299,9 +5298,31 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
   //ccx_iface->log_str(log);
   //PRINT_INFO("%s", log.c_str());
   
+  /*
+  enum ElementType { SPHERE_EXO=0,
+                   BAR, BAR2, BAR3,
+                   BEAM, BEAM2, BEAM3,
+                   TRUSS, TRUSS2, TRUSS3,
+                   SPRING,
+                   CUBIT_TRI, TRI3, TRI4, TRI6, TRI7, // changing TRI to CUBIT_TRI as CTH already has TRI
+                   TRISHELL, TRISHELL3, TRISHELL4, TRISHELL6, TRISHELL7,
+                   SHEL, SHELL4, SHELL8, SHELL9,
+                   QUAD, QUAD4, QUAD5, QUAD8, QUAD9,
+                   TETRA, TETRA4, TETRA8, TETRA10, TETRA14, TETRA15,
+                   PYRAMID, PYRAMID5, PYRAMID8, PYRAMID13, PYRAMID18,
+                   HEX, HEX8, HEX9, HEX20, HEX21, HEX26, HEX27, HEXSHELL,
+                   FLATQUAD, FLATWEDGE, FLATHEX,
+                   WEDGE, WEDGE6, WEDGE15, WEDGE16, WEDGE20, WEDGE21,
+                   SUPERELEMENT_TOPOLOGY,
+                   INVALID_ELEMENT_TYPE
+                 };
+  */
+  
+  
+  
   //get integration point in iso space
 
-  if ((element_type>=23) && (element_type<=27)) //quad 
+  if ((element_type>=25) && (element_type<=29)) //quad 
   { 
     if (ipmax == 1)
     {
@@ -5363,7 +5384,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
       ip_iso_coords.push_back({0.,0.774596669241483,0.774596669241483});
       ip_iso_coords.push_back({0.774596669241483,0.774596669241483,0.774596669241483});
     }
-  }else if ((element_type>=11) && (element_type<=14)) // triangle
+  }else if ((element_type>=11) && (element_type<=15)) // triangle
   {
     if (ipmax == 1)
     {
@@ -5398,7 +5419,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
       ip_iso_coords.push_back({0.666666666666667,0.166666666666667,0.774596669241483});
       ip_iso_coords.push_back({0.166666666666667,0.666666666666667,0.774596669241483});
     }
-  }else if ((element_type>=39) && (element_type<=43)) // hex
+  }else if ((element_type>=41) && (element_type<=48)) // hex
   {
     if (ipmax == 1)
     {
@@ -5443,7 +5464,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
       ip_iso_coords.push_back({0.,0.774596669241483,0.774596669241483});
       ip_iso_coords.push_back({0.774596669241483,0.774596669241483,0.774596669241483});
     }
-  }else if ((element_type>=28) && (element_type<=33)) // tet
+  }else if ((element_type>=30) && (element_type<=35)) // tet
   {
     if (ipmax == 1)
     {
@@ -5472,7 +5493,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
       ip_iso_coords.push_back({0.056350832689629,0.443649167310371,0.056350832689629});
       ip_iso_coords.push_back({0.443649167310371,0.056350832689629,0.443649167310371});  
     }
-  }else if ((element_type>=48) && (element_type<=50)) // wedge
+  }else if ((element_type>=52) && (element_type<=57)) // wedge
   {
     if (ipmax == 2)
     {
@@ -5500,44 +5521,45 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
   xi = ip_iso_coords[ip-1][0];
   eta = ip_iso_coords[ip-1][1];
   zeta = ip_iso_coords[ip-1][2];
-  
   /*
-  if ((element_type>=39) && (element_type<=43)) {
-    // HEX
-  } else if ((element_type>=28) && (element_type<=33)) {
-    // TETRA
-  } else if ((element_type>=11) && (element_type<=14)) {
-    // TRI
-  } else if ((element_type>=15) && (element_type<=18)) {
-    // TRISHELL
-  } else if ((element_type>=19) && (element_type<=22)) {
-    // SHELL
-  } else if ((element_type>=23) && (element_type<=27)) {
-    // QUAD
-  } else if ((element_type>=48) && (element_type<=50)) {
-    // WEDGE
-  }
+   enum ElementType { SPHERE_EXO=0,
+                   BAR, BAR2, BAR3,
+                   BEAM, BEAM2, BEAM3,
+                   TRUSS, TRUSS2, TRUSS3,
+                   SPRING,
+                   CUBIT_TRI, TRI3, TRI4, TRI6, TRI7, // changing TRI to CUBIT_TRI as CTH already has TRI
+                   TRISHELL, TRISHELL3, TRISHELL4, TRISHELL6, TRISHELL7,
+                   SHEL, SHELL4, SHELL8, SHELL9,
+                   QUAD, QUAD4, QUAD5, QUAD8, QUAD9,
+                   TETRA, TETRA4, TETRA8, TETRA10, TETRA14, TETRA15,
+                   PYRAMID, PYRAMID5, PYRAMID8, PYRAMID13, PYRAMID18,
+                   HEX, HEX8, HEX9, HEX20, HEX21, HEX26, HEX27, HEXSHELL,
+                   FLATQUAD, FLATWEDGE, FLATHEX,
+                   WEDGE, WEDGE6, WEDGE15, WEDGE16, WEDGE20, WEDGE21,
+                   SUPERELEMENT_TOPOLOGY,
+                   INVALID_ELEMENT_TYPE
+                 };
   */
 
   //compute shape functions IMPORTANT FROM CCX SOURCE CODE YOU HAVE TO MATCH THE NODE ORDER LATER!!!
-  if ((element_type == 11)||(element_type == 12)) // tri linear
+  if ((element_type == 11)||(element_type == 12)) // tri linear || CUBIT_TRI,TRI3
   {
     shape_functions.push_back(1.-xi-eta);
     shape_functions.push_back(xi);
     shape_functions.push_back(eta);
-  }else if ((element_type == 23)||(element_type == 24)) // quad linear
+  }else if ((element_type == 25)||(element_type == 26)) // quad linear   || QUAD, QUAD4
   {
     shape_functions.push_back((1.-xi)*(1.-eta)/4.);
     shape_functions.push_back((1.+xi)*(1.-eta)/4.);
     shape_functions.push_back((1.+xi)*(1.+eta)/4.);
     shape_functions.push_back((1.-xi)*(1.+eta)/4.);
-  }else if ((element_type == 28)||(element_type == 29)) // tet linear
+  }else if ((element_type == 30)||(element_type == 31)) // tet linear || TETRA, TETRA4
   {
     shape_functions.push_back(1.-xi-eta-zeta);
     shape_functions.push_back(xi);
     shape_functions.push_back(eta);
     shape_functions.push_back(zeta);
-  }else if (element_type == 13) // tri quadratic
+  }else if (element_type == 14) // tri quadratic || TRI6
   {
     shape_functions.push_back(2.*(0.5-xi-eta)*(1.-xi-eta));
     shape_functions.push_back(xi*(2.*xi-1.));
@@ -5545,7 +5567,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
     shape_functions.push_back(4.*xi*(1.-xi-eta));
     shape_functions.push_back(4.*xi*eta);
     shape_functions.push_back(4.*eta*(1.-xi-eta));
-  }else if ((element_type == 48)||(element_type == 49)) // wedge linear
+  }else if ((element_type == 52)||(element_type == 53)) // wedge linear || WEDGE, WEDGE6
   {
     shape_functions.push_back(0.5*(1.-xi-eta)*(1.-zeta));
     shape_functions.push_back(0.5*xi*(1.-zeta));
@@ -5553,7 +5575,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
     shape_functions.push_back(0.5*(1.-xi-eta)*(1.+zeta));
     shape_functions.push_back(0.5*xi*(1.+zeta));
     shape_functions.push_back(0.5*eta*(1.+zeta));
-  }else if ((element_type == 39)||(element_type == 40)) // hex linear
+  }else if ((element_type == 41)||(element_type == 42)) // hex linear || HEX,HEX8
   {
     shape_functions.push_back((1.-xi)*(1.-eta)*(1.-zeta)/8.);
     shape_functions.push_back((1.+xi)*(1.-eta)*(1.-zeta)/8.);
@@ -5563,7 +5585,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
     shape_functions.push_back((1.+xi)*(1.-eta)*(1.+zeta)/8.);
     shape_functions.push_back((1.+xi)*(1.+eta)*(1.+zeta)/8.);
     shape_functions.push_back((1.-xi)*(1.+eta)*(1.+zeta)/8.);
-  }else if (element_type == 26) // quad quadratic
+  }else if (element_type == 28) // quad quadratic || QUAD8
   {
     shape_functions.push_back((1.-xi)*(1.-eta)*(-xi-eta-1.)/4.);
     shape_functions.push_back((1.+xi)*(1.-eta)*(xi-eta-1.)/4.);
@@ -5573,7 +5595,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
     shape_functions.push_back((1.+xi)*(1.+eta)*(1.-eta)/2.);
     shape_functions.push_back((1.+xi)*(1.-xi)*(1.+eta)/2.);
     shape_functions.push_back((1.-xi)*(1.+eta)*(1.-eta)/2.);
-  }else if (element_type == 31) // tet quadratic
+  }else if (element_type == 33) // tet quadratic || TETRA10
   {
     shape_functions.push_back((2.*(1.-xi-eta-zeta)-1.)*(1.-xi-eta-zeta));
     shape_functions.push_back(xi*(2.*xi-1.));
@@ -5585,7 +5607,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
     shape_functions.push_back(4.*zeta*(1.-xi-eta-zeta));
     shape_functions.push_back(4.*xi*zeta);
     shape_functions.push_back(4.*eta*zeta);
-  }else if (element_type == 50) // wedge quadratic
+  }else if (element_type == 54) // wedge quadratic || WEDGE15
   {
     shape_functions.push_back(-0.5*(1.-xi-eta)*(1.-zeta)*((2.*xi)+(2.*eta)+zeta));
     shape_functions.push_back(0.5*xi*(1.-zeta)*((2.*xi)-2.-zeta));
@@ -5602,7 +5624,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
     shape_functions.push_back((1.-xi-eta)*(1.-(zeta*zeta)));
     shape_functions.push_back(xi*(1.-(zeta*zeta)));
     shape_functions.push_back(eta*(1.-(zeta*zeta)));
-  }else if (element_type == 42) // hex quadratic
+  }else if (element_type == 44) // hex quadratic || HEX20
   {
     shape_functions.push_back(-(1.-xi)*(1.-eta)*(1.-zeta)*((1.+xi)+(1.+eta)+zeta)/8.);
     shape_functions.push_back(-(1.+xi)*(1.-eta)*(1.-zeta)*((1.-xi)+(1.+eta)+zeta)/8.);
@@ -5632,7 +5654,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
   for (int j = 0; j < nodes_coords.size(); j++)
   {
     // different node numbering for hex20
-    if (element_type == 42) {
+    if (element_type == 44) {
       if (j >= 12 && j<=15) {
         nodes_coords[j] = conn[j+4];
       } else if (j >= 16 && j<=19) {
@@ -5640,7 +5662,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
       } else {
         nodes_coords[j] = conn[j];
       }
-    } else if (element_type == 50) {  // different node numbering for wedge15
+    } else if (element_type == 54) {  // different node numbering for wedge15
       if (j >= 9 && j<=11) {
         nodes_coords[j] = conn[j+3];
       } else if (j >= 12 && j<=14) {

@@ -26,8 +26,7 @@ bool CoreResultsProject::init(CoreResultsFrd* frd)
 
     this->frd = frd;
 
-    AppUtil au;
-    progressbar = new ProgressTool(au);
+    progressbar = CubitInterface::app_util().get()->progress_tool();;
     // otherwise cubitinterface gets false element count!
     me_iface = dynamic_cast<MeshExportInterface*>(CubitInterface::get_interface("MeshExport"));
     me_iface->initialize_export();
