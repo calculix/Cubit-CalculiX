@@ -723,7 +723,7 @@ bool CoreResultsFrd::read_parallel()
 
     ThreadPool tp;
     tp.start(max_threads);
-
+    
     for (size_t i = 0; i < number_of_result_blocks; i++)
     {
         std::function<void()> f = std::bind(&CoreResultsFrd::read_nodal_result_block_thread, this,int(i),0);
@@ -734,7 +734,7 @@ bool CoreResultsFrd::read_parallel()
       update_progressbar();
     }
     tp.stop();
-
+    
   }
   frd.close();
 
