@@ -442,12 +442,12 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
               {
                 output_file << ", ";
               }
-              //if ((j == 14) && element_type[0] == 42) {
-              //  output_file << "\n";
-              //}
-              if ((j == 14) && (num_nodes > 15)) {
+              if ((j == 14) && element_type[0] == 42) {
                 output_file << "\n";
               }
+              /*if ((j == 14) && (num_nodes > 15)) {
+                output_file << "\n";
+              }*/
             }
             output_file << std::endl;
           }
