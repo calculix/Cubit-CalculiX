@@ -26,7 +26,13 @@
 
 
 CoreJobs::CoreJobs()
-{}
+{
+  ProcessPipe.clear();
+  PPTID.clear();
+  PipePID.clear();
+  PipeThreads.clear();
+  PipeThreadsRun.clear();
+}
 
 CoreJobs::~CoreJobs()
 {}
@@ -331,10 +337,23 @@ bool CoreJobs::run_job(int job_id,int option)
         //PRINT_INFO("%s", log.c_str());
         std::string output(chBuf, dwRead);
         output_console[std::stoi(jobs_data[job_data_id][5])].push_back(output);
-                          
-        PipeThreads.push_back(std::thread(&CoreJobs::read_pipe, this, job_id, PipeThreadsRun.size()));
+        
+        /*
+        log = "pipethreads \n" + std::to_string(PipeThreads.size()) + " \n";
+        log.append("pipethreadsrun \n" + std::to_string(PipeThreadsRun.size()) + " \n");
+        PRINT_INFO("%s", log.c_str());
+        */
+
         PipeThreadsRun.push_back(true);
-       
+        int bool_data_id = int(PipeThreadsRun.size()-1);
+        PipeThreads.push_back(std::thread(&CoreJobs::read_pipe, this, job_id, bool_data_id));
+
+        /*
+        log = "pipethreads \n" + std::to_string(PipeThreads.size()) + " \n";
+        log.append("pipethreadsrun \n" + std::to_string(PipeThreadsRun.size()) + " \n");
+        PRINT_INFO("%s", log.c_str());
+        */
+
         // write linking of the ids
         PULONG ClientProcessId;
         GetNamedPipeClientProcessId(g_hChildStd_OUT_Rd,ClientProcessId);
@@ -1155,9 +1174,20 @@ int CoreJobs::get_jobs_data_id_from_job_id(int job_id)
           int PipePID;
           PipePID = get_PipePID_from_ProcessPID(std::stoi(jobs_data[jobs_data_id][4]));           
           ProcessPipe_data_id = get_ProcessPipe_data_id_from_PipePID(PipePID);
-          
+          bool_data_id = int(PipeThreadsRun.size()-1);
+
           while (success) 
           {
+            /*
+            log = "job_data_id " + std::to_string(jobs_data_id) + "\n";
+            PRINT_INFO("%s", log.c_str());
+            log = "bool_data_id " + std::to_string(bool_data_id) + "\n";
+            PRINT_INFO("%s", log.c_str());
+            log = "PipeThreadsRun " + std::to_string(PipeThreadsRun.size()) + "\n";
+            PRINT_INFO("%s", log.c_str());
+            log = "ProcessPipe_data_id " + std::to_string(ProcessPipe_data_id) + "\n";
+            PRINT_INFO("%s", log.c_str());
+            */
             if (!PipeThreadsRun[bool_data_id])
             {
               break;
@@ -1168,7 +1198,7 @@ int CoreJobs::get_jobs_data_id_from_job_id(int job_id)
             }
             std::string output(chBuf, dwRead);
             output_console[std::stoi(jobs_data[jobs_data_id][5])].push_back(output);
-            get_cvgsta(std::stoi(jobs_data[jobs_data_id][0]));        
+            get_cvgsta(std::stoi(jobs_data[jobs_data_id][0]));
           }
         }
       }

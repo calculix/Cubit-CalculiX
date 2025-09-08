@@ -93,10 +93,17 @@ bool CoreResultsDat::read()
   bool success = false;
   if (ccx_uo.mConverterThreads > 1)
   {
-    if (read_parallel())
-    {
-      success = true;
-    }
+    #ifdef WIN32
+      if (read_single())
+      {
+        success = true;
+      }
+    #else
+      if (read_parallel())
+      {
+        success = true;
+      }
+    #endif
   }else{
     if (read_single())
     {
@@ -568,7 +575,7 @@ bool CoreResultsDat::read_parallel()
     ++loop_c;
   }
   */
-
+  
   ThreadPool tp;
   
   tp.start(max_threads);

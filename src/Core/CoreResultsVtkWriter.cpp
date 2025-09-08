@@ -175,7 +175,11 @@ bool CoreResultsVtkWriter::write()
     PRINT_INFO("%s", log.c_str());
     if (ccx_uo.mConverterThreads > 1)
     {
-      this->write_linked_parallel();
+      #ifdef WIN32
+        this->write_linked();
+      #else
+        this->write_linked_parallel();
+      #endif
     }else{
       this->write_linked();
     }

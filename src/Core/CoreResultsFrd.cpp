@@ -75,10 +75,17 @@ bool CoreResultsFrd::read()
   bool success = false;
   if (ccx_uo.mConverterThreads > 1)
   {
-    if (read_parallel())
-    {
-      success = true;
-    }
+    #ifdef WIN32
+      if (read_single())
+      {
+        success = true;
+      }
+    #else
+      if (read_parallel())
+      {
+        success = true;
+      }
+    #endif
   }else{
     if (read_single())
     {
@@ -267,7 +274,8 @@ bool CoreResultsFrd::read_parallel()
   
   int maxlines = 0;
   std::string log;
-  log = "reading results " + filepath + " for Job ID " + std::to_string(job_id) + " using " + std::to_string(max_threads) + " threads \n";
+  //log = "reading results " + filepath + " for Job ID " + std::to_string(job_id) + " using " + std::to_string(max_threads) + " threads \n";
+  log = "reading results " + filepath + " for Job ID " + std::to_string(job_id) + " \n";
   PRINT_INFO("%s", log.c_str());
 
   std::string frdline = "";

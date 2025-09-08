@@ -270,7 +270,7 @@ int ConfigFile::standard_num_entry(std::string option)
     }else if (option == "ConverterThreads")
     {
         #ifdef WIN32
-            standard_value = 8;
+            standard_value = 1;
         #else
             standard_value = 8;
         #endif
