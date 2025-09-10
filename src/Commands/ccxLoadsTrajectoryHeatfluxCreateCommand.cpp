@@ -172,7 +172,7 @@ bool ccxLoadsTrajectoryHeatfluxCreateCommand::execute(CubitCommandData &data)
     }
   }
   
-  if (!ccx_iface.create_loadstrajectory(options,options2,options3))
+  if (!ccx_iface.create_loadstrajectory("HEATFLUX",options,options2,options3))
   {
     output = "Failed!\n";
     PRINT_ERROR(output.c_str());

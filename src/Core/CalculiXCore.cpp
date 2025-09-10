@@ -3965,9 +3965,9 @@ bool CalculiXCore::delete_loadscentrifugal(int centrifugal_id)
   return loadscentrifugal->delete_load(centrifugal_id);
 }
 
-bool CalculiXCore::create_loadstrajectory(std::vector<std::string> options, std::vector<int> options2, std::vector<std::vector<double>> options3)
+bool CalculiXCore::create_loadstrajectory(std::string load_type, std::vector<std::string> options, std::vector<int> options2, std::vector<std::vector<double>> options3)
 {
-  return loadstrajectory->create_load(options, options2, options3);
+  return loadstrajectory->create_load(load_type, options, options2, options3);
 }
 
 bool CalculiXCore::modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2, std::vector<std::vector<double>> options3)

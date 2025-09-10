@@ -1,4 +1,4 @@
-#include "CoreLoadsTrajectory.hpp"
+#include "CoreLoadsTrajectoryHeatflux.hpp"
 #include "CubitInterface.hpp"
 #include "CalculiXCoreInterface.hpp"
 #include "CubitMessage.hpp"
@@ -6,13 +6,13 @@
 #include <algorithm>
 #include "StopWatch.hpp"
 
-CoreLoadsTrajectory::CoreLoadsTrajectory()
+CoreLoadsTrajectoryHeatflux::CoreLoadsTrajectoryHeatflux()
 {}
 
-CoreLoadsTrajectory::~CoreLoadsTrajectory()
+CoreLoadsTrajectoryHeatflux::~CoreLoadsTrajectoryHeatflux()
 {}
 
-bool CoreLoadsTrajectory::init()
+bool CoreLoadsTrajectoryHeatflux::init()
 {
   if (is_initialized)
   {
@@ -24,12 +24,12 @@ bool CoreLoadsTrajectory::init()
   }
 }
 
-bool CoreLoadsTrajectory::update()
+bool CoreLoadsTrajectoryHeatflux::update()
 { 
   return true;
 }
 
-bool CoreLoadsTrajectory::reset()
+bool CoreLoadsTrajectoryHeatflux::reset()
 {
   loads_data.clear();
   fire_ray_surface_data.clear();
@@ -42,12 +42,12 @@ bool CoreLoadsTrajectory::reset()
   return true;
 }
 
-bool CoreLoadsTrajectory::check_initialized()
+bool CoreLoadsTrajectoryHeatflux::check_initialized()
 {
   return is_initialized;
 }
 
-bool CoreLoadsTrajectory::create_load(std::string load_type, std::vector<std::string> options, std::vector<int> options2, std::vector<std::vector<double>> options3)
+bool CoreLoadsTrajectoryHeatflux::create_load(std::vector<std::string> options, std::vector<int> options2, std::vector<std::vector<double>> options3)
 {
   int load_id;
   int load_last;
@@ -62,7 +62,7 @@ bool CoreLoadsTrajectory::create_load(std::string load_type, std::vector<std::st
   int time_id;
   int radius_id;
   int name_id;
-  int load_type_value;
+
 
   if (loads_data.size()==0)
   {
@@ -205,23 +205,20 @@ bool CoreLoadsTrajectory::create_load(std::string load_type, std::vector<std::st
   name_id = sub_id;
   this->add_name(std::to_string(sub_id), options[8]);
 
-  // load_type
-  load_type = std::stoi(options[9]);
-
-  this->add_load(load_id, op_mode, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id, radius_id, name_id,load_type);
+  this->add_load(load_id, op_mode, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id, radius_id, name_id);
   return true;
 }
 
-bool CoreLoadsTrajectory::add_load(int load_id, int op_mode, int curve_id, int vertex_id, int fire_ray_surface_id, int direction_id, int magnitude_id, int time_id, int radius_id, int name_id, int load_type)
+bool CoreLoadsTrajectoryHeatflux::add_load(int load_id, int op_mode, int curve_id, int vertex_id, int fire_ray_surface_id, int direction_id, int magnitude_id, int time_id, int radius_id, int name_id)
 {
-  std::vector<int> v = {load_id, op_mode, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id, radius_id, name_id, load_type};
+  std::vector<int> v = {load_id, op_mode, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id, radius_id, name_id};
       
   loads_data.push_back(v);
 
   return true;
 }
 
-bool CoreLoadsTrajectory::modify_load(int load_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2, std::vector<std::vector<double>> options3)
+bool CoreLoadsTrajectoryHeatflux::modify_load(int load_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2, std::vector<std::vector<double>> options3)
 {
   int sub_data_id;
   std::vector<int> sub_data_ids;
@@ -369,16 +366,11 @@ bool CoreLoadsTrajectory::modify_load(int load_id, std::vector<std::string> opti
       sub_data_id = get_name_data_id_from_name_id(loads_data[loads_data_id][9]);
       name_data[sub_data_id][1] = options[9];
     }
-    // load_type
-    if (options_marker[12]==1)
-    {
-      loads_data[loads_data_id][10] = std::stoi(options[10]);
-    }
     return true;
   }
 }
 
-bool CoreLoadsTrajectory::delete_load(int load_id)
+bool CoreLoadsTrajectoryHeatflux::delete_load(int load_id)
 {
   int sub_data_id;
   std::vector<int> sub_data_ids;
@@ -434,7 +426,7 @@ bool CoreLoadsTrajectory::delete_load(int load_id)
   }
 }
 
-bool CoreLoadsTrajectory::add_time(std::string time_id, std::string t_begin, std::string t_end)
+bool CoreLoadsTrajectoryHeatflux::add_time(std::string time_id, std::string t_begin, std::string t_end)
 {
   std::vector<std::string> v = {time_id, t_begin, t_end};
       
@@ -443,7 +435,7 @@ bool CoreLoadsTrajectory::add_time(std::string time_id, std::string t_begin, std
   return true;
 }
 
-bool CoreLoadsTrajectory::add_radius(double radius_id, double radius)
+bool CoreLoadsTrajectoryHeatflux::add_radius(double radius_id, double radius)
 {
   std::vector<double> v = {radius_id, radius};
       
@@ -452,7 +444,7 @@ bool CoreLoadsTrajectory::add_radius(double radius_id, double radius)
   return true;
 }
 
-bool CoreLoadsTrajectory::add_direction(std::string direction_id, std::string x, std::string y, std::string z)
+bool CoreLoadsTrajectoryHeatflux::add_direction(std::string direction_id, std::string x, std::string y, std::string z)
 {
   std::vector<std::string> v = {direction_id, x, y, z};
       
@@ -461,7 +453,7 @@ bool CoreLoadsTrajectory::add_direction(std::string direction_id, std::string x,
   return true;
 }
 
-bool CoreLoadsTrajectory::add_magnitude(double magnitude_id, double magnitude_value)
+bool CoreLoadsTrajectoryHeatflux::add_magnitude(double magnitude_id, double magnitude_value)
 {
   std::vector<double> v = {magnitude_id, magnitude_value};
       
@@ -470,7 +462,7 @@ bool CoreLoadsTrajectory::add_magnitude(double magnitude_id, double magnitude_va
   return true;
 }
 
-bool CoreLoadsTrajectory::add_fire_ray_surface(int fire_ray_surface_id, int surface_id)
+bool CoreLoadsTrajectoryHeatflux::add_fire_ray_surface(int fire_ray_surface_id, int surface_id)
 {
   std::vector<int> v = {fire_ray_surface_id, surface_id};
       
@@ -479,7 +471,7 @@ bool CoreLoadsTrajectory::add_fire_ray_surface(int fire_ray_surface_id, int surf
   return true;
 }
 
-bool CoreLoadsTrajectory::add_name(std::string name_id, std::string name)
+bool CoreLoadsTrajectoryHeatflux::add_name(std::string name_id, std::string name)
 {
   std::vector<std::string> v = {name_id, name};
   
@@ -488,7 +480,7 @@ bool CoreLoadsTrajectory::add_name(std::string name_id, std::string name)
   return true;
 }
 
-int CoreLoadsTrajectory::get_loads_data_id_from_load_id(int load_id)
+int CoreLoadsTrajectoryHeatflux::get_loads_data_id_from_load_id(int load_id)
 { 
   int return_int = -1;
   for (size_t i = 0; i < loads_data.size(); i++)
@@ -501,7 +493,7 @@ int CoreLoadsTrajectory::get_loads_data_id_from_load_id(int load_id)
   return return_int;
 }
 
-int CoreLoadsTrajectory::get_time_data_id_from_time_id(int time_id)
+int CoreLoadsTrajectoryHeatflux::get_time_data_id_from_time_id(int time_id)
 { 
   int return_int = -1;
   for (size_t i = 0; i < time_data.size(); i++)
@@ -514,7 +506,7 @@ int CoreLoadsTrajectory::get_time_data_id_from_time_id(int time_id)
   return return_int;
 }
 
-std::vector<int> CoreLoadsTrajectory::get_radius_data_ids_from_radius_id(int radius_id)
+std::vector<int> CoreLoadsTrajectoryHeatflux::get_radius_data_ids_from_radius_id(int radius_id)
 { 
   std::vector<int> return_int;
   for (size_t i = 0; i < radius_data.size(); i++)
@@ -527,7 +519,7 @@ std::vector<int> CoreLoadsTrajectory::get_radius_data_ids_from_radius_id(int rad
   return return_int;
 }
 
-int CoreLoadsTrajectory::get_direction_data_id_from_direction_id(int direction_id)
+int CoreLoadsTrajectoryHeatflux::get_direction_data_id_from_direction_id(int direction_id)
 { 
   int return_int = -1;
   for (size_t i = 0; i < direction_data.size(); i++)
@@ -540,7 +532,7 @@ int CoreLoadsTrajectory::get_direction_data_id_from_direction_id(int direction_i
   return return_int;
 }
 
-std::vector<int> CoreLoadsTrajectory::get_magnitude_data_ids_from_magnitude_id(int magnitude_id)
+std::vector<int> CoreLoadsTrajectoryHeatflux::get_magnitude_data_ids_from_magnitude_id(int magnitude_id)
 { 
   std::vector<int> return_int;
   for (size_t i = 0; i < magnitude_data.size(); i++)
@@ -553,7 +545,7 @@ std::vector<int> CoreLoadsTrajectory::get_magnitude_data_ids_from_magnitude_id(i
   return return_int;
 }
 
-std::vector<int> CoreLoadsTrajectory::get_fire_ray_surface_data_ids_from_fire_ray_surface_id(int fire_surface_id)
+std::vector<int> CoreLoadsTrajectoryHeatflux::get_fire_ray_surface_data_ids_from_fire_ray_surface_id(int fire_surface_id)
 { 
   std::vector<int> return_int;
   for (size_t i = 0; i < fire_ray_surface_data.size(); i++)
@@ -566,7 +558,7 @@ std::vector<int> CoreLoadsTrajectory::get_fire_ray_surface_data_ids_from_fire_ra
   return return_int;
 }
 
-std::vector<int> CoreLoadsTrajectory::get_fire_ray_surface_ids_from_fire_ray_surface_id(int fire_surface_id)
+std::vector<int> CoreLoadsTrajectoryHeatflux::get_fire_ray_surface_ids_from_fire_ray_surface_id(int fire_surface_id)
 { 
   std::vector<int> return_int;
   for (size_t i = 0; i < fire_ray_surface_data.size(); i++)
@@ -579,7 +571,7 @@ std::vector<int> CoreLoadsTrajectory::get_fire_ray_surface_ids_from_fire_ray_sur
   return return_int;
 }
 
-int CoreLoadsTrajectory::get_name_data_id_from_name_id(int name_id)
+int CoreLoadsTrajectoryHeatflux::get_name_data_id_from_name_id(int name_id)
 { 
   int return_int = -1;
   for (size_t i = 0; i < name_data.size(); i++)
@@ -592,7 +584,7 @@ int CoreLoadsTrajectory::get_name_data_id_from_name_id(int name_id)
   return return_int;
 }
 
-std::vector<int> CoreLoadsTrajectory::get_node_ids(int load_id)
+std::vector<int> CoreLoadsTrajectoryHeatflux::get_node_ids(int load_id)
 {
   std::vector<int> node_ids;
   int load_data_id = this->get_loads_data_id_from_load_id(load_id);
@@ -622,7 +614,7 @@ std::vector<int> CoreLoadsTrajectory::get_node_ids(int load_id)
   return node_ids;
 }
 
-std::vector<int> CoreLoadsTrajectory::get_edge_ids(int load_id)
+std::vector<int> CoreLoadsTrajectoryHeatflux::get_edge_ids(int load_id)
 {
   std::vector<int> edge_ids;
   int load_data_id = this->get_loads_data_id_from_load_id(load_id);
@@ -635,7 +627,7 @@ std::vector<int> CoreLoadsTrajectory::get_edge_ids(int load_id)
   return edge_ids;
 }
 
-std::vector<std::vector<double>> CoreLoadsTrajectory::get_hit_coordinates(int load_id)
+std::vector<std::vector<double>> CoreLoadsTrajectoryHeatflux::get_hit_coordinates(int load_id)
 {
   std::vector<std::vector<double>> hit_coordinates;
   
@@ -684,7 +676,7 @@ std::vector<std::vector<double>> CoreLoadsTrajectory::get_hit_coordinates(int lo
   return hit_coordinates;
 }
 
-std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectory::get_face_ids(int load_id)
+std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectoryHeatflux::get_face_ids(int load_id)
 {
   std::vector<std::vector<std::vector<int>>> selected_face_ids;
   //selected_face_ids[0] order by node
@@ -760,7 +752,7 @@ std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectory::get_face_ids(int
   return selected_face_ids;
 }
 
-std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectory::get_draw_face_ids(int load_id)
+std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectoryHeatflux::get_draw_face_ids(int load_id)
 {
   std::vector<std::vector<std::vector<int>>> face_ids = this->get_face_ids(load_id);
   //face_ids[0] order by node
@@ -787,7 +779,7 @@ std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectory::get_draw_face_id
   return face_ids;
 }
 
-std::vector<std::vector<double>> CoreLoadsTrajectory::get_times(int load_id)
+std::vector<std::vector<double>> CoreLoadsTrajectoryHeatflux::get_times(int load_id)
 {
   std::vector<std::vector<double>> times;
   
@@ -825,7 +817,7 @@ std::vector<std::vector<double>> CoreLoadsTrajectory::get_times(int load_id)
   return times;
 }
 
-std::vector<std::vector<double>> CoreLoadsTrajectory::get_radius(int load_id)
+std::vector<std::vector<double>> CoreLoadsTrajectoryHeatflux::get_radius(int load_id)
 {
   std::vector<std::vector<double>> node_radius;
   
@@ -851,7 +843,7 @@ std::vector<std::vector<double>> CoreLoadsTrajectory::get_radius(int load_id)
   return node_radius;
 }
 
-std::vector<std::vector<double>> CoreLoadsTrajectory::get_magnitude(int load_id)
+std::vector<std::vector<double>> CoreLoadsTrajectoryHeatflux::get_magnitude(int load_id)
 {
   std::vector<std::vector<double>> node_magnitude;
   
@@ -877,7 +869,7 @@ std::vector<std::vector<double>> CoreLoadsTrajectory::get_magnitude(int load_id)
   return node_magnitude;
 }
 
-bool CoreLoadsTrajectory::prepare_export()
+bool CoreLoadsTrajectoryHeatflux::prepare_export()
 {
   StopWatch watch;
   watch.tick("prepare trajectory start");
@@ -1187,7 +1179,7 @@ bool CoreLoadsTrajectory::prepare_export()
 }
 
 
-bool CoreLoadsTrajectory::clean_export()
+bool CoreLoadsTrajectoryHeatflux::clean_export()
 {
   std::string ids;
   StopWatch watch;
@@ -1259,7 +1251,7 @@ bool CoreLoadsTrajectory::clean_export()
   return true;
 }
 
-std::string CoreLoadsTrajectory::get_load_export(int load_id)
+std::string CoreLoadsTrajectoryHeatflux::get_load_export(int load_id)
 {
   
   int load_data_id;
@@ -1301,18 +1293,18 @@ std::string CoreLoadsTrajectory::get_load_export(int load_id)
   return str_temp;
 }
 
-std::string CoreLoadsTrajectory::print_data()
+std::string CoreLoadsTrajectoryHeatflux::print_data()
 {
   std::string str_return;
-  str_return = "\n CoreLoadsTrajectory loads_data: \n";
-  str_return.append("load_id, OP MODE, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id \n");
+  str_return = "\n CoreLoadsTrajectoryHeatflux loads_data: \n";
+  str_return.append("load_id, OP MODE, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id, radius_id, name_id \n");
 
   for (size_t i = 0; i < loads_data.size(); i++)
   {
-    str_return.append(std::to_string(loads_data[i][0]) + " " + std::to_string(loads_data[i][1]) + " " + std::to_string(loads_data[i][2]) + " " + std::to_string(loads_data[i][3]) + " " + std::to_string(loads_data[i][4]) + " " + std::to_string(loads_data[i][5]) + " " + std::to_string(loads_data[i][6]) + " " + std::to_string(loads_data[i][7]) + " \n");
+    str_return.append(std::to_string(loads_data[i][0]) + " " + std::to_string(loads_data[i][1]) + " " + std::to_string(loads_data[i][2]) + " " + std::to_string(loads_data[i][3]) + " " + std::to_string(loads_data[i][4]) + " " + std::to_string(loads_data[i][5]) + " " + std::to_string(loads_data[i][6]) + " " + std::to_string(loads_data[i][7]) + " " + std::to_string(loads_data[i][8]) + " " + std::to_string(loads_data[i][9]) + " \n");
   }
 
-  str_return.append("\n CoreLoadsTrajectory time_data: \n");
+  str_return.append("\n CoreLoadsTrajectoryHeatflux time_data: \n");
   str_return.append("time_id, t_begin, t_end \n");
 
   for (size_t i = 0; i < time_data.size(); i++)
@@ -1320,7 +1312,7 @@ std::string CoreLoadsTrajectory::print_data()
     str_return.append(time_data[i][0] + " " + time_data[i][1] + " " + time_data[i][2] + " \n");
   }
 
-  str_return.append("\n CoreLoadsTrajectory direction_data: \n");
+  str_return.append("\n CoreLoadsTrajectoryHeatflux direction_data: \n");
   str_return.append("direction_id, x, y, z \n");
 
   for (size_t i = 0; i < direction_data.size(); i++)
@@ -1328,7 +1320,7 @@ std::string CoreLoadsTrajectory::print_data()
     str_return.append(direction_data[i][0] + " " + direction_data[i][1] + " " + direction_data[i][2] + " " + direction_data[i][3] + " \n");
   }
   
-  str_return.append("\n CoreLoadsTrajectory magnitude_data: \n");
+  str_return.append("\n CoreLoadsTrajectoryHeatflux magnitude_data: \n");
   str_return.append("magnitude_id, magnitude_value \n");
 
   for (size_t i = 0; i < magnitude_data.size(); i++)
@@ -1336,7 +1328,7 @@ std::string CoreLoadsTrajectory::print_data()
     str_return.append(std::to_string(magnitude_data[i][0]) + " " + std::to_string(magnitude_data[i][1]) + " \n");
   }
 
-  str_return.append("\n CoreLoadsTrajectory radius_data: \n");
+  str_return.append("\n CoreLoadsTrajectoryHeatflux radius_data: \n");
   str_return.append("radius_id, radius_value \n");
 
   for (size_t i = 0; i < radius_data.size(); i++)
@@ -1344,7 +1336,7 @@ std::string CoreLoadsTrajectory::print_data()
     str_return.append(std::to_string(radius_data[i][0]) + " " + std::to_string(radius_data[i][1]) + " \n");
   }
 
-  str_return.append("\n CoreLoadsTrajectory fire_ray_surface_data: \n");
+  str_return.append("\n CoreLoadsTrajectoryHeatflux fire_ray_surface_data: \n");
   str_return.append("fire_ray_surface_id, surface_id \n");
 
   for (size_t i = 0; i < fire_ray_surface_data.size(); i++)
@@ -1352,7 +1344,7 @@ std::string CoreLoadsTrajectory::print_data()
     str_return.append(std::to_string(fire_ray_surface_data[i][0]) + " " + std::to_string(fire_ray_surface_data[i][1]) + " \n");
   }
 
-  str_return.append("\n CoreLoadsTrajectory name_data: \n");
+  str_return.append("\n CoreLoadsTrajectoryHeatflux name_data: \n");
   str_return.append("name_id, name \n");
 
   for (size_t i = 0; i < name_data.size(); i++)
@@ -1367,7 +1359,7 @@ std::string CoreLoadsTrajectory::print_data()
 
 //sorting of vectors
 template <typename T> 
-std::vector<std::size_t> CoreLoadsTrajectory::sort_permutation(
+std::vector<std::size_t> CoreLoadsTrajectoryHeatflux::sort_permutation(
     const std::vector<T>& vec)
 {
     std::vector<std::size_t> p(vec.size());
@@ -1379,7 +1371,7 @@ std::vector<std::size_t> CoreLoadsTrajectory::sort_permutation(
 }
 
 template <typename T> 
-void CoreLoadsTrajectory::apply_permutation(
+void CoreLoadsTrajectoryHeatflux::apply_permutation(
     std::vector<T>& vec,
     const std::vector<std::size_t>& p)
 {

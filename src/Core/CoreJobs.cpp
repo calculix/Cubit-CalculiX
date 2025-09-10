@@ -27,11 +27,13 @@
 
 CoreJobs::CoreJobs()
 {
-  ProcessPipe.clear();
-  PPTID.clear();
-  PipePID.clear();
-  PipeThreads.clear();
-  PipeThreadsRun.clear();
+  #ifdef WIN32
+    ProcessPipe.clear();
+    PPTID.clear();
+    PipePID.clear();
+    PipeThreads.clear();
+    PipeThreadsRun.clear();
+  #endif
 }
 
 CoreJobs::~CoreJobs()

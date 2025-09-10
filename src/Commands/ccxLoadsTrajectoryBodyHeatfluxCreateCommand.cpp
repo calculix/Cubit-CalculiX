@@ -176,7 +176,7 @@ bool ccxLoadsTrajectoryBodyHeatfluxCreateCommand::execute(CubitCommandData &data
     }
   }
   
-  if (!ccx_iface.create_loadstrajectory(options,options2,options3))
+  if (!ccx_iface.create_loadstrajectory("BODYHEATFLUX",options,options2,options3))
   {
     output = "Failed!\n";
     PRINT_ERROR(output.c_str());

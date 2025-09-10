@@ -183,7 +183,7 @@ public:
   bool create_loadscentrifugal(std::vector<std::string> options); // adds a new centrifugal load
   bool modify_loadscentrifugal(int centrifugal_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a centrifugal
   bool delete_loadscentrifugal(int centrifugal_id); // delete centrifugal load
-  bool create_loadstrajectory(std::vector<std::string> options, std::vector<int> options2, std::vector<std::vector<double>> options3); // adds a new trajectory load
+  bool create_loadstrajectory(std::string load_type, std::vector<std::string> options, std::vector<int> options2, std::vector<std::vector<double>> options3); // adds a new trajectory load
   bool modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2, std::vector<std::vector<double>> options3); // modify a trajectory
   bool delete_loadstrajectory(int trajectory_id); // delete trajectory load
   std::vector<int> loadstrajectory_get_node_ids(int trajectory_id); //returns node ids for curve

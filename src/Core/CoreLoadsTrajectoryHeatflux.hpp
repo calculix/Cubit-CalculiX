@@ -1,17 +1,17 @@
-#ifndef CORELOADSTRAJECTORY_HPP
-#define CORELOADSTRAJECTORY_HPP
+#ifndef CORELOADSTRAJECTORYHEATFLUX_HPP
+#define CORELOADSTRAJECTORYHEATFLUX_HPP
 
 #include <vector>
 #include <string>
 
 class CalculiXCoreInterface;
 
-class CoreLoadsTrajectory
+class CoreLoadsTrajectoryHeatflux
 {
 
 public:
-  CoreLoadsTrajectory();
-  ~CoreLoadsTrajectory();
+  CoreLoadsTrajectoryHeatflux();
+  ~CoreLoadsTrajectoryHeatflux();
 
   std::vector<std::vector<int>> loads_data; // used to store the connection between a trajectory and its possible options
   // loads_data[0][0] load_id
@@ -24,7 +24,6 @@ public:
   // loads_data[0][7] time_id
   // loads_data[0][8] radius_id
   // loads_data[0][9] name_id
-  // loads_data[0][10] load_type-> 1 heatflux | 2 pressure
 
   std::vector<std::vector<int>> fire_ray_surface_data;
   // fire_ray_surface_data[0][0] fire_ray_surface_id
@@ -64,7 +63,7 @@ public:
   bool update(); // check for changes 
   bool reset(); // delete all data and initialize afterwards
   bool check_initialized(); // check if object is initialized
-  bool create_load(std::string load_type,std::vector<std::string> options, std::vector<int> options2, std::vector<std::vector<double>> options3); // adds new load
+  bool create_load(std::vector<std::string> options, std::vector<int> options2, std::vector<std::vector<double>> options3); // adds new load
   bool add_load(int load_id, int op_mode, int curve_id, int vertex_id, int fire_ray_surface_id, int direction_id, int magnitude_id, int time_id, int radius_id, int name_id, int load_type); // adds new load to loads_data
   bool modify_load(int load_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2, std::vector<std::vector<double>> options3); // modify a load
   bool delete_load(int load_id); // deletes load from loads_data
@@ -102,4 +101,4 @@ public:
   CalculiXCoreInterface *ccx_iface;
 };
 
-#endif // CORELOADSTRAJECTORY_HPP
+#endif // CORELOADSTRAJECTORYHEATFLUX_HPP

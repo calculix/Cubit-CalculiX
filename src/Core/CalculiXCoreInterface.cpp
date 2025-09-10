@@ -555,9 +555,9 @@ bool CalculiXCoreInterface::delete_loadscentrifugal(int centrifugal_id)
   return ccx_core.delete_loadscentrifugal(centrifugal_id);
 }
 
-bool CalculiXCoreInterface::create_loadstrajectory(std::vector<std::string> options, std::vector<int> options2, std::vector<std::vector<double>> options3)
+bool CalculiXCoreInterface::create_loadstrajectory(std::string load_type, std::vector<std::string> options, std::vector<int> options2, std::vector<std::vector<double>> options3)
 {
-  return ccx_core.create_loadstrajectory(options, options2, options3);
+  return ccx_core.create_loadstrajectory(load_type, options, options2, options3);
 }
 
 bool CalculiXCoreInterface::modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2, std::vector<std::vector<double>> options3)
