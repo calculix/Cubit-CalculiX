@@ -29,6 +29,7 @@ class CoreLoadsTrajectoryHeatflux;
 class CoreLoadsFilm;
 class CoreLoadsRadiation;
 class CoreLoadsSurfaceTraction;
+class CoreLoadsBodyHeatflux;
 class CoreBCsDisplacements;
 class CoreBCsTemperatures;
 class CoreHistoryOutputs;
@@ -457,6 +458,7 @@ public:
   CoreLoadsFilm *loadsfilm;
   CoreLoadsRadiation *loadsradiation;
   CoreLoadsSurfaceTraction *loadssurfacetraction;
+  CoreLoadsBodyHeatflux *loadsbodyheatflux;
   CoreBCsDisplacements *bcsdisplacements;
   CoreBCsTemperatures *bcstemperatures;
   CoreHistoryOutputs *historyoutputs;

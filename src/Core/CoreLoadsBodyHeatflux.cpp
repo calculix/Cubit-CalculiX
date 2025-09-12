@@ -79,10 +79,10 @@ bool CoreLoadsBodyHeatflux::create_load(std::vector<std::string> options, std::v
   else
   {
     sub_last = int(time_delay_data.size()) - 1;
-    sub_id = std::stoi(time_delay_data[sub_last][0]) + 1;
+    sub_id = int(time_delay_data[sub_last][0]) + 1;
   }
   time_delay_id = sub_id;
-  this->add_time_delay(std::to_string(sub_id), options[2]);
+  this->add_time_delay(sub_id, std::stod(options[2]));
 
   // element
   if (element_data.size()==0)
@@ -92,13 +92,13 @@ bool CoreLoadsBodyHeatflux::create_load(std::vector<std::string> options, std::v
   else
   {
     sub_last = int(element_data.size()) - 1;
-    sub_id = std::stoi(element_data[sub_last][0]) + 1;
+    sub_id = int(element_data[sub_last][0]) + 1;
   }
   element_id = sub_id;
-  this->add_element(std::to_string(sub_id), options2);
+  this->add_element(sub_id, options2);
 
   // element type
-  op_mode = std::stoi(options[3]);
+  element_type = std::stoi(options[3]);
 
   // magnitude
   if (magnitude_data.size()==0)
@@ -108,10 +108,10 @@ bool CoreLoadsBodyHeatflux::create_load(std::vector<std::string> options, std::v
   else
   {
     sub_last = int(magnitude_data.size()) - 1;
-    sub_id = std::stoi(magnitude_data[sub_last][0]) + 1;
+    sub_id = int(magnitude_data[sub_last][0]) + 1;
   }
   magnitude_id = sub_id;
-  this->add_magnitude(std::to_string(sub_id), options[4]);
+  this->add_magnitude(sub_id, std::stod(options[4]));
 
   // name
   if (name_data.size()==0)
@@ -163,40 +163,36 @@ bool CoreLoadsBodyHeatflux::modify_load(int load_id, std::vector<std::string> op
     if (options_marker[2]==1)
     {
       sub_data_id = get_time_delay_data_id_from_time_delay_id(loads_data[loads_data_id][3]);
-      time_delay_data[sub_data_id][1] = options[2];
+      time_delay_data[sub_data_id][1] = std::stod(options[2]);
     }
-    // BLOCK
+    // element
     if (options_marker[3]==1)
     {
-      loads_data[loads_data_id][4] = std::stoi(options[3]);
+      sub_data_id = get_element_data_id_from_element_id(loads_data[loads_data_id][4]);
+      std::vector<int> e;
+      element_data[sub_data_id] = e;
+      element_data[sub_data_id].push_back(loads_data[loads_data_id][4]);
+      for (size_t i = 0; i < options2.size(); i++)
+      {
+        element_data[sub_data_id].push_back(options2[i]);
+      }
     }
-    // direction
+    // element type
     if (options_marker[4]==1)
     {
-      sub_data_id = get_direction_data_id_from_direction_id(loads_data[loads_data_id][5]);
-      direction_data[sub_data_id][1] = options[4];
-    }
-    if (options_marker[5]==1)
-    {
-      sub_data_id = get_direction_data_id_from_direction_id(loads_data[loads_data_id][5]);
-      direction_data[sub_data_id][2] = options[5];
-    }
-    if (options_marker[6]==1)
-    {
-      sub_data_id = get_direction_data_id_from_direction_id(loads_data[loads_data_id][5]);
-      direction_data[sub_data_id][3] = options[6];
+      loads_data[loads_data_id][5] = std::stoi(options[3]);
     }
     // magnitude
-    if (options_marker[7]==1)
+    if (options_marker[5]==1)
     {
       sub_data_id = get_magnitude_data_id_from_magnitude_id(loads_data[loads_data_id][6]);
-      magnitude_data[sub_data_id][1] = options[7];
+      magnitude_data[sub_data_id][1] = std::stod(options[4]);
     }
     // name
-    if (options_marker[8]==1)
+    if (options_marker[6]==1)
     {
       sub_data_id = get_name_data_id_from_name_id(loads_data[loads_data_id][7]);
-      name_data[sub_data_id][1] = options[8];
+      name_data[sub_data_id][1] = options[5];
     }
     return true;
   }
@@ -215,10 +211,10 @@ bool CoreLoadsBodyHeatflux::delete_load(int load_id)
     if (sub_data_id != -1){
       time_delay_data.erase(time_delay_data.begin() + sub_data_id);
     }
-    // direction
-    sub_data_id = get_direction_data_id_from_direction_id(loads_data[loads_data_id][5]);
+    // element
+    sub_data_id = get_element_data_id_from_element_id(loads_data[loads_data_id][4]);
     if (sub_data_id != -1){
-      direction_data.erase(direction_data.begin() + sub_data_id);
+      element_data.erase(element_data.begin() + sub_data_id);
     }
     // magnitude
     sub_data_id = get_magnitude_data_id_from_magnitude_id(loads_data[loads_data_id][6]);
@@ -235,27 +231,31 @@ bool CoreLoadsBodyHeatflux::delete_load(int load_id)
   }
 }
 
-bool CoreLoadsBodyHeatflux::add_time_delay(std::string time_delay_id, std::string time_delay_value)
+bool CoreLoadsBodyHeatflux::add_time_delay(double time_delay_id, double time_delay_value)
 {
-  std::vector<std::string> v = {time_delay_id, time_delay_value};
+  std::vector<double> v = {time_delay_id, time_delay_value};
       
   time_delay_data.push_back(v);
 
   return true;
 }
 
-bool CoreLoadsBodyHeatflux::add_direction(std::string direction_id, std::string x, std::string y, std::string z)
+bool CoreLoadsBodyHeatflux::add_element(int element_id, std::vector<int> elements)
 {
-  std::vector<std::string> v = {direction_id, x, y, z};
+  std::vector<int> v = {element_id};
+  for (size_t i = 0; i < elements.size(); i++)
+  {
+    v.push_back(elements[i]);
+  }
       
-  direction_data.push_back(v);
+  element_data.push_back(v);
 
   return true;
 }
 
-bool CoreLoadsBodyHeatflux::add_magnitude(std::string magnitude_id, std::string magnitude_value)
+bool CoreLoadsBodyHeatflux::add_magnitude(double magnitude_id, double magnitude_value)
 {
-  std::vector<std::string> v = {magnitude_id, magnitude_value};
+  std::vector<double> v = {magnitude_id, magnitude_value};
       
   magnitude_data.push_back(v);
 
@@ -289,7 +289,7 @@ int CoreLoadsBodyHeatflux::get_time_delay_data_id_from_time_delay_id(int time_de
   int return_int = -1;
   for (size_t i = 0; i < time_delay_data.size(); i++)
   {
-    if (time_delay_data[i][0]==std::to_string(time_delay_id))
+    if (time_delay_data[i][0]==double(time_delay_id))
     {
         return_int = int(i);
     }  
@@ -297,12 +297,12 @@ int CoreLoadsBodyHeatflux::get_time_delay_data_id_from_time_delay_id(int time_de
   return return_int;
 }
 
-int CoreLoadsBodyHeatflux::get_direction_data_id_from_direction_id(int direction_id)
+int CoreLoadsBodyHeatflux::get_element_data_id_from_element_id(int element_id)
 { 
   int return_int = -1;
-  for (size_t i = 0; i < direction_data.size(); i++)
+  for (size_t i = 0; i < element_data.size(); i++)
   {
-    if (direction_data[i][0]==std::to_string(direction_id))
+    if (element_data[i][0]==element_id)
     {
         return_int = int(i);
     }  
@@ -315,7 +315,7 @@ int CoreLoadsBodyHeatflux::get_magnitude_data_id_from_magnitude_id(int magnitude
   int return_int = -1;
   for (size_t i = 0; i < magnitude_data.size(); i++)
   {
-    if (magnitude_data[i][0]==std::to_string(magnitude_id))
+    if (magnitude_data[i][0]==double(magnitude_id))
     {
         return_int = int(i);
     }  
@@ -340,7 +340,9 @@ std::string CoreLoadsBodyHeatflux::get_load_export(int load_id)
 {
   int load_data_id;
   int sub_data_id;
-  std::string str_temp = "*DLOAD";
+  int magnitude_data_id;
+
+  std::string str_temp = "*DFLUX";
   load_data_id = get_loads_data_id_from_load_id(load_id);
   if (loads_data[load_data_id][1]==0)
   {
@@ -354,21 +356,29 @@ std::string CoreLoadsBodyHeatflux::get_load_export(int load_id)
     str_temp.append(",AMPLITUDE=" + ccx_iface->get_amplitude_name(loads_data[load_data_id][2]));
   }
   sub_data_id = get_time_delay_data_id_from_time_delay_id(loads_data[load_data_id][3]);
-  if (time_delay_data[sub_data_id][1]!="")
+  if (time_delay_data[sub_data_id][1]==0.)
   {
-    str_temp.append(",TIME DELAY=" + time_delay_data[sub_data_id][1]);
+    str_temp.append(",TIME DELAY=" + std::to_string(time_delay_data[sub_data_id][1]));
   }
   str_temp.append("\n");
   
   // second line
-  str_temp.append(ccx_iface->get_block_name(loads_data[load_data_id][4]) + ",GRAV,");
+  sub_data_id = get_element_data_id_from_element_id(loads_data[load_data_id][4]);
+  magnitude_data_id = get_magnitude_data_id_from_magnitude_id(loads_data[load_data_id][6]);
+    
+  for (size_t i = 1; i < element_data[sub_data_id].size(); i++)
+  {
+    if (loads_data[load_data_id][5]==1) // BLOCK
+    {  
+      str_temp.append(ccx_iface->get_block_name(element_data[sub_data_id][i]) + ",BF,"); 
+    }else if (loads_data[load_data_id][5]==2) // ELEMENTS
+    {
+      str_temp.append(std::to_string(element_data[sub_data_id][i]) + ",BF,"); 
+    }
+    str_temp.append(ccx_iface->to_string_scientific(magnitude_data[sub_data_id][1]));
+    str_temp.append("\n");  
+  }
   
-  sub_data_id = get_magnitude_data_id_from_magnitude_id(loads_data[load_data_id][6]);
-  str_temp.append(magnitude_data[sub_data_id][1] + ",");
-  
-  sub_data_id = get_direction_data_id_from_direction_id(loads_data[load_data_id][5]);
-  str_temp.append(direction_data[sub_data_id][1] + "," + direction_data[sub_data_id][2] + "," + direction_data[sub_data_id][3]);
-
   return str_temp;
 }
 
@@ -376,11 +386,11 @@ std::string CoreLoadsBodyHeatflux::print_data()
 {
   std::string str_return;
   str_return = "\n CoreLoadsBodyHeatflux loads_data: \n";
-  str_return.append("load_id, OP MODE, amplitude_id, time_delay_id, block_id, direction_id, magnitude_id \n");
+  str_return.append("load_id, OP MODE, amplitude_id, time_delay_id, element_id, element_type, magnitude_id, name_id \n");
 
   for (size_t i = 0; i < loads_data.size(); i++)
   {
-    str_return.append(std::to_string(loads_data[i][0]) + " " + std::to_string(loads_data[i][1]) + " " + std::to_string(loads_data[i][2]) + " " + std::to_string(loads_data[i][3]) + " " + std::to_string(loads_data[i][4]) + " " + std::to_string(loads_data[i][5]) + " " + std::to_string(loads_data[i][6]) + " \n");
+    str_return.append(std::to_string(loads_data[i][0]) + " " + std::to_string(loads_data[i][1]) + " " + std::to_string(loads_data[i][2]) + " " + std::to_string(loads_data[i][3]) + " " + std::to_string(loads_data[i][4]) + " " + std::to_string(loads_data[i][5]) + " " + std::to_string(loads_data[i][6]) + " " + std::to_string(loads_data[i][7]) + " \n");
   }
 
   str_return.append("\n CoreLoadsBodyHeatflux time_delay_data: \n");
@@ -388,15 +398,19 @@ std::string CoreLoadsBodyHeatflux::print_data()
 
   for (size_t i = 0; i < time_delay_data.size(); i++)
   {
-    str_return.append(time_delay_data[i][0] + " " + time_delay_data[i][1] + " \n");
+    str_return.append(std::to_string(time_delay_data[i][0]) + " " + std::to_string(time_delay_data[i][1]) + " \n");
   }
 
-  str_return.append("\n CoreLoadsBodyHeatflux direction_data: \n");
-  str_return.append("direction_id, x, y, z \n");
+  str_return.append("\n CoreLoadsBodyHeatflux element_data: \n");
+  str_return.append("element_id, element ids.... \n");
 
-  for (size_t i = 0; i < direction_data.size(); i++)
+  for (size_t i = 0; i < element_data.size(); i++)
   {
-    str_return.append(direction_data[i][0] + " " + direction_data[i][1] + " " + direction_data[i][2] + " " + direction_data[i][3] + " \n");
+    for (size_t ii = 0; ii < element_data[i].size(); ii++)
+    {
+      str_return.append(std::to_string(element_data[i][ii]) + " ");
+    }
+    str_return.append(" \n");
   }
   
   str_return.append("\n CoreLoadsBodyHeatflux magnitude_data: \n");
@@ -404,7 +418,7 @@ std::string CoreLoadsBodyHeatflux::print_data()
 
   for (size_t i = 0; i < magnitude_data.size(); i++)
   {
-    str_return.append(magnitude_data[i][0] + " " + magnitude_data[i][1] + " \n");
+    str_return.append(std::to_string(magnitude_data[i][0]) + " " + std::to_string(magnitude_data[i][1]) + " \n");
   }
 
   str_return.append("\n CoreLoadsBodyHeatflux name_data: \n");

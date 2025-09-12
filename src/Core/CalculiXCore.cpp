@@ -67,7 +67,7 @@ CalculiXCore::CalculiXCore():
   contactpairs(NULL),amplitudes(NULL),orientations(NULL),damping(NULL),physicalconstants(NULL),
   loadsforces(NULL),loadspressures(NULL),loadsheatfluxes(NULL),
   loadsgravity(NULL),loadscentrifugal(NULL),loadstrajectory(NULL),loadsfilm(NULL),loadsradiation(NULL),
-  loadssurfacetraction(NULL),
+  loadssurfacetraction(NULL),loadsbodyheatflux(NULL),
   bcsdisplacements(NULL),bcstemperatures(NULL), historyoutputs(NULL), fieldoutputs(NULL),
   initialconditions(NULL), hbcs(NULL), steps(NULL),jobs(NULL),results(NULL),timer(NULL),customlines(NULL),
   draw(NULL)
@@ -117,6 +117,8 @@ CalculiXCore::~CalculiXCore()
     delete loadsradiation;
   if(loadssurfacetraction)
     delete loadssurfacetraction;
+  if(loadsbodyheatflux)
+    delete loadsbodyheatflux;
   if(bcsdisplacements)
     delete bcsdisplacements;
   if(bcstemperatures)
