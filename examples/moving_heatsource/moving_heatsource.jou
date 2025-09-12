@@ -53,7 +53,7 @@ ccx create trajectory heatflux curve 14 vertex 18 surface 1 direction 0 0 -1 mag
 # refinement with the use of the python interface
 #!python
 import numpy
-face_ids = ccx.loadstrajectory_get_draw_face_ids(1)
+face_ids = ccx.loadstrajectory_heatflux_get_draw_face_ids(1)
 all_face_ids=[]
 for node in face_ids:
  for radius in node:
@@ -66,7 +66,7 @@ if len(all_face_ids)>0:
  status=cubit.cmd(f"refine hex all in face {' '.join(str(id) for id in all_face_ids)} numsplit 1 bias 1.0 depth 0")
 print(f"refinement {status}")
 
-face_ids = ccx.loadstrajectory_get_draw_face_ids(2)
+face_ids = ccx.loadstrajectory_heatflux_get_draw_face_ids(2)
 all_face_ids=[]
 for node in face_ids:
  for radius in node:
@@ -114,6 +114,7 @@ ccx create job name "moving_heatsource"
 #ccx run job 1
 
 ccx draw load trajectory 1 2 3
+
 
 
 

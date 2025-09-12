@@ -5516,7 +5516,7 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
     {
       if (loadstrajectory->get_load_type(id)=="HEATFLUX")
       {
-        sub_data_id = loadstrajectory->loads_data[data_id][2];               
+        sub_data_id = loadstrajectory->heatflux->get_loads_data_id_from_load_id(loadstrajectory->loads_data[data_id][2]);
         entities.push_back({"curve",std::to_string(loadstrajectory->heatflux->loads_data[sub_data_id][2])});
         entities.push_back({"vertex",std::to_string(loadstrajectory->heatflux->loads_data[sub_data_id][3])});
         std::vector<int> surface_ids = loadstrajectory->heatflux->get_fire_ray_surface_ids_from_fire_ray_surface_id(loadstrajectory->heatflux->loads_data[sub_data_id][4]);
