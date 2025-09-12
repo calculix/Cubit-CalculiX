@@ -134,14 +134,15 @@ public:
   bool create_loadstrajectory(std::string load_type,std::vector<std::string> options, std::vector<int> options2, std::vector<std::vector<double>> options3); // adds a new trajectory load
   bool modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2, std::vector<std::vector<double>> options3); // modify a trajectory
   bool delete_loadstrajectory(int trajectory_id); // delete trajectory load
-  std::vector<int> loadstrajectory_get_node_ids(int trajectory_id); //returns node ids for curve
-  std::vector<int> loadstrajectory_get_edge_ids(int trajectory_id); //returns edge ids for curve
-  std::vector<std::vector<double>> loadstrajectory_get_hit_coordinates(int trajectory_id); //returns hit coordinates
-  std::vector<std::vector<std::vector<int>>> loadstrajectory_get_face_ids(int trajectory_id); //returns face ids for the node ids from get_node_ids
-  std::vector<std::vector<std::vector<int>>> loadstrajectory_get_draw_face_ids(int trajectory_id); //returns face ids for the node ids from get_node_ids
-  std::vector<std::vector<double>> loadstrajectory_get_times(int trajectory_id); //returns time begin and end ordered by the node ids from get_node_ids
-  std::vector<std::vector<double>> loadstrajectory_get_radius(int trajectory_id); //returns radius ordered by the node ids from get_node_ids
-  std::vector<std::vector<double>> loadstrajectory_get_magnitude(int trajectory_id); //returns magnitude ordered by the node ids from get_node_ids
+  std::string loadstrajectory_get_load_type(int trajectory_id); //returns the load type
+  std::vector<int> loadstrajectory_heatflux_get_node_ids(int trajectory_id); //returns node ids for curve
+  std::vector<int> loadstrajectory_heatflux_get_edge_ids(int trajectory_id); //returns edge ids for curve
+  std::vector<std::vector<double>> loadstrajectory_heatflux_get_hit_coordinates(int trajectory_id); //returns hit coordinates
+  std::vector<std::vector<std::vector<int>>> loadstrajectory_heatflux_get_face_ids(int trajectory_id); //returns face ids for the node ids from get_node_ids
+  std::vector<std::vector<std::vector<int>>> loadstrajectory_heatflux_get_draw_face_ids(int trajectory_id); //returns face ids for the node ids from get_node_ids
+  std::vector<std::vector<double>> loadstrajectory_heatflux_get_times(int trajectory_id); //returns time begin and end ordered by the node ids from get_node_ids
+  std::vector<std::vector<double>> loadstrajectory_heatflux_get_radius(int trajectory_id); //returns radius ordered by the node ids from get_node_ids
+  std::vector<std::vector<double>> loadstrajectory_heatflux_get_magnitude(int trajectory_id); //returns magnitude ordered by the node ids from get_node_ids
   bool create_loadsfilm(std::vector<std::string> options); // adds a new film load
   bool modify_loadsfilm(int film_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a film
   bool delete_loadsfilm(int film_id); // delete film load

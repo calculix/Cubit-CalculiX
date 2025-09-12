@@ -831,13 +831,13 @@ bool CoreDraw::draw_load_centrifugal(int id, double size)
 bool CoreDraw::draw_load_trajectory(int id, double size)
 {
     std::vector<int> node_ids;
-    node_ids = ccx_iface->loadstrajectory_get_node_ids(id);
+    node_ids = ccx_iface->loadstrajectory_heatflux_get_node_ids(id);
     std::vector<std::vector<double>> hit_coordinates;
-    hit_coordinates = ccx_iface->loadstrajectory_get_hit_coordinates(id);
+    hit_coordinates = ccx_iface->loadstrajectory_heatflux_get_hit_coordinates(id);
     std::vector<std::vector<std::vector<int>>> face_ids;
-    face_ids = ccx_iface->loadstrajectory_get_draw_face_ids(id);
+    face_ids = ccx_iface->loadstrajectory_heatflux_get_draw_face_ids(id);
     std::vector<std::vector<double>> times;
-    times = ccx_iface->loadstrajectory_get_times(id);
+    times = ccx_iface->loadstrajectory_heatflux_get_times(id);
     bool switch_color = true;
 
     for (size_t i = 0; i < hit_coordinates.size(); i++)

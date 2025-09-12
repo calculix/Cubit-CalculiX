@@ -38,6 +38,7 @@
 #include "CoreLoadsGravity.hpp"
 #include "CoreLoadsCentrifugal.hpp"
 #include "CoreLoadsTrajectory.hpp"
+#include "CoreLoadsTrajectoryHeatflux.hpp"
 #include "CoreLoadsFilm.hpp"
 #include "CoreLoadsRadiation.hpp"
 #include "CoreLoadsSurfaceTraction.hpp"
@@ -674,13 +675,14 @@ bool CalculiXCore::read_cub(std::string filename)
     progressbar->check_interrupt();
     //LoadsTrajectory
     cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->loads_data);
-    cubTool.read_dataset_int_rank_2("fire_ray_surface_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->fire_ray_surface_data);
-    cubTool.read_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->direction_data);
-    cubTool.read_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->magnitude_data);
-    cubTool.read_dataset_double_rank_2("radius_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->radius_data);
-    cubTool.read_dataset_double_rank_2("depth_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->depth_data);
-    cubTool.read_dataset_string_rank_2("time_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->time_data);
-    cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->name_data);
+    //LoadsTrajectoryHeatflux
+    cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Trajectory/Heatflux", loadstrajectory->heatflux->loads_data);
+    cubTool.read_dataset_int_rank_2("fire_ray_surface_data","Cubit-CalculiX/Loads/Trajectory/Heatflux", loadstrajectory->heatflux->fire_ray_surface_data);
+    cubTool.read_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Trajectory/Heatflux", loadstrajectory->heatflux->direction_data);
+    cubTool.read_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory/Heatflux", loadstrajectory->heatflux->magnitude_data);
+    cubTool.read_dataset_double_rank_2("radius_data","Cubit-CalculiX/Loads/Trajectory/Heatflux", loadstrajectory->heatflux->radius_data);
+    cubTool.read_dataset_string_rank_2("time_data","Cubit-CalculiX/Loads/Trajectory/Heatflux", loadstrajectory->heatflux->time_data);
+    cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Trajectory/Heatflux", loadstrajectory->heatflux->name_data);
     progressbar->step();
     progressbar->check_interrupt();
     //LoadsFilm
@@ -1229,13 +1231,15 @@ bool CalculiXCore::save_cub(std::string filename)
     //LoadsTrajectory
     cubTool.createGroup("Cubit-CalculiX/Loads/Trajectory");
     cubTool.write_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->loads_data);
-    cubTool.write_dataset_int_rank_2("fire_ray_surface_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->fire_ray_surface_data);
-    cubTool.write_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->direction_data);
-    cubTool.write_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->magnitude_data);
-    cubTool.write_dataset_double_rank_2("radius_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->radius_data);
-    cubTool.write_dataset_double_rank_2("depth_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->depth_data);
-    cubTool.write_dataset_string_rank_2("time_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->time_data);
-    cubTool.write_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Trajectory", loadstrajectory->name_data);
+    //LoadsTrajectoryHeatflux
+    cubTool.createGroup("Cubit-CalculiX/Loads/Trajectory/Heatflux");
+    cubTool.write_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Trajectory/Heatflux", loadstrajectory->heatflux->loads_data);
+    cubTool.write_dataset_int_rank_2("fire_ray_surface_data","Cubit-CalculiX/Loads/Trajectory/Heatflux", loadstrajectory->heatflux->fire_ray_surface_data);
+    cubTool.write_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Trajectory/Heatflux", loadstrajectory->heatflux->direction_data);
+    cubTool.write_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory/Heatflux", loadstrajectory->heatflux->magnitude_data);
+    cubTool.write_dataset_double_rank_2("radius_data","Cubit-CalculiX/Loads/Trajectory/Heatflux", loadstrajectory->heatflux->radius_data);
+    cubTool.write_dataset_string_rank_2("time_data","Cubit-CalculiX/Loads/Trajectory/Heatflux", loadstrajectory->heatflux->time_data);
+    cubTool.write_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Trajectory/Heatflux", loadstrajectory->heatflux->name_data);
     progressbar->step();
     progressbar->check_interrupt();
     //LoadsFilm
@@ -1912,25 +1916,31 @@ std::string CalculiXCore::autocleanup()
   for (size_t i = loadstrajectory->loads_data.size(); i > 0; i--)
   { 
     sub_bool = false;
-    if (!check_curve_exists(loadstrajectory->loads_data[i-1][2]))
+    // LOADS TRAJECTORY HEATFLUX
+    if (loadstrajectory->get_load_type(loadstrajectory->loads_data[i-1][0])=="HEATFLUX")
     {
-      log.append("Curve ID " + std::to_string(loadstrajectory->loads_data[i-1][2]) + " doesn't exist.\n");
-      log.append("Trajectory ID " + std::to_string(loadstrajectory->loads_data[i-1][0]) + " will be deleted.\n");
-      sub_bool = true;
+      int sub_data_id = loadstrajectory->heatflux->get_loads_data_id_from_load_id(loadstrajectory->loads_data[i-1][2]);
+      if (!check_curve_exists(loadstrajectory->heatflux->loads_data[sub_data_id][2]))
+      {
+        log.append("Curve ID " + std::to_string(loadstrajectory->heatflux->loads_data[sub_data_id][2]) + " doesn't exist.\n");
+        log.append("Trajectory ID " + std::to_string(loadstrajectory->loads_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+      if (!check_vertex_exists(loadstrajectory->heatflux->loads_data[sub_data_id][3]))
+      {
+        log.append("Vertex ID " + std::to_string(loadstrajectory->heatflux->loads_data[sub_data_id][3]) + " doesn't exist.\n");
+        log.append("Trajectory ID " + std::to_string(loadstrajectory->loads_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+      std::vector<int> ids = CubitInterface::parse_cubit_list("vertex", std::to_string(loadstrajectory->heatflux->loads_data[sub_data_id][3]) + " in curve " + std::to_string(loadstrajectory->heatflux->loads_data[sub_data_id][2])); 
+      if (ids.size()==0)
+      {
+        log.append("Vertex ID " + std::to_string(loadstrajectory->heatflux->loads_data[sub_data_id][3]) + " doesn't exist in Curve.\n");
+        log.append("Trajectory ID " + std::to_string(loadstrajectory->loads_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
     }
-    if (!check_vertex_exists(loadstrajectory->loads_data[i-1][3]))
-    {
-      log.append("Vertex ID " + std::to_string(loadstrajectory->loads_data[i-1][3]) + " doesn't exist.\n");
-      log.append("Trajectory ID " + std::to_string(loadstrajectory->loads_data[i-1][0]) + " will be deleted.\n");
-      sub_bool = true;
-    }
-    std::vector<int> ids = CubitInterface::parse_cubit_list("vertex", std::to_string(loadstrajectory->loads_data[i-1][3]) + " in curve " + std::to_string(loadstrajectory->loads_data[i-1][2])); 
-    if (ids.size()==0)
-    {
-      log.append("Vertex ID " + std::to_string(loadstrajectory->loads_data[i-1][3]) + " doesn't exist in Curve.\n");
-      log.append("Trajectory ID " + std::to_string(loadstrajectory->loads_data[i-1][0]) + " will be deleted.\n");
-      sub_bool = true;
-    }
+
     if (sub_bool)
     {
       print_log = sub_bool;
@@ -3980,44 +3990,89 @@ bool CalculiXCore::delete_loadstrajectory(int trajectory_id)
   return loadstrajectory->delete_load(trajectory_id);
 }
 
-std::vector<int> CalculiXCore::loadstrajectory_get_node_ids(int trajectory_id)
+std::string CalculiXCore::loadstrajectory_get_load_type(int trajectory_id)
 {
-  return loadstrajectory->get_node_ids(trajectory_id);
+  return loadstrajectory->get_load_type(trajectory_id);
 }
 
-std::vector<int> CalculiXCore::loadstrajectory_get_edge_ids(int trajectory_id)
+std::vector<int> CalculiXCore::loadstrajectory_heatflux_get_node_ids(int trajectory_id)
 {
-  return loadstrajectory->get_edge_ids(trajectory_id);
+  if (loadstrajectory->get_load_type(trajectory_id)=="HEATFLUX")
+  {
+    int loads_data_id = loadstrajectory->get_loads_data_id_from_load_id(trajectory_id);
+    return loadstrajectory->heatflux->get_node_ids(loadstrajectory->loads_data[loads_data_id][2]);
+  }
+  return loadstrajectory->heatflux->get_node_ids(-1);
 }
 
-std::vector<std::vector<double>> CalculiXCore::loadstrajectory_get_hit_coordinates(int trajectory_id)
+std::vector<int> CalculiXCore::loadstrajectory_heatflux_get_edge_ids(int trajectory_id)
 {
-  return loadstrajectory->get_hit_coordinates(trajectory_id);
+  if (loadstrajectory->get_load_type(trajectory_id)=="HEATFLUX")
+  {
+    int loads_data_id = loadstrajectory->get_loads_data_id_from_load_id(trajectory_id);
+    return loadstrajectory->heatflux->get_edge_ids(loadstrajectory->loads_data[loads_data_id][2]);
+  }
+  return loadstrajectory->heatflux->get_edge_ids(-1);
 }
 
-std::vector<std::vector<std::vector<int>>> CalculiXCore::loadstrajectory_get_face_ids(int trajectory_id)
+std::vector<std::vector<double>> CalculiXCore::loadstrajectory_heatflux_get_hit_coordinates(int trajectory_id)
 {
-  return loadstrajectory->get_face_ids(trajectory_id);
+  if (loadstrajectory->get_load_type(trajectory_id)=="HEATFLUX")
+  {
+    int loads_data_id = loadstrajectory->get_loads_data_id_from_load_id(trajectory_id);
+    return loadstrajectory->heatflux->get_hit_coordinates(loadstrajectory->loads_data[loads_data_id][2]);
+  }
+  return loadstrajectory->heatflux->get_hit_coordinates(-1);
 }
 
-std::vector<std::vector<std::vector<int>>> CalculiXCore::loadstrajectory_get_draw_face_ids(int trajectory_id)
+std::vector<std::vector<std::vector<int>>> CalculiXCore::loadstrajectory_heatflux_get_face_ids(int trajectory_id)
 {
-  return loadstrajectory->get_draw_face_ids(trajectory_id);
+  if (loadstrajectory->get_load_type(trajectory_id)=="HEATFLUX")
+  {
+    int loads_data_id = loadstrajectory->get_loads_data_id_from_load_id(trajectory_id);
+    return loadstrajectory->heatflux->get_face_ids(loadstrajectory->loads_data[loads_data_id][2]);
+  }
+  return loadstrajectory->heatflux->get_face_ids(-1);
 }
 
-std::vector<std::vector<double>> CalculiXCore::loadstrajectory_get_times(int trajectory_id)
+std::vector<std::vector<std::vector<int>>> CalculiXCore::loadstrajectory_heatflux_get_draw_face_ids(int trajectory_id)
 {
-  return loadstrajectory->get_times(trajectory_id);
+  if (loadstrajectory->get_load_type(trajectory_id)=="HEATFLUX")
+  {
+    int loads_data_id = loadstrajectory->get_loads_data_id_from_load_id(trajectory_id);
+    return loadstrajectory->heatflux->get_draw_face_ids(loadstrajectory->loads_data[loads_data_id][2]);
+  }
+  return loadstrajectory->heatflux->get_draw_face_ids(-1);
 }
 
-std::vector<std::vector<double>> CalculiXCore::loadstrajectory_get_radius(int trajectory_id)
+std::vector<std::vector<double>> CalculiXCore::loadstrajectory_heatflux_get_times(int trajectory_id)
 {
-  return loadstrajectory->get_radius(trajectory_id);
+  if (loadstrajectory->get_load_type(trajectory_id)=="HEATFLUX")
+  {
+    int loads_data_id = loadstrajectory->get_loads_data_id_from_load_id(trajectory_id);
+    return loadstrajectory->heatflux->get_times(loadstrajectory->loads_data[loads_data_id][2]);
+  }
+  return loadstrajectory->heatflux->get_times(-1);
 }
 
-std::vector<std::vector<double>> CalculiXCore::loadstrajectory_get_magnitude(int trajectory_id)
+std::vector<std::vector<double>> CalculiXCore::loadstrajectory_heatflux_get_radius(int trajectory_id)
 {
-  return loadstrajectory->get_magnitude(trajectory_id);
+  if (loadstrajectory->get_load_type(trajectory_id)=="HEATFLUX")
+  {
+    int loads_data_id = loadstrajectory->get_loads_data_id_from_load_id(trajectory_id);
+    return loadstrajectory->heatflux->get_radius(loadstrajectory->loads_data[loads_data_id][2]);
+  }
+  return loadstrajectory->heatflux->get_radius(-1);
+}
+
+std::vector<std::vector<double>> CalculiXCore::loadstrajectory_heatflux_get_magnitude(int trajectory_id)
+{
+  if (loadstrajectory->get_load_type(trajectory_id)=="HEATFLUX")
+  {
+    int loads_data_id = loadstrajectory->get_loads_data_id_from_load_id(trajectory_id);
+    return loadstrajectory->heatflux->get_magnitude(loadstrajectory->loads_data[loads_data_id][2]);
+  }
+  return loadstrajectory->heatflux->get_magnitude(-1);
 }
 
 bool CalculiXCore::create_loadsfilm(std::vector<std::string> options)
@@ -5459,12 +5514,16 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
     data_id = loadstrajectory->get_loads_data_id_from_load_id(id);
     if (data_id!=-1)
     {
-      entities.push_back({"curve",std::to_string(loadstrajectory->loads_data[data_id][2])});
-      entities.push_back({"vertex",std::to_string(loadstrajectory->loads_data[data_id][3])});
-      std::vector<int> surface_ids = loadstrajectory->get_fire_ray_surface_ids_from_fire_ray_surface_id(loadstrajectory->loads_data[data_id][4]);
-      for (size_t i = 0; i < surface_ids.size(); i++)
+      if (loadstrajectory->get_load_type(id)=="HEATFLUX")
       {
-        entities.push_back({"surface",std::to_string(surface_ids[i])});
+        sub_data_id = loadstrajectory->loads_data[data_id][2];               
+        entities.push_back({"curve",std::to_string(loadstrajectory->heatflux->loads_data[sub_data_id][2])});
+        entities.push_back({"vertex",std::to_string(loadstrajectory->heatflux->loads_data[sub_data_id][3])});
+        std::vector<int> surface_ids = loadstrajectory->heatflux->get_fire_ray_surface_ids_from_fire_ray_surface_id(loadstrajectory->heatflux->loads_data[sub_data_id][4]);
+        for (size_t i = 0; i < surface_ids.size(); i++)
+        {
+          entities.push_back({"surface",std::to_string(surface_ids[i])});
+        }
       }
     }
   }else if (entity=="loadsfilm")
@@ -9243,11 +9302,10 @@ std::vector<std::vector<std::string>> CalculiXCore::get_loadstrajectory_tree_dat
     std::vector<std::string> loadstrajectory_tree_data_set;
     std::string name;
     
-    int subdata_id = loadstrajectory->get_name_data_id_from_name_id(loadstrajectory->loads_data[i][9]);
-    if ((subdata_id!=-1)&&(loadstrajectory->name_data[subdata_id][1]!=""))
+    name = loadstrajectory->get_name_from_load_id(loadstrajectory->loads_data[i][0]);
+
+    if (name=="")
     {
-      name = loadstrajectory->name_data[subdata_id][1];
-    }else{
       name = "Trajectory_" + std::to_string(loadstrajectory->loads_data[i][0]);
     }
     
@@ -9822,11 +9880,9 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadstrajectory_tr
       int loaddata_id = loadstrajectory->get_loads_data_id_from_load_id(steps->loads_data[loads_ids[i]][2]);
       if (loaddata_id!=-1)
       {
-        int subdata_id = loadstrajectory->get_name_data_id_from_name_id(loadstrajectory->loads_data[loaddata_id][9]);
-        if ((subdata_id!=-1)&&(loadstrajectory->name_data[subdata_id][1]!=""))
+        name = loadstrajectory->get_name_from_load_id(steps->loads_data[loads_ids[i]][2]);
+        if (name=="")
         {
-          name = loadstrajectory->name_data[subdata_id][1];
-        }else{
           name = "Trajectory_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
         }
       }else{

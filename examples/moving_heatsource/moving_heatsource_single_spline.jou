@@ -50,7 +50,7 @@ ccx create trajectory heatflux curve 13 vertex 16 surface 1 direction 0 0 -1 mag
 # refinement with the use of the python interface
 #!python
 import numpy
-face_ids = ccx.loadstrajectory_get_draw_face_ids(1)
+face_ids = ccx.loadstrajectory_heatflux_get_draw_face_ids(1)
 all_face_ids=[]
 for node in face_ids:
  for radius in node:
@@ -97,4 +97,5 @@ ccx create job name "moving_heatsource_single_spline"
 #ccx run job 1
 
 ccx draw load trajectory 1
+
 

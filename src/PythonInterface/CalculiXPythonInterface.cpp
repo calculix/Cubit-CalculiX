@@ -54,14 +54,15 @@ void CalculiXPythonInterface::help()
   log.append("std::vector<std::vector<double>> dat_get_section_data(int job_id, std::string section_set); // returns the section set data for a job\n");
   log.append("std::vector<std::string> dat_get_section_label(int job_id); // returns the section labels for a job");
   log.append("Interactions with Load Trajectory:\n");
-  log.append("std::vector<int> loadstrajectory_get_node_ids(int trajectory_id); //returns node ids for curve\n");
-  log.append("std::vector<int> loadstrajectory_get_edge_ids(int trajectory_id); //returns edge ids for curve\n");
-  log.append("std::vector<std::vector<double>> loadstrajectory_get_hit_coordinates(int trajectory_id); //returns hit coordinates\n");
-  log.append("std::vector<std::vector<std::vector<int>>> loadstrajectory_get_face_ids(int trajectory_id); //returns face ids for the node ids from get_node_ids\n");
-  log.append("std::vector<std::vector<std::vector<int>>> loadstrajectory_get_draw_face_ids(int trajectory_id); //returns face ids for the node ids from get_node_ids\n");
-  log.append("std::vector<std::vector<double>> loadstrajectory_get_times(int trajectory_id); //returns time begin and end ordered by the node ids from get_node_ids\n");
-  log.append("std::vector<std::vector<double>> loadstrajectory_get_radius(int trajectory_id); //returns radius ordered by the node ids from get_node_ids\n");
-  log.append("std::vector<std::vector<double>> loadstrajectory_get_magnitude(int trajectory_id); //returns magnitude ordered by the node ids from get_node_ids\n");
+  log.append("std::string loadstrajectory_get_load_type(int trajectory_id); //returns the trajectory load type\n");
+  log.append("std::vector<int> loadstrajectory_heatflux_get_node_ids(int trajectory_id); //returns node ids for curve\n");
+  log.append("std::vector<int> loadstrajectory_heatflux_get_edge_ids(int trajectory_id); //returns edge ids for curve\n");
+  log.append("std::vector<std::vector<double>> loadstrajectory_heatflux_get_hit_coordinates(int trajectory_id); //returns hit coordinates\n");
+  log.append("std::vector<std::vector<std::vector<int>>> loadstrajectory_heatflux_get_face_ids(int trajectory_id); //returns face ids for the node ids from get_node_ids\n");
+  log.append("std::vector<std::vector<std::vector<int>>> loadstrajectory_heatflux_get_draw_face_ids(int trajectory_id); //returns face ids for the node ids from get_node_ids\n");
+  log.append("std::vector<std::vector<double>> loadstrajectory_heatflux_get_times(int trajectory_id); //returns time begin and end ordered by the node ids from get_node_ids\n");
+  log.append("std::vector<std::vector<double>> loadstrajectory_heatflux_get_radius(int trajectory_id); //returns radius ordered by the node ids from get_node_ids\n");
+  log.append("std::vector<std::vector<double>> loadstrajectory_heatflux_get_magnitude(int trajectory_id); //returns magnitude ordered by the node ids from get_node_ids\n");
   PRINT_INFO("%s", log.c_str());
 }
 
@@ -230,42 +231,47 @@ std::vector<std::string> CalculiXPythonInterface::dat_get_section_label(int job_
   return ccx_iface->dat_get_section_label(job_id);
 }
 
-std::vector<int> CalculiXPythonInterface::loadstrajectory_get_node_ids(int trajectory_id)
+std::string CalculiXPythonInterface::loadstrajectory_get_load_type(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_get_node_ids(trajectory_id);
+  return ccx_iface->loadstrajectory_get_load_type(trajectory_id);
 }
 
-std::vector<int> CalculiXPythonInterface::loadstrajectory_get_edge_ids(int trajectory_id)
+std::vector<int> CalculiXPythonInterface::loadstrajectory_heatflux_get_node_ids(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_get_edge_ids(trajectory_id);
+  return ccx_iface->loadstrajectory_heatflux_get_node_ids(trajectory_id);
 }
 
-std::vector<std::vector<double>> CalculiXPythonInterface::loadstrajectory_get_hit_coordinates(int trajectory_id)
+std::vector<int> CalculiXPythonInterface::loadstrajectory_heatflux_get_edge_ids(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_get_hit_coordinates(trajectory_id);
+  return ccx_iface->loadstrajectory_heatflux_get_edge_ids(trajectory_id);
 }
 
-std::vector<std::vector<std::vector<int>>> CalculiXPythonInterface::loadstrajectory_get_face_ids(int trajectory_id)
+std::vector<std::vector<double>> CalculiXPythonInterface::loadstrajectory_heatflux_get_hit_coordinates(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_get_face_ids(trajectory_id);
+  return ccx_iface->loadstrajectory_heatflux_get_hit_coordinates(trajectory_id);
 }
 
-std::vector<std::vector<std::vector<int>>> CalculiXPythonInterface::loadstrajectory_get_draw_face_ids(int trajectory_id)
+std::vector<std::vector<std::vector<int>>> CalculiXPythonInterface::loadstrajectory_heatflux_get_face_ids(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_get_draw_face_ids(trajectory_id);
+  return ccx_iface->loadstrajectory_heatflux_get_face_ids(trajectory_id);
 }
 
-std::vector<std::vector<double>> CalculiXPythonInterface::loadstrajectory_get_times(int trajectory_id)
+std::vector<std::vector<std::vector<int>>> CalculiXPythonInterface::loadstrajectory_heatflux_get_draw_face_ids(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_get_times(trajectory_id);
+  return ccx_iface->loadstrajectory_heatflux_get_draw_face_ids(trajectory_id);
 }
 
-std::vector<std::vector<double>> CalculiXPythonInterface::loadstrajectory_get_radius(int trajectory_id)
+std::vector<std::vector<double>> CalculiXPythonInterface::loadstrajectory_heatflux_get_times(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_get_radius(trajectory_id);
+  return ccx_iface->loadstrajectory_heatflux_get_times(trajectory_id);
 }
 
-std::vector<std::vector<double>> CalculiXPythonInterface::loadstrajectory_get_magnitude(int trajectory_id)
+std::vector<std::vector<double>> CalculiXPythonInterface::loadstrajectory_heatflux_get_radius(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_get_magnitude(trajectory_id);
+  return ccx_iface->loadstrajectory_heatflux_get_radius(trajectory_id);
+}
+
+std::vector<std::vector<double>> CalculiXPythonInterface::loadstrajectory_heatflux_get_magnitude(int trajectory_id)
+{
+  return ccx_iface->loadstrajectory_heatflux_get_magnitude(trajectory_id);
 }
