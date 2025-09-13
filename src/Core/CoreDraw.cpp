@@ -931,6 +931,19 @@ bool CoreDraw::draw_load_radiation(int id, double size)
     return true;
 }
 
+bool CoreDraw::draw_load_bodyheatflux(int id, double size)
+{
+    std::vector<std::vector<double>> draw_data;
+    draw_data = ccx_iface->get_draw_data_for_load_bodyheatflux(id);
+    /*
+    for (size_t i = 0; i < draw_data.size(); i++)
+    {
+        draw_arrow({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, {-draw_data[i][3],-draw_data[i][4],-draw_data[i][5]}, true, "darkgreen", size);
+    }
+*/
+    return true;
+}
+
 bool CoreDraw::draw_load_surface_traction(int id, double size)
 {
     //std::string log = "Surface Traction ID " + std::to_string(id) + "  drawn with size " + std::to_string(size) +"\n";
@@ -1164,6 +1177,12 @@ bool CoreDraw::draw_loads(double size)
         draw_load_surface_traction(tmp_load_ids[i], size);
     }
 
+    tmp_load_ids = ccx_iface->get_loadsbodyheatflux_ids();
+    for (size_t i = 0; i < tmp_load_ids.size(); i++)
+    {
+        draw_load_bodyheatflux(tmp_load_ids[i], size);
+    }
+
     return true;
 }
 
@@ -1351,6 +1370,19 @@ bool CoreDraw::draw_load_surface_tractions(double size)
     for (size_t i = 0; i < tmp_load_ids.size(); i++)
     {
         draw_load_surface_traction(tmp_load_ids[i], size);
+    }
+
+    return true;
+}
+
+bool CoreDraw::draw_load_bodyheatfluxes(double size)
+{
+    std::vector<int> tmp_load_ids;
+    
+    tmp_load_ids = ccx_iface->get_loadsbodyheatflux_ids();
+    for (size_t i = 0; i < tmp_load_ids.size(); i++)
+    {
+        draw_load_bodyheatflux(tmp_load_ids[i], size);
     }
 
     return true;

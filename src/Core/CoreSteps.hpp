@@ -200,6 +200,7 @@ public:
   // forces_data[0][1] load_type  
   // 1: force | 2: pressure | 3: heatflux | 4: gravity | 5: centrifugal
   // | 6: trajectory | 7: film  | 8: radiation  | 9: surface traction
+  // | 10: bodyheatflux
   // forces_data[0][2] load_id
 
   std::vector<std::vector<int>> bcs_data;

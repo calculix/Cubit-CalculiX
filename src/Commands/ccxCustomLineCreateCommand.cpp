@@ -20,7 +20,7 @@ std::vector<std::string> ccxCustomLineCreateCommand::get_syntax()
   syntax.append("{elset|nset|sideset|material|section|");
   syntax.append("constraint|surfaceinteraction|contactpair|amplitude|orientation|");
   syntax.append("damping|physicalconstants|");
-  syntax.append("force|pressure|heatflux|gravity|centrifugal|film|radiation|");
+  syntax.append("force|pressure|heatflux|gravity|centrifugal|trajectory|film|radiation|surfacetraction|bodyheatflux|");
   syntax.append("displacement|temperature|");
   syntax.append("historyoutput|fieldoutput|initialcondition|step_begin|step_end} ");
   syntax.append("item_id <value:label='item_id',help='<item_id>'> ");
@@ -48,7 +48,7 @@ std::vector<std::string> ccxCustomLineCreateCommand::get_syntax_help()
   help[0].append("{elset|nset|sideset|material|section|");
   help[0].append("constraint|surfaceinteraction|contactpair|amplitude|orientation|");
   help[0].append("damping|physicalconstants|");
-  help[0].append("force|pressure|heatflux|gravity|centrifugal|film|radiation|");
+  help[0].append("force|pressure|heatflux|gravity|centrifugal|trajectory|film|radiation|surfacetraction|bodyheatflux|");
   help[0].append("displacement|temperature|");
   help[0].append("historyoutput|fieldoutput|initialcondition|step_begin|step_end} ");
   help[0].append("item_id <item_id> ");
@@ -149,12 +149,21 @@ bool ccxCustomLineCreateCommand::execute(CubitCommandData &data)
   }else if (data.find_keyword("CENTRIFUGAL"))
   {
     options.push_back("CENTRIFUGAL");
+  }else if (data.find_keyword("TRAJECTORY"))
+  {
+    options.push_back("TRAJECTORY");
   }else if (data.find_keyword("FILM"))
   {
     options.push_back("FILM");
   }else if (data.find_keyword("RADIATION"))
   {
     options.push_back("RADIATION");
+  }else if (data.find_keyword("SURFACETRACTION"))
+  {
+    options.push_back("SURFACETRACTION");
+  }else if (data.find_keyword("BODYHEATFLUX"))
+  {
+    options.push_back("BODYHEATFLUX");
   }else if (data.find_keyword("DISPLACEMENT"))
   {
     options.push_back("DISPLACEMENT");

@@ -42,6 +42,7 @@
 #include "CoreLoadsFilm.hpp"
 #include "CoreLoadsRadiation.hpp"
 #include "CoreLoadsSurfaceTraction.hpp"
+#include "CoreLoadsBodyHeatflux.hpp"
 #include "CoreBCsDisplacements.hpp"
 #include "CoreBCsTemperatures.hpp"
 #include "CoreHistoryOutputs.hpp"
@@ -281,6 +282,11 @@ bool CalculiXCore::init()
   
   loadssurfacetraction->init();
 
+  if(!loadsbodyheatflux)
+    loadsbodyheatflux = new CoreLoadsBodyHeatflux;
+  
+  loadsbodyheatflux->init();
+
   if(!bcsdisplacements)
     bcsdisplacements = new CoreBCsDisplacements;
   
@@ -511,6 +517,7 @@ bool CalculiXCore::reset()
   loadsfilm->reset();
   loadsradiation->reset();
   loadssurfacetraction->reset();
+  loadsbodyheatflux->reset();
   bcsdisplacements->reset();
   bcstemperatures->reset();
   historyoutputs->reset();
@@ -557,7 +564,7 @@ bool CalculiXCore::read_cub(std::string filename)
     PRINT_INFO("%s", log.c_str());
     return true;
   }else{
-    progressbar->start(0,28,"Reading Cubit-CalculiX data");
+    progressbar->start(0,29,"Reading Cubit-CalculiX data");
     progressbar->check_interrupt();
     //General
     std::vector<std::string> general;
@@ -710,6 +717,14 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/SurfaceTraction", loadssurfacetraction->time_delay_data);
     cubTool.read_dataset_double_rank_2("force_data","Cubit-CalculiX/Loads/SurfaceTraction", loadssurfacetraction->force_data);
     cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/SurfaceTraction", loadssurfacetraction->name_data);
+    progressbar->step();
+    progressbar->check_interrupt();
+    //LoadsBodyHeatflux
+    cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/BodyHeatflux", loadsbodyheatflux->loads_data);
+    cubTool.read_dataset_double_rank_2("time_delay_data","Cubit-CalculiX/Loads/BodyHeatflux", loadsbodyheatflux->time_delay_data);
+    cubTool.read_dataset_int_rank_2("element_data","Cubit-CalculiX/Loads/BodyHeatflux", loadsbodyheatflux->element_data);
+    cubTool.read_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/BodyHeatflux", loadsbodyheatflux->magnitude_data);
+    cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/BodyHeatflux", loadsbodyheatflux->name_data);
     progressbar->step();
     progressbar->check_interrupt();
     //BCs
@@ -1106,7 +1121,7 @@ bool CalculiXCore::save_cub(std::string filename)
 
   if (!cubTool.nameExists("Cubit-CalculiX"))
   {
-    progressbar->start(0,28,"Writing Cubit-CalculiX data");
+    progressbar->start(0,29,"Writing Cubit-CalculiX data");
     progressbar->check_interrupt();
     //General
     cubTool.createGroup("Cubit-CalculiX");
@@ -1270,6 +1285,15 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/SurfaceTraction", loadssurfacetraction->time_delay_data);
     cubTool.write_dataset_double_rank_2("force_data","Cubit-CalculiX/Loads/SurfaceTraction", loadssurfacetraction->force_data);
     cubTool.write_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/SurfaceTraction", loadssurfacetraction->name_data);
+    progressbar->step();
+    progressbar->check_interrupt();
+    //LoadsBodyHeatflux
+    cubTool.createGroup("Cubit-CalculiX/Loads/BodyHeatflux");
+    cubTool.write_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/BodyHeatflux", loadsbodyheatflux->loads_data);
+    cubTool.write_dataset_double_rank_2("time_delay_data","Cubit-CalculiX/Loads/BodyHeatflux", loadsbodyheatflux->time_delay_data);
+    cubTool.write_dataset_int_rank_2("element_data","Cubit-CalculiX/Loads/BodyHeatflux", loadsbodyheatflux->element_data);
+    cubTool.write_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/BodyHeatflux", loadsbodyheatflux->magnitude_data);
+    cubTool.write_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/BodyHeatflux", loadsbodyheatflux->name_data);
     progressbar->step();
     progressbar->check_interrupt();
     //BCs
@@ -2072,6 +2096,60 @@ std::string CalculiXCore::autocleanup()
       loadssurfacetraction->delete_load(loadssurfacetraction->loads_data[i-1][0]);
     }
   }
+  // BODYHEATFLUX
+  for (size_t i = loadsbodyheatflux->loads_data.size(); i > 0; i--)
+  { 
+    sub_bool = false;
+    if (loadsbodyheatflux->loads_data[i-1][2]!=-1)
+    {
+      if (!check_amplitude_exists(loadsbodyheatflux->loads_data[i-1][2]))
+      {
+        log.append("Amplitude ID " + std::to_string(loadsbodyheatflux->loads_data[i-1][2]) + " doesn't exist.\n");
+        log.append("Amplitude Reference from Load BodyHeatflux ID " + std::to_string(loadsbodyheatflux->loads_data[i-1][0]) + " will be deleted.\n");
+        sub_bool = true;
+      }
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      loadsbodyheatflux->loads_data[i-1][2]=-1;
+    }
+    sub_bool = false;
+
+    if (loadsbodyheatflux->loads_data[i-1][5]==1)
+    {
+      std::vector<int> elements = loadsbodyheatflux->get_elements_from_element_id(loadsbodyheatflux->loads_data[i-1][4]);
+      for (size_t ii = 1; ii < elements.size(); ii++)
+      {
+        if (!check_block_exists(elements[ii]))
+        {
+          log.append("Block ID " + std::to_string(elements[ii]) + " doesn't exist.\n");
+          log.append("Bodyheatflux ID " + std::to_string(loadsbodyheatflux->loads_data[i-1][0]) + " will be deleted.\n");
+          sub_bool = true;
+          break;
+        }
+      }  
+    }else if (loadsbodyheatflux->loads_data[i-1][5]==2)
+    {
+      std::vector<int> elements = loadsbodyheatflux->get_elements_from_element_id(loadsbodyheatflux->loads_data[i-1][4]);
+      for (size_t ii = 1; ii < elements.size(); ii++)
+      {
+        if (!check_global_element_exists(elements[ii]))
+        {
+          log.append("Global Element ID " + std::to_string(elements[ii]) + " doesn't exist.\n");
+          log.append("Check if assigned Elements are part of an existing Block.\n");
+          log.append("Bodyheatflux ID " + std::to_string(loadsbodyheatflux->loads_data[i-1][0]) + " will be deleted.\n");
+          sub_bool = true;
+          break;
+        }
+      }
+    }
+    if (sub_bool)
+    {
+      print_log = sub_bool;
+      loadsbodyheatflux->delete_load(loadsbodyheatflux->loads_data[i-1][0]);
+    }
+  }
   // BCS DISPLACEMENTS
   for (size_t i = bcsdisplacements->bcs_data.size(); i > 0; i--)
   { 
@@ -2507,6 +2585,7 @@ std::string CalculiXCore::print_data()
   str_return.append(loadsfilm->print_data());
   str_return.append(loadsradiation->print_data());
   str_return.append(loadssurfacetraction->print_data());
+  str_return.append(loadsbodyheatflux->print_data());
   str_return.append(bcsdisplacements->print_data());
   str_return.append(bcstemperatures->print_data());
   str_return.append(historyoutputs->print_data());
@@ -3251,6 +3330,16 @@ std::vector<int> CalculiXCore::get_loadssurfacetraction_ids()
   return tmp;
 }
 
+std::vector<int> CalculiXCore::get_loadsbodyheatflux_ids()
+{
+  std::vector<int> tmp;
+  for (size_t i = 0; i < loadsbodyheatflux->loads_data.size(); i++)
+  {
+    tmp.push_back(loadsbodyheatflux->loads_data[i][0]);
+  }
+  return tmp;
+}
+
 std::vector<int> CalculiXCore::get_bcsdisplacements_ids()
 {
   std::vector<int> tmp;
@@ -3318,6 +3407,11 @@ bool CalculiXCore::check_block_exists(int block_id)
   return true;
 }
 
+bool CalculiXCore::check_global_element_exists(int element_id)
+{
+  return CubitInterface::get_element_exists(element_id);
+}
+
 bool CalculiXCore::check_bc_exists(int bc_id,int BCType)
 {
   std::vector<int> ids;
@@ -3372,6 +3466,12 @@ bool CalculiXCore::check_bc_exists(int bc_id,int BCType)
     for (size_t i = 0; i < loadssurfacetraction->loads_data.size(); i++)
     {
       ids.push_back(loadssurfacetraction->loads_data[i][0]);
+    }
+  }else if (BCType == 15) // BodyHeatflux
+  {
+    for (size_t i = 0; i < loadsbodyheatflux->loads_data.size(); i++)
+    {
+      ids.push_back(loadsbodyheatflux->loads_data[i][0]);
     }
   }
   
@@ -4121,6 +4221,21 @@ bool CalculiXCore::delete_loadssurfacetraction(int surfacetraction_id)
 {
   return loadssurfacetraction->delete_load(surfacetraction_id);
 }  
+
+bool CalculiXCore::create_loadsbodyheatflux(std::vector<std::string> options, std::vector<int> options2)
+{
+  return loadsbodyheatflux->create_load(options, options2);
+}
+
+bool CalculiXCore::modify_loadsbodyheatflux(int bodyheatflux_id, std::vector<std::string> options, std::vector<int> options2, std::vector<int> options_marker)
+{
+  return loadsbodyheatflux->modify_load(bodyheatflux_id, options, options2, options_marker);
+}
+
+bool CalculiXCore::delete_loadsbodyheatflux(int bodyheatflux_id)
+{
+  return loadsbodyheatflux->delete_load(bodyheatflux_id);
+}
 
 bool CalculiXCore::modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
@@ -5549,6 +5664,27 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
     {
       entities.push_back({"sideset",std::to_string(loadssurfacetraction->loads_data[data_id][4])});
     }
+  }else if (entity=="loadsbodyheatflux")
+  {
+    data_id = loadsbodyheatflux->get_loads_data_id_from_load_id(id);
+    if (data_id!=-1)
+    {
+      if (loadsbodyheatflux->loads_data[data_id][5]==1)
+      {
+        std::vector<int> elements = loadsbodyheatflux->get_elements_from_element_id(loadsbodyheatflux->loads_data[data_id][4]);
+        for (size_t i = 1; i < elements.size(); i++)
+        {
+          entities.push_back({"block",std::to_string(elements[i])});
+        }  
+      }else if (loadsbodyheatflux->loads_data[data_id][5]==2)
+      {
+        std::vector<int> elements = loadsbodyheatflux->get_elements_from_element_id(loadsbodyheatflux->loads_data[data_id][4]);
+        for (size_t i = 1; i < elements.size(); i++)
+        {
+          entities.push_back({CubitInterface::get_element_type(elements[i]),std::to_string(elements[i])});
+        }
+      }
+    }
   }else if (entity=="bcsdisplacement")
   {
     entities.push_back({"displacement",std::to_string(id)});
@@ -5923,6 +6059,13 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_surface_tr
   return draw_data;
 }
 
+std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_bodyheatflux(int id)
+{
+  std::vector<std::vector<double>> draw_data;
+  
+  return draw_data;
+}
+
 std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_bc_displacement(int id) // returns coord(3) and dof
 {
   int bc_set_id=-1;
@@ -6286,6 +6429,16 @@ bool CalculiXCore::draw_load_surface_traction(std::vector<int> surface_traction_
   return true;
 }
 
+bool CalculiXCore::draw_load_bodyheatflux(std::vector<int> surface_traction_ids,double size)
+{
+  for (size_t i = 0; i < surface_traction_ids.size(); i++)
+  {
+    draw->draw_load_bodyheatflux(surface_traction_ids[i],size);
+  }
+  
+  return true;
+}
+
 bool CalculiXCore::draw_bc_displacement(std::vector<int> displacement_ids,double size)
 {
   for (size_t i = 0; i < displacement_ids.size(); i++)
@@ -6404,6 +6557,11 @@ bool CalculiXCore::draw_load_radiations(double size)
 bool CalculiXCore::draw_load_surface_tractions(double size)
 {
   return draw->draw_load_surface_tractions(size);
+}
+
+bool CalculiXCore::draw_load_bodyheatfluxes(double size)
+{
+  return draw->draw_load_bodyheatfluxes(size);
 }
 
 bool CalculiXCore::draw_bc_displacements(double size)
@@ -8634,6 +8792,34 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
         }
       }
     }
+    // SURFACE TRACTION
+    for (size_t ii = 0; ii < loadsbodyheatflux->loads_data.size(); ii++)
+    {  
+      for (size_t iii = 0; iii < sub_data_ids.size(); iii++)
+      { 
+        if ((steps->loads_data[sub_data_ids[iii]][1]==10) && (steps->loads_data[sub_data_ids[iii]][2]==loadsbodyheatflux->loads_data[ii][0]))
+        {
+          // CUSTOMLINE START
+          customline = customlines->get_customline_data("BEFORE","BODYHEATFLUX",steps->loads_data[sub_data_ids[iii]][2]);
+          for (size_t icl = 0; icl < customline.size(); icl++)
+          {
+            steps_export_list.push_back(customline[icl]);
+          }
+          // CUSTOMLINE END
+
+          str_temp = loadsbodyheatflux->get_load_export(steps->loads_data[sub_data_ids[iii]][2]);
+          steps_export_list.push_back(str_temp);
+
+          // CUSTOMLINE START
+          customline = customlines->get_customline_data("AFTER","BODYHEATFLUX",steps->loads_data[sub_data_ids[iii]][2]);
+          for (size_t icl = 0; icl < customline.size(); icl++)
+          {
+            steps_export_list.push_back(customline[icl]);
+          }
+          // CUSTOMLINE END
+        }
+      }
+    }
     // BCs
     me_iface->get_bc_restraints(bc_set, bc_handles);
     sub_data_ids = steps->get_bc_data_ids_from_bcs_id(steps->steps_data[i][6]);
@@ -9390,6 +9576,30 @@ std::vector<std::vector<std::string>> CalculiXCore::get_loadssurfacetraction_tre
   return loadssurfacetraction_tree_data;
 }
 
+std::vector<std::vector<std::string>> CalculiXCore::get_loadsbodyheatflux_tree_data()
+{ 
+  std::vector<std::vector<std::string>> loadsbodyheatflux_tree_data;
+  
+  for (size_t i = 0; i < loadsbodyheatflux->loads_data.size(); i++)
+  {
+    std::vector<std::string> loadsbodyheatflux_tree_data_set;
+    std::string name;
+    
+    int subdata_id = loadsbodyheatflux->get_name_data_id_from_name_id(loadsbodyheatflux->loads_data[i][6]);
+    if ((subdata_id!=-1)&&(loadsbodyheatflux->name_data[subdata_id][1]!=""))
+    {
+      name = loadsbodyheatflux->name_data[subdata_id][1];
+    }else{
+      name = "BodyHeatflux_" + std::to_string(loadsbodyheatflux->loads_data[i][0]);
+    }
+    
+    loadsbodyheatflux_tree_data_set.push_back(std::to_string(loadsbodyheatflux->loads_data[i][0])); //load_id
+    loadsbodyheatflux_tree_data_set.push_back(name); 
+    loadsbodyheatflux_tree_data.push_back(loadsbodyheatflux_tree_data_set);
+  }
+  return loadsbodyheatflux_tree_data;
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_bcsdisplacements_tree_data()
 { 
   std::vector<std::vector<std::string>> bcsdisplacements_tree_data;
@@ -10020,6 +10230,46 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadssurfacetracti
   return loadssurfacetraction_tree_data;
 }
 
+std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadsbodyheatflux_tree_data(int step_id)
+{ 
+  std::vector<std::vector<std::string>> loadsbodyheatflux_tree_data;
+  int step_data_id;
+  std::vector<int> loads_ids;
+  step_data_id = steps->get_steps_data_id_from_step_id(step_id);
+  if (step_data_id==-1)
+  {
+    return loadsbodyheatflux_tree_data;
+  }
+  loads_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[step_data_id][5]);
+
+  for (size_t i = 0; i < loads_ids.size(); i++)
+  {
+    std::vector<std::string> loadsbodyheatflux_tree_data_set;
+    std::string name;
+    if (steps->loads_data[loads_ids[i]][1]==10)
+    { 
+      int loaddata_id = loadsbodyheatflux->get_loads_data_id_from_load_id(steps->loads_data[loads_ids[i]][2]);
+      if (loaddata_id!=-1)
+      {
+        int subdata_id = loadsbodyheatflux->get_name_data_id_from_name_id(loadsbodyheatflux->loads_data[loaddata_id][6]);
+        if ((subdata_id!=-1)&&(loadsbodyheatflux->name_data[subdata_id][1]!=""))
+        {
+          name = loadsbodyheatflux->name_data[subdata_id][1];
+        }else{
+          name = "BodyHeatflux_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+        }
+      }else{
+        name = "BodyHeatflux_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
+      }
+    
+      loadsbodyheatflux_tree_data_set.push_back(std::to_string(steps->loads_data[loads_ids[i]][2])); //load_id
+      loadsbodyheatflux_tree_data_set.push_back(name); 
+      loadsbodyheatflux_tree_data.push_back(loadsbodyheatflux_tree_data_set);  
+    }
+  }
+  return loadsbodyheatflux_tree_data;
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_steps_bcsdisplacements_tree_data(int step_id)
 { 
   std::vector<std::vector<std::string>> bcsdisplacements_tree_data;
@@ -10292,6 +10542,12 @@ std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_
       for (size_t i = 0; i < loadssurfacetraction->loads_data.size(); i++)
       {
         all_ids.push_back(loadssurfacetraction->loads_data[i][0]);
+      }
+    } else if (parse_type=="loadsbodyheatflux")
+    {
+      for (size_t i = 0; i < loadsbodyheatflux->loads_data.size(); i++)
+      {
+        all_ids.push_back(loadsbodyheatflux->loads_data[i][0]);
       }
     } else if (parse_type=="historyoutput")
     {

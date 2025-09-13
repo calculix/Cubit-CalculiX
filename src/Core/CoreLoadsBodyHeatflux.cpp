@@ -336,6 +336,19 @@ int CoreLoadsBodyHeatflux::get_name_data_id_from_name_id(int name_id)
   return return_int;
 }
 
+std::vector<int>  CoreLoadsBodyHeatflux::get_elements_from_element_id(int element_id)
+{
+  std::vector<int> tmp;
+  int element_data_id = get_element_data_id_from_element_id(element_id);
+  
+  if (element_data_id != -1)
+  {
+    return element_data[element_data_id];
+  }
+
+  return tmp;
+}
+
 std::string CoreLoadsBodyHeatflux::get_load_export(int load_id)
 {
   int load_data_id;

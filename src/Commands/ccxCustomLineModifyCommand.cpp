@@ -20,7 +20,7 @@ std::vector<std::string> ccxCustomLineModifyCommand::get_syntax()
   syntax.append("[{elset|nset|sideset|material|section|");
   syntax.append("constraint|surfaceinteraction|contactpair|amplitude|orientation|");
   syntax.append("damping|physicalconstants|");
-  syntax.append("force|pressure|heatflux|gravity|centrifugal|film|radiation|");
+  syntax.append("force|pressure|heatflux|gravity|centrifugal|trajectory|film|radiation|surfacetraction|bodyheatflux|");
   syntax.append("displacement|temperature|");
   syntax.append("historyoutput|fieldoutput|initialcondition|step_begin|step_end|export}] ");
   syntax.append("[item_id <value:label='item_id',help='<item_id>'>] ");
@@ -40,7 +40,7 @@ std::vector<std::string> ccxCustomLineModifyCommand::get_syntax_help()
   help[0].append("[{elset|nset|sideset|material|section|");
   help[0].append("constraint|surfaceinteraction|contactpair|amplitude|orientation|");
   help[0].append("damping|physicalconstants|");
-  help[0].append("force|pressure|heatflux|gravity|centrifugal|film|radiation|");
+  help[0].append("force|pressure|heatflux|gravity|centrifugal|trajectory|film|radiation|surfacetraction|bodyheatflux|");
   help[0].append("displacement|temperature|");
   help[0].append("historyoutput|fieldoutput|initialcondition|step_begin|step_end|export}] ");
   help[0].append("[item_id <item_id>] ");
@@ -170,6 +170,10 @@ bool ccxCustomLineModifyCommand::execute(CubitCommandData &data)
   {
     options.push_back("CENTRIFUGAL");
     options_marker.push_back(1);
+  }else if (data.find_keyword("TRAJECTORY"))
+  {
+    options.push_back("TRAJECTORY");
+    options_marker.push_back(1);
   }else if (data.find_keyword("FILM"))
   {
     options.push_back("FILM");
@@ -177,6 +181,14 @@ bool ccxCustomLineModifyCommand::execute(CubitCommandData &data)
   }else if (data.find_keyword("RADIATION"))
   {
     options.push_back("RADIATION");
+    options_marker.push_back(1);
+  }else if (data.find_keyword("SURFACETRACTION"))
+  {
+    options.push_back("SURFACETRACTION");
+    options_marker.push_back(1);
+  }else if (data.find_keyword("BODYHEATFLUX"))
+  {
+    options.push_back("BODYHEATFLUX");
     options_marker.push_back(1);
   }else if (data.find_keyword("DISPLACEMENT"))
   {

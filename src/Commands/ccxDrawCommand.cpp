@@ -26,6 +26,7 @@ std::vector<std::string> ccxDrawCommand::get_syntax()
   syntax.append(" [film <value:label='film_id',help='<film_id>'>...]");
   syntax.append(" [radiation <value:label='radiation_id',help='<radiation_id>'>...]");
   syntax.append(" [surfacetraction <value:label='surfacetraction_id',help='<surfacetraction_id>'>...]");
+  syntax.append(" [bodyheatflux <value:label='bodyheatflux_id',help='<bodyheatflux_id>'>...]");
   syntax.append("]");
   syntax.append(" [bc ");
   syntax.append(" [displacement <value:label='displacement_id',help='<displacement_id>'>...]");
@@ -44,6 +45,7 @@ std::vector<std::string> ccxDrawCommand::get_syntax()
   syntax.append(" [load_film_all]");
   syntax.append(" [load_radiation_all]");
   syntax.append(" [load_surfacetraction_all]");
+  syntax.append(" [load_bodyheatflux_all]");
   syntax.append(" [bc_all]");
   syntax.append(" [bc_displacement_all]");
   syntax.append(" [bc_temperature_all]");
@@ -71,6 +73,7 @@ std::vector<std::string> ccxDrawCommand::get_syntax_help()
   help[0].append(" [film <film_id>...]]");
   help[0].append(" [radiation <radiation_id>...]]");
   help[0].append(" [surfacetraction <surfacetraction_id>...]]");
+  help[0].append(" [bodyheatflux <bodyheatflux_id>...]]");
   help[0].append(" [bc [displacement <displacement_id>...]");
   help[0].append(" [temperature <temperature_id>...]]");
   help[0].append(" [orientation <orientation_id>...]");
@@ -86,6 +89,7 @@ std::vector<std::string> ccxDrawCommand::get_syntax_help()
   help[0].append(" [load_film_all]");
   help[0].append(" [load_radiation_all]");
   help[0].append(" [load_surfacetraction_all]");
+  help[0].append(" [load_bodyheatflux_all]");
   help[0].append(" [bc_all]");
   help[0].append(" [bc_displacement_all]");
   help[0].append(" [bc_temperature_all]");
@@ -118,6 +122,7 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
   std::vector<int> film_id;
   std::vector<int> radiation_id;
   std::vector<int> surfacetraction_id;
+  std::vector<int> bodyheatflux_id;
   std::vector<int> displacement_id;
   std::vector<int> temperature_id;
   std::vector<int> orientation_id;
@@ -153,6 +158,7 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
     data.get_values("film_id", film_id);
     data.get_values("radiation_id", radiation_id);
     data.get_values("surfacetraction_id", surfacetraction_id);
+    data.get_values("bodyheatflux_id", bodyheatflux_id);
   }
 
   if (data.find_keyword("BC"))
@@ -174,6 +180,7 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
       (film_id.size()==0)&&
       (radiation_id.size()==0)&&
       (surfacetraction_id.size()==0)&&
+      (bodyheatflux_id.size()==0)&&
       (displacement_id.size()==0)&&
       (temperature_id.size()==0)&&
       (orientation_id.size()==0)&&
@@ -194,6 +201,7 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
    (!data.find_keyword("LOAD_FILM_ALL"))&&
    (!data.find_keyword("LOAD_RADIATION_ALL"))&&
    (!data.find_keyword("LOAD_SURFACETRACTION_ALL"))&&
+   (!data.find_keyword("LOAD_BODYHEATFLUX_ALL"))&&
    (!data.find_keyword("BC_DISPLACEMENT_ALL"))&&
    (!data.find_keyword("BC_TEMPERATURE_ALL")))
       {
@@ -328,6 +336,15 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
       PRINT_ERROR(output.c_str());
     }
   }
+  if (data.find_keyword("LOAD_BODYHEATFLUX_ALL"))
+  {
+    bool_draw_all = false;
+    if (!ccx_iface.draw_load_bodyheatfluxes(size_value))
+    {
+      output = "Failed ccx draw bodyheatflux!\n";
+      PRINT_ERROR(output.c_str());
+    }
+  }
   if (data.find_keyword("BC_DISPLACEMENT_ALL"))
   {
     bool_draw_all = false;
@@ -389,6 +406,11 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
   if (!ccx_iface.draw_load_surface_traction(surfacetraction_id,size_value))
   {
     output = "Failed ccx draw load surface traction!\n";
+    PRINT_ERROR(output.c_str());
+  }
+  if (!ccx_iface.draw_load_bodyheatflux(bodyheatflux_id,size_value))
+  {
+    output = "Failed ccx draw load bodyheatflux!\n";
     PRINT_ERROR(output.c_str());
   }
   if (!ccx_iface.draw_bc_displacement(displacement_id,size_value))
