@@ -721,7 +721,7 @@ bool CalculiXCore::read_cub(std::string filename)
     progressbar->check_interrupt();
     //LoadsBodyHeatflux
     cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/BodyHeatflux", loadsbodyheatflux->loads_data);
-    cubTool.read_dataset_double_rank_2("time_delay_data","Cubit-CalculiX/Loads/BodyHeatflux", loadsbodyheatflux->time_delay_data);
+    cubTool.read_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/BodyHeatflux", loadsbodyheatflux->time_delay_data);
     cubTool.read_dataset_int_rank_2("element_data","Cubit-CalculiX/Loads/BodyHeatflux", loadsbodyheatflux->element_data);
     cubTool.read_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/BodyHeatflux", loadsbodyheatflux->magnitude_data);
     cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/BodyHeatflux", loadsbodyheatflux->name_data);
@@ -1290,7 +1290,7 @@ bool CalculiXCore::save_cub(std::string filename)
     //LoadsBodyHeatflux
     cubTool.createGroup("Cubit-CalculiX/Loads/BodyHeatflux");
     cubTool.write_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/BodyHeatflux", loadsbodyheatflux->loads_data);
-    cubTool.write_dataset_double_rank_2("time_delay_data","Cubit-CalculiX/Loads/BodyHeatflux", loadsbodyheatflux->time_delay_data);
+    cubTool.write_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/BodyHeatflux", loadsbodyheatflux->time_delay_data);
     cubTool.write_dataset_int_rank_2("element_data","Cubit-CalculiX/Loads/BodyHeatflux", loadsbodyheatflux->element_data);
     cubTool.write_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/BodyHeatflux", loadsbodyheatflux->magnitude_data);
     cubTool.write_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/BodyHeatflux", loadsbodyheatflux->name_data);
@@ -2491,6 +2491,21 @@ std::string CalculiXCore::autocleanup()
           log.append("Load Surface Traction Reference from Step ID " + std::to_string(steps->steps_data[i-1][0]) + " will be deleted.\n");
           sub_bool = true;
           steps->remove_loads(steps->steps_data[i-1][0], 9, {steps->loads_data[sub_data_ids[ii-1]][2]});
+        }
+      }
+    }
+    // BodyHeatflux
+    sub_data_ids = steps->get_load_data_ids_from_loads_id(steps->steps_data[i-1][5]);
+    for (size_t ii = sub_data_ids.size(); ii > 0; ii--)
+    {
+      if (steps->loads_data[sub_data_ids[ii-1]][1]==10)
+      {
+        if (!check_bc_exists(steps->loads_data[sub_data_ids[ii-1]][2],15))
+        {
+          log.append("Load BodyHeatflux ID " + std::to_string(steps->loads_data[sub_data_ids[ii-1]][2]) + " doesn't exist.\n");
+          log.append("Load BodyHeatflux Reference from Step ID " + std::to_string(steps->steps_data[i-1][0]) + " will be deleted.\n");
+          sub_bool = true;
+          steps->remove_loads(steps->steps_data[i-1][0], 10, {steps->loads_data[sub_data_ids[ii-1]][2]});
         }
       }
     }

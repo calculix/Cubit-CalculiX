@@ -67,5 +67,6 @@
         "typeinfo": "cpp",
         "variant": "cpp",
         "codecvt": "cpp"
-    }
+    },
+    "git.ignoreLimitWarning": true
 }

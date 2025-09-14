@@ -1,21 +1,21 @@
-#include "ccxLoadsTrajectoryBodyHeatfluxCreateCommand.hpp"
+#include "ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "CalculiXCoreInterface.hpp"
 
-ccxLoadsTrajectoryBodyHeatfluxCreateCommand::ccxLoadsTrajectoryBodyHeatfluxCreateCommand()
+ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand::ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand()
 {}
 
-ccxLoadsTrajectoryBodyHeatfluxCreateCommand::~ccxLoadsTrajectoryBodyHeatfluxCreateCommand()
+ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand::~ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand()
 {}
 
-std::vector<std::string> ccxLoadsTrajectoryBodyHeatfluxCreateCommand::get_syntax()
+std::vector<std::string> ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand::get_syntax()
 {
   std::vector<std::string> syntax_list;
 
   std::string syntax = "ccx ";
   syntax.append("create trajectory ");
-  syntax.append("bodyheatflux ");
+  syntax.append("bodyheatflux sphere ");
   syntax.append("curve <value:label='curve_id',help='<curve_id>'> ");
   syntax.append("vertex <value:label='vertex_id',help='<vertex_id>'> ");
   syntax.append("surface <value:label='surface_id',help='<surface_id>'>... ");
@@ -35,12 +35,12 @@ std::vector<std::string> ccxLoadsTrajectoryBodyHeatfluxCreateCommand::get_syntax
   return syntax_list;
 }
 
-std::vector<std::string> ccxLoadsTrajectoryBodyHeatfluxCreateCommand::get_syntax_help()
+std::vector<std::string> ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand::get_syntax_help()
 {
   std::vector<std::string> help(1);
   help[0] = "ccx "; 
   help[0].append("create trajectory ");
-  help[0].append("bodyheatflux ");
+  help[0].append("bodyheatflux sphere ");
   help[0].append("curve <curve_id> ");
   help[0].append("vertex <vertex_id> ");
   help[0].append("surface <surface_id>... ");
@@ -58,13 +58,13 @@ std::vector<std::string> ccxLoadsTrajectoryBodyHeatfluxCreateCommand::get_syntax
   return help;
 }
 
-std::vector<std::string> ccxLoadsTrajectoryBodyHeatfluxCreateCommand::get_help()
+std::vector<std::string> ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand::get_help()
 {
   std::vector<std::string> help;
   return help;
 }
 
-bool ccxLoadsTrajectoryBodyHeatfluxCreateCommand::execute(CubitCommandData &data)
+bool ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand::execute(CubitCommandData &data)
 {
   CalculiXCoreInterface ccx_iface;
 
@@ -97,7 +97,7 @@ bool ccxLoadsTrajectoryBodyHeatfluxCreateCommand::execute(CubitCommandData &data
   //if (data.find_keyword("HEATFLUX")){
   //  load_type = 0;
   //}
-  if (data.find_keyword("BODYHEATFLUX"))
+  if (data.find_keyword("BODYHEATFLUXSPHERE"))
   {
     load_type = 1;
   }

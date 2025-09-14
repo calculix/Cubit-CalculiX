@@ -43,6 +43,8 @@ set(CORE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsTrajectory.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsTrajectoryHeatflux.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsTrajectoryHeatflux.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsTrajectoryBodyHeatfluxSphere.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsTrajectoryBodyHeatfluxSphere.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsFilm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsFilm.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsRadiation.cpp

@@ -2,6 +2,7 @@
 #include "CubitInterface.hpp"
 #include "CalculiXCoreInterface.hpp"
 #include "CoreLoadsTrajectoryHeatflux.hpp"
+#include "CoreLoadsTrajectoryBodyHeatfluxSphere.hpp"
 #include "CubitMessage.hpp"
 #include <cmath>
 #include <algorithm>
@@ -10,6 +11,7 @@
 CoreLoadsTrajectory::CoreLoadsTrajectory()
 {
   this->heatflux = new CoreLoadsTrajectoryHeatflux();
+  this->bodyheatfluxsphere = new CoreLoadsTrajectoryBodyHeatfluxSphere();
 }
 
 CoreLoadsTrajectory::~CoreLoadsTrajectory()
@@ -23,6 +25,7 @@ bool CoreLoadsTrajectory::init()
   }else{
     CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
     heatflux->init();
+    bodyheatfluxsphere->init();
     is_initialized = true;  
     return true;
   }
@@ -37,6 +40,7 @@ bool CoreLoadsTrajectory::reset()
 {
   loads_data.clear();
   heatflux->reset();
+  bodyheatfluxsphere->reset();
   init();
   heatflux->init();
   return true;

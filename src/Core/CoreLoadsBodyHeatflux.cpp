@@ -79,10 +79,10 @@ bool CoreLoadsBodyHeatflux::create_load(std::vector<std::string> options, std::v
   else
   {
     sub_last = int(time_delay_data.size()) - 1;
-    sub_id = int(time_delay_data[sub_last][0]) + 1;
+    sub_id = std::stoi(time_delay_data[sub_last][0]) + 1;
   }
   time_delay_id = sub_id;
-  this->add_time_delay(sub_id, std::stod(options[2]));
+  this->add_time_delay(std::to_string(sub_id), options[2]);
 
   // element
   if (element_data.size()==0)
@@ -163,7 +163,7 @@ bool CoreLoadsBodyHeatflux::modify_load(int load_id, std::vector<std::string> op
     if (options_marker[2]==1)
     {
       sub_data_id = get_time_delay_data_id_from_time_delay_id(loads_data[loads_data_id][3]);
-      time_delay_data[sub_data_id][1] = std::stod(options[2]);
+      time_delay_data[sub_data_id][1] = options[2];
     }
     // element
     if (options_marker[3]==1)
@@ -231,9 +231,9 @@ bool CoreLoadsBodyHeatflux::delete_load(int load_id)
   }
 }
 
-bool CoreLoadsBodyHeatflux::add_time_delay(double time_delay_id, double time_delay_value)
+bool CoreLoadsBodyHeatflux::add_time_delay(std::string time_delay_id, std::string time_delay_value)
 {
-  std::vector<double> v = {time_delay_id, time_delay_value};
+  std::vector<std::string> v = {time_delay_id, time_delay_value};
       
   time_delay_data.push_back(v);
 
@@ -289,7 +289,7 @@ int CoreLoadsBodyHeatflux::get_time_delay_data_id_from_time_delay_id(int time_de
   int return_int = -1;
   for (size_t i = 0; i < time_delay_data.size(); i++)
   {
-    if (time_delay_data[i][0]==double(time_delay_id))
+    if (time_delay_data[i][0]==std::to_string(time_delay_id))
     {
         return_int = int(i);
     }  
@@ -369,9 +369,9 @@ std::string CoreLoadsBodyHeatflux::get_load_export(int load_id)
     str_temp.append(",AMPLITUDE=" + ccx_iface->get_amplitude_name(loads_data[load_data_id][2]));
   }
   sub_data_id = get_time_delay_data_id_from_time_delay_id(loads_data[load_data_id][3]);
-  if (time_delay_data[sub_data_id][1]==0.)
+  if (time_delay_data[sub_data_id][1]!="")
   {
-    str_temp.append(",TIME DELAY=" + std::to_string(time_delay_data[sub_data_id][1]));
+    str_temp.append(",TIME DELAY=" + time_delay_data[sub_data_id][1]);
   }
   str_temp.append("\n");
   
@@ -411,7 +411,7 @@ std::string CoreLoadsBodyHeatflux::print_data()
 
   for (size_t i = 0; i < time_delay_data.size(); i++)
   {
-    str_return.append(std::to_string(time_delay_data[i][0]) + " " + std::to_string(time_delay_data[i][1]) + " \n");
+    str_return.append(time_delay_data[i][0] + " " + time_delay_data[i][1] + " \n");
   }
 
   str_return.append("\n CoreLoadsBodyHeatflux element_data: \n");

@@ -7,6 +7,7 @@
 class CalculiXCoreInterface;
 
 class CoreLoadsTrajectoryHeatflux;
+class CoreLoadsTrajectoryBodyHeatfluxSphere;
 
 class CoreLoadsTrajectory
 {
@@ -39,6 +40,7 @@ public:
  
   CalculiXCoreInterface *ccx_iface;
   CoreLoadsTrajectoryHeatflux *heatflux;
+  CoreLoadsTrajectoryBodyHeatfluxSphere *bodyheatfluxsphere;
 };
 
 #endif // CORELOADSTRAJECTORY_HPP
