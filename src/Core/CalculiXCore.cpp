@@ -6074,9 +6074,36 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_surface_tr
   return draw_data;
 }
 
-std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_bodyheatflux(int id)
+std::vector<std::vector<int>> CalculiXCore::get_draw_data_for_load_bodyheatflux(int id)
 {
-  std::vector<std::vector<double>> draw_data;
+  std::vector<std::vector<int>> draw_data;
+  for (size_t i = 0; i < loadsbodyheatflux->loads_data.size(); i++)
+  {
+    // check for right id
+    if (id==loadsbodyheatflux->loads_data[i][0])
+    { 
+      std::vector<int> block_ids;
+      std::vector<int> element_ids;
+
+      if (loadsbodyheatflux->loads_data[i][5]==1)
+      {
+        std::vector<int> elements = loadsbodyheatflux->get_elements_from_element_id(loadsbodyheatflux->loads_data[i][4]);
+        for (size_t ii = 1; ii < elements.size(); ii++)
+        {
+          block_ids.push_back(elements[ii]);
+        }  
+      }else if (loadsbodyheatflux->loads_data[i][5]==2)
+      {
+        std::vector<int> elements = loadsbodyheatflux->get_elements_from_element_id(loadsbodyheatflux->loads_data[i][4]);
+        for (size_t ii = 1; ii < elements.size(); ii++)
+        {
+          element_ids.push_back(elements[ii]);
+        }
+      }
+      draw_data.push_back(block_ids);
+      draw_data.push_back(element_ids);
+    }
+  }
   
   return draw_data;
 }

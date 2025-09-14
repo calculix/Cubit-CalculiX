@@ -243,7 +243,7 @@ public:
   std::vector<std::vector<double>> get_draw_data_for_load_film(int id); // returns coord(3) and magnitude(3) std::vector<double>
   std::vector<std::vector<double>> get_draw_data_for_load_radiation(int id); // returns coord(3) and magnitude(3) std::vector<double>
   std::vector<std::vector<double>> get_draw_data_for_load_surface_traction(int id); // returns coord(3) and magnitude(3) std::vector<double>
-  std::vector<std::vector<double>> get_draw_data_for_load_bodyheatflux(int id); // returns coord(3) and magnitude(3) std::vector<double>
+  std::vector<std::vector<int>> get_draw_data_for_load_bodyheatflux(int id); // returns block ids draw_data[][0] element ids draw_data[][1]
   std::vector<std::vector<double>> get_draw_data_for_bc_displacement(int id); // returns coord(3) and dof
   std::vector<std::vector<double>> get_draw_data_for_bc_temperature(int id); // returns coord(3) and dof
   std::vector<std::vector<double>> get_draw_data_for_orientation(int id); // returns pairs of 4 for {system_type,local_axis_angle}, coord(3) of section center, a_coord(3) ,b_coord(3)

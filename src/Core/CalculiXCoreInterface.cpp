@@ -1100,7 +1100,7 @@ std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_load_s
   return ccx_core.get_draw_data_for_load_surface_traction(id);
 }
 
-std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_load_bodyheatflux(int id)
+std::vector<std::vector<int>> CalculiXCoreInterface::get_draw_data_for_load_bodyheatflux(int id)
 {
   return ccx_core.get_draw_data_for_load_bodyheatflux(id);
 }
