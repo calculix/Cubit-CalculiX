@@ -8,6 +8,7 @@
 #include "StepsLoadsFilmTree.hpp"
 #include "StepsLoadsRadiationTree.hpp"
 #include "StepsLoadsSurfaceTractionTree.hpp"
+#include "StepsLoadsBodyHeatfluxTree.hpp"
 #include "CalculiXCoreInterface.hpp"
 
 StepsLoadsTree::StepsLoadsTree(QTreeWidgetItem* parent):
@@ -49,6 +50,8 @@ void StepsLoadsTree::initialize(int step_id_init)
   myStepsLoadsRadiationTree->initialize(step_id);
   myStepsLoadsSurfaceTractionTree = new StepsLoadsSurfaceTractionTree(this);
   myStepsLoadsSurfaceTractionTree->initialize(step_id);
+  myStepsLoadsBodyHeatfluxTree = new StepsLoadsBodyHeatfluxTree(this);
+  myStepsLoadsBodyHeatfluxTree->initialize(step_id);
 }
 
 void StepsLoadsTree::update()
@@ -62,6 +65,7 @@ void StepsLoadsTree::update()
   myStepsLoadsFilmTree->update();
   myStepsLoadsRadiationTree->update();
   myStepsLoadsSurfaceTractionTree->update();
+  myStepsLoadsBodyHeatfluxTree->update();
 }
 
 void StepsLoadsTree::clear()

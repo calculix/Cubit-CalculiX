@@ -22,6 +22,7 @@
 #include "LoadsFilmTree.hpp"
 #include "LoadsRadiationTree.hpp"
 #include "LoadsSurfaceTractionTree.hpp"
+#include "LoadsBodyHeatfluxTree.hpp"
 #include "BCsTree.hpp"
 #include "BCsDisplacementsTree.hpp"
 #include "BCsTemperaturesTree.hpp"
@@ -43,6 +44,7 @@
 #include "StepsLoadsFilmTree.hpp"
 #include "StepsLoadsRadiationTree.hpp"
 #include "StepsLoadsSurfaceTractionTree.hpp"
+#include "StepsLoadsBodyHeatfluxTree.hpp"
 #include "StepsBCsTree.hpp"
 #include "StepsBCsDisplacementsTree.hpp"
 #include "StepsBCsTemperaturesTree.hpp"
@@ -127,7 +129,7 @@ ModelTree::~ModelTree()
 
 void ModelTree::showContextMenu(const QPoint &pos)
 {
-  //current highest contextMenuAction[0][0] = 48;
+  //current highest contextMenuAction[0][0] = 50;
 
   QTreeWidgetItem* item = this->itemAt(pos);
   if (item)
@@ -154,6 +156,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
     LoadsFilmTree* LoadsFilmTreeItem;
     LoadsRadiationTree* LoadsRadiationTreeItem;
     LoadsSurfaceTractionTree* LoadsSurfaceTractionTreeItem;
+    LoadsBodyHeatfluxTree* LoadsBodyHeatfluxTreeItem;
     BCsTree* BCsTreeItem;
     BCsDisplacementsTree* BCsDisplacementsTreeItem;
     BCsTemperaturesTree* BCsTemperaturesTreeItem;
@@ -174,6 +177,7 @@ void ModelTree::showContextMenu(const QPoint &pos)
     StepsLoadsFilmTree* StepsLoadsFilmTreeItem;
     StepsLoadsRadiationTree* StepsLoadsRadiationTreeItem;
     StepsLoadsSurfaceTractionTree* StepsLoadsSurfaceTractionTreeItem;
+    StepsLoadsBodyHeatfluxTree* StepsLoadsBodyHeatfluxTreeItem;
     StepsBCsTree* StepsBCsTreeItem;
     StepsBCsDisplacementsTree* StepsBCsDisplacementsTreeItem;
     StepsBCsTemperaturesTree* StepsBCsTemperaturesTreeItem;
@@ -477,6 +481,21 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenuAction[0][0] = 47;
         contextMenu.exec(mapToGlobal(pos));
       }
+    }else if (LoadsBodyHeatfluxTreeItem = dynamic_cast<LoadsBodyHeatfluxTree*>(item))
+    {
+      if (LoadsBodyHeatfluxTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Body Heatflux",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Draw Body Heatfluxes", this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+
+        contextMenuAction[0][0] = 49;
+        contextMenu.exec(mapToGlobal(pos));
+      }
     }else if (BCsTreeItem = dynamic_cast<BCsTree*>(item)) 
     {
       if (BCsTreeItem->text(1).toStdString()=="")
@@ -764,6 +783,22 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenu.addAction(&action2);
 
         contextMenuAction[0][0] = 48;
+        contextMenuAction[0][2] = std::stoi(item->parent()->parent()->text(1).toStdString()); //Step id
+        contextMenu.exec(mapToGlobal(pos));
+      }
+    }else if (StepsLoadsBodyHeatfluxTreeItem = dynamic_cast<StepsLoadsBodyHeatfluxTree*>(item))
+    {
+      if (StepsLoadsBodyHeatfluxTreeItem->text(1).toStdString()=="")
+      { 
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Steps Management",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
+        contextMenu.addAction(&action1);
+        QAction action2("Draw Body Heatfluxes",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
+        contextMenu.addAction(&action2);
+
+        contextMenuAction[0][0] = 50;
         contextMenuAction[0][2] = std::stoi(item->parent()->parent()->text(1).toStdString()); //Step id
         contextMenu.exec(mapToGlobal(pos));
       }
@@ -1220,6 +1255,25 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenuAction[0][0] = 47;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
         contextMenu.exec(mapToGlobal(pos));
+      } else if (LoadsBodyHeatfluxTreeItem = dynamic_cast<LoadsBodyHeatfluxTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Body Heatflux",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action3("Modify Body Heatflux",this); //action 2 is "Draw BodyHeatflux All"
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+        QAction action4("Delete Body Heatflux",this);
+        connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
+        contextMenu.addAction(&action4);
+        QAction action5("Draw Body Heatflux",this);
+        connect(&action5, SIGNAL(triggered()),this,SLOT(ContextMenuAction5()));
+        contextMenu.addAction(&action5);
+
+        contextMenuAction[0][0] = 49;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       } else if (BCsDisplacementsTreeItem = dynamic_cast<BCsDisplacementsTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -1602,6 +1656,28 @@ void ModelTree::showContextMenu(const QPoint &pos)
         contextMenuAction[0][0] = 48;
         contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
         contextMenu.exec(mapToGlobal(pos));
+      } else if (StepsLoadsBodyHeatfluxTreeItem = dynamic_cast<StepsLoadsBodyHeatfluxTree*>(item->parent()))
+      {
+        QMenu contextMenu("Context Menu",this);
+        QAction action1("Create Body Heatflux",this);
+        connect(&action1, SIGNAL(triggered()),this,SLOT(ContextMenuAction1()));
+        contextMenu.addAction(&action1);
+        QAction action2("Modify Body Heatflux",this);
+        connect(&action2, SIGNAL(triggered()),this,SLOT(ContextMenuAction2()));
+        contextMenu.addAction(&action2);
+        QAction action3("Delete Body Heatflux",this);
+        connect(&action3, SIGNAL(triggered()),this,SLOT(ContextMenuAction3()));
+        contextMenu.addAction(&action3);
+        QAction action4("Steps Management",this);
+        connect(&action4, SIGNAL(triggered()),this,SLOT(ContextMenuAction4()));
+        contextMenu.addAction(&action4);
+        QAction action6("Draw Body Heatflux",this);
+        connect(&action6, SIGNAL(triggered()),this,SLOT(ContextMenuAction6()));
+        contextMenu.addAction(&action6);
+
+        contextMenuAction[0][0] = 50;
+        contextMenuAction[0][2] = std::stoi(item->text(1).toStdString());
+        contextMenu.exec(mapToGlobal(pos));
       }else if (StepsBCsTreeItem = dynamic_cast<StepsBCsTree*>(item->parent()))
       {
         QMenu contextMenu("Context Menu",this);
@@ -1771,6 +1847,7 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   LoadsFilmTree* LoadsFilmTreeItem;
   LoadsRadiationTree* LoadsRadiationTreeItem;
   LoadsSurfaceTractionTree* LoadsSurfaceTractionTreeItem;
+  LoadsBodyHeatfluxTree* LoadsBodyHeatfluxTreeItem;
   BCsDisplacementsTree* BCsDisplacementsTreeItem;
   BCsTemperaturesTree* BCsTemperaturesTreeItem;
   HistoryOutputsTree* HistoryOutputsTreeItem;
@@ -1790,6 +1867,7 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   StepsLoadsFilmTree* StepsLoadsFilmTreeItem;
   StepsLoadsRadiationTree* StepsLoadsRadiationTreeItem;
   StepsLoadsSurfaceTractionTree* StepsLoadsSurfaceTractionTreeItem;
+  StepsLoadsBodyHeatfluxTree* StepsLoadsBodyHeatfluxTreeItem;
   StepsBCsTree* StepsBCsTreeItem;
   StepsBCsDisplacementsTree* StepsBCsDisplacementsTreeItem;
   StepsBCsTemperaturesTree* StepsBCsTemperaturesTreeItem;
@@ -1924,6 +2002,12 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     if (LoadsSurfaceTractionTreeItem->text(1).toStdString()=="")
     {
       this->setWidgetInCmdPanelMarker("CCXLoadsSurfaceTractionCreate");
+    }
+  }else if (LoadsBodyHeatfluxTreeItem = dynamic_cast<LoadsBodyHeatfluxTree*>(item))
+  {
+    if (LoadsBodyHeatfluxTreeItem->text(1).toStdString()=="")
+    {
+      this->setWidgetInCmdPanelMarker("CCXLoadsBodyHeatfluxCreate");
     }
   }else if (BCsDisplacementsTreeItem = dynamic_cast<BCsDisplacementsTree*>(item))
   {
@@ -2070,9 +2154,31 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
       myStepsManagement->close();
       myStepsManagement->show();
     }
-  }else if (StepsLoadsFilmTreeItem = dynamic_cast<StepsLoadsFilmTree*>(item))
+  }else if (StepsLoadsRadiationTreeItem = dynamic_cast<StepsLoadsRadiationTree*>(item))
   {
-    if (StepsLoadsFilmTreeItem->text(1).toStdString()=="")
+    if (StepsLoadsRadiationTreeItem->text(1).toStdString()=="")
+    {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
+      myStepsManagement->show();
+    }
+  }else if (StepsLoadsSurfaceTractionTreeItem = dynamic_cast<StepsLoadsSurfaceTractionTree*>(item))
+  {
+    if (StepsLoadsSurfaceTractionTreeItem->text(1).toStdString()=="")
+    {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
+      myStepsManagement->show();
+    }
+  }else if (StepsLoadsBodyHeatfluxTreeItem = dynamic_cast<StepsLoadsBodyHeatfluxTree*>(item))
+  {
+    if (StepsLoadsBodyHeatfluxTreeItem->text(1).toStdString()=="")
     {
       if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
       {
@@ -2214,6 +2320,9 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     } else if (LoadsSurfaceTractionTreeItem = dynamic_cast<LoadsSurfaceTractionTree*>(item->parent()))
     {
       this->setWidgetInCmdPanelMarker("CCXLoadsSurfaceTractionModify");
+    } else if (LoadsBodyHeatfluxTreeItem = dynamic_cast<LoadsBodyHeatfluxTree*>(item->parent()))
+    {
+      this->setWidgetInCmdPanelMarker("CCXLoadsBodyHeatfluxModify");
     } else if (BCsDisplacementsTreeItem = dynamic_cast<BCsDisplacementsTree*>(item->parent()))
     {
       this->setWidgetInCmdPanelMarker("FEADisplacementModify");
@@ -2317,6 +2426,14 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
       myStepsManagement->close();
       myStepsManagement->show();
     } else if (StepsLoadsSurfaceTractionTreeItem = dynamic_cast<StepsLoadsSurfaceTractionTree*>(item->parent()))
+    {
+      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
+      {
+        myStepsManagement->setStep(TreeItem->text(1));
+      }
+      myStepsManagement->close();
+      myStepsManagement->show();
+    } else if (StepsLoadsBodyHeatfluxTreeItem = dynamic_cast<StepsLoadsBodyHeatfluxTree*>(item->parent()))
     {
       if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
       {
@@ -2738,6 +2855,28 @@ void ModelTree::execContextMenuAction(){
         //CubitInterface::cmd(command.c_str());
         ccx_iface->cmd(command);
       }
+    }else if (contextMenuAction[0][0]==49) //LoadsBodyHeatfluxTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsBodyHeatfluxCreate");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        std::string command = "ccx draw load_bodyheatflux_all";
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsBodyHeatfluxModify");
+      }else if (contextMenuAction[0][1]==3) //Action4
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsBodyHeatfluxDelete");
+      }else if (contextMenuAction[0][1]==4) //Action5
+      {
+        std::string command = "ccx draw load bodyheatflux " + std::to_string(contextMenuAction[0][2]);
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
+      }
     }else if (contextMenuAction[0][0]==38) //BCsTree
     {
       if(contextMenuAction[0][1]==0)
@@ -3143,6 +3282,31 @@ void ModelTree::execContextMenuAction(){
       }else if (contextMenuAction[0][1]==5) //Action6
       {
         std::string command = "ccx draw load surfacetraction " + std::to_string(contextMenuAction[0][2]);
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
+      }   
+    }else if (contextMenuAction[0][0]==50) //StepsLoadsBodyHeatfluxTree
+    {
+      if (contextMenuAction[0][1]==0) //Action1
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsBodyHeatfluxCreate");
+      }else if (contextMenuAction[0][1]==1) //Action2
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsBodyHeatfluxModify");
+      }else if (contextMenuAction[0][1]==2) //Action3
+      {
+        this->setWidgetInCmdPanelMarker("CCXLoadsBodyHeatfluxDelete");
+      }else if (contextMenuAction[0][1]==3) //Action4
+      {
+        myStepsManagement->show();
+      }else if (contextMenuAction[0][1]==4) //Action5
+      {
+        std::string command = "ccx draw step " + std::to_string(contextMenuAction[0][2]) + " load_bodyheatflux_all";
+        //CubitInterface::cmd(command.c_str());
+        ccx_iface->cmd(command);
+      }else if (contextMenuAction[0][1]==5) //Action6
+      {
+        std::string command = "ccx draw load bodyheatflux " + std::to_string(contextMenuAction[0][2]);
         //CubitInterface::cmd(command.c_str());
         ccx_iface->cmd(command);
       }   

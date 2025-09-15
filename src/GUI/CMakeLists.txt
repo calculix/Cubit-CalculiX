@@ -47,6 +47,8 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/LoadsRadiationTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsSurfaceTractionTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsSurfaceTractionTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsBodyHeatfluxTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsBodyHeatfluxTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsDisplacementsTree.cpp
@@ -87,6 +89,8 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsRadiationTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsSurfaceTractionTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsSurfaceTractionTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsBodyHeatfluxTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/StepsLoadsBodyHeatfluxTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsBCsTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsBCsTree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StepsBCsDisplacementsTree.cpp
@@ -257,6 +261,12 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/LoadsSurfaceTractionModifyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsSurfaceTractionDeletePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsSurfaceTractionDeletePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsBodyHeatfluxCreatePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsBodyHeatfluxCreatePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsBodyHeatfluxModifyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsBodyHeatfluxModifyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsBodyHeatfluxDeletePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsBodyHeatfluxDeletePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsDisplacementsModifyPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsDisplacementsModifyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/BCsTemperaturesModifyPanel.hpp
