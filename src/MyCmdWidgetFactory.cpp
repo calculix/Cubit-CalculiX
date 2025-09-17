@@ -72,6 +72,9 @@
 #include "LoadsSurfaceTractionCreatePanel.hpp"
 #include "LoadsSurfaceTractionModifyPanel.hpp"
 #include "LoadsSurfaceTractionDeletePanel.hpp"
+#include "LoadsBodyHeatfluxCreatePanel.hpp"
+#include "LoadsBodyHeatfluxModifyPanel.hpp"
+#include "LoadsBodyHeatfluxDeletePanel.hpp"
 #include "BCsDisplacementsModifyPanel.hpp"
 #include "BCsTemperaturesModifyPanel.hpp"
 #include "HistoryOutputsCreatePanel.hpp"
@@ -323,6 +326,12 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
     return new LoadsSurfaceTractionModifyPanel();
   if(name == "CCXLoadsSurfaceTractionDelete")
     return new LoadsSurfaceTractionDeletePanel();
+  if(name == "CCXLoadsBodyHeatfluxCreate")
+    return new LoadsBodyHeatfluxCreatePanel();
+  if(name == "CCXLoadsBodyHeatfluxModify")
+    return new LoadsBodyHeatfluxModifyPanel();
+  if(name == "CCXLoadsBodyHeatfluxDelete")
+    return new LoadsBodyHeatfluxDeletePanel();
   if(name == "CCXBCsDisplacementsModify")
     return new BCsDisplacementsModifyPanel();
   if(name == "CCXBCsTemperaturesModify")
