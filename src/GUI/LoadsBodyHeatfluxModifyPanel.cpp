@@ -26,7 +26,6 @@ LoadsBodyHeatfluxModifyPanel::LoadsBodyHeatfluxModifyPanel(QWidget *parent) :
   HBoxLayout_5 = new QHBoxLayout();
   HBoxLayout_6 = new QHBoxLayout();
   HBoxLayout_7 = new QHBoxLayout();
-  HBoxLayout_8 = new QHBoxLayout();
   label_0 = new QLabel();
   label_1 = new QLabel();
   label_2 = new QLabel();
@@ -35,7 +34,6 @@ LoadsBodyHeatfluxModifyPanel::LoadsBodyHeatfluxModifyPanel(QWidget *parent) :
   label_5 = new QLabel();
   label_6 = new QLabel();
   label_7 = new QLabel();
-  label_8 = new QLabel();
   label_0->setFixedWidth(labelWidth);
   label_1->setFixedWidth(labelWidth);
   label_2->setFixedWidth(labelWidth);
@@ -44,32 +42,32 @@ LoadsBodyHeatfluxModifyPanel::LoadsBodyHeatfluxModifyPanel(QWidget *parent) :
   label_5->setFixedWidth(labelWidth);
   label_6->setFixedWidth(labelWidth);
   label_7->setFixedWidth(labelWidth);
-  label_8->setFixedWidth(labelWidth);
-  label_0->setText("Surface Traction ID");
+  label_0->setText("Body Heatflux ID");
   label_1->setText("Name");
-  label_2->setText("Sideset ID");
-  label_3->setText("Force X");
-  label_4->setText("Force Y");
-  label_5->setText("Force Z");
-  label_6->setText("OP");
-  label_7->setText("Amplitude ID");
-  label_8->setText("Time Delay");
+  label_2->setText("Magnitude");
+  label_3->setText("Type");
+  label_4->setText("IDs");
+  label_5->setText("OP");
+  label_6->setText("Amplitude ID");
+  label_7->setText("Time Delay");
   lineEdit_0 = new QLineEdit();
   lineEdit_1 = new QLineEdit();
   lineEdit_2 = new QLineEdit();
-  lineEdit_3 = new QLineEdit();
+  comboBox_3 = new QComboBox();
+  comboBox_3->addItem("");
+  comboBox_3->addItem("Block");
+  comboBox_3->addItem("Element");
   lineEdit_4 = new QLineEdit();
-  lineEdit_5 = new QLineEdit();
-  comboBox_6 = new QComboBox();
-  comboBox_6->addItem("");
-  comboBox_6->addItem("mod");
-  comboBox_6->addItem("new");
+  comboBox_5 = new QComboBox();
+  comboBox_5->addItem("");
+  comboBox_5->addItem("mod");
+  comboBox_5->addItem("new");
+  lineEdit_6 = new QLineEdit();
   lineEdit_7 = new QLineEdit();
-  lineEdit_8 = new QLineEdit();
   
   lineEdit_1->setPlaceholderText("Optional");
+  lineEdit_6->setPlaceholderText("Optional");
   lineEdit_7->setPlaceholderText("Optional");
-  lineEdit_8->setPlaceholderText("Optional");
   
   pushButton_apply = new QPushButton();
   pushButton_apply->setText("Apply");
@@ -86,7 +84,6 @@ LoadsBodyHeatfluxModifyPanel::LoadsBodyHeatfluxModifyPanel(QWidget *parent) :
   VBoxLayout->addLayout(HBoxLayout_5);
   VBoxLayout->addLayout(HBoxLayout_6);
   VBoxLayout->addLayout(HBoxLayout_7);
-  VBoxLayout->addLayout(HBoxLayout_8);
   VBoxLayout->addItem(vertical_spacer);
   VBoxLayout->addLayout(HBoxLayout_pushButton_apply);
 
@@ -97,17 +94,15 @@ LoadsBodyHeatfluxModifyPanel::LoadsBodyHeatfluxModifyPanel(QWidget *parent) :
   HBoxLayout_2->addWidget(label_2);
   HBoxLayout_2->addWidget(lineEdit_2);
   HBoxLayout_3->addWidget(label_3);
-  HBoxLayout_3->addWidget(lineEdit_3);
+  HBoxLayout_3->addWidget(comboBox_3);
   HBoxLayout_4->addWidget(label_4);
   HBoxLayout_4->addWidget(lineEdit_4);
   HBoxLayout_5->addWidget(label_5);
-  HBoxLayout_5->addWidget(lineEdit_5);
+  HBoxLayout_5->addWidget(comboBox_5);
   HBoxLayout_6->addWidget(label_6);
-  HBoxLayout_6->addWidget(comboBox_6);
+  HBoxLayout_6->addWidget(lineEdit_6);
   HBoxLayout_7->addWidget(label_7);
   HBoxLayout_7->addWidget(lineEdit_7);
-  HBoxLayout_8->addWidget(label_8);
-  HBoxLayout_8->addWidget(lineEdit_8);
  
   HBoxLayout_pushButton_apply->addItem(horizontal_spacer_pushButton_apply);
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
@@ -125,43 +120,41 @@ void LoadsBodyHeatfluxModifyPanel::on_pushButton_apply_clicked(bool)
 {
   QStringList commands;
   QString command = "";
-
+//ccx modify bodyheatflux <bodyheatflux_id> [magnitude <magnitude_value>] [{block|element} <<element_ids>...] [op {mod | new}] [amplitude <amplitude id>] [timedelay <timedelay>] [name <name>] 
   if (lineEdit_0->text()!="")
   {
-    command.append("ccx modify surfacetraction " + lineEdit_0->text());
+    command.append("ccx modify bodyheatflux " + lineEdit_0->text());
      
     if (lineEdit_2->text()!="")
     {
-      command.append(" sideset " +lineEdit_2->text());
+      command.append(" magnitude " +lineEdit_2->text());
     }
 
-    if (lineEdit_3->text()!="")
+    if (comboBox_3->currentIndex()!=0)
     {
-      command.append(" force_dof_1 " +lineEdit_3->text());
+      if (comboBox_3->currentIndex()==0)
+      {
+        command.append(" block ");
+      }
+      if (comboBox_3->currentIndex()==1)
+      {
+        command.append(" element ");
+      }
+      command.append(" " + lineEdit_4->text());
     }
     
-    if (lineEdit_4->text()!="")
+    if (comboBox_5->currentIndex()!=0)
     {
-      command.append(" force_dof_2 " +lineEdit_4->text());
+      command.append(" op " + comboBox_5->currentText());
     }
 
-    if (lineEdit_5->text()!="")
+    if (lineEdit_6->text()!="")
     {
-      command.append(" force_dof_3 " +lineEdit_5->text());
+      command.append(" amplitude " +lineEdit_6->text());
     }
-    
-    if (comboBox_6->currentIndex()!=0)
-    {
-      command.append(" op " + comboBox_6->currentText());
-    }
-
     if (lineEdit_7->text()!="")
     {
-      command.append(" amplitude " +lineEdit_7->text());
-    }
-    if (lineEdit_8->text()!="")
-    {
-      command.append(" timedelay " +lineEdit_8->text());
+      command.append(" timedelay " +lineEdit_7->text());
     }
 
     if (lineEdit_1->text()!="")
@@ -176,12 +169,11 @@ void LoadsBodyHeatfluxModifyPanel::on_pushButton_apply_clicked(bool)
     lineEdit_0->setText("");
     lineEdit_1->setText("");
     lineEdit_2->setText("");
-    lineEdit_3->setText("");
+    comboBox_3->setCurrentIndex(0);
     lineEdit_4->setText("");
-    lineEdit_5->setText("");
-    comboBox_6->setCurrentIndex(0);
+    comboBox_5->setCurrentIndex(0);
+    lineEdit_6->setText("");
     lineEdit_7->setText("");
-    lineEdit_8->setText("");
   }
   
   for (size_t i = 0; i < commands.size(); i++)

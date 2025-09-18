@@ -32,7 +32,7 @@ std::vector<std::string> ccxLoadsBodyHeatfluxModifyCommand::get_syntax_help()
   std::vector<std::string> help(1);
   help[0] = "ccx "; 
   help[0].append("modify bodyheatflux <bodyheatflux_id> [magnitude <magnitude_value>] ");
-  help[0].append("[{block|element} <<element_ids>...] ");
+  help[0].append("[{block|element} <ids>...] ");
   help[0].append("[op {mod | new}] " );
   help[0].append("[amplitude <amplitude id>] ");
   help[0].append("[timedelay <timedelay>] ");

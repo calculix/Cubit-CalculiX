@@ -1,7 +1,7 @@
 [![GitHub](https://badgen.net/badge/icon/github?icon=github&label)](https://github.com/calculix/Cubit-CalculiX)
 [![Github All Releases](https://img.shields.io/github/downloads/calculix/Cubit-CalculiX/total.svg)](https://github.com/calculix/Cubit-CalculiX/releases)
 <br/>
-# Cubit-CalculiX 2025.8
+# Cubit-CalculiX 2025.9
 Hey ho that´s the CalculiX Component for coreform cubit!
 
 Full Model definitions for CalculiX can be done with Cubit as Preprocessor.
@@ -11,12 +11,14 @@ Here you can find the source code.
 
 The builds can be downloaded at our [website](https://www.maschinenbauer.at/open-source/calculix-component-for-coreform-cubit).
 
-Or just use the links.
+Or just use the links to download them from GitHub.
 
-[Windows Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2025.8/build_windows_2025.8.zip)
-[Linux Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2025.8/build_linux_2025.8.zip)
+[Windows Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2025.9/build_windows_2025.9.zip)
+[Linux Build](https://github.com/calculix/Cubit-CalculiX/releases/download/2025.9/build_linux_2025.9.zip)
 
 This component was build with Cubit 2025.8!
+So it will most likely only work with this Cubit Release. 
+For older Cubit Releases you must pick an older Cubit-CalculiX Release. 
 Tested with Cubit 2025.8 on Windows 11 and Ubuntu 24.04
 
 Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/@CubitCalculiX) . We will post videos from examples and updates in the near future.
@@ -118,6 +120,7 @@ Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/
   - Trajectories
     - Heatflux (can be used as moving heatsource)
   - Surface Traction
+  - Body Heatfluxes (DFLUX)
 - Boundary Conditions
   - Displacements
   - Temperatures
@@ -329,7 +332,7 @@ When choosing the totalincrement the related displacements will be used.
 ![projection of displacements](/readme_docs/projection_01.png?raw=true "projection of displacements")
 
 # How to build on linux
-Build Process for Ubuntu 22.04 and 24.04
+Build Process for Ubuntu 24.04
 
 1. After a clean installation
    Update and upgrade the system, then install tools required for building:
@@ -337,14 +340,14 @@ Build Process for Ubuntu 22.04 and 24.04
    sudo apt update && sudo apt upgrade -y
    sudo apt-get install cmake cmake-gui
    sudo apt-get install build-essential
-   sudo apt-get install qtbase5-dev libqt5charts5-dev libqt5widgets5
+   sudo apt-get install qt6-base-dev qt6-base-dev-tools qt6charts-dev
    sudo apt install libglu1-mesa
    ```
 2. Install Coreform Cubit
    Either download from the [Coreform Website](https://coreform.com/downloads/) or via terminal
    ```
-   wget https://f002.backblazeb2.com/file/cubit-downloads/Coreform-Cubit/Releases/Linux/Coreform-Cubit-2024.8%2B52155-Lin64.deb
-   sudo apt-get install ./Coreform-Cubit-2024.8+52155-Lin64.deb
+   wget https://f002.backblazeb2.com/file/cubit-downloads/Coreform-Cubit/Releases/Linux/Coreform-Cubit-2025.8%2B61943-Lin64.deb
+   sudo apt-get install ./Coreform-Cubit-2025.8+61943-Lin64.deb
    ```
 3. Install Cubit-Calculix
    Clone the Cubit-Calculix repository
@@ -363,6 +366,7 @@ Build Process for Ubuntu 22.04 and 24.04
    ```
    
 # known issues
+- On a freshly installed ubuntu are most likely some libraries missing to run CalculiX and Paraview out of the box. A short guide how to install the missing libraries for CalculiX can be found in the Readme file in the Solver directory. 
 - See https://github.com/calculix/Cubit-CalculiX/issues for open issues. Not every issue is closed in the available binaries. Please look at the issue and release date.
 
 # todo list

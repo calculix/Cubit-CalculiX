@@ -47,7 +47,6 @@ private:
   QHBoxLayout* HBoxLayout_5;
   QHBoxLayout* HBoxLayout_6;
   QHBoxLayout* HBoxLayout_7;
-  QHBoxLayout* HBoxLayout_8;
   QLabel* label_1;
   QLabel* label_2;
   QLabel* label_3;
@@ -55,15 +54,13 @@ private:
   QLabel* label_5;
   QLabel* label_6;
   QLabel* label_7;
-  QLabel* label_8;
   QLineEdit* lineEdit_1;
   QLineEdit* lineEdit_2;
-  QLineEdit* lineEdit_3;
+  QComboBox* comboBox_3;
   QLineEdit* lineEdit_4;
-  QLineEdit* lineEdit_5;
-  QComboBox* comboBox_6;
+  QComboBox* comboBox_5;
+  QLineEdit* lineEdit_6;
   QLineEdit* lineEdit_7;
-  QLineEdit* lineEdit_8;
 };
 
 #endif // LOADSBODYHEATFLUXCREATEPANEL_HPP
