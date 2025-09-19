@@ -2383,6 +2383,7 @@ bool CoreResultsVtkWriter::checkLinkPossible()
   for (size_t i = 0; i < trajectory_ids.size(); i++)
   {
     free_node_count = free_node_count + ccx_iface->loadstrajectory_heatflux_get_node_ids(trajectory_ids[i]).size();
+    free_node_count = free_node_count + ccx_iface->loadstrajectory_bodyheatfluxsphere_get_node_ids(trajectory_ids[i]).size();
   }
   if (CubitInterface::get_node_count()!=frd->nodes.size()+free_node_count)
   {
@@ -2399,6 +2400,7 @@ bool CoreResultsVtkWriter::checkLinkPossible()
   for (size_t i = 0; i < trajectory_ids.size(); i++)
   {
     free_element_count = free_element_count + ccx_iface->loadstrajectory_heatflux_get_edge_ids(trajectory_ids[i]).size();
+    free_element_count = free_element_count + ccx_iface->loadstrajectory_bodyheatfluxsphere_get_edge_ids(trajectory_ids[i]).size();
   }
   if (CubitInterface::get_element_count()!=frd->elements.size()+free_element_count)
   {

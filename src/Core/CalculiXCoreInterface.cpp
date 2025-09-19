@@ -625,6 +625,51 @@ std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_heatflux
   return ccx_core.loadstrajectory_heatflux_get_magnitude(trajectory_id);
 }
 
+std::vector<int> CalculiXCoreInterface::loadstrajectory_bodyheatfluxsphere_get_node_ids(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_bodyheatfluxsphere_get_node_ids(trajectory_id);
+}
+
+std::vector<int> CalculiXCoreInterface::loadstrajectory_bodyheatfluxsphere_get_edge_ids(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_bodyheatfluxsphere_get_edge_ids(trajectory_id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_bodyheatfluxsphere_get_hit_coordinates(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_bodyheatfluxsphere_get_hit_coordinates(trajectory_id);
+}
+  
+std::vector<std::vector<std::vector<int>>> CalculiXCoreInterface::loadstrajectory_bodyheatfluxsphere_get_element_ids(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_bodyheatfluxsphere_get_element_ids(trajectory_id);
+}
+
+std::vector<std::vector<std::vector<int>>> CalculiXCoreInterface::loadstrajectory_bodyheatfluxsphere_get_draw_element_ids(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_bodyheatfluxsphere_get_draw_element_ids(trajectory_id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_bodyheatfluxsphere_get_times(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_bodyheatfluxsphere_get_times(trajectory_id);
+} 
+
+std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_bodyheatfluxsphere_get_radius(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_bodyheatfluxsphere_get_radius(trajectory_id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_bodyheatfluxsphere_get_depth(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_bodyheatfluxsphere_get_depth(trajectory_id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_bodyheatfluxsphere_get_magnitude(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_bodyheatfluxsphere_get_magnitude(trajectory_id);
+}
+
 bool CalculiXCoreInterface::create_loadsfilm(std::vector<std::string> options)
 {
   return ccx_core.create_loadsfilm(options);

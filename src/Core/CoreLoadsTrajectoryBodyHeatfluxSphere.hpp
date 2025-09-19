@@ -57,7 +57,6 @@ public:
   // name_data[0][0] name_id
   // name_data[0][1] name
 
-  std::vector<int> prepared_sidesets;
   std::vector<int> prepared_amplitudes;
   std::vector<int> prepared_bodyheatflux;
   std::vector<std::vector<int>> prepared_step_bodyheatflux;
@@ -92,8 +91,8 @@ public:
   std::vector<int> get_node_ids(int load_id); //returns node ids for curve
   std::vector<int> get_edge_ids(int load_id); //returns edge ids for curve
   std::vector<std::vector<double>> get_hit_coordinates(int load_id); //returns hit coordinates
-  std::vector<std::vector<std::vector<int>>> get_face_ids(int load_id); //returns face ids for the node ids from get_node_ids per radius
-  std::vector<std::vector<std::vector<int>>> get_draw_face_ids(int load_id); //returns face ids for the node ids from get_node_ids per radius already filtered for drawing
+  std::vector<std::vector<std::vector<int>>> get_element_ids(int load_id); //returns element ids for the node ids from get_node_ids per radius and depth
+  std::vector<std::vector<std::vector<int>>> get_draw_element_ids(int load_id); //returns face ids for the node ids from get_node_ids per radius already filtered for drawing
   std::vector<std::vector<double>> get_times(int load_id); //returns time begin and end ordered by the node ids from get_node_ids
   std::vector<std::vector<double>> get_radius(int load_id); //returns radius ordered by the node ids from get_node_ids
   std::vector<std::vector<double>> get_depth(int load_id); //returns radius ordered by the node ids from get_node_ids

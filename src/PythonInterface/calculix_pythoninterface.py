@@ -1645,6 +1645,33 @@ class CalculiXPythonInterface(object):
 
     def loadstrajectory_heatflux_get_magnitude(self, trajectory_id):
         return _calculix_pythoninterface.CalculiXPythonInterface_loadstrajectory_heatflux_get_magnitude(self, trajectory_id)
+
+    def loadstrajectory_bodyheatfluxsphere_get_node_ids(self, trajectory_id):
+        return _calculix_pythoninterface.CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_node_ids(self, trajectory_id)
+
+    def loadstrajectory_bodyheatfluxsphere_get_edge_ids(self, trajectory_id):
+        return _calculix_pythoninterface.CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_edge_ids(self, trajectory_id)
+
+    def loadstrajectory_bodyheatfluxsphere_get_hit_coordinates(self, trajectory_id):
+        return _calculix_pythoninterface.CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_hit_coordinates(self, trajectory_id)
+
+    def loadstrajectory_bodyheatfluxsphere_get_element_ids(self, trajectory_id):
+        return _calculix_pythoninterface.CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_element_ids(self, trajectory_id)
+
+    def loadstrajectory_bodyheatfluxsphere_get_draw_element_ids(self, trajectory_id):
+        return _calculix_pythoninterface.CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_draw_element_ids(self, trajectory_id)
+
+    def loadstrajectory_bodyheatfluxsphere_get_times(self, trajectory_id):
+        return _calculix_pythoninterface.CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_times(self, trajectory_id)
+
+    def loadstrajectory_bodyheatfluxsphere_get_radius(self, trajectory_id):
+        return _calculix_pythoninterface.CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_radius(self, trajectory_id)
+
+    def loadstrajectory_bodyheatfluxsphere_get_depth(self, trajectory_id):
+        return _calculix_pythoninterface.CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_depth(self, trajectory_id)
+
+    def loadstrajectory_bodyheatfluxsphere_get_magnitude(self, trajectory_id):
+        return _calculix_pythoninterface.CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_magnitude(self, trajectory_id)
     ccx_iface = property(_calculix_pythoninterface.CalculiXPythonInterface_ccx_iface_get, _calculix_pythoninterface.CalculiXPythonInterface_ccx_iface_set)
 
 # Register CalculiXPythonInterface in _calculix_pythoninterface:

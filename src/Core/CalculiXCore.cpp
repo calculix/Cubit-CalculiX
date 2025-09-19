@@ -39,6 +39,7 @@
 #include "CoreLoadsCentrifugal.hpp"
 #include "CoreLoadsTrajectory.hpp"
 #include "CoreLoadsTrajectoryHeatflux.hpp"
+#include "CoreLoadsTrajectoryBodyHeatfluxSphere.hpp"
 #include "CoreLoadsFilm.hpp"
 #include "CoreLoadsRadiation.hpp"
 #include "CoreLoadsSurfaceTraction.hpp"
@@ -692,6 +693,15 @@ bool CalculiXCore::read_cub(std::string filename)
     cubTool.read_dataset_double_rank_2("radius_data","Cubit-CalculiX/Loads/Trajectory/Heatflux", loadstrajectory->heatflux->radius_data);
     cubTool.read_dataset_string_rank_2("time_data","Cubit-CalculiX/Loads/Trajectory/Heatflux", loadstrajectory->heatflux->time_data);
     cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Trajectory/Heatflux", loadstrajectory->heatflux->name_data);
+    //LoadsTrajectoryBodyHeatfluxSphere
+    cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", loadstrajectory->bodyheatfluxsphere->loads_data);
+    cubTool.read_dataset_int_rank_2("fire_ray_surface_data","Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", loadstrajectory->bodyheatfluxsphere->fire_ray_surface_data);
+    cubTool.read_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", loadstrajectory->bodyheatfluxsphere->direction_data);
+    cubTool.read_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", loadstrajectory->bodyheatfluxsphere->magnitude_data);
+    cubTool.read_dataset_double_rank_2("radius_data","Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", loadstrajectory->bodyheatfluxsphere->radius_data);
+    cubTool.read_dataset_double_rank_2("depth_data","Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", loadstrajectory->bodyheatfluxsphere->depth_data);
+    cubTool.read_dataset_string_rank_2("time_data","Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", loadstrajectory->bodyheatfluxsphere->time_data);
+    cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", loadstrajectory->bodyheatfluxsphere->name_data);
     progressbar->step();
     progressbar->check_interrupt();
     //LoadsFilm
@@ -1257,6 +1267,16 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.write_dataset_double_rank_2("radius_data","Cubit-CalculiX/Loads/Trajectory/Heatflux", loadstrajectory->heatflux->radius_data);
     cubTool.write_dataset_string_rank_2("time_data","Cubit-CalculiX/Loads/Trajectory/Heatflux", loadstrajectory->heatflux->time_data);
     cubTool.write_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Trajectory/Heatflux", loadstrajectory->heatflux->name_data);
+    //LoadsTrajectoryBodyHeatfluxSphere
+    cubTool.createGroup("Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere");
+    cubTool.write_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", loadstrajectory->bodyheatfluxsphere->loads_data);
+    cubTool.write_dataset_int_rank_2("fire_ray_surface_data","Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", loadstrajectory->bodyheatfluxsphere->fire_ray_surface_data);
+    cubTool.write_dataset_string_rank_2("direction_data","Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", loadstrajectory->bodyheatfluxsphere->direction_data);
+    cubTool.write_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", loadstrajectory->bodyheatfluxsphere->magnitude_data);
+    cubTool.write_dataset_double_rank_2("radius_data","Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", loadstrajectory->bodyheatfluxsphere->radius_data);
+    cubTool.write_dataset_double_rank_2("depth_data","Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", loadstrajectory->bodyheatfluxsphere->depth_data);
+    cubTool.write_dataset_string_rank_2("time_data","Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", loadstrajectory->bodyheatfluxsphere->time_data);
+    cubTool.write_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", loadstrajectory->bodyheatfluxsphere->name_data);
     progressbar->step();
     progressbar->check_interrupt();
     //LoadsFilm
@@ -4192,6 +4212,97 @@ std::vector<std::vector<double>> CalculiXCore::loadstrajectory_heatflux_get_magn
   return loadstrajectory->heatflux->get_magnitude(-1);
 }
 
+std::vector<int> CalculiXCore::loadstrajectory_bodyheatfluxsphere_get_node_ids(int trajectory_id)
+{
+  if (loadstrajectory->get_load_type(trajectory_id)=="BODYHEATFLUXSPHERE")
+  {
+    int loads_data_id = loadstrajectory->get_loads_data_id_from_load_id(trajectory_id);
+    return loadstrajectory->bodyheatfluxsphere->get_node_ids(loadstrajectory->loads_data[loads_data_id][2]);
+  }
+  return loadstrajectory->bodyheatfluxsphere->get_node_ids(-1);
+}
+
+std::vector<int> CalculiXCore::loadstrajectory_bodyheatfluxsphere_get_edge_ids(int trajectory_id)
+{
+  if (loadstrajectory->get_load_type(trajectory_id)=="BODYHEATFLUXSPHERE")
+  {
+    int loads_data_id = loadstrajectory->get_loads_data_id_from_load_id(trajectory_id);
+    return loadstrajectory->bodyheatfluxsphere->get_edge_ids(loadstrajectory->loads_data[loads_data_id][2]);
+  }
+  return loadstrajectory->bodyheatfluxsphere->get_edge_ids(-1);
+}
+
+std::vector<std::vector<double>> CalculiXCore::loadstrajectory_bodyheatfluxsphere_get_hit_coordinates(int trajectory_id)
+{
+  if (loadstrajectory->get_load_type(trajectory_id)=="BODYHEATFLUXSPHERE")
+  {
+    int loads_data_id = loadstrajectory->get_loads_data_id_from_load_id(trajectory_id);
+    return loadstrajectory->bodyheatfluxsphere->get_hit_coordinates(loadstrajectory->loads_data[loads_data_id][2]);
+  }
+  return loadstrajectory->bodyheatfluxsphere->get_hit_coordinates(-1);
+}
+
+std::vector<std::vector<std::vector<int>>> CalculiXCore::loadstrajectory_bodyheatfluxsphere_get_element_ids(int trajectory_id)
+{
+  if (loadstrajectory->get_load_type(trajectory_id)=="BODYHEATFLUXSPHERE")
+  {
+    int loads_data_id = loadstrajectory->get_loads_data_id_from_load_id(trajectory_id);
+    return loadstrajectory->bodyheatfluxsphere->get_element_ids(loadstrajectory->loads_data[loads_data_id][2]);
+  }
+  return loadstrajectory->bodyheatfluxsphere->get_element_ids(-1);
+}
+
+std::vector<std::vector<std::vector<int>>> CalculiXCore::loadstrajectory_bodyheatfluxsphere_get_draw_element_ids(int trajectory_id)
+{
+  if (loadstrajectory->get_load_type(trajectory_id)=="BODYHEATFLUXSPHERE")
+  {
+    int loads_data_id = loadstrajectory->get_loads_data_id_from_load_id(trajectory_id);
+    return loadstrajectory->bodyheatfluxsphere->get_draw_element_ids(loadstrajectory->loads_data[loads_data_id][2]);
+  }
+  return loadstrajectory->bodyheatfluxsphere->get_draw_element_ids(-1);
+}
+
+std::vector<std::vector<double>> CalculiXCore::loadstrajectory_bodyheatfluxsphere_get_times(int trajectory_id)
+{
+  if (loadstrajectory->get_load_type(trajectory_id)=="BODYHEATFLUXSPHERE")
+  {
+    int loads_data_id = loadstrajectory->get_loads_data_id_from_load_id(trajectory_id);
+    return loadstrajectory->bodyheatfluxsphere->get_times(loadstrajectory->loads_data[loads_data_id][2]);
+  }
+  return loadstrajectory->bodyheatfluxsphere->get_times(-1);
+}
+
+std::vector<std::vector<double>> CalculiXCore::loadstrajectory_bodyheatfluxsphere_get_radius(int trajectory_id)
+{
+  if (loadstrajectory->get_load_type(trajectory_id)=="BODYHEATFLUXSPHERE")
+  {
+    int loads_data_id = loadstrajectory->get_loads_data_id_from_load_id(trajectory_id);
+    return loadstrajectory->bodyheatfluxsphere->get_radius(loadstrajectory->loads_data[loads_data_id][2]);
+  }
+  return loadstrajectory->bodyheatfluxsphere->get_radius(-1);
+}
+
+std::vector<std::vector<double>> CalculiXCore::loadstrajectory_bodyheatfluxsphere_get_depth(int trajectory_id)
+{
+  if (loadstrajectory->get_load_type(trajectory_id)=="BODYHEATFLUXSPHERE")
+  {
+    int loads_data_id = loadstrajectory->get_loads_data_id_from_load_id(trajectory_id);
+    return loadstrajectory->bodyheatfluxsphere->get_depth(loadstrajectory->loads_data[loads_data_id][2]);
+  }
+  return loadstrajectory->bodyheatfluxsphere->get_depth(-1);
+}
+
+std::vector<std::vector<double>> CalculiXCore::loadstrajectory_bodyheatfluxsphere_get_magnitude(int trajectory_id)
+{
+  if (loadstrajectory->get_load_type(trajectory_id)=="BODYHEATFLUXSPHERE")
+  {
+    int loads_data_id = loadstrajectory->get_loads_data_id_from_load_id(trajectory_id);
+    return loadstrajectory->bodyheatfluxsphere->get_magnitude(loadstrajectory->loads_data[loads_data_id][2]);
+  }
+  return loadstrajectory->bodyheatfluxsphere->get_magnitude(-1);
+}
+
+
 bool CalculiXCore::create_loadsfilm(std::vector<std::string> options)
 {
   return loadsfilm->create_load(options);
@@ -5652,6 +5763,17 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
         entities.push_back({"curve",std::to_string(loadstrajectory->heatflux->loads_data[sub_data_id][2])});
         entities.push_back({"vertex",std::to_string(loadstrajectory->heatflux->loads_data[sub_data_id][3])});
         std::vector<int> surface_ids = loadstrajectory->heatflux->get_fire_ray_surface_ids_from_fire_ray_surface_id(loadstrajectory->heatflux->loads_data[sub_data_id][4]);
+        for (size_t i = 0; i < surface_ids.size(); i++)
+        {
+          entities.push_back({"surface",std::to_string(surface_ids[i])});
+        }
+      }
+      if (loadstrajectory->get_load_type(id)=="BODYHEATFLUXSPHERE")
+      {
+        sub_data_id = loadstrajectory->bodyheatfluxsphere->get_loads_data_id_from_load_id(loadstrajectory->loads_data[data_id][2]);
+        entities.push_back({"curve",std::to_string(loadstrajectory->bodyheatfluxsphere->loads_data[sub_data_id][2])});
+        entities.push_back({"vertex",std::to_string(loadstrajectory->bodyheatfluxsphere->loads_data[sub_data_id][3])});
+        std::vector<int> surface_ids = loadstrajectory->bodyheatfluxsphere->get_fire_ray_surface_ids_from_fire_ray_surface_id(loadstrajectory->bodyheatfluxsphere->loads_data[sub_data_id][4]);
         for (size_t i = 0; i < surface_ids.size(); i++)
         {
           entities.push_back({"surface",std::to_string(surface_ids[i])});

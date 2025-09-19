@@ -721,12 +721,27 @@ std::vector<std::vector<double>> CoreLoadsTrajectoryBodyHeatfluxSphere::get_hit_
   return hit_coordinates;
 }
 
-std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectoryBodyHeatfluxSphere::get_face_ids(int load_id)
+std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectoryBodyHeatfluxSphere::get_element_ids(int load_id)
 {
-  std::vector<std::vector<std::vector<int>>> selected_face_ids;
-  //selected_face_ids[0] order by node
-  //selected_face_ids[0][0] order by radius
-  //selected_face_ids[0][0][0] face ids
+  std::vector<std::vector<std::vector<int>>> selected_element_ids;
+  //selected_element_ids[0] order by node
+  //selected_element_ids[0][0] order by radius and depth
+  //selected_element_ids[0][0][0] face ids
+
+  std::vector<std::vector<std::vector<int>>> selected_tet_ids;
+  //selected_tet_ids[0] order by node
+  //selected_tet_ids[0][0] order by radius and depth
+  //selected_tet_ids[0][0][0] tet ids
+
+  std::vector<std::vector<std::vector<int>>> selected_hex_ids;
+  //selected_hex_ids[0] order by node
+  //selected_hex_ids[0][0] order by radius and depth
+  //selected_hex_ids[0][0][0] tet ids
+
+  std::vector<std::vector<std::vector<int>>> selected_wedge_ids;
+  //selected_wedge_ids[0] order by node
+  //selected_wedge_ids[0][0] order by radius and depth
+  //selected_wedge_ids[0][0][0] tet ids
 
   int load_data_id = this->get_loads_data_id_from_load_id(load_id);
 
@@ -735,93 +750,218 @@ std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectoryBodyHeatfluxSphere
     
     std::vector<std::vector<double>> hit_coordinates = get_hit_coordinates(load_id);
     std::vector<int> surface_ids = this->get_fire_ray_surface_ids_from_fire_ray_surface_id(loads_data[load_data_id][4]);
-    std::vector<int> face_ids;
+    std::vector<int> tet_ids;
+    std::vector<int> hex_ids;
+    std::vector<int> wedge_ids;
     for (size_t i = 0; i < surface_ids.size(); i++)
     {
-      std::vector<int> tmp_face_ids = CubitInterface::parse_cubit_list("face","in surface " + std::to_string(surface_ids[i]));
-      for (size_t ii = 0; ii < tmp_face_ids.size(); ii++)
+      int volume_id = volume_id = CubitInterface::get_owning_volume("surface" , surface_ids[i]);
+      std::vector<int> tmp_tet_ids = CubitInterface::parse_cubit_list("tet","in volume " + std::to_string(volume_id));
+      for (size_t ii = 0; ii < tmp_tet_ids.size(); ii++)
       {
-        face_ids.push_back(tmp_face_ids[ii]);
+        tet_ids.push_back(tmp_tet_ids[ii]);
+      }
+      std::vector<int> tmp_hex_ids = CubitInterface::parse_cubit_list("hex","in volume " + std::to_string(volume_id));
+      for (size_t ii = 0; ii < tmp_hex_ids.size(); ii++)
+      {
+        hex_ids.push_back(tmp_hex_ids[ii]);
+      }
+      std::vector<int> tmp_wedge_ids = CubitInterface::parse_cubit_list("wedge","in volume " + std::to_string(volume_id));
+      for (size_t ii = 0; ii < tmp_wedge_ids.size(); ii++)
+      {
+        wedge_ids.push_back(tmp_wedge_ids[ii]);
       }
     }
     
     std::vector<int> radius_data_ids = this->get_radius_data_ids_from_radius_id(loads_data[load_data_id][8]);
+    std::vector<int> depth_data_ids = this->get_depth_data_ids_from_depth_id(loads_data[load_data_id][9]);
     
-    // get all faces for a radius
+    // get all elements for a radius
     for (size_t i = 0; i < hit_coordinates.size(); i++) //loop over nodes
     {
-      std::vector<std::vector<int>> tmp_face_ids;
+      std::vector<std::vector<int>> tmp_tet_ids;
+      std::vector<std::vector<int>> tmp_hex_ids;
+      std::vector<std::vector<int>> tmp_wedge_ids;
       for (size_t ii = 0; ii < radius_data_ids.size(); ii++) //loop over radius
       {
-        std::vector<int> tmp_selected_face_ids;
+        std::vector<int> tmp_selected_tet_ids;
+        std::vector<int> tmp_selected_hex_ids;
+        std::vector<int> tmp_selected_wedge_ids;
 
         double radius = 0;
         radius = radius_data[radius_data_ids[ii]][1];
+        double depth = 0;
+        depth = depth_data[depth_data_ids[ii]][1];
         
         if (hit_coordinates[i].size()>0)
         {
-          for (size_t iii = 0; iii < face_ids.size(); iii++)
+          for (size_t iii = 0; iii < tet_ids.size(); iii++)
           {
             std::array<double,3> center_point;
-            center_point = CubitInterface::get_center_point("face", face_ids[iii]);
+            center_point = CubitInterface::get_center_point("tet", tet_ids[iii]);
 
             double distance = sqrt(pow(center_point[0]-hit_coordinates[i][0],2)+pow(center_point[1]-hit_coordinates[i][1],2)+pow(center_point[2]-hit_coordinates[i][2],2));
 
             if (distance <= radius)
             {
-              tmp_selected_face_ids.push_back(face_ids[iii]);
+              //check depth for all surfaces
+              for (size_t iv = 0; iv < surface_ids.size(); iv++)
+              {
+                std::vector<double> measure = CubitInterface::measure_between_entities("tet", tet_ids[iii],"surface",surface_ids[iv]);
+                if (measure[0] <= depth)
+                {
+                  tmp_selected_tet_ids.push_back(tet_ids[iii]);
+                  break;
+                }
+              }
+            }
+          }
+          for (size_t iii = 0; iii < hex_ids.size(); iii++)
+          {
+            std::array<double,3> center_point;
+            center_point = CubitInterface::get_center_point("hex", hex_ids[iii]);
+
+            double distance = sqrt(pow(center_point[0]-hit_coordinates[i][0],2)+pow(center_point[1]-hit_coordinates[i][1],2)+pow(center_point[2]-hit_coordinates[i][2],2));
+
+            if (distance <= radius)
+            {
+              //check depth for all surfaces
+              for (size_t iv = 0; iv < surface_ids.size(); iv++)
+              {
+                std::vector<double> measure = CubitInterface::measure_between_entities("hex", hex_ids[iii],"surface",surface_ids[iv]);
+                if (measure[0] <= depth)
+                {
+                  tmp_selected_hex_ids.push_back(hex_ids[iii]);
+                  break;
+                }
+              }
+            }
+          }
+          for (size_t iii = 0; iii < wedge_ids.size(); iii++)
+          {
+            std::array<double,3> center_point;
+            center_point = CubitInterface::get_center_point("wedge", hex_ids[iii]);
+
+            double distance = sqrt(pow(center_point[0]-hit_coordinates[i][0],2)+pow(center_point[1]-hit_coordinates[i][1],2)+pow(center_point[2]-hit_coordinates[i][2],2));
+
+            if (distance <= radius)
+            {
+              //check depth for all surfaces
+              for (size_t iv = 0; iv < surface_ids.size(); iv++)
+              {
+                std::vector<double> measure = CubitInterface::measure_between_entities("wedge", wedge_ids[iii],"surface",surface_ids[iv]);
+                if (measure[0] <= depth)
+                {
+                  tmp_selected_wedge_ids.push_back(wedge_ids[iii]);
+                  break;
+                }
+              }
             }
           }
         }
-        tmp_face_ids.push_back(tmp_selected_face_ids);
+        tmp_tet_ids.push_back(tmp_selected_tet_ids);
+        tmp_hex_ids.push_back(tmp_selected_hex_ids);
+        tmp_wedge_ids.push_back(tmp_selected_wedge_ids);
       }
-      selected_face_ids.push_back(tmp_face_ids);
+      selected_tet_ids.push_back(tmp_tet_ids);
+      selected_hex_ids.push_back(tmp_hex_ids);
+      selected_wedge_ids.push_back(tmp_wedge_ids);
     } 
 
-    // sort the faces out. this means if faces are in r1 and r2 and r1 is smaller
-    // then all faces belonging to r1 will be deleted from r2, this will be repeated for all radius in ascending order
-    for (size_t i = 0; i < selected_face_ids.size(); i++)
+    // sort the elements out. this means if elements are in r1 and r2 and r1 is smaller
+    // then all elements belonging to r1 will be deleted from r2, this will be repeated for all radius in ascending order
+    for (size_t i = 0; i < selected_tet_ids.size(); i++)
     {
-      for (size_t ii = 0; ii < selected_face_ids[i].size()-1; ii++)
+      for (size_t ii = 0; ii < selected_tet_ids[i].size()-1; ii++)
       {
-        sort(begin(selected_face_ids[i][ii]), end(selected_face_ids[i][ii]));
-        for (size_t iii = ii+1; iii < selected_face_ids[i].size(); iii++)
+        sort(begin(selected_tet_ids[i][ii]), end(selected_tet_ids[i][ii]));
+        for (size_t iii = ii+1; iii < selected_tet_ids[i].size(); iii++)
         { 
-          selected_face_ids[i][iii].erase( remove_if( begin(selected_face_ids[i][iii]),end(selected_face_ids[i][iii]),
-              [&](auto x){return binary_search(begin(selected_face_ids[i][ii]),end(selected_face_ids[i][ii]),x);}), end(selected_face_ids[i][iii]) );
+          selected_tet_ids[i][iii].erase( remove_if( begin(selected_tet_ids[i][iii]),end(selected_tet_ids[i][iii]),
+              [&](auto x){return binary_search(begin(selected_tet_ids[i][ii]),end(selected_tet_ids[i][ii]),x);}), end(selected_tet_ids[i][iii]) );
         }
       }
     }
+    for (size_t i = 0; i < selected_hex_ids.size(); i++)
+    {
+      for (size_t ii = 0; ii < selected_hex_ids[i].size()-1; ii++)
+      {
+        sort(begin(selected_hex_ids[i][ii]), end(selected_hex_ids[i][ii]));
+        for (size_t iii = ii+1; iii < selected_hex_ids[i].size(); iii++)
+        { 
+          selected_hex_ids[i][iii].erase( remove_if( begin(selected_hex_ids[i][iii]),end(selected_hex_ids[i][iii]),
+              [&](auto x){return binary_search(begin(selected_hex_ids[i][ii]),end(selected_hex_ids[i][ii]),x);}), end(selected_hex_ids[i][iii]) );
+        }
+      }
+    }
+    for (size_t i = 0; i < selected_wedge_ids.size(); i++)
+    {
+      for (size_t ii = 0; ii < selected_wedge_ids[i].size()-1; ii++)
+      {
+        sort(begin(selected_wedge_ids[i][ii]), end(selected_wedge_ids[i][ii]));
+        for (size_t iii = ii+1; iii < selected_wedge_ids[i].size(); iii++)
+        { 
+          selected_wedge_ids[i][iii].erase( remove_if( begin(selected_wedge_ids[i][iii]),end(selected_wedge_ids[i][iii]),
+              [&](auto x){return binary_search(begin(selected_wedge_ids[i][ii]),end(selected_wedge_ids[i][ii]),x);}), end(selected_wedge_ids[i][iii]) );
+        }
+      }
+    }
+    // get global element ids
+    for (size_t i = 0; i < hit_coordinates.size(); i++) //loop over nodes
+    {
+      std::vector<std::vector<int>> tmp_element_ids;
+      for (size_t ii = 0; ii < radius_data_ids.size(); ii++) //loop over radius
+      {
+        std::vector<int> tmp_element_ids_2;
+        for (size_t iii = 0; iii < selected_tet_ids[i][ii].size(); iii++)
+        {
+          int global_id = CubitInterface::get_global_element_id("tet",selected_tet_ids[i][ii][iii]);
+          tmp_element_ids_2.push_back(global_id);
+        }
+        for (size_t iii = 0; iii < selected_hex_ids[i][ii].size(); iii++)
+        {
+          int global_id = CubitInterface::get_global_element_id("hex",selected_hex_ids[i][ii][iii]);
+          tmp_element_ids_2.push_back(global_id);
+        }
+        for (size_t iii = 0; iii < selected_wedge_ids[i][ii].size(); iii++)
+        {
+          int global_id = CubitInterface::get_global_element_id("wedge",selected_wedge_ids[i][ii][iii]);
+          tmp_element_ids_2.push_back(global_id);
+        }
+        tmp_element_ids.push_back(tmp_element_ids_2);
+      }
+      selected_element_ids.push_back(tmp_element_ids);
+    }
   }
 
-  return selected_face_ids;
+  return selected_element_ids;
 }
 
-std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectoryBodyHeatfluxSphere::get_draw_face_ids(int load_id)
+std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectoryBodyHeatfluxSphere::get_draw_element_ids(int load_id)
 {
-  std::vector<std::vector<std::vector<int>>> face_ids = this->get_face_ids(load_id);
-  //face_ids[0] order by node
-  //face_ids[0][0] order by radius
-  //face_ids[0][0][0] face ids
+  std::vector<std::vector<std::vector<int>>> element_ids = this->get_element_ids(load_id);
+  //element_ids[0] order by node
+  //element_ids[0][0] order by radius
+  //element_ids[0][0][0] face ids
 
-  for (size_t i = 0; i < face_ids.size(); i++)
+  for (size_t i = 0; i < element_ids.size(); i++)
   {
-    for (size_t ii = 0; ii < face_ids[i].size()-1; ii++)
+    for (size_t ii = 0; ii < element_ids[i].size()-1; ii++)
     {
-      sort(begin(face_ids[i][ii]), end(face_ids[i][ii]));
+      sort(begin(element_ids[i][ii]), end(element_ids[i][ii]));
       // loop over all nodes
-      for (size_t ni = 0; ni < face_ids.size(); ni++)
+      for (size_t ni = 0; ni < element_ids.size(); ni++)
       {
-          for (size_t iii = ii+1; iii < face_ids[ni].size(); iii++) //loop over all bigger radius
+          for (size_t iii = ii+1; iii < element_ids[ni].size(); iii++) //loop over all bigger radius
           { 
-          face_ids[ni][iii].erase( remove_if( begin(face_ids[ni][iii]),end(face_ids[ni][iii]),
-              [&](auto x){return binary_search(begin(face_ids[i][ii]),end(face_ids[i][ii]),x);}), end(face_ids[ni][iii]) );
+          element_ids[ni][iii].erase( remove_if( begin(element_ids[ni][iii]),end(element_ids[ni][iii]),
+              [&](auto x){return binary_search(begin(element_ids[i][ii]),end(element_ids[i][ii]),x);}), end(element_ids[ni][iii]) );
           }
       }
     }
   }
 
-  return face_ids;
+  return element_ids;
 }
 
 std::vector<std::vector<double>> CoreLoadsTrajectoryBodyHeatfluxSphere::get_times(int load_id)
@@ -943,33 +1083,33 @@ std::vector<std::vector<double>> CoreLoadsTrajectoryBodyHeatfluxSphere::get_magn
 bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
 {
   StopWatch watch;
-  watch.tick("prepare trajectory start");
+  watch.tick("prepare trajectory bodyheatfluxsphere start");
 
   for (size_t i = 0; i < loads_data.size(); i++)
   {
     std::vector<int> node_ids;
     node_ids = this->get_node_ids(loads_data[i][0]);
-    std::vector<std::vector<std::vector<int>>> face_ids;
-    face_ids = this->get_face_ids(loads_data[i][0]);    
+    std::vector<std::vector<std::vector<int>>> element_ids;
+    element_ids = this->get_element_ids(loads_data[i][0]);    
     std::vector<std::vector<double>> times;
     times = this->get_times(loads_data[i][0]);
     std::vector<std::vector<double>> magnitude;
     magnitude = this->get_magnitude(loads_data[i][0]);
     std::vector<std::vector<double>> radius;
     radius = this->get_radius(loads_data[i][0]);
+    std::vector<std::vector<double>> depth;
+    depth = this->get_radius(loads_data[i][0]);
     int name_data_id = this->get_name_data_id_from_name_id(loads_data[i][9]);
     std::string name = this->name_data[name_data_id][1];
     std::vector<std::vector<std::vector<double>>> amplitude_times;
     std::vector<std::vector<std::vector<double>>> amplitude_magnitudes;
-    int last_id_sideset = 0;
     int last_id_amplitude = 0;
-    int last_id_heatflux = 0;
-    std::vector<int> heatflux_sidesets; //stores the sideset id for use in heatflux
-    std::vector<int> heatflux_amplitude; //stores the amplitude id for use in heatflux
-    std::vector<int> heatflux; //stores the heatflux ids from the current trajectory
+    int last_id_bodyheatflux = 0;
+    std::vector<int> bodyheatflux_amplitude; //stores the amplitude id for use in heatflux
+    std::vector<int> bodyheatflux; //stores the heatflux ids from the current trajectory
 
     //check if every vector has the same size, if not, something went wrong
-    if ((node_ids.size() != face_ids.size()) && (face_ids.size() != times.size()) && (times.size() != magnitude.size()) && (magnitude.size() != radius.size()))
+    if ((node_ids.size() != element_ids.size()) && (element_ids.size() != times.size()) && (times.size() != magnitude.size()) && (magnitude.size() != radius.size()) && (depth.size() != radius.size()))
     {
       std::string log = "Something went wrong with preparing export data for TRAJECTORY ID " + std::to_string(loads_data[i][0]) + "\n";
       PRINT_INFO("%s", log.c_str());
@@ -978,17 +1118,17 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
 
     // check for overlapping faces and prepare face_ids,times,magnitude according to it
     // sorting for faster search
-    std::vector<int> tmp_face_ids;
+    std::vector<int> tmp_element_ids;
     std::vector<std::vector<double>> tmp_times;
     std::vector<double> tmp_magnitude;
 
-    for (size_t ii = 0; ii < face_ids.size(); ii++) //loop over nodes
+    for (size_t ii = 0; ii < element_ids.size(); ii++) //loop over nodes
     {
-      for (size_t iii = 0; iii < face_ids[ii].size(); iii++) // loop over radius
+      for (size_t iii = 0; iii < element_ids[ii].size(); iii++) // loop over radius
       {
-        for (size_t iv = 0; iv < face_ids[ii][iii].size(); iv++) // loop over face
+        for (size_t iv = 0; iv < element_ids[ii][iii].size(); iv++) // loop over element
         {
-          tmp_face_ids.push_back(face_ids[ii][iii][iv]);
+          tmp_element_ids.push_back(element_ids[ii][iii][iv]);
           tmp_times.push_back(times[ii]);
           tmp_magnitude.push_back(magnitude[ii][iii]);
         }
@@ -1003,8 +1143,8 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
     }
     */
 
-    auto p = sort_permutation(tmp_face_ids);
-    this->apply_permutation(tmp_face_ids, p);
+    auto p = sort_permutation(tmp_element_ids);
+    this->apply_permutation(tmp_element_ids, p);
     this->apply_permutation(tmp_times, p);
     this->apply_permutation(tmp_magnitude, p);
     
@@ -1016,86 +1156,55 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
     }
     */
 
-    face_ids.clear();
+    element_ids.clear();
     times.clear();
     magnitude.clear();
 
-    int face_id;
-    std::vector<std::vector<int>> trajectory_face_ids;
-    std::vector<std::vector<double>> face_times; // to get all times when the face is active
-    std::vector<std::vector<double>> face_magnitudes; //saves the magnitude according to the face times
-    for (size_t ii = 0; ii < tmp_face_ids.size(); ii++)
+    int element_id;
+    std::vector<std::vector<int>> trajectory_element_ids;
+    std::vector<std::vector<double>> element_times; // to get all times when the element is active
+    std::vector<std::vector<double>> element_magnitudes; //saves the magnitude according to the element times
+    for (size_t ii = 0; ii < tmp_element_ids.size(); ii++)
     {
       if (ii==0)
       {
-        face_id = tmp_face_ids[ii];
-        face_times.push_back(tmp_times[ii]);
-        face_magnitudes.push_back({0,tmp_magnitude[ii]});
+        element_id = tmp_element_ids[ii];
+        element_times.push_back(tmp_times[ii]);
+        element_magnitudes.push_back({0,tmp_magnitude[ii]});
       }else{
-        if (face_id != tmp_face_ids[ii]) //check if its a new face
+        if (element_id != tmp_element_ids[ii]) //check if its a new element
         {
-          trajectory_face_ids.push_back({face_id});
-          amplitude_times.push_back(face_times);
-          amplitude_magnitudes.push_back(face_magnitudes);
-          face_times.clear();
-          face_magnitudes.clear();
-          face_id = tmp_face_ids[ii];
-          face_times.push_back(tmp_times[ii]);
-          face_magnitudes.push_back({0,tmp_magnitude[ii]});
+          trajectory_element_ids.push_back({element_id});
+          amplitude_times.push_back(element_times);
+          amplitude_magnitudes.push_back(element_magnitudes);
+          element_times.clear();
+          element_magnitudes.clear();
+          element_id = tmp_element_ids[ii];
+          element_times.push_back(tmp_times[ii]);
+          element_magnitudes.push_back({0,tmp_magnitude[ii]});
         }else{
-          face_times.push_back(tmp_times[ii]);
-          face_magnitudes.push_back({0,tmp_magnitude[ii]});
+          element_times.push_back(tmp_times[ii]);
+          element_magnitudes.push_back({0,tmp_magnitude[ii]});
         }
       }
-      if (ii==tmp_face_ids.size()-1)
+      if (ii==tmp_element_ids.size()-1)
       {        
-        trajectory_face_ids.push_back({face_id});
-        amplitude_times.push_back(face_times);
-        amplitude_magnitudes.push_back(face_magnitudes);
+        trajectory_element_ids.push_back({element_id});
+        amplitude_times.push_back(element_times);
+        amplitude_magnitudes.push_back(element_magnitudes);
       }
     }
 
     /*
-    for (size_t ii = 0; ii < trajectory_face_ids.size(); ii++)
+    for (size_t ii = 0; ii < trajectory_element_ids.size(); ii++)
     {
-      std::string log = "filtered[ii] " + std::to_string(trajectory_face_ids[ii][0]) + " " + std::to_string(times[ii][0]) + " " + std::to_string(times[ii][1]) + "\n";
+      std::string log = "filtered[ii] " + std::to_string(trajectory_element_ids[ii][0]) + " " + std::to_string(times[ii][0]) + " " + std::to_string(times[ii][1]) + "\n";
       PRINT_INFO("%s", log.c_str());
     }
     */
-    watch.tick("prepare trajectory " + std::to_string(loads_data[i][0]) + " filtered " + std::to_string(trajectory_face_ids.size()) +  " faces");
+    watch.tick("prepare trajectory " + std::to_string(loads_data[i][0]) + " filtered " + std::to_string(trajectory_element_ids.size()) +  " elements");
     //block core update
-    ccx_iface->set_block_core_update(true);
-    //prepare sidesets
-    std::vector<int> sideset_ids = CubitInterface::parse_cubit_list("sideset","all");
-    if (sideset_ids.size()>0)
-    {
-      last_id_sideset = sideset_ids[sideset_ids.size()-1] + 1;
-    }else{
-      last_id_sideset = 1;
-    }
-    for (size_t ii = 0; ii < trajectory_face_ids.size(); ii++)
-    {
-      if (trajectory_face_ids[ii].size()>0)
-      {
-        std::string face = "";
-        for (size_t iii = 0; iii < trajectory_face_ids[ii].size(); iii++)
-        {
-          face.append(std::to_string(trajectory_face_ids[ii][iii]) + " ");
-        }
-        ccx_iface->silent_cmd("sideset " + std::to_string(last_id_sideset) + " add face " + face);
-        ccx_iface->silent_cmd("sideset " + std::to_string(last_id_sideset) + " name \"Trajectory_" + std::to_string(loads_data[i][0]) + "_" + name + "_" + std::to_string(trajectory_face_ids[ii][0]) + "\"");
-        prepared_sidesets.push_back(last_id_sideset);
-        heatflux_sidesets.push_back(last_id_sideset);
-        last_id_sideset = last_id_sideset + 1;
-      }
-    }
-    //core update
-    ccx_iface->set_block_core_update(false);
-    ccx_iface->core_update();
-    //block core update
-    ccx_iface->set_block_core_update(true);
-    
-    watch.tick("prepare trajectory " + std::to_string(loads_data[i][0]) + " sidesets");
+    ccx_iface->set_block_core_update(true);    
     // prepare amplitudes
     std::vector<int> amplitude_ids = ccx_iface->parser("amplitude","all");
     if (amplitude_ids.size()>0)
@@ -1104,9 +1213,9 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
     }else{
       last_id_amplitude = 1;
     }
-    for (size_t ii = 0; ii < trajectory_face_ids.size(); ii++)
+    for (size_t ii = 0; ii < trajectory_element_ids.size(); ii++)
     {
-      if (trajectory_face_ids[ii].size()>0)
+      if (trajectory_element_ids[ii].size()>0)
       {
         //reorder times and magnitudes
         std::vector<double> temp;
@@ -1170,42 +1279,38 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
             amplitude.append(std::to_string(amplitude_times[ii][iii][1]) + " 0 ");
           } 
         }
-        //std::string log = std::to_string(trajectory_face_ids[ii][0]) + " " + std::to_string(amplitude_times[ii].size()) + " " +  amplitude + "\n";
+        //std::string log = std::to_string(trajectory_element_ids[ii][0]) + " " + std::to_string(amplitude_times[ii].size()) + " " +  amplitude + "\n";
         //PRINT_INFO("%s", log.c_str());
 
-        ccx_iface->silent_cmd("ccx create amplitude name \"Trajectory_" + std::to_string(loads_data[i][0]) + "_" + name + "_"  + std::to_string(trajectory_face_ids[ii][0]) + "\" time_amplitude " + amplitude);
+        ccx_iface->silent_cmd("ccx create amplitude name \"Trajectory_" + std::to_string(loads_data[i][0]) + "_" + name + "_"  + std::to_string(trajectory_element_ids[ii][0]) + "\" time_amplitude " + amplitude);
         prepared_amplitudes.push_back(last_id_amplitude);
-        heatflux_amplitude.push_back(last_id_amplitude);
+        bodyheatflux_amplitude.push_back(last_id_amplitude);
         last_id_amplitude = last_id_amplitude + 1;
       }
     }
     
     watch.tick("prepare trajectory " + std::to_string(loads_data[i][0]) + " amplitudes");
     
-    // prepare heatflux
-    std::vector<int> heatflux_ids = CubitInterface::parse_cubit_list("heatflux","all");
-    if (heatflux_ids.size()>0)
+    // prepare bodyheatflux
+    std::vector<int> bodyheatflux_ids = ccx_iface->get_loadsbodyheatflux_ids();
+    if (bodyheatflux_ids.size()>0)
     {
-      last_id_heatflux = heatflux_ids[heatflux_ids.size()-1] + 1;
+      last_id_bodyheatflux = bodyheatflux_ids[bodyheatflux_ids.size()-1] + 1;
     }else{
-      last_id_heatflux = 1;
+      last_id_bodyheatflux = 1;
     }
     int link_id = 0;
-    std::vector<std::string> modify_cmd;
     //block core update
     ccx_iface->set_block_core_update(true);
-    for (size_t ii = 0; ii < trajectory_face_ids.size(); ii++)
+    for (size_t ii = 0; ii < trajectory_element_ids.size(); ii++)
     {
-      if (trajectory_face_ids[ii].size()>0)
+      if (trajectory_element_ids[ii].size()>0)
       {
-        ccx_iface->silent_cmd("create heatflux on sideset " + std::to_string(heatflux_sidesets[link_id]) + " value 1");
-        //ccx_iface->silent_cmd("modify heatflux " + std::to_string(last_id_heatflux) + " name \"Trajectory_" + std::to_string(loads_data[i][0]) + "_" + name + "_"  + std::to_string(trajectory_face_ids[ii][0])+ "_" + std::to_string(times[ii][0])+ "_" + std::to_string(times[ii][1]) + "\"");
-        modify_cmd.push_back("ccx modify heatflux " + std::to_string(last_id_heatflux) + " amplitude " + std::to_string(heatflux_amplitude[link_id]));
-        //ccx_iface->silent_cmd("ccx modify heatflux " + std::to_string(last_id_heatflux) + " amplitude " + std::to_string(heatflux_amplitude[link_id]));
-        prepared_bodyheatflux.push_back(last_id_heatflux);
-        heatflux.push_back(last_id_heatflux);
+        ccx_iface->silent_cmd("ccx create bodyheatflux 1 element " + std::to_string(trajectory_element_ids[ii][0]) + " amplitude " + std::to_string(bodyheatflux_amplitude[link_id]));
+        prepared_bodyheatflux.push_back(last_id_bodyheatflux);
+        bodyheatflux.push_back(last_id_bodyheatflux);
         link_id = link_id + 1;
-        last_id_heatflux = last_id_heatflux + 1;
+        last_id_bodyheatflux = last_id_bodyheatflux + 1;
       }
     }
 
@@ -1214,13 +1319,9 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
     ccx_iface->core_update();
     //block core update
     ccx_iface->set_block_core_update(true);
-    for (size_t ii = 0; ii < modify_cmd.size(); ii++)
-    {
-      ccx_iface->silent_cmd(modify_cmd[ii]);
-    }
     
-    watch.tick("prepare trajectory " + std::to_string(loads_data[i][0]) + " heatflux");
-    //link heatflux to steps
+    watch.tick("prepare trajectory " + std::to_string(loads_data[i][0]) + " bodyheatflux");
+    //link bodyheatflux to steps
     std::vector<std::vector<std::string>> steps_tree = ccx_iface->get_steps_tree_data();
     for (size_t ii = 0; ii < steps_tree.size(); ii++)
     {
@@ -1230,12 +1331,12 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
         if (trajectory_tree[iii][0] == std::to_string(loads_data[i][0]))
         {
           std::string ids = "";
-          for (size_t iv= 0; iv < heatflux.size(); iv++)
+          for (size_t iv= 0; iv < bodyheatflux.size(); iv++)
           {
-            ids.append(std::to_string(heatflux[iv]) + " ");
-            prepared_step_bodyheatflux.push_back({std::stoi(steps_tree[ii][0]),heatflux[iv]});
+            ids.append(std::to_string(bodyheatflux[iv]) + " ");
+            prepared_step_bodyheatflux.push_back({std::stoi(steps_tree[ii][0]),bodyheatflux[iv]});
           }
-          ccx_iface->silent_cmd("ccx step " + steps_tree[ii][0] + " add load heatflux " + ids);
+          ccx_iface->silent_cmd("ccx step " + steps_tree[ii][0] + " add load bodyheatflux " + ids);
         }
       }
     }
@@ -1254,6 +1355,11 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::clean_export()
 {
   std::string ids;
   StopWatch watch;
+  if (prepared_amplitudes.size()==0)
+  {
+    return true;
+  }
+  
   watch.tick("clean trajectory start");
 
   //block core update
@@ -1268,7 +1374,7 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::clean_export()
     }
     if (current_step_id == prepared_step_bodyheatflux[i][0])
     {
-      ccx_iface->silent_cmd("ccx step " + std::to_string(current_step_id) + " remove load heatflux " + ids);
+      ccx_iface->silent_cmd("ccx step " + std::to_string(current_step_id) + " remove load bodyheatflux " + ids);
       ids="";
       ids.append(std::to_string(prepared_step_bodyheatflux[i][1]) + " ");
       current_step_id = prepared_step_bodyheatflux[i][0];
@@ -1277,26 +1383,18 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::clean_export()
     }
     if (i==prepared_step_bodyheatflux.size()-1)
     {
-      ccx_iface->silent_cmd("ccx step " + std::to_string(current_step_id) + " remove load heatflux " + ids);
+      ccx_iface->silent_cmd("ccx step " + std::to_string(current_step_id) + " remove load bodyheatflux " + ids);
     }
   }
   watch.tick("clean trajectory step links");
-  
-  ids = "";
-  for (size_t i = 0; i < prepared_sidesets.size(); i++)
-  {
-    ids.append(std::to_string(prepared_sidesets[i]) + " ");
-  }
-  ccx_iface->silent_cmd("delete sideset " + ids);
-  watch.tick("clean trajectory sideset");
 
   ids = "";
   for (size_t i = 0; i < prepared_bodyheatflux.size(); i++)
   {
     ids.append(std::to_string(prepared_bodyheatflux[i]) + " ");
   }
-  ccx_iface->silent_cmd("delete heatflux " + ids);
-  watch.tick("clean trajectory heatflux");
+  ccx_iface->silent_cmd("ccx delete bodyheatflux " + ids);
+  watch.tick("clean trajectory bodyheatfluxsphere");
 
   /*
   ids = "";
@@ -1313,7 +1411,6 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::clean_export()
   ccx_iface->set_block_core_update(false);
   ccx_iface->core_update();
   
-  prepared_sidesets.clear();
   prepared_amplitudes.clear();
   prepared_bodyheatflux.clear();
   prepared_step_bodyheatflux.clear();

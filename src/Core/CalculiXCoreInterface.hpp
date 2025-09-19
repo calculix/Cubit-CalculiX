@@ -145,6 +145,15 @@ public:
   std::vector<std::vector<double>> loadstrajectory_heatflux_get_times(int trajectory_id); //returns time begin and end ordered by the node ids from get_node_ids
   std::vector<std::vector<double>> loadstrajectory_heatflux_get_radius(int trajectory_id); //returns radius ordered by the node ids from get_node_ids
   std::vector<std::vector<double>> loadstrajectory_heatflux_get_magnitude(int trajectory_id); //returns magnitude ordered by the node ids from get_node_ids
+  std::vector<int> loadstrajectory_bodyheatfluxsphere_get_node_ids(int trajectory_id); //returns node ids for curve
+  std::vector<int> loadstrajectory_bodyheatfluxsphere_get_edge_ids(int trajectory_id); //returns edge ids for curve
+  std::vector<std::vector<double>> loadstrajectory_bodyheatfluxsphere_get_hit_coordinates(int trajectory_id); //returns hit coordinates
+  std::vector<std::vector<std::vector<int>>> loadstrajectory_bodyheatfluxsphere_get_element_ids(int trajectory_id); //returns element ids for the node ids from get_node_ids
+  std::vector<std::vector<std::vector<int>>> loadstrajectory_bodyheatfluxsphere_get_draw_element_ids(int trajectory_id); //returns element ids for the node ids from get_node_ids
+  std::vector<std::vector<double>> loadstrajectory_bodyheatfluxsphere_get_times(int trajectory_id); //returns time begin and end ordered by the node ids from get_node_ids
+  std::vector<std::vector<double>> loadstrajectory_bodyheatfluxsphere_get_radius(int trajectory_id); //returns radius ordered by the node ids from get_node_ids
+  std::vector<std::vector<double>> loadstrajectory_bodyheatfluxsphere_get_depth(int trajectory_id); //returns depth ordered by the node ids from get_node_ids
+  std::vector<std::vector<double>> loadstrajectory_bodyheatfluxsphere_get_magnitude(int trajectory_id); //returns magnitude ordered by the node ids from get_node_ids
   bool create_loadsfilm(std::vector<std::string> options); // adds a new film load
   bool modify_loadsfilm(int film_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a film
   bool delete_loadsfilm(int film_id); // delete film load

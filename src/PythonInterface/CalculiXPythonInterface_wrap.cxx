@@ -172,12 +172,14 @@
 #undef slots
 #include "Python.h"
 #pragma pop_macro("slots")
+
 # define _DEBUG 1
 #else
 #pragma push_macro("slots")
 #undef slots
 #include "Python.h"
 #pragma pop_macro("slots")
+
 #endif
 
 #if __GNUC__ >= 7
@@ -34690,6 +34692,285 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_node_ids(PyObject *self, PyObject *args) {
+  PyObject *resultobj = 0;
+  CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject *swig_obj[2] ;
+  std::vector< int,std::allocator< int > > result;
+  
+  (void)self;
+  if (!SWIG_Python_UnpackTuple(args, "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_node_ids", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_CalculiXPythonInterface, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_node_ids" "', argument " "1"" of type '" "CalculiXPythonInterface *""'"); 
+  }
+  arg1 = reinterpret_cast< CalculiXPythonInterface * >(argp1);
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_node_ids" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  result = (arg1)->loadstrajectory_bodyheatfluxsphere_get_node_ids(arg2);
+  resultobj = swig::from(static_cast< std::vector< int,std::allocator< int > > >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_edge_ids(PyObject *self, PyObject *args) {
+  PyObject *resultobj = 0;
+  CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject *swig_obj[2] ;
+  std::vector< int,std::allocator< int > > result;
+  
+  (void)self;
+  if (!SWIG_Python_UnpackTuple(args, "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_edge_ids", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_CalculiXPythonInterface, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_edge_ids" "', argument " "1"" of type '" "CalculiXPythonInterface *""'"); 
+  }
+  arg1 = reinterpret_cast< CalculiXPythonInterface * >(argp1);
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_edge_ids" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  result = (arg1)->loadstrajectory_bodyheatfluxsphere_get_edge_ids(arg2);
+  resultobj = swig::from(static_cast< std::vector< int,std::allocator< int > > >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_hit_coordinates(PyObject *self, PyObject *args) {
+  PyObject *resultobj = 0;
+  CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject *swig_obj[2] ;
+  std::vector< std::vector< double,std::allocator< double > >,std::allocator< std::vector< double,std::allocator< double > > > > result;
+  
+  (void)self;
+  if (!SWIG_Python_UnpackTuple(args, "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_hit_coordinates", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_CalculiXPythonInterface, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_hit_coordinates" "', argument " "1"" of type '" "CalculiXPythonInterface *""'"); 
+  }
+  arg1 = reinterpret_cast< CalculiXPythonInterface * >(argp1);
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_hit_coordinates" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  result = (arg1)->loadstrajectory_bodyheatfluxsphere_get_hit_coordinates(arg2);
+  resultobj = swig::from(static_cast< std::vector< std::vector< double,std::allocator< double > >,std::allocator< std::vector< double,std::allocator< double > > > > >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_element_ids(PyObject *self, PyObject *args) {
+  PyObject *resultobj = 0;
+  CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject *swig_obj[2] ;
+  std::vector< std::vector< std::vector< int,std::allocator< int > >,std::allocator< std::vector< int,std::allocator< int > > > >,std::allocator< std::vector< std::vector< int,std::allocator< int > >,std::allocator< std::vector< int,std::allocator< int > > > > > > result;
+  
+  (void)self;
+  if (!SWIG_Python_UnpackTuple(args, "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_element_ids", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_CalculiXPythonInterface, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_element_ids" "', argument " "1"" of type '" "CalculiXPythonInterface *""'"); 
+  }
+  arg1 = reinterpret_cast< CalculiXPythonInterface * >(argp1);
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_element_ids" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  result = (arg1)->loadstrajectory_bodyheatfluxsphere_get_element_ids(arg2);
+  resultobj = swig::from(static_cast< std::vector< std::vector< std::vector< int,std::allocator< int > >,std::allocator< std::vector< int,std::allocator< int > > > >,std::allocator< std::vector< std::vector< int,std::allocator< int > >,std::allocator< std::vector< int,std::allocator< int > > > > > > >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_draw_element_ids(PyObject *self, PyObject *args) {
+  PyObject *resultobj = 0;
+  CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject *swig_obj[2] ;
+  std::vector< std::vector< std::vector< int,std::allocator< int > >,std::allocator< std::vector< int,std::allocator< int > > > >,std::allocator< std::vector< std::vector< int,std::allocator< int > >,std::allocator< std::vector< int,std::allocator< int > > > > > > result;
+  
+  (void)self;
+  if (!SWIG_Python_UnpackTuple(args, "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_draw_element_ids", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_CalculiXPythonInterface, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_draw_element_ids" "', argument " "1"" of type '" "CalculiXPythonInterface *""'"); 
+  }
+  arg1 = reinterpret_cast< CalculiXPythonInterface * >(argp1);
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_draw_element_ids" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  result = (arg1)->loadstrajectory_bodyheatfluxsphere_get_draw_element_ids(arg2);
+  resultobj = swig::from(static_cast< std::vector< std::vector< std::vector< int,std::allocator< int > >,std::allocator< std::vector< int,std::allocator< int > > > >,std::allocator< std::vector< std::vector< int,std::allocator< int > >,std::allocator< std::vector< int,std::allocator< int > > > > > > >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_times(PyObject *self, PyObject *args) {
+  PyObject *resultobj = 0;
+  CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject *swig_obj[2] ;
+  std::vector< std::vector< double,std::allocator< double > >,std::allocator< std::vector< double,std::allocator< double > > > > result;
+  
+  (void)self;
+  if (!SWIG_Python_UnpackTuple(args, "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_times", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_CalculiXPythonInterface, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_times" "', argument " "1"" of type '" "CalculiXPythonInterface *""'"); 
+  }
+  arg1 = reinterpret_cast< CalculiXPythonInterface * >(argp1);
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_times" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  result = (arg1)->loadstrajectory_bodyheatfluxsphere_get_times(arg2);
+  resultobj = swig::from(static_cast< std::vector< std::vector< double,std::allocator< double > >,std::allocator< std::vector< double,std::allocator< double > > > > >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_radius(PyObject *self, PyObject *args) {
+  PyObject *resultobj = 0;
+  CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject *swig_obj[2] ;
+  std::vector< std::vector< double,std::allocator< double > >,std::allocator< std::vector< double,std::allocator< double > > > > result;
+  
+  (void)self;
+  if (!SWIG_Python_UnpackTuple(args, "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_radius", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_CalculiXPythonInterface, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_radius" "', argument " "1"" of type '" "CalculiXPythonInterface *""'"); 
+  }
+  arg1 = reinterpret_cast< CalculiXPythonInterface * >(argp1);
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_radius" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  result = (arg1)->loadstrajectory_bodyheatfluxsphere_get_radius(arg2);
+  resultobj = swig::from(static_cast< std::vector< std::vector< double,std::allocator< double > >,std::allocator< std::vector< double,std::allocator< double > > > > >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_depth(PyObject *self, PyObject *args) {
+  PyObject *resultobj = 0;
+  CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject *swig_obj[2] ;
+  std::vector< std::vector< double,std::allocator< double > >,std::allocator< std::vector< double,std::allocator< double > > > > result;
+  
+  (void)self;
+  if (!SWIG_Python_UnpackTuple(args, "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_depth", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_CalculiXPythonInterface, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_depth" "', argument " "1"" of type '" "CalculiXPythonInterface *""'"); 
+  }
+  arg1 = reinterpret_cast< CalculiXPythonInterface * >(argp1);
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_depth" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  result = (arg1)->loadstrajectory_bodyheatfluxsphere_get_depth(arg2);
+  resultobj = swig::from(static_cast< std::vector< std::vector< double,std::allocator< double > >,std::allocator< std::vector< double,std::allocator< double > > > > >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_magnitude(PyObject *self, PyObject *args) {
+  PyObject *resultobj = 0;
+  CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject *swig_obj[2] ;
+  std::vector< std::vector< double,std::allocator< double > >,std::allocator< std::vector< double,std::allocator< double > > > > result;
+  
+  (void)self;
+  if (!SWIG_Python_UnpackTuple(args, "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_magnitude", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_CalculiXPythonInterface, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_magnitude" "', argument " "1"" of type '" "CalculiXPythonInterface *""'"); 
+  }
+  arg1 = reinterpret_cast< CalculiXPythonInterface * >(argp1);
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_magnitude" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  result = (arg1)->loadstrajectory_bodyheatfluxsphere_get_magnitude(arg2);
+  resultobj = swig::from(static_cast< std::vector< std::vector< double,std::allocator< double > >,std::allocator< std::vector< double,std::allocator< double > > > > >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_CalculiXPythonInterface_ccx_iface_set(PyObject *self, PyObject *args) {
   PyObject *resultobj = 0;
   CalculiXPythonInterface *arg1 = (CalculiXPythonInterface *) 0 ;
@@ -35282,6 +35563,15 @@ static PyMethodDef SwigMethods[] = {
 	 { "CalculiXPythonInterface_loadstrajectory_heatflux_get_times", _wrap_CalculiXPythonInterface_loadstrajectory_heatflux_get_times, METH_VARARGS, NULL},
 	 { "CalculiXPythonInterface_loadstrajectory_heatflux_get_radius", _wrap_CalculiXPythonInterface_loadstrajectory_heatflux_get_radius, METH_VARARGS, NULL},
 	 { "CalculiXPythonInterface_loadstrajectory_heatflux_get_magnitude", _wrap_CalculiXPythonInterface_loadstrajectory_heatflux_get_magnitude, METH_VARARGS, NULL},
+	 { "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_node_ids", _wrap_CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_node_ids, METH_VARARGS, NULL},
+	 { "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_edge_ids", _wrap_CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_edge_ids, METH_VARARGS, NULL},
+	 { "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_hit_coordinates", _wrap_CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_hit_coordinates, METH_VARARGS, NULL},
+	 { "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_element_ids", _wrap_CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_element_ids, METH_VARARGS, NULL},
+	 { "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_draw_element_ids", _wrap_CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_draw_element_ids, METH_VARARGS, NULL},
+	 { "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_times", _wrap_CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_times, METH_VARARGS, NULL},
+	 { "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_radius", _wrap_CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_radius, METH_VARARGS, NULL},
+	 { "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_depth", _wrap_CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_depth, METH_VARARGS, NULL},
+	 { "CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_magnitude", _wrap_CalculiXPythonInterface_loadstrajectory_bodyheatfluxsphere_get_magnitude, METH_VARARGS, NULL},
 	 { "CalculiXPythonInterface_ccx_iface_set", _wrap_CalculiXPythonInterface_ccx_iface_set, METH_VARARGS, NULL},
 	 { "CalculiXPythonInterface_ccx_iface_get", _wrap_CalculiXPythonInterface_ccx_iface_get, METH_O, NULL},
 	 { "CalculiXPythonInterface_swigregister", CalculiXPythonInterface_swigregister, METH_O, NULL},

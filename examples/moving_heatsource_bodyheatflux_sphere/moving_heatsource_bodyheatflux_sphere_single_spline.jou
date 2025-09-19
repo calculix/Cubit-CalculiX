@@ -1,7 +1,9 @@
 #!cubit
 reset
-create brick x 2 y 2 z 0.1
+create brick x 2 y 2 z 1
 vol 1 size 0.1
+#vol 1 size auto factor 10
+#vol 1 scheme tetmesh
 mesh vol 1
 
 create vertex 1 1 1
@@ -40,7 +42,7 @@ modify material "steel" matrix_property "CCX_CONDUCTIVITY_ISO_K_TEMPERATURE" 50 
 ccx create section solid block all material 1
 
 #loads
-ccx create trajectory heatflux curve 13 vertex 16 surface 1 direction 0 0 -1 magnitude 50 30 10 time_begin 0 time_end 10 radius 0.1 0.2 0.3
+ccx create trajectory bodyheatfluxsphere curve 13 vertex 16 surface 1 direction 0 0 -1 magnitude 50 30 10 time_begin 0 time_end 10 radius 0.1 0.2 0.3 depth 0.1 0.2 0.3
 
 
 #refinement standard cubit methods
@@ -50,17 +52,17 @@ ccx create trajectory heatflux curve 13 vertex 16 surface 1 direction 0 0 -1 mag
 # refinement with the use of the python interface
 #!python
 import numpy
-face_ids = ccx.loadstrajectory_heatflux_get_draw_face_ids(1)
-all_face_ids=[]
+face_ids = ccx.loadstrajectory_bodyheatfluxsphere_get_draw_element_ids(1)
+all_element_ids=[]
 for node in face_ids:
  for radius in node:
-  for face in radius:
-   all_face_ids.append(face)
+  for element in radius:
+   all_element_ids.append(element)
 
-all_face_ids=list(numpy.unique(all_face_ids))
+all_element_ids=list(numpy.unique(all_element_ids))
 
-if len(all_face_ids)>0:
- status=cubit.cmd(f"refine hex all in face {' '.join(str(id) for id in all_face_ids)} numsplit 1 bias 1.0 depth 0")
+if len(all_element_ids)>0:
+ status=cubit.cmd(f"refine element {' '.join(str(id) for id in all_element_ids)} numsplit 1 bias 1.0 depth 0")
 print(f"refinement {status}")
 #!cubit
 
@@ -97,6 +99,3 @@ ccx create job name "moving_heatsource_single_spline"
 #ccx run job 1
 
 ccx draw load trajectory 1
-
-
-

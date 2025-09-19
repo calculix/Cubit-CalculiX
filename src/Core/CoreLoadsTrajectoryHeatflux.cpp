@@ -1183,6 +1183,12 @@ bool CoreLoadsTrajectoryHeatflux::clean_export()
 {
   std::string ids;
   StopWatch watch;
+  
+  if (prepared_amplitudes.size()==0)
+  {
+    return true;
+  }
+  
   watch.tick("clean trajectory start");
 
   //block core update
