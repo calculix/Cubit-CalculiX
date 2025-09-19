@@ -166,7 +166,7 @@ bool ccxLoadsTrajectoryHeatfluxCreateCommand::execute(CubitCommandData &data)
     }
     if (options3[1][i]<=0)
     {
-      output = "Failed! The radius must be greater zero!\n";
+      output = "Failed! The radius must be greater than zero!\n";
       PRINT_ERROR(output.c_str());
       return false;
     }

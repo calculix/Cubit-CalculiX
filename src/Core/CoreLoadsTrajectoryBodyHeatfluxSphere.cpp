@@ -37,6 +37,7 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::reset()
   direction_data.clear();
   magnitude_data.clear();
   radius_data.clear();
+  depth_data.clear();
   name_data.clear();
   init();
   return true;
@@ -61,6 +62,7 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::create_load(std::vector<std::string>
   int magnitude_id;
   int time_id;
   int radius_id;
+  int depth_id;
   int name_id;
 
 
@@ -104,20 +106,6 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::create_load(std::vector<std::string>
   this->add_direction(std::to_string(sub_id), options[3], options[4], options[5]);
 
   // magnitude
-  /*
-  if (magnitude_data.size()==0)
-  {
-    sub_id = 1;
-  }
-  else
-  {
-    sub_last = int(magnitude_data.size()) - 1;
-    sub_id = std::stoi(magnitude_data[sub_last][0]) + 1;
-  }
-  magnitude_id = sub_id;
-  this->add_magnitude(std::to_string(sub_id), options[6]);
-  */
-
   if (magnitude_data.size()==0)
   {
     sub_id = 1;
@@ -155,20 +143,6 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::create_load(std::vector<std::string>
   this->add_time(std::to_string(sub_id), options[6], options[7]);
   
   // radius
-  /*
-  if (radius_data.size()==0)
-  {
-    sub_id = 1;
-  }
-  else
-  {
-    sub_last = int(radius_data.size()) - 1;
-    sub_id = std::stoi(radius_data[sub_last][0]) + 1;
-  }
-  radius_id = sub_id;
-  this->add_radius(std::to_string(sub_id), options[9]);
-  */
-
   if (radius_data.size()==0)
   {
     sub_id = 1;
@@ -192,6 +166,30 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::create_load(std::vector<std::string>
     this->add_radius(double(radius_id), options3[1][i]);
   }
 
+  // depth
+  if (depth_data.size()==0)
+  {
+    sub_id = 1;
+  }
+  else
+  {
+    sub_id = 1;
+    for (size_t i = 0; i < depth_data.size(); i++)
+    {
+      sub_last = int(depth_data[i][0]);
+      if (sub_id < sub_last)
+      {
+        sub_id = sub_last;
+      }
+    }
+    sub_id = sub_id + 1;
+  }
+  depth_id = sub_id;
+  for (size_t i = 0; i < options3[1].size(); i++)
+  {
+    this->add_depth(double(depth_id), options3[2][i]);
+  }
+
   // name
   if (name_data.size()==0)
   {
@@ -205,13 +203,13 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::create_load(std::vector<std::string>
   name_id = sub_id;
   this->add_name(std::to_string(sub_id), options[8]);
 
-  this->add_load(load_id, op_mode, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id, radius_id, name_id);
+  this->add_load(load_id, op_mode, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id, radius_id, depth_id, name_id);
   return true;
 }
 
-bool CoreLoadsTrajectoryBodyHeatfluxSphere::add_load(int load_id, int op_mode, int curve_id, int vertex_id, int fire_ray_surface_id, int direction_id, int magnitude_id, int time_id, int radius_id, int name_id)
+bool CoreLoadsTrajectoryBodyHeatfluxSphere::add_load(int load_id, int op_mode, int curve_id, int vertex_id, int fire_ray_surface_id, int direction_id, int magnitude_id, int time_id, int radius_id, int depth_id, int name_id)
 {
-  std::vector<int> v = {load_id, op_mode, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id, radius_id, name_id};
+  std::vector<int> v = {load_id, op_mode, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id, radius_id, depth_id, name_id};
       
   loads_data.push_back(v);
 
@@ -360,10 +358,38 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::modify_load(int load_id, std::vector
         }
       }
     }
-    // name
+    // depth
     if (options_marker[11]==1)
     {
-      sub_data_id = get_name_data_id_from_name_id(loads_data[loads_data_id][9]);
+      sub_data_ids = get_depth_data_ids_from_depth_id(loads_data[loads_data_id][9]);
+      if (options3[2].size()!=0)
+      {
+        if (options3[2].size()==sub_data_ids.size())
+        {
+          for (size_t i = 0; i < options3[2].size(); i++)
+          {
+            depth_data[sub_data_ids[i]][0] = loads_data[loads_data_id][9];
+            depth_data[sub_data_ids[i]][1] = options3[2][i];
+          }
+        }else{
+          // first delete and then make a push back
+          // delete from back to begin so that we don't have to care about mismatching id's
+          for (size_t i = sub_data_ids.size(); i > 0; i--)
+          {
+            depth_data.erase(depth_data.begin() + sub_data_ids[i-1]);
+          }
+          
+          for (size_t i = 0; i < options3[2].size(); i++)
+          {
+            add_depth(double(loads_data[loads_data_id][9]),options3[2][i]);
+          }
+        }
+      }
+    }
+    // name
+    if (options_marker[12]==1)
+    {
+      sub_data_id = get_name_data_id_from_name_id(loads_data[loads_data_id][10]);
       name_data[sub_data_id][1] = options[9];
     }
     return true;
@@ -385,14 +411,16 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::delete_load(int load_id)
       time_data.erase(time_data.begin() + sub_data_id);
     }
     // radius
-    /*sub_data_id = get_radius_data_id_from_radius_id(loads_data[loads_data_id][8]);
-    if (sub_data_id != -1){
-      radius_data.erase(radius_data.begin() + sub_data_id);
-    }*/
     sub_data_ids = get_radius_data_ids_from_radius_id(loads_data[loads_data_id][8]);
     for (size_t i = sub_data_ids.size(); i > 0; i--)
     {
       radius_data.erase(radius_data.begin() + sub_data_ids[i-1]);
+    }
+    // depth
+    sub_data_ids = get_depth_data_ids_from_depth_id(loads_data[loads_data_id][9]);
+    for (size_t i = sub_data_ids.size(); i > 0; i--)
+    {
+      depth_data.erase(depth_data.begin() + sub_data_ids[i-1]);
     }
     // direction
     sub_data_id = get_direction_data_id_from_direction_id(loads_data[loads_data_id][5]);
@@ -400,11 +428,6 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::delete_load(int load_id)
       direction_data.erase(direction_data.begin() + sub_data_id);
     }
     // magnitude
-    /*
-    sub_data_id = get_magnitude_data_id_from_magnitude_id(loads_data[loads_data_id][6]);
-    if (sub_data_id != -1){
-      magnitude_data.erase(magnitude_data.begin() + sub_data_id);
-    }*/
     sub_data_ids = get_magnitude_data_ids_from_magnitude_id(loads_data[loads_data_id][6]);
     for (size_t i = sub_data_ids.size(); i > 0; i--)
     {
@@ -417,7 +440,7 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::delete_load(int load_id)
       fire_ray_surface_data.erase(fire_ray_surface_data.begin() + sub_data_ids[i-1]);
     }
     // name
-    sub_data_id = get_name_data_id_from_name_id(loads_data[loads_data_id][9]);
+    sub_data_id = get_name_data_id_from_name_id(loads_data[loads_data_id][10]);
     if (sub_data_id != -1){
       name_data.erase(name_data.begin() + sub_data_id);
     }
@@ -440,6 +463,15 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::add_radius(double radius_id, double 
   std::vector<double> v = {radius_id, radius};
       
   radius_data.push_back(v);
+
+  return true;
+}
+
+bool CoreLoadsTrajectoryBodyHeatfluxSphere::add_depth(double depth_id, double depth)
+{
+  std::vector<double> v = {depth_id, depth};
+      
+  depth_data.push_back(v);
 
   return true;
 }
@@ -512,6 +544,19 @@ std::vector<int> CoreLoadsTrajectoryBodyHeatfluxSphere::get_radius_data_ids_from
   for (size_t i = 0; i < radius_data.size(); i++)
   {
     if (radius_data[i][0]==double(radius_id))
+    {
+      return_int.push_back(int(i));
+    }  
+  }
+  return return_int;
+}
+
+std::vector<int> CoreLoadsTrajectoryBodyHeatfluxSphere::get_depth_data_ids_from_depth_id(int depth_id)
+{ 
+  std::vector<int> return_int;
+  for (size_t i = 0; i < depth_data.size(); i++)
+  {
+    if (depth_data[i][0]==double(depth_id))
     {
       return_int.push_back(int(i));
     }  
@@ -843,6 +888,32 @@ std::vector<std::vector<double>> CoreLoadsTrajectoryBodyHeatfluxSphere::get_radi
   return node_radius;
 }
 
+std::vector<std::vector<double>> CoreLoadsTrajectoryBodyHeatfluxSphere::get_depth(int load_id)
+{
+  std::vector<std::vector<double>> node_depth;
+  
+  int load_data_id = this->get_loads_data_id_from_load_id(load_id);
+
+  if (load_data_id!=-1)
+  {
+    std::vector<int> node_ids = this->get_node_ids(load_id);
+    std::vector<int> depth_data_ids = this->get_depth_data_ids_from_depth_id(loads_data[load_data_id][9]);
+
+    for (size_t i = 0; i < node_ids.size(); i++)
+    {
+      std::vector<double> depth;
+
+      for (size_t ii = 0; ii < depth_data_ids.size(); ii++)
+      {
+        depth.push_back(depth_data[depth_data_ids[ii]][1]);
+      }
+      node_depth.push_back(depth);
+    }
+  }
+
+  return node_depth;
+}
+
 std::vector<std::vector<double>> CoreLoadsTrajectoryBodyHeatfluxSphere::get_magnitude(int load_id)
 {
   std::vector<std::vector<double>> node_magnitude;
@@ -1131,7 +1202,7 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
         //ccx_iface->silent_cmd("modify heatflux " + std::to_string(last_id_heatflux) + " name \"Trajectory_" + std::to_string(loads_data[i][0]) + "_" + name + "_"  + std::to_string(trajectory_face_ids[ii][0])+ "_" + std::to_string(times[ii][0])+ "_" + std::to_string(times[ii][1]) + "\"");
         modify_cmd.push_back("ccx modify heatflux " + std::to_string(last_id_heatflux) + " amplitude " + std::to_string(heatflux_amplitude[link_id]));
         //ccx_iface->silent_cmd("ccx modify heatflux " + std::to_string(last_id_heatflux) + " amplitude " + std::to_string(heatflux_amplitude[link_id]));
-        prepared_heatflux.push_back(last_id_heatflux);
+        prepared_bodyheatflux.push_back(last_id_heatflux);
         heatflux.push_back(last_id_heatflux);
         link_id = link_id + 1;
         last_id_heatflux = last_id_heatflux + 1;
@@ -1162,7 +1233,7 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
           for (size_t iv= 0; iv < heatflux.size(); iv++)
           {
             ids.append(std::to_string(heatflux[iv]) + " ");
-            prepared_step_heatflux.push_back({std::stoi(steps_tree[ii][0]),heatflux[iv]});
+            prepared_step_bodyheatflux.push_back({std::stoi(steps_tree[ii][0]),heatflux[iv]});
           }
           ccx_iface->silent_cmd("ccx step " + steps_tree[ii][0] + " add load heatflux " + ids);
         }
@@ -1189,22 +1260,22 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::clean_export()
   ccx_iface->set_block_core_update(true);
   ids = "";
   int current_step_id=0;
-  for (size_t i = 0; i < prepared_step_heatflux.size(); i++)
+  for (size_t i = 0; i < prepared_step_bodyheatflux.size(); i++)
   {
     if (i==0)
     {
-      current_step_id = prepared_step_heatflux[i][0];
+      current_step_id = prepared_step_bodyheatflux[i][0];
     }
-    if (current_step_id == prepared_step_heatflux[i][0])
+    if (current_step_id == prepared_step_bodyheatflux[i][0])
     {
       ccx_iface->silent_cmd("ccx step " + std::to_string(current_step_id) + " remove load heatflux " + ids);
       ids="";
-      ids.append(std::to_string(prepared_step_heatflux[i][1]) + " ");
-      current_step_id = prepared_step_heatflux[i][0];
+      ids.append(std::to_string(prepared_step_bodyheatflux[i][1]) + " ");
+      current_step_id = prepared_step_bodyheatflux[i][0];
     }else{
-      ids.append(std::to_string(prepared_step_heatflux[i][1]) + " ");
+      ids.append(std::to_string(prepared_step_bodyheatflux[i][1]) + " ");
     }
-    if (i==prepared_step_heatflux.size()-1)
+    if (i==prepared_step_bodyheatflux.size()-1)
     {
       ccx_iface->silent_cmd("ccx step " + std::to_string(current_step_id) + " remove load heatflux " + ids);
     }
@@ -1220,9 +1291,9 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::clean_export()
   watch.tick("clean trajectory sideset");
 
   ids = "";
-  for (size_t i = 0; i < prepared_heatflux.size(); i++)
+  for (size_t i = 0; i < prepared_bodyheatflux.size(); i++)
   {
-    ids.append(std::to_string(prepared_heatflux[i]) + " ");
+    ids.append(std::to_string(prepared_bodyheatflux[i]) + " ");
   }
   ccx_iface->silent_cmd("delete heatflux " + ids);
   watch.tick("clean trajectory heatflux");
@@ -1244,8 +1315,8 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::clean_export()
   
   prepared_sidesets.clear();
   prepared_amplitudes.clear();
-  prepared_heatflux.clear();
-  prepared_step_heatflux.clear();
+  prepared_bodyheatflux.clear();
+  prepared_step_bodyheatflux.clear();
 
   watch.tick("clean trajectory end");
   return true;
@@ -1334,6 +1405,14 @@ std::string CoreLoadsTrajectoryBodyHeatfluxSphere::print_data()
   for (size_t i = 0; i < radius_data.size(); i++)
   {
     str_return.append(std::to_string(radius_data[i][0]) + " " + std::to_string(radius_data[i][1]) + " \n");
+  }
+
+  str_return.append("\n CoreLoadsTrajectoryBodyHeatfluxSphere depth_data: \n");
+  str_return.append("depth_id, depth_value \n");
+
+  for (size_t i = 0; i < depth_data.size(); i++)
+  {
+    str_return.append(std::to_string(depth_data[i][0]) + " " + std::to_string(depth_data[i][1]) + " \n");
   }
 
   str_return.append("\n CoreLoadsTrajectoryBodyHeatfluxSphere fire_ray_surface_data: \n");

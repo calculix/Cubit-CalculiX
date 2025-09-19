@@ -18,7 +18,7 @@ public:
 
   std::vector<std::vector<int>> loads_data; // used to store the connection between a trajectory and its possible options
   // loads_data[0][0] load_id
-  // loads_data[0][1] load_type-> 1 heatflux | 2 bodyheatflux
+  // loads_data[0][1] load_type-> 1 heatflux | 2 bodyheatflux sphere
   // loads_data[0][2] sub_load_id
 
   bool is_initialized = false;

@@ -1,5 +1,5 @@
-#ifndef LOADSTRAJECTORYCREATEPANEL_HPP
-#define LOADSTRAJECTORYCREATEPANEL_HPP
+#ifndef LOADSTRAJECTORYHEATFLUXMODIFYPANEL_HPP
+#define LOADSTRAJECTORYHEATFLUXMODIFYPANEL_HPP
 
 #include <QWidget>
 #include <QList>
@@ -19,13 +19,13 @@ class CalculiXCoreInterface;
 class PickWidget;
 class PanelTable;
 
-class LoadsTrajectoryCreatePanel : public QWidget
+class LoadsTrajectoryHeatfluxModifyPanel : public QWidget
 {
   Q_OBJECT
   
 public:
-  explicit LoadsTrajectoryCreatePanel(QWidget *parent = 0);
-  ~LoadsTrajectoryCreatePanel();
+  explicit LoadsTrajectoryHeatfluxModifyPanel(QWidget *parent = 0);
+  ~LoadsTrajectoryHeatfluxModifyPanel();
 
   bool isInitialized;
   CalculiXCoreInterface *ccx_iface;
@@ -44,6 +44,7 @@ private:
   QPushButton* pushButton_apply;
   QHBoxLayout* HBoxLayout_pushButton_apply;
   QSpacerItem* horizontal_spacer_pushButton_apply;
+  QHBoxLayout* HBoxLayout_0;
   QHBoxLayout* HBoxLayout_1;
   QHBoxLayout* HBoxLayout_2;
   QHBoxLayout* HBoxLayout_3;
@@ -54,6 +55,7 @@ private:
   QHBoxLayout* HBoxLayout_8;
   QHBoxLayout* HBoxLayout_9;
   QHBoxLayout* HBoxLayout_10;
+  QLabel* label_0;
   QLabel* label_1;
   QLabel* label_2;
   QLabel* label_3;
@@ -63,6 +65,7 @@ private:
   QLabel* label_7;
   QLabel* label_8;
   QLabel* label_9;
+  QLineEdit* lineEdit_0;
   QLineEdit* lineEdit_1;
   QComboBox* comboBox_2;
   PickWidget* PickWidget_3;
@@ -75,4 +78,4 @@ private:
   PanelTable* widget_10;
 };
 
-#endif // LOADSTRAJECTORYCREATEPANEL_HPP
+#endif // LOADSTRAJECTORYHEATFLUXMODIFYPANEL_HPP

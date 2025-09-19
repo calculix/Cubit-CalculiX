@@ -60,8 +60,10 @@
 #include "LoadsCentrifugalCreatePanel.hpp"
 #include "LoadsCentrifugalModifyPanel.hpp"
 #include "LoadsCentrifugalDeletePanel.hpp"
-#include "LoadsTrajectoryCreatePanel.hpp"
-#include "LoadsTrajectoryModifyPanel.hpp"
+#include "LoadsTrajectoryHeatfluxCreatePanel.hpp"
+#include "LoadsTrajectoryHeatfluxModifyPanel.hpp"
+#include "LoadsTrajectoryBodyHeatfluxSphereCreatePanel.hpp"
+#include "LoadsTrajectoryBodyHeatfluxSphereModifyPanel.hpp"
 #include "LoadsTrajectoryDeletePanel.hpp"
 #include "LoadsFilmCreatePanel.hpp"
 #include "LoadsFilmModifyPanel.hpp"
@@ -302,10 +304,14 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
     return new LoadsCentrifugalModifyPanel();
   if(name == "CCXLoadsCentrifugalDelete")
     return new LoadsCentrifugalDeletePanel();
-  if(name == "CCXLoadsTrajectoryCreate")
-    return new LoadsTrajectoryCreatePanel();
-  if(name == "CCXLoadsTrajectoryModify")
-    return new LoadsTrajectoryModifyPanel();
+  if(name == "CCXLoadsTrajectoryHeatfluxCreate")
+    return new LoadsTrajectoryHeatfluxCreatePanel();
+  if(name == "CCXLoadsTrajectoryHeatfluxModify")
+    return new LoadsTrajectoryHeatfluxModifyPanel();
+  if(name == "CCXLoadsTrajectoryBodyHeatfluxSphereCreate")
+    return new LoadsTrajectoryBodyHeatfluxSphereCreatePanel();
+  if(name == "CCXLoadsTrajectoryBodyHeatfluxSphereModify")
+    return new LoadsTrajectoryBodyHeatfluxSphereModifyPanel();
   if(name == "CCXLoadsTrajectoryDelete")
     return new LoadsTrajectoryDeletePanel();
   if(name == "CCXLoadsFilmCreate")

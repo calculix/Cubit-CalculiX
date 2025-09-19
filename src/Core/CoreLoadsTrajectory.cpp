@@ -43,6 +43,7 @@ bool CoreLoadsTrajectory::reset()
   bodyheatfluxsphere->reset();
   init();
   heatflux->init();
+  bodyheatfluxsphere->init();
   return true;
 }
 
@@ -75,8 +76,16 @@ bool CoreLoadsTrajectory::create_load(std::string load_type, std::vector<std::st
     load_type_int = 1;
     sub_last = int(heatflux->loads_data.size()) - 1;
     sub_id = heatflux->loads_data[sub_last][0];
+  }else if (load_type == "BODYHEATFLUXSPHERE")
+  {
+    bodyheatfluxsphere->create_load(options,options2,options3);
+    load_type_int = 2;
+    sub_last = int(bodyheatfluxsphere->loads_data.size()) - 1;
+    sub_id = bodyheatfluxsphere->loads_data[sub_last][0];
   }else{
     // no matching load type -> break
+    std::string output = "no matching load type !!! " + load_type + " !!! -> break!\n";
+    PRINT_INFO(output.c_str());
     return false;
   }
   
@@ -108,6 +117,11 @@ bool CoreLoadsTrajectory::modify_load(int load_id, std::vector<std::string> opti
     if (loads_data[loads_data_id][1]==1)
     {
       return heatflux->modify_load(loads_data[loads_data_id][2],options,options_marker,options2,options3);
+    }
+    //BODYHEATFLUX SPHERE
+    else if (loads_data[loads_data_id][1]==2)
+    {
+      return bodyheatfluxsphere->modify_load(loads_data[loads_data_id][2],options,options_marker,options2,options3);
     }else{
      return false;
     }    
@@ -129,6 +143,11 @@ bool CoreLoadsTrajectory::delete_load(int load_id)
     if (loads_data[loads_data_id][1]==1)
     {
       deleted = heatflux->delete_load(loads_data[loads_data_id][2]);
+    }
+    //BODYHEATFLUX SPHERE
+    else if (loads_data[loads_data_id][1]==2)
+    {
+      deleted = bodyheatfluxsphere->delete_load(loads_data[loads_data_id][2]);
     }else{
      return false;
     }
@@ -171,7 +190,7 @@ std::string CoreLoadsTrajectory::get_load_type(int load_id)
       return_str = "HEATFLUX";
     }else if (loads_data[loads_data_id][1]==2)
     {
-      return_str = "BODYHEATFLUX";
+      return_str = "BODYHEATFLUXSPHERE";
     }
   }
   
@@ -187,8 +206,15 @@ std::string CoreLoadsTrajectory::get_name_from_load_id(int load_id)
   {
     return return_str;
   } else {
-    int name_data_id = heatflux->get_name_data_id_from_name_id(loads_data[loads_data_id][2]);
-    return_str = heatflux->name_data[name_data_id][1];
+    if (loads_data[loads_data_id][1]==1) //HEATFLUX
+    {
+      int name_data_id = heatflux->get_name_data_id_from_name_id(loads_data[loads_data_id][2]);
+      return_str = heatflux->name_data[name_data_id][1];
+    }else if (loads_data[loads_data_id][1]==2) //BODYHEATFLUX SPHERE
+    {
+      int name_data_id = bodyheatfluxsphere->get_name_data_id_from_name_id(loads_data[loads_data_id][2]);
+      return_str = bodyheatfluxsphere->name_data[name_data_id][1];
+    }
   }
   
   return return_str;
@@ -197,6 +223,7 @@ std::string CoreLoadsTrajectory::get_name_from_load_id(int load_id)
 bool CoreLoadsTrajectory::prepare_export()
 {
   heatflux->prepare_export();
+  bodyheatfluxsphere->prepare_export();
   
   return true;
 }
@@ -204,6 +231,7 @@ bool CoreLoadsTrajectory::prepare_export()
 bool CoreLoadsTrajectory::clean_export()
 {
   heatflux->clean_export();
+  bodyheatfluxsphere->clean_export();
   
   return true;
 }  

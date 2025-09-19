@@ -238,10 +238,6 @@ bool ccxLoadsTrajectoryHeatfluxModifyCommand::execute(CubitCommandData &data)
   options.push_back(name);  
 
   if (data.find_keyword("HEATFLUX")){
-    load_type = 0;
-    options_marker.push_back(1);
-  }else if (data.find_keyword("PRESSURE"))
-  {
     load_type = 1;
     options_marker.push_back(1);
   }else{
@@ -270,7 +266,7 @@ bool ccxLoadsTrajectoryHeatfluxModifyCommand::execute(CubitCommandData &data)
     }
     if (options3[1][i]<=0)
     {
-      output = "Failed! The radius must be greater zero!\n";
+      output = "Failed! The radius must be greater than zero!\n";
       PRINT_ERROR(output.c_str());
       return false;
     }

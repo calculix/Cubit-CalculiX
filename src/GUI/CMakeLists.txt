@@ -237,10 +237,14 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/LoadsCentrifugalModifyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsCentrifugalDeletePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsCentrifugalDeletePanel.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryCreatePanel.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryCreatePanel.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryModifyPanel.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryModifyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryHeatfluxCreatePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryHeatfluxCreatePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryHeatfluxModifyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryHeatfluxModifyPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryBodyHeatfluxSphereCreatePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryBodyHeatfluxSphereCreatePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryBodyHeatfluxSphereModifyPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryBodyHeatfluxSphereModifyPanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryDeletePanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsTrajectoryDeletePanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/LoadsFilmCreatePanel.hpp

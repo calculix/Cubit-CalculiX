@@ -23,7 +23,8 @@ public:
   // loads_data[0][6] magnitude_id
   // loads_data[0][7] time_id
   // loads_data[0][8] radius_id
-  // loads_data[0][9] name_id
+  // loads_data[0][9] depth_id
+  // loads_data[0][10] name_id
 
   std::vector<std::vector<int>> fire_ray_surface_data;
   // fire_ray_surface_data[0][0] fire_ray_surface_id
@@ -48,14 +49,18 @@ public:
   // radius_data[0][0] radius_id
   // radius_data[0][1] radius
   
+  std::vector<std::vector<double>> depth_data;
+  // depth_data[0][0] depth_id
+  // depth_data[0][1] depth
+
   std::vector<std::vector<std::string>> name_data;
   // name_data[0][0] name_id
   // name_data[0][1] name
 
   std::vector<int> prepared_sidesets;
   std::vector<int> prepared_amplitudes;
-  std::vector<int> prepared_heatflux;
-  std::vector<std::vector<int>> prepared_step_heatflux;
+  std::vector<int> prepared_bodyheatflux;
+  std::vector<std::vector<int>> prepared_step_bodyheatflux;
 
   bool is_initialized = false;
 
@@ -64,11 +69,12 @@ public:
   bool reset(); // delete all data and initialize afterwards
   bool check_initialized(); // check if object is initialized
   bool create_load(std::vector<std::string> options, std::vector<int> options2, std::vector<std::vector<double>> options3); // adds new load
-  bool add_load(int load_id, int op_mode, int curve_id, int vertex_id, int fire_ray_surface_id, int direction_id, int magnitude_id, int time_id, int radius_id, int name_id); // adds new load to loads_data
+  bool add_load(int load_id, int op_mode, int curve_id, int vertex_id, int fire_ray_surface_id, int direction_id, int magnitude_id, int time_id, int radius_id, int depth_id, int name_id); // adds new load to loads_data
   bool modify_load(int load_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2, std::vector<std::vector<double>> options3); // modify a load
   bool delete_load(int load_id); // deletes load from loads_data
   bool add_time(std::string time_id, std::string t_begin, std::string t_end); // adds new time to time_data
   bool add_radius(double radius_id, double radius); // adds new radius to radius_data
+  bool add_depth(double depth_id, double depth); // adds new depth to depth_data
   bool add_direction(std::string direction_id, std::string x, std::string y, std::string z); // adds new direction to direction_data
   bool add_magnitude(double magnitude_id, double magnitude_value); // adds new magnitude to magnitude_data
   bool add_fire_ray_surface(int fire_ray_surface_id, int surface_id); // adds new surface id to fire_ray_surface_data
@@ -76,6 +82,7 @@ public:
   int  get_loads_data_id_from_load_id(int load_id); // searches for the load_id in the loads_data and returns the indices or -1 if it fails
   int  get_time_data_id_from_time_id(int time_id); // searches for the time_id in the time_data and returns the indices or -1 if it fails
   std::vector<int> get_radius_data_ids_from_radius_id(int radius_id); // searches for the radius_ids in the radius_data and returns an empty vector if it fails
+  std::vector<int> get_depth_data_ids_from_depth_id(int depth_id); // searches for the depth_ids in the depth_data and returns an empty vector if it fails
   std::vector<int> get_magnitude_data_ids_from_magnitude_id(int magnitude_id); // searches for the magnitude_ids in the magnitude_data and returns an empty vector if it fails
   int  get_direction_data_id_from_direction_id(int direction_id); // searches for the time_delay_id in the direction_data and returns the indices or -1 if it fails
   int  get_name_data_id_from_name_id(int name_id); // searches for the name_id in the name_data and returns the indices or -1 if it fails
@@ -89,6 +96,7 @@ public:
   std::vector<std::vector<std::vector<int>>> get_draw_face_ids(int load_id); //returns face ids for the node ids from get_node_ids per radius already filtered for drawing
   std::vector<std::vector<double>> get_times(int load_id); //returns time begin and end ordered by the node ids from get_node_ids
   std::vector<std::vector<double>> get_radius(int load_id); //returns radius ordered by the node ids from get_node_ids
+  std::vector<std::vector<double>> get_depth(int load_id); //returns radius ordered by the node ids from get_node_ids
   std::vector<std::vector<double>> get_magnitude(int load_id); //returns magnitude ordered by the node ids from get_node_ids
   bool prepare_export(); // prepare sidesets, amplitudes, dflux -> will be prepared for ALL trajectories
   bool clean_export(); // delete prepared

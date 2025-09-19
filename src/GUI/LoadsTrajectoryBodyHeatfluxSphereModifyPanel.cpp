@@ -1,4 +1,4 @@
-#include "LoadsTrajectoryModifyPanel.hpp"
+#include "LoadsTrajectoryBodyHeatfluxSphereModifyPanel.hpp"
 #include "CalculiXCoreInterface.hpp"
 #include "PanelTable.hpp"
 
@@ -8,7 +8,7 @@
 #include "PickWidget.hpp"
 
 
-LoadsTrajectoryModifyPanel::LoadsTrajectoryModifyPanel(QWidget *parent) :
+LoadsTrajectoryBodyHeatfluxSphereModifyPanel::LoadsTrajectoryBodyHeatfluxSphereModifyPanel(QWidget *parent) :
   QWidget(parent),
   isInitialized(false)
 {
@@ -69,8 +69,8 @@ LoadsTrajectoryModifyPanel::LoadsTrajectoryModifyPanel(QWidget *parent) :
   lineEdit_0 = new QLineEdit();
   lineEdit_1 = new QLineEdit();
   comboBox_2 = new QComboBox();
-  comboBox_2->addItem("");
-  comboBox_2->addItem("Heatflux");
+  //comboBox_2->addItem("");
+  comboBox_2->addItem("BodyHeatfluxSphere");
   //comboBox_2->addItem("Pressure");
   PickWidget_3 = new PickWidget();
   PickWidget_3->setPickType(PickWidget::Curve);
@@ -90,7 +90,7 @@ LoadsTrajectoryModifyPanel::LoadsTrajectoryModifyPanel(QWidget *parent) :
   comboBox_9->addItem("new");
   widget_10 =  new PanelTable(nullptr);
   matrix.clear();
-  widget_10->update({"Ray Radius","Magnitude"},matrix);
+  widget_10->update({"Ray Radius","Depth","Magnitude"},matrix);
   widget_10->panel_type = "trajectory";
   widget_10->setMinimumSize(200,160);
   
@@ -155,10 +155,10 @@ LoadsTrajectoryModifyPanel::LoadsTrajectoryModifyPanel(QWidget *parent) :
   isInitialized = true;
 }
 
-LoadsTrajectoryModifyPanel::~LoadsTrajectoryModifyPanel()
+LoadsTrajectoryBodyHeatfluxSphereModifyPanel::~LoadsTrajectoryBodyHeatfluxSphereModifyPanel()
 {}
 
-void LoadsTrajectoryModifyPanel::on_pushButton_apply_clicked(bool)
+void LoadsTrajectoryBodyHeatfluxSphereModifyPanel::on_pushButton_apply_clicked(bool)
 {
   QStringList commands;
   QString command = "";
@@ -199,7 +199,7 @@ void LoadsTrajectoryModifyPanel::on_pushButton_apply_clicked(bool)
     
       for (size_t i = 0; i < matrix.size(); i++)
       {
-        command.append(QString::number(matrix[i][1]) + " ");
+        command.append(QString::number(matrix[i][2]) + " ");
       }
     }
 
@@ -220,6 +220,16 @@ void LoadsTrajectoryModifyPanel::on_pushButton_apply_clicked(bool)
       for (size_t i = 0; i < matrix.size(); i++)
       {
         command.append(QString::number(matrix[i][0]) + " ");
+      }
+    }
+
+    if (matrix.size()>0)
+    {
+      command.append(" depth ");
+    
+      for (size_t i = 0; i < matrix.size(); i++)
+      {
+        command.append(QString::number(matrix[i][1]) + " ");
       }
     }
 
@@ -248,7 +258,7 @@ void LoadsTrajectoryModifyPanel::on_pushButton_apply_clicked(bool)
     lineEdit_8->setText("");    
     comboBox_9->setCurrentIndex(0);
     matrix.clear();
-    widget_10->update({"Ray Radius","Magnitude"},matrix);
+    widget_10->update({"Ray Radius","Depth","Magnitude"},matrix);
   }
   
   for (size_t i = 0; i < commands.size(); i++)

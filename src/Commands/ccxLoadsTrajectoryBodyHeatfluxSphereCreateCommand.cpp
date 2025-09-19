@@ -15,7 +15,7 @@ std::vector<std::string> ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand::get_
 
   std::string syntax = "ccx ";
   syntax.append("create trajectory ");
-  syntax.append("bodyheatflux sphere ");
+  syntax.append("bodyheatfluxsphere ");
   syntax.append("curve <value:label='curve_id',help='<curve_id>'> ");
   syntax.append("vertex <value:label='vertex_id',help='<vertex_id>'> ");
   syntax.append("surface <value:label='surface_id',help='<surface_id>'>... ");
@@ -40,7 +40,7 @@ std::vector<std::string> ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand::get_
   std::vector<std::string> help(1);
   help[0] = "ccx "; 
   help[0].append("create trajectory ");
-  help[0].append("bodyheatflux sphere ");
+  help[0].append("bodyheatfluxsphere ");
   help[0].append("curve <curve_id> ");
   help[0].append("vertex <vertex_id> ");
   help[0].append("surface <surface_id>... ");
@@ -170,13 +170,32 @@ bool ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand::execute(CubitCommandData
     }
     if (options3[1][i]<=0)
     {
-      output = "Failed! The radius must be greater zero!\n";
+      output = "Failed! The radius must be greater than zero!\n";
+      PRINT_ERROR(output.c_str());
+      return false;
+    }
+  }
+
+  double last_depth = 0;
+  for (size_t i = 0; i < options3[2].size(); i++)
+  {
+    if (last_depth > options3[2][i])
+    {
+      output = "Failed! The depth must be in ascending order!\n";
+      PRINT_ERROR(output.c_str());
+      return false;
+    }else{
+      last_depth = options3[2][i];
+    }
+    if (options3[2][i]<=0)
+    {
+      output = "Failed! The depth must be greater than zero!\n";
       PRINT_ERROR(output.c_str());
       return false;
     }
   }
   
-  if (!ccx_iface.create_loadstrajectory("BODYHEATFLUX",options,options2,options3))
+  if (!ccx_iface.create_loadstrajectory("BODYHEATFLUXSPHERE",options,options2,options3))
   {
     output = "Failed!\n";
     PRINT_ERROR(output.c_str());

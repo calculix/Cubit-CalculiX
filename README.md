@@ -221,10 +221,16 @@ in python mode (#!python)
   title="Mesh refinement">
 ](examples/mesh_refinement/)
 [<img
-  src="examples/moving_heatsource/example.gif"
+  src="examples/moving_heatsource_heatflux/example.gif"
   width="400"
-  title="Moving Heatsource">
-](examples/moving_heatsource/)
+  title="Moving Heatsource Heatflux">
+](examples/moving_heatsource_heatflux/)
+[<img
+  src="examples/moving_heatsource_bodyheatflux_sphere/example.gif"
+  width="400"
+  title="Moving Heatsource Body Heatflux Sphere">
+](examples/moving_heatsource_bodyheatflux_sphere/)
+
 [<img
   src="examples/model_change/example.gif"
   width="400"
