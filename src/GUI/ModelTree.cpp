@@ -1983,7 +1983,7 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   {
     if (LoadsTrajectoryTreeItem->text(1).toStdString()=="")
     {
-      this->setWidgetInCmdPanelMarker("CCXLoadsTrajectoryCreate");
+      this->setWidgetInCmdPanelMarker("CCXLoadsTrajectory");
     }
   }else if (LoadsFilmTreeItem = dynamic_cast<LoadsFilmTree*>(item))
   {
@@ -2310,7 +2310,7 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
       this->setWidgetInCmdPanelMarker("CCXLoadsCentrifugalModify");
     } else if (LoadsTrajectoryTreeItem = dynamic_cast<LoadsTrajectoryTree*>(item->parent()))
     {
-      this->setWidgetInCmdPanelMarker("CCXLoadsTrajectoryModify");
+      this->setWidgetInCmdPanelMarker("CCXLoadsTrajectory");
     } else if (LoadsFilmTreeItem = dynamic_cast<LoadsFilmTree*>(item->parent()))
     {
       this->setWidgetInCmdPanelMarker("CCXLoadsFilmModify");
@@ -2771,7 +2771,7 @@ void ModelTree::execContextMenuAction(){
     {
       if (contextMenuAction[0][1]==0) //Action1
       {
-        this->setWidgetInCmdPanelMarker("CCXLoadsTrajectoryCreate");
+        this->setWidgetInCmdPanelMarker("CCXLoadsTrajectory");
       }else if (contextMenuAction[0][1]==1) //Action2
       {
         std::string command = "ccx draw load_trajectory_all";
@@ -2779,7 +2779,7 @@ void ModelTree::execContextMenuAction(){
         ccx_iface->cmd(command);
       }else if (contextMenuAction[0][1]==2) //Action3
       {
-        this->setWidgetInCmdPanelMarker("CCXLoadsTrajectoryModify");
+        this->setWidgetInCmdPanelMarker("CCXLoadsTrajectory");
       }else if (contextMenuAction[0][1]==3) //Action4
       {
         this->setWidgetInCmdPanelMarker("CCXLoadsTrajectoryDelete");
@@ -3189,10 +3189,10 @@ void ModelTree::execContextMenuAction(){
     {
       if (contextMenuAction[0][1]==0) //Action1
       {
-        this->setWidgetInCmdPanelMarker("CCXLoadsTrajectoryCreate");
+        this->setWidgetInCmdPanelMarker("CCXLoadsTrajectory");
       }else if (contextMenuAction[0][1]==1) //Action2
       {
-        this->setWidgetInCmdPanelMarker("CCXLoadsTrajectoryModify");
+        this->setWidgetInCmdPanelMarker("CCXLoadsTrajectory");
       }else if (contextMenuAction[0][1]==2) //Action3
       {
         this->setWidgetInCmdPanelMarker("CCXLoadsTrajectoryDelete");

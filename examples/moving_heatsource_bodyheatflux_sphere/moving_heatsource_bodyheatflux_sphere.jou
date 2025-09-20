@@ -1,0 +1,273 @@
+#!cubit
+reset
+
+# geometry
+create brick x 400 y 200 z 10
+webcut volume 1  with plane normal to curve 4  distance 50 from start 
+webcut volume 1  with plane normal to curve 17  distance 75 from end 
+webcut volume 1  with plane normal to curve 1  distance 30 from end 
+webcut volume 4  with plane normal to curve 58  distance 30 from start 
+webcut volume 2  with plane normal to curve 3  distance 70 from start 
+webcut volume 2  with plane normal to curve 82  distance 70 from end 
+delete volume 7
+delete volume 1 5
+unite vol all
+compress
+
+create brick x 800 y 400 z 20
+move vol 1 z 5
+move vol 2 z -10
+
+modify curve 22 18 1 10  chamfer radius 50
+modify curve 28  blend radius 10
+modify curve 24  blend radius 10
+modify curve 58  blend radius 10
+modify curve 56  blend radius 10
+modify curve 61  blend radius 10
+modify curve 2  blend radius 10
+modify curve 5 6  blend radius 10
+modify curve 29 30  blend radius 20
+modify curve 50 52 14  blend radius 25
+
+unite vol all
+modify curve 4  blend radius 6
+
+webcut volume 1  with sheet extended from surface 38 
+webcut volume 1  sweep surface 9  perpendicular inward through_all 
+
+compress
+
+block 1 add vol 1
+block 2 add vol 2
+block 3 add vol 3
+
+webcut volume 1  with plane normal to curve 54  fraction 0.5 from end 
+webcut volume 4 1 with plane zplane offset 5.5
+delete volume 1, 4
+
+create vertex from vertex 139  
+Vertex 248  copy move z 5 
+create curve vertex 249 248  
+move Curve 444  midpoint y 0.5 z -3 include_merged 
+
+webcut volume 5 with plane vertex 191 83 32  vertex  vertex  
+webcut volume 5  with plane vertex 190 84 36  vertex  vertex  
+webcut volume 9  with plane vertex 85 189 40  vertex  vertex  
+webcut volume 9  with plane vertex 86 188 44  vertex  vertex  
+webcut volume 9  with plane vertex 187 87 48  vertex  vertex  
+webcut volume 14  with plane vertex 186 88 52  vertex  vertex  
+webcut volume 15  with plane vertex 56 185 89  vertex  vertex  
+unite volume 16 13 
+unite volume 11 16  
+webcut volume 11  with plane vertex 175 60 90  vertex  vertex  
+webcut volume 11  with plane vertex 183 91 64  vertex  vertex  
+webcut volume 18  with plane vertex 182 68 92  vertex  vertex  
+webcut volume 8  sweep curve 444 along curve 227  
+delete volume 8
+move Curve 444 midpoint location vertex 315
+webcut volume 5  sweep curve 444 along curve 59  
+delete volume 5
+move Curve 444 midpoint location vertex 324
+webcut volume 10  sweep curve 444 along curve 65  
+delete volume 10
+move Curve 444 midpoint location vertex 332  
+webcut volume 12  sweep curve 444 along curve 71  
+delete volume 12
+move Curve 444 midpoint location vertex 340  
+webcut volume 9  sweep curve 444 along curve 77  
+delete volume 9
+move Curve 444 midpoint location vertex 348  
+webcut volume 14  sweep curve 444 along curve 83  
+delete volume 14
+move Curve 444 midpoint location vertex 355  
+webcut volume 15  sweep curve 444 along curve 89  
+delete volume 15
+move Curve 444 midpoint location vertex 364  
+webcut volume 17  sweep curve 444 along curve 492  
+delete volume 17
+move Curve 444 midpoint location vertex 371  
+webcut volume 11  sweep curve 444 along curve 479  
+delete volume 11
+move Curve 444 midpoint location vertex 379  
+webcut volume 19  sweep curve 444 along curve 107  
+delete volume 19
+move Curve 444 midpoint location vertex 388  
+webcut volume 18  sweep curve 444 along curve 113  
+delete volume 18
+move Curve 444 midpoint location vertex 395  
+webcut volume 7  sweep curve 444 along curve 225  
+delete volume 7
+move Curve 444 midpoint location vertex 403  
+webcut volume 6  with plane vertex 231 76 94  vertex  vertex  
+webcut volume 32  with plane vertex 227 75 95  vertex  vertex  
+webcut volume 32  with plane vertex 226 71 96  vertex  vertex  
+webcut volume 32  with plane vertex 67 225 97  vertex  vertex  
+unite volume 39 36 
+webcut volume 39  with plane vertex 63 224 98  vertex  vertex  
+webcut volume 40  with plane vertex 59 223 99  vertex  vertex  
+webcut volume 41  with plane vertex 55 222 100  vertex  vertex  
+webcut volume 42  with plane vertex 51 221 78  vertex  vertex  
+unite volume 43 33  
+webcut volume 43  with plane vertex 220 79 47  vertex  vertex  
+unite volume 44 35  
+webcut volume 44  with plane vertex 247 43 80  vertex  vertex  
+webcut volume 44  with plane vertex 39 246 81  vertex  vertex  
+webcut volume 46  with plane vertex 35 245 82  vertex  vertex  
+webcut volume 44  with plane vertex 247 43 80  vertex  vertex  
+webcut volume 44  with plane vertex 39 246 81  vertex  vertex  
+webcut volume 46  with plane vertex 35 245 82  vertex  vertex  
+webcut volume 34  sweep curve 444 along curve 215  
+move Curve 444 midpoint location vertex 482  
+webcut volume 37  sweep curve 444 along curve 120  
+move Curve 444 midpoint location vertex 493  
+webcut volume 38  sweep curve 444 along curve 115  
+move Curve 444 midpoint location vertex 499  
+webcut volume 32  sweep curve 444 along curve 109  
+move Curve 444 midpoint location vertex 507  
+webcut volume 39  sweep curve 444 along curve 742  
+move Curve 444 midpoint location vertex 515  
+webcut volume 40  sweep curve 444 along curve 97  
+move Curve 444 midpoint location vertex 525  
+webcut volume 41  sweep curve 444 along curve 91  
+move Curve 444 midpoint location vertex 533  
+webcut volume 42  sweep curve 444 along curve 85  
+move Curve 444 midpoint location vertex 539  
+webcut volume 43  sweep curve 444 along curve 788  
+move Curve 444 midpoint location vertex 550  
+webcut volume 45  sweep curve 444 along curve 73  
+move Curve 444 midpoint location vertex 555
+webcut volume 44  sweep curve 444 along curve 408  
+move Curve 444 midpoint location vertex 565  
+webcut volume 46  sweep curve 444 along curve 61  
+move Curve 444 midpoint location vertex 573  
+webcut volume 47  sweep curve 444 along curve 211  
+delete curve 444
+delete volume 32, 34, 37 to 47
+
+imprint vol all
+
+merge vol all in block 1 2
+merge vol all in block 1 3
+
+vol all size 2
+vol 2 3 size 10
+
+pause
+
+mesh vol 3
+
+
+surface 296 size 0.7
+mesh surface 296
+mesh volume 20
+mesh volume 21
+mesh volume 22
+mesh volume 23
+mesh volume 24
+mesh volume 25
+mesh volume 26
+mesh volume 27
+mesh volume 28
+mesh volume 29
+mesh volume 30
+mesh volume 31
+mesh volume 48
+mesh volume 49
+mesh volume 50
+mesh volume 51
+mesh volume 52
+mesh volume 53
+mesh volume 54
+mesh volume 55
+mesh volume 56
+volume 57  redistribute nodes on 
+volume 57  scheme Sweep  source surface 594    target surface 602   sweep transform translate 
+volume 57  autosmooth target on  fixed imprints off  smart smooth off 
+mesh volume 57 
+mesh volume 58
+mesh volume 59
+mesh volume 60
+
+pause
+
+#material
+create material "steel" property_group "CalculiX-FEA"
+modify material "steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0 
+modify material "steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_DENSITY_USE_CARD" 1
+modify material "steel" matrix_property "CCX_DENSITY_DENSITY" 7.9e-06 0 
+modify material "steel" scalar_properties "CCX_SPECIFIC_HEAT_USE_CARD" 1
+modify material "steel" matrix_property "CCX_SPECIFIC_HEAT_SPECIFIC_HEAT" 5e+08 0 
+modify material "steel" scalar_properties "CCX_EXPANSION_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "steel" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 1.2e-05 0 
+modify material "steel" scalar_properties "CCX_CONDUCTIVITY_USE_CARD" 1
+modify material "steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+modify material "steel" matrix_property "CCX_CONDUCTIVITY_ISO_K_TEMPERATURE" 50 0 
+
+#sections
+ccx create section solid block all material 1
+
+#loads
+
+ccx create trajectory BodyHeatfluxSphere  curve 359  vertex 240  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end 4.63647 radius 10  depth 10 
+ccx create trajectory BodyHeatfluxSphere  curve 347  vertex 215  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639} radius 10  depth 10 
+ccx create trajectory BodyHeatfluxSphere  curve 363  vertex 248  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708} radius 10  depth 10 
+ccx create trajectory BodyHeatfluxSphere  curve 365  vertex 252  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159} radius 10  depth 10 
+ccx create trajectory BodyHeatfluxSphere  curve 348  vertex 217  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30} radius 10  depth 10 
+ccx create trajectory BodyHeatfluxSphere  curve 367  vertex 256  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699} radius 10  depth 10 
+ccx create trajectory BodyHeatfluxSphere  curve 349  vertex 219  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447} radius 10  depth 10 
+ccx create trajectory BodyHeatfluxSphere  curve 366  vertex 254  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635} radius 10  depth 10 
+ccx create trajectory BodyHeatfluxSphere  curve 352  vertex 226  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163} radius 10  depth 10 
+ccx create trajectory BodyHeatfluxSphere  curve 368  vertex 258  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483} radius 10  depth 10 
+ccx create trajectory BodyHeatfluxSphere  curve 364  vertex 250  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666} radius 10  depth 10 
+ccx create trajectory BodyHeatfluxSphere  curve 362  vertex 246  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708} radius 10  depth 10 
+ccx create trajectory BodyHeatfluxSphere  curve 346  vertex 213  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708 + 305} radius 10  depth 10 
+ccx create trajectory BodyHeatfluxSphere  curve 361  vertex 244  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708 + 305 + 15.708} radius 10  depth 10 
+ccx create trajectory BodyHeatfluxSphere  curve 350  vertex 221  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708 + 305 + 15.708 + 5.85786} radius 10  depth 10 
+ccx create trajectory BodyHeatfluxSphere  curve 360  vertex 242  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708 + 305 + 15.708 + 5.85786 + 7.85398} radius 10  depth 10 
+ccx create trajectory BodyHeatfluxSphere  curve 354  vertex 230  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708 + 305 + 15.708 + 5.85786 + 7.85398 + 62.4264} radius 10  depth 10 
+ccx create trajectory BodyHeatfluxSphere  curve 356  vertex 234  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708 + 305 + 15.708 + 5.85786 + 7.85398 + 62.4264 + 7.85398} radius 10  depth 10 
+ccx create trajectory BodyHeatfluxSphere  curve 351  vertex 223  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708 + 305 + 15.708 + 5.85786 + 7.85398 + 62.4264 + 7.85398 + 51.7157} radius 10  depth 10 
+ccx create trajectory BodyHeatfluxSphere  curve 357  vertex 236  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708 + 305 + 15.708 + 5.85786 + 7.85398 + 62.4264 + 7.85398 + 51.7157 + 7.85398} radius 10  depth 10 
+ccx create trajectory BodyHeatfluxSphere  curve 355  vertex 232  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708 + 305 + 15.708 + 5.85786 + 7.85398 + 62.4264 + 7.85398 + 51.7157 + 7.85398 + 52.6943} radius 10  depth 10 
+ccx create trajectory BodyHeatfluxSphere  curve 358  vertex 238  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708 + 305 + 15.708 + 5.85786 + 7.85398 + 62.4264 + 7.85398 + 51.7157 + 7.85398 + 52.6943 + 18.9255} radius 10  depth 10 
+ccx create trajectory BodyHeatfluxSphere  curve 353  vertex 228  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708 + 305 + 15.708 + 5.85786 + 7.85398 + 62.4264 + 7.85398 + 51.7157 + 7.85398 + 52.6943 + 18.9255 + 28.4864} radius 10  depth 10 
+
+#boundary conditions
+create temperature on vol 1 value 293 #will be used as initial condition
+
+#initial conditions
+ccx create initialcondition temperature
+ccx modify initialcondition 1 temperature bc_id 1
+
+#outputs
+ccx create fieldoutput name "fo_node" node
+ccx modify fieldoutput 1 node
+ccx modify fieldoutput 1 node key_on NT
+ccx modify fieldoutput 1 node key_off CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF PNT POT PRF PS PSF PT PTF PU RF RFL SEN TS TSF TT TTF TURB V VF U
+ccx create fieldoutput name "fo_element" element
+ccx modify fieldoutput 2 element
+ccx modify fieldoutput 2 element key_on HFL
+ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS E S 
+
+# add homogeneous bc
+ccx hbc add bc displacement 1
+
+# create step
+ccx create step name "heattransfer" heattransfer
+ccx modify step 1 parameter inc 100000
+ccx modify step 1 heattransfer  totaltimeatstart 0 initialtimeincrement 1e-1 timeperiodofstep 10 minimumtimeincrement 1e-5 maximumtimeincrement 1e-1
+ccx step 1 add load trajectory 1
+ccx step 1 add fieldoutput 1 2
+
+#job
+ccx create job name "moving_heatsource_single_spline"
+
+#ccx run job 1
+
+ccx draw load trajectory 1
+
+
