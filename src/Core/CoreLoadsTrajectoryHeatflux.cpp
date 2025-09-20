@@ -591,23 +591,27 @@ std::vector<int> CoreLoadsTrajectoryHeatflux::get_node_ids(int load_id)
 
   if (load_data_id!=-1)
   {
-    std::vector<int> edge_ids;
-    edge_ids = CubitInterface::get_curve_edges(loads_data[load_data_id][2]);
-    for (size_t i = 0; i < edge_ids.size(); i++)
+    // check if curve is meshed
+    if (CubitInterface::is_meshed("Curve",loads_data[load_data_id][2]))
     {
-      std::vector<int> tmp_node_ids = CubitInterface::parse_cubit_list("node","in edge " + std::to_string(edge_ids[i]));
-      if (i==0)
+      std::vector<int> edge_ids;
+      edge_ids = CubitInterface::get_curve_edges(loads_data[load_data_id][2]);
+      for (size_t i = 0; i < edge_ids.size(); i++)
       {
-        node_ids.push_back(tmp_node_ids[0]);
+        std::vector<int> tmp_node_ids = CubitInterface::parse_cubit_list("node","in edge " + std::to_string(edge_ids[i]));
+        if (i==0)
+        {
+          node_ids.push_back(tmp_node_ids[0]);
+        }
+        node_ids.push_back(tmp_node_ids[1]);
       }
-      node_ids.push_back(tmp_node_ids[1]);
-    }
-    //change order depending on the vertex id
-    int vertex_node_id = CubitInterface::get_vertex_node(loads_data[load_data_id][3]);
-    
-    if (vertex_node_id == node_ids[node_ids.size()-1])
-    {
-      std::reverse(node_ids.begin(), node_ids.end());
+      //change order depending on the vertex id
+      int vertex_node_id = CubitInterface::get_vertex_node(loads_data[load_data_id][3]);
+      
+      if (vertex_node_id == node_ids[node_ids.size()-1])
+      {
+        std::reverse(node_ids.begin(), node_ids.end());
+      }
     }
   }
 

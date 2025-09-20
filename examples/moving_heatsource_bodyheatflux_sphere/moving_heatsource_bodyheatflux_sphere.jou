@@ -42,13 +42,13 @@ block 2 add vol 2
 block 3 add vol 3
 
 webcut volume 1  with plane normal to curve 54  fraction 0.5 from end 
-webcut volume 4 1 with plane zplane offset 5.5
+webcut volume 4 1 with plane zplane offset 5.2
 delete volume 1, 4
 
 create vertex from vertex 139  
-Vertex 248  copy move z 5 
+Vertex 248  copy move z 5
 create curve vertex 249 248  
-move Curve 444  midpoint y 0.5 z -3 include_merged 
+move Curve 444  midpoint y 0.8 z -3 include_merged 
 
 webcut volume 5 with plane vertex 191 83 32  vertex  vertex  
 webcut volume 5  with plane vertex 190 84 36  vertex  vertex  
@@ -144,18 +144,25 @@ webcut volume 47  sweep curve 444 along curve 211
 delete curve 444
 delete volume 32, 34, 37 to 47
 
+webcut volume 3 with plane zplane offset 5.2
+collapse curve 772  vertex 468 
+collapse curve 773  vertex 469 
+
 imprint vol all
 
 merge vol all in block 1 2
 merge vol all in block 1 3
 
-vol all size 2
-vol 2 3 size 10
+vol all size 10
 
-pause
-
+paver cleanup extend
+mesh volume 61
+Curve 1 to 6, 19 to 23, 27, 29, 32, 36, 39, 40, 43, 44, 46, 48, 50, 51 copy move z 50
+composite create surface 14, 642
+composite create surface 19, 641
+composite create surface 20, 643
 mesh vol 3
-
+refine surface 138 to 145, 148, 149, 185 to 188, 190 to 192, 197 to 199, 236, 243, 413, 416, 433 numsplit 1 bias 1.0 depth 1 smooth
 
 surface 296 size 0.7
 mesh surface 296
@@ -188,7 +195,7 @@ mesh volume 58
 mesh volume 59
 mesh volume 60
 
-pause
+mesh volume 2
 
 #material
 create material "steel" property_group "CalculiX-FEA"
@@ -211,6 +218,8 @@ modify material "steel" matrix_property "CCX_CONDUCTIVITY_ISO_K_TEMPERATURE" 50 
 ccx create section solid block all material 1
 
 #loads
+
+pause
 
 ccx create trajectory BodyHeatfluxSphere  curve 359  vertex 240  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end 4.63647 radius 10  depth 10 
 ccx create trajectory BodyHeatfluxSphere  curve 347  vertex 215  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639} radius 10  depth 10 
@@ -237,7 +246,7 @@ ccx create trajectory BodyHeatfluxSphere  curve 358  vertex 238  surface 142 143
 ccx create trajectory BodyHeatfluxSphere  curve 353  vertex 228  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708 + 305 + 15.708 + 5.85786 + 7.85398 + 62.4264 + 7.85398 + 51.7157 + 7.85398 + 52.6943 + 18.9255 + 28.4864} radius 10  depth 10 
 
 #boundary conditions
-create temperature on vol 1 value 293 #will be used as initial condition
+create temperature on vol all value 293 #will be used as initial condition
 
 #initial conditions
 ccx create initialcondition temperature
@@ -269,5 +278,8 @@ ccx create job name "moving_heatsource_single_spline"
 #ccx run job 1
 
 ccx draw load trajectory 1
+
+
+
 
 

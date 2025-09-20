@@ -841,7 +841,6 @@ bool CoreDraw::draw_load_trajectory(int id, double size)
         std::vector<std::vector<double>> times;
         times = ccx_iface->loadstrajectory_heatflux_get_times(id);
         bool switch_color = true;
-
         for (size_t i = 0; i < hit_coordinates.size(); i++)
         {
             if (hit_coordinates[i].size()>0)
