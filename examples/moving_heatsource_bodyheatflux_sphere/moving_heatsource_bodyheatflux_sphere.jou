@@ -195,6 +195,7 @@ mesh volume 58
 mesh volume 59
 mesh volume 60
 
+paver cleanup extend
 mesh volume 2
 
 #material
@@ -218,32 +219,33 @@ modify material "steel" matrix_property "CCX_CONDUCTIVITY_ISO_K_TEMPERATURE" 50 
 ccx create section solid block all material 1
 
 #loads
+merge vertex all except 688
+curve all with is_free size 10
+mesh curve all with is_free
 
-pause
+#!python
+vertex_start = 688
+curve_start = 1254
+curve_ids = cubit.get_continuous_curves(curve_start,180)
+last_vertex = 0
+last_length=0
+delta_t = 0.0001
+surfaces = "210 211 220 232 246 254 259 266 274 277 283 287 425 444 450 453 459 465 471 477 484 492 495 501 505 "
 
-ccx create trajectory BodyHeatfluxSphere  curve 359  vertex 240  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end 4.63647 radius 10  depth 10 
-ccx create trajectory BodyHeatfluxSphere  curve 347  vertex 215  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639} radius 10  depth 10 
-ccx create trajectory BodyHeatfluxSphere  curve 363  vertex 248  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708} radius 10  depth 10 
-ccx create trajectory BodyHeatfluxSphere  curve 365  vertex 252  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159} radius 10  depth 10 
-ccx create trajectory BodyHeatfluxSphere  curve 348  vertex 217  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30} radius 10  depth 10 
-ccx create trajectory BodyHeatfluxSphere  curve 367  vertex 256  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699} radius 10  depth 10 
-ccx create trajectory BodyHeatfluxSphere  curve 349  vertex 219  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447} radius 10  depth 10 
-ccx create trajectory BodyHeatfluxSphere  curve 366  vertex 254  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635} radius 10  depth 10 
-ccx create trajectory BodyHeatfluxSphere  curve 352  vertex 226  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163} radius 10  depth 10 
-ccx create trajectory BodyHeatfluxSphere  curve 368  vertex 258  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483} radius 10  depth 10 
-ccx create trajectory BodyHeatfluxSphere  curve 364  vertex 250  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666} radius 10  depth 10 
-ccx create trajectory BodyHeatfluxSphere  curve 362  vertex 246  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708} radius 10  depth 10 
-ccx create trajectory BodyHeatfluxSphere  curve 346  vertex 213  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708 + 305} radius 10  depth 10 
-ccx create trajectory BodyHeatfluxSphere  curve 361  vertex 244  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708 + 305 + 15.708} radius 10  depth 10 
-ccx create trajectory BodyHeatfluxSphere  curve 350  vertex 221  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708 + 305 + 15.708 + 5.85786} radius 10  depth 10 
-ccx create trajectory BodyHeatfluxSphere  curve 360  vertex 242  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708 + 305 + 15.708 + 5.85786 + 7.85398} radius 10  depth 10 
-ccx create trajectory BodyHeatfluxSphere  curve 354  vertex 230  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708 + 305 + 15.708 + 5.85786 + 7.85398 + 62.4264} radius 10  depth 10 
-ccx create trajectory BodyHeatfluxSphere  curve 356  vertex 234  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708 + 305 + 15.708 + 5.85786 + 7.85398 + 62.4264 + 7.85398} radius 10  depth 10 
-ccx create trajectory BodyHeatfluxSphere  curve 351  vertex 223  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708 + 305 + 15.708 + 5.85786 + 7.85398 + 62.4264 + 7.85398 + 51.7157} radius 10  depth 10 
-ccx create trajectory BodyHeatfluxSphere  curve 357  vertex 236  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708 + 305 + 15.708 + 5.85786 + 7.85398 + 62.4264 + 7.85398 + 51.7157 + 7.85398} radius 10  depth 10 
-ccx create trajectory BodyHeatfluxSphere  curve 355  vertex 232  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708 + 305 + 15.708 + 5.85786 + 7.85398 + 62.4264 + 7.85398 + 51.7157 + 7.85398 + 52.6943} radius 10  depth 10 
-ccx create trajectory BodyHeatfluxSphere  curve 358  vertex 238  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708 + 305 + 15.708 + 5.85786 + 7.85398 + 62.4264 + 7.85398 + 51.7157 + 7.85398 + 52.6943 + 18.9255} radius 10  depth 10 
-ccx create trajectory BodyHeatfluxSphere  curve 353  vertex 228  surface 142 143 direction 0 0 -1 magnitude 10  time_begin 0 time_end {4.63647 + 272.639 + 15.708 + 31.4159 + 30 + 39.2699 + 54.6447 + 19.635 + 50.5163 + 16.4483 + 28.8666 + 15.708 + 305 + 15.708 + 5.85786 + 7.85398 + 62.4264 + 7.85398 + 51.7157 + 7.85398 + 52.6943 + 18.9255 + 28.4864} radius 10  depth 10 
+for cid in curve_ids:
+ curve =  cubit.curve(cid)
+ vertices = curve.vertices()
+ if vertices[0].id()==last_vertex:
+  current_vertex=vertices[0].id()
+ else:
+  current_vertex=vertices[1].id()
+ if cid == curve_start:
+  current_vertex=vertex_start
+ length=curve.length()
+ status = cubit.cmd(f"ccx create trajectory BodyHeatfluxSphere  curve {curve.id()}  vertex {current_vertex}  surface {surfaces} direction 0 0 -1 magnitude 10  time_begin {last_length} time_end {last_length + length} radius 10  depth 10")
+ last_length = last_length + length + delta_t
+
+#!cubit
 
 #boundary conditions
 create temperature on vol all value 293 #will be used as initial condition
@@ -268,18 +270,15 @@ ccx hbc add bc displacement 1
 # create step
 ccx create step name "heattransfer" heattransfer
 ccx modify step 1 parameter inc 100000
-ccx modify step 1 heattransfer  totaltimeatstart 0 initialtimeincrement 1e-1 timeperiodofstep 10 minimumtimeincrement 1e-5 maximumtimeincrement 1e-1
+#!python
+status = cubit.cmd(f"ccx modify step 1 heattransfer  totaltimeatstart 0 initialtimeincrement 1e-1 timeperiodofstep {last_length} minimumtimeincrement 1e-5 maximumtimeincrement 1e-1")
+#!cubit
 ccx step 1 add load trajectory 1
 ccx step 1 add fieldoutput 1 2
 
 #job
-ccx create job name "moving_heatsource_single_spline"
+ccx create job name "moving_heatsource_trajectory_bodyheatfluxsphere"
 
 #ccx run job 1
 
-ccx draw load trajectory 1
-
-
-
-
-
+#ccx draw

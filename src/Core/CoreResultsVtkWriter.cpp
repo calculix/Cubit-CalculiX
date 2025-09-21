@@ -2385,9 +2385,12 @@ bool CoreResultsVtkWriter::checkLinkPossible()
     free_node_count = free_node_count + ccx_iface->loadstrajectory_heatflux_get_node_ids(trajectory_ids[i]).size();
     free_node_count = free_node_count + ccx_iface->loadstrajectory_bodyheatfluxsphere_get_node_ids(trajectory_ids[i]).size();
   }
-  if (CubitInterface::get_node_count()!=frd->nodes.size()+free_node_count)
+  if (CubitInterface::get_node_count()!=frd->nodes.size() + free_node_count)
   {
     log = "Linking Failed! Wrong number of Nodes.\n";
+    log.append("Cubit Node Count:" + std::to_string(CubitInterface::get_node_count()) + "\n");
+    log.append("FRD   Node Count:" + std::to_string(frd->nodes.size()) + "\n");
+    log.append("Free  Node Count:" + std::to_string(free_node_count) + "\n");
     PRINT_INFO("%s", log.c_str());
     return false;
   }
