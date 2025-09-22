@@ -220,7 +220,7 @@ ccx create section solid block all material 1
 
 #loads
 merge vertex all except 688
-curve all with is_free size 10
+curve all with is_free size 3
 mesh curve all with is_free
 
 #!python
@@ -242,7 +242,7 @@ for cid in curve_ids:
  if cid == curve_start:
   current_vertex=vertex_start
  length=curve.length()
- status = cubit.cmd(f"ccx create trajectory BodyHeatfluxSphere  curve {curve.id()}  vertex {current_vertex}  surface {surfaces} direction 0 0 -1 magnitude 10  time_begin {last_length} time_end {last_length + length} radius 10  depth 10")
+ status = cubit.cmd(f"ccx create trajectory BodyHeatfluxSphere  curve {curve.id()}  vertex {current_vertex}  surface {surfaces} direction 0 0 -1 magnitude 7e+5  time_begin {last_length} time_end {last_length + length} radius 10  depth 10")
  last_length = last_length + length + delta_t
 
 #!cubit
@@ -271,7 +271,7 @@ ccx hbc add bc displacement 1
 ccx create step name "heattransfer" heattransfer
 ccx modify step 1 parameter inc 100000
 #!python
-status = cubit.cmd(f"ccx modify step 1 heattransfer  totaltimeatstart 0 initialtimeincrement 1e-1 timeperiodofstep {last_length} minimumtimeincrement 1e-5 maximumtimeincrement 1e-1")
+status = cubit.cmd(f"ccx modify step 1 heattransfer  totaltimeatstart 0 initialtimeincrement 1e-0 timeperiodofstep {last_length} minimumtimeincrement 1e-5 maximumtimeincrement 1e-0")
 #!cubit
 ccx step 1 add load trajectory 1
 ccx step 1 add fieldoutput 1 2
@@ -282,3 +282,5 @@ ccx create job name "moving_heatsource_trajectory_bodyheatfluxsphere"
 #ccx run job 1
 
 #ccx draw
+
+

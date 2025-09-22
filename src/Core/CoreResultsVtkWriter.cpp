@@ -2380,11 +2380,33 @@ bool CoreResultsVtkWriter::checkLinkPossible()
   int free_node_count = 0;
   free_node_count = CubitInterface::get_list_of_free_ref_entities("vertex").size();
   std::vector<int> trajectory_ids = ccx_iface->get_loadstrajectory_ids();
+  std::vector<int> tmp_node_ids;
   for (size_t i = 0; i < trajectory_ids.size(); i++)
   {
-    free_node_count = free_node_count + ccx_iface->loadstrajectory_heatflux_get_node_ids(trajectory_ids[i]).size();
-    free_node_count = free_node_count + ccx_iface->loadstrajectory_bodyheatfluxsphere_get_node_ids(trajectory_ids[i]).size();
+    std::vector<int> tmp_hf_node_ids = ccx_iface->loadstrajectory_heatflux_get_node_ids(trajectory_ids[i]);
+    std::vector<int> tmp_bfs_node_ids = ccx_iface->loadstrajectory_bodyheatfluxsphere_get_node_ids(trajectory_ids[i]);
+    
+    for (size_t ii = 0; ii < tmp_hf_node_ids.size(); ii++)
+    {
+      tmp_node_ids.push_back(tmp_hf_node_ids[ii]);
+    }
+    for (size_t ii = 0; ii < tmp_bfs_node_ids.size(); ii++)
+    {
+      tmp_node_ids.push_back(tmp_bfs_node_ids[ii]);
+    }
   }
+
+  std::sort(tmp_node_ids.begin(), tmp_node_ids.end());
+  int last_id = 0;
+  for (size_t i = 0; i < tmp_node_ids.size(); i++)
+  {
+    if (last_id != tmp_node_ids[i])
+    {
+      free_node_count = free_node_count + 1;
+      last_id = tmp_node_ids[i];
+    }
+  }
+  
   if (CubitInterface::get_node_count()!=frd->nodes.size() + free_node_count)
   {
     log = "Linking Failed! Wrong number of Nodes.\n";
