@@ -93,7 +93,6 @@ modify material "X5CrNi189" matrix_property "CCX_SPECIFIC_HEAT_SPECIFIC_HEAT" 45
 #sections
 ccx create section solid block all material 1
 
-
 #moving heatsource
 create vertex 10e-3 15e-3 0
 create vertex 10e-3 15e-3 225e-3
@@ -101,31 +100,13 @@ create curve vertex 34 35
 curve 53 size 3e-3
 mesh curve 53
 
-ccx create trajectory Heatflux  curve 53  vertex 34  surface 15 21 18 direction -1 -1 0 magnitude 5e+5 5e+4  time_begin 0 time_end 10 radius 5e-3 10e-3  name "heatsource"
+ccx create trajectory bodyheatfluxsphere  curve 53  vertex 34  surface 15  direction -1 -1 0 magnitude 5e+7 5e+6  time_begin 0 time_end 10 radius 5e-3 10e-3 depth 5e-3 10e-3  name "heatsource"
 
 sideset 1 Surface 18 15 17 21 16 8 2 10 4 3 6 11 1 7 
 ccx create film sideset 1 temperature 20 coefficient 15 name "convection"
 ccx create radiation sideset 1 temperature 20 emissivity 0.5 cavity_radiation_off name "radiation"
 
 ccx modify physicalconstants absolute_zero -273.15 stefan_boltzmann 5.669E-8
-
-
-# refinement with the use of the python interface
-#!python
-import numpy
-face_ids = ccx.loadstrajectory_get_draw_face_ids(1)
-all_face_ids=[]
-for node in face_ids:
- for radius in node:
-  for face in radius:
-   all_face_ids.append(face)
-
-all_face_ids=list(numpy.unique(all_face_ids))
-
-if len(all_face_ids)>0:
- #status=cubit.cmd(f"refine hex all in face {' '.join(str(id) for id in all_face_ids)} numsplit 1 bias 1.0 depth 0")
-print(f"refinement {status}")
-#!cubit
 
 #boundary conditions
 create temperature on nodeset 5 value 20 #will be used as initial condition
@@ -139,11 +120,11 @@ ccx modify initialcondition 1 temperature bc_id 1
 
 #outputs
 ccx create fieldoutput name "fo_node" node
-ccx modify fieldoutput 1 node frequency 10
+#ccx modify fieldoutput 1 node frequency 10
 ccx modify fieldoutput 1 node key_on U NT
 ccx modify fieldoutput 1 node key_off CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF PNT POT PRF PS PSF PT PTF PU RF RFL SEN TS TSF TT TTF TURB V VF 
 ccx create fieldoutput name "fo_element" element
-ccx modify fieldoutput 2 element frequency 10
+#ccx modify fieldoutput 2 element frequency 10
 ccx modify fieldoutput 2 element key_on E S HFL
 ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS 
 
@@ -177,6 +158,3 @@ ccx create job name "shrinkage_model"
 #ccx result paraview job 1
 
 ccx draw load trajectory 1
-
-
-

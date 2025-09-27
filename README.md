@@ -117,8 +117,9 @@ Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/
   - Centrifugal (CENTRIF)
   - Film
   - Radiation
-  - Trajectories
-    - Heatflux (can be used as moving heatsource)
+  - Trajectories (can be used as moving heatsource)
+    - Heatflux
+    - Body Heatflux
   - Surface Traction
   - Body Heatfluxes (DFLUX)
 - Boundary Conditions
@@ -230,7 +231,6 @@ in python mode (#!python)
   width="400"
   title="Moving Heatsource Body Heatflux Sphere">
 ](examples/moving_heatsource_bodyheatflux_sphere/)
-
 [<img
   src="examples/model_change/example.gif"
   width="400"
@@ -265,7 +265,13 @@ in python mode (#!python)
   src="examples/Welding/shrinkage_model/example.gif"
   width="400"
   title="Shrinkage model">
-](examples/Welding/shringage_model/)
+](examples/Welding/shrinkage_model/)
+[<img
+  src="examples/Welding/shrinkage_model_moving_heatsource/example.gif"
+  width="400"
+  title="Shrinkage model Moving Heatsource">
+](examples/Welding/shrinkage_model_moving_heatsource/)
+
 <!-- 
 [<img
   src="examples/Welding/shrinkage_model_moving_heatsource/example.gif"
