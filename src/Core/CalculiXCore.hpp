@@ -25,9 +25,11 @@ class CoreLoadsHeatfluxes;
 class CoreLoadsGravity;
 class CoreLoadsCentrifugal;
 class CoreLoadsTrajectory;
+class CoreLoadsTrajectoryHeatflux;
 class CoreLoadsFilm;
 class CoreLoadsRadiation;
 class CoreLoadsSurfaceTraction;
+class CoreLoadsBodyHeatflux;
 class CoreBCsDisplacements;
 class CoreBCsTemperatures;
 class CoreHistoryOutputs;
@@ -62,7 +64,7 @@ public:
   bool bool_block_gui_update = false;
   bool use_ccx_logfile = false;
   bool use_ccx_autocleanup = true;
-  std::string version = "2025.5";
+  std::string version = "2025.9";
   std::vector<std::vector<std::string>> sideset_face_data;
 
   bool cmd(std::string cmd); // executes a cubit command with appending to the history
@@ -121,12 +123,14 @@ public:
   std::vector<int> get_loadsfilm_ids(); // get all load film ids
   std::vector<int> get_loadsradiation_ids(); // get all load radiation ids
   std::vector<int> get_loadssurfacetraction_ids(); // get all load surface traction ids
+  std::vector<int> get_loadsbodyheatflux_ids(); // get all load bodyheatflux ids
   std::vector<int> get_bcsdisplacements_ids(); // get all bc displacement ids
   std::vector<int> get_bcstemperatures_ids(); // get all bc temperature ids
   std::vector<int> get_orientations_ids(); // get all orientation ids
   std::vector<int> get_equation_ids(); // get all equation ids
   std::vector<int> get_equationgroup_ids(); // get all equationgroup ids
   bool check_block_exists(int block_id);
+  bool check_global_element_exists(int element_id);
   bool check_bc_exists(int bc_id,int BCType); // checks if the id for the bc type exists
   bool check_nodeset_exists(int nodeset_id);
   bool check_sideset_exists(int sideset_id);
@@ -183,17 +187,27 @@ public:
   bool create_loadscentrifugal(std::vector<std::string> options); // adds a new centrifugal load
   bool modify_loadscentrifugal(int centrifugal_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a centrifugal
   bool delete_loadscentrifugal(int centrifugal_id); // delete centrifugal load
-  bool create_loadstrajectory(std::vector<std::string> options, std::vector<int> options2, std::vector<std::vector<double>> options3); // adds a new trajectory load
+  bool create_loadstrajectory(std::string load_type, std::vector<std::string> options, std::vector<int> options2, std::vector<std::vector<double>> options3); // adds a new trajectory load
   bool modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2, std::vector<std::vector<double>> options3); // modify a trajectory
   bool delete_loadstrajectory(int trajectory_id); // delete trajectory load
-  std::vector<int> loadstrajectory_get_node_ids(int trajectory_id); //returns node ids for curve
-  std::vector<int> loadstrajectory_get_edge_ids(int trajectory_id); //returns edge ids for curve
-  std::vector<std::vector<double>> loadstrajectory_get_hit_coordinates(int trajectory_id); //returns hit coordinates
-  std::vector<std::vector<std::vector<int>>> loadstrajectory_get_face_ids(int trajectory_id); //returns face ids for the node ids from get_node_ids
-  std::vector<std::vector<std::vector<int>>> loadstrajectory_get_draw_face_ids(int trajectory_id); //returns face ids for the node ids from get_node_ids
-  std::vector<std::vector<double>> loadstrajectory_get_times(int trajectory_id); //returns time begin and end ordered by the node ids from get_node_ids
-  std::vector<std::vector<double>> loadstrajectory_get_radius(int trajectory_id); //returns radius ordered by the node ids from get_node_ids
-  std::vector<std::vector<double>> loadstrajectory_get_magnitude(int trajectory_id); //returns magnitude ordered by the node ids from get_node_ids
+  std::string loadstrajectory_get_load_type(int trajectory_id); //returns the load type
+  std::vector<int> loadstrajectory_heatflux_get_node_ids(int trajectory_id); //returns node ids for curve
+  std::vector<int> loadstrajectory_heatflux_get_edge_ids(int trajectory_id); //returns edge ids for curve
+  std::vector<std::vector<double>> loadstrajectory_heatflux_get_hit_coordinates(int trajectory_id); //returns hit coordinates
+  std::vector<std::vector<std::vector<int>>> loadstrajectory_heatflux_get_face_ids(int trajectory_id); //returns face ids for the node ids from get_node_ids
+  std::vector<std::vector<std::vector<int>>> loadstrajectory_heatflux_get_draw_face_ids(int trajectory_id); //returns face ids for the node ids from get_node_ids
+  std::vector<std::vector<double>> loadstrajectory_heatflux_get_times(int trajectory_id); //returns time begin and end ordered by the node ids from get_node_ids
+  std::vector<std::vector<double>> loadstrajectory_heatflux_get_radius(int trajectory_id); //returns radius ordered by the node ids from get_node_ids
+  std::vector<std::vector<double>> loadstrajectory_heatflux_get_magnitude(int trajectory_id); //returns magnitude ordered by the node ids from get_node_ids
+  std::vector<int> loadstrajectory_bodyheatfluxsphere_get_node_ids(int trajectory_id); //returns node ids for curve
+  std::vector<int> loadstrajectory_bodyheatfluxsphere_get_edge_ids(int trajectory_id); //returns edge ids for curve
+  std::vector<std::vector<double>> loadstrajectory_bodyheatfluxsphere_get_hit_coordinates(int trajectory_id); //returns hit coordinates
+  std::vector<std::vector<std::vector<int>>> loadstrajectory_bodyheatfluxsphere_get_element_ids(int trajectory_id); //returns element ids for the node ids from get_node_ids
+  std::vector<std::vector<std::vector<int>>> loadstrajectory_bodyheatfluxsphere_get_draw_element_ids(int trajectory_id); //returns element ids for the node ids from get_node_ids
+  std::vector<std::vector<double>> loadstrajectory_bodyheatfluxsphere_get_times(int trajectory_id); //returns time begin and end ordered by the node ids from get_node_ids
+  std::vector<std::vector<double>> loadstrajectory_bodyheatfluxsphere_get_radius(int trajectory_id); //returns radius ordered by the node ids from get_node_ids
+  std::vector<std::vector<double>> loadstrajectory_bodyheatfluxsphere_get_depth(int trajectory_id); //returns depth ordered by the node ids from get_node_ids
+  std::vector<std::vector<double>> loadstrajectory_bodyheatfluxsphere_get_magnitude(int trajectory_id); //returns magnitude ordered by the node ids from get_node_ids
   bool create_loadsfilm(std::vector<std::string> options); // adds a new film load
   bool modify_loadsfilm(int film_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a film
   bool delete_loadsfilm(int film_id); // delete film load
@@ -203,6 +217,9 @@ public:
   bool create_loadssurfacetraction(std::vector<std::string> options, std::vector<double> options2); // adds a new surfacetraction load
   bool modify_loadssurfacetraction(int surfacetraction_id, std::vector<std::string> options, std::vector<double> options2, std::vector<int> options_marker); // modify a surface traction
   bool delete_loadssurfacetraction(int surfacetraction_id); // delete surfacetraction load
+  bool create_loadsbodyheatflux(std::vector<std::string> options, std::vector<int> options2); // adds a new bodyheatflux load
+  bool modify_loadsbodyheatflux(int bodyheatflux_id, std::vector<std::string> options, std::vector<int> options2, std::vector<int> options_marker); // modify a bodyheatflux
+  bool delete_loadsbodyheatflux(int bodyheatflux_id); // delete bodyheatflux load
   bool modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a displacement
   bool modify_bcstemperatures(int temperature_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a temperature
   bool create_historyoutput(std::vector<std::string> options); // adds a new output
@@ -289,6 +306,7 @@ public:
   std::vector<std::vector<double>> get_draw_data_for_load_film(int id); // returns coord(3) and magnitude(3) std::vector<double>
   std::vector<std::vector<double>> get_draw_data_for_load_radiation(int id); // returns coord(3) and magnitude(3) std::vector<double>
   std::vector<std::vector<double>> get_draw_data_for_load_surface_traction(int id); // returns coord(3) and magnitude(3) std::vector<double>
+  std::vector<std::vector<int>> get_draw_data_for_load_bodyheatflux(int id); // returns block ids draw_data[][0] element ids draw_data[][1]
   std::vector<std::vector<double>> get_draw_data_for_bc_displacement(int id); // returns coord(3) and dof
   std::vector<std::vector<double>> get_draw_data_for_bc_temperature(int id); // returns coord(3) and dof
   std::vector<std::vector<double>> get_draw_data_for_orientation(int id); // returns pairs of 4 for {system_type,local_axis_angle}, coord(3) of section center, a_coord(3) ,b_coord(3)
@@ -304,6 +322,7 @@ public:
   bool draw_load_film(std::vector<int> film_ids,double size); // draw load film
   bool draw_load_radiation(std::vector<int> radiation_ids,double size); // draw load radiation
   bool draw_load_surface_traction(std::vector<int> surface_traction_ids,double size); // draw load surface traction
+  bool draw_load_bodyheatflux(std::vector<int> bodyheatflux_ids,double size); // draw load bodyheatflux
   bool draw_bc_displacement(std::vector<int> displacement_ids,double size); // draw bc displacement
   bool draw_bc_temperature(std::vector<int> temperature_ids,double size); // draw bc temperature
   bool draw_orientation(std::vector<int> orientation_ids,double size); // draw orientation
@@ -323,6 +342,7 @@ public:
   bool draw_load_films(double size); //draw all films
   bool draw_load_radiations(double size); //draw all radiations
   bool draw_load_surface_tractions(double size); //draw all surface tractions
+  bool draw_load_bodyheatfluxes(double size); //draw all bodyheatflux
   bool draw_bc_displacements(double size); //draw all displacements
   bool draw_bc_temperatures(double size); //draw all temperatures
 
@@ -396,6 +416,7 @@ public:
   std::vector<std::vector<std::string>> get_loadsfilm_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_loadsradiation_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_loadssurfacetraction_tree_data(); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_loadsbodyheatflux_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_bcsdisplacements_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_bcstemperatures_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_historyoutputs_tree_data(); // gets the data from core to build the tree
@@ -413,6 +434,7 @@ public:
   std::vector<std::vector<std::string>> get_steps_loadsfilm_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_loadsradiation_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_loadssurfacetraction_tree_data(int step_id); // gets the data from core to build the tree
+  std::vector<std::vector<std::string>> get_steps_loadsbodyheatflux_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_bcsdisplacements_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_bcstemperatures_tree_data(int step_id); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_steps_historyoutputs_tree_data(int step_id); // gets the data from core to build the tree
@@ -455,6 +477,7 @@ public:
   CoreLoadsFilm *loadsfilm;
   CoreLoadsRadiation *loadsradiation;
   CoreLoadsSurfaceTraction *loadssurfacetraction;
+  CoreLoadsBodyHeatflux *loadsbodyheatflux;
   CoreBCsDisplacements *bcsdisplacements;
   CoreBCsTemperatures *bcstemperatures;
   CoreHistoryOutputs *historyoutputs;

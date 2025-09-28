@@ -226,7 +226,7 @@ QString ConfigFile::standard_entry(std::string option)
         #ifdef WIN32
             standard_value = QString::fromStdString(componentpath) + "Postprocessor/CGX/cgx_STATIC.exe";
         #else
-            standard_value = QString::fromStdString(componentpath) + "Postprocessor/CGX/cgx_2.21";
+            standard_value = QString::fromStdString(componentpath) + "Postprocessor/CGX/cgx_2.22";
         #endif
     }else if(option == "PathParaView")
     {

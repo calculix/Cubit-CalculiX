@@ -1,5 +1,5 @@
-#ifndef LOADSTRAJECTORYMODIFYPANEL_HPP
-#define LOADSTRAJECTORYMODIFYPANEL_HPP
+#ifndef LOADSTRAJECTORYBODYHEATFLUXSPHEREMODIFYPANEL_HPP
+#define LOADSTRAJECTORYBODYHEATFLUXSPHEREMODIFYPANEL_HPP
 
 #include <QWidget>
 #include <QList>
@@ -19,13 +19,13 @@ class CalculiXCoreInterface;
 class PickWidget;
 class PanelTable;
 
-class LoadsTrajectoryModifyPanel : public QWidget
+class LoadsTrajectoryBodyHeatfluxSphereModifyPanel : public QWidget
 {
   Q_OBJECT
   
 public:
-  explicit LoadsTrajectoryModifyPanel(QWidget *parent = 0);
-  ~LoadsTrajectoryModifyPanel();
+  explicit LoadsTrajectoryBodyHeatfluxSphereModifyPanel(QWidget *parent = 0);
+  ~LoadsTrajectoryBodyHeatfluxSphereModifyPanel();
 
   bool isInitialized;
   CalculiXCoreInterface *ccx_iface;
@@ -78,4 +78,4 @@ private:
   PanelTable* widget_10;
 };
 
-#endif // LOADSTRAJECTORYMODIFYPANEL_HPP
+#endif // LOADSTRAJECTORYBODYHEATFLUXSPHEREMODIFYPANEL_HPP

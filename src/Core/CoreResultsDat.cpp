@@ -29,7 +29,7 @@ bool CoreResultsDat::init(int job_id)
     std::vector<std::string> job_data = ccx_iface->get_job_data(job_id);
     this->filepath = job_data[1] + ".dat";
 
-    progressbar = new ProgressTool();
+    progressbar = CubitInterface::app_util().get()->progress_tool();;
 
     result_section_label.push_back("time");
     result_section_label.push_back("increment");
@@ -93,10 +93,17 @@ bool CoreResultsDat::read()
   bool success = false;
   if (ccx_uo.mConverterThreads > 1)
   {
-    if (read_parallel())
-    {
-      success = true;
-    }
+    #ifdef WIN32
+      if (read_single())
+      {
+        success = true;
+      }
+    #else
+      if (read_parallel())
+      {
+        success = true;
+      }
+    #endif
   }else{
     if (read_single())
     {
@@ -455,58 +462,63 @@ bool CoreResultsDat::read_parallel()
       dat_array = this->split_line(datline);
       int current_block_data_id = int(result_blocks.size())-1;
       
-      //first lets check if the step or increment needs an update
-      this->check_step(dat_array);
-      //second lets check if the mode is still valid
-      this->check_mode(dat_array);
+      if (dat_array.size()!=0)
+      {
+        //first lets check if the step or increment needs an update
+        this->check_step(dat_array);
+        //second lets check if the mode is still valid
+        this->check_mode(dat_array);
+        //log = "current_line: " + std::to_string(currentline) + " dat_array: " + std::to_string(dat_array.size()) + " \n";
+        //PRINT_INFO("%s", log.c_str());
 
-      if (dat.eof())
-      {
-        break;
-      }else if (current_read_mode == 1)
-      {
-        this->read_header(dat_array);
-      } else if (current_read_mode == 2)
-      {
-        //this->read_line(dat_array);
-        this->dat_arrays[current_block_data_id].push_back(dat_array);
-      } else if (current_read_mode == 10)
-      {
-        // do nothing here
-      } else if (current_read_mode == 11)
-      {
-        this->header_emas(dat_array);
-      } else if (current_read_mode == 102)
-      {
-        // Buckling, save data extra
-        this->read_line_buckle(dat_array);
-      } else if (current_read_mode == 111)
-      {
-        this->header_section_1(dat_array);
-      } else if (current_read_mode == 112)
-      {
-        this->header_section_2(dat_array);
-      } else if (current_read_mode == 114)
-      {
-        this->header_section_3(dat_array);
-      } else if (current_read_mode == 116)
-      {
-        this->header_section_4(dat_array);
-      } else if (current_read_mode == 118)
-      {
-        this->header_section_5(dat_array);
-      } else if (current_read_mode == 113)
-      {
-        this->read_line_section_1(dat_array);
-      } else if (current_read_mode == 115)
-      {
-        this->read_line_section_2(dat_array);
-      } else if (current_read_mode == 117)
-      {
-        this->read_line_section_3(dat_array);
-      } else if (current_read_mode == 119)
-      {
-        this->read_line_section_4(dat_array);
+        if (dat.eof())
+        {
+          break;
+        }else if (current_read_mode == 1)
+        {
+          this->read_header(dat_array);
+        } else if (current_read_mode == 2)
+        {
+          //this->read_line(dat_array);
+          this->dat_arrays[current_block_data_id].push_back(dat_array);
+        } else if (current_read_mode == 10)
+        {
+          // do nothing here
+        } else if (current_read_mode == 11)
+        {
+          this->header_emas(dat_array);
+        } else if (current_read_mode == 102)
+        {
+          // Buckling, save data extra
+          this->read_line_buckle(dat_array);
+        } else if (current_read_mode == 111)
+        {
+          this->header_section_1(dat_array);
+        } else if (current_read_mode == 112)
+        {
+          this->header_section_2(dat_array);
+        } else if (current_read_mode == 114)
+        {
+          this->header_section_3(dat_array);
+        } else if (current_read_mode == 116)
+        {
+          this->header_section_4(dat_array);
+        } else if (current_read_mode == 118)
+        {
+          this->header_section_5(dat_array);
+        } else if (current_read_mode == 113)
+        {
+          this->read_line_section_1(dat_array);
+        } else if (current_read_mode == 115)
+        {
+          this->read_line_section_2(dat_array);
+        } else if (current_read_mode == 117)
+        {
+          this->read_line_section_3(dat_array);
+        } else if (current_read_mode == 119)
+        {
+          this->read_line_section_4(dat_array);
+        }
       }
     }
   }
@@ -563,8 +575,9 @@ bool CoreResultsDat::read_parallel()
     ++loop_c;
   }
   */
-
+  
   ThreadPool tp;
+  
   tp.start(max_threads);
   for (size_t i = 0; i < number_of_result_blocks; i++)
   {
@@ -707,7 +720,6 @@ bool CoreResultsDat::read_parallel()
   //print_data();
 
   StopWatch.total("Duration of reading DAT [ms]: ");
-
   return true;
 }
 
@@ -829,7 +841,7 @@ bool CoreResultsDat::check_mode(std::vector<std::string> line)
   {
     current_read_mode = 101;
   }
-  
+ 
   //check for section print data
   if (line.size() > 4)
   { 

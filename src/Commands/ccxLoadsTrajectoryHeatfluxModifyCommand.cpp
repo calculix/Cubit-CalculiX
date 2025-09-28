@@ -1,15 +1,15 @@
-#include "ccxLoadsTrajectoryModifyCommand.hpp"
+#include "ccxLoadsTrajectoryHeatfluxModifyCommand.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "CalculiXCoreInterface.hpp"
 
-ccxLoadsTrajectoryModifyCommand::ccxLoadsTrajectoryModifyCommand()
+ccxLoadsTrajectoryHeatfluxModifyCommand::ccxLoadsTrajectoryHeatfluxModifyCommand()
 {}
 
-ccxLoadsTrajectoryModifyCommand::~ccxLoadsTrajectoryModifyCommand()
+ccxLoadsTrajectoryHeatfluxModifyCommand::~ccxLoadsTrajectoryHeatfluxModifyCommand()
 {}
 
-std::vector<std::string> ccxLoadsTrajectoryModifyCommand::get_syntax()
+std::vector<std::string> ccxLoadsTrajectoryHeatfluxModifyCommand::get_syntax()
 {
   std::vector<std::string> syntax_list;
 
@@ -35,7 +35,7 @@ std::vector<std::string> ccxLoadsTrajectoryModifyCommand::get_syntax()
   return syntax_list;
 }
 
-std::vector<std::string> ccxLoadsTrajectoryModifyCommand::get_syntax_help()
+std::vector<std::string> ccxLoadsTrajectoryHeatfluxModifyCommand::get_syntax_help()
 {
   std::vector<std::string> help(1);
   help[0] = "ccx "; 
@@ -58,13 +58,13 @@ std::vector<std::string> ccxLoadsTrajectoryModifyCommand::get_syntax_help()
   return help;
 }
 
-std::vector<std::string> ccxLoadsTrajectoryModifyCommand::get_help()
+std::vector<std::string> ccxLoadsTrajectoryHeatfluxModifyCommand::get_help()
 {
   std::vector<std::string> help;
   return help;
 }
 
-bool ccxLoadsTrajectoryModifyCommand::execute(CubitCommandData &data)
+bool ccxLoadsTrajectoryHeatfluxModifyCommand::execute(CubitCommandData &data)
 {
   CalculiXCoreInterface ccx_iface;
 
@@ -238,10 +238,6 @@ bool ccxLoadsTrajectoryModifyCommand::execute(CubitCommandData &data)
   options.push_back(name);  
 
   if (data.find_keyword("HEATFLUX")){
-    load_type = 0;
-    options_marker.push_back(1);
-  }else if (data.find_keyword("PRESSURE"))
-  {
     load_type = 1;
     options_marker.push_back(1);
   }else{
@@ -270,7 +266,7 @@ bool ccxLoadsTrajectoryModifyCommand::execute(CubitCommandData &data)
     }
     if (options3[1][i]<=0)
     {
-      output = "Failed! The radius must be greater zero!\n";
+      output = "Failed! The radius must be greater than zero!\n";
       PRINT_ERROR(output.c_str());
       return false;
     }

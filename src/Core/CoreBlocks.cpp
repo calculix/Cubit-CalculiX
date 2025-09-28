@@ -125,6 +125,26 @@ CoreBlocks::CoreBlocks()
   // special elements
   //ccx_element_types.push_back("SPRINGA");
 
+  /*
+  enum ElementType { SPHERE_EXO=0,
+                   BAR, BAR2, BAR3,
+                   BEAM, BEAM2, BEAM3,
+                   TRUSS, TRUSS2, TRUSS3,
+                   SPRING,
+                   CUBIT_TRI, TRI3, TRI4, TRI6, TRI7, // changing TRI to CUBIT_TRI as CTH already has TRI
+                   TRISHELL, TRISHELL3, TRISHELL4, TRISHELL6, TRISHELL7,
+                   SHEL, SHELL4, SHELL8, SHELL9,
+                   QUAD, QUAD4, QUAD5, QUAD8, QUAD9,
+                   TETRA, TETRA4, TETRA8, TETRA10, TETRA14, TETRA15,
+                   PYRAMID, PYRAMID5, PYRAMID8, PYRAMID13, PYRAMID18,
+                   HEX, HEX8, HEX9, HEX20, HEX21, HEX26, HEX27, HEXSHELL,
+                   FLATQUAD, FLATWEDGE, FLATHEX,
+                   WEDGE, WEDGE6, WEDGE15, WEDGE16, WEDGE20, WEDGE21,
+                   SUPERELEMENT_TOPOLOGY,
+                   INVALID_ELEMENT_TYPE
+                 };
+  */
+
   // define the cubit element types
   cubit_element_types.push_back("SPHERE");// 0
   cubit_element_types.push_back("SPRING");// 1

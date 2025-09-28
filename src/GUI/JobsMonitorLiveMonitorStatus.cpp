@@ -15,46 +15,46 @@ JobsMonitorLiveMonitorStatus::JobsMonitorLiveMonitorStatus():
   boxLayout_widget = new QVBoxLayout();
   gridLayout->addLayout(boxLayout_window,1,1, Qt::AlignRight);
 
-  series_1 = new QtCharts::QLineSeries(this);
+  series_1 = new QLineSeries(this);
   series_1->setPointsVisible(false);
   series_1->setName("STEP");
-  series_2 = new QtCharts::QLineSeries(this);
+  series_2 = new QLineSeries(this);
   series_2->setPointsVisible(false);
   series_2->setName("INC");
-  series_3 = new QtCharts::QLineSeries(this);
+  series_3 = new QLineSeries(this);
   series_3->setPointsVisible(false);
   series_3->setName("ATT");
-  series_4 = new QtCharts::QLineSeries(this);
+  series_4 = new QLineSeries(this);
   series_4->setPointsVisible(false);
   series_4->setName("ITRS");
-  series_5 = new QtCharts::QLineSeries(this);
+  series_5 = new QLineSeries(this);
   series_5->setPointsVisible(false);
   series_5->setName("TOT TIME");
-  series_6 = new QtCharts::QLineSeries(this);
+  series_6 = new QLineSeries(this);
   series_6->setPointsVisible(false);
   series_6->setName("STEP TIME");
-  series_7 = new QtCharts::QLineSeries(this);
+  series_7 = new QLineSeries(this);
   series_7->setPointsVisible(false);
   series_7->setName("INC TIME");
-  chart = new QtCharts::QChart();
+  chart = new QChart();
   //chart->legend()->hide();
   chart->legend()->setVisible(true);
   chart->legend()->setAlignment(Qt::AlignTop);
   //chart->createDefaultAxes();
   //chart->setTitle("Status Information");
-  chart2 = new QtCharts::QChart();
+  chart2 = new QChart();
   //chart2->legend()->hide();
   chart2->legend()->setVisible(true);
   chart2->legend()->setAlignment(Qt::AlignTop);
 
-  axisX = new QtCharts::QValueAxis();
+  axisX = new QValueAxis();
   axisX->setRange(1,1);
   axisX->setMin(1);
   axisX->setMax(1);
   //axisX->setTickCount(4);
   axisX->setLabelFormat("%u");
   axisX->setTitleText("Increment");
-  axisX2 = new QtCharts::QValueAxis();
+  axisX2 = new QValueAxis();
   axisX2->setRange(1,1);
   axisX2->setMin(1);
   axisX2->setMax(1);
@@ -62,14 +62,14 @@ JobsMonitorLiveMonitorStatus::JobsMonitorLiveMonitorStatus():
   axisX2->setLabelFormat("%u");
   axisX2->setTitleText("Increment");
   
-  axisY = new QtCharts::QValueAxis();
+  axisY = new QValueAxis();
   axisY->setMin(0);
   axisY->setMax(0);
   //axisY->setTickCount(5);
   axisY->setLabelFormat("%u");
   axisY->setTitleText("");
   
-  axisY2 = new QtCharts::QValueAxis();
+  axisY2 = new QValueAxis();
   axisY2->setMin(0);
   axisY2->setMax(0);
   //axisY2->setTickCount(5);
@@ -103,9 +103,9 @@ JobsMonitorLiveMonitorStatus::JobsMonitorLiveMonitorStatus():
   series_7->attachAxis(axisY2);
   
   
-  QtCharts::QChartView *chartView = new QtCharts::QChartView(chart,this);
+  QChartView *chartView = new QChartView(chart,this);
   chartView->setRenderHint(QPainter::Antialiasing);
-  QtCharts::QChartView *chartView2 = new QtCharts::QChartView(chart2,this);
+  QChartView *chartView2 = new QChartView(chart2,this);
   chartView2->setRenderHint(QPainter::Antialiasing);
   
   this->setAttribute(Qt::WA_DeleteOnClose);

@@ -1,16 +1,16 @@
-#ifndef CCXLOADSTRAJECTORYMODIFYCOMMAND_HPP
-#define CCXLOADSTRAJECTORYMODIFYCOMMAND_HPP
+#ifndef CCXLOADSTRAJECTORYHEATFLUXMODIFYCOMMAND_HPP
+#define CCXLOADSTRAJECTORYHEATFLUXMODIFYCOMMAND_HPP
 
 #include "CubitCommandInterface.hpp"
 
 /*!
  * \brief The Loads Trajectory modify command lets you modify your desired Trajectory Loads
  */
-class ccxLoadsTrajectoryModifyCommand : public CubitCommand
+class ccxLoadsTrajectoryHeatfluxModifyCommand : public CubitCommand
 {
 public:
-  ccxLoadsTrajectoryModifyCommand();
-  ~ccxLoadsTrajectoryModifyCommand();
+  ccxLoadsTrajectoryHeatfluxModifyCommand();
+  ~ccxLoadsTrajectoryHeatfluxModifyCommand();
 
   std::vector<std::string> get_syntax();
   std::vector<std::string> get_syntax_help();
@@ -18,4 +18,4 @@ public:
   bool execute(CubitCommandData &data);
 };
 
-#endif // CCXLOADSTRAJECTORYMODIFYCOMMAND_HPP
+#endif // CCXLOADSTRAJECTORYHEATFLUXMODIFYCOMMAND_HPP

@@ -1,4 +1,4 @@
-#include "LoadsTrajectoryCreatePanel.hpp"
+#include "LoadsTrajectoryHeatfluxModifyPanel.hpp"
 #include "CalculiXCoreInterface.hpp"
 #include "PanelTable.hpp"
 
@@ -8,7 +8,7 @@
 #include "PickWidget.hpp"
 
 
-LoadsTrajectoryCreatePanel::LoadsTrajectoryCreatePanel(QWidget *parent) :
+LoadsTrajectoryHeatfluxModifyPanel::LoadsTrajectoryHeatfluxModifyPanel(QWidget *parent) :
   QWidget(parent),
   isInitialized(false)
 {
@@ -25,6 +25,7 @@ LoadsTrajectoryCreatePanel::LoadsTrajectoryCreatePanel(QWidget *parent) :
   GridLayout = new QGridLayout(this);
   VBoxLayout = new QVBoxLayout();
   vertical_spacer = new QSpacerItem(1,1,QSizePolicy::Minimum,QSizePolicy::Expanding);
+  HBoxLayout_0 = new QHBoxLayout();
   HBoxLayout_1 = new QHBoxLayout();
   HBoxLayout_2 = new QHBoxLayout();
   HBoxLayout_3 = new QHBoxLayout();
@@ -35,6 +36,7 @@ LoadsTrajectoryCreatePanel::LoadsTrajectoryCreatePanel(QWidget *parent) :
   HBoxLayout_8 = new QHBoxLayout();
   HBoxLayout_9 = new QHBoxLayout();
   HBoxLayout_10 = new QHBoxLayout(frame_10);
+  label_0 = new QLabel();
   label_1 = new QLabel();
   label_2 = new QLabel();
   label_3 = new QLabel();
@@ -44,6 +46,7 @@ LoadsTrajectoryCreatePanel::LoadsTrajectoryCreatePanel(QWidget *parent) :
   label_7 = new QLabel();
   label_8 = new QLabel();
   label_9 = new QLabel();
+  label_0->setFixedWidth(labelWidth);
   label_1->setFixedWidth(labelWidth);
   label_2->setFixedWidth(labelWidth);
   label_3->setFixedWidth(labelWidth);
@@ -53,6 +56,7 @@ LoadsTrajectoryCreatePanel::LoadsTrajectoryCreatePanel(QWidget *parent) :
   label_7->setFixedWidth(labelWidth);
   label_8->setFixedWidth(labelWidth);
   label_9->setFixedWidth(labelWidth);
+  label_0->setText("Trajectory ID");
   label_1->setText("Name");
   label_2->setText("Load Type");
   label_3->setText("Curve");
@@ -62,8 +66,10 @@ LoadsTrajectoryCreatePanel::LoadsTrajectoryCreatePanel(QWidget *parent) :
   label_7->setText("Time Begin");
   label_8->setText("Time End");
   label_9->setText("OP");
+  lineEdit_0 = new QLineEdit();
   lineEdit_1 = new QLineEdit();
   comboBox_2 = new QComboBox();
+  //comboBox_2->addItem("");
   comboBox_2->addItem("Heatflux");
   //comboBox_2->addItem("Pressure");
   PickWidget_3 = new PickWidget();
@@ -89,8 +95,12 @@ LoadsTrajectoryCreatePanel::LoadsTrajectoryCreatePanel(QWidget *parent) :
   widget_10->setMinimumSize(200,160);
   
   lineEdit_1->setPlaceholderText("Optional");
-  PickWidget_4->setPlaceholderText("Start Vertex");
+  PickWidget_3->setPlaceholderText("Optional");
+  PickWidget_4->setPlaceholderText("Optional - Start Vertex");
+  PickWidget_5->setPlaceholderText("Optional");
   lineEdit_6->setPlaceholderText("<x> <y> <z>");
+  lineEdit_7->setPlaceholderText("<x> <y> <z>");
+  lineEdit_8->setPlaceholderText("<x> <y> <z>");
   
   pushButton_apply = new QPushButton();
   pushButton_apply->setText("Apply");
@@ -99,8 +109,9 @@ LoadsTrajectoryCreatePanel::LoadsTrajectoryCreatePanel(QWidget *parent) :
   
   // Layout
   GridLayout->addLayout(VBoxLayout,0,0, Qt::AlignTop);
+  VBoxLayout->addLayout(HBoxLayout_0);
   VBoxLayout->addLayout(HBoxLayout_1);
-  VBoxLayout->addLayout(HBoxLayout_2);
+  //VBoxLayout->addLayout(HBoxLayout_2);
   VBoxLayout->addLayout(HBoxLayout_3);
   VBoxLayout->addLayout(HBoxLayout_4);
   VBoxLayout->addLayout(HBoxLayout_5);
@@ -112,6 +123,8 @@ LoadsTrajectoryCreatePanel::LoadsTrajectoryCreatePanel(QWidget *parent) :
   VBoxLayout->addItem(vertical_spacer);
   VBoxLayout->addLayout(HBoxLayout_pushButton_apply);
 
+  HBoxLayout_0->addWidget(label_0);
+  HBoxLayout_0->addWidget(lineEdit_0);
   HBoxLayout_1->addWidget(label_1);
   HBoxLayout_1->addWidget(lineEdit_1);
   HBoxLayout_2->addWidget(label_2);
@@ -142,42 +155,72 @@ LoadsTrajectoryCreatePanel::LoadsTrajectoryCreatePanel(QWidget *parent) :
   isInitialized = true;
 }
 
-LoadsTrajectoryCreatePanel::~LoadsTrajectoryCreatePanel()
+LoadsTrajectoryHeatfluxModifyPanel::~LoadsTrajectoryHeatfluxModifyPanel()
 {}
 
-void LoadsTrajectoryCreatePanel::on_pushButton_apply_clicked(bool)
+void LoadsTrajectoryHeatfluxModifyPanel::on_pushButton_apply_clicked(bool)
 {
   QStringList commands;
   QString command = "";
   matrix = widget_10->getMatrix();
 
-  if ((PickWidget_3->text()!="") && (PickWidget_4->text()!="") && (PickWidget_5->text()!="") && (lineEdit_6->text()!="") && (lineEdit_7->text()!="") && (lineEdit_8->text()!="") && (matrix.size()>0))
+  if (lineEdit_0->text()!="")
   {
-    command.append("ccx create trajectory " + comboBox_2->currentText() + "  curve " + PickWidget_3->text() + " vertex " + PickWidget_4->text()); 
+    command.append("ccx modify trajectory " + lineEdit_0->text() + " " + comboBox_2->currentText());
+
+    if (PickWidget_3->text()!="")
+    {
+      command.append(" curve " + PickWidget_3->text());
+    }
+    if (PickWidget_4->text()!="")
+    {
+      command.append(" vertex " + PickWidget_4->text());
+    }
 
     std::string pickwidget_text = PickWidget_5->text().toUtf8().data();
-    std::vector<int> surface_ids = CubitInterface::parse_cubit_list("surface", pickwidget_text);
-    command.append(" surface");
-    for (size_t i = 0; i < surface_ids.size(); i++)
+    if (pickwidget_text!="")
     {
-      command.append(" " + QString::number(surface_ids[i]));
+      std::vector<int> surface_ids = CubitInterface::parse_cubit_list("surface", pickwidget_text);
+      command.append(" surface");
+      for (size_t i = 0; i < surface_ids.size(); i++)
+      {
+        command.append(" " + QString::number(surface_ids[i]));
+      }
     }
     
-    command.append(" direction " + lineEdit_6->text());
-    command.append(" magnitude ");
-    
-    for (size_t i = 0; i < matrix.size(); i++)
+    if (lineEdit_6->text()!="")
     {
-      command.append(QString::number(matrix[i][1]) + " ");
+      command.append(" direction " + lineEdit_6->text());
     }
 
-    command.append(" time_begin " +lineEdit_7->text());
-    command.append(" time_end " +lineEdit_8->text());
-    command.append(" radius ");
-    
-    for (size_t i = 0; i < matrix.size(); i++)
+    if (matrix.size()>0)
     {
-      command.append(QString::number(matrix[i][0]) + " ");
+      command.append(" magnitude ");
+    
+      for (size_t i = 0; i < matrix.size(); i++)
+      {
+        command.append(QString::number(matrix[i][1]) + " ");
+      }
+    }
+
+    if (lineEdit_7->text()!="")
+    {
+      command.append(" time_begin " + lineEdit_7->text());
+    }
+
+    if (lineEdit_8->text()!="")
+    {
+      command.append(" time_end " + lineEdit_8->text());
+    }
+
+    if (matrix.size()>0)
+    {
+      command.append(" radius ");
+    
+      for (size_t i = 0; i < matrix.size(); i++)
+      {
+        command.append(QString::number(matrix[i][0]) + " ");
+      }
     }
 
     if (comboBox_9->currentIndex()!=0)
@@ -194,6 +237,7 @@ void LoadsTrajectoryCreatePanel::on_pushButton_apply_clicked(bool)
   if (command != "")
   {
     commands.push_back(command);
+    lineEdit_0->setText("");
     lineEdit_1->setText("");
     comboBox_2->setCurrentIndex(0);
     PickWidget_3->setText("");

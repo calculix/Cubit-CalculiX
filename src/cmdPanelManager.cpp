@@ -92,8 +92,10 @@ void cmdPanelManager::clear()
     my_markers.push_back("CCXLoadsCentrifugalCreate");
     my_markers.push_back("CCXLoadsCentrifugalModify");
     my_markers.push_back("CCXLoadsCentrifugalDelete");
-    my_markers.push_back("CCXLoadsTrajectoryCreate");
-    my_markers.push_back("CCXLoadsTrajectoryModify");
+    my_markers.push_back("CCXLoadsTrajectoryHeatfluxCreate");
+    my_markers.push_back("CCXLoadsTrajectoryHeatfluxModify");
+    my_markers.push_back("CCXLoadsTrajectoryBodyHeatfluxSphereCreate");
+    my_markers.push_back("CCXLoadsTrajectoryBodyHeatfluxSphereModify");
     my_markers.push_back("CCXLoadsTrajectoryDelete");
     my_markers.push_back("CCXLoadsFilmCreate");
     my_markers.push_back("CCXLoadsFilmModify");
@@ -104,6 +106,9 @@ void cmdPanelManager::clear()
     my_markers.push_back("CCXLoadsSurfaceTractionCreate");
     my_markers.push_back("CCXLoadsSurfaceTractionModify");
     my_markers.push_back("CCXLoadsSurfaceTractionDelete");
+    my_markers.push_back("CCXLoadsBodyHeatfluxCreate");
+    my_markers.push_back("CCXLoadsBodyHeatfluxModify");
+    my_markers.push_back("CCXLoadsBodyHeatfluxDelete");    
     my_markers.push_back("CCXBCsDisplacementsModify");
     my_markers.push_back("CCXBCsTemperaturesModify");
     my_markers.push_back("CCXHistoryOutputsCreate");
@@ -495,11 +500,17 @@ void cmdPanelManager::initialize_from_code()
   model->setNodeMarker(node, "CCXLoadsTrajectory");
   node->setIcon(ccx_iface->getIcon("CCXLoadsTrajectory"));
   root_node = model->getMarkedNode("CCXLoadsTrajectory");
-  node = model->addNode("Create", root_node);
-  model->setNodeMarker(node, "CCXLoadsTrajectoryCreate");
+  node = model->addNode("Create Heatflux", root_node);
+  model->setNodeMarker(node, "CCXLoadsTrajectoryHeatfluxCreate");
   node->setIcon(ccx_iface->getIcon("CCXLoadsTrajectoryCreate"));
-  node = model->addNode("Modify", root_node);
-  model->setNodeMarker(node, "CCXLoadsTrajectoryModify");
+  node = model->addNode("Create Body Heatflux Sphere", root_node);
+  model->setNodeMarker(node, "CCXLoadsTrajectoryBodyHeatfluxSphereCreate");
+  node->setIcon(ccx_iface->getIcon("CCXLoadsTrajectoryCreate"));
+  node = model->addNode("Modify Heatflux", root_node);
+  model->setNodeMarker(node, "CCXLoadsTrajectoryHeatfluxModify");
+  node->setIcon(ccx_iface->getIcon("CCXLoadsTrajectoryModify"));
+  node = model->addNode("Modify Body Heatflux Sphere", root_node);
+  model->setNodeMarker(node, "CCXLoadsTrajectoryBodyHeatfluxSphereModify");
   node->setIcon(ccx_iface->getIcon("CCXLoadsTrajectoryModify"));
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXLoadsTrajectoryDelete");
@@ -555,6 +566,23 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXLoadsSurfaceTractionDelete");
   node->setIcon(ccx_iface->getIcon("CCXLoadsSurfaceTractionDelete"));
+
+  //##############################
+  // add LoadsBodyHeatflux Nodes
+  root_node = model->getMarkedNode("CCXLoads");
+  node = model->addNode("Body Heatflux", root_node);
+  model->setNodeMarker(node, "CCXLoadsBodyHeatflux");
+  node->setIcon(ccx_iface->getIcon("CCXLoadsBodyHeatflux"));
+  root_node = model->getMarkedNode("CCXLoadsBodyHeatflux");
+  node = model->addNode("Create", root_node);
+  model->setNodeMarker(node, "CCXLoadsBodyHeatfluxCreate");
+  node->setIcon(ccx_iface->getIcon("CCXLoadsBodyHeatfluxCreate"));
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXLoadsBodyHeatfluxModify");
+  node->setIcon(ccx_iface->getIcon("CCXLoadsBodyHeatfluxModify"));
+  node = model->addNode("Delete", root_node);
+  model->setNodeMarker(node, "CCXLoadsBodyHeatfluxDelete");
+  node->setIcon(ccx_iface->getIcon("CCXLoadsBodyHeatfluxDelete"));
 
   //##############################
   // add BCs Nodes
@@ -831,8 +859,10 @@ void cmdPanelManager::associate_panels_with_nodes()
   my_markers.push_back("CCXLoadsCentrifugalCreate");
   my_markers.push_back("CCXLoadsCentrifugalModify");
   my_markers.push_back("CCXLoadsCentrifugalDelete");
-  my_markers.push_back("CCXLoadsTrajectoryCreate");
-  my_markers.push_back("CCXLoadsTrajectoryModify");
+  my_markers.push_back("CCXLoadsTrajectoryHeatfluxCreate");
+  my_markers.push_back("CCXLoadsTrajectoryHeatfluxModify");
+  my_markers.push_back("CCXLoadsTrajectoryBodyHeatfluxSphereCreate");
+  my_markers.push_back("CCXLoadsTrajectoryBodyHeatfluxSphereModify");
   my_markers.push_back("CCXLoadsTrajectoryDelete");
   my_markers.push_back("CCXLoadsFilmCreate");
   my_markers.push_back("CCXLoadsFilmModify");
@@ -843,6 +873,9 @@ void cmdPanelManager::associate_panels_with_nodes()
   my_markers.push_back("CCXLoadsSurfaceTractionCreate");
   my_markers.push_back("CCXLoadsSurfaceTractionModify");
   my_markers.push_back("CCXLoadsSurfaceTractionDelete");
+  my_markers.push_back("CCXLoadsBodyHeatfluxCreate");
+  my_markers.push_back("CCXLoadsBodyHeatfluxModify");
+  my_markers.push_back("CCXLoadsBodyHeatfluxDelete");
   my_markers.push_back("CCXBCsDisplacementsModify");
   my_markers.push_back("CCXBCsTemperaturesModify");
   my_markers.push_back("CCXHistoryOutputsCreate");

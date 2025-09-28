@@ -6,6 +6,7 @@
 #include "CubitProcess.hpp"
 #include "CubitString.hpp"
 #include "ProgressTool.hpp"
+#include "AppUtil.hpp"
 #include "CubitFile.hpp"
 
 #include <stdlib.h>
@@ -25,7 +26,15 @@
 
 
 CoreJobs::CoreJobs()
-{}
+{
+  #ifdef WIN32
+    ProcessPipe.clear();
+    PPTID.clear();
+    PipePID.clear();
+    PipeThreads.clear();
+    PipeThreadsRun.clear();
+  #endif
+}
 
 CoreJobs::~CoreJobs()
 {}
@@ -37,7 +46,7 @@ bool CoreJobs::init()
     return false; // already initialized
   }else{
     CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-    progressbar = new ProgressTool();
+    progressbar = CubitInterface::app_util().get()->progress_tool();;
     is_initialized = true;  
     return true;
   }
@@ -180,15 +189,17 @@ bool CoreJobs::run_job(int job_id,int option)
     CubitString temp;
     CubitString output;
     int process_id = 0;
+    
+    
     if (_access(ccx_uo.mPathSolver.toStdString().c_str(), 0) == 0)
-    {
-      SetEnvironmentVariable("OMP_NUM_THREADS",std::to_string(ccx_uo.mSolverThreads).c_str());
+    { 
+      SetEnvironmentVariableA("OMP_NUM_THREADS",std::to_string(ccx_uo.mSolverThreads).c_str());
     }else{
       log = "CCX Solver not found! checked path \"" + ccx_uo.mPathSolver.toStdString() + "\" \n";
       PRINT_INFO("%s", log.c_str());    
       return false;
-    }
-
+    }   
+    
     int job_data_id;
     job_data_id = get_jobs_data_id_from_job_id(job_id);
     if (job_data_id != -1)
@@ -222,7 +233,7 @@ bool CoreJobs::run_job(int job_id,int option)
         //PRINT_INFO("%s", shellstr.c_str());
         std::string SourcePath = jobs_data[job_data_id][2];
         filepath = jobs_data[job_data_id][1] + ".inp";
-        CopyFile( SourcePath.c_str(), filepath.c_str(), FALSE );
+        CopyFileA( SourcePath.c_str(), filepath.c_str(), FALSE );
       } else {
         filepath = jobs_data[job_data_id][1] + ".inp";
         log = "Exporting Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " to \n";
@@ -271,6 +282,7 @@ bool CoreJobs::run_job(int job_id,int option)
       siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
     
       std::string arguments = "\"" + ccx_uo.mPathSolver.toStdString() + "\" -i \"" + filepath.substr(0, filepath.size()-4) + "\"";
+      std::wstring args = std::wstring(arguments.begin(), arguments.end());
       //arguments = "\"C:\\Windows\\System32\\cmd.exe\" echo output && ping -n 10 127.0.0.1 >NUL";
       //PRINT_INFO("%s", arguments.c_str()); 
 
@@ -281,7 +293,8 @@ bool CoreJobs::run_job(int job_id,int option)
 
       // Create the child process.         
       bSuccess = CreateProcess(NULL, 
-          &arguments[0],     // command line 
+          //&arguments[0],     // command line 
+          &args[0],     // command line 
           NULL,          // process security attributes 
           NULL,          // primary thread security attributes 
           TRUE,          // handles are inherited 
@@ -326,10 +339,23 @@ bool CoreJobs::run_job(int job_id,int option)
         //PRINT_INFO("%s", log.c_str());
         std::string output(chBuf, dwRead);
         output_console[std::stoi(jobs_data[job_data_id][5])].push_back(output);
-                          
-        PipeThreads.push_back(std::thread(&CoreJobs::read_pipe, this, job_id, PipeThreadsRun.size()));
+        
+        /*
+        log = "pipethreads \n" + std::to_string(PipeThreads.size()) + " \n";
+        log.append("pipethreadsrun \n" + std::to_string(PipeThreadsRun.size()) + " \n");
+        PRINT_INFO("%s", log.c_str());
+        */
+
         PipeThreadsRun.push_back(true);
-       
+        int bool_data_id = int(PipeThreadsRun.size()-1);
+        PipeThreads.push_back(std::thread(&CoreJobs::read_pipe, this, job_id, bool_data_id));
+
+        /*
+        log = "pipethreads \n" + std::to_string(PipeThreads.size()) + " \n";
+        log.append("pipethreadsrun \n" + std::to_string(PipeThreadsRun.size()) + " \n");
+        PRINT_INFO("%s", log.c_str());
+        */
+
         // write linking of the ids
         PULONG ClientProcessId;
         GetNamedPipeClientProcessId(g_hChildStd_OUT_Rd,ClientProcessId);
@@ -350,6 +376,7 @@ bool CoreJobs::run_job(int job_id,int option)
 
       return true;
     }
+
   #else
     std::string filepath;
     std::string log;
@@ -1149,9 +1176,20 @@ int CoreJobs::get_jobs_data_id_from_job_id(int job_id)
           int PipePID;
           PipePID = get_PipePID_from_ProcessPID(std::stoi(jobs_data[jobs_data_id][4]));           
           ProcessPipe_data_id = get_ProcessPipe_data_id_from_PipePID(PipePID);
-          
+          bool_data_id = int(PipeThreadsRun.size()-1);
+
           while (success) 
           {
+            /*
+            log = "job_data_id " + std::to_string(jobs_data_id) + "\n";
+            PRINT_INFO("%s", log.c_str());
+            log = "bool_data_id " + std::to_string(bool_data_id) + "\n";
+            PRINT_INFO("%s", log.c_str());
+            log = "PipeThreadsRun " + std::to_string(PipeThreadsRun.size()) + "\n";
+            PRINT_INFO("%s", log.c_str());
+            log = "ProcessPipe_data_id " + std::to_string(ProcessPipe_data_id) + "\n";
+            PRINT_INFO("%s", log.c_str());
+            */
             if (!PipeThreadsRun[bool_data_id])
             {
               break;
@@ -1162,7 +1200,7 @@ int CoreJobs::get_jobs_data_id_from_job_id(int job_id)
             }
             std::string output(chBuf, dwRead);
             output_console[std::stoi(jobs_data[jobs_data_id][5])].push_back(output);
-            get_cvgsta(std::stoi(jobs_data[jobs_data_id][0]));        
+            get_cvgsta(std::stoi(jobs_data[jobs_data_id][0]));
           }
         }
       }

@@ -67,8 +67,10 @@
 #include "ccxLoadsCentrifugalCreateCommand.hpp"
 #include "ccxLoadsCentrifugalModifyCommand.hpp"
 #include "ccxLoadsCentrifugalDeleteCommand.hpp"
-#include "ccxLoadsTrajectoryCreateCommand.hpp"
-#include "ccxLoadsTrajectoryModifyCommand.hpp"
+#include "ccxLoadsTrajectoryHeatfluxCreateCommand.hpp"
+#include "ccxLoadsTrajectoryHeatfluxModifyCommand.hpp"
+#include "ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand.hpp"
+#include "ccxLoadsTrajectoryBodyHeatfluxSphereModifyCommand.hpp"
 #include "ccxLoadsTrajectoryDeleteCommand.hpp"
 #include "ccxLoadsFilmCreateCommand.hpp"
 #include "ccxLoadsFilmModifyCommand.hpp"
@@ -79,6 +81,9 @@
 #include "ccxLoadsSurfaceTractionCreateCommand.hpp"
 #include "ccxLoadsSurfaceTractionModifyCommand.hpp"
 #include "ccxLoadsSurfaceTractionDeleteCommand.hpp"
+#include "ccxLoadsBodyHeatfluxCreateCommand.hpp"
+#include "ccxLoadsBodyHeatfluxModifyCommand.hpp"
+#include "ccxLoadsBodyHeatfluxDeleteCommand.hpp"
 #include "ccxBCsDisplacementsModifyCommand.hpp"
 #include "ccxBCsTemperaturesModifyCommand.hpp"
 #include "ccxHistoryOutputCreateCommand.hpp"
@@ -231,8 +236,10 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxLoadsCentrifugalCreateCommand");
   keys.push_back("ccxLoadsCentrifugalModifyCommand");
   keys.push_back("ccxLoadsCentrifugalDeleteCommand");
-  keys.push_back("ccxLoadsTrajectoryCreateCommand");
-  keys.push_back("ccxLoadsTrajectoryModifyCommand");
+  keys.push_back("ccxLoadsTrajectoryHeatfluxCreateCommand");
+  keys.push_back("ccxLoadsTrajectoryHeatfluxModifyCommand");
+  keys.push_back("ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand");
+  keys.push_back("ccxLoadsTrajectoryBodyHeatfluxSphereModifyCommand");
   keys.push_back("ccxLoadsTrajectoryDeleteCommand");
   keys.push_back("ccxLoadsFilmCreateCommand");
   keys.push_back("ccxLoadsFilmModifyCommand");
@@ -243,6 +250,9 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxLoadsSurfaceTractionCreateCommand");
   keys.push_back("ccxLoadsSurfaceTractionModifyCommand");
   keys.push_back("ccxLoadsSurfaceTractionDeleteCommand");
+  keys.push_back("ccxLoadsBodyHeatfluxCreateCommand");
+  keys.push_back("ccxLoadsBodyHeatfluxModifyCommand");
+  keys.push_back("ccxLoadsBodyHeatfluxDeleteCommand");
   keys.push_back("ccxBCsDisplacementsModifyCommand");
   keys.push_back("ccxBCsTemperaturesModifyCommand");
   keys.push_back("ccxHistoryOutputCreateCommand");
@@ -519,11 +529,17 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
   if(key == "ccxLoadsCentrifugalDeleteCommand")
     return new ccxLoadsCentrifugalDeleteCommand();
 
-  if(key == "ccxLoadsTrajectoryCreateCommand")
-    return new ccxLoadsTrajectoryCreateCommand();
+  if(key == "ccxLoadsTrajectoryHeatfluxCreateCommand")
+    return new ccxLoadsTrajectoryHeatfluxCreateCommand();
   
-  if(key == "ccxLoadsTrajectoryModifyCommand")
-    return new ccxLoadsTrajectoryModifyCommand();
+  if(key == "ccxLoadsTrajectoryHeatfluxModifyCommand")
+    return new ccxLoadsTrajectoryHeatfluxModifyCommand();
+  
+  if(key == "ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand")
+    return new ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand();  
+
+  if(key == "ccxLoadsTrajectoryBodyHeatfluxSphereModifyCommand")
+    return new ccxLoadsTrajectoryBodyHeatfluxSphereModifyCommand();
 
   if(key == "ccxLoadsTrajectoryDeleteCommand")
     return new ccxLoadsTrajectoryDeleteCommand();
@@ -554,6 +570,15 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
 
   if(key == "ccxLoadsSurfaceTractionDeleteCommand")
     return new ccxLoadsSurfaceTractionDeleteCommand();
+  
+  if(key == "ccxLoadsBodyHeatfluxCreateCommand")
+    return new ccxLoadsBodyHeatfluxCreateCommand();
+
+  if(key == "ccxLoadsBodyHeatfluxModifyCommand")
+    return new ccxLoadsBodyHeatfluxModifyCommand();
+
+  if(key == "ccxLoadsBodyHeatfluxDeleteCommand")
+    return new ccxLoadsBodyHeatfluxDeleteCommand();
     
   if(key == "ccxBCsDisplacementsModifyCommand")
     return new ccxBCsDisplacementsModifyCommand();

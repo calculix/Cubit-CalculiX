@@ -5,6 +5,7 @@
 #include "CubitMessage.hpp"
 #include "CalculiXCoreInterface.hpp"
 #include "ProgressTool.hpp"
+#include "AppUtil.hpp"
 #include <fstream>
 
 #ifdef WIN32
@@ -16,7 +17,7 @@
 
 ccxExportCommand::ccxExportCommand()
 {
-  progressbar = new ProgressTool();
+  progressbar = CubitInterface::app_util().get()->progress_tool();;
 }
 
 ccxExportCommand::~ccxExportCommand()
@@ -409,7 +410,7 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
             for (int j = 0; j < num_nodes; j++)
             {
               // different node numbering for hex20
-              if (element_type[0] == 42) {
+              if (element_type[0] == 44) {
                 if (j >= 12 && j<=15) {
                   output_file << conn[j+4];
                 } else if (j >= 16 && j<=19) {
@@ -417,7 +418,7 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
                 } else {
                   output_file << conn[j];
                 }
-              } else if (element_type[0] == 50) {  // different node numbering for wedge15
+              } else if (element_type[0] == 54) {  // different node numbering for wedge15
                 if (j >= 9 && j<=11) {
                   output_file << conn[j+3];
                 } else if (j >= 12 && j<=14) {
@@ -440,9 +441,12 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
               {
                 output_file << ", ";
               }
-              if ((j == 14) && element_type[0] == 42) {
+              if ((j == 14) && element_type[0] == 44) {
                 output_file << "\n";
               }
+              /*if ((j == 14) && (num_nodes > 15)) {
+                output_file << "\n";
+              }*/
             }
             output_file << std::endl;
           }

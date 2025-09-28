@@ -133,10 +133,14 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsCentrifugalModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsCentrifugalDeleteCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsCentrifugalDeleteCommand.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsTrajectoryCreateCommand.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsTrajectoryCreateCommand.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsTrajectoryModifyCommand.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsTrajectoryModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsTrajectoryHeatfluxCreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsTrajectoryHeatfluxCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsTrajectoryHeatfluxModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsTrajectoryHeatfluxModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsTrajectoryBodyHeatfluxSphereModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsTrajectoryBodyHeatfluxSphereModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsTrajectoryDeleteCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsTrajectoryDeleteCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsFilmCreateCommand.cpp
@@ -157,6 +161,12 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsSurfaceTractionModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsSurfaceTractionDeleteCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsSurfaceTractionDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsBodyHeatfluxCreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsBodyHeatfluxCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsBodyHeatfluxModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsBodyHeatfluxModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsBodyHeatfluxDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxLoadsBodyHeatfluxDeleteCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxBCsDisplacementsModifyCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxBCsDisplacementsModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxBCsTemperaturesModifyCommand.cpp

@@ -36,6 +36,7 @@ class LoadsTrajectoryTree;
 class LoadsFilmTree;
 class LoadsRadiationTree;
 class LoadsSurfaceTractionTree;
+class LoadsBodyHeatfluxTree;
 class BCsTree;
 class BCsDisplacementsTree;
 class BCsTemperaturesTree;
@@ -97,6 +98,7 @@ private:
   LoadsFilmTree *myLoadsFilmTree; //Film root item
   LoadsRadiationTree *myLoadsRadiationTree; //Radiation root item
   LoadsSurfaceTractionTree *myLoadsSurfaceTractionTree; //Surface Traction root item
+  LoadsBodyHeatfluxTree *myLoadsBodyHeatfluxTree; //Body Heatflux root item
   BCsTree *myBCsTree; //BCs root item
   BCsDisplacementsTree *myBCsDisplacementsTree; //Displacements root item
   BCsTemperaturesTree *myBCsTemperaturesTree; //Temperature root item

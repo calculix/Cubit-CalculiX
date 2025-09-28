@@ -33,20 +33,20 @@ public:
   QHBoxLayout* boxLayout_window;
   QVBoxLayout* boxLayout_widget;
 
-  QtCharts::QLineSeries *series_1;
-  QtCharts::QLineSeries *series_2;
-  QtCharts::QLineSeries *series_3;
-  QtCharts::QLineSeries *series_4;
-  QtCharts::QLineSeries *series_5;
-  QtCharts::QLineSeries *series_6;
-  QtCharts::QLineSeries *series_7;
+  QLineSeries *series_1;
+  QLineSeries *series_2;
+  QLineSeries *series_3;
+  QLineSeries *series_4;
+  QLineSeries *series_5;
+  QLineSeries *series_6;
+  QLineSeries *series_7;
 
-  QtCharts::QChart *chart;
-  QtCharts::QChart *chart2;
-  QtCharts::QValueAxis *axisX;
-  QtCharts::QValueAxis *axisY;
-  QtCharts::QValueAxis *axisX2;
-  QtCharts::QValueAxis *axisY2;
+  QChart *chart;
+  QChart *chart2;
+  QValueAxis *axisX;
+  QValueAxis *axisY;
+  QValueAxis *axisX2;
+  QValueAxis *axisY2;
 };
 
 #endif // JOBSMONITORLIVEMONITORSTATUS_HPP

@@ -30,7 +30,7 @@ bool CoreResultsFrd::init(int job_id)
     std::vector<std::string> job_data = ccx_iface->get_job_data(job_id);
     this->filepath = job_data[1] + ".frd";
 
-    progressbar = new ProgressTool();
+    progressbar = CubitInterface::app_util().get()->progress_tool();;
 
     is_initialized = true;  
     return true;
@@ -75,10 +75,17 @@ bool CoreResultsFrd::read()
   bool success = false;
   if (ccx_uo.mConverterThreads > 1)
   {
-    if (read_parallel())
-    {
-      success = true;
-    }
+    #ifdef WIN32
+      if (read_single())
+      {
+        success = true;
+      }
+    #else
+      if (read_parallel())
+      {
+        success = true;
+      }
+    #endif
   }else{
     if (read_single())
     {
@@ -267,6 +274,7 @@ bool CoreResultsFrd::read_parallel()
   
   int maxlines = 0;
   std::string log;
+  //log = "reading results " + filepath + " for Job ID " + std::to_string(job_id) + " using " + std::to_string(max_threads) + " threads \n";
   log = "reading results " + filepath + " for Job ID " + std::to_string(job_id) + " \n";
   PRINT_INFO("%s", log.c_str());
 
@@ -563,8 +571,15 @@ bool CoreResultsFrd::read_parallel()
 
     for (size_t i = 0; i < max_threads; i++)
     { 
-      ReadThreads.push_back(std::thread(&CoreResultsFrd::read_elements_thread, this, thread_ranges[i][0], thread_ranges[i][1], thread_ranges[i][2], i));
+      int start = 0;
+      int end = 0;
+      int data_start = 0;
+      start = thread_ranges[i][0];
+      end = thread_ranges[i][1];
+      data_start = thread_ranges[i][2];
+      ReadThreads.push_back(std::thread(&CoreResultsFrd::read_elements_thread, this, start, end, data_start, i));
     }
+
     // wait till all threads are finished
     /*
     for (size_t i = 0; i < max_threads; i++)
@@ -716,6 +731,7 @@ bool CoreResultsFrd::read_parallel()
 
     ThreadPool tp;
     tp.start(max_threads);
+    
     for (size_t i = 0; i < number_of_result_blocks; i++)
     {
         std::function<void()> f = std::bind(&CoreResultsFrd::read_nodal_result_block_thread, this,int(i),0);
@@ -726,7 +742,7 @@ bool CoreResultsFrd::read_parallel()
       update_progressbar();
     }
     tp.stop();
-
+    
   }
   frd.close();
 
@@ -1099,7 +1115,7 @@ bool CoreResultsFrd::read_elements_thread(int start,int end,int data_start,int t
   std::string frdline = "";
   int ic = 0;
   int id = -1;
-
+  
   std::ifstream frd;
   frd.open(this->filepath);
   while (std::getline(frd,frdline))
@@ -1158,6 +1174,7 @@ bool CoreResultsFrd::read_elements_thread(int start,int end,int data_start,int t
     ++ic;
   }
   frd.close();
+  
   return true;
 }
 

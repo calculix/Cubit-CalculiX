@@ -156,3 +156,24 @@
 2025-04-27 tinkering on examples, update readme
 2025-04-28 tinkering on examples, update readme
 2025-05-06 tinkering on examples
+######### ------  Release 2025.5
+
+2025-08-17 working on trajectory bodyheatflux
+2025-08-19 working on trajectory bodyheatflux
+2025-09-03 w11 maintenance, Debugging run jobs
+2025-09-03 w11 maintenance, Debugging converter in parallel
+2025-09-07 maintenance for 2025.8
+2025-09-08 maintenance for 2025.8
+2025-09-10 reworking trajectory loads
+2025-09-12 reworking trajectory loads
+2025-09-12 working on bodyheatflux
+2025-09-13 working on bodyheatflux
+2025-09-14 working on bodyheatflux
+2025-09-15 working on bodyheatflux gui
+2025-09-17 working on bodyheatflux gui
+2025-09-18 working on bodyheatflux gui
+2025-09-19 working on trajectory bodyheatflux sphere
+2025-09-20 working on trajectory bodyheatflux sphere example
+2025-09-21 working on trajectory bodyheatflux sphere example
+2025-09-28 prepare release 2025.9
+######### ------  Release 2025.9

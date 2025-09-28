@@ -250,6 +250,11 @@ std::vector<int> CalculiXCoreInterface::get_loadssurfacetraction_ids()
   return ccx_core.get_loadssurfacetraction_ids();
 }
 
+std::vector<int> CalculiXCoreInterface::get_loadsbodyheatflux_ids()
+{
+  return ccx_core.get_loadsbodyheatflux_ids();
+}
+
 std::vector<int> CalculiXCoreInterface::get_bcsdisplacements_ids()
 {
   return ccx_core.get_bcsdisplacements_ids();
@@ -278,6 +283,11 @@ std::vector<int> CalculiXCoreInterface::get_equationgroup_ids()
 bool CalculiXCoreInterface::check_block_exists(int block_id)
 {
   return ccx_core.check_block_exists(block_id);
+}
+
+bool CalculiXCoreInterface::check_global_element_exists(int element_id)
+{
+  return ccx_core.check_global_element_exists(element_id);
 }
 
 bool CalculiXCoreInterface::check_nodeset_exists(int nodeset_id)
@@ -555,9 +565,9 @@ bool CalculiXCoreInterface::delete_loadscentrifugal(int centrifugal_id)
   return ccx_core.delete_loadscentrifugal(centrifugal_id);
 }
 
-bool CalculiXCoreInterface::create_loadstrajectory(std::vector<std::string> options, std::vector<int> options2, std::vector<std::vector<double>> options3)
+bool CalculiXCoreInterface::create_loadstrajectory(std::string load_type, std::vector<std::string> options, std::vector<int> options2, std::vector<std::vector<double>> options3)
 {
-  return ccx_core.create_loadstrajectory(options, options2, options3);
+  return ccx_core.create_loadstrajectory(load_type, options, options2, options3);
 }
 
 bool CalculiXCoreInterface::modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2, std::vector<std::vector<double>> options3)
@@ -570,44 +580,94 @@ bool CalculiXCoreInterface::delete_loadstrajectory(int trajectory_id)
   return ccx_core.delete_loadstrajectory(trajectory_id);
 }
 
-std::vector<int> CalculiXCoreInterface::loadstrajectory_get_node_ids(int trajectory_id)
+std::string CalculiXCoreInterface::loadstrajectory_get_load_type(int trajectory_id)
 {
-  return ccx_core.loadstrajectory_get_node_ids(trajectory_id);
+  return ccx_core.loadstrajectory_get_load_type(trajectory_id);
 }
 
-std::vector<int> CalculiXCoreInterface::loadstrajectory_get_edge_ids(int trajectory_id)
+std::vector<int> CalculiXCoreInterface::loadstrajectory_heatflux_get_node_ids(int trajectory_id)
 {
-  return ccx_core.loadstrajectory_get_edge_ids(trajectory_id);
+  return ccx_core.loadstrajectory_heatflux_get_node_ids(trajectory_id);
 }
 
-std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_get_hit_coordinates(int trajectory_id)
+std::vector<int> CalculiXCoreInterface::loadstrajectory_heatflux_get_edge_ids(int trajectory_id)
 {
-  return ccx_core.loadstrajectory_get_hit_coordinates(trajectory_id);
+  return ccx_core.loadstrajectory_heatflux_get_edge_ids(trajectory_id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_heatflux_get_hit_coordinates(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_heatflux_get_hit_coordinates(trajectory_id);
 }
   
-std::vector<std::vector<std::vector<int>>> CalculiXCoreInterface::loadstrajectory_get_face_ids(int trajectory_id)
+std::vector<std::vector<std::vector<int>>> CalculiXCoreInterface::loadstrajectory_heatflux_get_face_ids(int trajectory_id)
 {
-  return ccx_core.loadstrajectory_get_face_ids(trajectory_id);
+  return ccx_core.loadstrajectory_heatflux_get_face_ids(trajectory_id);
 }
 
-std::vector<std::vector<std::vector<int>>> CalculiXCoreInterface::loadstrajectory_get_draw_face_ids(int trajectory_id)
+std::vector<std::vector<std::vector<int>>> CalculiXCoreInterface::loadstrajectory_heatflux_get_draw_face_ids(int trajectory_id)
 {
-  return ccx_core.loadstrajectory_get_draw_face_ids(trajectory_id);
+  return ccx_core.loadstrajectory_heatflux_get_draw_face_ids(trajectory_id);
 }
 
-std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_get_times(int trajectory_id)
+std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_heatflux_get_times(int trajectory_id)
 {
-  return ccx_core.loadstrajectory_get_times(trajectory_id);
+  return ccx_core.loadstrajectory_heatflux_get_times(trajectory_id);
 } 
 
-std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_get_radius(int trajectory_id)
+std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_heatflux_get_radius(int trajectory_id)
 {
-  return ccx_core.loadstrajectory_get_radius(trajectory_id);
+  return ccx_core.loadstrajectory_heatflux_get_radius(trajectory_id);
 }
 
-std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_get_magnitude(int trajectory_id)
+std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_heatflux_get_magnitude(int trajectory_id)
 {
-  return ccx_core.loadstrajectory_get_magnitude(trajectory_id);
+  return ccx_core.loadstrajectory_heatflux_get_magnitude(trajectory_id);
+}
+
+std::vector<int> CalculiXCoreInterface::loadstrajectory_bodyheatfluxsphere_get_node_ids(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_bodyheatfluxsphere_get_node_ids(trajectory_id);
+}
+
+std::vector<int> CalculiXCoreInterface::loadstrajectory_bodyheatfluxsphere_get_edge_ids(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_bodyheatfluxsphere_get_edge_ids(trajectory_id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_bodyheatfluxsphere_get_hit_coordinates(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_bodyheatfluxsphere_get_hit_coordinates(trajectory_id);
+}
+  
+std::vector<std::vector<std::vector<int>>> CalculiXCoreInterface::loadstrajectory_bodyheatfluxsphere_get_element_ids(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_bodyheatfluxsphere_get_element_ids(trajectory_id);
+}
+
+std::vector<std::vector<std::vector<int>>> CalculiXCoreInterface::loadstrajectory_bodyheatfluxsphere_get_draw_element_ids(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_bodyheatfluxsphere_get_draw_element_ids(trajectory_id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_bodyheatfluxsphere_get_times(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_bodyheatfluxsphere_get_times(trajectory_id);
+} 
+
+std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_bodyheatfluxsphere_get_radius(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_bodyheatfluxsphere_get_radius(trajectory_id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_bodyheatfluxsphere_get_depth(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_bodyheatfluxsphere_get_depth(trajectory_id);
+}
+
+std::vector<std::vector<double>> CalculiXCoreInterface::loadstrajectory_bodyheatfluxsphere_get_magnitude(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_bodyheatfluxsphere_get_magnitude(trajectory_id);
 }
 
 bool CalculiXCoreInterface::create_loadsfilm(std::vector<std::string> options)
@@ -654,6 +714,21 @@ bool CalculiXCoreInterface::delete_loadssurfacetraction(int surfacetraction_id)
 {
   return ccx_core.delete_loadssurfacetraction(surfacetraction_id);
 }  
+
+bool CalculiXCoreInterface::create_loadsbodyheatflux(std::vector<std::string> options, std::vector<int> options2)
+{
+  return ccx_core.create_loadsbodyheatflux(options, options2);
+}
+
+bool CalculiXCoreInterface::modify_loadsbodyheatflux(int bodyheatflux_id, std::vector<std::string> options, std::vector<int> options2, std::vector<int> options_marker)
+{
+  return ccx_core.modify_loadsbodyheatflux(bodyheatflux_id, options, options2, options_marker);
+}
+
+bool CalculiXCoreInterface::delete_loadsbodyheatflux(int bodyheatflux_id)
+{
+  return ccx_core.delete_loadsbodyheatflux(bodyheatflux_id);
+}
 
 bool CalculiXCoreInterface::modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
@@ -1070,6 +1145,11 @@ std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_load_s
   return ccx_core.get_draw_data_for_load_surface_traction(id);
 }
 
+std::vector<std::vector<int>> CalculiXCoreInterface::get_draw_data_for_load_bodyheatflux(int id)
+{
+  return ccx_core.get_draw_data_for_load_bodyheatflux(id);
+}
+
 std::vector<std::vector<double>> CalculiXCoreInterface::get_draw_data_for_bc_displacement(int id) // returns coord(3) and dof
 {
   return ccx_core.get_draw_data_for_bc_displacement(id);
@@ -1143,6 +1223,11 @@ bool CalculiXCoreInterface::draw_load_radiation(std::vector<int> radiation_ids,d
 bool CalculiXCoreInterface::draw_load_surface_traction(std::vector<int> surface_traction_ids,double size)
 {
   return ccx_core.draw_load_surface_traction(surface_traction_ids,size);
+}
+
+bool CalculiXCoreInterface::draw_load_bodyheatflux(std::vector<int> bodyheatflux_ids,double size)
+{
+  return ccx_core.draw_load_bodyheatflux(bodyheatflux_ids,size);
 }
 
 bool CalculiXCoreInterface::draw_bc_displacement(std::vector<int> displacement_ids,double size)
@@ -1238,6 +1323,11 @@ bool CalculiXCoreInterface::draw_load_radiations(double size)
 bool CalculiXCoreInterface::draw_load_surface_tractions(double size)
 {
   return ccx_core.draw_load_surface_tractions(size);
+}
+
+bool CalculiXCoreInterface::draw_load_bodyheatfluxes(double size)
+{
+  return ccx_core.draw_load_bodyheatfluxes(size);
 }
 
 bool CalculiXCoreInterface::draw_bc_displacements(double size)
@@ -1565,6 +1655,11 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_loadssurfacetra
   return ccx_core.get_loadssurfacetraction_tree_data();
 }
 
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_loadsbodyheatflux_tree_data()
+{ 
+  return ccx_core.get_loadsbodyheatflux_tree_data();
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_bcsdisplacements_tree_data()
 { 
   return ccx_core.get_bcsdisplacements_tree_data();
@@ -1648,6 +1743,11 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_loadsradi
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_loadssurfacetraction_tree_data(int step_id)
 { 
   return ccx_core.get_steps_loadssurfacetraction_tree_data(step_id);
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_loadsbodyheatflux_tree_data(int step_id)
+{ 
+  return ccx_core.get_steps_loadsbodyheatflux_tree_data(step_id);
 }
 
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_steps_bcsdisplacements_tree_data(int step_id)

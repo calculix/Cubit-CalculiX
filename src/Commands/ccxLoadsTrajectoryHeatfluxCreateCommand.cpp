@@ -1,15 +1,15 @@
-#include "ccxLoadsTrajectoryCreateCommand.hpp"
+#include "ccxLoadsTrajectoryHeatfluxCreateCommand.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "CalculiXCoreInterface.hpp"
 
-ccxLoadsTrajectoryCreateCommand::ccxLoadsTrajectoryCreateCommand()
+ccxLoadsTrajectoryHeatfluxCreateCommand::ccxLoadsTrajectoryHeatfluxCreateCommand()
 {}
 
-ccxLoadsTrajectoryCreateCommand::~ccxLoadsTrajectoryCreateCommand()
+ccxLoadsTrajectoryHeatfluxCreateCommand::~ccxLoadsTrajectoryHeatfluxCreateCommand()
 {}
 
-std::vector<std::string> ccxLoadsTrajectoryCreateCommand::get_syntax()
+std::vector<std::string> ccxLoadsTrajectoryHeatfluxCreateCommand::get_syntax()
 {
   std::vector<std::string> syntax_list;
 
@@ -35,7 +35,7 @@ std::vector<std::string> ccxLoadsTrajectoryCreateCommand::get_syntax()
   return syntax_list;
 }
 
-std::vector<std::string> ccxLoadsTrajectoryCreateCommand::get_syntax_help()
+std::vector<std::string> ccxLoadsTrajectoryHeatfluxCreateCommand::get_syntax_help()
 {
   std::vector<std::string> help(1);
   help[0] = "ccx "; 
@@ -58,13 +58,13 @@ std::vector<std::string> ccxLoadsTrajectoryCreateCommand::get_syntax_help()
   return help;
 }
 
-std::vector<std::string> ccxLoadsTrajectoryCreateCommand::get_help()
+std::vector<std::string> ccxLoadsTrajectoryHeatfluxCreateCommand::get_help()
 {
   std::vector<std::string> help;
   return help;
 }
 
-bool ccxLoadsTrajectoryCreateCommand::execute(CubitCommandData &data)
+bool ccxLoadsTrajectoryHeatfluxCreateCommand::execute(CubitCommandData &data)
 {
   CalculiXCoreInterface ccx_iface;
 
@@ -166,13 +166,13 @@ bool ccxLoadsTrajectoryCreateCommand::execute(CubitCommandData &data)
     }
     if (options3[1][i]<=0)
     {
-      output = "Failed! The radius must be greater zero!\n";
+      output = "Failed! The radius must be greater than zero!\n";
       PRINT_ERROR(output.c_str());
       return false;
     }
   }
   
-  if (!ccx_iface.create_loadstrajectory(options,options2,options3))
+  if (!ccx_iface.create_loadstrajectory("HEATFLUX",options,options2,options3))
   {
     output = "Failed!\n";
     PRINT_ERROR(output.c_str());
