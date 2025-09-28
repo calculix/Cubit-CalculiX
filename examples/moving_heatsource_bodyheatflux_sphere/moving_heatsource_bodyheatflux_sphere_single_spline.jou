@@ -1,6 +1,6 @@
 #!cubit
 reset
-create brick x 2 y 2 z 1
+create brick x 2 y 2 z 0.5
 vol 1 size 0.1
 #vol 1 size auto factor 10
 #vol 1 scheme tetmesh
@@ -61,9 +61,9 @@ for node in face_ids:
 
 all_element_ids=list(numpy.unique(all_element_ids))
 
-if len(all_element_ids)>0:
- status=cubit.cmd(f"refine element {' '.join(str(id) for id in all_element_ids)} numsplit 1 bias 1.0 depth 0")
-print(f"refinement {status}")
+#if len(all_element_ids)>0:
+# status=cubit.cmd(f"refine element {' '.join(str(id) for id in all_element_ids)} numsplit 1 bias 1.0 depth 0 smooth")
+#print(f"refinement {status}")
 #!cubit
 
 #boundary conditions
