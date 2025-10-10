@@ -15,7 +15,7 @@ void LoadsBodyHeatfluxTree::initialize()
   if(isInitialized)
     return;
 
-  QTreeWidgetItem::setText(0,"Body Heatlux");
+  QTreeWidgetItem::setText(0,"Body Heatflux");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
   this->setIcon(0,ccx_iface->getIcon2("LoadsBodyHeatfluxTree")); 
   isInitialized = true;
