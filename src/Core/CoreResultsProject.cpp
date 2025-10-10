@@ -80,6 +80,10 @@ bool CoreResultsProject::project(int step, int totalincrement,double scale)
   cmd = "graphics off";
   ccx_iface->silent_cmd(cmd.c_str());
 
+  //block core and update
+  ccx_iface->set_block_core_update(true);
+  ccx_iface->set_block_gui_update(true);
+    
   for (size_t i = 0; i < frd->result_block_node_data[data_id].size(); i++)
   {
     //node 1 move x 0.1 y 0.2 z 0.3
@@ -103,9 +107,14 @@ bool CoreResultsProject::project(int step, int totalincrement,double scale)
     }
   }
   progressbar->end();
-  
+
   cmd = "graphics on";
   ccx_iface->silent_cmd(cmd.c_str());
+  
+  //block core and update
+  ccx_iface->set_block_core_update(false);
+  ccx_iface->set_block_gui_update(false);
+  
   if (!ccx_iface->silent_cmd("set developer off")){return false;}
 
   return true;
@@ -113,7 +122,7 @@ bool CoreResultsProject::project(int step, int totalincrement,double scale)
 
 bool CoreResultsProject::checkLinkPossible()
 {
-  std::string log;
+    std::string log;
 
   if (frd->nodes.size()==0)
   {
@@ -138,20 +147,66 @@ bool CoreResultsProject::checkLinkPossible()
       return false;
     }
   }
-  if (CubitInterface::get_node_count()!=frd->nodes.size()+CubitInterface::get_list_of_free_ref_entities("vertex").size())
+  //check node count for vertex in reference point
+  //check node count for curve in trajectory
+  int free_node_count = 0;
+  free_node_count = CubitInterface::get_list_of_free_ref_entities("vertex").size();
+  std::vector<int> trajectory_ids = ccx_iface->get_loadstrajectory_ids();
+  std::vector<int> tmp_node_ids;
+  for (size_t i = 0; i < trajectory_ids.size(); i++)
+  {
+    std::vector<int> tmp_hf_node_ids = ccx_iface->loadstrajectory_heatflux_get_node_ids(trajectory_ids[i]);
+    std::vector<int> tmp_bfs_node_ids = ccx_iface->loadstrajectory_bodyheatfluxsphere_get_node_ids(trajectory_ids[i]);
+    
+    for (size_t ii = 0; ii < tmp_hf_node_ids.size(); ii++)
+    {
+      tmp_node_ids.push_back(tmp_hf_node_ids[ii]);
+    }
+    for (size_t ii = 0; ii < tmp_bfs_node_ids.size(); ii++)
+    {
+      tmp_node_ids.push_back(tmp_bfs_node_ids[ii]);
+    }
+  }
+
+  std::sort(tmp_node_ids.begin(), tmp_node_ids.end());
+  int last_id = 0;
+  for (size_t i = 0; i < tmp_node_ids.size(); i++)
+  {
+    if (last_id != tmp_node_ids[i])
+    {
+      free_node_count = free_node_count + 1;
+      last_id = tmp_node_ids[i];
+    }
+  }
+  
+  if (CubitInterface::get_node_count()!=frd->nodes.size() + free_node_count)
   {
     log = "Linking Failed! Wrong number of Nodes.\n";
+    log.append("Cubit Node Count:" + std::to_string(CubitInterface::get_node_count()) + "\n");
+    log.append("FRD   Node Count:" + std::to_string(frd->nodes.size()) + "\n");
+    log.append("Free  Node Count:" + std::to_string(free_node_count) + "\n");
     PRINT_INFO("%s", log.c_str());
     return false;
   }
-  if (CubitInterface::get_element_count()!=frd->elements.size()+CubitInterface::get_list_of_free_ref_entities("vertex").size())
+
+  //check element count for vertex in reference point
+  //check element count for curve in trajectory
+  int free_element_count = 0;
+  free_element_count = CubitInterface::get_list_of_free_ref_entities("vertex").size();
+  trajectory_ids = ccx_iface->get_loadstrajectory_ids();
+  for (size_t i = 0; i < trajectory_ids.size(); i++)
+  {
+    free_element_count = free_element_count + ccx_iface->loadstrajectory_heatflux_get_edge_ids(trajectory_ids[i]).size();
+    free_element_count = free_element_count + ccx_iface->loadstrajectory_bodyheatfluxsphere_get_edge_ids(trajectory_ids[i]).size();
+  }
+  if (CubitInterface::get_element_count()!=frd->elements.size()+free_element_count)
   {
     log = "Linking Failed! Wrong number of Elements.\n";
     //log.append("Cubit " + std::to_string(CubitInterface::get_element_count()) + " FRD " + std::to_string(frd->elements.size()+CubitInterface::get_list_of_free_ref_entities("vertex").size()) +  "\n");
     PRINT_INFO("%s", log.c_str());
     return false;
   }
-
+  
   return true;
 }
 
