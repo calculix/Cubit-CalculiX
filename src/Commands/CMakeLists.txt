@@ -249,6 +249,10 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepComplexFrequencyModifyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepDeleteCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxStepDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepUtilityModelChangeElementDummyStepCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepUtilityModelChangeElementDummyStepCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepUtilityModelChangeElementStepCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxStepUtilityModelChangeElementStepCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxJobCreateCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxJobCreateCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxJobModifyCommand.cpp

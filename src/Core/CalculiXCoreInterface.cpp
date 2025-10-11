@@ -890,6 +890,11 @@ bool CalculiXCoreInterface::step_remove_fieldoutputs(int step_id, std::vector<in
   return ccx_core.step_remove_fieldoutputs(step_id,fieldoutput_ids);
 }
 
+bool CalculiXCoreInterface::step_utility_modelchangeelement_dummystep(int step_id, std::vector<int> trajectory_ids)
+{
+  return ccx_core.step_utility_modelchangeelement_dummystep(step_id, trajectory_ids);
+}
+
 bool CalculiXCoreInterface::create_job(std::vector<std::string> options)
 {
   return ccx_core.create_job(options);

@@ -4523,6 +4523,12 @@ bool CalculiXCore::step_remove_fieldoutputs(int step_id, std::vector<int> fieldo
   return steps->remove_fieldoutputs(step_id,fieldoutput_ids);
 }
 
+bool CalculiXCore::step_utility_modelchangeelement_dummystep(int step_id, std::vector<int> trajectory_ids)
+{
+  //return steps->utility_modelchangeelement_dummystep(step_id, trajectory_ids);
+  return true;
+}
+
 bool CalculiXCore::create_job(std::vector<std::string> options)
 {
   return jobs->create_job(options);
