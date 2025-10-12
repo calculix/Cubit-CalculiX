@@ -946,7 +946,7 @@ std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectoryBodyHeatfluxSphere
   std::vector<std::vector<std::vector<int>>> element_ids = this->get_element_ids(load_id);
   //element_ids[0] order by node
   //element_ids[0][0] order by radius
-  //element_ids[0][0][0] face ids
+  //element_ids[0][0][0] element ids
 
   for (size_t i = 0; i < element_ids.size(); i++)
   {

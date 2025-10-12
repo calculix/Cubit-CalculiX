@@ -895,6 +895,11 @@ bool CalculiXCoreInterface::step_utility_modelchangeelement_dummystep(int step_i
   return ccx_core.step_utility_modelchangeelement_dummystep(step_id, trajectory_ids);
 }
 
+bool CalculiXCoreInterface::step_utility_modelchangeelement_step(int step_id)
+{
+  return ccx_core.step_utility_modelchangeelement_step(step_id);
+}
+
 bool CalculiXCoreInterface::create_job(std::vector<std::string> options)
 {
   return ccx_core.create_job(options);

@@ -4525,7 +4525,93 @@ bool CalculiXCore::step_remove_fieldoutputs(int step_id, std::vector<int> fieldo
 
 bool CalculiXCore::step_utility_modelchangeelement_dummystep(int step_id, std::vector<int> trajectory_ids)
 {
-  //return steps->utility_modelchangeelement_dummystep(step_id, trajectory_ids);
+  //create steps
+  if (!steps->create_modelchangeelement_dummystep(step_id))
+  {
+    return false;
+  }
+  
+  //insert custom lines
+  // customlines_data[0][1] name
+  // customlines_data[0][2] position
+  // customlines_data[0][3] insert keyword
+  // customlines_data[0][4] insert keyword id
+  // customlines_data[0][5] customline
+  std::vector<std::string> options;
+  options.push_back("DUMMY STEP 2");
+  options.push_back("AFTER");
+  options.push_back("STEP_BEGIN");
+  options.push_back("2");
+
+  std::string cline;
+  cline = "*MODEL CHANGE,TYPE=ELEMENT,REMOVE\n";
+  std::vector<int> element_ids;
+  
+  for (size_t i = 0; i < trajectory_ids.size(); i++)
+  {
+    std::vector<std::vector<std::vector<int>>> tmp_ids = this->loadstrajectory_bodyheatfluxsphere_get_draw_element_ids(trajectory_ids[i]);
+    if (tmp_ids.size()==0)
+    {
+      return false;
+    }
+    
+    for (size_t ii = 0; ii < tmp_ids.size(); ii++)
+    {
+      for (size_t iii = 0; iii < tmp_ids[ii].size(); iii++)
+      {
+        for (size_t iv = 0; iv < tmp_ids[ii][iii].size(); iv++)
+        {
+          element_ids.push_back(tmp_ids[ii][iii][iv]);
+        }
+      }
+    }
+  }
+  sort(begin(element_ids), end(element_ids));
+  // loop over all elements
+  for (size_t i = 0; i < element_ids.size(); i++)
+  { 
+    std::vector<int>::iterator ip;
+
+    // Using std::unique
+    ip = std::unique(element_ids.begin(), element_ids.begin() + element_ids.size());
+    // Now v becomes {1 3 10 1 3 7 8 * * * * *}
+    // * means undefined
+
+    // Resizing the vector so as to remove the undefined
+    // terms
+    element_ids.resize(std::distance(element_ids.begin(), ip));
+  }
+
+
+  int ic = 0;
+  for (size_t i = 0; i < element_ids.size(); i++)
+  {
+    cline.append(std::to_string(element_ids[i]));
+    ic = ic + 1;
+    if (ic == 16)
+    {
+      cline.append(",\n");
+      ic = 0;
+    }else{
+      cline.append(",");
+    }
+  }
+
+  options.push_back(cline);
+
+  customlines->create_customline(options);
+
+  return true;
+}
+
+bool CalculiXCore::step_utility_modelchangeelement_step(int step_id)
+{
+  //create steps
+  if (!steps->create_modelchangeelement_step(step_id))
+  {
+    return false;
+  }
+
   return true;
 }
 

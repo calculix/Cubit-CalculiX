@@ -56,7 +56,7 @@ std::vector<std::string> ccxStepUtilityModelChangeElementDummyStepCommand::get_s
 std::vector<std::string> ccxStepUtilityModelChangeElementDummyStepCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx utility step <step id> modelchange dummystep trajectory <trajectory id>";
+  help[0] = "ccx utility step <step id> modelchangeelement dummystep trajectory <trajectory id>";
   help[1]=" ";
   help[2]=" ";
   help[3]=" ";
@@ -120,17 +120,24 @@ bool ccxStepUtilityModelChangeElementDummyStepCommand::execute(CubitCommandData 
   
   if(!data.get_values("trajectory id", trajectory_ids))
   {   
-    trajectory_ids = ccx_iface.parser("trajectory", trajectory_string);
+    trajectory_ids = ccx_iface.parser("loadstrajectory", trajectory_string);
   }else{
     for (size_t i = 0; i < trajectory_ids.size(); i++)
     {
       trajectory_string.append(std::to_string(trajectory_ids[i]) + " ");
-      trajectory_ids = ccx_iface.parser("trajectory", trajectory_string);
+      trajectory_ids = ccx_iface.parser("loadstrajectory", trajectory_string);
     }
   }
   if (trajectory_ids.size()==0)
   {
     PRINT_ERROR("No trajectory found.\n");
+    return false;
+  }
+
+  if (!ccx_iface.check_step_exists(step_id))
+  {
+    output = "No Step ID " + std::to_string(step_id) + " found.\n";
+    PRINT_ERROR(output.c_str());
     return false;
   }
   

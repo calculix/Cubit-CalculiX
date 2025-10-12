@@ -273,6 +273,8 @@ public:
   std::vector<int> get_fieldoutput_data_ids_from_fieldoutputs_id(int fieldoutputs_id); // searches for the historyoutputs_id in the historyoutputs_data and returns the indices or -1 if it fails
   std::string get_step_export(int step_id); // get steps data export for given id
   std::string print_data(); // prints out the data
+  bool create_modelchangeelement_dummystep(int step_id); // inserts dummy steps based on given step_id
+  bool create_modelchangeelement_step(int step_id); // inserts steps based on given step_id
 
   CalculiXCoreInterface *ccx_iface;
 };
