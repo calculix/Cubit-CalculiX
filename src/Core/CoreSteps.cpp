@@ -2329,13 +2329,14 @@ bool CoreSteps::create_modelchangeelement_step(int step_id)
   }  
 
   std::vector<int> element_ids;
+  std::vector<std::vector<double>> times;
 
   for (size_t i = 0; i < trajectory_ids.size(); i++)
   {
     if (ccx_iface->loadstrajectory_get_load_type(trajectory_ids[i])=="BODYHEATFLUXSPHERE")
     {
       std::vector<std::vector<std::vector<int>>> tmp_element_ids = ccx_iface->loadstrajectory_bodyheatfluxsphere_get_draw_element_ids(trajectory_ids[i]);
-      std::vector<std::vector<double>> times = ccx_iface->loadstrajectory_bodyheatfluxsphere_get_times(trajectory_ids[i]);
+      std::vector<std::vector<double>> tmp_times = ccx_iface->loadstrajectory_bodyheatfluxsphere_get_times(trajectory_ids[i]);
     }
   }
   
