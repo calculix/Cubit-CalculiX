@@ -29,6 +29,7 @@ std::vector<std::string> ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand::get_
   syntax.append("depth <value:label='depth_value',help='<depth_value>'>... ");
   syntax.append("[op {mod | new}] " );
   syntax.append("[name <string:type='unquoted', number='1', label='name', help='<name>'>] " );
+  syntax.append("[{modelchange_add | modelchange_remove | modelchange_off}] " );
     
   syntax_list.push_back(syntax);
   
@@ -54,6 +55,7 @@ std::vector<std::string> ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand::get_
   help[0].append("depth <depth_value>... ");
   help[0].append("[op {mod | new}] " );
   help[0].append("[name <name>] " );
+  help[0].append("[{modelchange_add | modelchange_remove | modelchange_off}] " );
 
   return help;
 }
@@ -78,6 +80,7 @@ bool ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand::execute(CubitCommandData
   int vertex_id_value;
   std::vector<int> surface_id_values;
   int op_mode = 0;
+  int modelchange = 0;
   int load_type = 0;
   std::string time_begin;
   double time_begin_value;
@@ -143,6 +146,16 @@ bool ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand::execute(CubitCommandData
   options.push_back(time_end);
   options.push_back(name);
   options.push_back(std::to_string(load_type));
+  if (data.find_keyword("MODELCHANGE_OFF")){
+    modelchange = 0;
+  }else if (data.find_keyword("MODELCHANGE_ADD"))
+  {
+    modelchange = 1;
+  }else if (data.find_keyword("MODELCHANGE_REMOVE"))
+  {
+    modelchange = 2;
+  }
+  options.push_back(std::to_string(modelchange));
 
   options2 = surface_id_values;
 

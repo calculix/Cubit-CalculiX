@@ -64,7 +64,7 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::create_load(std::vector<std::string>
   int radius_id;
   int depth_id;
   int name_id;
-
+  int modelchange;
 
   if (loads_data.size()==0)
   {
@@ -203,13 +203,17 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::create_load(std::vector<std::string>
   name_id = sub_id;
   this->add_name(std::to_string(sub_id), options[8]);
 
-  this->add_load(load_id, op_mode, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id, radius_id, depth_id, name_id);
+  // modelchange
+  modelchange = std::stoi(options[9]);
+  
+
+  this->add_load(load_id, op_mode, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id, radius_id, depth_id, name_id, modelchange);
   return true;
 }
 
-bool CoreLoadsTrajectoryBodyHeatfluxSphere::add_load(int load_id, int op_mode, int curve_id, int vertex_id, int fire_ray_surface_id, int direction_id, int magnitude_id, int time_id, int radius_id, int depth_id, int name_id)
+bool CoreLoadsTrajectoryBodyHeatfluxSphere::add_load(int load_id, int op_mode, int curve_id, int vertex_id, int fire_ray_surface_id, int direction_id, int magnitude_id, int time_id, int radius_id, int depth_id, int name_id, int modelchange)
 {
-  std::vector<int> v = {load_id, op_mode, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id, radius_id, depth_id, name_id};
+  std::vector<int> v = {load_id, op_mode, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id, radius_id, depth_id, name_id, modelchange};
       
   loads_data.push_back(v);
 
@@ -392,6 +396,13 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::modify_load(int load_id, std::vector
       sub_data_id = get_name_data_id_from_name_id(loads_data[loads_data_id][10]);
       name_data[sub_data_id][1] = options[9];
     }
+    
+    // modelchange
+    if (options_marker[13]==1)
+    {
+      loads_data[loads_data_id][11] = std::stoi(options[10]);
+    }
+
     return true;
   }
 }
@@ -1469,11 +1480,11 @@ std::string CoreLoadsTrajectoryBodyHeatfluxSphere::print_data()
 {
   std::string str_return;
   str_return = "\n CoreLoadsTrajectoryBodyHeatfluxSphere loads_data: \n";
-  str_return.append("load_id, OP MODE, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id, radius_id, name_id \n");
+  str_return.append("load_id, OP MODE, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id, radius_id, depth_id, name_id, modelchange \n");
 
   for (size_t i = 0; i < loads_data.size(); i++)
   {
-    str_return.append(std::to_string(loads_data[i][0]) + " " + std::to_string(loads_data[i][1]) + " " + std::to_string(loads_data[i][2]) + " " + std::to_string(loads_data[i][3]) + " " + std::to_string(loads_data[i][4]) + " " + std::to_string(loads_data[i][5]) + " " + std::to_string(loads_data[i][6]) + " " + std::to_string(loads_data[i][7]) + " " + std::to_string(loads_data[i][8]) + " " + std::to_string(loads_data[i][9]) + " \n");
+    str_return.append(std::to_string(loads_data[i][0]) + " " + std::to_string(loads_data[i][1]) + " " + std::to_string(loads_data[i][2]) + " " + std::to_string(loads_data[i][3]) + " " + std::to_string(loads_data[i][4]) + " " + std::to_string(loads_data[i][5]) + " " + std::to_string(loads_data[i][6]) + " " + std::to_string(loads_data[i][7]) + " " + std::to_string(loads_data[i][8]) + " " + std::to_string(loads_data[i][9]) + " " + std::to_string(loads_data[i][10]) + " " + std::to_string(loads_data[i][11]) + " \n");
   }
 
   str_return.append("\n CoreLoadsTrajectoryBodyHeatfluxSphere time_data: \n");

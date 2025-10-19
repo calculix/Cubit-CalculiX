@@ -4604,17 +4604,6 @@ bool CalculiXCore::step_utility_modelchangeelement_dummystep(int step_id, std::v
   return true;
 }
 
-bool CalculiXCore::step_utility_modelchangeelement_step(int step_id)
-{
-  //create steps
-  if (!steps->create_modelchangeelement_step(step_id))
-  {
-    return false;
-  }
-
-  return true;
-}
-
 bool CalculiXCore::create_job(std::vector<std::string> options)
 {
   return jobs->create_job(options);

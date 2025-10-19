@@ -25,6 +25,7 @@ public:
   // loads_data[0][8] radius_id
   // loads_data[0][9] depth_id
   // loads_data[0][10] name_id
+  // loads_data[0][11] modelchange OFF|0 ADD|1 REMOVE|2
 
   std::vector<std::vector<int>> fire_ray_surface_data;
   // fire_ray_surface_data[0][0] fire_ray_surface_id
@@ -68,7 +69,7 @@ public:
   bool reset(); // delete all data and initialize afterwards
   bool check_initialized(); // check if object is initialized
   bool create_load(std::vector<std::string> options, std::vector<int> options2, std::vector<std::vector<double>> options3); // adds new load
-  bool add_load(int load_id, int op_mode, int curve_id, int vertex_id, int fire_ray_surface_id, int direction_id, int magnitude_id, int time_id, int radius_id, int depth_id, int name_id); // adds new load to loads_data
+  bool add_load(int load_id, int op_mode, int curve_id, int vertex_id, int fire_ray_surface_id, int direction_id, int magnitude_id, int time_id, int radius_id, int depth_id, int name_id, int modelchange); // adds new load to loads_data
   bool modify_load(int load_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2, std::vector<std::vector<double>> options3); // modify a load
   bool delete_load(int load_id); // deletes load from loads_data
   bool add_time(std::string time_id, std::string t_begin, std::string t_end); // adds new time to time_data

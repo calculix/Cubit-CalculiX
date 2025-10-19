@@ -126,7 +126,6 @@
 #include "ccxStepComplexFrequencyModifyCommand.hpp"
 #include "ccxStepDeleteCommand.hpp"
 #include "ccxStepUtilityModelChangeElementDummyStepCommand.hpp"
-#include "ccxStepUtilityModelChangeElementStepCommand.hpp"
 #include "ccxJobCreateCommand.hpp"
 #include "ccxJobModifyCommand.hpp"
 #include "ccxJobDeleteCommand.hpp"
@@ -297,7 +296,6 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxStepComplexFrequencyModifyCommand");
   keys.push_back("ccxStepDeleteCommand");
   keys.push_back("ccxStepUtilityModelChangeElementDummyStepCommand");
-  keys.push_back("ccxStepUtilityModelChangeElementStepCommand");
   keys.push_back("ccxJobCreateCommand");
   keys.push_back("ccxJobModifyCommand");
   keys.push_back("ccxJobDeleteCommand");
@@ -709,9 +707,6 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
   
   if(key == "ccxStepUtilityModelChangeElementDummyStepCommand")
     return new ccxStepUtilityModelChangeElementDummyStepCommand();
-
-  if(key == "ccxStepUtilityModelChangeElementStepCommand")
-    return new ccxStepUtilityModelChangeElementStepCommand();
 
   if(key == "ccxJobCreateCommand")
     return new ccxJobCreateCommand();

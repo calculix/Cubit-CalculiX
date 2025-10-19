@@ -17,11 +17,11 @@ LoadsTrajectoryBodyHeatfluxSphereModifyPanel::LoadsTrajectoryBodyHeatfluxSphereM
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
   int labelWidth = 120;
   //this->setMinimumSize(1000,300);
-  frame_10 = new QFrame();
-  frame_10->setMinimumSize(1,300);
-  frame_10->setLineWidth(1);
-  frame_10->setMidLineWidth(0);
-  frame_10->setFrameStyle(QFrame::Box | QFrame::Raised);
+  frame_11 = new QFrame();
+  frame_11->setMinimumSize(1,300);
+  frame_11->setLineWidth(1);
+  frame_11->setMidLineWidth(0);
+  frame_11->setFrameStyle(QFrame::Box | QFrame::Raised);
   GridLayout = new QGridLayout(this);
   VBoxLayout = new QVBoxLayout();
   vertical_spacer = new QSpacerItem(1,1,QSizePolicy::Minimum,QSizePolicy::Expanding);
@@ -35,7 +35,8 @@ LoadsTrajectoryBodyHeatfluxSphereModifyPanel::LoadsTrajectoryBodyHeatfluxSphereM
   HBoxLayout_7 = new QHBoxLayout();
   HBoxLayout_8 = new QHBoxLayout();
   HBoxLayout_9 = new QHBoxLayout();
-  HBoxLayout_10 = new QHBoxLayout(frame_10);
+  HBoxLayout_10 = new QHBoxLayout();
+  HBoxLayout_11 = new QHBoxLayout(frame_11);
   label_0 = new QLabel();
   label_1 = new QLabel();
   label_2 = new QLabel();
@@ -46,6 +47,7 @@ LoadsTrajectoryBodyHeatfluxSphereModifyPanel::LoadsTrajectoryBodyHeatfluxSphereM
   label_7 = new QLabel();
   label_8 = new QLabel();
   label_9 = new QLabel();
+  label_10 = new QLabel();
   label_0->setFixedWidth(labelWidth);
   label_1->setFixedWidth(labelWidth);
   label_2->setFixedWidth(labelWidth);
@@ -56,6 +58,7 @@ LoadsTrajectoryBodyHeatfluxSphereModifyPanel::LoadsTrajectoryBodyHeatfluxSphereM
   label_7->setFixedWidth(labelWidth);
   label_8->setFixedWidth(labelWidth);
   label_9->setFixedWidth(labelWidth);
+  label_10->setFixedWidth(labelWidth);
   label_0->setText("Trajectory ID");
   label_1->setText("Name");
   label_2->setText("Load Type");
@@ -66,6 +69,7 @@ LoadsTrajectoryBodyHeatfluxSphereModifyPanel::LoadsTrajectoryBodyHeatfluxSphereM
   label_7->setText("Time Begin");
   label_8->setText("Time End");
   label_9->setText("OP");
+  label_10->setText("Model Change");
   lineEdit_0 = new QLineEdit();
   lineEdit_1 = new QLineEdit();
   comboBox_2 = new QComboBox();
@@ -88,11 +92,16 @@ LoadsTrajectoryBodyHeatfluxSphereModifyPanel::LoadsTrajectoryBodyHeatfluxSphereM
   comboBox_9->addItem("");
   comboBox_9->addItem("mod");
   comboBox_9->addItem("new");
-  widget_10 =  new PanelTable(nullptr);
+  comboBox_10 = new QComboBox();
+  comboBox_10->addItem("");
+  comboBox_10->addItem("add");
+  comboBox_10->addItem("remove");
+  comboBox_10->addItem("off");
+  widget_11 =  new PanelTable(nullptr);
   matrix.clear();
-  widget_10->update({"Ray Radius","Depth","Magnitude"},matrix);
-  widget_10->panel_type = "trajectory";
-  widget_10->setMinimumSize(200,160);
+  widget_11->update({"Ray Radius","Depth","Magnitude"},matrix);
+  widget_11->panel_type = "trajectory";
+  widget_11->setMinimumSize(200,160);
   
   lineEdit_1->setPlaceholderText("Optional");
   PickWidget_3->setPlaceholderText("Optional");
@@ -119,7 +128,8 @@ LoadsTrajectoryBodyHeatfluxSphereModifyPanel::LoadsTrajectoryBodyHeatfluxSphereM
   VBoxLayout->addLayout(HBoxLayout_7);
   VBoxLayout->addLayout(HBoxLayout_8);
   VBoxLayout->addLayout(HBoxLayout_9);
-  VBoxLayout->addWidget(frame_10);
+  VBoxLayout->addLayout(HBoxLayout_10);
+  VBoxLayout->addWidget(frame_11);
   VBoxLayout->addItem(vertical_spacer);
   VBoxLayout->addLayout(HBoxLayout_pushButton_apply);
 
@@ -143,14 +153,15 @@ LoadsTrajectoryBodyHeatfluxSphereModifyPanel::LoadsTrajectoryBodyHeatfluxSphereM
   HBoxLayout_8->addWidget(lineEdit_8);
   HBoxLayout_9->addWidget(label_9);
   HBoxLayout_9->addWidget(comboBox_9);
-  HBoxLayout_10->addWidget(widget_10);
+  HBoxLayout_10->addWidget(comboBox_10);
+  HBoxLayout_11->addWidget(widget_11);
 
   HBoxLayout_pushButton_apply->addItem(horizontal_spacer_pushButton_apply);
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
 
-  widget_10->show();
+  widget_11->show();
 
   isInitialized = true;
 }
@@ -162,7 +173,7 @@ void LoadsTrajectoryBodyHeatfluxSphereModifyPanel::on_pushButton_apply_clicked(b
 {
   QStringList commands;
   QString command = "";
-  matrix = widget_10->getMatrix();
+  matrix = widget_11->getMatrix();
 
   if (lineEdit_0->text()!="")
   {
@@ -242,6 +253,18 @@ void LoadsTrajectoryBodyHeatfluxSphereModifyPanel::on_pushButton_apply_clicked(b
     {
       command.append(" name \"" + lineEdit_1->text() + "\"");
     }
+
+    if (comboBox_10->currentIndex()!=0)
+    {
+      if (comboBox_10->currentIndex()==1)
+      {
+        command.append(" modelchange_add ");
+      }
+      if (comboBox_10->currentIndex()==2)
+      {
+        command.append(" modelchange_remove ");
+      }
+    }
   }
   
   if (command != "")
@@ -257,8 +280,9 @@ void LoadsTrajectoryBodyHeatfluxSphereModifyPanel::on_pushButton_apply_clicked(b
     lineEdit_7->setText("");
     lineEdit_8->setText("");    
     comboBox_9->setCurrentIndex(0);
+    comboBox_10->setCurrentIndex(0);
     matrix.clear();
-    widget_10->update({"Ray Radius","Depth","Magnitude"},matrix);
+    widget_11->update({"Ray Radius","Depth","Magnitude"},matrix);
   }
   
   for (size_t i = 0; i < commands.size(); i++)
