@@ -1360,6 +1360,43 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
     ccx_iface->set_block_core_update(false);
     
   }
+
+  // check modelchange in trajetory loads
+  // only 1 trajectory per step is allowed for this operation
+  bool bool_modelchange = false
+  for (size_t i = 0; i < loads_data.size(); i++)
+  {
+    if (loads_data[i][11] != 0)
+    {
+      bool_modelchange = true;
+      break;
+    }
+  }
+
+  if (bool_modelchange)
+  {
+    std::vector<std::vector<std::string>> steps_tree = ccx_iface->get_steps_tree_data();
+    for (size_t i = 0; i < steps_tree.size(); i++)
+    {
+      std::vector<std::vector<std::string>> trajectory_tree = ccx_iface->get_steps_loadstrajectory_tree_data(std::stoi(steps_tree[i][0]));
+      if (trajectory_tree.size() > 1)
+      {
+        bool_modelchange = false;
+        watch.tick("prepare trajectory: WARNING only 1 trajectory allowed per step for the use of *modelchange");
+        break;
+      }
+    }
+  }
+
+  
+  if (bool_modelchange)
+  {
+    // transform steps
+
+    // add *modelchange to custom lines
+
+  }
+
   watch.tick("prepare trajectory end");
   
   return true;
