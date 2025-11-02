@@ -585,6 +585,11 @@ std::string CalculiXCoreInterface::loadstrajectory_get_load_type(int trajectory_
   return ccx_core.loadstrajectory_get_load_type(trajectory_id);
 }
 
+int CalculiXCoreInterface::loadstrajectory_get_subload_id(int trajectory_id)
+{
+  return ccx_core.loadstrajectory_get_subload_id(trajectory_id);
+}
+
 std::vector<int> CalculiXCoreInterface::loadstrajectory_heatflux_get_node_ids(int trajectory_id)
 {
   return ccx_core.loadstrajectory_heatflux_get_node_ids(trajectory_id);
@@ -893,6 +898,16 @@ bool CalculiXCoreInterface::step_remove_fieldoutputs(int step_id, std::vector<in
 bool CalculiXCoreInterface::step_utility_modelchangeelement_dummystep(int step_id, std::vector<int> trajectory_ids)
 {
   return ccx_core.step_utility_modelchangeelement_dummystep(step_id, trajectory_ids);
+}
+
+std::vector<int> CalculiXCoreInterface::step_utility_split_step(int step_id, std::vector<std::vector<double>> times)
+{
+  return ccx_core.step_utility_split_step(step_id, times);
+}
+
+int CalculiXCoreInterface::step_utility_merge_step(std::vector<int> step_ids)
+{
+  return ccx_core.step_utility_merge_step(step_ids);
 }
 
 bool CalculiXCoreInterface::create_job(std::vector<std::string> options)

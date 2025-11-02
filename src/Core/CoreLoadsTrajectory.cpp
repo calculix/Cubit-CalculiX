@@ -197,6 +197,21 @@ std::string CoreLoadsTrajectory::get_load_type(int load_id)
   return return_str;
 }
 
+int CoreLoadsTrajectory::get_subload_id(int load_id)
+{ 
+  int return_int = -1;
+  int loads_data_id = get_loads_data_id_from_load_id(load_id);
+  
+  if (loads_data_id == -1)
+  {
+    return return_int;
+  } else {
+    return_int = loads_data[loads_data_id][2];
+  }
+  
+  return return_int;
+}
+
 std::string CoreLoadsTrajectory::get_name_from_load_id(int load_id)
 { 
   std::string return_str = "";
@@ -222,16 +237,16 @@ std::string CoreLoadsTrajectory::get_name_from_load_id(int load_id)
 
 bool CoreLoadsTrajectory::prepare_export()
 {
-  heatflux->prepare_export();
   bodyheatfluxsphere->prepare_export();
+  heatflux->prepare_export();
   
   return true;
 }
 
 bool CoreLoadsTrajectory::clean_export()
 {
-  heatflux->clean_export();
   bodyheatfluxsphere->clean_export();
+  heatflux->clean_export();
   
   return true;
 }  

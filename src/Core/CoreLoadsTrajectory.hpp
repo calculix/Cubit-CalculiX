@@ -34,6 +34,7 @@ public:
   int  get_loads_data_id_from_load_id(int load_id); // searches for the load_id in the loads_data and returns the indices or -1 if it fails
   std::string get_load_type(int load_id); // gets the load type or "" if it fails
   std::string get_name_from_load_id(int load_id); // gets the name from the subloads or "" if it fails
+  int get_subload_id(int trajectory_id); //returns the subload id, -1 if fails
   bool prepare_export(); // prepare exports for the loads
   bool clean_export(); // delete prepared
   std::string print_data(); // prints out the loads_data

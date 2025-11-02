@@ -4132,6 +4132,11 @@ std::string CalculiXCore::loadstrajectory_get_load_type(int trajectory_id)
   return loadstrajectory->get_load_type(trajectory_id);
 }
 
+int CalculiXCore::loadstrajectory_get_subload_id(int trajectory_id)
+{
+  return loadstrajectory->get_subload_id(trajectory_id);
+}
+
 std::vector<int> CalculiXCore::loadstrajectory_heatflux_get_node_ids(int trajectory_id)
 {
   if (loadstrajectory->get_load_type(trajectory_id)=="HEATFLUX")
@@ -4602,6 +4607,16 @@ bool CalculiXCore::step_utility_modelchangeelement_dummystep(int step_id, std::v
   customlines->create_customline(options);
 
   return true;
+}
+
+std::vector<int> CalculiXCore::step_utility_split_step(int step_id, std::vector<std::vector<double>> times)
+{
+  return steps->split_step(step_id, times);
+}
+
+int CalculiXCore::step_utility_merge_step(std::vector<int> step_ids)
+{
+  return steps->merge_step(step_ids);
 }
 
 bool CalculiXCore::create_job(std::vector<std::string> options)

@@ -137,6 +137,7 @@ public:
   bool modify_loadstrajectory(int trajectory_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2, std::vector<std::vector<double>> options3); // modify a trajectory
   bool delete_loadstrajectory(int trajectory_id); // delete trajectory load
   std::string loadstrajectory_get_load_type(int trajectory_id); //returns the load type
+  int loadstrajectory_get_subload_id(int trajectory_id); //returns the subload id, -1 if fails
   std::vector<int> loadstrajectory_heatflux_get_node_ids(int trajectory_id); //returns node ids for curve
   std::vector<int> loadstrajectory_heatflux_get_edge_ids(int trajectory_id); //returns edge ids for curve
   std::vector<std::vector<double>> loadstrajectory_heatflux_get_hit_coordinates(int trajectory_id); //returns hit coordinates
@@ -199,6 +200,8 @@ public:
   bool step_remove_historyoutputs(int step_id, std::vector<int> historyoutput_ids); // removes historyoutputs to historyoutputs_data
   bool step_remove_fieldoutputs(int step_id, std::vector<int> fieldoutput_ids); // removes fieldoutputs to fieldoutputs_data
   bool step_utility_modelchangeelement_dummystep(int step_id, std::vector<int> trajectory_ids); // inserts dummysteps
+  std::vector<int> step_utility_split_step(int step_id, std::vector<std::vector<double>> times); // split step, returns step ids
+  int step_utility_merge_step(std::vector<int> step_ids); // merge steps, returns step id
   bool create_job(std::vector<std::string> options); // adds a new job
   bool modify_job(int job_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a job
   bool delete_job(int job_id); // delete job

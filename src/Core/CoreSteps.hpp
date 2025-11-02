@@ -274,7 +274,8 @@ public:
   std::string get_step_export(int step_id); // get steps data export for given id
   std::string print_data(); // prints out the data
   bool create_modelchangeelement_dummystep(int step_id); // inserts dummy steps based on given step_id
-  bool create_modelchangeelement_step(int step_id); // inserts steps based on given step_id
+  std::vector<int> split_step(int step_id, std::vector<std::vector<double>> times); // inserts steps based on given step_id and times
+  int merge_step(std::vector<int> step_ids); // merge steps
 
   CalculiXCoreInterface *ccx_iface;
 };

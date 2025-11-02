@@ -39,6 +39,11 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::reset()
   radius_data.clear();
   depth_data.clear();
   name_data.clear();
+  prepared_amplitudes.clear();
+  prepared_bodyheatflux.clear();
+  prepared_step_bodyheatflux.clear();
+  prepared_step_transform.clear();
+
   init();
   return true;
 }
@@ -1100,14 +1105,19 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
   StopWatch watch;
   watch.tick("prepare trajectory bodyheatfluxsphere start");
 
+  std::vector<std::vector<std::vector<std::vector<int>>>> load_element_ids;
+  std::vector<std::vector<std::vector<double>>> load_times;
+    
   for (size_t i = 0; i < loads_data.size(); i++)
   {
     std::vector<int> node_ids;
     node_ids = this->get_node_ids(loads_data[i][0]);
     std::vector<std::vector<std::vector<int>>> element_ids;
-    element_ids = this->get_element_ids(loads_data[i][0]);    
+    element_ids = this->get_element_ids(loads_data[i][0]);
+    load_element_ids.push_back(element_ids);
     std::vector<std::vector<double>> times;
     times = this->get_times(loads_data[i][0]);
+    load_times.push_back(times);
     std::vector<std::vector<double>> magnitude;
     magnitude = this->get_magnitude(loads_data[i][0]);
     std::vector<std::vector<double>> radius;
@@ -1343,7 +1353,7 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
       std::vector<std::vector<std::string>> trajectory_tree = ccx_iface->get_steps_loadstrajectory_tree_data(std::stoi(steps_tree[ii][0]));
       for (size_t iii = 0; iii < trajectory_tree.size(); iii++)
       {
-        if (trajectory_tree[iii][0] == std::to_string(loads_data[i][0]))
+        if (ccx_iface->loadstrajectory_get_subload_id(stoi(trajectory_tree[iii][0])) == loads_data[i][0])
         {
           std::string ids = "";
           for (size_t iv= 0; iv < bodyheatflux.size(); iv++)
@@ -1358,12 +1368,11 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
     watch.tick("prepare trajectory " + std::to_string(loads_data[i][0]) + " steps");
     //resume core update
     ccx_iface->set_block_core_update(false);
-    
   }
 
   // check modelchange in trajetory loads
   // only 1 trajectory per step is allowed for this operation
-  bool bool_modelchange = false
+  bool bool_modelchange = false;
   for (size_t i = 0; i < loads_data.size(); i++)
   {
     if (loads_data[i][11] != 0)
@@ -1376,9 +1385,17 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
   if (bool_modelchange)
   {
     std::vector<std::vector<std::string>> steps_tree = ccx_iface->get_steps_tree_data();
+    std::vector<std::vector<int>> prepared_step;
     for (size_t i = 0; i < steps_tree.size(); i++)
     {
       std::vector<std::vector<std::string>> trajectory_tree = ccx_iface->get_steps_loadstrajectory_tree_data(std::stoi(steps_tree[i][0]));
+      if (trajectory_tree.size() == 1)
+      {
+        if (ccx_iface->loadstrajectory_get_load_type(stoi(trajectory_tree[0][0])) == "BODYHEATFLUX")
+        {
+          prepared_step.push_back({std::stoi(steps_tree[i][0]),ccx_iface->loadstrajectory_get_subload_id(stoi(trajectory_tree[0][0]))});
+        }
+      } 
       if (trajectory_tree.size() > 1)
       {
         bool_modelchange = false;
@@ -1387,11 +1404,11 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
       }
     }
   }
-
   
   if (bool_modelchange)
   {
     // transform steps
+    
 
     // add *modelchange to custom lines
 
@@ -1466,6 +1483,7 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::clean_export()
   prepared_amplitudes.clear();
   prepared_bodyheatflux.clear();
   prepared_step_bodyheatflux.clear();
+  prepared_step_transform.clear();
 
   watch.tick("clean trajectory end");
   return true;

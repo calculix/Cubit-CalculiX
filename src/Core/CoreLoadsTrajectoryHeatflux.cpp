@@ -1160,7 +1160,7 @@ bool CoreLoadsTrajectoryHeatflux::prepare_export()
       std::vector<std::vector<std::string>> trajectory_tree = ccx_iface->get_steps_loadstrajectory_tree_data(std::stoi(steps_tree[ii][0]));
       for (size_t iii = 0; iii < trajectory_tree.size(); iii++)
       {
-        if (trajectory_tree[iii][0] == std::to_string(loads_data[i][0]))
+        if (ccx_iface->loadstrajectory_get_subload_id(stoi(trajectory_tree[iii][0])) == loads_data[i][0])
         {
           std::string ids = "";
           for (size_t iv= 0; iv < heatflux.size(); iv++)
