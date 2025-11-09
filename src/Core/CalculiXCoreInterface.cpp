@@ -905,9 +905,14 @@ std::vector<int> CalculiXCoreInterface::step_utility_split_step(int step_id, std
   return ccx_core.step_utility_split_step(step_id, times);
 }
 
-int CalculiXCoreInterface::step_utility_merge_step(std::vector<int> step_ids)
+bool CalculiXCoreInterface::step_utility_save_backup()
 {
-  return ccx_core.step_utility_merge_step(step_ids);
+  return ccx_core.step_utility_save_backup();
+}
+
+bool CalculiXCoreInterface::step_utility_load_backup()
+{
+  return ccx_core.step_utility_save_backup();
 }
 
 bool CalculiXCoreInterface::create_job(std::vector<std::string> options)

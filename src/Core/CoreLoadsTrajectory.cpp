@@ -237,6 +237,7 @@ std::string CoreLoadsTrajectory::get_name_from_load_id(int load_id)
 
 bool CoreLoadsTrajectory::prepare_export()
 {
+  ccx_iface->step_utility_save_backup();
   bodyheatfluxsphere->prepare_export();
   heatflux->prepare_export();
   
@@ -247,7 +248,8 @@ bool CoreLoadsTrajectory::clean_export()
 {
   bodyheatfluxsphere->clean_export();
   heatflux->clean_export();
-  
+  ccx_iface->step_utility_load_backup();
+
   return true;
 }  
 

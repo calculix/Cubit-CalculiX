@@ -255,7 +255,8 @@ public:
   bool step_remove_fieldoutputs(int step_id, std::vector<int> fieldoutput_ids); // removes fieldoutputs to fieldoutputs_data
   bool step_utility_modelchangeelement_dummystep(int step_id, std::vector<int> trajectory_ids); // inserts dummysteps
   std::vector<int> step_utility_split_step(int step_id, std::vector<std::vector<double>> times); // split step, returns step ids
-  int step_utility_merge_step(std::vector<int> step_ids); // merge steps, returns step id
+  bool step_utility_save_backup(); // saves the current steps data
+  bool step_utility_load_backup(); // loads the backup steps data
   bool create_job(std::vector<std::string> options); // adds a new job
   bool modify_job(int job_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a job
   bool delete_job(int job_id); // delete job

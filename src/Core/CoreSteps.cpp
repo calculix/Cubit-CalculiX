@@ -45,6 +45,26 @@ bool CoreSteps::reset()
   bcs_data.clear();
   historyoutputs_data.clear();
   fieldoutputs_data.clear();
+
+  // backup data
+  backup_steps_data.clear();
+  backup_name_data.clear();
+  backup_parameter_data.clear();
+  backup_static_data.clear();
+  backup_frequency_data.clear();
+  backup_buckle_data.clear();
+  backup_heattransfer_data.clear();
+  backup_coupledtd_data.clear();
+  backup_uncoupledtd_data.clear();
+  backup_dynamic_data.clear();
+  backup_modal_dynamic_data.clear();
+  backup_steady_state_dynamics_data.clear();
+  backup_complex_frequency_data.clear();
+  backup_loads_data.clear();
+  backup_bcs_data.clear();
+  backup_historyoutputs_data.clear();
+  backup_fieldoutputs_data.clear();
+  has_backup = false;
   
   init();
   return true;
@@ -2222,8 +2242,7 @@ std::vector<int> CoreSteps::split_step(int step_id, std::vector<std::vector<doub
 
   std::vector<int> return_ids;
 
-  //create step
-  std::vector<std::string> options;
+  //get step
   int step_data_id = this->get_steps_data_id_from_step_id(step_id);
   if (step_data_id == -1)
   {
@@ -2235,6 +2254,7 @@ std::vector<int> CoreSteps::split_step(int step_id, std::vector<std::vector<doub
     return return_ids;
   }
 
+  std::string name = this->name_data[this->get_name_data_id_from_name_id(this->steps_data[step_data_id][1])][1];
   std::string total_time_at_start;
   std::string initial_time_increment;
   std::string time_period_of_the_step;
@@ -2323,29 +2343,246 @@ std::vector<int> CoreSteps::split_step(int step_id, std::vector<std::vector<doub
   double double_minimum_time_increment_allowed = ccx_iface->string_scientific_to_double(minimum_time_increment_allowed);
   double double_maximum_time_increment_allowed = ccx_iface->string_scientific_to_double(maximum_time_increment_allowed);
 
-  std::vector<std::vector<std::string>> str_trajectory_ids = ccx_iface->get_steps_loadstrajectory_tree_data(step_id);
-  std::vector<int> trajectory_ids;
-  for (size_t i = 0; i < str_trajectory_ids.size(); i++)
+  // insert steps
+  std::vector<std::vector<int>> before_steps_data;
+  std::vector<std::vector<int>> after_steps_data;
+  std::vector<int> current_step_data = steps_data[step_data_id];
+  
+  for (size_t i = 0; i < step_data_id; i++)
   {
-    trajectory_ids.push_back(std::stoi(str_trajectory_ids[i][1]));
-  }  
-
-  std::vector<int> element_ids;
- // std::vector<std::vector<double>> times;
-
-  for (size_t i = 0; i < trajectory_ids.size(); i++)
+    before_steps_data.push_back(steps_data[i]);
+  }
+  for (size_t i = step_data_id + 1; i < steps_data.size(); i++)
   {
-    if (ccx_iface->loadstrajectory_get_load_type(trajectory_ids[i])=="BODYHEATFLUXSPHERE")
+    after_steps_data.push_back(steps_data[i]);
+  }
+
+  steps_data.clear();
+  for (size_t i = 0; i < before_steps_data.size(); i++)
+  {
+    steps_data.push_back(before_steps_data[i]);
+  }
+
+  std::vector<std::string> options;  
+  options.push_back(name);
+  options.push_back(std::to_string(step_type));
+  
+  for (size_t i = 0; i < times.size(); i++)
+  {
+    // check if times are in the step time
+    double time_start = -1.;
+    double time_period = -1.;
+    bool bool_create = false;
+
+    if ((times[i][0] >= double_total_time_at_start) && (times[i][0] <= (double_total_time_at_start+double_time_period_of_the_step)))
     {
-      std::vector<std::vector<std::vector<int>>> tmp_element_ids = ccx_iface->loadstrajectory_bodyheatfluxsphere_get_draw_element_ids(trajectory_ids[i]);
-      std::vector<std::vector<double>> tmp_times = ccx_iface->loadstrajectory_bodyheatfluxsphere_get_times(trajectory_ids[i]);
+      time_start = times[i][0];
     }
+
+    if ((times[i][1] >= double_total_time_at_start) && (times[i][1] <= (double_total_time_at_start+double_time_period_of_the_step)))
+    {
+      time_period = times[i][1] - times[i][0];
+    }
+
+    // create step
+    if(bool_create){
+      this->create_step(options);
+      int last_step_data_id = this->steps_data.size()-1;
+      this->steps_data[last_step_data_id][2] = current_step_data[2]; // parameter
+      this->steps_data[last_step_data_id][5] = current_step_data[5]; // loads
+      this->steps_data[last_step_data_id][6] = current_step_data[6]; // bcs
+      this->steps_data[last_step_data_id][7] = current_step_data[7]; // history
+      this->steps_data[last_step_data_id][8] = current_step_data[8]; // field
+      
+      // set type data
+      if (step_type==2) //static
+      {
+        int step_type_data_id_1 = this->get_static_data_id_from_static_id(this->steps_data[last_step_data_id][4]);
+        int step_type_data_id_2 = this->get_static_data_id_from_static_id(current_step_data[4]);
+        // static_data[0][0] static_id
+        // static_data[0][1] solver
+        // static_data[0][2] direct
+        // static_data[0][3] explicit
+        // static_data[0][4] time reset
+        // static_data[0][5] total time at start
+        // static_data[0][6] initial time increment
+        // static_data[0][7] time period of the step
+        // static_data[0][8] minimum time increment allowed
+        // static_data[0][9] maximum time increment allowed
+        // static_data[0][10] initial time increment CFD
+        this->static_data[step_type_data_id_1][1] = this->static_data[step_type_data_id_2][1];
+        this->static_data[step_type_data_id_1][2] = this->static_data[step_type_data_id_2][2];
+        this->static_data[step_type_data_id_1][3] = this->static_data[step_type_data_id_2][3];
+        this->static_data[step_type_data_id_1][4] = this->static_data[step_type_data_id_2][4];
+        this->static_data[step_type_data_id_1][5] = ccx_iface->to_string_scientific(time_start);
+        this->static_data[step_type_data_id_1][6] = this->static_data[step_type_data_id_2][6];
+        this->static_data[step_type_data_id_1][7] = ccx_iface->to_string_scientific(time_period);
+        this->static_data[step_type_data_id_1][8] = this->static_data[step_type_data_id_2][8];
+        this->static_data[step_type_data_id_1][9] = this->static_data[step_type_data_id_2][9];
+       }else if (step_type==5) // heat transfer
+      {
+        int step_type_data_id_1 = this->get_heattransfer_data_id_from_heattransfer_id(this->steps_data[last_step_data_id][4]);
+        int step_type_data_id_2 = this->get_heattransfer_data_id_from_heattransfer_id(current_step_data[4]);
+        // heattransfer_data[0][0] heattransfer_id
+        // heattransfer_data[0][1] solver
+        // heattransfer_data[0][2] direct
+        // heattransfer_data[0][3] steady state
+        // heattransfer_data[0][4] frequency
+        // heattransfer_data[0][5] modal dynamic
+        // heattransfer_data[0][6] storage
+        // heattransfer_data[0][7] deltmx
+        // heattransfer_data[0][8] time reset
+        // heattransfer_data[0][9] total time at start
+        // heattransfer_data[0][10] initial time increment
+        // heattransfer_data[0][11] time period of the step
+        // heattransfer_data[0][12] minimum time increment allowed
+        // heattransfer_data[0][13] maximum time increment allowed
+        // heattransfer_data[0][14] number of eigenfrequencies desired
+        // heattransfer_data[0][15] lower value
+        // heattransfer_data[0][16] upper value
+        this->heattransfer_data[step_type_data_id_1][1] = this->heattransfer_data[step_type_data_id_2][1];
+        this->heattransfer_data[step_type_data_id_1][2] = this->heattransfer_data[step_type_data_id_2][2];
+        this->heattransfer_data[step_type_data_id_1][3] = this->heattransfer_data[step_type_data_id_2][3];
+        this->heattransfer_data[step_type_data_id_1][4] = this->heattransfer_data[step_type_data_id_2][4];
+        this->heattransfer_data[step_type_data_id_1][5] = this->heattransfer_data[step_type_data_id_2][5];
+        this->heattransfer_data[step_type_data_id_1][6] = this->heattransfer_data[step_type_data_id_2][6];
+        this->heattransfer_data[step_type_data_id_1][7] = this->heattransfer_data[step_type_data_id_2][7];
+        this->heattransfer_data[step_type_data_id_1][8] = this->heattransfer_data[step_type_data_id_2][8];
+        this->heattransfer_data[step_type_data_id_1][9] = this->heattransfer_data[step_type_data_id_2][9];
+        this->heattransfer_data[step_type_data_id_1][10] = ccx_iface->to_string_scientific(time_start);
+        this->heattransfer_data[step_type_data_id_1][11] = ccx_iface->to_string_scientific(time_period);
+        this->heattransfer_data[step_type_data_id_1][12] = this->heattransfer_data[step_type_data_id_2][12];
+        this->heattransfer_data[step_type_data_id_1][13] = this->heattransfer_data[step_type_data_id_2][13];
+        this->heattransfer_data[step_type_data_id_1][14] = this->heattransfer_data[step_type_data_id_2][14];
+        this->heattransfer_data[step_type_data_id_1][15] = this->heattransfer_data[step_type_data_id_2][15];
+        this->heattransfer_data[step_type_data_id_1][16] = this->heattransfer_data[step_type_data_id_2][16];
+      }else if (step_type==6) // coupled
+      {
+        int step_type_data_id_1 = this->get_coupledtd_data_id_from_coupledtd_id(this->steps_data[last_step_data_id][4]);
+        int step_type_data_id_2 = this->get_coupledtd_data_id_from_coupledtd_id(current_step_data[4]);
+        // coupledtd_data[0][0] coupledtd_id
+        // coupledtd_data[0][1] solver
+        // coupledtd_data[0][2] direct
+        // coupledtd_data[0][3] alpha
+        // coupledtd_data[0][4] steady state
+        // coupledtd_data[0][5] deltmx
+        // coupledtd_data[0][6] time reset
+        // coupledtd_data[0][7] total time at start
+        // coupledtd_data[0][8] compressible
+        // coupledtd_data[0][9] initial time increment
+        // coupledtd_data[0][10] time period of the step
+        // coupledtd_data[0][11] minimum time increment allowed
+        // coupledtd_data[0][12] maximum time increment allowed
+        // coupledtd_data[0][13] initial time increment CFD
+        this->coupledtd_data[step_type_data_id_1][1] = this->coupledtd_data[step_type_data_id_2][1];
+        this->coupledtd_data[step_type_data_id_1][2] = this->coupledtd_data[step_type_data_id_2][2];
+        this->coupledtd_data[step_type_data_id_1][3] = this->coupledtd_data[step_type_data_id_2][3];
+        this->coupledtd_data[step_type_data_id_1][4] = this->coupledtd_data[step_type_data_id_2][4];
+        this->coupledtd_data[step_type_data_id_1][5] = this->coupledtd_data[step_type_data_id_2][5];
+        this->coupledtd_data[step_type_data_id_1][6] = this->coupledtd_data[step_type_data_id_2][6];
+        this->coupledtd_data[step_type_data_id_1][7] = ccx_iface->to_string_scientific(time_start);
+        this->coupledtd_data[step_type_data_id_1][8] = this->coupledtd_data[step_type_data_id_2][8];
+        this->coupledtd_data[step_type_data_id_1][9] = this->coupledtd_data[step_type_data_id_2][9];
+        this->coupledtd_data[step_type_data_id_1][10] = ccx_iface->to_string_scientific(time_period);
+        this->coupledtd_data[step_type_data_id_1][11] = this->coupledtd_data[step_type_data_id_2][11];
+        this->coupledtd_data[step_type_data_id_1][12] = this->coupledtd_data[step_type_data_id_2][12];
+        this->coupledtd_data[step_type_data_id_1][13] = this->coupledtd_data[step_type_data_id_2][13];
+        
+      }else if (step_type==7) // uncoupled
+      {
+        int step_type_data_id_1 = this->get_uncoupledtd_data_id_from_uncoupledtd_id(this->steps_data[last_step_data_id][4]);
+        int step_type_data_id_2 = this->get_uncoupledtd_data_id_from_uncoupledtd_id(current_step_data[4]);      
+        // uncoupledtd_data[0][0] uncoupledtd_id
+        // uncoupledtd_data[0][1] solver
+        // uncoupledtd_data[0][2] direct
+        // uncoupledtd_data[0][3] alpha
+        // uncoupledtd_data[0][4] steady state
+        // uncoupledtd_data[0][5] deltmx
+        // uncoupledtd_data[0][6] explicit
+        // uncoupledtd_data[0][7] time reset
+        // uncoupledtd_data[0][8] total time at start
+        // uncoupledtd_data[0][9] initial time increment
+        // uncoupledtd_data[0][10] time period of the step
+        // uncoupledtd_data[0][11] minimum time increment allowed
+        // uncoupledtd_data[0][12] maximum time increment allowed
+        this->uncoupledtd_data[step_type_data_id_1][1] = this->uncoupledtd_data[step_type_data_id_2][1];
+        this->uncoupledtd_data[step_type_data_id_1][2] = this->uncoupledtd_data[step_type_data_id_2][2];
+        this->uncoupledtd_data[step_type_data_id_1][3] = this->uncoupledtd_data[step_type_data_id_2][3];
+        this->uncoupledtd_data[step_type_data_id_1][4] = this->uncoupledtd_data[step_type_data_id_2][4];
+        this->uncoupledtd_data[step_type_data_id_1][5] = this->uncoupledtd_data[step_type_data_id_2][5];
+        this->uncoupledtd_data[step_type_data_id_1][6] = this->uncoupledtd_data[step_type_data_id_2][6];
+        this->uncoupledtd_data[step_type_data_id_1][7] = this->uncoupledtd_data[step_type_data_id_2][7];
+        this->uncoupledtd_data[step_type_data_id_1][8] = ccx_iface->to_string_scientific(time_start);
+        this->uncoupledtd_data[step_type_data_id_1][9] = ccx_iface->to_string_scientific(time_period);
+        this->uncoupledtd_data[step_type_data_id_1][10] = this->uncoupledtd_data[step_type_data_id_2][10];
+        this->uncoupledtd_data[step_type_data_id_1][11] = this->uncoupledtd_data[step_type_data_id_2][11];
+        this->uncoupledtd_data[step_type_data_id_1][12] = this->uncoupledtd_data[step_type_data_id_2][12];
+      }
+      return_ids.push_back(this->steps_data[last_step_data_id][0]);
+
+    }else{
+      // if times are not in the step time than skip
+      return_ids.push_back(-1);
+    }
+  }
+
+  // add after steps
+  int current_step_id = steps_data[steps_data.size()-1][0];
+  for (size_t i = 0; i < after_steps_data.size(); i++)
+  {
+    after_steps_data[i][0] = current_step_id + i + 1;
+    steps_data.push_back(after_steps_data[i]);
   }
   
   return return_ids;
 }
 
-int CoreSteps::merge_step(std::vector<int> step_ids)
+bool CoreSteps::save_backup()
 {
-  return -1;
+  backup_steps_data = steps_data;
+  backup_name_data = name_data;
+  backup_parameter_data = parameter_data;
+  backup_static_data = static_data;
+  backup_frequency_data = frequency_data;
+  backup_buckle_data = buckle_data;
+  backup_heattransfer_data = heattransfer_data;
+  backup_coupledtd_data = coupledtd_data;
+  backup_uncoupledtd_data = uncoupledtd_data;
+  backup_dynamic_data = dynamic_data;
+  backup_modal_dynamic_data = modal_dynamic_data;
+  backup_steady_state_dynamics_data = steady_state_dynamics_data;
+  backup_complex_frequency_data = complex_frequency_data;
+  backup_loads_data = loads_data;
+  backup_bcs_data = bcs_data;
+  backup_historyoutputs_data = historyoutputs_data;
+  backup_fieldoutputs_data = fieldoutputs_data;
+  has_backup = true;
+
+  return true;
+}
+
+bool CoreSteps::load_backup()
+{
+  if (has_backup)
+  {
+    steps_data = backup_steps_data;
+    name_data = backup_name_data;
+    parameter_data = backup_parameter_data;
+    static_data = backup_static_data;
+    frequency_data = backup_frequency_data;
+    buckle_data = backup_buckle_data;
+    heattransfer_data = backup_heattransfer_data;
+    coupledtd_data = backup_coupledtd_data;
+    uncoupledtd_data = backup_uncoupledtd_data;
+    dynamic_data = backup_dynamic_data;
+    modal_dynamic_data = backup_modal_dynamic_data;
+    steady_state_dynamics_data = backup_steady_state_dynamics_data;
+    complex_frequency_data = backup_complex_frequency_data;
+    loads_data = backup_loads_data;
+    bcs_data = backup_bcs_data;
+    historyoutputs_data = backup_historyoutputs_data;
+    fieldoutputs_data = backup_fieldoutputs_data;
+  }
+  
+  return has_backup;
 }

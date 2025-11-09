@@ -4614,9 +4614,14 @@ std::vector<int> CalculiXCore::step_utility_split_step(int step_id, std::vector<
   return steps->split_step(step_id, times);
 }
 
-int CalculiXCore::step_utility_merge_step(std::vector<int> step_ids)
+bool CalculiXCore::step_utility_save_backup()
 {
-  return steps->merge_step(step_ids);
+  return steps->save_backup();
+}
+
+bool CalculiXCore::step_utility_load_backup()
+{
+  return steps->load_backup();
 }
 
 bool CalculiXCore::create_job(std::vector<std::string> options)

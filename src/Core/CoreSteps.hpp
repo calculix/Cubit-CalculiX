@@ -216,7 +216,27 @@ public:
   // fieldoutputs_data[0][0] fieldoutputs_id
   // fieldoutputs_data[0][1] fieldoutput_id
 
+  // backup data
+  std::vector<std::vector<int>> backup_steps_data;
+  std::vector<std::vector<std::string>> backup_name_data;
+  std::vector<std::vector<std::string>> backup_parameter_data;
+  std::vector<std::vector<std::string>> backup_static_data;
+  std::vector<std::vector<std::string>> backup_frequency_data;
+  std::vector<std::vector<std::string>> backup_buckle_data;
+  std::vector<std::vector<std::string>> backup_heattransfer_data;
+  std::vector<std::vector<std::string>> backup_coupledtd_data;
+  std::vector<std::vector<std::string>> backup_uncoupledtd_data;
+  std::vector<std::vector<std::string>> backup_dynamic_data;
+  std::vector<std::vector<std::string>> backup_modal_dynamic_data;
+  std::vector<std::vector<std::string>> backup_steady_state_dynamics_data;
+  std::vector<std::vector<std::string>> backup_complex_frequency_data;
+  std::vector<std::vector<int>> backup_loads_data;
+  std::vector<std::vector<int>> backup_bcs_data;
+  std::vector<std::vector<int>> backup_historyoutputs_data;
+  std::vector<std::vector<int>> backup_fieldoutputs_data;
+
   bool is_initialized = false;
+  bool has_backup = false;
 
   bool init(); // initialize
   bool update(); // check for changes of the amplitude
@@ -275,7 +295,8 @@ public:
   std::string print_data(); // prints out the data
   bool create_modelchangeelement_dummystep(int step_id); // inserts dummy steps based on given step_id
   std::vector<int> split_step(int step_id, std::vector<std::vector<double>> times); // inserts steps based on given step_id and times
-  int merge_step(std::vector<int> step_ids); // merge steps
+  bool save_backup(); // saves the current steps data
+  bool load_backup(); // loads the backup steps data
 
   CalculiXCoreInterface *ccx_iface;
 };
