@@ -1382,16 +1382,16 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
     }
   }
 
+  std::vector<std::vector<int>> prepared_step;
   if (bool_modelchange)
   {
     std::vector<std::vector<std::string>> steps_tree = ccx_iface->get_steps_tree_data();
-    std::vector<std::vector<int>> prepared_step;
     for (size_t i = 0; i < steps_tree.size(); i++)
     {
       std::vector<std::vector<std::string>> trajectory_tree = ccx_iface->get_steps_loadstrajectory_tree_data(std::stoi(steps_tree[i][0]));
       if (trajectory_tree.size() == 1)
       {
-        if (ccx_iface->loadstrajectory_get_load_type(stoi(trajectory_tree[0][0])) == "BODYHEATFLUX")
+        if (ccx_iface->loadstrajectory_get_load_type(stoi(trajectory_tree[0][0])) == "BODYHEATFLUXSPHERE")
         {
           prepared_step.push_back({std::stoi(steps_tree[i][0]),ccx_iface->loadstrajectory_get_subload_id(stoi(trajectory_tree[0][0]))});
         }
@@ -1407,8 +1407,16 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
   
   if (bool_modelchange)
   {
+    std::vector<std::vector<int>> step_splits;
     // transform steps
-    
+    for (size_t i = 0; i < prepared_step.size(); i++)
+    {
+      if (i==0)
+      {
+        int load_data_id = this->get_loads_data_id_from_load_id(prepared_step[i][1]);
+        std::vector<int> step_ids = ccx_iface->step_utility_split_step(prepared_step[i][0],load_times[load_data_id]);
+      }
+    }
 
     // add *modelchange to custom lines
 
