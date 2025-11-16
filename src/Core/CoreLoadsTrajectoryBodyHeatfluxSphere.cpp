@@ -1307,7 +1307,7 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
         //std::string log = std::to_string(trajectory_element_ids[ii][0]) + " " + std::to_string(amplitude_times[ii].size()) + " " +  amplitude + "\n";
         //PRINT_INFO("%s", log.c_str());
 
-        ccx_iface->silent_cmd("ccx create amplitude name \"Trajectory_" + std::to_string(loads_data[i][0]) + "_" + name + "_"  + std::to_string(trajectory_element_ids[ii][0]) + "\" time_amplitude " + amplitude);
+        ccx_iface->silent_cmd("ccx create amplitude name \"Trajectory_" + std::to_string(loads_data[i][0]) + "_" + name + "_"  + std::to_string(trajectory_element_ids[ii][0]) + "\" time_amplitude " + amplitude + " totaltime ");
         prepared_amplitudes.push_back(last_id_amplitude);
         bodyheatflux_amplitude.push_back(last_id_amplitude);
         last_id_amplitude = last_id_amplitude + 1;

@@ -2366,7 +2366,8 @@ std::vector<int> CoreSteps::split_step(int step_id, std::vector<std::vector<doub
   std::vector<std::string> options;  
   options.push_back(name);
   options.push_back(std::to_string(step_type));
-  
+  bool bool_create_load_bc = true;
+
   for (size_t i = 0; i < times.size(); i++)
   {
     // check if times are in the step time
@@ -2377,20 +2378,30 @@ std::vector<int> CoreSteps::split_step(int step_id, std::vector<std::vector<doub
     if ((times[i][0] >= double_total_time_at_start) && (times[i][0] <= (double_total_time_at_start+double_time_period_of_the_step)))
     {
       time_start = times[i][0];
+      bool_create = true;
     }
 
     if ((times[i][1] >= double_total_time_at_start) && (times[i][1] <= (double_total_time_at_start+double_time_period_of_the_step)))
     {
       time_period = times[i][1] - times[i][0];
+    }else if ((times[i][1] >= double_total_time_at_start) && (times[i][1] > (double_total_time_at_start+double_time_period_of_the_step)))
+    {
+      time_period = double_total_time_at_start+double_time_period_of_the_step - times[i][0];
     }
-
+    
     // create step
     if(bool_create){
       this->create_step(options);
       int last_step_data_id = this->steps_data.size()-1;
+
       this->steps_data[last_step_data_id][2] = current_step_data[2]; // parameter
-      this->steps_data[last_step_data_id][5] = current_step_data[5]; // loads
-      this->steps_data[last_step_data_id][6] = current_step_data[6]; // bcs
+      
+      if (bool_create_load_bc)
+      {
+        this->steps_data[last_step_data_id][5] = current_step_data[5]; // loads
+        this->steps_data[last_step_data_id][6] = current_step_data[6]; // bcs
+        bool_create_load_bc = false;
+      }
       this->steps_data[last_step_data_id][7] = current_step_data[7]; // history
       this->steps_data[last_step_data_id][8] = current_step_data[8]; // field
       
@@ -2448,8 +2459,8 @@ std::vector<int> CoreSteps::split_step(int step_id, std::vector<std::vector<doub
         this->heattransfer_data[step_type_data_id_1][6] = this->heattransfer_data[step_type_data_id_2][6];
         this->heattransfer_data[step_type_data_id_1][7] = this->heattransfer_data[step_type_data_id_2][7];
         this->heattransfer_data[step_type_data_id_1][8] = this->heattransfer_data[step_type_data_id_2][8];
-        this->heattransfer_data[step_type_data_id_1][9] = this->heattransfer_data[step_type_data_id_2][9];
-        this->heattransfer_data[step_type_data_id_1][10] = ccx_iface->to_string_scientific(time_start);
+        this->heattransfer_data[step_type_data_id_1][9] = ccx_iface->to_string_scientific(time_start);
+        this->heattransfer_data[step_type_data_id_1][10] = this->heattransfer_data[step_type_data_id_2][10];
         this->heattransfer_data[step_type_data_id_1][11] = ccx_iface->to_string_scientific(time_period);
         this->heattransfer_data[step_type_data_id_1][12] = this->heattransfer_data[step_type_data_id_2][12];
         this->heattransfer_data[step_type_data_id_1][13] = this->heattransfer_data[step_type_data_id_2][13];
@@ -2525,9 +2536,10 @@ std::vector<int> CoreSteps::split_step(int step_id, std::vector<std::vector<doub
       return_ids.push_back(-1);
     }
   }
-
+  
   // add after steps
   int current_step_id = steps_data[steps_data.size()-1][0];
+  
   for (size_t i = 0; i < after_steps_data.size(); i++)
   {
     after_steps_data[i][0] = current_step_id + i + 1;

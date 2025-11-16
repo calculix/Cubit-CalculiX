@@ -95,8 +95,9 @@ ccx step 1 add fieldoutput 1 2
 #job
 ccx create job name "moving_heatsource_single_spline"
 
-#ccx run job 1
+ccx run job 1
 
-ccx draw load trajectory 1
+#ccx draw load trajectory 1
+
 
 
