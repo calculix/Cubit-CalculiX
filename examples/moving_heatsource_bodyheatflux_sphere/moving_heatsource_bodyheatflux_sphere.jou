@@ -282,5 +282,3 @@ ccx create job name "moving_heatsource_trajectory_bodyheatfluxsphere"
 #ccx run job 1
 
 #ccx draw
-
-

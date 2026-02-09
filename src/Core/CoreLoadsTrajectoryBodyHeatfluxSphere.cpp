@@ -1411,15 +1411,42 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
     // transform steps
     for (size_t i = 0; i < prepared_step.size(); i++)
     {
+      int load_data_id = this->get_loads_data_id_from_load_id(prepared_step[i][1]);
+      std::vector<int> step_ids;
       if (i==0)
       {
-        int load_data_id = this->get_loads_data_id_from_load_id(prepared_step[i][1]);
-        std::vector<int> step_ids = ccx_iface->step_utility_split_step(prepared_step[i][0],load_times[load_data_id]);
+        step_ids = ccx_iface->step_utility_split_step(prepared_step[i][0],load_times[load_data_id]);
+      }else{
+        int step_shift = 0;
+        for (size_t ii = 0; ii < step_splits.size(); ii++)
+        {
+          step_shift = step_shift + step_splits[ii].size() -1;
+        }
+        step_ids = ccx_iface->step_utility_split_step(prepared_step[i][0] + step_shift,load_times[load_data_id]);
+        // shift prepared_step_bodyheatflux
+        for (size_t ii = 0; ii < prepared_step_bodyheatflux.size(); ii++)
+        {  
+          if (prepared_step_bodyheatflux[ii][0]==prepared_step[i][0])
+          {
+            prepared_step_bodyheatflux[ii][0]=prepared_step[i][0] + step_shift;
+            std::string log = "prepared_step_bodyheatflux[ii][0] " + std::to_string(prepared_step_bodyheatflux[ii][0]) + " prepared_step[i][0] " + std::to_string(prepared_step[i][0]) + "\n";
+            PRINT_INFO("%s", log.c_str());
+          }
+        }
       }
+      step_splits.push_back(step_ids);
     }
 
     // add *modelchange to custom lines
-
+    for (size_t i = 0; i < step_splits.size(); i++)
+    {
+      for (size_t ii = 0; ii < step_splits[i].size(); ii++)
+      {
+        std::string log = "step_splits[" + std::to_string(i) + "] " + std::to_string(step_splits[i][ii]) + "\n";
+        //PRINT_INFO("%s", log.c_str());
+      }
+    }
+    
   }
 
   watch.tick("prepare trajectory end");
@@ -1502,7 +1529,7 @@ std::string CoreLoadsTrajectoryBodyHeatfluxSphere::get_load_export(int load_id)
   
   int load_data_id;
   int sub_data_id;
-  std::string str_temp = "**Trajectory " + std::to_string(load_id) + "\n";
+  std::string str_temp = "**Trajectory BodyHeatfluxSphere" + std::to_string(load_id) + "\n";
   
   /*
   load_data_id = get_loads_data_id_from_load_id(load_id);

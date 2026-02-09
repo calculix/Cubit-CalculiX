@@ -2401,6 +2401,9 @@ std::vector<int> CoreSteps::split_step(int step_id, std::vector<std::vector<doub
         this->steps_data[last_step_data_id][5] = current_step_data[5]; // loads
         this->steps_data[last_step_data_id][6] = current_step_data[6]; // bcs
         bool_create_load_bc = false;
+      }else{
+        this->steps_data[last_step_data_id][5] = -1; // loads
+        this->steps_data[last_step_data_id][6] = -1; // bcs
       }
       this->steps_data[last_step_data_id][7] = current_step_data[7]; // history
       this->steps_data[last_step_data_id][8] = current_step_data[8]; // field
@@ -2545,7 +2548,21 @@ std::vector<int> CoreSteps::split_step(int step_id, std::vector<std::vector<doub
     after_steps_data[i][0] = current_step_id + i + 1;
     steps_data.push_back(after_steps_data[i]);
   }
-  
+
+  /*
+  // check load ids and shift them for the after steps
+  for (size_t i = 0; i < loads_data.size(); i++)
+  {
+    if (loads_data[i][2] > step_id - 1)
+    {
+      int loads_id = loads_data[i][2];
+      loads_data[i][2] = loads_id + return_ids.size() - 1;
+    }
+  }
+
+  get_load_data_ids_from_loads_id(int loads_id)
+  */
+
   return return_ids;
 }
 
