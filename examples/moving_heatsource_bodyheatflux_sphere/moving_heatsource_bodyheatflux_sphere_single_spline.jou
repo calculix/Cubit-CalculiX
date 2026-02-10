@@ -43,7 +43,6 @@ modify material "steel" matrix_property "CCX_CONDUCTIVITY_ISO_K_TEMPERATURE" 50 
 ccx create section solid block all material 1
 
 #loads
-ccx create trajectory bodyheatfluxsphere curve 13 vertex 16 surface 1 direction 0 0 -1 magnitude 50 30 10 time_begin 10 time_end 20 radius 0.1 0.2 0.3 depth 0.1 0.2 0.3 modelchange_add
 ccx create trajectory bodyheatfluxsphere curve 13 vertex 16 surface 1 direction 0 0 -1 magnitude 50 30 10 time_begin 0 time_end 10 radius 0.1 0.2 0.3 depth 0.1 0.2 0.3 modelchange_add
 
 #refinement standard cubit methods
@@ -89,25 +88,18 @@ ccx hbc add bc displacement 1
 
 # create step
 ccx create step name "heattransfer" heattransfer
-ccx modify step 1 parameter inc 100000
+ccx modify step 1 parameter inc 100000 nlgeom_yes
 ccx modify step 1 heattransfer  totaltimeatstart 0 initialtimeincrement 1e-1 timeperiodofstep 10 minimumtimeincrement 1e-5 maximumtimeincrement 1e-1
-ccx step 1 add load trajectory 2
+ccx step 1 add load trajectory 1
 ccx step 1 add fieldoutput 1 2
 
-ccx create step name "heattransfer2" heattransfer
-ccx modify step 2 parameter inc 100000
-ccx modify step 2 heattransfer  totaltimeatstart 10 initialtimeincrement 1e-1 timeperiodofstep 20 minimumtimeincrement 1e-5 maximumtimeincrement 1e-1
-ccx step 2 add load trajectory 1
-ccx step 2 add fieldoutput 1 2
+ccx utility step 1 modelchangeelement dummystep trajectory 1
 
 #job
-#ccx use logfile core on
 ccx create job name "moving_heatsource_single_spline"
 export ccx "test.inp" overwrite
-#ccx use logfile core off
+
 #ccx run job 1
 #ccx draw load trajectory 1
-
-
 
 

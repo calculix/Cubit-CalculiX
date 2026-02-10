@@ -1373,11 +1373,21 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
   // check modelchange in trajetory loads
   // only 1 trajectory per step is allowed for this operation
   bool bool_modelchange = false;
+  bool bool_modelchange_add = false;
+  bool bool_modelchange_remove = false;
   for (size_t i = 0; i < loads_data.size(); i++)
   {
     if (loads_data[i][11] != 0)
     {
       bool_modelchange = true;
+      if ((loads_data[i][11] == 1))
+      {
+        bool_modelchange_add = true;
+      }
+      if ((loads_data[i][11] == 2))
+      {
+        bool_modelchange_remove = true;
+      }
       break;
     }
   }
@@ -1438,13 +1448,59 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
     }
 
     // add *modelchange to custom lines
-    for (size_t i = 0; i < step_splits.size(); i++)
-    {
-      for (size_t ii = 0; ii < step_splits[i].size(); ii++)
+    for (size_t i = 0; i < prepared_step.size(); i++)
+    { 
+      int load_data_id = this->get_loads_data_id_from_load_id(prepared_step[i][1]);
+      
+      // get elements for each step and time
+      //load_element_ids[load_data_id];
+      //load_element_ids[load_data_id][0] order by node
+      //load_element_ids[load_data_id][0][0] order by radius and depth
+      //load_element_ids[load_data_id][0][0][0] face ids
+      for (size_t ii = 0; ii < load_element_ids[load_data_id].size(); ii++)
       {
-        std::string log = "step_splits[" + std::to_string(i) + "] " + std::to_string(step_splits[i][ii]) + "\n";
-        //PRINT_INFO("%s", log.c_str());
+        std::vector<int> element_ids;
+        for (size_t iii = 0; iii < load_element_ids[load_data_id][ii].size(); iii++)
+        {
+          for (size_t iv = 0; iv < load_element_ids[load_data_id][ii][iii].size(); iv++)
+          {
+            element_ids.push_back(load_element_ids[load_data_id][ii][iii][iv]);
+          }
+        }
+
+        
+        //insert custom lines
+        // customlines_data[0][1] name
+        // customlines_data[0][2] position
+        // customlines_data[0][3] insert keyword
+        // customlines_data[0][4] insert keyword id
+        // customlines_data[0][5] customline
+        std::vector<std::string> options;
+        options.push_back("Trajectory_" + std::to_string(prepared_step[i][1]) + "_Step_" + std::to_string(step_splits[i][ii]));
+        options.push_back("AFTER");
+        options.push_back("STEP_BEGIN");
+        options.push_back(std::to_string(step_splits[i][ii]));
+
+        std::string cline;
+        cline = "*MODEL CHANGE,TYPE=ELEMENT,";
+        if (bool_modelchange_add)
+        {
+          cline.append("ADD\n");
+        }
+        if (bool_modelchange_remove)
+        {
+          cline.append("REMOVE\n");
+        }
+        for (size_t iii = 0; iii < element_ids.size(); iii++)
+        {
+          cline.append(std::to_string(element_ids[iii]) + "\n");
+        }
+
+        options.push_back(cline);
+
+        ccx_iface->create_customline(options);
       }
+      
     }
     
   }
@@ -1476,9 +1532,10 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::clean_export()
     {
       current_step_id = prepared_step_bodyheatflux[i][0];
     }
-    if (current_step_id == prepared_step_bodyheatflux[i][0])
+    if (current_step_id != prepared_step_bodyheatflux[i][0])
     {
       ccx_iface->silent_cmd("ccx step " + std::to_string(current_step_id) + " remove load bodyheatflux " + ids);
+      //ccx_iface->cmd("ccx step " + std::to_string(current_step_id) + " remove load bodyheatflux " + ids);
       ids="";
       ids.append(std::to_string(prepared_step_bodyheatflux[i][1]) + " ");
       current_step_id = prepared_step_bodyheatflux[i][0];
@@ -1488,6 +1545,7 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::clean_export()
     if (i==prepared_step_bodyheatflux.size()-1)
     {
       ccx_iface->silent_cmd("ccx step " + std::to_string(current_step_id) + " remove load bodyheatflux " + ids);
+      //ccx_iface->cmd("ccx step " + std::to_string(current_step_id) + " remove load bodyheatflux " + ids);
     }
   }
   watch.tick("clean trajectory step links");
