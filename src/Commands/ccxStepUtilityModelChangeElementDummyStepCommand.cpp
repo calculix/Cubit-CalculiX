@@ -122,11 +122,11 @@ bool ccxStepUtilityModelChangeElementDummyStepCommand::execute(CubitCommandData 
   {   
     trajectory_ids = ccx_iface.parser("loadstrajectory", trajectory_string);
   }else{
-    for (size_t i = 0; i < trajectory_ids.size(); i++)
+    /*for (size_t i = 0; i < trajectory_ids.size(); i++)
     {
       trajectory_string.append(std::to_string(trajectory_ids[i]) + " ");
       trajectory_ids = ccx_iface.parser("loadstrajectory", trajectory_string);
-    }
+    }*/
   }
   if (trajectory_ids.size()==0)
   {

@@ -1468,7 +1468,6 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
           }
         }
 
-        
         //insert custom lines
         // customlines_data[0][1] name
         // customlines_data[0][2] position
@@ -1491,9 +1490,18 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
         {
           cline.append("REMOVE\n");
         }
+        int ic = 0;
         for (size_t iii = 0; iii < element_ids.size(); iii++)
         {
-          cline.append(std::to_string(element_ids[iii]) + "\n");
+          cline.append(std::to_string(element_ids[iii]));
+          ic = ic + 1;
+          if (ic==16)
+          {
+            ic = 0;
+            cline.append(",\n");
+          }else{
+            cline.append(",");
+          }
         }
 
         options.push_back(cline);
