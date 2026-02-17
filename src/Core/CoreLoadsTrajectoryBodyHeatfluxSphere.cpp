@@ -43,6 +43,7 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::reset()
   prepared_bodyheatflux.clear();
   prepared_step_bodyheatflux.clear();
   prepared_step_transform.clear();
+  prepared_customlines.clear();
 
   init();
   return true;
@@ -1448,6 +1449,9 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
     }
 
     // add *modelchange to custom lines
+    // get custom lines ids before prep
+    std::vector<int> tmp = ccx_iface->get_customline_ids();
+    prepared_customlines.push_back(tmp);
     for (size_t i = 0; i < prepared_step.size(); i++)
     { 
       int load_data_id = this->get_loads_data_id_from_load_id(prepared_step[i][1]);
@@ -1472,7 +1476,7 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
         // customlines_data[0][1] name
         // customlines_data[0][2] position
         // customlines_data[0][3] insert keyword
-        // customlines_data[0][4] insert keyword id
+        // customlines_ data[0][4] insert keyword id
         // customlines_data[0][5] customline
         std::vector<std::string> options;
         options.push_back("Trajectory_" + std::to_string(prepared_step[i][1]) + "_Step_" + std::to_string(step_splits[i][ii]));
@@ -1503,14 +1507,15 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
             cline.append(",");
           }
         }
-
         options.push_back(cline);
 
         ccx_iface->create_customline(options);
       }
       
     }
-    
+    // get custom line ids after prep
+    tmp = ccx_iface->get_customline_ids();
+    prepared_customlines.push_back(tmp);
   }
 
   watch.tick("prepare trajectory end");
@@ -1580,6 +1585,24 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::clean_export()
   //resume core update
   ccx_iface->set_block_core_update(false);
   ccx_iface->core_update();
+
+  if (prepared_customlines.size()==2)
+  {
+    int id_from = prepared_customlines[0][prepared_customlines[0].size()-1] + 1;
+    int id_to = prepared_customlines[1][prepared_customlines[1].size()-1];;
+    
+    if (id_from == -1)
+    {
+      id_from = 0;
+    }
+    if (id_to == -1)
+    {
+      id_to = 0;
+    }
+
+    ccx_iface->silent_cmd("ccx delete customline " + std::to_string(id_from) + " to " + std::to_string(id_to));
+    watch.tick("clean custom lines");
+  }
   
   prepared_amplitudes.clear();
   prepared_bodyheatflux.clear();

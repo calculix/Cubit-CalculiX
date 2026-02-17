@@ -129,6 +129,7 @@ public:
   std::vector<int> get_orientations_ids(); // get all orientation ids
   std::vector<int> get_equation_ids(); // get all equation ids
   std::vector<int> get_equationgroup_ids(); // get all equationgroup ids
+  std::vector<int> get_customline_ids(); // get all equationgroup ids
   bool check_block_exists(int block_id);
   bool check_global_element_exists(int element_id);
   bool check_bc_exists(int bc_id,int BCType); // checks if the id for the bc type exists

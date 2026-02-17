@@ -3421,6 +3421,16 @@ std::vector<int> CalculiXCore::get_equationgroup_ids()
   return tmp;
 }
 
+std::vector<int> CalculiXCore::get_customline_ids()
+{
+  std::vector<int> tmp;
+  for (size_t i = 0; i < customlines->customlines_data.size(); i++)
+  {
+    tmp.push_back(std::stoi(customlines->customlines_data[i][0]));
+  }
+  return tmp;
+}
+
 std::vector<int> CalculiXCore::get_bcstemperatures_ids()
 {
   std::vector<int> tmp;

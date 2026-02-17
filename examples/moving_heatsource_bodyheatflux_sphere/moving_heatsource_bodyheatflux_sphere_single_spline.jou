@@ -1,7 +1,7 @@
 #!cubit
 reset
 create brick x 2 y 2 z 0.5
-vol 1 size 0.2
+vol 1 size 0.05
 #vol 1 size auto factor 10
 #vol 1 scheme tetmesh
 mesh vol 1
@@ -16,8 +16,8 @@ create vertex -0.5 -0.5 1
 create vertex -1 -0.5 1
 create curve spline location vertex all with is_free delete
 
-#curve 13 size 0.02
-curve 13 size 0.5
+curve 13 size 0.02
+#curve 13 size 0.5
 mesh curve 13
 
 block 1 add vol 1
@@ -103,6 +103,3 @@ export ccx "test.inp" overwrite
 
 #ccx run job 1
 #ccx draw load trajectory 1
-
-
-

@@ -280,6 +280,11 @@ std::vector<int> CalculiXCoreInterface::get_equationgroup_ids()
   return ccx_core.get_equationgroup_ids();
 }
 
+std::vector<int> CalculiXCoreInterface::get_customline_ids()
+{
+  return ccx_core.get_customline_ids();
+}
+
 bool CalculiXCoreInterface::check_block_exists(int block_id)
 {
   return ccx_core.check_block_exists(block_id);

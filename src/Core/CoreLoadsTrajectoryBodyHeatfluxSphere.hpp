@@ -62,6 +62,7 @@ public:
   std::vector<int> prepared_bodyheatflux;
   std::vector<std::vector<int>> prepared_step_bodyheatflux;
   std::vector<std::vector<int>> prepared_step_transform;
+  std::vector<std::vector<int>> prepared_customlines;
 
   bool is_initialized = false;
 
