@@ -4,11 +4,11 @@ project(Cubit-CalculiX)
 
 if (UNIX)
  #set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2025.12/cmake")
- set(CMAKE_PREFIX_PATH "/home/user/Downloads/Coreform-Cubit-2026.8-rc+69312-Lin64/Coreform-Cubit-2026.8/cmake")
+ set(CMAKE_PREFIX_PATH "/home/norbert/Downloads/Coreform-Cubit-2026.8+69344-Lin64/Coreform-Cubit-2026.8/cmake")
  # python for our swig wrapping
  #include_directories("/home/user/Downloads/Coreform-Cubit-2026.8-rc+69312-Lin64/Coreform-Cubit-2026.8/lib/python3/include/python3.12") 
  include_directories("/opt/Coreform-Cubit-2025.12/bin/python3/include/python3.10") 
- set(HDF5_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Utility/HDF5/Linux/1.12.1)
+ set(HDF5_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Utility/HDF5/Linux/1.14.4.3)
 endif (UNIX)
 
 if (WIN32)
@@ -96,8 +96,8 @@ endif (WIN32)
 if (UNIX)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Linux/libQt6Charts.so.6.2.4 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Linux/libhdf5_cpp.so DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Linux/libhdf5_cpp.so.200 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Linux/libhdf5_cpp.so.200.1.0 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Linux/libhdf5_cpp.so.310 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Linux/libhdf5_cpp.so.310.0.4 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
 endif (UNIX)
 
 #copy material default library into build directory
@@ -142,7 +142,8 @@ set(CCXCOMP_SRCS
     # never worked, also deprecated 20260822
     #ExportManager.cpp
     #ExportManager.hpp
-    loadCalculiXComp.cpp
+    #deprecated 20260822
+    #loadCalculiXComp.cpp
     )
 
 if (WIN32)
