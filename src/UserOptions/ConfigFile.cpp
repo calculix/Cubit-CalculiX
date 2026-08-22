@@ -3,7 +3,9 @@
 #include "Broker.hpp"
 #include "ComponentInfo.hpp"
 #include "Mediator.hpp"
+#include "ComponentInfo.hpp"
 #include "CubitMessage.hpp"
+#include "CubitStringUtil.hpp"
 #include <QString>
 #include <fstream>
 #include <iostream>
@@ -24,9 +26,10 @@ ConfigFile::ConfigFile()
 
     // search for correct component path
     Mediator* med = Broker::instance();
-    QString output;
     std::string log;
-
+    /*
+    QString output;
+    
     med->get_component_paths(output);
     //log = " paths:\n " + output.toStdString() + " \n";
     //PRINT_INFO("%s", log.c_str());
@@ -34,12 +37,24 @@ ConfigFile::ConfigFile()
     CubitString cs(output.toStdString());
     std::vector<CubitString> paths;
     cs.tokenize(';', paths );
+    */
+
+    std::vector<ComponentInfo> ci;
+    std::vector<QString> paths;
+    med->get_component_list(ci);
+
+    for (size_t i = 0; i < ci.size(); i++)
+    {
+        paths.push_back(ci[i].get_path());
+    }
+
     for (size_t i = 0; i < paths.size(); i++)
     {
         //log = " path: " + paths[i].str() + " \n";
         //PRINT_INFO("%s", log.c_str());
         #ifdef WIN32
-            componentpath = paths[i].str() + "/";
+            //componentpath = paths[i].str() + "/";
+            componentpath = paths[i].toStdString() + "/";
             filepath = componentpath + "calculix_comp.ccl";
             if (_access(filepath.c_str(), 0) == 0)
             {
@@ -47,7 +62,8 @@ ConfigFile::ConfigFile()
                 break;
             }
         #else
-            componentpath = paths[i].str() + "/";
+            //componentpath = paths[i].str() + "/";
+            componentpath = paths[i].toStdString() + "/";
             filepath = componentpath + "libcalculix_comp.ccl";
             if (access(filepath.c_str(), R_OK) == 0)
             {

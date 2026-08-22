@@ -21,6 +21,7 @@
  #include <signal.h>
 #endif
 #include <fstream>
+#include <chrono>
 #include <iostream>
 #include "loadUserOptions.hpp"
 

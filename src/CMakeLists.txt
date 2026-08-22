@@ -3,8 +3,10 @@ cmake_minimum_required(VERSION 3.5)
 project(Cubit-CalculiX)
 
 if (UNIX)
- set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2025.12/cmake")
+ #set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2025.12/cmake")
+ set(CMAKE_PREFIX_PATH "/home/user/Downloads/Coreform-Cubit-2026.8-rc+69312-Lin64/Coreform-Cubit-2026.8/cmake")
  # python for our swig wrapping
+ #include_directories("/home/user/Downloads/Coreform-Cubit-2026.8-rc+69312-Lin64/Coreform-Cubit-2026.8/lib/python3/include/python3.12") 
  include_directories("/opt/Coreform-Cubit-2025.12/bin/python3/include/python3.10") 
  set(HDF5_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Utility/HDF5/Linux/1.12.1)
 endif (UNIX)
@@ -31,6 +33,7 @@ ENDIF(CMAKE_SYSTEM_NAME MATCHES "Linux")
 
 # Get the packages needed to use the SDK
 find_package(Cubit REQUIRED CONFIG)
+find_package(CubitGUI REQUIRED CONFIG)
 find_package(Qt6 COMPONENTS Core REQUIRED)
 find_package(Qt6 COMPONENTS Charts REQUIRED)
 find_package(Qt6 COMPONENTS Widgets REQUIRED)
@@ -136,8 +139,9 @@ set(CCXCOMP_SRCS
     MyCmdWidgetFactory.hpp
     CCXDockWindowModelTree.cpp
     CCXDockWindowModelTree.hpp
-    ExportManager.cpp
-    ExportManager.hpp
+    # never worked, also deprecated 20260822
+    #ExportManager.cpp
+    #ExportManager.hpp
     loadCalculiXComp.cpp
     )
 
@@ -176,18 +180,20 @@ target_link_libraries(calculix_useroptions clarogui cubiti clarofw Qt6::Widgets)
 set_target_properties(calculix_useroptions PROPERTIES AUTOMOC 1)
 
 add_library(calculix_plugin MODULE ${CCXPLUGIN_SRCS})
-set_target_properties(calculix_plugin PROPERTIES SUFFIX ".ccm")
+#set_target_properties(calculix_plugin PROPERTIES SUFFIX ".ccm")
 
 add_library(calculix_core SHARED ${CCXCORE_SRCS})
 set_target_properties(calculix_core PROPERTIES SUFFIX ".so")
 target_link_libraries(calculix_core cubiti cubit_util cubit_gui)
-target_link_libraries(calculix_core clarogui clarofw navigation pickwidget Qt6::Charts Qt6::Widgets)
+#target_link_libraries(calculix_core clarogui clarofw navigation pickwidget Qt6::Charts Qt6::Widgets)
+target_link_libraries(calculix_core clarogui clarofw navigation Qt6::Charts Qt6::Widgets)
 target_link_libraries(calculix_core HDF5::HDF5)
 set_target_properties(calculix_core PROPERTIES AUTOMOC 1)
 
 add_library(calculix_comp SHARED ${CCXCOMP_SRCS})
-set_target_properties(calculix_comp PROPERTIES SUFFIX ".ccl")
-target_link_libraries(calculix_comp clarogui navigation pickwidget cubiti clarofw Qt6::Charts Qt6::Widgets)
+#set_target_properties(calculix_comp PROPERTIES SUFFIX ".ccl")
+#target_link_libraries(calculix_comp clarogui navigation pickwidget cubiti clarofw Qt6::Charts Qt6::Widgets)
+target_link_libraries(calculix_comp clarogui navigation cubiti clarofw Qt6::Charts Qt6::Widgets)
 set_target_properties(calculix_comp PROPERTIES AUTOMOC 1)
 
 add_library(calculix_pythoninterface SHARED ${CCXPYTHONINTERFACE_SRCS})

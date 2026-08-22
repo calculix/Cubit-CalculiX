@@ -8,6 +8,8 @@
 #include "Broker.hpp"
 #include "Claro.hpp"
 
+#include <sstream>
+
 JobsMonitorLiveMonitor::JobsMonitorLiveMonitor()
 {
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();

@@ -11,6 +11,7 @@
 #include <fstream>
 #include <cmath>
 #include <iostream>
+#include <sstream>
 
 CoreResultsFrd::CoreResultsFrd()
 {}
