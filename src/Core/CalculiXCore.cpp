@@ -12,8 +12,8 @@
 #include <algorithm>
 #include <cmath>
 
-//#include "cubitguicommondll.hpp"
-//#include "CubitGuiUtil.hpp"
+#include "cubitguicommondll.hpp"
+#include "CubitGuiUtil.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "MeshExportInterface.hpp"
@@ -149,12 +149,14 @@ CalculiXCore::~CalculiXCore()
 
 bool CalculiXCore::cmd(std::string cmd)
 {
-  //bool status = false;
+  /*
+  bool status = false;
   // all commands send with CubitGuiUtil will get listed in the history
-  //CubitGuiUtil::send_cubit_command(cmd.c_str());
-  //status = !CubitInterface::was_last_cmd_undoable();
+  CubitGuiUtil::send_cubit_command(cmd.c_str());
+  status = !CubitInterface::was_last_cmd_undoable();
+  */
 
-  bool status = CubitInterface::silent_cmd(cmd.c_str());
+  bool status = CubitInterface::cmd_single(cmd.c_str());
 
   return status;
 }

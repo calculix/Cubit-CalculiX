@@ -24,6 +24,6 @@ void CoreTimer::timeoutaction()
   }
   if (!this->bool_init_materiallibrary)
   {
-    //this->bool_init_materiallibrary = ccx_iface->init_materiallibrary();
+    this->bool_init_materiallibrary = ccx_iface->init_materiallibrary();
   }
 }
