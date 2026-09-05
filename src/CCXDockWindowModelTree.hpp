@@ -70,7 +70,6 @@ private:
   bool isInitialized;
   QString dock_title;
 
-  
   Claro* gui;
   ClaroViewMenu* ViewMenu;
   QDockWidget *dock;

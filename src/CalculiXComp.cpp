@@ -153,7 +153,7 @@ void CalculiXComp::setup_CCXDockWindowModelTree()
   if(!myCCXDockWindowModelTree)
     myCCXDockWindowModelTree = new CCXDockWindowModelTree;
 
-  //myCCXDockWindowModelTree->initialize();
+  myCCXDockWindowModelTree->initialize();
 }
 
 void CalculiXComp::cleanup_CCXDockWindowModelTree()
