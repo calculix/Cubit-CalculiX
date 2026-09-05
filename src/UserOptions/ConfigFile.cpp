@@ -3,7 +3,6 @@
 #include "Broker.hpp"
 #include "ComponentInfo.hpp"
 #include "Mediator.hpp"
-#include "ComponentInfo.hpp"
 #include "CubitMessage.hpp"
 #include "CubitStringUtil.hpp"
 #include <QString>
@@ -23,11 +22,16 @@ ConfigFile::ConfigFile()
     filename = "ccx.cfg";
     componentpath = "";
     filepath = "";
-
+    /*
     // search for correct component path
     Mediator* med = Broker::instance();
     std::string log;
-    /*
+
+
+    log = " something went wrong with getting the path for the plugin \n";
+    PRINT_INFO("%s", log.c_str());
+
+    
     QString output;
     
     med->get_component_paths(output);
@@ -38,7 +42,7 @@ ConfigFile::ConfigFile()
     std::vector<CubitString> paths;
     cs.tokenize(';', paths );
     */
-
+/*
     std::vector<ComponentInfo> ci;
     std::vector<QString> paths;
     med->get_component_list(ci);
@@ -55,21 +59,30 @@ ConfigFile::ConfigFile()
         #ifdef WIN32
             //componentpath = paths[i].str() + "/";
             componentpath = paths[i].toStdString() + "/";
-            filepath = componentpath + "calculix_comp.ccl";
+            filepath = componentpath + "calculix_comp.dll";
             if (_access(filepath.c_str(), 0) == 0)
             {
                 filepath = componentpath + filename;
                 break;
+            }else
+            {
+                log = " something went wrong with getting the path for the plugin \n";
+                PRINT_INFO("%s", log.c_str());
             }
         #else
             //componentpath = paths[i].str() + "/";
             componentpath = paths[i].toStdString() + "/";
-            filepath = componentpath + "libcalculix_comp.ccl";
+            filepath = componentpath + "libcalculix_comp.so";
             if (access(filepath.c_str(), R_OK) == 0)
             {
                 filepath = componentpath + filename;
                 break;
+            }else
+            {
+                log = " something went wrong with getting the path for the plugin \n";
+                PRINT_INFO("%s", log.c_str());
             }
+
         #endif
     }
 
@@ -94,12 +107,14 @@ ConfigFile::ConfigFile()
         log.append(" state: " + output.toStdString() + " \n");
         PRINT_INFO("%s", log.c_str());
     }
-    */    
+    */
+       
 }
 
 ConfigFile::~ConfigFile()
 {}
 
+/*
 void ConfigFile::clear()
 {
     std::ofstream output_file;
@@ -306,3 +321,4 @@ bool ConfigFile::standard_bool_entry(std::string option)
     
     return standard_value;
 }
+    */

@@ -6,7 +6,7 @@
 class MenuManager;
 class ToolbarManager;
 class cmdPanelManager;
-class ExportManager;
+//class ExportManager;
 class CCXDockWindowModelTree;
 class UserOptionsPanel;
 
@@ -21,6 +21,7 @@ public:
   // Methods inherited from Component
   void start_up(int withGUI);
   void clean_up();
+  virtual void interrupt_progress();
 
   void update();
   void reset();
@@ -41,8 +42,8 @@ private:
   void cleanup_CCXDockWindowModelTree();
 
   //! Add export types to the file menu
-  void add_exports();
-  void cleanup_exports();
+  //void add_exports();
+  //void cleanup_exports();
 
   void setup_observers(int withGUI);
   void cleanup_observers();
@@ -50,6 +51,7 @@ private:
   // Add User Options
   void restore_settings();
   void save_settings();
+  
   // load Panel
   void load_options();
   void unload_options();
@@ -57,7 +59,7 @@ private:
   MenuManager*    myMenus;
   ToolbarManager* myToolbars;
   cmdPanelManager*   mycmdPanels;
-  ExportManager*  myExportManager;
+  //ExportManager*  myExportManager;
   CCXDockWindowModelTree* myCCXDockWindowModelTree;
   UserOptionsPanel* mUserOptionsPanel;
 

@@ -1,10 +1,12 @@
 
-#include "ComponentPlugin.hpp"
+//#include "ComponentPlugin.hpp"
+#include "CubitPluginExport.hpp"
 #include "Broker.hpp"
 #include "CalculiXComp.hpp"
 
-COMPONENT_PLUGIN;
+//COMPONENT_PLUGIN;
 
+/*
 PLUGIN_PRINT_VERSION
 {
   Broker::command << "CalculiXComp Version 2026.9\n";
@@ -19,3 +21,6 @@ PLUGIN_REGISTER_COMPONENTS
   // Add the component to the framework.
   Broker::instance()->register_component(new CalculiXComp());
 }
+*/
+
+CUBIT_PLUGIN(CalculiXComp);

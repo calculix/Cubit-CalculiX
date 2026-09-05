@@ -14,7 +14,7 @@ class ConfigFile
   std::string componentpath;
   std::string filename;
   std::string filepath;
-
+/*
   void clear();
   void read_entry(std::string option, QString &value);
   void read_num_entry(std::string option, int &value);
@@ -25,6 +25,7 @@ class ConfigFile
   QString standard_entry(std::string option);
   int standard_num_entry(std::string option);
   bool standard_bool_entry(std::string option);
+*/
 };
 
 #endif // CONFIGFILE_HPP

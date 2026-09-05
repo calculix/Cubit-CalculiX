@@ -5,9 +5,12 @@ project(Cubit-CalculiX)
 if (UNIX)
  #set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2025.12/cmake")
  set(CMAKE_PREFIX_PATH "/home/norbert/Downloads/Coreform-Cubit-2026.8+69344-Lin64/Coreform-Cubit-2026.8/cmake")
+ include_directories("/home/norbert/Downloads/Coreform-Cubit-2026.8+69344-Lin64/Coreform-Cubit-2026.8/include")
  # python for our swig wrapping
  #include_directories("/home/user/Downloads/Coreform-Cubit-2026.8-rc+69312-Lin64/Coreform-Cubit-2026.8/lib/python3/include/python3.12") 
- include_directories("/opt/Coreform-Cubit-2025.12/bin/python3/include/python3.10") 
+ #include_directories("/opt/Coreform-Cubit-2025.12/bin/python3/include/python3.10") 
+ include_directories("/home/norbert/git/Python-3.12.10/Include")
+ include_directories("/home/norbert/git/Python-3.12.10") 
  set(HDF5_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Utility/HDF5/Linux/1.14.4.3)
 endif (UNIX)
 
@@ -84,6 +87,7 @@ endif (WIN32)
 if (UNIX)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface/calculix_pythoninterface.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Icons/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Icons/)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/calculix_comp.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
 endif (UNIX)
 
 # copy missing libraries into build directory
@@ -127,6 +131,7 @@ set(CCXPYTHONINTERFACE_SRCS
 set(CCXCOMP_SRCS
     CalculiXComp.cpp
     CalculiXComp.hpp
+    calculix_comp_wrap.cxx
     ${EO_COMP_SRC}
     ${GUI_SRC}
     MenuManager.cpp
@@ -193,8 +198,9 @@ set_target_properties(calculix_core PROPERTIES AUTOMOC 1)
 
 add_library(calculix_comp SHARED ${CCXCOMP_SRCS})
 #set_target_properties(calculix_comp PROPERTIES SUFFIX ".ccl")
+set_target_properties(calculix_comp PROPERTIES SUFFIX ".so" PREFIX "_")
 #target_link_libraries(calculix_comp clarogui navigation pickwidget cubiti clarofw Qt6::Charts Qt6::Widgets)
-target_link_libraries(calculix_comp clarogui navigation cubiti clarofw Qt6::Charts Qt6::Widgets)
+target_link_libraries(calculix_comp clarogui navigation cubiti clarofw Qt6::Charts Qt6::Widgets component)
 set_target_properties(calculix_comp PROPERTIES AUTOMOC 1)
 
 add_library(calculix_pythoninterface SHARED ${CCXPYTHONINTERFACE_SRCS})
