@@ -1,4 +1,4 @@
-#include "ConfigFile.hpp"
+#include "CalculiXConfigFile.hpp"
 
 #include "Broker.hpp"
 #include "ComponentInfo.hpp"
@@ -17,21 +17,17 @@
 #endif
 
 
-ConfigFile::ConfigFile()
+CalculiXConfigFile::CalculiXConfigFile()
 {
     filename = "ccx.cfg";
     componentpath = "";
     filepath = "";
-    /*
+    
     // search for correct component path
     Mediator* med = Broker::instance();
     std::string log;
 
-
-    log = " something went wrong with getting the path for the plugin \n";
-    PRINT_INFO("%s", log.c_str());
-
-    
+    /*
     QString output;
     
     med->get_component_paths(output);
@@ -42,7 +38,7 @@ ConfigFile::ConfigFile()
     std::vector<CubitString> paths;
     cs.tokenize(';', paths );
     */
-/*
+
     std::vector<ComponentInfo> ci;
     std::vector<QString> paths;
     med->get_component_list(ci);
@@ -66,21 +62,21 @@ ConfigFile::ConfigFile()
                 break;
             }else
             {
-                log = " something went wrong with getting the path for the plugin \n";
-                PRINT_INFO("%s", log.c_str());
+                //log = " something went wrong with getting the path for the plugin \n";
+                //PRINT_INFO("%s", log.c_str());
             }
         #else
             //componentpath = paths[i].str() + "/";
             componentpath = paths[i].toStdString() + "/";
-            filepath = componentpath + "libcalculix_comp.so";
+            filepath = componentpath + "libcalculix_plugin.so";
             if (access(filepath.c_str(), R_OK) == 0)
             {
                 filepath = componentpath + filename;
                 break;
             }else
             {
-                log = " something went wrong with getting the path for the plugin \n";
-                PRINT_INFO("%s", log.c_str());
+                //log = " something went wrong with getting the path for the plugin \n";
+                //PRINT_INFO("%s", log.c_str());
             }
 
         #endif
@@ -107,22 +103,20 @@ ConfigFile::ConfigFile()
         log.append(" state: " + output.toStdString() + " \n");
         PRINT_INFO("%s", log.c_str());
     }
-    */
-       
+    */       
 }
 
-ConfigFile::~ConfigFile()
+CalculiXConfigFile::~CalculiXConfigFile()
 {}
 
-/*
-void ConfigFile::clear()
+void CalculiXConfigFile::clear()
 {
     std::ofstream output_file;
     output_file.open(filepath, std::ofstream::out | std::ofstream::trunc);
     output_file.close();
 }
 
-void ConfigFile::read_entry(std::string option, QString &value)
+void CalculiXConfigFile::read_entry(std::string option, QString &value)
 {
     std::ifstream input_file;
     input_file.open(filepath.c_str());
@@ -149,7 +143,7 @@ void ConfigFile::read_entry(std::string option, QString &value)
     }
 }
 
-void ConfigFile::read_num_entry(std::string option, int &value)
+void CalculiXConfigFile::read_num_entry(std::string option, int &value)
 {
     std::ifstream input_file;
     input_file.open(filepath.c_str());
@@ -175,7 +169,7 @@ void ConfigFile::read_num_entry(std::string option, int &value)
     }
 }
 
-void ConfigFile::read_bool_entry(std::string option, bool &value)
+void CalculiXConfigFile::read_bool_entry(std::string option, bool &value)
 {
     std::ifstream input_file;
     QString cfgvalue;
@@ -211,7 +205,7 @@ void ConfigFile::read_bool_entry(std::string option, bool &value)
     }
 }
 
-void ConfigFile::write_entry(std::string option, QString value)
+void CalculiXConfigFile::write_entry(std::string option, QString value)
 {
     std::ofstream output_file;
     output_file.open(filepath.c_str(), std::ios_base::app);
@@ -219,7 +213,7 @@ void ConfigFile::write_entry(std::string option, QString value)
     output_file.close();
 }
 
-void ConfigFile::write_num_entry(std::string option, int value)
+void CalculiXConfigFile::write_num_entry(std::string option, int value)
 {
     std::ofstream output_file;
     output_file.open(filepath.c_str(), std::ios_base::app);
@@ -227,7 +221,7 @@ void ConfigFile::write_num_entry(std::string option, int value)
     output_file.close();
 }
 
-void ConfigFile::write_bool_entry(std::string option, bool value)
+void CalculiXConfigFile::write_bool_entry(std::string option, bool value)
 {
     std::ofstream output_file;
     output_file.open(filepath.c_str(), std::ios_base::app);
@@ -240,7 +234,7 @@ void ConfigFile::write_bool_entry(std::string option, bool value)
     output_file.close();
 }
 
-QString ConfigFile::standard_entry(std::string option)
+QString CalculiXConfigFile::standard_entry(std::string option)
 {
     QString standard_value = "";
 
@@ -291,7 +285,7 @@ QString ConfigFile::standard_entry(std::string option)
     return standard_value;
 }
 
-int ConfigFile::standard_num_entry(std::string option)
+int CalculiXConfigFile::standard_num_entry(std::string option)
 {
     int standard_value = 1;
 
@@ -310,7 +304,7 @@ int ConfigFile::standard_num_entry(std::string option)
     return standard_value;
 }
 
-bool ConfigFile::standard_bool_entry(std::string option)
+bool CalculiXConfigFile::standard_bool_entry(std::string option)
 {
     bool standard_value = true;
 
@@ -321,4 +315,3 @@ bool ConfigFile::standard_bool_entry(std::string option)
     
     return standard_value;
 }
-    */

@@ -12,7 +12,7 @@
 #include "CCXDockWindowModelTree.hpp"
 #include "ToolbarManager.hpp"
 #include "loadUserOptions.hpp"
-#include "ConfigFile.hpp"
+#include "CalculiXConfigFile.hpp"
 #include "UserOptionsPanel.hpp"
 #include <iostream>
 
@@ -59,10 +59,10 @@ void CalculiXComp::start_up(int withGUI)
     //setup_menus();
     //setup_toolbars();
     setup_command_panels();
-    ////setup_CCXDockWindowModelTree(); // command panels has to be setup before dockwindow
+    setup_CCXDockWindowModelTree(); // command panels has to be setup before dockwindow
     //add_exports();
     
-    ////load_options();
+    load_options();
     boolwithGUI = true;
   }
   setup_observers(withGUI);
@@ -210,8 +210,9 @@ void CalculiXComp::cleanup_observers()
 
 void CalculiXComp::restore_settings()
 {
-  ConfigFile config;
-  /*
+
+  CalculiXConfigFile config;
+  
   config.read_entry("PathSolver", ccx_uo.mPathSolver);
   ccx_uo.mPathSolverName = "Path to CalculiX Solver";
   config.read_num_entry("SolverThreads", ccx_uo.mSolverThreads);
@@ -230,13 +231,11 @@ void CalculiXComp::restore_settings()
   ccx_uo.mSaveLoadedResultsName = "Save loaded FRD and DAT data";
   config.read_entry("PathMaterialLibrary", ccx_uo.mPathMaterialLibrary);
   ccx_uo.mPathMaterialLibraryName = "Path to MaterialLibrary";
-  */
 }
 
 void CalculiXComp::save_settings()
-{
-  /* 
-  ConfigFile config;
+{ 
+  CalculiXConfigFile config;
   
   config.clear();
   config.write_entry("PathSolver", ccx_uo.mPathSolver);
@@ -248,7 +247,6 @@ void CalculiXComp::save_settings()
   config.write_entry("PathPythonInterface", ccx_uo.mPathPythonInterface);
   config.write_bool_entry("SaveLoadedResults", ccx_uo.mSaveLoadedResults);
   config.write_entry("PathMaterialLibrary", ccx_uo.mPathMaterialLibrary);
-  */
 }
 
 void CalculiXComp::load_options()
