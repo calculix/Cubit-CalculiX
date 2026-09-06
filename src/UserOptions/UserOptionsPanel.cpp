@@ -1,6 +1,6 @@
 #include "UserOptionsPanel.hpp"
 #include "loadUserOptions.hpp"
-
+#include "CalculiXConfigFile.hpp"
 
 UserOptionsPanel::UserOptionsPanel(QWidget *parent) :
   QWidget(parent),
@@ -124,4 +124,16 @@ void UserOptionsPanel::save_settings()
   ccx_uo.mPathPythonInterface = lineEdit_7->text();
   ccx_uo.mSaveLoadedResults = checkBox_8->isChecked();
   ccx_uo.mPathMaterialLibrary = lineEdit_9->text();
+
+  CalculiXConfigFile config;  
+  config.clear();
+  config.write_entry("PathSolver", ccx_uo.mPathSolver);
+  config.write_num_entry("SolverThreads", ccx_uo.mSolverThreads);
+  config.write_num_entry("ConverterThreads", ccx_uo.mConverterThreads);
+  config.write_entry("PathCGX", ccx_uo.mPathCGX);
+  config.write_entry("PathParaView", ccx_uo.mPathParaView);
+  config.write_entry("PathIcons", ccx_uo.mPathIcons);
+  config.write_entry("PathPythonInterface", ccx_uo.mPathPythonInterface);
+  config.write_bool_entry("SaveLoadedResults", ccx_uo.mSaveLoadedResults);
+  config.write_entry("PathMaterialLibrary", ccx_uo.mPathMaterialLibrary);
 }

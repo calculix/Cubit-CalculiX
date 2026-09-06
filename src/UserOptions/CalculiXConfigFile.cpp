@@ -5,6 +5,7 @@
 #include "Mediator.hpp"
 #include "CubitMessage.hpp"
 #include "CubitStringUtil.hpp"
+#include "CubitFileUtil.hpp"
 #include <QString>
 #include <fstream>
 #include <iostream>
@@ -55,10 +56,10 @@ CalculiXConfigFile::CalculiXConfigFile()
         #ifdef WIN32
             //componentpath = paths[i].str() + "/";
             componentpath = paths[i].toStdString() + "/";
-            filepath = componentpath + "calculix_comp.dll";
+            filepath = componentpath + "calculix_plugin.dll";
             if (_access(filepath.c_str(), 0) == 0)
             {
-                filepath = componentpath + filename;
+                filepath = CubitFileUtil::get_current_working_directory().str() + filename;
                 break;
             }else
             {
@@ -71,7 +72,7 @@ CalculiXConfigFile::CalculiXConfigFile()
             filepath = componentpath + "libcalculix_plugin.so";
             if (access(filepath.c_str(), R_OK) == 0)
             {
-                filepath = componentpath + filename;
+                filepath = CubitFileUtil::get_current_working_directory().str() + filename;
                 break;
             }else
             {
@@ -280,6 +281,13 @@ QString CalculiXConfigFile::standard_entry(std::string option)
             standard_value = QString::fromStdString(componentpath) + "libmaterial.hdf5";
         #else
             standard_value = QString::fromStdString(componentpath) + "libmaterial.hdf5";
+        #endif
+    }else if(option == "Version")
+    {
+        #ifdef WIN32
+            standard_value = "2026.9";
+        #else
+            standard_value = "2026.9";
         #endif
     }
     return standard_value;

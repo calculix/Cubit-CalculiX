@@ -235,8 +235,7 @@ void CalculiXComp::restore_settings()
 
 void CalculiXComp::save_settings()
 { 
-  CalculiXConfigFile config;
-  
+  CalculiXConfigFile config;  
   config.clear();
   config.write_entry("PathSolver", ccx_uo.mPathSolver);
   config.write_num_entry("SolverThreads", ccx_uo.mSolverThreads);

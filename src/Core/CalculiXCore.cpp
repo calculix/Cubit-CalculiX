@@ -12,8 +12,8 @@
 #include <algorithm>
 #include <cmath>
 
-#include "cubitguicommondll.hpp"
-#include "CubitGuiUtil.hpp"
+//#include "cubitguicommondll.hpp"
+//#include "CubitGuiUtil.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "MeshExportInterface.hpp"
@@ -8626,6 +8626,7 @@ std::string CalculiXCore::get_hbc_export_data() // gets the export data from cor
   std::string command;
   int bc_set_id=-1;
   BCSetHandle bc_set;
+  std::vector<BCSetHandle> bc_sets;
   NodesetHandle nodeset;
   std::vector<BCEntityHandle> bc_handles;
   std::vector<MeshExportBCData> bc_attribs; 
@@ -8633,9 +8634,15 @@ std::string CalculiXCore::get_hbc_export_data() // gets the export data from cor
 
   log = "Creating BCSet for exporting Homogeneous Boundary Conditions.\n";
   PRINT_INFO("%s", log.c_str());
-  me_iface->create_default_bcset(0,true,true,true,bc_set);
+  
+  if (me_iface->get_bcset_list(bc_sets))
+  {
+    bc_set_id = me_iface->id_from_handle(bc_sets[bc_sets.size()-1]);
+    me_iface->create_default_bcset(bc_set_id+1,true,true,true,bc_set);
+  }else{
+    me_iface->create_default_bcset(0,true,true,true,bc_set);
+  }
   bc_set_id = me_iface->id_from_handle(bc_set);
-
     
   // BCs
   me_iface->get_bc_restraints(bc_set, bc_handles);
@@ -8735,6 +8742,7 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
   std::string command;
   int bc_set_id=-1;
   BCSetHandle bc_set;
+  std::vector<BCSetHandle> bc_sets;
   NodesetHandle nodeset;
   SidesetHandle sideset;
   std::vector<BCEntityHandle> bc_handles;
@@ -8748,7 +8756,13 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
     { 
       log = "Creating BCSet for exporting Steps.\n";
       PRINT_INFO("%s", log.c_str());
-      me_iface->create_default_bcset(0,true,true,true,bc_set);
+      if (me_iface->get_bcset_list(bc_sets))
+      {
+        bc_set_id = me_iface->id_from_handle(bc_sets[bc_sets.size()-1]);
+        me_iface->create_default_bcset(bc_set_id+1,true,true,true,bc_set);
+      }else{
+        me_iface->create_default_bcset(0,true,true,true,bc_set);
+      }
       bc_set_id = me_iface->id_from_handle(bc_set);
     }
     str_temp = steps->get_step_export(steps->steps_data[i][0]);

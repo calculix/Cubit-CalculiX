@@ -191,4 +191,4 @@
 2026-02-11 working on utility model change
 2026-02-17 working on utility model change
 2026-08-22 updating for cubit 2026.8 
-2026-09-05 updating for cubit 2026.8 
+2026-09-05 updating for cubit 2026.8, need to add commands to history,need to move ccx.cfg and log files to cubit user files
