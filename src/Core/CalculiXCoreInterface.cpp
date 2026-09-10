@@ -84,9 +84,15 @@ std::string CalculiXCoreInterface::print_data()
   return ccx_core.print_data();
 }
 
-bool CalculiXCoreInterface::log_str(std::string str_log)
+bool CalculiXCoreInterface::print_to_log(std::string str_log)
 {
   ccx_core.print_to_log(str_log);
+  return true;
+}
+
+bool CalculiXCoreInterface::print_to_cl(std::string str_log)
+{
+  ccx_core.print_to_cl(str_log);
   return true;
 }
 

@@ -1,6 +1,6 @@
 #include "JobsMonitor.hpp"
 #include "CalculiXCoreInterface.hpp"
-#include "GUITimer.hpp"
+#include "GuiTimer.hpp"
 #include "JobsMonitorLiveMonitor.hpp"
 #include "JobsMonitorFRD.hpp"
 #include "JobsMonitorDAT.hpp"
@@ -103,7 +103,7 @@ JobsMonitor::JobsMonitor()
   // Update list items and data
   this->update();
 
-  timer = new GUITimer();
+  timer = new GuiTimer();
   QObject::connect(timer, SIGNAL(timeout()), this, SLOT(update_slot()));
 }
 

@@ -21,7 +21,7 @@
 
 
 class CalculiXCoreInterface;
-class GUITimer;
+class GuiTimer;
 class JobsMonitorLiveMonitor;
 class JobsMonitorFRD;
 class JobsMonitorDAT;
@@ -77,7 +77,7 @@ private:
   JobsMonitorDAT* DAT_widget;
   JobsMonitorDATSection* DATSection_widget;
 
-  GUITimer *timer;
+  GuiTimer *timer;
 };
 
 #endif // JOBSMONITOR_HPP

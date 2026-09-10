@@ -70,7 +70,8 @@ public:
   bool cmd(std::string cmd); // executes a cubit command with appending to the history
   bool silent_cmd(std::string cmd); // executes a cubit command
   std::string get_version(); // gets the component version
-  bool print_to_log(std::string str_log);
+  bool print_to_log(std::string str_log); // print to ccx log file
+  bool print_to_cl(std::string str_log); // print to cubit command line
   bool init(); // init all core objects
   bool init2(); // init material core and interfaces
   bool init_pythoninterface(); // init python interface

@@ -1,6 +1,6 @@
 #include "JobsTree.hpp"
 #include "CalculiXCoreInterface.hpp"
-#include "GUITimer.hpp"
+#include "GuiTimer.hpp"
 
 JobsTree::JobsTree(QTreeWidget* parent):
   QTreeWidgetItem (parent),
@@ -20,7 +20,7 @@ void JobsTree::initialize()
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
   this->setIcon(0,ccx_iface->getIcon2("JobsTree")); 
   isInitialized = true;
-  timer = new GUITimer();
+  timer = new GuiTimer();
   QObject::connect(timer, SIGNAL(timeout()), this, SLOT(update_icon()));
 }
 

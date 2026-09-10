@@ -7,7 +7,7 @@
 #include <QIcon>
 
 class CalculiXCoreInterface;
-class GUITimer;
+class GuiTimer;
 
 class JobsTree : public QObject, public QTreeWidgetItem
 {
@@ -35,7 +35,7 @@ private:
   int get_child_id(std::string job_id); // check if the item for the given job_id exists, returns the id or -1 if failed;
 
   CalculiXCoreInterface *ccx_iface;
-  GUITimer *timer;
+  GuiTimer *timer;
 };
 
 #endif // JOBSTREE_HPP

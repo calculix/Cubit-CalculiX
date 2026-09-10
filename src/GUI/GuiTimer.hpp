@@ -3,12 +3,12 @@
 
 #include <QTimer>
 
-class GUITimer : public QTimer
+class GuiTimer : public QTimer
 {
 
 public:
-  GUITimer();
-  ~GUITimer();
+  GuiTimer();
+  ~GuiTimer();
 
 public slots:
   void timeoutaction();

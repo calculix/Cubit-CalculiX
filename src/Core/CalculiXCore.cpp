@@ -185,6 +185,12 @@ bool CalculiXCore::print_to_log(std::string str_log)
   return true;
 }
 
+bool CalculiXCore::print_to_cl(std::string str_log)
+{
+  PRINT_INFO("%s", str_log.c_str());
+  return true;
+}
+
 bool CalculiXCore::init()
 {
 /*

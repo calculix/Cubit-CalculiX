@@ -35,7 +35,7 @@ bool ccxLogCoreCommand::execute(CubitCommandData &data)
 
   std::string output;
   
-  ccx_iface.log_str(ccx_iface.print_data());
+  ccx_iface.print_to_log(ccx_iface.print_data());
 
   output = "\tCalculiXPlugin Core\n";
   output.append("\tCore data printed to CalculiXCore_logfile\n");

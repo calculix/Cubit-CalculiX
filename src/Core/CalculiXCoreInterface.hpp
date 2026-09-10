@@ -27,7 +27,8 @@ public:
   bool block_gui_update(); //returns the bool if the gui should be updated
   bool set_block_gui_update(bool status); //sets the bool if the gui should be updated
   std::string print_data();
-  bool log_str(std::string str_log);
+  bool print_to_log(std::string str_log);
+  bool print_to_cl(std::string str_log);
   bool export_to_csv(std::string path_and_name, std::vector<std::string> header, std::vector<std::vector<double>> data,bool overwrite); // exports the data to a .csv file, with the header
   std::vector<int> parser(std::string parse_type, std::string parse_string);
   std::string to_string_scientific(double value, int precision = 6); // converts a double to string with scientific notation, with optional precision
