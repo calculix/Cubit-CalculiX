@@ -1,5 +1,6 @@
 #include "JobsMonitorDATPlot.hpp"
 #include "CalculiXCoreInterface.hpp"
+#include "GuiSendCmd.hpp"
 
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
@@ -367,7 +368,7 @@ void JobsMonitorDATPlot::on_pushButton_plot_clicked(bool)
  
   if (push_cmd)
   {
-    ccx_iface->cmd(cmd);
+    GuiSendCmd::gui_cmd(QString::fromStdString(cmd));
   }
 }
 

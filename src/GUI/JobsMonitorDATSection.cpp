@@ -1,6 +1,7 @@
 #include "JobsMonitorDATSection.hpp"
 #include "CalculiXCoreInterface.hpp"
 #include "JobsMonitorDATSectionPlot.hpp"
+#include "GuiSendCmd.hpp"
 
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
@@ -499,7 +500,7 @@ void JobsMonitorDATSection::on_pushButton_export_clicked(bool)
     cmd.append("overwrite ");
   }
  
-  ccx_iface->cmd(cmd);
+  GuiSendCmd::gui_cmd(QString::fromStdString(cmd));
 
   return;
 }

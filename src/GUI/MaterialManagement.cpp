@@ -18,6 +18,7 @@
 #include "MaterialManagementCompressionOnlyCard.hpp"
 #include "MaterialManagementTensionOnlyCard.hpp"
 #include "MaterialManagementDampingCard.hpp"
+#include "GuiSendCmd.hpp"
 
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
@@ -1241,7 +1242,8 @@ void MaterialManagement::on_pushButton_apply_clicked(bool)
   for (size_t i = 0; i < commands.size(); i++)
   {
     //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
-    ccx_iface->cmd(commands[int(i)].toStdString());
+    //ccx_iface->cmd(commands[int(i)].toStdString());
+    GuiSendCmd::gui_cmd(commands[int(i)]);
   }
 }
 
@@ -1272,7 +1274,8 @@ void MaterialManagement::on_pushButton_new_clicked(bool)
   for (size_t i = 0; i < commands.size(); i++)
   {
     //CubitInterface::cmd(commands[i].c_str());
-    ccx_iface->cmd(commands[int(i)]);
+    //ccx_iface->cmd(commands[int(i)].toStdString());
+    GuiSendCmd::gui_cmd(QString::fromStdString(commands[int(i)]));
   }
 }
 
@@ -1301,7 +1304,8 @@ void MaterialManagement::on_pushButton_delete_clicked(bool)
   for (size_t i = 0; i < commands.size(); i++)
   {
     //CubitInterface::cmd(commands[i].c_str());
-    ccx_iface->cmd(commands[int(i)]);
+    //ccx_iface->cmd(commands[int(i)].toStdString());
+    GuiSendCmd::gui_cmd(QString::fromStdString(commands[int(i)]));
   }
 
   this->removeListItems();
@@ -1341,7 +1345,8 @@ void MaterialManagement::on_pushButton_rename_clicked(bool)
 
     for (size_t i = 0; i < commands.size(); i++)
     {
-      ccx_iface->cmd(commands[int(i)]);
+    //ccx_iface->cmd(commands[int(i)].toStdString());
+    GuiSendCmd::gui_cmd(QString::fromStdString(commands[int(i)]));
     }
   }
 }
@@ -1375,7 +1380,8 @@ void MaterialManagement::on_pushButton_export_clicked(bool)
 
     for (size_t i = 0; i < commands.size(); i++)
     {
-      ccx_iface->cmd(commands[int(i)]);
+      //ccx_iface->cmd(commands[int(i)].toStdString());
+      GuiSendCmd::gui_cmd(QString::fromStdString(commands[int(i)]));
     }
   }
 }
@@ -1409,7 +1415,8 @@ void MaterialManagement::on_pushButton_library_import_clicked(bool)
 
     for (size_t i = 0; i < commands.size(); i++)
     {
-      ccx_iface->cmd(commands[int(i)]);
+      //ccx_iface->cmd(commands[int(i)].toStdString());
+      GuiSendCmd::gui_cmd(QString::fromStdString(commands[int(i)]));
     }
   }
 }
@@ -1436,7 +1443,8 @@ void MaterialManagement::on_pushButton_library_new_clicked(bool)
 
     for (size_t i = 0; i < commands.size(); i++)
     {
-      ccx_iface->cmd(commands[int(i)]);
+      //ccx_iface->cmd(commands[int(i)].toStdString());
+      GuiSendCmd::gui_cmd(QString::fromStdString(commands[int(i)]));
     }
   }
   //root material, when nothing is selected
@@ -1450,7 +1458,8 @@ void MaterialManagement::on_pushButton_library_new_clicked(bool)
 
     for (size_t i = 0; i < commands.size(); i++)
     {
-      ccx_iface->cmd(commands[int(i)]);
+      //ccx_iface->cmd(commands[int(i)].toStdString());
+      GuiSendCmd::gui_cmd(QString::fromStdString(commands[int(i)]));
     }
   }
 }
@@ -1470,7 +1479,8 @@ void MaterialManagement::on_pushButton_library_delete_clicked(bool)
 
     for (size_t i = 0; i < commands.size(); i++)
     {
-      ccx_iface->cmd(commands[int(i)]);
+      //ccx_iface->cmd(commands[int(i)].toStdString());
+      GuiSendCmd::gui_cmd(QString::fromStdString(commands[int(i)]));
     }
 
     this->removeListItems();
@@ -1511,7 +1521,8 @@ void MaterialManagement::on_pushButton_library_rename_clicked(bool)
 
     for (size_t i = 0; i < commands.size(); i++)
     {
-      ccx_iface->cmd(commands[int(i)]);
+      //ccx_iface->cmd(commands[int(i)].toStdString());
+      GuiSendCmd::gui_cmd(QString::fromStdString(commands[int(i)]));
     }
   }
 }
@@ -1538,7 +1549,8 @@ void MaterialManagement::on_pushButton_library_new_group_clicked(bool)
 
     for (size_t i = 0; i < commands.size(); i++)
     {
-      ccx_iface->cmd(commands[int(i)]);
+      //ccx_iface->cmd(commands[int(i)].toStdString());
+      GuiSendCmd::gui_cmd(QString::fromStdString(commands[int(i)]));
     }
   }
   //root material, when nothing is selected
@@ -1552,7 +1564,8 @@ void MaterialManagement::on_pushButton_library_new_group_clicked(bool)
 
     for (size_t i = 0; i < commands.size(); i++)
     {
-      ccx_iface->cmd(commands[int(i)]);
+      //ccx_iface->cmd(commands[int(i)].toStdString());
+      GuiSendCmd::gui_cmd(QString::fromStdString(commands[int(i)]));
     }
   }
 }
@@ -1572,7 +1585,8 @@ void MaterialManagement::on_pushButton_library_delete_group_clicked(bool)
 
     for (size_t i = 0; i < commands.size(); i++)
     {
-      ccx_iface->cmd(commands[int(i)]);
+      //ccx_iface->cmd(commands[int(i)].toStdString());
+      GuiSendCmd::gui_cmd(QString::fromStdString(commands[int(i)]));
     }
 
     this->removeListItems();
@@ -1613,7 +1627,8 @@ void MaterialManagement::on_pushButton_library_rename_group_clicked(bool)
 
     for (size_t i = 0; i < commands.size(); i++)
     {
-      ccx_iface->cmd(commands[int(i)]);
+      //ccx_iface->cmd(commands[int(i)].toStdString());
+      GuiSendCmd::gui_cmd(QString::fromStdString(commands[int(i)]));
     }
   }
 }
@@ -1640,7 +1655,8 @@ void MaterialManagement::on_pushButton_library_description_clicked(bool)
 
     for (size_t i = 0; i < commands.size(); i++)
     {
-      ccx_iface->cmd(commands[int(i)]);
+      //ccx_iface->cmd(commands[int(i)].toStdString());
+      GuiSendCmd::gui_cmd(QString::fromStdString(commands[int(i)]));
     }
   }
 }

@@ -1,6 +1,7 @@
 #include "JobsMonitorFRD.hpp"
 #include "CalculiXCoreInterface.hpp"
 #include "JobsMonitorFRDPlot.hpp"
+#include "GuiSendCmd.hpp"
 
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
@@ -732,7 +733,7 @@ void JobsMonitorFRD::on_pushButton_export_clicked(bool)
     cmd.append("node_id " + std::to_string(node_id) + " ");
   }
   
-  ccx_iface->cmd(cmd);
+  GuiSendCmd::gui_cmd(QString::fromStdString(cmd));
 
   return;
 }

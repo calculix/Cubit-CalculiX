@@ -1,6 +1,7 @@
 #include "StepsModifyUncoupledTemperatureDisplacementPanel.hpp"
 #include "PanelTable.hpp"
 #include "CalculiXCoreInterface.hpp"
+#include "GuiSendCmd.hpp"
 
 #include "CubitInterface.hpp"
 #include "Broker.hpp"
@@ -282,6 +283,7 @@ void StepsModifyUncoupledTemperatureDisplacementPanel::on_pushButton_apply_click
   for (size_t i = 0; i < commands.size(); i++)
   {
     //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
-    ccx_iface->cmd(commands[int(i)].toStdString());
+    //ccx_iface->cmd(commands[int(i)].toStdString());
+    GuiSendCmd::gui_cmd(commands[int(i)]);
   }
 }

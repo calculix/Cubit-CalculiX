@@ -5,6 +5,7 @@
 #include "JobsMonitorFRD.hpp"
 #include "JobsMonitorDAT.hpp"
 #include "JobsMonitorDATSection.hpp"
+#include "GuiSendCmd.hpp"
 
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
@@ -280,39 +281,39 @@ void JobsMonitor::setJob(int job_id)
 void JobsMonitor::on_pushButton_run_clicked(bool)
 {
   std::string command = "ccx run job " + std::to_string(current_job_id);
-  ccx_iface->cmd(command);
+  GuiSendCmd::gui_cmd((QString::fromStdString(command)));
 }
 
 void JobsMonitor::on_pushButton_kill_clicked(bool)
 {
   std::string command = "ccx kill job " + std::to_string(current_job_id);
-  ccx_iface->cmd(command);
+  GuiSendCmd::gui_cmd((QString::fromStdString(command)));
 }
 
 void JobsMonitor::on_pushButton_result_cgx_clicked(bool)
 {
   std::string command = "ccx result cgx job " + std::to_string(current_job_id);
-  ccx_iface->cmd(command);
+  GuiSendCmd::gui_cmd((QString::fromStdString(command)));
 }
 
 void JobsMonitor::on_pushButton_result_load_clicked(bool)
 {
   std::string command = "ccx result load job " + std::to_string(current_job_id);
-  ccx_iface->cmd(command);
+  GuiSendCmd::gui_cmd((QString::fromStdString(command)));
 }
 
 void JobsMonitor::on_pushButton_result_convert_clicked(bool)
 {
   //std::string command = "ccx result load job " + std::to_string(current_job_id);
-  //ccx_iface->cmd(command);
+  //GuiSendCmd::gui_cmd(commands[int(i)]);
   std::string command = "ccx result convert job " + std::to_string(current_job_id);
-  ccx_iface->cmd(command);
+  GuiSendCmd::gui_cmd((QString::fromStdString(command)));
 }
 
 void JobsMonitor::on_pushButton_result_paraview_clicked(bool)
 {
   std::string command = "ccx result paraview job " + std::to_string(current_job_id);
-  ccx_iface->cmd(command);
+  GuiSendCmd::gui_cmd((QString::fromStdString(command)));
 }
 
 void JobsMonitor::on_pushButton_close_clicked(bool)

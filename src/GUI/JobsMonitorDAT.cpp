@@ -1,6 +1,7 @@
 #include "JobsMonitorDAT.hpp"
 #include "CalculiXCoreInterface.hpp"
 #include "JobsMonitorDATPlot.hpp"
+#include "GuiSendCmd.hpp"
 
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
@@ -848,7 +849,7 @@ void JobsMonitorDAT::on_pushButton_export_clicked(bool)
   {
     cmd.append("element_id " + std::to_string(element_id) + " ");
   }
-  ccx_iface->cmd(cmd);
+  GuiSendCmd::gui_cmd(QString::fromStdString(cmd));
 
   return;
 }

@@ -1,5 +1,6 @@
 #include "JobsActionsPanel.hpp"
 #include "CalculiXCoreInterface.hpp"
+#include "GuiSendCmd.hpp"
 
 #include "CubitInterface.hpp"
 #include "Broker.hpp"
@@ -105,7 +106,8 @@ void JobsActionsPanel::on_pushButton_run_clicked(bool)
   for (size_t i = 0; i < commands.size(); i++)
   {
     //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
-    ccx_iface->cmd(commands[int(i)].toStdString());
+    //ccx_iface->cmd(commands[int(i)].toStdString());
+    GuiSendCmd::gui_cmd(commands[int(i)]);
   }
 }
 
@@ -128,7 +130,8 @@ void JobsActionsPanel::on_pushButton_kill_clicked(bool)
   for (size_t i = 0; i < commands.size(); i++)
   {
     //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
-    ccx_iface->cmd(commands[int(i)].toStdString());
+    //ccx_iface->cmd(commands[int(i)].toStdString());
+    GuiSendCmd::gui_cmd(commands[int(i)]);
   }
 }
 
@@ -151,7 +154,8 @@ void JobsActionsPanel::on_pushButton_result_cgx_clicked(bool)
   for (size_t i = 0; i < commands.size(); i++)
   {
     //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
-    ccx_iface->cmd(commands[int(i)].toStdString());
+    //ccx_iface->cmd(commands[int(i)].toStdString());
+    GuiSendCmd::gui_cmd(commands[int(i)]);
   }
 }
 
@@ -174,6 +178,7 @@ void JobsActionsPanel::on_pushButton_result_paraview_clicked(bool)
   for (size_t i = 0; i < commands.size(); i++)
   {
     //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
-    ccx_iface->cmd(commands[int(i)].toStdString());
+     //ccx_iface->cmd(commands[int(i)].toStdString());
+    GuiSendCmd::gui_cmd(commands[int(i)]);
   }
 }

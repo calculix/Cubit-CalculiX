@@ -1,5 +1,6 @@
 #include "ConstraintsDeletePanel.hpp"
 #include "CalculiXCoreInterface.hpp"
+#include "GuiSendCmd.hpp"
 
 #include "CubitInterface.hpp"
 #include "Broker.hpp"
@@ -68,6 +69,7 @@ void ConstraintsDeletePanel::on_pushButton_apply_clicked(bool)
   for (size_t i = 0; i < commands.size(); i++)
   {
     //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
-    ccx_iface->cmd(commands[int(i)].toStdString());
+    //ccx_iface->cmd(commands[int(i)].toStdString());
+    GuiSendCmd::gui_cmd(commands[int(i)]);
   }
 }
