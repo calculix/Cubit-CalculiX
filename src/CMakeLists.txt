@@ -4,8 +4,8 @@ project(Cubit-CalculiX)
 
 if (UNIX)
  #set(CMAKE_PREFIX_PATH "/opt/Coreform-Cubit-2025.12/cmake")
- set(CMAKE_PREFIX_PATH "/home/norbert/Downloads/Coreform-Cubit-2026.8+69344-Lin64/Coreform-Cubit-2026.8/cmake")
- include_directories("/home/norbert/Downloads/Coreform-Cubit-2026.8+69344-Lin64/Coreform-Cubit-2026.8/include")
+ set(CMAKE_PREFIX_PATH "/home/norbert/Downloads/Coreform-Cubit-2026.9-rc+70210-Lin64/Coreform-Cubit-2026.9/cmake")
+ include_directories("/home/norbert/Downloads/Coreform-Cubit-2026.9-rc+70210-Lin64/Coreform-Cubit-2026.9/include")
  # python for our swig wrapping
  #include_directories("/home/user/Downloads/Coreform-Cubit-2026.8-rc+69312-Lin64/Coreform-Cubit-2026.8/lib/python3/include/python3.12") 
  #include_directories("/opt/Coreform-Cubit-2025.12/bin/python3/include/python3.10") 

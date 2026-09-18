@@ -82,6 +82,10 @@ void CalculiXComp::clean_up()
   clean_up_complete();
 }
 
+void CalculiXComp::clean_up_complete()
+{
+}
+
 void CalculiXComp::interrupt_progress()
 {
 }

@@ -21,6 +21,7 @@ public:
   // Methods inherited from Component
   void start_up(int withGUI);
   void clean_up();
+  void clean_up_complete();
   virtual void interrupt_progress();
 
   void update();

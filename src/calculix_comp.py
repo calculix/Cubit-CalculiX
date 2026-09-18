@@ -72,6 +72,9 @@ class CalculiXComp(object):
     def clean_up(self):
         return _calculix_comp.CalculiXComp_clean_up(self)
 
+    def clean_up_complete(self):
+        return _calculix_comp.CalculiXComp_clean_up_complete(self)
+
     def interrupt_progress(self):
         return _calculix_comp.CalculiXComp_interrupt_progress(self)
 

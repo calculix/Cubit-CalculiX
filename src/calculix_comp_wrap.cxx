@@ -3573,6 +3573,29 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_CalculiXComp_clean_up_complete(PyObject *self, PyObject *args) {
+  PyObject *resultobj = 0;
+  CalculiXComp *arg1 = (CalculiXComp *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  
+  (void)self;
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_CalculiXComp, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CalculiXComp_clean_up_complete" "', argument " "1"" of type '" "CalculiXComp *""'"); 
+  }
+  arg1 = reinterpret_cast< CalculiXComp * >(argp1);
+  (arg1)->clean_up_complete();
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_CalculiXComp_interrupt_progress(PyObject *self, PyObject *args) {
   PyObject *resultobj = 0;
   CalculiXComp *arg1 = (CalculiXComp *) 0 ;
@@ -3712,6 +3735,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "delete_CalculiXComp", _wrap_delete_CalculiXComp, METH_O, NULL},
 	 { "CalculiXComp_start_up", _wrap_CalculiXComp_start_up, METH_VARARGS, NULL},
 	 { "CalculiXComp_clean_up", _wrap_CalculiXComp_clean_up, METH_O, NULL},
+	 { "CalculiXComp_clean_up_complete", _wrap_CalculiXComp_clean_up_complete, METH_O, NULL},
 	 { "CalculiXComp_interrupt_progress", _wrap_CalculiXComp_interrupt_progress, METH_O, NULL},
 	 { "CalculiXComp_update", _wrap_CalculiXComp_update, METH_O, NULL},
 	 { "CalculiXComp_reset", _wrap_CalculiXComp_reset, METH_O, NULL},
