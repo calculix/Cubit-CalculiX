@@ -43,6 +43,50 @@ find_package(Qt6 COMPONENTS Widgets REQUIRED)
 find_package(HDF5 REQUIRED COMPONENTS C CXX HL)
 ADD_DEFINITIONS(-DH5_BUILT_AS_DYNAMIC_LIB)
 
+
+# SWIG WRAPPING
+find_package(SWIG REQUIRED)
+set(CCXCOMP_WRAP
+    ${CMAKE_CURRENT_BINARY_DIR}/calculix_comp_wrap.cxx)
+set(CCXCOMP_PY
+    ${CMAKE_CURRENT_BINARY_DIR}/calculix_comp.py)
+
+add_custom_command(
+    OUTPUT ${CCXCOMP_WRAP} ${CCXCOMP_PY}
+    COMMAND  ${SWIG_EXECUTABLE} 
+        -c++
+        -python
+         -I${CMAKE_CURRENT_SOURCE_DIR} 
+        -outdir  ${CMAKE_CURRENT_BINARY_DIR} 
+        -o  ${CCXCOMP_WRAP} 
+         ${CMAKE_CURRENT_SOURCE_DIR}/calculix_comp.i 
+    DEPENDS
+         ${CMAKE_CURRENT_SOURCE_DIR}/calculix_comp.i 
+         ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXComp.hpp 
+    COMMENT "Generating CalculiXComp Python bindings"
+    VERBATIM
+)
+set(CCXPYTHONINTERFACE_WRAP
+     ${CMAKE_CURRENT_BINARY_DIR}/CalculiXPythonInterface_wrap.cxx )
+
+add_custom_command(
+    OUTPUT
+         ${CCXPYTHONINTERFACE_WRAP} 
+         ${CMAKE_CURRENT_BINARY_DIR}/calculix_pythoninterface.py 
+    COMMAND  ${SWIG_EXECUTABLE} 
+        -c++
+        -python
+         -I${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface 
+        -outdir  ${CMAKE_CURRENT_BINARY_DIR} 
+        -o  ${CCXPYTHONINTERFACE_WRAP} 
+         ${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface/CalculiXPythonInterface.i 
+    DEPENDS
+         ${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface/CalculiXPythonInterface.i 
+         ${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface/CalculiXPythonInterface.hpp 
+    COMMENT "Generating CalculiXPythonInterface Python bindings"
+    VERBATIM
+)
+
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 # this will link our libraries with a relative path
@@ -81,13 +125,13 @@ add_subdirectory(PythonInterface)
 
 # copy pythoninterface and icons to build directory
 if (WIN32)
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface/calculix_pythoninterface.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/)
+ #file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface/calculix_pythoninterface.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Icons/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/Icons/)
 endif (WIN32)
 if (UNIX)
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface/calculix_pythoninterface.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
+ #file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface/calculix_pythoninterface.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Icons/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Icons/)
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/calculix_comp.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
+ #file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/calculix_comp.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
 endif (UNIX)
 
 # copy missing libraries into build directory
@@ -131,7 +175,7 @@ set(CCXPYTHONINTERFACE_SRCS
 set(CCXCOMP_SRCS
     CalculiXComp.cpp
     CalculiXComp.hpp
-    calculix_comp_wrap.cxx
+    ${CCXCOMP_WRAP}
     ${EO_COMP_SRC}
     ${GUI_SRC}
     MenuManager.cpp

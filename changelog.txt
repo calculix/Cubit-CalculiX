@@ -195,3 +195,4 @@
 2026-09-05 updating for cubit 2026.8, need to add commands to history,moved ccx.cfg and log files to cubit working directory
 2026-09-10 adding guisendcmd to handle the history bug from cubit
 2026-09-17 adding guisendcmd to handle the history bug from cubit
+2026-09-22 added swig wrapping into cmake file
