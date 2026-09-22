@@ -376,10 +376,10 @@ Build Process for Ubuntu 24.04
    cd ~/Cubit-CalculiX/build
    make -j4
    ```
-   
+
+# Developers
+Developer guides: [architecture, source-code map, and adding a feature](docs/README.md).
+
 # known issues
 - On a freshly installed ubuntu are most likely some libraries missing to run CalculiX and Paraview out of the box. A short guide how to install the missing libraries for CalculiX can be found in the Readme file in the Solver directory. 
 - See https://github.com/calculix/Cubit-CalculiX/issues for open issues. Not every issue is closed in the available binaries. Please look at the issue and release date.
-
-# todo list
-- documentation

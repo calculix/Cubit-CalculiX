@@ -24,7 +24,6 @@ void CalculiXPythonInterface::help()
   log.append("std::vector<std::string> frd_get_result_block_components(int job_id, std::string result_block_type); // returns a list of all result block components for a block type\n");
   log.append("std::vector<int> frd_get_total_increments(int job_id); // returns a list of the total increments\n");
   log.append("double frd_get_time_from_total_increment(int job_id, int total_increment); // returns a the time for a total increment\n");
-  log.append("std::vector<int> frd_get_node_ids_between_limits(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double lower_limit,double upper_limit); // returns the global node ids within the limit\n");
   log.append("std::vector<int> frd_get_node_ids_smaller_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value); // returns the global node ids smaller than the value\n");
   log.append("std::vector<int> frd_get_node_ids_greater_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value); // returns the global node ids greater than the value\n");
   log.append("std::vector<int> frd_get_element_ids_between_values(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double lower_value,double upper_value); // returns the global element ids within the values\n");
