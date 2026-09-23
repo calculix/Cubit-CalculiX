@@ -16,15 +16,20 @@ endif (UNIX)
 
 if (WIN32)
  SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
- set(CMAKE_PREFIX_PATH "C:/Program Files/Coreform Cubit 2025.12/cmake")
+ set(CMAKE_PREFIX_PATH "C:/Program Files/Coreform Cubit 2026.9/cmake")
+ include_directories("C:/Program Files/Coreform Cubit 2026.9/include")
  set(Qt6_DIR "C:/Qt/6.8.3/msvc2022_64/lib/cmake/Qt6") 
  set(Qt6Core_DIR "C:/Qt/6.8.3/msvc2022_64/lib/cmake/Qt6Core") 
  set(Qt6Charts_DIR "C:/Qt/6.8.3/msvc2022_64/lib/cmake/Qt6Charts")
  set(Qt6Widgets_DIR "C:/Qt/6.8.3/msvc2022_64/lib/cmake/Qt6Widgets")
- set(HDF5_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Utility/HDF5/Win/1.12.1) 
- # python for our swig wrapping
- include_directories("C:/Program Files/Python310/include")
- link_directories("C:/Program Files/Python310/libs")
+ set(HDF5_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Utility/HDF5/Win/1.14.4.3) 
+ # python and swig for our wrapping
+ include_directories("C:/Program Files/Python312/include")
+ link_directories("C:/Program Files/Python312/libs")
+ set(SWIG_EXECUTABLE
+    "C:/Program Files/swigwin-4.5.1/swig.exe"
+    CACHE FILEPATH "Path to SWIG executable"
+    )
 endif (WIN32)
 
 # On Linux, we need to add some addition compiler flags to get our static
@@ -46,11 +51,21 @@ ADD_DEFINITIONS(-DH5_BUILT_AS_DYNAMIC_LIB)
 
 # SWIG WRAPPING
 find_package(SWIG REQUIRED)
+
+if (UNIX)
 set(CCXCOMP_WRAP
     ${CMAKE_CURRENT_BINARY_DIR}/calculix_comp_wrap.cxx)
 set(CCXCOMP_PY
     ${CMAKE_CURRENT_BINARY_DIR}/calculix_comp.py)
+endif(UNIX)
+if (WIN32)
+set(CCXCOMP_WRAP
+    ${CMAKE_CURRENT_BINARY_DIR}/Release/calculix_comp_wrap.cxx)
+set(CCXCOMP_PY
+    ${CMAKE_CURRENT_BINARY_DIR}/Release/calculix_comp.py)
+endif(WIN32)
 
+if(UNIX)
 add_custom_command(
     OUTPUT ${CCXCOMP_WRAP} ${CCXCOMP_PY}
     COMMAND  ${SWIG_EXECUTABLE} 
@@ -66,9 +81,35 @@ add_custom_command(
     COMMENT "Generating CalculiXComp Python bindings"
     VERBATIM
 )
+endif(UNIX)
+if(WIN32)
+add_custom_command(
+    OUTPUT ${CCXCOMP_WRAP} ${CCXCOMP_PY}
+    COMMAND  ${SWIG_EXECUTABLE} 
+        -c++
+        -python
+         -I${CMAKE_CURRENT_SOURCE_DIR} 
+        -outdir  ${CMAKE_CURRENT_BINARY_DIR}/Release
+        -o  ${CCXCOMP_WRAP} 
+         ${CMAKE_CURRENT_SOURCE_DIR}/calculix_comp.i 
+    DEPENDS
+         ${CMAKE_CURRENT_SOURCE_DIR}/calculix_comp.i 
+         ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXComp.hpp 
+    COMMENT "Generating CalculiXComp Python bindings"
+    VERBATIM
+)
+endif(WIN32)
+
+if (UNIX)
 set(CCXPYTHONINTERFACE_WRAP
      ${CMAKE_CURRENT_BINARY_DIR}/CalculiXPythonInterface_wrap.cxx )
+endif(UNIX)
+if (WIN32)
+set(CCXPYTHONINTERFACE_WRAP
+     ${CMAKE_CURRENT_BINARY_DIR}/Release/CalculiXPythonInterface_wrap.cxx )
+endif(WIN32)
 
+if(UNIX)
 add_custom_command(
     OUTPUT
          ${CCXPYTHONINTERFACE_WRAP} 
@@ -77,7 +118,7 @@ add_custom_command(
         -c++
         -python
          -I${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface 
-        -outdir  ${CMAKE_CURRENT_BINARY_DIR} 
+        -outdir  ${CMAKE_CURRENT_BINARY_DIR}
         -o  ${CCXPYTHONINTERFACE_WRAP} 
          ${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface/CalculiXPythonInterface.i 
     DEPENDS
@@ -86,6 +127,27 @@ add_custom_command(
     COMMENT "Generating CalculiXPythonInterface Python bindings"
     VERBATIM
 )
+endif(UNIX)
+
+if(WIN32)
+add_custom_command(
+    OUTPUT
+         ${CCXPYTHONINTERFACE_WRAP} 
+         ${CMAKE_CURRENT_BINARY_DIR}/Release/calculix_pythoninterface.py 
+    COMMAND  ${SWIG_EXECUTABLE} 
+        -c++
+        -python
+         -I${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface 
+        -outdir  ${CMAKE_CURRENT_BINARY_DIR}
+        -o  ${CCXPYTHONINTERFACE_WRAP} 
+         ${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface/CalculiXPythonInterface.i 
+    DEPENDS
+         ${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface/CalculiXPythonInterface.i 
+         ${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface/CalculiXPythonInterface.hpp 
+    COMMENT "Generating CalculiXPythonInterface Python bindings"
+    VERBATIM
+)
+endif(WIN32)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
@@ -196,65 +258,68 @@ set(CCXCOMP_SRCS
     )
 
 if (WIN32)
-add_library(calculix_useroptions SHARED ${CCXUSEROPTIONS_SRCS})
-target_link_libraries(calculix_useroptions clarogui cubiti clarofw Qt6::Widgets)
-set_target_properties(calculix_useroptions PROPERTIES AUTOMOC 1)
+    add_library(calculix_useroptions SHARED ${CCXUSEROPTIONS_SRCS})
+    target_link_libraries(calculix_useroptions clarogui cubiti clarofw Qt6::Widgets)
+    set_target_properties(calculix_useroptions PROPERTIES AUTOMOC 1)
 
-add_library(calculix_plugin MODULE ${CCXPLUGIN_SRCS})
-set_target_properties(calculix_plugin PROPERTIES SUFFIX ".ccm")
+    add_library(calculix_plugin MODULE ${CCXPLUGIN_SRCS})
+    #set_target_properties(calculix_plugin PROPERTIES SUFFIX ".ccm")
 
-add_library(calculix_core SHARED ${CCXCORE_SRCS})
-target_link_libraries(calculix_core cubiti cubit_util cubit_gui)
-target_link_libraries(calculix_core clarogui navigation pickwidget clarofw Qt6::Charts Qt6::Widgets)
-target_link_libraries(calculix_core HDF5::HDF5)
-set_target_properties(calculix_core PROPERTIES AUTOMOC 1)
+    add_library(calculix_core SHARED ${CCXCORE_SRCS})
+    target_link_libraries(calculix_core cubiti cubit_util cubit_gui)
+    #target_link_libraries(calculix_core clarogui navigation pickwidget clarofw Qt6::Charts Qt6::Widgets)
+    target_link_libraries(calculix_core clarogui clarofw navigation Qt6::Charts Qt6::Widgets)
+    target_link_libraries(calculix_core HDF5::HDF5)
+    set_target_properties(calculix_core PROPERTIES AUTOMOC 1)
 
-add_library(calculix_comp SHARED ${CCXCOMP_SRCS})
-set_target_properties(calculix_comp PROPERTIES SUFFIX ".ccl")
-target_link_libraries(calculix_comp clarogui navigation pickwidget cubiti clarofw Qt6::Charts Qt6::Widgets)
-set_target_properties(calculix_comp PROPERTIES AUTOMOC 1)
+    add_library(calculix_comp SHARED ${CCXCOMP_SRCS})
+    #set_target_properties(calculix_comp PROPERTIES SUFFIX ".ccl")
+    set_target_properties(calculix_comp PROPERTIES SUFFIX ".pyd" PREFIX "_")
+    #target_link_libraries(calculix_comp clarogui navigation pickwidget cubiti clarofw Qt6::Charts Qt6::Widgets)
+    target_link_libraries(calculix_comp clarogui navigation cubiti clarofw Qt6::Charts Qt6::Widgets component)
+    set_target_properties(calculix_comp PROPERTIES AUTOMOC 1)
 
-add_library(calculix_pythoninterface SHARED ${CCXPYTHONINTERFACE_SRCS})
-set_target_properties(calculix_pythoninterface PROPERTIES SUFFIX ".pyd" PREFIX "_")
-target_link_libraries(calculix_pythoninterface cubiti cubit_util)
+    add_library(calculix_pythoninterface SHARED ${CCXPYTHONINTERFACE_SRCS})
+    set_target_properties(calculix_pythoninterface PROPERTIES SUFFIX ".pyd" PREFIX "_")
+    target_link_libraries(calculix_pythoninterface cubiti cubit_util)
 
-target_link_libraries(calculix_core calculix_useroptions)
-target_link_libraries(calculix_plugin calculix_core)
-target_link_libraries(calculix_pythoninterface calculix_core)
-target_link_libraries(calculix_comp calculix_core)
+    target_link_libraries(calculix_core calculix_useroptions)
+    target_link_libraries(calculix_plugin calculix_core)
+    target_link_libraries(calculix_pythoninterface calculix_core)
+    target_link_libraries(calculix_comp calculix_core)
 endif (WIN32)
 
 if (UNIX)
-add_library(calculix_useroptions SHARED ${CCXUSEROPTIONS_SRCS})
-target_link_libraries(calculix_useroptions clarogui cubiti clarofw Qt6::Widgets)
-set_target_properties(calculix_useroptions PROPERTIES AUTOMOC 1)
+    add_library(calculix_useroptions SHARED ${CCXUSEROPTIONS_SRCS})
+    target_link_libraries(calculix_useroptions clarogui cubiti clarofw Qt6::Widgets)
+    set_target_properties(calculix_useroptions PROPERTIES AUTOMOC 1)
 
-add_library(calculix_plugin MODULE ${CCXPLUGIN_SRCS})
-#set_target_properties(calculix_plugin PROPERTIES SUFFIX ".ccm")
+    add_library(calculix_plugin MODULE ${CCXPLUGIN_SRCS})
+    #set_target_properties(calculix_plugin PROPERTIES SUFFIX ".ccm")
 
-add_library(calculix_core SHARED ${CCXCORE_SRCS})
-set_target_properties(calculix_core PROPERTIES SUFFIX ".so")
-target_link_libraries(calculix_core cubiti cubit_util cubit_gui)
-#target_link_libraries(calculix_core clarogui clarofw navigation pickwidget Qt6::Charts Qt6::Widgets)
-target_link_libraries(calculix_core clarogui clarofw navigation Qt6::Charts Qt6::Widgets)
-target_link_libraries(calculix_core HDF5::HDF5)
-set_target_properties(calculix_core PROPERTIES AUTOMOC 1)
+    add_library(calculix_core SHARED ${CCXCORE_SRCS})
+    set_target_properties(calculix_core PROPERTIES SUFFIX ".so")
+    target_link_libraries(calculix_core cubiti cubit_util cubit_gui)
+    #target_link_libraries(calculix_core clarogui clarofw navigation pickwidget Qt6::Charts Qt6::Widgets)
+    target_link_libraries(calculix_core clarogui clarofw navigation Qt6::Charts Qt6::Widgets)
+    target_link_libraries(calculix_core HDF5::HDF5)
+    set_target_properties(calculix_core PROPERTIES AUTOMOC 1)
 
-add_library(calculix_comp SHARED ${CCXCOMP_SRCS})
-#set_target_properties(calculix_comp PROPERTIES SUFFIX ".ccl")
-set_target_properties(calculix_comp PROPERTIES SUFFIX ".so" PREFIX "_")
-#target_link_libraries(calculix_comp clarogui navigation pickwidget cubiti clarofw Qt6::Charts Qt6::Widgets)
-target_link_libraries(calculix_comp clarogui navigation cubiti clarofw Qt6::Charts Qt6::Widgets component)
-set_target_properties(calculix_comp PROPERTIES AUTOMOC 1)
+    add_library(calculix_comp SHARED ${CCXCOMP_SRCS})
+    #set_target_properties(calculix_comp PROPERTIES SUFFIX ".ccl")
+    set_target_properties(calculix_comp PROPERTIES SUFFIX ".so" PREFIX "_")
+    #target_link_libraries(calculix_comp clarogui navigation pickwidget cubiti clarofw Qt6::Charts Qt6::Widgets)
+    target_link_libraries(calculix_comp clarogui navigation cubiti clarofw Qt6::Charts Qt6::Widgets component)
+    set_target_properties(calculix_comp PROPERTIES AUTOMOC 1)
 
-add_library(calculix_pythoninterface SHARED ${CCXPYTHONINTERFACE_SRCS})
-set_target_properties(calculix_pythoninterface PROPERTIES SUFFIX ".so" PREFIX "_")
-target_link_libraries(calculix_pythoninterface cubiti cubit_util)
+    add_library(calculix_pythoninterface SHARED ${CCXPYTHONINTERFACE_SRCS})
+    set_target_properties(calculix_pythoninterface PROPERTIES SUFFIX ".so" PREFIX "_")
+    target_link_libraries(calculix_pythoninterface cubiti cubit_util)
 
-target_link_libraries(calculix_core calculix_useroptions)
-target_link_libraries(calculix_pythoninterface calculix_core)
-target_link_libraries(calculix_plugin calculix_core)
-target_link_libraries(calculix_comp calculix_core)
+    target_link_libraries(calculix_core calculix_useroptions)
+    target_link_libraries(calculix_pythoninterface calculix_core)
+    target_link_libraries(calculix_plugin calculix_core)
+    target_link_libraries(calculix_comp calculix_core)
 endif (UNIX)
 
 # copy external software
@@ -262,7 +327,7 @@ if (WIN32)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Solver/CalculiX/Win/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/Solver/)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Postprocessor/CGX/Win/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/Postprocessor/CGX/)
  # if missing -> please download paraview binaries from https://www.paraview.org/download/
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../../ParaView-6.0.0-MPI-Windows-Python3.12-msvc2017-AMD64/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/Postprocessor/ParaView/)
+ #file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../../ParaView-6.0.0-MPI-Windows-Python3.12-msvc2017-AMD64/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/Postprocessor/ParaView/)
 endif (WIN32)
 if (UNIX)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Solver/CalculiX/Linux/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Solver/)

@@ -1,0 +1,16 @@
+prefix=D:/a/hdf5/hdf5/install114/ci-StdShar-Intel
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+moddir=${prefix}/mod
+
+Name: hdf5_hl_fortran
+Description: HDF5 (Hierarchical Data Format 5) Software Library
+Version: 1.14.4
+
+Cflags: -I${includedir}
+Fflags: -I${moddir}
+Libs: -L${libdir}  -lhdf5_hl_fortran
+Requires: hdf5_fortran = 1.14.4
+Libs.private:  -lhdf5_hl_fortran 
+Requires.private: hdf5_fortran = 1.14.4

@@ -23,6 +23,7 @@
 #include <fstream>
 #include <chrono>
 #include <iostream>
+#include <sstream>
 #include "loadUserOptions.hpp"
 
 
