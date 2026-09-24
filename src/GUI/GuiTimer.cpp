@@ -4,7 +4,7 @@
 
 GuiTimer::GuiTimer()
 { 
-  ccx_iface = new CalculiXCoreInterface();
+  //ccx_iface = new CalculiXCoreInterface();
   connect(this, &QTimer::timeout, this, &GuiTimer::timeoutaction);
   this->start(1000);
 }

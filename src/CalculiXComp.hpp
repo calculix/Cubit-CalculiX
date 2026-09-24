@@ -2,6 +2,7 @@
 #define CALCULIXCOMP_HPP
 
 #include "Component.hpp"
+#include "ComponentTracker.hpp"
 
 class MenuManager;
 class ToolbarManager;
@@ -9,10 +10,11 @@ class cmdPanelManager;
 //class ExportManager;
 class CCXDockWindowModelTree;
 class UserOptionsPanel;
+class CalculiXCoreInterface;
 
 class Observer;
 
-class CalculiXComp : public Component
+class CalculiXComp : public Component, public ComponentTracker
 {
 public:
   CalculiXComp();
@@ -23,6 +25,7 @@ public:
   void clean_up();
   void clean_up_complete();
   virtual void interrupt_progress();
+  void component_loaded(const char* name) override;
 
   void update();
   void reset();
@@ -64,7 +67,10 @@ private:
   CCXDockWindowModelTree* myCCXDockWindowModelTree;
   UserOptionsPanel* mUserOptionsPanel;
 
+  CalculiXCoreInterface *ccx_iface;
   Observer* mListener;
+  bool tracker_registered = false;
+  bool python_interface_initialized = false;
 };
 
 #endif // CALCULIXCOMP_HPP

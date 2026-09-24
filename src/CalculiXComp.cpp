@@ -13,8 +13,10 @@
 #include "ToolbarManager.hpp"
 #include "loadUserOptions.hpp"
 #include "CalculiXConfigFile.hpp"
+#include "CalculiXCoreInterface.hpp"
 #include "UserOptionsPanel.hpp"
 #include <iostream>
+#include <cstring>
 
 // Default constructor. Remember to include the component name (should match
 // the module name in mycomp.i).
@@ -53,9 +55,19 @@ void CalculiXComp::start_up(int withGUI)
 {
   
   restore_settings();
+
+  if (Mediator* mediator = Broker::instance())
+  {
+    mediator->add_component_tracker(this);
+    tracker_registered = true;
+  }
+  
+  ccx_iface = new CalculiXCoreInterface();
+  ccx_iface->init_materiallibrary();
+  //ccx_iface->init_pythoninterface();
   
   if(withGUI)
-  {
+  {   
     //setup_menus();
     //setup_toolbars();
     setup_command_panels();
@@ -78,6 +90,15 @@ void CalculiXComp::clean_up()
   cleanup_observers();
   save_settings();
   unload_options();
+  
+  if (tracker_registered)
+  {
+    if (Mediator* mediator = Broker::instance())
+      mediator->remove_component_tracker(this);
+
+    tracker_registered = false;
+  }
+  
   // Let the framework know you are done.
   clean_up_complete();
 }
@@ -272,4 +293,9 @@ void CalculiXComp::unload_options()
     options->remove_panel("CalculiX");
     delete mUserOptionsPanel;
   }
+}
+
+void CalculiXComp::component_loaded(const char* name)
+{
+ python_interface_initialized = ccx_iface->init_pythoninterface();
 }
