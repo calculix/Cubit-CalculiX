@@ -5,7 +5,7 @@
 CalculiXPythonInterface::CalculiXPythonInterface()
 {
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
-  std::string log = "CalculiX Python Interface loaded!\n";
+  std::string log = "Loading CalculiX Python Interface...\n";
   PRINT_INFO("%s", log.c_str());
 }
 

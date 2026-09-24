@@ -297,5 +297,8 @@ void CalculiXComp::unload_options()
 
 void CalculiXComp::component_loaded(const char* name)
 {
- python_interface_initialized = ccx_iface->init_pythoninterface();
+  if (!python_interface_initialized)
+  {
+    python_interface_initialized = ccx_iface->init_pythoninterface();
+  }
 }
