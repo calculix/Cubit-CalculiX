@@ -12,7 +12,7 @@
 
 Observer::Observer()
 {
-  CalculiXCoreInterface *ccx_iface =  new CalculiXCoreInterface;
+  ccx_iface =  new CalculiXCoreInterface;
 }
 
 Observer::~Observer()

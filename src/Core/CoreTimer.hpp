@@ -15,8 +15,8 @@ public:
   ~CoreTimer();
 
   CalculiXCoreInterface *ccx_iface;
-  bool bool_init_pythoninterface = false; // will be set to true after init
-  bool bool_init_materiallibrary = false; // will be set to true after init
+  //bool bool_init_pythoninterface = false; // will be set to true after init
+  //bool bool_init_materiallibrary = false; // will be set to true after init
 
 public slots:
   void timeoutaction();

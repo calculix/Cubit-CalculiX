@@ -74,7 +74,7 @@ CalculiXCore::CalculiXCore():
   initialconditions(NULL), hbcs(NULL), steps(NULL),jobs(NULL),results(NULL),timer(NULL),customlines(NULL),
   draw(NULL)
 {
-  init();
+  //init();
 }
 
 CalculiXCore::~CalculiXCore()
@@ -370,9 +370,18 @@ bool CalculiXCore::init()
 bool CalculiXCore::init2() // will be done when loading the ccm!
 { 
   me_iface = dynamic_cast<MeshExportInterface*>(CubitInterface::get_interface("MeshExport"));
+  if (me_iface==NULL)
+  {
+    return false;
+  }
   me_iface->initialize_export();
+    
   mat_iface = dynamic_cast<MaterialInterface*>(CubitInterface::get_interface("Material"));
-  
+  if (mat_iface==NULL)
+  {
+    return false;
+  }
+
   if(!mat)
     mat = new CoreMaterials;
   
@@ -389,7 +398,7 @@ bool CalculiXCore::init2() // will be done when loading the ccm!
 bool CalculiXCore::init_pythoninterface()
 {
   // init_pythoninterface(); needs to be initialized after the cubit is fully loaded; 
-  // will be initialized with the core timer on its first evocation
+  // will be initialized with the gui timer on its first evocation
 
   if (!this->bool_init_pythoninterface)
   {
@@ -417,7 +426,7 @@ bool CalculiXCore::init_pythoninterface()
 bool CalculiXCore::init_materiallibrary()
 {
   // init_materiallibrary(); needs to be initialized after the cubit is fully loaded; 
-  // will be initialized with the core timer on its first evocation
+  // will be initialized with the gui timer on its first evocation
 
   if (!this->bool_init_materiallibrary)
   {

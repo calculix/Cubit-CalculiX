@@ -162,7 +162,10 @@ CUBIT_PLUGIN(CalculiXPlugin)
 
 CalculiXPlugin::CalculiXPlugin()
 {
+  ccx_core.init();
   ccx_core.init2(); // to init missing material core and interfaces
+  //ccx_core.init_pythoninterface(); // can't start up with the plugin, needs to be started with the component
+  //ccx_core.init_materiallibrary();
 }
 
 CalculiXPlugin::~CalculiXPlugin()

@@ -196,3 +196,5 @@
 2026-09-10 adding guisendcmd to handle the history bug from cubit
 2026-09-17 adding guisendcmd to handle the history bug from cubit
 2026-09-22 added swig wrapping into cmake file
+2026-09-24 working on Startup process
+

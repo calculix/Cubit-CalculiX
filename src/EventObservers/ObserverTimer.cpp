@@ -5,7 +5,7 @@
 
 ObserverTimer::ObserverTimer(CalculiXComp *CalculiXComp)
 { 
-  CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
+  ccx_iface = new CalculiXCoreInterface();
   this->ccx_comp = CalculiXComp;    
   connect(this, &QTimer::timeout, this, &ObserverTimer::timeoutaction);
   this->start(1000);

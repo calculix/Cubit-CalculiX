@@ -138,7 +138,7 @@ add_custom_command(
         -c++
         -python
          -I${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface 
-        -outdir  ${CMAKE_CURRENT_BINARY_DIR}
+        -outdir ${CMAKE_CURRENT_BINARY_DIR}/Release
         -o  ${CCXPYTHONINTERFACE_WRAP} 
          ${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface/CalculiXPythonInterface.i 
     DEPENDS
