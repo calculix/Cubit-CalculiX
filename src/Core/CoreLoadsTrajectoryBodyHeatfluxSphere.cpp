@@ -1431,7 +1431,7 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
         int step_shift = 0;
         for (size_t ii = 0; ii < step_splits.size(); ii++)
         {
-          step_shift = step_shift + step_splits[ii].size() -1;
+          step_shift = step_shift + int(step_splits[ii].size()) - 1;
         }
         step_ids = ccx_iface->step_utility_split_step(prepared_step[i][0] + step_shift,load_times[load_data_id]);
         // shift prepared_step_bodyheatflux
@@ -1616,8 +1616,8 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::clean_export()
 std::string CoreLoadsTrajectoryBodyHeatfluxSphere::get_load_export(int load_id)
 {
   
-  int load_data_id;
-  int sub_data_id;
+  //int load_data_id;
+  //int sub_data_id;
   std::string str_temp = "**Trajectory BodyHeatfluxSphere" + std::to_string(load_id) + "\n";
   
   /*

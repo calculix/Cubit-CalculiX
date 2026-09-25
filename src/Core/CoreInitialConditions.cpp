@@ -143,7 +143,7 @@ bool CoreInitialConditions::modify_initialcondition(int initialcondition_id, int
 
 bool CoreInitialConditions::add_initialcondition_stress(int initialcondition_id, int modify_type, std::vector<double> options)
 {
-  int sub_data_id;
+  //int sub_data_id;
   int initialconditions_data_id = get_initialconditions_data_id_from_initialcondition_id(initialcondition_id);
 
   if (initialconditions_data_id == -1)

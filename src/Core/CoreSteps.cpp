@@ -2086,8 +2086,8 @@ bool CoreSteps::create_modelchangeelement_dummystep(int step_id)
   this->create_step(options);
   options.clear();
 
-  int step_data_id_dummy_1 = this->steps_data.size() - 2;
-  int step_data_id_dummy_2 = this->steps_data.size() - 1;
+  int step_data_id_dummy_1 = int(this->steps_data.size()) - 2;
+  int step_data_id_dummy_2 = int(this->steps_data.size()) - 1;
 
   if (step_type==2) //static
   {
@@ -2210,7 +2210,7 @@ bool CoreSteps::create_modelchangeelement_dummystep(int step_id)
 
   for (size_t i = 0; i < this->steps_data.size(); i++)
   {
-    this->steps_data[i][0] = i + 1;
+    this->steps_data[i][0] = int(i) + 1;
   }
   
   return true;
@@ -2392,7 +2392,7 @@ std::vector<int> CoreSteps::split_step(int step_id, std::vector<std::vector<doub
     // create step
     if(bool_create){
       this->create_step(options);
-      int last_step_data_id = this->steps_data.size()-1;
+      int last_step_data_id = int(this->steps_data.size())-1;
 
       this->steps_data[last_step_data_id][2] = current_step_data[2]; // parameter
       
@@ -2545,7 +2545,7 @@ std::vector<int> CoreSteps::split_step(int step_id, std::vector<std::vector<doub
   
   for (size_t i = 0; i < after_steps_data.size(); i++)
   {
-    after_steps_data[i][0] = current_step_id + i + 1;
+    after_steps_data[i][0] = current_step_id + int(i) + 1;
     steps_data.push_back(after_steps_data[i]);
   }
 

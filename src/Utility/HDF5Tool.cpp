@@ -9,17 +9,42 @@
 
 HDF5Tool::HDF5Tool(std::string filename)
 {
+  
   //check if hdf5 exists, if not create a new file
   #ifdef WIN32
     if (_access(filename.c_str(), 0) != 0)
     {
       std::string log = filename + " not found. An empty HDF5 will be created.\n";
       PRINT_INFO("%s", log.c_str());
-
+      
       hid_t new_file = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
       if (new_file != H5I_INVALID_HID)
       {
         H5Fclose(new_file);
+      }
+      
+    }else{
+      bool can_read = (_access(filename.c_str(), 4) == 0);
+      bool can_write = (_access(filename.c_str(), 2) == 0);
+      
+      if (!can_read)
+      {
+        std::string log = "Can't read file!!!\n";
+        PRINT_INFO("%s", log.c_str());
+      }
+      if (!can_write)
+      {
+        std::string log = "Can't write file!!!\n";
+        PRINT_INFO("%s", log.c_str());
+      }    
+      
+      if (can_read && can_write)
+      {
+        std::string log = "Access to file: " + filename + "\n";
+        PRINT_INFO("%s", log.c_str());
+      }else{
+        std::string log = "CHECK PERMISSIONS FOR FILE!!!\n";
+        PRINT_INFO("%s", log.c_str());
       }
     }
   #else
@@ -41,8 +66,14 @@ HDF5Tool::HDF5Tool(std::string filename)
 
 HDF5Tool::~HDF5Tool()
 {
-  this->file->close();
-  delete this->file;
+  if (this->file != nullptr)
+  {
+   this->file->close();
+   delete this->file;
+  }else{
+    std::string log = "ERROR IN HDF5TOOL!\n";
+    PRINT_INFO("%s", log.c_str());
+  }
 }
 
 bool HDF5Tool::nameExists(std::string name)

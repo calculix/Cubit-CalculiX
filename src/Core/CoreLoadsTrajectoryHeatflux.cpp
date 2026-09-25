@@ -1264,8 +1264,8 @@ bool CoreLoadsTrajectoryHeatflux::clean_export()
 std::string CoreLoadsTrajectoryHeatflux::get_load_export(int load_id)
 {
   
-  int load_data_id;
-  int sub_data_id;
+  //int load_data_id;
+  //int sub_data_id;
   std::string str_temp = "**Trajectory " + std::to_string(load_id) + "\n";
   
   /*

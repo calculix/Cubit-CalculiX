@@ -359,7 +359,7 @@ bool CoreJobs::run_job(int job_id,int option)
         */
 
         // write linking of the ids
-        PULONG ClientProcessId;
+        PULONG ClientProcessId = 0;
         GetNamedPipeClientProcessId(g_hChildStd_OUT_Rd,ClientProcessId);
         std::ostringstream oss;
         oss << PipeThreads[PipeThreads.size()-1].get_id() << std::endl;

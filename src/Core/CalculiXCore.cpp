@@ -20,7 +20,6 @@
 #include "MaterialInterface.hpp"
 #include "ProgressTool.hpp"
 #include "AppUtil.hpp"
-#include "CubitPythonInterpreter.hpp"
 
 #include "CoreBlocks.hpp"
 #include "CoreMaterials.hpp"
@@ -401,32 +400,6 @@ bool CalculiXCore::init_pythoninterface()
   // init_pythoninterface(); needs to be initialized after the cubit is fully loaded; 
   // will be initialized with the gui timer on its first evocation
 
-
-  /*
-  CubitPythonInterpreter *cpi = CubitInterface::python_interpreter();
-  if (cpi->IsInitialized())
-  {    
-    std::vector<std::string> command;
-    command.push_back("import sys");
-    command.push_back("sys.path.append('" + ccx_uo.mPathPythonInterface.toStdString() + "')");
-    command.push_back("from calculix_pythoninterface import *");
-    command.push_back("ccx = CalculiXPythonInterface()");
-    
-    for (size_t i = 0; i < command.size(); i++)
-    {
-      //cpi->Run_SimpleString(command[i].c_str());
-      std::string log = command[i] + "\n";
-      PRINT_INFO("%s", log.c_str());
-    }
-    this->bool_init_pythoninterface = true;
-
-    std::string log = "CalculiX Python Interface is ready!\n";
-    PRINT_INFO("%s", log.c_str());
-  }
-
-  return true;
-  */
-  
   if (!this->bool_init_pythoninterface)
   {
     std::vector<std::string> command;
@@ -460,9 +433,7 @@ bool CalculiXCore::init_materiallibrary()
 
   if (!this->bool_init_materiallibrary)
   {
-    mat_library->init();
-
-    this->bool_init_materiallibrary = true;
+    this->bool_init_materiallibrary = mat_library->init();
     return true;
   }
 
@@ -5039,7 +5010,7 @@ bool CalculiXCore::result_plot_job_dat_section(int job_id, std::string x_section
     {
       if (components[i]==y_section_component)
       {
-        component_id = i;
+        component_id = int(i);
         break;
       }
     }
@@ -5062,7 +5033,7 @@ bool CalculiXCore::result_plot_job_dat_section(int job_id, std::string x_section
     {
       if (components[i]==x_section_component)
       {
-        component_id = i;
+        component_id = int(i);
         break;
       }
     }

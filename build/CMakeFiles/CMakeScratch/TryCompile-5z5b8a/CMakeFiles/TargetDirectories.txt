@@ -1,0 +1,2 @@
+C:/Users/offic/Desktop/Git/Cubit-CalculiX/build/CMakeFiles/CMakeScratch/TryCompile-5z5b8a/CMakeFiles/cmTC_b3fbe.dir
+C:/Users/offic/Desktop/Git/Cubit-CalculiX/build/CMakeFiles/CMakeScratch/TryCompile-5z5b8a/CMakeFiles/ALL_BUILD.dir

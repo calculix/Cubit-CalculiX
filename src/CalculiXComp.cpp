@@ -7,6 +7,7 @@
 #include "MenuManager.hpp"
 #include "Observer.hpp"
 #include "OptionsPanel.hpp"
+#include "CubitMessage.hpp"
 
 #include "cmdPanelManager.hpp"
 #include "CCXDockWindowModelTree.hpp"
@@ -63,17 +64,16 @@ void CalculiXComp::start_up(int withGUI)
   }
   
   ccx_iface = new CalculiXCoreInterface();
-  ccx_iface->init_materiallibrary();
-  //ccx_iface->init_pythoninterface();
-  
+  //ccx_iface->init_materiallibrary();
+    
   if(withGUI)
   {   
     //setup_menus();
     //setup_toolbars();
-    setup_command_panels();
-    setup_CCXDockWindowModelTree(); // command panels has to be setup before dockwindow
     //add_exports();
-    
+
+    setup_command_panels();
+    //setup_CCXDockWindowModelTree(); // command panels has to be setup before dockwindow   
     load_options();
     boolwithGUI = true;
   }
@@ -299,6 +299,9 @@ void CalculiXComp::component_loaded(const char* name)
 {
   if (!python_interface_initialized)
   {
+    //std::string log = "Component Name\n";
+    //PRINT_INFO("%s", log.c_str());
+    //PRINT_INFO("%s", name);
     python_interface_initialized = ccx_iface->init_pythoninterface();
   }
 }

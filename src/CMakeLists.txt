@@ -17,11 +17,16 @@ if (WIN32)
  SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
  set(CMAKE_PREFIX_PATH "C:/Program Files/Coreform Cubit 2026.9/cmake")
  include_directories("C:/Program Files/Coreform Cubit 2026.9/include")
+ include_directories("C:/Program Files/Coreform Cubit 2026.9/include/python")
  set(Qt6_DIR "C:/Qt/6.8.3/msvc2022_64/lib/cmake/Qt6") 
  set(Qt6Core_DIR "C:/Qt/6.8.3/msvc2022_64/lib/cmake/Qt6Core") 
  set(Qt6Charts_DIR "C:/Qt/6.8.3/msvc2022_64/lib/cmake/Qt6Charts")
  set(Qt6Widgets_DIR "C:/Qt/6.8.3/msvc2022_64/lib/cmake/Qt6Widgets")
- set(HDF5_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Utility/HDF5/Win/1.14.4.3) 
+ set(HDF5_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Utility/HDF5/Win/1.14.6)
+#   import h5py for checking the cubit version
+#   print("HDF5 runtime:", h5py.version.hdf5_version)
+#   print("h5py:", h5py.__version__)
+
  # python and swig for our wrapping
  include_directories("C:/Program Files/Python312/include")
  link_directories("C:/Program Files/Python312/libs")

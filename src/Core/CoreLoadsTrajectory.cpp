@@ -89,7 +89,7 @@ bool CoreLoadsTrajectory::create_load(std::string load_type, std::vector<std::st
     return false;
   }
   
-  this-add_load(load_id,load_type_int,sub_id);
+  this->add_load(load_id,load_type_int,sub_id);
 
   return true;
 }
@@ -105,7 +105,7 @@ bool CoreLoadsTrajectory::add_load(int load_id, int load_type, int sub_load_id)
 
 bool CoreLoadsTrajectory::modify_load(int load_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2, std::vector<std::vector<double>> options3)
 {
-  int sub_data_id;
+  //int sub_data_id;
   std::vector<int> sub_data_ids;
   int loads_data_id = get_loads_data_id_from_load_id(load_id);
   
@@ -131,7 +131,7 @@ bool CoreLoadsTrajectory::modify_load(int load_id, std::vector<std::string> opti
 
 bool CoreLoadsTrajectory::delete_load(int load_id)
 {
-  int sub_data_id;
+  //int sub_data_id;
   std::vector<int> sub_data_ids;
   int loads_data_id = get_loads_data_id_from_load_id(load_id);
   if (loads_data_id == -1)

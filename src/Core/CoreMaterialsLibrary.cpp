@@ -19,13 +19,21 @@ bool CoreMaterialsLibrary::init()
   {
     return false; // already initialized
   }else{
-    CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
+    ccx_iface = new CalculiXCoreInterface();
+    std::string log = "Loading Material Library...\n";
+    PRINT_INFO("%s", log.c_str());
+    
     mat_iface = dynamic_cast<MaterialInterface*>(CubitInterface::get_interface("Material"));
-
-    is_initialized = true;
-    this->load_library();
-
-    return true;
+    if (mat_iface!=nullptr)
+    {
+      is_initialized = this->load_library();
+      log = "Loaded Material Library.\n";
+      PRINT_INFO("%s", log.c_str());
+      return is_initialized;
+    }
+    log = "Loading Material Library FAILED!\n";
+    PRINT_INFO("%s", log.c_str());
+    return false;
   }
 }
 
@@ -325,7 +333,7 @@ bool CoreMaterialsLibrary::modify_material_matrix(std::string name, std::string 
     hdf5Tool.deleteDataset(data,material);
   }
 
-  int rows = value_data.size()/property_size;
+  int rows = int(value_data.size())/property_size;
   
   std::vector<std::vector<double>> values;
   for (size_t i = 0; i < rows; i++)

@@ -1112,7 +1112,7 @@ bool CoreResultsDat::header_section_1(std::vector<std::string> line)
   if (line.size() > 6){
     std::vector<int> tmp_result_section(2);
     tmp_result_section[0] = this->get_current_result_section_set(line[4]);
-    tmp_result_section[1] = result_section_data.size();
+    tmp_result_section[1] = int(result_section_data.size());
     result_section.push_back(tmp_result_section);
 
     std::vector<double> tmp_result_section_data(22);
@@ -1226,7 +1226,7 @@ bool CoreResultsDat::read_line_section_1(std::vector<std::string> line)
   //std::string log = "read line section 1 \n";
   //PRINT_INFO("%s", log.c_str());
   if (line.size() == 6){
-    int data_id = result_section_data.size()-1;
+    int data_id = int(result_section_data.size())-1;
     result_section_data[data_id][2] = ccx_iface->string_scientific_to_double(line[0]);
     result_section_data[data_id][3] = ccx_iface->string_scientific_to_double(line[1]);
     result_section_data[data_id][4] = ccx_iface->string_scientific_to_double(line[2]);
@@ -1243,7 +1243,7 @@ bool CoreResultsDat::read_line_section_2(std::vector<std::string> line)
   //std::string log = "read line section 2 \n";
   //PRINT_INFO("%s", log.c_str());
   if (line.size() == 6){
-    int data_id = result_section_data.size()-1;
+    int data_id = int(result_section_data.size())-1;
     result_section_data[data_id][8] = ccx_iface->string_scientific_to_double(line[0]);
     result_section_data[data_id][9] = ccx_iface->string_scientific_to_double(line[1]);
     result_section_data[data_id][10] = ccx_iface->string_scientific_to_double(line[2]);
@@ -1260,7 +1260,7 @@ bool CoreResultsDat::read_line_section_3(std::vector<std::string> line)
   //std::string log = "read line section 3 \n";
   //PRINT_INFO("%s", log.c_str());
   if (line.size() == 3){
-    int data_id = result_section_data.size()-1;
+    int data_id = int(result_section_data.size())-1;
     result_section_data[data_id][14] = ccx_iface->string_scientific_to_double(line[0]);
     result_section_data[data_id][15] = ccx_iface->string_scientific_to_double(line[1]);
     result_section_data[data_id][16] = ccx_iface->string_scientific_to_double(line[2]);
@@ -1274,7 +1274,7 @@ bool CoreResultsDat::read_line_section_4(std::vector<std::string> line)
   //std::string log = "read line section 4 \n";
   //PRINT_INFO("%s", log.c_str());
   if (line.size() == 5){
-    int data_id = result_section_data.size()-1;
+    int data_id = int(result_section_data.size())-1;
     result_section_data[data_id][17] = ccx_iface->string_scientific_to_double(line[0]);
     result_section_data[data_id][18] = ccx_iface->string_scientific_to_double(line[1]);
     result_section_data[data_id][19] = ccx_iface->string_scientific_to_double(line[2]);
