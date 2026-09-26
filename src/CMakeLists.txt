@@ -10,7 +10,7 @@ if (UNIX)
  # python for our swig wrapping
  include_directories("~/Downloads/Python-3.12.10/Include")
  include_directories("~/Downloads/Python-3.12.10") 
- set(HDF5_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Utility/HDF5/Linux/1.14.4.3)
+ set(HDF5_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Utility/HDF5/Linux/1.14.6)
 endif (UNIX)
 
 if (WIN32)
@@ -23,7 +23,8 @@ if (WIN32)
  set(Qt6Charts_DIR "C:/Qt/6.8.3/msvc2022_64/lib/cmake/Qt6Charts")
  set(Qt6Widgets_DIR "C:/Qt/6.8.3/msvc2022_64/lib/cmake/Qt6Widgets")
  set(HDF5_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Utility/HDF5/Win/1.14.6)
-#   import h5py for checking the cubit version
+#   for checking the cubit version
+#   import h5py 
 #   print("HDF5 runtime:", h5py.version.hdf5_version)
 #   print("h5py:", h5py.__version__)
 
@@ -158,6 +159,9 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 # this will link our libraries with a relative path
 SET(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
+SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+SET(CMAKE_INSTALL_RPATH "$ORIGIN;$ORIGIN/../../lib")
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${CMAKE_CURRENT_BINARY_DIR})
@@ -210,9 +214,12 @@ if (WIN32)
 endif (WIN32)
 if (UNIX)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Linux/libQt6Charts.so.6.2.4 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Linux/libhdf5.so DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Linux/libhdf5.so.310 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Linux/libhdf5.so.310.5.1 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Linux/libhdf5_cpp.so DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Linux/libhdf5_cpp.so.310 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Linux/libhdf5_cpp.so.310.0.4 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Library/Linux/libhdf5_cpp.so.310.0.6 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
 endif (UNIX)
 
 #copy material default library into build directory

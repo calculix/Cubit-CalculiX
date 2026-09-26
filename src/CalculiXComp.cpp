@@ -64,7 +64,7 @@ void CalculiXComp::start_up(int withGUI)
   }
   
   ccx_iface = new CalculiXCoreInterface();
-  //ccx_iface->init_materiallibrary();
+  ccx_iface->init_materiallibrary();
     
   if(withGUI)
   {   
@@ -73,7 +73,7 @@ void CalculiXComp::start_up(int withGUI)
     //add_exports();
 
     setup_command_panels();
-    //setup_CCXDockWindowModelTree(); // command panels has to be setup before dockwindow   
+    setup_CCXDockWindowModelTree(); // command panels has to be setup before dockwindow   
     load_options();
     boolwithGUI = true;
   }
