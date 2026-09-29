@@ -12,7 +12,11 @@ ObserverTimer::ObserverTimer(CalculiXComp *CalculiXComp)
 }
 
 ObserverTimer::~ObserverTimer()
-{}
+{
+  stop();
+  delete ccx_iface;
+  ccx_iface = nullptr;
+}
 
 void ObserverTimer::timeoutaction()
 {

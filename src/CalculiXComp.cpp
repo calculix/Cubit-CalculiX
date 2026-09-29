@@ -8,6 +8,8 @@
 #include "Observer.hpp"
 #include "OptionsPanel.hpp"
 #include "CubitMessage.hpp"
+//#include "CubitPluginManager.hpp"
+//#include "CubitCommandInterface.hpp"
 
 #include "cmdPanelManager.hpp"
 #include "CCXDockWindowModelTree.hpp"
@@ -56,6 +58,34 @@ void CalculiXComp::start_up(int withGUI)
 {
   
   restore_settings();
+
+  ///////
+/*
+  CubitPluginManager* manager = CubitInterface::plugin_manager();
+  if (manager)
+  {
+    auto commands =
+    manager->get_typed_interfaces<CubitCommandInterface*>();
+
+    PRINT_INFO("Loaded command interfaces: %d\n",
+              static_cast<int>(commands.size()));
+
+    bool ok = manager->load_plugins("/home/norbert/Downloads/Coreform-Cubit-2026.9/sdk_examples/build/", true);
+    // Then retrieve an interface the plugin manager loaded.
+
+    if (ok)
+    PRINT_INFO("\nPlugin load WORKED\n");
+    if (!ok)
+    PRINT_INFO("\nPlugin load failed\n");
+
+    commands =
+    manager->get_typed_interfaces<CubitCommandInterface*>();
+
+    PRINT_INFO("Loaded command interfaces: %d\n",
+              static_cast<int>(commands.size()));
+  }
+*/
+  ///////
 
   if (Mediator* mediator = Broker::instance())
   {
@@ -220,14 +250,16 @@ void CalculiXComp::setup_observers(int withGUI)
 
 void CalculiXComp::cleanup_observers()
 {
-  if(mListener)
+  // If cubitcomp is still loaded, we need to unregister the observer.
+  if (mListener)
   {
-    // If cubitcomp is still loaded, we need to unregister the observer.
-    ComponentInfo cubitcomp_info;
-    Broker::instance()->get_component_info("cubitcomp", cubitcomp_info);
-    if(cubitcomp_info.get_state() == "Loaded")
-      mListener->unregister_observer();
-
+    if (Mediator* mediator = Broker::instance())
+    {
+      ComponentInfo cubitcomp_info;
+      mediator->get_component_info("cubitcomp", cubitcomp_info);
+      if (cubitcomp_info.get_state() == "Loaded")
+        mListener->unregister_observer();
+    }
     delete mListener;
     mListener = NULL;
   }

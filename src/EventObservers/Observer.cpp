@@ -17,6 +17,15 @@ Observer::Observer()
 
 Observer::~Observer()
 {
+  if (timer)
+  {
+    timer->stop();
+    delete timer;
+    timer = nullptr;
+  }
+
+  delete ccx_iface;
+  ccx_iface = nullptr;
 }
 
 void Observer::notify_model_reset()
