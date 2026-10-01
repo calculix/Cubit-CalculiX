@@ -238,6 +238,15 @@ if (UNIX)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/libmaterial.hdf5 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
 endif (UNIX)
 
+#copy setup scripts
+if (WIN32)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/set_cubit_plugin_dir.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/)
+endif (WIN32)
+if (UNIX)
+ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/set_cubit_plugin_dir.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
+endif (UNIX)
+
+
 
 set(CCXPLUGIN_SRCS
     CalculiXPlugin.cpp
@@ -346,7 +355,6 @@ endif (UNIX)
 if (WIN32)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Solver/CalculiX/Win/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/Solver/)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Postprocessor/CGX/Win/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/Postprocessor/CGX/)
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/set_cubit_plugin_dir.bat DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/)
  # if missing -> please download paraview binaries from https://www.paraview.org/download/
  #file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../../ParaView-6.0.0-MPI-Windows-Python3.12-msvc2017-AMD64/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/Postprocessor/ParaView/)
 endif (WIN32)
