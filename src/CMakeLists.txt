@@ -2,6 +2,14 @@ cmake_minimum_required(VERSION 3.5)
 
 project(Cubit-CalculiX)
 
+### version
+string(TIMESTAMP CCX_YEAR "%Y")
+string(TIMESTAMP CCX_MONTH "%m")
+string(REGEX REPLACE "^0" "" CCX_MONTH "${CCX_MONTH}") # 02 -> 2
+add_compile_definitions(CCX_VERSION="${CCX_YEAR}.${CCX_MONTH}")
+
+
+
 if (UNIX)
  set(CMAKE_PREFIX_PATH "~/Downloads/Coreform-Cubit-2026.9/cmake")
  include_directories("~/Downloads/Coreform-Cubit-2026.9/include")
