@@ -59,6 +59,10 @@ bool CoreMaterialsLibrary::load_library()
   PRINT_INFO("%s", log.c_str());
 
   HDF5Tool hdf5Tool(ccx_uo.mPathMaterialLibrary.toStdString());
+  if (hdf5Tool.file == nullptr)
+  {
+    return false;
+  }
   
   return true;
 }

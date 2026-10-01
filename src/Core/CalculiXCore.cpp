@@ -15,6 +15,7 @@
 //#include "cubitguicommondll.hpp"
 //#include "CubitGuiUtil.hpp"
 #include "CubitInterface.hpp"
+#include "CubitPythonInterpreter.hpp"
 #include "CubitMessage.hpp"
 #include "MeshExportInterface.hpp"
 #include "MaterialInterface.hpp"
@@ -398,22 +399,31 @@ bool CalculiXCore::init2() // will be done when loading the ccm!
 bool CalculiXCore::init_pythoninterface()
 {
   // init_pythoninterface(); needs to be initialized after the cubit is fully loaded; 
-  // will be initialized with the gui timer on its first evocation
+  // can be initialized by the user with ccx init pythoninterface
 
   if (!this->bool_init_pythoninterface)
   {
-    std::vector<std::string> command;
-    command.push_back("#!python");
-    command.push_back("import sys");
-    command.push_back("sys.path.append('" + ccx_uo.mPathPythonInterface.toStdString() + "')");
-    command.push_back("from calculix_pythoninterface import *");
-    command.push_back("ccx = CalculiXPythonInterface()");
-    command.push_back("#!cubit");
-    
-    for (size_t i = 0; i < command.size(); i++)
+    CubitPythonInterpreter* interpreter = CubitInterface::python_interpreter();
+    if (!interpreter || !interpreter->IsInitialized())
     {
-      //CubitInterface::silent_cmd_without_running_journal_lines(command[i].c_str());
-      CubitInterface::cubit_or_python_cmd(command[i].c_str());
+      PRINT_ERROR("Cubit Python interpreter is not ready.\n");
+      return false;
+    }
+
+    const std::string path = ccx_uo.mPathPythonInterface.toStdString();
+    if (path.empty())
+    {
+      PRINT_ERROR("Path to Python Interface is empty.\n");
+      return false;
+    }
+
+    interpreter->add_sys_path(path, true);
+    if (interpreter->Run_SimpleString(
+          "from calculix_pythoninterface import CalculiXPythonInterface\n"
+          "ccx = CalculiXPythonInterface()") != 0)
+    {
+      PRINT_ERROR("Init CalculiX Python Interface Failed!\n");
+      return false;
     }
     
     std::string log = "CalculiX Python Interface is ready!\n";
@@ -434,7 +444,7 @@ bool CalculiXCore::init_materiallibrary()
   if (!this->bool_init_materiallibrary)
   {
     this->bool_init_materiallibrary = mat_library->init();
-    return true;
+    return this->bool_init_materiallibrary;
   }
 
   return false;
@@ -8505,6 +8515,7 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
   std::string command;
   int bc_set_id=-1;
   BCSetHandle bc_set;
+  std::vector<BCSetHandle> bc_sets;
   NodesetHandle nodeset;
   std::vector<BCEntityHandle> bc_handles;
   std::vector<MeshExportBCData> bc_attribs; 
@@ -8516,7 +8527,14 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
     { 
       log = "Creating BCSet for exporting Initial Conditions.\n";
       PRINT_INFO("%s", log.c_str());
-      me_iface->create_default_bcset(0,true,true,true,bc_set);
+      if (me_iface->get_bcset_list(bc_sets))
+      {
+        //bc_set_id = me_iface->id_from_handle(bc_sets[bc_sets.size()-1]);
+        bc_set_id = bc_sets.size();     
+        me_iface->create_default_bcset(bc_set_id,true,true,true,bc_set);
+      }else{
+        me_iface->create_default_bcset(0,true,true,true,bc_set);
+      }
       me_iface->get_bc_restraints(bc_set, bc_handles);
       bc_set_id = me_iface->id_from_handle(bc_set);
     }
@@ -8650,16 +8668,16 @@ std::string CalculiXCore::get_hbc_export_data() // gets the export data from cor
 
   log = "Creating BCSet for exporting Homogeneous Boundary Conditions.\n";
   PRINT_INFO("%s", log.c_str());
-  
   if (me_iface->get_bcset_list(bc_sets))
   {
-    bc_set_id = me_iface->id_from_handle(bc_sets[bc_sets.size()-1]);
-    me_iface->create_default_bcset(bc_set_id+1,true,true,true,bc_set);
+    //bc_set_id = me_iface->id_from_handle(bc_sets[bc_sets.size()-1]);
+    bc_set_id = bc_sets.size();     
+    me_iface->create_default_bcset(bc_set_id,true,true,true,bc_set);
   }else{
-    me_iface->create_default_bcset(0,true,true,true,bc_set);
+    me_iface->create_default_bcset(1,true,true,true,bc_set);
   }
   bc_set_id = me_iface->id_from_handle(bc_set);
-    
+  
   // BCs
   me_iface->get_bc_restraints(bc_set, bc_handles);
   sub_data_ids = hbcs->get_bc_data_ids_from_bcs_id(0);
@@ -8774,10 +8792,11 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
       PRINT_INFO("%s", log.c_str());
       if (me_iface->get_bcset_list(bc_sets))
       {
-        bc_set_id = me_iface->id_from_handle(bc_sets[bc_sets.size()-1]);
-        me_iface->create_default_bcset(bc_set_id+1,true,true,true,bc_set);
+        //bc_set_id = me_iface->id_from_handle(bc_sets[bc_sets.size()-1]);
+        bc_set_id = bc_sets.size();     
+        me_iface->create_default_bcset(bc_set_id,true,true,true,bc_set);
       }else{
-        me_iface->create_default_bcset(0,true,true,true,bc_set);
+        me_iface->create_default_bcset(2,true,true,true,bc_set);
       }
       bc_set_id = me_iface->id_from_handle(bc_set);
     }

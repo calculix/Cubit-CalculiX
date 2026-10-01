@@ -1,6 +1,8 @@
 project(Cubit-CalculiX_commands)
 
 set(CMD_SRC
+    ${CMAKE_CURRENT_LIST_DIR}/ccxInitPythonInterfaceCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxInitPythonInterfaceCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxVersionCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxVersionCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxResetCommand.cpp

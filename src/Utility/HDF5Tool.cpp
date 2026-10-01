@@ -9,9 +9,75 @@
 
 HDF5Tool::HDF5Tool(std::string filename)
 {
-  
   //check if hdf5 exists, if not create a new file
   #ifdef WIN32
+    if (_access(filename.c_str(), 0) != 0)
+      {
+        HANDLE handle = CreateFileA(
+        filename.c_str(),
+        GENERIC_READ | GENERIC_WRITE,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        nullptr,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        nullptr
+        );
+
+        if (handle == INVALID_HANDLE_VALUE) 
+        {
+          DWORD error = GetLastError();
+          //std::printf("Read/write open failed: Windows error %lu\n", error);
+          // 5  = ERROR_ACCESS_DENIED
+          // 32 = ERROR_SHARING_VIOLATION
+          std::string log = ("Read/write open failed: Windows error " + std::to_string(error) + "\n");
+          log.append("CHECK PERMISSIONS FOR MATERIAL LIBRARY FILE!!!\n");
+          log.append("Most likely no user permission to write. FIX PERMISSIONS!\n");
+          log.append("Try running Cubit as Administrator!\n");
+          log.append("Or move the library file to another location and adjust the path in the options or in ccx.cfg!\n");
+          PRINT_ERROR("%s", log.c_str());        
+        }else{
+          //std::printf("Read/write open succeeded\n");
+          CloseHandle(handle);
+          std::string log = filename + " not found. An empty HDF5 will be created.\n";
+          PRINT_INFO("%s", log.c_str());
+          
+          hid_t new_file = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+          if (new_file != H5I_INVALID_HID)
+          {
+            H5Fclose(new_file);
+          }
+          this->file = new H5::H5File(filename,H5F_ACC_RDWR);
+        }
+      }else{
+        HANDLE handle = CreateFileA(
+        filename.c_str(),
+        GENERIC_READ | GENERIC_WRITE,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        nullptr,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        nullptr
+        );
+
+        if (handle == INVALID_HANDLE_VALUE) 
+        {
+          DWORD error = GetLastError();
+          //std::printf("Read/write open failed: Windows error %lu\n", error);
+          // 5  = ERROR_ACCESS_DENIED
+          // 32 = ERROR_SHARING_VIOLATION
+          std::string log = ("Read/write open failed: Windows error " + std::to_string(error) + "\n");
+          log.append("CHECK PERMISSIONS FOR MATERIAL LIBRARY FILE!!!\n");
+          log.append("Most likely no user permission to write. FIX PERMISSIONS!\n");
+          log.append("Try running Cubit as Administrator!\n");
+          log.append("Or move the library file to another location and adjust the path in the options or in ccx.cfg!\n");
+          PRINT_INFO("%s", log.c_str());        
+        }else{
+          //std::printf("Read/write open succeeded\n");
+          CloseHandle(handle);
+          this->file = new H5::H5File(filename,H5F_ACC_RDWR);
+        }
+      }
+    /*
     if (_access(filename.c_str(), 0) != 0)
     {
       std::string log = filename + " not found. An empty HDF5 will be created.\n";
@@ -21,8 +87,7 @@ HDF5Tool::HDF5Tool(std::string filename)
       if (new_file != H5I_INVALID_HID)
       {
         H5Fclose(new_file);
-      }
-      
+      } 
     }else{
       bool can_read = (_access(filename.c_str(), 4) == 0);
       bool can_write = (_access(filename.c_str(), 2) == 0);
@@ -47,6 +112,8 @@ HDF5Tool::HDF5Tool(std::string filename)
         PRINT_INFO("%s", log.c_str());
       }
     }
+    this->file = new H5::H5File(filename,H5F_ACC_RDWR);
+    */
   #else
     if (access(filename.c_str(), W_OK) != 0) 
     {
@@ -59,9 +126,8 @@ HDF5Tool::HDF5Tool(std::string filename)
         H5Fclose(new_file);
       }
     }
+    this->file = new H5::H5File(filename,H5F_ACC_RDWR);
   #endif
-
-  this->file = new H5::H5File(filename,H5F_ACC_RDWR);
 }
 
 HDF5Tool::~HDF5Tool()

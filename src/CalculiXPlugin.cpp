@@ -4,6 +4,7 @@
 #include "ccxVersionCommand.hpp"
 #include "ccxResetCommand.hpp"
 #include "ccxExportCommand.hpp"
+#include "ccxInitPythonInterfaceCommand.hpp"
 #include "ccxUseAutoCleanupCommand.hpp"
 #include "ccxUseLogCoreCommand.hpp"
 #include "ccxPrintCoreCommand.hpp"
@@ -177,6 +178,7 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxVersionCommand");
   keys.push_back("ccxResetCommand");
   keys.push_back("ccxExportCommand");
+  keys.push_back("ccxInitPythonInterfaceCommand");
   keys.push_back("ccxUseAutoCleanupCommand");
   keys.push_back("ccxUseLogCoreCommand");
   keys.push_back("ccxPrintCoreCommand");
@@ -348,6 +350,9 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
   if(key == "ccxUseAutoCleanupCommand")
     return new ccxUseAutoCleanupCommand();
   
+  if(key == "ccxInitPythonInterfaceCommand")
+    return new ccxInitPythonInterfaceCommand();
+
   if(key == "ccxUseLogCoreCommand")
     return new ccxUseLogCoreCommand();
 

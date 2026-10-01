@@ -94,20 +94,22 @@ void CalculiXComp::start_up(int withGUI)
   }
   
   ccx_iface = new CalculiXCoreInterface();
-  ccx_iface->init_materiallibrary();
-    
-  if(withGUI)
-  {   
-    //setup_menus();
-    //setup_toolbars();
-    //add_exports();
-
-    setup_command_panels();
-    setup_CCXDockWindowModelTree(); // command panels has to be setup before dockwindow   
-    load_options();
-    boolwithGUI = true;
+  bool init_materiallibrary = ccx_iface->init_materiallibrary();
+  
+  if (init_materiallibrary)
+  {    
+    if(withGUI)
+    {   
+      //setup_menus();
+      //setup_toolbars();
+      //add_exports();
+      setup_command_panels();
+      setup_CCXDockWindowModelTree(); // command panels has to be setup before dockwindow   
+      load_options();
+      boolwithGUI = true;
+    }
+    setup_observers(withGUI);
   }
-  setup_observers(withGUI);
 }
 
 void CalculiXComp::clean_up()
@@ -329,6 +331,7 @@ void CalculiXComp::unload_options()
 
 void CalculiXComp::component_loaded(const char* name)
 {
+  
   if (!python_interface_initialized)
   {
     //std::string log = "Component Name\n";
@@ -336,4 +339,5 @@ void CalculiXComp::component_loaded(const char* name)
     //PRINT_INFO("%s", name);
     python_interface_initialized = ccx_iface->init_pythoninterface();
   }
+  
 }

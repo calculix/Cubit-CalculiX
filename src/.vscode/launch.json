@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Cubit",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "C:\\Program Files\\Coreform Cubit 2026.9\\bin\\clarox.exe",
+      "cwd": "C:\\Program Files\\Coreform Cubit 2026.9\\bin",
+      "stopAtEntry": true
+    }
+  ]
+}
