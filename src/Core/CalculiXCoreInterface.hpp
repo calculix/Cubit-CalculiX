@@ -2,6 +2,7 @@
 #define CALCULIXCOREINTERFACE_HPP
 
 #include <QIcon>
+#include "CoreStepsStructs.hpp"
 
 class MeshExportInterface;
 
@@ -202,7 +203,7 @@ public:
   bool step_remove_historyoutputs(int step_id, std::vector<int> historyoutput_ids); // removes historyoutputs to historyoutputs_data
   bool step_remove_fieldoutputs(int step_id, std::vector<int> fieldoutput_ids); // removes fieldoutputs to fieldoutputs_data
   bool step_utility_modelchangeelement_dummystep(int step_id, std::vector<int> trajectory_ids); // inserts dummysteps
-  std::vector<int> step_utility_split_step(int step_id, std::vector<std::vector<double>> times); // split step, returns step ids
+  StepSplitResult step_utility_split_step(int step_id, std::vector<std::vector<double>> times); // split step, returns step ids
   bool step_utility_save_backup(); // saves the current steps data
   bool step_utility_load_backup(); // loads the backup steps data
   bool create_job(std::vector<std::string> options); // adds a new job

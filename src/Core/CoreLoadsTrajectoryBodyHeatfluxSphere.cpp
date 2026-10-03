@@ -4,6 +4,8 @@
 #include "CubitMessage.hpp"
 #include <cmath>
 #include <algorithm>
+#include <limits>
+#include <unordered_set>
 #include "StopWatch.hpp"
 
 CoreLoadsTrajectoryBodyHeatfluxSphere::CoreLoadsTrajectoryBodyHeatfluxSphere()
@@ -985,6 +987,7 @@ std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectoryBodyHeatfluxSphere
   return element_ids;
 }
 
+/*
 std::vector<std::vector<double>> CoreLoadsTrajectoryBodyHeatfluxSphere::get_times(int load_id)
 {
   std::vector<std::vector<double>> times;
@@ -1018,6 +1021,84 @@ std::vector<std::vector<double>> CoreLoadsTrajectoryBodyHeatfluxSphere::get_time
       t_begin = t_end;
       t_end = t_end + delta_t;
     }
+  }
+
+  return times;
+}
+*/
+// get times, with distance based timing
+std::vector<std::vector<double>> CoreLoadsTrajectoryBodyHeatfluxSphere::get_times(int load_id)
+{
+  const int load_data_id = get_loads_data_id_from_load_id(load_id);
+  if (load_data_id == -1)
+    return {};
+
+  const auto nodes = get_node_ids(load_id);
+  if (nodes.size() < 2)
+    return {};
+
+  const int time_data_id =
+      get_time_data_id_from_time_id(loads_data[load_data_id][7]);
+  if (time_data_id == -1)
+    return {};
+
+  const double begin =
+      ccx_iface->string_scientific_to_double(time_data[time_data_id][1], std::numeric_limits<double>::max_digits10);
+  const double end =
+      ccx_iface->string_scientific_to_double(time_data[time_data_id][2], std::numeric_limits<double>::max_digits10);
+
+  if (!std::isfinite(begin) || !std::isfinite(end) || end <= begin)
+    return {};
+
+  // Distance along the discretized trajectory.
+  std::vector<double> distance(nodes.size(), 0.0);
+
+  for (size_t i = 1; i < nodes.size(); ++i)
+  {
+    const auto a = CubitInterface::get_nodal_coordinates(nodes[i - 1]);
+    const auto b = CubitInterface::get_nodal_coordinates(nodes[i]);
+
+    const double segment = std::sqrt(
+        std::pow(b[0] - a[0], 2) +
+        std::pow(b[1] - a[1], 2) +
+        std::pow(b[2] - a[2], 2));
+
+    if (!std::isfinite(segment) || segment <= 0.0)
+      return {};
+
+    distance[i] = distance[i - 1] + segment;
+  }
+
+  const double length = distance.back();
+  if (!std::isfinite(length) || length <= 0.0)
+    return {};
+
+  std::vector<double> arrival(nodes.size());
+
+  for (size_t i = 0; i < nodes.size(); ++i)
+    arrival[i] = begin + (end - begin) * distance[i] / length;
+
+  arrival.front() = begin;
+  arrival.back() = end;
+
+  // Each stationary sphere represents the path near its node.
+  // Switch spheres halfway between adjacent arrival times.
+  std::vector<double> boundaries(nodes.size() + 1);
+  boundaries.front() = begin;
+  boundaries.back() = end;
+
+  for (size_t i = 1; i < nodes.size(); ++i)
+    boundaries[i] =
+        arrival[i - 1] + 0.5 * (arrival[i] - arrival[i - 1]);
+
+  std::vector<std::vector<double>> times;
+
+  for (size_t i = 0; i < nodes.size(); ++i)
+  {
+    if (boundaries[i + 1] <= boundaries[i])
+      return {};
+
+    times.push_back({boundaries[i], boundaries[i + 1]});
   }
 
   return times;
@@ -1103,6 +1184,12 @@ std::vector<std::vector<double>> CoreLoadsTrajectoryBodyHeatfluxSphere::get_magn
 
 bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
 {
+  // Preserve timestamp precision
+  const auto format_time = [&](double value) {
+  return ccx_iface->to_string_scientific(
+      value, std::numeric_limits<double>::max_digits10);
+  };
+
   StopWatch watch;
   watch.tick("prepare trajectory bodyheatfluxsphere start");
 
@@ -1267,8 +1354,8 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
               amplitude = "0 0 0 " + ccx_iface->to_string_scientific(amplitude_magnitudes[ii][iii][1]) + " ";
             }else{
               amplitude = "0 0 ";
-              amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " 0 ");
-              amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " " + ccx_iface->to_string_scientific(amplitude_magnitudes[ii][iii][1]) + " ");
+              amplitude.append(format_time(amplitude_times[ii][iii][0]) + " 0 ");
+              amplitude.append(format_time(amplitude_times[ii][iii][0]) + " " + ccx_iface->to_string_scientific(amplitude_magnitudes[ii][iii][1]) + " ");
             }
             zero_magnitude = false;
           }
@@ -1277,18 +1364,19 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
           {
             if (zero_magnitude)
             {
-              amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " 0 ");
-              amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " " + ccx_iface->to_string_scientific(amplitude_magnitudes[ii][iii][1]) + " ");
+              amplitude.append(format_time(amplitude_times[ii][iii][0]) + " 0 ");
+              amplitude.append(format_time(amplitude_times[ii][iii][0]) + " " + ccx_iface->to_string_scientific(amplitude_magnitudes[ii][iii][1]) + " ");
               zero_magnitude = false;
             }
-            if (pow((amplitude_times[ii][iii][1]-amplitude_times[ii][iii+1][0]),2) < 1e-12)
+            //if (pow((amplitude_times[ii][iii][1]-amplitude_times[ii][iii+1][0]),2) < 1e-12)
+            if (amplitude_times[ii][iii][1] == amplitude_times[ii][iii + 1][0])
             {
               //don't stop magnitude but adjust magnitude value to next value
-              amplitude.append(std::to_string(amplitude_times[ii][iii][1]) + " " + ccx_iface->to_string_scientific(amplitude_magnitudes[ii][iii][1]) + " ");
-              amplitude.append(std::to_string(amplitude_times[ii][iii][1]) + " " + ccx_iface->to_string_scientific(amplitude_magnitudes[ii][iii+1][1]) + " ");
+              amplitude.append(format_time(amplitude_times[ii][iii][1]) + " " + ccx_iface->to_string_scientific(amplitude_magnitudes[ii][iii][1]) + " ");
+              amplitude.append(format_time(amplitude_times[ii][iii][1]) + " " + ccx_iface->to_string_scientific(amplitude_magnitudes[ii][iii+1][1]) + " ");
             }else{
-              amplitude.append(std::to_string(amplitude_times[ii][iii][1]) + " " + ccx_iface->to_string_scientific(amplitude_magnitudes[ii][iii][1]) + " ");
-              amplitude.append(std::to_string(amplitude_times[ii][iii][1]) + " 0 ");
+              amplitude.append(format_time(amplitude_times[ii][iii][1]) + " " + ccx_iface->to_string_scientific(amplitude_magnitudes[ii][iii][1]) + " ");
+              amplitude.append(format_time(amplitude_times[ii][iii][1]) + " 0 ");
               zero_magnitude = true;
             }
           }
@@ -1297,12 +1385,12 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
           {
             if (zero_magnitude)
             {
-              amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " 0 ");
-              amplitude.append(std::to_string(amplitude_times[ii][iii][0]) + " " + ccx_iface->to_string_scientific(amplitude_magnitudes[ii][iii][1]) + " ");
+              amplitude.append(format_time(amplitude_times[ii][iii][0]) + " 0 ");
+              amplitude.append(format_time(amplitude_times[ii][iii][0]) + " " + ccx_iface->to_string_scientific(amplitude_magnitudes[ii][iii][1]) + " ");
               zero_magnitude = false;
             }
-            amplitude.append(std::to_string(amplitude_times[ii][iii][1]) + " " + ccx_iface->to_string_scientific(amplitude_magnitudes[ii][iii][1]) + " ");
-            amplitude.append(std::to_string(amplitude_times[ii][iii][1]) + " 0 ");
+            amplitude.append(format_time(amplitude_times[ii][iii][1]) + " " + ccx_iface->to_string_scientific(amplitude_magnitudes[ii][iii][1]) + " ");
+            amplitude.append(format_time(amplitude_times[ii][iii][1]) + " 0 ");
           } 
         }
         //std::string log = std::to_string(trajectory_element_ids[ii][0]) + " " + std::to_string(amplitude_times[ii].size()) + " " +  amplitude + "\n";
@@ -1373,85 +1461,97 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
 
   // check modelchange in trajetory loads
   // only 1 trajectory per step is allowed for this operation
-  bool bool_modelchange = false;
-  bool bool_modelchange_add = false;
-  bool bool_modelchange_remove = false;
-  for (size_t i = 0; i < loads_data.size(); i++)
-  {
-    if (loads_data[i][11] != 0)
-    {
-      bool_modelchange = true;
-      if ((loads_data[i][11] == 1))
-      {
-        bool_modelchange_add = true;
-      }
-      if ((loads_data[i][11] == 2))
-      {
-        bool_modelchange_remove = true;
-      }
-      break;
-    }
-  }
-
   std::vector<std::vector<int>> prepared_step;
-  if (bool_modelchange)
+  const auto steps_tree = ccx_iface->get_steps_tree_data();
+
+  for (const auto& step : steps_tree)
   {
-    std::vector<std::vector<std::string>> steps_tree = ccx_iface->get_steps_tree_data();
-    for (size_t i = 0; i < steps_tree.size(); i++)
+    const int step_id = std::stoi(step[0]);
+    const auto trajectories =
+        ccx_iface->get_steps_loadstrajectory_tree_data(step_id);
+
+    int enabled_subload = -1;
+
+    for (const auto& trajectory : trajectories)
     {
-      std::vector<std::vector<std::string>> trajectory_tree = ccx_iface->get_steps_loadstrajectory_tree_data(std::stoi(steps_tree[i][0]));
-      if (trajectory_tree.size() == 1)
-      {
-        if (ccx_iface->loadstrajectory_get_load_type(stoi(trajectory_tree[0][0])) == "BODYHEATFLUXSPHERE")
-        {
-          prepared_step.push_back({std::stoi(steps_tree[i][0]),ccx_iface->loadstrajectory_get_subload_id(stoi(trajectory_tree[0][0]))});
-        }
-      } 
-      if (trajectory_tree.size() > 1)
-      {
-        bool_modelchange = false;
-        watch.tick("prepare trajectory: WARNING only 1 trajectory allowed per step for the use of *modelchange");
-        break;
-      }
+      const int trajectory_id = std::stoi(trajectory[0]);
+
+      if (ccx_iface->loadstrajectory_get_load_type(trajectory_id) !=
+          "BODYHEATFLUXSPHERE")
+        continue;
+
+      const int subload_id =
+          ccx_iface->loadstrajectory_get_subload_id(trajectory_id);
+      const int data_id = get_loads_data_id_from_load_id(subload_id);
+
+      if (data_id < 0)
+        return false;
+
+      const int mode = loads_data[data_id][11];
+
+      if (mode < 0 || mode > 2)
+        return false;
+
+      if (mode != 0)
+        enabled_subload = subload_id;
     }
+
+    if (enabled_subload < 0)
+      continue; // Model change is OFF.
+
+    if (trajectories.size() != 1)
+    {
+      PRINT_ERROR(
+          "Model-change splitting requires one trajectory per step.\n");
+      return false;
+    }
+
+    prepared_step.push_back({step_id, enabled_subload});
   }
   
-  if (bool_modelchange)
+  if (!prepared_step.empty())
   {
-    std::vector<std::vector<int>> step_splits;
-    // transform steps
-    for (size_t i = 0; i < prepared_step.size(); i++)
+    std::vector<StepSplitResult> step_splits;
+    int step_shift = 0;
+
+    for (size_t i = 0; i < prepared_step.size(); ++i)
     {
-      int load_data_id = this->get_loads_data_id_from_load_id(prepared_step[i][1]);
-      std::vector<int> step_ids;
-      if (i==0)
+      const int load_data_id =
+          get_loads_data_id_from_load_id(prepared_step[i][1]);
+
+      if ((load_data_id < 0) || (static_cast<size_t>(load_data_id) >= load_times.size()))
+        return false;
+
+      const int shifted_step_id = prepared_step[i][0] + step_shift;
+
+      auto split = ccx_iface->step_utility_split_step(shifted_step_id, load_times[load_data_id]);
+
+      if (!split.valid || split.pieces.empty())
       {
-        step_ids = ccx_iface->step_utility_split_step(prepared_step[i][0],load_times[load_data_id]);
-      }else{
-        int step_shift = 0;
-        for (size_t ii = 0; ii < step_splits.size(); ii++)
-        {
-          step_shift = step_shift + int(step_splits[ii].size()) - 1;
-        }
-        step_ids = ccx_iface->step_utility_split_step(prepared_step[i][0] + step_shift,load_times[load_data_id]);
-        // shift prepared_step_bodyheatflux
-        for (size_t ii = 0; ii < prepared_step_bodyheatflux.size(); ii++)
-        {  
-          if (prepared_step_bodyheatflux[ii][0]==prepared_step[i][0])
-          {
-            prepared_step_bodyheatflux[ii][0]=prepared_step[i][0] + step_shift;
-            std::string log = "prepared_step_bodyheatflux[ii][0] " + std::to_string(prepared_step_bodyheatflux[ii][0]) + " prepared_step[i][0] " + std::to_string(prepared_step[i][0]) + "\n";
-            PRINT_INFO("%s", log.c_str());
-          }
-        }
+        PRINT_ERROR("Could not split trajectory step.\n");
+        return false;
       }
-      step_splits.push_back(step_ids);
+
+      const int added_steps = static_cast<int>(split.pieces.size()) - 1;
+
+      // Update IDs used when cleaning up the prepared heat loads.
+      for (auto& record : prepared_step_bodyheatflux)
+      {
+        if (record[0] == shifted_step_id)
+          record[0] = split.pieces.front().step_id;
+        else if (record[0] > shifted_step_id)
+          record[0] += added_steps;
+      }
+
+      step_shift += added_steps;
+      step_splits.push_back(split);
     }
 
     // add *modelchange to custom lines
     // get custom lines ids before prep
-    std::vector<int> tmp = ccx_iface->get_customline_ids();
-    prepared_customlines.push_back(tmp);
+    prepared_customlines.clear();
+    prepared_customlines.push_back(ccx_iface->get_customline_ids());
+    std::unordered_set<int> activated_elements;
     for (size_t i = 0; i < prepared_step.size(); i++)
     { 
       int load_data_id = this->get_loads_data_id_from_load_id(prepared_step[i][1]);
@@ -1461,8 +1561,20 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
       //load_element_ids[load_data_id][0] order by node
       //load_element_ids[load_data_id][0][0] order by radius and depth
       //load_element_ids[load_data_id][0][0][0] face ids
-      for (size_t ii = 0; ii < load_element_ids[load_data_id].size(); ii++)
+      for (const auto& piece : step_splits[i].pieces)
       {
+        if (piece.trajectory_interval < 0)
+          continue; // No activation during waiting/cooling.
+
+        const size_t ii =
+            static_cast<size_t>(piece.trajectory_interval);
+
+        if (piece.step_id <= 0 ||
+            ii >= load_element_ids[load_data_id].size())
+        {
+          PRINT_ERROR("Invalid trajectory activation mapping.\n");
+          return false;
+        }
         std::vector<int> element_ids;
         for (size_t iii = 0; iii < load_element_ids[load_data_id][ii].size(); iii++)
         {
@@ -1471,6 +1583,34 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
             element_ids.push_back(load_element_ids[load_data_id][ii][iii][iv]);
           }
         }
+        std::sort(element_ids.begin(), element_ids.end());
+        element_ids.erase(
+            std::unique(element_ids.begin(), element_ids.end()),
+            element_ids.end());
+
+        const int mode = loads_data[load_data_id][11];
+        if (mode == 0)
+          continue; // OFF exports heatflux without model change.
+
+        if (mode == 1)
+        {
+          element_ids.erase(
+              std::remove_if(element_ids.begin(), element_ids.end(),
+                  [&](int element_id)
+                  {
+                    // Keep only the first ADD until an explicit REMOVE.
+                    return !activated_elements.insert(element_id).second;
+                  }),
+              element_ids.end());
+        }
+        else
+        {
+          for (int element_id : element_ids)
+            activated_elements.erase(element_id);
+        }
+
+        if (element_ids.empty())
+          continue;
 
         //insert custom lines
         // customlines_data[0][1] name
@@ -1479,21 +1619,15 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
         // customlines_ data[0][4] insert keyword id
         // customlines_data[0][5] customline
         std::vector<std::string> options;
-        options.push_back("Trajectory_" + std::to_string(prepared_step[i][1]) + "_Step_" + std::to_string(step_splits[i][ii]));
+        options.push_back("Trajectory_" + std::to_string(prepared_step[i][1]) + "_Step_" + std::to_string(piece.step_id));
         options.push_back("AFTER");
         options.push_back("STEP_BEGIN");
-        options.push_back(std::to_string(step_splits[i][ii]));
+        options.push_back(std::to_string(piece.step_id));
 
-        std::string cline;
-        cline = "*MODEL CHANGE,TYPE=ELEMENT,";
-        if (bool_modelchange_add)
-        {
-          cline.append("ADD\n");
-        }
-        if (bool_modelchange_remove)
-        {
-          cline.append("REMOVE\n");
-        }
+        std::string cline =
+            "*MODEL CHANGE,TYPE=ELEMENT," +
+            std::string(mode == 1 ? "ADD\n" : "REMOVE\n");
+
         int ic = 0;
         for (size_t iii = 0; iii < element_ids.size(); iii++)
         {
@@ -1513,9 +1647,6 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
       }
       
     }
-    // get custom line ids after prep
-    tmp = ccx_iface->get_customline_ids();
-    prepared_customlines.push_back(tmp);
   }
 
   watch.tick("prepare trajectory end");
@@ -1523,15 +1654,11 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
   return true;
 }
 
-
 bool CoreLoadsTrajectoryBodyHeatfluxSphere::clean_export()
 {
   std::string ids;
   StopWatch watch;
-  if (prepared_amplitudes.size()==0)
-  {
-    return true;
-  }
+  bool cleanup_ok = true;
   
   watch.tick("clean trajectory start");
 
@@ -1547,7 +1674,8 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::clean_export()
     }
     if (current_step_id != prepared_step_bodyheatflux[i][0])
     {
-      ccx_iface->silent_cmd("ccx step " + std::to_string(current_step_id) + " remove load bodyheatflux " + ids);
+      const bool removed = ccx_iface->silent_cmd("ccx step " + std::to_string(current_step_id) + " remove load bodyheatflux " + ids);
+      cleanup_ok = removed && cleanup_ok;
       //ccx_iface->cmd("ccx step " + std::to_string(current_step_id) + " remove load bodyheatflux " + ids);
       ids="";
       ids.append(std::to_string(prepared_step_bodyheatflux[i][1]) + " ");
@@ -1557,7 +1685,8 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::clean_export()
     }
     if (i==prepared_step_bodyheatflux.size()-1)
     {
-      ccx_iface->silent_cmd("ccx step " + std::to_string(current_step_id) + " remove load bodyheatflux " + ids);
+      const bool removed = ccx_iface->silent_cmd("ccx step " + std::to_string(current_step_id) + " remove load bodyheatflux " + ids);
+      cleanup_ok = removed && cleanup_ok;
       //ccx_iface->cmd("ccx step " + std::to_string(current_step_id) + " remove load bodyheatflux " + ids);
     }
   }
@@ -1568,7 +1697,11 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::clean_export()
   {
     ids.append(std::to_string(prepared_bodyheatflux[i]) + " ");
   }
-  ccx_iface->silent_cmd("ccx delete bodyheatflux " + ids);
+  if (!ids.empty())
+  {
+    const bool deleted = ccx_iface->silent_cmd("ccx delete bodyheatflux " + ids);
+    cleanup_ok = deleted && cleanup_ok;
+  }
   watch.tick("clean trajectory bodyheatfluxsphere");
 
   /*
@@ -1579,38 +1712,46 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::clean_export()
   }
   ccx_iface->silent_cmd("ccx delete amplitude " + ids);
   */
-  ccx_iface->delete_amplitudes(prepared_amplitudes);
+  if (!prepared_amplitudes.empty())
+  {
+    const bool deleted = ccx_iface->delete_amplitudes(prepared_amplitudes);
+    cleanup_ok = deleted && cleanup_ok;
+  }
   watch.tick("clean trajectory amplitudes");
 
   //resume core update
   ccx_iface->set_block_core_update(false);
   ccx_iface->core_update();
 
-  if (prepared_customlines.size()==2)
+  if (!prepared_customlines.empty())
   {
-    int id_from = prepared_customlines[0][prepared_customlines[0].size()-1] + 1;
-    int id_to = prepared_customlines[1][prepared_customlines[1].size()-1];;
-    
-    if (id_from == -1)
-    {
-      id_from = 0;
-    }
-    if (id_to == -1)
-    {
-      id_to = 0;
-    }
+    const auto& original_ids = prepared_customlines.front();
+    const auto current_ids = ccx_iface->get_customline_ids();
 
-    ccx_iface->silent_cmd("ccx delete customline " + std::to_string(id_from) + " to " + std::to_string(id_to));
+    for (int id : current_ids)
+    {
+      const bool existed_before =
+          std::find(original_ids.begin(), original_ids.end(), id) != original_ids.end();
+      if (!existed_before)
+      {
+        const bool deleted = ccx_iface->delete_customline(id);
+        cleanup_ok = deleted && cleanup_ok;
+      }
+    }
     watch.tick("clean custom lines");
   }
   
-  prepared_amplitudes.clear();
-  prepared_bodyheatflux.clear();
-  prepared_step_bodyheatflux.clear();
-  prepared_step_transform.clear();
+  if (cleanup_ok)
+  {
+    prepared_amplitudes.clear();
+    prepared_bodyheatflux.clear();
+    prepared_step_bodyheatflux.clear();
+    prepared_step_transform.clear();
+    prepared_customlines.clear();
+  }
 
   watch.tick("clean trajectory end");
-  return true;
+  return cleanup_ok;
 }
 
 std::string CoreLoadsTrajectoryBodyHeatfluxSphere::get_load_export(int load_id)

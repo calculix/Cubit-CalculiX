@@ -199,3 +199,5 @@
 2026-09-24 working on Startup process
 2026-10-01 working on Startup process
 2026-10-01 fixing bc set bug
+2026-10-03 working on trajectory Body heat flux sphere, also fixing Timing to distance-based
+2026-10-03 ccx draw needs an update.

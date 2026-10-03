@@ -67,6 +67,7 @@ set(CORE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/CoreHBCs.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreSteps.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreSteps.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreStepsStructs.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreJobs.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreJobs.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreResults.cpp

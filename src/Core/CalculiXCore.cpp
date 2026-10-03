@@ -1,4 +1,5 @@
 #include "CalculiXCore.hpp"
+#include "ScientificNumber.hpp"
 #ifdef WIN32
  #include <io.h>
 #else
@@ -2723,18 +2724,13 @@ bool CalculiXCore::export_to_csv(std::string path, std::vector<std::string> head
 
 std::string  CalculiXCore::to_string_scientific(double value, int precision)
 {
-  std::string output;
-  std::ostringstream ss;
-  ss.precision(precision);
-  ss << std::scientific << value;
-  output = ss.str();
-  return output;
+  return ScientificNumber::format(value, precision);
 }
 
 double  CalculiXCore::string_scientific_to_double(std::string value, int precision)
 {
   double output;
-  if (value[0] == '-') // check if negative
+  if (!value.empty() && value[0] == '-') // check if negative
   {
     value.replace(0,1, "");
     //check if is INF
@@ -2742,7 +2738,7 @@ double  CalculiXCore::string_scientific_to_double(std::string value, int precisi
     {
       output = -1.255070e+29;
     }else{
-      output = std::stod(value);
+      output = ScientificNumber::parse(value);
       output = -1*output;
     }
   } else {
@@ -2751,11 +2747,11 @@ double  CalculiXCore::string_scientific_to_double(std::string value, int precisi
     {
       output = 1.255070e+29;
     }else{
-      output = std::stod(value);
+      output = ScientificNumber::parse(value);
     }
   }
   //apply precision
-  output = std::stod(this->to_string_scientific(output,precision));
+  output = ScientificNumber::parse(this->to_string_scientific(output,precision));
 
   return output;
 }
@@ -4649,7 +4645,7 @@ bool CalculiXCore::step_utility_modelchangeelement_dummystep(int step_id, std::v
   return true;
 }
 
-std::vector<int> CalculiXCore::step_utility_split_step(int step_id, std::vector<std::vector<double>> times)
+StepSplitResult CalculiXCore::step_utility_split_step(int step_id, std::vector<std::vector<double>> times)
 {
   return steps->split_step(step_id, times);
 }

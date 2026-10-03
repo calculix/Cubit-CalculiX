@@ -911,7 +911,7 @@ bool CalculiXCoreInterface::step_utility_modelchangeelement_dummystep(int step_i
   return ccx_core.step_utility_modelchangeelement_dummystep(step_id, trajectory_ids);
 }
 
-std::vector<int> CalculiXCoreInterface::step_utility_split_step(int step_id, std::vector<std::vector<double>> times)
+StepSplitResult CalculiXCoreInterface::step_utility_split_step(int step_id, std::vector<std::vector<double>> times)
 {
   return ccx_core.step_utility_split_step(step_id, times);
 }

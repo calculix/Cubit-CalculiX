@@ -2,6 +2,7 @@
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "CalculiXCoreInterface.hpp"
+#include <limits>
 
 ccxLoadsTrajectoryBodyHeatfluxSphereModifyCommand::ccxLoadsTrajectoryBodyHeatfluxSphereModifyCommand()
 {}
@@ -203,7 +204,7 @@ bool ccxLoadsTrajectoryBodyHeatfluxSphereModifyCommand::execute(CubitCommandData
   }
   else
   {
-    time_begin = ccx_iface.to_string_scientific(time_begin_value);
+    time_begin = ccx_iface.to_string_scientific(time_begin_value, std::numeric_limits<double>::max_digits10);
     options_marker.push_back(1);
   }
   options.push_back(time_begin);
@@ -215,7 +216,7 @@ bool ccxLoadsTrajectoryBodyHeatfluxSphereModifyCommand::execute(CubitCommandData
   }
   else
   {
-    time_end = ccx_iface.to_string_scientific(time_end_value);
+    time_end = ccx_iface.to_string_scientific(time_end_value, std::numeric_limits<double>::max_digits10);
     options_marker.push_back(1);
   }
   options.push_back(time_end);

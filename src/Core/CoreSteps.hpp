@@ -1,8 +1,12 @@
 #ifndef CORESTEPS_HPP
 #define CORESTEPS_HPP
 
+#include "CoreStepsStructs.hpp"
 #include <vector>
 #include <string>
+#include <algorithm>
+#include <cmath>
+#include <limits>
 
 class CalculiXCoreInterface;
 
@@ -294,7 +298,7 @@ public:
   std::string get_step_export(int step_id); // get steps data export for given id
   std::string print_data(); // prints out the data
   bool create_modelchangeelement_dummystep(int step_id); // inserts dummy steps based on given step_id
-  std::vector<int> split_step(int step_id, std::vector<std::vector<double>> times); // inserts steps based on given step_id and times
+  StepSplitResult split_step(int step_id, std::vector<std::vector<double>> times); // inserts steps based on given step_id and times
   bool save_backup(); // saves the current steps data
   bool load_backup(); // loads the backup steps data
 

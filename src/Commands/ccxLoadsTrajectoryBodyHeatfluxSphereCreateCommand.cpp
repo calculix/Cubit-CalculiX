@@ -2,6 +2,7 @@
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "CalculiXCoreInterface.hpp"
+#include <limits>
 
 ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand::ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand()
 {}
@@ -118,9 +119,9 @@ bool ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand::execute(CubitCommandData
   data.get_value("z_value", z_value);
   z = ccx_iface.to_string_scientific(z_value);
   data.get_value("time_begin_value", time_begin_value);
-  time_begin = ccx_iface.to_string_scientific(time_begin_value);
+  time_begin = ccx_iface.to_string_scientific(time_begin_value, std::numeric_limits<double>::max_digits10);
   data.get_value("time_end_value", time_end_value);
-  time_end = ccx_iface.to_string_scientific(time_end_value);
+  time_end = ccx_iface.to_string_scientific(time_end_value, std::numeric_limits<double>::max_digits10);
 
   if (data.find_keyword("OP")){
     if (data.find_keyword("MOD")){

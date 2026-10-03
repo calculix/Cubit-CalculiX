@@ -237,20 +237,22 @@ std::string CoreLoadsTrajectory::get_name_from_load_id(int load_id)
 
 bool CoreLoadsTrajectory::prepare_export()
 {
-  ccx_iface->step_utility_save_backup();
-  bodyheatfluxsphere->prepare_export();
-  heatflux->prepare_export();
-  
-  return true;
+  if (!ccx_iface->step_utility_save_backup())
+    return false;
+
+  if (!bodyheatfluxsphere->prepare_export())
+    return false;
+
+  return heatflux->prepare_export();
 }
 
 bool CoreLoadsTrajectory::clean_export()
 {
-  bodyheatfluxsphere->clean_export();
-  heatflux->clean_export();
-  ccx_iface->step_utility_load_backup();
+  const bool sphere_ok = bodyheatfluxsphere->clean_export();
+  const bool heatflux_ok = heatflux->clean_export();
+  const bool restore_ok = ccx_iface->step_utility_load_backup();
 
-  return true;
+  return sphere_ok && heatflux_ok && restore_ok;
 }  
 
 std::string CoreLoadsTrajectory::print_data()

@@ -669,7 +669,7 @@ bool CoreResultsVtkWriter::write_vtu_linked()
         {
           output.append("ComponentName"+ std::to_string(iii) + " =\"" + frd->result_block_components[frd->result_blocks[data_ids[ii]][6]][iii] +"\" ");
         }
-        output.append("format=\"ascii\" RangeMin=\"" + std::to_string(rangeMin) + "\" RangeMax=\"" + std::to_string(rangeMin) + "\">\n");
+        output.append("format=\"ascii\">\n");
         
         for (size_t iii = 0; iii < node_data_ids.size(); iii++)
         {
@@ -694,7 +694,7 @@ bool CoreResultsVtkWriter::write_vtu_linked()
           {
             output.append("ComponentName"+ std::to_string(iii) + " =\"" + frd->result_block_components[frd->result_blocks[data_ids[ii]][6]][iii] +"\" ");
           }
-          output.append("format=\"ascii\" RangeMin=\"" + std::to_string(rangeMin) + "\" RangeMax=\"" + std::to_string(rangeMin) + "\">\n");
+          output.append("format=\"ascii\">\n");
           
           // sorting variables
           int node_data_id = -1;          
@@ -759,7 +759,7 @@ bool CoreResultsVtkWriter::write_vtu_linked()
             {
               output.append("ComponentName"+ std::to_string(iii) + " =\"" + frd->result_block_components[frd->result_blocks[data_ids[ii]][6]][iii] +"\" ");
             }
-            output.append("format=\"ascii\" RangeMin=\"" + std::to_string(rangeMin) + "\" RangeMax=\"" + std::to_string(rangeMin) + "\">\n");
+            output.append("format=\"ascii\">\n");
             
             for (size_t iii = 0; iii < node_data_ids.size(); iii++)
             {
@@ -973,7 +973,7 @@ bool CoreResultsVtkWriter::write_vtu_linked_thread(int thread_part, std::string 
         {
           output.append("ComponentName"+ std::to_string(iii) + " =\"" + vec_frd[thread_part]->result_block_components[vec_frd[thread_part]->result_blocks[data_ids[ii]][6]][iii] +"\" ");
         }
-        output.append("format=\"ascii\" RangeMin=\"" + std::to_string(rangeMin_thread[thread_part]) + "\" RangeMax=\"" + std::to_string(rangeMin_thread[thread_part]) + "\">\n");
+        output.append("format=\"ascii\">\n");
         
         for (size_t iii = 0; iii < node_data_ids.size(); iii++)
         {
@@ -998,7 +998,7 @@ bool CoreResultsVtkWriter::write_vtu_linked_thread(int thread_part, std::string 
           {
             output.append("ComponentName"+ std::to_string(iii) + " =\"" + vec_frd[thread_part]->result_block_components[vec_frd[thread_part]->result_blocks[data_ids[ii]][6]][iii] +"\" ");
           }
-          output.append("format=\"ascii\" RangeMin=\"" + std::to_string(rangeMin_thread[thread_part]) + "\" RangeMax=\"" + std::to_string(rangeMin_thread[thread_part]) + "\">\n");
+          output.append("format=\"ascii\">\n");
           
           // sorting variables
           int node_data_id = -1;          
@@ -1063,7 +1063,7 @@ bool CoreResultsVtkWriter::write_vtu_linked_thread(int thread_part, std::string 
             {
               output.append("ComponentName"+ std::to_string(iii) + " =\"" + vec_frd[thread_part]->result_block_components[vec_frd[thread_part]->result_blocks[data_ids[ii]][6]][iii] +"\" ");
             }
-            output.append("format=\"ascii\" RangeMin=\"" + std::to_string(rangeMin_thread[thread_part]) + "\" RangeMax=\"" + std::to_string(rangeMin_thread[thread_part]) + "\">\n");
+            output.append("format=\"ascii\">\n");
             
             for (size_t iii = 0; iii < node_data_ids.size(); iii++)
             {
@@ -1280,7 +1280,7 @@ bool CoreResultsVtkWriter::write_vtu_linked_threadpool(int thread_part, std::str
         {
           output.append("ComponentName"+ std::to_string(iii) + " =\"" + vec_frd[thread_part]->result_block_components[vec_frd[thread_part]->result_blocks[data_ids[ii]][6]][iii] +"\" ");
         }
-        output.append("format=\"ascii\" RangeMin=\"" + std::to_string(rangeMin_threadpool[increment-1][thread_part]) + "\" RangeMax=\"" + std::to_string(rangeMin_threadpool[increment-1][thread_part]) + "\">\n");
+        output.append("format=\"ascii\">\n");
         
         for (size_t iii = 0; iii < node_data_ids.size(); iii++)
         {
@@ -1305,7 +1305,7 @@ bool CoreResultsVtkWriter::write_vtu_linked_threadpool(int thread_part, std::str
           {
             output.append("ComponentName"+ std::to_string(iii) + " =\"" + vec_frd[thread_part]->result_block_components[vec_frd[thread_part]->result_blocks[data_ids[ii]][6]][iii] +"\" ");
           }
-          output.append("format=\"ascii\" RangeMin=\"" + std::to_string(rangeMin_threadpool[increment-1][thread_part]) + "\" RangeMax=\"" + std::to_string(rangeMin_threadpool[increment-1][thread_part]) + "\">\n");
+          output.append("format=\"ascii\">\n");
           
           // sorting variables
           int node_data_id = -1;          
@@ -1370,7 +1370,7 @@ bool CoreResultsVtkWriter::write_vtu_linked_threadpool(int thread_part, std::str
             {
               output.append("ComponentName"+ std::to_string(iii) + " =\"" + vec_frd[thread_part]->result_block_components[vec_frd[thread_part]->result_blocks[data_ids[ii]][6]][iii] +"\" ");
             }
-            output.append("format=\"ascii\" RangeMin=\"" + std::to_string(rangeMin_threadpool[increment-1][thread_part]) + "\" RangeMax=\"" + std::to_string(rangeMin_threadpool[increment-1][thread_part]) + "\">\n");
+            output.append("format=\"ascii\">\n");
             
             for (size_t iii = 0; iii < node_data_ids.size(); iii++)
             {
@@ -1615,7 +1615,7 @@ bool CoreResultsVtkWriter::write_vtu_unlinked()
         {
           output.append("ComponentName"+ std::to_string(iii) + " =\"" + frd->result_block_components[frd->result_blocks[data_ids[ii]][6]][iii] +"\" ");
         }
-        output.append("format=\"ascii\" RangeMin=\"" + std::to_string(rangeMin) + "\" RangeMax=\"" + std::to_string(rangeMin) + "\">\n");
+        output.append("format=\"ascii\">\n");
         
         for (size_t iii = 0; iii < node_data_ids.size(); iii++)
         {
@@ -1642,7 +1642,7 @@ bool CoreResultsVtkWriter::write_vtu_unlinked()
           {
             output.append("ComponentName"+ std::to_string(iii) + " =\"" + frd->result_block_components[frd->result_blocks[data_ids[ii]][6]][iii] +"\" ");
           }
-          output.append("format=\"ascii\" RangeMin=\"" + std::to_string(rangeMin) + "\" RangeMax=\"" + std::to_string(rangeMin) + "\">\n");
+          output.append("format=\"ascii\">\n");
           
           // sorting variables
           int node_data_id = -1;          
@@ -1867,7 +1867,7 @@ std::string CoreResultsVtkWriter::get_increment_time()
     if (frd_all->result_blocks[i][3]==current_increment)
     {
       current_time = frd_all->total_times[frd_all->result_blocks[i][4]];
-      time = std::to_string(current_time);
+      time = ccx_iface->to_string_scientific(current_time, 6);
       if (time == "-nan")
       {
         return "0";

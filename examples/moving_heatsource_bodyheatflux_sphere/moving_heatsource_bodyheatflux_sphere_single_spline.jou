@@ -103,3 +103,5 @@ ccx create job name "moving_heatsource_single_spline"
 
 #ccx run job 1
 #ccx draw load trajectory 1
+#ccx result convert job 1 partial
+

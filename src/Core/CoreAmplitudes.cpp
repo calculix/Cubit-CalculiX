@@ -1,7 +1,9 @@
 #include "CoreAmplitudes.hpp"
+#include "ScientificNumber.hpp"
 #include "CubitInterface.hpp"
 #include "CalculiXCoreInterface.hpp"
 #include <algorithm>
+#include <limits>
 
 CoreAmplitudes::CoreAmplitudes()
 {}
@@ -126,7 +128,7 @@ bool CoreAmplitudes::create_amplitude(std::vector<std::string> options, std::vec
   amplitudevalues_id = sub_id;
   for (size_t i = 0; i < options2.size(); i++)
   {
-    this->add_amplitudevalues_amplitude(double(amplitudevalues_id), std::stod(options2[i][0]), std::stod(options2[i][1]));
+    this->add_amplitudevalues_amplitude(double(amplitudevalues_id), ScientificNumber::parse(options2[i][0]), ScientificNumber::parse(options2[i][1]));
   }
 
   this->add_amplitude(amplitude_id, name_id, shiftx_id, shifty_id, time_type, amplitudevalues_id);
@@ -176,8 +178,8 @@ bool CoreAmplitudes::modify_amplitude(int amplitude_id, std::vector<std::string>
         for (size_t i = 0; i < options2.size(); i++)
         {
           amplitudevalues_amplitude_data[sub_data_ids[i]][0] = double(amplitudes_data[amplitudes_data_id][5]);
-          amplitudevalues_amplitude_data[sub_data_ids[i]][1] = std::stod(options2[i][0]);
-          amplitudevalues_amplitude_data[sub_data_ids[i]][2] = std::stod(options2[i][1]);
+          amplitudevalues_amplitude_data[sub_data_ids[i]][1] = ScientificNumber::parse(options2[i][0]);
+          amplitudevalues_amplitude_data[sub_data_ids[i]][2] = ScientificNumber::parse(options2[i][1]);
         }
       }else{
         // first delete and then make a push back
@@ -189,7 +191,7 @@ bool CoreAmplitudes::modify_amplitude(int amplitude_id, std::vector<std::string>
         
         for (size_t i = 0; i < options2.size(); i++)
         {
-          add_amplitudevalues_amplitude(double(amplitudes_data[amplitudes_data_id][5]),std::stod(options2[i][0]),std::stod(options2[i][1]));
+          add_amplitudevalues_amplitude(double(amplitudes_data[amplitudes_data_id][5]),ScientificNumber::parse(options2[i][0]),ScientificNumber::parse(options2[i][1]));
         }
       }
     }
@@ -562,7 +564,7 @@ std::string CoreAmplitudes::get_amplitude_export() // get a list of the CalculiX
       }
       ii = ii + 1;
       
-      str_temp.append(ccx_iface->to_string_scientific(amplitudevalues_amplitude_data[sub_data_ids[i]][1]));
+      str_temp.append(ccx_iface->to_string_scientific(amplitudevalues_amplitude_data[sub_data_ids[i]][1], 6));
       str_temp.append(",");
       str_temp.append(ccx_iface->to_string_scientific(amplitudevalues_amplitude_data[sub_data_ids[i]][2]));
       if (ii == 4)

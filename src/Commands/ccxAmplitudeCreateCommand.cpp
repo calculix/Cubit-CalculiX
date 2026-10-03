@@ -2,6 +2,7 @@
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "CalculiXCoreInterface.hpp"
+#include <limits>
 
 ccxAmplitudeCreateCommand::ccxAmplitudeCreateCommand()
 {}
@@ -65,7 +66,7 @@ bool ccxAmplitudeCreateCommand::execute(CubitCommandData &data)
     for (size_t i = 0; i < amplitudevalues.size(); i+=2)
     {
       std::vector<std::string> amplitude(2);
-      amplitude[0] = ccx_iface.to_string_scientific(amplitudevalues[i]);
+      amplitude[0] = ccx_iface.to_string_scientific(amplitudevalues[i], std::numeric_limits<double>::max_digits10);
       amplitude[1] = ccx_iface.to_string_scientific(amplitudevalues[i+1]);
       options2.push_back(amplitude);
       amplitude.clear();

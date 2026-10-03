@@ -187,6 +187,15 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
   // prepare export data
   // trajectory: sidesets,amplitude,dflux
   result = ccx_iface.prepare_export();
+  if (!result)
+  {
+    const bool cleanup_ok = ccx_iface.clean_export();
+    progressbar->end();
+    PRINT_ERROR("Export stopped: trajectory preparation failed.\n");
+    if (!cleanup_ok)
+      PRINT_ERROR("Failed to clean up prepared export data.\n");
+    return false;
+  }
   progressbar->step();
 
   // Initialize the exporter
