@@ -134,6 +134,7 @@ public:
   std::vector<int> get_customline_ids(); // get all equationgroup ids
   bool check_block_exists(int block_id);
   bool check_global_element_exists(int element_id);
+  bool check_material_exists(int material_id); // check if material exists
   bool check_bc_exists(int bc_id,int BCType); // checks if the id for the bc type exists
   bool check_nodeset_exists(int nodeset_id);
   bool check_sideset_exists(int sideset_id);

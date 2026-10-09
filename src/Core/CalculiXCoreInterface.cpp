@@ -301,6 +301,11 @@ bool CalculiXCoreInterface::check_global_element_exists(int element_id)
   return ccx_core.check_global_element_exists(element_id);
 }
 
+bool CalculiXCoreInterface::check_material_exists(int material_id)
+{
+  return ccx_core.check_material_exists(material_id);
+}
+
 bool CalculiXCoreInterface::check_nodeset_exists(int nodeset_id)
 {
   return ccx_core.check_nodeset_exists(nodeset_id);

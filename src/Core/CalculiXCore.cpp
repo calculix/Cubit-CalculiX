@@ -3483,6 +3483,11 @@ bool CalculiXCore::check_global_element_exists(int element_id)
   return CubitInterface::get_element_exists(element_id);
 }
 
+bool CalculiXCore::check_material_exists(int material_id)
+{
+  return mat->check_material_exists(material_id);
+}
+
 bool CalculiXCore::check_bc_exists(int bc_id,int BCType)
 {
   std::vector<int> ids;

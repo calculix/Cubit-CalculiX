@@ -1,6 +1,7 @@
 #include "CoreMaterials.hpp"
 #include "CubitInterface.hpp"
 #include "MaterialInterface.hpp"
+#include "CubitMessage.hpp"
 #include "CalculiXCoreInterface.hpp"
 
 
@@ -1508,7 +1509,7 @@ bool CoreMaterials::check_material_exists(int material_id)
 
 bool CoreMaterials::initialize_topology_materials(int topology_id,const std::vector<int>& element_ids,const std::vector<int>& base_material_ids)
 {
-  if (!is_initialized || !mat_iface ||
+  if (!is_initialized || !mat_iface || !ccx_iface ||
       topology_id <= 0 ||
       element_ids.empty() ||
       element_ids.size() != base_material_ids.size() ||
@@ -1550,6 +1551,8 @@ bool CoreMaterials::initialize_topology_materials(int topology_id,const std::vec
 
     // This implementation supports isotropic elasticity only.
     if (card_enabled("CCX_ELASTIC_ORTHO_USE_CARD") || card_enabled("CCX_ELASTIC_EC_USE_CARD") || card_enabled("CCX_ELASTIC_ANISO_USE_CARD"))
+      return false;
+    if (card_enabled("CCX_PLASTIC_USE_CARD"))
       return false;
 
     MaterialMatrix properties;
@@ -1624,5 +1627,81 @@ std::string CoreMaterials::get_topology_material_name(int topology_id,int elemen
 
 std::string CoreMaterials::get_topology_material_export(int topology_id,int iteration_id)
 {
-  return "";
+  const auto collection_it = topology_material_data.find(topology_id);
+
+  if (collection_it == topology_material_data.end())
+  {
+    PRINT_ERROR("Topology material collection %d not found.\n",
+                topology_id);
+    return "";
+  }
+
+  const auto& collection = collection_it->second;
+  const auto iteration_it =
+      collection.iteration_factors.find(iteration_id);
+
+  if (iteration_it == collection.iteration_factors.end())
+  {
+    PRINT_ERROR("Iteration %d not found for topology %d.\n",
+                iteration_id, topology_id);
+    return "";
+  }
+
+  const auto& factors = iteration_it->second;
+
+  if (factors.empty() ||
+      factors.size() != collection.element_base_material.size())
+  {
+    PRINT_ERROR("Topology %d iteration %d is incomplete.\n",
+                topology_id, iteration_id);
+    return "";
+  }
+
+  std::ostringstream output;
+  output << std::scientific
+         << std::setprecision(std::numeric_limits<double>::max_digits10);
+
+  output << "** TOPOLOGY MATERIALS: RUN " << topology_id
+         << ", ITERATION " << iteration_id << "\n";
+
+  for (const auto& assignment : collection.element_base_material)
+  {
+    const int element_id = assignment.first;
+    const int base_material_id = assignment.second;
+
+    const auto material_it =
+        collection.base_materials.find(base_material_id);
+    const auto factor_it = factors.find(element_id);
+
+    if (material_it == collection.base_materials.end() ||
+        factor_it == factors.end())
+    {
+      PRINT_ERROR("Missing topology material data for element %d.\n",
+                  element_id);
+      return "";
+    }
+
+    const auto& material = material_it->second;
+    const double factor = factor_it->second;
+    const double modulus = material.youngs_modulus * factor;
+
+    if (!std::isfinite(factor) || factor <= 0.0 || factor > 1.0 ||
+        !std::isfinite(modulus) || modulus <= 0.0 ||
+        !std::isfinite(material.poissons_ratio) ||
+        material.poissons_ratio <= -1.0 ||
+        material.poissons_ratio >= 0.5)
+    {
+      PRINT_ERROR("Invalid topology elastic properties for element %d.\n",
+                  element_id);
+      return "";
+    }
+
+    output << "*MATERIAL, NAME="
+           << get_topology_material_name(topology_id, element_id)
+           << "\n"
+           << "*ELASTIC\n"
+           << modulus << ", " << material.poissons_ratio << "\n";
+  }
+
+  return output.str();
 }

@@ -6,6 +6,9 @@
 #include <string>
 #include <cmath>
 #include <utility>
+#include <iomanip>
+#include <limits>
+#include <sstream>
 
 class MaterialInterface;
 class CalculiXCoreInterface;
@@ -44,8 +47,8 @@ public:
   std::string get_topology_material_name(int topology_id,int element_id) const;
   std::string get_topology_material_export(int topology_id,int iteration_id);
 
-  MaterialInterface *mat_iface;
-  CalculiXCoreInterface *ccx_iface;
+  MaterialInterface *mat_iface = nullptr;
+  CalculiXCoreInterface *ccx_iface = nullptr;
   std::map<int, TopologyMaterialData> topology_material_data; // Topology ID -> one material collection.
 };
 
