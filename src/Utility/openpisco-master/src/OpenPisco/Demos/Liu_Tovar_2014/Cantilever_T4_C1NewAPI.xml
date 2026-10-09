@@ -1,0 +1,71 @@
+<data dim="3" debug="False">
+<!--
+An efficient 3D topology optimization code written in Matlab
+Kai Liu · Andres Tovar
+
+DOI 10.1007/s00158-014-1107-x
+
+Table 4 Case 1
+
+-->
+    <Zones>
+        <AABox id="1" origin="0. 0.05 1" size="12 3.9 1" desc="Init" />
+        <!-- To inisialise with a Gyroid
+        <AABox id="10" origin="0. 0.05 0.05" size="12 3.9 2.9" desc="Init" />
+        <Gyroid id="100"  desc="Init" scale="0.031831" />
+        <Symmetric id="101" z="100" center="12 0 1.5"/>
+        <Intersection id="1" z="10 101"/>
+        -->
+        <Plane id="2" point="0.1 0. 0." normal="1. 0. 0." desc="Block"/>
+        <Cylinder id="3" center1="12 0 1.47" center2="12 0 1.53" radius="0.03" desc="Force"/>
+        <Union id="4" z="2 3"/>
+        <Union id="5" z="1 4 "/>
+    </Zones>
+
+    <Grids><Grid id="1" n="61 41 31" origin="0. 0. 0." length="12 4 3"/></Grids>
+
+    <LevelSets><LevelSet id="1" support="1"/></LevelSets>
+
+    <PhysicalProblems>
+        <Structured id="1" grid="1" type="static_elastic" eVoid="0.001" narrow=".2">
+             <Dirichlet zone="2" dofs="0 1 2" val="0.0"/>
+             <Neumann   zone="3" dofs="1" val="-1000"/>
+        </Structured>
+    </PhysicalProblems>
+
+
+    <OptimProblems>
+        <OptimProblem type="TopoGeneric" id="1"
+            OnZone="4"
+            useLevelset="1"
+            e2="0.001"
+
+            output="1"
+        >
+          <Objective  type="Compliance"  name="Compliance" useProblem="1" />
+          <Constraint type="Volume"     name="Volume"   upperBound="21.6"  desc="0.15*voltotal= 0.15*12*4*3=21.6"/>
+       </OptimProblem>
+
+    </OptimProblems>
+
+    <TopologicalOptimizations>
+ 	<OptimAlgoNullSpace id="1"
+            useOptimProblem="1"
+            alphaC="0.1"
+        />
+    </TopologicalOptimizations>
+
+    <Outputs>
+       <Output id="2" name="Liu_Tovar_2014_Cantilever_T4_C1.xdmf"/>
+       <Output id="3" name="Liu_Tovar_2014_Cantilever_T4_C1.csv" nTag="NT3" />
+       <Output id="1" name="PROXY" outputs="2 3"/>
+    </Outputs>
+
+    <Actions>
+        <Action type="CreateTagsFromZones" ls="1" nodalTags="3" />
+        <Action type="InitLevelset" ls="1" zone="5"/>
+        <Action type="UpdateDistance" ls="1" />
+        <Action type="RunTopoOp" TopoOp="1"/>
+        <Action type="SaveShapeToFile" ls="1" filename="Liu_Tovar_2014_Cantilever_T4_C1.stl"/>
+    </Actions>
+ </data>

@@ -213,6 +213,7 @@ public:
   bool check_jobs(); // checks for changes of job processes
   bool wait_job(int job_id); // runs job
   bool kill_job(int job_id); // runs job
+  bool run_topology(int topology_id, int job_id); // runs topology optimization job
   bool set_job_conversion(int job_id, int conversion); // sets the paraview conversion value for the job
   bool result_cgx_job(int job_id); // opens the results with cgx
   bool result_paraview_job(int job_id); // opens the results with paraview

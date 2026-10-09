@@ -1,0 +1,96 @@
+<!--
+Minimization of the volume of a bridge structure under compliance constraint
+Computation on 1/4 of the domain
+-->
+
+<data dim="3" debug="False">
+    <Zones>
+
+        <!-- dirichlet plane
+        <Plane id="1" point="0.005 1. 1.5" normal="1. 0. 0."/>  -->
+        <AABox id="1" origin="0. -0.09 0." size="1. 0.1 3."/>
+        <!-- symetric plane x -->
+        <Plane id="2" point="7.9999 1. 1.5" normal="-1. 0. 0."/>
+        <!-- symetric plane z -->
+        <Plane id="7" point="0. 0. 1.4999" normal="0. 0. 1."/>
+        <!-- neumann zone
+        <AABox id="3" origin="7. 1.999 0." size="1. 0.1 3."/>  -->
+        <AABox id="3" origin="-.1 1.999 0." size="8. 0.1 4."/>
+
+        <Union id="4" z="1 3" />
+        <Offset id="5" z="4" offset="-.2" />
+
+        <Holes id="6" r="0.35" type="Aligned" boundingMin="1.5 0. 1." boundingMax="5.8 1.7 3." n="4 2 2"/>
+    </Zones>
+
+    <Grids>
+        <Grid id="1" n="25 20 20" origin="0. 0. 0." length="8. 2. 1.5" ofTetras ="True"/>
+    </Grids>
+
+
+    <LevelSets>
+        <LevelSet id="1" support="1" conform="True" gradientMethod="gradPhi">
+              <MesherInfo hmax="0.2" hmin="0.09" rmc="1e-5" hausd="0.09" nr="True" iso="0.0" computeDistanceWith="meshdist"    keepGeneratedFiles="True"/>
+        </LevelSet>
+    </LevelSets>
+
+
+    <PhysicalProblems>
+        <GeneralAster type="static_elastic" id="1" maxAllowedRelaxedResidual ="0.1">
+                  <Material  young="210000000000" poisson="0.3" />
+                  <Dirichlet eTag="ET1" dofs="0 1 2" value="0.0"/>
+                  <Dirichlet eTag="ET2" dofs="0" value="0.0"/>
+                  <Dirichlet eTag="ET7" dofs="2" value="0.0"/>
+                  <Force eTag="ET3" value="0. -10000. 0." />
+         </GeneralAster>
+    </PhysicalProblems>
+
+    <OptimProblems>
+        <OptimProblem type="TopoGeneric" id="1"
+            OnZone="5"
+            useLevelset="1"
+            output="3"
+            printMeshQualityInfo = "True"
+            outputEveryLevelsetUpdate = "False">
+          <Objective  type="Volume"  name="Volume" />
+          <Constraint type="Compliance"  name="Compliance"  useProblem="1"  UpperBound="3*1.00138000e+00" />
+
+       </OptimProblem>
+    </OptimProblems>
+    <TopologicalOptimizations>
+        <OptimAlgoNullSpace id="1"
+            useOptimProblem="1"
+            numberOfDesignStepsMax="100"
+            numberOfIterationsMax="20"
+            stepSizeMax=".2"
+            alphaC=".5"
+            alphaJ="1."
+            stepSize="0.05"
+        />
+
+    </TopologicalOptimizations>
+
+    <Outputs>
+       <Output id="1" name="BridgeHistory.xdmf" inTempDirectory="True" />
+       <Output id="2" name="BridgeHistory.csv" inTempDirectory="True" />
+       <Output id="3" name="PROXY" outputs="1 2"/>
+    </Outputs>
+
+    <Actions>
+        <Action type="InitLevelset" ls="1" zone="6"/>
+        <Action type="AddEdges" ls="1" ar="45" />
+       <Action type="AddSkin" ls="1" />
+       <Action type="CreateTagsFromZones" ls="1" elementTags="1 2 3 7" dim="2"/>
+       <Action type="Remesh" ls="1" iso="0.0" hausd="0.09" hmin="0.09"
+          hmax="0.2" nr="True" computeDistanceWith="meshdist"/>
+   <Action type="Try">
+       <Action type="RunTopoOp" TopoOp="1"/>
+       <Action type="SaveShapeToFile" ls="1" filename="Bridge.stl"/>
+       <Action type="LsQualityInfo" ls="1"  />
+   </Action>
+       <Action type="SaveShapeToFile" ls="1" filename="Bridge.stl"/>
+       <Action type="LsQualityInfo" ls="1"  />
+    </Actions>
+
+
+ </data>

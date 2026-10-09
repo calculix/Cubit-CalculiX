@@ -17,7 +17,7 @@ bool CoreMaterials::init()
     return false; // already initialized
   }else{
     mat_iface = dynamic_cast<MaterialInterface*>(CubitInterface::get_interface("Material"));
-    CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
+    ccx_iface = new CalculiXCoreInterface();
 
     MaterialInterface::PropertyGroup grp;
     MaterialInterface::Property prop;
@@ -326,6 +326,7 @@ bool CoreMaterials::update()
 
 bool CoreMaterials::reset()
 {
+  topology_material_data.clear();
   //init();
   return true;
 }
@@ -1503,4 +1504,125 @@ bool CoreMaterials::check_material_exists(int material_id)
     return true;
   }
   return false;
+}
+
+bool CoreMaterials::initialize_topology_materials(int topology_id,const std::vector<int>& element_ids,const std::vector<int>& base_material_ids)
+{
+  if (!is_initialized || !mat_iface ||
+      topology_id <= 0 ||
+      element_ids.empty() ||
+      element_ids.size() != base_material_ids.size() ||
+      topology_material_data.count(topology_id) != 0)
+    return false;
+
+  TopologyMaterialData collection;
+  
+  for (size_t i = 0; i < element_ids.size(); ++i)
+  {
+    const int element_id = element_ids[i];
+    const int material_id = base_material_ids[i];
+
+    if (!ccx_iface->check_global_element_exists(element_id))
+      return false;
+
+    if (!collection.element_base_material.emplace(
+            element_id, material_id).second)
+      return false; // Duplicate element.
+
+    // Read each distinct base material only once.
+    if (collection.base_materials.count(material_id) != 0)
+      continue;
+
+    auto material = mat_iface->get_material(material_id);
+    if (material == NULL)
+      return false;
+
+    auto card_enabled = [&](const std::string& property_name)
+    {
+      double value = 0.0;
+      auto property = mat_iface->get_property(property_name);
+
+      return mat_iface->get_material_property_value(material, property, value) && value == 1.0;
+    };
+
+    if (!card_enabled("CCX_ELASTIC_USE_CARD") || !card_enabled("CCX_ELASTIC_ISO_USE_CARD"))
+      return false;
+
+    // This implementation supports isotropic elasticity only.
+    if (card_enabled("CCX_ELASTIC_ORTHO_USE_CARD") || card_enabled("CCX_ELASTIC_EC_USE_CARD") || card_enabled("CCX_ELASTIC_ANISO_USE_CARD"))
+      return false;
+
+    MaterialMatrix properties;
+    auto property = mat_iface->get_property("CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE");
+
+    if (!mat_iface->get_material_property_value(material, property, properties))
+      return false;
+
+    // Multiple rows require temperature-dependent handling.
+    if (properties.size() != 1 || properties[0].size() != 3)
+      return false;
+
+    const double youngs_modulus = properties[0][0];
+    const double poissons_ratio = properties[0][1];
+
+    if (!std::isfinite(youngs_modulus) ||
+        !std::isfinite(poissons_ratio) ||
+        youngs_modulus <= 0.0 ||
+        poissons_ratio <= -1.0 ||
+        poissons_ratio >= 0.5)
+      return false;
+
+    collection.base_materials.emplace(material_id, TopologyElasticMaterial{youngs_modulus, poissons_ratio});
+  }
+
+  topology_material_data.emplace(topology_id, std::move(collection));
+  return true;
+}
+
+bool CoreMaterials::set_topology_iteration_factors(
+    int topology_id,
+    int iteration_id,
+    const std::vector<int>& element_ids,
+    const std::vector<double>& stiffness_factors)
+{
+  auto collection = topology_material_data.find(topology_id);
+
+  if (collection == topology_material_data.end() || iteration_id < 0 || element_ids.size() != stiffness_factors.size())
+    return false;
+
+  auto& data = collection->second;
+
+  if (data.iteration_factors.count(iteration_id) != 0 || element_ids.size() != data.element_base_material.size())
+    return false;
+
+  std::map<int, double> factors;
+
+  for (size_t i = 0; i < element_ids.size(); ++i)
+  {
+    const int element_id = element_ids[i];
+    const double factor = stiffness_factors[i];
+
+    if (data.element_base_material.count(element_id) == 0 ||
+        !std::isfinite(factor) ||
+        factor <= 0.0 ||
+        factor > 1.0)
+      return false;
+
+    if (!factors.emplace(element_id, factor).second)
+      return false;
+  }
+
+  data.iteration_factors.emplace(iteration_id, std::move(factors));
+  return true;
+}
+
+std::string CoreMaterials::get_topology_material_name(int topology_id,int element_id) const
+{
+  return "CCX_TOPO_" + std::to_string(topology_id)
+       + "_E" + std::to_string(element_id);
+}
+
+std::string CoreMaterials::get_topology_material_export(int topology_id,int iteration_id)
+{
+  return "";
 }

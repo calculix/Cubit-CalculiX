@@ -1,0 +1,97 @@
+<!--
+Distributor usecase
+
+OpenFOAM Parameter values mainly based on
+https://develop.openfoam.com/Development/openfoam/-/tree/master/tutorials/incompressible/adjointOptimisationFoam/shapeOptimisation/naca0012/laminar/drag?ref_type=heads
+-->
+
+<data dim="2" debug="False">
+
+    <Zones>
+        <AABox id="0" origin="-1 -1 -0.5" size="3 3 1" desc="Large" />
+        <AABox id="10" origin="-0.0001 0.2 -0.5" size="0.0002 0.2 1" desc="Inlet1" />
+        <AABox id="11" origin="-0.0001 0.6 -0.5" size="0.0002 0.2 1" desc="Inlet2" />
+        <Union id="1" z="10 11" desc="Inlets"/>
+        <AABox id="20" origin="0.9999 0.2 -0.5" size="0.0002 0.2 1" desc="Outlet1" />
+        <AABox id="21" origin="0.9999 0.6 -0.5" size="0.0002 0.2 1" desc="Outlet2" />
+        <Union id="2" z="20 21" desc="Outlets"/>
+        <AABox id="3" origin="0.0001 0.0001 -0.5" size="0.9998 0.9998 1" desc="AllBoundariesInverse" />
+        <Difference id="4" z1="0" z2="3" desc="AllBoundaries"/>
+        <Union id="5" z="1 11 2 21" desc="InletAndOutlet"/>
+        <Difference id="6" z1="4" z2="5" desc="Walls"/>                 
+        <Holes id="7" n="8 8 2" r="0.5" boundingMin="0.1 0.1 0" boundingMax="0.9 0.9 1" type="Original" desc="Holes"/>
+        <!-- Keep some margin between OnZone and inlet/outlet boundary conditions -->
+        <!-- to avoid that inlet/outlet faces are located next to void elements -->
+        <AABox id="8" origin="-0.0001 0.195 -0.5" size="0.05 0.21 1" desc="Inlet1OnZone" />
+        <AABox id="81" origin="-0.0001 0.595 -0.5" size="0.05 0.21 1" desc="Inlet2OnZone" />
+        <AABox id="82" origin="0.95 0.195 -0.5" size="0.05 0.21 1" desc="Outlet1OnZone" />
+        <AABox id="83" origin="0.95 0.595 -0.5" size="0.05 0.21 1" desc="Outlet2OnZone" />
+        <Union id="100" z="8 81 82 83" desc="OnZone"/>
+    </Zones>
+
+    <Grids>
+        <Grid id="1" n="100 100" origin="0. 0." length="1. 1. " ofSimplex ="True"/>
+    </Grids>
+
+    <LevelSets>
+        <LevelSet id="1" support="1" conform="True" gradientMethod="gradPhi" filterLevelSetField = "True" regularizationLengthscaleParameter="0.003">
+            <MesherInfo hgrad="-1" iso="0.0" met="True" hmin="0.003" hmax="0.02" hausd="0.001" rmc="1e-5" symbolicMetricExpression="(phi**2+0.006**2)**0.5" computeDistanceWith="meshdist"/>
+        </LevelSet>
+    </LevelSets>
+
+    <PhysicalProblems>
+         <FoamSteadyStateComplete id="1" grid="1" type="SteadyStateComplete" viscosity="1">
+              <GeneralConfig enableCheckError="True" optimizeRenumbering="False" enableParallelism="True" numberOfSubDomains="6"/>
+              <SteadStateConfig divSchemes="bounded Gauss linearUpwind grad(U)"
+              maxNumberIterationsPrimalSolver="700" maxNumberIterationsAdjointSolver="500" 
+              relativeToleranceVelocity="0.1" relativeTolerancePressure="0.01"
+              relaxFactorVelocityAdj="0.6" relaxFactorPressureAdj="0.6" relaxFactorPressure="0.7" relaxFactorVelocity="0.7"
+              residualControlDirect="1e-04" residualControlAdjoint="1e-04" toleranceVelocity="1e-9" tolerancePressure="1e-9"/>
+              <Dirichlet variable="p" type="fixedValue" tag="eTag2" value="0.0"/>
+              <Dirichlet variable="U" type="fixedValue" tag="eTag1" value="1.0 0.0 0.0"/>
+              <Dirichlet variable="U" type="noSlip" tags="InterfaceBars"/>
+              <Dirichlet variable="U" type="noSlip" tags="eTag6"/>
+         </FoamSteadyStateComplete>
+    </PhysicalProblems>
+
+    <OptimProblems>
+        <OptimProblem type="TopoGeneric" id="1"
+            useLevelset="1"
+            output="1"
+            printMeshQualityInfo = "True"
+            disableCFLTruncation = "False"
+            OnZone="100"
+            outputEveryLevelsetUpdate = "False">
+          <Objective type="PtLosses"  name="PtLosses"  useProblem="1" patches="eTag1 eTag2"/>
+          <Constraint type="Volume"  name="Volume" UpperBound="0.5" />
+       </OptimProblem>
+    </OptimProblems>
+
+    <TopologicalOptimizations>
+        <OptimAlgoNullSpace id="1"
+            useOptimProblem="1"
+            stepSize="0.5"
+            stepSizeMax="1.0"
+            tol_merit="10.0"
+            numberOfDesignStepsMax="500"
+        />
+    </TopologicalOptimizations>
+
+    <Outputs>
+       <Output id="1" name="minimizePressureDrop_2D.xdmf"/>
+    </Outputs>
+
+    <Actions>
+        <Action type="PrintMesh" ls="1"/>
+        <Action type="AddSkin" ls="1"/>
+        <Action type="CreateNodeTag"  ls="1" tagname="Corners"  operator="union" nodeTags="x0y0 x1y0 x0y1 x1y1"/>
+        <Action type="CreateTagsFromZones" ls="1" elementTags="1 2 6" dim="1" elemenprefix="eTag"/>
+        <Action type="PrintMesh" ls="1"/>
+        <Action type="InitLevelset" ls="1" zone="7"/>
+        <Action type="Remesh" ls="1" hmin="0.0005" met="False" hmax="0.005" hausd="0.001" iso="0.0" nr="True" computeDistanceWith="meshdist" />        
+        <Action type="WriteToFile" ls="1" filename="{INPUTFILE}.xdmf" />
+        <Action type="RunTopoOp" TopoOp="1"/>
+    </Actions>
+
+ </data>
+

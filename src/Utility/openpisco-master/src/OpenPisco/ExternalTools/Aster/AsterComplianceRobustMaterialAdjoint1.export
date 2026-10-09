@@ -1,0 +1,15 @@
+P actions make_etude
+P memjob 1048576
+P memory_limit 16384.0
+P mode interactif
+P nomjob AsterStaticRobustMaterial
+P version stable
+A args -max_base 300000
+A memjeveux 2048.0
+A tpmax 900.0
+F comm AsterComplianceRobustMaterialAdjoint1param.in D  1
+F comm AsterComplianceRobustMaterialAdjoint1.comm D  1
+F mmed AsterComplianceRobustMaterialAdjoint1input.med D  20
+F mess AsterComplianceRobustMaterialAdjoint1.log R  6
+F rmed AsterComplianceRobustMaterialAdjoint1.rmed R  81
+F resu AsterComplianceRobustMaterialAdjoint1.resu R  8

@@ -1,0 +1,240 @@
+# -*- coding: utf-8 -*-
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE', which is part of this source code package.
+#
+POURSUITE(PAR_LOT='NON')
+
+mesh = LIRE_MAILLAGE(FORMAT='MED')
+
+model = AFFE_MODELE(AFFE=_F(MODELISATION=('3D', ),
+                            PHENOMENE='MECANIQUE',
+                            TOUT='OUI'),
+                    MAILLAGE=mesh)
+
+
+CHYOUNG = LIRE_CHAMP (
+                  UNITE=20,
+                  MAILLAGE = mesh,
+                  NOM_MED = 'CHYOUNG',
+                  TYPE_CHAM = 'CART_NEUT_R',
+                  NOM_CMP = 'X1',
+                  NOM_CMP_MED='DX',
+                  PROL_ZERO = 'OUI',
+                  INST=0.0,
+                  INFO=1,
+)
+
+CHNU = LIRE_CHAMP (
+                  UNITE=20,
+                  MAILLAGE = mesh,
+                  NOM_MED = 'CHNU',
+                  TYPE_CHAM = 'CART_NEUT_R',
+                  NOM_CMP = 'X1',
+                  NOM_CMP_MED='DX',
+                  PROL_ZERO = 'OUI',
+                  INST=0.0,
+                  INFO=1,
+)
+
+E_F=DEFI_FONCTION(NOM_PARA='NEUT1',VALE=(-1.0,-1.0,1.0,1.0, ),PROL_DROITE='LINEAIRE',PROL_GAUCHE='LINEAIRE')
+NU_F=DEFI_FONCTION(NOM_PARA='NEUT2',VALE=(-1.0,-1.0,1.0,1.0, ),PROL_DROITE='LINEAIRE',PROL_GAUCHE='LINEAIRE')
+
+mater=DEFI_MATERIAU(ELAS_FO=_F(E=E_F, NU=NU_F,),)
+
+fieldmat = AFFE_MATERIAU(AFFE=_F(MATER=(mater, ),
+                                 TOUT='OUI'),
+                         AFFE_VARC=(
+                                    _F(NOM_VARC='NEUT1', CHAM_GD=CHYOUNG,),
+                                    _F(NOM_VARC='NEUT2', CHAM_GD=CHNU,),
+                                   ),
+                         MODELE=model)
+
+conditions = []
+for condition in [dirichlet,neumann,forcenodale,bodyforces]:
+    if len(list(condition.values())[0]):
+        conditions.append(AFFE_CHAR_MECA(MODELE=model, **condition))
+
+bloc = conditions[0]
+
+solveur = _F(METHODE='MUMPS',
+             RESI_RELA = resi_rela,
+            STOP_SINGULIER='NON',
+                      )
+
+excitOp = tuple([_F(CHARGE=condition) for condition in conditions])
+reslin = MECA_STATIQUE(CHAM_MATER=fieldmat,
+                       EXCIT=excitOp,
+                       SOLVEUR=solveur,
+                       MODELE=model,
+                       )
+
+
+#=====================================================================================================
+#                                      POST PROCESSING
+#=====================================================================================================
+
+#=====================================================================================================
+#                                    FIELD POST PROCESSING
+#=====================================================================================================
+dictFields = {'potential_energy':'ENEL_ELGA','stress':'SIEF_ELGA','von_mises':'SIEQ_ELGA',
+              'strain':'EPSI_ELGA','strain_buckling':'EPSI_ELGA','strain_green_buckling':'EPSG_ELGA',
+              'elastic_energy_buckling':'ENEL_ELGA'}
+buckling_fields = ['mode_buckling','strain_buckling','strain_green_buckling','elastic_energy_buckling']
+
+for field in fields:
+    if field == 'potential_energy':
+         reslin = CALC_CHAMP(reuse=reslin,
+                    RESULTAT=reslin,
+                    ENERGIE=('ENEL_ELGA'),
+                    FORCE=('FORC_NODA'))
+    elif field == 'stress':
+         reslin = CALC_CHAMP(reuse=reslin,
+                    CONTRAINTE=('SIEF_ELGA'),
+                    RESULTAT=reslin)
+    elif field == 'von_mises':
+         reslin = CALC_CHAMP(reuse=reslin,
+                    CONTRAINTE=('SIEF_ELGA'),
+                    CRITERES=('SIEQ_ELGA'),
+                    RESULTAT=reslin)
+    elif field == 'strain':
+         reslin = CALC_CHAMP(reuse=reslin,
+                    DEFORMATION=('EPSI_ELGA',),
+                    RESULTAT=reslin)
+    else:print('Not implemented for: ',field)
+
+nom_cham_med = [field for field in fields if field not in buckling_fields]
+nom_cham     = [dictFields[field] for field in nom_cham_med ]
+if len(nom_cham_med)>0:
+    if 'von_mises' in fields:
+      idx = nom_cham_med.index('von_mises')
+      nom_cham.pop(idx)
+      nom_cham_med.pop(idx)
+      IMPR_RESU(FORMAT='MED',UNITE=80,VERSION_MED='4.0.0',
+          RESU=(
+                _F(RESULTAT=reslin,
+                   NOM_CHAM=('DEPL'),
+                   NOM_CHAM_MED=('DEPL'),
+                   ),
+                _F(RESULTAT=reslin,
+                    NOM_CHAM     = nom_cham,
+                    NOM_CHAM_MED = nom_cham_med,
+                   ),
+                ),
+          );
+
+      IMPR_RESU(FORMAT='MED',UNITE=80,VERSION_MED='4.0.0',
+          RESU=(
+                _F(RESULTAT=reslin,
+                   NOM_CHAM=('SIEQ_ELGA'),
+                   NOM_CMP=('VMIS', ),
+                   NOM_CHAM_MED=('von_mises'),
+                   ),
+               ),
+          )
+    else:
+      IMPR_RESU(FORMAT='MED',UNITE=80,VERSION_MED='4.0.0',
+          RESU=(
+                _F(RESULTAT=reslin,
+                   NOM_CHAM=('DEPL'),
+                   NOM_CHAM_MED=('DEPL'),
+                   ),
+                _F(RESULTAT=reslin,
+                    NOM_CHAM     = nom_cham,
+                    NOM_CHAM_MED = nom_cham_med,
+                   ),
+                ),
+          );
+else:
+    IMPR_RESU(FORMAT='MED',UNITE=80,VERSION_MED='4.0.0',
+          RESU=(
+                _F(RESULTAT=reslin,
+                   NOM_CHAM=('DEPL'),
+                   NOM_CHAM_MED=('DEPL'),
+                   ),
+          ),);
+
+if 'mode_buckling' in fields:
+
+    sigma = CREA_CHAMP (    TYPE_CHAM = 'ELGA_SIEF_R' ,
+                  OPERATION = 'EXTR' ,
+                  RESULTAT  = reslin ,
+                  NOM_CHAM  = 'SIEF_ELGA' ,
+                  TYPE_MAXI = 'MINI' ,
+                  TYPE_RESU = 'VALE' , )
+
+    ASSEMBLAGE(MODELE = model,
+           CHARGE = bloc ,
+           CHAM_MATER = fieldmat,
+           NUME_DDL = CO("NDDL") ,
+           MATR_ASSE = ( _F(MATRICE= CO("K"), OPTION='RIGI_MECA'),
+                         _F(MATRICE= CO("KG"), OPTION='RIGI_GEOM', SIEF_ELGA=sigma),
+                       ),
+           )
+
+    mode1 = CALC_MODES(TYPE_RESU='MODE_FLAMB',
+                      MATR_RIGI = K,
+                      MATR_RIGI_GEOM = KG,
+                      OPTION = 'PLUS_PETITE',
+                      SOLVEUR_MODAL=_F(METHODE='TRI_DIAG'),
+                      SOLVEUR=_F(RESI_RELA = resi_rela,),
+                      VERI_MODE=_F(STOP_ERREUR='NON',),
+                      CALC_CHAR_CRIT=_F(**NMAX_CHAR_CRIT),
+                     )
+    mode1 = NORM_MODE ( reuse = mode1, MODE = mode1, NORME = 'TRAN' , )
+
+
+    for field in fields:
+        if field == 'strain_buckling':
+           mode1 = CALC_CHAMP(reuse=mode1,
+                  DEFORMATION=('EPSI_ELGA',),
+                  RESULTAT=mode1)
+        elif field == 'strain_green_buckling':
+            mode1 = CALC_CHAMP(reuse=mode1,
+                  DEFORMATION=('EPSG_ELGA',),
+                  RESULTAT=mode1)
+        elif field == 'elastic_energy_buckling':
+            mode1 = CALC_CHAMP(reuse=mode1,
+                  RESULTAT=mode1,
+                  ENERGIE=('ENEL_ELGA'),
+                  FORCE=('FORC_NODA'))
+        else:print('Not implemented for: ',field)
+
+    nom_cham_med = [field for field in fields if field in buckling_fields and field!='mode_buckling']
+    if len(nom_cham_med)==0:
+       nom_cham_med = ['elastic_energy_buckling']
+    nom_cham     = [dictFields[field] for field in nom_cham_med ]
+
+    IMPR_RESU(FORMAT='MED',UNITE=80,VERSION_MED='4.0.0',
+          RESU=(
+                _F(RESULTAT=mode1,
+                   MAILLAGE=mesh,
+                   NOM_CHAM=('DEPL'),
+                   NOM_CMP=('DX','DY','DZ',),
+                   NOM_CHAM_MED=('mode_buckling'),
+                   ),
+                _F(RESULTAT=mode1,
+                    NOM_CHAM     = nom_cham,
+                    NOM_CHAM_MED = nom_cham_med,
+                   ),
+                ),
+          );
+
+
+#==============================================================================================
+#                                SCALAR POST PROCESSING
+#==============================================================================================
+
+for scalar in scalars:
+    if scalar == 'int_potential_energy':
+       tab1 =POST_ELEM(RESULTAT=reslin, TRAV_EXT=_F())
+    elif scalar == 'load_crit':
+       tab1 = RECU_TABLE(CO=mode1,NOM_PARA = ('CHAR_CRIT',),)
+    else:print('Not implemented for scalar: ',scalar)
+    IMPR_TABLE(TABLE=tab1,FORMAT='TABLEAU',SEPARATEUR=',',TITRE='',UNITE=27)
+    DETRUIRE(CONCEPT=_F(NOM=tab1,),)
+
+#===============================================================================================
+
+
+FIN()

@@ -1,0 +1,20 @@
+P actions make_etude
+P memjob 3072000
+P memory_limit 3000.0
+P mode interactif
+P nomjob AsterHarmonic
+P version stable
+A memjeveux 512.0
+A args -max_base 300000
+A tpmax 20000.0
+F mmed AsterHarmonicinput.med D  20
+F comm AsterHarmonicparam.in D  1
+F comm AsterHarmonicDirect.comm D  1
+F comm AsterHarmonicPostPro.comm D 1
+F comm AsterHarmonicAdjoint.comm D  1
+F comm AsterHarmonicShapeDerivative.comm D  1
+F rmed direct.rmed R  81
+F mess AsterHarmonic.log R  6
+F rmed adjoint.rmed R  82
+F tab AsterHarmonic_objective.csv R  27
+F rmed AsterHarmonicoutput.rmed R  83

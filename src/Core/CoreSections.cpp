@@ -14,7 +14,7 @@ bool CoreSections::init()
   {
     return false; // already initialized
   }else{
-    CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
+    ccx_iface = new CalculiXCoreInterface();
     is_initialized = true;  
     return true;
   }
@@ -32,7 +32,9 @@ bool CoreSections::reset()
   shell_section_data.clear();
   beam_section_data.clear();
   membrane_section_data.clear();
-  init();
+  clear_topology_materials();
+  //is_initialized = false;
+  //init();
   return true;
 }
 
@@ -344,7 +346,7 @@ int CoreSections::get_membrane_section_data_id_from_membrane_section_id(int memb
   return return_int;
 }
 
-std::string CoreSections::get_section_export() // get a list of the CalculiX section exports
+std::string CoreSections::get_section_export(bool topology_run) // get a list of the CalculiX section exports
 {
   std::vector<std::string> sections_export_list;
   sections_export_list.push_back("********************************** S E C T I O N S ****************************");
@@ -562,4 +564,49 @@ std::string CoreSections::print_data()
   }
 
   return str_return;
+}
+
+bool CoreSections::set_topology_materials(int section_id,const std::vector<int>& element_ids,const std::vector<int>& material_ids)
+{
+  if (element_ids.size() != material_ids.size())
+    return false;
+
+  const int section_index = get_sections_data_id_from_section_id(section_id);
+
+  if (section_index < 0 || sections_data[section_index][1] != 1)
+    return false;
+
+  const int solid_index = get_solid_section_data_id_from_solid_section_id(sections_data[section_index][2]);
+
+  if (solid_index < 0)
+    return false;
+
+  const int block_id = std::stoi(solid_section_data[solid_index][1]);
+  const auto block_elements = ccx_iface->get_block_element_ids(block_id);
+  const std::set<int> allowed_elements(block_elements.begin(), block_elements.end());
+
+  std::map<int, int> assignments;
+
+  for (size_t i = 0; i < element_ids.size(); ++i)
+  {
+    if (allowed_elements.count(element_ids[i]) == 0 ||
+        !ccx_iface->check_material_exists(material_ids[i]))
+      return false;
+
+    if (!assignments.emplace(element_ids[i], material_ids[i]).second)
+      return false; // Duplicate element ID.
+  }
+
+  // Commit only after every assignment has passed validation.
+  if (assignments.empty())
+    topology_materials.erase(section_id);
+  else
+    topology_materials[section_id] = std::move(assignments);
+
+  return true;
+}
+
+void CoreSections::clear_topology_materials()
+{
+  topology_materials.clear();
 }

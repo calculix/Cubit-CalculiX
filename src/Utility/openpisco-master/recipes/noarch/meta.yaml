@@ -1,0 +1,49 @@
+{% set data = load_setup_py_data() %}
+
+package:
+  name: "openpisco"
+  version: {{ GIT_DESCRIBE_TAG }}
+
+source:
+  path: ../../
+
+build:
+  number: {{ GIT_DESCRIBE_NUMBER }}
+  noarch: python
+  entry_points:
+    - OpenPisco = OpenPisco.QtApp.OpenPiscoGUI:LaunchPiscoGUI
+    - OpenPiscoCL = OpenPisco.CLApp.OpenPiscoCL:RunSimulation
+  script: {{ PYTHON }} -m pip install --no-deps . -vv
+
+requirements:
+  build:
+    - setuptools-scm
+    - python =3.11.*
+    - pip
+  run:
+    - numpy
+    - muscat =2.5.2
+    - libmed >=4.1.1
+    - vtk 
+    - osqp
+    - numba
+    - pycgns-core
+test:
+  imports:
+    -  OpenPisco
+  commands :
+    - python -m Muscat -e OpenPisco -k aster -k thickness -k freefem -k zset -k qt -k extension -k meshdist -k advect -k levelset -k mmg
+
+about:
+    home: {{ data['url'] }}
+    license: {{ data['license'] }}
+    license_file: COPYING
+    license_family: GPL
+    summary: {{ data['description'] }}
+    description: {{ data['long_description'] }}
+
+extra:
+  recipe-maintainers:
+    - felipebordeu
+    - cnrdn
+    - daviddanan

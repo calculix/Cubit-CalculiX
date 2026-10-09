@@ -1,0 +1,194 @@
+# -*- coding: utf-8 -*-
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE', which is part of this source code package.
+#
+POURSUITE(PAR_LOT='NON', IGNORE_ALARM = ('MODELISA4_6','SUPERVIS_1', 'MODELE1_63', 'MODELE1_64'))
+import os
+
+mesh = LIRE_MAILLAGE(UNITE=20)
+
+model = AFFE_MODELE(AFFE=_F(MODELISATION=('3D', ),
+                            PHENOMENE='MECANIQUE',
+                            TOUT='OUI'),
+                    MAILLAGE=mesh) 
+
+NDDL=NUME_DDL(MODELE=model)             
+
+erpVariableRequired=any(["ERP" in scalar for scalar in scalars]) or any(["ERP" in field for field in fields])
+gradientFieldRequired=any(["Grad" in field for field in fields])
+
+if erpVariableRequired:
+    #ERP parameters
+    erpSurface=harmonicCritParams["radia_Surface"]
+    erprho=harmonicCritParams['density_flu']
+    erpc=harmonicCritParams['veloc_flu']
+    erpf=harmonicCritParams['radia_fact']
+    erprefdb=1.0e-9 
+
+    RECPRO = FORMULE(NOM_PARA=('DX', 'X1', 'DY', 'X2', 'DZ', 'X3'),
+                     VALE='0.5*erprho*erpc*erpf*(DX**2+X1**2+DY**2+X2**2+DZ**2+X3**2)', erprho=erprho, erpc=erpc,erpf=erpf)
+
+    ERPDB = FORMULE(NOM_PARA=('TEMP', ),
+                     VALE='10*log10(TEMP/erprefdb)',erprefdb=erprefdb) 
+
+    INPROD = FORMULE(NOM_PARA=('X', 'Y', 'Z', 'DX', 'DY', 'DZ'),
+                 VALE_C='DX*X+DY*Y+DZ*Z')
+
+    chnor = CREA_CHAMP(GROUP_MA=erpSurface,
+                       INFO=1,
+                       MODELE=model,
+                       OPERATION='NORMALE',
+                       TYPE_CHAM='NOEU_GEOM_R')
+
+    chnorf = CREA_CHAMP(AFFE=_F(NOM_CMP=('X1', ),
+                                GROUP_MA=erpSurface,
+                                VALE_F=(INPROD, )),
+                        MODELE=model,
+                        OPERATION='AFFE',
+                        TYPE_CHAM='NOEU_NEUT_F')
+
+    SCALEX = FORMULE(NOM_PARA=('X1', 'X'),
+                     VALE_C='X*X1')
+
+    SCALEY = FORMULE(NOM_PARA=('X1', 'Y'),
+                     VALE_C='Y*X1')
+
+    SCALEZ = FORMULE(NOM_PARA=('X1', 'Z'),
+                     VALE_C='Z*X1')
+
+    chscalf = CREA_CHAMP(AFFE=_F(NOM_CMP=('X1', 'X2', 'X3'),
+                                 GROUP_MA=erpSurface,
+                                 VALE_F=(SCALEX, SCALEY, SCALEZ)),
+                         MODELE=model,
+                         OPERATION='AFFE',
+                         TYPE_CHAM='NOEU_NEUT_F')
+
+    chprodf = CREA_CHAMP(AFFE=_F(NOM_CMP=('X1', ),
+                                 GROUP_MA=erpSurface,
+                                 VALE_F=(RECPRO,)),
+                         MODELE=model,
+                         OPERATION='AFFE',
+                         TYPE_CHAM='NOEU_NEUT_F') 
+
+else:
+    pass
+
+fieldmat = AFFE_MATERIAU(MODELE=model, **materials)
+
+l100 = DEFI_LIST_REEL(**exc_interval)
+             
+CHARLAGR = AFFE_CHAR_MECA(MODELE=model, **dirichlet)
+
+allPres=[]
+SIa = [None]*len(pressures)
+for pressId,(boundary,pressureParams) in enumerate(pressures.items()):
+    pressureType=pressureParams["type"]
+    pressureVal=pressureParams["val"]
+
+    if pressureType=="uniform":
+        SIa[pressId] = FORMULE(NOM_PARA=('X','Y'),VALE='pressure',pressure=pressureVal)
+    elif pressureType=="circularVariation":
+        kwaveNumber=pressureParams["spatialWaveNumber"]
+        center=pressureParams["center"]
+        SIa[pressId] = FORMULE(NOM_PARA=('X','Y'),
+                      VALE='pressure*(sin(k*(X-center)**2+k*(Y-center)**2))',
+                      pressure=pressureVal,k=kwaveNumber,center=center)
+    elif pressureType=="planarWaveVariation":
+        amplitude=pressureParams["amplitude"]
+        center=pressureParams["center"]
+        SIa[pressId] = FORMULE(NOM_PARA=('X','Y'),
+                      VALE='pressure*amp*sqrt((X-center)**2+(Y-center)**2)',
+                      pressure=pressureVal,amp=amplitude,center=center)
+    elif pressureType=="squareVariation":
+        kwaveNumber=pressureParams["spatialWaveNumber"]
+        SIa[pressId] = FORMULE(NOM_PARA=('X','Y'),
+                      VALE='pressure*(sin(k*X)*cos(k*Y))',
+                      pressure=pressureVal,k=kwaveNumber)
+    elif pressureType=="GoldackVariation":
+        center_x,center_y=pressureParams["coordCenter"]
+        scaler_x,scaler_y=pressureParams["coordScalers"]
+        SIa[pressId] = FORMULE(NOM_PARA=('X','Y'),
+                      VALE='pressure*exp(-3*( ((X-center_x)/scaler_x)**2+((Y-center_y)/scaler_y)**2 ) )',
+                      pressure=pressureVal,center_x=center_x,center_y=center_y,
+                      scaler_x=scaler_x,scaler_y=scaler_y)
+    else:
+        raise Exception("The type "+pressureType+" is not available")
+    allPres.append(_F(PRES=SIa[pressId], GROUP_MA=boundary))
+
+
+p610 = AFFE_CHAR_MECA_F(MODELE=model,PRES_REP=allPres)
+KELEM = CALC_MATR_ELEM(OPTION="RIGI_MECA", MODELE=model, CHAM_MATER=fieldmat, CHARGE=CHARLAGR)
+MELEM = CALC_MATR_ELEM(OPTION="MASS_MECA", MODELE=model, CHARGE=CHARLAGR, CHAM_MATER=fieldmat)
+CELEM = CALC_MATR_ELEM(
+    OPTION="AMOR_MECA",
+    MODELE=model,
+    CHAM_MATER=fieldmat,
+    CHARGE=CHARLAGR,
+    RIGI_MECA=KELEM,
+    MASS_MECA=MELEM,
+)
+FELEM = CALC_VECT_ELEM(OPTION="CHAR_MECA", CHARGE=p610)
+NUME = NUME_DDL(MATR_RIGI=KELEM)
+
+RIGI1 = ASSE_MATRICE(MATR_ELEM=KELEM, NUME_DDL=NUME)
+MASS1 = ASSE_MATRICE(MATR_ELEM=MELEM, NUME_DDL=NUME)
+CASS = ASSE_MATRICE(MATR_ELEM=CELEM, NUME_DDL=NUME)
+FASS = ASSE_VECTEUR(VECT_ELEM=FELEM, NUME_DDL=NUME)
+
+                    
+if 'NMAX_FREQ' in ModalBasis.keys():
+    modes = CALC_MODES(CALC_FREQ=_F(**ModalBasis),
+                       MATR_MASS=MASS1,
+                       MATR_RIGI=RIGI1,
+                       SOLVEUR= _F(NPREC=10),
+                       NORM_MODE=_F(NORME='MASS_GENE'),
+                       OPTION='PLUS_PETITE',
+                       VERI_MODE=_F(STOP_ERREUR='NON'),
+                       SOLVEUR_MODAL=_F(METHODE='SORENSEN',NMAX_ITER_SOREN=30))
+elif 'FREQ' in ModalBasis.keys():
+    modes = CALC_MODES(CALC_FREQ=_F(**ModalBasis),
+                       MATR_MASS=MASS1,
+                       MATR_RIGI=RIGI1,
+                       SOLVEUR= _F(NPREC=10),
+                       NORM_MODE=_F(NORME='MASS_GENE'),
+                       OPTION='BANDE',
+                       VERI_MODE=_F(STOP_ERREUR='NON'),
+                       SOLVEUR_MODAL=_F(METHODE='SORENSEN',NMAX_ITER_SOREN=30))
+elif 'ALLFREQ' in ModalBasis.keys():
+    modes = CALC_MODES(MATR_MASS=MASS1,
+                       MATR_RIGI=RIGI1,
+                       SOLVEUR= _F(NPREC=10),
+                       NORM_MODE=_F(NORME='MASS_GENE'),
+                       OPTION='PLUS_PETITE',
+                       SOLVEUR_MODAL=_F(METHODE='SORENSEN'),
+                       CALC_FREQ=_F(NMAX_FREQ=9999),
+                       VERI_MODE=_F(STOP_ERREUR='NON'),
+                       AMELIORATION='OUI',
+                       )
+else:
+    raise Exception("PLUS_PETITE, BANDE and TOUT are the only option interfaced for CALC_MODES in harmonic analysis")
+
+
+NUMDIAG = NUME_DDL_GENE(BASE=modes, STOCKAGE="DIAG")
+RIGIG1 = PROJ_MATR_BASE(BASE=modes, NUME_DDL_GENE=NUMDIAG, MATR_ASSE=RIGI1)
+MASSG1 = PROJ_MATR_BASE(BASE=modes, NUME_DDL_GENE=NUMDIAG, MATR_ASSE=MASS1)
+AMORG1 = PROJ_MATR_BASE(BASE=modes, NUME_DDL_GENE=NUMDIAG, MATR_ASSE=CASS)
+FDIAG = PROJ_VECT_BASE(BASE=modes, NUME_DDL_GENE=NUMDIAG, VECT_ASSE=FASS, TYPE_VECT="FORC")
+
+
+resharm = DYNA_VIBRA(BASE_CALCUL='GENE',
+                        EXCIT=_F(COEF_MULT=1.0,VECT_ASSE_GENE=FDIAG),
+                        LIST_FREQ=l100,
+                        MATR_MASS=MASSG1,
+                        MATR_RIGI=RIGIG1,
+                        MATR_AMOR=AMORG1,
+                        TYPE_CALCUL='HARM')
+
+restran = REST_GENE_PHYS(NOM_CHAM=('DEPL', ),
+                         RESU_GENE=resharm,
+                         TOUT_ORDRE='OUI')
+
+
+
+FIN()

@@ -1,0 +1,67 @@
+# -*- coding: utf-8 -*-
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE', which is part of this source code package.
+#
+POURSUITE()
+
+mesh = LIRE_MAILLAGE(FORMAT='MED',
+                     UNITE=20)
+
+model = AFFE_MODELE(AFFE=_F(**modelisation),
+                    MAILLAGE=mesh)
+
+
+fieldma1 = AFFE_MATERIAU(MODELE=model, **materials)
+
+# ~ prescribed temperature
+tempimpo = AFFE_CHAR_CINE(MODELE=model, **ther_impo)
+
+
+# MODAL COMPUTING
+
+ASSEMBLAGE(CHAM_MATER=fieldma1,
+           CHAR_CINE=(tempimpo, ),
+           MATR_ASSE=(_F(MATRICE=CO('RIGIT'),
+                         OPTION='RIGI_THER'),
+          ),
+           MODELE=model,
+           NUME_DDL=CO('NDDL'),
+           )
+
+MASSE=CALC_MATR_ELEM(MODELE     = model,
+                      CHAM_MATER = fieldma1,
+                      OPTION     = 'MASS_THER',
+                      )
+
+MASST=ASSE_MATRICE(MATR_ELEM=MASSE,
+                   CHAR_CINE=tempimpo,
+                   NUME_DDL=NDDL)
+
+MODES = CALC_MODES(
+                   MATR_RIGI=RIGIT,
+                   MATR_MASS=MASST,
+                   OPTION='PLUS_PETITE',
+                   CALC_FREQ= _F( NMAX_FREQ = NMAX_FREQ),
+                   VERI_MODE=_F(STOP_ERREUR='NON',
+                                  SEUIL=1.E-06,
+                                  PREC_SHIFT=5.E-3,
+                                  STURM='OUI',),
+                  )
+
+IMPR_RESU(RESU=_F(RESULTAT=MODES),
+          UNITE=80)
+
+TBMODES = RECU_TABLE(CO=MODES,NOM_PARA = ('FREQ','RIGI_GENE','MASS_GENE'))
+
+FOBJ = FORMULE(NOM_PARA = ('FREQ',), VALE = '(2.*pi*FREQ)**2')
+
+TBMODES=CALC_TABLE(reuse=TBMODES, TABLE=TBMODES,
+                   ACTION=(
+                         _F(OPERATION='OPER',FORMULE=FOBJ,NOM_PARA='EigenFreqSquared'),
+                            )
+                          )
+
+IMPR_TABLE(TABLE=TBMODES,FORMAT='TABLEAU',SEPARATEUR=',',TITRE='',UNITE=27)
+
+FIN()

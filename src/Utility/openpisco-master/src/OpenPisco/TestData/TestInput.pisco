@@ -1,0 +1,41 @@
+dim=3, debug=false
+*Plugins
+**Plugin name=OpenPisco.TestData.TestPlugin, load=true
+**Plugin name=OpenPisco.TestData.NonExistentPlugin, load=false
+
+*Zones
+**Cylinder id=1, center1=0 0 0.4, center2=0 0 0.6, radius=0.3
+**Plane id=2, point=0 0 -0.49, normal=0 0 1
+**Cylinder id=3, center1=0 0 -1, center2=0 0 1, radius=0.4
+**Union id=4, z=1 2 3
+
+*Grids
+**Grid id=1, n=25 26 27, origin=-0.5 -0.75 -0.5, length=1. 1.5 1.
+
+*LevelSets
+**LevelSet id=1, support=1
+
+*PhysicalProblems
+**StructuredFEA id=1, grid=1, type=disp, eVoid=0.001
+***Dirichlet zone=2, dofs=0 1 2, val=0.0
+***Neumann zone=1, dofs=1, val=1
+
+*OptimProblems
+**OptimProblem type=PenalizedSquaredTopoGeneric, id=1, OnZone=1 2, Dirichlet=2, Neumann=1,
+               useLevelset=1, PenalVolume=9, e2=.004*(2./25)**2, output=1,
+               outputEveryLevelsetUpdate=False
+***Objective type=Compliance, name=Compliance, useProblem=1
+***Constraint type=Volume, name=Volume, upperBound=0.2
+
+*TopologicalOptimizations
+**OptimAlgoUnconstrained id=1, useOptimProblem=1, addInequalityConstraintsConstribution=True,
+                         numberOfDesignStepsMax=1400, numberOfIterationsMax=20,
+                         automaticPenalisation=True
+
+*Outputs
+**Output id=1, name=Basic.xdmf, inTempDirectory=True
+
+*Actions
+**Action type=InitLevelset, ls=1, zone=4
+**Action type=RunTopoOp, TopoOp=1
+

@@ -1,0 +1,15 @@
+P actions make_etude
+P memjob 1000000
+P memory_limit 1000.0
+P mode interactif
+P nomjob AsterStatic
+P version stable
+A memjeveux 2048.0
+A args -max_base 300000
+A tpmax 9000.0
+F comm AsterStaticparam.in D 1
+F comm AsterStatic.comm D  1
+F mess AsterStatic.log R  6
+F mmed AsterStaticinput.med D  20
+F rmed AsterStaticoutput.rmed R  80
+F libr AsterStatic_objective.csv R  27

@@ -1,0 +1,15 @@
+P actions make_etude
+P memjob 3072000
+P memory_limit 3000.0
+P mode interactif
+P nomjob AsterThermalEigenValues
+P version stable
+A args -max_base 300000
+A memjeveux 1024.0
+A tpmax 20000.0
+F comm AsterThermalEigenValuesparam.in D  1
+F comm AsterThermalEigenValues.comm D  1
+F libr AsterThermalEigenValuesinput.med D  20
+F rmed AsterThermalEigenValuesoutput.rmed R  80
+F mess AsterThermalEigenValues.log R  6
+F libr AsterThermalEigenValues_objective.csv R  27

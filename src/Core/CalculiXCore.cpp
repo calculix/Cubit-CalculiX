@@ -4695,6 +4695,12 @@ bool CalculiXCore::kill_job(int job_id)
   return jobs->kill_job(job_id);
 }
 
+bool CalculiXCore::run_topology(int topology_id, int job_id)
+{
+  //return ccx_core.run_topology(topology_id, option);
+  return true;
+}
+
 bool CalculiXCore::set_job_conversion(int job_id, int conversion)
 {
   return jobs->set_job_conversion(job_id,conversion);

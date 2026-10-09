@@ -1,0 +1,20 @@
+P actions make_etude
+P memjob 1048576
+P memory_limit 16384.0
+P mode interactif
+P nomjob AsterNodalTargetDispAdjoint
+P version stable
+A memjeveux 128.0
+A args -max_base 300000
+A tpmax 9000.0
+F comm AsterNodalTargetDispAdjointparam.in D 1
+F comm AsterNodalTargetDispAdjoint.comm D  1
+F mess AsterNodalTargetDispAdjoint.log R  6
+F mmed AsterNodalTargetDispAdjointinput.med D  20
+F rmed AsterNodalTargetDispAdjointoutput.rmed R  80
+
+
+
+
+
+

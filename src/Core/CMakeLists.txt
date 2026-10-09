@@ -11,6 +11,7 @@ set(CORE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/CoreBlocks.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreMaterials.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreMaterials.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreMaterialsStructs.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreMaterialsLibrary.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreMaterialsLibrary.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreSections.cpp

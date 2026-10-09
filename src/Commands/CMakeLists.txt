@@ -261,6 +261,8 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxJobDeleteCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxRunJobCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxRunJobCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxRunTopologyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxRunTopologyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxWaitJobCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxWaitJobCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxResultLoadJobCommand.cpp

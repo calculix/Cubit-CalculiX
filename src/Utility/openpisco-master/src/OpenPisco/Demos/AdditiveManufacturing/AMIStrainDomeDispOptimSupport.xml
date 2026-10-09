@@ -1,0 +1,66 @@
+<!--
+Dome topology optimization taking into account the AM process (inherent strain method) 
+Data : Liu_Tovar_2014_MBB.stl 
+To generate input data user can run Demos/Liu_Tovar_2014/MBB_T4_C2.xml
+--> 
+
+<data dim="3" debug="False" >
+    <Zones>
+        <StlFile id="10" filename="{CWD}/Liu_Tovar_2014_MBB.stl"/>
+        <Offset id="1" z="10" offset="-0.2"/>
+        <Offset id="2" z="1" offset="-0.16"/>
+        <Union id="3" z="1 2" desc="part and support"/>
+        <Cylinder id="4" center1="0.0 0.0 -.1" center2="0.0 0.0 0.05" radius="0.1" desc="Block"/>
+        <Cylinder id="5" center1="1.0 1.0 -.1" center2="1.0 1.0 0.05" radius="0.15" desc="Force"/>
+        <Union id="6" z="1 4 5" desc="onzone"/> 
+        <Plane id="7" point="0.5 0.5 0.000001" normal="0. 0. 1."/>
+        <Intersection id="8" z="4 7" desc="Dirichlet"/>      
+        <Intersection id="9" z="5 7" desc="Neumann"/> 
+    </Zones>
+
+    <Grids>
+        <Grid id="1" n="61 21 31" origin="-6. -1. -.5" length="12 2 3" ofTetras ="True"/>
+    </Grids>
+
+    <LevelSets>
+        <LevelSet id="1" support="1">
+        </LevelSet>  
+    </LevelSets>
+
+    <PhysicalProblems>
+        <AMProcess id="1" type="IStrains" IStrains="-0.0001 -0.0001 0." >
+         <Material  young="110000000000" poisson="0.26" density="1" />
+         <Block  on="Z0" block="0 1 2"  />
+        </AMProcess>
+    </PhysicalProblems>
+
+    <OptimProblems>
+        <OptimProblem type="TopoGeneric" id="1"
+            OnZone="6"
+            useLevelset="1"
+            output="1">
+            <Objective type="AMInherentStrainDisp"  name="AMInherentStrainDisp" useProblem="1" beta="1e4"/>
+            <Constraint type="Volume"     name="Volume"   targetValue="0.5*(1-1.92011528e-01)" desc="0.5*(1-V0) V0 part volume"/>
+        </OptimProblem>
+    </OptimProblems>
+
+    <TopologicalOptimizations>
+    <OptimAlgoNullSpace id="1"
+            useOptimProblem="1"
+            tol_merit ="0.005"
+        />
+    </TopologicalOptimizations>
+
+    <Outputs>
+       <Output id="1" name="DomeIStrainOptimDisp.xdmf"/>
+    </Outputs>    
+
+    <Actions> 
+        <Action type="CreateTagsFromZones" ls="1" dim="2" elementTags="2" />
+        <Action type="InitLevelset" ls="1" zone="3"/>   
+        <Action type="AddSkin" ls="1"/>   
+        <Action type="ChangePhiByZones" ls="1" zone="2" />
+        <Action type="RunTopoOp" TopoOp="1"/>
+    </Actions>
+ </data>
+

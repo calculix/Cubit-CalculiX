@@ -1,0 +1,90 @@
+<data dim="3" debug="False">
+<!--
+An efficient 3D topology optimization code written in Matlab
+Kai Liu · Andres Tovar
+
+DOI 10.1007/s00158-014-1107-x
+
+Table 4 Case 1
+
+-->
+    <Zones>
+
+        <AABox id="1" origin="0. 0.05 0.05" size="13 3.9 2.9" desc="Init" />
+        <!--
+        To inisialise with a Gyroid
+
+        <AABox id="10" origin="0. 0.05 0.05" size="12 3.9 2.9" desc="Init" />
+        <Gyroid id="100"  desc="Init" scale="0.031831" />
+        <Symmetric id="101" z="100" center="12 0 1.5"/>
+        <Intersection id="1" z="10 101"/>
+        -->
+
+
+
+        <Plane id="2" point="0.05 0. 0." normal="1. 0. 0." desc="Block"/>
+        <Cylinder id="3" center1="12 0 1.45" center2="12 0 1.55" radius="0.05" desc="Force"/>
+        <Offset id="22" z="2" offset="-0.2" />
+        <Offset id="33" z="3" offset="-0.2" />
+
+        <Union id="4" z="22 33"/>
+        <Union id="5" z="1 4 "/>
+    </Zones>
+
+    <Grids>
+        <Grid id="1" n="61 21 15" origin="0. 0. 0." length="12 4 3" ofTetras="true" />
+    </Grids>
+
+    <LevelSets>
+        <LevelSet id="1" support="1" conform="True">
+            <MesherInfo iso="0.0" hmin="0.05" hmax="0.5" hausd="0.1" nr="True"  rmc="1e-5"  hgrad="1.1" />
+        </LevelSet>
+    </LevelSets>
+
+    <PhysicalProblems>
+        <Unstructured id="1" tagsToKeep="ET2"   type="static_elastic" linearSolverName="EigenLU">
+             <Material  young="1" poisson="0.3" />
+             <Dirichlet eTag="ET2" dofs="0 1 2" value="0.0"/>
+             <Force  nTag="NT3" dir="0 1 0" value="-1"/>
+        </Unstructured>
+    </PhysicalProblems>
+
+
+    <OptimProblems>
+        <OptimProblem type="TopoGeneric" id="1"
+            OnZone="4"
+            useLevelset="1"
+            output="1"
+        >
+          <Objective  type="Compliance"  name="Compliance" useProblem="1" />
+          <Constraint type="Volume"     name="Volume"   upperBound="21.6"  desc="0.15*voltotal= 0.15*12*4*3=21.6"/>
+       </OptimProblem>
+
+    </OptimProblems>
+
+    <TopologicalOptimizations>
+ 	<OptimAlgoNullSpace id="1"
+            useOptimProblem="1"
+            stepSize="3."
+            stepSizeMax="3."
+        />
+    </TopologicalOptimizations>
+
+    <Outputs>
+       <Output id="2" name="Liu_Tovar_2014_Cantilever_T4_C1_Conforme.xdmf"/>
+       <Output id="3" name="Liu_Tovar_2014_Cantilever_T4_C1_Conforme.csv" nTag="NT3" />
+       <Output id="1" name="PROXY" outputs="2 3"/>
+    </Outputs>
+
+    <Actions>
+        <Action type="AddEdges" ls="1" ar="90+45" addskin="true"/>
+        <Action type="CreateTagsFromZones" ls="1" nodalTags="2 3" dim="2" elementTags="2 3" />
+
+        <Action type="InitLevelset" ls="1" zone="5"/>
+        <Action type="UpdateDistance" ls="1" />
+        <Action type="SetAsRequired" ls="1" nTags="NT3" eTags="ET2"/>
+        <Action type="Remesh" ls="1" iso="0.001" />
+        <Action type="RunTopoOp" TopoOp="1"/>
+        <Action type="SaveShapeToFile" ls="1" filename="Liu_Tovar_2014_Cantilever_T4_C1_Conforme.stl"/>
+    </Actions>
+ </data>

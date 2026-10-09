@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Xdmf xmlns:xi="http://www.w3.org/2001/XInclude" Version="2.92">
+<Domain>
+    <Grid Name="Grid_0">
+    <Geometry Type="XYZ">
+ <DataItem Format="HDF" NumberType="Float" Dimensions="3923 3"  Precision="8" >ThermalRadiationInput0.h5:GEO_U_0_0</DataItem>
+    </Geometry>
+    <Topology TopologyType="Mixed" NumberOfElements="25291">
+ <DataItem Format="HDF" NumberType="Int" Dimensions="122438"  Precision="8" >ThermalRadiationInput0.h5:Topo_U_0_1</DataItem>
+    </Topology> 
+    <Attribute Center="Node" Name="Corners" Type="Scalar">
+ <DataItem Format="HDF" NumberType="Char" Dimensions="3923"  Precision="1" >ThermalRadiationInput0.h5:Corners_2</DataItem>
+    </Attribute>
+    <Attribute Center="Node" Name="RequiredVertices" Type="Scalar">
+ <DataItem Format="HDF" NumberType="Char" Dimensions="3923"  Precision="1" >ThermalRadiationInput0.h5:RequiredVertices_3</DataItem>
+    </Attribute>
+    <Attribute Center="Cell" Name="Inside3D" Type="Scalar">
+ <DataItem Format="HDF" NumberType="Char" Dimensions="25291"  Precision="1" >ThermalRadiationInput0.h5:Inside3D_4</DataItem>
+    </Attribute>
+    <Attribute Center="Cell" Name="inner" Type="Scalar">
+ <DataItem Format="HDF" NumberType="Char" Dimensions="25291"  Precision="1" >ThermalRadiationInput0.h5:inner_5</DataItem>
+    </Attribute>
+    <Attribute Center="Cell" Name="ExteriorBars" Type="Scalar">
+ <DataItem Format="HDF" NumberType="Char" Dimensions="25291"  Precision="1" >ThermalRadiationInput0.h5:ExteriorBars_6</DataItem>
+    </Attribute>
+    <Attribute Center="Cell" Name="annulus_faces" Type="Scalar">
+ <DataItem Format="HDF" NumberType="Char" Dimensions="25291"  Precision="1" >ThermalRadiationInput0.h5:annulus_faces_7</DataItem>
+    </Attribute>
+    <Attribute Center="Cell" Name="Ridges" Type="Scalar">
+ <DataItem Format="HDF" NumberType="Char" Dimensions="25291"  Precision="1" >ThermalRadiationInput0.h5:Ridges_8</DataItem>
+    </Attribute>
+    <Attribute Center="Cell" Name="annulus" Type="Scalar">
+ <DataItem Format="HDF" NumberType="Char" Dimensions="25291"  Precision="1" >ThermalRadiationInput0.h5:annulus_9</DataItem>
+    </Attribute>
+    <Attribute Center="Cell" Name="right" Type="Scalar">
+ <DataItem Format="HDF" NumberType="Char" Dimensions="25291"  Precision="1" >ThermalRadiationInput0.h5:right_10</DataItem>
+    </Attribute>
+    <Attribute Center="Cell" Name="inner_faces" Type="Scalar">
+ <DataItem Format="HDF" NumberType="Char" Dimensions="25291"  Precision="1" >ThermalRadiationInput0.h5:inner_faces_11</DataItem>
+    </Attribute>
+    <Attribute Center="Cell" Name="left" Type="Scalar">
+ <DataItem Format="HDF" NumberType="Char" Dimensions="25291"  Precision="1" >ThermalRadiationInput0.h5:left_12</DataItem>
+    </Attribute>
+    <Attribute Center="Cell" Name="background" Type="Scalar">
+ <DataItem Format="HDF" NumberType="Char" Dimensions="25291"  Precision="1" >ThermalRadiationInput0.h5:background_13</DataItem>
+    </Attribute>
+    <Attribute Center="Cell" Name="background_faces" Type="Scalar">
+ <DataItem Format="HDF" NumberType="Char" Dimensions="25291"  Precision="1" >ThermalRadiationInput0.h5:background_faces_14</DataItem>
+    </Attribute>
+    </Grid>
+  </Domain>
+</Xdmf>

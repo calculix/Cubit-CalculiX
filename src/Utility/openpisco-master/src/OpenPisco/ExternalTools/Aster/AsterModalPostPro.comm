@@ -1,0 +1,98 @@
+# -*- coding: utf-8 -*-
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE', which is part of this source code package.
+#
+POURSUITE(PAR_LOT='NON')
+
+def ComputeEigenFreqSquared_sensitivity(fieldNumber):
+    NumModeOptim=modalcritParams['NumModeOptim']
+    freq=(TBMODES.EXTR_TABLE().values()['FREQ'])[NumModeOptim-1]
+
+    #Compute norm of displacement at each nodes times density
+    Dnorm = CREA_CHAMP(OPERATION='EXTR',
+                          TYPE_CHAM='NOEU_NEUT_R',
+                          NUME_ORDRE=NumModeOptim,
+                          RESULTAT=evol,
+                          NOM_CHAM='UT01_NOEU')
+
+    MAELGA = CREA_CHAMP(OPERATION='EXTR',
+                          TYPE_CHAM='ELGA_NEUT_R',
+                          RESULTAT=evol,
+                          NOM_CHAM='UT02_ELGA',NUME_ORDRE=NumModeOptim)
+
+    MANOEU = CREA_CHAMP(OPERATION='DISC',
+                          TYPE_CHAM='NOEU_NEUT_R',
+                          CHAM_GD=MAELGA)
+
+    MANOE2=CREA_CHAMP(OPERATION='ASSE',
+                        TYPE_CHAM='NOEU_NEUT_R',
+                        MODELE=model,
+                        ASSE=_F(CHAM_GD=MANOEU ,TOUT='OUI',
+                                NOM_CMP =('X1',),
+                                NOM_CMP_RESU=('X2',),
+                                ),
+                       )
+
+    CRHOU = CREA_CHAMP(OPERATION='EVAL' ,TYPE_CHAM='NOEU_NEUT_R',
+                       CHAM_F=CHFMRHO ,
+                       CHAM_PARA=( MANOE2,Dnorm) )
+
+    UTNOEU = CREA_CHAMP(OPERATION='EXTR',
+                           TYPE_CHAM='NOEU_NEUT_R',
+                           RESULTAT=evol,
+                           NOM_CHAM='UT03_NOEU',
+                           NUME_ORDRE=NumModeOptim)
+
+    #Combine 2 terms of the derivative
+    aFi[fieldNumber]= CREA_CHAMP(OPERATION = 'COMB', TYPE_CHAM='NOEU_NEUT_R',
+             COMB=(
+                 _F(CHAM_GD=UTNOEU, COEF_R= -2.),
+                 _F(CHAM_GD=CRHOU, COEF_R= (2.*pi*freq)**2),
+    ))
+
+ 
+#Post-processing
+functionbyfield={'EigenFreqSquared_sensitivity':ComputeEigenFreqSquared_sensitivity}
+aFi = [None]*len(fields)
+
+for fieldNumber,fieldName in enumerate(fields):
+    functionbyfield[fieldName](fieldNumber)
+
+if len(aFi):
+    IMPR_RESU(FORMAT='MED',UNITE=80,
+              RESU=(
+                    _F(RESULTAT=modes, 
+                       NOM_CHAM=('DEPL'),
+                      NOM_CHAM_MED=('DEPL'),
+                       ),
+                    _F(CHAM_GD=[asterField for asterField in aFi],
+                      NOM_CHAM_MED=[fieldName for fieldName in fields],
+                       ),
+                    ),
+              )
+else:
+    IMPR_RESU(FORMAT='MED',UNITE=80,
+              RESU=(
+                    _F(RESULTAT=modes, 
+                       NOM_CHAM=('DEPL'),
+                      NOM_CHAM_MED=('DEPL'),
+                       ),
+                    ),
+              )
+
+
+for scalar in scalars:
+    if scalar == 'EigenFreqSquared':
+        FOBJ = FORMULE(NOM_PARA = ('FREQ',), VALE = '-(2.*pi*FREQ)**2')
+
+        TBMODES=CALC_TABLE(reuse=TBMODES, TABLE=TBMODES,
+                           ACTION=(
+                                  _F(OPERATION='OPER',FORMULE=FOBJ,NOM_PARA='EigenFreqSquared'),
+                                  )
+                          )
+
+        IMPR_TABLE(TABLE=TBMODES,FORMAT='TABLEAU',SEPARATEUR=',',TITRE='',UNITE=27)
+    else:
+        raise Exception("The scalar "+scalar+" is not available for the modal analysis.")
+FIN()

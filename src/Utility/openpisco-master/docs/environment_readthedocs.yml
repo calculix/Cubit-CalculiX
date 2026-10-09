@@ -1,0 +1,13 @@
+name: OpenPiscoDoc
+channels:
+    - conda-forge
+    - nodefaults
+dependencies:
+    - python=3.11
+    - muscat
+    - sphinx
+    - nbsphinx
+    - sphinx-design
+    - docutils <=0.17
+    - furo
+

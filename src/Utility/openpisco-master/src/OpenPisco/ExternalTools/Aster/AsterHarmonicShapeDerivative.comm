@@ -1,0 +1,353 @@
+# -*- coding: utf-8 -*-
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE', which is part of this source code package.
+#
+
+POURSUITE(PAR_LOT='NON', IGNORE_ALARM = ('MODELISA4_6','SUPERVIS_1', 'MODELE1_63', 'MODELE1_64'))
+
+def PRODUIT_SCALAIRE(mesh, chin1, nomcmp1, chin2):
+    """Compute the inner product between two fields."""
+    __finpro = FORMULE(NOM_PARA=('X1', 'X2', 'X3', 'DX', 'DY', 'DZ'),
+                     VALE_C='DX*X1+DY*X2+DZ*X3')
+
+    __chfinp = CREA_CHAMP(AFFE=_F(NOM_CMP=('X1', ),
+                          VALE_F=(__finpro, ),TOUT='OUI',),
+                    MAILLAGE=mesh,
+                    OPERATION='AFFE',
+                    TYPE_CHAM='NOEU_NEUT_F')
+
+    __chin1b = CREA_CHAMP(OPERATION='ASSE',
+                       TYPE_CHAM='NOEU_DEPL_R',
+                       MAILLAGE=mesh,
+                       ASSE=(_F(CHAM_GD=chin1,
+                                NOM_CMP=nomcmp1,
+                                NOM_CMP_RESU=('DX', 'DY', 'DZ'),
+                                TOUT='OUI'),),
+                       )
+
+    __chin2b = CREA_CHAMP(OPERATION='ASSE',
+                       TYPE_CHAM='NOEU_NEUT_R',
+                       MAILLAGE=mesh,
+                       ASSE=(_F(CHAM_GD=chin2,
+                                NOM_CMP=nomcmp1,
+                                NOM_CMP_RESU=('X1', 'X2', 'X3'),
+                                TOUT='OUI'),),
+                       )    
+                       
+    inprod = CREA_CHAMP(CHAM_F=__chfinp,
+                        CHAM_PARA=(__chin1b, __chin2b),
+                        OPERATION='EVAL',
+                        TYPE_CHAM='NOEU_NEUT_R')
+
+    DETRUIRE(NOM=(__finpro,__chfinp,__chin1b,__chin2b))
+
+    return inprod
+
+def PRODUIT_FROBENIUS_E(model, chin1, nomcmp1, chin2, nomcmp2):
+    """Compute the Froebnius production between two fields."""
+    SIGEPSEXPR = 'SIXX*EPXX+SIYY*EPYY+SIZZ*EPZZ+2*SIXY*EPXY+2*SIXZ*EPXZ+2*SIYZ*EPYZ'
+    __finprof = FORMULE(NOM_PARA=('SIXX','SIYY','SIZZ','SIXY','SIXZ','SIYZ','EPXX','EPYY','EPZZ','EPXY','EPXZ','EPYZ'),
+                     VALE=SIGEPSEXPR)
+
+    __chfinp = CREA_CHAMP(PROL_ZERO='OUI',
+                          AFFE=_F(NOM_CMP=('X1', ),
+                                  GROUP_MA=('ALLVOL', ),
+                                  VALE_F=(__finprof, ),
+                                 ),
+                          MODELE=model,
+                          OPERATION='AFFE',
+                          TYPE_CHAM='ELGA_NEUT_F')
+
+    __chin1b = CREA_CHAMP(OPERATION='ASSE',
+                       TYPE_CHAM='ELGA_SIEF_R',
+                       MODELE=model,
+                       ASSE=(_F(CHAM_GD=chin1,
+                                NOM_CMP=nomcmp1,
+                                NOM_CMP_RESU=('SIXX','SIYY','SIZZ','SIXY','SIXZ','SIYZ'),
+                                TOUT='OUI'),),
+                       )
+
+    __chin2b = CREA_CHAMP(OPERATION='ASSE',
+                       TYPE_CHAM='ELGA_EPSI_R',
+                      MODELE=model,
+                       ASSE=(_F(CHAM_GD=chin2,
+                                NOM_CMP=nomcmp2,
+                                NOM_CMP_RESU=('EPXX','EPYY','EPZZ','EPXY','EPXZ','EPYZ'),
+                                TOUT='OUI'),),
+                       )    
+                       
+    inprodf = CREA_CHAMP(CHAM_F=__chfinp,
+                        CHAM_PARA=(__chin1b, __chin2b),
+                        OPERATION='EVAL',
+                        TYPE_CHAM='ELGA_NEUT_R')
+
+    DETRUIRE(NOM=(__finprof,__chfinp,__chin1b,__chin2b))
+
+    return inprodf
+                        
+mesh = DEFI_GROUP(reuse=mesh, MAILLAGE=mesh,
+                   CREA_GROUP_MA=(
+                                  _F(NOM='ALLVOL', TOUT='OUI', TYPE_MAILLE='3D'),
+                                  _F(NOM='ALLSUR', TOUT='OUI', TYPE_MAILLE='2D'), # Frontiere
+                                  ),
+                   )
+
+meshvol = CREA_MAILLAGE(MAILLAGE=mesh,
+                   RESTREINT=(
+                                  _F(GROUP_MA='ALLVOL', ),
+                                  ),
+                   )
+
+lmodvol = AFFE_MODELE(AFFE=_F(MODELISATION=('3D', ),
+                            PHENOMENE='MECANIQUE',
+                            TOUT='OUI'),
+                    MAILLAGE=meshvol)
+if "ERP_sensitivity" in fields:
+    #Read fields - direct problem
+    U_RE = LIRE_RESU(FORMAT='MED',
+                      UNITE=81,
+                      TYPE_RESU='EVOL_ELAS',
+                      MODELE=model,
+                      TOUT_ORDRE='OUI',
+                      FORMAT_MED=(
+                             _F(NOM_CHAM_MED='U_RE',NOM_CHAM='DEPL',),
+                                  )
+                       )
+
+
+    U_IM = LIRE_RESU(FORMAT='MED',
+                      UNITE=81,
+                      TYPE_RESU='EVOL_ELAS',
+                      MODELE=model,
+                      TOUT_ORDRE='OUI',
+                      FORMAT_MED=(
+                             _F(NOM_CHAM_MED='U_IM',NOM_CHAM='DEPL',),
+                                  )
+                       )
+
+    SIG_RE = LIRE_RESU(FORMAT='MED',
+                      UNITE=81,
+                      TYPE_RESU='EVOL_ELAS',
+                      MODELE=model,
+                      TOUT_ORDRE='OUI',
+                      FORMAT_MED=(
+                             _F(NOM_CHAM_MED='SIGMA_RE',NOM_CHAM='SIEF_ELGA',),
+                                  )
+                       )
+
+    SIG_IM = LIRE_RESU(FORMAT='MED',
+                      UNITE=81,
+                      TYPE_RESU='EVOL_ELAS',
+                      MODELE=model,
+                      TOUT_ORDRE='OUI',
+                      FORMAT_MED=(
+                             _F(NOM_CHAM_MED='SIGMA_IM',NOM_CHAM='SIEF_ELGA',),
+                                  )
+                       )
+
+    #Read fields adjoint problem
+    P_RE = LIRE_RESU(FORMAT='MED',
+                      UNITE=82,
+                      TYPE_RESU='EVOL_ELAS',
+                      MODELE=model,
+                      TOUT_ORDRE='OUI',
+                      FORMAT_MED=(
+                             _F(NOM_CHAM_MED='P_RE',NOM_CHAM='DEPL',),
+                                  )
+                       )
+
+    P_IM = LIRE_RESU(FORMAT='MED',
+                      UNITE=82,
+                      TYPE_RESU='EVOL_ELAS',
+                      MODELE=model,
+                      TOUT_ORDRE='OUI',
+                      FORMAT_MED=(
+                             _F(NOM_CHAM_MED='P_IM',NOM_CHAM='DEPL',),
+                                  )
+                       )
+
+    EPP_RE = LIRE_RESU(FORMAT='MED',
+                      UNITE=82,
+                      TYPE_RESU='EVOL_ELAS',
+                      MODELE=model,
+                      TOUT_ORDRE='OUI',
+                      FORMAT_MED=(
+                             _F(NOM_CHAM_MED='EPSIP_RE',NOM_CHAM='EPSI_ELGA',),
+                                  )
+                       )
+
+    EPP_IM = LIRE_RESU(FORMAT='MED',
+                      UNITE=82,
+                      TYPE_RESU='EVOL_ELAS',
+                      MODELE=model,
+                      TOUT_ORDRE='OUI',
+                      FORMAT_MED=(
+                             _F(NOM_CHAM_MED='EPSIP_IM',NOM_CHAM='EPSI_ELGA',),
+                                  )
+                       )
+
+    lexc=l100.getValues()
+    rho=density_0
+    DERW=[None]*len(lexc)
+
+    for numfreqexc,freqexc in enumerate(lexc):
+        #U_re.P_re
+        numordre=numfreqexc+1
+        pulsation_exc=2.0*pi*freqexc
+        URE = CREA_CHAMP ( OPERATION= 'EXTR' ,TYPE_CHAM='NOEU_DEPL_R',RESULTAT= U_RE ,  NOM_CHAM= 'DEPL', NUME_ORDRE=numordre, NUME_DDL=NDDL)
+        PRE = CREA_CHAMP ( OPERATION= 'EXTR' ,TYPE_CHAM='NOEU_DEPL_R',RESULTAT= P_RE ,  NOM_CHAM= 'DEPL', NUME_ORDRE=numordre, NUME_DDL=NDDL)
+        TDRE=PRODUIT_SCALAIRE(mesh,URE,('DX','DY','DZ'),PRE)
+        ETDRE = CREA_CHAMP(OPERATION='ASSE',
+                           TYPE_CHAM='NOEU_ENER_R',
+                           OPTION='ENEL_NOEU',
+                           MODELE=model,
+                           ASSE=(_F(CHAM_GD=TDRE,
+                                    NOM_CMP=('X1',),
+                                    NOM_CMP_RESU=('TOTALE', ),
+                                    TOUT='OUI'),),
+                           )
+
+        #U_im.P_im
+        UIM = CREA_CHAMP ( OPERATION= 'EXTR' ,TYPE_CHAM='NOEU_DEPL_R',RESULTAT= U_IM ,  NOM_CHAM= 'DEPL', NUME_ORDRE=numordre, NUME_DDL=NDDL)
+        PIM = CREA_CHAMP ( OPERATION= 'EXTR' ,TYPE_CHAM='NOEU_DEPL_R',RESULTAT= P_IM ,  NOM_CHAM= 'DEPL', NUME_ORDRE=numordre, NUME_DDL=NDDL)
+        TDIM=PRODUIT_SCALAIRE(mesh,UIM,('DX','DY','DZ'),PIM)
+        ETDIM = CREA_CHAMP(OPERATION='ASSE',
+                           TYPE_CHAM='NOEU_ENER_R',
+                           OPTION='ENEL_NOEU',
+                           MODELE=model,
+                           ASSE=(_F(CHAM_GD=TDIM,
+                                    NOM_CMP=('X1',),
+                                    NOM_CMP_RESU=('TOTALE', ),
+                                    TOUT='OUI'),),
+                           )
+
+
+        #CU_re.P_im
+        CURE=PROD_MATR_CHAM(MATR_ASSE =CASS,CHAM_NO=URE)
+        TA1=PRODUIT_SCALAIRE(mesh,CURE,('DX','DY','DZ'),PIM)
+        ETA1 = CREA_CHAMP(OPERATION='ASSE',
+                           TYPE_CHAM='NOEU_ENER_R',
+                           OPTION='ENEL_NOEU',
+                           MODELE=model,
+                           ASSE=(_F(CHAM_GD=TA1,
+                                    NOM_CMP=('X1',),
+                                    NOM_CMP_RESU=('TOTALE', ),
+                                    TOUT='OUI'),),
+                           )
+
+        #CU_im.P_re
+        CUIM=PROD_MATR_CHAM(MATR_ASSE =CASS,CHAM_NO=UIM)
+        TA2=PRODUIT_SCALAIRE(mesh,CUIM,('DX','DY','DZ'),PRE)
+        ETA2 = CREA_CHAMP(OPERATION='ASSE',
+                           TYPE_CHAM='NOEU_ENER_R',
+                           OPTION='ENEL_NOEU',
+                           MODELE=model,
+                           ASSE=(_F(CHAM_GD=TA2,
+                                    NOM_CMP=('X1',),
+                                    NOM_CMP_RESU=('TOTALE', ),
+                                    TOUT='OUI'),),
+                           )  
+
+        DETRUIRE(NOM=(URE,UIM,PRE,PIM,CURE,CUIM,TDRE,TDIM,TA1,TA2))
+
+        #Sig(U_re).Epsi(P_re)
+        SURE = CREA_CHAMP ( OPERATION= 'EXTR' ,TYPE_CHAM='ELGA_SIEF_R',RESULTAT= SIG_RE ,  NOM_CHAM= 'SIEF_ELGA', NUME_ORDRE=numordre, NUME_DDL=NDDL)
+        EPRE = CREA_CHAMP ( OPERATION= 'EXTR' ,TYPE_CHAM='ELGA_EPSI_R',RESULTAT= EPP_RE ,  NOM_CHAM= 'EPSI_ELGA', NUME_ORDRE=numordre, NUME_DDL=NDDL)
+        PSURE = PROJ_CHAMP(MODELE_1=model,
+                           MODELE_2=lmodvol,
+                           CHAM_GD=SURE)
+
+        PEPRE = PROJ_CHAMP(MODELE_1=model,
+                           MODELE_2=lmodvol,
+                           CHAM_GD=EPRE)
+        DETRUIRE(NOM=(SURE,EPRE))
+
+        NEUTG1=PRODUIT_FROBENIUS_E(lmodvol,
+                                   PSURE,
+                                   ('SIXX','SIYY','SIZZ','SIXY','SIXZ','SIYZ'),
+                                   PEPRE,
+                                   ('EPXX','EPYY','EPZZ','EPXY','EPXZ','EPYZ'),)
+
+        ENELG1 = CREA_CHAMP(OPERATION='ASSE',
+                           TYPE_CHAM='ELGA_ENER_R',
+                           OPTION='ENEL_ELGA',
+                           MODELE=lmodvol,
+                           ASSE=(_F(CHAM_GD=NEUTG1,
+                                    NOM_CMP=('X1',),
+                                    NOM_CMP_RESU=('TOTALE', ),
+                                    TOUT='OUI'),),
+                           )
+
+        ENELN1=CREA_CHAMP(OPERATION='DISC',CHAM_GD=ENELG1,TYPE_CHAM='NOEU_ENER_R',MODELE=lmodvol)
+        PNELN1=PROJ_CHAMP(MODELE_1=lmodvol,
+                          MODELE_2=model,
+                          CHAM_GD=ENELN1)
+        DETRUIRE(NOM=(PSURE,PEPRE,NEUTG1,ENELG1,ENELN1)) 
+
+        #Sig(U_im).Epsi(P_im)
+        SUIM = CREA_CHAMP ( OPERATION= 'EXTR' ,TYPE_CHAM='ELGA_SIEF_R',RESULTAT= SIG_IM ,  NOM_CHAM= 'SIEF_ELGA', NUME_ORDRE=numordre, NUME_DDL=NDDL)
+        EPIM = CREA_CHAMP ( OPERATION= 'EXTR' ,TYPE_CHAM='ELGA_EPSI_R',RESULTAT= EPP_IM ,  NOM_CHAM= 'EPSI_ELGA', NUME_ORDRE=numordre, NUME_DDL=NDDL)
+        PSUIM = PROJ_CHAMP(MODELE_1=model,
+                           MODELE_2=lmodvol,
+                           CHAM_GD=SUIM)
+
+        PEPIM = PROJ_CHAMP(MODELE_1=model,
+                           MODELE_2=lmodvol,
+                           CHAM_GD=EPIM)
+        DETRUIRE(NOM=(SUIM,EPIM))
+
+        NEUTG2=PRODUIT_FROBENIUS_E(lmodvol,
+                                   PSUIM,
+                                   ('SIXX','SIYY','SIZZ','SIXY','SIXZ','SIYZ'),
+                                   PEPIM,
+                                   ('EPXX','EPYY','EPZZ','EPXY','EPXZ','EPYZ'),)
+
+        ENELG2 = CREA_CHAMP(OPERATION='ASSE',
+                           TYPE_CHAM='ELGA_ENER_R',
+                           OPTION='ENEL_ELGA',
+                           MODELE=lmodvol,
+                           ASSE=(_F(CHAM_GD=NEUTG2,
+                                    NOM_CMP=('X1',),
+                                    NOM_CMP_RESU=('TOTALE', ),
+                                    TOUT='OUI'),),
+                           )
+
+        ENELN2=CREA_CHAMP(OPERATION='DISC',CHAM_GD=ENELG2,TYPE_CHAM='NOEU_ENER_R',MODELE=lmodvol,)
+
+        PNELN2=PROJ_CHAMP(MODELE_1=lmodvol,
+                   MODELE_2=model,
+                   CHAM_GD=ENELN2)
+        DETRUIRE(NOM=(PSUIM,PEPIM,NEUTG2,ENELG2,ENELN2))
+
+        #Combine terms
+        DERW[numfreqexc]= CREA_CHAMP(OPERATION='COMB', 
+                                     TYPE_CHAM='NOEU_ENER_R',
+                                     COMB=(
+                                           _F(CHAM_GD=ETDRE, COEF_R=-rho*pulsation_exc**2),
+                                           _F(CHAM_GD=ETDIM, COEF_R=-rho*pulsation_exc**2),
+                                           _F(CHAM_GD=ETA1, COEF_R=pulsation_exc),
+                                           _F(CHAM_GD=ETA2, COEF_R=-pulsation_exc),
+                                           _F(CHAM_GD=PNELN1, COEF_R=1.0),
+                                           _F(CHAM_GD=PNELN2, COEF_R=1.0),
+                                          )
+                                    )
+        DETRUIRE(NOM=(ETDRE,ETDIM,ETA1,ETA2,PNELN1,PNELN2))
+
+    #Sum contribution on each frequency
+    S_DERIV=[_F(CHAM_GD=DERW[numfreq], COEF_R= 1.) for numfreq,freq in enumerate(lexc)]
+    C_DERIV= CREA_CHAMP(OPERATION = 'COMB', TYPE_CHAM='NOEU_ENER_R',
+              COMB=S_DERIV,
+    )
+
+
+    IMPR_RESU(FORMAT='MED',
+              RESU=(
+                    _F(CHAM_GD=C_DERIV,
+                       NOM_CHAM_MED=('ERP_sensitivity')
+                      ),
+                   ),
+              UNITE=83,
+              INFO=1)
+
+FIN()

@@ -1,0 +1,86 @@
+<!--
+Minimization of the von mises stress (p-norm) of a 2D L beam under a volume constraint
+-->
+
+<data dim="2" debug="False" >
+
+    <Zones>
+        <Plane id="1" point="0.25 1.9999 0.5" normal="0. -1. 0." desc="x0 plane "/>
+        <Plane id="2" point="0.25 1.95 0.5" normal="0. -1. 0." desc="dirichlet"/>
+        <Sphere id="4" center="2. 0.5 0.0"  radius="0.0009" desc="nodal force"/>
+        <Cylinder id="5" center1="1.9 0.5 0." center2="2.1 0.5 0." radius="0.05" desc="force"/>
+        <!--
+        Change this line to initialise with holes 
+        <Holes id="6" n="6 4 2" r="0.2" boundingMin="0. 0. 0." boundingMax="2.0 1.0 1.0" type="Original" desc="Holes"/>
+        -->
+        <All id="6" ls="1" />
+        <AABox id="7" origin="1. 1. 0." size="1.5 2.0 1.0" desc="aabox to delete "/>
+        <Union id="8" z="2 5" desc="onzone" />
+        <AABox id="9" origin=".05 0. 0." size=".8 2.0 1.0" desc="aabox"/>
+        <AABox id="10" origin=".95 0. 1." size="1.5 0.95 1.0" desc="aabox"/>
+        <Union id="11" z="2 4 9 10" desc="initialization"/>
+        <Sphere id="12" center="1.0 1.0 0.0"  radius="0.0009" desc="corner"/>
+        <Sphere id="13" center="1.0 2.0 0.0"  radius="0.0009" desc="corner"/>
+        <Sphere id="14" center="2.0 1.0 0.0"  radius="0.0009" desc="corner"/>
+    </Zones>
+
+    <Grids>
+        <Grid id="1" n="61 41" origin="0. 0." length="2.0 2.0" ofSimplex="True"/>
+    </Grids>
+
+    <LevelSets>
+        <LevelSet id="1" support="1" conform="True" gradientMethod="gradPhi">
+              <MesherInfo hmax=".02" hmin="0.008" iso="0.0" rmc="1e-5"
+      nr="True" setPhiZeroOnBoundary="True" keepGeneratedFiles="True"/>
+        </LevelSet>
+    </LevelSets>
+
+    <PhysicalProblems>
+        <GeneralAster type="static_elastic" id="1" >
+            <Material  young="210.e9" poisson="0.3" />
+            <Dirichlet eTag="Y1" dofs="0 1" value="0.0"/>
+            <Force nTag="nTag4" value="0. -1000" />
+         </GeneralAster>
+    </PhysicalProblems>
+
+    <OptimProblems>
+        <OptimProblem type="TopoGeneric" id="1"
+            OnZone="8" 
+            useLevelset="1"
+            printMeshQualityInfo = "True"
+            output="3"
+            outputEveryLevelsetUpdate = "False">
+ 
+          <Objective   type="VonMises"  name="VonMises" useProblem="1" alpha="6"  />
+          <Constraint type="Volume"  name="Volume" UpperBound="0.3*3.00000000e+00" />
+       </OptimProblem>
+    </OptimProblems>
+
+    <TopologicalOptimizations>
+        <OptimAlgoNullSpace id="1"
+            useOptimProblem="1"
+            numberOfDesignStepsMax="60"
+        />
+
+    </TopologicalOptimizations>
+    <Outputs>
+       <Output id="1" name="Lbeam2DHistory.xmf" />
+       <Output id="2" name="Lbeam2DHistory.csv"/>
+       <Output id="3" name="PROXY" outputs="1 2" />
+    </Outputs>
+
+    <Actions>
+        <Action type="DeleteElements" ls="1" zone="7" />
+        <Action type="PrintMesh" ls="1" />
+        <Action type="AddSkin" ls="1" />
+        <Action type="RenameTag" ls="1" eTag="Skin" name="Ridges" />
+        <Action type="PrintMesh" ls="1" />
+        <Action type="CreateTagsFromZones" ls="1" nodalTags="4 12 13 14" nodalprefix="nTag"/>
+        <Action type= "SetAsRequired" ls="1" nTags="nTag4 x0y0 x1y0 x0y1 x1y1 nTag12 nTag13 nTag14" />
+        <Action type= "SetAsCorners" ls="1" nTags="nTag4 x0y0 x1y0 x0y1 x1y1 nTag12 nTag13 nTag14" />
+        <Action type="InitLevelset" ls="1" zone="6"/>
+        <Action type="RunTopoOp" TopoOp="1" />
+        <Action type="LsQualityInfo" ls="1" />
+    </Actions>
+
+ </data>

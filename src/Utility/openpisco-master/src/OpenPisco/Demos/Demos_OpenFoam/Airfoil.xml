@@ -1,0 +1,93 @@
+<!--
+Airfoil usecase
+
+OpenFOAM Parameter values mainly based on
+https://develop.openfoam.com/Development/openfoam/-/tree/master/tutorials/incompressible/adjointOptimisationFoam/shapeOptimisation/naca0012/laminar/drag?ref_type=heads
+-->
+
+<data dim="3" debug="True">
+    <Zones>
+        <Sphere id="1" center="2.5  2. 2."  radius="1" desc="obstacle"/>
+        <InsideOut id="2" z="1" desc="Init"/>
+        <AABox id="3" origin="0.25 0.25 0.25" size="7.25 3.25 3.25" desc="Offzone" />
+        <AABox id="4" origin="-0.5 -0.5 -0.5" size="9 5 5" desc="box" />
+        <Difference id="10" z1="4" z2="3" desc="Onzone" />
+    </Zones>
+
+    <Grids>
+        <Grid id="1" n="20 10 10" origin="0. 0. 0." length="8. 4. 4" ofTetras ="True"/>
+    </Grids>
+
+
+    <LevelSets>
+        <LevelSet id="1" support="1" conform="True" gradientMethod="gradPhi">
+              <!-- Regular remeshing -->
+              <MesherInfo iso="0.0" hmax="0.2" hmin="0.05" hausd="0.01" nr="True" keepGeneratedFiles="True"/>
+              <!-- Requires Freefem -->
+              <!-- <MesherInfo iso="0.0" hgrad="-1" hmax="0.3" hmin="0.04" hausd="0.01" nr="True" keepGeneratedFiles="True" met="True"/> -->
+        </LevelSet>
+    </LevelSets>
+
+    <PhysicalProblems>
+         <FoamSteadyStateComplete id="1" grid="1" type="SteadyStateComplete" viscosity="0.1">
+              <GeneralConfig enableCheckError="True" optimizeRenumbering="True" enableParallelism="True" numberOfSubDomains="6"/>
+              <SteadStateConfig
+              maxNumberIterationsPrimalSolver="1000" maxNumberIterationsAdjointSolver="500" 
+              relativeToleranceVelocity="0.1" relativeTolerancePressure="0.01"
+              relaxFactorVelocityAdj="0.3" relaxFactorPressureAdj="0.3" relaxFactorPressure="0.7" relaxFactorVelocity="0.7"
+              residualControlDirect="1e-05" residualControlAdjoint="1e-05" toleranceVelocity="1e-9" tolerancePressure="1e-9"
+              numberOfNonOrthogonalCorrectorsDirect="3" relaxationTrials="3"/>
+              <Dirichlet variable="p" type="fixedValue" tag="X1" value="0.0"/>
+              <Dirichlet variable="p" type="symmetry" tags="Y0 Y1 Z0 Z1"/>
+              <Dirichlet variable="U" type="fixedValue" tag="X0" value="1.0 0.0 0.0"/>
+              <Dirichlet variable="U" type="symmetry" tags="Y0 Y1 Z0 Z1"/>
+              <Dirichlet variable="U" type="noSlip" tags="InterfaceSurf"/>
+         </FoamSteadyStateComplete>
+    </PhysicalProblems>
+
+    <OptimProblems>
+        <OptimProblem type="TopoGeneric" id="1"
+            OnZone="10"
+            useLevelset="1"
+            output="1"
+            printMeshQualityInfo = "True"
+            outputEveryLevelsetUpdate = "False">
+            <!-- We want to maximize the lift, hence we minimize the opposite -->
+          <Objective type="lift"  name="lift"  direction="0.0 -1.0 0.0" useProblem="1" patches="InterfaceSurf"/>
+            <!-- The drag threshold arise from a previous optimization case where it was the objective instead of the lift (minimal value reached at convergence) -->
+          <Constraint type="drag"  name="drag" useProblem="1" UpperBound="12.04" patches="InterfaceSurf"/>
+          <Constraint type="Volume"  name="Volume" TargetValue="123.8" />
+          <Constraint type="CenterOfMassDeviation"  name="CenterOfMassDeviation" centerOfMassReference="2.5  2. 2." computeOnInsideDomain="False" TargetValue="1e-3" />
+       </OptimProblem>
+    </OptimProblems>
+
+    <TopologicalOptimizations>
+        <OptimAlgoNullSpace id="1"
+            useOptimProblem="1"
+            numberOfDesignStepsMax="100"
+            numberOfIterationsMax="20"
+            stepSizeMax=".5"
+            alphaC=".5"
+            alphaJ="1."
+            stepSize="0.1"
+        />
+    </TopologicalOptimizations>
+
+    <Outputs>
+       <Output id="1" name="Airfoil.xdmf"/>
+    </Outputs>
+
+    <Actions>
+        <Action type="InitLevelset" ls="1" zone="2"/>
+        <Action type="AddEdges" ls="1" ar="90+45" />
+        <Action type="AddSkin" ls="1"/>
+        <!-- Regular remeshing -->
+        <Action type="Remesh" ls="1" iso="0.0" hmax="0.2" hmin="0.05" hausd="0.01" nr="True"/>
+        <!-- Requires Freefem -->
+        <!-- <Action type="Remesh" ls="1" iso="0.0" hgrad="-1" hmax="0.3" hmin="0.04" hausd="0.01" nr="True" met="True"/> -->
+        <!-- <Action type="CreateTagsFromZones" ls="1" elementTags="10" dim="3" elemenprefix="eTag"/> -->
+        <Action type="PrintMesh" ls="1"/>
+        <Action type="RunTopoOp" TopoOp="1"/>
+    </Actions>
+
+ </data>

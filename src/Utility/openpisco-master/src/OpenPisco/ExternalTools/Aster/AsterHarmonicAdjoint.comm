@@ -1,0 +1,177 @@
+# -*- coding: utf-8 -*-
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE', which is part of this source code package.
+#
+
+POURSUITE(PAR_LOT='NON', IGNORE_ALARM = ('MODELISA4_6','SUPERVIS_1', 'MODELE1_63', 'MODELE1_64'))
+import numpy as np
+
+AFMAT=[]
+for mater,(paramVal,tagName) in info_mater.items():
+    matadj = DEFI_MATERIAU(ELAS=_F(
+                                 E=paramVal["E"],
+                                 NU=paramVal["NU"],
+                                 RHO=paramVal["RHO"],
+                                 AMOR_ALPHA=-paramVal["AMOR_ALPHA"],
+                                 AMOR_BETA=-paramVal["AMOR_BETA"]
+                                )
+                         )
+    if tagName=="TOUT":
+        afmat_e=_F(MATER=(matadj, ),TOUT='OUI')
+    else:
+        afmat_e=_F(MATER=(matadj, ),GROUP_MA=tagName)
+    AFMAT.append(afmat_e)
+
+matadj = {'AFFE' :AFMAT,}
+
+
+fielmata = AFFE_MATERIAU(MODELE=model, **matadj)
+if "ERP_sensitivity" in fields:
+    FSURRE = LIRE_RESU(FORMAT='MED',
+                      UNITE=81,
+                      TYPE_RESU='EVOL_CHAR',
+                      MODELE=model,
+                      TOUT_ORDRE='OUI',
+                      FORMAT_MED=(
+                             _F(NOM_CHAM_MED='FREAL___FSUR_3D',NOM_CHAM='FSUR_3D',),
+                                  )
+                       )
+
+    FSURIM = LIRE_RESU(FORMAT='MED',
+                      UNITE=81,
+                      TYPE_RESU='EVOL_CHAR',
+                      MODELE=model,
+                      TOUT_ORDRE='OUI',
+                      FORMAT_MED=(
+                             _F(NOM_CHAM_MED='FIMAG___FSUR_3D',NOM_CHAM='FSUR_3D',),
+                                  )
+                       )
+
+    lexc=l100.Valeurs()
+    linit=[l-lexc[0] for l in lexc]
+    vectorAssembReal_by_pseudoinst={inst : "VX"+str(num)+"R" for num,inst in enumerate(linit)}
+    vectorAssembImag_by_pseudoinst={inst : "VX"+str(num)+"I" for num,inst in enumerate(linit)}
+    FASSR=[_F(VECTEUR=CO( vectorAssembReal_by_pseudoinst[linit[num]])) for num,inst in enumerate(linit)]
+    FASSI=[_F(VECTEUR=CO( vectorAssembImag_by_pseudoinst[linit[num]])) for num,inst in enumerate(linit)]
+
+    RESRE=[None]*len(lexc)
+    RESIM=[None]*len(lexc)
+    LSUR=[None]*len(lexc)
+    LSUI=[None]*len(lexc)
+
+    for numfreqexc,pseudoinst in enumerate(linit):
+        FREAL = CREA_CHAMP ( OPERATION= 'EXTR' ,TYPE_CHAM='ELEM_FORC_R',RESULTAT= FSURRE ,  NOM_CHAM= 'FSUR_3D', INST = pseudoinst)
+        RESRE[numfreqexc]=CREA_RESU(OPERATION='AFFE',
+                                    TYPE_RESU='EVOL_CHAR',
+                                    AFFE=(_F(CHAM_GD=FREAL,
+                                    MODELE=model,
+                                    INST=1.,NOM_CHAM='FSUR_3D',),
+                                    ),)
+        LSUR[numfreqexc]=AFFE_CHAR_MECA( MODELE=model,
+                                         EVOL_CHAR=RESRE[numfreqexc]
+                                       )
+        
+        FIMAG = CREA_CHAMP ( OPERATION= 'EXTR' ,TYPE_CHAM='ELEM_FORC_R',RESULTAT= FSURIM ,  NOM_CHAM= 'FSUR_3D', INST = pseudoinst)
+        RESIM[numfreqexc]=CREA_RESU(OPERATION='AFFE',
+                                    TYPE_RESU='EVOL_CHAR',
+                                    AFFE=(_F(CHAM_GD=FIMAG,
+                                    MODELE=model,
+                                    INST=1.,NOM_CHAM='FSUR_3D',),
+                                    ),)
+        LSUI[numfreqexc]=AFFE_CHAR_MECA( MODELE=model,
+                                         EVOL_CHAR=RESIM[numfreqexc]
+                                        )
+        DETRUIRE(NOM=(FREAL,FIMAG))
+
+
+    #Assemblage ddes matrices et des seconds membres (rigidité et masse identique!)
+    KELEM = CALC_MATR_ELEM(OPTION="RIGI_MECA", MODELE=model, CHAM_MATER=fielmata, CHARGE=CHARLAGR)
+    MELEM = CALC_MATR_ELEM(OPTION="MASS_MECA", MODELE=model, CHARGE=CHARLAGR, CHAM_MATER=fielmata)
+    CELEM = CALC_MATR_ELEM(
+        OPTION="AMOR_MECA",
+        MODELE=model,
+        CHAM_MATER=fielmata,
+        CHARGE=CHARLAGR,
+        RIGI_MECA=KELEM,
+        MASS_MECA=MELEM,
+    )
+    NUME2 = NUME_DDL(MATR_RIGI=KELEM)
+
+    RIGIADJ = ASSE_MATRICE(MATR_ELEM=KELEM, NUME_DDL=NUME2)
+    MASSADJ = ASSE_MATRICE(MATR_ELEM=MELEM, NUME_DDL=NUME2)
+    AMORADJ = ASSE_MATRICE(MATR_ELEM=CELEM, NUME_DDL=NUME2)
+    FELEMADJR = [CALC_VECT_ELEM(OPTION="CHAR_MECA", CHARGE=LSUR[num]) for num,_ in enumerate(linit)]
+    FASSADJR = [ASSE_VECTEUR(VECT_ELEM=FELEMR, NUME_DDL=NUME2) for FELEMR in FELEMADJR]
+    FELEMADJI = [CALC_VECT_ELEM(OPTION="CHAR_MECA", CHARGE=LSUI[num]) for num,_ in enumerate(linit)]
+    FASSADJI = [ASSE_VECTEUR(VECT_ELEM=FELEMI, NUME_DDL=NUME2) for FELEMI in FELEMADJR]
+
+    NUMDIAG = NUME_DDL_GENE(BASE=modes, STOCKAGE="DIAG")
+    RIGIAG1 = PROJ_MATR_BASE(BASE=modes, NUME_DDL_GENE=NUMDIAG, MATR_ASSE=RIGIADJ)
+    MASSAG1 = PROJ_MATR_BASE(BASE=modes, NUME_DDL_GENE=NUMDIAG, MATR_ASSE=MASSADJ)
+    AMORAG1 = PROJ_MATR_BASE(BASE=modes, NUME_DDL_GENE=NUMDIAG, MATR_ASSE=AMORADJ)
+    FDIAGR = [PROJ_VECT_BASE(BASE=modes, NUME_DDL_GENE=NUMDIAG, VECT_ASSE=FASSR, TYPE_VECT="FORC") for FASSR in FASSADJR]
+    FDIAGI = [PROJ_VECT_BASE(BASE=modes, NUME_DDL_GENE=NUMDIAG, VECT_ASSE=FASSI, TYPE_VECT="FORC") for FASSI in FASSADJI]
+
+
+    l_freqexc = l100.Valeurs()
+    nb_exc=len(l_freqexc)
+    Identity_f=np.identity(nb_exc)
+    FR=[None]*nb_exc
+    FI=[None]*nb_exc
+
+    for freq_index,f_dummy in enumerate(l_freqexc):
+        FR[freq_index]=DEFI_FONCTION(NOM_PARA='FREQ', 
+                                     VALE_C=tuple([result_f for index_Fonction,freqexc in enumerate(l_freqexc) for result_f in (freqexc,Identity_f[freq_index,index_Fonction],0.)]), 
+                                     PROL_DROITE='CONSTANT',PROL_GAUCHE='CONSTANT')
+        FI[freq_index]=DEFI_FONCTION(NOM_PARA='FREQ', 
+                                     VALE_C=tuple([result_f for index_Fonction,freqexc in enumerate(l_freqexc) for result_f in (freqexc,0.,Identity_f[freq_index,index_Fonction])]), 
+                                     PROL_DROITE='CONSTANT',PROL_GAUCHE='CONSTANT')
+    #Le code ci-dessus est équivalent a celui ci-dessous pour 2 frequence d'excitation seulement et permet d'imposer une force d'excitation pour une fréquence d'excitation specifique
+    # F1R=DEFI_FONCTION(NOM_PARA='FREQ', VALE_C=(l_freqexc[0], 1., 0., l_freqexc[1], 0., 0.), PROL_DROITE='CONSTANT',PROL_GAUCHE='CONSTANT')
+    # F2R=DEFI_FONCTION(NOM_PARA='FREQ', VALE_C=(l_freqexc[0], 0., 0., l_freqexc[1], 1., 0), PROL_DROITE='CONSTANT',PROL_GAUCHE='CONSTANT')
+    # F1I=DEFI_FONCTION(NOM_PARA='FREQ', VALE_C=(l_freqexc[0], 0., 1., l_freqexc[1], 0., 0.), PROL_DROITE='CONSTANT',PROL_GAUCHE='CONSTANT')
+    # F2I=DEFI_FONCTION(NOM_PARA='FREQ', VALE_C=(l_freqexc[0], 0., 0., l_freqexc[1], 0., 1.), PROL_DROITE='CONSTANT',PROL_GAUCHE='CONSTANT')
+
+    reshadj = DYNA_VIBRA(BASE_CALCUL='GENE',
+                        EXCIT=(
+                              [adjForcFreq for num,inst in enumerate(linit) for adjForcFreq in 
+                               (
+                                _F(FONC_MULT_C=FR[num],VECT_ASSE_GENE=FDIAGR[num]),
+                                _F(FONC_MULT_C=FI[num],VECT_ASSE_GENE=FDIAGI[num]), 
+                               )
+                              ]
+                              ),
+                         LIST_FREQ=l100,
+                         MATR_MASS=MASSAG1,
+                         MATR_RIGI=RIGIAG1,
+                         MATR_AMOR=AMORAG1,
+                         TYPE_CALCUL='HARM')
+
+    restadj = REST_GENE_PHYS(NOM_CHAM=('DEPL', ),
+                             RESU_GENE=reshadj,
+                             TOUT_ORDRE='OUI')
+
+
+    restadj = CALC_CHAMP(reuse=restadj,
+                        RESULTAT=restadj,
+                        DEFORMATION=('EPSI_ELGA'))
+
+    #Ecriture de la solution du probleme adjoint
+
+    IMPR_RESU(FORMAT='MED',
+              VERSION_MED='4.0.0',
+              RESU=(
+                    _F(RESULTAT=restadj,NOM_CHAM=('DEPL'),NOM_CHAM_MED=('P_RE'),PARTIE='REEL',),
+                    _F(RESULTAT=restadj,NOM_CHAM=('DEPL'),NOM_CHAM_MED=('P_IM'),PARTIE='IMAG',),
+                    _F(RESULTAT=restadj,NOM_CHAM=('EPSI_ELGA'),NOM_CHAM_MED=('EPSIP_RE'),PARTIE='REEL',),
+                    _F(RESULTAT=restadj,NOM_CHAM=('EPSI_ELGA'),NOM_CHAM_MED=('EPSIP_IM'),PARTIE='IMAG',),
+                    ),
+              UNITE=82,
+              INFO=1) 
+
+
+else:
+    pass
+
+FIN()

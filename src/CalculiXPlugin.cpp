@@ -131,6 +131,7 @@
 #include "ccxJobModifyCommand.hpp"
 #include "ccxJobDeleteCommand.hpp"
 #include "ccxRunJobCommand.hpp"
+#include "ccxRunTopologyCommand.hpp"
 #include "ccxWaitJobCommand.hpp"
 #include "ccxResultCGXJobCommand.hpp"
 #include "ccxResultParaViewJobCommand.hpp"
@@ -305,6 +306,7 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxJobModifyCommand");
   keys.push_back("ccxJobDeleteCommand");
   keys.push_back("ccxRunJobCommand");
+  keys.push_back("ccxRunTopologyCommand");
   keys.push_back("ccxWaitJobCommand");
   keys.push_back("ccxKillJobCommand");
   keys.push_back("ccxResultCGXJobCommand");
@@ -731,6 +733,9 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
   if(key == "ccxWaitJobCommand")
     return new ccxWaitJobCommand();
   
+  if(key == "ccxRunTopologyCommand")
+    return new ccxRunTopologyCommand();    
+
   if(key == "ccxResultCGXJobCommand")
     return new ccxResultCGXJobCommand();
 

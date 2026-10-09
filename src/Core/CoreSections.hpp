@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <string>
+#include <map>
+#include <set>
 
 class CalculiXCoreInterface;
 
@@ -85,9 +87,13 @@ public:
   int  get_shell_section_data_id_from_shell_section_id(int shell_section_id); // searches for the shell_section_id in the shell_section_data and returns the indices or -1 if it fails
   int  get_beam_section_data_id_from_beam_section_id(int beam_section_id); // searches for the beam_section_id in the beam_section_data and returns the indices or -1 if it fails
   int  get_membrane_section_data_id_from_membrane_section_id(int membrane_section_id); // searches for the membrane_section_id in the membrane_section_data and returns the indices or -1 if it fails
-  std::string get_section_export(); // get CalculiX section exports
+  std::string get_section_export(bool topology_run = false); // get CalculiX section exports
   std::string print_data(); // prints out the blocks_data
 
+  bool set_topology_materials(int section_id,const std::vector<int>& element_ids,const std::vector<int>& material_ids); // for mapping the element ids with the material ids
+  void clear_topology_materials(); // delete all topo data
+
+  std::map<int, std::map<int, int>> topology_materials; // Global section ID -> global element ID -> material ID
   CalculiXCoreInterface *ccx_iface;
 };
 

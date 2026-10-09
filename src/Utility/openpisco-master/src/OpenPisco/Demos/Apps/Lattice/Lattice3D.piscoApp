@@ -1,0 +1,89 @@
+AppXmlData = """
+<data dim="3" debug="True">
+
+  <Zones>
+    <Cylinder id="1"  center1="0 0 0" center2="1 1 1" radius="{R}"  wcups="False" />
+    <Cylinder id="2"  center1="1 0 0" center2="0 1 1" radius="{R}"  wcups="False" />
+    <Cylinder id="3"  center1="1 1 0" center2="0 0 1" radius="{R}"  wcups="False" />
+    <Cylinder id="4"  center1="0 1 0" center2="1 0 1" radius="{R}"  wcups="False" />
+    <Union id="100" z="1 2 3 4" />
+
+    <Cylinder id="11"  center1="0.5 0.5 0  " center2="0.5 0.5 1" radius="{R}" wcups="False"/>
+    <Cylinder id="12"  center1="0.5 0   0.5" center2="0.5 1 0.5" radius="{R}" wcups="False"  />
+    <Cylinder id="13"  center1="0   0.5 0.5" center2="1 0.5 0.5" radius="{R}" wcups="False" />
+    <Union id="101" z="11 12 13" />
+
+    <Cylinder id="30"  center1="0   0   0" center2="1   1  0" radius="{R}" wcups="False"/>
+    <Cylinder id="31"  center1="1   0   0" center2="0   1  0" radius="{R}" wcups="False"/>
+    <Cylinder id="32"  center1="1   0   1" center2="0   1  1" radius="{R}" wcups="False"/>
+    <Cylinder id="33"  center1="0   0   1" center2="1   1  1" radius="{R}" wcups="False"/>
+
+    <Cylinder id="34"  center1="0   0   0" center2="1  0  1" radius="{R}" wcups="False"/>
+    <Cylinder id="35"  center1="1   0   0" center2="0  0  1" radius="{R}" wcups="False"/>
+    <Cylinder id="36"  center1="0   1   0" center2="1  1  1" radius="{R}" wcups="False"/>
+    <Cylinder id="37"  center1="1   1   0" center2="0  1  1" radius="{R}" wcups="False"/>
+
+    <Cylinder id="38"  center1="0   0   0" center2="0  1  1" radius="{R}" wcups="False"/>
+    <Cylinder id="39"  center1="0   1   0" center2="0  0  1" radius="{R}" wcups="False"/>
+    <Cylinder id="40"  center1="1   0   0" center2="1  1  1" radius="{R}" wcups="False"/>
+    <Cylinder id="41"  center1="1   1   0" center2="1  0  1" radius="{R}" wcups="False"/>
+    <Union id="102" z="30 31 32 33 34 35 36 37 38 39 40 41 " />
+
+    <Cylinder id="42"  center1="0.5 0.5 0 " center2="0.5 0   0.5" radius="{R}" wcups="False"/>
+    <Cylinder id="43"  center1="0.5 0.5 0 " center2="0   0.5 0.5" radius="{R}" wcups="False"/>
+    <Cylinder id="44"  center1="0.5 0.5 0 " center2="1   0.5 0.5" radius="{R}" wcups="False"/>
+    <Cylinder id="45"  center1="0.5 0.5 0 " center2="0.5 1   0.5" radius="{R}" wcups="False"/>
+
+    <Cylinder id="46"  center1="0.5 0.5 1 " center2="0.5 0   0.5" radius="{R}" wcups="False"/>
+    <Cylinder id="47"  center1="0.5 0.5 1 " center2="0   0.5 0.5" radius="{R}" wcups="False"/>
+    <Cylinder id="48"  center1="0.5 0.5 1 " center2="1   0.5 0.5" radius="{R}" wcups="False"/>
+    <Cylinder id="49"  center1="0.5 0.5 1 " center2="0.5 1   0.5" radius="{R}" wcups="False"/>
+
+    <Cylinder id="50"  center1="0   0.5 0.5" center2="0.5 0   0.5" radius="{R}" wcups="False"/>
+    <Cylinder id="51"  center1="1   0.5 0.5" center2="0.5 0   0.5" radius="{R}" wcups="False"/>
+    <Cylinder id="52"  center1="0   0.5 0.5" center2="0.5 1   0.5" radius="{R}" wcups="False"/>
+    <Cylinder id="53"  center1="1   0.5 0.5" center2="0.5 1   0.5" radius="{R}" wcups="False"/>
+    <Union id="103" z="30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53" />
+
+  </Zones>
+
+  <Grids>
+    <Grid id="1" n="{NX} {NY} {NZ}" origin="0. 0. 0." length="1 1 1" ofTetras="True"/>
+  </Grids>
+
+  <LevelSets>
+    <LevelSet id="1" support="1" conform="True" >
+      <MesherInfo iso="0.0" hmin="0.01" hmax="0.2" hausd="0.01" nr="{NR}" hgrad="1.1" />
+    </LevelSet>
+  </LevelSets>
+
+  <AutoActions>
+    <Action type="InitLevelset" ls="1" zone="100+{LM}"/>
+  </AutoActions>
+  <Actions>
+
+    <Action type="AddEdges" ls="1" ar="90+45" addskin="true"/>
+    <Action type="Remesh" ls="1" iso="0.0" />
+    <Action type="SaveShapeToFile" ls="1" filename="Latice_{INPUTFILE}_{NX}_{NY}_{NZ}_{R}.stl"/>
+  </Actions>
+ </data>
+
+"""
+
+AppDescription= """
+This is a example of OpenPisco for the generation of lattice structures
+-----------------------------------------------------------------------------------
+Credits: Felipe Bordeu
+"""
+
+AppOptions = [
+  Options.OptionFloat("R", 0.10, valueRange=[0.05,0.3], slider=True, label="Bars radius"),
+  Options.OptionInt("LM", 0, valueRange=[0,3], slider=True, label="Lattice Model"),
+    Options.OptionBool("NR",False,label ="Skip Ridges Detection"),
+    Options.OptionInt("NX", 41 , valueRange=[11,51], slider=True, label="Nodes in the x directions"),
+    Options.OptionInt("NY", 41 , valueRange=[11,51], slider=True, label="Nodes in the y directions"),
+    Options.OptionInt("NZ", 41 , valueRange=[11,51], slider=True, label="Nodes in the z directions"),
+
+           ]
+
+

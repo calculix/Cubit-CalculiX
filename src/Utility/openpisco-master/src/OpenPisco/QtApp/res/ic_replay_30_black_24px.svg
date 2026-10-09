@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   fill="#000000"
+   height="24"
+   viewBox="0 0 24 24"
+   width="24"
+   version="1.1"
+   id="svg4153"
+   sodipodi:docname="ic_replay_30_black_24px.svg"
+   inkscape:version="0.92.0 r15299">
+  <metadata
+     id="metadata4159">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs4157" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="640"
+     inkscape:window-height="480"
+     id="namedview4155"
+     showgrid="false"
+     inkscape:zoom="9.8333333"
+     inkscape:cx="12"
+     inkscape:cy="12"
+     inkscape:window-x="594"
+     inkscape:window-y="240"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg4153" />
+  <path
+     d="M0 0h24v24H0V0z"
+     fill="none"
+     id="path4149" />
+  <path
+     d="M 12,5 V 1 l 5,5 -5,5 V 7 c -3.3,0 -6,2.7 -6,6 0,3.3 2.7,6 6,6 3.3,0 6,-2.7 6,-6 h 2 c 0,4.4 -3.6,8 -8,8 C 7.6,21 4,17.4 4,13 4,8.6 7.6,5 12,5 Z"
+     id="path4151"
+     inkscape:connector-curvature="0"
+     sodipodi:nodetypes="cccccssccssc" />
+  <path
+     inkscape:connector-curvature="0"
+     d="M 9.6,13.5 H 10 c 0.2,0 0.4,-0.1 0.5,-0.2 0.1,-0.1 0.2,-0.2 0.2,-0.4 v -0.2 c 0,0 -0.1,-0.1 -0.1,-0.2 0,-0.1 -0.1,-0.1 -0.2,-0.1 H 9.9 c 0,0 -0.1,0.1 -0.2,0.1 -0.1,0 -0.1,0.1 -0.1,0.2 v 0.2 h -1 c 0,-0.2 0,-0.3 0.1,-0.5 0.1,-0.2 0.2,-0.3 0.3,-0.4 0.1,-0.1 0.3,-0.2 0.4,-0.2 0.1,0 0.4,-0.1 0.5,-0.1 0.2,0 0.4,0 0.6,0.1 0.2,0.1 0.3,0.1 0.5,0.2 0.2,0.1 0.2,0.2 0.3,0.4 0.1,0.2 0.1,0.3 0.1,0.5 v 0.3 c 0,0 -0.1,0.2 -0.1,0.3 0,0.1 -0.1,0.2 -0.2,0.2 -0.1,0 -0.2,0.1 -0.3,0.2 0.2,0.1 0.4,0.2 0.5,0.4 0.1,0.2 0.2,0.4 0.2,0.6 0,0.2 0,0.4 -0.1,0.5 -0.1,0.1 -0.2,0.3 -0.3,0.4 C 11,15.9 10.8,16 10.6,16 10.4,16 10.2,16.1 10,16.1 9.8,16.1 9.6,16.1 9.5,16 9.4,15.9 9.2,15.9 9,15.8 8.8,15.7 8.8,15.6 8.7,15.4 8.6,15.2 8.6,15 8.6,14.8 H 9.4 V 15 c 0,0 0.1,0.1 0.1,0.2 0,0.1 0.1,0.1 0.2,0.1 h 0.5 c 0,0 0.1,-0.1 0.2,-0.1 0.1,0 0.1,-0.1 0.1,-0.2 v -0.5 c 0,0 -0.1,-0.1 -0.1,-0.2 0,-0.1 -0.1,-0.1 -0.2,-0.1 H 9.6 Z m 5.7,0.7 c 0,0.3 0,0.6 -0.1,0.8 l -0.3,0.6 c 0,0 -0.3,0.3 -0.5,0.3 -0.2,0 -0.4,0.1 -0.6,0.1 -0.2,0 -0.4,0 -0.6,-0.1 C 13,15.8 12.9,15.7 12.7,15.6 12.5,15.5 12.5,15.3 12.4,15 12.3,14.7 12.3,14.5 12.3,14.2 v -0.7 c 0,-0.3 0,-0.6 0.1,-0.8 l 0.3,-0.6 c 0,0 0.3,-0.3 0.5,-0.3 0.2,0 0.4,-0.1 0.6,-0.1 0.2,0 0.4,0 0.6,0.1 0.2,0.1 0.3,0.2 0.5,0.3 0.2,0.1 0.2,0.3 0.3,0.6 0.1,0.3 0.1,0.5 0.1,0.8 z m -0.8,-0.8 v -0.5 c 0,-0.1 -0.1,-0.2 -0.1,-0.3 0,-0.1 -0.1,-0.1 -0.2,-0.2 -0.1,-0.1 -0.2,-0.1 -0.3,-0.1 -0.1,0 -0.2,0 -0.3,0.1 l -0.2,0.2 c 0,0 -0.1,0.2 -0.1,0.3 v 2 c 0,0 0.1,0.2 0.1,0.3 0,0.1 0.1,0.1 0.2,0.2 0.1,0.1 0.2,0.1 0.3,0.1 0.1,0 0.2,0 0.3,-0.1 l 0.2,-0.2 c 0,0 0.1,-0.2 0.1,-0.3 z"
+     id="path4151-3"
+     sodipodi:nodetypes="cssscsscssccsssssssscsscssssssssscccsscsscssccsscsssssssscssssssscssssscscsssscsc" />
+</svg>

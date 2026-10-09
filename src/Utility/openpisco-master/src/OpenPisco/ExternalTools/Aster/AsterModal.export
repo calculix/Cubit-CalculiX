@@ -1,0 +1,17 @@
+P actions make_etude
+P memjob 1048576
+P memory_limit 1000.0
+P mode interactif
+P nomjob AsterModal
+P version stable
+A memjeveux 128.0
+A args -max_base 300000
+A tpmax 9000.0
+F comm AsterModalparam.in D 1
+F comm AsterModal.comm D  1
+F comm AsterModalPostPro.comm D 1
+F mess AsterModal.log R  6
+F mmed AsterModalinput.med D  20
+F rmed AsterModaloutput.rmed R  80
+F resu AsterModal.resu R 8
+F libr AsterModal_objective.csv R  27

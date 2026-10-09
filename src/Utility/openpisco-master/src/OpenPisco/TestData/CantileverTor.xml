@@ -1,0 +1,65 @@
+<data dim="3" debug="false">
+    <Zones>
+        <AABox id="10" origin="0. 0.1 .1" size="2. 0.8 0.8"/>
+    	<AABox id="1" origin="0.05 0.05 .05" size="1.9 0.9 0.9"/>
+        <Plane id="2" point="1.9 0. 0." normal="-1. 0. 0."/>
+
+        <Cylinder id="30" center1="-0.1 0.5 0.5" center2="0.1 0.5 0.5" radius="0.3"/>
+        <Cylinder id="3" center1="-0.1 0.5 0.5" center2="0.2 0.5 0.5" radius="0.4"/>
+
+        <Union id="4" z="2 3"/>
+
+        <Cylinder id="400" center1="1.0 0.5 1" center2="1 0.5 0" radius="0.2" />
+        <Cylinder id="401" center1="1.0 1. 0.5" center2="1 0 0.5" radius="0.2" />
+
+        <Cylinder id="402" center1="0.3 0.5 0.5" center2="1.8 0.5 0.5" radius="0.3" />
+        <Union id="420" z="400 401 402"  />
+
+        <Union id="50" z="1 4"/>
+        <Difference id="5" z1="50" z2="420"/>
+    </Zones>
+
+    <Grids>
+    	<Grid id="1" n="41 21 21" origin="0. -0.2 -0.2" length="2. 1.4 1.4"/>
+    </Grids>
+
+    <LevelSets>
+        <LevelSet id="1" support="1"/>
+    </LevelSets>
+
+    <PhysicalProblems>
+        <StructuredFEA id="1" grid="1" type="disp" eVoid="0.001"  linearSolver="EigenCG" >
+             <Dirichlet zone="2" dofs="0 1 2" val="0.0"/>
+             <NTorsion   zone="30" point="0 0.5 0.5" axis="1 0 0" val="1.0"/>
+        </StructuredFEA>
+
+    </PhysicalProblems>
+
+    <OptimProblems>
+        <OptimProblem type="TopoGeneric" id="1"
+            OnZone="4"  Dirichlet="2" Neumann="3"
+            useLevelset="1"
+            maxChangeVolume="0.2"
+            output="1"
+        >
+          <Objective  type="Compliance"  name="Compliance" useProblem="1" />
+          <Constraint type="Volume"     name="Volume"   UpperBound="1.0" />
+        </OptimProblem>
+    </OptimProblems>
+
+    <TopologicalOptimizations>
+        <OptimAlgoNullSpace id="1"
+            useOptimProblem="1"
+        />
+    </TopologicalOptimizations>
+
+    <Outputs>
+       <Output id="1" name="CantileverTor.xdmf"/>
+    </Outputs>
+
+    <Actions>
+        <Action type="InitLevelset" ls="1" zone="5"/>
+        <Action type="UpdateDistance" ls="1" />
+        <Action type="RunTopoOp" TopoOp="1"/>
+    </Actions>
+ </data>

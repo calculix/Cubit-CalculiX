@@ -1,0 +1,85 @@
+<!--
+Distributor usecase
+
+OpenFOAM Parameter values mainly based on
+https://develop.openfoam.com/Development/openfoam/-/tree/master/tutorials/incompressible/adjointOptimisationFoam/shapeOptimisation/naca0012/laminar/drag?ref_type=heads
+-->
+
+<data dim="3" debug="False">
+
+    <Zones>
+        <!--Holes id="6" n="5 1 5" r="0.005" boundingMin="0. 0. 0." boundingMax="0.1 0.03 0.1" type="Original" desc="initialization"/-->
+        <!--Sphere id="1" center="0.05  0.015 0.05"  radius="0.01" desc="obstacle"/-->
+        <AABox id="2" origin="-0.01 -0.01 0.01" size="0.2 0.05 0.08" desc="initlevelSet" />
+        <!--Plane id="2" point="0.05 0.015 0.005" normal="0. 0. 1" desc="initPlane"/-->
+        <!--Plane id="3" point="0.05 0.015 0.0095" normal="0. 0. -1" desc="initPlane"/-->
+        <!--InsideOut id="6" z="1" desc="InitSphere"/-->
+        <!--InsideOut id="7" z="2" desc="InitBox"/-->
+        <!--Union id="8" z="6 7" desc="initialization"/-->
+        <AABox id="10" origin="0 0 0" size="0.1 0.03 0.1" desc="onzone" />
+    </Zones>
+
+    <Grids>
+        <Mesh
+        id="1"
+        filename="{PISCO_TEST_DATA}1inlet_3outlets_3D_hdf.cgns"/>
+    </Grids>
+
+    <LevelSets>
+        <LevelSet id="1" support="1" conform="True" gradientMethod="gradPhi">
+            <MesherInfo hmax=".002" hmin="0.0006" iso="0.0" rmc="1e-5" hausd="0.0006" nr="True" computeDistanceWith="meshdist"/>
+        </LevelSet>
+    </LevelSets>
+
+    <PhysicalProblems>
+         <FoamSteadyStateComplete id="1" grid="1" type="SteadyStateComplete" viscosity="0.001">
+              <GeneralConfig enableCheckError="True" optimizeRenumbering="True" enableParallelism="True" numberOfSubDomains="12"/>
+              <SteadStateConfig divSchemes="bounded Gauss linearUpwind grad(U)"
+              maxNumberIterationsPrimalSolver="3000" maxNumberIterationsAdjointSolver="3000" 
+              relativeToleranceVelocity="0.1" relativeTolerancePressure="0.01"
+              relaxFactorVelocityAdj="0.6" relaxFactorPressureAdj="0.6" relaxFactorPressure="0.7" relaxFactorVelocity="0.7"
+              residualControlDirect="1e-04" residualControlAdjoint="1e-04" toleranceVelocity="1e-9" tolerancePressure="1e-9"/>
+              <Dirichlet variable="p" type="fixedValue" tag="OUTLET" value="0.0"/>
+              <Dirichlet variable="U" type="fixedValue" tag="INLET" value="1.0 0.0 0.0"/>
+              <Dirichlet variable="U" type="noSlip" tags="InterfaceSurf"/>
+              <Dirichlet variable="U" type="noSlip" tags="WALLS"/>
+         </FoamSteadyStateComplete>
+    </PhysicalProblems>
+
+    <OptimProblems>
+        <OptimProblem type="TopoGeneric" id="1"
+            useLevelset="1"
+            output="1"
+            printMeshQualityInfo = "True"
+            outputEveryLevelsetUpdate = "False">
+            <!-- We want to maximize the lift, hence we minimize the opposite -->
+          <Objective type="PtLosses"  name="PtLosses"  useProblem="1" patches="INLET OUTLET"/>
+          <!--Constraint type="drag"  name="drag" useProblem="1" UpperBound="1.0" patches="InterfaceSurf"/-->
+       </OptimProblem>
+    </OptimProblems>
+
+    <TopologicalOptimizations>
+        <OptimAlgoNullSpace id="1"
+            useOptimProblem="1"
+        />
+    </TopologicalOptimizations>
+
+    <Outputs>
+       <Output id="1" name="distributor_1inlet_3outlets_externalEnveloppe.xdmf"/>
+    </Outputs>
+
+    <Actions>
+        <Action type="PrintMesh" ls="1"/>
+        <Action type="AddEdges" ls="1" ar="90+45" />
+        <Action type="AddSkin" ls="1"/>
+        <Action type="Remesh" ls="1" hmax=".002" hmin="0.0006" rmc="1e-5" nr="True" computeDistanceWith="meshdist" />
+        <Action type="SetAsRequired" ls="1" eTags="INLET OUTLET" />
+        <Action type="InitLevelset" ls="1" zone="2"/>
+        <Action type="Remesh" ls="1" hmax=".002" hmin="0.0006" iso="0.0" rmc="1e-5" nr="True" computeDistanceWith="meshdist" />
+        <!--Action type="UpdateDistance" ls="1" /-->
+        <Action type="PrintMesh" ls="1"/>
+        <Action type="RunTopoOp" TopoOp="1"/>
+    	<!--Action type="WriteToFile" ls="1" filename="{INPUTFILE}.xdmf" /-->
+    </Actions>
+
+ </data>

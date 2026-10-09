@@ -1,0 +1,56 @@
+<data dim="3" debug="false" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <Plugins>
+    <Plugin name="OpenPisco.TestData.TestPlugin" load="true" />
+    <Plugin name="OpenPisco.TestData.NonExistentPlugin" load="false" />
+  </Plugins>
+
+  <xi:include href="zones.xml" />
+
+  <Grids>
+    <Grid id="1" n="25 26 27" origin="-0.5 -0.75 -0.5" length="1. 1.5 1." />
+    <Python function="GridHomeMade" someUserArg="5"><![CDATA[<Grid id="1" n="25 26 27" origin="-0.5 -0.75 -0.5" length="1. 1.5 1." />]]></Python>
+  </Grids>
+
+  <LevelSets>
+    <LevelSet id="1" support="1" />
+    <Python exec="True" someUserArg="5">
+print("here you can put any python code (mainApp and your arguments are available in th locals)  ")
+print(type(mainApp))
+print(PH)
+for i in range(PH.ReadInt(someUserArg)):
+  print(i)
+    </Python>
+  </LevelSets>
+
+  <PhysicalProblems>
+    <Structured id="1" grid="1" type="static_elastic" eVoid="0.001" >
+      <Dirichlet zone="2" dofs="0 1 2" val="0.0" />
+      <Neumann zone="1" dofs="1" val="1" />
+    </Structured>
+    <Python function="HomeMadePhysicalProblems" someUserArg="5" />
+  </PhysicalProblems>
+
+  <OptimProblems>
+    <OptimProblem type="PenalizedSquaredTopoGeneric" id="1" OnZone="1 2"
+     useLevelset="1" PenalVolume="9" e2=".004*(2./25)**2" output="1" outputEveryLevelsetUpdate="False"
+    >
+      <Objective type="Compliance" name="Compliance" useProblem="1" />
+      <Constraint type="Volume" name="Volume" upperBound="0.2" />
+    </OptimProblem>
+  </OptimProblems>
+
+  <TopologicalOptimizations>
+    <OptimAlgoUnconstrained id="1" useOptimProblem="1" addInequalityConstraintsConstribution="True" numberOfDesignStepsMax="1400"
+     numberOfIterationsMax="20" automaticPenalisation="True" />
+  </TopologicalOptimizations>
+
+  <Outputs>
+    <Output id="1" name="Basic.xdmf" inTempDirectory="True" />
+  </Outputs>
+
+  <Actions>
+    <Action type="InitLevelset" ls="1" zone="4" />
+    <Action type="RunTopoOp" TopoOp="1" />
+  </Actions>
+
+</data>

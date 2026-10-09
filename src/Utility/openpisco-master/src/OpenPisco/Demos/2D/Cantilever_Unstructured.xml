@@ -1,0 +1,64 @@
+<!--
+Minimization of the volume of a 2D cantilever beam under a compliance constraint
+-->
+
+<data dim="2" debug="False" >
+
+    <Zones>
+        <Plane id="2" point="0.05 0.25 0.5" normal="1. 0. 0." desc="dirichlet"/>
+        <Sphere id="4" center="2. 0.5 0.0"  radius="0.0009" desc="nodal force"/>
+        <Cylinder id="5" center1="1.9999 0.5 0." center2="2.1 0.5 0." radius="0.01" desc="force"/>
+        <Holes id="6" n="6 4 2" r="0.2" boundingMin="0. 0. 0." boundingMax="2.0 1.0 1.0" type="Original" desc="Holes"/>
+        <Union id="8" z="2 5" desc="onzone" />
+    </Zones>
+
+    <Grids>
+        <Grid id="1" n="31 21" origin="0. 0." length="2.0 1.0" ofSimplex="True"/>
+    </Grids>
+
+    <LevelSets>
+        <LevelSet id="1" support="1">
+        </LevelSet>
+    </LevelSets>
+
+    <PhysicalProblems>
+        <Unstructured type="static_elastic" id="1" dim="2" linearSolverName="EigenLU">
+            <Material  young="210.e9" poisson="0.3" />
+            <Dirichlet eTag="X0" dofs="0 1" value="0.0"/>
+            <Force  nTag="nTag4" dir="0 1" value="-10000"/>
+         </Unstructured>
+    </PhysicalProblems>
+
+    <OptimProblems>
+        <OptimProblem type="TopoGeneric" id="1"
+            OnZone="8"
+            useLevelset="1"
+            output="3"
+            outputEveryLevelsetUpdate = "False">
+          <Objective  type="Volume"  name="Volume"/>
+          <Constraint type="Compliance"  name="Compliance" UpperBound="2*2.22543496e-02" useProblem="1" />
+       </OptimProblem>
+    </OptimProblems>
+
+    <TopologicalOptimizations>
+        <OptimAlgoNullSpace id="1"
+            useOptimProblem="1"
+        />
+
+    </TopologicalOptimizations>
+
+    <Outputs>
+       <Output id="1" name="CantileverUnstructured2DHistory.xmf" inTempDirectory="True" />
+       <Output id="2" name="CantileverUnstructured2DHistory.csv" inTempDirectory="True" />
+       <Output id="3" name="PROXY" outputs="1 2" />
+    </Outputs>
+
+    <Actions>
+        <Action type="CreateTagsFromZones" ls="1" nodalTags="4" nodalprefix="nTag"/>
+        <Action type= "SetAsRequired" ls="1" nTags="nTag4" />
+        <Action type="Remesh" ls="1" hmax=".01" hmin="0.005" rmc="1e-5"
+      nr="False" computeDistanceWith="meshdist" force="True"/>
+        <Action type="InitLevelset" ls="1" zone="6"/>
+        <Action type="RunTopoOp" TopoOp="1" />
+    </Actions>
+ </data>

@@ -1,0 +1,117 @@
+# -*- coding: utf-8 -*-
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE', which is part of this source code package.
+#
+
+POURSUITE(PAR_LOT='NON')
+
+lmesh = LIRE_MAILLAGE(FORMAT='MED')
+
+
+lmodel = AFFE_MODELE(AFFE=_F(MODELISATION=('3D', ),
+                            PHENOMENE='MECANIQUE',
+                            TOUT='OUI'),
+                    MAILLAGE=lmesh)
+                  
+
+CHYOUNG = LIRE_CHAMP (
+                  UNITE=20,
+                  MAILLAGE = lmesh,
+                  NOM_MED = 'CHYOUNG',
+                  TYPE_CHAM = 'CART_NEUT_R',
+                  NOM_CMP = 'X1',
+                  NOM_CMP_MED='DX', 
+                  PROL_ZERO = 'OUI',
+                  INST=0.0,
+                  INFO=1,
+)
+
+CHNU = LIRE_CHAMP (
+                  UNITE=20,
+                  MAILLAGE = lmesh,
+                  NOM_MED = 'CHNU',
+                  TYPE_CHAM = 'CART_NEUT_R',
+                  NOM_CMP = 'X1',
+                  NOM_CMP_MED='DX',  
+                  PROL_ZERO = 'OUI',
+                  INST=0.0,
+                  INFO=1,
+)                
+
+E_F=DEFI_FONCTION(NOM_PARA='NEUT1',VALE=(-1.0,-1.0,1.0,1.0, ),PROL_DROITE='LINEAIRE',PROL_GAUCHE='LINEAIRE');
+NU_F=DEFI_FONCTION(NOM_PARA='NEUT2',VALE=(-1.0,-1.0,1.0,1.0, ),PROL_DROITE='LINEAIRE',PROL_GAUCHE='LINEAIRE');
+
+mater=DEFI_MATERIAU(ELAS_FO=_F(E=E_F, NU=NU_F,),);
+
+fieldmat = AFFE_MATERIAU(AFFE=_F(MATER=(mater, ),
+                                 TOUT='OUI'),
+                         AFFE_VARC=(
+                                    _F(NOM_VARC='NEUT1', CHAM_GD=CHYOUNG,),
+                                    _F(NOM_VARC='NEUT2', CHAM_GD=CHNU,),
+                                   ),
+                         MODELE=lmodel);
+
+bloc = AFFE_CHAR_MECA(MODELE=lmodel, **dirichlet)
+
+
+CHFSUR = LIRE_CHAMP (
+                  UNITE=20,
+                  MAILLAGE = lmesh,
+                  NOM_MED = 'Un',
+                  TYPE_CHAM = 'CART_FORC_R',
+                  NOM_CMP_IDEM = 'OUI',
+                  PROL_ZERO = 'OUI',
+                  INST=0.0,
+                  INFO=1,
+)
+
+
+RESU_SUR=CREA_RESU(OPERATION='AFFE',
+                   TYPE_RESU='EVOL_CHAR',
+                   NOM_CHAM='FSUR_3D',
+                   AFFE=(_F(CHAM_GD=CHFSUR,
+                            MODELE=lmodel,
+                            INST=0.0,),
+                        ),);
+
+LSUR=AFFE_CHAR_MECA(  MODELE=lmodel,
+                        EVOL_CHAR=RESU_SUR
+)
+
+
+solveur = _F(METHODE='MUMPS', 
+             RESI_RELA = 1.e-3,
+                      )
+
+lresu = MECA_STATIQUE(CHAM_MATER=fieldmat,
+                       EXCIT=(_F(CHARGE=bloc),
+                              _F(CHARGE = LSUR),
+                              ),
+                       MODELE=lmodel,
+                       SOLVEUR=solveur,
+                       )
+
+
+lresu = CALC_CHAMP(reuse=lresu,
+                    DEFORMATION=('EPSI_ELGA'),
+                    RESULTAT=lresu)
+
+
+IMPR_RESU(FORMAT='MED',
+          VERSION_MED='4.0.0',
+          RESU=(
+                _F(RESULTAT=lresu, 
+                   NOM_CHAM=('DEPL'),
+                  NOM_CHAM_MED=('DEPL'),
+                   ),
+                _F(RESULTAT=lresu, 
+                   NOM_CHAM=('EPSI_ELGA'),
+                  NOM_CHAM_MED=('strain'),
+                   ),
+               ),
+          UNITE=81,
+          INFO=1)        
+
+FIN()
+

@@ -1,0 +1,78 @@
+# -*- coding: utf-8 -*-
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE', which is part of this source code package.
+#
+POURSUITE()
+
+mesh = LIRE_MAILLAGE(FORMAT='MED',
+                     UNITE=20)
+
+model = AFFE_MODELE(AFFE=_F(**modelisation),
+                    MAILLAGE=mesh)
+
+fieldma1 = AFFE_MATERIAU(MODELE=model, **materials)
+
+# ~ prescribed temperature
+tempimpo = AFFE_CHAR_CINE(MODELE=model, **ther_impo)
+
+# ~ convection
+#convect = AFFE_CHAR_THER(MODELE=model, **convection)
+
+# ~ volumic source
+#source = AFFE_CHAR_THER(MODELE=model, **source)
+
+conditions = []
+for condition in [convection ,source]:
+    if len(list(condition.values())[0]):
+        conditions.append(AFFE_CHAR_THER(MODELE=model, **condition))
+
+test = [ _F(CHARGE=condition) for condition in conditions]
+test.append(_F(CHARGE=tempimpo))
+excitOp = tuple(test)
+
+
+if not steady_state_solution:
+   listr = DEFI_LIST_REEL(DEBUT=t_start,
+                       INTERVALLE=(_F(JUSQU_A=t_end,
+                                     NOMBRE=n_steps),
+                                   ),
+                       )
+
+   evolTher = THER_LINEAIRE(CHAM_MATER=fieldma1,
+                         ETAT_INIT=_F(VALE=temp_0),
+                         EXCIT=( excitOp),
+                         INCREMENT=_F(LIST_INST=listr),
+                         PARM_THETA=theta,
+                         MODELE=model)
+
+else:
+    listr = DEFI_LIST_REEL(DEBUT=0,
+                       INTERVALLE=(_F(JUSQU_A=0,
+                                     NOMBRE=1),
+                                   ),
+                       )
+    evolTher = THER_LINEAIRE(CHAM_MATER=fieldma1,
+                         EXCIT=( excitOp ),
+                         INCREMENT=_F(LIST_INST=listr),
+                         MODELE=model)
+
+
+evolTher = CALC_CHAMP(reuse=evolTher,
+                      MODELE=model,
+                      RESULTAT=evolTher,
+                      THERMIQUE=('FLUX_ELGA', ))
+
+
+IMPR_RESU(RESU=(_F(RESULTAT=evolTher,
+                   NOM_CHAM=('TEMP'),
+                   NOM_CHAM_MED=('temperature'),
+                   ),
+                _F(RESULTAT=evolTher,
+                   NOM_CHAM=('FLUX_ELGA'),
+                   NOM_CHAM_MED=('flux_temperature'),
+                   ),
+                   ),
+          UNITE=80)
+
+FIN()

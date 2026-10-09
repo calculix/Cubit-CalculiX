@@ -1,0 +1,103 @@
+<!--
+Distributor usecase
+
+OpenFOAM Parameter values mainly based on
+https://develop.openfoam.com/Development/openfoam/-/tree/master/tutorials/incompressible/adjointOptimisationFoam/shapeOptimisation/naca0012/laminar/drag?ref_type=heads
+-->
+
+<data dim="3" debug="False">
+
+    <Zones>
+        <!--Holes id="100" n="7 3 7" r="0.004" boundingMin="0.015 0.0 0.0" boundingMax="0.085 0.03 0.1" type="Aligned" desc="Holes"/-->
+        <AABox id="2" origin="-0.01 0.005 0.01" size="0.2 0.02 0.08" desc="externalEnvelope" />
+        <!--Intersection id="20" z="100 2" desc="externalAndInternal"/-->
+        <AABox id="3" origin="0.005 0.002 0.002" size="0.09 0.026 0.095" desc="OptimizationDomain" />
+        <AABox id="4" origin="-0.01 -0.01 -0.01" size="0.12 0.05 0.12" desc="LargeDomainBox" />
+        <Difference id="5" z1="4" z2="3" desc="OutsideOptimizationDomain" />
+        <AABox id="6" origin="-0.01 0.009 0.044" size="0.024 0.012 0.012" desc="FluidNearInlet" />
+        <AABox id="7" origin="0.09 0.009 0.014" size="0.024 0.012 0.012" desc="FluidNearOutlet" />
+        <AABox id="8" origin="0.09 0.009 0.044" size="0.024 0.012 0.012" desc="FluidNearOutlet" />
+        <AABox id="9" origin="0.09 0.009 0.074" size="0.024 0.012 0.012" desc="FluidNearOutlet" />
+        <Union id="30" z="6 7 8 9" desc="FluidNearInletOutlet"/>
+        <Difference id="31" z1="5" z2="30" desc="SolidOutsideOptimizationDomain"/>
+        <Intersection id="32" z="30 5" desc="FluidOutsideOptimizationDomain"/>
+    </Zones>
+
+    <Grids>
+        <Mesh
+        id="1"
+        filename="{PISCO_TEST_DATA}1inlet_3outlets_3D_hdf.cgns"/>
+    </Grids>
+
+    <LevelSets>
+        <LevelSet id="1" support="1" conform="True" gradientMethod="gradPhi">
+            <MesherInfo hgrad="-1" iso="0.0" met="True" symbolicMetricExpression="(phi**2+0.001**2)**0.5" computeDistanceWith="meshdist"/>
+            <!--MesherInfo met="False" optim="True" iso="0.0" hmax=".002" hmin="0.0006" hausd="0.0002" nr="True" computeDistanceWith="meshdist">            
+                <LocalParams eTag="InterfaceSurf" hmin="0.0006" hmax="0.001" hausd="0.0002" dim="2" />
+            </MesherInfo-->
+        </LevelSet>
+    </LevelSets>
+
+    <PhysicalProblems>
+         <FoamSteadyStateComplete id="1" grid="1" type="SteadyStateComplete" viscosity="0.0001">
+              <GeneralConfig enableCheckError="True" optimizeRenumbering="False" enableParallelism="True" numberOfSubDomains="12"/>
+              <SteadStateConfig divSchemes="bounded Gauss linearUpwind grad(U)"
+              maxNumberIterationsPrimalSolver="700" maxNumberIterationsAdjointSolver="500" 
+              relativeToleranceVelocity="0.1" relativeTolerancePressure="0.01"
+              relaxFactorVelocityAdj="0.6" relaxFactorPressureAdj="0.6" relaxFactorPressure="0.7" relaxFactorVelocity="0.7"
+              residualControlDirect="1e-04" residualControlAdjoint="1e-04" toleranceVelocity="1e-9" tolerancePressure="1e-9"/>
+              <Dirichlet variable="p" type="fixedValue" tag="OUTLET" value="0.0"/>
+              <Dirichlet variable="U" type="fixedValue" tag="INLET" value="1.0 0.0 0.0"/>
+              <Dirichlet variable="U" type="noSlip" tags="InterfaceSurf"/>
+              <Dirichlet variable="U" type="noSlip" tags="WALLS"/>
+         </FoamSteadyStateComplete>
+    </PhysicalProblems>
+
+    <OptimProblems>
+        <OptimProblem type="TopoGeneric" id="1"
+            useLevelset="1"
+            OffZone="31"
+            OnZone="32"
+            e2="0.002"
+            output="1"
+            printMeshQualityInfo = "True"
+            outputEveryLevelsetUpdate = "False">
+            <!-- We want to maximize the lift, hence we minimize the opposite -->
+          <Objective type="PtLosses"  name="PtLosses"  useProblem="1" patches="INLET OUTLET"/>
+          <Constraint type="Volume"  name="Volume" UpperBound="3e-5" />
+          <!--Constraint type="drag"  name="drag" useProblem="1" UpperBound="1.0" patches="InterfaceSurf"/-->
+       </OptimProblem>
+    </OptimProblems>
+
+    <TopologicalOptimizations>
+        <OptimAlgoNullSpace id="1"
+            useOptimProblem="1"
+            stepSize="0.5"
+            stepSizeMax="3.0"
+            tol_merit="0.01"
+            numberOfDesignStepsMax="100"
+        />
+    </TopologicalOptimizations>
+
+    <Outputs>
+       <Output id="1" name="with_metric.xdmf"/>
+    </Outputs>
+
+    <Actions>
+        <Action type="PrintMesh" ls="1"/>
+        <Action type="AddEdges" ls="1" ar="90+45"/>
+        <Action type="AddSkin" ls="1"/>
+        <Action type="Remesh" ls="1" met="False" optim="True" hmax=".002" hmin="0.0006" hausd="0.0002" nr="True" computeDistanceWith="meshdist" />
+        <Action type="PrintMesh" ls="1"/>
+        <Action type="SetAsRequired" ls="1" eTags="INLET OUTLET" />
+        <!--Action type="InitLevelset" ls="1" zone="20"/-->
+        <Action type="InitLevelset" ls="1" zone="2"/>
+        <!--Action type="Remesh" ls="1" hgrad="-1" iso="0.0" met="True" symbolicMetricExpression="(phi**2+0.001**2)**0.5" computeDistanceWith="meshdist" /-->
+        <!--Action type="Remesh" ls="1" met="False" iso="0.0" optim="True" hmax=".002" hmin="0.0006" hausd="0.0002" nr="True" computeDistanceWith="meshdist" /-->
+        <!--Action type="UpdateDistance" ls="1" /-->
+        <!--Action type="PrintMesh" ls="1"/-->
+        <Action type="RunTopoOp" TopoOp="1"/>
+    	<!--Action type="WriteToFile" ls="1" filename="with_metric_init.xdmf" /-->
+    </Actions>
+
+ </data>

@@ -1,0 +1,67 @@
+<!--
+Minimization of the volume of a 2D cantilever beam under a compliance constraint
+-->
+
+<data dim="2" debug="False" >
+
+    <Zones>
+        <Plane id="1" point="0.0001 0.25 0.5" normal="1. 0. 0." desc="x0 plane "/>
+        <Plane id="2" point="0.05 0.25 0.5" normal="1. 0. 0." desc="dirichlet"/>
+        <Sphere id="4" center="2. 0.5 0.0"  radius="0.0009" desc="nodal force"/>
+        <Cylinder id="5" center1="1.9999 0.5 0." center2="2.1 0.5 0." radius="0.01" desc="force"/>
+        <Holes id="6" n="6 4 2" r="0.2" boundingMin="0. 0. 0." boundingMax="2.0 1.0 1.0" type="Original" desc="Holes"/>
+        <Union id="7" z="2 4 6" desc="initialization"/>
+        <Union id="8" z="2 5" desc="onzone" />
+    </Zones>
+
+    <Grids>
+        <Grid id="1" n="61 41" origin="0. 0." length="2.0 1.0" ofsimplex="False"/>
+    </Grids>
+
+    <LevelSets>
+        <LevelSet id="1" support="1">
+        </LevelSet>
+    </LevelSets>
+
+    <PhysicalProblems>
+        <Structured type="static_elastic" id="1" grid="1" eVoid="0.0">
+            <Material  young="210.e9" poisson="0.3" />
+            <Dirichlet eTag="eTag1" dofs="0 1" val="0.0"/>
+            <NeumannNodal  nTag="nTag4" dofs="1" val="-1000"/>
+         </Structured>
+    </PhysicalProblems>
+
+    <OptimProblems>
+        <OptimProblem type="TopoGeneric" id="1"
+            OnZone="8"
+            useLevelset="1"
+            printMeshQualityInfo = "True"
+            output="3"
+            outputEveryLevelsetUpdate = "False">
+          <Objective  type="Volume"  name="Volume"/>
+          <Constraint type="Compliance"  name="Compliance" UpperBound="2*2.15111791e-04" useProblem="1" />
+       </OptimProblem>
+    </OptimProblems>
+
+    <TopologicalOptimizations>
+        <OptimAlgoNullSpace id="1"
+            useOptimProblem="1"
+        />
+    </TopologicalOptimizations>
+
+    <Outputs>
+       <Output id="1" name="CantileverStructured2DHistory.xmf" />
+       <Output id="2" name="CantileverStructured2DHistory.csv" />
+       <Output id="3" name="PROXY" outputs="1 2" />
+    </Outputs>
+
+    <Actions>
+        <Action type="InitLevelset" ls="1" zone="7"/>
+        <Action type="AddSkin" ls="1" />
+        <Action type="CreateTagsFromZones" ls="1" nodalTags="4" nodalprefix="nTag"/>
+        <Action type="CreateTagsFromZones" ls="1" elementTags="1" dim="1" elemenprefix="eTag"/>
+        <Action type= "PrintMesh" ls="1" />
+        <Action type="RunTopoOp" TopoOp="1" />
+    </Actions>
+
+ </data>

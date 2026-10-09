@@ -1,0 +1,86 @@
+<!--
+OverHang tube topology optimization in non conformal
+The part (the tube in this case) is removed.
+
+NB Run OverHangDetection.xml to generate overhangSurface.stl and backingSurface.stl files
+-->
+
+<data dim="3" debug="False" >
+
+    <Zones>
+        <AABox id="1" origin="-1 -1 0.1" size="4 3 2.1" desc="For overhanged surfaces"/>
+        <AABox id="2" origin="-1 -1 -0.01" size="4 3 0.1" desc="For plateau"/>
+        <AABox id="3" origin="0.7 0 0" size="1.5 1 1.13" desc="For backing surfaces"/>
+        <AABox id="4" origin="1.16 0.15 1.0" size="0.4 0.85 0.3" desc="For backing surfaces"/>
+        <Union id="5" z="3 4"/>
+        <StlFile id="100" filename="{CWD}/overhangSurface.stl"/>
+        <Intersection id="101" z="100 1" desc="Isolate Overhang surfaces"/>
+        <Offset id="102" z="101" offset="-0.001"/>
+        <AABox id="103" origin="-1 -1 -0.001" size="4 3 0.002" desc="plateau surface "/>
+        <StlFile id="200" filename="{CWD}/backingSurface.stl"/>
+        <Offset id="201" z="200" offset="-0.001"/>
+        <Intersection id="202" z="201 5" desc="Isolate relevant backing surface"/>
+        <!-- <StlFile id="203" filename="eTag10.stl"/>
+        <Offset id="204" z="203" offset="-0.001"/> -->
+        <Union id="300" z="103" desc="Dirichlet"/> <!--RETURN_FAIL-->
+        <Union id="301" z="102 300" desc="Onzone"/>
+        <AABox id="600" origin="-1 -1 -1" size="5 5 5" desc="For inizialization phi before remeshing"/>
+
+        <AABox id="400" origin="0.05 0.3 -0.05" size="1.9 0.35 1.9" desc="For initialization"/>
+        <!--
+        <Holes id="400" r="0.2" type="Aligned" boundingMin="0.05 0.05 0.05" boundingMax="1.95 .95 1.95" n="3 2 3"/>
+        <Gyroid id="400" scale="0.1" offset="0 0.2 0.3" desc="initialization"/>
+        -->
+        <Union id="401" z="301 400" desc="Init"/>
+    </Zones>
+
+    <Grids>
+        <Mesh id="1" filename="{PISCO_TEST_DATA}TubeMesh.msh" />
+    </Grids>
+
+    <LevelSets>
+        <LevelSet id="1" support="1">
+        </LevelSet>
+    </LevelSets>
+
+    <PhysicalProblems>
+        <Unstructured id="1" type="static_elastic"  p="1"  eVoid="0.0">
+            <Material    young="1" poisson="0.3"/>
+            <Dirichlet   eTag="ET103" dofs="0 1 2" value="0" />
+            <Dirichlet   eTag="ET202" dofs="0 1 2" value="0" />
+            <Force       eTag="ET102" dir="0 0 -1" value="0.002" />
+        </Unstructured>
+    </PhysicalProblems>
+
+    <OptimProblems>
+        <OptimProblem type="TopoGeneric" id="1"
+            OnZone="102" 
+            useLevelset="1"
+            output="1">
+          <Objective  type="Compliance"  name="Compliance" useProblem="1" />
+          <Constraint type="Volume"     name="Volume"   upperBound="0.15"/>
+        </OptimProblem>
+    </OptimProblems>
+
+    <TopologicalOptimizations>
+    <OptimAlgoNullSpace id="1"
+            useOptimProblem="1"
+            numberOfDesignStepsMax="50"
+            stepSize="0.2"
+        />
+    </TopologicalOptimizations>
+
+    <Outputs>
+       <Output id="1" name="TubeOverHangOptimization.xdmf" inTempDirectory="True"/>
+    </Outputs>
+
+    <Actions>
+        <Action type="DeleteElements" ls="1" ef="eTags(Tube)" />
+        <Action type="DeleteElements" ls="1" ef="eTags(GeoTag1) & Dim(2)" /> <!-- Remove base ring of the tube -->
+        <Action type="CreateTagsFromZones" ls="1" dim="2" elementTags="101 102 103 201 202 301" />
+        <Action type="InitLevelset" ls="1" zone="401"/>
+        <Action type="UpdateDistance" ls="1" />
+        <Action type="RunTopoOp" TopoOp="1"/>
+        <Action type="SaveShapeToFile" ls="1" filename="TubeOverHangOptimization.stl"/>
+    </Actions>
+ </data>

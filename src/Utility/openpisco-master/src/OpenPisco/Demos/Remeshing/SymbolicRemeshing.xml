@@ -1,0 +1,23 @@
+<!--
+Generate a body-fitted mesh using a symbolic metric
+-->
+
+<data dim="3">
+    <Zones>
+        <Sphere id="1" center="2.5  2. 2."  radius="1" desc="obstacle"/>
+        <InsideOut id="2" z="1" desc="Init"/>
+    </Zones>
+    <Grids>
+        <Grid id="1" n="40 20 20" origin="0. 0. 0." length="8. 4. 4" ofTetras ="True"/>
+    </Grids>
+    <LevelSets>
+        <LevelSet id="1" support="1" conform="True"></LevelSet>
+    </LevelSets>
+    <Actions>
+        <Action type="Remesh" ls="1" hmax=".4" hmin="0.2"/>
+        <Action type="InitLevelset" ls="1" zone="1"/>
+        <Action type="AddEdges" ls="1" ar="90+45" />
+        <Action type="Remesh" ls="1" hgrad="-1" iso="0.0" symbolicMetricExpression="(phi**2+0.01)**0.5"/>
+        <Action type="WriteToFile" ls="1" filename="{INPUTFILE}.xdmf" />
+    </Actions>
+ </data>

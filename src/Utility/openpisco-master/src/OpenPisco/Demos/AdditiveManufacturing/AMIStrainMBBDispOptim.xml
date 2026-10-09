@@ -1,0 +1,82 @@
+<!--
+MBB topology optimization taking into account the AM process (inherent strain method)
+Data : MBB-cor-rot.stl
+-->
+
+<data dim="3" debug="False" >
+    <Zones>
+        <StlFile id="1" filename="{CWD}/MBB-corr-rot.stl" desc="data"/>
+        <AABox id="2" origin="2.863 -.6 -0.001" size="0.2 1.2 .002" desc="Block"/>
+        <Plane id="3" point="0.001 0. 0." normal="1. 0. 0." desc="symetry x"/>
+        <Plane id="4" point="0. -0.001 0." normal="0. -1. 0." desc="symetry y"/>
+        <AABox id="5" origin="-0.01 -.5 0.999" size="0.2 5. .2" desc="force"/>
+        <Offset id="7" z="1" offset="-.05" desc="initialization" />
+    </Zones>
+
+    <Grids>
+        <Grid id="1" n="45 8 15" origin="0. -0.5 0." length="3. .5 1." ofSimplex ="True"/>
+    </Grids>
+
+    <LevelSets>
+        <LevelSet id="1" support="1">
+        </LevelSet>
+    </LevelSets>
+
+    <PhysicalProblems>
+        <AMProcess id="1" type="IStrains" deltaZ="0.055" IStrains="-0.0001 -0.0001 0." gridCharacteristicNumber="5" >
+         <Material  young="110000000000" poisson="0.26" density="1" />
+         <Block  on="Z0" block="0 1 2"  />
+         <Block  on="X0" block="0"  />
+         <Block  on="Y0" block="1"  />
+        </AMProcess>
+
+        <Unstructured id="2" type="static_elastic"  p="1"  eVoid="0.000">
+            <Material    young="110000000000" poisson="0.26"/>
+            <Dirichlet   eTag="eTag2" dofs="0 1 2" value="0" />
+            <Dirichlet   eTag="eTag3" dofs="0" value="0" />
+            <Dirichlet   eTag="eTag4" dofs="1" value="0" />
+            <Force eTag="eTag5" dir="0 0 -1" value="10000." />
+        </Unstructured>
+
+    </PhysicalProblems>
+
+    <OptimProblems>
+        <OptimProblem type="TopoGeneric" id="1"
+            OnZone="5"
+            useLevelset="1"
+            output="1">
+            <Objective type="AMInherentStrainDisp"  name="AMInherentStrainDisp" useProblem="1" beta="1e7"/>
+            <Constraint type="Compliance" name="Compliance" upperBound="(1+0.01)*2.02218167e-03" useProblem="2" desc="(1+k)*C0"/>
+            <Constraint type="Volume" name="Volume"   targetValue="6.82059076e-01" desc="a*V0"/>
+        </OptimProblem>
+    </OptimProblems>
+
+    <TopologicalOptimizations>
+    <OptimAlgoNullSpace id="1"
+            useOptimProblem="1"
+        />
+            <!--
+            numberOfDesignStepsMax="10"
+            numberOfIterationsMax="20"
+            stepSize="0.01"
+            stepSizeMax="0.04"
+            alphaC="1."
+            alphaJ="10000000000."
+            tol_merit ="0.01"
+
+            -->
+
+    </TopologicalOptimizations>
+
+    <Outputs>
+       <Output id="1" name="MBBIStrainOptimTer.xdmf"/>
+    </Outputs>
+
+    <Actions>
+        <Action type="AddSkin" ls="1"/>
+	    <Action type="InitLevelset" ls="1" zone="7"/>
+        <Action type="CreateTagsFromZones" ls="1" dim="2" elementTags="2 3 4 5" elemenprefix="eTag"/>
+        <Action type="RunTopoOp" TopoOp="1"/>
+    </Actions>
+ </data>
+

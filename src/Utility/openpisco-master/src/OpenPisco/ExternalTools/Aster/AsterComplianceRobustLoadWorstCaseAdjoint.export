@@ -1,0 +1,15 @@
+P actions make_etude
+P memjob 1048576
+P memory_limit 1000.0
+P mode interactif
+P nomjob AsterStaticLoadWorstCase
+P version stable
+A args -max_base 300000
+A memjeveux 2048.0
+A tpmax 900.0
+F comm AsterComplianceRobustLoadWorstCaseAdjointparam.in D  1
+F comm AsterComplianceRobustLoadWorstCaseAdjoint.comm D  1
+F mmed AsterComplianceRobustLoadWorstCaseAdjointinput.med D  20
+F mess AsterComplianceRobustLoadWorstCaseAdjoint.log R  6
+F rmed AsterComplianceRobustLoadWorstCaseAdjointoutput.rmed R  81
+F resu AsterComplianceRobustLoadWorstCaseAdjoint.resu R  8

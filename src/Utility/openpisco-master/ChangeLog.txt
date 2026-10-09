@@ -1,0 +1,114 @@
+New in master:
+*********************
+*********************
+Migrate KRBlock to new Muscat API
+
+New in version 1.4.1:
+*********************
+*********************
+Reorganize documentation 
+Fix aspect ratio computation for 2D meshes
+
+New in version 1.4:
+*********************
+*********************
+Switch from OpenFOAM.org to OpenFOAM.com (for its adjoint computation capabilities)
+Add force criteria (drag and lift)
+Add surface criterion
+Add computation of sensitivity for existing analysis for multiple criteria
+OpenFOAM interface various improvements (application-name agnostic, parallel run, convergence check, renumbering, purge intermediate steps)
+Enable use of FreeFem/OpenFOAM in an isolated environment
+Various bug fixes (computeGain, Pipeline, error handling for max connection)
+Add center of mass along direction criterion
+Enable definition of remeshing metric using a symbolic expression
+ExtractElementsByTags updated (API change)
+Enabled export of remeshing metric as nodal field on the remeshed grid
+Enabled export of criteria sensitivities 
+Improved handling of physical solver failures after advection
+Add a file-exchange interface for Ansys Mechanical, enabling steady-state thermal analyses with Dirichlet and radiation boundary conditions
+Extended OpenFOAM interface to 2D and add pressure drop minimization demo 
+Add optional truncation on level set advection step size, disabled by default 
+Better handling of physical solvet failure after level set advection 
+Add tutorial on Von Mises stress minimization 
+
+
+New in version 1.3:
+*********************
+*********************
+Move to Muscat 2.5.1 backend
+Improve and refactor documentation
+Add developer guide
+
+
+New in version 1.2.1:
+*********************
+*********************
+Add Pipeline script to run several demos and generate a report (mainly used to check if there is a regression)
+Move pipeline to html format 
+Fix physical domain validity verification
+Enable all muscat linear solvers, including Mumps 
+Enable optional unstructured solver as adjoint in von mises stress criterion
+Switch to div formula in non conformal case for the computation of mean curvature 
+Enable tabular Young Modulus in thermoelastic and static analysis
+Enable tabular thermal expansion coefficient in thermoelastic analysis
+Remove unused module Extension
+Fix rhs formulation for bidimensional problems
+Add topology optimization tutorial using Python library
+Move to Muscat 2.4.1 backend
+
+
+New in version 1.2.0:
+*********************
+*********************
+Move the responsability to check whether the boundary conditions are connected from the optimization problem to the physical problem
+Impose domain constraints (OnZone and OffZOne) on initial level set automatically 
+Remesh automatically the initial level set in conformal setting 
+Add new composed criterion to enforce cyclic symmetry to a given sensitivity field 
+Add new action to evaluate criteria from an optimization problem on a given level set 
+Move to Muscat 2.4 backend (API change)
+Add new option to set the signed distance field equal to zero on design space boundaries 
+Change type of rmc parameter from bool to float 
+Add Interface with OpenFOAM.org
+Add Incompressible steady-state laminar fluid flow analysis
+
+
+New in version 1.1.5:
+*********************
+*********************
+(Advect.py) Enable binary writer/reader
+(Meshdist.py)  Enable binary writer/reader
+(Levelset.py)  Disable automatic velocity normalization in transport
+(AsterThermoelastic.py) enable case with no convection, enable steady state thermal solution
+Refactoring unstructured solver based on Muscat
+Repare von mises criterion
+Enable 2D in von mises criterion
+Update noarch recipe
+(FieldNames.py) Replace keywork elastic_energy with potential_energy
+(FieldNames.py) Replace keywork int_elastic_energy with int_potential_energy
+(MmgMesher.py) Fix command line builder to ensure compatibility with mmg v 5.8.0
+Remove dependency on MeshToSimplex (Muscat) function
+Add possibility to call python during the xml construction (with a plugin or explicitly including some python code)
+
+
+New in version 1.1.4:
+*********************
+*********************
+Move backend Python library from BasicTools version 1.9.9 to Muscat version 2.2.2
+Move Code_Aster from version 14.6 to version 17.0.20
+Enable 2D in Code_Aster based thermal and thermoelastic analysis
+Repair freefem based unit tests
+
+
+New in version 1.1.3:
+*********************
+*********************
+Rename internal Python library from TopoTools to OpenPisco
+Add several utilities for topology optimization of supports for additive manufacturing,
+including detection of overhanged surfaces,
+inherent strain process simulation method
+and a geometrical criterion to penalise the contact surface between the part and the support.
+Add developer guide to interface external optimization algorithms
+Add developer guide to interface external physical solvers
+Add installation guide
+Refactoring optimization algorithms module
+Move to BasicTools version 1.9.9. The compatibility with older versions of BasicTools is not guaranteed

@@ -1,0 +1,76 @@
+<!--
+Minimization of the elastic compliance of a cantilever beam under volume constraint
+Computation on half domain
+-->
+
+<data dim="3" debug="False" >
+
+    <Zones>
+        <Plane id="1" point="0.0001 0.25 0.5" normal="1. 0. 0." desc="x0 plane "/>
+        <Plane id="2" point="0.05 0.25 0.5" normal="1. 0. 0." desc="dirichlet"/>
+        <Plane id="3" point="1. 0.24999 0.5" normal="0. -1. 0." desc="symetry plane"/>
+        <Sphere id="4" center="2. 0.25 0.5"  radius="0.0009" desc="nodal force"/>
+        <Cylinder id="5" center1="1.9999 0.25 0.5" center2="2.1 0.25 0.5" radius="0.01" desc="force"/>
+        <Cylinder id="6" center1="-0.1 0.25 0.5" center2="2.1 0.25 0.5" radius="0.249"/>
+        <Union id="7" z="2 4 6" desc="initialization"/>
+        <Union id="8" z="2 5" desc="onzone" />
+    </Zones>
+
+    <Grids>
+        <Grid id="1" n="41 41 41" origin="0. 0. 0." length="2.0 0.25 1.0" ofTetras ="True"/>
+    </Grids>
+
+
+    <LevelSets>
+        <LevelSet id="1" support="1" conform="True" gradientMethod="gradPhi">
+              <MesherInfo hmax=".5" hmin="0.01" iso="0.0" rmc="1e-5"
+      nr="True" computeDistanceWith="meshdist"/>
+        </LevelSet>
+    </LevelSets>
+
+    <PhysicalProblems>
+        <GeneralAster type="static_elastic" id="1" >
+                  <Material  young="210.e9" poisson="0.3" />
+                  <Dirichlet eTag="X0" dofs="0 1 2" value="0.0"/>
+                  <Dirichlet eTag="Y1" dofs="1" value="0.0"/>
+                  <Force nTag="nTag4" value="0. 0. -10000" />
+         </GeneralAster>
+    </PhysicalProblems>
+
+    <OptimProblems>
+        <OptimProblem type="TopoGeneric" id="1"
+            OnZone="8"
+            useLevelset="1"
+	    printMeshQualityInfo = "True"
+            output="3"
+            outputEveryLevelsetUpdate = "False">
+          <Objective  type="Volume"  name="Volume"/>
+          <Constraint type="Compliance"  name="Compliance" UpperBound="1.5*8.17478000e-01" useProblem="1" />
+       </OptimProblem>
+    </OptimProblems>
+
+    <TopologicalOptimizations>
+        <OptimAlgoNullSpace id="1"
+            useOptimProblem="1"
+        />
+
+    </TopologicalOptimizations>
+
+    <Outputs>
+       <Output id="1" name="CantileverHistory.xmf" inTempDirectory="True" />
+       <Output id="2" name="CantileverHistory.csv" inTempDirectory="True" />
+       <Output id="3" name="PROXY" outputs="1 2" />
+    </Outputs>
+    <Actions>
+
+        <Action type="InitLevelset" ls="1" zone="6"/>
+        <Action type="AddEdges" ls="1" ar="90+45" />
+        <Action type="AddSkin" ls="1"/>
+        <Action type="CreateTagsFromZones" ls="1" nodalTags="4" nodalprefix="nTag"/>
+        <Action type= "SetAsRequired" ls="1" nTags="nTag4" />
+        <Action type="RunTopoOp" TopoOp="1" />
+                <Action type="SaveShapeToFile" ls="1" filename="Cantilever.stl"/>
+  <Action type="LsQualityInfo" ls="1" />
+    </Actions>
+
+ </data>

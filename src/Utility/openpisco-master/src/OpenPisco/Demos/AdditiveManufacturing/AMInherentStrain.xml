@@ -1,0 +1,33 @@
+<!--
+AM process simulation using inherent strain method
+Data : Liu_Tovar_2014_MBB.stl
+To generate input data user can run Demos/Liu_Tovar_2014/MBB_T4_C2.xml
+-->
+
+<data dim="3" debug="False" >
+    <Zones>
+        <StlFile id="1" filename="{CWD}/Liu_Tovar_2014_MBB.stl"/>
+        <Offset id="2" z="1" offset="-0.2"/>
+    </Zones>
+
+    <Grids>
+        <Grid id="1" n="121 21 61" origin="-6. -1. -.5" length="12 2 3" ofTetras ="True"/>
+    </Grids>
+
+    <LevelSets>
+        <LevelSet id="1" support="1" conform="False">
+        </LevelSet>
+    </LevelSets>
+
+    <PhysicalProblems>
+        <AMProcess id="1" type="IStrains" IStrains="-0.0001 -0.0001 0." nx="60" ny="30" nz="20" debugFilename="IStrainsAMProcessMBB20layers"  >
+         <Material  young="110000000000" poisson="0.26" density="1" />
+         <Block  on="Z0" block="0 1 2"  />
+        </AMProcess>
+    </PhysicalProblems>
+
+    <Actions>
+	    <Action type="InitLevelset" ls="1" zone="2"/>
+        <Action type="SolveByLevelSet" ls="1" problem="1"/>
+    </Actions>
+ </data>

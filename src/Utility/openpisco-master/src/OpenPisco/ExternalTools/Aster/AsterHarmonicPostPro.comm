@@ -1,0 +1,546 @@
+# -*- coding: utf-8 -*-
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE', which is part of this source code package.
+#
+POURSUITE(PAR_LOT='NON', IGNORE_ALARM = ('MODELISA4_6','SUPERVIS_1', 'MODELE1_63', 'MODELE1_64'))
+
+import numpy as np
+import math
+
+def GetEigenPulsations(modes):
+    TBMODES = RECU_TABLE(CO=modes,NOM_PARA = ('FREQ'))
+    modalFreq=TBMODES.EXTR_TABLE().values()['FREQ']
+    DETRUIRE(NOM=(TBMODES))
+    return modalFreq
+
+def GeneralDisplacementByExcitFrequency(modes,resharm):
+    nbf=len(GetEigenPulsations(modes))
+    recf=[None]*nbf
+    for i in range(nbf):
+        recf[i]=RECU_FONCTION(RESU_GENE=resharm,NOM_CHAM='DEPL',NUME_CMP_GENE=i+1)
+    freqExcit=recf[0].Valeurs()[0]
+    geneDisps_by_freqExcit={freq:[] for freq in freqExcit}
+    for funcNumeOrder in recf:
+        freqExcitOrder,realGeneDisps,imagGeneDisps=funcNumeOrder.Valeurs()[0:3]
+        for numOrder,freqExc in enumerate(freqExcitOrder):
+            geneDisps_by_freqExcit[freqExc].append(complex(realGeneDisps[numOrder],imagGeneDisps[numOrder]))
+    DETRUIRE(NOM=(recf))
+    return geneDisps_by_freqExcit
+
+def ElasticEnergyByExcitFrequency(modes,geneDisps):
+    modalFreq=GetEigenPulsations(modes)
+    ModalContributionToTotalEnergy= lambda modalFreq,geneDispfreq: 0.5*(2*math.pi*modalFreq*geneDispfreq)**2
+
+    Ener_by_freqExcit=dict.fromkeys(geneDisps)
+    for freqExc in Ener_by_freqExcit.keys():
+        EnerModLast=ModalContributionToTotalEnergy(modalFreq[-1],geneDisps[freqExc][-1])
+        EnerTotFreq=complex(0.0,0.0)
+        for numMode,_ in enumerate(modalFreq):
+            EnerTotFreq+=ModalContributionToTotalEnergy(modalFreq[numMode],geneDisps[freqExc][numMode])
+        Ener_by_freqExcit[freqExc]={"last":EnerModLast,"total":EnerTotFreq}
+    return Ener_by_freqExcit
+
+def GetDominantModeIndexByFreq(modes,resharm):
+    #Retrieve generalized displacement
+    geneDisps=GeneralDisplacementByExcitFrequency(modes,resharm)
+
+    modalFreq=GetEigenPulsations(modes)
+    ModalContributionToTotalEnergy= lambda modalFreq,geneDispfreq: 0.5*(2*math.pi*modalFreq*geneDispfreq)**2
+
+    dominantModeIndexByFreq=dict.fromkeys(geneDisps)
+    for freqExc in dominantModeIndexByFreq.keys():
+        modalContributions=[]
+        for numMode,_ in enumerate(modalFreq):
+            modalContributions.append(abs(ModalContributionToTotalEnergy(modalFreq[numMode],geneDisps[freqExc][numMode])))
+        dominantIndex=np.argmax(modalContributions)
+        dominantModeIndexByFreq[freqExc]=dominantIndex
+    return dominantModeIndexByFreq
+
+def ModalBasisQualityEnergyContribution(modes,resharm,method):
+    #Retrieve generalized displacement
+    geneDisps=GeneralDisplacementByExcitFrequency(modes,resharm)
+
+    #Retrieve elastic energies
+    elasticEnergies=ElasticEnergyByExcitFrequency(modes,geneDisps)
+
+    if method=="ComplexEnergyRatio":
+        Crit_by_freqExcit={freq:abs(Ener["last"])/abs(Ener["total"]) for freq,Ener in elasticEnergies.items()}
+    elif method=="SeparatedEnergyRatio":
+        Crit_by_freqExcit={freq:max([Ener["last"].real/Ener["total"].real,Ener["last"].imag/Ener["total"].imag]) for freq,Ener in elasticEnergies.items()}
+    else:
+        raise Exception("Method not available")
+
+    criteria=1-max(Crit_by_freqExcit.values())
+    return criteria
+
+
+def ComputeElemForcFromField(Field,GROUP_MA):
+    # Components extraction of the field to evaluate, 
+    #    with several values per cell (ex: ELGA, ELNO)
+    pyreelgaX3EG_X1, _ = Field.getValuesWithDescription('X1',[GROUP_MA])
+    pyreelgaX3EG_X2, _ = Field.getValuesWithDescription('X2',[GROUP_MA])
+    pyreelgaX3EG_X3, _ = Field.getValuesWithDescription('X3',[GROUP_MA])
+
+    # Retrieve number of cells
+    nummailles_by_groupma = {t[0]:t[1] for t in mesh.LIST_GROUP_MA()}
+    numX300 = nummailles_by_groupma[GROUP_MA]
+
+    # From flatten array to celle,value matrix 
+    npyreelgaX3EG_X1valeurs = np.array(pyreelgaX3EG_X1).reshape(numX300,-1)
+    npyreelgaX3EG_X2valeurs = np.array(pyreelgaX3EG_X2).reshape(numX300,-1)
+    npyreelgaX3EG_X3valeurs = np.array(pyreelgaX3EG_X3).reshape(numX300,-1)
+
+    # Compute mean: one value per cell
+    npyreelgaX3EG_X1mean = np.mean(npyreelgaX3EG_X1valeurs, axis=1)
+    npyreelgaX3EG_X2mean = np.mean(npyreelgaX3EG_X2valeurs, axis=1)
+    npyreelgaX3EG_X3mean = np.mean(npyreelgaX3EG_X3valeurs, axis=1)
+
+    # Reassemble components
+    npyX1X2X3 = np.stack((npyreelgaX3EG_X1mean, npyreelgaX3EG_X2mean, npyreelgaX3EG_X3mean), axis = -1)
+    npyX1X2X3flat = npyX1X2X3.flatten()
+    return npyX1X2X3flat
+
+
+
+restran = CALC_CHAMP(reuse=restran,
+                    RESULTAT=restran,
+                    CONTRAINTE=('SIEF_ELGA'))
+
+IMPR_RESU(FORMAT='MED',
+          RESU=(
+                _F(RESULTAT=restran,NOM_CHAM=('DEPL'),NOM_CHAM_MED=('U_RE'),PARTIE='REEL',TOUT_ORDRE='OUI',),
+                _F(RESULTAT=restran,NOM_CHAM=('DEPL'),NOM_CHAM_MED=('U_IM'),PARTIE='IMAG',),
+                _F(RESULTAT=restran,NOM_CHAM=('SIEF_ELGA'),NOM_CHAM_MED=('SIGMA_RE'),PARTIE='REEL',),
+                _F(RESULTAT=restran,NOM_CHAM=('SIEF_ELGA'),NOM_CHAM_MED=('SIGMA_IM'),PARTIE='IMAG',),
+                ),
+          UNITE=81,
+          INFO=1) 
+
+
+#=====================================================================================================
+#                                      POST PROCESSING                                    
+#=====================================================================================================
+
+if len(scalars) or len(fields):
+    texc=RECU_TABLE(CO=restran,NOM_PARA='FREQ')
+    l_freqexc = l100.getValuesAsArray()
+    num_freq=len(l_freqexc)
+
+    #Compute complex force to apply for adjoint problem
+    fadre = [None]*num_freq
+    fadim = [None]*num_freq
+    chdr = [None]*num_freq
+    chdi = [None]*num_freq
+    domM = [None]*num_freq
+    chtp = [None]*num_freq
+    ched = [None]*num_freq
+    gd_re = [None]*num_freq
+    gd_im = [None]*num_freq
+    affe_erpd = []
+
+    for numfreqexc,freqexc in enumerate(l_freqexc):
+        if erpVariableRequired or gradientFieldRequired:
+            nume_ordre=numfreqexc+1
+            pulsation_exc=2.0*pi*freqexc
+
+            chdepl = CREA_CHAMP(NOM_CHAM='DEPL',
+                                OPERATION='EXTR',
+                                NUME_ORDRE=nume_ordre,
+                                RESULTAT=restran,
+                                TYPE_CHAM='NOEU_DEPL_C')
+
+            chdr[numfreqexc] = CREA_CHAMP(CHAM_GD=chdepl,
+                                 OPERATION='C2R',
+                                 PARTIE='REEL',
+                                 TYPE_CHAM='NOEU_DEPL_R')
+
+            # Real part: chvmodpr=u_re.n
+            chvmodpr = CREA_CHAMP(CHAM_F=chnorf,
+                                  CHAM_PARA=(chdr[numfreqexc], chnor),
+                                  OPERATION='EVAL',
+                                  TYPE_CHAM='NOEU_NEUT_R')
+
+            # Real part: chvrn=(u_re.n)n
+            chvrn = CREA_CHAMP(CHAM_F=chscalf,
+                                 CHAM_PARA=(chvmodpr, chnor),
+                                 OPERATION='EVAL',
+                                 TYPE_CHAM='NOEU_NEUT_R')
+            DETRUIRE(NOM=(chvmodpr))
+
+            chvrd = CREA_CHAMP(OPERATION='ASSE',
+                               TYPE_CHAM='NOEU_DEPL_R',
+                               MODELE=model,
+                               ASSE=(_F(CHAM_GD=chvrn,
+                                        NOM_CMP=('X1', 'X2', 'X3'),
+                                        NOM_CMP_RESU=('DX', 'DY', 'DZ'),
+                                        TOUT='OUI'),),
+                               )
+            DETRUIRE(NOM=(chvrn, ))
+
+            # ...Imaginary displacement at nodes
+            chdi[numfreqexc] = CREA_CHAMP(CHAM_GD=chdepl,
+                                 OPERATION='C2R',
+                                 PARTIE='IMAG',
+                                 TYPE_CHAM='NOEU_DEPL_R')
+
+            # Imaginary part: chvmodpi=u_im.n
+            chvmodpi = CREA_CHAMP(CHAM_F=chnorf,
+                                  CHAM_PARA=(chdi[numfreqexc], chnor),
+                                  OPERATION='EVAL',
+                                  TYPE_CHAM='NOEU_NEUT_R') 
+                  
+            # Imaginary part: chvin=(u_im.n)n
+            chvin = CREA_CHAMP(CHAM_F=chscalf,
+                                 CHAM_PARA=(chvmodpi, chnor),
+                                 OPERATION='EVAL',
+                                 TYPE_CHAM='NOEU_NEUT_R')
+            DETRUIRE(NOM=(chvmodpi))
+            
+            chvid = CREA_CHAMP(OPERATION='ASSE',
+                               TYPE_CHAM='NOEU_DEPL_R',
+                               MODELE=model,
+                               ASSE=(_F(CHAM_GD=chvin,
+                                        NOM_CMP=('X1', 'X2', 'X3'),
+                                        NOM_CMP_RESU=('DX', 'DY', 'DZ'),
+                                        TOUT='OUI'),),
+                               )
+
+            DETRUIRE(NOM=(chdepl))
+            #Compute ERP criterion
+            cherpd = CREA_CHAMP(CHAM_F=chprodf,
+                                 CHAM_PARA=(chvrd, chvin),
+                                 OPERATION='EVAL',
+                                 TYPE_CHAM='NOEU_NEUT_R')
+
+            chetpa = CREA_CHAMP(TYPE_CHAM="NOEU_NEUT_R", OPERATION="ASSE", MODELE=model,ASSE=(_F(TOUT="OUI", CHAM_GD=cherpd, NOM_CMP=('X1', 'X2', 'X3'), NOM_CMP_RESU=('X1', 'X2', 'X3')),),)                                 
+
+            chetp=CREA_CHAMP(OPERATION = 'COMB', TYPE_CHAM='NOEU_NEUT_R',COMB=(_F(CHAM_GD=chetpa, COEF_R= (2.*pi*l_freqexc[numfreqexc])**2),),INFO=2)
+
+            crinit=CREA_CHAMP(TYPE_CHAM='NOEU_TEMP_R',
+                                OPERATION='AFFE',
+                                MODELE=model,
+                                AFFE=_F(TOUT='OUI',NOM_CMP='TEMP',VALE=0.0),
+                                )
+
+            ched[numfreqexc] = CREA_CHAMP(OPERATION='ASSE',
+                               TYPE_CHAM='NOEU_TEMP_R',
+                               MODELE=model,
+                               ASSE=(
+                                     _F(CHAM_GD=crinit, TOUT='OUI', CUMUL='OUI'),
+                                     _F(CHAM_GD=chetp,NOM_CMP=('X1', ),NOM_CMP_RESU=('TEMP',),TOUT='OUI'),),
+                               )
+
+            DETRUIRE(NOM=(cherpd,chetpa,chetp,chvin,crinit))
+            affe_erpd.append( _F(CHAM_GD=ched[numfreqexc], INST=nume_ordre, NOM_CHAM='TEMP') )
+        else:
+            pass
+
+        #Compute adjoint force
+        for field in fields:
+            if field == 'ERP_sensitivity':
+                erp_coeff=-erprho*erpc*erpf*pulsation_exc**2
+                frenoeu= CREA_CHAMP(OPERATION = 'COMB', TYPE_CHAM='NOEU_DEPL_R',COMB=(_F(CHAM_GD=chvrd, COEF_R=erp_coeff )))
+                fimnoeu= CREA_CHAMP(OPERATION = 'COMB', TYPE_CHAM='NOEU_DEPL_R',COMB=(_F(CHAM_GD=chvid, COEF_R=erp_coeff )))
+
+                freneut = CREA_CHAMP(OPERATION='ASSE',
+                                    TYPE_CHAM='NOEU_NEUT_R',
+                                    MODELE=model,
+                                    ASSE=
+                                    _F(CHAM_GD=frenoeu ,
+                                    TOUT='OUI',
+                                    NOM_CMP  =('DX','DY','DZ'),
+                                    NOM_CMP_RESU=('X1','X2','X3'),
+                                       ),)
+
+                fimneut = CREA_CHAMP(OPERATION='ASSE',
+                                    TYPE_CHAM='NOEU_NEUT_R',
+                                    MODELE=model,
+                                    ASSE=
+                                    _F(CHAM_GD=fimnoeu ,
+                                    TOUT='OUI',
+                                    NOM_CMP  =('DX','DY','DZ'),
+                                    NOM_CMP_RESU=('X1','X2','X3'),
+                                       ),)
+
+                DETRUIRE(NOM=(frenoeu,fimnoeu ))
+
+                freelga = CREA_CHAMP( OPERATION='DISC',
+                                    TYPE_CHAM='ELGA_NEUT_R',
+                                    MODELE=model,
+                                    PROL_ZERO='OUI',
+                                    CHAM_GD=freneut )
+
+                fimelga = CREA_CHAMP( OPERATION='DISC',
+                                        TYPE_CHAM='ELGA_NEUT_R',
+                                        MODELE=model,
+                                        PROL_ZERO='OUI',
+                                        CHAM_GD=fimneut )
+                DETRUIRE(NOM=(freneut,fimneut ))
+
+                #Initialisation force real contribution
+                fadre[numfreqexc] = CREA_CHAMP(
+                                    TYPE_CHAM='ELEM_FORC_R',
+                                    MODELE = model,
+                                    OPERATION = 'AFFE',
+                                    PROL_ZERO='OUI',
+                                    AFFE = _F(GROUP_MA=erpSurface,NOM_CMP=('FX','FY','FZ'),VALE=(0.0,0.0,0.0)),         
+                          )   
+                
+                npyX1X2X3flat = ComputeElemForcFromField(freelga,erpSurface)
+
+                DETRUIRE(NOM=(freelga ))
+
+
+                #Initialisation force imaginary contribution
+                fadim[numfreqexc] = CREA_CHAMP(
+                                    TYPE_CHAM='ELEM_FORC_R',
+                                    MODELE = model,
+                                    OPERATION = 'AFFE',
+                                    PROL_ZERO='OUI',
+                                    AFFE = _F(GROUP_MA=erpSurface,NOM_CMP=('FX','FY','FZ'),VALE=(0.0,0.0,0.0)),         
+                          ) 
+                npyX1X2X3flat = ComputeElemForcFromField(fimelga,erpSurface)
+
+                npyX1X2X3flatext = np.pad(npyX1X2X3flat, (0, fadre[numfreqexc].size()-len(npyX1X2X3flat)), mode='constant', constant_values=0)
+                fadre[numfreqexc].setValues(tuple(npyX1X2X3flatext))
+
+                DETRUIRE(NOM=(fimelga ))
+            elif field == 'DomiModeDEPL':
+                DominantModeIndexByFreq=GetDominantModeIndexByFreq(modes,resharm)
+                domM[numfreqexc]=CREA_CHAMP(
+                                    OPERATION='EXTR',
+                                    RESULTAT= modes,
+                                    NUME_ORDRE=DominantModeIndexByFreq[freqexc]+1,  
+                                    TYPE_CHAM='NOEU_DEPL_R',
+                                    NOM_CHAM='DEPL'     
+                          ) 
+            elif field == 'ERP_dens':
+                pass
+            elif field == 'AllModeDEPL':
+                pass
+            elif field == 'Grad_Re_NEUT' :
+                gd_re[numfreqexc]= GRADIENT_TENSOR(MAILLAGE=mesh,
+                                        NOM_CMP=('DX','DY','DZ'),
+                                        CHAM_GD=chdr[numfreqexc])
+            elif field == 'Grad_Im_NEUT':
+                gd_im[numfreqexc]= GRADIENT_TENSOR(MAILLAGE=mesh,
+                                        NOM_CMP=('DX','DY','DZ'),
+                                        CHAM_GD=chdi[numfreqexc])
+            else:
+                raise Exception("The field "+field+" is not available for the harmonic analysis.")
+        #Destroyed used variable for next iteration
+        if erpVariableRequired:
+            DETRUIRE(NOM=(chvrd,chvid))
+else:
+    pass
+
+
+
+for scalar in scalars:
+    if scalar == 'ERP':
+        reserp = CREA_RESU(OPERATION='AFFE',
+                            TYPE_RESU='EVOL_THER',
+                            AFFE=affe_erpd,
+                            )
+
+        tbint = POST_ELEM(MODELE=model,
+                          RESULTAT=reserp,
+                          INTEGRALE=_F(GROUP_MA=erpSurface,
+                                        TYPE_MAILLE='2D',
+                                        NOM_CMP='TEMP',
+                                        NOM_CHAM='TEMP',
+                                        ),
+                  )
+        DETRUIRE(NOM=(reserp))
+
+        tbint = CALC_TABLE(reuse=tbint,
+                            TABLE=tbint,
+                            ACTION=(
+                                _F(OPERATION='COMB',NOM_PARA='NUME_ORDRE',TABLE=texc),
+                                _F(OPERATION='RENOMME',NOM_PARA=('INTE_TEMP','ERPABS'),),
+                                _F(OPERATION='RENOMME',NOM_PARA=('MOYE_TEMP','AVG_ERPABS'),),
+                                _F(OPERATION='OPER',FORMULE=ERPDB,NOM_PARA='ERPDB',NOM_COLONNE='ERPABS'),
+                                )
+                            )
+        IMPR_TABLE(TABLE=tbint,FORMAT='TABLEAU',SEPARATEUR=',',TITRE='',UNITE=27)
+    elif scalar in ["ModalCumulMassFractiondX","ModalCumulMassFractiondY","ModalCumulMassFractiondZ"]:
+        AsterCumulMassCritByName={
+                                  "ModalCumulMassFractiondX":'MASS_EFFE_UN_DX',
+                                  "ModalCumulMassFractiondY":'MASS_EFFE_UN_DY',
+                                  "ModalCumulMassFractiondZ":'MASS_EFFE_UN_DZ',
+                                  }
+        TBFMODES = RECU_TABLE(CO=modes,NOM_PARA = ('FREQ',AsterCumulMassCritByName[scalar],))
+        valueCriteria=sum(TBFMODES.EXTR_TABLE().values()[AsterCumulMassCritByName[scalar]])
+        T_LST=CREA_TABLE(
+                          LISTE=(
+                                 _F(LISTE_R=(valueCriteria),PARA=scalar),
+                                )
+                         )
+        IMPR_TABLE(TABLE=T_LST,FORMAT='TABLEAU',SEPARATEUR=',',TITRE='',UNITE=27)
+        DETRUIRE(NOM=(TBFMODES,T_LST))
+    elif scalar=="ModalLastEnergyRatio":
+        valueCriteria=ModalBasisQualityEnergyContribution(modes,resharm,method="ComplexEnergyRatio")
+        T_LST=CREA_TABLE(
+                          LISTE=(
+                                 _F(LISTE_R=(valueCriteria),PARA=scalar),
+                                )
+                         )
+        IMPR_TABLE(TABLE=T_LST,FORMAT='TABLEAU',SEPARATEUR=',',TITRE='',UNITE=27)
+        DETRUIRE(NOM=(T_LST))
+    elif scalar=="eigen_Frequencies":
+        valueCriteria=GetEigenPulsations(modes)
+        T_LST=CREA_TABLE(
+                          LISTE=(
+                                 _F(LISTE_R=(valueCriteria),PARA=scalar),
+                                )
+                         )
+        IMPR_TABLE(TABLE=T_LST,FORMAT='TABLEAU',SEPARATEUR=',',TITRE='',UNITE=27)
+        DETRUIRE(NOM=(T_LST))
+    elif scalar=="GeneDisp":
+        geneDisps=GeneralDisplacementByExcitFrequency(modes,resharm)
+        orderedFreq=sorted(geneDisps.keys(),key=float)
+        genedispsOrdered=[geneDisps[freq] for freq in orderedFreq]
+        flat_geneDisp_R = [item.real for sublist in genedispsOrdered for item in sublist]
+        flat_geneDisp_I = [item.imag for sublist in genedispsOrdered for item in sublist]
+        T_LST=CREA_TABLE(
+                          LISTE=(
+                                 _F(LISTE_R=(flat_geneDisp_R+flat_geneDisp_I),PARA=scalar),
+                                )
+                         )
+        IMPR_TABLE(TABLE=T_LST,FORMAT='TABLEAU',SEPARATEUR=',',TITRE='',UNITE=27)
+        DETRUIRE(NOM=(T_LST))
+    else:
+        raise Exception("The scalar "+scalar+" is not available for the harmonic analysis.")
+
+for field in fields:
+    if field == 'ERP_sensitivity':
+        freal= CREA_RESU(OPERATION='AFFE',
+                  TYPE_RESU='EVOL_CHAR',
+                  AFFE=(
+                       [_F(CHAM_GD=fadre[numfreqexc],
+                       MODELE=model,
+                       NOM_CHAM='FSUR_3D',
+                       INST=freqexc-l_freqexc[0],
+                          ) for numfreqexc,freqexc in enumerate(l_freqexc)]
+                  ),)
+
+        fimag= CREA_RESU(OPERATION='AFFE',
+                  TYPE_RESU='EVOL_CHAR',
+                  AFFE=(
+                       [_F(CHAM_GD=fadim[numfreqexc],
+                       MODELE=model,
+                       NOM_CHAM='FSUR_3D',
+                       INST=freqexc-l_freqexc[0],
+                          ) for numfreqexc,freqexc in enumerate(l_freqexc)]
+                  ),)
+
+        IMPR_RESU(FORMAT='MED',
+                  RESU=(_F(RESULTAT=freal,NOM_RESU_MED='FREAL',),_F(RESULTAT=fimag,NOM_RESU_MED='FIMAG')),
+                  UNITE=81,
+                  INFO=1) 
+    elif field == 'DomiModeDEPL':
+        domiM= CREA_RESU(OPERATION='AFFE',
+                  TYPE_RESU='EVOL_ELAS',
+                  AFFE=(
+                       [
+                       _F(CHAM_GD=domM[numfreqexc],
+                          INST=freqexc-l_freqexc[0],
+                          NOM_CHAM='DEPL',
+                          ) for numfreqexc,freqexc in enumerate(l_freqexc)
+                       ]
+                  ),)
+
+        IMPR_RESU(FORMAT='MED',
+                  RESU=_F(RESULTAT=domiM,NOM_RESU_MED='DomiModeDEPL',),
+                  UNITE=83,
+                  INFO=1) 
+    elif field == 'AllModeDEPL':
+        eigenFreq=GetEigenPulsations(modes)
+        aMd = [None]*len(eigenFreq)
+        for numOrder,eigfreq in enumerate(eigenFreq):
+            aMd[numOrder]=CREA_CHAMP(
+                            OPERATION='EXTR',
+                            RESULTAT= modes,
+                            NUME_ORDRE=numOrder+1,  
+                            TYPE_CHAM='NOEU_DEPL_R',
+                            NOM_CHAM='DEPL'     
+                                          )
+                
+        allM= CREA_RESU(OPERATION='AFFE',
+                  TYPE_RESU='EVOL_ELAS',
+                  AFFE=(
+                       [
+                       _F(CHAM_GD=aMd[numOrder],
+                          INST=numOrder,
+                          NOM_CHAM='DEPL',
+                          ) for numOrder,eigfreq in enumerate(eigenFreq)
+                       ]
+                  ),)
+
+        IMPR_RESU(FORMAT='MED',
+                  RESU=_F(RESULTAT=allM,NOM_RESU_MED='ModesDEPL',),
+                  UNITE=83,
+                  INFO=1) 
+    elif field == 'ERP_dens':
+        reserp = CREA_RESU(OPERATION='AFFE',
+                            TYPE_RESU='EVOL_THER',
+                            AFFE=affe_erpd,
+                            )
+
+        IMPR_RESU(FORMAT='MED',
+                  RESU=_F(RESULTAT=reserp,NOM_RESU_MED='ERP_dens',),
+                  UNITE=83,
+                  INFO=1) 
+        DETRUIRE(NOM=(reserp))
+    elif field == 'Grad_Re_NEUT':
+        GRE=CREA_RESU(OPERATION='AFFE',
+                           TYPE_RESU='EVOL_VARC',
+                           AFFE=(
+                                 [_F(CHAM_GD=gd_re[numfreqexc],
+                                 INST=numfreqexc,
+                                 NOM_CHAM='NEUT',
+                                    ) for numfreqexc,freqexc in enumerate(l_freqexc)]
+                                ),)
+        IMPR_RESU(FORMAT='MED',
+                  RESU=(
+                       _F(RESULTAT=GRE,NOM_RESU_MED='Grad_Re',),
+                         ),
+                  UNITE=83,
+                  INFO=1) 
+
+    elif field == 'Grad_Im_NEUT':
+        GIM=CREA_RESU(OPERATION='AFFE',
+                           TYPE_RESU='EVOL_VARC',
+                           AFFE=(
+                                 [_F(CHAM_GD=gd_im[numfreqexc],
+                                 INST=numfreqexc,
+                                 NOM_CHAM='NEUT',
+                                    ) for numfreqexc,freqexc in enumerate(l_freqexc)]
+                                ),)
+
+        IMPR_RESU(FORMAT='MED',
+                  RESU=(
+                       _F(RESULTAT=GIM,NOM_RESU_MED='Grad_Im',),
+                         ),
+                  UNITE=83,
+                  INFO=1) 
+    else:
+        raise Exception("The field "+field+" is not available for the harmonic analysis.")
+
+IMPR_RESU(FORMAT='MED',
+          RESU=(
+                _F(NOM_CHAM=('DEPL', ),
+                   NOM_CHAM_MED=('DEPL_R', ),
+                   PARTIE='REEL',
+                   RESULTAT=restran),
+                _F(NOM_CHAM=('DEPL', ),
+                   NOM_CHAM_MED=('DEPL_I', ),
+                   PARTIE='IMAG',
+                   RESULTAT=restran),
+               ),
+          UNITE=83,
+          INFO=1)
+
+
+FIN()

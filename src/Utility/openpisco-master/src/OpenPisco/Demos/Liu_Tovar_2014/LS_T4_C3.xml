@@ -1,0 +1,80 @@
+<data dim="3" debug="False">
+<!--
+An efficient 3D topology optimization code written in Matlab
+Kai Liu · Andres Tovar
+
+DOI 10.1007/s00158-014-1107-x
+
+Table 4 Case 2
+
+-->
+    <Zones>
+        <AABox id="10" origin="2 2 2" size="58 16 16" desc="Init1" />
+        <AABox id="20" origin="2 2 2" size="16 60 16" desc="Init2" />
+        <Union id="1" z="10 20" desc="all init"/>
+
+        <AABox id="30" origin="20.01 20.01 -10" size="50 50 40" desc="OFF" />
+
+	    <AABox id="2"    origin="0. 59.9 0." size="20 1 20" desc="Block" />
+        <Cylinder id="3" center1="59.9 10 10" center2="60.1 10 10" radius="0.5" desc="Force"/>
+
+        <Union id="44" z="2 3" />
+        <Difference id="444" z1="44" z2="30" />
+        <Offset id="4" z="444" offset="-1" desc="On" />
+
+        <Union id="5" z="1 4 " desc="Init" />
+    </Zones>
+
+    <Grids>
+        <Grid id="1" n="61 61 21" origin="0. 0. 0." length="60 60 20"/>
+    </Grids>
+
+    <LevelSets>
+        <LevelSet id="1" support="1"/>
+    </LevelSets>
+
+    <PhysicalProblems>
+        <Structured id="1" grid="1" type="static_elastic" eVoid="0.001">
+             <Dirichlet zone="2" dofs="0 1 2" val="0.0"/>
+             <Neumann   zone="3" dofs="1" val="-1000"/>
+        </Structured>
+    </PhysicalProblems>
+
+
+    <OptimProblems>
+        <OptimProblem type="TopoGeneric" id="1"
+            OnZone="4" OffZone="30"
+            useLevelset="1"
+            e2="0.001"
+            output="1"
+        >
+          <Objective  type="Compliance"  name="Displacement" useProblem="1" />
+          <Constraint type="Volume"     name="Volume"   UpperBound="8000"  desc="0.15*voltotal = 0.15*(60*60*20)=10800"/>
+       </OptimProblem>
+    </OptimProblems>
+
+    <TopologicalOptimizations>
+	<OptimAlgoNullSpace id="1"
+            useOptimProblem="1"
+            stepSizeMax="2.5"
+            stepSize="2"
+        />
+
+    </TopologicalOptimizations>
+
+    <Outputs>
+       <Output id="2" name="Liu_Tovar_2014_LS_T4_C3.xdmf"/>
+       <Output id="3" name="Liu_Tovar_2014_LS_T4_C3.csv" nTag="NT3" />
+       <Output id="1" name="PROXY" outputs="2 3"/>
+    </Outputs>
+
+
+    <Actions>
+        <Action type="CreateTagsFromZones" ls="1" nodalTags="3" />
+        <Action type="InitLevelset" ls="1" zone="5"/>
+        <Action type="UpdateDistance" ls="1" />
+        <Action type="RunTopoOp" TopoOp="1"/>
+        <Action type="SaveShapeToFile" ls="1" filename="Liu_Tovar_2014_LS_T4_C3.stl"/>
+
+    </Actions>
+ </data>

@@ -1,8 +1,11 @@
 #ifndef COREMATERIALS_HPP
 #define COREMATERIALS_HPP
 
+#include "CoreMaterialsStructs.hpp"
 #include <vector>
 #include <string>
+#include <cmath>
+#include <utility>
 
 class MaterialInterface;
 class CalculiXCoreInterface;
@@ -36,9 +39,14 @@ public:
   std::string get_material_prefix(std::string material_name); // gets a prefix for the material name if needed
   bool check_material_exists(int material_id); // check if material exists
   std::string get_material_name(int material_id); // gets material name
+  bool initialize_topology_materials(int topology_id,const std::vector<int>& element_ids,const std::vector<int>& base_material_ids);
+  bool set_topology_iteration_factors(int topology_id,int iteration_id,const std::vector<int>& element_ids,const std::vector<double>& stiffness_factors);
+  std::string get_topology_material_name(int topology_id,int element_id) const;
+  std::string get_topology_material_export(int topology_id,int iteration_id);
 
   MaterialInterface *mat_iface;
   CalculiXCoreInterface *ccx_iface;
+  std::map<int, TopologyMaterialData> topology_material_data; // Topology ID -> one material collection.
 };
 
 #endif // COREMATERIALS_HPP

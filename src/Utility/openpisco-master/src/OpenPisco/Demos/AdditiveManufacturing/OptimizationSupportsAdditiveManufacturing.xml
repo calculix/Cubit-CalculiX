@@ -1,0 +1,70 @@
+<!--
+Topology optimization of AM supports for an overhanged tube
+-->
+
+<data dim="3" debug="False" >
+
+    <Zones>
+         <ETag id="1" ls="1" eTags="Exterior" offset="1e-2" insideOut="True" desc="Initialization"/> 
+         <!--<AABox id="2" origin="0.5 0.2 0.4" size="1. 0.6 0.9" desc="bbox overhang"/> -->
+         <AABox id="3" origin="-1 -1 -0.01" size="4 3 0.1" desc="For plateau"/>
+         <Union id="403" z="1 3" desc="Initialization"/>
+    </Zones>
+
+    <Grids>
+        <Mesh id="1" filename="{PISCO_TEST_DATA}TubeMesh.msh" />
+    </Grids>
+
+    <LevelSets>
+        <LevelSet id="1" support="1" conform="False">
+        </LevelSet>
+    </LevelSets>
+
+    <PhysicalProblems>
+        <Unstructured id="1" type="static_elastic"  p="1"  eVoid="0.000">
+            <Material    young="1" poisson="0.3"/>
+            <Dirichlet   eTag="Bottom" dofs="0 1 2" value="0" />
+            <Dirichlet   eTag="backingSurface" dofs="0 1 2" value="0" />
+            <Force eTag="overhangSurface" dir="0 0 -1" value="0.002" />
+        </Unstructured>
+    </PhysicalProblems>
+
+
+    <OptimProblems>
+        <OptimProblem type="TopoGeneric" id="1"
+            DirichletETags="GeoTag6" 
+            NeumannETags="overhangSurface" 
+            OnETags="overhangSurface" 
+            useLevelset="1"
+            output="1">
+        
+           <Objective type="Weighted" automaticPenalisation="True">
+               <Criteria type="Compliance"  name="Compliance" weight="1" useProblem="1" />
+               <Criteria type="ContactSurfacePenalization" name="SurfacePenalization" weight="1" length="2e-3" eTags="InsideTube OutsideTube" overhangTag="overhangSurface" />
+            </Objective>
+        
+            <Constraint type="Volume"     name="Volume"   upperBound="0.2*4.01120495e+00" desc="0.2*V0"/>
+        </OptimProblem>
+    </OptimProblems>
+
+    <TopologicalOptimizations>
+    <OptimAlgoNullSpace id="1"
+            useOptimProblem="1"/>
+            
+    </TopologicalOptimizations>
+
+    <Outputs>
+       <Output id="1" name="AMSupportsOptimization.xmf"/>
+    </Outputs>
+
+    <Actions>
+        <Action type="DeleteElements" ls="1" ef="Tags(Tube)" />
+        <Action type="DeleteElements" ls="1" ef="Tags(GeoTag1) & Dim(2)" /> <!-- Remove base ring of the tube -->
+        <Action type="OverHangDetection" ls="1" angleDetection="45" surfaceTags="OutsideTube InsideTube" direction="0 0 1"/>
+        <Action type="BackingDetection" surfaceTag="InsideTube" ls="1" />
+        <Action type="InitLevelset" ls="1" zone="403"/>
+        <Action type="UpdateDistance" ls="1" />
+        <Action type="RunTopoOp" TopoOp="1"/>
+        <Action type="SaveShapeToFile" ls="1" filename="AMSupportsOptimization.stl"/>
+    </Actions>
+ </data>

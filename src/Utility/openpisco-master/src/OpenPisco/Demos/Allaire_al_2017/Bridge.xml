@@ -1,0 +1,84 @@
+<data dim="3" debug="False">
+<!--
+Structural optimization under overhang constraints imposed by additive
+manufacturing technologies
+Grégoire Allaire · Charles Dapogny · Rafael Estevez · Alexis Faure · Georgios Michailidis
+
+
+https://ljk.imag.fr/membres/Charles.Dapogny/publis/amnum_v5.pdf
+
+Table 4 Case 2
+
+-->
+    <Zones>
+        <AABox id="1" origin="0.01 0.01 0.01" size="6-2*0.01 1-2*0.01 1-2*0.01" desc="Init" />
+        <!-- to initialise with a gyroid
+        <AABox id="10" origin="-5.99 -0.99 0.01" size="11.98 1.98 1.98" desc="Init" />
+        <Gyroid id="100"  desc="Init" scale="0.3" />
+        <Symmetric id="101" z="100" />
+        <Intersection id="1" z="10 101"/>
+        -->
+
+        <Cylinder id="20" center1="0 0 -0.01" center2="0 0 0.01" radius="0.05" desc="block 012"/>
+        <Cylinder id="21" center1="0 1 -0.01" center2="0 1 0.01" radius="0.05" desc="block 012"/>
+        <Cylinder id="22" center1="6 0 -0.01" center2="6 0 0.01" radius="0.05" desc="block 2"/>
+        <Cylinder id="23" center1="6 1 -0.01" center2="6 1 0.01" radius="0.05" desc="block 2"/>
+
+        <Union id="2" z="20 21 22 23" desc="all blocks"/>
+
+        <Plane id="3" point="3 0.5 0.999" normal="0 0 -1" desc="Force"/>
+        <Union id="44" z="2 3"/>
+        <Offset id="4" z="44" offset="-0.1" />
+        <Union id="5" z="1 4 "/>
+
+        <Plane id="200" point="6/2-0.01 0 0" normal="-1 0 0" desc="sym plane x" />
+        <Plane id="201" point="0 1/2-0.01 0" normal="0 -1 0" desc="sym plane y" />
+    </Zones>
+
+    <Grids>
+        <Grid id="1" n="91 16 31" origin="0. 0. 0." length="3 0.5 1"/>
+    </Grids>
+
+    <LevelSets>
+        <LevelSet id="1" support="1"/>
+    </LevelSets>
+
+    <PhysicalProblems>
+        <Structured id="1" grid="1" type="static_elastic"  linearSolver="EigenCG" eVoid="0.001" >
+             <Dirichlet eTag="ET2" dofs=" 2" val="0.0" desc="because of the sym we dont need the 0 1 blockage"/>
+             <Dirichlet zone="200" dofs="0" val="0.0" desc="sym x"/>
+             <Dirichlet zone="201" dofs="1" val="0.0" desc="sym y"/>
+             <Neumann  eTag="ET3" dofs="2" val="-1"/>
+        </Structured>
+    </PhysicalProblems>
+
+
+    <OptimProblems>
+        <OptimProblem type="TopoGeneric" id="1"
+            OnZone="4"
+            useLevelset="1"
+            output="1"
+            outputEveryLevelsetUpdate="False"
+        >
+          <Objective  type="Compliance"  name="Displacement" useProblem="1" />
+          <Constraint type="Mass" upperBound="1.2/4" density="1"/>
+       </OptimProblem>
+    </OptimProblems>
+
+    <TopologicalOptimizations>
+ 	<OptimAlgoNullSpace id="1" useOptimProblem="1" />
+    </TopologicalOptimizations>
+
+    <Outputs>
+       <Output id="1" name="Allaire_al_2017_{INPUTFILE}.xdmf"/>
+    </Outputs>
+
+    <Actions>
+        <Action type="AddSkin" ls="1" />
+        <Action type="CreateTagsFromZones" ls="1" dim="2" elementTags="2 3" />
+        <Action type="InitLevelset" ls="1" zone="5"/>
+        <Action type="UpdateDistance" ls="1" />
+        <Action type="RunTopoOp" TopoOp="1"/>
+        <Action type="SaveShapeToFile" ls="1" filename="Allaire_al_2017_{INPUTFILE}.stl"/>
+    </Actions>
+ </data>

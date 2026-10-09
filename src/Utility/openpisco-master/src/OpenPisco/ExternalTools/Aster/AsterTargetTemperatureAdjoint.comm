@@ -1,0 +1,76 @@
+# -*- coding: utf-8 -*-
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE', which is part of this source code package.
+#
+POURSUITE()
+
+mesh = LIRE_MAILLAGE(FORMAT='MED',
+                     UNITE=20)
+
+model = AFFE_MODELE(AFFE=_F(MODELISATION=('3D', ),
+                              PHENOMENE='THERMIQUE',
+                              TOUT='OUI'),
+                      MAILLAGE=mesh)
+
+
+CHSOURCE = LIRE_CHAMP (
+                  UNITE=20,
+                  MAILLAGE = mesh,
+                  NOM_MED = 'source',
+                  MODELE = model,
+                  TYPE_CHAM = 'ELEM_SOUR_R',
+                  NOM_CMP = 'SOUR',
+                  NOM_CMP_MED = 'DX',
+                  PROL_ZERO = 'NON',
+                  INST=0.0,
+)
+
+LSOURCE=AFFE_CHAR_THER(  MODELE=model,
+                        SOURCE=_F(SOUR_CALCULEE=CHSOURCE)
+)
+
+fieldma1 = AFFE_MATERIAU(MODELE=model, **materials)
+
+# ~ prescribed temperature 
+tempimpo = AFFE_CHAR_CINE(MODELE=model, **ther_impo)
+
+# ~ convection                                     
+convect = AFFE_CHAR_THER(MODELE=model, **convection)
+
+# ~ volumic source 
+source = AFFE_CHAR_THER(MODELE=model, **source)
+
+if steady_state_solution==False: 
+   listr = DEFI_LIST_REEL(DEBUT=t_start,
+                       INTERVALLE=(_F(JUSQU_A=t_end,
+                                     NOMBRE=n_steps),
+                                   ),                       
+                       )
+
+   evolTher = THER_LINEAIRE(CHAM_MATER=fieldma1,
+                         ETAT_INIT=_F(VALE=temp_0),
+                         EXCIT=(
+                                _F(CHARGE=LSOURCE),
+                                _F(CHARGE=convect),
+                                _F(CHARGE=tempimpo)),
+                         INCREMENT=_F(LIST_INST=listr),
+                         MODELE=model)
+
+else:
+    evolTher = THER_LINEAIRE(CHAM_MATER=fieldma1,
+                         EXCIT=(
+                                _F(CHARGE=LSOURCE),
+                                _F(CHARGE=convect),
+                                _F(CHARGE=tempimpo)),
+                         MODELE=model)
+                         
+
+IMPR_RESU(RESU=(_F(RESULTAT=evolTher,
+                   NOM_CHAM=('TEMP'),
+                   NOM_CHAM_MED=('temperature'),
+                   ),
+                   ),
+          UNITE=80)
+
+FIN()

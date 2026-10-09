@@ -1,0 +1,23 @@
+<!--
+OverHang surfaces detection
+Data : tubepen0115.vtk
+-->
+
+<data dim="2" debug="False" >
+
+    <Grids>
+        <Mesh id="1" filename="{PISCO_TEST_DATA}TubeMesh2D.msh" />
+    </Grids>
+
+    <LevelSets>
+        <LevelSet id="1" support="1" conform="True">
+        </LevelSet>
+    </LevelSets>
+
+    <Actions>
+        <Action type="OverHangDetection" ls="1" />
+        <Action type="BackingDetection"  ls="1" />
+        <Action type="FilterSimplyConnectedBodiesInTag" ls="1" maxRelativeMeasure="1.0" minRelativeMeasure="0.0625"  eTag="overhangSurface" />
+         <Action type="FilterSimplyConnectedBodiesInTag" ls="1" maxRelativeMeasure="1.0" minRelativeMeasure="0.0625"  eTag="backingSurface" />
+    </Actions>
+ </data>

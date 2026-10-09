@@ -1,0 +1,122 @@
+<!--
+Topology optimization in non conformal case with thermoelastic equivalent loads and overhang loads
+-->
+
+
+<!--
+Topology optimization in non conformal case with thermoelastic equivalent loads and overhang loads
+-->
+
+
+<data dim="3" debug="False" >
+
+    <Zones>
+
+        <AABox id="100" origin="0 0 1.2" size="5 1.5 0.3"/>
+        <AABox id="101" origin="2.5-0.55/2 0 0" size="0.55 1.5 1.5"/>
+        <Union id="1"  z="100 101" desc="TBeam.stl" />
+
+        <Plane id="2" point="0. 0. 0.001" normal="0. 0. 1." desc="Block"/>
+        <ETag id="3" ls="1" eTags="InterfaceSurf" desc="Neumann zone"/>
+        <AABox id="4" origin="-0.4 -0.4 -0.2" size="5.8 2.5 1.75" desc="Full box"/>
+        <Difference id="5" z1="4" z2="1" desc="Initialization" />
+        <Union id="7" z="1 3" desc="Onzone"/>
+        <AABox id="10" origin="-0.1 1.5/2-0.2 -0.1" size="5.2 0.4 1.5" desc="initialization "/>
+
+    </Zones>
+    <Grids>
+        <Grid id="1" n="31 31 31" origin="-0.5 -0.5 0." length="6. 2.5 1.7" ofTetras ="True"/>
+    </Grids>
+
+    <LevelSets>
+        <LevelSet id="1" support="1">
+        </LevelSet>
+    </LevelSets>
+
+    <PhysicalProblems>
+    <AMThermalDilatationSolver id="1"  type="Thermal" debugFilename="ThermalAMProcess" Tini="24" HeatTime="0.1" CoolTime="5" deltaTime="0.1" nz="10">
+        <Powder
+            young="1.6*0.0001"
+            poisson="0.25"
+            thermalCapacity="700"
+            thermalDiffusion="0.25"
+            thermalExpansion="0.0000001"
+            thermalConvection="50"
+            density="2100"
+            referenceTemperature="290-273"
+            IncomePower="80000"/>
+        <Solid
+            young="110"
+            poisson="0.25"
+            thermalCapacity="610"
+            thermalDiffusion="15"
+            thermalExpansion="0.000009"
+            thermalConvection="50"
+            density="4300"
+            referenceTemperature="1923-273"
+            IncomePower="80000000"
+            />
+        </AMThermalDilatationSolver>
+
+        <Unstructured id="2" type="static_elastic"  p="1" linearSolverName="EigenCG" eVoid="0.0" >
+            <Material    young="1" poisson="0.3"/>
+            <Dirichlet   eTag="eTag2" dofs="0 1 2" value="0" />
+            <LoadingNodeField eTag="InterfaceSurf" name="ThermoElasticLoading" />
+        </Unstructured>
+
+        <Unstructured id="3" type="static_elastic"  p="1" linearSolverName="EigenCG"   eVoid="0.0">
+            <Material    young="1" poisson="0.3"/>
+            <Dirichlet   eTag="eTag2" dofs="0 1 2" value="0" />
+            <Force eTag="overhangSurface" dir="0 0 -1" value="0.002" />
+        </Unstructured>
+    </PhysicalProblems>
+
+    <OptimProblems>
+        <OptimProblem type="TopoGeneric" id="1"
+            OnZone="7"
+            useLevelset="1"
+            output="1">
+
+          <!--  <Objective type="Weighted" automaticPenalisation="True">-->
+            <Objective type="Compliance"  name="ComplianceThermoElastic" useProblem="2" />
+            <!-- <Objective type="Compliance"  name="ComplianceOverHang" weight="10" useProblem="3" /> -->
+            <!--</Objective> -->
+            <!--<Constraint type="Compliance"  name="ComplianceOverHang" useProblem="3"  upperBound="0.4*1.31767037e+01" />-->            
+            <Constraint type="Volume"     name="Volume"   upperBound="0.3*2.30489968e+00"/>
+        </OptimProblem>
+    </OptimProblems>
+
+    <TopologicalOptimizations>
+    <OptimAlgoNullSpace id="1"
+            useOptimProblem="1"
+            numberOfDesignStepsMax="100"
+        />
+
+
+    </TopologicalOptimizations>
+
+    <Outputs>
+       <Output id="1" name="TOptim.xmf"/>
+    </Outputs>
+
+    <Actions>
+    <Action type="InitLevelset" ls="1" zone="1"/>
+    <Action type="AddEdges" ls="1" ar="45" />
+    <Action type="AddSkin" ls="1"/>
+    <Action type="Remesh" force="True" ls="1" hmax=".1" iso="0.0" hmin="0.009" nr="True" keepGeneratedFiles="True" />
+    <Action type="RenameTag" ls="1" eTag="Inside3D" name="Tbeam" />
+    <Action type="RenameTag" ls="1" eTag="Outside3D" name="Box" />
+    <Action type="CreateTagsFromZones" ls="1" dim="2" elementTags="2" elemenprefix="eTag"/>
+    <Action type="OverHangDetection" ls="1" surfaceTag="InterfaceSurf"/>
+    <Action type="WriteSurfaceToStl" eTag="overhangSurface" ls="1"/>
+    <Action type="FilterSimplyConnectedBodiesInTag" ls="1" maxRelativeMeasure="1.0" minRelativeMeasure="0.0625"  eTag="overhangSurface" />
+    <Action type="GenerateEquivalentForceField" ls="1" useProblem="1" forceFieldName="ThermoElasticLoading" eTag="overhangSurface"/>
+    <Action type="DeleteElements" ls="1" ef="eTags(Tbeam)" /> 
+     <Action type="PushForceFieldToPhysicalProblem" useAMProcess="1" usePhyProblem="2" forceFieldName="ThermoElasticLoading" ls="1" />
+    <Action type="ChangePhiByZones" ls="1" zone="10" />
+    <Action type="RunTopoOp" TopoOp="1"/>
+    <Action type="SaveShapeToFile" ls="1" useMmg="True" filename="TOptim.stl" />
+    </Actions>
+ </data>
+
+

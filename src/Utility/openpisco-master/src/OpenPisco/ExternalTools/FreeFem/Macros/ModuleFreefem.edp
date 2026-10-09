@@ -1,0 +1,108 @@
+//
+// This file is subject to the terms and conditions defined in
+// file 'LICENSE', which is part of this source code package.
+//
+load "msh3"
+//NB load MUMPS changes the result...To load or not to load?
+//load "MUMPS"// massive parallel computing (>10000 elements)
+load "medit"
+//load "lapack"
+//load "fflapack"
+string header, MeshFile = "freefeminput.mesh", OutFile = "freefeminput.sol", SolFile = "freefeminput.depl.sol",  FuncFile = "objective.txt", ParamFile="velextdata.alpha";
+mesh3 Th = readmesh3(MeshFile);
+
+macro e(u) [dx(u[0]),dy(u[1]),dz(u[2]),(dz(u[1])+dy(u[2]))/sqrt(2.),(dx(u[2])+dz(u[0]))/sqrt(2.),(dx(u[1])+dy(u[0]))/sqrt(2.)]  //
+
+macro div(u) (dx(u[0])+dy(u[1])+dz(u[2])) //
+
+macro HookeTensor(c1,c2) [[ c1*(1+c2), c1*c2, c1*c2,0.,0.,0.],
+   [ c1*c2, c1*(1+c2), c1*c2,0.,0.,0.],
+   [ c1*c2, c1*c2, c1*(1+c2),0,0.,0],
+   [ 0., 0., 0.,0.5*c1, 0., 0],
+   [ 0., 0., 0.,0., 0.5*c1, 0],
+   [ 0., 0., 0.,0., 0., 0.5*c1]] // EOM
+
+macro CC HookeTensor(c1,c2)// EOM
+
+
+
+
+macro sigma(c1,c2,u) [ c1*(1+c2)*dx(u[0]) + c1*c2*(dy(u[1])+dz(u[2])),
+                 c1*c2*(dx(u[0]) + dz(u[2])) + c1*(1+c2)*dy(u[1]) ,
+                 c1*c2*(dx(u[0]) + dy(u[1])) + c1*(1+c2)*dz(u[2]) ,
+                 c1*(dz(u[1])+dy(u[2]))/sqrt(2.),
+                 c1*(dx(u[2])+dz(u[0]))/sqrt(2.),
+                 c1*(dx(u[1])+dy(u[0]))/sqrt(2.)]  // stress vector
+
+macro VV1 [[ 1., -0.5, -0.5,0.,0.,0.],
+         [ -0.5, 1., -0.5,0.,0.,0.],
+         [ -0.5, -0.5, 1., 0,0.,0],
+         [ 0., 0., 0.,1.5, 0., 0],
+         [ 0., 0., 0.,0., 1.5, 0],
+         [ 0., 0., 0.,0., 0., 1.5]]// EOM 
+
+
+
+macro WriteScalarField(vvel,n,name)
+   {
+        real[int] vel(n); vel=vvel;
+        {
+             ofstream field(name);
+             field.precision(16);
+             field<<"MeshVersionFormatted 2"<<endl;
+             field<<""<<endl;
+             field<<"Dimension 3"<<endl;
+             field<<""<<endl;
+             field<<"SolAtVertices"<<endl;
+             field<<n<<endl;
+             field<<"1 1"<<endl;
+             for(int j=0;j<n;j++){field<<vel(j)<<endl;}
+        }
+   }//EOM
+
+macro Average(ff,f,ar) 
+   {
+   real[int] FP1(Vh.ndof),FP1n(Vh.ndof);
+       FP1n = 1e-6*ar.min;
+       for (int i=0;i<Th.nt;i++)
+       {
+           for (int j=0; j <4; j++)
+           {
+             FP1[Vh(i,j)] += f[i]*ar[i];
+             FP1n[Vh(i,j)] += 1*ar[i];
+           }
+       }
+   FP1./=FP1n;
+   ff=FP1;
+   }//EOM
+
+macro WriteDisplacement(U,outfile)
+{
+real[int] ux(Th.nv);
+real[int] uy(Th.nv);
+real[int] uz(Th.nv);
+Vh o1=0, o2=0, o3=0;
+o1 = o1+ U[0];
+o2 = o2+ U[1];
+o3 = o3+ U[2];
+ux = o1[];
+uy = o2[];
+uz = o3[];
+{
+     {
+        ofstream Displacement(outfile);
+        Displacement.precision(16);
+        Displacement<<"MeshVersionFormatted 2"<<endl;
+        Displacement<<""<<endl;
+        Displacement<<"Dimension 3"<<endl;
+        Displacement<<""<<endl;
+        Displacement<<"SolAtVertices"<<endl;
+        Displacement<<Vh.ndof<<endl;
+        Displacement<<"1 2"<<endl;
+        Displacement<<""<<endl;
+        for(int k=0;k<Th.nv;k++){Displacement<<ux(k)<<" "<<uy(k)<<" "<<uz(k)<<endl;}
+        Displacement<<""<<endl;
+        Displacement<<"End"<<endl;
+     }
+}
+}//EOM

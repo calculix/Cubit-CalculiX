@@ -1,0 +1,125 @@
+# -*- coding: utf-8 -*-
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE', which is part of this source code package.
+#
+POURSUITE(PAR_LOT='NON')
+
+mesh = LIRE_MAILLAGE(FORMAT='MED')
+
+model = AFFE_MODELE(AFFE=_F(MODELISATION=('3D', ),
+                            PHENOMENE='MECANIQUE',
+                            TOUT='OUI'),
+                    MAILLAGE=mesh)
+
+fieldmat = AFFE_MATERIAU(MODELE=model, **materials)
+
+bloc = AFFE_CHAR_MECA(MODELE=model, **dirichlet)
+
+
+ASSEMBLAGE(CHAM_MATER=fieldmat,
+           CHARGE=bloc,
+           MATR_ASSE=(_F(MATRICE=CO('MRIGI'),
+                         OPTION='RIGI_MECA'),
+                      _F(MATRICE=CO('MMASS'),
+                         OPTION='MASS_MECA')),
+           MODELE=model,
+           NUME_DDL=CO('NDDL'))
+
+modes = CALC_MODES(MATR_MASS=MMASS,
+                   MATR_RIGI=MRIGI,
+                   OPTION='PLUS_PETITE',
+                   SOLVEUR_MODAL=_F(METHODE='SORENSEN',NMAX_ITER_SOREN=30),
+                   CALC_FREQ=_F(**NMAX_FREQ),
+                   VERI_MODE=_F(PREC_SHIFT=0.0005),
+                   NORM_MODE=_F(NORME='MASS_GENE'),
+                  )
+
+modes=CALC_CHAMP(reuse = modes,RESULTAT= modes , TOUT ='OUI',
+                 ENERGIE  = ('ENEL_NOEU'),
+                 PROPRIETES = ('MATE_ELGA'),
+ )
+
+#Postpro 
+#Formula
+TBMODES = RECU_TABLE(CO=modes,NOM_PARA = ('FREQ','RIGI_GENE','MASS_GENE'))
+FRHO = FORMULE(NOM_PARA=('RHO'), VALE="""RHO""")
+
+FNORME = FORMULE(NOM_PARA=('DX', 'DY', 'DZ'), VALE="""DX**2+DY**2+DZ**2""")
+FTOTAL = FORMULE(NOM_PARA=('TOTALE'), VALE="""TOTALE""")
+
+
+tbmodes=RECU_TABLE(CO=modes,
+                   NOM_PARA='FREQ',)
+
+lfreq = tbmodes.EXTR_TABLE().values()['FREQ']
+
+DEP=[None]*len(lfreq)
+ENE=[None]*len(lfreq)
+MAT=[None]*len(lfreq)
+DEPAFF = []
+ENEAFF = []
+MATAFF = []
+for ifreq, freq in enumerate(lfreq):
+   DEP[ifreq]=CREA_CHAMP(TYPE_CHAM='NOEU_DEPL_R',
+                         OPERATION='EXTR',
+                         RESULTAT=modes,
+                         NOM_CHAM='DEPL',
+                         NUME_ORDRE=ifreq+1)
+
+   DEPAFF.append(_F(CHAM_GD=DEP[ifreq],INST=lfreq[ifreq],MODELE=model,NOM_CHAM='DEPL'))
+
+   ENE[ifreq]=CREA_CHAMP(TYPE_CHAM='NOEU_ENER_R',
+                         OPERATION='EXTR',
+                         RESULTAT=modes,
+                         NOM_CHAM='ENEL_NOEU',
+                         NUME_ORDRE=ifreq+1)
+
+   ENEAFF.append(_F(CHAM_GD=ENE[ifreq],INST=lfreq[ifreq],MODELE=model,NOM_CHAM='ENEL_NOEU'))
+
+   MAT[ifreq]=CREA_CHAMP(TYPE_CHAM='ELGA_MATE_R',
+                         OPERATION='EXTR',
+                         RESULTAT=modes,
+                         NOM_CHAM='MATE_ELGA',
+                         NUME_ORDRE=ifreq+1)
+
+   MATAFF.append(_F(CHAM_GD=MAT[ifreq],INST=lfreq[ifreq],MODELE=model,NOM_CHAM='MATE_ELGA'))
+
+
+evol=CREA_RESU(TYPE_RESU='EVOL_ELAS',
+               OPERATION='AFFE',
+               AFFE=DEPAFF,
+               )
+
+evol=CREA_RESU(TYPE_RESU='EVOL_ELAS',
+               reuse=evol,
+               OPERATION='AFFE',
+               AFFE=ENEAFF,
+               )
+
+evol=CREA_RESU(TYPE_RESU='EVOL_ELAS',
+               reuse=evol,
+               OPERATION='AFFE',
+               AFFE=MATAFF,
+               )
+
+evol = CALC_CHAMP(reuse = evol,
+                  CHAM_UTIL=(
+                               _F(NOM_CHAM='DEPL', FORMULE=FNORME, NUME_CHAM_RESU=1),
+                               _F(NOM_CHAM='MATE_ELGA', FORMULE=FRHO, NUME_CHAM_RESU=2),
+                               _F(NOM_CHAM='ENEL_NOEU', FORMULE=FTOTAL, NUME_CHAM_RESU=3),
+                              ),
+                  RESULTAT=evol,
+                  )
+
+
+FMULX1X2 = FORMULE(NOM_PARA = ('X1', 'X2'), VALE = 'X1*X2')
+
+CHFMRHO = CREA_CHAMP(TYPE_CHAM='NOEU_NEUT_F',
+                 OPERATION='AFFE',
+                 MODELE=model,
+                 AFFE=_F(TOUT='OUI',NOM_CMP='X1',VALE_F=FMULX1X2,),
+)
+
+
+FIN()

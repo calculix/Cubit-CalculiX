@@ -1,0 +1,84 @@
+<data dim="3" debug="False" >
+
+    <Zones>
+        <Plane id="1" point="50.0 0.01 2.5" normal="0.0 1.0 0.0" desc="dirichlet 1"/>
+        <Plane id="2" point="50.0 99.99 2.5" normal="0.0 -1.0 0.0" desc="dirichlet 2"/>
+        <Plane id="3" point="0.01 47.62 2.5" normal="1.0 0.0 0.0" desc="dirichlet 3"/>
+        <Plane id="4" point="99.99 50.0 2.5" normal="-1.0 0.0 0.0" desc="dirichlet 4"/>
+        <Union id="5" z="1 2 3 4" desc="dirichlets"/>
+        <Plane id="6" point="50.0 50.0 0.02" normal="0.0 0.0 1.0" desc="neumann"/>
+        <Plane id="7" point="50.0 50.0 4.98" normal="0.0 0.0 -1.0" desc="erp"/>
+        <Union id="8" z="5 6" desc="non optimizable"/>
+        <AABox id="9" origin="-0.1 -0.1 -0.1" size="100.2 100.2 5.2" desc="Full box" />
+        <AABox id="10" origin="15 15 3" size="70 70 12.5" desc="Offzone for initialization" />
+        <Difference  id="11" z1="9" z2="10" desc="Initialization"/>
+        <AABox id="12" origin="10 10 2.5" size="80 80 12.5" desc="Offzone" />
+        <Difference  id="13" z1="9" z2="12" desc="Onzone"/>
+        <Union id="14" z="11 13" desc="Initialization with onzone" />
+    </Zones>
+
+    <Grids>
+        <Grid id="1" n="20 20 20" origin="0. 0. 0." length="100.0 100.0 5.0" ofTetras ="True"/>
+    </Grids>
+
+    <LevelSets>
+        <LevelSet id="1" support="1" conform="True" gradientMethod="gradPhi">
+              <MesherInfo hmax="2.4" hmin="0.6" hausd ="0.3" iso="0.0" rmc="1e-5"
+      nr="True" computeDistanceWith="meshdist"/>
+        </LevelSet>
+    </LevelSets>
+
+    <PhysicalProblems>
+        <GeneralAster type="harmonic_forced_elastic" id="1">
+            <Analysisparams freqExcitMin="3000" freqExcitMax="9000" freqExcitStep="400" Numbermaxfreq="140"/>
+            <Material  young="210000" poisson="0.3" rho="7.85e-09" Amor_alpha="2.21e-8" Amor_beta="1.105e-7"/>
+            <Dirichlet eTag="eTag5" dofs="0 1 2" value="0.0"/>
+            <Pressure eTag="eTag6" type="uniform" value="1e+02" />
+         </GeneralAster>
+    </PhysicalProblems>
+
+    <OptimProblems>
+        <OptimProblem type="TopoGeneric" id="1"
+            OnZone="13"
+            useLevelset="1"
+            output="3"
+            printMeshQualityInfo = "True"
+            outputEveryLevelsetUpdate = "False">
+          <Objective  type="ERP"  name="ERP" useProblem="1" density_flu="1.189e-12" veloc_flu="3.43e5" radia_fact="1.0" radia_Surface="eTag7" optimizableRadiatingSurface="True" nonOptimSurfZone="8"/>
+          <Constraint type="Volume"  name="Volume" UpperBound="4.5e4" />
+       </OptimProblem>
+    </OptimProblems>
+
+    <TopologicalOptimizations>
+        <OptimAlgoNullSpace id="1"
+            useOptimProblem="1"
+            numberOfDesignStepsMax="10"
+            numberOfIterationsMax="20"
+            stepSizeMax="0.2"
+            alphaC="0.5"
+            alphaJ="1."
+            stepSize="0.5"
+            tol_merit="0.02"
+        />
+    </TopologicalOptimizations>
+
+    <Outputs>
+       <Output id="1" name="PlateHistory.xdmf" inTempDirectory="True" />
+       <Output id="2" name="PlateHistory.csv" inTempDirectory="True" />
+       <Output id="3" name="PROXY" outputs="1 2"/>
+    </Outputs>
+
+    <Actions>
+        <Action type="InitLevelset" ls="1" zone="14"/>
+        <Action type="AddEdges" ls="1" ar="45" />
+        <Action type="AddSkin" ls="1"/>
+        <Action type="SetAsRequired" ls="1" nTags="nTag4" />
+        <Action type="CreateTagsFromZones" ls="1" elementTags="5 6 7" dim="2" elemenprefix="eTag"/>
+        <Action type="PrintMesh" ls="1"/>
+        <Action type="Remesh" ls="1" hmax="2.4" hmin="0.6" hausd ="0.3" iso="0.0" rmc="1e-5" nr="True" computeDistanceWith="meshdist"/>
+        <Action type="PrintMesh" ls="1"/>
+        <Action type="WriteToFile" ls="1" filename="Plate.med" binary="True"/>
+        <Action type="RunTopoOp" TopoOp="1"/>
+    </Actions>
+
+ </data>

@@ -1,0 +1,14 @@
+P actions make_etude
+P memjob 3072000
+P memory_limit 3000.0
+P mode interactif
+P nomjob AsterTargetTemperatureAdjoint
+P version stable
+A args -max_base 300000
+A memjeveux 2048.0
+A tpmax 20000.0
+F comm AsterTargetTemperatureAdjointparam.in D  1
+F comm AsterTargetTemperatureAdjoint.comm D  1
+F libr AsterTargetTemperatureAdjointinput.med D  20
+F rmed AsterTargetTemperatureAdjointoutput.rmed R 80
+F mess AsterThermal.log R  6

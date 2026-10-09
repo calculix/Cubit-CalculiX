@@ -1,0 +1,21 @@
+<!--
+Generate a honeycomb body-fitted mesh
+-->
+
+<data dim="3">
+    <Zones>
+        <Honeycomb id="1" lx="0.3" w="0.05" desc="honeycomb implicit zone "/>
+    </Zones>
+    <Grids>
+        <Grid id="1" n="201 51 101" origin="0. 0. 0." length="2.0 0.5 1.0" ofTetras ="True"/>
+    </Grids>
+    <LevelSets>
+        <LevelSet id="1" support="1" conform="True"></LevelSet>
+    </LevelSets>
+    <Actions>
+        <Action type="InitLevelset" ls="1" zone="1"/>
+        <Action type="AddEdges" ls="1" ar="90+45" />
+        <Action type="Remesh" ls="1" hmax=".1" hmin="0.05" hausd="0.05" iso="0.0" rmc="1e-5" nr="True"/>
+        <Action type="WriteToFile" ls="1" filename="{INPUTFILE}.xdmf" />
+    </Actions>
+ </data>

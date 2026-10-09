@@ -1,0 +1,97 @@
+AppXmlData = """
+<data dim="3" debug="True">
+    <Zones>
+
+        <AABox id="50" origin="0. 0.05 -1.00" size="3 0.90 1.90" desc="Init" />
+
+        <AABox id="10" origin="0. 0.05 0" size="2 0.9 0.95" desc="Init" />
+        <Gyroid id="100"  desc="Init" scale="0.2" />
+        <Symmetric id="101" z="100" center="0 .5 0"/>
+        <Intersection id="51" z="10 101"/>
+
+
+        <Plane id="2" point="0.01 0. 0." normal="1. 0. 0." desc="Block"/>
+        <Cylinder id="3" center1="2 -.1 0 " center2="2 1.1 0" radius="0.001" desc="Force"/>
+        <Offset id="30" z="3" offset="-0.1"/>
+
+        <Union id="4" z="2 30" desc="ON"/>
+        <Union id="5" z="50+{UG} 4 "/>
+    </Zones>
+
+    <Grids>
+        <Grid id="1" n="101/2 51/2 51/2" origin="0. 0. 0." length="2 1 1" ofTetras="True" />
+    </Grids>
+
+    <LevelSets>
+        <LevelSet id="1" support="1" conform="True" >
+            <MesherInfo iso="0.0" hmin="0.02" hmax="0.5" hausd="0.025" nr="True"  rmc="1e-5"  hgrad="1.1" />
+        </LevelSet>
+    </LevelSets>
+
+    <PhysicalProblems>
+        <Unstructured id="1"  type="static_elastic" eVoid="0.0"  tagsToKeep="ET2 ET3">
+             <Dirichlet eTag="ET2" dofs="0 1 2" value="0.0"/>
+             <Force   eTag="ET3" dir="0 0 1" value="-1000"/>
+        </Unstructured>
+    </PhysicalProblems>
+
+    <OptimProblems>
+        <OptimProblem type="TopoGeneric" id="1"
+            OnZone="4"
+            useLevelset="1"
+            output="1"
+        >
+          <Objective  type="Compliance"  name="Compliance" useProblem="1" />
+          <Constraint type="Volume"     name="Volume"   upperBound="0.24"  desc="0.12*voltotal= 0.12*2*1*1=0.24"/>
+       </OptimProblem>
+
+    </OptimProblems>
+
+    <TopologicalOptimizations>
+        <OptimAlgoNullSpace id="1"
+            useOptimProblem="1"
+            numberOfDesignStepsMax="10"
+            stepSizeMax="0.1"
+            stepSize="0.1"
+        />
+    </TopologicalOptimizations>
+
+    <Outputs>
+       <Output id="1" name="Aage_Lazarov_2013_{INPUTFILE}.xdmf"/>
+    </Outputs>
+  <AutoActions>
+        <Action type="AddEdges" ls="1" ar="90+45" addskin="true"/>
+        <Action type="CreateTagsFromZones" ls="1" dim="2" elementTags="2" />
+        <Action type="CreateTagsFromZones" ls="1" dim="1" elementTags="3" />
+        <Action type="InitLevelset" ls="1" zone="5"/>
+  </AutoActions>
+
+    <Actions>
+        <Action type="UpdateDistance" ls="1"  />
+        <Action type="Remesh" ls="1" iso="0.0" />
+        <Action type="RunTopoOp" TopoOp="1"/>
+        <Action type="SaveShapeToFile" ls="1" filename="Aage_Lazarov_2013_{INPUTFILE}.stl"/>
+    </Actions>
+ </data>
+
+"""
+
+AppDescription= """------------------------------------------------------------------------------
+This is a example of a Pisco application to solve the problem :
+------------------------------------------------------------------------------
+Topology optimization using PETSc: An easy-to-use, fully parallel, open source
+topology optimization framework
+Niels Aage Erik Andreassen Boyan Stefanov Lazarov
+
+DOI: 10.1007/s00158-014-1157-0
+
+Credits: Felipe Bordeu
+"""
+
+AppOptions = [
+    Options.OptionBool("UG",False,label ="Use Gyroid for the initialisation"),
+    Options.OptionInt("N", 30 , valueRange=[10,51], slider=True, label="Nodes Density 2*N*N*N"),
+    Options.OptionFloat("VF", 0.12, valueRange=[0.05,0.95], slider=True, label="Volume Fraction %"),
+           ]
+
+

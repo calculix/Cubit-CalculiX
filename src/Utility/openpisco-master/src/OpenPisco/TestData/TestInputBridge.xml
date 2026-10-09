@@ -1,0 +1,160 @@
+<data dim="3" >
+    <Zones>
+        <StlFile  id="1" filename="Bridge_OffVolume.stl" />
+        <StlFile  id="2" filename="Bridge_OnVolumeN.stl" />
+        <StlFile  id="300" filename="Bridge_OnVolumeDDown.stl" />
+        <StlFile  id="30" filename="../TestData/Bridge_OnVolumeDPole.stl" />
+        <StlFile  id="3" filename="../TestData/Bridge_OnVolumeDUp.stl" />
+        <Union id="3000" z='30' />
+
+        <Cylinder id="5" center1="-2.1 0.1 0" center2="2.1 0.1 0" radius="1." />
+
+        <Cylinder id="6" center1="1.7 0 -.5" center2="2.1 0 -.5" radius=".5" />
+
+        <Union id="4" z='2 3000 5' />
+        <Cylinder id="40" center1="-100 0 0" center2="100 0 0" radius="1" />
+        <Plane    id="100" point="0 0 0" normal="1 0 0"  offset="1e-5"/>
+        <Plane    id="101" point="0 0 0" normal="0 1 0"  offset="1e-5"/>
+        <Plane    id="102" point="0 0 0" normal="0 0 1"  offset="1e-5"/>
+
+        <ls    id="1001" ls="1" />
+        <ls    id="1002" ls="2" />
+        <ls    id="1003" ls="3" />
+
+        <Union id="4001" z='1001 2 3000' />
+        <Union id="4002" z='1002 2 3000' />
+        <Union id="4003" z='1003 2 3000' />
+
+    </Zones>
+
+    <Grids >
+        <Grid id="1" n="22 20 30" origin="0 0 -1.225" length="2.1 1.15 2.45" />
+        <Grid id="2" n="22 20 30" origin="0 0 -1.225" length="2.1 1.15 2.45" />
+        <Grid id="3" n="22 20 30" origin="0 0 -1.225" length="2.1 1.15 2.45" />
+       <!-- <Grid id="2" n="43 24 50" origin="0 0 -1.125" length="2.1 1.15 2.45" />
+        <Grid id="3" n="84 46 99" origin="0 0 -1.125" length="2.1 1.15 2.45" /> -->
+    </Grids >
+
+    <LevelSets>
+       <LevelSet id="1" support="1" />
+       <LevelSet id="2" support="2" />
+       <LevelSet id="3" support="3" />
+    </LevelSets>
+
+    <PhysicalProblems>
+        <StructuredFEA id="1" grid="1" type="disp" eVoid="0.00" >
+             <Dirichlet zone="3000" dofs="0 1 2" val="0.0" />
+             <Dirichlet zone="100" dofs="0" val="0.0" />
+             <Dirichlet zone="101" dofs="1" val="0.0" />
+             <Neumann   zone="2" dofs="2" val="-1" />
+        </StructuredFEA>
+
+      <StructuredFEA id="2" grid="2" type="disp" eVoid="0">
+             <Dirichlet zone="3000" dofs="0 1 2" val="0.0" />
+             <Dirichlet zone="100" dofs="0" val="0.0" />
+             <Dirichlet zone="101" dofs="1" val="0.0" />
+             <Neumann   zone="2" dofs="2" val="-1" />
+        </StructuredFEA>
+
+    <StructuredFEA id="3" grid="3" type="disp" eVoid="0">
+             <Dirichlet zone="3000" dofs="0 1 2" val="0.0" />
+             <Dirichlet zone="100" dofs="0" val="0.0" />
+             <Dirichlet zone="101" dofs="1" val="0.0" />
+             <Neumann   zone="2" dofs="2" val="-1" />
+    </StructuredFEA>
+
+    </PhysicalProblems>
+    <OptimProblems >
+        <OptimProblem type="TopoGeneric" id="1"
+            OnZone="2 3000"  Dirichlet="3000" OffZone="1" Neumann="2"
+            useLevelset="1"
+            output="1"
+            e2=".04*(2.1/21)**2"
+	 >
+	  <Objective  type="Compliance"  name="Compliance" useProblem="1" />
+          <Constraint type="Volume"     name="Volume"   UpperBound="0.5" />
+       </OptimProblem>
+	
+	
+        <OptimProblem type="TopoGeneric" id="2"
+            OnZone="2 3000" OffZone="1" Dirichlet="3000" Neumann="2"
+            useLevelset="2"
+            output="2"
+            e2=".04*(2.1/42)**2"
+	 >
+	  <Objective  type="Compliance"  name="Compliance" useProblem="2" />
+          <Constraint type="Volume"     name="Volume"   UpperBound="0.5" />
+       </OptimProblem>
+       <OptimProblem type="TopoGeneric" id="3"
+            OnZone="2 3000" OffZone="1" Dirichlet="3000" Neumann="2"
+            useLevelset="3"
+            output="3"
+            e2=".04*(2.1/83)**2"
+	 >
+	  <Objective  type="Compliance"  name="Compliance" useProblem="3" />
+          <Constraint type="Volume"     name="Volume"   UpperBound="0.5" />
+       </OptimProblem>
+    </OptimProblems>
+
+    <TopologicalOptimizations>
+        <OptimAlgoUnconstrained id="1"
+            useOptimProblem = "1"
+            addInequalityConstraintsConstribution = "True"
+            numberOfDesignStepsMax = "500"
+            numberOfIterationsMax = "20"
+            stepSizeMax="1"
+            automaticPenalisation="true"
+	    PenalVolume="1"
+        />
+
+        <OptimAlgoUnconstrained id="2"
+            useOptimProblem = "2"
+            addInequalityConstraintsConstribution = "True"
+            numberOfDesignStepsMax = "500"
+            numberOfIterationsMax = "20"
+            stepSizeMax="1"
+            automaticPenalisation="true"
+	    PenalVolume="1"
+        />
+      <OptimAlgoUnconstrained id="3"
+            useOptimProblem = "3"
+            addInequalityConstraintsConstribution = "True"
+            numberOfDesignStepsMax = "500"
+            numberOfIterationsMax = "20"
+            stepSizeMax="1"
+            automaticPenalisation="true"
+	    PenalVolume="1"
+        />
+    </TopologicalOptimizations>
+
+
+    <Outputs>
+        <Output id="1" name="BridgeTest1.xdmf" />
+        <Output id="2" name="BridgeTest2.xdmf" />
+        <Output id="3" name="BridgeTest3.xdmf" />
+    </Outputs>
+
+    <Actions>
+
+        <Action type="InitLevelset" ls="1" zone="4" />
+        <Action type="LevelSetOffset" ls="1" val="-0.0" />
+	<Action type="UpdateDistance" ls="1" />
+
+        <Action type="Repeate" times="1">
+            <Action type="RunTopoOp" TopoOp="1" />
+            <Action type="ResetTopoOp" TopoOp="1" />
+         </Action >
+
+        <Action type="InitLevelset" ls="2" zone="4001" />
+        <Action type="Repeate" times="1">
+            <Action type="RunTopoOp" TopoOp="2" />
+            <Action type="ResetTopoOp" TopoOp="2" />
+        </Action >
+
+       <Action type="InitLevelset" ls="3" zone="4002" />
+        <Action type="Repeate" times="3">
+            <Action type="RunTopoOp" TopoOp="3" />
+            <Action type="ResetTopoOp" TopoOp="3" />
+        </Action >
+    </Actions>
+    </data>

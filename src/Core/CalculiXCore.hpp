@@ -268,6 +268,7 @@ public:
   bool wait_job(int job_id); // runs job
   bool kill_job(int job_id); // runs job
   bool set_job_conversion(int job_id, int conversion); // sets the paraview conversion value for the job
+  bool run_topology(int topology_id, int job_id); // runs topology optimization job
   bool result_cgx_job(int job_id); // opens the results with cgx
   bool result_paraview_job(int job_id); // opens the results with paraview
   bool result_plot_job_frd(int job_id,int x_node_id, std::string x_block_type, std::string x_block_component, bool x_increment,bool x_time,int y_node_id, std::string y_block_type, std::string y_block_component, bool y_increment, bool y_time,QString title,QString x_axis,QString y_axis,bool save, QString save_filepath); // plots the results

@@ -1,0 +1,5 @@
+***behavior linear_elastic
+ **elasticity
+   young 2.000000e+09
+   poisson 0.300000
+***return

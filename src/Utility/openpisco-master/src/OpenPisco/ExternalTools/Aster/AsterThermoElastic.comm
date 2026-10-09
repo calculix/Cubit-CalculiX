@@ -1,0 +1,203 @@
+# -*- coding: utf-8 -*-
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE', which is part of this source code package.
+#
+POURSUITE(PAR_LOT='NON')
+
+mesh = LIRE_MAILLAGE(FORMAT='MED')
+
+modelt = AFFE_MODELE(AFFE=_F(**modelisation_thermal),
+                    MAILLAGE=mesh)
+
+#~ thermal analysis
+
+fieldma1 = AFFE_MATERIAU(MODELE=modelt, **materials)
+
+# ~ prescribed temperature
+tempimpo = AFFE_CHAR_CINE(MODELE=modelt, **ther_impo)
+
+conditions = []
+for condition in [convection ,source]:
+    if len(list(condition.values())[0]):
+        conditions.append(AFFE_CHAR_THER(MODELE=modelt, **condition))
+
+charge = [ _F(CHARGE=condition) for condition in conditions]
+charge.append(_F(CHARGE=tempimpo))
+excitOp = tuple(charge)
+
+if not steady_state_solution:
+   listr = DEFI_LIST_REEL(DEBUT=t_start,
+                       INTERVALLE=(_F(JUSQU_A=t_end,
+                                     NOMBRE=n_steps),
+                                   ),
+                       )
+
+   evolTher = THER_LINEAIRE(CHAM_MATER=fieldma1,
+                         ETAT_INIT=_F(VALE=temp_0),
+                         EXCIT=(excitOp),
+                         INCREMENT=_F(LIST_INST=listr),
+                         MODELE=modelt)
+
+else:
+    listr = DEFI_LIST_REEL(DEBUT=0,
+                       INTERVALLE=(_F(JUSQU_A=0,
+                                     NOMBRE=1),
+                                   ),
+                       )
+
+    evolTher = THER_LINEAIRE(CHAM_MATER=fieldma1,
+                         EXCIT=(excitOp),
+                         INCREMENT=_F(LIST_INST=listr),
+                         MODELE=modelt)
+
+evolTher = CALC_CHAMP(reuse=evolTher,
+                      MODELE=modelt,
+                      RESULTAT=evolTher,
+                      THERMIQUE=('FLUX_ELGA', ))
+
+# ~ elasticity analysis
+
+model = AFFE_MODELE(AFFE=_F(**modelisation_meca),
+                    MAILLAGE=mesh)
+
+fieldma = AFFE_MATERIAU(**materials,
+                         AFFE_VARC=_F(EVOL=evolTher,
+                                      NOM_CHAM='TEMP',
+                                      NOM_VARC='TEMP',
+                                      PROL_DROITE='CONSTANT',
+                                      PROL_GAUCHE='CONSTANT',
+                                      TOUT='OUI',
+                                      VALE_REF= reference_temperature_0),
+                         MAILLAGE=mesh)
+
+conditions = []
+for condition in [dirichlet,neumann,forcenodale,bodyforces]:
+    if len(list(condition.values())[0]):
+        conditions.append(AFFE_CHAR_MECA(MODELE=model, **condition))
+
+if hasPreStress:
+    CHSIGM = LIRE_CHAMP (
+                    UNITE=20,
+                    MAILLAGE = mesh,
+                    NOM_MED = 'PreStress',
+                    MODELE = model,
+                    TYPE_CHAM = 'ELGA_SIEF_R',
+                    NOM_CMP_IDEM = 'OUI',
+                    PROL_ZERO = 'OUI',
+                    INST=0.0,
+                    INFO=1,
+    )
+    conditions.append(AFFE_CHAR_MECA(MODELE=model, PRE_SIGM=_F(SIGM=CHSIGM)))
+
+
+solveur = _F(METHODE='MUMPS',
+             RESI_RELA = resi_rela,
+            STOP_SINGULIER='NON',
+                      )
+
+excitOp = tuple([_F(CHARGE=condition) for condition in conditions])
+reslin = MECA_STATIQUE(CHAM_MATER=fieldma,
+                       EXCIT=excitOp,
+                       SOLVEUR=solveur,
+                       MODELE=model,
+                       )
+
+#=====================================================================================================
+#                                      POST PROCESSING
+#=====================================================================================================
+
+#=====================================================================================================
+#                                    FIELD POST PROCESSING
+#=====================================================================================================
+dictFields = {'potential_energy':'ENEL_ELGA','stress':'SIEF_ELGA','von_mises':'SIEQ_ELGA',
+              'strain':'EPSI_ELGA'}
+
+for field in fields:
+    if field == 'potential_energy':
+         reslin = CALC_CHAMP(reuse=reslin,
+                    RESULTAT=reslin,
+                    ENERGIE=('ENEL_ELGA'),
+                    FORCE=('FORC_NODA'))
+    elif field == 'stress':
+         reslin = CALC_CHAMP(reuse=reslin,
+                    CONTRAINTE=('SIEF_ELGA'),
+                    RESULTAT=reslin)
+    elif field == 'von_mises':
+         reslin = CALC_CHAMP(reuse=reslin,
+                    CONTRAINTE=('SIEF_ELGA'),
+                    CRITERES=('SIEQ_ELGA'),
+                    RESULTAT=reslin)
+    elif field == 'strain':
+         reslin = CALC_CHAMP(reuse=reslin,
+                    DEFORMATION=('EPSI_ELGA',),
+                    RESULTAT=reslin)
+    else:print('Not implemented for: ',field)
+
+nom_cham_med = [field for field in fields ]
+nom_cham     = [dictFields[field] for field in nom_cham_med ]
+if len(nom_cham_med)>0:
+    if 'von_mises' in fields:
+      idx = nom_cham_med.index('von_mises')
+      nom_cham.pop(idx)
+      nom_cham_med.pop(idx)
+      IMPR_RESU(FORMAT='MED',UNITE=80,VERSION_MED='4.0.0',
+          RESU=(
+                _F(RESULTAT=reslin,
+                   NOM_CHAM=('DEPL'),
+                   NOM_CHAM_MED=('DEPL'),
+                   ),
+                _F(RESULTAT=reslin,
+                    NOM_CHAM     = nom_cham,
+                    NOM_CHAM_MED = nom_cham_med,
+                   ),
+                ),
+          );
+
+      IMPR_RESU(FORMAT='MED',UNITE=80,VERSION_MED='4.0.0',
+          RESU=(
+                _F(RESULTAT=reslin,
+                   NOM_CHAM=('SIEQ_ELGA'),
+                   NOM_CMP=('VMIS', ),
+                   NOM_CHAM_MED=('von_mises'),
+                   ),
+               ),
+          )
+    else:
+      IMPR_RESU(FORMAT='MED',UNITE=80,VERSION_MED='4.0.0',
+          RESU=(
+                _F(RESULTAT=reslin,
+                   NOM_CHAM=('DEPL'),
+                   NOM_CHAM_MED=('DEPL'),
+                   ),
+                _F(RESULTAT=reslin,
+                    NOM_CHAM     = nom_cham,
+                    NOM_CHAM_MED = nom_cham_med,
+                   ),
+                ),
+          );
+else:
+    IMPR_RESU(FORMAT='MED',UNITE=80,VERSION_MED='4.0.0',
+          RESU=(
+                _F(RESULTAT=reslin,
+                   NOM_CHAM=('DEPL'),
+                   NOM_CHAM_MED=('DEPL'),
+                   ),
+          ),);
+
+
+#==============================================================================================
+#                                SCALAR POST PROCESSING
+#==============================================================================================
+
+for scalar in scalars:
+    if scalar == 'int_potential_energy':
+       tab1 =POST_ELEM(RESULTAT=reslin, TRAV_EXT=_F())
+    else:print('Not implemented for scalar: ',scalar)
+    IMPR_TABLE(TABLE=tab1,FORMAT='TABLEAU',SEPARATEUR=',',TITRE='',UNITE=27)
+    DETRUIRE(CONCEPT=_F(NOM=tab1,),)
+
+#===============================================================================================
+
+
+FIN()
