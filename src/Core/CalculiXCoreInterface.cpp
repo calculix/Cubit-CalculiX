@@ -971,6 +971,16 @@ bool CalculiXCoreInterface::run_topology(int topology_id, int job_id)
   return ccx_core.run_topology(topology_id, job_id);
 }
 
+bool CalculiXCoreInterface::check_topology_material_assignment(int topology_id, int iteration_id, int element_id)
+{
+  return ccx_core.check_topology_material_assignment(topology_id, iteration_id, element_id);
+}
+
+std::string CalculiXCoreInterface::get_topology_material_name(int topology_id, int element_id)
+{
+  return ccx_core.get_topology_material_name(topology_id, element_id);
+}
+
 bool CalculiXCoreInterface::set_job_conversion(int job_id, int conversion)
 {
   return ccx_core.set_job_conversion(job_id,conversion);

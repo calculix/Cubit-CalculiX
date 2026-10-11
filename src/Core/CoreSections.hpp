@@ -90,10 +90,10 @@ public:
   std::string get_section_export(bool topology_run = false); // get CalculiX section exports
   std::string print_data(); // prints out the blocks_data
 
-  bool set_topology_materials(int section_id,const std::vector<int>& element_ids,const std::vector<int>& material_ids); // for mapping the element ids with the material ids
-  void clear_topology_materials(); // delete all topo data
+  bool initialize_topology_solid_sections(int topology_id,const std::vector<int>& section_ids);
+  void clear_topology_solid_sections(); // delete all topo data
 
-  std::map<int, std::map<int, int>> topology_materials; // Global section ID -> global element ID -> material ID
+  std::map<int, std::vector<int>> topology_solid_sections;// Topology ID -> existing global solid section IDs.
   CalculiXCoreInterface *ccx_iface;
 };
 

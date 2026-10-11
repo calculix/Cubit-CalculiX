@@ -4706,6 +4706,28 @@ bool CalculiXCore::run_topology(int topology_id, int job_id)
   return true;
 }
 
+bool CalculiXCore::check_topology_material_assignment(int topology_id, int iteration_id, int element_id)
+{
+  const auto collection_it = mat->topology_material_data.find(topology_id);
+
+  if (collection_it == mat->topology_material_data.end())
+    return false;
+
+  const auto& collection = collection_it->second;
+  const auto assignment = collection.element_base_material.find(element_id);
+  const auto iteration = collection.iteration_factors.find(iteration_id);
+
+  if (assignment == collection.element_base_material.end() || iteration == collection.iteration_factors.end())
+    return false;
+
+  return collection.base_materials.count(assignment->second) != 0 && iteration->second.count(element_id) != 0;
+}
+
+std::string CalculiXCore::get_topology_material_name(int topology_id, int element_id)
+{
+  return mat->get_topology_material_name(topology_id, element_id);
+}
+
 bool CalculiXCore::set_job_conversion(int job_id, int conversion)
 {
   return jobs->set_job_conversion(job_id,conversion);

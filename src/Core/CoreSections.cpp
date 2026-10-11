@@ -1,6 +1,7 @@
 #include "CoreSections.hpp"
 #include "CubitInterface.hpp"
 #include "CalculiXCoreInterface.hpp"
+#include "CubitMessage.hpp"
 
 CoreSections::CoreSections()
 {}
@@ -32,7 +33,7 @@ bool CoreSections::reset()
   shell_section_data.clear();
   beam_section_data.clear();
   membrane_section_data.clear();
-  clear_topology_materials();
+  clear_topology_solid_sections();
   //is_initialized = false;
   //init();
   return true;
@@ -566,47 +567,72 @@ std::string CoreSections::print_data()
   return str_return;
 }
 
-bool CoreSections::set_topology_materials(int section_id,const std::vector<int>& element_ids,const std::vector<int>& material_ids)
+bool CoreSections::initialize_topology_solid_sections(int topology_id,const std::vector<int>& section_ids)
 {
-  if (element_ids.size() != material_ids.size())
-    return false;
-
-  const int section_index = get_sections_data_id_from_section_id(section_id);
-
-  if (section_index < 0 || sections_data[section_index][1] != 1)
-    return false;
-
-  const int solid_index = get_solid_section_data_id_from_solid_section_id(sections_data[section_index][2]);
-
-  if (solid_index < 0)
-    return false;
-
-  const int block_id = std::stoi(solid_section_data[solid_index][1]);
-  const auto block_elements = ccx_iface->get_block_element_ids(block_id);
-  const std::set<int> allowed_elements(block_elements.begin(), block_elements.end());
-
-  std::map<int, int> assignments;
-
-  for (size_t i = 0; i < element_ids.size(); ++i)
+  if (!is_initialized || !ccx_iface || topology_id <= 0 || section_ids.empty())
   {
-    if (allowed_elements.count(element_ids[i]) == 0 ||
-        !ccx_iface->check_material_exists(material_ids[i]))
-      return false;
-
-    if (!assignments.emplace(element_ids[i], material_ids[i]).second)
-      return false; // Duplicate element ID.
+    PRINT_ERROR("Invalid topology solid section initialization.\n");
+    return false;
   }
 
-  // Commit only after every assignment has passed validation.
-  if (assignments.empty())
-    topology_materials.erase(section_id);
-  else
-    topology_materials[section_id] = std::move(assignments);
+  if (topology_solid_sections.count(topology_id) != 0)
+  {
+    PRINT_ERROR("Solid section collection for topology %d already exists.\n", topology_id);
+    return false;
+  }
 
+  std::set<int> unique_sections;
+  std::set<int> unique_elements;
+
+  for (int section_id : section_ids)
+  {
+    if (!unique_sections.insert(section_id).second)
+    {
+      PRINT_ERROR("Duplicate topology section %d.\n", section_id);
+      return false;
+    }
+
+    const int section_index = get_sections_data_id_from_section_id(section_id);
+
+    if (section_index < 0 || sections_data[section_index][1] != 1)
+    {
+      PRINT_ERROR("Section %d is not an existing solid section.\n", section_id);
+      return false;
+    }
+
+    const int solid_index = get_solid_section_data_id_from_solid_section_id(sections_data[section_index][2]);
+
+    if (solid_index < 0)
+    {
+      PRINT_ERROR("Solid section data missing for section %d.\n", section_id);
+      return false;
+    }
+
+    const int block_id = std::stoi(solid_section_data[solid_index][1]);
+    const auto element_ids = ccx_iface->get_block_element_ids(block_id);
+
+    if (element_ids.empty())
+    {
+      PRINT_ERROR("Block %d has no elements for topology section %d.\n", block_id, section_id);
+      return false;
+    }
+
+    for (int element_id : element_ids)
+    {
+      if (!unique_elements.insert(element_id).second)
+      {
+        PRINT_ERROR("Element %d belongs to multiple topology sections.\n", element_id);
+        return false;
+      }
+    }
+  }
+
+  // Commit only after every section passes validation.
+  topology_solid_sections.emplace(topology_id, section_ids);
   return true;
 }
 
-void CoreSections::clear_topology_materials()
+void CoreSections::clear_topology_solid_sections()
 {
-  topology_materials.clear();
+  topology_solid_sections.clear();
 }
