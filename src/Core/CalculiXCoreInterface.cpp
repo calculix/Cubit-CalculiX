@@ -1846,14 +1846,14 @@ bool CalculiXCoreInterface::clean_export()
   return ccx_core.clean_export();
 }
 
-std::string CalculiXCoreInterface::get_material_export_data() // gets the export data from materials core
+std::string CalculiXCoreInterface::get_material_export_data(int topology_id,int iteration_id) // gets the export data from materials core
 {
-  return ccx_core.get_material_export_data();
+  return ccx_core.get_material_export_data(topology_id,iteration_id);
 }
 
-std::string CalculiXCoreInterface::get_section_export_data() // gets the export data from sections core
+std::string CalculiXCoreInterface::get_section_export_data(int topology_id,int iteration_id) // gets the export data from sections core
 {
-  return ccx_core.get_section_export_data();
+  return ccx_core.get_section_export_data(topology_id,iteration_id);
 }
 
 std::string CalculiXCoreInterface::get_constraint_export_data() // gets the export data from constraints core

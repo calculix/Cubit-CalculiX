@@ -31,8 +31,10 @@ std::vector<std::string> ccxExportCommand::get_syntax()
   // format. Full documentation on the command specification syntax can be
   // found in the documentation.
   std::string syntax =
-      "export ccx <string:label='filename',help='<filename>'> "
-      "[overwrite]";
+    "export ccx <string:label='filename',help='<filename>'> "
+    "[topology <value:label='topology_id'> "
+    "iteration <value:label='iteration_id'>] "
+    "[overwrite]";
 
   std::vector<std::string> syntax_list;
   syntax_list.push_back(syntax);
@@ -62,6 +64,8 @@ bool ccxExportCommand::execute(CubitCommandData &data)
   // the command. We would not have gotten to this point without having that required
   // piece of data. Retrieve it here
   std::string filename;
+  int topology_id = -1;
+  int iteration_id = -1;
   data.get_string("filename", filename);
 
   // The syntax also indicated that we could have an optional piece of data asking if we
@@ -69,6 +73,12 @@ bool ccxExportCommand::execute(CubitCommandData &data)
   // was specified in the command
 
   bool overwrite = data.find_keyword("overwrite");
+
+  if (data.find_keyword("topology") && data.find_keyword("iteration"))
+  {
+    data.get_value("topology_id", topology_id);
+    data.get_value("iteration_id", iteration_id);
+  }
 
   // check if file already exists
   if (!overwrite)
@@ -114,8 +124,7 @@ bool ccxExportCommand::execute(CubitCommandData &data)
   ccx_iface.set_block_gui_update(true);
 
   // Open the file and write to it
-  bool result =
-      open_file(filename, output_file) && write_file(output_file, iface, material_iface, ccx_iface);
+  bool result = open_file(filename, output_file) && write_file(output_file, iface, material_iface, ccx_iface, topology_id, iteration_id);
 
   // Close the file
   close_file(output_file);
@@ -137,9 +146,22 @@ bool ccxExportCommand::open_file(const std::string& file, std::ofstream& output_
   return true;
 }
 
-bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterface *iface, MaterialInterface *material_iface, CalculiXCoreInterface ccx_iface)
+bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterface *iface, MaterialInterface *material_iface, CalculiXCoreInterface ccx_iface, int topology_id, int iteration_id)
 {
   bool result;
+  if (!output_file.good())
+  {
+    PRINT_ERROR("Unable to write the output file.\n");
+    return false;
+  }
+
+  const bool normal_export = topology_id == -1 && iteration_id == -1;
+
+  if (!normal_export && (topology_id <= 0 || iteration_id < 0))
+  {
+    PRINT_ERROR("Invalid topology export selection.\n");
+    return false;
+  }
 
   // check if everything is meshed. if no. abort!
   std::vector<std::string> entity_type_list;
@@ -202,64 +224,69 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
   iface->initialize_export();
 
   // Write the nodes
-  result = write_nodes(output_file, iface, ccx_iface);
+  result = result && write_nodes(output_file, iface, ccx_iface);
   progressbar->step();
 
   // Write the elements/connectivity
-  result = write_connectivity(output_file, iface, ccx_iface);
+  result = result && write_connectivity(output_file, iface, ccx_iface);
   progressbar->step();
 
   // Write the blocks
   //result = write_blocks(output_file, iface, ccx_iface);
 
   // Write the nodesets
-  result = write_nodesets(output_file, iface, ccx_iface);
+  result = result && write_nodesets(output_file, iface, ccx_iface);
   progressbar->step();
 
   // Write the sidesets
-  result = write_sidesets(output_file, iface, ccx_iface);
+  result = result && write_sidesets(output_file, iface, ccx_iface);
   progressbar->step();
 
   // Write the materials and sections
-  result = write_materials(output_file, ccx_iface);
+  result = result && write_materials(output_file, ccx_iface, topology_id, iteration_id);
   progressbar->step();
-  result = write_orientations(output_file, ccx_iface);
+  result = result && write_orientations(output_file, ccx_iface);
   progressbar->step();
-  result = write_sections(output_file, ccx_iface);
+  result = result && write_sections(output_file, ccx_iface, topology_id, iteration_id);
   progressbar->step();
   
-  result = write_damping(output_file, ccx_iface);
+  result = result && write_damping(output_file, ccx_iface);
   progressbar->step();
-  result = write_physicalconstants(output_file, ccx_iface);
+  result = result && write_physicalconstants(output_file, ccx_iface);
   progressbar->step();
-  result = write_constraints(output_file, ccx_iface);
+  result = result && write_constraints(output_file, ccx_iface);
   progressbar->step();
-  result = write_surfaceinteractions(output_file, ccx_iface);
+  result = result && write_surfaceinteractions(output_file, ccx_iface);
   progressbar->step();
-  result = write_contactpairs(output_file, ccx_iface);
+  result = result && write_contactpairs(output_file, ccx_iface);
   progressbar->step();
-  result = write_amplitudes(output_file, ccx_iface);
+  result = result && write_amplitudes(output_file, ccx_iface);
   progressbar->step();
-  result = write_initialconditions(output_file, ccx_iface);
+  result = result && write_initialconditions(output_file, ccx_iface);
   progressbar->step();
-  result = write_hbcs(output_file, ccx_iface);
+  result = result && write_hbcs(output_file, ccx_iface);
   progressbar->step();
-  result = write_steps(output_file, ccx_iface);
+  result = result && write_steps(output_file, ccx_iface);
   progressbar->step();
 
   //clean export data
-  result = ccx_iface.clean_export();
+  const bool cleanup_ok = ccx_iface.clean_export();
+  if (!cleanup_ok)
+    PRINT_ERROR("Failed to clean up prepared export data.\n");
   progressbar->step();
 
   progressbar->end();
 
-  customline = ccx_iface.get_customline_data("END","EXPORT",-1);
-  for (size_t icl = 0; icl < customline.size(); icl++)
+  if (result && cleanup_ok && output_file.good())
   {
-    output_file << customline[icl] << "\n";
+    customline = ccx_iface.get_customline_data("END","EXPORT",-1);
+    for (size_t icl = 0; icl < customline.size(); icl++)
+    {
+      output_file << customline[icl] << "\n";
+    }
   }
   
-  return result;
+  return result && cleanup_ok && output_file.good();
 }
 
 bool ccxExportCommand::close_file(std::ofstream& output_file)
@@ -729,16 +756,46 @@ bool ccxExportCommand::write_sidesets(std::ofstream& output_file, MeshExportInte
   return true;
 }
 
-bool ccxExportCommand::write_materials(std::ofstream& output_file, CalculiXCoreInterface ccx_iface)
+bool ccxExportCommand::write_materials(std::ofstream& output_file, CalculiXCoreInterface ccx_iface, int topology_id, int iteration_id)
 {
-  output_file << ccx_iface.get_material_export_data();
+  const std::string export_data = ccx_iface.get_material_export_data(topology_id, iteration_id);
+
+  if (export_data.empty())
+  {
+    PRINT_ERROR("Export stopped: material export failed.\n");
+    return false;
+  }
+
+  output_file << export_data;
+
+  if (!output_file.good())
+  {
+    PRINT_ERROR("Failed to write materials to the output file.\n");
+    return false;
+  }
+
   return true;
 }
 
 
-bool ccxExportCommand::write_sections(std::ofstream& output_file, CalculiXCoreInterface ccx_iface)
+bool ccxExportCommand::write_sections(std::ofstream& output_file, CalculiXCoreInterface ccx_iface, int topology_id, int iteration_id)
 {
-  output_file << ccx_iface.get_section_export_data();
+  const std::string export_data = ccx_iface.get_section_export_data(topology_id, iteration_id);
+
+  if (export_data.empty())
+  {
+    PRINT_ERROR("Export stopped: section export failed.\n");
+    return false;
+  }
+
+  output_file << export_data;
+
+  if (!output_file.good())
+  {
+    PRINT_ERROR("Failed to write sections to the output file.\n");
+    return false;
+  }
+
   return true;
 }
 

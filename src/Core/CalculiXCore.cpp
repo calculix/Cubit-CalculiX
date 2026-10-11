@@ -8487,14 +8487,29 @@ bool CalculiXCore::clean_export()
   return status;
 }
 
-std::string CalculiXCore::get_material_export_data() // gets the export data from materials core
+std::string CalculiXCore::get_material_export_data(int topology_id,int iteration_id) // gets the export data from materials core
 {
-  return mat->get_material_export();
+  if (topology_id == -1 && iteration_id == -1)
+    return mat->get_material_export();
+
+  if (topology_id <= 0 || iteration_id < 0)
+  {
+    PRINT_ERROR("Invalid topology export selection.\n");
+    return "";
+  }
+
+  const std::string topology_data = mat->get_topology_material_export(topology_id, iteration_id);
+
+  if (topology_data.empty())
+    return "";
+
+  // Original materials remain available for unaffected sections.
+  return mat->get_material_export() + "\n" + topology_data;
 }
 
-std::string CalculiXCore::get_section_export_data() // gets the export data from sections core
+std::string CalculiXCore::get_section_export_data(int topology_id, int iteration_id) // gets the export data from sections core
 {
-  return sections->get_section_export();
+  return sections->get_section_export(topology_id, iteration_id);
 }
 
 std::string CalculiXCore::get_constraint_export_data() // gets the export data from constraints core

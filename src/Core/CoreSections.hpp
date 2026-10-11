@@ -5,6 +5,8 @@
 #include <string>
 #include <map>
 #include <set>
+#include <algorithm>
+#include <sstream>
 
 class CalculiXCoreInterface;
 
@@ -87,10 +89,11 @@ public:
   int  get_shell_section_data_id_from_shell_section_id(int shell_section_id); // searches for the shell_section_id in the shell_section_data and returns the indices or -1 if it fails
   int  get_beam_section_data_id_from_beam_section_id(int beam_section_id); // searches for the beam_section_id in the beam_section_data and returns the indices or -1 if it fails
   int  get_membrane_section_data_id_from_membrane_section_id(int membrane_section_id); // searches for the membrane_section_id in the membrane_section_data and returns the indices or -1 if it fails
-  std::string get_section_export(bool topology_run = false); // get CalculiX section exports
+  std::string get_section_export(int topology_id = -1, int iteration_id = -1);
   std::string print_data(); // prints out the blocks_data
 
   bool initialize_topology_solid_sections(int topology_id,const std::vector<int>& section_ids);
+  std::string get_topology_solid_section_export(int topology_id,int iteration_id,int section_id);
   void clear_topology_solid_sections(); // delete all topo data
 
   std::map<int, std::vector<int>> topology_solid_sections;// Topology ID -> existing global solid section IDs.

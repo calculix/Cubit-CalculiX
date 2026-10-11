@@ -33,7 +33,7 @@ protected:
   //! \param output_file the file stream that is used for writing
   //! \param[in] iface the reference to the MeshExportInterface
   //! \return true if file write succeeded
-  bool write_file(std::ofstream& output_file, MeshExportInterface *iface, MaterialInterface *material_iface, CalculiXCoreInterface ccx_iface);
+  bool write_file(std::ofstream& output_file, MeshExportInterface *iface, MaterialInterface *material_iface, CalculiXCoreInterface ccx_iface, int topology_id, int iteration_id);
 
   //! \brief close the file
   //! \param output_file the file stream that is used for writing
@@ -50,8 +50,8 @@ protected:
   //bool write_blocks(std::ofstream& output_file,MeshExportInterface *iface, CalculiXCoreInterface ccx_iface);
   bool write_nodesets(std::ofstream& output_file,MeshExportInterface *iface, CalculiXCoreInterface ccx_iface);
   bool write_sidesets(std::ofstream& output_file,MeshExportInterface *iface, CalculiXCoreInterface ccx_iface);
-  bool write_materials(std::ofstream& output_file,CalculiXCoreInterface ccx_iface);
-  bool write_sections(std::ofstream& output_file,CalculiXCoreInterface ccx_iface);
+  bool write_materials(std::ofstream& output_file,CalculiXCoreInterface ccx_iface, int topology_id, int iteration_id);
+  bool write_sections(std::ofstream& output_file,CalculiXCoreInterface ccx_iface, int topology_id, int iteration_id);
   bool write_constraints(std::ofstream& output_file,CalculiXCoreInterface ccx_iface);
   bool write_surfaceinteractions(std::ofstream& output_file,CalculiXCoreInterface ccx_iface);
   bool write_contactpairs(std::ofstream& output_file,CalculiXCoreInterface ccx_iface);

@@ -347,13 +347,49 @@ int CoreSections::get_membrane_section_data_id_from_membrane_section_id(int memb
   return return_int;
 }
 
-std::string CoreSections::get_section_export(bool topology_run) // get a list of the CalculiX section exports
+std::string CoreSections::get_section_export(int topology_id,int iteration_id)
 {
   std::vector<std::string> sections_export_list;
   sections_export_list.push_back("********************************** S E C T I O N S ****************************");
   std::string str_temp;
   int sub_section_data_id;
+  std::set<int> topology_sections;
 
+  if (topology_id != -1 || iteration_id != -1)
+  {
+    if (topology_id <= 0 || iteration_id < 0)
+    {
+      PRINT_ERROR("Invalid topology export selection.\n");
+      return "";
+    }
+
+    const auto binding = topology_solid_sections.find(topology_id);
+
+    if (binding == topology_solid_sections.end() ||
+        binding->second.empty())
+    {
+      PRINT_ERROR("Solid section collection for topology %d not found.\n",
+                  topology_id);
+      return "";
+    }
+
+    for (int section_id : binding->second)
+    {
+      const int index =
+          get_sections_data_id_from_section_id(section_id);
+
+      if (index < 0 || sections_data[index][1] != 1)
+      {
+        PRINT_ERROR("Topology solid section %d no longer exists.\n",
+                    section_id);
+        return "";
+      }
+
+      topology_sections.insert(section_id);
+    }
+  }
+
+  // standard section export
   //loop over all sections
   for (size_t i = 0; i < sections_data.size(); i++)
   { 
@@ -365,8 +401,22 @@ std::string CoreSections::get_section_export(bool topology_run) // get a list of
     }
     // CUSTOMLINE END
 
+    // topology solid section
+    const int section_id = sections_data[i][0];
+    const bool topology_section = topology_sections.count(section_id) != 0;
+
+    if (topology_section)
+    {
+      const std::string data = get_topology_solid_section_export(topology_id, iteration_id, section_id);
+
+      if (data.empty())
+        return "";
+
+      sections_export_list.push_back(data);
+    }
+
     // SOLID
-    if (sections_data[i][1] == 1)
+    if (sections_data[i][1] == 1 && !topology_section)
     {
       sub_section_data_id = get_solid_section_data_id_from_solid_section_id(sections_data[i][2]);
 
@@ -630,6 +680,104 @@ bool CoreSections::initialize_topology_solid_sections(int topology_id,const std:
   // Commit only after every section passes validation.
   topology_solid_sections.emplace(topology_id, section_ids);
   return true;
+}
+
+std::string CoreSections::get_topology_solid_section_export(int topology_id,int iteration_id,int section_id)
+{
+  if (!is_initialized || !ccx_iface)
+  {
+    PRINT_ERROR("Solid section core is not initialized.\n");
+    return "";
+  }
+
+  const auto binding = topology_solid_sections.find(topology_id);
+
+  if (binding == topology_solid_sections.end())
+  {
+    PRINT_ERROR("Solid section collection for topology %d not found.\n", topology_id);
+    return "";
+  }
+
+  const auto& section_ids = binding->second;
+
+  if (std::find(section_ids.begin(), section_ids.end(), section_id) == section_ids.end())
+  {
+    PRINT_ERROR("Section %d does not belong to topology %d.\n", section_id, topology_id);
+    return "";
+  }
+
+  const int section_index = get_sections_data_id_from_section_id(section_id);
+
+  if (section_index < 0 || sections_data[section_index][1] != 1)
+  {
+    PRINT_ERROR("Section %d is not an existing solid section.\n", section_id);
+    return "";
+  }
+
+  const int solid_index = get_solid_section_data_id_from_solid_section_id(sections_data[section_index][2]);
+
+  if (solid_index < 0)
+  {
+    PRINT_ERROR("Solid section data missing for section %d.\n", section_id);
+    return "";
+  }
+
+  const auto& solid = solid_section_data[solid_index];
+  const int block_id = std::stoi(solid[1]);
+  const auto element_ids = ccx_iface->get_block_element_ids(block_id);
+
+  if (element_ids.empty())
+  {
+    PRINT_ERROR("Block %d contains no elements.\n", block_id);
+    return "";
+  }
+
+  std::string orientation;
+  const int orientation_id = std::stoi(solid[3]);
+
+  if (orientation_id != -1)
+  {
+    if (!ccx_iface->check_orientation_exists(orientation_id))
+    {
+      PRINT_ERROR("Orientation %d for section %d does not exist.\n", orientation_id, section_id);
+      return "";
+    }
+
+    orientation = ", ORIENTATION=" + ccx_iface->get_orientation_name(orientation_id);
+  }
+
+  std::ostringstream output;
+
+  for (int element_id : element_ids)
+  {
+    if (!ccx_iface->check_topology_material_assignment(topology_id, iteration_id, element_id))
+    {
+      PRINT_ERROR(
+          "Material assignment missing for topology %d, iteration %d, element %d.\n", topology_id, iteration_id, element_id);
+      return "";
+    }
+
+    const std::string material_name = ccx_iface->get_topology_material_name(topology_id, element_id);
+
+    if (material_name.empty())
+    {
+      PRINT_ERROR("Topology material name missing for element %d.\n", element_id);
+      return "";
+    }
+
+    const std::string elset = material_name + "_SET";
+
+    output << "*ELSET, ELSET=" << elset << "\n"
+           << element_id << "\n"
+           << "*SOLID SECTION, ELSET=" << elset
+           << ", MATERIAL=" << material_name
+           << orientation << "\n";
+
+    if (!solid[4].empty())
+      output << solid[4] << "\n";
+  }
+
+  return output.str();
 }
 
 void CoreSections::clear_topology_solid_sections()

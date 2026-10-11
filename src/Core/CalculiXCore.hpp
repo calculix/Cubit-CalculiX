@@ -455,8 +455,8 @@ public:
   std::vector<std::vector<std::string>> get_jobs_tree_data(); // gets the data from core to build the tree
   bool prepare_export(); // prepares data for export like for trajectory
   bool clean_export(); // cleans data for export like for trajectory
-  std::string get_material_export_data(); // gets the export data from materials core
-  std::string get_section_export_data(); // gets the export data from sections core
+  std::string get_material_export_data(int topology_id = -1,int iteration_id = -1); // gets the export data from materials core
+  std::string get_section_export_data(int topology_id = -1,int iteration_id = -1); // gets the export data from sections core
   std::string get_constraint_export_data(); // gets the export data from constraints core
   std::string get_surfaceinteraction_export_data(); // gets the export data from surfaceinteractions core
   std::string get_contactpair_export_data(); // gets the export data from contactpairs core
