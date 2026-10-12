@@ -39,7 +39,9 @@ CoreJobs::CoreJobs()
 }
 
 CoreJobs::~CoreJobs()
-{}
+{
+  delete ccx_iface;
+}
 
 bool CoreJobs::init()
 {
@@ -47,7 +49,7 @@ bool CoreJobs::init()
   {
     return false; // already initialized
   }else{
-    CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
+    ccx_iface = new CalculiXCoreInterface();
     progressbar = CubitInterface::app_util().get()->progress_tool();;
     is_initialized = true;  
     return true;

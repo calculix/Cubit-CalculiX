@@ -1658,8 +1658,7 @@ std::string CoreMaterials::get_topology_material_export(int topology_id,int iter
   }
 
   std::ostringstream output;
-  output << std::scientific
-         << std::setprecision(std::numeric_limits<double>::max_digits10);
+  output << std::scientific << std::setprecision(6);
 
   output << "** TOPOLOGY MATERIALS: RUN " << topology_id
          << ", ITERATION " << iteration_id << "\n";

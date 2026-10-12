@@ -131,6 +131,11 @@
 #include "ccxJobModifyCommand.hpp"
 #include "ccxJobDeleteCommand.hpp"
 #include "ccxRunJobCommand.hpp"
+#include "ccxTopologyCreateCommand.hpp"
+#include "ccxTopologyModifyCommand.hpp"
+#include "ccxTopologyDeleteCommand.hpp"
+#include "ccxTopologyAddSetsCommand.hpp"
+#include "ccxTopologyRemoveSetsCommand.hpp"
 #include "ccxRunTopologyCommand.hpp"
 #include "ccxWaitJobCommand.hpp"
 #include "ccxResultCGXJobCommand.hpp"
@@ -306,6 +311,11 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxJobModifyCommand");
   keys.push_back("ccxJobDeleteCommand");
   keys.push_back("ccxRunJobCommand");
+  keys.push_back("ccxTopologyCreateCommand");
+  keys.push_back("ccxTopologyModifyCommand");
+  keys.push_back("ccxTopologyDeleteCommand");
+  keys.push_back("ccxTopologyAddSetsCommand");
+  keys.push_back("ccxTopologyRemoveSetsCommand");
   keys.push_back("ccxRunTopologyCommand");
   keys.push_back("ccxWaitJobCommand");
   keys.push_back("ccxKillJobCommand");
@@ -732,7 +742,22 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
   
   if(key == "ccxWaitJobCommand")
     return new ccxWaitJobCommand();
-  
+
+  if(key == "ccxTopologyCreateCommand")
+    return new ccxTopologyCreateCommand();   
+
+  if(key == "ccxTopologyModifyCommand")
+    return new ccxTopologyModifyCommand();   
+    
+  if(key == "ccxTopologyDeleteCommand")
+    return new ccxTopologyDeleteCommand();
+
+  if(key == "ccxTopologyAddSetsCommand")
+    return new ccxTopologyAddSetsCommand();
+
+  if(key == "ccxTopologyRemoveSetsCommand")
+    return new ccxTopologyRemoveSetsCommand();
+
   if(key == "ccxRunTopologyCommand")
     return new ccxRunTopologyCommand();    
 

@@ -12,6 +12,8 @@
 #include <ctime>
 #include <algorithm>
 #include <cmath>
+#include <set>
+#include <limits>
 
 //#include "cubitguicommondll.hpp"
 //#include "CubitGuiUtil.hpp"
@@ -54,6 +56,7 @@
 #include "CoreHBCs.hpp"
 #include "CoreSteps.hpp"
 #include "CoreJobs.hpp"
+#include "CoreTopology.hpp"
 #include "CoreResults.hpp"
 #include "CoreResultsFrd.hpp"
 #include "CoreResultsDat.hpp"
@@ -139,6 +142,8 @@ CalculiXCore::~CalculiXCore()
     delete steps;
   if(jobs)
     delete jobs;
+  if(topology)
+    delete topology;
   if(results)
     delete results;
   if(timer)
@@ -340,6 +345,11 @@ bool CalculiXCore::init()
   
   jobs->init();
 
+  if (!topology)
+    topology = new CoreTopology;
+
+  topology->init();
+
   if(!results)
     results = new CoreResults;
   
@@ -505,6 +515,8 @@ bool CalculiXCore::update()
   loadsheatfluxes->update();
   bcsdisplacements->update();
   bcstemperatures->update();
+  //if (topology && !topology->update())
+  //return false;
   
   if (use_ccx_autocleanup)
   {
@@ -530,7 +542,7 @@ bool CalculiXCore::update()
 bool CalculiXCore::reset()
 {
   cb->reset();
-  //mat->reset();
+  mat->reset(); // to reset topo data
   mat_library->reset();
   sections->reset();
   constraints->reset();
@@ -558,6 +570,7 @@ bool CalculiXCore::reset()
   hbcs->reset();
   steps->reset();
   jobs->reset();
+  topology->reset();
   results->reset();
   customlines->reset();
   //draw->reset();
@@ -4700,9 +4713,919 @@ bool CalculiXCore::kill_job(int job_id)
   return jobs->kill_job(job_id);
 }
 
-bool CalculiXCore::run_topology(int topology_id, int job_id)
+bool CalculiXCore::create_topology(int topology_id, const TopologyOptions& options)
 {
-  //return ccx_core.run_topology(topology_id, option);
+  if (!topology)
+  {
+    PRINT_ERROR("Topology core is not initialized.\n");
+    return false;
+  }
+
+  return topology->create_topology(topology_id, options);
+}
+
+bool CalculiXCore::modify_topology(int topology_id, const TopologyOptions& options)
+{
+  if (!topology)
+  {
+    PRINT_ERROR("Topology core is not initialized.\n");
+    return false;
+  }
+
+  return topology->modify_topology(topology_id, options);
+}
+
+bool CalculiXCore::reset_topology_run(int topology_id)
+{
+  if (!topology || !jobs)
+  {
+    PRINT_ERROR("Topology or job core is not initialized.\n");
+    return false;
+  }
+
+  const auto entry = topology->topology_cases.find(topology_id);
+
+  if (entry == topology->topology_cases.end())
+  {
+    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    return false;
+  }
+
+  // Check all jobs before removing any.
+  for (const auto& iteration : entry->second.iteration_jobs)
+  {
+    const int status = jobs->get_job_status(iteration.second);
+
+    if (status == 1 || status == 5)
+    {
+      PRINT_ERROR("Topology %d has an active iteration job.\n",
+                  topology_id);
+      return false;
+    }
+  }
+
+  auto& configuration = entry->second;
+
+  for (auto it = configuration.iteration_jobs.begin();
+       it != configuration.iteration_jobs.end();)
+  {
+    const int job_id = it->second;
+
+    if (jobs->get_jobs_data_id_from_job_id(job_id) >= 0 &&
+        !jobs->delete_job(job_id))
+    {
+      PRINT_ERROR("Failed to delete topology iteration job %d.\n",
+                  job_id);
+      return false;
+    }
+
+    it = configuration.iteration_jobs.erase(it);
+  }
+
+  configuration.selected_iteration = -1;
+  configuration.element_preserved.clear();
+
+  if (mat)
+    mat->topology_material_data.erase(topology_id);
+
+  if (sections)
+    sections->topology_solid_sections.erase(topology_id);
+
+  return true;
+}
+
+bool CalculiXCore::delete_topology(int topology_id)
+{
+  if (!reset_topology_run(topology_id))
+    return false;
+
+  return topology->delete_topology(topology_id);
+}
+
+bool CalculiXCore::add_preserved_sets(int topology_id, int set_type, const std::vector<int>& ids)
+{
+  if (!topology)
+  {
+    PRINT_ERROR("Topology core is not initialized.\n");
+    return false;
+  }
+
+  return topology->add_preserved_sets(topology_id, set_type, ids);
+}
+
+bool CalculiXCore::remove_preserved_sets(int topology_id, int set_type, const std::vector<int>& ids)
+{
+  if (!topology)
+  {
+    PRINT_ERROR("Topology core is not initialized.\n");
+    return false;
+  }
+
+  return topology->remove_preserved_sets(topology_id, set_type, ids);
+}
+
+bool CalculiXCore::get_topology_set_element_ids(int topology_id,int set_type,int set_id, std::vector<int>& element_ids)
+{
+  element_ids.clear();
+
+  if (!mat || !me_iface)
+  {
+    PRINT_ERROR("Topology mesh/material interfaces are not initialized.\n");
+    return false;
+  }
+
+  const auto collection = mat->topology_material_data.find(topology_id);
+
+  if (collection == mat->topology_material_data.end())
+  {
+    PRINT_ERROR("Material collection for topology %d not found.\n", topology_id);
+    return false;
+  }
+
+  const auto& analysis_elements = collection->second.element_base_material;
+
+  bool exists = false;
+
+  if (set_id > 0)
+  {
+    if (set_type == 1)
+      exists = check_block_exists(set_id);
+    else if (set_type == 2)
+      exists = check_nodeset_exists(set_id);
+    else if (set_type == 3)
+      exists = check_sideset_exists(set_id);
+  }
+
+  if (!exists)
+  {
+    PRINT_ERROR("Invalid topology set type %d, ID %d.\n", set_type, set_id);
+    return false;
+  }
+
+  std::set<int> resolved;
+
+  if (set_type == 1)
+  {
+    for (int id : get_block_element_ids(set_id))
+      if (analysis_elements.count(id) != 0)
+        resolved.insert(id);
+  }
+  else if (set_type == 2)
+  {
+    NodesetHandle nodeset;
+
+    if (!me_iface->get_nodeset_handle(set_id, nodeset))
+    {
+      PRINT_ERROR("Unable to query nodeset %d.\n", set_id);
+      return false;
+    }
+
+    std::set<int> selected_nodes;
+    std::vector<int> node_ids;
+    const int batch_size = 100;
+    int start = 0;
+    int count = 0;
+
+    while ((count = me_iface->get_nodeset_node_ids(
+                nodeset, start, batch_size, node_ids)) > 0)
+    {
+      for (int i = 0; i < count; ++i)
+        selected_nodes.insert(node_ids[i]);
+
+      start += count;
+    }
+
+    if (count < 0)
+    {
+      PRINT_ERROR("Failed to read nodeset %d.\n", set_id);
+      return false;
+    }
+
+    const auto connectivity = get_element_id_type_connectivity();
+
+    for (const auto& element : connectivity)
+    {
+      // Row layout: global element ID, element type, node IDs.
+      if (element.size() < 3)
+      {
+        PRINT_ERROR("Invalid mesh connectivity row.\n");
+        return false;
+      }
+
+      const int element_id = element[0];
+
+      if (analysis_elements.count(element_id) == 0)
+        continue;
+
+      for (size_t i = 2; i < element.size(); ++i)
+      {
+        if (selected_nodes.count(element[i]) != 0)
+        {
+          resolved.insert(element_id);
+          break;
+        }
+      }
+    }
+  }
+  else
+  {
+    SidesetHandle sideset;
+
+    if (!me_iface->get_sideset_handle(set_id, sideset))
+    {
+      PRINT_ERROR("Unable to query sideset %d.\n", set_id);
+      return false;
+    }
+
+    std::vector<ElementHandle> handles;
+    std::vector<ElementType> types;
+    std::vector<int> side_ids;
+
+    const int batch_size = 100;
+    int start = 0;
+    int count = 0;
+
+    while ((count = me_iface->get_sideset_sides(
+                sideset, start, batch_size,
+                handles, types, side_ids)) > 0)
+    {
+      for (int i = 0; i < count; ++i)
+      {
+        int local_id = -1;
+        me_iface->get_element_id(handles[i], local_id);
+
+        const std::string entity = get_cubit_element_type_entity(
+            me_iface->get_element_type_name(types[i]));
+
+        const int global_id =
+            CubitInterface::get_global_element_id(entity, local_id);
+
+        if (analysis_elements.count(global_id) != 0)
+          resolved.insert(global_id);
+      }
+
+      start += count;
+    }
+
+    if (count < 0)
+    {
+      PRINT_ERROR("Failed to read sideset %d.\n", set_id);
+      return false;
+    }
+  }
+
+  element_ids.assign(resolved.begin(), resolved.end());
+  return true;
+}
+
+bool CalculiXCore::collect_topology_default_sets(std::map<int, std::set<int>>& default_sets,std::set<int>& default_elements)
+{
+  default_sets.clear();
+  default_elements.clear();
+
+  if (!constraints || !contactpairs || !me_iface || !steps ||
+    !loadsgravity || !loadscentrifugal ||
+    !loadsfilm || !loadsradiation || !loadssurfacetraction || !loadsbodyheatflux)
+  {
+    PRINT_ERROR("Topology preservation cores are not initialized.\n");
+    return false;
+  }
+
+  std::map<int, std::set<int>> collected;
+  std::set<int> collected_elements;
+  std::set<int> collected_nodes;
+
+  const auto add_node_id = [&](double value) -> bool
+  {
+    if (!std::isfinite(value) ||
+        value < 1.0 ||
+        value > static_cast<double>(std::numeric_limits<int>::max()) ||
+        std::floor(value) != value)
+    {
+      PRINT_ERROR("Invalid preserved node ID.\n");
+      return false;
+    }
+
+    const int node_id = static_cast<int>(value);
+
+    if (!CubitInterface::get_node_exists(node_id))
+    {
+      PRINT_ERROR("Preserved node %d does not exist.\n", node_id);
+      return false;
+    }
+
+    collected_nodes.insert(node_id);
+    return true;
+  };
+
+  // Read stored string IDs without throwing exceptions.
+  const auto read_positive_id =
+      [](const std::string& text, int& id) -> bool
+  {
+    std::istringstream input(text);
+
+    if (!(input >> id) || id <= 0)
+      return false;
+
+    input >> std::ws;
+    return input.eof();
+  };
+
+  const auto add_string_id =
+      [&](int set_type, const std::string& text) -> bool
+  {
+    int id = -1;
+
+    if (!read_positive_id(text, id))
+    {
+      PRINT_ERROR("Invalid preserved set ID '%s'.\n", text.c_str());
+      return false;
+    }
+
+    collected[set_type].insert(id);
+    return true;
+  };
+
+  // Load/BC type -> IDs assigned to existing steps.
+  std::map<int, std::set<int>> used_loads;
+  std::map<int, std::set<int>> used_bcs;
+
+  for (const auto& step : steps->steps_data)
+  {
+    if (step.size() < 7)
+    {
+      PRINT_ERROR("Invalid step data.\n");
+      return false;
+    }
+
+    const auto load_indices =
+        steps->get_load_data_ids_from_loads_id(step[5]);
+
+    for (int index : load_indices)
+    {
+      const auto& load = steps->loads_data[index];
+
+      if (load.size() < 3 ||
+          load[1] < 1 || load[1] > 10 || load[2] <= 0)
+      {
+        PRINT_ERROR("Invalid step load reference.\n");
+        return false;
+      }
+
+      used_loads[load[1]].insert(load[2]);
+    }
+
+    const auto bc_indices =
+        steps->get_bc_data_ids_from_bcs_id(step[6]);
+
+    for (int index : bc_indices)
+    {
+      const auto& bc = steps->bcs_data[index];
+
+      if (bc.size() < 3 ||
+          (bc[1] != 1 && bc[1] != 2) || bc[2] <= 0)
+      {
+        PRINT_ERROR("Invalid step boundary condition reference.\n");
+        return false;
+      }
+
+      used_bcs[bc[1]].insert(bc[2]);
+    }
+  }
+
+  // Constraints: rigid bodies and ties.
+  for (const auto& constraint : constraints->constraints_data)
+  {
+    if (constraint.size() < 3)
+    {
+      PRINT_ERROR("Invalid constraint data.\n");
+      return false;
+    }
+
+    const int type = constraint[1];
+    const int subtype_id = constraint[2];
+
+    if (type == 1)
+    {
+      const int index =
+          constraints->get_rigidbody_constraint_data_id_from_rigidbody_constraint_id(
+              subtype_id);
+
+      if (index < 0 ||
+          constraints->rigidbody_constraint_data[index].size() < 3)
+      {
+        PRINT_ERROR("Missing rigid body constraint data.\n");
+        return false;
+      }
+
+      const auto& rigid =
+          constraints->rigidbody_constraint_data[index];
+
+      // Rigid body types: 1 = nodeset, 2 = block.
+      // Preservation types: 1 = block, 2 = nodeset.
+      int set_type = -1;
+
+      if (rigid[1] == "1")
+        set_type = 2;
+      else if (rigid[1] == "2")
+        set_type = 1;
+      else
+      {
+        PRINT_ERROR("Invalid rigid body selection type.\n");
+        return false;
+      }
+
+      if (!add_string_id(set_type, rigid[2]))
+        return false;
+    }
+    else if (type == 2)
+    {
+      const int index =
+          constraints->get_tie_constraint_data_id_from_tie_constraint_id(
+              subtype_id);
+
+      if (index < 0 ||
+          constraints->tie_constraint_data[index].size() < 4)
+      {
+        PRINT_ERROR("Missing tie constraint data.\n");
+        return false;
+      }
+
+      const auto& tie = constraints->tie_constraint_data[index];
+
+      if (!add_string_id(3, tie[2]) ||
+          !add_string_id(3, tie[3]))
+        return false;
+    }
+    else if (type == 3)
+    {
+      const auto indices =
+          constraints->get_equation_data_ids_from_equation_constraint_id(
+              subtype_id);
+
+      if (indices.empty())
+      {
+        PRINT_ERROR("Missing equation constraint data.\n");
+        return false;
+      }
+
+      for (int index : indices)
+      {
+        const auto& equation = constraints->equation_data[index];
+
+        if (equation.size() < 4)
+        {
+          PRINT_ERROR("Invalid equation constraint data.\n");
+          return false;
+        }
+
+        if (!add_node_id(equation[1]))
+          return false;
+      }
+    }
+    else if (type == 4)
+    {
+      const auto indices =
+          constraints->get_equation_group_data_ids_from_equation_group_constraint_id(
+              subtype_id);
+
+      if (indices.empty())
+      {
+        PRINT_ERROR("Missing equation group constraint data.\n");
+        return false;
+      }
+
+      for (int index : indices)
+      {
+        const auto& equation = constraints->equation_group_data[index];
+
+        if (equation.size() < 4)
+        {
+          PRINT_ERROR("Invalid equation group constraint data.\n");
+          return false;
+        }
+
+        if (!add_node_id(equation[1]) ||
+            !add_node_id(equation[2]))
+          return false;
+      }
+    }
+  }
+
+  // Contact pairs: master/slave sidesets and optional adjust nodeset.
+  for (const auto& contact : contactpairs->contactpairs_data)
+  {
+    if (contact.size() < 6 ||
+        contact[3] <= 0 || contact[4] <= 0)
+    {
+      PRINT_ERROR("Invalid contact pair data.\n");
+      return false;
+    }
+
+    collected[3].insert(contact[3]);
+    collected[3].insert(contact[4]);
+
+    const int index =
+        contactpairs->get_adjust_contactpair_data_id_from_adjust_contactpair_id(
+            contact[5]);
+
+    if (index < 0 ||
+        contactpairs->adjust_contactpair_data[index].size() < 3)
+    {
+      PRINT_ERROR("Missing contact pair adjustment data.\n");
+      return false;
+    }
+
+    const std::string& nodeset =
+        contactpairs->adjust_contactpair_data[index][2];
+
+    if (!nodeset.empty() &&
+        !add_string_id(2, nodeset))
+      return false;
+  }
+
+  // These load tables store their block/sideset ID at column 4.
+  const auto collect_load_sets =
+      [&](const std::vector<std::vector<int>>& rows,
+          int load_type,
+          int set_type,
+          const char* load_name) -> bool
+  {
+    for (int load_id : used_loads[load_type])
+    {
+      const auto row = std::find_if(
+          rows.begin(), rows.end(),
+          [&](const std::vector<int>& data)
+          {
+            return !data.empty() && data[0] == load_id;
+          });
+
+      if (row == rows.end() || row->size() < 5 || (*row)[4] <= 0)
+      {
+        PRINT_ERROR("Missing or invalid %s load %d.\n",
+                    load_name, load_id);
+        return false;
+      }
+
+      collected[set_type].insert((*row)[4]);
+    }
+
+    return true;
+  };
+
+  // Block references.
+  if (!collect_load_sets(loadsgravity->loads_data,4,1, "gravity") ||
+      !collect_load_sets(loadscentrifugal->loads_data,5,1, "centrifugal"))
+    return false;
+
+  // Sideset references.
+  if (!collect_load_sets(loadsfilm->loads_data,7,3, "film") ||
+      !collect_load_sets(loadsradiation->loads_data,8,3, "radiation") ||
+      !collect_load_sets(loadssurfacetraction->loads_data,9,3, "surface traction"))
+    return false;
+
+  // Body heat flux: column 4 identifies the stored selection.
+  // Column 5: 1 = blocks, 2 = global elements.
+  for (int load_id : used_loads[10])
+  {
+    const int load_index =
+        loadsbodyheatflux->get_loads_data_id_from_load_id(load_id);
+
+    if (load_index < 0)
+    {
+      PRINT_ERROR("Body heat flux load %d does not exist.\n", load_id);
+      return false;
+    }
+
+    const auto& load = loadsbodyheatflux->loads_data[load_index];
+
+    if (load.size() < 6 ||
+        (load[5] != 1 && load[5] != 2))
+    {
+      PRINT_ERROR("Invalid body heat flux selection.\n");
+      return false;
+    }
+
+    const int index =
+        loadsbodyheatflux->get_element_data_id_from_element_id(
+            load[4]);
+
+    if (index < 0 ||
+        loadsbodyheatflux->element_data[index].size() < 2)
+    {
+      PRINT_ERROR("Missing body heat flux selection data.\n");
+      return false;
+    }
+
+    const auto& selection = loadsbodyheatflux->element_data[index];
+
+    // Entry 0 is the selection record ID.
+    for (size_t i = 1; i < selection.size(); ++i)
+    {
+      const int id = selection[i];
+
+      if (id <= 0)
+      {
+        PRINT_ERROR("Invalid body heat flux target ID %d.\n", id);
+        return false;
+      }
+
+      if (load[5] == 1)
+        collected[1].insert(id);
+      else
+        collected_elements.insert(id);
+    }
+  }
+
+  // Query only Cubit loads and BCs assigned to steps.
+  const auto collect_cubit_bc_sets =
+      [&](const std::set<int>& ids,
+          BCEntityType export_type,
+          int set_type,
+          const char* description) -> bool
+  {
+    for (int id : ids)
+    {
+      BCEntityHandle handle;
+
+      if (!me_iface->get_bc_handle(export_type, id, handle))
+      {
+        PRINT_ERROR("Unable to query %s %d.\n", description, id);
+        return false;
+      }
+
+      int set_id = -1;
+
+      if (set_type == 2)
+      {
+        NodesetHandle nodeset;
+
+        if (!me_iface->get_bc_nodeset(handle, nodeset))
+        {
+          PRINT_ERROR("Unable to query nodeset for %s %d.\n",
+                      description, id);
+          return false;
+        }
+
+        set_id = me_iface->id_from_handle(nodeset);
+      }
+      else
+      {
+        SidesetHandle sideset;
+
+        if (!me_iface->get_bc_sideset(handle, sideset))
+        {
+          PRINT_ERROR("Unable to query sideset for %s %d.\n",
+                      description, id);
+          return false;
+        }
+
+        set_id = me_iface->id_from_handle(sideset);
+      }
+
+      if (set_id <= 0)
+      {
+        PRINT_ERROR("Invalid set ID for %s %d.\n", description, id);
+        return false;
+      }
+
+      collected[set_type].insert(set_id);
+    }
+
+    return true;
+  };
+
+  if (!collect_cubit_bc_sets(used_loads[1], BCTYPE_FORCE, 2, "force") ||
+      !collect_cubit_bc_sets(used_loads[2], BCTYPE_PRESSURE, 3, "pressure") ||
+      !collect_cubit_bc_sets(used_loads[3], BCTYPE_HEATFLUX, 3, "heat flux") ||
+      !collect_cubit_bc_sets(used_bcs[1], BCTYPE_DISPLACEMENT, 2, "displacement") ||
+      !collect_cubit_bc_sets(used_bcs[2], BCTYPE_TEMPERATURE, 2, "temperature"))
+    return false;
+
+  // get elements from nodes
+  if (!collected_nodes.empty())
+  {
+    if (!me_iface)
+    {
+      PRINT_ERROR("Mesh export interface is not initialized.\n");
+      return false;
+    }
+
+    const auto connectivity = get_element_id_type_connectivity();
+
+    for (const auto& element : connectivity)
+    {
+      // Row: global element ID, element type, node IDs.
+      if (element.size() < 3 || element[0] <= 0)
+      {
+        PRINT_ERROR("Invalid topology connectivity row.\n");
+        return false;
+      }
+
+      for (size_t i = 2; i < element.size(); ++i)
+      {
+        if (collected_nodes.count(element[i]) != 0)
+        {
+          collected_elements.insert(element[0]);
+          break;
+        }
+      }
+    }
+  }
+
+  default_sets.swap(collected);
+  default_elements.swap(collected_elements);
+  return true;
+}
+
+bool CalculiXCore::resolve_topology_preservation(int topology_id,const std::map<int, std::set<int>>& default_sets,const std::set<int>& default_elements)
+{
+  if (!topology || !mat)
+  {
+    PRINT_ERROR("Topology/material cores are not initialized.\n");
+    return false;
+  }
+
+  const auto collection = mat->topology_material_data.find(topology_id);
+
+  if (collection == mat->topology_material_data.end())
+  {
+    PRINT_ERROR("Material collection for topology %d not found.\n",
+                topology_id);
+    return false;
+  }
+
+  std::vector<int> element_ids;
+
+  for (const auto& assignment : collection->second.element_base_material)
+    element_ids.push_back(assignment.first);
+
+  return topology->resolve_preserved_elements(topology_id, element_ids, default_sets, default_elements);
+}
+
+bool CalculiXCore::run_topology(int topology_id)
+{
+  if (!topology || !mat || !sections || !jobs)
+  {
+    PRINT_ERROR("Topology run cores are not initialized.\n");
+    return false;
+  }
+
+  const auto entry = topology->topology_cases.find(topology_id);
+
+  if (entry == topology->topology_cases.end())
+  {
+    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    return false;
+  }
+
+  if (!reset_topology_run(topology_id))
+    return false;
+
+  std::vector<int> material_section_ids;
+
+  for (const auto& section : sections->sections_data)
+  {
+    if (section[1] != 1)
+      continue;
+
+    const int solid_index =
+        sections->get_solid_section_data_id_from_solid_section_id(
+            section[2]);
+
+    if (solid_index < 0)
+    {
+      PRINT_ERROR("Solid section data missing for section %d.\n",
+                  section[0]);
+      return false;
+    }
+
+    const int block_id =
+        std::stoi(sections->solid_section_data[solid_index][1]);
+
+    if (get_ccx_element_type(block_id).rfind("C3D", 0) == 0)
+      material_section_ids.push_back(section[0]);
+  }
+
+  if (!initialize_topology(topology_id, material_section_ids))
+    return false;
+
+  const auto collection = mat->topology_material_data.find(topology_id);
+
+  if (collection == mat->topology_material_data.end())
+  {
+    PRINT_ERROR("Topology material initialization failed.\n");
+    sections->topology_solid_sections.erase(topology_id);
+    return false;
+  }
+
+  std::vector<int> element_ids;
+  std::vector<double> stiffness_factors;
+
+  for (const auto& assignment : collection->second.element_base_material)
+  {
+    element_ids.push_back(assignment.first);
+    stiffness_factors.push_back(1.0);
+  }
+
+  if (!set_topology_iteration_factors(
+          topology_id, 0, element_ids, stiffness_factors))
+  {
+    mat->topology_material_data.erase(topology_id);
+    sections->topology_solid_sections.erase(topology_id);
+    return false;
+  }
+
+  PRINT_INFO("Topology %d (%s): all-solid iteration 0 prepared. Solver execution is not connected yet.\n", topology_id, entry->second.name.c_str());
+
+  return true;
+}
+
+bool CalculiXCore::initialize_topology(int topology_id,const std::vector<int>& section_ids)
+{
+  if (topology_id <= 0 || section_ids.empty())
+  {
+    PRINT_ERROR("Invalid topology initialization.\n");
+    return false;
+  }
+
+  // Reset data belonging to this topology configuration.
+  mat->topology_material_data.erase(topology_id);
+  sections->topology_solid_sections.erase(topology_id);
+
+  std::vector<int> element_ids;
+  std::vector<int> base_material_ids;
+
+  for (int section_id : section_ids)
+  {
+    const int section_index =
+        sections->get_sections_data_id_from_section_id(section_id);
+
+    if (section_index < 0 || sections->sections_data[section_index][1] != 1)
+    {
+      PRINT_ERROR("Section %d is not an existing solid section.\n", section_id);
+      return false;
+    }
+
+    const int solid_index = sections->get_solid_section_data_id_from_solid_section_id(sections->sections_data[section_index][2]);
+
+    if (solid_index < 0)
+    {
+      PRINT_ERROR("Solid section data missing for section %d.\n", section_id);
+      return false;
+    }
+
+    const auto& solid = sections->solid_section_data[solid_index];
+    const int block_id = std::stoi(solid[1]);
+    const int material_id = std::stoi(solid[2]);
+
+    if (cb->get_blocks_data_id_from_block_id(block_id) < 0)
+    {
+      PRINT_ERROR("Block %d for section %d does not exist.\n", block_id, section_id);
+      return false;
+    }
+
+    const auto block_elements = get_block_element_ids(block_id);
+
+    if (block_elements.empty())
+    {
+      PRINT_ERROR("Block %d contains no elements.\n", block_id);
+      return false;
+    }
+
+    for (int element_id : block_elements)
+    {
+      element_ids.push_back(element_id);
+      base_material_ids.push_back(material_id);
+    }
+  }
+
+  if (!mat->initialize_topology_materials(topology_id, element_ids, base_material_ids))
+  {
+    PRINT_ERROR("Failed to initialize materials for topology %d.\n", topology_id);
+    return false;
+  }
+
+  if (!sections->initialize_topology_solid_sections(topology_id, section_ids))
+  {
+    // Remove only the collection created by this call.
+    mat->topology_material_data.erase(topology_id);
+    return false;
+  }
+
+  PRINT_INFO("Topology %d initialized with %d elements.\n", topology_id, static_cast<int>(element_ids.size()));
+
+  return true;
+}
+
+bool CalculiXCore::set_topology_iteration_factors(int topology_id, int iteration_id, const std::vector<int>& element_ids, const std::vector<double>& stiffness_factors)
+{
+  if (!mat->set_topology_iteration_factors(topology_id, iteration_id, element_ids, stiffness_factors))
+  {
+    PRINT_ERROR("Failed to store topology %d iteration %d factors.\n", topology_id, iteration_id);
+    return false;
+  }
+
   return true;
 }
 

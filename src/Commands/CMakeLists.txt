@@ -261,6 +261,16 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxJobDeleteCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxRunJobCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxRunJobCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxTopologyCreateCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxTopologyCreateCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxTopologyModifyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxTopologyModifyCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxTopologyDeleteCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxTopologyDeleteCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxTopologyAddSetsCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxTopologyAddSetsCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxTopologyRemoveSetsCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxTopologyRemoveSetsCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxRunTopologyCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxRunTopologyCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxWaitJobCommand.cpp

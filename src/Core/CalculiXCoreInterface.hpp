@@ -3,6 +3,7 @@
 
 #include <QIcon>
 #include "CoreStepsStructs.hpp"
+#include "CoreTopologyStructs.hpp"
 
 class MeshExportInterface;
 
@@ -213,8 +214,16 @@ public:
   bool run_job(int job_id, int option); // runs job
   bool check_jobs(); // checks for changes of job processes
   bool wait_job(int job_id); // runs job
-  bool kill_job(int job_id); // runs job
-  bool run_topology(int topology_id, int job_id); // runs topology optimization job
+  bool kill_job(int job_id); // kills job
+  bool run_topology(int topology_id); // runs topology optimization job
+  bool create_topology(int topology_id, const TopologyOptions& options);
+  bool modify_topology(int topology_id, const TopologyOptions& options);
+  bool delete_topology(int topology_id); // delete topology and all of its data
+  bool add_preserved_sets(int topology_id, int set_type, const std::vector<int>& ids);
+  bool remove_preserved_sets(int topology_id, int set_type, const std::vector<int>& ids);
+  bool get_topology_set_element_ids(int topology_id,int set_type,int set_id,std::vector<int>& element_ids);
+  bool initialize_topology(int topology_id, const std::vector<int>& section_ids);
+  bool set_topology_iteration_factors(int topology_id,int iteration_id,const std::vector<int>& element_ids,const std::vector<double>& stiffness_factors);
   bool check_topology_material_assignment(int topology_id, int iteration_id, int element_id);
   std::string get_topology_material_name(int topology_id, int element_id);
   bool set_job_conversion(int job_id, int conversion); // sets the paraview conversion value for the job

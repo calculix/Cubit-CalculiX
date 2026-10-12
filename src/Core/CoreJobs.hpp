@@ -82,7 +82,7 @@ public:
   bool is_whitespace(std::string line); // check if line consists only of whitespace
   std::string print_data(); // prints out the jobs_data
 
-  CalculiXCoreInterface *ccx_iface;
+  CalculiXCoreInterface *ccx_iface =  nullptr;
   ProgressTool *progressbar; // progressbar
 };
 

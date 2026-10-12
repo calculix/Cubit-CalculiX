@@ -4,7 +4,7 @@
 
 CalculiXPythonInterface::CalculiXPythonInterface()
 {
-  CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
+  ccx_iface = new CalculiXCoreInterface();
   std::string log = "Loading CalculiX Python Interface...\n";
   PRINT_INFO("%s", log.c_str());
 }
@@ -78,6 +78,16 @@ void CalculiXPythonInterface::help()
 int CalculiXPythonInterface::get_job_status(int job_id)
 {
   return ccx_iface->get_job_status(job_id);
+}
+
+bool CalculiXPythonInterface::initialize_topology(int topology_id, const std::vector<int>& section_ids)
+{
+  return ccx_iface->initialize_topology(topology_id, section_ids);
+}
+
+bool CalculiXPythonInterface::set_topology_iteration_factors(int topology_id, int iteration_id, const std::vector<int>& element_ids, const std::vector<double>& stiffness_factors)
+{
+  return ccx_iface->set_topology_iteration_factors(topology_id, iteration_id, element_ids, stiffness_factors);
 }
 
 std::vector<std::string> CalculiXPythonInterface::frd_get_result_block_types(int job_id)
