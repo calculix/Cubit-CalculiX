@@ -5337,6 +5337,79 @@ bool CalculiXCore::collect_topology_default_sets(std::map<int, std::set<int>>& d
     }
   }
 
+  for (int trajectory_id : used_loads[6])
+  {
+    if (!loadstrajectory)
+    {
+      PRINT_ERROR("Trajectory core is not initialized.\n");
+      return false;
+    }
+
+    const int index =
+        loadstrajectory->get_loads_data_id_from_load_id(
+            trajectory_id);
+
+    if (index < 0 ||
+        loadstrajectory->loads_data[index].size() < 3)
+    {
+      PRINT_ERROR("Missing trajectory load %d.\n", trajectory_id);
+      return false;
+    }
+
+    const auto& trajectory = loadstrajectory->loads_data[index];
+    const int type = trajectory[1];
+    const int subload_id = trajectory[2];
+
+    if (type == 1)
+    {
+      PRINT_ERROR(
+          "Preservation for surface heat flux trajectory %d "
+          "is not implemented yet.\n",
+          trajectory_id);
+      return false;
+    }
+
+    if (type != 2 || !loadstrajectory->bodyheatfluxsphere)
+    {
+      PRINT_ERROR("Invalid trajectory load type for %d.\n",
+                  trajectory_id);
+      return false;
+    }
+
+    const int subindex =
+        loadstrajectory->bodyheatfluxsphere
+            ->get_loads_data_id_from_load_id(subload_id);
+
+    if (subindex < 0)
+    {
+      PRINT_ERROR("Missing body heat flux sphere trajectory data.\n");
+      return false;
+    }
+
+    const auto targets =
+        loadstrajectory->bodyheatfluxsphere
+            ->get_element_ids(subload_id);
+
+    // Targets are grouped by trajectory position and radius/depth.
+    for (const auto& position : targets)
+    {
+      for (const auto& selection : position)
+      {
+        for (int element_id : selection)
+        {
+          if (element_id <= 0)
+          {
+            PRINT_ERROR("Invalid trajectory target element %d.\n",
+                        element_id);
+            return false;
+          }
+
+          collected_elements.insert(element_id);
+        }
+      }
+    }
+  }
+
   // Query only Cubit loads and BCs assigned to steps.
   const auto collect_cubit_bc_sets =
       [&](const std::set<int>& ids,
