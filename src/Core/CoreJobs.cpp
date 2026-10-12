@@ -578,11 +578,12 @@ bool CoreJobs::run_job(int job_id,int option)
 
 bool CoreJobs::wait_job(int job_id)
 { 
+  bool results_loaded = false;
+  
   #ifdef WIN32
     std::string log;
     CubitString output;
-    bool results_loaded = false;
-
+    
     int status=-1;
     
     int jobs_data_id=-1;
