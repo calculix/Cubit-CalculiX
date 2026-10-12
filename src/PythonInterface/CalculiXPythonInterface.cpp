@@ -90,6 +90,11 @@ bool CalculiXPythonInterface::set_topology_iteration_factors(int topology_id, in
   return ccx_iface->set_topology_iteration_factors(topology_id, iteration_id, element_ids, stiffness_factors);
 }
 
+std::vector<std::vector<int>> CalculiXPythonInterface::get_topology_element_preservation(int topology_id)
+{
+  return ccx_iface->get_topology_element_preservation(topology_id);
+}
+
 std::vector<std::string> CalculiXPythonInterface::frd_get_result_block_types(int job_id)
 {
   return ccx_iface->frd_get_result_block_types(job_id);

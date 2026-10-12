@@ -24,6 +24,7 @@
 #include <chrono>
 #include <iostream>
 #include <sstream>
+#include <limits>
 #include "loadUserOptions.hpp"
 
 
@@ -109,21 +110,77 @@ bool CoreJobs::check_initialized()
 
 bool CoreJobs::create_job(std::vector<std::string> options)
 {
-  int job_id;
-  int job_last;
-  
-  if (jobs_data.size()==0)
+  int created_job_id = -1;
+  return create_job(options, created_job_id);
+}
+
+bool CoreJobs::create_job(const std::vector<std::string>& options, int& created_job_id)
+{
+  created_job_id = -1;
+
+  if (!is_initialized || !ccx_iface ||
+      options.size() != 2 ||
+      options[0].find_first_not_of(" \t\r\n") == std::string::npos)
   {
-    job_id = 1;
-  }
-  else
-  {
-    job_last = int(jobs_data.size()) - 1;
-    job_id = std::stoi(jobs_data[job_last][0]) + 1;
+    PRINT_ERROR("Invalid job creation data.\n");
+    return false;
   }
 
-  this->add_job(job_id, options[0], options[1]);
-  ccx_iface->create_result(job_id);
+  int largest_id = 0;
+
+  for (const auto& job : jobs_data)
+  {
+    if (job.empty())
+    {
+      PRINT_ERROR("Invalid existing job data.\n");
+      return false;
+    }
+
+    int id = -1;
+    std::istringstream input(job[0]);
+
+    if (!(input >> id) || id <= 0)
+    {
+      PRINT_ERROR("Invalid existing job ID.\n");
+      return false;
+    }
+
+    input >> std::ws;
+
+    if (!input.eof())
+    {
+      PRINT_ERROR("Invalid existing job ID.\n");
+      return false;
+    }
+
+    if (id > largest_id)
+      largest_id = id;
+  }
+
+  if (largest_id == (std::numeric_limits<int>::max)())
+  {
+    PRINT_ERROR("No further job IDs are available.\n");
+    return false;
+  }
+
+  const int job_id = largest_id + 1;
+
+  if (!ccx_iface->create_result(job_id))
+  {
+    PRINT_ERROR("Failed to create results for job %d.\n", job_id);
+    return false;
+  }
+
+  if (!add_job(job_id, options[0], options[1]))
+  {
+    if (!ccx_iface->delete_result(job_id))
+      PRINT_ERROR("Failed to remove results for job %d.\n", job_id);
+
+    PRINT_ERROR("Failed to create job %d.\n", job_id);
+    return false;
+  }
+
+  created_job_id = job_id;
   return true;
 }
 
@@ -243,10 +300,26 @@ bool CoreJobs::run_job(int job_id,int option)
         log = "Exporting Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " to \n";
         log.append(filepath +  " \n");
         PRINT_INFO("%s", log.c_str());
-        command = "export ccx \"" + filepath + "\" overwrite";
-        CubitInterface::cmd(command.c_str());
-        if (CubitInterface::was_last_cmd_undoable())
+        int topology_id = -1;
+        int iteration_id = -1;
+
+        if (!ccx_iface->get_job_topology_context(
+                job_id, topology_id, iteration_id))
+          return false;
+
+        command = "export ccx \"" + filepath + "\"";
+
+        if (topology_id > 0)
         {
+          command += " topology " + std::to_string(topology_id);
+          command += " iteration " + std::to_string(iteration_id);
+        }
+
+        command += " overwrite";
+
+        if (!ccx_iface->silent_cmd(command))
+        {
+          PRINT_ERROR("Failed to export input for job %d.\n", job_id);
           return false;
         }
       }
@@ -436,10 +509,26 @@ bool CoreJobs::run_job(int job_id,int option)
         log = "Exporting Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " to \n";
         log.append(filepath +  " \n");
         PRINT_INFO("%s", log.c_str());
-        command = "export ccx \"" + filepath + "\" overwrite";
-        CubitInterface::cmd(command.c_str());
-        if (CubitInterface::was_last_cmd_undoable())
+        int topology_id = -1;
+        int iteration_id = -1;
+
+        if (!ccx_iface->get_job_topology_context(
+                job_id, topology_id, iteration_id))
+          return false;
+
+        command = "export ccx \"" + filepath + "\"";
+
+        if (topology_id > 0)
         {
+          command += " topology " + std::to_string(topology_id);
+          command += " iteration " + std::to_string(iteration_id);
+        }
+
+        command += " overwrite";
+
+        if (!ccx_iface->silent_cmd(command))
+        {
+          PRINT_ERROR("Failed to export input for job %d.\n", job_id);
           return false;
         }
       }
@@ -459,6 +548,11 @@ bool CoreJobs::run_job(int job_id,int option)
 
       CubitProcessHandler[CubitProcessHandler_data_id].start();
       process_id = CubitProcessHandler[CubitProcessHandler_data_id].pid();
+      if (process_id <= 0)
+      {
+        PRINT_ERROR("Failed to start solver for job %d.\n", job_id);
+        return false;
+      }
       if (process_id!=0)
       { 
         jobs_data[job_data_id][4] = std::to_string(process_id);
@@ -487,6 +581,8 @@ bool CoreJobs::wait_job(int job_id)
   #ifdef WIN32
     std::string log;
     CubitString output;
+    bool results_loaded = false;
+
     int status=-1;
     
     int jobs_data_id=-1;
@@ -495,7 +591,7 @@ bool CoreJobs::wait_job(int job_id)
 
     if (jobs_data_id != -1)
     {
-      int status;
+      int status = -1;
       HANDLE processhandle;
       DWORD returnCode{};
       processhandle = OpenProcess(PROCESS_ALL_ACCESS, TRUE, std::stoi(jobs_data[jobs_data_id][4]));
@@ -586,14 +682,18 @@ bool CoreJobs::wait_job(int job_id)
         //log.append(" Exit Code " + std::to_string(errorcode) + " \n");
         PRINT_INFO("%s", log.c_str());
         jobs_data[jobs_data_id][3] = "2";
-        ccx_iface->load_result(job_id);
+        results_loaded = ccx_iface->load_result(job_id);
+        if (!results_loaded)
+        {
+          PRINT_ERROR("Failed to load results for job %d.\n", job_id);
+        }
         if (jobs_data[jobs_data_id][9] == "1") 
         {
           jobs_data[jobs_data_id][6] = std::to_string(ccx_iface->convert_result(job_id,{-1,-1,-1},ccx_iface->get_blocks(),CubitInterface::get_nodeset_id_list(),CubitInterface::get_sideset_id_list()));
         }
       }
     }
-    return true;
+    return results_loaded && get_job_status(job_id) == 2;
   #else
     std::string log;
     CubitString output;
@@ -659,7 +759,11 @@ bool CoreJobs::wait_job(int job_id)
           //log.append(" Exit Code " + std::to_string(errorcode) + " \n");
           PRINT_INFO("%s", log.c_str());
           jobs_data[jobs_data_id][3] = "2";
-          ccx_iface->load_result(job_id);
+          results_loaded = ccx_iface->load_result(job_id);
+          if (!results_loaded)
+          {
+            PRINT_ERROR("Failed to load results for job %d.\n", job_id);
+          }
           if (jobs_data[jobs_data_id][9] == "1") 
           {
             jobs_data[jobs_data_id][6] = std::to_string(ccx_iface->convert_result(job_id,{-1,-1,-1},ccx_iface->get_blocks(),CubitInterface::get_nodeset_id_list(),CubitInterface::get_sideset_id_list()));
@@ -668,7 +772,7 @@ bool CoreJobs::wait_job(int job_id)
         CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
       }
     }
-    return true;
+    return results_loaded && get_job_status(job_id) == 2;
   #endif
   return false;
 }

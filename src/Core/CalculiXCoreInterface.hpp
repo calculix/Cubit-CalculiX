@@ -211,6 +211,7 @@ public:
   bool create_job(std::vector<std::string> options); // adds a new job
   bool modify_job(int job_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a job
   bool delete_job(int job_id); // delete job
+  bool get_job_topology_context(int job_id, int& topology_id, int& iteration_id); // connection between job and topology
   bool run_job(int job_id, int option); // runs job
   bool check_jobs(); // checks for changes of job processes
   bool wait_job(int job_id); // runs job
@@ -223,6 +224,7 @@ public:
   bool remove_preserved_sets(int topology_id, int set_type, const std::vector<int>& ids);
   bool get_topology_set_element_ids(int topology_id,int set_type,int set_id,std::vector<int>& element_ids);
   bool initialize_topology(int topology_id, const std::vector<int>& section_ids);
+  std::vector<std::vector<int>> get_topology_element_preservation(int topology_id);
   bool set_topology_iteration_factors(int topology_id,int iteration_id,const std::vector<int>& element_ids,const std::vector<double>& stiffness_factors);
   bool check_topology_material_assignment(int topology_id, int iteration_id, int element_id);
   std::string get_topology_material_name(int topology_id, int element_id);

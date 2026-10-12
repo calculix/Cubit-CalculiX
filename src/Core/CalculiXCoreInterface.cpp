@@ -946,6 +946,11 @@ bool CalculiXCoreInterface::delete_job(int job_id)
   return ccx_core.delete_job(job_id);
 }
 
+bool CalculiXCoreInterface::get_job_topology_context(int job_id, int& topology_id, int& iteration_id)
+{
+  return ccx_core.get_job_topology_context(job_id, topology_id, iteration_id);
+}
+
 bool CalculiXCoreInterface::run_job(int job_id, int option)
 {
   return ccx_core.run_job(job_id, option);
@@ -1004,6 +1009,11 @@ bool CalculiXCoreInterface::run_topology(int topology_id)
 bool CalculiXCoreInterface::initialize_topology(int topology_id, const std::vector<int>& section_ids)
 {
   return ccx_core.initialize_topology(topology_id, section_ids);
+}
+
+std::vector<std::vector<int>> CalculiXCoreInterface::get_topology_element_preservation(int topology_id)
+{
+  return ccx_core.get_topology_element_preservation(topology_id);
 }
 
 bool CalculiXCoreInterface::set_topology_iteration_factors(int topology_id,int iteration_id,const std::vector<int>& element_ids,const std::vector<double>& stiffness_factors)

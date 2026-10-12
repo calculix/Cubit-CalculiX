@@ -32,6 +32,7 @@ public:
   // TOPOLOGY
   bool initialize_topology(int topology_id, const std::vector<int>& section_ids);
   bool set_topology_iteration_factors(int topology_id, int iteration_id, const std::vector<int>& element_ids, const std::vector<double>& stiffness_factors);
+  std::vector<std::vector<int>> get_topology_element_preservation(int topology_id);
   //QUERY results
   //FRD results
   std::vector<std::string> frd_get_result_block_types(int job_id); // returns a list of all result block types

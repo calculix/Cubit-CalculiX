@@ -14,6 +14,7 @@
 #include <cmath>
 #include <set>
 #include <limits>
+#include <iomanip>
 
 //#include "cubitguicommondll.hpp"
 //#include "CubitGuiUtil.hpp"
@@ -4693,6 +4694,39 @@ bool CalculiXCore::delete_job(int job_id)
   return jobs->delete_job(job_id);
 }
 
+bool CalculiXCore::get_job_topology_context(int job_id, int& topology_id, int& iteration_id)
+{
+  topology_id = -1;
+  iteration_id = -1;
+
+  if (!topology || job_id <= 0)
+  {
+    PRINT_ERROR("Invalid job topology context query.\n");
+    return false;
+  }
+
+  for (const auto& configuration : topology->topology_cases)
+  {
+    for (const auto& iteration : configuration.second.iteration_jobs)
+    {
+      if (iteration.second != job_id)
+        continue;
+
+      if (topology_id != -1 || configuration.first <= 0 || iteration.first < 0)
+      {
+        PRINT_ERROR("Invalid topology association for job %d.\n", job_id);
+        return false;
+      }
+
+      topology_id = configuration.first;
+      iteration_id = iteration.first;
+    }
+  }
+
+  // Ordinary jobs return true with both IDs set to -1.
+  return true;
+}
+
 bool CalculiXCore::run_job(int job_id, int option)
 {
   return jobs->run_job(job_id,option);
@@ -5719,6 +5753,23 @@ bool CalculiXCore::run_topology(int topology_id)
     return false;
   }
 
+  // call element collector
+  std::map<int, std::set<int>> default_sets;
+  std::set<int> default_elements;
+
+  if (!collect_topology_default_sets(default_sets, default_elements) || !resolve_topology_preservation(topology_id, default_sets, default_elements))
+  {
+    // Discard only this run's prepared data.
+    entry->second.element_preserved.clear();
+    mat->topology_material_data.erase(topology_id);
+    sections->topology_solid_sections.erase(topology_id);
+
+    PRINT_ERROR("Failed to resolve preservation for topology %d.\n",
+                topology_id);
+    return false;
+  }
+  // call element collector end
+
   std::vector<int> element_ids;
   std::vector<double> stiffness_factors;
 
@@ -5728,15 +5779,86 @@ bool CalculiXCore::run_topology(int topology_id)
     stiffness_factors.push_back(1.0);
   }
 
-  if (!set_topology_iteration_factors(
-          topology_id, 0, element_ids, stiffness_factors))
+  if (!set_topology_iteration_factors(topology_id, 0, element_ids, stiffness_factors))
   {
+    entry->second.element_preserved.clear();
     mat->topology_material_data.erase(topology_id);
     sections->topology_solid_sections.erase(topology_id);
     return false;
   }
 
-  PRINT_INFO("Topology %d (%s): all-solid iteration 0 prepared. Solver execution is not connected yet.\n", topology_id, entry->second.name.c_str());
+  // final info message
+  // Convert the display name into a filename component.
+  std::string filename_name = entry->second.name;
+
+  for (char& character : filename_name)
+  {
+    const bool allowed =
+        (character >= 'a' && character <= 'z') ||
+        (character >= 'A' && character <= 'Z') ||
+        (character >= '0' && character <= '9') ||
+        character == '_';
+
+    if (!allowed)
+      character = '_';
+  }
+
+  std::ostringstream name;
+  name << "topo_" << topology_id << "_" << filename_name << "_iter_" << std::setfill('0') << std::setw(4) << 0;
+
+  const std::string job_name = name.str();
+  
+  // Prevent sharing a filename with an existing job.
+  for (const auto& job : jobs->jobs_data)
+  {
+    if (job.size() > 1 && job[1] == job_name)
+    {
+      PRINT_ERROR("Job name '%s' already exists.\n", job_name.c_str());
+
+      entry->second.element_preserved.clear();
+      mat->topology_material_data.erase(topology_id);
+      sections->topology_solid_sections.erase(topology_id);
+      return false;
+    }
+  }
+
+  int job_id = -1;
+
+  if (!jobs->create_job({job_name, ""}, job_id))
+  {
+    entry->second.element_preserved.clear();
+    mat->topology_material_data.erase(topology_id);
+    sections->topology_solid_sections.erase(topology_id);
+    return false;
+  }
+
+  entry->second.iteration_jobs.emplace(0, job_id);
+  entry->second.selected_iteration = 0;
+
+  // -1 disables automatic ParaView conversion.
+  // run first job
+  if (!jobs->run_job(job_id, -1))
+  {
+    PRINT_ERROR("Failed to start topology %d iteration 0, job %d.\n",topology_id, job_id);
+    return false;
+  }
+
+  PRINT_INFO(
+    "Topology %d (%s): iteration 0 started as job %d (%s).\n",
+    topology_id, entry->second.name.c_str(),
+    job_id, job_name.c_str());
+
+
+  // wait for job to finish
+  if (!jobs->wait_job(job_id))
+  {
+    PRINT_ERROR("Topology %d iteration 0 did not complete "
+        "with readable results. Job %d is retained.\n",
+        topology_id, job_id);
+    return false;
+  }
+
+  PRINT_INFO("Topology %d: iteration 0 completed; results are loaded.\n",topology_id);
 
   return true;
 }
@@ -5818,9 +5940,95 @@ bool CalculiXCore::initialize_topology(int topology_id,const std::vector<int>& s
   return true;
 }
 
-bool CalculiXCore::set_topology_iteration_factors(int topology_id, int iteration_id, const std::vector<int>& element_ids, const std::vector<double>& stiffness_factors)
+std::vector<std::vector<int>> CalculiXCore::get_topology_element_preservation(int topology_id)
 {
-  if (!mat->set_topology_iteration_factors(topology_id, iteration_id, element_ids, stiffness_factors))
+  if (!topology)
+  {
+    PRINT_ERROR("Topology core is not initialized.\n");
+    return {};
+  }
+
+  const auto entry = topology->topology_cases.find(topology_id);
+
+  if (entry == topology->topology_cases.end())
+  {
+    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    return {};
+  }
+
+  const auto& flags = entry->second.element_preserved;
+
+  if (flags.empty())
+  {
+    PRINT_ERROR("Preservation for topology %d has not been resolved.\n", topology_id);
+    return {};
+  }
+
+  std::vector<std::vector<int>> rows;
+  rows.reserve(flags.size());
+
+  for (const auto& flag : flags)
+    rows.push_back({flag.first, flag.second ? 1 : 0});
+
+  return rows;
+}
+
+bool CalculiXCore::set_topology_iteration_factors(int topology_id,int iteration_id,const std::vector<int>& element_ids,const std::vector<double>& stiffness_factors)
+{
+  if (!topology || !mat)
+  {
+    PRINT_ERROR("Topology/material cores are not initialized.\n");
+    return false;
+  }
+
+  const auto entry = topology->topology_cases.find(topology_id);
+
+  if (entry == topology->topology_cases.end())
+  {
+    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    return false;
+  }
+
+  if (element_ids.empty() || element_ids.size() != stiffness_factors.size())
+  {
+    PRINT_ERROR("Invalid topology iteration factor data.\n");
+    return false;
+  }
+
+  const auto& preserved = entry->second.element_preserved;
+
+  if (preserved.empty())
+  {
+    PRINT_ERROR("Preservation for topology %d has not been resolved.\n", topology_id);
+    return false;
+  }
+
+  // Keep the caller's data unchanged.
+  std::vector<double> factors = stiffness_factors;
+
+  for (size_t i = 0; i < element_ids.size(); ++i)
+  {
+    const int element_id = element_ids[i];
+    const auto flag = preserved.find(element_id);
+
+    if (flag == preserved.end())
+    {
+      PRINT_ERROR("Missing preservation flag for element %d.\n", element_id);
+      return false;
+    }
+
+    if (!std::isfinite(factors[i]) ||
+        factors[i] <= 0.0 || factors[i] > 1.0)
+    {
+      PRINT_ERROR("Invalid stiffness factor for element %d.\n", element_id);
+      return false;
+    }
+
+    if (flag->second)
+      factors[i] = 1.0;
+  }
+
+  if (!mat->set_topology_iteration_factors(topology_id, iteration_id, element_ids, factors))
   {
     PRINT_ERROR("Failed to store topology %d iteration %d factors.\n", topology_id, iteration_id);
     return false;

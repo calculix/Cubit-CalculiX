@@ -52,6 +52,7 @@ public:
   bool reset(); // delete all data and initialize afterwards
   bool check_initialized(); // check if object is initialized
   bool create_job(std::vector<std::string> options); // adds new job
+  bool create_job(const std::vector<std::string>& options, int& created_job_id); // needed for topology job
   bool modify_job(int job_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a job
   bool delete_job(int job_id); // deletes job from jobs_data
   bool add_job(int job_id, std::string name, std::string filepath); // adds new job to jobs_data
