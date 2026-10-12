@@ -5362,11 +5362,138 @@ bool CalculiXCore::collect_topology_default_sets(std::map<int, std::set<int>>& d
 
     if (type == 1)
     {
-      PRINT_ERROR(
-          "Preservation for surface heat flux trajectory %d "
-          "is not implemented yet.\n",
-          trajectory_id);
-      return false;
+      if (!loadstrajectory->heatflux ||
+          loadstrajectory->heatflux
+              ->get_loads_data_id_from_load_id(subload_id) < 0)
+      {
+        PRINT_ERROR("Missing surface heat flux trajectory data.\n");
+        return false;
+      }
+
+      // Sorted face corner nodes -> global volume element IDs.
+      std::map<std::vector<int>, std::set<int>> face_owners;
+
+      const auto connectivity = get_element_id_type_connectivity();
+
+      for (const auto& element : connectivity)
+      {
+        if (element.size() < 3 || element[0] <= 0)
+        {
+          PRINT_ERROR("Invalid topology connectivity row.\n");
+          return false;
+        }
+
+        const std::string entity = get_cubit_element_type_entity(
+            me_iface->get_element_type_name(
+                static_cast<ElementType>(element[1])));
+
+        // Corner-node indices in Exodus connectivity order.
+        std::vector<std::vector<int>> faces;
+        size_t corner_count = 0;
+
+        if (entity == "hex")
+        {
+          corner_count = 8;
+          faces = {
+              {0, 1, 2, 3},
+              {4, 5, 6, 7},
+              {0, 1, 5, 4},
+              {1, 2, 6, 5},
+              {2, 3, 7, 6},
+              {3, 0, 4, 7}
+          };
+        }
+        else if (entity == "tet")
+        {
+          corner_count = 4;
+          faces = {
+              {0, 1, 2},
+              {0, 1, 3},
+              {1, 2, 3},
+              {2, 0, 3}
+          };
+        }
+        else if (entity == "wedge")
+        {
+          corner_count = 6;
+          faces = {
+              {0, 1, 2},
+              {3, 4, 5},
+              {0, 1, 4, 3},
+              {1, 2, 5, 4},
+              {2, 0, 3, 5}
+          };
+        }
+        else
+        {
+          continue;
+        }
+
+        if (element.size() < corner_count + 2)
+        {
+          PRINT_ERROR("Incomplete connectivity for element %d.\n",
+                      element[0]);
+          return false;
+        }
+
+        for (const auto& face : faces)
+        {
+          std::vector<int> key;
+
+          for (int corner : face)
+            key.push_back(element[2 + corner]);
+
+          std::sort(key.begin(), key.end());
+          face_owners[key].insert(element[0]);
+        }
+      }
+
+      const auto targets =
+          loadstrajectory->heatflux->get_face_ids(subload_id);
+
+      std::set<int> selected_faces;
+
+      for (const auto& position : targets)
+        for (const auto& selection : position)
+          selected_faces.insert(selection.begin(), selection.end());
+
+      for (int face_id : selected_faces)
+      {
+        if (face_id <= 0)
+        {
+          PRINT_ERROR("Invalid trajectory face ID %d.\n", face_id);
+          return false;
+        }
+
+        // Cubit get_connectivity() returns corner nodes.
+        auto key = CubitInterface::get_connectivity("face", face_id);
+
+        if (key.size() != 3 && key.size() != 4)
+        {
+          PRINT_ERROR("Invalid connectivity for trajectory face %d.\n",
+                      face_id);
+          return false;
+        }
+
+        std::sort(key.begin(), key.end());
+
+        const auto owners = face_owners.find(key);
+
+        if (owners == face_owners.end())
+        {
+          PRINT_ERROR(
+              "Trajectory face %d has no hex, tet or wedge owner "
+              "in the analysis blocks.\n",
+              face_id);
+          return false;
+        }
+
+        collected_elements.insert(
+            owners->second.begin(), owners->second.end());
+      }
+
+      // This trajectory is complete; skip the sphere branch.
+      continue;
     }
 
     if (type != 2 || !loadstrajectory->bodyheatfluxsphere)
