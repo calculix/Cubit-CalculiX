@@ -5,6 +5,7 @@
 #include <string>
 #include <set>
 #include <map>
+#include <array>
 #include <QIcon>
 #include <QString>
 #include <QList>
@@ -296,8 +297,11 @@ public:
   bool read_topology_element_energies(int topology_id,int iteration_id,std::map<int, double>& element_energies);
   bool validate_topology_compliance_model(); // check if the model is build up correctly
   bool set_topology_iteration_densities(int topology_id,int iteration_id,const std::map<int, double>& densities);
-  bool collect_topology_element_volumes(int topology_id,std::map<int, double>& element_volumes);
+  bool collect_topology_element_volumes(int topology_id,std::map<int, double>& element_volumes,std::map<int, std::array<double, 3>>* element_centers = nullptr);
   bool prepare_topology_density_iteration(int topology_id,int source_iteration,int next_iteration);
+  std::vector<std::vector<std::string>> get_topology_iteration_data(int topology_id);
+  bool select_topology_iteration(int topology_id, int iteration_id);
+  std::string get_topology_run_state(int topology_id);
   bool result_cgx_job(int job_id); // opens the results with cgx
   bool result_paraview_job(int job_id); // opens the results with paraview
   bool result_plot_job_frd(int job_id,int x_node_id, std::string x_block_type, std::string x_block_component, bool x_increment,bool x_time,int y_node_id, std::string y_block_type, std::string y_block_component, bool y_increment, bool y_time,QString title,QString x_axis,QString y_axis,bool save, QString save_filepath); // plots the results

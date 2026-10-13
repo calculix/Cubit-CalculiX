@@ -6,6 +6,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <array>
 
 class CalculiXCoreInterface;
 
@@ -60,8 +61,8 @@ public:
     )
   */
   bool build_density_update(int topology_id, int source_iteration,std::map<int, double>& densities);
-
   bool check_density_convergence(int topology_id,int previous_iteration,int current_iteration,bool& converged);
+  bool filter_density_sensitivities(int topology_id,int iteration_id,const std::map<int, double>& element_volumes,const std::map<int, std::array<double, 3>>& element_centers);
 
   std::vector<std::vector<std::string>> get_tree_data() const;
   

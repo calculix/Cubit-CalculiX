@@ -36,6 +36,9 @@ public:
   int run_topology_iteration(int topology_id, int iteration_id);// Returns the completed job ID, or -1 on failure.
   std::vector<double> get_topology_parameters(int topology_id);
   int get_topology_iteration_job_id(int topology_id, int iteration_id); // Returns the associated job ID, or -1 on failure.
+  std::vector<std::vector<std::string>> get_topology_iteration_data(int topology_id);
+  bool select_topology_iteration(int topology_id, int iteration_id);
+  std::string get_topology_run_state(int topology_id);
   //QUERY results
   //FRD results
   std::vector<std::string> frd_get_result_block_types(int job_id); // returns a list of all result block types

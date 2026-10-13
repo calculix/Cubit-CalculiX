@@ -1046,6 +1046,21 @@ int CalculiXCoreInterface::get_topology_iteration_job_id(int topology_id, int it
   return ccx_core.get_topology_iteration_job_id(topology_id, iteration_id);
 }
 
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_topology_iteration_data(int topology_id)
+{
+  return ccx_core.get_topology_iteration_data(topology_id);
+}
+
+bool CalculiXCoreInterface::select_topology_iteration(int topology_id,int iteration_id)
+{
+  return ccx_core.select_topology_iteration(topology_id, iteration_id);
+}
+
+std::string CalculiXCoreInterface::get_topology_run_state(int topology_id)
+{
+  return ccx_core.get_topology_run_state(topology_id);
+}
+
 bool CalculiXCoreInterface::set_job_conversion(int job_id, int conversion)
 {
   return ccx_core.set_job_conversion(job_id,conversion);

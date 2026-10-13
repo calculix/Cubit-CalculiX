@@ -232,6 +232,9 @@ public:
   std::vector<double> get_topology_parameters(int topology_id);
   int get_topology_iteration_job_id(int topology_id, int iteration_id); // Returns the associated job ID, or -1 on failure.
   bool set_job_conversion(int job_id, int conversion); // sets the paraview conversion value for the job
+  std::vector<std::vector<std::string>> get_topology_iteration_data(int topology_id);
+  bool select_topology_iteration(int topology_id, int iteration_id);
+  std::string get_topology_run_state(int topology_id);
   bool result_cgx_job(int job_id); // opens the results with cgx
   bool result_paraview_job(int job_id); // opens the results with paraview
   bool result_plot_job_frd(int job_id,int x_node_id, std::string x_block_type, std::string x_block_component, bool x_increment,bool x_time,int y_node_id, std::string y_block_type, std::string y_block_component, bool y_increment, bool y_time,QString title,QString x_axis,QString y_axis,bool save, QString save_filepath); // plots the results

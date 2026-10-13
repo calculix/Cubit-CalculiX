@@ -6,6 +6,10 @@
 #include <set>
 #include <utility>
 #include <algorithm>
+#include <cstdint>
+#include <functional>
+#include <limits>
+#include <unordered_map>
 
 // HELPERS
 namespace
@@ -31,6 +35,11 @@ void ApplyTopologyOptions(
 
   if (options.has_maximum_iterations)
     configuration.maximum_iterations = options.maximum_iterations;
+  
+  if (options.has_filter_radius)
+  {
+    configuration.filter_radius = options.filter_radius;
+  }
 }
 
 bool ValidateTopologyConfiguration(const TopologyCase& configuration)
@@ -58,7 +67,9 @@ bool ValidateTopologyConfiguration(const TopologyCase& configuration)
       configuration.maximum_iterations > 0 &&
       std::isfinite(configuration.minimum_density) &&
       configuration.minimum_density > 0.0 &&
-      configuration.minimum_density < 1.0;
+      configuration.minimum_density < 1.0 &&
+      std::isfinite(configuration.filter_radius) &&
+      configuration.filter_radius >= 0.0;
 }
 }
 // HELPERS END
@@ -123,6 +134,7 @@ bool CoreTopology::create_topology(int topology_id,const TopologyOptions& option
   configuration.maximum_iterations = 100;
   configuration.density_penalization = 3.0;
   configuration.minimum_density = 1.0e-3;
+  configuration.filter_radius = 0.0;
 
   ApplyTopologyOptions(configuration, options);
 
@@ -715,7 +727,7 @@ bool CoreTopology::build_density_update(int topology_id,int source_iteration,std
   }
 
   const auto& previous = design->second.element_densities;
-  const auto& gradients = evaluation->second.density_sensitivities;
+  const auto& gradients = evaluation->second.filtered_density_sensitivities;
   const auto& volume = design->second.volume;
   const double minimum_density = design->second.minimum_density;
 
@@ -939,7 +951,7 @@ bool CoreTopology::check_density_convergence(int topology_id,int previous_iterat
     return false;
   }
 
-  const auto& configuration = entry->second;
+  auto& configuration = entry->second;
   const auto previous = configuration.iteration_density_designs.find(previous_iteration);
   const auto current = configuration.iteration_density_designs.find(current_iteration);
   const auto previous_evaluation = configuration.iteration_evaluations.find(previous_iteration);
@@ -1023,11 +1035,283 @@ bool CoreTopology::check_density_convergence(int topology_id,int previous_iterat
       relative_change <= compliance_tolerance &&
       fraction <= configuration.target_volume_fraction + volume_tolerance;
 
+  auto& progress = current_evaluation->second;
+  progress.maximum_density_change = maximum_change;
+  progress.relative_objective_change = relative_change;
+  progress.converged = converged;
+  progress.convergence_checked = true;
+
   PRINT_INFO(
       "Topology %d iteration %d: density change %.9g; "
       "relative compliance change %.9g; volume fraction %.9g.\n",
       topology_id, current_iteration,
       maximum_change, relative_change, fraction);
+
+  return true;
+}
+
+bool CoreTopology::filter_density_sensitivities(int topology_id,int iteration_id,const std::map<int, double>& element_volumes,const std::map<int, std::array<double, 3>>& element_centers)
+{
+  const auto entry = topology_cases.find(topology_id);
+
+  if (!is_initialized || iteration_id < 0 || entry == topology_cases.end())
+  {
+    PRINT_ERROR("Invalid topology sensitivity filter request.\n");
+    return false;
+  }
+
+  auto& configuration = entry->second;
+  const auto design = configuration.iteration_density_designs.find(iteration_id);
+  const auto evaluation = configuration.iteration_evaluations.find(iteration_id);
+
+  if (design == configuration.iteration_density_designs.end() ||
+      evaluation == configuration.iteration_evaluations.end() ||
+      evaluation->second.objective != TopologyObjective::Compliance ||
+      !design->second.volume.available)
+  {
+    PRINT_ERROR("Missing topology sensitivity filter data.\n");
+    return false;
+  }
+
+  const auto& densities = design->second.element_densities;
+  const auto& gradients = evaluation->second.density_sensitivities;
+
+  if (densities.empty() ||
+      densities.size() != gradients.size() ||
+      densities.size() != element_volumes.size() ||
+      densities.size() != element_centers.size() ||
+      densities.size() != configuration.element_preserved.size())
+  {
+    PRINT_ERROR("Incomplete topology sensitivity filter data.\n");
+    return false;
+  }
+
+  double maximum_volume = 0.0;
+
+  for (const auto& density : densities)
+  {
+    const auto gradient = gradients.find(density.first);
+    const auto volume = element_volumes.find(density.first);
+    const auto center = element_centers.find(density.first);
+    const auto preserved = configuration.element_preserved.find(density.first);
+
+    if (gradient == gradients.end() ||
+        volume == element_volumes.end() ||
+        center == element_centers.end() ||
+        preserved == configuration.element_preserved.end() ||
+        !std::isfinite(density.second) ||
+        density.second <= 0.0 || density.second > 1.0 ||
+        !std::isfinite(gradient->second) ||
+        gradient->second > 0.0 ||
+        !std::isfinite(volume->second) ||
+        volume->second <= 0.0)
+    {
+      PRINT_ERROR("Invalid filter data for element %d.\n", density.first);
+      return false;
+    }
+
+    for (double coordinate : center->second)
+    {
+      if (!std::isfinite(coordinate))
+      {
+        PRINT_ERROR("Invalid filter center for element %d.\n", density.first);
+        return false;
+      }
+    }
+
+    maximum_volume = std::max(maximum_volume, volume->second);
+  }
+
+  // Initial automatic radius default belongs to CoreTopology.
+  double radius = configuration.filter_radius;
+
+  if (!std::isfinite(radius) || radius < 0.0)
+  {
+    PRINT_ERROR("Invalid topology filter radius setting.\n");
+    return false;
+  }
+
+  if (radius == 0.0)
+  {
+    radius = 1.5 * std::cbrt(design->second.volume.total_volume / static_cast<double>(densities.size()));
+  }
+
+  if (!std::isfinite(radius) || radius <= 0.0)
+  {
+    PRINT_ERROR("Invalid topology sensitivity filter radius.\n");
+    return false;
+  }
+
+  // make a hash for all elements, to reduce neighbour search costs
+  using Cell = std::array<std::int64_t, 3>;
+  struct CellHash
+  {
+    std::size_t operator()(const Cell& cell) const
+    {
+      std::size_t seed = 0;
+
+      for (std::int64_t coordinate : cell)
+      {
+        const std::size_t value =
+            std::hash<std::int64_t>{}(coordinate);
+
+        seed ^= value + static_cast<std::size_t>(0x9e3779b9U) +
+            (seed << 6) + (seed >> 2);
+      }
+
+      return seed;
+    }
+  };
+
+  std::unordered_map<Cell, std::vector<int>, CellHash> cells;
+  std::map<int, Cell> element_cells;
+
+  // Shift the grid origin to the mesh bounds.
+  std::array<double, 3> origin = element_centers.begin()->second;
+
+  for (const auto& element : element_centers)
+  {
+    for (int axis = 0; axis < 3; ++axis)
+    {
+      origin[axis] = std::min(origin[axis], element.second[axis]);
+    }
+  }
+
+  // Leave ample room for neighboring-cell offsets.
+  const double maximum_cell_coordinate = static_cast<double>(
+      (std::numeric_limits<std::int64_t>::max)() / 2);
+
+  for (const auto& element : densities)
+  {
+    if (configuration.element_preserved.find(element.first)->second)
+    {
+      continue;
+    }
+
+    const auto& center = element_centers.find(element.first)->second;
+    Cell cell{};
+
+    for (int axis = 0; axis < 3; ++axis)
+    {
+      const double coordinate =
+          std::floor((center[axis] - origin[axis]) / radius);
+
+      if (!std::isfinite(coordinate) ||
+          coordinate < 0.0 ||
+          coordinate > maximum_cell_coordinate)
+      {
+        PRINT_ERROR("Invalid spatial cell for element %d.\n",
+                    element.first);
+        return false;
+      }
+
+      cell[axis] = static_cast<std::int64_t>(coordinate);
+    }
+
+    cells[cell].push_back(element.first);
+    element_cells.emplace(element.first, cell);
+  }
+
+
+  std::map<int, double> filtered;
+
+  for (const auto& element : densities)
+  {
+    if (configuration.element_preserved.find(element.first)->second)
+    {
+      filtered.emplace(element.first, 0.0);
+      continue;
+    }
+
+    const auto& center = element_centers.find(element.first)->second;
+    double numerator = 0.0;
+    double denominator = 0.0;
+
+    const Cell& own_cell = element_cells.find(element.first)->second;
+
+    for (int dx = -1; dx <= 1; ++dx)
+    {
+      for (int dy = -1; dy <= 1; ++dy)
+      {
+        for (int dz = -1; dz <= 1; ++dz)
+        {
+          const Cell neighbor_cell{
+              own_cell[0] + dx,
+              own_cell[1] + dy,
+              own_cell[2] + dz};
+
+          const auto bucket = cells.find(neighbor_cell);
+
+          if (bucket == cells.end())
+          {
+            continue;
+          }
+
+          for (int neighbor_id : bucket->second)
+          {
+            const auto& other =
+                element_centers.find(neighbor_id)->second;
+
+            const double distance = std::hypot(
+                std::hypot(
+                    center[0] - other[0],
+                    center[1] - other[1]),
+                center[2] - other[2]);
+
+            if (!std::isfinite(distance))
+            {
+              PRINT_ERROR("Invalid distance in topology filter.\n");
+              return false;
+            }
+
+            if (distance >= radius)
+            {
+              continue;
+            }
+
+            const double neighbor_volume =
+                element_volumes.find(neighbor_id)->second;
+
+            const double weight =
+                (1.0 - distance / radius) *
+                (neighbor_volume / maximum_volume);
+
+            const double neighbor_density =
+                densities.find(neighbor_id)->second;
+
+            const double sensitivity_per_volume =
+                gradients.find(neighbor_id)->second / neighbor_volume;
+
+            numerator +=
+                weight * neighbor_density * sensitivity_per_volume;
+
+            denominator += weight;
+          }
+        }
+      }
+    }
+
+    if (!std::isfinite(numerator) ||
+        !std::isfinite(denominator) ||
+        denominator <= 0.0)
+    {
+      PRINT_ERROR("Invalid filter accumulation for element %d.\n", element.first);
+      return false;
+    }
+
+    const double element_volume = element_volumes.find(element.first)->second;
+    const double sensitivity =(numerator / denominator) * element_volume / element.second;
+
+    if (!std::isfinite(sensitivity))
+    {
+      PRINT_ERROR("Invalid filtered sensitivity for element %d.\n",  element.first);
+      return false;
+    }
+    filtered.emplace(element.first, sensitivity);
+  }
+
+  evaluation->second.filtered_density_sensitivities.swap(filtered);
+  evaluation->second.sensitivity_filter_radius = radius;
 
   return true;
 }

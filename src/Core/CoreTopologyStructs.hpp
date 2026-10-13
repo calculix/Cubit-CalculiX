@@ -21,10 +21,23 @@ enum class TopologyObjective
   Displacement
 };
 
+enum class TopologyRunState
+{
+  NotRun,
+  Running,
+  Converged,
+  IterationLimit,
+  Failed
+};
+
 struct TopologyIterationEvaluation
 {
   TopologyObjective objective = TopologyObjective::Unspecified;
   double value = 0.0;
+  bool convergence_checked = false;
+  double maximum_density_change = 0.0;
+  double relative_objective_change = 0.0;
+  bool converged = false;
 
   // Global element ID -> derivative with respect to stiffness factor.
   // Preserved elements receive zero because they are fixed.
@@ -32,6 +45,8 @@ struct TopologyIterationEvaluation
   // Global element ID -> derivative with respect to solid fraction.
   // Empty when no density design belongs to the iteration.
   std::map<int, double> density_sensitivities;
+  std::map<int, double> filtered_density_sensitivities;
+  double sensitivity_filter_radius = 0.0;
 };
 
 struct TopologyVolumeEvaluation
@@ -89,9 +104,11 @@ struct TopologyCase
   int maximum_iterations;
   double density_penalization;
   double minimum_density;
+  double filter_radius; // 0 = automatic; positive = model length units.
 
   std::map<int, int> iteration_jobs;
   int selected_iteration = -1;
+  TopologyRunState run_state = TopologyRunState::NotRun;
   std::map<int, std::map<int, double>> iteration_element_energies; // Iteration ID -> global element ID -> internal energy.
   std::map<int, double> iteration_total_energies;
   std::map<int, TopologyIterationEvaluation> iteration_evaluations;
@@ -117,6 +134,9 @@ struct TopologyOptions
 
   bool has_maximum_iterations = false;
   int maximum_iterations = 0;
+
+  bool has_filter_radius = false;
+  double filter_radius = 0.0;
 };
 
 #endif

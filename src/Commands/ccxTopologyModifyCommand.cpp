@@ -12,7 +12,8 @@ std::vector<std::string> ccxTopologyModifyCommand::get_syntax()
       "[objective {compliance|mass|displacement}] "
       "[volume_fraction <value:label='volume_fraction'>] "
       "[void_ratio <value:label='void_ratio'>] "
-      "[iterations <value:label='maximum_iterations'>]"
+      "[iterations <value:label='maximum_iterations'>] "
+      "[filter_radius <value:label='filter_radius'>]"
   };
 }
 
@@ -22,7 +23,8 @@ std::vector<std::string> ccxTopologyModifyCommand::get_syntax_help()
       "ccx modify topology <id> [name <name>] "
       "[method {density|level_set}] "
       "[objective {compliance|mass|displacement}] "
-      "[volume_fraction <value>] [void_ratio <value>] [iterations <count>]"
+      "[volume_fraction <value>] [void_ratio <value>] "
+      "[iterations <count>] [filter_radius <length>]"
   };
 }
 
@@ -47,7 +49,7 @@ bool ccxTopologyModifyCommand::execute(CubitCommandData& data)
     options.has_name = true;
     data.get_string("name", options.name);
   }
-  
+
   if (data.find_keyword("method"))
   {
     options.has_method = true;
@@ -86,6 +88,12 @@ bool ccxTopologyModifyCommand::execute(CubitCommandData& data)
   {
     options.has_maximum_iterations = true;
     data.get_value("maximum_iterations", options.maximum_iterations);
+  }
+
+  if (data.find_keyword("filter_radius"))
+  {
+    options.has_filter_radius = true;
+    data.get_value("filter_radius", options.filter_radius);
   }
 
   return ccx_iface.modify_topology(topology_id, options);

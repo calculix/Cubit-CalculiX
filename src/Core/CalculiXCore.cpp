@@ -4822,6 +4822,7 @@ bool CalculiXCore::reset_topology_run(int topology_id)
   configuration.iteration_total_energies.clear();
   configuration.iteration_evaluations.clear();
   configuration.iteration_density_designs.clear();
+  configuration.run_state = TopologyRunState::NotRun;
 
   if (mat)
     mat->topology_material_data.erase(topology_id);
@@ -5841,10 +5842,32 @@ bool CalculiXCore::run_topology(int topology_id)
     return false;
   }
 
+  // Every unsuccessful exit records Failed.
+  struct RunStateGuard
+  {
+    TopologyCase& configuration;
+    bool finished = false;
+
+    explicit RunStateGuard(TopologyCase& case_data) : configuration(case_data)
+    {
+    }
+
+    ~RunStateGuard()
+    {
+      if (!finished)
+      {
+        configuration.run_state = TopologyRunState::Failed;
+      }
+    }
+  };
+
+  RunStateGuard run_guard(entry->second);
+
   if (!reset_topology_run(topology_id))
   {
     return false;
   }
+  entry->second.run_state = TopologyRunState::Running;
 
   if (entry->second.method != TopologyMethod::Density || entry->second.objective != TopologyObjective::Compliance)
   {
@@ -6008,10 +6031,16 @@ bool CalculiXCore::run_topology(int topology_id)
 
     if (converged)
     {
-      PRINT_INFO("Topology %d converged at iteration %d.\n",topology_id, iteration);
+      entry->second.run_state = TopologyRunState::Converged;
+      run_guard.finished = true;
+
+      PRINT_INFO("Topology %d converged at iteration %d.\n", topology_id, iteration);
       return true;
     }
   }
+
+  entry->second.run_state = TopologyRunState::IterationLimit;
+  run_guard.finished = true;
 
   PRINT_INFO("Topology %d reached its limit of %d iterations. The latest completed iteration remains selected.\n", topology_id, maximum_iterations);
   return true;
@@ -6924,9 +6953,14 @@ bool CalculiXCore::set_topology_iteration_densities(int topology_id,int iteratio
   return true;
 }
 
-bool CalculiXCore::collect_topology_element_volumes(int topology_id,std::map<int, double>& element_volumes)
+bool CalculiXCore::collect_topology_element_volumes(int topology_id, std::map<int, double>& element_volumes, std::map<int, std::array<double, 3>>* element_centers)
 {
   element_volumes.clear();
+  if (element_centers)
+  {
+    element_centers->clear();
+  }
+  std::map<int, std::array<double, 3>> centers;
 
   if (!mat || !me_iface)
   {
@@ -7012,6 +7046,20 @@ bool CalculiXCore::collect_topology_element_volumes(int topology_id,std::map<int
           PRINT_ERROR("Duplicate topology element %d in mesh blocks.\n", global_id);
           return false;
         }
+        if (element_centers)
+        {
+          const auto center = CubitInterface::get_center_point(entity, local_id);
+
+          for (double coordinate : center)
+          {
+            if (!std::isfinite(coordinate))
+            {
+              PRINT_ERROR("Invalid center for topology element %d.\n", global_id);
+              return false;
+            }
+          }
+          centers.emplace(global_id, center);
+        }
       }
       start += count;
     }
@@ -7030,6 +7078,10 @@ bool CalculiXCore::collect_topology_element_volumes(int topology_id,std::map<int
   }
 
   element_volumes.swap(collected);
+  if (element_centers)
+  {
+    element_centers->swap(centers);
+  }
   return true;
 }
 
@@ -7049,14 +7101,179 @@ bool CalculiXCore::prepare_topology_density_iteration(int topology_id,int source
     return false;
   }
 
-  std::map<int, double> densities;
+  std::map<int, double> element_volumes;
+  std::map<int, std::array<double, 3>> element_centers;
+  if (!collect_topology_element_volumes(topology_id, element_volumes, &element_centers))
+  {
+    return false;
+  }
+  if (!topology->filter_density_sensitivities(topology_id, source_iteration, element_volumes, element_centers))
+  {
+    return false;
+  }
 
+  std::map<int, double> densities;
   if (!topology->build_density_update(topology_id, source_iteration, densities))
   {
     return false;
   }
 
   return set_topology_iteration_densities(topology_id, next_iteration, densities);
+}
+
+std::vector<std::vector<std::string>> CalculiXCore::get_topology_iteration_data(int topology_id)
+{
+  if (!topology || !jobs)
+  {
+    PRINT_ERROR("Topology/job cores are not initialized.\n");
+    return {};
+  }
+
+  const auto entry = topology->topology_cases.find(topology_id);
+
+  if (entry == topology->topology_cases.end())
+  {
+    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    return {};
+  }
+
+  const auto& configuration = entry->second;
+  std::vector<std::vector<std::string>> rows;
+  
+  const auto format_value = [](double value)
+  {
+    std::ostringstream stream;
+    stream << std::scientific << std::setprecision(15) << value;
+    return stream.str();
+  };
+
+  for (const auto& iteration : configuration.iteration_jobs)
+  {
+    std::string objective;
+    std::string fraction;
+    std::string density_change;
+    std::string objective_change;
+    std::string converged;
+
+    const auto evaluation = configuration.iteration_evaluations.find(iteration.first);
+
+    if (evaluation != configuration.iteration_evaluations.end())
+    {
+      objective = format_value(evaluation->second.value);
+
+      if (evaluation->second.convergence_checked)
+      {
+        density_change = format_value(evaluation->second.maximum_density_change);
+
+        objective_change = format_value(evaluation->second.relative_objective_change);
+
+        converged = evaluation->second.converged ? "1" : "0";
+      }
+    }
+
+    const auto design = configuration.iteration_density_designs.find(iteration.first);
+
+    if (design != configuration.iteration_density_designs.end() && design->second.volume.available)
+    {
+      fraction = format_value(design->second.volume.volume_fraction);
+    }
+
+    rows.push_back({
+        std::to_string(iteration.first),
+        std::to_string(iteration.second),
+        std::to_string(jobs->get_job_status(iteration.second)),
+        objective,
+        fraction,
+        configuration.selected_iteration == iteration.first ? "1" : "0",
+        density_change,
+        objective_change,
+        converged
+    });
+  }
+
+  return rows;
+}
+
+bool CalculiXCore::select_topology_iteration(int topology_id, int iteration_id)
+{
+  if (!topology || !mat || !jobs || iteration_id < 0)
+  {
+    PRINT_ERROR("Invalid topology iteration selection request.\n");
+    return false;
+  }
+
+  const auto entry = topology->topology_cases.find(topology_id);
+  const auto collection = mat->topology_material_data.find(topology_id);
+
+  if (entry == topology->topology_cases.end() || collection == mat->topology_material_data.end())
+  {
+    PRINT_ERROR("Topology %d has no prepared iteration data.\n",
+                topology_id);
+    return false;
+  }
+
+  auto& configuration = entry->second;
+
+  for (const auto& iteration : configuration.iteration_jobs)
+  {
+    const int status = jobs->get_job_status(iteration.second);
+
+    if (status == 1 || status == 5)
+    {
+      PRINT_ERROR("Topology %d still has an active job.\n", topology_id);
+      return false;
+    }
+  }
+
+  const int job_id = get_topology_iteration_job_id(topology_id, iteration_id);
+
+  if (job_id <= 0 || jobs->get_job_status(job_id) != 2 ||
+      collection->second.iteration_factors.count(iteration_id) == 0 ||
+      configuration.iteration_evaluations.count(iteration_id) == 0)
+  {
+    PRINT_ERROR("Topology %d iteration %d is not a completed, evaluated result.\n", topology_id, iteration_id);
+    return false;
+  }
+
+  configuration.selected_iteration = iteration_id;
+
+  PRINT_INFO("Topology %d selected iteration %d, job %d.\n", topology_id, iteration_id, job_id);
+
+  return true;
+}
+
+std::string CalculiXCore::get_topology_run_state(int topology_id)
+{
+  if (!topology)
+  {
+    PRINT_ERROR("Topology core is not initialized.\n");
+    return "";
+  }
+
+  const auto entry = topology->topology_cases.find(topology_id);
+
+  if (entry == topology->topology_cases.end())
+  {
+    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    return "";
+  }
+
+  switch (entry->second.run_state)
+  {
+    case TopologyRunState::NotRun:
+      return "not_run";
+    case TopologyRunState::Running:
+      return "running";
+    case TopologyRunState::Converged:
+      return "converged";
+    case TopologyRunState::IterationLimit:
+      return "iteration_limit";
+    case TopologyRunState::Failed:
+      return "failed";
+  }
+
+  PRINT_ERROR("Invalid topology run state.\n");
+  return "";
 }
 
 bool CalculiXCore::set_job_conversion(int job_id, int conversion)
