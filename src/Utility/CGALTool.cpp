@@ -1,12 +1,17 @@
 #include "CGALTool.hpp"
-
 #include "CubitMessage.hpp"
+
+// Temporarily hide Cubit's NT macro while parsing CGAL headers.
+#pragma push_macro("NT")
+#undef NT
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Surface_mesh.h>
 #include <CGAL/alpha_wrap_3.h>
 #include <CGAL/boost/graph/helpers.h>
 #include <CGAL/boost/graph/IO/STL.h>
+
+#pragma pop_macro("NT")
 
 #include <cmath>
 #include <exception>
