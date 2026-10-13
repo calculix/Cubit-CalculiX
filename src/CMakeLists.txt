@@ -8,8 +8,6 @@ string(TIMESTAMP CCX_MONTH "%m")
 string(REGEX REPLACE "^0" "" CCX_MONTH "${CCX_MONTH}") # 02 -> 2
 add_compile_definitions(CCX_VERSION="${CCX_YEAR}.${CCX_MONTH}")
 
-
-
 if (UNIX)
  set(CMAKE_PREFIX_PATH "~/Downloads/Coreform-Cubit-2026.10/cmake")
  include_directories("~/Downloads/Coreform-Cubit-2026.10/include")
@@ -61,9 +59,12 @@ find_package(Qt6 COMPONENTS Charts REQUIRED)
 find_package(Qt6 COMPONENTS Widgets REQUIRED)
 find_package(HDF5 REQUIRED COMPONENTS C CXX HL)
 ADD_DEFINITIONS(-DH5_BUILT_AS_DYNAMIC_LIB)
+
+set(BOOST_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../boost_1_92_0")
+set(Boost_NO_BOOST_CMAKE ON) # Discover the headers using CMake's FindBoost module.
+set(CGAL_DISABLE_GMP ON) # Use Boost.Multiprecision instead of GMP/MPFR.
 set(CGAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Utility/cgal-main")
 find_package(CGAL REQUIRED CONFIG)
-
 
 # SWIG WRAPPING
 find_package(SWIG REQUIRED)
@@ -314,7 +315,15 @@ if (WIN32)
     set_target_properties(calculix_pythoninterface PROPERTIES SUFFIX ".pyd" PREFIX "_")
     target_link_libraries(calculix_pythoninterface cubiti cubit_util)
 
-    target_link_libraries(calculix_core calculix_useroptions)
+    add_library(ccx_cgal_tool STATIC
+        Utility/CGALTool.cpp
+        Utility/CGALTool.hpp
+    )
+    target_compile_features(ccx_cgal_tool PRIVATE cxx_std_17)
+    target_link_libraries(ccx_cgal_tool PRIVATE CGAL::CGAL cubit_util)
+    set_target_properties(ccx_cgal_tool PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+    target_link_libraries(calculix_core calculix_useroptions ccx_cgal_tool)
     target_link_libraries(calculix_plugin calculix_core)
     target_link_libraries(calculix_pythoninterface calculix_core)
     target_link_libraries(calculix_comp calculix_core)
@@ -347,7 +356,15 @@ if (UNIX)
     set_target_properties(calculix_pythoninterface PROPERTIES SUFFIX ".so" PREFIX "_")
     target_link_libraries(calculix_pythoninterface cubiti cubit_util)
 
-    target_link_libraries(calculix_core calculix_useroptions)
+    add_library(ccx_cgal_tool STATIC
+        Utility/CGALTool.cpp
+        Utility/CGALTool.hpp
+    )
+    target_compile_features(ccx_cgal_tool PRIVATE cxx_std_17)
+    target_link_libraries(ccx_cgal_tool PRIVATE CGAL::CGAL cubit_util)
+    set_target_properties(ccx_cgal_tool PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+    target_link_libraries(calculix_core calculix_useroptions ccx_cgal_tool)
     target_link_libraries(calculix_pythoninterface calculix_core)
     target_link_libraries(calculix_plugin calculix_core)
     target_link_libraries(calculix_comp calculix_core)
