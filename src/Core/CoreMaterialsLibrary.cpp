@@ -5,7 +5,8 @@
 #include "CalculiXCoreInterface.hpp"
 #include "loadUserOptions.hpp"
 #include "HDF5Tool.hpp"
-
+#include "ScientificNumber.hpp"
+#include <limits>
 
 CoreMaterialsLibrary::CoreMaterialsLibrary()
 {}
@@ -528,6 +529,7 @@ bool CoreMaterialsLibrary::import_material(std::string name, std::string groupna
   std::string material = groupname + "/" + name;
   MaterialInterface::Material cubit_material;
   cubit_material = mat_iface->get_material(cubit_name);
+  const int precision = std::numeric_limits<double>::max_digits10 - 1;
 
   if (cubit_material != NULL)
   {
@@ -567,7 +569,7 @@ bool CoreMaterialsLibrary::import_material(std::string name, std::string groupna
       {
         std::vector<double> data;
         hdf5Tool.read_dataset_double_rank_1(group_properties[i][0], material, data);      
-        ccx_iface->silent_cmd("modify material \"" + cubit_name + "\" scalar_properties \"" + group_properties[i][0] + "\" " + std::to_string(data[0]));
+        ccx_iface->silent_cmd("modify material \"" + cubit_name + "\" scalar_properties \"" + group_properties[i][0] + "\" " + ScientificNumber::format(data[0], precision));
       }
     }else if (group_properties[i][1]=="4")
     {
@@ -583,7 +585,7 @@ bool CoreMaterialsLibrary::import_material(std::string name, std::string groupna
           {
             for (size_t iii = 0; iii < data[ii].size(); iii++)
             {
-              cmd.append(" " + std::to_string(data[ii][iii]));
+              cmd.append(" " + ScientificNumber::format(data[ii][iii], precision));
             }
           } 
           ccx_iface->silent_cmd(cmd);

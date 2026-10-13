@@ -341,22 +341,22 @@ bool CoreDraw::draw_arrow(std::vector<double> start_point, std::vector<double> d
     {
         if (i==npolygon-1)
         {
-            commands.push_back("draw polygon location pos " + std::to_string(arrow_start_coord[0]) + " " + std::to_string(arrow_start_coord[1]) + " " + std::to_string(arrow_start_coord[2]) + " location pos " + std::to_string(polygon_coords[i][0]) + " " + std::to_string(polygon_coords[i][1]) + " " + std::to_string(polygon_coords[i][2]) + " location pos " + std::to_string(polygon_coords[0][0]) + " " + std::to_string(polygon_coords[0][1]) + " " + std::to_string(polygon_coords[0][2]) + " color " + color + " no_flush");
+            commands.push_back("draw polygon location pos " + ccx_iface->to_string_scientific(arrow_start_coord[0]) + " " + ccx_iface->to_string_scientific(arrow_start_coord[1]) + " " + ccx_iface->to_string_scientific(arrow_start_coord[2]) + " location pos " + ccx_iface->to_string_scientific(polygon_coords[i][0]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][1]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][2]) + " location pos " + ccx_iface->to_string_scientific(polygon_coords[0][0]) + " " + ccx_iface->to_string_scientific(polygon_coords[0][1]) + " " + ccx_iface->to_string_scientific(polygon_coords[0][2]) + " color " + color + " no_flush");
         }else{
-            commands.push_back("draw polygon location pos " + std::to_string(arrow_start_coord[0]) + " " + std::to_string(arrow_start_coord[1]) + " " + std::to_string(arrow_start_coord[2]) + " location pos " + std::to_string(polygon_coords[i][0]) + " " + std::to_string(polygon_coords[i][1]) + " " + std::to_string(polygon_coords[i][2]) + " location pos " + std::to_string(polygon_coords[i+1][0]) + " " + std::to_string(polygon_coords[i+1][1]) + " " + std::to_string(polygon_coords[i+1][2]) + " color " + color + " no_flush");
+            commands.push_back("draw polygon location pos " + ccx_iface->to_string_scientific(arrow_start_coord[0]) + " " + ccx_iface->to_string_scientific(arrow_start_coord[1]) + " " + ccx_iface->to_string_scientific(arrow_start_coord[2]) + " location pos " + ccx_iface->to_string_scientific(polygon_coords[i][0]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][1]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][2]) + " location pos " + ccx_iface->to_string_scientific(polygon_coords[i+1][0]) + " " + ccx_iface->to_string_scientific(polygon_coords[i+1][1]) + " " + ccx_iface->to_string_scientific(polygon_coords[i+1][2]) + " color " + color + " no_flush");
         }
     }
     cmd = "draw polygon";
     for (size_t i = 0; i < npolygon; i++)
     {
-        cmd = cmd + " location pos " + std::to_string(polygon_coords[i][0]) + " " + std::to_string(polygon_coords[i][1]) + " " + std::to_string(polygon_coords[i][2]);
+        cmd = cmd + " location pos " + ccx_iface->to_string_scientific(polygon_coords[i][0]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][1]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][2]);
     }
 
     cmd = cmd + " color " + color + " no_flush";
     commands.push_back(cmd);
 
     // draw arrow line
-    commands.push_back("draw line location pos " + std::to_string(arrow_end_coord[0]) + " " + std::to_string(arrow_end_coord[1]) + " " + std::to_string(arrow_end_coord[2]) + " location pos " + std::to_string(arrow_start_coord[0]) + " " + std::to_string(arrow_start_coord[1]) + " " + std::to_string(arrow_start_coord[2]) + " color " + color + " no_flush");
+    commands.push_back("draw line location pos " + ccx_iface->to_string_scientific(arrow_end_coord[0]) + " " + ccx_iface->to_string_scientific(arrow_end_coord[1]) + " " + ccx_iface->to_string_scientific(arrow_end_coord[2]) + " location pos " + ccx_iface->to_string_scientific(arrow_start_coord[0]) + " " + ccx_iface->to_string_scientific(arrow_start_coord[1]) + " " + ccx_iface->to_string_scientific(arrow_start_coord[2]) + " color " + color + " no_flush");
     commands.push_back("graphics flush"); 
     
     for (size_t i = 0; i < commands.size(); i++)
@@ -438,22 +438,22 @@ bool CoreDraw::draw_arrow_flat(std::vector<double> start_point, std::vector<doub
     {
         if (i==npolygon-1)
         {
-            commands.push_back("draw polygon location pos " + std::to_string(arrow_start_coord[0]) + " " + std::to_string(arrow_start_coord[1]) + " " + std::to_string(arrow_start_coord[2]) + " location pos " + std::to_string(polygon_coords[i][0]) + " " + std::to_string(polygon_coords[i][1]) + " " + std::to_string(polygon_coords[i][2]) + " location pos " + std::to_string(polygon_coords[0][0]) + " " + std::to_string(polygon_coords[0][1]) + " " + std::to_string(polygon_coords[0][2]) + " color " + color + " no_flush");
+            commands.push_back("draw polygon location pos " + ccx_iface->to_string_scientific(arrow_start_coord[0]) + " " + ccx_iface->to_string_scientific(arrow_start_coord[1]) + " " + ccx_iface->to_string_scientific(arrow_start_coord[2]) + " location pos " + ccx_iface->to_string_scientific(polygon_coords[i][0]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][1]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][2]) + " location pos " + ccx_iface->to_string_scientific(polygon_coords[0][0]) + " " + ccx_iface->to_string_scientific(polygon_coords[0][1]) + " " + ccx_iface->to_string_scientific(polygon_coords[0][2]) + " color " + color + " no_flush");
         }else{
-            commands.push_back("draw polygon location pos " + std::to_string(arrow_start_coord[0]) + " " + std::to_string(arrow_start_coord[1]) + " " + std::to_string(arrow_start_coord[2]) + " location pos " + std::to_string(polygon_coords[i][0]) + " " + std::to_string(polygon_coords[i][1]) + " " + std::to_string(polygon_coords[i][2]) + " location pos " + std::to_string(polygon_coords[i+1][0]) + " " + std::to_string(polygon_coords[i+1][1]) + " " + std::to_string(polygon_coords[i+1][2]) + " color " + color + " no_flush");
+            commands.push_back("draw polygon location pos " + ccx_iface->to_string_scientific(arrow_start_coord[0]) + " " + ccx_iface->to_string_scientific(arrow_start_coord[1]) + " " + ccx_iface->to_string_scientific(arrow_start_coord[2]) + " location pos " + ccx_iface->to_string_scientific(polygon_coords[i][0]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][1]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][2]) + " location pos " + ccx_iface->to_string_scientific(polygon_coords[i+1][0]) + " " + ccx_iface->to_string_scientific(polygon_coords[i+1][1]) + " " + ccx_iface->to_string_scientific(polygon_coords[i+1][2]) + " color " + color + " no_flush");
         }
     }
     cmd = "draw polygon";
     for (size_t i = 0; i < npolygon; i++)
     {
-        cmd = cmd + " location pos " + std::to_string(polygon_coords[i][0]) + " " + std::to_string(polygon_coords[i][1]) + " " + std::to_string(polygon_coords[i][2]);
+        cmd = cmd + " location pos " + ccx_iface->to_string_scientific(polygon_coords[i][0]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][1]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][2]);
     }
 
     cmd = cmd + " color " + color + " no_flush";
     commands.push_back(cmd);
 
     // draw arrow line
-    commands.push_back("draw line location pos " + std::to_string(arrow_end_coord[0]) + " " + std::to_string(arrow_end_coord[1]) + " " + std::to_string(arrow_end_coord[2]) + " location pos " + std::to_string(arrow_start_coord[0]) + " " + std::to_string(arrow_start_coord[1]) + " " + std::to_string(arrow_start_coord[2]) + " color " + color + " no_flush");
+    commands.push_back("draw line location pos " + ccx_iface->to_string_scientific(arrow_end_coord[0]) + " " + ccx_iface->to_string_scientific(arrow_end_coord[1]) + " " + ccx_iface->to_string_scientific(arrow_end_coord[2]) + " location pos " + ccx_iface->to_string_scientific(arrow_start_coord[0]) + " " + ccx_iface->to_string_scientific(arrow_start_coord[1]) + " " + ccx_iface->to_string_scientific(arrow_start_coord[2]) + " color " + color + " no_flush");
     commands.push_back("graphics flush"); 
     
     
@@ -610,24 +610,24 @@ bool CoreDraw::draw_dof(std::vector<double> coord, int dof, std::string color, d
         {
             if (i==npolygon-1)
             {
-                commands.push_back("draw polygon location pos " + std::to_string(draw_coord[0]) + " " + std::to_string(draw_coord[1]) + " " + std::to_string(draw_coord[2]) + " location pos " + std::to_string(polygon_coords[i][0]) + " " + std::to_string(polygon_coords[i][1]) + " " + std::to_string(polygon_coords[i][2]) + " location pos " + std::to_string(polygon_coords[0][0]) + " " + std::to_string(polygon_coords[0][1]) + " " + std::to_string(polygon_coords[0][2]) + " color " + color + " no_flush");
+                commands.push_back("draw polygon location pos " + ccx_iface->to_string_scientific(draw_coord[0]) + " " + ccx_iface->to_string_scientific(draw_coord[1]) + " " + ccx_iface->to_string_scientific(draw_coord[2]) + " location pos " + ccx_iface->to_string_scientific(polygon_coords[i][0]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][1]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][2]) + " location pos " + ccx_iface->to_string_scientific(polygon_coords[0][0]) + " " + ccx_iface->to_string_scientific(polygon_coords[0][1]) + " " + ccx_iface->to_string_scientific(polygon_coords[0][2]) + " color " + color + " no_flush");
             }else{
-                commands.push_back("draw polygon location pos " + std::to_string(draw_coord[0]) + " " + std::to_string(draw_coord[1]) + " " + std::to_string(draw_coord[2]) + " location pos " + std::to_string(polygon_coords[i][0]) + " " + std::to_string(polygon_coords[i][1]) + " " + std::to_string(polygon_coords[i][2]) + " location pos " + std::to_string(polygon_coords[i+1][0]) + " " + std::to_string(polygon_coords[i+1][1]) + " " + std::to_string(polygon_coords[i+1][2]) + " color " + color + " no_flush");
+                commands.push_back("draw polygon location pos " + ccx_iface->to_string_scientific(draw_coord[0]) + " " + ccx_iface->to_string_scientific(draw_coord[1]) + " " + ccx_iface->to_string_scientific(draw_coord[2]) + " location pos " + ccx_iface->to_string_scientific(polygon_coords[i][0]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][1]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][2]) + " location pos " + ccx_iface->to_string_scientific(polygon_coords[i+1][0]) + " " + ccx_iface->to_string_scientific(polygon_coords[i+1][1]) + " " + ccx_iface->to_string_scientific(polygon_coords[i+1][2]) + " color " + color + " no_flush");
             }
         }
         cmd = "draw polygon";
         for (size_t i = 0; i < npolygon; i++)
         {
-            cmd = cmd + " location pos " + std::to_string(polygon_coords[i][0]) + " " + std::to_string(polygon_coords[i][1]) + " " + std::to_string(polygon_coords[i][2]);
+            cmd = cmd + " location pos " + ccx_iface->to_string_scientific(polygon_coords[i][0]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][1]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][2]);
         }
 
         cmd = cmd + " color " + color + " no_flush";
         commands.push_back(cmd);
         // draw line
-        commands.push_back("draw line location pos " + std::to_string(draw_coord[0]) + " " + std::to_string(draw_coord[1]) + " " + std::to_string(draw_coord[2]) + " location pos " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " color " + color + " no_flush");
+        commands.push_back("draw line location pos " + ccx_iface->to_string_scientific(draw_coord[0]) + " " + ccx_iface->to_string_scientific(draw_coord[1]) + " " + ccx_iface->to_string_scientific(draw_coord[2]) + " location pos " + ccx_iface->to_string_scientific(coord[0]) + " " + ccx_iface->to_string_scientific(coord[1]) + " " + ccx_iface->to_string_scientific(coord[2]) + " color " + color + " no_flush");
     }else if (dof==11)
     {
-        commands.push_back("draw location " +  std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " color " + color + " no_flush");
+        commands.push_back("draw location " +  ccx_iface->to_string_scientific(coord[0]) + " " + ccx_iface->to_string_scientific(coord[1]) + " " + ccx_iface->to_string_scientific(coord[2]) + " color " + color + " no_flush");
     }
     commands.push_back("graphics flush");
     
@@ -738,9 +738,9 @@ bool CoreDraw::draw_equation_node(std::vector<double> coord, int dof, std::strin
         {
             if (i==npolygon-1)
             {
-                commands.push_back("draw polygon location pos " + std::to_string(draw_coord[0]) + " " + std::to_string(draw_coord[1]) + " " + std::to_string(draw_coord[2]) + " location pos " + std::to_string(polygon_coords[i][0]) + " " + std::to_string(polygon_coords[i][1]) + " " + std::to_string(polygon_coords[i][2]) + " location pos " + std::to_string(polygon_coords[0][0]) + " " + std::to_string(polygon_coords[0][1]) + " " + std::to_string(polygon_coords[0][2]) + " color " + color + " no_flush");
+                commands.push_back("draw polygon location pos " + ccx_iface->to_string_scientific(draw_coord[0]) + " " + ccx_iface->to_string_scientific(draw_coord[1]) + " " + ccx_iface->to_string_scientific(draw_coord[2]) + " location pos " + ccx_iface->to_string_scientific(polygon_coords[i][0]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][1]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][2]) + " location pos " + ccx_iface->to_string_scientific(polygon_coords[0][0]) + " " + ccx_iface->to_string_scientific(polygon_coords[0][1]) + " " + ccx_iface->to_string_scientific(polygon_coords[0][2]) + " color " + color + " no_flush");
             }else{
-                commands.push_back("draw polygon location pos " + std::to_string(draw_coord[0]) + " " + std::to_string(draw_coord[1]) + " " + std::to_string(draw_coord[2]) + " location pos " + std::to_string(polygon_coords[i][0]) + " " + std::to_string(polygon_coords[i][1]) + " " + std::to_string(polygon_coords[i][2]) + " location pos " + std::to_string(polygon_coords[i+1][0]) + " " + std::to_string(polygon_coords[i+1][1]) + " " + std::to_string(polygon_coords[i+1][2]) + " color " + color + " no_flush");
+                commands.push_back("draw polygon location pos " + ccx_iface->to_string_scientific(draw_coord[0]) + " " + ccx_iface->to_string_scientific(draw_coord[1]) + " " + ccx_iface->to_string_scientific(draw_coord[2]) + " location pos " + ccx_iface->to_string_scientific(polygon_coords[i][0]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][1]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][2]) + " location pos " + ccx_iface->to_string_scientific(polygon_coords[i+1][0]) + " " + ccx_iface->to_string_scientific(polygon_coords[i+1][1]) + " " + ccx_iface->to_string_scientific(polygon_coords[i+1][2]) + " color " + color + " no_flush");
             }
         }
     }
@@ -841,24 +841,7 @@ bool CoreDraw::draw_load_trajectory(int id, double size)
         std::vector<std::vector<double>> times;
         times = ccx_iface->loadstrajectory_heatflux_get_times(id);
         bool switch_color = true;
-        for (size_t i = 0; i < hit_coordinates.size(); i++)
-        {
-            if (hit_coordinates[i].size()>0)
-            {
-                std::array<double,3> coord = CubitInterface::get_nodal_coordinates(node_ids[i]);
-                if (switch_color)
-                {
-                    ccx_iface->silent_cmd("draw location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " color red");
-                    ccx_iface->silent_cmd("draw line location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " location " + std::to_string(hit_coordinates[i][0]) + " " + std::to_string(hit_coordinates[i][1]) + " " + std::to_string(hit_coordinates[i][2]) +  " color red");
-                    //switch_color = false;
-                }else{
-                    ccx_iface->silent_cmd("draw location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " color blue");
-                    ccx_iface->silent_cmd("draw line location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " location " + std::to_string(hit_coordinates[i][0]) + " " + std::to_string(hit_coordinates[i][1]) + " " + std::to_string(hit_coordinates[i][2]) +  " color blue");
-                    //switch_color = true;
-                }
-            }
-        }
-        
+
         // draw faces
         for (size_t i = 0; i < face_ids.size(); i++) //loop over nodes
         {
@@ -878,6 +861,25 @@ bool CoreDraw::draw_load_trajectory(int id, double size)
                 }
             }
         }
+
+        for (size_t i = 0; i < hit_coordinates.size(); i++)
+        {
+            if (hit_coordinates[i].size()>0)
+            {
+                std::array<double,3> coord = CubitInterface::get_nodal_coordinates(node_ids[i]);
+                if (switch_color)
+                {
+                    ccx_iface->silent_cmd("draw location " + ccx_iface->to_string_scientific(coord[0]) + " " + ccx_iface->to_string_scientific(coord[1]) + " " + ccx_iface->to_string_scientific(coord[2]) + " color red");
+                    ccx_iface->silent_cmd("draw line location " + ccx_iface->to_string_scientific(coord[0]) + " " + ccx_iface->to_string_scientific(coord[1]) + " " + ccx_iface->to_string_scientific(coord[2]) + " location " + ccx_iface->to_string_scientific(hit_coordinates[i][0]) + " " + ccx_iface->to_string_scientific(hit_coordinates[i][1]) + " " + ccx_iface->to_string_scientific(hit_coordinates[i][2]) +  " color red");
+                    //switch_color = false;
+                }else{
+                    ccx_iface->silent_cmd("draw location " + ccx_iface->to_string_scientific(coord[0]) + " " + ccx_iface->to_string_scientific(coord[1]) + " " + ccx_iface->to_string_scientific(coord[2]) + " color blue");
+                    ccx_iface->silent_cmd("draw line location " + ccx_iface->to_string_scientific(coord[0]) + " " + ccx_iface->to_string_scientific(coord[1]) + " " + ccx_iface->to_string_scientific(coord[2]) + " location " + ccx_iface->to_string_scientific(hit_coordinates[i][0]) + " " + ccx_iface->to_string_scientific(hit_coordinates[i][1]) + " " + ccx_iface->to_string_scientific(hit_coordinates[i][2]) +  " color blue");
+                    //switch_color = true;
+                }
+            }
+        }
+    
         /*
         for (size_t i = 0; i < times.size(); i++)
         {
@@ -893,12 +895,12 @@ bool CoreDraw::draw_load_trajectory(int id, double size)
         if (times.size()>1)
         {
             std::array<double,3> coord = CubitInterface::get_nodal_coordinates(node_ids[0]);
-            std::string label = "locate location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " ";
+            std::string label = "locate location " + ccx_iface->to_string_scientific(coord[0]) + " " + ccx_iface->to_string_scientific(coord[1]) + " " + ccx_iface->to_string_scientific(coord[2]) + " ";
             label.append("\" t_begin " + ccx_iface->to_string_scientific(times[0][0]) + "\"");
             ccx_iface->silent_cmd(label);
 
             coord = CubitInterface::get_nodal_coordinates(node_ids[node_ids.size()-1]);
-            label = "locate location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " ";
+            label = "locate location " + ccx_iface->to_string_scientific(coord[0]) + " " + ccx_iface->to_string_scientific(coord[1]) + " " + ccx_iface->to_string_scientific(coord[2]) + " ";
             label.append("\" t_end " + ccx_iface->to_string_scientific(times[times.size()-1][1]) + "\"");
             ccx_iface->silent_cmd(label);
         }
@@ -918,25 +920,7 @@ bool CoreDraw::draw_load_trajectory(int id, double size)
         times = ccx_iface->loadstrajectory_bodyheatfluxsphere_get_times(id);
         bool switch_color = true;
 
-        for (size_t i = 0; i < hit_coordinates.size(); i++)
-        {
-            if (hit_coordinates[i].size()>0)
-            {
-                std::array<double,3> coord = CubitInterface::get_nodal_coordinates(node_ids[i]);
-                if (switch_color)
-                {
-                    ccx_iface->silent_cmd("draw location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " color red");
-                    ccx_iface->silent_cmd("draw line location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " location " + std::to_string(hit_coordinates[i][0]) + " " + std::to_string(hit_coordinates[i][1]) + " " + std::to_string(hit_coordinates[i][2]) +  " color red");
-                    //switch_color = false;
-                }else{
-                    ccx_iface->silent_cmd("draw location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " color blue");
-                    ccx_iface->silent_cmd("draw line location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " location " + std::to_string(hit_coordinates[i][0]) + " " + std::to_string(hit_coordinates[i][1]) + " " + std::to_string(hit_coordinates[i][2]) +  " color blue");
-                    //switch_color = true;
-                }
-            }
-        }
-        
-        // draw elements
+                // draw elements
         for (size_t i = 0; i < element_ids.size(); i++) //loop over nodes
         {
             for (size_t ii = 0; ii < element_ids[i].size(); ii++) //loop over radius
@@ -955,6 +939,25 @@ bool CoreDraw::draw_load_trajectory(int id, double size)
                 }
             }
         }
+
+        for (size_t i = 0; i < hit_coordinates.size(); i++)
+        {
+            if (hit_coordinates[i].size()>0)
+            {
+                std::array<double,3> coord = CubitInterface::get_nodal_coordinates(node_ids[i]);
+                if (switch_color)
+                {
+                    ccx_iface->silent_cmd("draw location " + ccx_iface->to_string_scientific(coord[0]) + " " + ccx_iface->to_string_scientific(coord[1]) + " " + ccx_iface->to_string_scientific(coord[2]) + " color red");
+                    ccx_iface->silent_cmd("draw line location " + ccx_iface->to_string_scientific(coord[0]) + " " + ccx_iface->to_string_scientific(coord[1]) + " " + ccx_iface->to_string_scientific(coord[2]) + " location " + ccx_iface->to_string_scientific(hit_coordinates[i][0]) + " " + ccx_iface->to_string_scientific(hit_coordinates[i][1]) + " " + ccx_iface->to_string_scientific(hit_coordinates[i][2]) +  " color red");
+                    //switch_color = false;
+                }else{
+                    ccx_iface->silent_cmd("draw location " + ccx_iface->to_string_scientific(coord[0]) + " " + ccx_iface->to_string_scientific(coord[1]) + " " + ccx_iface->to_string_scientific(coord[2]) + " color blue");
+                    ccx_iface->silent_cmd("draw line location " + ccx_iface->to_string_scientific(coord[0]) + " " + ccx_iface->to_string_scientific(coord[1]) + " " + ccx_iface->to_string_scientific(coord[2]) + " location " + ccx_iface->to_string_scientific(hit_coordinates[i][0]) + " " + ccx_iface->to_string_scientific(hit_coordinates[i][1]) + " " + ccx_iface->to_string_scientific(hit_coordinates[i][2]) +  " color blue");
+                    //switch_color = true;
+                }
+            }
+        }
+        
         /*
         for (size_t i = 0; i < times.size(); i++)
         {
@@ -970,12 +973,12 @@ bool CoreDraw::draw_load_trajectory(int id, double size)
         if (times.size()>1)
         {
             std::array<double,3> coord = CubitInterface::get_nodal_coordinates(node_ids[0]);
-            std::string label = "locate location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " ";
+            std::string label = "locate location " + ccx_iface->to_string_scientific(coord[0]) + " " + ccx_iface->to_string_scientific(coord[1]) + " " + ccx_iface->to_string_scientific(coord[2]) + " ";
             label.append("\" t_begin " + ccx_iface->to_string_scientific(times[0][0]) + "\"");
             ccx_iface->silent_cmd(label);
 
             coord = CubitInterface::get_nodal_coordinates(node_ids[node_ids.size()-1]);
-            label = "locate location " + std::to_string(coord[0]) + " " + std::to_string(coord[1]) + " " + std::to_string(coord[2]) + " ";
+            label = "locate location " + ccx_iface->to_string_scientific(coord[0]) + " " + ccx_iface->to_string_scientific(coord[1]) + " " + ccx_iface->to_string_scientific(coord[2]) + " ";
             label.append("\" t_end " + ccx_iface->to_string_scientific(times[times.size()-1][1]) + "\"");
             ccx_iface->silent_cmd(label);
         }
@@ -1162,7 +1165,7 @@ bool CoreDraw::draw_equation(int id, double size)
     {
         for (size_t i = 1; i < draw_data.size(); i++)
         {
-            commands.push_back("draw line location pos " + std::to_string(draw_data[0][0]) + " " + std::to_string(draw_data[0][1]) + " " + std::to_string(draw_data[0][2]) + " location pos " + std::to_string(draw_data[i][0]) + " " + std::to_string(draw_data[i][1]) + " " + std::to_string(draw_data[i][2]) + " color yellow no_flush");
+            commands.push_back("draw line location pos " + ccx_iface->to_string_scientific(draw_data[0][0]) + " " + ccx_iface->to_string_scientific(draw_data[0][1]) + " " + ccx_iface->to_string_scientific(draw_data[0][2]) + " location pos " + ccx_iface->to_string_scientific(draw_data[i][0]) + " " + ccx_iface->to_string_scientific(draw_data[i][1]) + " " + ccx_iface->to_string_scientific(draw_data[i][2]) + " color yellow no_flush");
         }
         commands.push_back("graphics flush");
     }
@@ -1189,7 +1192,7 @@ bool CoreDraw::draw_equationgroup(int id, double size)
     
     for (size_t i = 0; i < draw_data.size(); i++)
     {
-        commands.push_back("draw location pos " + std::to_string(draw_data[i][0]) + " " + std::to_string(draw_data[i][1]) + " " + std::to_string(draw_data[i][2]) + " color yellow no_flush");
+        commands.push_back("draw location pos " + ccx_iface->to_string_scientific(draw_data[i][0]) + " " + ccx_iface->to_string_scientific(draw_data[i][1]) + " " + ccx_iface->to_string_scientific(draw_data[i][2]) + " color yellow no_flush");
     }
 
     // draw lines
@@ -1197,7 +1200,7 @@ bool CoreDraw::draw_equationgroup(int id, double size)
     {
         for (size_t i = 0; i < draw_data.size(); i = i + 2)
         {
-            commands.push_back("draw line location pos " + std::to_string(draw_data[i][0]) + " " + std::to_string(draw_data[i][1]) + " " + std::to_string(draw_data[i][2]) + " location pos " + std::to_string(draw_data[i+1][0]) + " " + std::to_string(draw_data[i+1][1]) + " " + std::to_string(draw_data[i+1][2]) + " color yellow no_flush");
+            commands.push_back("draw line location pos " + ccx_iface->to_string_scientific(draw_data[i][0]) + " " + ccx_iface->to_string_scientific(draw_data[i][1]) + " " + ccx_iface->to_string_scientific(draw_data[i][2]) + " location pos " + ccx_iface->to_string_scientific(draw_data[i+1][0]) + " " + ccx_iface->to_string_scientific(draw_data[i+1][1]) + " " + ccx_iface->to_string_scientific(draw_data[i+1][2]) + " color yellow no_flush");
         }
         commands.push_back("graphics flush");
     }
@@ -1347,7 +1350,7 @@ bool CoreDraw::draw_all(double size)
     this->draw_equations(size);
     this->draw_equationgroups(size);
 
-    std::string log = "Loads, BCs, Orientations and Equations drawn with size " + std::to_string(size) +"\n";
+    std::string log = "Loads, BCs, Orientations and Equations drawn with size " + ccx_iface->to_string_scientific(size) +"\n";
     PRINT_INFO("%s", log.c_str());
 
     return true;

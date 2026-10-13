@@ -165,18 +165,20 @@ bool CoreJobs::create_job(const std::vector<std::string>& options, int& created_
 
   const int job_id = largest_id + 1;
 
-  if (!ccx_iface->create_result(job_id))
-  {
-    PRINT_ERROR("Failed to create results for job %d.\n", job_id);
-    return false;
-  }
-
   if (!add_job(job_id, options[0], options[1]))
   {
     if (!ccx_iface->delete_result(job_id))
+    {
       PRINT_ERROR("Failed to remove results for job %d.\n", job_id);
-
+    }
+    
     PRINT_ERROR("Failed to create job %d.\n", job_id);
+    return false;
+  }
+
+  if (!ccx_iface->create_result(job_id))
+  {
+    PRINT_ERROR("Failed to create results for job %d.\n", job_id);
     return false;
   }
 

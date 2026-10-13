@@ -173,7 +173,8 @@ bool CalculiXCore::silent_cmd(std::string cmd)
 {
   //CubitInterface::silent_cmd_without_running_journal_lines(cmd.c_str());
   bool status = CubitInterface::silent_cmd(cmd.c_str());
-  
+  //PRINT_INFO("%s \n", cmd.c_str());
+
   return status;
 }
 
