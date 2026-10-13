@@ -217,6 +217,7 @@ public:
   bool wait_job(int job_id); // runs job
   bool kill_job(int job_id); // kills job
   bool run_topology(int topology_id); // runs topology optimization job
+  int run_topology_iteration(int topology_id, int iteration_id);// Returns the completed job ID, or -1 on failure.
   bool create_topology(int topology_id, const TopologyOptions& options);
   bool modify_topology(int topology_id, const TopologyOptions& options);
   bool delete_topology(int topology_id); // delete topology and all of its data
@@ -228,6 +229,8 @@ public:
   bool set_topology_iteration_factors(int topology_id,int iteration_id,const std::vector<int>& element_ids,const std::vector<double>& stiffness_factors);
   bool check_topology_material_assignment(int topology_id, int iteration_id, int element_id);
   std::string get_topology_material_name(int topology_id, int element_id);
+  std::vector<double> get_topology_parameters(int topology_id);
+  int get_topology_iteration_job_id(int topology_id, int iteration_id); // Returns the associated job ID, or -1 on failure.
   bool set_job_conversion(int job_id, int conversion); // sets the paraview conversion value for the job
   bool result_cgx_job(int job_id); // opens the results with cgx
   bool result_paraview_job(int job_id); // opens the results with paraview

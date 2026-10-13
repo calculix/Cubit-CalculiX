@@ -283,12 +283,21 @@ public:
   bool collect_topology_default_sets(std::map<int, std::set<int>>& default_sets,std::set<int>& default_elements);
   bool resolve_topology_preservation(int topology_id,const std::map<int, std::set<int>>& default_sets,const std::set<int>& default_elements);
   bool run_topology(int topology_id); // runs topology optimization job
+  int run_topology_iteration(int topology_id, int iteration_id);// Returns the completed job ID, or -1 on failure.
   bool initialize_topology(int topology_id, const std::vector<int>& section_ids);
   bool reset_topology_run(int topology_id);
   std::vector<std::vector<int>> get_topology_element_preservation(int topology_id);
   bool set_topology_iteration_factors(int topology_id,int iteration_id,const std::vector<int>& element_ids,const std::vector<double>& stiffness_factors);
   bool check_topology_material_assignment(int topology_id, int iteration_id, int element_id);
   std::string get_topology_material_name(int topology_id, int element_id);
+  std::vector<double> get_topology_parameters(int topology_id);
+  int get_topology_iteration_job_id(int topology_id, int iteration_id); // Returns the associated job ID, or -1 on failure.
+  bool ensure_topology_element_history_output(int topology_id,int step_id,int block_id,const std::string& key);
+  bool read_topology_element_energies(int topology_id,int iteration_id,std::map<int, double>& element_energies);
+  bool validate_topology_compliance_model(); // check if the model is build up correctly
+  bool set_topology_iteration_densities(int topology_id,int iteration_id,const std::map<int, double>& densities);
+  bool collect_topology_element_volumes(int topology_id,std::map<int, double>& element_volumes);
+  bool prepare_topology_density_iteration(int topology_id,int source_iteration,int next_iteration);
   bool result_cgx_job(int job_id); // opens the results with cgx
   bool result_paraview_job(int job_id); // opens the results with paraview
   bool result_plot_job_frd(int job_id,int x_node_id, std::string x_block_type, std::string x_block_component, bool x_increment,bool x_time,int y_node_id, std::string y_block_type, std::string y_block_component, bool y_increment, bool y_time,QString title,QString x_axis,QString y_axis,bool save, QString save_filepath); // plots the results

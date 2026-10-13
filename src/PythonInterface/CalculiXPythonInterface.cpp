@@ -95,6 +95,21 @@ std::vector<std::vector<int>> CalculiXPythonInterface::get_topology_element_pres
   return ccx_iface->get_topology_element_preservation(topology_id);
 }
 
+int CalculiXPythonInterface::run_topology_iteration(int topology_id, int iteration_id)
+{
+  return ccx_iface->run_topology_iteration(topology_id, iteration_id);
+}
+
+std::vector<double> CalculiXPythonInterface::get_topology_parameters(int topology_id)
+{
+  return ccx_iface->get_topology_parameters(topology_id);
+}
+
+int CalculiXPythonInterface::get_topology_iteration_job_id(int topology_id, int iteration_id)
+{
+  return ccx_iface->get_topology_iteration_job_id(topology_id, iteration_id);
+}
+
 std::vector<std::string> CalculiXPythonInterface::frd_get_result_block_types(int job_id)
 {
   return ccx_iface->frd_get_result_block_types(job_id);

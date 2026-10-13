@@ -4818,6 +4818,10 @@ bool CalculiXCore::reset_topology_run(int topology_id)
 
   configuration.selected_iteration = -1;
   configuration.element_preserved.clear();
+  configuration.iteration_element_energies.clear();
+  configuration.iteration_total_energies.clear();
+  configuration.iteration_evaluations.clear();
+  configuration.iteration_density_designs.clear();
 
   if (mat)
     mat->topology_material_data.erase(topology_id);
@@ -4831,7 +4835,9 @@ bool CalculiXCore::reset_topology_run(int topology_id)
 bool CalculiXCore::delete_topology(int topology_id)
 {
   if (!reset_topology_run(topology_id))
+  {
     return false;
+  }
 
   return topology->delete_topology(topology_id);
 }
@@ -5697,9 +5703,131 @@ bool CalculiXCore::resolve_topology_preservation(int topology_id,const std::map<
   return topology->resolve_preserved_elements(topology_id, element_ids, default_sets, default_elements);
 }
 
+int CalculiXCore::run_topology_iteration(int topology_id, int iteration_id)
+{
+  if (!topology || !mat || !jobs || iteration_id < 0)
+  {
+    PRINT_ERROR("Invalid topology iteration request.\n");
+    return -1;
+  }
+
+  const auto entry = topology->topology_cases.find(topology_id);
+  const auto collection = mat->topology_material_data.find(topology_id);
+
+  if (entry == topology->topology_cases.end() || collection == mat->topology_material_data.end())
+  {
+    PRINT_ERROR("Topology %d is not prepared.\n", topology_id);
+    return -1;
+  }
+
+  auto& configuration = entry->second;
+  
+  // check model
+  if (configuration.objective == TopologyObjective::Compliance && !validate_topology_compliance_model())
+  {
+    return -1;
+  }
+
+  if (collection->second.iteration_factors.count(iteration_id) == 0)
+  {
+    PRINT_ERROR("Factors for topology %d iteration %d are missing.\n", topology_id, iteration_id);
+    return -1;
+  }
+
+  if (configuration.iteration_jobs.count(iteration_id) != 0)
+  {
+    PRINT_ERROR("Topology %d iteration %d already has a job.\n", topology_id, iteration_id);
+    return -1;
+  }
+
+  for (const auto& iteration : configuration.iteration_jobs)
+  {
+    const int status = jobs->get_job_status(iteration.second);
+
+    if (status == 1 || status == 5)
+    {
+      PRINT_ERROR("Topology %d already has an active job.\n", topology_id);
+      return -1;
+    }
+  }
+
+  std::string filename_name = configuration.name;
+
+  for (char& character : filename_name)
+  {
+    const bool allowed =
+        (character >= 'a' && character <= 'z') ||
+        (character >= 'A' && character <= 'Z') ||
+        (character >= '0' && character <= '9') ||
+        character == '_';
+
+    if (!allowed)
+    {
+      character = '_';
+    }
+  }
+
+  std::ostringstream name;
+  name << "topo_" << topology_id << "_" << filename_name
+       << "_iter_" << std::setfill('0')
+       << std::setw(4) << iteration_id;
+
+  const std::string job_name = name.str();
+
+  for (const auto& job : jobs->jobs_data)
+  {
+    if (job.size() > 1 && job[1] == job_name)
+    {
+      PRINT_ERROR("Job name '%s' already exists.\n", job_name.c_str());
+      return -1;
+    }
+  }
+
+  int job_id = -1;
+
+  if (!jobs->create_job({job_name, ""}, job_id))
+  {
+    return -1;
+  }
+
+  // Link before running so export can retrieve the iteration context.
+  configuration.iteration_jobs.emplace(iteration_id, job_id);
+
+  if (!jobs->run_job(job_id, -1) || !jobs->wait_job(job_id))
+  {
+    PRINT_ERROR("Topology %d iteration %d failed. Job %d is retained.\n",topology_id, iteration_id, job_id);
+    return -1;
+  }
+
+
+  if (configuration.objective == TopologyObjective::Compliance)
+  {
+    std::map<int, double> element_energies;
+    if (!read_topology_element_energies(topology_id, iteration_id, element_energies) ||
+        !topology->set_iteration_element_energies(topology_id, iteration_id, element_energies))
+    {
+      PRINT_ERROR("Failed to collect topology %d iteration %d energies. Job %d is retained.\n", topology_id, iteration_id, job_id);
+      return -1;
+    }
+    const auto factors =
+    collection->second.iteration_factors.find(iteration_id);
+
+    if (factors == collection->second.iteration_factors.end() || !topology->evaluate_compliance(topology_id, iteration_id, factors->second))
+    {
+      PRINT_ERROR("Failed to evaluate topology %d iteration %d. Job %d is retained.\n", topology_id, iteration_id, job_id);
+      return -1;
+    }
+  }
+
+  configuration.selected_iteration = iteration_id;
+  PRINT_INFO("Topology %d iteration %d completed as job %d; results are loaded.\n", topology_id, iteration_id, job_id);
+
+  return job_id;
+}
+
 bool CalculiXCore::run_topology(int topology_id)
 {
-  if (!topology || !mat || !sections || !jobs)
+  if (!topology || !mat || !sections || !jobs || !steps || !historyoutputs)
   {
     PRINT_ERROR("Topology run cores are not initialized.\n");
     return false;
@@ -5714,35 +5842,86 @@ bool CalculiXCore::run_topology(int topology_id)
   }
 
   if (!reset_topology_run(topology_id))
+  {
     return false;
+  }
+
+  if (entry->second.method != TopologyMethod::Density || entry->second.objective != TopologyObjective::Compliance)
+  {
+    PRINT_ERROR("The topology iteration loop currently supports density optimization with compliance only.\n");
+    return false;
+  }
+
+  // check model
+  if (entry->second.objective == TopologyObjective::Compliance && !validate_topology_compliance_model())
+  {
+    return false;
+  }
 
   std::vector<int> material_section_ids;
+  std::set<int> topology_blocks; // blocks needed for history output
 
   for (const auto& section : sections->sections_data)
   {
     if (section[1] != 1)
+    {
       continue;
+    }
 
-    const int solid_index =
-        sections->get_solid_section_data_id_from_solid_section_id(
-            section[2]);
+    const int solid_index = sections->get_solid_section_data_id_from_solid_section_id(section[2]);
 
     if (solid_index < 0)
     {
-      PRINT_ERROR("Solid section data missing for section %d.\n",
-                  section[0]);
+      PRINT_ERROR("Solid section data missing for section %d.\n", section[0]);
       return false;
     }
 
-    const int block_id =
-        std::stoi(sections->solid_section_data[solid_index][1]);
+    const int block_id = std::stoi(sections->solid_section_data[solid_index][1]);
 
     if (get_ccx_element_type(block_id).rfind("C3D", 0) == 0)
+    {
       material_section_ids.push_back(section[0]);
+      topology_blocks.insert(block_id);
+    }
+  }
+
+  if (entry->second.objective == TopologyObjective::Compliance)
+  {
+    std::vector<int> step_ids;
+
+    for (const auto& step : steps->steps_data)
+    {
+      if (step.empty())
+      {
+        PRINT_ERROR("Invalid step data.\n");
+        return false;
+      }
+
+      step_ids.push_back(step[0]);
+    }
+
+    if (step_ids.empty())
+    {
+      PRINT_ERROR("Topology optimization requires an analysis step.\n");
+      return false;
+    }
+
+    for (int step_id : step_ids)
+    {
+      for (int block_id : topology_blocks)
+      {
+        if (!ensure_topology_element_history_output(topology_id, step_id, block_id, "ELSE"))
+        {
+          return false;
+        }
+      }
+    }
   }
 
   if (!initialize_topology(topology_id, material_section_ids))
+  {
     return false;
+  }
 
   const auto collection = mat->topology_material_data.find(topology_id);
 
@@ -5772,14 +5951,27 @@ bool CalculiXCore::run_topology(int topology_id)
 
   std::vector<int> element_ids;
   std::vector<double> stiffness_factors;
+  std::map<int, double> densities;
 
   for (const auto& assignment : collection->second.element_base_material)
   {
     element_ids.push_back(assignment.first);
     stiffness_factors.push_back(1.0);
+    densities.emplace(assignment.first, 1.0);
   }
 
-  if (!set_topology_iteration_factors(topology_id, 0, element_ids, stiffness_factors))
+  bool prepared = false;
+
+  if (entry->second.method == TopologyMethod::Density)
+  {
+    prepared = set_topology_iteration_densities(topology_id, 0, densities);
+  }
+  else
+  {
+    prepared = set_topology_iteration_factors(topology_id, 0, element_ids, stiffness_factors);
+  }
+
+  if (!prepared)
   {
     entry->second.element_preserved.clear();
     mat->topology_material_data.erase(topology_id);
@@ -5787,79 +5979,41 @@ bool CalculiXCore::run_topology(int topology_id)
     return false;
   }
 
-  // final info message
-  // Convert the display name into a filename component.
-  std::string filename_name = entry->second.name;
-
-  for (char& character : filename_name)
+  if (run_topology_iteration(topology_id, 0) <= 0)
   {
-    const bool allowed =
-        (character >= 'a' && character <= 'z') ||
-        (character >= 'A' && character <= 'Z') ||
-        (character >= '0' && character <= '9') ||
-        character == '_';
-
-    if (!allowed)
-      character = '_';
+    return false;
   }
 
-  std::ostringstream name;
-  name << "topo_" << topology_id << "_" << filename_name << "_iter_" << std::setfill('0') << std::setw(4) << 0;
+  // Count the baseline as iteration 0 within maximum_iterations.
+  const int maximum_iterations = entry->second.maximum_iterations;
 
-  const std::string job_name = name.str();
-  
-  // Prevent sharing a filename with an existing job.
-  for (const auto& job : jobs->jobs_data)
+  for (int iteration = 1; iteration < maximum_iterations; ++iteration)
   {
-    if (job.size() > 1 && job[1] == job_name)
+    if (!prepare_topology_density_iteration(topology_id, iteration - 1, iteration))
     {
-      PRINT_ERROR("Job name '%s' already exists.\n", job_name.c_str());
-
-      entry->second.element_preserved.clear();
-      mat->topology_material_data.erase(topology_id);
-      sections->topology_solid_sections.erase(topology_id);
+      PRINT_ERROR("Failed to prepare topology %d iteration %d. Completed iterations are retained.\n", topology_id, iteration);
       return false;
+    }
+
+    if (run_topology_iteration(topology_id, iteration) <= 0)
+    {
+      return false;
+    }
+
+    bool converged = false;
+    if (!topology->check_density_convergence(topology_id, iteration - 1, iteration, converged))
+    {
+      return false;
+    }
+
+    if (converged)
+    {
+      PRINT_INFO("Topology %d converged at iteration %d.\n",topology_id, iteration);
+      return true;
     }
   }
 
-  int job_id = -1;
-
-  if (!jobs->create_job({job_name, ""}, job_id))
-  {
-    entry->second.element_preserved.clear();
-    mat->topology_material_data.erase(topology_id);
-    sections->topology_solid_sections.erase(topology_id);
-    return false;
-  }
-
-  entry->second.iteration_jobs.emplace(0, job_id);
-  entry->second.selected_iteration = 0;
-
-  // -1 disables automatic ParaView conversion.
-  // run first job
-  if (!jobs->run_job(job_id, -1))
-  {
-    PRINT_ERROR("Failed to start topology %d iteration 0, job %d.\n",topology_id, job_id);
-    return false;
-  }
-
-  PRINT_INFO(
-    "Topology %d (%s): iteration 0 started as job %d (%s).\n",
-    topology_id, entry->second.name.c_str(),
-    job_id, job_name.c_str());
-
-
-  // wait for job to finish
-  if (!jobs->wait_job(job_id))
-  {
-    PRINT_ERROR("Topology %d iteration 0 did not complete "
-        "with readable results. Job %d is retained.\n",
-        topology_id, job_id);
-    return false;
-  }
-
-  PRINT_INFO("Topology %d: iteration 0 completed; results are loaded.\n",topology_id);
-
+  PRINT_INFO("Topology %d reached its limit of %d iterations. The latest completed iteration remains selected.\n", topology_id, maximum_iterations);
   return true;
 }
 
@@ -6057,6 +6211,852 @@ bool CalculiXCore::check_topology_material_assignment(int topology_id, int itera
 std::string CalculiXCore::get_topology_material_name(int topology_id, int element_id)
 {
   return mat->get_topology_material_name(topology_id, element_id);
+}
+
+std::vector<double> CalculiXCore::get_topology_parameters(int topology_id)
+{
+  if (!topology)
+  {
+    PRINT_ERROR("Topology core is not initialized.\n");
+    return {};
+  }
+
+  const auto entry = topology->topology_cases.find(topology_id);
+
+  if (entry == topology->topology_cases.end())
+  {
+    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    return {};
+  }
+
+  const auto& configuration = entry->second;
+
+  return {
+      configuration.target_volume_fraction,
+      configuration.void_stiffness_ratio,
+      static_cast<double>(configuration.maximum_iterations)
+  };
+}
+
+int CalculiXCore::get_topology_iteration_job_id(int topology_id, int iteration_id)
+{
+  if (!topology || !jobs || iteration_id < 0)
+  {
+    PRINT_ERROR("Invalid topology iteration query.\n");
+    return -1;
+  }
+
+  const auto entry = topology->topology_cases.find(topology_id);
+
+  if (entry == topology->topology_cases.end())
+  {
+    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    return -1;
+  }
+
+  const auto iteration = entry->second.iteration_jobs.find(iteration_id);
+
+  if (iteration == entry->second.iteration_jobs.end())
+  {
+    PRINT_ERROR("Topology %d iteration %d has no job.\n", topology_id, iteration_id);
+    return -1;
+  }
+
+  const int job_id = iteration->second;
+
+  if (jobs->get_jobs_data_id_from_job_id(job_id) < 0)
+  {
+    PRINT_ERROR("Topology iteration job %d no longer exists.\n", job_id);
+    return -1;
+  }
+
+  return job_id;
+}
+
+bool CalculiXCore::ensure_topology_element_history_output(int topology_id,int step_id,int block_id,const std::string& key)
+{
+  if (!historyoutputs || !steps || !check_block_exists(block_id))
+  {
+    PRINT_ERROR("Invalid topology history output request.\n");
+    return false;
+  }
+
+  const auto key_it = std::find(historyoutputs->element_keys.begin(),historyoutputs->element_keys.end(), key);
+
+  if (key_it == historyoutputs->element_keys.end())
+  {
+    PRINT_ERROR("Unknown element history output key '%s'.\n", key.c_str());
+    return false;
+  }
+
+  const size_t key_column = 7 + static_cast<size_t>(key_it - historyoutputs->element_keys.begin());
+
+  const int step_index = steps->get_steps_data_id_from_step_id(step_id);
+
+  if (step_index < 0 || steps->steps_data[step_index].size() < 8)
+  {
+    PRINT_ERROR("Missing step %d.\n", step_id);
+    return false;
+  }
+
+  // Copy IDs before executing commands that may change the vectors.
+  std::vector<int> assigned_ids;
+
+  for (int index : steps->get_historyoutput_data_ids_from_historyoutputs_id(steps->steps_data[step_index][7]))
+  {
+    const auto& assignment = steps->historyoutputs_data[index];
+
+    if (assignment.size() < 2)
+    {
+      PRINT_ERROR("Invalid step history output assignment.\n");
+      return false;
+    }
+
+    assigned_ids.push_back(assignment[1]);
+  }
+
+  const auto element_index = [&](int output_id) -> int
+  {
+    const int index = historyoutputs->get_outputs_data_id_from_output_id(output_id);
+
+    if (index < 0)
+    {
+      return -1;
+    }
+
+    const auto& output = historyoutputs->outputs_data[index];
+
+    if (output.size() < 4 || output[2] != 2)
+    {
+      return -1;
+    }
+
+    const int element = historyoutputs->get_element_data_id_from_element_id(output[3]);
+
+    if (element < 0)
+    {
+      return -1;
+    }
+
+    const auto& data = historyoutputs->element_data[element];
+
+    if (data.size() <= key_column || data[1] != std::to_string(block_id))
+    {
+      return -1;
+    }
+
+    return element;
+  };
+
+  // Prefer an output that already provides individual element values.
+  const auto choose_output = [&](const std::vector<int>& ids) -> int
+  {
+    int fallback = -1;
+
+    for (int id : ids)
+    {
+      const int index = element_index(id);
+
+      if (index < 0)
+      {
+        continue;
+      }
+
+      if (fallback < 0)
+      {
+        fallback = id;
+      }
+
+      const auto& data = historyoutputs->element_data[index];
+
+      if (data[key_column] == key && data[4] != "ONLY")
+      {
+        return id;
+      }
+    }
+
+    return fallback;
+  };
+
+  int output_id = choose_output(assigned_ids);
+  std::vector<int> existing_ids;
+
+  for (const auto& output : historyoutputs->outputs_data)
+  {
+    if (output.size() < 4)
+    {
+      PRINT_ERROR("Invalid history output data.\n");
+      return false;
+    }
+    existing_ids.push_back(output[0]);
+  }
+
+  if (output_id < 0)
+  {
+    output_id = choose_output(existing_ids);
+  }
+
+  bool created = false;
+
+  if (output_id < 0)
+  {
+    const std::string name = "Topology_" + std::to_string(topology_id) + "_Block_" + std::to_string(block_id) + "_" + key;
+
+    if (!silent_cmd("ccx create historyoutput name " + name + " element"))
+    {
+      return false;
+    }
+
+    // Discover the created ID and verify creation actually happened.
+    for (const auto& output : historyoutputs->outputs_data)
+    {
+      if (output.empty() || std::find(existing_ids.begin(), existing_ids.end(),output[0]) != existing_ids.end())
+      {
+        continue;
+      }
+
+      if (output_id >= 0)
+      {
+        PRINT_ERROR("Unexpected history output creation result.\n");
+        return false;
+      }
+
+      output_id = output[0];
+    }
+
+    if (output_id < 0)
+    {
+      PRINT_ERROR("Automatic history output creation failed.\n");
+      return false;
+    }
+
+    created = true;
+
+    if (!silent_cmd("ccx modify historyoutput " + std::to_string(output_id) + " element block " + std::to_string(block_id) + " totals_no key_on " + key))
+    {
+      return false;
+    }
+  }
+
+  int index = element_index(output_id);
+
+  if (index < 0)
+  {
+    PRINT_ERROR("Automatic history output configuration failed.\n");
+    return false;
+  }
+
+  const bool missing_key = historyoutputs->element_data[index][key_column] != key;
+
+  const bool totals_only = historyoutputs->element_data[index][4] == "ONLY";
+
+  if (missing_key || totals_only)
+  {
+    std::string command = "ccx modify historyoutput " + std::to_string(output_id) + " element";
+
+    if (totals_only)
+    {
+      command += " totals_yes";
+    }
+
+    command += " key_on " + key;
+
+    if (!silent_cmd(command))
+    {
+      return false;
+    }
+  }
+
+  index = element_index(output_id);
+
+  if (index < 0 ||
+      historyoutputs->element_data[index][key_column] != key ||
+      historyoutputs->element_data[index][4] == "ONLY")
+  {
+    PRINT_ERROR("History output %d does not provide element %s values.\n", output_id, key.c_str());
+    return false;
+  }
+
+  const bool needs_assignment = std::find(assigned_ids.begin(), assigned_ids.end(), output_id) == assigned_ids.end();
+
+  if (needs_assignment)
+  {
+    if (!silent_cmd("ccx step " + std::to_string(step_id) + " add historyoutput " + std::to_string(output_id)))
+    {
+      return false;
+    }
+  }
+
+  // Re-query after the commands.
+  const int updated_step = steps->get_steps_data_id_from_step_id(step_id);
+
+  bool assigned = false;
+
+  if (updated_step >= 0 && steps->steps_data[updated_step].size() >= 8)
+  {
+    for (int assignment : steps->get_historyoutput_data_ids_from_historyoutputs_id(steps->steps_data[updated_step][7]))
+    {
+      const auto& data = steps->historyoutputs_data[assignment];
+
+      if (data.size() >= 2 && data[1] == output_id)
+      {
+        assigned = true;
+      }
+    }
+  }
+
+  if (!assigned)
+  {
+    PRINT_ERROR("History output %d was not assigned to step %d.\n", output_id, step_id);
+    return false;
+  }
+
+  if (created)
+  {
+    PRINT_INFO("Automatically created history output %d for block %d with key %s.\n", output_id, block_id, key.c_str());
+  }
+  else if (missing_key || totals_only)
+  {
+    PRINT_INFO("Automatically configured history output %d to provide element %s values.\n", output_id, key.c_str());
+  }
+  if (needs_assignment)
+  {
+    PRINT_INFO("Automatically assigned history output %d to step %d.\n", output_id, step_id);
+  }
+  return true;
+}
+
+bool CalculiXCore::read_topology_element_energies(int topology_id,int iteration_id,std::map<int, double>& element_energies)
+{
+  element_energies.clear();
+
+  if (!mat || !results || !jobs)
+  {
+    PRINT_ERROR("Invalid topology energy query.\n");
+    return false;
+  }
+
+  const int job_id = get_topology_iteration_job_id(topology_id, iteration_id);
+
+  if (job_id <= 0 || jobs->get_job_status(job_id) != 2)
+  {
+    PRINT_ERROR("Topology iteration has no successfully completed job.\n");
+    return false;
+  }
+
+  const auto collection = mat->topology_material_data.find(topology_id);
+
+  if (collection == mat->topology_material_data.end() || collection->second.element_base_material.empty())
+  {
+    PRINT_ERROR("Topology material assignments are missing.\n");
+    return false;
+  }
+
+  const int dat_index = results->get_dat_data_id_from_job_id(job_id);
+
+  if (dat_index < 0)
+  {
+    PRINT_ERROR("DAT results for job %d are missing.\n", job_id);
+    return false;
+  }
+
+  auto& dat = results->dat_data[dat_index];
+
+  // The parser updates these when reading STEP/INCREMENT headers.
+  const int last_step = dat.current_step;
+  const int last_increment = dat.current_increment;
+
+  if (last_step <= 0 || last_increment <= 0)
+  {
+    PRINT_ERROR("Final solver step/increment is missing in job %d.\n", job_id);
+    return false;
+  }
+
+  int energy_type = -1;
+
+  for (size_t i = 0; i < dat.result_block_type.size(); ++i)
+  {
+    if (dat.erase_whitespace(dat.result_block_type[i]) == "internalenergy")
+    {
+      energy_type = static_cast<int>(i);
+      break;
+    }
+  }
+
+  if (energy_type < 0)
+  {
+    PRINT_ERROR("Job %d has no element internal energy results.\n", job_id);
+    return false;
+  }
+
+  const int energy_component = dat.get_result_block_component_id(energy_type, "energy");
+
+  if (energy_component < 0)
+  {
+    PRINT_ERROR("Internal energy component is missing.\n");
+    return false;
+  }
+
+  const auto& analysis_elements = collection->second.element_base_material;
+
+  std::map<int, double> collected;
+
+  // Read each result block once.
+  for (const auto& block : dat.result_blocks)
+  {
+    if (block.size() < 7 || block[1] < 0 || static_cast<size_t>(block[1]) >= dat.total_times.size())
+    {
+      PRINT_ERROR("Invalid DAT result block.\n");
+      return false;
+    }
+
+    if (block[2] != energy_type || block[5] != last_step || block[6] != last_increment)
+    {
+      continue;
+    }
+
+    const int data_id = block[4];
+
+    if (data_id < 0 || static_cast<size_t>(data_id) >= dat.result_block_data.size() || static_cast<size_t>(data_id) >= dat.result_block_c1_data.size())
+    {
+      PRINT_ERROR("Invalid DAT energy data reference.\n");
+      return false;
+    }
+
+    for (const auto& record : dat.result_block_c1_data[data_id])
+    {
+      if (record.size() < 3)
+      {
+        PRINT_ERROR("Invalid DAT element record.\n");
+        return false;
+      }
+
+      // Whole-element results only.
+      if (record[2] != 3 || analysis_elements.count(record[0]) == 0)
+      {
+        continue;
+      }
+
+      const int row_id = record[1];
+
+      if (row_id < 0 || static_cast<size_t>(row_id) >= dat.result_block_data[data_id].size())
+      {
+        PRINT_ERROR("Invalid DAT energy row reference.\n");
+        return false;
+      }
+
+      const auto& values = dat.result_block_data[data_id][row_id];
+
+      if (static_cast<size_t>(energy_component) >= values.size())
+      {
+        PRINT_ERROR("Missing energy value for element %d.\n", record[0]);
+        return false;
+      }
+
+      const double energy = values[energy_component];
+
+      if (!std::isfinite(energy))
+      {
+        PRINT_ERROR("Non-finite energy for element %d.\n", record[0]);
+        return false;
+      }
+
+      if (!collected.emplace(record[0], energy).second)
+      {
+        PRINT_ERROR("Multiple energy values for element %d in final step %d, increment %d.\n", record[0], last_step, last_increment);
+        return false;
+      }
+    }
+  }
+
+  for (const auto& element : analysis_elements)
+  {
+    if (collected.count(element.first) == 0)
+    {
+      PRINT_ERROR("Missing energy for topology element %d in final step %d, increment %d.\n", element.first, last_step, last_increment);
+      return false;
+    }
+  }
+
+  element_energies.swap(collected);
+  return true;
+}
+
+bool CalculiXCore::validate_topology_compliance_model()
+{
+  if (!steps || !sections || !me_iface || !bcsdisplacements || !contactpairs || !initialconditions || !hbcs)
+  {
+    PRINT_ERROR("Compliance validation interfaces are not initialized.\n");
+    return false;
+  }
+
+  if (steps->steps_data.empty())
+  {
+    PRINT_ERROR("Compliance optimization requires an analysis step.\n");
+    return false;
+  }
+
+  if (!contactpairs->contactpairs_data.empty() || !initialconditions->initialconditions_data.empty())
+  {
+    PRINT_ERROR("The initial compliance evaluator does not support contact pairs or initial conditions.\n");
+    return false;
+  }
+
+  // The energy reader currently covers volume solid sections.
+  for (const auto& section : sections->sections_data)
+  {
+    if (section.size() < 3 || section[1] != 1)
+    {
+      PRINT_ERROR("The initial compliance evaluator requires volume solid sections.\n");
+      return false;
+    }
+    const int solid_index =
+    sections->get_solid_section_data_id_from_solid_section_id(section[2]);
+
+    if (solid_index < 0 || sections->solid_section_data[solid_index].size() < 2)
+    {
+      PRINT_ERROR("Missing solid section data for section %d.\n", section[0]);
+      return false;
+    }
+
+    int block_id = -1;
+    std::istringstream block_stream(sections->solid_section_data[solid_index][1]);
+
+    if (!(block_stream >> block_id) || !(block_stream >> std::ws).eof() || block_id <= 0)
+    {
+      PRINT_ERROR("Invalid block for section %d.\n", section[0]);
+      return false;
+    }
+
+    if (get_ccx_element_type(block_id).rfind("C3D", 0) != 0)
+    {
+      PRINT_ERROR("Compliance optimization requires volume elements in block %d.\n", block_id);
+      return false;
+    }
+  }
+
+  std::set<int> displacement_ids;
+
+  for (const auto& step : steps->steps_data)
+  {
+    if (step.size() < 9 || step[3] != 2)
+    {
+      PRINT_ERROR("The initial compliance evaluator requires static steps.\n");
+      return false;
+    }
+
+    const int parameter_index = steps->get_parameter_data_id_from_parameter_id(step[2]);
+
+    if (parameter_index < 0 || steps->parameter_data[parameter_index].size() < 3)
+    {
+      PRINT_ERROR("Missing parameters for step %d.\n", step[0]);
+      return false;
+    }
+
+    const std::string& nlgeom = steps->parameter_data[parameter_index][2];
+
+    if (!nlgeom.empty() && nlgeom != "NO")
+    {
+      PRINT_ERROR("Compliance optimization requires NLGEOM=NO in step %d.\n", step[0]);
+      return false;
+    }
+
+    for (int index : steps->get_load_data_ids_from_loads_id(step[5]))
+    {
+      const auto& load = steps->loads_data[index];
+
+      // 1 = force, 2 = pressure, 9 = surface traction.
+      if (load.size() < 3 || (load[1] != 1 && load[1] != 2 && load[1] != 9))
+      {
+        PRINT_ERROR("Step %d has a load unsupported by the initial compliance evaluator.\n", step[0]);
+        return false;
+      }
+    }
+
+    for (int index : steps->get_bc_data_ids_from_bcs_id(step[6]))
+    {
+      const auto& bc = steps->bcs_data[index];
+
+      if (bc.size() < 3 || bc[1] != 1)
+      {
+        PRINT_ERROR("The initial compliance evaluator supports displacement BCs only, in step %d.\n", step[0]);
+        return false;
+      }
+      displacement_ids.insert(bc[2]);
+    }
+  }
+
+  // These model-level BCs are also exported.
+  for (const auto& bc : hbcs->bcs_data)
+  {
+    if (bc.size() < 3 || bc[1] != 1)
+    {
+      PRINT_ERROR("The initial compliance evaluator supports displacement model-level BCs only.\n");
+      return false;
+    }
+
+    displacement_ids.insert(bc[2]);
+  }
+
+  for (int bc_id : displacement_ids)
+  {
+    const int index = bcsdisplacements->get_bcs_data_id_from_bc_id(bc_id);
+
+    if (index < 0 || bcsdisplacements->bcs_data[index].size() < 10)
+    {
+      PRINT_ERROR("Missing displacement BC %d.\n", bc_id);
+      return false;
+    }
+
+    BCEntityHandle handle;
+    std::vector<MeshExportBCData> attributes;
+
+    if (!me_iface->get_bc_handle(BCTYPE_DISPLACEMENT, bc_id, handle) || !me_iface->get_bc_attributes(handle, attributes))
+    {
+      PRINT_ERROR("Unable to query displacement BC %d.\n", bc_id);
+      return false;
+    }
+
+    for (const auto& attribute : attributes)
+    {
+      if (attribute.first < 0 || attribute.first >= 6 || !std::isfinite(attribute.second))
+      {
+        PRINT_ERROR("Invalid displacement BC %d attributes.\n", bc_id);
+        return false;
+      }
+
+      // Match the exporter's fixed-DOF override.
+      if (!bcsdisplacements->check_dof_fixed(bc_id, attribute.first + 1) && attribute.second != 0.0)
+      {
+        PRINT_ERROR("The initial compliance evaluator requires zero prescribed displacement in BC %d.\n", bc_id);
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+bool CalculiXCore::set_topology_iteration_densities(int topology_id,int iteration_id,const std::map<int, double>& densities)
+{
+  if (!topology || !mat)
+  {
+    PRINT_ERROR("Topology/material cores are not initialized.\n");
+    return false;
+  }
+
+  // get sensivity
+  TopologyDensityDesign design;
+  std::map<int, double> factors;
+  if (!topology->build_density_design(topology_id, iteration_id, densities, design, factors))
+  {
+    return false;
+  }
+
+  // get volumes
+  std::map<int, double> element_volumes;
+  if (!collect_topology_element_volumes(topology_id, element_volumes))
+  {
+    return false;
+  }
+
+  std::vector<int> element_ids;
+  std::vector<double> stiffness_factors;
+
+  for (const auto& factor : factors)
+  {
+    element_ids.push_back(factor.first);
+    stiffness_factors.push_back(factor.second);
+  }
+
+  if (!set_topology_iteration_factors(topology_id, iteration_id, element_ids, stiffness_factors))
+  {
+    return false;
+  }
+
+  const auto entry = topology->topology_cases.find(topology_id);
+  auto& configuration = entry->second;
+
+  configuration.iteration_density_designs.emplace(iteration_id, design);
+
+  // These entries were created by this method, before any job exists.
+  const auto discard_iteration = [&]()
+  {
+    configuration.iteration_density_designs.erase(iteration_id);
+    const auto collection = mat->topology_material_data.find(topology_id);
+    if (collection != mat->topology_material_data.end())
+    {
+      collection->second.iteration_factors.erase(iteration_id);
+    }
+  };
+
+  if (!topology->evaluate_density_volume(topology_id, iteration_id, element_volumes))
+  {
+    discard_iteration();
+    return false;
+  }
+
+  const auto stored = configuration.iteration_density_designs.find(iteration_id);
+
+  const double minimum = stored->second.volume.minimum_design_volume_fraction;
+
+  if (!std::isfinite(configuration.target_volume_fraction) ||
+      configuration.target_volume_fraction <= 0.0 ||
+      configuration.target_volume_fraction > 1.0)
+  {
+    PRINT_ERROR("Invalid topology target volume fraction.\n");
+    discard_iteration();
+    return false;
+  }
+
+  // Allow a small tolerance for accumulated floating-point rounding.
+  if (configuration.target_volume_fraction + 1.0e-12 < minimum)
+  {
+    PRINT_ERROR(
+        "Topology %d target volume fraction %.9g is below "
+        "the minimum achievable fraction %.9g.\n",
+        topology_id, configuration.target_volume_fraction, minimum);
+
+    discard_iteration();
+    return false;
+  }
+
+  return true;
+}
+
+bool CalculiXCore::collect_topology_element_volumes(int topology_id,std::map<int, double>& element_volumes)
+{
+  element_volumes.clear();
+
+  if (!mat || !me_iface)
+  {
+    PRINT_ERROR("Topology volume query interfaces are missing.\n");
+    return false;
+  }
+
+  const auto collection = mat->topology_material_data.find(topology_id);
+
+  if (collection == mat->topology_material_data.end() || collection->second.element_base_material.empty())
+  {
+    PRINT_ERROR("Topology %d has no prepared elements.\n", topology_id);
+    return false;
+  }
+
+  const auto& analysis_elements = collection->second.element_base_material;
+  std::map<int, double> collected;
+  std::vector<BlockHandle> blocks;
+
+  if (me_iface->get_block_list(blocks) < 0)
+  {
+    PRINT_ERROR("Unable to query mesh blocks.\n");
+    return false;
+  }
+
+  for (const auto& block : blocks)
+  {
+    const int batch_size = 100;
+    int start = 0;
+    int count = 0;
+    std::vector<ElementType> types;
+    std::vector<ElementHandle> handles;
+
+    while ((count = me_iface->get_block_elements(start, batch_size, block, types, handles)) > 0)
+    {
+      if (types.size() < static_cast<size_t>(count) || handles.size() < static_cast<size_t>(count))
+      {
+        PRINT_ERROR("Incomplete mesh element query.\n");
+        return false;
+      }
+
+      for (int i = 0; i < count; ++i)
+      {
+        const std::string entity = get_cubit_element_type_entity(me_iface->get_element_type_name(types[i]));
+
+        if (entity != "hex" && entity != "tet" && entity != "wedge")
+        {
+          continue;
+        }
+
+        int local_id = -1;
+
+        if (!me_iface->get_element_id(handles[i], local_id) ||
+            local_id <= 0)
+        {
+          PRINT_ERROR("Unable to query a Cubit element ID.\n");
+          return false;
+        }
+
+        const int global_id = CubitInterface::get_global_element_id(entity, local_id);
+
+        if (global_id <= 0)
+        {
+          PRINT_ERROR("Invalid global ID for %s %d.\n", entity.c_str(), local_id);
+          return false;
+        }
+
+        if (analysis_elements.count(global_id) == 0)
+        {
+          continue;
+        }
+
+        const double volume = CubitInterface::get_meshed_volume_or_area(entity, {local_id});
+
+        if (!std::isfinite(volume) || volume <= 0.0)
+        {
+          PRINT_ERROR("Invalid volume for topology element %d.\n", global_id);
+          return false;
+        }
+
+        if (!collected.emplace(global_id, volume).second)
+        {
+          PRINT_ERROR("Duplicate topology element %d in mesh blocks.\n", global_id);
+          return false;
+        }
+      }
+      start += count;
+    }
+
+    if (count < 0)
+    {
+      PRINT_ERROR("Failed to query mesh block elements.\n");
+      return false;
+    }
+  }
+
+  if (collected.size() != analysis_elements.size())
+  {
+    PRINT_ERROR("Incomplete element volumes for topology %d.\n", topology_id);
+    return false;
+  }
+
+  element_volumes.swap(collected);
+  return true;
+}
+
+bool CalculiXCore::prepare_topology_density_iteration(int topology_id,int source_iteration,int next_iteration)
+{
+  if (!topology || !jobs || source_iteration < 0 || next_iteration <= source_iteration)
+  {
+    PRINT_ERROR("Invalid next topology iteration request.\n");
+    return false;
+  }
+
+  const int job_id = get_topology_iteration_job_id(topology_id, source_iteration);
+
+  if (job_id <= 0 || jobs->get_job_status(job_id) != 2)
+  {
+    PRINT_ERROR("The source topology job has not completed.\n");
+    return false;
+  }
+
+  std::map<int, double> densities;
+
+  if (!topology->build_density_update(topology_id, source_iteration, densities))
+  {
+    return false;
+  }
+
+  return set_topology_iteration_densities(topology_id, next_iteration, densities);
 }
 
 bool CalculiXCore::set_job_conversion(int job_id, int conversion)
@@ -9609,10 +10609,10 @@ std::vector<double> CalculiXCore::dat_get_element_values_for_component(int job_i
     if ((results->dat_data[dat_data_id].total_times[results->dat_data[dat_data_id].result_blocks[i][1]]==time)&&(results->dat_data[dat_data_id].result_blocks[i][2]==result_block_type_data_id)&&(results->dat_data[dat_data_id].result_blocks[i][3]==result_block_set_data_id))
     {
       int result_block_data_id = results->dat_data[dat_data_id].result_blocks[i][4];
-      
       for (size_t ii = 0; ii < results->dat_data[dat_data_id].result_block_c1_data[result_block_data_id].size(); ii++)
       {
-        if ((results->dat_data[dat_data_id].result_block_c1_data[result_block_data_id][ii][0]==element_id)&&(results->dat_data[dat_data_id].result_block_c1_data[result_block_data_id][ii][2]==2)) //check if element values and if node id fits
+        const auto& record = results->dat_data[dat_data_id].result_block_c1_data[result_block_data_id][ii];
+        if (record[0] == element_id && (record[2] == 2 || record[2] == 3))
         {
           int c1 = results->dat_data[dat_data_id].result_block_c1_data[result_block_data_id][ii][0];
           int result_block_c1_data_id = results->dat_data[dat_data_id].result_block_c1_data[result_block_data_id][ii][1];
@@ -9654,7 +10654,8 @@ std::vector<std::vector<double>> CalculiXCore::dat_get_element_values(int job_id
       
       for (size_t ii = 0; ii < results->dat_data[dat_data_id].result_block_c1_data[result_block_data_id].size(); ii++)
       {
-        if ((results->dat_data[dat_data_id].result_block_c1_data[result_block_data_id][ii][0]==element_id)&&(results->dat_data[dat_data_id].result_block_c1_data[result_block_data_id][ii][2]==2)) //check if element values and if node id fits
+        const auto& record = results->dat_data[dat_data_id].result_block_c1_data[result_block_data_id][ii];
+        if (record[0] == element_id && (record[2] == 2 || record[2] == 3)) //check if element values and if node id fits
         {
           int c1 = results->dat_data[dat_data_id].result_block_c1_data[result_block_data_id][ii][0];
           int result_block_c1_data_id = results->dat_data[dat_data_id].result_block_c1_data[result_block_data_id][ii][1];

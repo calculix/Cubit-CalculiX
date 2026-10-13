@@ -1001,6 +1001,11 @@ bool CalculiXCoreInterface::get_topology_set_element_ids(int topology_id,int set
   return ccx_core.get_topology_set_element_ids(topology_id, set_type, set_id, element_ids);
 }
 
+int CalculiXCoreInterface::run_topology_iteration(int topology_id, int iteration_id)
+{
+  return ccx_core.run_topology_iteration(topology_id, iteration_id);
+}
+
 bool CalculiXCoreInterface::run_topology(int topology_id)
 {
   return ccx_core.run_topology(topology_id);
@@ -1029,6 +1034,16 @@ bool CalculiXCoreInterface::check_topology_material_assignment(int topology_id, 
 std::string CalculiXCoreInterface::get_topology_material_name(int topology_id, int element_id)
 {
   return ccx_core.get_topology_material_name(topology_id, element_id);
+}
+
+std::vector<double> CalculiXCoreInterface::get_topology_parameters(int topology_id)
+{
+  return ccx_core.get_topology_parameters(topology_id);
+}
+
+int CalculiXCoreInterface::get_topology_iteration_job_id(int topology_id, int iteration_id)
+{
+  return ccx_core.get_topology_iteration_job_id(topology_id, iteration_id);
 }
 
 bool CalculiXCoreInterface::set_job_conversion(int job_id, int conversion)
