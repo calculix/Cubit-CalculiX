@@ -1,0 +1,402 @@
+#!/usr/bin/env bash
+
+shopt -s nullglob extglob
+
+dir=$(dirname "$0")
+PATH=$dir:$PATH
+
+exit_code=0
+
+heading()
+{
+  printf '\n## %s\n' "$*"
+}
+
+list_cgal_packages()
+{
+  find ./*/package_info -name 'license.txt' | awk -F "/" '{print $2}'
+}
+
+list_cgal_headers()
+{
+  for pkg in $(list_cgal_packages); do
+    if [ -e "${pkg}/include" ]; then
+      find "${pkg}/include" -type f \( -name '*.h' -o -name '*.hpp' \)
+    fi
+  done
+}
+
+report_error_with_list_of_files()
+{
+  local exit_code=0
+  local files
+  local msg
+  msg=$1
+  files=$2
+  if [ -n "${files}" ]; then
+    # shellcheck disable=SC2016
+    printf '\n%s\n\n```\n%s\n```\n' "$msg" "${files}"
+    exit_code=1
+  fi
+  return $exit_code
+}
+
+setup_git_command()
+{
+  if ! git --version > /dev/null 2>&1; then
+    echo 'This script needs git!' >&2
+    exit 1
+  fi
+}
+
+require_branch_argument()
+{
+  if [ -z "$branch" ]; then
+    echo 'Usage: test_merge_of_branch <branch>' >&2
+    exit 1
+  fi
+}
+
+ensure_clean_worktree()
+{
+  if ! git diff --exit-code > /dev/null || ! git diff --staged --exit-code > /dev/null; then
+    echo 'Your working directory contains local modifications!' >&2
+    exit 1
+  fi
+
+  cd "$(git rev-parse --show-toplevel)" || exit 1
+
+  if [ -n "$(git ls-files --other --exclude-standard --exclude=build\*)" ]; then
+    echo 'You have untracked files!' >&2
+    exit 1
+  fi
+}
+
+test_merge()
+{
+  trap 'echo "(aborting the merge now)" && git merge --abort' EXIT
+
+  heading "Test merging of the branch \"$branch\""
+  if ! git merge --no-ff --no-commit "$branch"; then
+    exit 1
+  fi
+
+  git status
+  git diff --staged --summary
+}
+
+test_permissions()
+{
+  heading 'Testing permissions'
+  detect_wrong_permissions
+}
+
+test_licenses()
+{
+  heading 'Testing licenses'
+  detect_packages_licenses || return 1
+  if ! git diff --exit-code ./*/package_info > /dev/null; then
+    echo '=> There are modifications in licenses (check if all modified/added headers files contain a valid SPDX tag compatible with the one in package_info/PKG/license and that no license text is present):'
+    git status --porcelain
+    return 1
+  fi
+}
+
+test_cmake_configuration()
+{
+  heading 'Testing CMake configuration'
+  if [ -d build ] && \
+     [ -f build/CMakeCache.txt ] && \
+     [ "$(grep -c -iE 'WITH_(demos|examples|tests):BOOL=(ON|TRUE|1)' build/CMakeCache.txt)" -eq "3" ]; then
+    local cmake_output
+    local cmake_exit_code
+
+    cmake_output=$(cmake build 2>&1)
+    cmake_exit_code=$?
+    if [ "$cmake_exit_code" -ne 0 ]; then
+      report_error_with_list_of_files 'CMake configuration failed:' "${cmake_output}"
+      return 1
+    fi
+  else
+    echo
+    echo 'Skip the CMake test (please configure a build/ CMake binary directory,'
+    # shellcheck disable=SC2016
+    echo 'with `-DWITH_tests:BOOL=TRUE -DWITH_examples:BOOL=TRUE -DWITH_demos:BOOL=TRUE`)'
+  fi
+}
+
+list_new_files()
+{
+  local new_files
+
+  heading 'List of new files (please check that it is the expected list):'
+  mapfile -t new_files < <(git status --porcelain | awk '/^A/ { print $0 }')
+  if [ ${#new_files[@]} -gt 0 ]; then
+    printf '%s\n' "${new_files[@]}"
+  else
+    echo
+    echo 'No new files.'
+  fi
+}
+
+check_cmakelists_presence()
+{
+  local i
+  local exit_code=0
+
+  heading 'Checking if all CMakeLists.txt are present'
+  for i in !(build*)/@(examples|test|demo)/*/; do
+    case $(basename "$i") in
+      icons|resources)
+        continue
+        ;;
+    esac
+
+    if ! [ -f "$i/CMakeLists.txt" ]; then
+      echo "Error: $i/CMakeLists.txt does not exist!"
+      exit_code=1
+    fi
+  done
+  return $exit_code
+}
+
+check_cpp_files_are_tested()
+{
+  local CML
+  local CML_ERRORS=""
+  local DIR
+  local i
+  local f
+
+  heading 'Checking if all .cpp files in examples/test are compiled'
+  while IFS= read -r CML; do
+    DIR=$(dirname "$CML")
+
+    if [ "./Arrangement_on_surface_2/test/Arrangement_on_surface_2" = "$DIR" ]; then
+      continue
+    fi
+    if [ "./Installation/test/Installation" = "$DIR" ]; then
+      continue
+    fi
+
+    for i in "$DIR"/*.cpp; do
+      f=$(basename "$i" .cpp)
+      if ! grep -q "$f" "$CML"; then
+        CML_ERRORS+=$'\n'
+        CML_ERRORS+="$i is not tested!"
+      fi
+    done
+  done < <(grep -L "GLOB cppfiles" ./*/test/*/CMakeLists.txt ./*/examples/*/CMakeLists.txt)
+
+  report_error_with_list_of_files 'Some .cpp files are not tested:' "${CML_ERRORS}"
+}
+
+pkg_of_cmakelist() {
+  awk -F "/" '{print $3}' <<< "$1"
+}
+
+check_cmake_project_names()
+{
+  declare -a project_names
+  local pkg
+
+  heading 'Checking if all CMakeLists.txt project names are correct'
+  mapfile -t project_names < <( {
+    for i in !(build*)/test/*/CMakeLists.txt; do pkg=$(pkg_of_cmakelist "$i"); grep -E "${pkg}_Tests[[:space:]]*\)" -L "$i"; done
+    for i in !(build*)/examples/*/CMakeLists.txt; do pkg=$(pkg_of_cmakelist "$i"); grep -E "${pkg}_Examples[[:space:]]*\)" -L "$i"; done
+    for i in !(build*)/demo/*/CMakeLists.txt; do pkg=$(pkg_of_cmakelist "$i"); grep -E "${pkg}_Demo[[:space:]]*\)" -L "$i"; done
+  } )
+
+  report_error_with_list_of_files 'CMakeLists with incorrect project name:' "${project_names[@]}"
+}
+
+check_cmake_minimum_required()
+{
+  local res
+
+  # shellcheck disable=SC2016
+  heading 'Checking if all CMakeLists.txt starts with `cmake_minimum_required`'
+  cmr=$(for i in !(build*)/@(test|examples|demo|benchmark*)/*/CMakeLists.txt; do res=$(grep -m 1 -Ev "^[[:space:]]*(#|$)" "$i" | grep -v cmake_minimum_required); if [ -n "${res}" ]; then echo "$i"; fi; done)
+  report_error_with_list_of_files 'CMakeLists with issues:' "${cmr}"
+}
+
+check_header_spdx_identifiers()
+{
+  local files_without_spdx
+
+  heading 'Checking SPDX license identifier presence in header files'
+  files_without_spdx=$(list_cgal_headers | xargs -r grep -L "SPDX-License-Identifier")
+  report_error_with_list_of_files 'The following files do not have a SPDX license identifier:' "${files_without_spdx}"
+}
+
+check_header_id_tags()
+{
+  local files_without_id_tag
+
+  # shellcheck disable=SC2016
+  heading 'Checking `$Id$` tag presence in header files'
+  # shellcheck disable=SC2016
+  files_without_id_tag=$(list_cgal_headers | xargs -r grep -L -F '$Id$')
+  # shellcheck disable=SC2016
+  report_error_with_list_of_files 'The following files do not have a `$Id$` tag:' "${files_without_id_tag}"
+}
+
+check_header_url_tags()
+{
+  local files_without_url_tag
+
+  # shellcheck disable=SC2016
+  heading 'Checking `$URL$` tag presence in header files'
+  # shellcheck disable=SC2016
+  files_without_url_tag=$(list_cgal_headers | xargs -r grep -L -F '$URL$')
+  # shellcheck disable=SC2016
+  report_error_with_list_of_files 'The following files do not have a `$URL$` tag:' "${files_without_url_tag}"
+}
+
+check_gpl_header_license_includes()
+{
+  local files_without_license_include
+
+  heading 'Checking include directives in GPL header files'
+  files_without_license_include=$(list_cgal_headers | xargs -r grep -E -l '^#\s*define\s+CGAL_.*_H\s*$' | xargs -r grep -E -l 'SPDX-License-Identifier.*[ (]GPL' | xargs -r grep -L '#include <CGAL/license')
+  report_error_with_list_of_files 'The following files do not have an include directive of the package license header:' "${files_without_license_include}"
+}
+
+check_non_utf8_files()
+{
+  local txt_not_utf8
+
+  heading 'Checking if non utf-8 characters are used'
+  txt_not_utf8=$(git ls-files -z --stage | awk -v RS='\0' -F"\t" '{ printf "%s\n", $2; }' | xargs -r file -N | grep "text" | grep -E -v "UTF-8|ASCII|CSV|XML|EPS|FIG|JSON|pixmap|magic|assembler source|Perl script|from flex")
+  report_error_with_list_of_files 'The following files have non utf-8 characters:' "${txt_not_utf8}"
+}
+
+check_tab_characters()
+{
+  local file_with_tabs
+
+  heading 'Checking if tab character is used'
+  file_with_tabs=$(git ls-files --stage | grep -E '\.txt|\.h$|\.cpp|\.hpp' | awk '{print $4}' | xargs -r grep -P -l '\t')
+  report_error_with_list_of_files 'The following files have tabs:' "${file_with_tabs}"
+}
+
+check_trailing_whitespaces()
+{
+  local files_with_trailingws
+
+  heading 'Look for trailing whitespaces'
+  files_with_trailingws=$(git ls-files --stage | grep -E '\.txt|\.h$|\.cpp|\.hpp' | awk '{print $4}' | xargs -r grep -P -l '\s+$')
+  report_error_with_list_of_files 'The following files have trailing whitespaces:' "${files_with_trailingws}"
+}
+
+check_documentation_headers()
+{
+  local not_existing_headers
+
+  heading 'Checking if all documentation headers exist'
+  not_existing_headers=$(bash ./Scripts/developer_scripts/check_headers.sh "$PWD")
+  report_error_with_list_of_files 'The following files are referenced in the documentation but do not exist:' "${not_existing_headers}"
+}
+
+check_documented_named_parameters()
+{
+  local nps
+  local git_dir
+  local tmp_dir
+  local i
+  local exit_code=0
+
+  heading 'Checking documented function named parameters'
+  nps=$(git ls-files --stage | grep -E '\.h' | awk '{print $4}' | xargs -r grep -E "cgalParamNBegin\{.+\}" | perl -lne 'print for /cgalParamNBegin{(.+)}/' | sort -u)
+  git_dir=$(pwd)
+  tmp_dir=$(mktemp -d)
+  cd "$tmp_dir" || exit 1
+  printf '#include <CGAL/Named_function_parameters.h>\nstruct A{};\nint main(){\nA a;\n' > main.cpp
+  for i in $nps; do
+    echo "  CGAL::parameters::${i}(a).${i}(a);" >> main.cpp
+  done
+  echo '}' >> main.cpp
+  printf 'Generated main.cpp:\n```c++\n'
+  cat main.cpp
+  printf '```\n'
+  if ! g++ -DCGAL_NO_STATIC_ASSERTION_TESTS -I"$git_dir"/STL_Extension/include -I"$git_dir"/Stream_support/include -I"$git_dir"/Installation/include main.cpp; then
+    echo 'ERROR: At least one documented named parameter does not exist'
+    cd - > /dev/null || exit 1
+    rm -r "$tmp_dir"
+    exit_code=1
+  fi
+  cd - > /dev/null || exit 1
+  rm -r "$tmp_dir"
+  return $exit_code
+}
+
+create_dummy_merge_commit()
+{
+  local conflicts
+
+  current_rev=$(git rev-parse HEAD)
+  trap 'echo "(aborting the merge now)" && git reset --quiet --hard "$current_rev"' EXIT
+
+  heading 'Dummy merge commit'
+  mapfile -t conflicts < <(git status --porcelain | awk '/^[^ ][^ ]/ {print $2}')
+  if [ ${#conflicts[@]} -gt 0 ]; then
+    git add -- "${conflicts[@]}" || exit 1
+  fi
+  git commit --allow-empty -m 'dummy merge commit' || exit 1
+}
+
+report_bundle_size()
+{
+  local size
+
+  heading 'Size of the gzipped bundle'
+  trap 'echo "(aborting the merge now)" && rm -f bundle.gz && git reset --quiet --hard "$current_rev"' EXIT
+  git bundle create bundle "${current_rev}..HEAD" > /dev/null 2>&1 && gzip bundle || exit 1
+  size=$(stat -c '%s' bundle.gz)
+  echo "=> $size"
+}
+
+display_result()
+{
+  if [ $? -eq 0 ]; then
+    printf '\n%s\n' "✅"
+  else
+    printf '\n%s\n' "❌"
+    exit_code=1
+  fi
+}
+
+main()
+{
+  branch=$1
+  if [ -n "$branch" ]; then
+    setup_git_command
+    require_branch_argument
+    ensure_clean_worktree
+    test_merge
+  fi
+  test_permissions; display_result
+  test_licenses; display_result
+  test_cmake_configuration; display_result
+  list_new_files; display_result
+  check_cmakelists_presence; display_result
+  check_cpp_files_are_tested; display_result
+  check_cmake_project_names; display_result
+  check_cmake_minimum_required; display_result
+  check_header_spdx_identifiers; display_result
+  check_header_id_tags; display_result
+  check_header_url_tags; display_result
+  check_gpl_header_license_includes; display_result
+  check_non_utf8_files; display_result
+  check_tab_characters; display_result
+  check_trailing_whitespaces; display_result
+  check_documentation_headers; display_result
+  check_documented_named_parameters; display_result
+  if [ -n "$branch" ]; then
+    create_dummy_merge_commit
+    report_bundle_size
+  fi
+}
+
+main "$@"
+exit "$exit_code"

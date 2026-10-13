@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Creator: fig2dev Version 3.2.8 -->
+<!-- CreationDate: 2022-05-05 19:05:07 -->
+<!-- Magnification: 1.05 -->
+<svg	xmlns="http://www.w3.org/2000/svg"
+	xmlns:xlink="http://www.w3.org/1999/xlink"
+	width="567pt" height="228pt"
+	viewBox="3588 5001 8996 3606">
+<g fill="none">
+<!-- Line -->
+<polyline points=" 8767,8032 11121,8032"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 8767,8442 11121,8442"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<rect x="8767" y="7623" width="2354" height="972"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 4112,5372 8358,5372"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 4112,5986 8358,5986"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<rect x="4112" y="5013" width="4246" height="1177"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3600,7623 7539,7623"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3600,8288 7539,8288"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<rect x="3600" y="7214" width="3939" height="1330"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 8870,7623 8870,5832 8153,5832"
+	stroke="#000000" stroke-width="15px" stroke-dasharray="60 60"/>
+<!-- Line -->
+<polyline points=" 7949,8186 8767,8186"
+	stroke="#000000" stroke-width="15px"/>
+<!-- Line -->
+<polyline points=" 7538,8183 7770,8083 7962,8175 7759,8283" fill="#000000"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7020,7056 7020,6177"
+	stroke="#000000" stroke-width="15px" stroke-dasharray="60 60"/>
+<!-- Text -->
+<text xml:space="preserve" x="8870" y="8339" fill="#000000" font-family="Times" font-style="normal" font-weight="bold" font-size="168" text-anchor="start">- Info info</text>
+<!-- Text -->
+<text xml:space="preserve" x="8921" y="7981" fill="#000000" font-family="Times" font-style="normal" font-weight="bold" font-size="216" text-anchor="start">Cell_attribute</text>
+<!-- Text -->
+<text xml:space="preserve" x="4163" y="5883" fill="#000000" font-family="Times" font-style="normal" font-weight="bold" font-size="168" text-anchor="start">+ Types Dart_wrapper&lt;Map&gt;::Attributes</text>
+<!-- Text -->
+<text xml:space="preserve" x="4163" y="5627" fill="#000000" font-family="Times" font-style="normal" font-weight="bold" font-size="168" text-anchor="start">+ Type Dart_wrapper&lt;Map&gt;::Dart_info</text>
+<!-- Text -->
+<text xml:space="preserve" x="4674" y="5269" fill="#000000" font-family="Times" font-style="italic" font-weight="bold" font-size="216" text-anchor="start">GenericMapItems</text>
+<!-- Text -->
+<text xml:space="preserve" x="3907" y="7521" fill="#000000" font-family="Times" font-style="normal" font-weight="bold" font-size="216" text-anchor="start">Combinatorial_map</text>
+<!-- Text -->
+<text xml:space="preserve" x="3702" y="7879" fill="#000000" font-family="Times" font-style="normal" font-weight="bold" font-size="168" text-anchor="start">+ typedef Items::Dart_info Dart_info</text>
+<!-- Text -->
+<text xml:space="preserve" x="3702" y="8135" fill="#000000" font-family="Times" font-style="normal" font-weight="bold" font-size="168" text-anchor="start">+ typedef Items::Attributes Attributes</text>
+<!-- Text -->
+<text xml:space="preserve" x="7591" y="8442" fill="#000000" font-family="Times" font-style="normal" font-weight="normal" font-size="168" text-anchor="start">0..*</text>
+<!-- Text -->
+<text xml:space="preserve" x="8639" y="8136" fill="#000000" font-family="Times" font-style="normal" font-weight="normal" font-size="168" text-anchor="start">1</text>
+<!-- Line -->
+<rect x="9842" y="7418" width="2506" height="307" fill="#ffffff"
+	stroke="#000000" stroke-width="8px" stroke-dasharray="40 40"/>
+<!-- Line -->
+<rect x="6618" y="7009" width="1177" height="307" fill="#ffffff"
+	stroke="#000000" stroke-width="8px" stroke-dasharray="40 40"/>
+<!-- Text -->
+<text xml:space="preserve" x="9893" y="7623" fill="#000000" font-family="Times" font-style="italic" font-weight="normal" font-size="132" text-anchor="start">Map,Info_,Tag,OnMerge,OnSplit</text>
+<!-- Text -->
+<text xml:space="preserve" x="6670" y="7214" fill="#000000" font-family="Times" font-style="italic" font-weight="normal" font-size="132" text-anchor="start">d, Items, Alloc</text>
+</g>
+</svg>

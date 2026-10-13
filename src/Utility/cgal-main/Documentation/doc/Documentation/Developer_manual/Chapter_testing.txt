@@ -1,0 +1,14 @@
+/*!
+
+\page devman_testing Running a Testsuite Locally
+\authors \cgal developers
+
+\section pkgTestsuite Running the Testsuite Locally of a Single Package
+
+Before submitting a change for integration into \cgal it is good style
+to run the testsuite of the modified package and all packages that
+could be impacted.
+
+For details see <a href="https://github.com/CGAL/cgal/wiki/Testing">Testing</a> on the CGAL wiki on github.
+
+*/

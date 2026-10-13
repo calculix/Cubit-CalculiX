@@ -1,0 +1,19 @@
+Debian packages for CGAL 6.0 are now available as well. Simply add
+
+  deb http://debian.cgal.org bullseye main
+  deb-src http://debian.cgal.org bullseye main
+
+  deb http://debian.cgal.org bookworm main
+  deb-src http://debian.cgal.org bookworm main
+
+to /etc/apt/sources.list (you only need the pair of lines
+corresponding to the release you are using) and make sure that the
+package apt-transport-https is installed. For sid/unstable,
+packages are available from the official Debian repository. The
+packages are called libcgal-dev, libcgal-qt6-dev, libcgal-demo,
+and libcgal-ipelets.
+
+In case you want to download the packages manually, have a look at
+https://debian.cgal.org/pool/main/c/cgal/ .
+
+See also https://www.cgal.org/FAQ.html#debian_packages .

@@ -1,0 +1,94 @@
+/// \defgroup PkgLinearCellComplexRef Reference Manual
+
+/// \defgroup PkgLinearCellComplexConcepts Concepts
+/// \ingroup PkgLinearCellComplexRef
+
+/// \defgroup PkgLinearCellComplexClasses Classes
+/// \ingroup PkgLinearCellComplexRef
+
+/*! Basic constructions.
+*/
+/// \defgroup PkgLinearCellComplexConstructions Constructions for Linear Cell Complex
+/// \ingroup PkgLinearCellComplexRef
+
+/*! High-level operations.
+\cgalInclude{CGAL/Linear_cell_complex_operations.h}
+\cgalInclude{CGAL/generate_hexahedral_mesh_using_two_refinement.h}
+*/
+/// \defgroup PkgLinearCellComplexOperations Operations for Linear Cell Complex
+/// \ingroup PkgLinearCellComplexRef
+
+/*!
+\cgalInclude{CGAL/draw_linear_cell_complex.h}
+*/
+/// \defgroup PkgDrawLinearCellComplex Draw a Linear Cell Complex
+/// \ingroup PkgLinearCellComplexRef
+
+/// \defgroup PkgLinearCellComplexRefIO IO Functions for LCC
+/// \ingroup PkgLinearCellComplexRef
+
+/*! High-level operations.
+\cgalInclude{CGAL/Linear_cell_complex/IO/VTK.h}
+*/
+/// \defgroup PkgLinearCellComplexRefIOVTK VTK IO Functions for LCC
+/// \ingroup PkgLinearCellComplexRefIO
+
+/*!
+\addtogroup PkgLinearCellComplexRef
+\cgalPkgDescriptionBegin{Linear Cell Complex,PkgLinearCellComplex}
+\cgalPkgPicture{lcc_logo.png}
+\cgalPkgSummaryBegin
+\cgalPkgAuthor{Guillaume Damiand}
+\cgalPkgDesc{This package implements linear cell complexes, objects in <I>d</I>-dimension with linear geometry. The combinatorial part of objects is described either by a combinatorial or a generalized map, representing all the cells of the object plus the incidence and adjacency relations between cells. Geometry is added to the combinatorial data-structure simply by associating a point to each vertex of the map. Taking a 2D combinatorial map, and using 3D points, gives a linear cell complex equivalent to a <I>Polyhedron_3</I>.}
+\cgalPkgManuals{Chapter_Linear_Cell_Complex,PkgLinearCellComplexRef}
+\cgalPkgSummaryEnd
+\cgalPkgShortInfoBegin
+\cgalPkgSince{4.0}
+\cgalPkgDependsOn{\ref PkgCombinatorialMaps}
+\cgalPkgDependsOn{\ref PkgGeneralizedMaps}
+\cgalPkgBib{cgal:d-lcc-12}
+\cgalPkgLicense{\ref licensesLGPL "LGPL"}
+\cgalPkgDemo{3D Linear Cell Complex,linear_cell_complex_3.zip}
+\cgalPkgShortInfoEnd
+\cgalPkgDescriptionEnd
+
+\cgalClassifedRefPages
+
+\cgalCRPSection{Concepts}
+- `CellAttributeWithPoint`
+- `LinearCellComplexItems`
+- `LinearCellComplexTraits`
+- `LinearCellComplex`
+
+\cgalCRPSection{Classes}
+- `CGAL::Linear_cell_complex_for_combinatorial_map<d,d2,LCCTraits,Items,Alloc>`
+- `CGAL::Linear_cell_complex_for_generalized_map<d,d2,LCCTraits,Items,Alloc>`
+- `CGAL::Linear_cell_complex_min_items<d>`
+- `CGAL::Linear_cell_complex_traits<d,K>`
+- `CGAL::Cell_attribute_with_point<LCC,Info_,Tag,OnMerge,OnSplit>`
+- `CGAL::Cell_attribute_with_point_and_id<LCC,Info_,Tag,OnMerge,OnSplit>`
+- `CGAL::Linear_cell_complex_incremental_builder_3<LCC>`
+
+\cgalCRPSection{Global Functions}
+\cgalCRPSubsection{Constructions for Linear Cell Complex}
+- `CGAL::read_plane_graph_in_lcc<LCC>` (formerly `import_from_plane_graph`)
+- `CGAL::triangulation_3_to_lcc<LCC,Triangulation>` (formerly `import_from_triangulation_3`)
+- `CGAL::import_face_graph_to_lcc<LCC, PolygonMesh>` (formerly `CGAL::import_from_polyhedron_3()`)
+- `CGAL::tetrahedron_soup_to_lcc()`
+
+\cgalCRPSubsection{Operations for Linear Cell Complex}
+- `CGAL::compute_normal_of_cell_0<LCC>()`
+- `CGAL::compute_normal_of_cell_2<LCC>()`
+- `CGAL::generate_hexahedral_mesh_using_two_refinement()`
+
+\cgalCRPSubsection{Draw a Linear Cell Complex}
+- \link PkgDrawLinearCellComplex CGAL::draw<LCC>() \endlink
+- \link PkgDrawLinearCellComplex CGAL::add_in_graphics_scene<LCC, BufferType, DrawingFunctor>() \endlink
+
+\cgalCRPSubsection{IO Functions for LCC}
+- \link PkgCombinatorialMapsRefIO `std::ostream& operator<< (std::ostream& os, const GenericMap& amap)` \endlink
+- \link PkgCombinatorialMapsRefIO `std::ifstream& operator>> (std::ifstream& is, GenericMap& amap)` \endlink
+- \link PkgLinearCellComplexRefIOVTK `CGAL::IO::Read_VTK<LCC>()` \endlink
+- \link PkgLinearCellComplexRefIOVTK `CGAL::IO::Write_VTK<LCC>()` \endlink
+
+*/

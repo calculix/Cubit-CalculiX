@@ -1,0 +1,14 @@
+cmake_minimum_required(VERSION 3.12...3.31)
+project(benchmark_for_closest_rotation)
+
+find_package(CGAL REQUIRED)
+
+find_package(Eigen3 QUIET)
+include(CGAL_Eigen3_support)
+
+if(TARGET CGAL::Eigen3_support)
+  create_single_source_cgal_program("benchmark_for_concept_models.cpp")
+  target_link_libraries(benchmark_for_concept_models PRIVATE CGAL::Eigen3_support)
+else()
+  message("NOTICE: This program requires Eigen 3.1 (or greater) and will not be compiled.")
+endif()

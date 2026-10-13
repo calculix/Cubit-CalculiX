@@ -1,0 +1,24 @@
+# Created by the script cgal_create_CMakeLists.
+# This is the CMake script for compiling a set of CGAL applications.
+
+cmake_minimum_required(VERSION 3.12...3.31)
+project(Shape_regularization_Benchmarks)
+
+find_package(CGAL REQUIRED)
+
+# Find OSQP library and headers.
+find_package(OSQP QUIET)
+include(CGAL_OSQP_support)
+if(TARGET CGAL::OSQP_support)
+  message(STATUS "Found OSQP")
+
+  set(osqp_targets benchmark_contours benchmark_qp_segments)
+  foreach(osqp_target ${osqp_targets})
+    create_single_source_cgal_program("${osqp_target}.cpp")
+    if(TARGET ${osqp_target})
+      target_link_libraries(${osqp_target} PRIVATE CGAL::OSQP_support)
+    endif()
+  endforeach()
+else()
+  message("NOTICE: OSQP was not found. OSQP benchmarks won't be available.")
+endif()

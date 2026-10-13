@@ -1,0 +1,119 @@
+// Copyright (c) 2006,2007,2009,2010,2011 Tel-Aviv University (Israel).
+// All rights reserved.
+//
+// This file is part of CGAL (www.cgal.org).
+//
+// $URL$
+// $Id$
+// SPDX-License-Identifier: GPL-3.0-or-later OR LicenseRef-Commercial
+//
+// Author(s) : Baruch Zukerman  <baruchzu@post.tau.ac.il>
+//             Ron Wein         <wein@post.tau.ac.il>
+//             Efi Fogel        <efif@post.tau.ac.il>
+
+#ifndef CGAL_SURFACE_SWEEP_2_DO_INTERIOR_INTERSECT_VISITORS_H
+#define CGAL_SURFACE_SWEEP_2_DO_INTERIOR_INTERSECT_VISITORS_H
+
+#include <CGAL/license/Surface_sweep_2.h>
+
+/*! \file
+ *
+ * Definition of the basic sweep-line visitors, for the usage of the global
+ * sweep-line functions.
+ */
+
+#include <vector>
+
+#include <CGAL/Surface_sweep_2/Default_visitor.h>
+
+namespace CGAL {
+namespace Surface_sweep_2 {
+
+/*! \class Do_interior_intersect_visitor
+ *
+ * A simple sweep-line visitor that determines whether the curves in a given set
+ * intersect in their interiors.
+ */
+template <typename GeometryTraits_2, typename Allocator_ = CGAL_ALLOCATOR(int)>
+class Do_interior_intersect_visitor :
+  public Default_visitor<Do_interior_intersect_visitor<GeometryTraits_2, Allocator_>, GeometryTraits_2, Allocator_> {
+public:
+  using Geometry_traits_2 = GeometryTraits_2;
+  using Allocator = Allocator_;
+
+private:
+  using Gt2 = Geometry_traits_2;
+  using Self = Do_interior_intersect_visitor<Gt2, Allocator>;
+  using Base = Default_visitor<Self, Gt2, Allocator>;
+
+public:
+  using Event = typename Base::Event;
+  using Subcurve = typename Base::Subcurve;
+
+  using Status_line_iterator = typename Subcurve::Status_line_iterator;
+
+  using X_monotone_curve_2 = typename Gt2::X_monotone_curve_2;
+  using Point_2 = typename Gt2::Point_2;
+  using Multiplicity = typename Gt2::Multiplicity;
+
+  using Surface_sweep_2 = typename Base::Surface_sweep_2;
+
+protected:
+  // Data members:
+  bool m_found_x;               // Have we found an intersection so far.
+
+public:
+  Do_interior_intersect_visitor() : m_found_x(false) {}
+
+  template <typename CurveIterator>
+  void sweep(CurveIterator begin, CurveIterator end) {
+    std::vector<X_monotone_curve_2> curves_vec;
+    std::vector<Point_2> points_vec;
+
+    curves_vec.reserve(std::distance(begin,end));
+    make_x_monotone(begin, end, std::back_inserter(curves_vec), std::back_inserter(points_vec), this-> traits());
+
+    // Perform the sweep.
+    Surface_sweep_2* sl = this->surface_sweep();
+    sl->sweep(curves_vec.begin(), curves_vec.end(), points_vec.begin(), points_vec.end());
+  }
+
+  /*!
+   */
+  template <typename XCurveIterator>
+  void sweep_xcurves(XCurveIterator begin, XCurveIterator end) {
+    Surface_sweep_2* sl = this->surface_sweep();        // perform the sweep
+    sl->sweep(begin, end);
+  }
+
+  /*!
+   */
+  void update_event(Event*, Subcurve*, Subcurve*, bool, Multiplicity) { m_found_x = true; }
+  void update_event(Event*, Subcurve*) { m_found_x = true; }
+  void update_event(Event*, const Point_2&, const X_monotone_curve_2&, Arr_curve_end, bool) {}
+  void update_event(Event*, const X_monotone_curve_2&, Arr_curve_end, bool) {}
+  void update_event(Event*, const Point_2&, bool) {}
+
+  /*!
+   */
+  bool after_handle_event(Event*, Status_line_iterator, bool) {
+    if (m_found_x) {
+      Surface_sweep_2* sl = this->surface_sweep();
+      sl->stop_sweep();
+    }
+    return true;
+  }
+
+  /*!
+   */
+  void found_overlap(Subcurve*, Subcurve*, Subcurve*) { m_found_x = true; }
+
+  /*!
+   */
+  bool do_intersect() { return m_found_x; }
+};
+
+} // namespace Surface_sweep_2
+} // namespace CGAL
+
+#endif

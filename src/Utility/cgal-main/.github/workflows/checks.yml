@@ -1,0 +1,31 @@
+name: CMake Test Merge Branch
+
+on: [push, pull_request, workflow_dispatch]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: github.repository == 'CGAL/cgal' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: install dependencies
+      run: |
+        .github/install.sh
+        set -x
+        sudo apt-get update && sudo apt-get install -y graphviz ssh bibtex2html
+        sudo pip install lxml
+        sudo pip install pyquery
+        wget --no-verbose -O doxygen_exe https://cgal.geometryfactory.com/~cgaltest/doxygen_1_17_0_patched/doxygen
+        sudo mv doxygen_exe /usr/bin/doxygen
+        sudo chmod +x /usr/bin/doxygen
+        git config --global user.email "cgal@geometryfactory.com"
+        git config --global user.name "cgaltest"
+
+    - name: Run checks
+      run: |
+        bash ${RUNNER_DEBUG:+-x} Scripts/developer_scripts/test_merge_of_branch HEAD | tee -a "$GITHUB_STEP_SUMMARY"
+        #test dependencies
+        bash ${RUNNER_DEBUG:+-x} Scripts/developer_scripts/cgal_check_dependencies.sh --check_headers /usr/bin/doxygen

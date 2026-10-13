@@ -1,0 +1,89 @@
+/*!
+
+\page devman_namespaces Namespaces
+
+\author Stefan Schirra
+
+Names, in particular (member) function names and class names should
+be descriptive and easily remembered. So it is not surprising that
+different libraries or packages choose the same name for corresponding
+or similar classes and functions. A common approach to avoid ambiguities
+is to add a prefix, for example, OpenGL adds `gl` and FLTK adds `fl`,
+but the better alternative is the usage of `namespace`.
+
+\section Developer_manualNamespaceCGAL Namespace CGAL
+
+All names introduced by \cgal should be in namespace `CGAL`,  or in a subnamespace
+corresponding to a package, <I>e.g.</I>:
+\code{.cpp}
+#include <something>
+
+namespace CGAL {
+
+/*!
+  * This class ...
+  */
+class Foo {};
+
+
+namespace Polygon_mesh_processing {
+
+/*!
+  * modifies `f` by ...
+  */
+void
+bar( foo & f);
+
+} // namespace Polygon_mesh_processing
+} // namespace CGAL
+\endcode
+
+Make sure not to have include statements inside the
+`namespace CGAL`. Otherwise, all names defined in the file included will be
+added to the namespace.
+
+\section Developer_manualNamespaceinternal Namespace internal
+
+All names introduced by \cgal which are not documented to the user
+should be under an `internal` subnamespace of `CGAL`, <I>e.g.</I>:
+\code{.cpp}
+namespace CGAL {
+namespace Polygon_mesh_processing {
+namespace internal {
+
+class Baz_used_by_foo {};
+
+} // namespace internal
+} // namespace Polygon_mesh_processing
+} // namespace CGAL
+\endcode
+
+\section Developer_manualNoteonglobaltemplatefunctions Note on global template functions
+
+According to the resolutions of the following issues in the forthcoming
+\cpp-standard (
+    <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#225">225</a>,
+    <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#226">226</a> and
+    <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#229">229</a>
+):
+<blockquote>Unless otherwise specified, no global or non-member function in the standard library
+shall use a function from another namespace which is found through argument-dependent
+name lookup</blockquote>
+the namespace `CGAL::NTS` does not need to be used anymore
+(currently `CGAL_NTS` macro boils down to `CGAL::`).
+
+\section Developer_manualRequirementsandrecommendations_1 Requirements and recommendations
+
+Requirements:
+<UL>
+<LI>all names defined by \cgal are in namespace `CGAL`
+  (including namespaces nested in namespace `CGAL`).
+<LI>explicitly prefix calls to template functions of CGAL
+(such as `square`, `sign`, `abs`,  \f$ \dots\f$ ) by `CGAL::`
+to ensure the functions used are the one from \cgal and not one from another
+library. If you want to allow an optimized function from another library
+to be used, then you should not qualify the call and document it explicitly
+ (if appropriate).
+</UL>
+
+*/

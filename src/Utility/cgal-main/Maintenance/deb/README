@@ -1,0 +1,13 @@
+README
+======
+
+Backports
+---------
+
+backport for trixie:
+- debian/changelog:
+  * add new section with version suffix ...-X~deb13u1 and suite testing
+
+backport for bookworm:
+- debian/changelog:
+  * add new section with version suffix ...-X~deb12u1 and suite stable
