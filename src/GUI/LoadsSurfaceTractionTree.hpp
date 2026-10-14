@@ -3,16 +3,20 @@
 #define LOADSSURFACETRACTIONTREE_HPP
 
 #include <QObject>
+#include "TreeContextMenu.hpp"
 #include <QTreeWidgetItem>
 #include <QIcon>
 
 class CalculiXCoreInterface;
 
-class LoadsSurfaceTractionTree : public QObject, public QTreeWidgetItem
+class LoadsSurfaceTractionTree : public QObject, public QTreeWidgetItem, public TreeContextMenu
 {
   Q_OBJECT
 
 public:
+  void populateContextMenu(
+    QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host) override;
+
   LoadsSurfaceTractionTree(QTreeWidgetItem *parent);
   ~LoadsSurfaceTractionTree();
 

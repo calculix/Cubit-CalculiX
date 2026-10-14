@@ -1,4 +1,6 @@
 #include "HistoryOutputsTree.hpp"
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "CalculiXCoreInterface.hpp"
 
 HistoryOutputsTree::HistoryOutputsTree(QTreeWidget* parent):
@@ -12,8 +14,10 @@ HistoryOutputsTree::~HistoryOutputsTree()
 
 void HistoryOutputsTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"History Outputs");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -124,4 +128,28 @@ int HistoryOutputsTree::get_child_id(std::string output_id)
     }
   }
   return int_return;
+}
+
+void HistoryOutputsTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create History Output", host, "CCXHistoryOutputsCreate");
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create History Output", host, "CCXHistoryOutputsCreate");
+  addPanelAction(menu, "Modify History Output", host, "CCXHistoryOutputsModify");
+  addPanelAction(menu, "Delete History Output", host, "CCXHistoryOutputsDelete");
 }

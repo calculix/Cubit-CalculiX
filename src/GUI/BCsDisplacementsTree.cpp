@@ -1,4 +1,6 @@
 #include "BCsDisplacementsTree.hpp"
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "CalculiXCoreInterface.hpp"
 
 BCsDisplacementsTree::BCsDisplacementsTree(QTreeWidgetItem* parent):
@@ -12,8 +14,10 @@ BCsDisplacementsTree::~BCsDisplacementsTree()
 
 void BCsDisplacementsTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Displacements");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -124,4 +128,37 @@ int BCsDisplacementsTree::get_child_id(std::string bc_id)
     }
   }
   return int_return;
+}
+
+void BCsDisplacementsTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create Displacement", host, "FEADisplacementCreate");
+    addCommandAction(menu, "Draw Displacements", QString("ccx draw bc_displacement_all"));
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  int entityId = -1;
+  if (!readItemId(clickedItem, entityId))
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Displacement", host, "FEADisplacementCreate");
+  addPanelAction(menu, "Modify Displacement", host, "FEADisplacementModify");
+  addPanelAction(menu, "CCX Modify Displacement", host, "CCXBCsDisplacementsModify");
+  addPanelAction(menu, "Delete Displacement", host, "FEADisplacementDelete");
+  addCommandAction(menu, "Draw Displacement", QString("ccx draw bc displacement ") + QString::number(entityId));
 }

@@ -1,4 +1,6 @@
 
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "SurfaceInteractionsTree.hpp"
 #include "CalculiXCoreInterface.hpp"
 
@@ -13,8 +15,10 @@ SurfaceInteractionsTree::~SurfaceInteractionsTree()
 
 void SurfaceInteractionsTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Surface Interactions");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -125,4 +129,28 @@ int SurfaceInteractionsTree::get_child_id(std::string surfaceinteraction_id)
     }
   }
   return int_return;
+}
+
+void SurfaceInteractionsTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create Surface Interaction", host, "CCXSurfaceInteractionsCreate");
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Surface Interaction", host, "CCXSurfaceInteractionsCreate");
+  addPanelAction(menu, "Modify Surface Interaction", host, "CCXSurfaceInteractionsModify");
+  addPanelAction(menu, "Delete Surface Interaction", host, "CCXSurfaceInteractionsDelete");
 }

@@ -1,4 +1,6 @@
 
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "SidesetTree.hpp"
 #include "CalculiXCoreInterface.hpp"
 
@@ -13,8 +15,10 @@ SidesetTree::~SidesetTree()
 
 void SidesetTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Side Sets");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -125,4 +129,28 @@ int SidesetTree::get_child_id(std::string sideset_id)
     }
   }
   return int_return;
+}
+
+void SidesetTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create Sideset", host, "ExodusCreateSideset");
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Sideset", host, "ExodusCreateSideset");
+  addPanelAction(menu, "Modify Sideset", host, "ExodusRemoveContentsSideset");
+  addPanelAction(menu, "Delete Sideset", host, "ExodusDeleteSideset");
 }

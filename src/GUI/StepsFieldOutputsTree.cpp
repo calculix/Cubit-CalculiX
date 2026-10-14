@@ -1,4 +1,9 @@
 #include "StepsFieldOutputsTree.hpp"
+#include "ModelTree.hpp"
+#include "CubitMessage.hpp"
+#include "StepsManagement.hpp"
+#include <QMenu>
+#include <QAction>
 #include "CalculiXCoreInterface.hpp"
 
 StepsFieldOutputsTree::StepsFieldOutputsTree(QTreeWidgetItem* parent):
@@ -12,8 +17,10 @@ StepsFieldOutputsTree::~StepsFieldOutputsTree()
 
 void StepsFieldOutputsTree::initialize(int step_id_init)
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Field Outputs");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -125,4 +132,55 @@ int StepsFieldOutputsTree::get_child_id(std::string output_id)
     }
   }
   return int_return;
+}
+
+void StepsFieldOutputsTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    {
+      QAction *action = menu.addAction("Steps Management");
+      ModelTree *hostPtr = &host;
+      QObject::connect(action, &QAction::triggered, hostPtr, [hostPtr]()
+      {
+        if (hostPtr->myStepsManagement == nullptr)
+        {
+          PRINT_WARNING("The requested model tree service is unavailable.\n");
+          return;
+        }
+
+        hostPtr->myStepsManagement->show();
+      });
+    }
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Field Output", host, "CCXFieldOutputsCreate");
+  addPanelAction(menu, "Modify Field Output", host, "CCXFieldOutputsModify");
+  addPanelAction(menu, "Delete Field Output", host, "CCXFieldOutputsDelete");
+  {
+    QAction *action = menu.addAction("Steps Management");
+    ModelTree *hostPtr = &host;
+    QObject::connect(action, &QAction::triggered, hostPtr, [hostPtr]()
+    {
+      if (hostPtr->myStepsManagement == nullptr)
+      {
+        PRINT_WARNING("The requested model tree service is unavailable.\n");
+        return;
+      }
+
+      hostPtr->myStepsManagement->show();
+    });
+  }
 }

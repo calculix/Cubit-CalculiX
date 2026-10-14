@@ -1,4 +1,6 @@
 #include "LoadsBodyHeatfluxTree.hpp"
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "CalculiXCoreInterface.hpp"
 
 LoadsBodyHeatfluxTree::LoadsBodyHeatfluxTree(QTreeWidgetItem* parent):
@@ -12,8 +14,10 @@ LoadsBodyHeatfluxTree::~LoadsBodyHeatfluxTree()
 
 void LoadsBodyHeatfluxTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Body Heatflux");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -124,4 +128,36 @@ int LoadsBodyHeatfluxTree::get_child_id(std::string load_id)
     }
   }
   return int_return;
+}
+
+void LoadsBodyHeatfluxTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create Body Heatflux", host, "CCXLoadsBodyHeatfluxCreate");
+    addCommandAction(menu, "Draw Body Heatfluxes", QString("ccx draw load_bodyheatflux_all"));
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  int entityId = -1;
+  if (!readItemId(clickedItem, entityId))
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Body Heatflux", host, "CCXLoadsBodyHeatfluxCreate");
+  addPanelAction(menu, "Modify Body Heatflux", host, "CCXLoadsBodyHeatfluxModify");
+  addPanelAction(menu, "Delete Body Heatflux", host, "CCXLoadsBodyHeatfluxDelete");
+  addCommandAction(menu, "Draw Body Heatflux", QString("ccx draw load bodyheatflux ") + QString::number(entityId));
 }

@@ -1,4 +1,6 @@
 #include "PhysicalConstantsTree.hpp"
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "CalculiXCoreInterface.hpp"
 
 PhysicalConstantsTree::PhysicalConstantsTree(QTreeWidget* parent):
@@ -12,8 +14,10 @@ PhysicalConstantsTree::~PhysicalConstantsTree()
 
 void PhysicalConstantsTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Physical Constants");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -124,4 +128,27 @@ int PhysicalConstantsTree::get_child_id(std::string PhysicalConstants_id)
     }
   }
   return int_return;
+}
+
+void PhysicalConstantsTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Modify PhysicalConstants", host, "CCXPhysicalConstantsModify");
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Modify PhysicalConstants", host, "CCXPhysicalConstantsModify");
+  addPanelAction(menu, "Delete PhysicalConstants", host, "CCXPhysicalConstantsDelete");
 }

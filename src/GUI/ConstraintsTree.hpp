@@ -3,16 +3,20 @@
 #define CONSTRAINTSTREE_HPP
 
 #include <QObject>
+#include "TreeContextMenu.hpp"
 #include <QTreeWidgetItem>
 #include <QIcon>
 
 class CalculiXCoreInterface;
 
-class ConstraintsTree : public QObject, public QTreeWidgetItem
+class ConstraintsTree : public QObject, public QTreeWidgetItem, public TreeContextMenu
 {
   Q_OBJECT
 
 public:
+  void populateContextMenu(
+    QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host) override;
+
   ConstraintsTree(QTreeWidget *parent);
   ~ConstraintsTree();
 

@@ -1,4 +1,9 @@
 #include "StepsLoadsTree.hpp"
+#include "ModelTree.hpp"
+#include "CubitMessage.hpp"
+#include "StepsManagement.hpp"
+#include <QMenu>
+#include <QAction>
 #include "StepsLoadsForcesTree.hpp"
 #include "StepsLoadsPressuresTree.hpp"
 #include "StepsLoadsHeatfluxesTree.hpp"
@@ -22,8 +27,10 @@ StepsLoadsTree::~StepsLoadsTree()
 
 void StepsLoadsTree::initialize(int step_id_init)
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Loads");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -74,5 +81,60 @@ void StepsLoadsTree::clear()
   while (this->childCount()>0)
   {
     this->removeChild(this->child(0));
+  }
+}
+
+void StepsLoadsTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    if (step_id < 0)
+    {
+      PRINT_WARNING("The model tree category has no valid step ID.\n");
+      return;
+    }
+
+    {
+      QAction *action = menu.addAction("Steps Management");
+      ModelTree *hostPtr = &host;
+      QObject::connect(action, &QAction::triggered, hostPtr, [hostPtr]()
+      {
+        if (hostPtr->myStepsManagement == nullptr)
+        {
+          PRINT_WARNING("The requested model tree service is unavailable.\n");
+          return;
+        }
+
+        hostPtr->myStepsManagement->show();
+      });
+    }
+    addCommandAction(menu, "Draw Loads", QString("ccx draw step ") + QString::number(step_id) + " load_all");
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  {
+    QAction *action = menu.addAction("Steps Management");
+    ModelTree *hostPtr = &host;
+    QObject::connect(action, &QAction::triggered, hostPtr, [hostPtr]()
+    {
+      if (hostPtr->myStepsManagement == nullptr)
+      {
+        PRINT_WARNING("The requested model tree service is unavailable.\n");
+        return;
+      }
+
+      hostPtr->myStepsManagement->show();
+    });
   }
 }

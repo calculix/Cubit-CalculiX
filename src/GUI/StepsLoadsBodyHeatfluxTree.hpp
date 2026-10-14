@@ -3,16 +3,20 @@
 #define STEPSLOADSBODYHEATFLUXTREE_HPP
 
 #include <QObject>
+#include "TreeContextMenu.hpp"
 #include <QTreeWidgetItem>
 #include <QIcon>
 
 class CalculiXCoreInterface;
 
-class StepsLoadsBodyHeatfluxTree : public QObject, public QTreeWidgetItem
+class StepsLoadsBodyHeatfluxTree : public QObject, public QTreeWidgetItem, public TreeContextMenu
 {
   Q_OBJECT
 
 public:
+  void populateContextMenu(
+    QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host) override;
+
   StepsLoadsBodyHeatfluxTree(QTreeWidgetItem *parent);
   ~StepsLoadsBodyHeatfluxTree();
 

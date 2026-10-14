@@ -3,16 +3,20 @@
 #define AMPLITUDESTREE_HPP
 
 #include <QObject>
+#include "TreeContextMenu.hpp"
 #include <QTreeWidgetItem>
 #include <QIcon>
 
 class CalculiXCoreInterface;
 
-class AmplitudesTree : public QObject, public QTreeWidgetItem
+class AmplitudesTree : public QObject, public QTreeWidgetItem, public TreeContextMenu
 {
   Q_OBJECT
 
 public:
+  void populateContextMenu(
+    QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host) override;
+
   AmplitudesTree(QTreeWidget *parent);
   ~AmplitudesTree();
 

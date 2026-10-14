@@ -1,4 +1,6 @@
 
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "SectionsTree.hpp"
 #include "CalculiXCoreInterface.hpp"
 
@@ -13,8 +15,10 @@ SectionsTree::~SectionsTree()
 
 void SectionsTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Sections");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -125,4 +129,28 @@ int SectionsTree::get_child_id(std::string section_id)
     }
   }
   return int_return;
+}
+
+void SectionsTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create Section", host, "CCXSectionsCreate");
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Section", host, "CCXSectionsCreate");
+  addPanelAction(menu, "Modify Section", host, "CCXSectionsModify");
+  addPanelAction(menu, "Delete Section", host, "CCXSectionsDelete");
 }

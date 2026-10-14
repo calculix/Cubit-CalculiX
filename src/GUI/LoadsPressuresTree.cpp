@@ -1,4 +1,6 @@
 #include "LoadsPressuresTree.hpp"
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "CalculiXCoreInterface.hpp"
 
 LoadsPressuresTree::LoadsPressuresTree(QTreeWidgetItem* parent):
@@ -12,8 +14,10 @@ LoadsPressuresTree::~LoadsPressuresTree()
 
 void LoadsPressuresTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Pressures");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -124,4 +128,37 @@ int LoadsPressuresTree::get_child_id(std::string load_id)
     }
   }
   return int_return;
+}
+
+void LoadsPressuresTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create Pressure", host, "FEAPressureCreate");
+    addCommandAction(menu, "Draw Pressures", QString("ccx draw load_pressure_all"));
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  int entityId = -1;
+  if (!readItemId(clickedItem, entityId))
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Pressure", host, "FEAPressureCreate");
+  addPanelAction(menu, "Modify Pressure", host, "FEAPressureModify");
+  addPanelAction(menu, "CCX Modify Pressure", host, "CCXLoadsPressuresModify");
+  addPanelAction(menu, "Delete Pressure", host, "FEAPressureDelete");
+  addCommandAction(menu, "Draw Pressure", QString("ccx draw load pressure ") + QString::number(entityId));
 }

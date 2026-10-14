@@ -1,4 +1,6 @@
 #include "LoadsSurfaceTractionTree.hpp"
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "CalculiXCoreInterface.hpp"
 
 LoadsSurfaceTractionTree::LoadsSurfaceTractionTree(QTreeWidgetItem* parent):
@@ -12,8 +14,10 @@ LoadsSurfaceTractionTree::~LoadsSurfaceTractionTree()
 
 void LoadsSurfaceTractionTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Surface Traction");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -124,4 +128,36 @@ int LoadsSurfaceTractionTree::get_child_id(std::string load_id)
     }
   }
   return int_return;
+}
+
+void LoadsSurfaceTractionTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create Surface Traction", host, "CCXLoadsSurfaceTractionCreate");
+    addCommandAction(menu, "Draw Surface Tractions", QString("ccx draw load_surfacetraction_all"));
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  int entityId = -1;
+  if (!readItemId(clickedItem, entityId))
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Surface Traction", host, "CCXLoadsSurfaceTractionCreate");
+  addPanelAction(menu, "Modify Surface Traction", host, "CCXLoadsSurfaceTractionModify");
+  addPanelAction(menu, "Delete Surface Traction", host, "CCXLoadsSurfaceTractionDelete");
+  addCommandAction(menu, "Draw Surface Traction", QString("ccx draw load surfacetraction ") + QString::number(entityId));
 }

@@ -1,4 +1,9 @@
 #include "StepsLoadsTrajectoryTree.hpp"
+#include "ModelTree.hpp"
+#include "CubitMessage.hpp"
+#include "StepsManagement.hpp"
+#include <QMenu>
+#include <QAction>
 #include "CalculiXCoreInterface.hpp"
 
 StepsLoadsTrajectoryTree::StepsLoadsTrajectoryTree(QTreeWidgetItem* parent):
@@ -12,8 +17,10 @@ StepsLoadsTrajectoryTree::~StepsLoadsTrajectoryTree()
 
 void StepsLoadsTrajectoryTree::initialize(int step_id_init)
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Trajectory");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -125,4 +132,69 @@ int StepsLoadsTrajectoryTree::get_child_id(std::string load_id)
     }
   }
   return int_return;
+}
+
+void StepsLoadsTrajectoryTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    if (step_id < 0)
+    {
+      PRINT_WARNING("The model tree category has no valid step ID.\n");
+      return;
+    }
+
+    {
+      QAction *action = menu.addAction("Steps Management");
+      ModelTree *hostPtr = &host;
+      QObject::connect(action, &QAction::triggered, hostPtr, [hostPtr]()
+      {
+        if (hostPtr->myStepsManagement == nullptr)
+        {
+          PRINT_WARNING("The requested model tree service is unavailable.\n");
+          return;
+        }
+
+        hostPtr->myStepsManagement->show();
+      });
+    }
+    addCommandAction(menu, "Draw Trajectories", QString("ccx draw step ") + QString::number(step_id) + " load_trajectory_all");
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  int entityId = -1;
+  if (!readItemId(clickedItem, entityId))
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Trajectory", host, "CCXLoadsTrajectory");
+  addPanelAction(menu, "Modify Trajectory", host, "CCXLoadsTrajectory");
+  addPanelAction(menu, "Delete Trajectory", host, "CCXLoadsTrajectoryDelete");
+  {
+    QAction *action = menu.addAction("Steps Management");
+    ModelTree *hostPtr = &host;
+    QObject::connect(action, &QAction::triggered, hostPtr, [hostPtr]()
+    {
+      if (hostPtr->myStepsManagement == nullptr)
+      {
+        PRINT_WARNING("The requested model tree service is unavailable.\n");
+        return;
+      }
+
+      hostPtr->myStepsManagement->show();
+    });
+  }
+  addCommandAction(menu, "Draw Trajectory", QString("ccx draw load trajectory ") + QString::number(entityId));
 }

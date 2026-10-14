@@ -1,4 +1,6 @@
 #include "AmplitudesTree.hpp"
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "CalculiXCoreInterface.hpp"
 
 AmplitudesTree::AmplitudesTree(QTreeWidget* parent):
@@ -12,8 +14,10 @@ AmplitudesTree::~AmplitudesTree()
 
 void AmplitudesTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Amplitudes");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -124,4 +128,28 @@ int AmplitudesTree::get_child_id(std::string amplitude_id)
     }
   }
   return int_return;
+}
+
+void AmplitudesTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create Amplitude", host, "CCXAmplitudesCreate");
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Amplitude", host, "CCXAmplitudesCreate");
+  addPanelAction(menu, "Modify Amplitude", host, "CCXAmplitudesModify");
+  addPanelAction(menu, "Delete Amplitude", host, "CCXAmplitudesDelete");
 }

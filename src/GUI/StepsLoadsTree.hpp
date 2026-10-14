@@ -2,6 +2,7 @@
 #define STEPSLOADSTREE_HPP
 
 #include <QObject>
+#include "TreeContextMenu.hpp"
 #include <QTreeWidgetItem>
 #include <QIcon>
 
@@ -17,11 +18,14 @@ class StepsLoadsRadiationTree;
 class StepsLoadsSurfaceTractionTree;
 class StepsLoadsBodyHeatfluxTree;
 
-class StepsLoadsTree : public QObject, public QTreeWidgetItem
+class StepsLoadsTree : public QObject, public QTreeWidgetItem, public TreeContextMenu
 {
   Q_OBJECT
 
 public:
+  void populateContextMenu(
+    QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host) override;
+
   StepsLoadsTree(QTreeWidgetItem *parent);
   ~StepsLoadsTree();
 

@@ -1,4 +1,6 @@
 #include "LoadsTrajectoryTree.hpp"
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "CalculiXCoreInterface.hpp"
 
 LoadsTrajectoryTree::LoadsTrajectoryTree(QTreeWidgetItem* parent):
@@ -12,8 +14,10 @@ LoadsTrajectoryTree::~LoadsTrajectoryTree()
 
 void LoadsTrajectoryTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Trajectory");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -124,4 +128,36 @@ int LoadsTrajectoryTree::get_child_id(std::string load_id)
     }
   }
   return int_return;
+}
+
+void LoadsTrajectoryTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create Trajectory", host, "CCXLoadsTrajectory");
+    addCommandAction(menu, "Draw Trajectories", QString("ccx draw load_trajectory_all"));
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  int entityId = -1;
+  if (!readItemId(clickedItem, entityId))
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Trajectory", host, "CCXLoadsTrajectory");
+  addPanelAction(menu, "Modify Trajectory", host, "CCXLoadsTrajectory");
+  addPanelAction(menu, "Delete Trajectory", host, "CCXLoadsTrajectoryDelete");
+  addCommandAction(menu, "Draw Trajectory", QString("ccx draw load trajectory ") + QString::number(entityId));
 }

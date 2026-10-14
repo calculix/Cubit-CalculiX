@@ -1,4 +1,9 @@
 
+#include "ModelTree.hpp"
+#include "CubitMessage.hpp"
+#include "MaterialManagement.hpp"
+#include <QMenu>
+#include <QAction>
 #include "MaterialTree.hpp"
 #include "CalculiXCoreInterface.hpp"
 
@@ -13,8 +18,10 @@ MaterialTree::~MaterialTree()
 
 void MaterialTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Material");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -125,4 +132,52 @@ int MaterialTree::get_child_id(std::string material_id)
     }
   }
   return int_return;
+}
+
+void MaterialTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    {
+      QAction *action = menu.addAction("Open Material Management");
+      ModelTree *hostPtr = &host;
+      QObject::connect(action, &QAction::triggered, hostPtr, [hostPtr]()
+      {
+        if (hostPtr->myMaterialManagement == nullptr)
+        {
+          PRINT_WARNING("The requested model tree service is unavailable.\n");
+          return;
+        }
+
+        hostPtr->myMaterialManagement->show();
+      });
+    }
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  {
+    QAction *action = menu.addAction("Open Material Management");
+    ModelTree *hostPtr = &host;
+    QObject::connect(action, &QAction::triggered, hostPtr, [hostPtr]()
+    {
+      if (hostPtr->myMaterialManagement == nullptr)
+      {
+        PRINT_WARNING("The requested model tree service is unavailable.\n");
+        return;
+      }
+
+      hostPtr->myMaterialManagement->show();
+    });
+  }
 }

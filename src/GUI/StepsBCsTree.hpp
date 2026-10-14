@@ -2,6 +2,7 @@
 #define STEPSBCSTREE_HPP
 
 #include <QObject>
+#include "TreeContextMenu.hpp"
 #include <QTreeWidgetItem>
 #include <QIcon>
 
@@ -9,11 +10,14 @@ class CalculiXCoreInterface;
 class StepsBCsDisplacementsTree;
 class StepsBCsTemperaturesTree;
 
-class StepsBCsTree : public QObject, public QTreeWidgetItem
+class StepsBCsTree : public QObject, public QTreeWidgetItem, public TreeContextMenu
 {
   Q_OBJECT
 
 public:
+  void populateContextMenu(
+    QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host) override;
+
   StepsBCsTree(QTreeWidgetItem *parent);
   ~StepsBCsTree();
 

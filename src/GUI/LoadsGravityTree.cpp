@@ -1,4 +1,6 @@
 #include "LoadsGravityTree.hpp"
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "CalculiXCoreInterface.hpp"
 
 LoadsGravityTree::LoadsGravityTree(QTreeWidgetItem* parent):
@@ -12,8 +14,10 @@ LoadsGravityTree::~LoadsGravityTree()
 
 void LoadsGravityTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Gravity");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -124,4 +128,36 @@ int LoadsGravityTree::get_child_id(std::string load_id)
     }
   }
   return int_return;
+}
+
+void LoadsGravityTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create Gravity", host, "CCXLoadsGravityCreate");
+    addCommandAction(menu, "Draw Gravities", QString("ccx draw load_gravity_all"));
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  int entityId = -1;
+  if (!readItemId(clickedItem, entityId))
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Gravity", host, "CCXLoadsGravityCreate");
+  addPanelAction(menu, "Modify Gravity", host, "CCXLoadsGravityModify");
+  addPanelAction(menu, "Delete Gravity", host, "CCXLoadsGravityDelete");
+  addCommandAction(menu, "Draw Gravity", QString("ccx draw load gravity ") + QString::number(entityId));
 }

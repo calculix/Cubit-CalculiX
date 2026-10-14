@@ -1,4 +1,6 @@
 #include "BCsTemperaturesTree.hpp"
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "CalculiXCoreInterface.hpp"
 
 BCsTemperaturesTree::BCsTemperaturesTree(QTreeWidgetItem* parent):
@@ -12,8 +14,10 @@ BCsTemperaturesTree::~BCsTemperaturesTree()
 
 void BCsTemperaturesTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Temperatures");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -124,4 +128,37 @@ int BCsTemperaturesTree::get_child_id(std::string bc_id)
     }
   }
   return int_return;
+}
+
+void BCsTemperaturesTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create Temperature", host, "FEATemperatureCreate");
+    addCommandAction(menu, "Draw Temperatures", QString("ccx draw bc_temperature_all"));
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  int entityId = -1;
+  if (!readItemId(clickedItem, entityId))
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Temperature", host, "FEATemperatureCreate");
+  addPanelAction(menu, "Modify Temperature", host, "FEATemperatureModify");
+  addPanelAction(menu, "CCX Modify Temperature", host, "CCXBCsTemperaturesModify");
+  addPanelAction(menu, "Delete Temperature", host, "FEATemperatureDelete");
+  addCommandAction(menu, "Draw Temperature", QString("ccx draw bc temperature ") + QString::number(entityId));
 }

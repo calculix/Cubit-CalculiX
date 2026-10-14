@@ -1,4 +1,6 @@
 #include "CustomLinesTree.hpp"
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "CalculiXCoreInterface.hpp"
 
 CustomLinesTree::CustomLinesTree(QTreeWidget* parent):
@@ -12,8 +14,10 @@ CustomLinesTree::~CustomLinesTree()
 
 void CustomLinesTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Custom Lines");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -124,4 +128,28 @@ int CustomLinesTree::get_child_id(std::string customline_id)
     }
   }
   return int_return;
+}
+
+void CustomLinesTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create Custom Line", host, "CCXCustomLinesCreate");
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Custom Line", host, "CCXCustomLinesCreate");
+  addPanelAction(menu, "Modify Custom Line", host, "CCXCustomLinesModify");
+  addPanelAction(menu, "Delete Custom Line", host, "CCXCustomLinesDelete");
 }

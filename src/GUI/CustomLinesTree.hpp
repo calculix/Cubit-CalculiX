@@ -3,16 +3,20 @@
 #define CUSTOMLINESTREE_HPP
 
 #include <QObject>
+#include "TreeContextMenu.hpp"
 #include <QTreeWidgetItem>
 #include <QIcon>
 
 class CalculiXCoreInterface;
 
-class CustomLinesTree : public QObject, public QTreeWidgetItem
+class CustomLinesTree : public QObject, public QTreeWidgetItem, public TreeContextMenu
 {
   Q_OBJECT
 
 public:
+  void populateContextMenu(
+    QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host) override;
+
   CustomLinesTree(QTreeWidget *parent);
   ~CustomLinesTree();
 

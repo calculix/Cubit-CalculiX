@@ -3,17 +3,21 @@
 #define JOBSTREE_HPP
 
 #include <QObject>
+#include "TreeContextMenu.hpp"
 #include <QTreeWidgetItem>
 #include <QIcon>
 
 class CalculiXCoreInterface;
 class GuiTimer;
 
-class JobsTree : public QObject, public QTreeWidgetItem
+class JobsTree : public QObject, public QTreeWidgetItem, public TreeContextMenu
 {
   Q_OBJECT
 
 public:
+  void populateContextMenu(
+    QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host) override;
+
   JobsTree(QTreeWidget *parent);
   ~JobsTree();
 

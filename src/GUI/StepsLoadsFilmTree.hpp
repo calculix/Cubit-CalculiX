@@ -3,16 +3,20 @@
 #define STEPSLOADSFILMTREE_HPP
 
 #include <QObject>
+#include "TreeContextMenu.hpp"
 #include <QTreeWidgetItem>
 #include <QIcon>
 
 class CalculiXCoreInterface;
 
-class StepsLoadsFilmTree : public QObject, public QTreeWidgetItem
+class StepsLoadsFilmTree : public QObject, public QTreeWidgetItem, public TreeContextMenu
 {
   Q_OBJECT
 
 public:
+  void populateContextMenu(
+    QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host) override;
+
   StepsLoadsFilmTree(QTreeWidgetItem *parent);
   ~StepsLoadsFilmTree();
 

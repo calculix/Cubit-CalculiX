@@ -1,4 +1,6 @@
 
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "BlocksTree.hpp"
 #include "CalculiXCoreInterface.hpp"
 
@@ -13,8 +15,10 @@ BlocksTree::~BlocksTree()
 
 void BlocksTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Element Sets");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -134,4 +138,26 @@ int BlocksTree::get_child_id(std::string block_id)
     }
   }
   return int_return;
+}
+
+void BlocksTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Assign CCX Element Type", host, "CCXBlocksModify");
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Assign CCX Element Type", host, "CCXBlocksModify");
 }

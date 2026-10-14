@@ -1,4 +1,6 @@
 #include "LoadsCentrifugalTree.hpp"
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "CalculiXCoreInterface.hpp"
 
 LoadsCentrifugalTree::LoadsCentrifugalTree(QTreeWidgetItem* parent):
@@ -12,8 +14,10 @@ LoadsCentrifugalTree::~LoadsCentrifugalTree()
 
 void LoadsCentrifugalTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Centrifugal");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -124,4 +128,36 @@ int LoadsCentrifugalTree::get_child_id(std::string load_id)
     }
   }
   return int_return;
+}
+
+void LoadsCentrifugalTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create Centrifugal", host, "CCXLoadsCentrifugalCreate");
+    addCommandAction(menu, "Draw Centrifugals", QString("ccx draw load_centrifugal_all"));
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  int entityId = -1;
+  if (!readItemId(clickedItem, entityId))
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Centrifugal", host, "CCXLoadsCentrifugalCreate");
+  addPanelAction(menu, "Modify Centrifugal", host, "CCXLoadsCentrifugalModify");
+  addPanelAction(menu, "Delete Centrifugal", host, "CCXLoadsCentrifugalDelete");
+  addCommandAction(menu, "Draw Centrifugal", QString("ccx draw load centrifugal ") + QString::number(entityId));
 }

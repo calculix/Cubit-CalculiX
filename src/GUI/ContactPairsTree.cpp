@@ -1,4 +1,6 @@
 #include "ContactPairsTree.hpp"
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "CalculiXCoreInterface.hpp"
 
 ContactPairsTree::ContactPairsTree(QTreeWidget* parent):
@@ -12,8 +14,10 @@ ContactPairsTree::~ContactPairsTree()
 
 void ContactPairsTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Contact Pairs");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -124,4 +128,28 @@ int ContactPairsTree::get_child_id(std::string contactpair_id)
     }
   }
   return int_return;
+}
+
+void ContactPairsTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create Contact Pair", host, "CCXContactPairsCreate");
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Contact Pair", host, "CCXContactPairsCreate");
+  addPanelAction(menu, "Modify Contact Pair", host, "CCXContactPairsModify");
+  addPanelAction(menu, "Delete Contact Pair", host, "CCXContactPairsDelete");
 }

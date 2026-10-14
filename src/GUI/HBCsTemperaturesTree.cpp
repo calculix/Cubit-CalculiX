@@ -1,4 +1,9 @@
 #include "HBCsTemperaturesTree.hpp"
+#include "ModelTree.hpp"
+#include "CubitMessage.hpp"
+#include "HBCsManagement.hpp"
+#include <QMenu>
+#include <QAction>
 #include "CalculiXCoreInterface.hpp"
 
 HBCsTemperaturesTree::HBCsTemperaturesTree(QTreeWidgetItem* parent):
@@ -12,8 +17,10 @@ HBCsTemperaturesTree::~HBCsTemperaturesTree()
 
 void HBCsTemperaturesTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Temperatures");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -124,4 +131,43 @@ int HBCsTemperaturesTree::get_child_id(std::string bc_id)
     }
   }
   return int_return;
+}
+
+void HBCsTemperaturesTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "homogeneous BCs Management", host, "FEATemperatureCreate");
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Temperature", host, "FEATemperatureCreate");
+  addPanelAction(menu, "Modify Temperature", host, "FEATemperatureModify");
+  addPanelAction(menu, "CCX Modify Temperature", host, "CCXBCsTemperaturesModify");
+  addPanelAction(menu, "Delete Temperature", host, "FEATemperatureDelete");
+  {
+    QAction *action = menu.addAction("homogeneous BCs Management");
+    ModelTree *hostPtr = &host;
+    QObject::connect(action, &QAction::triggered, hostPtr, [hostPtr]()
+    {
+      if (hostPtr->myHBCsManagement == nullptr)
+      {
+        PRINT_WARNING("The requested model tree service is unavailable.\n");
+        return;
+      }
+
+      hostPtr->myHBCsManagement->show();
+    });
+  }
 }

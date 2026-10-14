@@ -1,4 +1,6 @@
 #include "LoadsFilmTree.hpp"
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "CalculiXCoreInterface.hpp"
 
 LoadsFilmTree::LoadsFilmTree(QTreeWidgetItem* parent):
@@ -12,8 +14,10 @@ LoadsFilmTree::~LoadsFilmTree()
 
 void LoadsFilmTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Film");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -124,4 +128,36 @@ int LoadsFilmTree::get_child_id(std::string load_id)
     }
   }
   return int_return;
+}
+
+void LoadsFilmTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create Film", host, "CCXLoadsFilmCreate");
+    addCommandAction(menu, "Draw Films", QString("ccx draw load_film_all"));
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  int entityId = -1;
+  if (!readItemId(clickedItem, entityId))
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Film", host, "CCXLoadsFilmCreate");
+  addPanelAction(menu, "Modify Film", host, "CCXLoadsFilmModify");
+  addPanelAction(menu, "Delete Film", host, "CCXLoadsFilmDelete");
+  addCommandAction(menu, "Draw Film", QString("ccx draw load film ") + QString::number(entityId));
 }

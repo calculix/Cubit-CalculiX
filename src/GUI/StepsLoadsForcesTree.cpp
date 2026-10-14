@@ -1,4 +1,9 @@
 #include "StepsLoadsForcesTree.hpp"
+#include "ModelTree.hpp"
+#include "CubitMessage.hpp"
+#include "StepsManagement.hpp"
+#include <QMenu>
+#include <QAction>
 #include "CalculiXCoreInterface.hpp"
 
 StepsLoadsForcesTree::StepsLoadsForcesTree(QTreeWidgetItem* parent):
@@ -12,8 +17,10 @@ StepsLoadsForcesTree::~StepsLoadsForcesTree()
 
 void StepsLoadsForcesTree::initialize(int step_id_init)
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Forces");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -125,4 +132,70 @@ int StepsLoadsForcesTree::get_child_id(std::string load_id)
     }
   }
   return int_return;
+}
+
+void StepsLoadsForcesTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    if (step_id < 0)
+    {
+      PRINT_WARNING("The model tree category has no valid step ID.\n");
+      return;
+    }
+
+    {
+      QAction *action = menu.addAction("Steps Management");
+      ModelTree *hostPtr = &host;
+      QObject::connect(action, &QAction::triggered, hostPtr, [hostPtr]()
+      {
+        if (hostPtr->myStepsManagement == nullptr)
+        {
+          PRINT_WARNING("The requested model tree service is unavailable.\n");
+          return;
+        }
+
+        hostPtr->myStepsManagement->show();
+      });
+    }
+    addCommandAction(menu, "Draw Forces", QString("ccx draw step ") + QString::number(step_id) + " load_force_all");
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  int entityId = -1;
+  if (!readItemId(clickedItem, entityId))
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Force", host, "FEAForceCreate");
+  addPanelAction(menu, "Modify Force", host, "FEAForceModify");
+  addPanelAction(menu, "CCX Modify Force", host, "CCXLoadsForcesModify");
+  addPanelAction(menu, "Delete Force", host, "FEAForceDelete");
+  {
+    QAction *action = menu.addAction("Steps Management");
+    ModelTree *hostPtr = &host;
+    QObject::connect(action, &QAction::triggered, hostPtr, [hostPtr]()
+    {
+      if (hostPtr->myStepsManagement == nullptr)
+      {
+        PRINT_WARNING("The requested model tree service is unavailable.\n");
+        return;
+      }
+
+      hostPtr->myStepsManagement->show();
+    });
+  }
+  addCommandAction(menu, "Draw Force", QString("ccx draw load force ") + QString::number(entityId));
 }

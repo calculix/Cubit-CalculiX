@@ -1,4 +1,9 @@
 #include "StepsHistoryOutputsTree.hpp"
+#include "ModelTree.hpp"
+#include "CubitMessage.hpp"
+#include "StepsManagement.hpp"
+#include <QMenu>
+#include <QAction>
 #include "CalculiXCoreInterface.hpp"
 
 StepsHistoryOutputsTree::StepsHistoryOutputsTree(QTreeWidgetItem* parent):
@@ -12,8 +17,10 @@ StepsHistoryOutputsTree::~StepsHistoryOutputsTree()
 
 void StepsHistoryOutputsTree::initialize(int step_id_init)
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"History Outputs");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -125,4 +132,55 @@ int StepsHistoryOutputsTree::get_child_id(std::string output_id)
     }
   }
   return int_return;
+}
+
+void StepsHistoryOutputsTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    {
+      QAction *action = menu.addAction("Steps Management");
+      ModelTree *hostPtr = &host;
+      QObject::connect(action, &QAction::triggered, hostPtr, [hostPtr]()
+      {
+        if (hostPtr->myStepsManagement == nullptr)
+        {
+          PRINT_WARNING("The requested model tree service is unavailable.\n");
+          return;
+        }
+
+        hostPtr->myStepsManagement->show();
+      });
+    }
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create History Output", host, "CCXHistoryOutputsCreate");
+  addPanelAction(menu, "Modify History Output", host, "CCXHistoryOutputsModify");
+  addPanelAction(menu, "Delete History Output", host, "CCXHistoryOutputsDelete");
+  {
+    QAction *action = menu.addAction("Steps Management");
+    ModelTree *hostPtr = &host;
+    QObject::connect(action, &QAction::triggered, hostPtr, [hostPtr]()
+    {
+      if (hostPtr->myStepsManagement == nullptr)
+      {
+        PRINT_WARNING("The requested model tree service is unavailable.\n");
+        return;
+      }
+
+      hostPtr->myStepsManagement->show();
+    });
+  }
 }

@@ -1,4 +1,9 @@
 #include "HBCsDisplacementsTree.hpp"
+#include "ModelTree.hpp"
+#include "CubitMessage.hpp"
+#include "HBCsManagement.hpp"
+#include <QMenu>
+#include <QAction>
 #include "CalculiXCoreInterface.hpp"
 
 HBCsDisplacementsTree::HBCsDisplacementsTree(QTreeWidgetItem* parent):
@@ -12,8 +17,10 @@ HBCsDisplacementsTree::~HBCsDisplacementsTree()
 
 void HBCsDisplacementsTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Displacements");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -124,4 +131,43 @@ int HBCsDisplacementsTree::get_child_id(std::string bc_id)
     }
   }
   return int_return;
+}
+
+void HBCsDisplacementsTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "homogeneous BCs Management", host, "FEADisplacementCreate");
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Displacement", host, "FEADisplacementCreate");
+  addPanelAction(menu, "Modify Displacement", host, "FEADisplacementModify");
+  addPanelAction(menu, "CCX Modify Displacement", host, "CCXBCsDisplacementsModify");
+  addPanelAction(menu, "Delete Displacement", host, "FEADisplacementDelete");
+  {
+    QAction *action = menu.addAction("homogeneous BCs Management");
+    ModelTree *hostPtr = &host;
+    QObject::connect(action, &QAction::triggered, hostPtr, [hostPtr]()
+    {
+      if (hostPtr->myHBCsManagement == nullptr)
+      {
+        PRINT_WARNING("The requested model tree service is unavailable.\n");
+        return;
+      }
+
+      hostPtr->myHBCsManagement->show();
+    });
+  }
 }

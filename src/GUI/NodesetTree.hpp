@@ -3,16 +3,20 @@
 #define NODESETTREE_HPP
 
 #include <QObject>
+#include "TreeContextMenu.hpp"
 #include <QTreeWidgetItem>
 #include <QIcon>
 
 class CalculiXCoreInterface;
 
-class NodesetTree : public QObject, public QTreeWidgetItem
+class NodesetTree : public QObject, public QTreeWidgetItem, public TreeContextMenu
 {
   Q_OBJECT
 
 public:
+  void populateContextMenu(
+    QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host) override;
+
   //NodesetTree(QTreeWidget *parent, int type=0);
   NodesetTree(QTreeWidget *parent);
   ~NodesetTree();

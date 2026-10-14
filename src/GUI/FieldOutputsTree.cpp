@@ -1,4 +1,6 @@
 #include "FieldOutputsTree.hpp"
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "CalculiXCoreInterface.hpp"
 
 FieldOutputsTree::FieldOutputsTree(QTreeWidget* parent):
@@ -12,8 +14,10 @@ FieldOutputsTree::~FieldOutputsTree()
 
 void FieldOutputsTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Field Outputs");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -124,4 +128,28 @@ int FieldOutputsTree::get_child_id(std::string output_id)
     }
   }
   return int_return;
+}
+
+void FieldOutputsTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create Field Output", host, "CCXFieldOutputsCreate");
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Field Output", host, "CCXFieldOutputsCreate");
+  addPanelAction(menu, "Modify Field Output", host, "CCXFieldOutputsModify");
+  addPanelAction(menu, "Delete Field Output", host, "CCXFieldOutputsDelete");
 }

@@ -1,4 +1,6 @@
 #include "LoadsRadiationTree.hpp"
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "CalculiXCoreInterface.hpp"
 
 LoadsRadiationTree::LoadsRadiationTree(QTreeWidgetItem* parent):
@@ -12,8 +14,10 @@ LoadsRadiationTree::~LoadsRadiationTree()
 
 void LoadsRadiationTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Radiation");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -124,4 +128,36 @@ int LoadsRadiationTree::get_child_id(std::string load_id)
     }
   }
   return int_return;
+}
+
+void LoadsRadiationTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create Radiation", host, "CCXLoadsRadiationCreate");
+    addCommandAction(menu, "Draw Radiations", QString("ccx draw load_radiation_all"));
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  int entityId = -1;
+  if (!readItemId(clickedItem, entityId))
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Radiation", host, "CCXLoadsRadiationCreate");
+  addPanelAction(menu, "Modify Radiation", host, "CCXLoadsRadiationModify");
+  addPanelAction(menu, "Delete Radiation", host, "CCXLoadsRadiationDelete");
+  addCommandAction(menu, "Draw Radiation", QString("ccx draw load radiation ") + QString::number(entityId));
 }

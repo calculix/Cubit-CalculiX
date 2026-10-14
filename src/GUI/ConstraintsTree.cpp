@@ -1,4 +1,6 @@
 
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "ConstraintsTree.hpp"
 #include "CalculiXCoreInterface.hpp"
 
@@ -13,8 +15,10 @@ ConstraintsTree::~ConstraintsTree()
 
 void ConstraintsTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Constraints");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -125,4 +129,28 @@ int ConstraintsTree::get_child_id(std::string constraint_id)
     }
   }
   return int_return;
+}
+
+void ConstraintsTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create Constraint", host, "CCXConstraintsCreateRigidBody");
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Constraint", host, "CCXConstraintsCreateRigidBody");
+  addPanelAction(menu, "Modify Constraint", host, "CCXConstraintsModifyRigidBody");
+  addPanelAction(menu, "Delete Constraint", host, "CCXConstraintsDelete");
 }

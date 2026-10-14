@@ -3,16 +3,20 @@
 #define STEPSLOADSRADIATIONTREE_HPP
 
 #include <QObject>
+#include "TreeContextMenu.hpp"
 #include <QTreeWidgetItem>
 #include <QIcon>
 
 class CalculiXCoreInterface;
 
-class StepsLoadsRadiationTree : public QObject, public QTreeWidgetItem
+class StepsLoadsRadiationTree : public QObject, public QTreeWidgetItem, public TreeContextMenu
 {
   Q_OBJECT
 
 public:
+  void populateContextMenu(
+    QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host) override;
+
   StepsLoadsRadiationTree(QTreeWidgetItem *parent);
   ~StepsLoadsRadiationTree();
 

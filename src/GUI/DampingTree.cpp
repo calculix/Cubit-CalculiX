@@ -1,4 +1,6 @@
 #include "DampingTree.hpp"
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "CalculiXCoreInterface.hpp"
 
 DampingTree::DampingTree(QTreeWidget* parent):
@@ -12,8 +14,10 @@ DampingTree::~DampingTree()
 
 void DampingTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Damping");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -124,4 +128,27 @@ int DampingTree::get_child_id(std::string damping_id)
     }
   }
   return int_return;
+}
+
+void DampingTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Modify Damping", host, "CCXDampingModify");
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Modify Damping", host, "CCXDampingModify");
+  addPanelAction(menu, "Delete Damping", host, "CCXDampingDelete");
 }

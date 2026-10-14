@@ -3,16 +3,20 @@
 #define HISTORYOUTPUTSTREE_HPP
 
 #include <QObject>
+#include "TreeContextMenu.hpp"
 #include <QTreeWidgetItem>
 #include <QIcon>
 
 class CalculiXCoreInterface;
 
-class HistoryOutputsTree : public QObject, public QTreeWidgetItem
+class HistoryOutputsTree : public QObject, public QTreeWidgetItem, public TreeContextMenu
 {
   Q_OBJECT
 
 public:
+  void populateContextMenu(
+    QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host) override;
+
   HistoryOutputsTree(QTreeWidget *parent);
   ~HistoryOutputsTree();
 

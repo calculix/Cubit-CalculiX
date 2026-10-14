@@ -1,4 +1,9 @@
 #include "JobsTree.hpp"
+#include "ModelTree.hpp"
+#include "CubitMessage.hpp"
+#include "JobsMonitor.hpp"
+#include <QMenu>
+#include <QAction>
 #include "CalculiXCoreInterface.hpp"
 #include "GuiTimer.hpp"
 
@@ -13,8 +18,10 @@ JobsTree::~JobsTree()
 
 void JobsTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Jobs");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -166,4 +173,53 @@ void JobsTree::update_icon()
       }
     }
   }
+}
+
+void JobsTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create Job", host, "CCXJobsCreate");
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  int entityId = -1;
+  if (!readItemId(clickedItem, entityId))
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Job", host, "CCXJobsCreate");
+  addPanelAction(menu, "Modify Job", host, "CCXJobsModify");
+  addPanelAction(menu, "Delete Job", host, "CCXJobsDelete");
+  {
+    QAction *action = menu.addAction("Job Monitor");
+    ModelTree *hostPtr = &host;
+    QObject::connect(action, &QAction::triggered, hostPtr, [hostPtr, entityId]()
+    {
+      if (hostPtr->myJobsMonitor == nullptr)
+      {
+        PRINT_WARNING("The requested model tree service is unavailable.\n");
+        return;
+      }
+
+      hostPtr->myJobsMonitor->close();
+      hostPtr->myJobsMonitor->show();
+      hostPtr->myJobsMonitor->setJob(entityId);
+      hostPtr->myJobsMonitor->update();
+    });
+  }
+  addCommandAction(menu, "Result CGX", QString("ccx result cgx job ") + QString::number(entityId));
+  addCommandAction(menu, "Result ParaView", QString("ccx result paraview job ") + QString::number(entityId));
 }

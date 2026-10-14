@@ -1,4 +1,9 @@
 #include "StepsTree.hpp"
+#include "ModelTree.hpp"
+#include "CubitMessage.hpp"
+#include "GuiSendCmd.hpp"
+#include <QMenu>
+#include <QAction>
 #include "StepsLoadsTree.hpp"
 #include "StepsBCsTree.hpp"
 #include "StepsHistoryOutputsTree.hpp"
@@ -15,8 +20,10 @@ StepsTree::~StepsTree()
 
 void StepsTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Steps");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -152,4 +159,56 @@ int StepsTree::get_child_id(std::string step_id)
     }
   }
   return int_return;
+}
+
+void StepsTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create Step", host, "CCXStepsCreate");
+    {
+      QAction *action = menu.addAction("Draw Steps");
+      ModelTree *hostPtr = &host;
+      QObject::connect(action, &QAction::triggered, hostPtr, [hostPtr]()
+      {
+        if (hostPtr->ccx_iface == nullptr)
+        {
+          PRINT_WARNING("The requested model tree service is unavailable.\n");
+          return;
+        }
+
+        std::vector<int> step_ids;
+        step_ids = hostPtr->ccx_iface->get_steps_ids();
+        for (size_t i=0; i < step_ids.size(); i++)
+        {
+          std::string command = "ccx draw step " + std::to_string(step_ids[i]);
+
+          GuiSendCmd::gui_cmd(QString::fromStdString(command));
+        }
+      });
+    }
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  int entityId = -1;
+  if (!readItemId(clickedItem, entityId))
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Step", host, "CCXStepsCreate");
+  addPanelAction(menu, "Modify Step", host, "CCXStepsModify");
+  addPanelAction(menu, "Delete Step", host, "CCXStepsDelete");
+  addCommandAction(menu, "Draw Step", QString("ccx draw step ") + QString::number(entityId));
 }

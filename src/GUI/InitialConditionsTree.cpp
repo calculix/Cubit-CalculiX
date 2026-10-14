@@ -1,4 +1,6 @@
 #include "InitialConditionsTree.hpp"
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "CalculiXCoreInterface.hpp"
 
 InitialConditionsTree::InitialConditionsTree(QTreeWidget* parent):
@@ -12,8 +14,10 @@ InitialConditionsTree::~InitialConditionsTree()
 
 void InitialConditionsTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Initial Conditions");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -124,4 +128,28 @@ int InitialConditionsTree::get_child_id(std::string initialcondition_id)
     }
   }
   return int_return;
+}
+
+void InitialConditionsTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create Initial Condition", host, "CCXInitialConditionsCreate");
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Initial Condition", host, "CCXInitialConditionsCreate");
+  addPanelAction(menu, "Modify Initial Condition", host, "CCXInitialConditionsModify");
+  addPanelAction(menu, "Delete Initial Condition", host, "CCXInitialConditionsDelete");
 }

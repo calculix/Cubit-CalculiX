@@ -1,4 +1,6 @@
 #include "LoadsForcesTree.hpp"
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "CalculiXCoreInterface.hpp"
 
 LoadsForcesTree::LoadsForcesTree(QTreeWidgetItem* parent):
@@ -12,8 +14,10 @@ LoadsForcesTree::~LoadsForcesTree()
 
 void LoadsForcesTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Forces");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -124,4 +128,37 @@ int LoadsForcesTree::get_child_id(std::string load_id)
     }
   }
   return int_return;
+}
+
+void LoadsForcesTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create Force", host, "FEAForceCreate");
+    addCommandAction(menu, "Draw Forces", QString("ccx draw load_force_all"));
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  int entityId = -1;
+  if (!readItemId(clickedItem, entityId))
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Force", host, "FEAForceCreate");
+  addPanelAction(menu, "Modify Force", host, "FEAForceModify");
+  addPanelAction(menu, "CCX Modify Force", host, "CCXLoadsForcesModify");
+  addPanelAction(menu, "Delete Force", host, "FEAForceDelete");
+  addCommandAction(menu, "Draw Force", QString("ccx draw load force ") + QString::number(entityId));
 }

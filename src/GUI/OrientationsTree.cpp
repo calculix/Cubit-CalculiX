@@ -1,4 +1,6 @@
 #include "OrientationsTree.hpp"
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "CalculiXCoreInterface.hpp"
 
 OrientationsTree::OrientationsTree(QTreeWidget* parent):
@@ -12,8 +14,10 @@ OrientationsTree::~OrientationsTree()
 
 void OrientationsTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Orientations");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -124,4 +128,29 @@ int OrientationsTree::get_child_id(std::string orientation_id)
     }
   }
   return int_return;
+}
+
+void OrientationsTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create Orientation", host, "CCXOrientationsCreate");
+    addCommandAction(menu, "Draw Orientations", QString("ccx draw orientation_all"));
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Orientation", host, "CCXOrientationsCreate");
+  addPanelAction(menu, "Modify Orientation", host, "CCXOrientationsModify");
+  addPanelAction(menu, "Delete Orientation", host, "CCXOrientationsDelete");
 }

@@ -1,4 +1,9 @@
 #include "HBCsTree.hpp"
+#include "ModelTree.hpp"
+#include "CubitMessage.hpp"
+#include "HBCsManagement.hpp"
+#include <QMenu>
+#include <QAction>
 #include "CalculiXCoreInterface.hpp"
 
 HBCsTree::HBCsTree(QTreeWidget* parent):
@@ -12,8 +17,10 @@ HBCsTree::~HBCsTree()
 
 void HBCsTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"homogeneous BCs");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -30,5 +37,53 @@ void HBCsTree::clear()
   while (this->childCount()>0)
   {
     this->removeChild(this->child(0));
+  }
+}
+
+void HBCsTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    {
+      QAction *action = menu.addAction("homogeneous BCs Management");
+      ModelTree *hostPtr = &host;
+      QObject::connect(action, &QAction::triggered, hostPtr, [hostPtr]()
+      {
+        if (hostPtr->myHBCsManagement == nullptr)
+        {
+          PRINT_WARNING("The requested model tree service is unavailable.\n");
+          return;
+        }
+
+        hostPtr->myHBCsManagement->show();
+      });
+    }
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  {
+    QAction *action = menu.addAction("homogeneous BCs Management");
+    ModelTree *hostPtr = &host;
+    QObject::connect(action, &QAction::triggered, hostPtr, [hostPtr]()
+    {
+      if (hostPtr->myHBCsManagement == nullptr)
+      {
+        PRINT_WARNING("The requested model tree service is unavailable.\n");
+        return;
+      }
+
+      hostPtr->myHBCsManagement->show();
+    });
   }
 }

@@ -1,4 +1,6 @@
 
+#include "ModelTree.hpp"
+#include <QMenu>
 #include "NodesetTree.hpp"
 #include "CalculiXCoreInterface.hpp"
 
@@ -13,8 +15,10 @@ NodesetTree::~NodesetTree()
 
 void NodesetTree::initialize()
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
 
   QTreeWidgetItem::setText(0,"Node Sets");
   CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
@@ -125,4 +129,28 @@ int NodesetTree::get_child_id(std::string nodeset_id)
     }
   }
   return int_return;
+}
+
+void NodesetTree::populateContextMenu(
+  QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
+{
+  if (clickedItem == nullptr)
+  {
+    return;
+  }
+
+  if (clickedItem == this)
+  {
+    addPanelAction(menu, "Create Nodeset", host, "ExodusCreateNodeset");
+    return;
+  }
+
+  if (clickedItem->parent() != this)
+  {
+    return;
+  }
+
+  addPanelAction(menu, "Create Nodeset", host, "ExodusCreateNodeset");
+  addPanelAction(menu, "Modify Nodeset", host, "ExodusRemoveContentsNodeset");
+  addPanelAction(menu, "Delete Nodeset", host, "ExodusDeleteNodeset");
 }

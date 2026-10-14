@@ -3,16 +3,20 @@
 #define BLOCKSTREE_HPP
 
 #include <QObject>
+#include "TreeContextMenu.hpp"
 #include <QTreeWidgetItem>
 #include <QIcon>
 
 class CalculiXCoreInterface;
 
-class BlocksTree : public QObject, public QTreeWidgetItem
+class BlocksTree : public QObject, public QTreeWidgetItem, public TreeContextMenu
 {
   Q_OBJECT
 
 public:
+  void populateContextMenu(
+    QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host) override;
+
   //BlocksTree(QTreeWidget *parent, int type=0);
   BlocksTree(QTreeWidget *parent);
   ~BlocksTree();

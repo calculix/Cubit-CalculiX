@@ -90,23 +90,14 @@ public:
   HBCsManagement* myHBCsManagement;
   StepsManagement* myStepsManagement;
   JobsMonitor* myJobsMonitor;
-  std::vector<std::vector<int>> contextMenuAction;
 
   void setWidgetInCmdPanelMarker(QString name); // set Widget in CommandPanel
   void setWidgetInCmdPanelPath(QString name); // set Widget in CommandPanel
-  void execContextMenuAction();
   void update();
   void clear();
 
 public slots:
   void showContextMenu(const QPoint &pos);
-  void ContextMenuAction1();
-  void ContextMenuAction2();
-  void ContextMenuAction3();
-  void ContextMenuAction4();
-  void ContextMenuAction5();
-  void ContextMenuAction6();
-  void ContextMenuAction7();
   void ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column);
 };
 
