@@ -25,7 +25,10 @@ bool CoreResultsFrd::init(int job_id)
   {
     return false; // already initialized
   }else{
-    CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
+    if (!ccx_iface)
+    {
+      ccx_iface = new CalculiXCoreInterface();
+    }
     this->job_id = job_id;
 
     std::vector<std::string> job_data = ccx_iface->get_job_data(job_id);
@@ -188,6 +191,10 @@ bool CoreResultsFrd::read_single()
       }
       
       frd_array = this->split_line(frdline);
+      if (frd_array.empty())
+      {
+        continue;
+      }
 
       // first lets check if the mode is still valid
       this->check_mode(frd_array);
@@ -199,7 +206,12 @@ bool CoreResultsFrd::read_single()
         this->read_node(frd_array);
       } else if (current_read_mode == 2)
       {
-        this->read_element(frd_array);
+        const auto element_line = split_element_line(frdline);
+        if (element_line.empty() || !read_element(element_line))
+        {
+          progressbar->end();
+          return false;
+        }
       } else if (current_read_mode == 3)
       {
         this->read_parameter_header(frd_array);
@@ -1072,6 +1084,47 @@ bool CoreResultsFrd::read_nodes_thread(int start,int end,int data_start, int thr
   return true;
 }
 
+std::vector<std::string> CoreResultsFrd::split_element_line(const std::string& frdline)
+{
+  // Connectivity and other records use the existing splitter.
+  if (frdline.size() < 3 || frdline.substr(0, 3) != " -1")
+  {
+    return split_line(frdline);
+  }
+
+  if (frdline.size() < 24)
+  {
+    PRINT_ERROR("Incomplete FRD element header.\n");
+    return {};
+  }
+
+  std::vector<std::string> fields{
+      "-1",
+      frdline.substr(3, 10),   // Element ID.
+      frdline.substr(13, 5),   // Element type.
+      frdline.substr(18, 5),   // Group.
+      frdline.substr(23)       // Material ID.
+  };
+
+  // Validate without throwing; return canonical integer strings.
+  for (size_t i = 1; i < fields.size(); ++i)
+  {
+    int value = 0;
+    std::istringstream stream(fields[i]);
+
+    if (!(stream >> value) || !(stream >> std::ws).eof())
+    {
+      PRINT_ERROR("Invalid integer field %zu in FRD element header.\n",
+                  i);
+      return {};
+    }
+
+    fields[i] = std::to_string(value);
+  }
+
+  return fields;
+}
+
 bool CoreResultsFrd::read_element(std::vector<std::string> line)
 {
   int element_id;
@@ -1123,7 +1176,11 @@ bool CoreResultsFrd::read_elements_thread(int start,int end,int data_start,int t
   { 
     if ((ic>=start)&&(ic<=end))
     {
-      std::vector<std::string> line = this->split_line(frdline);
+      std::vector<std::string> line = split_element_line(frdline);
+      if (line.empty())
+      {
+        return false;
+      }
       
       int element_id;
       int element_type;

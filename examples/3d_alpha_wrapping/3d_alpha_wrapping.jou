@@ -1,0 +1,32 @@
+reset
+create brick x 1 y 2
+block 1 add vol 1
+mesh vol 1
+move vol 1 x 2
+
+
+create surface circle radius 1 zplane 
+create surface rectangle width 1 height 2 yplane 
+block 2 add surface 7 8
+mesh surface 7 8
+
+create brick x 1 y 1 z 2
+create vertex 0 0 0
+mesh vol 4
+move vol 4 x -2
+mesh vertex 22
+move vertex 22 x -2 z 3
+block 3 add node all in vol 4
+block 3 add node all in vertex 22
+
+
+create curve helix zaxis location 1 0 0  thread_distance 1 angle 360 right_handed 
+move curve 30 y 4
+mesh curve 30
+curve 30 size 0.01
+block 4 add curve 30
+
+ccx wrap block 1  alpha 2 offset 0.1 file "wrap_test.stl" overwrite
+ccx wrap block 2  alpha 0.1 offset 0.1 file "wrap_test.stl" overwrite
+ccx wrap block 3  alpha 2 offset 0.1 file "wrap_test.stl" overwrite
+ccx wrap block 4  alpha 0.1 offset 0.1 file "wrap_test.stl" overwrite

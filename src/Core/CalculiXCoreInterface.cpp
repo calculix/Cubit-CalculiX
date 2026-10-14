@@ -1061,6 +1061,11 @@ std::string CalculiXCoreInterface::get_topology_run_state(int topology_id)
   return ccx_core.get_topology_run_state(topology_id);
 }
 
+std::vector<std::vector<double>> CalculiXCoreInterface::get_topology_iteration_element_data(int topology_id,int iteration_id)
+{
+  return ccx_core.get_topology_iteration_element_data(topology_id, iteration_id);
+}
+
 bool CalculiXCoreInterface::set_job_conversion(int job_id, int conversion)
 {
   return ccx_core.set_job_conversion(job_id,conversion);
@@ -1154,6 +1159,11 @@ int CalculiXCoreInterface::convert_result(int job_id, std::vector<int> options, 
 bool CalculiXCoreInterface::project_result(int job_id,int step,int totalincrement,double scale)
 {
   return ccx_core.project_result(job_id,step,totalincrement,scale);
+}
+
+bool CalculiXCoreInterface::project_topology(int topology_id,int iteration_id, double threshold, bool preview)
+{
+  return ccx_core.project_topology(topology_id, iteration_id, threshold, preview);
 }
 
 double CalculiXCoreInterface::compute_von_mises_stress(std::vector<double> vec)
@@ -1474,6 +1484,16 @@ bool CalculiXCoreInterface::draw_bc_displacements(double size)
 bool CalculiXCoreInterface::draw_bc_temperatures(double size)
 {
   return ccx_core.draw_bc_temperatures(size);
+}
+
+bool CalculiXCoreInterface::draw_topology(int topology_id,int iteration_id,double threshold)
+{
+  return ccx_core.draw_topology(topology_id, iteration_id, threshold);
+}
+
+bool CalculiXCoreInterface::animate_topology(int topology_id,double threshold,int fps,std::string save_filepath, bool overwrite)
+{
+  return ccx_core.animate_topology(topology_id, threshold, fps, save_filepath, overwrite);
 }
 
 std::vector<int> CalculiXCoreInterface::frd_get_nodes(int job_id)

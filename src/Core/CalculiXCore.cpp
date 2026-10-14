@@ -15,6 +15,7 @@
 #include <set>
 #include <limits>
 #include <iomanip>
+#include <exception>
 
 //#include "cubitguicommondll.hpp"
 //#include "CubitGuiUtil.hpp"
@@ -5829,7 +5830,7 @@ int CalculiXCore::run_topology_iteration(int topology_id, int iteration_id)
 
 bool CalculiXCore::run_topology(int topology_id)
 {
-  if (!topology || !mat || !sections || !jobs || !steps || !historyoutputs)
+  if (!topology || !mat || !sections || !jobs || !steps || !historyoutputs || !me_iface)
   {
     PRINT_ERROR("Topology run cores are not initialized.\n");
     return false;
@@ -5864,10 +5865,12 @@ bool CalculiXCore::run_topology(int topology_id)
 
   RunStateGuard run_guard(entry->second);
 
+  PRINT_INFO("Topology %d: resetting run data.\n", topology_id);
   if (!reset_topology_run(topology_id))
   {
     return false;
   }
+  PRINT_INFO("Topology %d: run data reset completed.\n", topology_id);
   entry->second.run_state = TopologyRunState::Running;
 
   if (entry->second.method != TopologyMethod::Density || entry->second.objective != TopologyObjective::Compliance)
@@ -6954,172 +6957,183 @@ bool CalculiXCore::set_topology_iteration_densities(int topology_id,int iteratio
   return true;
 }
 
-bool CalculiXCore::collect_topology_element_volumes(int topology_id, std::map<int, double>& element_volumes, std::map<int, std::array<double, 3>>* element_centers)
+bool CalculiXCore::collect_topology_element_volumes(int topology_id,std::map<int, double>& element_volumes,std::map<int, std::array<double, 3>>* element_centers)
 {
   element_volumes.clear();
   if (element_centers)
   {
     element_centers->clear();
   }
-  std::map<int, std::array<double, 3>> centers;
 
-  if (!mat || !me_iface)
+  if (!mat)
   {
-    PRINT_ERROR("Topology volume query interfaces are missing.\n");
+    PRINT_ERROR("Material core is not initialized.\n");
     return false;
   }
 
   const auto collection = mat->topology_material_data.find(topology_id);
 
-  if (collection == mat->topology_material_data.end() || collection->second.element_base_material.empty())
+  if (collection == mat->topology_material_data.end() ||
+      collection->second.element_base_material.empty())
   {
     PRINT_ERROR("Topology %d has no prepared elements.\n", topology_id);
     return false;
   }
 
-  const auto& analysis_elements = collection->second.element_base_material;
-  std::map<int, double> collected;
-  std::vector<BlockHandle> blocks;
+  std::map<int, double> volumes;
+  std::map<int, std::array<double, 3>> centers;
 
-  if (me_iface->get_block_list(blocks) < 0)
+  PRINT_INFO("Topology %d: querying prepared elements directly.\n",topology_id);
+
+  for (const auto& assignment : collection->second.element_base_material)
   {
-    PRINT_ERROR("Unable to query mesh blocks.\n");
-    return false;
-  }
+    const int global_id = assignment.first;
 
-  for (const auto& block : blocks)
-  {
-    const int batch_size = 100;
-    int start = 0;
-    int count = 0;
-    std::vector<ElementType> types;
-    std::vector<ElementHandle> handles;
+    const std::string type = CubitInterface::get_element_type(global_id);
 
-    while ((count = me_iface->get_block_elements(start, batch_size, block, types, handles)) > 0)
+    std::string entity;
+    if (type == "hex" || type == "tet" || type == "wedge")
     {
-      if (types.size() < static_cast<size_t>(count) || handles.size() < static_cast<size_t>(count))
-      {
-        PRINT_ERROR("Incomplete mesh element query.\n");
-        return false;
-      }
-
-      for (int i = 0; i < count; ++i)
-      {
-        const std::string entity = get_cubit_element_type_entity(me_iface->get_element_type_name(types[i]));
-
-        if (entity != "hex" && entity != "tet" && entity != "wedge")
-        {
-          continue;
-        }
-
-        int local_id = -1;
-
-        if (!me_iface->get_element_id(handles[i], local_id) ||
-            local_id <= 0)
-        {
-          PRINT_ERROR("Unable to query a Cubit element ID.\n");
-          return false;
-        }
-
-        const int global_id = CubitInterface::get_global_element_id(entity, local_id);
-
-        if (global_id <= 0)
-        {
-          PRINT_ERROR("Invalid global ID for %s %d.\n", entity.c_str(), local_id);
-          return false;
-        }
-
-        if (analysis_elements.count(global_id) == 0)
-        {
-          continue;
-        }
-
-        const double volume = CubitInterface::get_meshed_volume_or_area(entity, {local_id});
-
-        if (!std::isfinite(volume) || volume <= 0.0)
-        {
-          PRINT_ERROR("Invalid volume for topology element %d.\n", global_id);
-          return false;
-        }
-
-        if (!collected.emplace(global_id, volume).second)
-        {
-          PRINT_ERROR("Duplicate topology element %d in mesh blocks.\n", global_id);
-          return false;
-        }
-        if (element_centers)
-        {
-          const auto center = CubitInterface::get_center_point(entity, local_id);
-
-          for (double coordinate : center)
-          {
-            if (!std::isfinite(coordinate))
-            {
-              PRINT_ERROR("Invalid center for topology element %d.\n", global_id);
-              return false;
-            }
-          }
-          centers.emplace(global_id, center);
-        }
-      }
-      start += count;
+      entity = type;
     }
-
-    if (count < 0)
+    else
     {
-      PRINT_ERROR("Failed to query mesh block elements.\n");
+      entity = get_cubit_element_type_entity(type);
+    }
+    const int local_id = CubitInterface::get_element_type_id(global_id);
+
+    if ((entity != "hex" && entity != "tet" && entity != "wedge") ||
+        local_id <= 0)
+    {
+      PRINT_ERROR("Invalid topology element %d: type '%s', local ID %d.\n",global_id, type.c_str(), local_id);
       return false;
     }
+
+    const bool first = volumes.empty();
+
+    if (first)
+    {
+      PRINT_INFO("Querying volume: global %d, %s %d.\n", global_id, entity.c_str(), local_id);
+    }
+
+    const double volume = CubitInterface::get_meshed_volume_or_area(entity, {local_id});
+
+    if (!std::isfinite(volume) || volume <= 0.0)
+    {
+      PRINT_ERROR("Invalid volume for topology element %d.\n", global_id);
+      return false;
+    }
+
+    volumes.emplace(global_id, volume);
+
+    if (element_centers)
+    {
+      if (first)
+      {
+        PRINT_INFO("Querying center: global %d, %s %d.\n", global_id, entity.c_str(), local_id);
+      }
+
+      const auto center = CubitInterface::get_center_point(entity, local_id);
+
+      for (double coordinate : center)
+      {
+        if (!std::isfinite(coordinate))
+        {
+          PRINT_ERROR("Invalid center for topology element %d.\n", global_id);
+          return false;
+        }
+      }
+
+      centers.emplace(global_id, center);
+
+      if (first)
+      {
+        PRINT_INFO("First element center queried successfully.\n");
+      }
+    }
   }
 
-  if (collected.size() != analysis_elements.size())
-  {
-    PRINT_ERROR("Incomplete element volumes for topology %d.\n", topology_id);
-    return false;
-  }
+  element_volumes.swap(volumes);
 
-  element_volumes.swap(collected);
   if (element_centers)
   {
     element_centers->swap(centers);
   }
+
+  PRINT_INFO("Topology %d: element geometry queries completed.\n", topology_id);
   return true;
 }
 
-bool CalculiXCore::prepare_topology_density_iteration(int topology_id,int source_iteration,int next_iteration)
+bool CalculiXCore::prepare_topology_density_iteration(
+    int topology_id,
+    int source_iteration,
+    int next_iteration)
 {
-  if (!topology || !jobs || source_iteration < 0 || next_iteration <= source_iteration)
+  if (!topology || !jobs ||
+      source_iteration < 0 ||
+      next_iteration <= source_iteration)
   {
     PRINT_ERROR("Invalid next topology iteration request.\n");
     return false;
   }
 
-  const int job_id = get_topology_iteration_job_id(topology_id, source_iteration);
+  const char* stage = "checking the source job";
 
-  if (job_id <= 0 || jobs->get_job_status(job_id) != 2)
+  try
   {
-    PRINT_ERROR("The source topology job has not completed.\n");
+    const int job_id =
+        get_topology_iteration_job_id(topology_id, source_iteration);
+
+    if (job_id <= 0 || jobs->get_job_status(job_id) != 2)
+    {
+      PRINT_ERROR("The source topology job has not completed.\n");
+      return false;
+    }
+
+    stage = "collecting element volumes and centers";
+    PRINT_INFO("Topology %d iteration %d: %s.\n",topology_id, next_iteration, stage);
+
+    std::map<int, double> element_volumes;
+    std::map<int, std::array<double, 3>> element_centers;
+
+    if (!collect_topology_element_volumes(topology_id, element_volumes, &element_centers))
+    {
+      return false;
+    }
+
+    stage = "filtering density sensitivities";
+    PRINT_INFO("Topology %d iteration %d: %s.\n",topology_id, next_iteration, stage);
+
+    if (!topology->filter_density_sensitivities(topology_id, source_iteration, element_volumes, element_centers))
+    {
+      return false;
+    }
+
+    stage = "calculating the density update";
+    PRINT_INFO("Topology %d iteration %d: %s.\n",topology_id, next_iteration, stage);
+
+    std::map<int, double> densities;
+
+    if (!topology->build_density_update(topology_id, source_iteration, densities))
+    {
+      return false;
+    }
+
+    stage = "storing the next density design";
+    PRINT_INFO("Topology %d iteration %d: %s.\n",topology_id, next_iteration, stage);
+
+    return set_topology_iteration_densities(topology_id, next_iteration, densities);
+  }
+  catch (const std::exception& error)
+  {
+    PRINT_ERROR("Topology %d iteration %d failed while %s: %s.\n",topology_id, next_iteration, stage, error.what());
     return false;
   }
-
-  std::map<int, double> element_volumes;
-  std::map<int, std::array<double, 3>> element_centers;
-  if (!collect_topology_element_volumes(topology_id, element_volumes, &element_centers))
+  catch (...)
   {
+    PRINT_ERROR("Topology %d iteration %d failed while %s.\n",topology_id, next_iteration, stage);
     return false;
   }
-  if (!topology->filter_density_sensitivities(topology_id, source_iteration, element_volumes, element_centers))
-  {
-    return false;
-  }
-
-  std::map<int, double> densities;
-  if (!topology->build_density_update(topology_id, source_iteration, densities))
-  {
-    return false;
-  }
-
-  return set_topology_iteration_densities(topology_id, next_iteration, densities);
 }
 
 std::vector<std::vector<std::string>> CalculiXCore::get_topology_iteration_data(int topology_id)
@@ -7275,6 +7289,103 @@ std::string CalculiXCore::get_topology_run_state(int topology_id)
 
   PRINT_ERROR("Invalid topology run state.\n");
   return "";
+}
+
+std::vector<std::vector<double>> CalculiXCore::get_topology_iteration_element_data(int topology_id,int iteration_id)
+{
+  if (!topology || !mat || !jobs || iteration_id < -1)
+  {
+    PRINT_ERROR("Invalid topology element-data request.\n");
+    return {};
+  }
+
+  const auto entry = topology->topology_cases.find(topology_id);
+  const auto collection = mat->topology_material_data.find(topology_id);
+
+  if (entry == topology->topology_cases.end() ||
+      collection == mat->topology_material_data.end())
+  {
+    PRINT_ERROR("Topology %d has no prepared design data.\n", topology_id);
+    return {};
+  }
+
+  const auto& configuration = entry->second;
+
+  if (iteration_id == -1)
+  {
+    iteration_id = configuration.selected_iteration;
+  }
+
+  if (iteration_id < 0)
+  {
+    PRINT_ERROR("Topology %d has no selected iteration.\n", topology_id);
+    return {};
+  }
+
+  const int job_id = get_topology_iteration_job_id(topology_id, iteration_id);
+
+  if (job_id <= 0 ||
+      jobs->get_job_status(job_id) != 2 ||
+      configuration.iteration_evaluations.count(iteration_id) == 0)
+  {
+    PRINT_ERROR("Topology iteration %d is not a completed evaluation.\n", iteration_id);
+    return {};
+  }
+
+  const auto design = configuration.iteration_density_designs.find(iteration_id);
+  const auto factors = collection->second.iteration_factors.find(iteration_id);
+
+  if (design == configuration.iteration_density_designs.end() ||
+      factors == collection->second.iteration_factors.end())
+  {
+    PRINT_ERROR("Missing topology iteration densities or factors.\n");
+    return {};
+  }
+
+  const auto& densities = design->second.element_densities;
+  const auto& preserved = configuration.element_preserved;
+  const auto& assignments = collection->second.element_base_material;
+
+  if (densities.empty() ||
+      densities.size() != factors->second.size() ||
+      densities.size() != preserved.size() ||
+      densities.size() != assignments.size())
+  {
+    PRINT_ERROR("Incomplete topology iteration element data.\n");
+    return {};
+  }
+
+  std::vector<std::vector<double>> rows;
+  rows.reserve(densities.size());
+
+  for (const auto& density : densities)
+  {
+    const auto factor = factors->second.find(density.first);
+    const auto flag = preserved.find(density.first);
+
+    if (density.first <= 0 ||
+        assignments.count(density.first) == 0 ||
+        factor == factors->second.end() ||
+        flag == preserved.end() ||
+        !std::isfinite(density.second) ||
+        density.second <= 0.0 || density.second > 1.0 ||
+        !std::isfinite(factor->second) ||
+        factor->second <= 0.0 || factor->second > 1.0)
+    {
+      PRINT_ERROR("Invalid topology data for element %d.\n",
+                  density.first);
+      return {};
+    }
+
+    rows.push_back({
+        static_cast<double>(density.first),
+        density.second,
+        factor->second,
+        flag->second ? 1.0 : 0.0
+    });
+  }
+
+  return rows;
 }
 
 bool CalculiXCore::set_job_conversion(int job_id, int conversion)
@@ -8136,6 +8247,17 @@ int CalculiXCore::convert_result(int job_id, std::vector<int> options, std::vect
 bool CalculiXCore::project_result(int job_id,int step,int totalincrement,double scale)
 {
   return results->project_result(job_id,step,totalincrement,scale);
+}
+
+bool CalculiXCore::project_topology(int topology_id, int iteration_id, double threshold, bool preview)
+{
+  if (!results)
+  {
+    PRINT_ERROR("Results core is not initialized.\n");
+    return false;
+  }
+
+  return results->project_topology(topology_id, iteration_id, threshold, preview);
 }
 
 double CalculiXCore::compute_von_mises_stress(std::vector<double> vec)
@@ -9455,6 +9577,27 @@ bool CalculiXCore::draw_bc_displacements(double size)
 bool CalculiXCore::draw_bc_temperatures(double size)
 {
   return draw->draw_bc_temperatures(size);
+}
+
+bool CalculiXCore::draw_topology(int topology_id,int iteration_id,double threshold)
+{
+  if (!draw)
+  {
+    PRINT_ERROR("Drawing core is not initialized.\n");
+    return false;
+  }
+  return draw->draw_topology(topology_id, iteration_id, threshold);
+}
+
+bool CalculiXCore::animate_topology(int topology_id,double threshold,int fps,std::string save_filepath,bool overwrite)
+{
+  if (!draw)
+  {
+    PRINT_ERROR("Drawing core is not initialized.\n");
+    return false;
+  }
+
+  return draw->animate_topology(topology_id, threshold, fps, save_filepath, overwrite);
 }
 
 std::vector<int> CalculiXCore::frd_get_nodes(int job_id)

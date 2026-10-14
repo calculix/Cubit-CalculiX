@@ -74,9 +74,12 @@ public:
   bool draw_bc_displacements(double size = 1); //draw all displacements
   bool draw_bc_temperatures(double size = 1); //draw all temperatures
 
+  bool draw_topology(int topology_id,int iteration_id = -1,double threshold = 0.5); // draw topology iteration
+  bool animate_topology(int topology_id,double threshold = 0.5,int fps = 5,std::string save_filepath = "", bool overwrite = false);
+
   std::string get_color(int color_id); // gets color based on the color id
 
-  CalculiXCoreInterface *ccx_iface;
+  CalculiXCoreInterface *ccx_iface = nullptr;
 };
 
 #endif // COREDRAW_HPP

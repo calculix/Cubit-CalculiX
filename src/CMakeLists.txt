@@ -318,9 +318,12 @@ if (WIN32)
     add_library(ccx_cgal_tool STATIC
         Utility/CGALTool.cpp
         Utility/CGALTool.hpp
+        Utility/CubitWrapInput.cpp
+        Utility/CubitWrapInput.hpp
     )
+
     target_compile_features(ccx_cgal_tool PRIVATE cxx_std_17)
-    target_link_libraries(ccx_cgal_tool PRIVATE CGAL::CGAL cubit_util)
+    target_link_libraries(ccx_cgal_tool PRIVATE CGAL::CGAL cubiti cubit_util)
     set_target_properties(ccx_cgal_tool PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
     target_link_libraries(calculix_core calculix_useroptions ccx_cgal_tool)
@@ -359,9 +362,12 @@ if (UNIX)
     add_library(ccx_cgal_tool STATIC
         Utility/CGALTool.cpp
         Utility/CGALTool.hpp
+        Utility/CubitWrapInput.cpp
+        Utility/CubitWrapInput.hpp
     )
+
     target_compile_features(ccx_cgal_tool PRIVATE cxx_std_17)
-    target_link_libraries(ccx_cgal_tool PRIVATE CGAL::CGAL cubit_util)
+    target_link_libraries(ccx_cgal_tool PRIVATE CGAL::CGAL cubiti cubit_util)
     set_target_properties(ccx_cgal_tool PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
     target_link_libraries(calculix_core calculix_useroptions ccx_cgal_tool)

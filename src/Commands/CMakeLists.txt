@@ -321,4 +321,8 @@ set(CMD_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryExportMaterialCommand.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryImportMaterialCommand.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ccxMaterialLibraryImportMaterialCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxWrapCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxWrapCommand.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxAnimateTopologyCommand.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ccxAnimateTopologyCommand.hpp
     PARENT_SCOPE)

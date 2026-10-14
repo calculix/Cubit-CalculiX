@@ -52,8 +52,12 @@ std::vector<std::string> ccxDrawCommand::get_syntax()
   syntax.append(" [orientation_all]");
   syntax.append(" [equation_all]");
   syntax.append(" [equationgroup_all]");
-  
   syntax_list.push_back(syntax);
+
+  syntax_list.push_back(
+    "ccx draw topology <value:label='topology_id'> "
+    "[iteration <value:label='iteration_id'>] "
+    "[threshold <value:label='threshold'>]");
 
   return syntax_list;
 }
@@ -97,6 +101,8 @@ std::vector<std::string> ccxDrawCommand::get_syntax_help()
   help[0].append(" [equation_all]");
   help[0].append(" [equationgroup_all]");
 
+  help.push_back("ccx draw topology <id> [iteration <iteration_id>] [threshold <density>]");
+
   return help;
 }
 
@@ -129,6 +135,31 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
   std::vector<int> equation_id;
   std::vector<int> equationgroup_id;
   
+  // topology
+  if (data.find_keyword("topology"))
+  {
+    int topology_id = -1;
+    int iteration_id = -1;
+    double threshold = 0.5;
+
+    data.get_value("topology_id", topology_id);
+
+    if (data.find_keyword("iteration"))
+    {
+      data.get_value("iteration_id", iteration_id);
+    }
+
+    if (data.find_keyword("threshold"))
+    {
+      data.get_value("threshold", threshold);
+    }
+
+    return ccx_iface.draw_topology(
+        topology_id, iteration_id, threshold);
+  }
+  ///////////
+
+
   if (!data.get_value("size_value", size_value))
   {
     std::array<double,10> vector_list;

@@ -160,7 +160,7 @@ public:
   template <typename T> void apply_permutation(std::vector<T>& vec,const std::vector<std::size_t>& p);
 
   ProgressTool *progressbar; // progressbar
-  CalculiXCoreInterface *ccx_iface;
+  CalculiXCoreInterface* ccx_iface = nullptr;
 };
 
 #endif // CORERESULTSDAT_HPP

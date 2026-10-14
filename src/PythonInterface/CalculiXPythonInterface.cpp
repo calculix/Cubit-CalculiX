@@ -125,6 +125,11 @@ std::string CalculiXPythonInterface::get_topology_run_state(int topology_id)
   return ccx_iface->get_topology_run_state(topology_id);
 }
 
+std::vector<std::vector<double>> CalculiXPythonInterface::get_topology_iteration_element_data(int topology_id,int iteration_id)
+{
+  return ccx_iface->get_topology_iteration_element_data(topology_id, iteration_id);
+}
+
 std::vector<std::string> CalculiXPythonInterface::frd_get_result_block_types(int job_id)
 {
   return ccx_iface->frd_get_result_block_types(job_id);

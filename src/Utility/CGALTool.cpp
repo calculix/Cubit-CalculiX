@@ -13,6 +13,13 @@
 
 #pragma pop_macro("NT")
 
+#ifdef _WIN32
+    #ifndef NOMINMAX
+    #define NOMINMAX
+    #endif
+    #include <windows.h>
+#endif
+
 #include <cmath>
 #include <exception>
 #include <system_error>
@@ -50,7 +57,9 @@ bool CGALTool::alphawrap(
     const TriangleSoup& input,
     double alpha,
     double offset,
-    const std::filesystem::path& filename)
+    const std::filesystem::path& filename,
+    WrapMode mode,
+    bool overwrite)
 {
     try
     {
@@ -66,7 +75,13 @@ bool CGALTool::alphawrap(
             return false;
         }
 
-        if (input.points.empty() || input.triangles.empty())
+        if (input.points.empty())
+        {
+            PRINT_ERROR("No input points for alpha wrapping.\n");
+            return false;
+        }
+
+        if (mode == WrapMode::TriangleSoup && input.triangles.empty())
         {
             PRINT_ERROR("No input triangles for alpha wrapping.\n");
             return false;
@@ -88,7 +103,7 @@ bool CGALTool::alphawrap(
             return false;
         }
 
-        if (file_exists)
+        if (file_exists && !overwrite)
         {
             PRINT_ERROR("Output file already exists.\n");
             return false;
@@ -114,14 +129,18 @@ bool CGALTool::alphawrap(
             points.emplace_back(point[0], point[1], point[2]);
         }
 
-        for (const Triangle& triangle : input.triangles)
+        if (mode == WrapMode::TriangleSoup)
         {
-            for (std::size_t index : triangle)
+            for (const Triangle& triangle : input.triangles)
             {
-                if (index >= points.size())
+                for (std::size_t index : triangle)
                 {
-                    PRINT_ERROR("Triangle contains an invalid point index.\n");
-                    return false;
+                    if (index >= points.size())
+                    {
+                        PRINT_ERROR(
+                            "Triangle contains an invalid point index.\n");
+                        return false;
+                    }
                 }
             }
         }
@@ -129,12 +148,23 @@ bool CGALTool::alphawrap(
         PRINT_INFO("Creating alpha wrap: alpha=%g, offset=%g.\n",alpha,offset);
 
         CGALMesh wrap;
-        CGAL::alpha_wrap_3(
-            points,
-            input.triangles,
-            alpha,
-            offset,
-            wrap);
+        if (mode == WrapMode::PointCloud)
+        {
+            CGAL::alpha_wrap_3(
+                points,
+                alpha,
+                offset,
+                wrap);
+        }
+        else
+        {
+            CGAL::alpha_wrap_3(
+                points,
+                input.triangles,
+                alpha,
+                offset,
+                wrap);
+        }
 
         if (wrap.number_of_faces() == 0 ||
             !CGAL::is_valid_polygon_mesh(wrap) ||
@@ -174,7 +204,7 @@ bool CGALTool::alphawrap(
         TemporarySTL temporary_file{temporary_filename};
 
         {
-            std::ofstream output(temporary_filename);
+            std::ofstream output(temporary_filename,std::ios::out | std::ios::binary);
 
             if (!output.is_open())
             {
@@ -182,7 +212,7 @@ bool CGALTool::alphawrap(
                 return false;
             }
 
-            CGAL::IO::set_mode(output, CGAL::IO::ASCII);
+            CGAL::IO::set_mode(output, CGAL::IO::BINARY);
 
             const bool written = CGAL::IO::write_STL(
                 output,
@@ -217,23 +247,45 @@ bool CGALTool::alphawrap(
             return false;
         }
 
-        if (destination_exists)
+        if (destination_exists && !overwrite)
         {
             PRINT_ERROR("Destination STL already exists.\n");
             return false;
         }
 
-        std::filesystem::rename(
-            temporary_filename,
-            filename,
-            file_error);
+        #ifdef _WIN32
+            DWORD move_flags = 0;
+
+            if (overwrite)
+            {
+                move_flags |= MOVEFILE_REPLACE_EXISTING;
+            }
+
+            if (!MoveFileExW(
+                    temporary_filename.c_str(),
+                    filename.c_str(),
+                    move_flags))
+            {
+                const DWORD error = GetLastError();
+
+                file_error = std::error_code(
+                    static_cast<int>(error),
+                    std::system_category());
+            }
+            else
+            {
+                file_error.clear();
+            }
+        #else
+            std::filesystem::rename(
+                temporary_filename,
+                filename,
+                file_error);
+        #endif
 
         if (file_error)
         {
-            PRINT_ERROR(
-                "Cannot rename temporary STL to destination: %s\n",
-                file_error.message().c_str());
-
+            PRINT_ERROR("Cannot publish wrapped STL: %s\n", file_error.message().c_str());
             return false;
         }
 

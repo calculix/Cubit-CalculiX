@@ -1,8 +1,23 @@
 #include "CoreDraw.hpp"
 #include "CubitInterface.hpp"
-#include <cmath>
 #include "CalculiXCoreInterface.hpp"
 #include "CubitMessage.hpp"
+#include "GifAnimation.hpp"
+
+#include <algorithm>
+#include <limits>
+#include <map>
+#include <sstream>
+#include <cmath>
+#include <set>
+
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#include <QImage>
+#include <QStringList>
+#include <QTemporaryDir>
+#include <QSaveFile>
 
 CoreDraw::CoreDraw()
 {}
@@ -17,7 +32,7 @@ bool CoreDraw::init()
   {
     return false; // already initialized
   }else{
-    CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
+    ccx_iface = new CalculiXCoreInterface();
     is_initialized = true;  
     return true;
   }
@@ -1512,6 +1527,384 @@ bool CoreDraw::draw_bc_temperatures(double size)
     return true;
 }
 
+bool CoreDraw::draw_topology(int topology_id,int iteration_id,double threshold)
+{
+  if (!is_initialized || !ccx_iface ||
+      iteration_id < -1 ||
+      !std::isfinite(threshold) ||
+      threshold < 0.0 || threshold > 1.0)
+  {
+    PRINT_ERROR("Invalid topology drawing request.\n");
+    return false;
+  }
+
+  const auto rows = ccx_iface->get_topology_iteration_element_data(topology_id, iteration_id);
+
+  if (rows.empty())
+  {
+    return false;
+  }
+
+  std::map<std::string, std::vector<int>> keep;
+  std::map<std::string, std::vector<int>> remove;
+  size_t kept_count = 0;
+  size_t removed_count = 0;
+
+  // Resolve every element before changing the display.
+  for (const auto& row : rows)
+  {
+    if (row.size() != 4 ||
+        !std::isfinite(row[0]) ||
+        row[0] < 1.0 ||
+        row[0] > static_cast<double>(
+        (std::numeric_limits<int>::max)()) ||
+        std::floor(row[0]) != row[0] ||
+        !std::isfinite(row[1]) ||
+        row[1] < 0.0 || row[1] > 1.0 ||
+        (row[3] != 0.0 && row[3] != 1.0))
+    {
+      PRINT_ERROR("Invalid topology preview data.\n");
+      return false;
+    }
+
+    const int global_id = static_cast<int>(row[0]);
+    const std::string type = CubitInterface::get_element_type(global_id);
+
+    std::string entity = type;
+
+    if (entity != "hex" && entity != "tet" && entity != "wedge")
+    {
+      entity = ccx_iface->get_cubit_element_type_entity(type);
+    }
+
+    const int local_id = CubitInterface::get_element_type_id(global_id);
+
+    if ((entity != "hex" && entity != "tet" && entity != "wedge") ||
+        local_id <= 0)
+    {
+      PRINT_ERROR("Unable to resolve topology element %d.\n", global_id);
+      return false;
+    }
+
+    const bool preserved = row[3] == 1.0;
+    const bool removal_candidate = !preserved && row[1] < threshold;
+
+    if (removal_candidate)
+    {
+      remove[entity].push_back(local_id);
+      ++removed_count;
+    }
+    else
+    {
+      keep[entity].push_back(local_id);
+      ++kept_count;
+    }
+  }
+
+  bool first_draw = true;
+
+  const auto draw_groups = [&](const std::map<std::string, std::vector<int>>& groups,bool edges_only, const std::string& color)
+  {
+    constexpr size_t batch_size = 200;
+
+    for (const auto& group : groups)
+    {
+      const auto& ids = group.second;
+
+      for (size_t start = 0; start < ids.size(); start += batch_size)
+      {
+        std::ostringstream command;
+        command << "draw ";
+
+        if (edges_only)
+        {
+          command << "edge all in ";
+        }
+
+        command << group.first;
+
+        const size_t end = std::min(ids.size(), start + batch_size);
+
+        for (size_t i = start; i < end; ++i)
+        {
+          command << " " << ids[i];
+        }
+
+        command << " color " << color;
+
+        if (!first_draw)
+        {
+          command << " add";
+        }
+
+        if (!ccx_iface->silent_cmd(command.str()))
+        {
+          PRINT_ERROR("Failed to draw topology preview.\n");
+          return false;
+        }
+
+        first_draw = false;
+      }
+    }
+
+    return true;
+  };
+
+  if (!draw_groups(keep, false, "green") ||
+      !draw_groups(remove, true, "red"))
+  {
+    return false;
+  }
+
+  if (!ccx_iface->silent_cmd("graphics flush"))
+  {
+    return false;
+  }
+
+  PRINT_INFO(
+      "Topology %d preview: threshold %.6g; "
+      "%zu kept elements, %zu removal candidates shown as red edges.\n",
+      topology_id, threshold, kept_count, removed_count);
+
+  return true;
+}
+
+bool CoreDraw::animate_topology(int topology_id, double threshold,int fps,std::string save_filepath, bool overwrite)
+{
+  if (!is_initialized || !ccx_iface)
+  {
+    PRINT_ERROR("Drawing core is not initialized.\n");
+    return false;
+  }
+
+  if (!std::isfinite(threshold) ||
+      threshold < 0.0 || threshold > 1.0 ||
+      fps < 1 || fps > 100)
+  {
+    PRINT_ERROR("Animation requires threshold 0..1 and fps 1..100.\n");
+    return false;
+  }
+
+  const std::string run_state = ccx_iface->get_topology_run_state(topology_id);
+
+  if (run_state.empty())
+  {
+    return false;
+  }
+
+  if (run_state == "running")
+  {
+    PRINT_ERROR("Cannot animate a running topology case.\n");
+    return false;
+  }
+
+  const auto rows = ccx_iface->get_topology_iteration_data(topology_id);
+
+  std::set<int> iterations;
+
+  for (const auto& row : rows)
+  {
+    // Completed job with an evaluated objective and volume.
+    if (row.size() < 6 ||
+        row[2] != "2" ||
+        row[3].empty() ||
+        row[4].empty())
+    {
+      continue;
+    }
+
+    int iteration_id = -1;
+    std::istringstream stream(row[0]);
+
+    if (!(stream >> iteration_id))
+    {
+      PRINT_ERROR("Invalid topology iteration ID.\n");
+      return false;
+    }
+
+    stream >> std::ws;
+
+    if (!stream.eof() || iteration_id < 0)
+    {
+      PRINT_ERROR("Invalid topology iteration ID.\n");
+      return false;
+    }
+
+    iterations.insert(iteration_id);
+  }
+
+  if (iterations.empty())
+  {
+    PRINT_ERROR("Topology %d has no completed iterations to animate.\n", topology_id);
+    return false;
+  }
+
+  if (save_filepath.empty())
+  {
+    save_filepath = "topo_" + std::to_string(topology_id) + "_animation.gif";
+  }
+
+  const QString output = QDir::current().absoluteFilePath(QString::fromStdString(save_filepath));
+
+  const QFileInfo output_info(output);
+
+  if (output_info.suffix().compare("gif", Qt::CaseInsensitive) != 0)
+  {
+    PRINT_ERROR("Animation save path must end with .gif.\n");
+    return false;
+  }
+
+  if (!output_info.dir().exists())
+  {
+    PRINT_ERROR("Animation output directory does not exist.\n");
+    return false;
+  }
+
+  if (output_info.exists() && !overwrite)
+    {
+    PRINT_ERROR(
+        "Animation output file already exists; use overwrite.\n");
+    return false;
+    }
+
+  // One temporary directory for this export, not for solver jobs.
+  QTemporaryDir temporary;
+
+  if (!temporary.isValid())
+  {
+    PRINT_ERROR("Unable to create animation temporary directory.\n");
+    return false;
+  }
+
+  const QDir frame_directory(temporary.path());
+
+  // Frame paths are inserted into quoted Cubit commands.
+  if (temporary.path().contains('\'') ||
+      temporary.path().contains('\n') ||
+      temporary.path().contains('\r'))
+  {
+    PRINT_ERROR("Unsupported animation temporary path.\n");
+    return false;
+  }
+
+  QSize frame_size;
+  int frame_index = 0;
+  QStringList frame_paths;
+
+  for (const int iteration_id : iterations)
+  {
+    PRINT_INFO(
+        "Topology %d animation: capturing iteration %d.\n",
+        topology_id, iteration_id);
+
+    if (!draw_topology(topology_id, iteration_id, threshold))
+    {
+      return false;
+    }
+
+    const QString frame_path = frame_directory.filePath(
+        QString("frame_%1.png").arg(
+            frame_index, 6, 10, QChar('0')));
+
+    const std::string command = "hardcopy '" + QDir::fromNativeSeparators(frame_path).toStdString() + "' png";
+
+    if (!ccx_iface->silent_cmd(command))
+    {
+      PRINT_ERROR("Unable to capture topology animation frame.\n");
+      return false;
+    }
+
+    const QImage frame(frame_path);
+
+    if (frame.isNull())
+    {
+      PRINT_ERROR("Topology frame was not captured. An active graphics window is required.\n");
+      return false;
+    }
+
+    if (frame_index == 0)
+    {
+      frame_size = frame.size();
+    }
+    else if (frame.size() != frame_size)
+    {
+      PRINT_ERROR("Animation frame dimensions changed.\n");
+      return false;
+    }
+
+    frame_paths.push_back(frame_path);
+    ++frame_index;
+  }
+
+  const QString temporary_gif =
+      frame_directory.filePath("animation.gif");
+
+  PRINT_INFO("Topology %d animation: encoding %d frames.\n", topology_id, frame_index);
+
+  if (!GifAnimation::write(frame_paths, temporary_gif, fps))
+  {
+    return false;
+  }
+
+  if (QFileInfo(temporary_gif).size() == 0)
+  {
+    PRINT_ERROR("GIF encoder produced an empty file.\n");
+    return false;
+  }
+
+  // Publish only the successfully encoded GIF.
+  if (overwrite)
+  {
+    QFile source(temporary_gif);
+    QSaveFile destination(output);
+
+    // Preserve the previous GIF if writing the replacement fails.
+    destination.setDirectWriteFallback(false);
+
+    if (!source.open(QIODevice::ReadOnly) ||
+        !destination.open(QIODevice::WriteOnly))
+    {
+        PRINT_ERROR("Unable to open animation files for replacement.\n");
+        return false;
+    }
+
+    while (!source.atEnd())
+    {
+        const QByteArray chunk = source.read(1024 * 1024);
+
+        if (source.error() != QFileDevice::NoError ||
+            chunk.isEmpty())
+        {
+        PRINT_ERROR("Unable to read encoded animation.\n");
+        return false;
+        }
+
+        if (destination.write(chunk) != chunk.size())
+        {
+        PRINT_ERROR("Unable to write replacement animation.\n");
+        return false;
+        }
+    }
+
+    if (!destination.commit())
+    {
+        PRINT_ERROR("Unable to replace animation output.\n");
+        return false;
+    }
+  }
+  else
+  {
+        if (!QFile::copy(temporary_gif, output))
+        {
+            PRINT_ERROR("Unable to save topology animation.\n");
+            return false;
+        }
+    }
+
+  PRINT_INFO("Topology %d animation saved to %s.\n",topology_id, output.toUtf8().constData());
+
+  return true;
+}
 
 std::string CoreDraw::get_color(int color_id)
 {

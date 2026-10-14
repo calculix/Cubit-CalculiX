@@ -106,6 +106,7 @@ public:
   bool read_single(); // reads the frd file single core
   bool read_parallel(); // reads the frd file in parallel for the result blocks
   std::vector<std::string> split_line(std::string frdline); // splits the line to a vector
+  std::vector<std::string> split_element_line(const std::string& frdline);
   std::string get_key(std::string frdline); // gets the frd key, first 6 chars in the line without whitespace
   bool check_mode(std::vector<std::string> line); // checks if the current read mode is still valid or others should be used
   bool check_mode_by_key(std::string key); // checks if the current read mode is still valid or others should be used
@@ -135,7 +136,7 @@ public:
   template <typename T> void apply_permutation(std::vector<T>& vec,const std::vector<std::size_t>& p);
 
   ProgressTool *progressbar; // progressbar
-  CalculiXCoreInterface *ccx_iface;
+  CalculiXCoreInterface* ccx_iface = nullptr;
 };
 
 #endif // CORERESULTSFRD_HPP

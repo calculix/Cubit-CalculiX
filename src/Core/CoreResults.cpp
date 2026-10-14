@@ -23,7 +23,10 @@ bool CoreResults::init()
   {
     return false; // already initialized
   }else{
-    CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
+    if (!ccx_iface)
+    {
+      ccx_iface = new CalculiXCoreInterface();
+    }
     is_initialized = true;  
     return true;
   }
@@ -186,6 +189,14 @@ int CoreResults::convert_result(int job_id, std::vector<int> options, std::vecto
 
     return write_mode;
   }
+}
+
+bool CoreResults::project_topology(int topology_id,int iteration_id, double threshold, bool preview)
+{
+  CalculiXCoreInterface iface;
+  CoreResultsProject projector;
+  projector.ccx_iface = &iface;
+  return projector.project_topology(topology_id, iteration_id, threshold, preview);
 }
 
 bool CoreResults::project_result(int job_id, int step, int totalincrement,double scale)

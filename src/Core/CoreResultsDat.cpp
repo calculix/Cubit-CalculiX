@@ -24,7 +24,10 @@ bool CoreResultsDat::init(int job_id)
   {
     return false; // already initialized
   }else{
-    CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
+    if (!ccx_iface)
+    {
+      ccx_iface = new CalculiXCoreInterface();
+    }
     this->job_id = job_id;
     
     std::vector<std::string> job_data = ccx_iface->get_job_data(job_id);
@@ -181,6 +184,10 @@ bool CoreResultsDat::read_single()
       }
 
       dat_array = this->split_line(datline);
+      if (dat_array.empty())
+      {
+        continue;
+      }
       
       //first lets check if the step or increment needs an update
       this->check_step(dat_array);

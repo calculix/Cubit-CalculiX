@@ -235,6 +235,7 @@ public:
   std::vector<std::vector<std::string>> get_topology_iteration_data(int topology_id);
   bool select_topology_iteration(int topology_id, int iteration_id);
   std::string get_topology_run_state(int topology_id);
+  std::vector<std::vector<double>> get_topology_iteration_element_data(int topology_id,int iteration_id = -1);
   bool result_cgx_job(int job_id); // opens the results with cgx
   bool result_paraview_job(int job_id); // opens the results with paraview
   bool result_plot_job_frd(int job_id,int x_node_id, std::string x_block_type, std::string x_block_component, bool x_increment,bool x_time,int y_node_id, std::string y_block_type, std::string y_block_component, bool y_increment, bool y_time,QString title,QString x_axis,QString y_axis,bool save, QString save_filepath); // plots the results
@@ -253,6 +254,7 @@ public:
   bool load_result(int job_id); // load result for job
   int convert_result(int job_id, std::vector<int> options, std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids); // convert result for job
   bool project_result(int job_id,int step,int totalincrement,double scale); // project disp result for job for specific step or increment
+  bool project_topology(int topology_id, int iteration_id = -1,double threshold = 0.5, bool preview = false);
   double compute_von_mises_stress(std::vector<double> vec); // computes the von mises stress/strain for a vector of values
   double compute_von_mises_strain(std::vector<double> vec); // computes the von mises stress/strain for a vector of values
   std::vector<double> compute_principal_stresses(std::vector<double> vec); // computes the principal stress for a vector/matrix of stresses
@@ -320,6 +322,8 @@ public:
   bool draw_load_bodyheatfluxes(double size); //draw all bodyheatflux
   bool draw_bc_displacements(double size); //draw all displacements
   bool draw_bc_temperatures(double size); //draw all temperatures
+  bool draw_topology(int topology_id,int iteration_id = -1,double threshold = 0.5); // draw topology iteration
+  bool animate_topology(int topology_id,double threshold = 0.5,int fps = 5,std::string save_filepath = "", bool overwrite = false);
 
   //QUERY results
   //FRD results

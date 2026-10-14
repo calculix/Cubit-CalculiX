@@ -18,13 +18,22 @@ public:
         std::vector<Triangle> triangles;
     };
 
+    enum class WrapMode
+    {
+        TriangleSoup,
+        PointCloud
+    };
+
     // Writes the alpha wrap as an ASCII STL.
     // Returns false and prints an error on failure.
     static bool alphawrap(
         const TriangleSoup& input,
         double alpha,
         double offset,
-        const std::filesystem::path& filename);
+        const std::filesystem::path& filename,
+        WrapMode mode = WrapMode::TriangleSoup,
+        bool overwrite = false);
+
 };
 
 #endif

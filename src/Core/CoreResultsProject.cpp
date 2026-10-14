@@ -8,7 +8,11 @@
 #include "MeshExportInterface.hpp"
 
 #include <cmath>
-//#include <bits/stdc++.h> 
+#include <algorithm>
+#include <limits>
+#include <map>
+#include <set>
+#include <sstream>
 
 CoreResultsProject::CoreResultsProject()
 {}
@@ -22,7 +26,7 @@ bool CoreResultsProject::init(CoreResultsFrd* frd)
   {
     return false; // already initialized
   }else{
-    CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
+    ccx_iface = new CalculiXCoreInterface();
 
     this->frd = frd;
 
@@ -116,6 +120,193 @@ bool CoreResultsProject::project(int step, int totalincrement,double scale)
   ccx_iface->set_block_gui_update(false);
   
   if (!ccx_iface->silent_cmd("set developer off")){return false;}
+
+  return true;
+}
+
+bool CoreResultsProject::project_topology(int topology_id,int iteration_id,double threshold,bool preview)
+{
+  if (iteration_id < -1 ||
+      !std::isfinite(threshold) ||
+      threshold < 0.0 || threshold > 1.0)
+  {
+    PRINT_ERROR("Invalid topology iteration or threshold.\n");
+    return false;
+  }
+
+  const std::string state = ccx_iface->get_topology_run_state(topology_id);
+
+  if (state.empty())
+  {
+    return false;
+  }
+
+  if (state == "running")
+  {
+    PRINT_ERROR("Cannot project a running topology case.\n");
+    return false;
+  }
+
+  const auto rows = ccx_iface->get_topology_iteration_element_data(topology_id, iteration_id);
+
+  if (rows.empty())
+  {
+    return false;
+  }
+
+  std::map<std::string, std::vector<int>> removal;
+  std::set<int> seen;
+  size_t removal_count = 0;
+
+  // Validate the entire design before changing the mesh.
+  for (const auto& row : rows)
+  {
+    if (row.size() != 4 ||
+        !std::isfinite(row[0]) ||
+        row[0] < 1.0 ||
+        row[0] > std::numeric_limits<int>::max() ||
+        std::floor(row[0]) != row[0] ||
+        !std::isfinite(row[1]) ||
+        row[1] < 0.0 || row[1] > 1.0 ||
+        (row[3] != 0.0 && row[3] != 1.0))
+    {
+      PRINT_ERROR("Invalid topology element data.\n");
+      return false;
+    }
+
+    const int global_id = static_cast<int>(row[0]);
+
+    if (!seen.insert(global_id).second)
+    {
+      PRINT_ERROR("Duplicate topology element %d.\n", global_id);
+      return false;
+    }
+
+    if (!CubitInterface::get_element_exists(global_id))
+    {
+      PRINT_ERROR("Topology element %d no longer exists in Cubit.\n", global_id);
+      return false;
+    }
+
+    const std::string element_type = CubitInterface::get_element_type(global_id);
+
+    std::string entity = element_type;
+
+    if (entity != "hex" && entity != "tet" && entity != "wedge")
+    {
+      entity = ccx_iface->get_cubit_element_type_entity(element_type);
+    }
+
+    const int local_id = CubitInterface::get_element_type_id(global_id);
+
+    if ((entity != "hex" && entity != "tet" && entity != "wedge") || local_id <= 0)
+    {
+      PRINT_ERROR("Invalid topology volume element %d.\n", global_id);
+      return false;
+    }
+
+    const bool preserved = row[3] == 1.0;
+
+    if (!preserved && row[1] < threshold)
+    {
+      removal[entity].push_back(local_id);
+      ++removal_count;
+    }
+  }
+
+  if (preview)
+  {
+    return ccx_iface->draw_topology(topology_id, iteration_id, threshold);
+  }
+
+  if (removal_count == 0)
+  {
+    PRINT_INFO("Topology %d: no elements are below threshold %.6g.\n", topology_id, threshold);
+    return true;
+  }
+
+  // Prepare every command before starting deletion.
+  std::vector<std::pair<std::string, size_t>> commands;
+  const size_t batch_size = 200;
+
+  for (const auto& group : removal)
+  {
+    for (size_t begin = 0; begin < group.second.size();
+         begin += batch_size)
+    {
+      const size_t end =
+          std::min(begin + batch_size, group.second.size());
+
+      std::ostringstream command;
+      command << "delete " << group.first;
+
+      for (size_t index = begin; index < end; ++index)
+      {
+        command << " " << group.second[index];
+      }
+
+      // Delete volume elements while retaining their child mesh.
+      if (group.first != "wedge")
+      {
+        command << " no_propagate";
+      }
+      commands.emplace_back(command.str(), end - begin);
+    }
+  }
+
+  const bool developer_was_enabled = CubitInterface::developer_commands_are_enabled();
+
+  if (!developer_was_enabled && !ccx_iface->silent_cmd("set developer commands on"))
+  {
+    PRINT_ERROR("Unable to enable element deletion.\n");
+    return false;
+  }
+
+  // Restore the previous developer setting on every return path.
+  struct DeveloperGuard
+  {
+    CalculiXCoreInterface& iface;
+    bool restore;
+
+    ~DeveloperGuard()
+    {
+      if (restore)
+      {
+        if (!iface.silent_cmd("set developer commands off"))
+        {
+          PRINT_ERROR("Unable to restore developer setting.\n");
+        }
+      }
+    }
+  } developer_guard{*ccx_iface, !developer_was_enabled};
+
+  size_t deleted_count = 0;
+
+  for (const auto& command : commands)
+  {
+    if (!ccx_iface->silent_cmd(command.first))
+    {
+      PRINT_ERROR(
+          "Topology deletion failed after %zu elements were "
+          "deleted in completed batches; the failed batch "
+          "may also have changed the mesh.\n",
+          deleted_count);
+      return false;
+    }
+
+    deleted_count += command.second;
+  }
+
+  PRINT_INFO(
+      "Topology %d: deleted %zu elements below threshold %.6g; "
+      "preserved elements were excluded.\n",
+      topology_id, deleted_count, threshold);
+
+  if (!ccx_iface->silent_cmd("display"))
+  {
+    PRINT_ERROR("Elements were deleted, but display refresh failed.\n");
+    return false;
+  }
 
   return true;
 }
