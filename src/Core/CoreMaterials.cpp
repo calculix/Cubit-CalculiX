@@ -1590,7 +1590,7 @@ bool CoreMaterials::set_topology_iteration_factors(
 {
   auto collection = topology_material_data.find(topology_id);
 
-  if (collection == topology_material_data.end() || iteration_id < 0 || element_ids.size() != stiffness_factors.size())
+  if (collection == topology_material_data.end() || iteration_id < 1 || element_ids.size() != stiffness_factors.size())
     return false;
 
   auto& data = collection->second;

@@ -96,6 +96,11 @@
 #include "InitialConditionsStressAddElementPanel.hpp"
 #include "InitialConditionsDeletePanel.hpp"
 #include "StepsCreatePanel.hpp"
+#include "TopologySettingsPanel.hpp"
+#include "TopologyPreservedSetsPanel.hpp"
+#include "TopologyResultsPanel.hpp"
+#include "TopologyDeletePanel.hpp"
+#include "TopologyActionsPanel.hpp"
 #include "StepsModifyParameterPanel.hpp"
 #include "StepsModifyStaticPanel.hpp"
 #include "StepsModifyFrequencyPanel.hpp"
@@ -374,6 +379,30 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
     return new InitialConditionsStressAddElementPanel();
   if(name == "CCXInitialConditionsDelete")
     return new InitialConditionsDeletePanel();
+  if (name == "CCXTopologyActions")
+  {
+    return new TopologyActionsPanel();
+  }
+  if (name == "CCXTopologyDelete")
+  {
+    return new TopologyDeletePanel();
+  }
+  if (name == "CCXTopologyResults")
+  {
+    return new TopologyResultsPanel();
+  }
+  if (name == "CCXTopologyPreservedSets")
+  {
+    return new TopologyPreservedSetsPanel();
+  }
+  if (name == "CCXTopologyCreate")
+  {
+    return new TopologySettingsPanel(false);
+  }
+  if (name == "CCXTopologyModify")
+  {
+    return new TopologySettingsPanel(true);
+  }
   if(name == "CCXStepsCreate")
     return new StepsCreatePanel();
   if(name == "CCXStepsModifyParameter")

@@ -25,6 +25,8 @@
 #include <iostream>
 #include <sstream>
 #include <limits>
+#include <exception>
+#include <cerrno>
 #include "loadUserOptions.hpp"
 
 
@@ -85,6 +87,11 @@ bool CoreJobs::reset()
       }
     }
     
+    for (const auto& retained : running_process_handles)
+    {
+      CloseHandle(retained.second);
+    }
+    running_process_handles.clear();
     //clear all vectors
     ProcessPipe.clear();
     PPTID.clear();
@@ -391,11 +398,8 @@ bool CoreJobs::run_job(int job_id,int option)
           return false;
       } else
       {        
-        // Close handles to the child process and its primary thread.
-        // Some applications might keep these handles to monitor the status
-        // of the child process, for example. 
-
-        CloseHandle(piProcInfo.hProcess);
+        // Retain the process handle so even fast solvers remain queryable.
+        running_process_handles.insert_or_assign(job_id, piProcInfo.hProcess);
         CloseHandle(piProcInfo.hThread);
         
         // Close handles to the stdin and stdout pipes no longer needed by the child process.
@@ -666,9 +670,20 @@ bool CoreJobs::wait_job(int job_id)
           PipePID = get_PipePID_from_ProcessPID(std::stoi(jobs_data[jobs_data_id][4]));           
           ProcessPipe_data_id = get_ProcessPipe_data_id_from_PipePID(PipePID);
           kill_pipe(job_id);
-          ProcessPipe.erase(ProcessPipe.begin() + ProcessPipe_data_id);
-          PPTID.erase(PPTID.begin() + ProcessPipe_data_id);
-          this->PipePID.erase(this->PipePID.begin() + ProcessPipe_data_id);
+          if (ProcessPipe_data_id >= 0 &&
+              static_cast<size_t>(ProcessPipe_data_id) < ProcessPipe.size())
+          {
+            CloseHandle(ProcessPipe[ProcessPipe_data_id]);
+            ProcessPipe.erase(ProcessPipe.begin() + ProcessPipe_data_id);
+            PPTID.erase(PPTID.begin() + ProcessPipe_data_id);
+            this->PipePID.erase(this->PipePID.begin() + ProcessPipe_data_id);
+          }
+          const auto retained = running_process_handles.find(job_id);
+          if (retained != running_process_handles.end())
+          {
+            CloseHandle(retained->second);
+            running_process_handles.erase(retained);
+          }
         }
       }
       if (status!=0)
@@ -695,6 +710,12 @@ bool CoreJobs::wait_job(int job_id)
           jobs_data[jobs_data_id][6] = std::to_string(ccx_iface->convert_result(job_id,{-1,-1,-1},ccx_iface->get_blocks(),CubitInterface::get_nodeset_id_list(),CubitInterface::get_sideset_id_list()));
         }
       }
+    }
+    const auto retained = running_process_handles.find(job_id);
+    if (retained != running_process_handles.end())
+    {
+      CloseHandle(retained->second);
+      running_process_handles.erase(retained);
     }
     return results_loaded && get_job_status(job_id) == 2;
   #else
@@ -792,14 +813,20 @@ bool CoreJobs::kill_job(int job_id)
     {
       HANDLE processhandle;
       DWORD returnCode{};
-      processhandle = OpenProcess(PROCESS_ALL_ACCESS, TRUE, std::stoi(jobs_data[jobs_data_id][4]));
+      processhandle = OpenProcess(PROCESS_TERMINATE | SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION, FALSE, std::stoi(jobs_data[jobs_data_id][4]));
       if (GetExitCodeProcess(processhandle, &returnCode)) {
         if (returnCode == STILL_ACTIVE)
         { 
           log = "Kill Job " + jobs_data[jobs_data_id][1] + " with ID " + jobs_data[jobs_data_id][0] + "\n";
           PRINT_INFO("%s", log.c_str());
-          TerminateProcess(processhandle, 1);
+          const bool terminated = TerminateProcess(processhandle, 1) != FALSE;
+          const bool exited = terminated && WaitForSingleObject(processhandle, 1000) == WAIT_OBJECT_0;
           CloseHandle(processhandle);
+          if (!exited)
+          {
+            PRINT_ERROR("Unable to confirm termination of job %d.\n", job_id);
+            return false;
+          }
           kill_pipe(std::stoi(jobs_data[jobs_data_id][0]));
           log = " Job killed!\n";
           PRINT_INFO("%s", log.c_str());
@@ -814,9 +841,14 @@ bool CoreJobs::kill_job(int job_id)
           ProcessPipe.erase(ProcessPipe.begin() + ProcessPipe_data_id);
           PPTID.erase(PPTID.begin() + ProcessPipe_data_id);
           this->PipePID.erase(this->PipePID.begin() + ProcessPipe_data_id);
+          return true;
         }
       }
-    return true;
+      if (processhandle != nullptr)
+      {
+        CloseHandle(processhandle);
+      }
+      return false;
     }  
   #else
     std::string log;
@@ -850,6 +882,35 @@ bool CoreJobs::kill_job(int job_id)
 
 bool CoreJobs::check_jobs()
 {
+  const auto load_finished_results = [&](size_t index)
+  {
+    bool loaded = false;
+    try
+    {
+      loaded = ccx_iface->load_result(std::stoi(jobs_data[index][0]));
+      if (loaded && jobs_data[index][9] == "1")
+      {
+        jobs_data[index][6] = std::to_string(ccx_iface->convert_result(
+          std::stoi(jobs_data[index][0]), {-1, -1, -1}, ccx_iface->get_blocks(),
+          CubitInterface::get_nodeset_id_list(), CubitInterface::get_sideset_id_list()));
+      }
+    }
+    catch (const std::exception& error)
+    {
+      PRINT_ERROR("Unable to load results for job %s: %s\n",
+        jobs_data[index][0].c_str(), error.what());
+    }
+    catch (...)
+    {
+      PRINT_ERROR("Unable to load results for job %s.\n", jobs_data[index][0].c_str());
+    }
+    if (!loaded)
+    {
+      jobs_data[index][3] = "4";
+      jobs_data[index][6] = "-1";
+    }
+  };
+
   #ifdef _WIN32
     std::string log;
     CubitString output;
@@ -860,25 +921,40 @@ bool CoreJobs::check_jobs()
     {
       if (std::stoi(jobs_data[i][3])==1)
       {
-        //solver processes still running?
-        int status;
-        HANDLE processhandle;
-        DWORD returnCode{};
-        processhandle = OpenProcess(PROCESS_ALL_ACCESS, TRUE, std::stoi(jobs_data[i][4]));
-        if (GetExitCodeProcess(processhandle, &returnCode)) {
-          if (returnCode != STILL_ACTIVE)
-          { 
-            status = int(returnCode);
-            // delete handles
-            int ProcessPipe_data_id;
-            int PipePID;
-            PipePID = get_PipePID_from_ProcessPID(std::stoi(jobs_data[i][4]));           
-            ProcessPipe_data_id = get_ProcessPipe_data_id_from_PipePID(PipePID);
-            kill_pipe(std::stoi(jobs_data[i][0]));
-            ProcessPipe.erase(ProcessPipe.begin() + ProcessPipe_data_id);
-            PPTID.erase(PPTID.begin() + ProcessPipe_data_id);
-            this->PipePID.erase(this->PipePID.begin() + ProcessPipe_data_id);
-          }
+        const int process_id = std::stoi(jobs_data[i][4]);
+        HANDLE processhandle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, process_id);
+        DWORD returnCode = STILL_ACTIVE;
+        const bool queried = processhandle != nullptr &&
+          GetExitCodeProcess(processhandle, &returnCode) != FALSE;
+        if (processhandle != nullptr)
+        {
+          CloseHandle(processhandle);
+        }
+        if (!queried)
+        {
+          PRINT_ERROR("Unable to query solver process for job %s.\n", jobs_data[i][0].c_str());
+          continue;
+        }
+        if (returnCode == STILL_ACTIVE)
+        {
+          continue;
+        }
+        const auto retained = running_process_handles.find(std::stoi(jobs_data[i][0]));
+        if (retained != running_process_handles.end())
+        {
+          CloseHandle(retained->second);
+          running_process_handles.erase(retained);
+        }
+        const int status = static_cast<int>(returnCode);
+        const int pipe_id = get_PipePID_from_ProcessPID(process_id);
+        const int pipe_index = get_ProcessPipe_data_id_from_PipePID(pipe_id);
+        kill_pipe(std::stoi(jobs_data[i][0]));
+        if (pipe_index >= 0 && static_cast<size_t>(pipe_index) < ProcessPipe.size())
+        {
+          CloseHandle(ProcessPipe[pipe_index]);
+          ProcessPipe.erase(ProcessPipe.begin() + pipe_index);
+          PPTID.erase(PPTID.begin() + pipe_index);
+          PipePID.erase(PipePID.begin() + pipe_index);
         }
         if ((returnCode != STILL_ACTIVE) && (status!=0)) // if process doesn't exist and exited with error
         {
@@ -891,11 +967,7 @@ bool CoreJobs::check_jobs()
           log = "Job " + jobs_data[i][1] + " with ID " + jobs_data[i][0] + " finished! \n";
           PRINT_INFO("%s", log.c_str());
           jobs_data[i][3] = "2";
-          ccx_iface->load_result(std::stoi(jobs_data[i][0]));
-          if (jobs_data[i][9] == "1") 
-          {
-            jobs_data[i][6] = std::to_string(ccx_iface->convert_result(std::stoi(jobs_data[i][0]),{-1,-1,-1},ccx_iface->get_blocks(),CubitInterface::get_nodeset_id_list(),CubitInterface::get_sideset_id_list()));
-          }
+          load_finished_results(i);
         }
       }
     }
@@ -944,12 +1016,25 @@ bool CoreJobs::check_jobs()
             }          
           }
           //solver processes still running?
-          int status;
-          waitpid(std::stoi(jobs_data[i][4]), &status,WNOHANG);
+          int status = 0;
+          const pid_t finished = waitpid(std::stoi(jobs_data[i][4]), &status, WNOHANG);
+          if (finished == 0 || (finished < 0 && errno == EINTR))
+          {
+            continue;
+          }
+          if (finished < 0)
+          {
+            PRINT_ERROR("Unable to query solver process for job %s.\n", jobs_data[i][0].c_str());
+            jobs_data[i][3] = "4";
+            jobs_data[i][6] = "-1";
+            CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
+            continue;
+          }
+          const bool succeeded = WIFEXITED(status) && WEXITSTATUS(status) == 0;
           //log = " wait Code " + std::to_string(status) + " \n";
           //PRINT_INFO("%s", log.c_str());
           
-          if ((0 != kill(std::stoi(jobs_data[i][4]),0)) && (status!=0)) // if process doesn't exist and exited with error
+          if (!succeeded) // if process doesn't exist and exited with error
           {
             CubitProcessHandler[CubitProcessHandler_data_id].wait();
             log = "Job " + jobs_data[i][1] + " with ID " + jobs_data[i][0] + " exited with errors! \n";
@@ -960,18 +1045,14 @@ bool CoreJobs::check_jobs()
             //jobs_data[i][6] = std::to_string(ccx_iface->convert_result(std::stoi(jobs_data[i][0])));
             jobs_data[i][6] = "-1";
             CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
-          }else if ((0 != kill(std::stoi(jobs_data[i][4]),0)) && (status==0)) // if process doesn't exist and exited without error
+          }else if (succeeded) // if process doesn't exist and exited without error
           {
             CubitProcessHandler[CubitProcessHandler_data_id].wait();
             log = "Job " + jobs_data[i][1] + " with ID " + jobs_data[i][0] + " finished! \n";
             //log.append(" Exit Code " + std::to_string(CubitProcessHandler[CubitProcessHandler_data_id].exit_code()) + " \n");
             PRINT_INFO("%s", log.c_str());
             jobs_data[i][3] = "2";
-            ccx_iface->load_result(std::stoi(jobs_data[i][0]));
-            if (jobs_data[i][9] == "1") 
-            {
-              jobs_data[i][6] = std::to_string(ccx_iface->convert_result(std::stoi(jobs_data[i][0]),{-1,-1,-1},ccx_iface->get_blocks(),CubitInterface::get_nodeset_id_list(),CubitInterface::get_sideset_id_list()));
-            }
+            load_finished_results(i);
             CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
           }
         }

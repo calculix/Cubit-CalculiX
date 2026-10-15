@@ -40,6 +40,7 @@
 #include "HBCsDisplacementsTree.hpp"
 #include "HBCsTemperaturesTree.hpp"
 #include "StepsTree.hpp"
+#include "TopologyTree.hpp"
 #include "CustomLinesTree.hpp"
 #include "JobsTree.hpp"
 
@@ -160,6 +161,8 @@ void CCXDockWindowModelTree::initialize()
   myHBCsTemperaturesTree->initialize();
   myStepsTree = new StepsTree(myModelTree);
   myStepsTree->initialize();
+  myTopologyTree = new TopologyTree(myModelTree);
+  myTopologyTree->initialize();
   myCustomLinesTree = new CustomLinesTree(myModelTree);
   myCustomLinesTree->initialize();
   myJobsTree = new JobsTree(myModelTree);
@@ -229,6 +232,8 @@ void CCXDockWindowModelTree::clear()
     delete myHBCsDisplacementsTree;
     delete myHBCsTree;
     delete myStepsTree;
+    delete myTopologyTree;
+    myTopologyTree = nullptr;
     delete myCustomLinesTree;
     delete myJobsTree;
     delete myHighlight;
@@ -279,6 +284,10 @@ void CCXDockWindowModelTree::update()
   myHBCsDisplacementsTree->update();
   myHBCsTemperaturesTree->update();
   myStepsTree->update();
+  if (myTopologyTree != nullptr)
+  {
+    myTopologyTree->update();
+  }
   myCustomLinesTree->update();
   myJobsTree->update();
 }
@@ -320,6 +329,10 @@ void CCXDockWindowModelTree::reset()
   myHBCsDisplacementsTree->clear();
   myHBCsTemperaturesTree->clear();
   myStepsTree->clear();
+  if (myTopologyTree != nullptr)
+  {
+    myTopologyTree->clear();
+  }
   myCustomLinesTree->clear();
   myJobsTree->clear();
 }

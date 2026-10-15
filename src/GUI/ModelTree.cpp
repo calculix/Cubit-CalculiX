@@ -35,6 +35,7 @@
 #include "HBCsTemperaturesTree.hpp"
 #include "HBCsManagement.hpp"
 #include "StepsTree.hpp"
+#include "TopologyTree.hpp"
 #include "StepsLoadsTree.hpp"
 #include "StepsLoadsForcesTree.hpp"
 #include "StepsLoadsPressuresTree.hpp"
@@ -149,6 +150,16 @@ void ModelTree::showContextMenu(const QPoint &pos)
 
 void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
 {
+  for (QTreeWidgetItem *owner = item; owner != nullptr; owner = owner->parent())
+  {
+    TopologyTree *topology_tree = dynamic_cast<TopologyTree *>(owner);
+    if (topology_tree != nullptr)
+    {
+      topology_tree->activate(item, *this);
+      return;
+    }
+  }
+
   BlocksTree* BlocksTreeItem;
   NodesetTree* NodesetTreeItem;
   SidesetTree* SidesetTreeItem;

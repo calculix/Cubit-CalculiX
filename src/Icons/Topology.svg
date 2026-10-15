@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <title>Topology optimization</title>
+  <!-- Original design envelope and remaining structural paths. -->
+  <path d="M9 8H44V40H9" fill="none" stroke="#b65b55" stroke-width="2" stroke-dasharray="3 3"/>
+  <path d="M9 10H42V16H33L19 32H42V38H9ZM17 16V25L25 16Z"
+        fill="#54ad67" fill-rule="evenodd" stroke="#263d32" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M8 7V41M3 11L8 7M3 19L8 15M3 27L8 23M3 35L8 31M3 43L8 39"
+        fill="none" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+</svg>

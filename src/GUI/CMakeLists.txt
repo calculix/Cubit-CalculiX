@@ -107,6 +107,18 @@ set(SRC
     ${CMAKE_CURRENT_LIST_DIR}/CustomLinesTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/JobsTree.cpp
     ${CMAKE_CURRENT_LIST_DIR}/JobsTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/TopologyTree.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/TopologyTree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/TopologySettingsPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/TopologySettingsPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/TopologyPreservedSetsPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/TopologyPreservedSetsPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/TopologyResultsPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/TopologyResultsPanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/TopologyDeletePanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/TopologyDeletePanel.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/TopologyActionsPanel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/TopologyActionsPanel.hpp
     ${CMAKE_CURRENT_LIST_DIR}/PanelTable.hpp
     ${CMAKE_CURRENT_LIST_DIR}/PanelTable.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CCXBlocksElementTypePanel.hpp

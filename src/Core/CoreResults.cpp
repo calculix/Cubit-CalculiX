@@ -149,9 +149,10 @@ bool CoreResults::load_result(int job_id)
 
 int CoreResults::convert_result(int job_id, std::vector<int> options, std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids)
 {
-  // options[0] partial
-  // options[1] frd
-  // options[2] dat
+  // options[0]: partial fields: 0 = disabled, 1 = enabled,
+  //            -1 = default (enabled).
+  // options[1]: frd
+  // options[2]: dat
   std::string log;
   int results_data_id = get_results_data_id_from_job_id(job_id);
   int frd_data_id = get_frd_data_id_from_job_id(job_id);
@@ -165,11 +166,10 @@ int CoreResults::convert_result(int job_id, std::vector<int> options, std::vecto
     log = "Converting results for Job ID " + std::to_string(results_data[results_data_id][1]) + " \n";
     PRINT_INFO("%s", log.c_str());
     vtkWriter->init(job_id,&frd_data[frd_data_id],&dat_data[dat_data_id], block_ids, nodeset_ids, sideset_ids);
+    
     // partial
-    if (options[0] == 1)
-    {
-      vtkWriter->write_partial = true;
-    }
+    vtkWriter->write_partial = options[0] != 0;
+
     //frd only
     if ((options[1] == 1)&&(options[2] == -1))
     {

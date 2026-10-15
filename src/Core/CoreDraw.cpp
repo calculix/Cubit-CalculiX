@@ -1661,10 +1661,13 @@ bool CoreDraw::draw_topology(int topology_id,int iteration_id,double threshold)
     return false;
   }
 
+  if (!ccx_iface->is_silent_cmd())
+  {
   PRINT_INFO(
       "Topology %d preview: threshold %.6g; "
       "%zu kept elements, %zu removal candidates shown as red edges.\n",
       topology_id, threshold, kept_count, removed_count);
+  }
 
   return true;
 }
@@ -1724,7 +1727,7 @@ bool CoreDraw::animate_topology(int topology_id, double threshold,int fps,std::s
 
     stream >> std::ws;
 
-    if (!stream.eof() || iteration_id < 0)
+    if (!stream.eof() || iteration_id < 1)
     {
       PRINT_ERROR("Invalid topology iteration ID.\n");
       return false;
@@ -1797,7 +1800,11 @@ bool CoreDraw::animate_topology(int topology_id, double threshold,int fps,std::s
         "Topology %d animation: capturing iteration %d.\n",
         topology_id, iteration_id);
 
-    if (!draw_topology(topology_id, iteration_id, threshold))
+    const std::string preview_command = QString(
+      "ccx result project topology %1 iteration %2 threshold %3 preview")
+      .arg(topology_id).arg(iteration_id)
+      .arg(QString::number(threshold, 'f', 6)).toStdString();
+    if (!ccx_iface->silent_cmd(preview_command))
     {
       return false;
     }

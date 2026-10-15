@@ -26,7 +26,11 @@ bool CoreResultsProject::init(CoreResultsFrd* frd)
   {
     return false; // already initialized
   }else{
-    ccx_iface = new CalculiXCoreInterface();
+    if (!ccx_iface)
+    {
+      PRINT_ERROR("Results projection interface is not initialized.\n");
+      return false;
+    }
 
     this->frd = frd;
 
@@ -126,7 +130,7 @@ bool CoreResultsProject::project(int step, int totalincrement,double scale)
 
 bool CoreResultsProject::project_topology(int topology_id,int iteration_id,double threshold,bool preview)
 {
-  if (iteration_id < -1 ||
+  if (iteration_id < -1 || iteration_id == 0 ||
       !std::isfinite(threshold) ||
       threshold < 0.0 || threshold > 1.0)
   {
@@ -245,11 +249,13 @@ bool CoreResultsProject::project_topology(int topology_id,int iteration_id,doubl
         command << " " << group.second[index];
       }
 
+      /*
       // Delete volume elements while retaining their child mesh.
       if (group.first != "wedge")
       {
         command << " no_propagate";
       }
+      */
       commands.emplace_back(command.str(), end - begin);
     }
   }
@@ -287,10 +293,16 @@ bool CoreResultsProject::project_topology(int topology_id,int iteration_id,doubl
     if (!ccx_iface->silent_cmd(command.first))
     {
       PRINT_ERROR(
-          "Topology deletion failed after %zu elements were "
-          "deleted in completed batches; the failed batch "
-          "may also have changed the mesh.\n",
-          deleted_count);
+          "Topology %d deletion failed after %zu elements were "
+          "deleted in completed batches. The failed batch may "
+          "also have changed the mesh.\n",
+          topology_id, deleted_count);
+
+      if (!ccx_iface->silent_cmd("display"))
+      {
+        PRINT_ERROR("Unable to refresh the remaining mesh.\n");
+      }
+
       return false;
     }
 

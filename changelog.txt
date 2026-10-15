@@ -207,3 +207,4 @@
 2026-10-13 work on topology optimization
 2026-10-14 work on topology optimization, added cgal 3d Alpha wrapping
 2026-10-14 move context menu into the specific trees
+2026-10-15 work on topology optimization

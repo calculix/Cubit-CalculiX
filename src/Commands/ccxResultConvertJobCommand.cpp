@@ -16,7 +16,7 @@ std::vector<std::string> ccxResultConvertJobCommand::get_syntax()
   std::vector<std::string> syntax_list;
 
   std::string syntax = "ccx ";
-  syntax.append("result convert job <value:label='job_id',help='<job_id>'> [partial] [frd] ");
+  syntax.append("result convert job <value:label='job_id',help='<job_id>'> [frd] [no_partial]");
   syntax.append("[block <value:label='block_ids',help='<block_ids>'>...] " );
   syntax.append("[nodeset <value:label='nodeset_ids',help='<nodeset_ids>'>...] " );
   syntax.append("[sideset <value:label='sideset_ids',help='<sideset_ids>'>...] " );
@@ -28,7 +28,7 @@ std::vector<std::string> ccxResultConvertJobCommand::get_syntax()
 std::vector<std::string> ccxResultConvertJobCommand::get_syntax_help()
 {
   std::vector<std::string> help(1);
-  help[0] = "ccx result convert job <job_id> [partial] [frd] ";
+  help[0] = "ccx result convert job <job_id> [frd] [no_partial]";
   help[0].append("[block <block_ids>...] " );
   help[0].append("[nodeset <nodeset_ids>...] " );
   help[0].append("[sideset <sideset_ids>...] " );
@@ -38,8 +38,11 @@ std::vector<std::string> ccxResultConvertJobCommand::get_syntax_help()
 
 std::vector<std::string> ccxResultConvertJobCommand::get_help()
 {
-  std::vector<std::string> help;
-  return help;
+  return {
+      "Incomplete result fields are exported by default, "
+      "with NaN for missing values. "
+      "Use no_partial to skip incomplete fields."
+  };
 }
 
 bool ccxResultConvertJobCommand::execute(CubitCommandData &data)
@@ -56,10 +59,10 @@ bool ccxResultConvertJobCommand::execute(CubitCommandData &data)
 
   data.get_value("job_id", job_id);
 
-  if (data.find_keyword("PARTIAL")){
-    options.push_back(1);
+  if (data.find_keyword("NO_PARTIAL")){
+    options.push_back(0);
   }else{
-    options.push_back(-1);
+    options.push_back(1);
   }
 
   if (data.find_keyword("FRD")){

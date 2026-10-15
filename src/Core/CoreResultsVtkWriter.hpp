@@ -23,7 +23,7 @@ public:
   int write_mode = -1; //1 linked //2 unlinked
   std::string filepath = "";
   bool is_initialized = false;
-  bool write_partial = false; // try to write out partial result blocks. like for using *modelchange keyword
+  bool write_partial = true;  // Export incomplete fields with NaN placeholders.
   bool write_frd = true; // write frd results
   bool write_dat = true; // write dat results
   int current_offset = 0;
@@ -143,7 +143,7 @@ public:
   std::string get_result_data(int data_id, int node_data_id); // gets the result data for a node
   std::string get_result_data_thread(int data_id, int node_data_id, int thread_part); // gets the result data for a node
   std::string get_result_data_threadpool(int data_id, int node_data_id, int thread_part, int increment); // gets the result data for a node
-  std::string get_result_data_partial(int data_id, int node_data_id, int component_size); // gets the result data for a node if exists or return zero value
+  std::string get_result_data_partial(int data_id, int node_data_id, int component_size); // gets the result data for a node if exists or return NaN value
   std::string get_result_data_partial_thread(int data_id, int node_data_id, int component_size, int thread_part); // gets the result data for a node if exists or return zero value
   std::string get_result_data_partial_threadpool(int data_id, int node_data_id, int component_size, int thread_part, int increment); // gets the result data for a node if exists or return zero value
   bool link_nodes(); // links the ids from frd/dat all

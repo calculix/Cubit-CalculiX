@@ -357,7 +357,7 @@ std::string CoreSections::get_section_export(int topology_id,int iteration_id)
 
   if (topology_id != -1 || iteration_id != -1)
   {
-    if (topology_id <= 0 || iteration_id < 0)
+    if (topology_id <= 0 || iteration_id < 1)
     {
       PRINT_ERROR("Invalid topology export selection.\n");
       return "";

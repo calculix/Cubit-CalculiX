@@ -5,6 +5,7 @@
 #include <string>
 #ifdef WIN32
   #include <windows.h>
+  #include <map>
   #include <thread>
 #endif
 
@@ -36,6 +37,7 @@ public:
   std::vector<std::vector<std::string>> sta;
 
   #ifdef WIN32
+    std::map<int, HANDLE> running_process_handles;
     std::vector<HANDLE> ProcessPipe;
     std::vector<std::vector<int>> PPTID; //links the process PID, pipe PID and ThreadID 
     std::vector<int> PipePID; //pipe PID

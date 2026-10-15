@@ -17,6 +17,11 @@ bool CalculiXCoreInterface::silent_cmd(std::string cmd)
   return ccx_core.silent_cmd(cmd);
 }
 
+bool CalculiXCoreInterface::is_silent_cmd() const
+{
+  return ccx_core.is_silent_cmd();
+}
+
 std::string CalculiXCoreInterface::get_version()
 {
   return ccx_core.get_version();
@@ -986,6 +991,20 @@ bool CalculiXCoreInterface::delete_topology(int topology_id)
   return ccx_core.delete_topology(topology_id);
 }
 
+bool CalculiXCoreInterface::get_topology_preserved_sets(
+  int topology_id,
+  std::vector<TopologyPreservedSetInfo>& sets,
+  std::set<int>& direct_elements)
+{
+  return ccx_core.get_topology_preserved_sets(
+    topology_id, sets, direct_elements);
+}
+
+bool CalculiXCoreInterface::reset_preserved_sets(int topology_id)
+{
+  return ccx_core.reset_preserved_sets(topology_id);
+}
+
 bool CalculiXCoreInterface::add_preserved_sets(int topology_id, int set_type, const std::vector<int>& ids)
 {
   return ccx_core.add_preserved_sets(topology_id, set_type, ids);
@@ -1006,9 +1025,24 @@ int CalculiXCoreInterface::run_topology_iteration(int topology_id, int iteration
   return ccx_core.run_topology_iteration(topology_id, iteration_id);
 }
 
-bool CalculiXCoreInterface::run_topology(int topology_id)
+bool CalculiXCoreInterface::run_topology(int topology_id, bool wait)
 {
-  return ccx_core.run_topology(topology_id);
+  return ccx_core.run_topology(topology_id, wait);
+}
+
+bool CalculiXCoreInterface::wait_topology(int topology_id)
+{
+  return ccx_core.wait_topology(topology_id);
+}
+
+bool CalculiXCoreInterface::kill_topology(int topology_id)
+{
+  return ccx_core.kill_topology(topology_id);
+}
+
+bool CalculiXCoreInterface::get_topology_run_info(int topology_id, TopologyRunInfo& information)
+{
+  return ccx_core.get_topology_run_info(topology_id, information);
 }
 
 bool CalculiXCoreInterface::initialize_topology(int topology_id, const std::vector<int>& section_ids)
@@ -1039,6 +1073,11 @@ std::string CalculiXCoreInterface::get_topology_material_name(int topology_id, i
 std::vector<double> CalculiXCoreInterface::get_topology_parameters(int topology_id)
 {
   return ccx_core.get_topology_parameters(topology_id);
+}
+
+bool CalculiXCoreInterface::get_topology_settings(int topology_id, TopologyOptions& options)
+{
+  return ccx_core.get_topology_settings(topology_id, options);
 }
 
 int CalculiXCoreInterface::get_topology_iteration_job_id(int topology_id, int iteration_id)
@@ -1934,6 +1973,11 @@ std::vector<std::vector<std::string>> CalculiXCoreInterface::get_customlines_tre
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_jobs_tree_data()
 { 
   return ccx_core.get_jobs_tree_data();
+}
+
+std::vector<std::vector<std::string>> CalculiXCoreInterface::get_topology_tree_data()
+{
+  return ccx_core.get_topology_tree_data();
 }
 
 bool CalculiXCoreInterface::prepare_export()

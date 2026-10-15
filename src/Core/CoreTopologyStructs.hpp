@@ -27,7 +27,18 @@ enum class TopologyRunState
   Running,
   Converged,
   IterationLimit,
-  Failed
+  Failed,
+  Killed
+};
+
+struct TopologyRunInfo
+{
+  std::string state;
+  int iteration_id = -1;
+  int job_id = -1;
+  bool active = false;
+  bool stop_requested = false;
+  bool waiting = false;
 };
 
 struct TopologyIterationEvaluation
@@ -82,6 +93,18 @@ struct TopologyDensityDesign
   // Global element ID -> solid fraction.
   std::map<int, double> element_densities;
   TopologyVolumeEvaluation volume;
+};
+
+// Transient query data for preservation management in the GUI.
+struct TopologyPreservedSetInfo
+{
+  int set_type = 0; // 1 = block, 2 = nodeset, 3 = sideset.
+  int set_id = 0;
+
+  bool automatic = false;
+  bool user_added = false;
+  bool excluded = false;
+  bool effective = false;
 };
 
 struct TopologyCase

@@ -47,6 +47,7 @@ class HBCsTree;
 class HBCsDisplacementsTree;
 class HBCsTemperaturesTree;
 class StepsTree;
+class TopologyTree;
 class CustomLinesTree;
 class JobsTree;
 
@@ -108,6 +109,7 @@ private:
   HBCsDisplacementsTree *myHBCsDisplacementsTree; //Displacements root item
   HBCsTemperaturesTree *myHBCsTemperaturesTree; //Temperature root item
   StepsTree *myStepsTree; //Steps root item
+  TopologyTree *myTopologyTree = nullptr;
   CustomLinesTree *myCustomLinesTree; //CustomLines root item
   JobsTree *myJobsTree; //Jobs root item
   

@@ -9,6 +9,7 @@
 #include <array>
 
 class CalculiXCoreInterface;
+class HDF5Tool;
 
 class CoreTopology
 {
@@ -19,11 +20,14 @@ public:
   bool update(); // check for changes of the constraints
   bool reset(); // delete all data and initialize afterwards
   bool check_initialized(); // check if object is initialized
+  bool save_configuration(HDF5Tool& file) const; // saving for .cub5
+  bool read_configuration(HDF5Tool& file); // loading for .cub5
 
   bool create_topology(int topology_id, const TopologyOptions& options);
   bool modify_topology(int topology_id, const TopologyOptions& options);
   bool delete_topology(int topology_id);
 
+  bool reset_preserved_sets(int topology_id);
   bool add_preserved_sets(int topology_id, int set_type, const std::vector<int>& ids);
   bool remove_preserved_sets(int topology_id, int set_type, const std::vector<int>& ids);
   bool resolve_preserved_elements(int topology_id,const std::vector<int>& analysis_element_ids,const std::map<int, std::set<int>>& default_sets,const std::set<int>& default_elements);

@@ -725,7 +725,7 @@ bool CoreResultsVtkWriter::write_vtu_linked()
           output.append(this->level_whitespace(4) + "</DataArray>\n");
         }else{
           log = "WARNING! Result data skipped for Result Block " + frd->result_block_type[frd->result_blocks[data_ids[ii]][5]] + " - current increment " + std::to_string(current_increment) + " - current part " + std::to_string(current_part) + " \n";
-          log.append("node_data_ids.size() = " + std::to_string(node_data_ids.size()) + " != frd->nodes.size() = " + std::to_string(frd->nodes.size()) + " try it again with Option [Partial]\n");
+          log.append("node_data_ids.size() = " + std::to_string(node_data_ids.size()) + " != frd->nodes.size() = " + std::to_string(frd->nodes.size()) + "; incomplete field skipped. Convert without no_partial to include it with NaN placeholders.\n");
           PRINT_INFO("%s", log.c_str());
         }
       }
@@ -1029,7 +1029,7 @@ bool CoreResultsVtkWriter::write_vtu_linked_thread(int thread_part, std::string 
           output.append(this->level_whitespace(4) + "</DataArray>\n");
         }else{
           log = "WARNING! Result data skipped for Result Block " + vec_frd[thread_part]->result_block_type[vec_frd[thread_part]->result_blocks[data_ids[ii]][5]] + " - current increment " + std::to_string(current_increment) + " - current part " + std::to_string(current_part) + " \n";
-          log.append("node_data_ids.size() = " + std::to_string(node_data_ids.size()) + " != vec_frd[thread_part]->nodes.size() = " + std::to_string(vec_frd[thread_part]->nodes.size()) + " try it again with Option [Partial]\n");
+          log.append("node_data_ids.size() = " + std::to_string(node_data_ids.size()) + " != vec_frd[thread_part]->nodes.size() = " + std::to_string(vec_frd[thread_part]->nodes.size()) + "; incomplete field skipped. Convert without no_partial to include it with NaN placeholders.\n");
           PRINT_INFO("%s", log.c_str());
         }
       }
@@ -1336,7 +1336,7 @@ bool CoreResultsVtkWriter::write_vtu_linked_threadpool(int thread_part, std::str
           output.append(this->level_whitespace(4) + "</DataArray>\n");
         }else{
           log = "WARNING! Result data skipped for Result Block " + vec_frd[thread_part]->result_block_type[vec_frd[thread_part]->result_blocks[data_ids[ii]][5]] + " - current increment " + std::to_string(current_increment) + " - current part " + std::to_string(current_part) + " \n";
-          log.append("node_data_ids.size() = " + std::to_string(node_data_ids.size()) + " != vec_frd[thread_part]->nodes.size() = " + std::to_string(vec_frd[thread_part]->nodes.size()) + " try it again with Option [Partial]\n");
+          log.append("node_data_ids.size() = " + std::to_string(node_data_ids.size()) + " != vec_frd[thread_part]->nodes.size() = " + std::to_string(vec_frd[thread_part]->nodes.size()) + "; incomplete field skipped. Convert without no_partial to include it with NaN placeholders.\n");
           PRINT_INFO("%s", log.c_str());
         }
       }
@@ -3055,7 +3055,8 @@ std::string CoreResultsVtkWriter::get_result_data_partial(int data_id, int node_
   {
     for (size_t i = 0; i < component_size; i++)
     {
-      str_result.append(ccx_iface->to_string_scientific(0.));
+      //str_result.append(ccx_iface->to_string_scientific(0.));
+      str_result.append("NaN");
       if (i!=component_size-1)
       {
         str_result.append(" ");
@@ -3094,7 +3095,8 @@ std::string CoreResultsVtkWriter::get_result_data_partial_thread(int data_id, in
   {
     for (size_t i = 0; i < component_size; i++)
     {
-      str_result.append(ccx_iface->to_string_scientific(0.));
+      //str_result.append(ccx_iface->to_string_scientific(0.));
+      str_result.append("NaN");
       if (i!=component_size-1)
       {
         str_result.append(" ");
@@ -3133,7 +3135,8 @@ std::string CoreResultsVtkWriter::get_result_data_partial_threadpool(int data_id
   {
     for (size_t i = 0; i < component_size; i++)
     {
-      str_result.append(ccx_iface->to_string_scientific(0.));
+      //str_result.append(ccx_iface->to_string_scientific(0.));
+      str_result.append("NaN");
       if (i!=component_size-1)
       {
         str_result.append(" ");
