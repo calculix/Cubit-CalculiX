@@ -1,7 +1,7 @@
 #!cubit
 reset
 #beam geometry
-create brick x 100 y 10 z 10
+create brick x 100 y 10 z 2
 block 1 add volume 1
 split surface 6 offset curve 10 distance 2.5
 
@@ -30,10 +30,10 @@ create vertex location on surface 8  center
 create vertex location on surface 8  center  
 
 # rigid body constraint
-ccx create constraint rigid body nodeset 3 ref 9 rot 10
+ccx create constraint rigid body nodeset 3 ref 11 rot 12
 
 # load 
-create force  on vertex 9 force value 10000 direction 0 -1 0
+create force  on vertex 11 force value 10000 direction 0 -1 0
 
 # bc
 create displacement  on nodeset 1  dof 1 dof 2 dof 3 fix 0 
@@ -74,7 +74,7 @@ mesh vertex all
 mesh volume all
 
 #topology
-ccx create topology 1 name "simple_beam" method density objective compliance volume_fraction 0.7 iterations 5
+ccx create topology 1 name "simple_beam" method density objective compliance volume_fraction 0.7 iterations 50
 #ccx run topology 1
 
 #ccx draw topology 1 iteration 4 threshold 0.5

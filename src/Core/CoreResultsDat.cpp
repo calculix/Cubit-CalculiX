@@ -108,11 +108,7 @@ bool CoreResultsDat::check_initialized()
 
 bool CoreResultsDat::read()
 {
-  if (ccx_uo.mConverterThreads > 1)
-  {
-    return read_parallel_boost();
-  }
-  return read_single();
+  return read_parallel_boost();
 }
 
 bool CoreResultsDat::read_single()
@@ -392,7 +388,7 @@ bool CoreResultsDat::read_single()
   //PRINT_INFO("%s", log.c_str());
   //print_data();
 
-  StopWatch.total("Duration of reading DAT [ms]: ");
+  StopWatch.total("Duration of reading DAT (single-thread) [ms]: ");
 
   return true;
 }
@@ -724,7 +720,7 @@ bool CoreResultsDat::read_parallel()
   //PRINT_INFO("%s", log.c_str());
   //print_data();
 
-  StopWatch.total("Duration of reading DAT [ms]: ");
+  StopWatch.total("Duration of reading DAT (legacy parallel) [ms]: ");
   return true;
 }
 
@@ -804,7 +800,7 @@ bool CoreResultsDat::read_parallel_boost()
   }
   if (success)
   {
-    stopwatch.total("Duration of reading DAT [ms]: ");
+    stopwatch.total("Duration of reading DAT (Boost, " + std::to_string(ccx_uo.mConverterThreads) + " threads) [ms]: ");
   }
   return success;
 }

@@ -90,11 +90,7 @@ bool CoreResultsFrd::check_initialized()
 
 bool CoreResultsFrd::read()
 {
-  if (ccx_uo.mConverterThreads > 1)
-  {
-    return read_parallel_boost();
-  }
-  return read_single();
+  return read_parallel_boost();
 }
 
 bool CoreResultsFrd::read_single()
@@ -271,7 +267,7 @@ bool CoreResultsFrd::read_single()
   //PRINT_INFO("%s", log.c_str());
   //print_data();
 
-  StopWatch.total("Duration of reading FRD [ms]: ");
+  StopWatch.total("Duration of reading FRD (single-thread) [ms]: ");
 
   return true;
 }
@@ -811,7 +807,7 @@ bool CoreResultsFrd::read_parallel()
   //print_data();
   
 
-  StopWatch.total("Duration of reading FRD [ms]: ");
+  StopWatch.total("Duration of reading FRD (legacy parallel) [ms]: ");
 
   return true;
 }
@@ -908,7 +904,7 @@ bool CoreResultsFrd::read_parallel_boost()
   }
   if (success)
   {
-    stopwatch.total("Duration of reading FRD [ms]: ");
+    stopwatch.total("Duration of reading FRD (Boost, " + std::to_string(ccx_uo.mConverterThreads) + " threads) [ms]: ");
   }
   return success;
 }
