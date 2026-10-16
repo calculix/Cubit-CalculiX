@@ -791,6 +791,13 @@ bool CoreResultsDat::read_parallel_boost()
   }
   if (success)
   {
+    const bool has_results = !result_section_data.empty()
+        || std::any_of(result_block_data.begin(), result_block_data.end(), [](const auto& block) { return !block.empty(); })
+        || std::any_of(buckle_data.begin(), buckle_data.end(), [](const auto& block) { return !block.empty(); });
+    if (!has_results)
+    {
+      PRINT_INFO("DAT file contains no results: %s\n", filepath.c_str());
+    }
     progressbar->percent(1.0);
   }
   progressbar->end();
@@ -1111,11 +1118,7 @@ bool CoreResultsDat::append_boost_batch(DatParsedBatch& batch)
 
 bool CoreResultsDat::finalize_boost_results()
 {
-  if (result_blocks.empty() && buckle_data.empty() && result_section_data.empty())
-  {
-    PRINT_ERROR("DAT file contains no readable results.\n");
-    return false;
-  }
+  // Empty result collections are valid when no DAT output was requested.
   if (!check_element_sets())
   {
     return false;

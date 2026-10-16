@@ -9,6 +9,7 @@
 #include "ResultsReaderPipeline.hpp"
 #include <functional>
 
+#include <algorithm>
 #include <fstream>
 #include <cmath>
 #include <iostream>
@@ -889,12 +890,17 @@ bool CoreResultsFrd::read_parallel_boost()
       success = false;
     }
   }
-  if (success && !state.found_end_marker)
-  {
-    PRINT_WARNING("FRD end marker is missing; only completed result blocks were accepted.\n");
-  }
   if (success)
   {
+    const bool has_results = std::any_of(result_block_data.begin(), result_block_data.end(), [](const auto& block) { return !block.empty(); });
+    if (!has_results)
+    {
+      PRINT_INFO("FRD file contains no results: %s\n", filepath.c_str());
+    }
+    else if (!state.found_end_marker)
+    {
+      PRINT_WARNING("FRD end marker is missing; only completed result blocks were accepted.\n");
+    }
     progressbar->percent(1.0);
   }
   progressbar->end();
@@ -1177,9 +1183,10 @@ bool CoreResultsFrd::append_boost_batch(FrdParsedBatch& batch)
 
 bool CoreResultsFrd::finalize_boost_results()
 {
-  if (nodes.empty() || !ResultsReaderPipeline::ids_fit(0, nodes.size()))
+  // No mesh/results is valid when no FRD output was requested.
+  if (!ResultsReaderPipeline::ids_fit(0, nodes.size()))
   {
-    PRINT_ERROR("FRD contains no nodes or exceeds the supported node index range.\n");
+    PRINT_ERROR("FRD exceeds the supported node index range.\n");
     return false;
   }
   for (const auto& element : elements)
