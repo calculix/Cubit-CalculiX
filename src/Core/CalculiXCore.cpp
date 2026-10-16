@@ -7729,10 +7729,12 @@ bool CalculiXCore::collect_topology_element_volumes(int topology_id,std::map<int
 
     const bool first = volumes.empty();
 
+    /*
     if (first)
     {
       PRINT_INFO("Querying volume: global %d, %s %d.\n", global_id, entity.c_str(), local_id);
     }
+    */
 
     const double volume = CubitInterface::get_meshed_volume_or_area(entity, {local_id});
 
@@ -7746,10 +7748,12 @@ bool CalculiXCore::collect_topology_element_volumes(int topology_id,std::map<int
 
     if (element_centers)
     {
+      /*
       if (first)
       {
         PRINT_INFO("Querying center: global %d, %s %d.\n", global_id, entity.c_str(), local_id);
       }
+      */
 
       const auto center = CubitInterface::get_center_point(entity, local_id);
 

@@ -64,8 +64,8 @@ private:
   QSpinBox *fps;
   QCheckBox *overwrite;
 
-  QDoubleSpinBox *wrapAlpha;
-  QDoubleSpinBox *wrapOffset;
+  QLineEdit *wrapAlpha;
+  QLineEdit *wrapOffset;
   QLineEdit *wrapPath;
   QCheckBox *wrapImport;
   QCheckBox *wrapOverwrite;

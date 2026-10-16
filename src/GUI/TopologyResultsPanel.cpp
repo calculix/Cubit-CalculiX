@@ -185,19 +185,14 @@ TopologyResultsPanel::TopologyResultsPanel(QWidget *parent)
   QGroupBox *wrapGroup = new QGroupBox("Alpha wrapping", this);
   QFormLayout *wrapForm = new QFormLayout(wrapGroup);
 
-  wrapAlpha = new QDoubleSpinBox(wrapGroup);
-  wrapOffset = new QDoubleSpinBox(wrapGroup);
+  wrapAlpha = new QLineEdit(wrapGroup);
+  wrapOffset = new QLineEdit(wrapGroup);
 
-  for (QDoubleSpinBox *spin : {wrapAlpha, wrapOffset})
-  {
-    spin->setDecimals(9);
-    spin->setRange(0.000000001, 1.0e12);
-  }
+  wrapAlpha->setPlaceholderText("Optional: calculated automatically");
+  wrapOffset->setPlaceholderText("Optional: calculated automatically");
 
-  wrapAlpha->setValue(0.2);
-  wrapOffset->setValue(0.01);
-  wrapAlpha->setToolTip("Alpha in model length units.");
-  wrapOffset->setToolTip("Offset in model length units.");
+  wrapAlpha->setToolTip("Leave empty for bounding-box diagonal / 20. Otherwise enter a positive value in model length units.");
+  wrapOffset->setToolTip("Leave empty for resolved alpha / 30. Otherwise enter a positive value in model length units.");
 
   wrapPath = new QLineEdit(wrapGroup);
   wrapPath->setPlaceholderText("Optional: default filename");
@@ -909,13 +904,41 @@ void TopologyResultsPanel::wrapIteration()
     return;
   }
 
-  QString command = QString("ccx wrap topology %1 iteration %2 threshold %3 alpha %4 offset %5 file \"%6\"")
+  QString command = QString("ccx wrap topology %1 iteration %2 threshold %3")
     .arg(topology_id)
     .arg(iteration_id)
-    .arg(QString::number(threshold->value(), 'g', 17))
-    .arg(QString::number(wrapAlpha->value(), 'g', 17))
-    .arg(QString::number(wrapOffset->value(), 'g', 17))
-    .arg(filename);
+    .arg(QString::number(threshold->value(), 'g', 17));
+
+  const auto append_parameter = [&](QLineEdit* field, const QString& keyword) -> bool
+  {
+    const QString text = field->text().trimmed();
+
+    if (text.isEmpty())
+    {
+      return true;
+    }
+
+    bool valid = false;
+    const double value = text.toDouble(&valid);
+
+    if (!valid || !std::isfinite(value) || value <= 0.0)
+    {
+      PRINT_ERROR("%s must be a finite positive number, or left empty for automatic calculation.\n", keyword.toUtf8().constData());
+      field->setFocus();
+      field->selectAll();
+      return false;
+    }
+
+    command += " " + keyword + " " + QString::number(value, 'g', 17);
+    return true;
+  };
+
+  if (!append_parameter(wrapAlpha, "alpha") || !append_parameter(wrapOffset, "offset"))
+  {
+    return;
+  }
+
+  command += " file \"" + filename + "\"";
 
   if (!wrapImport->isChecked())
   {

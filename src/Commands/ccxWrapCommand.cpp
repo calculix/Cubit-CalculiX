@@ -5,6 +5,10 @@
 #include "CGALTool.hpp"
 #include "CalculiXCoreInterface.hpp"
 
+#include <QCoreApplication>
+#include <QEventLoop>
+#include <QScopedValueRollback>
+
 #include <algorithm>
 #include <cmath>
 #include <exception>
@@ -133,16 +137,16 @@ bool collect_topology_wrap_mesh(int topology_id, int iteration_id, double thresh
 std::vector<std::string> ccxWrapCommand::get_syntax()
 {
     return {
-        "ccx wrap block <value:label='block_ids'>... alpha <value:label='alpha'> offset <value:label='offset'> file <string:label='filename'> [no_import] [overwrite]",
-        "ccx wrap topology <value:label='topology_id'> iteration <value:label='iteration_id'> threshold <value:label='threshold'> alpha <value:label='alpha'> offset <value:label='offset'> file <string:label='filename'> [no_import] [overwrite]"
+        "ccx wrap block <value:label='block_ids'>... [alpha <value:label='alpha'>] [offset <value:label='offset'>] file <string:label='filename'> [no_import] [overwrite]",
+        "ccx wrap topology <value:label='topology_id'> iteration <value:label='iteration_id'> threshold <value:label='threshold'> [alpha <value:label='alpha'>] [offset <value:label='offset'>] file <string:label='filename'> [no_import] [overwrite]"
     };
 }
 
 std::vector<std::string> ccxWrapCommand::get_syntax_help()
 {
     return {
-        "ccx wrap block <block_ids>... alpha <alpha> offset <offset> file \"<filename.stl>\" [no_import] [overwrite]",
-        "ccx wrap topology <topology_id> iteration <iteration_id> threshold <threshold> alpha <alpha> offset <offset> file \"<filename.stl>\" [no_import] [overwrite]"
+        "ccx wrap block <block_ids>... [alpha <alpha>] [offset <offset>] file \"<filename.stl>\" [no_import] [overwrite]",
+        "ccx wrap topology <topology_id> iteration <iteration_id> threshold <threshold> [alpha <alpha>] [offset <offset>] file \"<filename.stl>\" [no_import] [overwrite]"
     };
 }
 
@@ -155,6 +159,9 @@ std::vector<std::string> ccxWrapCommand::get_help()
         "Threshold must be between zero and one.",
         "Topology wrapping requires a completed iteration and an idle topology case.",
         "Wrapping uses the current Cubit mesh coordinates.",
+        "If alpha is omitted, it defaults to the wrapping input bounding-box diagonal divided by 20.",
+        "If offset is omitted, it defaults to the resolved alpha divided by 30.",
+        "Explicit alpha and offset values must be finite and positive.",
         "Every selected entity must be meshed.",
         "Volume input uses only boundary faces and nodes.",
         "Higher-order solids and shells use a corner-node surface approximation.",
@@ -167,22 +174,47 @@ std::vector<std::string> ccxWrapCommand::get_help()
 
 bool ccxWrapCommand::execute(CubitCommandData& data)
 {
+    static bool wrapping = false;
+
+    if (wrapping)
+    {
+        PRINT_ERROR("An alpha wrapping command is already running.\n");
+        return false;
+    }
+
+    const QScopedValueRollback<bool> wrapping_guard(wrapping, true);
+
     try
     {
         double alpha = 0.0;
         double offset = 0.0;
         std::string filename;
 
-        if (!data.get_value("alpha", alpha) || !data.get_value("offset", offset) || !data.get_string("filename", filename))
+        const bool automatic_alpha = !data.find_keyword("alpha");
+        const bool automatic_offset = !data.find_keyword("offset");
+
+        if (!data.get_string("filename", filename))
         {
-            PRINT_ERROR("Missing wrapping parameters.\n");
+            PRINT_ERROR("Missing output filename.\n");
             return false;
         }
 
-        if (!std::isfinite(alpha) || alpha <= 0.0 || !std::isfinite(offset) || offset <= 0.0)
+        if (!automatic_alpha)
         {
-            PRINT_ERROR("Alpha and offset must be finite and positive.\n");
-            return false;
+            if (!data.get_value("alpha", alpha) || !std::isfinite(alpha) || alpha <= 0.0)
+            {
+                PRINT_ERROR("Alpha must be finite and positive.\n");
+                return false;
+            }
+        }
+
+        if (!automatic_offset)
+        {
+            if (!data.get_value("offset", offset) || !std::isfinite(offset) || offset <= 0.0)
+            {
+                PRINT_ERROR("Offset must be finite and positive.\n");
+                return false;
+            }
         }
 
         if (filename.empty())
@@ -256,6 +288,62 @@ bool ccxWrapCommand::execute(CubitCommandData& data)
             return false;
         }
 
+        if (automatic_alpha)
+        {
+            if (input.soup.points.empty())
+            {
+                PRINT_ERROR("Cannot calculate alpha without input points.\n");
+                return false;
+            }
+
+            CGALTool::Point minimum = input.soup.points.front();
+            CGALTool::Point maximum = minimum;
+
+            for (const auto& point : input.soup.points)
+            {
+                for (std::size_t axis = 0; axis < 3; ++axis)
+                {
+                    if (!std::isfinite(point[axis]))
+                    {
+                        PRINT_ERROR("Cannot calculate alpha from non-finite coordinates.\n");
+                        return false;
+                    }
+
+                    minimum[axis] = (std::min)(minimum[axis], point[axis]);
+                    maximum[axis] = (std::max)(maximum[axis], point[axis]);
+                }
+            }
+
+            const double dx = maximum[0] - minimum[0];
+            const double dy = maximum[1] - minimum[1];
+            const double dz = maximum[2] - minimum[2];
+            const double diagonal = std::hypot(dx, dy, dz);
+
+            if (!std::isfinite(diagonal) || diagonal <= 0.0)
+            {
+                PRINT_ERROR("Cannot calculate alpha: input bounding-box diagonal must be finite and positive.\n");
+                return false;
+            }
+
+            alpha = diagonal / 20.0;
+            PRINT_INFO("Automatic alpha: input bounding-box diagonal %.9g / 20.\n", diagonal);
+        }
+
+        if (automatic_offset)
+        {
+            offset = alpha / 30.0;
+        }
+
+        if (!std::isfinite(alpha) || alpha <= 0.0 || !std::isfinite(offset) || offset <= 0.0)
+        {
+            PRINT_ERROR("Calculated wrapping parameters are outside the supported numeric range. Specify alpha and offset explicitly.\n");
+            return false;
+        }
+
+        PRINT_INFO("Alpha wrap parameters used: alpha=%.17g (%s), offset=%.17g (%s), in model length units.\n", alpha, automatic_alpha ? "automatic" : "specified", offset, automatic_offset ? "automatic: alpha / 30" : "specified");
+        PRINT_INFO("To override, specify alpha <value> and/or offset <value> in the wrap command, or enter positive values in the wrapping widget.\n");
+        PRINT_INFO("Smaller alpha retains finer detail; larger alpha gives a coarser wrap. Smaller offset gives a tighter fit; larger offset gives a looser fit.\n");
+
         CGALTool::WrapMode mode = CGALTool::WrapMode::TriangleSoup;
 
         if (input.use_point_cloud)
@@ -263,7 +351,15 @@ bool ccxWrapCommand::execute(CubitCommandData& data)
             mode = CGALTool::WrapMode::PointCloud;
         }
 
-        if (!CGALTool::alphawrap(input.soup, alpha, offset, output_path, mode, overwrite))
+        const auto refresh_output = []()
+        {
+            if (QCoreApplication::instance() != nullptr)
+            {
+                QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents | QEventLoop::ExcludeSocketNotifiers, 10);
+            }
+        };
+
+        if (!CGALTool::alphawrap(input.soup, alpha, offset, output_path, mode, overwrite, refresh_output))
         {
             return false;
         }
@@ -273,6 +369,9 @@ bool ccxWrapCommand::execute(CubitCommandData& data)
             return true;
         }
 
+        PRINT_INFO("Alpha wrap: importing STL into Cubit.\n");
+        refresh_output();
+
         const std::string import_command = "import stl \"" + import_filename + "\"";
 
         if (!CubitInterface::cmd_single(import_command.c_str()))
@@ -281,6 +380,7 @@ bool ccxWrapCommand::execute(CubitCommandData& data)
             return false;
         }
 
+        PRINT_INFO("Alpha wrap: import completed.\n");
         return true;
     }
     catch (const std::exception& error)
