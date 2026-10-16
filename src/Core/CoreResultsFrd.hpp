@@ -1,6 +1,8 @@
 #ifndef CORERESULTSFRD_HPP
 #define CORERESULTSFRD_HPP
 
+#include "CoreResultsFrdStructs.hpp"
+#include <fstream>
 #include "ProgressTool.hpp"
 #include "AppUtil.hpp"
 #include <vector>
@@ -104,6 +106,7 @@ public:
   bool check_initialized(); // check if object is initialized
   bool read(); // reads the frd file
   bool read_single(); // reads the frd file single core
+  bool read_parallel_boost();
   bool read_parallel(); // reads the frd file in parallel for the result blocks
   std::vector<std::string> split_line(std::string frdline); // splits the line to a vector
   std::vector<std::string> split_element_line(const std::string& frdline);
@@ -135,8 +138,14 @@ public:
   template <typename T>  std::vector<std::size_t> sort_permutation(const std::vector<T>& vec);
   template <typename T> void apply_permutation(std::vector<T>& vec,const std::vector<std::size_t>& p);
 
-  ProgressTool *progressbar; // progressbar
+  ProgressTool *progressbar = nullptr; // progressbar
   CalculiXCoreInterface* ccx_iface = nullptr;
+
+private:
+  bool read_next_boost_batch(std::ifstream& file, FrdReadState& state, FrdReadBatch& batch, bool& finished);
+  static FrdParsedBatch parse_boost_batch(const FrdReadBatch& batch, const std::atomic<bool>& cancelled);
+  bool append_boost_batch(FrdParsedBatch& batch);
+  bool finalize_boost_results();
 };
 
 #endif // CORERESULTSFRD_HPP

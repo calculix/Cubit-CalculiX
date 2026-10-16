@@ -5,6 +5,8 @@
 #include <string>
 #include <thread>
 #include <chrono>
+#include "CoreResultsDatStructs.hpp"
+#include <fstream>
 #include "ProgressTool.hpp"
 #include "AppUtil.hpp"
 
@@ -120,6 +122,7 @@ public:
   bool clear(); // clear all stored result data
   bool read(); // reads the dat file
   bool read_single(); // reads the dat file
+  bool read_parallel_boost();
   bool read_parallel(); // reads the dat file
   std::vector<std::string> split_line(std::string line); // splits the line to a vector
   bool is_number(std::string number); // check if string is a positive number, for check of first column
@@ -151,7 +154,7 @@ public:
   int get_result_block_type_data_id(std::string result_block_type); // returns the result_block_type_data_id or returns -1 
   int get_result_block_set_data_id(std::string result_block_set); // returns the result_block_set_data_id or returns -1 
   bool sort_data(int data_id); // sorts the data
-  int get_result_block_lines(std::vector<std::vector<std::vector<std::string>>> result_block_lines); // computes and returns the maximum line numbers that will be read for the result blocks
+  int get_result_block_lines(const std::vector<std::vector<std::vector<std::string>>>& result_block_lines); // computes and returns the maximum line numbers that will be read for the result blocks
   int get_result_blocks_predefined(); // gets the number of result blocks that are needing a predefined calculation
   void update_progressbar(); // updates the percent from the progressbar
   bool print_data(); // prints the data to the console
@@ -159,8 +162,14 @@ public:
   template <typename T>  std::vector<std::size_t> sort_permutation(const std::vector<T>& vec);
   template <typename T> void apply_permutation(std::vector<T>& vec,const std::vector<std::size_t>& p);
 
-  ProgressTool *progressbar; // progressbar
+  ProgressTool *progressbar = nullptr; // progressbar
   CalculiXCoreInterface* ccx_iface = nullptr;
+
+private:
+  bool read_next_boost_batch(std::ifstream& file, DatReadState& state, DatReadBatch& batch, bool& finished);
+  static DatParsedBatch parse_boost_batch(const DatReadBatch& batch, const std::atomic<bool>& cancelled);
+  bool append_boost_batch(DatParsedBatch& batch);
+  bool finalize_boost_results();
 };
 
 #endif // CORERESULTSDAT_HPP

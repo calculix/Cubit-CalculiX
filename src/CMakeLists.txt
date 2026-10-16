@@ -376,6 +376,13 @@ if (UNIX)
     target_link_libraries(calculix_comp calculix_core)
 endif (UNIX)
 
+# Result readers use header-only Boost.Asio on both platforms.
+find_package(Threads REQUIRED)
+target_include_directories(calculix_core PRIVATE "${BOOST_ROOT}")
+target_compile_features(calculix_core PRIVATE cxx_std_17)
+target_link_libraries(calculix_core Threads::Threads)
+target_link_libraries(calculix_core showviz_base showviz_cubit)
+
 # copy external software
 if (WIN32)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Solver/CalculiX/Win/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/Solver/)

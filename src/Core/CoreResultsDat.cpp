@@ -6,8 +6,11 @@
 #include "loadUserOptions.hpp"
 
 #include "ThreadPool.hpp"
+#include "ResultsReaderPipeline.hpp"
 #include <functional>
 
+#include <algorithm>
+#include <iterator>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -84,6 +87,17 @@ bool CoreResultsDat::clear()
   result_section_set.clear();
   dat_arrays.clear();
 
+  sorted_c1.clear();
+  sorted_result_block_c1_data_id.clear();
+  sorted_result_block_c1_data_type.clear();
+  progress.clear();
+  current_read_mode = 0;
+  current_result_block = -1;
+  current_total_time_id = -1;
+  current_step = -1;
+  current_increment = -1;
+
+
   return true;
 }
 
@@ -94,28 +108,11 @@ bool CoreResultsDat::check_initialized()
 
 bool CoreResultsDat::read()
 {
-  bool success = false;
   if (ccx_uo.mConverterThreads > 1)
   {
-    #ifdef WIN32
-      if (read_single())
-      {
-        success = true;
-      }
-    #else
-      if (read_parallel())
-      {
-        success = true;
-      }
-    #endif
-  }else{
-    if (read_single())
-    {
-      success = true;
-    }
+    return read_parallel_boost();
   }
-
-  return success;
+  return read_single();
 }
 
 bool CoreResultsDat::read_single()
@@ -731,6 +728,419 @@ bool CoreResultsDat::read_parallel()
   return true;
 }
 
+
+bool CoreResultsDat::read_parallel_boost()
+{
+  StopWatch stopwatch;
+  if (!is_initialized || !ccx_iface || !progressbar)
+  {
+    PRINT_ERROR("DAT reader is not initialized.\n");
+    return false;
+  }
+  if (ccx_uo.mConverterThreads < 1)
+  {
+    PRINT_ERROR("DAT reader requires at least one converter thread.\n");
+    return false;
+  }
+  std::ifstream file(filepath, std::ios::binary);
+  if (!file.is_open())
+  {
+    PRINT_ERROR("Cannot open DAT file: %s\n", filepath.c_str());
+    return false;
+  }
+  DatReadState state;
+  if (!ResultsReaderPipeline::file_size(file, state.file_size))
+  {
+    PRINT_ERROR("Cannot determine DAT file size.\n");
+    return false;
+  }
+
+  clear();
+  progressbar->start(0, 100, "Reading Results DAT");
+  bool success = ResultsReaderPipeline::run<DatReadTask>(
+      static_cast<std::size_t>(ccx_uo.mConverterThreads), "DAT",
+      [&](DatReadBatch& batch, bool& finished)
+      {
+        return read_next_boost_batch(file, state, batch, finished);
+      },
+      [](const DatReadBatch& batch, const std::atomic<bool>& cancelled)
+      {
+        return parse_boost_batch(batch, cancelled);
+      },
+      [&](DatParsedBatch& batch)
+      {
+        return append_boost_batch(batch);
+      },
+      [&]()
+      {
+        return ResultsReaderPipeline::poll(file, state.file_size, progressbar, state.progress_time);
+      });
+
+  if (success)
+  {
+    try
+    {
+      success = finalize_boost_results();
+    }
+    catch (const std::exception& error)
+    {
+      PRINT_ERROR("DAT finalization failed: %s\n", error.what());
+      success = false;
+    }
+    catch (...)
+    {
+      PRINT_ERROR("Unexpected DAT finalization failure.\n");
+      success = false;
+    }
+  }
+  if (success)
+  {
+    progressbar->percent(1.0);
+  }
+  progressbar->end();
+  if (!success)
+  {
+    clear();
+  }
+  if (success)
+  {
+    stopwatch.total("Duration of reading DAT [ms]: ");
+  }
+  return success;
+}
+
+bool CoreResultsDat::read_next_boost_batch(std::ifstream& file, DatReadState& state, DatReadBatch& batch, bool& finished)
+{
+  finished = false;
+  if (state.finished)
+  {
+    finished = true;
+    return true;
+  }
+
+  std::size_t batch_bytes = 0;
+  std::string raw;
+  while (true)
+  {
+    if (!ResultsReaderPipeline::poll(file, state.file_size, progressbar, state.progress_time))
+    {
+      return false;
+    }
+    if (state.has_pending_line)
+    {
+      raw = std::move(state.pending_line);
+      state.has_pending_line = false;
+    }
+    else
+    {
+      if (!ResultsReaderPipeline::read_line(file, raw))
+      {
+        if (!file.eof())
+        {
+          PRINT_ERROR("Cannot read DAT results: I/O error or line exceeds 64 KiB.\n");
+          return false;
+        }
+        if (current_read_mode >= 111 && current_read_mode <= 118)
+        {
+          PRINT_ERROR("Incomplete DAT section output at end of file.\n");
+          return false;
+        }
+        state.finished = true;
+        finished = batch.lines.empty();
+        return true;
+      }
+      ++state.line_number;
+    }
+
+    if (raw.size() > ResultsReaderPipeline::max_line_bytes)
+    {
+      PRINT_ERROR("DAT line %zu exceeds the supported line size.\n", state.line_number);
+      return false;
+    }
+    if (is_whitespace(raw))
+    {
+      continue;
+    }
+    auto fields = split_line(raw);
+    if (fields.empty() || fields.size() > ResultsReaderPipeline::max_fields)
+    {
+      PRINT_ERROR("Invalid DAT record at line %zu.\n", state.line_number);
+      return false;
+    }
+
+    const bool numeric = is_number(fields[0]);
+    const auto row_bytes = ResultsReaderPipeline::line_storage(fields) + ResultsReaderPipeline::result_row_storage(state.components.size(), 3);
+    if (!batch.lines.empty())
+    {
+      if (!numeric || current_read_mode != 2 || batch.lines.size() >= ResultsReaderPipeline::max_batch_lines || batch_bytes + row_bytes > ResultsReaderPipeline::max_batch_bytes)
+      {
+        state.pending_line = std::move(raw);
+        state.has_pending_line = true;
+        return true;
+      }
+    }
+
+    if (fields.size() == 4 && fields[0] == "S" && fields[1] == "T" && fields[2] == "E" && fields[3] == "P")
+    {
+      PRINT_ERROR("Incomplete DAT step header at line %zu.\n", state.line_number);
+      return false;
+    }
+    check_step(fields);
+    check_mode(fields);
+
+    if (current_read_mode == 1 || current_read_mode == 11)
+    {
+      const auto set = std::find(fields.begin(), fields.end(), "set");
+      if (set == fields.end() || std::distance(fields.begin(), set) < 2 || std::next(set) == fields.end())
+      {
+        PRINT_ERROR("Invalid DAT result header at line %zu.\n", state.line_number);
+        return false;
+      }
+      if (!ResultsReaderPipeline::ids_fit(result_blocks.size(), 1))
+      {
+        PRINT_ERROR("DAT result block index overflow.\n");
+        return false;
+      }
+      const bool valid_header = current_read_mode == 11 ? header_emas(fields) : read_header(fields);
+      if (!valid_header)
+      {
+        return false;
+      }
+      state.data_id = result_blocks.back()[4];
+      state.result_type = result_block_type[result_blocks.back()[2]];
+      state.components = result_block_components[state.data_id];
+      if (state.components.size() > ResultsReaderPipeline::max_fields)
+      {
+        PRINT_ERROR("DAT result has too many components.\n");
+        return false;
+      }
+    }
+    else if (current_read_mode == 2)
+    {
+      if (state.data_id < 0 || state.components.empty())
+      {
+        PRINT_ERROR("DAT result row has no header at line %zu.\n", state.line_number);
+        return false;
+      }
+      if (batch.lines.empty())
+      {
+        batch.data_id = state.data_id;
+        batch.first_line = state.line_number;
+        batch.result_type = state.result_type;
+        batch.components = state.components;
+      }
+      batch_bytes += row_bytes;
+      batch.lines.push_back(std::move(fields));
+    }
+    else if (current_read_mode == 102)
+    {
+      if (fields.size() < 2 || buckle_data.empty())
+      {
+        PRINT_ERROR("Invalid DAT buckling row at line %zu.\n", state.line_number);
+        return false;
+      }
+      if (!read_line_buckle(fields))
+      {
+        return false;
+      }
+    }
+    else if (current_read_mode == 111)
+    {
+      if (fields.size() < 8)
+      {
+        PRINT_ERROR("Incomplete DAT section header at line %zu.\n", state.line_number);
+        return false;
+      }
+      if (!header_section_1(fields))
+      {
+        return false;
+      }
+    }
+    else if (current_read_mode == 112)
+    {
+      if (!header_section_2(fields))
+      {
+        return false;
+      }
+    }
+    else if (current_read_mode == 114)
+    {
+      if (!header_section_3(fields))
+      {
+        return false;
+      }
+    }
+    else if (current_read_mode == 116)
+    {
+      if (!header_section_4(fields))
+      {
+        return false;
+      }
+    }
+    else if (current_read_mode == 118)
+    {
+      if (!header_section_5(fields))
+      {
+        return false;
+      }
+    }
+    else if (current_read_mode == 113 || current_read_mode == 115 || current_read_mode == 117 || current_read_mode == 119)
+    {
+      const std::size_t expected = current_read_mode == 117 ? 3 : current_read_mode == 119 ? 5 : 6;
+      if (result_section_data.empty() || fields.size() != expected)
+      {
+        PRINT_ERROR("Invalid DAT section row at line %zu.\n", state.line_number);
+        return false;
+      }
+      bool valid = false;
+      if (current_read_mode == 113)
+      {
+        valid = read_line_section_1(fields);
+      }
+      else if (current_read_mode == 115)
+      {
+        valid = read_line_section_2(fields);
+      }
+      else if (current_read_mode == 117)
+      {
+        valid = read_line_section_3(fields);
+      }
+      else
+      {
+        valid = read_line_section_4(fields);
+      }
+      if (!valid)
+      {
+        return false;
+      }
+    }
+  }
+}
+
+DatParsedBatch CoreResultsDat::parse_boost_batch(const DatReadBatch& batch, const std::atomic<bool>& cancelled)
+{
+  DatParsedBatch output;
+  output.data_id = batch.data_id;
+  output.first_line = batch.first_line;
+
+  // Existing conversion and derived-value functions operate only on this
+  // private reader. The interface below is borrowed and never initialized.
+  CalculiXCoreInterface interface;
+  CoreResultsDat reader;
+  reader.ccx_iface = &interface;
+  reader.result_block_type.push_back(batch.result_type);
+  reader.result_block_components.push_back(batch.components);
+  reader.result_blocks.push_back({0, 0, 0, 0, 0, 0, 0});
+  reader.result_block_data.emplace_back();
+  reader.result_block_c1_data.emplace_back();
+  reader.progress.assign(1, 0);
+  reader.result_block_data[0].reserve(batch.lines.size());
+  reader.result_block_c1_data[0].reserve(batch.lines.size());
+
+  const auto component_count = batch.components.size();
+  const auto type = reader.erase_whitespace(batch.result_type);
+  const bool derived = type == "stresses" || type == "strains";
+  if (component_count == 0 || (derived && component_count < 8))
+  {
+    output.error = "Invalid DAT component layout.";
+    return output;
+  }
+  for (const auto& line : batch.lines)
+  {
+    if (cancelled.load(std::memory_order_relaxed))
+    {
+      output.error = "Reading cancelled.";
+      return output;
+    }
+    if (line.empty() || line.back().empty())
+    {
+      output.error = "Empty DAT result row.";
+      return output;
+    }
+    const bool shell_suffix = line.back()[0] == '_';
+    const bool elemental = line.size() == component_count || shell_suffix;
+    const auto required = component_count + (elemental ? 0 : 1);
+    if (line.size() < required || (shell_suffix && line.size() < component_count + 1))
+    {
+      output.error = "Incomplete DAT result row.";
+      return output;
+    }
+    if (!reader.read_line(line))
+    {
+      output.error = "Cannot convert DAT result row.";
+      return output;
+    }
+  }
+  if (cancelled.load(std::memory_order_relaxed))
+  {
+    output.error = "Reading cancelled.";
+    return output;
+  }
+  if (!reader.compute_predefined(0, 0))
+  {
+    output.error = "Cannot compute DAT derived components.";
+    return output;
+  }
+  output.components = std::move(reader.result_block_components[0]);
+  output.values = std::move(reader.result_block_data[0]);
+  output.c1_data = std::move(reader.result_block_c1_data[0]);
+  output.valid = true;
+  return output;
+}
+
+bool CoreResultsDat::append_boost_batch(DatParsedBatch& batch)
+{
+  if (batch.data_id < 0 || static_cast<std::size_t>(batch.data_id) >= result_block_data.size())
+  {
+    PRINT_ERROR("Invalid DAT result destination.\n");
+    return false;
+  }
+  auto& values = result_block_data[batch.data_id];
+  auto& mapping = result_block_c1_data[batch.data_id];
+  if (batch.values.size() != batch.c1_data.size() || !ResultsReaderPipeline::ids_fit(values.size(), batch.values.size()))
+  {
+    PRINT_ERROR("Invalid DAT batch size or result index overflow.\n");
+    return false;
+  }
+  const int offset = static_cast<int>(values.size());
+  for (std::size_t i = 0; i < batch.values.size(); ++i)
+  {
+    batch.c1_data[i][1] += offset;
+    values.push_back(std::move(batch.values[i]));
+    mapping.push_back(std::move(batch.c1_data[i]));
+  }
+  result_block_components[batch.data_id] = std::move(batch.components);
+  return true;
+}
+
+bool CoreResultsDat::finalize_boost_results()
+{
+  if (result_blocks.empty() && buckle_data.empty() && result_section_data.empty())
+  {
+    PRINT_ERROR("DAT file contains no readable results.\n");
+    return false;
+  }
+  if (!check_element_sets())
+  {
+    return false;
+  }
+  sorted_c1.resize(result_block_c1_data.size());
+  sorted_result_block_c1_data_id.resize(result_block_c1_data.size());
+  sorted_result_block_c1_data_type.resize(result_block_c1_data.size());
+  for (std::size_t i = 0; i < result_block_c1_data.size(); ++i)
+  {
+    if (ResultsReaderPipeline::interrupted(progressbar))
+    {
+      return false;
+    }
+    if (!sort_data(static_cast<int>(i)))
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
 std::vector<std::string> CoreResultsDat::split_line(std::string line)
 {
   std::vector<std::string> str_array;
@@ -760,7 +1170,7 @@ std::vector<std::string> CoreResultsDat::split_line(std::string line)
   while (beginSpace != std::string::npos)
   {
     size_t range = 1;
-    if ((line[beginSpace-1] != 'E') && (line[beginSpace-1] != ' ') && (beginSpace !=0))
+    if (beginSpace != 0 && line[beginSpace-1] != 'E' && line[beginSpace-1] != 'e' && line[beginSpace-1] != ' ')
     {
       line.replace(beginSpace,range, " -");
     }
@@ -801,9 +1211,13 @@ std::vector<std::string> CoreResultsDat::split_line(std::string line)
 
 bool CoreResultsDat::is_number(std::string number)
 {
+  if (number.empty())
+  {
+    return false;
+  }
   for (size_t i = 0; i < number.length(); i++)
   {
-    if (!std::isdigit(number[i]))
+    if (!std::isdigit(static_cast<unsigned char>(number[i])))
     {
       return false;
     }
@@ -839,15 +1253,18 @@ std::string CoreResultsDat::erase_whitespace(std::string line)
 
 bool CoreResultsDat::check_mode(std::vector<std::string> line)
 {
-  if ((line[0] == "B")&&(line[1] == "U")) // Buckling!
+  if (line.size() > 1 && line[0] == "B" && line[1] == "U") // Buckling!
   {
     current_read_mode = 10;
+    return true;
   } else if (line[0]=="MODE") // still buckling
   {
-    current_read_mode = 10; 
+    current_read_mode = 10;
+    return true;
   } else if (line[0]=="FACTOR") // still buckling
   {
     current_read_mode = 101;
+    return true;
   }
  
   //check for section print data
@@ -943,7 +1360,7 @@ bool CoreResultsDat::check_mode(std::vector<std::string> line)
 
 bool CoreResultsDat::check_step(std::vector<std::string> line)
 {
-  if (line.size()>3)
+  if (line.size()>4)
   {
     if ((line[0] == "S")&&(line[1] == "T")&&(line[2] == "E")&&(line[3] == "P")) // STEP
     {
@@ -990,6 +1407,11 @@ bool CoreResultsDat::read_header(std::vector<std::string> line)
       search = int(i);
     }
   } 
+  if (search < 2 || static_cast<std::size_t>(search + 1) >= line.size())
+  {
+    PRINT_ERROR("Invalid DAT result header.\n");
+    return false;
+  }
   block_set = line[search + 1];
   total_time = ccx_iface->string_scientific_to_double(line[line.size()-1]);
   total_times.push_back(total_time);
@@ -1071,6 +1493,11 @@ bool CoreResultsDat::header_emas(std::vector<std::string> line)
       search = int(i);
     }
   } 
+  if (search < 2 || static_cast<std::size_t>(search + 1) >= line.size())
+  {
+    PRINT_ERROR("Invalid DAT result header.\n");
+    return false;
+  }
   block_set = line[search + 1];
   total_time = ccx_iface->string_scientific_to_double(line[line.size()-1],5);
   total_times.push_back(total_time);
@@ -1116,7 +1543,8 @@ bool CoreResultsDat::header_section_1(std::vector<std::string> line)
 {
   //std::string log = "header section 1 " + line[4] + " time " + line[7] + " \n";
   //PRINT_INFO("%s", log.c_str());
-  if (line.size() > 6){
+  if (line.size() > 7)
+  {
     std::vector<int> tmp_result_section(2);
     tmp_result_section[0] = this->get_current_result_section_set(line[4]);
     tmp_result_section[1] = int(result_section_data.size());
@@ -1504,7 +1932,7 @@ bool CoreResultsDat::check_element_sets()
   
   for (size_t i = 0; i < result_blocks.size(); i++)
   {
-    if (this->result_block_c1_data[result_blocks[i][4]][0][2] == 2)
+    if (!result_block_c1_data[result_blocks[i][4]].empty() && result_block_c1_data[result_blocks[i][4]][0][2] == 2)
     {
       result_blocks[i][3] = this->get_current_result_block_set("ip_" + result_block_set[result_blocks[i][3]]);
     }
@@ -1627,7 +2055,7 @@ bool CoreResultsDat::sort_data(int data_id)
   return true;
 }
 
-int CoreResultsDat::get_result_block_lines(std::vector<std::vector<std::vector<std::string>>> result_block_lines)
+int CoreResultsDat::get_result_block_lines(const std::vector<std::vector<std::vector<std::string>>>& result_block_lines)
 {
   int lines = 0;
   for (size_t i = 0; i < result_block_lines.size(); i++)

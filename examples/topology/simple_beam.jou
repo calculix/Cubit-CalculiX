@@ -3,12 +3,15 @@ reset
 #beam geometry
 create brick x 100 y 10 z 10
 block 1 add volume 1
+split surface 6 offset curve 10 distance 2.5
 
 # node sets
 nodeset 1 add surface 4  
 nodeset 1 name "x0"
-nodeset 2 add surface 6  
+nodeset 2 add surface 7  
 nodeset 2 name "xl"
+nodeset 3 add surface 8  
+nodeset 3 name "rb"
 
 # material
 create material "Steel" property_group "CalculiX-FEA"
@@ -23,11 +26,11 @@ modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
 ccx create section solid block 1 material 1
 
 # vertices for ref and rot node
-create vertex location on surface 6  center  
-create vertex location on surface 6  center  
+create vertex location on surface 8  center  
+create vertex location on surface 8  center  
 
 # rigid body constraint
-ccx create constraint rigid body nodeset 2 ref 9 rot 10
+ccx create constraint rigid body nodeset 3 ref 9 rot 10
 
 # load 
 create force  on vertex 9 force value 10000 direction 0 -1 0
@@ -46,7 +49,7 @@ ccx modify fieldoutput 2 element key_on E S
 ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFL HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS 
 ccx create historyoutput name "node_output" node
 ccx create historyoutput name "element_output" element
-ccx modify historyoutput 1 node nodeset 3
+ccx modify historyoutput 1 node nodeset 4
 ccx modify historyoutput 1 node key_on U RF 
 ccx modify historyoutput 1 node key_off NT TSF TTF PN PSF PTF MACH CP VF DEPF TURB MF RFL 
 ccx modify historyoutput 2 element block 1
@@ -65,16 +68,17 @@ ccx step 1 add historyoutput 1 2
 
 # mesh
 block 1 element type HEX20
+ccx block 1 element_type c3d20r
 volume 1 size auto factor 5
 mesh vertex all
 mesh volume all
 
 #topology
 ccx create topology 1 name "simple_beam" method density objective compliance volume_fraction 0.7 iterations 5
-ccx run topology 1
+#ccx run topology 1
 
-ccx draw topology 1 iteration 4 threshold 0.5
-ccx animate topology 1 threshold 0.5 fps 5 save 'beam.gif' overwrite
+#ccx draw topology 1 iteration 4 threshold 0.5
+#ccx animate topology 1 threshold 0.5 fps 5 save 'beam.gif' overwrite
 
 #ccx result project topology 1 iteration 4 threshold 0.5 preview
 #ccx result project topology 1 iteration 4 threshold 0.5

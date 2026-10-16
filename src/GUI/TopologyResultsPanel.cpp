@@ -12,6 +12,7 @@
 #include <QFileDialog>
 #include <QFormLayout>
 #include <QHBoxLayout>
+#include <QGroupBox>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
@@ -181,6 +182,50 @@ TopologyResultsPanel::TopologyResultsPanel(QWidget *parent)
   {
     exportGif();
   });
+  QGroupBox *wrapGroup = new QGroupBox("Alpha wrapping", this);
+  QFormLayout *wrapForm = new QFormLayout(wrapGroup);
+
+  wrapAlpha = new QDoubleSpinBox(wrapGroup);
+  wrapOffset = new QDoubleSpinBox(wrapGroup);
+
+  for (QDoubleSpinBox *spin : {wrapAlpha, wrapOffset})
+  {
+    spin->setDecimals(9);
+    spin->setRange(0.000000001, 1.0e12);
+  }
+
+  wrapAlpha->setValue(0.2);
+  wrapOffset->setValue(0.01);
+  wrapAlpha->setToolTip("Alpha in model length units.");
+  wrapOffset->setToolTip("Offset in model length units.");
+
+  wrapPath = new QLineEdit(wrapGroup);
+  wrapPath->setPlaceholderText("Optional: default filename");
+
+  QPushButton *wrapBrowse = new QPushButton("Browse", wrapGroup);
+  QHBoxLayout *wrapFileRow = new QHBoxLayout();
+  wrapFileRow->addWidget(wrapPath, 1);
+  wrapFileRow->addWidget(wrapBrowse);
+
+  wrapImport = new QCheckBox("Import STL into Cubit", wrapGroup);
+  wrapImport->setChecked(true);
+
+  wrapOverwrite = new QCheckBox("Overwrite existing STL", wrapGroup);
+  wrapButton = new QPushButton("Wrap displayed iteration", wrapGroup);
+  wrapButton->setToolTip("Wrap elements at or above the displayed threshold. Preserved elements are always included.");
+
+  wrapForm->addRow("Alpha", wrapAlpha);
+  wrapForm->addRow("Offset", wrapOffset);
+  wrapForm->addRow("STL filename", wrapFileRow);
+  wrapForm->addRow(wrapImport);
+  wrapForm->addRow(wrapOverwrite);
+  wrapForm->addRow(wrapButton);
+
+  layout->addWidget(wrapGroup);
+
+  QObject::connect(wrapBrowse, &QPushButton::clicked, this, &TopologyResultsPanel::browseWrap);
+  QObject::connect(wrapButton, &QPushButton::clicked, this, &TopologyResultsPanel::wrapIteration);
+
   layout->addStretch();
 
   QObject::connect(cases, QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -406,6 +451,7 @@ void TopologyResultsPanel::updateDisplay()
   monitorButton->setEnabled(false);
   paraviewButton->setEnabled(false);
   gifButton->setEnabled(false);
+  wrapButton->setEnabled(false);
 
   if (!selected)
   {
@@ -417,6 +463,7 @@ void TopologyResultsPanel::updateDisplay()
   }
 
   const int iteration_id = iterations->currentData().toInt();
+  wrapPath->setPlaceholderText(QString("Optional: topo_%1_iteration_%2_wrap.stl").arg(loaded_case).arg(iteration_id));
   const auto entry = rows.find(iteration_id);
 
   if (entry == rows.end())
@@ -483,6 +530,7 @@ void TopologyResultsPanel::updateDisplay()
   monitorButton->setEnabled(has_job);
   paraviewButton->setEnabled(has_job);
   previewButton->setEnabled(can_use_mesh);
+  wrapButton->setEnabled(can_use_mesh);
   deleteElementsButton->setEnabled(can_use_mesh);
   threshold->setEnabled(can_use_mesh);
   gifButton->setEnabled(can_use_mesh);
@@ -806,4 +854,80 @@ void TopologyResultsPanel::exportGif()
   }
 
   GuiSendCmd::gui_cmd(command);
+}
+
+void TopologyResultsPanel::browseWrap()
+{
+  QString suggested = wrapPath->text();
+
+  if (suggested.trimmed().isEmpty() && cases->currentIndex() >= 0 && iterations->currentIndex() >= 0)
+  {
+    suggested = QString("topo_%1_iteration_%2_wrap.stl").arg(cases->currentData().toInt()).arg(iterations->currentData().toInt());
+  }
+
+  const QString filename = QFileDialog::getSaveFileName(this, "Wrapped STL", suggested, "STL files (*.stl)", nullptr, QFileDialog::DontConfirmOverwrite);
+
+  if (!filename.isEmpty())
+  {
+    wrapPath->setText(QDir::fromNativeSeparators(filename));
+  }
+}
+
+void TopologyResultsPanel::wrapIteration()
+{
+  pausePlayback();
+  previewTimer->stop();
+
+  int topology_id;
+  int iteration_id;
+  int job_id;
+
+  if (!selectedResult(topology_id, iteration_id, job_id, true))
+  {
+    return;
+  }
+
+  if (!meshAvailable(topology_id, iteration_id))
+  {
+    PRINT_ERROR("The topology iteration cannot be applied to the current mesh.\n");
+    updateDisplay();
+    return;
+  }
+
+  QString filename = wrapPath->text();
+
+  if (filename.trimmed().isEmpty())
+  {
+    filename = QString("topo_%1_iteration_%2_wrap.stl").arg(topology_id).arg(iteration_id);
+  }
+
+  filename = QDir::fromNativeSeparators(filename);
+
+  if (filename.contains('"') || filename.contains('\r') || filename.contains('\n'))
+  {
+    PRINT_ERROR("The STL filename cannot be quoted safely in a Cubit command.\n");
+    return;
+  }
+
+  QString command = QString("ccx wrap topology %1 iteration %2 threshold %3 alpha %4 offset %5 file \"%6\"")
+    .arg(topology_id)
+    .arg(iteration_id)
+    .arg(QString::number(threshold->value(), 'g', 17))
+    .arg(QString::number(wrapAlpha->value(), 'g', 17))
+    .arg(QString::number(wrapOffset->value(), 'g', 17))
+    .arg(filename);
+
+  if (!wrapImport->isChecked())
+  {
+    command += " no_import";
+  }
+
+  if (wrapOverwrite->isChecked())
+  {
+    command += " overwrite";
+  }
+
+  // Records the command. Its return value does not indicate command success.
+  GuiSendCmd::gui_cmd(command);
+  updateDisplay();
 }

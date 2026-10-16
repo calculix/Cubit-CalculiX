@@ -6,6 +6,7 @@
 #include "StopWatch.hpp"
 
 #include "ThreadPool.hpp"
+#include "ResultsReaderPipeline.hpp"
 #include <functional>
 
 #include <fstream>
@@ -66,6 +67,19 @@ bool CoreResultsFrd::clear()
   keys.clear();
   frd_arrays.clear();
 
+  sorted_node_ids.clear();
+  sorted_node_data_ids.clear();
+  sorted_result_node_ids.clear();
+  sorted_result_node_data_ids.clear();
+  progress.clear();
+  current_read_mode = 0;
+  current_result_block = -1;
+  current_step = -1;
+  current_step_increment = -1;
+  current_total_increment = -1;
+  current_total_time_id = -1;
+
+
   return true;
 }
 
@@ -76,28 +90,11 @@ bool CoreResultsFrd::check_initialized()
 
 bool CoreResultsFrd::read()
 {
-  bool success = false;
   if (ccx_uo.mConverterThreads > 1)
   {
-    #ifdef WIN32
-      if (read_single())
-      {
-        success = true;
-      }
-    #else
-      if (read_parallel())
-      {
-        success = true;
-      }
-    #endif
-  }else{
-    if (read_single())
-    {
-      success = true;
-    }
+    return read_parallel_boost();
   }
-
-  return success;
+  return read_single();
 }
 
 bool CoreResultsFrd::read_single()
@@ -819,6 +816,410 @@ bool CoreResultsFrd::read_parallel()
   return true;
 }
 
+
+bool CoreResultsFrd::read_parallel_boost()
+{
+  StopWatch stopwatch;
+  if (!is_initialized || !ccx_iface || !progressbar)
+  {
+    PRINT_ERROR("FRD reader is not initialized.\n");
+    return false;
+  }
+  if (ccx_uo.mConverterThreads < 1)
+  {
+    PRINT_ERROR("FRD reader requires at least one converter thread.\n");
+    return false;
+  }
+  const auto job_data = ccx_iface->get_job_data(job_id);
+  if (job_data.size() <= 3)
+  {
+    PRINT_ERROR("Cannot obtain FRD job status.\n");
+    return false;
+  }
+  if (job_data[3] == "1")
+  {
+    PRINT_ERROR("Cannot read FRD results while the job is running.\n");
+    return false;
+  }
+
+  std::ifstream file(filepath, std::ios::binary);
+  if (!file.is_open())
+  {
+    PRINT_ERROR("Cannot open FRD file: %s\n", filepath.c_str());
+    return false;
+  }
+  FrdReadState state;
+  if (!ResultsReaderPipeline::file_size(file, state.file_size))
+  {
+    PRINT_ERROR("Cannot determine FRD file size.\n");
+    return false;
+  }
+
+  clear();
+  progressbar->start(0, 100, "Reading Results FRD");
+  bool success = ResultsReaderPipeline::run<FrdReadTask>(
+      static_cast<std::size_t>(ccx_uo.mConverterThreads), "FRD",
+      [&](FrdReadBatch& batch, bool& finished)
+      {
+        return read_next_boost_batch(file, state, batch, finished);
+      },
+      [](const FrdReadBatch& batch, const std::atomic<bool>& cancelled)
+      {
+        return parse_boost_batch(batch, cancelled);
+      },
+      [&](FrdParsedBatch& batch)
+      {
+        return append_boost_batch(batch);
+      },
+      [&]()
+      {
+        return ResultsReaderPipeline::poll(file, state.file_size, progressbar, state.progress_time);
+      });
+
+  if (success)
+  {
+    try
+    {
+      success = finalize_boost_results();
+    }
+    catch (const std::exception& error)
+    {
+      PRINT_ERROR("FRD finalization failed: %s\n", error.what());
+      success = false;
+    }
+    catch (...)
+    {
+      PRINT_ERROR("Unexpected FRD finalization failure.\n");
+      success = false;
+    }
+  }
+  if (success && !state.found_end_marker)
+  {
+    PRINT_WARNING("FRD end marker is missing; only completed result blocks were accepted.\n");
+  }
+  if (success)
+  {
+    progressbar->percent(1.0);
+  }
+  progressbar->end();
+  if (!success)
+  {
+    clear();
+  }
+  if (success)
+  {
+    stopwatch.total("Duration of reading FRD [ms]: ");
+  }
+  return success;
+}
+
+bool CoreResultsFrd::read_next_boost_batch(std::ifstream& file, FrdReadState& state, FrdReadBatch& batch, bool& finished)
+{
+  finished = false;
+  if (state.finished)
+  {
+    finished = true;
+    return true;
+  }
+
+  std::size_t batch_bytes = 0;
+  std::string raw;
+  while (true)
+  {
+    if (!ResultsReaderPipeline::poll(file, state.file_size, progressbar, state.progress_time))
+    {
+      return false;
+    }
+    if (state.has_pending_line)
+    {
+      raw = std::move(state.pending_line);
+      state.has_pending_line = false;
+    }
+    else
+    {
+      if (!ResultsReaderPipeline::read_line(file, raw))
+      {
+        if (!file.eof())
+        {
+          PRINT_ERROR("Cannot read FRD results: I/O error or line exceeds 64 KiB.\n");
+          return false;
+        }
+        if (current_read_mode == 4)
+        {
+          PRINT_ERROR("FRD result block is incomplete at end of file.\n");
+          return false;
+        }
+        state.finished = true;
+        finished = batch.lines.empty();
+        return true;
+      }
+      ++state.line_number;
+    }
+
+    if (raw.size() > ResultsReaderPipeline::max_line_bytes)
+    {
+      PRINT_ERROR("FRD line %zu exceeds the supported line size.\n", state.line_number);
+      return false;
+    }
+    if (raw.find_first_not_of(" \t\r\n\f\v") == std::string::npos)
+    {
+      continue;
+    }
+
+    auto fields = split_line(raw);
+    if (fields.empty() || fields.size() > ResultsReaderPipeline::max_fields)
+    {
+      PRINT_ERROR("Invalid FRD record at line %zu.\n", state.line_number);
+      return false;
+    }
+    const bool result_row = current_read_mode == 4 && fields[0] == "-1";
+    const auto row_bytes = ResultsReaderPipeline::line_storage(fields) + ResultsReaderPipeline::result_row_storage(state.components.size(), 2);
+    if (!batch.lines.empty())
+    {
+      if (!result_row || batch.lines.size() >= ResultsReaderPipeline::max_batch_lines || batch_bytes + row_bytes > ResultsReaderPipeline::max_batch_bytes)
+      {
+        state.pending_line = std::move(raw);
+        state.has_pending_line = true;
+        return true;
+      }
+    }
+
+    if (result_row)
+    {
+      if (state.data_id < 0 || state.components.empty())
+      {
+        PRINT_ERROR("FRD result row has no component definition at line %zu.\n", state.line_number);
+        return false;
+      }
+      if (batch.lines.empty())
+      {
+        batch.data_id = state.data_id;
+        batch.first_line = state.line_number;
+        batch.result_type = state.result_type;
+        batch.components = state.components;
+      }
+      batch_bytes += row_bytes;
+      batch.lines.push_back(std::move(fields));
+      continue;
+    }
+
+    check_mode(fields);
+    if (current_read_mode == 9999)
+    {
+      state.found_end_marker = true;
+      state.finished = true;
+      finished = true;
+      return true;
+    }
+    if (current_read_mode == 0)
+    {
+      if (fields[0] == "1UMAT" && fields.size() < 2)
+      {
+        PRINT_ERROR("Invalid FRD material header at line %zu.\n", state.line_number);
+        return false;
+      }
+      if (!read_header(fields))
+      {
+        return false;
+      }
+    }
+    else if (current_read_mode == 1)
+    {
+      if (fields[0] == "-1" && (fields.size() < 5 || !ResultsReaderPipeline::ids_fit(nodes.size(), 1)))
+      {
+        PRINT_ERROR("Invalid FRD node or node index overflow at line %zu.\n", state.line_number);
+        return false;
+      }
+      if (!read_node(fields))
+      {
+        return false;
+      }
+    }
+    else if (current_read_mode == 2)
+    {
+      const auto element_fields = split_element_line(raw);
+      if (element_fields.empty())
+      {
+        return false;
+      }
+      if (element_fields[0] == "-2" && elements.empty())
+      {
+        PRINT_ERROR("FRD connectivity has no element at line %zu.\n", state.line_number);
+        return false;
+      }
+      if (element_fields[0] == "-1" && !ResultsReaderPipeline::ids_fit(elements.size(), 1))
+      {
+        PRINT_ERROR("FRD element index overflow at line %zu.\n", state.line_number);
+        return false;
+      }
+      if (!read_element(element_fields))
+      {
+        return false;
+      }
+    }
+    else if (current_read_mode == 3)
+    {
+      if ((fields[0] == "1PSTEP" && fields.size() < 4) || (fields[0] == "100CL" && fields.size() < 6) || (fields[0] == "-4" && fields.size() < 2))
+      {
+        PRINT_ERROR("Incomplete FRD parameter header at line %zu.\n", state.line_number);
+        return false;
+      }
+      if (fields[0] == "-4" && !ResultsReaderPipeline::ids_fit(result_blocks.size(), 1))
+      {
+        PRINT_ERROR("FRD result block index overflow.\n");
+        return false;
+      }
+      if (!read_parameter_header(fields))
+      {
+        return false;
+      }
+      if (fields[0] == "-4")
+      {
+        state.data_id = result_blocks.back()[6];
+        state.result_type = fields[1];
+        state.components.clear();
+      }
+    }
+    else if (current_read_mode == 4)
+    {
+      if (fields[0] != "-5" || fields.size() < 2)
+      {
+        PRINT_ERROR("Unsupported FRD result record at line %zu.\n", state.line_number);
+        return false;
+      }
+      if (!read_nodal_result_block(fields))
+      {
+        return false;
+      }
+      if (fields[1] != "ALL")
+      {
+        state.components.push_back(fields[1]);
+      }
+      if (state.components.size() > ResultsReaderPipeline::max_fields)
+      {
+        PRINT_ERROR("FRD result has too many components.\n");
+        return false;
+      }
+    }
+  }
+}
+
+FrdParsedBatch CoreResultsFrd::parse_boost_batch(const FrdReadBatch& batch, const std::atomic<bool>& cancelled)
+{
+  FrdParsedBatch output;
+  output.data_id = batch.data_id;
+  output.first_line = batch.first_line;
+
+  // Reuse the existing row parser with batch-private state. Do not call init():
+  // the local facade is borrowed, and no job, GUI, or owned interface is created.
+  CalculiXCoreInterface interface;
+  CoreResultsFrd reader;
+  reader.ccx_iface = &interface;
+  reader.result_block_type.push_back(batch.result_type);
+  reader.result_block_components.push_back(batch.components);
+  reader.result_blocks.push_back({0, 0, 0, 0, 0, 0, 0});
+  reader.result_block_data.emplace_back();
+  reader.result_block_node_data.emplace_back();
+  reader.result_block_data[0].reserve(batch.lines.size());
+  reader.result_block_node_data[0].reserve(batch.lines.size());
+
+  const bool derived = batch.result_type == "STRESS" || batch.result_type == "TOSTRAIN";
+  if (derived && batch.components.size() != 6)
+  {
+    output.error = "Stress/strain results require six source components.";
+    return output;
+  }
+  for (const auto& line : batch.lines)
+  {
+    if (cancelled.load(std::memory_order_relaxed))
+    {
+      output.error = "Reading cancelled.";
+      return output;
+    }
+    if (line.size() < batch.components.size() + 2 || line[0] != "-1")
+    {
+      output.error = "Incomplete nodal result row.";
+      return output;
+    }
+    if (!reader.read_nodal_result_block(line))
+    {
+      output.error = "Cannot convert nodal result row.";
+      return output;
+    }
+  }
+  output.components = std::move(reader.result_block_components[0]);
+  output.values = std::move(reader.result_block_data[0]);
+  output.node_data = std::move(reader.result_block_node_data[0]);
+  output.valid = true;
+  return output;
+}
+
+bool CoreResultsFrd::append_boost_batch(FrdParsedBatch& batch)
+{
+  if (batch.data_id < 0 || static_cast<std::size_t>(batch.data_id) >= result_block_data.size())
+  {
+    PRINT_ERROR("Invalid FRD result destination.\n");
+    return false;
+  }
+  auto& values = result_block_data[batch.data_id];
+  auto& mapping = result_block_node_data[batch.data_id];
+  if (batch.values.size() != batch.node_data.size() || !ResultsReaderPipeline::ids_fit(values.size(), batch.values.size()))
+  {
+    PRINT_ERROR("Invalid FRD batch size or result index overflow.\n");
+    return false;
+  }
+  const int offset = static_cast<int>(values.size());
+  for (std::size_t i = 0; i < batch.values.size(); ++i)
+  {
+    batch.node_data[i][1] += offset;
+    values.push_back(std::move(batch.values[i]));
+    mapping.push_back(std::move(batch.node_data[i]));
+  }
+  result_block_components[batch.data_id] = std::move(batch.components);
+  return true;
+}
+
+bool CoreResultsFrd::finalize_boost_results()
+{
+  if (nodes.empty() || !ResultsReaderPipeline::ids_fit(0, nodes.size()))
+  {
+    PRINT_ERROR("FRD contains no nodes or exceeds the supported node index range.\n");
+    return false;
+  }
+  for (const auto& element : elements)
+  {
+    if (element[2] < 0 || static_cast<std::size_t>(element[2]) >= elements_connectivity.size() || elements_connectivity[element[2]].empty())
+    {
+      PRINT_ERROR("FRD element %d has incomplete connectivity.\n", element[0]);
+      return false;
+    }
+  }
+  sorted_node_ids.resize(nodes.size());
+  sorted_node_data_ids.resize(nodes.size());
+  for (std::size_t i = 0; i < nodes.size(); ++i)
+  {
+    sorted_node_ids[i] = nodes[i][0];
+    sorted_node_data_ids[i] = static_cast<int>(i);
+  }
+  const auto permutation = sort_permutation(sorted_node_ids);
+  apply_permutation(sorted_node_ids, permutation);
+  apply_permutation(sorted_node_data_ids, permutation);
+  sorted_result_node_ids.resize(result_block_node_data.size());
+  sorted_result_node_data_ids.resize(result_block_node_data.size());
+  for (std::size_t i = 0; i < result_block_node_data.size(); ++i)
+  {
+    if (ResultsReaderPipeline::interrupted(progressbar))
+    {
+      return false;
+    }
+    if (!sort_result_block_node_data(static_cast<int>(i)))
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
 std::vector<std::string> CoreResultsFrd::split_line(std::string frdline)
 {
   std::vector<std::string> str_array;
@@ -848,7 +1249,7 @@ std::vector<std::string> CoreResultsFrd::split_line(std::string frdline)
   while (beginSpace != std::string::npos)
   {
     size_t range = 1;
-    if ((frdline[beginSpace-1] != 'E') && (frdline[beginSpace-1] != ' ') && (beginSpace !=0))
+    if (beginSpace != 0 && frdline[beginSpace-1] != 'E' && frdline[beginSpace-1] != 'e' && frdline[beginSpace-1] != ' ')
     {
       frdline.replace(beginSpace,range, " -");
     }
