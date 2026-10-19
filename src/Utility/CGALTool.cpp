@@ -29,6 +29,86 @@
 // helpers
 namespace
 {
+struct WrapProgressState
+{
+    using Clock = std::chrono::steady_clock;
+
+    Clock::time_point started = Clock::now();
+    Clock::time_point last_report = started;
+
+    std::size_t processed_facets = 0;
+    std::size_t inserted_points = 0;
+    std::size_t callback_checks = 0;
+
+    std::function<void()> refresh_output;
+
+    void report(const char* stage, bool force = false)
+    {
+        const auto now = Clock::now();
+
+        if (!force && now - last_report < std::chrono::seconds(5))
+        {
+            return;
+        }
+
+        const double elapsed = std::chrono::duration<double>(now - started).count();
+        PRINT_INFO("Alpha wrap: %s - %.1f s, %zu facets processed, %zu points inserted.\n", stage, elapsed, processed_facets, inserted_points);
+        last_report = now;
+
+        if (refresh_output)
+        {
+            refresh_output();
+        }
+    }
+};
+
+struct WrapProgressVisitor : CGAL::Alpha_wraps_3::internal::Wrapping_default_visitor
+{
+    WrapProgressState* state;
+
+    explicit WrapProgressVisitor(WrapProgressState& progress) : state(&progress)
+    {
+    }
+
+    template <typename Wrapper>
+    void on_flood_fill_begin(const Wrapper&)
+    {
+        state->report("refining", true);
+    }
+
+    template <typename Wrapper>
+    bool go_further(const Wrapper&)
+    {
+        ++state->callback_checks;
+
+        // Avoid reading the clock on every CGAL iteration.
+        if (state->callback_checks % 256 == 0)
+        {
+            state->report("refining");
+        }
+
+        return true;
+    }
+
+    template <typename Wrapper, typename Gate>
+    void before_facet_treatment(const Wrapper&, const Gate&)
+    {
+        ++state->processed_facets;
+    }
+
+    template <typename Wrapper, typename VertexHandle>
+    void after_Steiner_point_insertion(const Wrapper&, VertexHandle)
+    {
+        ++state->inserted_points;
+    }
+
+    template <typename Wrapper>
+    void on_flood_fill_end(const Wrapper&)
+    {
+        state->report("finalizing surface", true);
+    }
+};
+
 struct TemporarySTL
 {
     std::filesystem::path filename;
@@ -53,13 +133,7 @@ struct TemporarySTL
 };
 }
 
-bool CGALTool::alphawrap(
-    const TriangleSoup& input,
-    double alpha,
-    double offset,
-    const std::filesystem::path& filename,
-    WrapMode mode,
-    bool overwrite)
+bool CGALTool::alphawrap(const TriangleSoup& input, double alpha, double offset, const std::filesystem::path& filename, WrapMode mode, bool overwrite, const std::function<void()>& refresh_output)
 {
     try
     {
@@ -109,6 +183,12 @@ bool CGALTool::alphawrap(
             return false;
         }
 
+        WrapProgressState progress;
+        progress.refresh_output = refresh_output;
+
+        PRINT_INFO("Alpha wrap input: %zu points, %zu triangles; alpha=%g, offset=%g.\n", input.points.size(), input.triangles.size(), alpha, offset);
+        progress.report("preparing input", true);
+
         using Kernel = CGAL::Exact_predicates_inexact_constructions_kernel;
         using CGALPoint = Kernel::Point_3;
         using CGALMesh = CGAL::Surface_mesh<CGALPoint>;
@@ -145,26 +225,21 @@ bool CGALTool::alphawrap(
             }
         }
 
-        PRINT_INFO("Creating alpha wrap: alpha=%g, offset=%g.\n",alpha,offset);
+        progress.report("initializing", true);
 
+        WrapProgressVisitor visitor(progress);
         CGALMesh wrap;
+
         if (mode == WrapMode::PointCloud)
         {
-            CGAL::alpha_wrap_3(
-                points,
-                alpha,
-                offset,
-                wrap);
+            CGAL::alpha_wrap_3(points, alpha, offset, wrap, CGAL::parameters::visitor(visitor));
         }
         else
         {
-            CGAL::alpha_wrap_3(
-                points,
-                input.triangles,
-                alpha,
-                offset,
-                wrap);
+            CGAL::alpha_wrap_3(points, input.triangles, alpha, offset, wrap, CGAL::parameters::visitor(visitor));
         }
+
+        progress.report("validating surface", true);
 
         if (wrap.number_of_faces() == 0 ||
             !CGAL::is_valid_polygon_mesh(wrap) ||
@@ -203,6 +278,9 @@ bool CGALTool::alphawrap(
         // Declared before the stream so the stream closes before cleanup.
         TemporarySTL temporary_file{temporary_filename};
 
+        PRINT_INFO("Alpha wrap output: %zu vertices, %zu triangles.\n", static_cast<std::size_t>(wrap.number_of_vertices()), static_cast<std::size_t>(wrap.number_of_faces()));
+        progress.report("writing binary STL", true);
+
         {
             std::ofstream output(temporary_filename,std::ios::out | std::ios::binary);
 
@@ -233,6 +311,8 @@ bool CGALTool::alphawrap(
                 return false;
             }
         }
+
+        progress.report("publishing STL", true);
 
         // Recheck because wrapping may have taken some time.
         const bool destination_exists =
@@ -290,6 +370,7 @@ bool CGALTool::alphawrap(
         }
 
         temporary_file.cleanup = false;
+        progress.report("STL completed", true);
 
         PRINT_INFO(
             "Alpha wrap written to: %s\n",

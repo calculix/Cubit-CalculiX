@@ -4,6 +4,7 @@
 #include <array>
 #include <cstddef>
 #include <filesystem>
+#include <functional>
 #include <vector>
 
 class CGALTool
@@ -24,15 +25,9 @@ public:
         PointCloud
     };
 
-    // Writes the alpha wrap as an ASCII STL.
+    // Writes the alpha wrap as a binary STL.
     // Returns false and prints an error on failure.
-    static bool alphawrap(
-        const TriangleSoup& input,
-        double alpha,
-        double offset,
-        const std::filesystem::path& filename,
-        WrapMode mode = WrapMode::TriangleSoup,
-        bool overwrite = false);
+    static bool alphawrap(const TriangleSoup& input, double alpha, double offset, const std::filesystem::path& filename, WrapMode mode = WrapMode::TriangleSoup, bool overwrite = false, const std::function<void()>& refresh_output = {});
 
 };
 

@@ -3,6 +3,12 @@
 #include "CalculiXCoreInterface.hpp"
 #include "CubitMessage.hpp"
 #include "GifAnimation.hpp"
+#include "CubitColorTable.hpp"
+#include "CubitVector.hpp"
+#include "GCubitModelSet.hpp"
+#include "GGenericModel.hpp"
+#include "GView.hpp"
+#include "GWindowFactory.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -295,8 +301,6 @@ bool CoreDraw::draw_arrow(std::vector<double> start_point, std::vector<double> d
         }
     }
     
-    std::vector<std::string> commands;
-    std::string cmd;
     int npolygon = 10;
     double radius = 0.1;
     double pi = 3.14159265359;
@@ -351,34 +355,28 @@ bool CoreDraw::draw_arrow(std::vector<double> start_point, std::vector<double> d
         }
     }
     
-    // draw arrow head
-    for (size_t i = 0; i < npolygon; i++)
+    // Draw arrow head.
+    for (size_t i = 0; i < polygon_coords.size(); i++)
     {
-        if (i==npolygon-1)
+        const size_t next = (i + 1) % polygon_coords.size();
+        if (!graphics_polygon({arrow_start_coord, polygon_coords[i], polygon_coords[next]}, color))
         {
-            commands.push_back("draw polygon location pos " + ccx_iface->to_string_scientific(arrow_start_coord[0]) + " " + ccx_iface->to_string_scientific(arrow_start_coord[1]) + " " + ccx_iface->to_string_scientific(arrow_start_coord[2]) + " location pos " + ccx_iface->to_string_scientific(polygon_coords[i][0]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][1]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][2]) + " location pos " + ccx_iface->to_string_scientific(polygon_coords[0][0]) + " " + ccx_iface->to_string_scientific(polygon_coords[0][1]) + " " + ccx_iface->to_string_scientific(polygon_coords[0][2]) + " color " + color + " no_flush");
-        }else{
-            commands.push_back("draw polygon location pos " + ccx_iface->to_string_scientific(arrow_start_coord[0]) + " " + ccx_iface->to_string_scientific(arrow_start_coord[1]) + " " + ccx_iface->to_string_scientific(arrow_start_coord[2]) + " location pos " + ccx_iface->to_string_scientific(polygon_coords[i][0]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][1]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][2]) + " location pos " + ccx_iface->to_string_scientific(polygon_coords[i+1][0]) + " " + ccx_iface->to_string_scientific(polygon_coords[i+1][1]) + " " + ccx_iface->to_string_scientific(polygon_coords[i+1][2]) + " color " + color + " no_flush");
+            return false;
         }
     }
-    cmd = "draw polygon";
-    for (size_t i = 0; i < npolygon; i++)
+
+    // Draw arrow-head base and shaft.
+    if (!graphics_polygon(polygon_coords, color))
     {
-        cmd = cmd + " location pos " + ccx_iface->to_string_scientific(polygon_coords[i][0]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][1]) + " " + ccx_iface->to_string_scientific(polygon_coords[i][2]);
+        return false;
     }
-
-    cmd = cmd + " color " + color + " no_flush";
-    commands.push_back(cmd);
-
-    // draw arrow line
-    commands.push_back("draw line location pos " + ccx_iface->to_string_scientific(arrow_end_coord[0]) + " " + ccx_iface->to_string_scientific(arrow_end_coord[1]) + " " + ccx_iface->to_string_scientific(arrow_end_coord[2]) + " location pos " + ccx_iface->to_string_scientific(arrow_start_coord[0]) + " " + ccx_iface->to_string_scientific(arrow_start_coord[1]) + " " + ccx_iface->to_string_scientific(arrow_start_coord[2]) + " color " + color + " no_flush");
-    commands.push_back("graphics flush"); 
-    
-    for (size_t i = 0; i < commands.size(); i++)
+    if (!graphics_line(arrow_end_coord, arrow_start_coord, color))
     {
-        ccx_iface->silent_cmd(commands[i]);
-        //commands[i].append("\n");
-        //PRINT_INFO("%s", commands[i].c_str());
+        return false;
+    }
+    if (!graphics_flush())
+    {
+        return false;
     }
 
     return true;
@@ -1603,31 +1601,44 @@ bool CoreDraw::draw_topology(int topology_id,int iteration_id,double threshold)
 
   bool first_draw = true;
 
-  const auto draw_groups = [&](const std::map<std::string, std::vector<int>>& groups,bool edges_only, const std::string& color)
+  const auto draw_groups = [&](const std::map<std::string, std::vector<int>>& groups, bool edges_only, const std::string& color)
   {
     constexpr size_t batch_size = 200;
 
     for (const auto& group : groups)
     {
-      const auto& ids = group.second;
+      std::string entity = group.first;
+      std::vector<int> ids = group.second;
+
+      if (edges_only)
+      {
+        std::set<int> edge_ids;
+
+        for (int element_id : group.second)
+        {
+          const auto edges = CubitInterface::get_sub_elements(group.first, element_id, 1);
+          edge_ids.insert(edges.begin(), edges.end());
+        }
+
+        if (edge_ids.empty())
+        {
+          continue;
+        }
+
+        entity = "edge";
+        ids.assign(edge_ids.begin(), edge_ids.end());
+      }
 
       for (size_t start = 0; start < ids.size(); start += batch_size)
       {
         std::ostringstream command;
-        command << "draw ";
-
-        if (edges_only)
-        {
-          command << "edge all in ";
-        }
-
-        command << group.first;
+        command << "draw " << entity;
 
         const size_t end = std::min(ids.size(), start + batch_size);
 
-        for (size_t i = start; i < end; ++i)
+        for (size_t index = start; index < end; ++index)
         {
-          command << " " << ids[i];
+          command << " " << ids[index];
         }
 
         command << " color " << color;
@@ -1654,6 +1665,15 @@ bool CoreDraw::draw_topology(int topology_id,int iteration_id,double threshold)
       !draw_groups(remove, true, "red"))
   {
     return false;
+  }
+
+  if (first_draw)
+  {
+    if (!ccx_iface->silent_cmd("graphics clear"))
+    {
+      PRINT_ERROR("Unable to clear the topology preview.\n");
+      return false;
+    }
   }
 
   if (!ccx_iface->silent_cmd("graphics flush"))
@@ -1959,4 +1979,199 @@ std::string CoreDraw::get_color(int color_id)
         return colors[color_id];
     }
     return colors[0];
+}
+
+namespace
+{
+  constexpr const char* ccx_graphics_set_name = "ccx_draw";
+
+  GCubitModelSet* ccx_graphics_model_set()
+  {
+    auto* factory = GWindowFactory::get_window_factory();
+    if (factory == nullptr)
+    {
+      return nullptr;
+    }
+
+    for (const auto& view : factory->views())
+    {
+      if (view == nullptr)
+      {
+        continue;
+      }
+
+      auto* model_set = dynamic_cast<GCubitModelSet*>(view->get_model_set());
+      if (model_set != nullptr)
+      {
+        return model_set;
+      }
+    }
+
+    return nullptr;
+  }
+
+  GGenericModel* ccx_graphics_model()
+  {
+    auto* model_set = ccx_graphics_model_set();
+    if (model_set == nullptr)
+    {
+      PRINT_ERROR("No Cubit graphics model set is available.\n");
+      return nullptr;
+    }
+
+    auto* drawing_set = model_set->get_drawing_set(CubitString(ccx_graphics_set_name));
+    if (drawing_set == nullptr)
+    {
+      // Retain the set across display; graphics_clear explicitly clears CCX data.
+      drawing_set = model_set->create_drawing_set(CubitString(ccx_graphics_set_name), false);
+    }
+
+    if (drawing_set == nullptr || drawing_set->mGenericModel == nullptr)
+    {
+      PRINT_ERROR("Unable to obtain the CCX graphics drawing set.\n");
+      return nullptr;
+    }
+
+    return drawing_set->mGenericModel;
+  }
+
+  bool ccx_graphics_color(const std::string& name, CubitColor& color)
+  {
+    int color_id = -1;
+    if (!CubitColorTable::string_to_color_id(name.c_str(), color_id))
+    {
+      PRINT_ERROR("Unknown Cubit color: %s\n", name.c_str());
+      return false;
+    }
+
+    return CubitColorTable::color_id_to_rgb(color_id, color);
+  }
+
+  bool ccx_graphics_valid_point(const std::vector<double>& coord)
+  {
+    return coord.size() == 3 &&
+           std::isfinite(coord[0]) &&
+           std::isfinite(coord[1]) &&
+           std::isfinite(coord[2]);
+  }
+}
+
+bool CoreDraw::graphics_point(const std::vector<double>& coord, const std::string& color)
+{
+  CubitColor draw_color;
+  if (!ccx_graphics_valid_point(coord) || !ccx_graphics_color(color, draw_color))
+  {
+    return false;
+  }
+
+  auto* model = ccx_graphics_model();
+  if (model == nullptr)
+  {
+    return false;
+  }
+
+  const CubitVector point(coord[0], coord[1], coord[2]);
+  model->add_points(1, &point, draw_color);
+  return true;
+}
+
+bool CoreDraw::graphics_line(const std::vector<double>& start, const std::vector<double>& end, const std::string& color)
+{
+  CubitColor draw_color;
+  if (!ccx_graphics_valid_point(start) || !ccx_graphics_valid_point(end) || !ccx_graphics_color(color, draw_color))
+  {
+    return false;
+  }
+
+  auto* model = ccx_graphics_model();
+  if (model == nullptr)
+  {
+    return false;
+  }
+
+  const CubitVector start_point(start[0], start[1], start[2]);
+  const CubitVector end_point(end[0], end[1], end[2]);
+  model->add_line(start_point, end_point, draw_color);
+  return true;
+}
+
+bool CoreDraw::graphics_polygon(const std::vector<std::vector<double>>& coords, const std::string& color)
+{
+  CubitColor draw_color;
+  if (coords.size() < 3 || coords.size() > static_cast<size_t>(std::numeric_limits<int>::max()) || !ccx_graphics_color(color, draw_color))
+  {
+    return false;
+  }
+
+  std::vector<CubitVector> points;
+  points.reserve(coords.size());
+  for (const auto& coord : coords)
+  {
+    if (!ccx_graphics_valid_point(coord))
+    {
+      return false;
+    }
+
+    points.emplace_back(coord[0], coord[1], coord[2]);
+  }
+
+  auto* model = ccx_graphics_model();
+  if (model == nullptr)
+  {
+    return false;
+  }
+
+  model->add_polygon(static_cast<int>(points.size()), points.data(), draw_color, SVUtil::SHADE);
+  return true;
+}
+
+bool CoreDraw::graphics_label(const std::vector<double>& coord, const std::string& text, const std::string& color)
+{
+  CubitColor draw_color;
+  if (!ccx_graphics_valid_point(coord) || !ccx_graphics_color(color, draw_color))
+  {
+    return false;
+  }
+
+  auto* model = ccx_graphics_model();
+  if (model == nullptr)
+  {
+    return false;
+  }
+
+  const CubitVector point(coord[0], coord[1], coord[2]);
+  model->add_label(text.c_str(), point, draw_color);
+  return true;
+}
+
+bool CoreDraw::graphics_flush()
+{
+  auto* model_set = ccx_graphics_model_set();
+  if (model_set == nullptr)
+  {
+    return false;
+  }
+
+  model_set->update_model_parts();
+  model_set->render();
+  return true;
+}
+
+bool CoreDraw::graphics_clear()
+{
+  auto* model_set = ccx_graphics_model_set();
+  if (model_set == nullptr)
+  {
+    return false;
+  }
+
+  auto* drawing_set = model_set->get_drawing_set(CubitString(ccx_graphics_set_name));
+  if (drawing_set != nullptr)
+  {
+    drawing_set->clear();
+  }
+
+  model_set->update_model_parts();
+  model_set->render();
+  return true;
 }

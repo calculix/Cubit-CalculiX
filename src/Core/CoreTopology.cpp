@@ -1403,11 +1403,11 @@ bool CoreTopology::check_density_convergence(int topology_id,int previous_iterat
   progress.converged = converged;
   progress.convergence_checked = true;
 
-  PRINT_INFO(
-      "Topology %d iteration %d: density change %.9g; "
-      "relative compliance change %.9g; volume fraction %.9g.\n",
-      topology_id, current_iteration,
-      maximum_change, relative_change, fraction);
+  PRINT_INFO("Topology %d iteration %d convergence:\n", topology_id, current_iteration);
+  PRINT_INFO("  Maximum density change: %.6g / %.6g (%.2fx limit) [%s]\n", maximum_change, density_tolerance, maximum_change / density_tolerance, maximum_change <= density_tolerance ? "PASS" : "WAIT");
+  PRINT_INFO("  Relative compliance change: %.6g / %.6g (%.2fx limit) [%s]\n", relative_change, compliance_tolerance, relative_change / compliance_tolerance, relative_change <= compliance_tolerance ? "PASS" : "WAIT");
+  PRINT_INFO("  Volume fraction: %.9g / %.9g [%s]\n", fraction, configuration.target_volume_fraction + volume_tolerance, fraction <= configuration.target_volume_fraction + volume_tolerance ? "PASS" : "WAIT");
+  PRINT_INFO("  Converged: %s\n", converged ? "YES" : "NO");
 
   return true;
 }

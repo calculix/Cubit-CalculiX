@@ -3,6 +3,7 @@
 
 #include "CGALTool.hpp"
 
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -31,5 +32,13 @@ struct WrapInput
 bool build_wrap_input(const BlockWrapMesh& mesh, WrapInput& input);
 
 bool collect_block_wrap_mesh(const std::vector<int>& block_ids,BlockWrapMesh& mesh);
+
+struct WrapElement
+{
+    std::string entity;
+    int local_id = -1;
+};
+
+bool collect_element_wrap_mesh(const std::vector<WrapElement>& elements, BlockWrapMesh& mesh);
 
 #endif

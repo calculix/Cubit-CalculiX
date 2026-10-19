@@ -714,34 +714,6 @@ void cmdPanelManager::initialize_from_code()
   node->setIcon(ccx_iface->getIcon("CCXInitialConditionsStressAddElement"));
 
   //##############################
-  // add Topology Nodes
-  root_node = model->getMarkedNode("CCX");
-  node = model->addNode("Topology", root_node);
-  node->setTitle("Topology");
-  model->setNodeMarker(node, "CCXTopology");
-  node->setIcon(ccx_iface->getIcon("Topology"));
-
-  root_node = model->getMarkedNode("CCXTopology");
-  node = model->addNode("Create", root_node);
-  model->setNodeMarker(node, "CCXTopologyCreate");
-  node->setIcon(ccx_iface->getIcon("CCXTopologyCreate"));
-  node = model->addNode("Modify", root_node);
-  model->setNodeMarker(node, "CCXTopologyModify");
-  node->setIcon(ccx_iface->getIcon("CCXTopologyModify"));
-  node = model->addNode("Preserved sets", root_node);
-  model->setNodeMarker(node, "CCXTopologyPreservedSets");
-  node->setIcon(ccx_iface->getIcon("CCXTopologyPreservedSets"));
-  node = model->addNode("Actions", root_node);
-  model->setNodeMarker(node, "CCXTopologyActions");
-  node->setIcon(ccx_iface->getIcon("CCXTopologyActions"));
-  node = model->addNode("Results", root_node);
-  model->setNodeMarker(node, "CCXTopologyResults");
-  node->setIcon(ccx_iface->getIcon("CCXTopologyResults"));
-  node = model->addNode("Delete", root_node);
-  model->setNodeMarker(node, "CCXTopologyDelete");
-  node->setIcon(ccx_iface->getIcon("CCXTopologyDelete"));
-
-  //##############################
   // add Steps Nodes
   root_node = model->getMarkedNode("CCX");
   node = model->addNode("Steps", root_node);
@@ -835,6 +807,34 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Actions", root_node);
   model->setNodeMarker(node, "CCXJobsActions");
   node->setIcon(ccx_iface->getIcon("CCXJobsActions"));
+
+  //##############################
+  // add Topology Nodes
+  root_node = model->getMarkedNode("CCX");
+  node = model->addNode("Topology", root_node);
+  node->setTitle("Topology");
+  model->setNodeMarker(node, "CCXTopology");
+  node->setIcon(ccx_iface->getIcon("Topology"));
+
+  root_node = model->getMarkedNode("CCXTopology");
+  node = model->addNode("Create", root_node);
+  model->setNodeMarker(node, "CCXTopologyCreate");
+  node->setIcon(ccx_iface->getIcon("CCXTopologyCreate"));
+  node = model->addNode("Modify", root_node);
+  model->setNodeMarker(node, "CCXTopologyModify");
+  node->setIcon(ccx_iface->getIcon("CCXTopologyModify"));
+  node = model->addNode("Preserved sets", root_node);
+  model->setNodeMarker(node, "CCXTopologyPreservedSets");
+  node->setIcon(ccx_iface->getIcon("CCXTopologyPreservedSets"));
+  node = model->addNode("Actions", root_node);
+  model->setNodeMarker(node, "CCXTopologyActions");
+  node->setIcon(ccx_iface->getIcon("CCXTopologyActions"));
+  node = model->addNode("Results", root_node);
+  model->setNodeMarker(node, "CCXTopologyResults");
+  node->setIcon(ccx_iface->getIcon("CCXTopologyResults"));
+  node = model->addNode("Delete", root_node);
+  model->setNodeMarker(node, "CCXTopologyDelete");
+  node->setIcon(ccx_iface->getIcon("CCXTopologyDelete"));
 }
 
 void cmdPanelManager::associate_panels_with_nodes()

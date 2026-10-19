@@ -131,6 +131,7 @@ bool collect_block_wrap_mesh(
     std::map<std::vector<int>, std::vector<int>> surface_faces;
 
     std::set<int> volume_nodes;
+    std::set<int> surface_element_nodes;
     std::set<int> candidate_nodes;
     std::set<int> additional_nodes;
 
@@ -169,14 +170,11 @@ bool collect_block_wrap_mesh(
         int element_id,
         std::size_t expected_nodes) -> bool
     {
-        const auto nodes =
-            CubitInterface::get_expanded_connectivity(type, element_id);
+        const auto nodes = CubitInterface::get_connectivity(type, element_id);
 
         if (nodes.size() != expected_nodes)
         {
-            PRINT_ERROR(
-                "Wrapping requires a linear %s: element %d has %zu nodes.\n",
-                type.c_str(), element_id, nodes.size());
+            PRINT_ERROR("Invalid %s corner connectivity: element %d has %zu corner nodes.\n", type.c_str(), element_id, nodes.size());
             return false;
         }
 
@@ -191,6 +189,15 @@ bool collect_block_wrap_mesh(
             return false;
         }
 
+        const auto expanded_nodes = CubitInterface::get_expanded_connectivity(type, element_id);
+
+        if (expanded_nodes.empty())
+        {
+            PRINT_ERROR("Cannot read %s %d connectivity.\n", type.c_str(), element_id);
+            return false;
+        }
+
+        surface_element_nodes.insert(expanded_nodes.begin(), expanded_nodes.end());
         surface_faces.emplace(key, nodes);
         return true;
     };
@@ -206,14 +213,11 @@ bool collect_block_wrap_mesh(
             return true;
         }
 
-        const auto nodes =
-            CubitInterface::get_expanded_connectivity(type, element_id);
+        const auto nodes = CubitInterface::get_connectivity(type, element_id);
 
         if (nodes.size() != expected_nodes)
         {
-            PRINT_ERROR(
-                "Wrapping requires a linear %s: element %d has %zu nodes.\n",
-                type.c_str(), element_id, nodes.size());
+            PRINT_ERROR("Invalid %s corner connectivity: element %d has %zu corner nodes.\n", type.c_str(), element_id, nodes.size());
             return false;
         }
 
@@ -227,7 +231,15 @@ bool collect_block_wrap_mesh(
             return false;
         }
 
-        volume_nodes.insert(nodes.begin(), nodes.end());
+        const auto expanded_nodes = CubitInterface::get_expanded_connectivity(type, element_id);
+
+        if (expanded_nodes.empty())
+        {
+            PRINT_ERROR("Cannot read %s %d connectivity.\n", type.c_str(), element_id);
+            return false;
+        }
+
+        volume_nodes.insert(expanded_nodes.begin(), expanded_nodes.end());
 
         for (const auto& local_face : local_faces)
         {
@@ -354,8 +366,7 @@ bool collect_block_wrap_mesh(
             const auto surface_nodes =
                 CubitInterface::get_surface_nodes(surface_id);
 
-            additional_nodes.insert(
-                surface_nodes.begin(), surface_nodes.end());
+            candidate_nodes.insert(surface_nodes.begin(), surface_nodes.end());
         }
 
         const auto block_nodes = query("node", block_id);
@@ -433,10 +444,10 @@ bool collect_block_wrap_mesh(
         }
     }
 
-    // Nodes not belonging to volume elements remain eligible as points.
+    // Nodes outside the selected element connectivity remain eligible as points.
     for (int node_id : candidate_nodes)
     {
-        if (volume_nodes.find(node_id) == volume_nodes.end())
+        if (volume_nodes.find(node_id) == volume_nodes.end() && surface_element_nodes.find(node_id) == surface_element_nodes.end())
         {
             additional_nodes.insert(node_id);
         }
@@ -485,5 +496,198 @@ bool collect_block_wrap_mesh(
     }
 
     mesh = std::move(collected);
+    return true;
+}
+
+bool collect_element_wrap_mesh(const std::vector<WrapElement>& elements, BlockWrapMesh& mesh)
+{
+    mesh = BlockWrapMesh{};
+
+    if (elements.empty())
+    {
+        PRINT_ERROR("No elements selected for wrapping.\n");
+        return false;
+    }
+
+    struct ElementLayout
+    {
+        std::size_t node_count;
+        std::vector<std::vector<int>> faces;
+    };
+
+    // Same corner-node ordering as the existing block extractor.
+    static const std::map<std::string, ElementLayout> layouts = {
+        {"tet", {
+            4,
+            {{0, 1, 2}, {0, 3, 1}, {1, 3, 2}, {2, 3, 0}}
+        }},
+        {"hex", {
+            8,
+            {
+                {0, 1, 2, 3}, {4, 5, 6, 7},
+                {0, 1, 5, 4}, {1, 2, 6, 5},
+                {2, 3, 7, 6}, {3, 0, 4, 7}
+            }
+        }},
+        {"wedge", {
+            6,
+            {
+                {0, 1, 2}, {3, 4, 5},
+                {0, 1, 4, 3}, {1, 2, 5, 4}, {2, 0, 3, 5}
+            }
+        }},
+        {"pyramid", {
+            5,
+            {
+                {0, 1, 2, 3},
+                {0, 1, 4}, {1, 2, 4}, {2, 3, 4}, {3, 0, 4}
+            }
+        }},
+        {"tri", {3, {{0, 1, 2}}}},
+        {"face", {4, {{0, 1, 2, 3}}}},
+        {"quad", {4, {{0, 1, 2, 3}}}}
+    };
+
+    struct BoundaryFace
+    {
+        std::vector<int> nodes;
+        int count = 0;
+        bool explicit_surface = false;
+    };
+
+    std::map<std::vector<int>, BoundaryFace> faces;
+    std::set<std::pair<std::string, int>> visited;
+    std::set<int> additional_nodes;
+
+    for (const auto& element : elements)
+    {
+        if (element.entity == "edge")
+        {
+            if (element.local_id <= 0)
+            {
+                PRINT_ERROR("Invalid edge element for wrapping.\n");
+                return false;
+            }
+
+            const auto nodes = CubitInterface::get_expanded_connectivity("edge", element.local_id);
+
+            if (nodes.empty())
+            {
+                PRINT_ERROR("Cannot read edge %d connectivity.\n", element.local_id);
+                return false;
+            }
+
+            additional_nodes.insert(nodes.begin(), nodes.end());
+            continue;
+        }
+
+        const auto layout = layouts.find(element.entity);
+
+        if (layout == layouts.end() || element.local_id <= 0)
+        {
+            PRINT_ERROR("Invalid mesh element for wrapping.\n");
+            return false;
+        }
+
+        if (!visited.emplace(element.entity, element.local_id).second)
+        {
+            continue;
+        }
+
+        const auto nodes = CubitInterface::get_connectivity(element.entity, element.local_id);
+
+        if (nodes.size() != layout->second.node_count)
+        {
+            PRINT_ERROR("Invalid %s corner connectivity: element %d has %zu corner nodes.\n", element.entity.c_str(), element.local_id, nodes.size());
+            return false;
+        }
+
+        const std::set<int> unique_nodes(nodes.begin(), nodes.end());
+
+        if (unique_nodes.size() != nodes.size())
+        {
+            PRINT_ERROR("%s %d contains repeated node IDs.\n", element.entity.c_str(), element.local_id);
+            return false;
+        }
+
+        for (const auto& local_face : layout->second.faces)
+        {
+            std::vector<int> face;
+
+            for (int index : local_face)
+            {
+                face.push_back(nodes[index]);
+            }
+
+            auto key = face;
+            std::sort(key.begin(), key.end());
+
+            auto& entry = faces[key];
+
+            if (entry.nodes.empty())
+            {
+                entry.nodes = std::move(face);
+            }
+
+            if (element.entity == "tri" || element.entity == "face" || element.entity == "quad")
+            {
+                entry.explicit_surface = true;
+            }
+            else
+            {
+                ++entry.count;
+            }
+
+            if (entry.count > 2)
+            {
+                PRINT_ERROR("Selected mesh has a face shared by more than two elements.\n");
+                return false;
+            }
+        }
+    }
+
+    BlockWrapMesh result;
+    std::set<int> boundary_nodes = additional_nodes;
+
+    for (const auto& item : faces)
+    {
+        if (item.second.count == 1 || item.second.explicit_surface)
+        {
+            result.faces.push_back(item.second.nodes);
+            boundary_nodes.insert(item.second.nodes.begin(), item.second.nodes.end());
+        }
+    }
+
+    result.additional_nodes.assign(additional_nodes.begin(), additional_nodes.end());
+
+    if (boundary_nodes.empty())
+    {
+        PRINT_ERROR("Selected elements contain no wrapping input.\n");
+        return false;
+    }
+
+    for (int node_id : boundary_nodes)
+    {
+        if (!CubitInterface::get_node_exists(node_id))
+        {
+            PRINT_ERROR("Mesh node %d does not exist.\n", node_id);
+            return false;
+        }
+
+        const auto coordinates = CubitInterface::get_nodal_coordinates(node_id);
+
+        for (double coordinate : coordinates)
+        {
+            if (!std::isfinite(coordinate))
+            {
+                PRINT_ERROR("Mesh node %d has invalid coordinates.\n", node_id);
+                return false;
+            }
+        }
+
+        result.coordinates.emplace(node_id, coordinates);
+    }
+
+    mesh = std::move(result);
     return true;
 }

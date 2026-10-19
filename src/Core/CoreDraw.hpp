@@ -79,6 +79,13 @@ public:
 
   std::string get_color(int color_id); // gets color based on the color id
 
+  bool graphics_point(const std::vector<double>& coord, const std::string& color);
+  bool graphics_line(const std::vector<double>& start, const std::vector<double>& end, const std::string& color);
+  bool graphics_polygon(const std::vector<std::vector<double>>& coords, const std::string& color);
+  bool graphics_label(const std::vector<double>& coord, const std::string& text, const std::string& color);
+  bool graphics_flush();
+  bool graphics_clear();
+
   CalculiXCoreInterface *ccx_iface = nullptr;
 };
 

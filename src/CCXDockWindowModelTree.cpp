@@ -161,12 +161,12 @@ void CCXDockWindowModelTree::initialize()
   myHBCsTemperaturesTree->initialize();
   myStepsTree = new StepsTree(myModelTree);
   myStepsTree->initialize();
-  myTopologyTree = new TopologyTree(myModelTree);
-  myTopologyTree->initialize();
   myCustomLinesTree = new CustomLinesTree(myModelTree);
   myCustomLinesTree->initialize();
   myJobsTree = new JobsTree(myModelTree);
   myJobsTree->initialize();
+  myTopologyTree = new TopologyTree(myModelTree);
+  myTopologyTree->initialize();
 
   dock->setWidget(myModelTree);
       

@@ -285,9 +285,9 @@ QString CalculiXConfigFile::standard_entry(std::string option)
     }else if(option == "Version")
     {
         #ifdef WIN32
-            standard_value = "2026.9";
+            standard_value = CCX_VERSION;
         #else
-            standard_value = "2026.9";
+            standard_value = CCX_VERSION;
         #endif
     }
     return standard_value;
@@ -302,11 +302,7 @@ int CalculiXConfigFile::standard_num_entry(std::string option)
         standard_value = 8;
     }else if (option == "ConverterThreads")
     {
-        #ifdef WIN32
-            standard_value = 1;
-        #else
-            standard_value = 8;
-        #endif
+        standard_value = 8;
     }
     
     return standard_value;

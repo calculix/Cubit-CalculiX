@@ -64,6 +64,13 @@ private:
   QSpinBox *fps;
   QCheckBox *overwrite;
 
+  QLineEdit *wrapAlpha;
+  QLineEdit *wrapOffset;
+  QLineEdit *wrapPath;
+  QCheckBox *wrapImport;
+  QCheckBox *wrapOverwrite;
+  QPushButton *wrapButton;
+
   QCheckBox *autoPreview;
   QSlider *iterationSlider;
   QPushButton *playButton;
@@ -91,6 +98,8 @@ private:
   void project(bool preview_only);
   void openJob();
   void openParaView();
+  void browseWrap();
+  void wrapIteration();
   void browseGif();
   void exportGif();
 };
