@@ -339,6 +339,28 @@ private:
     using U = std::remove_cv_t<T>;
     if constexpr (std::is_same_v<U, TopologyCase>)
     {
+      if constexpr (Reading)
+      {
+        if (file.nameExists(group + "/adjoint_jobs"))
+        {
+          if (!value("adjoint_jobs", data.iteration_adjoint_jobs))
+          {
+            return false;
+          }
+        }
+        else
+        {
+          data.iteration_adjoint_jobs.clear();
+        }
+      }
+      else
+      {
+        if (!value("adjoint_jobs", data.iteration_adjoint_jobs))
+        {
+          return false;
+        }
+      }
+
       // Configuration is stored by CoreTopology::save_configuration().
       return value("preserved", data.element_preserved) &&
           value("selected_iteration", data.selected_iteration) &&
@@ -351,6 +373,20 @@ private:
     }
     else if constexpr (std::is_same_v<U, TopologyIterationEvaluation>)
     {
+      // Older evaluations have no displacement measurement.
+      if (!Reading || file.nameExists(group + "/displacement_available"))
+      {
+        if (!value("displacement_available", data.displacement_available) || !value("displacement_value", data.displacement_value) || !value("displacement_node", data.displacement_node) || !value("displacement_nodeset", data.displacement_nodeset) || !value("displacement_component", data.displacement_component))
+        {
+          return false;
+        }
+      }
+
+      if (!std::isfinite(data.displacement_value) || data.displacement_value < 0.0 || data.displacement_component < 0 || data.displacement_component > 3 || (data.displacement_available && (data.displacement_node <= 0 || data.displacement_nodeset <= 0)))
+      {
+        return false;
+      }
+
       return value("objective", data.objective) &&
           value("value", data.value) &&
           value("convergence_checked", data.convergence_checked) &&

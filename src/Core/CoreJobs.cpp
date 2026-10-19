@@ -315,24 +315,7 @@ bool CoreJobs::run_job(int job_id,int option)
         log = "Exporting Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " to \n";
         log.append(filepath +  " \n");
         PRINT_INFO("%s", log.c_str());
-        int topology_id = -1;
-        int iteration_id = -1;
-
-        if (!ccx_iface->get_job_topology_context(
-                job_id, topology_id, iteration_id))
-          return false;
-
-        command = "export ccx \"" + filepath + "\"";
-
-        if (topology_id > 0)
-        {
-          command += " topology " + std::to_string(topology_id);
-          command += " iteration " + std::to_string(iteration_id);
-        }
-
-        command += " overwrite";
-
-        if (!ccx_iface->silent_cmd(command))
+        if (!ccx_iface->prepare_job_input(job_id, filepath))
         {
           PRINT_ERROR("Failed to export input for job %d.\n", job_id);
           return false;
@@ -521,24 +504,7 @@ bool CoreJobs::run_job(int job_id,int option)
         log = "Exporting Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " to \n";
         log.append(filepath +  " \n");
         PRINT_INFO("%s", log.c_str());
-        int topology_id = -1;
-        int iteration_id = -1;
-
-        if (!ccx_iface->get_job_topology_context(
-                job_id, topology_id, iteration_id))
-          return false;
-
-        command = "export ccx \"" + filepath + "\"";
-
-        if (topology_id > 0)
-        {
-          command += " topology " + std::to_string(topology_id);
-          command += " iteration " + std::to_string(iteration_id);
-        }
-
-        command += " overwrite";
-
-        if (!ccx_iface->silent_cmd(command))
+        if (!ccx_iface->prepare_job_input(job_id, filepath))
         {
           PRINT_ERROR("Failed to export input for job %d.\n", job_id);
           return false;

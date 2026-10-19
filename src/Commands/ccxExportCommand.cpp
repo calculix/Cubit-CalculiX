@@ -157,9 +157,14 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
 
   const bool normal_export = topology_id == -1 && iteration_id == -1;
 
-  if (!normal_export && (topology_id <= 0 || iteration_id < 0))
+  if (!normal_export && (topology_id <= 0 || iteration_id < 1))
   {
     PRINT_ERROR("Invalid topology export selection.\n");
+    return false;
+  }
+
+  if (!ccx_iface.check_topology_export(topology_id, iteration_id))
+  {
     return false;
   }
 
@@ -843,18 +848,35 @@ bool ccxExportCommand::write_physicalconstants(std::ofstream& output_file,Calcul
 
 bool ccxExportCommand::write_initialconditions(std::ofstream& output_file, CalculiXCoreInterface ccx_iface)
 {
+  if (ccx_iface.is_topology_adjoint_export())
+  {
+    return true;
+  }
   output_file << ccx_iface.get_initialcondition_export_data();
   return true;
 }
 
 bool ccxExportCommand::write_hbcs(std::ofstream& output_file, CalculiXCoreInterface ccx_iface)
 {
+  if (ccx_iface.is_topology_adjoint_export())
+  {
+    return true;
+  }
   output_file << ccx_iface.get_hbc_export_data();
   return true;
 }
 
 bool ccxExportCommand::write_steps(std::ofstream& output_file, CalculiXCoreInterface ccx_iface)
 {
-  output_file << ccx_iface.get_step_export_data();
-  return true;
+  const std::string data = ccx_iface.get_step_export_data();
+
+  if (ccx_iface.is_topology_adjoint_export() && data.empty())
+  {
+    PRINT_ERROR("Unable to export the topology adjoint step.\n");
+    return false;
+  }
+
+  output_file << data;
+
+  return output_file.good();
 }

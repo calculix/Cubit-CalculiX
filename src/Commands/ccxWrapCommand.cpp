@@ -159,7 +159,7 @@ std::vector<std::string> ccxWrapCommand::get_help()
         "Threshold must be between zero and one.",
         "Topology wrapping requires a completed iteration and an idle topology case.",
         "Wrapping uses the current Cubit mesh coordinates.",
-        "If alpha is omitted, it defaults to the wrapping input bounding-box diagonal divided by 20.",
+        "If alpha is omitted, it defaults to the wrapping input bounding-box diagonal divided by 40.",
         "If offset is omitted, it defaults to the resolved alpha divided by 30.",
         "Explicit alpha and offset values must be finite and positive.",
         "Every selected entity must be meshed.",
@@ -325,8 +325,8 @@ bool ccxWrapCommand::execute(CubitCommandData& data)
                 return false;
             }
 
-            alpha = diagonal / 20.0;
-            PRINT_INFO("Automatic alpha: input bounding-box diagonal %.9g / 20.\n", diagonal);
+            alpha = diagonal / 40.0;
+            PRINT_INFO("Automatic alpha: input bounding-box diagonal %.9g / 40.\n", diagonal);
         }
 
         if (automatic_offset)

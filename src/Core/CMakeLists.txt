@@ -85,6 +85,8 @@ set(CORE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/CoreTimer.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreTopology.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreTopology.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreTopologyOptimization.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreTopologyOptimization.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreTopologyStructs.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreCustomLines.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CoreCustomLines.hpp

@@ -43,6 +43,40 @@ void ApplyTopologyOptions(
   {
     configuration.filter_radius = options.filter_radius;
   }
+
+  if (options.has_move_limit)
+  {
+    configuration.move_limit = options.move_limit;
+  }
+
+  if (options.has_density_tolerance)
+  {
+    configuration.density_tolerance = options.density_tolerance;
+  }
+
+  if (options.has_compliance_tolerance)
+  {
+    configuration.compliance_tolerance = options.compliance_tolerance;
+  }
+
+  if (options.has_displacement_nodeset)
+  {
+    configuration.displacement_nodeset = options.displacement_nodeset;
+  }
+
+  if (options.has_displacement_component)
+  {
+    configuration.displacement_component = options.displacement_component;
+  }
+}
+
+void SetTopologyOptimizerDefaults(TopologyCase& configuration)
+{
+  configuration.move_limit = 0.2;
+  configuration.density_tolerance = 0.01;
+  configuration.compliance_tolerance = 0.001;
+  configuration.displacement_nodeset = 0;
+  configuration.displacement_component = 0;
 }
 
 bool ValidateTopologyConfiguration(const TopologyCase& configuration)
@@ -72,7 +106,19 @@ bool ValidateTopologyConfiguration(const TopologyCase& configuration)
       configuration.minimum_density > 0.0 &&
       configuration.minimum_density < 1.0 &&
       std::isfinite(configuration.filter_radius) &&
-      configuration.filter_radius >= 0.0;
+      configuration.filter_radius >= 0.0 &&
+      std::isfinite(configuration.move_limit) &&
+      configuration.move_limit > 0.0 &&
+      configuration.move_limit <= 1.0 &&
+      std::isfinite(configuration.density_tolerance) &&
+      configuration.density_tolerance > 0.0 &&
+      configuration.density_tolerance <= 1.0 &&
+      std::isfinite(configuration.compliance_tolerance) &&
+      configuration.compliance_tolerance > 0.0 &&
+      configuration.compliance_tolerance <= 1.0 &&
+      configuration.displacement_nodeset >= 0 &&
+      configuration.displacement_component >= 0 &&
+      configuration.displacement_component <= 3;
 }
 }
 // HELPERS END
@@ -135,7 +181,7 @@ bool CoreTopology::save_configuration(HDF5Tool& file) const
     }
 
     if (!file.createGroup(root) ||
-        !file.write_dataset_int_rank_1("version", root, {3}) ||
+        !file.write_dataset_int_rank_1("version", root, {6}) ||
         !file.write_dataset_int_rank_1("case_count", root,
             {static_cast<int>(topology_cases.size())}))
     {
@@ -166,7 +212,9 @@ bool CoreTopology::save_configuration(HDF5Tool& file) const
       const std::vector<int> integers = {
           static_cast<int>(configuration.method),
           static_cast<int>(configuration.objective),
-          configuration.maximum_iterations
+          configuration.maximum_iterations,
+          configuration.displacement_nodeset,
+          configuration.displacement_component
       };
 
       const std::vector<double> parameters = {
@@ -174,7 +222,10 @@ bool CoreTopology::save_configuration(HDF5Tool& file) const
           configuration.void_stiffness_ratio,
           configuration.density_penalization,
           configuration.minimum_density,
-          configuration.filter_radius
+          configuration.filter_radius,
+          configuration.move_limit,
+          configuration.density_tolerance,
+          configuration.compliance_tolerance
       };
 
       // Row: operation (1=add, 0=remove), set type, set ID.
@@ -262,7 +313,7 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
 
     if (!file.read_dataset_int_rank_1("version", root, version) ||
         version.size() != 1 ||
-        (version[0] != 1 && version[0] != 2 && version[0] != 3) ||
+        (version[0] < 1 || version[0] > 6) ||
         !file.read_dataset_int_rank_1("case_count", root, count) ||
         count.size() != 1 || count[0] < 0)
     {
@@ -302,8 +353,8 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
           !file.read_dataset_int_rank_1("integers", group, integers) ||
           !file.read_dataset_double_rank_1("parameters", group, parameters) ||
           names.size() != 1 ||
-          integers.size() != 3 ||
-          parameters.size() != 5)
+          integers.size() != (version[0] >= 5 ? 5u : 3u) ||
+          parameters.size() != (version[0] >= 4 ? 8u : 5u))
       {
         PRINT_ERROR("Incomplete saved topology case %d.\n", id);
         return false;
@@ -321,6 +372,21 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
       configuration.density_penalization = parameters[2];
       configuration.minimum_density = parameters[3];
       configuration.filter_radius = parameters[4];
+
+      SetTopologyOptimizerDefaults(configuration);
+
+      if (version[0] >= 5)
+      {
+        configuration.displacement_nodeset = integers[3];
+        configuration.displacement_component = integers[4];
+      }
+
+      if (version[0] >= 4)
+      {
+        configuration.move_limit = parameters[5];
+        configuration.density_tolerance = parameters[6];
+        configuration.compliance_tolerance = parameters[7];
+      }
 
       if (!ValidateTopologyConfiguration(configuration) ||
           !std::isfinite(configuration.density_penalization) ||
@@ -384,6 +450,12 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
 
       if (version[0] >= 2)
       {
+        if (version[0] >= 6 && !file.nameExists(group + "/runtime/adjoint_jobs"))
+        {
+          PRINT_ERROR("Missing saved adjoint job associations for topology %d.\n", id);
+          return false;
+        }
+
         TopologyHdf5<true> archive(file, group);
         if (!archive.value("runtime", configuration))
         {
@@ -410,6 +482,7 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
         }
 
         if (!valid_topology_iteration_keys(configuration.iteration_jobs) ||
+            !valid_topology_iteration_keys(configuration.iteration_adjoint_jobs) ||
             !valid_topology_iteration_keys(configuration.iteration_element_energies) ||
             !valid_topology_iteration_keys(configuration.iteration_total_energies) ||
             !valid_topology_iteration_keys(configuration.iteration_evaluations) ||
@@ -417,6 +490,29 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
         {
           PRINT_ERROR("Invalid saved topology iteration ID.\n");
           return false;
+        }
+
+        std::set<int> linked_jobs;
+
+        for (const auto* associations : {&configuration.iteration_jobs, &configuration.iteration_adjoint_jobs})
+        {
+          for (const auto& iteration : *associations)
+          {
+            if (iteration.second <= 0 || !linked_jobs.insert(iteration.second).second)
+            {
+              PRINT_ERROR("Invalid or duplicate saved topology job association.\n");
+              return false;
+            }
+          }
+        }
+
+        for (const auto& iteration : configuration.iteration_adjoint_jobs)
+        {
+          if (configuration.iteration_jobs.count(iteration.first) == 0)
+          {
+            PRINT_ERROR("Saved adjoint job has no physical iteration job.\n");
+            return false;
+          }
         }
 
         if (configuration.selected_iteration < -1 || configuration.selected_iteration == 0)
@@ -491,6 +587,7 @@ bool CoreTopology::create_topology(int topology_id,const TopologyOptions& option
   configuration.density_penalization = 3.0;
   configuration.minimum_density = 1.0e-3;
   configuration.filter_radius = 0.0;
+  SetTopologyOptimizerDefaults(configuration);
 
   ApplyTopologyOptions(configuration, options);
 
@@ -553,9 +650,9 @@ bool CoreTopology::delete_topology(int topology_id)
   }
 
   // The coordinating core must remove linked jobs first.
-  if (!entry->second.iteration_jobs.empty())
+  if (!entry->second.iteration_jobs.empty() || !entry->second.iteration_adjoint_jobs.empty())
   {
-    PRINT_ERROR("Topology case %d still has linked iteration jobs.\n",
+    PRINT_ERROR("Topology case %d still has linked jobs.\n",
                 topology_id);
     return false;
   }
@@ -1117,7 +1214,13 @@ bool CoreTopology::build_density_update(int topology_id,int source_iteration,std
   }
 
   // Initial algorithm defaults belong to CoreTopology.
-  constexpr double move_limit = 0.2;
+  const double move_limit = configuration.move_limit;
+  if (!std::isfinite(move_limit) ||
+      move_limit <= 0.0 || move_limit > 1.0)
+  {
+    PRINT_ERROR("Invalid topology move limit.\n");
+    return false;
+  }
   constexpr double volume_tolerance = 1.0e-10;
 
   struct Variable
@@ -1319,17 +1422,19 @@ bool CoreTopology::check_density_convergence(int topology_id,int previous_iterat
   const auto previous_evaluation = configuration.iteration_evaluations.find(previous_iteration);
   const auto current_evaluation = configuration.iteration_evaluations.find(current_iteration);
 
+  const char *objective_name = topology_objective_name(configuration.objective);
+
   if (configuration.method != TopologyMethod::Density ||
-      configuration.objective != TopologyObjective::Compliance ||
+      objective_name == nullptr ||
       previous == configuration.iteration_density_designs.end() ||
       current == configuration.iteration_density_designs.end() ||
       previous_evaluation == configuration.iteration_evaluations.end() ||
       current_evaluation == configuration.iteration_evaluations.end() ||
-      previous_evaluation->second.objective != TopologyObjective::Compliance ||
-      current_evaluation->second.objective != TopologyObjective::Compliance ||
+      previous_evaluation->second.objective != configuration.objective ||
+      current_evaluation->second.objective != configuration.objective ||
       !current->second.volume.available)
   {
-    PRINT_ERROR("Missing topology convergence data.\n");
+    PRINT_ERROR("Missing or inconsistent topology convergence data.\n");
     return false;
   }
 
@@ -1388,13 +1493,25 @@ bool CoreTopology::check_density_convergence(int topology_id,int previous_iterat
     relative_change = std::abs(current_value / scale - previous_value / scale);
   }
 
-  constexpr double density_tolerance = 0.01;
-  constexpr double compliance_tolerance = 0.001;
+  const double density_tolerance = configuration.density_tolerance;
+
+  // Retain the existing command and persistence field for compatibility.
+  const double objective_tolerance = configuration.compliance_tolerance;
+
+  if (!std::isfinite(density_tolerance) ||
+      density_tolerance <= 0.0 || density_tolerance > 1.0 ||
+      !std::isfinite(objective_tolerance) ||
+      objective_tolerance <= 0.0 || objective_tolerance > 1.0)
+  {
+    PRINT_ERROR("Invalid topology convergence tolerances.\n");
+    return false;
+  }
+
   constexpr double volume_tolerance = 1.0e-6;
 
   converged =
       maximum_change <= density_tolerance &&
-      relative_change <= compliance_tolerance &&
+      relative_change <= objective_tolerance &&
       fraction <= configuration.target_volume_fraction + volume_tolerance;
 
   auto& progress = current_evaluation->second;
@@ -1405,7 +1522,7 @@ bool CoreTopology::check_density_convergence(int topology_id,int previous_iterat
 
   PRINT_INFO("Topology %d iteration %d convergence:\n", topology_id, current_iteration);
   PRINT_INFO("  Maximum density change: %.6g / %.6g (%.2fx limit) [%s]\n", maximum_change, density_tolerance, maximum_change / density_tolerance, maximum_change <= density_tolerance ? "PASS" : "WAIT");
-  PRINT_INFO("  Relative compliance change: %.6g / %.6g (%.2fx limit) [%s]\n", relative_change, compliance_tolerance, relative_change / compliance_tolerance, relative_change <= compliance_tolerance ? "PASS" : "WAIT");
+  PRINT_INFO("  Relative %s change: %.6g / %.6g (%.2fx limit) [%s]\n", objective_name, relative_change, objective_tolerance, relative_change / objective_tolerance, relative_change <= objective_tolerance ? "PASS" : "WAIT");
   PRINT_INFO("  Volume fraction: %.9g / %.9g [%s]\n", fraction, configuration.target_volume_fraction + volume_tolerance, fraction <= configuration.target_volume_fraction + volume_tolerance ? "PASS" : "WAIT");
   PRINT_INFO("  Converged: %s\n", converged ? "YES" : "NO");
 
@@ -1426,12 +1543,14 @@ bool CoreTopology::filter_density_sensitivities(int topology_id,int iteration_id
   const auto design = configuration.iteration_density_designs.find(iteration_id);
   const auto evaluation = configuration.iteration_evaluations.find(iteration_id);
 
-  if (design == configuration.iteration_density_designs.end() ||
+  if (configuration.method != TopologyMethod::Density ||
+      topology_objective_name(configuration.objective) == nullptr ||
+      design == configuration.iteration_density_designs.end() ||
       evaluation == configuration.iteration_evaluations.end() ||
-      evaluation->second.objective != TopologyObjective::Compliance ||
+      evaluation->second.objective != configuration.objective ||
       !design->second.volume.available)
   {
-    PRINT_ERROR("Missing topology sensitivity filter data.\n");
+    PRINT_ERROR("Missing or inconsistent topology sensitivity filter data.\n");
     return false;
   }
 
@@ -1464,7 +1583,6 @@ bool CoreTopology::filter_density_sensitivities(int topology_id,int iteration_id
         !std::isfinite(density.second) ||
         density.second <= 0.0 || density.second > 1.0 ||
         !std::isfinite(gradient->second) ||
-        gradient->second > 0.0 ||
         !std::isfinite(volume->second) ||
         volume->second <= 0.0)
     {

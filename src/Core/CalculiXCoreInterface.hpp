@@ -2,6 +2,8 @@
 #define CALCULIXCOREINTERFACE_HPP
 
 #include <QIcon>
+#include <array>
+#include <set>
 #include "CoreStepsStructs.hpp"
 #include "CoreTopologyStructs.hpp"
 
@@ -213,10 +215,41 @@ public:
   bool modify_job(int job_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a job
   bool delete_job(int job_id); // delete job
   bool get_job_topology_context(int job_id, int& topology_id, int& iteration_id); // connection between job and topology
+  bool prepare_job_input(int job_id, const std::string& filename);
   bool run_job(int job_id, int option); // runs job
   bool check_jobs(); // checks for changes of job processes
   bool wait_job(int job_id); // runs job
   bool kill_job(int job_id); // kills job
+  bool begin_topology_run(int topology_id);
+  bool is_checking_jobs() const;
+  bool set_topology_run_state(int topology_id, TopologyRunState state);
+  bool get_topology_base_run_info(int topology_id, TopologyRunInfo& information);
+  int get_topology_active_iteration_job(int topology_id, int iteration_id);
+  bool prepare_topology_run(int topology_id);
+  bool collect_topology_run_sections(int topology_id, std::vector<int>& section_ids, std::set<int>& block_ids);
+  bool prepare_topology_history_outputs(int topology_id, const std::set<int>& block_ids);
+  bool initialize_topology_run_design(int topology_id, const std::vector<int>& section_ids);
+  int start_topology_iteration(int topology_id, int iteration_id);
+  int create_topology_iteration_job(int topology_id, int iteration_id, const std::string& job_name);
+  bool create_topology_adjoint_job(int topology_id, int iteration_id, int& job_id, bool& skipped);
+  int get_topology_adjoint_job_source(int topology_id, int iteration_id);
+  bool register_topology_adjoint_job(int topology_id, int iteration_id, int& job_id);
+  bool build_topology_adjoint_load(int topology_id, int iteration_id, double& objective_value, int& node_id, std::array<double, 3>& load);
+  bool check_topology_displacement_selection(int topology_id, int iteration_id);
+  bool check_topology_adjoint_results(int job_id);
+  bool read_topology_job_displacements(int job_id, std::map<int, std::array<double, 3>>& displacements);
+  bool finish_topology_iteration(int topology_id, int iteration_id);
+  bool evaluate_topology_compliance(int topology_id, int iteration_id, const std::map<int, double>& energies);
+  bool set_topology_iteration_displacement(int topology_id, int iteration_id, double displacement, int node_id);
+  bool mark_topology_iteration_completed(int topology_id, int iteration_id);
+  bool read_topology_element_energies(int topology_id, int iteration_id, std::map<int, double>& element_energies);
+  bool read_topology_displacement(int topology_id, int iteration_id, double& value, int& node_id, std::array<double, 3>* critical_displacement = nullptr);
+  bool prepare_topology_density_iteration(int topology_id, int source_iteration, int next_iteration);
+  bool collect_topology_element_volumes(int topology_id, std::map<int, double>& element_volumes, std::map<int, std::array<double, 3>>* element_centers = nullptr);
+  bool filter_topology_density_sensitivities(int topology_id, int iteration_id, const std::map<int, double>& element_volumes, const std::map<int, std::array<double, 3>>& element_centers);
+  bool build_topology_density_update(int topology_id, int source_iteration, std::map<int, double>& densities);
+  bool set_topology_iteration_densities(int topology_id, int iteration_id, const std::map<int, double>& densities);
+  bool check_topology_density_convergence(int topology_id, int previous_iteration, int current_iteration, bool& converged);
   bool run_topology(int topology_id, bool wait = false);
   bool wait_topology(int topology_id);
   bool kill_topology(int topology_id);
@@ -225,10 +258,7 @@ public:
   bool create_topology(int topology_id, const TopologyOptions& options);
   bool modify_topology(int topology_id, const TopologyOptions& options);
   bool delete_topology(int topology_id); // delete topology and all of its data
-  bool get_topology_preserved_sets(
-    int topology_id,
-    std::vector<TopologyPreservedSetInfo>& sets,
-    std::set<int>& direct_elements);
+  bool get_topology_preserved_sets(int topology_id,std::vector<TopologyPreservedSetInfo>& sets,std::set<int>& direct_elements);
   bool reset_preserved_sets(int topology_id);
   bool add_preserved_sets(int topology_id, int set_type, const std::vector<int>& ids);
   bool remove_preserved_sets(int topology_id, int set_type, const std::vector<int>& ids);
@@ -246,6 +276,8 @@ public:
   bool select_topology_iteration(int topology_id, int iteration_id);
   std::string get_topology_run_state(int topology_id);
   std::vector<std::vector<double>> get_topology_iteration_element_data(int topology_id,int iteration_id = -1);
+  bool is_topology_adjoint_export() const;
+  bool check_topology_export(int topology_id, int iteration_id);
   bool result_cgx_job(int job_id); // opens the results with cgx
   bool result_paraview_job(int job_id); // opens the results with paraview
   bool result_plot_job_frd(int job_id,int x_node_id, std::string x_block_type, std::string x_block_component, bool x_increment,bool x_time,int y_node_id, std::string y_block_type, std::string y_block_component, bool y_increment, bool y_time,QString title,QString x_axis,QString y_axis,bool save, QString save_filepath); // plots the results

@@ -1,4 +1,5 @@
 #include "TopologyResultsPanel.hpp"
+#include "TopologyDisplacementText.hpp"
 #include "CubitMessage.hpp"
 #include "GuiSendCmd.hpp"
 #include "JobsMonitor.hpp"
@@ -191,8 +192,8 @@ TopologyResultsPanel::TopologyResultsPanel(QWidget *parent)
   wrapAlpha->setPlaceholderText("Optional: calculated automatically");
   wrapOffset->setPlaceholderText("Optional: calculated automatically");
 
-  wrapAlpha->setToolTip("Leave empty for bounding-box diagonal / 20. Otherwise enter a positive value in model length units.");
-  wrapOffset->setToolTip("Leave empty for resolved alpha / 30. Otherwise enter a positive value in model length units.");
+  wrapAlpha->setToolTip("Leave empty for [bounding-box diagonal / 40]. Otherwise enter a positive value in model length units.");
+  wrapOffset->setToolTip("Leave empty for [resolved alpha / 30]. Otherwise enter a positive value in model length units.");
 
   wrapPath = new QLineEdit(wrapGroup);
   wrapPath->setPlaceholderText("Optional: default filename");
@@ -512,6 +513,7 @@ void TopologyResultsPanel::updateDisplay()
     .arg(format(row[DensityChange]))
     .arg(format(row[ObjectiveChange]))
     .arg(convergence));
+  metrics->setText(metrics->text() + "\n" + topologyDisplacementText(row));
 
   const std::string state = ccx_iface.get_topology_run_state(loaded_case);
   bool valid = false;

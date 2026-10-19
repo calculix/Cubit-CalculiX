@@ -21,6 +21,29 @@ enum class TopologyObjective
   Displacement
 };
 
+inline const char *topology_objective_name(TopologyObjective objective)
+{
+  switch (objective)
+  {
+    case TopologyObjective::Compliance:
+    {
+      return "compliance";
+    }
+    case TopologyObjective::Mass:
+    {
+      return "mass";
+    }
+    case TopologyObjective::Displacement:
+    {
+      return "displacement";
+    }
+    default:
+    {
+      return nullptr;
+    }
+  }
+}
+
 enum class TopologyRunState
 {
   NotRun,
@@ -45,6 +68,11 @@ struct TopologyIterationEvaluation
 {
   TopologyObjective objective = TopologyObjective::Unspecified;
   double value = 0.0;
+  bool displacement_available = false;
+  double displacement_value = 0.0;
+  int displacement_node = -1;
+  int displacement_nodeset = 0;
+  int displacement_component = 0;
   bool convergence_checked = false;
   double maximum_density_change = 0.0;
   double relative_objective_change = 0.0;
@@ -128,8 +156,14 @@ struct TopologyCase
   double density_penalization;
   double minimum_density;
   double filter_radius; // 0 = automatic; positive = model length units.
+  double move_limit;
+  double density_tolerance;
+  double compliance_tolerance;
+  int displacement_nodeset;
+  int displacement_component; // 0 = magnitude, 1 = X, 2 = Y, 3 = Z.
 
-  std::map<int, int> iteration_jobs;
+  std::map<int, int> iteration_jobs; // Iteration ID -> physical job ID.
+  std::map<int, int> iteration_adjoint_jobs; // Iteration ID -> adjoint job ID.
   int selected_iteration = -1;
   TopologyRunState run_state = TopologyRunState::NotRun;
   std::map<int, std::map<int, double>> iteration_element_energies; // Iteration ID -> global element ID -> internal energy.
@@ -160,6 +194,21 @@ struct TopologyOptions
 
   bool has_filter_radius = false;
   double filter_radius = 0.0;
+
+  bool has_move_limit = false;
+  double move_limit = 0.0;
+
+  bool has_density_tolerance = false;
+  double density_tolerance = 0.0;
+
+  bool has_compliance_tolerance = false;
+  double compliance_tolerance = 0.0;
+
+  bool has_displacement_nodeset = false;
+  int displacement_nodeset = 0;
+
+  bool has_displacement_component = false;
+  int displacement_component = 0;
 };
 
 #endif

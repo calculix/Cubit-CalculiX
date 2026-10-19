@@ -28,15 +28,19 @@ private:
   QSpinBox *id;
   QComboBox *cases;
   QWidget *settings;
-  // Name, volume fraction, void ratio, maximum iterations, filter radius.
-  std::array<QLineEdit *, 5> fields;
+  // Name, volume fraction, void ratio, maximum iterations,
+  // filter radius, move limit, density tolerance, compliance tolerance.
+  std::array<QLineEdit *, 8> fields;
   QComboBox *method;
   QComboBox *objective;
+  QComboBox *displacementNodeset;
+  QComboBox *displacementComponent;
   QPushButton *applyButton;
   QStringList original;
   int loaded_id = -1;
 
   void refreshCases(int preferred_id = -1);
+  void refreshNodesets(int preferred_id = -1);
   void load();
   void apply();
   QStringList values() const;

@@ -46,6 +46,7 @@ class CoreJobs;
 class CoreResults;
 class CoreTimer;
 class CoreTopology;
+class CoreTopologyOptimization;
 class CoreCustomLines;
 class CoreDraw;
 class PlotChart;
@@ -72,6 +73,17 @@ public:
   bool use_ccx_autocleanup = true;
   std::string version = CCX_VERSION;
   std::vector<std::vector<std::string>> sideset_face_data;
+  bool checking_jobs = false;
+  unsigned int silent_cmd_depth = 0;
+  struct JobExportContext
+  {
+    int job_id = -1;
+    int topology_id = -1;
+    int iteration_id = -1;
+    bool adjoint = false;
+  };
+
+  JobExportContext job_export_context;
 
   bool cmd(std::string cmd); // executes a cubit command with appending to the history
   bool silent_cmd(std::string cmd); // executes a cubit command
@@ -271,6 +283,7 @@ public:
   bool modify_job(int job_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a job
   bool delete_job(int job_id); // delete job
   bool get_job_topology_context(int job_id, int& topology_id, int& iteration_id); // connection between job and topology
+  bool prepare_job_input(int job_id, const std::string& filename);
   bool run_job(int job_id, int option); // runs job
   bool check_jobs(); // checks for changes of job processes
   bool wait_job(int job_id); // runs job
@@ -289,6 +302,30 @@ public:
   bool get_topology_set_element_ids(int topology_id,int set_type,int set_id,std::vector<int>& element_ids);
   bool collect_topology_default_sets(std::map<int, std::set<int>>& default_sets,std::set<int>& default_elements);
   bool resolve_topology_preservation(int topology_id,const std::map<int, std::set<int>>& default_sets,const std::set<int>& default_elements);
+  bool begin_topology_run(int topology_id);
+  bool is_checking_jobs() const;
+  bool set_topology_run_state(int topology_id, TopologyRunState state);
+  bool get_topology_base_run_info(int topology_id, TopologyRunInfo& information);
+  int get_topology_active_iteration_job(int topology_id, int iteration_id);
+  bool prepare_topology_run(int topology_id);
+  bool collect_topology_run_sections(int topology_id, std::vector<int>& section_ids, std::set<int>& block_ids);
+  bool prepare_topology_history_outputs(int topology_id, const std::set<int>& block_ids);
+  bool initialize_topology_run_design(int topology_id, const std::vector<int>& section_ids);
+  int start_topology_iteration(int topology_id, int iteration_id);
+  int create_topology_iteration_job(int topology_id, int iteration_id, const std::string& job_name);
+  bool create_topology_adjoint_job(int topology_id, int iteration_id, int& job_id, bool& skipped);
+  int get_topology_adjoint_job_source(int topology_id, int iteration_id);
+  bool register_topology_adjoint_job(int topology_id, int iteration_id, int& job_id);
+  bool check_topology_adjoint_results(int job_id);
+  bool read_topology_job_displacements(int job_id, std::map<int, std::array<double, 3>>& displacements);
+  bool finish_topology_iteration(int topology_id, int iteration_id);
+  bool evaluate_topology_compliance(int topology_id, int iteration_id, const std::map<int, double>& energies);
+  bool set_topology_iteration_displacement(int topology_id, int iteration_id, double displacement, int node_id);
+  bool mark_topology_iteration_completed(int topology_id, int iteration_id);
+  bool prepare_topology_density_iteration(int topology_id, int source_iteration, int next_iteration);
+  bool filter_topology_density_sensitivities(int topology_id, int iteration_id, const std::map<int, double>& element_volumes, const std::map<int, std::array<double, 3>>& element_centers);
+  bool build_topology_density_update(int topology_id, int source_iteration, std::map<int, double>& densities);
+  bool check_topology_density_convergence(int topology_id, int previous_iteration, int current_iteration, bool& converged);
   bool run_topology(int topology_id, bool wait = false);
   bool wait_topology(int topology_id);
   bool kill_topology(int topology_id);
@@ -304,15 +341,22 @@ public:
   bool get_topology_settings(int topology_id, TopologyOptions& options);
   int get_topology_iteration_job_id(int topology_id, int iteration_id); // Returns the associated job ID, or -1 on failure.
   bool ensure_topology_element_history_output(int topology_id,int step_id,int block_id,const std::string& key);
+  bool ensure_topology_node_history_output(int topology_id, int step_id, int nodeset_id, const std::string& key);
+  bool ensure_topology_displacement_field_output(int topology_id, int step_id);
+  bool read_topology_displacement(int topology_id, int iteration_id, double& value, int& node_id, std::array<double, 3>* critical_displacement = nullptr);
   bool read_topology_element_energies(int topology_id,int iteration_id,std::map<int, double>& element_energies);
-  bool validate_topology_compliance_model(); // check if the model is build up correctly
+  bool validate_topology_compliance_model(bool require_zero_displacements = true); // check if the model is build up correctly
   bool set_topology_iteration_densities(int topology_id,int iteration_id,const std::map<int, double>& densities);
   bool collect_topology_element_volumes(int topology_id,std::map<int, double>& element_volumes,std::map<int, std::array<double, 3>>* element_centers = nullptr);
-  bool prepare_topology_density_iteration(int topology_id,int source_iteration,int next_iteration);
   std::vector<std::vector<std::string>> get_topology_iteration_data(int topology_id);
   bool select_topology_iteration(int topology_id, int iteration_id);
   std::string get_topology_run_state(int topology_id);
   std::vector<std::vector<double>> get_topology_iteration_element_data(int topology_id,int iteration_id = -1);
+  bool build_topology_adjoint_load(int topology_id, int iteration_id, double& objective_value, int& node_id, std::array<double, 3>& load);
+  bool check_topology_displacement_selection(int topology_id, int iteration_id);
+  bool is_topology_adjoint_export() const;
+  bool check_topology_export(int topology_id, int iteration_id);
+  bool cancel_topology_runs();
   bool result_cgx_job(int job_id); // opens the results with cgx
   bool result_paraview_job(int job_id); // opens the results with paraview
   bool result_plot_job_frd(int job_id,int x_node_id, std::string x_block_type, std::string x_block_component, bool x_increment,bool x_time,int y_node_id, std::string y_block_type, std::string y_block_component, bool y_increment, bool y_time,QString title,QString x_axis,QString y_axis,bool save, QString save_filepath); // plots the results
@@ -543,6 +587,7 @@ public:
   CoreSteps *steps;
   CoreJobs *jobs;
   CoreTopology *topology = nullptr;
+  CoreTopologyOptimization *topologyoptimization = nullptr;
   CoreResults *results;
   CoreTimer *timer;
   CoreCustomLines *customlines;
@@ -551,39 +596,6 @@ public:
   MaterialInterface *mat_iface;
   PlotChart *plotchart; 
 
-private:
-  enum class TopologyRunPhase
-  {
-    Preparing,
-    Starting,
-    Waiting,
-    Evaluating,
-    Finished
-  };
-
-  struct TopologyRunContext
-  {
-    unsigned long long serial = 0;
-    TopologyRunPhase phase = TopologyRunPhase::Preparing;
-    int iteration_id = 1;
-    int job_id = -1;
-    bool stop_requested = false;
-    bool kill_error_reported = false;
-    TopologyRunState stop_state = TopologyRunState::Killed;
-  };
-
-  std::map<int, TopologyRunContext> topology_runs;
-  unsigned long long topology_run_serial = 0;
-  bool checking_jobs = false;
-  bool waiting_for_topology = false;
-  unsigned int silent_cmd_depth = 0;
-
-  bool prepare_topology_run(int topology_id);
-  int start_topology_iteration(int topology_id, int iteration_id);
-  bool finish_topology_iteration(int topology_id, int iteration_id);
-  void advance_topology_run(int topology_id, unsigned long long serial);
-  void finish_topology_run(int topology_id, unsigned long long serial, TopologyRunState state);
-  bool cancel_topology_runs();
 };
 
 #endif // CALCULIXCore_HPP

@@ -43,8 +43,9 @@ TopologySettingsPanel::TopologySettingsPanel(bool modify, QWidget *parent)
 
   settings = new QWidget(this);
   QFormLayout *form = new QFormLayout(settings);
-  const std::array<QString, 5> labels = {
-    "Name", "Volume fraction", "Void stiffness ratio", "Maximum iterations", "Filter radius"
+  const std::array<QString, 8> labels = {
+    "Name", "Volume fraction", "Void stiffness ratio", "Maximum iterations",
+    "Filter radius", "Density move limit", "Density tolerance", "Relative objective tolerance"
   };
   for (std::size_t i = 0; i < fields.size(); ++i)
   {
@@ -53,6 +54,9 @@ TopologySettingsPanel::TopologySettingsPanel(bool modify, QWidget *parent)
     form->addRow(labels[i], fields[i]);
   }
   fields[4]->setToolTip("0 selects the automatic filter radius; positive values use model length units.");
+  fields[5]->setToolTip("Maximum density change per iteration; greater than 0 and at most 1.");
+  fields[6]->setToolTip("Maximum density change allowed for convergence; greater than 0 and at most 1.");
+  fields[7]->setToolTip("Relative objective change allowed for convergence; 0.001 corresponds to 0.1 percent.");
 
   method = new QComboBox(settings);
   method->addItem(modifying ? "Keep current" : "Default", "");
@@ -70,6 +74,21 @@ TopologySettingsPanel::TopologySettingsPanel(bool modify, QWidget *parent)
   }
   form->addRow("Method", method);
   form->addRow("Objective", objective);
+  displacementNodeset = new QComboBox(settings);
+  displacementNodeset->setToolTip("Measure displacement in this nodeset. None disables monitoring.");
+  displacementComponent = new QComboBox(settings);
+  displacementComponent->addItem("Magnitude", "magnitude");
+  displacementComponent->addItem("X", "x");
+  displacementComponent->addItem("Y", "y");
+  displacementComponent->addItem("Z", "z");
+  displacementComponent->setToolTip("Global coordinates. X/Y/Z measure the maximum absolute component; magnitude measures the maximum vector norm.");
+  form->addRow("Displacement nodeset", displacementNodeset);
+  form->addRow("Displacement component", displacementComponent);
+  QObject::connect(displacementNodeset, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int)
+  {
+    displacementComponent->setEnabled(displacementNodeset->currentData().toInt() > 0);
+  });
+  refreshNodesets(0);
   layout->addWidget(settings);
   layout->addStretch();
   applyButton = new QPushButton("Apply", this);
@@ -86,6 +105,7 @@ TopologySettingsPanel::TopologySettingsPanel(bool modify, QWidget *parent)
   });
   QObject::connect(reload, &QPushButton::clicked, this, [this]()
   {
+    refreshNodesets();
     refreshCases();
   });
   QObject::connect(applyButton, &QPushButton::clicked, this, [this]()
@@ -102,6 +122,7 @@ bool TopologySettingsPanel::isModify() const
 void TopologySettingsPanel::showEvent(QShowEvent *event)
 {
   QWidget::showEvent(event);
+  refreshNodesets();
   if (modifying)
   {
     refreshCases();
@@ -147,6 +168,45 @@ void TopologySettingsPanel::refreshCases(int preferred_id)
   load();
 }
 
+void TopologySettingsPanel::refreshNodesets(int preferred_id)
+{
+  if (preferred_id < 0)
+  {
+    preferred_id = displacementNodeset->currentData().toInt();
+  }
+
+  const QSignalBlocker blocker(displacementNodeset);
+  displacementNodeset->clear();
+  displacementNodeset->addItem("None", 0);
+
+  for (const auto& row : ccx_iface.get_nodeset_tree_data())
+  {
+    if (row.size() < 2)
+    {
+      continue;
+    }
+
+    bool valid = false;
+    const int nodeset_id = QString::fromStdString(row[0]).toInt(&valid);
+
+    if (valid && nodeset_id > 0)
+    {
+      displacementNodeset->addItem(QString("%1: %2").arg(nodeset_id).arg(QString::fromStdString(row[1])), nodeset_id);
+    }
+  }
+
+  int index = displacementNodeset->findData(preferred_id);
+
+  if (index < 0 && preferred_id > 0)
+  {
+    displacementNodeset->addItem(QString("%1: missing nodeset").arg(preferred_id), preferred_id);
+    index = displacementNodeset->count() - 1;
+  }
+
+  displacementNodeset->setCurrentIndex(index >= 0 ? index : 0);
+  displacementComponent->setEnabled(displacementNodeset->currentData().toInt() > 0);
+}
+
 QStringList TopologySettingsPanel::values() const
 {
   QStringList result;
@@ -156,6 +216,10 @@ QStringList TopologySettingsPanel::values() const
   }
   result.append(method->currentData().toString());
   result.append(objective->currentData().toString());
+  const int nodeset_id = displacementNodeset->currentData().toInt();
+  const bool include_measurement = modifying || nodeset_id > 0;
+  result.append(include_measurement ? QString::number(nodeset_id) : QString());
+  result.append(include_measurement ? displacementComponent->currentData().toString() : QString());
   return result;
 }
 
@@ -171,6 +235,9 @@ void TopologySettingsPanel::load()
   }
   method->setCurrentIndex(0);
   objective->setCurrentIndex(0);
+  displacementNodeset->setCurrentIndex(0);
+  displacementComponent->setCurrentIndex(0);
+  displacementComponent->setEnabled(false);
   if (cases->currentIndex() < 0)
   {
     return;
@@ -187,6 +254,9 @@ void TopologySettingsPanel::load()
   fields[2]->setText(QString::number(options.void_ratio, 'g', 15));
   fields[3]->setText(QString::number(options.maximum_iterations));
   fields[4]->setText(QString::number(options.filter_radius, 'g', 15));
+  fields[5]->setText(QString::number(options.move_limit, 'g', 15));
+  fields[6]->setText(QString::number(options.density_tolerance, 'g', 15));
+  fields[7]->setText(QString::number(options.compliance_tolerance, 'g', 15));
   if (options.method == TopologyMethod::Density)
   {
     method->setCurrentIndex(1);
@@ -207,6 +277,8 @@ void TopologySettingsPanel::load()
   {
     objective->setCurrentIndex(3);
   }
+  refreshNodesets(options.displacement_nodeset);
+  displacementComponent->setCurrentIndex(options.displacement_component);
   original = values();
   loaded_id = topology_id;
   const bool running = ccx_iface.get_topology_run_state(topology_id) == "running";
@@ -217,7 +289,7 @@ void TopologySettingsPanel::load()
 void TopologySettingsPanel::apply()
 {
   const int topology_id = modifying ? cases->currentData().toInt() : id->value();
-  if (modifying && (loaded_id != topology_id || original.size() != 7))
+  if (modifying && (loaded_id != topology_id || original.size() != static_cast<qsizetype>(fields.size() + 4)))
   {
     PRINT_ERROR("Load a topology case before modifying its settings.\n");
     return;
@@ -229,8 +301,10 @@ void TopologySettingsPanel::apply()
   }
 
   const QStringList current = values();
-  const std::array<QString, 7> keywords = {
-    "name", "volume_fraction", "void_ratio", "iterations", "filter_radius", "method", "objective"
+  const std::array<QString, 12> keywords = {
+    "name", "volume_fraction", "void_ratio", "iterations", "filter_radius",
+    "move_limit", "density_tolerance", "compliance_tolerance", "method", "objective",
+    "displacement_nodeset", "displacement_component"
   };
   QString arguments;
   for (int i = 0; i < current.size(); ++i)
@@ -242,7 +316,7 @@ void TopologySettingsPanel::apply()
     QString value = current[i].trimmed();
     if (value.isEmpty())
     {
-      if (modifying && i < 5)
+      if (modifying && i < static_cast<int>(fields.size()))
       {
         PRINT_ERROR("A modified topology setting cannot be empty.\n");
         return;
@@ -269,7 +343,7 @@ void TopologySettingsPanel::apply()
       }
       value = QString::number(iterations);
     }
-    else if (i < 5)
+    else if (i < static_cast<int>(fields.size()))
     {
       bool valid = false;
       const double number = value.toDouble(&valid);

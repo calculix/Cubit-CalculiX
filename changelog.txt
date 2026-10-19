@@ -209,3 +209,4 @@
 2026-10-14 move context menu into the specific trees
 2026-10-15 work on topology optimization
 2026-10-16 implemented Alpha wrapping for topology; reworked draw commands. added frd and dat Reader Methods based on boost.
+2026-10-13 work on topology optimization

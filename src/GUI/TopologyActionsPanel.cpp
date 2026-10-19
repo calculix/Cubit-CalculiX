@@ -1,4 +1,5 @@
 #include "TopologyActionsPanel.hpp"
+#include "TopologyDisplacementText.hpp"
 #include "GuiSendCmd.hpp"
 #include "JobsMonitor.hpp"
 #include "CubitMessage.hpp"
@@ -14,6 +15,10 @@
 #include <QSignalBlocker>
 #include <QTimer>
 #include <QVBoxLayout>
+#include <QGroupBox>
+#include <QLocale>
+#include <QProgressBar>
+#include <cmath>
 
 TopologyActionsPanel::TopologyActionsPanel(QWidget *parent) : QWidget(parent)
 {
@@ -49,6 +54,14 @@ TopologyActionsPanel::TopologyActionsPanel(QWidget *parent) : QWidget(parent)
   layout->addLayout(buttons);
   monitorButton = new QPushButton("Job monitor", this);
   layout->addWidget(monitorButton);
+  createConvergenceDisplay(layout);
+  auto *measurementGroup = new QGroupBox("Displacement monitoring", this);
+  auto *measurementLayout = new QVBoxLayout(measurementGroup);
+  displacementMeasurement = new QLabel("No completed iteration", measurementGroup);
+  displacementMeasurement->setTextFormat(Qt::PlainText);
+  displacementMeasurement->setWordWrap(true);
+  measurementLayout->addWidget(displacementMeasurement);
+  layout->addWidget(measurementGroup);
   layout->addStretch();
 
   QObject::connect(cases, QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -134,6 +147,7 @@ void TopologyActionsPanel::refreshCases(int preferred_id)
 
 void TopologyActionsPanel::updateControls()
 {
+  updateConvergence();
   runButton->setEnabled(false);
   waitButton->setEnabled(false);
   killButton->setEnabled(false);
@@ -212,4 +226,159 @@ void TopologyActionsPanel::openJob()
     }
   }
   PRINT_ERROR("The job monitor is not available.\n");
+}
+
+void TopologyActionsPanel::createConvergenceDisplay(QVBoxLayout *layout)
+{
+  auto *group = new QGroupBox("Convergence", this);
+  auto *content = new QVBoxLayout(group);
+  content->setSpacing(6);
+  group->setToolTip("Latest completed iteration. Criteria use current case settings. Bars show limit usage; lower is better.");
+
+  convergenceIteration = new QLabel("No completed iteration", group);
+  content->addWidget(convergenceIteration);
+
+  const std::array<QString, 3> names = {
+    "Maximum density change",
+    "Relative objective change",
+    "Volume fraction"
+  };
+
+  for (std::size_t i = 0; i < criteria.size(); ++i)
+  {
+    auto& criterion = criteria[i];
+    auto *heading = new QHBoxLayout();
+    heading->addWidget(new QLabel(names[i], group));
+    heading->addStretch();
+
+    criterion.badge = new QLabel("-", group);
+    criterion.badge->setAlignment(Qt::AlignCenter);
+    criterion.badge->setMinimumWidth(48);
+    heading->addWidget(criterion.badge);
+    content->addLayout(heading);
+
+    criterion.bar = new QProgressBar(group);
+    criterion.bar->setRange(0, 10000);
+    criterion.bar->setValue(0);
+    criterion.bar->setFormat("Not available");
+    criterion.bar->setFixedHeight(18);
+    criterion.bar->setToolTip("Measured value / allowed limit. A full amber bar means the limit is exceeded.");
+    content->addWidget(criterion.bar);
+  }
+
+  convergenceSummary = new QLabel("Converged: not checked", group);
+  content->addWidget(convergenceSummary);
+  layout->addWidget(group);
+}
+
+int TopologyActionsPanel::updateCriterion(int index, const QString& text, double limit)
+{
+  auto& criterion = criteria[index];
+  bool valid = false;
+  const double value = text.toDouble(&valid);
+
+  if (!valid || !std::isfinite(value) || value < 0.0 || !std::isfinite(limit) || limit <= 0.0)
+  {
+    criterion.bar->setValue(0);
+    criterion.bar->setFormat("Not available");
+    criterion.bar->setStyleSheet("");
+    criterion.badge->setText("-");
+    criterion.badge->setStyleSheet("");
+    return -1;
+  }
+
+  const bool passed = value <= limit;
+  const double ratio = value / limit;
+  const QLocale locale;
+  int barValue = 10000;
+
+  if (passed)
+  {
+    barValue = static_cast<int>(std::round(ratio * 10000.0));
+  }
+
+  const QString multiplier = std::isfinite(ratio) ? locale.toString(ratio, 'f', 2) + "x limit" : QString("above limit");
+  const QString color = passed ? "#2e7d32" : "#b26a00";
+  const QString background = passed ? "#e8f5e9" : "#fff3e0";
+
+  criterion.bar->setValue(barValue);
+  criterion.bar->setFormat(QString("%1 / %2 (%3)").arg(locale.toString(value, 'g', 8)).arg(locale.toString(limit, 'g', 8)).arg(multiplier));
+  criterion.bar->setStyleSheet(QString("QProgressBar { border: 1px solid %1; border-radius: 3px; text-align: center; background: palette(base); } QProgressBar::chunk { background: %2; }").arg(color).arg(passed ? "#81c784" : "#ffb74d"));
+  criterion.badge->setText(passed ? "PASS" : "WAIT");
+  criterion.badge->setStyleSheet(QString("color: %1; background: %2; border-radius: 3px; padding: 2px 5px; font-weight: bold;").arg(color).arg(background));
+
+  return passed ? 1 : 0;
+}
+
+void TopologyActionsPanel::updateConvergence()
+{
+  displacementMeasurement->setText("No completed iteration");
+  for (int i = 0; i < static_cast<int>(criteria.size()); ++i)
+  {
+    updateCriterion(i, QString(), 1.0);
+  }
+
+  convergenceIteration->setText("No completed iteration");
+  convergenceSummary->setText("Converged: not checked");
+  convergenceSummary->setStyleSheet("");
+
+  if (cases->currentIndex() < 0)
+  {
+    return;
+  }
+
+  const int topology_id = cases->currentData().toInt();
+  TopologyOptions settings;
+
+  if (!ccx_iface.get_topology_settings(topology_id, settings))
+  {
+    return;
+  }
+
+  const auto rows = ccx_iface.get_topology_iteration_data(topology_id);
+  const std::vector<std::string> *latest = nullptr;
+  int latestIteration = -1;
+
+  for (const auto& row : rows)
+  {
+    if (row.size() < 9 || row[2] != "2" || row[3].empty())
+    {
+      continue;
+    }
+
+    bool valid = false;
+    const int iteration_id = QString::fromStdString(row[0]).toInt(&valid);
+
+    if (valid && iteration_id > latestIteration)
+    {
+      latest = &row;
+      latestIteration = iteration_id;
+    }
+  }
+
+  if (latest == nullptr)
+  {
+    return;
+  }
+
+  convergenceIteration->setText(QString("Completed iteration %1").arg(latestIteration));
+  displacementMeasurement->setText(topologyDisplacementText(*latest));
+
+  const int density = updateCriterion(0, QString::fromStdString((*latest)[6]), settings.density_tolerance);
+  const int compliance = updateCriterion(1, QString::fromStdString((*latest)[7]), settings.compliance_tolerance);
+
+  // Match the existing CoreTopology volume convergence allowance.
+  constexpr double volumeTolerance = 1.0e-6;
+  const int volume = updateCriterion(2, QString::fromStdString((*latest)[4]), settings.volume_fraction + volumeTolerance);
+  const int passed = (density == 1 ? 1 : 0) + (compliance == 1 ? 1 : 0) + (volume == 1 ? 1 : 0);
+
+  if (density < 0 || compliance < 0 || volume < 0)
+  {
+    convergenceSummary->setText(QString("Converged: not checked - %1 / 3 criteria met").arg(passed));
+    return;
+  }
+
+  const bool converged = passed == 3;
+  convergenceSummary->setText(QString("Converged: %1 - %2 / 3 criteria met").arg(converged ? "YES" : "NO").arg(passed));
+  convergenceSummary->setStyleSheet(converged ? "color: #2e7d32; font-weight: bold;" : "color: #b26a00; font-weight: bold;");
 }

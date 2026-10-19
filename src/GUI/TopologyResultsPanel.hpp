@@ -41,6 +41,10 @@ private:
     DensityChange,
     ObjectiveChange,
     Converged,
+    Displacement,
+    DisplacementNode,
+    DisplacementNodeset,
+    DisplacementComponent,
     ColumnCount
   };
 

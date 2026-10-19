@@ -3,12 +3,15 @@
 
 #include "CalculiXCoreInterface.hpp"
 #include <QWidget>
+#include <array>
 
 class QCheckBox;
 class QComboBox;
 class QLabel;
 class QPushButton;
 class QShowEvent;
+class QProgressBar;
+class QVBoxLayout;
 
 class TopologyActionsPanel : public QWidget
 {
@@ -28,6 +31,21 @@ private:
   QPushButton *waitButton;
   QPushButton *killButton;
   QPushButton *monitorButton;
+
+  struct ConvergenceCriterion
+  {
+    QProgressBar *bar = nullptr;
+    QLabel *badge = nullptr;
+  };
+
+  std::array<ConvergenceCriterion, 3> criteria;
+  QLabel *convergenceIteration;
+  QLabel *convergenceSummary;
+  QLabel *displacementMeasurement;
+
+  void createConvergenceDisplay(QVBoxLayout *layout);
+  void updateConvergence();
+  int updateCriterion(int index, const QString& value, double limit);
 
   void refreshCases(int preferred_id = -1);
   void updateControls();
