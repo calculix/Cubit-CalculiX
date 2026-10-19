@@ -71,10 +71,11 @@ mesh volume all
 
 #topology
 ccx create topology 1 name "simple_beam" method density objective compliance volume_fraction 0.7 iterations 5
+#ccx run topology 1 wait
 ccx run topology 1
 
-ccx draw topology 1 iteration 4 threshold 0.5
-ccx animate topology 1 threshold 0.5 fps 5 save 'beam.gif' overwrite
+#ccx draw topology 1 iteration 4 threshold 0.5
+#ccx animate topology 1 threshold 0.5 fps 5 save 'beam.gif' overwrite
 
 #ccx result project topology 1 iteration 4 threshold 0.5 preview
 #ccx result project topology 1 iteration 4 threshold 0.5

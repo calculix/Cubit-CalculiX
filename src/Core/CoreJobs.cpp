@@ -43,6 +43,12 @@ CoreJobs::CoreJobs()
 
 CoreJobs::~CoreJobs()
 {
+#ifdef WIN32
+  for (const auto& retained : running_process_handles)
+  {
+    CloseHandle(retained.second);
+  }
+#endif
   delete ccx_iface;
 }
 
