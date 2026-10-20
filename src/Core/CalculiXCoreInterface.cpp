@@ -1090,6 +1090,11 @@ int CalculiXCoreInterface::get_topology_iteration_job_id(int topology_id, int it
   return ccx_core.get_topology_iteration_job_id(topology_id, iteration_id);
 }
 
+int CalculiXCoreInterface::get_topology_iteration_adjoint_job_id(int topology_id, int iteration_id)
+{
+  return ccx_core.get_topology_iteration_adjoint_job_id(topology_id, iteration_id);
+}
+
 std::vector<std::vector<std::string>> CalculiXCoreInterface::get_topology_iteration_data(int topology_id)
 {
   return ccx_core.get_topology_iteration_data(topology_id);
@@ -2170,6 +2175,11 @@ bool CalculiXCoreInterface::evaluate_topology_compliance(int topology_id, int it
   return ccx_core.evaluate_topology_compliance(topology_id, iteration_id, energies);
 }
 
+bool CalculiXCoreInterface::evaluate_topology_displacement(int topology_id, int iteration_id, double value, int node_id, const std::map<int, double>& element_integrals)
+{
+  return ccx_core.evaluate_topology_displacement(topology_id, iteration_id, value, node_id, element_integrals);
+}
+
 bool CalculiXCoreInterface::set_topology_iteration_displacement(int topology_id, int iteration_id, double displacement, int node_id)
 {
   return ccx_core.set_topology_iteration_displacement(topology_id, iteration_id, displacement, node_id);
@@ -2183,6 +2193,11 @@ bool CalculiXCoreInterface::mark_topology_iteration_completed(int topology_id, i
 bool CalculiXCoreInterface::read_topology_element_energies(int topology_id, int iteration_id, std::map<int, double>& element_energies)
 {
   return ccx_core.read_topology_element_energies(topology_id, iteration_id, element_energies);
+}
+
+bool CalculiXCoreInterface::read_topology_job_element_tensors(int job_id, const std::string& key, std::map<int, std::map<int, std::array<double, 6>>>& tensors)
+{
+  return ccx_core.read_topology_job_element_tensors(job_id, key, tensors);
 }
 
 bool CalculiXCoreInterface::read_topology_displacement(int topology_id, int iteration_id, double& value, int& node_id, std::array<double, 3>* critical_displacement)
@@ -2200,6 +2215,11 @@ bool CalculiXCoreInterface::collect_topology_element_volumes(int topology_id, st
   return ccx_core.collect_topology_element_volumes(topology_id, element_volumes, element_centers);
 }
 
+bool CalculiXCoreInterface::collect_topology_integration_weights(int topology_id, std::map<int, std::map<int, double>>& weights)
+{
+  return ccx_core.collect_topology_integration_weights(topology_id, weights);
+}
+
 bool CalculiXCoreInterface::filter_topology_density_sensitivities(int topology_id, int iteration_id, const std::map<int, double>& element_volumes, const std::map<int, std::array<double, 3>>& element_centers)
 {
   return ccx_core.filter_topology_density_sensitivities(topology_id, iteration_id, element_volumes, element_centers);
@@ -2210,9 +2230,14 @@ bool CalculiXCoreInterface::build_topology_density_update(int topology_id, int s
   return ccx_core.build_topology_density_update(topology_id, source_iteration, densities);
 }
 
-bool CalculiXCoreInterface::set_topology_iteration_densities(int topology_id, int iteration_id, const std::map<int, double>& densities)
+bool CalculiXCoreInterface::evaluate_topology_compliance_oc_residual(int topology_id, int iteration_id)
 {
-  return ccx_core.set_topology_iteration_densities(topology_id, iteration_id, densities);
+  return ccx_core.evaluate_topology_compliance_oc_residual(topology_id, iteration_id);
+}
+
+bool CalculiXCoreInterface::set_topology_iteration_densities(int topology_id, int iteration_id, const std::map<int, double>& densities, int source_iteration)
+{
+  return ccx_core.set_topology_iteration_densities(topology_id, iteration_id, densities, source_iteration);
 }
 
 bool CalculiXCoreInterface::check_topology_density_convergence(int topology_id, int previous_iteration, int current_iteration, bool& converged)

@@ -1,0 +1,99 @@
+#!cubit
+# Compliance comparison on the same beam mesh and analysis settings.
+# This journal resets the model and runs both cases sequentially.
+# Case 1: fixed move limit. Case 2: adaptive move limit.
+# Requires the plugin containing the adaptive move commands.
+reset
+#beam geometry
+create brick x 100 y 30 z 1
+block 1 add volume 1
+split surface 6 offset curve 10 distance 2.5
+
+# node sets
+nodeset 1 add surface 4
+nodeset 1 name "x0"
+nodeset 2 add surface 7
+nodeset 2 name "xl"
+nodeset 3 add surface 8
+nodeset 3 name "rb"
+
+# material
+create material "Steel" property_group "CalculiX-FEA"
+modify material "Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0
+modify material "Steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+
+# section
+ccx create section solid block 1 material 1
+
+# vertices for ref and rot node
+create vertex location on surface 8  center
+create vertex location on surface 8  center
+
+# rigid body constraint
+ccx create constraint rigid body nodeset 3 ref 11 rot 12
+
+# load
+create force  on vertex 11 force value 10000 direction 0 -1 0
+
+# bc
+create displacement  on nodeset 1  dof 1 dof 2 dof 3 fix 0
+
+# outputs
+ccx create fieldoutput name "node_output" node
+ccx modify fieldoutput 1 node
+ccx modify fieldoutput 1 node key_on RF U
+ccx modify fieldoutput 1 node key_off CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF NT PNT POT PRF PS PSF PT PTF PU RFL SEN TS TSF TT TTF TURB V VF
+ccx create fieldoutput name "element_output" element
+ccx modify fieldoutput 2 element
+ccx modify fieldoutput 2 element key_on E S
+ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFL HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS
+ccx create historyoutput name "node_output" node
+ccx create historyoutput name "element_output" element
+ccx modify historyoutput 1 node nodeset 3
+ccx modify historyoutput 1 node key_on U RF
+ccx modify historyoutput 1 node key_off NT TSF TTF PN PSF PTF MACH CP VF DEPF TURB MF RFL
+ccx modify historyoutput 2 element block 1
+ccx modify historyoutput 2 element key_on S E
+ccx modify historyoutput 2 element key_off SVF ME PEEQ CEEQ ENER SDV HFL HFLF COORD ELSE ELKE EVOL EMAS EBHE CENT
+
+
+# steps
+ccx create step name "Static" static
+#ccx modify step 1 parameter nlgeom_yes
+ccx modify step 1 static solver spooles
+#ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.1 timeperiodofstep 1 minimumtimeincrement 0.01 maximumtimeincrement 0.1
+ccx step 1 add load force 1
+ccx step 1 add bc displacement 1
+ccx step 1 add fieldoutput 1 2
+ccx step 1 add historyoutput 1 2
+
+# mesh
+block 1 element type HEX8
+volume 1 size auto factor 5
+mesh vertex all
+mesh volume all
+# Explicit full integration; the default HEX8 mapping may select C3D8R.
+ccx block 1 element_type C3D8
+
+# Comparison cases: only adaptive move selection differs.
+# Both use automatic preservation and the same automatic filter radius.
+# Both start from density 1 and use the ordinary OC residual criterion.
+ccx create topology 1 name "beam_fixed_moves" method density objective compliance volume_fraction 0.7 void_ratio 0.001 iterations 150 filter_radius 0 move_limit 0.2 minimum_move_limit 0.02 density_tolerance 0.01 compliance_tolerance 0.001 displacement_nodeset 0 adaptive_moves_off
+ccx create topology 2 name "beam_adaptive_moves" method density objective compliance volume_fraction 0.7 void_ratio 0.001 iterations 150 filter_radius 0 move_limit 0.2 minimum_move_limit 0.02 density_tolerance 0.01 compliance_tolerance 0.001 displacement_nodeset 0 adaptive_moves_on
+
+# Wait for case 1 before starting case 2. Keep both sets of iteration jobs.
+ccx run topology 1 wait
+ccx run topology 2 wait
+
+# Compare the two cases in the topology Actions panel and command output:
+# - convergence versus the common 150-iteration limit;
+# - number of physical solves and elapsed time;
+# - final compliance, volume fraction and ordinary OC proposal residual;
+# - effective move limit and density update correlation in the progress log.
+# The effective move limit and correlation are also stored with each design.
+# A shorter run is not an improvement if compliance is materially worse
+# or the convergence criteria were not met.

@@ -6,6 +6,7 @@
 #include <QScopedValueRollback>
 #include <QThread>
 
+#include <cmath>
 #include <exception>
 #include <iomanip>
 #include <sstream>
@@ -531,8 +532,131 @@ bool CoreTopologyOptimization::evaluate_topology_objective(int topology_id, int 
     }
     case TopologyObjective::Displacement:
     {
-      PRINT_ERROR("Displacement optimization requires displacement sensitivities and a suitable density update.\n");
-      return false;
+      double objective_value = 0.0;
+      int node_id = -1;
+      std::array<double, 3> load{};
+
+      if (!build_topology_adjoint_load(topology_id, iteration_id, objective_value, node_id, load))
+      {
+        return false;
+      }
+
+      std::map<int, std::map<int, double>> weights;
+
+      if (!ccx_iface.collect_topology_integration_weights(topology_id, weights))
+      {
+        return false;
+      }
+
+      std::map<int, double> integrals;
+
+      // The established zero-subgradient convention needs no adjoint.
+      if (objective_value == 0.0)
+      {
+        for (const auto& element : weights)
+        {
+          integrals.emplace(element.first, 0.0);
+        }
+
+        return ccx_iface.evaluate_topology_displacement(topology_id, iteration_id, objective_value, node_id, integrals);
+      }
+
+      const int physical_job = ccx_iface.get_topology_iteration_job_id(topology_id, iteration_id);
+      const int adjoint_job = ccx_iface.get_topology_iteration_adjoint_job_id(topology_id, iteration_id);
+
+      if (physical_job <= 0 || adjoint_job <= 0 || physical_job == adjoint_job)
+      {
+        PRINT_ERROR("Invalid physical or adjoint job for displacement evaluation.\n");
+        return false;
+      }
+
+      std::map<int, std::map<int, std::array<double, 6>>> stresses;
+      std::map<int, std::map<int, std::array<double, 6>>> strains;
+
+      if (!ccx_iface.read_topology_job_element_tensors(physical_job, "S", stresses) ||
+          !ccx_iface.read_topology_job_element_tensors(adjoint_job, "ME", strains))
+      {
+        return false;
+      }
+
+      if (weights.empty() || stresses.size() != weights.size() || strains.size() != weights.size())
+      {
+        PRINT_ERROR("Incomplete element coverage for displacement integration.\n");
+        return false;
+      }
+
+      for (const auto& element : weights)
+      {
+        const int element_id = element.first;
+        const auto stress = stresses.find(element_id);
+        const auto strain = strains.find(element_id);
+
+        if (stress == stresses.end() ||
+            strain == strains.end() ||
+            element.second.empty() ||
+            stress->second.size() != element.second.size() ||
+            strain->second.size() != element.second.size())
+        {
+          PRINT_ERROR("Incomplete integration point coverage for element %d.\n", element_id);
+          return false;
+        }
+
+        double integral = 0.0;
+
+        for (const auto& point : element.second)
+        {
+          const auto stress_point = stress->second.find(point.first);
+          const auto strain_point = strain->second.find(point.first);
+
+          if (stress_point == stress->second.end() ||
+              strain_point == strain->second.end() ||
+              !std::isfinite(point.second) ||
+              point.second <= 0.0)
+          {
+            PRINT_ERROR("Invalid integration point %d for element %d.\n", point.first, element_id);
+            return false;
+          }
+
+          // DAT order: xx, yy, zz, xy, xz, yz.
+          // ME contains tensor shear strains, requiring the factor of 2.
+          double contraction = 0.0;
+
+          for (std::size_t component = 0; component < 6; ++component)
+          {
+            const double stress_value = stress_point->second[component];
+            const double strain_value = strain_point->second[component];
+
+            if (!std::isfinite(stress_value) || !std::isfinite(strain_value))
+            {
+              PRINT_ERROR("Non-finite tensor at integration point %d of element %d.\n", point.first, element_id);
+              return false;
+            }
+
+            const double multiplier = component < 3 ? 1.0 : 2.0;
+            contraction += multiplier * stress_value * strain_value;
+          }
+
+          const double contribution = contraction * point.second;
+
+          if (!std::isfinite(contribution))
+          {
+            PRINT_ERROR("Non-finite displacement integral contribution for element %d.\n", element_id);
+            return false;
+          }
+
+          integral += contribution;
+        }
+
+        if (!std::isfinite(integral))
+        {
+          PRINT_ERROR("Non-finite displacement integral for element %d.\n", element_id);
+          return false;
+        }
+
+        integrals.emplace(element_id, integral);
+      }
+
+      return ccx_iface.evaluate_topology_displacement(topology_id, iteration_id, objective_value, node_id, integrals);
     }
     default:
     {
@@ -551,9 +675,20 @@ bool CoreTopologyOptimization::prepare_topology_run(int topology_id)
     return false;
   }
 
-  if (options.method != TopologyMethod::Density || options.objective != TopologyObjective::Compliance)
+  if (options.method != TopologyMethod::Density ||
+      (options.objective != TopologyObjective::Compliance &&
+       options.objective != TopologyObjective::Displacement))
   {
-    PRINT_ERROR("The topology iteration loop currently supports density optimization with compliance only.\n");
+    PRINT_ERROR("The topology iteration loop supports density optimization with compliance or displacement objectives.\n");
+    return false;
+  }
+
+  if (options.objective == TopologyObjective::Displacement &&
+      (options.displacement_nodeset <= 0 ||
+       options.displacement_component < 0 ||
+       options.displacement_component > 3))
+  {
+    PRINT_ERROR("Displacement optimization requires a displacement nodeset and valid component.\n");
     return false;
   }
 
@@ -733,25 +868,6 @@ bool CoreTopologyOptimization::prepare_topology_density_iteration(int topology_i
       return false;
     }
 
-    stage = "collecting element volumes and centers";
-    PRINT_INFO("Topology %d iteration %d: %s.\n", topology_id, next_iteration, stage);
-
-    std::map<int, double> element_volumes;
-    std::map<int, std::array<double, 3>> element_centers;
-
-    if (!ccx_iface.collect_topology_element_volumes(topology_id, element_volumes, &element_centers))
-    {
-      return false;
-    }
-
-    stage = "filtering density sensitivities";
-    PRINT_INFO("Topology %d iteration %d: %s.\n", topology_id, next_iteration, stage);
-
-    if (!ccx_iface.filter_topology_density_sensitivities(topology_id, source_iteration, element_volumes, element_centers))
-    {
-      return false;
-    }
-
     stage = "calculating the density update";
     PRINT_INFO("Topology %d iteration %d: %s.\n", topology_id, next_iteration, stage);
 
@@ -765,7 +881,7 @@ bool CoreTopologyOptimization::prepare_topology_density_iteration(int topology_i
     stage = "storing the next density design";
     PRINT_INFO("Topology %d iteration %d: %s.\n", topology_id, next_iteration, stage);
 
-    return ccx_iface.set_topology_iteration_densities(topology_id, next_iteration, densities);
+    return ccx_iface.set_topology_iteration_densities(topology_id, next_iteration, densities, source_iteration);
   }
   catch (const std::exception& error)
   {
@@ -817,6 +933,29 @@ bool CoreTopologyOptimization::finish_topology_iteration(int topology_id, int it
     }
 
     PRINT_INFO("Topology %d iteration %d: maximum monitored displacement %.9g at node %d.\n", topology_id, iteration_id, displacement, node_id);
+  }
+
+  std::map<int, double> element_volumes;
+  std::map<int, std::array<double, 3>> element_centers;
+
+  PRINT_INFO("Topology %d iteration %d: preparing filtered sensitivities.\n", topology_id, iteration_id);
+
+  if (!ccx_iface.collect_topology_element_volumes(topology_id, element_volumes, &element_centers))
+  {
+    return false;
+  }
+
+  if (!ccx_iface.filter_topology_density_sensitivities(topology_id, iteration_id, element_volumes, element_centers))
+  {
+    return false;
+  }
+
+  if (options.objective == TopologyObjective::Compliance)
+  {
+    if (!ccx_iface.evaluate_topology_compliance_oc_residual(topology_id, iteration_id))
+    {
+      return false;
+    }
   }
 
   if (!ccx_iface.mark_topology_iteration_completed(topology_id, iteration_id))

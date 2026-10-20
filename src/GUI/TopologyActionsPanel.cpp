@@ -372,13 +372,22 @@ void TopologyActionsPanel::updateConvergence()
   const int volume = updateCriterion(2, QString::fromStdString((*latest)[4]), settings.volume_fraction + volumeTolerance);
   const int passed = (density == 1 ? 1 : 0) + (compliance == 1 ? 1 : 0) + (volume == 1 ? 1 : 0);
 
-  if (density < 0 || compliance < 0 || volume < 0)
+  if (density < 0 || compliance < 0 || volume < 0 || (*latest)[8].empty())
   {
-    convergenceSummary->setText(QString("Converged: not checked - %1 / 3 criteria met").arg(passed));
+    convergenceSummary->setText(QString("Converged: not checked - %1 / 3 displayed criteria met").arg(passed));
     return;
   }
 
-  const bool converged = passed == 3;
-  convergenceSummary->setText(QString("Converged: %1 - %2 / 3 criteria met").arg(converged ? "YES" : "NO").arg(passed));
+  const bool converged = (*latest)[8] == "1";
+
+  if (!converged && passed == 3 && settings.objective == TopologyObjective::Compliance)
+  {
+    convergenceSummary->setText("Converged: NO - ordinary OC proposal has not settled");
+  }
+  else
+  {
+    convergenceSummary->setText(QString("Converged: %1 - %2 / 3 displayed criteria met").arg(converged ? "YES" : "NO").arg(passed));
+  }
+
   convergenceSummary->setStyleSheet(converged ? "color: #2e7d32; font-weight: bold;" : "color: #b26a00; font-weight: bold;");
 }

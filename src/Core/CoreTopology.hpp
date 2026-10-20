@@ -43,6 +43,13 @@ public:
   bool evaluate_compliance(int topology_id,int iteration_id, const std::map<int, double>& stiffness_factors);
 
   /*
+   * I_e = integral(sigma_physical : epsilon_adjoint) dV
+   * dJ/ds_e = -I_e / s_e
+   * dJ/drho_e = (dJ/ds_e) (1 - void_ratio) p rho_e^(p - 1)
+   */
+  bool evaluate_displacement(int topology_id, int iteration_id, double value, int node_id, const std::map<int, double>& element_integrals, const std::map<int, double>& stiffness_factors);
+
+  /*
   ρ = solid fraction, between 0 and 1
   s(ρ) = void_ratio + (1 − void_ratio) × ρ³
   */
@@ -65,6 +72,8 @@ public:
     )
   */
   bool build_density_update(int topology_id, int source_iteration,std::map<int, double>& densities);
+  bool evaluate_compliance_oc_residual(int topology_id, int iteration_id);
+  bool set_density_update_diagnostics(int topology_id, int source_iteration, TopologyDensityDesign& design) const;
   bool check_density_convergence(int topology_id,int previous_iteration,int current_iteration,bool& converged);
   bool filter_density_sensitivities(int topology_id,int iteration_id,const std::map<int, double>& element_volumes,const std::map<int, std::array<double, 3>>& element_centers);
 
@@ -75,6 +84,9 @@ public:
   CalculiXCoreInterface *ccx_iface = nullptr;
 
 private:
+  bool select_compliance_move_limit(const TopologyCase& configuration, int source_iteration, double& move_limit, bool& correlation_available, double& correlation) const;
+  bool build_compliance_oc_proposal(const TopologyCase& configuration, const TopologyDensityDesign& design, const TopologyIterationEvaluation& evaluation, double move_limit, std::map<int, double>& densities) const;
+  bool build_displacement_density_update(const TopologyCase& configuration, const TopologyDensityDesign& design, const TopologyIterationEvaluation& evaluation, std::map<int, double>& densities) const;
   bool change_preserved_sets(int topology_id,int set_type,const std::vector<int>& ids,bool adding);
 };
 

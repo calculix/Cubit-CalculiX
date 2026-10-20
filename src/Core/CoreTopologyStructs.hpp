@@ -78,6 +78,10 @@ struct TopologyIterationEvaluation
   double relative_objective_change = 0.0;
   bool converged = false;
 
+  // Ordinary compliance OC proposal, calculated before adaptive restriction.
+  bool oc_proposal_residual_available = false;
+  double oc_proposal_residual = 0.0;
+
   // Global element ID -> derivative with respect to stiffness factor.
   // Preserved elements receive zero because they are fixed.
   std::map<int, double> stiffness_sensitivities;
@@ -118,6 +122,12 @@ struct TopologyDensityDesign
   double void_ratio = 0.0;
   double minimum_density = 0.0;
 
+  // Describes the update that generated this design; absent for iteration 1.
+  bool density_update_available = false;
+  double effective_move_limit = 0.0;
+  bool update_correlation_available = false;
+  double update_correlation = 0.0;
+
   // Global element ID -> solid fraction.
   std::map<int, double> element_densities;
   TopologyVolumeEvaluation volume;
@@ -157,6 +167,8 @@ struct TopologyCase
   double minimum_density;
   double filter_radius; // 0 = automatic; positive = model length units.
   double move_limit;
+  bool adaptive_move_limits;
+  double minimum_move_limit; // 0 = automatic: 10% of move_limit.
   double density_tolerance;
   double compliance_tolerance;
   int displacement_nodeset;
@@ -197,6 +209,12 @@ struct TopologyOptions
 
   bool has_move_limit = false;
   double move_limit = 0.0;
+
+  bool has_adaptive_move_limits = false;
+  bool adaptive_move_limits = false;
+
+  bool has_minimum_move_limit = false;
+  double minimum_move_limit = 0.0;
 
   bool has_density_tolerance = false;
   double density_tolerance = 0.0;

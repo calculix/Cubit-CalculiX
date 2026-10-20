@@ -31,6 +31,8 @@ private:
   // Name, volume fraction, void ratio, maximum iterations,
   // filter radius, move limit, density tolerance, compliance tolerance.
   std::array<QLineEdit *, 8> fields;
+  QComboBox *adaptiveMoves;
+  QLineEdit *minimumMoveLimit;
   QComboBox *method;
   QComboBox *objective;
   QComboBox *displacementNodeset;

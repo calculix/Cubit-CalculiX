@@ -15,6 +15,8 @@ std::vector<std::string> ccxTopologyCreateCommand::get_syntax()
       "[iterations <value:label='maximum_iterations'>] "
       "[filter_radius <value:label='filter_radius'>] "
       "[move_limit <value:label='move_limit'>] "
+      "[{adaptive_moves_on|adaptive_moves_off}] "
+      "[minimum_move_limit <value:label='minimum_move_limit'>] "
       "[density_tolerance <value:label='density_tolerance'>] "
       "[compliance_tolerance <value:label='compliance_tolerance'>] "
       "[displacement_nodeset <value:label='displacement_nodeset'>] "
@@ -30,7 +32,9 @@ std::vector<std::string> ccxTopologyCreateCommand::get_syntax_help()
       "[objective {compliance|mass|displacement}] "
       "[volume_fraction <value>] [void_ratio <value>] "
       "[iterations <count>] [filter_radius <length>] "
-      "[move_limit <value>] [density_tolerance <value>] "
+      "[move_limit <value>] "
+      "[{adaptive_moves_on|adaptive_moves_off}] [minimum_move_limit <value>] "
+      "[density_tolerance <value>] "
       "[compliance_tolerance <value>] "
       "[displacement_nodeset <id>] "
       "[displacement_component {x|y|z|magnitude}]"
@@ -39,7 +43,13 @@ std::vector<std::string> ccxTopologyCreateCommand::get_syntax_help()
 
 std::vector<std::string> ccxTopologyCreateCommand::get_help()
 {
-  return {"Create a named topology optimization case.", "displacement_nodeset enables displacement measurement; zero disables it.", "Displacement components use global coordinates. X/Y/Z report the maximum absolute component; magnitude reports the maximum vector norm."};
+  return {
+      "Create a named topology optimization case.",
+      "displacement_nodeset enables displacement measurement; zero disables it.",
+      "Displacement components use global coordinates. X/Y/Z report the maximum absolute component; magnitude reports the maximum vector norm.",
+      "adaptive_moves_on enables adaptive move limits for compliance density optimization; adaptive_moves_off disables them. The default is on.",
+      "minimum_move_limit must be between zero and move_limit. Zero automatically uses 10 percent of move_limit."
+  };
 }
 
 bool ccxTopologyCreateCommand::execute(CubitCommandData& data)
@@ -110,6 +120,23 @@ bool ccxTopologyCreateCommand::execute(CubitCommandData& data)
     if (!data.get_value("move_limit", options.move_limit))
     {
       PRINT_ERROR("Missing topology move limit.\n");
+      return false;
+    }
+  }
+
+  if (data.find_keyword("adaptive_moves_on") || data.find_keyword("adaptive_moves_off"))
+  {
+    options.has_adaptive_move_limits = true;
+    options.adaptive_move_limits = data.find_keyword("adaptive_moves_on");
+  }
+
+  if (data.find_keyword("minimum_move_limit"))
+  {
+    options.has_minimum_move_limit = true;
+
+    if (!data.get_value("minimum_move_limit", options.minimum_move_limit))
+    {
+      PRINT_ERROR("Missing minimum topology move limit.\n");
       return false;
     }
   }

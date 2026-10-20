@@ -196,7 +196,6 @@ CoreBlocks::CoreBlocks()
   cubit_element_types.push_back("PYRAMID18"); // 47
 
   // cubit 2 ccx standard element conversion
-  cubit_ccx_element_types_conversion.push_back(std::make_pair("HEX","C3D8R"));
   cubit_ccx_element_types_conversion.push_back(std::make_pair("BAR","B21"));
   cubit_ccx_element_types_conversion.push_back(std::make_pair("BAR2","B21"));
   cubit_ccx_element_types_conversion.push_back(std::make_pair("BEAM","B31"));
@@ -221,7 +220,7 @@ CoreBlocks::CoreBlocks()
   cubit_ccx_element_types_conversion.push_back(std::make_pair("TETRA","C3D4"));
   cubit_ccx_element_types_conversion.push_back(std::make_pair("TETRA4","C3D4"));
   cubit_ccx_element_types_conversion.push_back(std::make_pair("TETRA10","C3D10"));
-  cubit_ccx_element_types_conversion.push_back(std::make_pair("HEX","C3D8R"));
+  cubit_ccx_element_types_conversion.push_back(std::make_pair("HEX","C3D8"));
   cubit_ccx_element_types_conversion.push_back(std::make_pair("HEX8","C3D8"));
   cubit_ccx_element_types_conversion.push_back(std::make_pair("HEX20","C3D20"));
   cubit_ccx_element_types_conversion.push_back(std::make_pair("WEDGE","C3D6"));

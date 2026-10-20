@@ -387,6 +387,21 @@ private:
         return false;
       }
 
+      // Older files contain no ordinary OC proposal residual.
+      if (!Reading || file.nameExists(group + "/oc_proposal_residual_available"))
+      {
+        if (!value("oc_proposal_residual_available", data.oc_proposal_residual_available) ||
+            !value("oc_proposal_residual", data.oc_proposal_residual))
+        {
+          return false;
+        }
+      }
+
+      if (!std::isfinite(data.oc_proposal_residual) || data.oc_proposal_residual < 0.0)
+      {
+        return false;
+      }
+
       return value("objective", data.objective) &&
           value("value", data.value) &&
           value("convergence_checked", data.convergence_checked) &&
@@ -400,6 +415,29 @@ private:
     }
     else if constexpr (std::is_same_v<U, TopologyDensityDesign>)
     {
+      // Older designs contain no update diagnostics.
+      if (!Reading || file.nameExists(group + "/density_update_available"))
+      {
+        if (!value("density_update_available", data.density_update_available) ||
+            !value("effective_move_limit", data.effective_move_limit) ||
+            !value("update_correlation_available", data.update_correlation_available) ||
+            !value("update_correlation", data.update_correlation))
+        {
+          return false;
+        }
+      }
+
+      if (!std::isfinite(data.effective_move_limit) ||
+          data.effective_move_limit < 0.0 ||
+          data.effective_move_limit > 1.0 ||
+          (data.density_update_available && data.effective_move_limit <= 0.0) ||
+          !std::isfinite(data.update_correlation) ||
+          std::abs(data.update_correlation) > 1.0 + 1.0e-12 ||
+          (data.update_correlation_available && !data.density_update_available))
+      {
+        return false;
+      }
+
       return value("penalization", data.penalization) &&
           value("void_ratio", data.void_ratio) &&
           value("minimum_density", data.minimum_density) &&

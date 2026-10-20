@@ -58,6 +58,19 @@ TopologySettingsPanel::TopologySettingsPanel(bool modify, QWidget *parent)
   fields[6]->setToolTip("Maximum density change allowed for convergence; greater than 0 and at most 1.");
   fields[7]->setToolTip("Relative objective change allowed for convergence; 0.001 corresponds to 0.1 percent.");
 
+  adaptiveMoves = new QComboBox(settings);
+  adaptiveMoves->addItem(modifying ? "Keep current" : "Default", "");
+  adaptiveMoves->addItem("Off", "adaptive_moves_off");
+  adaptiveMoves->addItem("On", "adaptive_moves_on");
+  adaptiveMoves->setToolTip("Adapt the compliance density move limit from previous density changes. Other objectives do not use this setting.");
+
+  minimumMoveLimit = new QLineEdit(settings);
+  minimumMoveLimit->setPlaceholderText(modifying ? "" : "Optional: use default");
+  minimumMoveLimit->setToolTip("Minimum adaptive move limit; 0 automatically uses 10 percent of the maximum density move limit. An explicit value must not exceed that maximum.");
+
+  form->insertRow(6, "Adaptive compliance moves", adaptiveMoves);
+  form->insertRow(7, "Minimum move limit", minimumMoveLimit);
+
   method = new QComboBox(settings);
   method->addItem(modifying ? "Keep current" : "Default", "");
   method->addItem("Density", "density");
@@ -67,15 +80,12 @@ TopologySettingsPanel::TopologySettingsPanel(bool modify, QWidget *parent)
   objective->addItem(modifying ? "Keep current" : "Default", "");
   objective->addItem("Compliance", "compliance");
   objective->addItem("Mass (not implemented)", "mass");
-  objective->addItem("Displacement (not implemented)", "displacement");
-  for (int i = 2; i < objective->count(); ++i)
-  {
-    static_cast<QStandardItemModel *>(objective->model())->item(i)->setEnabled(false);
-  }
+  objective->addItem("Displacement", "displacement");
+  static_cast<QStandardItemModel *>(objective->model())->item(2)->setEnabled(false);
   form->addRow("Method", method);
   form->addRow("Objective", objective);
   displacementNodeset = new QComboBox(settings);
-  displacementNodeset->setToolTip("Measure displacement in this nodeset. None disables monitoring.");
+  displacementNodeset->setToolTip("Required for the displacement objective. For compliance, selecting a nodeset enables displacement monitoring; None disables monitoring.");
   displacementComponent = new QComboBox(settings);
   displacementComponent->addItem("Magnitude", "magnitude");
   displacementComponent->addItem("X", "x");
@@ -220,6 +230,8 @@ QStringList TopologySettingsPanel::values() const
   const bool include_measurement = modifying || nodeset_id > 0;
   result.append(include_measurement ? QString::number(nodeset_id) : QString());
   result.append(include_measurement ? displacementComponent->currentData().toString() : QString());
+  result.append(adaptiveMoves->currentData().toString());
+  result.append(minimumMoveLimit->text());
   return result;
 }
 
@@ -233,6 +245,8 @@ void TopologySettingsPanel::load()
   {
     field->clear();
   }
+  adaptiveMoves->setCurrentIndex(0);
+  minimumMoveLimit->clear();
   method->setCurrentIndex(0);
   objective->setCurrentIndex(0);
   displacementNodeset->setCurrentIndex(0);
@@ -257,6 +271,8 @@ void TopologySettingsPanel::load()
   fields[5]->setText(QString::number(options.move_limit, 'g', 15));
   fields[6]->setText(QString::number(options.density_tolerance, 'g', 15));
   fields[7]->setText(QString::number(options.compliance_tolerance, 'g', 15));
+  adaptiveMoves->setCurrentIndex(adaptiveMoves->findData(options.adaptive_move_limits ? "adaptive_moves_on" : "adaptive_moves_off"));
+  minimumMoveLimit->setText(QString::number(options.minimum_move_limit, 'g', 15));
   if (options.method == TopologyMethod::Density)
   {
     method->setCurrentIndex(1);
@@ -289,7 +305,7 @@ void TopologySettingsPanel::load()
 void TopologySettingsPanel::apply()
 {
   const int topology_id = modifying ? cases->currentData().toInt() : id->value();
-  if (modifying && (loaded_id != topology_id || original.size() != static_cast<qsizetype>(fields.size() + 4)))
+  if (modifying && (loaded_id != topology_id || original.size() != static_cast<qsizetype>(fields.size() + 6)))
   {
     PRINT_ERROR("Load a topology case before modifying its settings.\n");
     return;
@@ -301,10 +317,15 @@ void TopologySettingsPanel::apply()
   }
 
   const QStringList current = values();
-  const std::array<QString, 12> keywords = {
+  if (objective->currentData().toString() == "displacement" && displacementNodeset->currentData().toInt() <= 0)
+  {
+    PRINT_ERROR("Select a nodeset for the displacement objective.\n");
+    return;
+  }
+  const std::array<QString, 14> keywords = {
     "name", "volume_fraction", "void_ratio", "iterations", "filter_radius",
     "move_limit", "density_tolerance", "compliance_tolerance", "method", "objective",
-    "displacement_nodeset", "displacement_component"
+    "displacement_nodeset", "displacement_component", "adaptive_moves", "minimum_move_limit"
   };
   QString arguments;
   for (int i = 0; i < current.size(); ++i)
@@ -316,7 +337,7 @@ void TopologySettingsPanel::apply()
     QString value = current[i].trimmed();
     if (value.isEmpty())
     {
-      if (modifying && i < static_cast<int>(fields.size()))
+      if (modifying && (i < static_cast<int>(fields.size()) || keywords[i] == "minimum_move_limit"))
       {
         PRINT_ERROR("A modified topology setting cannot be empty.\n");
         return;
@@ -343,7 +364,7 @@ void TopologySettingsPanel::apply()
       }
       value = QString::number(iterations);
     }
-    else if (i < static_cast<int>(fields.size()))
+    else if (i < static_cast<int>(fields.size()) || keywords[i] == "minimum_move_limit")
     {
       bool valid = false;
       const double number = value.toDouble(&valid);
@@ -355,7 +376,14 @@ void TopologySettingsPanel::apply()
       }
       value = QString::number(number, 'g', 17);
     }
-    arguments += " " + keywords[i] + " " + value;
+    if (keywords[i] == "adaptive_moves")
+    {
+      arguments += " " + value;
+    }
+    else
+    {
+      arguments += " " + keywords[i] + " " + value;
+    }
   }
   if (modifying && arguments.isEmpty())
   {

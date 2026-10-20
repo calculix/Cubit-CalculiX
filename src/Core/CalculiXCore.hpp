@@ -320,11 +320,13 @@ public:
   bool read_topology_job_displacements(int job_id, std::map<int, std::array<double, 3>>& displacements);
   bool finish_topology_iteration(int topology_id, int iteration_id);
   bool evaluate_topology_compliance(int topology_id, int iteration_id, const std::map<int, double>& energies);
+  bool evaluate_topology_displacement(int topology_id, int iteration_id, double value, int node_id, const std::map<int, double>& element_integrals);
   bool set_topology_iteration_displacement(int topology_id, int iteration_id, double displacement, int node_id);
   bool mark_topology_iteration_completed(int topology_id, int iteration_id);
   bool prepare_topology_density_iteration(int topology_id, int source_iteration, int next_iteration);
   bool filter_topology_density_sensitivities(int topology_id, int iteration_id, const std::map<int, double>& element_volumes, const std::map<int, std::array<double, 3>>& element_centers);
   bool build_topology_density_update(int topology_id, int source_iteration, std::map<int, double>& densities);
+  bool evaluate_topology_compliance_oc_residual(int topology_id, int iteration_id);
   bool check_topology_density_convergence(int topology_id, int previous_iteration, int current_iteration, bool& converged);
   bool run_topology(int topology_id, bool wait = false);
   bool wait_topology(int topology_id);
@@ -340,14 +342,17 @@ public:
   std::vector<double> get_topology_parameters(int topology_id);
   bool get_topology_settings(int topology_id, TopologyOptions& options);
   int get_topology_iteration_job_id(int topology_id, int iteration_id); // Returns the associated job ID, or -1 on failure.
+  int get_topology_iteration_adjoint_job_id(int topology_id, int iteration_id);
   bool ensure_topology_element_history_output(int topology_id,int step_id,int block_id,const std::string& key);
   bool ensure_topology_node_history_output(int topology_id, int step_id, int nodeset_id, const std::string& key);
   bool ensure_topology_displacement_field_output(int topology_id, int step_id);
   bool read_topology_displacement(int topology_id, int iteration_id, double& value, int& node_id, std::array<double, 3>* critical_displacement = nullptr);
   bool read_topology_element_energies(int topology_id,int iteration_id,std::map<int, double>& element_energies);
+  bool read_topology_job_element_tensors(int job_id, const std::string& key, std::map<int, std::map<int, std::array<double, 6>>>& tensors);
   bool validate_topology_compliance_model(bool require_zero_displacements = true); // check if the model is build up correctly
-  bool set_topology_iteration_densities(int topology_id,int iteration_id,const std::map<int, double>& densities);
+  bool set_topology_iteration_densities(int topology_id, int iteration_id, const std::map<int, double>& densities, int source_iteration = -1);
   bool collect_topology_element_volumes(int topology_id,std::map<int, double>& element_volumes,std::map<int, std::array<double, 3>>* element_centers = nullptr);
+  bool collect_topology_integration_weights(int topology_id, std::map<int, std::map<int, double>>& weights);
   std::vector<std::vector<std::string>> get_topology_iteration_data(int topology_id);
   bool select_topology_iteration(int topology_id, int iteration_id);
   std::string get_topology_run_state(int topology_id);

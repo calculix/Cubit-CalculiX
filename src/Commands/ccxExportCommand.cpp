@@ -1,4 +1,5 @@
 #include "ccxExportCommand.hpp"
+#include "ElementNodeOrdering.hpp"
 #include "MeshExportInterface.hpp"
 #include "MaterialInterface.hpp"
 #include "CubitInterface.hpp"
@@ -443,52 +444,39 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
           for (int ii = 0; ii < num_elems; ii++)
           {
             std::vector<int> conn(27);
-            int num_nodes = iface->get_connectivity(handles[ii], conn);
+            const int num_nodes = iface->get_connectivity(handles[ii], conn);
 
-            //output_file << "**DEBUG:"<<  iface->get_element_type_name(element_type[i]) << "   " << (int) element_type[i] << " " << ids[i] << " " << block_id << "\n";
-                        
-            output_file << ids[ii] << ", ";
-            for (int j = 0; j < num_nodes; j++)
+            if (num_nodes <= 0 || static_cast<std::size_t>(num_nodes) > conn.size())
             {
-              // different node numbering for hex20
-              if (element_type[0] == 44) {
-                if (j >= 12 && j<=15) {
-                  output_file << conn[j+4];
-                } else if (j >= 16 && j<=19) {
-                  output_file << conn[j-4];
-                } else {
-                  output_file << conn[j];
-                }
-              } else if (element_type[0] == 54) {  // different node numbering for wedge15
-                if (j >= 9 && j<=11) {
-                  output_file << conn[j+3];
-                } else if (j >= 12 && j<=14) {
-                  output_file << conn[j-3];
-                } else {
-                  output_file << conn[j];
-                }
-              } else if ((element_type[0] == 6)||(element_type[0] == 3)||(element_type[0] == 9)) {  // different node numbering for beam3, bar3, truss3
-                if (j >= 2 && j<=2) {
-                  output_file << conn[j-1];
-                } else if (j >= 1 && j<=1) {
-                  output_file << conn[j+1];
-                } else {
-                  output_file << conn[j];
-                }
-              }else {
-                output_file << conn[j];
+              PRINT_ERROR("Invalid connectivity for element %d.\n", ids[ii]);
+              return false;
+            }
+
+            output_file << ids[ii] << ", ";
+
+            for (int j = 0; j < num_nodes; ++j)
+            {
+              const std::size_t source = ElementNodeOrdering::cubit_source_index(static_cast<int>(element_type[0]), static_cast<std::size_t>(j));
+
+              if (source >= static_cast<std::size_t>(num_nodes))
+              {
+                PRINT_ERROR("Invalid node ordering for element %d.\n", ids[ii]);
+                return false;
               }
-              if (!(j == num_nodes-1))
+
+              output_file << conn[source];
+
+              if (j != num_nodes - 1)
               {
                 output_file << ", ";
               }
-              if ((j == 14) && element_type[0] == 44) {
+
+              if (j == 14 && element_type[0] == 44)
+              {
                 output_file << "\n";
               }
-              /*if ((j == 14) && (num_nodes > 15)) {
-                output_file << "\n";
-              }*/
             }
+
             output_file << std::endl;
           }
         }

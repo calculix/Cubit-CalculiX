@@ -1,0 +1,257 @@
+#!cubit
+# Displacement sensitivity test. Resets the current model.
+# Uses the configured solver; all evidence is saved in Cubit's working directory.
+# Three physical/adjoint pairs, followed by 18 finite-difference physical solves.
+# This journal collects evidence; compare the finite differences with the raw
+# density sensitivities stored in the saved Cubit model, not filtered gradients.
+reset
+#beam geometry
+create brick x 100 y 30 z 1
+block 1 add volume 1
+split surface 6 offset curve 10 distance 2.5
+
+# node sets
+nodeset 1 add surface 4  
+nodeset 1 name "x0"
+nodeset 2 add surface 7  
+nodeset 2 name "xl"
+nodeset 3 add surface 8  
+nodeset 3 name "rb"
+
+# material
+create material "Steel" property_group "CalculiX-FEA"
+modify material "Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0 
+modify material "Steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+
+# section
+ccx create section solid block 1 material 1
+
+# vertices for ref and rot node
+create vertex location on surface 8  center  
+create vertex location on surface 8  center  
+
+# rigid body constraint
+ccx create constraint rigid body nodeset 3 ref 11 rot 12
+
+# load 
+create force  on vertex 11 force value 10000 direction 0 -1 0
+
+# bc
+create displacement  on nodeset 1  dof 1 dof 2 dof 3 fix 0 
+
+# outputs
+ccx create fieldoutput name "node_output" node
+ccx modify fieldoutput 1 node
+ccx modify fieldoutput 1 node key_on RF U 
+ccx modify fieldoutput 1 node key_off CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF NT PNT POT PRF PS PSF PT PTF PU RFL SEN TS TSF TT TTF TURB V VF 
+ccx create fieldoutput name "element_output" element
+ccx modify fieldoutput 2 element
+ccx modify fieldoutput 2 element key_on E S 
+ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFL HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS 
+ccx create historyoutput name "node_output" node
+ccx create historyoutput name "element_output" element
+ccx modify historyoutput 1 node nodeset 3
+ccx modify historyoutput 1 node key_on U RF 
+ccx modify historyoutput 1 node key_off NT TSF TTF PN PSF PTF MACH CP VF DEPF TURB MF RFL 
+ccx modify historyoutput 2 element block 1
+ccx modify historyoutput 2 element key_on S E 
+ccx modify historyoutput 2 element key_off SVF ME PEEQ CEEQ ENER SDV HFL HFLF COORD ELSE ELKE EVOL EMAS EBHE CENT 
+
+
+# steps
+ccx create step name "Static" static
+#ccx modify step 1 parameter nlgeom_yes
+ccx modify step 1 static solver spooles
+#ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.1 timeperiodofstep 1 minimumtimeincrement 0.01 maximumtimeincrement 0.1
+ccx step 1 add load force 1
+ccx step 1 add bc displacement 1
+ccx step 1 add fieldoutput 1 2
+ccx step 1 add historyoutput 1 2
+
+# mesh
+block 1 element type HEX8
+volume 1 size 5
+mesh vertex all
+mesh volume all
+ccx block 1 element_type C3D8
+
+
+#!python
+import csv
+import math
+import re
+from pathlib import Path
+from datetime import datetime
+from calculix_pythoninterface import CalculiXPythonInterface
+
+ccx = CalculiXPythonInterface()
+
+
+def run_sensitivity_test():
+    # A single monitored node avoids changes of the maximum-displacement node.
+    monitor_nodes = list(cubit.get_nodeset_nodes_inclusive(3))
+    if not monitor_nodes:
+        print("ERROR: The loaded rigid-body nodeset is empty.")
+        return
+    monitor_node = min(monitor_nodes)
+    cubit.cmd("nodeset 4 add node %d" % monitor_node)
+    cubit.cmd('nodeset 4 name "sensitivity_monitor"')
+    cubit.cmd("ccx modify historyoutput 1 node nodeset 4")
+
+    prefix = "displacement_fd_" + datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    work = Path.cwd()
+    cubit.cmd('ccx create topology 1 name "%s" method density objective displacement displacement_nodeset 4 displacement_component y volume_fraction 0.7 void_ratio 0.001 iterations 3 move_limit 0.15 density_tolerance 1e-12 compliance_tolerance 1e-12' % prefix)
+    cubit.cmd("ccx run topology 1 wait")
+    if ccx.get_topology_run_state(1) not in ("iteration_limit", "converged"):
+        print("ERROR: Topology run did not complete successfully.")
+        return
+
+    iterations = [list(row) for row in ccx.get_topology_iteration_data(1)]
+    if len(iterations) != 3 or any(int(row[2]) != 2 for row in iterations):
+        print("ERROR: Expected three completed topology iterations.")
+        return
+    iteration = int(iterations[-1][0])
+    physical_job = ccx.get_topology_iteration_job_id(1, iteration)
+    elements = [list(row) for row in ccx.get_topology_iteration_element_data(1, iteration)]
+    if not elements or physical_job <= 0:
+        print("ERROR: Missing iteration element data or physical job.")
+        return
+
+    def save_csv(suffix, columns, rows):
+        path = work / (prefix + suffix)
+        with path.open("w", newline="", encoding="utf-8") as stream:
+            writer = csv.writer(stream)
+            writer.writerow(columns)
+            writer.writerows(rows)
+        return path
+
+    save_csv("_iterations.csv", ["iteration", "job", "status", "objective", "volume_fraction", "selected", "max_density_change", "relative_objective_change", "converged", "displacement", "node", "nodeset", "component"], iterations)
+    save_csv("_elements.csv", ["element", "density", "stiffness_factor", "preserved"], elements)
+    # Includes the C++ evaluation's unfiltered and filtered sensitivity maps.
+    model = work / (prefix + ".cub5")
+    cubit.cmd('save as "%s" overwrite' % model.as_posix())
+    if not model.is_file():
+        print("ERROR: Failed to save the topology model.")
+        return
+
+    base_name = "topo_1_%s_iter_%04d" % (prefix, iteration)
+    source = work / (base_name + ".inp")
+    adjoint = work / (base_name + "_adjoint.dat")
+    if not source.is_file() or not adjoint.is_file():
+        print("ERROR: Missing physical input or adjoint DAT file.")
+        return
+    source_text = source.read_text(encoding="utf-8")
+    candidates = sorted([row for row in elements if not bool(row[3]) and 0.2 < row[1] < 0.95], key=lambda row: row[0])
+    if len(candidates) < 3:
+        print("ERROR: Need at least three free elements with intermediate densities.")
+        return
+    selected = [candidates[0], candidates[len(candidates) // 2], candidates[-1]]
+
+    # The model has one linear static step. Discover the displacement block
+    # and component from the interface rather than assuming a numeric block ID.
+    displacement_types = list(dict.fromkeys(str(value) for value in ccx.dat_get_result_block_types(physical_job) if "displacement" in str(value).lower()))
+    if len(displacement_types) != 1:
+        print("ERROR: Cannot identify a unique DAT displacement block: %s" % displacement_types)
+        return
+    displacement_type = displacement_types[0]
+    sets = list(dict.fromkeys(str(value) for value in ccx.dat_get_result_block_set(physical_job)))
+    monitor_sets = [value for value in sets if value.lower() == "sensitivity_monitor"]
+    if len(monitor_sets) != 1:
+        print("ERROR: Cannot find sensitivity_monitor in DAT sets: %s" % sets)
+        return
+    monitor_set = monitor_sets[0]
+    components = list(dict.fromkeys(str(value) for value in ccx.dat_get_result_block_components(physical_job, displacement_type)))
+    y_components = [value for value in components if value.lower().strip() in ("vy", "uy", "u2", "u_y")]
+    if len(y_components) != 1:
+        print("ERROR: Cannot identify the Y displacement component: %s" % components)
+        return
+    y_component = y_components[0]
+
+    def displacement(job):
+        times = list(ccx.dat_get_result_block_times(job, displacement_type, monitor_set))
+        if not times:
+            return None
+        values = list(ccx.dat_get_node_values(job, monitor_node, max(times), displacement_type, monitor_set))
+        if not values or not all(math.isfinite(value) for value in values):
+            return None
+        value = ccx.dat_get_node_value(job, monitor_node, max(times), displacement_type, monitor_set, y_component)
+        if not math.isfinite(value):
+            return None
+        return value
+
+    baseline_y = displacement(physical_job)
+    if baseline_y is None or baseline_y == 0.0:
+        print("ERROR: Missing or zero baseline displacement.")
+        return
+    if not math.isclose(abs(baseline_y), float(iterations[-1][3]), rel_tol=1e-6):
+        print("ERROR: Python displacement query differs from the stored objective.")
+        return
+
+    # Reset created no ordinary jobs; each nonzero displacement iteration owns
+    # one physical job and one adjoint job. Check before assigning new IDs.
+    next_job = 7
+    if ccx.get_job_status(next_job) != -2:
+        print("ERROR: Expected the next available job ID to be 7.")
+        return
+    results = []
+    manifest = []
+    result_path = None
+    for row in selected:
+        element = int(row[0])
+        rho = row[1]
+        material = re.compile(r"(?im)^(\*MATERIAL\s*,\s*NAME=CCX_TOPO_1_E%d\s*\n\*ELASTIC\s*\n)([^\n]+)" % element)
+        matches = list(material.finditer(source_text))
+        if len(matches) != 1:
+            print("ERROR: Cannot identify the elastic material for element %d." % element)
+            return
+        match = matches[0]
+        elastic = match.group(2).split(",")
+        base_modulus = 210000.0
+        void_ratio = 0.001
+        penalization = 3.0
+        written_modulus = float(elastic[0])
+        # Reconstruct the actual exported baseline density; retain both it and
+        # the exact C++ density in the CSV to expose six-decimal export rounding.
+        exported_rho = ((written_modulus / base_modulus - void_ratio) / (1.0 - void_ratio)) ** (1.0 / penalization)
+        for h in (0.01, 0.003, 0.001):
+            pair = []
+            for direction, sign in (("plus", 1.0), ("minus", -1.0)):
+                target_rho = exported_rho + sign * h
+                modulus = base_modulus * (void_ratio + (1.0 - void_ratio) * target_rho ** penalization)
+                written = "%.6e" % modulus
+                actual_rho = ((float(written) / base_modulus - void_ratio) / (1.0 - void_ratio)) ** (1.0 / penalization)
+                elastic[0] = written
+                changed_text = source_text[:match.start(2)] + ",".join(elastic) + source_text[match.end(2):]
+                tag = "%s_e%d_h%s_%s" % (prefix, element, str(h).replace(".", "p"), direction)
+                input_path = work / (tag + "_input.inp")
+                input_path.write_text(changed_text, encoding="utf-8")
+                cubit.cmd('ccx create job name "%s" filepath "%s"' % (tag, input_path.as_posix()))
+                cubit.cmd("ccx run job %d no_conversion" % next_job)
+                cubit.cmd("ccx wait job %d" % next_job)
+                if ccx.get_job_status(next_job) != 2:
+                    print("ERROR: Perturbation job %d failed; earlier evidence is retained." % next_job)
+                    return
+                y = displacement(next_job)
+                if y is None or y * baseline_y <= 0.0:
+                    print("ERROR: Missing displacement or a sign change in job %d." % next_job)
+                    return
+                pair.append((actual_rho, abs(y)))
+                manifest.append([next_job, tag, element, h, direction, actual_rho, y, abs(y)])
+                save_csv("_jobs.csv", ["job", "name", "element", "requested_h", "direction", "exported_density", "uy", "objective"], manifest)
+                next_job += 1
+            derivative = (pair[0][1] - pair[1][1]) / (pair[0][0] - pair[1][0])
+            results.append([iteration, element, rho, exported_rho, h, pair[0][0], pair[1][0], pair[0][1], pair[1][1], derivative])
+            result_path = save_csv("_finite_differences.csv", ["iteration", "element", "cpp_density", "exported_baseline_density", "requested_h", "rho_plus", "rho_minus", "objective_plus", "objective_minus", "dJ_drho_fd"], results)
+            print("Element %d, h=%g: finite-difference dJ/drho = %.9g" % (element, h, derivative))
+
+    print("Sensitivity evidence saved in: %s" % work)
+    print("Finite differences: %s" % result_path)
+    print("C++ sensitivity maps are preserved in: %s" % model)
+    print("Compare unfiltered C++ density sensitivities at iteration %d with dJ_drho_fd; no automatic PASS is assigned." % iteration)
+
+
+run_sensitivity_test()

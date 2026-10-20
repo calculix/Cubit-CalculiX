@@ -1,4 +1,5 @@
 #include "CoreResultsVtkWriter.hpp"
+#include "ElementNodeOrdering.hpp"
 #include "CalculiXCoreInterface.hpp"
 #include "CoreResultsFrd.hpp"
 #include "CoreResultsDat.hpp"
@@ -5682,42 +5683,19 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
     shape_functions.push_back((1.-zeta)*(1.+zeta)/4.*(1.-xi)*(1.+eta));
   }
 
-  // MATCHING NODE ORDER!!!
-  std::vector<std::vector<double>> conn = nodes_coords;
-
-  for (int j = 0; j < nodes_coords.size(); j++)
-  {
-    // different node numbering for hex20
-    if (element_type == 44) {
-      if (j >= 12 && j<=15) {
-        nodes_coords[j] = conn[j+4];
-      } else if (j >= 16 && j<=19) {
-        nodes_coords[j] = conn[j-4];
-      } else {
-        nodes_coords[j] = conn[j];
-      }
-    } else if (element_type == 54) {  // different node numbering for wedge15
-      if (j >= 9 && j<=11) {
-        nodes_coords[j] = conn[j+3];
-      } else if (j >= 12 && j<=14) {
-        nodes_coords[j] = conn[j-3];
-      } else {
-        nodes_coords[j] = conn[j];
-      }
-    }
-  }
-
   if ((shape_functions.size()!=0)&&(shape_functions.size()==nodes_coords.size()))
   {
     ip_coords[0] = 0;
     ip_coords[1] = 0;
     ip_coords[2] = 0;
 
-    for (size_t i = 0; i < shape_functions.size(); i++)
+    for (std::size_t i = 0; i < shape_functions.size(); ++i)
     {
-      ip_coords[0] += shape_functions[i]*nodes_coords[i][0];
-      ip_coords[1] += shape_functions[i]*nodes_coords[i][1];
-      ip_coords[2] += shape_functions[i]*nodes_coords[i][2];
+      const std::size_t source = ElementNodeOrdering::cubit_source_index(element_type, i);
+
+      ip_coords[0] += shape_functions[i] * nodes_coords[source][0];
+      ip_coords[1] += shape_functions[i] * nodes_coords[source][1];
+      ip_coords[2] += shape_functions[i] * nodes_coords[source][2];
     }
   }else{
     ip_coords[0] = 0;

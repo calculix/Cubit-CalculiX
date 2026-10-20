@@ -15,6 +15,9 @@ set(UTILITY_SRC
     ${CMAKE_CURRENT_LIST_DIR}/TopologyHdf5.hpp
     ${CMAKE_CURRENT_LIST_DIR}/TopologyIterationIds.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ScientificNumber.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ElementNodeOrdering.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ElementIntegration.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ElementIntegration.cpp
     ${CMAKE_CURRENT_LIST_DIR}/GifAnimation.cpp
     ${CMAKE_CURRENT_LIST_DIR}/GifAnimation.hpp
     ${CMAKE_CURRENT_LIST_DIR}/gif.h

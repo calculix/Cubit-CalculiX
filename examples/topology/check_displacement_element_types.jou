@@ -1,0 +1,380 @@
+#!cubit
+reset
+
+#!python
+# Displacement derivative matrix: C3D4/6/8/10/15/20, Y and magnitude.
+# RESETS the model for each case. No GIFs, deletion, or production code changes.
+# Requires the existing CalculiX Python interface and Cubit's bundled h5py.
+# Default: 12 cases x (3 physical + 3 adjoint + 18 perturbed physical) = 288 solves.
+# Evidence is saved in the current working directory with unique case prefixes.
+import csv
+import math
+import re
+from pathlib import Path
+from datetime import datetime
+import cubit
+from calculix_pythoninterface import CalculiXPythonInterface
+
+# Edit these lists to run a subset. X and Z are also supported by this journal.
+ELEMENT_TYPES = ("C3D4", "C3D6", "C3D8", "C3D10", "C3D15", "C3D20")
+COMPONENTS = ("y", "magnitude")
+RELATIVE_TOLERANCE = 0.01
+ABSOLUTE_TOLERANCE = 1.0e-6
+SUMMARY_COLUMNS = ["element_type", "component", "element", "best_h", "dJ_drho_cpp", "dJ_drho_fd", "relative_error", "within_tolerance", "preserved_sensitivities_zero", "saved_model"]
+ccx = CalculiXPythonInterface()
+
+
+def command(text):
+    if not cubit.silent_cmd(text):
+        print("ERROR: Journal command failed: " + text)
+        return False
+    return True
+
+
+def commands(items):
+    for text in items:
+        if not command(text):
+            return False
+    return True
+
+
+def prepare_model(element_type):
+    specifications = {
+        "C3D4": ("tet", "TETRA4", 4),
+        "C3D10": ("tet", "TETRA10", 10),
+        "C3D6": ("wedge", "WEDGE6", 6),
+        "C3D15": ("wedge", "WEDGE15", 15),
+        "C3D8": ("hex", "HEX8", 8),
+        "C3D20": ("hex", "HEX20", 20),
+    }
+    family, block_type, expected_nodes = specifications[element_type]
+    if not commands(["reset", "create brick x 24 y 6 z 4", "set node constraint off"]):
+        return False
+    # Deterministic conforming mesh. Tet/wedge subdivision uses identical face
+    # diagonals in neighboring cells; no meshing-scheme or geometry-ID guesses.
+    nodes = {}
+    for k in range(3):
+        for j in range(3):
+            for i in range(7):
+                if not command("create node location %g %g %g owner volume 1" % (-12 + 4*i, -3 + 3*j, -2 + 2*k)):
+                    return False
+                nodes[i, j, k] = cubit.get_last_id("node")
+    patterns = {
+        "hex": ((0, 1, 2, 3, 4, 5, 6, 7),),
+        "wedge": ((0, 1, 2, 4, 5, 6), (0, 2, 3, 4, 6, 7)),
+        "tet": ((0, 1, 2, 6), (0, 2, 3, 6), (0, 3, 7, 6), (0, 7, 4, 6), (0, 4, 5, 6), (0, 5, 1, 6)),
+    }
+    for k in range(2):
+        for j in range(2):
+            for i in range(6):
+                corners = [nodes[i,j,k], nodes[i+1,j,k], nodes[i+1,j+1,k], nodes[i,j+1,k], nodes[i,j,k+1], nodes[i+1,j,k+1], nodes[i+1,j+1,k+1], nodes[i,j+1,k+1]]
+                for pattern in patterns[family]:
+                    if not command("create %s node %s owner volume 1" % (family, " ".join(str(corners[index]) for index in pattern))):
+                        return False
+    # Preserve the manually created mesh and remove its temporary geometry.
+    element_count = len(cubit.get_entities(family))
+    if not commands([
+        "disassociate mesh from volume 1",
+        "delete volume 1",
+    ]):
+        return False
+    if len(cubit.get_entities(family)) != element_count:
+        print("ERROR: Element count changed while removing temporary geometry.")
+        return False
+    if not commands(["block 1 add %s all" % family, "block 1 element type " + block_type, "ccx block 1 element_type " + element_type]):
+        return False
+    # Query expanded connectivity after selecting the block order so quadratic
+    # midside nodes on both end faces are included in the BC and rigid body.
+    mesh_nodes = set()
+    for element in cubit.get_entities(family):
+        connectivity = list(cubit.get_expanded_connectivity(family, element))
+        if len(connectivity) != expected_nodes:
+            print("ERROR: %s element %d has %d nodes; expected %d." % (element_type, element, len(connectivity), expected_nodes))
+            return False
+        mesh_nodes.update(connectivity)
+    fixed = sorted(node for node in mesh_nodes if abs(cubit.get_nodal_coordinates(node)[0] + 12.0) < 1.0e-8)
+    loaded = sorted(node for node in mesh_nodes if abs(cubit.get_nodal_coordinates(node)[0] - 12.0) < 1.0e-8)
+    # An off-axis loaded corner produces a nontrivial vector-norm objective.
+    monitor = nodes[6, 2, 2]
+    if not fixed or not loaded:
+        print("ERROR: Empty end-face node selection.")
+        return False
+    if not commands([
+        "nodeset 1 add node " + " ".join(map(str, fixed)),
+        'nodeset 1 name "fixed"',
+        "nodeset 3 add node " + " ".join(map(str, loaded)),
+        'nodeset 3 name "loaded"',
+        "nodeset 4 add node %d" % monitor,
+        'nodeset 4 name "sensitivity_monitor"',
+        'create material "Steel" property_group "CalculiX-FEA"',
+        'modify material "Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1',
+        'modify material "Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1',
+        'modify material "Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0',
+        "ccx create section solid block 1 material 1",
+        "create vertex 12 0 0",
+    ]):
+        return False
+    reference = cubit.get_last_id("vertex")
+    if not command("create vertex 12 0 0"):
+        return False
+    rotation = cubit.get_last_id("vertex")
+    if not commands([
+        "ccx create constraint rigid body nodeset 3 ref %d rot %d" % (reference, rotation),
+        "create force on vertex %d force value 1000 direction 0.2 -1 0.3" % reference,
+        "create displacement on nodeset 1 dof 1 dof 2 dof 3 fix 0",
+        "mesh vertex %d %d" % (reference, rotation),
+        'ccx create fieldoutput name "node_output" node',
+        "ccx modify fieldoutput 1 node key_on U",
+        'ccx create historyoutput name "node_output" node',
+        "ccx modify historyoutput 1 node nodeset 4",
+        "ccx modify historyoutput 1 node key_on U",
+        'ccx create historyoutput name "element_output" element',
+        "ccx modify historyoutput 2 element block 1",
+        "ccx modify historyoutput 2 element key_on S ME",
+        'ccx create step name "Static" static',
+        "ccx modify step 1 static solver spooles",
+        "ccx step 1 add load force 1",
+        "ccx step 1 add bc displacement 1",
+        "ccx step 1 add fieldoutput 1",
+        "ccx step 1 add historyoutput 1 2",
+    ]):
+        return False
+    for entity_type in ("vertex", "curve", "surface", "volume"):
+        for entity_id in cubit.get_entities(entity_type):
+            if not cubit.is_meshed(entity_type, entity_id):
+                print("ERROR: Unmeshed %s %d before topology run." % (entity_type, entity_id))
+                return False
+    print("Prepared %s: %d elements, %d mesh nodes, monitor node %d." % (element_type, len(cubit.get_entities(family)), len(mesh_nodes), monitor))
+    return True
+
+
+def read_sensitivities(model, iteration, elements):
+    import h5py
+    with h5py.File(str(model), "r") as saved:
+        group = saved["Cubit-CalculiX/Topology/Case_1/runtime/evaluations/Item_%d/density_sensitivities" % iteration]
+        keys = list(group["keys/values"][:])
+        values = list(group["values/values"][:])
+        if len(keys) != len(values) or len(keys) != len(elements):
+            return None, False
+        gradients = {int(key): float(value) for key, value in zip(keys, values)}
+        if set(gradients) != set(int(row[0]) for row in elements) or not all(math.isfinite(value) for value in gradients.values()):
+            return None, False
+        preserved = [int(row[0]) for row in elements if bool(row[3])]
+        return gradients, bool(preserved) and all(gradients[element] == 0.0 for element in preserved)
+
+
+def run_case(element_type, component, suite_prefix):
+    prefix = suite_prefix + "_" + element_type + "_" + component
+    work = Path.cwd()
+    monitor_node = int(cubit.get_nodeset_nodes_inclusive(4)[0])
+    cubit.cmd('ccx create topology 1 name "%s" method density objective displacement displacement_nodeset 4 displacement_component %s volume_fraction 0.7 void_ratio 0.001 iterations 3 move_limit 0.15 density_tolerance 1e-12 compliance_tolerance 1e-12' % (prefix, component))
+    cubit.cmd("ccx run topology 1 wait")
+    if ccx.get_topology_run_state(1) not in ("iteration_limit", "converged"):
+        print("ERROR: Topology run did not complete successfully.")
+        return
+
+    iterations = [list(row) for row in ccx.get_topology_iteration_data(1)]
+    if len(iterations) != 3 or any(int(row[2]) != 2 for row in iterations):
+        print("ERROR: Expected three completed topology iterations.")
+        return
+    iteration = int(iterations[-1][0])
+    physical_job = ccx.get_topology_iteration_job_id(1, iteration)
+    elements = [list(row) for row in ccx.get_topology_iteration_element_data(1, iteration)]
+    if not elements or physical_job <= 0:
+        print("ERROR: Missing iteration element data or physical job.")
+        return
+
+    def save_csv(suffix, columns, rows):
+        path = work / (prefix + suffix)
+        with path.open("w", newline="", encoding="utf-8") as stream:
+            writer = csv.writer(stream)
+            writer.writerow(columns)
+            writer.writerows(rows)
+        return path
+
+    save_csv("_iterations.csv", ["iteration", "job", "status", "objective", "volume_fraction", "selected", "max_density_change", "relative_objective_change", "converged", "displacement", "node", "nodeset", "component"], iterations)
+    save_csv("_elements.csv", ["element", "density", "stiffness_factor", "preserved"], elements)
+    # Includes the C++ evaluation's unfiltered and filtered sensitivity maps.
+    model = work / (prefix + ".cub5")
+    cubit.cmd('save as "%s" overwrite' % model.as_posix())
+    if not model.is_file():
+        print("ERROR: Failed to save the topology model.")
+        return
+
+    base_name = "topo_1_%s_iter_%04d" % (prefix, iteration)
+    source = work / (base_name + ".inp")
+    adjoint = work / (base_name + "_adjoint.dat")
+    if not source.is_file() or not adjoint.is_file():
+        print("ERROR: Missing physical input or adjoint DAT file.")
+        return
+    source_text = source.read_text(encoding="utf-8")
+    candidates = sorted([row for row in elements if not bool(row[3]) and 0.2 < row[1] < 0.95], key=lambda row: row[0])
+    if len(candidates) < 3:
+        print("ERROR: Need at least three free elements with intermediate densities.")
+        return
+    selected = [candidates[0], candidates[len(candidates) // 2], candidates[-1]]
+
+    # The model has one linear static step. Discover the displacement block
+    # and component from the interface rather than assuming a numeric block ID.
+    displacement_types = list(dict.fromkeys(str(value) for value in ccx.dat_get_result_block_types(physical_job) if "displacement" in str(value).lower()))
+    if len(displacement_types) != 1:
+        print("ERROR: Cannot identify a unique DAT displacement block: %s" % displacement_types)
+        return
+    displacement_type = displacement_types[0]
+    sets = list(dict.fromkeys(str(value) for value in ccx.dat_get_result_block_set(physical_job)))
+    monitor_sets = [value for value in sets if value.lower() == "sensitivity_monitor"]
+    if len(monitor_sets) != 1:
+        print("ERROR: Cannot find sensitivity_monitor in DAT sets: %s" % sets)
+        return
+    monitor_set = monitor_sets[0]
+    components = list(dict.fromkeys(str(value) for value in ccx.dat_get_result_block_components(physical_job, displacement_type)))
+    axes = []
+    for aliases in (("vx", "ux", "u1", "u_x"), ("vy", "uy", "u2", "u_y"), ("vz", "uz", "u3", "u_z")):
+        found = [value for value in components if value.lower().strip() in aliases]
+        if len(found) != 1:
+            print("ERROR: Cannot identify displacement components: %s" % components)
+            return
+        axes.append(found[0])
+
+    def displacement(job):
+        times = list(ccx.dat_get_result_block_times(job, displacement_type, monitor_set))
+        if not times:
+            return None
+        values = list(ccx.dat_get_node_values(job, monitor_node, max(times), displacement_type, monitor_set))
+        if not values or not all(math.isfinite(value) for value in values):
+            return None
+        vector = [ccx.dat_get_node_value(job, monitor_node, max(times), displacement_type, monitor_set, axis) for axis in axes]
+        if not all(math.isfinite(value) for value in vector):
+            return None
+        return vector
+
+    def objective(vector):
+        if component == "magnitude":
+            return math.sqrt(sum(value * value for value in vector))
+        return abs(vector[("x", "y", "z").index(component)])
+
+    baseline_y = displacement(physical_job)
+    if baseline_y is None or objective(baseline_y) == 0.0:
+        print("ERROR: Missing or zero baseline displacement.")
+        return
+    if not math.isclose(objective(baseline_y), float(iterations[-1][3]), rel_tol=1e-6):
+        print("ERROR: Python displacement query differs from the stored objective.")
+        return
+
+    gradients, preserved_zero = read_sensitivities(model, iteration, elements)
+    if gradients is None:
+        print("ERROR: Cannot read C++ sensitivities from the saved model.")
+        return
+    save_csv("_cpp_sensitivities.csv", ["element", "dJ_drho_cpp"], sorted(gradients.items()))
+
+    # Reset created no ordinary jobs; each nonzero displacement iteration owns
+    # one physical job and one adjoint job. Check before assigning new IDs.
+    next_job = 7
+    if ccx.get_job_status(next_job) != -2:
+        print("ERROR: Expected the next available job ID to be 7.")
+        return
+    results = []
+    manifest = []
+    result_path = None
+    for row in selected:
+        element = int(row[0])
+        rho = row[1]
+        material = re.compile(r"(?im)^(\*MATERIAL\s*,\s*NAME=CCX_TOPO_1_E%d\s*\n\*ELASTIC\s*\n)([^\n]+)" % element)
+        matches = list(material.finditer(source_text))
+        if len(matches) != 1:
+            print("ERROR: Cannot identify the elastic material for element %d." % element)
+            return
+        match = matches[0]
+        elastic = match.group(2).split(",")
+        base_modulus = 210000.0
+        void_ratio = 0.001
+        penalization = 3.0
+        written_modulus = float(elastic[0])
+        # Reconstruct the actual exported baseline density; retain both it and
+        # the exact C++ density in the CSV to expose six-decimal export rounding.
+        exported_rho = ((written_modulus / base_modulus - void_ratio) / (1.0 - void_ratio)) ** (1.0 / penalization)
+        for h in (0.01, 0.003, 0.001):
+            pair = []
+            for direction, sign in (("plus", 1.0), ("minus", -1.0)):
+                target_rho = exported_rho + sign * h
+                modulus = base_modulus * (void_ratio + (1.0 - void_ratio) * target_rho ** penalization)
+                written = "%.6e" % modulus
+                actual_rho = ((float(written) / base_modulus - void_ratio) / (1.0 - void_ratio)) ** (1.0 / penalization)
+                elastic[0] = written
+                changed_text = source_text[:match.start(2)] + ",".join(elastic) + source_text[match.end(2):]
+                tag = "%s_e%d_h%s_%s" % (prefix, element, str(h).replace(".", "p"), direction)
+                input_path = work / (tag + "_input.inp")
+                input_path.write_text(changed_text, encoding="utf-8")
+                cubit.cmd('ccx create job name "%s" filepath "%s"' % (tag, input_path.as_posix()))
+                cubit.cmd("ccx run job %d no_conversion" % next_job)
+                cubit.cmd("ccx wait job %d" % next_job)
+                if ccx.get_job_status(next_job) != 2:
+                    print("ERROR: Perturbation job %d failed; earlier evidence is retained." % next_job)
+                    return
+                y = displacement(next_job)
+                if y is None or (component != "magnitude" and y[("x", "y", "z").index(component)] * baseline_y[("x", "y", "z").index(component)] <= 0.0):
+                    print("ERROR: Missing displacement or a sign change in job %d." % next_job)
+                    return
+                pair.append((actual_rho, objective(y)))
+                manifest.append([next_job, tag, element, h, direction, actual_rho] + y + [objective(y)])
+                save_csv("_jobs.csv", ["job", "name", "element", "requested_h", "direction", "exported_density", "ux", "uy", "uz", "objective"], manifest)
+                next_job += 1
+            derivative = (pair[0][1] - pair[1][1]) / (pair[0][0] - pair[1][0])
+            cpp = gradients[element]
+            absolute_error = abs(derivative - cpp)
+            relative_error = absolute_error / max(abs(cpp), 1.0e-30)
+            passed = absolute_error <= ABSOLUTE_TOLERANCE + RELATIVE_TOLERANCE * abs(cpp)
+            results.append([iteration, element, rho, exported_rho, h, pair[0][0], pair[1][0], pair[0][1], pair[1][1], derivative, cpp, absolute_error, relative_error, int(passed)])
+            result_path = save_csv("_finite_differences.csv", ["iteration", "element", "cpp_density", "exported_baseline_density", "requested_h", "rho_plus", "rho_minus", "objective_plus", "objective_minus", "dJ_drho_fd", "dJ_drho_cpp", "absolute_error", "relative_error", "within_tolerance"], results)
+            print("%s %s: element %d, h=%g: C++ %.9g, FD %.9g, error %.4g%% [%s]" % (element_type, component, element, h, cpp, derivative, 100.0 * relative_error, "PASS" if passed else "CHECK"))
+
+    case_passed = preserved_zero
+    summaries = []
+    for row in selected:
+        element = int(row[0])
+        candidates = [entry for entry in results if entry[1] == element]
+        # Report every h in the detail CSV. The summary uses the best h because
+        # truncation dominates large h and DAT precision dominates very small h.
+        best = min(candidates, key=lambda entry: entry[12])
+        case_passed = case_passed and bool(best[13])
+        summaries.append([element_type, component, element, best[4], best[10], best[9], best[12], best[13], int(preserved_zero), str(model)])
+    save_csv("_summary.csv", SUMMARY_COLUMNS, summaries)
+    print("CASE %s %s: %s; report: %s" % (element_type, component, "PASS" if case_passed else "CHECK", result_path))
+    return summaries
+
+
+def run_suite():
+    try:
+        import h5py
+    except ImportError:
+        print("ERROR: Run this journal in Cubit with its bundled h5py available.")
+        return
+    if not ELEMENT_TYPES or not COMPONENTS or any(value not in ("C3D4", "C3D6", "C3D8", "C3D10", "C3D15", "C3D20") for value in ELEMENT_TYPES) or any(value not in ("x", "y", "z", "magnitude") for value in COMPONENTS):
+        print("ERROR: Invalid test selection.")
+        return
+    suite_prefix = "displacement_matrix_" + datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    suite_path = Path.cwd() / (suite_prefix + "_summary.csv")
+    collected = []
+    for element_type in ELEMENT_TYPES:
+        for component in COMPONENTS:
+            print("STARTING %s / %s" % (element_type, component))
+            if not prepare_model(element_type):
+                print("STOPPED: Model preparation failed. Earlier reports are retained.")
+                return
+            summary = run_case(element_type, component, suite_prefix)
+            if summary is None:
+                print("STOPPED: Case failed. Current model and earlier evidence are retained.")
+                return
+            collected.extend(summary)
+            with suite_path.open("w", newline="", encoding="utf-8") as stream:
+                writer = csv.writer(stream)
+                writer.writerow(SUMMARY_COLUMNS)
+                writer.writerows(collected)
+    status = "PASS" if all(bool(row[7]) and bool(row[8]) for row in collected) else "CHECK"
+    print("SUITE %s: %s" % (status, suite_path))
+    print("PASS means each sampled element met the tolerance for at least one h; inspect the detailed CSVs for all three h values.")
+    print("Coverage: straight-sided elements and a single monitored node. Curved elements and switching maxima are not tested.")
+
+
+run_suite()
+

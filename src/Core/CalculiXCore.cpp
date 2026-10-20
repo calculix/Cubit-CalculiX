@@ -1,5 +1,6 @@
 #include "CalculiXCore.hpp"
 #include "ScientificNumber.hpp"
+#include "ElementIntegration.hpp"
 #ifdef WIN32
  #include <io.h>
 #else
@@ -6126,7 +6127,9 @@ int CalculiXCore::create_topology_iteration_job(int topology_id, int iteration_i
 
   auto& configuration = entry->second;
 
-  if (configuration.objective == TopologyObjective::Compliance && !validate_topology_compliance_model())
+  if ((configuration.objective == TopologyObjective::Compliance ||
+       configuration.objective == TopologyObjective::Displacement) &&
+      !validate_topology_compliance_model())
   {
     return -1;
   }
@@ -6531,6 +6534,67 @@ bool CalculiXCore::evaluate_topology_compliance(int topology_id, int iteration_i
   return topology->evaluate_compliance(topology_id, iteration_id, factors->second);
 }
 
+bool CalculiXCore::evaluate_topology_displacement(int topology_id, int iteration_id, double value, int node_id, const std::map<int, double>& element_integrals)
+{
+  if (!topology || !mat || !jobs || iteration_id < 1 || !std::isfinite(value) || value < 0.0 || node_id <= 0)
+  {
+    PRINT_ERROR("Invalid topology displacement evaluation request.\n");
+    return false;
+  }
+
+  const int physical_job = get_topology_iteration_job_id(topology_id, iteration_id);
+
+  if (physical_job <= 0 || jobs->get_job_status(physical_job) != 2)
+  {
+    PRINT_ERROR("Completed physical results are required for displacement evaluation.\n");
+    return false;
+  }
+
+  if (value > 0.0)
+  {
+    const int adjoint_job = get_topology_iteration_adjoint_job_id(topology_id, iteration_id);
+
+    if (adjoint_job <= 0 || jobs->get_job_status(adjoint_job) != 2)
+    {
+      PRINT_ERROR("Completed adjoint results are required for displacement evaluation.\n");
+      return false;
+    }
+  }
+
+  const auto collection = mat->topology_material_data.find(topology_id);
+
+  if (collection == mat->topology_material_data.end() || collection->second.element_base_material.empty())
+  {
+    PRINT_ERROR("Topology material data is missing.\n");
+    return false;
+  }
+
+  if (element_integrals.size() != collection->second.element_base_material.size())
+  {
+    PRINT_ERROR("Incomplete topology displacement integrals.\n");
+    return false;
+  }
+
+  for (const auto& assignment : collection->second.element_base_material)
+  {
+    if (element_integrals.count(assignment.first) == 0)
+    {
+      PRINT_ERROR("Missing displacement integral for element %d.\n", assignment.first);
+      return false;
+    }
+  }
+
+  const auto factors = collection->second.iteration_factors.find(iteration_id);
+
+  if (factors == collection->second.iteration_factors.end())
+  {
+    PRINT_ERROR("Topology iteration stiffness factors are missing.\n");
+    return false;
+  }
+
+  return topology->evaluate_displacement(topology_id, iteration_id, value, node_id, element_integrals, factors->second);
+}
+
 bool CalculiXCore::set_topology_iteration_displacement(int topology_id, int iteration_id, double displacement, int node_id)
 {
   if (!topology || iteration_id < 1 || !std::isfinite(displacement) || displacement < 0.0 || node_id <= 0)
@@ -6626,9 +6690,10 @@ bool CalculiXCore::begin_topology_run(int topology_id)
     return false;
   }
   if (entry->second.method != TopologyMethod::Density ||
-      entry->second.objective != TopologyObjective::Compliance)
+      (entry->second.objective != TopologyObjective::Compliance &&
+       entry->second.objective != TopologyObjective::Displacement))
   {
-    PRINT_ERROR("Topology currently supports density optimization with compliance only.\n");
+    PRINT_ERROR("Topology currently supports density optimization with compliance or displacement objectives.\n");
     return false;
   }
   if (!validate_topology_compliance_model())
@@ -6638,6 +6703,12 @@ bool CalculiXCore::begin_topology_run(int topology_id)
 
   const int nodeset_id = entry->second.displacement_nodeset;
   const int component = entry->second.displacement_component;
+
+  if (entry->second.objective == TopologyObjective::Displacement && nodeset_id <= 0)
+  {
+    PRINT_ERROR("Displacement optimization requires a displacement nodeset.\n");
+    return false;
+  }
 
   if (nodeset_id > 0)
   {
@@ -6775,6 +6846,7 @@ bool CalculiXCore::prepare_topology_history_outputs(int topology_id, const std::
   }
 
   const int nodeset_id = entry->second.displacement_nodeset;
+  const bool needs_displacement_sensitivities = entry->second.objective == TopologyObjective::Displacement || nodeset_id > 0;
   std::vector<int> step_ids;
 
   for (const auto& step : steps->steps_data)
@@ -6810,6 +6882,19 @@ bool CalculiXCore::prepare_topology_history_outputs(int topology_id, const std::
       if (!ensure_topology_element_history_output(topology_id, step_id, block_id, "ELSE"))
       {
         return false;
+      }
+
+      if (needs_displacement_sensitivities)
+      {
+        if (!ensure_topology_element_history_output(topology_id, step_id, block_id, "S"))
+        {
+          return false;
+        }
+
+        if (!ensure_topology_element_history_output(topology_id, step_id, block_id, "ME"))
+        {
+          return false;
+        }
       }
     }
 
@@ -6849,9 +6934,11 @@ bool CalculiXCore::initialize_topology_run_design(int topology_id, const std::ve
     return false;
   }
 
-  if (entry->second.method != TopologyMethod::Density || entry->second.objective != TopologyObjective::Compliance)
+  if (entry->second.method != TopologyMethod::Density ||
+      (entry->second.objective != TopologyObjective::Compliance &&
+       entry->second.objective != TopologyObjective::Displacement))
   {
-    PRINT_ERROR("The topology iteration loop currently supports density optimization with compliance only.\n");
+    PRINT_ERROR("The topology iteration loop supports density optimization with compliance or displacement objectives.\n");
     return false;
   }
 
@@ -7168,6 +7255,12 @@ bool CalculiXCore::get_topology_settings(int topology_id, TopologyOptions& optio
   options.has_move_limit = true;
   options.move_limit = configuration.move_limit;
 
+  options.has_adaptive_move_limits = true;
+  options.adaptive_move_limits = configuration.adaptive_move_limits;
+
+  options.has_minimum_move_limit = true;
+  options.minimum_move_limit = configuration.minimum_move_limit;
+
   options.has_density_tolerance = true;
   options.density_tolerance = configuration.density_tolerance;
 
@@ -7218,6 +7311,33 @@ int CalculiXCore::get_topology_iteration_job_id(int topology_id, int iteration_i
   return job_id;
 }
 
+int CalculiXCore::get_topology_iteration_adjoint_job_id(int topology_id, int iteration_id)
+{
+  if (!topology || !jobs || iteration_id < 1)
+  {
+    PRINT_ERROR("Invalid topology adjoint job query.\n");
+    return -1;
+  }
+
+  const auto entry = topology->topology_cases.find(topology_id);
+
+  if (entry == topology->topology_cases.end())
+  {
+    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    return -1;
+  }
+
+  const auto job = entry->second.iteration_adjoint_jobs.find(iteration_id);
+
+  if (job == entry->second.iteration_adjoint_jobs.end() || jobs->get_jobs_data_id_from_job_id(job->second) < 0)
+  {
+    PRINT_ERROR("Topology %d iteration %d has no available adjoint job.\n", topology_id, iteration_id);
+    return -1;
+  }
+
+  return job->second;
+}
+
 bool CalculiXCore::ensure_topology_element_history_output(int topology_id,int step_id,int block_id,const std::string& key)
 {
   if (!historyoutputs || !steps || !check_block_exists(block_id))
@@ -7235,6 +7355,7 @@ bool CalculiXCore::ensure_topology_element_history_output(int topology_id,int st
   }
 
   const size_t key_column = 7 + static_cast<size_t>(key_it - historyoutputs->element_keys.begin());
+  const bool tensor_output = key == "S" || key == "ME";
 
   const int step_index = steps->get_steps_data_id_from_step_id(step_id);
 
@@ -7377,7 +7498,14 @@ bool CalculiXCore::ensure_topology_element_history_output(int topology_id,int st
 
     created = true;
 
-    if (!silent_cmd("ccx modify historyoutput " + std::to_string(output_id) + " element block " + std::to_string(block_id) + " totals_no key_on " + key))
+    std::string command = "ccx modify historyoutput " + std::to_string(output_id) + " element block " + std::to_string(block_id) + " totals_no key_on " + key;
+
+    if (tensor_output)
+    {
+      command += " global_yes frequency 1";
+    }
+
+    if (!silent_cmd(command))
     {
       return false;
     }
@@ -7392,10 +7520,10 @@ bool CalculiXCore::ensure_topology_element_history_output(int topology_id,int st
   }
 
   const bool missing_key = historyoutputs->element_data[index][key_column] != key;
-
   const bool totals_only = historyoutputs->element_data[index][4] == "ONLY";
+  const bool needs_tensor_settings = tensor_output && (historyoutputs->element_data[index][5] != "YES" || historyoutputs->element_data[index][2] != "1");
 
-  if (missing_key || totals_only)
+  if (missing_key || totals_only || needs_tensor_settings)
   {
     std::string command = "ccx modify historyoutput " + std::to_string(output_id) + " element";
 
@@ -7405,6 +7533,11 @@ bool CalculiXCore::ensure_topology_element_history_output(int topology_id,int st
     }
 
     command += " key_on " + key;
+
+    if (tensor_output)
+    {
+      command += " global_yes frequency 1";
+    }
 
     if (!silent_cmd(command))
     {
@@ -7419,6 +7552,12 @@ bool CalculiXCore::ensure_topology_element_history_output(int topology_id,int st
       historyoutputs->element_data[index][4] == "ONLY")
   {
     PRINT_ERROR("History output %d does not provide element %s values.\n", output_id, key.c_str());
+    return false;
+  }
+
+  if (tensor_output && (historyoutputs->element_data[index][5] != "YES" || historyoutputs->element_data[index][2] != "1"))
+  {
+    PRINT_ERROR("History output %d does not provide global element %s values at every increment.\n", output_id, key.c_str());
     return false;
   }
 
@@ -7460,7 +7599,7 @@ bool CalculiXCore::ensure_topology_element_history_output(int topology_id,int st
   {
     PRINT_INFO("Automatically created history output %d for block %d with key %s.\n", output_id, block_id, key.c_str());
   }
-  else if (missing_key || totals_only)
+  else if (missing_key || totals_only || needs_tensor_settings)
   {
     PRINT_INFO("Automatically configured history output %d to provide element %s values.\n", output_id, key.c_str());
   }
@@ -8149,6 +8288,235 @@ bool CalculiXCore::read_topology_displacement(int topology_id, int iteration_id,
   return true;
 }
 
+bool CalculiXCore::read_topology_job_element_tensors(int job_id, const std::string& key, std::map<int, std::map<int, std::array<double, 6>>>& tensors)
+{
+  tensors.clear();
+
+  if (key != "S" && key != "ME")
+  {
+    PRINT_ERROR("Topology tensor reader supports S and ME only.\n");
+    return false;
+  }
+
+  if (!topology || !mat || !results || !jobs || job_id <= 0 || jobs->get_job_status(job_id) != 2)
+  {
+    PRINT_ERROR("Topology tensor results require a completed job.\n");
+    return false;
+  }
+
+  int topology_id = -1;
+  int iteration_id = -1;
+
+  if (!get_job_topology_context(job_id, topology_id, iteration_id))
+  {
+    return false;
+  }
+
+  if (topology_id <= 0 || iteration_id < 1)
+  {
+    PRINT_ERROR("Job %d is not associated with a topology iteration.\n", job_id);
+    return false;
+  }
+
+  const auto collection = mat->topology_material_data.find(topology_id);
+
+  if (collection == mat->topology_material_data.end() || collection->second.element_base_material.empty())
+  {
+    PRINT_ERROR("Prepared elements for topology %d are missing.\n", topology_id);
+    return false;
+  }
+
+  const int dat_index = results->get_dat_data_id_from_job_id(job_id);
+
+  if (dat_index < 0)
+  {
+    PRINT_ERROR("DAT results for job %d are missing.\n", job_id);
+    return false;
+  }
+
+  auto& dat = results->dat_data[dat_index];
+  const int final_step = dat.current_step;
+  const int final_increment = dat.current_increment;
+
+  if (final_step <= 0 || final_increment <= 0)
+  {
+    PRINT_ERROR("Final solver step/increment is missing for job %d.\n", job_id);
+    return false;
+  }
+
+  const std::string expected_type = key == "S" ? "stresses" : "mechanicalstrains";
+  const std::array<std::string, 6> component_names = key == "S" ? std::array<std::string, 6>{"sxx", "syy", "szz", "sxy", "sxz", "syz"} : std::array<std::string, 6>{"exx", "eyy", "ezz", "exy", "exz", "eyz"};
+  const auto& required_elements = collection->second.element_base_material;
+
+  std::map<int, std::map<int, std::array<double, 6>>> collected;
+
+  for (const auto& block : dat.result_blocks)
+  {
+    if (block.size() < 7)
+    {
+      PRINT_ERROR("Invalid DAT result block for job %d.\n", job_id);
+      return false;
+    }
+
+    if (block[5] != final_step || block[6] != final_increment)
+    {
+      continue;
+    }
+
+    const int type_id = block[2];
+
+    if (type_id < 0 || static_cast<std::size_t>(type_id) >= dat.result_block_type.size())
+    {
+      PRINT_ERROR("Invalid DAT result type for job %d.\n", job_id);
+      return false;
+    }
+
+    if (dat.erase_whitespace(dat.result_block_type[type_id]) != expected_type)
+    {
+      continue;
+    }
+
+    const int data_id = block[4];
+
+    if (data_id < 0 || static_cast<std::size_t>(data_id) >= dat.result_block_data.size() || static_cast<std::size_t>(data_id) >= dat.result_block_c1_data.size() || static_cast<std::size_t>(data_id) >= dat.result_block_components.size())
+    {
+      PRINT_ERROR("Invalid DAT tensor storage for job %d.\n", job_id);
+      return false;
+    }
+
+    const auto& components = dat.result_block_components[data_id];
+
+    const auto find_column = [&](const std::string& name) -> int
+    {
+      int column = -1;
+
+      for (std::size_t index = 0; index < components.size(); ++index)
+      {
+        if (dat.erase_whitespace(components[index]) == name)
+        {
+          if (column >= 0)
+          {
+            return -1;
+          }
+
+          column = static_cast<int>(index);
+        }
+      }
+
+      return column;
+    };
+
+    const int element_column = find_column("elem");
+    const int integration_column = find_column("integ.pnt.");
+
+    if (element_column < 0 || integration_column < 0)
+    {
+      PRINT_ERROR("Missing element/integration-point columns for job %d.\n", job_id);
+      return false;
+    }
+
+    std::array<int, 6> columns{};
+
+    for (std::size_t component = 0; component < columns.size(); ++component)
+    {
+      columns[component] = find_column(component_names[component]);
+
+      if (columns[component] < 0)
+      {
+        PRINT_ERROR("Missing or duplicate tensor component %s for job %d.\n", component_names[component].c_str(), job_id);
+        return false;
+      }
+    }
+
+    for (const auto& record : dat.result_block_c1_data[data_id])
+    {
+      if (record.size() < 3)
+      {
+        PRINT_ERROR("Invalid DAT tensor record for job %d.\n", job_id);
+        return false;
+      }
+
+      if (required_elements.count(record[0]) == 0)
+      {
+        continue;
+      }
+
+      if (record[2] != 2 || record[1] < 0 || static_cast<std::size_t>(record[1]) >= dat.result_block_data[data_id].size())
+      {
+        PRINT_ERROR("Invalid integration-point record for element %d.\n", record[0]);
+        return false;
+      }
+
+      const auto& row = dat.result_block_data[data_id][record[1]];
+
+      if (static_cast<std::size_t>(element_column) >= row.size() || static_cast<std::size_t>(integration_column) >= row.size())
+      {
+        PRINT_ERROR("Missing element/integration-point values for job %d.\n", job_id);
+        return false;
+      }
+
+      if (!std::isfinite(row[element_column]) || row[element_column] != static_cast<double>(record[0]))
+      {
+        PRINT_ERROR("Inconsistent DAT element mapping for job %d.\n", job_id);
+        return false;
+      }
+
+      const double integration_value = row[integration_column];
+
+      if (!std::isfinite(integration_value) || integration_value < 1.0 || integration_value > static_cast<double>(std::numeric_limits<int>::max()) || std::trunc(integration_value) != integration_value)
+      {
+        PRINT_ERROR("Invalid integration-point ID for element %d.\n", record[0]);
+        return false;
+      }
+
+      const int integration_id = static_cast<int>(integration_value);
+      std::array<double, 6> tensor{};
+
+      for (std::size_t component = 0; component < tensor.size(); ++component)
+      {
+        if (static_cast<std::size_t>(columns[component]) >= row.size() || !std::isfinite(row[columns[component]]))
+        {
+          PRINT_ERROR("Invalid %s tensor for element %d, integration point %d.\n", key.c_str(), record[0], integration_id);
+          return false;
+        }
+
+        tensor[component] = row[columns[component]];
+      }
+
+      auto& element_tensors = collected[record[0]];
+      const auto existing = element_tensors.find(integration_id);
+
+      if (existing != element_tensors.end())
+      {
+        if (existing->second != tensor)
+        {
+          PRINT_ERROR("Conflicting %s results for element %d, integration point %d.\n", key.c_str(), record[0], integration_id);
+          return false;
+        }
+
+        continue;
+      }
+
+      element_tensors.emplace(integration_id, tensor);
+    }
+  }
+
+  for (const auto& element : required_elements)
+  {
+    const auto found = collected.find(element.first);
+
+    if (found == collected.end() || found->second.empty())
+    {
+      PRINT_ERROR("Missing final-increment %s results for topology element %d in job %d.\n", key.c_str(), element.first, job_id);
+      return false;
+    }
+  }
+
+  tensors.swap(collected);
+
+  return true;
+}
+
 bool CalculiXCore::read_topology_element_energies(int topology_id,int iteration_id,std::map<int, double>& element_energies)
 {
   element_energies.clear();
@@ -8325,6 +8693,15 @@ bool CalculiXCore::validate_topology_compliance_model(bool require_zero_displace
     return false;
   }
 
+  const std::set<std::string> standard_volume_types = {
+    "C3D4",
+    "C3D6",
+    "C3D8",
+    "C3D10",
+    "C3D15",
+    "C3D20"
+  };
+
   // The energy reader currently covers volume solid sections.
   for (const auto& section : sections->sections_data)
   {
@@ -8351,9 +8728,11 @@ bool CalculiXCore::validate_topology_compliance_model(bool require_zero_displace
       return false;
     }
 
-    if (get_ccx_element_type(block_id).rfind("C3D", 0) != 0)
+    const std::string element_type = get_ccx_element_type(block_id);
+
+    if (standard_volume_types.count(element_type) == 0)
     {
-      PRINT_ERROR("Compliance optimization requires volume elements in block %d.\n", block_id);
+      PRINT_ERROR("Topology optimization does not support element type '%s' in block %d.\n", element_type.c_str(), block_id);
       return false;
     }
   }
@@ -8460,11 +8839,17 @@ bool CalculiXCore::validate_topology_compliance_model(bool require_zero_displace
   return true;
 }
 
-bool CalculiXCore::set_topology_iteration_densities(int topology_id,int iteration_id,const std::map<int, double>& densities)
+bool CalculiXCore::set_topology_iteration_densities(int topology_id, int iteration_id, const std::map<int, double>& densities, int source_iteration)
 {
   if (!topology || !mat)
   {
     PRINT_ERROR("Topology/material cores are not initialized.\n");
+    return false;
+  }
+
+  if (source_iteration < -1 || source_iteration == 0 || source_iteration >= iteration_id)
+  {
+    PRINT_ERROR("Invalid source iteration for topology density storage.\n");
     return false;
   }
 
@@ -8474,6 +8859,14 @@ bool CalculiXCore::set_topology_iteration_densities(int topology_id,int iteratio
   if (!topology->build_density_design(topology_id, iteration_id, densities, design, factors))
   {
     return false;
+  }
+
+  if (source_iteration > 0)
+  {
+    if (!topology->set_density_update_diagnostics(topology_id, source_iteration, design))
+    {
+      return false;
+    }
   }
 
   // get volumes
@@ -8658,6 +9051,147 @@ bool CalculiXCore::collect_topology_element_volumes(int topology_id,std::map<int
   return true;
 }
 
+bool CalculiXCore::collect_topology_integration_weights(int topology_id, std::map<int, std::map<int, double>>& weights)
+{
+  weights.clear();
+
+  if (!topology || !mat || !cb)
+  {
+    PRINT_ERROR("Topology integration weight interfaces are not initialized.\n");
+    return false;
+  }
+
+  if (topology->topology_cases.find(topology_id) == topology->topology_cases.end())
+  {
+    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    return false;
+  }
+
+  const auto collection = mat->topology_material_data.find(topology_id);
+
+  if (collection == mat->topology_material_data.end() || collection->second.element_base_material.empty())
+  {
+    PRINT_ERROR("Topology %d has no prepared elements.\n", topology_id);
+    return false;
+  }
+
+  std::map<int, std::map<int, double>> collected;
+
+  for (const auto& assignment : collection->second.element_base_material)
+  {
+    const int element_id = assignment.first;
+
+    if (!CubitInterface::get_element_exists(element_id))
+    {
+      PRINT_ERROR("Topology element %d no longer exists.\n", element_id);
+      return false;
+    }
+
+    std::string entity = CubitInterface::get_element_type(element_id);
+
+    if (entity != "hex" && entity != "tet" && entity != "wedge")
+    {
+      entity = get_cubit_element_type_entity(entity);
+    }
+
+    const int local_id = CubitInterface::get_element_type_id(element_id);
+
+    if ((entity != "hex" && entity != "tet" && entity != "wedge") || local_id <= 0)
+    {
+      PRINT_ERROR("Invalid topology volume element %d.\n", element_id);
+      return false;
+    }
+
+    const int block_id = CubitInterface::get_element_block(element_id);
+
+    if (block_id <= 0 || cb->get_blocks_data_id_from_block_id(block_id) < 0)
+    {
+      PRINT_ERROR("Missing CalculiX block assignment for topology element %d.\n", element_id);
+      return false;
+    }
+
+    const std::string calculix_type = get_ccx_element_type(block_id);
+    const auto connectivity = CubitInterface::get_expanded_connectivity(entity, local_id);
+
+    int cubit_type = -1;
+
+    if (entity == "hex")
+    {
+      if (connectivity.size() == 8)
+      {
+        cubit_type = 42; // HEX8
+      }
+      else if (connectivity.size() == 20)
+      {
+        cubit_type = 44; // HEX20
+      }
+    }
+    else if (entity == "tet")
+    {
+      if (connectivity.size() == 4)
+      {
+        cubit_type = 31; // TETRA4
+      }
+      else if (connectivity.size() == 10)
+      {
+        cubit_type = 33; // TETRA10
+      }
+    }
+    else if (entity == "wedge")
+    {
+      if (connectivity.size() == 6)
+      {
+        cubit_type = 53; // WEDGE6
+      }
+      else if (connectivity.size() == 15)
+      {
+        cubit_type = 54; // WEDGE15
+      }
+    }
+
+    if (cubit_type < 0)
+    {
+      PRINT_ERROR("Unsupported connectivity for topology element %d: %s with %d nodes.\n", element_id, entity.c_str(), static_cast<int>(connectivity.size()));
+      return false;
+    }
+
+    std::vector<ElementIntegration::Coordinates> coordinates;
+    coordinates.reserve(connectivity.size());
+
+    std::set<int> unique_nodes;
+
+    for (int node_id : connectivity)
+    {
+      if (node_id <= 0 || !CubitInterface::get_node_exists(node_id))
+      {
+        PRINT_ERROR("Invalid node %d in topology element %d.\n", node_id, element_id);
+        return false;
+      }
+
+      if (!unique_nodes.insert(node_id).second)
+      {
+        PRINT_ERROR("Duplicate node %d in topology element %d.\n", node_id, element_id);
+        return false;
+      }
+
+      coordinates.push_back(CubitInterface::get_nodal_coordinates(node_id));
+    }
+
+    std::map<int, double> element_weights;
+
+    if (!ElementIntegration::calculate_weights(calculix_type, cubit_type, coordinates, element_weights))
+    {
+      PRINT_ERROR("Unable to calculate integration weights for topology %d element %d in block %d.\n", topology_id, element_id, block_id);
+      return false;
+    }
+
+    collected.emplace(element_id, element_weights);
+  }
+
+  weights.swap(collected);
+  return true;
+}
+
 bool CalculiXCore::prepare_topology_density_iteration(int topology_id, int source_iteration, int next_iteration)
 {
   return topologyoptimization && topologyoptimization->prepare_topology_density_iteration(topology_id, source_iteration, next_iteration);
@@ -8685,6 +9219,17 @@ bool CalculiXCore::build_topology_density_update(int topology_id, int source_ite
   }
 
   return topology->build_density_update(topology_id, source_iteration, densities);
+}
+
+bool CalculiXCore::evaluate_topology_compliance_oc_residual(int topology_id, int iteration_id)
+{
+  if (!topology)
+  {
+    PRINT_ERROR("Topology core is not initialized.\n");
+    return false;
+  }
+
+  return topology->evaluate_compliance_oc_residual(topology_id, iteration_id);
 }
 
 std::vector<std::vector<std::string>> CalculiXCore::get_topology_iteration_data(int topology_id)
@@ -13322,6 +13867,44 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
     {
       PRINT_ERROR("Field output core is not initialized.\n");
       return "";
+    }
+
+    if (!historyoutputs)
+    {
+      PRINT_ERROR("History output core is not initialized.\n");
+      return "";
+    }
+
+    for (int index : steps->get_historyoutput_data_ids_from_historyoutputs_id(final_step[7]))
+    {
+      if (index < 0 || static_cast<std::size_t>(index) >= steps->historyoutputs_data.size() || steps->historyoutputs_data[index].size() < 2)
+      {
+        PRINT_ERROR("Invalid history output assignment for the final analysis step.\n");
+        return "";
+      }
+
+      const int output_id = steps->historyoutputs_data[index][1];
+
+      if (historyoutputs->get_outputs_data_id_from_output_id(output_id) < 0)
+      {
+        PRINT_ERROR("History output %d no longer exists.\n", output_id);
+        return "";
+      }
+
+      const std::string data = historyoutputs->get_output_export(output_id);
+
+      if (data.empty())
+      {
+        PRINT_ERROR("Unable to export history output %d.\n", output_id);
+        return "";
+      }
+
+      output << data;
+
+      if (data.back() != '\n')
+      {
+        output << "\n";
+      }
     }
 
     for (int index : steps->get_fieldoutput_data_ids_from_fieldoutputs_id(final_step[8]))
