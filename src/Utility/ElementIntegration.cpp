@@ -71,13 +71,13 @@ namespace
         return 20;
       }
 
-      case 52: // WEDGE
-      case 53: // WEDGE6
+      case 49: // WEDGE
+      case 50: // WEDGE6
       {
         return 6;
       }
 
-      case 54: // WEDGE15
+      case 52: // WEDGE15
       {
         return 15;
       }

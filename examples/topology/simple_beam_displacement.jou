@@ -75,15 +75,5 @@ mesh volume all
 ccx block 1 element_type C3D8
 
 #topology
-ccx create topology 1 name "simple_beam_displacement" method density objective displacement displacement_nodeset 3 displacement_component y volume_fraction 0.7 iterations 1
-ccx run topology 1 wait
-
-#ccx draw topology 1 iteration 4 threshold 0.5
-#ccx animate topology 1 threshold 0.5 fps 5 save 'beam.gif' overwrite
-
-#ccx result project topology 1 iteration 4 threshold 0.5 preview
-#ccx result project topology 1 iteration 4 threshold 0.5
-#ccx create job name "test"
-#ccx run job 6
-
-
+ccx create topology 1 name "simple_beam_displacement" method density objective displacement displacement_nodeset 3 displacement_component y volume_fraction 0.7 iterations 50
+#ccx run topology 1

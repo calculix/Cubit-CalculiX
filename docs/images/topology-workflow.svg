@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="180" viewBox="0 0 900 180" role="img" aria-labelledby="title desc">
+  <title id="title">Topology iteration workflow</title>
+  <desc id="desc">Settings and preserved elements feed the physical solve, optional displacement adjoint, evaluation, and density update. The process repeats until stopped.</desc>
+  <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8Z" fill="#334155"/></marker></defs>
+  <rect width="900" height="180" fill="#fff"/>
+  <g fill="#edf4fc" stroke="#35648b" stroke-width="1.5">
+    <rect x="10" y="35" width="155" height="75" rx="8"/>
+    <rect x="190" y="35" width="145" height="75" rx="8"/>
+    <rect x="360" y="35" width="170" height="75" rx="8"/>
+    <rect x="555" y="35" width="150" height="75" rx="8"/>
+    <rect x="730" y="35" width="160" height="75" rx="8"/>
+  </g>
+  <g font-family="sans-serif" font-size="16" fill="#162e43" text-anchor="middle">
+    <text x="87" y="65">Case settings</text><text x="87" y="88">Preserved elements</text>
+    <text x="262" y="78">Physical solve</text>
+    <text x="445" y="65">Adjoint solve</text><text x="445" y="88">Displacement only</text>
+    <text x="630" y="65">Objective</text><text x="630" y="88">Sensitivities</text>
+    <text x="810" y="65">Check convergence</text><text x="810" y="88">Update densities</text>
+    <text x="530" y="164">Repeat physical solve with the next density design</text>
+  </g>
+  <g fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)">
+    <path d="M165 72H185"/><path d="M335 72H355"/><path d="M530 72H550"/><path d="M705 72H725"/>
+    <path d="M810 110V137H262V115"/>
+  </g>
+</svg>

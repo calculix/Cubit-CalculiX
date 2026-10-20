@@ -1,4 +1,73 @@
-# Developer documentation
+# Documentation: authoring and building
+
+The offline manual contains separate user and developer sections. Its build is
+independent of CMake and never compiles or runs the plugin or solver.
+
+## Build requirements
+
+- Python 3.10 or newer; use an independent virtual environment, not Cubit's Python.
+- Doxygen 1.12.0 or newer, on `PATH` or passed with `--doxygen`.
+- Python dependencies pinned in `requirements.txt`.
+
+Windows (from the repository root):
+
+```powershell
+python -m venv docs/.venv
+docs/.venv/Scripts/python.exe -m pip install -r docs/requirements.txt
+docs/.venv/Scripts/python.exe docs/build.py --fetch-assets
+```
+
+Linux:
+
+```sh
+python3 -m venv docs/.venv
+docs/.venv/bin/python -m pip install -r docs/requirements.txt
+docs/.venv/bin/python docs/build.py --fetch-assets
+```
+
+`--fetch-assets` permits downloading the pinned KaTeX CSS/fonts archive. Its
+SHA-256 and URL are recorded in `assets.json`. Once cached in `docs/.tools/`,
+omit that flag to build without network access. An offline build machine can
+receive that exact archive and install the Python requirements from a prepared
+wheel cache. Doxygen is installed separately; there is no automatic system install.
+To select a portable executable, use `--doxygen "path/to/doxygen"`.
+Keep the DLLs from the Doxygen distribution beside its executable; on Windows,
+the portable 1.12.0 archive includes the required `libclang.dll`.
+
+For a release, add `--release 2026.10` (using the actual release being packaged).
+Open `docs/_build/html/index.html` directly in a browser. Ship **all contents**
+of `docs/_build/html/` as the release's `documentation/` folder. It contains local
+styles, equation scripts/fonts, the search index, and journal/source downloads.
+End users need none of the build tools or a web server. External manual citations
+remain online links; they are not required for navigation or rendering.
+Search uses the local index and shows linked results. Fetched context snippets
+are disabled because browsers can reject page fetches under `file://`.
+
+The build checks local page/download links and remote embedded resource URLs.
+Run `python docs/build.py --check-only` to repeat those checks on existing output.
+Before shipping, also open the pages via `file://` in supported browsers, disable
+network access, and check search, equations, navigation, and downloads. The static
+check does not execute JavaScript and does not replace that browser verification.
+Doxygen warnings are saved to `docs/_build/doxygen-warnings.log`.
+
+## Authoring conventions
+
+- Write user workflows in `user/`, syntax/defaults in `commands/`, runnable-example
+  explanations in `tutorials/`, and implementation/math in `developer/`.
+- Both Markdown (MyST) and reStructuredText are supported.
+- Reference maintained `.jou` files with Sphinx downloads or literal includes;
+  do not maintain a second copy of a complete journal in a page.
+- Put actual GUI screenshots in `images/`; record version and context in captions.
+- Keep online CalculiX references version-specific. Describe the plugin's exported
+  keywords and assumptions, rather than implying every solver feature is supported.
+- Document APIs with Doxygen comments in project code. Add cross-references in
+  `developer/api.rst`; existing declaration extraction is only initial coverage.
+- Keep runtime assets local. Sphinx uses its bundled Alabaster theme with system
+  fonts and the pinned KaTeX extension; KaTeX's CSS/fonts and license are packaged.
+- Existing Mermaid fences currently display as source diagrams. Use local SVGs
+  for rendered diagrams until a separate offline Mermaid build is introduced.
+
+## Existing developer guides
 
 Start here when changing Cubit-CalculiX:
 

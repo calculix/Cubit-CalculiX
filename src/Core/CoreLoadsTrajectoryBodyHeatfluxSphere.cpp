@@ -863,7 +863,7 @@ std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectoryBodyHeatfluxSphere
           for (size_t iii = 0; iii < wedge_ids.size(); iii++)
           {
             std::array<double,3> center_point;
-            center_point = CubitInterface::get_center_point("wedge", hex_ids[iii]);
+            center_point = CubitInterface::get_center_point("wedge", wedge_ids[iii]);
 
             double distance = sqrt(pow(center_point[0]-hit_coordinates[i][0],2)+pow(center_point[1]-hit_coordinates[i][1],2)+pow(center_point[2]-hit_coordinates[i][2],2));
 

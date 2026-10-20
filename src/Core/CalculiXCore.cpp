@@ -1,6 +1,7 @@
 #include "CalculiXCore.hpp"
 #include "ScientificNumber.hpp"
 #include "ElementIntegration.hpp"
+#include "ElementType.h"
 #ifdef WIN32
  #include <io.h>
 #else
@@ -4053,7 +4054,7 @@ int CalculiXCore::get_ccx_element_side(int element_type,int side)
     } else if (side==6){
       s_return=5;
     }
-  } else if ((element_type>=48) && (element_type<=50)) {
+  } else if (element_type == WEDGE || element_type == WEDGE6 || element_type == WEDGE15) {
     // WEDGE
     if (side==1) {
       s_return=3;
@@ -9141,11 +9142,11 @@ bool CalculiXCore::collect_topology_integration_weights(int topology_id, std::ma
     {
       if (connectivity.size() == 6)
       {
-        cubit_type = 53; // WEDGE6
+        cubit_type = 50; // WEDGE6
       }
       else if (connectivity.size() == 15)
       {
-        cubit_type = 54; // WEDGE15
+        cubit_type = 52; // WEDGE15
       }
     }
 

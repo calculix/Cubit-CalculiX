@@ -5528,7 +5528,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
       ip_iso_coords.push_back({0.056350832689629,0.443649167310371,0.056350832689629});
       ip_iso_coords.push_back({0.443649167310371,0.056350832689629,0.443649167310371});  
     }
-  }else if ((element_type>=52) && (element_type<=57)) // wedge
+  }else if ((element_type>=49) && (element_type<=54)) // wedge
   {
     if (ipmax == 2)
     {
@@ -5602,7 +5602,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
     shape_functions.push_back(4.*xi*(1.-xi-eta));
     shape_functions.push_back(4.*xi*eta);
     shape_functions.push_back(4.*eta*(1.-xi-eta));
-  }else if ((element_type == 52)||(element_type == 53)) // wedge linear || WEDGE, WEDGE6
+  }else if ((element_type == 49)||(element_type == 50)) // wedge linear || WEDGE, WEDGE6
   {
     shape_functions.push_back(0.5*(1.-xi-eta)*(1.-zeta));
     shape_functions.push_back(0.5*xi*(1.-zeta));
@@ -5642,7 +5642,7 @@ std::vector<double> CoreResultsVtkWriter::get_integration_point_coordinates(int 
     shape_functions.push_back(4.*zeta*(1.-xi-eta-zeta));
     shape_functions.push_back(4.*xi*zeta);
     shape_functions.push_back(4.*eta*zeta);
-  }else if (element_type == 54) // wedge quadratic || WEDGE15
+  }else if (element_type == 52) // wedge quadratic || WEDGE15
   {
     shape_functions.push_back(-0.5*(1.-xi-eta)*(1.-zeta)*((2.*xi)+(2.*eta)+zeta));
     shape_functions.push_back(0.5*xi*(1.-zeta)*((2.*xi)-2.-zeta));

@@ -1,0 +1,9 @@
+body { font-family: system-ui, sans-serif; }
+div.document { width: min(1180px, 96%); margin: 24px auto; }
+div.body { max-width: 900px; min-width: 0; }
+div.sphinxsidebar { font-family: system-ui, sans-serif; }
+pre { overflow-x: auto; }
+table.docutils { width: 100%; }
+.katex-display { overflow-x: auto; overflow-y: hidden; padding: .5rem 0; }
+img { max-width: 100%; height: auto; }
+@media (max-width: 875px) { div.document { width: auto; margin: 0; } }

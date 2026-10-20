@@ -19,7 +19,7 @@ namespace ElementNodeOrdering
   inline std::size_t cubit_source_index(int element_type, std::size_t calculix_index)
   {
     constexpr int cubit_hex20 = 44;
-    constexpr int cubit_wedge15 = 54;
+    constexpr int cubit_wedge15 = 52;
     constexpr int cubit_bar3 = 3;
     constexpr int cubit_beam3 = 6;
     constexpr int cubit_truss3 = 9;

@@ -1,0 +1,27 @@
+# Run from docs/ (build.py supplies that working directory).
+DOXYFILE_ENCODING       = UTF-8
+PROJECT_NAME            = Cubit-CalculiX
+OUTPUT_DIRECTORY        = _build/doxygen
+INPUT                   = ../src/Core ../src/Commands ../src/GUI \
+                          ../src/PythonInterface ../src/UserOptions \
+                          ../src/Utility/ElementIntegration.hpp \
+                          ../src/Utility/ElementIntegration.cpp \
+                          ../src/Utility/ElementNodeOrdering.hpp
+FILE_PATTERNS           = *.hpp *.cpp *.h
+RECURSIVE               = YES
+EXCLUDE_PATTERNS        = */*_wrap* */moc_* */ui_* */.venv/*
+EXTRACT_ALL             = YES
+EXTRACT_PRIVATE         = NO
+EXTRACT_STATIC          = NO
+HIDE_UNDOC_RELATIONS    = YES
+ENABLE_PREPROCESSING    = YES
+MACRO_EXPANSION         = NO
+GENERATE_HTML          = NO
+GENERATE_LATEX         = NO
+GENERATE_XML           = YES
+XML_PROGRAMLISTING     = NO
+HAVE_DOT               = NO
+QUIET                  = YES
+WARN_IF_UNDOCUMENTED   = NO
+WARN_IF_DOC_ERROR      = YES
+WARN_LOGFILE           = _build/doxygen-warnings.log
