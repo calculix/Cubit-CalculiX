@@ -50,18 +50,19 @@ Vertex 248  copy move z 5
 create curve vertex 249 248  
 move Curve 444  midpoint y 0.8 z -3 include_merged 
 
-webcut volume 5 with plane vertex 191 83 32  vertex  vertex  
-webcut volume 5  with plane vertex 190 84 36  vertex  vertex  
-webcut volume 9  with plane vertex 85 189 40  vertex  vertex  
-webcut volume 9  with plane vertex 86 188 44  vertex  vertex  
-webcut volume 9  with plane vertex 187 87 48  vertex  vertex  
-webcut volume 14  with plane vertex 186 88 52  vertex  vertex  
-webcut volume 15  with plane vertex 56 185 89  vertex  vertex  
+
+webcut volume 5 with plane vertex 191 85 32 vertex  vertex
+webcut volume 5 with plane vertex 190 86 36 vertex  vertex
+webcut volume 9 with plane vertex 87 189 40 vertex  vertex
+webcut volume 9 with plane vertex 88 188 44 vertex  vertex
+webcut volume 9 with plane vertex 187 89 48 vertex  vertex
+webcut volume 14 with plane vertex 186 90 52 vertex  vertex
+webcut volume 15 with plane vertex 56 185 91 vertex  vertex
 unite volume 16 13 
 unite volume 11 16  
-webcut volume 11  with plane vertex 175 60 90  vertex  vertex  
-webcut volume 11  with plane vertex 183 91 64  vertex  vertex  
-webcut volume 18  with plane vertex 182 68 92  vertex  vertex  
+webcut volume 11 with plane vertex 175 60 92 vertex  vertex
+webcut volume 11 with plane vertex 183 93 64 vertex  vertex
+webcut volume 18 with plane vertex 182 68 94 vertex  vertex
 webcut volume 8  sweep curve 444 along curve 227  
 delete volume 8
 move Curve 444 midpoint location vertex 315
@@ -98,24 +99,24 @@ move Curve 444 midpoint location vertex 395
 webcut volume 7  sweep curve 444 along curve 225  
 delete volume 7
 move Curve 444 midpoint location vertex 403  
-webcut volume 6  with plane vertex 231 76 94  vertex  vertex  
-webcut volume 32  with plane vertex 227 75 95  vertex  vertex  
-webcut volume 32  with plane vertex 226 71 96  vertex  vertex  
-webcut volume 32  with plane vertex 67 225 97  vertex  vertex  
+webcut volume 6 with plane vertex 229 76 96 vertex  vertex
+webcut volume 32 with plane vertex 225 75 97 vertex  vertex
+webcut volume 32 with plane vertex 224 71 98 vertex  vertex
+webcut volume 32 with plane vertex 67 223 99 vertex  vertex
 unite volume 39 36 
-webcut volume 39  with plane vertex 63 224 98  vertex  vertex  
-webcut volume 40  with plane vertex 59 223 99  vertex  vertex  
-webcut volume 41  with plane vertex 55 222 100  vertex  vertex  
-webcut volume 42  with plane vertex 51 221 78  vertex  vertex  
+webcut volume 39 with plane vertex 63 222 100 vertex  vertex
+webcut volume 40 with plane vertex 59 221 78 vertex  vertex
+webcut volume 41 with plane vertex 55 220 79 vertex  vertex
+webcut volume 42 with plane vertex 51 247 80 vertex  vertex
 unite volume 43 33  
-webcut volume 43  with plane vertex 220 79 47  vertex  vertex  
+webcut volume 43 with plane vertex 246 81 47 vertex  vertex
 unite volume 44 35  
-webcut volume 44  with plane vertex 247 43 80  vertex  vertex  
-webcut volume 44  with plane vertex 39 246 81  vertex  vertex  
-webcut volume 46  with plane vertex 35 245 82  vertex  vertex  
-webcut volume 44  with plane vertex 247 43 80  vertex  vertex  
-webcut volume 44  with plane vertex 39 246 81  vertex  vertex  
-webcut volume 46  with plane vertex 35 245 82  vertex  vertex  
+webcut volume 44 with plane vertex 245 43 82 vertex  vertex
+webcut volume 44 with plane vertex 39 244 83 vertex  vertex
+webcut volume 46 with plane vertex 35 243 84 vertex  vertex
+webcut volume 44 with plane vertex 245 43 82 vertex  vertex
+webcut volume 44 with plane vertex 39 244 83 vertex  vertex
+webcut volume 46 with plane vertex 35 243 84 vertex  vertex
 webcut volume 34  sweep curve 444 along curve 215  
 move Curve 444 midpoint location vertex 482  
 webcut volume 37  sweep curve 444 along curve 120  
@@ -125,18 +126,18 @@ move Curve 444 midpoint location vertex 499
 webcut volume 32  sweep curve 444 along curve 109  
 move Curve 444 midpoint location vertex 507  
 webcut volume 39  sweep curve 444 along curve 742  
-move Curve 444 midpoint location vertex 515  
+move Curve 444 midpoint location vertex 512
 webcut volume 40  sweep curve 444 along curve 97  
-move Curve 444 midpoint location vertex 525  
+move Curve 444 midpoint location vertex 526
 webcut volume 41  sweep curve 444 along curve 91  
-move Curve 444 midpoint location vertex 533  
+move Curve 444 midpoint location vertex 534
 webcut volume 42  sweep curve 444 along curve 85  
-move Curve 444 midpoint location vertex 539  
+move Curve 444 midpoint location vertex 536
 webcut volume 43  sweep curve 444 along curve 788  
 move Curve 444 midpoint location vertex 550  
 webcut volume 45  sweep curve 444 along curve 73  
 move Curve 444 midpoint location vertex 555
-webcut volume 44  sweep curve 444 along curve 408  
+webcut volume 44 sweep curve 444 along curve 406
 move Curve 444 midpoint location vertex 565  
 webcut volume 46  sweep curve 444 along curve 61  
 move Curve 444 midpoint location vertex 573  
@@ -157,12 +158,12 @@ vol all size 10
 
 paver cleanup extend
 mesh volume 61
-Curve 1 to 6, 19 to 23, 27, 29, 32, 36, 39, 40, 43, 44, 46, 48, 50, 51 copy move z 50
-composite create surface 14, 642
-composite create surface 19, 641
-composite create surface 20, 643
+Curve 1 2 3 4 5 6 19 20 21 22 23 27 29 32 36 39 40 43 44 46 49 48 50 copy move z 50
+composite create surface 14 640
+composite create surface 19 639
+composite create surface 20 641
 mesh vol 3
-refine surface 138 to 145, 148, 149, 185 to 188, 190 to 192, 197 to 199, 236, 243, 413, 416, 433 numsplit 1 bias 1.0 depth 1 smooth
+refine surface 138 139 140 141 142 143 144 145 148 149 187 188 189 190 192 193 196 199 200 201 236 243 413 416 432 numsplit 1 bias 1.0 depth 1 smooth
 
 surface 296 size 0.7
 mesh surface 296
@@ -230,7 +231,7 @@ curve_ids = cubit.get_continuous_curves(curve_start,180)
 last_vertex = 0
 last_length=0
 delta_t = 0.0001
-surfaces = "210 211 220 232 246 254 259 266 274 277 283 287 425 444 450 453 459 465 471 477 484 492 495 501 505 "
+surfaces = "210 211 220 232 246 254 259 266 274 277 283 287 425 444 450 453 460 466 472 478 484 492 495 501 505 "
 
 for cid in curve_ids:
  curve =  cubit.curve(cid)
@@ -269,7 +270,7 @@ ccx hbc add bc displacement 1
 
 # create step
 ccx create step name "heattransfer" heattransfer
-ccx modify step 1 parameter inc 100000
+ccx modify step 1 parameter inc 100000 nlgeom_yes
 #!python
 status = cubit.cmd(f"ccx modify step 1 heattransfer  totaltimeatstart 0 initialtimeincrement 1e-0 timeperiodofstep {last_length} minimumtimeincrement 1e-5 maximumtimeincrement 1e-0")
 #!cubit
@@ -282,3 +283,4 @@ ccx create job name "moving_heatsource_trajectory_bodyheatfluxsphere"
 #ccx run job 1
 
 #ccx draw
+

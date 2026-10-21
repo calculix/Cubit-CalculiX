@@ -1,5 +1,6 @@
 #include "CalculiXPlugin.hpp"
 #include "loadCalculiXCore.hpp"
+#include "CoreObserver.hpp"
 
 #include "ccxVersionCommand.hpp"
 #include "ccxResetCommand.hpp"
@@ -175,12 +176,15 @@ CalculiXPlugin::CalculiXPlugin()
 {
   ccx_core.init();
   ccx_core.init2(); // to init missing material core and interfaces
+  CalculiXCoreInterface::core_observer().register_observer();
   //ccx_core.init_pythoninterface(); // can't start up with the plugin, needs to be started with the component
   //ccx_core.init_materiallibrary();
 }
 
 CalculiXPlugin::~CalculiXPlugin()
-{}
+{
+  CalculiXCoreInterface::core_observer().unregister_observer();
+}
 
 std::vector<std::string> CalculiXPlugin::get_keys()
 {

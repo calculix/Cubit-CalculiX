@@ -1,9 +1,9 @@
 Topology: mathematics and implementation map
 ============================================
 
-This first page establishes the notation and links to the implementing code.
-Detailed derivations, filter/update algorithms, persistence, and GUI behavior
-will be documented in subsequent chapters.
+This page establishes the notation and links to the implementing code.
+See :doc:`topology-algorithms` for the derivative derivations, integration
+conventions, sensitivity filter, update algorithms, and convergence checks.
 
 Linear model and density interpolation
 --------------------------------------
@@ -63,6 +63,58 @@ adjoint product :math:`\lambda_e^T K_eu_e`, not stored strain energy.
 For tensor shear components, the contraction uses normal terms once and
 the three shear terms twice. Both fields must use matching global coordinates
 and CalculiX integration-point IDs.
+
+Configuration and run lifecycle
+-------------------------------
+
+Defaults belong to ``CoreTopology``. Creation initializes a ``TopologyCase``
+with those defaults, applies supplied ``TopologyOptions`` entries, validates
+the configuration, and stores it. Each ``has_*`` flag distinguishes an omitted
+option from an explicitly supplied value, including zero where allowed.
+The GUI and commands must not introduce a competing set of defaults.
+
+Modification rejects an active case, copies the existing configuration,
+applies supplied options, validates the copy, and only then replaces the
+stored configuration. Selections and iteration records are preserved.
+Configuration acceptance does not establish support for running every enum
+value: mass and level set remain unavailable in the iteration controller.
+
+``CalculiXCore::begin_topology_run()`` validates the required cores, current
+state, supported method/objective, analysis, and displacement selection.
+It then calls ``reset_topology_run()`` before marking the case running.
+Reset removes associated physical/adjoint job records and clears evaluations,
+density designs, resolved preservation flags, selection, and prepared topology
+material/section collections. The case settings and explicit preservation
+selections remain. Remaining initialization and output preparation occur in
+the controller, so a later preparation failure does not restore the old run.
+
+``CoreTopologyOptimization`` owns the transient run context. Its phases are
+``Preparing``, ``Starting``, ``Waiting``, ``StartingAdjoint``,
+``WaitingAdjoint``, ``Evaluating``, and ``Finished``. The controller advances
+these as jobs are polled. A nonzero displacement objective uses an adjoint;
+compliance and the zero-displacement branch do not require that extra solve.
+Each context has a serial so stale work can be distinguished from a new run.
+
+With ``wait=false``, a successful call establishes startup/acceptance rather
+than completion. With ``wait=true``, it enters the wait loop, polls jobs,
+processes Qt events, and returns success only for convergence or the iteration
+limit. Polling/event processing is not a separate result-reader worker.
+Nested waits and waits without a current controller context are rejected.
+Persisted case results do not recreate an active controller context on load.
+
+Kill sets ``stop_requested`` and requests polling when possible. Subsequent
+advancement terminates the active process and confirms that it is no longer
+running before setting the terminal state. A true return from kill therefore
+means request acceptance, not guaranteed immediate process termination.
+Completed evaluations remain available. A failed run uses the corresponding
+stop/termination path with the failed state rather than continuing updates.
+
+Calls between domain cores use ``CalculiXCoreInterface``. ``CalculiXCore``
+coordinates its owned collections and Cubit queries; the optimization controller
+does not include other domain-core headers to obtain their stored data.
+
+See :doc:`../user/topology-settings`, :doc:`../user/topology-running`, and
+:doc:`../commands/topology` for the corresponding public behavior.
 
 Implementation entry points
 ---------------------------

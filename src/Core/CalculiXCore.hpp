@@ -299,8 +299,39 @@ public:
   bool reset_preserved_sets(int topology_id);
   bool add_preserved_sets(int topology_id, int set_type, const std::vector<int>& ids);
   bool remove_preserved_sets(int topology_id, int set_type, const std::vector<int>& ids);
+  /**
+   * @brief Query participating volume elements selected by an existing set.
+   * @param topology_id Case with a prepared topology material/analysis collection.
+   * @param set_type Preservation kind: 1=block, 2=nodeset, 3=sideset.
+   * @param set_id Existing positive set ID of that kind.
+   * @param element_ids Sorted unique global IDs; cleared on entry and empty on failure.
+   * @return True for a successful query, including an empty intersection; false on error.
+   * @note Nodesets use any-node intersection with expanded connectivity, including
+   * midside nodes. Sidesets select owners. Results are restricted to the analysis.
+   */
   bool get_topology_set_element_ids(int topology_id,int set_type,int set_id,std::vector<int>& element_ids);
+
+  /**
+   * @brief Collect automatic preservation rules from current analysis definitions.
+   * @param default_sets Automatic IDs keyed by kind: 1=block, 2=nodeset, 3=sideset.
+   * @param default_elements Direct global-element selections, separate from set rules.
+   * @return True after publishing both collections; false with both outputs empty.
+   * @note Outputs are cleared on entry. Constraints/contact definitions are model
+   * selections; only loads and BCs referenced by existing steps contribute.
+   * Direct selections can include elements outside a particular topology domain;
+   * the resolver applies that domain restriction. No case flags are modified here.
+   */
   bool collect_topology_default_sets(std::map<int, std::set<int>>& default_sets,std::set<int>& default_elements);
+
+  /**
+   * @brief Resolve automatic and case-specific preservation against prepared elements.
+   * @param topology_id Existing case with a prepared topology material collection.
+   * @param default_sets Automatic IDs keyed by kind: 1=block, 2=nodeset, 3=sideset.
+   * @param default_elements Direct automatic selections not removed by set exclusions.
+   * @return True when CoreTopology commits the flags; false on resolution failure.
+   * @note Uses the prepared analysis global IDs and delegates rule application
+   * through the owned topology core; collection and resolution remain separate.
+   */
   bool resolve_topology_preservation(int topology_id,const std::map<int, std::set<int>>& default_sets,const std::set<int>& default_elements);
   bool begin_topology_run(int topology_id);
   bool is_checking_jobs() const;

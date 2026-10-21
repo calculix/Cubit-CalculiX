@@ -1,6 +1,8 @@
 project(Cubit-CalculiX_core)
 
 set(CORE_SRC
+    ${CMAKE_CURRENT_LIST_DIR}/CoreObserver.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/CoreObserver.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CalculiXCore.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CalculiXCore.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CalculiXCoreInterface.cpp

@@ -6,6 +6,7 @@
 //#include "ExportManager.hpp"
 #include "MenuManager.hpp"
 #include "Observer.hpp"
+#include "CoreObserver.hpp"
 #include "OptionsPanel.hpp"
 #include "CubitMessage.hpp"
 //#include "CubitPluginManager.hpp"
@@ -35,6 +36,8 @@ CalculiXComp::CalculiXComp() :
 
 CalculiXComp::~CalculiXComp()
 {
+  cleanup_observers();
+
   if(myMenus)
     delete myMenus;
 
@@ -50,8 +53,6 @@ CalculiXComp::~CalculiXComp()
   //if(myExportManager)
   //  delete myExportManager;
 
-  if(mListener)
-    delete mListener;
 }
 
 void CalculiXComp::start_up(int withGUI)
@@ -93,6 +94,19 @@ void CalculiXComp::start_up(int withGUI)
     tracker_registered = true;
   }
   
+  // clear command line
+  Claro* gui;
+  gui = Claro::instance();
+  QList<QPlainTextEdit *> widgets = gui->findChildren<QPlainTextEdit *>();
+  foreach(QPlainTextEdit *w, widgets) {
+    if (w->objectName()=="mCommandWindow")
+    {
+      w->clear();
+    }
+    //QString name = w->objectName();
+    //PRINT_INFO("%s", name.toStdString().c_str());
+  }
+
   ccx_iface = new CalculiXCoreInterface();
   bool init_materiallibrary = ccx_iface->init_materiallibrary();
   
@@ -114,12 +128,12 @@ void CalculiXComp::start_up(int withGUI)
 
 void CalculiXComp::clean_up()
 {
+  cleanup_observers();
   //cleanup_menus();
   //cleanup_toolbars();
   cleanup_command_panels();
   cleanup_CCXDockWindowModelTree();
   //cleanup_exports();
-  cleanup_observers();
   save_settings();
   unload_options();
   
@@ -238,30 +252,28 @@ void CalculiXComp::cleanup_exports()
 
 void CalculiXComp::setup_observers(int withGUI)
 {
-  if(!mListener)
-  {
-    mListener = new Observer();
+  if (!withGUI || mListener)
+    return;
 
-    // Let Cubit know that this class will be observing events
-    mListener->register_observer();
+  mListener = new Observer();
+  mListener->fetch_comp(this);
 
-    // get a connection down to the observer
-    mListener->fetch_comp(this);
-  }
+  auto& observer = CalculiXCoreInterface::core_observer();
+  observer.command_start = [this] { mListener->notify_command_start(); };
+  observer.before_core_update = [this] { mListener->before_core_update(); };
+  observer.core_updated = [this] { mListener->on_core_updated(); };
+  observer.core_reset = [this] { reset(); };
 }
 
 void CalculiXComp::cleanup_observers()
 {
-  // If cubitcomp is still loaded, we need to unregister the observer.
   if (mListener)
   {
-    if (Mediator* mediator = Broker::instance())
-    {
-      ComponentInfo cubitcomp_info;
-      mediator->get_component_info("cubitcomp", cubitcomp_info);
-      if (cubitcomp_info.get_state() == "Loaded")
-        mListener->unregister_observer();
-    }
+    auto& observer = CalculiXCoreInterface::core_observer();
+    observer.command_start = {};
+    observer.before_core_update = {};
+    observer.core_updated = {};
+    observer.core_reset = {};
     delete mListener;
     mListener = NULL;
   }
@@ -331,7 +343,6 @@ void CalculiXComp::unload_options()
 
 void CalculiXComp::component_loaded(const char* name)
 {
-  
   if (!python_interface_initialized)
   {
     //std::string log = "Component Name\n";

@@ -1,27 +1,24 @@
 #include "GuiSendCmd.hpp"
-#include "CubitMessage.hpp"
-#include "CubitInterface.hpp"
 #include "Claro.hpp"
-
-GuiSendCmd::GuiSendCmd()
-{}
-
-GuiSendCmd::~GuiSendCmd()
-{}
+#include <QMetaObject>
 
 bool GuiSendCmd::gui_cmd(QString cmd)
-{    
-  CubitInterface::cmd(cmd.toStdString().c_str());
+{
+  if (cmd.trimmed().isEmpty())
+    return false;
 
-  Claro* gui;
-  gui = Claro::instance();
-  QList<QPlainTextEdit *> widgets = gui->findChildren<QPlainTextEdit *>();
-  foreach(QPlainTextEdit *w, widgets) {
-    if (w->objectName()=="mHistoryWindow")
-    {
-      w->appendPlainText(cmd);
-    }
-  }
+  Claro* gui = Claro::instance();
+  if (!gui)
+    return false;
 
-  return true;
+  auto* window = gui->findChild<QPlainTextEdit*>("mCommandWindow");
+  if (!window)
+    return false;
+
+  const bool submitted = QMetaObject::invokeMethod(window, "commandEntered", Qt::DirectConnection, Q_ARG(QString, cmd));
+
+  if (submitted)
+    QMetaObject::invokeMethod(window, "resetHistoryIndex",Qt::DirectConnection);
+
+  return submitted;
 }

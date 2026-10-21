@@ -8,6 +8,7 @@
 #include "CoreTopologyStructs.hpp"
 
 class MeshExportInterface;
+class CoreObserver;
 
 class CalculiXCoreInterface
 {
@@ -15,6 +16,7 @@ class CalculiXCoreInterface
 public:
   CalculiXCoreInterface();
   ~CalculiXCoreInterface();
+  static CoreObserver& core_observer();
 	
   bool cmd(std::string cmd); // executes a cubit command with appending to the history
   bool silent_cmd(std::string cmd); // executes a cubit command

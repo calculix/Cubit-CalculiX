@@ -10,8 +10,9 @@ stiffness; the physical CalculiX analysis is solved again for each iteration.
 
 The current density run loop supports compliance and displacement objectives.
 Mass and level-set optimization are not implemented. Supported volume elements
-are C3D4, C3D6, C3D8, C3D10, C3D15, and C3D20. C3D8R is excluded from the
-displacement workflow. Consult the model validation errors for further analysis
+are C3D4, C3D6, C3D8, C3D10, C3D15, and C3D20. The shared validator excludes
+C3D8R from both compliance and displacement runs. Consult the model validation
+errors for further analysis
 restrictions; support for an element alone does not make every analysis suitable.
 
 .. figure:: ../images/topology-workflow.svg
@@ -35,6 +36,14 @@ Here :math:`v` is the void stiffness ratio and :math:`p` is the density
 penalization (currently 3). Preserved elements have density and stiffness
 multiplier equal to 1. A low density represents low stiffness during the run;
 it does not delete the element.
+
+Configuration and execution
+---------------------------
+
+See :doc:`topology-settings` for defaults and parameter meanings, and
+:doc:`topology-running` for asynchronous execution, stopping, and rerunning.
+See :doc:`topology-preservation` for automatic preservation, set overrides,
+overlaps, and their effect on volume feasibility and element removal.
 
 Run a prepared model
 --------------------
@@ -67,8 +76,9 @@ Runnable example
 ----------------
 
 Download the :download:`complete displacement beam journal <../../examples/topology/simple_beam_displacement.jou>`.
-It resets the current model and writes analysis files into Cubit's working
-directory. It performs one optimization iteration as a workflow example.
+It resets the current model, prepares the analysis, and creates a displacement
+topology case with a maximum of 50 iterations. The run command is commented
+out. Follow :doc:`../tutorials/topology-beam` to run and inspect the case.
 The short command snippet above is not a standalone model.
 
 What CalculiX receives
@@ -80,6 +90,9 @@ displacement results and element stress/energy data. Displacement sensitivity
 evaluation contracts physical stress with adjoint mechanical strain at matching
 CalculiX integration points. The run preparation checks and configures required
 output requests through the existing command mechanisms.
+See :doc:`topology-solver` for supported analyses, automatic requests, and the
+results consumed by each evaluator. See :doc:`../developer/topology-export`
+for annotated input excerpts.
 
 For solver semantics, consult the CalculiX manual matching your solver version:
 ``*ELASTIC``, ``*SOLID SECTION``, ``*NODE PRINT``, and ``*EL PRINT``. The
@@ -92,7 +105,8 @@ reproducing or extending the checks.
 Implementation and verification
 -------------------------------
 
-See :doc:`../developer/topology` for the initial equations and implementation
-map, and :doc:`../tutorials/index` for the finite-difference journals.
-The detailed feature manual and GUI screenshots will be added in the next
-documentation pass.
+See :doc:`topology-results` for iteration browsing, threshold previews,
+playback, GIF export, wrapping, and element deletion.
+See :doc:`../developer/topology` for the implementation map,
+:doc:`../developer/topology-algorithms` for the mathematical derivations, and
+:doc:`../tutorials/index` for the finite-difference journals.

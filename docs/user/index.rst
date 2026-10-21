@@ -8,6 +8,12 @@ and interpretation of results. The initial chapter covers topology.
    :maxdepth: 1
 
    topology
+   topology-settings
+   topology-objectives
+   topology-running
+   topology-preservation
+   topology-results
+   topology-solver
 
 Planned coverage
 ----------------

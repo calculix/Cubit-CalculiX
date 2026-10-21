@@ -8,6 +8,10 @@ Developer guide
    ../source-map
    ../adding-a-feature
    topology
+   topology-algorithms
+   topology-preservation
+   topology-results
+   topology-export
    api
    ../README
 

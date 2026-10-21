@@ -1,5 +1,12 @@
 #include "CalculiXCoreInterface.hpp"
 #include "loadCalculiXCore.hpp"
+#include "CoreObserver.hpp"
+
+CoreObserver& CalculiXCoreInterface::core_observer()
+{
+  static CoreObserver observer;
+  return observer;
+}
 
 CalculiXCoreInterface::CalculiXCoreInterface()
 {}

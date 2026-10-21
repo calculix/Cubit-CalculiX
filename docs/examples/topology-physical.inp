@@ -1,0 +1,32 @@
+** INCOMPLETE EXCERPT - not a standalone runnable input deck.
+** Source: topo_1_simple_beam_displacement_iter_0002.inp
+** Selected blocks copied from an existing local beam export.
+** Nodes, connectivity, referenced sets, and other materials are omitted.
+** One element material and section; modulus already includes its factor.
+*MATERIAL, NAME=CCX_TOPO_1_E23
+*ELASTIC
+1.076225e+05, 3.000000e-01
+*ELSET, ELSET=CCX_TOPO_1_E23_SET
+23
+*SOLID SECTION, ELSET=CCX_TOPO_1_E23_SET, MATERIAL=CCX_TOPO_1_E23
+** Model constraint retained in both solves.
+*RIGID BODY, NSET=rb, REF NODE=11, ROT NODE=12
+** Physical beam load and assigned outputs.
+*STEP
+*STATIC,SOLVER=SPOOLES
+
+*CLOAD
+Nodeset_4,2,-1.000000e+04
+*BOUNDARY
+x0,1,1,0.000000e+00
+x0,2,2,0.000000e+00
+x0,3,3,0.000000e+00
+*NODE PRINT, NSET=rb, FREQUENCY=1, GLOBAL=YES
+U,RF
+*EL PRINT, ELSET=Block_1, FREQUENCY=1, GLOBAL=YES
+S,E,ME,ELSE
+*NODE FILE, FREQUENCY=1, GLOBAL=YES
+RF,U
+*EL FILE
+E,S
+*END STEP

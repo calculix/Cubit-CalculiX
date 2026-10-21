@@ -4,6 +4,9 @@
 #include "Component.hpp"
 #include "ComponentTracker.hpp"
 
+#include <QPlainTextEdit>
+#include <QString>
+
 class MenuManager;
 class ToolbarManager;
 class cmdPanelManager;

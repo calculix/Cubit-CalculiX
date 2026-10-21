@@ -2,13 +2,14 @@
 #include "CubitMessage.hpp"
 #include "CalculiXCoreInterface.hpp"
 #include "CalculiXComp.hpp"
+#include "CoreObserver.hpp"
 
 ObserverTimer::ObserverTimer(CalculiXComp *CalculiXComp)
 { 
   ccx_iface = new CalculiXCoreInterface();
   this->ccx_comp = CalculiXComp;    
   connect(this, &QTimer::timeout, this, &ObserverTimer::timeoutaction);
-  this->start(1000);
+  // Start only after the core observer has completed synchronization.
 }
 
 ObserverTimer::~ObserverTimer()
@@ -20,6 +21,10 @@ ObserverTimer::~ObserverTimer()
 
 void ObserverTimer::timeoutaction()
 {
+  if (ccx_iface->block_core_update() || ccx_iface->block_gui_update() ||
+      CalculiXCoreInterface::core_observer().is_updating())
+    return;
+
   //std::string log;
   //log =  "observer timer \n";
   //PRINT_INFO("%s", log.c_str());
