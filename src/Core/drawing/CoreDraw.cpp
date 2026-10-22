@@ -793,18 +793,26 @@ bool CoreDraw::draw_label(std::vector<double> coord, std::string color, double s
 bool CoreDraw::draw_load_force(int id, double size)
 {
   CalculiXDrawInterface ccx_draw_iface;
+  std::vector<std::vector<double>> draw_data = ccx_draw_iface.get_draw_data_for_load_force(id);
 
-    std::vector<std::vector<double>> draw_data;
-    draw_data = ccx_draw_iface.get_draw_data_for_load_force(id);
-    
-    for (size_t i = 0; i < draw_data.size(); i++)
+  for (size_t i = 0; i + 1 < draw_data.size(); i += 2)
+  {
+    if (draw_data[i][3] != 0.0 || draw_data[i][4] != 0.0 || draw_data[i][5] != 0.0)
     {
-        draw_arrow({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, {-draw_data[i][3],-draw_data[i][4],-draw_data[i][5]}, false, "green", size);
-        i+=1;
-        draw_arrow_flat({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, {-draw_data[i][3],-draw_data[i][4],-draw_data[i][5]}, false, "seagreen", size);
+      draw_arrow(
+          {draw_data[i][0], draw_data[i][1], draw_data[i][2]},
+          {-draw_data[i][3], -draw_data[i][4], -draw_data[i][5]},
+          false, "green", size);
     }
-
-    return true;
+    if (draw_data[i + 1][3] != 0.0 || draw_data[i + 1][4] != 0.0 || draw_data[i + 1][5] != 0.0)
+    {
+      draw_arrow_flat(
+          {draw_data[i + 1][0], draw_data[i + 1][1], draw_data[i + 1][2]},
+          {-draw_data[i + 1][3], -draw_data[i + 1][4], -draw_data[i + 1][5]},
+          false, "seagreen", size);
+    }
+  }
+  return true;
 }
 
 bool CoreDraw::draw_load_pressure(int id, double size)

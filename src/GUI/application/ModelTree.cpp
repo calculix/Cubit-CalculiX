@@ -285,7 +285,7 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   {
     if (LoadsForcesTreeItem->text(1).toStdString()=="")
     {
-      this->setWidgetInCmdPanelMarker("FEAForceCreate");
+      this->setWidgetInCmdPanelMarker("CCXLoadsForcesCreate");
     }
   }else if (LoadsPressuresTreeItem = dynamic_cast<LoadsPressuresTree*>(item))
   {
@@ -627,7 +627,7 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
       this->setWidgetInCmdPanelMarker("CCXPhysicalConstantsModify");
     } else if (LoadsForcesTreeItem = dynamic_cast<LoadsForcesTree*>(item->parent()))
     {
-      this->setWidgetInCmdPanelMarker("FEAForceModify");
+      this->setWidgetInCmdPanelMarker("CCXLoadsForcesModify");
     } else if (LoadsPressuresTreeItem = dynamic_cast<LoadsPressuresTree*>(item->parent()))
     {
       this->setWidgetInCmdPanelMarker("FEAPressureModify");

@@ -23,6 +23,10 @@ target_sources(calculix_comp PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsFilmModifyPanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsFilmTree.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsFilmTree.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsForcesCreatePanel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsForcesCreatePanel.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsForcesDeletePanel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsForcesDeletePanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsForcesModifyPanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsForcesModifyPanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsForcesTree.cpp

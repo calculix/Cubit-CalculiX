@@ -51,6 +51,8 @@
 #include "GUI/steps/DampingDeletePanel.hpp"
 #include "GUI/steps/PhysicalConstantsModifyPanel.hpp"
 #include "GUI/steps/PhysicalConstantsDeletePanel.hpp"
+#include "GUI/loads/LoadsForcesCreatePanel.hpp"
+#include "GUI/loads/LoadsForcesDeletePanel.hpp"
 #include "GUI/loads/LoadsForcesModifyPanel.hpp"
 #include "GUI/loads/LoadsPressuresModifyPanel.hpp"
 #include "GUI/loads/LoadsHeatfluxesModifyPanel.hpp"
@@ -291,8 +293,18 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
     return new PhysicalConstantsModifyPanel();
   if(name == "CCXPhysicalConstantsDelete")
     return new PhysicalConstantsDeletePanel();
+  if(name == "CCXLoadsForcesCreate")
+  {
+    return new LoadsForcesCreatePanel();
+  }
   if(name == "CCXLoadsForcesModify")
+  {
     return new LoadsForcesModifyPanel();
+  }
+  if(name == "CCXLoadsForcesDelete")
+  {
+    return new LoadsForcesDeletePanel();
+  }
   if(name == "CCXLoadsPressuresModify")
     return new LoadsPressuresModifyPanel();
   if(name == "CCXLoadsHeatfluxesModify")

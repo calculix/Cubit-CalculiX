@@ -17,7 +17,9 @@ public:
   std::vector<int> get_loadsradiation_ids(); // get all load radiation ids
   std::vector<int> get_loadssurfacetraction_ids(); // get all load surface traction ids
   std::vector<int> get_loadsbodyheatflux_ids(); // get all load bodyheatflux ids
-  bool modify_loadsforces(int force_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a force
+  bool delete_loadsforces(int force_id); // delete force load
+  bool create_loadsforces(std::vector<std::string> options, std::vector<double> options2); // adds a new force
+  bool modify_loadsforces(int force_id, std::vector<std::string> options, std::vector<double> options2, std::vector<int> options_marker); // modify a force
   bool modify_loadspressures(int pressure_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a pressure
   bool modify_loadsheatfluxes(int heatflux_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a heatflux
   bool create_loadsgravity(std::vector<std::string> options); // adds a new gravity load

@@ -87,7 +87,9 @@ void cmdPanelManager::clear()
     my_markers.push_back("CCXDampingDelete");
     my_markers.push_back("CCXPhysicalConstantsModify");
     my_markers.push_back("CCXPhysicalConstantsDelete");
+    my_markers.push_back("CCXLoadsForcesCreate");
     my_markers.push_back("CCXLoadsForcesModify");
+    my_markers.push_back("CCXLoadsForcesDelete");
     my_markers.push_back("CCXLoadsPressuresModify");
     my_markers.push_back("CCXLoadsHeatfluxesModify");
     my_markers.push_back("CCXLoadsGravityCreate");
@@ -449,9 +451,15 @@ void cmdPanelManager::initialize_from_code()
   model->setNodeMarker(node, "CCXLoadsForces");
   node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsForces"));
   root_node = model->getMarkedNode("CCXLoadsForces");
+  node = model->addNode("Create", root_node);
+  model->setNodeMarker(node, "CCXLoadsForcesCreate");
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsForcesCreate"));
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXLoadsForcesModify");
   node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsForcesModify"));
+  node = model->addNode("Delete", root_node);
+  model->setNodeMarker(node, "CCXLoadsForcesDelete");
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsForcesDelete"));
 
   //##############################
   // add LoadsPressures Nodes
@@ -896,7 +904,9 @@ void cmdPanelManager::associate_panels_with_nodes()
   my_markers.push_back("CCXDampingDelete");
   my_markers.push_back("CCXPhysicalConstantsModify");
   my_markers.push_back("CCXPhysicalConstantsDelete");
+  my_markers.push_back("CCXLoadsForcesCreate");
   my_markers.push_back("CCXLoadsForcesModify");
+  my_markers.push_back("CCXLoadsForcesDelete");
   my_markers.push_back("CCXLoadsPressuresModify");
   my_markers.push_back("CCXLoadsHeatfluxesModify");
   my_markers.push_back("CCXLoadsGravityCreate");

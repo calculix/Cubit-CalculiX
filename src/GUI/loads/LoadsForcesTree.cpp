@@ -148,7 +148,7 @@ void LoadsForcesTree::populateContextMenu(
 
   if (clickedItem == this)
   {
-    addPanelAction(menu, "Create Force", host, "FEAForceCreate");
+    addPanelAction(menu, "Create Force", host, "CCXLoadsForcesCreate");
     addCommandAction(menu, "Draw Forces", QString("ccx draw load_force_all"));
     return;
   }
@@ -164,9 +164,8 @@ void LoadsForcesTree::populateContextMenu(
     return;
   }
 
-  addPanelAction(menu, "Create Force", host, "FEAForceCreate");
-  addPanelAction(menu, "Modify Force", host, "FEAForceModify");
-  addPanelAction(menu, "CCX Modify Force", host, "CCXLoadsForcesModify");
-  addPanelAction(menu, "Delete Force", host, "FEAForceDelete");
+  addPanelAction(menu, "Create Force", host, "CCXLoadsForcesCreate");
+  addPanelAction(menu, "Modify Force", host, "CCXLoadsForcesModify");
+  addPanelAction(menu, "Delete Force", host, "CCXLoadsForcesDelete");
   addCommandAction(menu, "Draw Force", QString("ccx draw load force ") + QString::number(entityId));
 }

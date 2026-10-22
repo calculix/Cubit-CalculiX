@@ -200,7 +200,9 @@ public:
   bool delete_damping(bool delete_alpha, bool delete_beta); // deletes the values
   bool modify_physicalconstants(std::vector<std::string> options, std::vector<int> options_marker); // modify physical constants
   bool delete_physicalconstants(bool delete_absolute_zero, bool delete_stefan_boltzmann, bool delete_newton_gravity); // deletes the values
-  bool modify_loadsforces(int force_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a force
+  bool delete_loadsforces(int force_id); // delete force load
+  bool create_loadsforces(std::vector<std::string> options, std::vector<double> options2); // adds a new force
+  bool modify_loadsforces(int force_id, std::vector<std::string> options, std::vector<double> options2, std::vector<int> options_marker); // modify a force
   bool modify_loadspressures(int pressure_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a pressure
   bool modify_loadsheatfluxes(int heatflux_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a heatflux
   bool create_loadsgravity(std::vector<std::string> options); // adds a new gravity load

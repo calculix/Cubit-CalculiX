@@ -54,9 +54,19 @@ std::vector<int> CalculiXLoadsInterface::get_loadsbodyheatflux_ids()
   return ccx_core.get_loadsbodyheatflux_ids();
 }
 
-bool CalculiXLoadsInterface::modify_loadsforces(int force_id, std::vector<std::string> options, std::vector<int> options_marker)
+bool CalculiXLoadsInterface::delete_loadsforces(int force_id)
 {
-  return ccx_core.modify_loadsforces(force_id,options,options_marker);
+  return ccx_core.delete_loadsforces(force_id);
+}
+
+bool CalculiXLoadsInterface::create_loadsforces(std::vector<std::string> options, std::vector<double> options2)
+{
+  return ccx_core.create_loadsforces(options, options2);
+}
+
+bool CalculiXLoadsInterface::modify_loadsforces(int force_id, std::vector<std::string> options, std::vector<double> options2, std::vector<int> options_marker)
+{
+  return ccx_core.modify_loadsforces(force_id, options, options2, options_marker);
 }
 
 bool CalculiXLoadsInterface::modify_loadspressures(int pressure_id, std::vector<std::string> options, std::vector<int> options_marker)

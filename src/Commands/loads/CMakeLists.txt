@@ -17,6 +17,10 @@ target_sources(calculix_plugin PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxLoadsFilmDeleteCommand.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxLoadsFilmModifyCommand.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxLoadsFilmModifyCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxLoadsForcesCreateCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxLoadsForcesCreateCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxLoadsForcesDeleteCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxLoadsForcesDeleteCommand.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxLoadsForcesModifyCommand.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxLoadsForcesModifyCommand.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxLoadsGravityCreateCommand.cpp

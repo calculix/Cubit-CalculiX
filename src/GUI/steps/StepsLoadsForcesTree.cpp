@@ -187,10 +187,9 @@ void StepsLoadsForcesTree::populateContextMenu(
     return;
   }
 
-  addPanelAction(menu, "Create Force", host, "FEAForceCreate");
-  addPanelAction(menu, "Modify Force", host, "FEAForceModify");
-  addPanelAction(menu, "CCX Modify Force", host, "CCXLoadsForcesModify");
-  addPanelAction(menu, "Delete Force", host, "FEAForceDelete");
+  addPanelAction(menu, "Create Force", host, "CCXLoadsForcesCreate");
+  addPanelAction(menu, "Modify Force", host, "CCXLoadsForcesModify");
+  addPanelAction(menu, "Delete Force", host, "CCXLoadsForcesDelete");
   {
     QAction *action = menu.addAction("Steps Management");
     ModelTree *hostPtr = &host;
