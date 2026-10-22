@@ -1,5 +1,4 @@
 #include "GifAnimation.hpp"
-#include "CubitMessage.hpp"
 
 // gif.h contains definitions: include it in this translation unit only.
 #include "gif.h"
@@ -44,11 +43,14 @@ public:
 }
 
 bool GifAnimation::write(const QStringList& frame_paths,
-                         const QString& output_path, int fps)
+                         const QString& output_path, int fps, QString& error,
+                         const std::atomic_bool& cancelled, std::atomic_int& completed_frames)
 {
+  error.clear();
+  completed_frames.store(0);
   if (frame_paths.isEmpty() || fps < 1 || fps > 100)
   {
-    PRINT_ERROR("Invalid GIF frames or frame rate.\n");
+    error = "Invalid GIF frames or frame rate.";
     return false;
   }
 
@@ -61,18 +63,21 @@ bool GifAnimation::write(const QStringList& frame_paths,
 
   for (const QString& frame_path : frame_paths)
   {
+    if (cancelled.load())
+    {
+      return false;
+    }
     const QImage loaded(frame_path);
     if (loaded.isNull())
     {
-      PRINT_ERROR("Unable to load GIF frame %s.\n",
-                  frame_path.toUtf8().constData());
+      error = QString("Unable to load GIF frame: %1").arg(frame_path);
       return false;
     }
 
     const QImage rgba = loaded.convertToFormat(QImage::Format_RGBA8888);
     if (rgba.isNull())
     {
-      PRINT_ERROR("Unable to convert GIF frame to RGBA.\n");
+      error = "Unable to convert GIF frame to RGBA.";
       return false;
     }
 
@@ -84,14 +89,14 @@ bool GifAnimation::write(const QStringList& frame_paths,
       if (rgba.width() > 65535 || rgba.height() > 65535 ||
           pixel_count > std::numeric_limits<int>::max() / 4)
       {
-        PRINT_ERROR("GIF frame dimensions are too large.\n");
+        error = "GIF frame dimensions are too large.";
         return false;
       }
 
       FILE* file = open_gif_file(output_path);
       if (!file)
       {
-        PRINT_ERROR("Unable to open GIF output file.\n");
+        error = "Unable to open GIF output file.";
         return false;
       }
 
@@ -100,13 +105,13 @@ bool GifAnimation::write(const QStringList& frame_paths,
                         static_cast<uint32_t>(rgba.width()),
                         static_cast<uint32_t>(rgba.height()), delay))
       {
-        PRINT_ERROR("Unable to initialize GIF encoder.\n");
+        error = "Unable to initialize GIF encoder.";
         return false;
       }
     }
     else if (rgba.size() != frame_size)
     {
-      PRINT_ERROR("GIF frame dimensions changed.\n");
+      error = "GIF frame dimensions changed.";
       return false;
     }
 
@@ -115,14 +120,15 @@ bool GifAnimation::write(const QStringList& frame_paths,
                        static_cast<uint32_t>(rgba.height()), delay, 8, false) ||
         std::ferror(guard.writer.f) != 0)
     {
-      PRINT_ERROR("Unable to encode or write GIF frame.\n");
+      error = "Unable to encode or write GIF frame.";
       return false;
     }
+    completed_frames.fetch_add(1);
   }
 
   if (!GifEnd(&guard.writer))
   {
-    PRINT_ERROR("Unable to finish GIF output.\n");
+    error = "Unable to finish GIF output.";
     return false;
   }
   return true;

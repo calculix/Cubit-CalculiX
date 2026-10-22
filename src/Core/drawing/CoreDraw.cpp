@@ -13,7 +13,7 @@
 #include "Core/topology/CalculiXTopologyInterface.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
-#include "GifAnimation.hpp"
+#include "TopologyAnimation.hpp"
 #include "CubitColorTable.hpp"
 #include "CubitVector.hpp"
 #include "GCubitModelSet.hpp"
@@ -1692,7 +1692,7 @@ bool CoreDraw::draw_topology(int topology_id,int iteration_id,double threshold)
   {
     CalculiXApplicationInterface ccx_application_iface;
 
-    constexpr size_t batch_size = 200;
+    constexpr std::size_t maximum_command_length = 8000;
 
     for (const auto& group : groups)
     {
@@ -1718,31 +1718,42 @@ bool CoreDraw::draw_topology(int topology_id,int iteration_id,double threshold)
         ids.assign(edge_ids.begin(), edge_ids.end());
       }
 
-      for (size_t start = 0; start < ids.size(); start += batch_size)
+      std::sort(ids.begin(), ids.end());
+      ids.erase(std::unique(ids.begin(), ids.end()), ids.end());
+      std::size_t index = 0;
+      while (index < ids.size())
       {
-        std::ostringstream command;
-        command << "draw " << entity;
-
-        const size_t end = std::min(ids.size(), start + batch_size);
-
-        for (size_t index = start; index < end; ++index)
+        std::string command = "draw " + entity;
+        while (index < ids.size())
         {
-          command << " " << ids[index];
+          const std::size_t begin = index;
+          std::size_t end = begin;
+          while (end + 1 < ids.size() && ids[end] < (std::numeric_limits<int>::max)() && ids[end + 1] == ids[end] + 1)
+          {
+            ++end;
+          }
+          std::string range = " " + std::to_string(ids[begin]);
+          if (end > begin)
+          {
+            range += " to " + std::to_string(ids[end]);
+          }
+          if (command.size() + range.size() + 40 > maximum_command_length)
+          {
+            break;
+          }
+          command += range;
+          index = end + 1;
         }
-
-        command << " color " << color;
-
+        command += " color " + color;
         if (!first_draw)
         {
-          command << " add";
+          command += " add";
         }
-
-        if (!ccx_application_iface.silent_cmd(command.str()))
+        if (!ccx_application_iface.silent_cmd(command))
         {
           PRINT_ERROR("Failed to draw topology preview.\n");
           return false;
         }
-
         first_draw = false;
       }
     }
@@ -1781,248 +1792,36 @@ bool CoreDraw::draw_topology(int topology_id,int iteration_id,double threshold)
   return true;
 }
 
-bool CoreDraw::animate_topology(int topology_id, double threshold,int fps,std::string save_filepath, bool overwrite)
+bool CoreDraw::animate_topology(int topology_id, double threshold, int fps, std::string save_filepath, bool overwrite)
 {
-  CalculiXApplicationInterface ccx_application_iface;
-  CalculiXTopologyInterface ccx_topology_iface;
-
   if (!is_initialized)
   {
     PRINT_ERROR("Drawing core is not initialized.\n");
     return false;
   }
-
-  if (!std::isfinite(threshold) ||
-      threshold < 0.0 || threshold > 1.0 ||
-      fps < 1 || fps > 100)
+  if (!topology_animation)
   {
-    PRINT_ERROR("Animation requires threshold 0..1 and fps 1..100.\n");
-    return false;
+    topology_animation = std::make_unique<TopologyAnimation>();
   }
+  return topology_animation->start(topology_id, threshold, fps, QString::fromStdString(save_filepath), overwrite);
+}
 
-  const std::string run_state = ccx_topology_iface.get_topology_run_state(topology_id);
+bool CoreDraw::topology_animation_active() const
+{
+  return topology_animation && topology_animation->active();
+}
 
-  if (run_state.empty())
+void CoreDraw::cancel_topology_animation()
+{
+  if (topology_animation)
   {
-    return false;
+    topology_animation->cancel();
   }
+}
 
-  if (run_state == "running")
-  {
-    PRINT_ERROR("Cannot animate a running topology case.\n");
-    return false;
-  }
-
-  const auto rows = ccx_topology_iface.get_topology_iteration_data(topology_id);
-
-  std::set<int> iterations;
-
-  for (const auto& row : rows)
-  {
-    // Completed job with an evaluated objective and volume.
-    if (row.size() < 6 ||
-        row[2] != "2" ||
-        row[3].empty() ||
-        row[4].empty())
-    {
-      continue;
-    }
-
-    int iteration_id = -1;
-    std::istringstream stream(row[0]);
-
-    if (!(stream >> iteration_id))
-    {
-      PRINT_ERROR("Invalid topology iteration ID.\n");
-      return false;
-    }
-
-    stream >> std::ws;
-
-    if (!stream.eof() || iteration_id < 1)
-    {
-      PRINT_ERROR("Invalid topology iteration ID.\n");
-      return false;
-    }
-
-    iterations.insert(iteration_id);
-  }
-
-  if (iterations.empty())
-  {
-    PRINT_ERROR("Topology %d has no completed iterations to animate.\n", topology_id);
-    return false;
-  }
-
-  if (save_filepath.empty())
-  {
-    save_filepath = "topo_" + std::to_string(topology_id) + "_animation.gif";
-  }
-
-  const QString output = QDir::current().absoluteFilePath(QString::fromStdString(save_filepath));
-
-  const QFileInfo output_info(output);
-
-  if (output_info.suffix().compare("gif", Qt::CaseInsensitive) != 0)
-  {
-    PRINT_ERROR("Animation save path must end with .gif.\n");
-    return false;
-  }
-
-  if (!output_info.dir().exists())
-  {
-    PRINT_ERROR("Animation output directory does not exist.\n");
-    return false;
-  }
-
-  if (output_info.exists() && !overwrite)
-    {
-    PRINT_ERROR(
-        "Animation output file already exists; use overwrite.\n");
-    return false;
-    }
-
-  // One temporary directory for this export, not for solver jobs.
-  QTemporaryDir temporary;
-
-  if (!temporary.isValid())
-  {
-    PRINT_ERROR("Unable to create animation temporary directory.\n");
-    return false;
-  }
-
-  const QDir frame_directory(temporary.path());
-
-  // Frame paths are inserted into quoted Cubit commands.
-  if (temporary.path().contains('\'') ||
-      temporary.path().contains('\n') ||
-      temporary.path().contains('\r'))
-  {
-    PRINT_ERROR("Unsupported animation temporary path.\n");
-    return false;
-  }
-
-  QSize frame_size;
-  int frame_index = 0;
-  QStringList frame_paths;
-
-  for (const int iteration_id : iterations)
-  {
-    PRINT_INFO(
-        "Topology %d animation: capturing iteration %d.\n",
-        topology_id, iteration_id);
-
-    const std::string preview_command = QString(
-      "ccx result project topology %1 iteration %2 threshold %3 preview")
-      .arg(topology_id).arg(iteration_id)
-      .arg(QString::number(threshold, 'f', 6)).toStdString();
-    if (!ccx_application_iface.silent_cmd(preview_command))
-    {
-      return false;
-    }
-
-    const QString frame_path = frame_directory.filePath(
-        QString("frame_%1.png").arg(
-            frame_index, 6, 10, QChar('0')));
-
-    const std::string command = "hardcopy '" + QDir::fromNativeSeparators(frame_path).toStdString() + "' png";
-
-    if (!ccx_application_iface.silent_cmd(command))
-    {
-      PRINT_ERROR("Unable to capture topology animation frame.\n");
-      return false;
-    }
-
-    const QImage frame(frame_path);
-
-    if (frame.isNull())
-    {
-      PRINT_ERROR("Topology frame was not captured. An active graphics window is required.\n");
-      return false;
-    }
-
-    if (frame_index == 0)
-    {
-      frame_size = frame.size();
-    }
-    else if (frame.size() != frame_size)
-    {
-      PRINT_ERROR("Animation frame dimensions changed.\n");
-      return false;
-    }
-
-    frame_paths.push_back(frame_path);
-    ++frame_index;
-  }
-
-  const QString temporary_gif =
-      frame_directory.filePath("animation.gif");
-
-  PRINT_INFO("Topology %d animation: encoding %d frames.\n", topology_id, frame_index);
-
-  if (!GifAnimation::write(frame_paths, temporary_gif, fps))
-  {
-    return false;
-  }
-
-  if (QFileInfo(temporary_gif).size() == 0)
-  {
-    PRINT_ERROR("GIF encoder produced an empty file.\n");
-    return false;
-  }
-
-  // Publish only the successfully encoded GIF.
-  if (overwrite)
-  {
-    QFile source(temporary_gif);
-    QSaveFile destination(output);
-
-    // Preserve the previous GIF if writing the replacement fails.
-    destination.setDirectWriteFallback(false);
-
-    if (!source.open(QIODevice::ReadOnly) ||
-        !destination.open(QIODevice::WriteOnly))
-    {
-        PRINT_ERROR("Unable to open animation files for replacement.\n");
-        return false;
-    }
-
-    while (!source.atEnd())
-    {
-        const QByteArray chunk = source.read(1024 * 1024);
-
-        if (source.error() != QFileDevice::NoError ||
-            chunk.isEmpty())
-        {
-        PRINT_ERROR("Unable to read encoded animation.\n");
-        return false;
-        }
-
-        if (destination.write(chunk) != chunk.size())
-        {
-        PRINT_ERROR("Unable to write replacement animation.\n");
-        return false;
-        }
-    }
-
-    if (!destination.commit())
-    {
-        PRINT_ERROR("Unable to replace animation output.\n");
-        return false;
-    }
-  }
-  else
-  {
-        if (!QFile::copy(temporary_gif, output))
-        {
-            PRINT_ERROR("Unable to save topology animation.\n");
-            return false;
-        }
-    }
-
-  PRINT_INFO("Topology %d animation saved to %s.\n",topology_id, output.toUtf8().constData());
-
-  return true;
+void CoreDraw::shutdown_topology_animation()
+{
+  topology_animation.reset(); // Cancels and joins the file-only worker before unloading.
 }
 
 std::string CoreDraw::get_color(int color_id)

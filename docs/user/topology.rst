@@ -24,14 +24,17 @@ restrictions; support for an element alone does not make every analysis suitable
 Density and stiffness
 ---------------------
 
-The solid fraction :math:`\rho_e` determines the stiffness multiplier:
+The solid fraction :math:`\rho_e` requests a continuous SIMP stiffness multiplier:
 
 .. math::
    :label: simp-stiffness
 
    s_e(\rho_e) = v + (1-v)\rho_e^p,
-   \qquad K_e = s_e K_e^{\mathrm{base}}.
+   \qquad K_e = \widehat{s}_e K_e^{\mathrm{base}}.
 
+The applied factor :math:`\widehat{s}_e` can differ from :math:`s_e` when
+material grouping is needed to satisfy the configured cap. See the material
+grouping section in :doc:`topology-settings`.
 Here :math:`v` is the void stiffness ratio and :math:`p` is the density
 penalization (currently 3). Preserved elements have density and stiffness
 multiplier equal to 1. A low density represents low stiffness during the run;
@@ -84,8 +87,10 @@ The short command snippet above is not a standalone model.
 What CalculiX receives
 ----------------------
 
-The plugin exports element stiffness through element-specific isotropic elastic
-material definitions and solid sections. The physical solve supplies global
+New iterations export grouped isotropic elastic materials and solid sections.
+Elements sharing a base material and applied factor share a material; occupied
+groups receive assignments within their original section. Historical iterations
+without grouping metadata retain per-element export. The physical solve supplies global
 displacement results and element stress/energy data. Displacement sensitivity
 evaluation contracts physical stress with adjoint mechanical strain at matching
 CalculiX integration points. The run preparation checks and configures required

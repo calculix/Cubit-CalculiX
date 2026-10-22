@@ -1,0 +1,564 @@
+--- /dev/null
++++ b/src/Utility/ResultReadBuffer.hpp
+@@ -0,0 +1,111 @@
++#ifndef RESULTREADBUFFER_HPP
++#define RESULTREADBUFFER_HPP
++#include <cstddef>
++#include <cstring>
++#include <fstream>
++#include <string>
++#include <string_view>
++#include <vector>
++
++namespace ResultsReaderPipeline
++{
++enum class LineStatus { Line, End, IoError, TooLong };
++
++// Returned views remain valid until next() is called again. Worker batches
++// must own their text; append_raw_record() copies each view into the batch.
++class BufferedInput
++{
++public:
++  explicit BufferedInput(std::ifstream& file, std::size_t maximum_line_bytes) : file_(file), buffer_(1024 * 1024), maximum_line_bytes_(maximum_line_bytes)
++  {
++  }
++
++  std::streamoff consumed_bytes() const
++  {
++    return consumed_bytes_;
++  }
++
++  LineStatus next(std::string_view& line)
++  {
++    line = {};
++    spill_.clear();
++    while (true)
++    {
++      if (begin_ == end_)
++      {
++        const auto status = refill();
++        if (status == LineStatus::IoError)
++        {
++          return status;
++        }
++        if (status == LineStatus::End)
++        {
++          if (spill_.empty())
++          {
++            return LineStatus::End;
++          }
++          line = spill_;
++          return LineStatus::Line;
++        }
++      }
++      const char* first = buffer_.data() + begin_;
++      const std::size_t available = end_ - begin_;
++      const auto newline = static_cast<const char*>(std::memchr(first, '\n', available));
++      const std::size_t length = newline == nullptr ? available : static_cast<std::size_t>(newline - first);
++      if (length > maximum_line_bytes_ - spill_.size())
++      {
++        return LineStatus::TooLong;
++      }
++      if (newline != nullptr)
++      {
++        if (spill_.empty())
++        {
++          line = std::string_view(first, length);
++        }
++        else
++        {
++          spill_.append(first, length);
++          line = spill_;
++        }
++        begin_ += length + 1;
++        consumed_bytes_ += static_cast<std::streamoff>(length + 1);
++        return LineStatus::Line;
++      }
++      spill_.append(first, length);
++      begin_ += length;
++      consumed_bytes_ += static_cast<std::streamoff>(length);
++    }
++  }
++
++private:
++  LineStatus refill()
++  {
++    begin_ = 0;
++    end_ = 0;
++    if (file_.bad() || (file_.fail() && !file_.eof()))
++    {
++      return LineStatus::IoError;
++    }
++    if (file_.eof())
++    {
++      return LineStatus::End;
++    }
++    file_.read(buffer_.data(), static_cast<std::streamsize>(buffer_.size()));
++    if (file_.bad() || (file_.fail() && !file_.eof()))
++    {
++      return LineStatus::IoError;
++    }
++    end_ = static_cast<std::size_t>(file_.gcount());
++    return end_ == 0 ? LineStatus::End : LineStatus::Line;
++  }
++
++  std::ifstream& file_;
++  std::vector<char> buffer_;
++  std::string spill_;
++  std::size_t begin_ = 0;
++  std::size_t end_ = 0;
++  std::size_t maximum_line_bytes_;
++  std::streamoff consumed_bytes_ = 0;
++};
++}
++#endif // RESULTREADBUFFER_HPP
+--- a/src/Utility/ResultsReaderPipeline.hpp
++++ b/src/Utility/ResultsReaderPipeline.hpp
+@@ -21,6 +21,7 @@
+ #include <limits>
+ #include <memory>
+ #include <string>
++#include <string_view>
+ #include <thread>
+ #include <utility>
+ #include <vector>
+@@ -113,6 +114,21 @@
+   return !CubitInterface::app_util().get()->interrupt();
+ }
+ 
++// Exclude prefetched bytes that the scanner has not consumed yet.
++inline bool poll(std::streamoff position, std::streamoff size, ProgressTool* progressbar, std::chrono::steady_clock::time_point& previous)
++{
++  const auto now = std::chrono::steady_clock::now();
++  if (now - previous < std::chrono::milliseconds(100))
++  {
++    return true;
++  }
++  previous = now;
++  const double fraction = size > 0 ? std::min(0.99, static_cast<double>(position) / static_cast<double>(size)) : 0.0;
++  progressbar->percent(fraction);
++  progressbar->check_interrupt();
++  return !CubitInterface::app_util().get()->interrupt();
++}
++
+ inline bool interrupted(ProgressTool* progressbar)
+ {
+   progressbar->check_interrupt();
+@@ -250,7 +266,7 @@
+ }
+ // Only the calling thread assembles batches; stored offsets survive string growth.
+ template <typename Batch, typename State>
+-void append_raw_record(Batch& batch, const State& state, const std::string& raw)
++void append_raw_record(Batch& batch, const State& state, std::string_view raw)
+ {
+   if (batch.records.empty())
+   {
+@@ -260,7 +276,7 @@
+     batch.components = state.components;
+   }
+   batch.records.push_back({batch.text.size(), raw.size(), state.line_number});
+-  batch.text.append(raw);
++  batch.text.append(raw.data(), raw.size());
+ }
+ 
+ template <typename Task, typename Next, typename Parse, typename Append, typename Poll>
+--- a/src/Core/results/frd/CoreResultsFrd.hpp
++++ b/src/Core/results/frd/CoreResultsFrd.hpp
+@@ -7,8 +7,14 @@
+ #include "AppUtil.hpp"
+ #include <vector>
+ #include <string>
++#include <string_view>
+ #include <thread>
+ #include <chrono>
++namespace ResultsReaderPipeline
++{
++class BufferedInput;
++}
++
+ class CoreResultsFrd
+ {
+ 
+@@ -138,7 +144,10 @@
+   ProgressTool *progressbar = nullptr; // progressbar
+ 
+ private:
+-  bool read_next_raw_batch(std::ifstream& file, FrdReadState& state, FrdRawReadBatch& batch, bool& finished);
++  bool read_raw_node(std::string_view line, std::size_t source_line);
++  bool read_raw_element_header(std::string_view line, std::size_t source_line);
++  bool read_raw_connectivity(std::string_view line, std::size_t source_line);
++  bool read_next_raw_batch(ResultsReaderPipeline::BufferedInput& input, FrdReadState& state, FrdRawReadBatch& batch, bool& finished);
+   static FrdParsedBatch parse_raw_batch(const FrdRawReadBatch& batch, const std::atomic<bool>& cancelled);
+   bool read_next_boost_batch(std::ifstream& file, FrdReadState& state, FrdReadBatch& batch, bool& finished);
+   static FrdParsedBatch parse_boost_batch(const FrdReadBatch& batch, const std::atomic<bool>& cancelled);
+--- a/src/Core/results/frd/CoreResultsFrd.cpp
++++ b/src/Core/results/frd/CoreResultsFrd.cpp
+@@ -13,6 +13,9 @@
+ 
+ #include "ThreadPool.hpp"
+ #include "ResultsReaderPipeline.hpp"
++#include "ResultReadBuffer.hpp"
++#include <string_view>
++#include <utility>
+ #include "ResultReadNumbers.hpp"
+ #include <functional>
+ 
+@@ -862,6 +865,7 @@
+     return false;
+   }
+ 
++  ResultsReaderPipeline::BufferedInput input(file, ResultsReaderPipeline::max_line_bytes);
+   clear();
+   progressbar->start(0, 100, "Reading Results FRD");
+   ResultReadTimings::Phases phases;
+@@ -869,7 +873,7 @@
+       static_cast<std::size_t>(ccx_uo.mConverterThreads), "FRD", phases,
+       [&](FrdRawReadBatch& batch, bool& finished)
+       {
+-        return read_next_raw_batch(file, state, batch, finished);
++        return read_next_raw_batch(input, state, batch, finished);
+       },
+       [](const FrdRawReadBatch& batch, const std::atomic<bool>& cancelled)
+       {
+@@ -881,7 +885,7 @@
+       },
+       [&]()
+       {
+-        return ResultsReaderPipeline::poll(file, state.file_size, progressbar, state.progress_time);
++        return ResultsReaderPipeline::poll(input.consumed_bytes(), state.file_size, progressbar, state.progress_time);
+       });
+ 
+   if (success)
+@@ -929,7 +933,7 @@
+   return success;
+ }
+ 
+-bool CoreResultsFrd::read_next_raw_batch(std::ifstream& file, FrdReadState& state, FrdRawReadBatch& batch, bool& finished)
++bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& input, FrdReadState& state, FrdRawReadBatch& batch, bool& finished)
+ {
+   finished = false;
+   if (state.finished)
+@@ -939,23 +943,29 @@
+   }
+ 
+   std::size_t batch_bytes = 0;
+-  std::string raw;
++  std::string_view raw;
++  std::streamoff next_poll = input.consumed_bytes();
+   while (true)
+   {
+-    if (!ResultsReaderPipeline::poll(file, state.file_size, progressbar, state.progress_time))
+-    {
+-      return false;
++    if (input.consumed_bytes() >= next_poll)
++    {
++      if (!ResultsReaderPipeline::poll(input.consumed_bytes(), state.file_size, progressbar, state.progress_time))
++      {
++        return false;
++      }
++      next_poll = input.consumed_bytes() + 256 * 1024;
+     }
+     if (state.has_pending_line)
+     {
+-      raw = std::move(state.pending_line);
++      raw = state.pending_line;
+       state.has_pending_line = false;
+     }
+     else
+     {
+-      if (!ResultsReaderPipeline::read_line(file, raw))
+-      {
+-        if (!file.eof())
++      const auto line_status = input.next(raw);
++      if (line_status != ResultsReaderPipeline::LineStatus::Line)
++      {
++        if (line_status != ResultsReaderPipeline::LineStatus::End)
+         {
+           PRINT_ERROR("Cannot read FRD results: I/O error or line exceeds 64 KiB.\n");
+           return false;
+@@ -989,7 +999,7 @@
+     {
+       if (!result_row || batch.records.size() >= ResultsReaderPipeline::max_batch_lines || batch_bytes + row_bytes > ResultsReaderPipeline::max_batch_bytes)
+       {
+-        state.pending_line = std::move(raw);
++        state.pending_line.assign(raw.data(), raw.size());
+         state.has_pending_line = true;
+         return true;
+       }
+@@ -1007,8 +1017,36 @@
+       continue;
+     }
+ 
++    // Common mesh records bypass string rewriting and stream conversions.
++    // Transitions and uncommon records retain the existing state machine.
++    if (current_read_mode == 1 && ResultReadNumbers::frd_record(raw))
++    {
++      if (!read_raw_node(raw, state.line_number))
++      {
++        return false;
++      }
++      continue;
++    }
++    if (current_read_mode == 2 && raw.substr(0, 3) == " -1")
++    {
++      if (!read_raw_element_header(raw, state.line_number))
++      {
++        return false;
++      }
++      continue;
++    }
++    const auto trimmed = ResultReadNumbers::trim(raw);
++    if (current_read_mode == 2 && trimmed.size() > 2 && trimmed.substr(0, 2) == "-2" && ResultReadNumbers::whitespace(trimmed[2]))
++    {
++      if (!read_raw_connectivity(raw, state.line_number))
++      {
++        return false;
++      }
++      continue;
++    }
++
+     // Headers and special outputs retain the established state-machine logic.
+-    auto fields = split_line(raw);
++    auto fields = split_line(std::string(raw));
+     if (fields.empty() || fields.size() > ResultsReaderPipeline::max_fields)
+     {
+       PRINT_ERROR("Invalid FRD record at line %zu.\n", state.line_number);
+@@ -1048,7 +1086,7 @@
+     }
+     else if (current_read_mode == 2)
+     {
+-      const auto element_fields = split_element_line(raw);
++      const auto element_fields = split_element_line(std::string(raw));
+       if (element_fields.empty())
+       {
+         return false;
+@@ -1115,6 +1153,94 @@
+   }
+ }
+ 
++
++bool CoreResultsFrd::read_raw_node(std::string_view line, std::size_t source_line)
++{
++  std::array<std::string_view, ResultReadNumbers::max_fields> fields;
++  std::size_t count = 0;
++  int identifier = 0;
++  std::vector<double> coordinates(3);
++  if (!ResultReadNumbers::fields(line, fields, count) || count < 5 || fields[0] != "-1" ||
++      !ResultReadNumbers::integer(fields[1], identifier) ||
++      !ResultReadNumbers::real(fields[2], coordinates[0]) ||
++      !ResultReadNumbers::real(fields[3], coordinates[1]) ||
++      !ResultReadNumbers::real(fields[4], coordinates[2]) ||
++      !ResultsReaderPipeline::ids_fit(nodes.size(), 1) ||
++      !ResultsReaderPipeline::ids_fit(nodes_coords.size(), 1))
++  {
++    PRINT_ERROR("Invalid FRD node or node index overflow at line %zu.\n", source_line);
++    return false;
++  }
++  const int coordinate_index = static_cast<int>(nodes_coords.size());
++  nodes_coords.push_back(std::move(coordinates));
++  nodes.push_back({identifier, coordinate_index});
++  return true;
++}
++
++bool CoreResultsFrd::read_raw_element_header(std::string_view line, std::size_t source_line)
++{
++  int identifier = 0;
++  int type = 0;
++  int group = 0;
++  int material = 0;
++  if (line.size() < 24 ||
++      !ResultReadNumbers::integer(line.substr(3, 10), identifier) ||
++      !ResultReadNumbers::integer(line.substr(13, 5), type) ||
++      !ResultReadNumbers::integer(line.substr(18, 5), group) ||
++      !ResultReadNumbers::integer(line.substr(23), material) ||
++      !ResultsReaderPipeline::ids_fit(elements.size(), 1))
++  {
++    PRINT_ERROR("Invalid FRD element header or element index overflow at line %zu.\n", source_line);
++    return false;
++  }
++  elements.push_back({identifier, type, -1, material});
++  return true;
++}
++
++bool CoreResultsFrd::read_raw_connectivity(std::string_view line, std::size_t source_line)
++{
++  std::array<std::string_view, ResultReadNumbers::max_fields> fields;
++  std::size_t count = 0;
++  if (elements.empty() || !ResultReadNumbers::fields(line, fields, count) || count < 2 || fields[0] != "-2")
++  {
++    PRINT_ERROR("Invalid FRD connectivity at line %zu.\n", source_line);
++    return false;
++  }
++  std::vector<int> connectivity;
++  connectivity.reserve(count - 1);
++  for (std::size_t i = 1; i < count; ++i)
++  {
++    int identifier = 0;
++    if (!ResultReadNumbers::integer(fields[i], identifier))
++    {
++      PRINT_ERROR("Invalid FRD connectivity integer at line %zu.\n", source_line);
++      return false;
++    }
++    connectivity.push_back(identifier);
++  }
++  auto& element = elements.back();
++  if (element[2] == -1)
++  {
++    if (!ResultsReaderPipeline::ids_fit(elements_connectivity.size(), 1))
++    {
++      PRINT_ERROR("FRD connectivity index overflow at line %zu.\n", source_line);
++      return false;
++    }
++    element[2] = static_cast<int>(elements_connectivity.size());
++    elements_connectivity.push_back(std::move(connectivity));
++  }
++  else
++  {
++    if (element[2] < 0 || static_cast<std::size_t>(element[2]) >= elements_connectivity.size())
++    {
++      PRINT_ERROR("Invalid FRD connectivity index at line %zu.\n", source_line);
++      return false;
++    }
++    auto& stored = elements_connectivity[static_cast<std::size_t>(element[2])];
++    stored.insert(stored.end(), connectivity.begin(), connectivity.end());
++  }
++  return true;
++}
+ 
+ FrdParsedBatch CoreResultsFrd::parse_raw_batch(const FrdRawReadBatch& batch, const std::atomic<bool>& cancelled)
+ {
+--- a/src/Core/results/dat/CoreResultsDat.hpp
++++ b/src/Core/results/dat/CoreResultsDat.hpp
+@@ -9,6 +9,11 @@
+ #include <fstream>
+ #include "ProgressTool.hpp"
+ #include "AppUtil.hpp"
++namespace ResultsReaderPipeline
++{
++class BufferedInput;
++}
++
+ class CoreResultsDat
+ {
+ 
+@@ -162,7 +167,7 @@
+   ProgressTool *progressbar = nullptr; // progressbar
+ 
+ private:
+-  bool read_next_raw_batch(std::ifstream& file, DatReadState& state, DatRawReadBatch& batch, bool& finished);
++  bool read_next_raw_batch(ResultsReaderPipeline::BufferedInput& input, DatReadState& state, DatRawReadBatch& batch, bool& finished);
+   static DatParsedBatch parse_raw_batch(const DatRawReadBatch& batch, const std::atomic<bool>& cancelled);
+   bool read_next_boost_batch(std::ifstream& file, DatReadState& state, DatReadBatch& batch, bool& finished);
+   static DatParsedBatch parse_boost_batch(const DatReadBatch& batch, const std::atomic<bool>& cancelled);
+--- a/src/Core/results/dat/CoreResultsDat.cpp
++++ b/src/Core/results/dat/CoreResultsDat.cpp
+@@ -13,6 +13,9 @@
+ 
+ #include "ThreadPool.hpp"
+ #include "ResultsReaderPipeline.hpp"
++#include "ResultReadBuffer.hpp"
++#include <string_view>
++#include <utility>
+ #include "ResultReadNumbers.hpp"
+ #include <functional>
+ 
+@@ -757,6 +760,7 @@
+     return false;
+   }
+ 
++  ResultsReaderPipeline::BufferedInput input(file, ResultsReaderPipeline::max_line_bytes);
+   clear();
+   progressbar->start(0, 100, "Reading Results DAT");
+   ResultReadTimings::Phases phases;
+@@ -764,7 +768,7 @@
+       static_cast<std::size_t>(ccx_uo.mConverterThreads), "DAT", phases,
+       [&](DatRawReadBatch& batch, bool& finished)
+       {
+-        return read_next_raw_batch(file, state, batch, finished);
++        return read_next_raw_batch(input, state, batch, finished);
+       },
+       [](const DatRawReadBatch& batch, const std::atomic<bool>& cancelled)
+       {
+@@ -776,7 +780,7 @@
+       },
+       [&]()
+       {
+-        return ResultsReaderPipeline::poll(file, state.file_size, progressbar, state.progress_time);
++        return ResultsReaderPipeline::poll(input.consumed_bytes(), state.file_size, progressbar, state.progress_time);
+       });
+ 
+   if (success)
+@@ -822,7 +826,7 @@
+   return success;
+ }
+ 
+-bool CoreResultsDat::read_next_raw_batch(std::ifstream& file, DatReadState& state, DatRawReadBatch& batch, bool& finished)
++bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& input, DatReadState& state, DatRawReadBatch& batch, bool& finished)
+ {
+   finished = false;
+   if (state.finished)
+@@ -832,23 +836,29 @@
+   }
+ 
+   std::size_t batch_bytes = 0;
+-  std::string raw;
++  std::string_view raw;
++  std::streamoff next_poll = input.consumed_bytes();
+   while (true)
+   {
+-    if (!ResultsReaderPipeline::poll(file, state.file_size, progressbar, state.progress_time))
+-    {
+-      return false;
++    if (input.consumed_bytes() >= next_poll)
++    {
++      if (!ResultsReaderPipeline::poll(input.consumed_bytes(), state.file_size, progressbar, state.progress_time))
++      {
++        return false;
++      }
++      next_poll = input.consumed_bytes() + 256 * 1024;
+     }
+     if (state.has_pending_line)
+     {
+-      raw = std::move(state.pending_line);
++      raw = state.pending_line;
+       state.has_pending_line = false;
+     }
+     else
+     {
+-      if (!ResultsReaderPipeline::read_line(file, raw))
+-      {
+-        if (!file.eof())
++      const auto line_status = input.next(raw);
++      if (line_status != ResultsReaderPipeline::LineStatus::Line)
++      {
++        if (line_status != ResultsReaderPipeline::LineStatus::End)
+         {
+           PRINT_ERROR("Cannot read DAT results: I/O error or line exceeds 64 KiB.\n");
+           return false;
+@@ -870,7 +880,7 @@
+       PRINT_ERROR("DAT line %zu exceeds the supported line size.\n", state.line_number);
+       return false;
+     }
+-    if (is_whitespace(raw))
++    if (ResultReadNumbers::trim(raw).empty())
+     {
+       continue;
+     }
+@@ -881,7 +891,7 @@
+     {
+       if (!result_row || batch.records.size() >= ResultsReaderPipeline::max_batch_lines || batch_bytes + row_bytes > ResultsReaderPipeline::max_batch_bytes)
+       {
+-        state.pending_line = std::move(raw);
++        state.pending_line.assign(raw.data(), raw.size());
+         state.has_pending_line = true;
+         return true;
+       }
+@@ -901,7 +911,7 @@
+     }
+ 
+     // Headers and special outputs retain the established state-machine logic.
+-    auto fields = split_line(raw);
++    auto fields = split_line(std::string(raw));
+     if (fields.empty() || fields.size() > ResultsReaderPipeline::max_fields)
+     {
+       PRINT_ERROR("Invalid DAT record at line %zu.\n", state.line_number);

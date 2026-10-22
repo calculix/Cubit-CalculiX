@@ -3,6 +3,9 @@
 
 #include <vector>
 #include <string>
+#include <memory>
+
+class TopologyAnimation;
 // why it's not in the gui section, because we control it over the commands
 // class for drawing of loads and bcs
 
@@ -74,6 +77,10 @@ public:
   bool draw_topology(int topology_id,int iteration_id = -1,double threshold = 0.5); // draw topology iteration
   bool animate_topology(int topology_id,double threshold = 0.5,int fps = 5,std::string save_filepath = "", bool overwrite = false);
 
+  bool topology_animation_active() const;
+  void cancel_topology_animation();
+  void shutdown_topology_animation();
+
   std::string get_color(int color_id); // gets color based on the color id
 
   bool graphics_point(const std::vector<double>& coord, const std::string& color);
@@ -83,6 +90,8 @@ public:
   bool graphics_flush();
   bool graphics_clear();
 
+private:
+  std::unique_ptr<TopologyAnimation> topology_animation;
 };
 
 #endif // COREDRAW_HPP

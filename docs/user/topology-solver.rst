@@ -122,10 +122,15 @@ increments or conflicting output settings.
 Exported stiffness and solver jobs
 ----------------------------------
 
-For each element, export scales Young's modulus by the iteration stiffness
-factor and retains Poisson ratio. It generates an elastic material, a
-single-element set, and a solid-section assignment. These generated input
-definitions do not create one material item per element in the GUI tree.
+New iterations share elastic materials between elements with the same base
+material and applied stiffness factor. When necessary, logarithmic grouping
+limits generated materials to the configured cap. Young's modulus is scaled
+by the applied factor, while Poisson ratio is retained.
+
+Each occupied group within an original section receives an element set and
+solid-section assignment. Historical iterations without grouping metadata
+retain legacy per-element export. These generated definitions do not create
+one material item per element in the GUI tree.
 
 Each evaluated design owns a physical job. A nonzero displacement objective
 also needs an adjoint job with the same iteration stiffnesses and an

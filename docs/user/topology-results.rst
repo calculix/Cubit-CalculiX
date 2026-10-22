@@ -108,6 +108,19 @@ require **Overwrite existing GIF**. The exported GIF loops, whereas panel
 playback stops at the final iteration. Export previews each iteration and
 can leave the graphics view showing the final captured design.
 
+Export starts asynchronously. Frame capture stays on the GUI thread and yields
+between frames; image encoding, publishing, and temporary-file cleanup run on a
+worker. A complex frame can still briefly pause the UI. The final saved-file
+message appears after cleanup, rather than before deleting temporary PNGs.
+
+Use **Cancel GIF export** to stop between frames. Cancellation during encoding
+can wait for the current frame; if publication already completed, the output
+remains. While export is active, the Results panel disables competing preview,
+playback, navigation, threshold, deletion, and wrapping actions. Avoid changing
+the model or graphics view through other commands during capture. Model reset
+or load requests cancellation. Only one GIF export can be active, and starting
+a topology solve is rejected until export ends.
+
 Wrapping an iteration
 ---------------------
 

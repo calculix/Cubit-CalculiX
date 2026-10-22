@@ -9,18 +9,29 @@ for the implementation map, :doc:`api` for contracts, and
 Notation and assumptions
 ------------------------
 
-An element has density :math:`\rho_e`, physical volume :math:`V_e`, and
-stiffness factor :math:`s_e`. The stored design supplies the penalization
-:math:`p`, void stiffness ratio :math:`v`, and minimum density
-:math:`\rho_{\min}`. The analysis assumes fixed loads, homogeneous prescribed
-displacements, and symmetric linear-elastic stiffness:
+An element has density :math:`\rho_e` and physical volume :math:`V_e`.
+The stored design supplies the penalization :math:`p`, void stiffness ratio
+:math:`v`, and minimum density :math:`\rho_{\min}`. Density requests the
+continuous SIMP factor
 
 .. math::
 
-   K(\rho)u=f,\qquad K_e=s_eK_e^{\mathrm{base}},\qquad
-   s_e=v+(1-v)\rho_e^p.
+   s_e(\rho_e)=v+(1-v)\rho_e^p.
 
-Thus :math:`s'_e=(1-v)p\rho_e^{p-1}`. Preserved densities and stiffness factors
+Material grouping produces the applied factor :math:`\widehat{s}_e`.
+With fixed loads, homogeneous prescribed displacements, and symmetric
+linear-elastic stiffness, the solver uses
+
+.. math::
+
+   K(\widehat{s})u=f,\qquad K_e=\widehat{s}_eK_e^{\mathrm{base}}.
+
+Exact sharing leaves the requested factors unchanged. Logarithmic grouping can
+change them to satisfy the material cap. The formulas below distinguish
+stiffness-factor derivatives from the density surrogate used for such solves;
+see :doc:`topology-export` for grouping and export rounding.
+
+The continuous SIMP derivative is :math:`s'_e=(1-v)p\rho_e^{p-1}`. Preserved densities and stiffness factors
 are exactly one. Their stored sensitivities are zero because they are fixed
 variables. These assumptions are required for the derivatives below.
 
@@ -52,9 +63,16 @@ For fixed :math:`f`, differentiating equilibrium gives
    C=f^Tu=u^TKu=2\sum_e U_e,\qquad
    dC=-u^T(dK)u,\\
    U_e=\tfrac12u_e^TK_eu_e,\qquad
-   \frac{\partial C}{\partial s_e}=-\frac{2U_e}{s_e},\qquad
-   g_e=\frac{\partial C}{\partial\rho_e}
-   =-\frac{2U_e}{s_e}(1-v)p\rho_e^{p-1}.
+   \frac{\partial C}{\partial\widehat{s}_e}
+   =-\frac{2U_e}{\widehat{s}_e},\qquad
+   g_{C,e}^{\mathrm{sur}}
+   =-\frac{2U_e}{\widehat{s}_e}(1-v)p\rho_e^{p-1}.
+
+For the ideal continuous model with :math:`\widehat{s}_e=s_e(\rho_e)`, the
+chain rule gives an exact density derivative. With quantized material grouping,
+the implementation instead uses the continuous SIMP derivative with the
+applied-factor derivative as a surrogate. It does not differentiate bin
+assignments, bin endpoints, or the grouping operation.
 
 ``evaluate_compliance`` uses element internal energies from the physical solve.
 It validates complete element coverage and consistency with the stored design
@@ -82,13 +100,21 @@ The implementation contracts physical stress with adjoint mechanical strain:
    I_e=\int_{\Omega_e}\sigma^{\mathrm{physical}}:
    \varepsilon^{\mathrm{adjoint}}\,dV
    =\lambda_e^TK_eu_e,\\
-   \frac{\partial J}{\partial s_e}=-I_e/s_e,\qquad
-   g_e=-\frac{I_e}{s_e}(1-v)p\rho_e^{p-1}.
+   \frac{\partial J}{\partial\widehat{s}_e}=-I_e/\widehat{s}_e,\qquad
+   g_{J,e}^{\mathrm{sur}}
+   =-\frac{I_e}{\widehat{s}_e}(1-v)p\rho_e^{p-1}.
+
+As for compliance, this is an exact density branch derivative of the ideal
+continuous SIMP model when applied and requested factors coincide. With
+quantized grouping it is a surrogate, not an exact derivative through grouping.
+The stored raw sensitivities below mean these values before filtering; raw
+does not imply exact differentiation of a quantized solve.
 
 There is no factor of one half: this is a bilinear contraction of two different
 solutions, not the strain energy of one solution. Physical stress already
-contains the current stiffness scaling. Multiplying by another :math:`s_e`
-would count that scaling twice; division by :math:`s_e` converts the contraction
+contains the current applied stiffness scaling. Multiplying by another
+:math:`\widehat{s}_e` would count that scaling twice; division by
+:math:`\widehat{s}_e` converts the contraction
 to the stiffness-factor derivative.
 
 The final available solver step/increment supplies the results. The controlling

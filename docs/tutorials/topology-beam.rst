@@ -188,6 +188,10 @@ GIF of all completed iterations:
 
    ccx animate topology 1 threshold 0.5 fps 5 save "beam.gif"
 
+This starts an asynchronous export. Wait for the saved-file message before
+changing the mesh or proceeding to deletion. Use **Cancel GIF export** in the
+Results panel if needed; startup success is not completion.
+
 Use a different filename or add ``overwrite`` for an existing file. The Results
 panel provides the same filename, frame-rate, and overwrite controls. A GIF
 captures all eligible iterations, not just the displayed one.

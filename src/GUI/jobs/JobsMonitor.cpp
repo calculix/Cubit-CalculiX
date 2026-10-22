@@ -103,7 +103,7 @@ JobsMonitor::JobsMonitor()
   QObject::connect(pushButton_close, SIGNAL(clicked(bool)),this,SLOT(on_pushButton_close_clicked(bool)));
   
   // Update list items and data
-  this->update();
+  clear();
 
   timer = new GuiTimer();
   QObject::connect(timer, SIGNAL(timeout()), this, SLOT(update_slot()));
@@ -114,7 +114,29 @@ JobsMonitor::~JobsMonitor()
 
 void JobsMonitor::clear()
 {
+  current_job_id = -1;
 
+  total_block_count_console_output = 0;
+  total_block_count_cvg = 0;
+  total_block_count_sta = 0;
+
+  QPlainTextEdit_console->clear();
+  QPlainTextEdit_cvg->clear();
+  QPlainTextEdit_sta->clear();
+  liveMonitor_widget->clear();
+
+  FRD_widget->clear();
+  DAT_widget->clear();
+  DATSection_widget->clear();
+
+  setWindowTitle("Jobs Monitor");
+
+  pushButton_run->setEnabled(false);
+  pushButton_kill->setEnabled(false);
+  pushButton_result_cgx->setEnabled(false);
+  pushButton_result_load->setEnabled(false);
+  pushButton_result_convert->setEnabled(false);
+  pushButton_result_paraview->setEnabled(false);
 }
 
 void JobsMonitor::update_slot()
@@ -126,14 +148,22 @@ void JobsMonitor::update()
 {
   CalculiXJobsInterface ccx_jobs_iface;
 
-  std::vector<std::string> job_data;
-  std::vector<std::string> console_output;
-  std::vector<std::string> cvg;
-  std::vector<std::string> sta;
-  job_data = ccx_jobs_iface.get_job_data(current_job_id);
-  console_output = ccx_jobs_iface.get_job_console_output(current_job_id);
-  cvg = ccx_jobs_iface.get_job_cvg(current_job_id);
-  sta = ccx_jobs_iface.get_job_sta(current_job_id);
+  if (current_job_id <= 0)
+  {
+    return;
+  }
+
+  const auto job_data = ccx_jobs_iface.get_job_data(current_job_id);
+
+  if (job_data.empty())
+  {
+    clear();
+    return;
+  }
+
+  const auto console_output = ccx_jobs_iface.get_job_console_output(current_job_id);
+  const auto cvg = ccx_jobs_iface.get_job_cvg(current_job_id);
+  const auto sta = ccx_jobs_iface.get_job_sta(current_job_id);
 
   // jobs_data[0][1] name
   // jobs_data[0][2] filepath
@@ -275,10 +305,26 @@ void JobsMonitor::update()
 
 void JobsMonitor::setJob(int job_id)
 {
+  clear();
+
+  if (job_id <= 0)
+  {
+    return;
+  }
+
+  CalculiXJobsInterface ccx_jobs_iface;
+
+  if (ccx_jobs_iface.get_job_data(job_id).empty())
+  {
+    return;
+  }
+
   current_job_id = job_id;
-  FRD_widget->set_current_job_id(current_job_id);
-  DAT_widget->set_current_job_id(current_job_id);
-  DATSection_widget->set_current_job_id(current_job_id);
+  FRD_widget->set_current_job_id(job_id);
+  DAT_widget->set_current_job_id(job_id);
+  DATSection_widget->set_current_job_id(job_id);
+
+  update();
 }
 
 void JobsMonitor::on_pushButton_run_clicked(bool)

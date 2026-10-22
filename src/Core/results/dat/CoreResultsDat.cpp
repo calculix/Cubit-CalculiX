@@ -1,6 +1,8 @@
 #include "Core/results/dat/CoreResultsDat.hpp"
 #include <numeric>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 #include <array>
 #include "Core/application/CalculiXApplicationInterface.hpp"
@@ -12,8 +14,10 @@
 #include "loadUserOptions.hpp"
 
 #include "ThreadPool.hpp"
-#include "ResultsReaderPipeline.hpp"
-#include "ResultReadNumbers.hpp"
+#include "Core/results/ResultsReaderPipeline.hpp"
+#include "Core/results/ResultReadBuffer.hpp"
+#include "Core/results/ResultReadNumbers.hpp"
+#include "Core/results/ResultReadTimings.hpp"
 #include <functional>
 
 #include <algorithm>
@@ -757,6 +761,7 @@ bool CoreResultsDat::read_parallel_boost()
     return false;
   }
 
+  ResultsReaderPipeline::BufferedInput input(file, ResultsReaderPipeline::max_line_bytes);
   clear();
   progressbar->start(0, 100, "Reading Results DAT");
   ResultReadTimings::Phases phases;
@@ -764,7 +769,7 @@ bool CoreResultsDat::read_parallel_boost()
       static_cast<std::size_t>(ccx_uo.mConverterThreads), "DAT", phases,
       [&](DatRawReadBatch& batch, bool& finished)
       {
-        return read_next_raw_batch(file, state, batch, finished);
+        return read_next_raw_batch(input, state, batch, finished);
       },
       [](const DatRawReadBatch& batch, const std::atomic<bool>& cancelled)
       {
@@ -776,7 +781,7 @@ bool CoreResultsDat::read_parallel_boost()
       },
       [&]()
       {
-        return ResultsReaderPipeline::poll(file, state.file_size, progressbar, state.progress_time);
+        return ResultsReaderPipeline::poll(input.consumed_bytes(), state.file_size, progressbar, state.progress_time);
       });
 
   if (success)
@@ -822,7 +827,7 @@ bool CoreResultsDat::read_parallel_boost()
   return success;
 }
 
-bool CoreResultsDat::read_next_raw_batch(std::ifstream& file, DatReadState& state, DatRawReadBatch& batch, bool& finished)
+bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& input, DatReadState& state, DatRawReadBatch& batch, bool& finished)
 {
   finished = false;
   if (state.finished)
@@ -832,23 +837,29 @@ bool CoreResultsDat::read_next_raw_batch(std::ifstream& file, DatReadState& stat
   }
 
   std::size_t batch_bytes = 0;
-  std::string raw;
+  std::string_view raw;
+  std::streamoff next_poll = input.consumed_bytes();
   while (true)
   {
-    if (!ResultsReaderPipeline::poll(file, state.file_size, progressbar, state.progress_time))
+    if (input.consumed_bytes() >= next_poll)
     {
-      return false;
+      if (!ResultsReaderPipeline::poll(input.consumed_bytes(), state.file_size, progressbar, state.progress_time))
+      {
+        return false;
+      }
+      next_poll = input.consumed_bytes() + 256 * 1024;
     }
     if (state.has_pending_line)
     {
-      raw = std::move(state.pending_line);
+      raw = state.pending_line;
       state.has_pending_line = false;
     }
     else
     {
-      if (!ResultsReaderPipeline::read_line(file, raw))
+      const auto line_status = input.next(raw);
+      if (line_status != ResultsReaderPipeline::LineStatus::Line)
       {
-        if (!file.eof())
+        if (line_status != ResultsReaderPipeline::LineStatus::End)
         {
           PRINT_ERROR("Cannot read DAT results: I/O error or line exceeds 64 KiB.\n");
           return false;
@@ -870,7 +881,7 @@ bool CoreResultsDat::read_next_raw_batch(std::ifstream& file, DatReadState& stat
       PRINT_ERROR("DAT line %zu exceeds the supported line size.\n", state.line_number);
       return false;
     }
-    if (is_whitespace(raw))
+    if (ResultReadNumbers::trim(raw).empty())
     {
       continue;
     }
@@ -881,7 +892,7 @@ bool CoreResultsDat::read_next_raw_batch(std::ifstream& file, DatReadState& stat
     {
       if (!result_row || batch.records.size() >= ResultsReaderPipeline::max_batch_lines || batch_bytes + row_bytes > ResultsReaderPipeline::max_batch_bytes)
       {
-        state.pending_line = std::move(raw);
+        state.pending_line.assign(raw.data(), raw.size());
         state.has_pending_line = true;
         return true;
       }
@@ -901,7 +912,7 @@ bool CoreResultsDat::read_next_raw_batch(std::ifstream& file, DatReadState& stat
     }
 
     // Headers and special outputs retain the established state-machine logic.
-    auto fields = split_line(raw);
+    auto fields = split_line(std::string(raw));
     if (fields.empty() || fields.size() > ResultsReaderPipeline::max_fields)
     {
       PRINT_ERROR("Invalid DAT record at line %zu.\n", state.line_number);

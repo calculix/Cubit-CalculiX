@@ -157,6 +157,27 @@ void TopologyActionsPanel::updateControls()
 {
   CalculiXTopologyInterface ccx_topology_iface;
 
+  if (cases->currentIndex() >= 0)
+  {
+    const std::string selected_id = std::to_string(cases->currentData().toInt());
+    bool selected_exists = false;
+
+    for (const auto& row : ccx_topology_iface.get_topology_tree_data())
+    {
+      if (row.size() >= 2 && row[0] == selected_id)
+      {
+        selected_exists = true;
+        break;
+      }
+    }
+
+    if (!selected_exists)
+    {
+      refreshCases();
+      return;
+    }
+  }
+
   updateConvergence();
   runButton->setEnabled(false);
   waitButton->setEnabled(false);

@@ -1,43 +1,31 @@
-/*!
- *  \file MenuManager.hpp
- *  \brief
- *    Provides an example of how to create menus and menu items using
- *    the Claro framework.
- *  \author Michael Plooster
- *  \date 11 Feb 2014
+/*! @file MenuManager.hpp
+ *  @brief Provides the Cubit-CalculiX documentation entry in the Help menu.
  */
-
 #ifndef MENUMANAGER_HPP
 #define MENUMANAGER_HPP
 
 #include <QObject>
+#include <QPointer>
+
+class QAction;
 
 class MenuManager : public QObject
 {
   Q_OBJECT
 
 public:
-  MenuManager(QObject* parent = 0);
+  MenuManager(QObject* parent = nullptr);
   ~MenuManager();
 
-  // Provides an example of adding an item to an exisiting menu
-  void add_to_existing_menu();
-
-  // Provides an example of creating your own menu.
-  void setup_custom_menu();
-
-  // Provides an example of how to remove your menu items.
+  void setup_help_menu();
   void remove_menu_items();
 
 public slots:
-  void myTool_triggered();
-  void show_dialog_triggered();
-  void something_cool_triggered();
+  void open_documentation();
 
 private:
-  bool existingInitialized;
-  bool customInitialized;
-
+  bool help_initialized = false;
+  QPointer<QAction> help_action;
 };
 
 #endif // MENUMANAGER_HPP

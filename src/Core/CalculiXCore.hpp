@@ -482,6 +482,8 @@ public:
   bool draw_bc_temperatures(double size); //draw all temperatures
   bool draw_topology(int topology_id,int iteration_id = -1,double threshold = 0.5); // draw topology iteration
   bool animate_topology(int topology_id,double threshold = 0.5,int fps = 5,std::string save_filepath = "", bool overwrite = false);
+  bool topology_animation_active() const;
+  void cancel_topology_animation();
 
   
   //QUERY results

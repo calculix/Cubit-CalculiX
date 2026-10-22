@@ -60,7 +60,7 @@ ccx modify historyoutput 2 element key_off SVF ME PEEQ CEEQ ENER SDV HFL HFLF CO
 # steps
 ccx create step name "Static" static
 #ccx modify step 1 parameter nlgeom_yes
-ccx modify step 1 static solver spooles
+ccx modify step 1 static solver pardiso
 #ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.1 timeperiodofstep 1 minimumtimeincrement 0.01 maximumtimeincrement 0.1
 ccx step 1 add load force 1
 ccx step 1 add bc displacement 1
@@ -69,7 +69,7 @@ ccx step 1 add bc displacement 1
 
 # mesh
 block 1 element type HEX8
-volume 1 size 0.5
+volume 1 size 4
 mesh vertex all
 mesh volume all
 
@@ -85,6 +85,9 @@ ccx create topology 1 name "simple_beam"
 #ccx result project topology 1 iteration 4 threshold 0.5
 #ccx create job name "test"
 #ccx run job 6
+
+
+
 
 
 

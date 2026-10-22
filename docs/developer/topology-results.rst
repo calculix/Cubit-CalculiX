@@ -68,7 +68,9 @@ Save and load
 -------------
 
 ``CoreTopology::save_configuration`` writes the topology group below
-``Cubit-CalculiX/Topology`` with schema version 7. Case settings, explicit
+``Cubit-CalculiX/Topology`` with schema version 8. Version 8 stores
+``material_cap``; older configurations receive the default for future iterations
+without changing their historical applied factors. Case settings, explicit
 preservation rules, and runtime records are serialized through the topology
 HDF5 archive helpers. Related material and job data are managed by their
 own cores; case records refer to them rather than owning duplicate job objects.
@@ -105,12 +107,28 @@ rate guarantee. It stops at the final entry or when availability is lost.
 GIF capture and wrapping
 ------------------------
 
-``CoreDraw::animate_topology`` collects eligible iterations in numerical order,
-silently previews them, and captures graphics frames in a temporary directory.
-``GifAnimation`` encodes the frames into a looping GIF. This path uses the
-current graphics view, not a reconstructed view stored in the iteration.
-Output validation includes extension, directory, frame rate, and overwrite.
-There is no restoration of the original graphics display after frame capture.
+``CoreDraw::animate_topology`` starts a ``TopologyAnimation`` controller. It
+snapshots eligible iteration IDs, validates output settings, and schedules one
+silent preview/hardcopy per GUI-thread timer callback. Startup returns before
+capture is complete. No Cubit or widget access occurs on the encoding worker.
+
+After capture, the controller moves its temporary directory into a worker using
+``std::async``. ``GifAnimation`` receives atomic cancellation/progress values and
+returns errors through a string, without calling Cubit logging. The worker
+encodes, publishes, and removes temporary PNGs before returning. A GUI timer
+polls readiness without waiting and reports progress/completion on the main
+thread. Replacement uses ``QSaveFile``; without overwrite, ``QFile::copy``
+refuses an existing output, including one created after startup.
+
+Cancellation is cooperative between captures/encoded frames and replacement
+copy chunks. A completed publication remains successful even if cancellation
+arrives afterwards. Reset/load requests cancellation; shutdown joins any file
+worker before destroying plugin-owned code. The Results panel polls active
+state, stops competing preview timers, and exposes cancellation. Generic Cubit
+commands can still change the graphics view, so users must keep it unchanged
+during capture. This uses the current view, not a stored camera snapshot, and
+does not restore the previous display. Topology drawing compresses consecutive
+IDs into ranges and bounds batches by command length.
 
 ``ccxWrapCommand`` collects the threshold-selected volume mesh through
 ``collect_topology_wrap_mesh``. It validates the entire stored design against

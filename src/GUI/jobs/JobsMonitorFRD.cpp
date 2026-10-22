@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <QString>
+#include <QSignalBlocker>
 #include "Core/results/frd/CalculiXFrdInterface.hpp"
 #include "Core/gui/CalculiXGuiResourcesInterface.hpp"
 #include "Core/mesh/CalculiXMeshInterface.hpp"
@@ -157,6 +158,41 @@ JobsMonitorFRD::~JobsMonitorFRD()
 
 void JobsMonitorFRD::clear()
 {
+  current_job_id = -1;
+  current_result_block = nullptr;
+  current_result_component = nullptr;
+  current_increment = nullptr;
+  current_page = 0;
+  results_size = 0;
+  filter.clear();
+
+  const QSignalBlocker block_results(list_result_block);
+  const QSignalBlocker block_components(list_component);
+  const QSignalBlocker block_increments(list_increment);
+  const QSignalBlocker block_filter(combobox_filter_by_set);
+
+  list_result_block->clear();
+  list_component->clear();
+  list_increment->clear();
+
+  table_result->setRowCount(0);
+  table_result->setColumnCount(0);
+  table_filter_by_set->setRowCount(0);
+  table_filter_by_set->setColumnCount(0);
+  table_counter->clear();
+
+  combobox_filter_by_set->setCurrentIndex(0);
+  PickWidget_filter_node_id->setText("");
+
+  pushButton_prev->setEnabled(false);
+  pushButton_next->setEnabled(false);
+  pushButton_export->setEnabled(false);
+
+  PlotWidget->current_job_id = -1;
+  PlotWidget->hide();
+  PlotWidget->setEnabled(false);
+
+  setEnabled(false);
 }
 
 void JobsMonitorFRD::update()
@@ -521,11 +557,19 @@ void JobsMonitorFRD::update_result()
 
 void JobsMonitorFRD::set_current_job_id(int job_id)
 {
-  this->current_job_id = job_id;
+  if (job_id <= 0)
+  {
+    clear();
+    return;
+  }
+
+  current_job_id = job_id;
   PlotWidget->current_job_id = job_id;
-  //std::string log = "Current job id set is " + std::to_string(current_job_id) + "\n";
-  //PRINT_INFO("%s", log.c_str());
-  this->update();
+
+  setEnabled(true);
+  PlotWidget->setEnabled(true);
+
+  update();
   PlotWidget->reset();
 }
 

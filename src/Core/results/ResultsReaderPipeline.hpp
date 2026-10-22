@@ -5,7 +5,7 @@
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "ProgressTool.hpp"
-#include "ResultReadTimings.hpp"
+#include "Core/results/ResultReadTimings.hpp"
 
 #include <boost/asio/post.hpp>
 #include <boost/asio/thread_pool.hpp>
@@ -21,6 +21,7 @@
 #include <limits>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -108,6 +109,21 @@ inline bool poll(std::ifstream& file, std::streamoff size, ProgressTool* progres
       fraction = 0.99;
     }
   }
+  progressbar->percent(fraction);
+  progressbar->check_interrupt();
+  return !CubitInterface::app_util().get()->interrupt();
+}
+
+// Exclude prefetched bytes that the scanner has not consumed yet.
+inline bool poll(std::streamoff position, std::streamoff size, ProgressTool* progressbar, std::chrono::steady_clock::time_point& previous)
+{
+  const auto now = std::chrono::steady_clock::now();
+  if (now - previous < std::chrono::milliseconds(100))
+  {
+    return true;
+  }
+  previous = now;
+  const double fraction = size > 0 ? std::min(0.99, static_cast<double>(position) / static_cast<double>(size)) : 0.0;
   progressbar->percent(fraction);
   progressbar->check_interrupt();
   return !CubitInterface::app_util().get()->interrupt();
@@ -250,7 +266,7 @@ bool run(std::size_t workers, const char* reader_name, Next next, Parse parse, A
 }
 // Only the calling thread assembles batches; stored offsets survive string growth.
 template <typename Batch, typename State>
-void append_raw_record(Batch& batch, const State& state, const std::string& raw)
+void append_raw_record(Batch& batch, const State& state, std::string_view raw)
 {
   if (batch.records.empty())
   {
@@ -260,7 +276,7 @@ void append_raw_record(Batch& batch, const State& state, const std::string& raw)
     batch.components = state.components;
   }
   batch.records.push_back({batch.text.size(), raw.size(), state.line_number});
-  batch.text.append(raw);
+  batch.text.append(raw.data(), raw.size());
 }
 
 template <typename Task, typename Next, typename Parse, typename Append, typename Poll>

@@ -43,6 +43,69 @@ remain online links; they are not required for navigation or rendering.
 Search uses the local index and shows linked results. Fetched context snippets
 are disabled because browsers can reject page fetches under `file://`.
 
+## Stage and ship the manual
+
+Build the manual first, then explicitly stage it beside the plugin resources.
+The CMake target `stage_documentation` copies existing HTML; it does not run
+Python, Doxygen, a plugin compilation, or the solver. It is outside `ALL`, so
+normal plugin builds have no documentation-generation dependency. Reconfigure
+an existing build directory once to make the new target available.
+
+Windows, from the repository root:
+
+```powershell
+docs/.venv/Scripts/python.exe docs/build.py --release 2026.10
+cmake --build build --config Release --target stage_documentation
+```
+
+Linux:
+
+```sh
+docs/.venv/bin/python docs/build.py --release 2026.10
+cmake --build build --target stage_documentation
+```
+
+Use the actual release label when packaging. The default destination is
+`build/Release/documentation/` on Windows and `build/documentation/` on Linux,
+following the current plugin resource layout. `CCX_DOCUMENTATION_SOURCE` and
+`CCX_DOCUMENTATION_DESTINATION` are CMake cache paths for overriding the source
+HTML tree and the destination. The destination names the documentation folder
+itself, not its parent. For example, configure with
+`-DCCX_DOCUMENTATION_DESTINATION=/release/plugin/documentation` for a separate
+release directory. Use a clean release destination to avoid retaining obsolete
+pages from an older manual; staging copies files without deleting unrelated files.
+
+The script can also be run without configuring or building the plugin; supply
+absolute paths (quote the complete `-D...` argument if it contains spaces):
+
+```text
+cmake -DCCX_DOCUMENTATION_SOURCE=<absolute-html-directory> -DCCX_DOCUMENTATION_DESTINATION=<absolute-plugin-directory>/documentation -P src/cmake/StageDocumentation.cmake
+```
+
+Ship the resulting layout together:
+
+```text
+plugin directory/
+  calculix_plugin.dll          # Windows; libcalculix_plugin.so on Linux
+  ...other plugin libraries and resources...
+  documentation/
+    index.html
+    _static/
+    _downloads/
+    ...all other generated pages and assets...
+```
+
+After rebuilding the plugin with the Help action, use
+**Help > Cubit-CalculiX documentation**. The action finds the plugin directory
+through the component registry and opens its local `documentation/index.html`
+using the desktop's configured HTML application. Missing or unreadable manuals
+report the expected path; failure to submit the open request is also reported.
+An accepted desktop request does not prove the browser finished rendering.
+Menu initialization does not duplicate the action; cleanup removes only entries
+owned by this plugin's documentation menu integration.
+
+## Validate generated output
+
 The build checks local page/download links and remote embedded resource URLs.
 Run `python docs/build.py --check-only` to repeat those checks on existing output.
 Before shipping, also open the pages via `file://` in supported browsers, disable

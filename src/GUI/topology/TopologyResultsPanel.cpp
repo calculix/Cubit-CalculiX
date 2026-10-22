@@ -1,4 +1,5 @@
 #include "TopologyResultsPanel.hpp"
+#include "Core/drawing/CalculiXDrawInterface.hpp"
 #include <string>
 #include <QString>
 #include "Core/application/CalculiXApplicationInterface.hpp"
@@ -34,6 +35,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <initializer_list>
 
 TopologyResultsPanel::TopologyResultsPanel(QWidget *parent)
   : QWidget(parent)
@@ -167,6 +169,27 @@ TopologyResultsPanel::TopologyResultsPanel(QWidget *parent)
   gifButton->setToolTip(
     "Export all completed iterations of this case using the displayed threshold.");
   layout->addWidget(gifButton);
+  cancelGifButton = new QPushButton("Cancel GIF export", this);
+  cancelGifButton->setEnabled(false);
+  layout->addWidget(cancelGifButton);
+  QObject::connect(cancelGifButton, &QPushButton::clicked, this, [this]()
+  {
+    CalculiXDrawInterface drawing;
+    drawing.cancel_topology_animation();
+    cancelGifButton->setEnabled(false);
+    cancelGifButton->setText("Cancelling GIF export...");
+  });
+  auto* animationTimer = new QTimer(this);
+  QObject::connect(animationTimer, &QTimer::timeout, this, [this]()
+  {
+    CalculiXDrawInterface drawing;
+    const bool active = drawing.topology_animation_active();
+    if (active != animation_was_active)
+    {
+      updateDisplay();
+    }
+  });
+  animationTimer->start(250);
 
   QObject::connect(deleteElementsButton, &QPushButton::clicked, this, [this]()
   {
@@ -436,6 +459,11 @@ void TopologyResultsPanel::refreshIterations(int preferred_iteration)
 
 void TopologyResultsPanel::updateDisplay()
 {
+  updateAnimationControls();
+  if (animation_was_active)
+  {
+    return;
+  }
   CalculiXJobsInterface ccx_jobs_iface;
   CalculiXTopologyInterface ccx_topology_iface;
 
@@ -559,6 +587,12 @@ void TopologyResultsPanel::updateDisplay()
 
 void TopologyResultsPanel::preview()
 {
+  CalculiXDrawInterface drawing;
+  if (drawing.topology_animation_active())
+  {
+    pausePlayback();
+    return;
+  }
   if (preview_busy)
   {
     return;
@@ -577,6 +611,11 @@ void TopologyResultsPanel::pausePlayback()
 
 void TopologyResultsPanel::requestPreview()
 {
+  CalculiXDrawInterface drawing;
+  if (drawing.topology_animation_active())
+  {
+    return;
+  }
   if (!playing && isVisible() && previewButton->isEnabled())
   {
     previewTimer->start(75);
@@ -585,6 +624,12 @@ void TopologyResultsPanel::requestPreview()
 
 void TopologyResultsPanel::togglePlayback()
 {
+  CalculiXDrawInterface drawing;
+  if (drawing.topology_animation_active())
+  {
+    pausePlayback();
+    return;
+  }
   if (playing)
   {
     pausePlayback();
@@ -611,6 +656,12 @@ void TopologyResultsPanel::togglePlayback()
 
 void TopologyResultsPanel::playbackFrame()
 {
+  CalculiXDrawInterface drawing;
+  if (drawing.topology_animation_active())
+  {
+    pausePlayback();
+    return;
+  }
   if (!playing || !isVisible())
   {
     pausePlayback();
@@ -672,6 +723,12 @@ bool TopologyResultsPanel::selectedResult(
 
   if (state.empty())
   {
+    return false;
+  }
+  CalculiXDrawInterface drawing;
+  if (require_idle && drawing.topology_animation_active())
+  {
+    PRINT_ERROR("Finish or cancel the topology GIF export before using mesh actions.\n");
     return false;
   }
   if (require_idle && state == "running")
@@ -833,6 +890,14 @@ void TopologyResultsPanel::browseGif()
 
 void TopologyResultsPanel::exportGif()
 {
+  CalculiXDrawInterface drawing;
+  pausePlayback();
+  previewTimer->stop();
+  if (drawing.topology_animation_active())
+  {
+    PRINT_ERROR("A topology GIF export is already active.\n");
+    return;
+  }
   int topology_id;
   int iteration_id;
   int job_id;
@@ -870,6 +935,7 @@ void TopologyResultsPanel::exportGif()
   }
 
   GuiSendCmd::gui_cmd(command);
+  updateDisplay();
 }
 
 void TopologyResultsPanel::browseWrap()
@@ -974,4 +1040,30 @@ void TopologyResultsPanel::wrapIteration()
   // Records the command. Its return value does not indicate command success.
   GuiSendCmd::gui_cmd(command);
   updateDisplay();
+}
+
+void TopologyResultsPanel::updateAnimationControls()
+{
+  CalculiXDrawInterface drawing;
+  animation_was_active = drawing.topology_animation_active();
+  cases->setEnabled(!animation_was_active);
+  iterations->setEnabled(!animation_was_active);
+  autoPreview->setEnabled(!animation_was_active);
+  if (!animation_was_active)
+  {
+    cancelGifButton->setEnabled(false);
+    cancelGifButton->setText("Cancel GIF export");
+    return;
+  }
+  pausePlayback();
+  for (QWidget* widget : std::initializer_list<QWidget*>{firstButton, previousButton, nextButton, lastButton,
+       iterationSlider, playButton, previewButton, threshold, deleteElementsButton,
+       wrapButton, gifButton, paraviewButton})
+  {
+    widget->setEnabled(false);
+  }
+  if (cancelGifButton->text() != "Cancelling GIF export...")
+  {
+    cancelGifButton->setEnabled(true);
+  }
 }

@@ -1,135 +1,136 @@
-/*!
- *  \file MenuManager.cpp
- *  \brief
- *    Provides an example of how to create menus and menu items using
- *    the Claro framework.
- *  \author Michael Plooster
- *  \date 11 Feb 2014
+/*! @file MenuManager.cpp
+ *  @brief Opens the packaged manual through the desktop's local-file handler.
  */
-
 #include "MenuManager.hpp"
+#include "Broker.hpp"
 #include "Claro.hpp"
-#include "CommandWindow.hpp"
+#include "ComponentInfo.hpp"
+#include "Mediator.hpp"
+#include "CubitMessage.hpp"
 
 #include <QAction>
+#include <QDesktopServices>
+#include <QDir>
+#include <QFileInfo>
+#include <QSet>
+#include <QUrl>
 #include <vector>
 
-MenuManager::MenuManager(QObject *parent) :
-  QObject(parent),
-  existingInitialized(false),
-  customInitialized(false)
+namespace
+{
+const char* documentation_owner = "CalculiXCompDocumentation";
+}
+
+MenuManager::MenuManager(QObject* parent) : QObject(parent)
 {}
 
 MenuManager::~MenuManager()
-{}
-
-// This will function will add an item labeled "MyTool" in the Tools menu.
-void MenuManager::add_to_existing_menu()
 {
-  if(existingInitialized)
-    return;
-
-  std::vector<QAction*> menu_list;
-
-  // Create the QAction that represents our tool and connect it to the
-  // appropriate slot.
-  QAction* action = new QAction(this);
-  action->setText(tr("MyTool"));
-  connect(action, SIGNAL(triggered()),
-          this, SLOT(myTool_triggered()));
-
-  menu_list.push_back(action);
-
-  Claro* gui = Claro::instance();
-  if(gui)
-  {
-    // Add the item to the Tools menu.
-    gui->add_to_menu(tr("&Tools"), menu_list, "mycomp");
-
-    existingInitialized = true;
-  }
-  else
-    delete action;
+  remove_menu_items();
 }
 
-// This function will create the "MyMenu" menu, with a list of actions that
-// are useful for MyComp.
-void MenuManager::setup_custom_menu()
+void MenuManager::setup_help_menu()
 {
-  if(customInitialized)
+  if (help_initialized)
+  {
     return;
-
-  std::vector<QAction*> menu_list;
-
-  // Create the QActions and connect them to the appropriate slots.
-  QAction* action = new QAction(this);
-  action->setText(tr("Show Dialog"));
-  connect(action, SIGNAL(triggered()),
-          this, SLOT(show_dialog_triggered()));
-
-  menu_list.push_back(action);
-
-  // TODO: Change the name of this action and the name of it's slot.
-  action = new QAction(this);
-  action->setText(tr("Something Cool"));
-  connect(action, SIGNAL(triggered()),
-          this, SLOT(something_cool_triggered()));
-
-  menu_list.push_back(action);
+  }
 
   Claro* gui = Claro::instance();
-  if(gui)
+  if (!gui)
   {
-    // Add the item to our menu. Note that if the named menu does not exist,
-    // Claro will create it for us.
-    gui->add_to_menu(tr("&MyMenu"), menu_list, "mycomp");
+    return;
+  }
 
-    customInitialized = true;
-  }
-  else
-  {
-    for(size_t i = 0; i < menu_list.size(); i++)
-      delete menu_list[i];
-  }
+  help_action = new QAction(tr("Cubit-CalculiX documentation"), this);
+  connect(help_action.data(), &QAction::triggered, this, &MenuManager::open_documentation);
+  std::vector<QAction*> actions{help_action.data()};
+  gui->add_to_menu(tr("&Help"), actions, documentation_owner);
+  help_initialized = true;
 }
 
 void MenuManager::remove_menu_items()
 {
-  // Remove all of our menu items.
-  Claro* gui = Claro::instance();
-  if(gui)
+  if (!help_initialized)
   {
-    // Items are removed based on the component name
-    gui->remove_menu_items("mycomp");
-
-    existingInitialized = false;
-    customInitialized = false;
+    return;
   }
+
+  if (Claro* gui = Claro::instance())
+  {
+    gui->remove_menu_items(documentation_owner);
+  }
+
+  // Claro may delete actions during removal; QPointer tracks that ownership.
+  delete help_action.data();
+  help_action = nullptr;
+  help_initialized = false;
 }
 
-void MenuManager::myTool_triggered()
+void MenuManager::open_documentation()
 {
-  // TODO: Something more demonstrative that printing to the
-  // command window.
-  CommandWindow* cw = Claro::instance()->command_line();
+  Mediator* mediator = Broker::instance();
+  if (!mediator)
+  {
+    PRINT_ERROR("Unable to locate Cubit-CalculiX documentation: component registry is unavailable.\n");
+    return;
+  }
 
-  cw->print_data("MyTool was triggered\n");
-}
+  std::vector<ComponentInfo> components;
+  mediator->get_component_list(components);
+  QSet<QString> candidates;
+  QString component_directory;
 
-void MenuManager::show_dialog_triggered()
-{
-  // TODO: Something more demonstrative that printing to the
-  // command window.
-  CommandWindow* cw = Claro::instance()->command_line();
+  for (auto& component : components)
+  {
+    const QString path = component.get_path();
+    if (path.isEmpty())
+    {
+      continue;
+    }
 
-  cw->print_data("ShowDialog was triggered\n");
-}
+    const QDir directory(path);
+#ifdef WIN32
+    const QFileInfo library(directory.filePath("calculix_plugin.dll"));
+#else
+    const QFileInfo library(directory.filePath("libcalculix_plugin.so"));
+#endif
+    if (!library.isFile())
+    {
+      continue;
+    }
 
-void MenuManager::something_cool_triggered()
-{
-  // TODO: Something more demonstrative that printing to the
-  // command window.
-  CommandWindow* cw = Claro::instance()->command_line();
+    const QString resolved = library.canonicalPath();
+    if (component.get_class() == "CalculiXComp")
+    {
+      component_directory = resolved;
+      break;
+    }
+    candidates.insert(resolved);
+  }
 
-  cw->print_data("Something Cool was triggered\n");
+  if (component_directory.isEmpty() && candidates.size() == 1)
+  {
+    component_directory = *candidates.constBegin();
+  }
+  if (component_directory.isEmpty())
+  {
+    PRINT_ERROR("Unable to locate the Cubit-CalculiX plugin directory. Expected documentation/index.html beside the plugin library.\n");
+    return;
+  }
+
+  const QString index_path = QDir(component_directory).filePath("documentation/index.html");
+  const QFileInfo index(index_path);
+  if (!index.isFile() || !index.isReadable())
+  {
+    PRINT_ERROR("Cubit-CalculiX documentation is missing or unreadable: %s\n", index_path.toUtf8().constData());
+    return;
+  }
+
+  // Success means the desktop accepted the request, not that rendering completed.
+  if (!QDesktopServices::openUrl(QUrl::fromLocalFile(index.absoluteFilePath())))
+  {
+    PRINT_ERROR("Unable to open Cubit-CalculiX documentation: %s\n", index_path.toUtf8().constData());
+    return;
+  }
 }

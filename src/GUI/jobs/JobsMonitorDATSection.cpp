@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <QString>
+#include <QSignalBlocker>
 #include "Core/results/dat/CalculiXDatInterface.hpp"
 #include "JobsMonitorDATSectionPlot.hpp"
 #include "GUI/application/GuiSendCmd.hpp"
@@ -102,6 +103,32 @@ JobsMonitorDATSection::~JobsMonitorDATSection()
 
 void JobsMonitorDATSection::clear()
 {
+  current_job_id = -1;
+  current_result_set = nullptr;
+  current_time = nullptr;
+  current_page = 0;
+  results_size = 0;
+  filter.clear();
+
+  const QSignalBlocker block_sets(list_result_set);
+  const QSignalBlocker block_times(list_time);
+
+  list_result_set->clear();
+  list_time->clear();
+
+  table_result->setRowCount(0);
+  table_result->setColumnCount(0);
+  table_counter->clear();
+
+  pushButton_prev->setEnabled(false);
+  pushButton_next->setEnabled(false);
+  pushButton_export->setEnabled(false);
+
+  PlotWidget->current_job_id = -1;
+  PlotWidget->hide();
+  PlotWidget->setEnabled(false);
+
+  setEnabled(false);
 }
 
 void JobsMonitorDATSection::update()
@@ -345,11 +372,19 @@ void JobsMonitorDATSection::update_result()
 
 void JobsMonitorDATSection::set_current_job_id(int job_id)
 {
-  this->current_job_id = job_id;
+  if (job_id <= 0)
+  {
+    clear();
+    return;
+  }
+
+  current_job_id = job_id;
   PlotWidget->current_job_id = job_id;
-  //std::string log = "Current job id set is " + std::to_string(current_job_id) + "\n";
-  //PRINT_INFO("%s", log.c_str());
-  this->update();
+
+  setEnabled(true);
+  PlotWidget->setEnabled(true);
+
+  update();
   PlotWidget->reset();
 }
 

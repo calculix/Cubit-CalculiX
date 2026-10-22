@@ -60,6 +60,8 @@ private:
   QPushButton *monitorButton;
   QPushButton *paraviewButton;
   QPushButton *gifButton;
+  QPushButton *cancelGifButton;
+  bool animation_was_active = false;
 
   QLineEdit *gifPath;
   QSpinBox *fps;
@@ -103,6 +105,7 @@ private:
   void wrapIteration();
   void browseGif();
   void exportGif();
+  void updateAnimationControls();
 };
 
 #endif // TOPOLOGYRESULTSPANEL_HPP

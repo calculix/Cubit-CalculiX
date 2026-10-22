@@ -7,8 +7,15 @@
 #include "AppUtil.hpp"
 #include <vector>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <chrono>
+
+namespace ResultsReaderPipeline
+{
+class BufferedInput;
+}
+
 class CoreResultsFrd
 {
 
@@ -138,7 +145,10 @@ public:
   ProgressTool *progressbar = nullptr; // progressbar
 
 private:
-  bool read_next_raw_batch(std::ifstream& file, FrdReadState& state, FrdRawReadBatch& batch, bool& finished);
+  bool read_raw_node(std::string_view line, std::size_t source_line);
+  bool read_raw_element_header(std::string_view line, std::size_t source_line);
+  bool read_raw_connectivity(std::string_view line, std::size_t source_line);
+  bool read_next_raw_batch(ResultsReaderPipeline::BufferedInput& input, FrdReadState& state, FrdRawReadBatch& batch, bool& finished);
   static FrdParsedBatch parse_raw_batch(const FrdRawReadBatch& batch, const std::atomic<bool>& cancelled);
   bool read_next_boost_batch(std::ifstream& file, FrdReadState& state, FrdReadBatch& batch, bool& finished);
   static FrdParsedBatch parse_boost_batch(const FrdReadBatch& batch, const std::atomic<bool>& cancelled);

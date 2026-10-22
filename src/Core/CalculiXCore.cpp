@@ -102,6 +102,10 @@ CalculiXCore::CalculiXCore():
 
 CalculiXCore::~CalculiXCore()
 {
+  if (draw)
+  {
+    draw->shutdown_topology_animation();
+  }
   if (timer)
   {
     timer->stop();
@@ -710,6 +714,7 @@ bool CalculiXCore::update()
 
 bool CalculiXCore::reset()
 {
+  cancel_topology_animation();
   if (checking_jobs)
   {
     PRINT_ERROR("Cannot reset CalculiX data while job results are being processed.\n");
@@ -777,6 +782,7 @@ bool CalculiXCore::reset()
 
 bool CalculiXCore::read_cub(std::string filename)
 {
+  cancel_topology_animation();
   if (checking_jobs)
   {
     PRINT_ERROR("Cannot read model data while job results are being processed.\n");
@@ -6856,6 +6862,11 @@ bool CalculiXCore::run_topology(int topology_id, bool wait)
 
 bool CalculiXCore::begin_topology_run(int topology_id)
 {
+  if (topology_animation_active())
+  {
+    PRINT_ERROR("Finish or cancel the topology GIF export before starting topology.\n");
+    return false;
+  }
   if (!topology || !mat || !sections || !jobs || !steps || !historyoutputs || !me_iface)
   {
     PRINT_ERROR("Topology run cores are not initialized.\n");
@@ -12007,6 +12018,19 @@ bool CalculiXCore::draw_topology(int topology_id,int iteration_id,double thresho
     return false;
   }
   return draw->draw_topology(topology_id, iteration_id, threshold);
+}
+
+bool CalculiXCore::topology_animation_active() const
+{
+  return draw && draw->topology_animation_active();
+}
+
+void CalculiXCore::cancel_topology_animation()
+{
+  if (draw)
+  {
+    draw->cancel_topology_animation();
+  }
 }
 
 bool CalculiXCore::animate_topology(int topology_id,double threshold,int fps,std::string save_filepath,bool overwrite)

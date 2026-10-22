@@ -42,6 +42,9 @@ Recorded coverage
 The one-solver-thread run on 20 October 2026 met that criterion for all
 36 sampled derivatives (six element types, two objectives, three elements).
 The result reader used 20 threads. Preserved-element sensitivities were zero.
+This recorded check does not establish derivative accuracy through material
+grouping. Quantized solves use continuous SIMP sensitivities as surrogates;
+see :doc:`../developer/topology-algorithms`.
 Some smallest perturbations exceeded tolerance for weak derivatives, consistent
 with limited result precision.
 

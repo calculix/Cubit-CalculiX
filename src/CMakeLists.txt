@@ -208,6 +208,22 @@ if (UNIX)
  #file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/calculix_comp.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
 endif (UNIX)
 
+# Package an existing manual explicitly; normal builds do not generate or stage it.
+set(CCX_DOCUMENTATION_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/../docs/_build/html" CACHE PATH "Generated manual directory")
+if (WIN32)
+ set(_ccx_documentation_destination "${CMAKE_CURRENT_BINARY_DIR}/Release/documentation")
+else()
+ set(_ccx_documentation_destination "${CMAKE_CURRENT_BINARY_DIR}/documentation")
+endif()
+set(CCX_DOCUMENTATION_DESTINATION "${_ccx_documentation_destination}" CACHE PATH "Packaged manual directory beside the plugin")
+add_custom_target(stage_documentation
+ COMMAND "${CMAKE_COMMAND}"
+   "-DCCX_DOCUMENTATION_SOURCE=${CCX_DOCUMENTATION_SOURCE}"
+   "-DCCX_DOCUMENTATION_DESTINATION=${CCX_DOCUMENTATION_DESTINATION}"
+   -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/StageDocumentation.cmake"
+ COMMENT "Staging the existing Cubit-CalculiX manual"
+ VERBATIM)
+
 # copy missing libraries into build directory
 # Qt6Charts is currently not shipped with Cubit 2025.8
 if (WIN32)

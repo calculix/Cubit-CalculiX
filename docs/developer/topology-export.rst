@@ -78,7 +78,10 @@ original section ID. The material exporter emits one ``*MATERIAL`` and
 ``*ELASTIC`` per group; the section exporter emits one ``*ELSET`` and
 ``*SOLID SECTION`` per occupied group within an original section. Orientation
 and section data remain separate. Elastic properties use scientific notation
-with round-trip double precision.
+with six digits after the decimal point. This formatting introduces rounding
+relative to stored double-precision values; it does not guarantee round-trip
+precision. Six decimals is the plugin's formatting policy, not a universal
+CalculiX decimal limit.
 
 Historical iterations without grouping metadata retain the legacy
 ``CCX_TOPO_<case>_E<element>`` material names and six-decimal scientific

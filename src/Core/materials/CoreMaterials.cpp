@@ -2038,8 +2038,8 @@ std::string CoreMaterials::get_topology_material_export(int topology_id,int iter
       return "";
     }
 
-    const std::string modulus_text = ScientificNumber::format(modulus, 12);
-    const std::string poisson_text = ScientificNumber::format(material->second.poissons_ratio, 12);
+    const std::string modulus_text = ScientificNumber::format(modulus, 6);
+    const std::string poisson_text = ScientificNumber::format(material->second.poissons_ratio, 6);
 
     if (modulus_text.size() > 20 || poisson_text.size() > 20)
     {

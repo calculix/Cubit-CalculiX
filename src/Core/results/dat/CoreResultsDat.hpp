@@ -9,6 +9,12 @@
 #include <fstream>
 #include "ProgressTool.hpp"
 #include "AppUtil.hpp"
+
+namespace ResultsReaderPipeline
+{
+class BufferedInput;
+}
+
 class CoreResultsDat
 {
 
@@ -162,7 +168,7 @@ public:
   ProgressTool *progressbar = nullptr; // progressbar
 
 private:
-  bool read_next_raw_batch(std::ifstream& file, DatReadState& state, DatRawReadBatch& batch, bool& finished);
+  bool read_next_raw_batch(ResultsReaderPipeline::BufferedInput& input, DatReadState& state, DatRawReadBatch& batch, bool& finished);
   static DatParsedBatch parse_raw_batch(const DatRawReadBatch& batch, const std::atomic<bool>& cancelled);
   bool read_next_boost_batch(std::ifstream& file, DatReadState& state, DatReadBatch& batch, bool& finished);
   static DatParsedBatch parse_boost_batch(const DatReadBatch& batch, const std::atomic<bool>& cancelled);

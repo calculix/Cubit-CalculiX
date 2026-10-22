@@ -248,3 +248,13 @@ bool CalculiXDrawInterface::animate_topology(int topology_id,double threshold,in
 {
   return ccx_core.animate_topology(topology_id, threshold, fps, save_filepath, overwrite);
 }
+
+bool CalculiXDrawInterface::topology_animation_active() const
+{
+  return ccx_core.topology_animation_active();
+}
+
+void CalculiXDrawInterface::cancel_topology_animation()
+{
+  ccx_core.cancel_topology_animation();
+}

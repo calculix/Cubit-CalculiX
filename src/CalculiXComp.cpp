@@ -123,7 +123,7 @@ void CalculiXComp::start_up(int withGUI)
   {    
     if(withGUI)
     {   
-      //setup_menus();
+      setup_menus();
       //setup_toolbars();
       //add_exports();
       setup_command_panels();
@@ -138,7 +138,7 @@ void CalculiXComp::start_up(int withGUI)
 void CalculiXComp::clean_up()
 {
   cleanup_observers();
-  //cleanup_menus();
+  cleanup_menus();
   //cleanup_toolbars();
   cleanup_command_panels();
   cleanup_CCXDockWindowModelTree();
@@ -197,8 +197,7 @@ void CalculiXComp::setup_menus()
     myMenus = new MenuManager;
   }
 
-  myMenus->add_to_existing_menu();
-  myMenus->setup_custom_menu();
+  myMenus->setup_help_menu();
 }
 
 void CalculiXComp::cleanup_menus()

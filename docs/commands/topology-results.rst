@@ -77,6 +77,19 @@ as a looping GIF. The case must not be running. Every frame uses the same
 threshold and the current graphics view. Frame capture previews the designs;
 the command can leave the final design displayed.
 
+The command starts an asynchronous export and returns after startup. Startup
+success does not certify that the GIF was created. Capture runs one frame at a
+time on the GUI thread; encoding, publication, and temporary PNG cleanup run on
+a worker. The saved-file message is printed only after those stages finish.
+A single complex capture can still briefly pause the UI.
+
+Only one topology GIF export can be active. Use **Cancel GIF export** in the
+Results panel to request cancellation. Cancellation is checked between captures
+and encoded frames; it cannot interrupt one encoder frame already in progress.
+An output already published before cancellation is retained. Avoid changing the
+mesh, model, camera, or graphics view during capture. Model reset/load requests
+cancel the export; starting topology is rejected while export is active.
+
 * ``fps`` defaults to 5 and must be an integer from 1 through 100.
 * ``save`` defaults to ``topo_<id>_animation.gif`` in the working directory.
 * The filename must end in ``.gif`` and its parent directory must exist.
