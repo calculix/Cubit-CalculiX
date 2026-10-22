@@ -77,7 +77,8 @@ settings use the defaults from the core; see :doc:`../user/topology-settings`.
 This objective minimizes the maximum absolute global Y displacement among
 nodes in nodeset 3. It is not compliance optimization with a displacement
 monitor. It can require an additional adjoint job per evaluated design.
-Compliance adaptive move settings do not adapt displacement updates.
+Adaptive density moves also apply to displacement updates; the ordinary
+projected proposal residual guards against apparent convergence from small moves.
 
 3. Inspect automatic preservation
 ---------------------------------

@@ -1012,6 +1012,13 @@ bool CoreTopologyOptimization::finish_topology_iteration(int topology_id, int it
       return false;
     }
   }
+  else if (options.objective == TopologyObjective::Displacement)
+  {
+    if (!ccx_topology_run_iface.evaluate_topology_displacement_projected_residual(topology_id, iteration_id))
+    {
+      return false;
+    }
+  }
 
   if (!ccx_topology_run_iface.mark_topology_iteration_completed(topology_id, iteration_id))
   {

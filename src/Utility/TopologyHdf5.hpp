@@ -402,6 +402,25 @@ private:
         return false;
       }
 
+      // Additive optional diagnostics: historical displacement records have none.
+      if constexpr (Reading)
+      {
+        data.projected_proposal_residual_available = false;
+        data.projected_proposal_residual = 0.0;
+      }
+      if (!Reading || file.nameExists(group + "/projected_proposal_residual_available"))
+      {
+        if (!value("projected_proposal_residual_available", data.projected_proposal_residual_available) ||
+            !value("projected_proposal_residual", data.projected_proposal_residual))
+        {
+          return false;
+        }
+      }
+      if (!std::isfinite(data.projected_proposal_residual) || data.projected_proposal_residual < 0.0)
+      {
+        return false;
+      }
+
       return value("objective", data.objective) &&
           value("value", data.value) &&
           value("convergence_checked", data.convergence_checked) &&

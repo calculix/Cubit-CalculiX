@@ -194,7 +194,7 @@ The implementation buckets free centers into cells of side length :math:`r`
 and searches the current cell and its 26 neighbors. This avoids an unconditional
 all-pairs search, but dense neighborhoods can still have quadratic cost.
 Filtering commits only after validation and invalidates any previously stored
-ordinary OC residual. Raw derivatives remain available separately. This is a
+ordinary proposal residuals. Raw derivatives remain available separately. This is a
 sensitivity filter, not a density filter, and is not generally the derivative
 of a separately defined filtered objective.
 
@@ -226,10 +226,11 @@ bisect for up to 100 steps. Retain a feasible trial and stop when the remaining
 volume gap is at most :math:`10^{-10}`. Volume is an upper bound; an update
 may use less than the target. Preserved densities stay one.
 
-Adaptive compliance moves
--------------------------
+Adaptive density moves
+----------------------
 
-Adaptation needs three ordered stored designs ending at the source iteration.
+Both compliance and displacement use this selection. Adaptation needs three
+ordered stored designs ending at the source iteration.
 If any of their volume fractions exceeds the target by more than :math:`10^{-6}`,
 use the configured maximum move. Otherwise start with the current design's
 recorded incoming move, bounded by the permitted minimum and maximum. The
@@ -247,14 +248,14 @@ If either weighted squared norm is at most :math:`10^{-24}`, correlation is
 unavailable and the selected move is retained. Otherwise clamp correlation
 to [-1, 1]. For :math:`c<-0.25`, halve the move down to the minimum. For
 :math:`c>0.5`, multiply by 1.1 up to the maximum. Between these thresholds,
-retain it. Diagnostics are attached to the next design. Disabling adaptation
-or optimizing displacement uses the configured maximum move.
+retain it. Diagnostics are attached to the next design for either objective.
+Disabling adaptation uses the configured maximum move.
 
 Displacement projected-gradient update
 --------------------------------------
 
-Signed displacement derivatives need a different update. With the same bounds
-and staged volume target, define
+Signed displacement derivatives need a different update. With the selected
+effective move, the same bounds, and the staged volume target, define
 
 .. math::
 
@@ -276,8 +277,8 @@ bisect up to 100 times, retaining a feasible trial. Even a zero-gradient design
 can change when volume projection is needed. There is no additional physical
 solve for a line search and no monotonic objective guarantee.
 
-Convergence and ordinary OC residual
-------------------------------------
+Convergence and ordinary proposal residuals
+-------------------------------------------
 
 From the second evaluation, compute
 
@@ -291,12 +292,19 @@ the relative change through normalized objective values to avoid unnecessary
 overflow. Both objectives require :math:`D_k\le\epsilon_\rho`,
 :math:`r_k\le\epsilon_J`, and :math:`f_k\le f_{\mathrm{target}}+10^{-6}`.
 
-Compliance additionally evaluates a fresh OC proposal from the current filtered
-sensitivities with the configured maximum move, independently of adaptation:
+Both objectives additionally evaluate a fresh proposal from the current filtered
+sensitivities with the configured maximum move, independently of adaptation.
+Compliance uses OC and displacement uses the same volume-weighted projection
+as its update:
 
 .. math::
 
-   R_k=\max_e|\rho_e^{\mathrm{OC}}-\rho_e^k|\le\epsilon_\rho.
+   R_k=\max_e|\rho_e^{\mathrm{ordinary}}-\rho_e^k|\le\epsilon_\rho.
+
+The ordinary projected residual also ignores any smaller adaptive step, so
+adaptation alone cannot make its test pass. It is a fixed-point diagnostic of
+the implemented filtered/surrogate update, not proof of optimality or a line
+search acceptance test.
 
 This diagnostic does not solve or store another physical design. Missing residual
 availability prevents convergence; invalid available data causes an error.
@@ -312,7 +320,8 @@ After physical and, when needed, adjoint results are available:
 #. Store optional displacement monitoring values.
 #. Collect Cubit element volumes and centers.
 #. Filter density sensitivities.
-#. Evaluate the ordinary OC residual for compliance.
+#. Evaluate the ordinary OC residual for compliance or the ordinary projected
+   residual for displacement.
 #. Mark the iteration completed.
 #. Check convergence from iteration 2; otherwise enforce the iteration limit
    or prepare and store the next density design and its update diagnostics.

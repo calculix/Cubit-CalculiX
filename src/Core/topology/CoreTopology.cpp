@@ -1361,7 +1361,7 @@ bool CoreTopology::evaluate_density_volume(int topology_id,int iteration_id,cons
   return true;
 }
 
-bool CoreTopology::select_compliance_move_limit(const TopologyCase& configuration, int source_iteration, double& move_limit, bool& correlation_available, double& correlation) const
+bool CoreTopology::select_density_move_limit(const TopologyCase& configuration, int source_iteration, double& move_limit, bool& correlation_available, double& correlation) const
 {
   move_limit = configuration.move_limit;
   correlation_available = false;
@@ -1370,7 +1370,8 @@ bool CoreTopology::select_compliance_move_limit(const TopologyCase& configuratio
   const auto current = configuration.iteration_density_designs.find(source_iteration);
 
   if (configuration.method != TopologyMethod::Density ||
-      configuration.objective != TopologyObjective::Compliance ||
+      (configuration.objective != TopologyObjective::Compliance &&
+       configuration.objective != TopologyObjective::Displacement) ||
       current == configuration.iteration_density_designs.end() ||
       !std::isfinite(configuration.move_limit) ||
       configuration.move_limit <= 0.0 ||
@@ -1379,7 +1380,7 @@ bool CoreTopology::select_compliance_move_limit(const TopologyCase& configuratio
       configuration.minimum_move_limit < 0.0 ||
       configuration.minimum_move_limit > configuration.move_limit)
   {
-    PRINT_ERROR("Invalid adaptive compliance move request.\n");
+    PRINT_ERROR("Invalid adaptive density move request.\n");
     return false;
   }
 
@@ -1419,7 +1420,7 @@ bool CoreTopology::select_compliance_move_limit(const TopologyCase& configuratio
       configuration.target_volume_fraction <= 0.0 ||
       configuration.target_volume_fraction > 1.0)
   {
-    PRINT_ERROR("Invalid adaptive compliance volume target.\n");
+    PRINT_ERROR("Invalid adaptive density volume target.\n");
     return false;
   }
 
@@ -1430,7 +1431,7 @@ bool CoreTopology::select_compliance_move_limit(const TopologyCase& configuratio
         stored->volume.volume_fraction < 0.0 ||
         stored->volume.volume_fraction > 1.0)
     {
-      PRINT_ERROR("Missing or invalid volume history for adaptive compliance moves.\n");
+      PRINT_ERROR("Missing or invalid volume history for adaptive density moves.\n");
       return false;
     }
 
@@ -1452,7 +1453,7 @@ bool CoreTopology::select_compliance_move_limit(const TopologyCase& configuratio
       current_densities.size() != weights.size() ||
       current_densities.size() != configuration.element_preserved.size())
   {
-    PRINT_ERROR("Incomplete density history for adaptive compliance moves.\n");
+    PRINT_ERROR("Incomplete density history for adaptive density moves.\n");
     return false;
   }
 
@@ -1563,17 +1564,11 @@ bool CoreTopology::set_density_update_diagnostics(int topology_id, int source_it
     return false;
   }
 
-  // Adaptive moves currently apply only to compliance.
-  if (configuration.objective == TopologyObjective::Displacement)
-  {
-    return true;
-  }
-
   double move_limit = configuration.move_limit;
   bool correlation_available = false;
   double correlation = 0.0;
 
-  if (!select_compliance_move_limit(configuration, source_iteration, move_limit, correlation_available, correlation))
+  if (!select_density_move_limit(configuration, source_iteration, move_limit, correlation_available, correlation))
   {
     return false;
   }
@@ -1649,32 +1644,36 @@ bool CoreTopology::build_density_update(int topology_id,int source_iteration,std
     PRINT_ERROR("Invalid topology move limit.\n");
     return false;
   }
-  if (configuration.objective == TopologyObjective::Displacement)
-  {
-    return build_displacement_density_update(configuration, design->second, evaluation->second, densities);
-  }
-
   double effective_move_limit = move_limit;
   bool correlation_available = false;
   double correlation = 0.0;
 
-  if (!select_compliance_move_limit(configuration, source_iteration, effective_move_limit, correlation_available, correlation))
+  if (!select_density_move_limit(configuration, source_iteration, effective_move_limit, correlation_available, correlation))
   {
     return false;
   }
 
-  if (!build_compliance_oc_proposal(configuration, design->second, evaluation->second, effective_move_limit, densities))
+  bool updated = false;
+  if (configuration.objective == TopologyObjective::Displacement)
+  {
+    updated = build_displacement_density_update(configuration, design->second, evaluation->second, effective_move_limit, densities);
+  }
+  else
+  {
+    updated = build_compliance_oc_proposal(configuration, design->second, evaluation->second, effective_move_limit, densities);
+  }
+  if (!updated)
   {
     return false;
   }
 
   if (correlation_available)
   {
-    PRINT_INFO("Topology %d iteration %d: next compliance move limit %.6g; density update correlation %.6g.\n", topology_id, source_iteration, effective_move_limit, correlation);
+    PRINT_INFO("Topology %d iteration %d: next density move limit %.6g; density update correlation %.6g.\n", topology_id, source_iteration, effective_move_limit, correlation);
   }
   else
   {
-    PRINT_INFO("Topology %d iteration %d: next compliance move limit %.6g.\n", topology_id, source_iteration, effective_move_limit);
+    PRINT_INFO("Topology %d iteration %d: next density move limit %.6g.\n", topology_id, source_iteration, effective_move_limit);
   }
 
   return true;
@@ -1879,7 +1878,7 @@ bool CoreTopology::build_compliance_oc_proposal(const TopologyCase& configuratio
   return true;
 }
 
-bool CoreTopology::build_displacement_density_update(const TopologyCase& configuration, const TopologyDensityDesign& design, const TopologyIterationEvaluation& evaluation, std::map<int, double>& densities) const
+bool CoreTopology::build_displacement_density_update(const TopologyCase& configuration, const TopologyDensityDesign& design, const TopologyIterationEvaluation& evaluation, double move_limit, std::map<int, double>& densities) const
 {
   densities.clear();
 
@@ -1887,7 +1886,30 @@ bool CoreTopology::build_displacement_density_update(const TopologyCase& configu
   const auto& gradients = evaluation.filtered_density_sensitivities;
   const auto& volume = design.volume;
 
-  const double move_limit = configuration.move_limit;
+  // Shared validation for adaptive updates and ordinary projected residuals.
+  if (configuration.method != TopologyMethod::Density ||
+      configuration.objective != TopologyObjective::Displacement ||
+      evaluation.objective != TopologyObjective::Displacement ||
+      !volume.available || previous.empty() ||
+      previous.size() != gradients.size() ||
+      previous.size() != volume.density_sensitivities.size() ||
+      previous.size() != configuration.element_preserved.size() ||
+      !std::isfinite(design.minimum_density) ||
+      design.minimum_density <= 0.0 || design.minimum_density >= 1.0 ||
+      !std::isfinite(configuration.move_limit) ||
+      configuration.move_limit <= 0.0 || configuration.move_limit > 1.0 ||
+      !std::isfinite(move_limit) || move_limit <= 0.0 || move_limit > configuration.move_limit ||
+      !std::isfinite(configuration.target_volume_fraction) ||
+      configuration.target_volume_fraction <= 0.0 || configuration.target_volume_fraction > 1.0 ||
+      !std::isfinite(volume.minimum_volume_fraction) ||
+      volume.minimum_volume_fraction < 0.0 || volume.minimum_volume_fraction > 1.0 ||
+      !std::isfinite(volume.minimum_design_volume_fraction) ||
+      volume.minimum_design_volume_fraction < 0.0 || volume.minimum_design_volume_fraction > 1.0 ||
+      configuration.target_volume_fraction + 1.0e-12 < volume.minimum_design_volume_fraction)
+  {
+    PRINT_ERROR("Invalid displacement density update data or move limit.\n");
+    return false;
+  }
   constexpr double volume_tolerance = 1.0e-10;
 
   struct Variable
@@ -1914,7 +1936,7 @@ bool CoreTopology::build_displacement_density_update(const TopologyCase& configu
     const auto weight = volume.density_sensitivities.find(density.first);
     const auto preserved = configuration.element_preserved.find(density.first);
 
-    if (gradient == gradients.end() ||
+    if (density.first <= 0 || gradient == gradients.end() ||
         weight == volume.density_sensitivities.end() ||
         preserved == configuration.element_preserved.end() ||
         !std::isfinite(density.second) ||
@@ -2175,6 +2197,65 @@ bool CoreTopology::evaluate_compliance_oc_residual(int topology_id, int iteratio
   return true;
 }
 
+bool CoreTopology::evaluate_displacement_projected_residual(int topology_id, int iteration_id)
+{
+  const auto entry = topology_cases.find(topology_id);
+  if (!is_initialized || iteration_id < 1 || entry == topology_cases.end())
+  {
+    PRINT_ERROR("Invalid displacement projected residual request.\n");
+    return false;
+  }
+  auto& configuration = entry->second;
+  const auto design = configuration.iteration_density_designs.find(iteration_id);
+  const auto evaluation = configuration.iteration_evaluations.find(iteration_id);
+  if (evaluation == configuration.iteration_evaluations.end())
+  {
+    PRINT_ERROR("Missing displacement evaluation for projected residual.\n");
+    return false;
+  }
+  auto& progress = evaluation->second;
+  progress.projected_proposal_residual_available = false;
+  progress.projected_proposal_residual = 0.0;
+  if (design == configuration.iteration_density_designs.end())
+  {
+    PRINT_ERROR("Missing displacement design for projected residual.\n");
+    return false;
+  }
+  const auto& stored_design = design->second;
+  const auto& densities = stored_design.element_densities;
+  std::map<int, double> proposal;
+  // Deliberately ignore adaptive restriction when assessing stationarity.
+  if (!build_displacement_density_update(configuration, stored_design, progress, configuration.move_limit, proposal))
+  {
+    return false;
+  }
+  if (proposal.size() != densities.size())
+  {
+    PRINT_ERROR("Incomplete ordinary displacement proposal.\n");
+    return false;
+  }
+  double residual = 0.0;
+  for (const auto& density : densities)
+  {
+    const auto proposed = proposal.find(density.first);
+    if (proposed == proposal.end() || !std::isfinite(proposed->second) ||
+        proposed->second < stored_design.minimum_density || proposed->second > 1.0)
+    {
+      PRINT_ERROR("Invalid ordinary displacement proposal for element %d.\n", density.first);
+      return false;
+    }
+    residual = std::max(residual, std::abs(proposed->second - density.second));
+  }
+  if (!std::isfinite(residual))
+  {
+    PRINT_ERROR("Invalid ordinary displacement projected residual.\n");
+    return false;
+  }
+  progress.projected_proposal_residual = residual;
+  progress.projected_proposal_residual_available = true;
+  return true;
+}
+
 bool CoreTopology::check_density_convergence(int topology_id,int previous_iteration, int current_iteration, bool& converged)
 {
   converged = false;
@@ -2281,21 +2362,21 @@ bool CoreTopology::check_density_convergence(int topology_id,int previous_iterat
     return false;
   }
 
-  const bool needs_oc_residual = configuration.objective == TopologyObjective::Compliance;
   const auto& current_progress = current_evaluation->second;
-
-  if (needs_oc_residual &&
-      current_progress.oc_proposal_residual_available &&
-      (!std::isfinite(current_progress.oc_proposal_residual) ||
-       current_progress.oc_proposal_residual < 0.0))
+  const bool displacement = configuration.objective == TopologyObjective::Displacement;
+  const bool residual_available = displacement
+    ? current_progress.projected_proposal_residual_available
+    : current_progress.oc_proposal_residual_available;
+  const double residual = displacement
+    ? current_progress.projected_proposal_residual
+    : current_progress.oc_proposal_residual;
+  if (residual_available && (!std::isfinite(residual) || residual < 0.0))
   {
-    PRINT_ERROR("Invalid ordinary compliance OC residual.\n");
+    PRINT_ERROR("Invalid ordinary density proposal residual.\n");
     return false;
   }
-
-  const bool oc_residual_passed = !needs_oc_residual ||
-      (current_progress.oc_proposal_residual_available &&
-       current_progress.oc_proposal_residual <= density_tolerance);
+  const bool residual_passed = residual_available && residual <= density_tolerance;
+  const char* residual_name = displacement ? "Ordinary projected proposal residual" : "Ordinary OC proposal residual";
 
   constexpr double volume_tolerance = 1.0e-6;
 
@@ -2303,7 +2384,7 @@ bool CoreTopology::check_density_convergence(int topology_id,int previous_iterat
       maximum_change <= density_tolerance &&
       relative_change <= objective_tolerance &&
       fraction <= configuration.target_volume_fraction + volume_tolerance &&
-      oc_residual_passed;
+      residual_passed;
 
   auto& progress = current_evaluation->second;
   progress.maximum_density_change = maximum_change;
@@ -2313,16 +2394,13 @@ bool CoreTopology::check_density_convergence(int topology_id,int previous_iterat
 
   PRINT_INFO("Topology %d iteration %d convergence:\n", topology_id, current_iteration);
   PRINT_INFO("  Maximum density change: %.6g / %.6g (%.2fx limit) [%s]\n", maximum_change, density_tolerance, maximum_change / density_tolerance, maximum_change <= density_tolerance ? "PASS" : "WAIT");
-  if (needs_oc_residual)
+  if (residual_available)
   {
-    if (current_progress.oc_proposal_residual_available)
-    {
-      PRINT_INFO("  Ordinary OC proposal residual: %.6g / %.6g (%.2fx limit) [%s]\n", current_progress.oc_proposal_residual, density_tolerance, current_progress.oc_proposal_residual / density_tolerance, oc_residual_passed ? "PASS" : "WAIT");
-    }
-    else
-    {
-      PRINT_INFO("  Ordinary OC proposal residual: unavailable [WAIT]\n");
-    }
+    PRINT_INFO("  %s: %.6g / %.6g (%.2fx limit) [%s]\n", residual_name, residual, density_tolerance, residual / density_tolerance, residual_passed ? "PASS" : "WAIT");
+  }
+  else
+  {
+    PRINT_INFO("  %s: unavailable [WAIT]\n", residual_name);
   }
   PRINT_INFO("  Relative %s change: %.6g / %.6g (%.2fx limit) [%s]\n", objective_name, relative_change, objective_tolerance, relative_change / objective_tolerance, relative_change <= objective_tolerance ? "PASS" : "WAIT");
   PRINT_INFO("  Volume fraction: %.9g / %.9g [%s]\n", fraction, configuration.target_volume_fraction + volume_tolerance, fraction <= configuration.target_volume_fraction + volume_tolerance ? "PASS" : "WAIT");
@@ -2596,6 +2674,8 @@ bool CoreTopology::filter_density_sensitivities(int topology_id,int iteration_id
   evaluation->second.sensitivity_filter_radius = radius;
   evaluation->second.oc_proposal_residual_available = false;
   evaluation->second.oc_proposal_residual = 0.0;
+  evaluation->second.projected_proposal_residual_available = false;
+  evaluation->second.projected_proposal_residual = 0.0;
 
   return true;
 }

@@ -149,7 +149,7 @@ public:
    * @param source_iteration Stored design with filtered sensitivities and volume data.
    * @param densities Output proposed element densities.
    * @return True for a valid proposal; false if required data or calculations fail.
-   * @note Compliance uses OC with optional adaptive moves; displacement uses a
+   * @note Both objectives support adaptive moves. Compliance uses OC; displacement uses a
    * signed projected-gradient update. Both preserve fixed elements and stage
    * the volume target to respect move bounds. Neither performs a new solve.
    */
@@ -164,6 +164,16 @@ public:
    * adaptive move reduction and does not store or solve the proposed design.
    */
   bool evaluate_compliance_oc_residual(int topology_id, int iteration_id);
+
+  /**
+   * @brief Store max(abs(rho_projected-rho)) with the configured maximum move.
+   * @param topology_id Displacement density case.
+   * @param iteration_id Evaluated design with filtered sensitivities and volume data.
+   * @return True after storing an available residual; false on invalid data.
+   * @note Ignores adaptive restriction, requires no solve, and does not store the
+   * proposal as another design. Failed calculations leave availability false.
+   */
+  bool evaluate_displacement_projected_residual(int topology_id, int iteration_id);
 
   /**
    * @brief Attach the source update's effective move and correlation to a design.
@@ -207,9 +217,9 @@ public:
   std::map<int, TopologyCase> topology_cases;
 
 private:
-  bool select_compliance_move_limit(const TopologyCase& configuration, int source_iteration, double& move_limit, bool& correlation_available, double& correlation) const;
+  bool select_density_move_limit(const TopologyCase& configuration, int source_iteration, double& move_limit, bool& correlation_available, double& correlation) const;
   bool build_compliance_oc_proposal(const TopologyCase& configuration, const TopologyDensityDesign& design, const TopologyIterationEvaluation& evaluation, double move_limit, std::map<int, double>& densities) const;
-  bool build_displacement_density_update(const TopologyCase& configuration, const TopologyDensityDesign& design, const TopologyIterationEvaluation& evaluation, std::map<int, double>& densities) const;
+  bool build_displacement_density_update(const TopologyCase& configuration, const TopologyDensityDesign& design, const TopologyIterationEvaluation& evaluation, double move_limit, std::map<int, double>& densities) const;
   bool change_preserved_sets(int topology_id,int set_type,const std::vector<int>& ids,bool adding);
 };
 

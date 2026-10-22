@@ -52,7 +52,7 @@ std::vector<std::string> ccxTopologyCreateCommand::get_help()
       "Create a named topology optimization case.",
       "displacement_nodeset enables displacement measurement; zero disables it.",
       "Displacement components use global coordinates. X/Y/Z report the maximum absolute component; magnitude reports the maximum vector norm.",
-      "adaptive_moves_on enables adaptive move limits for compliance density optimization; adaptive_moves_off disables them. The default is on.",
+      "adaptive_moves_on enables adaptive move limits for compliance and displacement density optimization; adaptive_moves_off disables them. The default is on.",
       "minimum_move_limit must be between zero and move_limit. Zero automatically uses 10 percent of move_limit.",
       "material_cap limits generated topology materials across all base materials. Default: 1024; minimum: 2. Applies to new iterations; section settings remain separate."
   };

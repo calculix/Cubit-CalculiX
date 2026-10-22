@@ -55,7 +55,7 @@ satisfy the volume bound. This avoids treating the initial volume reduction
 as oscillation.
 
 Displacement uses a projected-gradient update that accepts signed derivatives.
-Compliance move adaptation does not apply to it. There is no objective line
+The same adaptive move selection applies to it. There is no objective line
 search or guarantee that every displacement update decreases the objective.
 
 Reading convergence indicators
@@ -73,11 +73,12 @@ When both objective values are zero, :math:`r_J=0`. The density change must
 not exceed the density tolerance, and the relative objective change must not
 exceed the relative objective tolerance.
 
-Compliance also requires an ordinary OC proposal residual:
+Both objectives also require an ordinary proposal residual: OC for compliance,
+and projected-gradient for displacement:
 
 .. math::
 
-   R_{\mathrm{OC}}=\max_e |\rho_e^{\mathrm{OC}}-\rho_e^k|
+   R=\max_e |\rho_e^{\mathrm{ordinary}}-\rho_e^k|
    \le \text{density tolerance}.
 
 This proposal uses the configured maximum move limit, even if the actual
@@ -86,8 +87,8 @@ prevents a small adaptive move alone from implying convergence.
 
 The action panel's bars show usage of each displayed limit, rather than a
 percentage of the optimization completed. ``WAIT`` means that criterion has
-not passed. All three visible indicators can pass while the additional OC
-check still prevents compliance convergence. Displacement has no OC check.
+not passed. All three visible indicators can pass while the additional
+objective-specific proposal check still prevents convergence.
 ``iteration_limit`` means the maximum number of evaluated designs was reached;
 it does not certify convergence. The initial solid design counts as iteration 1.
 

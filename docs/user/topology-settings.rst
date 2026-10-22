@@ -68,15 +68,15 @@ stored settings when read by the supported configuration loader.
    * - Density move limit / ``move_limit``
      - ``0.2``
      - Maximum absolute change of an element's density per update. Greater than 0 and at most 1; dimensionless.
-   * - Adaptive compliance moves
+   * - Adaptive density moves
      - Enabled
-     - ``adaptive_moves_on`` enables adaptive restriction of the compliance move limit; ``adaptive_moves_off`` disables it. Displacement updates do not use this adaptation.
+     - ``adaptive_moves_on`` enables adaptive restriction of density move limits for compliance and displacement; ``adaptive_moves_off`` disables it.
    * - Minimum move limit / ``minimum_move_limit``
      - ``0``
-     - Nonnegative and no greater than ``move_limit``. Zero automatically uses 10 percent of the configured maximum. Used by adaptive compliance moves.
+     - Nonnegative and no greater than ``move_limit``. Zero automatically uses 10 percent of the configured maximum. Used by adaptive density moves.
    * - Density tolerance / ``density_tolerance``
      - ``0.01``
-     - Maximum density change allowed for convergence; also the ordinary OC proposal-residual limit for compliance. Greater than 0 and at most 1; dimensionless.
+     - Maximum density change allowed for convergence; also the ordinary proposal-residual limit (OC for compliance, projected update for displacement). Greater than 0 and at most 1; dimensionless.
    * - Relative objective tolerance / ``compliance_tolerance``
      - ``0.001``
      - Relative objective-change limit for compliance or displacement; 0.001 is 0.1 percent. Greater than 0 and at most 1.

@@ -1,0 +1,256 @@
+#!cubit
+# Compare fixed and adaptive moves for displacement minimization.
+# WARNING: resets the current model. Requires the updated plugin.
+# Runs two cases sequentially with wait; each iteration has physical + adjoint solves.
+# Outputs use a timestamp prefix in the current Cubit working directory.
+# No animation, element deletion, solver launch or result import outside the topology run.
+reset
+#beam geometry
+create brick x 100 y 30 z 1
+block 1 add volume 1
+split surface 6 offset curve 10 distance 2.5
+
+# node sets
+nodeset 1 add surface 4
+nodeset 1 name "x0"
+nodeset 2 add surface 7
+nodeset 2 name "xl"
+nodeset 3 add surface 8
+nodeset 3 name "rb"
+
+# material
+create material "Steel" property_group "CalculiX-FEA"
+modify material "Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0
+modify material "Steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
+
+# section
+ccx create section solid block 1 material 1
+
+# vertices for ref and rot node
+create vertex location on surface 8  center
+create vertex location on surface 8  center
+
+# rigid body constraint
+ccx create constraint rigid body nodeset 3 ref 11 rot 12
+
+# load
+create force  on vertex 11 force value 10000 direction 0 -1 0
+
+# bc
+create displacement  on nodeset 1  dof 1 dof 2 dof 3 fix 0
+
+# outputs
+ccx create fieldoutput name "node_output" node
+ccx modify fieldoutput 1 node
+ccx modify fieldoutput 1 node key_on RF U
+ccx modify fieldoutput 1 node key_off CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF NT PNT POT PRF PS PSF PT PTF PU RFL SEN TS TSF TT TTF TURB V VF
+ccx create fieldoutput name "element_output" element
+ccx modify fieldoutput 2 element
+ccx modify fieldoutput 2 element key_on E S
+ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFL HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS
+ccx create historyoutput name "node_output" node
+ccx create historyoutput name "element_output" element
+ccx modify historyoutput 1 node nodeset 3
+ccx modify historyoutput 1 node key_on U RF
+ccx modify historyoutput 1 node key_off NT TSF TTF PN PSF PTF MACH CP VF DEPF TURB MF RFL
+ccx modify historyoutput 2 element block 1
+ccx modify historyoutput 2 element key_on S E
+ccx modify historyoutput 2 element key_off SVF ME PEEQ CEEQ ENER SDV HFL HFLF COORD ELSE ELKE EVOL EMAS EBHE CENT
+
+
+# steps
+ccx create step name "Static" static
+#ccx modify step 1 parameter nlgeom_yes
+ccx modify step 1 static solver spooles
+#ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.1 timeperiodofstep 1 minimumtimeincrement 0.01 maximumtimeincrement 0.1
+ccx step 1 add load force 1
+ccx step 1 add bc displacement 1
+ccx step 1 add fieldoutput 1 2
+ccx step 1 add historyoutput 1 2
+
+# mesh
+block 1 element type HEX8
+volume 1 size 5
+mesh vertex all
+mesh volume all
+# Explicit full integration; the default HEX8 mapping may select C3D8R.
+ccx block 1 element_type C3D8
+
+
+#!python
+import csv
+import json
+import math
+import time
+import traceback
+from datetime import datetime
+from pathlib import Path
+from calculix_pythoninterface import CalculiXPythonInterface
+
+# Edit before running. Both cases receive exactly the same numerical settings.
+MAXIMUM_ITERATIONS = 300
+TARGET_VOLUME_FRACTION = 0.7
+MOVE_LIMIT = 0.2
+MINIMUM_MOVE_LIMIT = 0.02
+DENSITY_TOLERANCE = 0.005
+OBJECTIVE_TOLERANCE = 0.0001
+MATERIAL_CAP = 2048  # At least the element count: avoids stiffness grouping in this test.
+SAVE_MODEL = True  # Preserves evaluations, sensitivities, move diagnostics and residuals.
+
+ITERATION_COLUMNS = ["iteration", "physical_job", "job_status", "objective", "volume_fraction", "selected", "maximum_density_change", "relative_objective_change", "converged", "displacement", "node", "nodeset", "component"]
+ELEMENT_COLUMNS = ["iteration", "element", "density", "stiffness_factor", "preserved"]
+
+
+def compare_displacement_moves():
+    ccx = CalculiXPythonInterface()
+    prefix = "displacement_moves_" + datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    work = Path.cwd()
+    report_path = work / (prefix + "_report.json")
+    report = {
+        "status": "running", "cases": [], "checks": [],
+        "settings": {"maximum_iterations": MAXIMUM_ITERATIONS, "target_volume_fraction": TARGET_VOLUME_FRACTION,
+                     "move_limit": MOVE_LIMIT, "minimum_move_limit": MINIMUM_MOVE_LIMIT,
+                     "density_tolerance": DENSITY_TOLERANCE, "objective_tolerance": OBJECTIVE_TOLERANCE,
+                     "material_cap": MATERIAL_CAP, "displacement_nodeset": 4, "component": "y"},
+        "notes": ["One sequential run per mode; elapsed times are observations, not a repeated benchmark.",
+                  "Iteration-limit termination is reported separately from convergence and execution failure.",
+                  "Python does not expose ordinary projected residuals or effective moves. Inspect the command output and saved model.",
+                  "A converged state uses the core convergence test, including the ordinary projected residual."]}
+    final_elements = {}
+    initial_elements = {}
+
+    def save_report():
+        report_path.write_text(json.dumps(report, indent=2, allow_nan=False), encoding="utf-8")
+
+    def require(condition, label):
+        report["checks"].append({"check": label, "passed": bool(condition)})
+        save_report()
+        if not condition:
+            raise RuntimeError(label)
+
+    def command(text):
+        before = cubit.get_error_count()
+        cubit.cmd(text)
+        require(cubit.get_error_count() == before, "Command succeeded: " + text)
+
+    def write_csv(suffix, columns, rows):
+        path = work / (prefix + suffix)
+        with path.open("w", newline="", encoding="utf-8") as stream:
+            writer = csv.writer(stream)
+            writer.writerow(columns)
+            writer.writerows(rows)
+
+    try:
+        print("Displacement comparison output prefix: " + str(work / prefix))
+        mesh_ids = set(int(value) for value in cubit.get_entities("hex"))
+        require(bool(mesh_ids) and len(mesh_ids) <= MATERIAL_CAP, "Mesh is nonempty and fits the exact material cap")
+        require(MAXIMUM_ITERATIONS >= 2 and 0 < MINIMUM_MOVE_LIMIT <= MOVE_LIMIT <= 1,
+                "Iteration and move settings are valid")
+        require(0 < TARGET_VOLUME_FRACTION <= 1 and 0 < DENSITY_TOLERANCE <= 1 and 0 < OBJECTIVE_TOLERANCE <= 1,
+                "Volume and convergence settings are valid")
+        # One node on the loaded rigid face avoids switching the maximum-displacement node.
+        loaded_nodes = list(cubit.get_nodeset_nodes_inclusive(3))
+        require(bool(loaded_nodes), "Loaded rigid-body nodeset is nonempty")
+        monitor = min(int(value) for value in loaded_nodes)
+        command("nodeset 4 add node %d" % monitor)
+        command('nodeset 4 name "displacement_monitor"')
+        report["monitor_node"] = monitor
+        report["mesh_element_count"] = len(mesh_ids)
+
+        for case_id, mode in ((1, "off"), (2, "on")):
+            label = "fixed" if mode == "off" else "adaptive"
+            name = prefix + "_" + label
+            command('ccx create topology %d name "%s" method density objective displacement displacement_nodeset 4 displacement_component y volume_fraction %.17g void_ratio 0.001 iterations %d filter_radius 0 move_limit %.17g minimum_move_limit %.17g density_tolerance %.17g compliance_tolerance %.17g material_cap %d adaptive_moves_%s' %
+                    (case_id, name, TARGET_VOLUME_FRACTION, MAXIMUM_ITERATIONS, MOVE_LIMIT, MINIMUM_MOVE_LIMIT, DENSITY_TOLERANCE, OBJECTIVE_TOLERANCE, MATERIAL_CAP, mode))
+            print("STARTING " + label.upper() + " DISPLACEMENT RUN")
+            started = time.perf_counter()
+            # Collect evidence even when the run command reports an error.
+            before = cubit.get_error_count()
+            cubit.cmd("ccx run topology %d wait" % case_id)
+            elapsed = time.perf_counter() - started
+            state = str(ccx.get_topology_run_state(case_id))
+            rows = sorted([list(row) for row in ccx.get_topology_iteration_data(case_id)], key=lambda row: int(row[0]))
+            write_csv("_" + label + "_iterations.csv", ITERATION_COLUMNS, rows)
+            case = {"case": case_id, "mode": label, "state": state, "seconds": elapsed,
+                    "physical_iteration_count": len(rows), "converged": state == "converged"}
+            report["cases"].append(case)
+            save_report()
+            require(cubit.get_error_count() == before and state in ("converged", "iteration_limit"), label + ": topology completed without failure")
+            require(bool(rows) and all(len(row) == len(ITERATION_COLUMNS) and int(row[2]) == 2 for row in rows), label + ": completed physical jobs and expected query columns")
+            require([int(row[0]) for row in rows] == list(range(1, len(rows) + 1)), label + ": consecutive iterations starting at 1")
+            previous = None
+            preservation = None
+            with (work / (prefix + "_" + label + "_elements.csv")).open("w", newline="", encoding="utf-8") as stream:
+                writer = csv.writer(stream)
+                writer.writerow(ELEMENT_COLUMNS)
+                for row in rows:
+                    iteration = int(row[0])
+                    data = [list(item) for item in ccx.get_topology_iteration_element_data(case_id, iteration)]
+                    require(len(data) == len(mesh_ids) and all(len(item) == 4 for item in data), label + ": complete element data at iteration %d" % iteration)
+                    elements = {int(item[0]): item for item in data}
+                    require(set(elements) == mesh_ids and all(all(math.isfinite(value) for value in item) and 0 < item[1] <= 1 and 0 < item[2] <= 1 and item[3] in (0, 1) for item in data), label + ": valid IDs, densities, factors and preservation flags at iteration %d" % iteration)
+                    flags = {element: bool(item[3]) for element, item in elements.items()}
+                    if preservation is None:
+                        preservation = flags
+                        initial_elements[label] = elements
+                        require(any(flags.values()) and not all(flags.values()), label + ": both preserved and design elements exist")
+                        require(all(abs(item[1] - 1) <= 1e-12 for item in data), label + ": initial design is fully solid")
+                    require(flags == preservation and all(not flags[element] or abs(item[1] - 1) <= 1e-12 for element, item in elements.items()), label + ": preserved elements remain solid at iteration %d" % iteration)
+                    require(math.isfinite(float(row[3])) and float(row[3]) >= 0 and math.isfinite(float(row[4])) and 0 <= float(row[4]) <= 1, label + ": finite objective and volume at iteration %d" % iteration)
+                    if previous is not None:
+                        change = max(abs(elements[element][1] - previous[element][1]) for element in mesh_ids)
+                        require(change <= MOVE_LIMIT + 1e-10 and math.isclose(change, float(row[6]), rel_tol=1e-9, abs_tol=1e-12), label + ": move bound and recorded density change at iteration %d" % iteration)
+                    writer.writerows([[iteration] + item for item in data])
+                    stream.flush()
+                    previous = elements
+            final_elements[label] = previous
+            last = rows[-1]
+            case.update({"final_objective": float(last[3]), "final_volume_fraction": float(last[4]),
+                         "final_maximum_density_change": float(last[6]) if last[6] else None,
+                         "final_relative_objective_change": float(last[7]) if last[7] else None})
+            require((last[8] == "1") == case["converged"], label + ": convergence flag matches terminal state")
+            if case["converged"]:
+                require(float(last[6]) <= DENSITY_TOLERANCE and float(last[7]) <= OBJECTIVE_TOLERANCE and float(last[4]) <= TARGET_VOLUME_FRACTION + 1e-6, label + ": visible convergence criteria pass")
+            else:
+                require(len(rows) == MAXIMUM_ITERATIONS, label + ": iteration limit reached as configured")
+            print("%s: %s, %d iterations, %.3f seconds, displacement %.9g, volume %.9g" %
+                  (label, state, len(rows), elapsed, case["final_objective"], case["final_volume_fraction"]))
+            save_report()
+
+        require(initial_elements["fixed"] == initial_elements["adaptive"], "Both cases start with identical element designs and preservation")
+        fixed, adaptive = report["cases"]
+        differences = [abs(final_elements["adaptive"][element][1] - final_elements["fixed"][element][1]) for element in sorted(mesh_ids)]
+        report["comparison"] = {
+            "iteration_difference_adaptive_minus_fixed": adaptive["physical_iteration_count"] - fixed["physical_iteration_count"],
+            "objective_difference_adaptive_minus_fixed": adaptive["final_objective"] - fixed["final_objective"],
+            "objective_difference_percent": 100 * (adaptive["final_objective"] / fixed["final_objective"] - 1) if fixed["final_objective"] > 0 else None,
+            "maximum_density_difference": max(differences),
+            "mean_density_difference_unweighted": math.fsum(differences) / len(differences)}
+        write_csv("_comparison.csv", ["mode", "state", "physical_iteration_count", "seconds", "final_objective", "final_volume_fraction", "final_maximum_density_change", "final_relative_objective_change"],
+                  [[case[key] for key in ("mode", "state", "physical_iteration_count", "seconds", "final_objective", "final_volume_fraction", "final_maximum_density_change", "final_relative_objective_change")] for case in report["cases"]])
+        report["status"] = "COMPLETED_ALL_CONVERGED" if all(case["converged"] for case in report["cases"]) else "COMPLETED_NOT_ALL_CONVERGED"
+        print("Comparison: " + json.dumps(report["comparison"], allow_nan=False))
+        print("Assess iteration count together with convergence and final objective; fewer iterations alone do not establish an improvement.")
+    except Exception:
+        report["status"] = "FAILED_OR_INCOMPLETE"
+        report["exception"] = traceback.format_exc()
+        print(report["exception"])
+    finally:
+        if SAVE_MODEL:
+            try:
+                command('save as "%s" overwrite' % (work / (prefix + ".cub5")).as_posix())
+            except Exception:
+                report["status"] = "FAILED_OR_INCOMPLETE"
+                report["save_exception"] = traceback.format_exc()
+                print(report["save_exception"])
+        save_report()
+        print("DISPLACEMENT MOVE COMPARISON: " + report["status"])
+        print("Report: " + str(report_path))
+        print("Residual and effective move values: see the topology command output and saved model.")
+
+
+compare_displacement_moves()

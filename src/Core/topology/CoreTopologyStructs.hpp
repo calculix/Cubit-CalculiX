@@ -82,6 +82,10 @@ struct TopologyIterationEvaluation
   bool oc_proposal_residual_available = false;
   double oc_proposal_residual = 0.0;
 
+  // Ordinary displacement projection using the configured maximum move.
+  bool projected_proposal_residual_available = false;
+  double projected_proposal_residual = 0.0;
+
   // Global element ID -> derivative with respect to stiffness factor.
   // Preserved elements receive zero because they are fixed.
   std::map<int, double> stiffness_sensitivities;

@@ -358,6 +358,7 @@ public:
   bool filter_topology_density_sensitivities(int topology_id, int iteration_id, const std::map<int, double>& element_volumes, const std::map<int, std::array<double, 3>>& element_centers);
   bool build_topology_density_update(int topology_id, int source_iteration, std::map<int, double>& densities);
   bool evaluate_topology_compliance_oc_residual(int topology_id, int iteration_id);
+  bool evaluate_topology_displacement_projected_residual(int topology_id, int iteration_id);
   bool check_topology_density_convergence(int topology_id, int previous_iteration, int current_iteration, bool& converged);
   bool run_topology(int topology_id, bool wait = false);
   bool wait_topology(int topology_id);

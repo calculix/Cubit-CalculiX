@@ -70,7 +70,11 @@ Save and load
 ``CoreTopology::save_configuration`` writes the topology group below
 ``Cubit-CalculiX/Topology`` with schema version 8. Version 8 stores
 ``material_cap``; older configurations receive the default for future iterations
-without changing their historical applied factors. Case settings, explicit
+without changing their historical applied factors. Ordinary displacement
+projected-residual diagnostics are additive optional evaluation datasets within
+this schema. Older records load with availability false and residual zero;
+loading does not recompute them or manufacture a passing check. Newly evaluated
+iterations calculate their residual before convergence checks. Case settings, explicit
 preservation rules, and runtime records are serialized through the topology
 HDF5 archive helpers. Related material and job data are managed by their
 own cores; case records refer to them rather than owning duplicate job objects.

@@ -67,13 +67,13 @@ TopologySettingsPanel::TopologySettingsPanel(bool modify, QWidget *parent)
   adaptiveMoves->addItem(modifying ? "Keep current" : "Default", "");
   adaptiveMoves->addItem("Off", "adaptive_moves_off");
   adaptiveMoves->addItem("On", "adaptive_moves_on");
-  adaptiveMoves->setToolTip("Adapt the compliance density move limit from previous density changes. Other objectives do not use this setting.");
+  adaptiveMoves->setToolTip("Adapt density move limits from previous density changes for compliance and displacement optimization.");
 
   minimumMoveLimit = new QLineEdit(settings);
   minimumMoveLimit->setPlaceholderText(modifying ? "" : "Optional: use default");
   minimumMoveLimit->setToolTip("Minimum adaptive move limit; 0 automatically uses 10 percent of the maximum density move limit. An explicit value must not exceed that maximum.");
 
-  form->insertRow(6, "Adaptive compliance moves", adaptiveMoves);
+  form->insertRow(6, "Adaptive density moves", adaptiveMoves);
   form->insertRow(7, "Minimum move limit", minimumMoveLimit);
 
   method = new QComboBox(settings);

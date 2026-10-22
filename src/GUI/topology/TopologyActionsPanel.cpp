@@ -417,9 +417,9 @@ void TopologyActionsPanel::updateConvergence()
 
   const bool converged = (*latest)[8] == "1";
 
-  if (!converged && passed == 3 && settings.objective == TopologyObjective::Compliance)
+  if (!converged && passed == 3 && (settings.objective == TopologyObjective::Compliance || settings.objective == TopologyObjective::Displacement))
   {
-    convergenceSummary->setText("Converged: NO - ordinary OC proposal has not settled");
+    convergenceSummary->setText("Converged: NO - ordinary density proposal has not settled");
   }
   else
   {

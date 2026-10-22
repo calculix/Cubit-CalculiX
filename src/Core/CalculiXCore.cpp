@@ -9444,6 +9444,16 @@ bool CalculiXCore::build_topology_density_update(int topology_id, int source_ite
   return topology->build_density_update(topology_id, source_iteration, densities);
 }
 
+bool CalculiXCore::evaluate_topology_displacement_projected_residual(int topology_id, int iteration_id)
+{
+  if (!topology)
+  {
+    PRINT_ERROR("Topology core is not initialized.\n");
+    return false;
+  }
+  return topology->evaluate_displacement_projected_residual(topology_id, iteration_id);
+}
+
 bool CalculiXCore::evaluate_topology_compliance_oc_residual(int topology_id, int iteration_id)
 {
   if (!topology)

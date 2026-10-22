@@ -21,7 +21,7 @@ Case and objective operations
 
 .. doxygenclass:: CoreTopology
    :project: Cubit-CalculiX
-   :members: create_topology, modify_topology, delete_topology, evaluate_compliance, evaluate_displacement, build_density_design, evaluate_density_volume, build_density_update, evaluate_compliance_oc_residual, set_density_update_diagnostics, check_density_convergence, filter_density_sensitivities, reset_preserved_sets, add_preserved_sets, remove_preserved_sets, resolve_preserved_elements
+   :members: create_topology, modify_topology, delete_topology, evaluate_compliance, evaluate_displacement, build_density_design, evaluate_density_volume, build_density_update, evaluate_compliance_oc_residual, evaluate_displacement_projected_residual, set_density_update_diagnostics, check_density_convergence, filter_density_sensitivities, reset_preserved_sets, add_preserved_sets, remove_preserved_sets, resolve_preserved_elements
 
 Preservation queries and coordination
 -------------------------------------

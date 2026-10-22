@@ -152,9 +152,11 @@ Using the Actions panel
 
 The panel displays the latest available convergence and displacement
 measurements. Bars indicate limit usage, so lower values are better; they are
-not a percentage estimate of remaining runtime. Compliance also requires its
-ordinary OC proposal residual to satisfy the density tolerance, even if all
-three visible criteria have passed.
+not a percentage estimate of remaining runtime. Both objectives also require an
+ordinary proposal residual to satisfy the density tolerance: OC for compliance,
+projected-gradient for displacement. This can prevent convergence even when all
+three visible criteria pass. The proposal uses the configured maximum move,
+independently of adaptive restriction, and requires no additional solve.
 
 See :doc:`../commands/topology` for command syntax and
 :doc:`../tutorials/index` for complete journals.

@@ -171,3 +171,8 @@ bool CalculiXTopologyRunInterface::check_topology_density_convergence(int topolo
 {
   return ccx_core.check_topology_density_convergence(topology_id, previous_iteration, current_iteration, converged);
 }
+
+bool CalculiXTopologyRunInterface::evaluate_topology_displacement_projected_residual(int topology_id, int iteration_id)
+{
+  return ccx_core.evaluate_topology_displacement_projected_residual(topology_id, iteration_id);
+}
