@@ -12,8 +12,6 @@
 #include "StopWatch.hpp"
 
 // GUI timing handler called explicitly by the plugin's core observer.
-
-class CalculiXCoreInterface;
 class CalculiXComp;
 class ObserverTimer;
 
@@ -23,7 +21,6 @@ public:
   Observer();
   ~Observer();
 
-  CalculiXCoreInterface *ccx_iface;
   CalculiXComp *ccx_comp = nullptr;
   ObserverTimer *timer = nullptr;
   

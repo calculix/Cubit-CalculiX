@@ -10,15 +10,15 @@
 | Individual command syntax and execution | [Commands](../src/Commands/) | `ccx*Command.hpp/.cpp`; `get_syntax()`, `get_syntax_help()`, `get_help()`, `execute()` |
 | GUI component lifecycle | [CalculiXComp.cpp](../src/CalculiXComp.cpp), [loadCalculiXComp.cpp](../src/loadCalculiXComp.cpp) | `start_up()`, `clean_up()`, `update()`, plugin registration |
 | Shared model instance | [loadCalculiXCore.cpp](../src/Core/loadCalculiXCore.cpp) | Global `ccx_core` |
-| Interface used by commands, GUI, and Python | [CalculiXCoreInterface.hpp](../src/Core/CalculiXCoreInterface.hpp), [implementation](../src/Core/CalculiXCoreInterface.cpp) | Forwarders, model queries, export access |
+| Interface used by commands, GUI, and Python | [Domain interface layout](developer/interface-layout.rst) | Forwarders, model queries, export access |
 | Model coordination and persistence | [CalculiXCore.cpp](../src/Core/CalculiXCore.cpp) | `init()`, `init2()`, `update()`, `reset()`, `read_cub()`, `save_cub()` |
 | Feature state and behavior | [Core](../src/Core/) | `CoreMaterials`, `CoreSections`, `CoreLoads*`, `CoreBCs*`, `CoreSteps`, `CoreCustomLines`, and others |
-| Input-deck assembly | [ccxExportCommand.cpp](../src/Commands/ccxExportCommand.cpp) | `write_*()` methods and ordered export orchestration |
-| Solver jobs | [CoreJobs.cpp](../src/Core/CoreJobs.cpp) | `run_job()`, `wait_job()`, `kill_job()`, `check_jobs()` |
-| Results | [CoreResults.cpp](../src/Core/CoreResults.cpp) | `load_result()`, `convert_result()`; adjacent FRD/DAT readers, VTK writer, and projection code |
+| Input-deck assembly | [ccxExportCommand.cpp](../src/Commands/export/ccxExportCommand.cpp) | `write_*()` methods and ordered export orchestration |
+| Solver jobs | [CoreJobs.cpp](../src/Core/jobs/CoreJobs.cpp) | `run_job()`, `wait_job()`, `kill_job()`, `check_jobs()` |
+| Results | [CoreResults.cpp](../src/Core/results/CoreResults.cpp) | `load_result()`, `convert_result()`; adjacent FRD/DAT readers, VTK writer, and projection code |
 | GUI trees and panels | [GUI](../src/GUI/) | `ModelTree.cpp`, `*Tree.cpp`, `*Panel.cpp`, material-management widgets |
 | Panel registration/navigation | [cmdPanelManager.cpp](../src/cmdPanelManager.cpp), [MyCmdWidgetFactory.cpp](../src/MyCmdWidgetFactory.cpp) | Marker names, navigation nodes, widget creation |
-| GUI command submission | [GuiSendCmd.cpp](../src/GUI/GuiSendCmd.cpp) | `gui_cmd()` |
+| GUI command submission | [GuiSendCmd.cpp](../src/GUI/application/GuiSendCmd.cpp) | `gui_cmd()` |
 | Host events | [Observer.cpp](../src/EventObservers/Observer.cpp) | Command completion, reset, file read/save notifications |
 | Python API and binding declarations | [PythonInterface](../src/PythonInterface/) | `CalculiXPythonInterface.hpp/.cpp` and `.i` |
 | Settings | [UserOptions](../src/UserOptions/) | Options, configuration, settings panels |

@@ -1,0 +1,294 @@
+#!cubit
+# Material-cap / Boost-reader validation for the rebuilt plugin.
+# RUN IN A FRESH CUBIT SESSION: resets the current model and later opens its
+# own saved model. Uses your configured CalculiX solver; does not build.
+# A thin beam with size 1.5 keeps this substantially below 90000 elements.
+# Runs six compliance iterations each at cap 256 and default 1024, plus
+# three displacement iterations at cap 16 (physical + adjoint solves).
+# Outputs: timestamped material_cap_validation_* folder under the working
+# directory, report.json, iteration CSVs, exported inputs and a Cubit model.
+# PASS means these bounded tests passed, not full convergence validation.
+reset
+#beam geometry
+create brick x 100 y 30 z 1
+block 1 add volume 1
+split surface 6 offset curve 10 distance 2.5
+
+# node sets
+nodeset 1 add surface 4
+nodeset 1 name "x0"
+nodeset 2 add surface 7
+nodeset 2 name "xl"
+nodeset 3 add surface 8
+nodeset 3 name "rb"
+
+# material
+create material "Steel" property_group "CalculiX-FEA"
+modify material "Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0
+
+# section
+ccx create section solid block 1 material 1
+
+# vertices for ref and rot node
+create vertex location on surface 8  center
+create vertex location on surface 8  center
+
+# rigid body constraint
+ccx create constraint rigid body nodeset 3 ref 11 rot 12
+
+# load
+create force  on vertex 11 force value 10000 direction 0 -1 0
+
+# bc
+create displacement  on nodeset 1  dof 1 dof 2 dof 3 fix 0
+
+# outputs
+ccx create fieldoutput name "node_output" node
+ccx modify fieldoutput 1 node
+ccx modify fieldoutput 1 node key_on RF U
+ccx modify fieldoutput 1 node key_off CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF NT PNT POT PRF PS PSF PT PTF PU RFL SEN TS TSF TT TTF TURB V VF
+ccx create fieldoutput name "element_output" element
+ccx modify fieldoutput 2 element
+ccx modify fieldoutput 2 element key_on E S
+ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFL HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS
+ccx create historyoutput name "node_output" node
+ccx create historyoutput name "element_output" element
+ccx modify historyoutput 1 node nodeset 3
+ccx modify historyoutput 1 node key_on U RF
+ccx modify historyoutput 1 node key_off NT TSF TTF PN PSF PTF MACH CP VF DEPF TURB MF RFL
+ccx modify historyoutput 2 element block 1
+ccx modify historyoutput 2 element key_on S E
+ccx modify historyoutput 2 element key_off SVF ME PEEQ CEEQ ENER SDV HFL HFLF COORD ELSE ELKE EVOL EMAS EBHE CENT
+
+
+# steps
+ccx create step name "Static" static
+#ccx modify step 1 parameter nlgeom_yes
+ccx modify step 1 static solver spooles
+#ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.1 timeperiodofstep 1 minimumtimeincrement 0.01 maximumtimeincrement 0.1
+ccx step 1 add load force 1
+ccx step 1 add bc displacement 1
+ccx step 1 add fieldoutput 1 2
+ccx step 1 add historyoutput 1 2
+
+# mesh
+block 1 element type HEX8
+volume 1 size 1.5
+mesh vertex all
+mesh volume all
+ccx block 1 element_type C3D8
+
+
+#!python
+
+import csv
+import json
+import math
+import os
+import re
+import traceback
+from datetime import datetime
+from pathlib import Path
+
+
+def run_material_cap_validation():
+    original_directory = Path.cwd()
+    work = original_directory / ("material_cap_validation_" + datetime.now().strftime("%Y%m%d_%H%M%S_%f"))
+    work.mkdir(parents=True, exist_ok=False)
+    report = {"passed": False, "output_directory": str(work), "checks": [], "cases": []}
+    snapshots = {}
+
+    def save_report():
+        (work / "report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+
+    def check(condition, label, detail=""):
+        item = {"passed": bool(condition), "check": label, "detail": str(detail)}
+        report["checks"].append(item)
+        print(("PASS: " if condition else "FAIL: ") + label + (" -- " + str(detail) if detail else ""))
+        save_report()
+        return bool(condition)
+
+    def command(text):
+        errors_before = cubit.get_error_count()
+        cubit.cmd(text)
+        return check(cubit.get_error_count() == errors_before, "Command: " + text)
+
+    def element_rows(ccx, case_id, iteration_id):
+        return [list(row) for row in ccx.get_topology_iteration_element_data(case_id, iteration_id)]
+
+    def read_deck(path):
+        materials = {}
+        sets = {}
+        sections = []
+        mode = ""
+        current = ""
+        generate = False
+        for raw in path.read_text(encoding="utf-8").splitlines():
+            line = raw.strip()
+            if not line or line.startswith("**"):
+                continue
+            if line.startswith("*"):
+                pieces = [piece.strip() for piece in line.split(",")]
+                keyword = pieces[0].upper()
+                options = dict(piece.split("=", 1) for piece in pieces[1:] if "=" in piece)
+                mode = ""
+                if keyword == "*MATERIAL":
+                    current = options.get("NAME", "")
+                elif keyword == "*ELASTIC" and current.startswith("CCX_TOPO_"):
+                    mode = "elastic"
+                elif keyword == "*ELSET" and options.get("ELSET", "").startswith("CCX_TOPO_"):
+                    current = options["ELSET"]
+                    sets[current] = []
+                    generate = "GENERATE" in [piece.upper() for piece in pieces]
+                    mode = "set"
+                elif keyword == "*SOLID SECTION" and options.get("MATERIAL", "").startswith("CCX_TOPO_"):
+                    sections.append((options.get("ELSET", ""), options["MATERIAL"]))
+                continue
+            if mode == "elastic":
+                values = [float(value.replace("D", "E")) for value in line.split(",") if value.strip()]
+                materials[current] = values[:2]
+                mode = ""
+            elif mode == "set":
+                values = [int(value) for value in line.split(",") if value.strip()]
+                if generate:
+                    if len(values) != 3 or values[2] <= 0:
+                        return None
+                    sets[current].extend(range(values[0], values[1] + 1, values[2]))
+                else:
+                    sets[current].extend(values)
+        assigned = {}
+        duplicate = False
+        missing_reference = False
+        for set_name, material_name in sections:
+            if set_name not in sets or material_name not in materials:
+                missing_reference = True
+                continue
+            for element in sets[set_name]:
+                if element in assigned:
+                    duplicate = True
+                assigned[element] = materials[material_name]
+        return {"materials": materials, "sets": sets, "sections": sections, "assigned": assigned, "duplicate": duplicate, "missing_reference": missing_reference}
+
+    def export_and_check(ccx, case_id, iteration_id, cap, suffix):
+        path = work / ("case_%d_iteration_%04d_%s.inp" % (case_id, iteration_id, suffix))
+        if not command('export ccx "%s" topology %d iteration %d overwrite' % (path.as_posix(), case_id, iteration_id)):
+            return None
+        if not check(path.is_file(), "Export exists", path.name):
+            return None
+        deck = read_deck(path)
+        if not check(deck is not None, "Export can be parsed", path.name):
+            return None
+        rows = element_rows(ccx, case_id, iteration_id)
+        expected = {int(row[0]): row for row in rows}
+        prefix = "CCX_TOPO_%d_G" % case_id
+        valid = True
+        valid = check(bool(expected), "Stored iteration has element data", path.name) and valid
+        valid = check(0 < len(deck["materials"]) <= cap, "Generated material count <= cap", "%s: %d <= %d" % (path.name, len(deck["materials"]), cap)) and valid
+        valid = check(all(name.startswith(prefix) for name in deck["materials"]), "Grouped material naming is active", path.name) and valid
+        valid = check(len(deck["sets"]) == len(deck["sections"]) == len(deck["materials"]), "One set and section per occupied group in this one-section model", path.name) and valid
+        valid = check(not deck["duplicate"] and not deck["missing_reference"] and set(deck["assigned"]) == set(expected), "Every design element assigned exactly once", path.name) and valid
+        factors_match = True
+        preserved_match = True
+        for element, row in expected.items():
+            if len(row) < 4 or element not in deck["assigned"]:
+                factors_match = False
+                continue
+            modulus, poisson = deck["assigned"][element]
+            if not math.isfinite(row[2]) or not math.isclose(modulus / 210000.0, row[2], rel_tol=1e-12, abs_tol=1e-15) or not math.isclose(poisson, 0.3, rel_tol=0.0, abs_tol=1e-14):
+                factors_match = False
+            if bool(row[3]) and (row[2] != 1.0 or not math.isclose(modulus, 210000.0, rel_tol=1e-14)):
+                preserved_match = False
+        valid = check(factors_match, "Exported modulus matches stored applied factor", path.name) and valid
+        valid = check(preserved_match, "Preserved elements retain full stiffness", path.name) and valid
+        if iteration_id == 1:
+            valid = check(len(deck["materials"]) <= 2, "Initial uniform design shares materials", path.name) and valid
+        if not valid:
+            return None
+        return {"rows": rows, "materials": deck["materials"], "sets": deck["sets"], "sections": deck["sections"], "assigned": deck["assigned"]}
+
+    try:
+        os.chdir(work)
+        print("Material cap validation outputs: " + str(work))
+        from calculix_pythoninterface import CalculiXPythonInterface
+        ccx = CalculiXPythonInterface()
+        if not check(len(cubit.get_entities("hex")) > 0, "Small HEX8 beam is meshed"):
+            return
+        mesh_count = len(cubit.get_entities("hex"))
+        report["mesh_elements"] = mesh_count
+        print("Validation mesh elements: %d" % mesh_count)
+
+        # A cap-16 displacement run deliberately exercises binned factors and
+        # the physical/adjoint path. It is a functional stress test only.
+        specifications = [(1, 256, 6, "compliance"), (2, 1024, 6, "compliance"), (3, 16, 3, "displacement")]
+        for case_id, cap, limit, objective in specifications:
+            # Omit material_cap for case 2 to exercise the default.
+            cap_option = "" if case_id == 2 else " material_cap %d" % cap
+            displacement = " displacement_nodeset 3 displacement_component y" if objective == "displacement" else ""
+            text = 'ccx create topology %d name "validation_cap_%d" method density objective %s volume_fraction 0.7 iterations %d density_tolerance 1e-12 compliance_tolerance 1e-12%s%s' % (case_id, cap, objective, limit, cap_option, displacement)
+            if not command(text) or not command("ccx run topology %d wait" % case_id):
+                return
+            state = ccx.get_topology_run_state(case_id)
+            iterations = [list(row) for row in ccx.get_topology_iteration_data(case_id)]
+            report["cases"].append({"case": case_id, "cap": cap, "objective": objective, "state": state, "iterations": iterations})
+            save_report()
+            if not check(state in ("converged", "iteration_limit"), "Topology run completed", "case %d: %s" % (case_id, state)):
+                return
+            if not check(len(iterations) >= 2 and all(int(row[2]) == 2 for row in iterations), "At least two completed iterations", "case %d" % case_id):
+                return
+            with (work / ("case_%d_iterations.csv" % case_id)).open("w", newline="", encoding="utf-8") as stream:
+                writer = csv.writer(stream)
+                writer.writerow(["iteration", "job", "status", "objective", "volume_fraction", "selected", "max_density_change", "relative_objective_change", "converged", "displacement", "node", "nodeset", "component"])
+                writer.writerows(iterations)
+            for iteration in iterations:
+                iteration_id = int(iteration[0])
+                snapshot = export_and_check(ccx, case_id, iteration_id, cap, "before")
+                if snapshot is None:
+                    return
+                snapshots[case_id, iteration_id] = snapshot
+            # A lower cap makes it easy to check that actual sharing/binning
+            # occurred, rather than accidentally leaving per-element exports.
+            if case_id == 3:
+                last_id = int(iterations[-1][0])
+                if not check(len(snapshots[case_id, last_id]["materials"]) <= 16, "Low-cap displacement run remains bounded"):
+                    return
+
+        last_iteration = max(iteration for case_id, iteration in snapshots if case_id == 1)
+        original_snapshot = snapshots[1, last_iteration]
+        # Future cap changes must not alter an existing iteration.
+        if not command("ccx modify topology 1 material_cap 16"):
+            return
+        changed = export_and_check(ccx, 1, last_iteration, 256, "after_cap_change")
+        if changed is None or not check(changed == original_snapshot, "Changing the cap leaves an existing iteration unchanged"):
+            return
+
+        model = work / "material_cap_validation.cub5"
+        if not command('save as "%s" overwrite' % model.as_posix()):
+            return
+        if not check(model.is_file(), "Cubit model was saved"):
+            return
+        # This replaces only the test model constructed by this journal.
+        if not command('open "%s"' % model.as_posix()):
+            return
+        ccx = CalculiXPythonInterface()
+        for (case_id, iteration_id), expected in sorted(snapshots.items()):
+            cap = {1: 256, 2: 1024, 3: 16}[case_id]
+            restored = export_and_check(ccx, case_id, iteration_id, cap, "after_reload")
+            if restored is None or not check(restored == expected, "Save/reload preserves the applied factors and group assignments", "case %d iteration %d" % (case_id, iteration_id)):
+                return
+        report["passed"] = all(item["passed"] for item in report["checks"])
+        print("MATERIAL CAP VALIDATION: " + ("PASS" if report["passed"] else "FAIL"))
+        print("These are bounded iteration tests; inspect the CSV histories before claiming convergence.")
+    except Exception:
+        report["exception"] = traceback.format_exc()
+        print(report["exception"])
+    finally:
+        save_report()
+        os.chdir(original_directory)
+        print("Validation report: " + str(work / "report.json"))
+        if not report["passed"]:
+            print("MATERIAL CAP VALIDATION: FAILED OR INCOMPLETE. See report.json and the Cubit console.")
+
+
+run_material_cap_validation()

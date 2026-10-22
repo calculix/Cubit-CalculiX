@@ -1,7 +1,7 @@
 #!cubit
 reset
 #beam geometry
-create brick x 100 y 30 z 1
+create brick x 100 y 30 z 30
 block 1 add volume 1
 split surface 6 offset curve 10 distance 2.5
 
@@ -69,7 +69,7 @@ ccx step 1 add bc displacement 1
 
 # mesh
 block 1 element type HEX8
-volume 1 size auto factor 5
+volume 1 size 0.5
 mesh vertex all
 mesh volume all
 
@@ -85,6 +85,7 @@ ccx create topology 1 name "simple_beam"
 #ccx result project topology 1 iteration 4 threshold 0.5
 #ccx create job name "test"
 #ccx run job 6
+
 
 
 

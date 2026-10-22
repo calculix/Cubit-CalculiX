@@ -1,48 +1,47 @@
 #include "CCXDockWindowModelTree.hpp"
+#include <QString>
+#include "Core/application/CalculiXApplicationInterface.hpp"
 #include "Claro.hpp"
 #include "ClaroViewMenu.hpp"
 #include <iostream>
-
-#include "CalculiXCoreInterface.hpp"
-
-#include "ModelTree.hpp"
-#include "Highlight.hpp"
-#include "BlocksTree.hpp"
-#include "NodesetTree.hpp"
-#include "SidesetTree.hpp"
-#include "MaterialTree.hpp"
-#include "SectionsTree.hpp"
-#include "ConstraintsTree.hpp"
-#include "SurfaceInteractionsTree.hpp"
-#include "ContactPairsTree.hpp"
-#include "AmplitudesTree.hpp"
-#include "OrientationsTree.hpp"
-#include "DampingTree.hpp"
-#include "PhysicalConstantsTree.hpp"
-#include "LoadsTree.hpp"
-#include "LoadsForcesTree.hpp"
-#include "LoadsPressuresTree.hpp"
-#include "LoadsHeatfluxesTree.hpp"
-#include "LoadsGravityTree.hpp"
-#include "LoadsCentrifugalTree.hpp"
-#include "LoadsTrajectoryTree.hpp"
-#include "LoadsFilmTree.hpp"
-#include "LoadsRadiationTree.hpp"
-#include "LoadsSurfaceTractionTree.hpp"
-#include "LoadsBodyHeatfluxTree.hpp"
-#include "BCsTree.hpp"
-#include "BCsDisplacementsTree.hpp"
-#include "BCsTemperaturesTree.hpp"
-#include "HistoryOutputsTree.hpp"
-#include "FieldOutputsTree.hpp"
-#include "InitialConditionsTree.hpp"
-#include "HBCsTree.hpp"
-#include "HBCsDisplacementsTree.hpp"
-#include "HBCsTemperaturesTree.hpp"
-#include "StepsTree.hpp"
-#include "TopologyTree.hpp"
-#include "CustomLinesTree.hpp"
-#include "JobsTree.hpp"
+#include "GUI/application/ModelTree.hpp"
+#include "GUI/common/Highlight.hpp"
+#include "GUI/mesh/BlocksTree.hpp"
+#include "GUI/mesh/NodesetTree.hpp"
+#include "GUI/mesh/SidesetTree.hpp"
+#include "GUI/materials/MaterialTree.hpp"
+#include "GUI/sections/SectionsTree.hpp"
+#include "GUI/interactions/ConstraintsTree.hpp"
+#include "GUI/interactions/SurfaceInteractionsTree.hpp"
+#include "GUI/interactions/ContactPairsTree.hpp"
+#include "GUI/amplitudes/AmplitudesTree.hpp"
+#include "GUI/sections/OrientationsTree.hpp"
+#include "GUI/steps/DampingTree.hpp"
+#include "GUI/steps/PhysicalConstantsTree.hpp"
+#include "GUI/loads/LoadsTree.hpp"
+#include "GUI/loads/LoadsForcesTree.hpp"
+#include "GUI/loads/LoadsPressuresTree.hpp"
+#include "GUI/loads/LoadsHeatfluxesTree.hpp"
+#include "GUI/loads/LoadsGravityTree.hpp"
+#include "GUI/loads/LoadsCentrifugalTree.hpp"
+#include "GUI/loads/LoadsTrajectoryTree.hpp"
+#include "GUI/loads/LoadsFilmTree.hpp"
+#include "GUI/loads/LoadsRadiationTree.hpp"
+#include "GUI/loads/LoadsSurfaceTractionTree.hpp"
+#include "GUI/loads/LoadsBodyHeatfluxTree.hpp"
+#include "GUI/bcs/BCsTree.hpp"
+#include "GUI/bcs/BCsDisplacementsTree.hpp"
+#include "GUI/bcs/BCsTemperaturesTree.hpp"
+#include "GUI/steps/HistoryOutputsTree.hpp"
+#include "GUI/steps/FieldOutputsTree.hpp"
+#include "GUI/steps/InitialConditionsTree.hpp"
+#include "GUI/bcs/HBCsTree.hpp"
+#include "GUI/bcs/HBCsDisplacementsTree.hpp"
+#include "GUI/bcs/HBCsTemperaturesTree.hpp"
+#include "GUI/steps/StepsTree.hpp"
+#include "GUI/topology/TopologyTree.hpp"
+#include "GUI/export/CustomLinesTree.hpp"
+#include "GUI/jobs/JobsTree.hpp"
 
 
 CCXDockWindowModelTree::CCXDockWindowModelTree() :
@@ -57,8 +56,12 @@ CCXDockWindowModelTree::~CCXDockWindowModelTree()
 
 void CCXDockWindowModelTree::initialize()
 {
+  CalculiXApplicationInterface ccx_application_iface;
+
   if(isInitialized)
+  {
     return;
+  }
 
   gui = Claro::instance();
 
@@ -68,10 +71,9 @@ void CCXDockWindowModelTree::initialize()
   
   //std::vector<QString> dock_labels;
 
-  CalculiXCoreInterface *ccx_iface = new CalculiXCoreInterface();
   
   title = gui->get_title();
-  title = title + " -- with Cubit-CalculiX " + QString::fromStdString(ccx_iface->get_version());
+  title = title + " -- with Cubit-CalculiX " + QString::fromStdString(ccx_application_iface.get_version());
   //std::cout << title.toStdString();
   
   gui->set_title(title);

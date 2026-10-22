@@ -10,8 +10,8 @@
 #include <QString>
 #include <QList>
 #include <QWidget>
-#include "CoreStepsStructs.hpp"
-#include "CoreTopologyStructs.hpp"
+#include "Core/steps/CoreStepsStructs.hpp"
+#include "Core/topology/CoreTopologyStructs.hpp"
 
 class CoreBlocks;
 class CoreMaterials;
@@ -370,6 +370,7 @@ public:
   bool set_topology_iteration_factors(int topology_id,int iteration_id,const std::vector<int>& element_ids,const std::vector<double>& stiffness_factors);
   bool check_topology_material_assignment(int topology_id, int iteration_id, int element_id);
   std::string get_topology_material_name(int topology_id, int element_id);
+  bool get_topology_group_material_name(int topology_id, int iteration_id, int element_id, std::string& material_name);
   std::vector<double> get_topology_parameters(int topology_id);
   bool get_topology_settings(int topology_id, TopologyOptions& options);
   int get_topology_iteration_job_id(int topology_id, int iteration_id); // Returns the associated job ID, or -1 on failure.

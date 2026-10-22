@@ -20,7 +20,7 @@ Implementation map
    * - Required output preparation
      - ``CalculiXCore.cpp``: ``prepare_topology_history_outputs`` and the ``ensure_topology_*_output`` helpers.
    * - Iteration material export
-     - ``CoreMaterials.cpp``: ``get_topology_material_export`` and ``get_topology_material_name``.
+     - ``CoreMaterials.cpp``: ``get_topology_material_export``, ``build_topology_material_groups``, and ``get_topology_group_material_name``.
    * - Element section export
      - ``CoreSections.cpp``: ``get_topology_solid_section_export``.
    * - Export context validation
@@ -32,7 +32,7 @@ Implementation map
    * - Objective evaluation
      - ``CoreTopologyOptimization.cpp`` dispatches compliance or displacement evaluation and checks integration coverage.
 
-Cross-core access remains through ``CalculiXCoreInterface``. The export helpers
+Cross-core access remains through the domain-specific interfaces (see :doc:`interface-layout`). The export helpers
 return empty strings on invalid required data, and their callers must treat
 that as failure rather than continue with an incomplete input deck.
 
@@ -60,28 +60,35 @@ apply even where no dedicated validator tests every possible model feature.
 Materials and sections
 ----------------------
 
-An iteration stores stiffness factors independently of the base material
-definitions. For element :math:`e`, export uses
+An iteration stores applied stiffness factors independently of the base
+material definitions. Continuous SIMP factors are requested from densities;
+the grouping operation produces the factors actually assigned to the solver.
+For element :math:`e`, export uses
 
 .. math::
 
-   E_e=s_eE_{\mathrm{base}},\qquad
+   E_e=\widehat{s}_eE_{\mathrm{base}},\qquad
    \nu_e=\nu_{\mathrm{base}},\qquad
    s_e=v+(1-v)\rho_e^p.
 
-The material name is ``CCX_TOPO_<case>_E<element>``. Its set name appends
-``_SET``. The material exporter emits ``*MATERIAL`` and ``*ELASTIC``; the section
-exporter emits the single-element ``*ELSET`` and its ``*SOLID SECTION`` using
-that name. Existing applicable section information is carried by the section
-exporter. Export validates factor coverage and material assignments before
-using them. Floating-point elastic properties use scientific notation with
-six digits after the decimal point.
+Here :math:`\widehat{s}_e` is the applied factor after exact sharing or
+logarithmic grouping. New material names are
+``CCX_TOPO_<case>_G<fixed-width-group>``. Element-set names also include the
+original section ID. The material exporter emits one ``*MATERIAL`` and
+``*ELASTIC`` per group; the section exporter emits one ``*ELSET`` and
+``*SOLID SECTION`` per occupied group within an original section. Orientation
+and section data remain separate. Elastic properties use scientific notation
+with round-trip double precision.
 
-The element-specific definitions are generated solver input. The material core
-holds a topology collection of base assignments and iteration factors rather
-than registering a normal GUI material for every element. Participating sections
-are exported through their topology path rather than also emitting their normal
-block-wide assignment.
+Historical iterations without grouping metadata retain the legacy
+``CCX_TOPO_<case>_E<element>`` material names and six-decimal scientific
+material export. Applied factors are never quantized again on reload.
+
+These definitions are generated solver input. The material core stores base
+assignments and iteration factors rather than registering a GUI material for
+every element. Participating sections use their topology export path rather
+than also emitting their normal block-wide assignment. See
+`Grouped material export`_ for budgets, caching and persistence.
 
 Output preparation contract
 ---------------------------
@@ -195,3 +202,30 @@ additional implementation checks; the integration routines are described in
 executable that produced an older local result. Record that executable's version
 separately when collecting verification evidence. The external manual is not
 bundled with the offline documentation.
+
+Grouped material export
+-----------------------
+
+New iterations capture ``material_cap`` (default 1024) and store the applied
+solver factors in ``TopologyMaterialData::iteration_factors``. The grouping
+budget is shared across base materials; one group is reserved for constant
+factors and two for a varying range, followed by round-robin distribution of
+remaining capacity. Exact factors are shared when they fit. Otherwise nearest
+logarithmic bins preserve each base material's minimum and maximum factors.
+
+``iteration_material_caps`` identifies grouped iterations and is persisted.
+``iteration_material_groups`` is a transient cache for one iteration per
+case. Reloading rebuilds this cache with exact sharing of the saved factors,
+without applying a new cap or quantizing them again. Historical iterations
+without the marker use the legacy per-element material exporter.
+
+The grouped section exporter retains original orientations and section data.
+It generates one element set and solid section per occupied material within
+an original section. The original export helpers remain available with the
+``_legacy`` suffix. Group names have fixed-width numeric suffixes.
+
+Compliance and displacement normalization use applied solver factors. Density
+updates retain continuous SIMP derivatives as surrogate sensitivities for the
+quantized solve; these are not exact derivatives through the binning operation.
+Topology configuration version 8 stores the material cap; older configurations
+receive the default for future iterations without changing historical factors.

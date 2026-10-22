@@ -1,0 +1,287 @@
+#!cubit
+# Run in a FRESH Cubit session after a successful plugin build: resets the model.
+# Replays the saved iteration-51/52 inputs; no mesh generation is required.
+# Tests unique job names, repeated job-name reuse with alternating inputs,
+# and two overlapping jobs with different inputs. VTK conversion stays disabled.
+# Compares raw DAT files, loaded DAT/FRD values, and independent direct solves.
+# Original inputs/results are read only. Outputs use a new timestamped folder.
+# Plugin waits use the normal blocking ccx wait job route; Cubit's progress
+# interrupt remains available. Direct subprocesses have a 60-second timeout.
+reset
+
+#!python
+import csv
+import ctypes
+import hashlib
+import json
+import math
+import os
+import re
+import shutil
+import subprocess
+import time
+import traceback
+from datetime import datetime
+from pathlib import Path
+
+SOURCE_DIRECTORY = Path(r"C:\Users\offic\Desktop\cubit\topology_density_diagnostics_20261022_073019_168234")
+SOLVER = Path(r"C:\Users\offic\Desktop\Git\Cubit-CalculiX\build\Release\Solver\ccx_dynamic.exe")
+RUN_OVERLAP_TEST = True
+EXPECTED_ELEMENTS = 1340
+EXPECTED_GOOD_COMPLIANCE_52 = 90322.29074597117
+
+
+def parse_raw_dat(path):
+    text = path.read_text(encoding="utf-8")
+    header = re.search(r"internal energy \(element, energy\) for set (\S+) and time\s+(\S+)", text)
+    displacement = re.search(r"displacements[^\n]*\n\s*\n\s*(\d+)\s+([-+0-9.EeDd]+)\s+([-+0-9.EeDd]+)", text)
+    if header is None or displacement is None:
+        return None
+    energies = {}
+    for line in text[header.end():].splitlines():
+        match = re.fullmatch(r"\s*(\d+)\s+([-+0-9.EeDd]+)\s*", line)
+        if match:
+            identifier = int(match[1])
+            value = float(match[2].replace("D", "E").replace("d", "e"))
+            if identifier in energies or not math.isfinite(value):
+                return None
+            energies[identifier] = value
+        elif energies and line.strip():
+            break
+    return {
+        "energies": energies,
+        "total_energy": math.fsum(energies.values()),
+        "compliance": 2.0 * math.fsum(energies.values()),
+        "set": header[1],
+        "time": float(header[2].replace("D", "E")),
+        "node": int(displacement[1]),
+        "uy": float(displacement[3].replace("D", "E")),
+    }
+
+
+def native_environment(name):
+    # CoreJobs changes the native process environment; os.environ may be stale.
+    if os.name != "nt":
+        return os.environ.get(name)
+    get_value = ctypes.windll.kernel32.GetEnvironmentVariableW
+    get_value.argtypes = [ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_uint32]
+    get_value.restype = ctypes.c_uint32
+    size = get_value(name, None, 0)
+    if size == 0:
+        return None
+    buffer = ctypes.create_unicode_buffer(size)
+    get_value(name, buffer, size)
+    return buffer.value
+
+
+def run_job_output_consistency():
+    original_directory = Path.cwd()
+    work = original_directory / ("job_output_consistency_" + datetime.now().strftime("%Y%m%d_%H%M%S_%f"))
+    work.mkdir(parents=True, exist_ok=False)
+    report = {"status": "running", "checks": [], "runs": [], "direct_controls": {}, "output_directory": str(work)}
+    active_jobs = set()
+    ccx = None
+
+    def save_report():
+        (work / "report.json").write_text(json.dumps(report, indent=2, allow_nan=False), encoding="utf-8")
+
+    def check(condition, label, detail=""):
+        report["checks"].append({"passed": bool(condition), "check": label, "detail": str(detail)})
+        print(("PASS: " if condition else "FAIL: ") + label + (" -- " + str(detail) if detail else ""))
+        save_report()
+        return bool(condition)
+
+    def command(text):
+        errors = cubit.get_error_count()
+        cubit.cmd(text)
+        return check(cubit.get_error_count() == errors, "Command: " + text)
+
+    def snapshot(name):
+        result = {}
+        for suffix in ("inp", "dat", "frd", "sta"):
+            path = work / (name + "." + suffix)
+            if path.is_file():
+                data = path.read_bytes()
+                stat = path.stat()
+                result[suffix] = {"size": len(data), "mtime_ns": stat.st_mtime_ns, "sha256": hashlib.sha256(data).hexdigest()}
+        return result
+
+    def create(job_id, name, source_iteration):
+        if not check(ccx.get_job_status(job_id) == -2, "Expected new job ID is unused", job_id):
+            return False
+        if not command("ccx create job name %s filepath source_%d.inp" % (name, source_iteration)):
+            return False
+        return check(ccx.get_job_status(job_id) != -2, "Job was created", job_id)
+
+    def start(job_id):
+        active_jobs.add(job_id)
+        return command("ccx run job %d no_conversion" % job_id)
+
+    def inspect(job_id, name, source_iteration, label, started_ns, before):
+        started = time.perf_counter()
+        if not command("ccx wait job %d" % job_id):
+            return False
+        wait_seconds = time.perf_counter() - started
+        status = ccx.get_job_status(job_id)
+        if not check(status == 2, "Job reports successful completion", "%s: %s" % (label, status)):
+            return False
+        active_jobs.discard(job_id)
+        instant = snapshot(name)
+        entry = {"label": label, "job_id": job_id, "job_name": name, "source_iteration": source_iteration, "wait_seconds": wait_seconds, "snapshot_at_wait_return": instant, "native_omp_threads": native_environment("OMP_NUM_THREADS")}
+        report["runs"].append(entry)
+        save_report()
+        if not check(set(instant) == {"inp", "dat", "frd", "sta"} and all(value["size"] > 0 for value in instant.values()), "Outputs exist when wait returns", label):
+            return False
+        if not check(instant["inp"]["sha256"] == report["input_hashes"][str(source_iteration)], "Job copied the intended input", label):
+            return False
+        fresh = all(instant[suffix]["mtime_ns"] >= started_ns - 2000000000 for suffix in ("dat", "frd", "sta"))
+        if before:
+            fresh = fresh and all(instant[suffix]["mtime_ns"] != before[suffix]["mtime_ns"] for suffix in ("dat", "frd"))
+        if not check(fresh, "Outputs were rewritten for this run", label):
+            return False
+        archive = work / "snapshots" / label
+        archive.mkdir(parents=True)
+        for suffix in instant:
+            shutil.copyfile(work / (name + "." + suffix), archive / (name + "." + suffix))
+        raw = parse_raw_dat(archive / (name + ".dat"))
+        if not check(raw is not None and len(raw["energies"]) == EXPECTED_ELEMENTS, "Raw DAT has complete finite element energies", label):
+            return False
+        entry.update({"raw_compliance": raw["compliance"], "raw_uy": raw["uy"]})
+        types = list(ccx.dat_get_result_block_types(job_id))
+        energy_type = next((value for value in types if "".join(value.lower().split()) == "internalenergy"), None)
+        sets = list(ccx.dat_get_result_block_set(job_id))
+        energy_set = next((value for value in sets if value.strip().lower() == raw["set"].lower()), None)
+        if not check(energy_type is not None and energy_set is not None, "Loaded DAT exposes the energy block", label):
+            return False
+        loaded = {}
+        for identifier, expected in raw["energies"].items():
+            values = [list(row) for row in ccx.dat_get_element_values(job_id, identifier, raw["time"], energy_type, energy_set)]
+            if len(values) != 1 or not values[0] or not math.isfinite(values[0][-1]):
+                return check(False, "Loaded element energy exists", "%s, element %d" % (label, identifier))
+            loaded[identifier] = float(values[0][-1])
+        entry["loaded_compliance"] = 2.0 * math.fsum(loaded.values())
+        if not check(all(math.isclose(loaded[key], value, rel_tol=1e-10, abs_tol=1e-10) for key, value in raw["energies"].items()), "Every loaded element energy matches the raw DAT", label):
+            return False
+        frd_types = list(ccx.frd_get_result_block_types(job_id))
+        displacement_type = next((value for value in frd_types if value.strip().upper() == "DISP"), None)
+        increments = list(ccx.frd_get_total_increments(job_id))
+        if not check(displacement_type is not None and bool(increments), "Loaded FRD exposes displacements", label):
+            return False
+        components = list(ccx.frd_get_result_block_components(job_id, displacement_type))
+        y_component = next((value for value in components if value.strip().upper() in ("D2", "U2", "UY")), None)
+        if not check(y_component is not None, "FRD Y-displacement component exists", label):
+            return False
+        frd_y = ccx.frd_get_node_value(job_id, raw["node"], max(increments), displacement_type, y_component)
+        entry["loaded_frd_uy"] = frd_y
+        if not check(math.isfinite(frd_y) and math.isclose(frd_y, raw["uy"], rel_tol=1e-4, abs_tol=1e-4), "Loaded FRD displacement agrees with raw DAT", label):
+            return False
+        observations = [instant]
+        for delay in (0.25, 0.75):
+            time.sleep(delay)
+            observations.append(snapshot(name))
+        entry["snapshots_after_wait"] = observations[1:]
+        if not check(all(value == instant for value in observations[1:]), "Output files stay unchanged after completion", label):
+            return False
+        # Run a direct control after the plugin has established its native
+        # solver environment. Inherit that native environment without using
+        # Python's potentially stale os.environ mapping.
+        if source_iteration not in direct_controls:
+            folder = work / ("direct_control_%d" % source_iteration)
+            folder.mkdir()
+            shutil.copyfile(work / ("source_%d.inp" % source_iteration), folder / "control.inp")
+            flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
+            control_started = time.perf_counter()
+            with (folder / "solver.log").open("w", encoding="utf-8") as output:
+                process = subprocess.run([str(SOLVER), "-i", "control"], cwd=folder, stdout=output, stderr=subprocess.STDOUT, timeout=60, creationflags=flags)
+            if not check(process.returncode == 0, "Direct control solve completed", source_iteration):
+                return False
+            control = parse_raw_dat(folder / "control.dat")
+            if not check(control is not None and len(control["energies"]) == EXPECTED_ELEMENTS, "Direct control DAT is complete", source_iteration):
+                return False
+            direct_controls[source_iteration] = control
+            report["direct_controls"][str(source_iteration)] = {"seconds": time.perf_counter() - control_started, "compliance": control["compliance"], "uy": control["uy"], "omp_threads": native_environment("OMP_NUM_THREADS")}
+        control = direct_controls[source_iteration]
+        if not check(set(raw["energies"]) == set(control["energies"]) and all(math.isclose(value, control["energies"][key], rel_tol=1e-6, abs_tol=1e-6) for key, value in raw["energies"].items()), "Plugin raw energies agree with the independent direct solve", label):
+            return False
+        if source_iteration == 52:
+            if not check(math.isclose(raw["compliance"], EXPECTED_GOOD_COMPLIANCE_52, rel_tol=1e-6), "Iteration 52 agrees with the prior good direct replay", label):
+                return False
+        save_report()
+        return True
+
+    try:
+        os.chdir(work)
+        print("Job-output diagnostic folder: " + str(work))
+        from calculix_pythoninterface import CalculiXPythonInterface
+        ccx = CalculiXPythonInterface()
+        if not check(SOLVER.is_file(), "Direct-control solver exists", SOLVER):
+            return
+        report["input_hashes"] = {}
+        for iteration in (51, 52):
+            source = SOURCE_DIRECTORY / ("topo_1_density_diagnostic_cap_2048_iter_%04d.inp" % iteration)
+            if not check(source.is_file(), "Saved input exists", source):
+                return
+            data = source.read_bytes()
+            report["input_hashes"][str(iteration)] = hashlib.sha256(data).hexdigest()
+            (work / ("source_%d.inp" % iteration)).write_bytes(data)
+        direct_controls = {}
+        for job_id, iteration in enumerate((52, 51, 52), 1):
+            name = "completion_unique_%d" % job_id
+            if not create(job_id, name, iteration):
+                return
+            started_ns = time.time_ns()
+            if not start(job_id) or not inspect(job_id, name, iteration, "unique_%d" % job_id, started_ns, {}):
+                return
+        name = "completion_reused"
+        if not create(4, name, 51):
+            return
+        for attempt, iteration in enumerate((51, 52, 51), 1):
+            if attempt > 1 and not command("ccx modify job 4 filepath source_%d.inp" % iteration):
+                return
+            before = snapshot(name)
+            started_ns = time.time_ns()
+            if not start(4) or not inspect(4, name, iteration, "reused_%d" % attempt, started_ns, before):
+                return
+        if RUN_OVERLAP_TEST:
+            pending = []
+            for job_id, iteration in ((5, 51), (6, 52)):
+                name = "completion_overlap_%d" % job_id
+                if not create(job_id, name, iteration):
+                    return
+                started_ns = time.time_ns()
+                if not start(job_id):
+                    return
+                pending.append((job_id, name, iteration, started_ns))
+            overlap_statuses = {str(job_id): ccx.get_job_status(job_id) for job_id, name, iteration, started_ns in pending}
+            report["overlap_statuses_after_both_launches"] = overlap_statuses
+            if not check(all(status in (1, 5) for status in overlap_statuses.values()), "Both overlap jobs are unfinished after launch", overlap_statuses):
+                print("The overlap phase was not demonstrated; inspect the saved statuses before interpreting this phase.")
+                return
+            for job_id, name, iteration, started_ns in pending:
+                if not inspect(job_id, name, iteration, "overlap_%d" % job_id, started_ns, {}):
+                    return
+        report["status"] = "PASSED" if all(item["passed"] for item in report["checks"]) else "FAILED"
+    except Exception:
+        report["exception"] = traceback.format_exc()
+        print(report["exception"])
+    finally:
+        if ccx is not None:
+            for job_id in sorted(active_jobs):
+                if ccx.get_job_status(job_id) in (1, 5):
+                    cubit.cmd("ccx kill job %d" % job_id)
+        if report["status"] == "running":
+            report["status"] = "FAILED_OR_INCOMPLETE"
+        if report["runs"]:
+            columns = ["label", "job_id", "source_iteration", "raw_compliance", "loaded_compliance", "raw_uy", "loaded_frd_uy", "wait_seconds"]
+            with (work / "comparison.csv").open("w", newline="", encoding="utf-8") as output:
+                writer = csv.writer(output)
+                writer.writerow(columns)
+                writer.writerows([[row.get(key) for key in columns] for row in report["runs"]])
+        save_report()
+        os.chdir(original_directory)
+        print("JOB OUTPUT CONSISTENCY: " + report["status"])
+        print("Report: " + str(work / "report.json"))
+        print("Raw output snapshots are retained for diagnosing any mismatch.")
+
+
+run_job_output_consistency()

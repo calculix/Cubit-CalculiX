@@ -1,0 +1,26 @@
+target_sources(calculix_plugin PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxOrientationCreateCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxOrientationCreateCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxOrientationDeleteCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxOrientationDeleteCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxOrientationModifyCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxOrientationModifyCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxSectionBeamCreateCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxSectionBeamCreateCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxSectionBeamModifyCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxSectionBeamModifyCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxSectionDeleteCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxSectionDeleteCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxSectionMembraneCreateCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxSectionMembraneCreateCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxSectionMembraneModifyCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxSectionMembraneModifyCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxSectionShellCreateCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxSectionShellCreateCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxSectionShellModifyCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxSectionShellModifyCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxSectionSolidCreateCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxSectionSolidCreateCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxSectionSolidModifyCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxSectionSolidModifyCommand.hpp
+)

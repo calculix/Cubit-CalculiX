@@ -1,0 +1,374 @@
+#!cubit
+# Full topology-sequence consistency test; fresh session required, resets model.
+# Same 1340-element beam, exact material cap 2048, up to 500 iterations.
+# Uses the NORMAL ccx run topology 1 wait sequence. Audits every stored iteration
+# AFTER the run, so Python checks do not change iteration scheduling.
+# Compares recorded compliance, loaded DAT element energies, raw DAT, and
+# external work for this beam. Suspicious iterations can be replayed directly.
+# Does not build anything. No previous test inputs/results are overwritten.
+reset
+#beam geometry
+create brick x 100 y 30 z 1
+block 1 add volume 1
+split surface 6 offset curve 10 distance 2.5
+
+# node sets
+nodeset 1 add surface 4
+nodeset 1 name "x0"
+nodeset 2 add surface 7
+nodeset 2 name "xl"
+nodeset 3 add surface 8
+nodeset 3 name "rb"
+
+# material
+create material "Steel" property_group "CalculiX-FEA"
+modify material "Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0
+
+# section
+ccx create section solid block 1 material 1
+
+# vertices for ref and rot node
+create vertex location on surface 8  center
+create vertex location on surface 8  center
+
+# rigid body constraint
+ccx create constraint rigid body nodeset 3 ref 11 rot 12
+
+# load
+create force  on vertex 11 force value 10000 direction 0 -1 0
+
+# bc
+create displacement  on nodeset 1  dof 1 dof 2 dof 3 fix 0
+
+# outputs
+ccx create fieldoutput name "node_output" node
+ccx modify fieldoutput 1 node
+ccx modify fieldoutput 1 node key_on RF U
+ccx modify fieldoutput 1 node key_off CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF NT PNT POT PRF PS PSF PT PTF PU RFL SEN TS TSF TT TTF TURB V VF
+ccx create fieldoutput name "element_output" element
+ccx modify fieldoutput 2 element
+ccx modify fieldoutput 2 element key_on E S
+ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFL HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS
+ccx create historyoutput name "node_output" node
+ccx create historyoutput name "element_output" element
+ccx modify historyoutput 1 node nodeset 3
+ccx modify historyoutput 1 node key_on U RF
+ccx modify historyoutput 1 node key_off NT TSF TTF PN PSF PTF MACH CP VF DEPF TURB MF RFL
+ccx modify historyoutput 2 element block 1
+ccx modify historyoutput 2 element key_on S E
+ccx modify historyoutput 2 element key_off SVF ME PEEQ CEEQ ENER SDV HFL HFLF COORD ELSE ELKE EVOL EMAS EBHE CENT
+
+
+# steps
+ccx create step name "Static" static
+#ccx modify step 1 parameter nlgeom_yes
+ccx modify step 1 static solver spooles
+#ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.1 timeperiodofstep 1 minimumtimeincrement 0.01 maximumtimeincrement 0.1
+ccx step 1 add load force 1
+ccx step 1 add bc displacement 1
+ccx step 1 add fieldoutput 1 2
+ccx step 1 add historyoutput 1 2
+
+# mesh
+block 1 element type HEX8
+volume 1 size 1.5
+mesh vertex all
+mesh volume all
+ccx block 1 element_type C3D8
+
+
+
+#!python
+import csv
+import hashlib
+import json
+import math
+import os
+import re
+import shutil
+import subprocess
+import time
+import traceback
+from datetime import datetime
+from pathlib import Path
+
+MAXIMUM_ITERATIONS = 500
+MATERIAL_CAP = 2048
+DENSITY_TOLERANCE = 0.01
+COMPLIANCE_TOLERANCE = 0.001
+VOLUME_FRACTION = 0.7
+CASE_NAME = "sequence_consistency"
+DIRECT_REPLAY_ON_ALERT = True
+MAXIMUM_DIRECT_REPLAYS = 3
+DIRECT_TIMEOUT_SECONDS = 60
+SOLVER = Path(r"C:\Users\offic\Desktop\Git\Cubit-CalculiX\build\Release\Solver\ccx_dynamic.exe")
+# Large changes are diagnostic triggers, not proof of an invalid design update.
+JUMP_THRESHOLD = 0.05
+JUMP_CHECK_START_ITERATION = 10
+ENERGY_RELATIVE_TOLERANCE = 1e-9
+WORK_RELATIVE_TOLERANCE = 2e-5  # Accounts for rounded displacement output.
+ITERATION_COLUMNS = ["iteration", "job", "status", "compliance", "volume_fraction", "selected", "maximum_density_change", "relative_objective_change", "converged", "displacement", "node", "nodeset", "component"]
+
+
+def parse_raw_dat(text):
+    energy_header = re.search(r"internal energy \(element, energy\) for set (\S+) and time\s+(\S+)", text)
+    displacement_header = re.search(r"displacements[^\n]* for set (\S+) and time\s+(\S+)", text)
+    if energy_header is None or displacement_header is None:
+        return None
+    energies = {}
+    for line in text[energy_header.end():].splitlines():
+        match = re.fullmatch(r"\s*(\d+)\s+([-+0-9.EeDd]+)\s*", line)
+        if match:
+            identifier = int(match[1])
+            value = float(match[2].replace("D", "E"))
+            if identifier in energies or not math.isfinite(value):
+                return None
+            energies[identifier] = value
+        elif energies and line.strip():
+            break
+    displacements = {}
+    for line in text[displacement_header.end():].splitlines():
+        fields = line.split()
+        if len(fields) == 4 and fields[0].isdigit():
+            values = [float(value.replace("D", "E")) for value in fields[1:]]
+            if int(fields[0]) in displacements or not all(math.isfinite(value) for value in values):
+                return None
+            displacements[int(fields[0])] = values
+        elif displacements and line.strip():
+            break
+    if not energies or not displacements:
+        return None
+    return {"energies": energies, "displacements": displacements,
+            "set": energy_header[1], "displacement_set": displacement_header[1],
+            "time": float(energy_header[2].replace("D", "E")),
+            "displacement_time": float(displacement_header[2].replace("D", "E")),
+            "compliance": 2.0 * math.fsum(energies.values())}
+
+
+def beam_external_work(input_text, raw):
+    # This check is deliberately specific to the validated static beam:
+    # one Y force on the rigid body's reference node, no other external loads.
+    nodes, sets, loads, rigid = {}, {}, [], None
+    keyword, options = "", {}
+    for original in input_text.splitlines():
+        line = original.strip()
+        if not line or line.startswith("**"):
+            continue
+        if line.startswith("*"):
+            parts = [part.strip() for part in line.split(",")]
+            keyword = parts[0].upper()
+            options = {part.split("=", 1)[0].strip().upper(): part.split("=", 1)[1].strip() for part in parts[1:] if "=" in part}
+            if keyword == "*RIGID BODY":
+                if rigid is not None:
+                    return None
+                rigid = options.copy()
+            if keyword == "*NSET":
+                if any(part.upper() == "GENERATE" for part in parts[1:]):
+                    return None
+                sets.setdefault(options.get("NSET", "").upper(), [])
+            continue
+        fields = [value.strip() for value in line.split(",") if value.strip()]
+        if keyword == "*NODE" and len(fields) == 4:
+            nodes[int(fields[0])] = [float(value) for value in fields[1:]]
+        elif keyword == "*NSET":
+            sets[options.get("NSET", "").upper()].extend(int(value) for value in fields)
+        elif keyword == "*CLOAD":
+            loads.append(fields)
+    if rigid is None or len(loads) != 1 or len(loads[0]) != 3:
+        return None
+    reference = int(rigid.get("REF NODE", "-1"))
+    target, dof, magnitude = loads[0]
+    targets = [int(target)] if target.isdigit() else sets.get(target.upper(), [])
+    ids = sorted(raw["displacements"])
+    if targets != [reference] or int(dof) != 2 or reference not in nodes or any(identifier not in nodes for identifier in ids):
+        return None
+    if rigid.get("NSET", "").upper() != raw["displacement_set"].upper() or set(sets.get(rigid["NSET"].upper(), [])) != set(ids):
+        return None
+    # For rigid-body motion, mean Uy equals reference Uy when the mean X/Z
+    # offsets vanish. Verify that geometry condition before using the mean.
+    if not all(math.isclose(math.fsum(nodes[identifier][axis] for identifier in ids) / len(ids), nodes[reference][axis], abs_tol=1e-9, rel_tol=0.0) for axis in (0, 2)):
+        return None
+    uy = math.fsum(raw["displacements"][identifier][1] for identifier in ids) / len(ids)
+    return float(magnitude) * uy
+
+
+def run_topology_sequence_consistency():
+    original_directory = Path.cwd()
+    work = original_directory / ("topology_sequence_consistency_" + datetime.now().strftime("%Y%m%d_%H%M%S_%f"))
+    work.mkdir(parents=True, exist_ok=False)
+    report = {"status": "running", "checks": [], "iterations": [], "alerts": [], "direct_replays": [], "output_directory": str(work),
+              "audit_timing": "All iteration checks run after the normal topology run; this journal does not observe file stability at each original completion instant.",
+              "settings": {"iterations": MAXIMUM_ITERATIONS, "material_cap": MATERIAL_CAP, "density_tolerance": DENSITY_TOLERANCE, "compliance_tolerance": COMPLIANCE_TOLERANCE}}
+    ccx = None
+    case_created = False
+
+    def save():
+        (work / "report.json").write_text(json.dumps(report, indent=2, allow_nan=False), encoding="utf-8")
+
+    def check(condition, label, detail=""):
+        report["checks"].append({"passed": bool(condition), "check": label, "detail": str(detail)})
+        print(("PASS: " if condition else "FAIL: ") + label + (" -- " + str(detail) if detail else ""))
+        save()
+        return bool(condition)
+
+    def command(text):
+        errors = cubit.get_error_count()
+        cubit.cmd(text)
+        return check(cubit.get_error_count() == errors, "Command: " + text)
+
+    def write_csv(path, columns, rows):
+        with path.open("w", newline="", encoding="utf-8") as stream:
+            writer = csv.writer(stream)
+            writer.writerow(columns)
+            writer.writerows(rows)
+
+    def replay(iteration, stem, raw):
+        if not DIRECT_REPLAY_ON_ALERT or len(report["direct_replays"]) >= MAXIMUM_DIRECT_REPLAYS:
+            return
+        if not check(SOLVER.is_file(), "Direct replay solver exists", SOLVER):
+            return
+        folder = work / ("replay_%04d" % iteration)
+        folder.mkdir()
+        shutil.copyfile(stem.with_suffix(".inp"), folder / "control.inp")
+        entry = {"iteration": iteration, "folder": str(folder)}
+        report["direct_replays"].append(entry)
+        save()
+        flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
+        try:
+            started = time.perf_counter()
+            with (folder / "solver.log").open("w", encoding="utf-8") as log:
+                process = subprocess.run([str(SOLVER), "-i", "control"], cwd=folder, stdout=log, stderr=subprocess.STDOUT, timeout=DIRECT_TIMEOUT_SECONDS, creationflags=flags)
+            entry.update({"exit_code": process.returncode, "seconds": time.perf_counter() - started})
+            if not check(process.returncode == 0, "Direct replay completed", iteration):
+                return
+            direct = parse_raw_dat((folder / "control.dat").read_text(encoding="utf-8"))
+            if not check(direct is not None, "Direct replay DAT is readable", iteration):
+                return
+            entry["original_raw_compliance"] = raw["compliance"]
+            entry["replay_compliance"] = direct["compliance"]
+            matches = set(raw["energies"]) == set(direct["energies"]) and all(math.isclose(value, direct["energies"][key], rel_tol=1e-6, abs_tol=1e-6) for key, value in raw["energies"].items())
+            entry["matches_original_raw_results"] = matches
+            check(matches, "Direct replay reproduces every original element energy", iteration)
+        except Exception:
+            entry["exception"] = traceback.format_exc()
+            check(False, "Direct replay finished without exception", iteration)
+        save()
+
+    try:
+        os.chdir(work)
+        print("Full-sequence diagnostic outputs: " + str(work))
+        from calculix_pythoninterface import CalculiXPythonInterface
+        ccx = CalculiXPythonInterface()
+        mesh_count = len(cubit.get_entities("hex"))
+        if not check(0 < mesh_count <= MATERIAL_CAP, "Mesh fits exact material cap", mesh_count):
+            return
+        if not command('ccx create topology 1 name "%s" method density objective compliance material_cap %d volume_fraction %.17g iterations %d density_tolerance %.17g compliance_tolerance %.17g' % (CASE_NAME, MATERIAL_CAP, VOLUME_FRACTION, MAXIMUM_ITERATIONS, DENSITY_TOLERANCE, COMPLIANCE_TOLERANCE)):
+            return
+        case_created = True
+        started = time.perf_counter()
+        run_ok = command("ccx run topology 1 wait")
+        report["topology_seconds"] = time.perf_counter() - started
+        state = ccx.get_topology_run_state(1)
+        report["run_state"] = state
+        report["converged"] = state == "converged"
+        records = [list(row) for row in ccx.get_topology_iteration_data(1)]
+        write_csv(work / "iteration_history.csv", ITERATION_COLUMNS, records)
+        # Keep partial histories available even if the optimizer stopped early.
+        check(run_ok and state in ("converged", "iteration_limit"), "Topology run reached a completed state", state)
+        if not check(bool(records) and all(len(row) == len(ITERATION_COLUMNS) for row in records), "Iteration history is available"):
+            return
+        previous_compliance = None
+        for record in records:
+            iteration, job_id = int(record[0]), int(record[1])
+            label = "iteration %d, job %d" % (iteration, job_id)
+            if not check(int(record[2]) == 2 and ccx.get_job_status(job_id) == 2, "Recorded solver job completed", label):
+                continue
+            stem = work / ("topo_1_%s_iter_%04d" % (CASE_NAME, iteration))
+            if not check(all(stem.with_suffix(suffix).is_file() for suffix in (".inp", ".dat", ".frd")), "Iteration files exist", label):
+                continue
+            inp_bytes, dat_bytes = stem.with_suffix(".inp").read_bytes(), stem.with_suffix(".dat").read_bytes()
+            raw = parse_raw_dat(dat_bytes.decode("utf-8"))
+            if not check(raw is not None and len(raw["energies"]) == mesh_count, "Raw DAT contains complete finite energies", label):
+                continue
+            recorded_compliance, fraction = float(record[3]), float(record[4])
+            density_change = float(record[6]) if record[6] else None
+            finite_scalars = math.isfinite(recorded_compliance) and math.isfinite(fraction) and (density_change is None or math.isfinite(density_change))
+            if not check(finite_scalars, "Recorded iteration scalars are finite", label):
+                continue
+            entry = {"iteration": iteration, "job": job_id, "recorded_compliance": recorded_compliance, "raw_compliance": raw["compliance"],
+                     "input_sha256": hashlib.sha256(inp_bytes).hexdigest(), "dat_sha256": hashlib.sha256(dat_bytes).hexdigest(),
+                     "volume_fraction": fraction, "maximum_density_change": density_change}
+            report["iterations"].append(entry)
+            reasons = []
+            types = list(ccx.dat_get_result_block_types(job_id))
+            sets = list(ccx.dat_get_result_block_set(job_id))
+            energy_type = next((value for value in types if "".join(value.lower().split()) == "internalenergy"), None)
+            energy_set = next((value for value in sets if value.strip().lower() == raw["set"].lower()), None)
+            loaded = {}
+            if energy_type is not None and energy_set is not None:
+                for identifier in raw["energies"]:
+                    values = [list(row) for row in ccx.dat_get_element_values(job_id, identifier, raw["time"], energy_type, energy_set)]
+                    if len(values) == 1 and values[0] and math.isfinite(values[0][-1]):
+                        loaded[identifier] = float(values[0][-1])
+            matching = set(loaded) == set(raw["energies"]) and all(math.isclose(loaded[key], value, rel_tol=ENERGY_RELATIVE_TOLERANCE, abs_tol=1e-10) for key, value in raw["energies"].items())
+            entry["loaded_compliance"] = 2.0 * math.fsum(loaded.values()) if len(loaded) == mesh_count else None
+            if not check(matching, "Every loaded element energy matches raw DAT", label):
+                reasons.append("loaded_raw_energy_mismatch")
+            scalar_matches = math.isfinite(entry["recorded_compliance"]) and math.isclose(entry["recorded_compliance"], raw["compliance"], rel_tol=ENERGY_RELATIVE_TOLERANCE, abs_tol=1e-6)
+            if not check(scalar_matches, "Recorded compliance equals twice raw internal energy", label):
+                reasons.append("recorded_raw_compliance_mismatch")
+            work_value = beam_external_work(inp_bytes.decode("utf-8"), raw)
+            entry["external_work"] = work_value
+            balanced = work_value is not None and math.isclose(work_value, raw["compliance"], rel_tol=WORK_RELATIVE_TOLERANCE, abs_tol=1e-3)
+            if not check(balanced, "Raw energy agrees with beam external work", label):
+                reasons.append("external_work_energy_mismatch_or_unsupported_geometry")
+            factors = [list(row) for row in ccx.get_topology_iteration_element_data(1, iteration)]
+            exact = len(factors) == mesh_count and all(len(row) == 4 and math.isfinite(row[1]) and math.isfinite(row[2]) and math.isclose(row[2], 0.001 + 0.999 * row[1] ** 3, rel_tol=1e-12, abs_tol=1e-14) for row in factors)
+            check(exact, "Iteration used exact continuous SIMP stiffness", label)
+            check(math.isfinite(entry["volume_fraction"]) and entry["volume_fraction"] <= VOLUME_FRACTION + 1e-6, "Iteration volume is feasible", label)
+            unchanged = hashlib.sha256(stem.with_suffix(".inp").read_bytes()).hexdigest() == entry["input_sha256"] and hashlib.sha256(stem.with_suffix(".dat").read_bytes()).hexdigest() == entry["dat_sha256"]
+            check(unchanged, "Input and raw DAT remain unchanged during audit", label)
+            if previous_compliance is not None and previous_compliance > 0.0:
+                entry["relative_raw_compliance_jump"] = abs(raw["compliance"] / previous_compliance - 1.0)
+                if iteration >= JUMP_CHECK_START_ITERATION and entry["relative_raw_compliance_jump"] > JUMP_THRESHOLD:
+                    reasons.append("large_compliance_jump_diagnostic_only")
+            previous_compliance = raw["compliance"]
+            if reasons:
+                report["alerts"].append({"iteration": iteration, "reasons": reasons})
+                print("ALERT: %s: %s" % (label, ", ".join(reasons)))
+                folder = work / "alerts" / ("iteration_%04d" % iteration)
+                folder.mkdir(parents=True)
+                for suffix in (".inp", ".dat", ".frd", ".sta", ".cvg"):
+                    path = stem.with_suffix(suffix)
+                    if path.is_file():
+                        shutil.copyfile(path, folder / path.name)
+                replay(iteration, stem, raw)
+            save()
+        last = records[-1]
+        if state == "converged":
+            check(last[8] == "1" and bool(last[6]) and float(last[6]) <= DENSITY_TOLERANCE and bool(last[7]) and float(last[7]) <= COMPLIANCE_TOLERANCE, "Final reported convergence meets requested tolerances")
+        report["execution_passed"] = all(value["passed"] for value in report["checks"])
+        report["status"] = ("PASSED_CONVERGED" if state == "converged" else "PASSED_ITERATION_LIMIT") if report["execution_passed"] else "FAILED_CHECKS"
+    except Exception:
+        report["exception"] = traceback.format_exc()
+        print(report["exception"])
+    finally:
+        if ccx is not None and case_created and ccx.get_topology_run_state(1) == "running":
+            cubit.cmd("ccx kill topology 1")
+        if report["status"] == "running":
+            report["status"] = "FAILED_OR_INCOMPLETE"
+        columns = ["iteration", "job", "recorded_compliance", "loaded_compliance", "raw_compliance", "external_work", "relative_raw_compliance_jump", "maximum_density_change", "volume_fraction", "input_sha256", "dat_sha256"]
+        write_csv(work / "comparison.csv", columns, [[row.get(key) for key in columns] for row in report["iterations"]])
+        save()
+        os.chdir(original_directory)
+        print("TOPOLOGY SEQUENCE CONSISTENCY: " + report["status"])
+        print("Converged: " + str(report.get("converged", False)))
+        print("Alerts: %d; direct replays: %d" % (len(report["alerts"]), len(report["direct_replays"])))
+        print("Report: " + str(work / "report.json"))
+        print("Comparison: " + str(work / "comparison.csv"))
+        print("An iteration limit is reported separately from convergence; alerts and direct replay files are retained.")
+
+
+run_topology_sequence_consistency()

@@ -1,0 +1,20 @@
+target_sources(calculix_plugin PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxKillTopologyCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxKillTopologyCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxRunTopologyCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxRunTopologyCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxTopologyAddSetsCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxTopologyAddSetsCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxTopologyCreateCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxTopologyCreateCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxTopologyDeleteCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxTopologyDeleteCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxTopologyModifyCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxTopologyModifyCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxTopologyRemoveSetsCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxTopologyRemoveSetsCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxTopologyResetPreservedCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxTopologyResetPreservedCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxWaitTopologyCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxWaitTopologyCommand.hpp
+)

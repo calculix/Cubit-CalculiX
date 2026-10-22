@@ -1,17 +1,21 @@
 #include "CalculiXPythonInterface.hpp"
-#include "CalculiXCoreInterface.hpp"
+#include <string>
+#include <vector>
+#include "Core/results/dat/CalculiXDatInterface.hpp"
+#include "Core/results/frd/CalculiXFrdInterface.hpp"
+#include "Core/jobs/CalculiXJobsInterface.hpp"
+#include "Core/loads/CalculiXLoadsInterface.hpp"
+#include "Core/topology/CalculiXTopologyInterface.hpp"
 #include "CubitMessage.hpp"
 
 CalculiXPythonInterface::CalculiXPythonInterface()
 {
-  ccx_iface = new CalculiXCoreInterface();
   std::string log = "Loading CalculiX Python Interface...\n";
   PRINT_INFO("%s", log.c_str());
 }
 
 CalculiXPythonInterface::~CalculiXPythonInterface()
 {
-  delete ccx_iface;
 }
 
 void CalculiXPythonInterface::help()
@@ -77,305 +81,427 @@ void CalculiXPythonInterface::help()
 
 int CalculiXPythonInterface::get_job_status(int job_id)
 {
-  return ccx_iface->get_job_status(job_id);
+  CalculiXJobsInterface ccx_jobs_iface;
+
+  return ccx_jobs_iface.get_job_status(job_id);
 }
 
 bool CalculiXPythonInterface::initialize_topology(int topology_id, const std::vector<int>& section_ids)
 {
-  return ccx_iface->initialize_topology(topology_id, section_ids);
+  CalculiXTopologyInterface ccx_topology_iface;
+
+  return ccx_topology_iface.initialize_topology(topology_id, section_ids);
 }
 
 bool CalculiXPythonInterface::set_topology_iteration_factors(int topology_id, int iteration_id, const std::vector<int>& element_ids, const std::vector<double>& stiffness_factors)
 {
-  return ccx_iface->set_topology_iteration_factors(topology_id, iteration_id, element_ids, stiffness_factors);
+  CalculiXTopologyInterface ccx_topology_iface;
+
+  return ccx_topology_iface.set_topology_iteration_factors(topology_id, iteration_id, element_ids, stiffness_factors);
 }
 
 std::vector<std::vector<int>> CalculiXPythonInterface::get_topology_element_preservation(int topology_id)
 {
-  return ccx_iface->get_topology_element_preservation(topology_id);
+  CalculiXTopologyInterface ccx_topology_iface;
+
+  return ccx_topology_iface.get_topology_element_preservation(topology_id);
 }
 
 int CalculiXPythonInterface::run_topology_iteration(int topology_id, int iteration_id)
 {
-  return ccx_iface->run_topology_iteration(topology_id, iteration_id);
+  CalculiXTopologyInterface ccx_topology_iface;
+
+  return ccx_topology_iface.run_topology_iteration(topology_id, iteration_id);
 }
 
 std::vector<double> CalculiXPythonInterface::get_topology_parameters(int topology_id)
 {
-  return ccx_iface->get_topology_parameters(topology_id);
+  CalculiXTopologyInterface ccx_topology_iface;
+
+  return ccx_topology_iface.get_topology_parameters(topology_id);
 }
 
 int CalculiXPythonInterface::get_topology_iteration_job_id(int topology_id, int iteration_id)
 {
-  return ccx_iface->get_topology_iteration_job_id(topology_id, iteration_id);
+  CalculiXTopologyInterface ccx_topology_iface;
+
+  return ccx_topology_iface.get_topology_iteration_job_id(topology_id, iteration_id);
 }
 
 std::vector<std::vector<std::string>> CalculiXPythonInterface::get_topology_iteration_data(int topology_id)
 {
-  return ccx_iface->get_topology_iteration_data(topology_id);
+  CalculiXTopologyInterface ccx_topology_iface;
+
+  return ccx_topology_iface.get_topology_iteration_data(topology_id);
 }
 
 bool CalculiXPythonInterface::select_topology_iteration(int topology_id, int iteration_id)
 {
-  return ccx_iface->select_topology_iteration(topology_id, iteration_id);
+  CalculiXTopologyInterface ccx_topology_iface;
+
+  return ccx_topology_iface.select_topology_iteration(topology_id, iteration_id);
 }
 
 std::string CalculiXPythonInterface::get_topology_run_state(int topology_id)
 {
-  return ccx_iface->get_topology_run_state(topology_id);
+  CalculiXTopologyInterface ccx_topology_iface;
+
+  return ccx_topology_iface.get_topology_run_state(topology_id);
 }
 
 std::vector<std::vector<double>> CalculiXPythonInterface::get_topology_iteration_element_data(int topology_id,int iteration_id)
 {
-  return ccx_iface->get_topology_iteration_element_data(topology_id, iteration_id);
+  CalculiXTopologyInterface ccx_topology_iface;
+
+  return ccx_topology_iface.get_topology_iteration_element_data(topology_id, iteration_id);
 }
 
 std::vector<std::string> CalculiXPythonInterface::frd_get_result_block_types(int job_id)
 {
-  return ccx_iface->frd_get_result_block_types(job_id);
+  CalculiXFrdInterface ccx_frd_iface;
+
+  return ccx_frd_iface.frd_get_result_block_types(job_id);
 }
 
 std::vector<std::string> CalculiXPythonInterface::frd_get_result_block_components(int job_id, std::string result_block_type)
 {
-  return ccx_iface->frd_get_result_block_components(job_id, result_block_type);
+  CalculiXFrdInterface ccx_frd_iface;
+
+  return ccx_frd_iface.frd_get_result_block_components(job_id, result_block_type);
 }
 
 std::vector<int> CalculiXPythonInterface::frd_get_total_increments(int job_id)
 {
-  return ccx_iface->frd_get_total_increments(job_id);
+  CalculiXFrdInterface ccx_frd_iface;
+
+  return ccx_frd_iface.frd_get_total_increments(job_id);
 }
 
 double CalculiXPythonInterface::frd_get_time_from_total_increment(int job_id, int total_increment)
 {
-  return ccx_iface->frd_get_time_from_total_increment(job_id,total_increment);
+  CalculiXFrdInterface ccx_frd_iface;
+
+  return ccx_frd_iface.frd_get_time_from_total_increment(job_id,total_increment);
 }
 
 std::vector<int> CalculiXPythonInterface::frd_get_node_ids_between_values(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double lower_value,double upper_value)
 {
-  return ccx_iface->frd_get_node_ids_between_values(job_id,total_increment,result_block_type,result_block_component,lower_value,upper_value);
+  CalculiXFrdInterface ccx_frd_iface;
+
+  return ccx_frd_iface.frd_get_node_ids_between_values(job_id,total_increment,result_block_type,result_block_component,lower_value,upper_value);
 }
 
 std::vector<int> CalculiXPythonInterface::frd_get_node_ids_smaller_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value)
 {
-  return ccx_iface->frd_get_node_ids_smaller_value(job_id,total_increment,result_block_type,result_block_component,value);
+  CalculiXFrdInterface ccx_frd_iface;
+
+  return ccx_frd_iface.frd_get_node_ids_smaller_value(job_id,total_increment,result_block_type,result_block_component,value);
 }
 
 std::vector<int> CalculiXPythonInterface::frd_get_node_ids_greater_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value)
 {
-  return ccx_iface->frd_get_node_ids_greater_value(job_id,total_increment,result_block_type,result_block_component,value);
+  CalculiXFrdInterface ccx_frd_iface;
+
+  return ccx_frd_iface.frd_get_node_ids_greater_value(job_id,total_increment,result_block_type,result_block_component,value);
 }
 
 std::vector<int> CalculiXPythonInterface::frd_get_element_ids_between_values(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double lower_value,double upper_value)
 {
-  return ccx_iface->frd_get_element_ids_between_values(job_id,total_increment,result_block_type,result_block_component,lower_value,upper_value);
+  CalculiXFrdInterface ccx_frd_iface;
+
+  return ccx_frd_iface.frd_get_element_ids_between_values(job_id,total_increment,result_block_type,result_block_component,lower_value,upper_value);
 }
 
 std::vector<int> CalculiXPythonInterface::frd_get_element_ids_smaller_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value)
 {
-  return ccx_iface->frd_get_element_ids_smaller_value(job_id,total_increment,result_block_type,result_block_component,value);
+  CalculiXFrdInterface ccx_frd_iface;
+
+  return ccx_frd_iface.frd_get_element_ids_smaller_value(job_id,total_increment,result_block_type,result_block_component,value);
 }
 
 std::vector<int> CalculiXPythonInterface::frd_get_element_ids_greater_value(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double value)
 {
-  return ccx_iface->frd_get_element_ids_greater_value(job_id,total_increment,result_block_type,result_block_component,value);
+  CalculiXFrdInterface ccx_frd_iface;
+
+  return ccx_frd_iface.frd_get_element_ids_greater_value(job_id,total_increment,result_block_type,result_block_component,value);
 }
 
 std::vector<int> CalculiXPythonInterface::frd_get_element_ids_over_limit(int job_id,int total_increment,std::string result_block_type,std::string result_block_component,double limit)
 {
-  return ccx_iface->frd_get_element_ids_over_limit(job_id,total_increment,result_block_type,result_block_component,limit);
+  CalculiXFrdInterface ccx_frd_iface;
+
+  return ccx_frd_iface.frd_get_element_ids_over_limit(job_id,total_increment,result_block_type,result_block_component,limit);
 }
 
 double CalculiXPythonInterface::frd_get_node_value(int job_id,int node_id, int total_increment,std::string result_block_type,std::string result_block_component)
 {
-  return ccx_iface->frd_get_node_value(job_id,node_id,total_increment,result_block_type,result_block_component);
+  CalculiXFrdInterface ccx_frd_iface;
+
+  return ccx_frd_iface.frd_get_node_value(job_id,node_id,total_increment,result_block_type,result_block_component);
 }
 
 std::vector<double> CalculiXPythonInterface::frd_get_node_values(int job_id,int node_id, int total_increment,std::string result_block_type)
 {
-  return ccx_iface->frd_get_node_values(job_id,node_id,total_increment,result_block_type);
+  CalculiXFrdInterface ccx_frd_iface;
+
+  return ccx_frd_iface.frd_get_node_values(job_id,node_id,total_increment,result_block_type);
 }
 
 std::vector<std::string> CalculiXPythonInterface::dat_get_result_block_types(int job_id)
 {
-  return ccx_iface->dat_get_result_block_types(job_id);
+  CalculiXDatInterface ccx_dat_iface;
+
+  return ccx_dat_iface.dat_get_result_block_types(job_id);
 }
 
 std::vector<std::string> CalculiXPythonInterface::dat_get_result_block_set(int job_id)
 {
-  return ccx_iface->dat_get_result_block_set(job_id);
+  CalculiXDatInterface ccx_dat_iface;
+
+  return ccx_dat_iface.dat_get_result_block_set(job_id);
 }
 
 std::vector<std::string> CalculiXPythonInterface::dat_get_result_block_components(int job_id, std::string result_block_type)
 {
-  return ccx_iface->dat_get_result_block_components(job_id, result_block_type);
+  CalculiXDatInterface ccx_dat_iface;
+
+  return ccx_dat_iface.dat_get_result_block_components(job_id, result_block_type);
 }
 
 std::vector<double> CalculiXPythonInterface::dat_get_result_block_times(int job_id, std::string result_block_type, std::string result_block_set)
 {
-  return ccx_iface->dat_get_result_block_times(job_id, result_block_type, result_block_set);
+  CalculiXDatInterface ccx_dat_iface;
+
+  return ccx_dat_iface.dat_get_result_block_times(job_id, result_block_type, result_block_set);
 }
 
 std::vector<int> CalculiXPythonInterface::dat_get_node_ids_between_values(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double lower_value,double upper_value)
 {
-  return ccx_iface->dat_get_node_ids_between_values(job_id,time,result_block_type,result_block_set,result_block_component,lower_value,upper_value);
+  CalculiXDatInterface ccx_dat_iface;
+
+  return ccx_dat_iface.dat_get_node_ids_between_values(job_id,time,result_block_type,result_block_set,result_block_component,lower_value,upper_value);
 }
 
 std::vector<int> CalculiXPythonInterface::dat_get_node_ids_smaller_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value)
 {
-  return ccx_iface->dat_get_node_ids_smaller_value(job_id,time,result_block_type,result_block_set,result_block_component,value);
+  CalculiXDatInterface ccx_dat_iface;
+
+  return ccx_dat_iface.dat_get_node_ids_smaller_value(job_id,time,result_block_type,result_block_set,result_block_component,value);
 }
 
 std::vector<int> CalculiXPythonInterface::dat_get_node_ids_greater_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value)
 {
-  return ccx_iface->dat_get_node_ids_greater_value(job_id,time,result_block_type,result_block_set,result_block_component,value);
+  CalculiXDatInterface ccx_dat_iface;
+
+  return ccx_dat_iface.dat_get_node_ids_greater_value(job_id,time,result_block_type,result_block_set,result_block_component,value);
 }
 
 std::vector<int> CalculiXPythonInterface::dat_get_element_ids_between_values(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double lower_value,double upper_value)
 {
-  return ccx_iface->dat_get_element_ids_between_values(job_id,time,result_block_type,result_block_set,result_block_component,lower_value,upper_value);
+  CalculiXDatInterface ccx_dat_iface;
+
+  return ccx_dat_iface.dat_get_element_ids_between_values(job_id,time,result_block_type,result_block_set,result_block_component,lower_value,upper_value);
 }
 
 std::vector<int> CalculiXPythonInterface::dat_get_element_ids_smaller_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value)
 {
-  return ccx_iface->dat_get_element_ids_smaller_value(job_id,time,result_block_type,result_block_set,result_block_component,value);
+  CalculiXDatInterface ccx_dat_iface;
+
+  return ccx_dat_iface.dat_get_element_ids_smaller_value(job_id,time,result_block_type,result_block_set,result_block_component,value);
 }
 
 std::vector<int> CalculiXPythonInterface::dat_get_element_ids_greater_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value)
 {
-  return ccx_iface->dat_get_element_ids_greater_value(job_id,time,result_block_type,result_block_set,result_block_component,value);
+  CalculiXDatInterface ccx_dat_iface;
+
+  return ccx_dat_iface.dat_get_element_ids_greater_value(job_id,time,result_block_type,result_block_set,result_block_component,value);
 }
 
 std::vector<int> CalculiXPythonInterface::dat_get_element_ids_over_limit(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double limit)
 {
-  return ccx_iface->dat_get_element_ids_over_limit(job_id,time,result_block_type,result_block_set,result_block_component,limit);
+  CalculiXDatInterface ccx_dat_iface;
+
+  return ccx_dat_iface.dat_get_element_ids_over_limit(job_id,time,result_block_type,result_block_set,result_block_component,limit);
 }
 
 double CalculiXPythonInterface::dat_get_node_value(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component)
 {
-  return ccx_iface->dat_get_node_value(job_id,node_id,time,result_block_type,result_block_set,result_block_component);
+  CalculiXDatInterface ccx_dat_iface;
+
+  return ccx_dat_iface.dat_get_node_value(job_id,node_id,time,result_block_type,result_block_set,result_block_component);
 }
 
 std::vector<double> CalculiXPythonInterface::dat_get_node_values(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set)
 {
-  return ccx_iface->dat_get_node_values(job_id,node_id,time,result_block_type,result_block_set);
+  CalculiXDatInterface ccx_dat_iface;
+
+  return ccx_dat_iface.dat_get_node_values(job_id,node_id,time,result_block_type,result_block_set);
 }
 
 std::vector<double> CalculiXPythonInterface::dat_get_element_values_for_component(int job_id,int element_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component)
 {
-  return ccx_iface->dat_get_element_values_for_component(job_id,element_id,time,result_block_type,result_block_set,result_block_component);
+  CalculiXDatInterface ccx_dat_iface;
+
+  return ccx_dat_iface.dat_get_element_values_for_component(job_id,element_id,time,result_block_type,result_block_set,result_block_component);
 }
 
 std::vector<std::vector<double>> CalculiXPythonInterface::dat_get_element_values(int job_id,int element_id, double time,std::string result_block_type,std::string result_block_set)
 {
-  return ccx_iface->dat_get_element_values(job_id,element_id,time,result_block_type,result_block_set);
+  CalculiXDatInterface ccx_dat_iface;
+
+  return ccx_dat_iface.dat_get_element_values(job_id,element_id,time,result_block_type,result_block_set);
 }
 
 std::vector<std::vector<std::vector<double>>> CalculiXPythonInterface::dat_get_buckle(int job_id)
 {
-  return ccx_iface->dat_get_buckle(job_id);
+  CalculiXDatInterface ccx_dat_iface;
+
+  return ccx_dat_iface.dat_get_buckle(job_id);
 }
 
 std::vector<std::string> CalculiXPythonInterface::dat_get_section_set(int job_id)
 {
-  return ccx_iface->dat_get_section_set(job_id);
+  CalculiXDatInterface ccx_dat_iface;
+
+  return ccx_dat_iface.dat_get_section_set(job_id);
 }
 
 std::vector<std::vector<double>> CalculiXPythonInterface::dat_get_section_data(int job_id, std::string section_set)
 {
-  return ccx_iface->dat_get_section_data(job_id, section_set);
+  CalculiXDatInterface ccx_dat_iface;
+
+  return ccx_dat_iface.dat_get_section_data(job_id, section_set);
 }
 
 std::vector<std::string> CalculiXPythonInterface::dat_get_section_label(int job_id)
 {
-  return ccx_iface->dat_get_section_label(job_id);
+  CalculiXDatInterface ccx_dat_iface;
+
+  return ccx_dat_iface.dat_get_section_label(job_id);
 }
 
 std::string CalculiXPythonInterface::loadstrajectory_get_load_type(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_get_load_type(trajectory_id);
+  CalculiXLoadsInterface ccx_loads_iface;
+
+  return ccx_loads_iface.loadstrajectory_get_load_type(trajectory_id);
 }
 
 std::vector<int> CalculiXPythonInterface::loadstrajectory_heatflux_get_node_ids(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_heatflux_get_node_ids(trajectory_id);
+  CalculiXLoadsInterface ccx_loads_iface;
+
+  return ccx_loads_iface.loadstrajectory_heatflux_get_node_ids(trajectory_id);
 }
 
 std::vector<int> CalculiXPythonInterface::loadstrajectory_heatflux_get_edge_ids(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_heatflux_get_edge_ids(trajectory_id);
+  CalculiXLoadsInterface ccx_loads_iface;
+
+  return ccx_loads_iface.loadstrajectory_heatflux_get_edge_ids(trajectory_id);
 }
 
 std::vector<std::vector<double>> CalculiXPythonInterface::loadstrajectory_heatflux_get_hit_coordinates(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_heatflux_get_hit_coordinates(trajectory_id);
+  CalculiXLoadsInterface ccx_loads_iface;
+
+  return ccx_loads_iface.loadstrajectory_heatflux_get_hit_coordinates(trajectory_id);
 }
 
 std::vector<std::vector<std::vector<int>>> CalculiXPythonInterface::loadstrajectory_heatflux_get_face_ids(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_heatflux_get_face_ids(trajectory_id);
+  CalculiXLoadsInterface ccx_loads_iface;
+
+  return ccx_loads_iface.loadstrajectory_heatflux_get_face_ids(trajectory_id);
 }
 
 std::vector<std::vector<std::vector<int>>> CalculiXPythonInterface::loadstrajectory_heatflux_get_draw_face_ids(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_heatflux_get_draw_face_ids(trajectory_id);
+  CalculiXLoadsInterface ccx_loads_iface;
+
+  return ccx_loads_iface.loadstrajectory_heatflux_get_draw_face_ids(trajectory_id);
 }
 
 std::vector<std::vector<double>> CalculiXPythonInterface::loadstrajectory_heatflux_get_times(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_heatflux_get_times(trajectory_id);
+  CalculiXLoadsInterface ccx_loads_iface;
+
+  return ccx_loads_iface.loadstrajectory_heatflux_get_times(trajectory_id);
 }
 
 std::vector<std::vector<double>> CalculiXPythonInterface::loadstrajectory_heatflux_get_radius(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_heatflux_get_radius(trajectory_id);
+  CalculiXLoadsInterface ccx_loads_iface;
+
+  return ccx_loads_iface.loadstrajectory_heatflux_get_radius(trajectory_id);
 }
 
 std::vector<std::vector<double>> CalculiXPythonInterface::loadstrajectory_heatflux_get_magnitude(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_heatflux_get_magnitude(trajectory_id);
+  CalculiXLoadsInterface ccx_loads_iface;
+
+  return ccx_loads_iface.loadstrajectory_heatflux_get_magnitude(trajectory_id);
 }
 
 std::vector<int> CalculiXPythonInterface::loadstrajectory_bodyheatfluxsphere_get_node_ids(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_bodyheatfluxsphere_get_node_ids(trajectory_id);
+  CalculiXLoadsInterface ccx_loads_iface;
+
+  return ccx_loads_iface.loadstrajectory_bodyheatfluxsphere_get_node_ids(trajectory_id);
 }
 
 std::vector<int> CalculiXPythonInterface::loadstrajectory_bodyheatfluxsphere_get_edge_ids(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_bodyheatfluxsphere_get_edge_ids(trajectory_id);
+  CalculiXLoadsInterface ccx_loads_iface;
+
+  return ccx_loads_iface.loadstrajectory_bodyheatfluxsphere_get_edge_ids(trajectory_id);
 }
 
 std::vector<std::vector<double>> CalculiXPythonInterface::loadstrajectory_bodyheatfluxsphere_get_hit_coordinates(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_bodyheatfluxsphere_get_hit_coordinates(trajectory_id);
+  CalculiXLoadsInterface ccx_loads_iface;
+
+  return ccx_loads_iface.loadstrajectory_bodyheatfluxsphere_get_hit_coordinates(trajectory_id);
 }
 
 std::vector<std::vector<std::vector<int>>> CalculiXPythonInterface::loadstrajectory_bodyheatfluxsphere_get_element_ids(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_bodyheatfluxsphere_get_element_ids(trajectory_id);
+  CalculiXLoadsInterface ccx_loads_iface;
+
+  return ccx_loads_iface.loadstrajectory_bodyheatfluxsphere_get_element_ids(trajectory_id);
 }
 
 std::vector<std::vector<std::vector<int>>> CalculiXPythonInterface::loadstrajectory_bodyheatfluxsphere_get_draw_element_ids(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_bodyheatfluxsphere_get_draw_element_ids(trajectory_id);
+  CalculiXLoadsInterface ccx_loads_iface;
+
+  return ccx_loads_iface.loadstrajectory_bodyheatfluxsphere_get_draw_element_ids(trajectory_id);
 }
 
 std::vector<std::vector<double>> CalculiXPythonInterface::loadstrajectory_bodyheatfluxsphere_get_times(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_bodyheatfluxsphere_get_times(trajectory_id);
+  CalculiXLoadsInterface ccx_loads_iface;
+
+  return ccx_loads_iface.loadstrajectory_bodyheatfluxsphere_get_times(trajectory_id);
 }
 
 std::vector<std::vector<double>> CalculiXPythonInterface::loadstrajectory_bodyheatfluxsphere_get_radius(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_bodyheatfluxsphere_get_radius(trajectory_id);
+  CalculiXLoadsInterface ccx_loads_iface;
+
+  return ccx_loads_iface.loadstrajectory_bodyheatfluxsphere_get_radius(trajectory_id);
 }
 
 std::vector<std::vector<double>> CalculiXPythonInterface::loadstrajectory_bodyheatfluxsphere_get_depth(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_bodyheatfluxsphere_get_depth(trajectory_id);
+  CalculiXLoadsInterface ccx_loads_iface;
+
+  return ccx_loads_iface.loadstrajectory_bodyheatfluxsphere_get_depth(trajectory_id);
 }
 
 std::vector<std::vector<double>> CalculiXPythonInterface::loadstrajectory_bodyheatfluxsphere_get_magnitude(int trajectory_id)
 {
-  return ccx_iface->loadstrajectory_bodyheatfluxsphere_get_magnitude(trajectory_id);
+  CalculiXLoadsInterface ccx_loads_iface;
+
+  return ccx_loads_iface.loadstrajectory_bodyheatfluxsphere_get_magnitude(trajectory_id);
 }

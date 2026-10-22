@@ -19,7 +19,7 @@ The material core owns the topology material collection, including base
 material assignments and per-iteration stiffness factors. Job records belong
 to the job core. ``CalculiXCore`` coordinates these stores through its existing
 interfaces. Consumers must not introduce direct dependencies between domain
-core headers; cross-core access goes through ``CalculiXCoreInterface``.
+core headers; cross-core access goes through the domain-specific interfaces (see :doc:`interface-layout`).
 
 ``CalculiXCore::get_topology_iteration_element_data`` checks the iteration job
 is finished and an evaluation, density design, and factor map exist. It checks

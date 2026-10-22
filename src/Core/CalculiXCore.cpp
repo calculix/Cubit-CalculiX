@@ -1,4 +1,11 @@
 #include "CalculiXCore.hpp"
+#include "Core/steps/CoreStepsStructs.hpp"
+#include <string>
+#include <vector>
+#include <map>
+#include <array>
+#include <QString>
+#include "Core/topology/CoreTopologyStructs.hpp"
 #include "ScientificNumber.hpp"
 #include "ElementIntegration.hpp"
 #include "ElementType.h"
@@ -29,46 +36,46 @@
 #include "ProgressTool.hpp"
 #include "AppUtil.hpp"
 
-#include "CoreBlocks.hpp"
-#include "CoreMaterials.hpp"
-#include "CoreMaterialsLibrary.hpp"
-#include "CoreSections.hpp"
-#include "CoreConstraints.hpp"
-#include "CoreSurfaceInteractions.hpp"
-#include "CoreContactPairs.hpp"
-#include "CoreAmplitudes.hpp"
-#include "CoreOrientations.hpp"
-#include "CoreDamping.hpp"
-#include "CorePhysicalConstants.hpp"
-#include "CoreLoadsForces.hpp"
-#include "CoreLoadsPressures.hpp"
-#include "CoreLoadsHeatfluxes.hpp"
-#include "CoreLoadsGravity.hpp"
-#include "CoreLoadsCentrifugal.hpp"
-#include "CoreLoadsTrajectory.hpp"
-#include "CoreLoadsTrajectoryHeatflux.hpp"
-#include "CoreLoadsTrajectoryBodyHeatfluxSphere.hpp"
-#include "CoreLoadsFilm.hpp"
-#include "CoreLoadsRadiation.hpp"
-#include "CoreLoadsSurfaceTraction.hpp"
-#include "CoreLoadsBodyHeatflux.hpp"
-#include "CoreBCsDisplacements.hpp"
-#include "CoreBCsTemperatures.hpp"
-#include "CoreHistoryOutputs.hpp"
-#include "CoreFieldOutputs.hpp"
-#include "CoreInitialConditions.hpp"
-#include "CoreHBCs.hpp"
-#include "CoreSteps.hpp"
-#include "CoreJobs.hpp"
-#include "CoreTopology.hpp"
-#include "CoreTopologyOptimization.hpp"
-#include "CoreResults.hpp"
-#include "CoreResultsFrd.hpp"
-#include "CoreResultsDat.hpp"
-#include "CoreTimer.hpp"
-#include "CoreCustomLines.hpp"
+#include "Core/mesh/CoreBlocks.hpp"
+#include "Core/materials/CoreMaterials.hpp"
+#include "Core/materials/CoreMaterialsLibrary.hpp"
+#include "Core/sections/CoreSections.hpp"
+#include "Core/interactions/CoreConstraints.hpp"
+#include "Core/interactions/CoreSurfaceInteractions.hpp"
+#include "Core/interactions/CoreContactPairs.hpp"
+#include "Core/amplitudes/CoreAmplitudes.hpp"
+#include "Core/sections/CoreOrientations.hpp"
+#include "Core/steps/CoreDamping.hpp"
+#include "Core/steps/CorePhysicalConstants.hpp"
+#include "Core/loads/CoreLoadsForces.hpp"
+#include "Core/loads/CoreLoadsPressures.hpp"
+#include "Core/loads/CoreLoadsHeatfluxes.hpp"
+#include "Core/loads/CoreLoadsGravity.hpp"
+#include "Core/loads/CoreLoadsCentrifugal.hpp"
+#include "Core/loads/CoreLoadsTrajectory.hpp"
+#include "Core/loads/CoreLoadsTrajectoryHeatflux.hpp"
+#include "Core/loads/CoreLoadsTrajectoryBodyHeatfluxSphere.hpp"
+#include "Core/loads/CoreLoadsFilm.hpp"
+#include "Core/loads/CoreLoadsRadiation.hpp"
+#include "Core/loads/CoreLoadsSurfaceTraction.hpp"
+#include "Core/loads/CoreLoadsBodyHeatflux.hpp"
+#include "Core/bcs/CoreBCsDisplacements.hpp"
+#include "Core/bcs/CoreBCsTemperatures.hpp"
+#include "Core/steps/CoreHistoryOutputs.hpp"
+#include "Core/steps/CoreFieldOutputs.hpp"
+#include "Core/steps/CoreInitialConditions.hpp"
+#include "Core/bcs/CoreHBCs.hpp"
+#include "Core/steps/CoreSteps.hpp"
+#include "Core/jobs/CoreJobs.hpp"
+#include "Core/topology/CoreTopology.hpp"
+#include "Core/topology/CoreTopologyOptimization.hpp"
+#include "Core/results/CoreResults.hpp"
+#include "Core/results/frd/CoreResultsFrd.hpp"
+#include "Core/results/dat/CoreResultsDat.hpp"
+#include "Core/application/CoreTimer.hpp"
+#include "Core/export/CoreCustomLines.hpp"
 #include "loadUserOptions.hpp"
-#include "CoreDraw.hpp"
+#include "Core/drawing/CoreDraw.hpp"
 #include "PlotChart.hpp"
 
 #include <Utility/Eigen/Eigenvalues>
@@ -103,73 +110,141 @@ CalculiXCore::~CalculiXCore()
   delete topologyoptimization;
   topologyoptimization = nullptr;
   if(cb)
+  {
     delete cb;
+  }
   if(mat)
+  {
     delete mat;
+  }
   if(mat_library)
+  {
     delete mat_library;
+  }
   if(sections)
+  {
     delete sections;
+  }
   if(constraints)
+  {
     delete constraints;
+  }
   if(surfaceinteractions)
+  {
     delete surfaceinteractions;
+  }
   if(contactpairs)
+  {
     delete contactpairs;
+  }
   if(amplitudes)
+  {
     delete amplitudes;
+  }
   if(orientations)
+  {
     delete orientations;
+  }
   if(damping)
+  {
     delete damping;
+  }
   if(physicalconstants)
+  {
     delete physicalconstants;
+  }
   if(loadsforces)
+  {
     delete loadsforces;
+  }
   if(loadspressures)
+  {
     delete loadspressures;
+  }
   if(loadsheatfluxes)
+  {
     delete loadsheatfluxes;
+  }
   if(loadsgravity)
+  {
     delete loadsgravity;
+  }
   if(loadscentrifugal)
+  {
     delete loadscentrifugal;
+  }
   if(loadstrajectory)
+  {
     delete loadstrajectory;
+  }
   if(loadsfilm)
+  {
     delete loadsfilm;
+  }
   if(loadsradiation)
+  {
     delete loadsradiation;
+  }
   if(loadssurfacetraction)
+  {
     delete loadssurfacetraction;
+  }
   if(loadsbodyheatflux)
+  {
     delete loadsbodyheatflux;
+  }
   if(bcsdisplacements)
+  {
     delete bcsdisplacements;
+  }
   if(bcstemperatures)
+  {
     delete bcstemperatures;
+  }
   if(historyoutputs)
+  {
     delete historyoutputs;
+  }
   if(fieldoutputs)
+  {
     delete fieldoutputs;
+  }
   if(initialconditions)
+  {
     delete initialconditions;
+  }
   if(hbcs)
+  {
     delete hbcs;
+  }
   if(steps)
+  {
     delete steps;
+  }
   if(jobs)
+  {
     delete jobs;
+  }
   if(topology)
+  {
     delete topology;
+  }
   if(results)
+  {
     delete results;
+  }
   if(timer)
+  {
     delete timer;
+  }
   if(customlines)
+  {
     delete customlines;
+  }
   if(draw)
+  {
     delete draw;
+  }
 }
 
 bool CalculiXCore::cmd(std::string cmd)
@@ -227,7 +302,9 @@ bool CalculiXCore::init()
   mat_iface = dynamic_cast<MaterialInterface*>(CubitInterface::get_interface("Material"));
 */
   if(!cb)
+  {
     cb = new CoreBlocks;
+  }
   
   cb->init();
 /*
@@ -237,157 +314,219 @@ bool CalculiXCore::init()
   mat->init();
 */
   if(!sections)
+  {
     sections = new CoreSections;
+  }
   
   sections->init();
 
   if(!constraints)
+  {
     constraints = new CoreConstraints;
+  }
   
   constraints->init();
 
   if(!surfaceinteractions)
+  {
     surfaceinteractions = new CoreSurfaceInteractions;
+  }
   
   surfaceinteractions->init();
 
   if(!contactpairs)
+  {
     contactpairs = new CoreContactPairs;
+  }
   
   contactpairs->init();
 
   if(!amplitudes)
+  {
     amplitudes = new CoreAmplitudes;
+  }
   
   amplitudes->init();
 
   if(!orientations)
+  {
     orientations = new CoreOrientations;
+  }
   
   orientations->init();
 
   if(!damping)
+  {
     damping = new CoreDamping;
+  }
   
   damping->init();
 
   if(!physicalconstants)
+  {
     physicalconstants = new CorePhysicalConstants;
+  }
   
   physicalconstants->init();
 
   if(!loadsforces)
+  {
     loadsforces = new CoreLoadsForces;
+  }
   
   loadsforces->init();
 
   if(!loadspressures)
+  {
     loadspressures = new CoreLoadsPressures;
+  }
   
   loadspressures->init();
 
   if(!loadsheatfluxes)
+  {
     loadsheatfluxes = new CoreLoadsHeatfluxes;
+  }
   
   loadsheatfluxes->init();
 
   if(!loadsgravity)
+  {
     loadsgravity = new CoreLoadsGravity;
+  }
   
   loadsgravity->init();
 
   if(!loadscentrifugal)
+  {
     loadscentrifugal = new CoreLoadsCentrifugal;
+  }
   
   loadscentrifugal->init();
 
   if(!loadstrajectory)
+  {
     loadstrajectory = new CoreLoadsTrajectory;
+  }
   
   loadstrajectory->init();
 
   if(!loadsfilm)
+  {
     loadsfilm = new CoreLoadsFilm;
+  }
   
   loadsfilm->init();
 
   if(!loadsradiation)
+  {
     loadsradiation = new CoreLoadsRadiation;
+  }
   
   loadsradiation->init();
 
   if(!loadssurfacetraction)
+  {
     loadssurfacetraction = new CoreLoadsSurfaceTraction;
+  }
   
   loadssurfacetraction->init();
 
   if(!loadsbodyheatflux)
+  {
     loadsbodyheatflux = new CoreLoadsBodyHeatflux;
+  }
   
   loadsbodyheatflux->init();
 
   if(!bcsdisplacements)
+  {
     bcsdisplacements = new CoreBCsDisplacements;
+  }
   
   bcsdisplacements->init();
 
   if(!bcstemperatures)
+  {
     bcstemperatures = new CoreBCsTemperatures;
+  }
   
   bcstemperatures->init();
 
   if(!historyoutputs)
+  {
     historyoutputs = new CoreHistoryOutputs;
+  }
   
   historyoutputs->init();
 
   if(!fieldoutputs)
+  {
     fieldoutputs = new CoreFieldOutputs;
+  }
   
   fieldoutputs->init();
 
   if(!initialconditions)
+  {
     initialconditions = new CoreInitialConditions;
+  }
   
   initialconditions->init();
 
   if(!hbcs)
+  {
     hbcs = new CoreHBCs;
+  }
   
   hbcs->init();
 
   if(!steps)
+  {
     steps = new CoreSteps;
+  }
   
   steps->init();
 
   if(!jobs)
+  {
     jobs = new CoreJobs;
+  }
   
   jobs->init();
 
   if (!topology)
+  {
     topology = new CoreTopology;
+  }
 
   topology->init();
 
   if(!results)
+  {
     results = new CoreResults;
+  }
   
   results->init();
 
   if(!customlines)
+  {
     customlines = new CoreCustomLines;
+  }
   
   customlines->init();
 
   if(!draw)
+  {
     draw = new CoreDraw;
+  }
   
   draw->init();
 
   if(!timer)
+  {
     timer = new CoreTimer;
+  }
 
   if (!topologyoptimization)
   {
@@ -421,12 +560,16 @@ bool CalculiXCore::init2() // will be done when loading the ccm!
   }
 
   if(!mat)
+  {
     mat = new CoreMaterials;
+  }
   
   mat->init();
 
   if(!mat_library)
+  {
     mat_library = new CoreMaterialsLibrary;
+  }
 
   this->bool_init2 = true;
   
@@ -1249,7 +1392,7 @@ bool CalculiXCore::read_cub(std::string filename)
       {
         for (auto& collection : materials)
         {
-          if (!increment_topology_iteration_keys(collection.second.iteration_factors))
+          if (!increment_topology_iteration_keys(collection.second.iteration_factors) || !increment_topology_iteration_keys(collection.second.iteration_material_caps))
           {
             progressbar->end();
             PRINT_ERROR("Unable to migrate topology material factors.\n");
@@ -1260,7 +1403,7 @@ bool CalculiXCore::read_cub(std::string filename)
 
       for (const auto& collection : materials)
       {
-        if (!valid_topology_iteration_keys(collection.second.iteration_factors))
+        if (!valid_topology_iteration_keys(collection.second.iteration_factors) || !valid_topology_iteration_keys(collection.second.iteration_material_caps))
         {
           progressbar->end();
           PRINT_ERROR("Invalid saved topology material iteration ID.\n");
@@ -5277,11 +5420,17 @@ bool CalculiXCore::get_topology_set_element_ids(int topology_id,int set_type,int
   if (set_id > 0)
   {
     if (set_type == 1)
+    {
       exists = check_block_exists(set_id);
+    }
     else if (set_type == 2)
+    {
       exists = check_nodeset_exists(set_id);
+    }
     else if (set_type == 3)
+    {
       exists = check_sideset_exists(set_id);
+    }
   }
 
   if (!exists)
@@ -5295,8 +5444,12 @@ bool CalculiXCore::get_topology_set_element_ids(int topology_id,int set_type,int
   if (set_type == 1)
   {
     for (int id : get_block_element_ids(set_id))
+    {
       if (analysis_elements.count(id) != 0)
+      {
         resolved.insert(id);
+      }
+    }
   }
     else if (set_type == 2)
   {
@@ -5396,7 +5549,9 @@ bool CalculiXCore::get_topology_set_element_ids(int topology_id,int set_type,int
             CubitInterface::get_global_element_id(entity, local_id);
 
         if (analysis_elements.count(global_id) != 0)
+        {
           resolved.insert(global_id);
+        }
       }
 
       start += count;
@@ -5460,7 +5615,9 @@ bool CalculiXCore::collect_topology_default_sets(std::map<int, std::set<int>>& d
     std::istringstream input(text);
 
     if (!(input >> id) || id <= 0)
+    {
       return false;
+    }
 
     input >> std::ws;
     return input.eof();
@@ -5561,9 +5718,13 @@ bool CalculiXCore::collect_topology_default_sets(std::map<int, std::set<int>>& d
       int set_type = -1;
 
       if (rigid[1] == "1")
+      {
         set_type = 2;
+      }
       else if (rigid[1] == "2")
+      {
         set_type = 1;
+      }
       else
       {
         PRINT_ERROR("Invalid rigid body selection type.\n");
@@ -5571,7 +5732,9 @@ bool CalculiXCore::collect_topology_default_sets(std::map<int, std::set<int>>& d
       }
 
       if (!add_string_id(set_type, rigid[2]))
+      {
         return false;
+      }
     }
     else if (type == 2)
     {
@@ -5590,7 +5753,9 @@ bool CalculiXCore::collect_topology_default_sets(std::map<int, std::set<int>>& d
 
       if (!add_string_id(3, tie[2]) ||
           !add_string_id(3, tie[3]))
+      {
         return false;
+      }
     }
     else if (type == 3)
     {
@@ -5615,7 +5780,9 @@ bool CalculiXCore::collect_topology_default_sets(std::map<int, std::set<int>>& d
         }
 
         if (!add_node_id(equation[1]))
+        {
           return false;
+        }
       }
     }
     else if (type == 4)
@@ -5642,7 +5809,9 @@ bool CalculiXCore::collect_topology_default_sets(std::map<int, std::set<int>>& d
 
         if (!add_node_id(equation[1]) ||
             !add_node_id(equation[2]))
+        {
           return false;
+        }
       }
     }
   }
@@ -5676,7 +5845,9 @@ bool CalculiXCore::collect_topology_default_sets(std::map<int, std::set<int>>& d
 
     if (!nodeset.empty() &&
         !add_string_id(2, nodeset))
+    {
       return false;
+    }
   }
 
   // These load tables store their block/sideset ID at column 4.
@@ -5711,13 +5882,17 @@ bool CalculiXCore::collect_topology_default_sets(std::map<int, std::set<int>>& d
   // Block references.
   if (!collect_load_sets(loadsgravity->loads_data,4,1, "gravity") ||
       !collect_load_sets(loadscentrifugal->loads_data,5,1, "centrifugal"))
+  {
     return false;
+  }
 
   // Sideset references.
   if (!collect_load_sets(loadsfilm->loads_data,7,3, "film") ||
       !collect_load_sets(loadsradiation->loads_data,8,3, "radiation") ||
       !collect_load_sets(loadssurfacetraction->loads_data,9,3, "surface traction"))
+  {
     return false;
+  }
 
   // Body heat flux: column 4 identifies the stored selection.
   // Column 5: 1 = blocks, 2 = global elements.
@@ -5766,7 +5941,9 @@ bool CalculiXCore::collect_topology_default_sets(std::map<int, std::set<int>>& d
       }
 
       if (load[5] == 1)
+      {
         collected[1].insert(id);
+      }
       else
         collected_elements.insert(id);
     }
@@ -5876,7 +6053,9 @@ bool CalculiXCore::collect_topology_default_sets(std::map<int, std::set<int>>& d
           std::vector<int> key;
 
           for (int corner : face)
+          {
             key.push_back(element[2 + corner]);
+          }
 
           std::sort(key.begin(), key.end());
           face_owners[key].insert(element[0]);
@@ -5889,8 +6068,12 @@ bool CalculiXCore::collect_topology_default_sets(std::map<int, std::set<int>>& d
       std::set<int> selected_faces;
 
       for (const auto& position : targets)
+      {
         for (const auto& selection : position)
+        {
           selected_faces.insert(selection.begin(), selection.end());
+        }
+      }
 
       for (int face_id : selected_faces)
       {
@@ -6035,7 +6218,9 @@ bool CalculiXCore::collect_topology_default_sets(std::map<int, std::set<int>>& d
       !collect_cubit_bc_sets(used_loads[3], BCTYPE_HEATFLUX, 3, "heat flux") ||
       !collect_cubit_bc_sets(used_bcs[1], BCTYPE_DISPLACEMENT, 2, "displacement") ||
       !collect_cubit_bc_sets(used_bcs[2], BCTYPE_TEMPERATURE, 2, "temperature"))
+  {
     return false;
+  }
 
   // get elements from nodes
   if (!collected_nodes.empty())
@@ -6093,7 +6278,9 @@ bool CalculiXCore::resolve_topology_preservation(int topology_id,const std::map<
   std::vector<int> element_ids;
 
   for (const auto& assignment : collection->second.element_base_material)
+  {
     element_ids.push_back(assignment.first);
+  }
 
   return topology->resolve_preserved_elements(topology_id, element_ids, default_sets, default_elements);
 }
@@ -6593,7 +6780,7 @@ bool CalculiXCore::evaluate_topology_displacement(int topology_id, int iteration
     return false;
   }
 
-  return topology->evaluate_displacement(topology_id, iteration_id, value, node_id, element_integrals, factors->second);
+  return topology->evaluate_displacement(topology_id, iteration_id, value, node_id, element_integrals, factors->second, collection->second.iteration_material_caps.count(iteration_id) != 0);
 }
 
 bool CalculiXCore::set_topology_iteration_displacement(int topology_id, int iteration_id, double displacement, int node_id)
@@ -7096,7 +7283,9 @@ std::vector<std::vector<int>> CalculiXCore::get_topology_element_preservation(in
   rows.reserve(flags.size());
 
   for (const auto& flag : flags)
+  {
     rows.push_back({flag.first, flag.second ? 1 : 0});
+  }
 
   return rows;
 }
@@ -7153,10 +7342,12 @@ bool CalculiXCore::set_topology_iteration_factors(int topology_id,int iteration_
     }
 
     if (flag->second)
+    {
       factors[i] = 1.0;
+    }
   }
 
-  if (!mat->set_topology_iteration_factors(topology_id, iteration_id, element_ids, factors))
+  if (!mat->set_topology_iteration_factors(topology_id, iteration_id, element_ids, factors, entry->second.material_cap))
   {
     PRINT_ERROR("Failed to store topology %d iteration %d factors.\n", topology_id, iteration_id);
     return false;
@@ -7170,16 +7361,31 @@ bool CalculiXCore::check_topology_material_assignment(int topology_id, int itera
   const auto collection_it = mat->topology_material_data.find(topology_id);
 
   if (collection_it == mat->topology_material_data.end())
+  {
     return false;
+  }
 
   const auto& collection = collection_it->second;
   const auto assignment = collection.element_base_material.find(element_id);
   const auto iteration = collection.iteration_factors.find(iteration_id);
 
   if (assignment == collection.element_base_material.end() || iteration == collection.iteration_factors.end())
+  {
     return false;
+  }
 
   return collection.base_materials.count(assignment->second) != 0 && iteration->second.count(element_id) != 0;
+}
+
+bool CalculiXCore::get_topology_group_material_name(int topology_id, int iteration_id, int element_id, std::string& material_name)
+{
+  if (!mat)
+  {
+    PRINT_ERROR("Topology material core is not initialized.\n");
+    return false;
+  }
+
+  return mat->get_topology_group_material_name(topology_id, iteration_id, element_id, material_name);
 }
 
 std::string CalculiXCore::get_topology_material_name(int topology_id, int element_id)
@@ -7249,6 +7455,9 @@ bool CalculiXCore::get_topology_settings(int topology_id, TopologyOptions& optio
 
   options.has_maximum_iterations = true;
   options.maximum_iterations = configuration.maximum_iterations;
+
+  options.has_material_cap = true;
+  options.material_cap = configuration.material_cap;
 
   options.has_filter_radius = true;
   options.filter_radius = configuration.filter_radius;
@@ -8904,6 +9113,8 @@ bool CalculiXCore::set_topology_iteration_densities(int topology_id, int iterati
     if (collection != mat->topology_material_data.end())
     {
       collection->second.iteration_factors.erase(iteration_id);
+      collection->second.iteration_material_caps.erase(iteration_id);
+      collection->second.iteration_material_groups.erase(iteration_id);
     }
   };
 
@@ -13389,7 +13600,9 @@ bool CalculiXCore::clean_export()
 std::string CalculiXCore::get_material_export_data(int topology_id,int iteration_id) // gets the export data from materials core
 {
   if (topology_id == -1 && iteration_id == -1)
+  {
     return mat->get_material_export();
+  }
 
   if (topology_id <= 0 || iteration_id < 1)
   {
@@ -13400,7 +13613,9 @@ std::string CalculiXCore::get_material_export_data(int topology_id,int iteration
   const std::string topology_data = mat->get_topology_material_export(topology_id, iteration_id);
 
   if (topology_data.empty())
+  {
     return "";
+  }
 
   // Original materials remain available for unaffected sections.
   return mat->get_material_export() + "\n" + topology_data;

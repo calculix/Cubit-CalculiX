@@ -1,0 +1,20 @@
+target_sources(calculix_comp PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/BCsDisplacementsModifyPanel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BCsDisplacementsModifyPanel.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BCsDisplacementsTree.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BCsDisplacementsTree.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BCsTemperaturesModifyPanel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BCsTemperaturesModifyPanel.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BCsTemperaturesTree.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BCsTemperaturesTree.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BCsTree.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BCsTree.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/HBCsDisplacementsTree.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/HBCsDisplacementsTree.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/HBCsManagement.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/HBCsManagement.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/HBCsTemperaturesTree.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/HBCsTemperaturesTree.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/HBCsTree.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/HBCsTree.hpp
+)

@@ -1,4 +1,5 @@
 #include "CalculiXComp.hpp"
+#include "Core/application/CalculiXApplicationInterface.hpp"
 
 #include "Claro.hpp"
 #include "Broker.hpp"
@@ -6,7 +7,7 @@
 //#include "ExportManager.hpp"
 #include "MenuManager.hpp"
 #include "Observer.hpp"
-#include "CoreObserver.hpp"
+#include "Core/application/CoreObserver.hpp"
 #include "OptionsPanel.hpp"
 #include "CubitMessage.hpp"
 //#include "CubitPluginManager.hpp"
@@ -17,7 +18,6 @@
 #include "ToolbarManager.hpp"
 #include "loadUserOptions.hpp"
 #include "CalculiXConfigFile.hpp"
-#include "CalculiXCoreInterface.hpp"
 #include "UserOptionsPanel.hpp"
 #include <iostream>
 #include <cstring>
@@ -39,16 +39,24 @@ CalculiXComp::~CalculiXComp()
   cleanup_observers();
 
   if(myMenus)
+  {
     delete myMenus;
+  }
 
   if(myToolbars)
+  {
     delete myToolbars;
+  }
 
   if(mycmdPanels)
+  {
     delete mycmdPanels;
+  }
 
   if(myCCXDockWindowModelTree)
+  {
     delete myCCXDockWindowModelTree;
+  }
 
   //if(myExportManager)
   //  delete myExportManager;
@@ -57,6 +65,8 @@ CalculiXComp::~CalculiXComp()
 
 void CalculiXComp::start_up(int withGUI)
 {
+  CalculiXApplicationInterface ccx_application_iface;
+
   
   restore_settings();
 
@@ -107,8 +117,7 @@ void CalculiXComp::start_up(int withGUI)
     //PRINT_INFO("%s", name.toStdString().c_str());
   }
 
-  ccx_iface = new CalculiXCoreInterface();
-  bool init_materiallibrary = ccx_iface->init_materiallibrary();
+  bool init_materiallibrary = ccx_application_iface.init_materiallibrary();
   
   if (init_materiallibrary)
   {    
@@ -140,7 +149,9 @@ void CalculiXComp::clean_up()
   if (tracker_registered)
   {
     if (Mediator* mediator = Broker::instance())
+    {
       mediator->remove_component_tracker(this);
+    }
 
     tracker_registered = false;
   }
@@ -162,7 +173,9 @@ void CalculiXComp::update()
   if(boolwithGUI)
   {
     if(myCCXDockWindowModelTree)
+    {
     myCCXDockWindowModelTree->update();
+    }
   }
 }
 
@@ -171,14 +184,18 @@ void CalculiXComp::reset()
   if(boolwithGUI)
   {
     if(myCCXDockWindowModelTree)
+    {
     myCCXDockWindowModelTree->reset();
+    }
   }
 }
 
 void CalculiXComp::setup_menus()
 {
   if(!myMenus)
+  {
     myMenus = new MenuManager;
+  }
 
   myMenus->add_to_existing_menu();
   myMenus->setup_custom_menu();
@@ -187,13 +204,17 @@ void CalculiXComp::setup_menus()
 void CalculiXComp::cleanup_menus()
 {
   if(myMenus)
+  {
     myMenus->remove_menu_items();
+  }
 }
 
 void CalculiXComp::setup_toolbars()
 {
   if(!myToolbars)
+  {
     myToolbars = new ToolbarManager;
+  }
 
   myToolbars->add_to_existing_toolbar();
   myToolbars->setup_custom_toolbar();
@@ -202,13 +223,17 @@ void CalculiXComp::setup_toolbars()
 void CalculiXComp::cleanup_toolbars()
 {
   if(myToolbars)
+  {
     myToolbars->remove_toolbar_items();
+  }
 }
 
 void CalculiXComp::setup_command_panels()
 {
   if(!mycmdPanels)
+  {
     mycmdPanels = new cmdPanelManager;
+  }
 
   mycmdPanels->initialize();
 }
@@ -216,13 +241,17 @@ void CalculiXComp::setup_command_panels()
 void CalculiXComp::cleanup_command_panels()
 {
   if(mycmdPanels)
+  {
     mycmdPanels->clear();
+  }
 }
 
 void CalculiXComp::setup_CCXDockWindowModelTree()
 {
   if(!myCCXDockWindowModelTree)
+  {
     myCCXDockWindowModelTree = new CCXDockWindowModelTree;
+  }
 
   myCCXDockWindowModelTree->initialize();
 }
@@ -230,7 +259,9 @@ void CalculiXComp::setup_CCXDockWindowModelTree()
 void CalculiXComp::cleanup_CCXDockWindowModelTree()
 {
   if(myCCXDockWindowModelTree)
+  {
     myCCXDockWindowModelTree->clear();
+  }
 }
 
 /*
@@ -252,13 +283,17 @@ void CalculiXComp::cleanup_exports()
 
 void CalculiXComp::setup_observers(int withGUI)
 {
+  CalculiXApplicationInterface ccx_application_iface;
+
   if (!withGUI || mListener)
+  {
     return;
+  }
 
   mListener = new Observer();
   mListener->fetch_comp(this);
 
-  auto& observer = CalculiXCoreInterface::core_observer();
+  auto& observer = ccx_application_iface.core_observer();
   observer.command_start = [this] { mListener->notify_command_start(); };
   observer.before_core_update = [this] { mListener->before_core_update(); };
   observer.core_updated = [this] { mListener->on_core_updated(); };
@@ -267,9 +302,11 @@ void CalculiXComp::setup_observers(int withGUI)
 
 void CalculiXComp::cleanup_observers()
 {
+  CalculiXApplicationInterface ccx_application_iface;
+
   if (mListener)
   {
-    auto& observer = CalculiXCoreInterface::core_observer();
+    auto& observer = ccx_application_iface.core_observer();
     observer.command_start = {};
     observer.before_core_update = {};
     observer.core_updated = {};
@@ -343,12 +380,14 @@ void CalculiXComp::unload_options()
 
 void CalculiXComp::component_loaded(const char* name)
 {
+  CalculiXApplicationInterface ccx_application_iface;
+
   if (!python_interface_initialized)
   {
     //std::string log = "Component Name\n";
     //PRINT_INFO("%s", log.c_str());
     //PRINT_INFO("%s", name);
-    python_interface_initialized = ccx_iface->init_pythoninterface();
+    python_interface_initialized = ccx_application_iface.init_pythoninterface();
   }
   
 }

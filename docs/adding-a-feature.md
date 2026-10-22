@@ -24,9 +24,9 @@ This excerpt requires the surrounding model setup; it is not a standalone journa
 
 The three command implementations are:
 
-- [ccxLoadsSurfaceTractionCreateCommand.cpp](../src/Commands/ccxLoadsSurfaceTractionCreateCommand.cpp)
-- [ccxLoadsSurfaceTractionModifyCommand.cpp](../src/Commands/ccxLoadsSurfaceTractionModifyCommand.cpp)
-- [ccxLoadsSurfaceTractionDeleteCommand.cpp](../src/Commands/ccxLoadsSurfaceTractionDeleteCommand.cpp)
+- [ccxLoadsSurfaceTractionCreateCommand.cpp](../src/Commands/loads/ccxLoadsSurfaceTractionCreateCommand.cpp)
+- [ccxLoadsSurfaceTractionModifyCommand.cpp](../src/Commands/loads/ccxLoadsSurfaceTractionModifyCommand.cpp)
+- [ccxLoadsSurfaceTractionDeleteCommand.cpp](../src/Commands/loads/ccxLoadsSurfaceTractionDeleteCommand.cpp)
 
 Each provides syntax/help and an `execute()` entry point. [CalculiXPlugin.cpp](../src/CalculiXPlugin.cpp) includes their headers, advertises keys in `get_keys()`, and constructs them in `create_command()`. [Commands/CMakeLists.txt](../src/Commands/CMakeLists.txt) explicitly includes their source/header files.
 
@@ -39,13 +39,13 @@ Creation requires a sideset and all three force components. Optional inputs are 
 
 Defaults are OP mode `0` (MOD), amplitude ID `-1`, empty delay, and empty name. NEW is stored as `1`. Modification additionally passes eight presence markers in the order OP, amplitude, delay, sideset, force 1, force 2, force 3, name. A missing component is preserved rather than set to the placeholder zero packed by the command.
 
-[CalculiXCoreInterface.cpp](../src/Core/CalculiXCoreInterface.cpp), `create_loadssurfacetraction()`, `modify_loadssurfacetraction()`, and `delete_loadssurfacetraction()`, forwards to the shared core. Matching methods in [CalculiXCore.cpp](../src/Core/CalculiXCore.cpp) forward to `CoreLoadsSurfaceTraction`.
+[CalculiXLoadsInterface.cpp](../src/Core/loads/CalculiXLoadsInterface.cpp), `create_loadssurfacetraction()`, `modify_loadssurfacetraction()`, and `delete_loadssurfacetraction()`, forwards to the shared core. Matching methods in [CalculiXCore.cpp](../src/Core/CalculiXCore.cpp) forward to `CoreLoadsSurfaceTraction`.
 
 **For a similar new feature:** wire all three registration locations, the source lists, and both forwarding layers. Specify vector layouts explicitly so commands and core methods agree.
 
 ## 3. Understand the stored data and lifecycle
 
-[CoreLoadsSurfaceTraction.hpp](../src/Core/CoreLoadsSurfaceTraction.hpp) declares four tables. [CoreLoadsSurfaceTraction.cpp](../src/Core/CoreLoadsSurfaceTraction.cpp) implements their creation, lookup, modification, and deletion.
+[CoreLoadsSurfaceTraction.hpp](../src/Core/loads/CoreLoadsSurfaceTraction.hpp) declares four tables. [CoreLoadsSurfaceTraction.cpp](../src/Core/loads/CoreLoadsSurfaceTraction.cpp) implements their creation, lookup, modification, and deletion.
 
 | Table | Row layout |
 | --- | --- |
@@ -76,9 +76,9 @@ The central core's cleanup logic clears missing amplitude references to `-1`, de
 
 ## 5. Connect the load to analysis steps
 
-[ccxStepAddLoadCommand.cpp](../src/Commands/ccxStepAddLoadCommand.cpp) maps `surfacetraction` to load type **9** and calls `step_add_loads()`. [ccxStepRemoveLoadCommand.cpp](../src/Commands/ccxStepRemoveLoadCommand.cpp) uses the same type for removal. [CoreSteps.cpp](../src/Core/CoreSteps.cpp), `add_loads()`, stores membership and avoids an existing duplicate association.
+[ccxStepAddLoadCommand.cpp](../src/Commands/steps/ccxStepAddLoadCommand.cpp) maps `surfacetraction` to load type **9** and calls `step_add_loads()`. [ccxStepRemoveLoadCommand.cpp](../src/Commands/steps/ccxStepRemoveLoadCommand.cpp) uses the same type for removal. [CoreSteps.cpp](../src/Core/steps/CoreSteps.cpp), `add_loads()`, stores membership and avoids an existing duplicate association.
 
-Step export in `CalculiXCore.cpp` matches type 9 and the load ID before calling `get_load_export()`. Merely creating the load does not assign it to a step. The core wraps its export with custom lines identified by `BEFORE`/`AFTER`, `SURFACETRACTION`, and the load ID; [ccxCustomLineCreateCommand.cpp](../src/Commands/ccxCustomLineCreateCommand.cpp) and the modify command recognize that keyword.
+Step export in `CalculiXCore.cpp` matches type 9 and the load ID before calling `get_load_export()`. Merely creating the load does not assign it to a step. The core wraps its export with custom lines identified by `BEFORE`/`AFTER`, `SURFACETRACTION`, and the load ID; [ccxCustomLineCreateCommand.cpp](../src/Commands/export/ccxCustomLineCreateCommand.cpp) and the modify command recognize that keyword.
 
 **For a similar new feature:** select an unused type and update all relevant dispatch sites.
 
@@ -102,7 +102,7 @@ The implemented weights are:
 
 These are the code's formulas. Each row sums to one, so the expected summed nodal force equals the supplied component when all faces/connectivity are supported, area is valid, and every connectivity node is included. Correctness for curved/distorted higher-order faces and Cubit's connectivity ordering remains **unverified**.
 
-[ccxExportCommand.cpp](../src/Commands/ccxExportCommand.cpp) writes the resulting step output. Unlike a global keyword such as damping, this load is integrated through step export, not a separate top-level `write_surfacetraction()` function.
+[ccxExportCommand.cpp](../src/Commands/export/ccxExportCommand.cpp) writes the resulting step output. Unlike a global keyword such as damping, this load is integrated through step export, not a separate top-level `write_surfacetraction()` function.
 
 ## 7. Wire the GUI, selection, and drawing
 
@@ -110,12 +110,12 @@ The existing integration points are:
 
 | Concern | Source |
 | --- | --- |
-| Create/modify/delete widgets | [LoadsSurfaceTractionCreatePanel.cpp](../src/GUI/LoadsSurfaceTractionCreatePanel.cpp), [modify panel](../src/GUI/LoadsSurfaceTractionModifyPanel.cpp), [delete panel](../src/GUI/LoadsSurfaceTractionDeletePanel.cpp) |
+| Create/modify/delete widgets | [LoadsSurfaceTractionCreatePanel.cpp](../src/GUI/loads/LoadsSurfaceTractionCreatePanel.cpp), [modify panel](../src/GUI/loads/LoadsSurfaceTractionModifyPanel.cpp), [delete panel](../src/GUI/loads/LoadsSurfaceTractionDeletePanel.cpp) |
 | Panel markers and construction | [cmdPanelManager.cpp](../src/cmdPanelManager.cpp), [MyCmdWidgetFactory.cpp](../src/MyCmdWidgetFactory.cpp): `CCXLoadsSurfaceTractionCreate/Modify/Delete` |
-| Global and per-step trees | [LoadsSurfaceTractionTree.cpp](../src/GUI/LoadsSurfaceTractionTree.cpp), [StepsLoadsSurfaceTractionTree.cpp](../src/GUI/StepsLoadsSurfaceTractionTree.cpp) |
-| Context/navigation and step editing | [ModelTree.cpp](../src/GUI/ModelTree.cpp), [StepsManagement.cpp](../src/GUI/StepsManagement.cpp) |
+| Global and per-step trees | [LoadsSurfaceTractionTree.cpp](../src/GUI/loads/LoadsSurfaceTractionTree.cpp), [StepsLoadsSurfaceTractionTree.cpp](../src/GUI/steps/StepsLoadsSurfaceTractionTree.cpp) |
+| Context/navigation and step editing | [ModelTree.cpp](../src/GUI/application/ModelTree.cpp), [StepsManagement.cpp](../src/GUI/steps/StepsManagement.cpp) |
 | Display data, entity resolution, parsing | [CalculiXCore.cpp](../src/Core/CalculiXCore.cpp): search `loadssurfacetraction` and the two `get_*loadssurfacetraction_tree_data()` methods |
-| Load drawing | [CoreDraw.cpp](../src/Core/CoreDraw.cpp), plus sideset coordinates and force-component preparation in the central core |
+| Load drawing | [CoreDraw.cpp](../src/Core/drawing/CoreDraw.cpp), plus sideset coordinates and force-component preparation in the central core |
 
 The create panel builds `ccx create surfacetraction ...` and submits it through `GuiSendCmd::gui_cmd()`. Step management constructs add/remove-load commands. New GUI files also belong in [GUI/CMakeLists.txt](../src/GUI/CMakeLists.txt); core files belong in [Core/CMakeLists.txt](../src/Core/CMakeLists.txt).
 

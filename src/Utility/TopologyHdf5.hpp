@@ -2,8 +2,8 @@
 #define TOPOLOGYHDF5_HPP
 
 #include "HDF5Tool.hpp"
-#include "CoreTopologyStructs.hpp"
-#include "CoreMaterialsStructs.hpp"
+#include "Core/topology/CoreTopologyStructs.hpp"
+#include "Core/materials/CoreMaterialsStructs.hpp"
 
 #include <cmath>
 #include <limits>
@@ -457,9 +457,33 @@ private:
     }
     else if constexpr (std::is_same_v<U, TopologyMaterialData>)
     {
-      return value("base_materials", data.base_materials) &&
+      if constexpr (Reading)
+      {
+        data.iteration_material_caps.clear();
+        data.iteration_material_groups.clear();
+      }
+
+      if (!Reading || file.nameExists(group + "/material_caps"))
+      {
+        if (!value("material_caps", data.iteration_material_caps))
+        {
+          return false;
+        }
+      }
+
+      const bool success = value("base_materials", data.base_materials) &&
           value("element_materials", data.element_base_material) &&
           value("factors", data.iteration_factors);
+
+      for (const auto& entry : data.iteration_material_caps)
+      {
+        if (entry.first < 1 || entry.second < 2 || data.iteration_factors.count(entry.first) == 0)
+        {
+          return false;
+        }
+      }
+
+      return success;
     }
     else
     {

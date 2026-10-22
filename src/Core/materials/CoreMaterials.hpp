@@ -1,0 +1,59 @@
+#ifndef COREMATERIALS_HPP
+#define COREMATERIALS_HPP
+#include <map>
+
+#include "Core/materials/CoreMaterialsStructs.hpp"
+#include <vector>
+#include <string>
+#include <cmath>
+#include <utility>
+#include <iomanip>
+#include <limits>
+#include <sstream>
+
+class MaterialInterface;
+class CoreMaterials
+{
+
+public:
+  CoreMaterials();
+  ~CoreMaterials();
+
+  std::vector<std::vector<std::string>> material_cards; // used to store the material cards and its property prefix, maybe comes in handy later
+  // materials_data[0][0] material_card
+  // materials_data[0][1] material card property prefix
+  std::vector<std::vector<std::string>> group_properties;
+  std::vector<std::string> group_properties_description;
+  // group_properties[0][0] property name
+  // group_properties[0][1] property name type  1=scalar, 2=vector, 3 = matrix, 4 = tabular
+  // group_properties[0][2] type column size for table property
+
+  bool is_initialized = false;
+
+  bool init(); // initialize
+  bool update(); // check for changes of the materials // just a placeholder right now
+  bool reset(); // delete all data and initialize afterwards // just a placeholder right now
+  bool check_initialized(); // check if object is initialized
+  std::vector<std::string> get_group_list(); // get a list of CalculiX Material Groups
+  int get_group_property_size(std::string group_property); // gets the size of a group property, returns -1 if the group can't be found
+  std::string get_material_export(); // get CalculiX Material exports
+  std::string get_material_cards_export(std::string material_name, std::string group_name); // get card exports for a material
+  std::string get_material_prefix(std::string material_name); // gets a prefix for the material name if needed
+  bool check_material_exists(int material_id); // check if material exists
+  std::string get_material_name(int material_id); // gets material name
+  bool initialize_topology_materials(int topology_id,const std::vector<int>& element_ids,const std::vector<int>& base_material_ids);
+  bool set_topology_iteration_factors(int topology_id,int iteration_id,const std::vector<int>& element_ids,const std::vector<double>& stiffness_factors, int material_cap = 1024);
+  std::string get_topology_material_name(int topology_id,int element_id) const;
+  std::string get_topology_material_export(int topology_id,int iteration_id);
+  std::string get_topology_material_export_legacy(int topology_id,int iteration_id);
+  bool get_topology_group_material_name(int topology_id, int iteration_id, int element_id, std::string& material_name);
+
+  MaterialInterface *mat_iface = nullptr;
+  std::map<int, TopologyMaterialData> topology_material_data; // Topology ID -> one material collection.
+private:
+  bool build_topology_material_groups(const TopologyMaterialData& data, const std::map<int, double>& requested_factors, int material_cap, TopologyMaterialGrouping& grouping, std::map<int, double>& applied_factors, bool quantize) const;
+  bool ensure_topology_material_groups(int topology_id, int iteration_id);
+  std::string get_topology_material_group_name(int topology_id, int group_id) const;
+};
+
+#endif // COREMATERIALS_HPP

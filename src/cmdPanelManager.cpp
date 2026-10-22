@@ -1,34 +1,38 @@
 #include "cmdPanelManager.hpp"
+#include "Core/gui/CalculiXGuiResourcesInterface.hpp"
 #include "Claro.hpp"
 #include "NavigationModel.hpp"
 #include "NavigationNode.hpp"
 #include "MyCmdWidgetFactory.hpp"
 #include <iostream>
-#include "CalculiXCoreInterface.hpp"
-
 cmdPanelManager::cmdPanelManager() :
   isInitialized(false),
   myFactory(NULL)
 {
-  ccx_iface = new CalculiXCoreInterface();
 }
 
 cmdPanelManager::~cmdPanelManager()
 {
   if(myFactory)
+  {
     delete myFactory;
+  }
 }
 
 void cmdPanelManager::initialize()
 {
   if(isInitialized)
+  {
     return;
+  }
 
   // Set this variable to choose how to initialize your navigation nodes.
   bool use_xml = false;
 
   if(use_xml)
+  {
     initialize_from_xml();
+  }
   else
     initialize_from_code();
 
@@ -161,7 +165,9 @@ void cmdPanelManager::clear()
     {
       NavigationNode* node = model->getMarkedNode(my_markers[i]);
       if(node)
+      {
         node->setFactory(0);
+      }
     }
   }
 
@@ -180,12 +186,16 @@ void cmdPanelManager::initialize_from_xml()
 
 void cmdPanelManager::initialize_from_code()
 {
+  CalculiXGuiResourcesInterface ccx_gui_resources_iface;
+
   // QIcon *NodeIconPointer;
   // This example shows how to create the command panel navigation buttons (nodes)
   // using the NavigationModel directly.
   NavigationModel* model = Claro::instance()->navigation_model();
   if(!model)
+  {
     return;
+  }
   
   NavigationNode* root_node;
   NavigationNode* node;
@@ -193,7 +203,7 @@ void cmdPanelManager::initialize_from_code()
   // CCX Root Node
   root_node = model->addNode("CCX", model->getRoot());
   root_node->setTitle("CCX");
-  root_node->setIcon(ccx_iface->getIcon("CCX"));
+  root_node->setIcon(ccx_gui_resources_iface.getIcon("CCX"));
   model->setNodeMarker(root_node, "CCX"); 
   model->updateNode(root_node); 
 
@@ -203,17 +213,17 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Blocks", root_node);
   node->setTitle("Blocks");
   model->setNodeMarker(node, "CCXBlocks");
-  node->setIcon(ccx_iface->getIcon("CCXBlocks"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXBlocks"));
 
   root_node = model->getMarkedNode("CCXBlocks");
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXBlocksModifyDummy");
-  node->setIcon(ccx_iface->getIcon("CCXBlocksModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXBlocksModify"));
 
   root_node = model->getMarkedNode("CCXBlocksModifyDummy");
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXBlocksModify");
-  node->setIcon(ccx_iface->getIcon("CCXBlocksModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXBlocksModify"));
 
   //##############################
   // add Materials and Section Nodes
@@ -221,45 +231,45 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Sections", root_node);
   node->setTitle("Sections");
   model->setNodeMarker(node, "CCXSections");
-  node->setIcon(ccx_iface->getIcon("CCXSections"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXSections"));
   root_node = model->getMarkedNode("CCXSections");
   node = model->addNode("Create", root_node);
   model->setNodeMarker(node, "CCXSectionsCreate");
-  node->setIcon(ccx_iface->getIcon("CCXSectionsCreate"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXSectionsCreate"));
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXSectionsModify");
-  node->setIcon(ccx_iface->getIcon("CCXSectionsModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXSectionsModify"));
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXSectionsDelete");
-  node->setIcon(ccx_iface->getIcon("CCXSectionsDelete"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXSectionsDelete"));
   //##
   root_node = model->getMarkedNode("CCXSectionsCreate");
   node = model->addNode("Solid Section", root_node);
   model->setNodeMarker(node, "CCXSectionsCreateSolid");
-  node->setIcon(ccx_iface->getIcon("CCXSectionsCreateSolid"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXSectionsCreateSolid"));
   node = model->addNode("Shell Section", root_node);
   model->setNodeMarker(node, "CCXSectionsCreateShell");
-  node->setIcon(ccx_iface->getIcon("CCXSectionsCreateShell"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXSectionsCreateShell"));
   node = model->addNode("Beam Section", root_node);
   model->setNodeMarker(node, "CCXSectionsCreateBeam");
-  node->setIcon(ccx_iface->getIcon("CCXSectionsCreateBeam"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXSectionsCreateBeam"));
   node = model->addNode("Membrane Section", root_node);
   model->setNodeMarker(node, "CCXSectionsCreateMembrane");
-  node->setIcon(ccx_iface->getIcon("CCXSectionsCreateMembrane"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXSectionsCreateMembrane"));
   //##
   root_node = model->getMarkedNode("CCXSectionsModify");
   node = model->addNode("Solid Section", root_node);
   model->setNodeMarker(node, "CCXSectionsModifySolid");
-  node->setIcon(ccx_iface->getIcon("CCXSectionsModifySolid"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXSectionsModifySolid"));
   node = model->addNode("Shell Section", root_node);
   model->setNodeMarker(node, "CCXSectionsModifyShell");
-  node->setIcon(ccx_iface->getIcon("CCXSectionsModifyShell"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXSectionsModifyShell"));
   node = model->addNode("Beam Section", root_node);
   model->setNodeMarker(node, "CCXSectionsModifyBeam");
-  node->setIcon(ccx_iface->getIcon("CCXSectionsModifyBeam"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXSectionsModifyBeam"));
   node = model->addNode("Membrane Section", root_node);
   model->setNodeMarker(node, "CCXSectionsModifyMembrane");
-  node->setIcon(ccx_iface->getIcon("CCXSectionsModifyMembrane"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXSectionsModifyMembrane"));
 
   //##############################
   // add Constraints Nodes
@@ -268,51 +278,51 @@ void cmdPanelManager::initialize_from_code()
   node->setTitle("Constraints");
   model->setNodeMarker(node, "CCXConstraints");
   root_node = model->getMarkedNode("CCXConstraints");
-  node->setIcon(ccx_iface->getIcon("CCXConstraints"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXConstraints"));
   node = model->addNode("Create", root_node);
   model->setNodeMarker(node, "CCXConstraintsCreate");
-  node->setIcon(ccx_iface->getIcon("CCXConstraintsCreate"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXConstraintsCreate"));
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXConstraintsModify");
-  node->setIcon(ccx_iface->getIcon("CCXConstraintsModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXConstraintsModify"));
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXConstraintsDelete");
-  node->setIcon(ccx_iface->getIcon("CCXConstraintsDelete"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXConstraintsDelete"));
   node = model->addNode("Utility", root_node);
   model->setNodeMarker(node, "CCXConstraintsUtility");
-  node->setIcon(ccx_iface->getIcon("CCXConstraintsUtility"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXConstraintsUtility"));
 
   root_node = model->getMarkedNode("CCXConstraintsCreate");
   node = model->addNode("Rigid Body", root_node);
   model->setNodeMarker(node, "CCXConstraintsCreateRigidBody");
-  node->setIcon(ccx_iface->getIcon("CCXConstraintsCreateRigidBody"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXConstraintsCreateRigidBody"));
   node = model->addNode("Tie", root_node);
   model->setNodeMarker(node, "CCXConstraintsCreateTie");
-  node->setIcon(ccx_iface->getIcon("CCXConstraintsCreateTie"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXConstraintsCreateTie"));
   node = model->addNode("Equation", root_node);
   model->setNodeMarker(node, "CCXConstraintsCreateEquation");
-  node->setIcon(ccx_iface->getIcon("CCXConstraintsCreateEquation"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXConstraintsCreateEquation"));
   root_node = model->getMarkedNode("CCXConstraintsModify");
   node = model->addNode("Rigid Body", root_node);
   model->setNodeMarker(node, "CCXConstraintsModifyRigidBody");
-  node->setIcon(ccx_iface->getIcon("CCXConstraintsModifyRigidBody"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXConstraintsModifyRigidBody"));
   node = model->addNode("Tie", root_node);
   model->setNodeMarker(node, "CCXConstraintsModifyTie");
-  node->setIcon(ccx_iface->getIcon("CCXConstraintsModifyTie"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXConstraintsModifyTie"));
   node = model->addNode("Equation", root_node);
   model->setNodeMarker(node, "CCXConstraintsModifyEquation");
-  node->setIcon(ccx_iface->getIcon("CCXConstraintsModifyEquation"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXConstraintsModifyEquation"));
   /*root_node = model->getMarkedNode("CCXConstraintsDelete");
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXConstraintsDelete");
-  node->setIcon(ccx_iface->getIcon("CCXConstraintsDelete"));*/
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXConstraintsDelete"));*/
   root_node = model->getMarkedNode("CCXConstraintsUtility");
   node = model->addNode("Tie from Cubit Contact Pair", root_node);
   model->setNodeMarker(node, "CCXConstraintsCreateTieFromCubitContactPair");
-  node->setIcon(ccx_iface->getIcon("CCXConstraintsCreateTieFromCubitContactPair"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXConstraintsCreateTieFromCubitContactPair"));
   node = model->addNode("Equation from Group", root_node);
   model->setNodeMarker(node, "CCXConstraintsCreateEquationFromGroup");
-  node->setIcon(ccx_iface->getIcon("CCXConstraintsCreateEquationFromGroup"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXConstraintsCreateEquationFromGroup"));
 
   //##############################
   // add SurfaceInteractions Nodes
@@ -320,17 +330,17 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Surface Interactions", root_node);
   node->setTitle("Surface Interactions");
   model->setNodeMarker(node, "CCXSurfaceInteractions");
-  node->setIcon(ccx_iface->getIcon("CCXSurfaceInteractions"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXSurfaceInteractions"));
   root_node = model->getMarkedNode("CCXSurfaceInteractions");
   node = model->addNode("Create", root_node);
   model->setNodeMarker(node, "CCXSurfaceInteractionsCreate");
-  node->setIcon(ccx_iface->getIcon("CCXSurfaceInteractionsCreate"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXSurfaceInteractionsCreate"));
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXSurfaceInteractionsModify");
-  node->setIcon(ccx_iface->getIcon("CCXSurfaceInteractionsModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXSurfaceInteractionsModify"));
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXSurfaceInteractionsDelete");
-  node->setIcon(ccx_iface->getIcon("CCXSurfaceInteractionsDelete"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXSurfaceInteractionsDelete"));
 
   //##############################
   // add ContactPairs Nodes
@@ -338,25 +348,25 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Contact Pairs", root_node);
   node->setTitle("Contact Pairs");
   model->setNodeMarker(node, "CCXContactPairs");
-  node->setIcon(ccx_iface->getIcon("CCXContactPairs"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXContactPairs"));
   root_node = model->getMarkedNode("CCXContactPairs");
   node = model->addNode("Create", root_node);
   model->setNodeMarker(node, "CCXContactPairsCreate");
-  node->setIcon(ccx_iface->getIcon("CCXContactPairsCreate"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXContactPairsCreate"));
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXContactPairsModify");
-  node->setIcon(ccx_iface->getIcon("CCXContactPairsModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXContactPairsModify"));
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXContactPairsDelete");
-  node->setIcon(ccx_iface->getIcon("CCXContactPairsDelete"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXContactPairsDelete"));
   node = model->addNode("Utility", root_node);
   model->setNodeMarker(node, "CCXContactPairsUtility");
-  node->setIcon(ccx_iface->getIcon("CCXContactPairsUtility"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXContactPairsUtility"));
   
   root_node = model->getMarkedNode("CCXContactPairsUtility");
   node = model->addNode("Create from Cubit Contact Pair", root_node);
   model->setNodeMarker(node, "CCXContactPairsCreateFromCubitContactPair");
-  node->setIcon(ccx_iface->getIcon("CCXContactPairsCreateFromCubitContactPair"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXContactPairsCreateFromCubitContactPair"));
   
   //##############################
   // add Amplitudes Nodes
@@ -364,17 +374,17 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Amplitudes", root_node);
   node->setTitle("Amplitudes");
   model->setNodeMarker(node, "CCXAmplitudes");
-  node->setIcon(ccx_iface->getIcon("CCXAmplitudes"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXAmplitudes"));
   root_node = model->getMarkedNode("CCXAmplitudes");
   node = model->addNode("Create", root_node);
   model->setNodeMarker(node, "CCXAmplitudesCreate");
-  node->setIcon(ccx_iface->getIcon("CCXAmplitudesCreate"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXAmplitudesCreate"));
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXAmplitudesModify");
-  node->setIcon(ccx_iface->getIcon("CCXAmplitudesModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXAmplitudesModify"));
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXAmplitudesDelete");
-  node->setIcon(ccx_iface->getIcon("CCXAmplitudesDelete"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXAmplitudesDelete"));
 
   //##############################
   // add Orientations Nodes
@@ -382,17 +392,17 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Orientations", root_node);
   node->setTitle("Orientations");
   model->setNodeMarker(node, "CCXOrientations");
-  node->setIcon(ccx_iface->getIcon("CCXOrientations"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXOrientations"));
   root_node = model->getMarkedNode("CCXOrientations");
   node = model->addNode("Create", root_node);
   model->setNodeMarker(node, "CCXOrientationsCreate");
-  node->setIcon(ccx_iface->getIcon("CCXOrientationsCreate"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXOrientationsCreate"));
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXOrientationsModify");
-  node->setIcon(ccx_iface->getIcon("CCXOrientationsModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXOrientationsModify"));
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXOrientationsDelete");
-  node->setIcon(ccx_iface->getIcon("CCXOrientationsDelete"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXOrientationsDelete"));
 
   //##############################
   // add Damping Nodes
@@ -400,14 +410,14 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Damping", root_node);
   node->setTitle("Damping");
   model->setNodeMarker(node, "CCXDamping");
-  node->setIcon(ccx_iface->getIcon("CCXDamping"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXDamping"));
   root_node = model->getMarkedNode("CCXDamping");
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXDampingModify");
-  node->setIcon(ccx_iface->getIcon("CCXDampingModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXDampingModify"));
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXDampingDelete");
-  node->setIcon(ccx_iface->getIcon("CCXDampingDelete"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXDampingDelete"));
 
   //##############################
   // add PhysicalConstants Nodes
@@ -415,14 +425,14 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("PhysicalConstants", root_node);
   node->setTitle("Physical Constants");
   model->setNodeMarker(node, "CCXPhysicalConstants");
-  node->setIcon(ccx_iface->getIcon("CCXPhysicalConstants"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXPhysicalConstants"));
   root_node = model->getMarkedNode("CCXPhysicalConstants");
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXPhysicalConstantsModify");
-  node->setIcon(ccx_iface->getIcon("CCXPhysicalConstantsModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXPhysicalConstantsModify"));
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXPhysicalConstantsDelete");
-  node->setIcon(ccx_iface->getIcon("CCXPhysicalConstantsDelete"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXPhysicalConstantsDelete"));
 
   //##############################
   // add Loads Nodes
@@ -430,165 +440,165 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Loads", root_node);
   node->setTitle("Loads");
   model->setNodeMarker(node, "CCXLoads");
-  node->setIcon(ccx_iface->getIcon("CCXLoads"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoads"));
 
   //##############################
   // add LoadsForces Nodes
   root_node = model->getMarkedNode("CCXLoads");
   node = model->addNode("Force", root_node);
   model->setNodeMarker(node, "CCXLoadsForces");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsForces"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsForces"));
   root_node = model->getMarkedNode("CCXLoadsForces");
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXLoadsForcesModify");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsForcesModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsForcesModify"));
 
   //##############################
   // add LoadsPressures Nodes
   root_node = model->getMarkedNode("CCXLoads");
   node = model->addNode("Pressure", root_node);
   model->setNodeMarker(node, "CCXLoadsPressures");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsPressures"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsPressures"));
   root_node = model->getMarkedNode("CCXLoadsPressures");
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXLoadsPressuresModify");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsPressuresModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsPressuresModify"));
 
   //##############################
   // add LoadsHeatfluxes Nodes
   root_node = model->getMarkedNode("CCXLoads");
   node = model->addNode("Heatflux", root_node);
   model->setNodeMarker(node, "CCXLoadsHeatfluxes");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsHeatfluxes"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsHeatfluxes"));
   root_node = model->getMarkedNode("CCXLoadsHeatfluxes");
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXLoadsHeatfluxesModify");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsHeatfluxesModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsHeatfluxesModify"));
 
   //##############################
   // add LoadsGravity Nodes
   root_node = model->getMarkedNode("CCXLoads");
   node = model->addNode("Gravity", root_node);
   model->setNodeMarker(node, "CCXLoadsGravity");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsGravity"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsGravity"));
   root_node = model->getMarkedNode("CCXLoadsGravity");
   node = model->addNode("Create", root_node);
   model->setNodeMarker(node, "CCXLoadsGravityCreate");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsGravityCreate"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsGravityCreate"));
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXLoadsGravityModify");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsGravityModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsGravityModify"));
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXLoadsGravityDelete");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsGravityDelete"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsGravityDelete"));
 
   //##############################
   // add LoadsCentrifugal Nodes
   root_node = model->getMarkedNode("CCXLoads");
   node = model->addNode("Centrifugal", root_node);
   model->setNodeMarker(node, "CCXLoadsCentrifugal");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsCentrifugal"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsCentrifugal"));
   root_node = model->getMarkedNode("CCXLoadsCentrifugal");
   node = model->addNode("Create", root_node);
   model->setNodeMarker(node, "CCXLoadsCentrifugalCreate");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsCentrifugalCreate"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsCentrifugalCreate"));
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXLoadsCentrifugalModify");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsCentrifugalModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsCentrifugalModify"));
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXLoadsCentrifugalDelete");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsCentrifugalDelete"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsCentrifugalDelete"));
 
   //##############################
   // add LoadsTrajectory Nodes
   root_node = model->getMarkedNode("CCXLoads");
   node = model->addNode("Trajectory", root_node);
   model->setNodeMarker(node, "CCXLoadsTrajectory");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsTrajectory"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsTrajectory"));
   root_node = model->getMarkedNode("CCXLoadsTrajectory");
   node = model->addNode("Create Heatflux", root_node);
   model->setNodeMarker(node, "CCXLoadsTrajectoryHeatfluxCreate");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsTrajectoryCreate"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsTrajectoryCreate"));
   node = model->addNode("Create Body Heatflux Sphere", root_node);
   model->setNodeMarker(node, "CCXLoadsTrajectoryBodyHeatfluxSphereCreate");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsTrajectoryCreate"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsTrajectoryCreate"));
   node = model->addNode("Modify Heatflux", root_node);
   model->setNodeMarker(node, "CCXLoadsTrajectoryHeatfluxModify");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsTrajectoryModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsTrajectoryModify"));
   node = model->addNode("Modify Body Heatflux Sphere", root_node);
   model->setNodeMarker(node, "CCXLoadsTrajectoryBodyHeatfluxSphereModify");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsTrajectoryModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsTrajectoryModify"));
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXLoadsTrajectoryDelete");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsTrajectoryDelete"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsTrajectoryDelete"));
 
   //##############################
   // add LoadsFilm Nodes
   root_node = model->getMarkedNode("CCXLoads");
   node = model->addNode("Film", root_node);
   model->setNodeMarker(node, "CCXLoadsFilm");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsFilm"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsFilm"));
   root_node = model->getMarkedNode("CCXLoadsFilm");
   node = model->addNode("Create", root_node);
   model->setNodeMarker(node, "CCXLoadsFilmCreate");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsFilmCreate"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsFilmCreate"));
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXLoadsFilmModify");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsFilmModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsFilmModify"));
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXLoadsFilmDelete");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsFilmDelete"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsFilmDelete"));
 
   //##############################
   // add LoadsRadiation Nodes
   root_node = model->getMarkedNode("CCXLoads");
   node = model->addNode("Radiation", root_node);
   model->setNodeMarker(node, "CCXLoadsRadiation");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsRadiation"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsRadiation"));
   root_node = model->getMarkedNode("CCXLoadsRadiation");
   node = model->addNode("Create", root_node);
   model->setNodeMarker(node, "CCXLoadsRadiationCreate");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsRadiationCreate"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsRadiationCreate"));
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXLoadsRadiationModify");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsRadiationModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsRadiationModify"));
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXLoadsRadiationDelete");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsRadiationDelete"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsRadiationDelete"));
 
   //##############################
   // add LoadsSurfaceTraction Nodes
   root_node = model->getMarkedNode("CCXLoads");
   node = model->addNode("Surface Traction", root_node);
   model->setNodeMarker(node, "CCXLoadsSurfaceTraction");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsSurfaceTraction"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsSurfaceTraction"));
   root_node = model->getMarkedNode("CCXLoadsSurfaceTraction");
   node = model->addNode("Create", root_node);
   model->setNodeMarker(node, "CCXLoadsSurfaceTractionCreate");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsSurfaceTractionCreate"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsSurfaceTractionCreate"));
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXLoadsSurfaceTractionModify");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsSurfaceTractionModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsSurfaceTractionModify"));
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXLoadsSurfaceTractionDelete");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsSurfaceTractionDelete"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsSurfaceTractionDelete"));
 
   //##############################
   // add LoadsBodyHeatflux Nodes
   root_node = model->getMarkedNode("CCXLoads");
   node = model->addNode("Body Heatflux", root_node);
   model->setNodeMarker(node, "CCXLoadsBodyHeatflux");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsBodyHeatflux"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsBodyHeatflux"));
   root_node = model->getMarkedNode("CCXLoadsBodyHeatflux");
   node = model->addNode("Create", root_node);
   model->setNodeMarker(node, "CCXLoadsBodyHeatfluxCreate");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsBodyHeatfluxCreate"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsBodyHeatfluxCreate"));
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXLoadsBodyHeatfluxModify");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsBodyHeatfluxModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsBodyHeatfluxModify"));
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXLoadsBodyHeatfluxDelete");
-  node->setIcon(ccx_iface->getIcon("CCXLoadsBodyHeatfluxDelete"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXLoadsBodyHeatfluxDelete"));
 
   //##############################
   // add BCs Nodes
@@ -596,29 +606,29 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("BCs", root_node);
   node->setTitle("BCs");
   model->setNodeMarker(node, "CCXBCs");
-  node->setIcon(ccx_iface->getIcon("CCXBCs"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXBCs"));
 
   //##############################
   // add BCsDisplacements Nodes
   root_node = model->getMarkedNode("CCXBCs");
   node = model->addNode("Displacement", root_node);
   model->setNodeMarker(node, "CCXBCsDisplacements");
-  node->setIcon(ccx_iface->getIcon("CCXBCsDisplacements"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXBCsDisplacements"));
   root_node = model->getMarkedNode("CCXBCsDisplacements");
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXBCsDisplacementsModify");
-  node->setIcon(ccx_iface->getIcon("CCXBCsDisplacementsModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXBCsDisplacementsModify"));
 
   //##############################
   // add BCsTemperatures Nodes
   root_node = model->getMarkedNode("CCXBCs");
   node = model->addNode("Temperature", root_node);
   model->setNodeMarker(node, "CCXBCsTemperatures");
-  node->setIcon(ccx_iface->getIcon("CCXBCsTemperatures"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXBCsTemperatures"));
   root_node = model->getMarkedNode("CCXBCsTemperatures");
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXBCsTemperaturesModify");
-  node->setIcon(ccx_iface->getIcon("CCXBCsTemperaturesModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXBCsTemperaturesModify"));
 
   //##############################
   // add History Outputs Nodes 
@@ -626,32 +636,32 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("History Outputs", root_node);
   node->setTitle("History Outputs");
   model->setNodeMarker(node, "CCXHistoryOutputs");
-  node->setIcon(ccx_iface->getIcon("CCXHistoryOutputs"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXHistoryOutputs"));
 
   root_node = model->getMarkedNode("CCXHistoryOutputs");
   node = model->addNode("Create", root_node);
   model->setNodeMarker(node, "CCXHistoryOutputsCreate");
-  node->setIcon(ccx_iface->getIcon("CCXHistoryOutputsCreate"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXHistoryOutputsCreate"));
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXHistoryOutputsModify");
-  node->setIcon(ccx_iface->getIcon("CCXHistoryOutputsModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXHistoryOutputsModify"));
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXHistoryOutputsDelete");
-  node->setIcon(ccx_iface->getIcon("CCXHistoryOutputsDelete"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXHistoryOutputsDelete"));
 
   root_node = model->getMarkedNode("CCXHistoryOutputsModify");
   node = model->addNode("Node", root_node);
   model->setNodeMarker(node, "CCXHistoryOutputsModifyNode");
-  node->setIcon(ccx_iface->getIcon("CCXHistoryOutputsModifyNode"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXHistoryOutputsModifyNode"));
   node = model->addNode("Element", root_node);
   model->setNodeMarker(node, "CCXHistoryOutputsModifyElement");
-  node->setIcon(ccx_iface->getIcon("CCXHistoryOutputsModifyElement"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXHistoryOutputsModifyElement"));
   node = model->addNode("Contact", root_node);
   model->setNodeMarker(node, "CCXHistoryOutputsModifyContact");
-  node->setIcon(ccx_iface->getIcon("CCXHistoryOutputsModifyContact"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXHistoryOutputsModifyContact"));
   node = model->addNode("Section", root_node);
   model->setNodeMarker(node, "CCXHistoryOutputsModifySection");
-  node->setIcon(ccx_iface->getIcon("CCXHistoryOutputsModifySection"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXHistoryOutputsModifySection"));
   
   //##############################
   // add Field Outputs Nodes
@@ -659,29 +669,29 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Field Outputs", root_node);
   node->setTitle("Field Outputs");
   model->setNodeMarker(node, "CCXFieldOutputs");
-  node->setIcon(ccx_iface->getIcon("CCXFieldOutputs"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXFieldOutputs"));
 
   root_node = model->getMarkedNode("CCXFieldOutputs");
   node = model->addNode("Create", root_node);
   model->setNodeMarker(node, "CCXFieldOutputsCreate");
-  node->setIcon(ccx_iface->getIcon("CCXFieldOutputsCreate"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXFieldOutputsCreate"));
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXFieldOutputsModify");
-  node->setIcon(ccx_iface->getIcon("CCXFieldOutputsModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXFieldOutputsModify"));
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXFieldOutputsDelete");
-  node->setIcon(ccx_iface->getIcon("CCXFieldOutputsDelete"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXFieldOutputsDelete"));
 
   root_node = model->getMarkedNode("CCXFieldOutputsModify");
   node = model->addNode("Node", root_node);
   model->setNodeMarker(node, "CCXFieldOutputsModifyNode");
-  node->setIcon(ccx_iface->getIcon("CCXFieldOutputsModifyNode"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXFieldOutputsModifyNode"));
   node = model->addNode("Element", root_node);
   model->setNodeMarker(node, "CCXFieldOutputsModifyElement");
-  node->setIcon(ccx_iface->getIcon("CCXFieldOutputsModifyElement"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXFieldOutputsModifyElement"));
   node = model->addNode("Contact", root_node);
   model->setNodeMarker(node, "CCXFieldOutputsModifyContact");
-  node->setIcon(ccx_iface->getIcon("CCXFieldOutputsModifyContact"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXFieldOutputsModifyContact"));
   
   //##############################
   // add Initial Conditions Nodes
@@ -689,29 +699,29 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Initial Conditions", root_node);
   node->setTitle("Initial Conditions");
   model->setNodeMarker(node, "CCXInitialConditions");  
-  node->setIcon(ccx_iface->getIcon("CCXInitialConditions"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXInitialConditions"));
 
   root_node = model->getMarkedNode("CCXInitialConditions");
   node = model->addNode("Create", root_node);
   model->setNodeMarker(node, "CCXInitialConditionsCreate");
-  node->setIcon(ccx_iface->getIcon("CCXInitialConditionsCreate"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXInitialConditionsCreate"));
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXInitialConditionsModify");
-  node->setIcon(ccx_iface->getIcon("CCXInitialConditionsModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXInitialConditionsModify"));
   node = model->addNode("Add", root_node);
   model->setNodeMarker(node, "CCXInitialConditionsAdd");
-  node->setIcon(ccx_iface->getIcon("CCXInitialConditionsAdd"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXInitialConditionsAdd"));
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXInitialConditionsDelete");
-  node->setIcon(ccx_iface->getIcon("CCXInitialConditionsDelete"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXInitialConditionsDelete"));
 
   root_node = model->getMarkedNode("CCXInitialConditionsAdd");
   node = model->addNode("Stress for Block", root_node);
   model->setNodeMarker(node, "CCXInitialConditionsStressAddBlock");
-  node->setIcon(ccx_iface->getIcon("CCXInitialConditionsStressAddBlock"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXInitialConditionsStressAddBlock"));
   node = model->addNode("Stress for Element", root_node);
   model->setNodeMarker(node, "CCXInitialConditionsStressAddElement");
-  node->setIcon(ccx_iface->getIcon("CCXInitialConditionsStressAddElement"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXInitialConditionsStressAddElement"));
 
   //##############################
   // add Steps Nodes
@@ -719,53 +729,53 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Steps", root_node);
   node->setTitle("Steps");
   model->setNodeMarker(node, "CCXSteps");
-  node->setIcon(ccx_iface->getIcon("CCXSteps"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXSteps"));
 
   root_node = model->getMarkedNode("CCXSteps");
   node = model->addNode("Create", root_node);
   model->setNodeMarker(node, "CCXStepsCreate");
-  node->setIcon(ccx_iface->getIcon("CCXStepsCreate"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXStepsCreate"));
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXStepsModify");
-  node->setIcon(ccx_iface->getIcon("CCXStepsModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXStepsModify"));
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXStepsDelete");
-  node->setIcon(ccx_iface->getIcon("CCXStepsDelete"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXStepsDelete"));
   
   root_node = model->getMarkedNode("CCXStepsModify");
   node = model->addNode("Parameter", root_node);
   model->setNodeMarker(node, "CCXStepsModifyParameter");
-  node->setIcon(ccx_iface->getIcon("CCXStepsModifyParameter"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXStepsModifyParameter"));
   node = model->addNode("Static", root_node);
   model->setNodeMarker(node, "CCXStepsModifyStatic");
-  node->setIcon(ccx_iface->getIcon("CCXStepsModifyStatic"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXStepsModifyStatic"));
   node = model->addNode("Frequency", root_node);
   model->setNodeMarker(node, "CCXStepsModifyFrequency");
-  node->setIcon(ccx_iface->getIcon("CCXStepsModifyFrequency"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXStepsModifyFrequency"));
   node = model->addNode("Buckle", root_node);
   model->setNodeMarker(node, "CCXStepsModifyBuckle");
-  node->setIcon(ccx_iface->getIcon("CCXStepsModifyBuckle"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXStepsModifyBuckle"));
   node = model->addNode("Heat Transfer", root_node);
   model->setNodeMarker(node, "CCXStepsModifyHeatTransfer");
-  node->setIcon(ccx_iface->getIcon("CCXStepsModifyHeatTransfer"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXStepsModifyHeatTransfer"));
   node = model->addNode("Coupled Temperature Displacement", root_node);
   model->setNodeMarker(node, "CCXStepsModifyCoupledTemperatureDisplacement");
-  node->setIcon(ccx_iface->getIcon("CCXStepsModifyCoupledTemperatureDisplacement"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXStepsModifyCoupledTemperatureDisplacement"));
   node = model->addNode("Uncoupled Temperature Displacement", root_node);
   model->setNodeMarker(node, "CCXStepsModifyUncoupledTemperatureDisplacement");
-  node->setIcon(ccx_iface->getIcon("CCXStepsModifyUncoupledTemperatureDisplacement"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXStepsModifyUncoupledTemperatureDisplacement"));
   node = model->addNode("Dynamic", root_node);
   model->setNodeMarker(node, "CCXStepsModifyDynamic");
-  node->setIcon(ccx_iface->getIcon("CCXStepsModifyDynamic"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXStepsModifyDynamic"));
   node = model->addNode("Modal Dynamic", root_node);
   model->setNodeMarker(node, "CCXStepsModifyModalDynamic");
-  node->setIcon(ccx_iface->getIcon("CCXStepsModifyModalDynamic"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXStepsModifyModalDynamic"));
   node = model->addNode("Steady State Dynamics", root_node);
   model->setNodeMarker(node, "CCXStepsModifySteadyStateDynamics");
-  node->setIcon(ccx_iface->getIcon("CCXStepsModifySteadyStateDynamics"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXStepsModifySteadyStateDynamics"));
   node = model->addNode("Complex Frequency", root_node);
   model->setNodeMarker(node, "CCXStepsModifyComplexFrequency");
-  node->setIcon(ccx_iface->getIcon("CCXStepsModifyComplexFrequency"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXStepsModifyComplexFrequency"));
 
   //##############################
   // add Jobs Nodes
@@ -773,18 +783,18 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Custom Lines", root_node);
   node->setTitle("Custom Lines");
   model->setNodeMarker(node, "CCXCustomLines");  
-  node->setIcon(ccx_iface->getIcon("CCXCustomLines"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXCustomLines"));
 
   root_node = model->getMarkedNode("CCXCustomLines");
   node = model->addNode("Create", root_node);
   model->setNodeMarker(node, "CCXCustomLinesCreate");
-  node->setIcon(ccx_iface->getIcon("CCXCustomLinesCreate"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXCustomLinesCreate"));
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXCustomLinesModify");
-  node->setIcon(ccx_iface->getIcon("CCXCustomLinesModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXCustomLinesModify"));
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXCustomLinesDelete");
-  node->setIcon(ccx_iface->getIcon("CCXCustomLinesDelete"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXCustomLinesDelete"));
 
   //##############################
   // add Jobs Nodes
@@ -792,21 +802,21 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Jobs", root_node);
   node->setTitle("Jobs");
   model->setNodeMarker(node, "CCXJobs");  
-  node->setIcon(ccx_iface->getIcon("CCXJobs"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXJobs"));
 
   root_node = model->getMarkedNode("CCXJobs");
   node = model->addNode("Create", root_node);
   model->setNodeMarker(node, "CCXJobsCreate");
-  node->setIcon(ccx_iface->getIcon("CCXJobsCreate"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXJobsCreate"));
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXJobsModify");
-  node->setIcon(ccx_iface->getIcon("CCXJobsModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXJobsModify"));
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXJobsDelete");
-  node->setIcon(ccx_iface->getIcon("CCXJobsDelete"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXJobsDelete"));
   node = model->addNode("Actions", root_node);
   model->setNodeMarker(node, "CCXJobsActions");
-  node->setIcon(ccx_iface->getIcon("CCXJobsActions"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXJobsActions"));
 
   //##############################
   // add Topology Nodes
@@ -814,27 +824,27 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Topology", root_node);
   node->setTitle("Topology");
   model->setNodeMarker(node, "CCXTopology");
-  node->setIcon(ccx_iface->getIcon("Topology"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("Topology"));
 
   root_node = model->getMarkedNode("CCXTopology");
   node = model->addNode("Create", root_node);
   model->setNodeMarker(node, "CCXTopologyCreate");
-  node->setIcon(ccx_iface->getIcon("CCXTopologyCreate"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXTopologyCreate"));
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXTopologyModify");
-  node->setIcon(ccx_iface->getIcon("CCXTopologyModify"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXTopologyModify"));
   node = model->addNode("Preserved sets", root_node);
   model->setNodeMarker(node, "CCXTopologyPreservedSets");
-  node->setIcon(ccx_iface->getIcon("CCXTopologyPreservedSets"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXTopologyPreservedSets"));
   node = model->addNode("Actions", root_node);
   model->setNodeMarker(node, "CCXTopologyActions");
-  node->setIcon(ccx_iface->getIcon("CCXTopologyActions"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXTopologyActions"));
   node = model->addNode("Results", root_node);
   model->setNodeMarker(node, "CCXTopologyResults");
-  node->setIcon(ccx_iface->getIcon("CCXTopologyResults"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXTopologyResults"));
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXTopologyDelete");
-  node->setIcon(ccx_iface->getIcon("CCXTopologyDelete"));
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXTopologyDelete"));
 }
 
 void cmdPanelManager::associate_panels_with_nodes()
@@ -842,7 +852,9 @@ void cmdPanelManager::associate_panels_with_nodes()
   // The widget factory is in charge of giving out our panels when the framework
   // needs them.
   if(!myFactory)
+  {
     myFactory = new MyCmdWidgetFactory();
+  }
 
   // Setup a list of the markers that identify my navigation nodes. Note that
   // we did not include our root marker because we do not need to create a
@@ -961,6 +973,8 @@ void cmdPanelManager::associate_panels_with_nodes()
   {
     NavigationNode* node = model->getMarkedNode(my_markers[i]);
     if(node)
+    {
       node->setFactory(myFactory);
+    }
   }
 }

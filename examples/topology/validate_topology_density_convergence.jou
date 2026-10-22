@@ -1,0 +1,430 @@
+#!cubit
+# Extended exact-reference density convergence diagnostic; material cap 2048.
+# RUN IN A FRESH CUBIT SESSION: resets the current model.
+# Uses the rebuilt plugin and your configured solver; never builds anything.
+# Same 1340-element beam as validate_material_cap.jou (size 1.5).
+# One case, up to 500 iterations, using unchanged convergence tolerances.
+# Records consecutive update correlation, two-step drift and late-window trends.
+# Cap 2048 is an exact-stiffness reference only while element count <= 2048.
+# Results go into a unique topology_density_diagnostics_* working-directory folder.
+# Starts from the original beam, independently of the previous test session.
+# Exact-reference history is checked at every recorded iteration.
+# Ordinary OC proposal residual and solver move-limit telemetry remain in the console;
+# the current Python iteration API does not expose those fields.
+# No density threshold is used to delete or modify mesh elements.
+reset
+#beam geometry
+create brick x 100 y 30 z 1
+block 1 add volume 1
+split surface 6 offset curve 10 distance 2.5
+
+# node sets
+nodeset 1 add surface 4
+nodeset 1 name "x0"
+nodeset 2 add surface 7
+nodeset 2 name "xl"
+nodeset 3 add surface 8
+nodeset 3 name "rb"
+
+# material
+create material "Steel" property_group "CalculiX-FEA"
+modify material "Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+modify material "Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+modify material "Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0
+
+# section
+ccx create section solid block 1 material 1
+
+# vertices for ref and rot node
+create vertex location on surface 8  center
+create vertex location on surface 8  center
+
+# rigid body constraint
+ccx create constraint rigid body nodeset 3 ref 11 rot 12
+
+# load
+create force  on vertex 11 force value 10000 direction 0 -1 0
+
+# bc
+create displacement  on nodeset 1  dof 1 dof 2 dof 3 fix 0
+
+# outputs
+ccx create fieldoutput name "node_output" node
+ccx modify fieldoutput 1 node
+ccx modify fieldoutput 1 node key_on RF U
+ccx modify fieldoutput 1 node key_off CP DEPF DEPT DTF HCRI KEQ MACH MAXU MF NT PNT POT PRF PS PSF PT PTF PU RFL SEN TS TSF TT TTF TURB V VF
+ccx create fieldoutput name "element_output" element
+ccx modify fieldoutput 2 element
+ccx modify fieldoutput 2 element key_on E S
+ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFL HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS
+ccx create historyoutput name "node_output" node
+ccx create historyoutput name "element_output" element
+ccx modify historyoutput 1 node nodeset 3
+ccx modify historyoutput 1 node key_on U RF
+ccx modify historyoutput 1 node key_off NT TSF TTF PN PSF PTF MACH CP VF DEPF TURB MF RFL
+ccx modify historyoutput 2 element block 1
+ccx modify historyoutput 2 element key_on S E
+ccx modify historyoutput 2 element key_off SVF ME PEEQ CEEQ ENER SDV HFL HFLF COORD ELSE ELKE EVOL EMAS EBHE CENT
+
+
+# steps
+ccx create step name "Static" static
+#ccx modify step 1 parameter nlgeom_yes
+ccx modify step 1 static solver spooles
+#ccx modify step 1 static totaltimeatstart 0 initialtimeincrement 0.1 timeperiodofstep 1 minimumtimeincrement 0.01 maximumtimeincrement 0.1
+ccx step 1 add load force 1
+ccx step 1 add bc displacement 1
+ccx step 1 add fieldoutput 1 2
+ccx step 1 add historyoutput 1 2
+
+# mesh
+block 1 element type HEX8
+volume 1 size 1.5
+mesh vertex all
+mesh volume all
+ccx block 1 element_type C3D8
+
+
+#!python
+
+import csv
+import json
+import math
+import os
+import re
+import time
+import traceback
+from datetime import datetime
+from pathlib import Path
+
+# Edit these settings before running if a longer convergence window is needed.
+MAXIMUM_ITERATIONS = 500
+DENSITY_TOLERANCE = 0.01
+OBJECTIVE_TOLERANCE = 0.001
+TARGET_VOLUME_FRACTION = 0.7
+REFERENCE_CAP = 2048
+CAPS = (2048,)
+SAVE_FINAL_MODEL = False  # Optional: includes the stored histories/results.
+
+ITERATION_COLUMNS = ["iteration", "job", "status", "compliance", "volume_fraction", "selected", "maximum_density_change", "relative_objective_change", "converged", "displacement", "node", "nodeset", "component"]
+ELEMENT_COLUMNS = ["element", "density", "applied_stiffness_factor", "preserved"]
+
+
+def run_topology_density_diagnostics():
+    original_directory = Path.cwd()
+    work = original_directory / ("topology_density_diagnostics_" + datetime.now().strftime("%Y%m%d_%H%M%S_%f"))
+    work.mkdir(parents=True, exist_ok=False)
+    report = {
+        "status": "running",
+        "execution_passed": False,
+        "all_converged": False,
+        "output_directory": str(work),
+        "settings": {
+            "maximum_iterations": MAXIMUM_ITERATIONS,
+            "density_tolerance": DENSITY_TOLERANCE,
+            "objective_tolerance": OBJECTIVE_TOLERANCE,
+            "target_volume_fraction": TARGET_VOLUME_FRACTION,
+            "caps_in_run_order": list(CAPS),
+            "reference_cap": REFERENCE_CAP,
+        },
+        "checks": [],
+        "cases": [],
+        "comparison": [],
+        "timing_note": "One sequential run per cap; timings are observations, not a repeated performance benchmark.",
+        "density_note": "Element-density comparison metrics are unweighted by element volume.",
+    }
+    final_elements = {}
+
+    def save_report():
+        (work / "report.json").write_text(json.dumps(report, indent=2, allow_nan=False), encoding="utf-8")
+
+    def check(condition, label, detail=""):
+        report["checks"].append({"passed": bool(condition), "check": label, "detail": str(detail)})
+        print(("PASS: " if condition else "FAIL: ") + label + (" -- " + str(detail) if detail else ""))
+        save_report()
+        return bool(condition)
+
+    def command(text):
+        before = cubit.get_error_count()
+        cubit.cmd(text)
+        return check(cubit.get_error_count() == before, "Command: " + text)
+
+    def write_csv(path, columns, rows):
+        with path.open("w", newline="", encoding="utf-8") as stream:
+            writer = csv.writer(stream)
+            writer.writerow(columns)
+            writer.writerows(rows)
+
+    def material_summary(path, case_id):
+        text = path.read_text(encoding="utf-8")
+        prefix = "CCX_TOPO_%d_G" % case_id
+        materials = {}
+        current_material = ""
+        elastic = False
+        for raw in text.splitlines():
+            line = raw.strip()
+            if not line or line.startswith("**"):
+                continue
+            if line.startswith("*"):
+                parts = [part.strip() for part in line.split(",")]
+                options = dict(part.split("=", 1) for part in parts[1:] if "=" in part)
+                elastic = False
+                if parts[0].upper() == "*MATERIAL":
+                    current_material = options.get("NAME", "")
+                elif parts[0].upper() == "*ELASTIC" and current_material.startswith(prefix):
+                    elastic = True
+                continue
+            if elastic:
+                fields = [part.strip() for part in line.split(",") if part.strip()]
+                if len(fields) < 2 or any(len(field) > 20 for field in fields):
+                    return None
+                materials[current_material] = (float(fields[0].replace("D", "E")), float(fields[1].replace("D", "E")))
+                elastic = False
+        set_count = len(re.findall(r"^\*ELSET,\s*ELSET=" + re.escape(prefix), text, flags=re.MULTILINE))
+        section_count = len(re.findall(r"^\*SOLID SECTION,.*MATERIAL=" + re.escape(prefix), text, flags=re.MULTILINE))
+        return {"materials": materials, "sets": set_count, "sections": section_count}
+
+    def analyze_density_history(ccx, case_id, iterations, mesh_count):
+        columns = ["iteration", "compliance", "volume_fraction", "reported_maximum_density_change", "recomputed_maximum_density_change", "rms_density_update", "consecutive_update_cosine", "reversed_active_element_fraction", "maximum_two_step_drift", "two_step_drift_over_one_step_update", "elements_above_density_tolerance", "worst_element"]
+        history = []
+        previous = None
+        previous_previous = None
+        previous_update = None
+        last_update = None
+        element_ids = None
+        checkpoint_iterations = {100, 200, 300, 400, 500, int(iterations[-1][0])}
+        diagnostic_path = work / "density_update_history.csv"
+        for record in iterations:
+            iteration_id = int(record[0])
+            rows = [list(row) for row in ccx.get_topology_iteration_element_data(case_id, iteration_id)]
+            if not check(len(rows) == mesh_count and all(len(row) == 4 for row in rows), "Diagnostic history covers the mesh", "iteration %d" % iteration_id):
+                return None
+            elements = {int(row[0]): row for row in rows}
+            if element_ids is None:
+                element_ids = sorted(elements)
+            valid = len(elements) == mesh_count and sorted(elements) == element_ids
+            valid = valid and all(math.isfinite(row[1]) and 0.0 < row[1] <= 1.0 and math.isfinite(row[2]) and math.isclose(row[2], 0.001 + 0.999 * row[1] ** 3, rel_tol=1e-12, abs_tol=1e-14) for row in rows)
+            if not check(valid, "History retains exact continuous stiffness and element IDs", "iteration %d" % iteration_id):
+                return None
+            density = [float(elements[element][1]) for element in element_ids]
+            if iteration_id in checkpoint_iterations:
+                write_csv(work / ("iteration_%04d_elements.csv" % iteration_id), ELEMENT_COLUMNS, [elements[element] for element in element_ids])
+            maximum = rms = cosine = reversed_fraction = drift = drift_ratio = worst = None
+            above = None
+            update = None
+            if previous is not None:
+                update = [value - old for value, old in zip(density, previous)]
+                worst_index = max(range(len(update)), key=lambda index: abs(update[index]))
+                maximum = abs(update[worst_index])
+                worst = element_ids[worst_index]
+                norm_squared = sum(value * value for value in update)
+                rms = math.sqrt(norm_squared / mesh_count)
+                above = sum(abs(value) > DENSITY_TOLERANCE for value in update)
+                if record[6]:
+                    if not check(math.isclose(maximum, float(record[6]), rel_tol=1e-9, abs_tol=1e-12), "Recorded density change matches stored designs", "iteration %d" % iteration_id):
+                        return None
+                if previous_update is not None:
+                    old_norm_squared = sum(value * value for value in previous_update)
+                    if norm_squared > 0.0 and old_norm_squared > 0.0:
+                        cosine = sum(value * old for value, old in zip(update, previous_update)) / math.sqrt(norm_squared * old_norm_squared)
+                        cosine = max(-1.0, min(1.0, cosine))
+                    active = [(value, old) for value, old in zip(update, previous_update) if abs(value) > 1e-12 and abs(old) > 1e-12]
+                    if active:
+                        reversed_fraction = sum(value * old < 0.0 for value, old in active) / len(active)
+                if previous_previous is not None:
+                    drift = max(abs(value - old) for value, old in zip(density, previous_previous))
+                    if maximum > 0.0:
+                        drift_ratio = drift / maximum
+                last_update = update
+            history.append([iteration_id, float(record[3]), float(record[4]), float(record[6]) if record[6] else None, maximum, rms, cosine, reversed_fraction, drift, drift_ratio, above, worst])
+            previous_previous = previous
+            previous = density
+            previous_update = update
+            # Save incrementally so a diagnostic failure leaves the processed history.
+            write_csv(diagnostic_path, columns, history)
+
+        if last_update is not None:
+            order = sorted(range(len(last_update)), key=lambda index: abs(last_update[index]), reverse=True)[:20]
+            write_csv(work / "largest_final_density_updates.csv", ["element", "previous_density", "final_density", "signed_update", "absolute_update"], [[element_ids[index], previous_previous[index], previous[index], last_update[index], abs(last_update[index])] for index in order])
+
+        def window_summary(rows):
+            updates = [row[4] for row in rows if row[4] is not None]
+            correlations = [row[6] for row in rows if row[6] is not None]
+            objectives = [row[1] for row in rows]
+            return {
+                "first_iteration": rows[0][0], "last_iteration": rows[-1][0],
+                "mean_maximum_density_change": sum(updates) / len(updates) if updates else None,
+                "peak_maximum_density_change": max(updates) if updates else None,
+                "minimum_maximum_density_change": min(updates) if updates else None,
+                "mean_consecutive_update_cosine": sum(correlations) / len(correlations) if correlations else None,
+                "negative_update_correlations": sum(value < 0.0 for value in correlations),
+                "compliance_range_relative_to_last": (max(objectives) - min(objectives)) / abs(objectives[-1]),
+                "iterations_meeting_density_tolerance": sum(value <= DENSITY_TOLERANCE for value in updates),
+            }
+
+        windows = []
+        for start in range(0, len(history), 25):
+            windows.append(window_summary(history[start:start + 25]))
+        write_csv(work / "density_windows.csv", list(windows[0]), [[window[key] for key in windows[0]] for window in windows])
+        summary = {
+            "checked_iterations": len(history), "window_size": 25,
+            "windows": windows, "last_25_iterations": window_summary(history[-25:]),
+            "interpretation": "Decreasing update magnitude supports settling. Negative cosine indicates consecutive update reversal. Small two-step drift relative to one-step update supports a two-cycle hypothesis; inspect sustained history before concluding oscillation.",
+            "unavailable_api_fields": ["ordinary_oc_proposal_residual", "effective_move_limit", "internal_update_correlation"],
+            "note": "Cosines here are recomputed from stored consecutive physical density designs and may differ from internal optimizer telemetry. Density metrics are unweighted by element volume.",
+        }
+        print("Last density window: " + json.dumps(summary["last_25_iterations"], allow_nan=False))
+        return summary
+
+    try:
+        os.chdir(work)
+        print("Exact-reference diagnostic outputs: " + str(work))
+        print("Up to %d solver iterations per case; exact reference first." % MAXIMUM_ITERATIONS)
+        from calculix_pythoninterface import CalculiXPythonInterface
+        ccx = CalculiXPythonInterface()
+        mesh_count = len(cubit.get_entities("hex"))
+        report["mesh_elements"] = mesh_count
+        if not check(0 < mesh_count <= REFERENCE_CAP, "Mesh fits the exact reference cap", "%d elements, reference cap %d" % (mesh_count, REFERENCE_CAP)):
+            return
+        if not check(MAXIMUM_ITERATIONS >= 2 and 0.0 < DENSITY_TOLERANCE <= 1.0 and 0.0 < OBJECTIVE_TOLERANCE <= 1.0, "Convergence settings are valid"):
+            return
+
+        for case_id, cap in enumerate(CAPS, 1):
+            name = "density_diagnostic_cap_%d" % cap
+            text = 'ccx create topology %d name "%s" method density objective compliance material_cap %d volume_fraction %.17g iterations %d density_tolerance %.17g compliance_tolerance %.17g' % (case_id, name, cap, TARGET_VOLUME_FRACTION, MAXIMUM_ITERATIONS, DENSITY_TOLERANCE, OBJECTIVE_TOLERANCE)
+            if not command(text):
+                return
+            print("START: cap %d" % cap)
+            started = time.perf_counter()
+            succeeded = command("ccx run topology %d wait" % case_id)
+            elapsed = time.perf_counter() - started
+            state = ccx.get_topology_run_state(case_id)
+            iterations = [list(row) for row in ccx.get_topology_iteration_data(case_id)]
+            case = {"case": case_id, "cap": cap, "state": state, "seconds": elapsed, "iteration_count": len(iterations), "converged": state == "converged"}
+            report["cases"].append(case)
+            write_csv(work / ("cap_%d_iterations.csv" % cap), ITERATION_COLUMNS, iterations)
+            save_report()
+            if not succeeded or not check(state in ("converged", "iteration_limit"), "Run ended in a completed state", "cap %d: %s" % (cap, state)):
+                return
+            if not check(bool(iterations) and all(len(row) == len(ITERATION_COLUMNS) and int(row[2]) == 2 for row in iterations), "All recorded solver jobs completed", "cap %d" % cap):
+                return
+
+            last = iterations[-1]
+            iteration_id = int(last[0])
+            compliance = float(last[3])
+            volume_fraction = float(last[4])
+            density_change = float(last[6]) if last[6] else None
+            objective_change = float(last[7]) if last[7] else None
+            if not check(math.isfinite(compliance) and compliance > 0.0 and math.isfinite(volume_fraction), "Final objective and volume are finite", "cap %d" % cap):
+                return
+            if not check(volume_fraction <= TARGET_VOLUME_FRACTION + 1e-6, "Final volume is feasible", "cap %d: %.12g" % (cap, volume_fraction)):
+                return
+            if state == "converged":
+                if not check(last[8] == "1" and density_change is not None and density_change <= DENSITY_TOLERANCE and objective_change is not None and objective_change <= OBJECTIVE_TOLERANCE, "Reported convergence meets the requested tolerances", "cap %d" % cap):
+                    return
+            else:
+                print("NOT CONVERGED: cap %d reached the iteration limit. Results will still be compared." % cap)
+
+            rows = [list(row) for row in ccx.get_topology_iteration_element_data(case_id, iteration_id)]
+            if not check(len(rows) == mesh_count and all(len(row) == 4 for row in rows), "Final design covers the mesh", "cap %d" % cap):
+                return
+            elements = {int(row[0]): row for row in rows}
+            if not check(len(elements) == mesh_count and all(math.isfinite(row[1]) and 0.0 < row[1] <= 1.0 and math.isfinite(row[2]) and 0.0 < row[2] <= 1.0 and (not bool(row[3]) or (row[1] == 1.0 and row[2] == 1.0)) for row in rows), "Final densities, factors and preserved elements are valid", "cap %d" % cap):
+                return
+            final_elements[cap] = elements
+            write_csv(work / ("cap_%d_final_elements.csv" % cap), ELEMENT_COLUMNS, rows)
+
+            path = work / ("cap_%d_final.inp" % cap)
+            if not command('export ccx "%s" topology %d iteration %d overwrite' % (path.as_posix(), case_id, iteration_id)):
+                return
+            if not check(path.is_file(), "Final input was exported", path.name):
+                return
+            summary = material_summary(path, case_id)
+            if not check(summary is not None, "Exported elastic values fit CalculiX field widths", path.name):
+                return
+            count = len(summary["materials"])
+            if not check(0 < count <= cap and summary["sets"] == count and summary["sections"] == count, "Generated materials, sets and sections obey the cap", "cap %d: %d groups" % (cap, count)):
+                return
+            group_moduli = {values[0] for values in summary["materials"].values()}
+            if not check(all(any(math.isclose(210000.0 * row[2], modulus, rel_tol=1e-12, abs_tol=0.0) for modulus in group_moduli) for row in rows), "Stored factors occur in the exported material groups", "cap %d" % cap):
+                return
+            if cap == REFERENCE_CAP:
+                exact = all(math.isclose(row[2], 0.001 + 0.999 * row[1] ** 3, rel_tol=1e-12, abs_tol=1e-14) for row in rows)
+                if not check(exact, "Reference factors preserve continuous SIMP stiffness"):
+                    return
+                # A global cap at least as large as the element count prevents
+                # binning in every iteration of this one-base-material model.
+                report["reference_is_exact"] = True
+            case.update({"last_iteration": iteration_id, "final_compliance": compliance, "final_volume_fraction": volume_fraction, "final_maximum_density_change": density_change, "final_relative_objective_change": objective_change, "final_material_groups": count})
+            save_report()
+            print("FINISHED: cap %d, state %s, %d iterations, %.3f seconds, compliance %.12g, %d groups" % (cap, state, len(iterations), elapsed, compliance, count))
+
+        diagnostic = analyze_density_history(ccx, 1, iterations, mesh_count)
+        if diagnostic is None:
+            return
+        report["density_diagnostics"] = diagnostic
+        save_report()
+
+        reference = next(case for case in report["cases"] if case["cap"] == REFERENCE_CAP)
+        reference_elements = final_elements[REFERENCE_CAP]
+        comparison_rows = []
+        for case in report["cases"]:
+            cap = case["cap"]
+            elements = final_elements[cap]
+            if not check(set(elements) == set(reference_elements) and all(bool(elements[element][3]) == bool(reference_elements[element][3]) for element in elements), "Cases share element IDs and preservation flags", "cap %d" % cap):
+                return
+            differences = [abs(elements[element][1] - reference_elements[element][1]) for element in sorted(elements)]
+            changed_classification = sum((elements[element][1] >= 0.5) != (reference_elements[element][1] >= 0.5) for element in elements)
+            comparison = {
+                "cap": cap,
+                "state": case["state"],
+                "iterations": case["iteration_count"],
+                "seconds": case["seconds"],
+                "final_material_groups": case["final_material_groups"],
+                "final_compliance": case["final_compliance"],
+                "compliance_difference_percent": 100.0 * (case["final_compliance"] / reference["final_compliance"] - 1.0),
+                "final_volume_fraction": case["final_volume_fraction"],
+                "mean_absolute_density_difference": sum(differences) / len(differences),
+                "maximum_absolute_density_difference": max(differences),
+                "rms_density_difference": math.sqrt(sum(value * value for value in differences) / len(differences)),
+                "elements_with_different_classification_at_0_5": changed_classification,
+                "converged": case["converged"],
+            }
+            report["comparison"].append(comparison)
+            comparison_rows.append(comparison)
+            detail = []
+            for element in sorted(elements):
+                actual = elements[element]
+                baseline = reference_elements[element]
+                detail.append([element, baseline[1], actual[1], actual[1] - baseline[1], baseline[2], actual[2], int(bool(actual[3]))])
+            write_csv(work / ("cap_%d_vs_reference_elements.csv" % cap), ["element", "reference_density", "density", "density_difference", "reference_applied_factor", "applied_factor", "preserved"], detail)
+        columns = list(comparison_rows[0])
+        write_csv(work / "comparison.csv", columns, [[row[column] for column in columns] for row in comparison_rows])
+
+        if SAVE_FINAL_MODEL:
+            if not command('save as "%s" overwrite' % (work / "topology_density_diagnostics.cub5").as_posix()):
+                return
+        report["execution_passed"] = all(item["passed"] for item in report["checks"])
+        report["all_converged"] = all(case["converged"] for case in report["cases"])
+        report["status"] = "COMPLETED_ALL_CONVERGED" if report["all_converged"] else "COMPLETED_NOT_ALL_CONVERGED"
+        print("\nEXACT-REFERENCE DENSITY DIAGNOSTICS: " + report["status"])
+        print("cap | state | iterations | seconds | compliance difference % | mean density difference | max density difference")
+        for row in report["comparison"]:
+            print("%d | %s | %d | %.3f | %+.6f | %.6g | %.6g" % (row["cap"], row["state"], row["iterations"], row["seconds"], row["compliance_difference_percent"], row["mean_absolute_density_difference"], row["maximum_absolute_density_difference"]))
+        print("See density_update_history.csv and report.json for density settling and reversal evidence. Negative update correlation alone does not prove a limit cycle.")
+    except Exception:
+        report["status"] = "FAILED_OR_INCOMPLETE"
+        report["exception"] = traceback.format_exc()
+        print(report["exception"])
+    finally:
+        if report["status"] == "running":
+            report["status"] = "FAILED_OR_INCOMPLETE"
+        save_report()
+        os.chdir(original_directory)
+        print("Report: " + str(work / "report.json"))
+        print("Comparison: " + str(work / "comparison.csv"))
+        if report["status"] == "FAILED_OR_INCOMPLETE":
+            print("Validation stopped early. Check report.json and the Cubit/Jobs Monitor console.")
+
+
+run_topology_density_diagnostics()

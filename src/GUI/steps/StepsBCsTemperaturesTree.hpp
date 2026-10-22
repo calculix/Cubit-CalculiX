@@ -1,0 +1,38 @@
+
+#ifndef STEPSBCSTEMPERATURESTREE_HPP
+#define STEPSBCSTEMPERATURESTREE_HPP
+#include <string>
+
+#include <QObject>
+#include "GUI/common/TreeContextMenu.hpp"
+#include <QTreeWidgetItem>
+#include <QIcon>
+class StepsBCsTemperaturesTree : public QObject, public QTreeWidgetItem, public TreeContextMenu
+{
+  Q_OBJECT
+
+public:
+  void populateContextMenu(
+    QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host) override;
+
+  StepsBCsTemperaturesTree(QTreeWidgetItem *parent);
+  ~StepsBCsTemperaturesTree();
+
+  void initialize(int step_id_init);
+
+  void clear(); // remove all children from tree 
+
+  void update(); // updates the children from the tree
+
+private:
+  bool isInitialized;
+  int step_id = -1;
+
+  void addBC(QString bc_id, QString bc_name); // adds a new bc to the tree
+  void removeBC(QTreeWidgetItem *bc); // removes the bc from to the tree
+
+  int get_child_id(std::string bc_id); // check if the item for the given bc_id exists, returns the id or -1 if failed;
+
+};
+
+#endif // STEPSBCSTEMPERATURESTREE_HPP

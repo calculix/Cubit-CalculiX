@@ -59,6 +59,9 @@ stored settings when read by the supported configuration loader.
    * - Maximum iterations / ``iterations``
      - ``100``
      - Positive integer limiting the number of evaluated designs, including the initial design.
+   * - Material cap / ``material_cap``
+     - ``1024``
+     - Integer of at least 2 limiting generated topology materials across all base materials. Exact sharing is used when possible; otherwise stiffness factors are grouped logarithmically. Applies to new iterations.
    * - Filter radius / ``filter_radius``
      - ``0``
      - Nonnegative length. Zero selects an automatic radius; a positive value uses the model's length units.
@@ -92,6 +95,26 @@ The density floor is currently 0.001 and the SIMP penalization is 3. They are
 implementation parameters, not additional create/modify command options.
 The density floor and the void stiffness ratio have different roles even
 though their default numeric values coincide.
+
+Material grouping
+-----------------
+
+The material cap is available through the create/modify commands. It bounds
+new topology material definitions; original materials for unaffected sections
+remain available. Different base materials are never mixed. Each varying base
+material needs at least two groups to preserve its stiffness endpoints. A cap
+too small for those endpoints is rejected when preparing an iteration.
+
+Element sets and solid sections are grouped by material within each original
+section. Their count can exceed the material cap when original sections have
+different orientation or section data. With one original section their count
+is bounded by the cap.
+
+The stored iteration factors are the factors actually assigned to the solver.
+Continuous densities are retained for volume and design updates; their smooth
+SIMP sensitivities approximate the grouped solve. A single-iteration solver
+comparison does not validate full optimization convergence. Existing saved
+iterations are never quantized again when loaded or exported.
 
 Objective selection and monitoring
 ----------------------------------

@@ -4,9 +4,9 @@
 #include <vector>
 #include <string>
 
-/* don't forget to wrap with 'swig -python -py3 -c++ CalculiXPythonInterface.i'  
+/* don't forget to wrap with 'swig -python -py3 -c++ CalculiXPythonInterface.i'
 
-and if compiling fails because of qt replace Python.h with 
+and if compiling fails because of qt replace Python.h with
 
 #pragma push_macro("slots")
 #undef slots
@@ -16,16 +16,13 @@ and if compiling fails because of qt replace Python.h with
 in file CalculiXPythonInterface_wrap.cxx
 
 */
-
-class CalculiXCoreInterface;
-
 class CalculiXPythonInterface
 {
 
 public:
   CalculiXPythonInterface();
   ~CalculiXPythonInterface();
-	
+
   void help(); // prints out python interface help
   //JOBS
   int get_job_status(int job_id); //status -2 no job -1 no process, 1 process running, 2 process finished, 3 process killed, 4 process finished with errors, 5 process running currently waiting
@@ -65,7 +62,7 @@ public:
   std::vector<int> dat_get_node_ids_greater_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value); // returns the global node ids greater than the value
   std::vector<int> dat_get_element_ids_between_values(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double lower_value,double upper_value); // returns the global element ids within the values
   std::vector<int> dat_get_element_ids_smaller_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value); // returns the global element ids smaller than the values
-  std::vector<int> dat_get_element_ids_greater_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value); // returns the global element ids greater than the values  
+  std::vector<int> dat_get_element_ids_greater_value(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double value); // returns the global element ids greater than the values
   std::vector<int> dat_get_element_ids_over_limit(int job_id,double time,std::string result_block_type,std::string result_block_set,std::string result_block_component,double limit); // returns the global element ids where the largest difference between element values exceeds the limit
   double dat_get_node_value(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set,std::string result_block_component); // returns the queried node_id value or zero if no value exists
   std::vector<double> dat_get_node_values(int job_id,int node_id, double time,std::string result_block_type,std::string result_block_set); // returns the queried node_id values
@@ -75,7 +72,7 @@ public:
   std::vector<std::string> dat_get_section_set(int job_id); // returns the section set for a job
   std::vector<std::vector<double>> dat_get_section_data(int job_id, std::string section_set); // returns the section set data for a job
   std::vector<std::string> dat_get_section_label(int job_id); // returns the section labels for a job
-  
+
   //Loads Trajectory
   std::string loadstrajectory_get_load_type(int trajectory_id); //returns the trajectory load type
   std::vector<int> loadstrajectory_heatflux_get_node_ids(int trajectory_id); //returns node ids for curve
@@ -96,7 +93,6 @@ public:
   std::vector<std::vector<double>> loadstrajectory_bodyheatfluxsphere_get_depth(int trajectory_id); //returns depth ordered by the node ids from get_node_ids
   std::vector<std::vector<double>> loadstrajectory_bodyheatfluxsphere_get_magnitude(int trajectory_id); //returns magnitude ordered by the node ids from get_node_ids
 
-  CalculiXCoreInterface *ccx_iface;
 };
 
 #endif // CALCULIXPYTHONINTERFACE_HPP

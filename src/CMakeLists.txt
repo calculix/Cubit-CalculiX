@@ -177,17 +177,9 @@ SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${CMAKE_CURRENT_BINARY_DIR})
 
-# Include our Core code
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Core)
-add_subdirectory(Core)
+# Core domain sources are registered after calculix_core is created.
 
-# Include our Commands code
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Commands)
-add_subdirectory(Commands)
 
-# Include our GUI code
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/GUI)
-add_subdirectory(GUI)
 
 # Include our EventObserver code
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/EventObservers)
@@ -253,11 +245,9 @@ endif (UNIX)
 
 set(CCXPLUGIN_SRCS
     CalculiXPlugin.cpp
-    CalculiXPlugin.hpp
-    ${CMD_SRC})
+    CalculiXPlugin.hpp)
 
 set(CCXCORE_SRCS
-    ${CORE_SRC}
     ${UTILITY_SRC})
 
 set(CCXUSEROPTIONS_SRCS
@@ -271,7 +261,6 @@ set(CCXCOMP_SRCS
     CalculiXComp.hpp
     ${CCXCOMP_WRAP}
     ${EO_COMP_SRC}
-    ${GUI_SRC}
     MenuManager.cpp
     MenuManager.hpp
     ToolbarManager.cpp
@@ -375,6 +364,11 @@ if (UNIX)
     target_link_libraries(calculix_plugin calculix_core)
     target_link_libraries(calculix_comp calculix_core)
 endif (UNIX)
+
+# Register feature sources after both platform branches create the targets.
+add_subdirectory(Core)
+add_subdirectory(Commands)
+add_subdirectory(GUI)
 
 # Result readers use header-only Boost.Asio on both platforms.
 find_package(Threads REQUIRED)

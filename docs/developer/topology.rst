@@ -109,7 +109,7 @@ means request acceptance, not guaranteed immediate process termination.
 Completed evaluations remain available. A failed run uses the corresponding
 stop/termination path with the failed state rather than continuing updates.
 
-Calls between domain cores use ``CalculiXCoreInterface``. ``CalculiXCore``
+Calls between domain cores use the domain-specific interfaces (see :doc:`interface-layout`). ``CalculiXCore``
 coordinates its owned collections and Cubit queries; the optimization controller
 does not include other domain-core headers to obtain their stored data.
 
@@ -127,7 +127,7 @@ Implementation entry points
   element-type IDs must match the installed Cubit SDK. WEDGE15 swaps midside
   positions 10--12 with 13--15 when exported to C3D15.
 
-Cross-core operations pass through ``CalculiXCoreInterface``; geometry and
+Cross-core operations pass through the domain-specific interfaces (see :doc:`interface-layout`); geometry and
 materials are supplied through the existing core and Cubit interfaces.
 
 See :doc:`../tutorials/index` for verification scope and

@@ -15,8 +15,6 @@
 #include <QString>
 
 class MyCmdWidgetFactory;
-class CalculiXCoreInterface;
-
 class cmdPanelManager
 {
 public:
@@ -33,7 +31,6 @@ public:
 private:
   bool isInitialized;
   MyCmdWidgetFactory* myFactory;
-  CalculiXCoreInterface* ccx_iface;
 
 
   // Two examples of how to initialize command panel navigation buttons.

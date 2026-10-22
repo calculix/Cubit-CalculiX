@@ -1,172 +1,175 @@
 #include "CalculiXPlugin.hpp"
-#include "loadCalculiXCore.hpp"
-#include "CoreObserver.hpp"
+#include <string>
+#include <vector>
+#include "Core/application/CalculiXApplicationInterface.hpp"
+#include "Core/loadCalculiXCore.hpp"
+#include "Core/application/CoreObserver.hpp"
 
-#include "ccxVersionCommand.hpp"
-#include "ccxResetCommand.hpp"
-#include "ccxExportCommand.hpp"
-#include "ccxInitPythonInterfaceCommand.hpp"
-#include "ccxUseAutoCleanupCommand.hpp"
-#include "ccxUseLogCoreCommand.hpp"
-#include "ccxPrintCoreCommand.hpp"
-#include "ccxLogCoreCommand.hpp"
-#include "ccxDrawCommand.hpp"
-#include "ccxDrawStepCommand.hpp"
-#include "ccxBlockElementTypeCommand.hpp"
-#include "ccxSectionDeleteCommand.hpp"
-#include "ccxSectionSolidCreateCommand.hpp"
-#include "ccxSectionSolidModifyCommand.hpp"
-#include "ccxSectionShellCreateCommand.hpp"
-#include "ccxSectionShellModifyCommand.hpp"
-#include "ccxSectionBeamCreateCommand.hpp"
-#include "ccxSectionBeamModifyCommand.hpp"
-#include "ccxSectionMembraneCreateCommand.hpp"
-#include "ccxSectionMembraneModifyCommand.hpp"
-#include "ccxConstraintDeleteCommand.hpp"
-#include "ccxConstraintEquationCreateCommand.hpp"
-#include "ccxConstraintEquationCreateFromCoincidentNodesCommand.hpp"
-#include "ccxConstraintEquationModifyCommand.hpp"
-#include "ccxConstraintRigidBodyCreateCommand.hpp"
-#include "ccxConstraintRigidBody2CreateCommand.hpp"
-#include "ccxConstraintRigidBodyModifyCommand.hpp"
-#include "ccxConstraintTieCreateCommand.hpp"
-#include "ccxConstraintTieModifyCommand.hpp"
-#include "ccxConstraintTieCreateFromCubitContactPairCommand.hpp"
-#include "ccxSurfaceInteractionExponentialCreateCommand.hpp"
-#include "ccxSurfaceInteractionLinearCreateCommand.hpp"
-#include "ccxSurfaceInteractionTabularCreateCommand.hpp"
-#include "ccxSurfaceInteractionTiedCreateCommand.hpp"
-#include "ccxSurfaceInteractionHardCreateCommand.hpp"
-#include "ccxSurfaceInteractionNameModifyCommand.hpp"
-#include "ccxSurfaceInteractionExponentialModifyCommand.hpp"
-#include "ccxSurfaceInteractionLinearModifyCommand.hpp"
-#include "ccxSurfaceInteractionTabularModifyCommand.hpp"
-#include "ccxSurfaceInteractionTiedModifyCommand.hpp"
-#include "ccxSurfaceInteractionGapConductanceModifyCommand.hpp"
-#include "ccxSurfaceInteractionGapHeatGenerationModifyCommand.hpp"
-#include "ccxSurfaceInteractionFrictionModifyCommand.hpp"
-#include "ccxSurfaceInteractionDeleteCommand.hpp"
-#include "ccxContactPairCreateCommand.hpp"
-#include "ccxContactPairModifyCommand.hpp"
-#include "ccxContactPairDeleteCommand.hpp"
-#include "ccxContactPairCreateFromCubitContactPairCommand.hpp"
-#include "ccxAmplitudeCreateCommand.hpp"
-#include "ccxAmplitudeModifyCommand.hpp"
-#include "ccxAmplitudeDeleteCommand.hpp"
-#include "ccxOrientationCreateCommand.hpp"
-#include "ccxOrientationModifyCommand.hpp"
-#include "ccxOrientationDeleteCommand.hpp"
-#include "ccxDampingModifyCommand.hpp"
-#include "ccxDampingDeleteCommand.hpp"
-#include "ccxPhysicalConstantsModifyCommand.hpp"
-#include "ccxPhysicalConstantsDeleteCommand.hpp"
-#include "ccxLoadsForcesModifyCommand.hpp"
-#include "ccxLoadsPressuresModifyCommand.hpp"
-#include "ccxLoadsHeatfluxesModifyCommand.hpp"
-#include "ccxLoadsGravityCreateCommand.hpp"
-#include "ccxLoadsGravityModifyCommand.hpp"
-#include "ccxLoadsGravityDeleteCommand.hpp"
-#include "ccxLoadsCentrifugalCreateCommand.hpp"
-#include "ccxLoadsCentrifugalModifyCommand.hpp"
-#include "ccxLoadsCentrifugalDeleteCommand.hpp"
-#include "ccxLoadsTrajectoryHeatfluxCreateCommand.hpp"
-#include "ccxLoadsTrajectoryHeatfluxModifyCommand.hpp"
-#include "ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand.hpp"
-#include "ccxLoadsTrajectoryBodyHeatfluxSphereModifyCommand.hpp"
-#include "ccxLoadsTrajectoryDeleteCommand.hpp"
-#include "ccxLoadsFilmCreateCommand.hpp"
-#include "ccxLoadsFilmModifyCommand.hpp"
-#include "ccxLoadsFilmDeleteCommand.hpp"
-#include "ccxLoadsRadiationCreateCommand.hpp"
-#include "ccxLoadsRadiationModifyCommand.hpp"
-#include "ccxLoadsRadiationDeleteCommand.hpp"
-#include "ccxLoadsSurfaceTractionCreateCommand.hpp"
-#include "ccxLoadsSurfaceTractionModifyCommand.hpp"
-#include "ccxLoadsSurfaceTractionDeleteCommand.hpp"
-#include "ccxLoadsBodyHeatfluxCreateCommand.hpp"
-#include "ccxLoadsBodyHeatfluxModifyCommand.hpp"
-#include "ccxLoadsBodyHeatfluxDeleteCommand.hpp"
-#include "ccxBCsDisplacementsModifyCommand.hpp"
-#include "ccxBCsTemperaturesModifyCommand.hpp"
-#include "ccxHistoryOutputCreateCommand.hpp"
-#include "ccxHistoryOutputNodeModifyCommand.hpp"
-#include "ccxHistoryOutputElementModifyCommand.hpp"
-#include "ccxHistoryOutputContactModifyCommand.hpp"
-#include "ccxHistoryOutputSectionModifyCommand.hpp"
-#include "ccxHistoryOutputDeleteCommand.hpp"
-#include "ccxFieldOutputCreateCommand.hpp"
-#include "ccxFieldOutputNodeModifyCommand.hpp"
-#include "ccxFieldOutputElementModifyCommand.hpp"
-#include "ccxFieldOutputContactModifyCommand.hpp"
-#include "ccxFieldOutputDeleteCommand.hpp"
-#include "ccxInitialConditionCreateCommand.hpp"
-#include "ccxInitialConditionDisplacementModifyCommand.hpp"
-#include "ccxInitialConditionTemperatureModifyCommand.hpp"
-#include "ccxInitialConditionStressAddCommand.hpp"
-#include "ccxInitialConditionDeleteCommand.hpp"
-#include "ccxHBCAddBCCommand.hpp"
-#include "ccxHBCRemoveBCCommand.hpp"
-#include "ccxStepCreateCommand.hpp"
-#include "ccxStepAddLoadCommand.hpp"
-#include "ccxStepAddBCCommand.hpp"
-#include "ccxStepAddHistoryOutputCommand.hpp"
-#include "ccxStepAddFieldOutputCommand.hpp"
-#include "ccxStepRemoveLoadCommand.hpp"
-#include "ccxStepRemoveBCCommand.hpp"
-#include "ccxStepRemoveHistoryOutputCommand.hpp"
-#include "ccxStepRemoveFieldOutputCommand.hpp"
-#include "ccxStepParameterModifyCommand.hpp"
-#include "ccxStepStaticModifyCommand.hpp"
-#include "ccxStepFrequencyModifyCommand.hpp"
-#include "ccxStepBuckleModifyCommand.hpp"
-#include "ccxStepHeatTransferModifyCommand.hpp"
-#include "ccxStepCoupledTemperatureDisplacementModifyCommand.hpp"
-#include "ccxStepUncoupledTemperatureDisplacementModifyCommand.hpp"
-#include "ccxStepDynamicModifyCommand.hpp"
-#include "ccxStepModalDynamicModifyCommand.hpp"
-#include "ccxStepSteadyStateDynamicsModifyCommand.hpp"
-#include "ccxStepComplexFrequencyModifyCommand.hpp"
-#include "ccxStepDeleteCommand.hpp"
-#include "ccxStepUtilityModelChangeElementDummyStepCommand.hpp"
-#include "ccxJobCreateCommand.hpp"
-#include "ccxJobModifyCommand.hpp"
-#include "ccxJobDeleteCommand.hpp"
-#include "ccxRunJobCommand.hpp"
-#include "ccxTopologyCreateCommand.hpp"
-#include "ccxTopologyModifyCommand.hpp"
-#include "ccxTopologyDeleteCommand.hpp"
-#include "ccxTopologyAddSetsCommand.hpp"
-#include "ccxTopologyRemoveSetsCommand.hpp"
-#include "ccxTopologyResetPreservedCommand.hpp"
-#include "ccxRunTopologyCommand.hpp"
-#include "ccxWaitTopologyCommand.hpp"
-#include "ccxKillTopologyCommand.hpp"
-#include "ccxWaitJobCommand.hpp"
-#include "ccxResultCGXJobCommand.hpp"
-#include "ccxResultParaViewJobCommand.hpp"
-#include "ccxResultLoadJobCommand.hpp"
-#include "ccxResultConvertJobCommand.hpp"
-#include "ccxResultPlotJobFrdCommand.hpp"
-#include "ccxResultPlotJobDatCommand.hpp"
-#include "ccxResultPlotJobDatSectionCommand.hpp"
-#include "ccxResultCSVJobFrdCommand.hpp"
-#include "ccxResultCSVJobDatCommand.hpp"
-#include "ccxResultCSVJobDatSectionCommand.hpp"
-#include "ccxResultProjectJobCommand.hpp"
-#include "ccxKillJobCommand.hpp"
-#include "ccxCustomLineCreateCommand.hpp"
-#include "ccxCustomLineModifyCommand.hpp"
-#include "ccxCustomLineDeleteCommand.hpp"
-#include "ccxMaterialLibraryCreateGroupCommand.hpp"
-#include "ccxMaterialLibraryModifyGroupCommand.hpp"
-#include "ccxMaterialLibraryDeleteGroupCommand.hpp"
-#include "ccxMaterialLibraryCreateMaterialCommand.hpp"
-#include "ccxMaterialLibraryModifyMaterialCommand.hpp"
-#include "ccxMaterialLibraryDeleteMaterialCommand.hpp"
-#include "ccxMaterialLibraryExportMaterialCommand.hpp"
-#include "ccxMaterialLibraryImportMaterialCommand.hpp"
-#include "ccxWrapCommand.hpp"
-#include "ccxAnimateTopologyCommand.hpp"
+#include "Commands/application/ccxVersionCommand.hpp"
+#include "Commands/application/ccxResetCommand.hpp"
+#include "Commands/export/ccxExportCommand.hpp"
+#include "Commands/application/ccxInitPythonInterfaceCommand.hpp"
+#include "Commands/application/ccxUseAutoCleanupCommand.hpp"
+#include "Commands/application/ccxUseLogCoreCommand.hpp"
+#include "Commands/application/ccxPrintCoreCommand.hpp"
+#include "Commands/application/ccxLogCoreCommand.hpp"
+#include "Commands/drawing/ccxDrawCommand.hpp"
+#include "Commands/drawing/ccxDrawStepCommand.hpp"
+#include "Commands/mesh/ccxBlockElementTypeCommand.hpp"
+#include "Commands/sections/ccxSectionDeleteCommand.hpp"
+#include "Commands/sections/ccxSectionSolidCreateCommand.hpp"
+#include "Commands/sections/ccxSectionSolidModifyCommand.hpp"
+#include "Commands/sections/ccxSectionShellCreateCommand.hpp"
+#include "Commands/sections/ccxSectionShellModifyCommand.hpp"
+#include "Commands/sections/ccxSectionBeamCreateCommand.hpp"
+#include "Commands/sections/ccxSectionBeamModifyCommand.hpp"
+#include "Commands/sections/ccxSectionMembraneCreateCommand.hpp"
+#include "Commands/sections/ccxSectionMembraneModifyCommand.hpp"
+#include "Commands/interactions/ccxConstraintDeleteCommand.hpp"
+#include "Commands/interactions/ccxConstraintEquationCreateCommand.hpp"
+#include "Commands/interactions/ccxConstraintEquationCreateFromCoincidentNodesCommand.hpp"
+#include "Commands/interactions/ccxConstraintEquationModifyCommand.hpp"
+#include "Commands/interactions/ccxConstraintRigidBodyCreateCommand.hpp"
+#include "Commands/interactions/ccxConstraintRigidBody2CreateCommand.hpp"
+#include "Commands/interactions/ccxConstraintRigidBodyModifyCommand.hpp"
+#include "Commands/interactions/ccxConstraintTieCreateCommand.hpp"
+#include "Commands/interactions/ccxConstraintTieModifyCommand.hpp"
+#include "Commands/interactions/ccxConstraintTieCreateFromCubitContactPairCommand.hpp"
+#include "Commands/interactions/ccxSurfaceInteractionExponentialCreateCommand.hpp"
+#include "Commands/interactions/ccxSurfaceInteractionLinearCreateCommand.hpp"
+#include "Commands/interactions/ccxSurfaceInteractionTabularCreateCommand.hpp"
+#include "Commands/interactions/ccxSurfaceInteractionTiedCreateCommand.hpp"
+#include "Commands/interactions/ccxSurfaceInteractionHardCreateCommand.hpp"
+#include "Commands/interactions/ccxSurfaceInteractionNameModifyCommand.hpp"
+#include "Commands/interactions/ccxSurfaceInteractionExponentialModifyCommand.hpp"
+#include "Commands/interactions/ccxSurfaceInteractionLinearModifyCommand.hpp"
+#include "Commands/interactions/ccxSurfaceInteractionTabularModifyCommand.hpp"
+#include "Commands/interactions/ccxSurfaceInteractionTiedModifyCommand.hpp"
+#include "Commands/interactions/ccxSurfaceInteractionGapConductanceModifyCommand.hpp"
+#include "Commands/interactions/ccxSurfaceInteractionGapHeatGenerationModifyCommand.hpp"
+#include "Commands/interactions/ccxSurfaceInteractionFrictionModifyCommand.hpp"
+#include "Commands/interactions/ccxSurfaceInteractionDeleteCommand.hpp"
+#include "Commands/interactions/ccxContactPairCreateCommand.hpp"
+#include "Commands/interactions/ccxContactPairModifyCommand.hpp"
+#include "Commands/interactions/ccxContactPairDeleteCommand.hpp"
+#include "Commands/interactions/ccxContactPairCreateFromCubitContactPairCommand.hpp"
+#include "Commands/amplitudes/ccxAmplitudeCreateCommand.hpp"
+#include "Commands/amplitudes/ccxAmplitudeModifyCommand.hpp"
+#include "Commands/amplitudes/ccxAmplitudeDeleteCommand.hpp"
+#include "Commands/sections/ccxOrientationCreateCommand.hpp"
+#include "Commands/sections/ccxOrientationModifyCommand.hpp"
+#include "Commands/sections/ccxOrientationDeleteCommand.hpp"
+#include "Commands/steps/ccxDampingModifyCommand.hpp"
+#include "Commands/steps/ccxDampingDeleteCommand.hpp"
+#include "Commands/steps/ccxPhysicalConstantsModifyCommand.hpp"
+#include "Commands/steps/ccxPhysicalConstantsDeleteCommand.hpp"
+#include "Commands/loads/ccxLoadsForcesModifyCommand.hpp"
+#include "Commands/loads/ccxLoadsPressuresModifyCommand.hpp"
+#include "Commands/loads/ccxLoadsHeatfluxesModifyCommand.hpp"
+#include "Commands/loads/ccxLoadsGravityCreateCommand.hpp"
+#include "Commands/loads/ccxLoadsGravityModifyCommand.hpp"
+#include "Commands/loads/ccxLoadsGravityDeleteCommand.hpp"
+#include "Commands/loads/ccxLoadsCentrifugalCreateCommand.hpp"
+#include "Commands/loads/ccxLoadsCentrifugalModifyCommand.hpp"
+#include "Commands/loads/ccxLoadsCentrifugalDeleteCommand.hpp"
+#include "Commands/loads/ccxLoadsTrajectoryHeatfluxCreateCommand.hpp"
+#include "Commands/loads/ccxLoadsTrajectoryHeatfluxModifyCommand.hpp"
+#include "Commands/loads/ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand.hpp"
+#include "Commands/loads/ccxLoadsTrajectoryBodyHeatfluxSphereModifyCommand.hpp"
+#include "Commands/loads/ccxLoadsTrajectoryDeleteCommand.hpp"
+#include "Commands/loads/ccxLoadsFilmCreateCommand.hpp"
+#include "Commands/loads/ccxLoadsFilmModifyCommand.hpp"
+#include "Commands/loads/ccxLoadsFilmDeleteCommand.hpp"
+#include "Commands/loads/ccxLoadsRadiationCreateCommand.hpp"
+#include "Commands/loads/ccxLoadsRadiationModifyCommand.hpp"
+#include "Commands/loads/ccxLoadsRadiationDeleteCommand.hpp"
+#include "Commands/loads/ccxLoadsSurfaceTractionCreateCommand.hpp"
+#include "Commands/loads/ccxLoadsSurfaceTractionModifyCommand.hpp"
+#include "Commands/loads/ccxLoadsSurfaceTractionDeleteCommand.hpp"
+#include "Commands/loads/ccxLoadsBodyHeatfluxCreateCommand.hpp"
+#include "Commands/loads/ccxLoadsBodyHeatfluxModifyCommand.hpp"
+#include "Commands/loads/ccxLoadsBodyHeatfluxDeleteCommand.hpp"
+#include "Commands/bcs/ccxBCsDisplacementsModifyCommand.hpp"
+#include "Commands/bcs/ccxBCsTemperaturesModifyCommand.hpp"
+#include "Commands/steps/ccxHistoryOutputCreateCommand.hpp"
+#include "Commands/steps/ccxHistoryOutputNodeModifyCommand.hpp"
+#include "Commands/steps/ccxHistoryOutputElementModifyCommand.hpp"
+#include "Commands/steps/ccxHistoryOutputContactModifyCommand.hpp"
+#include "Commands/steps/ccxHistoryOutputSectionModifyCommand.hpp"
+#include "Commands/steps/ccxHistoryOutputDeleteCommand.hpp"
+#include "Commands/steps/ccxFieldOutputCreateCommand.hpp"
+#include "Commands/steps/ccxFieldOutputNodeModifyCommand.hpp"
+#include "Commands/steps/ccxFieldOutputElementModifyCommand.hpp"
+#include "Commands/steps/ccxFieldOutputContactModifyCommand.hpp"
+#include "Commands/steps/ccxFieldOutputDeleteCommand.hpp"
+#include "Commands/steps/ccxInitialConditionCreateCommand.hpp"
+#include "Commands/steps/ccxInitialConditionDisplacementModifyCommand.hpp"
+#include "Commands/steps/ccxInitialConditionTemperatureModifyCommand.hpp"
+#include "Commands/steps/ccxInitialConditionStressAddCommand.hpp"
+#include "Commands/steps/ccxInitialConditionDeleteCommand.hpp"
+#include "Commands/bcs/ccxHBCAddBCCommand.hpp"
+#include "Commands/bcs/ccxHBCRemoveBCCommand.hpp"
+#include "Commands/steps/ccxStepCreateCommand.hpp"
+#include "Commands/steps/ccxStepAddLoadCommand.hpp"
+#include "Commands/steps/ccxStepAddBCCommand.hpp"
+#include "Commands/steps/ccxStepAddHistoryOutputCommand.hpp"
+#include "Commands/steps/ccxStepAddFieldOutputCommand.hpp"
+#include "Commands/steps/ccxStepRemoveLoadCommand.hpp"
+#include "Commands/steps/ccxStepRemoveBCCommand.hpp"
+#include "Commands/steps/ccxStepRemoveHistoryOutputCommand.hpp"
+#include "Commands/steps/ccxStepRemoveFieldOutputCommand.hpp"
+#include "Commands/steps/ccxStepParameterModifyCommand.hpp"
+#include "Commands/steps/ccxStepStaticModifyCommand.hpp"
+#include "Commands/steps/ccxStepFrequencyModifyCommand.hpp"
+#include "Commands/steps/ccxStepBuckleModifyCommand.hpp"
+#include "Commands/steps/ccxStepHeatTransferModifyCommand.hpp"
+#include "Commands/steps/ccxStepCoupledTemperatureDisplacementModifyCommand.hpp"
+#include "Commands/steps/ccxStepUncoupledTemperatureDisplacementModifyCommand.hpp"
+#include "Commands/steps/ccxStepDynamicModifyCommand.hpp"
+#include "Commands/steps/ccxStepModalDynamicModifyCommand.hpp"
+#include "Commands/steps/ccxStepSteadyStateDynamicsModifyCommand.hpp"
+#include "Commands/steps/ccxStepComplexFrequencyModifyCommand.hpp"
+#include "Commands/steps/ccxStepDeleteCommand.hpp"
+#include "Commands/steps/ccxStepUtilityModelChangeElementDummyStepCommand.hpp"
+#include "Commands/jobs/ccxJobCreateCommand.hpp"
+#include "Commands/jobs/ccxJobModifyCommand.hpp"
+#include "Commands/jobs/ccxJobDeleteCommand.hpp"
+#include "Commands/jobs/ccxRunJobCommand.hpp"
+#include "Commands/topology/ccxTopologyCreateCommand.hpp"
+#include "Commands/topology/ccxTopologyModifyCommand.hpp"
+#include "Commands/topology/ccxTopologyDeleteCommand.hpp"
+#include "Commands/topology/ccxTopologyAddSetsCommand.hpp"
+#include "Commands/topology/ccxTopologyRemoveSetsCommand.hpp"
+#include "Commands/topology/ccxTopologyResetPreservedCommand.hpp"
+#include "Commands/topology/ccxRunTopologyCommand.hpp"
+#include "Commands/topology/ccxWaitTopologyCommand.hpp"
+#include "Commands/topology/ccxKillTopologyCommand.hpp"
+#include "Commands/jobs/ccxWaitJobCommand.hpp"
+#include "Commands/results/ccxResultCGXJobCommand.hpp"
+#include "Commands/results/ccxResultParaViewJobCommand.hpp"
+#include "Commands/results/ccxResultLoadJobCommand.hpp"
+#include "Commands/results/ccxResultConvertJobCommand.hpp"
+#include "Commands/results/frd/ccxResultPlotJobFrdCommand.hpp"
+#include "Commands/results/dat/ccxResultPlotJobDatCommand.hpp"
+#include "Commands/results/dat/ccxResultPlotJobDatSectionCommand.hpp"
+#include "Commands/results/frd/ccxResultCSVJobFrdCommand.hpp"
+#include "Commands/results/dat/ccxResultCSVJobDatCommand.hpp"
+#include "Commands/results/dat/ccxResultCSVJobDatSectionCommand.hpp"
+#include "Commands/results/ccxResultProjectJobCommand.hpp"
+#include "Commands/jobs/ccxKillJobCommand.hpp"
+#include "Commands/export/ccxCustomLineCreateCommand.hpp"
+#include "Commands/export/ccxCustomLineModifyCommand.hpp"
+#include "Commands/export/ccxCustomLineDeleteCommand.hpp"
+#include "Commands/materials/ccxMaterialLibraryCreateGroupCommand.hpp"
+#include "Commands/materials/ccxMaterialLibraryModifyGroupCommand.hpp"
+#include "Commands/materials/ccxMaterialLibraryDeleteGroupCommand.hpp"
+#include "Commands/materials/ccxMaterialLibraryCreateMaterialCommand.hpp"
+#include "Commands/materials/ccxMaterialLibraryModifyMaterialCommand.hpp"
+#include "Commands/materials/ccxMaterialLibraryDeleteMaterialCommand.hpp"
+#include "Commands/materials/ccxMaterialLibraryExportMaterialCommand.hpp"
+#include "Commands/materials/ccxMaterialLibraryImportMaterialCommand.hpp"
+#include "Commands/mesh/ccxWrapCommand.hpp"
+#include "Commands/drawing/ccxAnimateTopologyCommand.hpp"
 
 //! This macro is required to identify this as a valid Cubit plugin. The plugin
 //! will NOT be loaded if this macro is not present.
@@ -174,16 +177,20 @@ CUBIT_PLUGIN(CalculiXPlugin)
 
 CalculiXPlugin::CalculiXPlugin()
 {
+  CalculiXApplicationInterface ccx_application_iface;
+
   ccx_core.init();
   ccx_core.init2(); // to init missing material core and interfaces
-  CalculiXCoreInterface::core_observer().register_observer();
+  ccx_application_iface.core_observer().register_observer();
   //ccx_core.init_pythoninterface(); // can't start up with the plugin, needs to be started with the component
   //ccx_core.init_materiallibrary();
 }
 
 CalculiXPlugin::~CalculiXPlugin()
 {
-  CalculiXCoreInterface::core_observer().unregister_observer();
+  CalculiXApplicationInterface ccx_application_iface;
+
+  ccx_application_iface.core_observer().unregister_observer();
 }
 
 std::vector<std::string> CalculiXPlugin::get_keys()
@@ -364,412 +371,684 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
   // and delete it when it is time to clean up.
 
   if(key == "ccxVersionCommand")
+  {
     return new ccxVersionCommand();
+  }
   
   if(key == "ccxResetCommand")
+  {
     return new ccxResetCommand();
+  }
 
   if(key == "ccxExportCommand")
+  {
     return new ccxExportCommand();
+  }
 
   if(key == "ccxUseAutoCleanupCommand")
+  {
     return new ccxUseAutoCleanupCommand();
+  }
   
   if(key == "ccxInitPythonInterfaceCommand")
+  {
     return new ccxInitPythonInterfaceCommand();
+  }
 
   if(key == "ccxUseLogCoreCommand")
+  {
     return new ccxUseLogCoreCommand();
+  }
 
   if(key == "ccxPrintCoreCommand")
+  {
     return new ccxPrintCoreCommand();
+  }
   
   if(key == "ccxLogCoreCommand")
+  {
     return new ccxLogCoreCommand();
+  }
   
   if(key == "ccxDrawCommand")
+  {
     return new ccxDrawCommand();
+  }
   
   if(key == "ccxDrawStepCommand")
+  {
     return new ccxDrawStepCommand();
+  }
 
   if(key == "ccxBlockElementTypeCommand")
+  {
     return new ccxBlockElementTypeCommand();
+  }
 
   if(key == "ccxSectionDeleteCommand")
+  {
     return new ccxSectionDeleteCommand();
+  }
 
   if(key == "ccxSectionSolidCreateCommand")
+  {
     return new ccxSectionSolidCreateCommand();
+  }
 
   if(key == "ccxSectionSolidModifyCommand")
+  {
     return new ccxSectionSolidModifyCommand();
+  }
 
   if(key == "ccxSectionShellCreateCommand")
+  {
     return new ccxSectionShellCreateCommand();
+  }
 
   if(key == "ccxSectionShellModifyCommand")
+  {
     return new ccxSectionShellModifyCommand();
+  }
 
   if(key == "ccxSectionBeamCreateCommand")
+  {
     return new ccxSectionBeamCreateCommand();
+  }
 
   if(key == "ccxSectionBeamModifyCommand")
+  {
     return new ccxSectionBeamModifyCommand();
+  }
 
   if(key == "ccxSectionMembraneCreateCommand")
+  {
     return new ccxSectionMembraneCreateCommand();
+  }
 
   if(key == "ccxSectionMembraneModifyCommand")
+  {
     return new ccxSectionMembraneModifyCommand();
+  }
 
   if(key == "ccxConstraintDeleteCommand")
+  {
     return new ccxConstraintDeleteCommand();
+  }
 
   if(key == "ccxConstraintRigidBodyCreateCommand")
+  {
     return new ccxConstraintRigidBodyCreateCommand();
+  }
 
   if(key == "ccxConstraintRigidBody2CreateCommand")
+  {
     return new ccxConstraintRigidBody2CreateCommand();
+  }
   
   if(key == "ccxConstraintRigidBodyModifyCommand")
+  {
     return new ccxConstraintRigidBodyModifyCommand();
+  }
 
   if(key == "ccxConstraintTieCreateCommand")
+  {
     return new ccxConstraintTieCreateCommand();
+  }
 
   if(key == "ccxConstraintTieModifyCommand")
+  {
     return new ccxConstraintTieModifyCommand();
+  }
 
   if(key == "ccxConstraintEquationCreateCommand")
+  {
     return new ccxConstraintEquationCreateCommand();
+  }
 
   if(key == "ccxConstraintEquationCreateFromCoincidentNodesCommand")
+  {
     return new ccxConstraintEquationCreateFromCoincidentNodesCommand();
+  }
   
   if(key == "ccxConstraintEquationModifyCommand")
+  {
     return new ccxConstraintEquationModifyCommand();
+  }
 
   if(key == "ccxConstraintTieCreateFromCubitContactPairCommand")
+  {
     return new ccxConstraintTieCreateFromCubitContactPairCommand();
+  }
 
   if(key == "ccxSurfaceInteractionExponentialCreateCommand")
+  {
     return new ccxSurfaceInteractionExponentialCreateCommand();
+  }
 
   if(key == "ccxSurfaceInteractionLinearCreateCommand")
+  {
     return new ccxSurfaceInteractionLinearCreateCommand();
+  }
   
   if(key == "ccxSurfaceInteractionTabularCreateCommand")
+  {
     return new ccxSurfaceInteractionTabularCreateCommand();
+  }
 
   if(key == "ccxSurfaceInteractionTiedCreateCommand")
+  {
     return new ccxSurfaceInteractionTiedCreateCommand();
+  }
 
   if(key == "ccxSurfaceInteractionHardCreateCommand")
+  {
     return new ccxSurfaceInteractionHardCreateCommand();
+  }
 
   if(key == "ccxSurfaceInteractionNameModifyCommand")
+  {
     return new ccxSurfaceInteractionNameModifyCommand();
+  }
 
   if(key == "ccxSurfaceInteractionExponentialModifyCommand")
+  {
     return new ccxSurfaceInteractionExponentialModifyCommand();
+  }
 
   if(key == "ccxSurfaceInteractionLinearModifyCommand")
+  {
     return new ccxSurfaceInteractionLinearModifyCommand();
+  }
 
   if(key == "ccxSurfaceInteractionTabularModifyCommand")
+  {
     return new ccxSurfaceInteractionTabularModifyCommand();
+  }
 
   if(key == "ccxSurfaceInteractionTiedModifyCommand")
+  {
     return new ccxSurfaceInteractionTiedModifyCommand();
+  }
 
   if(key == "ccxSurfaceInteractionGapConductanceModifyCommand")
+  {
     return new ccxSurfaceInteractionGapConductanceModifyCommand();
+  }
 
   if(key == "ccxSurfaceInteractionGapHeatGenerationModifyCommand")
+  {
     return new ccxSurfaceInteractionGapHeatGenerationModifyCommand();
+  }
 
   if(key == "ccxSurfaceInteractionFrictionModifyCommand")
+  {
     return new ccxSurfaceInteractionFrictionModifyCommand();
+  }
 
   if(key == "ccxSurfaceInteractionDeleteCommand")
+  {
     return new ccxSurfaceInteractionDeleteCommand();
+  }
 
   if(key == "ccxContactPairCreateCommand")
+  {
     return new ccxContactPairCreateCommand();
+  }
 
   if(key == "ccxContactPairModifyCommand")
+  {
     return new ccxContactPairModifyCommand();
+  }
   
   if(key == "ccxContactPairDeleteCommand")
+  {
     return new ccxContactPairDeleteCommand();
+  }
   
   if(key == "ccxContactPairCreateFromCubitContactPairCommand")
+  {
     return new ccxContactPairCreateFromCubitContactPairCommand();
+  }
 
   if(key == "ccxAmplitudeCreateCommand")
+  {
     return new ccxAmplitudeCreateCommand();
+  }
 
   if(key == "ccxAmplitudeModifyCommand")
+  {
     return new ccxAmplitudeModifyCommand();
+  }
 
   if(key == "ccxAmplitudeDeleteCommand")
+  {
     return new ccxAmplitudeDeleteCommand();
+  }
   
   if(key == "ccxOrientationCreateCommand")
+  {
     return new ccxOrientationCreateCommand();
+  }
 
   if(key == "ccxOrientationModifyCommand")
+  {
     return new ccxOrientationModifyCommand();
+  }
 
   if(key == "ccxOrientationDeleteCommand")
+  {
     return new ccxOrientationDeleteCommand();
+  }
 
   if(key == "ccxDampingModifyCommand")
+  {
     return new ccxDampingModifyCommand();
+  }
 
   if(key == "ccxDampingDeleteCommand")
+  {
     return new ccxDampingDeleteCommand();
+  }
 
   if(key == "ccxPhysicalConstantsModifyCommand")
+  {
     return new ccxPhysicalConstantsModifyCommand();
+  }
 
   if(key == "ccxPhysicalConstantsDeleteCommand")
+  {
     return new ccxPhysicalConstantsDeleteCommand();
+  }
 
   if(key == "ccxLoadsForcesModifyCommand")
+  {
     return new ccxLoadsForcesModifyCommand();
+  }
 
   if(key == "ccxLoadsPressuresModifyCommand")
+  {
     return new ccxLoadsPressuresModifyCommand();
+  }
 
   if(key == "ccxLoadsHeatfluxesModifyCommand")
+  {
     return new ccxLoadsHeatfluxesModifyCommand();
+  }
 
   if(key == "ccxLoadsGravityCreateCommand")
+  {
     return new ccxLoadsGravityCreateCommand();
+  }
   
   if(key == "ccxLoadsGravityModifyCommand")
+  {
     return new ccxLoadsGravityModifyCommand();
+  }
 
   if(key == "ccxLoadsGravityDeleteCommand")
+  {
     return new ccxLoadsGravityDeleteCommand();
+  }
 
   if(key == "ccxLoadsCentrifugalCreateCommand")
+  {
     return new ccxLoadsCentrifugalCreateCommand();
+  }
   
   if(key == "ccxLoadsCentrifugalModifyCommand")
+  {
     return new ccxLoadsCentrifugalModifyCommand();
+  }
 
   if(key == "ccxLoadsCentrifugalDeleteCommand")
+  {
     return new ccxLoadsCentrifugalDeleteCommand();
+  }
 
   if(key == "ccxLoadsTrajectoryHeatfluxCreateCommand")
+  {
     return new ccxLoadsTrajectoryHeatfluxCreateCommand();
+  }
   
   if(key == "ccxLoadsTrajectoryHeatfluxModifyCommand")
+  {
     return new ccxLoadsTrajectoryHeatfluxModifyCommand();
+  }
   
   if(key == "ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand")
-    return new ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand();  
+  {
+    return new ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand();
+  }
 
   if(key == "ccxLoadsTrajectoryBodyHeatfluxSphereModifyCommand")
+  {
     return new ccxLoadsTrajectoryBodyHeatfluxSphereModifyCommand();
+  }
 
   if(key == "ccxLoadsTrajectoryDeleteCommand")
+  {
     return new ccxLoadsTrajectoryDeleteCommand();
+  }
 
   if(key == "ccxLoadsFilmCreateCommand")
+  {
     return new ccxLoadsFilmCreateCommand();
+  }
 
   if(key == "ccxLoadsFilmModifyCommand")
+  {
     return new ccxLoadsFilmModifyCommand();
+  }
 
   if(key == "ccxLoadsFilmDeleteCommand")
+  {
     return new ccxLoadsFilmDeleteCommand();
+  }
 
   if(key == "ccxLoadsRadiationCreateCommand")
+  {
     return new ccxLoadsRadiationCreateCommand();
+  }
 
   if(key == "ccxLoadsRadiationModifyCommand")
+  {
     return new ccxLoadsRadiationModifyCommand();
+  }
 
   if(key == "ccxLoadsRadiationDeleteCommand")
+  {
     return new ccxLoadsRadiationDeleteCommand();
+  }
 
   if(key == "ccxLoadsSurfaceTractionCreateCommand")
+  {
     return new ccxLoadsSurfaceTractionCreateCommand();
+  }
 
   if(key == "ccxLoadsSurfaceTractionModifyCommand")
+  {
     return new ccxLoadsSurfaceTractionModifyCommand();
+  }
 
   if(key == "ccxLoadsSurfaceTractionDeleteCommand")
+  {
     return new ccxLoadsSurfaceTractionDeleteCommand();
+  }
   
   if(key == "ccxLoadsBodyHeatfluxCreateCommand")
+  {
     return new ccxLoadsBodyHeatfluxCreateCommand();
+  }
 
   if(key == "ccxLoadsBodyHeatfluxModifyCommand")
+  {
     return new ccxLoadsBodyHeatfluxModifyCommand();
+  }
 
   if(key == "ccxLoadsBodyHeatfluxDeleteCommand")
+  {
     return new ccxLoadsBodyHeatfluxDeleteCommand();
+  }
     
   if(key == "ccxBCsDisplacementsModifyCommand")
+  {
     return new ccxBCsDisplacementsModifyCommand();
+  }
 
   if(key == "ccxBCsTemperaturesModifyCommand")
+  {
     return new ccxBCsTemperaturesModifyCommand();
+  }
   
   if(key == "ccxHistoryOutputCreateCommand")
+  {
     return new ccxHistoryOutputCreateCommand();
+  }
 
   if(key == "ccxHistoryOutputNodeModifyCommand")
+  {
     return new ccxHistoryOutputNodeModifyCommand();
+  }
   
   if(key == "ccxHistoryOutputElementModifyCommand")
+  {
     return new ccxHistoryOutputElementModifyCommand();
+  }
   
   if(key == "ccxHistoryOutputContactModifyCommand")
+  {
     return new ccxHistoryOutputContactModifyCommand();
+  }
 
   if(key == "ccxHistoryOutputSectionModifyCommand")
+  {
     return new ccxHistoryOutputSectionModifyCommand();
+  }
 
   if(key == "ccxHistoryOutputDeleteCommand")
+  {
     return new ccxHistoryOutputDeleteCommand();
+  }
 
   if(key == "ccxFieldOutputCreateCommand")
+  {
     return new ccxFieldOutputCreateCommand();
+  }
 
   if(key == "ccxFieldOutputNodeModifyCommand")
+  {
     return new ccxFieldOutputNodeModifyCommand();
+  }
   
   if(key == "ccxFieldOutputElementModifyCommand")
+  {
     return new ccxFieldOutputElementModifyCommand();
+  }
 
   if(key == "ccxFieldOutputContactModifyCommand")
+  {
     return new ccxFieldOutputContactModifyCommand();
+  }
 
   if(key == "ccxFieldOutputDeleteCommand")
+  {
     return new ccxFieldOutputDeleteCommand();
+  }
 
   if(key == "ccxInitialConditionCreateCommand")
+  {
     return new ccxInitialConditionCreateCommand();
+  }
 
   if(key == "ccxInitialConditionDisplacementModifyCommand")
+  {
     return new ccxInitialConditionDisplacementModifyCommand();
+  }
 
   if(key == "ccxInitialConditionTemperatureModifyCommand")
+  {
     return new ccxInitialConditionTemperatureModifyCommand();
+  }
 
   if(key == "ccxInitialConditionStressAddCommand")
+  {
     return new ccxInitialConditionStressAddCommand();
+  }
 
   if(key == "ccxInitialConditionDeleteCommand")
+  {
     return new ccxInitialConditionDeleteCommand();
+  }
 
   if(key == "ccxHBCAddBCCommand")
+  {
     return new ccxHBCAddBCCommand();
+  }
 
   if(key == "ccxHBCRemoveBCCommand")
+  {
     return new ccxHBCRemoveBCCommand();
+  }
 
   if(key == "ccxStepCreateCommand")
+  {
     return new ccxStepCreateCommand();
+  }
   
   if(key == "ccxStepAddLoadCommand")
+  {
     return new ccxStepAddLoadCommand();
+  }
 
   if(key == "ccxStepAddBCCommand")
+  {
     return new ccxStepAddBCCommand();
+  }
 
   if(key == "ccxStepAddHistoryOutputCommand")
+  {
     return new ccxStepAddHistoryOutputCommand();
+  }
   
   if(key == "ccxStepAddFieldOutputCommand")
+  {
     return new ccxStepAddFieldOutputCommand();
+  }
 
   if(key == "ccxStepRemoveLoadCommand")
+  {
     return new ccxStepRemoveLoadCommand();
+  }
 
   if(key == "ccxStepRemoveBCCommand")
+  {
     return new ccxStepRemoveBCCommand();
+  }
 
   if(key == "ccxStepRemoveHistoryOutputCommand")
+  {
     return new ccxStepRemoveHistoryOutputCommand();
+  }
   
   if(key == "ccxStepRemoveFieldOutputCommand")
+  {
     return new ccxStepRemoveFieldOutputCommand();
+  }
   
   if(key == "ccxStepParameterModifyCommand")
+  {
     return new ccxStepParameterModifyCommand();
+  }
 
   if(key == "ccxStepStaticModifyCommand")
+  {
     return new ccxStepStaticModifyCommand();
+  }
 
   if(key == "ccxStepFrequencyModifyCommand")
+  {
     return new ccxStepFrequencyModifyCommand();
+  }
 
   if(key == "ccxStepBuckleModifyCommand")
+  {
     return new ccxStepBuckleModifyCommand();
+  }
 
   if(key == "ccxStepHeatTransferModifyCommand")
+  {
     return new ccxStepHeatTransferModifyCommand();
+  }
 
   if(key == "ccxStepCoupledTemperatureDisplacementModifyCommand")
-    return new ccxStepCoupledTemperatureDisplacementModifyCommand();  
+  {
+    return new ccxStepCoupledTemperatureDisplacementModifyCommand();
+  }
 
   if(key == "ccxStepUncoupledTemperatureDisplacementModifyCommand")
-    return new ccxStepUncoupledTemperatureDisplacementModifyCommand();  
+  {
+    return new ccxStepUncoupledTemperatureDisplacementModifyCommand();
+  }
 
   if(key == "ccxStepDynamicModifyCommand")
-    return new ccxStepDynamicModifyCommand();  
+  {
+    return new ccxStepDynamicModifyCommand();
+  }
 
   if(key == "ccxStepModalDynamicModifyCommand")
-    return new ccxStepModalDynamicModifyCommand();  
+  {
+    return new ccxStepModalDynamicModifyCommand();
+  }
 
   if(key == "ccxStepSteadyStateDynamicsModifyCommand")
-    return new ccxStepSteadyStateDynamicsModifyCommand();  
+  {
+    return new ccxStepSteadyStateDynamicsModifyCommand();
+  }
 
   if(key == "ccxStepComplexFrequencyModifyCommand")
-    return new ccxStepComplexFrequencyModifyCommand();  
+  {
+    return new ccxStepComplexFrequencyModifyCommand();
+  }
 
   if(key == "ccxStepDeleteCommand")
+  {
     return new ccxStepDeleteCommand();
+  }
   
   if(key == "ccxStepUtilityModelChangeElementDummyStepCommand")
+  {
     return new ccxStepUtilityModelChangeElementDummyStepCommand();
+  }
 
   if(key == "ccxJobCreateCommand")
+  {
     return new ccxJobCreateCommand();
+  }
 
   if(key == "ccxJobModifyCommand")
+  {
     return new ccxJobModifyCommand();
+  }
   
   if(key == "ccxJobDeleteCommand")
+  {
     return new ccxJobDeleteCommand();
+  }
 
   if(key == "ccxRunJobCommand")
+  {
     return new ccxRunJobCommand();
+  }
   
   if(key == "ccxWaitJobCommand")
+  {
     return new ccxWaitJobCommand();
+  }
 
   if(key == "ccxTopologyCreateCommand")
-    return new ccxTopologyCreateCommand();   
+  {
+    return new ccxTopologyCreateCommand();
+  }
 
   if(key == "ccxTopologyModifyCommand")
-    return new ccxTopologyModifyCommand();   
+  {
+    return new ccxTopologyModifyCommand();
+  }
     
   if(key == "ccxTopologyDeleteCommand")
+  {
     return new ccxTopologyDeleteCommand();
+  }
 
   if(key == "ccxTopologyAddSetsCommand")
+  {
     return new ccxTopologyAddSetsCommand();
+  }
 
   if(key == "ccxTopologyRemoveSetsCommand")
+  {
     return new ccxTopologyRemoveSetsCommand();
+  }
 
   if (key == "ccxTopologyResetPreservedCommand")
   {
@@ -786,82 +1065,134 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
   }
 
   if(key == "ccxRunTopologyCommand")
-    return new ccxRunTopologyCommand();    
+  {
+    return new ccxRunTopologyCommand();
+  }
 
   if(key == "ccxResultCGXJobCommand")
+  {
     return new ccxResultCGXJobCommand();
+  }
 
   if(key == "ccxResultParaViewJobCommand")
+  {
     return new ccxResultParaViewJobCommand();
+  }
 
   if(key == "ccxResultLoadJobCommand")
+  {
     return new ccxResultLoadJobCommand();
+  }
 
   if(key == "ccxResultConvertJobCommand")
+  {
     return new ccxResultConvertJobCommand();
+  }
 
   if(key == "ccxResultProjectJobCommand")
+  {
     return new ccxResultProjectJobCommand();
+  }
 
   if(key == "ccxResultPlotJobFrdCommand")
+  {
     return new ccxResultPlotJobFrdCommand();
+  }
 
   if(key == "ccxResultPlotJobDatCommand")
+  {
     return new ccxResultPlotJobDatCommand();
+  }
   
   if(key == "ccxResultPlotJobDatSectionCommand")
+  {
     return new ccxResultPlotJobDatSectionCommand();
+  }
 
   if(key == "ccxResultCSVJobFrdCommand")
+  {
     return new ccxResultCSVJobFrdCommand();
+  }
 
   if(key == "ccxResultCSVJobDatCommand")
+  {
     return new ccxResultCSVJobDatCommand();
+  }
 
   if(key == "ccxResultCSVJobDatSectionCommand")
+  {
     return new ccxResultCSVJobDatSectionCommand();
+  }
 
   if(key == "ccxKillJobCommand")
+  {
     return new ccxKillJobCommand();
+  }
 
   if(key == "ccxCustomLineCreateCommand")
+  {
     return new ccxCustomLineCreateCommand();
+  }
 
   if(key == "ccxCustomLineModifyCommand")
+  {
     return new ccxCustomLineModifyCommand();
+  }
   
   if(key == "ccxCustomLineDeleteCommand")
+  {
     return new ccxCustomLineDeleteCommand();
+  }
 
   if(key == "ccxMaterialLibraryCreateGroupCommand")
+  {
     return new ccxMaterialLibraryCreateGroupCommand();
+  }
 
   if(key == "ccxMaterialLibraryModifyGroupCommand")
+  {
     return new ccxMaterialLibraryModifyGroupCommand();
+  }
   
   if(key == "ccxMaterialLibraryDeleteGroupCommand")
+  {
     return new ccxMaterialLibraryDeleteGroupCommand();
+  }
 
   if(key == "ccxMaterialLibraryCreateMaterialCommand")
+  {
     return new ccxMaterialLibraryCreateMaterialCommand();
+  }
 
   if(key == "ccxMaterialLibraryModifyMaterialCommand")
+  {
     return new ccxMaterialLibraryModifyMaterialCommand();
+  }
   
   if(key == "ccxMaterialLibraryDeleteMaterialCommand")
+  {
     return new ccxMaterialLibraryDeleteMaterialCommand();
+  }
 
   if(key == "ccxMaterialLibraryExportMaterialCommand")
+  {
     return new ccxMaterialLibraryExportMaterialCommand();
+  }
 
   if(key == "ccxMaterialLibraryImportMaterialCommand")
+  {
     return new ccxMaterialLibraryImportMaterialCommand();
+  }
   
   if (key == "ccxWrapCommand")
+  {
      return new ccxWrapCommand();
+  }
 
   if (key == "ccxAnimateTopologyCommand")
+  {
     return new ccxAnimateTopologyCommand();
+  }
 
   return NULL;
 }

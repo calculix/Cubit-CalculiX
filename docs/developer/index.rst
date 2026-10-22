@@ -7,6 +7,7 @@ Developer guide
    ../architecture
    ../source-map
    ../adding-a-feature
+   interface-layout
    topology
    topology-algorithms
    topology-preservation

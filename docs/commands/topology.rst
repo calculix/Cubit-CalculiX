@@ -13,6 +13,7 @@ Create a topology case
      [volume_fraction <value>]
      [void_ratio <value>]
      [iterations <count>]
+     [material_cap <count>]
      [filter_radius <length>]
      [move_limit <value>]
      [{adaptive_moves_on|adaptive_moves_off}]
@@ -50,6 +51,9 @@ valid numeric range, unit, and parameter meaning for both commands.
   configuration value but cannot currently run.
 * ``objective`` defaults to ``compliance``. ``displacement`` is implemented;
   ``mass`` is accepted as a configuration value but cannot currently run.
+* ``material_cap`` defaults to 1024 and must be an integer of at least 2.
+  It limits generated topology materials across base materials. It applies to
+  new iterations; original section settings remain separate.
 * ``filter_radius 0`` selects the automatic radius; it does not disable filtering.
 * ``adaptive_moves_on`` and ``adaptive_moves_off`` are individual tokens.
   There is no ``adaptive_moves on`` command form. The default is enabled.

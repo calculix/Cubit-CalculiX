@@ -212,3 +212,4 @@
 2026-10-19 work on topology optimization
 2026-10-20 work on topology optimization
 2026-10-21 working on documentation and fix for issue 45
+2026-10-21 adding material cap to topology, split calculixcoreinterface and reorder files

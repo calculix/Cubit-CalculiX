@@ -92,7 +92,7 @@ current defaults and reports automatic/included/excluded/effective status, plus
 direct selections. It is not the historical element-flag map used by an earlier
 design, and its direct-selection count is not a final union restricted to the domain.
 
-All calls between domain cores pass through ``CalculiXCoreInterface``.
+All calls between domain cores pass through the domain-specific interfaces (see :doc:`interface-layout`).
 ``CalculiXCore`` owns coordination and Cubit queries; ``CoreTopology`` applies
 the rules and stores flags without including another domain core's header.
 

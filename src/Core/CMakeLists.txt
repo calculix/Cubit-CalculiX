@@ -1,97 +1,22 @@
-project(Cubit-CalculiX_core)
+target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCore.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCore.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/loadCalculiXCore.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/loadCalculiXCore.hpp
+)
 
-set(CORE_SRC
-    ${CMAKE_CURRENT_LIST_DIR}/CoreObserver.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreObserver.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CalculiXCore.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CalculiXCore.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CalculiXCoreInterface.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CalculiXCoreInterface.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/loadCalculiXCore.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/loadCalculiXCore.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreBlocks.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreBlocks.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreMaterials.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreMaterials.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreMaterialsStructs.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreMaterialsLibrary.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreMaterialsLibrary.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreSections.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreSections.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreConstraints.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreConstraints.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreSurfaceInteractions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreSurfaceInteractions.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreContactPairs.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreContactPairs.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreAmplitudes.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreAmplitudes.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreOrientations.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreOrientations.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreDamping.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreDamping.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CorePhysicalConstants.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CorePhysicalConstants.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsForces.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsForces.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsPressures.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsPressures.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsHeatfluxes.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsHeatfluxes.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsGravity.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsGravity.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsCentrifugal.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsCentrifugal.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsTrajectory.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsTrajectory.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsTrajectoryHeatflux.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsTrajectoryHeatflux.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsTrajectoryBodyHeatfluxSphere.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsTrajectoryBodyHeatfluxSphere.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsFilm.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsFilm.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsRadiation.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsRadiation.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsSurfaceTraction.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsSurfaceTraction.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsBodyHeatflux.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreLoadsBodyHeatflux.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreBCsDisplacements.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreBCsDisplacements.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreBCsTemperatures.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreBCsTemperatures.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreHistoryOutputs.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreHistoryOutputs.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreFieldOutputs.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreFieldOutputs.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreInitialConditions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreInitialConditions.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreHBCs.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreHBCs.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreSteps.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreSteps.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreStepsStructs.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreJobs.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreJobs.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreResults.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreResults.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreResultsFrd.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreResultsFrd.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreResultsDat.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreResultsDat.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreResultsVtkWriter.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreResultsVtkWriter.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreResultsProject.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreResultsProject.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreTimer.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreTimer.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreTopology.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreTopology.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreTopologyOptimization.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreTopologyOptimization.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreTopologyStructs.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreCustomLines.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreCustomLines.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreDraw.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/CoreDraw.hpp
-    PARENT_SCOPE)
+add_subdirectory(application)
+add_subdirectory(mesh)
+add_subdirectory(materials)
+add_subdirectory(sections)
+add_subdirectory(interactions)
+add_subdirectory(loads)
+add_subdirectory(bcs)
+add_subdirectory(amplitudes)
+add_subdirectory(steps)
+add_subdirectory(jobs)
+add_subdirectory(results)
+add_subdirectory(topology)
+add_subdirectory(drawing)
+add_subdirectory(export)
+add_subdirectory(gui)

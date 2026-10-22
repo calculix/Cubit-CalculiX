@@ -13,8 +13,6 @@ class cmdPanelManager;
 //class ExportManager;
 class CCXDockWindowModelTree;
 class UserOptionsPanel;
-class CalculiXCoreInterface;
-
 class Observer;
 
 class CalculiXComp : public Component, public ComponentTracker
@@ -70,7 +68,6 @@ private:
   CCXDockWindowModelTree* myCCXDockWindowModelTree;
   UserOptionsPanel* mUserOptionsPanel;
 
-  CalculiXCoreInterface *ccx_iface;
   Observer* mListener;
   bool tracker_registered = false;
   bool python_interface_initialized = false;
