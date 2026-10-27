@@ -911,6 +911,8 @@ bool CalculiXCore::read_cub(std::string filename)
     //LoadsPressures
     cubTool.read_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Pressures", loadspressures->loads_data);
     cubTool.read_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Pressures", loadspressures->time_delay_data);
+    cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Pressures", loadspressures->name_data);
+    cubTool.read_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/Pressures", loadspressures->magnitude_data);
     progressbar->step();
     progressbar->check_interrupt();
     //LoadsHeatFluxes
@@ -1596,6 +1598,8 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.createGroup("Cubit-CalculiX/Loads/Pressures");
     cubTool.write_dataset_int_rank_2("loads_data","Cubit-CalculiX/Loads/Pressures", loadspressures->loads_data);
     cubTool.write_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/Loads/Pressures", loadspressures->time_delay_data);
+    cubTool.write_dataset_string_rank_2("name_data","Cubit-CalculiX/Loads/Pressures", loadspressures->name_data);
+    cubTool.write_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/Loads/Pressures", loadspressures->magnitude_data);
     progressbar->step();
     progressbar->check_interrupt();
     //LoadsHeatFluxes
@@ -2275,6 +2279,14 @@ std::string CalculiXCore::autocleanup()
     {
       print_log = sub_bool;
       loadspressures->loads_data[i-1][2]=-1;
+    }
+    if (!check_sideset_exists(loadspressures->loads_data[i-1][4]))
+    {
+      log.append("Sideset ID " + std::to_string(loadspressures->loads_data[i-1][4]) + " doesn't exist.\n");
+      log.append("Pressure ID " + std::to_string(loadspressures->loads_data[i-1][0]) + " will be deleted.\n");
+
+      print_log = true;
+      delete_loadspressures(loadspressures->loads_data[i-1][0]);
     }
   }
   // LOADS HEATFLUXES
@@ -3872,7 +3884,10 @@ bool CalculiXCore::check_bc_exists(int bc_id,int BCType)
     }
   }else if (BCType == 7)
   {
-    ids = CubitInterface::get_bc_id_list(CI_BCTYPE_PRESSURE);
+    for (size_t i = 0; i < loadspressures->loads_data.size(); i++)
+    {
+      ids.push_back(loadspressures->loads_data[i][0]);
+    }
   }else if (BCType == 8) // heaftlux
   {
     ids = CubitInterface::get_bc_id_list(CI_BCTYPE_HEATFLUX);
@@ -4501,9 +4516,29 @@ bool CalculiXCore::delete_loadsforces(int force_id)
   return true;
 }
 
-bool CalculiXCore::modify_loadspressures(int pressure_id, std::vector<std::string> options, std::vector<int> options_marker)
+bool CalculiXCore::delete_loadspressures(int pressure_id)
 {
-  return loadspressures->modify_load(pressure_id,options,options_marker);
+  if (!loadspressures->delete_load(pressure_id))
+  {
+    return false;
+  }
+
+  for (size_t i = 0; i < steps->steps_data.size(); i++)
+  {
+    steps->remove_loads(steps->steps_data[i][0], 2, {pressure_id});
+  }
+
+  return true;
+}
+
+bool CalculiXCore::create_loadspressures(std::vector<std::string> options, std::vector<double> options2)
+{
+  return loadspressures->create_load(options, options2);
+}
+
+bool CalculiXCore::modify_loadspressures(int pressure_id, std::vector<std::string> options, std::vector<double> options2, std::vector<int> options_marker)
+{
+  return loadspressures->modify_load(pressure_id, options, options2, options_marker);
 }
 
 bool CalculiXCore::modify_loadsheatfluxes(int heatflux_id, std::vector<std::string> options, std::vector<int> options_marker)
@@ -5613,7 +5648,7 @@ bool CalculiXCore::collect_topology_default_sets(std::map<int, std::set<int>>& d
   default_elements.clear();
 
   if (!constraints || !contactpairs || !me_iface || !steps ||
-    !loadsforces || !loadsgravity || !loadscentrifugal ||
+    !loadsforces || !loadspressures || !loadsgravity || !loadscentrifugal ||
     !loadsfilm || !loadsradiation || !loadssurfacetraction || !loadsbodyheatflux)
   {
     PRINT_ERROR("Topology preservation cores are not initialized.\n");
@@ -6271,8 +6306,27 @@ bool CalculiXCore::collect_topology_default_sets(std::map<int, std::set<int>>& d
     collected[2].insert(nodeset_id);
   }
 
-  if (!collect_cubit_bc_sets(used_loads[2], BCTYPE_PRESSURE, 3, "pressure") ||
-      !collect_cubit_bc_sets(used_loads[3], BCTYPE_HEATFLUX, 3, "heat flux") ||
+  // Plugin-owned pressures reference their sideset directly.
+  for (int pressure_id : used_loads[2])
+  {
+    int loads_data_id = loadspressures->get_loads_data_id_from_load_id(pressure_id);
+    if (loads_data_id == -1 || loadspressures->loads_data[loads_data_id].size() < 7)
+    {
+      PRINT_ERROR("Missing or invalid pressure load %d.\n", pressure_id);
+      return false;
+    }
+
+    int sideset_id = loadspressures->loads_data[loads_data_id][4];
+    if (!check_sideset_exists(sideset_id))
+    {
+      PRINT_ERROR("Sideset %d referenced by pressure %d does not exist.\n", sideset_id, pressure_id);
+      return false;
+    }
+
+    collected[3].insert(sideset_id);
+  }
+
+  if (!collect_cubit_bc_sets(used_loads[3], BCTYPE_HEATFLUX, 3, "heat flux") ||
       !collect_cubit_bc_sets(used_bcs[1], BCTYPE_DISPLACEMENT, 2, "displacement") ||
       !collect_cubit_bc_sets(used_bcs[2], BCTYPE_TEMPERATURE, 2, "temperature"))
   {
@@ -11073,7 +11127,11 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
     }
   }else if (entity=="loadspressure")
   {
-    entities.push_back({"pressure",std::to_string(id)});
+    data_id = loadspressures->get_loads_data_id_from_load_id(id);
+    if (data_id != -1)
+    {
+      entities.push_back({"sideset", std::to_string(loadspressures->loads_data[data_id][4])});
+    }
   }else if (entity=="loadsheatflux")
   {
     entities.push_back({"heatflux",std::to_string(id)});
@@ -11292,43 +11350,34 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_force(int 
 
 std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_load_pressure(int id)
 {
-  int bc_set_id=-1;
-  BCSetHandle bc_set;
-  SidesetHandle sideset;
-  std::string command;
-  std::vector<BCEntityHandle> bc_handles;
   std::vector<std::vector<double>> draw_data;
 
-  me_iface->create_default_bcset(0,true,true,true,bc_set);
-  bc_set_id = me_iface->id_from_handle(bc_set);
+  int loads_data_id = loadspressures->get_loads_data_id_from_load_id(id);
+  if (loads_data_id == -1)
+  {
+    return draw_data;
+  }
 
-  me_iface->get_bc_loads(bc_set, bc_handles);
-  for (size_t i = 0; i < bc_handles.size(); i++)
-  {  
-    std::vector<MeshExportBCData> bc_attribs;
-    me_iface->get_bc_attributes(bc_handles[i],bc_attribs); 
-    if ((get_bc_fea_type(bc_attribs)==6))
-    {
-      if (id==me_iface->id_from_handle(bc_handles[i]))
-      {     
-        me_iface->get_bc_sideset(bc_handles[i],sideset);
-        std::vector<std::vector<double>> coords_normals = get_sideset_entities_coords_normals(me_iface->id_from_handle(sideset));
-        
-        for (size_t ii = 0; ii < coords_normals.size(); ii++)
-        {
-          std::vector<double> data;
-          
-          data.push_back(coords_normals[ii][0]);
-          data.push_back(coords_normals[ii][1]);
-          data.push_back(coords_normals[ii][2]);
-          data.push_back(coords_normals[ii][3]);
-          data.push_back(coords_normals[ii][4]);
-          data.push_back(coords_normals[ii][5]);
-          draw_data.push_back(data);
-          data.clear();
-        }
-      }
-    }
+  int sideset_id = loadspressures->loads_data[loads_data_id][4];
+  if (!check_sideset_exists(sideset_id))
+  {
+    return draw_data;
+  }
+
+  std::vector<std::vector<double>> coords_normals = get_sideset_entities_coords_normals(sideset_id);
+
+  for (size_t i = 0; i < coords_normals.size(); i++)
+  {
+    std::vector<double> data;
+
+    data.push_back(coords_normals[i][0]);
+    data.push_back(coords_normals[i][1]);
+    data.push_back(coords_normals[i][2]);
+    data.push_back(coords_normals[i][3]);
+    data.push_back(coords_normals[i][4]);
+    data.push_back(coords_normals[i][5]);
+
+    draw_data.push_back(data);
   }
 
   return draw_data;
@@ -14277,65 +14326,6 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
       me_iface->get_bc_attributes(bc_handles[ii],bc_attribs);
       for (size_t iii = 0; iii < sub_data_ids.size(); iii++)
       { 
-        // PRESSURE DLOAD 
-        if ((get_bc_fea_type(bc_attribs)==6) && (steps->loads_data[sub_data_ids[iii]][1]==2))
-        {
-          if (steps->loads_data[sub_data_ids[iii]][2]==me_iface->id_from_handle(bc_handles[ii]))
-          {
-            // CUSTOMLINE START
-            customline = customlines->get_customline_data("BEFORE","PRESSURE",steps->loads_data[sub_data_ids[iii]][2]);
-            for (size_t icl = 0; icl < customline.size(); icl++)
-            {
-              steps_export_list.push_back(customline[icl]);
-            }
-            // CUSTOMLINE END
-            
-            me_iface->get_bc_sideset(bc_handles[ii],sideset);
-            temp_list = get_sideset_face(me_iface->id_from_handle(sideset));
-            int element_type = std::stoi(temp_list[0][3]);
-            // check if shell element
-            if ((element_type>=15) && (element_type<=22))
-            {
-              for (size_t iv = 0; iv < temp_list.size(); iv++)
-              {              
-                str_temp = "*DLOAD";
-                str_temp.append(loadspressures->get_load_parameter_export(steps->loads_data[sub_data_ids[iii]][2]));
-                steps_export_list.push_back(str_temp);
-                // check if edge load or not
-                if (std::stoi(temp_list[0][2])>2)
-                {
-                  int edge = std::stoi(temp_list[iv][2])-2;
-                  str_temp = temp_list[iv][1] + ",EDNOR" + std::to_string(edge) + "," + to_string_scientific(bc_attribs[0].second);
-                }else{
-                  // check direction of load, invert +- if necessary
-                  if (std::stoi(temp_list[0][2])==1) // negativ normal direction->invert load
-                  {
-                    str_temp = temp_list[iv][1] + ",P," + to_string_scientific(bc_attribs[0].second*(-1));
-                  }else{
-                    str_temp = temp_list[iv][1] + ",P," + to_string_scientific(bc_attribs[0].second);
-                  }
-                }
-                steps_export_list.push_back(str_temp);
-              }
-            }else{
-              for (size_t iv = 0; iv < temp_list.size(); iv++)
-              {              
-                str_temp = "*DLOAD";
-                str_temp.append(loadspressures->get_load_parameter_export(steps->loads_data[sub_data_ids[iii]][2]));
-                steps_export_list.push_back(str_temp);
-
-                str_temp = temp_list[iv][1] + ",P" + temp_list[iv][2] + "," + to_string_scientific(bc_attribs[0].second);
-                steps_export_list.push_back(str_temp);
-              }
-            }
-            // CUSTOMLINE START
-            customline = customlines->get_customline_data("AFTER","PRESSURE",steps->loads_data[sub_data_ids[iii]][2]);
-            for (size_t icl = 0; icl < customline.size(); icl++)
-            {
-              steps_export_list.push_back(customline[icl]);
-            }
-          }  
-        }
         // HEATFLUX DFLUX
         if ((get_bc_fea_type(bc_attribs)==7) && (steps->loads_data[sub_data_ids[iii]][1]==3))
         {
@@ -14399,6 +14389,44 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
 
           // CUSTOMLINE START
           customline = customlines->get_customline_data("AFTER", "FORCE", force_id);
+          for (size_t icl = 0; icl < customline.size(); icl++)
+          {
+            steps_export_list.push_back(customline[icl]);
+          }
+          // CUSTOMLINE END
+        }
+      }
+    }
+    // PRESSURE DLOAD
+    for (size_t ii = 0; ii < loadspressures->loads_data.size(); ii++)
+    {
+      for (size_t iii = 0; iii < sub_data_ids.size(); iii++)
+      {
+        if (steps->loads_data[sub_data_ids[iii]][1] == 2 &&
+            steps->loads_data[sub_data_ids[iii]][2] == loadspressures->loads_data[ii][0])
+        {
+          int pressure_id = loadspressures->loads_data[ii][0];
+
+          // CUSTOMLINE START
+          customline = customlines->get_customline_data("BEFORE", "PRESSURE", pressure_id);
+          for (size_t icl = 0; icl < customline.size(); icl++)
+          {
+            steps_export_list.push_back(customline[icl]);
+          }
+          // CUSTOMLINE END
+
+          str_temp = loadspressures->get_load_export(pressure_id);
+          if (str_temp.empty())
+          {
+            PRINT_ERROR("Failed exporting pressure %d.\n", pressure_id);
+            command = "delete bcset " + std::to_string(bc_set_id);
+            CubitInterface::cmd(command.c_str());
+            return "";
+          }
+          steps_export_list.push_back(str_temp);
+
+          // CUSTOMLINE START
+          customline = customlines->get_customline_data("AFTER", "PRESSURE", pressure_id);
           for (size_t icl = 0; icl < customline.size(); icl++)
           {
             steps_export_list.push_back(customline[icl]);
@@ -15191,12 +15219,16 @@ std::vector<std::vector<std::string>> CalculiXCore::get_loadspressures_tree_data
     std::vector<std::string> loadspressures_tree_data_set;
     std::string name;
     
-    name = CubitInterface::get_bc_name(CI_BCTYPE_PRESSURE,loadspressures->loads_data[i][0]);
-    if (name == "")
+    int subdata_id = loadspressures->get_name_data_id_from_name_id(loadspressures->loads_data[i][6]);
+    if (subdata_id != -1 && !loadspressures->name_data[subdata_id][1].empty())
+    {
+      name = loadspressures->name_data[subdata_id][1];
+    }
+    else
     {
       name = "Pressure_" + std::to_string(loadspressures->loads_data[i][0]);
     }
-    
+
     loadspressures_tree_data_set.push_back(std::to_string(loadspressures->loads_data[i][0])); //load_id
     loadspressures_tree_data_set.push_back(name); 
     loadspressures_tree_data.push_back(loadspressures_tree_data_set);
@@ -15749,8 +15781,17 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_loadspressures_tre
     std::string name;
     if (steps->loads_data[loads_ids[i]][1]==2)
     {
-      name = CubitInterface::get_bc_name(CI_BCTYPE_PRESSURE,steps->loads_data[loads_ids[i]][2]);
-      if (name == "")
+      int loaddata_id = loadspressures->get_loads_data_id_from_load_id(steps->loads_data[loads_ids[i]][2]);
+      if (loaddata_id == -1)
+      {
+        continue;
+      }
+      int subdata_id = loadspressures->get_name_data_id_from_name_id(loadspressures->loads_data[loaddata_id][6]);
+      if (subdata_id != -1 && !loadspressures->name_data[subdata_id][1].empty())
+      {
+        name = loadspressures->name_data[subdata_id][1];
+      }
+      else
       {
         name = "Pressure_" + std::to_string(steps->loads_data[loads_ids[i]][2]);
       }
@@ -16322,6 +16363,12 @@ std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_
       for (size_t i = 0; i < loadsforces->loads_data.size(); i++)
       {
         all_ids.push_back(loadsforces->loads_data[i][0]);
+      }
+    } else if (parse_type=="loadspressures")
+    {
+      for (size_t i = 0; i < loadspressures->loads_data.size(); i++)
+      {
+        all_ids.push_back(loadspressures->loads_data[i][0]);
       }
     } else if (parse_type=="loadsgravity")
     {

@@ -43,6 +43,10 @@ target_sources(calculix_comp PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsHeatfluxesModifyPanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsHeatfluxesTree.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsHeatfluxesTree.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsPressuresCreatePanel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsPressuresCreatePanel.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsPressuresDeletePanel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsPressuresDeletePanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsPressuresModifyPanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsPressuresModifyPanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsPressuresTree.cpp

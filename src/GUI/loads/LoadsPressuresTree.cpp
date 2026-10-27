@@ -148,7 +148,7 @@ void LoadsPressuresTree::populateContextMenu(
 
   if (clickedItem == this)
   {
-    addPanelAction(menu, "Create Pressure", host, "FEAPressureCreate");
+    addPanelAction(menu, "Create Pressure", host, "CCXLoadsPressuresCreate");
     addCommandAction(menu, "Draw Pressures", QString("ccx draw load_pressure_all"));
     return;
   }
@@ -164,9 +164,8 @@ void LoadsPressuresTree::populateContextMenu(
     return;
   }
 
-  addPanelAction(menu, "Create Pressure", host, "FEAPressureCreate");
-  addPanelAction(menu, "Modify Pressure", host, "FEAPressureModify");
-  addPanelAction(menu, "CCX Modify Pressure", host, "CCXLoadsPressuresModify");
-  addPanelAction(menu, "Delete Pressure", host, "FEAPressureDelete");
+  addPanelAction(menu, "Create Pressure", host, "CCXLoadsPressuresCreate");
+  addPanelAction(menu, "Modify Pressure", host, "CCXLoadsPressuresModify");
+  addPanelAction(menu, "Delete Pressure", host, "CCXLoadsPressuresDelete");
   addCommandAction(menu, "Draw Pressure", QString("ccx draw load pressure ") + QString::number(entityId));
 }

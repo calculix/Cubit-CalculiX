@@ -187,10 +187,9 @@ void StepsLoadsPressuresTree::populateContextMenu(
     return;
   }
 
-  addPanelAction(menu, "Create Pressure", host, "FEAPressureCreate");
-  addPanelAction(menu, "Modify Pressure", host, "FEAPressureModify");
-  addPanelAction(menu, "CCX Modify Pressure", host, "CCXLoadsPressuresModify");
-  addPanelAction(menu, "Delete Pressure", host, "FEAPressureDelete");
+  addPanelAction(menu, "Create Pressure", host, "CCXLoadsPressuresCreate");
+  addPanelAction(menu, "Modify Pressure", host, "CCXLoadsPressuresModify");
+  addPanelAction(menu, "Delete Pressure", host, "CCXLoadsPressuresDelete");
   {
     QAction *action = menu.addAction("Steps Management");
     ModelTree *hostPtr = &host;
