@@ -29,8 +29,12 @@ target_sources(calculix_plugin PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxLoadsGravityDeleteCommand.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxLoadsGravityModifyCommand.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxLoadsGravityModifyCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxLoadsHeatfluxesCreateCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxLoadsHeatfluxesCreateCommand.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxLoadsHeatfluxesModifyCommand.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxLoadsHeatfluxesModifyCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxLoadsHeatfluxesDeleteCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxLoadsHeatfluxesDeleteCommand.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxLoadsPressuresCreateCommand.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxLoadsPressuresCreateCommand.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxLoadsPressuresModifyCommand.cpp

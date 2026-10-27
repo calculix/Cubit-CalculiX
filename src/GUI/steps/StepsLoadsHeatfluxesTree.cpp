@@ -187,10 +187,9 @@ void StepsLoadsHeatfluxesTree::populateContextMenu(
     return;
   }
 
-  addPanelAction(menu, "Create Heatflux", host, "FEAHeatfluxCreate");
-  addPanelAction(menu, "Modify Heatflux", host, "FEAHeatfluxModify");
-  addPanelAction(menu, "CCX Modify Heatflux", host, "CCXLoadsHeatfluxesModify");
-  addPanelAction(menu, "Delete Heatflux", host, "FEAHeatfluxDelete");
+  addPanelAction(menu, "Create Heatflux", host, "CCXLoadsHeatfluxesCreate");
+  addPanelAction(menu, "Modify Heatflux", host, "CCXLoadsHeatfluxesModify");
+  addPanelAction(menu, "Delete Heatflux", host, "CCXLoadsHeatfluxesDelete");
   {
     QAction *action = menu.addAction("Steps Management");
     ModelTree *hostPtr = &host;

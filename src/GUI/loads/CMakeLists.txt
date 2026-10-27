@@ -39,8 +39,12 @@ target_sources(calculix_comp PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsGravityModifyPanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsGravityTree.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsGravityTree.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsHeatfluxesCreatePanel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsHeatfluxesCreatePanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsHeatfluxesModifyPanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsHeatfluxesModifyPanel.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsHeatfluxesDeletePanel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsHeatfluxesDeletePanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsHeatfluxesTree.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsHeatfluxesTree.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsPressuresCreatePanel.cpp

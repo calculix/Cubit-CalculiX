@@ -297,7 +297,7 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   {
     if (LoadsHeatfluxesTreeItem->text(1).toStdString()=="")
     {
-      this->setWidgetInCmdPanelMarker("FEAHeatfluxCreate");
+      this->setWidgetInCmdPanelMarker("CCXLoadsHeatfluxesCreate");
     }
   }else if (LoadsGravityTreeItem = dynamic_cast<LoadsGravityTree*>(item))
   {
@@ -633,7 +633,7 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
       this->setWidgetInCmdPanelMarker("CCXLoadsPressuresModify");
     } else if (LoadsHeatfluxesTreeItem = dynamic_cast<LoadsHeatfluxesTree*>(item->parent()))
     {
-      this->setWidgetInCmdPanelMarker("FEAHeatfluxModify");
+      this->setWidgetInCmdPanelMarker("CCXLoadsHeatfluxesModify");
     } else if (LoadsGravityTreeItem = dynamic_cast<LoadsGravityTree*>(item->parent()))
     {
       this->setWidgetInCmdPanelMarker("CCXLoadsGravityModify");

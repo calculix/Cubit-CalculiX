@@ -42,14 +42,25 @@ private:
   QHBoxLayout* HBoxLayout_1;
   QHBoxLayout* HBoxLayout_2;
   QHBoxLayout* HBoxLayout_3;
+  QHBoxLayout* HBoxLayout_4;
+  QHBoxLayout* HBoxLayout_5;
+  QHBoxLayout* HBoxLayout_6;
+
   QLabel* label_0;
   QLabel* label_1;
   QLabel* label_2;
   QLabel* label_3;
+  QLabel* label_4;
+  QLabel* label_5;
+  QLabel* label_6;
+
   QLineEdit* lineEdit_0;
-  QComboBox* comboBox_1;
+  QLineEdit* lineEdit_1;
   QLineEdit* lineEdit_2;
   QLineEdit* lineEdit_3;
+  QComboBox* comboBox_4;
+  QLineEdit* lineEdit_5;
+  QLineEdit* lineEdit_6;
 };
 
 #endif // LOADSHEATFLUXESMODIFYPANEL_HPP

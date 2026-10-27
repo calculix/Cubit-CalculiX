@@ -57,7 +57,9 @@
 #include "GUI/loads/LoadsPressuresCreatePanel.hpp"
 #include "GUI/loads/LoadsPressuresDeletePanel.hpp"
 #include "GUI/loads/LoadsPressuresModifyPanel.hpp"
+#include "GUI/loads/LoadsHeatfluxesCreatePanel.hpp"
 #include "GUI/loads/LoadsHeatfluxesModifyPanel.hpp"
+#include "GUI/loads/LoadsHeatfluxesDeletePanel.hpp"
 #include "GUI/loads/LoadsGravityCreatePanel.hpp"
 #include "GUI/loads/LoadsGravityModifyPanel.hpp"
 #include "GUI/loads/LoadsGravityDeletePanel.hpp"
@@ -319,8 +321,18 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
   {
     return new LoadsPressuresDeletePanel();
   }
-  if(name == "CCXLoadsHeatfluxesModify")
+  if (name == "CCXLoadsHeatfluxesCreate")
+  {
+    return new LoadsHeatfluxesCreatePanel();
+  }
+  if (name == "CCXLoadsHeatfluxesModify")
+  {
     return new LoadsHeatfluxesModifyPanel();
+  }
+  if (name == "CCXLoadsHeatfluxesDelete")
+  {
+    return new LoadsHeatfluxesDeletePanel();
+  }
   if(name == "CCXLoadsGravityCreate")
     return new LoadsGravityCreatePanel();
   if(name == "CCXLoadsGravityModify")

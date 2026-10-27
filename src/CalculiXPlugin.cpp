@@ -69,7 +69,9 @@
 #include "Commands/loads/ccxLoadsPressuresCreateCommand.hpp"
 #include "Commands/loads/ccxLoadsPressuresModifyCommand.hpp"
 #include "Commands/loads/ccxLoadsPressuresDeleteCommand.hpp"
+#include "Commands/loads/ccxLoadsHeatfluxesCreateCommand.hpp"
 #include "Commands/loads/ccxLoadsHeatfluxesModifyCommand.hpp"
+#include "Commands/loads/ccxLoadsHeatfluxesDeleteCommand.hpp"
 #include "Commands/loads/ccxLoadsGravityCreateCommand.hpp"
 #include "Commands/loads/ccxLoadsGravityModifyCommand.hpp"
 #include "Commands/loads/ccxLoadsGravityDeleteCommand.hpp"
@@ -264,7 +266,9 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxLoadsPressuresCreateCommand");
   keys.push_back("ccxLoadsPressuresModifyCommand");
   keys.push_back("ccxLoadsPressuresDeleteCommand");
+  keys.push_back("ccxLoadsHeatfluxesCreateCommand");
   keys.push_back("ccxLoadsHeatfluxesModifyCommand");
+  keys.push_back("ccxLoadsHeatfluxesDeleteCommand");
   keys.push_back("ccxLoadsGravityCreateCommand");
   keys.push_back("ccxLoadsGravityModifyCommand");
   keys.push_back("ccxLoadsGravityDeleteCommand");
@@ -698,9 +702,19 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
     return new ccxLoadsPressuresDeleteCommand();
   }
 
+  if(key == "ccxLoadsHeatfluxesCreateCommand")
+  {
+    return new ccxLoadsHeatfluxesCreateCommand();
+  }
+
   if(key == "ccxLoadsHeatfluxesModifyCommand")
   {
     return new ccxLoadsHeatfluxesModifyCommand();
+  }
+
+  if(key == "ccxLoadsHeatfluxesDeleteCommand")
+  {
+    return new ccxLoadsHeatfluxesDeleteCommand();
   }
 
   if(key == "ccxLoadsGravityCreateCommand")

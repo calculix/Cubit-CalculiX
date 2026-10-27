@@ -206,7 +206,9 @@ public:
   bool delete_loadspressures(int pressure_id);
   bool create_loadspressures(std::vector<std::string> options, std::vector<double> options2); // adds a new pressure
   bool modify_loadspressures(int pressure_id, std::vector<std::string> options, std::vector<double> options2, std::vector<int> options_marker); // modify a pressure
-  bool modify_loadsheatfluxes(int heatflux_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a heatflux
+  bool create_loadsheatfluxes(std::vector<std::string> options, std::vector<double> options2);
+  bool modify_loadsheatfluxes(int heatflux_id, std::vector<std::string> options, std::vector<double> options2, std::vector<int> options_marker);
+  bool delete_loadsheatfluxes(int heatflux_id);
   bool create_loadsgravity(std::vector<std::string> options); // adds a new gravity load
   bool modify_loadsgravity(int gravity_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a gravity
   bool delete_loadsgravity(int gravity_id); // delete gravity load
