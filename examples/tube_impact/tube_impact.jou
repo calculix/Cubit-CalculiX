@@ -69,8 +69,8 @@ ccx create surfaceinteraction name "ContactType" linear slopeK 1e6 sigmaINF 3 c0
 ccx modify surfaceinteraction 1 friction mu 0.1 lambda 1
 ccx create contactpair surfaceinteraction 1 surfacetosurface master 2 slave 1
 
-create displacement on nodeset 1 dof 1 dof 2 fix 0
-create displacement on nodeset 2 dof 1 dof 2 dof 3 fix 0
+ccx create displacement nodeset 1 dof_1 0 dof_2 0
+ccx create displacement nodeset 2 dof_1 0 dof_2 0 dof_3 0
 
 ccx create customline name "setInitialCondition" before step_begin item_id 1 cline "*INITIAL CONDITIONS,TYPE=VELOCITY"
 ccx create customline name "setInitialCondition" before step_begin item_id 1 cline "Top_Tube,3,-20000"

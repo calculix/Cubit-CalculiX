@@ -38,10 +38,13 @@ create vertex location on surface 8  center
 ccx create constraint rigid body nodeset 3 ref 11 rot 12
 
 # load 
-create force  on vertex 11 force value 10000 direction 0 -1 0
+nodeset 5 add vertex 11
+nodeset 5 name "load_target"
+
+ccx create force nodeset 5 dof_1 0 dof_2 -10000 dof_3 0 dof_4 0 dof_5 0 dof_6 0
 
 # bc
-create displacement  on nodeset 1  dof 1 dof 2 dof 3 fix 0 
+ccx create displacement nodeset 1 dof_1 0 dof_2 0 dof_3 0
 
 # outputs
 ccx create fieldoutput name "node_output" node
@@ -132,7 +135,7 @@ def run_sensitivity_test():
     save_csv("_iterations.csv", ["iteration", "job", "status", "objective", "volume_fraction", "selected", "max_density_change", "relative_objective_change", "converged", "displacement", "node", "nodeset", "component"], iterations)
     save_csv("_elements.csv", ["element", "density", "stiffness_factor", "preserved"], elements)
     # Includes the C++ evaluation's unfiltered and filtered sensitivity maps.
-    model = work / (prefix + ".cub5")
+    model = work / (prefix + ".cub")
     cubit.cmd('save as "%s" overwrite' % model.as_posix())
     if not model.is_file():
         print("ERROR: Failed to save the topology model.")

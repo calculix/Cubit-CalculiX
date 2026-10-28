@@ -84,13 +84,13 @@ modify material "steel" matrix_property "CCX_CONDUCTIVITY_ISO_K_TEMPERATURE" 50 
 ccx create section solid block all material 1
 
 #boundary conditions
-create temperature on nodeset 5 value 0 #will be used as initial condition
-create temperature  on nodeset 4 value -1000 #our seam temperature
+ccx create temperature nodeset 5 magnitude 0 #will be used as initial condition
+ccx create temperature nodeset 4 magnitude -1000 #our seam temperature
 ccx modify temperature 1 keyword_type temp
 ccx modify temperature 2 keyword_type temp
-create displacement  on nodeset 1 dof 1 dof 6 fix 0 #x symm
-create displacement  on nodeset 2 dof 3 dof 4 fix 0 #z symm
-create displacement  on nodeset 3 dof 2 fix 0 dof 5 #fixed point in y
+ccx create displacement nodeset 1 dof_1 0 dof_6 0 #x symm
+ccx create displacement nodeset 2 dof_3 0 dof_4 0 #z symm
+ccx create displacement nodeset 3 dof_2 0 dof_5 0 #fixed point in y
 
 #initial conditions
 ccx create initialcondition temperature

@@ -1,9 +1,15 @@
 #include "ccxBCsDisplacementsModifyCommand.hpp"
 #include <string>
 #include <vector>
+#include <cctype>
+#include <cmath>
+#include <stdexcept>
+#include "Core/application/CalculiXApplicationInterface.hpp"
 #include "Core/bcs/CalculiXBCsInterface.hpp"
+#include "Core/mesh/CalculiXMeshInterface.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
+
 ccxBCsDisplacementsModifyCommand::ccxBCsDisplacementsModifyCommand()
 {}
 
@@ -13,178 +19,175 @@ ccxBCsDisplacementsModifyCommand::~ccxBCsDisplacementsModifyCommand()
 std::vector<std::string> ccxBCsDisplacementsModifyCommand::get_syntax()
 {
   std::vector<std::string> syntax_list;
+  std::string syntax = "ccx modify displacement <value:label='displacement id',help='<displacement id>'> ";
+  syntax.append("[nodeset <value:label='nodeset id',help='<nodeset id>'>] ");
 
-  std::string syntax = "ccx ";
-  syntax.append("modify displacement <value:label='displacement id',help='<displacement id>'>");
-  syntax.append("[op {mod | new}] " );
+  for (int dof = 1; dof <= 6; dof++)
+  {
+    std::string keyword = "dof_" + std::to_string(dof);
+    syntax.append(
+      "[{" +
+      keyword + " <value:label='" + keyword +
+      "_magnitude',help='<number>'> | " +
+      keyword + " <string:type='unquoted',number='1',label='" +
+      keyword + "',help='<free|fixed>'>}] ");
+  }
+
+  syntax.append("[op {mod | new}] ");
   syntax.append("[amplitude <value:label='amplitude id',help='<amplitude id>'>] ");
   syntax.append("[timedelay <value:label='timedelay',help='<timedelay>'>] ");
-  syntax.append("[{fixed_1 | unfixed_1}] ");
-  syntax.append("[{fixed_2 | unfixed_2}] ");
-  syntax.append("[{fixed_3 | unfixed_3}] ");
-  syntax.append("[{fixed_4 | unfixed_4}] ");
-  syntax.append("[{fixed_5 | unfixed_5}] ");
-  syntax.append("[{fixed_6 | unfixed_6}] ");
-  
+  syntax.append("[name <string:type='unquoted',number='1',label='name',help='<name>'>] ");
+
   syntax_list.push_back(syntax);
-  
   return syntax_list;
 }
 
 std::vector<std::string> ccxBCsDisplacementsModifyCommand::get_syntax_help()
 {
-  std::vector<std::string> help(5);
-  help[0] = "ccx modify displacement <displacement id> [op {mod | new}] [amplitude <amplitude id>] [timedelay <value>] [{fixed_1|unfixed_1}] [{fixed_2|unfixed_2}] [{fixed_3|unfixed_3}] [{fixed_4|unfixed_4}] [{fixed_5|unfixed_5}] [{fixed_6|unfixed_6}]"; 
-
+  std::vector<std::string> help(1);
+  help[0] = "ccx modify displacement <displacement id> [nodeset <nodeset id>] ";
+  for (int dof = 1; dof <= 6; dof++)
+  {
+    help[0].append("[dof_" + std::to_string(dof) + " <number|free|fixed>] ");
+  }
+  help[0].append("[op {mod | new}] [amplitude <amplitude id>] [timedelay <value>] [name <name>]");
   return help;
 }
 
 std::vector<std::string> ccxBCsDisplacementsModifyCommand::get_help()
 {
   std::vector<std::string> help;
+  help.push_back("A numeric DOF value is prescribed; free omits the DOF; fixed uses CalculiX FIXED.");
+  help.push_back("Omitted DOFs remain unchanged.");
   return help;
 }
 
 bool ccxBCsDisplacementsModifyCommand::execute(CubitCommandData &data)
 {
+  CalculiXApplicationInterface ccx_application_iface;
   CalculiXBCsInterface ccx_bcs_iface;
+  CalculiXMeshInterface ccx_mesh_iface;
 
+  std::vector<std::string> options(5);
+  std::vector<double> options2(6, 0.0);
+  std::vector<int> options3(6, 0);
+  std::vector<int> options_marker(11, 0);
+  int displacement_id = -1;
+  int nodeset_id = -1;
+  int amplitude_id = -1;
+  double timedelay_value = 0.0;
 
-  std::string output;
-  std::vector<std::string> options;  
-  std::vector<int> options_marker;
-  int displacement_id;
-  std::string amplitude_id;
-  int amplitude_value;
-  std::string timedelay;
-  double timedelay_value;
+  if (!data.get_value("displacement id", displacement_id))
+  {
+    return false;
+  }
 
-  data.get_value("displacement id", displacement_id);
-  
-  if (data.find_keyword("OP")){
-    if (data.find_keyword("MOD")){
-      options_marker.push_back(1);
-      options.push_back("0");
-    }else if (data.find_keyword("NEW"))
+  if (data.find_keyword("OP"))
+  {
+    options[0] = "0";
+    if (data.find_keyword("NEW"))
     {
-      options_marker.push_back(1);
-      options.push_back("1");
+      options[0] = "1";
     }
-  }else{
-      options_marker.push_back(0);
-      options.push_back("0");
+    options_marker[0] = 1;
   }
 
-  if (!data.get_value("amplitude id", amplitude_value))
+  if (data.get_value("amplitude id", amplitude_id))
   {
-    amplitude_id = "";
-    options_marker.push_back(0);
+    options[1] = std::to_string(amplitude_id);
+    options_marker[1] = 1;
   }
-  else
-  {
-    amplitude_id = std::to_string(amplitude_value);
-    options_marker.push_back(1);
-  }
-  options.push_back(amplitude_id);
 
-  if (!data.get_value("timedelay", timedelay_value))
+  if (data.get_value("timedelay", timedelay_value))
   {
-    timedelay = "";
-    options_marker.push_back(0);
+    options[2] = ccx_application_iface.to_string_scientific(timedelay_value);
+    options_marker[2] = 1;
   }
-  else
+
+  if (data.get_value("nodeset id", nodeset_id))
   {
-    timedelay = std::to_string(timedelay_value);
-    options_marker.push_back(1);
+    if (!ccx_mesh_iface.check_nodeset_exists(nodeset_id))
+    {
+      PRINT_ERROR("Nodeset %d does not exist.\n", nodeset_id);
+      return false;
+    }
+    options[3] = std::to_string(nodeset_id);
+    options_marker[3] = 1;
   }
-  options.push_back(timedelay);
-  
-  if (data.find_keyword("FIXED_1"))
+
+  for (int dof = 1; dof <= 6; dof++)
   {
-    options_marker.push_back(1);
-    options.push_back("1");
-  }else if (data.find_keyword("UNFIXED_1"))
-  {
-    options_marker.push_back(1);
-    options.push_back("0");
+    std::string keyword = "dof_" + std::to_string(dof);
+    std::string magnitude_label = keyword + "_magnitude";
+    double magnitude = 0.0;
+
+    if (data.get_value(magnitude_label.c_str(), magnitude))
+    {
+      if (!std::isfinite(magnitude))
+      {
+        PRINT_ERROR("Invalid magnitude for DOF %d.\n", dof);
+        return false;
+      }
+
+      options2[dof - 1] = magnitude;
+      options3[dof - 1] = 1;
+      options_marker[dof + 3] = 1;
+      continue;
+    }
+
+    std::string argument;
+
+    if (!data.get_string(keyword.c_str(), argument))
+    {
+      continue;
+    }
+
+    for (char &character : argument)
+    {
+      character = char(std::tolower(static_cast<unsigned char>(character)));
+    }
+
+    if (argument == "free")
+    {
+      options3[dof - 1] = 0;
+    }
+    else if (argument == "fixed")
+    {
+      options3[dof - 1] = 2;
+    }
+    else
+    {
+      try
+      {
+        size_t parsed = 0;
+        double value = std::stod(argument, &parsed);
+        if (parsed != argument.size() || !std::isfinite(value))
+        {
+          PRINT_ERROR("Invalid value for DOF %d.\n", dof);
+          return false;
+        }
+        options2[dof - 1] = value;
+        options3[dof - 1] = 1;
+      }
+      catch (const std::exception &)
+      {
+        PRINT_ERROR("Invalid value for DOF %d.\n", dof);
+        return false;
+      }
+    }
+
+    options_marker[dof + 3] = 1;
   }
-  else
+
+  if (data.get_string("name", options[4]))
   {
-    options_marker.push_back(0);
-    options.push_back("0");
+    options_marker[10] = 1;
   }
-  if (data.find_keyword("FIXED_2"))
+
+  if (!ccx_bcs_iface.modify_bcsdisplacements(displacement_id, options, options2, options3, options_marker))
   {
-    options_marker.push_back(1);
-    options.push_back("1");
-  }else if (data.find_keyword("UNFIXED_2"))
-  {
-    options_marker.push_back(1);
-    options.push_back("0");
-  }else
-  {
-    options_marker.push_back(0);
-    options.push_back("0");
+    PRINT_ERROR("Failed modifying displacement %d.\n", displacement_id);
+    return false;
   }
-  if (data.find_keyword("FIXED_3"))
-  {
-    options_marker.push_back(1);
-    options.push_back("1");
-  }else if (data.find_keyword("UNFIXED_3"))
-  {
-    options_marker.push_back(1);
-    options.push_back("0");
-  }else
-  {
-    options_marker.push_back(0);
-    options.push_back("0");
-  }
-  if (data.find_keyword("FIXED_4"))
-  {
-    options_marker.push_back(1);
-    options.push_back("1");
-  }else if (data.find_keyword("UNFIXED_4"))
-  {
-    options_marker.push_back(1);
-    options.push_back("0");
-  }else
-  {
-    options_marker.push_back(0);
-    options.push_back("0");
-  }
-  if (data.find_keyword("FIXED_5"))
-  {
-    options_marker.push_back(1);
-    options.push_back("1");
-  }else if (data.find_keyword("UNFIXED_5"))
-  {
-    options_marker.push_back(1);
-    options.push_back("0");
-  }else
-  {
-    options_marker.push_back(0);
-    options.push_back("0");
-  }
-  if (data.find_keyword("FIXED_6"))
-  {
-    options_marker.push_back(1);
-    options.push_back("1");
-  }else if (data.find_keyword("UNFIXED_6"))
-  {
-    options_marker.push_back(1);
-    options.push_back("0");
-  }else
-  {
-    options_marker.push_back(0);
-    options.push_back("0");
-  }
-  
-  if (!ccx_bcs_iface.modify_bcsdisplacements(displacement_id, options, options_marker))
-  {
-    output = "Failed!\n";
-    PRINT_ERROR(output.c_str());
-  }
-  options.clear();
-    
   return true;
 }

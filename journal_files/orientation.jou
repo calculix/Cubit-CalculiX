@@ -42,9 +42,10 @@ ccx create section solid block 2 material 2 orientation 2
 ccx create section solid block 3 material 2 orientation 3
 
 
-create displacement on nodeset 1 dof 1 dof 2 dof 3 fix 0 
+ccx create displacement nodeset 1 dof_1 0 dof_2 0 dof_3 0
 
-create pressure  on surface 5  magnitude 1 
+sideset 6 add surface 5
+ccx create pressure sideset 6 magnitude 1
 
 ccx create fieldoutput name "foe" element
 ccx modify fieldoutput 1 element

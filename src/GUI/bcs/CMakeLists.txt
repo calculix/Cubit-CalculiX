@@ -1,8 +1,16 @@
 target_sources(calculix_comp PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/BCsDisplacementsCreatePanel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BCsDisplacementsCreatePanel.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BCsDisplacementsDeletePanel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BCsDisplacementsDeletePanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/BCsDisplacementsModifyPanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/BCsDisplacementsModifyPanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/BCsDisplacementsTree.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/BCsDisplacementsTree.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BCsTemperaturesCreatePanel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BCsTemperaturesCreatePanel.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BCsTemperaturesDeletePanel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BCsTemperaturesDeletePanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/BCsTemperaturesModifyPanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/BCsTemperaturesModifyPanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/BCsTemperaturesTree.cpp

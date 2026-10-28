@@ -345,13 +345,13 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
   {
     if (BCsDisplacementsTreeItem->text(1).toStdString()=="")
     {
-      this->setWidgetInCmdPanelMarker("FEADisplacementCreate");
+      this->setWidgetInCmdPanelMarker("CCXBCsDisplacementsCreate");
     }
   }else if (BCsTemperaturesTreeItem = dynamic_cast<BCsTemperaturesTree*>(item))
   {
     if (BCsTemperaturesTreeItem->text(1).toStdString()=="")
     {
-      this->setWidgetInCmdPanelMarker("FEATemperatureCreate");
+      this->setWidgetInCmdPanelMarker("CCXBCsTemperaturesCreate");
     }
   }else if (HistoryOutputsTreeItem = dynamic_cast<HistoryOutputsTree*>(item))
   {
@@ -657,10 +657,10 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
       this->setWidgetInCmdPanelMarker("CCXLoadsBodyHeatfluxModify");
     } else if (BCsDisplacementsTreeItem = dynamic_cast<BCsDisplacementsTree*>(item->parent()))
     {
-      this->setWidgetInCmdPanelMarker("FEADisplacementModify");
+      this->setWidgetInCmdPanelMarker("CCXBCsDisplacementsModify");
     } else if (BCsTemperaturesTreeItem = dynamic_cast<BCsTemperaturesTree*>(item->parent()))
     {
-      this->setWidgetInCmdPanelMarker("FEATemperatureModify");
+      this->setWidgetInCmdPanelMarker("CCXBCsTemperaturesModify");
     } else if (HistoryOutputsTreeItem = dynamic_cast<HistoryOutputsTree*>(item->parent()))
     {
       this->setWidgetInCmdPanelMarker("CCXHistoryOutputsModify");

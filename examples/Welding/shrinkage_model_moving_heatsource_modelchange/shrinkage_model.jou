@@ -109,10 +109,10 @@ ccx create radiation sideset 1 temperature 20 emissivity 0.5 cavity_radiation_of
 ccx modify physicalconstants absolute_zero -273.15 stefan_boltzmann 5.669E-8
 
 #boundary conditions
-create temperature on nodeset 5 value 20 #will be used as initial condition
-create displacement  on nodeset 1 dof 1 dof 6 fix 0 #x symm
-create displacement  on nodeset 2 dof 3 dof 4 fix 0 #z symm
-create displacement  on nodeset 3 dof 2 fix 0 dof 5 #fixed point in y
+ccx create temperature nodeset 5 magnitude 20 #will be used as initial condition
+ccx create displacement nodeset 1 dof_1 0 dof_6 0 #x symm
+ccx create displacement nodeset 2 dof_3 0 dof_4 0 #z symm
+ccx create displacement nodeset 3 dof_2 0 dof_5 0 #fixed point in y
 
 #initial conditions
 ccx create initialcondition temperature

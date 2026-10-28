@@ -187,10 +187,9 @@ void StepsBCsDisplacementsTree::populateContextMenu(
     return;
   }
 
-  addPanelAction(menu, "Create Displacement", host, "FEADisplacementCreate");
-  addPanelAction(menu, "Modify Displacement", host, "FEADisplacementModify");
-  addPanelAction(menu, "CCX Modify Displacement", host, "CCXBCsDisplacementsModify");
-  addPanelAction(menu, "Delete Displacement", host, "FEADisplacementDelete");
+  addPanelAction(menu, "Create Displacement", host, "CCXBCsDisplacementsCreate");
+  addPanelAction(menu, "Modify Displacement", host, "CCXBCsDisplacementsModify");
+  addPanelAction(menu, "Delete Displacement", host, "CCXBCsDisplacementsDelete");
   {
     QAction *action = menu.addAction("Steps Management");
     ModelTree *hostPtr = &host;

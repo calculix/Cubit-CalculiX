@@ -81,10 +81,14 @@ ccx create initialcondition stress
 ccx initialcondition 1 stress add block 3 sxx 0 syy 0 szz 300 sxy 0 sxz 0 syz 0
 
 # plate bc
-create displacement name "plate_1_fix" on surface 4 dof 1 dof 2 dof 3 fix 0
-create displacement name "plate_2_fix" on surface 12 dof 1 dof 2 dof 3 fix 0
-create displacement name "plate_1_pull" on surface 4 dof 1 fix -0.35
-create displacement name "plate_2_pull" on surface 12 dof 1 fix 0.35
+nodeset 3 add surface 4
+ccx create displacement nodeset 3 dof_1 0 dof_2 0 dof_3 0 name "plate_1_fix"
+nodeset 4 add surface 12
+ccx create displacement nodeset 4 dof_1 0 dof_2 0 dof_3 0 name "plate_2_fix"
+nodeset 5 add surface 4
+ccx create displacement nodeset 5 dof_1 -0.35 name "plate_1_pull"
+nodeset 6 add surface 12
+ccx create displacement nodeset 6 dof_1 0.35 name "plate_2_pull"
 
 ccx create historyoutput name "ho_1" element
 ccx modify historyoutput 1 element block 1 totals_yes

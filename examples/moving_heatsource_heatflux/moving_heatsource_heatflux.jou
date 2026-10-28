@@ -82,7 +82,8 @@ print(f"refinement {status}")
 
 
 #boundary conditions
-create temperature on vol 1 value 293 #will be used as initial condition
+nodeset 1 add volume 1
+ccx create temperature nodeset 1 magnitude 293 #will be used as initial condition
 
 #initial conditions
 ccx create initialcondition temperature

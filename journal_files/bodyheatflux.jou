@@ -32,7 +32,8 @@ ccx create bodyheatflux 1000 block 1 name "test"
 ccx create bodyheatflux -1000 element 1001 1002 1003 1004 1005 name "test2" 
 
 #boundary conditions
-create temperature on vol all value 293 #will be used as initial condition
+nodeset 1 add volume all
+ccx create temperature nodeset 1 magnitude 293 #will be used as initial condition
 
 #initial conditions
 ccx create initialcondition temperature

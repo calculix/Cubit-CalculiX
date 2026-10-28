@@ -35,10 +35,14 @@ ccx create section beam beam_type box block 4 material 1 parameter1 5 parameter2
 #ccx create section beam beam_type rect block 3 material 1 parameter1 10 parameter2 5  x 0 y 0 z 1 
 #ccx create section beam beam_type rect block 4 material 1 parameter1 10 parameter2 5  x 0 y 0 z 1 
 
-create displacement  on vertex 1 3 5 7  dof 1 dof 2 dof 3 dof 4 dof 5 dof 6 fix
-create displacement  on vertex 2 4 6 8  dof 2 dof 3 dof 4 dof 5 dof 6 fix
+nodeset 1 add vertex 1 3 5 7
+ccx create displacement nodeset 1 dof_1 0 dof_2 0 dof_3 0 dof_4 0 dof_5 0 dof_6 0
+nodeset 2 add vertex 2 4 6 8
+ccx create displacement nodeset 2 dof_2 0 dof_3 0 dof_4 0 dof_5 0 dof_6 0
 
-create pressure on curve 1 2 3 4 magnitude 100 bottom
+sideset 1 add curve 1 2 3 4
+# Legacy bottom curve pressure: verify the beam/edge load direction after migration.
+ccx create pressure sideset 1 magnitude 100
 
 ccx create fieldoutput name "nodes" node
 ccx create fieldoutput name "elements" element

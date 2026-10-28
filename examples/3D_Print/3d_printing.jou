@@ -196,7 +196,8 @@ ccx modify fieldoutput 2 element key_on HFL
 ccx modify fieldoutput 2 element key_off CEEQ S E ECD EMFB EMFE ENER ERR HER HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS
 
 # initial conditions
-create temperature on node all value 240
+nodeset 1 add node all
+ccx create temperature nodeset 1 magnitude 240
 ccx modify temperature 1 op new
 ccx create initialcondition temperature
 ccx modify initialcondition 1 temperature bc_id 1
@@ -205,7 +206,8 @@ ccx modify initialcondition 1 temperature bc_id 1
 block_ids = cubit.parse_cubit_list("block","all")
 for i in range(len(block_ids)):
   status = cubit.cmd(f"ccx create film sideset {(i+1)*3-1} temperature 20 coefficient 0.0025 name 'layer_{block_ids[i]}'")
-  status = cubit.cmd(f"create temperature on node all in hex all in block {block_ids[i]} value 240")
+  status = cubit.cmd(f"nodeset {i+2} add node all in hex all in block {block_ids[i]}")
+  status = cubit.cmd(f"ccx create temperature nodeset {i+2} magnitude 240")
   status = cubit.cmd(f"ccx modify temperature {i+2} op new")
 
 #!python

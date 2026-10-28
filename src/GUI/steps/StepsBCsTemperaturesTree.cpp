@@ -187,10 +187,9 @@ void StepsBCsTemperaturesTree::populateContextMenu(
     return;
   }
 
-  addPanelAction(menu, "Create Temperature", host, "FEATemperatureCreate");
-  addPanelAction(menu, "Modify Temperature", host, "FEATemperatureModify");
-  addPanelAction(menu, "CCX Modify Temperature", host, "CCXBCsTemperaturesModify");
-  addPanelAction(menu, "Delete Temperature", host, "FEATemperatureDelete");
+  addPanelAction(menu, "Create Temperature", host, "CCXBCsTemperaturesCreate");
+  addPanelAction(menu, "Modify Temperature", host, "CCXBCsTemperaturesModify");
+  addPanelAction(menu, "Delete Temperature", host, "CCXBCsTemperaturesDelete");
   {
     QAction *action = menu.addAction("Steps Management");
     ModelTree *hostPtr = &host;

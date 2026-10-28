@@ -79,6 +79,7 @@
 #include "PlotChart.hpp"
 
 #include <Utility/Eigen/Eigenvalues>
+#include <hdf5.h>
 #include "HDF5Tool.hpp"
 #include "TopologyHdf5.hpp"
 #include "TopologyIterationIds.hpp"
@@ -800,10 +801,11 @@ bool CalculiXCore::read_cub(std::string filename)
   log = "Reading Cubit-CalculiX data from \"" + filename + "\"\n";
   PRINT_INFO("%s", log.c_str());
   
-  if (filename.substr(filename.size() - 4) == ".cub")
+  if (H5Fis_accessible(filename.c_str(), H5P_DEFAULT) <= 0)
   {
-    log = "Reading from a .cub not supported. Please save your data in a .cub5 file.\n";
-    PRINT_INFO("%s", log.c_str());
+    PRINT_ERROR(
+      "Cannot read Cubit-CalculiX data: \"%s\" is not accessible as an HDF5 file.\n",
+      filename.c_str());
     return false;
   }
 
@@ -997,11 +999,16 @@ bool CalculiXCore::read_cub(std::string filename)
     //BCsDisplacements
     cubTool.read_dataset_int_rank_2("bcs_data","Cubit-CalculiX/BCs/Displacements", bcsdisplacements->bcs_data);
     cubTool.read_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/BCs/Displacements", bcsdisplacements->time_delay_data);
+    cubTool.read_dataset_double_rank_2("displacement_data","Cubit-CalculiX/BCs/Displacements", bcsdisplacements->displacement_data);
+    cubTool.read_dataset_int_rank_2("mode_data","Cubit-CalculiX/BCs/Displacements", bcsdisplacements->mode_data);
+    cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/BCs/Displacements", bcsdisplacements->name_data);
     progressbar->step();
     progressbar->check_interrupt();
     //BCsTemperatures
     cubTool.read_dataset_int_rank_2("bcs_data","Cubit-CalculiX/BCs/Temperatures", bcstemperatures->bcs_data);
     cubTool.read_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/BCs/Temperatures", bcstemperatures->time_delay_data);
+    cubTool.read_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/BCs/Temperatures", bcstemperatures->magnitude_data);
+    cubTool.read_dataset_string_rank_2("name_data","Cubit-CalculiX/BCs/Temperatures", bcstemperatures->name_data);
     progressbar->step();
     progressbar->check_interrupt();
     //HistoryOutputs
@@ -1490,10 +1497,11 @@ bool CalculiXCore::save_cub(std::string filename)
   ProgressTool* progressbar;
   progressbar = CubitInterface::app_util().get()->progress_tool();;
 
-  if (filename.substr(filename.size() - 4) == ".cub")
+  if (H5Fis_accessible(filename.c_str(), H5P_DEFAULT) <= 0)
   {
-    log = "Writing to a .cub not supported. Please save your data in a .cub5 file.\n";
-    PRINT_INFO("%s", log.c_str());
+    PRINT_ERROR(
+      "Cannot save Cubit-CalculiX data: \"%s\" is not accessible as an HDF5 file.\n",
+      filename.c_str());
     return false;
   }
 
@@ -1698,12 +1706,17 @@ bool CalculiXCore::save_cub(std::string filename)
     cubTool.createGroup("Cubit-CalculiX/BCs/Displacements");
     cubTool.write_dataset_int_rank_2("bcs_data","Cubit-CalculiX/BCs/Displacements", bcsdisplacements->bcs_data);
     cubTool.write_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/BCs/Displacements", bcsdisplacements->time_delay_data);
+    cubTool.write_dataset_double_rank_2("displacement_data","Cubit-CalculiX/BCs/Displacements", bcsdisplacements->displacement_data);
+    cubTool.write_dataset_int_rank_2("mode_data","Cubit-CalculiX/BCs/Displacements", bcsdisplacements->mode_data);
+    cubTool.write_dataset_string_rank_2("name_data","Cubit-CalculiX/BCs/Displacements", bcsdisplacements->name_data);
     progressbar->step();
     progressbar->check_interrupt();
     //BCsTemperatures
     cubTool.createGroup("Cubit-CalculiX/BCs/Temperatures");
     cubTool.write_dataset_int_rank_2("bcs_data","Cubit-CalculiX/BCs/Temperatures", bcstemperatures->bcs_data);
     cubTool.write_dataset_string_rank_2("time_delay_data","Cubit-CalculiX/BCs/Temperatures", bcstemperatures->time_delay_data);
+    cubTool.write_dataset_double_rank_2("magnitude_data","Cubit-CalculiX/BCs/Temperatures", bcstemperatures->magnitude_data);
+    cubTool.write_dataset_string_rank_2("name_data","Cubit-CalculiX/BCs/Temperatures", bcstemperatures->name_data);
     progressbar->step();
     progressbar->check_interrupt();
     //HistoryOutputs
@@ -2613,6 +2626,14 @@ std::string CalculiXCore::autocleanup()
       print_log = sub_bool;
       bcsdisplacements->bcs_data[i-1][2]=-1;
     }
+    if (!check_nodeset_exists(bcsdisplacements->bcs_data[i-1][4]))
+    {
+      log.append("Nodeset ID " + std::to_string(bcsdisplacements->bcs_data[i-1][4]) + " doesn't exist.\n");
+      log.append("Displacement ID " + std::to_string(bcsdisplacements->bcs_data[i-1][0]) + " will be deleted.\n");
+
+      print_log = true;
+      delete_bcsdisplacements(bcsdisplacements->bcs_data[i-1][0]);
+    }
   }
   // BCS TEMPERATURES
   for (size_t i = bcstemperatures->bcs_data.size(); i > 0; i--)
@@ -2632,6 +2653,13 @@ std::string CalculiXCore::autocleanup()
     {
       print_log = sub_bool;
       bcstemperatures->bcs_data[i-1][2]=-1;
+    }
+    if (!check_nodeset_exists(bcstemperatures->bcs_data[i-1][4]))
+    {
+      log.append("Nodeset ID " + std::to_string(bcstemperatures->bcs_data[i-1][4]) + " doesn't exist.\n");
+      log.append("Temperature ID " + std::to_string(bcstemperatures->bcs_data[i-1][0]) + " will be deleted.\n");
+      print_log = true;
+      delete_bcstemperatures(bcstemperatures->bcs_data[i-1][0]);
     }
   }
 
@@ -3884,10 +3912,16 @@ bool CalculiXCore::check_bc_exists(int bc_id,int BCType)
 
   if (BCType == 4)
   {
-    ids = CubitInterface::get_bc_id_list(CI_BCTYPE_DISPLACEMENT);
+    for (size_t i = 0; i < bcsdisplacements->bcs_data.size(); i++)
+    {
+      ids.push_back(bcsdisplacements->bcs_data[i][0]);
+    }
   }else if (BCType == 5)
   {
-    ids = CubitInterface::get_bc_id_list(CI_BCTYPE_TEMPERATURE);
+    for (size_t i = 0; i < bcstemperatures->bcs_data.size(); i++)
+    {
+      ids.push_back(bcstemperatures->bcs_data[i][0]);
+    }
   }else if (BCType == 6)
   {
     for (size_t i = 0; i < loadsforces->loads_data.size(); i++)
@@ -4105,50 +4139,6 @@ bool CalculiXCore::check_vertex_in_nodeset_exists(int vertex_id,int nodeset_id)
     }
   }
   return false;
-}
-
-int CalculiXCore::get_bc_fea_type(std::vector<std::pair<int, double>> bc_attribs)
-{
-  for (size_t i = 0; i < bc_attribs.size(); i++)
-  {
-    if ((bc_attribs[i].first > -1) && (bc_attribs[i].first < 6))
-    {
-      //displacement
-      return 1;
-    }
-    if ((bc_attribs[i].first > 5) && (bc_attribs[i].first < 12))
-    {
-      //Velocity
-      return 2;
-    }
-    if ((bc_attribs[i].first > 11) && (bc_attribs[i].first < 18))
-    {
-      //Acceleration
-      return 3;
-    }
-    if ((bc_attribs[i].first > 17) && (bc_attribs[i].first < 23))
-    //if (bc_attribs[i].first == 22)
-    {
-      //Temperature
-      return 4;
-    }
-    if ((bc_attribs[i].first > 22) && (bc_attribs[i].first < 31))
-    {
-      //Forces
-      return 5;
-    }
-    if (bc_attribs[i].first == 31)
-    {
-      //Pressure
-      return 6;
-    }
-    if ((bc_attribs[i].first > 37) && (bc_attribs[i].first < 41))
-    {
-      //Heatflux
-      return 7;
-    }
-  }
-  return -1;
 }
 
 std::vector<int> CalculiXCore::get_blocks()
@@ -4866,14 +4856,76 @@ bool CalculiXCore::delete_loadsbodyheatflux(int bodyheatflux_id)
   return loadsbodyheatflux->delete_load(bodyheatflux_id);
 }
 
-bool CalculiXCore::modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker)
+bool CalculiXCore::create_bcsdisplacements(std::vector<std::string> options, std::vector<double> options2, std::vector<int> options3)
 {
-  return bcsdisplacements->modify_bc(displacement_id,options,options_marker);
+  return bcsdisplacements->create_bc(options, options2, options3);
 }
 
-bool CalculiXCore::modify_bcstemperatures(int temperature_id, std::vector<std::string> options, std::vector<int> options_marker)
+bool CalculiXCore::delete_bcsdisplacements(int displacement_id)
 {
-  return bcstemperatures->modify_bc(temperature_id,options,options_marker);
+  if (!bcsdisplacements->delete_bc(displacement_id))
+  {
+    return false;
+  }
+
+  for (size_t i = 0; i < steps->steps_data.size(); i++)
+  {
+    steps->remove_bcs(steps->steps_data[i][0], 1, {displacement_id});
+  }
+
+  hbcs->remove_bcs(0, 1, {displacement_id});
+
+  for (size_t i = 0; i < initialconditions->displacement_data.size(); i++)
+  {
+    if (!initialconditions->displacement_data[i][1].empty())
+    {
+      if (std::stoi(initialconditions->displacement_data[i][1]) == displacement_id)
+      {
+        initialconditions->displacement_data[i][1] = "";
+      }
+    }
+  }
+
+  return true;
+}
+
+bool CalculiXCore::modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<double> options2, std::vector<int> options3, std::vector<int> options_marker)
+{
+  return bcsdisplacements->modify_bc(displacement_id, options, options2, options3, options_marker);
+}
+
+bool CalculiXCore::create_bcstemperatures(std::vector<std::string> options, std::vector<double> options2)
+{
+  return bcstemperatures->create_bc(options, options2);
+}
+
+bool CalculiXCore::modify_bcstemperatures(int temperature_id, std::vector<std::string> options, std::vector<double> options2, std::vector<int> options_marker)
+{
+  return bcstemperatures->modify_bc(temperature_id, options, options2, options_marker);
+}
+
+bool CalculiXCore::delete_bcstemperatures(int temperature_id)
+{
+  if (!bcstemperatures->delete_bc(temperature_id))
+  {
+    return false;
+  }
+  for (size_t i = 0; i < steps->steps_data.size(); i++)
+  {
+    steps->remove_bcs(steps->steps_data[i][0], 2, {temperature_id});
+  }
+  hbcs->remove_bcs(0, 2, {temperature_id});
+  for (size_t i = 0; i < initialconditions->temperature_data.size(); i++)
+  {
+    if (!initialconditions->temperature_data[i][1].empty())
+    {
+      if (std::stoi(initialconditions->temperature_data[i][1]) == temperature_id)
+      {
+        initialconditions->temperature_data[i][1] = "";
+      }
+    }
+  }
+  return true;
 }
 
 bool CalculiXCore::create_historyoutput(std::vector<std::string> options)
@@ -5684,6 +5736,7 @@ bool CalculiXCore::collect_topology_default_sets(std::map<int, std::set<int>>& d
 
   if (!constraints || !contactpairs || !me_iface || !steps ||
     !loadsforces || !loadspressures || !loadsheatfluxes ||
+    !bcsdisplacements || !bcstemperatures ||
     !loadsgravity || !loadscentrifugal ||
     !loadsfilm || !loadsradiation || !loadssurfacetraction || !loadsbodyheatflux)
   {
@@ -6265,64 +6318,6 @@ bool CalculiXCore::collect_topology_default_sets(std::map<int, std::set<int>>& d
     }
   }
 
-  // Query only Cubit loads and BCs assigned to steps.
-  const auto collect_cubit_bc_sets =
-      [&](const std::set<int>& ids,
-          BCEntityType export_type,
-          int set_type,
-          const char* description) -> bool
-  {
-    for (int id : ids)
-    {
-      BCEntityHandle handle;
-
-      if (!me_iface->get_bc_handle(export_type, id, handle))
-      {
-        PRINT_ERROR("Unable to query %s %d.\n", description, id);
-        return false;
-      }
-
-      int set_id = -1;
-
-      if (set_type == 2)
-      {
-        NodesetHandle nodeset;
-
-        if (!me_iface->get_bc_nodeset(handle, nodeset))
-        {
-          PRINT_ERROR("Unable to query nodeset for %s %d.\n",
-                      description, id);
-          return false;
-        }
-
-        set_id = me_iface->id_from_handle(nodeset);
-      }
-      else
-      {
-        SidesetHandle sideset;
-
-        if (!me_iface->get_bc_sideset(handle, sideset))
-        {
-          PRINT_ERROR("Unable to query sideset for %s %d.\n",
-                      description, id);
-          return false;
-        }
-
-        set_id = me_iface->id_from_handle(sideset);
-      }
-
-      if (set_id <= 0)
-      {
-        PRINT_ERROR("Invalid set ID for %s %d.\n", description, id);
-        return false;
-      }
-
-      collected[set_type].insert(set_id);
-    }
-
-    return true;
-  };
-
   // Plugin-owned forces reference their nodeset directly.
   for (int force_id : used_loads[1])
   {
@@ -6382,10 +6377,43 @@ bool CalculiXCore::collect_topology_default_sets(std::map<int, std::set<int>>& d
     collected[3].insert(sideset_id);
   }
 
-  if (!collect_cubit_bc_sets(used_bcs[1], BCTYPE_DISPLACEMENT, 2, "displacement") ||
-      !collect_cubit_bc_sets(used_bcs[2], BCTYPE_TEMPERATURE, 2, "temperature"))
+  for (int bc_id : used_bcs[1])
   {
-    return false;
+    const int index = bcsdisplacements->get_bcs_data_id_from_bc_id(bc_id);
+
+    if (index < 0 || bcsdisplacements->bcs_data[index].size() < 7)
+    {
+      PRINT_ERROR("Missing displacement BC %d.\n", bc_id);
+      return false;
+    }
+
+    const int nodeset_id = bcsdisplacements->bcs_data[index][4];
+
+    if (!check_nodeset_exists(nodeset_id))
+    {
+      PRINT_ERROR("Nodeset %d referenced by displacement BC %d does not exist.\n",
+                  nodeset_id, bc_id);
+      return false;
+    }
+
+    collected[2].insert(nodeset_id);
+  }
+
+  for (int bc_id : used_bcs[2])
+  {
+    int index = bcstemperatures->get_bcs_data_id_from_bc_id(bc_id);
+    if (index == -1 || bcstemperatures->bcs_data[index].size() < 8)
+    {
+      PRINT_ERROR("Missing temperature BC %d.\n", bc_id);
+      return false;
+    }
+    int nodeset_id = bcstemperatures->bcs_data[index][4];
+    if (!check_nodeset_exists(nodeset_id))
+    {
+      PRINT_ERROR("Nodeset %d referenced by temperature BC %d does not exist.\n", nodeset_id, bc_id);
+      return false;
+    }
+    collected[2].insert(nodeset_id);
   }
 
   // get elements from nodes
@@ -9185,34 +9213,68 @@ bool CalculiXCore::validate_topology_compliance_model(bool require_zero_displace
   {
     const int index = bcsdisplacements->get_bcs_data_id_from_bc_id(bc_id);
 
-    if (index < 0 || bcsdisplacements->bcs_data[index].size() < 10)
+    if (index < 0 || bcsdisplacements->bcs_data[index].size() < 7)
     {
       PRINT_ERROR("Missing displacement BC %d.\n", bc_id);
       return false;
     }
 
-    BCEntityHandle handle;
-    std::vector<MeshExportBCData> attributes;
+    const int nodeset_id = bcsdisplacements->bcs_data[index][4];
+    const int displacement_id = bcsdisplacements->bcs_data[index][5];
 
-    if (!me_iface->get_bc_handle(BCTYPE_DISPLACEMENT, bc_id, handle) || !me_iface->get_bc_attributes(handle, attributes))
+    if (!check_nodeset_exists(nodeset_id))
     {
-      PRINT_ERROR("Unable to query displacement BC %d.\n", bc_id);
+      PRINT_ERROR("Nodeset %d referenced by displacement BC %d does not exist.\n",
+                  nodeset_id, bc_id);
       return false;
     }
 
-    for (const auto& attribute : attributes)
+    const int displacement_data_id =
+      bcsdisplacements->get_displacement_data_id_from_displacement_id(displacement_id);
+    const int mode_data_id =
+      bcsdisplacements->get_mode_data_id_from_displacement_id(displacement_id);
+
+    if (displacement_data_id < 0 || mode_data_id < 0)
     {
-      if (attribute.first < 0 || attribute.first >= 6 || !std::isfinite(attribute.second))
+      PRINT_ERROR("Missing displacement data for BC %d.\n", bc_id);
+      return false;
+    }
+
+    if (bcsdisplacements->displacement_data[displacement_data_id].size() < 7 ||
+        bcsdisplacements->mode_data[mode_data_id].size() < 7)
+    {
+      PRINT_ERROR("Invalid displacement data for BC %d.\n", bc_id);
+      return false;
+    }
+
+    for (int dof = 1; dof <= 6; ++dof)
+    {
+      const int mode = bcsdisplacements->mode_data[mode_data_id][dof];
+
+      if (mode < 0 || mode > 2)
       {
-        PRINT_ERROR("Invalid displacement BC %d attributes.\n", bc_id);
+        PRINT_ERROR("Invalid displacement mode for BC %d, DOF %d.\n", bc_id, dof);
         return false;
       }
 
-      // Match the exporter's fixed-DOF override.
-      if (require_zero_displacements && !bcsdisplacements->check_dof_fixed(bc_id, attribute.first + 1) && attribute.second != 0.0)
+      if (mode == 1)
       {
-        PRINT_ERROR("The initial compliance evaluator requires zero prescribed displacement in BC %d.\n", bc_id);
-        return false;
+        const double magnitude =
+          bcsdisplacements->displacement_data[displacement_data_id][dof];
+
+        if (!std::isfinite(magnitude))
+        {
+          PRINT_ERROR("Invalid displacement magnitude for BC %d, DOF %d.\n",
+                      bc_id, dof);
+          return false;
+        }
+
+        if (require_zero_displacements && magnitude != 0.0)
+        {
+          PRINT_ERROR("The initial compliance evaluator requires zero prescribed displacement in BC %d.\n",
+                      bc_id);
+          return false;
+        }
       }
     }
   }
@@ -11280,10 +11342,22 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
     }
   }else if (entity=="bcsdisplacement")
   {
-    entities.push_back({"displacement",std::to_string(id)});
+    data_id = bcsdisplacements->get_bcs_data_id_from_bc_id(id);
+
+    if (data_id != -1)
+    {
+      entities.push_back({
+        "nodeset",
+        std::to_string(bcsdisplacements->bcs_data[data_id][4])
+      });
+    }
   }else if (entity=="bcstemperature")
   {
-    entities.push_back({"temperature",std::to_string(id)});
+    data_id = bcstemperatures->get_bcs_data_id_from_bc_id(id);
+    if (data_id != -1)
+    {
+      entities.push_back({"nodeset", std::to_string(bcstemperatures->bcs_data[data_id][4])});
+    }
   }else if (entity=="initialcondition")
   {
     int data_id = initialconditions->get_initialconditions_data_id_from_initialcondition_id(id);
@@ -11291,17 +11365,35 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
     
     if (initialconditions->initialconditions_data[data_id][1]==1)
     {
-      sub_data_id = initialconditions->get_displacement_data_id_from_displacement_id(initialconditions->initialconditions_data[data_id][2]);
-      if (initialconditions->displacement_data[sub_data_id][1] != "")
+      sub_data_id =
+        initialconditions->get_displacement_data_id_from_displacement_id(
+          initialconditions->initialconditions_data[data_id][2]);
+
+      if (sub_data_id != -1 &&
+          initialconditions->displacement_data[sub_data_id][1] != "")
       {
-        entities.push_back({"displacement",initialconditions->displacement_data[sub_data_id][1]});
+        int bcs_data_id = bcsdisplacements->get_bcs_data_id_from_bc_id(
+          std::stoi(initialconditions->displacement_data[sub_data_id][1]));
+
+        if (bcs_data_id != -1)
+        {
+          entities.push_back({
+            "nodeset",
+            std::to_string(bcsdisplacements->bcs_data[bcs_data_id][4])
+          });
+        }
       }
     }else if (initialconditions->initialconditions_data[data_id][1]==2)
     {
       sub_data_id = initialconditions->get_temperature_data_id_from_temperature_id(initialconditions->initialconditions_data[data_id][2]);
-      if (initialconditions->temperature_data[sub_data_id][1] != "")
+      if (sub_data_id != -1 && initialconditions->temperature_data[sub_data_id][1] != "")
       {
-        entities.push_back({"temperature",initialconditions->temperature_data[sub_data_id][1]});
+        int bcs_data_id = bcstemperatures->get_bcs_data_id_from_bc_id(
+          std::stoi(initialconditions->temperature_data[sub_data_id][1]));
+        if (bcs_data_id != -1)
+        {
+          entities.push_back({"nodeset", std::to_string(bcstemperatures->bcs_data[bcs_data_id][4])});
+        }
       }
     }else if (initialconditions->initialconditions_data[data_id][1]==3)
     {
@@ -11318,10 +11410,22 @@ std::vector<std::vector<std::string>> CalculiXCore::get_entities(std::string ent
     }
   }else if (entity=="hbcsdisplacement")
   {
-    entities.push_back({"displacement",std::to_string(id)});
+    data_id = bcsdisplacements->get_bcs_data_id_from_bc_id(id);
+
+    if (data_id != -1)
+    {
+      entities.push_back({
+        "nodeset",
+        std::to_string(bcsdisplacements->bcs_data[data_id][4])
+      });
+    }
   }else if (entity=="hbcstemperature")
   {
-    entities.push_back({"temperature",std::to_string(id)});
+    data_id = bcstemperatures->get_bcs_data_id_from_bc_id(id);
+    if (data_id != -1)
+    {
+      entities.push_back({"nodeset", std::to_string(bcstemperatures->bcs_data[data_id][4])});
+    }
   }
   return entities;
 }
@@ -11654,43 +11758,57 @@ std::vector<std::vector<int>> CalculiXCore::get_draw_data_for_load_bodyheatflux(
   return draw_data;
 }
 
-std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_bc_displacement(int id) // returns coord(3) and dof
+std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_bc_displacement(int id)
 {
-  int bc_set_id=-1;
-  BCSetHandle bc_set;
-  NodesetHandle nodeset;
-  std::string command;
-  std::vector<BCEntityHandle> bc_handles;
   std::vector<std::vector<double>> draw_data;
 
-  me_iface->create_default_bcset(0,true,true,true,bc_set);
-  bc_set_id = me_iface->id_from_handle(bc_set);
+  int bcs_data_id = bcsdisplacements->get_bcs_data_id_from_bc_id(id);
 
-  me_iface->get_bc_restraints(bc_set, bc_handles);
-  for (size_t i = 0; i < bc_handles.size(); i++)
-  {  
-    std::vector<MeshExportBCData> bc_attribs;
-    me_iface->get_bc_attributes(bc_handles[i],bc_attribs); 
-    if ((get_bc_fea_type(bc_attribs)==1))
+  if (bcs_data_id == -1 || bcsdisplacements->bcs_data[bcs_data_id].size() < 7)
+  {
+    return draw_data;
+  }
+
+  int nodeset_id = bcsdisplacements->bcs_data[bcs_data_id][4];
+  int displacement_id = bcsdisplacements->bcs_data[bcs_data_id][5];
+  int mode_data_id =
+    bcsdisplacements->get_mode_data_id_from_displacement_id(displacement_id);
+
+  if (!check_nodeset_exists(nodeset_id) || mode_data_id == -1)
+  {
+    return draw_data;
+  }
+
+  if (bcsdisplacements->mode_data[mode_data_id].size() < 7)
+  {
+    return draw_data;
+  }
+
+  for (int dof = 1; dof <= 6; ++dof)
+  {
+    int mode = bcsdisplacements->mode_data[mode_data_id][dof];
+
+    if (mode < 0 || mode > 2)
     {
-      if (id==me_iface->id_from_handle(bc_handles[i]))
-      {     
-        me_iface->get_bc_nodeset(bc_handles[i],nodeset);
-        std::vector<std::vector<double>> coords = get_nodeset_entities_coords(me_iface->id_from_handle(nodeset));
-        
-        for (size_t ii = 0; ii < coords.size(); ii++)
-        {   
-          for (size_t iii = 0; iii < bc_attribs.size(); iii++)
-          {
-            std::vector<double> data;            
-            data.push_back(coords[ii][0]);
-            data.push_back(coords[ii][1]);
-            data.push_back(coords[ii][2]);
-            data.push_back(bc_attribs[iii].first+1);
-            draw_data.push_back(data);
-            data.clear();          
-          }
-        }
+      return draw_data;
+    }
+  }
+
+  std::vector<std::vector<double>> coords =
+    get_nodeset_entities_coords(nodeset_id);
+
+  for (size_t i = 0; i < coords.size(); i++)
+  {
+    for (int dof = 1; dof <= 6; ++dof)
+    {
+      if (bcsdisplacements->mode_data[mode_data_id][dof] != 0)
+      {
+        std::vector<double> data;
+        data.push_back(coords[i][0]);
+        data.push_back(coords[i][1]);
+        data.push_back(coords[i][2]);
+        data.push_back(dof);
+        draw_data.push_back(data);
       }
     }
   }
@@ -11698,49 +11816,31 @@ std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_bc_displacement
   return draw_data;
 }
 
-std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_bc_temperature(int id) // returns coord(3) and dof
+std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_bc_temperature(int id)
 {
-  int bc_set_id=-1;
-  BCSetHandle bc_set;
-  NodesetHandle nodeset;
-  std::string command;
-  std::vector<BCEntityHandle> bc_handles;
   std::vector<std::vector<double>> draw_data;
-
-  me_iface->create_default_bcset(0,true,true,true,bc_set);
-  bc_set_id = me_iface->id_from_handle(bc_set);
-
-  me_iface->get_bc_restraints(bc_set, bc_handles);
-  for (size_t i = 0; i < bc_handles.size(); i++)
-  {  
-    std::vector<MeshExportBCData> bc_attribs;
-    me_iface->get_bc_attributes(bc_handles[i],bc_attribs); 
-    if ((get_bc_fea_type(bc_attribs)==4))
-    {
-      if (id==me_iface->id_from_handle(bc_handles[i]))
-      {     
-        me_iface->get_bc_nodeset(bc_handles[i],nodeset);
-        std::vector<std::vector<double>> coords = get_nodeset_entities_coords(me_iface->id_from_handle(nodeset));
-        
-        for (size_t ii = 0; ii < coords.size(); ii++)
-        {   
-          for (size_t iii = 0; iii < bc_attribs.size(); iii++)
-          {
-            std::vector<double> data;            
-            data.push_back(coords[ii][0]);
-            data.push_back(coords[ii][1]);
-            data.push_back(coords[ii][2]);
-            data.push_back(11);
-            draw_data.push_back(data);
-            data.clear();          
-          }
-        }
-      }
-    }
+  int bcs_data_id = bcstemperatures->get_bcs_data_id_from_bc_id(id);
+  if (bcs_data_id == -1 || bcstemperatures->bcs_data[bcs_data_id].size() < 8)
+  {
+    return draw_data;
   }
-  
+  int nodeset_id = bcstemperatures->bcs_data[bcs_data_id][4];
+  if (!check_nodeset_exists(nodeset_id))
+  {
+    return draw_data;
+  }
+  std::vector<std::vector<double>> coords = get_nodeset_entities_coords(nodeset_id);
+  for (size_t i = 0; i < coords.size(); i++)
+  {
+    std::vector<double> data;
+    data.push_back(coords[i][0]);
+    data.push_back(coords[i][1]);
+    data.push_back(coords[i][2]);
+    data.push_back(11);
+    draw_data.push_back(data);
+  }
   return draw_data;
-}  
+}
 
 std::vector<std::vector<double>> CalculiXCore::get_draw_data_for_orientation(int id) // returns pairs of 4 for {system_type,local_axis_angle}, coord(3) of section center, a_coord(3) ,b_coord(3)
 {
@@ -13841,36 +13941,12 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
   std::vector<std::string> initialconditions_export_list;
   initialconditions_export_list.push_back("********************************** I N I T I A L C O N D I T I O N S ****************************");
   std::string str_temp;
-  std::string log;
   int sub_data_id;
   std::vector<int> sub_data_ids;
-  std::string command;
-  int bc_set_id=-1;
-  BCSetHandle bc_set;
-  std::vector<BCSetHandle> bc_sets;
-  NodesetHandle nodeset;
-  std::vector<BCEntityHandle> bc_handles;
-  std::vector<MeshExportBCData> bc_attribs; 
 
   //loop over all initialconditions
   for (size_t i = 0; i < initialconditions->initialconditions_data.size(); i++)
   { 
-    if (i==0)
-    { 
-      log = "Creating BCSet for exporting Initial Conditions.\n";
-      PRINT_INFO("%s", log.c_str());
-      if (me_iface->get_bcset_list(bc_sets))
-      {
-        //bc_set_id = me_iface->id_from_handle(bc_sets[bc_sets.size()-1]);
-        bc_set_id = bc_sets.size();     
-        me_iface->create_default_bcset(bc_set_id,true,true,true,bc_set);
-      }else{
-        me_iface->create_default_bcset(0,true,true,true,bc_set);
-      }
-      me_iface->get_bc_restraints(bc_set, bc_handles);
-      bc_set_id = me_iface->id_from_handle(bc_set);
-    }
-
     // CUSTOMLINE START
     std::vector<std::string> customline = customlines->get_customline_data("BEFORE","INITIALCONDITION",initialconditions->initialconditions_data[i][0]);
     for (size_t icl = 0; icl < customline.size(); icl++)
@@ -13879,47 +13955,97 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
     }
     // CUSTOMLINE END
 
-    for (size_t ii = 0; ii < bc_handles.size(); ii++)
-    {  
-      me_iface->get_bc_attributes(bc_handles[ii],bc_attribs);
-    
-      if ((get_bc_fea_type(bc_attribs)==1) && (initialconditions->initialconditions_data[i][1]==1))
-      {
-        sub_data_id = initialconditions->get_displacement_data_id_from_displacement_id(initialconditions->initialconditions_data[i][2]);
-        if (initialconditions->displacement_data[sub_data_id][1]!="")
-        {
-          if (std::stoi(initialconditions->displacement_data[sub_data_id][1])==me_iface->id_from_handle(bc_handles[ii]))
-          {
-            me_iface->get_bc_nodeset(bc_handles[ii],nodeset);
-            str_temp = "*INITIAL CONDITIONS,TYPE=DISPLACEMENT";
-            initialconditions_export_list.push_back(str_temp);
-            for (size_t iii = 0; iii < bc_attribs.size(); iii++)
-            { 
-              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iii].first+1) + "," + to_string_scientific(bc_attribs[iii].second);
-              initialconditions_export_list.push_back(str_temp);
-            }
+    // Plugin-owned initial displacement.
+    if (initialconditions->initialconditions_data[i][1] == 1)
+    {
+      sub_data_id = initialconditions->get_displacement_data_id_from_displacement_id(
+          initialconditions->initialconditions_data[i][2]);
 
+      if (sub_data_id == -1 ||
+          initialconditions->displacement_data[sub_data_id].size() < 2)
+      {
+        PRINT_ERROR("Missing initial-displacement reference.\n");
+        return "";
+      }
+
+      if (!initialconditions->displacement_data[sub_data_id][1].empty())
+      {
+        int displacement_id = std::stoi(initialconditions->displacement_data[sub_data_id][1]);
+        int bcs_data_id = bcsdisplacements->get_bcs_data_id_from_bc_id(displacement_id);
+
+        if (bcs_data_id == -1 ||
+            bcsdisplacements->bcs_data[bcs_data_id].size() < 7)
+        {
+          PRINT_ERROR("Missing displacement BC %d for initial conditions.\n", displacement_id);
+          return "";
+        }
+
+        int displacement_data_id = bcsdisplacements->get_displacement_data_id_from_displacement_id(
+            bcsdisplacements->bcs_data[bcs_data_id][5]);
+        int mode_data_id = bcsdisplacements->get_mode_data_id_from_displacement_id(
+            bcsdisplacements->bcs_data[bcs_data_id][5]);
+        int nodeset_id = bcsdisplacements->bcs_data[bcs_data_id][4];
+
+        if (displacement_data_id == -1 || mode_data_id == -1)
+        {
+          PRINT_ERROR("Missing displacement data for BC %d.\n", displacement_id);
+          return "";
+        }
+
+        if (bcsdisplacements->displacement_data[displacement_data_id].size() < 7 ||
+            bcsdisplacements->mode_data[mode_data_id].size() < 7 ||
+            !check_nodeset_exists(nodeset_id) ||
+            get_nodeset_name(nodeset_id).empty())
+        {
+          PRINT_ERROR("Invalid initial-displacement data for BC %d.\n", displacement_id);
+          return "";
+        }
+
+        bool active = false;
+        for (int dof = 1; dof <= 6; dof++)
+        {
+          if (bcsdisplacements->mode_data[mode_data_id][dof] != 0)
+          {
+            active = true;
           }
         }
-      }else if ((get_bc_fea_type(bc_attribs)==4) && (initialconditions->initialconditions_data[i][1]==2))
-      {
-        sub_data_id = initialconditions->get_temperature_data_id_from_temperature_id(initialconditions->initialconditions_data[i][2]);
-        if (initialconditions->temperature_data[sub_data_id][1]!="")
+
+        str_temp = bcsdisplacements->get_initial_displacement_export(displacement_id);
+
+        if (str_temp.empty() && active)
         {
-          if (std::stoi(initialconditions->temperature_data[sub_data_id][1])==me_iface->id_from_handle(bc_handles[ii]))
-          {
-            me_iface->get_bc_nodeset(bc_handles[ii],nodeset);
-            str_temp = "*INITIAL CONDITIONS,TYPE=TEMPERATURE";
-            initialconditions_export_list.push_back(str_temp);
-            for (size_t iii = 0; iii < bc_attribs.size(); iii++)
-            { 
-              str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + to_string_scientific(bc_attribs[iii].second);
-              initialconditions_export_list.push_back(str_temp);
-            }
-          }
+          PRINT_ERROR("Failed exporting initial displacement from BC %d.\n", displacement_id);
+          return "";
+        }
+
+        if (!str_temp.empty())
+        {
+          initialconditions_export_list.push_back(str_temp);
         }
       }
-      bc_attribs.clear();
+    }
+
+    if (initialconditions->initialconditions_data[i][1] == 2)
+    {
+      sub_data_id = initialconditions->get_temperature_data_id_from_temperature_id(
+        initialconditions->initialconditions_data[i][2]);
+      if (sub_data_id == -1 || initialconditions->temperature_data[sub_data_id].size() < 2)
+      {
+        PRINT_ERROR("Missing initial temperature reference.\n");
+        return "";
+      }
+      std::string bc_id = initialconditions->temperature_data[sub_data_id][1];
+      if (!bc_id.empty())
+      {
+        int temperature_id = std::stoi(bc_id);
+        str_temp = bcstemperatures->get_initial_temperature_export(temperature_id);
+        if (str_temp.empty())
+        {
+          PRINT_ERROR("Failed exporting initial temperature from BC %d.\n", temperature_id);
+          return "";
+        }
+        initialconditions_export_list.push_back(str_temp);
+      }
     }
     if (initialconditions->initialconditions_data[i][1]==3)
     {
@@ -13963,14 +14089,6 @@ std::string CalculiXCore::get_initialcondition_export_data() // gets the export 
     // CUSTOMLINE END
   }
   
-  if (bc_set_id!=-1)
-  {
-    log = "Deleting BCSet Initial Conditions Export.\n";
-    PRINT_INFO("%s", log.c_str());
-    command = "delete bcset " + std::to_string(bc_set_id);
-    CubitInterface::cmd(command.c_str());
-  }
-
   std::string initialcondition_export;
 
   for (size_t i = 0; i < initialconditions_export_list.size(); i++)
@@ -13986,107 +14104,123 @@ std::string CalculiXCore::get_hbc_export_data() // gets the export data from cor
   std::vector<std::string> hbcs_export_list;
   hbcs_export_list.push_back("********************************** H B C s ****************************");
   std::string str_temp;
-  std::vector<std::vector<std::string>> temp_list;
-  std::string log;
   std::vector<int> sub_data_ids;
-  std::string command;
-  int bc_set_id=-1;
-  BCSetHandle bc_set;
-  std::vector<BCSetHandle> bc_sets;
-  NodesetHandle nodeset;
-  std::vector<BCEntityHandle> bc_handles;
-  std::vector<MeshExportBCData> bc_attribs; 
   std::vector<std::string> customline;
 
-  log = "Creating BCSet for exporting Homogeneous Boundary Conditions.\n";
-  PRINT_INFO("%s", log.c_str());
-  if (me_iface->get_bcset_list(bc_sets))
-  {
-    //bc_set_id = me_iface->id_from_handle(bc_sets[bc_sets.size()-1]);
-    bc_set_id = bc_sets.size();     
-    me_iface->create_default_bcset(bc_set_id,true,true,true,bc_set);
-  }else{
-    me_iface->create_default_bcset(1,true,true,true,bc_set);
-  }
-  bc_set_id = me_iface->id_from_handle(bc_set);
-  
   // BCs
-  me_iface->get_bc_restraints(bc_set, bc_handles);
   sub_data_ids = hbcs->get_bc_data_ids_from_bcs_id(0);
-  for (size_t ii = 0; ii < bc_handles.size(); ii++)
-  {  
-    me_iface->get_bc_attributes(bc_handles[ii],bc_attribs);
-    for (size_t iii = 0; iii < sub_data_ids.size(); iii++)
-    { 
-      // DISPLACEMENT
-      if ((get_bc_fea_type(bc_attribs)==1) && (hbcs->bcs_data[sub_data_ids[iii]][1]==1))
+
+  // Plugin-owned displacement BCs.
+  for (size_t iii = 0; iii < sub_data_ids.size(); iii++)
+  {
+    if (hbcs->bcs_data[sub_data_ids[iii]][1] != 1)
+    {
+      continue;
+    }
+
+    int displacement_id = hbcs->bcs_data[sub_data_ids[iii]][2];
+    int bcs_data_id = bcsdisplacements->get_bcs_data_id_from_bc_id(displacement_id);
+
+    if (bcs_data_id == -1 || bcsdisplacements->bcs_data[bcs_data_id].size() < 7)
+    {
+      PRINT_ERROR("Missing or invalid displacement BC %d.\n", displacement_id);
+      return "";
+    }
+
+    int displacement_data_id = bcsdisplacements->get_displacement_data_id_from_displacement_id(
+        bcsdisplacements->bcs_data[bcs_data_id][5]);
+    int mode_data_id = bcsdisplacements->get_mode_data_id_from_displacement_id(
+        bcsdisplacements->bcs_data[bcs_data_id][5]);
+    int time_delay_data_id = bcsdisplacements->get_time_delay_data_id_from_time_delay_id(
+        bcsdisplacements->bcs_data[bcs_data_id][3]);
+    int nodeset_id = bcsdisplacements->bcs_data[bcs_data_id][4];
+
+    if (displacement_data_id == -1 ||
+        mode_data_id == -1 ||
+        time_delay_data_id == -1)
+    {
+      PRINT_ERROR("Missing displacement data for BC %d.\n", displacement_id);
+      return "";
+    }
+
+    if (bcsdisplacements->displacement_data[displacement_data_id].size() < 7 ||
+        bcsdisplacements->mode_data[mode_data_id].size() < 7 ||
+        bcsdisplacements->time_delay_data[time_delay_data_id].size() < 2 ||
+        !check_nodeset_exists(nodeset_id) ||
+        get_nodeset_name(nodeset_id).empty())
+    {
+      PRINT_ERROR("Invalid displacement data for BC %d.\n", displacement_id);
+      return "";
+    }
+
+    bool active = false;
+    for (int dof = 1; dof <= 6; dof++)
+    {
+      if (bcsdisplacements->mode_data[mode_data_id][dof] != 0)
       {
-        if (hbcs->bcs_data[sub_data_ids[iii]][2]==me_iface->id_from_handle(bc_handles[ii]))
-        { 
-          // CUSTOMLINE START
-          customline = customlines->get_customline_data("BEFORE","DISPLACEMENT",hbcs->bcs_data[sub_data_ids[iii]][2]);
-          for (size_t icl = 0; icl < customline.size(); icl++)
-          {
-            hbcs_export_list.push_back(customline[icl]);
-          }
-          // CUSTOMLINE END
-          me_iface->get_bc_nodeset(bc_handles[ii],nodeset);
-          str_temp = "*BOUNDARY";
-          str_temp.append(bcsdisplacements->get_bc_parameter_export(hbcs->bcs_data[sub_data_ids[iii]][2]));
-          hbcs_export_list.push_back(str_temp);
-          for (size_t iv = 0; iv < bc_attribs.size(); iv++)
-          { 
-            //str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iv].first+1) + "," + std::to_string(bc_attribs[iv].first+1) + "," + to_string_scientific(bc_attribs[iv].second);
-            str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iv].first+1) + "," + std::to_string(bc_attribs[iv].first+1);
-            hbcs_export_list.push_back(str_temp);
-          }
-          // CUSTOMLINE START
-          customline = customlines->get_customline_data("AFTER","DISPLACEMENT",hbcs->bcs_data[sub_data_ids[iii]][2]);
-          for (size_t icl = 0; icl < customline.size(); icl++)
-          {
-            hbcs_export_list.push_back(customline[icl]);
-          }
-          // CUSTOMLINE END
-        }  
-      }
-      // TEMPERATURE
-      if ((get_bc_fea_type(bc_attribs)==4) && (hbcs->bcs_data[sub_data_ids[iii]][1]==2))
-      {
-        if (hbcs->bcs_data[sub_data_ids[iii]][2]==me_iface->id_from_handle(bc_handles[ii]))
-        {
-          // CUSTOMLINE START
-          customline = customlines->get_customline_data("BEFORE","TEMPERATURE",hbcs->bcs_data[sub_data_ids[iii]][2]);
-          for (size_t icl = 0; icl < customline.size(); icl++)
-          {
-            hbcs_export_list.push_back(customline[icl]);
-          }
-          // CUSTOMLINE END
-          me_iface->get_bc_nodeset(bc_handles[ii],nodeset);
-          str_temp = "*BOUNDARY";
-          str_temp.append(bcstemperatures->get_bc_parameter_export(hbcs->bcs_data[sub_data_ids[iii]][2]));
-          hbcs_export_list.push_back(str_temp);
-          for (size_t iv = 0; iv < bc_attribs.size(); iv++)
-          { 
-            str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + ",11,11";
-            hbcs_export_list.push_back(str_temp);
-          }
-          // CUSTOMLINE START
-          customline = customlines->get_customline_data("AFTER","TEMPERATURE",hbcs->bcs_data[sub_data_ids[iii]][2]);
-          for (size_t icl = 0; icl < customline.size(); icl++)
-          {
-            hbcs_export_list.push_back(customline[icl]);
-          }
-          // CUSTOMLINE END
-        }  
+        active = true;
       }
     }
-    bc_attribs.clear();
+
+    // CUSTOMLINE START
+    customline = customlines->get_customline_data("BEFORE", "DISPLACEMENT", displacement_id);
+    for (size_t icl = 0; icl < customline.size(); icl++)
+    {
+      hbcs_export_list.push_back(customline[icl]);
+    }
+    // CUSTOMLINE END
+
+    str_temp = bcsdisplacements->get_hbc_export(displacement_id);
+
+    if (str_temp.empty() && active)
+    {
+      PRINT_ERROR("Failed exporting displacement BC %d.\n", displacement_id);
+      return "";
+    }
+
+    if (!str_temp.empty())
+    {
+      hbcs_export_list.push_back(str_temp);
+    }
+
+    // CUSTOMLINE START
+    customline = customlines->get_customline_data("AFTER", "DISPLACEMENT", displacement_id);
+    for (size_t icl = 0; icl < customline.size(); icl++)
+    {
+      hbcs_export_list.push_back(customline[icl]);
+    }
+    // CUSTOMLINE END
   }
-  
-  log = "Deleting BCSet HBCs Export.\n";
-  PRINT_INFO("%s", log.c_str());
-  command = "delete bcset " + std::to_string(bc_set_id);
-  CubitInterface::cmd(command.c_str());
+
+  for (size_t ii = 0; ii < sub_data_ids.size(); ii++)
+  {
+    int assignment_id = sub_data_ids[ii];
+    if (hbcs->bcs_data[assignment_id][1] != 2)
+    {
+      continue;
+    }
+    int temperature_id = hbcs->bcs_data[assignment_id][2];
+
+    customline = customlines->get_customline_data("BEFORE", "TEMPERATURE", temperature_id);
+    for (size_t icl = 0; icl < customline.size(); icl++)
+    {
+      hbcs_export_list.push_back(customline[icl]);
+    }
+
+    str_temp = bcstemperatures->get_hbc_export(temperature_id);
+    if (str_temp.empty())
+    {
+      PRINT_ERROR("Failed exporting temperature BC %d.\n", temperature_id);
+      return "";
+    }
+    hbcs_export_list.push_back(str_temp);
+
+    customline = customlines->get_customline_data("AFTER", "TEMPERATURE", temperature_id);
+    for (size_t icl = 0; icl < customline.size(); icl++)
+    {
+      hbcs_export_list.push_back(customline[icl]);
+    }
+  }
 
   std::string hbc_export;
 
@@ -14122,7 +14256,7 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
     {
       const int index = bcsdisplacements->get_bcs_data_id_from_bc_id(bc_id);
 
-      if (index < 0 || bcsdisplacements->bcs_data[index].size() < 10)
+      if (index < 0 || bcsdisplacements->bcs_data[index].size() < 7)
       {
         PRINT_ERROR("Missing displacement BC %d.\n", bc_id);
         return false;
@@ -14130,37 +14264,66 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
 
       if (bcsdisplacements->bcs_data[index][1] != 0)
       {
-        PRINT_ERROR("Adjoint export does not yet support OP=NEW in displacement BC %d.\n", bc_id);
+        PRINT_ERROR("Adjoint export does not yet support OP=NEW in displacement BC %d.\n",
+                    bc_id);
         return false;
       }
 
-      BCEntityHandle handle;
-      NodesetHandle nodeset;
-      std::vector<MeshExportBCData> attributes;
+      const int nodeset_id = bcsdisplacements->bcs_data[index][4];
+      const int displacement_id = bcsdisplacements->bcs_data[index][5];
 
-      if (!me_iface->get_bc_handle(BCTYPE_DISPLACEMENT, bc_id, handle) || !me_iface->get_bc_nodeset(handle, nodeset) || !me_iface->get_bc_attributes(handle, attributes))
-      {
-        PRINT_ERROR("Unable to query displacement BC %d.\n", bc_id);
-        return false;
-      }
-
-      const int nodeset_id = me_iface->id_from_handle(nodeset);
-
-      if (nodeset_id <= 0 || CubitInterface::get_nodeset_nodes_inclusive(nodeset_id).empty())
+      if (!check_nodeset_exists(nodeset_id) ||
+          CubitInterface::get_nodeset_nodes_inclusive(nodeset_id).empty())
       {
         PRINT_ERROR("Displacement BC %d has a missing or empty nodeset.\n", bc_id);
         return false;
       }
 
-      for (const auto& attribute : attributes)
+      const int displacement_data_id =
+        bcsdisplacements->get_displacement_data_id_from_displacement_id(displacement_id);
+      const int mode_data_id =
+        bcsdisplacements->get_mode_data_id_from_displacement_id(displacement_id);
+
+      if (displacement_data_id < 0 || mode_data_id < 0)
       {
-        if (attribute.first < 0 || attribute.first >= 6 || !std::isfinite(attribute.second))
+        PRINT_ERROR("Missing displacement data for BC %d.\n", bc_id);
+        return false;
+      }
+
+      if (bcsdisplacements->displacement_data[displacement_data_id].size() < 7 ||
+          bcsdisplacements->mode_data[mode_data_id].size() < 7)
+      {
+        PRINT_ERROR("Invalid displacement data for BC %d.\n", bc_id);
+        return false;
+      }
+
+      for (int dof = 1; dof <= 6; ++dof)
+      {
+        const int mode = bcsdisplacements->mode_data[mode_data_id][dof];
+
+        if (mode < 0 || mode > 2)
         {
-          PRINT_ERROR("Invalid displacement attributes for BC %d.\n", bc_id);
+          PRINT_ERROR("Invalid displacement mode for BC %d, DOF %d.\n", bc_id, dof);
           return false;
         }
 
-        boundaries.emplace(nodeset_id, attribute.first + 1);
+        if (mode == 1)
+        {
+          const double magnitude =
+            bcsdisplacements->displacement_data[displacement_data_id][dof];
+
+          if (!std::isfinite(magnitude))
+          {
+            PRINT_ERROR("Invalid displacement magnitude for BC %d, DOF %d.\n",
+                        bc_id, dof);
+            return false;
+          }
+        }
+
+        if (mode != 0)
+        {
+          boundaries.emplace(nodeset_id, dof);
+        }
       }
 
       return true;
@@ -14337,35 +14500,12 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
   steps_export_list.push_back("********************************** S T E P S ****************************");
   std::string str_temp;
   std::vector<std::vector<std::string>> temp_list;
-  std::string log;
   std::vector<int> sub_data_ids;
-  std::string command;
-  int bc_set_id=-1;
-  BCSetHandle bc_set;
-  std::vector<BCSetHandle> bc_sets;
-  NodesetHandle nodeset;
-  SidesetHandle sideset;
-  std::vector<BCEntityHandle> bc_handles;
-  std::vector<MeshExportBCData> bc_attribs; 
   std::vector<std::string> customline;
 
   //loop over all steps
   for (size_t i = 0; i < steps->steps_data.size(); i++)
   { 
-    if (i==0)
-    { 
-      log = "Creating BCSet for exporting Steps.\n";
-      PRINT_INFO("%s", log.c_str());
-      if (me_iface->get_bcset_list(bc_sets))
-      {
-        //bc_set_id = me_iface->id_from_handle(bc_sets[bc_sets.size()-1]);
-        bc_set_id = bc_sets.size();     
-        me_iface->create_default_bcset(bc_set_id,true,true,true,bc_set);
-      }else{
-        me_iface->create_default_bcset(2,true,true,true,bc_set);
-      }
-      bc_set_id = me_iface->id_from_handle(bc_set);
-    }
     str_temp = steps->get_step_export(steps->steps_data[i][0]);
     steps_export_list.push_back(str_temp);        
     // Loads
@@ -14392,8 +14532,6 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
           if (str_temp.empty())
           {
             PRINT_ERROR("Failed exporting force %d.\n", force_id);
-            command = "delete bcset " + std::to_string(bc_set_id);
-            CubitInterface::cmd(command.c_str());
             return "";
           }
           steps_export_list.push_back(str_temp);
@@ -14430,8 +14568,6 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
           if (str_temp.empty())
           {
             PRINT_ERROR("Failed exporting pressure %d.\n", pressure_id);
-            command = "delete bcset " + std::to_string(bc_set_id);
-            CubitInterface::cmd(command.c_str());
             return "";
           }
           steps_export_list.push_back(str_temp);
@@ -14468,8 +14604,6 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
           if (str_temp.empty())
           {
             PRINT_ERROR("Failed exporting heatflux %d.\n", heatflux_id);
-            command = "delete bcset " + std::to_string(bc_set_id);
-            CubitInterface::cmd(command.c_str());
             return "";
           }
           steps_export_list.push_back(str_temp);
@@ -14688,114 +14822,120 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
       }
     }
     // BCs
-    me_iface->get_bc_restraints(bc_set, bc_handles);
     sub_data_ids = steps->get_bc_data_ids_from_bcs_id(steps->steps_data[i][6]);
-    for (size_t ii = 0; ii < bc_handles.size(); ii++)
-    {  
-      me_iface->get_bc_attributes(bc_handles[ii],bc_attribs);
-      for (size_t iii = 0; iii < sub_data_ids.size(); iii++)
-      { 
-        // DISPLACEMENT
-        if ((get_bc_fea_type(bc_attribs)==1) && (steps->bcs_data[sub_data_ids[iii]][1]==1))
+
+    // Plugin-owned displacement BCs.
+    for (size_t iii = 0; iii < sub_data_ids.size(); iii++)
+    {
+      if (steps->bcs_data[sub_data_ids[iii]][1] != 1)
+      {
+        continue;
+      }
+
+      int displacement_id = steps->bcs_data[sub_data_ids[iii]][2];
+      int bcs_data_id = bcsdisplacements->get_bcs_data_id_from_bc_id(displacement_id);
+
+      if (bcs_data_id == -1 || bcsdisplacements->bcs_data[bcs_data_id].size() < 7)
+      {
+        PRINT_ERROR("Missing or invalid displacement BC %d.\n", displacement_id);
+        return "";
+      }
+
+      int displacement_data_id = bcsdisplacements->get_displacement_data_id_from_displacement_id(
+          bcsdisplacements->bcs_data[bcs_data_id][5]);
+      int mode_data_id = bcsdisplacements->get_mode_data_id_from_displacement_id(
+          bcsdisplacements->bcs_data[bcs_data_id][5]);
+      int time_delay_data_id = bcsdisplacements->get_time_delay_data_id_from_time_delay_id(
+          bcsdisplacements->bcs_data[bcs_data_id][3]);
+      int nodeset_id = bcsdisplacements->bcs_data[bcs_data_id][4];
+
+      if (displacement_data_id == -1 ||
+          mode_data_id == -1 ||
+          time_delay_data_id == -1)
+      {
+        PRINT_ERROR("Missing displacement data for BC %d.\n", displacement_id);
+        return "";
+      }
+
+      if (bcsdisplacements->displacement_data[displacement_data_id].size() < 7 ||
+          bcsdisplacements->mode_data[mode_data_id].size() < 7 ||
+          bcsdisplacements->time_delay_data[time_delay_data_id].size() < 2 ||
+          !check_nodeset_exists(nodeset_id) ||
+          get_nodeset_name(nodeset_id).empty())
+      {
+        PRINT_ERROR("Invalid displacement data for BC %d.\n", displacement_id);
+        return "";
+      }
+
+      bool active = false;
+      for (int dof = 1; dof <= 6; dof++)
+      {
+        if (bcsdisplacements->mode_data[mode_data_id][dof] != 0)
         {
-          if (steps->bcs_data[sub_data_ids[iii]][2]==me_iface->id_from_handle(bc_handles[ii]))
-          { 
-            // CUSTOMLINE START
-            customline = customlines->get_customline_data("BEFORE","DISPLACEMENT",steps->bcs_data[sub_data_ids[iii]][2]);
-            for (size_t icl = 0; icl < customline.size(); icl++)
-            {
-              steps_export_list.push_back(customline[icl]);
-            }
-            // CUSTOMLINE END
-            me_iface->get_bc_nodeset(bc_handles[ii],nodeset);
-            str_temp = "*BOUNDARY";
-            str_temp.append(bcsdisplacements->get_bc_parameter_export(steps->bcs_data[sub_data_ids[iii]][2]));
-            steps_export_list.push_back(str_temp);
-            for (size_t iv = 0; iv < bc_attribs.size(); iv++)
-            { 
-              //SKIP IF FIXED
-              if (!bcsdisplacements->check_dof_fixed(steps->bcs_data[sub_data_ids[iii]][2],bc_attribs[iv].first+1))
-              {
-                str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iv].first+1) + "," + std::to_string(bc_attribs[iv].first+1) + "," + to_string_scientific(bc_attribs[iv].second);
-                steps_export_list.push_back(str_temp);
-              }
-            }
-            //FIXED DOFS
-            if (bcsdisplacements->check_fixed(steps->bcs_data[sub_data_ids[iii]][2]))
-            {
-              str_temp = "*BOUNDARY";
-              str_temp.append(bcsdisplacements->get_bc_parameter_fixed_export(steps->bcs_data[sub_data_ids[iii]][2]));
-              steps_export_list.push_back(str_temp);
-              for (size_t iv = 0; iv < bc_attribs.size(); iv++)
-              { 
-                //SKIP IF NOT FIXED
-                if (bcsdisplacements->check_dof_fixed(steps->bcs_data[sub_data_ids[iii]][2],bc_attribs[iv].first+1))
-                {
-                  str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + std::to_string(bc_attribs[iv].first+1) + "," + std::to_string(bc_attribs[iv].first+1);
-                  steps_export_list.push_back(str_temp);
-                }
-              }
-            }
-            // CUSTOMLINE START
-            customline = customlines->get_customline_data("AFTER","DISPLACEMENT",steps->bcs_data[sub_data_ids[iii]][2]);
-            for (size_t icl = 0; icl < customline.size(); icl++)
-            {
-              steps_export_list.push_back(customline[icl]);
-            }
-            // CUSTOMLINE END
-          }  
-        }
-        // TEMPERATURE
-        if ((get_bc_fea_type(bc_attribs)==4) && (steps->bcs_data[sub_data_ids[iii]][1]==2))
-        {
-          if (steps->bcs_data[sub_data_ids[iii]][2]==me_iface->id_from_handle(bc_handles[ii]))
-          {
-            // CUSTOMLINE START
-            customline = customlines->get_customline_data("BEFORE","TEMPERATURE",steps->bcs_data[sub_data_ids[iii]][2]);
-            for (size_t icl = 0; icl < customline.size(); icl++)
-            {
-              steps_export_list.push_back(customline[icl]);
-            }
-            // CUSTOMLINE END
-            me_iface->get_bc_nodeset(bc_handles[ii],nodeset);
-            if (bcstemperatures->get_bc_keyword_type(steps->bcs_data[sub_data_ids[iii]][2]) == 0) // *BOUNDARY
-            {
-              str_temp = "*BOUNDARY";
-            }else if (bcstemperatures->get_bc_keyword_type(steps->bcs_data[sub_data_ids[iii]][2]) == 1) // *TEMPERATURE
-            {
-              str_temp = "*TEMPERATURE";
-            }else{
-              str_temp = "*SOMETHING WENT WRONG";
-            }
-            str_temp.append(bcstemperatures->get_bc_parameter_export(steps->bcs_data[sub_data_ids[iii]][2]));
-            steps_export_list.push_back(str_temp);            
-            if (bcstemperatures->get_bc_keyword_type(steps->bcs_data[sub_data_ids[iii]][2]) == 0) // *BOUNDARY
-            {
-              for (size_t iv = 0; iv < bc_attribs.size(); iv++)
-              { 
-                str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + ",11,11," + to_string_scientific(bc_attribs[iv].second);
-                steps_export_list.push_back(str_temp);
-              }
-            }else if (bcstemperatures->get_bc_keyword_type(steps->bcs_data[sub_data_ids[iii]][2]) == 1) // *TEMPERATURE
-            {
-              for (size_t iv = 0; iv < bc_attribs.size(); iv++)
-              { 
-                str_temp = get_nodeset_name(me_iface->id_from_handle(nodeset)) + "," + to_string_scientific(bc_attribs[iv].second);
-                steps_export_list.push_back(str_temp);
-              }
-            }
-            // CUSTOMLINE START
-            customline = customlines->get_customline_data("AFTER","TEMPERATURE",steps->bcs_data[sub_data_ids[iii]][2]);
-            for (size_t icl = 0; icl < customline.size(); icl++)
-            {
-              steps_export_list.push_back(customline[icl]);
-            }
-            // CUSTOMLINE END
-          }  
+          active = true;
         }
       }
-      bc_attribs.clear();
+
+      // CUSTOMLINE START
+      customline = customlines->get_customline_data("BEFORE", "DISPLACEMENT", displacement_id);
+      for (size_t icl = 0; icl < customline.size(); icl++)
+      {
+        steps_export_list.push_back(customline[icl]);
+      }
+      // CUSTOMLINE END
+
+      str_temp = bcsdisplacements->get_bc_export(displacement_id);
+
+      if (str_temp.empty() && active)
+      {
+        PRINT_ERROR("Failed exporting displacement BC %d.\n", displacement_id);
+        return "";
+      }
+
+      if (!str_temp.empty())
+      {
+        steps_export_list.push_back(str_temp);
+      }
+
+      // CUSTOMLINE START
+      customline = customlines->get_customline_data("AFTER", "DISPLACEMENT", displacement_id);
+      for (size_t icl = 0; icl < customline.size(); icl++)
+      {
+        steps_export_list.push_back(customline[icl]);
+      }
+      // CUSTOMLINE END
     }
+
+    for (size_t ii = 0; ii < sub_data_ids.size(); ii++)
+    {
+      int assignment_id = sub_data_ids[ii];
+      if (steps->bcs_data[assignment_id][1] != 2)
+      {
+        continue;
+      }
+      int temperature_id = steps->bcs_data[assignment_id][2];
+
+      customline = customlines->get_customline_data("BEFORE", "TEMPERATURE", temperature_id);
+      for (size_t icl = 0; icl < customline.size(); icl++)
+      {
+        steps_export_list.push_back(customline[icl]);
+      }
+
+      str_temp = bcstemperatures->get_bc_export(temperature_id);
+      if (str_temp.empty())
+      {
+        PRINT_ERROR("Failed exporting temperature BC %d.\n", temperature_id);
+        return "";
+      }
+      steps_export_list.push_back(str_temp);
+
+      customline = customlines->get_customline_data("AFTER", "TEMPERATURE", temperature_id);
+      for (size_t icl = 0; icl < customline.size(); icl++)
+      {
+        steps_export_list.push_back(customline[icl]);
+      }
+    }
+
     // History Outputs
     sub_data_ids = steps->get_historyoutput_data_ids_from_historyoutputs_id(steps->steps_data[i][7]);
 
@@ -14832,14 +14972,6 @@ std::string CalculiXCore::get_step_export_data() // gets the export data from co
     // CUSTOMLINE END
   }
   
-  if (bc_set_id!=-1)
-  {
-    log = "Deleting BCSet Steps Export.\n";
-    PRINT_INFO("%s", log.c_str());
-    command = "delete bcset " + std::to_string(bc_set_id);
-    CubitInterface::cmd(command.c_str());
-  }
-
   std::string step_export;
 
   for (size_t i = 0; i < steps_export_list.size(); i++)
@@ -15487,8 +15619,14 @@ std::vector<std::vector<std::string>> CalculiXCore::get_bcsdisplacements_tree_da
     std::vector<std::string> bcsdisplacements_tree_data_set;
     std::string name;
     
-    name = CubitInterface::get_bc_name(CI_BCTYPE_DISPLACEMENT,bcsdisplacements->bcs_data[i][0]);
-    if (name == "")
+    int subdata_id = bcsdisplacements->get_name_data_id_from_name_id(
+      bcsdisplacements->bcs_data[i][6]);
+
+    if (subdata_id != -1 && bcsdisplacements->name_data[subdata_id][1] != "")
+    {
+      name = bcsdisplacements->name_data[subdata_id][1];
+    }
+    else
     {
       name = "Displacement_" + std::to_string(bcsdisplacements->bcs_data[i][0]);
     }
@@ -15509,8 +15647,14 @@ std::vector<std::vector<std::string>> CalculiXCore::get_bcstemperatures_tree_dat
     std::vector<std::string> bcstemperatures_tree_data_set;
     std::string name;
     
-    name = CubitInterface::get_bc_name(CI_BCTYPE_TEMPERATURE,bcstemperatures->bcs_data[i][0]);
-    if (name == "")
+    int subdata_id = bcstemperatures->get_name_data_id_from_name_id(
+      bcstemperatures->bcs_data[i][6]);
+
+    if (subdata_id != -1 && bcstemperatures->name_data[subdata_id][1] != "")
+    {
+      name = bcstemperatures->name_data[subdata_id][1];
+    }
+    else
     {
       name = "Temperature_" + std::to_string(bcstemperatures->bcs_data[i][0]);
     }
@@ -15610,7 +15754,19 @@ std::vector<std::vector<std::string>> CalculiXCore::get_initialconditions_tree_d
       } else {
         if (check_bc_exists(std::stoi(bc_id),4))
         {
-          initialcondition_name = CubitInterface::get_bc_name(CI_BCTYPE_DISPLACEMENT,std::stoi(bc_id));
+          int bcs_data_id =
+            bcsdisplacements->get_bcs_data_id_from_bc_id(std::stoi(bc_id));
+
+          if (bcs_data_id != -1)
+          {
+            int subdata_id = bcsdisplacements->get_name_data_id_from_name_id(
+              bcsdisplacements->bcs_data[bcs_data_id][6]);
+
+            if (subdata_id != -1)
+            {
+              initialcondition_name = bcsdisplacements->name_data[subdata_id][1];
+            }
+          }
         } else 
         {
           initialcondition_name = "Displacement ID " + bc_id + " doesn't exist!";
@@ -15631,7 +15787,16 @@ std::vector<std::vector<std::string>> CalculiXCore::get_initialconditions_tree_d
       }else {
         if (check_bc_exists(std::stoi(bc_id),5))
         {
-          initialcondition_name = CubitInterface::get_bc_name(CI_BCTYPE_TEMPERATURE,std::stoi(bc_id));
+          int bcs_data_id = bcstemperatures->get_bcs_data_id_from_bc_id(std::stoi(bc_id));
+          if (bcs_data_id != -1)
+          {
+            int subdata_id = bcstemperatures->get_name_data_id_from_name_id(
+              bcstemperatures->bcs_data[bcs_data_id][6]);
+            if (subdata_id != -1)
+            {
+              initialcondition_name = bcstemperatures->name_data[subdata_id][1];
+            }
+          }
         } else 
         {
           initialcondition_name = "Temperature ID " + bc_id + " doesn't exist!";
@@ -15671,10 +15836,20 @@ std::vector<std::vector<std::string>> CalculiXCore::get_hbcsdisplacements_tree_d
     std::string name;
     if (hbcs->bcs_data[bcs_ids[i]][1]==1)
     {
-      name = CubitInterface::get_bc_name(CI_BCTYPE_DISPLACEMENT,hbcs->bcs_data[bcs_ids[i]][2]);
-      if (name == "")
+      int bc_id = hbcs->bcs_data[bcs_ids[i]][2];
+      int bcs_data_id = bcsdisplacements->get_bcs_data_id_from_bc_id(bc_id);
+
+      name = "Displacement_" + std::to_string(bc_id);
+
+      if (bcs_data_id != -1)
       {
-        name = "Displacement_" + std::to_string(hbcs->bcs_data[bcs_ids[i]][2]);
+        int subdata_id = bcsdisplacements->get_name_data_id_from_name_id(
+          bcsdisplacements->bcs_data[bcs_data_id][6]);
+
+        if (subdata_id != -1 && bcsdisplacements->name_data[subdata_id][1] != "")
+        {
+          name = bcsdisplacements->name_data[subdata_id][1];
+        }
       }
       bcsdisplacements_tree_data_set.push_back(std::to_string(hbcs->bcs_data[bcs_ids[i]][2])); //bc_id
       bcsdisplacements_tree_data_set.push_back(name); 
@@ -15697,10 +15872,20 @@ std::vector<std::vector<std::string>> CalculiXCore::get_hbcstemperatures_tree_da
     std::string name;
     if (hbcs->bcs_data[bcs_ids[i]][1]==2)
     {
-      name = CubitInterface::get_bc_name(CI_BCTYPE_TEMPERATURE,hbcs->bcs_data[bcs_ids[i]][2]);
-      if (name == "")
+      int bc_id = hbcs->bcs_data[bcs_ids[i]][2];
+      int bcs_data_id = bcstemperatures->get_bcs_data_id_from_bc_id(bc_id);
+
+      name = "Temperature_" + std::to_string(bc_id);
+
+      if (bcs_data_id != -1)
       {
-        name = "Temperature_" + std::to_string(hbcs->bcs_data[bcs_ids[i]][2]);
+        int subdata_id = bcstemperatures->get_name_data_id_from_name_id(
+          bcstemperatures->bcs_data[bcs_data_id][6]);
+
+        if (subdata_id != -1 && bcstemperatures->name_data[subdata_id][1] != "")
+        {
+          name = bcstemperatures->name_data[subdata_id][1];
+        }
       }
       bcstemperatures_tree_data_set.push_back(std::to_string(hbcs->bcs_data[bcs_ids[i]][2])); //bc_id
       bcstemperatures_tree_data_set.push_back(name); 
@@ -15709,6 +15894,7 @@ std::vector<std::vector<std::string>> CalculiXCore::get_hbcstemperatures_tree_da
   }
   return bcstemperatures_tree_data;
 }
+
 
 std::vector<int> CalculiXCore::get_steps_ids()
 {
@@ -16192,10 +16378,20 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_bcsdisplacements_t
     std::string name;
     if (steps->bcs_data[bcs_ids[i]][1]==1)
     {
-      name = CubitInterface::get_bc_name(CI_BCTYPE_DISPLACEMENT,steps->bcs_data[bcs_ids[i]][2]);
-      if (name == "")
+      int bc_id = steps->bcs_data[bcs_ids[i]][2];
+      int bcs_data_id = bcsdisplacements->get_bcs_data_id_from_bc_id(bc_id);
+
+      name = "Displacement_" + std::to_string(bc_id);
+
+      if (bcs_data_id != -1)
       {
-        name = "Displacement_" + std::to_string(steps->bcs_data[bcs_ids[i]][2]);
+        int subdata_id = bcsdisplacements->get_name_data_id_from_name_id(
+          bcsdisplacements->bcs_data[bcs_data_id][6]);
+
+        if (subdata_id != -1 && bcsdisplacements->name_data[subdata_id][1] != "")
+        {
+          name = bcsdisplacements->name_data[subdata_id][1];
+        }
       }
       bcsdisplacements_tree_data_set.push_back(std::to_string(steps->bcs_data[bcs_ids[i]][2])); //bc_id
       bcsdisplacements_tree_data_set.push_back(name); 
@@ -16223,10 +16419,20 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_bcstemperatures_tr
     std::string name;
     if (steps->bcs_data[bcs_ids[i]][1]==2)
     {
-      name = CubitInterface::get_bc_name(CI_BCTYPE_TEMPERATURE,steps->bcs_data[bcs_ids[i]][2]);
-      if (name == "")
+      int bc_id = steps->bcs_data[bcs_ids[i]][2];
+      int bcs_data_id = bcstemperatures->get_bcs_data_id_from_bc_id(bc_id);
+
+      name = "Temperature_" + std::to_string(bc_id);
+
+      if (bcs_data_id != -1)
       {
-        name = "Temperature_" + std::to_string(steps->bcs_data[bcs_ids[i]][2]);
+        int subdata_id = bcstemperatures->get_name_data_id_from_name_id(
+          bcstemperatures->bcs_data[bcs_data_id][6]);
+
+        if (subdata_id != -1 && bcstemperatures->name_data[subdata_id][1] != "")
+        {
+          name = bcstemperatures->name_data[subdata_id][1];
+        }
       }
       bcstemperatures_tree_data_set.push_back(std::to_string(steps->bcs_data[bcs_ids[i]][2])); //bc_id
       bcstemperatures_tree_data_set.push_back(name); 
@@ -16235,6 +16441,7 @@ std::vector<std::vector<std::string>> CalculiXCore::get_steps_bcstemperatures_tr
   }
   return bcstemperatures_tree_data;
 }
+
 
 std::vector<std::vector<std::string>> CalculiXCore::get_steps_historyoutputs_tree_data(int step_id)
 { 
@@ -16419,6 +16626,18 @@ std::vector<int> CalculiXCore::parser(std::string parse_type, std::string parse_
       for (size_t i = 0; i < orientations->orientations_data.size(); i++)
       {
         all_ids.push_back(orientations->orientations_data[i][0]);
+      }
+    } else if (parse_type=="bcstemperatures")
+    {
+      for (size_t i = 0; i < bcstemperatures->bcs_data.size(); i++)
+      {
+        all_ids.push_back(bcstemperatures->bcs_data[i][0]);
+      }
+    } else if (parse_type=="bcsdisplacements")
+    {
+      for (size_t i = 0; i < bcsdisplacements->bcs_data.size(); i++)
+      {
+        all_ids.push_back(bcsdisplacements->bcs_data[i][0]);
       }
     } else if (parse_type=="loadsforces")
     {

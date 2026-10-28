@@ -151,7 +151,20 @@ void HBCsDisplacementsTree::populateContextMenu(
 
   if (clickedItem == this)
   {
-    addPanelAction(menu, "homogeneous BCs Management", host, "FEADisplacementCreate");
+    QAction *action = menu.addAction("homogeneous BCs Management");
+    ModelTree *hostPtr = &host;
+
+    QObject::connect(action, &QAction::triggered, hostPtr, [hostPtr]()
+    {
+      if (hostPtr->myHBCsManagement == nullptr)
+      {
+        PRINT_WARNING("The requested model tree service is unavailable.\n");
+        return;
+      }
+
+      hostPtr->myHBCsManagement->show();
+    });
+
     return;
   }
 
@@ -160,10 +173,9 @@ void HBCsDisplacementsTree::populateContextMenu(
     return;
   }
 
-  addPanelAction(menu, "Create Displacement", host, "FEADisplacementCreate");
-  addPanelAction(menu, "Modify Displacement", host, "FEADisplacementModify");
-  addPanelAction(menu, "CCX Modify Displacement", host, "CCXBCsDisplacementsModify");
-  addPanelAction(menu, "Delete Displacement", host, "FEADisplacementDelete");
+  addPanelAction(menu, "Create Displacement", host, "CCXBCsDisplacementsCreate");
+  addPanelAction(menu, "Modify Displacement", host, "CCXBCsDisplacementsModify");
+  addPanelAction(menu, "Delete Displacement", host, "CCXBCsDisplacementsDelete");
   {
     QAction *action = menu.addAction("homogeneous BCs Management");
     ModelTree *hostPtr = &host;

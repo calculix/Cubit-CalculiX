@@ -34,13 +34,18 @@ create vertex on curve 4 midpoint
 ccx create constraint rigid body nodeset 1 ref 5 rot 6
 ccx create constraint rigid body nodeset 2 ref 7 rot 8
 
-create displacement  on vertex 5 dof 1 dof 2 dof 3 fix 
-create displacement  on vertex 6 dof 1 dof 2 dof 3 fix
+nodeset 3 add vertex 5
+ccx create displacement nodeset 3 dof_1 0 dof_2 0 dof_3 0
+nodeset 4 add vertex 6
+ccx create displacement nodeset 4 dof_1 0 dof_2 0 dof_3 0
 
-create displacement  on vertex 7 dof 2 dof 3 fix 
-create displacement  on vertex 8 dof 1 dof 2 dof 3 fix
+nodeset 5 add vertex 7
+ccx create displacement nodeset 5 dof_2 0 dof_3 0
+nodeset 6 add vertex 8
+ccx create displacement nodeset 6 dof_1 0 dof_2 0 dof_3 0
 
-create pressure on curve 4 magnitude 10
+sideset 1 add curve 4
+ccx create pressure sideset 1 magnitude 10
 
 ccx create fieldoutput name "nodes" node
 ccx create fieldoutput name "elements" element

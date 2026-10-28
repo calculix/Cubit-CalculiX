@@ -167,7 +167,6 @@ public:
   bool check_fieldoutput_exists(int fieldoutput_id);
   bool check_vertex_in_nodeset_exists(int vertex_id,int nodeset_id); // checks if the vertex exists in the nodeset
   bool check_step_exists(int step_id); // check if step exists
-  int get_bc_fea_type(std::vector<std::pair<int, double>> bc_attribs);
   bool set_ccx_element_type(int block_id, std::string ccx_element_type); // sets the ccx element type for a block
   std::vector<int> get_blocks(); // gets the block ids from core blocks
   int get_ccx_element_side(int element_type,int side); // gets the ccx element side for the given cubit element side
@@ -249,8 +248,12 @@ public:
   bool create_loadsbodyheatflux(std::vector<std::string> options, std::vector<int> options2); // adds a new bodyheatflux load
   bool modify_loadsbodyheatflux(int bodyheatflux_id, std::vector<std::string> options, std::vector<int> options2, std::vector<int> options_marker); // modify a bodyheatflux
   bool delete_loadsbodyheatflux(int bodyheatflux_id); // delete bodyheatflux load
-  bool modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a displacement
-  bool modify_bcstemperatures(int temperature_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a temperature
+  bool create_bcsdisplacements(std::vector<std::string> options, std::vector<double> options2, std::vector<int> options3);
+  bool delete_bcsdisplacements(int displacement_id);
+  bool modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<double> options2, std::vector<int> options3, std::vector<int> options_marker); // modify a displacement
+  bool create_bcstemperatures(std::vector<std::string> options, std::vector<double> options2);
+  bool modify_bcstemperatures(int temperature_id, std::vector<std::string> options, std::vector<double> options2, std::vector<int> options_marker);
+  bool delete_bcstemperatures(int temperature_id);
   bool create_historyoutput(std::vector<std::string> options); // adds a new output
   bool modify_historyoutput(int output_id, int modify_type, std::vector<std::string> options, std::vector<int> options_marker); // modify a output
   bool delete_historyoutput(int output_id); // delete output

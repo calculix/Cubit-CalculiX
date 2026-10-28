@@ -75,20 +75,26 @@ ccx create contactpair surfaceinteraction 1 surfacetosurface master 2 slave 3
 ccx create contactpair surfaceinteraction 1 surfacetosurface master 4 slave 6
 ccx create contactpair surfaceinteraction 1 surfacetosurface master 7 slave 8
 
-create temperature  on volume all value 0
+nodeset 3 add volume all
+ccx create temperature nodeset 3 magnitude 0
 ccx create initialcondition temperature
 ccx modify initialcondition 1 temperature bc_id 1
 
 #preload
-create temperature  on volume 3 value -50
+nodeset 4 add volume 3
+ccx create temperature nodeset 4 magnitude -50
 ccx modify temperature 2 keyword_type temp
 ccx modify temperature 1 keyword_type temp
 
 # plate bc
-create displacement name "plate_1_fix" on surface 4 dof 1 dof 2 dof 3 fix 0
-create displacement name "plate_2_fix" on surface 12 dof 1 dof 2 dof 3 fix 0
-create displacement name "plate_1_pull" on surface 4 dof 1 fix -0.35
-create displacement name "plate_2_pull" on surface 12 dof 1 fix 0.35
+nodeset 5 add surface 4
+ccx create displacement nodeset 5 dof_1 0 dof_2 0 dof_3 0 name "plate_1_fix"
+nodeset 6 add surface 12
+ccx create displacement nodeset 6 dof_1 0 dof_2 0 dof_3 0 name "plate_2_fix"
+nodeset 7 add surface 4
+ccx create displacement nodeset 7 dof_1 -0.35 name "plate_1_pull"
+nodeset 8 add surface 12
+ccx create displacement nodeset 8 dof_1 0.35 name "plate_2_pull"
 
 ccx create historyoutput name "ho_1" element
 ccx modify historyoutput 1 element block 1 totals_yes

@@ -83,8 +83,12 @@
 #include "GUI/loads/LoadsBodyHeatfluxCreatePanel.hpp"
 #include "GUI/loads/LoadsBodyHeatfluxModifyPanel.hpp"
 #include "GUI/loads/LoadsBodyHeatfluxDeletePanel.hpp"
+#include "GUI/bcs/BCsDisplacementsCreatePanel.hpp"
 #include "GUI/bcs/BCsDisplacementsModifyPanel.hpp"
+#include "GUI/bcs/BCsDisplacementsDeletePanel.hpp"
+#include "GUI/bcs/BCsTemperaturesCreatePanel.hpp"
 #include "GUI/bcs/BCsTemperaturesModifyPanel.hpp"
+#include "GUI/bcs/BCsTemperaturesDeletePanel.hpp"
 #include "GUI/steps/HistoryOutputsCreatePanel.hpp"
 #include "GUI/steps/HistoryOutputsModifyNodePanel.hpp"
 #include "GUI/steps/HistoryOutputsModifyElementPanel.hpp"
@@ -379,10 +383,30 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
     return new LoadsBodyHeatfluxModifyPanel();
   if(name == "CCXLoadsBodyHeatfluxDelete")
     return new LoadsBodyHeatfluxDeletePanel();
-  if(name == "CCXBCsDisplacementsModify")
+  if (name == "CCXBCsDisplacementsCreate")
+  {
+    return new BCsDisplacementsCreatePanel();
+  }
+  if (name == "CCXBCsDisplacementsModify")
+  {
     return new BCsDisplacementsModifyPanel();
-  if(name == "CCXBCsTemperaturesModify")
+  }
+  if (name == "CCXBCsDisplacementsDelete")
+  {
+    return new BCsDisplacementsDeletePanel();
+  }
+  if (name == "CCXBCsTemperaturesCreate")
+  {
+    return new BCsTemperaturesCreatePanel();
+  }
+  if (name == "CCXBCsTemperaturesModify")
+  {
     return new BCsTemperaturesModifyPanel();
+  }
+  if (name == "CCXBCsTemperaturesDelete")
+  {
+    return new BCsTemperaturesDeletePanel();
+  }
   if(name == "CCXHistoryOutputsCreate")
     return new HistoryOutputsCreatePanel();
   if(name == "CCXHistoryOutputsModifyNode")

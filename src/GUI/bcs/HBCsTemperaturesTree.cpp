@@ -151,7 +151,20 @@ void HBCsTemperaturesTree::populateContextMenu(
 
   if (clickedItem == this)
   {
-    addPanelAction(menu, "homogeneous BCs Management", host, "FEATemperatureCreate");
+    QAction *action = menu.addAction("homogeneous BCs Management");
+    ModelTree *hostPtr = &host;
+
+    QObject::connect(action, &QAction::triggered, hostPtr, [hostPtr]()
+    {
+      if (hostPtr->myHBCsManagement == nullptr)
+      {
+        PRINT_WARNING("The requested model tree service is unavailable.\n");
+        return;
+      }
+
+      hostPtr->myHBCsManagement->show();
+    });
+
     return;
   }
 
@@ -160,10 +173,9 @@ void HBCsTemperaturesTree::populateContextMenu(
     return;
   }
 
-  addPanelAction(menu, "Create Temperature", host, "FEATemperatureCreate");
-  addPanelAction(menu, "Modify Temperature", host, "FEATemperatureModify");
-  addPanelAction(menu, "CCX Modify Temperature", host, "CCXBCsTemperaturesModify");
-  addPanelAction(menu, "Delete Temperature", host, "FEATemperatureDelete");
+  addPanelAction(menu, "Create Temperature", host, "CCXBCsTemperaturesCreate");
+  addPanelAction(menu, "Modify Temperature", host, "CCXBCsTemperaturesModify");
+  addPanelAction(menu, "Delete Temperature", host, "CCXBCsTemperaturesDelete");
   {
     QAction *action = menu.addAction("homogeneous BCs Management");
     ModelTree *hostPtr = &host;

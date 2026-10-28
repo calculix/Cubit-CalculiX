@@ -17,7 +17,8 @@ block 1 add vol 1
 block 2 add vol 2
 #block 2 element type tetra10
 
-create displacement  on surface 3 9 dof all fix 0 
+nodeset 1 add surface 3 9
+ccx create displacement nodeset 1 dof_1 0 dof_2 0 dof_3 0 dof_4 0 dof_5 0 dof_6 0
 
 sideset 1 add surface 5
 sideset 1 name "top_quad"

@@ -4,7 +4,7 @@
 #include "CubitCommandInterface.hpp"
 
 /*!
- * \brief The BCs modify command lets you modify your desired BCs
+ * \brief The Loads modify command lets you modify your desired Loads
  */
 class ccxBCsTemperaturesModifyCommand : public CubitCommand
 {

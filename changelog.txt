@@ -215,3 +215,4 @@
 2026-10-21 adding material cap to topology, split calculixcoreinterface and reorder files
 2026-10-27 reworking pressure
 2026-10-27 reworking heatflux
+2026-10-28 reworking displacement, temperature; added .cub support

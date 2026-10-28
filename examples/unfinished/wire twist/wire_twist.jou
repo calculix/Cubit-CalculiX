@@ -66,9 +66,11 @@ ccx modify fieldoutput 2 element key_on E S
 ccx modify fieldoutput 2 element key_off CEEQ ECD EMFB EMFE ENER ERR HER HFL HFLF MAXE MAXS ME PEEQ PHS SF SMID SNEG SPOS SVF SDV THE ZZS 
 
 # bc
-create displacement  on nodeset 1 dof all fix 0 
-create displacement on vertex 5 dof 1 dof 2 fix 0
-create displacement  on vertex 6 dof 3 fix 5
+ccx create displacement nodeset 1 dof_1 0 dof_2 0 dof_3 0 dof_4 0 dof_5 0 dof_6 0
+nodeset 3 add vertex 5
+ccx create displacement nodeset 3 dof_1 0 dof_2 0
+nodeset 4 add vertex 6
+ccx create displacement nodeset 4 dof_3 5
 
 #step
 ccx create step name "twist" static

@@ -37,7 +37,8 @@ ccx create film sideset 1 temperature 293 coefficient 0.1
 ccx create film sideset 2 temperature 20 coefficient 0.1 name "woohooo"
 
 #boundary conditions
-create temperature on vol 1 value 400 #will be used as initial condition
+nodeset 1 add volume 1
+ccx create temperature nodeset 1 magnitude 400 #will be used as initial condition
 
 #initial conditions
 ccx create initialcondition temperature

@@ -10,33 +10,46 @@ move vol 2 x 1.5
 move vol 3 y 1.5
 move vol 4 x 1.5 y 1.5
 
-create force on surface 17 force value 1 direction 0 1 0
-create force on surface 23 force value 0 moment value 3 direction 1 1 1
-create force on surface 23 force value 1 direction 0 1 0
+nodeset 1 add surface 17
+ccx create force nodeset 1 dof_1 0 dof_2 1 dof_3 0 dof_4 0 dof_5 0 dof_6 0
+nodeset 2 add surface 23
+ccx create force nodeset 2 dof_1 0 dof_2 0 dof_3 0 dof_4 1.7320508075688776 dof_5 1.7320508075688776 dof_6 1.7320508075688776
+nodeset 3 add surface 23
+ccx create force nodeset 3 dof_1 0 dof_2 1 dof_3 0 dof_4 0 dof_5 0 dof_6 0
 
-create pressure on surface 1 magnitude 22
-create pressure on curve 1 magnitude 22
+sideset 1 add surface 1
+ccx create pressure sideset 1 magnitude 22
+sideset 2 add curve 1
+ccx create pressure sideset 2 magnitude 22
 
-create heatflux  on surface 12  value 21 
-create heatflux  on surface 10  value 21 
-create heatflux  on surface 11  value 12
+sideset 3 add surface 12
+ccx create heatflux sideset 3 magnitude 21
+sideset 4 add surface 10
+ccx create heatflux sideset 4 magnitude 21
+sideset 5 add surface 11
+ccx create heatflux sideset 5 magnitude 12
 
 block 1 add volume 1
 
 ccx create gravity 234 block 1 direction 1 2 3
 ccx create centrifugal 123123 block 1 coordinate -1 -2 -2 direction 4 4 0
 
-create displacement  on volume 1 dof 1 dof 6 fix 21 
-create displacement  on volume 2 dof all fix  1
-create temperature on volume 4 value 21
+nodeset 4 add volume 1
+ccx create displacement nodeset 4 dof_1 21 dof_6 21
+nodeset 5 add volume 2
+ccx create displacement nodeset 5 dof_1 1 dof_2 1 dof_3 1 dof_4 1 dof_5 1 dof_6 1
+nodeset 6 add volume 4
+ccx create temperature nodeset 6 magnitude 21
 
 vol all size auto factor 5
 mesh vol all
 
-create temperature on vertex 1 2 3 4 value 21
+nodeset 7 add vertex 1 2 3 4
+ccx create temperature nodeset 7 magnitude 21
 
 
-create pressure on face 601 magnitude 99
+sideset 6 add face 601
+ccx create pressure sideset 6 magnitude 99
 
 ccx draw size 0.8
 

@@ -26,12 +26,15 @@ ccx modify section shell 1 thickness 1
 nodeset 1 add curve 2
 nodeset 2 add curve 4
 
-create displacement  on nodeset 1 dof 1 dof 2 dof 3 fix 
-#create displacement  on nodeset 2 dof 1 dof 2 dof 3 fix
-create displacement  on nodeset 2 dof 2 dof 3 fix
+ccx create displacement nodeset 1 dof_1 0 dof_2 0 dof_3 0
+#ccx create displacement nodeset 2 dof_1 0 dof_2 0 dof_3 0
+ccx create displacement nodeset 2 dof_2 0 dof_3 0
 
-create pressure  on surface 1  magnitude 10
-create pressure  on curve 4 magnitude 10 bottom 
+sideset 1 add surface 1
+ccx create pressure sideset 1 magnitude 10
+sideset 2 add curve 4
+# Legacy bottom curve pressure: verify the beam/edge load direction after migration.
+ccx create pressure sideset 2 magnitude 10
 
 ccx create fieldoutput name "nodes" node
 ccx create fieldoutput name "elements" element

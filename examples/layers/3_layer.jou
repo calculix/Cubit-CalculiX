@@ -35,7 +35,8 @@ draw vol all
 group 2 remove node all with x_coord=-10
 ccx create constraint equation name "layer" group_id 2 tolerance 1e-5 dof_1 dof_2 dof_3
 
-create displacement name 'fix' on surface 16 23 21  dof 1 dof 2 dof 3 fix 0 
+nodeset 1 add surface 16 23 21
+ccx create displacement nodeset 1 dof_1 0 dof_2 0 dof_3 0 name "fix"
 sideset 1 add surface 13 26 19  
 sideset 1 name "load"
 ccx create surfacetraction sideset 1 force_dof_1 0 force_dof_2 -10 force_dof_3 0 name "Load"

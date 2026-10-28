@@ -249,7 +249,8 @@ for cid in curve_ids:
 #!cubit
 
 #boundary conditions
-create temperature on vol all value 293 #will be used as initial condition
+nodeset 1 add volume all
+ccx create temperature nodeset 1 magnitude 293 #will be used as initial condition
 
 #initial conditions
 ccx create initialcondition temperature

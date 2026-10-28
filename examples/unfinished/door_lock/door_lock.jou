@@ -140,15 +140,16 @@ ccx create contactpair surfaceinteraction 1 surfacetosurface master 4 slave 7
 ccx create contactpair surfaceinteraction 1 surfacetosurface master 5 slave 7 
 
 # load
-create force name 'load' on vertex 449 451 force value 100 direction 0 -1 0
+nodeset 5 add vertex 449 451
+ccx create force nodeset 5 dof_1 0 dof_2 -100 dof_3 0 dof_4 0 dof_5 0 dof_6 0 name "load"
 ccx modify force 1 op new
 
 # bc
-create displacement name "disp_fix" on nodeset 1 dof all fix 0 
+ccx create displacement nodeset 1 dof_1 0 dof_2 0 dof_3 0 dof_4 0 dof_5 0 dof_6 0 name "disp_fix"
 ccx modify displacement 1 op new
-create displacement name "disp_contact" on nodeset 5 dof 2 fix -0.5
+ccx create displacement nodeset 5 dof_2 -0.5 name "disp_contact"
 ccx modify displacement 2 op new
-create displacement name "disp_fix_all" on nodeset 4 dof all fix 0 
+ccx create displacement nodeset 4 dof_1 0 dof_2 0 dof_3 0 dof_4 0 dof_5 0 dof_6 0 name "disp_fix_all"
 
 # outputs
 ccx create fieldoutput name "fo_node" node

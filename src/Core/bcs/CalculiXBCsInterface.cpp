@@ -19,14 +19,34 @@ std::string CalculiXBCsInterface::get_hbc_export_data() // gets the export data 
   return ccx_core.get_hbc_export_data();
 }
 
-bool CalculiXBCsInterface::modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<int> options_marker)
+bool CalculiXBCsInterface::create_bcsdisplacements(std::vector<std::string> options, std::vector<double> options2, std::vector<int> options3)
 {
-  return ccx_core.modify_bcsdisplacements(displacement_id,options,options_marker);
+  return ccx_core.create_bcsdisplacements(options, options2, options3);
 }
 
-bool CalculiXBCsInterface::modify_bcstemperatures(int temperature_id, std::vector<std::string> options, std::vector<int> options_marker)
+bool CalculiXBCsInterface::delete_bcsdisplacements(int displacement_id)
 {
-  return ccx_core.modify_bcstemperatures(temperature_id,options,options_marker);
+  return ccx_core.delete_bcsdisplacements(displacement_id);
+}
+
+bool CalculiXBCsInterface::modify_bcsdisplacements(int displacement_id, std::vector<std::string> options, std::vector<double> options2, std::vector<int> options3, std::vector<int> options_marker)
+{
+  return ccx_core.modify_bcsdisplacements(displacement_id, options, options2, options3, options_marker);
+}
+
+bool CalculiXBCsInterface::create_bcstemperatures(std::vector<std::string> options, std::vector<double> options2)
+{
+  return ccx_core.create_bcstemperatures(options, options2);
+}
+
+bool CalculiXBCsInterface::modify_bcstemperatures(int temperature_id, std::vector<std::string> options, std::vector<double> options2, std::vector<int> options_marker)
+{
+  return ccx_core.modify_bcstemperatures(temperature_id, options, options2, options_marker);
+}
+
+bool CalculiXBCsInterface::delete_bcstemperatures(int temperature_id)
+{
+  return ccx_core.delete_bcstemperatures(temperature_id);
 }
 
 bool CalculiXBCsInterface::hbc_add_bcs(int bcs_id, int bc_type, std::vector<int> bc_ids)

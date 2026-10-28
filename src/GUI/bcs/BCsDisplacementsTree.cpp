@@ -148,7 +148,7 @@ void BCsDisplacementsTree::populateContextMenu(
 
   if (clickedItem == this)
   {
-    addPanelAction(menu, "Create Displacement", host, "FEADisplacementCreate");
+    addPanelAction(menu, "Create Displacement", host, "CCXBCsDisplacementsCreate");
     addCommandAction(menu, "Draw Displacements", QString("ccx draw bc_displacement_all"));
     return;
   }
@@ -164,9 +164,8 @@ void BCsDisplacementsTree::populateContextMenu(
     return;
   }
 
-  addPanelAction(menu, "Create Displacement", host, "FEADisplacementCreate");
-  addPanelAction(menu, "Modify Displacement", host, "FEADisplacementModify");
-  addPanelAction(menu, "CCX Modify Displacement", host, "CCXBCsDisplacementsModify");
-  addPanelAction(menu, "Delete Displacement", host, "FEADisplacementDelete");
+  addPanelAction(menu, "Create Displacement", host, "CCXBCsDisplacementsCreate");
+  addPanelAction(menu, "Modify Displacement", host, "CCXBCsDisplacementsModify");
+  addPanelAction(menu, "Delete Displacement", host, "CCXBCsDisplacementsDelete");
   addCommandAction(menu, "Draw Displacement", QString("ccx draw bc displacement ") + QString::number(entityId));
 }

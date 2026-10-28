@@ -23,9 +23,11 @@ modify material "Steel" matrix_property "CCX_CONDUCTIVITY_ISO_K_TEMPERATURE" 52 
 ccx create section shell block 1 material 1
 ccx modify section shell 1 thickness 1
 
-create temperature on surface 1 value 123
+nodeset 1 add surface 1
+ccx create temperature nodeset 1 magnitude 123
 
-create heatflux on curve 4 value 15
+sideset 1 add curve 4
+ccx create heatflux sideset 1 magnitude 15
 
 ccx create fieldoutput name "nodes" node
 ccx create fieldoutput name "elements" element

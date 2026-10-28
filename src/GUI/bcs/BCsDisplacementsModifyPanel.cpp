@@ -30,6 +30,8 @@ BCsDisplacementsModifyPanel::BCsDisplacementsModifyPanel(QWidget *parent) :
   HBoxLayout_7 = new QHBoxLayout();
   HBoxLayout_8 = new QHBoxLayout();
   HBoxLayout_9 = new QHBoxLayout();
+  HBoxLayout_10 = new QHBoxLayout();
+  HBoxLayout_11 = new QHBoxLayout();
   label_0 = new QLabel();
   label_1 = new QLabel();
   label_2 = new QLabel();
@@ -40,41 +42,65 @@ BCsDisplacementsModifyPanel::BCsDisplacementsModifyPanel(QWidget *parent) :
   label_7 = new QLabel();
   label_8 = new QLabel();
   label_9 = new QLabel();
+  label_10 = new QLabel();
+  label_11 = new QLabel();
   label_0->setFixedWidth(labelWidth);
   label_1->setFixedWidth(labelWidth);
   label_2->setFixedWidth(labelWidth);
   label_3->setFixedWidth(labelWidth);
+  label_4->setFixedWidth(labelWidth);
+  label_5->setFixedWidth(labelWidth);
+  label_6->setFixedWidth(labelWidth);
+  label_7->setFixedWidth(labelWidth);
+  label_8->setFixedWidth(labelWidth);
+  label_9->setFixedWidth(labelWidth);
+  label_10->setFixedWidth(labelWidth);
+  label_11->setFixedWidth(labelWidth);
   label_0->setText("Displacement ID");
-  label_1->setText("OP");
-  label_2->setText("Amplitude ID");
-  label_3->setText("Time Delay");
-  label_4->setText("Fixed DOF 1");
-  label_5->setText("Fixed DOF 2");
-  label_6->setText("Fixed DOF 3");
-  label_7->setText("Fixed DOF 4");
-  label_8->setText("Fixed DOF 5");
-  label_9->setText("Fixed DOF 6");
+  label_1->setText("Name");
+  label_2->setText("Nodeset ID");
+  label_3->setText("Displacement X");
+  label_4->setText("Displacement Y");
+  label_5->setText("Displacement Z");
+  label_6->setText("Rotation X");
+  label_7->setText("Rotation Y");
+  label_8->setText("Rotation Z");
+  label_9->setText("OP");
+  label_10->setText("Amplitude ID");
+  label_11->setText("Time Delay");
   lineEdit_0 = new QLineEdit();
-  comboBox_1 = new QComboBox();
-  comboBox_1->addItem("");
-  comboBox_1->addItem("mod");
-  comboBox_1->addItem("new");
+  lineEdit_1 = new QLineEdit();
   lineEdit_2 = new QLineEdit();
   lineEdit_3 = new QLineEdit();
+  lineEdit_4 = new QLineEdit();
+  lineEdit_5 = new QLineEdit();
+  lineEdit_6 = new QLineEdit();
+  lineEdit_7 = new QLineEdit();
+  lineEdit_8 = new QLineEdit();
+  comboBox_9 = new QComboBox();
+  comboBox_9->addItem("");
+  comboBox_9->addItem("mod");
+  comboBox_9->addItem("new");
+  lineEdit_10 = new QLineEdit();
+  lineEdit_11 = new QLineEdit();
+
+  lineEdit_1->setPlaceholderText("Optional");
   lineEdit_2->setPlaceholderText("Optional");
-  lineEdit_3->setPlaceholderText("Optional");
-  checkBox_4 = new QCheckBox();
-  checkBox_5 = new QCheckBox();
-  checkBox_6 = new QCheckBox();
-  checkBox_7 = new QCheckBox();
-  checkBox_8 = new QCheckBox();
-  checkBox_9 = new QCheckBox();
-  
+  lineEdit_3->setPlaceholderText("Unchanged / number / free / fixed");
+  lineEdit_4->setPlaceholderText("Unchanged / number / free / fixed");
+  lineEdit_5->setPlaceholderText("Unchanged / number / free / fixed");
+  lineEdit_6->setPlaceholderText("Unchanged / number / free / fixed");
+  lineEdit_7->setPlaceholderText("Unchanged / number / free / fixed");
+  lineEdit_8->setPlaceholderText("Unchanged / number / free / fixed");
+
+  lineEdit_10->setPlaceholderText("Optional");
+  lineEdit_11->setPlaceholderText("Optional");
+
   pushButton_apply = new QPushButton();
   pushButton_apply->setText("Apply");
   HBoxLayout_pushButton_apply = new QHBoxLayout();
   horizontal_spacer_pushButton_apply = new QSpacerItem(1,1,QSizePolicy::Expanding,QSizePolicy::Minimum);
-  
+
   // Layout
   GridLayout->addLayout(VBoxLayout,0,0, Qt::AlignTop);
   VBoxLayout->addLayout(HBoxLayout_0);
@@ -87,36 +113,43 @@ BCsDisplacementsModifyPanel::BCsDisplacementsModifyPanel(QWidget *parent) :
   VBoxLayout->addLayout(HBoxLayout_7);
   VBoxLayout->addLayout(HBoxLayout_8);
   VBoxLayout->addLayout(HBoxLayout_9);
+  VBoxLayout->addLayout(HBoxLayout_10);
+  VBoxLayout->addLayout(HBoxLayout_11);
   VBoxLayout->addItem(vertical_spacer);
   VBoxLayout->addLayout(HBoxLayout_pushButton_apply);
 
   HBoxLayout_0->addWidget(label_0);
   HBoxLayout_0->addWidget(lineEdit_0);
   HBoxLayout_1->addWidget(label_1);
-  HBoxLayout_1->addWidget(comboBox_1);
+  HBoxLayout_1->addWidget(lineEdit_1);
   HBoxLayout_2->addWidget(label_2);
   HBoxLayout_2->addWidget(lineEdit_2);
   HBoxLayout_3->addWidget(label_3);
   HBoxLayout_3->addWidget(lineEdit_3);
   HBoxLayout_4->addWidget(label_4);
-  HBoxLayout_4->addWidget(checkBox_4);
+  HBoxLayout_4->addWidget(lineEdit_4);
   HBoxLayout_5->addWidget(label_5);
-  HBoxLayout_5->addWidget(checkBox_5);
+  HBoxLayout_5->addWidget(lineEdit_5);
   HBoxLayout_6->addWidget(label_6);
-  HBoxLayout_6->addWidget(checkBox_6);
+  HBoxLayout_6->addWidget(lineEdit_6);
   HBoxLayout_7->addWidget(label_7);
-  HBoxLayout_7->addWidget(checkBox_7);
+  HBoxLayout_7->addWidget(lineEdit_7);
   HBoxLayout_8->addWidget(label_8);
-  HBoxLayout_8->addWidget(checkBox_8);
+  HBoxLayout_8->addWidget(lineEdit_8);
   HBoxLayout_9->addWidget(label_9);
-  HBoxLayout_9->addWidget(checkBox_9);
-  
+  HBoxLayout_9->addWidget(comboBox_9);
+  HBoxLayout_10->addWidget(label_10);
+  HBoxLayout_10->addWidget(lineEdit_10);
+  HBoxLayout_11->addWidget(label_11);
+  HBoxLayout_11->addWidget(lineEdit_11);
+
   HBoxLayout_pushButton_apply->addItem(horizontal_spacer_pushButton_apply);
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
-  
+
   isInitialized = true;
+
 }
 
 BCsDisplacementsModifyPanel::~BCsDisplacementsModifyPanel()
@@ -127,78 +160,74 @@ void BCsDisplacementsModifyPanel::on_pushButton_apply_clicked(bool)
   QStringList commands;
   QString command = "";
 
-  if ((lineEdit_0->text()!=""))
+  if (!lineEdit_0->text().trimmed().isEmpty())
   {
-    command.append("ccx modify displacement " +lineEdit_0->text());
-    
-    if (comboBox_1->currentIndex()!=0)
+    command.append("ccx modify displacement " + lineEdit_0->text());
+    if (!lineEdit_2->text().trimmed().isEmpty())
     {
-      command.append(" op " + comboBox_1->currentText());
+      command.append(" nodeset " + lineEdit_2->text());
     }
-    if (lineEdit_2->text()!="")
+    if (!lineEdit_3->text().trimmed().isEmpty())
     {
-      command.append(" amplitude " +lineEdit_2->text());
+      command.append(" dof_1 " + lineEdit_3->text());
     }
-    if (lineEdit_3->text()!="")
+    if (!lineEdit_4->text().trimmed().isEmpty())
     {
-      command.append(" timedelay " +lineEdit_3->text());
+      command.append(" dof_2 " + lineEdit_4->text());
     }
-    if (checkBox_4->isChecked())
+    if (!lineEdit_5->text().trimmed().isEmpty())
     {
-      command.append(" fixed_1 ");
-    }else{
-      command.append(" unfixed_1 ");
+      command.append(" dof_3 " + lineEdit_5->text());
     }
-    if (checkBox_5->isChecked())
+    if (!lineEdit_6->text().trimmed().isEmpty())
     {
-      command.append(" fixed_2 ");
-    }else{
-      command.append(" unfixed_2 ");
+      command.append(" dof_4 " + lineEdit_6->text());
     }
-    if (checkBox_6->isChecked())
+    if (!lineEdit_7->text().trimmed().isEmpty())
     {
-      command.append(" fixed_3 ");
-    }else{
-      command.append(" unfixed_3 ");
+      command.append(" dof_5 " + lineEdit_7->text());
     }
-    if (checkBox_7->isChecked())
+    if (!lineEdit_8->text().trimmed().isEmpty())
     {
-      command.append(" fixed_4 ");
-    }else{
-      command.append(" unfixed_4 ");
+      command.append(" dof_6 " + lineEdit_8->text());
     }
-    if (checkBox_8->isChecked())
+    if (comboBox_9->currentIndex() != 0)
     {
-      command.append(" fixed_5 ");
-    }else{
-      command.append(" unfixed_5 ");
+      command.append(" op " + comboBox_9->currentText());
     }
-    if (checkBox_9->isChecked())
+    if (!lineEdit_10->text().trimmed().isEmpty())
     {
-      command.append(" fixed_6 ");
-    }else{
-      command.append(" unfixed_6 ");
+      command.append(" amplitude " + lineEdit_10->text());
+    }
+    if (!lineEdit_11->text().trimmed().isEmpty())
+    {
+      command.append(" timedelay " + lineEdit_11->text());
+    }
+    if (!lineEdit_1->text().isEmpty())
+    {
+      command.append(" name \"" + lineEdit_1->text() + "\"");
     }
   }
-  
+
   if (command != "")
   {
     commands.push_back(command);
     lineEdit_0->setText("");
-    comboBox_1->setCurrentIndex(0);
+    lineEdit_1->setText("");
     lineEdit_2->setText("");
     lineEdit_3->setText("");
-    checkBox_4->setChecked(false);
-    checkBox_5->setChecked(false);
-    checkBox_6->setChecked(false);
-    checkBox_7->setChecked(false);
-    checkBox_8->setChecked(false);
-    checkBox_9->setChecked(false);
+    lineEdit_4->setText("");
+    lineEdit_5->setText("");
+    lineEdit_6->setText("");
+    lineEdit_7->setText("");
+    lineEdit_8->setText("");
+    comboBox_9->setCurrentIndex(0);
+    lineEdit_10->setText("");
+    lineEdit_11->setText("");
   }
-  
+
   for (size_t i = 0; i < commands.size(); i++)
   {
-    //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
     GuiSendCmd::gui_cmd(commands[int(i)]);
   }
 }

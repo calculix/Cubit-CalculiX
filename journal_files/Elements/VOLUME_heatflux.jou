@@ -24,8 +24,10 @@ ccx create section solid block 1 material 1
 
 nodeset 1 add surface 1 2
 
-create temperature on volume 1 value 200
-create heatflux on surface 1 value -15
+nodeset 2 add volume 1
+ccx create temperature nodeset 2 magnitude 200
+sideset 1 add surface 1
+ccx create heatflux sideset 1 magnitude -15
 
 ccx create fieldoutput name "nodes" node
 ccx create fieldoutput name "elements" element

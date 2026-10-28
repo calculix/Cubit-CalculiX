@@ -41,11 +41,14 @@ modify material "Alu" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
 #ccx create section shell block 1 material 1 thickness 2 offset 0
 ccx create section shell block 1 material 2 thickness 2 offset 0
 
-create force  on curve 2 force value 6e-3 direction 0 0 -1
+nodeset 3 add curve 2
+ccx create force nodeset 3 dof_1 0 dof_2 0 dof_3 -0.0060000000000000001 dof_4 0 dof_5 0 dof_6 0
 
-create displacement on curve 1 dof 1 dof 2 dof 3 dof 4 dof 5 dof 6 fix 0
-create displacement on curve 2 dof 1 dof 2 dof 4 dof 5 dof 6 fix 0
-#modify displacement 2 dof 3 fix -5
+nodeset 4 add curve 1
+ccx create displacement nodeset 4 dof_1 0 dof_2 0 dof_3 0 dof_4 0 dof_5 0 dof_6 0
+nodeset 5 add curve 2
+ccx create displacement nodeset 5 dof_1 0 dof_2 0 dof_4 0 dof_5 0 dof_6 0
+#ccx modify displacement 2 dof_3 -5
 
 ccx create fieldoutput name "fo_1" node
 ccx modify fieldoutput 1 element output_2d
@@ -78,7 +81,7 @@ modify material "Steel" scalar_properties "CCX_PLASTIC_USE_CARD" 1
 modify material "Steel" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 4e+2 0 0  
 modify material "Alu" scalar_properties "CCX_PLASTIC_USE_CARD" 1
 modify material "Alu" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 1.6e+2 0 0
-modify displacement 2 dof 3 fix -20
+ccx modify displacement 2 dof_3 -20
 
 ccx create step name "nonlinear" static
 ccx modify step 1 parameter nlgeom_yes

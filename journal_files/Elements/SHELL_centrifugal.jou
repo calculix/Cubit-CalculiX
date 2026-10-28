@@ -34,8 +34,10 @@ create vertex 0 0 0
 
 ccx create constraint rigid body nodeset 1 ref 4 rot 5
 
-create displacement  on vertex 4  dof 1 dof 2 dof 3 fix  
-create displacement  on vertex 5  dof 1 dof 2 dof 3 fix  
+nodeset 2 add vertex 4
+ccx create displacement nodeset 2 dof_1 0 dof_2 0 dof_3 0
+nodeset 3 add vertex 5
+ccx create displacement nodeset 3 dof_1 0 dof_2 0 dof_3 0
 
 ccx create centrifugal 100 block 1 coordinate 0 0 0 direction 0 0 1
 

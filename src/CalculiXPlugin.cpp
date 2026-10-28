@@ -95,7 +95,11 @@
 #include "Commands/loads/ccxLoadsBodyHeatfluxCreateCommand.hpp"
 #include "Commands/loads/ccxLoadsBodyHeatfluxModifyCommand.hpp"
 #include "Commands/loads/ccxLoadsBodyHeatfluxDeleteCommand.hpp"
+#include "Commands/bcs/ccxBCsDisplacementsCreateCommand.hpp"
 #include "Commands/bcs/ccxBCsDisplacementsModifyCommand.hpp"
+#include "Commands/bcs/ccxBCsDisplacementsDeleteCommand.hpp"
+#include "Commands/bcs/ccxBCsTemperaturesCreateCommand.hpp"
+#include "Commands/bcs/ccxBCsTemperaturesDeleteCommand.hpp"
 #include "Commands/bcs/ccxBCsTemperaturesModifyCommand.hpp"
 #include "Commands/steps/ccxHistoryOutputCreateCommand.hpp"
 #include "Commands/steps/ccxHistoryOutputNodeModifyCommand.hpp"
@@ -292,7 +296,11 @@ std::vector<std::string> CalculiXPlugin::get_keys()
   keys.push_back("ccxLoadsBodyHeatfluxCreateCommand");
   keys.push_back("ccxLoadsBodyHeatfluxModifyCommand");
   keys.push_back("ccxLoadsBodyHeatfluxDeleteCommand");
+  keys.push_back("ccxBCsDisplacementsCreateCommand");
   keys.push_back("ccxBCsDisplacementsModifyCommand");
+  keys.push_back("ccxBCsDisplacementsDeleteCommand");
+  keys.push_back("ccxBCsTemperaturesCreateCommand");
+  keys.push_back("ccxBCsTemperaturesDeleteCommand");
   keys.push_back("ccxBCsTemperaturesModifyCommand");
   keys.push_back("ccxHistoryOutputCreateCommand");
   keys.push_back("ccxHistoryOutputNodeModifyCommand");
@@ -832,11 +840,29 @@ CubitCommand* CalculiXPlugin::create_command(const std::string &key)
     return new ccxLoadsBodyHeatfluxDeleteCommand();
   }
     
+  if(key == "ccxBCsDisplacementsCreateCommand")
+  {
+    return new ccxBCsDisplacementsCreateCommand();
+  }
+
   if(key == "ccxBCsDisplacementsModifyCommand")
   {
     return new ccxBCsDisplacementsModifyCommand();
   }
 
+  if(key == "ccxBCsDisplacementsDeleteCommand")
+  {
+    return new ccxBCsDisplacementsDeleteCommand();
+  }
+
+  if(key == "ccxBCsTemperaturesCreateCommand")
+  {
+    return new ccxBCsTemperaturesCreateCommand();
+  }
+  if(key == "ccxBCsTemperaturesDeleteCommand")
+  {
+    return new ccxBCsTemperaturesDeleteCommand();
+  }
   if(key == "ccxBCsTemperaturesModifyCommand")
   {
     return new ccxBCsTemperaturesModifyCommand();

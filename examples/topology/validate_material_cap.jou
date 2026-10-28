@@ -39,10 +39,13 @@ create vertex location on surface 8  center
 ccx create constraint rigid body nodeset 3 ref 11 rot 12
 
 # load
-create force  on vertex 11 force value 10000 direction 0 -1 0
+nodeset 4 add vertex 11
+nodeset 4 name "load_target"
+
+ccx create force nodeset 4 dof_1 0 dof_2 -10000 dof_3 0 dof_4 0 dof_5 0 dof_6 0
 
 # bc
-create displacement  on nodeset 1  dof 1 dof 2 dof 3 fix 0
+ccx create displacement nodeset 1 dof_1 0 dof_2 0 dof_3 0
 
 # outputs
 ccx create fieldoutput name "node_output" node
@@ -263,7 +266,7 @@ def run_material_cap_validation():
         if changed is None or not check(changed == original_snapshot, "Changing the cap leaves an existing iteration unchanged"):
             return
 
-        model = work / "material_cap_validation.cub5"
+        model = work / "material_cap_validation.cub"
         if not command('save as "%s" overwrite' % model.as_posix()):
             return
         if not check(model.is_file(), "Cubit model was saved"):

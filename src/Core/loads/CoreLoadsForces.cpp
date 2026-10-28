@@ -280,7 +280,8 @@ std::string CoreLoadsForces::get_load_parameter_export(int load_id)
     str_temp.append(",AMPLITUDE=" + ccx_amplitudes_iface.get_amplitude_name(loads_data[load_data_id][2]));
   }
   sub_data_id = get_time_delay_data_id_from_time_delay_id(loads_data[load_data_id][3]);
-  if (time_delay_data[sub_data_id][1]!="")
+  if (loads_data[load_data_id][2] != -1 &&
+      time_delay_data[sub_data_id][1] != "")
   {
     str_temp.append(",TIME DELAY=" + time_delay_data[sub_data_id][1]);
   }

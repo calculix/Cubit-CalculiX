@@ -148,7 +148,7 @@ void BCsTemperaturesTree::populateContextMenu(
 
   if (clickedItem == this)
   {
-    addPanelAction(menu, "Create Temperature", host, "FEATemperatureCreate");
+    addPanelAction(menu, "Create Temperature", host, "CCXBCsTemperaturesCreate");
     addCommandAction(menu, "Draw Temperatures", QString("ccx draw bc_temperature_all"));
     return;
   }
@@ -164,9 +164,8 @@ void BCsTemperaturesTree::populateContextMenu(
     return;
   }
 
-  addPanelAction(menu, "Create Temperature", host, "FEATemperatureCreate");
-  addPanelAction(menu, "Modify Temperature", host, "FEATemperatureModify");
-  addPanelAction(menu, "CCX Modify Temperature", host, "CCXBCsTemperaturesModify");
-  addPanelAction(menu, "Delete Temperature", host, "FEATemperatureDelete");
+  addPanelAction(menu, "Create Temperature", host, "CCXBCsTemperaturesCreate");
+  addPanelAction(menu, "Modify Temperature", host, "CCXBCsTemperaturesModify");
+  addPanelAction(menu, "Delete Temperature", host, "CCXBCsTemperaturesDelete");
   addCommandAction(menu, "Draw Temperature", QString("ccx draw bc temperature ") + QString::number(entityId));
 }

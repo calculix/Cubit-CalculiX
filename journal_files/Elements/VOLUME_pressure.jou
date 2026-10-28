@@ -34,13 +34,18 @@ create vertex location on surface 2  center
 ccx create constraint rigid body nodeset 1 ref 9 rot 10
 ccx create constraint rigid body nodeset 2 ref 11 rot 12
 
-create displacement  on vertex 9  dof 1 dof 2 fix 
-create displacement  on vertex 10  dof 2 dof 3 fix
+nodeset 3 add vertex 9
+ccx create displacement nodeset 3 dof_1 0 dof_2 0
+nodeset 4 add vertex 10
+ccx create displacement nodeset 4 dof_2 0 dof_3 0
 
-create displacement  on vertex 11  dof 1 dof 2 dof 3 fix 
-create displacement  on vertex 12  dof 2 dof 3 fix
+nodeset 5 add vertex 11
+ccx create displacement nodeset 5 dof_1 0 dof_2 0 dof_3 0
+nodeset 6 add vertex 12
+ccx create displacement nodeset 6 dof_2 0 dof_3 0
 
-create pressure on surface 5 magnitude 10
+sideset 1 add surface 5
+ccx create pressure sideset 1 magnitude 10
 
 ccx create fieldoutput name "nodes" node
 ccx create fieldoutput name "elements" element

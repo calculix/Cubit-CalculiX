@@ -119,8 +119,12 @@ void cmdPanelManager::clear()
     my_markers.push_back("CCXLoadsBodyHeatfluxCreate");
     my_markers.push_back("CCXLoadsBodyHeatfluxModify");
     my_markers.push_back("CCXLoadsBodyHeatfluxDelete");    
+    my_markers.push_back("CCXBCsDisplacementsCreate");
     my_markers.push_back("CCXBCsDisplacementsModify");
+    my_markers.push_back("CCXBCsDisplacementsDelete");
+    my_markers.push_back("CCXBCsTemperaturesCreate");
     my_markers.push_back("CCXBCsTemperaturesModify");
+    my_markers.push_back("CCXBCsTemperaturesDelete");
     my_markers.push_back("CCXHistoryOutputsCreate");
     my_markers.push_back("CCXHistoryOutputsModifyNode");
     my_markers.push_back("CCXHistoryOutputsModifyElement");
@@ -645,9 +649,18 @@ void cmdPanelManager::initialize_from_code()
   model->setNodeMarker(node, "CCXBCsDisplacements");
   node->setIcon(ccx_gui_resources_iface.getIcon("CCXBCsDisplacements"));
   root_node = model->getMarkedNode("CCXBCsDisplacements");
+
+  node = model->addNode("Create", root_node);
+  model->setNodeMarker(node, "CCXBCsDisplacementsCreate");
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXBCsDisplacementsCreate"));
+
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXBCsDisplacementsModify");
   node->setIcon(ccx_gui_resources_iface.getIcon("CCXBCsDisplacementsModify"));
+
+  node = model->addNode("Delete", root_node);
+  model->setNodeMarker(node, "CCXBCsDisplacementsDelete");
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXBCsDisplacementsDelete"));
 
   //##############################
   // add BCsTemperatures Nodes
@@ -656,9 +669,18 @@ void cmdPanelManager::initialize_from_code()
   model->setNodeMarker(node, "CCXBCsTemperatures");
   node->setIcon(ccx_gui_resources_iface.getIcon("CCXBCsTemperatures"));
   root_node = model->getMarkedNode("CCXBCsTemperatures");
+
+  node = model->addNode("Create", root_node);
+  model->setNodeMarker(node, "CCXBCsTemperaturesCreate");
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXBCsTemperaturesCreate"));
+
   node = model->addNode("Modify", root_node);
   model->setNodeMarker(node, "CCXBCsTemperaturesModify");
   node->setIcon(ccx_gui_resources_iface.getIcon("CCXBCsTemperaturesModify"));
+
+  node = model->addNode("Delete", root_node);
+  model->setNodeMarker(node, "CCXBCsTemperaturesDelete");
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXBCsTemperaturesDelete"));
 
   //##############################
   // add History Outputs Nodes 
@@ -958,8 +980,12 @@ void cmdPanelManager::associate_panels_with_nodes()
   my_markers.push_back("CCXLoadsBodyHeatfluxCreate");
   my_markers.push_back("CCXLoadsBodyHeatfluxModify");
   my_markers.push_back("CCXLoadsBodyHeatfluxDelete");
+  my_markers.push_back("CCXBCsDisplacementsCreate");
   my_markers.push_back("CCXBCsDisplacementsModify");
+  my_markers.push_back("CCXBCsDisplacementsDelete");
+  my_markers.push_back("CCXBCsTemperaturesCreate");
   my_markers.push_back("CCXBCsTemperaturesModify");
+  my_markers.push_back("CCXBCsTemperaturesDelete");
   my_markers.push_back("CCXHistoryOutputsCreate");
   my_markers.push_back("CCXHistoryOutputsModifyNode");
   my_markers.push_back("CCXHistoryOutputsModifyElement");
