@@ -11,8 +11,13 @@ class CoreSteps
 {
 
 public:
+  void remove_bc_references(int bc_type, int bc_id);
+  void remove_load_references(int load_type, int load_id);
+  bool check_step_exists(int step_id);
   CoreSteps();
   ~CoreSteps();
+
+  std::vector<int> get_steps_ids() const;
 
   // make 1 data storage for each step parameter
   // NAME

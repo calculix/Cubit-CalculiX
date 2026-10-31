@@ -7,6 +7,7 @@ class CoreSurfaceInteractions
 {
 
 public:
+  std::vector<int> get_surfaceinteraction_ids() const;
   CoreSurfaceInteractions();
   ~CoreSurfaceInteractions();
 
@@ -101,6 +102,9 @@ public:
   int  get_gap_heat_generation_data_id_from_gap_heat_generation_id(int gap_heat_generation_id); // searches for the gap_heat_generation_id in the gap_heat_generation_data and returns the indices or -1 if it fails
   int  get_friction_data_id_from_friction_id(int friction_id); // searches for the friction_id in the friction_data and returns the indices or -1 if it fails
 
+  const std::string* find_surfaceinteraction_name(int surfaceinteraction_id);
+  std::string get_surfaceinteraction_name(int surfaceinteraction_id);
+  bool check_surfaceinteraction_exists(int surfaceinteraction_id);
   std::string get_surfaceinteraction_export(); // get CalculiX surfaceinteractions exports
   std::string print_data(); // prints out the xxx_data
 

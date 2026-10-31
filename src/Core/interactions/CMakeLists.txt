@@ -1,10 +1,25 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreSurfaceInteractions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreContactPairs.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreConstraints.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreConstraints.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreConstraints.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreConstraintsCleanup.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreConstraintsCleanup.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreConstraintsEntities.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreConstraintsEntities.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreInteractionsTreeData.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreInteractionsTreeData.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreInteractionsPersistence.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreInteractionsPersistence.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreSurfaceInteractions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreSurfaceInteractions.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreContactPairs.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreContactPairs.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreContactPairsCleanup.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreContactPairsCleanup.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreCubitContactImport.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreCubitContactImport.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXInteractionsInterface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXInteractionsInterface.hpp
 )

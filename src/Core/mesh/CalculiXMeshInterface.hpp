@@ -16,6 +16,10 @@ public:
   std::string get_block_name(int block_id); // gets the block name
   std::vector<int> get_block_node_ids(int block_id); // gets the block node ids
   std::vector<int> get_block_element_ids(int block_id); // gets the block global element ids
+  std::vector<double> get_block_bounding_box_center(int block_id);
+  std::vector<std::vector<double>> get_nodeset_entities_coords(int nodeset_id);
+  std::vector<std::vector<double>> get_sideset_entities_coords(int sideset_id);
+  std::vector<std::vector<double>> get_sideset_entities_coords_normals(int sideset_id);
   std::string get_nodeset_name(int nodeset_id); // gets the nodeset name
   std::string get_sideset_name(int sideset_id); // gets the sideset name
   bool check_block_exists(int block_id);

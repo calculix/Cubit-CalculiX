@@ -216,3 +216,6 @@
 2026-10-27 reworking pressure
 2026-10-27 reworking heatflux
 2026-10-28 reworking displacement, temperature; added .cub support
+2026-10-29 refactor calculixcore
+2026-10-30 refactor calculixcore
+2026-10-31 refactor calculixcore

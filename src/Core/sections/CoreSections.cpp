@@ -1,4 +1,6 @@
 #include "Core/sections/CoreSections.hpp"
+#include "Core/application/CoreIdSelection.hpp"
+#include <cstddef>
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -249,32 +251,45 @@ bool CoreSections::add_membrane_section(std::string membrane_section_id, std::st
 
 bool CoreSections::delete_section(int section_id)
 {
-  int sub_section_data_id;
-  int sections_data_id = get_sections_data_id_from_section_id(section_id);
-  if (sections_data_id == -1)
+  const int section_index = get_sections_data_id_from_section_id(section_id);
+
+  if (section_index == -1)
   {
     return false;
-  } else {
-    if (sections_data[sections_data_id][1]==1)
-    {
-      sub_section_data_id = get_solid_section_data_id_from_solid_section_id(sections_data[sections_data_id][2]);
-      solid_section_data.erase(solid_section_data.begin() + sub_section_data_id);  
-    }else if (sections_data[sections_data_id][1]==2)
-    {
-      sub_section_data_id = get_shell_section_data_id_from_shell_section_id(sections_data[sections_data_id][2]);
-      shell_section_data.erase(shell_section_data.begin() + sub_section_data_id);  
-    }else if (sections_data[sections_data_id][1]==3)
-    {
-      sub_section_data_id = get_beam_section_data_id_from_beam_section_id(sections_data[sections_data_id][2]);
-      beam_section_data.erase(beam_section_data.begin() + sub_section_data_id);  
-    }else if (sections_data[sections_data_id][1]==4)
-    {
-      sub_section_data_id = get_membrane_section_data_id_from_membrane_section_id(sections_data[sections_data_id][2]);
-      membrane_section_data.erase(membrane_section_data.begin() + sub_section_data_id);  
-    }
-    sections_data.erase(sections_data.begin() + sections_data_id);
-    return true;
   }
+
+  const auto& section = sections_data[section_index];
+  std::vector<std::vector<std::string>>* data = nullptr;
+  int data_index = -1;
+
+  if (section[1] == 1)
+  {
+    data = &solid_section_data;
+    data_index = get_solid_section_data_id_from_solid_section_id(section[2]);
+  }
+  else if (section[1] == 2)
+  {
+    data = &shell_section_data;
+    data_index = get_shell_section_data_id_from_shell_section_id(section[2]);
+  }
+  else if (section[1] == 3)
+  {
+    data = &beam_section_data;
+    data_index = get_beam_section_data_id_from_beam_section_id(section[2]);
+  }
+  else if (section[1] == 4)
+  {
+    data = &membrane_section_data;
+    data_index = get_membrane_section_data_id_from_membrane_section_id(section[2]);
+  }
+
+  if (data && data_index >= 0)
+  {
+    data->erase(data->begin() + data_index);
+  }
+
+  sections_data.erase(sections_data.begin() + section_index);
+  return true;
 }
 bool CoreSections::modify_section_id(int section_id, int new_section_id)
 {
@@ -286,6 +301,71 @@ bool CoreSections::modify_section_id(int section_id, int new_section_id)
     sections_data[sections_data_id][0]=new_section_id;
     return true;
   }
+}
+
+std::vector<int> CoreSections::get_orientation_block_ids(int orientation_id) const
+{
+  std::vector<int> block_ids;
+
+  const auto collect_blocks = [&](const std::vector<std::vector<std::string>>& data, std::size_t orientation_column)
+  {
+    for (const auto& section : data)
+    {
+      if (std::stoi(section[orientation_column]) == orientation_id)
+      {
+        block_ids.push_back(std::stoi(section[1]));
+      }
+    }
+  };
+
+  collect_blocks(solid_section_data, 3);
+  collect_blocks(shell_section_data, 3);
+  collect_blocks(beam_section_data, 13);
+  collect_blocks(membrane_section_data, 3);
+
+  return block_ids;
+}
+
+const std::vector<std::string>* CoreSections::get_section_data(int section_id)
+{
+  const int section_index = get_sections_data_id_from_section_id(section_id);
+
+  if (section_index < 0)
+  {
+    return nullptr;
+  }
+
+  const auto& section = sections_data[section_index];
+  const std::vector<std::vector<std::string>>* data = nullptr;
+  int data_index = -1;
+
+  if (section[1] == 1)
+  {
+    data = &solid_section_data;
+    data_index = get_solid_section_data_id_from_solid_section_id(section[2]);
+  }
+  else if (section[1] == 2)
+  {
+    data = &shell_section_data;
+    data_index = get_shell_section_data_id_from_shell_section_id(section[2]);
+  }
+  else if (section[1] == 3)
+  {
+    data = &beam_section_data;
+    data_index = get_beam_section_data_id_from_beam_section_id(section[2]);
+  }
+  else if (section[1] == 4)
+  {
+    data = &membrane_section_data;
+    data_index = get_membrane_section_data_id_from_membrane_section_id(section[2]);
+  }
+
+  if (!data || data_index < 0)
+  {
+    return nullptr;
+  }
+
+  return &(*data)[data_index];
 }
 
 int CoreSections::get_sections_data_id_from_section_id(int section_id)
@@ -928,4 +1008,8 @@ std::string CoreSections::get_topology_solid_section_export_legacy(int topology_
 void CoreSections::clear_topology_solid_sections()
 {
   topology_solid_sections.clear();
+}
+std::vector<int> CoreSections::get_section_ids() const
+{
+  return CoreIdSelection::collect_ids(sections_data);
 }

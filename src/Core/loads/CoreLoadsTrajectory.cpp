@@ -132,36 +132,37 @@ bool CoreLoadsTrajectory::modify_load(int load_id, std::vector<std::string> opti
 
 bool CoreLoadsTrajectory::delete_load(int load_id)
 {
-  //int sub_data_id;
-  std::vector<int> sub_data_ids;
-  int loads_data_id = get_loads_data_id_from_load_id(load_id);
-  if (loads_data_id == -1)
+  const int index = get_loads_data_id_from_load_id(load_id);
+
+  if (index == -1)
   {
     return false;
-  } else {
-    //HEATFLUX
-    bool deleted = false;
-    if (loads_data[loads_data_id][1]==1)
-    {
-      deleted = heatflux->delete_load(loads_data[loads_data_id][2]);
-    }
-    //BODYHEATFLUX SPHERE
-    else if (loads_data[loads_data_id][1]==2)
-    {
-      deleted = bodyheatfluxsphere->delete_load(loads_data[loads_data_id][2]);
-    }else{
-     return false;
-    }
-
-    if (deleted)
-    {
-      loads_data.erase(loads_data.begin() + loads_data_id);
-      return true;
-    }else{
-      return false;
-    }
   }
-  return false;
+
+  const int type = loads_data[index][1];
+  const int subload_id = loads_data[index][2];
+  bool deleted = false;
+
+  if (type == 1)
+  {
+    deleted = heatflux->get_loads_data_id_from_load_id(subload_id) == -1 || heatflux->delete_load(subload_id);
+  }
+  else if (type == 2)
+  {
+    deleted = bodyheatfluxsphere->get_loads_data_id_from_load_id(subload_id) == -1 || bodyheatfluxsphere->delete_load(subload_id);
+  }
+  else
+  {
+    return false;
+  }
+
+  if (!deleted)
+  {
+    return false;
+  }
+
+  loads_data.erase(loads_data.begin() + index);
+  return true;
 }
 
 int CoreLoadsTrajectory::get_loads_data_id_from_load_id(int load_id)
@@ -276,4 +277,139 @@ std::string CoreLoadsTrajectory::print_data()
   }
 
   return str_return;
+}
+
+std::vector<int> CoreLoadsTrajectory::get_load_ids() const
+{
+  std::vector<int> ids;
+  ids.reserve(loads_data.size());
+
+  for (const auto& load : loads_data)
+  {
+    ids.push_back(load[0]);
+  }
+
+  return ids;
+}
+
+std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectory::get_bodyheatfluxsphere_draw_element_ids(int trajectory_id)
+{
+  return bodyheatfluxsphere->get_draw_element_ids(get_subload_id(trajectory_id, 2));
+}
+
+bool CoreLoadsTrajectory::prepare_export_if_needed()
+{
+  if (loads_data.empty())
+  {
+    return true;
+  }
+
+  return prepare_export();
+}
+
+bool CoreLoadsTrajectory::clean_export_if_needed()
+{
+  if (loads_data.empty())
+  {
+    return true;
+  }
+
+  return clean_export();
+}
+
+int CoreLoadsTrajectory::get_subload_id(int trajectory_id, int expected_type)
+{
+  const int index = get_loads_data_id_from_load_id(trajectory_id);
+
+  if (index == -1)
+  {
+    return -1;
+  }
+
+  if (loads_data[index][1] != expected_type)
+  {
+    return -1;
+  }
+
+  return loads_data[index][2];
+}
+
+std::vector<int> CoreLoadsTrajectory::get_heatflux_node_ids(int trajectory_id)
+{
+  return heatflux->get_node_ids(get_subload_id(trajectory_id, 1));
+}
+
+std::vector<int> CoreLoadsTrajectory::get_heatflux_edge_ids(int trajectory_id)
+{
+  return heatflux->get_edge_ids(get_subload_id(trajectory_id, 1));
+}
+
+std::vector<std::vector<double>> CoreLoadsTrajectory::get_heatflux_hit_coordinates(int trajectory_id)
+{
+  return heatflux->get_hit_coordinates(get_subload_id(trajectory_id, 1));
+}
+
+std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectory::get_heatflux_face_ids(int trajectory_id)
+{
+  return heatflux->get_face_ids(get_subload_id(trajectory_id, 1));
+}
+
+std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectory::get_heatflux_draw_face_ids(int trajectory_id)
+{
+  return heatflux->get_draw_face_ids(get_subload_id(trajectory_id, 1));
+}
+
+std::vector<std::vector<double>> CoreLoadsTrajectory::get_heatflux_times(int trajectory_id)
+{
+  return heatflux->get_times(get_subload_id(trajectory_id, 1));
+}
+
+std::vector<std::vector<double>> CoreLoadsTrajectory::get_heatflux_radius(int trajectory_id)
+{
+  return heatflux->get_radius(get_subload_id(trajectory_id, 1));
+}
+
+std::vector<std::vector<double>> CoreLoadsTrajectory::get_heatflux_magnitude(int trajectory_id)
+{
+  return heatflux->get_magnitude(get_subload_id(trajectory_id, 1));
+}
+
+std::vector<int> CoreLoadsTrajectory::get_bodyheatfluxsphere_node_ids(int trajectory_id)
+{
+  return bodyheatfluxsphere->get_node_ids(get_subload_id(trajectory_id, 2));
+}
+
+std::vector<int> CoreLoadsTrajectory::get_bodyheatfluxsphere_edge_ids(int trajectory_id)
+{
+  return bodyheatfluxsphere->get_edge_ids(get_subload_id(trajectory_id, 2));
+}
+
+std::vector<std::vector<double>> CoreLoadsTrajectory::get_bodyheatfluxsphere_hit_coordinates(int trajectory_id)
+{
+  return bodyheatfluxsphere->get_hit_coordinates(get_subload_id(trajectory_id, 2));
+}
+
+std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectory::get_bodyheatfluxsphere_element_ids(int trajectory_id)
+{
+  return bodyheatfluxsphere->get_element_ids(get_subload_id(trajectory_id, 2));
+}
+
+std::vector<std::vector<double>> CoreLoadsTrajectory::get_bodyheatfluxsphere_times(int trajectory_id)
+{
+  return bodyheatfluxsphere->get_times(get_subload_id(trajectory_id, 2));
+}
+
+std::vector<std::vector<double>> CoreLoadsTrajectory::get_bodyheatfluxsphere_radius(int trajectory_id)
+{
+  return bodyheatfluxsphere->get_radius(get_subload_id(trajectory_id, 2));
+}
+
+std::vector<std::vector<double>> CoreLoadsTrajectory::get_bodyheatfluxsphere_depth(int trajectory_id)
+{
+  return bodyheatfluxsphere->get_depth(get_subload_id(trajectory_id, 2));
+}
+
+std::vector<std::vector<double>> CoreLoadsTrajectory::get_bodyheatfluxsphere_magnitude(int trajectory_id)
+{
+  return bodyheatfluxsphere->get_magnitude(get_subload_id(trajectory_id, 2));
 }

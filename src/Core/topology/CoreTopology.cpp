@@ -2807,3 +2807,190 @@ bool CoreTopology::remove_preserved_sets(int topology_id, int set_type, const st
 {
   return change_preserved_sets(topology_id, set_type, ids, false);
 }
+
+std::vector<double> CoreTopology::get_topology_parameters(int topology_id) const
+{
+  const auto entry = topology_cases.find(topology_id);
+
+  if (entry == topology_cases.end())
+  {
+    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    return {};
+  }
+
+  const auto& configuration = entry->second;
+
+  return {
+      configuration.target_volume_fraction,
+      configuration.void_stiffness_ratio,
+      static_cast<double>(configuration.maximum_iterations)
+  };
+}
+
+bool CoreTopology::get_topology_settings(int topology_id, TopologyOptions& options) const
+{
+  options = {};
+  const auto entry = topology_cases.find(topology_id);
+
+  if (entry == topology_cases.end())
+  {
+    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    return false;
+  }
+
+  const auto& configuration = entry->second;
+
+  options.has_name = true;
+  options.name = configuration.name;
+
+  options.has_method = true;
+  options.method = configuration.method;
+
+  options.has_objective = true;
+  options.objective = configuration.objective;
+
+  options.has_volume_fraction = true;
+  options.volume_fraction = configuration.target_volume_fraction;
+
+  options.has_void_ratio = true;
+  options.void_ratio = configuration.void_stiffness_ratio;
+
+  options.has_maximum_iterations = true;
+  options.maximum_iterations = configuration.maximum_iterations;
+
+  options.has_material_cap = true;
+  options.material_cap = configuration.material_cap;
+
+  options.has_filter_radius = true;
+  options.filter_radius = configuration.filter_radius;
+
+  options.has_move_limit = true;
+  options.move_limit = configuration.move_limit;
+
+  options.has_adaptive_move_limits = true;
+  options.adaptive_move_limits = configuration.adaptive_move_limits;
+
+  options.has_minimum_move_limit = true;
+  options.minimum_move_limit = configuration.minimum_move_limit;
+
+  options.has_density_tolerance = true;
+  options.density_tolerance = configuration.density_tolerance;
+
+  options.has_compliance_tolerance = true;
+  options.compliance_tolerance = configuration.compliance_tolerance;
+
+  options.has_displacement_nodeset = true;
+  options.displacement_nodeset = configuration.displacement_nodeset;
+
+  options.has_displacement_component = true;
+  options.displacement_component = configuration.displacement_component;
+
+  return true;
+}
+
+std::string CoreTopology::get_topology_run_state(int topology_id) const
+{
+  const auto entry = topology_cases.find(topology_id);
+
+  if (entry == topology_cases.end())
+  {
+    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    return "";
+  }
+
+  switch (entry->second.run_state)
+  {
+    case TopologyRunState::NotRun:
+    {
+      return "not_run";
+    }
+    case TopologyRunState::Running:
+    {
+      return "running";
+    }
+    case TopologyRunState::Converged:
+    {
+      return "converged";
+    }
+    case TopologyRunState::IterationLimit:
+    {
+      return "iteration_limit";
+    }
+    case TopologyRunState::Failed:
+    {
+      return "failed";
+    }
+    case TopologyRunState::Killed:
+    {
+      return "killed";
+    }
+  }
+
+  PRINT_ERROR("Invalid topology run state.\n");
+  return "";
+}
+
+bool CoreTopology::set_topology_run_state(int topology_id, TopologyRunState state)
+{
+  const auto entry = topology_cases.find(topology_id);
+
+  if (entry == topology_cases.end())
+  {
+    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    return false;
+  }
+
+  entry->second.run_state = state;
+  return true;
+}
+
+bool CoreTopology::get_topology_base_run_info(int topology_id, TopologyRunInfo& information) const
+{
+  information = {};
+  const auto entry = topology_cases.find(topology_id);
+
+  if (entry == topology_cases.end())
+  {
+    return false;
+  }
+
+  information.state = get_topology_run_state(topology_id);
+
+  if (!entry->second.iteration_jobs.empty())
+  {
+    const auto& last = *entry->second.iteration_jobs.rbegin();
+    information.iteration_id = last.first;
+    information.job_id = last.second;
+  }
+
+  return true;
+}
+
+std::vector<std::vector<int>> CoreTopology::get_topology_element_preservation(int topology_id) const
+{
+  const auto entry = topology_cases.find(topology_id);
+
+  if (entry == topology_cases.end())
+  {
+    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    return {};
+  }
+
+  const auto& flags = entry->second.element_preserved;
+
+  if (flags.empty())
+  {
+    PRINT_ERROR("Preservation for topology %d has not been resolved.\n", topology_id);
+    return {};
+  }
+
+  std::vector<std::vector<int>> rows;
+  rows.reserve(flags.size());
+
+  for (const auto& flag : flags)
+  {
+    rows.push_back({flag.first, flag.second ? 1 : 0});
+  }
+
+  return rows;
+}

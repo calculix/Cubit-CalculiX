@@ -3,6 +3,7 @@
 #include <vector>
 #include "Core/amplitudes/CalculiXAmplitudesInterface.hpp"
 #include "CubitInterface.hpp"
+#include "CubitMessage.hpp"
 CoreLoadsRadiation::CoreLoadsRadiation()
 {}
 
@@ -475,7 +476,14 @@ std::string CoreLoadsRadiation::get_load_export(int load_id)
     str_temp.append(",RADIATION TIME DELAY=" + radiation_time_delay_data[sub_data_id][1]);
   }
   sub_data_id = get_cavity_data_id_from_cavity_id(loads_data[load_data_id][10]);
-  if (cavity_data[sub_data_id][1]!="")
+
+  if (sub_data_id < 0 || cavity_data[sub_data_id].size() < 2)
+  {
+    PRINT_ERROR("Missing cavity data for radiation load %d.\n", load_id);
+    return {};
+  }
+
+  if (!cavity_data[sub_data_id][1].empty())
   {
     str_temp.append(",CAVITY=" + cavity_data[sub_data_id][1]);
   }
@@ -537,4 +545,17 @@ std::string CoreLoadsRadiation::print_data()
   }
 
   return str_return;
+}
+
+std::vector<int> CoreLoadsRadiation::get_load_ids() const
+{
+  std::vector<int> ids;
+  ids.reserve(loads_data.size());
+
+  for (const auto& load : loads_data)
+  {
+    ids.push_back(load[0]);
+  }
+
+  return ids;
 }

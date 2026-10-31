@@ -34,6 +34,10 @@ public:
   bool modify_block_element_type_cubit(int block_id, int new_cubit_element_type); // modifies the block_element_type from given block
   bool modify_block_element_type_ccx(int block_id, int new_ccx_element_type); // modifies the block_element_type from given block
   int get_blocks_data_id_from_block_id(int block_id); // searches for the block_id in the blocks_data and returns the indices or -1 if it fails
+  std::vector<int> get_blocks() const;
+  bool check_block_exists(int block_id);
+  std::vector<std::vector<std::string>> get_entities(int block_id);
+  bool set_ccx_element_type(int block_id, std::string ccx_element_type);
   std::vector<std::string> get_ccx_element_types(); // returns all supported ccx element types ;
   int get_ccx_element_type_id(std::string ccx_element_type); // returns the index for the ccx element type
   int get_cubit_element_type_id(std::string cubit_element_type); // returns the index for the cubit element type

@@ -3,10 +3,14 @@
 
 #include <vector>
 #include <string>
+class MeshExportInterface;
+
 class CoreContactPairs
 {
 
 public:
+  std::vector<int> get_contactpair_ids() const;
+  std::vector<std::string> get_contactpair_master_slave(MeshExportInterface& mesh, int contactpair_id);
   CoreContactPairs();
   ~CoreContactPairs();
 
@@ -46,6 +50,8 @@ public:
   bool add_adjust_contactpair(std::string adjust_contactpair_id, std::string adjust_value, std::string adjust_nodeset); // adds new adjustvalue to adjust_contactpair_data
   int  get_contactpairs_data_id_from_contactpair_id(int contactpair_id); // searches for the contactpair_id in the contactpairs_data and returns the indices or -1 if it fails
   int  get_adjust_contactpair_data_id_from_adjust_contactpair_id(int adjust_contactpair_id); // searches for the adjust_contactpair_id in the adjust_contactpair_data and returns the indices or -1 if it fails
+  bool check_contactpair_exists(int contactpair_id);
+  std::vector<std::vector<std::string>> get_entities(int contactpair_id);
   std::string get_contactpair_export(); // get CalculiX contactpair exports
   std::string print_data(); // prints out the blocks_data
 

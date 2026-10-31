@@ -1,4 +1,10 @@
 #include "CalculiXDrawInterface.hpp"
+#include "CoreDraw.hpp"
+#include "CubitMessage.hpp"
+#include "CoreDrawBCData.hpp"
+#include "CoreDrawLoadData.hpp"
+#include "CoreDrawConstraintData.hpp"
+#include "CoreDrawOrientationData.hpp"
 #include <string>
 #include <vector>
 
@@ -6,72 +12,72 @@
 
 std::vector<std::vector<double>> CalculiXDrawInterface::get_draw_data_for_load_force(int id)
 {
-  return ccx_core.get_draw_data_for_load_force(id);
+  return CoreDrawLoadData::get_draw_data_for_load_force(*ccx_core.loadsforces, *ccx_core.me_iface, id);
 }
 
 std::vector<std::vector<double>> CalculiXDrawInterface::get_draw_data_for_load_pressure(int id)
 {
-  return ccx_core.get_draw_data_for_load_pressure(id);
+  return CoreDrawLoadData::get_draw_data_for_load_pressure(*ccx_core.loadspressures, *ccx_core.me_iface, id);
 }
 
 std::vector<std::vector<double>> CalculiXDrawInterface::get_draw_data_for_load_heatflux(int id)
 {
-  return ccx_core.get_draw_data_for_load_heatflux(id);
+  return CoreDrawLoadData::get_draw_data_for_load_heatflux(*ccx_core.loadsheatfluxes, *ccx_core.me_iface, id);
 }
 
 std::vector<std::vector<double>> CalculiXDrawInterface::get_draw_data_for_load_gravity(int id)
 {
-  return ccx_core.get_draw_data_for_load_gravity(id);
+  return CoreDrawLoadData::get_draw_data_for_load_gravity(*ccx_core.loadsgravity, id);
 }
 
 std::vector<std::vector<double>> CalculiXDrawInterface::get_draw_data_for_load_centrifugal(int id)
 {
-  return ccx_core.get_draw_data_for_load_centrifugal(id);
+  return CoreDrawLoadData::get_draw_data_for_load_centrifugal(*ccx_core.loadscentrifugal, id);
 }
 
 std::vector<std::vector<double>> CalculiXDrawInterface::get_draw_data_for_load_film(int id)
 {
-  return ccx_core.get_draw_data_for_load_film(id);
+  return CoreDrawLoadData::get_draw_data_for_load_film(*ccx_core.loadsfilm, id);
 }
 
 std::vector<std::vector<double>> CalculiXDrawInterface::get_draw_data_for_load_radiation(int id)
 {
-  return ccx_core.get_draw_data_for_load_radiation(id);
+  return CoreDrawLoadData::get_draw_data_for_load_radiation(*ccx_core.loadsradiation, id);
 }
 
 std::vector<std::vector<double>> CalculiXDrawInterface::get_draw_data_for_load_surface_traction(int id)
 {
-  return ccx_core.get_draw_data_for_load_surface_traction(id);
+  return CoreDrawLoadData::get_draw_data_for_load_surface_traction(*ccx_core.loadssurfacetraction, id);
 }
 
 std::vector<std::vector<int>> CalculiXDrawInterface::get_draw_data_for_load_bodyheatflux(int id)
 {
-  return ccx_core.get_draw_data_for_load_bodyheatflux(id);
+  return CoreDrawLoadData::get_draw_data_for_load_bodyheatflux(*ccx_core.loadsbodyheatflux, id);
 }
 
 std::vector<std::vector<double>> CalculiXDrawInterface::get_draw_data_for_bc_displacement(int id) // returns coord(3) and dof
 {
-  return ccx_core.get_draw_data_for_bc_displacement(id);
+  return CoreDrawBCData::get_draw_data_for_bc_displacement(*ccx_core.bcsdisplacements, *ccx_core.me_iface, id);
 }
 
 std::vector<std::vector<double>> CalculiXDrawInterface::get_draw_data_for_bc_temperature(int id) // returns coord(3) and dof
 {
-  return ccx_core.get_draw_data_for_bc_temperature(id);
+  return CoreDrawBCData::get_draw_data_for_bc_temperature(*ccx_core.bcstemperatures, *ccx_core.me_iface, id);
 }
 
 std::vector<std::vector<double>> CalculiXDrawInterface::get_draw_data_for_orientation(int id)
 {
-  return ccx_core.get_draw_data_for_orientation(id);
+  return CoreDrawOrientationData::get_draw_data_for_orientation(*ccx_core.orientations, *ccx_core.sections, id);
 }
 
 std::vector<std::vector<double>> CalculiXDrawInterface::get_draw_data_for_equation(int id)
 {
-  return ccx_core.get_draw_data_for_equation(id);
+  return CoreDrawConstraintData::get_draw_data_for_equation(*ccx_core.constraints, id);
 }
 
 std::vector<std::vector<double>> CalculiXDrawInterface::get_draw_data_for_equationgroup(int id)
 {
-  return ccx_core.get_draw_data_for_equationgroup(id);
+  return CoreDrawConstraintData::get_draw_data_for_equationgroup(*ccx_core.constraints, id);
 }
 
 bool CalculiXDrawInterface::draw_all(double size) // draw all bc,loads,orientations, equations
@@ -239,22 +245,37 @@ bool CalculiXDrawInterface::draw_bc_temperatures(double size)
   return ccx_core.draw_bc_temperatures(size);
 }
 
-bool CalculiXDrawInterface::draw_topology(int topology_id,int iteration_id,double threshold)
+bool CalculiXDrawInterface::draw_topology(int topology_id, int iteration_id, double threshold)
 {
-  return ccx_core.draw_topology(topology_id, iteration_id, threshold);
+  if (!ccx_core.draw)
+  {
+    PRINT_ERROR("Drawing core is not initialized.\n");
+    return false;
+  }
+
+  return ccx_core.draw->draw_topology(topology_id, iteration_id, threshold);
 }
 
-bool CalculiXDrawInterface::animate_topology(int topology_id,double threshold,int fps,std::string save_filepath, bool overwrite)
+bool CalculiXDrawInterface::animate_topology(int topology_id, double threshold, int fps, std::string save_filepath, bool overwrite)
 {
-  return ccx_core.animate_topology(topology_id, threshold, fps, save_filepath, overwrite);
+  if (!ccx_core.draw)
+  {
+    PRINT_ERROR("Drawing core is not initialized.\n");
+    return false;
+  }
+
+  return ccx_core.draw->animate_topology(topology_id, threshold, fps, save_filepath, overwrite);
 }
 
 bool CalculiXDrawInterface::topology_animation_active() const
 {
-  return ccx_core.topology_animation_active();
+  return ccx_core.draw && ccx_core.draw->topology_animation_active();
 }
 
 void CalculiXDrawInterface::cancel_topology_animation()
 {
-  ccx_core.cancel_topology_animation();
+  if (ccx_core.draw)
+  {
+    ccx_core.draw->cancel_topology_animation();
+  }
 }

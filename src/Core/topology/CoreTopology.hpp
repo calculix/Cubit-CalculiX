@@ -211,6 +211,13 @@ public:
    */
   bool filter_density_sensitivities(int topology_id,int iteration_id,const std::map<int, double>& element_volumes,const std::map<int, std::array<double, 3>>& element_centers);
 
+  std::vector<double> get_topology_parameters(int topology_id) const;
+  bool get_topology_settings(int topology_id, TopologyOptions& options) const;
+  std::string get_topology_run_state(int topology_id) const;
+  bool set_topology_run_state(int topology_id, TopologyRunState state);
+  bool get_topology_base_run_info(int topology_id, TopologyRunInfo& information) const;
+
+  std::vector<std::vector<int>> get_topology_element_preservation(int topology_id) const;
   std::vector<std::vector<std::string>> get_tree_data() const;
   
   bool is_initialized = false;

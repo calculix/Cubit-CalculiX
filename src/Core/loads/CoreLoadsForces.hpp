@@ -7,6 +7,7 @@ class CoreLoadsForces
 {
 
 public:
+  std::vector<int> get_load_ids() const;
   CoreLoadsForces();
   ~CoreLoadsForces();
 

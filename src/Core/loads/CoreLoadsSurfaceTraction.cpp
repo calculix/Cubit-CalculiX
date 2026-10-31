@@ -580,3 +580,16 @@ void CoreLoadsSurfaceTraction::apply_permutation(
         }
     }
 }
+
+std::vector<int> CoreLoadsSurfaceTraction::get_load_ids() const
+{
+  std::vector<int> ids;
+  ids.reserve(loads_data.size());
+
+  for (const auto& load : loads_data)
+  {
+    ids.push_back(load[0]);
+  }
+
+  return ids;
+}

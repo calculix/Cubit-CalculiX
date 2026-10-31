@@ -16,6 +16,7 @@ class CoreMaterials
 {
 
 public:
+  std::string get_material_export_data(int topology_id, int iteration_id);
   CoreMaterials();
   ~CoreMaterials();
 
@@ -43,6 +44,7 @@ public:
   std::string get_material_name(int material_id); // gets material name
   bool initialize_topology_materials(int topology_id,const std::vector<int>& element_ids,const std::vector<int>& base_material_ids);
   bool set_topology_iteration_factors(int topology_id,int iteration_id,const std::vector<int>& element_ids,const std::vector<double>& stiffness_factors, int material_cap = 1024);
+  bool check_topology_material_assignment(int topology_id, int iteration_id, int element_id) const;
   std::string get_topology_material_name(int topology_id,int element_id) const;
   std::string get_topology_material_export(int topology_id,int iteration_id);
   std::string get_topology_material_export_legacy(int topology_id,int iteration_id);

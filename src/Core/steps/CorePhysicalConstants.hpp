@@ -10,6 +10,8 @@ public:
   CorePhysicalConstants();
   ~CorePhysicalConstants();
 
+  std::vector<std::vector<std::string>> get_tree_data() const;
+
   std::vector<std::string> physicalconstants_data;
   // physicalconstants_data[0] ABSOLUTE ZERO
   // physicalconstants_data[1] STEFAN BOLTZMANN

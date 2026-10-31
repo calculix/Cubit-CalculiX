@@ -1,8 +1,25 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreUtilities.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreState.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreCommands.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreSelection.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreEntityQueries.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreInitialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreFeatureInitialization.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreMaintenance.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCorePersistence.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreObserver.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreObserver.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreTimer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreTimer.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreIdSelection.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreIdSelection.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreApplicationLog.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreApplicationLog.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CorePythonInterfaceInitialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CorePythonInterfaceInitialization.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreModelMetadataPersistence.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreModelMetadataPersistence.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXApplicationInterface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXApplicationInterface.hpp
 )

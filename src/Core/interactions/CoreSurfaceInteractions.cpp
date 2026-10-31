@@ -1,4 +1,5 @@
 #include "Core/interactions/CoreSurfaceInteractions.hpp"
+#include "Core/application/CoreIdSelection.hpp"
 #include <string>
 #include <vector>
 #include "Core/export/CalculiXExportInterface.hpp"
@@ -880,4 +881,44 @@ std::string CoreSurfaceInteractions::print_data()
   }
 
   return str_return;
+}
+
+const std::string* CoreSurfaceInteractions::find_surfaceinteraction_name(int surfaceinteraction_id)
+{
+  const int index = get_surfaceinteractions_data_id_from_surfaceinteraction_id(surfaceinteraction_id);
+
+  if (index < 0)
+  {
+    return nullptr;
+  }
+
+  const int name_index = get_surfaceinteraction_name_data_id_from_surfaceinteraction_name_id(surfaceinteractions_data[index][1]);
+
+  if (name_index < 0)
+  {
+    return nullptr;
+  }
+
+  return &surfaceinteraction_name_data[name_index][1];
+}
+
+std::string CoreSurfaceInteractions::get_surfaceinteraction_name(int surfaceinteraction_id)
+{
+  if (!check_surfaceinteraction_exists(surfaceinteraction_id))
+  {
+    return "SURFACEINTERACTION " + std::to_string(surfaceinteraction_id) + " doesn't exist!";
+  }
+
+  const auto* name = find_surfaceinteraction_name(surfaceinteraction_id);
+  return name ? *name : std::string{};
+}
+
+bool CoreSurfaceInteractions::check_surfaceinteraction_exists(int surfaceinteraction_id)
+{
+  return get_surfaceinteractions_data_id_from_surfaceinteraction_id(surfaceinteraction_id) != -1;
+}
+
+std::vector<int> CoreSurfaceInteractions::get_surfaceinteraction_ids() const
+{
+  return CoreIdSelection::collect_ids(surfaceinteractions_data);
 }

@@ -1,4 +1,5 @@
 #include "Core/interactions/CoreConstraints.hpp"
+#include "Core/application/CoreIdSelection.hpp"
 #include <algorithm>
 #include <numeric>
 #include <string>
@@ -288,43 +289,101 @@ bool CoreConstraints::add_equation_group(double equation_constraint_id, double n
 
 bool CoreConstraints::delete_constraint(int constraint_id)
 {
-  int sub_constraint_data_id;
-  std::vector<int> sub_data_ids;
-  int constraints_data_id = get_constraints_data_id_from_constraint_id(constraint_id);
-  if (constraints_data_id == -1)
+  const int index = get_constraints_data_id_from_constraint_id(constraint_id);
+
+  if (index < 0)
   {
     return false;
-  } else {
-    if (constraints_data[constraints_data_id][1]==1)
-    {
-      sub_constraint_data_id = get_rigidbody_constraint_data_id_from_rigidbody_constraint_id(constraints_data[constraints_data_id][2]);
-      rigidbody_constraint_data.erase(rigidbody_constraint_data.begin() + sub_constraint_data_id);  
-    }else if (constraints_data[constraints_data_id][1]==2)
-    {
-      sub_constraint_data_id = get_tie_constraint_data_id_from_tie_constraint_id(constraints_data[constraints_data_id][2]);
-      tie_constraint_data.erase(tie_constraint_data.begin() + sub_constraint_data_id);  
-    }else if (constraints_data[constraints_data_id][1]==3)
-    {
-      sub_data_ids = get_equation_data_ids_from_equation_constraint_id(constraints_data[constraints_data_id][2]);
-      for (size_t i = sub_data_ids.size(); i > 0; i--)
-      {
-        equation_data.erase(equation_data.begin() + sub_data_ids[i-1]);
-      }
-      sub_constraint_data_id = get_equation_constraint_data_id_from_equation_constraint_id(constraints_data[constraints_data_id][2]);
-      equation_constraint_data.erase(equation_constraint_data.begin() + sub_constraint_data_id);  
-    }else if (constraints_data[constraints_data_id][1]==4)
-    {
-      sub_data_ids = get_equation_group_data_ids_from_equation_group_constraint_id(constraints_data[constraints_data_id][2]);
-      for (size_t i = sub_data_ids.size(); i > 0; i--)
-      {
-        equation_group_data.erase(equation_group_data.begin() + sub_data_ids[i-1]);
-      }
-      sub_constraint_data_id = get_equation_group_constraint_data_id_from_equation_group_constraint_id(constraints_data[constraints_data_id][2]);
-      equation_group_constraint_data.erase(equation_group_constraint_data.begin() + sub_constraint_data_id);  
-    }
-    constraints_data.erase(constraints_data.begin() + constraints_data_id);
-    return true;
   }
+
+  const auto& constraint = constraints_data[index];
+  std::vector<std::vector<std::string>>* data = nullptr;
+  int data_index = -1;
+
+  if (constraint[1] == 1)
+  {
+    data = &rigidbody_constraint_data;
+    data_index = get_rigidbody_constraint_data_id_from_rigidbody_constraint_id(constraint[2]);
+  }
+  else if (constraint[1] == 2)
+  {
+    data = &tie_constraint_data;
+    data_index = get_tie_constraint_data_id_from_tie_constraint_id(constraint[2]);
+  }
+  else if (constraint[1] == 3)
+  {
+    const auto indices = get_equation_data_ids_from_equation_constraint_id(constraint[2]);
+
+    for (auto entry = indices.rbegin(); entry != indices.rend(); ++entry)
+    {
+      equation_data.erase(equation_data.begin() + *entry);
+    }
+
+    data = &equation_constraint_data;
+    data_index = get_equation_constraint_data_id_from_equation_constraint_id(constraint[2]);
+  }
+  else if (constraint[1] == 4)
+  {
+    const auto indices = get_equation_group_data_ids_from_equation_group_constraint_id(constraint[2]);
+
+    for (auto entry = indices.rbegin(); entry != indices.rend(); ++entry)
+    {
+      equation_group_data.erase(equation_group_data.begin() + *entry);
+    }
+
+    data = &equation_group_constraint_data;
+    data_index = get_equation_group_constraint_data_id_from_equation_group_constraint_id(constraint[2]);
+  }
+
+  if (data && data_index >= 0)
+  {
+    data->erase(data->begin() + data_index);
+  }
+
+  constraints_data.erase(constraints_data.begin() + index);
+  return true;
+}
+
+const std::vector<std::string>* CoreConstraints::get_constraint_data(int constraint_id)
+{
+  const int index = get_constraints_data_id_from_constraint_id(constraint_id);
+
+  if (index < 0)
+  {
+    return nullptr;
+  }
+
+  const auto& constraint = constraints_data[index];
+  const std::vector<std::vector<std::string>>* data = nullptr;
+  int data_index = -1;
+
+  if (constraint[1] == 1)
+  {
+    data = &rigidbody_constraint_data;
+    data_index = get_rigidbody_constraint_data_id_from_rigidbody_constraint_id(constraint[2]);
+  }
+  else if (constraint[1] == 2)
+  {
+    data = &tie_constraint_data;
+    data_index = get_tie_constraint_data_id_from_tie_constraint_id(constraint[2]);
+  }
+  else if (constraint[1] == 3)
+  {
+    data = &equation_constraint_data;
+    data_index = get_equation_constraint_data_id_from_equation_constraint_id(constraint[2]);
+  }
+  else if (constraint[1] == 4)
+  {
+    data = &equation_group_constraint_data;
+    data_index = get_equation_group_constraint_data_id_from_equation_group_constraint_id(constraint[2]);
+  }
+
+  if (!data || data_index < 0)
+  {
+    return nullptr;
+  }
+
+  return &(*data)[data_index];
 }
 
 int CoreConstraints::get_constraints_data_id_from_constraint_id(int constraint_id)
@@ -944,4 +1003,39 @@ void CoreConstraints::apply_permutation(
             j = p[j];
         }
     }
+}
+
+std::vector<int> CoreConstraints::get_equation_ids() const
+{
+  std::vector<int> ids;
+
+  for (const auto& constraint : constraints_data)
+  {
+    if (constraint[1] == 3)
+    {
+      ids.push_back(constraint[0]);
+    }
+  }
+
+  return ids;
+}
+
+std::vector<int> CoreConstraints::get_equationgroup_ids() const
+{
+  std::vector<int> ids;
+
+  for (const auto& constraint : constraints_data)
+  {
+    if (constraint[1] == 4)
+    {
+      ids.push_back(constraint[0]);
+    }
+  }
+
+  return ids;
+}
+
+std::vector<int> CoreConstraints::get_constraint_ids() const
+{
+  return CoreIdSelection::collect_ids(constraints_data);
 }

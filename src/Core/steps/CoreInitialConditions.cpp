@@ -1,4 +1,5 @@
 #include "Core/steps/CoreInitialConditions.hpp"
+#include "Core/application/CoreIdSelection.hpp"
 #include <string>
 #include <vector>
 #include "CubitInterface.hpp"
@@ -398,4 +399,35 @@ std::string CoreInitialConditions::print_data()
   }
 
   return str_return;
+}
+
+void CoreInitialConditions::clear_bc_references(int bc_type, int bc_id)
+{
+  std::vector<std::vector<std::string>>* references;
+
+  if (bc_type == 1)
+  {
+    references = &displacement_data;
+  }
+  else if (bc_type == 2)
+  {
+    references = &temperature_data;
+  }
+  else
+  {
+    return;
+  }
+
+  for (auto& reference : *references)
+  {
+    if (!reference[1].empty() && std::stoi(reference[1]) == bc_id)
+    {
+      reference[1].clear();
+    }
+  }
+}
+
+std::vector<int> CoreInitialConditions::get_initialcondition_ids() const
+{
+  return CoreIdSelection::collect_ids(initialconditions_data);
 }

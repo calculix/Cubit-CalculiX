@@ -10,6 +10,27 @@ class CoreLoadsTrajectory
 {
 
 public:
+  int get_subload_id(int trajectory_id, int expected_type);
+  std::vector<int> get_heatflux_node_ids(int trajectory_id);
+  std::vector<int> get_heatflux_edge_ids(int trajectory_id);
+  std::vector<std::vector<double>> get_heatflux_hit_coordinates(int trajectory_id);
+  std::vector<std::vector<std::vector<int>>> get_heatflux_face_ids(int trajectory_id);
+  std::vector<std::vector<std::vector<int>>> get_heatflux_draw_face_ids(int trajectory_id);
+  std::vector<std::vector<double>> get_heatflux_times(int trajectory_id);
+  std::vector<std::vector<double>> get_heatflux_radius(int trajectory_id);
+  std::vector<std::vector<double>> get_heatflux_magnitude(int trajectory_id);
+  std::vector<int> get_bodyheatfluxsphere_node_ids(int trajectory_id);
+  std::vector<int> get_bodyheatfluxsphere_edge_ids(int trajectory_id);
+  std::vector<std::vector<double>> get_bodyheatfluxsphere_hit_coordinates(int trajectory_id);
+  std::vector<std::vector<std::vector<int>>> get_bodyheatfluxsphere_element_ids(int trajectory_id);
+  std::vector<std::vector<double>> get_bodyheatfluxsphere_times(int trajectory_id);
+  std::vector<std::vector<double>> get_bodyheatfluxsphere_radius(int trajectory_id);
+  std::vector<std::vector<double>> get_bodyheatfluxsphere_depth(int trajectory_id);
+  std::vector<std::vector<double>> get_bodyheatfluxsphere_magnitude(int trajectory_id);
+  std::vector<std::vector<std::vector<int>>> get_bodyheatfluxsphere_draw_element_ids(int trajectory_id);
+  bool prepare_export_if_needed();
+  bool clean_export_if_needed();
+  std::vector<int> get_load_ids() const;
   CoreLoadsTrajectory();
   ~CoreLoadsTrajectory();
 

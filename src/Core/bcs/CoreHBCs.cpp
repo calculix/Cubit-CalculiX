@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "Core/bcs/CoreHBCs.hpp"
 #include <string>
 #include <vector>
@@ -138,4 +139,14 @@ std::string CoreHBCs::print_data()
   }
 
   return str_return;
+}
+
+void CoreHBCs::remove_bc_references(int bc_type, int bc_id)
+{
+  const auto matches = [&](const std::vector<int>& reference)
+  {
+    return reference[1] == bc_type && reference[2] == bc_id;
+  };
+
+  bcs_data.erase(std::remove_if(bcs_data.begin(), bcs_data.end(), matches), bcs_data.end());
 }

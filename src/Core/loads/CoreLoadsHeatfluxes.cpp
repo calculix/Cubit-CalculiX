@@ -379,3 +379,16 @@ std::string CoreLoadsHeatfluxes::print_data()
   }
   return str_return;
 }
+
+std::vector<int> CoreLoadsHeatfluxes::get_load_ids() const
+{
+  std::vector<int> ids;
+  ids.reserve(loads_data.size());
+
+  for (const auto& load : loads_data)
+  {
+    ids.push_back(load[0]);
+  }
+
+  return ids;
+}

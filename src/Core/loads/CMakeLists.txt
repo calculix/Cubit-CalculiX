@@ -1,6 +1,18 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreLoads.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreTrajectory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreLoadsForces.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreLoadsForces.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreLoadsCleanup.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreLoadsCleanup.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreLoadsPersistence.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreLoadsPersistence.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreLoadRemoval.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreLoadRemoval.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreLoadsQuery.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreLoadsQuery.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreLoadsTreeData.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreLoadsTreeData.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreLoadsPressures.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreLoadsPressures.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreLoadsHeatfluxes.cpp

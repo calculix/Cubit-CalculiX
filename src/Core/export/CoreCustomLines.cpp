@@ -136,3 +136,29 @@ std::string CoreCustomLines::print_data()
 
   return str_return;
 }
+
+std::vector<std::vector<std::string>> CoreCustomLines::get_tree_data() const
+{
+  std::vector<std::vector<std::string>> tree_data;
+
+  for (const auto& line : customlines_data)
+  {
+    std::string name = line[1] + " (" + line[2] + " " + line[3] + " " + line[4] + ")";
+    tree_data.push_back({line[0], name});
+  }
+
+  return tree_data;
+}
+
+std::vector<int> CoreCustomLines::get_customline_ids() const
+{
+  std::vector<int> ids;
+  ids.reserve(customlines_data.size());
+
+  for (const auto& line : customlines_data)
+  {
+    ids.push_back(std::stoi(line[0]));
+  }
+
+  return ids;
+}

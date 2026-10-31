@@ -132,3 +132,17 @@ std::string CorePhysicalConstants::print_data()
 
   return str_return;
 }
+
+std::vector<std::vector<std::string>> CorePhysicalConstants::get_tree_data() const
+{
+  if (physicalconstants_data.size() != 3)
+  {
+    return {};
+  }
+
+  return {
+    {"1", "ABSOLUTE ZERO = " + physicalconstants_data[0]},
+    {"2", "STEFAN BOLTZMANN = " + physicalconstants_data[1]},
+    {"3", "NEWTON GRAVITY = " + physicalconstants_data[2]}
+  };
+}

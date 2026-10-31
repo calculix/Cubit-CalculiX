@@ -1,14 +1,15 @@
 #include "CalculiXGuiResourcesInterface.hpp"
 #include <string>
 
-#include "Core/loadCalculiXCore.hpp"
+#include "Core/gui/CoreIconLoader.hpp"
+#include "loadUserOptions.hpp"
 
 QIcon* CalculiXGuiResourcesInterface::getIcon(std::string name)
 {
-  return ccx_core.getIcon(name);
+  return new QIcon(CoreIconLoader::load(ccx_uo.mPathIcons, name));
 }
 
 QIcon CalculiXGuiResourcesInterface::getIcon2(std::string name)
 {
-  return ccx_core.getIcon2(name);
+  return CoreIconLoader::load(ccx_uo.mPathIcons, name);
 }

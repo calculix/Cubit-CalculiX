@@ -120,3 +120,16 @@ std::string CoreDamping::print_data()
 
   return str_return;
 }
+
+std::vector<std::vector<std::string>> CoreDamping::get_tree_data() const
+{
+  if (damping_data.size() != 2)
+  {
+    return {};
+  }
+
+  return {
+    {"1", "alpha = " + damping_data[0]},
+    {"2", "beta = " + damping_data[1]}
+  };
+}

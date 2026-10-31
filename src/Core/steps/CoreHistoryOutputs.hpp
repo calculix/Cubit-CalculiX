@@ -7,6 +7,8 @@ class CoreHistoryOutputs
 {
 
 public:
+  std::vector<int> get_output_ids() const;
+  bool check_historyoutput_exists(int historyoutput_id);
   CoreHistoryOutputs();
   ~CoreHistoryOutputs();
 

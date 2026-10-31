@@ -7,8 +7,14 @@ class CoreAmplitudes
 {
 
 public:
+  std::vector<int> get_amplitude_ids() const;
   CoreAmplitudes();
   ~CoreAmplitudes();
+
+  const std::string* find_amplitude_name(int amplitude_id);
+  std::string get_amplitude_name(int amplitude_id);
+  bool check_amplitude_exists(int amplitude_id);
+  std::vector<std::vector<std::string>> get_tree_data();
 
   // make 1 data storage for each amplitude parameter
   // NAME

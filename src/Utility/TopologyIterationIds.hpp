@@ -17,7 +17,7 @@ bool increment_topology_iteration_keys(std::map<int, Value>& values)
 {
   for (const auto& entry : values)
   {
-    if (entry.first < 0 || entry.first == std::numeric_limits<int>::max())
+    if (entry.first < 0 || entry.first == (std::numeric_limits<int>::max)())
     {
       return false;
     }

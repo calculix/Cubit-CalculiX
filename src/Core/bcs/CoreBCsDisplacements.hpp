@@ -7,6 +7,7 @@
 class CoreBCsDisplacements
 {
 public:
+  std::vector<int> get_bc_ids() const;
   CoreBCsDisplacements();
   ~CoreBCsDisplacements();
 

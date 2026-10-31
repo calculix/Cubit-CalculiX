@@ -3,8 +3,17 @@ target_sources(calculix_core PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/ResultReadNumbers.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ResultReadTimings.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ResultsReaderPipeline.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreResults.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreResults.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreResults.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsPersistence.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsPersistence.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsCsv.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsCsv.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsMath.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsMath.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsPlot.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsPlot.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsProject.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsProject.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsVtkWriter.cpp

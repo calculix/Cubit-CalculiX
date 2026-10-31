@@ -1,4 +1,5 @@
 #include "Core/jobs/CoreJobs.hpp"
+#include "Core/application/CoreIdSelection.hpp"
 #include <string>
 #include <vector>
 #include "Core/jobs/CalculiXJobsInterface.hpp"
@@ -1562,4 +1563,21 @@ std::string CoreJobs::print_data()
   }
 
   return str_return;
+}
+
+std::vector<std::vector<std::string>> CoreJobs::get_tree_data() const
+{
+  std::vector<std::vector<std::string>> tree_data;
+
+  for (const auto& job : jobs_data)
+  {
+    tree_data.push_back({job[0], job[1]});
+  }
+
+  return tree_data;
+}
+
+std::vector<int> CoreJobs::get_job_ids() const
+{
+  return CoreIdSelection::collect_ids(jobs_data);
 }

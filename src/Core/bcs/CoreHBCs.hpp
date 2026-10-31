@@ -7,6 +7,7 @@ class CoreHBCs
 {
 
 public:
+  void remove_bc_references(int bc_type, int bc_id);
   CoreHBCs();
   ~CoreHBCs();
 

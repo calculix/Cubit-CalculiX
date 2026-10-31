@@ -1,4 +1,5 @@
 #include "Core/steps/CoreFieldOutputs.hpp"
+#include "Core/application/CoreIdSelection.hpp"
 #include <string>
 #include <vector>
 #include "Core/export/CalculiXExportInterface.hpp"
@@ -690,4 +691,14 @@ std::string CoreFieldOutputs::print_data()
   }
 
   return str_return;
+}
+
+bool CoreFieldOutputs::check_fieldoutput_exists(int fieldoutput_id)
+{
+  return get_outputs_data_id_from_output_id(fieldoutput_id) != -1;
+}
+
+std::vector<int> CoreFieldOutputs::get_output_ids() const
+{
+  return CoreIdSelection::collect_ids(outputs_data);
 }

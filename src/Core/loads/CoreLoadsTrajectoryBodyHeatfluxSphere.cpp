@@ -220,7 +220,7 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::create_load(std::vector<std::string>
   this->add_name(std::to_string(sub_id), options[8]);
 
   // modelchange
-  modelchange = std::stoi(options[9]);
+  modelchange = std::stoi(options[10]);
   
 
   this->add_load(load_id, op_mode, curve_id, vertex_id, fire_ray_surface_id, direction_id, magnitude_id, time_id, radius_id, depth_id, name_id, modelchange);
@@ -1479,7 +1479,10 @@ bool CoreLoadsTrajectoryBodyHeatfluxSphere::prepare_export()
       std::vector<std::vector<std::string>> trajectory_tree = ccx_steps_iface.get_steps_loadstrajectory_tree_data(std::stoi(steps_tree[ii][0]));
       for (size_t iii = 0; iii < trajectory_tree.size(); iii++)
       {
-        if (ccx_loads_iface.loadstrajectory_get_subload_id(stoi(trajectory_tree[iii][0])) == loads_data[i][0])
+        const int trajectory_id = std::stoi(trajectory_tree[iii][0]);
+
+        if (ccx_loads_iface.loadstrajectory_get_load_type(trajectory_id) == "BODYHEATFLUXSPHERE" &&
+            ccx_loads_iface.loadstrajectory_get_subload_id(trajectory_id) == loads_data[i][0])
         {
           std::string ids = "";
           for (size_t iv= 0; iv < bodyheatflux.size(); iv++)

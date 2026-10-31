@@ -6,6 +6,8 @@
 class CoreFieldOutputs
 {
 public:
+  std::vector<int> get_output_ids() const;
+  bool check_fieldoutput_exists(int fieldoutput_id);
   CoreFieldOutputs();
   ~CoreFieldOutputs();
 

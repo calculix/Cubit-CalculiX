@@ -492,3 +492,16 @@ std::string CoreBCsTemperatures::print_data()
   }
   return str_return;
 }
+
+std::vector<int> CoreBCsTemperatures::get_bc_ids() const
+{
+  std::vector<int> ids;
+  ids.reserve(bcs_data.size());
+
+  for (const auto& bc : bcs_data)
+  {
+    ids.push_back(bc[0]);
+  }
+
+  return ids;
+}

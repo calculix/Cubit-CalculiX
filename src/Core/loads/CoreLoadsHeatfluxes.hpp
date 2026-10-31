@@ -7,6 +7,7 @@ class CoreLoadsHeatfluxes
 {
 
 public:
+  std::vector<int> get_load_ids() const;
   CoreLoadsHeatfluxes();
   ~CoreLoadsHeatfluxes();
 

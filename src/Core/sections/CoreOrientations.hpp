@@ -69,6 +69,10 @@ public:
   int  get_a_data_id_from_a_id(int a_id); // searches for the a_id in the a_data and returns the indices or -1 if it fails
   int  get_b_data_id_from_b_id(int b_id); // searches for the b_id in the b_data and returns the indices or -1 if it fails
   int  get_rotation_data_id_from_rotation_id(int rotation_id); // searches for the rotation_id in the rotation_data and returns the indices or -1 if it fails
+  const std::string* find_orientation_name(int orientation_id);
+  std::string get_orientation_name(int orientation_id);
+  bool check_orientation_exists(int orientation_id);
+  std::vector<int> get_orientations_ids() const;
   std::string get_orientation_export(); // get CalculiX orientation exports
   std::string print_data(); // prints out the blocks_data
 

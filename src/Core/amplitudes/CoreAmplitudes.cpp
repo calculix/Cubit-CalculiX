@@ -1,4 +1,5 @@
 #include "Core/amplitudes/CoreAmplitudes.hpp"
+#include "Core/application/CoreIdSelection.hpp"
 #include <numeric>
 #include <string>
 #include <vector>
@@ -6,6 +7,7 @@
 #include "Core/export/CalculiXExportInterface.hpp"
 #include "ScientificNumber.hpp"
 #include "CubitInterface.hpp"
+#include "CubitMessage.hpp"
 #include <algorithm>
 #include <limits>
 
@@ -757,4 +759,64 @@ void CoreAmplitudes::apply_permutation(
             j = p[j];
         }
     }
+}
+
+const std::string* CoreAmplitudes::find_amplitude_name(int amplitude_id)
+{
+  if (amplitude_id == -1)
+  {
+    return nullptr;
+  }
+
+  const int index = get_amplitudes_data_id_from_amplitude_id(amplitude_id);
+
+  if (index < 0)
+  {
+    return nullptr;
+  }
+
+  const int name_index = get_name_amplitude_data_id_from_name_amplitude_id(amplitudes_data[index][1]);
+
+  if (name_index < 0)
+  {
+    return nullptr;
+  }
+
+  return &name_amplitude_data[name_index][1];
+}
+
+std::string CoreAmplitudes::get_amplitude_name(int amplitude_id)
+{
+  const auto* name = find_amplitude_name(amplitude_id);
+  return name ? *name : std::string{};
+}
+
+std::vector<std::vector<std::string>> CoreAmplitudes::get_tree_data()
+{
+  std::vector<std::vector<std::string>> tree_data;
+
+  for (const auto& amplitude : amplitudes_data)
+  {
+    const auto* name = find_amplitude_name(amplitude[0]);
+
+    if (!name)
+    {
+      PRINT_ERROR("Name data missing for Amplitude ID %d.\n", amplitude[0]);
+      continue;
+    }
+
+    tree_data.push_back({std::to_string(amplitude[0]), *name});
+  }
+
+  return tree_data;
+}
+
+bool CoreAmplitudes::check_amplitude_exists(int amplitude_id)
+{
+  return get_amplitudes_data_id_from_amplitude_id(amplitude_id) != -1;
+}
+
+std::vector<int> CoreAmplitudes::get_amplitude_ids() const
+{
+  return CoreIdSelection::collect_ids(amplitudes_data);
 }

@@ -3,7 +3,10 @@
 #include <vector>
 
 #include "Core/loadCalculiXCore.hpp"
+#include "Core/export/CoreCsvWriter.hpp"
+#include "Core/application/CoreApplicationLog.hpp"
 #include "CoreObserver.hpp"
+#include "ScientificNumber.hpp"
 
 CoreObserver& CalculiXApplicationInterface::core_observer()
 {
@@ -95,8 +98,7 @@ std::string CalculiXApplicationInterface::print_data()
 
 bool CalculiXApplicationInterface::print_to_log(std::string str_log)
 {
-  ccx_core.print_to_log(str_log);
-  return true;
+  return CoreApplicationLog::append(str_log);
 }
 
 bool CalculiXApplicationInterface::print_to_cl(std::string str_log)
@@ -107,7 +109,7 @@ bool CalculiXApplicationInterface::print_to_cl(std::string str_log)
 
 bool CalculiXApplicationInterface::export_to_csv(std::string path, std::vector<std::string> header, std::vector<std::vector<double>> data,bool overwrite)
 {
-  return ccx_core.export_to_csv(path, header, data,overwrite);
+  return CoreCsvWriter::write(path, header, data, overwrite);
 }
 
 std::vector<int> CalculiXApplicationInterface::parser(std::string parse_type, std::string parse_string)
@@ -115,52 +117,32 @@ std::vector<int> CalculiXApplicationInterface::parser(std::string parse_type, st
   return ccx_core.parser(parse_type, parse_string);
 }
 
-std::string  CalculiXApplicationInterface::to_string_scientific(double value, int precision)
+std::string CalculiXApplicationInterface::to_string_scientific(double value, int precision)
 {
-  return ccx_core.to_string_scientific(value, precision);
+  return ScientificNumber::format(value, precision);
 }
 
 double CalculiXApplicationInterface::string_scientific_to_double(std::string value, int precision)
 {
-  return ccx_core.string_scientific_to_double(value, precision);
+  return ScientificNumber::parse_with_precision(value, precision);
 }
 
 bool CalculiXApplicationInterface::core_update()
 {
-  if (ccx_core.update())
-  {
-    return true;
-  }else{
-    return false;
-  }
+  return ccx_core.update();
 }
 
 bool CalculiXApplicationInterface::core_reset()
 {
-  if (ccx_core.reset())
-  {
-    return true;
-  }else{
-    return false;
-  }
+  return ccx_core.reset();
 }
 
 bool CalculiXApplicationInterface::core_read_cub(std::string filename)
 {
-  if (ccx_core.read_cub(filename))
-  {
-    return true;
-  }else{
-    return false;
-  }
+  return ccx_core.read_cub(filename);
 }
 
 bool CalculiXApplicationInterface::core_save_cub(std::string filename)
 {
-  if (ccx_core.save_cub(filename))
-  {
-    return true;
-  }else{
-    return false;
-  }
+  return ccx_core.save_cub(filename);
 }

@@ -10,6 +10,8 @@ public:
   CoreDamping();
   ~CoreDamping();
 
+  std::vector<std::vector<std::string>> get_tree_data() const;
+
   std::vector<std::string> damping_data;
   // damping_data[0] alpha
   // damping_data[1] beta

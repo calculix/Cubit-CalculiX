@@ -7,6 +7,7 @@ class CoreBCsTemperatures
 {
 
 public:
+  std::vector<int> get_bc_ids() const;
   CoreBCsTemperatures();
   ~CoreBCsTemperatures();
 

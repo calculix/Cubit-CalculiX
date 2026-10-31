@@ -462,3 +462,51 @@ std::string CoreOrientations::print_data()
 
   return str_return;
 }
+
+const std::string* CoreOrientations::find_orientation_name(int orientation_id)
+{
+  if (orientation_id == -1)
+  {
+    return nullptr;
+  }
+
+  const int index = get_orientations_data_id_from_orientation_id(orientation_id);
+
+  if (index < 0)
+  {
+    return nullptr;
+  }
+
+  const int name_index = get_name_data_id_from_name_id(orientations_data[index][1]);
+
+  if (name_index < 0)
+  {
+    return nullptr;
+  }
+
+  return &name_data[name_index][1];
+}
+
+std::string CoreOrientations::get_orientation_name(int orientation_id)
+{
+  const auto* name = find_orientation_name(orientation_id);
+  return name ? *name : std::string{};
+}
+
+bool CoreOrientations::check_orientation_exists(int orientation_id)
+{
+  return get_orientations_data_id_from_orientation_id(orientation_id) != -1;
+}
+
+std::vector<int> CoreOrientations::get_orientations_ids() const
+{
+  std::vector<int> ids;
+  ids.reserve(orientations_data.size());
+
+  for (const auto& orientation : orientations_data)
+  {
+    ids.push_back(orientation[0]);
+  }
+
+  return ids;
+}

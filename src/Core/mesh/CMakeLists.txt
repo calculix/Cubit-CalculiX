@@ -1,6 +1,19 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreMesh.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreBlocks.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreBlocks.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreBlocksPersistence.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreBlocksPersistence.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreMeshElementMapping.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreMeshElementMapping.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreMeshGeometry.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreMeshGeometry.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreMeshQuery.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreMeshQuery.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreMeshTreeData.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreMeshTreeData.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreSidesetFaces.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreSidesetFaces.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXMeshInterface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXMeshInterface.hpp
 )

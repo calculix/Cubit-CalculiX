@@ -2054,3 +2054,53 @@ std::string CoreMaterials::get_topology_material_export(int topology_id,int iter
 
   return output.str();
 }
+
+std::string CoreMaterials::get_material_export_data(int topology_id, int iteration_id)
+{
+  if (topology_id == -1 && iteration_id == -1)
+  {
+    return get_material_export();
+  }
+
+  if (topology_id <= 0 || iteration_id < 1)
+  {
+    PRINT_ERROR("Invalid topology export selection.\n");
+    return {};
+  }
+
+  const std::string topology_data = get_topology_material_export(topology_id, iteration_id);
+
+  if (topology_data.empty())
+  {
+    return {};
+  }
+
+  return get_material_export() + "\n" + topology_data;
+}
+
+bool CoreMaterials::check_topology_material_assignment(int topology_id, int iteration_id, int element_id) const
+{
+  const auto collection_it = topology_material_data.find(topology_id);
+
+  if (collection_it == topology_material_data.end())
+  {
+    return false;
+  }
+
+  const auto& collection = collection_it->second;
+  const auto assignment = collection.element_base_material.find(element_id);
+  const auto iteration = collection.iteration_factors.find(iteration_id);
+
+  if (assignment == collection.element_base_material.end() || iteration == collection.iteration_factors.end())
+  {
+    return false;
+  }
+
+  return collection.base_materials.count(assignment->second) != 0 && iteration->second.count(element_id) != 0;
+}
+
+std::string CoreMaterials::get_material_name(int material_id)
+{
+  const MaterialInterface::Material material = mat_iface->get_material(material_id);
+  return mat_iface->get_material_name(material);
+}

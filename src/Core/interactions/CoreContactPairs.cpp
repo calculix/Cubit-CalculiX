@@ -1,3 +1,5 @@
+#include "Core/mesh/CoreMeshQuery.hpp"
+#include "Core/application/CoreIdSelection.hpp"
 #include "Core/interactions/CoreContactPairs.hpp"
 #include <string>
 #include <vector>
@@ -347,4 +349,63 @@ std::string CoreContactPairs::print_data()
   }
  
   return str_return;
+}
+
+std::vector<std::vector<std::string>> CoreContactPairs::get_entities(int contactpair_id)
+{
+  const int index = get_contactpairs_data_id_from_contactpair_id(contactpair_id);
+
+  if (index == -1)
+  {
+    return {};
+  }
+
+  const auto& pair = contactpairs_data[index];
+  std::vector<std::vector<std::string>> entities = {
+    {"sideset", std::to_string(pair[3])},
+    {"sideset", std::to_string(pair[4])}
+  };
+
+  const int adjust_index = get_adjust_contactpair_data_id_from_adjust_contactpair_id(pair[5]);
+
+  if (adjust_index == -1)
+  {
+    return entities;
+  }
+
+  const std::string& nodeset = adjust_contactpair_data[adjust_index][2];
+
+  if (!nodeset.empty())
+  {
+    entities.push_back({"nodeset", nodeset});
+  }
+
+  return entities;
+}
+
+bool CoreContactPairs::check_contactpair_exists(int contactpair_id)
+{
+  return get_contactpairs_data_id_from_contactpair_id(contactpair_id) != -1;
+}
+
+std::vector<std::string> CoreContactPairs::get_contactpair_master_slave(MeshExportInterface& mesh, int contactpair_id)
+{
+  const int index = get_contactpairs_data_id_from_contactpair_id(contactpair_id);
+
+  if (index == -1)
+  {
+    const std::string error = "CONTACTPAIR " + std::to_string(contactpair_id) + "DOESN'T EXIST!";
+    return {error, error};
+  }
+
+  CoreMeshQuery query(mesh);
+  return {
+    query.get_sideset_name(contactpairs_data[index][3]),
+    query.get_sideset_name(contactpairs_data[index][4])
+  };
+}
+
+std::vector<int> CoreContactPairs::get_contactpair_ids() const
+{
+  return CoreIdSelection::collect_ids(contactpairs_data);
 }

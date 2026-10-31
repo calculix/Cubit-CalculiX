@@ -11,6 +11,7 @@ class CoreSections
 {
 
 public:
+  std::vector<int> get_section_ids() const;
   CoreSections();
   ~CoreSections();
 
@@ -81,6 +82,8 @@ public:
   bool add_beam_section(std::string beam_section_id, std::string block_id, std::string material_id,std::string beam_type,std::string parameter1,std::string parameter2,std::string parameter3,std::string parameter4,std::string parameter5,std::string parameter6,std::string x,std::string y,std::string z,std::string orientation,std::string offset1,std::string offset2); // adds new beam section to beam_sections_data
   bool add_membrane_section(std::string membrane_section_id, std::string block_id, std::string material_id,std::string orientation,std::string thickness,std::string offset); // adds new membrane section to membrane_sections_data
   bool modify_section_id(int section_id, int new_section_id); // modifies the section_id from given section
+  const std::vector<std::string>* get_section_data(int section_id);
+  std::vector<int> get_orientation_block_ids(int orientation_id) const;
   int  get_sections_data_id_from_section_id(int section_id); // searches for the section_id in the sections_data and returns the indices or -1 if it fails
   int  get_solid_section_data_id_from_solid_section_id(int solid_section_id); // searches for the solid_section_id in the solid_section_data and returns the indices or -1 if it fails
   int  get_shell_section_data_id_from_shell_section_id(int shell_section_id); // searches for the shell_section_id in the shell_section_data and returns the indices or -1 if it fails

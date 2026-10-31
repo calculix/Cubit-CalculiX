@@ -1129,41 +1129,36 @@ bool CoreLoadsTrajectoryHeatflux::prepare_export()
     
     watch.tick("prepare trajectory " + std::to_string(loads_data[i][0]) + " amplitudes");
     
-    // prepare heatflux
-    std::vector<int> heatflux_ids = CubitInterface::parse_cubit_list("heatflux","all");
-    if (heatflux_ids.size()>0)
-    {
-      last_id_heatflux = heatflux_ids[heatflux_ids.size()-1] + 1;
-    }else{
-      last_id_heatflux = 1;
-    }
+    // Prepare plugin-owned heat-flux loads.
+    const auto heatflux_ids = ccx_loads_iface.get_loadsheatfluxes_ids();
+    last_id_heatflux = heatflux_ids.empty() ? 1 : heatflux_ids.back() + 1;
+
     int link_id = 0;
-    std::vector<std::string> modify_cmd;
-    //block core update
-    ccx_application_iface.set_block_core_update(true);
-    for (size_t ii = 0; ii < trajectory_face_ids.size(); ii++)
+
+    for (const auto& face_ids : trajectory_face_ids)
     {
-      if (trajectory_face_ids[ii].size()>0)
+      if (face_ids.empty())
       {
-        ccx_application_iface.silent_cmd("create heatflux on sideset " + std::to_string(heatflux_sidesets[link_id]) + " value 1");
-        modify_cmd.push_back("ccx modify heatflux " + std::to_string(last_id_heatflux) + " amplitude " + std::to_string(heatflux_amplitude[link_id]));
-        prepared_heatflux.push_back(last_id_heatflux);
-        heatflux.push_back(last_id_heatflux);
-        link_id = link_id + 1;
-        last_id_heatflux = last_id_heatflux + 1;
+        continue;
       }
+
+      const std::vector<std::string> options = {
+        "0", std::to_string(heatflux_amplitude[link_id]), "0",
+        std::to_string(heatflux_sidesets[link_id]), ""
+      };
+
+      if (!ccx_loads_iface.create_loadsheatfluxes(options, {1.0}))
+      {
+        PRINT_ERROR("Failed creating heat flux for trajectory %d.\n", loads_data[i][0]);
+        return false;
+      }
+
+      prepared_heatflux.push_back(last_id_heatflux);
+      heatflux.push_back(last_id_heatflux);
+      ++link_id;
+      ++last_id_heatflux;
     }
 
-    //core update
-    ccx_application_iface.set_block_core_update(false);
-    ccx_application_iface.core_update();
-    //block core update
-    ccx_application_iface.set_block_core_update(true);
-    for (size_t ii = 0; ii < modify_cmd.size(); ii++)
-    {
-      ccx_application_iface.silent_cmd(modify_cmd[ii]);
-    }
-    
     watch.tick("prepare trajectory " + std::to_string(loads_data[i][0]) + " heatflux");
     //link heatflux to steps
     std::vector<std::vector<std::string>> steps_tree = ccx_steps_iface.get_steps_tree_data();
@@ -1172,7 +1167,10 @@ bool CoreLoadsTrajectoryHeatflux::prepare_export()
       std::vector<std::vector<std::string>> trajectory_tree = ccx_steps_iface.get_steps_loadstrajectory_tree_data(std::stoi(steps_tree[ii][0]));
       for (size_t iii = 0; iii < trajectory_tree.size(); iii++)
       {
-        if (ccx_loads_iface.loadstrajectory_get_subload_id(stoi(trajectory_tree[iii][0])) == loads_data[i][0])
+        const int trajectory_id = std::stoi(trajectory_tree[iii][0]);
+
+        if (ccx_loads_iface.loadstrajectory_get_load_type(trajectory_id) == "HEATFLUX" &&
+            ccx_loads_iface.loadstrajectory_get_subload_id(trajectory_id) == loads_data[i][0])
         {
           std::string ids = "";
           for (size_t iv= 0; iv < heatflux.size(); iv++)
@@ -1199,81 +1197,48 @@ bool CoreLoadsTrajectoryHeatflux::clean_export()
 {
   CalculiXAmplitudesInterface ccx_amplitudes_iface;
   CalculiXApplicationInterface ccx_application_iface;
+  CalculiXLoadsInterface ccx_loads_iface;
 
-  std::string ids;
-  StopWatch watch;
-  
-  if (prepared_amplitudes.size()==0)
-  {
-    return true;
-  }
-  
-  watch.tick("clean trajectory start");
-
-  //block core update
+  const bool was_blocked = ccx_application_iface.block_core_update();
   ccx_application_iface.set_block_core_update(true);
-  ids = "";
-  int current_step_id=0;
-  for (size_t i = 0; i < prepared_step_heatflux.size(); i++)
-  {
-    if (i==0)
-    {
-      current_step_id = prepared_step_heatflux[i][0];
-    }
-    if (current_step_id == prepared_step_heatflux[i][0])
-    {
-      ccx_application_iface.silent_cmd("ccx step " + std::to_string(current_step_id) + " remove load heatflux " + ids);
-      ids="";
-      ids.append(std::to_string(prepared_step_heatflux[i][1]) + " ");
-      current_step_id = prepared_step_heatflux[i][0];
-    }else{
-      ids.append(std::to_string(prepared_step_heatflux[i][1]) + " ");
-    }
-    if (i==prepared_step_heatflux.size()-1)
-    {
-      ccx_application_iface.silent_cmd("ccx step " + std::to_string(current_step_id) + " remove load heatflux " + ids);
-    }
-  }
-  watch.tick("clean trajectory step links");
-  
-  ids = "";
-  for (size_t i = 0; i < prepared_sidesets.size(); i++)
-  {
-    ids.append(std::to_string(prepared_sidesets[i]) + " ");
-  }
-  ccx_application_iface.silent_cmd("delete sideset " + ids);
-  watch.tick("clean trajectory sideset");
 
-  ids = "";
-  for (size_t i = 0; i < prepared_heatflux.size(); i++)
-  {
-    ids.append(std::to_string(prepared_heatflux[i]) + " ");
-  }
-  ccx_application_iface.silent_cmd("delete heatflux " + ids);
-  watch.tick("clean trajectory heatflux");
+  bool result = true;
 
-  /*
-  ids = "";
-  for (size_t i = 0; i < prepared_amplitudes.size(); i++)
+  for (int heatflux_id : prepared_heatflux)
   {
-    ids.append(std::to_string(prepared_amplitudes[i]) + " ");
+    result = ccx_loads_iface.delete_loadsheatfluxes(heatflux_id) && result;
   }
-  ccx_application_iface.silent_cmd("ccx delete amplitude " + ids);
-  */
-  ccx_amplitudes_iface.delete_amplitudes(prepared_amplitudes);
-  watch.tick("clean trajectory amplitudes");
 
-  //resume core update
-  ccx_application_iface.set_block_core_update(false);
-  ccx_application_iface.core_update();
-  
+  if (!prepared_sidesets.empty())
+  {
+    std::string ids;
+
+    for (int sideset_id : prepared_sidesets)
+    {
+      ids += std::to_string(sideset_id) + " ";
+    }
+
+    result = ccx_application_iface.silent_cmd("delete sideset " + ids) && result;
+  }
+
+  if (!prepared_amplitudes.empty())
+  {
+    result = ccx_amplitudes_iface.delete_amplitudes(prepared_amplitudes) && result;
+  }
+
   prepared_sidesets.clear();
   prepared_amplitudes.clear();
   prepared_heatflux.clear();
   prepared_step_heatflux.clear();
 
-  watch.tick("clean trajectory end");
-  return true;
+  ccx_application_iface.set_block_core_update(was_blocked);
+
+  if (!was_blocked)
+  {
+    result = ccx_application_iface.core_update() && result;
+  }
+
+  return result;
 }
 
 std::string CoreLoadsTrajectoryHeatflux::get_load_export(int load_id)

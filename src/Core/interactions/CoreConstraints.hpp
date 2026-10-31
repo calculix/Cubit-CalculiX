@@ -7,6 +7,10 @@ class CoreConstraints
 {
 
 public:
+  const std::vector<std::string>* get_constraint_data(int constraint_id);
+  std::vector<int> get_constraint_ids() const;
+  std::vector<int> get_equation_ids() const;
+  std::vector<int> get_equationgroup_ids() const;
   CoreConstraints();
   ~CoreConstraints();
 

@@ -1,4 +1,5 @@
 #include "Core/steps/CoreHistoryOutputs.hpp"
+#include "Core/application/CoreIdSelection.hpp"
 #include <string>
 #include <vector>
 #include "Core/export/CalculiXExportInterface.hpp"
@@ -750,4 +751,14 @@ std::string CoreHistoryOutputs::print_data()
   }
 
   return str_return;
+}
+
+bool CoreHistoryOutputs::check_historyoutput_exists(int historyoutput_id)
+{
+  return get_outputs_data_id_from_output_id(historyoutput_id) != -1;
+}
+
+std::vector<int> CoreHistoryOutputs::get_output_ids() const
+{
+  return CoreIdSelection::collect_ids(outputs_data);
 }

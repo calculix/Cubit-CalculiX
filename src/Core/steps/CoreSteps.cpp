@@ -15,6 +15,19 @@ CoreSteps::CoreSteps()
 CoreSteps::~CoreSteps()
 {}
 
+std::vector<int> CoreSteps::get_steps_ids() const
+{
+  std::vector<int> ids;
+  ids.reserve(steps_data.size());
+
+  for (const auto& step : steps_data)
+  {
+    ids.push_back(step[0]);
+  }
+
+  return ids;
+}
+
 bool CoreSteps::init()
 {
   if (is_initialized)
@@ -2692,4 +2705,29 @@ bool CoreSteps::load_backup()
   }
   
   return has_backup;
+}
+
+bool CoreSteps::check_step_exists(int step_id)
+{
+  return get_steps_data_id_from_step_id(step_id) != -1;
+}
+
+void CoreSteps::remove_load_references(int load_type, int load_id)
+{
+  const auto matches = [&](const std::vector<int>& reference)
+  {
+    return reference[1] == load_type && reference[2] == load_id;
+  };
+
+  loads_data.erase(std::remove_if(loads_data.begin(), loads_data.end(), matches), loads_data.end());
+}
+
+void CoreSteps::remove_bc_references(int bc_type, int bc_id)
+{
+  const auto matches = [&](const std::vector<int>& reference)
+  {
+    return reference[1] == bc_type && reference[2] == bc_id;
+  };
+
+  bcs_data.erase(std::remove_if(bcs_data.begin(), bcs_data.end(), matches), bcs_data.end());
 }

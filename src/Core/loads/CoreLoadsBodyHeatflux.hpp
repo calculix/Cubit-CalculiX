@@ -7,6 +7,7 @@ class CoreLoadsBodyHeatflux
 {
 
 public:
+  std::vector<int> get_load_ids() const;
   CoreLoadsBodyHeatflux();
   ~CoreLoadsBodyHeatflux();
 

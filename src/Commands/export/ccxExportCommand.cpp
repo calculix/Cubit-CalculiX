@@ -20,6 +20,7 @@
 #include "ProgressTool.hpp"
 #include "AppUtil.hpp"
 #include <fstream>
+#include <exception>
 
 #ifdef WIN32
  //#include <windows.h>
@@ -909,16 +910,42 @@ bool ccxExportCommand::write_steps(std::ofstream& output_file)
 {
   CalculiXStepsInterface ccx_steps_iface;
   CalculiXTopologyInterface ccx_topology_iface;
+  std::string data;
 
-  const std::string data = ccx_steps_iface.get_step_export_data();
-
-  if (ccx_topology_iface.is_topology_adjoint_export() && data.empty())
+  try
   {
-    PRINT_ERROR("Unable to export the topology adjoint step.\n");
+    data = ccx_steps_iface.get_step_export_data();
+  }
+  catch (const std::exception& error)
+  {
+    PRINT_ERROR("Failed exporting step data: %s\n", error.what());
+    return false;
+  }
+  catch (const char* error)
+  {
+    PRINT_ERROR("Failed exporting step data: %s\n", error ? error : "Null exception message");
+    return false;
+  }
+  catch (...)
+  {
+    PRINT_ERROR("Failed exporting step data: unknown exception type.\n");
+    return false;
+  }
+
+  if (data.empty())
+  {
+    if (ccx_topology_iface.is_topology_adjoint_export())
+    {
+      PRINT_ERROR("Unable to export the topology adjoint step.\n");
+    }
+    else
+    {
+      PRINT_ERROR("Unable to export step data.\n");
+    }
+
     return false;
   }
 
   output_file << data;
-
   return output_file.good();
 }

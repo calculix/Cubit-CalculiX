@@ -7,8 +7,11 @@ class CoreCustomLines
 {
 
 public:
+  std::vector<int> get_customline_ids() const;
   CoreCustomLines();
   ~CoreCustomLines();
+
+  std::vector<std::vector<std::string>> get_tree_data() const;
 
   std::vector<std::vector<std::string>> customlines_data;
   // customlines_data[0][0] customline_id

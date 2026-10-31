@@ -15,8 +15,11 @@ class CoreJobs
 {
 
 public:
+  std::vector<int> get_job_ids() const;
   CoreJobs();
   ~CoreJobs();
+
+  std::vector<std::vector<std::string>> get_tree_data() const;
 
   std::vector<std::vector<std::string>> jobs_data;
   // jobs_data[0][0] job_id

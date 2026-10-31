@@ -1,10 +1,23 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreBCs.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreBCsDisplacements.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreBCsDisplacements.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreBCsTemperatures.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreBCsTemperatures.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreBCsCleanup.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreBCsCleanup.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreBCsPersistence.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreBCsPersistence.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreBCRemoval.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreBCRemoval.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreHBCs.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreHBCs.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreHBCExport.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreHBCExport.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreBCsTreeData.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreBCsTreeData.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreBCsEntities.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreBCsEntities.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXBCsInterface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXBCsInterface.hpp
 )

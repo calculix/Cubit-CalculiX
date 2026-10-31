@@ -538,3 +538,37 @@ int CoreBlocks::get_ccx_element_type_integration_points(int block_id)
   
   return ip_return;
 }
+
+std::vector<int> CoreBlocks::get_blocks() const
+{
+  std::vector<int> blocks;
+  blocks.reserve(blocks_data.size());
+
+  for (const auto& block : blocks_data)
+  {
+    blocks.push_back(block[0]);
+  }
+
+  return blocks;
+}
+
+bool CoreBlocks::check_block_exists(int block_id)
+{
+  return get_blocks_data_id_from_block_id(block_id) != -1;
+}
+
+bool CoreBlocks::set_ccx_element_type(int block_id, std::string ccx_element_type)
+{
+  const int element_type_id = get_ccx_element_type_id(ccx_element_type);
+  return modify_block_element_type_ccx(block_id, element_type_id);
+}
+
+std::vector<std::vector<std::string>> CoreBlocks::get_entities(int block_id)
+{
+  if (!check_block_exists(block_id))
+  {
+    return {};
+  }
+
+  return {{"block", std::to_string(block_id)}};
+}
