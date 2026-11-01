@@ -219,3 +219,4 @@
 2026-10-29 refactor calculixcore
 2026-10-30 refactor calculixcore
 2026-10-31 refactor calculixcore
+2026-11-01 introducing Framework for loading multiple components at once. will be used for other solvers and Tools

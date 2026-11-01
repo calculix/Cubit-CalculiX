@@ -8,6 +8,9 @@ Developer guide
    ../source-map
    ../adding-a-feature
    interface-layout
+   framework-stage1
+   framework-stage2
+   framework-stage3
    topology
    topology-algorithms
    topology-preservation

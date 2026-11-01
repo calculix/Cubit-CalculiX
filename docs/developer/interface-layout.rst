@@ -185,7 +185,7 @@ include the moved Qt headers.
      - Custom-line panels and tree.
 
 FRD/DAT monitors, their plots and section views, and live-monitor widgets all
-remain together in ``src/GUI/jobs``. Their result-query dependencies still use
+remain together in ``src/CalculiX/GUI/jobs``. Their result-query dependencies still use
 the core's FRD/DAT interfaces. Step-specific load and BC trees belong to
 ``GUI/steps``; load and BC definition trees belong to their respective features.
 
