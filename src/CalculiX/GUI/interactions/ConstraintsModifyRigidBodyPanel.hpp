@@ -1,7 +1,11 @@
 #ifndef CONSTRAINTSMODIFYRIGIDBODYPANEL_HPP
 #define CONSTRAINTSMODIFYRIGIDBODYPANEL_HPP
+
+#include "Core/interactions/ConstraintsSettings.hpp"
 #include <string>
 
+#include <QHash>
+#include <QString>
 #include <QWidget>
 #include <QFrame>
 #include <QList>
@@ -22,6 +26,7 @@ class ConstraintsModifyRigidBodyPanel : public QWidget
   Q_OBJECT
   
 public:
+  bool setConstraint(int id);
   explicit ConstraintsModifyRigidBodyPanel(QWidget *parent = 0);
   ~ConstraintsModifyRigidBodyPanel();
 
@@ -33,6 +38,9 @@ private slots:
   void on_radioButton_2_toggled(bool toggled);
 
 private:
+  int loadedEntityId = -1;
+  QHash<QString, QString> originalValues;
+  bool fieldChanged(const QString& field, const QString& value) const;
   std::string log;
 
   QFrame*      frame_1;

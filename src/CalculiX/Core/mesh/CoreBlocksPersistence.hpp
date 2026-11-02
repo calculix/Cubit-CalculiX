@@ -7,8 +7,8 @@ class HDF5Tool;
 class CoreBlocksPersistence
 {
 public:
-  static void read(HDF5Tool& file, CoreBlocks& blocks);
-  static void write(HDF5Tool& file, const CoreBlocks& blocks);
+  static bool read(HDF5Tool& file, CoreBlocks& blocks);
+  static bool write(HDF5Tool& file, const CoreBlocks& blocks);
 };
 
 #endif

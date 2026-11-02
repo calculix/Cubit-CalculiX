@@ -1,3 +1,4 @@
+#include "Core/application/SettingsRead.hpp"
 #include "Core/export/CoreCustomLines.hpp"
 #include <string>
 #include <vector>
@@ -161,4 +162,32 @@ std::vector<int> CoreCustomLines::get_customline_ids() const
   }
 
   return ids;
+}
+
+
+bool CoreCustomLines::get_settings(int id, CustomLinesSettings& settings, std::string& error) const
+{
+  settings = {};
+  error.clear();
+  const auto* record = SettingsRead::row(customlines_data, id, 6, error);
+
+  if (record == nullptr)
+  {
+    return false;
+  }
+
+  settings.id = id;
+  settings.name = SettingsRead::text((*record)[1]);
+  settings.position = SettingsRead::text((*record)[2]);
+  settings.keyword = SettingsRead::text((*record)[3]);
+  settings.keywordId = SettingsRead::text((*record)[4]);
+  settings.text = SettingsRead::text((*record)[5]);
+
+  if (!error.empty())
+  {
+    settings = {};
+    return false;
+  }
+
+  return true;
 }

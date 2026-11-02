@@ -1,3 +1,17 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include "StepsDeletePanel.hpp"
+#include "StepsModifyComplexFrequencyPanel.hpp"
+#include "StepsModifySteadyStateDynamicsPanel.hpp"
+#include "StepsModifyModalDynamicPanel.hpp"
+#include "StepsModifyDynamicPanel.hpp"
+#include "StepsModifyUncoupledTemperatureDisplacementPanel.hpp"
+#include "StepsModifyCoupledTemperatureDisplacementPanel.hpp"
+#include "StepsModifyHeatTransferPanel.hpp"
+#include "StepsModifyBucklePanel.hpp"
+#include "StepsModifyFrequencyPanel.hpp"
+#include "StepsModifyStaticPanel.hpp"
+#include "StepsModifyParameterPanel.hpp"
+#include "TaskPanel.hpp"
 #include "StepsTree.hpp"
 #include <string>
 #include <vector>
@@ -124,6 +138,9 @@ void StepsTree::addStep(QString step_id, QString step_name)
   StepTreeChild->setText(0, step_name);
     
   StepTreeChild->setText(1, step_id);
+  StepTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Step));
+  StepTreeChild->setData(0, PropertyIdRole, step_id.toInt());
+  StepTreeChild->setData(0, PropertyStepIdRole, step_id.toInt());
 
   StepTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("StepsTree"));
 
@@ -177,6 +194,12 @@ void StepsTree::populateContextMenu(
     return;
   }
 
+  int selectedId = 0;
+  if (clickedItem != this && !readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
+
   if (clickedItem == this)
   {
     addPanelAction(menu, "Create Step", host, "CCXStepsCreate");
@@ -213,7 +236,194 @@ void StepsTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Step", host, "CCXStepsCreate");
-  addPanelAction(menu, "Modify Step", host, "CCXStepsModify");
-  addPanelAction(menu, "Delete Step", host, "CCXStepsDelete");
+  {
+    auto* action = menu.addAction("Modify Step");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      StepsTree::open_modify(selectedId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Step");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      StepsTree::open_delete(selectedId, host);
+    });
+  }
   addCommandAction(menu, "Draw Step", QString("ccx draw step ") + QString::number(entityId));
+}
+
+
+void StepsTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+
+  CalculiXStepsInterface core;
+  StepsSettings settings;
+  std::string error;
+  if (!core.get_step_settings(id, settings, error))
+  {
+    PRINT_ERROR("Cannot open Step %d: %s\n", id, error.c_str());
+    return;
+  }
+
+  QString marker;
+  switch (settings.type)
+  {
+    case 1: marker = "CCXStepsModifyParameter"; break;
+    case 2: marker = "CCXStepsModifyStatic"; break;
+    case 3: marker = "CCXStepsModifyFrequency"; break;
+    case 4: marker = "CCXStepsModifyBuckle"; break;
+    case 5: marker = "CCXStepsModifyHeatTransfer"; break;
+    case 6: marker = "CCXStepsModifyCoupledTemperatureDisplacement"; break;
+    case 7: marker = "CCXStepsModifyUncoupledTemperatureDisplacement"; break;
+    case 8: marker = "CCXStepsModifyDynamic"; break;
+    case 9: marker = "CCXStepsModifyModalDynamic"; break;
+    case 10: marker = "CCXStepsModifySteadyStateDynamics"; break;
+    case 11: marker = "CCXStepsModifyComplexFrequency"; break;
+    default:
+      PRINT_ERROR("This stored type has no modify panel.\n");
+      return;
+  }
+  host.setWidgetInCmdPanelMarker(marker);
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<StepsModifyParameterPanel*>(widget))
+    {
+      if (settings.type == 1)
+      {
+        panel->setStep(id);
+        return;
+      }
+    }
+    if (auto* panel = dynamic_cast<StepsModifyStaticPanel*>(widget))
+    {
+      if (settings.type == 2)
+      {
+        panel->setStep(id);
+        return;
+      }
+    }
+    if (auto* panel = dynamic_cast<StepsModifyFrequencyPanel*>(widget))
+    {
+      if (settings.type == 3)
+      {
+        panel->setStep(id);
+        return;
+      }
+    }
+    if (auto* panel = dynamic_cast<StepsModifyBucklePanel*>(widget))
+    {
+      if (settings.type == 4)
+      {
+        panel->setStep(id);
+        return;
+      }
+    }
+    if (auto* panel = dynamic_cast<StepsModifyHeatTransferPanel*>(widget))
+    {
+      if (settings.type == 5)
+      {
+        panel->setStep(id);
+        return;
+      }
+    }
+    if (auto* panel = dynamic_cast<StepsModifyCoupledTemperatureDisplacementPanel*>(widget))
+    {
+      if (settings.type == 6)
+      {
+        panel->setStep(id);
+        return;
+      }
+    }
+    if (auto* panel = dynamic_cast<StepsModifyUncoupledTemperatureDisplacementPanel*>(widget))
+    {
+      if (settings.type == 7)
+      {
+        panel->setStep(id);
+        return;
+      }
+    }
+    if (auto* panel = dynamic_cast<StepsModifyDynamicPanel*>(widget))
+    {
+      if (settings.type == 8)
+      {
+        panel->setStep(id);
+        return;
+      }
+    }
+    if (auto* panel = dynamic_cast<StepsModifyModalDynamicPanel*>(widget))
+    {
+      if (settings.type == 9)
+      {
+        panel->setStep(id);
+        return;
+      }
+    }
+    if (auto* panel = dynamic_cast<StepsModifySteadyStateDynamicsPanel*>(widget))
+    {
+      if (settings.type == 10)
+      {
+        panel->setStep(id);
+        return;
+      }
+    }
+    if (auto* panel = dynamic_cast<StepsModifyComplexFrequencyPanel*>(widget))
+    {
+      if (settings.type == 11)
+      {
+        panel->setStep(id);
+        return;
+      }
+    }
+  }
+  PRINT_ERROR("Unable to open the Step modify panel.\n");
+}
+
+void StepsTree::open_delete(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXStepsDelete");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<StepsDeletePanel*>(widget))
+    {
+      panel->setStep(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Step delete panel.\n");
+}
+
+void StepsTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (item == nullptr)
+  {
+    return;
+  }
+  if (item == this)
+  {
+    host.setWidgetInCmdPanelMarker("CCXStepsCreate");
+    return;
+  }
+
+  if (item->parent() != this)
+  {
+    return;
+  }
+
+  int id = -1;
+  if (!readItemId(item, id))
+  {
+    return;
+  }
+  open_modify(id, host);
 }

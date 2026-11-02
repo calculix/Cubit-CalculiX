@@ -7,8 +7,8 @@ class HDF5Tool;
 class CoreCustomLinesPersistence
 {
 public:
-  static void read(HDF5Tool& file, CoreCustomLines& lines);
-  static void write(HDF5Tool& file, const CoreCustomLines& lines);
+  static bool read(HDF5Tool& file, CoreCustomLines& lines);
+  static bool write(HDF5Tool& file, const CoreCustomLines& lines);
 };
 
 #endif

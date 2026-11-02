@@ -1,3 +1,12 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include <QAction>
+#include "HistoryOutputsDeletePanel.hpp"
+#include "HistoryOutputsModifySectionPanel.hpp"
+#include "HistoryOutputsModifyContactPanel.hpp"
+#include "HistoryOutputsModifyElementPanel.hpp"
+#include "HistoryOutputsModifyNodePanel.hpp"
+#include "CubitMessage.hpp"
+#include "TaskPanel.hpp"
 #include "HistoryOutputsTree.hpp"
 #include <string>
 #include <vector>
@@ -105,6 +114,8 @@ void HistoryOutputsTree::addOutput(QString output_id, QString output_name)
   OutputTreeChild->setText(0, output_name);
     
   OutputTreeChild->setText(1, output_id);
+  OutputTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::HistoryOutput));
+  OutputTreeChild->setData(0, PropertyIdRole, output_id.toInt());
 
   OutputTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("HistoryOutputsTree"));
 
@@ -146,6 +157,12 @@ void HistoryOutputsTree::populateContextMenu(
     return;
   }
 
+  int selectedId = 0;
+  if (clickedItem != this && !readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
+
   if (clickedItem == this)
   {
     addPanelAction(menu, "Create History Output", host, "CCXHistoryOutputsCreate");
@@ -158,6 +175,130 @@ void HistoryOutputsTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create History Output", host, "CCXHistoryOutputsCreate");
-  addPanelAction(menu, "Modify History Output", host, "CCXHistoryOutputsModify");
-  addPanelAction(menu, "Delete History Output", host, "CCXHistoryOutputsDelete");
+  {
+    auto* action = menu.addAction("Modify History Output");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      HistoryOutputsTree::open_modify(selectedId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete History Output");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      HistoryOutputsTree::open_delete(selectedId, host);
+    });
+  }
+}
+
+
+void HistoryOutputsTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+
+  CalculiXStepsInterface core;
+  HistoryOutputsSettings settings;
+  std::string error;
+  if (!core.get_historyoutput_settings(id, settings, error))
+  {
+    PRINT_ERROR("Cannot open HistoryOutput %d: %s\n", id, error.c_str());
+    return;
+  }
+
+  QString marker;
+  switch (settings.type)
+  {
+    case 1: marker = "CCXHistoryOutputsModifyNode"; break;
+    case 2: marker = "CCXHistoryOutputsModifyElement"; break;
+    case 3: marker = "CCXHistoryOutputsModifyContact"; break;
+    case 4: marker = "CCXHistoryOutputsModifySection"; break;
+    default:
+      PRINT_ERROR("This stored type has no modify panel.\n");
+      return;
+  }
+  host.setWidgetInCmdPanelMarker(marker);
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<HistoryOutputsModifyNodePanel*>(widget))
+    {
+      if (settings.type == 1)
+      {
+        panel->setHistoryOutput(id);
+        return;
+      }
+    }
+    if (auto* panel = dynamic_cast<HistoryOutputsModifyElementPanel*>(widget))
+    {
+      if (settings.type == 2)
+      {
+        panel->setHistoryOutput(id);
+        return;
+      }
+    }
+    if (auto* panel = dynamic_cast<HistoryOutputsModifyContactPanel*>(widget))
+    {
+      if (settings.type == 3)
+      {
+        panel->setHistoryOutput(id);
+        return;
+      }
+    }
+    if (auto* panel = dynamic_cast<HistoryOutputsModifySectionPanel*>(widget))
+    {
+      if (settings.type == 4)
+      {
+        panel->setHistoryOutput(id);
+        return;
+      }
+    }
+  }
+  PRINT_ERROR("Unable to open the HistoryOutput modify panel.\n");
+}
+
+void HistoryOutputsTree::open_delete(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXHistoryOutputsDelete");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<HistoryOutputsDeletePanel*>(widget))
+    {
+      panel->setHistoryOutput(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the HistoryOutput delete panel.\n");
+}
+
+void HistoryOutputsTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (item == nullptr)
+  {
+    return;
+  }
+  if (item == this)
+  {
+    host.setWidgetInCmdPanelMarker("CCXHistoryOutputsCreate");
+    return;
+  }
+
+  if (item->parent() != this)
+  {
+    return;
+  }
+
+  int id = -1;
+  if (!readItemId(item, id))
+  {
+    return;
+  }
+  open_modify(id, host);
 }

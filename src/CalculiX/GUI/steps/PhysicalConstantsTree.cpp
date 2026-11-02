@@ -1,3 +1,9 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include <QAction>
+#include "PhysicalConstantsDeletePanel.hpp"
+#include "PhysicalConstantsModifyPanel.hpp"
+#include "CubitMessage.hpp"
+#include "TaskPanel.hpp"
 #include "PhysicalConstantsTree.hpp"
 #include <string>
 #include <vector>
@@ -26,6 +32,8 @@ void PhysicalConstantsTree::initialize()
 
   QTreeWidgetItem::setText(0,"Physical Constants");
   this->setIcon(0,ccx_gui_resources_iface.getIcon2("PhysicalConstantsTree"));
+  setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::PhysicalConstants));
+  setData(0, PropertyIdRole, 0);
   isInitialized = true;
 }
 
@@ -105,6 +113,8 @@ void PhysicalConstantsTree::addPhysicalConstants(QString PhysicalConstants_id, Q
   PhysicalConstantsTreeChild->setText(0, name);
     
   PhysicalConstantsTreeChild->setText(1, PhysicalConstants_id);
+  PhysicalConstantsTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::PhysicalConstants));
+  PhysicalConstantsTreeChild->setData(0, PropertyIdRole, PhysicalConstants_id.toInt());
 
   PhysicalConstantsTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("PhysicalConstantsTree"));
 
@@ -146,9 +156,21 @@ void PhysicalConstantsTree::populateContextMenu(
     return;
   }
 
+  int selectedId = 0;
+  if (clickedItem != this && !readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
+
   if (clickedItem == this)
   {
-    addPanelAction(menu, "Modify PhysicalConstants", host, "CCXPhysicalConstantsModify");
+    {
+      auto* action = menu.addAction("Modify PhysicalConstants");
+      QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+      {
+        PhysicalConstantsTree::open_modify(0, host);
+      });
+    }
     return;
   }
 
@@ -157,6 +179,67 @@ void PhysicalConstantsTree::populateContextMenu(
     return;
   }
 
-  addPanelAction(menu, "Modify PhysicalConstants", host, "CCXPhysicalConstantsModify");
-  addPanelAction(menu, "Delete PhysicalConstants", host, "CCXPhysicalConstantsDelete");
+  {
+    auto* action = menu.addAction("Modify PhysicalConstants");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      PhysicalConstantsTree::open_modify(0, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete PhysicalConstants");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      PhysicalConstantsTree::open_delete(selectedId, host);
+    });
+  }
+}
+
+
+void PhysicalConstantsTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+
+  host.setWidgetInCmdPanelMarker("CCXPhysicalConstantsModify");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<PhysicalConstantsModifyPanel*>(widget))
+    {
+      panel->setPhysicalConstants(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the PhysicalConstants modify panel.\n");
+}
+
+void PhysicalConstantsTree::open_delete(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXPhysicalConstantsDelete");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<PhysicalConstantsDeletePanel*>(widget))
+    {
+      panel->selectConstant(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the PhysicalConstants delete panel.\n");
+}
+
+void PhysicalConstantsTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (item == nullptr)
+  {
+    return;
+  }
+  open_modify(0, host);
 }

@@ -118,3 +118,21 @@ std::vector<std::vector<std::string>> CalculiXInteractionsInterface::get_contact
 { 
   return CoreInteractionsTreeData::get_contactpairs_tree_data(*ccx_core.contactpairs);
 }
+
+
+bool CalculiXInteractionsInterface::get_constraint_settings(int id, ConstraintsSettings& settings, std::string& error)
+{
+  return ccx_core.constraints->get_settings(id, settings, error);
+}
+
+
+bool CalculiXInteractionsInterface::get_contactpair_settings(int id, ContactPairsSettings& settings, std::string& error)
+{
+  return ccx_core.contactpairs->get_settings(id, settings, error);
+}
+
+
+bool CalculiXInteractionsInterface::get_surfaceinteraction_settings(int id, SurfaceInteractionsSettings& settings, std::string& error)
+{
+  return ccx_core.surfaceinteractions->get_settings(id, settings, error);
+}

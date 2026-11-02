@@ -1,3 +1,6 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include "StepsTree.hpp"
+#include "GUI/loads/LoadsSurfaceTractionTree.hpp"
 #include "StepsLoadsSurfaceTractionTree.hpp"
 #include <string>
 #include <vector>
@@ -109,6 +112,8 @@ void StepsLoadsSurfaceTractionTree::addLoad(QString load_id, QString load_name)
   LoadTreeChild->setText(0, load_name);
     
   LoadTreeChild->setText(1, load_id);
+  LoadTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::SurfaceTraction));
+  LoadTreeChild->setData(0, PropertyIdRole, load_id.toInt());
 
   LoadTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("StepsLoadsSurfaceTractionTree"));
 
@@ -188,8 +193,20 @@ void StepsLoadsSurfaceTractionTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Surface Traction", host, "CCXLoadsSurfaceTractionCreate");
-  addPanelAction(menu, "Modify Surface Traction", host, "CCXLoadsSurfaceTractionModify");
-  addPanelAction(menu, "Delete Surface Traction", host, "CCXLoadsSurfaceTractionDelete");
+  {
+    auto* action = menu.addAction("Modify Surface Traction");
+    QObject::connect(action, &QAction::triggered, &menu, [entityId, &host]()
+    {
+      LoadsSurfaceTractionTree::open_modify(entityId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Surface Traction");
+    QObject::connect(action, &QAction::triggered, &menu, [entityId, &host]()
+    {
+      LoadsSurfaceTractionTree::open_delete(entityId, host);
+    });
+  }
   {
     QAction *action = menu.addAction("Steps Management");
     ModelTree *hostPtr = &host;
@@ -205,4 +222,23 @@ void StepsLoadsSurfaceTractionTree::populateContextMenu(
     });
   }
   addCommandAction(menu, "Draw Surface Traction", QString("ccx draw load surfacetraction ") + QString::number(entityId));
+}
+
+
+void StepsLoadsSurfaceTractionTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (host.myStepsManagement == nullptr)
+  {
+    return;
+  }
+  for (auto* ancestor = item; ancestor != nullptr; ancestor = ancestor->parent())
+  {
+    if (dynamic_cast<StepsTree*>(ancestor->parent()) != nullptr)
+    {
+      host.myStepsManagement->setStep(ancestor->text(1));
+      host.myStepsManagement->show();
+      host.myStepsManagement->raise();
+      return;
+    }
+  }
 }

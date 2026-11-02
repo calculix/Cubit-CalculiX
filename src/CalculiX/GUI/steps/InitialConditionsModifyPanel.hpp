@@ -1,7 +1,11 @@
 #ifndef INITIALCONDITIONSMODIFYPANEL_HPP
 #define INITIALCONDITIONSMODIFYPANEL_HPP
+
+#include "Core/steps/InitialConditionsSettings.hpp"
 #include <string>
 
+#include <QHash>
+#include <QString>
 #include <QWidget>
 #include <QList>
 #include <QPushButton>
@@ -17,11 +21,13 @@
 #include <QLineEdit>
 #include <QRadioButton>
 #include <QCheckBox>
+class PanelTable;
 class InitialConditionsModifyPanel : public QWidget
 {
   Q_OBJECT
   
 public:
+  bool setInitialCondition(int id);
   explicit InitialConditionsModifyPanel(QWidget *parent = 0);
   ~InitialConditionsModifyPanel();
 
@@ -31,6 +37,12 @@ private slots:
   void on_pushButton_apply_clicked(bool);
 
 private:
+  QLabel* stressInfo = nullptr;
+  PanelTable* blockStress = nullptr;
+  PanelTable* elementStress = nullptr;
+  int loadedEntityId = -1;
+  QHash<QString, QString> originalValues;
+  bool fieldChanged(const QString& field, const QString& value) const;
   std::string log;
 
   QGridLayout* GridLayout;

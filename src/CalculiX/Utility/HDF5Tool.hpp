@@ -10,8 +10,13 @@ class HDF5Tool
 {
 
 public:
-  HDF5Tool(std::string filename);
-  ~HDF5Tool();
+  HDF5Tool(std::string filename, bool createIfMissing = true);
+  ~HDF5Tool() noexcept;
+  HDF5Tool(const HDF5Tool&) = delete;
+  HDF5Tool& operator=(const HDF5Tool&) = delete;
+  bool close() noexcept;
+  bool ensureGroup(const std::string& groupname);
+  const std::string& last_error() const;
 
   bool nameExists(std::string name);
   bool createGroup(std::string groupname);
@@ -38,7 +43,9 @@ public:
   bool write_dataset_string_rank_1(std::string name, std::string groupname, std::vector<std::string> data); // create dataset
   bool write_dataset_string_rank_2(std::string name, std::string groupname, std::vector<std::vector<std::string>> data); // create dataset
 
-  H5::H5File *file;
+  H5::H5File* file = nullptr;
+private:
+  std::string lastError;
 };
 
 #endif // HDF5TOOL_HPP

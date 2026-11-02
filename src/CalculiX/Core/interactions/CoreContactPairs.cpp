@@ -1,3 +1,4 @@
+#include "Core/application/SettingsRead.hpp"
 #include "Core/mesh/CoreMeshQuery.hpp"
 #include "Core/application/CoreIdSelection.hpp"
 #include "Core/interactions/CoreContactPairs.hpp"
@@ -408,4 +409,39 @@ std::vector<std::string> CoreContactPairs::get_contactpair_master_slave(MeshExpo
 std::vector<int> CoreContactPairs::get_contactpair_ids() const
 {
   return CoreIdSelection::collect_ids(contactpairs_data);
+}
+
+
+bool CoreContactPairs::get_settings(int id, ContactPairsSettings& settings, std::string& error) const
+{
+  settings = {};
+  error.clear();
+  const auto* record = SettingsRead::row(contactpairs_data, id, 6, error);
+
+  if (record == nullptr)
+  {
+    return false;
+  }
+
+  settings.id = id;
+  const char* contactTypes[] = {"nodetosurface", "surfacetosurface", "mortar", "linmortar", "pglinmortar", "massless"};
+  if ((*record)[2] < 1 || (*record)[2] > 6)
+  {
+    error = "Unknown contact-pair type.";
+    return false;
+  }
+  settings.surfaceInteraction = SettingsRead::text((*record)[1]);
+  settings.contactType = contactTypes[(*record)[2] - 1];
+  settings.master = SettingsRead::text((*record)[3]);
+  settings.slave = SettingsRead::text((*record)[4]);
+  settings.adjust = SettingsRead::field(adjust_contactpair_data, (*record)[5], 1, error);
+  settings.adjustNodeset = SettingsRead::field(adjust_contactpair_data, (*record)[5], 2, error);
+
+  if (!error.empty())
+  {
+    settings = {};
+    return false;
+  }
+
+  return true;
 }

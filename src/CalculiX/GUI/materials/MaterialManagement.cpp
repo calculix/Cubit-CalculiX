@@ -1129,16 +1129,23 @@ void MaterialManagement::loadWidget(QListWidgetItem* item)
 
 void MaterialManagement::setMaterial(QString material_id)
 {
-  MaterialManagementItem* current_item;
-  int ChildId;
-  ChildId = get_child_id(material_id.toStdString());
-  if (ChildId!=-1)
+  const int childId = get_child_id(material_id.toStdString());
+  if (childId < 0)
   {
-    current_item = dynamic_cast<MaterialManagementItem*>(tree_material->topLevelItem(ChildId));
-    if (current_item!=NULL)
-    {
-      tree_material->setCurrentItem(current_item);
-    }
+    tree_material->clearSelection();
+    tree_material->setCurrentItem(nullptr);
+    current_material_item = nullptr;
+    removeListItems();
+    card_frame->hide();
+    return;
+  }
+  auto* item = dynamic_cast<MaterialManagementItem*>(tree_material->topLevelItem(childId));
+  if (item != nullptr)
+  {
+    tree_material->setCurrentItem(item);
+    tree_material->scrollToItem(item);
+    card_frame->show();
+    material_clicked(item, 0);
   }
 }
 

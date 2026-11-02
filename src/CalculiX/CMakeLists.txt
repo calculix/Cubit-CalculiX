@@ -81,6 +81,15 @@ add_subdirectory(Utility)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface)
 add_subdirectory(PythonInterface)
 
+# Re-stage the approved toolbar SVGs when their source assets change.
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/CCXDisplay.svg"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/CCXDisplayHidden.svg"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/CCXPickSymbols.svg"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/CCXPickSymbolsActive.svg"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/CCXDrawAll.svg"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/CCXDrawAllHidden.svg")
+
 # copy pythoninterface and icons to build directory
 if (WIN32)
  #file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/PythonInterface/calculix_pythoninterface.py DESTINATION ${CMAKE_BINARY_DIR}/Release/)
@@ -277,20 +286,20 @@ find_package(Threads REQUIRED)
 target_include_directories(calculix_core PRIVATE "${BOOST_ROOT}")
 target_compile_features(calculix_core PRIVATE cxx_std_17)
 target_link_libraries(calculix_core Threads::Threads)
-target_link_libraries(calculix_core showviz_base showviz_cubit)
+target_link_libraries(calculix_core showviz_base showviz_cubit showviz_mesh showviz_geom)
 
 # copy external software
 if (WIN32)
  file(COPY ${CCX_SOURCE_ROOT}/Solvers/CalculiX/Win/ DESTINATION ${CMAKE_BINARY_DIR}/Release/Solver/)
- file(COPY ${CCX_SOURCE_ROOT}/Postprocessor/CGX/Win/ DESTINATION ${CMAKE_BINARY_DIR}/Release/Postprocessor/CGX/)
+ #file(COPY ${CCX_SOURCE_ROOT}/Postprocessor/CGX/Win/ DESTINATION ${CMAKE_BINARY_DIR}/Release/Postprocessor/CGX/)
  # if missing -> please download paraview binaries from https://www.paraview.org/download/
  #file(COPY ${CCX_SOURCE_ROOT}/../../ParaView-6.0.0-MPI-Windows-Python3.12-msvc2017-AMD64/ DESTINATION ${CMAKE_BINARY_DIR}/Release/Postprocessor/ParaView/)
 endif (WIN32)
 if (UNIX)
  file(COPY ${CCX_SOURCE_ROOT}/Solvers/CalculiX/Linux/ DESTINATION ${CMAKE_BINARY_DIR}/Solver/)
- file(COPY ${CCX_SOURCE_ROOT}/Postprocessor/CGX/Linux/ DESTINATION ${CMAKE_BINARY_DIR}/Postprocessor/CGX/)
+ #file(COPY ${CCX_SOURCE_ROOT}/Postprocessor/CGX/Linux/ DESTINATION ${CMAKE_BINARY_DIR}/Postprocessor/CGX/)
  # if missing -> please download paraview binaries from https://www.paraview.org/download/
- file(COPY ${CCX_SOURCE_ROOT}/../../ParaView-6.0.0-MPI-Linux-Python3.12-x86_64/ DESTINATION ${CMAKE_BINARY_DIR}/Postprocessor/ParaView/)
+ #file(COPY ${CCX_SOURCE_ROOT}/../../ParaView-6.0.0-MPI-Linux-Python3.12-x86_64/ DESTINATION ${CMAKE_BINARY_DIR}/Postprocessor/ParaView/)
 endif (UNIX)
 
 set_property(GLOBAL PROPERTY GLOBAL_DEPENDS_DEBUG_MODE 1)

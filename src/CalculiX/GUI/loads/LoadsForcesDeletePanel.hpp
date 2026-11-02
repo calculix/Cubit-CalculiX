@@ -20,6 +20,7 @@ class LoadsForcesDeletePanel : public QWidget
   Q_OBJECT
 
 public:
+  void setForce(int id);
   explicit LoadsForcesDeletePanel(QWidget *parent = 0);
   ~LoadsForcesDeletePanel();
 

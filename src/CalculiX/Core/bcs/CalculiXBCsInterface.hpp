@@ -1,12 +1,17 @@
 #ifndef CALCULIXBCSINTERFACE_HPP
 #define CALCULIXBCSINTERFACE_HPP
 
+#include "BCsDisplacementsSettings.hpp"
+#include "BCsTemperaturesSettings.hpp"
+
 #include <string>
 #include <vector>
 
 class CalculiXBCsInterface
 {
 public:
+  bool get_displacement_settings(int id, BCsDisplacementsSettings& settings, std::string& error);
+  bool get_temperature_settings(int id, BCsTemperaturesSettings& settings, std::string& error);
   std::vector<int> get_bcsdisplacements_ids(); // get all bc displacement ids
   std::vector<int> get_bcstemperatures_ids(); // get all bc temperature ids
   std::string get_hbc_export_data(); // gets the export data from core

@@ -1,6 +1,8 @@
 #ifndef CORELOADSTRAJECTORY_HPP
 #define CORELOADSTRAJECTORY_HPP
 
+#include "LoadsTrajectorySettings.hpp"
+
 #include <vector>
 #include <string>
 class CoreLoadsTrajectoryHeatflux;
@@ -10,6 +12,7 @@ class CoreLoadsTrajectory
 {
 
 public:
+  bool get_settings(int id, LoadsTrajectorySettings& settings, std::string& error) const;
   int get_subload_id(int trajectory_id, int expected_type);
   std::vector<int> get_heatflux_node_ids(int trajectory_id);
   std::vector<int> get_heatflux_edge_ids(int trajectory_id);

@@ -1,3 +1,9 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include <QAction>
+#include "InitialConditionsDeletePanel.hpp"
+#include "InitialConditionsModifyPanel.hpp"
+#include "CubitMessage.hpp"
+#include "TaskPanel.hpp"
 #include "InitialConditionsTree.hpp"
 #include <string>
 #include <vector>
@@ -105,6 +111,8 @@ void InitialConditionsTree::addInitialCondition(QString initialcondition_id, QSt
   InitialConditionTreeChild->setText(0, initialcondition_name);
     
   InitialConditionTreeChild->setText(1, initialcondition_id);
+  InitialConditionTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::InitialCondition));
+  InitialConditionTreeChild->setData(0, PropertyIdRole, initialcondition_id.toInt());
 
   InitialConditionTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("InitialConditionsTree"));
 
@@ -146,6 +154,12 @@ void InitialConditionsTree::populateContextMenu(
     return;
   }
 
+  int selectedId = 0;
+  if (clickedItem != this && !readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
+
   if (clickedItem == this)
   {
     addPanelAction(menu, "Create Initial Condition", host, "CCXInitialConditionsCreate");
@@ -158,6 +172,83 @@ void InitialConditionsTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Initial Condition", host, "CCXInitialConditionsCreate");
-  addPanelAction(menu, "Modify Initial Condition", host, "CCXInitialConditionsModify");
-  addPanelAction(menu, "Delete Initial Condition", host, "CCXInitialConditionsDelete");
+  {
+    auto* action = menu.addAction("Modify Initial Condition");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      InitialConditionsTree::open_modify(selectedId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Initial Condition");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      InitialConditionsTree::open_delete(selectedId, host);
+    });
+  }
+}
+
+
+void InitialConditionsTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+
+  host.setWidgetInCmdPanelMarker("CCXInitialConditionsModify");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<InitialConditionsModifyPanel*>(widget))
+    {
+      panel->setInitialCondition(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the InitialCondition modify panel.\n");
+}
+
+void InitialConditionsTree::open_delete(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXInitialConditionsDelete");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<InitialConditionsDeletePanel*>(widget))
+    {
+      panel->setInitialCondition(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the InitialCondition delete panel.\n");
+}
+
+void InitialConditionsTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (item == nullptr)
+  {
+    return;
+  }
+  if (item == this)
+  {
+    host.setWidgetInCmdPanelMarker("CCXInitialConditionsCreate");
+    return;
+  }
+
+  if (item->parent() != this)
+  {
+    return;
+  }
+
+  int id = -1;
+  if (!readItemId(item, id))
+  {
+    return;
+  }
+  open_modify(id, host);
 }

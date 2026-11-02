@@ -1,12 +1,15 @@
 #ifndef CORESURFACEINTERACTIONS_HPP
 #define CORESURFACEINTERACTIONS_HPP
 
+#include "SurfaceInteractionsSettings.hpp"
+
 #include <vector>
 #include <string>
 class CoreSurfaceInteractions
 {
 
 public:
+  bool get_settings(int id, SurfaceInteractionsSettings& settings, std::string& error) const;
   std::vector<int> get_surfaceinteraction_ids() const;
   CoreSurfaceInteractions();
   ~CoreSurfaceInteractions();

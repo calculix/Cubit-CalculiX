@@ -25,6 +25,7 @@ class CCXBlocksElementTypePanel : public QWidget
   Q_OBJECT
   
 public:
+  bool setBlock(int block_id);
   explicit CCXBlocksElementTypePanel(QWidget *parent = 0);
   ~CCXBlocksElementTypePanel();
 

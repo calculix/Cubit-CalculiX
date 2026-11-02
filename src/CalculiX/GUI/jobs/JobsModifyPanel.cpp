@@ -1,3 +1,5 @@
+#include "CubitMessage.hpp"
+#include "Core/jobs/CalculiXJobsInterface.hpp"
 #include "JobsModifyPanel.hpp"
 #include <QString>
 #include "GUI/application/GuiSendCmd.hpp"
@@ -71,6 +73,46 @@ JobsModifyPanel::~JobsModifyPanel()
 
 void JobsModifyPanel::on_pushButton_apply_clicked(bool)
 {
+  bool changed = false;
+  changed = changed || fieldChanged("lineEdit_1", lineEdit_1->text());
+  changed = changed || fieldChanged("lineEdit_2", lineEdit_2->text());
+  if (loadedEntityId >= 0 && !changed && lineEdit_0->text().trimmed() == QString::number(loadedEntityId))
+  {
+    PRINT_INFO("No settings were changed.\n");
+    return;
+  }
+
+  if (loadedEntityId >= 0)
+  {
+    if (lineEdit_0->text().trimmed() != QString::number(loadedEntityId))
+    {
+      bool valid = false;
+      const int requestedId = lineEdit_0->text().trimmed().toInt(&valid);
+
+      if (valid)
+      {
+        setJob(requestedId);
+      }
+      else
+      {
+        PRINT_ERROR("Select a single entity ID before reloading this panel.\n");
+      }
+
+      return;
+    }
+  }
+
+  if (loadedEntityId >= 0 && lineEdit_1->isEnabled() && !originalValues.value("lineEdit_1").isEmpty() && lineEdit_1->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Name; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_2->isEnabled() && !originalValues.value("lineEdit_2").isEmpty() && lineEdit_2->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Filepath; use the supported reset value.\n");
+    return;
+  }
+
   QStringList commands;
   QString command = "";
 
@@ -78,12 +120,12 @@ void JobsModifyPanel::on_pushButton_apply_clicked(bool)
   {
     command.append("ccx modify job " +lineEdit_0->text());
     
-    if (lineEdit_1->text()!="")
+    if (lineEdit_1->text()!="" && fieldChanged("lineEdit_1", lineEdit_1->text()))
     {
       command.append(" name \"" +lineEdit_1->text() + "\"");
     }
 
-    if (lineEdit_2->text()!="")
+    if (lineEdit_2->text()!="" && fieldChanged("lineEdit_2", lineEdit_2->text()))
     {
       command.append(" filepath \"" +lineEdit_2->text() + "\"");
     }
@@ -92,9 +134,6 @@ void JobsModifyPanel::on_pushButton_apply_clicked(bool)
   if (command != "")
   {
     commands.push_back(command);
-    lineEdit_0->setText("");
-    lineEdit_1->setText("");
-    lineEdit_2->setText("");
   }
   
   for (size_t i = 0; i < commands.size(); i++)
@@ -102,4 +141,41 @@ void JobsModifyPanel::on_pushButton_apply_clicked(bool)
     //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
     GuiSendCmd::gui_cmd(commands[int(i)]);
   }
+}
+
+
+bool JobsModifyPanel::fieldChanged(const QString& field, const QString& value) const
+{
+  return loadedEntityId < 0 || originalValues.value(field) != value;
+}
+
+bool JobsModifyPanel::setJob(int id)
+{
+  loadedEntityId = -1;
+  originalValues.clear();
+
+  pushButton_apply->setEnabled(false);
+  lineEdit_0->clear();
+  lineEdit_1->clear();
+  lineEdit_2->clear();
+  CalculiXJobsInterface core;
+  JobsSettings settings;
+  std::string error;
+
+  if (!core.get_job_settings(id, settings, error))
+  {
+    PRINT_ERROR("Cannot load Job %d: %s\n", id, error.c_str());
+    return false;
+  }
+  lineEdit_0->setText(QString::number(settings.id));
+  lineEdit_1->setText(QString::fromStdString(settings.name));
+  lineEdit_2->setText(QString::fromStdString(settings.filepath));
+  originalValues.insert("lineEdit_0", lineEdit_0->text());
+  originalValues.insert("lineEdit_1", lineEdit_1->text());
+  originalValues.insert("lineEdit_2", lineEdit_2->text());
+
+  loadedEntityId = id;
+  const int status = core.get_job_status(id);
+  pushButton_apply->setEnabled(status != 1 && status != 5);
+  return true;
 }

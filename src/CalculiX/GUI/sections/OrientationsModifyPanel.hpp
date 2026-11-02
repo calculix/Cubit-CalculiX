@@ -1,7 +1,11 @@
 #ifndef ORIENTATIONSMODIFYPANEL_HPP
 #define ORIENTATIONSMODIFYPANEL_HPP
+
+#include "Core/sections/OrientationsSettings.hpp"
 #include <string>
 
+#include <QHash>
+#include <QString>
 #include <QWidget>
 #include <QList>
 #include <QPushButton>
@@ -20,6 +24,7 @@ class OrientationsModifyPanel : public QWidget
   Q_OBJECT
   
 public:
+  bool setOrientation(int id);
   explicit OrientationsModifyPanel(QWidget *parent = 0);
   ~OrientationsModifyPanel();
 
@@ -29,6 +34,9 @@ private slots:
   void on_pushButton_apply_clicked(bool);
 
 private:
+  int loadedEntityId = -1;
+  QHash<QString, QString> originalValues;
+  bool fieldChanged(const QString& field, const QString& value) const;
   std::string log;
 
   QGridLayout* GridLayout;

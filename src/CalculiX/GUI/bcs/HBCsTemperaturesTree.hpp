@@ -12,6 +12,7 @@ class HBCsTemperaturesTree : public QObject, public QTreeWidgetItem, public Tree
   Q_OBJECT
 
 public:
+  void activate(QTreeWidgetItem* item, ModelTree& host);
   void populateContextMenu(
     QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host) override;
 

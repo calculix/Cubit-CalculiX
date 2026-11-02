@@ -1,3 +1,6 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include "StepsTree.hpp"
+#include "GUI/loads/LoadsHeatfluxesTree.hpp"
 #include "StepsLoadsHeatfluxesTree.hpp"
 #include <string>
 #include <vector>
@@ -109,6 +112,8 @@ void StepsLoadsHeatfluxesTree::addLoad(QString load_id, QString load_name)
   LoadTreeChild->setText(0, load_name);
     
   LoadTreeChild->setText(1, load_id);
+  LoadTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Heatflux));
+  LoadTreeChild->setData(0, PropertyIdRole, load_id.toInt());
 
   LoadTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("StepsLoadsHeatfluxesTree"));
 
@@ -188,8 +193,20 @@ void StepsLoadsHeatfluxesTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Heatflux", host, "CCXLoadsHeatfluxesCreate");
-  addPanelAction(menu, "Modify Heatflux", host, "CCXLoadsHeatfluxesModify");
-  addPanelAction(menu, "Delete Heatflux", host, "CCXLoadsHeatfluxesDelete");
+  {
+    auto* action = menu.addAction("Modify Heatflux");
+    QObject::connect(action, &QAction::triggered, &menu, [entityId, &host]()
+    {
+      LoadsHeatfluxesTree::open_modify(entityId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Heatflux");
+    QObject::connect(action, &QAction::triggered, &menu, [entityId, &host]()
+    {
+      LoadsHeatfluxesTree::open_delete(entityId, host);
+    });
+  }
   {
     QAction *action = menu.addAction("Steps Management");
     ModelTree *hostPtr = &host;
@@ -205,4 +222,23 @@ void StepsLoadsHeatfluxesTree::populateContextMenu(
     });
   }
   addCommandAction(menu, "Draw Heatflux", QString("ccx draw load heatflux ") + QString::number(entityId));
+}
+
+
+void StepsLoadsHeatfluxesTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (host.myStepsManagement == nullptr)
+  {
+    return;
+  }
+  for (auto* ancestor = item; ancestor != nullptr; ancestor = ancestor->parent())
+  {
+    if (dynamic_cast<StepsTree*>(ancestor->parent()) != nullptr)
+    {
+      host.myStepsManagement->setStep(ancestor->text(1));
+      host.myStepsManagement->show();
+      host.myStepsManagement->raise();
+      return;
+    }
+  }
 }

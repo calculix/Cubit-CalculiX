@@ -8,11 +8,11 @@ class HDF5Tool;
 class CoreOutputsPersistence
 {
 public:
-  static void read(HDF5Tool& file, CoreHistoryOutputs& outputs);
-  static void write(HDF5Tool& file, const CoreHistoryOutputs& outputs);
+  static bool read(HDF5Tool& file, CoreHistoryOutputs& outputs);
+  static bool write(HDF5Tool& file, const CoreHistoryOutputs& outputs);
 
-  static void read(HDF5Tool& file, CoreFieldOutputs& outputs);
-  static void write(HDF5Tool& file, const CoreFieldOutputs& outputs);
+  static bool read(HDF5Tool& file, CoreFieldOutputs& outputs);
+  static bool write(HDF5Tool& file, const CoreFieldOutputs& outputs);
 };
 
 #endif

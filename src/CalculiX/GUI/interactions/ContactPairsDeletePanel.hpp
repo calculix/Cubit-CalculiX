@@ -20,6 +20,7 @@ class ContactPairsDeletePanel : public QWidget
   Q_OBJECT
   
 public:
+  void setContactPair(int id);
   explicit ContactPairsDeletePanel(QWidget *parent = 0);
   ~ContactPairsDeletePanel();
 

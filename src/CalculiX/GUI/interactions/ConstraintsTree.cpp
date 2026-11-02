@@ -1,3 +1,11 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include <QAction>
+#include "ConstraintsDeletePanel.hpp"
+#include "ConstraintsModifyEquationPanel.hpp"
+#include "ConstraintsModifyTiePanel.hpp"
+#include "ConstraintsModifyRigidBodyPanel.hpp"
+#include "CubitMessage.hpp"
+#include "TaskPanel.hpp"
 #include "ConstraintsTree.hpp"
 
 #include "GUI/application/ModelTree.hpp"
@@ -106,6 +114,8 @@ void ConstraintsTree::addConstraint(QString constraint_id, QString constraint_na
   ConstraintTreeChild->setText(0, constraint_name);
     
   ConstraintTreeChild->setText(1, constraint_id);
+  ConstraintTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Constraint));
+  ConstraintTreeChild->setData(0, PropertyIdRole, constraint_id.toInt());
 
   ConstraintTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("ConstraintsTree"));
 
@@ -147,6 +157,12 @@ void ConstraintsTree::populateContextMenu(
     return;
   }
 
+  int selectedId = 0;
+  if (clickedItem != this && !readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
+
   if (clickedItem == this)
   {
     addPanelAction(menu, "Create Constraint", host, "CCXConstraintsCreateRigidBody");
@@ -159,6 +175,121 @@ void ConstraintsTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Constraint", host, "CCXConstraintsCreateRigidBody");
-  addPanelAction(menu, "Modify Constraint", host, "CCXConstraintsModifyRigidBody");
-  addPanelAction(menu, "Delete Constraint", host, "CCXConstraintsDelete");
+  {
+    auto* action = menu.addAction("Modify Constraint");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      ConstraintsTree::open_modify(selectedId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Constraint");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      ConstraintsTree::open_delete(selectedId, host);
+    });
+  }
+}
+
+
+void ConstraintsTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+
+  CalculiXInteractionsInterface core;
+  ConstraintsSettings settings;
+  std::string error;
+  if (!core.get_constraint_settings(id, settings, error))
+  {
+    PRINT_ERROR("Cannot open Constraint %d: %s\n", id, error.c_str());
+    return;
+  }
+
+  QString marker;
+  switch (settings.type)
+  {
+    case 1: marker = "CCXConstraintsModifyRigidBody"; break;
+    case 2: marker = "CCXConstraintsModifyTie"; break;
+    case 3: marker = "CCXConstraintsModifyEquation"; break;
+    default:
+      PRINT_ERROR("This stored type has no modify panel.\n");
+      return;
+  }
+  host.setWidgetInCmdPanelMarker(marker);
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<ConstraintsModifyRigidBodyPanel*>(widget))
+    {
+      if (settings.type == 1)
+      {
+        panel->setConstraint(id);
+        return;
+      }
+    }
+    if (auto* panel = dynamic_cast<ConstraintsModifyTiePanel*>(widget))
+    {
+      if (settings.type == 2)
+      {
+        panel->setConstraint(id);
+        return;
+      }
+    }
+    if (auto* panel = dynamic_cast<ConstraintsModifyEquationPanel*>(widget))
+    {
+      if (settings.type == 3)
+      {
+        panel->setConstraint(id);
+        return;
+      }
+    }
+  }
+  PRINT_ERROR("Unable to open the Constraint modify panel.\n");
+}
+
+void ConstraintsTree::open_delete(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXConstraintsDelete");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<ConstraintsDeletePanel*>(widget))
+    {
+      panel->setConstraint(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Constraint delete panel.\n");
+}
+
+void ConstraintsTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (item == nullptr)
+  {
+    return;
+  }
+  if (item == this)
+  {
+    host.setWidgetInCmdPanelMarker("CCXConstraintsCreate");
+    return;
+  }
+
+  if (item->parent() != this)
+  {
+    return;
+  }
+
+  int id = -1;
+  if (!readItemId(item, id))
+  {
+    return;
+  }
+  open_modify(id, host);
 }

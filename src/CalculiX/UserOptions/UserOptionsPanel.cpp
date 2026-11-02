@@ -1,13 +1,16 @@
 #include "UserOptionsPanel.hpp"
 #include "loadUserOptions.hpp"
-#include "CalculiXConfigFile.hpp"
+#include "CalculiXSettings.hpp"
+#include "DrawingOptionsWidget.hpp"
 
 UserOptionsPanel::UserOptionsPanel(QWidget *parent) :
   QWidget(parent),
   isInitialized(false)
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
   
   int labelWidth = 240;
   //this->setMinimumSize(1000,300);
@@ -62,6 +65,8 @@ UserOptionsPanel::UserOptionsPanel(QWidget *parent) :
   VBoxLayout->addLayout(HBoxLayout_7);
   VBoxLayout->addLayout(HBoxLayout_8);
   VBoxLayout->addLayout(HBoxLayout_9);
+  drawingOptions = new DrawingOptionsWidget(this);
+  VBoxLayout->addWidget(drawingOptions);
   VBoxLayout->addItem(vertical_spacer);
 
   HBoxLayout_1->addWidget(label_1);
@@ -110,6 +115,7 @@ void UserOptionsPanel::refresh_settings()
   lineEdit_7->setText(ccx_uo.mPathPythonInterface);
   checkBox_8->setChecked(ccx_uo.mSaveLoadedResults);
   lineEdit_9->setText(ccx_uo.mPathMaterialLibrary);
+  drawingOptions->setOptions(ccx_uo.mDrawing);
 
 }
 
@@ -125,15 +131,7 @@ void UserOptionsPanel::save_settings()
   ccx_uo.mSaveLoadedResults = checkBox_8->isChecked();
   ccx_uo.mPathMaterialLibrary = lineEdit_9->text();
 
-  CalculiXConfigFile config;  
-  config.clear();
-  config.write_entry("PathSolver", ccx_uo.mPathSolver);
-  config.write_num_entry("SolverThreads", ccx_uo.mSolverThreads);
-  config.write_num_entry("ConverterThreads", ccx_uo.mConverterThreads);
-  config.write_entry("PathCGX", ccx_uo.mPathCGX);
-  config.write_entry("PathParaView", ccx_uo.mPathParaView);
-  config.write_entry("PathIcons", ccx_uo.mPathIcons);
-  config.write_entry("PathPythonInterface", ccx_uo.mPathPythonInterface);
-  config.write_bool_entry("SaveLoadedResults", ccx_uo.mSaveLoadedResults);
-  config.write_entry("PathMaterialLibrary", ccx_uo.mPathMaterialLibrary);
+  ccx_uo.mDrawing = drawingOptions->options();
+  CalculiXSettings::save();
+  emit drawingSettingsChanged();
 }

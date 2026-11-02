@@ -1,6 +1,7 @@
 #ifndef USEROPTIONSPANEL_HPP
 #define USEROPTIONSPANEL_HPP
 
+#include "UserOptionsExport.hpp"
 #include <QWidget>
 #include <QFrame>
 #include <QList>
@@ -18,7 +19,9 @@
 #include <QRadioButton>
 #include <QCheckBox>
 
-class UserOptionsPanel : public QWidget
+class DrawingOptionsWidget;
+
+class CALCULIX_USEROPTIONS_EXPORT UserOptionsPanel : public QWidget
 {
   Q_OBJECT
   
@@ -28,11 +31,15 @@ public:
 
   bool isInitialized;
   
+signals:
+  void drawingSettingsChanged();
+
 public slots:
   void refresh_settings();
   void save_settings();
 
 private:
+  DrawingOptionsWidget* drawingOptions;
   std::string log;
   
   QGridLayout* GridLayout;

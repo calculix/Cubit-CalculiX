@@ -2,6 +2,7 @@
 #define USEROPTIONS_HPP
 
 #include <QString>
+#include "DrawingOptions.hpp"
 
 class UserOptions
 {
@@ -9,6 +10,7 @@ class UserOptions
     UserOptions();
     ~UserOptions();
   public:
+    DrawingOptions mDrawing;
     QString mPathSolver;
     QString mPathSolverName;
     int mSolverThreads;

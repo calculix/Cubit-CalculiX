@@ -20,6 +20,7 @@ class OrientationsDeletePanel : public QWidget
   Q_OBJECT
   
 public:
+  void setOrientation(int id);
   explicit OrientationsDeletePanel(QWidget *parent = 0);
   ~OrientationsDeletePanel();
 

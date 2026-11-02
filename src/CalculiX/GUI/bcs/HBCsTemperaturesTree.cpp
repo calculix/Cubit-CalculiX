@@ -1,3 +1,5 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include "BCsTemperaturesTree.hpp"
 #include "HBCsTemperaturesTree.hpp"
 #include <string>
 #include <vector>
@@ -108,6 +110,9 @@ void HBCsTemperaturesTree::addBC(QString bc_id, QString bc_name)
   BCTreeChild->setText(0, bc_name);
     
   BCTreeChild->setText(1, bc_id);
+  BCTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Temperature));
+  BCTreeChild->setData(0, PropertyIdRole, bc_id.toInt());
+  BCTreeChild->setData(0, PropertyHomogeneousRole, true);
 
   BCTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("HBCsTemperaturesTree"));
 
@@ -173,9 +178,26 @@ void HBCsTemperaturesTree::populateContextMenu(
     return;
   }
 
+  int selectedId = -1;
+  if (!readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
   addPanelAction(menu, "Create Temperature", host, "CCXBCsTemperaturesCreate");
-  addPanelAction(menu, "Modify Temperature", host, "CCXBCsTemperaturesModify");
-  addPanelAction(menu, "Delete Temperature", host, "CCXBCsTemperaturesDelete");
+  {
+    auto* action = menu.addAction("Modify Temperature");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      BCsTemperaturesTree::open_modify(selectedId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Temperature");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      BCsTemperaturesTree::open_delete(selectedId, host);
+    });
+  }
   {
     QAction *action = menu.addAction("homogeneous BCs Management");
     ModelTree *hostPtr = &host;
@@ -190,4 +212,24 @@ void HBCsTemperaturesTree::populateContextMenu(
       hostPtr->myHBCsManagement->show();
     });
   }
+}
+
+
+void HBCsTemperaturesTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (host.myHBCsManagement == nullptr)
+  {
+    return;
+  }
+  host.myHBCsManagement->update();
+  if (item != this)
+  {
+    int id = -1;
+    if (readItemId(item, id))
+    {
+      host.myHBCsManagement->selectTemperature(id);
+    }
+  }
+  host.myHBCsManagement->show();
+  host.myHBCsManagement->raise();
 }

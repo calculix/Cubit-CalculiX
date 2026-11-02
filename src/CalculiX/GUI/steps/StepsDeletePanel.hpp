@@ -20,6 +20,7 @@ class StepsDeletePanel : public QWidget
   Q_OBJECT
   
 public:
+  void setStep(int id);
   explicit StepsDeletePanel(QWidget *parent = 0);
   ~StepsDeletePanel();
 

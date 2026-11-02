@@ -1,12 +1,15 @@
 #ifndef CALCULIXAMPLITUDESINTERFACE_HPP
 #define CALCULIXAMPLITUDESINTERFACE_HPP
 
+#include "AmplitudesSettings.hpp"
+
 #include <string>
 #include <vector>
 
 class CalculiXAmplitudesInterface
 {
 public:
+  bool get_amplitude_settings(int id, AmplitudesSettings& settings, std::string& error);
   std::string get_amplitude_name(int amplitude_id); // gets the amplitude name
   std::string get_amplitude_export_data(); // gets the export data from amplitudes core
   bool create_amplitude(std::vector<std::string> options, std::vector<std::vector<std::string>> options2); // adds a new amplitude

@@ -12,6 +12,7 @@ class StepsFieldOutputsTree : public QObject, public QTreeWidgetItem, public Tre
   Q_OBJECT
 
 public:
+  void activate(QTreeWidgetItem* item, ModelTree& host);
   void populateContextMenu(
     QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host) override;
 

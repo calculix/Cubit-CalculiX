@@ -95,9 +95,6 @@ void PhysicalConstantsDeletePanel::on_pushButton_apply_clicked(bool)
   if (command != "")
   {
     commands.push_back(command);
-    checkBox_1->setChecked(false);
-    checkBox_2->setChecked(false); 
-    checkBox_3->setChecked(false); 
   }
   
   for (size_t i = 0; i < commands.size(); i++)
@@ -105,4 +102,11 @@ void PhysicalConstantsDeletePanel::on_pushButton_apply_clicked(bool)
     //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
     GuiSendCmd::gui_cmd(commands[int(i)]);
   }
+}
+
+void PhysicalConstantsDeletePanel::selectConstant(int id)
+{
+  checkBox_1->setChecked(id == 1);
+  checkBox_2->setChecked(id == 2);
+  checkBox_3->setChecked(id == 3);
 }

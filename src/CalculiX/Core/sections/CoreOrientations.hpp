@@ -1,12 +1,15 @@
 #ifndef COREORIENTATIONS_HPP
 #define COREORIENTATIONS_HPP
 
+#include "OrientationsSettings.hpp"
+
 #include <vector>
 #include <string>
 class CoreOrientations
 {
 
 public:
+  bool get_settings(int id, OrientationsSettings& settings, std::string& error) const;
   CoreOrientations();
   ~CoreOrientations();
 

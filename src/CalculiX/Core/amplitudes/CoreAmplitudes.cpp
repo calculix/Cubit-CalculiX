@@ -1,3 +1,4 @@
+#include "Core/application/SettingsRead.hpp"
 #include "Core/amplitudes/CoreAmplitudes.hpp"
 #include "Core/application/CoreIdSelection.hpp"
 #include <numeric>
@@ -819,4 +820,33 @@ bool CoreAmplitudes::check_amplitude_exists(int amplitude_id)
 std::vector<int> CoreAmplitudes::get_amplitude_ids() const
 {
   return CoreIdSelection::collect_ids(amplitudes_data);
+}
+
+
+bool CoreAmplitudes::get_settings(int id, AmplitudesSettings& settings, std::string& error) const
+{
+  settings = {};
+  error.clear();
+  const auto* record = SettingsRead::row(amplitudes_data, id, 6, error);
+
+  if (record == nullptr)
+  {
+    return false;
+  }
+
+  settings.id = id;
+  settings.name = SettingsRead::field(name_amplitude_data, (*record)[1], 1, error);
+  settings.shiftX = SettingsRead::field(shiftx_amplitude_data, (*record)[2], 1, error);
+  settings.shiftY = SettingsRead::field(shifty_amplitude_data, (*record)[3], 1, error);
+  settings.totalTime = (*record)[4] == 1 ? "YES" : "NO";
+
+  settings.points = SettingsRead::table(amplitudevalues_amplitude_data, (*record)[5], 2, error);
+
+  if (!error.empty())
+  {
+    settings = {};
+    return false;
+  }
+
+  return true;
 }

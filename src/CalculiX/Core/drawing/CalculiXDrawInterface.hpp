@@ -1,12 +1,38 @@
 #ifndef CALCULIXDRAWINTERFACE_HPP
 #define CALCULIXDRAWINTERFACE_HPP
 
+#include "CoreDrawTypes.hpp"
 #include <string>
+#include <functional>
 #include <vector>
 
 class CalculiXDrawInterface
 {
 public:
+  bool draw_step(int stepId, const std::vector<DrawFeature>& features, double size, std::string& error, const std::vector<DrawEntityKey>& entities = {});
+  bool restore_pending_drawing(std::string& error);
+  bool apply_drawing_options(std::string& error);
+  bool apply_drawing_defaults(std::string& error);
+  bool pick_symbol(int viewId, double xFraction, double yFraction, CalculiXDrawSelection& selection, std::string& error);
+  bool picking_active() const;
+  void clear_hover();
+  bool set_picking_enabled(bool enabled, std::string& error);
+  void set_pick_callback(std::function<void(const CalculiXDrawSelection&)> callback);
+  bool set_highlight(const CalculiXDrawSelection& selection, std::string& error);
+  bool clear_highlight(std::string& error);
+  bool set_overlay_visible(bool visible, std::string& error);
+  bool set_all_visible(bool visible, std::string& error);
+  bool set_scope(const DrawScope& scope, std::string& error);
+  bool set_group_visible(DrawGroup group, bool visible, std::string& error);
+  bool set_size_factor(double factor, std::string& error);
+  bool draw_scope_all(std::string& error);
+  bool refresh_drawing(std::string& error);
+  void set_workspace_active(bool active);
+  void reset_drawing();
+  void shutdown_drawing() noexcept;
+  CalculiXDrawState drawing_state() const;
+  double default_size() const;
+  bool render_pending();
   std::vector<std::vector<double>> get_draw_data_for_load_force(int id); // returns coord(3) and magnitude(3) std::vector<double>
   std::vector<std::vector<double>> get_draw_data_for_load_pressure(int id); // returns coord(3) and magnitude(3) std::vector<double>
   std::vector<std::vector<double>> get_draw_data_for_load_heatflux(int id); // returns coord(3) and magnitude(3) std::vector<double>

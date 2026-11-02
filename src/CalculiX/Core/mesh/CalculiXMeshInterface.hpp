@@ -1,18 +1,25 @@
 #ifndef CALCULIXMESHINTERFACE_HPP
 #define CALCULIXMESHINTERFACE_HPP
 
+#include "MeshProperties.hpp"
 #include <string>
 #include <vector>
 
 class CalculiXMeshInterface
 {
 public:
+  bool get_block_properties(int id, MeshProperties& properties, std::string& error);
+  bool get_nodeset_properties(int id, MeshProperties& properties, std::string& error);
+  bool get_sideset_properties(int id, MeshProperties& properties, std::string& error);
+  std::vector<std::string> get_valid_block_element_types(int blockId);
+  std::vector<std::string> get_compatible_ccx_element_types(int blockId);
   std::vector<std::string> get_ccx_element_types(); // returns all supported ccx element types
   bool set_ccx_element_type(int block_id, std::string ccx_element_type); // sets the ccx element type for a block
   std::string get_ccx_element_type(int block_id); // gets the ccx element type for a block
   int get_ccx_element_type_integration_points(int block_id); // gets the number of integration points for the ccx element type for a block
   std::string get_cubit_element_type_entity(std::string cubit_element_type); // gets the string for a cubit element type
   std::vector<std::vector<int>> get_element_id_type_connectivity(); // gets the element id , type and connectivity all elements
+  bool get_assignment_entity_name(const std::string& type, int id, std::string& name);
   std::string get_block_name(int block_id); // gets the block name
   std::vector<int> get_block_node_ids(int block_id); // gets the block node ids
   std::vector<int> get_block_element_ids(int block_id); // gets the block global element ids

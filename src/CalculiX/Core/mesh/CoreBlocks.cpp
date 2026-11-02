@@ -1,6 +1,9 @@
 #include "Core/mesh/CoreBlocks.hpp"
 #include <string>
 #include <vector>
+#include <algorithm>
+#include <cctype>
+#include <map>
 #include "CubitInterface.hpp"
 
 CoreBlocks::CoreBlocks()
@@ -555,6 +558,63 @@ std::vector<int> CoreBlocks::get_blocks() const
 bool CoreBlocks::check_block_exists(int block_id)
 {
   return get_blocks_data_id_from_block_id(block_id) != -1;
+}
+
+std::vector<std::string> CoreBlocks::get_compatible_ccx_element_types(const std::string& cubitType) const
+{
+  std::string type = cubitType;
+  std::transform(type.begin(), type.end(), type.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+  // Choices describe matching topology and connectivity, not the physical analysis model.
+  // Keep the existing command interface unrestricted; these choices guide property editing.
+  static const std::map<std::string, std::vector<std::string>> compatible = {
+    {"HEX", {"C3D8", "C3D8R", "C3D8I"}},
+    {"HEX8", {"C3D8", "C3D8R", "C3D8I"}},
+    {"HEX20", {"C3D20", "C3D20R"}},
+    {"TETRA", {"C3D4"}},
+    {"TETRA4", {"C3D4"}},
+    {"TET", {"C3D4"}},
+    {"TET4", {"C3D4"}},
+    {"TETRA10", {"C3D10", "C3D10T"}},
+    {"TET10", {"C3D10", "C3D10T"}},
+    {"WEDGE", {"C3D6"}},
+    {"WEDGE6", {"C3D6"}},
+    {"WEDGE15", {"C3D15"}},
+    {"TRI", {"S3", "M3D3", "CPS3", "CPE3", "CAX3"}},
+    {"TRI3", {"S3", "M3D3", "CPS3", "CPE3", "CAX3"}},
+    {"TRISHELL", {"S3", "M3D3", "CPS3", "CPE3", "CAX3"}},
+    {"TRISHELL3", {"S3", "M3D3", "CPS3", "CPE3", "CAX3"}},
+    {"TRI6", {"S6", "M3D6", "CPS6", "CPE6", "CAX6"}},
+    {"TRISHELL6", {"S6", "M3D6", "CPS6", "CPE6", "CAX6"}},
+    {"QUAD", {"S4", "S4R", "M3D4", "M3D4R", "CPS4", "CPS4R", "CPE4", "CPE4R", "CAX4", "CAX4R"}},
+    {"QUAD4", {"S4", "S4R", "M3D4", "M3D4R", "CPS4", "CPS4R", "CPE4", "CPE4R", "CAX4", "CAX4R"}},
+    {"SHELL", {"S4", "S4R", "M3D4", "M3D4R", "CPS4", "CPS4R", "CPE4", "CPE4R", "CAX4", "CAX4R"}},
+    {"SHELL4", {"S4", "S4R", "M3D4", "M3D4R", "CPS4", "CPS4R", "CPE4", "CPE4R", "CAX4", "CAX4R"}},
+    {"QUAD8", {"S8", "S8R", "M3D8", "M3D8R", "CPS8", "CPS8R", "CPE8", "CPE8R", "CAX8", "CAX8R"}},
+    {"SHELL8", {"S8", "S8R", "M3D8", "M3D8R", "CPS8", "CPS8R", "CPE8", "CPE8R", "CAX8", "CAX8R"}},
+    {"BAR", {"B21", "B31", "B31R", "T2D2", "T3D2"}},
+    {"BAR2", {"B21", "B31", "B31R", "T2D2", "T3D2"}},
+    {"BEAM", {"B21", "B31", "B31R", "T2D2", "T3D2"}},
+    {"BEAM2", {"B21", "B31", "B31R", "T2D2", "T3D2"}},
+    {"TRUSS", {"B21", "B31", "B31R", "T2D2", "T3D2"}},
+    {"TRUSS2", {"B21", "B31", "B31R", "T2D2", "T3D2"}},
+    {"BAR3", {"B32", "B32R", "T3D3"}},
+    {"BEAM3", {"B32", "B32R", "T3D3"}},
+    {"TRUSS3", {"B32", "B32R", "T3D3"}},
+  };
+  const auto found = compatible.find(type);
+  if (found == compatible.end())
+  {
+    return {};
+  }
+  std::vector<std::string> result;
+  for (const auto& choice : found->second)
+  {
+    if (std::find(ccx_element_types.begin(), ccx_element_types.end(), choice) != ccx_element_types.end())
+    {
+      result.push_back(choice);
+    }
+  }
+  return result;
 }
 
 bool CoreBlocks::set_ccx_element_type(int block_id, std::string ccx_element_type)

@@ -1,12 +1,14 @@
 #ifndef CALCULIXMATERIALSINTERFACE_HPP
 #define CALCULIXMATERIALSINTERFACE_HPP
 
+#include "MaterialProperties.hpp"
 #include <string>
 #include <vector>
 
 class CalculiXMaterialsInterface
 {
 public:
+  bool get_material_properties(int id, MaterialProperties& properties, std::string& error);
   std::string get_material_name(int material_id); // gets the material name
   std::string get_material_prefix(std::string material_name); // gets a prefix for the material name if needed
   int get_group_property_size(std::string group_property); // gets the size of a material group property

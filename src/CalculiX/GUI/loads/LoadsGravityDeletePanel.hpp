@@ -20,6 +20,7 @@ class LoadsGravityDeletePanel : public QWidget
   Q_OBJECT
   
 public:
+  void setGravity(int id);
   explicit LoadsGravityDeletePanel(QWidget *parent = 0);
   ~LoadsGravityDeletePanel();
 

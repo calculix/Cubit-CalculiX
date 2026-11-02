@@ -1,3 +1,9 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include <QAction>
+#include "LoadsCentrifugalDeletePanel.hpp"
+#include "LoadsCentrifugalModifyPanel.hpp"
+#include "CubitMessage.hpp"
+#include "TaskPanel.hpp"
 #include "LoadsCentrifugalTree.hpp"
 #include <string>
 #include <vector>
@@ -105,6 +111,8 @@ void LoadsCentrifugalTree::addLoad(QString load_id, QString load_name)
   LoadTreeChild->setText(0, load_name);
     
   LoadTreeChild->setText(1, load_id);
+  LoadTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Centrifugal));
+  LoadTreeChild->setData(0, PropertyIdRole, load_id.toInt());
 
   LoadTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("LoadsCentrifugalTree"));
 
@@ -146,6 +154,12 @@ void LoadsCentrifugalTree::populateContextMenu(
     return;
   }
 
+  int selectedId = 0;
+  if (clickedItem != this && !readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
+
   if (clickedItem == this)
   {
     addPanelAction(menu, "Create Centrifugal", host, "CCXLoadsCentrifugalCreate");
@@ -165,7 +179,84 @@ void LoadsCentrifugalTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Centrifugal", host, "CCXLoadsCentrifugalCreate");
-  addPanelAction(menu, "Modify Centrifugal", host, "CCXLoadsCentrifugalModify");
-  addPanelAction(menu, "Delete Centrifugal", host, "CCXLoadsCentrifugalDelete");
+  {
+    auto* action = menu.addAction("Modify Centrifugal");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      LoadsCentrifugalTree::open_modify(selectedId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Centrifugal");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      LoadsCentrifugalTree::open_delete(selectedId, host);
+    });
+  }
   addCommandAction(menu, "Draw Centrifugal", QString("ccx draw load centrifugal ") + QString::number(entityId));
+}
+
+
+void LoadsCentrifugalTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+
+  host.setWidgetInCmdPanelMarker("CCXLoadsCentrifugalModify");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<LoadsCentrifugalModifyPanel*>(widget))
+    {
+      panel->setCentrifugal(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Centrifugal modify panel.\n");
+}
+
+void LoadsCentrifugalTree::open_delete(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXLoadsCentrifugalDelete");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<LoadsCentrifugalDeletePanel*>(widget))
+    {
+      panel->setCentrifugal(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Centrifugal delete panel.\n");
+}
+
+void LoadsCentrifugalTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (item == nullptr)
+  {
+    return;
+  }
+  if (item == this)
+  {
+    host.setWidgetInCmdPanelMarker("CCXLoadsCentrifugalCreate");
+    return;
+  }
+
+  if (item->parent() != this)
+  {
+    return;
+  }
+
+  int id = -1;
+  if (!readItemId(item, id))
+  {
+    return;
+  }
+  open_modify(id, host);
 }

@@ -1,7 +1,11 @@
 #ifndef LOADSBODYHEATFLUXMODIFYPANEL_HPP
 #define LOADSBODYHEATFLUXMODIFYPANEL_HPP
+
+#include "Core/loads/LoadsBodyHeatfluxSettings.hpp"
 #include <string>
 
+#include <QHash>
+#include <QString>
 #include <QWidget>
 #include <QList>
 #include <QPushButton>
@@ -20,6 +24,7 @@ class LoadsBodyHeatfluxModifyPanel : public QWidget
   Q_OBJECT
   
 public:
+  bool setBodyHeatflux(int id);
   explicit LoadsBodyHeatfluxModifyPanel(QWidget *parent = 0);
   ~LoadsBodyHeatfluxModifyPanel();
 
@@ -29,6 +34,9 @@ private slots:
   void on_pushButton_apply_clicked(bool);
 
 private:
+  int loadedEntityId = -1;
+  QHash<QString, QString> originalValues;
+  bool fieldChanged(const QString& field, const QString& value) const;
   std::string log;
 
    QGridLayout* GridLayout;

@@ -1,3 +1,9 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include <QAction>
+#include "LoadsHeatfluxesDeletePanel.hpp"
+#include "LoadsHeatfluxesModifyPanel.hpp"
+#include "CubitMessage.hpp"
+#include "TaskPanel.hpp"
 #include "LoadsHeatfluxesTree.hpp"
 #include <string>
 #include <vector>
@@ -105,6 +111,8 @@ void LoadsHeatfluxesTree::addLoad(QString load_id, QString load_name)
   LoadTreeChild->setText(0, load_name);
     
   LoadTreeChild->setText(1, load_id);
+  LoadTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Heatflux));
+  LoadTreeChild->setData(0, PropertyIdRole, load_id.toInt());
 
   LoadTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("LoadsHeatfluxesTree"));
 
@@ -146,6 +154,12 @@ void LoadsHeatfluxesTree::populateContextMenu(
     return;
   }
 
+  int selectedId = 0;
+  if (clickedItem != this && !readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
+
   if (clickedItem == this)
   {
     addPanelAction(menu, "Create Heatflux", host, "CCXLoadsHeatfluxesCreate");
@@ -165,7 +179,84 @@ void LoadsHeatfluxesTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Heatflux", host, "CCXLoadsHeatfluxesCreate");
-  addPanelAction(menu, "Modify Heatflux", host, "CCXLoadsHeatfluxesModify");
-  addPanelAction(menu, "Delete Heatflux", host, "CCXLoadsHeatfluxesDelete");
+  {
+    auto* action = menu.addAction("Modify Heatflux");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      LoadsHeatfluxesTree::open_modify(selectedId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Heatflux");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      LoadsHeatfluxesTree::open_delete(selectedId, host);
+    });
+  }
   addCommandAction(menu, "Draw Heatflux", QString("ccx draw load heatflux ") + QString::number(entityId));
+}
+
+
+void LoadsHeatfluxesTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+
+  host.setWidgetInCmdPanelMarker("CCXLoadsHeatfluxesModify");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<LoadsHeatfluxesModifyPanel*>(widget))
+    {
+      panel->setHeatflux(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Heatflux modify panel.\n");
+}
+
+void LoadsHeatfluxesTree::open_delete(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXLoadsHeatfluxesDelete");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<LoadsHeatfluxesDeletePanel*>(widget))
+    {
+      panel->setHeatflux(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Heatflux delete panel.\n");
+}
+
+void LoadsHeatfluxesTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (item == nullptr)
+  {
+    return;
+  }
+  if (item == this)
+  {
+    host.setWidgetInCmdPanelMarker("CCXLoadsHeatfluxesCreate");
+    return;
+  }
+
+  if (item->parent() != this)
+  {
+    return;
+  }
+
+  int id = -1;
+  if (!readItemId(item, id))
+  {
+    return;
+  }
+  open_modify(id, host);
 }

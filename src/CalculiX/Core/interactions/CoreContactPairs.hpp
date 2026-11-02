@@ -1,6 +1,8 @@
 #ifndef CORECONTACTPAIRS_HPP
 #define CORECONTACTPAIRS_HPP
 
+#include "ContactPairsSettings.hpp"
+
 #include <vector>
 #include <string>
 class MeshExportInterface;
@@ -9,6 +11,7 @@ class CoreContactPairs
 {
 
 public:
+  bool get_settings(int id, ContactPairsSettings& settings, std::string& error) const;
   std::vector<int> get_contactpair_ids() const;
   std::vector<std::string> get_contactpair_master_slave(MeshExportInterface& mesh, int contactpair_id);
   CoreContactPairs();

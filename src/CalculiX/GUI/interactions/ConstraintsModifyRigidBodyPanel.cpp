@@ -1,3 +1,5 @@
+#include "CubitMessage.hpp"
+#include "Core/interactions/CalculiXInteractionsInterface.hpp"
 #include "ConstraintsModifyRigidBodyPanel.hpp"
 #include <QString>
 #include "GUI/application/GuiSendCmd.hpp"
@@ -103,6 +105,58 @@ ConstraintsModifyRigidBodyPanel::~ConstraintsModifyRigidBodyPanel()
 
 void ConstraintsModifyRigidBodyPanel::on_pushButton_apply_clicked(bool)
 {
+  bool changed = false;
+  changed = changed || fieldChanged("lineEdit_1", lineEdit_1->text());
+  changed = changed || fieldChanged("lineEdit_2", lineEdit_2->text());
+  changed = changed || fieldChanged("lineEdit_3", lineEdit_3->text());
+  changed = changed || fieldChanged("lineEdit_4", lineEdit_4->text());
+  if (loadedEntityId >= 0 && !changed && lineEdit_0->text().trimmed() == QString::number(loadedEntityId))
+  {
+    PRINT_INFO("No settings were changed.\n");
+    return;
+  }
+
+  if (loadedEntityId >= 0)
+  {
+    if (lineEdit_0->text().trimmed() != QString::number(loadedEntityId))
+    {
+      bool valid = false;
+      const int requestedId = lineEdit_0->text().trimmed().toInt(&valid);
+
+      if (valid)
+      {
+        setConstraint(requestedId);
+      }
+      else
+      {
+        PRINT_ERROR("Select a single entity ID before reloading this panel.\n");
+      }
+
+      return;
+    }
+  }
+
+  if (loadedEntityId >= 0 && lineEdit_1->isEnabled() && !originalValues.value("lineEdit_1").isEmpty() && lineEdit_1->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Block ID; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_2->isEnabled() && !originalValues.value("lineEdit_2").isEmpty() && lineEdit_2->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Nodeset ID; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_3->isEnabled() && !originalValues.value("lineEdit_3").isEmpty() && lineEdit_3->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear REF Vertex ID; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_4->isEnabled() && !originalValues.value("lineEdit_4").isEmpty() && lineEdit_4->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear ROT Vertex ID; use the supported reset value.\n");
+    return;
+  }
+
   QStringList commands;
   QString command = "";
 
@@ -110,18 +164,18 @@ void ConstraintsModifyRigidBodyPanel::on_pushButton_apply_clicked(bool)
   {
     command.append("ccx modify constraint rigid body " + lineEdit_0->text());
 
-    if ((lineEdit_1->text()!="") && (lineEdit_1->isEnabled()))
+    if ((lineEdit_1->text()!="") && (lineEdit_1->isEnabled()) && fieldChanged("lineEdit_1", lineEdit_1->text()))
     {
       command.append(" block " + lineEdit_1->text());
-    }else if ((lineEdit_2->text()!="") && (lineEdit_2->isEnabled()))
+    }else if ((lineEdit_2->text()!="") && (lineEdit_2->isEnabled()) && fieldChanged("lineEdit_2", lineEdit_2->text()))
     {
       command.append(" nodeset " + lineEdit_2->text());
     }
-    if (lineEdit_3->text()!="")
+    if (lineEdit_3->text()!="" && fieldChanged("lineEdit_3", lineEdit_3->text()))
     {
       command.append(" ref " + lineEdit_3->text());
     }
-    if (lineEdit_3->text()!="")
+    if (lineEdit_4->text()!="" && fieldChanged("lineEdit_4", lineEdit_4->text()))
     {
       command.append(" rot " + lineEdit_4->text());
     }
@@ -131,11 +185,6 @@ void ConstraintsModifyRigidBodyPanel::on_pushButton_apply_clicked(bool)
   if (command != "")
   {
     commands.push_back(command);
-    lineEdit_0->setText("");
-    lineEdit_1->setText("");
-    lineEdit_2->setText("");
-    lineEdit_3->setText("");
-    lineEdit_4->setText("");
   }
   
   for (size_t i = 0; i < commands.size(); i++)
@@ -155,4 +204,55 @@ void ConstraintsModifyRigidBodyPanel::on_radioButton_2_toggled(bool toggled)
 {
   lineEdit_1->setDisabled(true);
   lineEdit_2->setDisabled(false);
+}
+
+
+bool ConstraintsModifyRigidBodyPanel::fieldChanged(const QString& field, const QString& value) const
+{
+  return loadedEntityId < 0 || originalValues.value(field) != value;
+}
+
+bool ConstraintsModifyRigidBodyPanel::setConstraint(int id)
+{
+  loadedEntityId = -1;
+  originalValues.clear();
+
+  pushButton_apply->setEnabled(false);
+  lineEdit_0->clear();
+  lineEdit_1->clear();
+  lineEdit_2->clear();
+  lineEdit_3->clear();
+  lineEdit_4->clear();
+  CalculiXInteractionsInterface core;
+  ConstraintsSettings settings;
+  std::string error;
+
+  if (!core.get_constraint_settings(id, settings, error))
+  {
+    PRINT_ERROR("Cannot load Constraint %d: %s\n", id, error.c_str());
+    return false;
+  }
+
+  if (settings.type != 1)
+  {
+    PRINT_ERROR("The selected record does not match this Constraint panel.\n");
+    return false;
+  }
+  lineEdit_0->setText(QString::number(settings.id));
+  lineEdit_1->setText(QString::fromStdString(settings.block));
+  lineEdit_2->setText(QString::fromStdString(settings.nodeset));
+  lineEdit_3->setText(QString::fromStdString(settings.reference));
+  lineEdit_4->setText(QString::fromStdString(settings.rotation));
+
+  radioButton_1->setChecked(!settings.block.empty());
+  radioButton_2->setChecked(settings.block.empty());
+  originalValues.insert("lineEdit_0", lineEdit_0->text());
+  originalValues.insert("lineEdit_1", lineEdit_1->text());
+  originalValues.insert("lineEdit_2", lineEdit_2->text());
+  originalValues.insert("lineEdit_3", lineEdit_3->text());
+  originalValues.insert("lineEdit_4", lineEdit_4->text());
+
+  loadedEntityId = id;
+  pushButton_apply->setEnabled(true);
+  return true;
 }

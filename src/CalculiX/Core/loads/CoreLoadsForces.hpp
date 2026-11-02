@@ -1,12 +1,15 @@
 #ifndef CORELOADSFORCES_HPP
 #define CORELOADSFORCES_HPP
 
+#include "LoadsForcesSettings.hpp"
+
 #include <vector>
 #include <string>
 class CoreLoadsForces
 {
 
 public:
+  bool get_settings(int id, LoadsForcesSettings& settings, std::string& error) const;
   std::vector<int> get_load_ids() const;
   CoreLoadsForces();
   ~CoreLoadsForces();

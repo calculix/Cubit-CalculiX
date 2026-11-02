@@ -1,3 +1,4 @@
+#include "Core/application/SettingsRead.hpp"
 #include "Core/steps/CoreInitialConditions.hpp"
 #include "Core/application/CoreIdSelection.hpp"
 #include <string>
@@ -430,4 +431,62 @@ void CoreInitialConditions::clear_bc_references(int bc_type, int bc_id)
 std::vector<int> CoreInitialConditions::get_initialcondition_ids() const
 {
   return CoreIdSelection::collect_ids(initialconditions_data);
+}
+
+
+bool CoreInitialConditions::get_settings(int id, InitialConditionsSettings& settings, std::string& error) const
+{
+  settings = {};
+  error.clear();
+  const auto* record = SettingsRead::row(initialconditions_data, id, 3, error);
+
+  if (record == nullptr)
+  {
+    return false;
+  }
+
+  settings.id = id;
+  settings.type = (*record)[1];
+  std::string bc;
+  if (settings.type == 1)
+  {
+    bc = SettingsRead::field(displacement_data, (*record)[2], 1, error);
+  }
+  else if (settings.type == 2)
+  {
+    bc = SettingsRead::field(temperature_data, (*record)[2], 1, error);
+  }
+  else if (settings.type != 3)
+  {
+    error = "Unknown initial-condition type.";
+    return false;
+  }
+  settings.bcId = bc;
+  settings.conditionType = settings.type == 1 ? "Displacement" : (settings.type == 2 ? "Temperature" : "Stress");
+
+  if (settings.type == 3)
+  {
+    for (const auto& row : stress_block_data)
+    {
+      if (row.size() >= 8 && row[0] == (*record)[2])
+      {
+        settings.blockStress.emplace_back(row.begin() + 1, row.end());
+      }
+    }
+    for (const auto& row : stress_element_data)
+    {
+      if (row.size() >= 9 && row[0] == (*record)[2])
+      {
+        settings.elementStress.emplace_back(row.begin() + 1, row.end());
+      }
+    }
+  }
+
+  if (!error.empty())
+  {
+    settings = {};
+    return false;
+  }
+
+  return true;
 }

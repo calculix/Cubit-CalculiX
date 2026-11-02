@@ -84,3 +84,15 @@ std::vector<std::vector<std::string>> CalculiXBCsInterface::get_hbcstemperatures
 { 
   return CoreBCsTreeData::get_hbcstemperatures_tree_data(*ccx_core.hbcs, *ccx_core.bcstemperatures);
 }
+
+
+bool CalculiXBCsInterface::get_temperature_settings(int id, BCsTemperaturesSettings& settings, std::string& error)
+{
+  return ccx_core.bcstemperatures->get_settings(id, settings, error);
+}
+
+
+bool CalculiXBCsInterface::get_displacement_settings(int id, BCsDisplacementsSettings& settings, std::string& error)
+{
+  return ccx_core.bcsdisplacements->get_settings(id, settings, error);
+}

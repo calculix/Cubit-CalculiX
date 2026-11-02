@@ -4,6 +4,7 @@ project(Cubit-CalculiX_Utility)
 include_directories(${CCX_SOURCE_ROOT}/Utility/Eigen)
 
 set(UTILITY_SRC
+    ${CMAKE_CURRENT_LIST_DIR}/PersistenceTable.hpp
     ${CMAKE_CURRENT_LIST_DIR}/StopWatch.cpp
     ${CMAKE_CURRENT_LIST_DIR}/StopWatch.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ThreadPool.cpp

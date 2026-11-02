@@ -1,8 +1,12 @@
 #ifndef HISTORYOUTPUTSMODIFYCONTACTPANEL_HPP
 #define HISTORYOUTPUTSMODIFYCONTACTPANEL_HPP
+
+#include "Core/steps/HistoryOutputsSettings.hpp"
 #include <string>
 #include <vector>
 
+#include <QHash>
+#include <QString>
 #include <QWidget>
 #include <QList>
 #include <QPushButton>
@@ -23,6 +27,7 @@ class HistoryOutputsModifyContactPanel : public QWidget
   Q_OBJECT
   
 public:
+  bool setHistoryOutput(int id);
   explicit HistoryOutputsModifyContactPanel(QWidget *parent = 0);
   ~HistoryOutputsModifyContactPanel();
 
@@ -32,6 +37,9 @@ private slots:
   void on_pushButton_apply_clicked(bool);
 
 private:
+  int loadedEntityId = -1;
+  QHash<QString, QString> originalValues;
+  bool fieldChanged(const QString& field, const QString& value) const;
   std::string log;
   std::vector<std::string> keys;
   QGridLayout* GridLayout;

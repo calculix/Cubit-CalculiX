@@ -20,6 +20,7 @@ class ConstraintsDeletePanel : public QWidget
   Q_OBJECT
   
 public:
+  void setConstraint(int id);
   explicit ConstraintsDeletePanel(QWidget *parent = 0);
   ~ConstraintsDeletePanel();
 

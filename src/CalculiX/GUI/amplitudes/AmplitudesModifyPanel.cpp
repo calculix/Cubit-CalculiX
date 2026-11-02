@@ -1,3 +1,5 @@
+#include "CubitMessage.hpp"
+#include "Core/amplitudes/CalculiXAmplitudesInterface.hpp"
 #include "AmplitudesModifyPanel.hpp"
 #include <QString>
 #include "GUI/common/PanelTable.hpp"
@@ -108,55 +110,112 @@ AmplitudesModifyPanel::~AmplitudesModifyPanel()
 
 void AmplitudesModifyPanel::on_pushButton_apply_clicked(bool)
 {
+  bool changed = false;
+  changed = changed || fieldChanged("lineEdit_1", lineEdit_1->text());
+  changed = changed || fieldChanged("lineEdit_2", lineEdit_2->text());
+  changed = changed || fieldChanged("lineEdit_3", lineEdit_3->text());
+  changed = changed || fieldChanged("checkBox_4", (checkBox_4->isChecked() ? QStringLiteral("YES") : QStringLiteral("NO")));
+  changed = changed || fieldChanged("widget_5", widget_5->snapshot());
+  if (loadedEntityId >= 0 && !changed && lineEdit_0->text().trimmed() == QString::number(loadedEntityId))
+  {
+    PRINT_INFO("No settings were changed.\n");
+    return;
+  }
+
+  if (loadedEntityId >= 0)
+  {
+    if (lineEdit_0->text().trimmed() != QString::number(loadedEntityId))
+    {
+      bool valid = false;
+      const int requestedId = lineEdit_0->text().trimmed().toInt(&valid);
+
+      if (valid)
+      {
+        setAmplitude(requestedId);
+      }
+      else
+      {
+        PRINT_ERROR("Select a single entity ID before reloading this panel.\n");
+      }
+
+      return;
+    }
+  }
+
+  if (loadedEntityId >= 0 && lineEdit_1->isEnabled() && !originalValues.value("lineEdit_1").isEmpty() && lineEdit_1->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Name; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_2->isEnabled() && !originalValues.value("lineEdit_2").isEmpty() && lineEdit_2->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Shift x; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_3->isEnabled() && !originalValues.value("lineEdit_3").isEmpty() && lineEdit_3->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Shift y; use the supported reset value.\n");
+    return;
+  }
+
+  if (loadedEntityId >= 0 && !originalValues.value("widget_5").isEmpty() && widget_5->snapshot().isEmpty())
+  {
+    PRINT_ERROR("The stored table cannot be cleared with an empty Modify command.\n");
+    return;
+  }
+
   QStringList commands;
   QString command = "";
-  matrix = widget_5->getMatrix();
+  QString tableError;
+  if (!widget_5->readMatrix(matrix, tableError))
+  {
+    PRINT_ERROR("%s\n", tableError.toStdString().c_str());
+    return;
+  }
 
   if ((lineEdit_0->text()!=""))
   {
     command.append("ccx modify amplitude "+ lineEdit_0->text());
     
-    if (lineEdit_1->text()!="")
+    if (lineEdit_1->text()!="" && fieldChanged("lineEdit_1", lineEdit_1->text()))
     {
       command.append(" name \"" +lineEdit_1->text() + "\"");
     }
-    if (matrix.size()!=0)
+    if (matrix.size()!=0 && fieldChanged("widget_5", widget_5->snapshot()))
     {
       command.append(" time_amplitude ");
       for (size_t i = 0; i < matrix.size(); i++)
       {
         for (size_t ii = 0; ii < matrix[i].size(); ii++)
         {
-          command.append(QString::number(matrix[i][ii]) + " ");
+          command.append(QString::number(matrix[i][ii], 'g', 17) + " ");
         }
       }
     }
-    if (lineEdit_2->text()!="")
+    if (lineEdit_2->text()!="" && fieldChanged("lineEdit_2", lineEdit_2->text()))
     {
       command.append(" shiftx " +lineEdit_2->text());
     }
-    if (lineEdit_3->text()!="")
+    if (lineEdit_3->text()!="" && fieldChanged("lineEdit_3", lineEdit_3->text()))
     {
       command.append(" shifty " +lineEdit_3->text());
     }
-    if((checkBox_4->isChecked()))
+    if (fieldChanged("checkBox_4", checkBox_4->isChecked() ? "YES" : "NO"))
     {
-      command.append(" totaltime_yes");
-    }else{
-      command.append(" totaltime_no");
+      if (checkBox_4->isChecked())
+      {
+        command.append(" totaltime_yes");
+      }
+      else
+      {
+        command.append(" totaltime_no");
+      }
     }
   }
   
   if (command != "")
   {
     commands.push_back(command);
-    lineEdit_0->setText("");
-    lineEdit_1->setText("");
-    lineEdit_2->setText("");
-    lineEdit_3->setText("");
-    checkBox_4->setChecked(false);
-    matrix.clear();
-    widget_5->update({"Time","Amplitude"},matrix);
   }
   
 
@@ -165,4 +224,48 @@ void AmplitudesModifyPanel::on_pushButton_apply_clicked(bool)
     //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
     GuiSendCmd::gui_cmd(commands[int(i)]);
   }
+}
+
+
+bool AmplitudesModifyPanel::fieldChanged(const QString& field, const QString& value) const
+{
+  return loadedEntityId < 0 || originalValues.value(field) != value;
+}
+
+bool AmplitudesModifyPanel::setAmplitude(int id)
+{
+  loadedEntityId = -1;
+  originalValues.clear();
+  checkBox_4->setChecked(false);
+  widget_5->setRowCount(0);
+  pushButton_apply->setEnabled(false);
+  lineEdit_0->clear();
+  lineEdit_1->clear();
+  lineEdit_2->clear();
+  lineEdit_3->clear();
+  CalculiXAmplitudesInterface core;
+  AmplitudesSettings settings;
+  std::string error;
+
+  if (!core.get_amplitude_settings(id, settings, error))
+  {
+    PRINT_ERROR("Cannot load Amplitude %d: %s\n", id, error.c_str());
+    return false;
+  }
+  lineEdit_0->setText(QString::number(settings.id));
+  lineEdit_1->setText(QString::fromStdString(settings.name));
+  lineEdit_2->setText(QString::fromStdString(settings.shiftX));
+  lineEdit_3->setText(QString::fromStdString(settings.shiftY));
+  checkBox_4->setChecked(settings.totalTime == "YES");
+
+  widget_5->update({"Time", "Amplitude"}, settings.points);
+  originalValues.insert("lineEdit_0", lineEdit_0->text());
+  originalValues.insert("lineEdit_1", lineEdit_1->text());
+  originalValues.insert("lineEdit_2", lineEdit_2->text());
+  originalValues.insert("lineEdit_3", lineEdit_3->text());
+  originalValues.insert("checkBox_4", (checkBox_4->isChecked() ? QStringLiteral("YES") : QStringLiteral("NO")));
+  originalValues.insert("widget_5", widget_5->snapshot());
+  loadedEntityId = id;
+  pushButton_apply->setEnabled(true);
+  return true;
 }

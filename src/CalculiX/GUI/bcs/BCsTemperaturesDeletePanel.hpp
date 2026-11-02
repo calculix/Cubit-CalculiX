@@ -20,6 +20,7 @@ class BCsTemperaturesDeletePanel : public QWidget
   Q_OBJECT
 
 public:
+  void setTemperature(int id);
   explicit BCsTemperaturesDeletePanel(QWidget *parent = 0);
   ~BCsTemperaturesDeletePanel();
 

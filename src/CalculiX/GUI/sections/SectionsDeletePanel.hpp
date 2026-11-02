@@ -20,6 +20,7 @@ class SectionsDeletePanel : public QWidget
   Q_OBJECT
   
 public:
+  void setSection(int id);
   explicit SectionsDeletePanel(QWidget *parent = 0);
   ~SectionsDeletePanel();
 

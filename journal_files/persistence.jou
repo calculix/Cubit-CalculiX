@@ -1,0 +1,421 @@
+#!python
+# CalculiX .cub persistence regression journal (Cubit 2026.10+, Qt6).
+# Run AFTER rebuilding the component, in a disposable Cubit session.
+# This journal RESETS the current model. It never runs CalculiX, CGX or ParaView.
+# Uses Cubit's embedded Python and its h5py/numpy packages for diagnostics only.
+# Each replay creates a new persistence_YYYYMMDD_HHMMSS_microseconds directory
+# in Cubit's current working directory. Existing models/files are not overwritten.
+# Negative tests intentionally produce labelled Cubit errors on private file copies.
+# The final model is the undamaged baseline. See report.json for PASS/FAIL/SKIP.
+# Synthetic result caches test serialization only; they are NOT solver results.
+# Coverage: empty files; populated feature families; drawing requests; cached
+# FRD/DAT; missing optional drawing data; malformed required feature/result data.
+# Does not test every feature subtype, process interruption, or filesystem faults.
+
+import json
+import shutil
+import traceback
+from datetime import datetime
+from pathlib import Path
+
+RUN_NEGATIVE_TESTS = True
+RUN_SYNTHETIC_CACHE_TEST = True
+ROOT = "Cubit-CalculiX"
+
+
+def seed_cached_results(path, node_ids, coordinates, element_id):
+    """Seed only the private test copy, using node/element IDs from its Cubit mesh."""
+    import h5py
+    import numpy as np
+
+    def ints(group, name, values):
+        group.create_dataset(name, data=np.asarray(values, dtype=np.int32))
+
+    def numbers(group, name, values):
+        group.create_dataset(name, data=np.asarray(values, dtype=np.float64))
+
+    def strings(group, name, values):
+        group.create_dataset(name, data=np.asarray(values, dtype=object),
+                             dtype=h5py.string_dtype(encoding="ascii"))
+
+    order = sorted(range(len(node_ids)), key=lambda index: node_ids[index])
+    with h5py.File(path, "r+") as file:
+        results = file[ROOT + "/Results"]
+        if "results_data" in results:
+            del results["results_data"]
+        ints(results, "results_data", [[1, 1, 1, 1]])
+        frd_family = results.require_group("Frd")
+        # The copied .cub can already contain an empty or initialized job-1 cache.
+        # Replace only this fixture job inside the private test copy.
+        if "1" in frd_family:
+            del frd_family["1"]
+        frd = frd_family.create_group("1")
+        ints(frd, "nodes", [[node, index] for index, node in enumerate(node_ids)])
+        numbers(frd, "nodes_coords", coordinates)
+        ints(frd, "elements", [[element_id, 1, 0, 1]])
+        ints(frd, "elements_connectivity", [node_ids])
+        ints(frd, "result_blocks", [[1, 1, 1, 1, 0, 0, 0]])
+        numbers(frd, "total_times", [1.0])
+        strings(frd, "result_block_type", ["DISP"])
+        strings(frd.create_group("result_block_components"), "0", ["D1", "D2", "D3", "ALL"])
+        values = [[0.0, 0.001 * index, 0.0, 0.001 * index] for index in range(len(node_ids))]
+        numbers(frd.create_group("result_block_data"), "0", values)
+        ints(frd.create_group("result_block_node_data"), "0",
+             [[node, index] for index, node in enumerate(node_ids)])
+        ints(frd, "sorted_node_ids", [node_ids[index] for index in order])
+        ints(frd, "sorted_node_data_ids", order)
+        ints(frd.create_group("sorted_result_node_ids"), "0", [node_ids[index] for index in order])
+        ints(frd.create_group("sorted_result_node_data_ids"), "0", order)
+
+        dat_family = results.require_group("Dat")
+        # The copied .cub can already contain an empty or initialized job-1 cache.
+        # Replace only this fixture job inside the private test copy.
+        if "1" in dat_family:
+            del dat_family["1"]
+        dat = dat_family.create_group("1")
+        ints(dat, "result_blocks", [[1, 0, 0, 0, 0, 1, 1]])
+        numbers(dat, "total_times", [1.0])
+        strings(dat, "result_block_type", ["displacements"])
+        strings(dat, "result_block_set", ["NODESET_1"])
+        strings(dat.create_group("result_block_components"), "0", ["node", "ux", "uy", "uz"])
+        numbers(dat.create_group("result_block_data"), "0",
+                [[float(node), 0.0, 0.001 * index, 0.0] for index, node in enumerate(node_ids)])
+        ints(dat.create_group("result_block_c1_data"), "0",
+             [[node, index, 1] for index, node in enumerate(node_ids)])
+        ints(dat.create_group("sorted_c1"), "0", [node_ids[index] for index in order])
+        ints(dat.create_group("sorted_result_block_c1_data_id"), "0", order)
+        ints(dat.create_group("sorted_result_block_c1_data_type"), "0", [1] * len(order))
+        ints(dat.create_group("result_section"), "0", [0, 0])
+        strings(dat, "result_section_set", ["PersistenceFixtureSection"])
+        strings(dat, "result_section_label", ["fixture_field_" + str(index) for index in range(22)])
+        numbers(dat.create_group("result_section_data"), "0", [1.0] + [0.0] * 21)
+
+
+def run_persistence_journal():
+    # Import requirements before creating output or resetting a model.
+    try:
+        import cubit
+        import h5py
+        import numpy as np
+    except ImportError as error:
+        print("PERSISTENCE: NOT RUN. Cubit's embedded Python requires cubit, h5py and numpy: " + str(error))
+        return
+
+    original_directory = Path.cwd()
+    work = original_directory / ("persistence_" + datetime.now().strftime("%Y%m%d_%H%M%S_%f"))
+    work.mkdir(exist_ok=False)
+    report = {"status": "running", "checks": [], "skipped": [], "expected_error_tests": 0, "output_directory": str(work)}
+    baseline = None
+
+    def save_report():
+        (work / "report.json").write_text(json.dumps(report, indent=2, allow_nan=False), encoding="utf-8")
+
+    def check(condition, label, detail=""):
+        passed = bool(condition)
+        report["checks"].append({"passed": passed, "check": label, "detail": str(detail)})
+        print(("PASS: " if passed else "FAIL: ") + label + (" -- " + str(detail) if detail else ""))
+        save_report()
+        if not passed:
+            raise RuntimeError(label + (": " + str(detail) if detail else ""))
+
+    def skip(label, reason):
+        report["skipped"].append({"check": label, "reason": reason})
+        print("SKIP: " + label + " -- " + reason)
+        save_report()
+
+    def quote(path):
+        value = Path(path).resolve().as_posix()
+        if any(char in value for char in ('"', "\n", "\r")):
+            raise RuntimeError("Unsupported character in test output path.")
+        return '"' + value + '"'
+
+    def command(text, expected_error=False):
+        print(("EXPECTED ERROR TEST: " if expected_error else "COMMAND: ") + text)
+        report["last_command"] = text
+        before = cubit.get_error_count()
+        status = cubit.cmd(text)
+        errors = cubit.get_error_count() - before
+        if expected_error:
+            report["expected_error_tests"] += 1
+            # Observer callbacks can report errors even if native 'open' returns success.
+            check(errors > 0, "Rejected malformed file through Cubit messages", text)
+        else:
+            check(status is not False and errors == 0, "Command completed", text)
+
+    def commands(text):
+        for line in text.splitlines():
+            line = line.strip()
+            if line and not line.startswith("#"):
+                command(line)
+
+    def save(name):
+        path = work / name
+        command("save as " + quote(path) + " overwrite")
+        check(path.is_file() and h5py.is_hdf5(path), "Saved .cub is HDF5", path.name)
+        return path
+
+    def reopen(path, expected_error=False):
+        command("reset")
+        command("open " + quote(path), expected_error=expected_error)
+
+    def normal(value):
+        if isinstance(value, bytes):
+            return value.decode("utf-8")
+        if isinstance(value, (list, tuple)):
+            return [normal(item) for item in value]
+        if isinstance(value, np.ndarray):
+            return normal(value.tolist())
+        if isinstance(value, np.generic):
+            return normal(value.item())
+        return value
+
+    def snapshot(path, prefix=ROOT):
+        result = {}
+        with h5py.File(path, "r") as file:
+            if prefix not in file:
+                return result
+            def inspect(name, item):
+                if isinstance(item, h5py.Dataset):
+                    result[name] = {"shape": list(item.shape), "value": normal(item[()])}
+            file[prefix].visititems(inspect)
+        return result
+
+    def same_data(expected, actual, label):
+        changed = [name for name in sorted(set(expected) | set(actual)) if expected.get(name) != actual.get(name)]
+        check(not changed, label, ", ".join(changed[:12]))
+
+    def drawing_defaults(path):
+        tree = snapshot(path, ROOT + "/Core/Drawing")
+        names = ["scope_kind", "scope_step_id", "size_factor", "overlay_visible"]
+        names += ["Groups/" + group + "/enabled" for group in ("bcs", "loads", "constraints", "orientations")]
+        return {name: tree.get(name) for name in names}
+
+    def private_copy(source, name):
+        target = work / name
+        shutil.copy2(source, target)
+        return target
+
+    def no_records(path, feature):
+        with h5py.File(path, "r") as file:
+            key = ROOT + "/" + feature
+            return key not in file or file[key].size == 0
+
+    try:
+        save_report()
+        # Phase 1: valid empty collections have no datasets in this format.
+        command("reset")
+        command("ccx display all off")
+        empty = save("01_empty.cub")
+        empty_data = snapshot(empty)
+        reopen(empty)
+        same_data(empty_data, snapshot(save("02_empty_reopened.cub")), "Empty model round-trip")
+
+        # Phase 2: a small model with representative data in every feature family.
+        # This is a serialization fixture, not a physically consistent solver deck.
+        command("reset")
+        command("ccx display all off")
+        commands("""
+        create brick x 8 y 2 z 2
+        volume 1 size 1
+        mesh volume 1
+        block 1 add volume 1
+        block 1 name "PersistenceSolid"
+        block 1 element type HEX8
+        ccx block 1 element_type C3D8
+        nodeset 1 add surface 4
+        nodeset 1 name "PersistenceFixed"
+        nodeset 2 add surface 6
+        nodeset 2 name "PersistenceLoaded"
+        sideset 1 add surface 1
+        sideset 1 name "PersistenceMaster"
+        sideset 2 add surface 2
+        sideset 2 name "PersistenceSlave"
+        create material "PersistenceSteel" property_group "CalculiX-FEA"
+        modify material "PersistenceSteel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
+        modify material "PersistenceSteel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
+        modify material "PersistenceSteel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0
+        ccx create orientation name PersistenceAxes system_type_r a_coord 1 0 0 b_coord 0 1 0 local_axis_z angle 15
+        ccx create section solid block 1 material 1 orientation 1
+        ccx create amplitude name PersistenceRamp time_amplitude 0 0 0.5 0.25 1 1 shiftx 0.1 shifty 0.2
+        ccx create force nodeset 2 dof_1 0 dof_2 -100 dof_3 0 dof_4 0 dof_5 0 dof_6 0 amplitude 1 name PersistenceForce
+        ccx create pressure sideset 1 magnitude 12 name PersistencePressure
+        ccx create heatflux sideset 1 magnitude 7 name PersistenceHeatflux
+        ccx create gravity 9.81 block 1 direction 0 -1 0
+        ccx create centrifugal 4 block 1 coordinate 0 0 0 direction 0 0 1
+        ccx create film sideset 1 temperature 293 coefficient 0.1 name PersistenceFilm
+        ccx create radiation sideset 2 temperature 293 emissivity 0.8 name PersistenceRadiation
+        ccx create surfacetraction sideset 1 force_dof_1 1 force_dof_2 2 force_dof_3 3 name PersistenceTraction
+        ccx create bodyheatflux 5 block 1 name PersistenceBodyHeat
+        ccx create displacement nodeset 1 dof_1 0 dof_2 0 dof_3 0
+        ccx create temperature nodeset 2 magnitude 293
+        ccx hbc add bc displacement 1
+        ccx create surfaceinteraction name PersistenceContact linear slopeK 1000 sigmaINF 10 c0 0.01
+        ccx modify surfaceinteraction 1 friction mu 0.2 lambda 1
+        ccx modify surfaceinteraction 1 gapconductance conductance_contactpressure_temperature 1 0 293 2 10 293
+        ccx create contactpair surfaceinteraction 1 nodetosurface master 1 slave 2
+        ccx create constraint tie name PersistenceTie master 1 slave 2 position tolerance 0.01
+        ccx modify damping alpha 0.1 beta 0.01
+        ccx modify physicalconstants absolute_zero -273.15 stefan_boltzmann 5.67e-8 newton_gravity 6.6743e-11
+        ccx create fieldoutput name PersistenceNodes node
+        ccx create fieldoutput name PersistenceElements element
+        ccx create historyoutput name PersistenceHistory node
+        ccx modify historyoutput 1 node nodeset 2
+        ccx create initialcondition displacement
+        ccx modify initialcondition 1 displacement bc_id 1
+        ccx create initialcondition temperature
+        ccx modify initialcondition 2 temperature bc_id 1
+        ccx create initialcondition stress
+        ccx initialcondition 3 stress add block 1 sxx 1 syy 2 szz 3 sxy 0 sxz 0 syz 0
+        ccx create step name PersistenceStatic static
+        ccx step 1 add load force 1
+        ccx step 1 add bc displacement 1
+        ccx step 1 add fieldoutput 1 2
+        ccx step 1 add historyoutput 1
+        ccx create step name PersistenceHeat heattransfer
+        ccx step 2 add load heatflux 1
+        ccx step 2 add bc temperature 1
+        ccx step 2 add fieldoutput 1 2
+        ccx create customline name PersistenceNote begin export cline "** persistence fixture"
+        ccx create topology 1 name "PersistenceTopology"
+        """)
+        node_ids = list(map(int, cubit.get_entities("node")))
+        element_id = int(cubit.get_entities("hex")[0])
+        element_nodes = list(map(int, cubit.get_connectivity("hex", element_id)))
+        coordinates = [list(cubit.get_nodal_coordinates(node)) for node in element_nodes]
+        command("ccx create constraint equation name PersistenceEquation node_dof_coefficient %d 1 1 %d 1 -1" % tuple(element_nodes[:2]))
+        # Both trajectory subtypes are stored without running their heat-source evaluation.
+        command("create curve location -3 0 2 location 3 0 2")
+        curve = int(cubit.get_last_id("curve"))
+        start_vertex = int(cubit.get_last_id("vertex")) - 1
+        command("curve %d interval 4" % curve)
+        command("mesh curve %d" % curve)
+        top_surface = max(cubit.get_entities("surface"), key=lambda surface: cubit.get_center_point("surface", surface)[2])
+        command("ccx create trajectory heatflux curve %d vertex %d surface %d direction 0 0 -1 magnitude 5 10 time_begin 0 time_end 1 radius 0.1 0.2 name PersistenceLaser" % (curve, start_vertex, top_surface))
+        command("ccx create trajectory bodyheatfluxsphere curve %d vertex %d surface %d direction 0 0 -1 magnitude 5 10 time_begin 0 time_end 1 radius 0.1 0.2 depth 0.1 0.2 name PersistenceSphere" % (curve, start_vertex, top_surface))
+        command("ccx create job name PersistenceFixtureJob filepath " + quote(work / "fixture_job"))
+        mesh_counts = {kind: len(cubit.get_entities(kind)) for kind in ("node", "hex")}
+
+        command("ccx display defaults")
+        default_values = drawing_defaults(save("03_configured_defaults.cub"))
+        command("ccx display all off")
+        # Explicit drawing subset (not every load) and a separately selected toolbar scope.
+        command("ccx draw size 0.2 load force 1 bc displacement 1")
+        command("ccx display size 2.25")
+        command("ccx display overlay off")
+        baseline = save("04_populated.cub")
+        expected = snapshot(baseline)
+        report["baseline_dataset_count"] = len(expected)
+        required = ["Blocks/blocks_data", "Sections/sections_data", "Constraints/constraints_data",
+                    "SurfaceInteractions/surfaceinteractions_data", "ContactPairs/contactpairs_data",
+                    "Amplitudes/amplitudes_data", "Orientations/orientations_data", "Damping/damping_data",
+                    "PhysicalConstants/physicalconstants_data", "BCs/Displacements/bcs_data",
+                    "BCs/Temperatures/bcs_data", "HBCs/bcs_data", "Steps/steps_data", "Jobs/jobs_data",
+                    "FieldOutputs/outputs_data", "HistoryOutputs/outputs_data", "InitialConditions/initialconditions_data",
+                    "CustomLines/customlines_data", "Topology/version", "Core/Drawing/schema_version"]
+        required += ["Loads/" + family + "/loads_data" for family in
+                     ("Forces", "Pressures", "HeatFluxes", "Gravity", "Centrifugal", "Trajectory", "Film", "Radiation", "SurfaceTraction", "BodyHeatflux")]
+        check(all(name in expected for name in required), "Populated feature families were actually saved",
+              ", ".join(name for name in required if name not in expected))
+        check(not any("picking" in name.lower() or "hover" in name.lower() for name in expected),
+              "Picker and hover state are absent from .cub datasets")
+        reopen(baseline)
+        check(mesh_counts == {kind: len(cubit.get_entities(kind)) for kind in mesh_counts}, "Native mesh counts survive reopening")
+        same_data(expected, snapshot(save("05_populated_reopened.cub")), "Populated feature and drawing data round-trip")
+
+        # Phase 3: local synthetic caches exercise result persistence without a solver.
+        cache = None
+        if RUN_SYNTHETIC_CACHE_TEST:
+            cache = private_copy(baseline, "06_synthetic_cache.cub")
+            seed_cached_results(cache, element_nodes, coordinates, element_id)
+            cached_data = snapshot(cache)
+            reopen(cache)
+            rewritten_cache = save("07_synthetic_cache_reopened.cub")
+            with h5py.File(rewritten_cache, "r") as file:
+                cached_results_saved = ROOT + "/Results/Frd/1" in file and ROOT + "/Results/Dat/1" in file
+            if cached_results_saved:
+                same_data(cached_data, snapshot(rewritten_cache), "FRD/DAT cache values and indices round-trip")
+            else:
+                skip("FRD/DAT cache write round-trip", "Enable CalculiX option 'Save loaded FRD and DAT data' to include cached arrays. Preference was left unchanged.")
+        else:
+            skip("FRD/DAT cache tests", "RUN_SYNTHETIC_CACHE_TEST is false")
+
+        # Phase 4: older files without drawing data and unsupported optional schemas.
+        missing = private_copy(baseline, "08_without_drawing.cub")
+        with h5py.File(missing, "r+") as file:
+            del file[ROOT + "/Core/Drawing"]
+        reopen(missing)
+        recovered = save("09_without_drawing_reopened.cub")
+        check(drawing_defaults(recovered) == default_values, "Missing drawing group uses configured defaults")
+        same_data(snapshot(baseline, ROOT + "/Loads"), snapshot(recovered, ROOT + "/Loads"), "Missing optional drawing data preserves loads")
+
+        unsupported = private_copy(baseline, "10_unsupported_drawing.cub")
+        with h5py.File(unsupported, "r+") as file:
+            file[ROOT + "/Core/Drawing/schema_version"][0] = 999
+        print("EXPECTED WARNING TEST: unsupported drawing schema; model loading should continue.")
+        reopen(unsupported)
+        recovered = save("11_unsupported_drawing_reopened.cub")
+        check(drawing_defaults(recovered) == default_values, "Unsupported drawing schema uses configured defaults")
+
+        # Phase 5: fail inside required features, rather than accepting partial tables.
+        if RUN_NEGATIVE_TESTS:
+            damaged = private_copy(baseline, "12_bad_sections.cub")
+            with h5py.File(damaged, "r+") as file:
+                file[ROOT + "/Sections/sections_data"][0, 2] = 999999
+            reopen(damaged, expected_error=True)
+            recovered = save("13_after_bad_sections.cub")
+            check(no_records(recovered, "Sections/sections_data") and no_records(recovered, "Sections/solid_section_data"),
+                  "Failed sections read did not commit its partially read tables")
+            same_data(snapshot(baseline, ROOT + "/Blocks"), snapshot(recovered, ROOT + "/Blocks"), "Earlier successful blocks remain consistent")
+            check(no_records(recovered, "Loads/Forces/loads_data"), "Loading stopped before later feature families")
+
+            damaged = private_copy(baseline, "14_bad_force_rank.cub")
+            with h5py.File(damaged, "r+") as file:
+                group = file[ROOT + "/Loads/Forces"]
+                del group["force_data"]
+                group.create_dataset("force_data", data=np.asarray([1.0, 2.0], dtype=np.float64))
+            reopen(damaged, expected_error=True)
+            recovered = save("15_after_bad_force_rank.cub")
+            check(all(no_records(recovered, "Loads/Forces/" + name) for name in ("loads_data", "force_data", "name_data", "time_delay_data")),
+                  "Wrong-rank force data did not commit any force tables")
+            same_data(snapshot(baseline, ROOT + "/Sections"), snapshot(recovered, ROOT + "/Sections"), "Earlier sections remain consistent after load failure")
+
+            if cache is not None:
+                for number, family, dataset, column in ((16, "Frd", "nodes", 1), (18, "Dat", "result_blocks", 4)):
+                    damaged = private_copy(cache, "%02d_bad_%s_index.cub" % (number, family.lower()))
+                    with h5py.File(damaged, "r+") as file:
+                        file[ROOT + "/Results/" + family + "/1/" + dataset][0, column] = 999999
+                    reopen(damaged, expected_error=True)
+                    recovered = save("%02d_after_bad_%s_index.cub" % (number + 1, family.lower()))
+                    check(no_records(recovered, "Results/results_data"), family + " failure left result registry uncommitted")
+                    with h5py.File(recovered, "r") as file:
+                        check(ROOT + "/Results/Frd/1" not in file and ROOT + "/Results/Dat/1" not in file,
+                              family + " failure left both reader collections uncommitted")
+                    same_data(snapshot(baseline, ROOT + "/Jobs"), snapshot(recovered, ROOT + "/Jobs"), "Job data survives " + family + " cache rejection")
+        else:
+            skip("Malformed required feature tests", "RUN_NEGATIVE_TESTS is false")
+
+        report["status"] = "PASS_WITH_SKIPS" if report["skipped"] else "PASS"
+    except Exception:
+        report["status"] = "FAIL"
+        report["exception"] = traceback.format_exc()
+        print(report["exception"])
+    finally:
+        # Leave a valid model; malformed files remain only as diagnostic artifacts.
+        if baseline is not None:
+            try:
+                reopen(baseline)
+                command("ccx display overlay on")
+            except Exception:
+                report["status"] = "FAIL"
+                report["restore_exception"] = traceback.format_exc()
+        save_report()
+        print("PERSISTENCE JOURNAL: " + report["status"])
+        print("Report: " + str(work / "report.json"))
+        if report["expected_error_tests"]:
+            print("Expected negative-test errors remain visible in Cubit's Error tab.")
+        elif report["status"] == "FAIL":
+            print("No expected-error test ran; this failure occurred during a positive test or setup.")
+        print("No solver or external viewer was launched. Global options were not changed.")
+
+
+run_persistence_journal()

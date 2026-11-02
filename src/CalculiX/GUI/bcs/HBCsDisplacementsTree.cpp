@@ -1,3 +1,5 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include "BCsDisplacementsTree.hpp"
 #include "HBCsDisplacementsTree.hpp"
 #include <string>
 #include <vector>
@@ -108,6 +110,9 @@ void HBCsDisplacementsTree::addBC(QString bc_id, QString bc_name)
   BCTreeChild->setText(0, bc_name);
     
   BCTreeChild->setText(1, bc_id);
+  BCTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Displacement));
+  BCTreeChild->setData(0, PropertyIdRole, bc_id.toInt());
+  BCTreeChild->setData(0, PropertyHomogeneousRole, true);
 
   BCTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("HBCsDisplacementsTree"));
 
@@ -173,9 +178,26 @@ void HBCsDisplacementsTree::populateContextMenu(
     return;
   }
 
+  int selectedId = -1;
+  if (!readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
   addPanelAction(menu, "Create Displacement", host, "CCXBCsDisplacementsCreate");
-  addPanelAction(menu, "Modify Displacement", host, "CCXBCsDisplacementsModify");
-  addPanelAction(menu, "Delete Displacement", host, "CCXBCsDisplacementsDelete");
+  {
+    auto* action = menu.addAction("Modify Displacement");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      BCsDisplacementsTree::open_modify(selectedId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Displacement");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      BCsDisplacementsTree::open_delete(selectedId, host);
+    });
+  }
   {
     QAction *action = menu.addAction("homogeneous BCs Management");
     ModelTree *hostPtr = &host;
@@ -190,4 +212,24 @@ void HBCsDisplacementsTree::populateContextMenu(
       hostPtr->myHBCsManagement->show();
     });
   }
+}
+
+
+void HBCsDisplacementsTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (host.myHBCsManagement == nullptr)
+  {
+    return;
+  }
+  host.myHBCsManagement->update();
+  if (item != this)
+  {
+    int id = -1;
+    if (readItemId(item, id))
+    {
+      host.myHBCsManagement->selectDisplacement(id);
+    }
+  }
+  host.myHBCsManagement->show();
+  host.myHBCsManagement->raise();
 }

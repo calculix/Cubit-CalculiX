@@ -1,3 +1,6 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include "StepsTree.hpp"
+#include "GUI/bcs/BCsDisplacementsTree.hpp"
 #include "StepsBCsDisplacementsTree.hpp"
 #include <string>
 #include <vector>
@@ -109,6 +112,8 @@ void StepsBCsDisplacementsTree::addBC(QString bc_id, QString bc_name)
   BCTreeChild->setText(0, bc_name);
     
   BCTreeChild->setText(1, bc_id);
+  BCTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Displacement));
+  BCTreeChild->setData(0, PropertyIdRole, bc_id.toInt());
 
   BCTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("StepsBCsDisplacementsTree"));
 
@@ -188,8 +193,20 @@ void StepsBCsDisplacementsTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Displacement", host, "CCXBCsDisplacementsCreate");
-  addPanelAction(menu, "Modify Displacement", host, "CCXBCsDisplacementsModify");
-  addPanelAction(menu, "Delete Displacement", host, "CCXBCsDisplacementsDelete");
+  {
+    auto* action = menu.addAction("Modify Displacement");
+    QObject::connect(action, &QAction::triggered, &menu, [entityId, &host]()
+    {
+      BCsDisplacementsTree::open_modify(entityId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Displacement");
+    QObject::connect(action, &QAction::triggered, &menu, [entityId, &host]()
+    {
+      BCsDisplacementsTree::open_delete(entityId, host);
+    });
+  }
   {
     QAction *action = menu.addAction("Steps Management");
     ModelTree *hostPtr = &host;
@@ -205,4 +222,23 @@ void StepsBCsDisplacementsTree::populateContextMenu(
     });
   }
   addCommandAction(menu, "Draw Displacement", QString("ccx draw bc displacement ") + QString::number(entityId));
+}
+
+
+void StepsBCsDisplacementsTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (host.myStepsManagement == nullptr)
+  {
+    return;
+  }
+  for (auto* ancestor = item; ancestor != nullptr; ancestor = ancestor->parent())
+  {
+    if (dynamic_cast<StepsTree*>(ancestor->parent()) != nullptr)
+    {
+      host.myStepsManagement->setStep(ancestor->text(1));
+      host.myStepsManagement->show();
+      host.myStepsManagement->raise();
+      return;
+    }
+  }
 }

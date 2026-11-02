@@ -1,3 +1,5 @@
+#include "CubitMessage.hpp"
+#include "Core/loads/CalculiXLoadsInterface.hpp"
 #include "LoadsRadiationModifyPanel.hpp"
 #include <QString>
 #include "GUI/application/GuiSendCmd.hpp"
@@ -157,6 +159,90 @@ LoadsRadiationModifyPanel::~LoadsRadiationModifyPanel()
 
 void LoadsRadiationModifyPanel::on_pushButton_apply_clicked(bool)
 {
+  bool changed = false;
+  changed = changed || fieldChanged("lineEdit_1", lineEdit_1->text());
+  changed = changed || fieldChanged("lineEdit_2", lineEdit_2->text());
+  changed = changed || fieldChanged("lineEdit_3", lineEdit_3->text());
+  changed = changed || fieldChanged("lineEdit_4", lineEdit_4->text());
+  changed = changed || fieldChanged("lineEdit_5", lineEdit_5->text());
+  changed = changed || fieldChanged("lineEdit_6", lineEdit_6->text());
+  changed = changed || fieldChanged("lineEdit_7", lineEdit_7->text());
+  changed = changed || fieldChanged("lineEdit_8", lineEdit_8->text());
+  changed = changed || fieldChanged("comboBox_9", comboBox_9->currentText());
+  changed = changed || fieldChanged("lineEdit_10", lineEdit_10->text());
+  changed = changed || fieldChanged("comboBox_11", comboBox_11->currentText());
+  if (loadedEntityId >= 0 && !changed && lineEdit_0->text().trimmed() == QString::number(loadedEntityId))
+  {
+    PRINT_INFO("No settings were changed.\n");
+    return;
+  }
+
+  if (loadedEntityId >= 0)
+  {
+    if (lineEdit_0->text().trimmed() != QString::number(loadedEntityId))
+    {
+      bool valid = false;
+      const int requestedId = lineEdit_0->text().trimmed().toInt(&valid);
+
+      if (valid)
+      {
+        setRadiation(requestedId);
+      }
+      else
+      {
+        PRINT_ERROR("Select a single entity ID before reloading this panel.\n");
+      }
+
+      return;
+    }
+  }
+
+  if (loadedEntityId >= 0 && lineEdit_1->isEnabled() && !originalValues.value("lineEdit_1").isEmpty() && lineEdit_1->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Name; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_2->isEnabled() && !originalValues.value("lineEdit_2").isEmpty() && lineEdit_2->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Sideset ID; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_3->isEnabled() && !originalValues.value("lineEdit_3").isEmpty() && lineEdit_3->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Temperature; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_4->isEnabled() && !originalValues.value("lineEdit_4").isEmpty() && lineEdit_4->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Emissivity; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_5->isEnabled() && !originalValues.value("lineEdit_5").isEmpty() && lineEdit_5->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Amplitude ID; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_6->isEnabled() && !originalValues.value("lineEdit_6").isEmpty() && lineEdit_6->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Time Delay; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_7->isEnabled() && !originalValues.value("lineEdit_7").isEmpty() && lineEdit_7->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Radiation Amplitude ID; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_8->isEnabled() && !originalValues.value("lineEdit_8").isEmpty() && lineEdit_8->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Radiation Time Delay; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_10->isEnabled() && !originalValues.value("lineEdit_10").isEmpty() && lineEdit_10->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Cavity; use the supported reset value.\n");
+    return;
+  }
+
   QStringList commands;
   QString command = "";
 
@@ -164,59 +250,59 @@ void LoadsRadiationModifyPanel::on_pushButton_apply_clicked(bool)
   {
     command.append("ccx modify radiation " + lineEdit_0->text());
     
-    if (lineEdit_1->text()!="")
+    if (lineEdit_1->text()!="" && fieldChanged("lineEdit_1", lineEdit_1->text()))
     {
       command.append(" name \"" +lineEdit_1->text() + "\"");
     }
 
-    if (lineEdit_2->text()!="")
+    if (lineEdit_2->text()!="" && fieldChanged("lineEdit_2", lineEdit_2->text()))
     {
       command.append(" sideset \"" +lineEdit_2->text() + "\"");
     }
 
-    if (lineEdit_3->text()!="")
+    if (lineEdit_3->text()!="" && fieldChanged("lineEdit_3", lineEdit_3->text()))
     {
       command.append(" temperature \"" +lineEdit_3->text() + "\"");
     }
 
-    if (lineEdit_4->text()!="")
+    if (lineEdit_4->text()!="" && fieldChanged("lineEdit_4", lineEdit_4->text()))
     {
       command.append(" emissivity \"" +lineEdit_4->text() + "\"");
     }
     
-    if (lineEdit_5->text()!="")
+    if (lineEdit_5->text()!="" && fieldChanged("lineEdit_5", lineEdit_5->text()))
     {
       command.append(" amplitude " +lineEdit_5->text());
     }
-    if (lineEdit_6->text()!="")
+    if (lineEdit_6->text()!="" && fieldChanged("lineEdit_6", lineEdit_6->text()))
     {
       command.append(" timedelay " +lineEdit_6->text());
     }
 
-    if (lineEdit_7->text()!="")
+    if (lineEdit_7->text()!="" && fieldChanged("lineEdit_7", lineEdit_7->text()))
     {
       command.append(" radiationamplitude " +lineEdit_7->text());
     }
-    if (lineEdit_8->text()!="")
+    if (lineEdit_8->text()!="" && fieldChanged("lineEdit_8", lineEdit_8->text()))
     {
       command.append(" radiationtimedelay " +lineEdit_8->text());
     }
 
-    if (comboBox_9->currentIndex()!=0)
+    if (comboBox_9->currentIndex()!=0 && fieldChanged("comboBox_9", comboBox_9->currentText()))
     {
       command.append(" op " + comboBox_9->currentText());
     }
-    if (lineEdit_10->text()!="")
+    if (lineEdit_10->text()!="" && fieldChanged("lineEdit_1", lineEdit_1->text()))
     {
       command.append(" cavity \"" +lineEdit_10->text() + "\"");
     }
 
-    if (comboBox_11->currentIndex()==1)
+    if (comboBox_11->currentIndex()==1 && fieldChanged("comboBox_11", comboBox_11->currentText()))
     {
       command.append(" cavity_radiation_on ");
     }
 
-    if (comboBox_11->currentIndex()==2)
+    if (comboBox_11->currentIndex()==2 && fieldChanged("comboBox_11", comboBox_11->currentText()))
     {
       command.append(" cavity_radiation_off ");
     }
@@ -225,18 +311,6 @@ void LoadsRadiationModifyPanel::on_pushButton_apply_clicked(bool)
   if (command != "")
   {
     commands.push_back(command);
-    lineEdit_0->setText("");
-    lineEdit_1->setText("");
-    lineEdit_2->setText("");
-    lineEdit_3->setText("");
-    lineEdit_4->setText("");
-    lineEdit_5->setText("");
-    lineEdit_6->setText("");
-    lineEdit_7->setText("");
-    lineEdit_8->setText("");
-    comboBox_9->setCurrentIndex(0);
-    lineEdit_10->setText("");
-    comboBox_11->setCurrentIndex(0);
   }
   
   for (size_t i = 0; i < commands.size(); i++)
@@ -244,4 +318,80 @@ void LoadsRadiationModifyPanel::on_pushButton_apply_clicked(bool)
     //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
     GuiSendCmd::gui_cmd(commands[int(i)]);
   }
+}
+
+
+bool LoadsRadiationModifyPanel::fieldChanged(const QString& field, const QString& value) const
+{
+  return loadedEntityId < 0 || originalValues.value(field) != value;
+}
+
+bool LoadsRadiationModifyPanel::setRadiation(int id)
+{
+  loadedEntityId = -1;
+  originalValues.clear();
+  comboBox_9->setCurrentIndex(0);
+  comboBox_11->setCurrentIndex(0);
+  pushButton_apply->setEnabled(false);
+  lineEdit_0->clear();
+  lineEdit_1->clear();
+  lineEdit_2->clear();
+  lineEdit_3->clear();
+  lineEdit_4->clear();
+  lineEdit_5->clear();
+  lineEdit_6->clear();
+  lineEdit_7->clear();
+  lineEdit_8->clear();
+  lineEdit_10->clear();
+  CalculiXLoadsInterface core;
+  LoadsRadiationSettings settings;
+  std::string error;
+
+  if (!core.get_radiation_settings(id, settings, error))
+  {
+    PRINT_ERROR("Cannot load Radiation %d: %s\n", id, error.c_str());
+    return false;
+  }
+  lineEdit_0->setText(QString::number(settings.id));
+  lineEdit_1->setText(QString::fromStdString(settings.name));
+  lineEdit_2->setText(QString::fromStdString(settings.sideset));
+  lineEdit_3->setText(QString::fromStdString(settings.temperature));
+  lineEdit_4->setText(QString::fromStdString(settings.coefficient));
+  lineEdit_5->setText(QString::fromStdString(settings.amplitude));
+  lineEdit_6->setText(QString::fromStdString(settings.timeDelay));
+  lineEdit_7->setText(QString::fromStdString(settings.secondaryAmplitude));
+  lineEdit_8->setText(QString::fromStdString(settings.secondaryTimeDelay));
+  const QString comboBox_9Value = QString::fromStdString(settings.operation);
+  int comboBox_9Index = comboBox_9->findText(comboBox_9Value, Qt::MatchFixedString);
+  if (comboBox_9Index < 0 && !comboBox_9Value.isEmpty())
+  {
+    comboBox_9->addItem(comboBox_9Value);
+    comboBox_9Index = comboBox_9->count() - 1;
+  }
+  comboBox_9->setCurrentIndex(qMax(0, comboBox_9Index));
+  lineEdit_10->setText(QString::fromStdString(settings.cavity));
+  const QString comboBox_11Value = QString::fromStdString(settings.cavityRadiation);
+  int comboBox_11Index = comboBox_11->findText(comboBox_11Value, Qt::MatchFixedString);
+  if (comboBox_11Index < 0 && !comboBox_11Value.isEmpty())
+  {
+    comboBox_11->addItem(comboBox_11Value);
+    comboBox_11Index = comboBox_11->count() - 1;
+  }
+  comboBox_11->setCurrentIndex(qMax(0, comboBox_11Index));
+  originalValues.insert("lineEdit_0", lineEdit_0->text());
+  originalValues.insert("lineEdit_1", lineEdit_1->text());
+  originalValues.insert("lineEdit_2", lineEdit_2->text());
+  originalValues.insert("lineEdit_3", lineEdit_3->text());
+  originalValues.insert("lineEdit_4", lineEdit_4->text());
+  originalValues.insert("lineEdit_5", lineEdit_5->text());
+  originalValues.insert("lineEdit_6", lineEdit_6->text());
+  originalValues.insert("lineEdit_7", lineEdit_7->text());
+  originalValues.insert("lineEdit_8", lineEdit_8->text());
+  originalValues.insert("comboBox_9", comboBox_9->currentText());
+  originalValues.insert("lineEdit_10", lineEdit_10->text());
+  originalValues.insert("comboBox_11", comboBox_11->currentText());
+
+  loadedEntityId = id;
+  pushButton_apply->setEnabled(true);
+  return true;
 }

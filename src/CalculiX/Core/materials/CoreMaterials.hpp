@@ -4,6 +4,7 @@
 
 #include "Core/materials/CoreMaterialsStructs.hpp"
 #include <vector>
+#include "MaterialProperties.hpp"
 #include <string>
 #include <cmath>
 #include <utility>
@@ -16,6 +17,7 @@ class CoreMaterials
 {
 
 public:
+  bool get_properties(int id, MaterialProperties& properties, std::string& error);
   std::string get_material_export_data(int topology_id, int iteration_id);
   CoreMaterials();
   ~CoreMaterials();

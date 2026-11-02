@@ -20,6 +20,7 @@ class DampingDeletePanel : public QWidget
   Q_OBJECT
   
 public:
+  void selectCoefficient(int id);
   explicit DampingDeletePanel(QWidget *parent = 0);
   ~DampingDeletePanel();
 

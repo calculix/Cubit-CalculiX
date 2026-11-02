@@ -1,3 +1,10 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include <QAction>
+#include "LoadsTrajectoryDeletePanel.hpp"
+#include "LoadsTrajectoryBodyHeatfluxSphereModifyPanel.hpp"
+#include "LoadsTrajectoryHeatfluxModifyPanel.hpp"
+#include "CubitMessage.hpp"
+#include "TaskPanel.hpp"
 #include "LoadsTrajectoryTree.hpp"
 #include <string>
 #include <vector>
@@ -105,6 +112,8 @@ void LoadsTrajectoryTree::addLoad(QString load_id, QString load_name)
   LoadTreeChild->setText(0, load_name);
     
   LoadTreeChild->setText(1, load_id);
+  LoadTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Trajectory));
+  LoadTreeChild->setData(0, PropertyIdRole, load_id.toInt());
 
   LoadTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("LoadsTrajectoryTree"));
 
@@ -146,6 +155,12 @@ void LoadsTrajectoryTree::populateContextMenu(
     return;
   }
 
+  int selectedId = 0;
+  if (clickedItem != this && !readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
+
   if (clickedItem == this)
   {
     addPanelAction(menu, "Create Trajectory", host, "CCXLoadsTrajectory");
@@ -165,7 +180,113 @@ void LoadsTrajectoryTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Trajectory", host, "CCXLoadsTrajectory");
-  addPanelAction(menu, "Modify Trajectory", host, "CCXLoadsTrajectory");
-  addPanelAction(menu, "Delete Trajectory", host, "CCXLoadsTrajectoryDelete");
+  {
+    auto* action = menu.addAction("Modify Trajectory");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      LoadsTrajectoryTree::open_modify(selectedId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Trajectory");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      LoadsTrajectoryTree::open_delete(selectedId, host);
+    });
+  }
   addCommandAction(menu, "Draw Trajectory", QString("ccx draw load trajectory ") + QString::number(entityId));
+}
+
+
+void LoadsTrajectoryTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+
+  CalculiXLoadsInterface core;
+  LoadsTrajectorySettings settings;
+  std::string error;
+  if (!core.get_trajectory_settings(id, settings, error))
+  {
+    PRINT_ERROR("Cannot open Trajectory %d: %s\n", id, error.c_str());
+    return;
+  }
+
+  QString marker;
+  switch (settings.type)
+  {
+    case 1: marker = "CCXLoadsTrajectoryHeatfluxModify"; break;
+    case 2: marker = "CCXLoadsTrajectoryBodyHeatfluxSphereModify"; break;
+    default:
+      PRINT_ERROR("This stored type has no modify panel.\n");
+      return;
+  }
+  host.setWidgetInCmdPanelMarker(marker);
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<LoadsTrajectoryHeatfluxModifyPanel*>(widget))
+    {
+      if (settings.type == 1)
+      {
+        panel->setTrajectory(id);
+        return;
+      }
+    }
+    if (auto* panel = dynamic_cast<LoadsTrajectoryBodyHeatfluxSphereModifyPanel*>(widget))
+    {
+      if (settings.type == 2)
+      {
+        panel->setTrajectory(id);
+        return;
+      }
+    }
+  }
+  PRINT_ERROR("Unable to open the Trajectory modify panel.\n");
+}
+
+void LoadsTrajectoryTree::open_delete(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXLoadsTrajectoryDelete");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<LoadsTrajectoryDeletePanel*>(widget))
+    {
+      panel->setTrajectory(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Trajectory delete panel.\n");
+}
+
+void LoadsTrajectoryTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (item == nullptr)
+  {
+    return;
+  }
+  if (item == this)
+  {
+    host.setWidgetInCmdPanelMarker("CCXLoadsTrajectoryHeatfluxCreate");
+    return;
+  }
+
+  if (item->parent() != this)
+  {
+    return;
+  }
+
+  int id = -1;
+  if (!readItemId(item, id))
+  {
+    return;
+  }
+  open_modify(id, host);
 }

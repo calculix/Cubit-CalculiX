@@ -1,3 +1,5 @@
+#include "CubitInterface.hpp"
+#include "MeshExportInterface.hpp"
 #include "CoreMeshElementMapping.hpp"
 #include "CalculiXMeshInterface.hpp"
 #include "CoreMeshQuery.hpp"
@@ -8,6 +10,76 @@
 #include <vector>
 
 #include "Core/loadCalculiXCore.hpp"
+
+bool CalculiXMeshInterface::get_assignment_entity_name(const std::string& type, int id, std::string& name)
+{
+  name.clear();
+  if (id < 1)
+  {
+    return false;
+  }
+  if (type == "block" || type == "nodeset" || type == "sideset")
+  {
+    if (ccx_core.me_iface == nullptr)
+    {
+      return false;
+    }
+    auto& mesh = *ccx_core.me_iface;
+    if (type == "block")
+    {
+      BlockHandle handle;
+      if (!mesh.get_block_handle(id, handle))
+      {
+        return false;
+      }
+      name = mesh.name_from_handle(handle);
+    }
+    else if (type == "nodeset")
+    {
+      NodesetHandle handle;
+      if (!mesh.get_nodeset_handle(id, handle))
+      {
+        return false;
+      }
+      name = mesh.get_nodeset_name(handle);
+    }
+    else
+    {
+      SidesetHandle handle;
+      if (!mesh.get_sideset_handle(id, handle))
+      {
+        return false;
+      }
+      name = mesh.get_sideset_name(handle);
+    }
+    return true;
+  }
+  const bool exists = (type == "vertex" && check_vertex_exists(id)) || (type == "curve" && check_curve_exists(id)) || (type == "surface" && check_surface_exists(id));
+  if (!exists)
+  {
+    return false;
+  }
+  name = CubitInterface::get_entity_name(type, id, true);
+  return true;
+}
+
+std::vector<std::string> CalculiXMeshInterface::get_valid_block_element_types(int blockId)
+{
+  if (!check_block_exists(blockId))
+  {
+    return {};
+  }
+  return CubitInterface::get_valid_block_element_types(blockId);
+}
+
+std::vector<std::string> CalculiXMeshInterface::get_compatible_ccx_element_types(int blockId)
+{
+  if (ccx_core.cb == nullptr || !check_block_exists(blockId))
+  {
+    return {};
+  }
+  return ccx_core.cb->get_compatible_ccx_element_types(CubitInterface::get_block_element_type(blockId));
+}
 
 std::vector<std::string> CalculiXMeshInterface::get_ccx_element_types()
 {
@@ -162,4 +234,80 @@ std::vector<std::vector<std::string>> CalculiXMeshInterface::get_nodeset_tree_da
 std::vector<std::vector<std::string>> CalculiXMeshInterface::get_sideset_tree_data()
 { 
   return CoreMeshTreeData::get_sideset_tree_data(*ccx_core.me_iface);
+}
+
+
+bool CalculiXMeshInterface::get_block_properties(int id, MeshProperties& properties, std::string& error)
+{
+  properties = {};
+  error.clear();
+  if (ccx_core.me_iface == nullptr || ccx_core.cb == nullptr || !check_block_exists(id))
+  {
+    error = "The selected block is unavailable.";
+    return false;
+  }
+  properties.id = id;
+  properties.name = get_block_name(id);
+  properties.elementType = CubitInterface::get_block_element_type(id);
+  properties.calculixElementType = get_ccx_element_type(id);
+  std::vector<int> nodes, spheres, edges, triangles, faces, pyramids, wedges, tetrahedra, hexahedra;
+  if (!CubitInterface::get_block_elements_and_nodes(id, nodes, spheres, edges, triangles, faces, pyramids, wedges, tetrahedra, hexahedra))
+  {
+    error = "Unable to read the selected block mesh.";
+    return false;
+  }
+  properties.nodeCount = nodes.size();
+  properties.elementCount = spheres.size() + edges.size() + triangles.size() + faces.size() + pyramids.size() + wedges.size() + tetrahedra.size() + hexahedra.size();
+  return true;
+}
+
+bool CalculiXMeshInterface::get_nodeset_properties(int id, MeshProperties& properties, std::string& error)
+{
+  properties = {};
+  error.clear();
+  if (ccx_core.me_iface == nullptr || !check_nodeset_exists(id))
+  {
+    error = "The selected nodeset is unavailable.";
+    return false;
+  }
+  properties.id = id;
+  properties.name = get_nodeset_name(id);
+  properties.nodeCount = CubitInterface::get_nodeset_nodes_inclusive(id).size();
+  return true;
+}
+
+bool CalculiXMeshInterface::get_sideset_properties(int id, MeshProperties& properties, std::string& error)
+{
+  properties = {};
+  error.clear();
+  if (ccx_core.me_iface == nullptr || !check_sideset_exists(id))
+  {
+    error = "The selected sideset is unavailable.";
+    return false;
+  }
+  SidesetHandle handle;
+  if (!ccx_core.me_iface->get_sideset_handle(id, handle))
+  {
+    error = "Unable to read the selected sideset.";
+    return false;
+  }
+  properties.id = id;
+  properties.name = get_sideset_name(id);
+  const int batchSize = 512;
+  std::vector<ElementHandle> elements(batchSize);
+  std::vector<ElementType> types(batchSize);
+  std::vector<int> sides(batchSize);
+  int offset = 0;
+  int count = 0;
+  while ((count = ccx_core.me_iface->get_sideset_sides(handle, offset, batchSize, elements, types, sides)) > 0)
+  {
+    properties.sideCount += static_cast<std::size_t>(count);
+    offset += count;
+  }
+  if (count < 0)
+  {
+    error = "Unable to read the sideset faces.";
+    return false;
+  }
+  return true;
 }

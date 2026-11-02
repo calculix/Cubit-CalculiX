@@ -220,3 +220,6 @@
 2026-10-30 refactor calculixcore
 2026-10-31 refactor calculixcore
 2026-11-01 introducing Framework for loading multiple components at once. will be used for other solvers and Tools
+2026-11-02 update modify and delete panels with core data
+2026-11-02 introducing property Widget
+2026-11-02 rework draw, introduce draw toolbar

@@ -1,4 +1,8 @@
 target_sources(calculix_gui PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/TopologyIterationPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TopologyIterationPropertiesWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TopologyPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TopologyPropertiesWidget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TopologyActionsPanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TopologyActionsPanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TopologyDeletePanel.cpp

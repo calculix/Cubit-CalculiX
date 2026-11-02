@@ -1,3 +1,7 @@
+#include <QItemSelectionModel>
+#include <QSignalBlocker>
+#include <QTreeWidgetItemIterator>
+#include <QVariant>
 #include "ModelTree.hpp"
 #include "GUI/common/TreeContextMenu.hpp"
 #include "GUI/mesh/BlocksTree.hpp"
@@ -97,6 +101,9 @@ ModelTree::ModelTree(QDockWidget* parent, NavigationModel* navigation):QTreeWidg
   }
   */
 
+  setSelectionMode(QAbstractItemView::SingleSelection);
+  connect(this, &QTreeWidget::itemSelectionChanged, this, &ModelTree::updatePropertySelection);
+
   this->setColumnCount(2);  
   this->setHeaderLabels(QStringList() << "Name" << "ID");
   this->setColumnWidth(0, 280);
@@ -148,680 +155,258 @@ void ModelTree::showContextMenu(const QPoint &pos)
 
 void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
 {
-  for (QTreeWidgetItem *owner = item; owner != nullptr; owner = owner->parent())
+  Q_UNUSED(column);
+  for (auto* owner = item; owner != nullptr; owner = owner->parent())
   {
-    TopologyTree *topology_tree = dynamic_cast<TopologyTree *>(owner);
-    if (topology_tree != nullptr)
+    if (auto* feature = dynamic_cast<TopologyTree*>(owner))
     {
-      topology_tree->activate(item, *this);
+      feature->activate(item, *this);
       return;
     }
-  }
-
-  BlocksTree* BlocksTreeItem;
-  NodesetTree* NodesetTreeItem;
-  SidesetTree* SidesetTreeItem;
-  MaterialTree* MaterialTreeItem;
-  SectionsTree* SectionsTreeItem;
-  ConstraintsTree* ConstraintsTreeItem;
-  SurfaceInteractionsTree* SurfaceInteractionsTreeItem;
-  ContactPairsTree* ContactPairsTreeItem;
-  AmplitudesTree* AmplitudesTreeItem;
-  OrientationsTree* OrientationsTreeItem;
-  DampingTree* DampingTreeItem;
-  PhysicalConstantsTree* PhysicalConstantsTreeItem;
-  LoadsForcesTree* LoadsForcesTreeItem;
-  LoadsPressuresTree* LoadsPressuresTreeItem;
-  LoadsHeatfluxesTree* LoadsHeatfluxesTreeItem;
-  LoadsGravityTree* LoadsGravityTreeItem;
-  LoadsCentrifugalTree* LoadsCentrifugalTreeItem;
-  LoadsTrajectoryTree* LoadsTrajectoryTreeItem;
-  LoadsFilmTree* LoadsFilmTreeItem;
-  LoadsRadiationTree* LoadsRadiationTreeItem;
-  LoadsSurfaceTractionTree* LoadsSurfaceTractionTreeItem;
-  LoadsBodyHeatfluxTree* LoadsBodyHeatfluxTreeItem;
-  BCsDisplacementsTree* BCsDisplacementsTreeItem;
-  BCsTemperaturesTree* BCsTemperaturesTreeItem;
-  HistoryOutputsTree* HistoryOutputsTreeItem;
-  FieldOutputsTree* FieldOutputsTreeItem;
-  InitialConditionsTree* InitialConditionsTreeItem;
-  HBCsTree* HBCsTreeItem;
-  HBCsDisplacementsTree* HBCsDisplacementsTreeItem;
-  HBCsTemperaturesTree* HBCsTemperaturesTreeItem;
-  StepsTree* StepsTreeItem;
-  StepsLoadsTree* StepsLoadsTreeItem;
-  StepsLoadsForcesTree* StepsLoadsForcesTreeItem;
-  StepsLoadsPressuresTree* StepsLoadsPressuresTreeItem;
-  StepsLoadsHeatfluxesTree* StepsLoadsHeatfluxesTreeItem;
-  StepsLoadsGravityTree* StepsLoadsGravityTreeItem;
-  StepsLoadsCentrifugalTree* StepsLoadsCentrifugalTreeItem;
-  StepsLoadsTrajectoryTree* StepsLoadsTrajectoryTreeItem;
-  StepsLoadsFilmTree* StepsLoadsFilmTreeItem;
-  StepsLoadsRadiationTree* StepsLoadsRadiationTreeItem;
-  StepsLoadsSurfaceTractionTree* StepsLoadsSurfaceTractionTreeItem;
-  StepsLoadsBodyHeatfluxTree* StepsLoadsBodyHeatfluxTreeItem;
-  StepsBCsTree* StepsBCsTreeItem;
-  StepsBCsDisplacementsTree* StepsBCsDisplacementsTreeItem;
-  StepsBCsTemperaturesTree* StepsBCsTemperaturesTreeItem;
-  StepsHistoryOutputsTree* StepsHistoryOutputsTreeItem;
-  StepsFieldOutputsTree* StepsFieldOutputsTreeItem;  
-  CustomLinesTree* CustomLinesTreeItem;
-  JobsTree* JobsTreeItem;
-  QTreeWidgetItem* TreeItem;
-
-  if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item))
-  {
-    if (BlocksTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<StepsBCsDisplacementsTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXBlocksModify");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (NodesetTreeItem = dynamic_cast<NodesetTree*>(item))
-  {
-    if (NodesetTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<StepsBCsTemperaturesTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("ExodusCreateNodeset");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (SidesetTreeItem = dynamic_cast<SidesetTree*>(item))
-  {
-    if (SidesetTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<StepsBCsTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("ExodusCreateSideset");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (MaterialTreeItem = dynamic_cast<MaterialTree*>(item))
-  {
-    if (MaterialTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<StepsFieldOutputsTree*>(owner))
     {
-      myMaterialManagement->show();
+      feature->activate(item, *this);
+      return;
     }
-  }else if (SectionsTreeItem = dynamic_cast<SectionsTree*>(item))
-  {
-    if (SectionsTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<StepsHistoryOutputsTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXSectionsCreate");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (ConstraintsTreeItem = dynamic_cast<ConstraintsTree*>(item))
-  {
-    if (ConstraintsTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<StepsLoadsBodyHeatfluxTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXConstraintsCreateRigidBody");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (SurfaceInteractionsTreeItem = dynamic_cast<SurfaceInteractionsTree*>(item))
-  {
-    if (SurfaceInteractionsTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<StepsLoadsCentrifugalTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXSurfaceInteractionsCreate");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (ContactPairsTreeItem = dynamic_cast<ContactPairsTree*>(item))
-  {
-    if (ContactPairsTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<StepsLoadsFilmTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXContactPairsCreate");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (AmplitudesTreeItem = dynamic_cast<AmplitudesTree*>(item))
-  {
-    if (AmplitudesTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<StepsLoadsForcesTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXAmplitudesCreate");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (OrientationsTreeItem = dynamic_cast<OrientationsTree*>(item))
-  {
-    if (OrientationsTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<StepsLoadsGravityTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXOrientationsCreate");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (DampingTreeItem = dynamic_cast<DampingTree*>(item))
-  {
-    if (DampingTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<StepsLoadsHeatfluxesTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXDampingModify");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (PhysicalConstantsTreeItem = dynamic_cast<PhysicalConstantsTree*>(item))
-  {
-    if (PhysicalConstantsTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<StepsLoadsPressuresTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXPhysicalConstantsModify");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (LoadsForcesTreeItem = dynamic_cast<LoadsForcesTree*>(item))
-  {
-    if (LoadsForcesTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<StepsLoadsRadiationTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXLoadsForcesCreate");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (LoadsPressuresTreeItem = dynamic_cast<LoadsPressuresTree*>(item))
-  {
-    if (LoadsPressuresTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<StepsLoadsSurfaceTractionTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXLoadsPressuresCreate");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (LoadsHeatfluxesTreeItem = dynamic_cast<LoadsHeatfluxesTree*>(item))
-  {
-    if (LoadsHeatfluxesTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<StepsLoadsTrajectoryTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXLoadsHeatfluxesCreate");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (LoadsGravityTreeItem = dynamic_cast<LoadsGravityTree*>(item))
-  {
-    if (LoadsGravityTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<StepsLoadsTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXLoadsGravityCreate");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (LoadsCentrifugalTreeItem = dynamic_cast<LoadsCentrifugalTree*>(item))
-  {
-    if (LoadsCentrifugalTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<HBCsDisplacementsTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXLoadsCentrifugalCreate");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (LoadsTrajectoryTreeItem = dynamic_cast<LoadsTrajectoryTree*>(item))
-  {
-    if (LoadsTrajectoryTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<HBCsTemperaturesTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXLoadsTrajectory");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (LoadsFilmTreeItem = dynamic_cast<LoadsFilmTree*>(item))
-  {
-    if (LoadsFilmTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<HBCsTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXLoadsFilmCreate");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (LoadsRadiationTreeItem = dynamic_cast<LoadsRadiationTree*>(item))
-  {
-    if (LoadsRadiationTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<BlocksTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXLoadsRadiationCreate");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (LoadsSurfaceTractionTreeItem = dynamic_cast<LoadsSurfaceTractionTree*>(item))
-  {
-    if (LoadsSurfaceTractionTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<MaterialTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXLoadsSurfaceTractionCreate");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (LoadsBodyHeatfluxTreeItem = dynamic_cast<LoadsBodyHeatfluxTree*>(item))
-  {
-    if (LoadsBodyHeatfluxTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<LoadsForcesTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXLoadsBodyHeatfluxCreate");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (BCsDisplacementsTreeItem = dynamic_cast<BCsDisplacementsTree*>(item))
-  {
-    if (BCsDisplacementsTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<LoadsPressuresTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXBCsDisplacementsCreate");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (BCsTemperaturesTreeItem = dynamic_cast<BCsTemperaturesTree*>(item))
-  {
-    if (BCsTemperaturesTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<LoadsHeatfluxesTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXBCsTemperaturesCreate");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (HistoryOutputsTreeItem = dynamic_cast<HistoryOutputsTree*>(item))
-  {
-    if (HistoryOutputsTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<LoadsSurfaceTractionTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXHistoryOutputsCreate");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (FieldOutputsTreeItem = dynamic_cast<FieldOutputsTree*>(item))
-  {
-    if (FieldOutputsTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<LoadsGravityTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXFieldOutputsCreate");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (InitialConditionsTreeItem = dynamic_cast<InitialConditionsTree*>(item))
-  {
-    if (InitialConditionsTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<LoadsCentrifugalTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXInitialConditionsCreate");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (HBCsTreeItem = dynamic_cast<HBCsTree*>(item))
-  {
-    if (HBCsTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<LoadsFilmTree*>(owner))
     {
-      myHBCsManagement->close();
-      myHBCsManagement->show();
+      feature->activate(item, *this);
+      return;
     }
-  }else if (HBCsDisplacementsTreeItem = dynamic_cast<HBCsDisplacementsTree*>(item))
-  {
-    if (HBCsDisplacementsTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<LoadsRadiationTree*>(owner))
     {
-      myHBCsManagement->close();
-      myHBCsManagement->show();
+      feature->activate(item, *this);
+      return;
     }
-  }else if (HBCsTemperaturesTreeItem = dynamic_cast<HBCsTemperaturesTree*>(item))
-  {
-    if (HBCsTemperaturesTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<LoadsBodyHeatfluxTree*>(owner))
     {
-      myHBCsManagement->close();
-      myHBCsManagement->show();
+      feature->activate(item, *this);
+      return;
     }
-  }else if (StepsTreeItem = dynamic_cast<StepsTree*>(item))
-  {
-    if (StepsTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<BCsTemperaturesTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXStepsCreate");
+      feature->activate(item, *this);
+      return;
     }
-  }else if (StepsLoadsTreeItem = dynamic_cast<StepsLoadsTree*>(item))
-  {
-    if (StepsLoadsTreeItem->text(1).toStdString()=="")
-    { 
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
+    if (auto* feature = dynamic_cast<BCsDisplacementsTree*>(owner))
+    {
+      feature->activate(item, *this);
+      return;
     }
-  }else if (StepsLoadsForcesTreeItem = dynamic_cast<StepsLoadsForcesTree*>(item))
-  {
-    if (StepsLoadsForcesTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<SectionsTree*>(owner))
     {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
+      feature->activate(item, *this);
+      return;
     }
-  }else if (StepsLoadsPressuresTreeItem = dynamic_cast<StepsLoadsPressuresTree*>(item))
-  {
-    if (StepsLoadsPressuresTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<OrientationsTree*>(owner))
     {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
+      feature->activate(item, *this);
+      return;
     }
-  }else if (StepsLoadsHeatfluxesTreeItem = dynamic_cast<StepsLoadsHeatfluxesTree*>(item))
-  {
-    if (StepsLoadsHeatfluxesTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<ConstraintsTree*>(owner))
     {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
+      feature->activate(item, *this);
+      return;
     }
-  }else if (StepsLoadsGravityTreeItem = dynamic_cast<StepsLoadsGravityTree*>(item))
-  {
-    if (StepsLoadsGravityTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<ContactPairsTree*>(owner))
     {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
+      feature->activate(item, *this);
+      return;
     }
-  }else if (StepsLoadsCentrifugalTreeItem = dynamic_cast<StepsLoadsCentrifugalTree*>(item))
-  {
-    if (StepsLoadsCentrifugalTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<AmplitudesTree*>(owner))
     {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
+      feature->activate(item, *this);
+      return;
     }
-  }else if (StepsLoadsTrajectoryTreeItem = dynamic_cast<StepsLoadsTrajectoryTree*>(item))
-  {
-    if (StepsLoadsTrajectoryTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<CustomLinesTree*>(owner))
     {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
+      feature->activate(item, *this);
+      return;
     }
-  }else if (StepsLoadsFilmTreeItem = dynamic_cast<StepsLoadsFilmTree*>(item))
-  {
-    if (StepsLoadsFilmTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<StepsTree*>(owner))
     {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
+      feature->activate(item, *this);
+      return;
     }
-  }else if (StepsLoadsRadiationTreeItem = dynamic_cast<StepsLoadsRadiationTree*>(item))
-  {
-    if (StepsLoadsRadiationTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<HistoryOutputsTree*>(owner))
     {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
+      feature->activate(item, *this);
+      return;
     }
-  }else if (StepsLoadsSurfaceTractionTreeItem = dynamic_cast<StepsLoadsSurfaceTractionTree*>(item))
-  {
-    if (StepsLoadsSurfaceTractionTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<FieldOutputsTree*>(owner))
     {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
+      feature->activate(item, *this);
+      return;
     }
-  }else if (StepsLoadsBodyHeatfluxTreeItem = dynamic_cast<StepsLoadsBodyHeatfluxTree*>(item))
-  {
-    if (StepsLoadsBodyHeatfluxTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<InitialConditionsTree*>(owner))
     {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
+      feature->activate(item, *this);
+      return;
     }
-  }else if (StepsBCsTreeItem = dynamic_cast<StepsBCsTree*>(item))
-  {
-    if (StepsBCsTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<JobsTree*>(owner))
     {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
+      feature->activate(item, *this);
+      return;
     }
-  }else if (StepsBCsDisplacementsTreeItem = dynamic_cast<StepsBCsDisplacementsTree*>(item))
-  {
-    if (StepsBCsDisplacementsTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<DampingTree*>(owner))
     {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
+      feature->activate(item, *this);
+      return;
     }
-  }else if (StepsBCsTemperaturesTreeItem = dynamic_cast<StepsBCsTemperaturesTree*>(item))
-  {
-    if (StepsBCsTemperaturesTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<PhysicalConstantsTree*>(owner))
     {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
+      feature->activate(item, *this);
+      return;
     }
-  }else if (StepsHistoryOutputsTreeItem = dynamic_cast<StepsHistoryOutputsTree*>(item))
-  {
-    if (StepsHistoryOutputsTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<SurfaceInteractionsTree*>(owner))
     {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
+      feature->activate(item, *this);
+      return;
     }
-  }else if (StepsFieldOutputsTreeItem = dynamic_cast<StepsFieldOutputsTree*>(item))
-  {
-    if (StepsFieldOutputsTreeItem->text(1).toStdString()=="")
+    if (auto* feature = dynamic_cast<LoadsTrajectoryTree*>(owner))
     {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
+      feature->activate(item, *this);
+      return;
     }
-  }else if (CustomLinesTreeItem = dynamic_cast<CustomLinesTree*>(item))
-  {
-    if (CustomLinesTreeItem->text(1).toStdString()=="")
+    if (auto* nodesets = dynamic_cast<NodesetTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXCustomLinesCreate");
+      setWidgetInCmdPanelMarker(item == nodesets ? "ExodusCreateNodeset" : "ExodusRemoveContentsNodeset");
+      return;
     }
-  }else if (JobsTreeItem = dynamic_cast<JobsTree*>(item))
-  {
-    if (JobsTreeItem->text(1).toStdString()=="")
+    if (auto* sidesets = dynamic_cast<SidesetTree*>(owner))
     {
-      this->setWidgetInCmdPanelMarker("CCXJobsCreate");
-    }
-  } else {
-    if (BlocksTreeItem = dynamic_cast<BlocksTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXBlocksModify");
-    } else if (NodesetTreeItem = dynamic_cast<NodesetTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("ExodusRemoveContentsNodeset");
-    } else if (SidesetTreeItem = dynamic_cast<SidesetTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("ExodusRemoveContentsSideset");
-    } else if (MaterialTreeItem = dynamic_cast<MaterialTree*>(item->parent()))
-    {
-      myMaterialManagement->setMaterial(item->text(1));
-      myMaterialManagement->close();
-      myMaterialManagement->show();
-    } else if (SectionsTreeItem = dynamic_cast<SectionsTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXSectionsModify");
-    } else if (ConstraintsTreeItem = dynamic_cast<ConstraintsTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXConstraintsModifyRigidBody");
-    } else if (SurfaceInteractionsTreeItem = dynamic_cast<SurfaceInteractionsTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXSurfaceInteractionsModify");
-    } else if (ContactPairsTreeItem = dynamic_cast<ContactPairsTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXContactPairsModify");
-    } else if (AmplitudesTreeItem = dynamic_cast<AmplitudesTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXAmplitudesModify");
-    } else if (OrientationsTreeItem = dynamic_cast<OrientationsTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXOrientationsModify");
-    } else if (DampingTreeItem = dynamic_cast<DampingTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXDampingModify");
-    } else if (PhysicalConstantsTreeItem = dynamic_cast<PhysicalConstantsTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXPhysicalConstantsModify");
-    } else if (LoadsForcesTreeItem = dynamic_cast<LoadsForcesTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXLoadsForcesModify");
-    } else if (LoadsPressuresTreeItem = dynamic_cast<LoadsPressuresTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXLoadsPressuresModify");
-    } else if (LoadsHeatfluxesTreeItem = dynamic_cast<LoadsHeatfluxesTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXLoadsHeatfluxesModify");
-    } else if (LoadsGravityTreeItem = dynamic_cast<LoadsGravityTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXLoadsGravityModify");
-    } else if (LoadsCentrifugalTreeItem = dynamic_cast<LoadsCentrifugalTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXLoadsCentrifugalModify");
-    } else if (LoadsTrajectoryTreeItem = dynamic_cast<LoadsTrajectoryTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXLoadsTrajectory");
-    } else if (LoadsFilmTreeItem = dynamic_cast<LoadsFilmTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXLoadsFilmModify");
-    } else if (LoadsRadiationTreeItem = dynamic_cast<LoadsRadiationTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXLoadsRadiationModify");
-    } else if (LoadsSurfaceTractionTreeItem = dynamic_cast<LoadsSurfaceTractionTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXLoadsSurfaceTractionModify");
-    } else if (LoadsBodyHeatfluxTreeItem = dynamic_cast<LoadsBodyHeatfluxTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXLoadsBodyHeatfluxModify");
-    } else if (BCsDisplacementsTreeItem = dynamic_cast<BCsDisplacementsTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXBCsDisplacementsModify");
-    } else if (BCsTemperaturesTreeItem = dynamic_cast<BCsTemperaturesTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXBCsTemperaturesModify");
-    } else if (HistoryOutputsTreeItem = dynamic_cast<HistoryOutputsTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXHistoryOutputsModify");
-    } else if (FieldOutputsTreeItem = dynamic_cast<FieldOutputsTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXFieldOutputsModify");
-    } else if (InitialConditionsTreeItem = dynamic_cast<InitialConditionsTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXInitialConditionsModify");
-    } else if (HBCsTreeItem = dynamic_cast<HBCsTree*>(item->parent()))
-    {
-      myHBCsManagement->close();
-      myHBCsManagement->show();
-    } else if (HBCsDisplacementsTreeItem = dynamic_cast<HBCsDisplacementsTree*>(item->parent()))
-    {
-      myHBCsManagement->close();
-      myHBCsManagement->show();
-    } else if (HBCsTemperaturesTreeItem = dynamic_cast<HBCsTemperaturesTree*>(item->parent()))
-    {
-      myHBCsManagement->close();
-      myHBCsManagement->show();
-    } else if (StepsTreeItem = dynamic_cast<StepsTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXStepsModify");
-    } else if (StepsLoadsTreeItem = dynamic_cast<StepsLoadsTree*>(item->parent()))
-    {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
-    } else if (StepsLoadsForcesTreeItem = dynamic_cast<StepsLoadsForcesTree*>(item->parent()))
-    {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
-    } else if (StepsLoadsPressuresTreeItem = dynamic_cast<StepsLoadsPressuresTree*>(item->parent()))
-    {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
-    } else if (StepsLoadsHeatfluxesTreeItem = dynamic_cast<StepsLoadsHeatfluxesTree*>(item->parent()))
-    {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
-    } else if (StepsLoadsGravityTreeItem = dynamic_cast<StepsLoadsGravityTree*>(item->parent()))
-    {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
-    } else if (StepsLoadsCentrifugalTreeItem = dynamic_cast<StepsLoadsCentrifugalTree*>(item->parent()))
-    {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
-    } else if (StepsLoadsTrajectoryTreeItem = dynamic_cast<StepsLoadsTrajectoryTree*>(item->parent()))
-    {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
-    } else if (StepsLoadsFilmTreeItem = dynamic_cast<StepsLoadsFilmTree*>(item->parent()))
-    {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
-    } else if (StepsLoadsRadiationTreeItem = dynamic_cast<StepsLoadsRadiationTree*>(item->parent()))
-    {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
-    } else if (StepsLoadsSurfaceTractionTreeItem = dynamic_cast<StepsLoadsSurfaceTractionTree*>(item->parent()))
-    {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
-    } else if (StepsLoadsBodyHeatfluxTreeItem = dynamic_cast<StepsLoadsBodyHeatfluxTree*>(item->parent()))
-    {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
-    } else if (StepsBCsTreeItem = dynamic_cast<StepsBCsTree*>(item->parent()))
-    {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
-    } else if (StepsBCsDisplacementsTreeItem = dynamic_cast<StepsBCsDisplacementsTree*>(item->parent()))
-    {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
-    } else if (StepsBCsTemperaturesTreeItem = dynamic_cast<StepsBCsTemperaturesTree*>(item->parent()))
-    {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
-    } else if (StepsHistoryOutputsTreeItem = dynamic_cast<StepsHistoryOutputsTree*>(item->parent()))
-    {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
-    } else if (StepsFieldOutputsTreeItem = dynamic_cast<StepsFieldOutputsTree*>(item->parent()))
-    {
-      if (TreeItem = dynamic_cast<QTreeWidgetItem*>(item->parent()->parent()))
-      {
-        myStepsManagement->setStep(TreeItem->text(1));
-      }
-      myStepsManagement->close();
-      myStepsManagement->show();
-    } else if (CustomLinesTreeItem = dynamic_cast<CustomLinesTree*>(item->parent()))
-    {
-      this->setWidgetInCmdPanelMarker("CCXCustomLinesModify");
-    } else if (JobsTreeItem = dynamic_cast<JobsTree*>(item->parent()))
-    {
-      myJobsMonitor->close();
-      myJobsMonitor->show();
-      myJobsMonitor->setJob(std::stoi(item->text(1).toStdString()));
-      myJobsMonitor->update();
+      setWidgetInCmdPanelMarker(item == sidesets ? "ExodusCreateSideset" : "ExodusRemoveContentsSideset");
+      return;
     }
   }
 }
@@ -876,4 +461,127 @@ void ModelTree::clear(){
   myHBCsManagement->clear();
   myStepsManagement->clear();
   myJobsMonitor->clear();
+}
+
+
+bool ModelTree::selectDrawingEntity(const CalculiXDrawSelection& selection)
+{
+  if (!selection.active)
+  {
+    clearSelection();
+    return true;
+  }
+  PropertyFeature feature = PropertyFeature::None;
+  switch (selection.entity.feature)
+  {
+    case DrawFeature::Force: feature = PropertyFeature::Force; break;
+    case DrawFeature::Pressure: feature = PropertyFeature::Pressure; break;
+    case DrawFeature::Heatflux: feature = PropertyFeature::Heatflux; break;
+    case DrawFeature::Gravity: feature = PropertyFeature::Gravity; break;
+    case DrawFeature::Centrifugal: feature = PropertyFeature::Centrifugal; break;
+    case DrawFeature::Trajectory: feature = PropertyFeature::Trajectory; break;
+    case DrawFeature::Film: feature = PropertyFeature::Film; break;
+    case DrawFeature::Radiation: feature = PropertyFeature::Radiation; break;
+    case DrawFeature::SurfaceTraction: feature = PropertyFeature::SurfaceTraction; break;
+    case DrawFeature::BodyHeatflux: feature = PropertyFeature::BodyHeatflux; break;
+    case DrawFeature::Displacement: feature = PropertyFeature::Displacement; break;
+    case DrawFeature::Temperature: feature = PropertyFeature::Temperature; break;
+    case DrawFeature::Orientation: feature = PropertyFeature::Orientation; break;
+    case DrawFeature::Equation:
+    case DrawFeature::EquationGroup: feature = PropertyFeature::Constraint; break;
+    case DrawFeature::Topology: return false;
+  }
+  QTreeWidgetItem* match = nullptr;
+  QTreeWidgetItem* global = nullptr;
+  for (QTreeWidgetItemIterator iterator(this); *iterator != nullptr; ++iterator)
+  {
+    auto* item = *iterator;
+    bool valid = false;
+    const int id = item->data(0, PropertyIdRole).toInt(&valid);
+    const auto value = item->data(0, PropertyFeatureRole);
+    if (!valid || !value.isValid() || id != selection.entity.id || value.toInt() != static_cast<int>(feature))
+    {
+      continue;
+    }
+    int stepId = -1;
+    for (const auto* ancestor = item; ancestor != nullptr; ancestor = ancestor->parent())
+    {
+      const auto step = ancestor->data(0, PropertyStepIdRole);
+      if (step.isValid())
+      {
+        stepId = step.toInt();
+        break;
+      }
+    }
+    if (stepId == selection.stepId)
+    {
+      match = item;
+      break;
+    }
+    if (stepId < 0 && !item->data(0, PropertyHomogeneousRole).toBool())
+    {
+      global = item;
+    }
+  }
+  // Inherited conditions may not have an explicit entry beneath the active step.
+  if (match == nullptr && selection.stepId >= 0)
+  {
+    match = global;
+  }
+  if (match == nullptr)
+  {
+    return false;
+  }
+  {
+    const QSignalBlocker blocker(this);
+    for (auto* ancestor = match->parent(); ancestor != nullptr; ancestor = ancestor->parent())
+    {
+      ancestor->setExpanded(true);
+    }
+    setCurrentItem(match, 0, QItemSelectionModel::ClearAndSelect);
+    scrollToItem(match, QAbstractItemView::EnsureVisible);
+  }
+  updatePropertySelection();
+  return true;
+}
+
+void ModelTree::updatePropertySelection()
+{
+  PropertySelection selection;
+  const auto items = selectedItems();
+  if (items.size() == 1)
+  {
+    const auto* item = items.front();
+    const QVariant feature = item->data(0, PropertyFeatureRole);
+    bool valid = false;
+    const int id = item->data(0, PropertyIdRole).toInt(&valid);
+    if (feature.isValid() && valid && id >= 0)
+    {
+      selection.feature = static_cast<PropertyFeature>(feature.toInt());
+      selection.id = id;
+      selection.caption = item->text(0);
+      selection.icon = item->icon(0);
+      selection.homogeneous = item->data(0, PropertyHomogeneousRole).toBool();
+      for (const auto* ancestor = item; ancestor != nullptr; ancestor = ancestor->parent())
+      {
+        const QVariant step = ancestor->data(0, PropertyStepIdRole);
+        if (step.isValid())
+        {
+          selection.stepId = step.toInt();
+          break;
+        }
+      }
+      const QVariant topology = item->data(0, PropertyTopologyIdRole);
+      if (topology.isValid())
+      {
+        selection.topologyId = topology.toInt();
+      }
+      const QVariant iteration = item->data(0, PropertyIterationIdRole);
+      if (iteration.isValid())
+      {
+        selection.iterationId = iteration.toInt();
+      }
+    }
+  }
+  emit propertySelectionChanged(selection);
 }

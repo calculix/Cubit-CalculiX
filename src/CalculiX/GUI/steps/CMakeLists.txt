@@ -1,4 +1,16 @@
 target_sources(calculix_gui PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/PhysicalConstantsPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PhysicalConstantsPropertiesWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/DampingPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/DampingPropertiesWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/InitialConditionsPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/InitialConditionsPropertiesWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FieldOutputsPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FieldOutputsPropertiesWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/HistoryOutputsPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/HistoryOutputsPropertiesWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/StepsPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/StepsPropertiesWidget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/DampingDeletePanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/DampingDeletePanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/DampingModifyPanel.cpp

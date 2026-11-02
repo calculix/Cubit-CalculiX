@@ -8,8 +8,8 @@ class HDF5Tool;
 class CoreModelMetadataPersistence
 {
 public:
-  static void read(HDF5Tool& file);
-  static void write(HDF5Tool& file, const std::string& version);
+  static bool read(HDF5Tool& file);
+  static bool write(HDF5Tool& file, const std::string& version);
 };
 
 #endif

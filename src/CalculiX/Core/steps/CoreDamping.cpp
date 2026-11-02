@@ -1,3 +1,4 @@
+#include "Core/application/SettingsRead.hpp"
 #include "Core/steps/CoreDamping.hpp"
 #include <string>
 #include <vector>
@@ -132,4 +133,22 @@ std::vector<std::vector<std::string>> CoreDamping::get_tree_data() const
     {"1", "alpha = " + damping_data[0]},
     {"2", "beta = " + damping_data[1]}
   };
+}
+
+
+bool CoreDamping::get_settings(int id, DampingSettings& settings, std::string& error) const
+{
+  settings = {};
+  error.clear();
+  settings.id = id;
+  settings.alpha = damping_data.size() > 0 ? damping_data[0] : std::string();
+  settings.beta = damping_data.size() > 1 ? damping_data[1] : std::string();
+
+  if (!error.empty())
+  {
+    settings = {};
+    return false;
+  }
+
+  return true;
 }

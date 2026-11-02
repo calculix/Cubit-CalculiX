@@ -1,4 +1,6 @@
+#include "CoreDraw.hpp"
 #include "CalculiXDrawInterface.hpp"
+#include <utility>
 #include "CoreDraw.hpp"
 #include "CubitMessage.hpp"
 #include "CoreDrawBCData.hpp"
@@ -278,4 +280,146 @@ void CalculiXDrawInterface::cancel_topology_animation()
   {
     ccx_core.draw->cancel_topology_animation();
   }
+}
+
+
+bool CalculiXDrawInterface::set_scope(const DrawScope& scope, std::string& error)
+{
+  return ccx_core.draw->setScope(scope, error);
+}
+
+
+bool CalculiXDrawInterface::set_group_visible(DrawGroup group, bool visible, std::string& error)
+{
+  return ccx_core.draw->setGroupVisible(group, visible, error);
+}
+
+
+bool CalculiXDrawInterface::set_size_factor(double factor, std::string& error)
+{
+  return ccx_core.draw->setSizeFactor(factor, error);
+}
+
+
+bool CalculiXDrawInterface::draw_scope_all(std::string& error)
+{
+  return ccx_core.draw->drawScopeAll(error);
+}
+
+
+bool CalculiXDrawInterface::refresh_drawing(std::string& error)
+{
+  return ccx_core.draw->refreshDrawing(error);
+}
+
+
+void CalculiXDrawInterface::set_workspace_active(bool active)
+{
+  ccx_core.draw->setWorkspaceActive(active);
+}
+
+
+void CalculiXDrawInterface::reset_drawing()
+{
+  ccx_core.draw->resetDrawing();
+}
+
+
+void CalculiXDrawInterface::shutdown_drawing() noexcept
+{
+  ccx_core.draw->shutdownDrawing();
+}
+
+
+CalculiXDrawState CalculiXDrawInterface::drawing_state() const
+{
+  return ccx_core.draw->drawingState();
+}
+
+
+double CalculiXDrawInterface::default_size() const
+{
+  return ccx_core.draw->defaultSymbolSize();
+}
+
+
+bool CalculiXDrawInterface::render_pending()
+{
+  return ccx_core.draw->renderPending();
+}
+
+
+bool CalculiXDrawInterface::draw_step(int stepId, const std::vector<DrawFeature>& features, double size, std::string& error, const std::vector<DrawEntityKey>& entities)
+{
+  return ccx_core.draw->drawForStep(stepId, features, size, error, entities);
+}
+
+bool CalculiXDrawInterface::picking_active() const
+{
+  return ccx_core.draw != nullptr && ccx_core.draw->pickingActive();
+}
+
+bool CalculiXDrawInterface::set_picking_enabled(bool enabled, std::string& error)
+{
+  return ccx_core.draw->setPickingEnabled(enabled, error);
+}
+
+void CalculiXDrawInterface::set_pick_callback(std::function<void(const CalculiXDrawSelection&)> callback)
+{
+  ccx_core.draw->setPickCallback(std::move(callback));
+}
+
+bool CalculiXDrawInterface::set_highlight(const CalculiXDrawSelection& selection, std::string& error)
+{
+  return ccx_core.draw->setHighlight(selection, error);
+}
+
+bool CalculiXDrawInterface::clear_highlight(std::string& error)
+{
+  return ccx_core.draw->clearHighlight(error);
+}
+
+bool CalculiXDrawInterface::set_overlay_visible(bool visible, std::string& error)
+{
+  return ccx_core.draw->setOverlayVisible(visible, error);
+}
+
+bool CalculiXDrawInterface::set_all_visible(bool visible, std::string& error)
+{
+  return ccx_core.draw->setAllVisible(visible, error);
+}
+
+void CalculiXDrawInterface::clear_hover()
+{
+  if (ccx_core.draw != nullptr)
+  {
+    ccx_core.draw->clearHover();
+  }
+}
+
+bool CalculiXDrawInterface::restore_pending_drawing(std::string& error)
+{
+  return ccx_core.draw->restorePendingDrawing(error);
+}
+
+bool CalculiXDrawInterface::apply_drawing_options(std::string& error)
+{
+  return ccx_core.draw->applyDrawingOptions(error);
+}
+
+bool CalculiXDrawInterface::apply_drawing_defaults(std::string& error)
+{
+  ccx_core.draw->resetDrawing();
+  return ccx_core.draw->restorePendingDrawing(error);
+}
+
+bool CalculiXDrawInterface::pick_symbol(int viewId, double xFraction, double yFraction, CalculiXDrawSelection& selection, std::string& error)
+{
+  selection = {};
+  error.clear();
+  if (!picking_active())
+  {
+    return true;
+  }
+  return ccx_core.draw->pickSymbol(viewId, xFraction, yFraction, selection, error);
 }

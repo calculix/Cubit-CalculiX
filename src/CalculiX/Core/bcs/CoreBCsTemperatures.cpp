@@ -1,3 +1,4 @@
+#include "Core/application/SettingsRead.hpp"
 #include "Core/bcs/CoreBCsTemperatures.hpp"
 #include <string>
 #include <vector>
@@ -504,4 +505,34 @@ std::vector<int> CoreBCsTemperatures::get_bc_ids() const
   }
 
   return ids;
+}
+
+
+bool CoreBCsTemperatures::get_settings(int id, BCsTemperaturesSettings& settings, std::string& error) const
+{
+  settings = {};
+  error.clear();
+  const auto* record = SettingsRead::row(bcs_data, id, 8, error);
+
+  if (record == nullptr)
+  {
+    return false;
+  }
+
+  settings.id = id;
+  settings.name = SettingsRead::field(name_data, (*record)[6], 1, error);
+  settings.amplitude = SettingsRead::optional_id((*record)[2]);
+  settings.timeDelay = SettingsRead::field(time_delay_data, (*record)[3], 1, error);
+  settings.operation = (*record)[1] == 1 ? "new" : "mod";
+  settings.nodeset = SettingsRead::text((*record)[4]);
+  settings.magnitude = SettingsRead::field(magnitude_data, (*record)[5], 1, error);
+  settings.keyword = (*record)[7] == 1 ? "*TEMPERATURE" : "*BOUNDARY";
+
+  if (!error.empty())
+  {
+    settings = {};
+    return false;
+  }
+
+  return true;
 }

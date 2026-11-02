@@ -8,6 +8,7 @@
 #include <QPointer>
 #include <QRect>
 
+class QToolBar;
 class Claro;
 class QMenuBar;
 class QGroupBox;
@@ -73,6 +74,8 @@ private:
   QList<TabState> nativeTabs;
   QList<QPointer<QDockWidget>> ownedDocks;
   QList<QPointer<QAction>> ownedMenus;
+  QList<QPointer<QToolBar>> ownedToolbars;
+  QList<QPointer<QToolBar>> activeToolbars;
   QList<QPointer<QDockWidget>> activeDocks;
   QByteArray nativeLayout;
   Qt::DockWidgetArea bottomLeft = Qt::LeftDockWidgetArea;

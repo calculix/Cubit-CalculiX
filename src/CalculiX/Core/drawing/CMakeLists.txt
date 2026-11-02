@@ -1,4 +1,31 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawPersistence.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawPersistence.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawSavedState.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawSavedState.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawHover.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawHover.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawPickData.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawPicker.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawPicker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawHitTest.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawHitTest.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawTopology.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawState.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawScope.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawScope.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawMeshGeometry.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawMeshGeometry.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawSymbols.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawSymbols.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawScene.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawScene.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawGraphics.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawGraphics.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawGeometry.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawGeometry.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawTypes.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawTypes.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TopologyAnimation.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TopologyAnimation.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreDrawData.cpp

@@ -1,27 +1,56 @@
-#include "Core/application/CoreModelMetadataPersistence.hpp"
+#include "CoreModelMetadataPersistence.hpp"
 #include "HDF5Tool.hpp"
 #include "CubitMessage.hpp"
-
+#include <exception>
 #include <vector>
 
-void CoreModelMetadataPersistence::read(HDF5Tool& file)
+bool CoreModelMetadataPersistence::read(HDF5Tool& file)
 {
-  std::vector<std::string> general;
-  file.read_dataset_string_rank_1("general", "Cubit-CalculiX", general);
-
-  if (!general.empty())
+  try
   {
-    const std::string log = "Save file was created with Cubit-CalculiX " + general[0] + "\n";
-    PRINT_INFO("%s", log.c_str());
+    std::vector<std::string> general;
+    if (file.nameExists("Cubit-CalculiX/general") && !file.read_dataset_string_rank_1("general", "Cubit-CalculiX", general))
+    {
+      PRINT_ERROR("Cannot read CalculiX model metadata: %s\n", file.last_error().c_str());
+      return false;
+    }
+    if (!general.empty())
+    {
+      PRINT_INFO("Save file was created with Cubit-CalculiX %s\n", general.front().c_str());
+    }
+    return true;
+  }
+  catch (const H5::Exception& error)
+  {
+    PRINT_ERROR("Cannot read CalculiX model metadata: %s\n", error.getDetailMsg().c_str());
+    return false;
+  }
+  catch (const std::exception& error)
+  {
+    PRINT_ERROR("Cannot read CalculiX model metadata: %s\n", error.what());
+    return false;
   }
 }
 
-void CoreModelMetadataPersistence::write(HDF5Tool& file, const std::string& version)
+bool CoreModelMetadataPersistence::write(HDF5Tool& file, const std::string& version)
 {
-  file.createGroup("Cubit-CalculiX");
-
-  const std::vector<std::string> general = {version};
-  file.write_dataset_string_rank_1("general", "Cubit-CalculiX", general);
-
-  file.createGroup("Cubit-CalculiX/Core");
+  try
+  {
+    if (!file.ensureGroup("Cubit-CalculiX") || !file.ensureGroup("Cubit-CalculiX/Core") || !file.ensureGroup("Cubit-CalculiX/Materials") || !file.write_dataset_string_rank_1("general", "Cubit-CalculiX", {version}))
+    {
+      PRINT_ERROR("Cannot save CalculiX model metadata: %s\n", file.last_error().c_str());
+      return false;
+    }
+    return true;
+  }
+  catch (const H5::Exception& error)
+  {
+    PRINT_ERROR("Cannot save CalculiX model metadata: %s\n", error.getDetailMsg().c_str());
+    return false;
+  }
+  catch (const std::exception& error)
+  {
+    PRINT_ERROR("Cannot save CalculiX model metadata: %s\n", error.what());
+    return false;
+  }
 }

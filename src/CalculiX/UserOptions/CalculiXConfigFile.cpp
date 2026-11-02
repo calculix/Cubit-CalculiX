@@ -5,6 +5,10 @@
 #include <fstream>
 #include <iostream>
 #include <algorithm>
+#include <cmath>
+#include <iomanip>
+#include <locale>
+#include <sstream>
 
 namespace
 {
@@ -229,4 +233,38 @@ bool CalculiXConfigFile::standard_bool_entry(std::string option)
     }
     
     return standard_value;
+}
+
+bool CalculiXConfigFile::read_double_entry(const std::string& option, double& value)
+{
+  std::ifstream input(filepath);
+  bool found = false;
+  for (std::string line; std::getline(input, line);)
+  {
+    const std::string prefix = option + "=";
+    if (line.compare(0, prefix.size(), prefix) != 0)
+    {
+      continue;
+    }
+    std::istringstream parser(line.substr(prefix.size()));
+    parser.imbue(std::locale::classic());
+    double candidate = 0;
+    if (parser >> candidate)
+    {
+      parser >> std::ws;
+      if (parser.eof() && std::isfinite(candidate) && candidate > 0)
+      {
+        value = candidate;
+        found = true;
+      }
+    }
+  }
+  return found;
+}
+
+void CalculiXConfigFile::write_double_entry(const std::string& option, double value)
+{
+  std::ofstream output(filepath, std::ios_base::app);
+  output.imbue(std::locale::classic());
+  output << option << "=" << std::setprecision(17) << value << "\n";
 }

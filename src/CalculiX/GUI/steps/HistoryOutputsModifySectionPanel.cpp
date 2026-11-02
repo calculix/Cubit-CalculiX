@@ -1,3 +1,5 @@
+#include <algorithm>
+#include "CubitMessage.hpp"
 #include "HistoryOutputsModifySectionPanel.hpp"
 #include <QString>
 #include "Core/steps/CalculiXStepsInterface.hpp"
@@ -104,7 +106,57 @@ HistoryOutputsModifySectionPanel::~HistoryOutputsModifySectionPanel()
 
 void HistoryOutputsModifySectionPanel::on_pushButton_apply_clicked(bool)
 {
+  bool changed = false;
+  changed = changed || fieldChanged("lineEdit_1", lineEdit_1->text());
+  changed = changed || fieldChanged("lineEdit_2", lineEdit_2->text());
+  changed = changed || fieldChanged("lineEdit_3", lineEdit_3->text());
+  for (std::size_t index = 0; index < keys.size(); ++index)
+  {
+    changed = changed || fieldChanged("key:" + QString::fromStdString(keys[index]), checkBox_keys[index]->isChecked() ? "YES" : "NO");
+  }
+  if (loadedEntityId >= 0 && !changed && lineEdit_0->text().trimmed() == QString::number(loadedEntityId))
+  {
+    PRINT_INFO("No settings were changed.\n");
+    return;
+  }
+
+  if (loadedEntityId >= 0)
+  {
+    if (lineEdit_0->text().trimmed() != QString::number(loadedEntityId))
+    {
+      bool valid = false;
+      const int requestedId = lineEdit_0->text().trimmed().toInt(&valid);
+
+      if (valid)
+      {
+        setHistoryOutput(requestedId);
+      }
+      else
+      {
+        PRINT_ERROR("Select a single entity ID before reloading this panel.\n");
+      }
+
+      return;
+    }
+  }
+
   //ccx modify historyoutput <output id> contact [name <name>] [sideset <sideset id>] [frequencyf <frequencyf>] [{key_on|key_off} [SOF] [SOM] [SOAREA] [FLUX] [DRAG]]
+  if (loadedEntityId >= 0 && lineEdit_1->isEnabled() && !originalValues.value("lineEdit_1").isEmpty() && lineEdit_1->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Name; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_2->isEnabled() && !originalValues.value("lineEdit_2").isEmpty() && lineEdit_2->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Sideset ID; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_3->isEnabled() && !originalValues.value("lineEdit_3").isEmpty() && lineEdit_3->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear FrequencyF; use the supported reset value.\n");
+    return;
+  }
+
   QStringList commands;
   QString command = "";
   bool key_on = false;
@@ -114,15 +166,15 @@ void HistoryOutputsModifySectionPanel::on_pushButton_apply_clicked(bool)
   {
     command.append("ccx modify historyoutput " +lineEdit_0->text() + " section");
 
-    if (lineEdit_1->text() != "")
+    if (lineEdit_1->text() != "" && fieldChanged("lineEdit_1", lineEdit_1->text()))
     {
       command.append(" name \"" + lineEdit_1->text() + "\"");
     }
-    if (lineEdit_2->text() != "")
+    if (lineEdit_2->text() != "" && fieldChanged("lineEdit_2", lineEdit_2->text()))
     {
       command.append(" sideset " + lineEdit_2->text());
     }
-    if (lineEdit_3->text() != "")
+    if (lineEdit_3->text() != "" && fieldChanged("lineEdit_3", lineEdit_3->text()))
     {
       command.append(" frequencyf " + lineEdit_3->text());
     }
@@ -131,11 +183,11 @@ void HistoryOutputsModifySectionPanel::on_pushButton_apply_clicked(bool)
 
     for (size_t i = 0; i < checkBox_keys.size(); i++)
     {
-      if (checkBox_keys[i]->isChecked())
+      if (checkBox_keys[i]->isChecked() && fieldChanged("key:" + QString::fromStdString(keys[i]), "YES"))
       {
         key_on = true;
       }
-      if (!checkBox_keys[i]->isChecked())
+      if (!checkBox_keys[i]->isChecked() && fieldChanged("key:" + QString::fromStdString(keys[i]), "NO"))
       {
         key_off = true;
       }
@@ -146,7 +198,7 @@ void HistoryOutputsModifySectionPanel::on_pushButton_apply_clicked(bool)
       command = "ccx modify historyoutput " +lineEdit_0->text() + " section key_on ";
       for (size_t i = 0; i < checkBox_keys.size(); i++)
       {
-        if (checkBox_keys[i]->isChecked())
+        if (checkBox_keys[i]->isChecked() && fieldChanged("key:" + QString::fromStdString(keys[i]), "YES"))
         {
           command.append(label_keys[i]->text() + " ");
         }
@@ -158,7 +210,7 @@ void HistoryOutputsModifySectionPanel::on_pushButton_apply_clicked(bool)
       command = "ccx modify historyoutput " +lineEdit_0->text() + " section key_off ";
       for (size_t i = 0; i < checkBox_keys.size(); i++)
       {
-        if (!checkBox_keys[i]->isChecked())
+        if (!checkBox_keys[i]->isChecked() && fieldChanged("key:" + QString::fromStdString(keys[i]), "NO"))
         {
           command.append(label_keys[i]->text() + " ");
         }
@@ -169,14 +221,9 @@ void HistoryOutputsModifySectionPanel::on_pushButton_apply_clicked(bool)
   
   if (command != "")
   {
-    lineEdit_0->setText("");
-    lineEdit_1->setText("");
-    lineEdit_2->setText("");
-    lineEdit_3->setText("");
  
     for (size_t i = 0; i < checkBox_keys.size(); i++)
     {
-      checkBox_keys[i]->setChecked(false);
     }
   }
   
@@ -185,4 +232,58 @@ void HistoryOutputsModifySectionPanel::on_pushButton_apply_clicked(bool)
     //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
     GuiSendCmd::gui_cmd(commands[int(i)]);
   }
+}
+
+
+bool HistoryOutputsModifySectionPanel::fieldChanged(const QString& field, const QString& value) const
+{
+  return loadedEntityId < 0 || originalValues.value(field) != value;
+}
+
+bool HistoryOutputsModifySectionPanel::setHistoryOutput(int id)
+{
+  loadedEntityId = -1;
+  originalValues.clear();
+  for (auto* key : checkBox_keys)
+  {
+    key->setChecked(false);
+  }
+  pushButton_apply->setEnabled(false);
+  lineEdit_0->clear();
+  lineEdit_1->clear();
+  lineEdit_2->clear();
+  lineEdit_3->clear();
+  CalculiXStepsInterface core;
+  HistoryOutputsSettings settings;
+  std::string error;
+
+  if (!core.get_historyoutput_settings(id, settings, error))
+  {
+    PRINT_ERROR("Cannot load HistoryOutput %d: %s\n", id, error.c_str());
+    return false;
+  }
+
+  if (settings.type != 4)
+  {
+    PRINT_ERROR("The selected record does not match this HistoryOutput panel.\n");
+    return false;
+  }
+  lineEdit_0->setText(QString::number(settings.id));
+  lineEdit_1->setText(QString::fromStdString(settings.name));
+  lineEdit_2->setText(QString::fromStdString(settings.parameters.at(1)));
+  lineEdit_3->setText(QString::fromStdString(settings.parameters.at(2)));
+
+  for (std::size_t index = 0; index < keys.size(); ++index)
+  {
+    checkBox_keys[index]->setChecked(std::find(settings.enabledKeys.begin(), settings.enabledKeys.end(), keys[index]) != settings.enabledKeys.end());
+    originalValues.insert("key:" + QString::fromStdString(keys[index]), checkBox_keys[index]->isChecked() ? "YES" : "NO");
+  }
+  originalValues.insert("lineEdit_0", lineEdit_0->text());
+  originalValues.insert("lineEdit_1", lineEdit_1->text());
+  originalValues.insert("lineEdit_2", lineEdit_2->text());
+  originalValues.insert("lineEdit_3", lineEdit_3->text());
+
+  loadedEntityId = id;
+  pushButton_apply->setEnabled(true);
+  return true;
 }

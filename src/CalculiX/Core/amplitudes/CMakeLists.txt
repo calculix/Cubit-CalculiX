@@ -1,4 +1,5 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/AmplitudesSettings.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreAmplitudes.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreAmplitudes.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreAmplitudes.hpp

@@ -1,4 +1,14 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsTrajectorySettings.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsBodyHeatfluxSettings.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsRadiationSettings.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsFilmSettings.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsCentrifugalSettings.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsGravitySettings.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsSurfaceTractionSettings.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsHeatfluxesSettings.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsPressuresSettings.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsForcesSettings.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreLoads.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreTrajectory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreLoadsForces.cpp

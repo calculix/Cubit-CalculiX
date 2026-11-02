@@ -1,4 +1,6 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/OrientationsSettings.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/SectionsSettings.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreSections.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreSections.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreSections.hpp

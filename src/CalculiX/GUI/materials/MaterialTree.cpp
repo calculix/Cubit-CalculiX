@@ -1,3 +1,4 @@
+#include "GUI/properties/PropertySelection.hpp"
 #include "MaterialTree.hpp"
 
 #include "GUI/application/ModelTree.hpp"
@@ -109,6 +110,8 @@ void MaterialTree::addMaterial(QString material_id, QString material_name)
   MaterialTreeChild->setText(0, material_name);
     
   MaterialTreeChild->setText(1, material_id);
+  MaterialTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Material));
+  MaterialTreeChild->setData(0, PropertyIdRole, material_id.toInt());
 
   MaterialTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("MaterialTree"));
 
@@ -145,47 +148,43 @@ int MaterialTree::get_child_id(std::string material_id)
 void MaterialTree::populateContextMenu(
   QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host)
 {
-  if (clickedItem == nullptr)
+  if (clickedItem == nullptr || (clickedItem != this && clickedItem->parent() != this))
   {
     return;
   }
-
-  if (clickedItem == this)
-  {
-    {
-      QAction *action = menu.addAction("Open Material Management");
-      ModelTree *hostPtr = &host;
-      QObject::connect(action, &QAction::triggered, hostPtr, [hostPtr]()
-      {
-        if (hostPtr->myMaterialManagement == nullptr)
-        {
-          PRINT_WARNING("The requested model tree service is unavailable.\n");
-          return;
-        }
-
-        hostPtr->myMaterialManagement->show();
-      });
-    }
-    return;
-  }
-
-  if (clickedItem->parent() != this)
+  int id = -1;
+  if (clickedItem != this && !readItemId(clickedItem, id))
   {
     return;
   }
-
+  auto* action = menu.addAction("Open Material Management");
+  QObject::connect(action, &QAction::triggered, &menu, [id, &host]()
   {
-    QAction *action = menu.addAction("Open Material Management");
-    ModelTree *hostPtr = &host;
-    QObject::connect(action, &QAction::triggered, hostPtr, [hostPtr]()
-    {
-      if (hostPtr->myMaterialManagement == nullptr)
-      {
-        PRINT_WARNING("The requested model tree service is unavailable.\n");
-        return;
-      }
+    MaterialTree::open_material(id, host);
+  });
+}
 
-      hostPtr->myMaterialManagement->show();
-    });
+
+void MaterialTree::open_material(int id, ModelTree& host)
+{
+  if (host.myMaterialManagement == nullptr)
+  {
+    return;
+  }
+  host.myMaterialManagement->update();
+  if (id >= 0)
+  {
+    host.myMaterialManagement->setMaterial(QString::number(id));
+  }
+  host.myMaterialManagement->show();
+  host.myMaterialManagement->raise();
+}
+
+void MaterialTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  int id = -1;
+  if (item == this || readItemId(item, id))
+  {
+    open_material(id, host);
   }
 }

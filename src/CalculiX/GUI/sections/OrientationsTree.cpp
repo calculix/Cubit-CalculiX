@@ -1,3 +1,9 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include <QAction>
+#include "OrientationsDeletePanel.hpp"
+#include "OrientationsModifyPanel.hpp"
+#include "CubitMessage.hpp"
+#include "TaskPanel.hpp"
 #include "OrientationsTree.hpp"
 #include <string>
 #include <vector>
@@ -105,6 +111,8 @@ void OrientationsTree::addOrientation(QString orientation_id, QString name)
   OrientationTreeChild->setText(0, name);
     
   OrientationTreeChild->setText(1, orientation_id);
+  OrientationTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Orientation));
+  OrientationTreeChild->setData(0, PropertyIdRole, orientation_id.toInt());
 
   OrientationTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("OrientationsTree"));
 
@@ -146,6 +154,12 @@ void OrientationsTree::populateContextMenu(
     return;
   }
 
+  int selectedId = 0;
+  if (clickedItem != this && !readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
+
   if (clickedItem == this)
   {
     addPanelAction(menu, "Create Orientation", host, "CCXOrientationsCreate");
@@ -159,6 +173,83 @@ void OrientationsTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Orientation", host, "CCXOrientationsCreate");
-  addPanelAction(menu, "Modify Orientation", host, "CCXOrientationsModify");
-  addPanelAction(menu, "Delete Orientation", host, "CCXOrientationsDelete");
+  {
+    auto* action = menu.addAction("Modify Orientation");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      OrientationsTree::open_modify(selectedId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Orientation");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      OrientationsTree::open_delete(selectedId, host);
+    });
+  }
+}
+
+
+void OrientationsTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+
+  host.setWidgetInCmdPanelMarker("CCXOrientationsModify");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<OrientationsModifyPanel*>(widget))
+    {
+      panel->setOrientation(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Orientation modify panel.\n");
+}
+
+void OrientationsTree::open_delete(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXOrientationsDelete");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<OrientationsDeletePanel*>(widget))
+    {
+      panel->setOrientation(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Orientation delete panel.\n");
+}
+
+void OrientationsTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (item == nullptr)
+  {
+    return;
+  }
+  if (item == this)
+  {
+    host.setWidgetInCmdPanelMarker("CCXOrientationsCreate");
+    return;
+  }
+
+  if (item->parent() != this)
+  {
+    return;
+  }
+
+  int id = -1;
+  if (!readItemId(item, id))
+  {
+    return;
+  }
+  open_modify(id, host);
 }

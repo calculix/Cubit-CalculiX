@@ -20,6 +20,7 @@ class InitialConditionsDeletePanel : public QWidget
   Q_OBJECT
   
 public:
+  void setInitialCondition(int id);
   explicit InitialConditionsDeletePanel(QWidget *parent = 0);
   ~InitialConditionsDeletePanel();
 

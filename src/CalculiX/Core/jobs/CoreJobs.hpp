@@ -1,6 +1,8 @@
 #ifndef COREJOBS_HPP
 #define COREJOBS_HPP
 
+#include "JobsSettings.hpp"
+
 #include <vector>
 #include <string>
 #ifdef WIN32
@@ -15,6 +17,7 @@ class CoreJobs
 {
 
 public:
+  bool get_settings(int id, JobsSettings& settings, std::string& error) const;
   std::vector<int> get_job_ids() const;
   CoreJobs();
   ~CoreJobs();

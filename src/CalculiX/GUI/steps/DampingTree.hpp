@@ -11,6 +11,9 @@ class DampingTree : public QObject, public QTreeWidgetItem, public TreeContextMe
   Q_OBJECT
 
 public:
+  void activate(QTreeWidgetItem* item, ModelTree& host);
+  static void open_modify(int id, ModelTree& host);
+  static void open_delete(int id, ModelTree& host);
   void populateContextMenu(
     QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host) override;
 

@@ -1,3 +1,5 @@
+#include "CubitMessage.hpp"
+#include "Core/export/CalculiXExportInterface.hpp"
 #include "CustomLinesModifyPanel.hpp"
 #include <QString>
 #include "GUI/application/GuiSendCmd.hpp"
@@ -102,6 +104,54 @@ CustomLinesModifyPanel::~CustomLinesModifyPanel()
 
 void CustomLinesModifyPanel::on_pushButton_apply_clicked(bool)
 {
+  bool changed = false;
+  changed = changed || fieldChanged("lineEdit_1", lineEdit_1->text());
+  changed = changed || fieldChanged("comboBox_2", comboBox_2->currentText());
+  changed = changed || fieldChanged("comboBox_3", comboBox_3->currentText());
+  changed = changed || fieldChanged("lineEdit_4", lineEdit_4->text());
+  changed = changed || fieldChanged("lineEdit_5", lineEdit_5->text());
+  if (loadedEntityId >= 0 && !changed && lineEdit_0->text().trimmed() == QString::number(loadedEntityId))
+  {
+    PRINT_INFO("No settings were changed.\n");
+    return;
+  }
+
+  if (loadedEntityId >= 0)
+  {
+    if (lineEdit_0->text().trimmed() != QString::number(loadedEntityId))
+    {
+      bool valid = false;
+      const int requestedId = lineEdit_0->text().trimmed().toInt(&valid);
+
+      if (valid)
+      {
+        setCustomLine(requestedId);
+      }
+      else
+      {
+        PRINT_ERROR("Select a single entity ID before reloading this panel.\n");
+      }
+
+      return;
+    }
+  }
+
+  if (loadedEntityId >= 0 && lineEdit_1->isEnabled() && !originalValues.value("lineEdit_1").isEmpty() && lineEdit_1->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Name; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_4->isEnabled() && !originalValues.value("lineEdit_4").isEmpty() && lineEdit_4->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Item ID; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_5->isEnabled() && !originalValues.value("lineEdit_5").isEmpty() && lineEdit_5->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Custom Line; use the supported reset value.\n");
+    return;
+  }
+
   QStringList commands;
   QString command = "";
 
@@ -109,27 +159,27 @@ void CustomLinesModifyPanel::on_pushButton_apply_clicked(bool)
   {
     command.append("ccx modify customline " +lineEdit_0->text());
 
-    if ((lineEdit_1->text()!=""))
+    if ((lineEdit_1->text()!="") && fieldChanged("lineEdit_1", lineEdit_1->text()))
     {
       command.append(" name \"" +lineEdit_1->text() + "\"");
     }
     
-    if (comboBox_2->currentIndex()>0)
+    if (comboBox_2->currentIndex()>0 && fieldChanged("comboBox_2", comboBox_2->currentText()))
     {
       command.append(" " + comboBox_2->currentText());
     }
 
-    if (comboBox_3->currentIndex()>0)
+    if (comboBox_3->currentIndex()>0 && fieldChanged("comboBox_3", comboBox_3->currentText()))
     {
       command.append(" " + comboBox_3->currentText());
     }
 
-    if ((lineEdit_4->text()!=""))
+    if ((lineEdit_4->text()!="") && fieldChanged("lineEdit_4", lineEdit_4->text()))
     {
       command.append(" item_id " +lineEdit_4->text());
     }
 
-    if ((lineEdit_5->text()!=""))
+    if ((lineEdit_5->text()!="") && fieldChanged("lineEdit_5", lineEdit_5->text()))
     {
       command.append(" cline \"" +lineEdit_5->text() + "\"");
     }
@@ -138,12 +188,6 @@ void CustomLinesModifyPanel::on_pushButton_apply_clicked(bool)
   if (command != "")
   {
     commands.push_back(command);
-    lineEdit_0->setText("");
-    lineEdit_1->setText("");
-    comboBox_2->setCurrentIndex(0);
-    //comboBox_3->clear();
-    lineEdit_4->setText("");
-    lineEdit_5->setText("");
   }
   
   for (size_t i = 0; i < commands.size(); i++)
@@ -197,4 +241,62 @@ void CustomLinesModifyPanel::on_comboBox_index_changed(int index)
     comboBox_3->addItem("step_end");
     lineEdit_4->setEnabled(true);
   }
+}
+
+
+bool CustomLinesModifyPanel::fieldChanged(const QString& field, const QString& value) const
+{
+  return loadedEntityId < 0 || originalValues.value(field) != value;
+}
+
+bool CustomLinesModifyPanel::setCustomLine(int id)
+{
+  loadedEntityId = -1;
+  originalValues.clear();
+  comboBox_2->setCurrentIndex(0);
+  comboBox_3->setCurrentIndex(0);
+  pushButton_apply->setEnabled(false);
+  lineEdit_0->clear();
+  lineEdit_1->clear();
+  lineEdit_4->clear();
+  lineEdit_5->clear();
+  CalculiXExportInterface core;
+  CustomLinesSettings settings;
+  std::string error;
+
+  if (!core.get_customline_settings(id, settings, error))
+  {
+    PRINT_ERROR("Cannot load CustomLine %d: %s\n", id, error.c_str());
+    return false;
+  }
+  lineEdit_0->setText(QString::number(settings.id));
+  lineEdit_1->setText(QString::fromStdString(settings.name));
+  const QString comboBox_2Value = QString::fromStdString(settings.position);
+  int comboBox_2Index = comboBox_2->findText(comboBox_2Value, Qt::MatchFixedString);
+  if (comboBox_2Index < 0 && !comboBox_2Value.isEmpty())
+  {
+    comboBox_2->addItem(comboBox_2Value);
+    comboBox_2Index = comboBox_2->count() - 1;
+  }
+  comboBox_2->setCurrentIndex(qMax(0, comboBox_2Index));
+  const QString comboBox_3Value = QString::fromStdString(settings.keyword);
+  int comboBox_3Index = comboBox_3->findText(comboBox_3Value, Qt::MatchFixedString);
+  if (comboBox_3Index < 0 && !comboBox_3Value.isEmpty())
+  {
+    comboBox_3->addItem(comboBox_3Value);
+    comboBox_3Index = comboBox_3->count() - 1;
+  }
+  comboBox_3->setCurrentIndex(qMax(0, comboBox_3Index));
+  lineEdit_4->setText(QString::fromStdString(settings.keywordId));
+  lineEdit_5->setText(QString::fromStdString(settings.text));
+  originalValues.insert("lineEdit_0", lineEdit_0->text());
+  originalValues.insert("lineEdit_1", lineEdit_1->text());
+  originalValues.insert("comboBox_2", comboBox_2->currentText());
+  originalValues.insert("comboBox_3", comboBox_3->currentText());
+  originalValues.insert("lineEdit_4", lineEdit_4->text());
+  originalValues.insert("lineEdit_5", lineEdit_5->text());
+
+  loadedEntityId = id;
+  pushButton_apply->setEnabled(true);
+  return true;
 }

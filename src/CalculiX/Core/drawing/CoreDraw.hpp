@@ -1,9 +1,12 @@
 #ifndef COREDRAW_HPP
 #define COREDRAW_HPP
 
+#include "CoreDrawScene.hpp"
+#include "CoreDrawSavedState.hpp"
 #include <vector>
 #include <string>
 #include <memory>
+#include <functional>
 
 class TopologyAnimation;
 // why it's not in the gui section, because we control it over the commands
@@ -13,6 +16,33 @@ class CoreDraw
 {
 
 public:
+  bool drawForStep(int stepId, const std::vector<DrawFeature>& features, double size, std::string& error, const std::vector<DrawEntityKey>& entities = {});
+  bool setAllVisible(bool visible, std::string& error);
+  bool setScope(const DrawScope& scope, std::string& error);
+  bool setGroupVisible(DrawGroup group, bool visible, std::string& error);
+  bool setSizeFactor(double factor, std::string& error);
+  bool drawScopeAll(std::string& error);
+  bool refreshDrawing(std::string& error);
+  DrawSavedState savedState() const;
+  bool restoreState(const DrawSavedState& state, std::string& error);
+  void resetToDefaults();
+  bool restorePendingDrawing(std::string& error);
+  bool applyDrawingOptions(std::string& error);
+  bool pickSymbol(int viewId, double xFraction, double yFraction, CalculiXDrawSelection& selection, std::string& error);
+  bool pickingActive() const;
+  void clearHover() noexcept;
+  bool setPickingEnabled(bool enabled, std::string& error);
+  void setPickCallback(std::function<void(const CalculiXDrawSelection&)> callback);
+  bool setHighlight(const CalculiXDrawSelection& selection, std::string& error);
+  bool clearHighlight(std::string& error);
+  bool setOverlayVisible(bool visible, std::string& error);
+  void setWorkspaceActive(bool active);
+  void resetDrawing();
+  void shutdownDrawing() noexcept;
+  CalculiXDrawState drawingState() const;
+  double defaultSymbolSize() const;
+  bool renderPending();
+  bool buildEntity(DrawEntityKey key, double size);
   CoreDraw();
   ~CoreDraw();
 
@@ -91,6 +121,15 @@ public:
   bool graphics_clear();
 
 private:
+  bool storeGeometry(DrawEntityKey key, DrawGeometry geometry, double size);
+  double modelSymbolSize() const;
+  CoreDrawScene scene;
+  DrawGeometry* currentGeometry = nullptr;
+  bool rebuilding = false;
+  bool restorePending = false;
+  int activeTopologyId = -1;
+  int activeTopologyIteration = -1;
+  double activeTopologyThreshold = 0.5;
   std::unique_ptr<TopologyAnimation> topology_animation;
 };
 

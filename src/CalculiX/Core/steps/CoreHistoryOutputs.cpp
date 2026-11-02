@@ -1,3 +1,4 @@
+#include "Core/application/SettingsRead.hpp"
 #include "Core/steps/CoreHistoryOutputs.hpp"
 #include "Core/application/CoreIdSelection.hpp"
 #include <string>
@@ -761,4 +762,51 @@ bool CoreHistoryOutputs::check_historyoutput_exists(int historyoutput_id)
 std::vector<int> CoreHistoryOutputs::get_output_ids() const
 {
   return CoreIdSelection::collect_ids(outputs_data);
+}
+
+
+bool CoreHistoryOutputs::get_settings(int id, HistoryOutputsSettings& settings, std::string& error) const
+{
+  settings = {};
+  error.clear();
+  const auto* record = SettingsRead::row(outputs_data, id, 4, error);
+
+  if (record == nullptr)
+  {
+    return false;
+  }
+
+  settings.id = id;
+  settings.type = (*record)[2];
+  settings.name = SettingsRead::field(name_data, (*record)[1], 1, error);
+
+  const std::vector<std::string>* values = nullptr;
+  std::size_t firstKey = 0;
+  switch (settings.type)
+  {
+    case 1: values = SettingsRead::row(node_data, (*record)[3], 22, error); firstKey = 7; break;
+    case 2: values = SettingsRead::row(element_data, (*record)[3], 24, error); firstKey = 7; break;
+    case 3: values = SettingsRead::row(contact_data, (*record)[3], 13, error); firstKey = 6; break;
+    case 4: values = SettingsRead::row(section_data, (*record)[3], 9, error); firstKey = 4; break;
+    default: error = "Unknown output type."; break;
+  }
+  if (values != nullptr)
+  {
+    settings.parameters = *values;
+    for (std::size_t index = firstKey; index < values->size(); ++index)
+    {
+      if (!(*values)[index].empty())
+      {
+        settings.enabledKeys.push_back((*values)[index]);
+      }
+    }
+  }
+
+  if (!error.empty())
+  {
+    settings = {};
+    return false;
+  }
+
+  return true;
 }

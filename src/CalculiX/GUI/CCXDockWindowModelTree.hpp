@@ -58,6 +58,7 @@ public:
 
   void initialize(NavigationModel* navigation);
   QDockWidget* dock_widget() const noexcept;
+  ModelTree* modelTree() const noexcept;
 
   // Cleanup (for example, when we unload the component)
   void clear();

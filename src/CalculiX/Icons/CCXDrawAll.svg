@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <g transform="matrix(0.8661417323,0,0,0.8661417323,0.5,0.5)">
+    <g id="LoadsTree_layer2" style="fill-opacity:1">
+      <rect style="fill:none;stroke:#000000;stroke-width:0.336167;stroke-dasharray:none;stroke-opacity:1" id="LoadsTree_rect5697" width="9.6373377" height="1.6203986" x="2.0043287" y="5.5233517" />
+      <path style="fill:none;stroke:#e01b1b;stroke-width:0.346925;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1" d="M 11.261429,1.5415234 V 5.0207986" id="LoadsTree_path5720" />
+      <path style="fill:none;stroke:#e01b1b;stroke-width:0.336167;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1" d="M 11.911039,3.977016 11.261429,5.0207986 10.611818,3.977016" id="LoadsTree_path5825" />
+    </g>
+  </g>
+  <g transform="matrix(0.8661417323,0,0,0.8661417323,12.5,0.5)">
+    <g id="BCsTree_layer2" style="fill-opacity:1">
+      <path style="fill:#ff0000;fill-opacity:1;stroke:#ff0000;stroke-width:0.338777;stroke-dasharray:none;stroke-opacity:1" d="M 2.1075616,7.7353772 0.43744626,8.3999809" id="BCsTree_path4733-7" />
+      <path style="fill:#ff0000;fill-opacity:1;stroke:#ff0000;stroke-width:0.338777;stroke-dasharray:none;stroke-opacity:1" d="M 2.1075618,5.2998845 0.43744626,5.964488" id="BCsTree_path4733-3" />
+      <path style="fill:#ff0000;stroke:#ff0000;stroke-width:0.338777;stroke-dasharray:none;stroke-opacity:1;fill-opacity:1" d="M 2.1087244,4.0816701 0.43860906,4.7462736" id="BCsTree_path4733" />
+      <path style="fill:#ff0000;fill-opacity:1;stroke:#ff0000;stroke-width:0.338777;stroke-dasharray:none;stroke-opacity:1" d="M 2.1075616,6.5176309 0.43744626,7.1822344" id="BCsTree_path4733-6" />
+      <rect style="fill:none;stroke:#000000;stroke-width:0.336167;stroke-dasharray:none;stroke-opacity:1" id="BCsTree_rect5697" width="9.6373377" height="1.6203986" x="2.0043287" y="5.5233517" />
+      <path style="fill:#ff0000;stroke:#ff0000;stroke-width:0.336167;stroke-dasharray:none;stroke-opacity:1;fill-opacity:1" d="M 2.0166142,3.743834 1.9923431,8.962747" id="BCsTree_path4715" />
+    </g>
+  </g>
+  <g transform="matrix(7.638888889,0,0,7.638888889,0.5,12.5)">
+    <path style="fill:none;stroke:#000000;stroke-width:0.06;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none" d="M 1.23,0.15 V 1.29" id="ConstraintsTree_path3857" />
+    <path style="fill:none;stroke:#000000;stroke-width:0.06;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none" d="M 1.23,1.29 H 1.44" id="ConstraintsTree_path3987" />
+    <path style="fill:none;stroke:#b2b500;stroke-width:0.06;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none" d="M 0.21,0.75 1.23,1.29" id="ConstraintsTree_path2408" />
+    <path style="fill:none;stroke:#000000;stroke-width:0.06;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none" d="M 1.23,0.15 H 1.47" id="ConstraintsTree_path3985" />
+    <path style="fill:none;stroke:#b2b500;stroke-width:0.06;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none" d="M 0.21,0.72 1.23,0.15" id="ConstraintsTree_path2404" />
+    <ellipse style="fill:#e50000;fill-opacity:1;stroke:#e50000;stroke-width:0.102111;stroke-linecap:round;stroke-opacity:1" id="ConstraintsTree_path4002" cx="1.23" cy="0.15000004" rx="0.0989445" ry="0.098944537" />
+    <path style="fill:none;stroke:#b2b500;stroke-width:0.06;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none" d="M 0.21,0.75 H 1.23" id="ConstraintsTree_path2406" />
+    <ellipse style="fill:#e50000;fill-opacity:1;stroke:#e50000;stroke-width:0.102111;stroke-linecap:round;stroke-opacity:1" id="ConstraintsTree_path4002-0" cx="0.20999999" cy="0.73500001" rx="0.0989445" ry="0.098944537" />
+    <ellipse style="fill:#e50000;fill-opacity:1;stroke:#e50000;stroke-width:0.102111;stroke-linecap:round;stroke-opacity:1" id="ConstraintsTree_path4002-7" cx="1.23" cy="0.73499995" rx="0.098944537" ry="0.098944522" />
+    <ellipse style="fill:#e50000;fill-opacity:1;stroke:#e50000;stroke-width:0.102111;stroke-linecap:round;stroke-opacity:1" id="ConstraintsTree_path4002-6" cx="1.23" cy="1.29" rx="0.09894453" ry="0.098944515" />
+  </g>
+  <g transform="matrix(7.638888889,0,0,7.638888889,12.5,12.5)">
+    <path style="fill:none;stroke:#000000;stroke-width:0.0456477;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" d="M 0.46159099,1.0709513 V 0.18" id="OrientationsTree_path945" />
+    <path style="fill:none;stroke:#000000;stroke-width:0.0456477;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" d="M 0.4604773,1.0698376 H 1.3514286" id="OrientationsTree_path1060" />
+    <path style="fill:none;stroke:#000000;stroke-width:0.0467749;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" d="m 0.39142858,0.2512761 0.0701624,-0.0701624 0.0701624,0.0701624" id="OrientationsTree_path1792" />
+    <path style="fill:none;stroke:#000000;stroke-width:0.0467749;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" d="M 1.2801525,0.9996752 1.3503149,1.0698376 1.2801525,1.14" id="OrientationsTree_path1961" />
+    <path style="fill:none;stroke:#ff0000;stroke-width:0.0456477;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" d="M 0.45142744,1.0806656 0.14670416,0.24344526" id="OrientationsTree_path945-3" />
+    <path style="fill:none;stroke:#ff0000;stroke-width:0.0456477;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" d="M 0.45,1.08 1.2872203,0.77527668" id="OrientationsTree_path1060-6" />
+    <path style="fill:none;stroke:#ff0000;stroke-width:0.0467749;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" d="m 0.10515093,0.33441984 0.0419341,-0.089928 0.089928,0.0419341" id="OrientationsTree_path1792-7" />
+    <path style="fill:none;stroke:#ff0000;stroke-width:0.0467749;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" d="m 1.1962458,0.73372351 0.089928,0.0419343 -0.041934,0.0899275" id="OrientationsTree_path1961-5" />
+  </g>
+</svg>

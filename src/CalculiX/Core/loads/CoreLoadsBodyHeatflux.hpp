@@ -1,12 +1,15 @@
 #ifndef CORELOADSBODYHEATFLUX_HPP
 #define CORELOADSBODYHEATFLUX_HPP
 
+#include "LoadsBodyHeatfluxSettings.hpp"
+
 #include <vector>
 #include <string>
 class CoreLoadsBodyHeatflux
 {
 
 public:
+  bool get_settings(int id, LoadsBodyHeatfluxSettings& settings, std::string& error) const;
   std::vector<int> get_load_ids() const;
   CoreLoadsBodyHeatflux();
   ~CoreLoadsBodyHeatflux();

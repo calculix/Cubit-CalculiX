@@ -1,12 +1,17 @@
 #ifndef CALCULIXSECTIONSINTERFACE_HPP
 #define CALCULIXSECTIONSINTERFACE_HPP
 
+#include "OrientationsSettings.hpp"
+#include "SectionsSettings.hpp"
+
 #include <string>
 #include <vector>
 
 class CalculiXSectionsInterface
 {
 public:
+  bool get_orientation_settings(int id, OrientationsSettings& settings, std::string& error);
+  bool get_section_settings(int id, SectionsSettings& settings, std::string& error);
   std::string get_orientation_name(int orientation_id); // gets the orientation name
   std::vector<int> get_orientations_ids(); // get all orientation ids
   bool check_orientation_exists(int orientation_id); // check if orientation exists

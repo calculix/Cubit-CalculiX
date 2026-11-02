@@ -8,6 +8,9 @@
 struct WorkspaceView;
 class Claro;
 class CalculiXPropertiesDock;
+class CalculiXDrawingToolbar;
+class DrawingSelectionController;
+class DrawingPickController;
 class QWidget;
 class MenuManager;
 class ToolbarManager;
@@ -48,6 +51,9 @@ private:
   CCXDockWindowModelTree* myCCXDockWindowModelTree = nullptr;
   QPointer<UserOptionsPanel> mUserOptionsPanel;
   QPointer<CalculiXPropertiesDock> propertiesDock;
+  QPointer<CalculiXDrawingToolbar> drawingToolbar;
+  QPointer<DrawingSelectionController> drawingSelection;
+  QPointer<DrawingPickController> drawingPick;
   QPointer<Claro> titleHost;
   QString titleSuffix;
   Observer* mListener = nullptr;

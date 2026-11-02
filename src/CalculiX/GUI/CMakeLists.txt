@@ -11,3 +11,7 @@ add_subdirectory(steps)
 add_subdirectory(jobs)
 add_subdirectory(topology)
 add_subdirectory(export)
+
+add_subdirectory(properties)
+
+add_subdirectory(drawing)

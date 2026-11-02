@@ -12,6 +12,7 @@ class QAction;
 class Claro;
 class QDockWidget;
 class QMenu;
+class QToolBar;
 
 class MenuManager : public QObject
 {
@@ -21,7 +22,7 @@ public:
   MenuManager(QObject* parent = nullptr);
   ~MenuManager();
 
-  void setup_workspace_menus(Claro* host, QDockWidget* modelDock, QDockWidget* propertiesDock);
+  void setup_workspace_menus(Claro* host, QDockWidget* modelDock, QDockWidget* propertiesDock, QToolBar* drawingToolbar);
   QList<QAction*> workspace_menu_actions() const;
   void remove_menu_items();
 

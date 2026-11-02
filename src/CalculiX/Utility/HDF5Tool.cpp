@@ -1,1071 +1,734 @@
 #include "HDF5Tool.hpp"
-#include "CubitMessage.hpp" 
-#ifdef WIN32
- #include <windows.h>
- #include <io.h>
-#else
- #include <unistd.h>
-#endif
+#include "CubitMessage.hpp"
+#include <algorithm>
+#include <filesystem>
+#include <limits>
+#include <memory>
+#include <stdexcept>
+#include <utility>
 
-HDF5Tool::HDF5Tool(std::string filename)
+namespace
 {
-  //check if hdf5 exists, if not create a new file
-  #ifdef WIN32
-    if (_access(filename.c_str(), 0) != 0)
-      {
-        HANDLE handle = CreateFileA(
-        filename.c_str(),
-        GENERIC_READ | GENERIC_WRITE,
-        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-        nullptr,
-        OPEN_EXISTING,
-        FILE_ATTRIBUTE_NORMAL,
-        nullptr
-        );
-
-        if (handle == INVALID_HANDLE_VALUE) 
-        {
-          DWORD error = GetLastError();
-          //std::printf("Read/write open failed: Windows error %lu\n", error);
-          // 5  = ERROR_ACCESS_DENIED
-          // 32 = ERROR_SHARING_VIOLATION
-          std::string log = ("Read/write open failed: Windows error " + std::to_string(error) + "\n");
-          log.append("CHECK PERMISSIONS FOR MATERIAL LIBRARY FILE!!!\n");
-          log.append("Most likely no user permission to write. FIX PERMISSIONS!\n");
-          log.append("Try running Cubit as Administrator!\n");
-          log.append("Or move the library file to another location and adjust the path in the options or in ccx.cfg!\n");
-          PRINT_ERROR("%s", log.c_str());        
-        }else{
-          //std::printf("Read/write open succeeded\n");
-          CloseHandle(handle);
-          std::string log = filename + " not found. An empty HDF5 will be created.\n";
-          PRINT_INFO("%s", log.c_str());
-          
-          hid_t new_file = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-          if (new_file != H5I_INVALID_HID)
-          {
-            H5Fclose(new_file);
-          }
-          this->file = new H5::H5File(filename,H5F_ACC_RDWR);
-        }
-      }else{
-        HANDLE handle = CreateFileA(
-        filename.c_str(),
-        GENERIC_READ | GENERIC_WRITE,
-        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-        nullptr,
-        OPEN_EXISTING,
-        FILE_ATTRIBUTE_NORMAL,
-        nullptr
-        );
-
-        if (handle == INVALID_HANDLE_VALUE) 
-        {
-          DWORD error = GetLastError();
-          //std::printf("Read/write open failed: Windows error %lu\n", error);
-          // 5  = ERROR_ACCESS_DENIED
-          // 32 = ERROR_SHARING_VIOLATION
-          std::string log = ("Read/write open failed: Windows error " + std::to_string(error) + "\n");
-          log.append("CHECK PERMISSIONS FOR MATERIAL LIBRARY FILE!!!\n");
-          log.append("Most likely no user permission to write. FIX PERMISSIONS!\n");
-          log.append("Try running Cubit as Administrator!\n");
-          log.append("Or move the library file to another location and adjust the path in the options or in ccx.cfg!\n");
-          PRINT_INFO("%s", log.c_str());        
-        }else{
-          //std::printf("Read/write open succeeded\n");
-          CloseHandle(handle);
-          this->file = new H5::H5File(filename,H5F_ACC_RDWR);
-        }
-      }
-    /*
-    if (_access(filename.c_str(), 0) != 0)
+std::string cleanPath(const std::string& path)
+{
+  std::string result;
+  for (char value : path)
+  {
+    if (value != '/' || (!result.empty() && result.back() != '/'))
     {
-      std::string log = filename + " not found. An empty HDF5 will be created.\n";
-      PRINT_INFO("%s", log.c_str());
-      
-      hid_t new_file = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-      if (new_file != H5I_INVALID_HID)
-      {
-        H5Fclose(new_file);
-      } 
-    }else{
-      bool can_read = (_access(filename.c_str(), 4) == 0);
-      bool can_write = (_access(filename.c_str(), 2) == 0);
-      
-      if (!can_read)
-      {
-        std::string log = "Can't read file!!!\n";
-        PRINT_INFO("%s", log.c_str());
-      }
-      if (!can_write)
-      {
-        std::string log = "Can't write file!!!\n";
-        PRINT_INFO("%s", log.c_str());
-      }    
-      
-      if (can_read && can_write)
-      {
-        std::string log = "Access to file: " + filename + "\n";
-        PRINT_INFO("%s", log.c_str());
-      }else{
-        std::string log = "CHECK PERMISSIONS FOR FILE!!!\n";
-        PRINT_INFO("%s", log.c_str());
-      }
+      result.push_back(value);
     }
-    this->file = new H5::H5File(filename,H5F_ACC_RDWR);
-    */
-  #else
-    if (access(filename.c_str(), W_OK) != 0) 
-    {
-      std::string log = filename + " not found. An empty HDF5 will be created.\n";
-      PRINT_INFO("%s", log.c_str());
-
-      hid_t new_file = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-      if (new_file != H5I_INVALID_HID)
-      {
-        H5Fclose(new_file);
-      }
-    }
-    this->file = new H5::H5File(filename,H5F_ACC_RDWR);
-  #endif
+  }
+  if (!result.empty() && result.back() == '/')
+  {
+    result.pop_back();
+  }
+  return result;
 }
 
-HDF5Tool::~HDF5Tool()
+void require(bool condition, const char* message)
 {
-  if (this->file != nullptr)
+  if (!condition)
   {
-   this->file->close();
-   delete this->file;
-  }else{
-    std::string log = "ERROR IN HDF5TOOL!\n";
-    PRINT_INFO("%s", log.c_str());
+    throw std::runtime_error(message);
   }
+}
+
+std::vector<hsize_t> dimensions(const H5::DataSet& dataset, int rank, H5T_class_t type)
+{
+  const auto space = dataset.getSpace();
+  require(space.getSimpleExtentNdims() == rank, "Unexpected dataset rank.");
+  require(dataset.getTypeClass() == type, "Unexpected dataset type.");
+  std::vector<hsize_t> shape(rank);
+  space.getSimpleExtentDims(shape.data());
+  return shape;
+}
+
+std::size_t elementCount(const std::vector<hsize_t>& shape)
+{
+  std::size_t count = 1;
+  for (auto extent : shape)
+  {
+    require(extent <= (std::numeric_limits<std::size_t>::max)(), "Dataset extent is too large.");
+    require(extent == 0 || count <= (std::numeric_limits<std::size_t>::max)() / extent, "Dataset dimensions overflow.");
+    count *= static_cast<std::size_t>(extent);
+  }
+  return count;
+}
+
+template<class T>
+void readNumeric(H5::H5File& file, const std::string& path, std::vector<T>& values, const H5::PredType& type, H5T_class_t kind)
+{
+  require(values.empty(), "Read destination is not empty.");
+  auto dataset = file.openDataSet(path);
+  const auto shape = dimensions(dataset, 1, kind);
+  std::vector<T> saved(elementCount(shape));
+  if (!saved.empty())
+  {
+    dataset.read(saved.data(), type);
+  }
+  values.swap(saved);
+}
+
+template<class T>
+void readNumeric(H5::H5File& file, const std::string& path, std::vector<std::vector<T>>& values, const H5::PredType& type, H5T_class_t kind)
+{
+  require(values.empty(), "Read destination is not empty.");
+  auto dataset = file.openDataSet(path);
+  const auto shape = dimensions(dataset, 2, kind);
+  std::vector<T> flat(elementCount(shape));
+  if (!flat.empty())
+  {
+    dataset.read(flat.data(), type);
+  }
+  std::vector<std::vector<T>> saved(static_cast<std::size_t>(shape[0]));
+  const auto width = static_cast<std::size_t>(shape[1]);
+  for (std::size_t row = 0; row < saved.size(); ++row)
+  {
+    saved[row].assign(flat.begin() + row * width, flat.begin() + (row + 1) * width);
+  }
+  values.swap(saved);
+}
+
+template<class T>
+void writeNumeric(H5::H5File& file, const std::string& path, const std::vector<T>& values, const H5::PredType& type)
+{
+  if (values.empty())
+  {
+    return;
+  }
+  const hsize_t shape[] = {values.size()};
+  const H5::DataSpace space(1, shape);
+  auto dataset = file.createDataSet(path, type, space);
+  dataset.write(values.data(), type);
+}
+
+template<class T>
+void writeNumeric(H5::H5File& file, const std::string& path, const std::vector<std::vector<T>>& values, const H5::PredType& type)
+{
+  if (values.empty())
+  {
+    return;
+  }
+  const std::size_t width = values.front().size();
+  for (const auto& row : values)
+  {
+    require(row.size() == width, "Table rows have inconsistent widths.");
+  }
+  if (width == 0)
+  {
+    return;
+  }
+  const std::vector<hsize_t> shape = {values.size(), width};
+  std::vector<T> flat;
+  flat.reserve(elementCount(shape));
+  for (const auto& row : values)
+  {
+    flat.insert(flat.end(), row.begin(), row.end());
+  }
+  const H5::DataSpace space(2, shape.data());
+  auto dataset = file.createDataSet(path, type, space);
+  dataset.write(flat.data(), type);
+}
+
+std::vector<std::string> readStrings(H5::H5File& file, const std::string& path, int rank, std::vector<hsize_t>& shape)
+{
+  auto dataset = file.openDataSet(path);
+  shape = dimensions(dataset, rank, H5T_STRING);
+  const auto count = elementCount(shape);
+  std::vector<std::string> result;
+  if (count == 0)
+  {
+    return result;
+  }
+  H5::StrType type(H5::PredType::C_S1, H5T_VARIABLE);
+  const auto storedType = dataset.getStrType();
+  type.setCset(storedType.getCset());
+  if (storedType.isVariableStr())
+  {
+    std::vector<char*> buffer(count, nullptr);
+    const auto space = dataset.getSpace();
+    dataset.read(buffer.data(), type);
+    try
+    {
+      for (const auto* value : buffer)
+      {
+        require(value != nullptr, "Null string in dataset.");
+        result.emplace_back(value);
+      }
+    }
+    catch (...)
+    {
+      H5Dvlen_reclaim(type.getId(), space.getId(), H5P_DEFAULT, buffer.data());
+      throw;
+    }
+    H5Dvlen_reclaim(type.getId(), space.getId(), H5P_DEFAULT, buffer.data());
+  }
+  else
+  {
+    const std::size_t width = storedType.getSize();
+    require(width > 0 && count <= (std::numeric_limits<std::size_t>::max)() / width, "String dataset dimensions overflow.");
+    std::vector<char> buffer(count * width);
+    dataset.read(buffer.data(), storedType);
+    for (std::size_t index = 0; index < count; ++index)
+    {
+      const char* begin = buffer.data() + index * width;
+      const char* end = std::find(begin, begin + width, '\0');
+      result.emplace_back(begin, end);
+    }
+  }
+  return result;
+}
+
+void readText(H5::H5File& file, const std::string& path, std::vector<std::string>& values)
+{
+  require(values.empty(), "Read destination is not empty.");
+  std::vector<hsize_t> shape;
+  auto saved = readStrings(file, path, 1, shape);
+  values.swap(saved);
+}
+
+void readText(H5::H5File& file, const std::string& path, std::vector<std::vector<std::string>>& values)
+{
+  require(values.empty(), "Read destination is not empty.");
+  std::vector<hsize_t> shape;
+  auto flat = readStrings(file, path, 2, shape);
+  std::vector<std::vector<std::string>> saved(static_cast<std::size_t>(shape[0]));
+  const auto width = static_cast<std::size_t>(shape[1]);
+  for (std::size_t row = 0; row < saved.size(); ++row)
+  {
+    saved[row].assign(flat.begin() + row * width, flat.begin() + (row + 1) * width);
+  }
+  values.swap(saved);
+}
+
+void writeTextFlat(H5::H5File& file, const std::string& path, const std::vector<const char*>& values, const std::vector<hsize_t>& shape)
+{
+  if (values.empty())
+  {
+    return;
+  }
+  H5::StrType type(H5::PredType::C_S1, H5T_VARIABLE);
+  const H5::DataSpace space(static_cast<int>(shape.size()), shape.data());
+  auto dataset = file.createDataSet(path, type, space);
+  dataset.write(values.data(), type);
+}
+
+void writeText(H5::H5File& file, const std::string& path, const std::vector<std::string>& values)
+{
+  std::vector<const char*> buffer;
+  for (const auto& value : values)
+  {
+    buffer.push_back(value.c_str());
+  }
+  writeTextFlat(file, path, buffer, {values.size()});
+}
+
+void writeText(H5::H5File& file, const std::string& path, const std::vector<std::vector<std::string>>& values)
+{
+  if (values.empty())
+  {
+    return;
+  }
+  const auto width = values.front().size();
+  std::vector<const char*> buffer;
+  for (const auto& row : values)
+  {
+    require(row.size() == width, "Table rows have inconsistent widths.");
+    for (const auto& value : row)
+    {
+      buffer.push_back(value.c_str());
+    }
+  }
+  writeTextFlat(file, path, buffer, {values.size(), width});
+}
+
+herr_t collectGroups(hid_t, const char* name, const H5O_info_t* info, void* data)
+{
+  try
+  {
+    if (name[0] != '.' && info->type == H5O_TYPE_GROUP)
+    {
+      static_cast<std::vector<std::string>*>(data)->emplace_back(name);
+    }
+    return 0;
+  }
+  catch (...)
+  {
+    // Never let a C++ exception cross the HDF5 C callback boundary.
+    return -1;
+  }
+}
+}
+
+HDF5Tool::HDF5Tool(std::string filename, bool createIfMissing)
+{
+  H5::Exception::dontPrint();
+  const bool exists = std::filesystem::exists(std::filesystem::u8path(filename));
+  if (!exists && !createIfMissing)
+  {
+    throw std::runtime_error("The HDF5 file does not exist: " + filename);
+  }
+  // Exclusive creation cannot truncate an existing file after an access failure.
+  file = new H5::H5File(filename, exists ? H5F_ACC_RDWR : H5F_ACC_EXCL);
+}
+
+HDF5Tool::~HDF5Tool() noexcept
+{
+  close();
+}
+
+bool HDF5Tool::close() noexcept
+{
+  auto* opened = file;
+  file = nullptr;
+  if (opened == nullptr)
+  {
+    return true;
+  }
+  bool success = true;
+  try
+  {
+    opened->close();
+  }
+  catch (const H5::Exception& error)
+  {
+    PRINT_ERROR("Cannot close HDF5 file: %s\n", error.getDetailMsg().c_str());
+    success = false;
+  }
+  catch (const std::exception& error)
+  {
+    PRINT_ERROR("Cannot close HDF5 file: %s\n", error.what());
+    success = false;
+  }
+  catch (...)
+  {
+    PRINT_ERROR("Cannot close HDF5 file: unknown exception.\n");
+    success = false;
+  }
+  try
+  {
+    delete opened;
+  }
+  catch (...)
+  {
+    PRINT_ERROR("Cannot release HDF5 file handle.\n");
+    success = false;
+  }
+  return success;
+}
+
+const std::string& HDF5Tool::last_error() const
+{
+  return lastError;
 }
 
 bool HDF5Tool::nameExists(std::string name)
 {
-  return this->file->nameExists(name.c_str());
+  require(file != nullptr, "HDF5 file is not open.");
+  const std::string path = cleanPath(name);
+  if (path.empty())
+  {
+    return true;
+  }
+  std::size_t position = 0;
+  do
+  {
+    position = path.find('/', position + 1);
+    const std::string prefix = path.substr(0, position);
+    const auto status = H5Lexists(file->getId(), prefix.c_str(), H5P_DEFAULT);
+    require(status >= 0, "Cannot inspect HDF5 path.");
+    if (status == 0)
+    {
+      return false;
+    }
+  }
+  while (position != std::string::npos);
+  return true;
 }
 
 bool HDF5Tool::createGroup(std::string groupname)
 {
-  this->file->createGroup(groupname.c_str());
-  return true;
+  lastError.clear();
+  try
+  {
+    require(file != nullptr, "HDF5 file is not open.");
+    file->createGroup(cleanPath(groupname));
+    return true;
+  }
+  catch (const H5::Exception& error)
+  {
+    lastError = error.getDetailMsg();
+  }
+  catch (const std::exception& error)
+  {
+    lastError = error.what();
+  }
+  return false;
 }
 
-bool HDF5Tool::renameGroup(std::string groupname,std::string new_groupname)
+bool HDF5Tool::ensureGroup(const std::string& groupname)
 {
-  if (!this->nameExists(groupname.c_str()))
+  lastError.clear();
+  try
   {
-    return false;
+    require(file != nullptr, "HDF5 file is not open.");
+    const std::string path = cleanPath(groupname);
+    std::size_t position = 0;
+    do
+    {
+      position = path.find('/', position + 1);
+      const auto prefix = path.substr(0, position);
+      if (!nameExists(prefix))
+      {
+        file->createGroup(prefix);
+      }
+    }
+    while (position != std::string::npos);
+    return true;
   }
-
-  if (this->nameExists(new_groupname.c_str()))
+  catch (const H5::Exception& error)
   {
-    return false;
+    lastError = error.getDetailMsg();
   }
+  catch (const std::exception& error)
+  {
+    lastError = error.what();
+  }
+  return false;
+}
 
-  int result = H5Lmove(this->file->getId(), groupname.c_str(),this->file->getId(), new_groupname.c_str(), H5P_DEFAULT, H5P_DEFAULT);
-  
-  return true;
+bool HDF5Tool::renameGroup(std::string groupname, std::string new_groupname)
+{
+  lastError.clear();
+  try
+  {
+    require(file != nullptr, "HDF5 file is not open.");
+    if (!nameExists(groupname) || nameExists(new_groupname))
+    {
+      lastError = "Source group is missing or destination already exists.";
+      return false;
+    }
+    require(H5Lmove(file->getId(), cleanPath(groupname).c_str(), file->getId(), cleanPath(new_groupname).c_str(), H5P_DEFAULT, H5P_DEFAULT) >= 0, "Cannot rename HDF5 group.");
+    return true;
+  }
+  catch (const H5::Exception& error)
+  {
+    lastError = error.getDetailMsg();
+  }
+  catch (const std::exception& error)
+  {
+    lastError = error.what();
+  }
+  return false;
 }
 
 bool HDF5Tool::deleteGroup(std::string groupname)
 {
-  if (!this->nameExists(groupname.c_str()))
+  lastError.clear();
+  try
   {
-    return false;
+    require(file != nullptr, "HDF5 file is not open.");
+    if (!nameExists(groupname))
+    {
+      return false;
+    }
+    require(H5Ldelete(file->getId(), cleanPath(groupname).c_str(), H5P_DEFAULT) >= 0, "Cannot delete HDF5 group.");
+    return true;
   }
-
-  int result = H5Ldelete(this->file->getId(), groupname.c_str(), H5P_DEFAULT);
-  
-  return true;
+  catch (const H5::Exception& error)
+  {
+    lastError = error.getDetailMsg();
+  }
+  catch (const std::exception& error)
+  {
+    lastError = error.what();
+  }
+  return false;
 }
 
-herr_t op_func(hid_t loc_id, const char* name, const H5O_info_t* info, void *data)
+bool HDF5Tool::deleteDataset(std::string name, std::string groupname)
 {
-  auto vec = static_cast<std::vector<std::string>*>(data);
-
-  if (name[0] == '.') /* Root group, do not print '.' */
-  {  //ignore
-    //vec->push_back("/");
-  }
-  else
+  lastError.clear();
+  try
   {
-    switch (info->type) {
-        case H5O_TYPE_GROUP:
-            vec->push_back(std::string(name));
-            //printf("%s  (Group)\n", name);
-            break;
-        case H5O_TYPE_DATASET:
-            //printf("%s  (Dataset)\n", name);
-            break;
-        case H5O_TYPE_NAMED_DATATYPE:
-            //printf("%s  (Datatype)\n", name);
-            break;
-        //default:
-            //printf("%s  (Unknown)\n", name);
+    require(file != nullptr, "HDF5 file is not open.");
+    const auto path = cleanPath(groupname + "/" + name);
+    if (!nameExists(path))
+    {
+      return false;
     }
+    require(H5Ldelete(file->getId(), path.c_str(), H5P_DEFAULT) >= 0, "Cannot delete HDF5 dataset.");
+    return true;
   }
-
-  return 0;
+  catch (const H5::Exception& error)
+  {
+    lastError = error.getDetailMsg();
+  }
+  catch (const std::exception& error)
+  {
+    lastError = error.what();
+  }
+  return false;
 }
 
 std::vector<std::string> HDF5Tool::getGroupsFromFile()
 {
   std::vector<std::string> groups;
-
-  bool status = false;
-  status = H5Ovisit(this->file->getId(), H5_INDEX_NAME, H5_ITER_NATIVE, op_func, static_cast<void*>(&groups),H5O_INFO_BASIC);
-
-  return groups;
-}
-
-
-
-bool HDF5Tool::deleteDataset(std::string name, std::string groupname)
-{
-  //this->file->createGroup(groupname.c_str());
-  H5::Group group(file->openGroup(groupname.c_str()));
-  if (!group.exists(name.c_str()))
+  try
   {
-    return false;
+    require(file != nullptr, "HDF5 file is not open.");
+    require(H5Ovisit(file->getId(), H5_INDEX_NAME, H5_ITER_NATIVE, collectGroups, &groups, H5O_INFO_BASIC) >= 0, "Cannot enumerate HDF5 groups.");
   }
-
-  int result = H5Ldelete(group.getId(), name.c_str(), H5P_DEFAULT);
-  
-  return true;
+  catch (const H5::Exception& error)
+  {
+    PRINT_ERROR("Cannot enumerate HDF5 groups: %s\n", error.getDetailMsg().c_str());
+    groups.clear();
+  }
+  catch (const std::exception& error)
+  {
+    PRINT_ERROR("Cannot enumerate HDF5 groups: %s\n", error.what());
+    groups.clear();
+  }
+  return groups;
 }
 
 bool HDF5Tool::read_dataset_int_rank_1(std::string name, std::string groupname, std::vector<int> &data)
 {
-  std::string log = "";
-
-  // Try block to detect exceptions raised by any of the calls inside it
-  try {
-    const int rank = 1;
-    if (data.size()!=0)
-    {
-      log = name + " data not empty -> please write an issue on github\n";
-      PRINT_INFO("%s", log.c_str());
-      return false;
-    }
-
-    // Turn off the auto-printing when failure occurs so that we can
-    // handle the errors appropriately
-    H5::Exception::dontPrint();
-
-    H5::Group group(file->openGroup(groupname.c_str()));
-    if (!group.exists(name.c_str()))
-    {
-      //log = "dataset " + name + " in group " + groupname + " doesn't exist\n";
-      //PRINT_INFO("%s", log.c_str());
-      return false;
-    }
-    
-    H5::DataSet dataset = group.openDataSet(name);
-    H5::DataSpace dataspace = dataset.getSpace();
-    const int ndims = dataspace.getSimpleExtentNdims();
-
-    if (rank!=ndims)
-    {
-      log = "ranks doesn't match in dataset " + name + " in group " + groupname + "\n";
-      PRINT_INFO("%s", log.c_str());
-      return false;
-    }
-    
-    hsize_t dims[rank];
-    dataspace.getSimpleExtentDims(dims, NULL);
-
-    // Read the data from the dataset    
-    std::vector<int> rdata(dims[0]); // buffer for data to read
-
-    dataset.read(rdata.data(), H5::PredType::NATIVE_INT);
-
-    for (size_t i = 0; i < dims[0]; i++)
-    { 
-      data.push_back(rdata[i]);
-    }
-    
-    // Close all objects.
-    dataspace.close();
-    dataset.close();
-    group.close();
+  lastError.clear();
+  try
+  {
+    require(file != nullptr, "HDF5 file is not open.");
+    readNumeric(*file, cleanPath(groupname + "/" + name), data, H5::PredType::NATIVE_INT, H5T_INTEGER);
     return true;
-  } // end of try block
-
-  // catch failure caused by the H5File operations
-  catch (H5::FileIException error) {
-      error.printErrorStack();
-      return false;
   }
-
-  // catch failure caused by the DataSet operations
-  catch (H5::DataSetIException error) {
-      error.printErrorStack();
-      return false;
+  catch (const H5::Exception& error)
+  {
+    lastError = cleanPath(groupname + "/" + name) + ": " + error.getDetailMsg();
   }
-
-  return true;
+  catch (const std::exception& error)
+  {
+    lastError = cleanPath(groupname + "/" + name) + ": " + error.what();
+  }
+  return false;
 }
-
-
-bool HDF5Tool::read_dataset_int_rank_2(std::string name, std::string groupname, std::vector<std::vector<int>> &data)
-{
-  std::string log = "";
-
-  // Try block to detect exceptions raised by any of the calls inside it
-  try {
-    const int rank = 2;
-    if (data.size()!=0)
-    {
-      log = name + " data not empty -> please write an issue on github\n";
-      PRINT_INFO("%s", log.c_str());
-      return false;
-    }
-
-    // Turn off the auto-printing when failure occurs so that we can
-    // handle the errors appropriately
-    H5::Exception::dontPrint();
-
-    H5::Group group(file->openGroup(groupname.c_str()));
-    if (!group.exists(name.c_str()))
-    {
-      //log = "dataset " + name + " in group " + groupname + " doesn't exist\n";
-      //PRINT_INFO("%s", log.c_str());
-      return false;
-    }
-    
-    H5::DataSet dataset = group.openDataSet(name);
-    H5::DataSpace dataspace = dataset.getSpace();
-    const int ndims = dataspace.getSimpleExtentNdims();
-
-    if (rank!=ndims)
-    {
-      log = "ranks doesn't match in dataset " + name + " in group " + groupname + "\n";
-      PRINT_INFO("%s", log.c_str());
-      return false;
-    }
-    
-    hsize_t dims[rank];
-    dataspace.getSimpleExtentDims(dims, NULL);
-
-    // Read the data from the dataset    
-    std::vector<int> rdata(dims[0]*dims[1]); // buffer for data to read
-
-    dataset.read(rdata.data(), H5::PredType::NATIVE_INT);
-    
-    /* 
-    int getArrayLength = rdata.size();
-    std::string log = "array length " + std::to_string(getArrayLength) + " dims[0] " + std::to_string(dims[0]) + " dims[1] " + std::to_string(dims[1]) + "\n";
-    PRINT_INFO("%s", log.c_str());
-
-    for (size_t i = 0; i < rdata.size(); i++)
-    {
-      log = "i " + std::to_string(i) + " rdata[i] " + std::to_string(rdata[i]) + "\n";
-      PRINT_INFO("%s", log.c_str());
-    }
-    */
-    
-    for (size_t i = 0; i < dims[0]; i++)
-    { 
-      std::vector<int> tmp;
-      for (size_t ii = 0; ii < dims[1]; ii++)
-      { 
-        tmp.push_back(rdata[dims[1]*i+ii]);
-        //log = "data.size() " + std::to_string(data.size()) + " i " + std::to_string(i) + " rdata[dims[1]*i+ii] " + std::to_string(rdata[dims[1]*i+ii]) + "\n";
-        //PRINT_INFO("%s", log.c_str());
-      }
-      data.push_back(tmp);
-    }
-    
-    // Close all objects.
-    dataspace.close();
-    dataset.close();
-    group.close();
-    return true;
-  } // end of try block
-
-  // catch failure caused by the H5File operations
-  catch (H5::FileIException error) {
-      error.printErrorStack();
-      return false;
-  }
-
-  // catch failure caused by the DataSet operations
-  catch (H5::DataSetIException error) {
-      error.printErrorStack();
-      return false;
-  }
-
-  return true;
-}
-
 
 bool HDF5Tool::write_dataset_int_rank_1(std::string name, std::string groupname, std::vector<int> data)
 {
-  // Try block to detect exceptions raised by any of the calls inside it
-  try {
-    //check if there is data that can be written
-    if (data.size()==0)
-    {
-      return true;
-    }
-
-    // Turn off the auto-printing when failure occurs so that we can
-    // handle the errors appropriately
-    H5::Exception::dontPrint();
-
-    H5::Group group(this->file->openGroup(groupname.c_str()));
-    const int rank = 1;
-    hsize_t dims[rank]; // dataset dimensions
-    dims[0]              = data.size();
-    H5::DataSpace *dataspace = new H5::DataSpace(rank, dims);
-    
-    H5::DataSet *dataset = new H5::DataSet(group.createDataSet(name.c_str(), H5::PredType::NATIVE_INT, *dataspace));
-
-    // Write the data to the dataset using default memory space, file
-    // space, and transfer properties.
-    int *wdata = new int [dims[0]];
-    
-    for (size_t i = 0; i < data.size(); i++)
-    {
-      wdata[i] = data[i];
-    }
-    dataset->write(wdata, H5::PredType::NATIVE_INT);
-
-    // Close all objects.
-    delete dataspace;
-    delete dataset;
-    group.close();
+  lastError.clear();
+  try
+  {
+    require(file != nullptr, "HDF5 file is not open.");
+    writeNumeric(*file, cleanPath(groupname + "/" + name), data, H5::PredType::NATIVE_INT);
     return true;
-  } // end of try block
-
-  // catch failure caused by the H5File operations
-  catch (H5::FileIException error) {
-      error.printErrorStack();
-      return false;
   }
-
-  // catch failure caused by the DataSet operations
-  catch (H5::DataSetIException error) {
-      error.printErrorStack();
-      return false;
+  catch (const H5::Exception& error)
+  {
+    lastError = cleanPath(groupname + "/" + name) + ": " + error.getDetailMsg();
   }
+  catch (const std::exception& error)
+  {
+    lastError = cleanPath(groupname + "/" + name) + ": " + error.what();
+  }
+  return false;
+}
 
-  return true;
+bool HDF5Tool::read_dataset_int_rank_2(std::string name, std::string groupname, std::vector<std::vector<int>> &data)
+{
+  lastError.clear();
+  try
+  {
+    require(file != nullptr, "HDF5 file is not open.");
+    readNumeric(*file, cleanPath(groupname + "/" + name), data, H5::PredType::NATIVE_INT, H5T_INTEGER);
+    return true;
+  }
+  catch (const H5::Exception& error)
+  {
+    lastError = cleanPath(groupname + "/" + name) + ": " + error.getDetailMsg();
+  }
+  catch (const std::exception& error)
+  {
+    lastError = cleanPath(groupname + "/" + name) + ": " + error.what();
+  }
+  return false;
 }
 
 bool HDF5Tool::write_dataset_int_rank_2(std::string name, std::string groupname, std::vector<std::vector<int>> data)
 {
-  // Try block to detect exceptions raised by any of the calls inside it
-  try {
-    const int rank = 2;
-    if (data.size()==0)
-    {
-      return true;
-    }
-    if (data[0].size()==0)
-    {
-      return true;
-    }
-    // Turn off the auto-printing when failure occurs so that we can
-    // handle the errors appropriately
-    H5::Exception::dontPrint();
-
-    H5::Group group(this->file->openGroup(groupname.c_str()));
-    hsize_t dims[rank]; // dataset dimensions
-    dims[0]              = data.size();
-    dims[1]              = data[0].size();
-    H5::DataSpace *dataspace = new H5::DataSpace(rank, dims);
-    
-    H5::DataSet *dataset = new H5::DataSet(group.createDataSet(name.c_str(), H5::PredType::NATIVE_INT, *dataspace));
-
-    // Write the data to the dataset using default memory space, file
-    // space, and transfer properties.
-    
-    int *wdata = new int[dims[0]*dims[1]]; // buffer for data to write
-    
-    for (size_t i = 0; i < data.size(); i++)
-    {
-      for (size_t ii = 0; ii < data[i].size(); ii++)
-      {
-        wdata[dims[1]*i+ii] = data[i][ii];
-      }
-    }
-    dataset->write(wdata, H5::PredType::NATIVE_INT);
-        
-    // Close all objects.
-    delete dataspace;
-    delete dataset;
-    delete wdata;
-    group.close();
-
-/*
-    std::string log = "";
-    for (size_t i = 0; i < data.size(); i++)
-    {
-      for (size_t ii = 0; ii < data[i].size(); ii++)
-      {
-        log.append(std::to_string(data[i][ii]) + "->");
-      }
-      log.append("\n");
-    }
-    PRINT_INFO("%s", log.c_str());
-*/
+  lastError.clear();
+  try
+  {
+    require(file != nullptr, "HDF5 file is not open.");
+    writeNumeric(*file, cleanPath(groupname + "/" + name), data, H5::PredType::NATIVE_INT);
     return true;
-  } // end of try block
-
-  // catch failure caused by the H5File operations
-  catch (H5::FileIException error) {
-      error.printErrorStack();
-      return false;
   }
-
-  // catch failure caused by the DataSet operations
-  catch (H5::DataSetIException error) {
-      error.printErrorStack();
-      return false;
+  catch (const H5::Exception& error)
+  {
+    lastError = cleanPath(groupname + "/" + name) + ": " + error.getDetailMsg();
   }
+  catch (const std::exception& error)
+  {
+    lastError = cleanPath(groupname + "/" + name) + ": " + error.what();
+  }
+  return false;
+}
 
-  return true;
+bool HDF5Tool::read_dataset_double_rank_1(std::string name, std::string groupname, std::vector<double> &data)
+{
+  lastError.clear();
+  try
+  {
+    require(file != nullptr, "HDF5 file is not open.");
+    readNumeric(*file, cleanPath(groupname + "/" + name), data, H5::PredType::NATIVE_DOUBLE, H5T_FLOAT);
+    return true;
+  }
+  catch (const H5::Exception& error)
+  {
+    lastError = cleanPath(groupname + "/" + name) + ": " + error.getDetailMsg();
+  }
+  catch (const std::exception& error)
+  {
+    lastError = cleanPath(groupname + "/" + name) + ": " + error.what();
+  }
+  return false;
 }
 
 bool HDF5Tool::write_dataset_double_rank_1(std::string name, std::string groupname, std::vector<double> data)
 {
-  // Try block to detect exceptions raised by any of the calls inside it
-  try {
-    //check if there is data that can be written
-    if (data.size()==0)
-    {
-      return true;
-    }
-
-    // Turn off the auto-printing when failure occurs so that we can
-    // handle the errors appropriately
-    H5::Exception::dontPrint();
-
-    H5::Group group(this->file->openGroup(groupname.c_str()));
-    const int rank = 1;
-    hsize_t dims[rank]; // dataset dimensions
-    dims[0]              = data.size();
-    H5::DataSpace *dataspace = new H5::DataSpace(rank, dims);
-    
-    H5::DataSet *dataset = new H5::DataSet(group.createDataSet(name.c_str(), H5::PredType::NATIVE_DOUBLE, *dataspace));
-
-    // Write the data to the dataset using default memory space, file
-    // space, and transfer properties.
-    double *wdata = new double [dims[0]];
-    
-    for (size_t i = 0; i < data.size(); i++)
-    {
-      wdata[i] = data[i];
-    }
-    dataset->write(wdata, H5::PredType::NATIVE_DOUBLE);
-
-    // Close all objects.
-    delete dataspace;
-    delete dataset;
-    group.close();
+  lastError.clear();
+  try
+  {
+    require(file != nullptr, "HDF5 file is not open.");
+    writeNumeric(*file, cleanPath(groupname + "/" + name), data, H5::PredType::NATIVE_DOUBLE);
     return true;
-  } // end of try block
-
-  // catch failure caused by the H5File operations
-  catch (H5::FileIException error) {
-      error.printErrorStack();
-      return false;
   }
-
-  // catch failure caused by the DataSet operations
-  catch (H5::DataSetIException error) {
-      error.printErrorStack();
-      return false;
+  catch (const H5::Exception& error)
+  {
+    lastError = cleanPath(groupname + "/" + name) + ": " + error.getDetailMsg();
   }
-
-  return true;
+  catch (const std::exception& error)
+  {
+    lastError = cleanPath(groupname + "/" + name) + ": " + error.what();
+  }
+  return false;
 }
-
-
-bool HDF5Tool::read_dataset_double_rank_1(std::string name, std::string groupname, std::vector<double> &data)
-{
-  std::string log = "";
-
-  // Try block to detect exceptions raised by any of the calls inside it
-  try {
-    const int rank = 1;
-    if (data.size()!=0)
-    {
-      log = name + " data not empty -> please write an issue on github\n";
-      PRINT_INFO("%s", log.c_str());
-      return false;
-    }
-
-    // Turn off the auto-printing when failure occurs so that we can
-    // handle the errors appropriately
-    H5::Exception::dontPrint();
-
-    H5::Group group(file->openGroup(groupname.c_str()));
-    if (!group.exists(name.c_str()))
-    {
-      //log = "dataset " + name + " in group " + groupname + " doesn't exist\n";
-      //PRINT_INFO("%s", log.c_str());
-      return false;
-    }
-    
-    H5::DataSet dataset = group.openDataSet(name);
-    H5::DataSpace dataspace = dataset.getSpace();
-    const int ndims = dataspace.getSimpleExtentNdims();
-
-    if (rank!=ndims)
-    {
-      log = "ranks doesn't match in dataset " + name + " in group " + groupname + "\n";
-      PRINT_INFO("%s", log.c_str());
-      return false;
-    }
-    
-    hsize_t dims[rank];
-    dataspace.getSimpleExtentDims(dims, NULL);
-
-    // Read the data from the dataset    
-    std::vector<double> rdata(dims[0]); // buffer for data to read
-
-    dataset.read(rdata.data(), H5::PredType::NATIVE_DOUBLE);
-
-    for (size_t i = 0; i < dims[0]; i++)
-    { 
-      data.push_back(rdata[i]);
-    }
-    
-    // Close all objects.
-    dataspace.close();
-    dataset.close();
-    group.close();
-    return true;
-  } // end of try block
-
-  // catch failure caused by the H5File operations
-  catch (H5::FileIException error) {
-      error.printErrorStack();
-      return false;
-  }
-
-  // catch failure caused by the DataSet operations
-  catch (H5::DataSetIException error) {
-      error.printErrorStack();
-      return false;
-  }
-
-  return true;
-}
-
 
 bool HDF5Tool::read_dataset_double_rank_2(std::string name, std::string groupname, std::vector<std::vector<double>> &data)
 {
-  std::string log = "";
-
-  // Try block to detect exceptions raised by any of the calls inside it
-  try {
-    const int rank = 2;
-    if (data.size()!=0)
-    {
-      log = name + " data not empty -> please write an issue on github\n";
-      PRINT_INFO("%s", log.c_str());
-      return false;
-    }
-
-    // Turn off the auto-printing when failure occurs so that we can
-    // handle the errors appropriately
-    H5::Exception::dontPrint();
-
-    H5::Group group(file->openGroup(groupname.c_str()));
-    if (!group.exists(name.c_str()))
-    {
-      //log = "dataset " + name + " in group " + groupname + " doesn't exist\n";
-      //PRINT_INFO("%s", log.c_str());
-      return false;
-    }
-    
-    H5::DataSet dataset = group.openDataSet(name);
-    H5::DataSpace dataspace = dataset.getSpace();
-    const int ndims = dataspace.getSimpleExtentNdims();
-
-    if (rank!=ndims)
-    {
-      log = "ranks doesn't match in dataset " + name + " in group " + groupname + "\n";
-      PRINT_INFO("%s", log.c_str());
-      return false;
-    }
-    
-    hsize_t dims[rank];
-    dataspace.getSimpleExtentDims(dims, NULL);
-
-    // Read the data from the dataset    
-    std::vector<double> rdata(dims[0]*dims[1]); // buffer for data to read
-
-    dataset.read(rdata.data(), H5::PredType::NATIVE_DOUBLE);
-    
-    for (size_t i = 0; i < dims[0]; i++)
-    { 
-      std::vector<double> tmp;
-      for (size_t ii = 0; ii < dims[1]; ii++)
-      { 
-        tmp.push_back(rdata[dims[1]*i+ii]);
-        //log = "data.size() " + std::to_string(data.size()) + " i " + std::to_string(i) + " rdata[dims[1]*i+ii] " + std::to_string(rdata[dims[1]*i+ii]) + "\n";
-        //PRINT_INFO("%s", log.c_str());
-      }
-      data.push_back(tmp);
-    }
-    
-    // Close all objects.
-    dataspace.close();
-    dataset.close();
-    group.close();
+  lastError.clear();
+  try
+  {
+    require(file != nullptr, "HDF5 file is not open.");
+    readNumeric(*file, cleanPath(groupname + "/" + name), data, H5::PredType::NATIVE_DOUBLE, H5T_FLOAT);
     return true;
-  } // end of try block
-
-  // catch failure caused by the H5File operations
-  catch (H5::FileIException error) {
-      error.printErrorStack();
-      return false;
   }
-
-  // catch failure caused by the DataSet operations
-  catch (H5::DataSetIException error) {
-      error.printErrorStack();
-      return false;
+  catch (const H5::Exception& error)
+  {
+    lastError = cleanPath(groupname + "/" + name) + ": " + error.getDetailMsg();
   }
-
-  return true;
+  catch (const std::exception& error)
+  {
+    lastError = cleanPath(groupname + "/" + name) + ": " + error.what();
+  }
+  return false;
 }
-
 
 bool HDF5Tool::write_dataset_double_rank_2(std::string name, std::string groupname, std::vector<std::vector<double>> data)
 {
-  // Try block to detect exceptions raised by any of the calls inside it
-  try {
-    const int rank = 2;
-    if (data.size()==0)
-    {
-      return true;
-    }
-    if (data[0].size()==0)
-    {
-      return true;
-    }
-    // Turn off the auto-printing when failure occurs so that we can
-    // handle the errors appropriately
-    H5::Exception::dontPrint();
-
-    H5::Group group(this->file->openGroup(groupname.c_str()));
-    hsize_t dims[rank]; // dataset dimensions
-    dims[0]              = data.size();
-    dims[1]              = data[0].size();
-    H5::DataSpace *dataspace = new H5::DataSpace(rank, dims);
-    
-    H5::DataSet *dataset = new H5::DataSet(group.createDataSet(name.c_str(), H5::PredType::NATIVE_DOUBLE, *dataspace));
-
-    // Write the data to the dataset using default memory space, file
-    // space, and transfer properties.
-    
-    double *wdata = new double[dims[0]*dims[1]]; // buffer for data to write
-    
-    for (size_t i = 0; i < data.size(); i++)
-    {
-      for (size_t ii = 0; ii < data[i].size(); ii++)
-      {
-        wdata[dims[1]*i+ii] = data[i][ii];
-      }
-    }
-    dataset->write(wdata, H5::PredType::NATIVE_DOUBLE);
-        
-    // Close all objects.
-    delete dataspace;
-    delete dataset;
-    delete wdata;
-    group.close();
-
+  lastError.clear();
+  try
+  {
+    require(file != nullptr, "HDF5 file is not open.");
+    writeNumeric(*file, cleanPath(groupname + "/" + name), data, H5::PredType::NATIVE_DOUBLE);
     return true;
-  } // end of try block
-
-  // catch failure caused by the H5File operations
-  catch (H5::FileIException error) {
-      error.printErrorStack();
-      return false;
   }
-
-  // catch failure caused by the DataSet operations
-  catch (H5::DataSetIException error) {
-      error.printErrorStack();
-      return false;
+  catch (const H5::Exception& error)
+  {
+    lastError = cleanPath(groupname + "/" + name) + ": " + error.getDetailMsg();
   }
-
-  return true;
+  catch (const std::exception& error)
+  {
+    lastError = cleanPath(groupname + "/" + name) + ": " + error.what();
+  }
+  return false;
 }
 
 bool HDF5Tool::read_dataset_string_rank_1(std::string name, std::string groupname, std::vector<std::string> &data)
 {
-  std::string log = "";
-
-  // Try block to detect exceptions raised by any of the calls inside it
-  try {
-    const int rank = 1;
-    if (data.size()!=0)
-    {
-      log = name + " data not empty -> please write an issue on github\n";
-      PRINT_INFO("%s", log.c_str());
-      return false;
-    }
-
-    // Turn off the auto-printing when failure occurs so that we can
-    // handle the errors appropriately
-    H5::Exception::dontPrint();
-
-    H5::Group group(file->openGroup(groupname.c_str()));
-    if (!group.exists(name.c_str()))
-    {
-      //log = "dataset " + name + " in group " + groupname + " doesn't exist\n";
-      //PRINT_INFO("%s", log.c_str());
-      return false;
-    }
-    
-    H5::DataSet dataset = group.openDataSet(name);
-    H5::DataSpace dataspace = dataset.getSpace();
-    const int ndims = dataspace.getSimpleExtentNdims();
-
-    if (rank!=ndims)
-    {
-      log = "ranks doesn't match in dataset " + name + " in group " + groupname + "\n";
-      PRINT_INFO("%s", log.c_str());
-      return false;
-    }
-    
-    hsize_t dims[rank];
-    dataspace.getSimpleExtentDims( dims, NULL);
-    H5::StrType datatype(H5::PredType::C_S1, H5T_VARIABLE); 
-
-    std::vector<const char *> rdata(dims[0]); // buffer for data to read
-
-    dataset.read(rdata.data(), datatype);
-        
-    for (size_t i = 0; i < dims[0]; i++)
-    { 
-      data.push_back(rdata[i]);
-    }
-    
-    // Close all objects.
-    dataspace.close();
-    dataset.close();
-    group.close();
+  lastError.clear();
+  try
+  {
+    require(file != nullptr, "HDF5 file is not open.");
+    readText(*file, cleanPath(groupname + "/" + name), data);
     return true;
-  } // end of try block
-
-  // catch failure caused by the H5File operations
-  catch (H5::FileIException error) {
-      error.printErrorStack();
-      return false;
   }
-
-  // catch failure caused by the DataSet operations
-  catch (H5::DataSetIException error) {
-      error.printErrorStack();
-      return false;
+  catch (const H5::Exception& error)
+  {
+    lastError = cleanPath(groupname + "/" + name) + ": " + error.getDetailMsg();
   }
-
-  return true;
-}
-
-bool HDF5Tool::read_dataset_string_rank_2(std::string name, std::string groupname, std::vector<std::vector<std::string>> &data)
-{
-  std::string log = "";
-
-  // Try block to detect exceptions raised by any of the calls inside it
-  try {
-    const int rank = 2;
-    if (data.size()!=0)
-    {
-      log = name + " data not empty -> please write an issue on github\n";
-      PRINT_INFO("%s", log.c_str());
-      return false;
-    }
-
-    // Turn off the auto-printing when failure occurs so that we can
-    // handle the errors appropriately
-    H5::Exception::dontPrint();
-
-    H5::Group group(file->openGroup(groupname.c_str()));
-    if (!group.exists(name.c_str()))
-    {
-      //log = "dataset " + name + " in group " + groupname + " doesn't exist\n";
-      //PRINT_INFO("%s", log.c_str());
-      return false;
-    }
-    
-    H5::DataSet dataset = group.openDataSet(name);
-    H5::DataSpace dataspace = dataset.getSpace();
-    const int ndims = dataspace.getSimpleExtentNdims();
-
-    if (rank!=ndims)
-    {
-      log = "ranks doesn't match in dataset " + name + " in group " + groupname + "\n";
-      PRINT_INFO("%s", log.c_str());
-      return false;
-    }
-    
-    hsize_t dims[rank];
-    dataspace.getSimpleExtentDims( dims, NULL);
-    H5::StrType datatype(H5::PredType::C_S1, H5T_VARIABLE); 
-
-    std::vector<const char *> rdata(dims[0]*dims[1]); // buffer for data to read
-
-    dataset.read(rdata.data(), datatype);
-        
-    for (size_t i = 0; i < dims[0]; i++)
-    { 
-      std::vector<std::string> tmp;
-      for (size_t ii = 0; ii < dims[1]; ii++)
-      { 
-        tmp.push_back(rdata[dims[1]*i+ii]);
-        //log = "data.size() " + std::to_string(data.size()) + " i " + std::to_string(i) + " rdata[dims[1]*i+ii] " + rdata[dims[1]*i+ii] + "\n";
-        //PRINT_INFO("%s", log.c_str());
-      }
-      data.push_back(tmp);
-    }
-    
-    // Close all objects.
-    dataspace.close();
-    dataset.close();
-    group.close();
-    return true;
-  } // end of try block
-
-  // catch failure caused by the H5File operations
-  catch (H5::FileIException error) {
-      error.printErrorStack();
-      return false;
+  catch (const std::exception& error)
+  {
+    lastError = cleanPath(groupname + "/" + name) + ": " + error.what();
   }
-
-  // catch failure caused by the DataSet operations
-  catch (H5::DataSetIException error) {
-      error.printErrorStack();
-      return false;
-  }
-
-  return true;
+  return false;
 }
 
 bool HDF5Tool::write_dataset_string_rank_1(std::string name, std::string groupname, std::vector<std::string> data)
 {
-  // Try block to detect exceptions raised by any of the calls inside it
-  try {
-    const int rank = 1;
-    if (data.size()==0)
-    {
-      return true;
-    }
-
-    // Turn off the auto-printing when failure occurs so that we can
-    // handle the errors appropriately
-    H5::Exception::dontPrint();
-
-    H5::Group group(this->file->openGroup(groupname.c_str()));
-    hsize_t dims[rank]; // dataset dimensions
-    dims[0]              = data.size();
-    H5::DataSpace *dataspace = new H5::DataSpace(rank, dims);
-    H5::StrType datatype(H5::PredType::C_S1, H5T_VARIABLE); 
-
-    H5::DataSet *dataset = new H5::DataSet(group.createDataSet(name.c_str(), datatype, *dataspace));
-
-    // Write the data to the dataset using default memory space, file
-    // space, and transfer properties.
-    
-    std::vector<const char*> wdata;
-    for (size_t i = 0; i < data.size(); i++)
-    {
-      wdata.push_back(data[i].c_str());
-    }
-    dataset->write(wdata.data(), datatype);
-    
-    // Close all objects.
-    delete dataspace;
-    delete dataset;
-    group.close();
-
+  lastError.clear();
+  try
+  {
+    require(file != nullptr, "HDF5 file is not open.");
+    writeText(*file, cleanPath(groupname + "/" + name), data);
     return true;
-  } // end of try block
-
-  // catch failure caused by the H5File operations
-  catch (H5::FileIException error) {
-      error.printErrorStack();
-      return false;
   }
-
-  // catch failure caused by the DataSet operations
-  catch (H5::DataSetIException error) {
-      error.printErrorStack();
-      return false;
+  catch (const H5::Exception& error)
+  {
+    lastError = cleanPath(groupname + "/" + name) + ": " + error.getDetailMsg();
   }
+  catch (const std::exception& error)
+  {
+    lastError = cleanPath(groupname + "/" + name) + ": " + error.what();
+  }
+  return false;
+}
 
-  return true;
+bool HDF5Tool::read_dataset_string_rank_2(std::string name, std::string groupname, std::vector<std::vector<std::string>> &data)
+{
+  lastError.clear();
+  try
+  {
+    require(file != nullptr, "HDF5 file is not open.");
+    readText(*file, cleanPath(groupname + "/" + name), data);
+    return true;
+  }
+  catch (const H5::Exception& error)
+  {
+    lastError = cleanPath(groupname + "/" + name) + ": " + error.getDetailMsg();
+  }
+  catch (const std::exception& error)
+  {
+    lastError = cleanPath(groupname + "/" + name) + ": " + error.what();
+  }
+  return false;
 }
 
 bool HDF5Tool::write_dataset_string_rank_2(std::string name, std::string groupname, std::vector<std::vector<std::string>> data)
 {
-  // Try block to detect exceptions raised by any of the calls inside it
-  try {
-    const int rank = 2;
-    if (data.size()==0)
-    {
-      return true;
-    }
-    if (data[0].size()==0)
-    {
-      return true;
-    }
-    // Turn off the auto-printing when failure occurs so that we can
-    // handle the errors appropriately
-    H5::Exception::dontPrint();
-
-    H5::Group group(this->file->openGroup(groupname.c_str()));
-    hsize_t dims[rank]; // dataset dimensions
-    dims[0]              = data.size();
-    dims[1]              = data[0].size();
-    H5::DataSpace *dataspace = new H5::DataSpace(rank, dims);
-    H5::StrType datatype(H5::PredType::C_S1, H5T_VARIABLE); 
-
-    H5::DataSet *dataset = new H5::DataSet(group.createDataSet(name.c_str(), datatype, *dataspace));
-
-    // Write the data to the dataset using default memory space, file
-    // space, and transfer properties.
-    
-    std::vector<const char*> wdata;
-    for (size_t i = 0; i < data.size(); i++)
-    {
-      for (size_t ii = 0; ii < data[i].size(); ii++)
-      {
-        wdata.push_back(data[i][ii].c_str());
-      }
-    }
-    dataset->write(wdata.data(), datatype);
-
-    // Close all objects.
-    delete dataspace;
-    delete dataset;
-    group.close();
-
+  lastError.clear();
+  try
+  {
+    require(file != nullptr, "HDF5 file is not open.");
+    writeText(*file, cleanPath(groupname + "/" + name), data);
     return true;
-  } // end of try block
-
-  // catch failure caused by the H5File operations
-  catch (H5::FileIException error) {
-      error.printErrorStack();
-      return false;
   }
-
-  // catch failure caused by the DataSet operations
-  catch (H5::DataSetIException error) {
-      error.printErrorStack();
-      return false;
+  catch (const H5::Exception& error)
+  {
+    lastError = cleanPath(groupname + "/" + name) + ": " + error.getDetailMsg();
   }
-
-  return true;
+  catch (const std::exception& error)
+  {
+    lastError = cleanPath(groupname + "/" + name) + ": " + error.what();
+  }
+  return false;
 }

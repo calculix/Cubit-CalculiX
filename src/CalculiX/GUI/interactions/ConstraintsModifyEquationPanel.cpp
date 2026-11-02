@@ -1,3 +1,5 @@
+#include "CubitMessage.hpp"
+#include "Core/interactions/CalculiXInteractionsInterface.hpp"
 #include "ConstraintsModifyEquationPanel.hpp"
 #include <QString>
 #include "GUI/common/PanelTable.hpp"
@@ -79,26 +81,72 @@ ConstraintsModifyEquationPanel::~ConstraintsModifyEquationPanel()
 
 void ConstraintsModifyEquationPanel::on_pushButton_apply_clicked(bool)
 {
+  bool changed = false;
+  changed = changed || fieldChanged("lineEdit_1", lineEdit_1->text());
+  changed = changed || fieldChanged("widget_2", widget_2->snapshot());
+  if (loadedEntityId >= 0 && !changed && lineEdit_0->text().trimmed() == QString::number(loadedEntityId))
+  {
+    PRINT_INFO("No settings were changed.\n");
+    return;
+  }
+
+  if (loadedEntityId >= 0)
+  {
+    if (lineEdit_0->text().trimmed() != QString::number(loadedEntityId))
+    {
+      bool valid = false;
+      const int requestedId = lineEdit_0->text().trimmed().toInt(&valid);
+
+      if (valid)
+      {
+        setConstraint(requestedId);
+      }
+      else
+      {
+        PRINT_ERROR("Select a single entity ID before reloading this panel.\n");
+      }
+
+      return;
+    }
+  }
+
+  if (loadedEntityId >= 0 && lineEdit_1->isEnabled() && !originalValues.value("lineEdit_1").isEmpty() && lineEdit_1->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Name; use the supported reset value.\n");
+    return;
+  }
+
+  if (loadedEntityId >= 0 && !originalValues.value("widget_2").isEmpty() && widget_2->snapshot().isEmpty())
+  {
+    PRINT_ERROR("The stored table cannot be cleared with an empty Modify command.\n");
+    return;
+  }
+
   QStringList commands;
   QString command = "";
-  matrix = widget_2->getMatrix();
+  QString tableError;
+  if (!widget_2->readMatrix(matrix, tableError))
+  {
+    PRINT_ERROR("%s\n", tableError.toStdString().c_str());
+    return;
+  }
 
   if ((lineEdit_0->text()!=""))
   {
     command.append("ccx modify constraint equation "+ lineEdit_0->text());
     
-    if (lineEdit_1->text()!="")
+    if (lineEdit_1->text()!="" && fieldChanged("lineEdit_1", lineEdit_1->text()))
     {
       command.append(" name \"" +lineEdit_1->text() + "\"");
     }
-    if (matrix.size()!=0)
+    if (matrix.size()!=0 && fieldChanged("widget_2", widget_2->snapshot()))
     {
       command.append(" node_dof_coefficient ");
       for (size_t i = 0; i < matrix.size(); i++)
       {
         for (size_t ii = 0; ii < matrix[i].size(); ii++)
         {
-          command.append(QString::number(matrix[i][ii]) + " ");
+          command.append(QString::number(matrix[i][ii], 'g', 17) + " ");
         }
       }
     }
@@ -107,10 +155,6 @@ void ConstraintsModifyEquationPanel::on_pushButton_apply_clicked(bool)
   if (command != "")
   {
     commands.push_back(command);
-    lineEdit_0->setText("");
-    lineEdit_1->setText("");
-    matrix.clear();
-    widget_2->update({"Node ID","DOF","Coefficient"},matrix);
   }
   
   for (size_t i = 0; i < commands.size(); i++)
@@ -118,4 +162,45 @@ void ConstraintsModifyEquationPanel::on_pushButton_apply_clicked(bool)
     //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
     GuiSendCmd::gui_cmd(commands[int(i)]);
   }
+}
+
+
+bool ConstraintsModifyEquationPanel::fieldChanged(const QString& field, const QString& value) const
+{
+  return loadedEntityId < 0 || originalValues.value(field) != value;
+}
+
+bool ConstraintsModifyEquationPanel::setConstraint(int id)
+{
+  loadedEntityId = -1;
+  originalValues.clear();
+  widget_2->setRowCount(0);
+  pushButton_apply->setEnabled(false);
+  lineEdit_0->clear();
+  lineEdit_1->clear();
+  CalculiXInteractionsInterface core;
+  ConstraintsSettings settings;
+  std::string error;
+
+  if (!core.get_constraint_settings(id, settings, error))
+  {
+    PRINT_ERROR("Cannot load Constraint %d: %s\n", id, error.c_str());
+    return false;
+  }
+
+  if (settings.type != 3)
+  {
+    PRINT_ERROR("The selected record does not match this Constraint panel.\n");
+    return false;
+  }
+  lineEdit_0->setText(QString::number(settings.id));
+  lineEdit_1->setText(QString::fromStdString(settings.name));
+
+  widget_2->update({"Node ID", "DOF", "Coefficient"}, settings.terms);
+  originalValues.insert("lineEdit_0", lineEdit_0->text());
+  originalValues.insert("lineEdit_1", lineEdit_1->text());
+  originalValues.insert("widget_2", widget_2->snapshot());
+  loadedEntityId = id;
+  pushButton_apply->setEnabled(true);
+  return true;
 }

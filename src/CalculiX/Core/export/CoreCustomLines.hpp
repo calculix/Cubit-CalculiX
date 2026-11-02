@@ -1,12 +1,15 @@
 #ifndef CORECUSTOMLINES_HPP
 #define CORECUSTOMLINES_HPP
 
+#include "CustomLinesSettings.hpp"
+
 #include <vector>
 #include <string>
 class CoreCustomLines
 {
 
 public:
+  bool get_settings(int id, CustomLinesSettings& settings, std::string& error) const;
   std::vector<int> get_customline_ids() const;
   CoreCustomLines();
   ~CoreCustomLines();

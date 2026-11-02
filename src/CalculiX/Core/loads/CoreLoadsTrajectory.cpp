@@ -1,3 +1,4 @@
+#include "Core/application/SettingsRead.hpp"
 #include "Core/loads/CoreLoadsTrajectory.hpp"
 #include <string>
 #include <vector>
@@ -412,4 +413,111 @@ std::vector<std::vector<double>> CoreLoadsTrajectory::get_bodyheatfluxsphere_dep
 std::vector<std::vector<double>> CoreLoadsTrajectory::get_bodyheatfluxsphere_magnitude(int trajectory_id)
 {
   return bodyheatfluxsphere->get_magnitude(get_subload_id(trajectory_id, 2));
+}
+
+
+bool CoreLoadsTrajectory::get_settings(int id, LoadsTrajectorySettings& settings, std::string& error) const
+{
+  settings = {};
+  error.clear();
+  const auto* record = SettingsRead::row(loads_data, id, 3, error);
+
+  if (record == nullptr)
+  {
+    return false;
+  }
+
+  settings.id = id;
+  settings.type = (*record)[1];
+  if (settings.type == 1 && heatflux != nullptr)
+  {
+    const auto* sub = SettingsRead::row(heatflux->loads_data, (*record)[2], 10, error);
+    if (sub == nullptr)
+    {
+      return false;
+    }
+    settings.name = SettingsRead::field(heatflux->name_data, (*sub)[9], 1, error);
+    settings.loadType = "Heatflux";
+    settings.operation = (*sub)[1] == 1 ? "new" : "mod";
+    settings.curve = SettingsRead::optional_id((*sub)[2]);
+    settings.vertex = SettingsRead::optional_id((*sub)[3]);
+    settings.direction = SettingsRead::field(heatflux->direction_data, (*sub)[5], 1, error) + " " + SettingsRead::field(heatflux->direction_data, (*sub)[5], 2, error) + " " + SettingsRead::field(heatflux->direction_data, (*sub)[5], 3, error);
+    settings.timeBegin = SettingsRead::field(heatflux->time_data, (*sub)[7], 1, error);
+    settings.timeEnd = SettingsRead::field(heatflux->time_data, (*sub)[7], 2, error);
+    for (const auto& entry : heatflux->fire_ray_surface_data)
+    {
+      if (entry.size() >= 2 && entry[0] == (*sub)[4])
+      {
+        if (!settings.surfaces.empty())
+        {
+          settings.surfaces += " ";
+        }
+        settings.surfaces += SettingsRead::text(entry[1]);
+      }
+    }
+    const auto radii = SettingsRead::table(heatflux->radius_data, (*sub)[8], 1, error);
+    const auto magnitudes = SettingsRead::table(heatflux->magnitude_data, (*sub)[6], 1, error);
+    if (radii.size() != magnitudes.size())
+    {
+      error = "Trajectory sample arrays have inconsistent lengths.";
+      return false;
+    }
+    for (std::size_t index = 0; index < radii.size(); ++index)
+    {
+      settings.samples.push_back({radii[index][0], magnitudes[index][0]});
+    }
+  }
+  else if (settings.type == 2 && bodyheatfluxsphere != nullptr)
+  {
+    const auto* sub = SettingsRead::row(bodyheatfluxsphere->loads_data, (*record)[2], 12, error);
+    if (sub == nullptr)
+    {
+      return false;
+    }
+    settings.name = SettingsRead::field(bodyheatfluxsphere->name_data, (*sub)[10], 1, error);
+    settings.loadType = "BodyHeatfluxSphere";
+    settings.modelChange = (*sub)[11] == 1 ? "add" : ((*sub)[11] == 2 ? "remove" : "off");
+    settings.operation = (*sub)[1] == 1 ? "new" : "mod";
+    settings.curve = SettingsRead::optional_id((*sub)[2]);
+    settings.vertex = SettingsRead::optional_id((*sub)[3]);
+    settings.direction = SettingsRead::field(bodyheatfluxsphere->direction_data, (*sub)[5], 1, error) + " " + SettingsRead::field(bodyheatfluxsphere->direction_data, (*sub)[5], 2, error) + " " + SettingsRead::field(bodyheatfluxsphere->direction_data, (*sub)[5], 3, error);
+    settings.timeBegin = SettingsRead::field(bodyheatfluxsphere->time_data, (*sub)[7], 1, error);
+    settings.timeEnd = SettingsRead::field(bodyheatfluxsphere->time_data, (*sub)[7], 2, error);
+    for (const auto& entry : bodyheatfluxsphere->fire_ray_surface_data)
+    {
+      if (entry.size() >= 2 && entry[0] == (*sub)[4])
+      {
+        if (!settings.surfaces.empty())
+        {
+          settings.surfaces += " ";
+        }
+        settings.surfaces += SettingsRead::text(entry[1]);
+      }
+    }
+    const auto radii = SettingsRead::table(bodyheatfluxsphere->radius_data, (*sub)[8], 1, error);
+    const auto magnitudes = SettingsRead::table(bodyheatfluxsphere->magnitude_data, (*sub)[6], 1, error);
+    const auto depths = SettingsRead::table(bodyheatfluxsphere->depth_data, (*sub)[9], 1, error);
+    if (radii.size() != magnitudes.size() || radii.size() != depths.size())
+    {
+      error = "Trajectory sample arrays have inconsistent lengths.";
+      return false;
+    }
+    for (std::size_t index = 0; index < radii.size(); ++index)
+    {
+      settings.samples.push_back({radii[index][0], depths[index][0], magnitudes[index][0]});
+    }
+  }
+  else
+  {
+    error = "Trajectory subtype data is unavailable.";
+    return false;
+  }
+
+  if (!error.empty())
+  {
+    settings = {};
+    return false;
+  }
+
+  return true;
 }

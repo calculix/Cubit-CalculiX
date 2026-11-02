@@ -1,4 +1,8 @@
 target_sources(calculix_gui PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/MaterialCardPresentation.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/MaterialCardPresentation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/MaterialPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/MaterialPropertiesWidget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/MaterialManagement.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/MaterialManagement.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/MaterialManagementCompressionOnlyCard.cpp

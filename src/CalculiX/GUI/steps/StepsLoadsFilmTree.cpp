@@ -1,3 +1,6 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include "StepsTree.hpp"
+#include "GUI/loads/LoadsFilmTree.hpp"
 #include "StepsLoadsFilmTree.hpp"
 #include <string>
 #include <vector>
@@ -109,6 +112,8 @@ void StepsLoadsFilmTree::addLoad(QString load_id, QString load_name)
   LoadTreeChild->setText(0, load_name);
     
   LoadTreeChild->setText(1, load_id);
+  LoadTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Film));
+  LoadTreeChild->setData(0, PropertyIdRole, load_id.toInt());
 
   LoadTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("StepsLoadsFilmTree"));
 
@@ -188,8 +193,20 @@ void StepsLoadsFilmTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Film", host, "CCXLoadsFilmCreate");
-  addPanelAction(menu, "Modify Film", host, "CCXLoadsFilmModify");
-  addPanelAction(menu, "Delete Film", host, "CCXLoadsFilmDelete");
+  {
+    auto* action = menu.addAction("Modify Film");
+    QObject::connect(action, &QAction::triggered, &menu, [entityId, &host]()
+    {
+      LoadsFilmTree::open_modify(entityId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Film");
+    QObject::connect(action, &QAction::triggered, &menu, [entityId, &host]()
+    {
+      LoadsFilmTree::open_delete(entityId, host);
+    });
+  }
   {
     QAction *action = menu.addAction("Steps Management");
     ModelTree *hostPtr = &host;
@@ -205,4 +222,23 @@ void StepsLoadsFilmTree::populateContextMenu(
     });
   }
   addCommandAction(menu, "Draw Film", QString("ccx draw load film ") + QString::number(entityId));
+}
+
+
+void StepsLoadsFilmTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (host.myStepsManagement == nullptr)
+  {
+    return;
+  }
+  for (auto* ancestor = item; ancestor != nullptr; ancestor = ancestor->parent())
+  {
+    if (dynamic_cast<StepsTree*>(ancestor->parent()) != nullptr)
+    {
+      host.myStepsManagement->setStep(ancestor->text(1));
+      host.myStepsManagement->show();
+      host.myStepsManagement->raise();
+      return;
+    }
+  }
 }

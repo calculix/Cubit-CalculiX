@@ -1,12 +1,15 @@
 #ifndef COREPHYSICALCONSTANTS_HPP
 #define COREPHYSICALCONSTANTS_HPP
 
+#include "PhysicalConstantsSettings.hpp"
+
 #include <vector>
 #include <string>
 class CorePhysicalConstants
 {
 
 public:
+  bool get_settings(int id, PhysicalConstantsSettings& settings, std::string& error) const;
   CorePhysicalConstants();
   ~CorePhysicalConstants();
 

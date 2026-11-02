@@ -1,3 +1,9 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include <QAction>
+#include "DampingDeletePanel.hpp"
+#include "DampingModifyPanel.hpp"
+#include "CubitMessage.hpp"
+#include "TaskPanel.hpp"
 #include "DampingTree.hpp"
 #include <string>
 #include <vector>
@@ -26,6 +32,8 @@ void DampingTree::initialize()
 
   QTreeWidgetItem::setText(0,"Damping");
   this->setIcon(0,ccx_gui_resources_iface.getIcon2("DampingTree"));
+  setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Damping));
+  setData(0, PropertyIdRole, 0);
   isInitialized = true;
 }
 
@@ -105,6 +113,8 @@ void DampingTree::addDamping(QString damping_id, QString name)
   dampingTreeChild->setText(0, name);
     
   dampingTreeChild->setText(1, damping_id);
+  dampingTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Damping));
+  dampingTreeChild->setData(0, PropertyIdRole, damping_id.toInt());
 
   dampingTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("DampingTree"));
 
@@ -146,9 +156,21 @@ void DampingTree::populateContextMenu(
     return;
   }
 
+  int selectedId = 0;
+  if (clickedItem != this && !readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
+
   if (clickedItem == this)
   {
-    addPanelAction(menu, "Modify Damping", host, "CCXDampingModify");
+    {
+      auto* action = menu.addAction("Modify Damping");
+      QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+      {
+        DampingTree::open_modify(0, host);
+      });
+    }
     return;
   }
 
@@ -157,6 +179,67 @@ void DampingTree::populateContextMenu(
     return;
   }
 
-  addPanelAction(menu, "Modify Damping", host, "CCXDampingModify");
-  addPanelAction(menu, "Delete Damping", host, "CCXDampingDelete");
+  {
+    auto* action = menu.addAction("Modify Damping");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      DampingTree::open_modify(0, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Damping");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      DampingTree::open_delete(selectedId, host);
+    });
+  }
+}
+
+
+void DampingTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+
+  host.setWidgetInCmdPanelMarker("CCXDampingModify");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<DampingModifyPanel*>(widget))
+    {
+      panel->setDamping(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Damping modify panel.\n");
+}
+
+void DampingTree::open_delete(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXDampingDelete");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<DampingDeletePanel*>(widget))
+    {
+      panel->selectCoefficient(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Damping delete panel.\n");
+}
+
+void DampingTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (item == nullptr)
+  {
+    return;
+  }
+  open_modify(0, host);
 }

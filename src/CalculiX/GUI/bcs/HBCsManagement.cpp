@@ -151,7 +151,7 @@ void HBCsManagement::clear()
 
 void HBCsManagement::update()
 {
-  this->setHBC(0);
+  this->setHBC(QStringLiteral("0"));
 }
 
 void HBCsManagement::addHBC(QString hbc_id, QString hbc_name)
@@ -464,4 +464,53 @@ void HBCsManagement::available_doubleclicked(QTreeWidgetItem* item, int column)
   //log = " doubleclicked available \n";
   //PRINT_INFO("%s", log.c_str());
   on_pushButton_add_clicked(true);
+}
+
+void HBCsManagement::selectDisplacement(int bc_id)
+{
+  setHBC(QStringLiteral("0"));
+  if (current_hbc_item == nullptr)
+  {
+    return;
+  }
+  removeItems();
+  createItems(current_hbc_item);
+  tree_used->clearSelection();
+  tree_used->setCurrentItem(nullptr);
+  for (int index = 0; index < tree_used_bcs_displacements->childCount(); ++index)
+  {
+    auto* item = tree_used_bcs_displacements->child(index);
+    if (item->text(1).toInt() == bc_id)
+    {
+      tree_used_bcs_displacements->setExpanded(true);
+      tree_used->setCurrentItem(item);
+      tree_used->scrollToItem(item);
+      return;
+    }
+  }
+}
+
+
+void HBCsManagement::selectTemperature(int bc_id)
+{
+  setHBC(QStringLiteral("0"));
+  if (current_hbc_item == nullptr)
+  {
+    return;
+  }
+  removeItems();
+  createItems(current_hbc_item);
+  tree_used->clearSelection();
+  tree_used->setCurrentItem(nullptr);
+  for (int index = 0; index < tree_used_bcs_temperatures->childCount(); ++index)
+  {
+    auto* item = tree_used_bcs_temperatures->child(index);
+    if (item->text(1).toInt() == bc_id)
+    {
+      tree_used_bcs_temperatures->setExpanded(true);
+      tree_used->setCurrentItem(item);
+      tree_used->scrollToItem(item);
+      return;
+    }
+  }
 }

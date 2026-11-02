@@ -20,6 +20,7 @@ class LoadsCentrifugalDeletePanel : public QWidget
   Q_OBJECT
   
 public:
+  void setCentrifugal(int id);
   explicit LoadsCentrifugalDeletePanel(QWidget *parent = 0);
   ~LoadsCentrifugalDeletePanel();
 

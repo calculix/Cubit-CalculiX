@@ -1,3 +1,9 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include <QAction>
+#include "LoadsGravityDeletePanel.hpp"
+#include "LoadsGravityModifyPanel.hpp"
+#include "CubitMessage.hpp"
+#include "TaskPanel.hpp"
 #include "LoadsGravityTree.hpp"
 #include <string>
 #include <vector>
@@ -105,6 +111,8 @@ void LoadsGravityTree::addLoad(QString load_id, QString load_name)
   LoadTreeChild->setText(0, load_name);
     
   LoadTreeChild->setText(1, load_id);
+  LoadTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Gravity));
+  LoadTreeChild->setData(0, PropertyIdRole, load_id.toInt());
 
   LoadTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("LoadsGravityTree"));
 
@@ -146,6 +154,12 @@ void LoadsGravityTree::populateContextMenu(
     return;
   }
 
+  int selectedId = 0;
+  if (clickedItem != this && !readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
+
   if (clickedItem == this)
   {
     addPanelAction(menu, "Create Gravity", host, "CCXLoadsGravityCreate");
@@ -165,7 +179,84 @@ void LoadsGravityTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Gravity", host, "CCXLoadsGravityCreate");
-  addPanelAction(menu, "Modify Gravity", host, "CCXLoadsGravityModify");
-  addPanelAction(menu, "Delete Gravity", host, "CCXLoadsGravityDelete");
+  {
+    auto* action = menu.addAction("Modify Gravity");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      LoadsGravityTree::open_modify(selectedId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Gravity");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      LoadsGravityTree::open_delete(selectedId, host);
+    });
+  }
   addCommandAction(menu, "Draw Gravity", QString("ccx draw load gravity ") + QString::number(entityId));
+}
+
+
+void LoadsGravityTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+
+  host.setWidgetInCmdPanelMarker("CCXLoadsGravityModify");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<LoadsGravityModifyPanel*>(widget))
+    {
+      panel->setGravity(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Gravity modify panel.\n");
+}
+
+void LoadsGravityTree::open_delete(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXLoadsGravityDelete");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<LoadsGravityDeletePanel*>(widget))
+    {
+      panel->setGravity(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Gravity delete panel.\n");
+}
+
+void LoadsGravityTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (item == nullptr)
+  {
+    return;
+  }
+  if (item == this)
+  {
+    host.setWidgetInCmdPanelMarker("CCXLoadsGravityCreate");
+    return;
+  }
+
+  if (item->parent() != this)
+  {
+    return;
+  }
+
+  int id = -1;
+  if (!readItemId(item, id))
+  {
+    return;
+  }
+  open_modify(id, host);
 }

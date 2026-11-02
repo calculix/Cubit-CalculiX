@@ -1,3 +1,8 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include <QAction>
+#include "CubitMessage.hpp"
+#include "TaskPanel.hpp"
+#include "CCXBlocksElementTypePanel.hpp"
 #include "BlocksTree.hpp"
 
 #include "GUI/application/ModelTree.hpp"
@@ -117,6 +122,8 @@ void BlocksTree::addBlock(QString block_id, QString block_name, QString element_
   }
     
   BlocksTreeChild->setText(1, block_id);
+  BlocksTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Block));
+  BlocksTreeChild->setData(0, PropertyIdRole, block_id.toInt());
   BlocksTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("BlocksTree"));
   this->addChild(BlocksTreeChild);
 }
@@ -167,5 +174,46 @@ void BlocksTree::populateContextMenu(
     return;
   }
 
-  addPanelAction(menu, "Assign CCX Element Type", host, "CCXBlocksModify");
+  int id = -1;
+  if (!readItemId(clickedItem, id))
+  {
+    return;
+  }
+  auto* action = menu.addAction("Assign CCX Element Type");
+  QObject::connect(action, &QAction::triggered, &menu, [id, &host]()
+  {
+    BlocksTree::open_modify(id, host);
+  });
+}
+
+
+void BlocksTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXBlocksModify");
+  if (id < 0)
+  {
+    return;
+  }
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<CCXBlocksElementTypePanel*>(widget))
+    {
+      panel->setBlock(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the CalculiX block panel.\n");
+}
+
+void BlocksTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  int id = -1;
+  if (item == this || readItemId(item, id))
+  {
+    open_modify(id, host);
+  }
 }

@@ -1,12 +1,15 @@
 #ifndef CORECONSTRAINTS_HPP
 #define CORECONSTRAINTS_HPP
 
+#include "ConstraintsSettings.hpp"
+
 #include <vector>
 #include <string>
 class CoreConstraints
 {
 
 public:
+  bool get_settings(int id, ConstraintsSettings& settings, std::string& error) const;
   const std::vector<std::string>* get_constraint_data(int constraint_id);
   std::vector<int> get_constraint_ids() const;
   std::vector<int> get_equation_ids() const;

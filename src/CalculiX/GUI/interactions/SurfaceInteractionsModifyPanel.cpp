@@ -1,3 +1,5 @@
+#include "CubitMessage.hpp"
+#include "Core/interactions/CalculiXInteractionsInterface.hpp"
 #include "SurfaceInteractionsModifyPanel.hpp"
 #include <QString>
 #include "GUI/common/PanelTable.hpp"
@@ -233,6 +235,120 @@ SurfaceInteractionsModifyPanel::~SurfaceInteractionsModifyPanel()
 
 void SurfaceInteractionsModifyPanel::on_pushButton_apply_clicked(bool)
 {
+  bool changed = false;
+  changed = changed || fieldChanged("lineEdit_2", lineEdit_2->text());
+  changed = changed || fieldChanged("comboBox_1", comboBox_1->currentText());
+  changed = changed || fieldChanged("lineEdit_4", lineEdit_4->text());
+  changed = changed || fieldChanged("lineEdit_5", lineEdit_5->text());
+  changed = changed || fieldChanged("lineEdit_6", lineEdit_6->text());
+  changed = changed || fieldChanged("lineEdit_7", lineEdit_7->text());
+  changed = changed || fieldChanged("lineEdit_8", lineEdit_8->text());
+  changed = changed || fieldChanged("lineEdit_9", lineEdit_9->text());
+  changed = changed || fieldChanged("lineEdit_10", lineEdit_10->text());
+  changed = changed || fieldChanged("lineEdit_11", lineEdit_11->text());
+  changed = changed || fieldChanged("lineEdit_12", lineEdit_12->text());
+  changed = changed || fieldChanged("lineEdit_13", lineEdit_13->text());
+  changed = changed || fieldChanged("lineEdit_14", lineEdit_14->text());
+  changed = changed || fieldChanged("widget_3", widget_3->snapshot());
+  changed = changed || fieldChanged("widget_5", widget_5->snapshot());
+  if (loadedEntityId >= 0 && !changed && lineEdit_1->text().trimmed() == QString::number(loadedEntityId))
+  {
+    PRINT_INFO("No settings were changed.\n");
+    return;
+  }
+
+  if (loadedEntityId >= 0)
+  {
+    if (lineEdit_1->text().trimmed() != QString::number(loadedEntityId))
+    {
+      bool valid = false;
+      const int requestedId = lineEdit_1->text().trimmed().toInt(&valid);
+
+      if (valid)
+      {
+        setSurfaceInteraction(requestedId);
+      }
+      else
+      {
+        PRINT_ERROR("Select a single entity ID before reloading this panel.\n");
+      }
+
+      return;
+    }
+  }
+
+  if (loadedEntityId >= 0 && lineEdit_2->isEnabled() && !originalValues.value("lineEdit_2").isEmpty() && lineEdit_2->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Name; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_4->isEnabled() && !originalValues.value("lineEdit_4").isEmpty() && lineEdit_4->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear c0; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_5->isEnabled() && !originalValues.value("lineEdit_5").isEmpty() && lineEdit_5->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear p0; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_6->isEnabled() && !originalValues.value("lineEdit_6").isEmpty() && lineEdit_6->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear slope K; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_7->isEnabled() && !originalValues.value("lineEdit_7").isEmpty() && lineEdit_7->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear sigmaINF; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_8->isEnabled() && !originalValues.value("lineEdit_8").isEmpty() && lineEdit_8->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear c0; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_9->isEnabled() && !originalValues.value("lineEdit_9").isEmpty() && lineEdit_9->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear slope K; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_10->isEnabled() && !originalValues.value("lineEdit_10").isEmpty() && lineEdit_10->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear heat conversion \nfactor; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_11->isEnabled() && !originalValues.value("lineEdit_11").isEmpty() && lineEdit_11->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear surface weighting \nfactor; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_12->isEnabled() && !originalValues.value("lineEdit_12").isEmpty() && lineEdit_12->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear differential \ntangential velocity; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_13->isEnabled() && !originalValues.value("lineEdit_13").isEmpty() && lineEdit_13->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear mu; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_14->isEnabled() && !originalValues.value("lineEdit_14").isEmpty() && lineEdit_14->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear lambda; use the supported reset value.\n");
+    return;
+  }
+
+  if (loadedEntityId >= 0 && !originalValues.value("widget_3").isEmpty() && widget_3->snapshot().isEmpty())
+  {
+    PRINT_ERROR("The stored table cannot be cleared with an empty Modify command.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && !originalValues.value("widget_5").isEmpty() && widget_5->snapshot().isEmpty())
+  {
+    PRINT_ERROR("The stored table cannot be cleared with an empty Modify command.\n");
+    return;
+  }
+
   QStringList commands;
   QString command = "";
 
@@ -240,113 +356,126 @@ void SurfaceInteractionsModifyPanel::on_pushButton_apply_clicked(bool)
   {
     command.append("ccx modify surfaceinteraction " + lineEdit_1->text());
 
-    if (lineEdit_2->text()!="")
+    if (lineEdit_2->text()!="" && fieldChanged("lineEdit_2", lineEdit_2->text()))
     {
       command.append(" name \"" + lineEdit_2->text() + "\"");
       commands.push_back(command);
       command = "ccx modify surfaceinteraction " + lineEdit_1->text();
     }
     
-    if (comboBox_1->currentIndex()==0)
+    if (comboBox_1->currentIndex() == 0 && (
+      fieldChanged("comboBox_1", comboBox_1->currentText()) ||
+      fieldChanged("lineEdit_4", lineEdit_4->text()) ||
+      fieldChanged("lineEdit_5", lineEdit_5->text())))
     {
       command.append(" exponential");
-      if (lineEdit_4->text()!="")
+      if (lineEdit_4->text()!="" && fieldChanged("lineEdit_4", lineEdit_4->text()))
       {
         command.append(" c0 " + lineEdit_4->text());
       }
-      if (lineEdit_5->text()!="")
+      if (lineEdit_5->text()!="" && fieldChanged("lineEdit_5", lineEdit_5->text()))
       {
         command.append(" p0 " + lineEdit_5->text());
       }
-    }else if (comboBox_1->currentIndex()==1)
+    }else if (comboBox_1->currentIndex() == 1 && (
+      fieldChanged("comboBox_1", comboBox_1->currentText()) ||
+      fieldChanged("lineEdit_6", lineEdit_6->text()) ||
+      fieldChanged("lineEdit_7", lineEdit_7->text()) ||
+      fieldChanged("lineEdit_8", lineEdit_8->text())))
     {
       command.append(" linear");
-      if (lineEdit_6->text()!="")
+      if (lineEdit_6->text()!="" && fieldChanged("lineEdit_6", lineEdit_6->text()))
       {
         command.append(" slopeK " + lineEdit_6->text());
       }
-      if (lineEdit_7->text()!="")
+      if (lineEdit_7->text()!="" && fieldChanged("lineEdit_7", lineEdit_7->text()))
       {
         command.append(" sigmaINF " + lineEdit_7->text());
       }
-      if (lineEdit_8->text()!="")
+      if (lineEdit_8->text()!="" && fieldChanged("lineEdit_8", lineEdit_8->text()))
       {
         command.append(" c0 " + lineEdit_8->text());
       }
-    }else if (comboBox_1->currentIndex()==2)
+    }else if (comboBox_1->currentIndex() == 2 && (
+      fieldChanged("comboBox_1", comboBox_1->currentText()) ||
+      fieldChanged("widget_3", widget_3->snapshot())))
     {
       command.append(" tabular pressure_overclosure ");
-      matrix = widget_3->getMatrix();
+      QString tableError;
+      if (!widget_3->readMatrix(matrix, tableError))
+      {
+        PRINT_ERROR("%s\n", tableError.toStdString().c_str());
+        return;
+      }
       for (size_t i = 0; i < matrix.size(); i++)
       {
         for (size_t ii = 0; ii < matrix[i].size(); ii++)
         {
-          command.append(QString::number(matrix[i][ii]) + " ");
+          command.append(QString::number(matrix[i][ii], 'g', 17) + " ");
         }
       }
-    }else if (comboBox_1->currentIndex()==3)
+    }else if (comboBox_1->currentIndex() == 3 && (
+      fieldChanged("comboBox_1", comboBox_1->currentText()) ||
+      fieldChanged("lineEdit_9", lineEdit_9->text())))
     {
       command.append(" tied slopeK " + lineEdit_9->text());
-    }else if (comboBox_1->currentIndex()==4)
+    }else if (comboBox_1->currentIndex() == 4 && (
+      fieldChanged("comboBox_1", comboBox_1->currentText()) ||
+      fieldChanged("widget_5", widget_5->snapshot())))
     {
       command.append(" gapconductance conductance_contactpressure_temperature ");
-      matrix = widget_5->getMatrix();
+      QString tableError;
+      if (!widget_5->readMatrix(matrix, tableError))
+      {
+        PRINT_ERROR("%s\n", tableError.toStdString().c_str());
+        return;
+      }
       for (size_t i = 0; i < matrix.size(); i++)
       {
         for (size_t ii = 0; ii < matrix[i].size(); ii++)
         {
-          command.append(QString::number(matrix[i][ii]) + " ");
+          command.append(QString::number(matrix[i][ii], 'g', 17) + " ");
         }
       }
-    }else if (comboBox_1->currentIndex()==5)
+    }else if (comboBox_1->currentIndex() == 5 && (
+      fieldChanged("comboBox_1", comboBox_1->currentText()) ||
+      fieldChanged("lineEdit_10", lineEdit_10->text()) ||
+      fieldChanged("lineEdit_11", lineEdit_11->text()) ||
+      fieldChanged("lineEdit_12", lineEdit_12->text())))
     { 
       command.append(" gapheatgeneration");
-      if (lineEdit_10->text()!="")
+      if (lineEdit_10->text()!="" && fieldChanged("lineEdit_10", lineEdit_10->text()))
       {
         command.append(" heat_conversion_factor " + lineEdit_10->text());
       }
-      if (lineEdit_11->text()!="")
+      if (lineEdit_11->text()!="" && fieldChanged("lineEdit_11", lineEdit_11->text()))
       {
         command.append(" surface_weighing_factor " + lineEdit_11->text());
       }
-      if (lineEdit_12->text()!="")
+      if (lineEdit_12->text()!="" && fieldChanged("lineEdit_12", lineEdit_12->text()))
       {
         command.append(" differential_tangential_velocity " + lineEdit_12->text());
       }
-    }else if (comboBox_1->currentIndex()==6)
+    }else if (comboBox_1->currentIndex() == 6 && (
+      fieldChanged("comboBox_1", comboBox_1->currentText()) ||
+      fieldChanged("lineEdit_13", lineEdit_13->text()) ||
+      fieldChanged("lineEdit_14", lineEdit_14->text())))
     { 
       command.append(" friction");
-      if (lineEdit_13->text()!="")
+      if (lineEdit_13->text()!="" && fieldChanged("lineEdit_13", lineEdit_13->text()))
       {
         command.append(" mu " + lineEdit_13->text());
       }
-      if (lineEdit_14->text()!="")
+      if (lineEdit_14->text()!="" && fieldChanged("lineEdit_14", lineEdit_14->text()))
       {
         command.append(" lambda " + lineEdit_14->text());
       }
     }
   }
   
-  if (command != "")
+  if (!command.isEmpty() && command != "ccx modify surfaceinteraction " + lineEdit_1->text())
   {
     commands.push_back(command);
-    comboBox_1->setCurrentIndex(0);
-    lineEdit_1->setText("");
-    lineEdit_2->setText("");
-    lineEdit_4->setText("");
-    lineEdit_5->setText("");
-    lineEdit_6->setText("");
-    lineEdit_7->setText("");
-    lineEdit_8->setText("");
-    lineEdit_9->setText("");
-    lineEdit_10->setText("");
-    lineEdit_11->setText("");
-    lineEdit_12->setText("");
-    lineEdit_13->setText("");
-    lineEdit_14->setText("");
-    matrix.clear();
-    widget_3->update({"pressure","overclosure"},matrix);
-    widget_5->update({"Conductance","Contact pressure","Temperature"},matrix);
   
   }
   
@@ -386,4 +515,85 @@ void SurfaceInteractionsModifyPanel::comboBox_currentIndexChanged(int index)
   }else if (index==6){
     widget_7->show();
   }  
+}
+
+
+bool SurfaceInteractionsModifyPanel::fieldChanged(const QString& field, const QString& value) const
+{
+  return loadedEntityId < 0 || originalValues.value(field) != value;
+}
+
+bool SurfaceInteractionsModifyPanel::setSurfaceInteraction(int id)
+{
+  loadedEntityId = -1;
+  originalValues.clear();
+  comboBox_1->setCurrentIndex(0);
+  widget_3->setRowCount(0);
+  widget_5->setRowCount(0);
+  pushButton_apply->setEnabled(false);
+  lineEdit_1->clear();
+  lineEdit_2->clear();
+  lineEdit_4->clear();
+  lineEdit_5->clear();
+  lineEdit_6->clear();
+  lineEdit_7->clear();
+  lineEdit_8->clear();
+  lineEdit_9->clear();
+  lineEdit_10->clear();
+  lineEdit_11->clear();
+  lineEdit_12->clear();
+  lineEdit_13->clear();
+  lineEdit_14->clear();
+  CalculiXInteractionsInterface core;
+  SurfaceInteractionsSettings settings;
+  std::string error;
+
+  if (!core.get_surfaceinteraction_settings(id, settings, error))
+  {
+    PRINT_ERROR("Cannot load SurfaceInteraction %d: %s\n", id, error.c_str());
+    return false;
+  }
+  lineEdit_1->setText(QString::number(settings.id));
+  lineEdit_2->setText(QString::fromStdString(settings.name));
+  const QString comboBox_1Value = QString::fromStdString(settings.behavior);
+  int comboBox_1Index = comboBox_1->findText(comboBox_1Value, Qt::MatchFixedString);
+  if (comboBox_1Index < 0 && !comboBox_1Value.isEmpty())
+  {
+    comboBox_1->addItem(comboBox_1Value);
+    comboBox_1Index = comboBox_1->count() - 1;
+  }
+  comboBox_1->setCurrentIndex(qMax(0, comboBox_1Index));
+  lineEdit_4->setText(QString::fromStdString(settings.c0));
+  lineEdit_5->setText(QString::fromStdString(settings.p0));
+  lineEdit_6->setText(QString::fromStdString(settings.slope));
+  lineEdit_7->setText(QString::fromStdString(settings.sigma));
+  lineEdit_8->setText(QString::fromStdString(settings.linearC0));
+  lineEdit_9->setText(QString::fromStdString(settings.tiedSlope));
+  lineEdit_10->setText(QString::fromStdString(settings.conversion));
+  lineEdit_11->setText(QString::fromStdString(settings.weight));
+  lineEdit_12->setText(QString::fromStdString(settings.velocity));
+  lineEdit_13->setText(QString::fromStdString(settings.mu));
+  lineEdit_14->setText(QString::fromStdString(settings.lambdaValue));
+
+  widget_3->update({"pressure", "overclosure"}, settings.pressureOverclosure);
+  widget_5->update({"Conductance", "Contact pressure", "Temperature"}, settings.conductance);
+  originalValues.insert("lineEdit_1", lineEdit_1->text());
+  originalValues.insert("lineEdit_2", lineEdit_2->text());
+  originalValues.insert("comboBox_1", comboBox_1->currentText());
+  originalValues.insert("lineEdit_4", lineEdit_4->text());
+  originalValues.insert("lineEdit_5", lineEdit_5->text());
+  originalValues.insert("lineEdit_6", lineEdit_6->text());
+  originalValues.insert("lineEdit_7", lineEdit_7->text());
+  originalValues.insert("lineEdit_8", lineEdit_8->text());
+  originalValues.insert("lineEdit_9", lineEdit_9->text());
+  originalValues.insert("lineEdit_10", lineEdit_10->text());
+  originalValues.insert("lineEdit_11", lineEdit_11->text());
+  originalValues.insert("lineEdit_12", lineEdit_12->text());
+  originalValues.insert("lineEdit_13", lineEdit_13->text());
+  originalValues.insert("lineEdit_14", lineEdit_14->text());
+  originalValues.insert("widget_3", widget_3->snapshot());
+  originalValues.insert("widget_5", widget_5->snapshot());
+  loadedEntityId = id;
+  pushButton_apply->setEnabled(true);
+  return true;
 }

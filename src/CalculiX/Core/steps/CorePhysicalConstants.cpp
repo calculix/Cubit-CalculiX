@@ -1,3 +1,4 @@
+#include "Core/application/SettingsRead.hpp"
 #include "Core/steps/CorePhysicalConstants.hpp"
 #include <string>
 #include <vector>
@@ -145,4 +146,23 @@ std::vector<std::vector<std::string>> CorePhysicalConstants::get_tree_data() con
     {"2", "STEFAN BOLTZMANN = " + physicalconstants_data[1]},
     {"3", "NEWTON GRAVITY = " + physicalconstants_data[2]}
   };
+}
+
+
+bool CorePhysicalConstants::get_settings(int id, PhysicalConstantsSettings& settings, std::string& error) const
+{
+  settings = {};
+  error.clear();
+  settings.id = id;
+  settings.absoluteZero = physicalconstants_data.size() > 0 ? physicalconstants_data[0] : std::string();
+  settings.stefanBoltzmann = physicalconstants_data.size() > 1 ? physicalconstants_data[1] : std::string();
+  settings.newtonGravity = physicalconstants_data.size() > 2 ? physicalconstants_data[2] : std::string();
+
+  if (!error.empty())
+  {
+    settings = {};
+    return false;
+  }
+
+  return true;
 }

@@ -71,3 +71,15 @@ std::vector<std::vector<std::string>> CalculiXSectionsInterface::get_orientation
 { 
   return CoreSectionsTreeData::get_orientations_tree_data(*ccx_core.orientations);
 }
+
+
+bool CalculiXSectionsInterface::get_section_settings(int id, SectionsSettings& settings, std::string& error)
+{
+  return ccx_core.sections->get_settings(id, settings, error);
+}
+
+
+bool CalculiXSectionsInterface::get_orientation_settings(int id, OrientationsSettings& settings, std::string& error)
+{
+  return ccx_core.orientations->get_settings(id, settings, error);
+}

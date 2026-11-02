@@ -8,11 +8,11 @@ class HDF5Tool;
 class CoreStepSettingsPersistence
 {
 public:
-  static void read(HDF5Tool& file, CoreDamping& damping);
-  static void write(HDF5Tool& file, const CoreDamping& damping);
+  static bool read(HDF5Tool& file, CoreDamping& damping);
+  static bool write(HDF5Tool& file, const CoreDamping& damping);
 
-  static void read(HDF5Tool& file, CorePhysicalConstants& constants);
-  static void write(HDF5Tool& file, const CorePhysicalConstants& constants);
+  static bool read(HDF5Tool& file, CorePhysicalConstants& constants);
+  static bool write(HDF5Tool& file, const CorePhysicalConstants& constants);
 };
 
 #endif

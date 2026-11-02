@@ -1,3 +1,9 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include <QAction>
+#include "SurfaceInteractionsDeletePanel.hpp"
+#include "SurfaceInteractionsModifyPanel.hpp"
+#include "CubitMessage.hpp"
+#include "TaskPanel.hpp"
 #include "SurfaceInteractionsTree.hpp"
 
 #include "GUI/application/ModelTree.hpp"
@@ -106,6 +112,8 @@ void SurfaceInteractionsTree::addSurfaceInteraction(QString surfaceinteraction_i
   SurfaceInteractionTreeChild->setText(0, surfaceinteraction_name);
     
   SurfaceInteractionTreeChild->setText(1, surfaceinteraction_id);
+  SurfaceInteractionTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::SurfaceInteraction));
+  SurfaceInteractionTreeChild->setData(0, PropertyIdRole, surfaceinteraction_id.toInt());
 
   SurfaceInteractionTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("SurfaceInteractionsTree"));
 
@@ -147,6 +155,12 @@ void SurfaceInteractionsTree::populateContextMenu(
     return;
   }
 
+  int selectedId = 0;
+  if (clickedItem != this && !readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
+
   if (clickedItem == this)
   {
     addPanelAction(menu, "Create Surface Interaction", host, "CCXSurfaceInteractionsCreate");
@@ -159,6 +173,83 @@ void SurfaceInteractionsTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Surface Interaction", host, "CCXSurfaceInteractionsCreate");
-  addPanelAction(menu, "Modify Surface Interaction", host, "CCXSurfaceInteractionsModify");
-  addPanelAction(menu, "Delete Surface Interaction", host, "CCXSurfaceInteractionsDelete");
+  {
+    auto* action = menu.addAction("Modify Surface Interaction");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      SurfaceInteractionsTree::open_modify(selectedId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Surface Interaction");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      SurfaceInteractionsTree::open_delete(selectedId, host);
+    });
+  }
+}
+
+
+void SurfaceInteractionsTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+
+  host.setWidgetInCmdPanelMarker("CCXSurfaceInteractionsModify");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<SurfaceInteractionsModifyPanel*>(widget))
+    {
+      panel->setSurfaceInteraction(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the SurfaceInteraction modify panel.\n");
+}
+
+void SurfaceInteractionsTree::open_delete(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXSurfaceInteractionsDelete");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<SurfaceInteractionsDeletePanel*>(widget))
+    {
+      panel->setSurfaceInteraction(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the SurfaceInteraction delete panel.\n");
+}
+
+void SurfaceInteractionsTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (item == nullptr)
+  {
+    return;
+  }
+  if (item == this)
+  {
+    host.setWidgetInCmdPanelMarker("CCXSurfaceInteractionsCreate");
+    return;
+  }
+
+  if (item->parent() != this)
+  {
+    return;
+  }
+
+  int id = -1;
+  if (!readItemId(item, id))
+  {
+    return;
+  }
+  open_modify(id, host);
 }

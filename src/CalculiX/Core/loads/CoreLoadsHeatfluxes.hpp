@@ -1,12 +1,15 @@
 #ifndef CORELOADSHEATFLUXES_HPP
 #define CORELOADSHEATFLUXES_HPP
 
+#include "LoadsHeatfluxesSettings.hpp"
+
 #include <vector>
 #include <string>
 class CoreLoadsHeatfluxes
 {
 
 public:
+  bool get_settings(int id, LoadsHeatfluxesSettings& settings, std::string& error) const;
   std::vector<int> get_load_ids() const;
   CoreLoadsHeatfluxes();
   ~CoreLoadsHeatfluxes();

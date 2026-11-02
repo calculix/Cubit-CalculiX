@@ -100,3 +100,9 @@ std::vector<std::vector<std::string>> CalculiXJobsInterface::get_jobs_tree_data(
 { 
   return ccx_core.jobs->get_tree_data();
 }
+
+
+bool CalculiXJobsInterface::get_job_settings(int id, JobsSettings& settings, std::string& error)
+{
+  return ccx_core.jobs->get_settings(id, settings, error);
+}

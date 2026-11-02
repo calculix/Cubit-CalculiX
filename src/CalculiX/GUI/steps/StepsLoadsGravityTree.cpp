@@ -1,3 +1,6 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include "StepsTree.hpp"
+#include "GUI/loads/LoadsGravityTree.hpp"
 #include "StepsLoadsGravityTree.hpp"
 #include <string>
 #include <vector>
@@ -109,6 +112,8 @@ void StepsLoadsGravityTree::addLoad(QString load_id, QString load_name)
   LoadTreeChild->setText(0, load_name);
     
   LoadTreeChild->setText(1, load_id);
+  LoadTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Gravity));
+  LoadTreeChild->setData(0, PropertyIdRole, load_id.toInt());
 
   LoadTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("StepsLoadsGravityTree"));
 
@@ -188,8 +193,20 @@ void StepsLoadsGravityTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Gravity", host, "CCXLoadsGravityCreate");
-  addPanelAction(menu, "Modify Gravity", host, "CCXLoadsGravityModify");
-  addPanelAction(menu, "Delete Gravity", host, "CCXLoadsGravityDelete");
+  {
+    auto* action = menu.addAction("Modify Gravity");
+    QObject::connect(action, &QAction::triggered, &menu, [entityId, &host]()
+    {
+      LoadsGravityTree::open_modify(entityId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Gravity");
+    QObject::connect(action, &QAction::triggered, &menu, [entityId, &host]()
+    {
+      LoadsGravityTree::open_delete(entityId, host);
+    });
+  }
   {
     QAction *action = menu.addAction("Steps Management");
     ModelTree *hostPtr = &host;
@@ -205,4 +222,23 @@ void StepsLoadsGravityTree::populateContextMenu(
     });
   }
   addCommandAction(menu, "Draw Gravity", QString("ccx draw load gravity ") + QString::number(entityId));
+}
+
+
+void StepsLoadsGravityTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (host.myStepsManagement == nullptr)
+  {
+    return;
+  }
+  for (auto* ancestor = item; ancestor != nullptr; ancestor = ancestor->parent())
+  {
+    if (dynamic_cast<StepsTree*>(ancestor->parent()) != nullptr)
+    {
+      host.myStepsManagement->setStep(ancestor->text(1));
+      host.myStepsManagement->show();
+      host.myStepsManagement->raise();
+      return;
+    }
+  }
 }

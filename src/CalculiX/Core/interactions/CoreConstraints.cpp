@@ -1,3 +1,4 @@
+#include "Core/application/SettingsRead.hpp"
 #include "Core/interactions/CoreConstraints.hpp"
 #include "Core/application/CoreIdSelection.hpp"
 #include <algorithm>
@@ -1038,4 +1039,65 @@ std::vector<int> CoreConstraints::get_equationgroup_ids() const
 std::vector<int> CoreConstraints::get_constraint_ids() const
 {
   return CoreIdSelection::collect_ids(constraints_data);
+}
+
+
+bool CoreConstraints::get_settings(int id, ConstraintsSettings& settings, std::string& error) const
+{
+  settings = {};
+  error.clear();
+  const auto* record = SettingsRead::row(constraints_data, id, 3, error);
+
+  if (record == nullptr)
+  {
+    return false;
+  }
+
+  settings.id = id;
+  settings.type = (*record)[1];
+  const std::vector<std::string>* detail = nullptr;
+  switch (settings.type)
+  {
+    case 1: detail = SettingsRead::row(rigidbody_constraint_data, (*record)[2], 5, error); break;
+    case 2: detail = SettingsRead::row(tie_constraint_data, (*record)[2], 5, error); break;
+    case 3: detail = SettingsRead::row(equation_constraint_data, (*record)[2], 2, error); break;
+    case 4: detail = SettingsRead::row(equation_group_constraint_data, (*record)[2], 2, error); break;
+    default: error = "Unknown constraint type."; break;
+  }
+  if (detail == nullptr)
+  {
+    return false;
+  }
+  settings.name = settings.type == 1 ? std::string() : (*detail)[1];
+  settings.block = settings.type == 1 && (*detail)[1] == "2" ? (*detail)[2] : std::string();
+  settings.nodeset = settings.type == 1 && (*detail)[1] == "1" ? (*detail)[2] : std::string();
+  settings.reference = settings.type == 1 ? (*detail)[3] : std::string();
+  settings.rotation = settings.type == 1 ? (*detail)[4] : std::string();
+  settings.master = settings.type == 2 ? (*detail)[2] : std::string();
+  settings.slave = settings.type == 2 ? (*detail)[3] : std::string();
+  settings.tolerance = settings.type == 2 ? (*detail)[4] : std::string();
+
+  if (settings.type == 3)
+  {
+    for (const auto& term : equation_data)
+    {
+      if (term.size() >= 4 && SettingsRead::text(term[0]) == std::to_string((*record)[2]))
+      {
+        settings.terms.push_back({term[1], term[2], term[3]});
+      }
+    }
+  }
+
+  if (settings.type == 4)
+  {
+    settings.equationPairs = SettingsRead::table(equation_group_data, (*record)[2], 3, error);
+  }
+
+  if (!error.empty())
+  {
+    settings = {};
+    return false;
+  }
+
+  return true;
 }

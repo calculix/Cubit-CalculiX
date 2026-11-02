@@ -64,7 +64,6 @@ void OrientationsDeletePanel::on_pushButton_apply_clicked(bool)
   if (command != "")
   {
     commands.push_back(command);
-    lineEdit_1->setText("");
   }
   
   for (size_t i = 0; i < commands.size(); i++)
@@ -72,4 +71,9 @@ void OrientationsDeletePanel::on_pushButton_apply_clicked(bool)
     //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
     GuiSendCmd::gui_cmd(commands[int(i)]);
   }
+}
+
+void OrientationsDeletePanel::setOrientation(int id)
+{
+  lineEdit_1->setText(QString::number(id));
 }

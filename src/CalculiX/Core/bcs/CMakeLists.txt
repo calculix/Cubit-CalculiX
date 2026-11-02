@@ -1,4 +1,6 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/BCsDisplacementsSettings.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BCsTemperaturesSettings.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreBCs.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreBCsDisplacements.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreBCsDisplacements.hpp

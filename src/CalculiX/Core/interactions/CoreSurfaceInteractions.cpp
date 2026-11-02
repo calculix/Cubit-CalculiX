@@ -1,3 +1,4 @@
+#include "Core/application/SettingsRead.hpp"
 #include "Core/interactions/CoreSurfaceInteractions.hpp"
 #include "Core/application/CoreIdSelection.hpp"
 #include <string>
@@ -921,4 +922,47 @@ bool CoreSurfaceInteractions::check_surfaceinteraction_exists(int surfaceinterac
 std::vector<int> CoreSurfaceInteractions::get_surfaceinteraction_ids() const
 {
   return CoreIdSelection::collect_ids(surfaceinteractions_data);
+}
+
+
+bool CoreSurfaceInteractions::get_settings(int id, SurfaceInteractionsSettings& settings, std::string& error) const
+{
+  settings = {};
+  error.clear();
+  const auto* record = SettingsRead::row(surfaceinteractions_data, id, 7, error);
+
+  if (record == nullptr)
+  {
+    return false;
+  }
+
+  settings.id = id;
+  settings.type = (*record)[2];
+  settings.name = SettingsRead::field(surfaceinteraction_name_data, (*record)[1], 1, error);
+  settings.behavior = (*record)[2] == 2 ? "Linear" : ((*record)[2] == 3 ? "Tabular" : ((*record)[2] == 4 ? "Tied" : "Exponential"));
+  settings.c0 = (*record)[2] == 1 ? SettingsRead::field(exponential_surfacebehavior_data, (*record)[3], 1, error) : std::string();
+  settings.p0 = (*record)[2] == 1 ? SettingsRead::field(exponential_surfacebehavior_data, (*record)[3], 2, error) : std::string();
+  settings.slope = (*record)[2] == 2 ? SettingsRead::field(linear_surfacebehavior_data, (*record)[3], 1, error) : std::string();
+  settings.sigma = (*record)[2] == 2 ? SettingsRead::field(linear_surfacebehavior_data, (*record)[3], 2, error) : std::string();
+  settings.linearC0 = (*record)[2] == 2 ? SettingsRead::field(linear_surfacebehavior_data, (*record)[3], 3, error) : std::string();
+  settings.tiedSlope = (*record)[2] == 4 ? SettingsRead::field(tied_surfacebehavior_data, (*record)[3], 1, error) : std::string();
+  settings.conversion = SettingsRead::field(gap_heat_generation_data, (*record)[5], 1, error);
+  settings.weight = SettingsRead::field(gap_heat_generation_data, (*record)[5], 2, error);
+  settings.velocity = SettingsRead::field(gap_heat_generation_data, (*record)[5], 3, error);
+  settings.mu = SettingsRead::field(friction_data, (*record)[6], 1, error);
+  settings.lambdaValue = SettingsRead::field(friction_data, (*record)[6], 2, error);
+
+  if (settings.type == 3)
+  {
+    settings.pressureOverclosure = SettingsRead::table(tabular_surfacebehavior_data, (*record)[3], 2, error);
+  }
+  settings.conductance = SettingsRead::table(gap_conductance_data, (*record)[4], 3, error);
+
+  if (!error.empty())
+  {
+    settings = {};
+    return false;
+  }
+
+  return true;
 }

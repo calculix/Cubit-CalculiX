@@ -1,3 +1,9 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include <QAction>
+#include "LoadsSurfaceTractionDeletePanel.hpp"
+#include "LoadsSurfaceTractionModifyPanel.hpp"
+#include "CubitMessage.hpp"
+#include "TaskPanel.hpp"
 #include "LoadsSurfaceTractionTree.hpp"
 #include <string>
 #include <vector>
@@ -105,6 +111,8 @@ void LoadsSurfaceTractionTree::addLoad(QString load_id, QString load_name)
   LoadTreeChild->setText(0, load_name);
     
   LoadTreeChild->setText(1, load_id);
+  LoadTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::SurfaceTraction));
+  LoadTreeChild->setData(0, PropertyIdRole, load_id.toInt());
 
   LoadTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("LoadsSurfaceTractionTree"));
 
@@ -146,6 +154,12 @@ void LoadsSurfaceTractionTree::populateContextMenu(
     return;
   }
 
+  int selectedId = 0;
+  if (clickedItem != this && !readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
+
   if (clickedItem == this)
   {
     addPanelAction(menu, "Create Surface Traction", host, "CCXLoadsSurfaceTractionCreate");
@@ -165,7 +179,84 @@ void LoadsSurfaceTractionTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Surface Traction", host, "CCXLoadsSurfaceTractionCreate");
-  addPanelAction(menu, "Modify Surface Traction", host, "CCXLoadsSurfaceTractionModify");
-  addPanelAction(menu, "Delete Surface Traction", host, "CCXLoadsSurfaceTractionDelete");
+  {
+    auto* action = menu.addAction("Modify Surface Traction");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      LoadsSurfaceTractionTree::open_modify(selectedId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Surface Traction");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      LoadsSurfaceTractionTree::open_delete(selectedId, host);
+    });
+  }
   addCommandAction(menu, "Draw Surface Traction", QString("ccx draw load surfacetraction ") + QString::number(entityId));
+}
+
+
+void LoadsSurfaceTractionTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+
+  host.setWidgetInCmdPanelMarker("CCXLoadsSurfaceTractionModify");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<LoadsSurfaceTractionModifyPanel*>(widget))
+    {
+      panel->setSurfaceTraction(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the SurfaceTraction modify panel.\n");
+}
+
+void LoadsSurfaceTractionTree::open_delete(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXLoadsSurfaceTractionDelete");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<LoadsSurfaceTractionDeletePanel*>(widget))
+    {
+      panel->setSurfaceTraction(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the SurfaceTraction delete panel.\n");
+}
+
+void LoadsSurfaceTractionTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (item == nullptr)
+  {
+    return;
+  }
+  if (item == this)
+  {
+    host.setWidgetInCmdPanelMarker("CCXLoadsSurfaceTractionCreate");
+    return;
+  }
+
+  if (item->parent() != this)
+  {
+    return;
+  }
+
+  int id = -1;
+  if (!readItemId(item, id))
+  {
+    return;
+  }
+  open_modify(id, host);
 }

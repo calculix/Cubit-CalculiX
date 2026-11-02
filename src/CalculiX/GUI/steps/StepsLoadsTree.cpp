@@ -1,3 +1,4 @@
+#include "StepsTree.hpp"
 #include "StepsLoadsTree.hpp"
 #include <QString>
 #include "Core/gui/CalculiXGuiResourcesInterface.hpp"
@@ -137,5 +138,24 @@ void StepsLoadsTree::populateContextMenu(
 
       hostPtr->myStepsManagement->show();
     });
+  }
+}
+
+
+void StepsLoadsTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (host.myStepsManagement == nullptr)
+  {
+    return;
+  }
+  for (auto* ancestor = item; ancestor != nullptr; ancestor = ancestor->parent())
+  {
+    if (dynamic_cast<StepsTree*>(ancestor->parent()) != nullptr)
+    {
+      host.myStepsManagement->setStep(ancestor->text(1));
+      host.myStepsManagement->show();
+      host.myStepsManagement->raise();
+      return;
+    }
   }
 }

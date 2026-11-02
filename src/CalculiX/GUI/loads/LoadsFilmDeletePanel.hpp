@@ -20,6 +20,7 @@ class LoadsFilmDeletePanel : public QWidget
   Q_OBJECT
   
 public:
+  void setFilm(int id);
   explicit LoadsFilmDeletePanel(QWidget *parent = 0);
   ~LoadsFilmDeletePanel();
 

@@ -1,3 +1,11 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include <QAction>
+#include "FieldOutputsDeletePanel.hpp"
+#include "FieldOutputsModifyContactPanel.hpp"
+#include "FieldOutputsModifyElementPanel.hpp"
+#include "FieldOutputsModifyNodePanel.hpp"
+#include "CubitMessage.hpp"
+#include "TaskPanel.hpp"
 #include "FieldOutputsTree.hpp"
 #include <string>
 #include <vector>
@@ -105,6 +113,8 @@ void FieldOutputsTree::addOutput(QString output_id, QString output_name)
   OutputTreeChild->setText(0, output_name);
     
   OutputTreeChild->setText(1, output_id);
+  OutputTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::FieldOutput));
+  OutputTreeChild->setData(0, PropertyIdRole, output_id.toInt());
 
   OutputTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("FieldOutputsTree"));
 
@@ -146,6 +156,12 @@ void FieldOutputsTree::populateContextMenu(
     return;
   }
 
+  int selectedId = 0;
+  if (clickedItem != this && !readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
+
   if (clickedItem == this)
   {
     addPanelAction(menu, "Create Field Output", host, "CCXFieldOutputsCreate");
@@ -158,6 +174,121 @@ void FieldOutputsTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Field Output", host, "CCXFieldOutputsCreate");
-  addPanelAction(menu, "Modify Field Output", host, "CCXFieldOutputsModify");
-  addPanelAction(menu, "Delete Field Output", host, "CCXFieldOutputsDelete");
+  {
+    auto* action = menu.addAction("Modify Field Output");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      FieldOutputsTree::open_modify(selectedId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Field Output");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      FieldOutputsTree::open_delete(selectedId, host);
+    });
+  }
+}
+
+
+void FieldOutputsTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+
+  CalculiXStepsInterface core;
+  FieldOutputsSettings settings;
+  std::string error;
+  if (!core.get_fieldoutput_settings(id, settings, error))
+  {
+    PRINT_ERROR("Cannot open FieldOutput %d: %s\n", id, error.c_str());
+    return;
+  }
+
+  QString marker;
+  switch (settings.type)
+  {
+    case 1: marker = "CCXFieldOutputsModifyNode"; break;
+    case 2: marker = "CCXFieldOutputsModifyElement"; break;
+    case 3: marker = "CCXFieldOutputsModifyContact"; break;
+    default:
+      PRINT_ERROR("This stored type has no modify panel.\n");
+      return;
+  }
+  host.setWidgetInCmdPanelMarker(marker);
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<FieldOutputsModifyNodePanel*>(widget))
+    {
+      if (settings.type == 1)
+      {
+        panel->setFieldOutput(id);
+        return;
+      }
+    }
+    if (auto* panel = dynamic_cast<FieldOutputsModifyElementPanel*>(widget))
+    {
+      if (settings.type == 2)
+      {
+        panel->setFieldOutput(id);
+        return;
+      }
+    }
+    if (auto* panel = dynamic_cast<FieldOutputsModifyContactPanel*>(widget))
+    {
+      if (settings.type == 3)
+      {
+        panel->setFieldOutput(id);
+        return;
+      }
+    }
+  }
+  PRINT_ERROR("Unable to open the FieldOutput modify panel.\n");
+}
+
+void FieldOutputsTree::open_delete(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXFieldOutputsDelete");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<FieldOutputsDeletePanel*>(widget))
+    {
+      panel->setFieldOutput(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the FieldOutput delete panel.\n");
+}
+
+void FieldOutputsTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (item == nullptr)
+  {
+    return;
+  }
+  if (item == this)
+  {
+    host.setWidgetInCmdPanelMarker("CCXFieldOutputsCreate");
+    return;
+  }
+
+  if (item->parent() != this)
+  {
+    return;
+  }
+
+  int id = -1;
+  if (!readItemId(item, id))
+  {
+    return;
+  }
+  open_modify(id, host);
 }

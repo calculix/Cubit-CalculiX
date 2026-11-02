@@ -20,6 +20,7 @@ class LoadsRadiationDeletePanel : public QWidget
   Q_OBJECT
   
 public:
+  void setRadiation(int id);
   explicit LoadsRadiationDeletePanel(QWidget *parent = 0);
   ~LoadsRadiationDeletePanel();
 

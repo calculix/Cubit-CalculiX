@@ -149,6 +149,16 @@ bool CubitWorkspaceHost::dock_allowed(QDockWidget* dock) const
 
 void CubitWorkspaceHost::register_view(const WorkspaceView& view)
 {
+  for (auto* toolbar : view.toolbars)
+  {
+    ownedToolbars.append(toolbar);
+    gui->addToolBarBreak(Qt::TopToolBarArea);
+    gui->addToolBar(Qt::TopToolBarArea, toolbar);
+    toolbar->hide();
+    toolbar->toggleViewAction()->setVisible(false);
+    toolbar->toggleViewAction()->setEnabled(false);
+  }
+
   for (auto* dock : view.docks)
   {
     ownedDocks.append(dock);
@@ -374,6 +384,30 @@ bool CubitWorkspaceHost::apply(const WorkspaceView& view, const QPersistentModel
     }
   }
 
+  activeToolbars.clear();
+  for (auto* toolbar : view.toolbars)
+  {
+    activeToolbars.append(toolbar);
+  }
+  for (const auto& toolbar : ownedToolbars)
+  {
+    if (toolbar == nullptr)
+    {
+      continue;
+    }
+    const bool active = activeToolbars.contains(toolbar);
+    if (active)
+    {
+      // Only our workspace toolbar is moved; native Cubit toolbars remain attached.
+      gui->removeToolBar(toolbar.data());
+      gui->addToolBarBreak(Qt::TopToolBarArea);
+      gui->addToolBar(Qt::TopToolBarArea, toolbar.data());
+    }
+    toolbar->setVisible(active);
+    toolbar->toggleViewAction()->setVisible(active);
+    toolbar->toggleViewAction()->setEnabled(active);
+  }
+
   auto* panel = gui->command_buttons();
 
   for (const auto& item : nativeTabs)
@@ -423,6 +457,16 @@ bool CubitWorkspaceHost::apply(const WorkspaceView& view, const QPersistentModel
 
 void CubitWorkspaceHost::restore_native() noexcept
 {
+  for (const auto& toolbar : ownedToolbars)
+  {
+    if (toolbar != nullptr)
+    {
+      toolbar->hide();
+      toolbar->toggleViewAction()->setVisible(false);
+      toolbar->toggleViewAction()->setEnabled(false);
+    }
+  }
+
   if (!can_access_ui())
   {
     return;

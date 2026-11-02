@@ -1,3 +1,9 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include <QAction>
+#include "CustomLinesDeletePanel.hpp"
+#include "CustomLinesModifyPanel.hpp"
+#include "CubitMessage.hpp"
+#include "TaskPanel.hpp"
 #include "CustomLinesTree.hpp"
 #include <string>
 #include <vector>
@@ -105,6 +111,8 @@ void CustomLinesTree::addCustomLine(QString customline_id, QString customline_na
   CustomLineTreeChild->setText(0, customline_name);
     
   CustomLineTreeChild->setText(1, customline_id);
+  CustomLineTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::CustomLine));
+  CustomLineTreeChild->setData(0, PropertyIdRole, customline_id.toInt());
 
   CustomLineTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("CustomLinesTree"));
 
@@ -146,6 +154,12 @@ void CustomLinesTree::populateContextMenu(
     return;
   }
 
+  int selectedId = 0;
+  if (clickedItem != this && !readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
+
   if (clickedItem == this)
   {
     addPanelAction(menu, "Create Custom Line", host, "CCXCustomLinesCreate");
@@ -158,6 +172,83 @@ void CustomLinesTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Custom Line", host, "CCXCustomLinesCreate");
-  addPanelAction(menu, "Modify Custom Line", host, "CCXCustomLinesModify");
-  addPanelAction(menu, "Delete Custom Line", host, "CCXCustomLinesDelete");
+  {
+    auto* action = menu.addAction("Modify Custom Line");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      CustomLinesTree::open_modify(selectedId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Custom Line");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      CustomLinesTree::open_delete(selectedId, host);
+    });
+  }
+}
+
+
+void CustomLinesTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+
+  host.setWidgetInCmdPanelMarker("CCXCustomLinesModify");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<CustomLinesModifyPanel*>(widget))
+    {
+      panel->setCustomLine(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the CustomLine modify panel.\n");
+}
+
+void CustomLinesTree::open_delete(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXCustomLinesDelete");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<CustomLinesDeletePanel*>(widget))
+    {
+      panel->setCustomLine(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the CustomLine delete panel.\n");
+}
+
+void CustomLinesTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (item == nullptr)
+  {
+    return;
+  }
+  if (item == this)
+  {
+    host.setWidgetInCmdPanelMarker("CCXCustomLinesCreate");
+    return;
+  }
+
+  if (item->parent() != this)
+  {
+    return;
+  }
+
+  int id = -1;
+  if (!readItemId(item, id))
+  {
+    return;
+  }
+  open_modify(id, host);
 }

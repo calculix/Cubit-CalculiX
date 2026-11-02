@@ -327,3 +327,39 @@ std::vector<std::vector<std::string>> CalculiXStepsInterface::get_steps_fieldout
 { 
   return CoreOutputsTreeData::get_steps_fieldoutputs_tree_data(*ccx_core.steps, *ccx_core.fieldoutputs, step_id);
 }
+
+
+bool CalculiXStepsInterface::get_step_settings(int id, StepsSettings& settings, std::string& error)
+{
+  return ccx_core.steps->get_settings(id, settings, error);
+}
+
+
+bool CalculiXStepsInterface::get_historyoutput_settings(int id, HistoryOutputsSettings& settings, std::string& error)
+{
+  return ccx_core.historyoutputs->get_settings(id, settings, error);
+}
+
+
+bool CalculiXStepsInterface::get_fieldoutput_settings(int id, FieldOutputsSettings& settings, std::string& error)
+{
+  return ccx_core.fieldoutputs->get_settings(id, settings, error);
+}
+
+
+bool CalculiXStepsInterface::get_initialcondition_settings(int id, InitialConditionsSettings& settings, std::string& error)
+{
+  return ccx_core.initialconditions->get_settings(id, settings, error);
+}
+
+
+bool CalculiXStepsInterface::get_damping_settings(int id, DampingSettings& settings, std::string& error)
+{
+  return ccx_core.damping->get_settings(id, settings, error);
+}
+
+
+bool CalculiXStepsInterface::get_physicalconstants_settings(int id, PhysicalConstantsSettings& settings, std::string& error)
+{
+  return ccx_core.physicalconstants->get_settings(id, settings, error);
+}

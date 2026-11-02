@@ -1,3 +1,9 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include <QAction>
+#include "LoadsRadiationDeletePanel.hpp"
+#include "LoadsRadiationModifyPanel.hpp"
+#include "CubitMessage.hpp"
+#include "TaskPanel.hpp"
 #include "LoadsRadiationTree.hpp"
 #include <string>
 #include <vector>
@@ -105,6 +111,8 @@ void LoadsRadiationTree::addLoad(QString load_id, QString load_name)
   LoadTreeChild->setText(0, load_name);
     
   LoadTreeChild->setText(1, load_id);
+  LoadTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Radiation));
+  LoadTreeChild->setData(0, PropertyIdRole, load_id.toInt());
 
   LoadTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("LoadsRadiationTree"));
 
@@ -146,6 +154,12 @@ void LoadsRadiationTree::populateContextMenu(
     return;
   }
 
+  int selectedId = 0;
+  if (clickedItem != this && !readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
+
   if (clickedItem == this)
   {
     addPanelAction(menu, "Create Radiation", host, "CCXLoadsRadiationCreate");
@@ -165,7 +179,84 @@ void LoadsRadiationTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Radiation", host, "CCXLoadsRadiationCreate");
-  addPanelAction(menu, "Modify Radiation", host, "CCXLoadsRadiationModify");
-  addPanelAction(menu, "Delete Radiation", host, "CCXLoadsRadiationDelete");
+  {
+    auto* action = menu.addAction("Modify Radiation");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      LoadsRadiationTree::open_modify(selectedId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Radiation");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      LoadsRadiationTree::open_delete(selectedId, host);
+    });
+  }
   addCommandAction(menu, "Draw Radiation", QString("ccx draw load radiation ") + QString::number(entityId));
+}
+
+
+void LoadsRadiationTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+
+  host.setWidgetInCmdPanelMarker("CCXLoadsRadiationModify");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<LoadsRadiationModifyPanel*>(widget))
+    {
+      panel->setRadiation(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Radiation modify panel.\n");
+}
+
+void LoadsRadiationTree::open_delete(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXLoadsRadiationDelete");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<LoadsRadiationDeletePanel*>(widget))
+    {
+      panel->setRadiation(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Radiation delete panel.\n");
+}
+
+void LoadsRadiationTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (item == nullptr)
+  {
+    return;
+  }
+  if (item == this)
+  {
+    host.setWidgetInCmdPanelMarker("CCXLoadsRadiationCreate");
+    return;
+  }
+
+  if (item->parent() != this)
+  {
+    return;
+  }
+
+  int id = -1;
+  if (!readItemId(item, id))
+  {
+    return;
+  }
+  open_modify(id, host);
 }

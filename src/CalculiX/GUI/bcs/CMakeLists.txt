@@ -1,4 +1,10 @@
 target_sources(calculix_gui PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/HBCsPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/HBCsPropertiesWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BCsDisplacementsPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BCsDisplacementsPropertiesWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BCsTemperaturesPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BCsTemperaturesPropertiesWidget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/BCsDisplacementsCreatePanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/BCsDisplacementsCreatePanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/BCsDisplacementsDeletePanel.cpp

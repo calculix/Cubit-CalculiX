@@ -1,3 +1,4 @@
+#include "Core/application/SettingsRead.hpp"
 #include "Core/bcs/CoreBCsDisplacements.hpp"
 #include <string>
 #include <vector>
@@ -696,4 +697,56 @@ std::vector<int> CoreBCsDisplacements::get_bc_ids() const
   }
 
   return ids;
+}
+
+
+bool CoreBCsDisplacements::get_settings(int id, BCsDisplacementsSettings& settings, std::string& error) const
+{
+  settings = {};
+  error.clear();
+  const auto* record = SettingsRead::row(bcs_data, id, 7, error);
+
+  if (record == nullptr)
+  {
+    return false;
+  }
+
+  settings.id = id;
+  settings.name = SettingsRead::field(name_data, (*record)[6], 1, error);
+  settings.amplitude = SettingsRead::optional_id((*record)[2]);
+  settings.timeDelay = SettingsRead::field(time_delay_data, (*record)[3], 1, error);
+  settings.operation = (*record)[1] == 1 ? "new" : "mod";
+  settings.nodeset = SettingsRead::text((*record)[4]);
+  const auto* modes = SettingsRead::row(mode_data, (*record)[5], 7, error);
+  if (modes == nullptr)
+  {
+    return false;
+  }
+  std::string* components[] = {&settings.component1, &settings.component2, &settings.component3, &settings.component4, &settings.component5, &settings.component6};
+  for (std::size_t index = 0; index < 6; ++index)
+  {
+    switch ((*modes)[index + 1])
+    {
+      case 0:
+        *components[index] = "free";
+        break;
+      case 1:
+        *components[index] = SettingsRead::field(displacement_data, (*record)[5], index + 1, error);
+        break;
+      case 2:
+        *components[index] = "FIXED";
+        break;
+      default:
+        error = "Unknown displacement component mode.";
+        break;
+    }
+  }
+
+  if (!error.empty())
+  {
+    settings = {};
+    return false;
+  }
+
+  return true;
 }

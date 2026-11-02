@@ -1,6 +1,10 @@
 project(Cubit-CalculiX_useroptions)
 
 set(UO_SRC
+    ${CMAKE_CURRENT_LIST_DIR}/UserOptionsExport.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/DrawingOptions.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/DrawingOptionsWidget.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/DrawingOptionsWidget.cpp
     ${CMAKE_CURRENT_LIST_DIR}/UserOptions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/UserOptions.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CalculiXConfigFile.cpp

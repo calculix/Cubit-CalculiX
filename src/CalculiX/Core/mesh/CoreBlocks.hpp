@@ -38,6 +38,7 @@ public:
   bool check_block_exists(int block_id);
   std::vector<std::vector<std::string>> get_entities(int block_id);
   bool set_ccx_element_type(int block_id, std::string ccx_element_type);
+  std::vector<std::string> get_compatible_ccx_element_types(const std::string& cubitType) const;
   std::vector<std::string> get_ccx_element_types(); // returns all supported ccx element types ;
   int get_ccx_element_type_id(std::string ccx_element_type); // returns the index for the ccx element type
   int get_cubit_element_type_id(std::string cubit_element_type); // returns the index for the cubit element type

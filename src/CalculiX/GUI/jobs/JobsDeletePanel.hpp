@@ -20,6 +20,7 @@ class JobsDeletePanel : public QWidget
   Q_OBJECT
   
 public:
+  void setJob(int id);
   explicit JobsDeletePanel(QWidget *parent = 0);
   ~JobsDeletePanel();
 

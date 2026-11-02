@@ -1,12 +1,15 @@
 #ifndef COREBCSTEMPERATURES_HPP
 #define COREBCSTEMPERATURES_HPP
 
+#include "BCsTemperaturesSettings.hpp"
+
 #include <vector>
 #include <string>
 class CoreBCsTemperatures
 {
 
 public:
+  bool get_settings(int id, BCsTemperaturesSettings& settings, std::string& error) const;
   std::vector<int> get_bc_ids() const;
   CoreBCsTemperatures();
   ~CoreBCsTemperatures();

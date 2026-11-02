@@ -1,3 +1,6 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include "StepsTree.hpp"
+#include "GUI/steps/HistoryOutputsTree.hpp"
 #include "StepsHistoryOutputsTree.hpp"
 #include <string>
 #include <vector>
@@ -109,6 +112,8 @@ void StepsHistoryOutputsTree::addOutput(QString output_id, QString output_name)
   OutputTreeChild->setText(0, output_name);
     
   OutputTreeChild->setText(1, output_id);
+  OutputTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::HistoryOutput));
+  OutputTreeChild->setData(0, PropertyIdRole, output_id.toInt());
 
   OutputTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("StepsHistoryOutputsTree"));
 
@@ -174,9 +179,27 @@ void StepsHistoryOutputsTree::populateContextMenu(
     return;
   }
 
+  int entityId = -1;
+  if (!readItemId(clickedItem, entityId))
+  {
+    return;
+  }
+
   addPanelAction(menu, "Create History Output", host, "CCXHistoryOutputsCreate");
-  addPanelAction(menu, "Modify History Output", host, "CCXHistoryOutputsModify");
-  addPanelAction(menu, "Delete History Output", host, "CCXHistoryOutputsDelete");
+  {
+    auto* action = menu.addAction("Modify History Output");
+    QObject::connect(action, &QAction::triggered, &menu, [entityId, &host]()
+    {
+      HistoryOutputsTree::open_modify(entityId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete History Output");
+    QObject::connect(action, &QAction::triggered, &menu, [entityId, &host]()
+    {
+      HistoryOutputsTree::open_delete(entityId, host);
+    });
+  }
   {
     QAction *action = menu.addAction("Steps Management");
     ModelTree *hostPtr = &host;
@@ -190,5 +213,24 @@ void StepsHistoryOutputsTree::populateContextMenu(
 
       hostPtr->myStepsManagement->show();
     });
+  }
+}
+
+
+void StepsHistoryOutputsTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (host.myStepsManagement == nullptr)
+  {
+    return;
+  }
+  for (auto* ancestor = item; ancestor != nullptr; ancestor = ancestor->parent())
+  {
+    if (dynamic_cast<StepsTree*>(ancestor->parent()) != nullptr)
+    {
+      host.myStepsManagement->setStep(ancestor->text(1));
+      host.myStepsManagement->show();
+      host.myStepsManagement->raise();
+      return;
+    }
   }
 }

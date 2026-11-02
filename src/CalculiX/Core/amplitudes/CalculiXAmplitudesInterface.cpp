@@ -39,3 +39,9 @@ std::vector<std::vector<std::string>> CalculiXAmplitudesInterface::get_amplitude
 { 
   return ccx_core.amplitudes->get_tree_data();
 }
+
+
+bool CalculiXAmplitudesInterface::get_amplitude_settings(int id, AmplitudesSettings& settings, std::string& error)
+{
+  return ccx_core.amplitudes->get_settings(id, settings, error);
+}

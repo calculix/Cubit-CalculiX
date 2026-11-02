@@ -20,6 +20,7 @@ class HistoryOutputsDeletePanel : public QWidget
   Q_OBJECT
   
 public:
+  void setHistoryOutput(int id);
   explicit HistoryOutputsDeletePanel(QWidget *parent = 0);
   ~HistoryOutputsDeletePanel();
 

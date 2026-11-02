@@ -1,12 +1,15 @@
 #ifndef COREINITIALCONDITIONS_HPP
 #define COREINITIALCONDITIONS_HPP
 
+#include "InitialConditionsSettings.hpp"
+
 #include <vector>
 #include <string>
 class CoreInitialConditions
 {
 
 public:
+  bool get_settings(int id, InitialConditionsSettings& settings, std::string& error) const;
   std::vector<int> get_initialcondition_ids() const;
   void clear_bc_references(int bc_type, int bc_id);
   CoreInitialConditions();

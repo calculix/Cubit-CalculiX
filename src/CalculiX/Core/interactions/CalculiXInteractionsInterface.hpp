@@ -1,12 +1,19 @@
 #ifndef CALCULIXINTERACTIONSINTERFACE_HPP
 #define CALCULIXINTERACTIONSINTERFACE_HPP
 
+#include "SurfaceInteractionsSettings.hpp"
+#include "ContactPairsSettings.hpp"
+#include "ConstraintsSettings.hpp"
+
 #include <string>
 #include <vector>
 
 class CalculiXInteractionsInterface
 {
 public:
+  bool get_surfaceinteraction_settings(int id, SurfaceInteractionsSettings& settings, std::string& error);
+  bool get_contactpair_settings(int id, ContactPairsSettings& settings, std::string& error);
+  bool get_constraint_settings(int id, ConstraintsSettings& settings, std::string& error);
   std::string get_surfaceinteraction_name(int surfaceinteraction_id); // gets the surfaceinteraction name
   std::vector<std::string> get_contactpair_master_slave(int contactpair_id); // gets the contactpair master and slave name
   std::vector<int> get_equation_ids(); // get all equation ids

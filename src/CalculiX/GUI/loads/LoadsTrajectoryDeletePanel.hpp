@@ -20,6 +20,7 @@ class LoadsTrajectoryDeletePanel : public QWidget
   Q_OBJECT
   
 public:
+  void setTrajectory(int id);
   explicit LoadsTrajectoryDeletePanel(QWidget *parent = 0);
   ~LoadsTrajectoryDeletePanel();
 

@@ -1,3 +1,5 @@
+#include "CubitMessage.hpp"
+#include "Core/interactions/CalculiXInteractionsInterface.hpp"
 #include "ContactPairsModifyPanel.hpp"
 #include <QString>
 #include "GUI/application/GuiSendCmd.hpp"
@@ -121,6 +123,65 @@ ContactPairsModifyPanel::~ContactPairsModifyPanel()
 
 void ContactPairsModifyPanel::on_pushButton_apply_clicked(bool)
 {
+  bool changed = false;
+  changed = changed || fieldChanged("lineEdit_1", lineEdit_1->text());
+  changed = changed || fieldChanged("comboBox_2", comboBox_2->currentText());
+  changed = changed || fieldChanged("lineEdit_3", lineEdit_3->text());
+  changed = changed || fieldChanged("lineEdit_4", lineEdit_4->text());
+  changed = changed || fieldChanged("lineEdit_5", lineEdit_5->text());
+  changed = changed || fieldChanged("lineEdit_6", lineEdit_6->text());
+  if (loadedEntityId >= 0 && !changed && lineEdit_0->text().trimmed() == QString::number(loadedEntityId))
+  {
+    PRINT_INFO("No settings were changed.\n");
+    return;
+  }
+
+  if (loadedEntityId >= 0)
+  {
+    if (lineEdit_0->text().trimmed() != QString::number(loadedEntityId))
+    {
+      bool valid = false;
+      const int requestedId = lineEdit_0->text().trimmed().toInt(&valid);
+
+      if (valid)
+      {
+        setContactPair(requestedId);
+      }
+      else
+      {
+        PRINT_ERROR("Select a single entity ID before reloading this panel.\n");
+      }
+
+      return;
+    }
+  }
+
+  if (loadedEntityId >= 0 && lineEdit_1->isEnabled() && !originalValues.value("lineEdit_1").isEmpty() && lineEdit_1->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Surface \nIneraction ID; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_3->isEnabled() && !originalValues.value("lineEdit_3").isEmpty() && lineEdit_3->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Master; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_4->isEnabled() && !originalValues.value("lineEdit_4").isEmpty() && lineEdit_4->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Slave; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_5->isEnabled() && !originalValues.value("lineEdit_5").isEmpty() && lineEdit_5->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Adjust; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_6->isEnabled() && !originalValues.value("lineEdit_6").isEmpty() && lineEdit_6->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Adjust Nodeset ID; use the supported reset value.\n");
+    return;
+  }
+
   QStringList commands;
   QString command = "";
 
@@ -128,26 +189,26 @@ void ContactPairsModifyPanel::on_pushButton_apply_clicked(bool)
   {
     command.append("ccx modify contactpair " +lineEdit_0->text());
     
-    if (lineEdit_1->text()!="")
+    if (lineEdit_1->text()!="" && fieldChanged("lineEdit_1", lineEdit_1->text()))
     {
       command.append(" surfaceinteraction " +lineEdit_1->text());
     }
-    if (comboBox_2->currentIndex()!=0)
+    if (comboBox_2->currentIndex()!=0 && fieldChanged("comboBox_2", comboBox_2->currentText()))
     {
       command.append(" " + comboBox_2->currentText());
     }
-    if (lineEdit_3->text()!="")
+    if (lineEdit_3->text()!="" && fieldChanged("lineEdit_3", lineEdit_3->text()))
     {
       command.append(" master " +lineEdit_3->text());
     }
-    if (lineEdit_4->text()!="")
+    if (lineEdit_4->text()!="" && fieldChanged("lineEdit_4", lineEdit_4->text()))
     {
       command.append(" slave " +lineEdit_4->text());
     }
-    if((lineEdit_5->isEnabled()) && (lineEdit_5->text()!=""))
+    if((lineEdit_5->isEnabled()) && (lineEdit_5->text()!="") && fieldChanged("lineEdit_5", lineEdit_5->text()))
     {
       command.append(" adjust " +lineEdit_5->text());
-    }else if ((lineEdit_6->isEnabled()) && (lineEdit_6->text()!=""))
+    }else if ((lineEdit_6->isEnabled()) && (lineEdit_6->text()!="") && fieldChanged("lineEdit_6", lineEdit_6->text()))
     {
       command.append(" adjust_nodeset " +lineEdit_6->text());
     }
@@ -156,13 +217,6 @@ void ContactPairsModifyPanel::on_pushButton_apply_clicked(bool)
   if (command != "")
   {
     commands.push_back(command);
-    lineEdit_0->setText("");
-    lineEdit_1->setText("");
-    comboBox_2->setCurrentIndex(0);
-    lineEdit_3->setText("");
-    lineEdit_4->setText("");
-    lineEdit_5->setText("");
-    lineEdit_6->setText("");
   }
   
   for (size_t i = 0; i < commands.size(); i++)
@@ -182,4 +236,61 @@ void ContactPairsModifyPanel::on_radioButton_6_toggled(bool toggled)
 {
   lineEdit_5->setDisabled(true);
   lineEdit_6->setDisabled(false);
+}
+
+
+bool ContactPairsModifyPanel::fieldChanged(const QString& field, const QString& value) const
+{
+  return loadedEntityId < 0 || originalValues.value(field) != value;
+}
+
+bool ContactPairsModifyPanel::setContactPair(int id)
+{
+  loadedEntityId = -1;
+  originalValues.clear();
+  comboBox_2->setCurrentIndex(0);
+  pushButton_apply->setEnabled(false);
+  lineEdit_0->clear();
+  lineEdit_1->clear();
+  lineEdit_3->clear();
+  lineEdit_4->clear();
+  lineEdit_5->clear();
+  lineEdit_6->clear();
+  CalculiXInteractionsInterface core;
+  ContactPairsSettings settings;
+  std::string error;
+
+  if (!core.get_contactpair_settings(id, settings, error))
+  {
+    PRINT_ERROR("Cannot load ContactPair %d: %s\n", id, error.c_str());
+    return false;
+  }
+  lineEdit_0->setText(QString::number(settings.id));
+  lineEdit_1->setText(QString::fromStdString(settings.surfaceInteraction));
+  const QString comboBox_2Value = QString::fromStdString(settings.contactType);
+  int comboBox_2Index = comboBox_2->findText(comboBox_2Value, Qt::MatchFixedString);
+  if (comboBox_2Index < 0 && !comboBox_2Value.isEmpty())
+  {
+    comboBox_2->addItem(comboBox_2Value);
+    comboBox_2Index = comboBox_2->count() - 1;
+  }
+  comboBox_2->setCurrentIndex(qMax(0, comboBox_2Index));
+  lineEdit_3->setText(QString::fromStdString(settings.master));
+  lineEdit_4->setText(QString::fromStdString(settings.slave));
+  lineEdit_5->setText(QString::fromStdString(settings.adjust));
+  lineEdit_6->setText(QString::fromStdString(settings.adjustNodeset));
+
+  radioButton_6->setChecked(!settings.adjustNodeset.empty() && settings.adjustNodeset != "-1");
+  radioButton_5->setChecked(settings.adjustNodeset.empty() || settings.adjustNodeset == "-1");
+  originalValues.insert("lineEdit_0", lineEdit_0->text());
+  originalValues.insert("lineEdit_1", lineEdit_1->text());
+  originalValues.insert("comboBox_2", comboBox_2->currentText());
+  originalValues.insert("lineEdit_3", lineEdit_3->text());
+  originalValues.insert("lineEdit_4", lineEdit_4->text());
+  originalValues.insert("lineEdit_5", lineEdit_5->text());
+  originalValues.insert("lineEdit_6", lineEdit_6->text());
+
+  loadedEntityId = id;
+  pushButton_apply->setEnabled(true);
+  return true;
 }

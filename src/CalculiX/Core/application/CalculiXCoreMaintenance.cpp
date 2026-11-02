@@ -1,3 +1,4 @@
+#include "Core/drawing/CoreDraw.hpp"
 #include "Core/CalculiXCore.hpp"
 #include "Core/sections/CoreSectionsCleanup.hpp"
 #include "Core/interactions/CoreConstraintsCleanup.hpp"
@@ -73,6 +74,11 @@ bool CalculiXCore::update()
 
 bool CalculiXCore::reset()
 {
+  if (draw != nullptr)
+  {
+    draw->resetDrawing();
+  }
+
   cancel_topology_animation();
 
   if (checking_jobs)
@@ -283,4 +289,3 @@ std::string CalculiXCore::autocleanup()
   }
   return "";
 }
-

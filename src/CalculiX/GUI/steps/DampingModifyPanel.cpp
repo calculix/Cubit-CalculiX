@@ -1,3 +1,5 @@
+#include "CubitMessage.hpp"
+#include "Core/steps/CalculiXStepsInterface.hpp"
 #include "DampingModifyPanel.hpp"
 #include <QString>
 #include "GUI/application/GuiSendCmd.hpp"
@@ -61,34 +63,75 @@ DampingModifyPanel::~DampingModifyPanel()
 
 void DampingModifyPanel::on_pushButton_apply_clicked(bool)
 {
-  QStringList commands;
-  QString command = "";
-
-  if ((lineEdit_0->text()!="")||(lineEdit_1->text()!=""))
+  QString options;
+  if (fieldChanged("lineEdit_0", lineEdit_0->text()))
   {
-    command.append("ccx modify damping");
-
-    if (lineEdit_0->text()!="")
+    if (lineEdit_0->text().trimmed().isEmpty())
     {
-      command.append(" alpha " + lineEdit_0->text());
+      if (loadedEntityId >= 0 && !originalValues.value("lineEdit_0").isEmpty())
+      {
+        PRINT_ERROR("Use the Delete panel to clear Alpha.\n");
+        return;
+      }
     }
-
-    if (lineEdit_1->text()!="")
+    else
     {
-      command.append(" beta " + lineEdit_1->text());
-    }  
+      options.append(" alpha " + lineEdit_0->text());
+    }
   }
-  
-  if (command != "")
+  if (fieldChanged("lineEdit_1", lineEdit_1->text()))
   {
-    commands.push_back(command);
-    lineEdit_0->setText("");
-    lineEdit_1->setText("");
+    if (lineEdit_1->text().trimmed().isEmpty())
+    {
+      if (loadedEntityId >= 0 && !originalValues.value("lineEdit_1").isEmpty())
+      {
+        PRINT_ERROR("Use the Delete panel to clear Beta.\n");
+        return;
+      }
+    }
+    else
+    {
+      options.append(" beta " + lineEdit_1->text());
+    }
   }
-  
-  for (size_t i = 0; i < commands.size(); i++)
+  if (!options.isEmpty())
   {
-    //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
-    GuiSendCmd::gui_cmd(commands[int(i)]);
+    GuiSendCmd::gui_cmd("ccx modify damping" + options);
   }
+}
+
+
+bool DampingModifyPanel::fieldChanged(const QString& field, const QString& value) const
+{
+  return loadedEntityId < 0 || originalValues.value(field) != value;
+}
+
+bool DampingModifyPanel::setDamping(int id)
+{
+  loadedEntityId = -1;
+  originalValues.clear();
+  pushButton_apply->setEnabled(false);
+  lineEdit_0->clear();
+  lineEdit_1->clear();
+  CalculiXStepsInterface core;
+  DampingSettings settings;
+  std::string error;
+  if (!core.get_damping_settings(id, settings, error))
+  {
+    PRINT_ERROR("Cannot load Damping: %s\n", error.c_str());
+    return false;
+  }
+  lineEdit_0->setText(QString::fromStdString(settings.alpha));
+  originalValues.insert("lineEdit_0", lineEdit_0->text());
+  lineEdit_1->setText(QString::fromStdString(settings.beta));
+  originalValues.insert("lineEdit_1", lineEdit_1->text());
+  loadedEntityId = id;
+  pushButton_apply->setEnabled(true);
+  return true;
+}
+
+
+bool DampingModifyPanel::loadDamping()
+{
+  return setDamping(0);
 }

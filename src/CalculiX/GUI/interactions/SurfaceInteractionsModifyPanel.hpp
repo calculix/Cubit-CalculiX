@@ -1,8 +1,12 @@
 #ifndef SURFACEINTERACTIONMODIFYPANEL_HPP
 #define SURFACEINTERACTIONMODIFYPANEL_HPP
+
+#include "Core/interactions/SurfaceInteractionsSettings.hpp"
 #include <string>
 #include <vector>
 
+#include <QHash>
+#include <QString>
 #include <QWidget>
 #include <QFrame>
 #include <QList>
@@ -25,6 +29,7 @@ class SurfaceInteractionsModifyPanel : public QWidget
   Q_OBJECT
   
 public:
+  bool setSurfaceInteraction(int id);
   explicit SurfaceInteractionsModifyPanel(QWidget *parent = 0);
   ~SurfaceInteractionsModifyPanel();
 
@@ -35,6 +40,9 @@ private slots:
   void comboBox_currentIndexChanged(int index);
 
 private:
+  int loadedEntityId = -1;
+  QHash<QString, QString> originalValues;
+  bool fieldChanged(const QString& field, const QString& value) const;
   std::string log;
   std::vector<std::vector<double>> matrix;
   

@@ -20,6 +20,7 @@ class AmplitudesDeletePanel : public QWidget
   Q_OBJECT
   
 public:
+  void setAmplitude(int id);
   explicit AmplitudesDeletePanel(QWidget *parent = 0);
   ~AmplitudesDeletePanel();
 

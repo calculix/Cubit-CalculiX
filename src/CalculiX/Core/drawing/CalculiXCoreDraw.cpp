@@ -96,7 +96,10 @@ bool CalculiXCore::draw_load_force(std::vector<int> force_ids, double size)
 {
   for (int id : force_ids)
   {
-    draw->draw_load_force(id, size);
+    if (!draw->draw_load_force(id, size))
+    {
+      return false;
+    }
   }
 
   return true;
@@ -106,7 +109,10 @@ bool CalculiXCore::draw_load_pressure(std::vector<int> pressure_ids, double size
 {
   for (int id : pressure_ids)
   {
-    draw->draw_load_pressure(id, size);
+    if (!draw->draw_load_pressure(id, size))
+    {
+      return false;
+    }
   }
 
   return true;
@@ -116,7 +122,10 @@ bool CalculiXCore::draw_load_heatflux(std::vector<int> heatflux_ids, double size
 {
   for (int id : heatflux_ids)
   {
-    draw->draw_load_heatflux(id, size);
+    if (!draw->draw_load_heatflux(id, size))
+    {
+      return false;
+    }
   }
 
   return true;
@@ -126,7 +135,10 @@ bool CalculiXCore::draw_load_gravity(std::vector<int> gravity_ids, double size)
 {
   for (int id : gravity_ids)
   {
-    draw->draw_load_gravity(id, size);
+    if (!draw->draw_load_gravity(id, size))
+    {
+      return false;
+    }
   }
 
   return true;
@@ -136,7 +148,10 @@ bool CalculiXCore::draw_load_centrifugal(std::vector<int> centrifugal_ids, doubl
 {
   for (int id : centrifugal_ids)
   {
-    draw->draw_load_centrifugal(id, size);
+    if (!draw->draw_load_centrifugal(id, size))
+    {
+      return false;
+    }
   }
 
   return true;
@@ -146,7 +161,10 @@ bool CalculiXCore::draw_load_trajectory(std::vector<int> trajectory_ids, double 
 {
   for (int id : trajectory_ids)
   {
-    draw->draw_load_trajectory(id, size);
+    if (!draw->draw_load_trajectory(id, size))
+    {
+      return false;
+    }
   }
 
   return true;
@@ -156,7 +174,10 @@ bool CalculiXCore::draw_load_film(std::vector<int> film_ids, double size)
 {
   for (int id : film_ids)
   {
-    draw->draw_load_film(id, size);
+    if (!draw->draw_load_film(id, size))
+    {
+      return false;
+    }
   }
 
   return true;
@@ -166,7 +187,10 @@ bool CalculiXCore::draw_load_radiation(std::vector<int> radiation_ids, double si
 {
   for (int id : radiation_ids)
   {
-    draw->draw_load_radiation(id, size);
+    if (!draw->draw_load_radiation(id, size))
+    {
+      return false;
+    }
   }
 
   return true;
@@ -176,7 +200,10 @@ bool CalculiXCore::draw_load_surface_traction(std::vector<int> surface_traction_
 {
   for (int id : surface_traction_ids)
   {
-    draw->draw_load_surface_traction(id, size);
+    if (!draw->draw_load_surface_traction(id, size))
+    {
+      return false;
+    }
   }
 
   return true;
@@ -186,7 +213,10 @@ bool CalculiXCore::draw_load_bodyheatflux(std::vector<int> bodyheatflux_ids, dou
 {
   for (int id : bodyheatflux_ids)
   {
-    draw->draw_load_bodyheatflux(id, size);
+    if (!draw->draw_load_bodyheatflux(id, size))
+    {
+      return false;
+    }
   }
 
   return true;
@@ -196,7 +226,10 @@ bool CalculiXCore::draw_bc_displacement(std::vector<int> displacement_ids, doubl
 {
   for (int id : displacement_ids)
   {
-    draw->draw_bc_displacement(id, size);
+    if (!draw->draw_bc_displacement(id, size))
+    {
+      return false;
+    }
   }
 
   return true;
@@ -206,7 +239,10 @@ bool CalculiXCore::draw_bc_temperature(std::vector<int> temperature_ids, double 
 {
   for (int id : temperature_ids)
   {
-    draw->draw_bc_temperature(id, size);
+    if (!draw->draw_bc_temperature(id, size))
+    {
+      return false;
+    }
   }
 
   return true;
@@ -216,7 +252,10 @@ bool CalculiXCore::draw_orientation(std::vector<int> orientation_ids, double siz
 {
   for (int id : orientation_ids)
   {
-    draw->draw_orientation(id, size);
+    if (!draw->draw_orientation(id, size))
+    {
+      return false;
+    }
   }
 
   return true;
@@ -226,7 +265,10 @@ bool CalculiXCore::draw_equation(std::vector<int> equation_ids, double size)
 {
   for (int id : equation_ids)
   {
-    draw->draw_equation(id, size);
+    if (!draw->draw_equation(id, size))
+    {
+      return false;
+    }
   }
 
   return true;
@@ -236,7 +278,10 @@ bool CalculiXCore::draw_equationgroup(std::vector<int> equationgroup_ids, double
 {
   for (int id : equationgroup_ids)
   {
-    draw->draw_equationgroup(id, size);
+    if (!draw->draw_equationgroup(id, size))
+    {
+      return false;
+    }
   }
 
   return true;

@@ -1,3 +1,9 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include <QAction>
+#include "LoadsPressuresDeletePanel.hpp"
+#include "LoadsPressuresModifyPanel.hpp"
+#include "CubitMessage.hpp"
+#include "TaskPanel.hpp"
 #include "LoadsPressuresTree.hpp"
 #include <string>
 #include <vector>
@@ -105,6 +111,8 @@ void LoadsPressuresTree::addLoad(QString load_id, QString load_name)
   LoadTreeChild->setText(0, load_name);
     
   LoadTreeChild->setText(1, load_id);
+  LoadTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Pressure));
+  LoadTreeChild->setData(0, PropertyIdRole, load_id.toInt());
 
   LoadTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("LoadsPressuresTree"));
 
@@ -146,6 +154,12 @@ void LoadsPressuresTree::populateContextMenu(
     return;
   }
 
+  int selectedId = 0;
+  if (clickedItem != this && !readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
+
   if (clickedItem == this)
   {
     addPanelAction(menu, "Create Pressure", host, "CCXLoadsPressuresCreate");
@@ -165,7 +179,84 @@ void LoadsPressuresTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Pressure", host, "CCXLoadsPressuresCreate");
-  addPanelAction(menu, "Modify Pressure", host, "CCXLoadsPressuresModify");
-  addPanelAction(menu, "Delete Pressure", host, "CCXLoadsPressuresDelete");
+  {
+    auto* action = menu.addAction("Modify Pressure");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      LoadsPressuresTree::open_modify(selectedId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Pressure");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      LoadsPressuresTree::open_delete(selectedId, host);
+    });
+  }
   addCommandAction(menu, "Draw Pressure", QString("ccx draw load pressure ") + QString::number(entityId));
+}
+
+
+void LoadsPressuresTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+
+  host.setWidgetInCmdPanelMarker("CCXLoadsPressuresModify");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<LoadsPressuresModifyPanel*>(widget))
+    {
+      panel->setPressure(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Pressure modify panel.\n");
+}
+
+void LoadsPressuresTree::open_delete(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXLoadsPressuresDelete");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<LoadsPressuresDeletePanel*>(widget))
+    {
+      panel->setPressure(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Pressure delete panel.\n");
+}
+
+void LoadsPressuresTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (item == nullptr)
+  {
+    return;
+  }
+  if (item == this)
+  {
+    host.setWidgetInCmdPanelMarker("CCXLoadsPressuresCreate");
+    return;
+  }
+
+  if (item->parent() != this)
+  {
+    return;
+  }
+
+  int id = -1;
+  if (!readItemId(item, id))
+  {
+    return;
+  }
+  open_modify(id, host);
 }

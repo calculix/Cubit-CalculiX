@@ -61,11 +61,16 @@ void LoadsHeatfluxesDeletePanel::on_pushButton_apply_clicked(bool)
   if (command != "")
   {
     commands.push_back(command);
-    lineEdit_1->setText("");
   }
 
   for (size_t i = 0; i < commands.size(); i++)
   {
     GuiSendCmd::gui_cmd(commands[int(i)]);
   }
+}
+
+
+void LoadsHeatfluxesDeletePanel::setHeatflux(int id)
+{
+  lineEdit_1->setText(QString::number(id));
 }

@@ -1,3 +1,7 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include "JobsDeletePanel.hpp"
+#include "JobsModifyPanel.hpp"
+#include "TaskPanel.hpp"
 #include "JobsTree.hpp"
 #include <string>
 #include <vector>
@@ -112,6 +116,8 @@ void JobsTree::addJob(QString job_id, QString job_name)
   JobTreeChild->setText(0, job_name);
     
   JobTreeChild->setText(1, job_id);
+  JobTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Job));
+  JobTreeChild->setData(0, PropertyIdRole, job_id.toInt());
 
   JobTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("JobsTree"));
 
@@ -195,6 +201,12 @@ void JobsTree::populateContextMenu(
     return;
   }
 
+  int selectedId = 0;
+  if (clickedItem != this && !readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
+
   if (clickedItem == this)
   {
     addPanelAction(menu, "Create Job", host, "CCXJobsCreate");
@@ -213,8 +225,20 @@ void JobsTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Job", host, "CCXJobsCreate");
-  addPanelAction(menu, "Modify Job", host, "CCXJobsModify");
-  addPanelAction(menu, "Delete Job", host, "CCXJobsDelete");
+  {
+    auto* action = menu.addAction("Modify Job");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      JobsTree::open_modify(selectedId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Job");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      JobsTree::open_delete(selectedId, host);
+    });
+  }
   {
     QAction *action = menu.addAction("Job Monitor");
     ModelTree *hostPtr = &host;
@@ -234,4 +258,75 @@ void JobsTree::populateContextMenu(
   }
   addCommandAction(menu, "Result CGX", QString("ccx result cgx job ") + QString::number(entityId));
   addCommandAction(menu, "Result ParaView", QString("ccx result paraview job ") + QString::number(entityId));
+}
+
+
+void JobsTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+
+  host.setWidgetInCmdPanelMarker("CCXJobsModify");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<JobsModifyPanel*>(widget))
+    {
+      panel->setJob(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Job modify panel.\n");
+}
+
+void JobsTree::open_delete(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXJobsDelete");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<JobsDeletePanel*>(widget))
+    {
+      panel->setJob(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Job delete panel.\n");
+}
+
+void JobsTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (item == nullptr)
+  {
+    return;
+  }
+  if (item == this)
+  {
+    host.setWidgetInCmdPanelMarker("CCXJobsCreate");
+    return;
+  }
+
+  if (item->parent() != this)
+  {
+    return;
+  }
+
+  int id = -1;
+  if (!readItemId(item, id))
+  {
+    return;
+  }
+  if (host.myJobsMonitor != nullptr)
+  {
+    host.myJobsMonitor->setJob(id);
+    host.myJobsMonitor->show();
+    host.myJobsMonitor->raise();
+    host.myJobsMonitor->update();
+  }
 }

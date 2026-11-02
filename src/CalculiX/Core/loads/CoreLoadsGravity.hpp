@@ -1,12 +1,15 @@
 #ifndef CORELOADSGRAVITY_HPP
 #define CORELOADSGRAVITY_HPP
 
+#include "LoadsGravitySettings.hpp"
+
 #include <vector>
 #include <string>
 class CoreLoadsGravity
 {
 
 public:
+  bool get_settings(int id, LoadsGravitySettings& settings, std::string& error) const;
   std::vector<int> get_load_ids() const;
   CoreLoadsGravity();
   ~CoreLoadsGravity();

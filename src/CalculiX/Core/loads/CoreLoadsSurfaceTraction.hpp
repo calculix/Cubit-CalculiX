@@ -1,12 +1,15 @@
 #ifndef CORELOADSSURFACETRACTION_HPP
 #define CORELOADSSURFACETRACTION_HPP
 
+#include "LoadsSurfaceTractionSettings.hpp"
+
 #include <vector>
 #include <string>
 class CoreLoadsSurfaceTraction
 {
 
 public:
+  bool get_settings(int id, LoadsSurfaceTractionSettings& settings, std::string& error) const;
   std::vector<int> get_load_ids() const;
   CoreLoadsSurfaceTraction();
   ~CoreLoadsSurfaceTraction();

@@ -62,11 +62,14 @@ void TopologyDeletePanel::showEvent(QShowEvent *event)
   refreshCases();
 }
 
-void TopologyDeletePanel::refreshCases()
+void TopologyDeletePanel::refreshCases(int preferred_id)
 {
   CalculiXTopologyInterface ccx_topology_iface;
 
-  const int preferred_id = cases->currentData().toInt();
+  if (preferred_id < 0)
+  {
+    preferred_id = cases->currentData().toInt();
+  }
 
   {
     const QSignalBlocker blocker(cases);
@@ -91,10 +94,7 @@ void TopologyDeletePanel::refreshCases()
 
     const int index = cases->findData(preferred_id);
 
-    if (index >= 0)
-    {
-      cases->setCurrentIndex(index);
-    }
+    cases->setCurrentIndex(index);
   }
 
   updateButton();
@@ -136,4 +136,10 @@ void TopologyDeletePanel::deleteCase()
 
   GuiSendCmd::gui_cmd(QString("ccx delete topology %1").arg(topology_id));
   refreshCases();
+}
+
+
+void TopologyDeletePanel::setTopology(int topology_id)
+{
+  refreshCases(topology_id);
 }

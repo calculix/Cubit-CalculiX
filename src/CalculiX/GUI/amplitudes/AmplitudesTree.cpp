@@ -1,3 +1,9 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include <QAction>
+#include "AmplitudesDeletePanel.hpp"
+#include "AmplitudesModifyPanel.hpp"
+#include "CubitMessage.hpp"
+#include "TaskPanel.hpp"
 #include "AmplitudesTree.hpp"
 #include <string>
 #include <vector>
@@ -105,6 +111,8 @@ void AmplitudesTree::addAmplitude(QString amplitude_id, QString amplitude_name)
   AmplitudeTreeChild->setText(0, amplitude_name);
     
   AmplitudeTreeChild->setText(1, amplitude_id);
+  AmplitudeTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Amplitude));
+  AmplitudeTreeChild->setData(0, PropertyIdRole, amplitude_id.toInt());
 
   AmplitudeTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("AmplitudesTree"));
 
@@ -146,6 +154,12 @@ void AmplitudesTree::populateContextMenu(
     return;
   }
 
+  int selectedId = 0;
+  if (clickedItem != this && !readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
+
   if (clickedItem == this)
   {
     addPanelAction(menu, "Create Amplitude", host, "CCXAmplitudesCreate");
@@ -158,6 +172,83 @@ void AmplitudesTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Amplitude", host, "CCXAmplitudesCreate");
-  addPanelAction(menu, "Modify Amplitude", host, "CCXAmplitudesModify");
-  addPanelAction(menu, "Delete Amplitude", host, "CCXAmplitudesDelete");
+  {
+    auto* action = menu.addAction("Modify Amplitude");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      AmplitudesTree::open_modify(selectedId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Amplitude");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      AmplitudesTree::open_delete(selectedId, host);
+    });
+  }
+}
+
+
+void AmplitudesTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+
+  host.setWidgetInCmdPanelMarker("CCXAmplitudesModify");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<AmplitudesModifyPanel*>(widget))
+    {
+      panel->setAmplitude(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Amplitude modify panel.\n");
+}
+
+void AmplitudesTree::open_delete(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXAmplitudesDelete");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<AmplitudesDeletePanel*>(widget))
+    {
+      panel->setAmplitude(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Amplitude delete panel.\n");
+}
+
+void AmplitudesTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (item == nullptr)
+  {
+    return;
+  }
+  if (item == this)
+  {
+    host.setWidgetInCmdPanelMarker("CCXAmplitudesCreate");
+    return;
+  }
+
+  if (item->parent() != this)
+  {
+    return;
+  }
+
+  int id = -1;
+  if (!readItemId(item, id))
+  {
+    return;
+  }
+  open_modify(id, host);
 }

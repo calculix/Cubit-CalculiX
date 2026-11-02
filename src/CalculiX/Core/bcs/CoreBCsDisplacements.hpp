@@ -1,12 +1,15 @@
 #ifndef COREBCSDISPLACEMENTS_HPP
 #define COREBCSDISPLACEMENTS_HPP
 
+#include "BCsDisplacementsSettings.hpp"
+
 #include <vector>
 #include <string>
 
 class CoreBCsDisplacements
 {
 public:
+  bool get_settings(int id, BCsDisplacementsSettings& settings, std::string& error) const;
   std::vector<int> get_bc_ids() const;
   CoreBCsDisplacements();
   ~CoreBCsDisplacements();

@@ -20,6 +20,7 @@ class SurfaceInteractionsDeletePanel : public QWidget
   Q_OBJECT
   
 public:
+  void setSurfaceInteraction(int id);
   explicit SurfaceInteractionsDeletePanel(QWidget *parent = 0);
   ~SurfaceInteractionsDeletePanel();
 

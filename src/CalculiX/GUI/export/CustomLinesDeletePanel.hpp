@@ -20,6 +20,7 @@ class CustomLinesDeletePanel : public QWidget
   Q_OBJECT
   
 public:
+  void setCustomLine(int id);
   explicit CustomLinesDeletePanel(QWidget *parent = 0);
   ~CustomLinesDeletePanel();
 

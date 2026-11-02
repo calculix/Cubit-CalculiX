@@ -1,12 +1,15 @@
 #ifndef CALCULIXEXPORTINTERFACE_HPP
 #define CALCULIXEXPORTINTERFACE_HPP
 
+#include "CustomLinesSettings.hpp"
+
 #include <string>
 #include <vector>
 
 class CalculiXExportInterface
 {
 public:
+  bool get_customline_settings(int id, CustomLinesSettings& settings, std::string& error);
   std::vector<int> get_customline_ids(); // get all equationgroup ids
   bool prepare_export(); // prepares data for export like for trajectory
   bool clean_export(); // cleans data for export like for trajectory

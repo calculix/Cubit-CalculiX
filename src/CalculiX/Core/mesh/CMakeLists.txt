@@ -1,4 +1,5 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/MeshProperties.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreMesh.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreBlocks.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreBlocks.hpp

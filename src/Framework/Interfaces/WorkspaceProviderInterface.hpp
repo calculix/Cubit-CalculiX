@@ -6,8 +6,10 @@
 #include <QPersistentModelIndex>
 #include <QString>
 #include <string>
+#include <functional>
 
 class QAction;
+class QToolBar;
 class QDockWidget;
 class NavigationModel;
 
@@ -18,6 +20,8 @@ struct WorkspaceView
   QIcon icon;
   QList<QDockWidget*> docks;
   QList<QAction*> menuActions;
+  QList<QToolBar*> toolbars;
+  std::function<void(bool)> activationChanged;
   NavigationModel* navigationModel = nullptr;
   QPersistentModelIndex navigationRoot;
   QPersistentModelIndex initialNavigationSelection;

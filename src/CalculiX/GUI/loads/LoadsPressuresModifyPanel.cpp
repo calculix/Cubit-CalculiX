@@ -1,3 +1,5 @@
+#include "CubitMessage.hpp"
+#include "Core/loads/CalculiXLoadsInterface.hpp"
 #include "LoadsPressuresModifyPanel.hpp"
 #include <QString>
 #include "GUI/application/GuiSendCmd.hpp"
@@ -118,6 +120,65 @@ LoadsPressuresModifyPanel::~LoadsPressuresModifyPanel()
 
 void LoadsPressuresModifyPanel::on_pushButton_apply_clicked(bool)
 {
+  bool changed = false;
+  changed = changed || fieldChanged("lineEdit_1", lineEdit_1->text());
+  changed = changed || fieldChanged("lineEdit_2", lineEdit_2->text());
+  changed = changed || fieldChanged("lineEdit_3", lineEdit_3->text());
+  changed = changed || fieldChanged("comboBox_4", comboBox_4->currentText());
+  changed = changed || fieldChanged("lineEdit_5", lineEdit_5->text());
+  changed = changed || fieldChanged("lineEdit_6", lineEdit_6->text());
+  if (loadedEntityId >= 0 && !changed && lineEdit_0->text().trimmed() == QString::number(loadedEntityId))
+  {
+    PRINT_INFO("No settings were changed.\n");
+    return;
+  }
+
+  if (loadedEntityId >= 0)
+  {
+    if (lineEdit_0->text().trimmed() != QString::number(loadedEntityId))
+    {
+      bool valid = false;
+      const int requestedId = lineEdit_0->text().trimmed().toInt(&valid);
+
+      if (valid)
+      {
+        setPressure(requestedId);
+      }
+      else
+      {
+        PRINT_ERROR("Select a single entity ID before reloading this panel.\n");
+      }
+
+      return;
+    }
+  }
+
+  if (loadedEntityId >= 0 && lineEdit_1->isEnabled() && !originalValues.value("lineEdit_1").isEmpty() && lineEdit_1->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Name; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_2->isEnabled() && !originalValues.value("lineEdit_2").isEmpty() && lineEdit_2->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Sideset ID; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_3->isEnabled() && !originalValues.value("lineEdit_3").isEmpty() && lineEdit_3->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Magnitude; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_5->isEnabled() && !originalValues.value("lineEdit_5").isEmpty() && lineEdit_5->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Amplitude ID; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_6->isEnabled() && !originalValues.value("lineEdit_6").isEmpty() && lineEdit_6->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Time Delay; use the supported reset value.\n");
+    return;
+  }
+
   QStringList commands;
   QString command = "";
 
@@ -125,27 +186,27 @@ void LoadsPressuresModifyPanel::on_pushButton_apply_clicked(bool)
   {
     command.append("ccx modify pressure " + lineEdit_0->text());
 
-    if (!lineEdit_2->text().trimmed().isEmpty())
+    if (!lineEdit_2->text().trimmed().isEmpty() && fieldChanged("lineEdit_2", lineEdit_2->text()))
     {
       command.append(" sideset " + lineEdit_2->text());
     }
-    if (!lineEdit_3->text().trimmed().isEmpty())
+    if (!lineEdit_3->text().trimmed().isEmpty() && fieldChanged("lineEdit_3", lineEdit_3->text()))
     {
       command.append(" magnitude " + lineEdit_3->text());
     }
-    if (comboBox_4->currentIndex() != 0)
+    if (comboBox_4->currentIndex() != 0 && fieldChanged("comboBox_4", comboBox_4->currentText()))
     {
       command.append(" op " + comboBox_4->currentText());
     }
-    if (!lineEdit_5->text().trimmed().isEmpty())
+    if (!lineEdit_5->text().trimmed().isEmpty() && fieldChanged("lineEdit_5", lineEdit_5->text()))
     {
       command.append(" amplitude " + lineEdit_5->text());
     }
-    if (!lineEdit_6->text().trimmed().isEmpty())
+    if (!lineEdit_6->text().trimmed().isEmpty() && fieldChanged("lineEdit_6", lineEdit_6->text()))
     {
       command.append(" timedelay " + lineEdit_6->text());
     }
-    if (!lineEdit_1->text().isEmpty())
+    if (!lineEdit_1->text().isEmpty() && fieldChanged("lineEdit_1", lineEdit_1->text()))
     {
       command.append(" name \"" + lineEdit_1->text() + "\"");
     }
@@ -154,17 +215,64 @@ void LoadsPressuresModifyPanel::on_pushButton_apply_clicked(bool)
   if (command != "")
   {
     commands.push_back(command);
-    lineEdit_0->setText("");
-    lineEdit_1->setText("");
-    lineEdit_2->setText("");
-    lineEdit_3->setText("");
-    comboBox_4->setCurrentIndex(0);
-    lineEdit_5->setText("");
-    lineEdit_6->setText("");
   }
 
   for (size_t i = 0; i < commands.size(); i++)
   {
     GuiSendCmd::gui_cmd(commands[int(i)]);
   }
+}
+
+
+bool LoadsPressuresModifyPanel::fieldChanged(const QString& field, const QString& value) const
+{
+  return loadedEntityId < 0 || originalValues.value(field) != value;
+}
+
+bool LoadsPressuresModifyPanel::setPressure(int id)
+{
+  loadedEntityId = -1;
+  originalValues.clear();
+  comboBox_4->setCurrentIndex(0);
+  pushButton_apply->setEnabled(false);
+  lineEdit_0->clear();
+  lineEdit_1->clear();
+  lineEdit_2->clear();
+  lineEdit_3->clear();
+  lineEdit_5->clear();
+  lineEdit_6->clear();
+  CalculiXLoadsInterface core;
+  LoadsPressuresSettings settings;
+  std::string error;
+
+  if (!core.get_pressure_settings(id, settings, error))
+  {
+    PRINT_ERROR("Cannot load Pressure %d: %s\n", id, error.c_str());
+    return false;
+  }
+  lineEdit_0->setText(QString::number(settings.id));
+  lineEdit_1->setText(QString::fromStdString(settings.name));
+  lineEdit_2->setText(QString::fromStdString(settings.sideset));
+  lineEdit_3->setText(QString::fromStdString(settings.magnitude));
+  const QString comboBox_4Value = QString::fromStdString(settings.operation);
+  int comboBox_4Index = comboBox_4->findText(comboBox_4Value, Qt::MatchFixedString);
+  if (comboBox_4Index < 0 && !comboBox_4Value.isEmpty())
+  {
+    comboBox_4->addItem(comboBox_4Value);
+    comboBox_4Index = comboBox_4->count() - 1;
+  }
+  comboBox_4->setCurrentIndex(qMax(0, comboBox_4Index));
+  lineEdit_5->setText(QString::fromStdString(settings.amplitude));
+  lineEdit_6->setText(QString::fromStdString(settings.timeDelay));
+  originalValues.insert("lineEdit_0", lineEdit_0->text());
+  originalValues.insert("lineEdit_1", lineEdit_1->text());
+  originalValues.insert("lineEdit_2", lineEdit_2->text());
+  originalValues.insert("lineEdit_3", lineEdit_3->text());
+  originalValues.insert("comboBox_4", comboBox_4->currentText());
+  originalValues.insert("lineEdit_5", lineEdit_5->text());
+  originalValues.insert("lineEdit_6", lineEdit_6->text());
+
+  loadedEntityId = id;
+  pushButton_apply->setEnabled(true);
+  return true;
 }

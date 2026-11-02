@@ -20,6 +20,7 @@ class PhysicalConstantsDeletePanel : public QWidget
   Q_OBJECT
   
 public:
+  void selectConstant(int id);
   explicit PhysicalConstantsDeletePanel(QWidget *parent = 0);
   ~PhysicalConstantsDeletePanel();
 

@@ -1,68 +1,236 @@
-#include "Core/results/CoreResultsPersistence.hpp"
-#include "Core/results/CoreResults.hpp"
+#include "CoreResultsPersistence.hpp"
+#include "CoreResults.hpp"
 #include "Core/results/frd/CoreResultsFrd.hpp"
 #include "Core/results/frd/CoreResultsFrdPersistence.hpp"
 #include "Core/results/dat/CoreResultsDat.hpp"
 #include "Core/results/dat/CoreResultsDatPersistence.hpp"
+#include "Core/jobs/CoreJobs.hpp"
+#include "Core/loadCalculiXCore.hpp"
 #include "HDF5Tool.hpp"
+#include "PersistenceTable.hpp"
+#include "CubitMessage.hpp"
+#include <exception>
+#include <set>
 
-void CoreResultsPersistence::read_registry(HDF5Tool& file, CoreResults& results)
+namespace
 {
-  file.read_dataset_int_rank_2("results_data", "Cubit-CalculiX/Results", results.results_data);
-}
-
-void CoreResultsPersistence::write_registry(HDF5Tool& file, const CoreResults& results)
+bool validRegistry(const std::vector<std::vector<int>>& data)
 {
-  file.createGroup("Cubit-CalculiX/Results");
-  file.write_dataset_int_rank_2("results_data", "Cubit-CalculiX/Results", results.results_data);
-  file.createGroup("Cubit-CalculiX/Results/Frd");
-  file.createGroup("Cubit-CalculiX/Results/Dat");
-}
-
-void CoreResultsPersistence::initialize_readers(CoreResults& results)
-{
-  for (const auto& entry : results.results_data)
+  if (!PersistenceTable::rows(data, 4) || !PersistenceTable::uniqueIds(data))
   {
-    results.create_frd_dat(entry[1]);
+    return false;
+  }
+  std::set<int> seenJobs;
+  for (const auto& row : data)
+  {
+    if (!seenJobs.insert(row[1]).second || ccx_core.jobs->get_jobs_data_id_from_job_id(row[1]) < 0)
+    {
+      return false;
+    }
+  }
+  return true;
+}
+}
+
+bool CoreResultsPersistence::read_registry(HDF5Tool& file, CoreResults& results)
+{
+  try
+  {
+    decltype(results.results_data) saved;
+    if (file.nameExists("Cubit-CalculiX/Results/results_data") && !file.read_dataset_int_rank_2("results_data", "Cubit-CalculiX/Results", saved))
+    {
+      PRINT_ERROR("Cannot read CalculiX result registry: %s\n", file.last_error().c_str());
+      return false;
+    }
+    if (!validRegistry(saved))
+    {
+      PRINT_ERROR("Cannot read CalculiX result registry: invalid records or missing jobs.\n");
+      return false;
+    }
+    results.results_data.swap(saved);
+    return true;
+  }
+  catch (const H5::Exception& error)
+  {
+    PRINT_ERROR("Cannot read CalculiX result registry: %s\n", error.getDetailMsg().c_str());
+    return false;
+  }
+  catch (const std::exception& error)
+  {
+    PRINT_ERROR("Cannot read CalculiX result registry: %s\n", error.what());
+    return false;
+  }
+}
+
+bool CoreResultsPersistence::write_registry(HDF5Tool& file, const CoreResults& results)
+{
+  try
+  {
+    if (!validRegistry(results.results_data))
+    {
+      PRINT_ERROR("Cannot save CalculiX result registry: invalid records or missing jobs.\n");
+      return false;
+    }
+    if (!file.ensureGroup("Cubit-CalculiX/Results/Frd") || !file.ensureGroup("Cubit-CalculiX/Results/Dat") || !file.write_dataset_int_rank_2("results_data", "Cubit-CalculiX/Results", results.results_data))
+    {
+      PRINT_ERROR("Cannot save CalculiX result registry: %s\n", file.last_error().c_str());
+      return false;
+    }
+    return true;
+  }
+  catch (const H5::Exception& error)
+  {
+    PRINT_ERROR("Cannot write CalculiX result registry: %s\n", error.getDetailMsg().c_str());
+    return false;
+  }
+  catch (const std::exception& error)
+  {
+    PRINT_ERROR("Cannot write CalculiX result registry: %s\n", error.what());
+    return false;
+  }
+}
+
+bool CoreResultsPersistence::initialize_readers(CoreResults& results)
+{
+  try
+  {
+    if (!validRegistry(results.results_data))
+    {
+      PRINT_ERROR("Cannot initialize CalculiX result readers: invalid job references.\n");
+      return false;
+    }
+    std::vector<CoreResultsFrd> frd;
+    std::vector<CoreResultsDat> dat;
+    frd.reserve(results.results_data.size());
+    dat.reserve(results.results_data.size());
+    for (const auto& row : results.results_data)
+    {
+      frd.emplace_back();
+      dat.emplace_back();
+      if (!frd.back().init(row[1]) || !dat.back().init(row[1]))
+      {
+        PRINT_ERROR("Cannot initialize CalculiX result readers for job %d.\n", row[1]);
+        return false;
+      }
+    }
+    results.frd_data.swap(frd);
+    results.dat_data.swap(dat);
+    return true;
+  }
+  catch (const H5::Exception& error)
+  {
+    PRINT_ERROR("Cannot initialize CalculiX result readers: %s\n", error.getDetailMsg().c_str());
+    return false;
+  }
+  catch (const std::exception& error)
+  {
+    PRINT_ERROR("Cannot initialize CalculiX result readers: %s\n", error.what());
+    return false;
   }
 }
 
 bool CoreResultsPersistence::read_loaded_results(HDF5Tool& file, CoreResults& results)
 {
-  initialize_readers(results);
-
-  for (auto& frd : results.frd_data)
+  try
   {
-    CoreResultsFrdPersistence::read(file, frd);
-  }
-
-  for (auto& dat : results.dat_data)
-  {
-    if (!CoreResultsDatPersistence::read(file, dat))
+    CoreResults saved;
+    saved.results_data = results.results_data;
+    if (!initialize_readers(saved))
     {
       return false;
     }
+    for (auto& frd : saved.frd_data)
+    {
+      if (!CoreResultsFrdPersistence::read(file, frd))
+      {
+        return false;
+      }
+    }
+    for (auto& dat : saved.dat_data)
+    {
+      if (!CoreResultsDatPersistence::read(file, dat))
+      {
+        return false;
+      }
+    }
+    results.frd_data.swap(saved.frd_data);
+    results.dat_data.swap(saved.dat_data);
+    return true;
   }
-
-  return true;
+  catch (const H5::Exception& error)
+  {
+    PRINT_ERROR("Cannot read CalculiX loaded results: %s\n", error.getDetailMsg().c_str());
+    return false;
+  }
+  catch (const std::exception& error)
+  {
+    PRINT_ERROR("Cannot read CalculiX loaded results: %s\n", error.what());
+    return false;
+  }
 }
 
-void CoreResultsPersistence::write(HDF5Tool& file, const CoreResults& results, bool save_loaded_results)
+bool CoreResultsPersistence::read(HDF5Tool& file, CoreResults& results)
 {
-  write_registry(file, results);
-
-  if (!save_loaded_results)
+  try
   {
-    return;
+    CoreResults saved;
+    if (!read_registry(file, saved) || !read_loaded_results(file, saved))
+    {
+      return false;
+    }
+    results.results_data.swap(saved.results_data);
+    results.frd_data.swap(saved.frd_data);
+    results.dat_data.swap(saved.dat_data);
+    return true;
   }
-
-  for (const auto& frd : results.frd_data)
+  catch (const H5::Exception& error)
   {
-    CoreResultsFrdPersistence::write(file, frd);
+    PRINT_ERROR("Cannot read CalculiX results: %s\n", error.getDetailMsg().c_str());
+    return false;
   }
-
-  for (const auto& dat : results.dat_data)
+  catch (const std::exception& error)
   {
-    CoreResultsDatPersistence::write(file, dat);
+    PRINT_ERROR("Cannot read CalculiX results: %s\n", error.what());
+    return false;
+  }
+}
+
+bool CoreResultsPersistence::write(HDF5Tool& file, const CoreResults& results, bool save_loaded_results)
+{
+  try
+  {
+    if (!write_registry(file, results))
+    {
+      return false;
+    }
+    if (!save_loaded_results)
+    {
+      return true;
+    }
+    for (const auto& frd : results.frd_data)
+    {
+      if (!CoreResultsFrdPersistence::write(file, frd))
+      {
+        return false;
+      }
+    }
+    for (const auto& dat : results.dat_data)
+    {
+      if (!CoreResultsDatPersistence::write(file, dat))
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+  catch (const H5::Exception& error)
+  {
+    PRINT_ERROR("Cannot write CalculiX results: %s\n", error.getDetailMsg().c_str());
+    return false;
+  }
+  catch (const std::exception& error)
+  {
+    PRINT_ERROR("Cannot write CalculiX results: %s\n", error.what());
+    return false;
   }
 }

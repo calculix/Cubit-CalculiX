@@ -1,3 +1,4 @@
+#include "Core/application/SettingsRead.hpp"
 #include "Core/loads/CoreLoadsGravity.hpp"
 #include <string>
 #include <vector>
@@ -433,4 +434,34 @@ std::vector<int> CoreLoadsGravity::get_load_ids() const
   }
 
   return ids;
+}
+
+
+bool CoreLoadsGravity::get_settings(int id, LoadsGravitySettings& settings, std::string& error) const
+{
+  settings = {};
+  error.clear();
+  const auto* record = SettingsRead::row(loads_data, id, 8, error);
+
+  if (record == nullptr)
+  {
+    return false;
+  }
+
+  settings.id = id;
+  settings.name = SettingsRead::field(name_data, (*record)[7], 1, error);
+  settings.amplitude = SettingsRead::optional_id((*record)[2]);
+  settings.timeDelay = SettingsRead::field(time_delay_data, (*record)[3], 1, error);
+  settings.operation = (*record)[1] == 1 ? "new" : "mod";
+  settings.block = SettingsRead::text((*record)[4]);
+  settings.magnitude = SettingsRead::field(magnitude_data, (*record)[6], 1, error);
+  settings.direction = SettingsRead::field(direction_data, (*record)[5], 1, error) + " " + SettingsRead::field(direction_data, (*record)[5], 2, error) + " " + SettingsRead::field(direction_data, (*record)[5], 3, error);
+
+  if (!error.empty())
+  {
+    settings = {};
+    return false;
+  }
+
+  return true;
 }

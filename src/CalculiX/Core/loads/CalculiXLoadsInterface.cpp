@@ -360,3 +360,63 @@ std::vector<std::vector<std::string>> CalculiXLoadsInterface::get_loadsbodyheatf
 { 
   return CoreLoadsTreeData::get_loadsbodyheatflux_tree_data(*ccx_core.loadsbodyheatflux);
 }
+
+
+bool CalculiXLoadsInterface::get_force_settings(int id, LoadsForcesSettings& settings, std::string& error)
+{
+  return ccx_core.loadsforces->get_settings(id, settings, error);
+}
+
+
+bool CalculiXLoadsInterface::get_pressure_settings(int id, LoadsPressuresSettings& settings, std::string& error)
+{
+  return ccx_core.loadspressures->get_settings(id, settings, error);
+}
+
+
+bool CalculiXLoadsInterface::get_heatflux_settings(int id, LoadsHeatfluxesSettings& settings, std::string& error)
+{
+  return ccx_core.loadsheatfluxes->get_settings(id, settings, error);
+}
+
+
+bool CalculiXLoadsInterface::get_surfacetraction_settings(int id, LoadsSurfaceTractionSettings& settings, std::string& error)
+{
+  return ccx_core.loadssurfacetraction->get_settings(id, settings, error);
+}
+
+
+bool CalculiXLoadsInterface::get_gravity_settings(int id, LoadsGravitySettings& settings, std::string& error)
+{
+  return ccx_core.loadsgravity->get_settings(id, settings, error);
+}
+
+
+bool CalculiXLoadsInterface::get_centrifugal_settings(int id, LoadsCentrifugalSettings& settings, std::string& error)
+{
+  return ccx_core.loadscentrifugal->get_settings(id, settings, error);
+}
+
+
+bool CalculiXLoadsInterface::get_film_settings(int id, LoadsFilmSettings& settings, std::string& error)
+{
+  return ccx_core.loadsfilm->get_settings(id, settings, error);
+}
+
+
+bool CalculiXLoadsInterface::get_radiation_settings(int id, LoadsRadiationSettings& settings, std::string& error)
+{
+  return ccx_core.loadsradiation->get_settings(id, settings, error);
+}
+
+
+bool CalculiXLoadsInterface::get_bodyheatflux_settings(int id, LoadsBodyHeatfluxSettings& settings, std::string& error)
+{
+  return ccx_core.loadsbodyheatflux->get_settings(id, settings, error);
+}
+
+
+bool CalculiXLoadsInterface::get_trajectory_settings(int id, LoadsTrajectorySettings& settings, std::string& error)
+{
+  return ccx_core.loadstrajectory->get_settings(id, settings, error);
+}

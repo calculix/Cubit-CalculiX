@@ -1,4 +1,5 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/CustomLinesSettings.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreCsvWriter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreCsvWriter.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreCustomLines.cpp

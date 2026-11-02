@@ -1,3 +1,4 @@
+#include "Core/application/SettingsRead.hpp"
 #include "Core/loads/CoreLoadsSurfaceTraction.hpp"
 #include <algorithm>
 #include <numeric>
@@ -592,4 +593,35 @@ std::vector<int> CoreLoadsSurfaceTraction::get_load_ids() const
   }
 
   return ids;
+}
+
+
+bool CoreLoadsSurfaceTraction::get_settings(int id, LoadsSurfaceTractionSettings& settings, std::string& error) const
+{
+  settings = {};
+  error.clear();
+  const auto* record = SettingsRead::row(loads_data, id, 7, error);
+
+  if (record == nullptr)
+  {
+    return false;
+  }
+
+  settings.id = id;
+  settings.name = SettingsRead::field(name_data, (*record)[6], 1, error);
+  settings.amplitude = SettingsRead::optional_id((*record)[2]);
+  settings.timeDelay = SettingsRead::field(time_delay_data, (*record)[3], 1, error);
+  settings.operation = (*record)[1] == 1 ? "new" : "mod";
+  settings.sideset = SettingsRead::text((*record)[4]);
+  settings.component1 = SettingsRead::field(force_data, (*record)[5], 1, error);
+  settings.component2 = SettingsRead::field(force_data, (*record)[5], 2, error);
+  settings.component3 = SettingsRead::field(force_data, (*record)[5], 3, error);
+
+  if (!error.empty())
+  {
+    settings = {};
+    return false;
+  }
+
+  return true;
 }

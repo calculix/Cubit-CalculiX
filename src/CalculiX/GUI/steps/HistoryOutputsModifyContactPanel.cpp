@@ -1,3 +1,5 @@
+#include <algorithm>
+#include "CubitMessage.hpp"
 #include "HistoryOutputsModifyContactPanel.hpp"
 #include <QString>
 #include "Core/steps/CalculiXStepsInterface.hpp"
@@ -135,6 +137,58 @@ HistoryOutputsModifyContactPanel::~HistoryOutputsModifyContactPanel()
 
 void HistoryOutputsModifyContactPanel::on_pushButton_apply_clicked(bool)
 {
+  bool changed = false;
+  changed = changed || fieldChanged("lineEdit_1", lineEdit_1->text());
+  changed = changed || fieldChanged("lineEdit_2", lineEdit_2->text());
+  changed = changed || fieldChanged("lineEdit_3", lineEdit_3->text());
+  changed = changed || fieldChanged("comboBox_5", comboBox_5->currentText());
+  changed = changed || fieldChanged("comboBox_6", comboBox_6->currentText());
+  for (std::size_t index = 0; index < keys.size(); ++index)
+  {
+    changed = changed || fieldChanged("key:" + QString::fromStdString(keys[index]), checkBox_keys[index]->isChecked() ? "YES" : "NO");
+  }
+  if (loadedEntityId >= 0 && !changed && lineEdit_0->text().trimmed() == QString::number(loadedEntityId))
+  {
+    PRINT_INFO("No settings were changed.\n");
+    return;
+  }
+
+  if (loadedEntityId >= 0)
+  {
+    if (lineEdit_0->text().trimmed() != QString::number(loadedEntityId))
+    {
+      bool valid = false;
+      const int requestedId = lineEdit_0->text().trimmed().toInt(&valid);
+
+      if (valid)
+      {
+        setHistoryOutput(requestedId);
+      }
+      else
+      {
+        PRINT_ERROR("Select a single entity ID before reloading this panel.\n");
+      }
+
+      return;
+    }
+  }
+
+  if (loadedEntityId >= 0 && lineEdit_1->isEnabled() && !originalValues.value("lineEdit_1").isEmpty() && lineEdit_1->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Name; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_2->isEnabled() && !originalValues.value("lineEdit_2").isEmpty() && lineEdit_2->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Contact Pair ID; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_3->isEnabled() && !originalValues.value("lineEdit_3").isEmpty() && lineEdit_3->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Frequency; use the supported reset value.\n");
+    return;
+  }
+
   QStringList commands;
   QString command = "";
   bool key_on = false;
@@ -144,15 +198,15 @@ void HistoryOutputsModifyContactPanel::on_pushButton_apply_clicked(bool)
   {
     command.append("ccx modify historyoutput " +lineEdit_0->text() + " contact");
 
-    if (lineEdit_1->text() != "")
+    if (lineEdit_1->text() != "" && fieldChanged("lineEdit_1", lineEdit_1->text()))
     {
       command.append(" name \"" + lineEdit_1->text() + "\"");
     }
-    if (lineEdit_2->text() != "")
+    if (lineEdit_2->text() != "" && fieldChanged("lineEdit_2", lineEdit_2->text()))
     {
       command.append(" contactpair " + lineEdit_2->text());
     }
-    if (lineEdit_3->text() != "")
+    if (lineEdit_3->text() != "" && fieldChanged("lineEdit_3", lineEdit_3->text()))
     {
       command.append(" frequency " + lineEdit_3->text());
     }
@@ -160,20 +214,20 @@ void HistoryOutputsModifyContactPanel::on_pushButton_apply_clicked(bool)
     {
       command.append(" frequencyf " + lineEdit_4->text());
     }*/
-    if (comboBox_5->currentIndex()==1)
+    if (comboBox_5->currentIndex()==1 && fieldChanged("comboBox_5", comboBox_5->currentText()))
     {
       command.append(" totals_yes");
-    }else if (comboBox_5->currentIndex()==2)
+    }else if (comboBox_5->currentIndex()==2 && fieldChanged("comboBox_5", comboBox_5->currentText()))
     {
       command.append(" totals_only");
-    }else if (comboBox_5->currentIndex()==3)
+    }else if (comboBox_5->currentIndex()==3 && fieldChanged("comboBox_5", comboBox_5->currentText()))
     {
       command.append(" totals_no");
     }
-    if (comboBox_6->currentIndex()==1)
+    if (comboBox_6->currentIndex()==1 && fieldChanged("comboBox_6", comboBox_6->currentText()))
     {
       command.append(" global_yes");
-    }else if (comboBox_6->currentIndex()==2)
+    }else if (comboBox_6->currentIndex()==2 && fieldChanged("comboBox_6", comboBox_6->currentText()))
     {
       command.append(" global_no");
     }
@@ -181,11 +235,11 @@ void HistoryOutputsModifyContactPanel::on_pushButton_apply_clicked(bool)
 
     for (size_t i = 0; i < checkBox_keys.size(); i++)
     {
-      if (checkBox_keys[i]->isChecked())
+      if (checkBox_keys[i]->isChecked() && fieldChanged("key:" + QString::fromStdString(keys[i]), "YES"))
       {
         key_on = true;
       }
-      if (!checkBox_keys[i]->isChecked())
+      if (!checkBox_keys[i]->isChecked() && fieldChanged("key:" + QString::fromStdString(keys[i]), "NO"))
       {
         key_off = true;
       }
@@ -196,7 +250,7 @@ void HistoryOutputsModifyContactPanel::on_pushButton_apply_clicked(bool)
       command = "ccx modify historyoutput " +lineEdit_0->text() + " contact key_on ";
       for (size_t i = 0; i < checkBox_keys.size(); i++)
       {
-        if (checkBox_keys[i]->isChecked())
+        if (checkBox_keys[i]->isChecked() && fieldChanged("key:" + QString::fromStdString(keys[i]), "YES"))
         {
           command.append(label_keys[i]->text() + " ");
         }
@@ -208,7 +262,7 @@ void HistoryOutputsModifyContactPanel::on_pushButton_apply_clicked(bool)
       command = "ccx modify historyoutput " +lineEdit_0->text() + " contact key_off ";
       for (size_t i = 0; i < checkBox_keys.size(); i++)
       {
-        if (!checkBox_keys[i]->isChecked())
+        if (!checkBox_keys[i]->isChecked() && fieldChanged("key:" + QString::fromStdString(keys[i]), "NO"))
         {
           command.append(label_keys[i]->text() + " ");
         }
@@ -217,24 +271,84 @@ void HistoryOutputsModifyContactPanel::on_pushButton_apply_clicked(bool)
     }
   }
   
-  if (command != "")
-  {
-    lineEdit_0->setText("");
-    lineEdit_1->setText("");
-    lineEdit_2->setText("");
-    lineEdit_3->setText("");
-    //lineEdit_4->setText("");
-    comboBox_5->setCurrentIndex(0);
-    comboBox_6->setCurrentIndex(0);
-    for (size_t i = 0; i < checkBox_keys.size(); i++)
-    {
-      checkBox_keys[i]->setChecked(false);
-    }
-  }
   
   for (size_t i = 0; i < commands.size(); i++)
   {
     //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
     GuiSendCmd::gui_cmd(commands[int(i)]);
   }
+}
+
+
+bool HistoryOutputsModifyContactPanel::fieldChanged(const QString& field, const QString& value) const
+{
+  return loadedEntityId < 0 || originalValues.value(field) != value;
+}
+
+bool HistoryOutputsModifyContactPanel::setHistoryOutput(int id)
+{
+  loadedEntityId = -1;
+  originalValues.clear();
+  comboBox_5->setCurrentIndex(0);
+  comboBox_6->setCurrentIndex(0);
+  for (auto* key : checkBox_keys)
+  {
+    key->setChecked(false);
+  }
+  pushButton_apply->setEnabled(false);
+  lineEdit_0->clear();
+  lineEdit_1->clear();
+  lineEdit_2->clear();
+  lineEdit_3->clear();
+  CalculiXStepsInterface core;
+  HistoryOutputsSettings settings;
+  std::string error;
+
+  if (!core.get_historyoutput_settings(id, settings, error))
+  {
+    PRINT_ERROR("Cannot load HistoryOutput %d: %s\n", id, error.c_str());
+    return false;
+  }
+
+  if (settings.type != 3)
+  {
+    PRINT_ERROR("The selected record does not match this HistoryOutput panel.\n");
+    return false;
+  }
+  lineEdit_0->setText(QString::number(settings.id));
+  lineEdit_1->setText(QString::fromStdString(settings.name));
+  lineEdit_2->setText(QString::fromStdString(settings.parameters.at(1)));
+  lineEdit_3->setText(QString::fromStdString(settings.parameters.at(2)));
+  const QString comboBox_5Value = QString::fromStdString(settings.parameters.at(3));
+  int comboBox_5Index = comboBox_5->findText(comboBox_5Value, Qt::MatchFixedString);
+  if (comboBox_5Index < 0 && !comboBox_5Value.isEmpty())
+  {
+    comboBox_5->addItem(comboBox_5Value);
+    comboBox_5Index = comboBox_5->count() - 1;
+  }
+  comboBox_5->setCurrentIndex(qMax(0, comboBox_5Index));
+  const QString comboBox_6Value = QString::fromStdString(settings.parameters.at(4));
+  int comboBox_6Index = comboBox_6->findText(comboBox_6Value, Qt::MatchFixedString);
+  if (comboBox_6Index < 0 && !comboBox_6Value.isEmpty())
+  {
+    comboBox_6->addItem(comboBox_6Value);
+    comboBox_6Index = comboBox_6->count() - 1;
+  }
+  comboBox_6->setCurrentIndex(qMax(0, comboBox_6Index));
+
+  for (std::size_t index = 0; index < keys.size(); ++index)
+  {
+    checkBox_keys[index]->setChecked(std::find(settings.enabledKeys.begin(), settings.enabledKeys.end(), keys[index]) != settings.enabledKeys.end());
+    originalValues.insert("key:" + QString::fromStdString(keys[index]), checkBox_keys[index]->isChecked() ? "YES" : "NO");
+  }
+  originalValues.insert("lineEdit_0", lineEdit_0->text());
+  originalValues.insert("lineEdit_1", lineEdit_1->text());
+  originalValues.insert("lineEdit_2", lineEdit_2->text());
+  originalValues.insert("lineEdit_3", lineEdit_3->text());
+  originalValues.insert("comboBox_5", comboBox_5->currentText());
+  originalValues.insert("comboBox_6", comboBox_6->currentText());
+
+  loadedEntityId = id;
+  pushButton_apply->setEnabled(true);
+  return true;
 }

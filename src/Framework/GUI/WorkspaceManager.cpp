@@ -1,3 +1,4 @@
+#include <QToolBar>
 #include "WorkspaceManager.hpp"
 #include "CubitWorkspaceHost.hpp"
 #include "WorkspaceHeader.hpp"
@@ -82,6 +83,7 @@ bool WorkspaceManager::register_views(const std::vector<WorkspaceProviderInterfa
 
   views.insert("cubit", host->native_view());
   QList<QDockWidget*> registeredDocks;
+  QList<QToolBar*> registeredToolbars;
 
   for (auto* provider : providers)
   {
@@ -116,6 +118,16 @@ bool WorkspaceManager::register_views(const std::vector<WorkspaceProviderInterfa
         error = "A workspace supplied a null menu action.";
         return false;
       }
+    }
+
+    for (auto* toolbar : view.toolbars)
+    {
+      if (toolbar == nullptr || toolbar->objectName().isEmpty() || registeredToolbars.contains(toolbar))
+      {
+        error = "Workspace toolbars must be named, non-null and owned by only one workspace.";
+        return false;
+      }
+      registeredToolbars.append(toolbar);
     }
 
     views.insert(view.id, view);
@@ -229,6 +241,14 @@ bool WorkspaceManager::activate(const QString& id, std::string& error)
       return false;
     }
 
+    if (views.value(previous).activationChanged)
+    {
+      views.value(previous).activationChanged(false);
+    }
+    if (views.value(id).activationChanged)
+    {
+      views.value(id).activationChanged(true);
+    }
     current = id;
     startup_trace("Workspace active: " + id);
     header->set_current(id);
@@ -251,6 +271,21 @@ bool WorkspaceManager::activate(const QString& id, std::string& error)
   host->restore_layout(before);
   std::string rollbackError;
   host->apply(views.value(previous), previousSelection, false, rollbackError);
+  try
+  {
+    if (views.value(id).activationChanged)
+    {
+      views.value(id).activationChanged(false);
+    }
+    if (views.value(previous).activationChanged)
+    {
+      views.value(previous).activationChanged(true);
+    }
+  }
+  catch (...)
+  {
+    PRINT_ERROR("Workspace graphics state could not be restored.\n");
+  }
   current = previous;
 
   if (header != nullptr)
@@ -273,6 +308,16 @@ void WorkspaceManager::shutdown() noexcept
 
   if (!host->can_access_ui())
   {
+    if (views.value(current).activationChanged)
+    {
+      try
+      {
+        views.value(current).activationChanged(false);
+      }
+      catch (...)
+      {
+      }
+    }
     ready = false;
     return;
   }

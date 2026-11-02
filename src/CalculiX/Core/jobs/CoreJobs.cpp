@@ -1,3 +1,4 @@
+#include "Core/application/SettingsRead.hpp"
 #include "Core/jobs/CoreJobs.hpp"
 #include "Core/application/CoreIdSelection.hpp"
 #include <string>
@@ -1580,4 +1581,29 @@ std::vector<std::vector<std::string>> CoreJobs::get_tree_data() const
 std::vector<int> CoreJobs::get_job_ids() const
 {
   return CoreIdSelection::collect_ids(jobs_data);
+}
+
+
+bool CoreJobs::get_settings(int id, JobsSettings& settings, std::string& error) const
+{
+  settings = {};
+  error.clear();
+  const auto* record = SettingsRead::row(jobs_data, id, 3, error);
+
+  if (record == nullptr)
+  {
+    return false;
+  }
+
+  settings.id = id;
+  settings.name = SettingsRead::text((*record)[1]);
+  settings.filepath = SettingsRead::text((*record)[2]);
+
+  if (!error.empty())
+  {
+    settings = {};
+    return false;
+  }
+
+  return true;
 }

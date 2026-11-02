@@ -1,12 +1,15 @@
 #ifndef CORELOADSRADIATION_HPP
 #define CORELOADSRADIATION_HPP
 
+#include "LoadsRadiationSettings.hpp"
+
 #include <vector>
 #include <string>
 class CoreLoadsRadiation
 {
 
 public:
+  bool get_settings(int id, LoadsRadiationSettings& settings, std::string& error) const;
   std::vector<int> get_load_ids() const;
   CoreLoadsRadiation();
   ~CoreLoadsRadiation();

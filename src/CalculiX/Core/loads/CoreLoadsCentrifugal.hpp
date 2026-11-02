@@ -1,12 +1,15 @@
 #ifndef CORELOADSCENTRIFUGAL_HPP
 #define CORELOADSCENTRIFUGAL_HPP
 
+#include "LoadsCentrifugalSettings.hpp"
+
 #include <vector>
 #include <string>
 class CoreLoadsCentrifugal
 {
 
 public:
+  bool get_settings(int id, LoadsCentrifugalSettings& settings, std::string& error) const;
   std::vector<int> get_load_ids() const;
   CoreLoadsCentrifugal();
   ~CoreLoadsCentrifugal();

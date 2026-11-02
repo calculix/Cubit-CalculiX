@@ -96,3 +96,9 @@ std::vector<std::vector<double>> CalculiXMaterialsInterface::get_materiallibrary
 {
   return ccx_core.mat_library->get_materiallibrary_material_values(name, group, property);
 }
+
+
+bool CalculiXMaterialsInterface::get_material_properties(int id, MaterialProperties& properties, std::string& error)
+{
+  return ccx_core.mat->get_properties(id, properties, error);
+}

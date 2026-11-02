@@ -1,6 +1,8 @@
 #ifndef CORESECTIONS_HPP
 #define CORESECTIONS_HPP
 
+#include "SectionsSettings.hpp"
+
 #include <vector>
 #include <string>
 #include <map>
@@ -11,6 +13,7 @@ class CoreSections
 {
 
 public:
+  bool get_settings(int id, SectionsSettings& settings, std::string& error) const;
   std::vector<int> get_section_ids() const;
   CoreSections();
   ~CoreSections();

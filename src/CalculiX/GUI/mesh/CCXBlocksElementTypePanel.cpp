@@ -1,3 +1,5 @@
+#include "CubitMessage.hpp"
+#include "Core/mesh/CalculiXMeshInterface.hpp"
 #include "CCXBlocksElementTypePanel.hpp"
 #include <string>
 #include <vector>
@@ -353,7 +355,6 @@ void CCXBlocksElementTypePanel::on_pushButton_apply_clicked(bool)
   if (command != "")
   {
     commands.push_back(command);
-    PickWidget_1->setText("");
   }
   
   for (size_t i = 0; i < commands.size(); i++)
@@ -361,4 +362,44 @@ void CCXBlocksElementTypePanel::on_pushButton_apply_clicked(bool)
     //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
     GuiSendCmd::gui_cmd(commands[int(i)]);
   }
+}
+
+
+bool CCXBlocksElementTypePanel::setBlock(int block_id)
+{
+  PickWidget_1->clear();
+  group.setExclusive(false);
+  for (auto* button : group.buttons())
+  {
+    button->setChecked(false);
+  }
+  group.setExclusive(true);
+  CalculiXMeshInterface mesh;
+  if (!mesh.check_block_exists(block_id))
+  {
+    pushButton_apply->setEnabled(false);
+    PRINT_ERROR("Block %d is no longer available.\n", block_id);
+    return false;
+  }
+
+  PickWidget_1->setText(QString::number(block_id));
+  const QString type = QString::fromStdString(mesh.get_ccx_element_type(block_id));
+  for (auto* button : group.buttons())
+  {
+    if (button->text() == type)
+    {
+      button->setChecked(true);
+      for (int index = 0; index < TabWidget->count(); ++index)
+      {
+        if (TabWidget->widget(index)->isAncestorOf(button))
+        {
+          TabWidget->setCurrentIndex(index);
+          break;
+        }
+      }
+      break;
+    }
+  }
+  pushButton_apply->setEnabled(true);
+  return true;
 }

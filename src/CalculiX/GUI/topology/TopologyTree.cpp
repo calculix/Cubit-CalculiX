@@ -1,3 +1,5 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include "TopologyDeletePanel.hpp"
 #include "TopologyTree.hpp"
 #include <string>
 #include <QString>
@@ -128,6 +130,9 @@ void TopologyTree::update()
     case_ids.insert(topology_id);
     QTreeWidgetItem *case_item = ensure(this, Case, topology_id, QString::fromStdString(row[1]));
     case_item->setText(1, QString::number(topology_id));
+    case_item->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Topology));
+    case_item->setData(0, PropertyIdRole, topology_id);
+    case_item->setData(0, PropertyTopologyIdRole, topology_id);
     case_item->setData(0, TopologyRole, topology_id);
     const QString state = QString::fromStdString(ccx_topology_iface.get_topology_run_state(topology_id));
     case_item->setToolTip(0, QString("Topology %1: %2").arg(topology_id).arg(state));
@@ -177,6 +182,10 @@ void TopologyTree::update()
       QString label = QString("Iteration %1").arg(iteration_id);
       QTreeWidgetItem *item = ensure(iterations, Iteration, iteration_id, label);
       item->setText(1, QString::number(iteration_id));
+      item->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::TopologyIteration));
+      item->setData(0, PropertyIdRole, iteration_id);
+      item->setData(0, PropertyTopologyIdRole, topology_id);
+      item->setData(0, PropertyIterationIdRole, iteration_id);
       item->setData(0, TopologyRole, topology_id);
       item->setData(0, IterationRole, iteration_id);
       item->setData(0, JobRole, job_id);
@@ -191,6 +200,10 @@ void TopologyTree::update()
 
       QTreeWidgetItem *job = ensure(item, Job, job_id, QString("Job %1").arg(job_id));
       job->setText(1, QString::number(job_id));
+      job->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Job));
+      job->setData(0, PropertyIdRole, job_id);
+      job->setData(0, PropertyTopologyIdRole, topology_id);
+      job->setData(0, PropertyIterationIdRole, iteration_id);
       job->setData(0, JobRole, job_id);
       job->setIcon(0, icon);
       for (int i = item->childCount() - 1; i >= 0; --i)
@@ -214,6 +227,21 @@ void TopologyTree::update()
     if (!case_ids.contains(child(i)->data(0, IdRole).toInt()))
     {
       delete takeChild(i);
+    }
+  }
+  if (auto* model = dynamic_cast<ModelTree*>(treeWidget()))
+  {
+    const auto selected = model->selectedItems();
+    if (selected.size() == 1 && !model->signalsBlocked())
+    {
+      for (auto* ancestor = selected.front(); ancestor != nullptr; ancestor = ancestor->parent())
+      {
+        if (ancestor == this)
+        {
+          model->updatePropertySelection();
+          break;
+        }
+      }
     }
   }
 }
@@ -392,7 +420,11 @@ void TopologyTree::populateContextMenu(QMenu &menu, QTreeWidgetItem *item, Model
     menu.actions().last()->setEnabled(!running);
     addCommandAction(menu, "Kill", QString("ccx kill topology %1").arg(topology_id));
     menu.actions().last()->setEnabled(running);
-    addCommandAction(menu, "Delete", QString("ccx delete topology %1").arg(topology_id));
+    auto* remove = menu.addAction("Delete");
+    QObject::connect(remove, &QAction::triggered, &menu, [topology_id, &host]()
+    {
+      TopologyTree::open_delete(topology_id, host);
+    });
     menu.actions().last()->setEnabled(!running);
   }
   else if (kind == Iteration || kind == Job)
@@ -431,4 +463,23 @@ void TopologyTree::populateContextMenu(QMenu &menu, QTreeWidgetItem *item, Model
       open_job(job_id, host);
     });
   }
+}
+
+
+void TopologyTree::open_delete(int topology_id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXTopologyDelete");
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<TopologyDeletePanel*>(widget))
+    {
+      panel->setTopology(topology_id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the topology delete panel.\n");
 }

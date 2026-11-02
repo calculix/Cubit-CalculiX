@@ -23,6 +23,8 @@ class HBCsManagement : public QWidget
   Q_OBJECT
   
 public:
+  void selectDisplacement(int bc_id);
+  void selectTemperature(int bc_id);
   HBCsManagement();
   ~HBCsManagement();
 

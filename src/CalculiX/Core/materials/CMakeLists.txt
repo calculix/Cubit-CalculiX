@@ -1,4 +1,5 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/MaterialProperties.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreMaterials.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreMaterials.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreMaterials.hpp

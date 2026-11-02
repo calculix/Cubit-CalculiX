@@ -1,3 +1,6 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include "StepsTree.hpp"
+#include "GUI/loads/LoadsCentrifugalTree.hpp"
 #include "StepsLoadsCentrifugalTree.hpp"
 #include <string>
 #include <vector>
@@ -109,6 +112,8 @@ void StepsLoadsCentrifugalTree::addLoad(QString load_id, QString load_name)
   LoadTreeChild->setText(0, load_name);
     
   LoadTreeChild->setText(1, load_id);
+  LoadTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Centrifugal));
+  LoadTreeChild->setData(0, PropertyIdRole, load_id.toInt());
 
   LoadTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("StepsLoadsCentrifugalTree"));
 
@@ -188,8 +193,20 @@ void StepsLoadsCentrifugalTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Centrifugal", host, "CCXLoadsCentrifugalCreate");
-  addPanelAction(menu, "Modify Centrifugal", host, "CCXLoadsCentrifugalModify");
-  addPanelAction(menu, "Delete Centrifugal", host, "CCXLoadsCentrifugalDelete");
+  {
+    auto* action = menu.addAction("Modify Centrifugal");
+    QObject::connect(action, &QAction::triggered, &menu, [entityId, &host]()
+    {
+      LoadsCentrifugalTree::open_modify(entityId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Centrifugal");
+    QObject::connect(action, &QAction::triggered, &menu, [entityId, &host]()
+    {
+      LoadsCentrifugalTree::open_delete(entityId, host);
+    });
+  }
   {
     QAction *action = menu.addAction("Steps Management");
     ModelTree *hostPtr = &host;
@@ -205,4 +222,23 @@ void StepsLoadsCentrifugalTree::populateContextMenu(
     });
   }
   addCommandAction(menu, "Draw Centrifugal", QString("ccx draw load centrifugal ") + QString::number(entityId));
+}
+
+
+void StepsLoadsCentrifugalTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (host.myStepsManagement == nullptr)
+  {
+    return;
+  }
+  for (auto* ancestor = item; ancestor != nullptr; ancestor = ancestor->parent())
+  {
+    if (dynamic_cast<StepsTree*>(ancestor->parent()) != nullptr)
+    {
+      host.myStepsManagement->setStep(ancestor->text(1));
+      host.myStepsManagement->show();
+      host.myStepsManagement->raise();
+      return;
+    }
+  }
 }

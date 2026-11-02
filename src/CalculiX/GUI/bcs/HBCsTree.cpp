@@ -1,3 +1,4 @@
+#include "GUI/properties/PropertySelection.hpp"
 #include "HBCsTree.hpp"
 #include "Core/gui/CalculiXGuiResourcesInterface.hpp"
 #include "GUI/application/ModelTree.hpp"
@@ -25,6 +26,8 @@ void HBCsTree::initialize()
 
   QTreeWidgetItem::setText(0,"homogeneous BCs");
   this->setIcon(0,ccx_gui_resources_iface.getIcon2("HBCsTree"));
+  setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::HBCs));
+  setData(0, PropertyIdRole, 0);
   isInitialized = true;
 }
 
@@ -86,4 +89,16 @@ void HBCsTree::populateContextMenu(
       hostPtr->myHBCsManagement->show();
     });
   }
+}
+
+
+void HBCsTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (host.myHBCsManagement == nullptr)
+  {
+    return;
+  }
+  host.myHBCsManagement->update();
+  host.myHBCsManagement->show();
+  host.myHBCsManagement->raise();
 }

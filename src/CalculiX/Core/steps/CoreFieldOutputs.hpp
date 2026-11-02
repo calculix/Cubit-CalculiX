@@ -1,11 +1,14 @@
 #ifndef COREFIELDOUTPUTS_HPP
 #define COREFIELDOUTPUTS_HPP
 
+#include "FieldOutputsSettings.hpp"
+
 #include <vector>
 #include <string>
 class CoreFieldOutputs
 {
 public:
+  bool get_settings(int id, FieldOutputsSettings& settings, std::string& error) const;
   std::vector<int> get_output_ids() const;
   bool check_fieldoutput_exists(int fieldoutput_id);
   CoreFieldOutputs();

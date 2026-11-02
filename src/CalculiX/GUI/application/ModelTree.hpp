@@ -1,6 +1,8 @@
 #ifndef MODELTREE_HPP
 #define MODELTREE_HPP
 
+#include "GUI/properties/PropertySelection.hpp"
+#include "Core/drawing/CoreDrawTypes.hpp"
 #include <QWidget>
 #include <QDockWidget>
 #include <QTreeWidget>
@@ -93,7 +95,12 @@ public:
   void update();
   void clear();
 
+signals:
+  void propertySelectionChanged(const PropertySelection& selection);
+
 public slots:
+  bool selectDrawingEntity(const CalculiXDrawSelection& selection);
+  void updatePropertySelection();
   void showContextMenu(const QPoint &pos);
   void ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column);
 };

@@ -1,4 +1,7 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/SurfaceInteractionsSettings.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ContactPairsSettings.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintsSettings.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreSurfaceInteractions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreContactPairs.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreConstraints.cpp

@@ -20,6 +20,7 @@ class FieldOutputsDeletePanel : public QWidget
   Q_OBJECT
   
 public:
+  void setFieldOutput(int id);
   explicit FieldOutputsDeletePanel(QWidget *parent = 0);
   ~FieldOutputsDeletePanel();
 

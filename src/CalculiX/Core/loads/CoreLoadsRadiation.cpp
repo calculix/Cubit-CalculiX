@@ -1,3 +1,4 @@
+#include "Core/application/SettingsRead.hpp"
 #include "Core/loads/CoreLoadsRadiation.hpp"
 #include <string>
 #include <vector>
@@ -558,4 +559,38 @@ std::vector<int> CoreLoadsRadiation::get_load_ids() const
   }
 
   return ids;
+}
+
+
+bool CoreLoadsRadiation::get_settings(int id, LoadsRadiationSettings& settings, std::string& error) const
+{
+  settings = {};
+  error.clear();
+  const auto* record = SettingsRead::row(loads_data, id, 12, error);
+
+  if (record == nullptr)
+  {
+    return false;
+  }
+
+  settings.id = id;
+  settings.name = SettingsRead::field(name_data, (*record)[9], 1, error);
+  settings.amplitude = SettingsRead::optional_id((*record)[2]);
+  settings.timeDelay = SettingsRead::field(time_delay_data, (*record)[3], 1, error);
+  settings.operation = (*record)[1] == 1 ? "new" : "mod";
+  settings.sideset = SettingsRead::text((*record)[4]);
+  settings.temperature = SettingsRead::field(temperature_data, (*record)[5], 1, error);
+  settings.coefficient = SettingsRead::field(emissivity_data, (*record)[6], 1, error);
+  settings.secondaryAmplitude = SettingsRead::optional_id((*record)[7]);
+  settings.secondaryTimeDelay = SettingsRead::field(radiation_time_delay_data, (*record)[8], 1, error);
+  settings.cavity = SettingsRead::field(cavity_data, (*record)[10], 1, error);
+  settings.cavityRadiation = (*record)[11] == 1 ? "ON" : "OFF";
+
+  if (!error.empty())
+  {
+    settings = {};
+    return false;
+  }
+
+  return true;
 }

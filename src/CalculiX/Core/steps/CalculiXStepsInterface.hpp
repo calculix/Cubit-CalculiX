@@ -1,6 +1,13 @@
 #ifndef CALCULIXSTEPSINTERFACE_HPP
 #define CALCULIXSTEPSINTERFACE_HPP
 
+#include "PhysicalConstantsSettings.hpp"
+#include "DampingSettings.hpp"
+#include "InitialConditionsSettings.hpp"
+#include "FieldOutputsSettings.hpp"
+#include "HistoryOutputsSettings.hpp"
+#include "StepsSettings.hpp"
+
 #include <string>
 #include <vector>
 
@@ -9,6 +16,12 @@ struct StepSplitResult;
 class CalculiXStepsInterface
 {
 public:
+  bool get_physicalconstants_settings(int id, PhysicalConstantsSettings& settings, std::string& error);
+  bool get_damping_settings(int id, DampingSettings& settings, std::string& error);
+  bool get_initialcondition_settings(int id, InitialConditionsSettings& settings, std::string& error);
+  bool get_fieldoutput_settings(int id, FieldOutputsSettings& settings, std::string& error);
+  bool get_historyoutput_settings(int id, HistoryOutputsSettings& settings, std::string& error);
+  bool get_step_settings(int id, StepsSettings& settings, std::string& error);
   bool check_step_exists(int step_id); // check if step exists
   std::string get_damping_export_data(); // gets the export data from damping core
   std::string get_physicalconstants_export_data(); // gets the export data from physicalconstants core

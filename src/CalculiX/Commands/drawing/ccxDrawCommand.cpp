@@ -121,6 +121,7 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
 
   std::string output;
   bool bool_draw_all = false;
+  bool success = true;
   double size_value;
   std::vector<int> force_id;
   std::vector<int> pressure_id;
@@ -165,20 +166,7 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
 
   if (!data.get_value("size_value", size_value))
   {
-    std::array<double,10> vector_list;
-    std::vector<int> ids = CubitInterface::parse_cubit_list("vertex", "all");
-    if (ids.size()!=0)
-    {
-      vector_list = CubitInterface::get_total_bounding_box("vertex", ids);
-    }else{
-      std::vector<int> ids = CubitInterface::parse_cubit_list("node", "all");
-      vector_list = CubitInterface::get_total_bounding_box("node", ids);
-    }
-    size_value = (vector_list[2]+vector_list[5]+vector_list[8])/3;
-    if (size_value <= 0)
-    {
-      size_value = 1;
-    }
+    size_value = ccx_draw_iface.default_size();
   }
 
   if (data.find_keyword("LOAD"))
@@ -250,6 +238,7 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
     {
       output = "Failed ccx draw loads!\n";
       PRINT_ERROR(output.c_str());
+    success = false;
     }
   }
   
@@ -260,6 +249,7 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
     {
       output = "Failed ccx draw bcs!\n";
       PRINT_ERROR(output.c_str());
+    success = false;
     }
   }
   if (data.find_keyword("ORIENTATION_ALL"))
@@ -269,6 +259,7 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
     {
       output = "Failed ccx draw orientations!\n";
       PRINT_ERROR(output.c_str());
+    success = false;
     }
   }
   if (data.find_keyword("EQUATION_ALL"))
@@ -278,6 +269,7 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
     {
       output = "Failed ccx draw equations!\n";
       PRINT_ERROR(output.c_str());
+    success = false;
     }
   }
   if (data.find_keyword("EQUATIONGROUP_ALL"))
@@ -287,6 +279,7 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
     {
       output = "Failed ccx draw equationgroups!\n";
       PRINT_ERROR(output.c_str());
+    success = false;
     }
   }
   if (data.find_keyword("LOAD_FORCE_ALL"))
@@ -296,6 +289,7 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
     {
       output = "Failed ccx draw forces!\n";
       PRINT_ERROR(output.c_str());
+    success = false;
     }
   }
   if (data.find_keyword("LOAD_PRESSURE_ALL"))
@@ -305,6 +299,7 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
     {
       output = "Failed ccx draw pressures!\n";
       PRINT_ERROR(output.c_str());
+    success = false;
     }
   }
   if (data.find_keyword("LOAD_HEATFLUX_ALL"))
@@ -314,6 +309,7 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
     {
       output = "Failed ccx draw heatfluxes!\n";
       PRINT_ERROR(output.c_str());
+    success = false;
     }
   }
   if (data.find_keyword("LOAD_GRAVITY_ALL"))
@@ -323,6 +319,7 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
     {
       output = "Failed ccx draw gravities!\n";
       PRINT_ERROR(output.c_str());
+    success = false;
     }
   }
   if (data.find_keyword("LOAD_CENTRIFUGAL_ALL"))
@@ -332,6 +329,7 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
     {
       output = "Failed ccx draw centrifugals!\n";
       PRINT_ERROR(output.c_str());
+    success = false;
     }
   }
   if (data.find_keyword("LOAD_TRAJECTORY_ALL"))
@@ -341,6 +339,7 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
     {
       output = "Failed ccx draw trajectories!\n";
       PRINT_ERROR(output.c_str());
+    success = false;
     }
   }
   if (data.find_keyword("LOAD_FILM_ALL"))
@@ -350,6 +349,7 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
     {
       output = "Failed ccx draw films!\n";
       PRINT_ERROR(output.c_str());
+    success = false;
     }
   }
   if (data.find_keyword("LOAD_RADIATION_ALL"))
@@ -359,6 +359,7 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
     {
       output = "Failed ccx draw radiations!\n";
       PRINT_ERROR(output.c_str());
+    success = false;
     }
   }
   if (data.find_keyword("LOAD_SURFACETRACTION_ALL"))
@@ -368,6 +369,7 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
     {
       output = "Failed ccx draw surface tractions!\n";
       PRINT_ERROR(output.c_str());
+    success = false;
     }
   }
   if (data.find_keyword("LOAD_BODYHEATFLUX_ALL"))
@@ -377,6 +379,7 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
     {
       output = "Failed ccx draw bodyheatflux!\n";
       PRINT_ERROR(output.c_str());
+    success = false;
     }
   }
   if (data.find_keyword("BC_DISPLACEMENT_ALL"))
@@ -386,6 +389,7 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
     {
       output = "Failed ccx draw displacements!\n";
       PRINT_ERROR(output.c_str());
+    success = false;
     }
   }
   if (data.find_keyword("BC_TEMPERATURE_ALL"))
@@ -395,82 +399,98 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
     {
       output = "Failed ccx draw temperatures!\n";
       PRINT_ERROR(output.c_str());
+    success = false;
     }
   }
   if (!ccx_draw_iface.draw_load_force(force_id,size_value))
   {
     output = "Failed ccx draw load force!\n";
     PRINT_ERROR(output.c_str());
+    success = false;
   }
   if (!ccx_draw_iface.draw_load_pressure(pressure_id,size_value))
   {
     output = "Failed ccx draw load pressure!\n";
     PRINT_ERROR(output.c_str());
+    success = false;
   }
   if (!ccx_draw_iface.draw_load_heatflux(heatflux_id,size_value))
   {
     output = "Failed ccx draw load heatflux!\n";
     PRINT_ERROR(output.c_str());
+    success = false;
   }
   if (!ccx_draw_iface.draw_load_gravity(gravity_id,size_value))
   {
     output = "Failed ccx draw load gravity!\n";
     PRINT_ERROR(output.c_str());
+    success = false;
   }
   if (!ccx_draw_iface.draw_load_centrifugal(centrifugal_id,size_value))
   {
     output = "Failed ccx draw load centrifugal!\n";
     PRINT_ERROR(output.c_str());
+    success = false;
   }
   if (!ccx_draw_iface.draw_load_trajectory(trajectory_id,size_value))
   {
     output = "Failed ccx draw load trajectory!\n";
     PRINT_ERROR(output.c_str());
+    success = false;
   }
   if (!ccx_draw_iface.draw_load_film(film_id,size_value))
   {
     output = "Failed ccx draw load film!\n";
     PRINT_ERROR(output.c_str());
+    success = false;
   }
   if (!ccx_draw_iface.draw_load_radiation(radiation_id,size_value))
   {
     output = "Failed ccx draw load radiation!\n";
     PRINT_ERROR(output.c_str());
+    success = false;
   }
   if (!ccx_draw_iface.draw_load_surface_traction(surfacetraction_id,size_value))
   {
     output = "Failed ccx draw load surface traction!\n";
     PRINT_ERROR(output.c_str());
+    success = false;
   }
   if (!ccx_draw_iface.draw_load_bodyheatflux(bodyheatflux_id,size_value))
   {
     output = "Failed ccx draw load bodyheatflux!\n";
     PRINT_ERROR(output.c_str());
+    success = false;
   }
   if (!ccx_draw_iface.draw_bc_displacement(displacement_id,size_value))
   {
     output = "Failed ccx draw bc displacement!\n";
     PRINT_ERROR(output.c_str());
+    success = false;
   }
   if (!ccx_draw_iface.draw_bc_temperature(temperature_id,size_value))
   {
     output = "Failed ccx draw bc temperature!\n";
     PRINT_ERROR(output.c_str());
+    success = false;
   }
   if (!ccx_draw_iface.draw_orientation(orientation_id,size_value))
   {
     output = "Failed ccx draw orientation!\n";
     PRINT_ERROR(output.c_str());
+    success = false;
   }
   if (!ccx_draw_iface.draw_equation(equation_id,size_value))
   {
     output = "Failed ccx draw equation!\n";
     PRINT_ERROR(output.c_str());
+    success = false;
   }
   if (!ccx_draw_iface.draw_equationgroup(equationgroup_id,size_value))
   {
     output = "Failed ccx draw equationgroup!\n";
     PRINT_ERROR(output.c_str());
+    success = false;
   }
   
   if (bool_draw_all)
@@ -479,8 +499,10 @@ bool ccxDrawCommand::execute(CubitCommandData &data)
     {
       output = "Failed ccx draw!\n";
       PRINT_ERROR(output.c_str());
+    success = false;
     } 
   }
     
-  return true;
+  const bool rendered = ccx_draw_iface.render_pending();
+  return success && rendered;
 }

@@ -1,8 +1,12 @@
 #ifndef LOADSTRAJECTORYHEATFLUXMODIFYPANEL_HPP
 #define LOADSTRAJECTORYHEATFLUXMODIFYPANEL_HPP
+
+#include "Core/loads/LoadsTrajectorySettings.hpp"
 #include <string>
 #include <vector>
 
+#include <QHash>
+#include <QString>
 #include <QWidget>
 #include <QList>
 #include <QPushButton>
@@ -24,6 +28,7 @@ class LoadsTrajectoryHeatfluxModifyPanel : public QWidget
   Q_OBJECT
   
 public:
+  bool setTrajectory(int id);
   explicit LoadsTrajectoryHeatfluxModifyPanel(QWidget *parent = 0);
   ~LoadsTrajectoryHeatfluxModifyPanel();
 
@@ -33,6 +38,9 @@ private slots:
   void on_pushButton_apply_clicked(bool);
 
 private:
+  int loadedEntityId = -1;
+  QHash<QString, QString> originalValues;
+  bool fieldChanged(const QString& field, const QString& value) const;
   std::string log;
   std::vector<std::vector<double>> matrix;
 

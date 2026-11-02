@@ -1,4 +1,6 @@
 #include "Core/CalculiXCore.hpp"
+#include "Core/drawing/CoreDraw.hpp"
+#include "Core/drawing/CoreDrawPersistence.hpp"
 #include "CoreModelMetadataPersistence.hpp"
 #include "Core/mesh/CoreBlocksPersistence.hpp"
 #include "Core/sections/CoreSectionsPersistence.hpp"
@@ -24,14 +26,116 @@
 
 #include <hdf5.h>
 #include <QScopedValueRollback>
+#include <exception>
+#include <memory>
 
 namespace
 {
-void advance_progress(ProgressTool& progress)
+std::unique_ptr<HDF5Tool> open_model_file(const std::string& filename, bool& hasCalculiXData)
 {
-  progress.step();
-  progress.check_interrupt();
+  try
+  {
+    if (H5Fis_accessible(filename.c_str(), H5P_DEFAULT) <= 0)
+    {
+      PRINT_ERROR("Cannot access CalculiX model file as HDF5: %s\n", filename.c_str());
+      return nullptr;
+    }
+    auto file = std::make_unique<HDF5Tool>(filename, false);
+    hasCalculiXData = file->nameExists("Cubit-CalculiX");
+    return file;
+  }
+  catch (const H5::Exception& error)
+  {
+    PRINT_ERROR("Cannot open CalculiX model file %s: %s\n", filename.c_str(), error.getDetailMsg().c_str());
+    return nullptr;
+  }
+  catch (const std::exception& error)
+  {
+    PRINT_ERROR("Cannot open CalculiX model file %s: %s\n", filename.c_str(), error.what());
+    return nullptr;
+  }
 }
+
+class PersistenceProgress
+{
+public:
+  explicit PersistenceProgress(ProgressTool* progress) : progress(progress)
+  {
+  }
+
+  ~PersistenceProgress() noexcept
+  {
+    finish();
+  }
+
+  bool start(int steps, const char* title)
+  {
+    try
+    {
+      if (progress != nullptr)
+      {
+        started = true;
+        progress->start(0, steps, title);
+        progress->check_interrupt();
+      }
+      return true;
+    }
+    catch (const std::exception& error)
+    {
+      PRINT_WARNING("CalculiX persistence progress interrupted: %s\n", error.what());
+      return false;
+    }
+    catch (...)
+    {
+      PRINT_WARNING("CalculiX persistence progress interrupted.\n");
+      return false;
+    }
+  }
+
+  bool advance()
+  {
+    try
+    {
+      if (started && progress != nullptr)
+      {
+        progress->step();
+        progress->check_interrupt();
+      }
+      return true;
+    }
+    catch (const std::exception& error)
+    {
+      PRINT_WARNING("CalculiX persistence progress interrupted: %s\n", error.what());
+      return false;
+    }
+    catch (...)
+    {
+      PRINT_WARNING("CalculiX persistence progress interrupted.\n");
+      return false;
+    }
+  }
+
+  void finish() noexcept
+  {
+    if (!started || progress == nullptr)
+    {
+      return;
+    }
+    started = false;
+    try
+    {
+      progress->end();
+    }
+    catch (...)
+    {
+      PRINT_WARNING("Cannot finish CalculiX persistence progress display.\n");
+    }
+  }
+
+private:
+  ProgressTool* progress;
+  bool started = false;
+};
 }
 
 bool CalculiXCore::read_cub(std::string filename)
@@ -53,130 +157,309 @@ bool CalculiXCore::read_cub(std::string filename)
   log = "Reading Cubit-CalculiX data from \"" + filename + "\"\n";
   PRINT_INFO("%s", log.c_str());
   
-  if (H5Fis_accessible(filename.c_str(), H5P_DEFAULT) <= 0)
+  bool hasCalculiXData = false;
+  auto opened = open_model_file(filename, hasCalculiXData);
+  if (opened == nullptr)
   {
-    PRINT_ERROR(
-      "Cannot read Cubit-CalculiX data: \"%s\" is not accessible as an HDF5 file.\n",
-      filename.c_str());
     return false;
   }
-
-  HDF5Tool cubTool(filename);
+  auto& cubTool = *opened;
  
-  if (!cubTool.nameExists("Cubit-CalculiX"))
+  if (!hasCalculiXData)
   {
     log = "No Cubit-CalculiX data in \"" + filename + "\"\n";
     PRINT_INFO("%s", log.c_str());
-    return true;
+    if (!CoreDrawPersistence::read(cubTool, *draw))
+    {
+      return false;
+    }
+    return cubTool.close();
   }
 
-  progressbar->start(0, 29, "Reading Cubit-CalculiX data");
-  progressbar->check_interrupt();
+  PersistenceProgress progress(progressbar);
+  if (!progress.start(32, "Reading Cubit-CalculiX data"))
+  {
+    return false;
+  }
   //General
-  CoreModelMetadataPersistence::read(cubTool);
+  if (!CoreModelMetadataPersistence::read(cubTool))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
   //Blocks
-  CoreBlocksPersistence::read(cubTool, *cb);
-  advance_progress(*progressbar);
+  if (!CoreBlocksPersistence::read(cubTool, *cb))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
   //Sections
-  CoreSectionsPersistence::read(cubTool, *sections);
-  advance_progress(*progressbar);
+  if (!CoreSectionsPersistence::read(cubTool, *sections))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
   //Constraints
-  CoreInteractionsPersistence::read(cubTool, *constraints);
-  advance_progress(*progressbar);
+  if (!CoreInteractionsPersistence::read(cubTool, *constraints))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
   //SurfaceInteractions
-  CoreInteractionsPersistence::read(cubTool, *surfaceinteractions);
-  advance_progress(*progressbar);
+  if (!CoreInteractionsPersistence::read(cubTool, *surfaceinteractions))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
   //ContactPairs
-  CoreInteractionsPersistence::read(cubTool, *contactpairs);
-  advance_progress(*progressbar);
+  if (!CoreInteractionsPersistence::read(cubTool, *contactpairs))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
   //Amplitudes
-  CoreAmplitudesPersistence::read(cubTool, *amplitudes);
-  advance_progress(*progressbar);
+  if (!CoreAmplitudesPersistence::read(cubTool, *amplitudes))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
   //Orientations
-  CoreOrientationsPersistence::read(cubTool, *orientations);
-  advance_progress(*progressbar);
+  if (!CoreOrientationsPersistence::read(cubTool, *orientations))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
   //Damping
-  CoreStepSettingsPersistence::read(cubTool, *damping);
-  advance_progress(*progressbar);
+  if (!CoreStepSettingsPersistence::read(cubTool, *damping))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
   //Physical Constants
-  CoreStepSettingsPersistence::read(cubTool, *physicalconstants);
-  advance_progress(*progressbar);
+  if (!CoreStepSettingsPersistence::read(cubTool, *physicalconstants))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
   //LoadsForces
-  CoreLoadsPersistence::read(cubTool, *loadsforces);
-  advance_progress(*progressbar);
+  if (!CoreLoadsPersistence::read(cubTool, *loadsforces))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
   //LoadsPressures
-  CoreLoadsPersistence::read(cubTool, *loadspressures);
-  advance_progress(*progressbar);
+  if (!CoreLoadsPersistence::read(cubTool, *loadspressures))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
   //LoadsHeatFluxes
-  CoreLoadsPersistence::read(cubTool, *loadsheatfluxes);
-  advance_progress(*progressbar);
+  if (!CoreLoadsPersistence::read(cubTool, *loadsheatfluxes))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
   //LoadsGravity
-  CoreLoadsPersistence::read(cubTool, *loadsgravity);
-  advance_progress(*progressbar);
+  if (!CoreLoadsPersistence::read(cubTool, *loadsgravity))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
   //LoadsCentrifugal
-  CoreLoadsPersistence::read(cubTool, *loadscentrifugal);
-  advance_progress(*progressbar);
+  if (!CoreLoadsPersistence::read(cubTool, *loadscentrifugal))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
   //LoadsTrajectory
-  CoreLoadsPersistence::read(cubTool, *loadstrajectory);
-  advance_progress(*progressbar);
+  if (!CoreLoadsPersistence::read(cubTool, *loadstrajectory))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
   //LoadsFilm
-  CoreLoadsPersistence::read(cubTool, *loadsfilm);
-  advance_progress(*progressbar);
+  if (!CoreLoadsPersistence::read(cubTool, *loadsfilm))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
   //LoadsRadiation
-  CoreLoadsPersistence::read(cubTool, *loadsradiation);
-  advance_progress(*progressbar);
+  if (!CoreLoadsPersistence::read(cubTool, *loadsradiation))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
   //LoadsSurfaceTraction
-  CoreLoadsPersistence::read(cubTool, *loadssurfacetraction);
-  advance_progress(*progressbar);
+  if (!CoreLoadsPersistence::read(cubTool, *loadssurfacetraction))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
   //LoadsBodyHeatflux
-  CoreLoadsPersistence::read(cubTool, *loadsbodyheatflux);
-  advance_progress(*progressbar);
+  if (!CoreLoadsPersistence::read(cubTool, *loadsbodyheatflux))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
   //BCs
   //BCsDisplacements
-  CoreBCsPersistence::read(cubTool, *bcsdisplacements);
-  advance_progress(*progressbar);
-  //BCsTemperatures
-  CoreBCsPersistence::read(cubTool, *bcstemperatures);
-  advance_progress(*progressbar);
-  //HistoryOutputs
-  CoreOutputsPersistence::read(cubTool, *historyoutputs);
-  advance_progress(*progressbar);
-  //FieldOutputs
-  CoreOutputsPersistence::read(cubTool, *fieldoutputs);
-  advance_progress(*progressbar);
-  //InitialConditions
-  CoreInitialConditionsPersistence::read(cubTool, *initialconditions);
-  advance_progress(*progressbar);
-  //HBCs
-  CoreBCsPersistence::read(cubTool, *hbcs);
-  advance_progress(*progressbar);
-  //Steps
-  CoreStepsPersistence::read(cubTool, *steps);
-  advance_progress(*progressbar);
-  //Jobs
-  CoreJobsPersistence::read(cubTool, *jobs);
-  advance_progress(*progressbar);
-  //Results
-  CoreResultsPersistence::read_registry(cubTool, *results);
-  advance_progress(*progressbar);
-  if (!CoreResultsPersistence::read_loaded_results(cubTool, *results))
+  if (!CoreBCsPersistence::read(cubTool, *bcsdisplacements))
   {
-    progressbar->end();
     return false;
   }
-  advance_progress(*progressbar);
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //BCsTemperatures
+  if (!CoreBCsPersistence::read(cubTool, *bcstemperatures))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //HistoryOutputs
+  if (!CoreOutputsPersistence::read(cubTool, *historyoutputs))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //FieldOutputs
+  if (!CoreOutputsPersistence::read(cubTool, *fieldoutputs))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //InitialConditions
+  if (!CoreInitialConditionsPersistence::read(cubTool, *initialconditions))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //HBCs
+  if (!CoreBCsPersistence::read(cubTool, *hbcs))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //Steps
+  if (!CoreStepsPersistence::read(cubTool, *steps))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //Jobs
+  if (!CoreJobsPersistence::read(cubTool, *jobs))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //Results
+  if (!CoreResultsPersistence::read(cubTool, *results))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
   //CustomLines
-  CoreCustomLinesPersistence::read(cubTool, *customlines);
-  advance_progress(*progressbar);
+  if (!CoreCustomLinesPersistence::read(cubTool, *customlines))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
   if (!CoreTopologyPersistence::read(cubTool, *topology, *mat, *sections, *jobs))
   {
-    progressbar->end();
     return false;
   }
-  progressbar->end();
-  log = "Finished reading Cubit-CalculiX data from \"" + filename + "\"\n";
-  PRINT_INFO("%s", log.c_str());
-
+  if (!progress.advance())
+  {
+    return false;
+  }
   // check data with autocleanup
   if (use_ccx_autocleanup)
   {
@@ -188,6 +471,22 @@ bool CalculiXCore::read_cub(std::string filename)
     }
   }
 
+  if (!CoreDrawPersistence::read(cubTool, *draw))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  progress.finish();
+  if (!cubTool.close())
+  {
+    return false;
+  }
+  log = "Finished reading Cubit-CalculiX data from \"" + filename + "\"\n";
+  PRINT_INFO("%s", log.c_str());
+
   return true;
 }
 
@@ -197,131 +496,322 @@ bool CalculiXCore::save_cub(std::string filename)
   PRINT_INFO("%s", log.c_str());
   ProgressTool* progressbar = CubitInterface::app_util().get()->progress_tool();
 
-  if (H5Fis_accessible(filename.c_str(), H5P_DEFAULT) <= 0)
+  bool hasCalculiXData = false;
+  auto opened = open_model_file(filename, hasCalculiXData);
+  if (opened == nullptr)
   {
-    PRINT_ERROR(
-      "Cannot save Cubit-CalculiX data: \"%s\" is not accessible as an HDF5 file.\n",
-      filename.c_str());
     return false;
   }
+  auto& cubTool = *opened;
 
-  HDF5Tool cubTool(filename);
-
-  if (cubTool.nameExists("Cubit-CalculiX"))
+  if (hasCalculiXData)
   {
     log = "group already here. Can't write Cubit-CalculiX data into \"" + filename + "\"\n";
     PRINT_INFO("%s", log.c_str());
     return false;
   }
 
-  progressbar->start(0, 29, "Writing Cubit-CalculiX data");
-  progressbar->check_interrupt();
-  //General
-  CoreModelMetadataPersistence::write(cubTool, version);
-  //Blocks
-  CoreBlocksPersistence::write(cubTool, *cb);
-  advance_progress(*progressbar);
-  //Materials
-  cubTool.createGroup("Cubit-CalculiX/Materials");
-  advance_progress(*progressbar);
-  //Sections
-  CoreSectionsPersistence::write(cubTool, *sections);
-  advance_progress(*progressbar);
-  //Constraints
-  CoreInteractionsPersistence::write(cubTool, *constraints);
-  advance_progress(*progressbar);
-  //SurfaceInteractions
-  CoreInteractionsPersistence::write(cubTool, *surfaceinteractions);
-  advance_progress(*progressbar);
-  //ContactPairs
-  CoreInteractionsPersistence::write(cubTool, *contactpairs);
-  advance_progress(*progressbar);
-  //Amplitudes
-  CoreAmplitudesPersistence::write(cubTool, *amplitudes);
-  advance_progress(*progressbar);
-  //Orientations
-  CoreOrientationsPersistence::write(cubTool, *orientations);
-  advance_progress(*progressbar);
-  //Damping
-  CoreStepSettingsPersistence::write(cubTool, *damping);
-  advance_progress(*progressbar);
-  //Physical Constants
-  CoreStepSettingsPersistence::write(cubTool, *physicalconstants);
-  advance_progress(*progressbar);
-  //Loads
-  cubTool.createGroup("Cubit-CalculiX/Loads");
-  //LoadsForces
-  CoreLoadsPersistence::write(cubTool, *loadsforces);
-  advance_progress(*progressbar);
-  //LoadsPressures
-  CoreLoadsPersistence::write(cubTool, *loadspressures);
-  advance_progress(*progressbar);
-  //LoadsHeatFluxes
-  CoreLoadsPersistence::write(cubTool, *loadsheatfluxes);
-  advance_progress(*progressbar);
-  //LoadsGravity
-  CoreLoadsPersistence::write(cubTool, *loadsgravity);
-  advance_progress(*progressbar);
-  //LoadsCentrifugal
-  CoreLoadsPersistence::write(cubTool, *loadscentrifugal);
-  advance_progress(*progressbar);
-  //LoadsTrajectory
-  CoreLoadsPersistence::write(cubTool, *loadstrajectory);
-  advance_progress(*progressbar);
-  //LoadsFilm
-  CoreLoadsPersistence::write(cubTool, *loadsfilm);
-  advance_progress(*progressbar);
-  //LoadsRadiation
-  CoreLoadsPersistence::write(cubTool, *loadsradiation);
-  advance_progress(*progressbar);
-  //LoadsSurfaceTraction
-  CoreLoadsPersistence::write(cubTool, *loadssurfacetraction);
-  advance_progress(*progressbar);
-  //LoadsBodyHeatflux
-  CoreLoadsPersistence::write(cubTool, *loadsbodyheatflux);
-  advance_progress(*progressbar);
-  //BCs
-  cubTool.createGroup("Cubit-CalculiX/BCs");
-  //BCsDisplacements
-  CoreBCsPersistence::write(cubTool, *bcsdisplacements);
-  advance_progress(*progressbar);
-  //BCsTemperatures
-  CoreBCsPersistence::write(cubTool, *bcstemperatures);
-  advance_progress(*progressbar);
-  //HistoryOutputs
-  CoreOutputsPersistence::write(cubTool, *historyoutputs);
-  advance_progress(*progressbar);
-  //FieldOutputs
-  CoreOutputsPersistence::write(cubTool, *fieldoutputs);
-  advance_progress(*progressbar);
-  //InitialConditions
-  CoreInitialConditionsPersistence::write(cubTool, *initialconditions);
-  advance_progress(*progressbar);
-  //HBCs
-  CoreBCsPersistence::write(cubTool, *hbcs);
-  advance_progress(*progressbar);
-  //Steps
-  CoreStepsPersistence::write(cubTool, *steps);
-  advance_progress(*progressbar);
-  //Jobs
-  CoreJobsPersistence::write(cubTool, *jobs);
-  advance_progress(*progressbar);
-  //Results
-  CoreResultsPersistence::write(cubTool, *results, ccx_uo.mSaveLoadedResults);
-  advance_progress(*progressbar);
-  //CustomLines
-  CoreCustomLinesPersistence::write(cubTool, *customlines);
-  advance_progress(*progressbar);
-  if (!CoreTopologyPersistence::write(cubTool, *topology, *mat, *sections))
+  PersistenceProgress progress(progressbar);
+  if (!progress.start(32, "Writing Cubit-CalculiX data"))
   {
-    progressbar->end();
     return false;
   }
-  progressbar->end();
+  //General
+  if (!CoreModelMetadataPersistence::write(cubTool, version))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //Blocks
+  if (!CoreBlocksPersistence::write(cubTool, *cb))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //Sections
+  if (!CoreSectionsPersistence::write(cubTool, *sections))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //Constraints
+  if (!CoreInteractionsPersistence::write(cubTool, *constraints))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //SurfaceInteractions
+  if (!CoreInteractionsPersistence::write(cubTool, *surfaceinteractions))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //ContactPairs
+  if (!CoreInteractionsPersistence::write(cubTool, *contactpairs))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //Amplitudes
+  if (!CoreAmplitudesPersistence::write(cubTool, *amplitudes))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //Orientations
+  if (!CoreOrientationsPersistence::write(cubTool, *orientations))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //Damping
+  if (!CoreStepSettingsPersistence::write(cubTool, *damping))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //Physical Constants
+  if (!CoreStepSettingsPersistence::write(cubTool, *physicalconstants))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //Loads
+  //LoadsForces
+  if (!CoreLoadsPersistence::write(cubTool, *loadsforces))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //LoadsPressures
+  if (!CoreLoadsPersistence::write(cubTool, *loadspressures))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //LoadsHeatFluxes
+  if (!CoreLoadsPersistence::write(cubTool, *loadsheatfluxes))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //LoadsGravity
+  if (!CoreLoadsPersistence::write(cubTool, *loadsgravity))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //LoadsCentrifugal
+  if (!CoreLoadsPersistence::write(cubTool, *loadscentrifugal))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //LoadsTrajectory
+  if (!CoreLoadsPersistence::write(cubTool, *loadstrajectory))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //LoadsFilm
+  if (!CoreLoadsPersistence::write(cubTool, *loadsfilm))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //LoadsRadiation
+  if (!CoreLoadsPersistence::write(cubTool, *loadsradiation))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //LoadsSurfaceTraction
+  if (!CoreLoadsPersistence::write(cubTool, *loadssurfacetraction))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //LoadsBodyHeatflux
+  if (!CoreLoadsPersistence::write(cubTool, *loadsbodyheatflux))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //BCs
+  //BCsDisplacements
+  if (!CoreBCsPersistence::write(cubTool, *bcsdisplacements))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //BCsTemperatures
+  if (!CoreBCsPersistence::write(cubTool, *bcstemperatures))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //HistoryOutputs
+  if (!CoreOutputsPersistence::write(cubTool, *historyoutputs))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //FieldOutputs
+  if (!CoreOutputsPersistence::write(cubTool, *fieldoutputs))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //InitialConditions
+  if (!CoreInitialConditionsPersistence::write(cubTool, *initialconditions))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //HBCs
+  if (!CoreBCsPersistence::write(cubTool, *hbcs))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //Steps
+  if (!CoreStepsPersistence::write(cubTool, *steps))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //Jobs
+  if (!CoreJobsPersistence::write(cubTool, *jobs))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //Results
+  if (!CoreResultsPersistence::write(cubTool, *results, ccx_uo.mSaveLoadedResults))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  //CustomLines
+  if (!CoreCustomLinesPersistence::write(cubTool, *customlines))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  if (!CoreTopologyPersistence::write(cubTool, *topology, *mat, *sections))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
+  if (!CoreDrawPersistence::write(cubTool, *draw))
+  {
+    return false;
+  }
+  if (!progress.advance())
+  {
+    return false;
+  }
 
+  progress.finish();
+  if (!cubTool.close())
+  {
+    return false;
+  }
   log = "Finished saving Cubit-CalculiX data.\n";
   PRINT_INFO("%s", log.c_str());
 
   return true;
 }
-

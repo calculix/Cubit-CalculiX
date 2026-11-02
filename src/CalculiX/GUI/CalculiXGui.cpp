@@ -1,3 +1,10 @@
+#include "GUI/drawing/CalculiXDrawingToolbar.hpp"
+#include "GUI/drawing/DrawingSelectionController.hpp"
+#include "GUI/drawing/DrawingPickController.hpp"
+#include "Core/drawing/CalculiXDrawInterface.hpp"
+#include <algorithm>
+#include "GUI/application/ModelTree.hpp"
+#include <QSignalBlocker>
 #include "CalculiXGui.hpp"
 #include "properties/CalculiXPropertiesDock.hpp"
 #include "Framework/Interfaces/WorkspaceProviderInterface.hpp"
@@ -43,7 +50,15 @@ bool CalculiXGui::start(QWidget* host, std::string& error)
 
   setup_command_panels();
   setup_CCXDockWindowModelTree();
+  drawingToolbar = new CalculiXDrawingToolbar(host);
+  drawingSelection = new DrawingSelectionController(host);
+  QObject::connect(myCCXDockWindowModelTree->modelTree(), &ModelTree::propertySelectionChanged, drawingSelection.data(), &DrawingSelectionController::showSelection);
   propertiesDock = new CalculiXPropertiesDock(host);
+  QObject::connect(myCCXDockWindowModelTree->modelTree(), &ModelTree::propertySelectionChanged, propertiesDock.data(), &CalculiXPropertiesDock::showSelection);
+
+  drawingPick = new DrawingPickController(myCCXDockWindowModelTree->modelTree(), Claro::instance()->graphics_widget());
+  drawingPick->start();
+
   Claro::instance()->add_dock_window(propertiesDock.data(), "CalculiXProperties", Qt::LeftDockWidgetArea, Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
   propertiesDock->hide();
   setup_menus();
@@ -63,6 +78,21 @@ void CalculiXGui::stop() noexcept
     boolwithGUI = false;
     cleanup_window_title();
     cleanup_observers();
+    CalculiXDrawInterface drawing;
+    drawing.set_workspace_active(false);
+    if (drawingPick != nullptr)
+    {
+      drawingPick->stop();
+      delete drawingPick.data();
+      drawingPick = nullptr;
+    }
+    if (drawingSelection != nullptr)
+    {
+      drawingSelection->clearSelection();
+      delete drawingSelection.data();
+      drawingSelection = nullptr;
+    }
+    drawing.shutdown_drawing();
 
     if (save_options)
     {
@@ -71,6 +101,15 @@ void CalculiXGui::stop() noexcept
 
     unload_options();
     cleanup_menus();
+    if (drawingToolbar != nullptr)
+    {
+      if (auto* host = Claro::instance())
+      {
+        host->removeToolBar(drawingToolbar.data());
+      }
+      delete drawingToolbar.data();
+      drawingToolbar = nullptr;
+    }
     if (propertiesDock != nullptr)
     {
       if (auto* host = Claro::instance())
@@ -133,7 +172,43 @@ void CalculiXGui::update()
   {
     if (myCCXDockWindowModelTree)
     {
-      myCCXDockWindowModelTree->update();
+      {
+        const QSignalBlocker blocker(myCCXDockWindowModelTree->modelTree());
+        myCCXDockWindowModelTree->update();
+      }
+    }
+    if (drawingToolbar != nullptr)
+    {
+      CalculiXDrawInterface drawing;
+      const auto state = drawing.drawing_state();
+      const bool enabled = std::any_of(state.groups.begin(), state.groups.end(), [](const auto& group) { return group.second.enabled; });
+      if (enabled)
+      {
+        std::string error;
+        if (!drawing.refresh_drawing(error))
+        {
+          PRINT_ERROR("Drawing refresh failed: %s\n", error.c_str());
+        }
+      }
+      else
+      {
+        std::string error;
+        if (!drawing.restore_pending_drawing(error))
+        {
+          PRINT_WARNING("Drawing restoration failed: %s\n", error.c_str());
+        }
+      }
+      drawingToolbar->refreshSteps();
+      drawingToolbar->synchronize(drawing.drawing_state());
+    }
+    if (myCCXDockWindowModelTree)
+    {
+      myCCXDockWindowModelTree->modelTree()->updatePropertySelection();
+    }
+    if (drawingPick != nullptr)
+    {
+      auto* host = Claro::instance();
+      drawingPick->refreshCursor(host == nullptr ? nullptr : host->graphics_widget());
     }
   }
 }
@@ -142,9 +217,30 @@ void CalculiXGui::reset()
 {
   if (boolwithGUI)
   {
+    CalculiXDrawInterface drawing;
+    drawing.reset_drawing();
+    if (drawingSelection != nullptr)
+    {
+      drawingSelection->clearSelection();
+    }
+    if (drawingToolbar != nullptr)
+    {
+      drawingToolbar->refreshSteps();
+      drawingToolbar->synchronize(drawing.drawing_state());
+    }
+    if (propertiesDock != nullptr)
+    {
+      propertiesDock->reset();
+    }
     if (myCCXDockWindowModelTree)
     {
+      myCCXDockWindowModelTree->modelTree()->clearSelection();
       myCCXDockWindowModelTree->reset();
+    }
+    if (drawingPick != nullptr)
+    {
+      auto* host = Claro::instance();
+      drawingPick->refreshCursor(host == nullptr ? nullptr : host->graphics_widget());
     }
   }
 }
@@ -156,7 +252,7 @@ void CalculiXGui::setup_menus()
     myMenus = new MenuManager;
   }
 
-  myMenus->setup_workspace_menus(Claro::instance(), myCCXDockWindowModelTree->dock_widget(), propertiesDock.data());
+  myMenus->setup_workspace_menus(Claro::instance(), myCCXDockWindowModelTree->dock_widget(), propertiesDock.data(), drawingToolbar.data());
 }
 
 void CalculiXGui::cleanup_menus()
@@ -261,6 +357,14 @@ void CalculiXGui::load_options()
   mUserOptionsPanel = new UserOptionsPanel();
   auto* options = gui->options();
   options->add_panel("CalculiX", mUserOptionsPanel.data());
+  QObject::connect(mUserOptionsPanel.data(), &UserOptionsPanel::drawingSettingsChanged, mUserOptionsPanel.data(), []()
+  {
+    std::string error;
+    if (!CalculiXDrawInterface().apply_drawing_options(error))
+    {
+      PRINT_WARNING("Drawing settings could not be applied: %s\n", error.c_str());
+    }
+  });
   QObject::connect(options, SIGNAL(refreshSettings()),
     mUserOptionsPanel.data(), SLOT(refresh_settings()));
   QObject::connect(options, SIGNAL(saveSettings()),
@@ -288,7 +392,7 @@ void CalculiXGui::unload_options()
 
 bool CalculiXGui::workspace_view(WorkspaceView& view, std::string& error) const
 {
-  if (!boolwithGUI || mycmdPanels == nullptr || myCCXDockWindowModelTree == nullptr || propertiesDock == nullptr || myMenus == nullptr)
+  if (!boolwithGUI || mycmdPanels == nullptr || myCCXDockWindowModelTree == nullptr || propertiesDock == nullptr || drawingToolbar == nullptr || myMenus == nullptr)
   {
     error = "The CalculiX workspace widgets are not ready.";
     return false;
@@ -309,6 +413,30 @@ bool CalculiXGui::workspace_view(WorkspaceView& view, std::string& error) const
   view.icon = resources.getIcon2("CCX");
   view.docks = {myCCXDockWindowModelTree->dock_widget(), propertiesDock.data()};
   view.menuActions = myMenus->workspace_menu_actions();
+  view.toolbars = {drawingToolbar.data()};
+  view.activationChanged = [
+    toolbar = QPointer<CalculiXDrawingToolbar>(drawingToolbar),
+    pick = QPointer<DrawingPickController>(drawingPick),
+    tree = QPointer<ModelTree>(myCCXDockWindowModelTree->modelTree())
+  ](bool active)
+  {
+    if (toolbar != nullptr)
+    {
+      CalculiXDrawInterface drawing;
+      drawing.set_workspace_active(active);
+      toolbar->refreshSteps();
+      toolbar->synchronize(drawing.drawing_state());
+    }
+    if (active && tree != nullptr)
+    {
+      tree->updatePropertySelection();
+    }
+    if (pick != nullptr)
+    {
+      auto* host = Claro::instance();
+      pick->refreshCursor(host == nullptr ? nullptr : host->graphics_widget());
+    }
+  };
   view.navigationModel = model;
   // Cubit uses three button levels, followed by panel-choice dropdowns.
   // Keep CCX as the first level instead of removing it from the path.

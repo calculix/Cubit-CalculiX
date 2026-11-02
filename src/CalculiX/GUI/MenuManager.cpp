@@ -1,3 +1,4 @@
+#include <QToolBar>
 #include "MenuManager.hpp"
 #include "CalculiXConfigFile.hpp"
 #include "Claro.hpp"
@@ -26,7 +27,7 @@ MenuManager::~MenuManager()
   remove_menu_items();
 }
 
-void MenuManager::setup_workspace_menus(Claro* host, QDockWidget* modelDock, QDockWidget* propertiesDock)
+void MenuManager::setup_workspace_menus(Claro* host, QDockWidget* modelDock, QDockWidget* propertiesDock, QToolBar* drawingToolbar)
 {
   if (!menus.isEmpty())
   {
@@ -65,6 +66,11 @@ void MenuManager::setup_workspace_menus(Claro* host, QDockWidget* modelDock, QDo
   auto* view = createMenu("CalculiX.Menu.View", tr("&View"));
   view->addAction(modelDock->toggleViewAction());
   view->addAction(propertiesDock->toggleViewAction());
+  if (drawingToolbar != nullptr)
+  {
+    view->addSeparator();
+    view->addAction(drawingToolbar->toggleViewAction());
+  }
 
   auto* application = createMenu("CalculiX.Menu.Application", tr("&CalculiX"));
   auto* options = application->addAction(host->style()->standardIcon(QStyle::SP_FileDialogDetailedView), tr("&Options..."));

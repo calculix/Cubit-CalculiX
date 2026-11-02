@@ -12,6 +12,7 @@ class StepsBCsDisplacementsTree : public QObject, public QTreeWidgetItem, public
   Q_OBJECT
 
 public:
+  void activate(QTreeWidgetItem* item, ModelTree& host);
   void populateContextMenu(
     QMenu &menu, QTreeWidgetItem *clickedItem, ModelTree &host) override;
 

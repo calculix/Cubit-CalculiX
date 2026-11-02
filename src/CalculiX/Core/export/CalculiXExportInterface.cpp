@@ -45,3 +45,9 @@ std::vector<std::vector<std::string>> CalculiXExportInterface::get_customlines_t
 { 
   return ccx_core.customlines->get_tree_data();
 }
+
+
+bool CalculiXExportInterface::get_customline_settings(int id, CustomLinesSettings& settings, std::string& error)
+{
+  return ccx_core.customlines->get_settings(id, settings, error);
+}

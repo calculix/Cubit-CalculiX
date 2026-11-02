@@ -1,3 +1,4 @@
+#include "Core/application/SettingsRead.hpp"
 #include "Core/steps/CoreSteps.hpp"
 #include <algorithm>
 #include "Core/steps/CoreStepsStructs.hpp"
@@ -2730,4 +2731,60 @@ void CoreSteps::remove_bc_references(int bc_type, int bc_id)
   };
 
   bcs_data.erase(std::remove_if(bcs_data.begin(), bcs_data.end(), matches), bcs_data.end());
+}
+
+
+bool CoreSteps::get_settings(int id, StepsSettings& settings, std::string& error) const
+{
+  settings = {};
+  error.clear();
+  const auto* record = SettingsRead::row(steps_data, id, 9, error);
+
+  if (record == nullptr)
+  {
+    return false;
+  }
+
+  settings.id = id;
+  settings.type = (*record)[3];
+  settings.name = SettingsRead::field(name_data, (*record)[1], 1, error);
+
+  settings.parameters.assign(8, "");
+  settings.procedure.assign(17, "");
+  if ((*record)[2] >= 0)
+  {
+    const auto* parameters = SettingsRead::row(parameter_data, (*record)[2], 8, error);
+    if (parameters != nullptr)
+    {
+      settings.parameters = *parameters;
+    }
+  }
+  const std::vector<std::string>* procedure = nullptr;
+  switch (settings.type)
+  {
+    case 2: procedure = SettingsRead::row(static_data, (*record)[4], 11, error); break;
+    case 3: procedure = SettingsRead::row(frequency_data, (*record)[4], 8, error); break;
+    case 4: procedure = SettingsRead::row(buckle_data, (*record)[4], 6, error); break;
+    case 5: procedure = SettingsRead::row(heattransfer_data, (*record)[4], 17, error); break;
+    case 6: procedure = SettingsRead::row(coupledtd_data, (*record)[4], 14, error); break;
+    case 7: procedure = SettingsRead::row(uncoupledtd_data, (*record)[4], 13, error); break;
+    case 8: procedure = SettingsRead::row(dynamic_data, (*record)[4], 11, error); break;
+    case 9: procedure = SettingsRead::row(modal_dynamic_data, (*record)[4], 9, error); break;
+    case 10: procedure = SettingsRead::row(steady_state_dynamics_data, (*record)[4], 10, error); break;
+    case 11: procedure = SettingsRead::row(complex_frequency_data, (*record)[4], 3, error); break;
+    case 1: break;
+    default: error = "Unknown step procedure."; break;
+  }
+  if (procedure != nullptr)
+  {
+    settings.procedure = *procedure;
+  }
+
+  if (!error.empty())
+  {
+    settings = {};
+    return false;
+  }
+
+  return true;
 }

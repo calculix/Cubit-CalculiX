@@ -1,4 +1,8 @@
 target_sources(calculix_gui PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/OrientationsPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/OrientationsPropertiesWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/SectionsPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/SectionsPropertiesWidget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/OrientationsCreatePanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/OrientationsCreatePanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/OrientationsDeletePanel.cpp

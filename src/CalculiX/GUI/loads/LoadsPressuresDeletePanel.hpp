@@ -20,6 +20,7 @@ class LoadsPressuresDeletePanel : public QWidget
   Q_OBJECT
 
 public:
+  void setPressure(int id);
   explicit LoadsPressuresDeletePanel(QWidget *parent = 0);
   ~LoadsPressuresDeletePanel();
 

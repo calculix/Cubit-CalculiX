@@ -1,4 +1,6 @@
 target_sources(calculix_gui PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/AmplitudesPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AmplitudesPropertiesWidget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AmplitudesCreatePanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AmplitudesCreatePanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/AmplitudesDeletePanel.cpp

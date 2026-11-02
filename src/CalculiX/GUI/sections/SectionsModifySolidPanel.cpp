@@ -1,3 +1,5 @@
+#include "CubitMessage.hpp"
+#include "Core/sections/CalculiXSectionsInterface.hpp"
 #include "SectionsModifySolidPanel.hpp"
 #include <QString>
 #include "GUI/application/GuiSendCmd.hpp"
@@ -89,6 +91,58 @@ SectionsModifySolidPanel::~SectionsModifySolidPanel()
 
 void SectionsModifySolidPanel::on_pushButton_apply_clicked(bool)
 {
+  bool changed = false;
+  changed = changed || fieldChanged("lineEdit_1", lineEdit_1->text());
+  changed = changed || fieldChanged("lineEdit_2", lineEdit_2->text());
+  changed = changed || fieldChanged("lineEdit_3", lineEdit_3->text());
+  changed = changed || fieldChanged("lineEdit_4", lineEdit_4->text());
+  if (loadedEntityId >= 0 && !changed && lineEdit_0->text().trimmed() == QString::number(loadedEntityId))
+  {
+    PRINT_INFO("No settings were changed.\n");
+    return;
+  }
+
+  if (loadedEntityId >= 0)
+  {
+    if (lineEdit_0->text().trimmed() != QString::number(loadedEntityId))
+    {
+      bool valid = false;
+      const int requestedId = lineEdit_0->text().trimmed().toInt(&valid);
+
+      if (valid)
+      {
+        setSection(requestedId);
+      }
+      else
+      {
+        PRINT_ERROR("Select a single entity ID before reloading this panel.\n");
+      }
+
+      return;
+    }
+  }
+
+  if (loadedEntityId >= 0 && lineEdit_1->isEnabled() && !originalValues.value("lineEdit_1").isEmpty() && lineEdit_1->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Block ID; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_2->isEnabled() && !originalValues.value("lineEdit_2").isEmpty() && lineEdit_2->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Material ID; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_3->isEnabled() && !originalValues.value("lineEdit_3").isEmpty() && lineEdit_3->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Orientation ID; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_4->isEnabled() && !originalValues.value("lineEdit_4").isEmpty() && lineEdit_4->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Thickness; use the supported reset value.\n");
+    return;
+  }
+
   QStringList commands;
   QString command = "";
 
@@ -96,19 +150,19 @@ void SectionsModifySolidPanel::on_pushButton_apply_clicked(bool)
   {
     command.append("ccx modify section solid " + lineEdit_0->text());
 
-    if (lineEdit_1->text()!="")
+    if (lineEdit_1->text()!="" && fieldChanged("lineEdit_1", lineEdit_1->text()))
     {
       command.append(" block " + lineEdit_1->text());
     }
-    if (lineEdit_2->text()!="")
+    if (lineEdit_2->text()!="" && fieldChanged("lineEdit_2", lineEdit_2->text()))
     {
       command.append(" material " + lineEdit_2->text());
     }
-    if (lineEdit_3->text()!="")
+    if (lineEdit_3->text()!="" && fieldChanged("lineEdit_3", lineEdit_3->text()))
     {
       command.append(" orientation " + lineEdit_3->text());
     }
-    if (lineEdit_4->text()!="")
+    if (lineEdit_4->text()!="" && fieldChanged("lineEdit_4", lineEdit_4->text()))
     {
       command.append(" thickness " + lineEdit_4->text());
     }
@@ -117,11 +171,6 @@ void SectionsModifySolidPanel::on_pushButton_apply_clicked(bool)
   if (command != "")
   {
     commands.push_back(command);
-    lineEdit_0->setText("");
-    lineEdit_1->setText("");
-    lineEdit_2->setText("");
-    lineEdit_3->setText("");
-    lineEdit_4->setText("");
   }
   
   for (size_t i = 0; i < commands.size(); i++)
@@ -129,4 +178,52 @@ void SectionsModifySolidPanel::on_pushButton_apply_clicked(bool)
     //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
     GuiSendCmd::gui_cmd(commands[int(i)]);
   }
+}
+
+
+bool SectionsModifySolidPanel::fieldChanged(const QString& field, const QString& value) const
+{
+  return loadedEntityId < 0 || originalValues.value(field) != value;
+}
+
+bool SectionsModifySolidPanel::setSection(int id)
+{
+  loadedEntityId = -1;
+  originalValues.clear();
+
+  pushButton_apply->setEnabled(false);
+  lineEdit_0->clear();
+  lineEdit_1->clear();
+  lineEdit_2->clear();
+  lineEdit_3->clear();
+  lineEdit_4->clear();
+  CalculiXSectionsInterface core;
+  SectionsSettings settings;
+  std::string error;
+
+  if (!core.get_section_settings(id, settings, error))
+  {
+    PRINT_ERROR("Cannot load Section %d: %s\n", id, error.c_str());
+    return false;
+  }
+
+  if (settings.type != 1)
+  {
+    PRINT_ERROR("The selected record does not match this Section panel.\n");
+    return false;
+  }
+  lineEdit_0->setText(QString::number(settings.id));
+  lineEdit_1->setText(QString::fromStdString(settings.block));
+  lineEdit_2->setText(QString::fromStdString(settings.material));
+  lineEdit_3->setText(QString::fromStdString(settings.orientation));
+  lineEdit_4->setText(QString::fromStdString(settings.thickness));
+  originalValues.insert("lineEdit_0", lineEdit_0->text());
+  originalValues.insert("lineEdit_1", lineEdit_1->text());
+  originalValues.insert("lineEdit_2", lineEdit_2->text());
+  originalValues.insert("lineEdit_3", lineEdit_3->text());
+  originalValues.insert("lineEdit_4", lineEdit_4->text());
+
+  loadedEntityId = id;
+  pushButton_apply->setEnabled(true);
+  return true;
 }

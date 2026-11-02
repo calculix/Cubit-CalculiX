@@ -1,7 +1,11 @@
 #ifndef PHYSICALCONSTANTSMODIFYPANEL_HPP
 #define PHYSICALCONSTANTSMODIFYPANEL_HPP
+
+#include "Core/steps/PhysicalConstantsSettings.hpp"
 #include <string>
 
+#include <QHash>
+#include <QString>
 #include <QWidget>
 #include <QList>
 #include <QPushButton>
@@ -20,6 +24,8 @@ class PhysicalConstantsModifyPanel : public QWidget
   Q_OBJECT
   
 public:
+  bool loadPhysicalConstants();
+  bool setPhysicalConstants(int id);
   explicit PhysicalConstantsModifyPanel(QWidget *parent = 0);
   ~PhysicalConstantsModifyPanel();
 
@@ -29,6 +35,9 @@ private slots:
   void on_pushButton_apply_clicked(bool);
 
 private:
+  int loadedEntityId = -1;
+  QHash<QString, QString> originalValues;
+  bool fieldChanged(const QString& field, const QString& value) const;
   std::string log;
 
   QGridLayout* GridLayout;

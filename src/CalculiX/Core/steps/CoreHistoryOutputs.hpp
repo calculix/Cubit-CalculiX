@@ -1,12 +1,15 @@
 #ifndef COREHISTORYOUTPUTS_HPP
 #define COREHISTORYOUTPUTS_HPP
 
+#include "HistoryOutputsSettings.hpp"
+
 #include <vector>
 #include <string>
 class CoreHistoryOutputs
 {
 
 public:
+  bool get_settings(int id, HistoryOutputsSettings& settings, std::string& error) const;
   std::vector<int> get_output_ids() const;
   bool check_historyoutput_exists(int historyoutput_id);
   CoreHistoryOutputs();

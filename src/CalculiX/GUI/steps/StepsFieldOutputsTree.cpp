@@ -1,3 +1,6 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include "StepsTree.hpp"
+#include "GUI/steps/FieldOutputsTree.hpp"
 #include "StepsFieldOutputsTree.hpp"
 #include <string>
 #include <vector>
@@ -109,6 +112,8 @@ void StepsFieldOutputsTree::addOutput(QString output_id, QString output_name)
   OutputTreeChild->setText(0, output_name);
     
   OutputTreeChild->setText(1, output_id);
+  OutputTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::FieldOutput));
+  OutputTreeChild->setData(0, PropertyIdRole, output_id.toInt());
 
   OutputTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("StepsFieldOutputsTree"));
 
@@ -174,9 +179,27 @@ void StepsFieldOutputsTree::populateContextMenu(
     return;
   }
 
+  int entityId = -1;
+  if (!readItemId(clickedItem, entityId))
+  {
+    return;
+  }
+
   addPanelAction(menu, "Create Field Output", host, "CCXFieldOutputsCreate");
-  addPanelAction(menu, "Modify Field Output", host, "CCXFieldOutputsModify");
-  addPanelAction(menu, "Delete Field Output", host, "CCXFieldOutputsDelete");
+  {
+    auto* action = menu.addAction("Modify Field Output");
+    QObject::connect(action, &QAction::triggered, &menu, [entityId, &host]()
+    {
+      FieldOutputsTree::open_modify(entityId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Field Output");
+    QObject::connect(action, &QAction::triggered, &menu, [entityId, &host]()
+    {
+      FieldOutputsTree::open_delete(entityId, host);
+    });
+  }
   {
     QAction *action = menu.addAction("Steps Management");
     ModelTree *hostPtr = &host;
@@ -190,5 +213,24 @@ void StepsFieldOutputsTree::populateContextMenu(
 
       hostPtr->myStepsManagement->show();
     });
+  }
+}
+
+
+void StepsFieldOutputsTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (host.myStepsManagement == nullptr)
+  {
+    return;
+  }
+  for (auto* ancestor = item; ancestor != nullptr; ancestor = ancestor->parent())
+  {
+    if (dynamic_cast<StepsTree*>(ancestor->parent()) != nullptr)
+    {
+      host.myStepsManagement->setStep(ancestor->text(1));
+      host.myStepsManagement->show();
+      host.myStepsManagement->raise();
+      return;
+    }
   }
 }

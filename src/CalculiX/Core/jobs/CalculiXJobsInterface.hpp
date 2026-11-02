@@ -1,12 +1,15 @@
 #ifndef CALCULIXJOBSINTERFACE_HPP
 #define CALCULIXJOBSINTERFACE_HPP
 
+#include "JobsSettings.hpp"
+
 #include <string>
 #include <vector>
 
 class CalculiXJobsInterface
 {
 public:
+  bool get_job_settings(int id, JobsSettings& settings, std::string& error);
   bool create_job(std::vector<std::string> options); // adds a new job
   bool modify_job(int job_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a job
   bool delete_job(int job_id); // delete job

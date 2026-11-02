@@ -1,12 +1,15 @@
 #ifndef COREDAMPING_HPP
 #define COREDAMPING_HPP
 
+#include "DampingSettings.hpp"
+
 #include <vector>
 #include <string>
 class CoreDamping
 {
 
 public:
+  bool get_settings(int id, DampingSettings& settings, std::string& error) const;
   CoreDamping();
   ~CoreDamping();
 

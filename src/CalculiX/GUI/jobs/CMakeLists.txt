@@ -1,4 +1,6 @@
 target_sources(calculix_gui PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/JobsPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/JobsPropertiesWidget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/JobsActionsPanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/JobsActionsPanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/JobsCreatePanel.cpp

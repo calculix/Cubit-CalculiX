@@ -1,3 +1,9 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include <QAction>
+#include "LoadsFilmDeletePanel.hpp"
+#include "LoadsFilmModifyPanel.hpp"
+#include "CubitMessage.hpp"
+#include "TaskPanel.hpp"
 #include "LoadsFilmTree.hpp"
 #include <string>
 #include <vector>
@@ -105,6 +111,8 @@ void LoadsFilmTree::addLoad(QString load_id, QString load_name)
   LoadTreeChild->setText(0, load_name);
     
   LoadTreeChild->setText(1, load_id);
+  LoadTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Film));
+  LoadTreeChild->setData(0, PropertyIdRole, load_id.toInt());
 
   LoadTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("LoadsFilmTree"));
 
@@ -146,6 +154,12 @@ void LoadsFilmTree::populateContextMenu(
     return;
   }
 
+  int selectedId = 0;
+  if (clickedItem != this && !readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
+
   if (clickedItem == this)
   {
     addPanelAction(menu, "Create Film", host, "CCXLoadsFilmCreate");
@@ -165,7 +179,84 @@ void LoadsFilmTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Film", host, "CCXLoadsFilmCreate");
-  addPanelAction(menu, "Modify Film", host, "CCXLoadsFilmModify");
-  addPanelAction(menu, "Delete Film", host, "CCXLoadsFilmDelete");
+  {
+    auto* action = menu.addAction("Modify Film");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      LoadsFilmTree::open_modify(selectedId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Film");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      LoadsFilmTree::open_delete(selectedId, host);
+    });
+  }
   addCommandAction(menu, "Draw Film", QString("ccx draw load film ") + QString::number(entityId));
+}
+
+
+void LoadsFilmTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+
+  host.setWidgetInCmdPanelMarker("CCXLoadsFilmModify");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<LoadsFilmModifyPanel*>(widget))
+    {
+      panel->setFilm(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Film modify panel.\n");
+}
+
+void LoadsFilmTree::open_delete(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXLoadsFilmDelete");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<LoadsFilmDeletePanel*>(widget))
+    {
+      panel->setFilm(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Film delete panel.\n");
+}
+
+void LoadsFilmTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (item == nullptr)
+  {
+    return;
+  }
+  if (item == this)
+  {
+    host.setWidgetInCmdPanelMarker("CCXLoadsFilmCreate");
+    return;
+  }
+
+  if (item->parent() != this)
+  {
+    return;
+  }
+
+  int id = -1;
+  if (!readItemId(item, id))
+  {
+    return;
+  }
+  open_modify(id, host);
 }

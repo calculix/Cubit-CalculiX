@@ -1,8 +1,12 @@
 #ifndef CUSTOMLINESMODIFYPANEL_HPP
 #define CUSTOMLINESMODIFYPANEL_HPP
+
+#include "Core/export/CustomLinesSettings.hpp"
 #include <string>
 #include <vector>
 
+#include <QHash>
+#include <QString>
 #include <QWidget>
 #include <QList>
 #include <QPushButton>
@@ -24,6 +28,7 @@ class CustomLinesModifyPanel : public QWidget
   Q_OBJECT
   
 public:
+  bool setCustomLine(int id);
   explicit CustomLinesModifyPanel(QWidget *parent = 0);
   ~CustomLinesModifyPanel();
 
@@ -34,6 +39,9 @@ private slots:
   void on_comboBox_index_changed(int index);
 
 private:
+  int loadedEntityId = -1;
+  QHash<QString, QString> originalValues;
+  bool fieldChanged(const QString& field, const QString& value) const;
   std::string log;
   std::vector<std::vector<double>> matrix;
 

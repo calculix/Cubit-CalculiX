@@ -1,3 +1,4 @@
+#include "GUI/properties/PropertySelection.hpp"
 #include "NodesetTree.hpp"
 
 #include "GUI/application/ModelTree.hpp"
@@ -106,6 +107,8 @@ void NodesetTree::addNodeset(QString nodeset_id, QString nodeset_name)
   NodesetTreeChild->setText(0, nodeset_name);
     
   NodesetTreeChild->setText(1, nodeset_id);
+  NodesetTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Nodeset));
+  NodesetTreeChild->setData(0, PropertyIdRole, nodeset_id.toInt());
 
   NodesetTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("NodesetTree"));
 

@@ -1,3 +1,9 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include <QAction>
+#include "BCsDisplacementsDeletePanel.hpp"
+#include "BCsDisplacementsModifyPanel.hpp"
+#include "CubitMessage.hpp"
+#include "TaskPanel.hpp"
 #include "BCsDisplacementsTree.hpp"
 #include <string>
 #include <vector>
@@ -105,6 +111,8 @@ void BCsDisplacementsTree::addBC(QString bc_id, QString bc_name)
   BCTreeChild->setText(0, bc_name);
     
   BCTreeChild->setText(1, bc_id);
+  BCTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Displacement));
+  BCTreeChild->setData(0, PropertyIdRole, bc_id.toInt());
   
   BCTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("BCsDisplacementsTree"));
 
@@ -146,6 +154,12 @@ void BCsDisplacementsTree::populateContextMenu(
     return;
   }
 
+  int selectedId = 0;
+  if (clickedItem != this && !readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
+
   if (clickedItem == this)
   {
     addPanelAction(menu, "Create Displacement", host, "CCXBCsDisplacementsCreate");
@@ -165,7 +179,84 @@ void BCsDisplacementsTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Displacement", host, "CCXBCsDisplacementsCreate");
-  addPanelAction(menu, "Modify Displacement", host, "CCXBCsDisplacementsModify");
-  addPanelAction(menu, "Delete Displacement", host, "CCXBCsDisplacementsDelete");
+  {
+    auto* action = menu.addAction("Modify Displacement");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      BCsDisplacementsTree::open_modify(selectedId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Displacement");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      BCsDisplacementsTree::open_delete(selectedId, host);
+    });
+  }
   addCommandAction(menu, "Draw Displacement", QString("ccx draw bc displacement ") + QString::number(entityId));
+}
+
+
+void BCsDisplacementsTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+
+  host.setWidgetInCmdPanelMarker("CCXBCsDisplacementsModify");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<BCsDisplacementsModifyPanel*>(widget))
+    {
+      panel->setDisplacement(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Displacement modify panel.\n");
+}
+
+void BCsDisplacementsTree::open_delete(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXBCsDisplacementsDelete");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<BCsDisplacementsDeletePanel*>(widget))
+    {
+      panel->setDisplacement(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Displacement delete panel.\n");
+}
+
+void BCsDisplacementsTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (item == nullptr)
+  {
+    return;
+  }
+  if (item == this)
+  {
+    host.setWidgetInCmdPanelMarker("CCXBCsDisplacementsCreate");
+    return;
+  }
+
+  if (item->parent() != this)
+  {
+    return;
+  }
+
+  int id = -1;
+  if (!readItemId(item, id))
+  {
+    return;
+  }
+  open_modify(id, host);
 }

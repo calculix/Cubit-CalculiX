@@ -1,3 +1,5 @@
+#include "CubitMessage.hpp"
+#include "Core/steps/CalculiXStepsInterface.hpp"
 #include "StepsModifyComplexFrequencyPanel.hpp"
 #include <QString>
 #include "GUI/common/PanelTable.hpp"
@@ -83,24 +85,65 @@ StepsModifyComplexFrequencyPanel::~StepsModifyComplexFrequencyPanel()
 
 void StepsModifyComplexFrequencyPanel::on_pushButton_apply_clicked(bool)
 {
+  bool changed = false;
+  changed = changed || fieldChanged("lineEdit_2", lineEdit_2->text());
+  changed = changed || fieldChanged("comboBox_3", comboBox_3->currentText());
+  changed = changed || fieldChanged("lineEdit_4", lineEdit_4->text());
+  if (loadedEntityId >= 0 && !changed && lineEdit_1->text().trimmed() == QString::number(loadedEntityId))
+  {
+    PRINT_INFO("No settings were changed.\n");
+    return;
+  }
+
+  if (loadedEntityId >= 0)
+  {
+    if (lineEdit_1->text().trimmed() != QString::number(loadedEntityId))
+    {
+      bool valid = false;
+      const int requestedId = lineEdit_1->text().trimmed().toInt(&valid);
+
+      if (valid)
+      {
+        setStep(requestedId);
+      }
+      else
+      {
+        PRINT_ERROR("Select a single entity ID before reloading this panel.\n");
+      }
+
+      return;
+    }
+  }
+
+  if (loadedEntityId >= 0 && lineEdit_2->isEnabled() && !originalValues.value("lineEdit_2").isEmpty() && lineEdit_2->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Name; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_4->isEnabled() && !originalValues.value("lineEdit_4").isEmpty() && lineEdit_4->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Eigenfrequencies; use the supported reset value.\n");
+    return;
+  }
+
   QStringList commands;
   QString command = "";
 
   if ((lineEdit_1->text()!=""))
   {
     command.append("ccx modify step " + lineEdit_1->text() + " complexfrequency");
-    if (lineEdit_2->text()!="")
+    if (lineEdit_2->text()!="" && fieldChanged("lineEdit_2", lineEdit_2->text()))
     {
       command.append(" name \"" + lineEdit_2->text() + "\"");
     }
-    if (comboBox_3->currentIndex()==1)
+    if (comboBox_3->currentIndex()==1 && fieldChanged("comboBox_3", comboBox_3->currentText()))
     {
       command.append(" coriolis_yes");
-    }else if (comboBox_3->currentIndex()==2)
+    }else if (comboBox_3->currentIndex()==2 && fieldChanged("comboBox_3", comboBox_3->currentText()))
     {
       command.append(" coriolis_no");
     }
-    if (lineEdit_4->text()!="")
+    if (lineEdit_4->text()!="" && fieldChanged("lineEdit_4", lineEdit_4->text()))
     {
       command.append(" number_eigenfrequency " + lineEdit_4->text());
     }
@@ -109,10 +152,6 @@ void StepsModifyComplexFrequencyPanel::on_pushButton_apply_clicked(bool)
   if (command != "")
   {
     commands.push_back(command);
-    lineEdit_1->setText("");
-    lineEdit_2->setText("");
-    comboBox_3->setCurrentIndex(0);
-    lineEdit_4->setText("");
   }
   
   for (size_t i = 0; i < commands.size(); i++)
@@ -120,4 +159,55 @@ void StepsModifyComplexFrequencyPanel::on_pushButton_apply_clicked(bool)
     //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
     GuiSendCmd::gui_cmd(commands[int(i)]);
   }
+}
+
+
+bool StepsModifyComplexFrequencyPanel::fieldChanged(const QString& field, const QString& value) const
+{
+  return loadedEntityId < 0 || originalValues.value(field) != value;
+}
+
+bool StepsModifyComplexFrequencyPanel::setStep(int id)
+{
+  loadedEntityId = -1;
+  originalValues.clear();
+  comboBox_3->setCurrentIndex(0);
+  pushButton_apply->setEnabled(false);
+  lineEdit_1->clear();
+  lineEdit_2->clear();
+  lineEdit_4->clear();
+  CalculiXStepsInterface core;
+  StepsSettings settings;
+  std::string error;
+
+  if (!core.get_step_settings(id, settings, error))
+  {
+    PRINT_ERROR("Cannot load Step %d: %s\n", id, error.c_str());
+    return false;
+  }
+
+  if (settings.type != 11)
+  {
+    PRINT_ERROR("The selected record does not match this Step panel.\n");
+    return false;
+  }
+  lineEdit_1->setText(QString::number(settings.id));
+  lineEdit_2->setText(QString::fromStdString(settings.name));
+  const QString comboBox_3Value = QString::fromStdString(settings.procedure.at(1));
+  int comboBox_3Index = comboBox_3->findText(comboBox_3Value, Qt::MatchFixedString);
+  if (comboBox_3Index < 0 && !comboBox_3Value.isEmpty())
+  {
+    comboBox_3->addItem(comboBox_3Value);
+    comboBox_3Index = comboBox_3->count() - 1;
+  }
+  comboBox_3->setCurrentIndex(qMax(0, comboBox_3Index));
+  lineEdit_4->setText(QString::fromStdString(settings.procedure.at(2)));
+  originalValues.insert("lineEdit_1", lineEdit_1->text());
+  originalValues.insert("lineEdit_2", lineEdit_2->text());
+  originalValues.insert("comboBox_3", comboBox_3->currentText());
+  originalValues.insert("lineEdit_4", lineEdit_4->text());
+
+  loadedEntityId = id;
+  pushButton_apply->setEnabled(true);
+  return true;
 }

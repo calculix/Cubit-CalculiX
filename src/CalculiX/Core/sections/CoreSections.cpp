@@ -1,3 +1,4 @@
+#include "Core/application/SettingsRead.hpp"
 #include "Core/sections/CoreSections.hpp"
 #include "Core/application/CoreIdSelection.hpp"
 #include <cstddef>
@@ -1012,4 +1013,58 @@ void CoreSections::clear_topology_solid_sections()
 std::vector<int> CoreSections::get_section_ids() const
 {
   return CoreIdSelection::collect_ids(sections_data);
+}
+
+
+bool CoreSections::get_settings(int id, SectionsSettings& settings, std::string& error) const
+{
+  settings = {};
+  error.clear();
+  const auto* record = SettingsRead::row(sections_data, id, 3, error);
+
+  if (record == nullptr)
+  {
+    return false;
+  }
+
+  settings.id = id;
+  settings.type = (*record)[1];
+  const std::vector<std::string>* detail = nullptr;
+  switch (settings.type)
+  {
+    case 1: detail = SettingsRead::row(solid_section_data, (*record)[2], 5, error); break;
+    case 2: detail = SettingsRead::row(shell_section_data, (*record)[2], 6, error); break;
+    case 3: detail = SettingsRead::row(beam_section_data, (*record)[2], 16, error); break;
+    case 4: detail = SettingsRead::row(membrane_section_data, (*record)[2], 6, error); break;
+    default: error = "Unknown section type."; break;
+  }
+  if (detail == nullptr)
+  {
+    return false;
+  }
+  settings.block = (*detail)[1];
+  settings.material = (*detail)[2];
+  settings.orientation = (*detail)[settings.type == 3 ? 13 : 3];
+  settings.thickness = settings.type == 3 ? std::string() : (*detail)[4];
+  settings.offset = settings.type == 2 || settings.type == 4 ? (*detail)[5] : std::string();
+  settings.beamType = settings.type == 3 ? (*detail)[3] : std::string();
+  settings.parameter1 = settings.type == 3 ? (*detail)[4] : std::string();
+  settings.parameter2 = settings.type == 3 ? (*detail)[5] : std::string();
+  settings.parameter3 = settings.type == 3 ? (*detail)[6] : std::string();
+  settings.parameter4 = settings.type == 3 ? (*detail)[7] : std::string();
+  settings.parameter5 = settings.type == 3 ? (*detail)[8] : std::string();
+  settings.parameter6 = settings.type == 3 ? (*detail)[9] : std::string();
+  settings.x = settings.type == 3 ? (*detail)[10] : std::string();
+  settings.y = settings.type == 3 ? (*detail)[11] : std::string();
+  settings.z = settings.type == 3 ? (*detail)[12] : std::string();
+  settings.offset1 = settings.type == 3 ? (*detail)[14] : std::string();
+  settings.offset2 = settings.type == 3 ? (*detail)[15] : std::string();
+
+  if (!error.empty())
+  {
+    settings = {};
+    return false;
+  }
+
+  return true;
 }

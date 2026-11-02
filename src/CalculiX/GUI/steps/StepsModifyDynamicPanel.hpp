@@ -1,7 +1,11 @@
 #ifndef STEPSMODIFYDYNAMICPANEL_HPP
 #define STEPSMODIFYDYNAMICPANEL_HPP
+
+#include "Core/steps/StepsSettings.hpp"
 #include <string>
 
+#include <QHash>
+#include <QString>
 #include <QWidget>
 #include <QList>
 #include <QPushButton>
@@ -22,6 +26,7 @@ class StepsModifyDynamicPanel : public QWidget
   Q_OBJECT
   
 public:
+  bool setStep(int id);
   explicit StepsModifyDynamicPanel(QWidget *parent = 0);
   ~StepsModifyDynamicPanel();
 
@@ -31,6 +36,9 @@ private slots:
   void on_pushButton_apply_clicked(bool);
 
 private:
+  int loadedEntityId = -1;
+  QHash<QString, QString> originalValues;
+  bool fieldChanged(const QString& field, const QString& value) const;
   std::string log;
 
   QGridLayout* GridLayout;

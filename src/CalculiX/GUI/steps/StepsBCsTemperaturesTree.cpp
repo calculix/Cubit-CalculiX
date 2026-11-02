@@ -1,3 +1,6 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include "StepsTree.hpp"
+#include "GUI/bcs/BCsTemperaturesTree.hpp"
 #include "StepsBCsTemperaturesTree.hpp"
 #include <string>
 #include <vector>
@@ -109,6 +112,8 @@ void StepsBCsTemperaturesTree::addBC(QString bc_id, QString bc_name)
   BCTreeChild->setText(0, bc_name);
     
   BCTreeChild->setText(1, bc_id);
+  BCTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Temperature));
+  BCTreeChild->setData(0, PropertyIdRole, bc_id.toInt());
 
   BCTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("StepsBCsTemperaturesTree"));
 
@@ -188,8 +193,20 @@ void StepsBCsTemperaturesTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Temperature", host, "CCXBCsTemperaturesCreate");
-  addPanelAction(menu, "Modify Temperature", host, "CCXBCsTemperaturesModify");
-  addPanelAction(menu, "Delete Temperature", host, "CCXBCsTemperaturesDelete");
+  {
+    auto* action = menu.addAction("Modify Temperature");
+    QObject::connect(action, &QAction::triggered, &menu, [entityId, &host]()
+    {
+      BCsTemperaturesTree::open_modify(entityId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Temperature");
+    QObject::connect(action, &QAction::triggered, &menu, [entityId, &host]()
+    {
+      BCsTemperaturesTree::open_delete(entityId, host);
+    });
+  }
   {
     QAction *action = menu.addAction("Steps Management");
     ModelTree *hostPtr = &host;
@@ -205,4 +222,23 @@ void StepsBCsTemperaturesTree::populateContextMenu(
     });
   }
   addCommandAction(menu, "Draw Temperature", QString("ccx draw bc temperature ") + QString::number(entityId));
+}
+
+
+void StepsBCsTemperaturesTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (host.myStepsManagement == nullptr)
+  {
+    return;
+  }
+  for (auto* ancestor = item; ancestor != nullptr; ancestor = ancestor->parent())
+  {
+    if (dynamic_cast<StepsTree*>(ancestor->parent()) != nullptr)
+    {
+      host.myStepsManagement->setStep(ancestor->text(1));
+      host.myStepsManagement->show();
+      host.myStepsManagement->raise();
+      return;
+    }
+  }
 }

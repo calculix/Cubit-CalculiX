@@ -1,12 +1,15 @@
 #ifndef CORELOADSFILM_HPP
 #define CORELOADSFILM_HPP
 
+#include "LoadsFilmSettings.hpp"
+
 #include <vector>
 #include <string>
 class CoreLoadsFilm
 {
 
 public:
+  bool get_settings(int id, LoadsFilmSettings& settings, std::string& error) const;
   std::vector<int> get_load_ids() const;
   CoreLoadsFilm();
   ~CoreLoadsFilm();

@@ -1,6 +1,8 @@
 #ifndef CORESTEPS_HPP
 #define CORESTEPS_HPP
 
+#include "StepsSettings.hpp"
+
 #include "Core/steps/CoreStepsStructs.hpp"
 #include <vector>
 #include <string>
@@ -11,6 +13,7 @@ class CoreSteps
 {
 
 public:
+  bool get_settings(int id, StepsSettings& settings, std::string& error) const;
   void remove_bc_references(int bc_type, int bc_id);
   void remove_load_references(int load_type, int load_id);
   bool check_step_exists(int step_id);

@@ -1,3 +1,4 @@
+#include "GUI/properties/PropertySelection.hpp"
 #include "SidesetTree.hpp"
 
 #include "GUI/application/ModelTree.hpp"
@@ -106,6 +107,8 @@ void SidesetTree::addSideset(QString sideset_id, QString sideset_name)
   SidesetTreeChild->setText(0, sideset_name);
     
   SidesetTreeChild->setText(1, sideset_id);
+  SidesetTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Sideset));
+  SidesetTreeChild->setData(0, PropertyIdRole, sideset_id.toInt());
 
   SidesetTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("SidesetTree"));
 

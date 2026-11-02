@@ -1,3 +1,9 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include <QAction>
+#include "LoadsForcesDeletePanel.hpp"
+#include "LoadsForcesModifyPanel.hpp"
+#include "CubitMessage.hpp"
+#include "TaskPanel.hpp"
 #include "LoadsForcesTree.hpp"
 #include <string>
 #include <vector>
@@ -105,6 +111,8 @@ void LoadsForcesTree::addLoad(QString load_id, QString load_name)
   LoadTreeChild->setText(0, load_name);
     
   LoadTreeChild->setText(1, load_id);
+  LoadTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Force));
+  LoadTreeChild->setData(0, PropertyIdRole, load_id.toInt());
 
   LoadTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("LoadsForcesTree"));
 
@@ -146,6 +154,12 @@ void LoadsForcesTree::populateContextMenu(
     return;
   }
 
+  int selectedId = 0;
+  if (clickedItem != this && !readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
+
   if (clickedItem == this)
   {
     addPanelAction(menu, "Create Force", host, "CCXLoadsForcesCreate");
@@ -165,7 +179,84 @@ void LoadsForcesTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Force", host, "CCXLoadsForcesCreate");
-  addPanelAction(menu, "Modify Force", host, "CCXLoadsForcesModify");
-  addPanelAction(menu, "Delete Force", host, "CCXLoadsForcesDelete");
+  {
+    auto* action = menu.addAction("Modify Force");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      LoadsForcesTree::open_modify(selectedId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Force");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      LoadsForcesTree::open_delete(selectedId, host);
+    });
+  }
   addCommandAction(menu, "Draw Force", QString("ccx draw load force ") + QString::number(entityId));
+}
+
+
+void LoadsForcesTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+
+  host.setWidgetInCmdPanelMarker("CCXLoadsForcesModify");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<LoadsForcesModifyPanel*>(widget))
+    {
+      panel->setForce(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Force modify panel.\n");
+}
+
+void LoadsForcesTree::open_delete(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXLoadsForcesDelete");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<LoadsForcesDeletePanel*>(widget))
+    {
+      panel->setForce(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Force delete panel.\n");
+}
+
+void LoadsForcesTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (item == nullptr)
+  {
+    return;
+  }
+  if (item == this)
+  {
+    host.setWidgetInCmdPanelMarker("CCXLoadsForcesCreate");
+    return;
+  }
+
+  if (item->parent() != this)
+  {
+    return;
+  }
+
+  int id = -1;
+  if (!readItemId(item, id))
+  {
+    return;
+  }
+  open_modify(id, host);
 }

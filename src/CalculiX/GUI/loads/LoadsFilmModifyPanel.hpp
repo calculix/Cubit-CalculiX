@@ -1,7 +1,11 @@
 #ifndef LOADSFILMMODIFYPANEL_HPP
 #define LOADSFILMMODIFYPANEL_HPP
+
+#include "Core/loads/LoadsFilmSettings.hpp"
 #include <string>
 
+#include <QHash>
+#include <QString>
 #include <QWidget>
 #include <QList>
 #include <QPushButton>
@@ -20,6 +24,7 @@ class LoadsFilmModifyPanel : public QWidget
   Q_OBJECT
   
 public:
+  bool setFilm(int id);
   explicit LoadsFilmModifyPanel(QWidget *parent = 0);
   ~LoadsFilmModifyPanel();
 
@@ -29,6 +34,9 @@ private slots:
   void on_pushButton_apply_clicked(bool);
 
 private:
+  int loadedEntityId = -1;
+  QHash<QString, QString> originalValues;
+  bool fieldChanged(const QString& field, const QString& value) const;
   std::string log;
 
   QGridLayout* GridLayout;

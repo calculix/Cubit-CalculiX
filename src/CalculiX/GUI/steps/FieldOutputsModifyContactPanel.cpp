@@ -1,3 +1,5 @@
+#include <algorithm>
+#include "CubitMessage.hpp"
 #include "FieldOutputsModifyContactPanel.hpp"
 #include <QString>
 #include "Core/steps/CalculiXStepsInterface.hpp"
@@ -116,6 +118,52 @@ FieldOutputsModifyContactPanel::~FieldOutputsModifyContactPanel()
 
 void FieldOutputsModifyContactPanel::on_pushButton_apply_clicked(bool)
 {
+  bool changed = false;
+  changed = changed || fieldChanged("lineEdit_1", lineEdit_1->text());
+  changed = changed || fieldChanged("lineEdit_2", lineEdit_2->text());
+  changed = changed || fieldChanged("comboBox_3", comboBox_3->currentText());
+  changed = changed || fieldChanged("comboBox_4", comboBox_4->currentText());
+  for (std::size_t index = 0; index < keys.size(); ++index)
+  {
+    changed = changed || fieldChanged("key:" + QString::fromStdString(keys[index]), checkBox_keys[index]->isChecked() ? "YES" : "NO");
+  }
+  if (loadedEntityId >= 0 && !changed && lineEdit_0->text().trimmed() == QString::number(loadedEntityId))
+  {
+    PRINT_INFO("No settings were changed.\n");
+    return;
+  }
+
+  if (loadedEntityId >= 0)
+  {
+    if (lineEdit_0->text().trimmed() != QString::number(loadedEntityId))
+    {
+      bool valid = false;
+      const int requestedId = lineEdit_0->text().trimmed().toInt(&valid);
+
+      if (valid)
+      {
+        setFieldOutput(requestedId);
+      }
+      else
+      {
+        PRINT_ERROR("Select a single entity ID before reloading this panel.\n");
+      }
+
+      return;
+    }
+  }
+
+  if (loadedEntityId >= 0 && lineEdit_1->isEnabled() && !originalValues.value("lineEdit_1").isEmpty() && lineEdit_1->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Name; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_2->isEnabled() && !originalValues.value("lineEdit_2").isEmpty() && lineEdit_2->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Frequency; use the supported reset value.\n");
+    return;
+  }
+
   QStringList commands;
   QString command = "";
   bool key_on = false;
@@ -125,25 +173,25 @@ void FieldOutputsModifyContactPanel::on_pushButton_apply_clicked(bool)
   {
     command.append("ccx modify fieldoutput " +lineEdit_0->text() + " contact");
 
-    if (lineEdit_1->text() != "")
+    if (lineEdit_1->text() != "" && fieldChanged("lineEdit_1", lineEdit_1->text()))
     {
       command.append(" name \"" + lineEdit_1->text() + "\"");
     }
-    if (lineEdit_2->text() != "")
+    if (lineEdit_2->text() != "" && fieldChanged("lineEdit_2", lineEdit_2->text()))
     {
       command.append(" frequency " + lineEdit_2->text());
     }
-    if (comboBox_3->currentIndex()==1)
+    if (comboBox_3->currentIndex()==1 && fieldChanged("comboBox_3", comboBox_3->currentText()))
     {
       command.append(" last_iterations_on");
-    }else if (comboBox_3->currentIndex()==2)
+    }else if (comboBox_3->currentIndex()==2 && fieldChanged("comboBox_3", comboBox_3->currentText()))
     {
       command.append(" last_iterations_off");
     }
-    if (comboBox_4->currentIndex()==1)
+    if (comboBox_4->currentIndex()==1 && fieldChanged("comboBox_4", comboBox_4->currentText()))
     {
       command.append(" contact_elements_on");
-    }else if (comboBox_4->currentIndex()==2)
+    }else if (comboBox_4->currentIndex()==2 && fieldChanged("comboBox_4", comboBox_4->currentText()))
     {
       command.append(" contact_elements_off");
     }
@@ -151,11 +199,11 @@ void FieldOutputsModifyContactPanel::on_pushButton_apply_clicked(bool)
 
     for (size_t i = 0; i < checkBox_keys.size(); i++)
     {
-      if (checkBox_keys[i]->isChecked())
+      if (checkBox_keys[i]->isChecked() && fieldChanged("key:" + QString::fromStdString(keys[i]), "YES"))
       {
         key_on = true;
       }
-      if (!checkBox_keys[i]->isChecked())
+      if (!checkBox_keys[i]->isChecked() && fieldChanged("key:" + QString::fromStdString(keys[i]), "NO"))
       {
         key_off = true;
       }
@@ -166,7 +214,7 @@ void FieldOutputsModifyContactPanel::on_pushButton_apply_clicked(bool)
       command = "ccx modify fieldoutput " +lineEdit_0->text() + " contact key_on ";
       for (size_t i = 0; i < checkBox_keys.size(); i++)
       {
-        if (checkBox_keys[i]->isChecked())
+        if (checkBox_keys[i]->isChecked() && fieldChanged("key:" + QString::fromStdString(keys[i]), "YES"))
         {
           command.append(label_keys[i]->text() + " ");
         }
@@ -178,7 +226,7 @@ void FieldOutputsModifyContactPanel::on_pushButton_apply_clicked(bool)
       command = "ccx modify fieldoutput " +lineEdit_0->text() + " contact key_off ";
       for (size_t i = 0; i < checkBox_keys.size(); i++)
       {
-        if (!checkBox_keys[i]->isChecked())
+        if (!checkBox_keys[i]->isChecked() && fieldChanged("key:" + QString::fromStdString(keys[i]), "NO"))
         {
           command.append(label_keys[i]->text() + " ");
         }
@@ -187,22 +235,81 @@ void FieldOutputsModifyContactPanel::on_pushButton_apply_clicked(bool)
     }
   }
   
-  if (command != "")
-  {
-    lineEdit_0->setText("");
-    lineEdit_1->setText("");
-    lineEdit_2->setText("");
-    comboBox_3->setCurrentIndex(0);
-    comboBox_4->setCurrentIndex(0);
-    for (size_t i = 0; i < checkBox_keys.size(); i++)
-    {
-      checkBox_keys[i]->setChecked(false);
-    }
-  }
   
   for (size_t i = 0; i < commands.size(); i++)
   {
     //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
     GuiSendCmd::gui_cmd(commands[int(i)]);
   }
+}
+
+
+bool FieldOutputsModifyContactPanel::fieldChanged(const QString& field, const QString& value) const
+{
+  return loadedEntityId < 0 || originalValues.value(field) != value;
+}
+
+bool FieldOutputsModifyContactPanel::setFieldOutput(int id)
+{
+  loadedEntityId = -1;
+  originalValues.clear();
+  comboBox_3->setCurrentIndex(0);
+  comboBox_4->setCurrentIndex(0);
+  for (auto* key : checkBox_keys)
+  {
+    key->setChecked(false);
+  }
+  pushButton_apply->setEnabled(false);
+  lineEdit_0->clear();
+  lineEdit_1->clear();
+  lineEdit_2->clear();
+  CalculiXStepsInterface core;
+  FieldOutputsSettings settings;
+  std::string error;
+
+  if (!core.get_fieldoutput_settings(id, settings, error))
+  {
+    PRINT_ERROR("Cannot load FieldOutput %d: %s\n", id, error.c_str());
+    return false;
+  }
+
+  if (settings.type != 3)
+  {
+    PRINT_ERROR("The selected record does not match this FieldOutput panel.\n");
+    return false;
+  }
+  lineEdit_0->setText(QString::number(settings.id));
+  lineEdit_1->setText(QString::fromStdString(settings.name));
+  lineEdit_2->setText(QString::fromStdString(settings.parameters.at(1)));
+  const QString comboBox_3Value = QString::fromStdString(settings.parameters.at(3));
+  int comboBox_3Index = comboBox_3->findText(comboBox_3Value, Qt::MatchFixedString);
+  if (comboBox_3Index < 0 && !comboBox_3Value.isEmpty())
+  {
+    comboBox_3->addItem(comboBox_3Value);
+    comboBox_3Index = comboBox_3->count() - 1;
+  }
+  comboBox_3->setCurrentIndex(qMax(0, comboBox_3Index));
+  const QString comboBox_4Value = QString::fromStdString(settings.parameters.at(4));
+  int comboBox_4Index = comboBox_4->findText(comboBox_4Value, Qt::MatchFixedString);
+  if (comboBox_4Index < 0 && !comboBox_4Value.isEmpty())
+  {
+    comboBox_4->addItem(comboBox_4Value);
+    comboBox_4Index = comboBox_4->count() - 1;
+  }
+  comboBox_4->setCurrentIndex(qMax(0, comboBox_4Index));
+
+  for (std::size_t index = 0; index < keys.size(); ++index)
+  {
+    checkBox_keys[index]->setChecked(std::find(settings.enabledKeys.begin(), settings.enabledKeys.end(), keys[index]) != settings.enabledKeys.end());
+    originalValues.insert("key:" + QString::fromStdString(keys[index]), checkBox_keys[index]->isChecked() ? "YES" : "NO");
+  }
+  originalValues.insert("lineEdit_0", lineEdit_0->text());
+  originalValues.insert("lineEdit_1", lineEdit_1->text());
+  originalValues.insert("lineEdit_2", lineEdit_2->text());
+  originalValues.insert("comboBox_3", comboBox_3->currentText());
+  originalValues.insert("comboBox_4", comboBox_4->currentText());
+
+  loadedEntityId = id;
+  pushButton_apply->setEnabled(true);
+  return true;
 }

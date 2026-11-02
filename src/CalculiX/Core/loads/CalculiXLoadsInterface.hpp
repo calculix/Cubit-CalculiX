@@ -1,12 +1,33 @@
 #ifndef CALCULIXLOADSINTERFACE_HPP
 #define CALCULIXLOADSINTERFACE_HPP
 
+#include "LoadsTrajectorySettings.hpp"
+#include "LoadsBodyHeatfluxSettings.hpp"
+#include "LoadsRadiationSettings.hpp"
+#include "LoadsFilmSettings.hpp"
+#include "LoadsCentrifugalSettings.hpp"
+#include "LoadsGravitySettings.hpp"
+#include "LoadsSurfaceTractionSettings.hpp"
+#include "LoadsHeatfluxesSettings.hpp"
+#include "LoadsPressuresSettings.hpp"
+#include "LoadsForcesSettings.hpp"
+
 #include <string>
 #include <vector>
 
 class CalculiXLoadsInterface
 {
 public:
+  bool get_trajectory_settings(int id, LoadsTrajectorySettings& settings, std::string& error);
+  bool get_bodyheatflux_settings(int id, LoadsBodyHeatfluxSettings& settings, std::string& error);
+  bool get_radiation_settings(int id, LoadsRadiationSettings& settings, std::string& error);
+  bool get_film_settings(int id, LoadsFilmSettings& settings, std::string& error);
+  bool get_centrifugal_settings(int id, LoadsCentrifugalSettings& settings, std::string& error);
+  bool get_gravity_settings(int id, LoadsGravitySettings& settings, std::string& error);
+  bool get_surfacetraction_settings(int id, LoadsSurfaceTractionSettings& settings, std::string& error);
+  bool get_heatflux_settings(int id, LoadsHeatfluxesSettings& settings, std::string& error);
+  bool get_pressure_settings(int id, LoadsPressuresSettings& settings, std::string& error);
+  bool get_force_settings(int id, LoadsForcesSettings& settings, std::string& error);
   std::vector<int> get_loadsforces_ids(); // get all load forces ids
   std::vector<int> get_loadspressures_ids(); // get all load pressure ids
   std::vector<int> get_loadsheatfluxes_ids(); // get all load heatflux ids

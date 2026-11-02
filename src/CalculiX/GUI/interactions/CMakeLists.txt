@@ -1,4 +1,10 @@
 target_sources(calculix_gui PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/SurfaceInteractionsPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/SurfaceInteractionsPropertiesWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ContactPairsPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ContactPairsPropertiesWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintsPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintsPropertiesWidget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintsCreateEquationFromGroupPanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintsCreateEquationFromGroupPanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintsCreateEquationPanel.cpp

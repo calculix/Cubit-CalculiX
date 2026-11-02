@@ -9,6 +9,7 @@ class QTimer;
 class TopologyTree : public QObject, public QTreeWidgetItem, public TreeContextMenu
 {
 public:
+  static void open_delete(int topology_id, ModelTree& host);
   explicit TopologyTree(QTreeWidget *parent);
   ~TopologyTree() override;
 

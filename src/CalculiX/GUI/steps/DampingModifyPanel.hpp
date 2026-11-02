@@ -1,7 +1,11 @@
 #ifndef DAMPINGMODIFYPANEL_HPP
 #define DAMPINGMODIFYPANEL_HPP
+
+#include "Core/steps/DampingSettings.hpp"
 #include <string>
 
+#include <QHash>
+#include <QString>
 #include <QWidget>
 #include <QList>
 #include <QPushButton>
@@ -20,6 +24,8 @@ class DampingModifyPanel : public QWidget
   Q_OBJECT
   
 public:
+  bool loadDamping();
+  bool setDamping(int id);
   explicit DampingModifyPanel(QWidget *parent = 0);
   ~DampingModifyPanel();
 
@@ -29,6 +35,9 @@ private slots:
   void on_pushButton_apply_clicked(bool);
 
 private:
+  int loadedEntityId = -1;
+  QHash<QString, QString> originalValues;
+  bool fieldChanged(const QString& field, const QString& value) const;
   std::string log;
 
   QGridLayout* GridLayout;

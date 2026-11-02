@@ -329,3 +329,9 @@ QDockWidget* CCXDockWindowModelTree::dock_widget() const noexcept
 {
   return dock;
 }
+
+
+ModelTree* CCXDockWindowModelTree::modelTree() const noexcept
+{
+  return myModelTree;
+}

@@ -1,3 +1,12 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include <QAction>
+#include "SectionsDeletePanel.hpp"
+#include "SectionsModifyMembranePanel.hpp"
+#include "SectionsModifyBeamPanel.hpp"
+#include "SectionsModifyShellPanel.hpp"
+#include "SectionsModifySolidPanel.hpp"
+#include "CubitMessage.hpp"
+#include "TaskPanel.hpp"
 #include "SectionsTree.hpp"
 
 #include "GUI/application/ModelTree.hpp"
@@ -106,6 +115,8 @@ void SectionsTree::addSection(QString section_id, QString section_name)
   SectionTreeChild->setText(0, section_name);
     
   SectionTreeChild->setText(1, section_id);
+  SectionTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::Section));
+  SectionTreeChild->setData(0, PropertyIdRole, section_id.toInt());
 
   SectionTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("SectionsTree"));
 
@@ -147,6 +158,12 @@ void SectionsTree::populateContextMenu(
     return;
   }
 
+  int selectedId = 0;
+  if (clickedItem != this && !readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
+
   if (clickedItem == this)
   {
     addPanelAction(menu, "Create Section", host, "CCXSectionsCreate");
@@ -159,6 +176,130 @@ void SectionsTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Section", host, "CCXSectionsCreate");
-  addPanelAction(menu, "Modify Section", host, "CCXSectionsModify");
-  addPanelAction(menu, "Delete Section", host, "CCXSectionsDelete");
+  {
+    auto* action = menu.addAction("Modify Section");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      SectionsTree::open_modify(selectedId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Section");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      SectionsTree::open_delete(selectedId, host);
+    });
+  }
+}
+
+
+void SectionsTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+
+  CalculiXSectionsInterface core;
+  SectionsSettings settings;
+  std::string error;
+  if (!core.get_section_settings(id, settings, error))
+  {
+    PRINT_ERROR("Cannot open Section %d: %s\n", id, error.c_str());
+    return;
+  }
+
+  QString marker;
+  switch (settings.type)
+  {
+    case 1: marker = "CCXSectionsModifySolid"; break;
+    case 2: marker = "CCXSectionsModifyShell"; break;
+    case 3: marker = "CCXSectionsModifyBeam"; break;
+    case 4: marker = "CCXSectionsModifyMembrane"; break;
+    default:
+      PRINT_ERROR("This stored type has no modify panel.\n");
+      return;
+  }
+  host.setWidgetInCmdPanelMarker(marker);
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<SectionsModifySolidPanel*>(widget))
+    {
+      if (settings.type == 1)
+      {
+        panel->setSection(id);
+        return;
+      }
+    }
+    if (auto* panel = dynamic_cast<SectionsModifyShellPanel*>(widget))
+    {
+      if (settings.type == 2)
+      {
+        panel->setSection(id);
+        return;
+      }
+    }
+    if (auto* panel = dynamic_cast<SectionsModifyBeamPanel*>(widget))
+    {
+      if (settings.type == 3)
+      {
+        panel->setSection(id);
+        return;
+      }
+    }
+    if (auto* panel = dynamic_cast<SectionsModifyMembranePanel*>(widget))
+    {
+      if (settings.type == 4)
+      {
+        panel->setSection(id);
+        return;
+      }
+    }
+  }
+  PRINT_ERROR("Unable to open the Section modify panel.\n");
+}
+
+void SectionsTree::open_delete(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXSectionsDelete");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<SectionsDeletePanel*>(widget))
+    {
+      panel->setSection(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the Section delete panel.\n");
+}
+
+void SectionsTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (item == nullptr)
+  {
+    return;
+  }
+  if (item == this)
+  {
+    host.setWidgetInCmdPanelMarker("CCXSectionsCreate");
+    return;
+  }
+
+  if (item->parent() != this)
+  {
+    return;
+  }
+
+  int id = -1;
+  if (!readItemId(item, id))
+  {
+    return;
+  }
+  open_modify(id, host);
 }

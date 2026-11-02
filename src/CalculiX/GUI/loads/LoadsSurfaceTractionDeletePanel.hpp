@@ -20,6 +20,7 @@ class LoadsSurfaceTractionDeletePanel : public QWidget
   Q_OBJECT
   
 public:
+  void setSurfaceTraction(int id);
   explicit LoadsSurfaceTractionDeletePanel(QWidget *parent = 0);
   ~LoadsSurfaceTractionDeletePanel();
 

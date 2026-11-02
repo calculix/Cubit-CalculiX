@@ -20,6 +20,7 @@ class BCsDisplacementsDeletePanel : public QWidget
   Q_OBJECT
 
 public:
+  void setDisplacement(int id);
   explicit BCsDisplacementsDeletePanel(QWidget *parent = 0);
   ~BCsDisplacementsDeletePanel();
 

@@ -1,6 +1,8 @@
 #ifndef PANELTABLE_HPP
 #define PANELTABLE_HPP
 
+#include <string>
+#include <vector>
 #include <QWidget>
 #include <QString>
 #include <QStringList>
@@ -18,6 +20,8 @@ public:
   ~PanelTable();
   void update(QStringList columns,std::vector<std::vector<double>> matrix); // updates the data in the table
   std::vector<std::vector<double>> getMatrix(); // gets the matrix property values
+  bool readMatrix(std::vector<std::vector<double>>& values, QString& error) const;
+  QString snapshot() const; // compares entered cells without modifying the table
   void insertNewRow(std::vector<double> values); // inserts new row at the bottom
   void insertLastRow(); // inserts new last row at the bottom
   bool checkRowEmtpy(int row); // checks if the columns in the row are empty

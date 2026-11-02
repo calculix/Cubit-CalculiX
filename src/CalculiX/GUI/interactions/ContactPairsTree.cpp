@@ -1,3 +1,9 @@
+#include "GUI/properties/PropertySelection.hpp"
+#include <QAction>
+#include "ContactPairsDeletePanel.hpp"
+#include "ContactPairsModifyPanel.hpp"
+#include "CubitMessage.hpp"
+#include "TaskPanel.hpp"
 #include "ContactPairsTree.hpp"
 #include <string>
 #include <vector>
@@ -105,6 +111,8 @@ void ContactPairsTree::addContactPair(QString contactpair_id, QString contactpai
   ContactPairTreeChild->setText(0, contactpair_name);
     
   ContactPairTreeChild->setText(1, contactpair_id);
+  ContactPairTreeChild->setData(0, PropertyFeatureRole, static_cast<int>(PropertyFeature::ContactPair));
+  ContactPairTreeChild->setData(0, PropertyIdRole, contactpair_id.toInt());
 
   ContactPairTreeChild->setIcon(0,ccx_gui_resources_iface.getIcon2("ContactPairsTree"));
 
@@ -146,6 +154,12 @@ void ContactPairsTree::populateContextMenu(
     return;
   }
 
+  int selectedId = 0;
+  if (clickedItem != this && !readItemId(clickedItem, selectedId))
+  {
+    return;
+  }
+
   if (clickedItem == this)
   {
     addPanelAction(menu, "Create Contact Pair", host, "CCXContactPairsCreate");
@@ -158,6 +172,83 @@ void ContactPairsTree::populateContextMenu(
   }
 
   addPanelAction(menu, "Create Contact Pair", host, "CCXContactPairsCreate");
-  addPanelAction(menu, "Modify Contact Pair", host, "CCXContactPairsModify");
-  addPanelAction(menu, "Delete Contact Pair", host, "CCXContactPairsDelete");
+  {
+    auto* action = menu.addAction("Modify Contact Pair");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      ContactPairsTree::open_modify(selectedId, host);
+    });
+  }
+  {
+    auto* action = menu.addAction("Delete Contact Pair");
+    QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
+    {
+      ContactPairsTree::open_delete(selectedId, host);
+    });
+  }
+}
+
+
+void ContactPairsTree::open_modify(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+
+  host.setWidgetInCmdPanelMarker("CCXContactPairsModify");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<ContactPairsModifyPanel*>(widget))
+    {
+      panel->setContactPair(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the ContactPair modify panel.\n");
+}
+
+void ContactPairsTree::open_delete(int id, ModelTree& host)
+{
+  if (host.cmdpanel == nullptr)
+  {
+    return;
+  }
+  host.setWidgetInCmdPanelMarker("CCXContactPairsDelete");
+
+  for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
+  {
+    if (auto* panel = dynamic_cast<ContactPairsDeletePanel*>(widget))
+    {
+      panel->setContactPair(id);
+      return;
+    }
+  }
+  PRINT_ERROR("Unable to open the ContactPair delete panel.\n");
+}
+
+void ContactPairsTree::activate(QTreeWidgetItem* item, ModelTree& host)
+{
+  if (item == nullptr)
+  {
+    return;
+  }
+  if (item == this)
+  {
+    host.setWidgetInCmdPanelMarker("CCXContactPairsCreate");
+    return;
+  }
+
+  if (item->parent() != this)
+  {
+    return;
+  }
+
+  int id = -1;
+  if (!readItemId(item, id))
+  {
+    return;
+  }
+  open_modify(id, host);
 }

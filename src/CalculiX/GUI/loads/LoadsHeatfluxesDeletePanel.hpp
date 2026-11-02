@@ -20,6 +20,7 @@ class LoadsHeatfluxesDeletePanel : public QWidget
   Q_OBJECT
 
 public:
+  void setHeatflux(int id);
   explicit LoadsHeatfluxesDeletePanel(QWidget *parent = 0);
   ~LoadsHeatfluxesDeletePanel();
 

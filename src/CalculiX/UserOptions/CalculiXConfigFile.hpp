@@ -15,6 +15,8 @@ class CalculiXConfigFile
   std::string filename;
   std::string filepath;
 
+  bool read_double_entry(const std::string& option, double& value);
+  void write_double_entry(const std::string& option, double value);
   void clear();
   void read_entry(std::string option, QString &value);
   void read_num_entry(std::string option, int &value);

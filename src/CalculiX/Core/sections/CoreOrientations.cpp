@@ -1,3 +1,4 @@
+#include "Core/application/SettingsRead.hpp"
 #include "Core/sections/CoreOrientations.hpp"
 #include <string>
 #include <vector>
@@ -509,4 +510,33 @@ std::vector<int> CoreOrientations::get_orientations_ids() const
   }
 
   return ids;
+}
+
+
+bool CoreOrientations::get_settings(int id, OrientationsSettings& settings, std::string& error) const
+{
+  settings = {};
+  error.clear();
+  const auto* record = SettingsRead::row(orientations_data, id, 8, error);
+
+  if (record == nullptr)
+  {
+    return false;
+  }
+
+  settings.id = id;
+  settings.name = SettingsRead::field(name_data, (*record)[1], 1, error);
+  settings.system = (*record)[2] == 2 ? "Cylindrical" : "Rectangular";
+  settings.a = SettingsRead::field(a_data, (*record)[4], 1, error) + " " + SettingsRead::field(a_data, (*record)[4], 2, error) + " " + SettingsRead::field(a_data, (*record)[4], 3, error);
+  settings.b = SettingsRead::field(b_data, (*record)[5], 1, error) + " " + SettingsRead::field(b_data, (*record)[5], 2, error) + " " + SettingsRead::field(b_data, (*record)[5], 3, error);
+  settings.axis = (*record)[6] == 1 ? "x" : ((*record)[6] == 2 ? "y" : ((*record)[6] == 3 ? "z" : " "));
+  settings.angle = SettingsRead::field(rotation_data, (*record)[7], 1, error);
+
+  if (!error.empty())
+  {
+    settings = {};
+    return false;
+  }
+
+  return true;
 }

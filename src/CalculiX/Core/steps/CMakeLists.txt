@@ -1,4 +1,10 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/PhysicalConstantsSettings.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/DampingSettings.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/InitialConditionsSettings.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FieldOutputsSettings.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/HistoryOutputsSettings.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/StepsSettings.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreStepSettings.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreInitialConditions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreHistoryOutputs.cpp

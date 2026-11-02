@@ -1,4 +1,24 @@
 target_sources(calculix_gui PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsTrajectoryPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsTrajectoryPropertiesWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsBodyHeatfluxPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsBodyHeatfluxPropertiesWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsRadiationPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsRadiationPropertiesWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsFilmPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsFilmPropertiesWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsCentrifugalPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsCentrifugalPropertiesWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsGravityPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsGravityPropertiesWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsSurfaceTractionPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsSurfaceTractionPropertiesWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsHeatfluxesPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsHeatfluxesPropertiesWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsPressuresPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsPressuresPropertiesWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsForcesPropertiesWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoadsForcesPropertiesWidget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsBodyHeatfluxCreatePanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsBodyHeatfluxCreatePanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsBodyHeatfluxDeletePanel.cpp

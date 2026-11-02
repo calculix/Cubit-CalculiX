@@ -1,3 +1,5 @@
+#include "CubitMessage.hpp"
+#include "Core/loads/CalculiXLoadsInterface.hpp"
 #include "LoadsBodyHeatfluxModifyPanel.hpp"
 #include <QString>
 #include "GUI/application/GuiSendCmd.hpp"
@@ -120,6 +122,66 @@ LoadsBodyHeatfluxModifyPanel::~LoadsBodyHeatfluxModifyPanel()
 
 void LoadsBodyHeatfluxModifyPanel::on_pushButton_apply_clicked(bool)
 {
+  bool changed = false;
+  changed = changed || fieldChanged("lineEdit_1", lineEdit_1->text());
+  changed = changed || fieldChanged("lineEdit_2", lineEdit_2->text());
+  changed = changed || fieldChanged("comboBox_3", comboBox_3->currentText());
+  changed = changed || fieldChanged("lineEdit_4", lineEdit_4->text());
+  changed = changed || fieldChanged("comboBox_5", comboBox_5->currentText());
+  changed = changed || fieldChanged("lineEdit_6", lineEdit_6->text());
+  changed = changed || fieldChanged("lineEdit_7", lineEdit_7->text());
+  if (loadedEntityId >= 0 && !changed && lineEdit_0->text().trimmed() == QString::number(loadedEntityId))
+  {
+    PRINT_INFO("No settings were changed.\n");
+    return;
+  }
+
+  if (loadedEntityId >= 0)
+  {
+    if (lineEdit_0->text().trimmed() != QString::number(loadedEntityId))
+    {
+      bool valid = false;
+      const int requestedId = lineEdit_0->text().trimmed().toInt(&valid);
+
+      if (valid)
+      {
+        setBodyHeatflux(requestedId);
+      }
+      else
+      {
+        PRINT_ERROR("Select a single entity ID before reloading this panel.\n");
+      }
+
+      return;
+    }
+  }
+
+  if (loadedEntityId >= 0 && lineEdit_1->isEnabled() && !originalValues.value("lineEdit_1").isEmpty() && lineEdit_1->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Name; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_2->isEnabled() && !originalValues.value("lineEdit_2").isEmpty() && lineEdit_2->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Magnitude; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_4->isEnabled() && !originalValues.value("lineEdit_4").isEmpty() && lineEdit_4->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear IDs; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_6->isEnabled() && !originalValues.value("lineEdit_6").isEmpty() && lineEdit_6->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Amplitude ID; use the supported reset value.\n");
+    return;
+  }
+  if (loadedEntityId >= 0 && lineEdit_7->isEnabled() && !originalValues.value("lineEdit_7").isEmpty() && lineEdit_7->text().trimmed().isEmpty())
+  {
+    PRINT_ERROR("An empty value cannot clear Time Delay; use the supported reset value.\n");
+    return;
+  }
+
   QStringList commands;
   QString command = "";
 //ccx modify bodyheatflux <bodyheatflux_id> [magnitude <magnitude_value>] [{block|element} <<element_ids>...] [op {mod | new}] [amplitude <amplitude id>] [timedelay <timedelay>] [name <name>] 
@@ -127,39 +189,33 @@ void LoadsBodyHeatfluxModifyPanel::on_pushButton_apply_clicked(bool)
   {
     command.append("ccx modify bodyheatflux " + lineEdit_0->text());
      
-    if (lineEdit_2->text()!="")
+    if (lineEdit_2->text()!="" && fieldChanged("lineEdit_2", lineEdit_2->text()))
     {
       command.append(" magnitude " +lineEdit_2->text());
     }
 
-    if (comboBox_3->currentIndex()!=0)
+    if (!lineEdit_4->text().trimmed().isEmpty() &&
+        (fieldChanged("comboBox_3", comboBox_3->currentText()) || fieldChanged("lineEdit_4", lineEdit_4->text())))
     {
-      if (comboBox_3->currentIndex()==0)
-      {
-        command.append(" block ");
-      }
-      if (comboBox_3->currentIndex()==1)
-      {
-        command.append(" element ");
-      }
-      command.append(" " + lineEdit_4->text());
+      command.append(comboBox_3->currentIndex() == 0 ? " block " : " element ");
+      command.append(lineEdit_4->text());
     }
-    
-    if (comboBox_5->currentIndex()!=0)
+
+    if (comboBox_5->currentIndex()!=0 && fieldChanged("comboBox_5", comboBox_5->currentText()))
     {
       command.append(" op " + comboBox_5->currentText());
     }
 
-    if (lineEdit_6->text()!="")
+    if (lineEdit_6->text()!="" && fieldChanged("lineEdit_6", lineEdit_6->text()))
     {
       command.append(" amplitude " +lineEdit_6->text());
     }
-    if (lineEdit_7->text()!="")
+    if (lineEdit_7->text()!="" && fieldChanged("lineEdit_7", lineEdit_7->text()))
     {
       command.append(" timedelay " +lineEdit_7->text());
     }
 
-    if (lineEdit_1->text()!="")
+    if (lineEdit_1->text()!="" && fieldChanged("lineEdit_1", lineEdit_1->text()))
     {
       command.append(" name \"" +lineEdit_1->text() + "\"");
     }
@@ -168,14 +224,6 @@ void LoadsBodyHeatfluxModifyPanel::on_pushButton_apply_clicked(bool)
   if (command != "")
   {
     commands.push_back(command);
-    lineEdit_0->setText("");
-    lineEdit_1->setText("");
-    lineEdit_2->setText("");
-    comboBox_3->setCurrentIndex(0);
-    lineEdit_4->setText("");
-    comboBox_5->setCurrentIndex(0);
-    lineEdit_6->setText("");
-    lineEdit_7->setText("");
   }
   
   for (size_t i = 0; i < commands.size(); i++)
@@ -183,4 +231,68 @@ void LoadsBodyHeatfluxModifyPanel::on_pushButton_apply_clicked(bool)
     //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
     GuiSendCmd::gui_cmd(commands[int(i)]);
   }
+}
+
+
+bool LoadsBodyHeatfluxModifyPanel::fieldChanged(const QString& field, const QString& value) const
+{
+  return loadedEntityId < 0 || originalValues.value(field) != value;
+}
+
+bool LoadsBodyHeatfluxModifyPanel::setBodyHeatflux(int id)
+{
+  loadedEntityId = -1;
+  originalValues.clear();
+  comboBox_3->setCurrentIndex(0);
+  comboBox_5->setCurrentIndex(0);
+  pushButton_apply->setEnabled(false);
+  lineEdit_0->clear();
+  lineEdit_1->clear();
+  lineEdit_2->clear();
+  lineEdit_4->clear();
+  lineEdit_6->clear();
+  lineEdit_7->clear();
+  CalculiXLoadsInterface core;
+  LoadsBodyHeatfluxSettings settings;
+  std::string error;
+
+  if (!core.get_bodyheatflux_settings(id, settings, error))
+  {
+    PRINT_ERROR("Cannot load BodyHeatflux %d: %s\n", id, error.c_str());
+    return false;
+  }
+  lineEdit_0->setText(QString::number(settings.id));
+  lineEdit_1->setText(QString::fromStdString(settings.name));
+  lineEdit_2->setText(QString::fromStdString(settings.magnitude));
+  const QString comboBox_3Value = QString::fromStdString(settings.entityType);
+  int comboBox_3Index = comboBox_3->findText(comboBox_3Value, Qt::MatchFixedString);
+  if (comboBox_3Index < 0 && !comboBox_3Value.isEmpty())
+  {
+    comboBox_3->addItem(comboBox_3Value);
+    comboBox_3Index = comboBox_3->count() - 1;
+  }
+  comboBox_3->setCurrentIndex(qMax(0, comboBox_3Index));
+  lineEdit_4->setText(QString::fromStdString(settings.ids));
+  const QString comboBox_5Value = QString::fromStdString(settings.operation);
+  int comboBox_5Index = comboBox_5->findText(comboBox_5Value, Qt::MatchFixedString);
+  if (comboBox_5Index < 0 && !comboBox_5Value.isEmpty())
+  {
+    comboBox_5->addItem(comboBox_5Value);
+    comboBox_5Index = comboBox_5->count() - 1;
+  }
+  comboBox_5->setCurrentIndex(qMax(0, comboBox_5Index));
+  lineEdit_6->setText(QString::fromStdString(settings.amplitude));
+  lineEdit_7->setText(QString::fromStdString(settings.timeDelay));
+  originalValues.insert("lineEdit_0", lineEdit_0->text());
+  originalValues.insert("lineEdit_1", lineEdit_1->text());
+  originalValues.insert("lineEdit_2", lineEdit_2->text());
+  originalValues.insert("comboBox_3", comboBox_3->currentText());
+  originalValues.insert("lineEdit_4", lineEdit_4->text());
+  originalValues.insert("comboBox_5", comboBox_5->currentText());
+  originalValues.insert("lineEdit_6", lineEdit_6->text());
+  originalValues.insert("lineEdit_7", lineEdit_7->text());
+
+  loadedEntityId = id;
+  pushButton_apply->setEnabled(true);
+  return true;
 }

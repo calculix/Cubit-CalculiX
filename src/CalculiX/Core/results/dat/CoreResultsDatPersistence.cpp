@@ -7,327 +7,758 @@
 #include <string>
 #include <vector>
 
-void CoreResultsDatPersistence::read_block_metadata(HDF5Tool& file, CoreResultsDat& results)
+#include "PersistenceTable.hpp"
+#include <algorithm>
+#include <exception>
+#include <stdexcept>
+
+namespace
 {
-  const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
-
-  file.read_dataset_int_rank_2("result_blocks", group, results.result_blocks);
-  file.read_dataset_double_rank_1("total_times", group, results.total_times);
-
-  const std::string components = group + "result_block_components/";
-
-  if (file.nameExists(components))
+  struct SavedDatData
   {
-    int index = 0;
+    int job_id = -1;
+    decltype(CoreResultsDat::buckle_data) buckle_data;
+    decltype(CoreResultsDat::result_block_c1_data) result_block_c1_data;
+    decltype(CoreResultsDat::result_block_components) result_block_components;
+    decltype(CoreResultsDat::result_block_data) result_block_data;
+    decltype(CoreResultsDat::result_block_set) result_block_set;
+    decltype(CoreResultsDat::result_block_type) result_block_type;
+    decltype(CoreResultsDat::result_blocks) result_blocks;
+    decltype(CoreResultsDat::result_section) result_section;
+    decltype(CoreResultsDat::result_section_data) result_section_data;
+    decltype(CoreResultsDat::result_section_label) result_section_label;
+    decltype(CoreResultsDat::result_section_set) result_section_set;
+    decltype(CoreResultsDat::sorted_c1) sorted_c1;
+    decltype(CoreResultsDat::sorted_result_block_c1_data_id) sorted_result_block_c1_data_id;
+    decltype(CoreResultsDat::sorted_result_block_c1_data_type) sorted_result_block_c1_data_type;
+    decltype(CoreResultsDat::total_times) total_times;
+  };
 
-    while (file.nameExists(components + std::to_string(index) + "/"))
+  std::vector<int> savedIndices(HDF5Tool& file, const std::string& path)
+  {
+    std::vector<int> indices;
+    if (!file.nameExists(path))
     {
-      results.result_block_components.emplace_back();
-      file.read_dataset_string_rank_1(std::to_string(index), components, results.result_block_components[index]);
-      ++index;
+      return indices;
     }
+    auto group = file.file->openGroup(path);
+    for (hsize_t position = 0; position < group.getNumObjs(); ++position)
+    {
+      const std::string name = group.getObjnameByIdx(position);
+      int index = 0;
+      if (!PersistenceTable::id(name, index) || index < 0 || index > 1000000 || group.getObjTypeByIdx(position) != H5G_DATASET)
+      {
+        throw std::runtime_error("Invalid indexed result dataset: " + path + name);
+      }
+      indices.push_back(index);
+    }
+    std::sort(indices.begin(), indices.end());
+    return indices;
   }
 
-  file.read_dataset_string_rank_1("result_block_type", group, results.result_block_type);
-  file.read_dataset_string_rank_1("result_block_set", group, results.result_block_set);
-}
-
-void CoreResultsDatPersistence::write_block_metadata(HDF5Tool& file, const CoreResultsDat& results)
-{
-  const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
-
-  file.createGroup(group);
-  file.write_dataset_int_rank_2("result_blocks", group, results.result_blocks);
-  file.write_dataset_double_rank_1("total_times", group, results.total_times);
-
-  if (!results.result_block_components.empty())
+  bool inRange(int index, std::size_t size)
   {
-    const std::string subgroup = group + "result_block_components/";
-    file.createGroup(subgroup);
-
-    for (std::size_t index = 0; index < results.result_block_components.size(); index++)
-    {
-      file.write_dataset_string_rank_1(std::to_string(index), subgroup, results.result_block_components[index]);
-    }
+    return index >= 0 && static_cast<std::size_t>(index) < size;
   }
 
-  file.write_dataset_string_rank_1("result_block_type", group, results.result_block_type);
-  file.write_dataset_string_rank_1("result_block_set", group, results.result_block_set);
-}
-
-void CoreResultsDatPersistence::read_result_values(HDF5Tool& file, CoreResultsDat& results)
-{
-  const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
-  const std::string values = group + "result_block_data/";
-
-  if (file.nameExists(values))
+  bool read_block_metadata(HDF5Tool& file, SavedDatData& results)
   {
-    int index = 0;
-
-    while (file.nameExists(values + std::to_string(index) + "/"))
+    try
     {
-      results.result_block_data.emplace_back();
-      file.read_dataset_double_rank_2(std::to_string(index), values, results.result_block_data[index]);
-      ++index;
+      const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
+
+      if (file.nameExists(group) && file.nameExists(group + std::string("/") + "result_blocks") && !file.read_dataset_int_rank_2("result_blocks", group, results.result_blocks))
+      {
+        PRINT_ERROR("Cannot read CalculiX Dat read_block_metadata for job %d: %s\n", results.job_id, file.last_error().c_str());
+        return false;
+      }
+      if (file.nameExists(group) && file.nameExists(group + std::string("/") + "total_times") && !file.read_dataset_double_rank_1("total_times", group, results.total_times))
+      {
+        PRINT_ERROR("Cannot read CalculiX Dat read_block_metadata for job %d: %s\n", results.job_id, file.last_error().c_str());
+        return false;
+      }
+
+      const std::string components = group + "result_block_components/";
+
+      if (file.nameExists(components))
+      {
+        for (const int index : savedIndices(file, components))
+        {
+          results.result_block_components.resize(static_cast<std::size_t>(index) + 1);
+          if (file.nameExists(components) && file.nameExists(components + std::string("/") + std::to_string(index)) && !file.read_dataset_string_rank_1(std::to_string(index), components, results.result_block_components[index]))
+          {
+            PRINT_ERROR("Cannot read CalculiX Dat read_block_metadata for job %d: %s\n", results.job_id, file.last_error().c_str());
+            return false;
+          }
+        }
+      }
+
+      if (file.nameExists(group) && file.nameExists(group + std::string("/") + "result_block_type") && !file.read_dataset_string_rank_1("result_block_type", group, results.result_block_type))
+      {
+        PRINT_ERROR("Cannot read CalculiX Dat read_block_metadata for job %d: %s\n", results.job_id, file.last_error().c_str());
+        return false;
+      }
+      if (file.nameExists(group) && file.nameExists(group + std::string("/") + "result_block_set") && !file.read_dataset_string_rank_1("result_block_set", group, results.result_block_set))
+      {
+        PRINT_ERROR("Cannot read CalculiX Dat read_block_metadata for job %d: %s\n", results.job_id, file.last_error().c_str());
+        return false;
+      }
+      return true;
     }
-  }
-
-  const std::string mappings = group + "result_block_c1_data/";
-
-  if (file.nameExists(mappings))
-  {
-    int index = 0;
-
-    while (file.nameExists(mappings + std::to_string(index) + "/"))
+    catch (const H5::Exception& error)
     {
-      results.result_block_c1_data.emplace_back();
-      file.read_dataset_int_rank_2(std::to_string(index), mappings, results.result_block_c1_data[index]);
-      ++index;
-    }
-  }
-
-  const std::string buckling = group + "buckle_data/";
-
-  if (file.nameExists(buckling))
-  {
-    int index = 0;
-
-    while (file.nameExists(buckling + std::to_string(index) + "/"))
-    {
-      results.buckle_data.emplace_back();
-      file.read_dataset_double_rank_2(std::to_string(index), buckling, results.buckle_data[index]);
-      ++index;
-    }
-  }
-}
-
-void CoreResultsDatPersistence::write_result_values(HDF5Tool& file, const CoreResultsDat& results)
-{
-  const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
-
-  if (!results.result_block_data.empty())
-  {
-    const std::string subgroup = group + "result_block_data/";
-    file.createGroup(subgroup);
-
-    for (std::size_t index = 0; index < results.result_block_data.size(); index++)
-    {
-      file.write_dataset_double_rank_2(std::to_string(index), subgroup, results.result_block_data[index]);
-    }
-  }
-
-  if (!results.result_block_c1_data.empty())
-  {
-    const std::string subgroup = group + "result_block_c1_data/";
-    file.createGroup(subgroup);
-
-    for (std::size_t index = 0; index < results.result_block_c1_data.size(); index++)
-    {
-      file.write_dataset_int_rank_2(std::to_string(index), subgroup, results.result_block_c1_data[index]);
-    }
-  }
-
-  if (!results.buckle_data.empty())
-  {
-    const std::string subgroup = group + "buckle_data/";
-    file.createGroup(subgroup);
-
-    for (std::size_t index = 0; index < results.buckle_data.size(); index++)
-    {
-      file.write_dataset_double_rank_2(std::to_string(index), subgroup, results.buckle_data[index]);
-    }
-  }
-}
-
-bool CoreResultsDatPersistence::read_section_results(HDF5Tool& file, CoreResultsDat& results)
-{
-  const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
-  const std::string sections = group + "result_section/";
-
-  if (file.nameExists(sections))
-  {
-    int index = 0;
-
-    while (file.nameExists(sections + std::to_string(index) + "/"))
-    {
-      results.result_section.emplace_back();
-      file.read_dataset_int_rank_1(std::to_string(index), sections, results.result_section[index]);
-      ++index;
-    }
-  }
-
-  file.read_dataset_string_rank_1("result_section_set", group, results.result_section_set);
-
-  // Preserve default labels unless saved labels are read successfully.
-  if (file.nameExists(group + "result_section_label"))
-  {
-    std::vector<std::string> labels;
-
-    if (!file.read_dataset_string_rank_1("result_section_label", group, labels))
-    {
-      PRINT_ERROR("Unable to read DAT section labels for job %d.\n", results.job_id);
+      PRINT_ERROR("Cannot read CalculiX Dat read_block_metadata: %s\n", error.getDetailMsg().c_str());
       return false;
     }
-
-    results.result_section_label.swap(labels);
-  }
-
-  const std::string values = group + "result_section_data/";
-
-  if (file.nameExists(values))
-  {
-    int index = 0;
-
-    while (file.nameExists(values + std::to_string(index) + "/"))
+    catch (const std::exception& error)
     {
-      results.result_section_data.emplace_back();
-      file.read_dataset_double_rank_1(std::to_string(index), values, results.result_section_data[index]);
-      ++index;
+      PRINT_ERROR("Cannot read CalculiX Dat read_block_metadata: %s\n", error.what());
+      return false;
     }
   }
 
-  return true;
-}
-
-void CoreResultsDatPersistence::write_section_results(HDF5Tool& file, const CoreResultsDat& results)
-{
-  const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
-
-  if (!results.result_section.empty())
+  bool write_block_metadata(HDF5Tool& file, const CoreResultsDat& results)
   {
-    const std::string subgroup = group + "result_section/";
-    file.createGroup(subgroup);
-
-    for (std::size_t index = 0; index < results.result_section.size(); index++)
+    try
     {
-      file.write_dataset_int_rank_1(std::to_string(index), subgroup, results.result_section[index]);
+      const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
+
+      if (!file.ensureGroup(group))
+      {
+        PRINT_ERROR("Cannot save CalculiX Dat result group for job %d: %s\n", results.job_id, file.last_error().c_str());
+        return false;
+      }
+      if (!file.write_dataset_int_rank_2("result_blocks", group, results.result_blocks))
+      {
+        PRINT_ERROR("Cannot save CalculiX Dat write_block_metadata for job %d: %s\n", results.job_id, file.last_error().c_str());
+        return false;
+      }
+      if (!file.write_dataset_double_rank_1("total_times", group, results.total_times))
+      {
+        PRINT_ERROR("Cannot save CalculiX Dat write_block_metadata for job %d: %s\n", results.job_id, file.last_error().c_str());
+        return false;
+      }
+
+      if (!results.result_block_components.empty())
+      {
+        const std::string subgroup = group + "result_block_components/";
+        if (!file.ensureGroup(subgroup))
+        {
+          PRINT_ERROR("Cannot save CalculiX Dat result group for job %d: %s\n", results.job_id, file.last_error().c_str());
+          return false;
+        }
+
+        for (std::size_t index = 0; index < results.result_block_components.size(); index++)
+        {
+          if (!file.write_dataset_string_rank_1(std::to_string(index), subgroup, results.result_block_components[index]))
+          {
+            PRINT_ERROR("Cannot save CalculiX Dat write_block_metadata for job %d: %s\n", results.job_id, file.last_error().c_str());
+            return false;
+          }
+        }
+      }
+
+      if (!file.write_dataset_string_rank_1("result_block_type", group, results.result_block_type))
+      {
+        PRINT_ERROR("Cannot save CalculiX Dat write_block_metadata for job %d: %s\n", results.job_id, file.last_error().c_str());
+        return false;
+      }
+      if (!file.write_dataset_string_rank_1("result_block_set", group, results.result_block_set))
+      {
+        PRINT_ERROR("Cannot save CalculiX Dat write_block_metadata for job %d: %s\n", results.job_id, file.last_error().c_str());
+        return false;
+      }
+      return true;
+    }
+    catch (const H5::Exception& error)
+    {
+      PRINT_ERROR("Cannot write CalculiX Dat write_block_metadata: %s\n", error.getDetailMsg().c_str());
+      return false;
+    }
+    catch (const std::exception& error)
+    {
+      PRINT_ERROR("Cannot write CalculiX Dat write_block_metadata: %s\n", error.what());
+      return false;
     }
   }
 
-  file.write_dataset_string_rank_1("result_section_set", group, results.result_section_set);
-  file.write_dataset_string_rank_1("result_section_label", group, results.result_section_label);
-
-  if (!results.result_section_data.empty())
+  bool read_result_values(HDF5Tool& file, SavedDatData& results)
   {
-    const std::string subgroup = group + "result_section_data/";
-    file.createGroup(subgroup);
-
-    for (std::size_t index = 0; index < results.result_section_data.size(); index++)
+    try
     {
-      file.write_dataset_double_rank_1(std::to_string(index), subgroup, results.result_section_data[index]);
+      const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
+      const std::string values = group + "result_block_data/";
+
+      if (file.nameExists(values))
+      {
+        for (const int index : savedIndices(file, values))
+        {
+          results.result_block_data.resize(static_cast<std::size_t>(index) + 1);
+          if (file.nameExists(values) && file.nameExists(values + std::string("/") + std::to_string(index)) && !file.read_dataset_double_rank_2(std::to_string(index), values, results.result_block_data[index]))
+          {
+            PRINT_ERROR("Cannot read CalculiX Dat read_result_values for job %d: %s\n", results.job_id, file.last_error().c_str());
+            return false;
+          }
+        }
+      }
+
+      const std::string mappings = group + "result_block_c1_data/";
+
+      if (file.nameExists(mappings))
+      {
+        for (const int index : savedIndices(file, mappings))
+        {
+          results.result_block_c1_data.resize(static_cast<std::size_t>(index) + 1);
+          if (file.nameExists(mappings) && file.nameExists(mappings + std::string("/") + std::to_string(index)) && !file.read_dataset_int_rank_2(std::to_string(index), mappings, results.result_block_c1_data[index]))
+          {
+            PRINT_ERROR("Cannot read CalculiX Dat read_result_values for job %d: %s\n", results.job_id, file.last_error().c_str());
+            return false;
+          }
+        }
+      }
+
+      const std::string buckling = group + "buckle_data/";
+
+      if (file.nameExists(buckling))
+      {
+        for (const int index : savedIndices(file, buckling))
+        {
+          results.buckle_data.resize(static_cast<std::size_t>(index) + 1);
+          if (file.nameExists(buckling) && file.nameExists(buckling + std::string("/") + std::to_string(index)) && !file.read_dataset_double_rank_2(std::to_string(index), buckling, results.buckle_data[index]))
+          {
+            PRINT_ERROR("Cannot read CalculiX Dat read_result_values for job %d: %s\n", results.job_id, file.last_error().c_str());
+            return false;
+          }
+        }
+      }
+      return true;
     }
-  }
-}
-
-void CoreResultsDatPersistence::read_sorted_indices(HDF5Tool& file, CoreResultsDat& results)
-{
-  const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
-  const std::string column_ids = group + "sorted_c1/";
-
-  if (file.nameExists(column_ids))
-  {
-    int index = 0;
-
-    while (file.nameExists(column_ids + std::to_string(index) + "/"))
+    catch (const H5::Exception& error)
     {
-      results.sorted_c1.emplace_back();
-      file.read_dataset_int_rank_1(std::to_string(index), column_ids, results.sorted_c1[index]);
-      ++index;
+      PRINT_ERROR("Cannot read CalculiX Dat read_result_values: %s\n", error.getDetailMsg().c_str());
+      return false;
     }
-  }
-
-  const std::string data_ids = group + "sorted_result_block_c1_data_id/";
-
-  if (file.nameExists(data_ids))
-  {
-    int index = 0;
-
-    while (file.nameExists(data_ids + std::to_string(index) + "/"))
+    catch (const std::exception& error)
     {
-      results.sorted_result_block_c1_data_id.emplace_back();
-      file.read_dataset_int_rank_1(std::to_string(index), data_ids, results.sorted_result_block_c1_data_id[index]);
-      ++index;
-    }
-  }
-
-  const std::string data_types = group + "sorted_result_block_c1_data_type/";
-
-  if (file.nameExists(data_types))
-  {
-    int index = 0;
-
-    while (file.nameExists(data_types + std::to_string(index) + "/"))
-    {
-      results.sorted_result_block_c1_data_type.emplace_back();
-      file.read_dataset_int_rank_1(std::to_string(index), data_types, results.sorted_result_block_c1_data_type[index]);
-      ++index;
-    }
-  }
-}
-
-void CoreResultsDatPersistence::write_sorted_indices(HDF5Tool& file, const CoreResultsDat& results)
-{
-  const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
-
-  if (!results.sorted_c1.empty())
-  {
-    const std::string subgroup = group + "sorted_c1/";
-    file.createGroup(subgroup);
-
-    for (std::size_t index = 0; index < results.sorted_c1.size(); index++)
-    {
-      file.write_dataset_int_rank_1(std::to_string(index), subgroup, results.sorted_c1[index]);
+      PRINT_ERROR("Cannot read CalculiX Dat read_result_values: %s\n", error.what());
+      return false;
     }
   }
 
-  if (!results.sorted_result_block_c1_data_id.empty())
+  bool write_result_values(HDF5Tool& file, const CoreResultsDat& results)
   {
-    const std::string subgroup = group + "sorted_result_block_c1_data_id/";
-    file.createGroup(subgroup);
-
-    for (std::size_t index = 0; index < results.sorted_result_block_c1_data_id.size(); index++)
+    try
     {
-      file.write_dataset_int_rank_1(std::to_string(index), subgroup, results.sorted_result_block_c1_data_id[index]);
+      const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
+
+      if (!results.result_block_data.empty())
+      {
+        const std::string subgroup = group + "result_block_data/";
+        if (!file.ensureGroup(subgroup))
+        {
+          PRINT_ERROR("Cannot save CalculiX Dat result group for job %d: %s\n", results.job_id, file.last_error().c_str());
+          return false;
+        }
+
+        for (std::size_t index = 0; index < results.result_block_data.size(); index++)
+        {
+          if (!file.write_dataset_double_rank_2(std::to_string(index), subgroup, results.result_block_data[index]))
+          {
+            PRINT_ERROR("Cannot save CalculiX Dat write_result_values for job %d: %s\n", results.job_id, file.last_error().c_str());
+            return false;
+          }
+        }
+      }
+
+      if (!results.result_block_c1_data.empty())
+      {
+        const std::string subgroup = group + "result_block_c1_data/";
+        if (!file.ensureGroup(subgroup))
+        {
+          PRINT_ERROR("Cannot save CalculiX Dat result group for job %d: %s\n", results.job_id, file.last_error().c_str());
+          return false;
+        }
+
+        for (std::size_t index = 0; index < results.result_block_c1_data.size(); index++)
+        {
+          if (!file.write_dataset_int_rank_2(std::to_string(index), subgroup, results.result_block_c1_data[index]))
+          {
+            PRINT_ERROR("Cannot save CalculiX Dat write_result_values for job %d: %s\n", results.job_id, file.last_error().c_str());
+            return false;
+          }
+        }
+      }
+
+      if (!results.buckle_data.empty())
+      {
+        const std::string subgroup = group + "buckle_data/";
+        if (!file.ensureGroup(subgroup))
+        {
+          PRINT_ERROR("Cannot save CalculiX Dat result group for job %d: %s\n", results.job_id, file.last_error().c_str());
+          return false;
+        }
+
+        for (std::size_t index = 0; index < results.buckle_data.size(); index++)
+        {
+          if (!file.write_dataset_double_rank_2(std::to_string(index), subgroup, results.buckle_data[index]))
+          {
+            PRINT_ERROR("Cannot save CalculiX Dat write_result_values for job %d: %s\n", results.job_id, file.last_error().c_str());
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+    catch (const H5::Exception& error)
+    {
+      PRINT_ERROR("Cannot write CalculiX Dat write_result_values: %s\n", error.getDetailMsg().c_str());
+      return false;
+    }
+    catch (const std::exception& error)
+    {
+      PRINT_ERROR("Cannot write CalculiX Dat write_result_values: %s\n", error.what());
+      return false;
     }
   }
 
-  if (!results.sorted_result_block_c1_data_type.empty())
+  bool read_section_results(HDF5Tool& file, SavedDatData& results)
   {
-    const std::string subgroup = group + "sorted_result_block_c1_data_type/";
-    file.createGroup(subgroup);
-
-    for (std::size_t index = 0; index < results.sorted_result_block_c1_data_type.size(); index++)
+    try
     {
-      file.write_dataset_int_rank_1(std::to_string(index), subgroup, results.sorted_result_block_c1_data_type[index]);
+      const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
+      const std::string sections = group + "result_section/";
+
+      if (file.nameExists(sections))
+      {
+        for (const int index : savedIndices(file, sections))
+        {
+          results.result_section.resize(static_cast<std::size_t>(index) + 1);
+          if (file.nameExists(sections) && file.nameExists(sections + std::string("/") + std::to_string(index)) && !file.read_dataset_int_rank_1(std::to_string(index), sections, results.result_section[index]))
+          {
+            PRINT_ERROR("Cannot read CalculiX Dat read_section_results for job %d: %s\n", results.job_id, file.last_error().c_str());
+            return false;
+          }
+        }
+      }
+
+      if (file.nameExists(group) && file.nameExists(group + std::string("/") + "result_section_set") && !file.read_dataset_string_rank_1("result_section_set", group, results.result_section_set))
+      {
+        PRINT_ERROR("Cannot read CalculiX Dat read_section_results for job %d: %s\n", results.job_id, file.last_error().c_str());
+        return false;
+      }
+
+      // Preserve default labels unless saved labels are read successfully.
+      if (file.nameExists(group + "result_section_label"))
+      {
+        std::vector<std::string> labels;
+
+        if (!file.read_dataset_string_rank_1("result_section_label", group, labels))
+        {
+          PRINT_ERROR("Unable to read DAT section labels for job %d.\n", results.job_id);
+          return false;
+        }
+
+        results.result_section_label.swap(labels);
+      }
+
+      const std::string values = group + "result_section_data/";
+
+      if (file.nameExists(values))
+      {
+        for (const int index : savedIndices(file, values))
+        {
+          results.result_section_data.resize(static_cast<std::size_t>(index) + 1);
+          if (file.nameExists(values) && file.nameExists(values + std::string("/") + std::to_string(index)) && !file.read_dataset_double_rank_1(std::to_string(index), values, results.result_section_data[index]))
+          {
+            PRINT_ERROR("Cannot read CalculiX Dat read_section_results for job %d: %s\n", results.job_id, file.last_error().c_str());
+            return false;
+          }
+        }
+      }
+
+      return true;
     }
+    catch (const H5::Exception& error)
+    {
+      PRINT_ERROR("Cannot read CalculiX Dat read_section_results: %s\n", error.getDetailMsg().c_str());
+      return false;
+    }
+    catch (const std::exception& error)
+    {
+      PRINT_ERROR("Cannot read CalculiX Dat read_section_results: %s\n", error.what());
+      return false;
+    }
+  }
+
+  bool write_section_results(HDF5Tool& file, const CoreResultsDat& results)
+  {
+    try
+    {
+      const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
+
+      if (!results.result_section.empty())
+      {
+        const std::string subgroup = group + "result_section/";
+        if (!file.ensureGroup(subgroup))
+        {
+          PRINT_ERROR("Cannot save CalculiX Dat result group for job %d: %s\n", results.job_id, file.last_error().c_str());
+          return false;
+        }
+
+        for (std::size_t index = 0; index < results.result_section.size(); index++)
+        {
+          if (!file.write_dataset_int_rank_1(std::to_string(index), subgroup, results.result_section[index]))
+          {
+            PRINT_ERROR("Cannot save CalculiX Dat write_section_results for job %d: %s\n", results.job_id, file.last_error().c_str());
+            return false;
+          }
+        }
+      }
+
+      if (!file.write_dataset_string_rank_1("result_section_set", group, results.result_section_set))
+      {
+        PRINT_ERROR("Cannot save CalculiX Dat write_section_results for job %d: %s\n", results.job_id, file.last_error().c_str());
+        return false;
+      }
+      if (!file.write_dataset_string_rank_1("result_section_label", group, results.result_section_label))
+      {
+        PRINT_ERROR("Cannot save CalculiX Dat write_section_results for job %d: %s\n", results.job_id, file.last_error().c_str());
+        return false;
+      }
+
+      if (!results.result_section_data.empty())
+      {
+        const std::string subgroup = group + "result_section_data/";
+        if (!file.ensureGroup(subgroup))
+        {
+          PRINT_ERROR("Cannot save CalculiX Dat result group for job %d: %s\n", results.job_id, file.last_error().c_str());
+          return false;
+        }
+
+        for (std::size_t index = 0; index < results.result_section_data.size(); index++)
+        {
+          if (!file.write_dataset_double_rank_1(std::to_string(index), subgroup, results.result_section_data[index]))
+          {
+            PRINT_ERROR("Cannot save CalculiX Dat write_section_results for job %d: %s\n", results.job_id, file.last_error().c_str());
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+    catch (const H5::Exception& error)
+    {
+      PRINT_ERROR("Cannot write CalculiX Dat write_section_results: %s\n", error.getDetailMsg().c_str());
+      return false;
+    }
+    catch (const std::exception& error)
+    {
+      PRINT_ERROR("Cannot write CalculiX Dat write_section_results: %s\n", error.what());
+      return false;
+    }
+  }
+
+  bool read_sorted_indices(HDF5Tool& file, SavedDatData& results)
+  {
+    try
+    {
+      const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
+      const std::string column_ids = group + "sorted_c1/";
+
+      if (file.nameExists(column_ids))
+      {
+        for (const int index : savedIndices(file, column_ids))
+        {
+          results.sorted_c1.resize(static_cast<std::size_t>(index) + 1);
+          if (file.nameExists(column_ids) && file.nameExists(column_ids + std::string("/") + std::to_string(index)) && !file.read_dataset_int_rank_1(std::to_string(index), column_ids, results.sorted_c1[index]))
+          {
+            PRINT_ERROR("Cannot read CalculiX Dat read_sorted_indices for job %d: %s\n", results.job_id, file.last_error().c_str());
+            return false;
+          }
+        }
+      }
+
+      const std::string data_ids = group + "sorted_result_block_c1_data_id/";
+
+      if (file.nameExists(data_ids))
+      {
+        for (const int index : savedIndices(file, data_ids))
+        {
+          results.sorted_result_block_c1_data_id.resize(static_cast<std::size_t>(index) + 1);
+          if (file.nameExists(data_ids) && file.nameExists(data_ids + std::string("/") + std::to_string(index)) && !file.read_dataset_int_rank_1(std::to_string(index), data_ids, results.sorted_result_block_c1_data_id[index]))
+          {
+            PRINT_ERROR("Cannot read CalculiX Dat read_sorted_indices for job %d: %s\n", results.job_id, file.last_error().c_str());
+            return false;
+          }
+        }
+      }
+
+      const std::string data_types = group + "sorted_result_block_c1_data_type/";
+
+      if (file.nameExists(data_types))
+      {
+        for (const int index : savedIndices(file, data_types))
+        {
+          results.sorted_result_block_c1_data_type.resize(static_cast<std::size_t>(index) + 1);
+          if (file.nameExists(data_types) && file.nameExists(data_types + std::string("/") + std::to_string(index)) && !file.read_dataset_int_rank_1(std::to_string(index), data_types, results.sorted_result_block_c1_data_type[index]))
+          {
+            PRINT_ERROR("Cannot read CalculiX Dat read_sorted_indices for job %d: %s\n", results.job_id, file.last_error().c_str());
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+    catch (const H5::Exception& error)
+    {
+      PRINT_ERROR("Cannot read CalculiX Dat read_sorted_indices: %s\n", error.getDetailMsg().c_str());
+      return false;
+    }
+    catch (const std::exception& error)
+    {
+      PRINT_ERROR("Cannot read CalculiX Dat read_sorted_indices: %s\n", error.what());
+      return false;
+    }
+  }
+
+  bool write_sorted_indices(HDF5Tool& file, const CoreResultsDat& results)
+  {
+    try
+    {
+      const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
+
+      if (!results.sorted_c1.empty())
+      {
+        const std::string subgroup = group + "sorted_c1/";
+        if (!file.ensureGroup(subgroup))
+        {
+          PRINT_ERROR("Cannot save CalculiX Dat result group for job %d: %s\n", results.job_id, file.last_error().c_str());
+          return false;
+        }
+
+        for (std::size_t index = 0; index < results.sorted_c1.size(); index++)
+        {
+          if (!file.write_dataset_int_rank_1(std::to_string(index), subgroup, results.sorted_c1[index]))
+          {
+            PRINT_ERROR("Cannot save CalculiX Dat write_sorted_indices for job %d: %s\n", results.job_id, file.last_error().c_str());
+            return false;
+          }
+        }
+      }
+
+      if (!results.sorted_result_block_c1_data_id.empty())
+      {
+        const std::string subgroup = group + "sorted_result_block_c1_data_id/";
+        if (!file.ensureGroup(subgroup))
+        {
+          PRINT_ERROR("Cannot save CalculiX Dat result group for job %d: %s\n", results.job_id, file.last_error().c_str());
+          return false;
+        }
+
+        for (std::size_t index = 0; index < results.sorted_result_block_c1_data_id.size(); index++)
+        {
+          if (!file.write_dataset_int_rank_1(std::to_string(index), subgroup, results.sorted_result_block_c1_data_id[index]))
+          {
+            PRINT_ERROR("Cannot save CalculiX Dat write_sorted_indices for job %d: %s\n", results.job_id, file.last_error().c_str());
+            return false;
+          }
+        }
+      }
+
+      if (!results.sorted_result_block_c1_data_type.empty())
+      {
+        const std::string subgroup = group + "sorted_result_block_c1_data_type/";
+        if (!file.ensureGroup(subgroup))
+        {
+          PRINT_ERROR("Cannot save CalculiX Dat result group for job %d: %s\n", results.job_id, file.last_error().c_str());
+          return false;
+        }
+
+        for (std::size_t index = 0; index < results.sorted_result_block_c1_data_type.size(); index++)
+        {
+          if (!file.write_dataset_int_rank_1(std::to_string(index), subgroup, results.sorted_result_block_c1_data_type[index]))
+          {
+            PRINT_ERROR("Cannot save CalculiX Dat write_sorted_indices for job %d: %s\n", results.job_id, file.last_error().c_str());
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+    catch (const H5::Exception& error)
+    {
+      PRINT_ERROR("Cannot write CalculiX Dat write_sorted_indices: %s\n", error.getDetailMsg().c_str());
+      return false;
+    }
+    catch (const std::exception& error)
+    {
+      PRINT_ERROR("Cannot write CalculiX Dat write_sorted_indices: %s\n", error.what());
+      return false;
+    }
+  }
+
+  template<class Data>
+  bool validDatData(const Data& results)
+  {
+    if (!PersistenceTable::rows(results.result_blocks, 7) || !PersistenceTable::rows(results.result_section, 2))
+    {
+      return false;
+    }
+    for (const auto& block : results.result_blocks)
+    {
+      if (!inRange(block[1], results.total_times.size()) || !inRange(block[2], results.result_block_type.size()) || !inRange(block[3], results.result_block_set.size()) || !inRange(block[4], results.result_block_data.size()) || !inRange(block[4], results.result_block_components.size()) || !inRange(block[4], results.result_block_c1_data.size()))
+      {
+        return false;
+      }
+      const auto& values = results.result_block_data[block[4]];
+      if (!PersistenceTable::rows(values, results.result_block_components[block[4]].size()))
+      {
+        return false;
+      }
+      for (const auto& mapping : results.result_block_c1_data[block[4]])
+      {
+        if (mapping.size() < 3 || !inRange(mapping[1], values.size()))
+        {
+          return false;
+        }
+      }
+    }
+    for (const auto& section : results.result_section)
+    {
+      if (!inRange(section[0], results.result_section_set.size()) || !inRange(section[1], results.result_section_data.size()))
+      {
+        return false;
+      }
+    }
+    if (results.sorted_c1.size() != results.sorted_result_block_c1_data_id.size() || results.sorted_c1.size() != results.sorted_result_block_c1_data_type.size())
+    {
+      return false;
+    }
+    for (std::size_t block = 0; block < results.sorted_c1.size(); ++block)
+    {
+      const auto& ids = results.sorted_c1[block];
+      const auto& indices = results.sorted_result_block_c1_data_id[block];
+      const auto& types = results.sorted_result_block_c1_data_type[block];
+      if (ids.size() != indices.size() || ids.size() != types.size() || !std::is_sorted(ids.begin(), ids.end()) || block >= results.result_block_data.size())
+      {
+        return false;
+      }
+      for (const int index : indices)
+      {
+        if (!inRange(index, results.result_block_data[block].size()))
+        {
+          return false;
+        }
+      }
+    }
+    for (const auto& values : results.result_section_data)
+    {
+      if (values.size() > results.result_section_label.size())
+      {
+        return false;
+      }
+    }
+    return true;
   }
 }
 
 bool CoreResultsDatPersistence::read(HDF5Tool& file, CoreResultsDat& results)
 {
-  const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
-
-  if (!file.nameExists(group))
+  try
   {
+    const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id);
+    if (!file.nameExists(group))
+    {
+      return true;
+    }
+    SavedDatData saved;
+    saved.job_id = results.job_id;
+    saved.result_section_label = results.result_section_label;
+    if (!read_block_metadata(file, saved))
+    {
+      return false;
+    }
+    if (!read_result_values(file, saved))
+    {
+      return false;
+    }
+    if (!read_section_results(file, saved))
+    {
+      return false;
+    }
+    if (!read_sorted_indices(file, saved))
+    {
+      return false;
+    }
+    if (!validDatData(saved))
+    {
+      PRINT_ERROR("Cannot read CalculiX Dat results for job %d: invalid data shape or result reference.\n", results.job_id);
+      return false;
+    }
+    results.buckle_data.swap(saved.buckle_data);
+    results.result_block_c1_data.swap(saved.result_block_c1_data);
+    results.result_block_components.swap(saved.result_block_components);
+    results.result_block_data.swap(saved.result_block_data);
+    results.result_block_set.swap(saved.result_block_set);
+    results.result_block_type.swap(saved.result_block_type);
+    results.result_blocks.swap(saved.result_blocks);
+    results.result_section.swap(saved.result_section);
+    results.result_section_data.swap(saved.result_section_data);
+    results.result_section_label.swap(saved.result_section_label);
+    results.result_section_set.swap(saved.result_section_set);
+    results.sorted_c1.swap(saved.sorted_c1);
+    results.sorted_result_block_c1_data_id.swap(saved.sorted_result_block_c1_data_id);
+    results.sorted_result_block_c1_data_type.swap(saved.sorted_result_block_c1_data_type);
+    results.total_times.swap(saved.total_times);
     return true;
   }
-
-  read_block_metadata(file, results);
-  read_result_values(file, results);
-
-  if (!read_section_results(file, results))
+  catch (const H5::Exception& error)
   {
+    PRINT_ERROR("Cannot read CalculiX Dat results: %s\n", error.getDetailMsg().c_str());
     return false;
   }
-
-  read_sorted_indices(file, results);
-  return true;
+  catch (const std::exception& error)
+  {
+    PRINT_ERROR("Cannot read CalculiX Dat results: %s\n", error.what());
+    return false;
+  }
 }
 
-void CoreResultsDatPersistence::write(HDF5Tool& file, const CoreResultsDat& results)
+bool CoreResultsDatPersistence::write(HDF5Tool& file, const CoreResultsDat& results)
 {
-  write_block_metadata(file, results);
-  write_result_values(file, results);
-  write_section_results(file, results);
-  write_sorted_indices(file, results);
+  try
+  {
+    if (!validDatData(results))
+    {
+      PRINT_ERROR("Cannot save CalculiX Dat results for job %d: invalid data shape or result reference.\n", results.job_id);
+      return false;
+    }
+    if (!write_block_metadata(file, results))
+    {
+      return false;
+    }
+    if (!write_result_values(file, results))
+    {
+      return false;
+    }
+    if (!write_section_results(file, results))
+    {
+      return false;
+    }
+    if (!write_sorted_indices(file, results))
+    {
+      return false;
+    }
+    return true;
+  }
+  catch (const H5::Exception& error)
+  {
+    PRINT_ERROR("Cannot write CalculiX Dat results: %s\n", error.getDetailMsg().c_str());
+    return false;
+  }
+  catch (const std::exception& error)
+  {
+    PRINT_ERROR("Cannot write CalculiX Dat results: %s\n", error.what());
+    return false;
+  }
 }

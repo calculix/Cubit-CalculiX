@@ -1,3 +1,5 @@
+#include "CubitMessage.hpp"
+#include "Core/steps/CalculiXStepsInterface.hpp"
 #include "PhysicalConstantsModifyPanel.hpp"
 #include <QString>
 #include "GUI/application/GuiSendCmd.hpp"
@@ -69,40 +71,93 @@ PhysicalConstantsModifyPanel::~PhysicalConstantsModifyPanel()
 
 void PhysicalConstantsModifyPanel::on_pushButton_apply_clicked(bool)
 {
-  QStringList commands;
-  QString command = "";
-
-  if ((lineEdit_0->text()!="")||(lineEdit_1->text()!="")||(lineEdit_2->text()!=""))
+  QString options;
+  if (fieldChanged("lineEdit_0", lineEdit_0->text()))
   {
-    command.append("ccx modify physicalconstants");
-
-    if (lineEdit_0->text()!="")
+    if (lineEdit_0->text().trimmed().isEmpty())
     {
-      command.append(" absolute_zero " + lineEdit_0->text());
+      if (loadedEntityId >= 0 && !originalValues.value("lineEdit_0").isEmpty())
+      {
+        PRINT_ERROR("Use the Delete panel to clear Absolute Zero.\n");
+        return;
+      }
     }
-
-    if (lineEdit_1->text()!="")
+    else
     {
-      command.append(" stefan_boltzmann " + lineEdit_1->text());
-    }
-
-    if (lineEdit_2->text()!="")
-    {
-      command.append(" newton_gravity " + lineEdit_2->text());
+      options.append(" absolute_zero " + lineEdit_0->text());
     }
   }
-  
-  if (command != "")
+  if (fieldChanged("lineEdit_1", lineEdit_1->text()))
   {
-    commands.push_back(command);
-    lineEdit_0->setText("");
-    lineEdit_1->setText("");
-    lineEdit_2->setText("");
+    if (lineEdit_1->text().trimmed().isEmpty())
+    {
+      if (loadedEntityId >= 0 && !originalValues.value("lineEdit_1").isEmpty())
+      {
+        PRINT_ERROR("Use the Delete panel to clear Stefan Boltzmann.\n");
+        return;
+      }
+    }
+    else
+    {
+      options.append(" stefan_boltzmann " + lineEdit_1->text());
+    }
   }
-  
-  for (size_t i = 0; i < commands.size(); i++)
+  if (fieldChanged("lineEdit_2", lineEdit_2->text()))
   {
-    //CubitInterface::cmd(commands[int(i)].toStdString().c_str());
-    GuiSendCmd::gui_cmd(commands[int(i)]);
+    if (lineEdit_2->text().trimmed().isEmpty())
+    {
+      if (loadedEntityId >= 0 && !originalValues.value("lineEdit_2").isEmpty())
+      {
+        PRINT_ERROR("Use the Delete panel to clear Newton Gravity.\n");
+        return;
+      }
+    }
+    else
+    {
+      options.append(" newton_gravity " + lineEdit_2->text());
+    }
   }
+  if (!options.isEmpty())
+  {
+    GuiSendCmd::gui_cmd("ccx modify physicalconstants" + options);
+  }
+}
+
+
+bool PhysicalConstantsModifyPanel::fieldChanged(const QString& field, const QString& value) const
+{
+  return loadedEntityId < 0 || originalValues.value(field) != value;
+}
+
+bool PhysicalConstantsModifyPanel::setPhysicalConstants(int id)
+{
+  loadedEntityId = -1;
+  originalValues.clear();
+  pushButton_apply->setEnabled(false);
+  lineEdit_0->clear();
+  lineEdit_1->clear();
+  lineEdit_2->clear();
+  CalculiXStepsInterface core;
+  PhysicalConstantsSettings settings;
+  std::string error;
+  if (!core.get_physicalconstants_settings(id, settings, error))
+  {
+    PRINT_ERROR("Cannot load PhysicalConstants: %s\n", error.c_str());
+    return false;
+  }
+  lineEdit_0->setText(QString::fromStdString(settings.absoluteZero));
+  originalValues.insert("lineEdit_0", lineEdit_0->text());
+  lineEdit_1->setText(QString::fromStdString(settings.stefanBoltzmann));
+  originalValues.insert("lineEdit_1", lineEdit_1->text());
+  lineEdit_2->setText(QString::fromStdString(settings.newtonGravity));
+  originalValues.insert("lineEdit_2", lineEdit_2->text());
+  loadedEntityId = id;
+  pushButton_apply->setEnabled(true);
+  return true;
+}
+
+
+bool PhysicalConstantsModifyPanel::loadPhysicalConstants()
+{
+  return setPhysicalConstants(0);
 }

@@ -1,3 +1,4 @@
+#include "Core/application/SettingsRead.hpp"
 #include "Core/loads/CoreLoadsBodyHeatflux.hpp"
 #include <string>
 #include <vector>
@@ -462,4 +463,49 @@ std::vector<int> CoreLoadsBodyHeatflux::get_load_ids() const
   }
 
   return ids;
+}
+
+
+bool CoreLoadsBodyHeatflux::get_settings(int id, LoadsBodyHeatfluxSettings& settings, std::string& error) const
+{
+  settings = {};
+  error.clear();
+  const auto* record = SettingsRead::row(loads_data, id, 8, error);
+
+  if (record == nullptr)
+  {
+    return false;
+  }
+
+  settings.id = id;
+  std::string entityIds;
+  for (const auto& entry : element_data)
+  {
+    if (!entry.empty() && entry[0] == (*record)[4])
+    {
+      for (std::size_t index = 1; index < entry.size(); ++index)
+      {
+        if (!entityIds.empty())
+        {
+          entityIds += " ";
+        }
+        entityIds += SettingsRead::text(entry[index]);
+      }
+    }
+  }
+  settings.name = SettingsRead::field(name_data, (*record)[7], 1, error);
+  settings.amplitude = SettingsRead::optional_id((*record)[2]);
+  settings.timeDelay = SettingsRead::field(time_delay_data, (*record)[3], 1, error);
+  settings.operation = (*record)[1] == 1 ? "new" : "mod";
+  settings.magnitude = SettingsRead::field(magnitude_data, (*record)[6], 1, error);
+  settings.entityType = (*record)[5] == 1 ? "Block" : "Element";
+  settings.ids = entityIds;
+
+  if (!error.empty())
+  {
+    settings = {};
+    return false;
+  }
+
+  return true;
 }

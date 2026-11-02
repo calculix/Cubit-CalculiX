@@ -1,7 +1,11 @@
 #ifndef CONTACTPAIRSMODIFYPANEL_HPP
 #define CONTACTPAIRSMODIFYPANEL_HPP
+
+#include "Core/interactions/ContactPairsSettings.hpp"
 #include <string>
 
+#include <QHash>
+#include <QString>
 #include <QWidget>
 #include <QList>
 #include <QPushButton>
@@ -21,6 +25,7 @@ class ContactPairsModifyPanel : public QWidget
   Q_OBJECT
   
 public:
+  bool setContactPair(int id);
   explicit ContactPairsModifyPanel(QWidget *parent = 0);
   ~ContactPairsModifyPanel();
 
@@ -32,6 +37,9 @@ private slots:
   void on_radioButton_6_toggled(bool toggled);
 
 private:
+  int loadedEntityId = -1;
+  QHash<QString, QString> originalValues;
+  bool fieldChanged(const QString& field, const QString& value) const;
   std::string log;
 
   QGridLayout* GridLayout;

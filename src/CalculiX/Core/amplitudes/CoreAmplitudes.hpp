@@ -1,12 +1,15 @@
 #ifndef COREAMPLITUDES_HPP
 #define COREAMPLITUDES_HPP
 
+#include "AmplitudesSettings.hpp"
+
 #include <vector>
 #include <string>
 class CoreAmplitudes
 {
 
 public:
+  bool get_settings(int id, AmplitudesSettings& settings, std::string& error) const;
   std::vector<int> get_amplitude_ids() const;
   CoreAmplitudes();
   ~CoreAmplitudes();

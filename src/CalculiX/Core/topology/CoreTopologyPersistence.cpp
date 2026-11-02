@@ -10,6 +10,8 @@
 #include "CubitMessage.hpp"
 
 #include <string>
+#include <exception>
+#include <algorithm>
 #include <vector>
 
 bool CoreTopologyPersistence::read_derived_data(HDF5Tool& file, const CoreTopology& topology, CoreMaterials& materials, CoreSections& sections, CoreJobs& jobs)
@@ -62,17 +64,53 @@ bool CoreTopologyPersistence::read_derived_data(HDF5Tool& file, const CoreTopolo
       }
     }
 
-    CoreTopologyJobs::invalidate_saved_processes(topology, jobs);
-
-    materials.topology_material_data.swap(saved_materials);
+    for (const auto& collection : saved_materials)
+    {
+      if (topology.topology_cases.count(collection.first) == 0)
+      {
+        PRINT_ERROR("Cannot read CalculiX topology materials: missing topology case.\n");
+        return false;
+      }
+    }
+    for (const auto& assignment : saved_sections)
+    {
+      if (topology.topology_cases.count(assignment.first) == 0)
+      {
+        PRINT_ERROR("Cannot read CalculiX topology sections: missing topology case.\n");
+        return false;
+      }
+      for (const int id : assignment.second)
+      {
+        if (std::none_of(sections.sections_data.begin(), sections.sections_data.end(), [id](const auto& row) { return row.size() >= 3 && row[0] == id && row[1] == 1; }))
+        {
+          PRINT_ERROR("Cannot read CalculiX topology sections: missing solid section %d.\n", id);
+          return false;
+        }
+      }
+    }
+    // Data-only validation views: no material interfaces or process handles are copied.
+    CoreMaterials saved_material_view;
+    saved_material_view.topology_material_data.swap(saved_materials);
+    CoreJobs saved_job_view;
+    saved_job_view.jobs_data = jobs.jobs_data;
+    CoreTopologyJobs::invalidate_saved_processes(topology, saved_job_view);
+    if (!CoreTopologyQuery::validate_selected_iterations(topology, saved_material_view, saved_job_view))
+    {
+      return false;
+    }
+    materials.topology_material_data.swap(saved_material_view.topology_material_data);
     sections.topology_solid_sections.swap(saved_sections);
-
-    // Dependencies and job results are loaded before checking selections.
-    return CoreTopologyQuery::validate_selected_iterations(topology, materials, jobs);
+    jobs.jobs_data.swap(saved_job_view.jobs_data);
+    return true;
   }
   catch (const H5::Exception& error)
   {
     PRINT_ERROR("Unable to read topology material/section data: %s\n", error.getDetailMsg().c_str());
+    return false;
+  }
+  catch (const std::exception& error)
+  {
+    PRINT_ERROR("Cannot read CalculiX topology derived data: %s\n", error.what());
     return false;
   }
 }
@@ -96,26 +134,55 @@ bool CoreTopologyPersistence::write_derived_data(HDF5Tool& file, CoreMaterials& 
     PRINT_ERROR("Unable to save topology material/section data: %s\n", error.getDetailMsg().c_str());
     return false;
   }
+  catch (const std::exception& error)
+  {
+    PRINT_ERROR("Cannot write CalculiX topology derived data: %s\n", error.what());
+    return false;
+  }
 }
 
 bool CoreTopologyPersistence::read(HDF5Tool& file, CoreTopology& topology, CoreMaterials& materials, CoreSections& sections, CoreJobs& jobs)
 {
-  if (!topology.read_configuration(file))
+  try
   {
-    PRINT_ERROR("Unable to read topology configurations.\n");
+    CoreTopology saved;
+    if (!saved.read_configuration(file) || !read_derived_data(file, saved, materials, sections, jobs))
+    {
+      return false;
+    }
+    topology.topology_cases.swap(saved.topology_cases);
+    return true;
+  }
+  catch (const H5::Exception& error)
+  {
+    PRINT_ERROR("Cannot read CalculiX topology: %s\n", error.getDetailMsg().c_str());
     return false;
   }
-
-  return read_derived_data(file, topology, materials, sections, jobs);
+  catch (const std::exception& error)
+  {
+    PRINT_ERROR("Cannot read CalculiX topology: %s\n", error.what());
+    return false;
+  }
 }
 
 bool CoreTopologyPersistence::write(HDF5Tool& file, const CoreTopology& topology, CoreMaterials& materials, CoreSections& sections)
 {
-  if (!topology.save_configuration(file))
+  try
   {
-    PRINT_ERROR("Unable to save topology configurations.\n");
+    if (!topology.save_configuration(file))
+    {
+      return false;
+    }
+    return write_derived_data(file, materials, sections);
+  }
+  catch (const H5::Exception& error)
+  {
+    PRINT_ERROR("Cannot write CalculiX topology: %s\n", error.getDetailMsg().c_str());
     return false;
   }
-
-  return write_derived_data(file, materials, sections);
+  catch (const std::exception& error)
+  {
+    PRINT_ERROR("Cannot write CalculiX topology: %s\n", error.what());
+    return false;
+  }
 }

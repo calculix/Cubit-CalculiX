@@ -1,4 +1,5 @@
 #include "PanelTable.hpp"
+#include <cmath>
 
 #include "CubitMessage.hpp"
 
@@ -6,8 +7,10 @@ PanelTable::PanelTable(QWidget* parent):
   QTableWidget(parent),
   isInitialized(false)
 {
-  if(isInitialized)
+  if (isInitialized)
+  {
     return;
+  }
   
   //this->setMinimumSize(200,200);
   this->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
@@ -93,7 +96,7 @@ void PanelTable::insertNewRow(std::vector<double> values)
   {
     QTableWidgetItem* item;
     item = new QTableWidgetItem();
-    item->setText(QString::number(values[i]));
+    item->setText(QString::number(values[i], 'g', 17));
     this->setItem(this->currentRow,int(i),item);
   }
 }
@@ -188,4 +191,58 @@ void PanelTable::cellChanged(int row,int column)
     }
     this->setVerticalHeaderLabels(verticalHeaderLabels);
   }
+}
+
+QString PanelTable::snapshot() const
+{
+  QStringList rows;
+  for (int row = 0; row < rowCount(); ++row)
+  {
+    QStringList cells;
+    bool populated = false;
+    for (int column = 0; column < columnCount(); ++column)
+    {
+      const auto* cell = item(row, column);
+      const QString value = cell == nullptr ? QString() : cell->text().trimmed();
+      populated = populated || !value.isEmpty();
+      cells.append(value);
+    }
+    if (populated)
+    {
+      rows.append(cells.join(QChar(0x1e)));
+    }
+  }
+  return rows.join(QChar(0x1f));
+}
+
+
+bool PanelTable::readMatrix(std::vector<std::vector<double>>& values, QString& error) const
+{
+  values.clear();
+  error.clear();
+  for (int row = 0; row < rowCount(); ++row)
+  {
+    std::vector<double> numbers;
+    bool populated = false;
+    for (int column = 0; column < columnCount(); ++column)
+    {
+      const auto* cell = item(row, column);
+      const QString text = cell == nullptr ? QString() : cell->text().trimmed();
+      populated = populated || !text.isEmpty();
+      bool valid = true;
+      const double value = text.isEmpty() ? 0.0 : text.toDouble(&valid);
+      if (!valid || !std::isfinite(value))
+      {
+        error = QString("Invalid number at row %1, column %2.").arg(row + 1).arg(column + 1);
+        values.clear();
+        return false;
+      }
+      numbers.push_back(value);
+    }
+    if (populated)
+    {
+      values.push_back(numbers);
+    }
+  }
+  return true;
 }

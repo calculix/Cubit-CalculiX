@@ -2104,3 +2104,58 @@ std::string CoreMaterials::get_material_name(int material_id)
   const MaterialInterface::Material material = mat_iface->get_material(material_id);
   return mat_iface->get_material_name(material);
 }
+
+
+bool CoreMaterials::get_properties(int id, MaterialProperties& properties, std::string& error)
+{
+  properties = {};
+  error.clear();
+  if (mat_iface == nullptr || !check_material_exists(id))
+  {
+    error = "The selected material is unavailable.";
+    return false;
+  }
+  properties.id = id;
+  properties.name = get_material_name(id);
+  const auto material = mat_iface->get_material(properties.name);
+  properties.group = mat_iface->get_group_name(mat_iface->get_material_property_group(material));
+  for (const auto& entry : group_properties)
+  {
+    if (entry.size() < 2)
+    {
+      continue;
+    }
+    const auto property = mat_iface->get_property(entry[0]);
+    MaterialPropertyValues values;
+    values.name = entry[0];
+    if (entry[1] == "1")
+    {
+      double scalar = 0;
+      if (mat_iface->get_material_property_value(material, property, scalar))
+      {
+        values.values.push_back({scalar});
+      }
+    }
+    else if (entry[1] == "2")
+    {
+      MaterialVector vector;
+      if (mat_iface->get_material_property_value(material, property, vector))
+      {
+        values.values.push_back(vector);
+      }
+    }
+    else if (entry[1] == "4")
+    {
+      MaterialMatrix matrix;
+      if (mat_iface->get_material_property_value(material, property, matrix))
+      {
+        values.values = matrix;
+      }
+    }
+    if (!values.values.empty())
+    {
+      properties.properties.push_back(values);
+    }
+  }
+  return true;
+}
