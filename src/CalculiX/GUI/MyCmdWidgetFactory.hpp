@@ -13,6 +13,8 @@
 #include "NavigationWidgetFactory.hpp"
 
 #include <QMap>
+#include <QList>
+#include <QPointer>
 #include <QObject>
 
 class NavigationWidgetCache;
@@ -36,6 +38,7 @@ public:
 
   // Clean up our widgets
   void clear();
+  void clearTopologyPanels(int topology_id = -1);
 
 private slots:
   // Removes our cache when a parent widget (object) is destroyed.
@@ -45,6 +48,7 @@ private:
   // Create a widget based on the name (used in the get_widget_using_cache
   // example).
   QMap<QWidget*, NavigationWidgetCache*> widget_cache;
+  QList<QPointer<QWidget>> topologyPanels;
   QWidget* createWidget(const QString &name);
 };
 

@@ -34,6 +34,7 @@ public:
   ~JobsMonitor();
 
   
+  void clearJob(int job_id);
   void clear(); // remove all data
   void update();
   void setJob(int job_id); // sets the job to monitor

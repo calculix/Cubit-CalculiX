@@ -32,34 +32,36 @@ case state or Actions panel to distinguish them. Iteration icons reflect their
 physical job status. A completed physical job alone does not establish that
 objective evaluation has finished.
 
-Right-click a completed iteration and choose **Browse iteration** to open the
-Results panel at that iteration. **Preview (threshold 0.5)** draws a preview
-directly. Activating an iteration also requests that preview. Activating its
-job opens the job monitor. Case context-menu actions provide settings,
-preservation management, run controls, and the Actions panel.
+Double-click **Topology** in the model tree to open **Topology Management**.
+Double-click a case to open it with that case selected. Double-click an iteration,
+or choose **Browse iteration** from its context menu, to open the **Iterations**
+tab at that iteration. Activating a physical or adjoint job opens Jobs Monitor.
+**Preview (threshold 0.5)** remains available in the iteration context menu.
+There is no management navigation node and no separate Results command panel.
 
-Navigating the Results panel
-----------------------------
+Navigating Topology Management
+------------------------------
 
-Choose a topology case and completed iteration. When first opening a case,
-the panel initially displays its last completed iteration. **Reload** refreshes
-the available cases and iterations; a reload is useful after new results arrive.
-The iteration list includes evaluated iterations with a finished physical job.
+Select a case in the left-hand list. The right-hand tabs contain Settings,
+Preserved sets, Run, Iterations, GIF, and Alpha wrap. See
+:doc:`topology-management` for case editing and execution.
 
-Use the first, previous, next, and last buttons, the dropdown, or the horizontal
-slider to move through completed iterations. The slider follows the available
-entries rather than assuming that every possible iteration ID exists.
+The **Iterations** table shows physical-job states and stored evaluations.
+The completed-iteration dropdown initially selects the last available evaluation.
+Refresh retains an existing displayed iteration as new results arrive. Use the
+first, previous, next, and last buttons, the dropdown, or the horizontal slider
+to move through completed iterations. Slider positions follow available entries,
+not an assumption that every iteration ID exists.
 
-The panel reports the physical job, objective, volume fraction, density change,
-relative objective change, convergence, and available displacement information.
-**Job monitor** opens the displayed iteration's physical job. **ParaView** opens
-that job's results through the existing result workflow.
+Result-iteration and threshold controls are inside their relevant tabs. The GIF
+tab has a threshold and exports all completed iterations; it has no iteration
+selector. The Iterations and Alpha wrap tabs synchronize their displayed iteration
+and threshold values within the window. **Job monitor** opens the physical job; **Adjoint job
+monitor** opens the associated adjoint when available. ParaView remains available from Jobs Monitor; Topology Management has no ParaView button.
 
-The displayed iteration is a panel selection. It does not change the core's
-stored selected iteration. The panel passes an explicit iteration ID to its
-preview, deletion, and wrap commands. Commands with an omitted iteration use
-the core selection instead; specify an iteration explicitly when reproducing
-a panel operation in a journal.
+The displayed iteration is a GUI selection. It does not change the core's
+stored selected iteration. Preview, deletion and wrapping commands include an
+explicit iteration ID. Specify that ID when reproducing an operation in a journal.
 
 Threshold and preview
 ---------------------
@@ -76,7 +78,7 @@ iteration or threshold. Preview commands run silently, avoiding repeated
 entries in command history. A preview failure is still reported.
 
 Preview and other mesh operations need the original stored elements to exist
-in the current Cubit mesh. They are unavailable in the Results panel while
+in the current Cubit mesh. They are unavailable in the Topology Management while
 the topology case is running. Editing or deleting the mesh can make them
 unavailable even though numerical iteration records remain visible.
 
@@ -86,10 +88,10 @@ Playing through iterations
 With at least two completed iterations and usable mesh data, **Play** previews
 successive iterations at the displayed threshold. **Pause** stops playback.
 Starting at the last iteration restarts from the first; playback then stops at
-the last iteration. Changing the iteration manually or hiding the panel also
+the last iteration. Changing the iteration manually or hiding the window or leaving the Iterations tab also
 stops playback.
 
-**Playback / GIF FPS** controls both the panel playback interval and GIF export.
+**Playback / GIF FPS** on the GIF tab controls both interactive playback and GIF export.
 Drawing takes time, so interactive playback can be slower than the requested
 rate. Playback does not run the optimizer or interpolate new density designs.
 
@@ -115,7 +117,7 @@ message appears after cleanup, rather than before deleting temporary PNGs.
 
 Use **Cancel GIF export** to stop between frames. Cancellation during encoding
 can wait for the current frame; if publication already completed, the output
-remains. While export is active, the Results panel disables competing preview,
+remains. While export is active, the Topology Management disables competing preview,
 playback, navigation, threshold, deletion, and wrapping actions. Avoid changing
 the model or graphics view through other commands during capture. Model reset
 or load requests cancellation. Only one GIF export can be active, and starting

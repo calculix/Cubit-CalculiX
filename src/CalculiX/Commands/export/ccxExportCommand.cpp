@@ -21,6 +21,7 @@
 #include "AppUtil.hpp"
 #include <fstream>
 #include <exception>
+#include <QScopeGuard>
 
 #ifdef WIN32
  //#include <windows.h>
@@ -36,7 +37,7 @@ ccxExportCommand::ccxExportCommand()
 
 ccxExportCommand::~ccxExportCommand()
 {
-  delete progressbar;
+  // AppUtil owns the progress tool.
 }
 
 std::vector<std::string> ccxExportCommand::get_syntax()
@@ -122,6 +123,8 @@ bool ccxExportCommand::execute(CubitCommandData &data)
     return false;
   }
 
+  const auto mesh_guard = qScopeGuard([&]() { CubitInterface::release_interface(iface); });
+
   // Get the Material Interface from CubitInterface
   material_iface = dynamic_cast<MaterialInterface*>(CubitInterface::get_interface("Material"));
   if(!material_iface)
@@ -131,26 +134,29 @@ bool ccxExportCommand::execute(CubitCommandData &data)
   }
 
 
+  const auto material_guard = qScopeGuard([&]() { CubitInterface::release_interface(material_iface); });
+
   // Now we can use the interface as before
   iface->set_use_sequential_ids(false);
 
-  //block ccx gui updates
+  const bool previous_gui_block = ccx_application_iface.block_gui_update();
   ccx_application_iface.set_block_gui_update(true);
-
-  // Open the file and write to it
-  bool result = open_file(filename, output_file) && write_file(output_file, iface, material_iface, topology_id, iteration_id);
-
-  // Close the file
-  close_file(output_file);
-
-  // Make sure that you release the interface after accessing it
-  CubitInterface::release_interface(iface);
-  CubitInterface::release_interface(material_iface);
-
-  //unblock ccx gui updates
-  ccx_application_iface.set_block_gui_update(false);
-
-  return result;
+  const auto gui_guard = qScopeGuard([&]() { ccx_application_iface.set_block_gui_update(previous_gui_block); });
+  try
+  {
+    const bool result = open_file(filename, output_file) && write_file(output_file, iface, material_iface, topology_id, iteration_id);
+    close_file(output_file);
+    return result;
+  }
+  catch (const std::exception& error)
+  {
+    PRINT_ERROR("CCX input export '%s' failed: %s\n", filename.c_str(), error.what());
+  }
+  catch (...)
+  {
+    PRINT_ERROR("CCX input export '%s' failed with an unexpected exception.\n", filename.c_str());
+  }
+  return false;
 }
 
 bool ccxExportCommand::open_file(const std::string& file, std::ofstream& output_file)
@@ -215,104 +221,182 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
     entity_id_list.clear();
   }
 
-  // first blood ... no i mean first line
-  std::vector<std::string> customline = ccx_export_iface.get_customline_data("BEGIN","EXPORT",-1);
-  for (size_t icl = 0; icl < customline.size(); icl++)
+  if (progressbar == nullptr)
   {
-    output_file << customline[icl] << "\n";
-  }
-
-  //output_file << "*HEADING \n";
-  //output_file << "Cubit2CalculiX with CalculiX Plugin \n";
-  //output_file << "** \n";
-
-  progressbar->start(0,18,"Writing CCX .inp File");
-
-  // prepare export data
-  // trajectory: sidesets,amplitude,dflux
-  result = ccx_export_iface.prepare_export();
-  if (!result)
-  {
-    const bool cleanup_ok = ccx_export_iface.clean_export();
-    progressbar->end();
-    PRINT_ERROR("Export stopped: trajectory preparation failed.\n");
-    if (!cleanup_ok)
-    {
-      PRINT_ERROR("Failed to clean up prepared export data.\n");
-    }
+    PRINT_ERROR("The CCX export progress tool is unavailable.\n");
     return false;
   }
-  progressbar->step();
-
-  // Initialize the exporter
-  iface->initialize_export();
-
-  // Write the nodes
-  result = result && write_nodes(output_file, iface);
-  progressbar->step();
-
-  // Write the elements/connectivity
-  result = result && write_connectivity(output_file, iface);
-  progressbar->step();
-
-  // Write the blocks
-  //result = write_blocks(output_file, iface);
-
-  // Write the nodesets
-  result = result && write_nodesets(output_file, iface);
-  progressbar->step();
-
-  // Write the sidesets
-  result = result && write_sidesets(output_file, iface);
-  progressbar->step();
-
-  // Write the materials and sections
-  result = result && write_materials(output_file, topology_id, iteration_id);
-  progressbar->step();
-  result = result && write_orientations(output_file);
-  progressbar->step();
-  result = result && write_sections(output_file, topology_id, iteration_id);
-  progressbar->step();
-  
-  result = result && write_damping(output_file);
-  progressbar->step();
-  result = result && write_physicalconstants(output_file);
-  progressbar->step();
-  result = result && write_constraints(output_file);
-  progressbar->step();
-  result = result && write_surfaceinteractions(output_file);
-  progressbar->step();
-  result = result && write_contactpairs(output_file);
-  progressbar->step();
-  result = result && write_amplitudes(output_file);
-  progressbar->step();
-  result = result && write_initialconditions(output_file);
-  progressbar->step();
-  result = result && write_hbcs(output_file);
-  progressbar->step();
-  result = result && write_steps(output_file);
-  progressbar->step();
-
-  //clean export data
-  const bool cleanup_ok = ccx_export_iface.clean_export();
-  if (!cleanup_ok)
+  const char* stage = "opening export data";
+  bool cleanup_pending = false;
+  bool progress_started = false;
+  const auto cleanup_guard = qScopeGuard([&]()
   {
-    PRINT_ERROR("Failed to clean up prepared export data.\n");
-  }
-  progressbar->step();
-
-  progressbar->end();
-
-  if (result && cleanup_ok && output_file.good())
+    if (cleanup_pending)
+    {
+      try
+      {
+        if (!ccx_export_iface.clean_export())
+        {
+          PRINT_ERROR("Failed to clean up interrupted CCX export data.\n");
+        }
+      }
+      catch (...)
+      {
+        PRINT_ERROR("Exception while cleaning up interrupted CCX export data.\n");
+      }
+    }
+    if (progress_started)
+    {
+      try
+      {
+        progressbar->end();
+      }
+      catch (...)
+      {
+        PRINT_ERROR("Unable to end the CCX export progress display.\n");
+      }
+    }
+  });
+  try
   {
-    customline = ccx_export_iface.get_customline_data("END","EXPORT",-1);
+    // first blood ... no i mean first line
+    std::vector<std::string> customline = ccx_export_iface.get_customline_data("BEGIN","EXPORT",-1);
     for (size_t icl = 0; icl < customline.size(); icl++)
     {
       output_file << customline[icl] << "\n";
     }
+
+    //output_file << "*HEADING \n";
+    //output_file << "Cubit2CalculiX with CalculiX Plugin \n";
+    //output_file << "** \n";
+
+    progress_started = true;
+    progressbar->start(0,18,"Writing CCX .inp File");
+
+    // prepare export data
+    // trajectory: sidesets,amplitude,dflux
+    stage = "preparing export data";
+    cleanup_pending = true;
+    result = ccx_export_iface.prepare_export();
+    if (!result)
+    {
+      stage = "cleaning export data";
+      cleanup_pending = false;
+      const bool cleanup_ok = ccx_export_iface.clean_export();
+      progress_started = false;
+      progressbar->end();
+      PRINT_ERROR("Export stopped: trajectory preparation failed.\n");
+      if (!cleanup_ok)
+      {
+        PRINT_ERROR("Failed to clean up prepared export data.\n");
+      }
+      return false;
+    }
+    progressbar->step();
+
+    // Initialize the exporter
+    stage = "initializing the mesh exporter";
+    if (!iface->initialize_export())
+    {
+      PRINT_ERROR("Unable to initialize the CCX mesh exporter.\n");
+      return false;
+    }
+
+    // Write the nodes
+    stage = "write_nodes";
+    result = result && write_nodes(output_file, iface);
+    progressbar->step();
+
+    // Write the elements/connectivity
+    stage = "write_connectivity";
+    result = result && write_connectivity(output_file, iface);
+    progressbar->step();
+
+    // Write the blocks
+    //result = write_blocks(output_file, iface);
+
+    // Write the nodesets
+    stage = "write_nodesets";
+    result = result && write_nodesets(output_file, iface);
+    progressbar->step();
+
+    // Write the sidesets
+    stage = "write_sidesets";
+    result = result && write_sidesets(output_file, iface);
+    progressbar->step();
+
+    // Write the materials and sections
+    stage = "write_materials";
+    result = result && write_materials(output_file, topology_id, iteration_id);
+    progressbar->step();
+    stage = "write_orientations";
+    result = result && write_orientations(output_file);
+    progressbar->step();
+    stage = "write_sections";
+    result = result && write_sections(output_file, topology_id, iteration_id);
+    progressbar->step();
+
+    stage = "write_damping";
+    result = result && write_damping(output_file);
+    progressbar->step();
+    stage = "write_physicalconstants";
+    result = result && write_physicalconstants(output_file);
+    progressbar->step();
+    stage = "write_constraints";
+    result = result && write_constraints(output_file);
+    progressbar->step();
+    stage = "write_surfaceinteractions";
+    result = result && write_surfaceinteractions(output_file);
+    progressbar->step();
+    stage = "write_contactpairs";
+    result = result && write_contactpairs(output_file);
+    progressbar->step();
+    stage = "write_amplitudes";
+    result = result && write_amplitudes(output_file);
+    progressbar->step();
+    stage = "write_initialconditions";
+    result = result && write_initialconditions(output_file);
+    progressbar->step();
+    stage = "write_hbcs";
+    result = result && write_hbcs(output_file);
+    progressbar->step();
+    stage = "write_steps";
+    result = result && write_steps(output_file);
+    progressbar->step();
+
+    //clean export data
+    stage = "cleaning export data";
+    cleanup_pending = false;
+    const bool cleanup_ok = ccx_export_iface.clean_export();
+    if (!cleanup_ok)
+    {
+      PRINT_ERROR("Failed to clean up prepared export data.\n");
+    }
+    progressbar->step();
+
+    progress_started = false;
+    progressbar->end();
+
+    if (result && cleanup_ok && output_file.good())
+    {
+      customline = ccx_export_iface.get_customline_data("END","EXPORT",-1);
+      for (size_t icl = 0; icl < customline.size(); icl++)
+      {
+        output_file << customline[icl] << "\n";
+      }
+    }
+
+    return result && cleanup_ok && output_file.good();
   }
-  
-  return result && cleanup_ok && output_file.good();
+  catch (const std::exception& error)
+  {
+    PRINT_ERROR("CCX input export failed during %s: %s\n", stage, error.what());
+  }
+  catch (...)
+  {
+    PRINT_ERROR("CCX input export failed during %s with an unexpected exception.\n", stage);
+  }
+  return false;
 }
 
 bool ccxExportCommand::close_file(std::ofstream& output_file)
@@ -427,7 +511,7 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
 
 
     if (current_element_type != "SPHERE") // check if cubit element type from block is sphere
-    {         
+    {
       // write only once per block
       int block_id = blocks[i];
       block_name = ccx_mesh_iface.get_block_name(block_id);
@@ -456,7 +540,7 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
           // convert ids from element_id to global_element_id
           cubit_element_type_entity = iface->get_element_type_name(element_type[0]);
           cubit_element_type_entity = ccx_mesh_iface.get_cubit_element_type_entity(cubit_element_type_entity);
-          
+
           //rewrite to global element ids
           for (size_t ii = 0; ii < ids.size(); ii++)
           {
@@ -675,7 +759,7 @@ bool ccxExportCommand::write_sidesets(std::ofstream& output_file, MeshExportInte
         cubit_element_type_entity = iface->get_element_type_name(element_type[j]);
         cubit_element_type_entity = ccx_mesh_iface.get_cubit_element_type_entity(cubit_element_type_entity);
         element_ids_all[start_index + j] = CubitInterface::get_global_element_id(cubit_element_type_entity,element_id);
-        
+
         // check if element type is already recognized for this sideset
         it = std::find(sideset_element_types.begin(), sideset_element_types.end(), element_type[j]);
         if (it == sideset_element_types.end())
@@ -698,7 +782,7 @@ bool ccxExportCommand::write_sidesets(std::ofstream& output_file, MeshExportInte
     }else{
       bool_one_element_type = false;
     }
-    
+
     // check how many different element types there are
     // an loop over them
     for (size_t i_types = 0; i_types < sideset_element_types.size(); i_types++)
@@ -753,7 +837,7 @@ bool ccxExportCommand::write_sidesets(std::ofstream& output_file, MeshExportInte
 
     // write surface card for sideset
     //output_file << "*SURFACE, NAME=";
-    
+
     for (size_t i = 0; i < temp_list.size(); i++)
     {
       if (bool_first) {
@@ -762,7 +846,7 @@ bool ccxExportCommand::write_sidesets(std::ofstream& output_file, MeshExportInte
       }
       output_file << temp_list[i][1] << ", " << "S" << temp_list[i][2] << " \n";
     }
-    
+
     // CUSTOMLINE START
     customline = ccx_export_iface.get_customline_data("AFTER","SIDESET",iface->id_from_handle(sideset));
     for (size_t icl = 0; icl < customline.size(); icl++)

@@ -11,6 +11,7 @@ class QTreeWidget;
 class TopologyPreservedSetsPanel : public QWidget
 {
 public:
+  void clearTopology(int topology_id = -1);
   explicit TopologyPreservedSetsPanel(QWidget *parent = nullptr);
   void setTopology(int topology_id);
 

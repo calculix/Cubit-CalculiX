@@ -40,6 +40,7 @@
 #include "GUI/bcs/HBCsManagement.hpp"
 #include "GUI/steps/StepsTree.hpp"
 #include "GUI/topology/TopologyTree.hpp"
+#include "GUI/topology/TopologyManagement.hpp"
 #include "GUI/steps/StepsLoadsTree.hpp"
 #include "GUI/steps/StepsLoadsForcesTree.hpp"
 #include "GUI/steps/StepsLoadsPressuresTree.hpp"
@@ -85,6 +86,19 @@ ModelTree::ModelTree(QDockWidget* parent, NavigationModel* navigation):QTreeWidg
   myHBCsManagement = new HBCsManagement();
   myStepsManagement = new StepsManagement();
   myJobsMonitor = new JobsMonitor();
+
+  QWidget* auxiliaryWindows[] = {
+    myMaterialManagement,
+    myHBCsManagement,
+    myStepsManagement,
+    myJobsMonitor
+  };
+
+  for (QWidget* window : auxiliaryWindows)
+  {
+    window->setParent(this, Qt::Window);
+    window->setAttribute(Qt::WA_QuitOnClose, false);
+  }
 
   /*
   if (nav_model)
@@ -449,11 +463,35 @@ void ModelTree::setWidgetInCmdPanelPath(const QString name) // get Widget from n
   cmdpanel->setCurrent(widget_index);
 }
 
+void ModelTree::openTopologyManagement(int topologyId, int iterationId)
+{
+  if (myTopologyManagement == nullptr)
+  {
+    myTopologyManagement = new TopologyManagement(myJobsMonitor, this);
+  }
+  myTopologyManagement->refresh();
+  if (topologyId > 0 && iterationId > 0)
+  {
+    myTopologyManagement->setIteration(topologyId, iterationId);
+  }
+  else if (topologyId > 0)
+  {
+    myTopologyManagement->setTopology(topologyId);
+  }
+  myTopologyManagement->show();
+  myTopologyManagement->raise();
+  myTopologyManagement->activateWindow();
+}
+
 void ModelTree::update(){
   myMaterialManagement->update();
   myHBCsManagement->update();
   myStepsManagement->update();
   myJobsMonitor->update();
+  if (myTopologyManagement != nullptr && myTopologyManagement->isVisible())
+  {
+    myTopologyManagement->refresh();
+  }
 }
 
 void ModelTree::clear(){
@@ -461,6 +499,10 @@ void ModelTree::clear(){
   myHBCsManagement->clear();
   myStepsManagement->clear();
   myJobsMonitor->clear();
+  if (myTopologyManagement != nullptr)
+  {
+    myTopologyManagement->clear();
+  }
 }
 
 
@@ -584,4 +626,17 @@ void ModelTree::updatePropertySelection()
     }
   }
   emit propertySelectionChanged(selection);
+}
+
+void ModelTree::clearDeletedJob(int jobId)
+{
+  myJobsMonitor->clearJob(jobId);
+}
+
+void ModelTree::invalidateTopology(int topologyId)
+{
+  if (myTopologyManagement != nullptr)
+  {
+    myTopologyManagement->invalidateTopology(topologyId);
+  }
 }

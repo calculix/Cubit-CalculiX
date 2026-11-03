@@ -34,6 +34,10 @@ bool CoreDraw::draw_topology(int topologyId, int iterationId, double threshold)
       return false;
     }
   }
+  if (!rebuilding)
+  {
+    scene.state.overlayVisible = true;
+  }
   scene.clear(DrawGroup::Topology);
   scene.replace({DrawFeature::Topology, topologyId}, std::move(geometry));
   auto& group = scene.state.groups[DrawGroup::Topology];
@@ -45,4 +49,24 @@ bool CoreDraw::draw_topology(int topologyId, int iterationId, double threshold)
   activeTopologyIteration = iterationId;
   activeTopologyThreshold = threshold;
   return rebuilding || graphics_flush();
+}
+
+void CoreDraw::invalidate_topology(int topology_id)
+{
+  if (activeTopologyId != topology_id)
+  {
+    return;
+  }
+  scene.clear(DrawGroup::Topology);
+  scene.state.groups[DrawGroup::Topology].enabled = false;
+  activeTopologyId = -1;
+  activeTopologyIteration = -1;
+  graphics_flush();
+}
+
+void CoreDraw::topologyPreview(int& caseId, int& iterationId, double& threshold) const
+{
+  caseId = activeTopologyId;
+  iterationId = activeTopologyIteration;
+  threshold = activeTopologyThreshold;
 }

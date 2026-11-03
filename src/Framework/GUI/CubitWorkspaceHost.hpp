@@ -4,6 +4,7 @@
 #include "Framework/Interfaces/WorkspaceProviderInterface.hpp"
 
 #include <QObject>
+#include <QMap>
 #include <QByteArray>
 #include <QPointer>
 #include <QRect>
@@ -74,6 +75,7 @@ private:
   QList<TabState> nativeTabs;
   QList<QPointer<QDockWidget>> ownedDocks;
   QList<QPointer<QAction>> ownedMenus;
+  QMap<QToolBar*, bool> toolbarVisibility;
   QList<QPointer<QToolBar>> ownedToolbars;
   QList<QPointer<QToolBar>> activeToolbars;
   QList<QPointer<QDockWidget>> activeDocks;

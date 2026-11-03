@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" role="img"><title>Surface wrap</title>
+<path d="M6 18 15 6l19 1 10 14-5 18-18 6L6 34Z" fill="#d9eee0" stroke="#54ad67" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="m13 20 7-8 12 3 5 12-9 10-13-5Z" fill="#d9e9f3" stroke="#303a43" stroke-width="2" stroke-linejoin="round"/>
+<path d="m13 20 15 4 4-9m-4 9 9 3m-9-3v13m-15-17 2 12 13-8" fill="none" stroke="#426d8b" stroke-width="1.5"/>
+<path d="M4 10v8h8M44 38v-8h-8" fill="none" stroke="#303a43" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

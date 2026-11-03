@@ -37,6 +37,7 @@ void JobsTree::initialize()
   this->setIcon(0,ccx_gui_resources_iface.getIcon2("JobsTree"));
   isInitialized = true;
   timer = new GuiTimer();
+  timer->setParent(this);
   QObject::connect(timer, SIGNAL(timeout()), this, SLOT(update_icon()));
 }
 

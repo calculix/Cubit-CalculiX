@@ -79,6 +79,8 @@ private:
     Finished
   };
 
+  static const char* phase_name(TopologyRunPhase phase);
+
   struct TopologyRunContext
   {
     unsigned long long serial = 0;

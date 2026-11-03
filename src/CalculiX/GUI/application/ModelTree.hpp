@@ -17,6 +17,7 @@ class NodesetTree;
 class SidesetTree;
 class MaterialTree;
 class MaterialManagement;
+class TopologyManagement;
 class SectionsTree;
 class ConstraintsTree;
 class SurfaceInteractionsTree;
@@ -90,10 +91,17 @@ public:
   StepsManagement* myStepsManagement;
   JobsMonitor* myJobsMonitor;
 
+  void clearDeletedJob(int jobId);
+  void invalidateTopology(int topologyId);
+  void openTopologyManagement(int topologyId = -1, int iterationId = -1);
+
   void setWidgetInCmdPanelMarker(QString name); // set Widget in CommandPanel
   void setWidgetInCmdPanelPath(QString name); // set Widget in CommandPanel
   void update();
   void clear();
+
+private:
+  TopologyManagement* myTopologyManagement = nullptr;
 
 signals:
   void propertySelectionChanged(const PropertySelection& selection);

@@ -14,6 +14,7 @@
 #include <QTabWidget>
 #include <QThread>
 #include <QToolBar>
+#include <QSettings>
 
 namespace
 {
@@ -155,6 +156,17 @@ void CubitWorkspaceHost::register_view(const WorkspaceView& view)
     gui->addToolBarBreak(Qt::TopToolBarArea);
     gui->addToolBar(Qt::TopToolBarArea, toolbar);
     toolbar->hide();
+    const QString visibilityKey = "Workspaces/" + view.id + "/Toolbars/" + toolbar->objectName() + "/Visible";
+    toolbarVisibility[toolbar] = QSettings("Cubit-CalculiX", "Framework").value(visibilityKey, true).toBool();
+    connect(toolbar, &QToolBar::visibilityChanged, this, [this, toolbar, visibilityKey](bool)
+    {
+      if (!changing && activeToolbars.contains(toolbar) && gui != nullptr && gui->isVisible())
+      {
+        const bool visible = !toolbar->isHidden();
+        toolbarVisibility[toolbar] = visible;
+        QSettings("Cubit-CalculiX", "Framework").setValue(visibilityKey, visible);
+      }
+    });
     toolbar->toggleViewAction()->setVisible(false);
     toolbar->toggleViewAction()->setEnabled(false);
   }
@@ -259,7 +271,10 @@ bool CubitWorkspaceHost::restore_layout(const QByteArray& layout)
 
   for (auto* bar : gui->findChildren<QToolBar*>(QString(), Qt::FindDirectChildrenOnly))
   {
-    toolbars.append({bar, !bar->isHidden()});
+    if (!ownedToolbars.contains(bar))
+    {
+      toolbars.append({bar, !bar->isHidden()});
+    }
   }
 
   const auto commandArea = gui->dockWidgetArea(commandDock);
@@ -396,14 +411,7 @@ bool CubitWorkspaceHost::apply(const WorkspaceView& view, const QPersistentModel
       continue;
     }
     const bool active = activeToolbars.contains(toolbar);
-    if (active)
-    {
-      // Only our workspace toolbar is moved; native Cubit toolbars remain attached.
-      gui->removeToolBar(toolbar.data());
-      gui->addToolBarBreak(Qt::TopToolBarArea);
-      gui->addToolBar(Qt::TopToolBarArea, toolbar.data());
-    }
-    toolbar->setVisible(active);
+    toolbar->setVisible(active && toolbarVisibility.value(toolbar.data(), true));
     toolbar->toggleViewAction()->setVisible(active);
     toolbar->toggleViewAction()->setEnabled(active);
   }
@@ -457,6 +465,7 @@ bool CubitWorkspaceHost::apply(const WorkspaceView& view, const QPersistentModel
 
 void CubitWorkspaceHost::restore_native() noexcept
 {
+  const QScopedValueRollback<bool> guard(changing, true);
   for (const auto& toolbar : ownedToolbars)
   {
     if (toolbar != nullptr)

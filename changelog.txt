@@ -223,3 +223,4 @@
 2026-11-02 update modify and delete panels with core data
 2026-11-02 introducing property Widget
 2026-11-02 rework draw, introduce draw toolbar
+2026-11-03 adding topology Management and toolbar

@@ -80,6 +80,8 @@ JobsMonitorDATSection::JobsMonitorDATSection()
   
 
   PlotWidget = new JobsMonitorDATSectionPlot();
+  PlotWidget->setParent(this, Qt::Window);
+  PlotWidget->setAttribute(Qt::WA_QuitOnClose, false);
   PlotWidget->hide();
 
   // Signals

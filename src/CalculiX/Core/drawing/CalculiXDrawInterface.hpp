@@ -31,6 +31,7 @@ public:
   void reset_drawing();
   void shutdown_drawing() noexcept;
   CalculiXDrawState drawing_state() const;
+  void topology_preview(int& caseId, int& iterationId, double& threshold) const;
   double default_size() const;
   bool render_pending();
   std::vector<std::vector<double>> get_draw_data_for_load_force(int id); // returns coord(3) and magnitude(3) std::vector<double>
@@ -80,6 +81,7 @@ public:
   bool draw_load_bodyheatfluxes(double size); //draw all bodyheatflux
   bool draw_bc_displacements(double size); //draw all displacements
   bool draw_bc_temperatures(double size); //draw all temperatures
+  void invalidate_topology(int topology_id);
   bool draw_topology(int topology_id,int iteration_id = -1,double threshold = 0.5); // draw topology iteration
   bool animate_topology(int topology_id,double threshold = 0.5,int fps = 5,std::string save_filepath = "", bool overwrite = false);
   bool topology_animation_active() const;

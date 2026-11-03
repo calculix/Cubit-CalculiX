@@ -13,6 +13,7 @@ class QSpinBox;
 class TopologySettingsPanel : public QWidget
 {
 public:
+  void clearTopology(int topology_id = -1);
   explicit TopologySettingsPanel(bool modify, QWidget *parent = nullptr);
   bool isModify() const;
   void setTopology(int topology_id);

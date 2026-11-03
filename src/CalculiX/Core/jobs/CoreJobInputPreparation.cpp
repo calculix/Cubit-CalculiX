@@ -53,5 +53,11 @@ bool CoreJobInputPreparation::prepare(const CoreTopology* topology, CoreJobExpor
 
   command += " overwrite";
 
-  return execute_command(command);
+  PRINT_INFO("Job %d: preparing input %s.\n", job_id, filename.c_str());
+  if (!execute_command(command))
+  {
+    return false;
+  }
+  PRINT_INFO("Job %d: input export completed.\n", job_id);
+  return true;
 }

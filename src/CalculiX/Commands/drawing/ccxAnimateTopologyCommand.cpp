@@ -31,7 +31,7 @@ std::vector<std::string> ccxAnimateTopologyCommand::get_help()
       "Start asynchronous export of a looping GIF from completed topology iterations. "
       "Kept elements are green; removal candidates have red edges. "
       "Success means startup; completion or failure is reported later. "
-      "Cancel from the topology Results panel. Avoid changing the mesh or graphics view during capture."
+      "Cancel from the Topology Management GIF tab. Avoid changing the mesh or graphics view during capture."
   };
 }
 

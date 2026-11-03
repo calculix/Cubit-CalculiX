@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" role="img"><title>Wrap to STL</title>
+<path d="M8 4h20l10 10v30H8Z" fill="#f4f7fa" stroke="#303a43" stroke-width="2" stroke-linejoin="round"/>
+<path d="M28 4v10h10" fill="#d9e9f3" stroke="#303a43" stroke-width="1.8" stroke-linejoin="round"/>
+<path d="m13 25 8-7 12 4 3 11-8 8-13-4Z" fill="#e3f2e7" stroke="#54ad67" stroke-width="2" stroke-linejoin="round"/>
+<path d="m18 27 5-4 7 3 1 7-5 4-7-3Z" fill="#d9e9f3" stroke="#426d8b" stroke-width="1.5" stroke-linejoin="round"/>
+<path d="m18 27 8 3 4-4m-4 4v7m-7-3 7-4 5 3" fill="none" stroke="#426d8b" stroke-width="1.2"/>
+</svg>

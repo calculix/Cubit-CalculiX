@@ -10,6 +10,7 @@ add_subdirectory(amplitudes)
 add_subdirectory(steps)
 add_subdirectory(jobs)
 add_subdirectory(topology)
+add_subdirectory(cgal)
 add_subdirectory(export)
 
 add_subdirectory(properties)

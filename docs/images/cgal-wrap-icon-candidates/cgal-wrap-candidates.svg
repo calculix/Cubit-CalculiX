@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="260" viewBox="0 0 1100 260">
+<rect width="1100" height="260" fill="#f6f7f9"/>
+<text x="24" y="30" font-family="Segoe UI, sans-serif" font-size="19" fill="#26323d">CGAL Alpha wrap — action icon candidates</text>
+<rect x="20" y="50" width="200" height="190" rx="9" fill="white" stroke="#d5dce3"/>
+<g transform="translate(72,65) scale(2)"><path d="m24 3 20 11v22L24 46 4 35V14Z" fill="#e3f2e7" stroke="#54ad67" stroke-width="2.4" stroke-linejoin="round"/>
+<path d="m24 10 13 7v15l-13 7-13-7V17Z" fill="#d9e9f3" stroke="#303a43" stroke-width="1.8" stroke-linejoin="round"/>
+<path d="m11 17 13 7 13-7M24 24v15M11 17l13 22M37 17 24 39M11 32l13-8 13 8" fill="none" stroke="#426d8b" stroke-width="1.4"/></g>
+<text x="120" y="195" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" fill="#26323d">1. Shell around mesh</text>
+<g transform="translate(107,207) scale(0.5)"><path d="m24 3 20 11v22L24 46 4 35V14Z" fill="#e3f2e7" stroke="#54ad67" stroke-width="2.4" stroke-linejoin="round"/>
+<path d="m24 10 13 7v15l-13 7-13-7V17Z" fill="#d9e9f3" stroke="#303a43" stroke-width="1.8" stroke-linejoin="round"/>
+<path d="m11 17 13 7 13-7M24 24v15M11 17l13 22M37 17 24 39M11 32l13-8 13 8" fill="none" stroke="#426d8b" stroke-width="1.4"/></g>
+<rect x="236" y="50" width="200" height="190" rx="9" fill="white" stroke="#d5dce3"/>
+<g transform="translate(288,65) scale(2)"><path d="m15 12 15-2 8 12-5 15-16 2-8-13Z" fill="#d9e9f3" stroke="#303a43" stroke-width="1.8" stroke-linejoin="round"/>
+<path d="m15 12 8 13 7-15m-7 15 15-3m-15 3 10 12M9 26l14-1-6 14" fill="none" stroke="#426d8b" stroke-width="1.4"/>
+<path d="M4 4 13 13M6 13h7V6M44 4 35 13M35 6v7h7M44 44 35 35M42 35h-7v7M4 44 13 35M13 42v-7H6" fill="none" stroke="#54ad67" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></g>
+<text x="336" y="195" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" fill="#26323d">2. Inward wrap</text>
+<g transform="translate(323,207) scale(0.5)"><path d="m15 12 15-2 8 12-5 15-16 2-8-13Z" fill="#d9e9f3" stroke="#303a43" stroke-width="1.8" stroke-linejoin="round"/>
+<path d="m15 12 8 13 7-15m-7 15 15-3m-15 3 10 12M9 26l14-1-6 14" fill="none" stroke="#426d8b" stroke-width="1.4"/>
+<path d="M4 4 13 13M6 13h7V6M44 4 35 13M35 6v7h7M44 44 35 35M42 35h-7v7M4 44 13 35M13 42v-7H6" fill="none" stroke="#54ad67" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></g>
+<rect x="452" y="50" width="200" height="190" rx="9" fill="white" stroke="#d5dce3"/>
+<g transform="translate(504,65) scale(2)"><path d="M5 20 11 7l17-3 14 11 2 17-14 12-17-4-9-12Z" fill="#e3f2e7" stroke="#54ad67" stroke-width="2.4" stroke-linejoin="round"/>
+<path d="m14 14 11 8 11-7M14 14l-2 13 13-5 10 12M12 27l9 10 14-3M25 22l-4 15" fill="none" stroke="#a0b8c8" stroke-width="1.2"/>
+<g fill="#426d8b" stroke="#303a43" stroke-width=".8"><circle cx="14" cy="14" r="2.7"/><circle cx="25" cy="22" r="2.7"/><circle cx="36" cy="15" r="2.7"/><circle cx="12" cy="27" r="2.7"/><circle cx="21" cy="37" r="2.7"/><circle cx="35" cy="34" r="2.7"/></g></g>
+<text x="552" y="195" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" fill="#26323d">3. Wrap point cloud</text>
+<g transform="translate(539,207) scale(0.5)"><path d="M5 20 11 7l17-3 14 11 2 17-14 12-17-4-9-12Z" fill="#e3f2e7" stroke="#54ad67" stroke-width="2.4" stroke-linejoin="round"/>
+<path d="m14 14 11 8 11-7M14 14l-2 13 13-5 10 12M12 27l9 10 14-3M25 22l-4 15" fill="none" stroke="#a0b8c8" stroke-width="1.2"/>
+<g fill="#426d8b" stroke="#303a43" stroke-width=".8"><circle cx="14" cy="14" r="2.7"/><circle cx="25" cy="22" r="2.7"/><circle cx="36" cy="15" r="2.7"/><circle cx="12" cy="27" r="2.7"/><circle cx="21" cy="37" r="2.7"/><circle cx="35" cy="34" r="2.7"/></g></g>
+<rect x="668" y="50" width="200" height="190" rx="9" fill="white" stroke="#d5dce3"/>
+<g transform="translate(720,65) scale(2)"><path d="M4 17 16 4l18 2 10 13-3 19-18 7L7 36Z" fill="#e3f2e7" stroke="#54ad67" stroke-width="2.4" stroke-linejoin="round"/>
+<path d="m12 20 8-9 11 3 6 11-6 11-13-3Z" fill="#d9e9f3" stroke="#303a43" stroke-width="1.8" stroke-linejoin="round"/>
+<path d="m12 20 12 3 7-9m-7 9 13 2m-13-2 7 13m-7-13-6 10" fill="none" stroke="#426d8b" stroke-width="1.3"/>
+<path d="m32 7 5 4m-5 0 5-4M8 33l5 4m-5 0 5-4" fill="none" stroke="#303a43" stroke-width="1.6" stroke-linecap="round"/></g>
+<text x="768" y="195" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" fill="#26323d">4. Offset surface</text>
+<g transform="translate(755,207) scale(0.5)"><path d="M4 17 16 4l18 2 10 13-3 19-18 7L7 36Z" fill="#e3f2e7" stroke="#54ad67" stroke-width="2.4" stroke-linejoin="round"/>
+<path d="m12 20 8-9 11 3 6 11-6 11-13-3Z" fill="#d9e9f3" stroke="#303a43" stroke-width="1.8" stroke-linejoin="round"/>
+<path d="m12 20 12 3 7-9m-7 9 13 2m-13-2 7 13m-7-13-6 10" fill="none" stroke="#426d8b" stroke-width="1.3"/>
+<path d="m32 7 5 4m-5 0 5-4M8 33l5 4m-5 0 5-4" fill="none" stroke="#303a43" stroke-width="1.6" stroke-linecap="round"/></g>
+<rect x="884" y="50" width="200" height="190" rx="9" fill="white" stroke="#d5dce3"/>
+<g transform="translate(936,65) scale(2)"><path d="M8 4h20l10 10v30H8Z" fill="#f4f7fa" stroke="#303a43" stroke-width="2" stroke-linejoin="round"/>
+<path d="M28 4v10h10" fill="#d9e9f3" stroke="#303a43" stroke-width="1.8" stroke-linejoin="round"/>
+<path d="m13 25 8-7 12 4 3 11-8 8-13-4Z" fill="#e3f2e7" stroke="#54ad67" stroke-width="2" stroke-linejoin="round"/>
+<path d="m18 27 5-4 7 3 1 7-5 4-7-3Z" fill="#d9e9f3" stroke="#426d8b" stroke-width="1.5" stroke-linejoin="round"/>
+<path d="m18 27 8 3 4-4m-4 4v7m-7-3 7-4 5 3" fill="none" stroke="#426d8b" stroke-width="1.2"/></g>
+<text x="984" y="195" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" fill="#26323d">5. Wrap to STL</text>
+<g transform="translate(971,207) scale(0.5)"><path d="M8 4h20l10 10v30H8Z" fill="#f4f7fa" stroke="#303a43" stroke-width="2" stroke-linejoin="round"/>
+<path d="M28 4v10h10" fill="#d9e9f3" stroke="#303a43" stroke-width="1.8" stroke-linejoin="round"/>
+<path d="m13 25 8-7 12 4 3 11-8 8-13-4Z" fill="#e3f2e7" stroke="#54ad67" stroke-width="2" stroke-linejoin="round"/>
+<path d="m18 27 5-4 7 3 1 7-5 4-7-3Z" fill="#d9e9f3" stroke="#426d8b" stroke-width="1.5" stroke-linejoin="round"/>
+<path d="m18 27 8 3 4-4m-4 4v7m-7-3 7-4 5 3" fill="none" stroke="#426d8b" stroke-width="1.2"/></g>
+</svg>

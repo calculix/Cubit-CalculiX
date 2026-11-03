@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" role="img"><title>Shell around mesh</title>
+<path d="m24 3 20 11v22L24 46 4 35V14Z" fill="#e3f2e7" stroke="#54ad67" stroke-width="2.4" stroke-linejoin="round"/>
+<path d="m24 10 13 7v15l-13 7-13-7V17Z" fill="#d9e9f3" stroke="#303a43" stroke-width="1.8" stroke-linejoin="round"/>
+<path d="m11 17 13 7 13-7M24 24v15M11 17l13 22M37 17 24 39M11 32l13-8 13 8" fill="none" stroke="#426d8b" stroke-width="1.4"/>
+</svg>

@@ -9,6 +9,7 @@ class QShowEvent;
 class TopologyDeletePanel : public QWidget
 {
 public:
+  void clearTopology(int topology_id = -1);
   void setTopology(int topology_id);
   explicit TopologyDeletePanel(QWidget *parent = nullptr);
 

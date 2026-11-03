@@ -27,7 +27,7 @@ MenuManager::~MenuManager()
   remove_menu_items();
 }
 
-void MenuManager::setup_workspace_menus(Claro* host, QDockWidget* modelDock, QDockWidget* propertiesDock, QToolBar* drawingToolbar)
+void MenuManager::setup_workspace_menus(Claro* host, QDockWidget* modelDock, QDockWidget* propertiesDock, QToolBar* drawingToolbar, QToolBar* topologyToolbar)
 {
   if (!menus.isEmpty())
   {
@@ -70,6 +70,11 @@ void MenuManager::setup_workspace_menus(Claro* host, QDockWidget* modelDock, QDo
   {
     view->addSeparator();
     view->addAction(drawingToolbar->toggleViewAction());
+  }
+
+  if (topologyToolbar != nullptr)
+  {
+    view->addAction(topologyToolbar->toggleViewAction());
   }
 
   auto* application = createMenu("CalculiX.Menu.Application", tr("&CalculiX"));

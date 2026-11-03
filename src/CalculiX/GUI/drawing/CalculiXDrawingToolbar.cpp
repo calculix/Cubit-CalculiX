@@ -9,6 +9,7 @@
 #include <QLabel>
 #include <QSignalBlocker>
 #include <QStyle>
+#include <QSizePolicy>
 
 CalculiXDrawingToolbar::CalculiXDrawingToolbar(QWidget* parent)
   : QToolBar(tr("CalculiX drawing"), parent)
@@ -39,11 +40,11 @@ CalculiXDrawingToolbar::CalculiXDrawingToolbar(QWidget* parent)
     submit(enabled ? "ccx display picking on" : "ccx display picking off");
   });
   addSeparator();
-  addWidget(new QLabel(tr("Scope: "), this));
   scope = new QComboBox(this);
   scope->setObjectName("CalculiX.DrawingScope");
-  scope->setMinimumWidth(190);
-  scope->setMaximumWidth(310);
+  scope->setMinimumWidth(90);
+  scope->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+  scope->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
   scope->setToolTip(tr("Draw native reference conditions for the entire model or one step. Time-dependent amplitudes are not evaluated. Custom indicates an explicit selection made through commands."));
   addWidget(scope);
   addSeparator();
@@ -72,9 +73,15 @@ CalculiXDrawingToolbar::CalculiXDrawingToolbar(QWidget* parent)
   addGroup(DrawGroup::Constraints, tr("Constraints"), "ConstraintsTree", "constraints");
   addGroup(DrawGroup::Orientations, tr("Orientations"), "OrientationsTree", "orientations");
   addSeparator();
-  addWidget(new QLabel(tr("Size: "), this));
+  auto* sizeIcon = new QLabel(this);
+  sizeIcon->setPixmap(resources.getIcon2("CCXDrawingSize").pixmap(iconSize()));
+  sizeIcon->setFixedSize(iconSize());
+  sizeIcon->setAccessibleName(tr("Symbol size"));
+  sizeIcon->setToolTip(tr("Symbol size factor relative to the model dimensions"));
+  addWidget(sizeIcon);
   size = new QDoubleSpinBox(this);
   size->setObjectName("CalculiX.DrawingSize");
+  size->setAccessibleName(tr("Symbol size"));
   size->setRange(0.01, 100.0);
   size->setDecimals(2);
   size->setSingleStep(0.1);

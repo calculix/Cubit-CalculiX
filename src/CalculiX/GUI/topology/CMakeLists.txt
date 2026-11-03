@@ -1,4 +1,12 @@
 target_sources(calculix_gui PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/TopologyManagement.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TopologyManagement.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TopologyManagementSettings.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TopologyManagementPreservation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TopologyManagementRun.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TopologyManagementIterations.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TopologyManagementAnimation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TopologyManagementWrap.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TopologyIterationPropertiesWidget.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TopologyIterationPropertiesWidget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TopologyPropertiesWidget.cpp
@@ -10,8 +18,6 @@ target_sources(calculix_gui PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/TopologyDisplacementText.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TopologyPreservedSetsPanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TopologyPreservedSetsPanel.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/TopologyResultsPanel.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/TopologyResultsPanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TopologySettingsPanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TopologySettingsPanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TopologyTree.cpp

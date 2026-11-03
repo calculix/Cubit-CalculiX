@@ -40,6 +40,7 @@ public:
   void resetDrawing();
   void shutdownDrawing() noexcept;
   CalculiXDrawState drawingState() const;
+  void topologyPreview(int& caseId, int& iterationId, double& threshold) const;
   double defaultSymbolSize() const;
   bool renderPending();
   bool buildEntity(DrawEntityKey key, double size);
@@ -104,6 +105,7 @@ public:
   bool draw_bc_displacements(double size = 1); //draw all displacements
   bool draw_bc_temperatures(double size = 1); //draw all temperatures
 
+  void invalidate_topology(int topology_id);
   bool draw_topology(int topology_id,int iteration_id = -1,double threshold = 0.5); // draw topology iteration
   bool animate_topology(int topology_id,double threshold = 0.5,int fps = 5,std::string save_filepath = "", bool overwrite = false);
 

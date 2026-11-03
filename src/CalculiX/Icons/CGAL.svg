@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" role="img"><title>Alpha envelope</title>
+<path d="M4 25 10 8l17-4 15 10 3 17-12 13-19-3Z" fill="#d9eee0" stroke="#303a43" stroke-width="2" stroke-linejoin="round"/>
+<path d="m10 8 9 14 8-18 6 23 9-13M4 25l15-3-5 19 19-14 12 4M19 22l14 5v17" fill="none" stroke="#54ad67" stroke-width="1.7"/>
+<g fill="#426d8b"><circle cx="10" cy="8" r="2.4"/><circle cx="19" cy="22" r="2.4"/><circle cx="27" cy="4" r="2.4"/><circle cx="33" cy="27" r="2.4"/><circle cx="14" cy="41" r="2.4"/><circle cx="42" cy="14" r="2.4"/></g>
+</svg>

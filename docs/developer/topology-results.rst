@@ -42,7 +42,7 @@ finished, evaluated iteration before changing it. Element-data requests with
 iteration -1 resolve through this field rather than searching for the newest
 iteration themselves.
 
-``TopologyResultsPanel`` maintains its own displayed case and iteration.
+``TopologyManagement`` maintains its own displayed case and iteration.
 Opening a case initially chooses the last completed entry when no previous or
 explicit selection applies. Browsing the dropdown does not call the core
 selection API. Panel preview, deletion, and wrapping pass explicit iteration
@@ -57,7 +57,7 @@ Tree and panel availability
 use physical job status; completion for browsing additionally requires a stored
 objective. Each iteration's job child refers to the physical job.
 
-``TopologyResultsPanel`` lists evaluated entries with finished physical jobs.
+``TopologyManagement`` lists evaluated entries with finished physical jobs.
 It validates that the displayed job still matches the iteration association.
 Mesh operations additionally require an idle case and available stored
 elements. ``meshAvailable`` checks that returned global element IDs are valid
@@ -100,7 +100,7 @@ kinds and local IDs before drawing. The classification is
 ``!preserved && density < threshold`` for removal; all others are retained.
 Retained elements are green and removal candidates have red edges.
 
-The Results panel and tree call previews through ``silent_cmd``. Other GUI
+The Topology Management and tree call previews through ``silent_cmd``. Other GUI
 actions, including deletion and exports, use the ordinary GUI command path.
 The panel guards against reentrant preview calls and defers automatic preview
 requests through a short single-shot timer. Playback advances the available
@@ -127,7 +127,7 @@ refuses an existing output, including one created after startup.
 Cancellation is cooperative between captures/encoded frames and replacement
 copy chunks. A completed publication remains successful even if cancellation
 arrives afterwards. Reset/load requests cancellation; shutdown joins any file
-worker before destroying plugin-owned code. The Results panel polls active
+worker before destroying plugin-owned code. The Topology Management polls active
 state, stops competing preview timers, and exposes cancellation. Generic Cubit
 commands can still change the graphics view, so users must keep it unchanged
 during capture. This uses the current view, not a stored camera snapshot, and
@@ -157,7 +157,7 @@ not restore deleted elements.
 Failure stops further batches. Earlier batches remain deleted, and the failed
 batch may itself have changed the mesh. A subsequent display failure can return
 false after successful deletion. Callers must therefore not interpret a false
-return as proof that the mesh is unchanged. The Results panel refreshes its
+return as proof that the mesh is unchanged. The Topology Management refreshes its
 availability checks after deletion without assuming command success.
 
 Mesh identity limits
@@ -174,3 +174,54 @@ Keep historical records for numerical inspection, but use their mesh operations
 with the corresponding unchanged mesh. After deliberate deletion, create and
 validate a normal analysis of the remaining mesh rather than treating the
 historical solve as a verification of that modified model.
+
+Topology Management source layout
+---------------------------------
+
+``GUI/topology/TopologyManagement.hpp`` declares one window class. Its main source
+owns case selection, lifecycle and refresh. Settings, Preservation, Run,
+Iterations, Animation and Wrap translation units implement that same class; they
+do not instantiate command-panel widgets. ``ModelTree`` owns the window as a
+parented Qt window, reuses it on activation, and clears it on model reset.
+``GUI/cgal/AlphaWrapPanel`` independently submits the existing wrap commands.
+
+Solid preview geometry uses Cubit/Exodus corner connectivity to construct faces
+and unique edges. It does not require explicit interior face/edge entities from
+Cubit. Higher-order elements use a corner-node display approximation. Export
+exceptions report the current pipeline stage, and scope guards release acquired
+interfaces, restore the previous GUI-update flag and clean interrupted export
+preparation/progress. AppUtil owns the borrowed progress tool.
+
+Topology toolbar and native display lifecycle
+--------------------------------------------
+
+``CalculiXTopologyToolbar`` owns independent controls and queries completed
+iteration rows through the topology interface. Preview uses the existing silent
+project command; hiding uses the display command. The draw interface exposes
+only the current preview case, iteration and threshold for synchronization.
+Ordinary drawing rebuilds preserve global overlay visibility.
+
+``NativeDisplayRefreshObserver`` owns an empty, delete-on-display SDK drawing set
+per live viewport model set. Its disappearance while armed indicates a native
+display clear. The observer then disables the global overlay through the draw
+interface, avoiding a nested command while Cubit handles its own display action.
+Camera repaints do not constitute display clears. Workspace deactivation, model
+reset, GIF capture and teardown disarm the observer. Viewports are re-enumerated
+before accessing SDK pointers. This also applies to native display operations
+that clear temporary drawing sets, not only the context-menu action.
+
+The Framework host registers each toolbar once and persists its intended
+visibility separately from hiding an inactive workspace. Layout restoration
+preserves native toolbar visibility and restores workspace toolbar placement.
+
+Management and result plot windows are parented auxiliary windows with
+``WA_QuitOnClose`` disabled. Jobs Monitor and Jobs tree timers are parented to
+their owners. Display-refresh polling starts only in the active workspace,
+stops on deactivation or application quit, and avoids graphics SDK access after
+Qt teardown begins. These ownership changes address cleanup defects; a runtime
+shutdown check is still needed to establish whether a reported lingering Clarox
+process is resolved.
+
+The topology toolbar's final Alpha wrap action submits the existing wrap command
+with the selected iteration, six-decimal displayed threshold, generated STL name
+and ``overwrite``. Alpha and offset remain command defaults; import remains on.

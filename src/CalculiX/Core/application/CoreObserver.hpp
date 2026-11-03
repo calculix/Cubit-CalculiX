@@ -13,6 +13,8 @@ public:
   std::function<void()> before_core_update;
   std::function<void()> core_updated;
   std::function<void()> core_reset;
+  std::function<void(int)> job_deleted;
+  std::function<void(int)> topology_data_cleared;
 
   void notify_command_start() override;
   void notify_command_complete() override;

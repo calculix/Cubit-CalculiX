@@ -1,6 +1,8 @@
 #include "Core/CalculiXCore.hpp"
 #include "CoreTopologyJobs.hpp"
 #include "CubitMessage.hpp"
+#include "Core/application/CoreObserver.hpp"
+#include "Core/application/CalculiXApplicationInterface.hpp"
 
 bool CalculiXCore::reset_topology_run(int topology_id)
 {
@@ -10,7 +12,12 @@ bool CalculiXCore::reset_topology_run(int topology_id)
     return false;
   }
 
-  return CoreTopologyJobs::reset_run(*topology, *jobs, mat, sections, topologyoptimization, topology_id);
+  const bool result = CoreTopologyJobs::reset_run(*topology, *jobs, mat, sections, topologyoptimization, topology_id);
+  if (result && CalculiXApplicationInterface().core_observer().topology_data_cleared)
+  {
+    CalculiXApplicationInterface().core_observer().topology_data_cleared(topology_id);
+  }
+  return result;
 }
 
 bool CalculiXCore::delete_topology(int topology_id)
@@ -21,7 +28,12 @@ bool CalculiXCore::delete_topology(int topology_id)
     return false;
   }
 
-  return CoreTopologyJobs::delete_topology(*topology, *jobs, mat, sections, topologyoptimization, topology_id);
+  const bool result = CoreTopologyJobs::delete_topology(*topology, *jobs, mat, sections, topologyoptimization, topology_id);
+  if (result && CalculiXApplicationInterface().core_observer().topology_data_cleared)
+  {
+    CalculiXApplicationInterface().core_observer().topology_data_cleared(topology_id);
+  }
+  return result;
 }
 
 int CalculiXCore::create_topology_iteration_job(int topology_id, int iteration_id, const std::string& job_name)

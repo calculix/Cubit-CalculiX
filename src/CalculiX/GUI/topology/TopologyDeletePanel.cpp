@@ -143,3 +143,14 @@ void TopologyDeletePanel::setTopology(int topology_id)
 {
   refreshCases(topology_id);
 }
+
+void TopologyDeletePanel::clearTopology(int topology_id)
+{
+  if (topology_id > 0 && cases->currentData().toInt() != topology_id)
+  {
+    return;
+  }
+  const QSignalBlocker blocker(cases);
+  cases->clear();
+  updateButton();
+}

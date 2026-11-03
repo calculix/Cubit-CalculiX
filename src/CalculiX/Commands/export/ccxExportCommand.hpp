@@ -64,7 +64,7 @@ protected:
   bool write_hbcs(std::ofstream& output_file);
   bool write_steps(std::ofstream& output_file);
 
-  ProgressTool *progressbar; // progressbar
+  ProgressTool* progressbar = nullptr; // Borrowed from AppUtil.
 };
 
 #endif // CCXEXPORTCOMMAND_HPP

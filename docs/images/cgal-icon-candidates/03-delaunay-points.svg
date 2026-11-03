@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" role="img"><title>Delaunay points</title>
+<path d="m7 9 22-4 14 14-5 21-22 4L4 27Z" fill="#edf3f7" stroke="#303a43" stroke-width="2" stroke-linejoin="round"/>
+<path d="m7 9 13 14L29 5m-9 18 23-4M20 23l18 17M20 23l-4 21M20 23 4 27M7 9 43 19M4 27l34 13" fill="none" stroke="#426d8b" stroke-width="1.7"/>
+<g fill="#54ad67" stroke="#303a43" stroke-width="1"><circle cx="7" cy="9" r="2.5"/><circle cx="29" cy="5" r="2.5"/><circle cx="43" cy="19" r="2.5"/><circle cx="38" cy="40" r="2.5"/><circle cx="16" cy="44" r="2.5"/><circle cx="4" cy="27" r="2.5"/><circle cx="20" cy="23" r="3"/></g>
+</svg>

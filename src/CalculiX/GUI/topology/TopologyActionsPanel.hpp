@@ -14,6 +14,7 @@ class QVBoxLayout;
 class TopologyActionsPanel : public QWidget
 {
 public:
+  void clearTopology(int topology_id = -1);
   explicit TopologyActionsPanel(QWidget *parent = nullptr);
   void setTopology(int topology_id);
 

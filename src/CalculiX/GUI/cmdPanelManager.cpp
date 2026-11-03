@@ -153,7 +153,7 @@ void cmdPanelManager::clear()
     my_markers.push_back("CCXTopologyModify");
     my_markers.push_back("CCXTopologyPreservedSets");
     my_markers.push_back("CCXTopologyActions");
-    my_markers.push_back("CCXTopologyResults");
+    my_markers.push_back("CCXCGALWrap");
     my_markers.push_back("CCXTopologyDelete");
     my_markers.push_back("CCXStepsCreate");
     my_markers.push_back("CCXStepsModifyParameter");
@@ -900,12 +900,21 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Actions", root_node);
   model->setNodeMarker(node, "CCXTopologyActions");
   node->setIcon(ccx_gui_resources_iface.getIcon("CCXTopologyActions"));
-  node = model->addNode("Results", root_node);
-  model->setNodeMarker(node, "CCXTopologyResults");
-  node->setIcon(ccx_gui_resources_iface.getIcon("CCXTopologyResults"));
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXTopologyDelete");
   node->setIcon(ccx_gui_resources_iface.getIcon("CCXTopologyDelete"));
+
+  // CGAL is a sibling of Topology.
+  root_node = model->getMarkedNode("CCX");
+  node = model->addNode("CGAL", root_node);
+  node->setTitle("CGAL");
+  model->setNodeMarker(node, "CCXCGAL");
+  node->setIcon(ccx_gui_resources_iface.getIcon("CGAL"));
+  root_node = node;
+  node = model->addNode("Alpha wrap", root_node);
+  model->setNodeMarker(node, "CCXCGALWrap");
+  node->setIcon(ccx_gui_resources_iface.getIcon("CCXCGALWrap"));
+
 }
 
 void cmdPanelManager::associate_panels_with_nodes()
@@ -1015,7 +1024,7 @@ void cmdPanelManager::associate_panels_with_nodes()
   my_markers.push_back("CCXTopologyModify");
   my_markers.push_back("CCXTopologyPreservedSets");
   my_markers.push_back("CCXTopologyActions");
-  my_markers.push_back("CCXTopologyResults");
+  my_markers.push_back("CCXCGALWrap");
   my_markers.push_back("CCXTopologyDelete");
   my_markers.push_back("CCXStepsCreate");
   my_markers.push_back("CCXStepsModifyParameter");
@@ -1090,4 +1099,12 @@ void cmdPanelManager::add_native_mesh_panels()
   auto* blocks = navigationModel->getMarkedNode("CCXCubitBlocks");
   navigationModel->setNodeLabel(blocks, "Cubit Blocks");
   navigationModel->setNodeTitle(blocks, "Cubit Blocks");
+}
+
+void cmdPanelManager::clearTopologyPanels(int topology_id)
+{
+  if (myFactory != nullptr)
+  {
+    myFactory->clearTopologyPanels(topology_id);
+  }
 }

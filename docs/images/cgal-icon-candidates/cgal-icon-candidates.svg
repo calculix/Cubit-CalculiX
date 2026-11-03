@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="260" viewBox="0 0 1100 260">
+<rect width="1100" height="260" fill="#f6f7f9"/>
+<text x="24" y="30" font-family="Segoe UI, sans-serif" font-size="19" fill="#26323d">CGAL navigation icon candidates — no icon assigned</text>
+<rect x="20" y="50" width="200" height="190" rx="9" fill="white" stroke="#d5dce3"/>
+<g transform="translate(72,65) scale(2)"><path d="M24 5 43 15v20L24 45 5 35V15Z" fill="#d9e9f3"/>
+<path d="m5 15 19 10 19-10M24 25v20M24 5v20M5 15l19 30M43 15 24 45M5 35l19-10 19 10" fill="none" stroke="#426d8b" stroke-width="1.8" stroke-linejoin="round"/>
+<path d="M24 5 43 15v20L24 45 5 35V15Z" fill="none" stroke="#303a43" stroke-width="2.2" stroke-linejoin="round"/>
+<g fill="#54ad67" stroke="#303a43" stroke-width="1"><circle cx="24" cy="5" r="2.4"/><circle cx="5" cy="15" r="2.4"/><circle cx="43" cy="15" r="2.4"/><circle cx="24" cy="25" r="2.4"/><circle cx="24" cy="45" r="2.4"/></g></g>
+<text x="120" y="195" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" fill="#26323d">1. Triangulated cube</text>
+<g transform="translate(107,207) scale(0.5)"><path d="M24 5 43 15v20L24 45 5 35V15Z" fill="#d9e9f3"/>
+<path d="m5 15 19 10 19-10M24 25v20M24 5v20M5 15l19 30M43 15 24 45M5 35l19-10 19 10" fill="none" stroke="#426d8b" stroke-width="1.8" stroke-linejoin="round"/>
+<path d="M24 5 43 15v20L24 45 5 35V15Z" fill="none" stroke="#303a43" stroke-width="2.2" stroke-linejoin="round"/>
+<g fill="#54ad67" stroke="#303a43" stroke-width="1"><circle cx="24" cy="5" r="2.4"/><circle cx="5" cy="15" r="2.4"/><circle cx="43" cy="15" r="2.4"/><circle cx="24" cy="25" r="2.4"/><circle cx="24" cy="45" r="2.4"/></g></g>
+<rect x="236" y="50" width="200" height="190" rx="9" fill="white" stroke="#d5dce3"/>
+<g transform="translate(288,65) scale(2)"><path d="M4 25 10 8l17-4 15 10 3 17-12 13-19-3Z" fill="#d9eee0" stroke="#303a43" stroke-width="2" stroke-linejoin="round"/>
+<path d="m10 8 9 14 8-18 6 23 9-13M4 25l15-3-5 19 19-14 12 4M19 22l14 5v17" fill="none" stroke="#54ad67" stroke-width="1.7"/>
+<g fill="#426d8b"><circle cx="10" cy="8" r="2.4"/><circle cx="19" cy="22" r="2.4"/><circle cx="27" cy="4" r="2.4"/><circle cx="33" cy="27" r="2.4"/><circle cx="14" cy="41" r="2.4"/><circle cx="42" cy="14" r="2.4"/></g></g>
+<text x="336" y="195" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" fill="#26323d">2. Alpha envelope</text>
+<g transform="translate(323,207) scale(0.5)"><path d="M4 25 10 8l17-4 15 10 3 17-12 13-19-3Z" fill="#d9eee0" stroke="#303a43" stroke-width="2" stroke-linejoin="round"/>
+<path d="m10 8 9 14 8-18 6 23 9-13M4 25l15-3-5 19 19-14 12 4M19 22l14 5v17" fill="none" stroke="#54ad67" stroke-width="1.7"/>
+<g fill="#426d8b"><circle cx="10" cy="8" r="2.4"/><circle cx="19" cy="22" r="2.4"/><circle cx="27" cy="4" r="2.4"/><circle cx="33" cy="27" r="2.4"/><circle cx="14" cy="41" r="2.4"/><circle cx="42" cy="14" r="2.4"/></g></g>
+<rect x="452" y="50" width="200" height="190" rx="9" fill="white" stroke="#d5dce3"/>
+<g transform="translate(504,65) scale(2)"><path d="m7 9 22-4 14 14-5 21-22 4L4 27Z" fill="#edf3f7" stroke="#303a43" stroke-width="2" stroke-linejoin="round"/>
+<path d="m7 9 13 14L29 5m-9 18 23-4M20 23l18 17M20 23l-4 21M20 23 4 27M7 9 43 19M4 27l34 13" fill="none" stroke="#426d8b" stroke-width="1.7"/>
+<g fill="#54ad67" stroke="#303a43" stroke-width="1"><circle cx="7" cy="9" r="2.5"/><circle cx="29" cy="5" r="2.5"/><circle cx="43" cy="19" r="2.5"/><circle cx="38" cy="40" r="2.5"/><circle cx="16" cy="44" r="2.5"/><circle cx="4" cy="27" r="2.5"/><circle cx="20" cy="23" r="3"/></g></g>
+<text x="552" y="195" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" fill="#26323d">3. Delaunay points</text>
+<g transform="translate(539,207) scale(0.5)"><path d="m7 9 22-4 14 14-5 21-22 4L4 27Z" fill="#edf3f7" stroke="#303a43" stroke-width="2" stroke-linejoin="round"/>
+<path d="m7 9 13 14L29 5m-9 18 23-4M20 23l18 17M20 23l-4 21M20 23 4 27M7 9 43 19M4 27l34 13" fill="none" stroke="#426d8b" stroke-width="1.7"/>
+<g fill="#54ad67" stroke="#303a43" stroke-width="1"><circle cx="7" cy="9" r="2.5"/><circle cx="29" cy="5" r="2.5"/><circle cx="43" cy="19" r="2.5"/><circle cx="38" cy="40" r="2.5"/><circle cx="16" cy="44" r="2.5"/><circle cx="4" cy="27" r="2.5"/><circle cx="20" cy="23" r="3"/></g></g>
+<rect x="668" y="50" width="200" height="190" rx="9" fill="white" stroke="#d5dce3"/>
+<g transform="translate(720,65) scale(2)"><path d="M6 18 15 6l19 1 10 14-5 18-18 6L6 34Z" fill="#d9eee0" stroke="#54ad67" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="m13 20 7-8 12 3 5 12-9 10-13-5Z" fill="#d9e9f3" stroke="#303a43" stroke-width="2" stroke-linejoin="round"/>
+<path d="m13 20 15 4 4-9m-4 9 9 3m-9-3v13m-15-17 2 12 13-8" fill="none" stroke="#426d8b" stroke-width="1.5"/>
+<path d="M4 10v8h8M44 38v-8h-8" fill="none" stroke="#303a43" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>
+<text x="768" y="195" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" fill="#26323d">4. Surface wrap</text>
+<g transform="translate(755,207) scale(0.5)"><path d="M6 18 15 6l19 1 10 14-5 18-18 6L6 34Z" fill="#d9eee0" stroke="#54ad67" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="m13 20 7-8 12 3 5 12-9 10-13-5Z" fill="#d9e9f3" stroke="#303a43" stroke-width="2" stroke-linejoin="round"/>
+<path d="m13 20 15 4 4-9m-4 9 9 3m-9-3v13m-15-17 2 12 13-8" fill="none" stroke="#426d8b" stroke-width="1.5"/>
+<path d="M4 10v8h8M44 38v-8h-8" fill="none" stroke="#303a43" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>
+<rect x="884" y="50" width="200" height="190" rx="9" fill="white" stroke="#d5dce3"/>
+<g transform="translate(936,65) scale(2)"><path d="M9 38 19 8l6-3 6 4 9 29" fill="none" stroke="#303a43" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="m19 8 6 16L31 9M13 28h23M9 38l16-14 15 14" fill="none" stroke="#426d8b" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="25" cy="24" r="4" fill="#54ad67" stroke="#303a43" stroke-width="1.7"/>
+<path d="M5 43h38" fill="none" stroke="#54ad67" stroke-width="2"/>
+<g fill="#426d8b"><circle cx="9" cy="38" r="2.5"/><circle cx="40" cy="38" r="2.5"/></g></g>
+<text x="984" y="195" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" fill="#26323d">5. Geometry compass</text>
+<g transform="translate(971,207) scale(0.5)"><path d="M9 38 19 8l6-3 6 4 9 29" fill="none" stroke="#303a43" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="m19 8 6 16L31 9M13 28h23M9 38l16-14 15 14" fill="none" stroke="#426d8b" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="25" cy="24" r="4" fill="#54ad67" stroke="#303a43" stroke-width="1.7"/>
+<path d="M5 43h38" fill="none" stroke="#54ad67" stroke-width="2"/>
+<g fill="#426d8b"><circle cx="9" cy="38" r="2.5"/><circle cx="40" cy="38" r="2.5"/></g></g>
+</svg>

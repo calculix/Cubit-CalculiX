@@ -84,7 +84,7 @@ a worker. The saved-file message is printed only after those stages finish.
 A single complex capture can still briefly pause the UI.
 
 Only one topology GIF export can be active. Use **Cancel GIF export** in the
-Results panel to request cancellation. Cancellation is checked between captures
+Topology Management to request cancellation. Cancellation is checked between captures
 and encoded frames; it cannot interrupt one encoder frame already in progress.
 An output already published before cancellation is retained. Avoid changing the
 mesh, model, camera, or graphics view during capture. Model reset/load requests
@@ -101,7 +101,7 @@ cancel the export; starting topology is rejected while export is active.
    ccx animate topology 1 threshold 0.5 fps 5 save "beam.gif" overwrite
 
 There is no iteration argument: animation processes the case's completed
-iterations rather than the Results panel's currently displayed iteration.
+iterations rather than the Topology Management's currently displayed iteration.
 
 Wrap a retained design
 ----------------------

@@ -428,3 +428,14 @@ void TopologyActionsPanel::updateConvergence()
 
   convergenceSummary->setStyleSheet(converged ? "color: #2e7d32; font-weight: bold;" : "color: #b26a00; font-weight: bold;");
 }
+
+void TopologyActionsPanel::clearTopology(int topology_id)
+{
+  if (topology_id > 0 && cases->currentData().toInt() != topology_id)
+  {
+    return;
+  }
+  const QSignalBlocker blocker(cases);
+  cases->clear();
+  updateControls();
+}

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" role="img"><title>Wrap point cloud</title>
+<path d="M5 20 11 7l17-3 14 11 2 17-14 12-17-4-9-12Z" fill="#e3f2e7" stroke="#54ad67" stroke-width="2.4" stroke-linejoin="round"/>
+<path d="m14 14 11 8 11-7M14 14l-2 13 13-5 10 12M12 27l9 10 14-3M25 22l-4 15" fill="none" stroke="#a0b8c8" stroke-width="1.2"/>
+<g fill="#426d8b" stroke="#303a43" stroke-width=".8"><circle cx="14" cy="14" r="2.7"/><circle cx="25" cy="22" r="2.7"/><circle cx="36" cy="15" r="2.7"/><circle cx="12" cy="27" r="2.7"/><circle cx="21" cy="37" r="2.7"/><circle cx="35" cy="34" r="2.7"/></g>
+</svg>

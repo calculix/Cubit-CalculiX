@@ -1,4 +1,6 @@
 #include "Core/application/SettingsRead.hpp"
+#include "Core/application/CalculiXApplicationInterface.hpp"
+#include "Core/application/CoreObserver.hpp"
 #include "Core/jobs/CoreJobs.hpp"
 #include "Core/application/CoreIdSelection.hpp"
 #include <string>
@@ -258,8 +260,21 @@ bool CoreJobs::delete_job(int job_id)
     return false;
   } else {
     // todo erasing console output ect., should normally be not too much memory so....no prob for now
+    CalculiXJobsInterface jobs_iface;
+    int topology_id = -1;
+    int iteration_id = -1;
+    jobs_iface.get_job_topology_context(job_id, topology_id, iteration_id);
     jobs_data.erase(jobs_data.begin() + jobs_data_id);
     ccx_results_iface.delete_result(job_id);
+    auto& observer = CalculiXApplicationInterface().core_observer();
+    if (observer.job_deleted)
+    {
+      observer.job_deleted(job_id);
+    }
+    if (topology_id > 0 && observer.topology_data_cleared)
+    {
+      observer.topology_data_cleared(topology_id);
+    }
     return true;
   }
 }
@@ -379,6 +394,7 @@ bool CoreJobs::run_job(int job_id,int option)
       sta[std::stoi(jobs_data[job_data_id][8])].clear();
 
       // Create the child process.         
+      PRINT_INFO("Job %d: starting solver process.\n", job_id);
       bSuccess = CreateProcess(NULL, 
           //&arguments[0],     // command line 
           &args[0],     // command line 
@@ -536,6 +552,7 @@ bool CoreJobs::run_job(int job_id,int option)
       cvg[std::stoi(jobs_data[job_data_id][7])].clear();
       sta[std::stoi(jobs_data[job_data_id][8])].clear();
 
+      PRINT_INFO("Job %d: starting solver process.\n", job_id);
       CubitProcessHandler[CubitProcessHandler_data_id].start();
       process_id = CubitProcessHandler[CubitProcessHandler_data_id].pid();
       if (process_id <= 0)

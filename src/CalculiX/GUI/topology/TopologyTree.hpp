@@ -25,11 +25,10 @@ private:
 
   QTimer *refreshTimer = nullptr;
   QTreeWidgetItem *ensure(QTreeWidgetItem *parent, Kind kind, int id, const QString &label);
-  void preview(QTreeWidgetItem *item);
   static void open_job(int job_id, ModelTree &host);
   static void open_settings(int topology_id, ModelTree &host);
   static void open_preserved_sets(int topology_id, ModelTree &host);
-  static void open_results(int topology_id, int iteration_id, ModelTree &host);
+  static void open_management(int topology_id, int iteration_id, ModelTree &host);
   static void open_actions(int topology_id, ModelTree &host);
 };
 

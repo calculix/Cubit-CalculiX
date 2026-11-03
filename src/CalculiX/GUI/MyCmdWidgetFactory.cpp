@@ -108,7 +108,7 @@
 #include "GUI/steps/StepsCreatePanel.hpp"
 #include "GUI/topology/TopologySettingsPanel.hpp"
 #include "GUI/topology/TopologyPreservedSetsPanel.hpp"
-#include "GUI/topology/TopologyResultsPanel.hpp"
+#include "GUI/cgal/AlphaWrapPanel.hpp"
 #include "GUI/topology/TopologyDeletePanel.hpp"
 #include "GUI/topology/TopologyActionsPanel.hpp"
 #include "GUI/steps/StepsModifyParameterPanel.hpp"
@@ -173,6 +173,10 @@ QWidget* MyCmdWidgetFactory::getWidget(NavigationModel *model,
   widget = createWidget(name);
   if(widget)
   {
+      if (name.startsWith("CCXTopology") || name == "CCXCGALWrap")
+      {
+        topologyPanels.append(widget);
+      }
       // Add a new cache for the parent widget if needed.
       NavigationWidgetCache *cache = 0;
       if(iter == widget_cache.end())
@@ -447,9 +451,9 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
   {
     return new TopologyDeletePanel();
   }
-  if (name == "CCXTopologyResults")
+  if (name == "CCXCGALWrap")
   {
-    return new TopologyResultsPanel();
+    return new AlphaWrapPanel();
   }
   if (name == "CCXTopologyPreservedSets")
   {
@@ -505,4 +509,31 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
     return new JobsActionsPanel();
   
   return NULL;
+}
+
+void MyCmdWidgetFactory::clearTopologyPanels(int topology_id)
+{
+  for (const auto& widget : topologyPanels)
+  {
+    if (auto* panel = dynamic_cast<TopologySettingsPanel*>(widget.data()))
+    {
+      panel->clearTopology(topology_id);
+    }
+    else if (auto* panel = dynamic_cast<TopologyPreservedSetsPanel*>(widget.data()))
+    {
+      panel->clearTopology(topology_id);
+    }
+    else if (auto* panel = dynamic_cast<TopologyActionsPanel*>(widget.data()))
+    {
+      panel->clearTopology(topology_id);
+    }
+    else if (auto* panel = dynamic_cast<TopologyDeletePanel*>(widget.data()))
+    {
+      panel->clearTopology(topology_id);
+    }
+    else if (auto* panel = dynamic_cast<AlphaWrapPanel*>(widget.data()))
+    {
+      panel->clearTopology(topology_id);
+    }
+  }
 }

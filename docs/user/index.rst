@@ -13,6 +13,8 @@ and interpretation of results. The initial chapter covers topology.
    topology-running
    topology-preservation
    topology-results
+   topology-management
+   cgal
    topology-solver
 
 Planned coverage

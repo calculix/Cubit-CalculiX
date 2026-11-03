@@ -409,3 +409,33 @@ void TopologySettingsPanel::apply()
   GuiSendCmd::gui_cmd(QString("ccx %1 topology %2")
     .arg(modifying ? "modify" : "create").arg(topology_id) + arguments);
 }
+
+void TopologySettingsPanel::clearTopology(int topology_id)
+{
+  if (topology_id > 0 && (!modifying || cases->currentData().toInt() != topology_id))
+  {
+    return;
+  }
+  if (modifying)
+  {
+    const QSignalBlocker blocker(cases);
+    cases->clear();
+    load();
+  }
+  else
+  {
+    for (auto* field : fields)
+    {
+      field->clear();
+    }
+    method->setCurrentIndex(0);
+    objective->setCurrentIndex(0);
+    adaptiveMoves->setCurrentIndex(0);
+    minimumMoveLimit->clear();
+    const QSignalBlocker blocker(displacementNodeset);
+    displacementNodeset->clear();
+    displacementComponent->setCurrentIndex(0);
+    displacementComponent->setEnabled(false);
+    id->setValue(1);
+  }
+}

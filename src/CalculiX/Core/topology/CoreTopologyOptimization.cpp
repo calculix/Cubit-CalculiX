@@ -83,12 +83,18 @@ void CoreTopologyOptimization::update()
     }
     catch (const std::exception& error)
     {
-      PRINT_ERROR("Topology %d failed: %s\n", entry.first, error.what());
+      const auto run = topology_runs.find(entry.first);
+      PRINT_ERROR("Topology %d iteration %d failed during %s: %s\n", entry.first,
+        run == topology_runs.end() ? -1 : run->second.iteration_id,
+        run == topology_runs.end() ? "unknown phase" : phase_name(run->second.phase), error.what());
       fail_topology_run(entry.first, entry.second);
     }
     catch (...)
     {
-      PRINT_ERROR("Topology %d failed with an unexpected exception.\n", entry.first);
+      const auto run = topology_runs.find(entry.first);
+      PRINT_ERROR("Topology %d iteration %d failed during %s with an unexpected exception.\n", entry.first,
+        run == topology_runs.end() ? -1 : run->second.iteration_id,
+        run == topology_runs.end() ? "unknown phase" : phase_name(run->second.phase));
       fail_topology_run(entry.first, entry.second);
     }
   }
@@ -1027,4 +1033,19 @@ bool CoreTopologyOptimization::finish_topology_iteration(int topology_id, int it
 
   PRINT_INFO("Topology %d iteration %d completed as job %d; results are loaded.\n", topology_id, iteration_id, job_id);
   return true;
+}
+
+const char* CoreTopologyOptimization::phase_name(TopologyRunPhase phase)
+{
+  switch (phase)
+  {
+    case TopologyRunPhase::Preparing: return "design preparation";
+    case TopologyRunPhase::Starting: return "physical job export/startup";
+    case TopologyRunPhase::Waiting: return "physical job completion";
+    case TopologyRunPhase::StartingAdjoint: return "adjoint job export/startup";
+    case TopologyRunPhase::WaitingAdjoint: return "adjoint job completion";
+    case TopologyRunPhase::Evaluating: return "objective evaluation";
+    case TopologyRunPhase::Finished: return "run completion";
+  }
+  return "unknown phase";
 }

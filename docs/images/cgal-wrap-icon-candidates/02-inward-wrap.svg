@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" role="img"><title>Inward wrap</title>
+<path d="m15 12 15-2 8 12-5 15-16 2-8-13Z" fill="#d9e9f3" stroke="#303a43" stroke-width="1.8" stroke-linejoin="round"/>
+<path d="m15 12 8 13 7-15m-7 15 15-3m-15 3 10 12M9 26l14-1-6 14" fill="none" stroke="#426d8b" stroke-width="1.4"/>
+<path d="M4 4 13 13M6 13h7V6M44 4 35 13M35 6v7h7M44 44 35 35M42 35h-7v7M4 44 13 35M13 42v-7H6" fill="none" stroke="#54ad67" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -106,6 +106,7 @@ JobsMonitor::JobsMonitor()
   clear();
 
   timer = new GuiTimer();
+  timer->setParent(this);
   QObject::connect(timer, SIGNAL(timeout()), this, SLOT(update_slot()));
 }
 
@@ -368,4 +369,12 @@ void JobsMonitor::on_pushButton_result_paraview_clicked(bool)
 void JobsMonitor::on_pushButton_close_clicked(bool)
 {
   this->close();
+}
+
+void JobsMonitor::clearJob(int job_id)
+{
+  if (current_job_id == job_id)
+  {
+    clear();
+  }
 }

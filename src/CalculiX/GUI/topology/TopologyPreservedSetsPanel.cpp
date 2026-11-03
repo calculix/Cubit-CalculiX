@@ -431,3 +431,14 @@ void TopologyPreservedSetsPanel::changeSelection(bool adding)
   // Reload actual core state even if the command was rejected.
   refreshLists();
 }
+
+void TopologyPreservedSetsPanel::clearTopology(int topology_id)
+{
+  if (topology_id > 0 && cases->currentData().toInt() != topology_id)
+  {
+    return;
+  }
+  const QSignalBlocker blocker(cases);
+  cases->clear();
+  refreshLists();
+}

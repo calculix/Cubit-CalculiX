@@ -22,7 +22,7 @@ public:
   MenuManager(QObject* parent = nullptr);
   ~MenuManager();
 
-  void setup_workspace_menus(Claro* host, QDockWidget* modelDock, QDockWidget* propertiesDock, QToolBar* drawingToolbar);
+  void setup_workspace_menus(Claro* host, QDockWidget* modelDock, QDockWidget* propertiesDock, QToolBar* drawingToolbar, QToolBar* topologyToolbar);
   QList<QAction*> workspace_menu_actions() const;
   void remove_menu_items();
 

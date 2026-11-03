@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" role="img"><title>Geometry compass</title>
+<path d="M9 38 19 8l6-3 6 4 9 29" fill="none" stroke="#303a43" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="m19 8 6 16L31 9M13 28h23M9 38l16-14 15 14" fill="none" stroke="#426d8b" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="25" cy="24" r="4" fill="#54ad67" stroke="#303a43" stroke-width="1.7"/>
+<path d="M5 43h38" fill="none" stroke="#54ad67" stroke-width="2"/>
+<g fill="#426d8b"><circle cx="9" cy="38" r="2.5"/><circle cx="40" cy="38" r="2.5"/></g>
+</svg>

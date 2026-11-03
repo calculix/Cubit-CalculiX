@@ -1,4 +1,6 @@
 #include "GUI/drawing/CalculiXDrawingToolbar.hpp"
+#include "GUI/drawing/CalculiXTopologyToolbar.hpp"
+#include "GUI/drawing/NativeDisplayRefreshObserver.hpp"
 #include "GUI/drawing/DrawingSelectionController.hpp"
 #include "GUI/drawing/DrawingPickController.hpp"
 #include "Core/drawing/CalculiXDrawInterface.hpp"
@@ -51,6 +53,14 @@ bool CalculiXGui::start(QWidget* host, std::string& error)
   setup_command_panels();
   setup_CCXDockWindowModelTree();
   drawingToolbar = new CalculiXDrawingToolbar(host);
+  topologyToolbar = new CalculiXTopologyToolbar(host);
+  displayRefreshObserver = new NativeDisplayRefreshObserver(host);
+  displayRefreshObserver->displayChanged = [this]()
+  {
+    drawingToolbar->synchronize(CalculiXDrawInterface().drawing_state());
+    topologyToolbar->cancelPendingPreview();
+    topologyToolbar->refresh();
+  };
   drawingSelection = new DrawingSelectionController(host);
   QObject::connect(myCCXDockWindowModelTree->modelTree(), &ModelTree::propertySelectionChanged, drawingSelection.data(), &DrawingSelectionController::showSelection);
   propertiesDock = new CalculiXPropertiesDock(host);
@@ -78,6 +88,8 @@ void CalculiXGui::stop() noexcept
     boolwithGUI = false;
     cleanup_window_title();
     cleanup_observers();
+    delete displayRefreshObserver.data();
+    displayRefreshObserver = nullptr;
     CalculiXDrawInterface drawing;
     drawing.set_workspace_active(false);
     if (drawingPick != nullptr)
@@ -109,6 +121,15 @@ void CalculiXGui::stop() noexcept
       }
       delete drawingToolbar.data();
       drawingToolbar = nullptr;
+    }
+    if (topologyToolbar != nullptr)
+    {
+      if (auto* host = Claro::instance())
+      {
+        host->removeToolBar(topologyToolbar.data());
+      }
+      delete topologyToolbar.data();
+      topologyToolbar = nullptr;
     }
     if (propertiesDock != nullptr)
     {
@@ -201,6 +222,10 @@ void CalculiXGui::update()
       drawingToolbar->refreshSteps();
       drawingToolbar->synchronize(drawing.drawing_state());
     }
+    if (topologyToolbar != nullptr)
+    {
+      topologyToolbar->refresh();
+    }
     if (myCCXDockWindowModelTree)
     {
       myCCXDockWindowModelTree->modelTree()->updatePropertySelection();
@@ -217,8 +242,20 @@ void CalculiXGui::reset()
 {
   if (boolwithGUI)
   {
+    if (mycmdPanels != nullptr)
+    {
+      mycmdPanels->clearTopologyPanels();
+    }
     CalculiXDrawInterface drawing;
+    if (displayRefreshObserver != nullptr)
+    {
+      displayRefreshObserver->reset();
+    }
     drawing.reset_drawing();
+    if (topologyToolbar != nullptr)
+    {
+      topologyToolbar->clear();
+    }
     if (drawingSelection != nullptr)
     {
       drawingSelection->clearSelection();
@@ -252,7 +289,7 @@ void CalculiXGui::setup_menus()
     myMenus = new MenuManager;
   }
 
-  myMenus->setup_workspace_menus(Claro::instance(), myCCXDockWindowModelTree->dock_widget(), propertiesDock.data(), drawingToolbar.data());
+  myMenus->setup_workspace_menus(Claro::instance(), myCCXDockWindowModelTree->dock_widget(), propertiesDock.data(), drawingToolbar.data(), topologyToolbar.data());
 }
 
 void CalculiXGui::cleanup_menus()
@@ -322,6 +359,29 @@ void CalculiXGui::setup_observers(int withGUI)
   observer.before_core_update = [this] { mListener->before_core_update(); };
   observer.core_updated = [this] { mListener->on_core_updated(); };
   observer.core_reset = [this] { reset(); };
+  observer.job_deleted = [this](int id)
+  {
+    if (myCCXDockWindowModelTree != nullptr)
+    {
+      myCCXDockWindowModelTree->modelTree()->clearDeletedJob(id);
+    }
+  };
+  observer.topology_data_cleared = [this](int id)
+  {
+    CalculiXDrawInterface().invalidate_topology(id);
+    if (topologyToolbar != nullptr)
+    {
+      topologyToolbar->invalidateTopology(id);
+    }
+    if (myCCXDockWindowModelTree != nullptr)
+    {
+      myCCXDockWindowModelTree->modelTree()->invalidateTopology(id);
+    }
+    if (mycmdPanels != nullptr)
+    {
+      mycmdPanels->clearTopologyPanels(id);
+    }
+  };
 }
 
 void CalculiXGui::cleanup_observers()
@@ -335,6 +395,8 @@ void CalculiXGui::cleanup_observers()
     observer.before_core_update = {};
     observer.core_updated = {};
     observer.core_reset = {};
+    observer.job_deleted = {};
+    observer.topology_data_cleared = {};
     delete mListener;
     mListener = nullptr;
   }
@@ -392,7 +454,7 @@ void CalculiXGui::unload_options()
 
 bool CalculiXGui::workspace_view(WorkspaceView& view, std::string& error) const
 {
-  if (!boolwithGUI || mycmdPanels == nullptr || myCCXDockWindowModelTree == nullptr || propertiesDock == nullptr || drawingToolbar == nullptr || myMenus == nullptr)
+  if (!boolwithGUI || mycmdPanels == nullptr || myCCXDockWindowModelTree == nullptr || propertiesDock == nullptr || drawingToolbar == nullptr || topologyToolbar == nullptr || myMenus == nullptr)
   {
     error = "The CalculiX workspace widgets are not ready.";
     return false;
@@ -413,13 +475,23 @@ bool CalculiXGui::workspace_view(WorkspaceView& view, std::string& error) const
   view.icon = resources.getIcon2("CCX");
   view.docks = {myCCXDockWindowModelTree->dock_widget(), propertiesDock.data()};
   view.menuActions = myMenus->workspace_menu_actions();
-  view.toolbars = {drawingToolbar.data()};
+  view.toolbars = {drawingToolbar.data(), topologyToolbar.data()};
   view.activationChanged = [
     toolbar = QPointer<CalculiXDrawingToolbar>(drawingToolbar),
+    topology = QPointer<CalculiXTopologyToolbar>(topologyToolbar),
+    refresh = QPointer<NativeDisplayRefreshObserver>(displayRefreshObserver),
     pick = QPointer<DrawingPickController>(drawingPick),
     tree = QPointer<ModelTree>(myCCXDockWindowModelTree->modelTree())
   ](bool active)
   {
+    if (refresh != nullptr)
+    {
+      refresh->setActive(active);
+    }
+    if (topology != nullptr)
+    {
+      topology->refresh();
+    }
     if (toolbar != nullptr)
     {
       CalculiXDrawInterface drawing;

@@ -9,6 +9,8 @@ struct WorkspaceView;
 class Claro;
 class CalculiXPropertiesDock;
 class CalculiXDrawingToolbar;
+class CalculiXTopologyToolbar;
+class NativeDisplayRefreshObserver;
 class DrawingSelectionController;
 class DrawingPickController;
 class QWidget;
@@ -52,6 +54,8 @@ private:
   QPointer<UserOptionsPanel> mUserOptionsPanel;
   QPointer<CalculiXPropertiesDock> propertiesDock;
   QPointer<CalculiXDrawingToolbar> drawingToolbar;
+  QPointer<CalculiXTopologyToolbar> topologyToolbar;
+  QPointer<NativeDisplayRefreshObserver> displayRefreshObserver;
   QPointer<DrawingSelectionController> drawingSelection;
   QPointer<DrawingPickController> drawingPick;
   QPointer<Claro> titleHost;

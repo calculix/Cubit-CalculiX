@@ -19,7 +19,7 @@ Add tutorial figure references only after the corresponding images are present.
 | `topology/settings.png` | Case 1: density method, displacement Y objective, nodeset 3, target volume fraction 0.7, maximum 50 iterations. |
 | `topology/preservation.png` | Preserved-set management showing the automatic support and rigid-body selections; distinguish set rules from resolved element flags. |
 | `topology/actions.png` | Actions panel with run state, a completed iteration, displacement measurement, and readable convergence indicators. |
-| `topology/results.png` | Results panel showing the displayed iteration, navigation, automatic preview, playback, and threshold controls. |
+| `topology/results.png` | Topology Management showing the displayed iteration, navigation, automatic preview, playback, and threshold controls. |
 | `topology/threshold-preview.png` | A later completed iteration with green retained elements and red removal edges at the recorded threshold. |
 
 Record the actual Cubit version, plugin version or revision, case name/ID,
@@ -29,3 +29,10 @@ iteration and convergence state rather than forcing a predetermined outcome.
 Keep panel text readable and use a consistent camera for comparable mesh views.
 Capture comparisons and exports before deleting elements. Do not use older
 screenshots or fabricated panel images to fill the planned filenames.
+
+## Toolbar icon candidates
+
+`toolbar-size-icon-candidates/` and `toolbar-threshold-icon-candidates/` each
+contain five numbered 24-pixel SVG candidates and a `candidates.svg` comparison
+sheet with enlarged and native-size samples. These are proposals; no candidate
+is assigned to a toolbar until selected.

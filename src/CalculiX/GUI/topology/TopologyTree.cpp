@@ -11,7 +11,6 @@
 #include "GUI/application/ModelTree.hpp"
 #include "TopologySettingsPanel.hpp"
 #include "TopologyPreservedSetsPanel.hpp"
-#include "TopologyResultsPanel.hpp"
 #include "TopologyActionsPanel.hpp"
 #include "CommandButtonPanel.hpp"
 #include "CubitMessage.hpp"
@@ -160,6 +159,7 @@ void TopologyTree::update()
     case_item->setIcon(0, ccx_gui_resources_iface.getIcon2(icon_name));
 
     QTreeWidgetItem *iterations = ensure(case_item, Iterations, 0, "Iterations");
+    iterations->setData(0, TopologyRole, topology_id);
     QSet<int> iteration_ids;
     for (const auto &iteration : ccx_topology_iface.get_topology_iteration_data(topology_id))
     {
@@ -246,22 +246,6 @@ void TopologyTree::update()
   }
 }
 
-void TopologyTree::preview(QTreeWidgetItem *item)
-{
-  CalculiXApplicationInterface ccx_application_iface;
-
-  if (item == nullptr || !item->data(0, CompletedRole).toBool())
-  {
-    return;
-  }
-  const QString command = QString("ccx result project topology %1 iteration %2 threshold 0.5 preview")
-    .arg(item->data(0, TopologyRole).toInt()).arg(item->data(0, IterationRole).toInt());
-  if (!ccx_application_iface.silent_cmd(command.toStdString()))
-  {
-    PRINT_ERROR("Topology preview failed.\n");
-  }
-}
-
 void TopologyTree::open_job(int job_id, ModelTree &host)
 {
   if (job_id <= 0 || host.myJobsMonitor == nullptr)
@@ -293,27 +277,9 @@ void TopologyTree::open_actions(int topology_id, ModelTree &host)
   PRINT_ERROR("Unable to open topology actions.\n");
 }
 
-void TopologyTree::open_results(int topology_id, int iteration_id, ModelTree &host)
+void TopologyTree::open_management(int topology_id, int iteration_id, ModelTree& host)
 {
-  if (host.cmdpanel == nullptr)
-  {
-    return;
-  }
-
-  host.setWidgetInCmdPanelMarker("CCXTopologyResults");
-
-  for (QWidget *widget : host.cmdpanel->findChildren<QWidget *>())
-  {
-    auto *panel = dynamic_cast<TopologyResultsPanel *>(widget);
-
-    if (panel != nullptr)
-    {
-      panel->setIteration(topology_id, iteration_id);
-      return;
-    }
-  }
-
-  PRINT_ERROR("Unable to open the topology results panel.\n");
+  host.openTopologyManagement(topology_id, iteration_id);
 }
 
 void TopologyTree::open_preserved_sets(int topology_id, ModelTree &host)
@@ -358,24 +324,24 @@ void TopologyTree::open_settings(int topology_id, ModelTree &host)
   PRINT_ERROR("Unable to open the topology settings panel.\n");
 }
 
-void TopologyTree::activate(QTreeWidgetItem *item, ModelTree &host)
+void TopologyTree::activate(QTreeWidgetItem* item, ModelTree& host)
 {
   if (item == nullptr)
   {
     return;
   }
   const int kind = item->data(0, KindRole).toInt();
-  if (kind == Case)
+  if (kind == Root)
   {
-    open_settings(item->data(0, TopologyRole).toInt(), host);
+    host.openTopologyManagement();
   }
-  else if (kind == Root)
+  else if (kind == Case || kind == Iterations)
   {
-    host.setWidgetInCmdPanelMarker("CCXTopologyCreate");
+    host.openTopologyManagement(item->data(0, TopologyRole).toInt());
   }
   else if (kind == Iteration)
   {
-    preview(item);
+    host.openTopologyManagement(item->data(0, TopologyRole).toInt(), item->data(0, IterationRole).toInt());
   }
   else if (kind == Job)
   {
@@ -395,11 +361,21 @@ void TopologyTree::populateContextMenu(QMenu &menu, QTreeWidgetItem *item, Model
   const int topology_id = item->data(0, TopologyRole).toInt();
   if (kind == Root)
   {
+    auto* manage = menu.addAction("Open Topology Management");
+    QObject::connect(manage, &QAction::triggered, &menu, [&host]()
+    {
+      host.openTopologyManagement();
+    });
     addPanelAction(menu, "Create topology", host, "CCXTopologyCreate");
   }
   else if (kind == Case)
   {
     const bool running = ccx_topology_iface.get_topology_run_state(topology_id) == "running";
+    auto* manage = menu.addAction("Open Topology Management");
+    QObject::connect(manage, &QAction::triggered, &menu, [topology_id, &host]()
+    {
+      host.openTopologyManagement(topology_id);
+    });
     QAction *actions = menu.addAction("Actions");
     QObject::connect(actions, &QAction::triggered, &menu, [topology_id, &host]()
     {
@@ -439,7 +415,7 @@ void TopologyTree::populateContextMenu(QMenu &menu, QTreeWidgetItem *item, Model
       QObject::connect(browse, &QAction::triggered, &menu,
         [topology_id, iteration_id, &host]()
       {
-        open_results(topology_id, iteration_id, host);
+        open_management(topology_id, iteration_id, host);
       });
       QAction *previewAction = menu.addAction("Preview (threshold 0.5)");
       previewAction->setEnabled(completed && ccx_topology_iface.get_topology_run_state(topology_id) != "running");

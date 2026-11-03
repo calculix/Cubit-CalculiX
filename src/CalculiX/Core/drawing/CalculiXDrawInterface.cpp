@@ -331,6 +331,11 @@ void CalculiXDrawInterface::shutdown_drawing() noexcept
 }
 
 
+void CalculiXDrawInterface::topology_preview(int& caseId, int& iterationId, double& threshold) const
+{
+  ccx_core.draw->topologyPreview(caseId, iterationId, threshold);
+}
+
 CalculiXDrawState CalculiXDrawInterface::drawing_state() const
 {
   return ccx_core.draw->drawingState();
@@ -422,4 +427,12 @@ bool CalculiXDrawInterface::pick_symbol(int viewId, double xFraction, double yFr
     return true;
   }
   return ccx_core.draw->pickSymbol(viewId, xFraction, yFraction, selection, error);
+}
+
+void CalculiXDrawInterface::invalidate_topology(int topology_id)
+{
+  if (ccx_core.draw != nullptr)
+  {
+    ccx_core.draw->invalidate_topology(topology_id);
+  }
 }

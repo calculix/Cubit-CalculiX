@@ -191,13 +191,13 @@ GIF of all completed iterations:
 
 This starts an asynchronous export. Wait for the saved-file message before
 changing the mesh or proceeding to deletion. Use **Cancel GIF export** in the
-Results panel if needed; startup success is not completion.
+Topology Management if needed; startup success is not completion.
 
 Use a different filename or add ``overwrite`` for an existing file. The Results
 panel provides the same filename, frame-rate, and overwrite controls. A GIF
 captures all eligible iterations, not just the displayed one.
 
-For a wrapped surface of your chosen iteration, use the Results panel's
+For a wrapped surface of your chosen iteration, use the Topology Management's
 **Alpha wrapping** group. Leave alpha and offset empty for automatic values,
 choose ``beam.stl``, clear **Import STL into Cubit**, and click
 **Wrap displayed iteration**. This exports the retained region without deleting
@@ -218,7 +218,7 @@ See :doc:`../user/topology-results` for alpha, offset, and filename defaults.
 ---------------------------------
 
 This stage changes the mesh. Complete the comparisons and exports you need
-first. Choose the desired iteration and threshold in the Results panel, click
+first. Choose the desired iteration and threshold in the Topology Management, click
 **Preview**, and review the retained support, loaded region, and connecting mesh.
 
 If you decide to apply that result, use **Delete below threshold**. It deletes
