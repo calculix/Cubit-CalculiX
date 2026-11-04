@@ -1,4 +1,6 @@
 target_sources(calculix_commands PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxUserOptionsCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxUserOptionsCommand.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxInitPythonInterfaceCommand.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxInitPythonInterfaceCommand.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxLogCoreCommand.cpp

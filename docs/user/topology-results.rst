@@ -69,7 +69,11 @@ Threshold and preview
 For threshold :math:`t` in [0, 1], an element is retained if it is preserved or
 its density is at least :math:`t`. An unpreserved element with density strictly
 below :math:`t` is a removal candidate. A density exactly equal to the threshold
-is retained. The default threshold is 0.5.
+is retained. The command and management default threshold is 0.5; the toolbar
+can restore its last saved GUI threshold preference. This threshold is separate
+from the optimization volume target, void stiffness ratio and minimum density.
+Changing it does not rerun the optimizer or modify the stored densities or
+stiffness factors. See :doc:`topology-settings`.
 
 **Preview** draws retained elements in green and removal candidates as red
 edges. It changes the display, without changing the mesh. Enable

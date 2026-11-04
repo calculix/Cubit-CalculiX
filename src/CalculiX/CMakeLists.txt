@@ -104,37 +104,13 @@ if (UNIX)
  #file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/calculix_gui.py DESTINATION ${CMAKE_BINARY_DIR}/)
 endif (UNIX)
 
-# Package an existing manual explicitly; normal builds do not generate or stage it.
-set(CCX_DOCUMENTATION_SOURCE "${CCX_SOURCE_ROOT}/../docs/_build/html" CACHE PATH "Generated manual directory")
-if (WIN32)
- set(_ccx_documentation_destination "${CMAKE_BINARY_DIR}/Release/documentation")
-else()
- set(_ccx_documentation_destination "${CMAKE_BINARY_DIR}/documentation")
-endif()
-set(CCX_DOCUMENTATION_DESTINATION "${_ccx_documentation_destination}" CACHE PATH "Packaged manual directory beside the plugin")
-add_custom_target(stage_documentation
- COMMAND "${CMAKE_COMMAND}"
-   "-DCCX_DOCUMENTATION_SOURCE=${CCX_DOCUMENTATION_SOURCE}"
-   "-DCCX_DOCUMENTATION_DESTINATION=${CCX_DOCUMENTATION_DESTINATION}"
-   -P "${CMAKE_CURRENT_SOURCE_DIR}/../cmake/StageDocumentation.cmake"
- COMMENT "Staging the existing Cubit-CalculiX manual"
- VERBATIM)
-
 # copy missing libraries into build directory
 # Qt6Charts is currently not shipped with Cubit 2025.8
 if (WIN32)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../Library/Win/Qt6Charts.dll DESTINATION ${CMAKE_BINARY_DIR}/Release/)
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../Library/Win/hdf5_cpp.dll DESTINATION ${CMAKE_BINARY_DIR}/Release/)
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../Library/Win/hdf5.dll DESTINATION ${CMAKE_BINARY_DIR}/Release/)
 endif (WIN32)
 if (UNIX)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../Library/Linux/libQt6Charts.so.6.2.4 DESTINATION ${CMAKE_BINARY_DIR}/)
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../Library/Linux/libhdf5.so DESTINATION ${CMAKE_BINARY_DIR}/)
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../Library/Linux/libhdf5.so.310 DESTINATION ${CMAKE_BINARY_DIR}/)
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../Library/Linux/libhdf5.so.310.5.1 DESTINATION ${CMAKE_BINARY_DIR}/)
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../Library/Linux/libhdf5_cpp.so DESTINATION ${CMAKE_BINARY_DIR}/)
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../Library/Linux/libhdf5_cpp.so.310 DESTINATION ${CMAKE_BINARY_DIR}/)
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../Library/Linux/libhdf5_cpp.so.310.0.6 DESTINATION ${CMAKE_BINARY_DIR}/)
 endif (UNIX)
 
 #copy material default library into build directory
@@ -203,7 +179,7 @@ if (WIN32)
     target_link_libraries(calculix_core cubiti cubit_util cubit_gui cubit_python)
     #target_link_libraries(calculix_core clarogui navigation pickwidget clarofw Qt6::Charts Qt6::Widgets)
     target_link_libraries(calculix_core clarogui clarofw navigation Qt6::Charts Qt6::Widgets)
-    target_link_libraries(calculix_core HDF5::HDF5)
+    target_link_libraries(calculix_core fea_storage)
     set_target_properties(calculix_core PROPERTIES AUTOMOC 1)
 
     add_library(calculix_gui SHARED ${CCXCOMP_SRCS})
@@ -247,7 +223,7 @@ if (UNIX)
     target_link_libraries(calculix_core cubiti cubit_util cubit_gui cubit_python)
     #target_link_libraries(calculix_core clarogui clarofw navigation pickwidget Qt6::Charts Qt6::Widgets)
     target_link_libraries(calculix_core clarogui clarofw navigation Qt6::Charts Qt6::Widgets)
-    target_link_libraries(calculix_core HDF5::HDF5)
+    target_link_libraries(calculix_core fea_storage)
     set_target_properties(calculix_core PROPERTIES AUTOMOC 1)
 
     add_library(calculix_gui SHARED ${CCXCOMP_SRCS})
@@ -277,6 +253,9 @@ if (UNIX)
     target_link_libraries(calculix_commands calculix_core)
     target_link_libraries(calculix_gui calculix_core)
 endif (UNIX)
+
+# The material-library GUI also uses the shared storage tool directly.
+target_link_libraries(calculix_gui fea_storage)
 
 # Register feature sources after both platform branches create the targets.
 add_subdirectory(Core)
@@ -331,9 +310,6 @@ foreach (CCX_TARGET calculix_module calculix_commands calculix_gui calculix_core
   )
 endforeach()
 
-if (CMAKE_DL_LIBS)
-  target_link_libraries(calculix_useroptions ${CMAKE_DL_LIBS})
-endif()
 
 if (WIN32)
   set(CCXPYTHONINTERFACE_PROXY "${CMAKE_BINARY_DIR}/Release/calculix_pythoninterface.py")

@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="1090" viewBox="0 0 1100 1090" role="img" aria-labelledby="title desc">
+<title id="title">Topology data ownership and lifetime</title>
+<desc id="desc">CalculiXCore owns domain stores. CoreTopology cases store designs and evaluations, reference material factors and physical or adjoint jobs. CoreMaterials stores factors, CoreSections stores section mappings, CoreJobs stores job records, and CoreResults holds loaded results. Controller state, GUI selections and application preferences are separate. External files are not embedded simply by saving topology records.</desc>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8Z" fill="#475569"/></marker></defs>
+<rect width="1100" height="1090" fill="#ffffff"/>
+<g font-family="Segoe UI, DejaVu Sans, sans-serif" fill="#16324a">
+<text x="550" y="30" font-size="24" text-anchor="middle" font-weight="600">Topology data ownership and lifetime</text>
+<rect x="390" y="60" width="320" height="65" rx="9" fill="#edf4fc" stroke="#52748d" stroke-width="1.5"/>
+<text x="550.0" y="86.44" font-size="17" text-anchor="middle">CalculiXCore</text>
+<text x="550.0" y="109.44" font-size="17" text-anchor="middle">Single shared model owner</text>
+<rect x="20" y="205" width="240" height="195" rx="9" fill="#edf4fc" stroke="#52748d" stroke-width="1.5"/>
+<text x="140.0" y="256.98" font-size="14" text-anchor="middle">CoreTopology</text>
+<text x="140.0" y="276.98" font-size="14" text-anchor="middle">Case settings and set rules</text>
+<text x="140.0" y="296.98" font-size="14" text-anchor="middle">Resolved element flags</text>
+<text x="140.0" y="316.98" font-size="14" text-anchor="middle">Iteration densities</text>
+<text x="140.0" y="336.98" font-size="14" text-anchor="middle">Evaluations and diagnostics</text>
+<text x="140.0" y="356.98" font-size="14" text-anchor="middle">Physical / adjoint job IDs</text>
+<rect x="290" y="205" width="240" height="195" rx="9" fill="#edf4fc" stroke="#52748d" stroke-width="1.5"/>
+<text x="410.0" y="266.98" font-size="14" text-anchor="middle">CoreMaterials</text>
+<text x="410.0" y="286.98" font-size="14" text-anchor="middle">Base material assignments</text>
+<text x="410.0" y="306.98" font-size="14" text-anchor="middle">Applied factors per iteration</text>
+<text x="410.0" y="326.98" font-size="14" text-anchor="middle">Material-cap metadata</text>
+<text x="410.0" y="346.98" font-size="14" text-anchor="middle">Rebuildable grouping cache</text>
+<rect x="560" y="205" width="240" height="195" rx="9" fill="#edf4fc" stroke="#52748d" stroke-width="1.5"/>
+<text x="680.0" y="276.98" font-size="14" text-anchor="middle">CoreSections</text>
+<text x="680.0" y="296.98" font-size="14" text-anchor="middle">Original solid sections</text>
+<text x="680.0" y="316.98" font-size="14" text-anchor="middle">Participating section IDs</text>
+<text x="680.0" y="336.98" font-size="14" text-anchor="middle">Grouped export assignments</text>
+<rect x="830" y="205" width="240" height="195" rx="9" fill="#edf4fc" stroke="#52748d" stroke-width="1.5"/>
+<text x="950.0" y="266.98" font-size="14" text-anchor="middle">CoreJobs</text>
+<text x="950.0" y="286.98" font-size="14" text-anchor="middle">Physical and adjoint jobs</text>
+<text x="950.0" y="306.98" font-size="14" text-anchor="middle">Names, settings and paths</text>
+<text x="950.0" y="326.98" font-size="14" text-anchor="middle">Process status</text>
+<text x="950.0" y="346.98" font-size="14" text-anchor="middle">Files referenced by path</text>
+<polyline points="550,125 550,165 140,165 140,205" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<polyline points="550,165 410,165 410,205" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<polyline points="550,165 680,165 680,205" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<polyline points="550,165 950,165 950,205" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<rect x="830" y="510" width="240" height="145" rx="9" fill="#edf4fc" stroke="#52748d" stroke-width="1.5"/>
+<text x="950.0" y="556.98" font-size="14" text-anchor="middle">CoreResults</text>
+<text x="950.0" y="576.98" font-size="14" text-anchor="middle">Loaded FRD / DAT data</text>
+<text x="950.0" y="596.98" font-size="14" text-anchor="middle">Job-result associations</text>
+<text x="950.0" y="616.98" font-size="14" text-anchor="middle">Reading and conversion</text>
+<polyline points="710,92 1090,92 1090,582 1070,582" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<text x="900" y="80" font-size="13" text-anchor="middle">owns</text>
+<polyline points="140,400 140,445 410,445 410,400" fill="none" stroke="#475569" stroke-width="1.7" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+<text x="275" y="437" font-size="12" text-anchor="middle">design / factor association</text>
+<polyline points="245,400 245,475 950,475 950,400" fill="none" stroke="#475569" stroke-width="1.7" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+<text x="600" y="468" font-size="12" text-anchor="middle">iteration IDs refer to physical and adjoint jobs</text>
+<polyline points="950,400 950,510" fill="none" stroke="#475569" stroke-width="1.7" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+<rect x="20" y="525" width="510" height="160" rx="9" fill="#f0edf9" stroke="#52748d" stroke-width="1.5"/>
+<text x="275.0" y="578.3" font-size="15" text-anchor="middle">Transient: CoreTopologyOptimization</text>
+<text x="275.0" y="599.3" font-size="15" text-anchor="middle">Owns run contexts, phase, serial and active job ID</text>
+<text x="275.0" y="620.3" font-size="15" text-anchor="middle">Polling, wait and stop state</text>
+<text x="275.0" y="641.3" font-size="15" text-anchor="middle">Not recreated as an active run by model loading</text>
+<rect x="560" y="710" width="510" height="135" rx="9" fill="#fff4d9" stroke="#52748d" stroke-width="1.5"/>
+<text x="815.0" y="751.98" font-size="14" text-anchor="middle">GUI selection and application preferences</text>
+<text x="815.0" y="771.98" font-size="14" text-anchor="middle">Displayed case / iteration: model-scoped GUI state</text>
+<text x="815.0" y="791.98" font-size="14" text-anchor="middle">Threshold and toolbar visibility: GUI preferences</text>
+<text x="815.0" y="811.98" font-size="14" text-anchor="middle">Browsing is distinct from stored core selection</text>
+<rect x="20" y="745" width="510" height="100" rx="9" fill="#e7f3e9" stroke="#52748d" stroke-width="1.5"/>
+<text x="275.0" y="778.8" font-size="15" text-anchor="middle">Saved model (.cub5)</text>
+<text x="275.0" y="799.8" font-size="15" text-anchor="middle">Supported model and iteration records</text>
+<text x="275.0" y="820.8" font-size="15" text-anchor="middle">Saving does not create a resumable controller</text>
+<polyline points="275,445 545,445 545,795 530,795" fill="none" stroke="#475569" stroke-width="1.7" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+<rect x="20" y="910" width="1050" height="110" rx="9" fill="#f5f7fa" stroke="#52748d" stroke-width="1.5"/>
+<text x="545.0" y="959.3" font-size="15" text-anchor="middle">External files: .inp, .frd, .dat, other job outputs, GIF and STL</text>
+<text x="545.0" y="980.3" font-size="15" text-anchor="middle">Retain files separately when required; topology model records do not embed their contents.</text>
+<polyline points="1070,305 1080,305 1080,965 1070,965" fill="none" stroke="#475569" stroke-width="1.7" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+<text x="550" y="1060" font-size="14" text-anchor="middle">Solid arrows: ownership. Dashed arrows: references or data flow, not C++ include dependencies.</text>
+<polyline points="390,92 10,92 10,605 20,605" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+</g>
+</svg>

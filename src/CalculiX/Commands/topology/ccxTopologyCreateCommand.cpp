@@ -25,7 +25,15 @@ std::vector<std::string> ccxTopologyCreateCommand::get_syntax()
       "[density_tolerance <value:label='density_tolerance'>] "
       "[compliance_tolerance <value:label='compliance_tolerance'>] "
       "[displacement_nodeset <value:label='displacement_nodeset'>] "
-      "[displacement_component {x|y|z|magnitude}]"
+      "[displacement_component {x|y|z|magnitude}] "
+      "[level_set_interface_width <value:label='level_set_interface_width'>] "
+      "[level_set_regularization_length <value:label='level_set_regularization_length'>] "
+      "[level_set_move_limit <value:label='level_set_move_limit'>] "
+      "[level_set_field_tolerance <value:label='level_set_field_tolerance'>] "
+      "[level_set_seed_spacing <value:label='level_set_seed_spacing'>] "
+      "[level_set_seed_radius <value:label='level_set_seed_radius'>] "
+      "[level_set_integration_tolerance <value:label='level_set_integration_tolerance'>] "
+      "[level_set_integration_max_refinements <value:label='level_set_integration_max_refinements'>]"
   };
 }
 
@@ -42,7 +50,15 @@ std::vector<std::string> ccxTopologyCreateCommand::get_syntax_help()
       "[density_tolerance <value>] "
       "[compliance_tolerance <value>] "
       "[displacement_nodeset <id>] "
-      "[displacement_component {x|y|z|magnitude}]"
+      "[displacement_component {x|y|z|magnitude}] "
+      "[level_set_interface_width <value>] "
+      "[level_set_regularization_length <value>] "
+      "[level_set_move_limit <value>] "
+      "[level_set_field_tolerance <value>] "
+      "[level_set_seed_spacing <value>] "
+      "[level_set_seed_radius <value>] "
+      "[level_set_integration_tolerance <value>] "
+      "[level_set_integration_max_refinements <count>]"
   };
 }
 
@@ -51,6 +67,10 @@ std::vector<std::string> ccxTopologyCreateCommand::get_help()
   return {
       "Create a named topology optimization case.",
       "displacement_nodeset enables displacement measurement; zero disables it.",
+      "level_set_* options configure the level-set method. Omitted options retain Core defaults on creation or stored values on modification.",
+      "Level-set execution remains blocked pending verification. Interface width, field move and field tolerance are dimensionless; regularization and seed sizes use model length units.",
+      "Zero regularization length, seed spacing or seed radius selects an automatic value. Integration refinements must be an integer from 1 to 5.",
+
       "Displacement components use global coordinates. X/Y/Z report the maximum absolute component; magnitude reports the maximum vector norm.",
       "adaptive_moves_on enables adaptive move limits for compliance and displacement density optimization; adaptive_moves_off disables them. The default is on.",
       "minimum_move_limit must be between zero and move_limit. Zero automatically uses 10 percent of move_limit.",
@@ -230,6 +250,89 @@ bool ccxTopologyCreateCommand::execute(CubitCommandData& data)
       PRINT_ERROR("Missing displacement component.\n");
       return false;
     }
+  }
+
+  if (data.find_keyword("level_set_interface_width"))
+  {
+    if (!data.get_value("level_set_interface_width", options.level_set_settings.interface_width))
+    {
+      PRINT_ERROR("Missing level_set_interface_width value.\n");
+      return false;
+    }
+    options.has_level_set_interface_width = true;
+  }
+
+  if (data.find_keyword("level_set_regularization_length"))
+  {
+    if (!data.get_value("level_set_regularization_length", options.level_set_settings.regularization_length))
+    {
+      PRINT_ERROR("Missing level_set_regularization_length value.\n");
+      return false;
+    }
+    options.has_level_set_regularization_length = true;
+  }
+
+  if (data.find_keyword("level_set_move_limit"))
+  {
+    if (!data.get_value("level_set_move_limit", options.level_set_settings.move_limit))
+    {
+      PRINT_ERROR("Missing level_set_move_limit value.\n");
+      return false;
+    }
+    options.has_level_set_move_limit = true;
+  }
+
+  if (data.find_keyword("level_set_field_tolerance"))
+  {
+    if (!data.get_value("level_set_field_tolerance", options.level_set_settings.field_tolerance))
+    {
+      PRINT_ERROR("Missing level_set_field_tolerance value.\n");
+      return false;
+    }
+    options.has_level_set_field_tolerance = true;
+  }
+
+  if (data.find_keyword("level_set_seed_spacing"))
+  {
+    if (!data.get_value("level_set_seed_spacing", options.level_set_settings.seed_spacing))
+    {
+      PRINT_ERROR("Missing level_set_seed_spacing value.\n");
+      return false;
+    }
+    options.has_level_set_seed_spacing = true;
+  }
+
+  if (data.find_keyword("level_set_seed_radius"))
+  {
+    if (!data.get_value("level_set_seed_radius", options.level_set_settings.seed_radius))
+    {
+      PRINT_ERROR("Missing level_set_seed_radius value.\n");
+      return false;
+    }
+    options.has_level_set_seed_radius = true;
+  }
+
+  if (data.find_keyword("level_set_integration_tolerance"))
+  {
+    if (!data.get_value("level_set_integration_tolerance", options.level_set_settings.integration_tolerance))
+    {
+      PRINT_ERROR("Missing level_set_integration_tolerance value.\n");
+      return false;
+    }
+    options.has_level_set_integration_tolerance = true;
+  }
+
+  if (data.find_keyword("level_set_integration_max_refinements"))
+  {
+    double refinements = 0.0;
+    if (!data.get_value("level_set_integration_max_refinements", refinements) || !std::isfinite(refinements) ||
+        refinements < 1.0 || refinements > 5.0 || std::floor(refinements) != refinements)
+    {
+      PRINT_ERROR("Level-set integration refinements must be an integer from 1 to 5.\n");
+      return false;
+    }
+    options.level_set_settings.integration_max_refinements = static_cast<int>(refinements);
+    options.has_level_set_integration_max_refinements = true;
   }
 
   return ccx_topology_iface.create_topology(topology_id, options);

@@ -11,6 +11,56 @@
 
 #include "Core/loadCalculiXCore.hpp"
 
+bool CalculiXResultsInterface::prepare_vtk_plan(int job_id, const CoreResultsVtkOptions& options, CoreResultsVtkPlan& plan)
+{
+  if (!ccx_core.results)
+  {
+    PRINT_ERROR("Results core is not initialized.\n");
+    return false;
+  }
+  return ccx_core.results->prepare_vtk_plan(job_id, options, plan);
+}
+
+FeaResults::ConversionStatus CalculiXResultsInterface::get_vtk_status(int job_id) const
+{
+  return ccx_core.results ? ccx_core.results->get_vtk_status(job_id) : FeaResults::ConversionStatus::NotConverted;
+}
+
+bool CalculiXResultsInterface::build_vtk_result(int job_id, const CoreResultsVtkOptions& options)
+{
+  if (!ccx_core.results)
+  {
+    PRINT_ERROR("Results core is not initialized.\n");
+    return false;
+  }
+  return ccx_core.results->build_vtk_result(job_id, options);
+}
+
+bool CalculiXResultsInterface::cancel_vtk_build()
+{
+  return ccx_core.results && ccx_core.results->cancel_vtk_build();
+}
+
+bool CalculiXResultsInterface::export_vtk_result(int job_id, const std::string& destination)
+{
+  return ccx_core.results && ccx_core.results->export_vtk_result(job_id, destination);
+}
+
+std::string CalculiXResultsInterface::get_vtk_export_path(int job_id) const
+{
+  return ccx_core.results ? ccx_core.results->get_vtk_export_path(job_id) : std::string{};
+}
+
+bool CalculiXResultsInterface::is_vtk_build_active() const
+{
+  return ccx_core.results && ccx_core.results->is_vtk_build_active();
+}
+
+std::shared_ptr<const FeaResults::VtkResultsData> CalculiXResultsInterface::get_vtk_result(int job_id) const
+{
+  return ccx_core.results ? ccx_core.results->get_vtk_result(job_id) : nullptr;
+}
+
 bool CalculiXResultsInterface::result_cgx_job(int job_id)
 {
   return ccx_core.jobs->result_cgx_job(job_id);

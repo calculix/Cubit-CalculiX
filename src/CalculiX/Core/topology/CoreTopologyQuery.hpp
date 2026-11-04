@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+enum class TopologyMethod;
+struct TopologyLevelSetSettings;
 class CoreTopology;
 class CoreJobs;
 class CoreMaterials;
@@ -11,6 +13,9 @@ class CoreMaterials;
 class CoreTopologyQuery
 {
 public:
+  /// Captured historical method; never inferred from editable case settings.
+  static bool get_iteration_level_set_settings(const CoreTopology& topology, int topology_id, int iteration_id, TopologyLevelSetSettings& settings);
+  static bool get_iteration_method(const CoreTopology& topology, int topology_id, int iteration_id, TopologyMethod& method);
   static int get_iteration_job_id(const CoreTopology& topology, CoreJobs& jobs, int topology_id, int iteration_id);
   static int get_iteration_adjoint_job_id(const CoreTopology& topology, CoreJobs& jobs, int topology_id, int iteration_id);
   static int get_active_iteration_job(const CoreTopology& topology, CoreJobs& jobs, int topology_id, int iteration_id);

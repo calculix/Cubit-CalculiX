@@ -22,7 +22,7 @@ public:
   ~CalculiXModule() override;
 
   std::string module_id() const override;
-  bool initialize(std::string& error) override;
+  bool initialize(UserOptionsInterface& options, std::string& error) override;
   void shutdown() noexcept override;
   CommandProviderInterface* command_provider() noexcept override;
   ComponentProviderInterface* component_provider() noexcept override;

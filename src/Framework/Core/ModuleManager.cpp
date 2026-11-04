@@ -46,7 +46,7 @@ bool ModuleManager::add_module(
   return true;
 }
 
-bool ModuleManager::initialize(std::string& error)
+bool ModuleManager::initialize(UserOptionsInterface& options, std::string& error)
 {
   error.clear();
 
@@ -67,7 +67,7 @@ bool ModuleManager::initialize(std::string& error)
       // Record before calling initialize so partial startup is cleaned up too.
       started_modules.push_back(module.get());
 
-      if (!module->initialize(error))
+      if (!module->initialize(options, error))
       {
         if (error.empty())
         {

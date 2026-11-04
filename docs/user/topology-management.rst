@@ -14,6 +14,11 @@ The left-hand list shows case name, ID, and run state. **New** opens the Setting
 tab in create mode with a suggested unused ID. Empty optional fields use core
 configuration defaults. **Apply** submits creation or modification through the
 existing commands. It confirms the stored settings before clearing edits.
+The **Method** dropdown displays the complete Density-based or Level set settings
+widget inside the tab. Switching the dropdown alone does not modify the case;
+Apply stores the selected method. Each method retains its own draft.
+Level-set cases can be configured, but their Run button remains disabled pending
+native numerical verification.
 
 Changing cases retains unsaved settings as window-local drafts. **Reload settings**
 discards that case's draft and reloads stored values. Drafts are not model data
@@ -52,8 +57,25 @@ wrapping use recorded commands. GIF cancellation uses the existing
 animation-controller API. Closing the window pauses preview playback and hides
 the window; it does not kill a topology run or cancel an active GIF export.
 
-Reset and deletion
-------------------
+Reset, save and restart behavior
+--------------------------------
+
+.. list-table:: Model records, controller state and mesh changes
+   :header-rows: 1
+   :widths: 28 72
+
+   * - Operation
+     - Behavior
+   * - Save/load a model
+     - Stores supported settings and iteration records. External solver inputs/results remain separate files; saving topology data does not package them all.
+   * - Load a case saved while running
+     - Restores an interrupted failed state, not an active solver process or controller context.
+   * - Run the same case again
+     - Clears that case's previous run records and initializes a fresh run with its current settings and preservation selections.
+   * - Reset or delete records
+     - Clears or invalidates affected GUI selections, monitor data and previews. Historical IDs must not be reused by stale controls.
+   * - Delete mesh elements
+     - Keeps historical numerical records, but missing elements can prevent later preview, playback, GIF export, wrapping or further projection.
 
 Model reset clears management data, cached topology/CGAL panel selections and
 Jobs Monitor. Deleting a job explicitly clears a monitor displaying that job,
@@ -73,6 +95,10 @@ selection, a six-decimal threshold, an icon-only **Topology Preview** toggle, an
 a final **CGAL Alpha wrap** button.
 Dropdown widths follow their contents with a compact minimum width. Each control
 has a tooltip. Open management by double-clicking the model-tree case or iteration.
+The displayed iteration is a GUI selection; browsing does not change the stored
+core selected iteration. Preview and mesh actions submit the displayed ID
+explicitly. The remembered toolbar threshold/visibility preferences are separate
+from that model selection and from transient controller state.
 
 The toolbar's Alpha wrap button wraps the selected completed iteration at the
 shown threshold using automatic alpha and offset. It writes

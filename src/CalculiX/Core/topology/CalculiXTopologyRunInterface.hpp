@@ -8,6 +8,7 @@
 #include <array>
 
 struct TopologyRunInfo;
+struct TopologyLevelSetProposal;
 enum class TopologyRunState;
 
 class CalculiXTopologyRunInterface
@@ -38,6 +39,11 @@ public:
   bool read_topology_element_energies(int topology_id, int iteration_id, std::map<int, double>& element_energies);
   bool read_topology_job_element_tensors(int job_id, const std::string& key, std::map<int, std::map<int, std::array<double, 6>>>& tensors);
   bool read_topology_displacement(int topology_id, int iteration_id, double& value, int& node_id, std::array<double, 3>* critical_displacement = nullptr);
+  bool initialize_topology_level_set_design(int topology_id);
+  bool evaluate_topology_level_set_compliance(int topology_id, int iteration_id, const std::map<int, double>& energies);
+  bool evaluate_topology_level_set_proposal(int topology_id, int iteration_id, TopologyLevelSetProposal& proposal);
+  bool prepare_topology_level_set_iteration(int topology_id, int source_iteration, int next_iteration, const TopologyLevelSetProposal& proposal);
+  bool check_topology_level_set_convergence(int topology_id, int previous_iteration, int current_iteration, bool& converged);
   bool prepare_topology_density_iteration(int topology_id, int source_iteration, int next_iteration);
   bool collect_topology_element_volumes(int topology_id, std::map<int, double>& element_volumes, std::map<int, std::array<double, 3>>* element_centers = nullptr);
   bool collect_topology_integration_weights(int topology_id, std::map<int, std::map<int, double>>& weights);

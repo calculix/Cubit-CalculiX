@@ -1,5 +1,6 @@
 #include "FEAPlugin.hpp"
 #include "Framework/Commands/WorkspaceCommand.hpp"
+#include "Framework/Commands/DocumentationCommand.hpp"
 #include "Framework/Core/FrameworkContext.hpp"
 #include "CubitMessage.hpp"
 #include "CubitPluginExport.hpp"
@@ -34,6 +35,7 @@ std::vector<std::string> FEAPlugin::get_keys()
 
   auto keys = framework_context().module_manager().command_keys();
   keys.insert(keys.begin(), "feaWorkspaceCommand");
+  keys.insert(keys.begin(), "feaDocumentationCommand");
   return keys;
 }
 
@@ -42,6 +44,11 @@ CubitCommand* FEAPlugin::create_command(const std::string& key)
   if (!acquired)
   {
     return nullptr;
+  }
+
+  if (key == "feaDocumentationCommand")
+  {
+    return new DocumentationCommand();
   }
 
   if (key == "feaWorkspaceCommand")

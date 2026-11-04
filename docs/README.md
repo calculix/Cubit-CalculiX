@@ -1,6 +1,7 @@
 # Documentation: authoring and building
 
-The offline manual contains separate user and developer sections. Its build is
+The Framework owns one offline manual with shared and workspace-specific user
+and developer sections. Its build is
 independent of CMake and never compiles or runs the plugin or solver.
 
 ## Build requirements
@@ -67,11 +68,11 @@ cmake --build build --target stage_documentation
 
 Use the actual release label when packaging. The default destination is
 `build/Release/documentation/` on Windows and `build/documentation/` on Linux,
-following the current plugin resource layout. `CCX_DOCUMENTATION_SOURCE` and
-`CCX_DOCUMENTATION_DESTINATION` are CMake cache paths for overriding the source
+following the current plugin resource layout. `FEA_DOCUMENTATION_SOURCE` and
+`FEA_DOCUMENTATION_DESTINATION` are CMake cache paths for overriding the source
 HTML tree and the destination. The destination names the documentation folder
 itself, not its parent. For example, configure with
-`-DCCX_DOCUMENTATION_DESTINATION=/release/plugin/documentation` for a separate
+`-DFEA_DOCUMENTATION_DESTINATION=/release/plugin/documentation` for a separate
 release directory. Use a clean release destination to avoid retaining obsolete
 pages from an older manual; staging copies files without deleting unrelated files.
 
@@ -79,14 +80,16 @@ The script can also be run without configuring or building the plugin; supply
 absolute paths (quote the complete `-D...` argument if it contains spaces):
 
 ```text
-cmake -DCCX_DOCUMENTATION_SOURCE=<absolute-html-directory> -DCCX_DOCUMENTATION_DESTINATION=<absolute-plugin-directory>/documentation -P src/cmake/StageDocumentation.cmake
+cmake -DFEA_DOCUMENTATION_SOURCE=<absolute-html-directory> -DFEA_DOCUMENTATION_DESTINATION=<absolute-plugin-directory>/documentation -P src/cmake/StageDocumentation.cmake
 ```
 
 Ship the resulting layout together:
 
 ```text
 plugin directory/
-  calculix_plugin.dll          # Windows; libcalculix_plugin.so on Linux
+  fea_plugin.dll               # Windows; libfea_plugin.so on Linux
+  fea_framework.dll            # Windows; libfea_framework.so on Linux
+  _fea_comp.pyd                # Windows; _fea_comp.so on Linux
   ...other plugin libraries and resources...
   documentation/
     index.html
@@ -96,13 +99,13 @@ plugin directory/
 ```
 
 After rebuilding the plugin with the Help action, use
-**Help > Cubit-CalculiX documentation**. The action finds the plugin directory
-through the component registry and opens its local `documentation/index.html`
+**Help > FEA documentation**, or `fea documentation`. The Framework resolves
+its component directory directly and opens its local `documentation/index.html`
 using the desktop's configured HTML application. Missing or unreadable manuals
 report the expected path; failure to submit the open request is also reported.
 An accepted desktop request does not prove the browser finished rendering.
 Menu initialization does not duplicate the action; cleanup removes only entries
-owned by this plugin's documentation menu integration.
+owned by the Framework documentation menu integration.
 
 ## Validate generated output
 
@@ -115,7 +118,8 @@ Doxygen warnings are saved to `docs/_build/doxygen-warnings.log`.
 
 ## Authoring conventions
 
-- Write user workflows in `user/`, syntax/defaults in `commands/`, runnable-example
+- Write shared user topics in `framework/`; `calculix/index.rst` groups the CalculiX chapters.
+- Write CalculiX user workflows in `user/`, syntax/defaults in `commands/`, runnable-example
   explanations in `tutorials/`, and implementation/math in `developer/`.
 - Both Markdown (MyST) and reStructuredText are supported.
 - Reference maintained `.jou` files with Sphinx downloads or literal includes;
@@ -125,6 +129,14 @@ Doxygen warnings are saved to `docs/_build/doxygen-warnings.log`.
   keywords and assumptions, rather than implying every solver feature is supported.
 - Document APIs with Doxygen comments in project code. Add cross-references in
   `developer/api.rst`; existing declaration extraction is only initial coverage.
+- During a documentation-only/code-frozen pass, leave source comments unchanged
+  and put additional contracts in `developer/code-documentation.rst` and its
+  domain chapters. `developer/code-api-index.rst` covers owned declarations;
+  `developer/code-catalog/index.rst` covers source navigation. Do not include
+  bundled external utility implementations in either extraction or the catalogue.
+- Record source findings and verification blockers in
+  `developer/review-findings.rst`; distinguish source-confirmed behavior, an API
+  hazard and a runtime reproduction. Documentation work does not authorize fixes.
 - Keep runtime assets local. Sphinx uses its bundled Alabaster theme with system
   fonts and the pinned KaTeX extension; KaTeX's CSS/fonts and license are packaged.
 - Existing Mermaid fences currently display as source diagrams. Use local SVGs

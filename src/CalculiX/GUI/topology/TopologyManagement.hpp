@@ -10,6 +10,9 @@
 
 struct TopologyOptions;
 class JobsMonitor;
+class QStackedWidget;
+class TopologyManagementDensitySettingsWidget;
+class TopologyManagementLevelSetSettingsWidget;
 class QTreeWidget;
 class QTabWidget;
 class QProgressBar;
@@ -31,7 +34,7 @@ class TopologyManagement : public QWidget
 {
 public:
   explicit TopologyManagement(JobsMonitor* monitor, QWidget* parent = nullptr);
-  void clear();
+  void clear(bool clear_settings = true);
   void invalidateTopology(int topology_id);
   void refresh();
   void setTopology(int topology_id);
@@ -67,8 +70,6 @@ private:
   bool creating = false;
   bool refreshing = false;
   bool submitting = false;
-  bool loadingSettings = false;
-  bool settingsDirty = false;
   QPointer<JobsMonitor> jobsMonitor;
   QTreeWidget* caseTree = nullptr;
   QTreeWidget* iterationTree = nullptr;
@@ -82,18 +83,12 @@ private:
   std::string lastRunState;
 
   QWidget* settingsForm = nullptr;
-  QSpinBox* settingsId = nullptr;
-  std::array<QLineEdit*, 9> settingsFields{};
   QComboBox* settingsMethod = nullptr;
-  QComboBox* settingsObjective = nullptr;
-  QComboBox* settingsNodeset = nullptr;
-  QComboBox* settingsComponent = nullptr;
-  QComboBox* settingsAdaptive = nullptr;
-  QLineEdit* settingsMinimumMove = nullptr;
-  QPushButton* settingsApply = nullptr;
-  QLabel* settingsMessage = nullptr;
-  QStringList settingsOriginal;
-  std::map<int, QStringList> settingsDrafts;
+  QStackedWidget* settingsStack = nullptr;
+  TopologyManagementDensitySettingsWidget* densitySettings = nullptr;
+  TopologyManagementLevelSetSettingsWidget* levelSetSettings = nullptr;
+  int settingsLoadedId = -2;
+  std::map<int, int> settingsMethodDrafts;
 
   QComboBox* setType = nullptr;
   QTreeWidget* available = nullptr;
@@ -112,7 +107,12 @@ private:
   QPushButton* waitButton = nullptr;
   QPushButton* killButton = nullptr;
   QPushButton* runMonitorButton = nullptr;
-  struct ConvergenceCriterion { QProgressBar* bar = nullptr; QLabel* badge = nullptr; };
+  struct ConvergenceCriterion
+  {
+    QProgressBar* bar = nullptr;
+    QLabel* badge = nullptr;
+    QLabel* label = nullptr;
+  };
   std::array<ConvergenceCriterion, 3> criteria;
   QLabel* convergenceIteration = nullptr;
   QLabel* convergenceSummary = nullptr;
@@ -134,12 +134,7 @@ private:
   void beginCreate();
   void deleteTopology();
   void loadSettings();
-  void applySettings();
   void rememberSettingsDraft();
-  QStringList settingsValues() const;
-  QStringList settingsValues(const TopologyOptions& options) const;
-  void setSettingsValues(const QStringList& values);
-  void refreshSettingsNodesets(int selected);
   void refreshLists();
   void updateButtons();
   void changeSelection(bool adding);

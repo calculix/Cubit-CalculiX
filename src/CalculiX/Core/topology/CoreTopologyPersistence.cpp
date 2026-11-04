@@ -7,6 +7,7 @@
 #include "Core/jobs/CoreJobs.hpp"
 #include "TopologyHdf5.hpp"
 #include "TopologyIterationIds.hpp"
+#include "CoreTopologySaveValidation.hpp"
 #include "CubitMessage.hpp"
 
 #include <string>
@@ -21,21 +22,9 @@ bool CoreTopologyPersistence::read_derived_data(HDF5Tool& file, const CoreTopolo
     decltype(materials.topology_material_data) saved_materials;
     decltype(sections.topology_solid_sections) saved_sections;
     const std::string root = "Cubit-CalculiX/Topology";
-    std::vector<int> version;
-
     if (file.nameExists(root))
     {
-      if (!file.read_dataset_int_rank_1("version", root, version) || version.size() != 1)
-      {
-        PRINT_ERROR("Unable to read topology save version.\n");
-        return false;
-      }
-    }
-
-    if (!version.empty() && version[0] >= 2)
-    {
       TopologyHdf5<true> archive(file, "Cubit-CalculiX");
-
       if (!archive.value("TopologyMaterials", saved_materials) || !archive.value("TopologySections", saved_sections))
       {
         PRINT_ERROR("Unable to read topology material/section data.\n");
@@ -43,15 +32,12 @@ bool CoreTopologyPersistence::read_derived_data(HDF5Tool& file, const CoreTopolo
       }
     }
 
-    if (!version.empty() && version[0] == 2)
+    for (const auto& entry : topology.topology_cases)
     {
-      for (auto& collection : saved_materials)
+      if ((!entry.second.iteration_density_designs.empty() || !entry.second.iteration_level_set_designs.empty()) && saved_materials.count(entry.first) == 0)
       {
-        if (!increment_topology_iteration_keys(collection.second.iteration_factors) || !increment_topology_iteration_keys(collection.second.iteration_material_caps))
-        {
-          PRINT_ERROR("Unable to migrate topology material factors.\n");
-          return false;
-        }
+        PRINT_ERROR("Missing saved topology material collection for case %d.\n", entry.first);
+        return false;
       }
     }
 
@@ -86,6 +72,14 @@ bool CoreTopologyPersistence::read_derived_data(HDF5Tool& file, const CoreTopolo
           PRINT_ERROR("Cannot read CalculiX topology sections: missing solid section %d.\n", id);
           return false;
         }
+      }
+    }
+    for (const auto& collection : saved_materials)
+    {
+      if (!CoreTopologySaveValidation::validate_factors(topology.topology_cases.at(collection.first), collection.second.element_base_material, collection.second.iteration_factors))
+      {
+        PRINT_ERROR("Invalid saved topology material coverage.\n");
+        return false;
       }
     }
     // Data-only validation views: no material interfaces or process handles are copied.
@@ -169,6 +163,33 @@ bool CoreTopologyPersistence::write(HDF5Tool& file, const CoreTopology& topology
 {
   try
   {
+    for (const auto& entry : topology.topology_cases)
+    {
+      if ((!entry.second.iteration_density_designs.empty() || !entry.second.iteration_level_set_designs.empty()) && materials.topology_material_data.count(entry.first) == 0)
+      {
+        PRINT_ERROR("Missing topology material collection; save cancelled.\n");
+        return false;
+      }
+    }
+    for (const auto& entry : materials.topology_material_data)
+    {
+      const auto configuration = topology.topology_cases.find(entry.first);
+      if (configuration == topology.topology_cases.end() ||
+          entry.second.iteration_material_caps.size() != entry.second.iteration_factors.size() ||
+          !CoreTopologySaveValidation::validate_factors(configuration->second, entry.second.element_base_material, entry.second.iteration_factors))
+      {
+        PRINT_ERROR("Invalid topology material data; save cancelled.\n");
+        return false;
+      }
+      for (const auto& cap : entry.second.iteration_material_caps)
+      {
+        if (cap.first < 1 || cap.second < 2 || entry.second.iteration_factors.count(cap.first) == 0)
+        {
+          PRINT_ERROR("Invalid topology material cap; save cancelled.\n");
+          return false;
+        }
+      }
+    }
     if (!topology.save_configuration(file))
     {
       return false;

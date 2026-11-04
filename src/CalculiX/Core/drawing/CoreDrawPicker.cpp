@@ -10,10 +10,45 @@
 #include <cmath>
 #include <exception>
 #include <utility>
+#include <vtkMatrix4x4.h>
+#include <vtkDataSet.h>
 
 namespace
 {
 const char SymbolPickType[] = "ccx_symbol";
+
+// Cubit 2026.11 passes a render snapshot rather than a renderer. Views with
+// identical visible datasets and projection are equivalent for this hit test.
+bool matchesView(GView& view, const PickViewInfo& info)
+{
+  auto* renderer = view.get_renderer();
+  if (renderer == nullptr)
+  {
+    return false;
+  }
+  const auto candidate = SVPickUtil::pick_info(renderer);
+  if (candidate.data != info.data || candidate.winsize[0] != info.winsize[0] || candidate.winsize[1] != info.winsize[1] ||
+    !candidate.world_to_view || !info.world_to_view)
+  {
+    return false;
+  }
+  for (int i = 0; i < 4; ++i)
+  {
+    if (candidate.viewport[i] != info.viewport[i])
+    {
+      return false;
+    }
+    for (int j = 0; j < 4; ++j)
+    {
+      const double difference = candidate.world_to_view->GetElement(i, j) - info.world_to_view->GetElement(i, j);
+      if (!std::isfinite(difference) || std::abs(difference) > 1e-12)
+      {
+        return false;
+      }
+    }
+  }
+  return true;
+}
 
 const char* featureName(DrawFeature feature)
 {
@@ -69,7 +104,7 @@ CoreDrawPicker::~CoreDrawPicker()
 
 bool CoreDrawPicker::ownsPickMode() const
 {
-  return registered && GPickerBase::get_picker() == this;
+  return registered && SVSelection::get_picker() == this;
 }
 
 bool CoreDrawPicker::active() const
@@ -84,7 +119,7 @@ bool CoreDrawPicker::activate(std::string& error)
   {
     return true;
   }
-  const char* previous = GPickerBase::get_pick_type();
+  const char* previous = SVSelection::get_pick_type();
   if (previous == nullptr || std::strcmp(previous, SymbolPickType) == 0)
   {
     error = "No previous Cubit pick mode is available to restore.";
@@ -93,16 +128,16 @@ bool CoreDrawPicker::activate(std::string& error)
   previousType = previous;
   if (!registered)
   {
-    if (!GPickerBase::register_picker(SymbolPickType, this))
+    if (!SVSelection::register_picker(SymbolPickType, this))
     {
       error = "Cubit could not register CalculiX symbol picking.";
       return false;
     }
-    GPickerBase::add_pick_observer(this);
-    GPickerBase::add_pre_selection_observer(this);
+    SVSelection::add_pick_observer(this);
+    SVSelection::add_pre_selection_observer(this);
     registered = true;
   }
-  GPickerBase::set_pick_type(SymbolPickType, true);
+  SVSelection::set_pick_type(SymbolPickType, true);
   dispatch->active = ownsPickMode();
   if (!dispatch->active)
   {
@@ -114,14 +149,14 @@ bool CoreDrawPicker::activate(std::string& error)
 void CoreDrawPicker::clearOwnedSelections()
 {
   const QScopedValueRollback<bool> guard(internalUpdate, true);
-  if (dynamic_cast<const PickedDrawEntity*>(GPickerBase::get_current_pre_selection()) != nullptr)
+  if (dynamic_cast<const PickedDrawEntity*>(SVSelection::get_current_pre_selection()) != nullptr)
   {
-    GPickerBase::set_pre_selection(EntitySelection());
+    SVSelection::set_pre_selection(EntitySelection());
   }
   clear_selection_buffer();
   const EntitySelection* picked = nullptr;
   int count = 0;
-  GPickerBase::get_picked_list(picked, count);
+  SVSelection::get_picked_list(picked, count);
   std::vector<GPicked::PickedEntity*> owned;
   for (int index = 0; index < count; ++index)
   {
@@ -132,10 +167,10 @@ void CoreDrawPicker::clearOwnedSelections()
   }
   if (!owned.empty())
   {
-    GPickerBase::remove_from_picked_list(owned.size(), owned.data());
+    SVSelection::remove_from_picked_list(owned.size(), owned.data());
   }
   const EntitySelection* possible = nullptr;
-  GPickerBase::get_possible_selections(possible, count);
+  SVSelection::get_possible_selections(possible, count);
   owned.clear();
   for (int index = 0; index < count; ++index)
   {
@@ -146,7 +181,7 @@ void CoreDrawPicker::clearOwnedSelections()
   }
   for (auto* entity : owned)
   {
-    GPickerBase::remove_from_possible_selections_list(entity);
+    SVSelection::remove_from_possible_selections_list(entity);
   }
 }
 
@@ -164,9 +199,9 @@ void CoreDrawPicker::deactivate() noexcept
     clearOwnedSelections();
     if (ownsPickMode())
     {
-      const int count = GPickerBase::get_number_pick_types();
+      const int count = SVSelection::get_number_pick_types();
       std::vector<const char*> types(static_cast<std::size_t>(count));
-      GPickerBase::get_pick_types(types.data());
+      SVSelection::get_pick_types(types.data());
       const char* fallback = nullptr;
       const char* restore = nullptr;
       for (const char* type : types)
@@ -186,7 +221,7 @@ void CoreDrawPicker::deactivate() noexcept
       }
       if (restore != nullptr || fallback != nullptr)
       {
-        GPickerBase::set_pick_type(restore == nullptr ? fallback : restore, true);
+        SVSelection::set_pick_type(restore == nullptr ? fallback : restore, true);
       }
     }
   }
@@ -202,9 +237,9 @@ void CoreDrawPicker::shutdown() noexcept
   dispatch->callback = {};
   if (registered)
   {
-    GPickerBase::remove_pre_selection_observer(this);
-    GPickerBase::remove_pick_observer(this);
-    GPickerBase::unregister_picker(SymbolPickType, this);
+    SVSelection::remove_pre_selection_observer(this);
+    SVSelection::remove_pick_observer(this);
+    SVSelection::unregister_picker(SymbolPickType, this);
     registered = false;
   }
   hover.detach();
@@ -229,7 +264,7 @@ void CoreDrawPicker::setCallback(std::function<void(const CalculiXDrawSelection&
   ++dispatch->serial;
 }
 
-void CoreDrawPicker::compute_pick(vtkRenderer* renderer, float x, float y)
+void CoreDrawPicker::compute_pick(float x, float y, PickViewInfo& info)
 {
   clear_selection_buffer();
   if (!active() || !ownsPickMode())
@@ -246,14 +281,14 @@ void CoreDrawPicker::compute_pick(vtkRenderer* renderer, float x, float y)
     const QScopedValueRollback<bool> guard(internalUpdate, true);
     for (const auto& view : factory->views())
     {
-      if (view != nullptr && view->get_renderer() == renderer)
+      if (view != nullptr && matchesView(*view, info))
       {
         DrawPickHit hit;
         CalculiXDrawSelection result;
         if (CoreDrawHitTest().pick(*view, x, y, snapshot, hit))
         {
           auto* entity = new PickedDrawEntity(hit, snapshot.revision);
-          const float point[] = {static_cast<float>(hit.world[0]), static_cast<float>(hit.world[1]), static_cast<float>(hit.world[2])};
+          const std::array<float, 3> point = {{static_cast<float>(hit.world[0]), static_cast<float>(hit.world[1]), static_cast<float>(hit.world[2])}};
           add_to_selection_buffer(entity, point, static_cast<float>(hit.display[2]), true);
           entity->Delete();
           result = hit.owner;
@@ -278,7 +313,7 @@ void CoreDrawPicker::clearHover() noexcept
 
 }
 
-void CoreDrawPicker::compute_pre_select(vtkRenderer* renderer, float x, float y)
+void CoreDrawPicker::compute_pre_select(float x, float y, PickViewInfo& info)
 {
   clear_selection_buffer();
   if (!active() || !ownsPickMode())
@@ -297,7 +332,7 @@ void CoreDrawPicker::compute_pre_select(vtkRenderer* renderer, float x, float y)
     const QScopedValueRollback<bool> guard(internalUpdate, true);
     for (const auto& view : factory->views())
     {
-      if (view == nullptr || view->get_renderer() != renderer)
+      if (view == nullptr || !matchesView(*view, info))
       {
         continue;
       }
@@ -308,7 +343,7 @@ void CoreDrawPicker::compute_pre_select(vtkRenderer* renderer, float x, float y)
         return;
       }
       auto* entity = new PickedDrawEntity(hit, snapshot.revision);
-      const float point[] = {static_cast<float>(hit.world[0]), static_cast<float>(hit.world[1]), static_cast<float>(hit.world[2])};
+      const std::array<float, 3> point = {{static_cast<float>(hit.world[0]), static_cast<float>(hit.world[1]), static_cast<float>(hit.world[2])}};
       add_to_selection_buffer(entity, point, static_cast<float>(hit.display[2]), true);
       entity->Delete();
       return;
@@ -322,7 +357,7 @@ void CoreDrawPicker::compute_pre_select(vtkRenderer* renderer, float x, float y)
   }
 }
 
-void CoreDrawPicker::compute_pick_by_bounds(vtkRenderer*, PickBounds*)
+void CoreDrawPicker::compute_pick_by_bounds(PickBounds*, PickViewInfo&)
 {
   clear_selection_buffer();
 }

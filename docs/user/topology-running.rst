@@ -12,8 +12,10 @@ nodeset and a global component or magnitude; see :doc:`topology-settings`.
 
 The run validates the supported analysis and objective, resolves preserved
 elements, initializes the density design, and checks/configures the required
-output requests. It uses the final available analysis step/increment for its
-objective evaluation. A single physical job may contain several analysis steps.
+output requests. The evaluator requires its quantities at the final DAT
+step/increment recorded by the parser. Missing data there is an error; it does
+not fall back to an earlier frame. A single physical job may contain several
+analysis steps. Physical and adjoint files select their final frames independently.
 
 Starting asynchronously
 -----------------------
@@ -150,13 +152,18 @@ Using the Actions panel
    * - Job monitor
      - Opens the monitor for the controller's current associated job, which can be physical or adjoint.
 
-The panel displays the latest available convergence and displacement
-measurements. Bars indicate limit usage, so lower values are better; they are
-not a percentage estimate of remaining runtime. Both objectives also require an
+The Actions panel and Topology Management's Run tab display the latest
+available convergence and displacement measurements. Their three bars show
+maximum density change, relative objective change and volume fraction. Bars
+indicate limit usage, so lower values are better; they are not a percentage
+estimate of optimization completion or remaining runtime. Both objectives also require an
 ordinary proposal residual to satisfy the density tolerance: OC for compliance,
 projected-gradient for displacement. This can prevent convergence even when all
 three visible criteria pass. The proposal uses the configured maximum move,
-independently of adaptive restriction, and requires no additional solve.
+independently of adaptive restriction, and requires no additional solve. It is
+a fourth numerical check, not a fourth bar. If the three bars pass but that
+proposal has not settled, the summary still reports ``Converged: NO``. See
+:doc:`topology-objectives` for the criteria and their interpretation.
 
 See :doc:`../commands/topology` for command syntax and
 :doc:`../tutorials/index` for complete journals.

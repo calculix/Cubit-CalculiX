@@ -1,4 +1,5 @@
 #include "CalculiXApplicationInterface.hpp"
+#include "CoreUserOptions.hpp"
 #include <string>
 #include <vector>
 
@@ -155,4 +156,34 @@ bool CalculiXApplicationInterface::initialize_application()
   }
 
   return ccx_core.bool_init2 || ccx_core.init2();
+}
+
+bool CalculiXApplicationInterface::initialize_user_options(UserOptionsInterface& options, std::string& error)
+{
+  return CoreUserOptions::initialize(options, error);
+}
+
+void CalculiXApplicationInterface::shutdown_user_options() noexcept
+{
+  CoreUserOptions::detach();
+}
+
+UserOptions CalculiXApplicationInterface::user_options() const
+{
+  return CoreUserOptions::current();
+}
+
+std::vector<std::string> CalculiXApplicationInterface::user_options_restart_required() const
+{
+  return CoreUserOptions::restart_required();
+}
+
+std::string CalculiXApplicationInterface::component_directory() const
+{
+  return CoreUserOptions::component_directory();
+}
+
+bool CalculiXApplicationInterface::apply_user_options(const std::string& payload, std::string& error)
+{
+  return CoreUserOptions::apply(payload, error);
 }

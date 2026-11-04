@@ -6,10 +6,45 @@ See :doc:`topology-algorithms` for objective/update mathematics,
 :doc:`../user/topology-results` for the GUI, and
 :doc:`../commands/topology-results` for command syntax.
 
+Implementation map
+------------------
+
+Paths below are relative to ``src/CalculiX``; source downloads remain
+available in the offline manual.
+
+.. list-table:: Current implementation
+   :header-rows: 1
+   :widths: 30 70
+
+   * - Responsibility
+     - Source and operation
+   * - Public iteration queries
+     - :download:`Core/topology/CalculiXCoreTopologyQueries.cpp <../../src/CalculiX/Core/topology/CalculiXCoreTopologyQueries.cpp>`; :download:`Core/topology/CoreTopologyQuery.cpp <../../src/CalculiX/Core/topology/CoreTopologyQuery.cpp>`. Iteration rows, job associations and validated per-element data.
+   * - Stored records and case serialization
+     - :download:`Core/topology/CoreTopologyStructs.hpp <../../src/CalculiX/Core/topology/CoreTopologyStructs.hpp>`; :download:`Core/topology/CoreTopology.cpp <../../src/CalculiX/Core/topology/CoreTopology.cpp>`. ``TopologyCase``, ``TopologyDensityDesign`` and ``TopologyIterationEvaluation``; ``save_configuration`` and ``read_configuration``.
+   * - Cross-domain persistence
+     - :download:`Core/topology/CoreTopologyPersistence.cpp <../../src/CalculiX/Core/topology/CoreTopologyPersistence.cpp>`; :download:`Core/application/CalculiXCorePersistence.cpp <../../src/CalculiX/Core/application/CalculiXCorePersistence.cpp>`. ``CoreTopologyPersistence::read``/``write`` coordinate case records with derived material and section data during model persistence.
+   * - Iteration completion and selection
+     - :download:`Core/topology/CalculiXCoreTopologyIteration.cpp <../../src/CalculiX/Core/topology/CalculiXCoreTopologyIteration.cpp>`; :download:`Core/topology/CoreTopologyIteration.cpp <../../src/CalculiX/Core/topology/CoreTopologyIteration.cpp>`. ``mark_completed`` and ``select_iteration`` validate the stored iteration and job association.
+   * - Preview and animation
+     - :download:`Core/drawing/CoreDrawTopology.cpp <../../src/CalculiX/Core/drawing/CoreDrawTopology.cpp>`; :download:`Core/drawing/TopologyAnimation.cpp <../../src/CalculiX/Core/drawing/TopologyAnimation.cpp>`. ``draw_topology`` builds retained/removal geometry; the animation controller captures and encodes frames.
+   * - Mesh projection
+     - :download:`Core/results/CoreResultsProject.cpp <../../src/CalculiX/Core/results/CoreResultsProject.cpp>`. Threshold-based topology projection and deletion.
+   * - Management and toolbar
+     - :download:`GUI/topology/TopologyManagement.cpp <../../src/CalculiX/GUI/topology/TopologyManagement.cpp>`; :download:`GUI/topology/TopologyManagementIterations.cpp <../../src/CalculiX/GUI/topology/TopologyManagementIterations.cpp>`; :download:`GUI/drawing/CalculiXTopologyToolbar.cpp <../../src/CalculiX/GUI/drawing/CalculiXTopologyToolbar.cpp>`. Explicit displayed iteration selection and existing command submission; GUI state is distinct from stored core selection.
+
 Stored records and ownership
 ----------------------------
 
-``CoreTopology`` owns cases and their iteration density designs, objective
+.. figure:: ../images/topology-data-ownership.svg
+   :alt: CalculiXCore owns the topology, material, section, job and result stores. Case records reference applied factors and jobs. Controller contexts and GUI selections are separate; GUI preferences use application settings. External files are not embedded merely by saving topology records.
+
+   Solid arrows indicate ownership; dashed arrows indicate references or data
+   flow. The diagram describes data responsibility, not direct header dependencies
+   between domain cores. Domain interfaces remain the communication boundary.
+
+
+``CoreTopology`` owns cases and their density/level-set iteration designs, objective
 evaluations, volume/convergence diagnostics, physical and adjoint job
 associations, and resolved element-preservation flags. Preservation flags are
 case run data, shared by the designs in that run. Density designs retain their
@@ -22,13 +57,21 @@ interfaces. Consumers must not introduce direct dependencies between domain
 core headers; cross-core access goes through the domain-specific interfaces (see :doc:`interface-layout`).
 
 ``CalculiXCore::get_topology_iteration_element_data`` checks the iteration job
-is finished and an evaluation, density design, and factor map exist. It checks
+is finished and an evaluation, method-matching design, and factor map exist. It checks
 coverage against preservation and base material assignments and validates
-positive IDs, finite densities/factors, and their bounds. Each returned row is:
+positive IDs, finite solid fractions/factors, and their bounds. Each returned row is:
 
 .. code-block:: text
 
-   [global_element_id, density, stiffness_factor, preserved_flag]
+   [global_element_id, solid_fraction, stiffness_factor, preserved_flag]
+
+For density designs the solid fraction is the density; for level set it is the
+regularized element fraction, including zero for void. Stiffness factors remain
+strictly positive. Preserved elements require fraction and factor equal to one.
+``get_topology_iteration_method`` reports the captured historical method;
+editing the case method does not reinterpret earlier results. The existing
+13-column iteration query retains its layout; its design-change column reports
+density change or available nodal field change according to that captured method.
 
 The flag is zero or one. Consumers perform their additional mesh checks before
 using these rows. An empty result signals unavailable or invalid data.
@@ -67,23 +110,31 @@ are disabled. Reloading refreshes the lists without reconstructing a run.
 Save and load
 -------------
 
-``CoreTopology::save_configuration`` writes the topology group below
-``Cubit-CalculiX/Topology`` with schema version 8. Version 8 stores
-``material_cap``; older configurations receive the default for future iterations
-without changing their historical applied factors. Ordinary displacement
-projected-residual diagnostics are additive optional evaluation datasets within
-this schema. Older records load with availability false and residual zero;
-loading does not recompute them or manufacture a passing check. Newly evaluated
-iterations calculate their residual before convergence checks. Case settings, explicit
-preservation rules, and runtime records are serialized through the topology
-HDF5 archive helpers. Related material and job data are managed by their
-own cores; case records refer to them rather than owning duplicate job objects.
+``CoreTopology::save_configuration`` writes a single required current layout
+below ``Cubit-CalculiX/Topology``. No topology format version or migration path
+is stored. Older or incomplete topology layouts fail with a Cubit error; missing
+current fields are not replaced by defaults. An absent topology group represents
+a model without topology cases.
 
-Loading validates case settings, iteration keys, job associations, and selected
-iteration completeness before committing the collection. Supported older data
-is migrated by the reader, including the iteration numbering conversion where
-applicable. A case saved as running is restored as failed with an interrupted-run
-message; loading does not recreate the transient controller or restart a solver.
+The archive stores case settings (including level-set settings), preservation
+rules, job associations, designs and common evaluations. Level-set designs retain
+nodal coefficients, fixed nodes, solid fractions, captured settings, seed origin,
+volume diagnostics and incoming update diagnostics. Evaluations retain their own
+method tag, nodal derivatives and source proposal diagnostics. Material factors,
+base assignments and material-cap markers remain owned by the material core.
+Transient material-group caches are rebuilt from saved factors.
+
+``CoreTopologySaveValidation`` checks numeric records, domains, method/design
+consistency, source links and selected-iteration completeness without consulting
+the current Cubit mesh. Material coverage is checked against stored preservation
+and assignments. Prepared unsolved designs and failed-stage physical objectives
+can be retained; a usable objective does not require an outgoing proposal.
+
+Validation precedes replacement of the topology group during save; this does not
+make the entire HDF5 write transactional. Loading stages records before committing
+the collection. A case saved as running is restored as failed with an
+interrupted-run message. Active proposals, sparse operators, controller contexts
+and process handles are not restored, and loading never restarts a solver.
 
 GUI timers, the displayed dropdown entry, preview state, and playback are
 transient widget state. Persisted core selection is a different field. Stored
@@ -179,9 +230,14 @@ Topology Management source layout
 ---------------------------------
 
 ``GUI/topology/TopologyManagement.hpp`` declares one window class. Its main source
-owns case selection, lifecycle and refresh. Settings, Preservation, Run,
-Iterations, Animation and Wrap translation units implement that same class; they
-do not instantiate command-panel widgets. ``ModelTree`` owns the window as a
+owns case selection, lifecycle and refresh. Preservation, Run, Iterations, Animation and Wrap translation units implement
+that same class. The Settings translation unit owns Method selection and a
+QStackedWidget with independent TopologyManagementDensitySettingsWidget and
+TopologyManagementLevelSetSettingsWidget forms. Each form owns complete fields,
+drafts and command construction; submission uses the management command guard.
+Navigation uses separate TopologyDensitySettingsPanel and
+TopologyLevelSetSettingsPanel classes under Create/Modify method children.
+Management does not instantiate command-panel widgets. ``ModelTree`` owns the window as a
 parented Qt window, reuses it on activation, and clears it on model reset.
 ``GUI/cgal/AlphaWrapPanel`` independently submits the existing wrap commands.
 
@@ -193,7 +249,7 @@ interfaces, restore the previous GUI-update flag and clean interrupted export
 preparation/progress. AppUtil owns the borrowed progress tool.
 
 Topology toolbar and native display lifecycle
---------------------------------------------
+---------------------------------------------
 
 ``CalculiXTopologyToolbar`` owns independent controls and queries completed
 iteration rows through the topology interface. Preview uses the existing silent

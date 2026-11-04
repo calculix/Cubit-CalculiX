@@ -1,18 +1,18 @@
 # Run from docs/ (build.py supplies that working directory).
 DOXYFILE_ENCODING       = UTF-8
-PROJECT_NAME            = Cubit-CalculiX
+PROJECT_NAME            = "Cubit FEA"
 OUTPUT_DIRECTORY        = _build/doxygen
-INPUT                   = ../src/Core ../src/Commands ../src/GUI \
-                          ../src/PythonInterface ../src/UserOptions \
-                          ../src/Utility/ElementIntegration.hpp \
-                          ../src/Utility/ElementIntegration.cpp \
-                          ../src/Utility/ElementNodeOrdering.hpp
+# Project-owned Framework and CalculiX sources only.
+# These roots contain project code, including its adapters and utility wrappers.
+# src/Utility (CGAL/Eigen/HDF5/OpenPisco/gif.h), src/Library and src/Solvers are
+# deliberately outside INPUT. Generated wrapper/MOC/UI files are excluded below.
+INPUT                   = ../src/Framework ../src/CalculiX
 FILE_PATTERNS           = *.hpp *.cpp *.h
 RECURSIVE               = YES
 EXCLUDE_PATTERNS        = */*_wrap* */moc_* */ui_* */.venv/*
 EXTRACT_ALL             = YES
-EXTRACT_PRIVATE         = NO
-EXTRACT_STATIC          = NO
+EXTRACT_PRIVATE         = YES
+EXTRACT_STATIC          = YES
 HIDE_UNDOC_RELATIONS    = YES
 ENABLE_PREPROCESSING    = YES
 MACRO_EXPANSION         = NO

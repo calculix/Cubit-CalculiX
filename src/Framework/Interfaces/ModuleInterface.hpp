@@ -3,6 +3,7 @@
 
 #include <string>
 
+class UserOptionsInterface;
 class CommandProviderInterface;
 class ComponentProviderInterface;
 class WorkspaceProviderInterface;
@@ -15,7 +16,7 @@ public:
   // Stable identifier, independent of translated display text.
   virtual std::string module_id() const = 0;
 
-  virtual bool initialize(std::string& error) = 0;
+  virtual bool initialize(UserOptionsInterface& options, std::string& error) = 0;
 
   // Also valid after partial initialization; implementations must not throw.
   virtual void shutdown() noexcept = 0;

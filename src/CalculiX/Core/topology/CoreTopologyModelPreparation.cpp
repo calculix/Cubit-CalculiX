@@ -2,6 +2,7 @@
 #include "CoreTopologyDefaultPreservation.hpp"
 #include "CoreTopologyDensity.hpp"
 #include "CoreTopology.hpp"
+#include "CalculiXTopologyRunInterface.hpp"
 #include "Core/materials/CoreMaterials.hpp"
 #include "Core/sections/CoreSections.hpp"
 #include "Core/mesh/CoreBlocks.hpp"
@@ -121,11 +122,19 @@ bool CoreTopologyModelPreparation::initialize_run_design(CoreTopology& topology,
     return false;
   }
 
-  if (entry->second.method != TopologyMethod::Density ||
-      (entry->second.objective != TopologyObjective::Compliance &&
-       entry->second.objective != TopologyObjective::Displacement))
+  const bool density = entry->second.method == TopologyMethod::Density &&
+      (entry->second.objective == TopologyObjective::Compliance || entry->second.objective == TopologyObjective::Displacement);
+  const bool level_set = entry->second.method == TopologyMethod::LevelSet && entry->second.objective == TopologyObjective::Compliance;
+  if (!density && !level_set)
   {
-    PRINT_ERROR("The topology iteration loop supports density optimization with compliance or displacement objectives.\n");
+    PRINT_ERROR("Unsupported topology method/objective combination for design preparation.\n");
+    return false;
+  }
+
+  if (level_set && (!entry->second.iteration_jobs.empty() || !entry->second.iteration_evaluations.empty() ||
+      !entry->second.iteration_density_designs.empty() || !entry->second.iteration_level_set_designs.empty()))
+  {
+    PRINT_ERROR("Level-set initialization requires freshly reset case run data.\n");
     return false;
   }
 
@@ -160,6 +169,16 @@ bool CoreTopologyModelPreparation::initialize_run_design(CoreTopology& topology,
     PRINT_ERROR("Failed to resolve preservation for topology %d.\n", topology_id);
     discard_prepared_data();
     return false;
+  }
+
+  if (level_set)
+  {
+    if (!CalculiXTopologyRunInterface().initialize_topology_level_set_design(topology_id))
+    {
+      discard_prepared_data();
+      return false;
+    }
+    return true;
   }
 
   std::map<int, double> densities;

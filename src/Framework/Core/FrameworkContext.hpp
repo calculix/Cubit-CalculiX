@@ -8,6 +8,8 @@
 #include <cstddef>
 #include <string>
 
+class UserOptionsManager;
+class UserOptionsStore;
 class WorkspaceManager;
 class QWidget;
 
@@ -30,10 +32,15 @@ public:
   bool register_workspaces(std::string& error);
   bool select_workspace(const std::string& id, std::string& error);
   void detach_workspace_host() noexcept;
+  // Success means the desktop accepted the request, not that rendering completed.
+  bool open_documentation(std::string& error) const;
 
 private:
+  // Declared before modules so the service outlives module destruction.
+  std::unique_ptr<UserOptionsStore> options;
   ModuleManager modules;
   std::unique_ptr<WorkspaceManager> workspaces;
+  std::unique_ptr<UserOptionsManager> optionsPages;
   std::size_t clients = 0;
   bool registered = false;
   bool command_plugin_attached = false;

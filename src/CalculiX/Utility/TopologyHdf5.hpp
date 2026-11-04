@@ -147,7 +147,7 @@ public:
         std::set<int> unique_keys;
         for (const int key : keys)
         {
-          if (key < 0 || !unique_keys.insert(key).second)
+          if (key <= 0 || !unique_keys.insert(key).second)
           {
             return false;
           }
@@ -339,94 +339,50 @@ private:
     using U = std::remove_cv_t<T>;
     if constexpr (std::is_same_v<U, TopologyCase>)
     {
-      if constexpr (Reading)
-      {
-        if (file.nameExists(group + "/adjoint_jobs"))
-        {
-          if (!value("adjoint_jobs", data.iteration_adjoint_jobs))
-          {
-            return false;
-          }
-        }
-        else
-        {
-          data.iteration_adjoint_jobs.clear();
-        }
-      }
-      else
-      {
-        if (!value("adjoint_jobs", data.iteration_adjoint_jobs))
-        {
-          return false;
-        }
-      }
-
-      // Configuration is stored by CoreTopology::save_configuration().
-      return value("preserved", data.element_preserved) &&
+      return value("adjoint_jobs", data.iteration_adjoint_jobs) &&
+          value("preserved", data.element_preserved) &&
           value("selected_iteration", data.selected_iteration) &&
           value("run_state", data.run_state) &&
           value("jobs", data.iteration_jobs) &&
           value("element_energies", data.iteration_element_energies) &&
           value("total_energies", data.iteration_total_energies) &&
           value("evaluations", data.iteration_evaluations) &&
-          value("designs", data.iteration_density_designs);
+          value("designs", data.iteration_density_designs) &&
+          value("level_set_designs", data.iteration_level_set_designs);
     }
     else if constexpr (std::is_same_v<U, TopologyIterationEvaluation>)
     {
-      // Older evaluations have no displacement measurement.
-      if (!Reading || file.nameExists(group + "/displacement_available"))
+      if (!value("method", data.method))
       {
-        if (!value("displacement_available", data.displacement_available) || !value("displacement_value", data.displacement_value) || !value("displacement_node", data.displacement_node) || !value("displacement_nodeset", data.displacement_nodeset) || !value("displacement_component", data.displacement_component))
+        return false;
+      }
+      if (data.method == TopologyMethod::LevelSet)
+      {
+        if (!value("level_set_evaluation", data.level_set_evaluation) || !value("level_set_proposal", data.level_set_proposal) ||
+            !value("level_set_change_available", data.level_set_change_available) || !value("maximum_level_set_change", data.maximum_level_set_change))
         {
           return false;
         }
       }
-
-      if (!std::isfinite(data.displacement_value) || data.displacement_value < 0.0 || data.displacement_component < 0 || data.displacement_component > 3 || (data.displacement_available && (data.displacement_node <= 0 || data.displacement_nodeset <= 0)))
+      else if (data.method != TopologyMethod::Density)
       {
         return false;
       }
-
-      // Older files contain no ordinary OC proposal residual.
-      if (!Reading || file.nameExists(group + "/oc_proposal_residual_available"))
-      {
-        if (!value("oc_proposal_residual_available", data.oc_proposal_residual_available) ||
-            !value("oc_proposal_residual", data.oc_proposal_residual))
-        {
-          return false;
-        }
-      }
-
-      if (!std::isfinite(data.oc_proposal_residual) || data.oc_proposal_residual < 0.0)
-      {
-        return false;
-      }
-
-      // Additive optional diagnostics: historical displacement records have none.
-      if constexpr (Reading)
-      {
-        data.projected_proposal_residual_available = false;
-        data.projected_proposal_residual = 0.0;
-      }
-      if (!Reading || file.nameExists(group + "/projected_proposal_residual_available"))
-      {
-        if (!value("projected_proposal_residual_available", data.projected_proposal_residual_available) ||
-            !value("projected_proposal_residual", data.projected_proposal_residual))
-        {
-          return false;
-        }
-      }
-      if (!std::isfinite(data.projected_proposal_residual) || data.projected_proposal_residual < 0.0)
-      {
-        return false;
-      }
-
       return value("objective", data.objective) &&
           value("value", data.value) &&
+          value("displacement_available", data.displacement_available) &&
+          value("displacement_value", data.displacement_value) &&
+          value("displacement_node", data.displacement_node) &&
+          value("displacement_nodeset", data.displacement_nodeset) &&
+          value("displacement_component", data.displacement_component) &&
           value("convergence_checked", data.convergence_checked) &&
           value("maximum_density_change", data.maximum_density_change) &&
           value("relative_objective_change", data.relative_objective_change) &&
           value("converged", data.converged) &&
+          value("oc_proposal_residual_available", data.oc_proposal_residual_available) &&
+          value("oc_proposal_residual", data.oc_proposal_residual) &&
+          value("projected_proposal_residual_available", data.projected_proposal_residual_available) &&
+          value("projected_proposal_residual", data.projected_proposal_residual) &&
           value("stiffness_sensitivities", data.stiffness_sensitivities) &&
           value("density_sensitivities", data.density_sensitivities) &&
           value("filtered_sensitivities", data.filtered_density_sensitivities) &&
@@ -434,32 +390,13 @@ private:
     }
     else if constexpr (std::is_same_v<U, TopologyDensityDesign>)
     {
-      // Older designs contain no update diagnostics.
-      if (!Reading || file.nameExists(group + "/density_update_available"))
-      {
-        if (!value("density_update_available", data.density_update_available) ||
-            !value("effective_move_limit", data.effective_move_limit) ||
-            !value("update_correlation_available", data.update_correlation_available) ||
-            !value("update_correlation", data.update_correlation))
-        {
-          return false;
-        }
-      }
-
-      if (!std::isfinite(data.effective_move_limit) ||
-          data.effective_move_limit < 0.0 ||
-          data.effective_move_limit > 1.0 ||
-          (data.density_update_available && data.effective_move_limit <= 0.0) ||
-          !std::isfinite(data.update_correlation) ||
-          std::abs(data.update_correlation) > 1.0 + 1.0e-12 ||
-          (data.update_correlation_available && !data.density_update_available))
-      {
-        return false;
-      }
-
       return value("penalization", data.penalization) &&
           value("void_ratio", data.void_ratio) &&
           value("minimum_density", data.minimum_density) &&
+          value("density_update_available", data.density_update_available) &&
+          value("effective_move_limit", data.effective_move_limit) &&
+          value("update_correlation_available", data.update_correlation_available) &&
+          value("update_correlation", data.update_correlation) &&
           value("densities", data.element_densities) &&
           value("volume", data.volume);
     }
@@ -474,6 +411,79 @@ private:
           value("minimum_design_volume_fraction", data.minimum_design_volume_fraction) &&
           value("sensitivities", data.density_sensitivities);
     }
+    else if constexpr (std::is_same_v<U, TopologyLevelSetSettings>)
+    {
+      return value("interface_width", data.interface_width) &&
+          value("regularization_length", data.regularization_length) &&
+          value("move_limit", data.move_limit) &&
+          value("field_tolerance", data.field_tolerance) &&
+          value("seed_spacing", data.seed_spacing) &&
+          value("seed_radius", data.seed_radius) &&
+          value("integration_tolerance", data.integration_tolerance) &&
+          value("integration_max_refinements", data.integration_max_refinements);
+    }
+    else if constexpr (std::is_same_v<U, TopologyLevelSetDesign>)
+    {
+      std::vector<double> origin;
+      if constexpr (!Reading)
+      {
+        origin.assign(data.seed_origin.begin(), data.seed_origin.end());
+      }
+      if (!value("seed_origin", origin) || origin.size() != 3)
+      {
+        return false;
+      }
+      if constexpr (Reading)
+      {
+        for (std::size_t axis = 0; axis < 3; ++axis)
+        {
+          data.seed_origin[axis] = origin[axis];
+        }
+      }
+      return value("iteration_id", data.iteration_id) &&
+          value("source_iteration", data.source_iteration) &&
+          value("void_ratio", data.void_ratio) &&
+          value("characteristic_length", data.characteristic_length) &&
+          value("transition_node_inserted", data.transition_node_inserted) &&
+          value("free_interface_available", data.free_interface_available) &&
+          value("objective_scale", data.objective_scale) &&
+          value("incoming_update", data.incoming_update) &&
+          value("fixed_nodes", data.fixed_nodes) &&
+          value("settings", data.settings) &&
+          value("node_values", data.node_values) &&
+          value("element_solid_fractions", data.element_solid_fractions) &&
+          value("volume", data.volume);
+    }
+    else if constexpr (std::is_same_v<U, TopologyLevelSetEvaluation>)
+    {
+      return value("available", data.available) &&
+          value("iteration_id", data.iteration_id) &&
+          value("compliance", data.compliance) &&
+          value("total_volume", data.total_volume) &&
+          value("solid_volume", data.solid_volume) &&
+          value("volume_fraction", data.volume_fraction) &&
+          value("factor_approximation", data.factor_approximation) &&
+          value("compliance_derivatives", data.compliance_derivatives) &&
+          value("volume_derivatives", data.volume_derivatives) &&
+          value("volume_fraction_derivatives", data.volume_fraction_derivatives);
+    }
+    else if constexpr (std::is_same_v<U, TopologyLevelSetUpdateDiagnostics>)
+    {
+      return value("available", data.available) &&
+          value("source_iteration", data.source_iteration) &&
+          value("volume_restoration", data.volume_restoration) &&
+          value("volume_feasible", data.volume_feasible) &&
+          value("ordinary_proposal_residual", data.ordinary_proposal_residual) &&
+          value("maximum_field_change", data.maximum_field_change) &&
+          value("effective_move_limit", data.effective_move_limit) &&
+          value("step_scale", data.step_scale) &&
+          value("target_volume_fraction", data.target_volume_fraction) &&
+          value("linearized_volume_fraction", data.linearized_volume_fraction) &&
+          value("actual_volume_fraction", data.actual_volume_fraction) &&
+          value("qp_stationarity_residual", data.qp_stationarity_residual) &&
+          value("volume_multiplier", data.volume_multiplier) &&
+          value("backtracking_steps", data.backtracking_steps);
+    }
     else if constexpr (std::is_same_v<U, TopologyMaterialData>)
     {
       if constexpr (Reading)
@@ -482,18 +492,19 @@ private:
         data.iteration_material_groups.clear();
       }
 
-      if (!Reading || file.nameExists(group + "/material_caps"))
+      if (!value("material_caps", data.iteration_material_caps))
       {
-        if (!value("material_caps", data.iteration_material_caps))
-        {
-          return false;
-        }
+        return false;
       }
 
       const bool success = value("base_materials", data.base_materials) &&
           value("element_materials", data.element_base_material) &&
           value("factors", data.iteration_factors);
 
+      if (data.iteration_material_caps.size() != data.iteration_factors.size())
+      {
+        return false;
+      }
       for (const auto& entry : data.iteration_material_caps)
       {
         if (entry.first < 1 || entry.second < 2 || data.iteration_factors.count(entry.first) == 0)

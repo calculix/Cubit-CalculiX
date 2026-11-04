@@ -1,6 +1,29 @@
 Preservation resolution
 =======================
 
+Implementation map
+------------------
+
+Paths below are relative to ``src/CalculiX``; source downloads remain
+available in the offline manual.
+
+.. list-table:: Current implementation
+   :header-rows: 1
+   :widths: 30 70
+
+   * - Responsibility
+     - Source and operation
+   * - Public queries and coordination
+     - :download:`Core/topology/CalculiXTopologyInterface.cpp <../../src/CalculiX/Core/topology/CalculiXTopologyInterface.cpp>`; :download:`Core/topology/CalculiXCoreTopologyPreservation.cpp <../../src/CalculiX/Core/topology/CalculiXCoreTopologyPreservation.cpp>`. Set edits, rule queries, default collection and set-to-element entry points.
+   * - Automatic sources
+     - :download:`Core/topology/CoreTopologyDefaultPreservation.cpp <../../src/CalculiX/Core/topology/CoreTopologyDefaultPreservation.cpp>`; :download:`Core/topology/CoreTopologyPreservation.cpp <../../src/CalculiX/Core/topology/CoreTopologyPreservation.cpp>`. ``collect`` gathers sources; ``collect_step_references`` limits load and BC inputs to assigned references.
+   * - Domain source collectors
+     - :download:`Core/topology/CoreTopologyLoadPreservation.cpp <../../src/CalculiX/Core/topology/CoreTopologyLoadPreservation.cpp>`; :download:`Core/topology/CoreTopologyBCPreservation.cpp <../../src/CalculiX/Core/topology/CoreTopologyBCPreservation.cpp>`; :download:`Core/topology/CoreTopologyInteractionPreservation.cpp <../../src/CalculiX/Core/topology/CoreTopologyInteractionPreservation.cpp>`; :download:`Core/topology/CoreTopologyTrajectoryPreservation.cpp <../../src/CalculiX/Core/topology/CoreTopologyTrajectoryPreservation.cpp>`. Collect set, node and direct-element selections for the supported source categories.
+   * - Element resolution
+     - :download:`Core/topology/CoreTopologyPreservation.cpp <../../src/CalculiX/Core/topology/CoreTopologyPreservation.cpp>`; :download:`Core/topology/CoreTopologyGeometry.cpp <../../src/CalculiX/Core/topology/CoreTopologyGeometry.cpp>`. ``get_set_element_ids`` and connectivity helpers resolve blocks, nodesets and sidesets.
+   * - Rule storage and run initialization
+     - :download:`Core/topology/CoreTopology.cpp <../../src/CalculiX/Core/topology/CoreTopology.cpp>`; :download:`Core/topology/CoreTopologyModelPreparation.cpp <../../src/CalculiX/Core/topology/CoreTopologyModelPreparation.cpp>`. ``resolve_preserved_elements`` commits flags; ``initialize_run_design`` and ``resolve_preservation`` coordinate preparation.
+
 Data and identifiers
 --------------------
 

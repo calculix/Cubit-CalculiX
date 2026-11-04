@@ -34,6 +34,10 @@ bool validRegistry(const std::vector<std::vector<int>>& data)
 
 bool CoreResultsPersistence::read_registry(HDF5Tool& file, CoreResults& results)
 {
+  if (!results.can_change_readers())
+  {
+    return false;
+  }
   try
   {
     decltype(results.results_data) saved;
@@ -48,6 +52,7 @@ bool CoreResultsPersistence::read_registry(HDF5Tool& file, CoreResults& results)
       return false;
     }
     results.results_data.swap(saved);
+    results.clear_vtk_cache();
     return true;
   }
   catch (const H5::Exception& error)
@@ -92,6 +97,10 @@ bool CoreResultsPersistence::write_registry(HDF5Tool& file, const CoreResults& r
 
 bool CoreResultsPersistence::initialize_readers(CoreResults& results)
 {
+  if (!results.can_change_readers())
+  {
+    return false;
+  }
   try
   {
     if (!validRegistry(results.results_data))
@@ -115,6 +124,7 @@ bool CoreResultsPersistence::initialize_readers(CoreResults& results)
     }
     results.frd_data.swap(frd);
     results.dat_data.swap(dat);
+    results.clear_vtk_cache();
     return true;
   }
   catch (const H5::Exception& error)
@@ -131,6 +141,10 @@ bool CoreResultsPersistence::initialize_readers(CoreResults& results)
 
 bool CoreResultsPersistence::read_loaded_results(HDF5Tool& file, CoreResults& results)
 {
+  if (!results.can_change_readers())
+  {
+    return false;
+  }
   try
   {
     CoreResults saved;
@@ -155,6 +169,7 @@ bool CoreResultsPersistence::read_loaded_results(HDF5Tool& file, CoreResults& re
     }
     results.frd_data.swap(saved.frd_data);
     results.dat_data.swap(saved.dat_data);
+    results.clear_vtk_cache();
     return true;
   }
   catch (const H5::Exception& error)
@@ -171,6 +186,10 @@ bool CoreResultsPersistence::read_loaded_results(HDF5Tool& file, CoreResults& re
 
 bool CoreResultsPersistence::read(HDF5Tool& file, CoreResults& results)
 {
+  if (!results.can_change_readers())
+  {
+    return false;
+  }
   try
   {
     CoreResults saved;
@@ -181,6 +200,7 @@ bool CoreResultsPersistence::read(HDF5Tool& file, CoreResults& results)
     results.results_data.swap(saved.results_data);
     results.frd_data.swap(saved.frd_data);
     results.dat_data.swap(saved.dat_data);
+    results.clear_vtk_cache();
     return true;
   }
   catch (const H5::Exception& error)

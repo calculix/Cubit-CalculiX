@@ -26,12 +26,6 @@
 #include <iostream>
 #include <sstream>
 
-CoreResultsFrd::CoreResultsFrd()
-{}
-
-CoreResultsFrd::~CoreResultsFrd()
-{}
-
 bool CoreResultsFrd::init(int job_id)
 {
   CalculiXJobsInterface ccx_jobs_iface;

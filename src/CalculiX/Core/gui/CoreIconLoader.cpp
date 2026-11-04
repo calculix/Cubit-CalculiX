@@ -1,10 +1,11 @@
 #include "Core/gui/CoreIconLoader.hpp"
 
+#include <QDir>
 #include <QFileInfo>
 
 QIcon CoreIconLoader::load(const QString& directory, const std::string& name)
 {
-  const QString filepath = directory + QString::fromStdString(name) + ".svg";
+  const QString filepath = QDir(directory).filePath(QString::fromStdString(name) + ".svg");
 
   if (QFileInfo::exists(filepath))
   {

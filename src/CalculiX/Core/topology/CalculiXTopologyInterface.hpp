@@ -5,6 +5,8 @@
 #include <vector>
 #include <set>
 
+enum class TopologyMethod;
+struct TopologyLevelSetSettings;
 struct TopologyRunInfo;
 struct TopologyOptions;
 struct TopologyPreservedSetInfo;
@@ -38,6 +40,8 @@ public:
   std::vector<std::vector<std::string>> get_topology_iteration_data(int topology_id);
   bool select_topology_iteration(int topology_id, int iteration_id);
   std::string get_topology_run_state(int topology_id);
+  bool get_topology_iteration_level_set_settings(int topology_id, int iteration_id, TopologyLevelSetSettings& settings);
+  bool get_topology_iteration_method(int topology_id, int iteration_id, TopologyMethod& method);
   std::vector<std::vector<double>> get_topology_iteration_element_data(int topology_id,int iteration_id = -1);
   bool is_topology_adjoint_export() const;
   bool check_topology_export(int topology_id, int iteration_id);

@@ -1,25 +1,34 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="900" height="180" viewBox="0 0 900 180" role="img" aria-labelledby="title desc">
-  <title id="title">Topology iteration workflow</title>
-  <desc id="desc">Settings and preserved elements feed the physical solve, optional displacement adjoint, evaluation, and density update. The process repeats until stopped.</desc>
-  <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8Z" fill="#334155"/></marker></defs>
-  <rect width="900" height="180" fill="#fff"/>
-  <g fill="#edf4fc" stroke="#35648b" stroke-width="1.5">
-    <rect x="10" y="35" width="155" height="75" rx="8"/>
-    <rect x="190" y="35" width="145" height="75" rx="8"/>
-    <rect x="360" y="35" width="170" height="75" rx="8"/>
-    <rect x="555" y="35" width="150" height="75" rx="8"/>
-    <rect x="730" y="35" width="160" height="75" rx="8"/>
-  </g>
-  <g font-family="sans-serif" font-size="16" fill="#162e43" text-anchor="middle">
-    <text x="87" y="65">Case settings</text><text x="87" y="88">Preserved elements</text>
-    <text x="262" y="78">Physical solve</text>
-    <text x="445" y="65">Adjoint solve</text><text x="445" y="88">Displacement only</text>
-    <text x="630" y="65">Objective</text><text x="630" y="88">Sensitivities</text>
-    <text x="810" y="65">Check convergence</text><text x="810" y="88">Update densities</text>
-    <text x="530" y="164">Repeat physical solve with the next density design</text>
-  </g>
-  <g fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)">
-    <path d="M165 72H185"/><path d="M335 72H355"/><path d="M530 72H550"/><path d="M705 72H725"/>
-    <path d="M810 110V137H262V115"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="235" viewBox="0 0 1080 235" role="img" aria-labelledby="title desc">
+<title id="title">Topology iteration workflow</title>
+<desc id="desc">Case settings and preservation feed physical jobs. Nonzero displacement uses an adjoint; compliance and zero displacement bypass it. Evaluation, filtering and checks precede the next density design.</desc>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8Z" fill="#475569"/></marker></defs>
+<rect width="1080" height="235" fill="#ffffff"/>
+<g font-family="Segoe UI, DejaVu Sans, sans-serif" fill="#16324a">
+<rect x="15" y="55" width="180" height="85" rx="9" fill="#edf4fc" stroke="#52748d" stroke-width="1.5"/>
+<text x="105.0" y="91.62" font-size="16" text-anchor="middle">Case settings</text>
+<text x="105.0" y="113.62" font-size="16" text-anchor="middle">Preserved elements</text>
+<rect x="230" y="55" width="170" height="85" rx="9" fill="#edf4fc" stroke="#52748d" stroke-width="1.5"/>
+<text x="315.0" y="91.62" font-size="16" text-anchor="middle">Physical job</text>
+<text x="315.0" y="113.62" font-size="16" text-anchor="middle">Solve and read</text>
+<rect x="435" y="55" width="200" height="85" rx="9" fill="#fff4d9" stroke="#52748d" stroke-width="1.5"/>
+<text x="535.0" y="81.3" font-size="15" text-anchor="middle">Adjoint job</text>
+<text x="535.0" y="102.3" font-size="15" text-anchor="middle">Only for nonzero</text>
+<text x="535.0" y="123.3" font-size="15" text-anchor="middle">displacement</text>
+<rect x="670" y="55" width="175" height="85" rx="9" fill="#edf4fc" stroke="#52748d" stroke-width="1.5"/>
+<text x="757.5" y="91.8" font-size="15" text-anchor="middle">Evaluate and filter</text>
+<text x="757.5" y="112.8" font-size="15" text-anchor="middle">Check convergence</text>
+<rect x="880" y="55" width="180" height="85" rx="9" fill="#edf4fc" stroke="#52748d" stroke-width="1.5"/>
+<text x="970.0" y="91.8" font-size="15" text-anchor="middle">Next density design</text>
+<text x="970.0" y="112.8" font-size="15" text-anchor="middle">Update free elements</text>
+<polyline points="195,97 230,97" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<polyline points="400,97 435,97" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<polyline points="635,97 670,97" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<polyline points="845,97 880,97" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<text x="862" y="82" font-size="11" text-anchor="middle">continue</text>
+<polyline points="315,140 315,173 757,173 757,140" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<text x="535" y="198" font-size="13" text-anchor="middle">Bypass adjoint for compliance or zero displacement</text>
+<polyline points="970,55 970,25 315,25 315,55" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<text x="640" y="18" font-size="13" text-anchor="middle">Repeat with the next design</text>
+<text x="540" y="225" font-size="14" text-anchor="middle">End on convergence, iteration limit, failure or confirmed user termination.</text>
+</g>
 </svg>

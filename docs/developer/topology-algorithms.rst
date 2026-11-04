@@ -9,6 +9,53 @@ for the implementation map, :doc:`api` for contracts, and
 Notation and assumptions
 ------------------------
 
+.. list-table:: Symbols and units
+   :header-rows: 1
+   :widths: 24 51 25
+
+   * - Symbol
+     - Meaning
+     - Units
+   * - :math:`\rho_e`, :math:`\rho_{\min}`
+     - Design solid fraction and its free-element lower bound; not physical mass density.
+     - Dimensionless
+   * - :math:`p`, :math:`v`
+     - SIMP penalization and void stiffness ratio.
+     - Dimensionless
+   * - :math:`s_e`, :math:`\widehat{s}_e`
+     - Requested SIMP factor and stored applied factor after grouping, before text export rounding.
+     - Dimensionless
+   * - :math:`V_e`, :math:`V_T`
+     - Cubit element volume and total participating volume.
+     - Length cubed
+   * - :math:`w_e`
+     - Geometric volume ratio :math:`V_e/V_T`; stored design derivative is zero for preserved variables.
+     - Dimensionless
+   * - :math:`\mathbf f`, :math:`u`
+     - Physical load vector and solution; units shown are for translational nodal entries.
+     - Force; length
+   * - :math:`\lambda`
+     - Adjoint solution; translational entries depend on the objective and are not physical displacements in general.
+     - Objective units divided by force
+   * - :math:`f(\rho)`, :math:`f_P`, :math:`f_{\mathrm{target}}`
+     - Design volume fraction, preserved fraction and configured volume bound.
+     - Dimensionless
+   * - :math:`C`, :math:`U_e`
+     - Compliance and element internal strain energy.
+     - Force times length
+   * - :math:`J`
+     - Displacement objective when discussing the adjoint; generic objective in convergence checks.
+     - Length for displacement
+   * - :math:`g_e`, :math:`\widetilde g_e`
+     - Stored raw and filtered density sensitivities; raw includes surrogate sensitivities for grouped solves.
+     - Same as the objective
+   * - :math:`m`, :math:`m_{\max}`
+     - Effective move for an update and configured maximum move.
+     - Dimensionless
+   * - :math:`\omega_q^{\mathrm{ref}}`, :math:`W_{e,q}`
+     - Reference quadrature weight and physical weight :math:`\omega_q^{\mathrm{ref}}\det J_{e,q}`.
+     - Dimensionless; length cubed
+
 An element has density :math:`\rho_e` and physical volume :math:`V_e`.
 The stored design supplies the penalization :math:`p`, void stiffness ratio
 :math:`v`, and minimum density :math:`\rho_{\min}`. Density requests the
@@ -20,16 +67,19 @@ continuous SIMP factor
 
 Material grouping produces the applied factor :math:`\widehat{s}_e`.
 With fixed loads, homogeneous prescribed displacements, and symmetric
-linear-elastic stiffness, the solver uses
+linear-elastic stiffness, the ideal factor-scaled solve is
 
 .. math::
 
-   K(\widehat{s})u=f,\qquad K_e=\widehat{s}_eK_e^{\mathrm{base}}.
+   K(\widehat{s})u=\mathbf f,\qquad K_e=\widehat{s}_eK_e^{\mathrm{base}}.
 
 Exact sharing leaves the requested factors unchanged. Logarithmic grouping can
 change them to satisfy the material cap. The formulas below distinguish
 stiffness-factor derivatives from the density surrogate used for such solves;
-see :doc:`topology-export` for grouping and export rounding.
+see :doc:`topology-export` for grouping and export rounding. Stored factors
+are not rounded again by the sensitivity evaluator. The identities below refer
+to the ideal unrounded model; decimal input formatting and finite solver/result
+precision also affect numerical comparisons, even without grouping.
 
 The continuous SIMP derivative is :math:`s'_e=(1-v)p\rho_e^{p-1}`. Preserved densities and stiffness factors
 are exactly one. Their stored sensitivities are zero because they are fixed
@@ -47,20 +97,29 @@ Let :math:`F` contain free elements and :math:`P` preserved elements. Define
    f(\rho)=f_P+\sum_{e\in F}w_e\rho_e.
 
 The stored volume derivative is :math:`w_e` for free variables and zero for
-preserved variables. The stored minimum volume fraction is :math:`f_P`;
-the actual minimum attainable design fraction is
-:math:`f_P+\rho_{\min}(1-f_P)`. Cubit provides the element volumes directly;
+preserved variables. ``TopologyVolumeEvaluation::minimum_volume_fraction``
+stores :math:`f_P`; ``minimum_design_volume_fraction`` stores the actual
+minimum attainable design fraction
+
+.. math::
+
+   f_{\min}=f_P+\rho_{\min}(1-f_P).
+
+Density updates and ordinary proposals reject a configured target when
+:math:`f_{\mathrm{target}}+10^{-12}<f_{\min}`. This check is distinct from
+case-creation validation and from temporarily exceeding the target while move
+bounds restrict volume reduction. Cubit provides the element volumes directly;
 an ``EVOL`` history output is unnecessary.
 
 Compliance derivative
 ---------------------
 
-For fixed :math:`f`, differentiating equilibrium gives
+For fixed :math:`\mathbf f`, differentiating equilibrium gives
 :math:`K\,du=-dK\,u`. Therefore:
 
 .. math::
 
-   C=f^Tu=u^TKu=2\sum_e U_e,\qquad
+   C=\mathbf f^Tu=u^TKu=2\sum_e U_e,\qquad
    dC=-u^T(dK)u,\\
    U_e=\tfrac12u_e^TK_eu_e,\qquad
    \frac{\partial C}{\partial\widehat{s}_e}
@@ -117,10 +176,13 @@ contains the current applied stiffness scaling. Multiplying by another
 :math:`\widehat{s}_e` converts the contraction
 to the stiffness-factor derivative.
 
-The final available solver step/increment supplies the results. The controlling
-node is selected anew each iteration. Ties and changes of active node are
-nonsmooth; the formula is a local branch derivative. At zero objective the
-implementation chooses a zero subgradient, skips the adjoint solve, and uses
+The reader requires the requested quantities at the final DAT step/increment
+recorded by its parser; it does not fall back to an earlier frame if a quantity
+is missing. Physical and adjoint files select their final frames independently.
+The controlling node is selected anew each iteration. For exactly equal maxima,
+the ordered node map and strict comparison select the lowest node ID. Ties and
+changes of active node are nonsmooth; the formula is a local branch derivative.
+At zero objective the implementation chooses a zero subgradient, skips the adjoint solve, and uses
 zero element integrals. This is not a differentiability claim at zero.
 
 Integration and tensor conventions
@@ -137,11 +199,24 @@ ordered xx, yy, zz, xy, xz, yz. Mechanical strain uses tensor shear components:
    +2(\sigma_{xy}\varepsilon_{xy}+\sigma_{xz}\varepsilon_{xz}
    +\sigma_{yz}\varepsilon_{yz}).
 
-Complete matching element and integration-point coverage is required.
-``ElementIntegration`` computes reference weights times :math:`\det J` using
-the element coordinates, with strictly positive, finite determinants and
-weights. Rules and shape gradients follow the locally inspected CalculiX 2.23
-sources (``gauss.f`` and the corresponding tetrahedron, wedge, and hexahedron
+Complete matching element and integration-point coverage is required. Let
+:math:`\omega_q^{\mathrm{ref}}` denote the reference quadrature weight and
+:math:`J_{e,q}` the element mapping Jacobian, distinct from the objective
+:math:`J`. ``ElementIntegration::calculate_weights`` returns physical weights:
+
+.. math::
+
+   W_{e,q}=\omega_q^{\mathrm{ref}}\det J_{e,q},\qquad
+   I_e=\sum_q(\sigma^{\mathrm{physical}}:
+             \varepsilon^{\mathrm{adjoint}})_{e,q}W_{e,q}.
+
+The contraction multiplies by :math:`W_{e,q}` once; multiplying by another
+Jacobian determinant would count the geometric scaling twice. Every determinant
+and physical weight must be finite and strictly positive. These weights are
+used for the adjoint integral. The volume constraint instead uses the separately
+queried Cubit volumes :math:`V_e`; the implementation does not replace those
+volumes by a quadrature-weight sum or require those two measures to match.
+Rules and shape gradients follow the locally inspected CalculiX 2.23 sources (``gauss.f`` and the corresponding tetrahedron, wedge, and hexahedron
 shape routines).
 
 .. list-table:: Supported displacement integration
@@ -164,8 +239,7 @@ shape routines).
 
 The shared model validator rejects C3D8R for both compliance and displacement.
 See :doc:`topology-export` for validation and output preparation. Point IDs are
-one-based and
-follow CalculiX order. Input coordinates use Cubit/Exodus connectivity;
+one-based and follow CalculiX order. Input coordinates use Cubit/Exodus connectivity;
 ``ElementNodeOrdering`` converts the source indices. For WEDGE15 (Cubit type
 52), positions 10--12 and 13--15 are exchanged. For HEX20 (type 44), positions
 13--16 and 17--20 are exchanged. Positions here are one-based. Other supported
@@ -190,6 +264,22 @@ Each free element includes itself. Preserved elements neither receive a
 filtered derivative nor enter free neighborhoods. With configured radius zero,
 :math:`r=1.5(V_T/N)^{1/3}` using all participating elements.
 
+The factor :math:`1/V_{\max}` is common to all :math:`a_{ij}` and cancels
+mathematically between numerator and denominator. Two useful limiting cases are:
+
+* A self-only free neighborhood gives :math:`\widetilde g_i=g_i`.
+* For equal element volumes, with :math:`h_{ij}=1-d_{ij}/r`, the expression
+  reduces to
+
+  .. math::
+
+     \widetilde g_i=
+     \frac{\sum_{j\in F,\ d_{ij}<r}h_{ij}\rho_jg_j}
+          {\rho_i\sum_{j\in F,\ d_{ij}<r}h_{ij}}.
+
+These are algebraic checks on the documented expression, not additional
+runtime checks or evidence that filtering is an exact objective derivative.
+
 The implementation buckets free centers into cells of side length :math:`r`
 and searches the current cell and its 26 neighbors. This avoids an unconditional
 all-pairs search, but dense neighborhoods can still have quadratic cost.
@@ -211,8 +301,17 @@ For move limit :math:`m`, let
 
 The staged target :math:`f_*` permits an initial reduction toward the configured
 target without violating move bounds. Compliance requires nonpositive filtered
-derivatives. Define :math:`b_e=-\widetilde g_e/w_e` and normalize all benefits
-by their largest value when positive. A common scale changes only the multiplier.
+derivatives. Define the raw benefit and its normalization explicitly:
+
+.. math::
+
+   \beta_e=-\widetilde g_e/w_e,\qquad
+   B=\max_{e\in F}\beta_e,\qquad
+   b_e=\begin{cases}\beta_e/B,&B>0,\\0,&B=0.\end{cases}
+
+Use :math:`B=0` when there are no free variables. A common benefit scale changes
+only the multiplier, not the ideal OC proposal. The OC multiplier below is a
+scalar distinct from the displacement adjoint vector.
 
 .. math::
 
@@ -220,21 +319,33 @@ by their largest value when positive. A common scale changes only the multiplier
    \left(\rho_e\sqrt{b_e/\lambda},l_e,h_e\right).
 
 Zero benefit selects the lower bound. Positive benefit with zero multiplier
-selects the upper bound. If the zero-multiplier trial is feasible, accept it;
-otherwise bracket the multiplier by doubling from one (up to 100 times), then
-bisect for up to 100 steps. Retain a feasible trial and stop when the remaining
-volume gap is at most :math:`10^{-10}`. Volume is an upper bound; an update
-may use less than the target. Preserved densities stay one.
+selects the upper bound. Accept the zero-multiplier trial when its volume is
+at most :math:`f_*+10^{-10}`. Otherwise bracket the multiplier by doubling from
+one (up to 100 trials); the bracket check also allows :math:`10^{-10}` volume
+slack. Bisect for up to 100 steps, classifying each trial against :math:`f_*`
+itself and retaining a feasible trial. Stop when the remaining feasible volume
+gap is at most :math:`10^{-10}`. If the iteration limit is reached, return the
+retained candidate; the tolerance is not a guarantee that bisection reached an
+exact volume equality. Volume is an upper bound; an update may use less than
+the target. Preserved densities stay one.
 
 Adaptive density moves
 ----------------------
 
-Both compliance and displacement use this selection. Adaptation needs three
-ordered stored designs ending at the source iteration.
-If any of their volume fractions exceeds the target by more than :math:`10^{-6}`,
-use the configured maximum move. Otherwise start with the current design's
-recorded incoming move, bounded by the permitted minimum and maximum. The
-automatic minimum is ten percent of the maximum.
+Both compliance and displacement use this selection. Start with the configured
+maximum :math:`m_{\max}`. Disabling adaptation or having fewer than three
+ordered stored designs ending at the source iteration retains that maximum.
+If any of the three volume fractions exceeds the target by more than
+:math:`10^{-6}`, also retain the maximum. Missing/invalid required volume
+history is an error rather than a reason to invent history values.
+
+Otherwise use the current design's recorded incoming move when available,
+bounded by the permitted minimum and maximum; without incoming diagnostics,
+start from the maximum. A configured minimum of zero selects an automatic
+minimum of :math:`0.1m_{\max}`. The correlation rule then selects the outgoing
+move for the next design. That next design stores it as its incoming move,
+together with the correlation availability/value. The solid initial design
+has no incoming update diagnostics.
 
 For free elements, use consecutive changes :math:`a_e=\rho_e^k-\rho_e^{k-1}`
 and :math:`b_e=\rho_e^{k-1}-\rho_e^{k-2}`:
@@ -262,14 +373,29 @@ effective move, the same bounds, and the staged volume target, define
    q_e=\widetilde g_e/w_e,\qquad Q=\max_{e\in F}|q_e|,\qquad
    t_e=\rho_e-mq_e/Q.
 
-For :math:`Q=0`, use zero direction, so :math:`t_e=\rho_e`. Project onto the
-bounds and volume inequality in a volume-weighted metric:
+For :math:`Q=0`, use zero direction, so :math:`t_e=\rho_e`. If :math:`F` is
+empty, define :math:`Q=0`; there are no free variables and the proposal retains
+all preserved densities at one, subject to the same volume-feasibility checks.
+Project onto the bounds and volume inequality in a volume-weighted metric:
 
 .. math::
 
    \min_z\ \tfrac12\sum_{e\in F}w_e(z_e-t_e)^2,\qquad
    l_e\le z_e\le h_e,\qquad f_P+\sum_{e\in F}w_ez_e\le f_*,\\
    z_e=\operatorname{clamp}(t_e-\lambda,l_e,h_e),\qquad\lambda\ge0.
+
+The common multiplier shift follows from the volume-weighted Lagrangian:
+
+.. math::
+
+   \mathcal L(z,\lambda)
+   =\frac12\sum_{e\in F}w_e(z_e-t_e)^2
+    +\lambda\left(f_P+\sum_{e\in F}w_ez_e-f_*\right).
+
+For an interior free variable, stationarity gives
+:math:`w_e(z_e-t_e+\lambda)=0`; applying the box bounds gives the clamped
+expression above. Here :math:`\lambda` is a scalar projection multiplier,
+distinct from the displacement adjoint vector.
 
 Accept the zero-multiplier trial when feasible within :math:`10^{-10}`.
 Otherwise :math:`\max(0,\max_e(t_e-l_e))` bounds the multiplier above;
@@ -301,6 +427,19 @@ as its update:
 
    R_k=\max_e|\rho_e^{\mathrm{ordinary}}-\rho_e^k|\le\epsilon_\rho.
 
+All four convergence requirements must hold together:
+
+.. math::
+
+   D_k\le\epsilon_\rho,\qquad
+   r_k\le\epsilon_J,\qquad
+   f_k\le f_{\mathrm{target}}+10^{-6},\qquad
+   R_k\le\epsilon_\rho.
+
+The stored ``compliance_tolerance`` setting supplies :math:`\epsilon_J` for
+both compliance and displacement; its historical name does not restrict the
+check to compliance. ``density_tolerance`` supplies :math:`\epsilon_\rho`.
+
 The ordinary projected residual also ignores any smaller adaptive step, so
 adaptation alone cannot make its test pass. It is a fixed-point diagnostic of
 the implemented filtered/surrogate update, not proof of optimality or a line
@@ -310,6 +449,27 @@ This diagnostic does not solve or store another physical design. Missing residua
 availability prevents convergence; invalid available data causes an error.
 The diagnostic is recomputed after filtering. ``check_density_convergence``
 returns operation success separately from its ``converged`` output.
+
+Numerical tolerances
+--------------------
+
+These checks have different purposes; their constants are not one shared
+optimization tolerance. Volume quantities here are dimensionless fractions.
+
+.. list-table:: Implemented numerical checks
+   :header-rows: 1
+   :widths: 65 35
+
+   * - Purpose
+     - Constant / condition
+   * - Target versus minimum attainable volume in update/proposal validation
+     - Reject when :math:`f_{\mathrm{target}}+10^{-12}<f_{\min}`.
+   * - Update/projection trial acceptance and feasible volume-gap stopping
+     - :math:`10^{-10}`; bisection classifies trials against the staged target itself.
+   * - Adaptive-history volume gate and final convergence volume slack
+     - :math:`10^{-6}` above the configured target.
+   * - Minimum weighted squared density change for adaptive correlation
+     - :math:`10^{-24}`; at or below this value correlation remains unavailable.
 
 Evaluation order and diagnostics
 --------------------------------
@@ -335,8 +495,9 @@ limit is distinct from convergence.
 Verification scope
 ------------------
 
-:doc:`../tutorials/index` records the derivative matrix and its limitations.
-Central finite differences validate raw objective derivatives on the tested
-branches. They do not validate filtered sensitivities as exact objective
-derivatives, optimizer convergence, or a global optimum. The straight-sided
-integration checks do not establish coverage for curved higher-order elements.
+:doc:`topology-verification` records the historical derivative matrix, evidence
+status, finite-difference protocol and limitations. Those reported results were
+not rerun against the current revision during this documentation stage. Raw
+objective derivative checks do not validate filtered sensitivities as exact
+objective derivatives, optimizer convergence or a global optimum. Straight-sided
+checks do not establish coverage for curved higher-order elements.

@@ -1,5 +1,5 @@
-Command reference
-=================
+CalculiX command reference
+==========================
 
 The initial reference covers topology settings, run control, preservation,
 and result processing. Further feature command pages will describe syntax,

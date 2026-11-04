@@ -1,4 +1,18 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologySaveValidation.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologySaveValidation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreTopologyLevelSet.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetUpdate.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetUpdate.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetInitialization.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetInitialization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetEvaluation.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetEvaluation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetStructs.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSet.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSet.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetGeometry.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetGeometry.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreTopologyQueries.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreTopologyResults.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreTopologyDensity.cpp

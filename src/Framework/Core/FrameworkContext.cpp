@@ -1,13 +1,31 @@
 #include "FrameworkContext.hpp"
 #include "FrameworkModules.hpp"
+#include "Framework/Storage/UserOptionsStore.hpp"
+#include "Framework/Utility/FrameworkPaths.hpp"
+#include "Framework/GUI/UserOptionsManager.hpp"
 #include "Framework/GUI/WorkspaceManager.hpp"
 
+#include <QCoreApplication>
+#include <QDesktopServices>
+#include <QDir>
+#include <QFileInfo>
+#include <QGuiApplication>
+#include <QUrl>
 #include <exception>
 #include <utility>
 
+namespace
+{
+int componentAnchor = 0;
+}
+
 FrameworkContext::FrameworkContext() = default;
 
-FrameworkContext::~FrameworkContext() = default;
+FrameworkContext::~FrameworkContext()
+{
+  detach_workspace_host();
+  modules.shutdown();
+}
 
 bool FrameworkContext::acquire(std::string& error)
 {
@@ -36,9 +54,19 @@ bool FrameworkContext::acquire(std::string& error)
     return false;
   }
 
-  if (clients == 0 && !modules.initialize(error))
+  if (clients == 0)
   {
-    return false;
+    FrameworkPaths paths;
+    if (!FrameworkPaths::resolve(&componentAnchor, paths, error))
+    {
+      return false;
+    }
+    options = std::make_unique<UserOptionsStore>(std::move(paths));
+    if (!modules.initialize(*options, error))
+    {
+      options.reset();
+      return false;
+    }
   }
 
   ++clients;
@@ -57,6 +85,7 @@ void FrameworkContext::release() noexcept
   if (clients == 0)
   {
     modules.shutdown();
+    options.reset();
   }
 }
 
@@ -142,7 +171,13 @@ bool FrameworkContext::register_workspaces(std::string& error)
   {
     if (workspaces != nullptr)
     {
-      return workspaces->register_views(modules.workspace_providers(), error);
+      const auto providers = modules.workspace_providers();
+      if (!workspaces->register_views(providers, error))
+      {
+        return false;
+      }
+      optionsPages = std::make_unique<UserOptionsManager>();
+      return optionsPages->attach(providers, error);
     }
 
     error = "No GUI workspace host is attached.";
@@ -185,10 +220,39 @@ bool FrameworkContext::select_workspace(const std::string& id, std::string& erro
 
 void FrameworkContext::detach_workspace_host() noexcept
 {
+  optionsPages.reset();
   if (workspaces != nullptr)
   {
     workspaces->shutdown();
   }
 
   workspaces.reset();
+}
+
+bool FrameworkContext::open_documentation(std::string& error) const
+{
+  error.clear();
+  if (options == nullptr)
+  {
+    error = "The Framework component directory is unavailable.";
+    return false;
+  }
+  if (qobject_cast<QGuiApplication*>(QCoreApplication::instance()) == nullptr)
+  {
+    error = "Opening documentation requires a GUI-capable session.";
+    return false;
+  }
+  const QDir component(QString::fromUtf8(options->component_directory().c_str()));
+  const QFileInfo index(component.filePath("documentation/index.html"));
+  if (!index.isFile() || !index.isReadable())
+  {
+    error = "Installed documentation is missing or unreadable: " + index.absoluteFilePath().toUtf8().toStdString();
+    return false;
+  }
+  if (!QDesktopServices::openUrl(QUrl::fromLocalFile(index.absoluteFilePath())))
+  {
+    error = "The desktop could not open: " + index.absoluteFilePath().toUtf8().toStdString();
+    return false;
+  }
+  return true;
 }

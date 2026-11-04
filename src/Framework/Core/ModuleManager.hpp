@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+class UserOptionsInterface;
 class CommandProviderInterface;
 class CubitCommand;
 class ComponentProviderInterface;
@@ -25,7 +26,7 @@ public:
   ModuleManager& operator=(const ModuleManager&) = delete;
 
   bool add_module(std::unique_ptr<ModuleInterface> module, std::string& error);
-  bool initialize(std::string& error);
+  bool initialize(UserOptionsInterface& options, std::string& error);
   void shutdown() noexcept;
 
   bool start_components(int withGUI, QWidget* host, std::string& error);

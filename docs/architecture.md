@@ -13,13 +13,13 @@ flowchart TD
     J[User commands and journals] --> C[Cubit command dispatcher]
     G[Qt panels] --> S[GuiSendCmd]
     S --> C
-    C --> P[CalculiXPlugin command objects]
+    C --> P[FEAPlugin and module command providers]
     P --> I[Domain interfaces]
     PY[SWIG Python interface] --> I
     I --> M[Shared ccx_core / CalculiXCore]
     M --> D[Core domain objects]
-    O[Cubit event observer] --> I
-    O --> V[CalculiXComp / model-tree refresh]
+    O[Cubit events / CoreObserver] --> I
+    O --> V[CalculiXGui observers / model-tree refresh]
     V --> I
     M --> H[HDF5 data in cub5]
     P --> E[ccxExportCommand / inp file]
@@ -32,32 +32,36 @@ flowchart TD
 
 ## Entry points and shared state
 
-- [CalculiXPlugin.cpp](../src/CalculiXPlugin.cpp) registers the command plugin with `CUBIT_PLUGIN`, lists command keys in `get_keys()`, and constructs command objects in `create_command()`. Its constructor calls `ccx_core.init2()`.
-- [loadCalculiXComp.cpp](../src/loadCalculiXComp.cpp) registers the GUI component. [CalculiXComp.cpp](../src/CalculiXComp.cpp), `start_up()`, restores settings, creates command panels before the docked model tree when GUI mode is enabled, and installs observers. Some menu, toolbar, and export-manager setup calls are commented out; their files alone do not establish active functionality.
-- [loadCalculiXCore.cpp](../src/CalculiX/Core/loadCalculiXCore.cpp) defines one global `CalculiXCore ccx_core`. [domain interfaces](developer/interface-layout.rst) forwards operations to this shared instance. Constructing an interface does not create an independent model.
-- [CalculiXCore.cpp](../src/CalculiX/Core/CalculiXCore.cpp) allocates domain objects in `init()` and deletes them in its destructor. `init2()` obtains Cubit mesh-export and material interfaces and initializes additional material state. `init_pythoninterface()` sends Python commands to create the `ccx` Python object.
+- [FEAPlugin.cpp](../src/Framework/FEAPlugin.cpp) registers the loader-facing command plugin with `CUBIT_PLUGIN`. It exposes the workspace command and delegates module command keys/construction through [FrameworkContext](../src/Framework/Core/FrameworkContext.cpp). CalculiX command registration lives in [CalculiXCommands.cpp](../src/CalculiX/Commands/CalculiXCommands.cpp).
+- [FEAComp.cpp](../src/Framework/FEAComp.cpp) is the loader-facing component. It attaches the workspace host through the Framework context. [CalculiXModule.cpp](../src/CalculiX/CalculiXModule.cpp) owns the module lifecycle and core observer registration; [CalculiXGui.cpp](../src/CalculiX/GUI/CalculiXGui.cpp) creates panels, model tree, menus, toolbars and GUI observer callbacks. The component binding is declared in [fea_comp.i](../src/Framework/fea_comp.i).
+- [loadCalculiXCore.cpp](../src/CalculiX/Core/loadCalculiXCore.cpp) defines one global `CalculiXCore ccx_core`. [Domain interfaces](developer/interface-layout.rst) forward operations to this shared instance. Constructing an interface does not create an independent model.
+- [CalculiXCore.hpp](../src/CalculiX/Core/CalculiXCore.hpp) declares coordination operations. [CalculiXCoreInitialization.cpp](../src/CalculiX/Core/application/CalculiXCoreInitialization.cpp) implements `init()`, `init2()` and Python initialization; [CalculiXCoreMaintenance.cpp](../src/CalculiX/Core/application/CalculiXCoreMaintenance.cpp) implements updates/reset, and [CalculiXCorePersistence.cpp](../src/CalculiX/Core/application/CalculiXCorePersistence.cpp) implements model read/save. The destructor remains in [CalculiXCore.cpp](../src/CalculiX/Core/CalculiXCore.cpp). Domain-specific coordination is split across the corresponding Core directories.
 
-The core depends on Cubit and Qt: it is not a standalone solver or a host-independent data library. See the `calculix_core` link dependencies in [CMakeLists.txt](../src/CMakeLists.txt).
+The core depends on Cubit and Qt: it is not a standalone solver or a host-independent data library. See the `calculix_core` link dependencies in [CalculiX/CMakeLists.txt](../src/CalculiX/CMakeLists.txt).
 
 ## Commands, GUI, and model updates
 
 Commands define syntax, help, and an `execute(CubitCommandData&)` method. For example, [ccxDampingModifyCommand.cpp](../src/CalculiX/Commands/steps/ccxDampingModifyCommand.cpp) reads optional alpha/beta values, converts numbers to strings, and passes values plus presence markers through the core interface.
 
-[DampingModifyPanel.cpp](../src/CalculiX/GUI/steps/DampingModifyPanel.cpp) constructs the same command text. [GuiSendCmd.cpp](../src/CalculiX/GUI/application/GuiSendCmd.cpp), `gui_cmd()`, calls `CubitInterface::cmd()` and appends the command to the GUI history widget. This verifies the command route for this panel; do not assume every GUI action uses it.
+[DampingModifyPanel.cpp](../src/CalculiX/GUI/steps/DampingModifyPanel.cpp) constructs the same command text. [GuiSendCmd.cpp](../src/CalculiX/GUI/application/GuiSendCmd.cpp), `gui_cmd()`, submits text to the native command window through its `commandEntered` method and resets its history index. The return value reports submission, not command success. Previews use the separate `silent_cmd` path.
 
-[Observer.cpp](../src/CalculiX/EventObservers/Observer.cpp) connects host events to the model:
+[CoreObserver.cpp](../src/CalculiX/Core/application/CoreObserver.cpp) handles model operations from host notifications. [Observer.cpp](../src/CalculiX/EventObservers/Observer.cpp) supplies GUI-update callbacks installed by `CalculiXGui`:
 
 - `notify_command_complete()` calls `core_update()` unless blocked and refreshes the GUI immediately or through a timer, subject to update flags.
 - `notify_model_reset()` resets both the core and component view.
 - File-read and file-save notifications call the persistence methods. Temporary file saves are explicitly skipped.
 
-Tree display data also passes through the interface. For damping, `CalculiXCore::get_damping_tree_data()` constructs ID/name rows consumed by [DampingTree.cpp](../src/CalculiX/GUI/steps/DampingTree.cpp).
+Tree display data also passes through the interface. For damping, [CalculiXCoreStepSettings.cpp](../src/CalculiX/Core/steps/CalculiXCoreStepSettings.cpp) implements `CalculiXCore::get_damping_tree_data()` for ID/name rows consumed by [DampingTree.cpp](../src/CalculiX/GUI/steps/DampingTree.cpp).
+
+## User options
+
+The framework owns one `cubitfea_user_options.h5` in Cubit's standard settings directory. If the SDK cannot resolve a settings directory, the startup working directory is used. The absolute filename is retained for the session. Each workspace supplies explicit typed defaults and validators through `UserOptionsInterface`; CalculiX declarations live in `CoreUserOptions.cpp`. Saved values are validated before populating `ccx_uo`. Resource defaults remain relative to the framework component directory. The options store is implemented in `fea_storage`, and modules receive its interface during initialization, avoiding a link dependency back to the framework host. The framework registers workspace-owned options widgets with Cubit. CalculiX editing runs through a replayable command. `ccx.cfg` is no longer read or written. See [the contract](developer/user-options.rst).
 
 ## Model representation and persistence
 
 Domain objects such as `CoreSections`, `CoreSteps`, and `CoreDamping` hold feature state. Many interfaces use positional vectors rather than named record fields. For example, [CoreDamping.hpp](../src/CalculiX/Core/steps/CoreDamping.hpp) defines `damping_data[0]` as alpha and `[1]` as beta. Empty strings represent unset coefficients; an explicit zero is a different stored value.
 
-`CalculiXCore::read_cub()` and `save_cub()` use [HDF5Tool](../src/CalculiX/Utility/HDF5Tool.hpp) to read/write groups beneath `Cubit-CalculiX` in the model file. Damping uses the rank-one string dataset `Cubit-CalculiX/Damping/damping_data`. The reader rejects the legacy `.cub` extension and directs users to `.cub5`.
+`CalculiXCore::read_cub()` and `save_cub()` use the shared framework storage library `fea_storage` and its [HDF5Tool](../src/Framework/Storage/HDF5Tool.hpp) to read/write groups beneath `Cubit-CalculiX` in the model file. Damping uses the rank-one string dataset `Cubit-CalculiX/Damping/damping_data`. The reader rejects the legacy `.cub` extension and directs users to `.cub5`.
 
 Changing vector layout is therefore potentially a file-format change. Check initialization, reset, readers, writers, display consumers, and exports together. The damping reader fills two empty entries when its dataset is empty; that is not proof of a general migration mechanism.
 
@@ -69,6 +73,7 @@ Changing vector layout is therefore potentially a file-format change. Check init
 
 [CoreJobs.cpp](../src/CalculiX/Core/jobs/CoreJobs.cpp) creates/manages jobs, starts external processes in `run_job()`, waits or kills them, and checks completion in `check_jobs()`. Windows and non-Windows process handling have separate branches. Completion handling includes result loading and conditional conversion.
 
-[CoreResults.cpp](../src/CalculiX/Core/results/CoreResults.cpp) maintains job-to-result associations, loads FRD/DAT readers, and creates a `CoreResultsVtkWriter` for conversion. Result reading and conversion live in separate `CoreResultsFrd`, `CoreResultsDat`, and `CoreResultsVtkWriter` files. Python query methods in [CalculiXPythonInterface.cpp](../src/CalculiX/PythonInterface/CalculiXPythonInterface.cpp) forward through the Jobs, Topology, FRD, DAT and Loads interfaces.
+[CoreResults.cpp](../src/CalculiX/Core/results/CoreResults.cpp) maintains job-to-result associations and loads FRD/DAT readers. The [VTK converter](developer/vtk-conversion.rst) builds complete in-memory datasets using bounded Boost tasks and exposes them through `CalculiXResultsInterface`. Job completion builds datasets synchronously; a separate
+XML exporter writes optional VTU/VTPC/VTT/PVD output. The old `CoreResultsVtkWriterLegacy` is archived without build bindings or active callers. Python query methods in [CalculiXPythonInterface.cpp](../src/CalculiX/PythonInterface/CalculiXPythonInterface.cpp) forward through the Jobs, Topology, FRD, DAT and Loads interfaces.
 
 For a complete step-dependent feature trace, see the [surface-traction walkthrough](adding-a-feature.md), including its conversion from distributed total force components to nodal `*CLOAD` entries.

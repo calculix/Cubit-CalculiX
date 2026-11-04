@@ -305,6 +305,26 @@ std::string CalculiXTopologyInterface::get_topology_run_state(int topology_id)
   return ccx_core.topology->get_topology_run_state(topology_id);
 }
 
+bool CalculiXTopologyInterface::get_topology_iteration_level_set_settings(int topology_id, int iteration_id, TopologyLevelSetSettings& settings)
+{
+  settings = {};
+  if (!ccx_core.topology)
+  {
+    return false;
+  }
+  return CoreTopologyQuery::get_iteration_level_set_settings(*ccx_core.topology, topology_id, iteration_id, settings);
+}
+
+bool CalculiXTopologyInterface::get_topology_iteration_method(int topology_id, int iteration_id, TopologyMethod& method)
+{
+  method = TopologyMethod::Unspecified;
+  if (!ccx_core.topology)
+  {
+    return false;
+  }
+  return CoreTopologyQuery::get_iteration_method(*ccx_core.topology, topology_id, iteration_id, method);
+}
+
 std::vector<std::vector<double>> CalculiXTopologyInterface::get_topology_iteration_element_data(int topology_id, int iteration_id)
 {
   if (!ccx_core.topology || !ccx_core.mat || !ccx_core.jobs)

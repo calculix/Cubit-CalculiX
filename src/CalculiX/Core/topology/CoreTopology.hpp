@@ -94,10 +94,12 @@ public:
    * @brief Commit compliance and raw derivatives from physical element energies.
    * @param topology_id Existing prepared density case.
    * @param iteration_id Unevaluated iteration with stored element energies.
-   * @param stiffness_factors Complete element factors consistent with its design.
+   * @param stiffness_factors Complete stored applied factors, after any material grouping.
    * @return True after storing the evaluation; false on invalid or incomplete data.
    * @note For fixed loads and homogeneous prescribed displacements, C = 2 sum(Ue)
-   * and dC/ds = -2 Ue/s. Density derivatives multiply by (1-v) p rho^(p-1).
+   * and dC/ds_hat = -2 Ue/s_hat. Multiplication by (1-v) p rho^(p-1) gives
+   * continuous-model density derivatives, or surrogate sensitivities for grouped
+   * solves. Group assignments and text-export rounding are not differentiated.
    * Preserved derivatives are zero. No sensitivity filtering is performed here.
    */
   bool evaluate_compliance(int topology_id,int iteration_id, const std::map<int, double>& stiffness_factors);
@@ -109,13 +111,13 @@ public:
    * @param value Finite, nonnegative maximum displacement objective.
    * @param node_id Controlling node selected from the displacement nodeset.
    * @param element_integrals Complete integrals of physical S contracted with adjoint ME.
-   * @param stiffness_factors Applied solver factors for the stored iteration.
+   * @param stiffness_factors Stored applied factors before text-export rounding.
    * @param grouped_materials Applied factors may approximate continuous SIMP factors.
    * @return True after storing the evaluation; false on inconsistent data.
-   * @note dJ/ds = -I/s; multiply by (1-v) p rho^(p-1) for density derivatives.
+   * @note dJ/ds_hat = -I/s_hat; multiply by (1-v) p rho^(p-1) for density sensitivities.
    * With grouped materials the smooth SIMP density derivative is an approximation.
    * The bilinear contraction has no factor of one half. Preserved derivatives
-   * are zero. A zero objective requires zero integrals and no adjoint job.
+   * are zero. A zero objective requires zero integrals; no adjoint job is required.
    */
   bool evaluate_displacement(int topology_id, int iteration_id, double value, int node_id, const std::map<int, double>& element_integrals, const std::map<int, double>& stiffness_factors, bool grouped_materials = false);
 
@@ -125,9 +127,11 @@ public:
    * @param iteration_id Positive iteration ID for the design.
    * @param densities Complete element densities within the permitted bounds.
    * @param design Output design including interpolation settings.
-   * @param stiffness_factors Output factors s = v + (1-v) rho^p.
+   * @param stiffness_factors Output requested factors s = v + (1-v) rho^p, before grouping.
    * @return True on success; false for invalid coverage, values, or preservation.
-   * @note Preserved densities are forced to one. The caller stores the design.
+   * @note Preserved densities are forced to one. Outputs are replaced only on
+   * success. The caller stores the design; subsequent material grouping supplies
+   * the applied factors used by the solver and sensitivity evaluation.
    */
   bool build_density_design(int topology_id,int iteration_id,const std::map<int, double>& densities,TopologyDensityDesign& design,std::map<int, double>& stiffness_factors);
 
@@ -135,11 +139,14 @@ public:
    * @brief Store volume diagnostics and free-variable volume derivatives.
    * @param topology_id Prepared density case.
    * @param iteration_id Stored density design to measure.
-   * @param element_volumes Complete, finite, positive physical element volumes.
+   * @param element_volumes Complete, finite, positive Cubit element volumes.
    * @return True when diagnostics are stored; false on invalid data.
    * @note Fraction = sum(rho V)/sum(V). The minimum fraction field contains
    * preserved volume/sum(V), excluding the free elements' minimum densities.
-   * Free derivatives are V/sum(V); preserved derivatives are zero.
+   * minimum_design_volume_fraction additionally includes the density floor of
+   * free elements: preserved_fraction + rho_min * (1-preserved_fraction).
+   * Free derivatives are V/sum(V); preserved derivatives are zero. No EVOL output
+   * or quadrature-weight sum supplies these volumes.
    */
   bool evaluate_density_volume(int topology_id,int iteration_id,const std::map<int, double>& element_volumes);
 
@@ -193,7 +200,11 @@ public:
    * @return Operation success, independently of the converged output.
    * @note Tests maximum density change, relative objective change using the larger
    * objective as denominator (zero when both are zero), and volume <= target+1e-6.
-   * Compliance also needs an available OC residual within the density tolerance.
+   * Both objectives additionally require an available ordinary proposal residual
+   * within density_tolerance: OC for compliance, projected for displacement.
+   * compliance_tolerance is the relative objective tolerance for both objectives.
+   * Missing residual availability prevents convergence. Success does not imply
+   * that converged is true or that the design is globally optimal.
    */
   bool check_density_convergence(int topology_id,int previous_iteration,int current_iteration,bool& converged);
 
@@ -207,7 +218,8 @@ public:
    * @note Free neighbors within r use a_ij=(1-distance/r) Vj/Vmax and
    * filtered_gi=(Vi/rhoi) sum(a_ij rhoj gj/Vj)/sum(a_ij).
    * Radius zero selects 1.5 cbrt(total_volume/element_count). Preserved elements
-   * are excluded and get zero. Success invalidates the ordinary OC residual.
+   * are excluded and get zero. Success invalidates both ordinary proposal
+   * residuals. Filtered values are not generally exact objective derivatives.
    */
   bool filter_density_sensitivities(int topology_id,int iteration_id,const std::map<int, double>& element_volumes,const std::map<int, std::array<double, 3>>& element_centers);
 

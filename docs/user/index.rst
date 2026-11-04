@@ -1,5 +1,5 @@
-User guide
-==========
+CalculiX user guide
+===================
 
 The user guide explains workflows, GUI controls, commands, exported input,
 and interpretation of results. The initial chapter covers topology.

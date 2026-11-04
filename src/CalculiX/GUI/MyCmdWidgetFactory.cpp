@@ -106,7 +106,8 @@
 #include "GUI/steps/InitialConditionsStressAddElementPanel.hpp"
 #include "GUI/steps/InitialConditionsDeletePanel.hpp"
 #include "GUI/steps/StepsCreatePanel.hpp"
-#include "GUI/topology/TopologySettingsPanel.hpp"
+#include "GUI/topology/TopologyDensitySettingsPanel.hpp"
+#include "GUI/topology/TopologyLevelSetSettingsPanel.hpp"
 #include "GUI/topology/TopologyPreservedSetsPanel.hpp"
 #include "GUI/cgal/AlphaWrapPanel.hpp"
 #include "GUI/topology/TopologyDeletePanel.hpp"
@@ -459,13 +460,21 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
   {
     return new TopologyPreservedSetsPanel();
   }
-  if (name == "CCXTopologyCreate")
+  if (name == "CCXTopologyCreateDensity")
   {
-    return new TopologySettingsPanel(false);
+    return new TopologyDensitySettingsPanel(false);
   }
-  if (name == "CCXTopologyModify")
+  if (name == "CCXTopologyCreateLevelSet")
   {
-    return new TopologySettingsPanel(true);
+    return new TopologyLevelSetSettingsPanel(false);
+  }
+  if (name == "CCXTopologyModifyDensity")
+  {
+    return new TopologyDensitySettingsPanel(true);
+  }
+  if (name == "CCXTopologyModifyLevelSet")
+  {
+    return new TopologyLevelSetSettingsPanel(true);
   }
   if(name == "CCXStepsCreate")
     return new StepsCreatePanel();
@@ -515,7 +524,11 @@ void MyCmdWidgetFactory::clearTopologyPanels(int topology_id)
 {
   for (const auto& widget : topologyPanels)
   {
-    if (auto* panel = dynamic_cast<TopologySettingsPanel*>(widget.data()))
+    if (auto* panel = dynamic_cast<TopologyDensitySettingsPanel*>(widget.data()))
+    {
+      panel->clearTopology(topology_id);
+    }
+    else if (auto* panel = dynamic_cast<TopologyLevelSetSettingsPanel*>(widget.data()))
     {
       panel->clearTopology(topology_id);
     }

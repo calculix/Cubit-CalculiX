@@ -1,28 +1,17 @@
-Cubit-CalculiX documentation
-============================
+Cubit FEA documentation
+=======================
 
-Build finite-element models in Cubit, run CalculiX analyses, and inspect or
-process their results. This manual is intended to ship with Cubit-CalculiX
-and can be opened directly in a browser without a server.
-
-.. note::
-
-   This is the initial documentation framework. Topology is the first sample
-   chapter; the rest of the feature reference will be added incrementally.
-   Generated API declarations do not yet imply complete developer comments.
+Shared framework functionality and workspace-specific finite-element workflows.
+This manual ships as one offline site with local search, formulas and downloads.
+CalculiX topology is the first detailed workspace feature reference; other
+features will be documented incrementally. Generated API declarations do not
+imply complete developer comments.
 
 .. toctree::
    :maxdepth: 2
-   :caption: User documentation
 
-   user/index
-   commands/index
-   tutorials/index
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Developer documentation
-
+   framework/index
+   calculix/index
    developer/index
 
 * :ref:`genindex`

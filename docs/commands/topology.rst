@@ -22,6 +22,14 @@ Create a topology case
      [compliance_tolerance <value>]
      [displacement_nodeset <id>]
      [displacement_component {x|y|z|magnitude}]
+     [level_set_interface_width <value>]
+     [level_set_regularization_length <value>]
+     [level_set_move_limit <value>]
+     [level_set_field_tolerance <value>]
+     [level_set_seed_spacing <value>]
+     [level_set_seed_radius <value>]
+     [level_set_integration_tolerance <value>]
+     [level_set_integration_max_refinements <count>]
 
 This is a wrapped presentation of **one command**, not a multiline journal
 command. Square brackets indicate optional syntax; braces indicate choices.
@@ -65,6 +73,12 @@ valid numeric range, unit, and parameter meaning for both commands.
   Displacement optimization requires an existing, nonempty nodeset at run time.
 * ``displacement_component`` uses global coordinates. X/Y/Z optimize or measure
   the maximum absolute component, and ``magnitude`` the maximum vector norm.
+
+* ``level_set_*`` options edit captured method settings for future designs.
+  Width, field move and field tolerance are dimensionless; regularization and
+  seed sizes use model length units. Zero regularization length, spacing or
+  radius requests automatic resolution. Maximum refinements is an integer 1--5.
+  Configuring these fields does not enable level-set execution.
 
 The fixed density floor and penalization are not additional command arguments.
 The command/configuration parser accepting a setting is distinct from the
@@ -141,3 +155,15 @@ Stop an active run instead of waiting:
 See :doc:`topology-preservation` for inclusion, exclusion, and reset commands.
 See :doc:`topology-results` for preview, deletion, GIF export, and wrapping.
 See :doc:`../user/topology` for the overview.
+
+Level-set configuration example
+--------------------------------
+
+.. code-block:: text
+
+   ccx create topology 2 name "beam_level_set" method level_set objective compliance
+   ccx modify topology 2 level_set_move_limit 0.05 level_set_field_tolerance 0.005
+   ccx modify topology 2 level_set_regularization_length 0 level_set_seed_spacing 0
+
+These commands configure a case only. ``ccx run topology 2`` remains rejected
+until native numerical verification has been completed and execution enabled.

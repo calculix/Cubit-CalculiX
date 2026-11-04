@@ -7,6 +7,53 @@
 #include <iomanip>
 #include <sstream>
 
+bool CoreTopologyQuery::get_iteration_level_set_settings(const CoreTopology& topology, int topology_id, int iteration_id, TopologyLevelSetSettings& settings)
+{
+  settings = {};
+  TopologyMethod method;
+  if (!get_iteration_method(topology, topology_id, iteration_id, method) || method != TopologyMethod::LevelSet)
+  {
+    return false;
+  }
+  const auto& configuration = topology.topology_cases.at(topology_id);
+  const int resolved = iteration_id == -1 ? configuration.selected_iteration : iteration_id;
+  settings = configuration.iteration_level_set_designs.at(resolved).settings;
+  return true;
+}
+
+bool CoreTopologyQuery::get_iteration_method(const CoreTopology& topology, int topology_id, int iteration_id, TopologyMethod& method)
+{
+  method = TopologyMethod::Unspecified;
+  const auto entry = topology.topology_cases.find(topology_id);
+  if (entry == topology.topology_cases.end())
+  {
+    return false;
+  }
+  const auto& configuration = entry->second;
+  if (iteration_id == -1)
+  {
+    iteration_id = configuration.selected_iteration;
+  }
+  if (iteration_id < 1)
+  {
+    return false;
+  }
+  const bool density = configuration.iteration_density_designs.count(iteration_id) != 0;
+  const bool level_set = configuration.iteration_level_set_designs.count(iteration_id) != 0;
+  if (density == level_set)
+  {
+    return false;
+  }
+  const auto captured = density ? TopologyMethod::Density : TopologyMethod::LevelSet;
+  const auto evaluation = configuration.iteration_evaluations.find(iteration_id);
+  if (evaluation != configuration.iteration_evaluations.end() && evaluation->second.method != captured)
+  {
+    return false;
+  }
+  method = captured;
+  return true;
+}
+
 int CoreTopologyQuery::get_iteration_job_id(const CoreTopology& topology, CoreJobs& jobs, int topology_id, int iteration_id)
 {
   if (iteration_id < 1)
@@ -146,17 +193,32 @@ std::vector<std::vector<std::string>> CoreTopologyQuery::get_iteration_data(cons
 
       if (evaluation->second.convergence_checked)
       {
-        density_change = format_value(evaluation->second.maximum_density_change);
+        if (evaluation->second.method == TopologyMethod::LevelSet)
+        {
+          if (evaluation->second.level_set_change_available)
+          {
+            density_change = format_value(evaluation->second.maximum_level_set_change);
+          }
+        }
+        else
+        {
+          density_change = format_value(evaluation->second.maximum_density_change);
+        }
         objective_change = format_value(evaluation->second.relative_objective_change);
         converged = evaluation->second.converged ? "1" : "0";
       }
     }
 
-    const auto design = configuration.iteration_density_designs.find(iteration.first);
-
-    if (design != configuration.iteration_density_designs.end() && design->second.volume.available)
+    TopologyMethod method;
+    if (get_iteration_method(topology, topology_id, iteration.first, method))
     {
-      fraction = format_value(design->second.volume.volume_fraction);
+      const auto& volume = method == TopologyMethod::Density
+          ? configuration.iteration_density_designs.at(iteration.first).volume
+          : configuration.iteration_level_set_designs.at(iteration.first).volume;
+      if (volume.available)
+      {
+        fraction = format_value(volume.volume_fraction);
+      }
     }
 
     rows.push_back({
@@ -217,16 +279,18 @@ std::vector<std::vector<double>> CoreTopologyQuery::get_iteration_element_data(c
     return {};
   }
 
-  const auto design = configuration.iteration_density_designs.find(iteration_id);
+  TopologyMethod method;
   const auto factors = collection->second.iteration_factors.find(iteration_id);
-
-  if (design == configuration.iteration_density_designs.end() || factors == collection->second.iteration_factors.end())
+  if (!get_iteration_method(topology, topology_id, iteration_id, method) || factors == collection->second.iteration_factors.end())
   {
-    PRINT_ERROR("Missing topology iteration densities or factors.\n");
+    PRINT_ERROR("Missing topology iteration design, method or factors.\n");
     return {};
   }
 
-  const auto& densities = design->second.element_densities;
+  // Column 1 is the design solid fraction: density or regularized level-set fraction.
+  const auto& densities = method == TopologyMethod::Density
+      ? configuration.iteration_density_designs.at(iteration_id).element_densities
+      : configuration.iteration_level_set_designs.at(iteration_id).element_solid_fractions;
   const auto& preserved = configuration.element_preserved;
   const auto& assignments = collection->second.element_base_material;
 
@@ -249,7 +313,9 @@ std::vector<std::vector<double>> CoreTopologyQuery::get_iteration_element_data(c
         factor == factors->second.end() ||
         flag == preserved.end() ||
         !std::isfinite(density.second) ||
-        density.second <= 0.0 || density.second > 1.0 ||
+        density.second < 0.0 || density.second > 1.0 ||
+        (method == TopologyMethod::Density && density.second == 0.0) ||
+        (flag != preserved.end() && flag->second && (density.second != 1.0 || factor->second != 1.0)) ||
         !std::isfinite(factor->second) ||
         factor->second <= 0.0 || factor->second > 1.0)
     {

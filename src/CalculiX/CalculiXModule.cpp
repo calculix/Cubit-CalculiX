@@ -1,7 +1,6 @@
 #include "CalculiXModule.hpp"
 #include "Commands/CalculiXCommands.hpp"
 #include "GUI/CalculiXGui.hpp"
-#include "CalculiXSettings.hpp"
 #include "Core/application/CalculiXApplicationInterface.hpp"
 #include "Core/application/CoreObserver.hpp"
 #include "CubitInterface.hpp"
@@ -57,7 +56,7 @@ std::string CalculiXModule::module_id() const
   return "calculix";
 }
 
-bool CalculiXModule::initialize(std::string& error)
+bool CalculiXModule::initialize(UserOptionsInterface& options, std::string& error)
 {
   error.clear();
 
@@ -81,8 +80,11 @@ bool CalculiXModule::initialize(std::string& error)
     }
   }
 
-  CalculiXSettings::restore();
   CalculiXApplicationInterface application;
+  if (!application.initialize_user_options(options, error))
+  {
+    return false;
+  }
 
   if (!application.initialize_application())
   {
@@ -108,6 +110,7 @@ void CalculiXModule::shutdown() noexcept
   }
 
   commands.reset();
+  CalculiXApplicationInterface().shutdown_user_options();
   // Project data remains owned by the one ccx_core in calculix_core.
   // GUI detach does not reset the model or terminate running solver jobs.
 }

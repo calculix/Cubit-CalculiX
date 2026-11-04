@@ -1,4 +1,6 @@
 #include "TopologyManagement.hpp"
+#include "TopologyManagementDensitySettingsWidget.hpp"
+#include "TopologyManagementLevelSetSettingsWidget.hpp"
 #include "Core/drawing/CalculiXDrawInterface.hpp"
 #include <string>
 #include <QString>
@@ -145,14 +147,18 @@ TopologyManagement::TopologyManagement(JobsMonitor* monitor, QWidget* parent)
   clear();
 }
 
-void TopologyManagement::clear()
+void TopologyManagement::clear(bool clear_settings)
 {
   pausePlayback();
   currentTopologyId = -1;
   creating = false;
-  settingsDirty = false;
-  settingsDrafts.clear();
-  settingsOriginal.clear();
+  if (clear_settings)
+  {
+    densitySettings->clearTopology();
+    levelSetSettings->clearTopology();
+    settingsMethodDrafts.clear();
+  }
+  settingsLoadedId = -2;
   iterationRecords.clear();
   lastRunState.clear();
   caseTree->clear();
@@ -280,7 +286,10 @@ void TopologyManagement::refresh()
     auto* item = caseTree->topLevelItem(i);
     if (existing.count(item->data(0, Qt::UserRole).toInt()) == 0)
     {
-      settingsDrafts.erase(item->data(0, Qt::UserRole).toInt());
+      const int removed = item->data(0, Qt::UserRole).toInt();
+      densitySettings->clearTopology(removed);
+      levelSetSettings->clearTopology(removed);
+      settingsMethodDrafts.erase(removed);
       delete caseTree->takeTopLevelItem(i);
     }
   }
@@ -316,14 +325,16 @@ void TopologyManagement::refresh()
       refreshIterations();
     }
   }
-  if (!creating && currentTopologyId > 0 && settingsOriginal.empty())
+  if (!creating && currentTopologyId > 0 && settingsLoadedId != currentTopologyId)
   {
     loadSettings();
   }
   updateControls();
   const bool running = currentTopologyId > 0 && core.get_topology_run_state(currentTopologyId) == "running";
-  settingsForm->setEnabled((creating || currentTopologyId > 0) && !running && !animation_was_active);
-  settingsApply->setEnabled(settingsForm->isEnabled());
+  const bool settingsEditable = (creating || currentTopologyId > 0) && !running && !animation_was_active;
+  settingsForm->setEnabled(settingsEditable);
+  densitySettings->setEditable(settingsEditable);
+  levelSetSettings->setEditable(settingsEditable);
   deleteButton->setEnabled(currentTopologyId > 0 && !running && !animation_was_active && !creating);
   newButton->setEnabled(!animation_was_active);
   // Re-enable preservation immediately after a run without clearing the user's selection.
@@ -466,15 +477,15 @@ bool TopologyManagement::submitCommand(const QString& command)
 
 void TopologyManagement::invalidateTopology(int topology_id)
 {
-  settingsDrafts.erase(topology_id);
+  densitySettings->clearTopology(topology_id);
+  levelSetSettings->clearTopology(topology_id);
+  settingsMethodDrafts.erase(topology_id);
   if (currentTopologyId != topology_id)
   {
     return;
   }
   // Deletion notifications can arrive in a batch. Clear without querying half-reset cores.
   const int selected = currentTopologyId;
-  auto drafts = std::move(settingsDrafts);
-  clear();
-  settingsDrafts = std::move(drafts);
+  clear(false);
   currentTopologyId = selected;
 }

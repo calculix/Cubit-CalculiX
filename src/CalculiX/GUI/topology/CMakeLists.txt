@@ -18,8 +18,14 @@ target_sources(calculix_gui PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/TopologyDisplacementText.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TopologyPreservedSetsPanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TopologyPreservedSetsPanel.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/TopologySettingsPanel.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/TopologySettingsPanel.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TopologyDensitySettingsPanel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TopologyDensitySettingsPanel.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TopologyLevelSetSettingsPanel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TopologyLevelSetSettingsPanel.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TopologyManagementDensitySettingsWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TopologyManagementDensitySettingsWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TopologyManagementLevelSetSettingsWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TopologyManagementLevelSetSettingsWidget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TopologyTree.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TopologyTree.hpp
 )

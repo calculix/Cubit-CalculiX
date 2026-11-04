@@ -12,6 +12,10 @@ add_library(fea_framework SHARED
   Interfaces/CommandProviderInterface.hpp
   Interfaces/ComponentProviderInterface.hpp
   Interfaces/WorkspaceProviderInterface.hpp
+  GUI/DocumentationManager.cpp
+  GUI/DocumentationManager.hpp
+  GUI/UserOptionsManager.cpp
+  GUI/UserOptionsManager.hpp
   GUI/WorkspaceManager.cpp
   GUI/WorkspaceManager.hpp
   GUI/WorkspaceHeader.cpp
@@ -23,7 +27,7 @@ add_library(fea_framework SHARED
 )
 
 target_compile_features(fea_framework PUBLIC cxx_std_17)
-target_link_libraries(fea_framework PRIVATE calculix_module clarogui clarofw navigation cubiti cubit_util Qt6::Widgets)
+target_link_libraries(fea_framework PRIVATE fea_storage calculix_module clarogui clarofw navigation cubiti cubit_util Qt6::Widgets)
 set_target_properties(fea_framework PROPERTIES AUTOMOC ON)
 target_compile_definitions(fea_framework PRIVATE FEA_FRAMEWORK_BUILD)
 target_include_directories(fea_framework PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
@@ -31,6 +35,7 @@ target_include_directories(fea_framework PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/.."
 add_library(fea_plugin MODULE
   FEAPlugin.cpp FEAPlugin.hpp
   Commands/WorkspaceCommand.cpp Commands/WorkspaceCommand.hpp
+  Commands/DocumentationCommand.cpp Commands/DocumentationCommand.hpp
 )
 target_link_libraries(fea_plugin PRIVATE fea_framework cubiti cubit_util)
 
@@ -81,3 +86,19 @@ add_custom_command(TARGET fea_comp POST_BUILD
     "${FEA_COMPONENT_PROXY}" "$<TARGET_FILE_DIR:fea_comp>/fea_comp.py"
   VERBATIM
 )
+
+# Package an existing manual explicitly; normal builds do not generate or stage it.
+set(FEA_DOCUMENTATION_SOURCE "${CCX_SOURCE_ROOT}/../docs/_build/html" CACHE PATH "Generated manual directory")
+if (WIN32)
+  set(_fea_documentation_destination "${CMAKE_BINARY_DIR}/Release/documentation")
+else()
+  set(_fea_documentation_destination "${CMAKE_BINARY_DIR}/documentation")
+endif()
+set(FEA_DOCUMENTATION_DESTINATION "${_fea_documentation_destination}" CACHE PATH "Packaged manual directory beside the plugin")
+add_custom_target(stage_documentation
+  COMMAND "${CMAKE_COMMAND}"
+    "-DFEA_DOCUMENTATION_SOURCE=${FEA_DOCUMENTATION_SOURCE}"
+    "-DFEA_DOCUMENTATION_DESTINATION=${FEA_DOCUMENTATION_DESTINATION}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/../cmake/StageDocumentation.cmake"
+  COMMENT "Staging the existing Cubit FEA manual"
+  VERBATIM)

@@ -1,28 +1,16 @@
 Developer guide
 ===============
 
+Framework contracts describe shared infrastructure. Workspace chapters describe
+solver-specific implementation and mathematics.
+The complete project-code guide includes domain contracts, an owned-source
+catalogue, declaration navigation and review findings. External utility
+implementations are excluded.
+
 .. toctree::
    :maxdepth: 1
 
-   ../architecture
-   ../source-map
-   ../adding-a-feature
-   interface-layout
-   framework-stage1
-   framework-stage2
-   framework-stage3
-   topology
-   topology-algorithms
-   topology-preservation
-   topology-results
-   topology-export
-   api
+   code-documentation
+   framework
+   calculix
    ../README
-
-Architecture notes and source links
------------------------------------
-
-The existing Markdown guides remain the starting point for development.
-In the built manual, links to individual repository source files are packaged
-as downloads so they remain accessible offline. The generated API reference
-is an initial topology-focused view of the extracted project declarations.

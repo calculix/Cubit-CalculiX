@@ -4,13 +4,22 @@
 #include "Core/jobs/CalculiXJobsInterface.hpp"
 #include "Core/results/frd/CoreResultsFrd.hpp"
 #include "Core/results/dat/CoreResultsDat.hpp"
-#include "Core/results/CoreResultsVtkWriter.hpp"
 #include "Core/results/CoreResultsProject.hpp"
+#include "Core/results/vtk/CoreResultsVtkLink.hpp"
+#include "Core/results/vtk/CoreResultsVtkConverter.hpp"
+#include "Framework/Results/VtkResultsExporter.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 
 #include <fstream>
 #include <iostream>
+#include <exception>
+#include <chrono>
+#include <filesystem>
+#include <QScopedValueRollback>
+#include <QScopeGuard>
+#include "ProgressTool.hpp"
+#include "AppUtil.hpp"
 #include "loadUserOptions.hpp"
 
 CoreResults::CoreResults()
@@ -37,6 +46,11 @@ bool CoreResults::update()
 
 bool CoreResults::reset()
 {
+  if (!can_change_readers())
+  {
+    return false;
+  }
+  clear_vtk_cache();
   results_data.clear();
   frd_data.clear();
   dat_data.clear();
@@ -52,6 +66,10 @@ bool CoreResults::check_initialized()
 
 bool CoreResults::create_result(int job_id)
 {
+  if (!can_change_readers())
+  {
+    return false;
+  }
   int result_id;
   int result_last;
   CoreResultsFrd frd;
@@ -79,6 +97,10 @@ bool CoreResults::create_result(int job_id)
 
 bool CoreResults::create_frd_dat(int job_id)
 {
+  if (!can_change_readers())
+  {
+    return false;
+  }
   CoreResultsFrd frd;
   CoreResultsDat dat;
   
@@ -93,6 +115,10 @@ bool CoreResults::create_frd_dat(int job_id)
 
 bool CoreResults::add_result(int result_id, int job_id, int frd_id, int dat_id)
 {
+  if (!can_change_readers())
+  {
+    return false;
+  }
   std::vector<int> v = {result_id, job_id, frd_id, dat_id};
   results_data.push_back(v);
   return true;
@@ -100,6 +126,10 @@ bool CoreResults::add_result(int result_id, int job_id, int frd_id, int dat_id)
 
 bool CoreResults::delete_result(int job_id)
 {
+  if (!can_change_readers())
+  {
+    return false;
+  }
   int results_data_id = get_results_data_id_from_job_id(job_id);
   int frd_data_id = get_frd_data_id_from_job_id(job_id);
   int dat_data_id = get_dat_data_id_from_job_id(job_id);
@@ -108,6 +138,9 @@ bool CoreResults::delete_result(int job_id)
   {
     return false;
   } else {
+    vtk_results.erase(job_id);
+    vtk_exports.erase(job_id);
+    vtk_status.erase(job_id);
     frd_data.erase(frd_data.begin() + frd_data_id);
     dat_data.erase(dat_data.begin() + dat_data_id);
     results_data.erase(results_data.begin() + results_data_id);
@@ -117,6 +150,13 @@ bool CoreResults::delete_result(int job_id)
 
 bool CoreResults::load_result(int job_id)
 {
+  if (!can_change_readers())
+  {
+    return false;
+  }
+  vtk_results.erase(job_id);
+  vtk_exports.erase(job_id);
+  vtk_status.erase(job_id);
   std::string log;
   int results_data_id = get_results_data_id_from_job_id(job_id);
   int frd_data_id = get_frd_data_id_from_job_id(job_id);
@@ -145,50 +185,268 @@ bool CoreResults::load_result(int job_id)
   }
 }
 
+FeaResults::ConversionStatus CoreResults::get_vtk_status(int job_id) const
+{
+  const auto found = vtk_status.find(job_id);
+  return found == vtk_status.end() ? FeaResults::ConversionStatus::NotConverted : found->second;
+}
+
+bool CoreResults::prepare_vtk_plan(int job_id, const CoreResultsVtkOptions& options, CoreResultsVtkPlan& plan)
+{
+  if (vtk_build_active)
+  {
+    PRINT_ERROR("A VTK result build is already active.\n");
+    return false;
+  }
+  QScopedValueRollback<bool> guard(vtk_build_active, true);
+  return prepare_vtk_plan_impl(job_id, options, plan);
+}
+
+bool CoreResults::prepare_vtk_plan_impl(int job_id, const CoreResultsVtkOptions& options, CoreResultsVtkPlan& plan)
+{
+  const int frd_id = get_frd_data_id_from_job_id(job_id);
+  const int dat_id = get_dat_data_id_from_job_id(job_id);
+  CalculiXJobsInterface jobs;
+  const auto job = jobs.get_job_data(job_id);
+  if (get_results_data_id_from_job_id(job_id) < 0 || frd_id < 0 || dat_id < 0 || static_cast<std::size_t>(frd_id) >= frd_data.size() || static_cast<std::size_t>(dat_id) >= dat_data.size() || job.size() < 4 || job[3] == "1")
+  {
+    PRINT_ERROR("Cannot plan VTK results for a missing or running job.\n");
+    return false;
+  }
+  vtk_status[job_id] = FeaResults::ConversionStatus::Planning;
+  CoreResultsVtkLink linker;
+  try
+  {
+    if (!linker.prepare(job_id, frd_data[frd_id], dat_data[dat_id], job[1] + ".inp", options, plan))
+    {
+      vtk_status[job_id] = FeaResults::ConversionStatus::Failed;
+      return false;
+    }
+  }
+  catch (const std::exception& error)
+  {
+    vtk_status[job_id] = FeaResults::ConversionStatus::Failed;
+    PRINT_ERROR("VTK planning failed: %s\n", error.what());
+    return false;
+  }
+  catch (...)
+  {
+    vtk_status[job_id] = FeaResults::ConversionStatus::Failed;
+    PRINT_ERROR("Unexpected VTK planning failure.\n");
+    return false;
+  }
+  vtk_status[job_id] = FeaResults::ConversionStatus::Planned;
+  return true;
+}
+
+bool CoreResults::can_change_readers() const
+{
+  if (vtk_build_active)
+  {
+    PRINT_ERROR("Cannot modify result readers while VTK planning/conversion is active.\n");
+    return false;
+  }
+  return true;
+}
+
+void CoreResults::clear_vtk_cache()
+{
+  vtk_results.clear();
+  vtk_exports.clear();
+  vtk_status.clear();
+}
+
+bool CoreResults::is_vtk_build_active() const
+{
+  return vtk_build_active;
+}
+
+bool CoreResults::cancel_vtk_build()
+{
+  if (!vtk_build_active)
+  {
+    return false;
+  }
+  vtk_cancelled.store(true, std::memory_order_relaxed);
+  return true;
+}
+
+bool CoreResults::build_vtk_result(int job_id, const CoreResultsVtkOptions& options)
+{
+  if (vtk_build_active)
+  {
+    PRINT_ERROR("A VTK result build is already active.\n");
+    return false;
+  }
+  QScopedValueRollback<bool> guard(vtk_build_active, true);
+  vtk_cancelled.store(false, std::memory_order_relaxed);
+  try
+  {
+    CoreResultsVtkOptions resolved = options;
+    if (resolved.workers == 0)
+    {
+      if (ccx_uo.mConverterThreads < 1)
+      {
+        vtk_status[job_id] = FeaResults::ConversionStatus::Failed;
+        PRINT_ERROR("VTK conversion requires at least one converter thread.\n");
+        return false;
+      }
+      resolved.workers = static_cast<std::size_t>(ccx_uo.mConverterThreads);
+    }
+    CoreResultsVtkPlan plan;
+    if (!prepare_vtk_plan_impl(job_id, resolved, plan))
+    {
+      return false;
+    }
+    plan.run_identity = std::to_string(job_id) + ":" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+    const int frd_id = get_frd_data_id_from_job_id(job_id);
+    const int dat_id = get_dat_data_id_from_job_id(job_id);
+    ProgressTool* progress = CubitInterface::app_util().get()->progress_tool();
+    if (!progress)
+    {
+      vtk_status[job_id] = FeaResults::ConversionStatus::Failed;
+      PRINT_ERROR("VTK conversion progress service is unavailable.\n");
+      return false;
+    }
+    progress->start(0, 100, "Building VTK Result Datasets");
+    const auto end_progress = qScopeGuard([&]()
+    {
+      progress->end();
+    });
+    auto previous = std::chrono::steady_clock::time_point{};
+    const auto poll = [&](double fraction)
+    {
+      const auto now = std::chrono::steady_clock::now();
+      if (now - previous >= std::chrono::milliseconds(100) || fraction >= 1.0)
+      {
+        previous = now;
+        progress->percent(fraction);
+        progress->check_interrupt();
+        if (CubitInterface::app_util().get()->interrupt())
+        {
+          vtk_cancelled.store(true, std::memory_order_relaxed);
+        }
+      }
+      return !vtk_cancelled.load(std::memory_order_relaxed);
+    };
+    vtk_status[job_id] = FeaResults::ConversionStatus::Converting;
+    std::shared_ptr<const FeaResults::VtkResultsData> converted;
+    std::string error;
+    CoreResultsVtkConverter converter;
+    if (!converter.build(frd_data[frd_id], dat_data[dat_id], plan, vtk_cancelled, poll, converted, error))
+    {
+      if (error.empty() && vtk_cancelled.load(std::memory_order_relaxed))
+      {
+        vtk_status[job_id] = FeaResults::ConversionStatus::Cancelled;
+        PRINT_INFO("VTK result build cancelled.\n");
+      }
+      else
+      {
+        vtk_status[job_id] = FeaResults::ConversionStatus::Failed;
+        PRINT_ERROR("VTK result build failed: %s\n", error.empty() ? "unknown conversion error" : error.c_str());
+      }
+      return false;
+    }
+    vtk_results[job_id] = std::move(converted);
+    vtk_exports.erase(job_id);
+    vtk_status[job_id] = FeaResults::ConversionStatus::Complete;
+    CalculiXJobsInterface().set_job_conversion(job_id, -1);
+    return true;
+  }
+  catch (const std::exception& error)
+  {
+    vtk_status[job_id] = FeaResults::ConversionStatus::Failed;
+    PRINT_ERROR("VTK result build failed: %s\n", error.what());
+    return false;
+  }
+  catch (...)
+  {
+    vtk_status[job_id] = FeaResults::ConversionStatus::Failed;
+    PRINT_ERROR("Unexpected VTK result build failure.\n");
+    return false;
+  }
+}
+
+std::shared_ptr<const FeaResults::VtkResultsData> CoreResults::get_vtk_result(int job_id) const
+{
+  const auto found = vtk_results.find(job_id);
+  return found == vtk_results.end() ? nullptr : found->second;
+}
+
+std::string CoreResults::get_vtk_export_path(int job_id) const
+{
+  const auto found = vtk_exports.find(job_id);
+  return found == vtk_exports.end() ? std::string{} : found->second;
+}
+
+bool CoreResults::export_vtk_result(int job_id, const std::string& destination)
+{
+  if (vtk_build_active)
+  {
+    PRINT_ERROR("A VTK result operation is already active.\n");
+    return false;
+  }
+  const auto result = get_vtk_result(job_id);
+  if (!result || get_vtk_status(job_id) != FeaResults::ConversionStatus::Complete)
+  {
+    PRINT_ERROR("Build a complete VTK result before exporting job %d.\n", job_id);
+    return false;
+  }
+  QScopedValueRollback<bool> guard(vtk_build_active, true);
+  vtk_cancelled.store(false, std::memory_order_relaxed);
+  try
+  {
+    std::string target = destination;
+    if (target.empty())
+    {
+      CalculiXJobsInterface jobs;
+      const auto job = jobs.get_job_data(job_id);
+      if (job.size() < 2)
+      {
+        PRINT_ERROR("Cannot find the VTK export path for job %d.\n", job_id);
+        return false;
+      }
+      const auto token = std::chrono::steady_clock::now().time_since_epoch().count();
+      target = (std::filesystem::u8path(job[1] + ".vtk") / ("run_" + std::to_string(token))).u8string();
+    }
+    std::string index;
+    std::string error;
+    if (!FeaResults::export_vtk_result(*result, target, index, error, [&](double)
+      {
+        return !vtk_cancelled.load(std::memory_order_relaxed);
+      }))
+    {
+      PRINT_ERROR("VTK export for job %d failed: %s\n", job_id, error.c_str());
+      return false;
+    }
+    vtk_exports[job_id] = index;
+    CalculiXJobsInterface().set_job_conversion(job_id, 1);
+    PRINT_INFO("VTK result exported to %s\n", index.c_str());
+    return true;
+  }
+  catch (const std::exception& failure)
+  {
+    PRINT_ERROR("VTK export for job %d failed: %s\n", job_id, failure.what());
+    return false;
+  }
+}
+
 int CoreResults::convert_result(int job_id, std::vector<int> options, std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids)
 {
-  CalculiXJobsInterface ccx_jobs_iface;
-
-  // options[0]: partial fields: 0 = disabled, 1 = enabled,
-  //            -1 = default (enabled).
-  // options[1]: frd
-  // options[2]: dat
-  std::string log;
-  int results_data_id = get_results_data_id_from_job_id(job_id);
-  int frd_data_id = get_frd_data_id_from_job_id(job_id);
-  int dat_data_id = get_dat_data_id_from_job_id(job_id);
-  CoreResultsVtkWriter* vtkWriter = new CoreResultsVtkWriter();
-
-  if (results_data_id == -1)
+  CoreResultsVtkOptions settings;
+  settings.include_partial = options.empty() || options[0] != 0;
+  const bool frd_only = options.size() > 1 && options[1] == 1;
+  const bool dat_only = options.size() > 2 && options[2] == 1;
+  settings.include_frd = frd_only || !dat_only;
+  settings.include_dat = dat_only || !frd_only;
+  settings.block_ids = std::move(block_ids);
+  settings.nodeset_ids = std::move(nodeset_ids);
+  settings.sideset_ids = std::move(sideset_ids);
+  if (!build_vtk_result(job_id, settings) || !export_vtk_result(job_id))
   {
     return -1;
-  } else {
-    log = "Converting results for Job ID " + std::to_string(results_data[results_data_id][1]) + " \n";
-    PRINT_INFO("%s", log.c_str());
-    vtkWriter->init(job_id,&frd_data[frd_data_id],&dat_data[dat_data_id], block_ids, nodeset_ids, sideset_ids);
-    
-    // partial
-    vtkWriter->write_partial = options[0] != 0;
-
-    //frd only
-    if ((options[1] == 1)&&(options[2] == -1))
-    {
-      vtkWriter->write_dat = false;
-    }
-    //dat only
-    if ((options[1] == -1)&&(options[2] == 1))
-    {
-      vtkWriter->write_frd = false;
-    }
-    vtkWriter->write();
-    int write_mode = vtkWriter->write_mode;
-    ccx_jobs_iface.set_job_conversion(job_id,write_mode); // used for manual conversion, twice is better than once
-
-    vtkWriter->clear(); //clear data
-    delete vtkWriter;
-
-    return write_mode;
   }
+  return 1;
 }
 
 bool CoreResults::project_topology(int topology_id,int iteration_id, double threshold, bool preview)

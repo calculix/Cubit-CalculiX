@@ -176,6 +176,7 @@ bool CoreTopologyJobs::reset_run(CoreTopology& topology, CoreJobs& jobs, CoreMat
   configuration.iteration_total_energies.clear();
   configuration.iteration_evaluations.clear();
   configuration.iteration_density_designs.clear();
+  configuration.iteration_level_set_designs.clear();
   configuration.run_state = TopologyRunState::NotRun;
 
   if (materials)

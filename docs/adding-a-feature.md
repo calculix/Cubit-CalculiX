@@ -28,7 +28,7 @@ The three command implementations are:
 - [ccxLoadsSurfaceTractionModifyCommand.cpp](../src/CalculiX/Commands/loads/ccxLoadsSurfaceTractionModifyCommand.cpp)
 - [ccxLoadsSurfaceTractionDeleteCommand.cpp](../src/CalculiX/Commands/loads/ccxLoadsSurfaceTractionDeleteCommand.cpp)
 
-Each provides syntax/help and an `execute()` entry point. [CalculiXPlugin.cpp](../src/CalculiXPlugin.cpp) includes their headers, advertises keys in `get_keys()`, and constructs them in `create_command()`. [Commands/CMakeLists.txt](../src/CalculiX/Commands/CMakeLists.txt) explicitly includes their source/header files.
+Each provides syntax/help and an `execute()` entry point. [CalculiXCommands.cpp](../src/CalculiX/Commands/CalculiXCommands.cpp) includes their headers, advertises keys in `command_keys()`, and constructs them in `create_command()`. The loader-facing [FEAPlugin.cpp](../src/Framework/FEAPlugin.cpp) delegates through the Framework module registry. [loads/CMakeLists.txt](../src/CalculiX/Commands/loads/CMakeLists.txt) explicitly includes their source/header files.
 
 Creation requires a sideset and all three force components. Optional inputs are `op`, `amplitude`, `timedelay`, and `name`. The create command packs these arguments as follows:
 
@@ -39,7 +39,7 @@ Creation requires a sideset and all three force components. Optional inputs are 
 
 Defaults are OP mode `0` (MOD), amplitude ID `-1`, empty delay, and empty name. NEW is stored as `1`. Modification additionally passes eight presence markers in the order OP, amplitude, delay, sideset, force 1, force 2, force 3, name. A missing component is preserved rather than set to the placeholder zero packed by the command.
 
-[CalculiXLoadsInterface.cpp](../src/CalculiX/Core/loads/CalculiXLoadsInterface.cpp), `create_loadssurfacetraction()`, `modify_loadssurfacetraction()`, and `delete_loadssurfacetraction()`, forwards to the shared core. Matching methods in [CalculiXCore.cpp](../src/CalculiX/Core/CalculiXCore.cpp) forward to `CoreLoadsSurfaceTraction`.
+[CalculiXLoadsInterface.cpp](../src/CalculiX/Core/loads/CalculiXLoadsInterface.cpp), `create_loadssurfacetraction()`, `modify_loadssurfacetraction()`, and `delete_loadssurfacetraction()`, forwards to the shared core. Matching methods in [CalculiXCoreLoads.cpp](../src/CalculiX/Core/loads/CalculiXCoreLoads.cpp) forward to `CoreLoadsSurfaceTraction`.
 
 **For a similar new feature:** wire all three registration locations, the source lists, and both forwarding layers. Specify vector layouts explicitly so commands and core methods agree.
 
@@ -78,7 +78,7 @@ The central core's cleanup logic clears missing amplitude references to `-1`, de
 
 [ccxStepAddLoadCommand.cpp](../src/CalculiX/Commands/steps/ccxStepAddLoadCommand.cpp) maps `surfacetraction` to load type **9** and calls `step_add_loads()`. [ccxStepRemoveLoadCommand.cpp](../src/CalculiX/Commands/steps/ccxStepRemoveLoadCommand.cpp) uses the same type for removal. [CoreSteps.cpp](../src/CalculiX/Core/steps/CoreSteps.cpp), `add_loads()`, stores membership and avoids an existing duplicate association.
 
-Step export in `CalculiXCore.cpp` matches type 9 and the load ID before calling `get_load_export()`. Merely creating the load does not assign it to a step. The core wraps its export with custom lines identified by `BEFORE`/`AFTER`, `SURFACETRACTION`, and the load ID; [ccxCustomLineCreateCommand.cpp](../src/CalculiX/Commands/export/ccxCustomLineCreateCommand.cpp) and the modify command recognize that keyword.
+[CalculiXCoreStepExport.cpp](../src/CalculiX/Core/steps/CalculiXCoreStepExport.cpp) selects ordinary or adjoint export. The ordinary path uses [CoreStepExport.cpp](../src/CalculiX/Core/steps/CoreStepExport.cpp) and [CoreStepLoadExport.cpp](../src/CalculiX/Core/steps/CoreStepLoadExport.cpp), which match type 9 and the load ID before calling `get_load_export()`. Merely creating the load does not assign it to a step. The core wraps its export with custom lines identified by `BEFORE`/`AFTER`, `SURFACETRACTION`, and the load ID; [ccxCustomLineCreateCommand.cpp](../src/CalculiX/Commands/export/ccxCustomLineCreateCommand.cpp) and the modify command recognize that keyword.
 
 **For a similar new feature:** select an unused type and update all relevant dispatch sites.
 
@@ -114,8 +114,8 @@ The existing integration points are:
 | Panel markers and construction | [cmdPanelManager.cpp](../src/CalculiX/GUI/cmdPanelManager.cpp), [MyCmdWidgetFactory.cpp](../src/CalculiX/GUI/MyCmdWidgetFactory.cpp): `CCXLoadsSurfaceTractionCreate/Modify/Delete` |
 | Global and per-step trees | [LoadsSurfaceTractionTree.cpp](../src/CalculiX/GUI/loads/LoadsSurfaceTractionTree.cpp), [StepsLoadsSurfaceTractionTree.cpp](../src/CalculiX/GUI/steps/StepsLoadsSurfaceTractionTree.cpp) |
 | Context/navigation and step editing | [ModelTree.cpp](../src/CalculiX/GUI/application/ModelTree.cpp), [StepsManagement.cpp](../src/CalculiX/GUI/steps/StepsManagement.cpp) |
-| Display data, entity resolution, parsing | [CalculiXCore.cpp](../src/CalculiX/Core/CalculiXCore.cpp): search `loadssurfacetraction` and the two `get_*loadssurfacetraction_tree_data()` methods |
-| Load drawing | [CoreDraw.cpp](../src/CalculiX/Core/drawing/CoreDraw.cpp), plus sideset coordinates and force-component preparation in the central core |
+| Display data, entity resolution, parsing | [CalculiXCoreLoads.cpp](../src/CalculiX/Core/loads/CalculiXCoreLoads.cpp), [CoreLoadsTreeData.cpp](../src/CalculiX/Core/loads/CoreLoadsTreeData.cpp), and [CoreStepsLoadTreeData.cpp](../src/CalculiX/Core/steps/CoreStepsLoadTreeData.cpp): global/per-step surface-traction rows |
+| Load drawing | [CoreDraw.cpp](../src/CalculiX/Core/drawing/CoreDraw.cpp) and [CoreDrawLoadData.cpp](../src/CalculiX/Core/drawing/CoreDrawLoadData.cpp): symbol generation and sideset/force data |
 
 The create panel builds `ccx create surfacetraction ...` and submits it through `GuiSendCmd::gui_cmd()`. Step management constructs add/remove-load commands. New GUI files also belong in [GUI/CMakeLists.txt](../src/CalculiX/GUI/CMakeLists.txt); core files belong in [Core/CMakeLists.txt](../src/CalculiX/Core/CMakeLists.txt).
 

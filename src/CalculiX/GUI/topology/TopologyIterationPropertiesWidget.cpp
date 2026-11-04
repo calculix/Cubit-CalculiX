@@ -1,5 +1,6 @@
 #include "TopologyIterationPropertiesWidget.hpp"
 #include "Core/topology/CalculiXTopologyInterface.hpp"
+#include "Core/topology/CoreTopologyStructs.hpp"
 #include "CubitMessage.hpp"
 
 TopologyIterationPropertiesWidget::TopologyIterationPropertiesWidget(QWidget* parent)
@@ -19,6 +20,10 @@ bool TopologyIterationPropertiesWidget::setTopologyIteration(int topologyId, int
     }
     addIdentity("Topology iteration", iterationId);
     auto* results = addGroup("iteration", "Iteration", PropertySection::Data);
+    TopologyMethod method = TopologyMethod::Unspecified;
+    const bool methodAvailable = core.get_topology_iteration_method(topologyId, iterationId, method);
+    const QString methodName = !methodAvailable ? "Unavailable" : (method == TopologyMethod::LevelSet ? "Level set" : "Density-based");
+    addValue(results, "Method", methodName);
     addReference(results, PropertyReferenceKind::Job, "Job", QString::fromStdString(row[1]));
     QString status;
     const int statusCode = QString::fromStdString(row[2]).toInt();
@@ -36,7 +41,8 @@ bool TopologyIterationPropertiesWidget::setTopologyIteration(int topologyId, int
     addValue(results, "Objective", QString::fromStdString(row[3]));
     addValue(results, "Volume fraction", QString::fromStdString(row[4]));
     addValue(results, "Selected for results", row[5].empty() ? QString() : (row[5] == "1" ? "Yes" : "No"));
-    addValue(results, "Maximum density change", QString::fromStdString(row[6]));
+    const QString changeLabel = !methodAvailable ? "Maximum design change" : (method == TopologyMethod::LevelSet ? "Maximum field change" : "Maximum density change");
+    addValue(results, changeLabel, QString::fromStdString(row[6]));
     addValue(results, "Relative objective change", QString::fromStdString(row[7]));
     addValue(results, "Converged", row[8].empty() ? QString() : (row[8] == "1" ? "Yes" : "No"));
     if (row.size() >= 13)

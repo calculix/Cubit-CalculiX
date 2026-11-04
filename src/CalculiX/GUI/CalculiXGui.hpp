@@ -43,8 +43,6 @@ private:
   void cleanup_CCXDockWindowModelTree();
   void setup_observers(int withGUI);
   void cleanup_observers();
-  void load_options();
-  void unload_options();
   void setup_window_title();
   void cleanup_window_title();
 

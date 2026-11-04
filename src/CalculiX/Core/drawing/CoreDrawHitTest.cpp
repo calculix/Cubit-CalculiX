@@ -3,6 +3,8 @@
 #include "GCubitModelSet.hpp"
 #include "GGeomPicker.hpp"
 #include "GMeshPicker.hpp"
+#include "SVSelection.hpp"
+#include "SVPickUtil.hpp"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -96,16 +98,16 @@ class NativeFilterGuard
 public:
   NativeFilterGuard()
   {
-    int count = GPickerBase::get_number_pick_types();
+    int count = SVSelection::get_number_pick_types();
     filters.resize(static_cast<std::size_t>((std::max)(count, 1)));
-    GPickerBase::get_pick_filters(filters.data(), count);
+    SVSelection::get_pick_filters(filters.data(), count);
     filters.resize(static_cast<std::size_t>((std::max)(count, 0)));
     const char* surface[] = {GGeomPicker::gSurfaceType};
-    GPickerBase::set_filter_types(1, surface);
+    SVSelection::set_filter_types(1, surface);
   }
   ~NativeFilterGuard()
   {
-    GPickerBase::set_filter_types(filters.size(), filters.data());
+    SVSelection::set_filter_types(filters.size(), filters.data());
   }
 private:
   std::vector<const char*> filters;
@@ -116,7 +118,7 @@ bool bufferOccludes(GView& view, GPicker& picker, double depth)
   for (const auto& hit : picker.get_selection_buffer())
   {
     Point display;
-    const auto* p = hit.mPickIntersection;
+    const auto& p = hit.mPickIntersection;
     if (project(view, {p[0], p[1], p[2]}, display) && display[2] < depth - 1e-5)
     {
       return true;
@@ -138,7 +140,8 @@ bool occluded(GView& view, const DrawPickHit& hit)
   {
     auto& picker = *models->get_mesh_picker();
     NativeBufferGuard guard(picker);
-    picker.compute_pick(view.get_renderer(), x, y, false);
+    auto info = SVPickUtil::pick_info(view.get_renderer());
+    picker.compute_pick(x, y, false, info);
     if (bufferOccludes(view, picker, hit.display[2]))
     {
       return true;
@@ -149,7 +152,8 @@ bool occluded(GView& view, const DrawPickHit& hit)
     auto& picker = *models->get_geom_picker();
     NativeFilterGuard filters;
     NativeBufferGuard guard(picker);
-    picker.compute_pick(view.get_renderer(), x, y);
+    auto info = SVPickUtil::pick_info(view.get_renderer());
+    picker.compute_pick(x, y, info);
     if (bufferOccludes(view, picker, hit.display[2]))
     {
       return true;

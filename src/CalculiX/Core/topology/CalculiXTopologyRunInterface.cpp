@@ -193,6 +193,15 @@ bool CalculiXTopologyRunInterface::finish_topology_iteration(int topology_id, in
 
 bool CalculiXTopologyRunInterface::evaluate_topology_compliance(int topology_id, int iteration_id, const std::map<int, double>& energies)
 {
+  if (ccx_core.topology)
+  {
+    const auto entry = ccx_core.topology->topology_cases.find(topology_id);
+    if (entry != ccx_core.topology->topology_cases.end() && entry->second.method == TopologyMethod::LevelSet)
+    {
+      return ccx_core.evaluate_topology_level_set_compliance(topology_id, iteration_id, energies);
+    }
+  }
+
   if (!ccx_core.topology || !ccx_core.mat)
   {
     PRINT_ERROR("Invalid topology compliance evaluation request.\n");
@@ -407,4 +416,29 @@ bool CalculiXTopologyRunInterface::evaluate_topology_displacement_projected_resi
   }
 
   return ccx_core.topology->evaluate_displacement_projected_residual(topology_id, iteration_id);
+}
+
+bool CalculiXTopologyRunInterface::initialize_topology_level_set_design(int topology_id)
+{
+  return ccx_core.initialize_topology_level_set_design(topology_id);
+}
+
+bool CalculiXTopologyRunInterface::evaluate_topology_level_set_compliance(int topology_id, int iteration_id, const std::map<int, double>& energies)
+{
+  return ccx_core.evaluate_topology_level_set_compliance(topology_id, iteration_id, energies);
+}
+
+bool CalculiXTopologyRunInterface::evaluate_topology_level_set_proposal(int topology_id, int iteration_id, TopologyLevelSetProposal& proposal)
+{
+  return ccx_core.evaluate_topology_level_set_proposal(topology_id, iteration_id, proposal);
+}
+
+bool CalculiXTopologyRunInterface::prepare_topology_level_set_iteration(int topology_id, int source_iteration, int next_iteration, const TopologyLevelSetProposal& proposal)
+{
+  return ccx_core.prepare_topology_level_set_iteration(topology_id, source_iteration, next_iteration, proposal);
+}
+
+bool CalculiXTopologyRunInterface::check_topology_level_set_convergence(int topology_id, int previous_iteration, int current_iteration, bool& converged)
+{
+  return ccx_core.check_topology_level_set_convergence(topology_id, previous_iteration, current_iteration, converged);
 }

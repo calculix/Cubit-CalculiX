@@ -15,16 +15,14 @@
 #include "NavigationNode.hpp"
 #include "Core/application/CalculiXApplicationInterface.hpp"
 #include "Core/application/CoreObserver.hpp"
-#include "CalculiXSettings.hpp"
 #include "Claro.hpp"
 #include "Broker.hpp"
-#include "OptionsPanel.hpp"
 #include "CubitMessage.hpp"
 #include "MenuManager.hpp"
 #include "cmdPanelManager.hpp"
 #include "CCXDockWindowModelTree.hpp"
 #include "Observer.hpp"
-#include "UserOptionsPanel.hpp"
+#include "options/UserOptionsPanel.hpp"
 
 #include <QObject>
 #include <QCoreApplication>
@@ -72,7 +70,7 @@ bool CalculiXGui::start(QWidget* host, std::string& error)
   Claro::instance()->add_dock_window(propertiesDock.data(), "CalculiXProperties", Qt::LeftDockWidgetArea, Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
   propertiesDock->hide();
   setup_menus();
-  load_options();
+  mUserOptionsPanel = new UserOptionsPanel();
   setup_observers(1);
   setup_window_title();
   boolwithGUI = true;
@@ -84,7 +82,6 @@ void CalculiXGui::stop() noexcept
 {
   try
   {
-    const bool save_options = boolwithGUI;
     boolwithGUI = false;
     cleanup_window_title();
     cleanup_observers();
@@ -106,12 +103,8 @@ void CalculiXGui::stop() noexcept
     }
     drawing.shutdown_drawing();
 
-    if (save_options)
-    {
-      CalculiXSettings::save();
-    }
-
-    unload_options();
+    delete mUserOptionsPanel.data();
+    mUserOptionsPanel = nullptr;
     cleanup_menus();
     if (drawingToolbar != nullptr)
     {
@@ -402,56 +395,6 @@ void CalculiXGui::cleanup_observers()
   }
 }
 
-void CalculiXGui::load_options()
-{
-  if (mUserOptionsPanel != nullptr)
-  {
-    return;
-  }
-
-  auto* gui = Claro::instance();
-
-  if (gui == nullptr || gui->options() == nullptr)
-  {
-    return;
-  }
-
-  mUserOptionsPanel = new UserOptionsPanel();
-  auto* options = gui->options();
-  options->add_panel("CalculiX", mUserOptionsPanel.data());
-  QObject::connect(mUserOptionsPanel.data(), &UserOptionsPanel::drawingSettingsChanged, mUserOptionsPanel.data(), []()
-  {
-    std::string error;
-    if (!CalculiXDrawInterface().apply_drawing_options(error))
-    {
-      PRINT_WARNING("Drawing settings could not be applied: %s\n", error.c_str());
-    }
-  });
-  QObject::connect(options, SIGNAL(refreshSettings()),
-    mUserOptionsPanel.data(), SLOT(refresh_settings()));
-  QObject::connect(options, SIGNAL(saveSettings()),
-    mUserOptionsPanel.data(), SLOT(save_settings()));
-}
-
-void CalculiXGui::unload_options()
-{
-  if (mUserOptionsPanel == nullptr)
-  {
-    return;
-  }
-
-  if (auto* gui = Claro::instance())
-  {
-    if (gui->options() != nullptr)
-    {
-      gui->options()->remove_panel("CalculiX");
-    }
-  }
-
-  delete mUserOptionsPanel.data();
-  mUserOptionsPanel = nullptr;
-}
-
 bool CalculiXGui::workspace_view(WorkspaceView& view, std::string& error) const
 {
   if (!boolwithGUI || mycmdPanels == nullptr || myCCXDockWindowModelTree == nullptr || propertiesDock == nullptr || drawingToolbar == nullptr || topologyToolbar == nullptr || myMenus == nullptr)
@@ -471,6 +414,23 @@ bool CalculiXGui::workspace_view(WorkspaceView& view, std::string& error) const
 
   CalculiXGuiResourcesInterface resources;
   view.id = "calculix";
+  view.optionsPage = mUserOptionsPanel.data();
+  view.refreshOptions = [panel = mUserOptionsPanel]()
+  {
+    if (panel != nullptr)
+    {
+      panel->refresh_settings();
+    }
+  };
+  view.applyOptions = [panel = mUserOptionsPanel](std::string& error)
+  {
+    if (panel == nullptr)
+    {
+      error = "The CalculiX options page is unavailable.";
+      return false;
+    }
+    return panel->save_settings(error);
+  };
   view.label = "CalculiX";
   view.icon = resources.getIcon2("CCX");
   view.docks = {myCCXDockWindowModelTree->dock_widget(), propertiesDock.data()};

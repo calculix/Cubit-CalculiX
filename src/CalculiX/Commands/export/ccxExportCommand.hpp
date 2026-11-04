@@ -33,6 +33,9 @@ protected:
   //! \brief write data to the file
   //! \param output_file the file stream that is used for writing
   //! \param[in] iface the reference to the MeshExportInterface
+  //! \param[in] material_iface the Cubit material interface supplied for export
+  //! \param[in] topology_id the topology case ID, or -1 for a normal export
+  //! \param[in] iteration_id the one-based topology iteration ID, or -1 for a normal export
   //! \return true if file write succeeded
   bool write_file(std::ofstream& output_file, MeshExportInterface *iface, MaterialInterface *material_iface, int topology_id, int iteration_id);
 

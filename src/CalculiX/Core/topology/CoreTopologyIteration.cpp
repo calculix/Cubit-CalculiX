@@ -38,9 +38,7 @@ bool CoreTopologyIteration::select_iteration(CoreTopology& topology, const CoreM
 
   const int job_id = CoreTopologyQuery::get_iteration_job_id(topology, jobs, topology_id, iteration_id);
 
-  if (job_id <= 0 || jobs.get_job_status(job_id) != 2 ||
-      collection->second.iteration_factors.count(iteration_id) == 0 ||
-      configuration.iteration_evaluations.count(iteration_id) == 0)
+  if (job_id <= 0 || CoreTopologyQuery::get_iteration_element_data(topology, materials, jobs, topology_id, iteration_id).empty())
   {
     PRINT_ERROR("Topology %d iteration %d is not a completed, evaluated result.\n", topology_id, iteration_id);
     return false;

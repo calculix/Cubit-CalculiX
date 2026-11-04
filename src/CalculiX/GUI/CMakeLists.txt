@@ -16,3 +16,10 @@ add_subdirectory(export)
 add_subdirectory(properties)
 
 add_subdirectory(drawing)
+
+target_sources(calculix_gui PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/options/UserOptionsPanel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/options/UserOptionsPanel.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/options/DrawingOptionsWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/options/DrawingOptionsWidget.hpp
+)

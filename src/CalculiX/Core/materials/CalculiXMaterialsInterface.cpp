@@ -4,6 +4,8 @@
 #include "CoreMaterialsLibrary.hpp"
 #include <string>
 #include <vector>
+#include "CubitMessage.hpp"
+#include <cmath>
 
 #include "Core/loadCalculiXCore.hpp"
 
@@ -101,4 +103,36 @@ std::vector<std::vector<double>> CalculiXMaterialsInterface::get_materiallibrary
 bool CalculiXMaterialsInterface::get_material_properties(int id, MaterialProperties& properties, std::string& error)
 {
   return ccx_core.mat->get_properties(id, properties, error);
+}
+
+bool CalculiXMaterialsInterface::get_topology_iteration_factors(int topology_id, int iteration_id, std::map<int, double>& factors)
+{
+  factors.clear();
+  if (!ccx_core.mat || topology_id <= 0 || iteration_id <= 0)
+  {
+    PRINT_ERROR("Invalid topology material factor query.\n");
+    return false;
+  }
+  const auto collection = ccx_core.mat->topology_material_data.find(topology_id);
+  if (collection == ccx_core.mat->topology_material_data.end())
+  {
+    PRINT_ERROR("Topology material collection is missing.\n");
+    return false;
+  }
+  const auto iteration = collection->second.iteration_factors.find(iteration_id);
+  if (iteration == collection->second.iteration_factors.end() || iteration->second.empty() || iteration->second.size() != collection->second.element_base_material.size())
+  {
+    PRINT_ERROR("Topology applied factors are missing or incomplete.\n");
+    return false;
+  }
+  for (const auto& factor : iteration->second)
+  {
+    if (collection->second.element_base_material.count(factor.first) == 0 || !std::isfinite(factor.second) || factor.second <= 0.0 || factor.second > 1.0)
+    {
+      PRINT_ERROR("Invalid stored topology applied factor.\n");
+      return false;
+    }
+  }
+  factors = iteration->second;
+  return true;
 }

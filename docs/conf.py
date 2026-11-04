@@ -5,9 +5,9 @@ import re
 ROOT = Path(__file__).resolve().parent
 REPOSITORY = ROOT.parent
 
-project = "Cubit-CalculiX"
-author = "Cubit-CalculiX contributors"
-copyright = "Cubit-CalculiX contributors"
+project = "Cubit FEA"
+author = "Cubit FEA contributors"
+copyright = "Cubit FEA contributors"
 release = "development"
 language = "en"
 extensions = ["myst_parser", "breathe", "sphinxcontrib.katex"]
@@ -19,8 +19,8 @@ myst_enable_extensions = ["colon_fence", "dollarmath"]
 myst_heading_anchors = 3
 highlight_language = "text"
 
-breathe_projects = {"Cubit-CalculiX": str(ROOT / "_build/doxygen/xml")}
-breathe_default_project = "Cubit-CalculiX"
+breathe_projects = {"Cubit FEA": str(ROOT / "_build/doxygen/xml")}
+breathe_default_project = "Cubit FEA"
 breathe_default_members = ()
 
 # Alabaster is bundled with Sphinx; use system fonts and local assets only.
@@ -29,7 +29,7 @@ html_theme_options = {"description": "User and developer documentation", "fixed_
 html_sidebars = {"**": ["about.html", "navigation.html", "relations.html", "searchbox.html"]}
 html_static_path = ["_static", ".tools/static"]
 html_css_files = ["manual.css"]
-html_title = "Cubit-CalculiX documentation"
+html_title = "Cubit FEA documentation"
 html_show_sourcelink = False
 html_show_sphinx = False
 html_copy_source = False
@@ -62,7 +62,12 @@ def localize_existing_links(app, docname, source):
         if path.is_file():
             return "{download}`" + label + " <" + target + ">`"
         if path.is_dir():
-            page = "tutorials/index" if target.startswith(("../examples", "../journal_files")) else "developer/api"
+            if target.startswith(("../examples", "../journal_files")):
+                page = "tutorials/index"
+            elif target.startswith("../src/Framework"):
+                page = "developer/framework-api"
+            else:
+                page = "developer/api"
             return "[" + label + "](" + page + ")"
         return match.group(0)
 

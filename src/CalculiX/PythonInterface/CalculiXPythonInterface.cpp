@@ -6,7 +6,12 @@
 #include "Core/jobs/CalculiXJobsInterface.hpp"
 #include "Core/loads/CalculiXLoadsInterface.hpp"
 #include "Core/topology/CalculiXTopologyInterface.hpp"
+#include "Core/topology/CoreTopologyStructs.hpp"
 #include "CubitMessage.hpp"
+#include <iomanip>
+#include <limits>
+#include <locale>
+#include <sstream>
 
 CalculiXPythonInterface::CalculiXPythonInterface()
 {
@@ -23,6 +28,7 @@ void CalculiXPythonInterface::help()
   std::string log = "CalculiX Python Interface HELP:\n";
   log.append("Interactions with Jobs\n");
   log.append("int get_job_status(int job_id); //status -2 no job -1 no process, 1 process running, 2 process finished, 3 process killed, 4 process finished with errors, 5 process running currently waiting \n");
+  log.append("Topology: get_topology_settings(id) returns [keyword, value] rows for current common, density and level-set settings; empty on failure.\n");
   log.append("Interactions with FRD Results:\n");
   log.append("std::vector<std::string> frd_get_result_block_types(int job_id); // returns a list of all result block types \n");
   log.append("std::vector<std::string> frd_get_result_block_components(int job_id, std::string result_block_type); // returns a list of all result block components for a block type\n");
@@ -119,6 +125,59 @@ std::vector<double> CalculiXPythonInterface::get_topology_parameters(int topolog
   CalculiXTopologyInterface ccx_topology_iface;
 
   return ccx_topology_iface.get_topology_parameters(topology_id);
+}
+
+std::vector<std::vector<std::string>> CalculiXPythonInterface::get_topology_settings(int topology_id)
+{
+  TopologyOptions options;
+  if (!CalculiXTopologyInterface().get_topology_settings(topology_id, options))
+  {
+    return {};
+  }
+
+  const char* objective = topology_objective_name(options.objective);
+  if ((options.method != TopologyMethod::Density && options.method != TopologyMethod::LevelSet) ||
+      objective == nullptr || options.displacement_component < 0 || options.displacement_component > 3)
+  {
+    PRINT_ERROR("Invalid topology settings for Python query %d.\n", topology_id);
+    return {};
+  }
+
+  const auto number = [](double value)
+  {
+    std::ostringstream stream;
+    stream.imbue(std::locale::classic());
+    stream << std::setprecision(std::numeric_limits<double>::max_digits10) << value;
+    return stream.str();
+  };
+  const char* components[] = {"magnitude", "x", "y", "z"};
+  const auto& level_set = options.level_set_settings;
+
+  return {
+      {"name", options.name},
+      {"method", options.method == TopologyMethod::Density ? "density" : "level_set"},
+      {"objective", objective},
+      {"volume_fraction", number(options.volume_fraction)},
+      {"void_ratio", number(options.void_ratio)},
+      {"iterations", std::to_string(options.maximum_iterations)},
+      {"material_cap", std::to_string(options.material_cap)},
+      {"filter_radius", number(options.filter_radius)},
+      {"move_limit", number(options.move_limit)},
+      {"adaptive_moves", options.adaptive_move_limits ? "adaptive_moves_on" : "adaptive_moves_off"},
+      {"minimum_move_limit", number(options.minimum_move_limit)},
+      {"density_tolerance", number(options.density_tolerance)},
+      {"compliance_tolerance", number(options.compliance_tolerance)},
+      {"displacement_nodeset", std::to_string(options.displacement_nodeset)},
+      {"displacement_component", components[options.displacement_component]},
+      {"level_set_interface_width", number(level_set.interface_width)},
+      {"level_set_regularization_length", number(level_set.regularization_length)},
+      {"level_set_move_limit", number(level_set.move_limit)},
+      {"level_set_field_tolerance", number(level_set.field_tolerance)},
+      {"level_set_seed_spacing", number(level_set.seed_spacing)},
+      {"level_set_seed_radius", number(level_set.seed_radius)},
+      {"level_set_integration_tolerance", number(level_set.integration_tolerance)},
+      {"level_set_integration_max_refinements", std::to_string(level_set.integration_max_refinements)}
+  };
 }
 
 int CalculiXPythonInterface::get_topology_iteration_job_id(int topology_id, int iteration_id)

@@ -1,0 +1,67 @@
+#!python
+# Single verification entry point. Requires the companion configuration script.
+# Configuration checks reset the model. No solver or GUI automation is started.
+import csv
+from datetime import datetime, timezone
+from pathlib import Path
+import runpy
+from uuid import uuid4
+
+PLUGIN_REVISION = "not recorded"  # Revision of the loaded plugin binary.
+
+_candidates = (
+    Path.cwd() / "settings_and_persistence.py",
+    Path.cwd() / "examples/calculix/topology/verification/settings_and_persistence.py",
+)
+_script = next((path for path in _candidates if path.is_file()), None)
+if _script is None:
+    raise FileNotFoundError("Set Cubit's working directory to the repository root or examples/calculix/topology/verification.")
+
+_stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+_output = (Path.cwd() / "topology_verification" / ("suite_" + _stamp + "_" + uuid4().hex[:8])).resolve()
+_output.mkdir(parents=True, exist_ok=False)
+_stages = [
+    ["configuration_and_unrun_persistence", "NOT EXECUTED", "", ""],
+    ["interpolation_and_ordering", "BLOCKED", "Native production interpolation is not exposed by the current Python interface.", ""],
+    ["fractions_and_volume_derivatives", "BLOCKED", "Native level-set geometry evaluation is not exposed by the current Python interface.", ""],
+    ["compliance_chain", "BLOCKED", "Native level-set nodal evaluation is not exposed; Python-only equations would not verify it.", ""],
+    ["proposal_and_acceptance", "BLOCKED", "Native proposal/acceptance helpers are not exposed. Public level-set execution remains gated.", ""],
+    ["historical_iteration_persistence", "NOT EXECUTED", "Requires a model with actual solved iteration records and its solver files.", ""],
+    ["gui_lifecycle", "NOT EXECUTED", "Manual checklist; no GUI automation is used.", ""],
+    ["solver_benchmarks", "NOT EXECUTED", "No solver is launched by this journal.", ""],
+]
+
+print("Topology verification entry point. Evidence: " + str(_output))
+try:
+    import calculix_pythoninterface
+    _ccx = calculix_pythoninterface.CalculiXPythonInterface()
+    if not callable(getattr(_ccx, "get_topology_settings", None)):
+        _stages[0][1] = "BLOCKED"
+        _stages[0][2] = "The loaded plugin/Python wrapper does not contain get_topology_settings(). The model was not reset."
+    else:
+        _configuration = runpy.run_path(str(_script))
+        _evidence = _configuration["run_suite"](output_root=_output / "configuration", plugin_revision=PLUGIN_REVISION)
+        _stages[0][1] = "PASSED"
+        _stages[0][2] = "Automated configuration and unrun-case save/load checks only."
+        _stages[0][3] = str(_evidence)
+except ImportError as _error:
+    _stages[0][1] = "BLOCKED"
+    _stages[0][2] = "The plugin/Python wrapper could not be imported: " + str(_error)
+except Exception as _error:
+    _stages[0][1] = "FAILED"
+    _stages[0][2] = str(_error)
+    raise
+finally:
+    with (_output / "verification.csv").open("w", newline="", encoding="utf-8") as _handle:
+        _writer = csv.writer(_handle)
+        _writer.writerow(("stage", "status", "reason", "evidence_directory"))
+        _writer.writerows(_stages)
+    with (_output / "metadata.csv").open("w", newline="", encoding="utf-8") as _handle:
+        _writer = csv.writer(_handle)
+        _writer.writerow(("key", "value"))
+        _writer.writerows((("started_utc", _stamp), ("loaded_plugin_revision_supplied_by_user", PLUGIN_REVISION),
+                          ("whole_verification", "INCOMPLETE"),
+                          ("reason", "Numerical entry points require a separately approved code change; GUI and solver checks remain separate.")))
+    for _stage, _status, _reason, _directory in _stages:
+        print(_status + ": " + _stage + (" - " + _reason if _reason else ""))
+    print("WHOLE VERIFICATION IS INCOMPLETE. Read verification.csv; a configuration pass is not a numerical pass.")

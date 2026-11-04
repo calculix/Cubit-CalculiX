@@ -1,5 +1,5 @@
 Stage 3: Cubit and CalculiX workspaces
-====================================
+======================================
 
 The framework command plugin provides::
 

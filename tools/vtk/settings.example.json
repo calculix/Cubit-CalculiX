@@ -1,0 +1,7 @@
+{
+  "VTK_USE_64BIT_IDS": true,
+  "VTK_USE_FUTURE_BOOL": false,
+  "VTK_USE_FUTURE_CONST": false,
+  "VTK_ABI_NAMESPACE_NAME": "",
+  "VTK_SMP_IMPLEMENTATION_TYPE": "Sequential"
+}

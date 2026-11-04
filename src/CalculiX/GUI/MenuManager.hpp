@@ -1,5 +1,5 @@
 /*! @file MenuManager.hpp
- *  @brief Provides the Cubit-CalculiX documentation entry in the Help menu.
+ *  @brief Provides CalculiX workspace File, View and Options menus.
  */
 #ifndef MENUMANAGER_HPP
 #define MENUMANAGER_HPP
@@ -25,9 +25,6 @@ public:
   void setup_workspace_menus(Claro* host, QDockWidget* modelDock, QDockWidget* propertiesDock, QToolBar* drawingToolbar, QToolBar* topologyToolbar);
   QList<QAction*> workspace_menu_actions() const;
   void remove_menu_items();
-
-public slots:
-  void open_documentation();
 
 private:
   QList<QPointer<QMenu>> menus;

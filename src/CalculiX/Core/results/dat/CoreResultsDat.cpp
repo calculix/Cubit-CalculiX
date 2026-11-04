@@ -26,12 +26,6 @@
 #include <iostream>
 #include <sstream>
 
-CoreResultsDat::CoreResultsDat()
-{}
-
-CoreResultsDat::~CoreResultsDat()
-{}
-
 bool CoreResultsDat::init(int job_id)
 {
   CalculiXJobsInterface ccx_jobs_iface;

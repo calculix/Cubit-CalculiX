@@ -1,0 +1,19 @@
+#!python
+# Run from this directory or the repository root. The suite resets the model.
+from pathlib import Path
+import runpy
+
+# Record the revision of the loaded plugin, not merely the source checkout.
+PLUGIN_REVISION = "not recorded"
+
+_candidates = (
+    Path.cwd() / "settings_and_persistence.py",
+    Path.cwd() / "examples/calculix/topology/verification/settings_and_persistence.py",
+)
+_suite = next((path for path in _candidates if path.is_file()), None)
+if _suite is None:
+    raise FileNotFoundError(
+        "Set Cubit's working directory to the repository root or to "
+        "examples/calculix/topology/verification, then play this journal again."
+    )
+runpy.run_path(str(_suite), run_name="__main__", init_globals={"PLUGIN_REVISION": PLUGIN_REVISION})

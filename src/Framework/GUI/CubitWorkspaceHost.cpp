@@ -1,4 +1,5 @@
 #include "CubitWorkspaceHost.hpp"
+#include "DocumentationManager.hpp"
 #include "Claro.hpp"
 #include "CommandWindow.hpp"
 #include "NavigationModel.hpp"
@@ -31,6 +32,10 @@ QDockWidget* enclosingDock(QWidget* widget, QWidget* host)
   return nullptr;
 }
 }
+
+CubitWorkspaceHost::CubitWorkspaceHost() = default;
+
+CubitWorkspaceHost::~CubitWorkspaceHost() = default;
 
 bool CubitWorkspaceHost::attach(Claro* host, std::string& error)
 {
@@ -74,6 +79,12 @@ bool CubitWorkspaceHost::attach(Claro* host, std::string& error)
   for (auto* action : menu->actions())
   {
     nativeMenus.append({action, action->isVisible()});
+  }
+
+  documentation = std::make_unique<DocumentationManager>();
+  if (!documentation->attach(host, error))
+  {
+    return false;
   }
 
   // Power Tools can be siblings of the navigation page rather than a dock.
@@ -397,6 +408,11 @@ bool CubitWorkspaceHost::apply(const WorkspaceView& view, const QPersistentModel
     {
       action->setVisible(view.menuActions.contains(action.data()));
     }
+  }
+
+  if (documentation != nullptr)
+  {
+    documentation->set_native_workspace(nativeActive);
   }
 
   activeToolbars.clear();

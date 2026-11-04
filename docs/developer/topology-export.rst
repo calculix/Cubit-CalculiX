@@ -9,28 +9,49 @@ and integration conventions, :doc:`topology-results` for stored records, and
 Implementation map
 ------------------
 
-.. list-table:: Entry points
+.. list-table:: Current export and result entry points
    :header-rows: 1
-   :widths: 30 70
+   :widths: 25 40 35
 
    * - Responsibility
-     - Source and operation
+     - Source
+     - Entry points
    * - Shared model validation
-     - ``CalculiXCore.cpp``: ``validate_topology_compliance_model``. Despite its name, both objectives use it.
+     - :download:`Core/topology/CalculiXCoreTopologyValidation.cpp <../../src/CalculiX/Core/topology/CalculiXCoreTopologyValidation.cpp>`; :download:`Core/topology/CoreTopologyModelValidation.cpp <../../src/CalculiX/Core/topology/CoreTopologyModelValidation.cpp>`
+     - ``validate_topology_compliance_model`` delegates to ``CoreTopologyModelValidation::validate_model`` for both objectives.
    * - Required output preparation
-     - ``CalculiXCore.cpp``: ``prepare_topology_history_outputs`` and the ``ensure_topology_*_output`` helpers.
+     - :download:`Core/topology/CalculiXCoreTopologyOutputs.cpp <../../src/CalculiX/Core/topology/CalculiXCoreTopologyOutputs.cpp>`; :download:`Core/topology/CoreTopologyOutputPreparation.cpp <../../src/CalculiX/Core/topology/CoreTopologyOutputPreparation.cpp>`
+     - ``prepare_topology_history_outputs`` delegates to ``CoreTopologyOutputPreparation::prepare``; ``ensure_topology_*_output`` wrappers call the element-history, node-history and field-output helpers.
    * - Iteration material export
-     - ``CoreMaterials.cpp``: ``get_topology_material_export``, ``build_topology_material_groups``, and ``get_topology_group_material_name``.
+     - :download:`Core/materials/CoreMaterials.cpp <../../src/CalculiX/Core/materials/CoreMaterials.cpp>`
+     - ``get_topology_material_export``, ``build_topology_material_groups``, ``get_topology_group_material_name``.
    * - Element section export
-     - ``CoreSections.cpp``: ``get_topology_solid_section_export``.
+     - :download:`Core/sections/CoreSections.cpp <../../src/CalculiX/Core/sections/CoreSections.cpp>`
+     - ``get_topology_solid_section_export``.
    * - Export context validation
-     - ``CalculiXCore.cpp``: ``check_topology_export`` and ``is_topology_adjoint_export``.
-   * - Physical and adjoint step export
-     - ``CalculiXCore.cpp``: ``get_step_export_data``; the adjoint branch builds one step from the final physical step definition.
-   * - Scalar and tensor result reading
-     - ``CalculiXCore.cpp``: ``read_topology_element_energies``, ``read_topology_displacement``, and ``read_topology_job_element_tensors``.
+     - :download:`Core/topology/CalculiXCoreTopologyValidation.cpp <../../src/CalculiX/Core/topology/CalculiXCoreTopologyValidation.cpp>`; :download:`Core/topology/CoreTopologyExportValidation.cpp <../../src/CalculiX/Core/topology/CoreTopologyExportValidation.cpp>`; :download:`Core/jobs/CalculiXCoreJobs.cpp <../../src/CalculiX/Core/jobs/CalculiXCoreJobs.cpp>`
+     - ``check_topology_export`` delegates to ``CoreTopologyExportValidation::check``; ``is_topology_adjoint_export`` reads the active job export context.
+   * - Physical step export
+     - :download:`Core/steps/CalculiXCoreStepExport.cpp <../../src/CalculiX/Core/steps/CalculiXCoreStepExport.cpp>`; :download:`Core/steps/CoreStepExport.cpp <../../src/CalculiX/Core/steps/CoreStepExport.cpp>`
+     - ``CalculiXCore::get_step_export_data`` selects the physical or adjoint path. ``CoreStepExport::get_export`` assembles physical steps.
+   * - Adjoint step export
+     - :download:`Core/topology/CoreTopologyAdjointStepExport.cpp <../../src/CalculiX/Core/topology/CoreTopologyAdjointStepExport.cpp>`; :download:`Core/topology/CoreTopologyAdjointBoundaries.cpp <../../src/CalculiX/Core/topology/CoreTopologyAdjointBoundaries.cpp>`; :download:`Core/topology/CoreTopologyAdjointOutputs.cpp <../../src/CalculiX/Core/topology/CoreTopologyAdjointOutputs.cpp>`
+     - ``get_export`` constructs one adjoint step from the final physical step; ``collect`` resolves constrained DOFs and ``append_history``/``append_field`` write assigned outputs.
+   * - Scalar result reading
+     - :download:`Core/topology/CalculiXCoreTopologyResults.cpp <../../src/CalculiX/Core/topology/CalculiXCoreTopologyResults.cpp>`; :download:`Core/topology/CoreTopologyResults.cpp <../../src/CalculiX/Core/topology/CoreTopologyResults.cpp>`; :download:`Core/topology/CoreTopologyDisplacementResults.cpp <../../src/CalculiX/Core/topology/CoreTopologyDisplacementResults.cpp>`
+     - ``read_topology_element_energies`` and ``read_topology_displacement`` delegate to the result helpers.
+   * - Tensor result reading
+     - :download:`Core/topology/CalculiXCoreTopologyResults.cpp <../../src/CalculiX/Core/topology/CalculiXCoreTopologyResults.cpp>`; :download:`Core/topology/CoreTopologyTensorResults.cpp <../../src/CalculiX/Core/topology/CoreTopologyTensorResults.cpp>`
+     - ``read_topology_job_element_tensors`` delegates to ``CoreTopologyTensorResults::read_job`` and ``read_final``.
+   * - Geometry and quadrature
+     - :download:`Core/topology/CalculiXCoreTopologyGeometry.cpp <../../src/CalculiX/Core/topology/CalculiXCoreTopologyGeometry.cpp>`; :download:`Core/topology/CoreTopologyGeometry.cpp <../../src/CalculiX/Core/topology/CoreTopologyGeometry.cpp>`; :download:`Utility/ElementIntegration.cpp <../../src/CalculiX/Utility/ElementIntegration.cpp>`; :download:`Utility/ElementNodeOrdering.hpp <../../src/CalculiX/Utility/ElementNodeOrdering.hpp>`
+     - ``collect_topology_integration_weights`` delegates to ``collect_integration_weights``; ``ElementIntegration::calculate_weights`` uses the shared node-order conversion.
    * - Objective evaluation
-     - ``CoreTopologyOptimization.cpp`` dispatches compliance or displacement evaluation and checks integration coverage.
+     - :download:`Core/topology/CoreTopologyOptimization.cpp <../../src/CalculiX/Core/topology/CoreTopologyOptimization.cpp>`; :download:`Core/topology/CalculiXCoreTopologyEvaluation.cpp <../../src/CalculiX/Core/topology/CalculiXCoreTopologyEvaluation.cpp>`; :download:`Core/topology/CoreTopologyEvaluation.cpp <../../src/CalculiX/Core/topology/CoreTopologyEvaluation.cpp>`; :download:`Core/topology/CoreTopology.cpp <../../src/CalculiX/Core/topology/CoreTopology.cpp>`
+     - The controller selects the objective and contracts matching integration-point data; coordination helpers supply applied factors to the numerical evaluation.
+   * - Input-deck assembly
+     - :download:`Commands/export/ccxExportCommand.cpp <../../src/CalculiX/Commands/export/ccxExportCommand.cpp>`
+     - ``write_file``, ``write_materials``, ``write_sections``, and ``write_steps`` consume interface exports in deck order.
 
 Cross-core access remains through the domain-specific interfaces (see :doc:`interface-layout`). The export helpers
 return empty strings on invalid required data, and their callers must treat
@@ -83,6 +104,12 @@ relative to stored double-precision values; it does not guarantee round-trip
 precision. Six decimals is the plugin's formatting policy, not a universal
 CalculiX decimal limit.
 
+Grouping and text rounding are separate approximations. The material core
+stores the grouped factor before text formatting; the sensitivity evaluator
+normalizes by that stored factor. It does not recover a new factor from the
+rounded exported modulus. Even exact factor sharing therefore leaves numerical
+input/result precision to consider when comparing derivatives.
+
 Historical iterations without grouping metadata retain the legacy
 ``CCX_TOPO_<case>_E<element>`` material names and six-decimal scientific
 material export. Applied factors are never quantized again on reload.
@@ -124,11 +151,14 @@ Physical and adjoint steps
 --------------------------
 
 The ordinary physical step export supplies its assigned loads, boundary
-conditions, and history/field outputs. Multiple physical steps remain possible;
-the readers select the final available solver result step/increment.
+conditions, and history/field outputs. Multiple physical steps remain possible.
+The readers require the requested quantities at the final DAT step/increment
+recorded by the parser. Missing data at that final frame is an error; they do
+not silently fall back to an earlier frame containing the requested quantity.
 
-For a nonzero displacement objective, the adjoint branch of
-``get_step_export_data``:
+For a nonzero displacement objective, ``CalculiXCore::get_step_export_data``
+in ``Core/steps/CalculiXCoreStepExport.cpp`` rebuilds the adjoint load and
+delegates to ``CoreTopologyAdjointStepExport::get_export``. Together these:
 
 #. Rebuilds the objective-derived global nodal load at the controlling node.
 #. Collects model-level and step-assigned constrained DOFs under the supported
@@ -216,11 +246,46 @@ factors and two for a varying range, followed by round-robin distribution of
 remaining capacity. Exact factors are shared when they fit. Otherwise nearest
 logarithmic bins preserve each base material's minimum and maximum factors.
 
+For one base material, let :math:`B\ge2` be its allocated budget and let
+:math:`s_{\min}<s_{\max}` be the extrema of its requested factors. When the
+number of distinct factors exceeds that budget, the implementation uses
+
+.. math::
+
+   t_e=\operatorname{clamp}\!\left(
+   \frac{\log s_e-\log s_{\min}}{\log s_{\max}-\log s_{\min}},0,1
+   \right),\qquad
+   b_e=\operatorname{clamp}\!\left(
+   \left\lfloor(B-1)t_e+\tfrac12\right\rfloor,0,B-1\right),\\
+   \widehat{s}_e=
+   \exp\!\left(\log s_{\min}
+   +\frac{b_e}{B-1}(\log s_{\max}-\log s_{\min})\right).
+
+The nonnegative bin-position rounding corresponds to ``std::llround`` in the
+code. The first and last bins use the stored minimum and maximum directly,
+rather than recomputing those endpoints through logarithms/exponentials;
+interior results are clamped to that range. Constant ranges and factor sets
+that fit their budget use exact sharing without this quantization. Here
+:math:`B` is the budget of one base material, not the global ``material_cap``.
+The extrema are the factors present in this iteration, not universal SIMP
+bounds such as :math:`v` and one.
+
+The reported maximum relative factor error is
+
+.. math::
+
+   \delta_{\max}=\max_e\left|\frac{\widehat{s}_e}{s_e}-1\right|.
+
+The informational percentage is :math:`100\delta_{\max}`. It measures the
+change from requested to stored applied factors; it does not include modulus
+text rounding, solver precision or result-file precision. The log-bin index
+:math:`b_e` in this section is unrelated to the normalized OC benefit using
+the same local symbol in :doc:`topology-algorithms`.
+
 ``iteration_material_caps`` identifies grouped iterations and is persisted.
 ``iteration_material_groups`` is a transient cache for one iteration per
 case. Reloading rebuilds this cache with exact sharing of the saved factors,
-without applying a new cap or quantizing them again. Historical iterations
-without the marker use the legacy per-element material exporter.
+without applying a new cap or quantizing them again. The current save layout requires a cap marker for every stored factor map.
 
 The grouped section exporter retains original orientations and section data.
 It generates one element set and solid section per occupied material within
@@ -230,5 +295,5 @@ an original section. The original export helpers remain available with the
 Compliance and displacement normalization use applied solver factors. Density
 updates retain continuous SIMP derivatives as surrogate sensitivities for the
 quantized solve; these are not exact derivatives through the binning operation.
-Topology configuration version 8 stores the material cap; older configurations
-receive the default for future iterations without changing historical factors.
+The current unversioned topology layout stores the material cap and historical
+applied factors; older topology layouts are not migrated.

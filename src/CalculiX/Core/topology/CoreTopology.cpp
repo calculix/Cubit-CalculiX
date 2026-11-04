@@ -1,5 +1,7 @@
 #include "Core/topology/CoreTopology.hpp"
 #include "Core/topology/CoreTopologyStructs.hpp"
+#include "CoreTopologyLevelSet.hpp"
+#include "CoreTopologySaveValidation.hpp"
 #include <string>
 #include <vector>
 #include <map>
@@ -101,10 +103,51 @@ void ApplyTopologyOptions(
   {
     configuration.displacement_component = options.displacement_component;
   }
+
+  if (options.has_level_set_interface_width)
+  {
+    configuration.level_set_settings.interface_width = options.level_set_settings.interface_width;
+  }
+
+  if (options.has_level_set_regularization_length)
+  {
+    configuration.level_set_settings.regularization_length = options.level_set_settings.regularization_length;
+  }
+
+  if (options.has_level_set_move_limit)
+  {
+    configuration.level_set_settings.move_limit = options.level_set_settings.move_limit;
+  }
+
+  if (options.has_level_set_field_tolerance)
+  {
+    configuration.level_set_settings.field_tolerance = options.level_set_settings.field_tolerance;
+  }
+
+  if (options.has_level_set_seed_spacing)
+  {
+    configuration.level_set_settings.seed_spacing = options.level_set_settings.seed_spacing;
+  }
+
+  if (options.has_level_set_seed_radius)
+  {
+    configuration.level_set_settings.seed_radius = options.level_set_settings.seed_radius;
+  }
+
+  if (options.has_level_set_integration_tolerance)
+  {
+    configuration.level_set_settings.integration_tolerance = options.level_set_settings.integration_tolerance;
+  }
+
+  if (options.has_level_set_integration_max_refinements)
+  {
+    configuration.level_set_settings.integration_max_refinements = options.level_set_settings.integration_max_refinements;
+  }
 }
 
 void SetTopologyOptimizerDefaults(TopologyCase& configuration)
 {
+  configuration.level_set_settings = CoreTopologyLevelSet::default_settings();
   configuration.move_limit = 0.2;
   configuration.adaptive_move_limits = true;
   configuration.minimum_move_limit = 0.0;
@@ -124,6 +167,11 @@ bool ValidateTopologyConfiguration(const TopologyCase& configuration)
       configuration.objective == TopologyObjective::Compliance ||
       configuration.objective == TopologyObjective::Mass ||
       configuration.objective == TopologyObjective::Displacement;
+
+  if (!CoreTopologyLevelSet::validate_settings(configuration.level_set_settings))
+  {
+    return false;
+  }
 
   if (!valid_method || !valid_objective)
   {
@@ -212,6 +260,16 @@ bool CoreTopology::save_configuration(HDF5Tool& file) const
       return false;
     }
 
+    for (const auto& entry : topology_cases)
+    {
+      if (entry.first <= 0 || !ValidateTopologyConfiguration(entry.second) || !CoreTopologySaveValidation::validate_case(entry.second) ||
+          !std::isfinite(entry.second.density_penalization) || entry.second.density_penalization < 1.0)
+      {
+        PRINT_ERROR("Invalid topology case %d; save cancelled.\n", entry.first);
+        return false;
+      }
+    }
+
     if (file.nameExists(root))
     {
       if (!file.deleteGroup(root))
@@ -222,7 +280,6 @@ bool CoreTopology::save_configuration(HDF5Tool& file) const
     }
 
     if (!file.createGroup(root) ||
-        !file.write_dataset_int_rank_1("version", root, {8}) ||
         !file.write_dataset_int_rank_1("case_count", root,
             {static_cast<int>(topology_cases.size())}))
     {
@@ -236,15 +293,6 @@ bool CoreTopology::save_configuration(HDF5Tool& file) const
     {
       const int id = entry.first;
       const auto& configuration = entry.second;
-
-      if (id <= 0 ||
-          !ValidateTopologyConfiguration(configuration) ||
-          !std::isfinite(configuration.density_penalization) ||
-          configuration.density_penalization < 1.0)
-      {
-        PRINT_ERROR("Invalid topology configuration %d.\n", id);
-        return false;
-      }
 
       case_ids.push_back(id);
 
@@ -311,7 +359,7 @@ bool CoreTopology::save_configuration(HDF5Tool& file) const
       }
 
       TopologyHdf5<false> archive(file, group);
-      if (!archive.value("runtime", configuration))
+      if (!archive.value("level_set_settings", configuration.level_set_settings) || !archive.value("runtime", configuration))
       {
         PRINT_ERROR("Unable to save topology %d iteration data.\n", id);
         return false;
@@ -344,21 +392,17 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
   {
     const std::string root = "Cubit-CalculiX/Topology";
 
-    // Older files contain no topology configuration.
+    // An absent topology group represents a model without topology cases.
     if (!file.nameExists(root))
     {
       topology_cases.clear();
       return true;
     }
 
-    std::vector<int> version;
     std::vector<int> count;
     std::vector<int> case_ids;
 
-    if (!file.read_dataset_int_rank_1("version", root, version) ||
-        version.size() != 1 ||
-        (version[0] < 1 || version[0] > 8) ||
-        !file.read_dataset_int_rank_1("case_count", root, count) ||
+    if (!file.read_dataset_int_rank_1("case_count", root, count) ||
         count.size() != 1 || count[0] < 0)
     {
       PRINT_ERROR("Invalid topology save format.\n");
@@ -397,8 +441,8 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
           !file.read_dataset_int_rank_1("integers", group, integers) ||
           !file.read_dataset_double_rank_1("parameters", group, parameters) ||
           names.size() != 1 ||
-          integers.size() != (version[0] >= 8 ? 7u : (version[0] >= 7 ? 6u : (version[0] >= 5 ? 5u : 3u))) ||
-          parameters.size() != (version[0] >= 7 ? 9u : (version[0] >= 4 ? 8u : 5u)))
+          integers.size() != 7u ||
+          parameters.size() != 9u)
       {
         PRINT_ERROR("Incomplete saved topology case %d.\n", id);
         return false;
@@ -411,42 +455,29 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
       configuration.objective = static_cast<TopologyObjective>(integers[1]);
       configuration.maximum_iterations = integers[2];
 
-      if (version[0] >= 8)
-      {
-        configuration.material_cap = integers[6];
-      }
-
+      configuration.material_cap = integers[6];
       configuration.target_volume_fraction = parameters[0];
       configuration.void_stiffness_ratio = parameters[1];
       configuration.density_penalization = parameters[2];
       configuration.minimum_density = parameters[3];
       configuration.filter_radius = parameters[4];
-
-      SetTopologyOptimizerDefaults(configuration);
-
-      if (version[0] >= 5)
+      configuration.displacement_nodeset = integers[3];
+      configuration.displacement_component = integers[4];
+      configuration.move_limit = parameters[5];
+      configuration.density_tolerance = parameters[6];
+      configuration.compliance_tolerance = parameters[7];
+      if (integers[5] != 0 && integers[5] != 1)
       {
-        configuration.displacement_nodeset = integers[3];
-        configuration.displacement_component = integers[4];
+        PRINT_ERROR("Invalid saved adaptive move setting for topology %d.\n", id);
+        return false;
       }
-
-      if (version[0] >= 4)
+      configuration.adaptive_move_limits = integers[5] == 1;
+      configuration.minimum_move_limit = parameters[8];
+      TopologyHdf5<true> archive(file, group);
+      if (!archive.value("level_set_settings", configuration.level_set_settings))
       {
-        configuration.move_limit = parameters[5];
-        configuration.density_tolerance = parameters[6];
-        configuration.compliance_tolerance = parameters[7];
-      }
-
-      if (version[0] >= 7)
-      {
-        if (integers[5] != 0 && integers[5] != 1)
-        {
-          PRINT_ERROR("Invalid saved adaptive move setting for topology %d.\n", id);
-          return false;
-        }
-
-        configuration.adaptive_move_limits = integers[5] == 1;
-        configuration.minimum_move_limit = parameters[8];
+        PRINT_ERROR("Incomplete saved topology settings for case %d.\n", id);
+        return false;
       }
 
       if (!ValidateTopologyConfiguration(configuration) ||
@@ -509,102 +540,15 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
         }
       }
 
-      if (version[0] >= 2)
+      if (!archive.value("runtime", configuration) || !CoreTopologySaveValidation::validate_case(configuration))
       {
-        if (version[0] >= 6 && !file.nameExists(group + "/runtime/adjoint_jobs"))
-        {
-          PRINT_ERROR("Missing saved adjoint job associations for topology %d.\n", id);
-          return false;
-        }
-
-        TopologyHdf5<true> archive(file, group);
-        if (!archive.value("runtime", configuration))
-        {
-          PRINT_ERROR("Unable to read topology %d iteration data.\n", id);
-          return false;
-        }
-
-        if (version[0] == 2)
-        {
-          if (configuration.selected_iteration == std::numeric_limits<int>::max() ||
-              !increment_topology_iteration_keys(configuration.iteration_jobs) ||
-              !increment_topology_iteration_keys(configuration.iteration_element_energies) ||
-              !increment_topology_iteration_keys(configuration.iteration_total_energies) ||
-              !increment_topology_iteration_keys(configuration.iteration_evaluations) ||
-              !increment_topology_iteration_keys(configuration.iteration_density_designs))
-          {
-            PRINT_ERROR("Unable to migrate topology iteration IDs.\n");
-            return false;
-          }
-          if (configuration.selected_iteration >= 0)
-          {
-            ++configuration.selected_iteration;
-          }
-        }
-
-        if (!valid_topology_iteration_keys(configuration.iteration_jobs) ||
-            !valid_topology_iteration_keys(configuration.iteration_adjoint_jobs) ||
-            !valid_topology_iteration_keys(configuration.iteration_element_energies) ||
-            !valid_topology_iteration_keys(configuration.iteration_total_energies) ||
-            !valid_topology_iteration_keys(configuration.iteration_evaluations) ||
-            !valid_topology_iteration_keys(configuration.iteration_density_designs))
-        {
-          PRINT_ERROR("Invalid saved topology iteration ID.\n");
-          return false;
-        }
-
-        std::set<int> linked_jobs;
-
-        for (const auto* associations : {&configuration.iteration_jobs, &configuration.iteration_adjoint_jobs})
-        {
-          for (const auto& iteration : *associations)
-          {
-            if (iteration.second <= 0 || !linked_jobs.insert(iteration.second).second)
-            {
-              PRINT_ERROR("Invalid or duplicate saved topology job association.\n");
-              return false;
-            }
-          }
-        }
-
-        for (const auto& iteration : configuration.iteration_adjoint_jobs)
-        {
-          if (configuration.iteration_jobs.count(iteration.first) == 0)
-          {
-            PRINT_ERROR("Saved adjoint job has no physical iteration job.\n");
-            return false;
-          }
-        }
-
-        if (configuration.selected_iteration < -1 || configuration.selected_iteration == 0)
-        {
-          PRINT_ERROR("Invalid saved topology iteration selection.\n");
-          return false;
-        }
-
-        if (configuration.selected_iteration >= 0)
-        {
-          const int iteration = configuration.selected_iteration;
-          if (configuration.iteration_jobs.count(iteration) == 0 ||
-              configuration.iteration_evaluations.count(iteration) == 0 ||
-              configuration.iteration_density_designs.count(iteration) == 0)
-          {
-            PRINT_ERROR("Incomplete selected topology iteration.\n");
-            return false;
-          }
-        }
-
-        if (configuration.run_state == TopologyRunState::Running)
-        {
-          configuration.run_state = TopologyRunState::Failed;
-          PRINT_INFO("Topology %d was saved while running; "
-                     "restored as an interrupted run.\n", id);
-        }
+        PRINT_ERROR("Invalid or incomplete saved topology %d iteration data.\n", id);
+        return false;
       }
-      else
+      if (configuration.run_state == TopologyRunState::Running)
       {
-        configuration.selected_iteration = -1;
-        configuration.run_state = TopologyRunState::NotRun;
+        configuration.run_state = TopologyRunState::Failed;
+        PRINT_INFO("Topology %d was saved while running; restored as an interrupted run.\n", id);
       }
 
       loaded.emplace(id, std::move(configuration));
@@ -931,6 +875,7 @@ bool CoreTopology::evaluate_compliance(int topology_id,int iteration_id,const st
   }
 
   TopologyIterationEvaluation evaluation;
+  evaluation.method = configuration.method;
   evaluation.objective = TopologyObjective::Compliance;
   evaluation.value = 2.0 * total->second;
 
@@ -979,7 +924,7 @@ bool CoreTopology::evaluate_compliance(int topology_id,int iteration_id,const st
   */
   const auto density_design = configuration.iteration_density_designs.find(iteration_id);
 
-  if (density_design != configuration.iteration_density_designs.end())
+  if (configuration.method == TopologyMethod::Density && density_design != configuration.iteration_density_designs.end())
   {
     const auto& design = density_design->second;
 
@@ -1103,6 +1048,7 @@ bool CoreTopology::evaluate_displacement(int topology_id, int iteration_id, doub
   }
 
   TopologyIterationEvaluation evaluation;
+  evaluation.method = configuration.method;
   evaluation.objective = TopologyObjective::Displacement;
   evaluation.value = value;
   evaluation.displacement_available = true;
@@ -2884,6 +2830,16 @@ bool CoreTopology::get_topology_settings(int topology_id, TopologyOptions& optio
 
   options.has_displacement_component = true;
   options.displacement_component = configuration.displacement_component;
+
+  options.level_set_settings = configuration.level_set_settings;
+  options.has_level_set_interface_width = true;
+  options.has_level_set_regularization_length = true;
+  options.has_level_set_move_limit = true;
+  options.has_level_set_field_tolerance = true;
+  options.has_level_set_seed_spacing = true;
+  options.has_level_set_seed_radius = true;
+  options.has_level_set_integration_tolerance = true;
+  options.has_level_set_integration_max_refinements = true;
 
   return true;
 }

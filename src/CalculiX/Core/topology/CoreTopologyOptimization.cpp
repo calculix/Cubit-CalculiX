@@ -134,6 +134,7 @@ void CoreTopologyOptimization::finish_topology_run(int topology_id, unsigned lon
     return;
   }
 
+  run->second.pending_level_set_proposal = {};
   run->second.phase = TopologyRunPhase::Finished;
 
   if (ccx_topology_run_iface.set_topology_run_state(topology_id, state))
@@ -203,7 +204,15 @@ void CoreTopologyOptimization::advance_topology_run(int topology_id, unsigned lo
     {
       return;
     }
-    const TopologyRunContext current = run->second;
+    // Snapshot phase/process state only; the cached proposal can contain large nodal maps.
+    TopologyRunContext current;
+    current.serial = run->second.serial;
+    current.phase = run->second.phase;
+    current.iteration_id = run->second.iteration_id;
+    current.job_id = run->second.job_id;
+    current.stop_requested = run->second.stop_requested;
+    current.kill_error_reported = run->second.kill_error_reported;
+    current.stop_state = run->second.stop_state;
     if (current.stop_requested)
     {
       if (current.job_id > 0)
@@ -235,7 +244,7 @@ void CoreTopologyOptimization::advance_topology_run(int topology_id, unsigned lo
     {
       const bool prepared = current.iteration_id == 1
         ? prepare_topology_run(topology_id)
-        : prepare_topology_density_iteration(topology_id, current.iteration_id - 1, current.iteration_id);
+        : prepare_topology_iteration(topology_id, current.iteration_id - 1, current.iteration_id);
       if (!prepared)
       {
         finish_topology_run(topology_id, serial, TopologyRunState::Failed);
@@ -400,7 +409,8 @@ void CoreTopologyOptimization::advance_topology_run(int topology_id, unsigned lo
     }
     else if (current.phase == TopologyRunPhase::Evaluating)
     {
-      if (!finish_topology_iteration(topology_id, current.iteration_id))
+      TopologyLevelSetProposal proposal;
+      if (!finish_topology_iteration(topology_id, current.iteration_id, &proposal))
       {
         finish_topology_run(topology_id, serial, TopologyRunState::Failed);
         return;
@@ -414,8 +424,9 @@ void CoreTopologyOptimization::advance_topology_run(int topology_id, unsigned lo
       {
         continue;
       }
+      run->second.pending_level_set_proposal = std::move(proposal);
       bool converged = false;
-      if (current.iteration_id > 1 && !ccx_topology_run_iface.check_topology_density_convergence(
+      if (current.iteration_id > 1 && !check_topology_convergence(
             topology_id, current.iteration_id - 1, current.iteration_id, converged))
       {
         finish_topology_run(topology_id, serial, TopologyRunState::Failed);
@@ -719,11 +730,12 @@ bool CoreTopologyOptimization::prepare_topology_run(int topology_id)
     return false;
   }
 
-  if (options.method != TopologyMethod::Density ||
-      (options.objective != TopologyObjective::Compliance &&
-       options.objective != TopologyObjective::Displacement))
+  const bool density = options.method == TopologyMethod::Density &&
+      (options.objective == TopologyObjective::Compliance || options.objective == TopologyObjective::Displacement);
+  const bool level_set = options.method == TopologyMethod::LevelSet && options.objective == TopologyObjective::Compliance;
+  if (!density && !level_set)
   {
-    PRINT_ERROR("The topology iteration loop supports density optimization with compliance or displacement objectives.\n");
+    PRINT_ERROR("Unsupported topology method/objective combination for run preparation.\n");
     return false;
   }
 
@@ -952,8 +964,13 @@ bool CoreTopologyOptimization::prepare_topology_density_iteration(int topology_i
   }
 }
 
-bool CoreTopologyOptimization::finish_topology_iteration(int topology_id, int iteration_id)
+bool CoreTopologyOptimization::finish_topology_iteration(int topology_id, int iteration_id, TopologyLevelSetProposal* proposal)
 {
+  if (proposal)
+  {
+    *proposal = {};
+  }
+  TopologyLevelSetProposal level_set_proposal;
   CalculiXJobsInterface ccx_jobs_iface;
   CalculiXTopologyInterface ccx_topology_iface;
   CalculiXTopologyRunInterface ccx_topology_run_iface;
@@ -996,39 +1013,59 @@ bool CoreTopologyOptimization::finish_topology_iteration(int topology_id, int it
     PRINT_INFO("Topology %d iteration %d: maximum monitored displacement %.9g at node %d.\n", topology_id, iteration_id, displacement, node_id);
   }
 
-  std::map<int, double> element_volumes;
-  std::map<int, std::array<double, 3>> element_centers;
-
-  PRINT_INFO("Topology %d iteration %d: preparing filtered sensitivities.\n", topology_id, iteration_id);
-
-  if (!ccx_topology_run_iface.collect_topology_element_volumes(topology_id, element_volumes, &element_centers))
+  if (options.method == TopologyMethod::LevelSet)
   {
-    return false;
-  }
-
-  if (!ccx_topology_run_iface.filter_topology_density_sensitivities(topology_id, iteration_id, element_volumes, element_centers))
-  {
-    return false;
-  }
-
-  if (options.objective == TopologyObjective::Compliance)
-  {
-    if (!ccx_topology_run_iface.evaluate_topology_compliance_oc_residual(topology_id, iteration_id))
+    if (options.objective != TopologyObjective::Compliance || !ccx_topology_run_iface.evaluate_topology_level_set_proposal(topology_id, iteration_id, level_set_proposal))
     {
       return false;
     }
   }
-  else if (options.objective == TopologyObjective::Displacement)
+  else if (options.method == TopologyMethod::Density)
   {
-    if (!ccx_topology_run_iface.evaluate_topology_displacement_projected_residual(topology_id, iteration_id))
+    std::map<int, double> element_volumes;
+    std::map<int, std::array<double, 3>> element_centers;
+
+    PRINT_INFO("Topology %d iteration %d: preparing filtered sensitivities.\n", topology_id, iteration_id);
+
+    if (!ccx_topology_run_iface.collect_topology_element_volumes(topology_id, element_volumes, &element_centers))
     {
       return false;
     }
+
+    if (!ccx_topology_run_iface.filter_topology_density_sensitivities(topology_id, iteration_id, element_volumes, element_centers))
+    {
+      return false;
+    }
+
+    if (options.objective == TopologyObjective::Compliance)
+    {
+      if (!ccx_topology_run_iface.evaluate_topology_compliance_oc_residual(topology_id, iteration_id))
+      {
+        return false;
+      }
+    }
+    else if (options.objective == TopologyObjective::Displacement)
+    {
+      if (!ccx_topology_run_iface.evaluate_topology_displacement_projected_residual(topology_id, iteration_id))
+      {
+        return false;
+      }
+    }
+  }
+  else
+  {
+    PRINT_ERROR("Unsupported topology method during iteration evaluation.\n");
+    return false;
   }
 
   if (!ccx_topology_run_iface.mark_topology_iteration_completed(topology_id, iteration_id))
   {
     return false;
+  }
+
+  if (proposal)
+  {
+    *proposal = std::move(level_set_proposal);
   }
 
   PRINT_INFO("Topology %d iteration %d completed as job %d; results are loaded.\n", topology_id, iteration_id, job_id);
@@ -1048,4 +1085,63 @@ const char* CoreTopologyOptimization::phase_name(TopologyRunPhase phase)
     case TopologyRunPhase::Finished: return "run completion";
   }
   return "unknown phase";
+}
+
+bool CoreTopologyOptimization::prepare_topology_iteration(int topology_id, int source_iteration, int next_iteration)
+{
+  TopologyOptions options;
+  if (!CalculiXTopologyInterface().get_topology_settings(topology_id, options))
+  {
+    return false;
+  }
+  if (options.method == TopologyMethod::Density)
+  {
+    return prepare_topology_density_iteration(topology_id, source_iteration, next_iteration);
+  }
+  if (options.method != TopologyMethod::LevelSet || options.objective != TopologyObjective::Compliance)
+  {
+    PRINT_ERROR("Unsupported topology method for next-iteration preparation.\n");
+    return false;
+  }
+  auto run = topology_runs.find(topology_id);
+  if (run == topology_runs.end() || !run->second.pending_level_set_proposal.available || run->second.pending_level_set_proposal.source_iteration != source_iteration)
+  {
+    PRINT_ERROR("A current controller-owned level-set proposal is required.\n");
+    return false;
+  }
+  const auto serial = run->second.serial;
+  const auto proposal = std::move(run->second.pending_level_set_proposal);
+  run->second.pending_level_set_proposal = {};
+  const bool prepared = CalculiXTopologyRunInterface().prepare_topology_level_set_iteration(topology_id, source_iteration, next_iteration, proposal);
+  run = topology_runs.find(topology_id);
+  if (run == topology_runs.end() || run->second.serial != serial)
+  {
+    return false;
+  }
+  if (prepared)
+  {
+    run->second.pending_level_set_proposal = {};
+  }
+  return prepared;
+}
+
+bool CoreTopologyOptimization::check_topology_convergence(int topology_id, int previous_iteration, int current_iteration, bool& converged)
+{
+  converged = false;
+  TopologyOptions options;
+  if (!CalculiXTopologyInterface().get_topology_settings(topology_id, options))
+  {
+    return false;
+  }
+  CalculiXTopologyRunInterface topology;
+  if (options.method == TopologyMethod::Density)
+  {
+    return topology.check_topology_density_convergence(topology_id, previous_iteration, current_iteration, converged);
+  }
+  if (options.method == TopologyMethod::LevelSet && options.objective == TopologyObjective::Compliance)
+  {
+    return topology.check_topology_level_set_convergence(topology_id, previous_iteration, current_iteration, converged);
+  }
+  PRINT_ERROR("Unsupported topology method for convergence evaluation.\n");
+  return false;
 }

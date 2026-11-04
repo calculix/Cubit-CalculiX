@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <string>
+#include <set>
 #ifdef WIN32
   #include <windows.h>
   #include <map>
@@ -90,6 +91,12 @@ public:
   std::string print_data(); // prints out the jobs_data
 
   ProgressTool *progressbar; // progressbar
+
+private:
+  bool complete_job_results(int job_id);
+  bool results_ready();
+  bool completing_results = false;
+  std::set<int> pending_result_jobs;
 };
 
 #endif // COREJOBS_HPP

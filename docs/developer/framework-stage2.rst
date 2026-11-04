@@ -98,6 +98,13 @@ Python initialization is an explicit component startup step, not a synthetic
 Settings and resources
 ----------------------
 
+.. note::
+
+   This section describes the Stage 2 implementation. The subsequent
+   framework user-options service replaces CalculiXSettings and ccx.cfg
+   with required Core declarations and cubitfea_user_options.h5. See
+   :doc:`user-options` for the current contract.
+
 CalculiX settings restoration is extracted from the old component into
 ``CalculiXSettings`` and runs before core initialization, including headless
 command use. Missing entries are prefilled with their existing defaults.

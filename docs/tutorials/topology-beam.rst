@@ -7,7 +7,7 @@ surface, and optionally delete low-density elements. It explains what to look
 for rather than prescribing a final iteration or promising convergence.
 
 The preparation journal is
-:download:`simple_beam_displacement.jou <../../examples/topology/simple_beam_displacement.jou>`.
+:download:`simple_beam_displacement.jou <../../examples/calculix/topology/simple_beam_displacement.jou>`.
 It creates a topology case with a maximum of 50 iterations. Its run command
 is commented out: running the journal prepares the model but does not start
 optimization. The steps below start the run explicitly.
@@ -65,7 +65,7 @@ the displacement journal linked above.
 Expand **Topology** in the model tree and open case 1's settings. The journal
 creates the following configuration:
 
-.. literalinclude:: ../../examples/topology/simple_beam_displacement.jou
+.. literalinclude:: ../../examples/calculix/topology/simple_beam_displacement.jou
    :language: text
    :start-at: ccx create topology 1
    :end-at: ccx create topology 1
@@ -107,15 +107,20 @@ Start asynchronously from the command line:
 
    ccx run topology 1
 
-Alternatively, open **Actions** for case 1, leave **Wait until finished**
-unchecked, and click **Run**. The run checks the analysis and configures required
+Alternatively, double-click case 1 in the model tree to open Topology
+Management, choose the **Run** tab, leave **Wait until finished** unchecked,
+and click **Run**. The independent Actions panel offers the same run commands.
+The run checks the analysis and configures required
 outputs before evaluating designs. An information message about automatically
 configured outputs is expected when required requests or keys are missing.
 
 The command returns control while jobs progress. Results loading can still
 pause the UI; asynchronous solver execution does not make reading asynchronous.
-The Actions panel reports the current state, iteration, job, and completed
-iteration diagnostics. Use **Job monitor** to inspect the active physical job.
+The Run tab and Actions panel report the current state, iteration, job and
+completed-iteration diagnostics. Use **Job monitor** to inspect the controller's
+current job, which can be physical or adjoint. Objective evaluation requires its
+quantities at the final DAT step/increment; missing final-frame data is an
+error, not a reason to reuse an earlier output frame.
 
 If you want to wait after starting, use:
 
@@ -136,10 +141,14 @@ preserved regions remain solid. The reported objective can increase while
 volume is removed, and displacement updates do not guarantee a decrease at
 every iteration.
 
-Use the Actions panel's convergence indicators to compare density change,
-relative objective change, and volume against their limits. ``WAIT`` means a
-criterion has not passed. The initial iteration has no previous design for a
-convergence comparison. See :doc:`../user/topology-objectives` for the equations.
+Use the Run tab or Actions panel's three convergence bars to compare density
+change, relative objective change and volume against their limits. Bar fill is
+limit usage, not elapsed optimization progress. ``WAIT`` means a criterion has
+not passed, even if the associated solves have finished. The ordinary proposal
+residual is an additional fourth numerical check: all three bars can pass while
+the overall summary remains ``Converged: NO`` because that proposal has not
+settled. The initial iteration has no previous design for a convergence
+comparison. See :doc:`../user/topology-objectives` for the equations.
 
 Both ``converged`` and ``iteration_limit`` end a run normally, but reaching the
 iteration limit does not establish convergence. There is no expected fixed
@@ -150,9 +159,10 @@ Inspect the actual run messages if it ends as ``failed`` or ``killed``.
 -------------------------------
 
 After the run is idle, right-click a completed iteration and choose
-**Browse iteration**. Use **Reload** if new results are not listed. The Results
-panel initially opens a case at its last completed iteration unless another
-selection was requested or retained.
+**Browse iteration**, or double-click the iteration. This opens Topology
+Management's **Iterations** tab at the requested result. Use **Refresh** if new
+results are not listed. Opening a case without an explicit iteration initially
+selects its last completed evaluation unless an existing selection is retained.
 
 Use the dropdown, navigation buttons, or slider to compare iterations. Enable
 **Automatically preview iteration changes** and set the threshold to 0.5.
@@ -168,7 +178,11 @@ For an explicit first-design check, run:
 Because the first design is fully solid, this preview should have no removal
 candidates. Then choose a later completed iteration in the panel. Adjust the
 threshold to compare its retained regions. Elements exactly at the threshold
-are retained, and preserved elements are retained at every threshold.
+are retained, and preserved elements are retained at every threshold. Changing
+this result threshold does not change the optimization volume target, rerun
+any solves or modify the stored density/stiffness distribution. Browsing also
+does not change the stored core selection; commands below pass the chosen
+iteration ID explicitly.
 
 With at least two completed iterations, use **Play/Pause** to browse the sequence
 at the selected threshold. Interactive playback stops at the last iteration;
@@ -193,12 +207,13 @@ This starts an asynchronous export. Wait for the saved-file message before
 changing the mesh or proceeding to deletion. Use **Cancel GIF export** in the
 Topology Management if needed; startup success is not completion.
 
-Use a different filename or add ``overwrite`` for an existing file. The Results
-panel provides the same filename, frame-rate, and overwrite controls. A GIF
+Use a different filename or add ``overwrite`` for an existing file. The **GIF**
+tab provides the same filename, frame-rate and overwrite controls. A GIF
 captures all eligible iterations, not just the displayed one.
 
-For a wrapped surface of your chosen iteration, use the Topology Management's
-**Alpha wrapping** group. Leave alpha and offset empty for automatic values,
+For a wrapped surface of your chosen iteration, use Topology Management's
+**Alpha wrap** tab and its **Alpha wrapping** group. Leave alpha and offset empty
+for automatic values,
 choose ``beam.stl``, clear **Import STL into Cubit**, and click
 **Wrap displayed iteration**. This exports the retained region without deleting
 the source volume mesh or importing the new STL.
@@ -212,7 +227,11 @@ an actual completed iteration ID before running it:
 
 Wrapping uses a surface approximation of the selected mesh. It does not create
 a volume mesh ready for analysis or transfer the stored density stiffnesses.
-See :doc:`../user/topology-results` for alpha, offset, and filename defaults.
+See :doc:`../user/topology-results` for alpha, offset and filename defaults.
+The toolbar's final **CGAL Alpha wrap** icon offers a different shortcut: it
+uses the selected iteration and displayed threshold, automatic alpha/offset,
+a generated filename, overwrite enabled and automatic STL import. Use the
+management tab when you want the export-only ``no_import`` behavior above.
 
 8. Optionally apply the threshold
 ---------------------------------

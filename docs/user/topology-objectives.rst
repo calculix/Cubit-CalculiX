@@ -85,10 +85,18 @@ This proposal uses the configured maximum move limit, even if the actual
 adaptive update used a smaller one. It requires no additional solve and
 prevents a small adaptive move alone from implying convergence.
 
-The action panel's bars show usage of each displayed limit, rather than a
-percentage of the optimization completed. ``WAIT`` means that criterion has
-not passed. All three visible indicators can pass while the additional
-objective-specific proposal check still prevents convergence.
+The Actions panel and Topology Management's Run tab show three bars: maximum
+density change, relative objective change and volume fraction. Bar fill shows
+usage of each displayed limit, not the percentage of optimization completed or
+time remaining. Lower usage is better; a full amber bar indicates a limit is
+exceeded. ``WAIT`` means that displayed criterion has not passed, not that its
+solver job is still running.
+
+The ordinary proposal residual is a fourth numerical requirement, not a fourth
+bar. All three bars can show ``PASS`` while the summary reports
+``Converged: NO - ordinary density proposal has not settled``. Read the stored
+overall convergence result as well as the three visible indicators. The first
+evaluated design has no preceding design for the usual convergence comparison.
 ``iteration_limit`` means the maximum number of evaluated designs was reached;
 it does not certify convergence. The initial solid design counts as iteration 1.
 

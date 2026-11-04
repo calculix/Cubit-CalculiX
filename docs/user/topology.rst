@@ -9,14 +9,15 @@ and iteration results. Density optimization changes each free element's
 stiffness; the physical CalculiX analysis is solved again for each iteration.
 
 The current density run loop supports compliance and displacement objectives.
-Mass and level-set optimization are not implemented. Supported volume elements
+Mass optimization is unavailable. Level-set configuration is exposed, while
+execution remains blocked pending verification. Supported volume elements
 are C3D4, C3D6, C3D8, C3D10, C3D15, and C3D20. The shared validator excludes
 C3D8R from both compliance and displacement runs. Consult the model validation
 errors for further analysis
 restrictions; support for an element alone does not make every analysis suitable.
 
 .. figure:: ../images/topology-workflow.svg
-   :alt: Case settings lead to a physical solve, optional adjoint solve, evaluation, and density update.
+   :alt: Case settings and preservation feed a physical job. A nonzero displacement objective adds an adjoint job; compliance or zero displacement bypasses it. Evaluation and checks precede the next density design.
 
    Iteration workflow. Displacement optimization uses an adjoint solve when
    the monitored objective is nonzero.
@@ -78,7 +79,7 @@ applying it; projection does not create a restoration point.
 Runnable example
 ----------------
 
-Download the :download:`complete displacement beam journal <../../examples/topology/simple_beam_displacement.jou>`.
+Download the :download:`complete displacement beam journal <../../examples/calculix/topology/simple_beam_displacement.jou>`.
 It resets the current model, prepares the analysis, and creates a displacement
 topology case with a maximum of 50 iterations. The run command is commented
 out. Follow :doc:`../tutorials/topology-beam` to run and inspect the case.
@@ -114,4 +115,5 @@ See :doc:`topology-results` for iteration browsing, threshold previews,
 playback, GIF export, wrapping, and element deletion.
 See :doc:`../developer/topology` for the implementation map,
 :doc:`../developer/topology-algorithms` for the mathematical derivations, and
-:doc:`../tutorials/index` for the finite-difference journals.
+:doc:`../developer/topology-verification` for the historical finite-difference
+coverage, evidence status and verification procedure.

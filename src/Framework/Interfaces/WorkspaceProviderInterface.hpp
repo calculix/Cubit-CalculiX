@@ -8,6 +8,7 @@
 #include <string>
 #include <functional>
 
+class QWidget;
 class QAction;
 class QToolBar;
 class QDockWidget;
@@ -15,6 +16,10 @@ class NavigationModel;
 
 struct WorkspaceView
 {
+  // Borrowed options widget; framework unregisters it before provider teardown.
+  QWidget* optionsPage = nullptr;
+  std::function<void()> refreshOptions;
+  std::function<bool(std::string&)> applyOptions;
   QString id;
   QString label;
   QIcon icon;

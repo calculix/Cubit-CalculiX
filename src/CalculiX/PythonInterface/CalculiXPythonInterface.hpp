@@ -32,6 +32,9 @@ public:
   std::vector<std::vector<int>> get_topology_element_preservation(int topology_id);
   int run_topology_iteration(int topology_id, int iteration_id);// Returns the completed job ID, or -1 on failure.
   std::vector<double> get_topology_parameters(int topology_id);
+  /// Read current command settings as [keyword, value] rows; empty on failure.
+  /// Doubles use locale-independent round-trip precision. No model data is modified.
+  std::vector<std::vector<std::string>> get_topology_settings(int topology_id);
   int get_topology_iteration_job_id(int topology_id, int iteration_id); // Returns the associated job ID, or -1 on failure.
   std::vector<std::vector<std::string>> get_topology_iteration_data(int topology_id);
   bool select_topology_iteration(int topology_id, int iteration_id);

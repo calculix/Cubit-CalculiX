@@ -130,7 +130,10 @@ void TopologyManagement::updateControls()
       ? QString("Stopping") : QString::fromStdString(information.state))
     .arg(information.iteration_id > 0 ? QString::number(information.iteration_id) : "-")
     .arg(information.job_id > 0 ? QString::number(information.job_id) : "-"));
-  runButton->setEnabled(!information.active && !animation_was_active);
+  TopologyOptions options;
+  const bool runnable = ccx_topology_iface.get_topology_settings(currentTopologyId, options) && options.method == TopologyMethod::Density;
+  runButton->setEnabled(runnable && !information.active && !animation_was_active);
+  runButton->setToolTip(runnable ? "Run this topology case." : "Level-set execution remains blocked pending verification.");
   waitButton->setEnabled(information.active && !information.waiting);
   killButton->setEnabled(information.active && !information.stop_requested);
   runMonitorButton->setEnabled(information.job_id > 0);
@@ -192,7 +195,7 @@ void TopologyManagement::createConvergenceDisplay(QVBoxLayout *layout)
   auto *group = new QGroupBox("Convergence", this);
   auto *content = new QVBoxLayout(group);
   content->setSpacing(6);
-  group->setToolTip("Latest completed iteration. Criteria use current case settings. Bars show limit usage; lower is better.");
+  group->setToolTip("Latest completed iteration. Density and objective limits use current case settings; level-set field tolerance is captured with its design. Bars show limit usage; lower is better.");
 
   convergenceIteration = new QLabel("No completed iteration", group);
   content->addWidget(convergenceIteration);
@@ -207,7 +210,8 @@ void TopologyManagement::createConvergenceDisplay(QVBoxLayout *layout)
   {
     auto& criterion = criteria[i];
     auto *heading = new QHBoxLayout();
-    heading->addWidget(new QLabel(names[i], group));
+    criterion.label = new QLabel(names[i], group);
+    heading->addWidget(criterion.label);
     heading->addStretch();
 
     criterion.badge = new QLabel("-", group);
@@ -279,6 +283,7 @@ void TopologyManagement::updateConvergence()
     updateCriterion(i, QString(), 1.0);
   }
 
+  criteria[0].label->setText("Maximum design change");
   convergenceIteration->setText("No completed iteration");
   convergenceSummary->setText("Converged: not checked");
   convergenceSummary->setStyleSheet("");
@@ -325,7 +330,27 @@ void TopologyManagement::updateConvergence()
   convergenceIteration->setText(QString("Completed iteration %1").arg(latestIteration));
   displacementMeasurement->setText(topologyDisplacementText(*latest));
 
-  const int density = updateCriterion(0, QString::fromStdString((*latest)[6]), settings.density_tolerance);
+  TopologyMethod method;
+  if (!ccx_topology_iface.get_topology_iteration_method(topology_id, latestIteration, method))
+  {
+    return;
+  }
+  double changeTolerance = settings.density_tolerance;
+  if (method == TopologyMethod::LevelSet)
+  {
+    TopologyLevelSetSettings captured;
+    if (!ccx_topology_iface.get_topology_iteration_level_set_settings(topology_id, latestIteration, captured))
+    {
+      return;
+    }
+    criteria[0].label->setText("Maximum field change");
+    changeTolerance = captured.field_tolerance;
+  }
+  else
+  {
+    criteria[0].label->setText("Maximum density change");
+  }
+  const int density = updateCriterion(0, QString::fromStdString((*latest)[6]), changeTolerance);
   const int compliance = updateCriterion(1, QString::fromStdString((*latest)[7]), settings.compliance_tolerance);
 
   // Match the existing CoreTopology volume convergence allowance.
@@ -341,9 +366,9 @@ void TopologyManagement::updateConvergence()
 
   const bool converged = (*latest)[8] == "1";
 
-  if (!converged && passed == 3 && (settings.objective == TopologyObjective::Compliance || settings.objective == TopologyObjective::Displacement))
+  if (!converged && passed == 3)
   {
-    convergenceSummary->setText("Converged: NO - ordinary density proposal has not settled");
+    convergenceSummary->setText("Converged: NO - additional Core convergence checks did not pass");
   }
   else
   {

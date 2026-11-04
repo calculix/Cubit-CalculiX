@@ -25,6 +25,26 @@ std::string CalculiXCore::get_topology_run_state(int topology_id)
   return topology->get_topology_run_state(topology_id);
 }
 
+bool CalculiXCore::get_topology_iteration_level_set_settings(int topology_id, int iteration_id, TopologyLevelSetSettings& settings)
+{
+  settings = {};
+  if (!topology)
+  {
+    return false;
+  }
+  return CoreTopologyQuery::get_iteration_level_set_settings(*topology, topology_id, iteration_id, settings);
+}
+
+bool CalculiXCore::get_topology_iteration_method(int topology_id, int iteration_id, TopologyMethod& method)
+{
+  method = TopologyMethod::Unspecified;
+  if (!topology)
+  {
+    return false;
+  }
+  return CoreTopologyQuery::get_iteration_method(*topology, topology_id, iteration_id, method);
+}
+
 std::vector<std::vector<double>> CalculiXCore::get_topology_iteration_element_data(int topology_id, int iteration_id)
 {
   if (!topology || !mat || !jobs)

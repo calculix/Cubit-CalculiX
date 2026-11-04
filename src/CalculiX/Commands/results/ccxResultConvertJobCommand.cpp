@@ -1,7 +1,8 @@
 #include "ccxResultConvertJobCommand.hpp"
 #include <string>
 #include <vector>
-#include "Core/mesh/CalculiXMeshInterface.hpp"
+#include "Core/results/vtk/CoreResultsVtkStructs.hpp"
+#include "Core/jobs/CalculiXJobsInterface.hpp"
 #include "Core/results/CalculiXResultsInterface.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
@@ -19,7 +20,7 @@ std::vector<std::string> ccxResultConvertJobCommand::get_syntax()
   std::vector<std::string> syntax_list;
 
   std::string syntax = "ccx ";
-  syntax.append("result convert job <value:label='job_id',help='<job_id>'> [frd] [no_partial]");
+  syntax.append("result convert job <value:label='job_id',help='<job_id>'> [frd] [dat] [no_partial] [in_memory]");
   syntax.append("[block <value:label='block_ids',help='<block_ids>'>...] " );
   syntax.append("[nodeset <value:label='nodeset_ids',help='<nodeset_ids>'>...] " );
   syntax.append("[sideset <value:label='sideset_ids',help='<sideset_ids>'>...] " );
@@ -31,7 +32,7 @@ std::vector<std::string> ccxResultConvertJobCommand::get_syntax()
 std::vector<std::string> ccxResultConvertJobCommand::get_syntax_help()
 {
   std::vector<std::string> help(1);
-  help[0] = "ccx result convert job <job_id> [frd] [no_partial]";
+  help[0] = "ccx result convert job <job_id> [frd] [dat] [no_partial] [in_memory]";
   help[0].append("[block <block_ids>...] " );
   help[0].append("[nodeset <nodeset_ids>...] " );
   help[0].append("[sideset <sideset_ids>...] " );
@@ -44,106 +45,48 @@ std::vector<std::string> ccxResultConvertJobCommand::get_help()
   return {
       "Incomplete result fields are exported by default, "
       "with NaN for missing values. "
-      "Use no_partial to skip incomplete fields."
+      "Use no_partial to skip incomplete fields. "
+      "Use in_memory to retain datasets without writing files. "
+      "Without frd/dat flags both reader sources are included."
   };
 }
 
 bool ccxResultConvertJobCommand::execute(CubitCommandData &data)
 {
-  CalculiXMeshInterface ccx_mesh_iface;
-  CalculiXResultsInterface ccx_results_iface;
-
-
-  std::string output;
-
-  int job_id;
-  std::vector<int> options;
-  std::vector<int> block_ids;
-  std::vector<int> nodeset_ids;
-  std::vector<int> sideset_ids;
-
+  CalculiXResultsInterface results;
+  int job_id = 0;
   data.get_value("job_id", job_id);
-
-  if (data.find_keyword("NO_PARTIAL")){
-    options.push_back(0);
-  }else{
-    options.push_back(1);
-  }
-
-  if (data.find_keyword("FRD")){
-    options.push_back(1);
-  }else{
-    options.push_back(-1);
-  }
-
-  if (data.find_keyword("DAT")){
-    options.push_back(1);
-  }else{
-    options.push_back(-1);
-  }
-
-  if (data.find_keyword("BLOCK")){
-    data.get_values("block_ids", block_ids);
-  }else{
-    if (!((data.find_keyword("NODESET"))||(data.find_keyword("SIDESET"))))
-    {
-      block_ids = ccx_mesh_iface.get_blocks();
-    }
-  }
-
-  if (data.find_keyword("NODESET")){
-    data.get_values("nodeset_ids", nodeset_ids);
-  }else{
-    if (!((data.find_keyword("BLOCK"))||(data.find_keyword("SIDESET"))))
-    {
-     nodeset_ids = CubitInterface::get_nodeset_id_list();
-    }
-  }
-
-  if (data.find_keyword("SIDESET")){
-    data.get_values("sideset_ids", sideset_ids);
-  }else{
-    if (!((data.find_keyword("NODESET"))||(data.find_keyword("BLOCK"))))
-    {
-     sideset_ids = CubitInterface::get_sideset_id_list();
-    }
-  }
-
-  //check if ids exist! Otherwise failed!
-  for (size_t i = 0; i < block_ids.size(); i++)
+  CoreResultsVtkOptions settings;
+  settings.include_partial = !data.find_keyword("NO_PARTIAL");
+  const bool frd = data.find_keyword("FRD");
+  const bool dat = data.find_keyword("DAT");
+  settings.include_frd = frd || !dat;
+  settings.include_dat = dat || !frd;
+  if (data.find_keyword("BLOCK"))
   {
-    if (!ccx_mesh_iface.check_block_exists(block_ids[i]))
-    {
-      output = "Failed! Block ID " + std::to_string(block_ids[i]) + " doesn't exist!\n";
-      PRINT_ERROR(output.c_str());
-      return false;
-    }
+    data.get_values("block_ids", settings.block_ids);
   }
-  for (size_t i = 0; i < nodeset_ids.size(); i++)
+  if (data.find_keyword("NODESET"))
   {
-    if (!ccx_mesh_iface.check_nodeset_exists(nodeset_ids[i]))
-    {
-      output = "Failed! Nodeset ID " + std::to_string(nodeset_ids[i]) + " doesn't exist!\n";
-      PRINT_ERROR(output.c_str());
-      return false;
-    }
+    data.get_values("nodeset_ids", settings.nodeset_ids);
   }
-  for (size_t i = 0; i < sideset_ids.size(); i++)
+  if (data.find_keyword("SIDESET"))
   {
-    if (!ccx_mesh_iface.check_sideset_exists(sideset_ids[i]))
-    {
-      output = "Failed! Sideset ID " + std::to_string(sideset_ids[i]) + " doesn't exist!\n";
-      PRINT_ERROR(output.c_str());
-      return false;
-    }
+    data.get_values("sideset_ids", settings.sideset_ids);
   }
-  
-  if (!ccx_results_iface.convert_result(job_id,options,block_ids,nodeset_ids,sideset_ids))
+  // Resolve requested IDs against the linked run mesh, not a possibly changed
+  // current model. Empty selections retain all groups of that kind.
+  if (!results.build_vtk_result(job_id, settings))
   {
-    output = "Failed!\n";
-    PRINT_ERROR(output.c_str());
     return false;
   }
-    
-  return true;
+  if (data.find_keyword("IN_MEMORY"))
+  {
+    return true;
+  }
+  if (!results.export_vtk_result(job_id))
+  {
+    return false;
+  }
+  return CalculiXJobsInterface().set_job_conversion(job_id, 1);
 }

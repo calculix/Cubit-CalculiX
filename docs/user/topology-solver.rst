@@ -97,11 +97,13 @@ What each evaluator reads
    * - Volume fraction and volume derivatives
      - Element volumes queried directly from Cubit; no ``EVOL`` request is needed.
 
-The readers use the final available solver step/increment in each relevant
-result file. A physical solve can contain multiple loading steps. The adjoint
-uses its own exported step; its step index need not equal the final physical
-step index. Required elements, nodes, and integration points must still be
-covered by the selected result data.
+The numerical evaluators require their quantities at the final DAT step/increment
+recorded by each parser. Missing data there is an error; they do not fall back
+to an earlier frame that happens to contain the requested quantity. A physical
+solve can contain multiple loading steps. The adjoint uses its own exported
+step, whose index need not equal the final physical step index. Physical and
+adjoint final frames are selected independently; required element, node and
+integration-point identities must still match the evaluation domain.
 
 Understanding the solver keywords
 ---------------------------------

@@ -4,10 +4,12 @@
 #include "MaterialProperties.hpp"
 #include <string>
 #include <vector>
+#include <map>
 
 class CalculiXMaterialsInterface
 {
 public:
+  bool get_topology_iteration_factors(int topology_id, int iteration_id, std::map<int, double>& factors);
   bool get_material_properties(int id, MaterialProperties& properties, std::string& error);
   std::string get_material_name(int material_id); // gets the material name
   std::string get_material_prefix(std::string material_name); // gets a prefix for the material name if needed

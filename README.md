@@ -181,103 +181,103 @@ in python mode (#!python)
 
 # Examples
 [<img
-  src="examples/first_run.gif"
+  src="examples/calculix/first_run.gif"
   width="400"
   title="First run example">
-](examples/)
+](examples/calculix/)
 [<img
-  src="examples/bolted_connection/example.gif"
+  src="examples/calculix/bolted_connection/example.gif"
   width="400"
   title="Simple bolted connection Preload Temperature">
-](examples/bolted_connection/)
+](examples/calculix/bolted_connection/)
 [<img
-  src="examples/bolted_connection_initial_stress/example.png"
+  src="examples/calculix/bolted_connection_initial_stress/example.png"
   width="400"
   title="Simple bolted connection Preload STRESS">
-](examples/bolted_connection_initial_stress/)
+](examples/calculix/bolted_connection_initial_stress/)
 [<img
-  src="examples/contact_press_fitting/example.png"
+  src="examples/calculix/contact_press_fitting/example.png"
   width="400"
   title="Contact press fitting">
-](examples/contact_press_fitting/)
+](examples/calculix/contact_press_fitting/)
 
 [<img
-  src="examples/knuckle/example.gif"
+  src="examples/calculix/knuckle/example.gif"
   width="400"
   title="Knuckle">
-](examples/knuckle/)
+](examples/calculix/knuckle/)
 [<img
-  src="examples/layers/example.png"
+  src="examples/calculix/layers/example.png"
   width="400"
   title="layers">
-](examples/layers/)
+](examples/calculix/layers/)
 [<img
-  src="examples/metal_forming/example.gif"
+  src="examples/calculix/metal_forming/example.gif"
   width="400"
   title="Metal forming">
-](examples/metal_forming/)
+](examples/calculix/metal_forming/)
 [<img
-  src="examples/mesh_refinement/example.png"
+  src="examples/calculix/mesh_refinement/example.png"
   width="400"
   title="Mesh refinement">
-](examples/mesh_refinement/)
+](examples/calculix/mesh_refinement/)
 [<img
-  src="examples/moving_heatsource_heatflux/example.gif"
+  src="examples/calculix/moving_heatsource_heatflux/example.gif"
   width="400"
   title="Moving Heatsource Heatflux">
-](examples/moving_heatsource_heatflux/)
+](examples/calculix/moving_heatsource_heatflux/)
 [<img
-  src="examples/moving_heatsource_bodyheatflux_sphere/example.gif"
+  src="examples/calculix/moving_heatsource_bodyheatflux_sphere/example.gif"
   width="400"
   title="Moving Heatsource Body Heatflux Sphere">
-](examples/moving_heatsource_bodyheatflux_sphere/)
+](examples/calculix/moving_heatsource_bodyheatflux_sphere/)
 [<img
-  src="examples/model_change/example.gif"
+  src="examples/calculix/model_change/example.gif"
   width="400"
   title="Custom Key Words - Model Change">
-](examples/model_change/)
+](examples/calculix/model_change/)
 [<img
-  src="examples/nonlinear_buckling_cylindrical_shell/example.gif"
+  src="examples/calculix/nonlinear_buckling_cylindrical_shell/example.gif"
   width="400"
   title="Buckling cylindrical shell">
-](examples/nonlinear_buckling_cylindrical_shell/)
+](examples/calculix/nonlinear_buckling_cylindrical_shell/)
 [<img
-  src="examples/3D_Print/example.gif"
+  src="examples/calculix/3D_Print/example.gif"
   width="400"
   title="Buckling cylindrical shell">
-](examples/3D_Print/)
+](examples/calculix/3D_Print/)
 [<img
-  src="examples/simple_convergence_study/example.png"
+  src="examples/calculix/simple_convergence_study/example.png"
   width="400"
   title="Simple convergence study">
-](examples/simple_convergence_study/)
+](examples/calculix/simple_convergence_study/)
 [<img
-  src="examples/snap_fit/example.gif"
+  src="examples/calculix/snap_fit/example.gif"
   width="400"
   title="Simple snap fit">
-](examples/snap_fit/)
+](examples/calculix/snap_fit/)
 [<img
-  src="examples/tube_impact/example.gif"
+  src="examples/calculix/tube_impact/example.gif"
   width="400"
   title="Tube Impact">
-](examples/tube_impact/)
+](examples/calculix/tube_impact/)
 [<img
-  src="examples/Welding/shrinkage_model/example.gif"
+  src="examples/calculix/Welding/shrinkage_model/example.gif"
   width="400"
   title="Shrinkage model">
-](examples/Welding/shrinkage_model/)
+](examples/calculix/Welding/shrinkage_model/)
 [<img
-  src="examples/Welding/shrinkage_model_moving_heatsource/example.gif"
+  src="examples/calculix/Welding/shrinkage_model_moving_heatsource/example.gif"
   width="400"
   title="Shrinkage model Moving Heatsource">
-](examples/Welding/shrinkage_model_moving_heatsource/)
+](examples/calculix/Welding/shrinkage_model_moving_heatsource/)
 
 <!-- 
 [<img
-  src="examples/Welding/shrinkage_model_moving_heatsource/example.gif"
+  src="examples/calculix/Welding/shrinkage_model_moving_heatsource/example.gif"
   width="400"
   title="Shrinkage model">
-](examples/Welding/shringage_model_moving_heatsource/)
+](examples/calculix/Welding/shrinkage_model_moving_heatsource/)
 -->
 
 # Installation

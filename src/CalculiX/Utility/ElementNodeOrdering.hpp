@@ -5,16 +5,16 @@
 
 namespace ElementNodeOrdering
 {
-  /*
-   * Returns the Cubit/Exodus source position for a CalculiX node position.
-   *
-   * Both positions are zero-based:
-   *   calculix_nodes[i] = cubit_nodes[cubit_source_index(type, i)]
-   *
-   * element_type uses the Cubit ElementType values already used by the
-   * exporter. The caller must provide valid connectivity positions.
-   *
-   * This changes local connectivity order, not global node IDs.
+  /**
+   * @brief Return the Cubit/Exodus source index for a CalculiX node position.
+   * @param element_type Cubit ElementType value used by the exporter.
+   * @param calculix_index Zero-based position in CalculiX connectivity.
+   * @return Zero-based source position in Cubit/Exodus connectivity.
+   * @pre The caller supplies a valid position for the element type.
+   * @note calculix_nodes[i] = cubit_nodes[cubit_source_index(type, i)].
+   * Reorders local connectivity positions, not global node IDs. No range
+   * validation is performed. Types without an explicit permutation retain their
+   * input position. Export and integration must use this same conversion.
    */
   inline std::size_t cubit_source_index(int element_type, std::size_t calculix_index)
   {

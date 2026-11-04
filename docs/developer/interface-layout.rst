@@ -5,7 +5,7 @@ Domain interfaces and source layout
 interfaces forward operations to the shared ``ccx_core`` instance. Creating an
 interface does not initialize a second model or allocate a domain object.
 
-Each directory beneath ``src/Core`` contains its interface, associated classes,
+Each directory beneath ``src/CalculiX/Core`` contains its interface, associated classes,
 struct headers and a ``CMakeLists.txt``. The parent build creates
 ``calculix_core`` before adding the Core directory; each child registers its
 explicit source list with ``target_sources(calculix_core PRIVATE ...)``.
@@ -76,7 +76,7 @@ All domains remain in the existing shared library.
 Dependency rules
 ----------------
 
-Include another domain using its path from the ``src`` include root. Use a
+Include another domain using its path from the ``src/CalculiX`` include root. Use a
 named local interface in the method that needs it, for example::
 
    #include "Core/loads/CalculiXLoadsInterface.hpp"
@@ -120,12 +120,12 @@ header dependencies determine recompilation scope.
 Command and GUI feature directories
 -----------------------------------
 
-``src/Commands`` and ``src/GUI`` use the same feature names as the core.
+``src/CalculiX/Commands`` and ``src/CalculiX/GUI`` use the same feature names as the core.
 Each class's header and implementation stay together. Each feature directory
 registers its explicit source list through its own ``CMakeLists.txt``.
-Command sources belong to ``calculix_plugin``; GUI sources belong to
-``calculix_comp``. The parent build adds these directories after creating both
-targets. Qt ``AUTOMOC`` remains enabled on ``calculix_comp`` and the source lists
+Command sources belong to ``calculix_commands``; GUI sources belong to
+``calculix_gui``. The parent build adds these directories after creating both
+targets. Qt ``AUTOMOC`` remains enabled on ``calculix_gui`` and the source lists
 include the moved Qt headers.
 
 .. list-table:: Command and GUI ownership
@@ -176,10 +176,13 @@ include the moved Qt headers.
      - Monitor widgets remain in ``GUI/jobs``.
    * - ``topology``
      - Configuration, preservation and run control.
-     - Topology panels/tree and the displacement-text helper header.
+     - Topology Management, command panels/tree and the displacement-text helper header.
    * - ``drawing``
      - Draw, draw-step and topology animation.
-     - No separate GUI directory.
+     - Drawing and topology toolbars, picking and display-refresh controllers.
+   * - ``cgal``
+     - Wrapping commands remain in ``Commands/mesh``.
+     - Independent Alpha wrap panel in ``GUI/cgal``.
    * - ``export``
      - Export and custom lines.
      - Custom-line panels and tree.
@@ -192,7 +195,7 @@ the core's FRD/DAT interfaces. Step-specific load and BC trees belong to
 Use path-qualified includes across features, for example
 ``GUI/jobs/JobsMonitor.hpp``, ``GUI/common/PanelTable.hpp`` and
 ``Commands/loads/ccxLoadsForcesModifyCommand.hpp``. A class can include an adjacent
-header by filename. The shared ``src`` include root resolves these paths; the
+header by filename. The shared ``src/CalculiX`` include root resolves these paths; the
 build does not add every feature directory to a global include search path.
 
 This organization does not change command syntax, widget class names, icons,

@@ -4,6 +4,7 @@
 #include "CoreDrawPickData.hpp"
 #include "CoreDrawHover.hpp"
 #include "SVPickUtil.hpp"
+#include "SVSelection.hpp"
 #include <functional>
 #include <memory>
 
@@ -22,9 +23,9 @@ public:
   bool ownsPickMode() const;
   void updateSnapshot(DrawPickSnapshot snapshot);
   void setCallback(std::function<void(const CalculiXDrawSelection&)> callback);
-  void compute_pick(vtkRenderer* renderer, float x, float y) override;
-  void compute_pre_select(vtkRenderer* renderer, float x, float y) override;
-  void compute_pick_by_bounds(vtkRenderer* renderer, PickBounds* bounds) override;
+  void compute_pick(float x, float y, PickViewInfo& info) override;
+  void compute_pre_select(float x, float y, PickViewInfo& info) override;
+  void compute_pick_by_bounds(PickBounds* bounds, PickViewInfo& info) override;
   void notify_picked(int num, GPicked::PickedEntity const* const* entities, float const* const* points, bool addOrRemove) override;
   void notify_pre_select(GPicked::PickedEntity const* entity, const float point[3], bool addOrRemove) override;
 

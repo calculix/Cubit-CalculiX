@@ -1,20 +1,15 @@
 #include <QToolBar>
 #include "MenuManager.hpp"
-#include "CalculiXConfigFile.hpp"
 #include "Claro.hpp"
 #include "ClaroFileMenu.hpp"
 #include "OptionsPanel.hpp"
 #include "CubitMessage.hpp"
 
 #include <QAction>
-#include <QDesktopServices>
-#include <QDir>
 #include <QDockWidget>
-#include <QFileInfo>
 #include <QMenu>
 #include <QMenuBar>
 #include <QStyle>
-#include <QUrl>
 #include <exception>
 #include <stdexcept>
 
@@ -89,10 +84,6 @@ void MenuManager::setup_workspace_menus(Claro* host, QDockWidget* modelDock, QDo
       guard->options()->activateWindow();
     }
   });
-
-  auto* help = createMenu("CalculiX.Menu.Help", tr("&Help"));
-  auto* documentation = help->addAction(host->style()->standardIcon(QStyle::SP_DialogHelpButton), tr("Cubit-CalculiX documentation"));
-  connect(documentation, &QAction::triggered, this, &MenuManager::open_documentation);
 }
 
 QList<QAction*> MenuManager::workspace_menu_actions() const
@@ -118,34 +109,4 @@ void MenuManager::remove_menu_items()
   }
 
   menus.clear();
-}
-
-void MenuManager::open_documentation()
-{
-  QString component_directory;
-
-  try
-  {
-    component_directory = QString::fromStdString(CalculiXConfigFile().componentpath);
-  }
-  catch (const std::exception& error)
-  {
-    PRINT_ERROR("Unable to locate Cubit-CalculiX documentation: %s\n", error.what());
-    return;
-  }
-
-  const QString index_path = QDir(component_directory).filePath("documentation/index.html");
-  const QFileInfo index(index_path);
-  if (!index.isFile() || !index.isReadable())
-  {
-    PRINT_ERROR("Cubit-CalculiX documentation is missing or unreadable: %s\n", index_path.toUtf8().constData());
-    return;
-  }
-
-  // Success means the desktop accepted the request, not that rendering completed.
-  if (!QDesktopServices::openUrl(QUrl::fromLocalFile(index.absoluteFilePath())))
-  {
-    PRINT_ERROR("Unable to open Cubit-CalculiX documentation: %s\n", index_path.toUtf8().constData());
-    return;
-  }
 }

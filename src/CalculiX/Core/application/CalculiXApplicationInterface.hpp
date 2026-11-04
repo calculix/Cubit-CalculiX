@@ -5,12 +5,20 @@
 #include <vector>
 
 class CoreObserver;
+class UserOptionsInterface;
+class UserOptions;
 
 class CalculiXApplicationInterface
 {
 public:
   static CoreObserver& core_observer();
   bool initialize_application();
+  bool initialize_user_options(UserOptionsInterface& options, std::string& error);
+  void shutdown_user_options() noexcept;
+  UserOptions user_options() const;
+  std::vector<std::string> user_options_restart_required() const;
+  std::string component_directory() const;
+  bool apply_user_options(const std::string& payload, std::string& error);
   bool cmd(std::string cmd); // executes a cubit command with appending to the history
   bool silent_cmd(std::string cmd); // executes a cubit command
   bool is_silent_cmd() const;

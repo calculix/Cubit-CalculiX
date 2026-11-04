@@ -8,6 +8,8 @@
 #include "Core/jobs/CalculiXJobsInterface.hpp"
 #include "Core/mesh/CalculiXMeshInterface.hpp"
 #include "Core/results/CalculiXResultsInterface.hpp"
+#include "Core/results/vtk/CoreResultsVtkStructs.hpp"
+#include <QScopedValueRollback>
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "StopWatch.hpp"
@@ -79,6 +81,12 @@ bool CoreJobs::update()
 
 bool CoreJobs::reset()
 {
+  if (completing_results || CalculiXResultsInterface().is_vtk_build_active())
+  {
+    PRINT_ERROR("Cannot reset jobs during result preparation.\n");
+    return false;
+  }
+  pending_result_jobs.clear();
   #ifdef WIN32
     //close all jobs and threads first
     
@@ -211,6 +219,11 @@ bool CoreJobs::create_job(const std::vector<std::string>& options, int& created_
 
 bool CoreJobs::modify_job(int job_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
+  if (completing_results || CalculiXResultsInterface().is_vtk_build_active())
+  {
+    PRINT_ERROR("Cannot modify jobs during result preparation.\n");
+    return false;
+  }
   int jobs_data_id = get_jobs_data_id_from_job_id(job_id);
   
   if (jobs_data_id == -1)
@@ -252,6 +265,11 @@ bool CoreJobs::add_job(int job_id, std::string name, std::string filepath)
 
 bool CoreJobs::delete_job(int job_id)
 {
+  if (completing_results || CalculiXResultsInterface().is_vtk_build_active())
+  {
+    PRINT_ERROR("Cannot delete jobs during result preparation.\n");
+    return false;
+  }
   CalculiXResultsInterface ccx_results_iface;
 
   int jobs_data_id = get_jobs_data_id_from_job_id(job_id);
@@ -265,6 +283,7 @@ bool CoreJobs::delete_job(int job_id)
     int iteration_id = -1;
     jobs_iface.get_job_topology_context(job_id, topology_id, iteration_id);
     jobs_data.erase(jobs_data.begin() + jobs_data_id);
+    pending_result_jobs.erase(job_id);
     ccx_results_iface.delete_result(job_id);
     auto& observer = CalculiXApplicationInterface().core_observer();
     if (observer.job_deleted)
@@ -281,6 +300,13 @@ bool CoreJobs::delete_job(int job_id)
 
 bool CoreJobs::run_job(int job_id,int option)
 {
+  // Observe completed processes before another run can overwrite their input
+  // or output files. This also covers a restart before the GUI timer ticks.
+  if (!check_jobs() || !results_ready())
+  {
+    PRINT_ERROR("Finish or retry pending VTK result conversion before starting another job.\n");
+    return false;
+  }
   CalculiXJobsInterface ccx_jobs_iface;
  
   #ifdef WIN32
@@ -702,17 +728,7 @@ bool CoreJobs::wait_job(int job_id)
         //log.append(" Exit Code " + std::to_string(errorcode) + " \n");
         PRINT_INFO("%s", log.c_str());
         jobs_data[jobs_data_id][3] = "2";
-        results_loaded = ccx_results_iface.load_result(job_id);
-        if (!results_loaded)
-        {
-          PRINT_ERROR("Failed to load results for job %d.\n", job_id);
-        }
-        if (jobs_data[jobs_data_id][9] == "1") 
-        {
-          StopWatch conversion_stopwatch;
-          jobs_data[jobs_data_id][6] = std::to_string(ccx_results_iface.convert_result(job_id,{-1,-1,-1},ccx_mesh_iface.get_blocks(),CubitInterface::get_nodeset_id_list(),CubitInterface::get_sideset_id_list()));
-          conversion_stopwatch.total("Duration of VTK conversion [ms]: ");
-        }
+        results_loaded = complete_job_results(job_id);
       }
     }
     const auto retained = running_process_handles.find(job_id);
@@ -785,17 +801,7 @@ bool CoreJobs::wait_job(int job_id)
           //log.append(" Exit Code " + std::to_string(errorcode) + " \n");
           PRINT_INFO("%s", log.c_str());
           jobs_data[jobs_data_id][3] = "2";
-          results_loaded = ccx_results_iface.load_result(job_id);
-          if (!results_loaded)
-          {
-            PRINT_ERROR("Failed to load results for job %d.\n", job_id);
-          }
-          if (jobs_data[jobs_data_id][9] == "1") 
-          {
-            StopWatch conversion_stopwatch;
-            jobs_data[jobs_data_id][6] = std::to_string(ccx_results_iface.convert_result(job_id,{-1,-1,-1},ccx_mesh_iface.get_blocks(),CubitInterface::get_nodeset_id_list(),CubitInterface::get_sideset_id_list()));
-            conversion_stopwatch.total("Duration of VTK conversion [ms]: ");
-          }
+          results_loaded = complete_job_results(job_id);
         }
         CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
       }
@@ -884,40 +890,77 @@ bool CoreJobs::kill_job(int job_id)
   return false;
 }
 
+bool CoreJobs::results_ready()
+{
+  CalculiXResultsInterface results;
+  if (completing_results || results.is_vtk_build_active())
+  {
+    return false;
+  }
+  for (auto item = pending_result_jobs.begin(); item != pending_result_jobs.end();)
+  {
+    if (get_jobs_data_id_from_job_id(*item) < 0 || results.get_vtk_status(*item) == FeaResults::ConversionStatus::Complete)
+    {
+      item = pending_result_jobs.erase(item);
+    }
+    else
+    {
+      ++item;
+    }
+  }
+  return pending_result_jobs.empty();
+}
+
+bool CoreJobs::complete_job_results(int job_id)
+{
+  if (completing_results)
+  {
+    return false;
+  }
+  QScopedValueRollback<bool> guard(completing_results, true);
+  pending_result_jobs.insert(job_id);
+  const int index = get_jobs_data_id_from_job_id(job_id);
+  if (index < 0)
+  {
+    return false;
+  }
+  CalculiXResultsInterface results;
+  try
+  {
+    jobs_data[index][6] = "-1";
+    if (!results.load_result(job_id) || !results.build_vtk_result(job_id, CoreResultsVtkOptions{}))
+    {
+      PRINT_ERROR("Job %d finished, but its result data could not be prepared. Retry conversion before the next job.\n", job_id);
+      return false;
+    }
+    pending_result_jobs.erase(job_id);
+    if (jobs_data[index][9] == "1")
+    {
+      jobs_data[index][6] = results.export_vtk_result(job_id) ? "1" : "-1";
+    }
+    return true;
+  }
+  catch (const std::exception& failure)
+  {
+    PRINT_ERROR("Unable to prepare results for job %d: %s\n", job_id, failure.what());
+    return false;
+  }
+  catch (...)
+  {
+    PRINT_ERROR("Unable to prepare results for job %d.\n", job_id);
+    return false;
+  }
+}
+
 bool CoreJobs::check_jobs()
 {
+  if (completing_results)
+  {
+    return false;
+  }
   const auto load_finished_results = [&](size_t index)
   {
-    CalculiXMeshInterface ccx_mesh_iface;
-    CalculiXResultsInterface ccx_results_iface;
-
-    bool loaded = false;
-    try
-    {
-      loaded = ccx_results_iface.load_result(std::stoi(jobs_data[index][0]));
-      if (loaded && jobs_data[index][9] == "1")
-      {
-        StopWatch conversion_stopwatch;
-        jobs_data[index][6] = std::to_string(ccx_results_iface.convert_result(
-          std::stoi(jobs_data[index][0]), {-1, -1, -1}, ccx_mesh_iface.get_blocks(),
-          CubitInterface::get_nodeset_id_list(), CubitInterface::get_sideset_id_list()));
-        conversion_stopwatch.total("Duration of VTK conversion [ms]: ");
-      }
-    }
-    catch (const std::exception& error)
-    {
-      PRINT_ERROR("Unable to load results for job %s: %s\n",
-        jobs_data[index][0].c_str(), error.what());
-    }
-    catch (...)
-    {
-      PRINT_ERROR("Unable to load results for job %s.\n", jobs_data[index][0].c_str());
-    }
-    if (!loaded)
-    {
-      jobs_data[index][3] = "4";
-      jobs_data[index][6] = "-1";
-    }
+    complete_job_results(std::stoi(jobs_data[index][0]));
   };
 
   #ifdef _WIN32
@@ -980,7 +1023,7 @@ bool CoreJobs::check_jobs()
         }
       }
     }
-    return true;
+    return results_ready();
   #else
     std::string log;
     CubitString output;
@@ -1065,7 +1108,7 @@ bool CoreJobs::check_jobs()
         }
       }
     }
-    return true;
+    return results_ready();
   #endif
   
   return false;
@@ -1180,113 +1223,33 @@ bool CoreJobs::result_cgx_job(int job_id)
 }
 
 bool CoreJobs::result_paraview_job(int job_id)
-{  
-  std::string filepath;
-  std::string log;
-  std::string command;
-
-  #ifdef WIN32
-    if (_access(ccx_uo.mPathParaView.toStdString().c_str(), 0) == 0)
-    {
-    }else{
-      log = "ParaView not found! checked path \"" + ccx_uo.mPathParaView.toStdString() + "\" \n";
-      PRINT_INFO("%s", log.c_str());    
-      return false;
-    }
-  #else
-    if (access(ccx_uo.mPathParaView.toStdString().c_str(), X_OK) == 0) 
-    {
-    }else{
-      log = "ParaView not found! checked path \"" + ccx_uo.mPathParaView.toStdString() + "\" \n";
-      PRINT_INFO("%s", log.c_str());    
-      return false;
-    }
-  #endif
-
-  int job_data_id;
-  job_data_id = get_jobs_data_id_from_job_id(job_id);
-  if (job_data_id != -1)
-  { 
-    //if ((std::stoi(jobs_data[job_data_id][3])>1) && (jobs_data[job_data_id][6] == "1"))
-    if ((jobs_data[job_data_id][6] == "1"))
-    { 
-      #ifdef WIN32
-        filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".000002.vtpc"; // if more than one file
-        if (_access(filepath.c_str(), 0) == 0)
-        {
-          filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + "...vtpc";
-        }else{
-          filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".000001.vtpc";
-        }
-        //std::string shellstr;
-        //shellstr = " \"" + ccx_uo.mPathParaView.toStdString() + "\" --data=" + filepath;
-        //system(shellstr.c_str());
-
-        CubitString programm;
-        std::vector<CubitString> arguments(3);
-        programm = ccx_uo.mPathParaView.toStdString().substr(0, ccx_uo.mPathParaView.toStdString().size()-4).c_str();
-        arguments[0] = "--data";
-        arguments[1] = filepath;
-        arguments[2] = NULL;
-        CubitProcess::start(programm, arguments, false);
-      #else
-        filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".000002.vtpc"; // if more than one file
-        if (access(filepath.c_str(), W_OK) == 0) 
-        {
-          filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + "...vtpc";
-        }else{
-          filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".000001.vtpc";
-        }
-        std::string shellstr;
-        shellstr = "nohup " + ccx_uo.mPathParaView.toStdString() + " --data=" + filepath + " &";
-        system(shellstr.c_str());
-      #endif
-      log = "Opening Results with Paraview for Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + "\n";
-      //log.append(filepath +  " \n");
-      //log.append(arg +  " \n");
-      //log.append(shellstr +  " \n");
-      PRINT_INFO("%s", log.c_str());
-    }
-    //if ((std::stoi(jobs_data[job_data_id][3])>1) && (jobs_data[job_data_id][6] == "2"))
-    if ((jobs_data[job_data_id][6] == "2"))
-    {      
-      #ifdef WIN32
-        filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".vtu";
-        if (_access(filepath.c_str(), 0) == 0)
-        {
-          filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + "...vtu";
-        }
-        //std::string shellstr;
-        //shellstr = " \"" + ccx_uo.mPathParaView.toStdString() + "\" --data=" + filepath;
-        //system(shellstr.c_str());
-
-        CubitString programm;
-        std::vector<CubitString> arguments(3);
-        programm = ccx_uo.mPathParaView.toStdString().substr(0, ccx_uo.mPathParaView.toStdString().size()-4).c_str();
-        arguments[0] = "--data";
-        arguments[1] = filepath;
-        arguments[2] = NULL;
-        CubitProcess::start(programm, arguments, false);
-      #else
-        filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + ".vtu";
-        if (access(filepath.c_str(), W_OK) != 0) 
-        {
-          filepath = jobs_data[job_data_id][1] + "/" + jobs_data[job_data_id][1] + "...vtu";
-        }
-        std::string shellstr;
-        shellstr = "nohup " + ccx_uo.mPathParaView.toStdString() + " --data=" + filepath + " &";
-        system(shellstr.c_str());
-      #endif
-      log = "Opening Results with Paraview for Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + "\n";
-      //log.append(filepath +  " \n");
-      //log.append(arg +  " \n");
-      //log.append(shellstr +  " \n");
-      PRINT_INFO("%s", log.c_str());
-    }
-  } else {
+{
+  CalculiXResultsInterface results;
+  const auto index = results.get_vtk_export_path(job_id);
+  if (index.empty())
+  {
+    PRINT_ERROR("Export this job's VTK result before opening ParaView.\n");
     return false;
   }
-  return true;  
+  CubitString program(ccx_uo.mPathParaView.toStdString().c_str());
+  std::vector<CubitString> arguments;
+  arguments.emplace_back("--data");
+  arguments.emplace_back(index.c_str());
+  const auto process = CubitProcess::start(program, arguments, false);
+#ifdef WIN32
+  const bool started = process.hProcess != nullptr && process.hProcess != INVALID_HANDLE_VALUE;
+  if (started)
+  {
+    CloseHandle(process.hProcess);
+  }
+  if (process.hThread != nullptr && process.hThread != INVALID_HANDLE_VALUE)
+  {
+    CloseHandle(process.hThread);
+  }
+  return started;
+#else
+  return process > 0;
+#endif
 }
 
 int CoreJobs::get_jobs_data_id_from_job_id(int job_id)

@@ -254,6 +254,13 @@ bool CoreTopologyModelValidation::validate_run(const CoreTopology& topology, Mes
     return false;
   }
 
+  // Internal controller wiring exists, but normal runs must not precede native numerical verification.
+  if (configuration.method == TopologyMethod::LevelSet)
+  {
+    PRINT_ERROR("Level-set execution remains disabled pending native numerical verification.\n");
+    return false;
+  }
+
   if (configuration.method != TopologyMethod::Density ||
       (configuration.objective != TopologyObjective::Compliance &&
        configuration.objective != TopologyObjective::Displacement))

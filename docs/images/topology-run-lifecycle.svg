@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="1335" viewBox="0 0 1100 1335" role="img" aria-labelledby="title desc">
+<title id="title">Density topology run lifecycle</title>
+<desc id="desc">Validate and reset the selected case. Prepare the initial or next design, run the physical job and optional nonzero-displacement adjoint. Evaluate, filter, compute residuals and mark completion. Check convergence before the iteration limit. Otherwise prepare the next design. Failures and kill requests use stop handling.</desc>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8Z" fill="#475569"/></marker></defs>
+<rect width="1100" height="1335" fill="#ffffff"/>
+<g font-family="Segoe UI, DejaVu Sans, sans-serif" fill="#16324a">
+<text x="560" y="30" font-size="24" text-anchor="middle" font-weight="600">Density topology run lifecycle</text>
+<rect x="350" y="60" width="450" height="80" rx="9" fill="#edf4fc" stroke="#52748d" stroke-width="1.5"/>
+<text x="575.0" y="94.12" font-size="16" text-anchor="middle">Validate and reset selected case</text>
+<text x="575.0" y="116.12" font-size="16" text-anchor="middle">Retain case settings and preservation rules</text>
+<rect x="350" y="175" width="450" height="80" rx="9" fill="#edf4fc" stroke="#52748d" stroke-width="1.5"/>
+<text x="575.0" y="209.12" font-size="16" text-anchor="middle">Prepare initial solid design</text>
+<text x="575.0" y="231.12" font-size="16" text-anchor="middle">or next density design</text>
+<rect x="350" y="290" width="450" height="60" rx="9" fill="#edf4fc" stroke="#52748d" stroke-width="1.5"/>
+<text x="575.0" y="325.12" font-size="16" text-anchor="middle">Create / export / start physical job</text>
+<rect x="350" y="385" width="450" height="70" rx="9" fill="#edf4fc" stroke="#52748d" stroke-width="1.5"/>
+<text x="575.0" y="414.12" font-size="16" text-anchor="middle">Wait for physical completion</text>
+<text x="575.0" y="436.12" font-size="16" text-anchor="middle">Load final results</text>
+<path d="M575.0 500 L800 550.0 L575.0 600 L350 550.0 Z" fill="#fff4d9" stroke="#94722a" stroke-width="1.5"/>
+<text x="575.0" y="544.0" font-size="15" text-anchor="middle">Displacement objective</text>
+<text x="575.0" y="565.0" font-size="15" text-anchor="middle">with a nonzero value?</text>
+<rect x="855" y="485" width="225" height="130" rx="9" fill="#edf4fc" stroke="#52748d" stroke-width="1.5"/>
+<text x="967.5" y="524.48" font-size="14" text-anchor="middle">Create / export / start</text>
+<text x="967.5" y="544.48" font-size="14" text-anchor="middle">adjoint job</text>
+<text x="967.5" y="564.48" font-size="14" text-anchor="middle">Wait for completion</text>
+<text x="967.5" y="584.48" font-size="14" text-anchor="middle">Load final results</text>
+<rect x="350" y="640" width="450" height="80" rx="9" fill="#edf4fc" stroke="#52748d" stroke-width="1.5"/>
+<text x="575.0" y="674.12" font-size="16" text-anchor="middle">Evaluate objective and raw sensitivities</text>
+<text x="575.0" y="696.12" font-size="16" text-anchor="middle">Store optional displacement monitor</text>
+<rect x="350" y="770" width="450" height="90" rx="9" fill="#edf4fc" stroke="#52748d" stroke-width="1.5"/>
+<text x="575.0" y="798.12" font-size="16" text-anchor="middle">Collect Cubit volumes and centers</text>
+<text x="575.0" y="820.12" font-size="16" text-anchor="middle">Filter density sensitivities</text>
+<text x="575.0" y="842.12" font-size="16" text-anchor="middle">Compute ordinary proposal residual</text>
+<rect x="350" y="910" width="450" height="55" rx="9" fill="#edf4fc" stroke="#52748d" stroke-width="1.5"/>
+<text x="575.0" y="942.62" font-size="16" text-anchor="middle">Mark iteration completed</text>
+<path d="M575.0 1015 L800 1060.0 L575.0 1105 L350 1060.0 Z" fill="#fff4d9" stroke="#94722a" stroke-width="1.5"/>
+<text x="575.0" y="1054.0" font-size="15" text-anchor="middle">Iteration &gt; 1 and</text>
+<text x="575.0" y="1075.0" font-size="15" text-anchor="middle">all convergence checks pass?</text>
+<path d="M575.0 1145 L800 1190.0 L575.0 1235 L350 1190.0 Z" fill="#fff4d9" stroke="#94722a" stroke-width="1.5"/>
+<text x="575.0" y="1184.0" font-size="15" text-anchor="middle">Evaluated-design</text>
+<text x="575.0" y="1205.0" font-size="15" text-anchor="middle">iteration limit reached?</text>
+<rect x="870" y="1025" width="210" height="70" rx="9" fill="#e7f3e9" stroke="#52748d" stroke-width="1.5"/>
+<text x="975.0" y="1065.12" font-size="16" text-anchor="middle">converged</text>
+<rect x="870" y="1155" width="210" height="70" rx="9" fill="#fff4d9" stroke="#52748d" stroke-width="1.5"/>
+<text x="975.0" y="1195.12" font-size="16" text-anchor="middle">iteration_limit</text>
+<polyline points="575,140 575,175" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<polyline points="575,255 575,290" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<polyline points="575,350 575,385" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<polyline points="575,455 575,500" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<polyline points="575,600 575,640" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<polyline points="575,720 575,770" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<polyline points="575,860 575,910" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<polyline points="575,965 575,1015" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<polyline points="575,1105 575,1145" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<polyline points="800,550 855,550" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<text x="826" y="538" font-size="13" text-anchor="middle">yes</text>
+<text x="595" y="625" font-size="13" text-anchor="start">no / zero</text>
+<polyline points="967,615 967,680 800,680" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<polyline points="800,1060 870,1060" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<text x="835" y="1048" font-size="13" text-anchor="middle">yes</text>
+<polyline points="800,1190 870,1190" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<text x="835" y="1178" font-size="13" text-anchor="middle">yes</text>
+<text x="596" y="1133" font-size="13" text-anchor="start">no</text>
+<polyline points="575,1235 575,1280 310,1280 310,215 350,215" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<text x="430" y="1305" font-size="13" text-anchor="middle">no: advance iteration and prepare next design</text>
+<rect x="20" y="625" width="250" height="320" rx="9" fill="#fff0ef" stroke="#52748d" stroke-width="1.5"/>
+<text x="145" y="655" font-size="16" text-anchor="middle" font-weight="600">From any active phase</text>
+<text x="145" y="693" font-size="14" text-anchor="middle">Error / failed stage</text>
+<text x="145" y="713" font-size="14" text-anchor="middle">Request stop as needed</text>
+<polyline points="145,729 145,750" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<rect x="40" y="760" width="210" height="42" rx="9" fill="#ffe0db" stroke="#52748d" stroke-width="1.5"/>
+<text x="145.0" y="785.16" font-size="13" text-anchor="middle">failed after stop handling</text>
+<text x="145" y="838" font-size="14" text-anchor="middle">User kill request</text>
+<text x="145" y="858" font-size="14" text-anchor="middle">Confirm active job stopped</text>
+<polyline points="145,872 145,891" fill="none" stroke="#475569" stroke-width="1.7" marker-end="url(#arrow)"/>
+<rect x="40" y="901" width="210" height="32" rx="9" fill="#ffe0db" stroke="#52748d" stroke-width="1.5"/>
+<text x="145.0" y="921.16" font-size="13" text-anchor="middle">killed</text>
+<text x="145" y="977" font-size="13" text-anchor="middle">Completed evaluations remain.</text>
+<text x="145" y="996" font-size="13" text-anchor="middle">Earlier successful stages</text>
+<text x="145" y="1015" font-size="13" text-anchor="middle">are not rolled back together.</text>
+<text x="560" y="1328" font-size="14" text-anchor="middle">A successful asynchronous start is acceptance, not completed optimization.</text>
+</g>
+</svg>

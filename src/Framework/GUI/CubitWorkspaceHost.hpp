@@ -4,6 +4,7 @@
 #include "Framework/Interfaces/WorkspaceProviderInterface.hpp"
 
 #include <QObject>
+#include <memory>
 #include <QMap>
 #include <QByteArray>
 #include <QPointer>
@@ -11,6 +12,7 @@
 
 class QToolBar;
 class Claro;
+class DocumentationManager;
 class QMenuBar;
 class QGroupBox;
 class QTabWidget;
@@ -20,6 +22,8 @@ class QWidget;
 class CubitWorkspaceHost : public QObject
 {
 public:
+  CubitWorkspaceHost();
+  ~CubitWorkspaceHost() override;
   bool attach(Claro* host, std::string& error);
   bool validate(std::string& error) const;
   bool can_access_ui() const;
@@ -62,6 +66,7 @@ private:
 
   void watch_dock(QDockWidget* dock);
   bool dock_allowed(QDockWidget* dock) const;
+  std::unique_ptr<DocumentationManager> documentation;
   QPointer<Claro> gui;
   QPointer<QDockWidget> commandDock;
   QPointer<QDockWidget> navigationDock;
