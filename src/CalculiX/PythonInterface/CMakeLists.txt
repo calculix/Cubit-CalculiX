@@ -1,4 +1,4 @@
-project(Cubit-CalculiX_pythoninterface)
+project(cubit-sim_pythoninterface)
 
 set(PYTHONINTERFACE_SRC
     ${CCXPYTHONINTERFACE_WRAP}

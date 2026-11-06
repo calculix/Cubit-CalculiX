@@ -1,4 +1,5 @@
 #include "Core/results/dat/CoreResultsDat.hpp"
+#include "Core/results/dat/CoreResultsDatFormat.hpp"
 #include <numeric>
 #include <string>
 #include <string_view>
@@ -78,6 +79,8 @@ bool CoreResultsDat::reset()
 bool CoreResultsDat::clear()
 {
   result_blocks.clear();
+  result_tables.clear();
+  diagnostics.clear();
   total_times.clear();
   result_block_components.clear();
   result_block_type.clear();
@@ -799,9 +802,13 @@ bool CoreResultsDat::read_parallel_boost()
   }
   if (success)
   {
-    const bool has_results = !result_section_data.empty()
+    const bool has_results = !result_tables.empty() || !result_section_data.empty()
         || std::any_of(result_block_data.begin(), result_block_data.end(), [](const auto& block) { return !block.empty(); })
         || std::any_of(buckle_data.begin(), buckle_data.end(), [](const auto& block) { return !block.empty(); });
+    for (const auto& diagnostic : diagnostics)
+    {
+      PRINT_WARNING("DAT: %s\n", diagnostic.c_str());
+    }
     if (!has_results)
     {
       PRINT_INFO("DAT file contains no results: %s\n", filepath.c_str());
@@ -823,13 +830,13 @@ bool CoreResultsDat::read_parallel_boost()
 
 bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& input, DatReadState& state, DatRawReadBatch& batch, bool& finished)
 {
+  using namespace CoreResultsDatFormat;
   finished = false;
   if (state.finished)
   {
     finished = true;
     return true;
   }
-
   std::size_t batch_bytes = 0;
   std::string_view raw;
   std::streamoff next_poll = input.consumed_bytes();
@@ -850,18 +857,31 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
     }
     else
     {
-      const auto line_status = input.next(raw);
-      if (line_status != ResultsReaderPipeline::LineStatus::Line)
+      const auto status = input.next(raw);
+      if (status != ResultsReaderPipeline::LineStatus::Line)
       {
-        if (line_status != ResultsReaderPipeline::LineStatus::End)
+        if (status != ResultsReaderPipeline::LineStatus::End)
         {
           PRINT_ERROR("Cannot read DAT results: I/O error or line exceeds 64 KiB.\n");
           return false;
         }
+        if (state.table_id >= 0 && ((state.summary_section && (result_tables.back().rows.empty() ||
+          result_tables.back().rows.back().size() != result_tables.back().columns.size())) ||
+          (result_tables.back().rows.empty() && (result_tables.back().name.find("total ") == 0 ||
+            result_tables.back().name.find("center of gravity") == 0))))
+        {
+          diagnostics.push_back("Discarded incomplete trailing DAT summary/statistics block.");
+          result_tables.pop_back();
+        }
         if (current_read_mode >= 111 && current_read_mode <= 118)
         {
-          PRINT_ERROR("Incomplete DAT section output at end of file.\n");
-          return false;
+          // Section rows are committed only after all four records exist.
+          if (!result_section_data.empty())
+          {
+            result_section_data.pop_back();
+            result_section.pop_back();
+          }
+          diagnostics.push_back("Discarded incomplete trailing DAT section statistics.");
         }
         state.finished = true;
         finished = batch.records.empty();
@@ -869,175 +889,312 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
       }
       ++state.line_number;
     }
-
-    if (raw.size() > ResultsReaderPipeline::max_line_bytes)
-    {
-      PRINT_ERROR("DAT line %zu exceeds the supported line size.\n", state.line_number);
-      return false;
-    }
-    if (ResultReadNumbers::trim(raw).empty())
+    raw = ResultReadNumbers::trim(raw);
+    if (raw.empty())
     {
       continue;
     }
-    const bool result_row = (current_read_mode == 1 || current_read_mode == 11 || current_read_mode == 2) && ResultReadNumbers::dat_record(raw);
-    const auto row_bytes = raw.size() + sizeof(DatRawRecord)
-        + ResultsReaderPipeline::result_row_storage(state.components.size(), 3);
-    if (!batch.records.empty())
+    const bool field_row = state.association > 0 && ResultReadNumbers::dat_record(raw);
+    const auto row_bytes = raw.size() + sizeof(DatRawRecord) +
+      ResultsReaderPipeline::result_row_storage(state.components.size(), 3);
+    if (!batch.records.empty() && (!field_row || batch.records.size() >= ResultsReaderPipeline::max_batch_lines ||
+      batch_bytes + row_bytes > ResultsReaderPipeline::max_batch_bytes))
     {
-      if (!result_row || batch.records.size() >= ResultsReaderPipeline::max_batch_lines || batch_bytes + row_bytes > ResultsReaderPipeline::max_batch_bytes)
-      {
-        state.pending_line.assign(raw.data(), raw.size());
-        state.has_pending_line = true;
-        return true;
-      }
+      state.pending_line.assign(raw.data(), raw.size());
+      state.has_pending_line = true;
+      return true;
     }
-
-    if (result_row)
+    if (field_row)
     {
-      if (state.data_id < 0 || state.components.empty())
+      if (state.variable_components)
       {
-        PRINT_ERROR("DAT result row has no component definition at line %zu.\n", state.line_number);
-        return false;
+        std::array<std::string_view, ResultReadNumbers::max_fields> tokens;
+        std::size_t count = 0;
+        if (!ResultReadNumbers::fields(raw, tokens, count))
+        {
+          PRINT_ERROR("Invalid variable DAT record at line %zu.\n", state.line_number);
+          return false;
+        }
+        const std::size_t identifiers = state.association == 2 ? 2 : 1;
+        const bool suffix = !tokens[count - 1].empty() && tokens[count - 1].front() == '_';
+        const std::size_t size = count - (suffix ? 1 : 0);
+        if (size <= identifiers)
+        {
+          PRINT_ERROR("DAT variable record has no values at line %zu.\n", state.line_number);
+          return false;
+        }
+        for (std::size_t i = identifiers; i < size; ++i)
+        {
+          state.components.push_back((state.result_type == "internal state variables" ? "SDV" : "D") + std::to_string(i - identifiers + 1));
+        }
+        result_block_components[state.data_id] = state.components;
+        state.variable_components = false;
       }
-      current_read_mode = 2;
+      if (input.consumed_bytes() >= state.file_size)
+      {
+        // A killed solver can leave a partial final physical row. Validate
+        // only this row on the scanner; normal numeric parsing stays in Boost.
+        std::array<std::string_view, ResultReadNumbers::max_fields> tokens;
+        std::size_t count = 0;
+        bool valid = ResultReadNumbers::fields(raw, tokens, count);
+        const bool suffix = valid && tokens[count - 1].front() == '_';
+        const std::size_t offset = state.association == 1 ? 1 : 0;
+        valid = valid && count == state.components.size() + offset + (suffix ? 1 : 0);
+        for (std::size_t i = 0; valid && i < count - (suffix ? 1 : 0); ++i)
+        {
+          double value = 0.0;
+          valid = ResultReadNumbers::real(tokens[i], value);
+        }
+        if (!valid)
+        {
+          diagnostics.push_back("Discarded incomplete trailing DAT field row at line " + std::to_string(state.line_number) + ".");
+          state.finished = true;
+          finished = batch.records.empty();
+          return true;
+        }
+      }
+      batch.association = state.association;
       ResultsReaderPipeline::append_raw_record(batch, state, raw);
       batch_bytes += row_bytes;
       continue;
     }
 
-    // Headers and special outputs retain the established state-machine logic.
-    auto fields = split_line(std::string(raw));
-    if (fields.empty() || fields.size() > ResultsReaderPipeline::max_fields)
+    const std::string line = normalize(raw);
+    const auto definition = header(raw);
+    if (definition.kind != Kind::Unknown)
     {
-      PRINT_ERROR("Invalid DAT record at line %zu.\n", state.line_number);
-      return false;
+      if (state.table_id >= 0 && state.summary_section && (result_tables.back().rows.empty() ||
+        result_tables.back().rows.back().size() != result_tables.back().columns.size()))
+      {
+        PRINT_ERROR("Incomplete DAT contact statistics before line %zu.\n", state.line_number);
+        return false;
+      }
+      if (current_read_mode >= 111 && current_read_mode <= 118)
+      {
+        PRINT_ERROR("Incomplete DAT section statistics before line %zu.\n", state.line_number);
+        return false;
+      }
+      state.association = 0;
+      state.data_id = -1;
+      state.table_id = -1;
+      state.summary_section = definition.kind == Kind::ContactStatistics;
+      current_read_mode = 0;
+      if (definition.kind == Kind::Field)
+      {
+        if (!ResultsReaderPipeline::ids_fit(result_blocks.size(), 1))
+        {
+          PRINT_ERROR("DAT result block index overflow.\n");
+          return false;
+        }
+        state.association = definition.association;
+        state.variable_components = definition.variable;
+        state.components = definition.components;
+        state.result_type = definition.table.key == "EMAS" ? "emas" : definition.table.name;
+        state.data_id = static_cast<int>(result_block_data.size());
+        total_times.push_back(definition.table.time);
+        result_blocks.push_back({static_cast<int>(result_blocks.size() + 1), static_cast<int>(total_times.size() - 1),
+          get_current_result_block_type(state.result_type), get_current_result_block_set(definition.table.set_name),
+          state.data_id, current_step, current_increment});
+        result_block_components.push_back(state.components);
+        result_block_data.emplace_back();
+        result_block_c1_data.emplace_back();
+        dat_arrays.emplace_back();
+      }
+      else if (definition.kind == Kind::Section)
+      {
+        current_read_mode = 111;
+        if (!header_section_1(split_line(std::string(raw))))
+        {
+          return false;
+        }
+      }
+      else
+      {
+        if (!ResultsReaderPipeline::ids_fit(result_tables.size(), 1))
+        {
+          PRINT_ERROR("DAT table index overflow.\n");
+          return false;
+        }
+        auto table = definition.table;
+        table.step = current_step;
+        table.increment = current_increment;
+        table.source_line = state.line_number;
+        result_tables.push_back(std::move(table));
+        state.table_id = static_cast<int>(result_tables.size() - 1);
+        state.table_width = result_tables.back().columns.size();
+      }
+      continue;
+    }
+
+    if (state.table_id >= 0)
+    {
+      auto& table = result_tables[state.table_id];
+      std::vector<double> values;
+      if (numeric(raw, values))
+      {
+        if (state.summary_section)
+        {
+          if (table.rows.empty())
+          {
+            table.rows.emplace_back();
+          }
+          auto& row = table.rows.back();
+          const std::size_t expected = row.size() == 0 || row.size() == 6 ? 6 : row.size() == 12 || row.size() == 15 ? 3 : 0;
+          if (values.size() != expected || row.size() + values.size() > state.table_width)
+          {
+            if (input.consumed_bytes() >= state.file_size)
+            {
+              result_tables.pop_back();
+              diagnostics.push_back("Discarded incomplete trailing DAT contact statistics.");
+              state.finished = true;
+              finished = batch.records.empty();
+              return true;
+            }
+            PRINT_ERROR("Invalid DAT contact statistics at line %zu.\n", state.line_number);
+            return false;
+          }
+          row.insert(row.end(), values.begin(), values.end());
+          if (row.size() == state.table_width)
+          {
+            state.table_id = -1;
+            state.summary_section = false;
+          }
+        }
+        else
+        {
+          if (values.size() != state.table_width || !identifiers(table.columns, values))
+          {
+            if (input.consumed_bytes() >= state.file_size)
+            {
+              diagnostics.push_back("Discarded incomplete trailing DAT table row at line " + std::to_string(state.line_number) + ".");
+              state.finished = true;
+              finished = batch.records.empty();
+              return true;
+            }
+            PRINT_ERROR("DAT table width mismatch at line %zu.\n", state.line_number);
+            return false;
+          }
+          table.rows.push_back(std::move(values));
+          if (table.name.find("total ") == 0 || table.name.find("center of gravity") == 0)
+          {
+            state.table_id = -1;
+          }
+        }
+        continue;
+      }
+      if (!raw.empty() && ((raw.front() >= '0' && raw.front() <= '9') || raw.front() == '-' || raw.front() == '+' || raw.front() == '.'))
+      {
+        if (input.consumed_bytes() >= state.file_size)
+        {
+          if (state.summary_section)
+          {
+            result_tables.pop_back();
+          }
+          diagnostics.push_back("Discarded incomplete trailing DAT table record at line " + std::to_string(state.line_number) + ".");
+          state.finished = true;
+          finished = batch.records.empty();
+          return true;
+        }
+        PRINT_ERROR("Invalid numeric DAT table record at line %zu.\n", state.line_number);
+        return false;
+      }
+      if (state.summary_section)
+      {
+        if (line.find(" and time ") != std::string::npos || line.find("s t e p ") == 0 || line.find("increment ") == 0)
+        {
+          PRINT_ERROR("Incomplete DAT contact statistics before line %zu.\n", state.line_number);
+          return false;
+        }
+        if (line.find("total normal surface force") == 0)
+        {
+          table.key = "CFN";
+        }
+        else if (line.find("total shear surface force") == 0)
+        {
+          table.key = "CFS";
+        }
+        if (line.find(" and time ") == std::string::npos)
+        {
+          continue; // Named separators between the four statistics records.
+        }
+      }
+      else if (table.key == "FLUX" && line.find("el fa int") == 0)
+      {
+        continue;
+      }
+      state.table_id = -1;
+      state.summary_section = false;
+    }
+
+    auto fields = split_line(std::string(raw));
+    if (fields.empty())
+    {
+      continue;
     }
     if (fields.size() == 4 && fields[0] == "S" && fields[1] == "T" && fields[2] == "E" && fields[3] == "P")
     {
       PRINT_ERROR("Incomplete DAT step header at line %zu.\n", state.line_number);
       return false;
     }
-    check_step(fields);
-    check_mode(fields);
-
-    if (current_read_mode == 1 || current_read_mode == 11)
+    if (check_step(fields))
     {
-      const auto set = std::find(fields.begin(), fields.end(), "set");
-      if (set == fields.end() || std::distance(fields.begin(), set) < 2 || std::next(set) == fields.end())
+      if (current_read_mode >= 111 && current_read_mode <= 118)
       {
-        PRINT_ERROR("Invalid DAT result header at line %zu.\n", state.line_number);
+        PRINT_ERROR("Incomplete DAT section statistics before a step/increment header.\n");
         return false;
       }
-      if (!ResultsReaderPipeline::ids_fit(result_blocks.size(), 1))
-      {
-        PRINT_ERROR("DAT result block index overflow.\n");
-        return false;
-      }
-      const bool valid_header = current_read_mode == 11 ? header_emas(fields) : read_header(fields);
-      if (!valid_header)
-      {
-        return false;
-      }
-      state.data_id = result_blocks.back()[4];
-      state.result_type = result_block_type[result_blocks.back()[2]];
-      state.components = result_block_components[state.data_id];
-      if (state.components.size() > ResultsReaderPipeline::max_fields)
-      {
-        PRINT_ERROR("DAT result has too many components.\n");
-        return false;
-      }
+      state.association = 0;
+      current_read_mode = 0;
+      continue;
     }
-    else if (current_read_mode == 2)
+    if (current_read_mode >= 111 && current_read_mode <= 118)
     {
-      if (state.data_id < 0 || state.components.empty())
+      ++current_read_mode;
+      if (current_read_mode == 113 || current_read_mode == 115 || current_read_mode == 117 || current_read_mode == 119)
       {
-        PRINT_ERROR("DAT result row has no header at line %zu.\n", state.line_number);
-        return false;
+        const std::size_t count = current_read_mode == 117 ? 3 : current_read_mode == 119 ? 5 : 6;
+        std::vector<double> values;
+        if (!numeric(raw, values) || values.size() != count)
+        {
+          PRINT_ERROR("Invalid DAT section record at line %zu.\n", state.line_number);
+          return false;
+        }
+        const bool valid = current_read_mode == 113 ? read_line_section_1(fields) :
+          current_read_mode == 115 ? read_line_section_2(fields) : current_read_mode == 117 ? read_line_section_3(fields) : read_line_section_4(fields);
+        if (!valid)
+        {
+          return false;
+        }
       }
-      ResultsReaderPipeline::append_raw_record(batch, state, raw);
-      batch_bytes += row_bytes;
+      continue;
     }
-    else if (current_read_mode == 102)
+    if (fields[0] == "FACTOR")
     {
-      if (fields.size() < 2 || buckle_data.empty())
-      {
-        PRINT_ERROR("Invalid DAT buckling row at line %zu.\n", state.line_number);
-        return false;
-      }
-      if (!read_line_buckle(fields))
-      {
-        return false;
-      }
+      current_read_mode = 101;
+      state.association = 0;
+      continue;
     }
-    else if (current_read_mode == 111)
+    if ((current_read_mode == 101 || current_read_mode == 102) && ResultReadNumbers::dat_record(raw))
     {
-      if (fields.size() < 8)
+      if (current_read_mode == 101)
       {
-        PRINT_ERROR("Incomplete DAT section header at line %zu.\n", state.line_number);
+        buckle_data.emplace_back();
+      }
+      current_read_mode = 102;
+      if (fields.size() != 2 || !read_line_buckle(fields))
+      {
+        PRINT_ERROR("Invalid DAT buckling record at line %zu.\n", state.line_number);
         return false;
       }
-      if (!header_section_1(fields))
-      {
-        return false;
-      }
+      continue;
     }
-    else if (current_read_mode == 112)
+    // An unrecognized heading must never leave the previous field active.
+    state.association = 0;
+    state.data_id = -1;
+    current_read_mode = 0;
+    if (line.find("time ") != std::string::npos || line.find("for set ") != std::string::npos || line.find("statistics for ") == 0)
     {
-      if (!header_section_2(fields))
-      {
-        return false;
-      }
-    }
-    else if (current_read_mode == 114)
-    {
-      if (!header_section_3(fields))
-      {
-        return false;
-      }
-    }
-    else if (current_read_mode == 116)
-    {
-      if (!header_section_4(fields))
-      {
-        return false;
-      }
-    }
-    else if (current_read_mode == 118)
-    {
-      if (!header_section_5(fields))
-      {
-        return false;
-      }
-    }
-    else if (current_read_mode == 113 || current_read_mode == 115 || current_read_mode == 117 || current_read_mode == 119)
-    {
-      const std::size_t expected = current_read_mode == 117 ? 3 : current_read_mode == 119 ? 5 : 6;
-      if (result_section_data.empty() || fields.size() != expected)
-      {
-        PRINT_ERROR("Invalid DAT section row at line %zu.\n", state.line_number);
-        return false;
-      }
-      bool valid = false;
-      if (current_read_mode == 113)
-      {
-        valid = read_line_section_1(fields);
-      }
-      else if (current_read_mode == 115)
-      {
-        valid = read_line_section_2(fields);
-      }
-      else if (current_read_mode == 117)
-      {
-        valid = read_line_section_3(fields);
-      }
-      else
-      {
-        valid = read_line_section_4(fields);
-      }
-      if (!valid)
-      {
-        return false;
-      }
+      diagnostics.push_back("Unsupported DAT result header at line " + std::to_string(state.line_number) + ": " + std::string(raw));
     }
   }
 }
@@ -1100,18 +1257,26 @@ DatParsedBatch CoreResultsDat::parse_raw_batch(const DatRawReadBatch& batch, con
     }
 
     const bool shell_suffix = fields[count - 1].front() == '_';
-    const bool elemental = count == component_count || shell_suffix;
+    const bool elemental = batch.association > 0 ? batch.association != 1 : count == component_count || shell_suffix;
     const std::size_t offset = elemental ? 0 : 1;
-    // Match the legacy parser's accepted trailing fields and shell suffixes.
-    if (count < component_count + offset || (shell_suffix && count < component_count + 1))
+    if (count != component_count + offset + (shell_suffix ? 1 : 0))
     {
       output.error = "Incomplete DAT result row at line " + std::to_string(record.source_line);
       return output;
     }
-    int identifier_type = 1;
-    if (elemental)
+    int identifier_type = batch.association;
+    if (identifier_type == 0)
     {
-      identifier_type = component_count == 2 || type == "emas" ? 3 : 2;
+      identifier_type = elemental ? (component_count == 2 || type == "emas" ? 3 : 2) : 1;
+    }
+    if (identifier_type == 2)
+    {
+      int point = 0;
+      if (count < 3 || !ResultReadNumbers::integer(fields[1], point) || point <= 0)
+      {
+        output.error = "Invalid DAT integration-point identifier at line " + std::to_string(record.source_line);
+        return output;
+      }
     }
 
     std::vector<double> row(component_count);

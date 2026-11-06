@@ -1,3 +1,4 @@
+#include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/amplitudes/CoreAmplitudesPersistence.hpp"
 #include "Core/amplitudes/CoreAmplitudes.hpp"
 #include "HDF5Tool.hpp"
@@ -15,27 +16,27 @@ bool CoreAmplitudesPersistence::read(HDF5Tool& file, CoreAmplitudes& amplitudes)
     decltype(amplitudes.shiftx_amplitude_data) saved_shiftx_amplitude_data;
     decltype(amplitudes.shifty_amplitude_data) saved_shifty_amplitude_data;
     decltype(amplitudes.amplitudevalues_amplitude_data) saved_amplitudevalues_amplitude_data;
-    if (file.nameExists("Cubit-CalculiX/Amplitudes/amplitudes_data") && !file.read_dataset_int_rank_2("amplitudes_data", "Cubit-CalculiX/Amplitudes", saved_amplitudes_data))
+    if (file.nameExists(CalculiXModelSchema::path("Amplitudes/amplitudes_data")) && !file.read_dataset_int_rank_2("amplitudes_data", CalculiXModelSchema::path("Amplitudes"), saved_amplitudes_data))
     {
       PRINT_ERROR("Cannot read CalculiX Amplitudes: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Amplitudes/name_amplitude_data") && !file.read_dataset_string_rank_2("name_amplitude_data", "Cubit-CalculiX/Amplitudes", saved_name_amplitude_data))
+    if (file.nameExists(CalculiXModelSchema::path("Amplitudes/name_amplitude_data")) && !file.read_dataset_string_rank_2("name_amplitude_data", CalculiXModelSchema::path("Amplitudes"), saved_name_amplitude_data))
     {
       PRINT_ERROR("Cannot read CalculiX Amplitudes: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Amplitudes/shiftx_amplitude_data") && !file.read_dataset_string_rank_2("shiftx_amplitude_data", "Cubit-CalculiX/Amplitudes", saved_shiftx_amplitude_data))
+    if (file.nameExists(CalculiXModelSchema::path("Amplitudes/shiftx_amplitude_data")) && !file.read_dataset_string_rank_2("shiftx_amplitude_data", CalculiXModelSchema::path("Amplitudes"), saved_shiftx_amplitude_data))
     {
       PRINT_ERROR("Cannot read CalculiX Amplitudes: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Amplitudes/shifty_amplitude_data") && !file.read_dataset_string_rank_2("shifty_amplitude_data", "Cubit-CalculiX/Amplitudes", saved_shifty_amplitude_data))
+    if (file.nameExists(CalculiXModelSchema::path("Amplitudes/shifty_amplitude_data")) && !file.read_dataset_string_rank_2("shifty_amplitude_data", CalculiXModelSchema::path("Amplitudes"), saved_shifty_amplitude_data))
     {
       PRINT_ERROR("Cannot read CalculiX Amplitudes: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Amplitudes/amplitudevalues_amplitude_data") && !file.read_dataset_double_rank_2("amplitudevalues_amplitude_data", "Cubit-CalculiX/Amplitudes", saved_amplitudevalues_amplitude_data))
+    if (file.nameExists(CalculiXModelSchema::path("Amplitudes/amplitudevalues_amplitude_data")) && !file.read_dataset_double_rank_2("amplitudevalues_amplitude_data", CalculiXModelSchema::path("Amplitudes"), saved_amplitudevalues_amplitude_data))
     {
       PRINT_ERROR("Cannot read CalculiX Amplitudes: %s\n", file.last_error().c_str());
       return false;
@@ -154,32 +155,32 @@ bool CoreAmplitudesPersistence::write(HDF5Tool& file, const CoreAmplitudes& ampl
       PRINT_ERROR("Cannot write CalculiX Amplitudes: invalid or duplicate IDs.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/Amplitudes"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("Amplitudes")))
     {
       PRINT_ERROR("Cannot write CalculiX Amplitudes: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("amplitudes_data", "Cubit-CalculiX/Amplitudes", amplitudes.amplitudes_data))
+    if (!file.write_dataset_int_rank_2("amplitudes_data", CalculiXModelSchema::path("Amplitudes"), amplitudes.amplitudes_data))
     {
       PRINT_ERROR("Cannot write CalculiX Amplitudes: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("name_amplitude_data", "Cubit-CalculiX/Amplitudes", amplitudes.name_amplitude_data))
+    if (!file.write_dataset_string_rank_2("name_amplitude_data", CalculiXModelSchema::path("Amplitudes"), amplitudes.name_amplitude_data))
     {
       PRINT_ERROR("Cannot write CalculiX Amplitudes: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("shiftx_amplitude_data", "Cubit-CalculiX/Amplitudes", amplitudes.shiftx_amplitude_data))
+    if (!file.write_dataset_string_rank_2("shiftx_amplitude_data", CalculiXModelSchema::path("Amplitudes"), amplitudes.shiftx_amplitude_data))
     {
       PRINT_ERROR("Cannot write CalculiX Amplitudes: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("shifty_amplitude_data", "Cubit-CalculiX/Amplitudes", amplitudes.shifty_amplitude_data))
+    if (!file.write_dataset_string_rank_2("shifty_amplitude_data", CalculiXModelSchema::path("Amplitudes"), amplitudes.shifty_amplitude_data))
     {
       PRINT_ERROR("Cannot write CalculiX Amplitudes: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_double_rank_2("amplitudevalues_amplitude_data", "Cubit-CalculiX/Amplitudes", amplitudes.amplitudevalues_amplitude_data))
+    if (!file.write_dataset_double_rank_2("amplitudevalues_amplitude_data", CalculiXModelSchema::path("Amplitudes"), amplitudes.amplitudevalues_amplitude_data))
     {
       PRINT_ERROR("Cannot write CalculiX Amplitudes: %s\n", file.last_error().c_str());
       return false;

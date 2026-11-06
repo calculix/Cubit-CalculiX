@@ -1,3 +1,4 @@
+#include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/sections/CoreOrientationsPersistence.hpp"
 #include "Core/sections/CoreOrientations.hpp"
 #include "HDF5Tool.hpp"
@@ -15,27 +16,27 @@ bool CoreOrientationsPersistence::read(HDF5Tool& file, CoreOrientations& orienta
     decltype(orientations.a_data) saved_a_data;
     decltype(orientations.b_data) saved_b_data;
     decltype(orientations.rotation_data) saved_rotation_data;
-    if (file.nameExists("Cubit-CalculiX/Orientations/orientations_data") && !file.read_dataset_int_rank_2("orientations_data", "Cubit-CalculiX/Orientations", saved_orientations_data))
+    if (file.nameExists(CalculiXModelSchema::path("Orientations/orientations_data")) && !file.read_dataset_int_rank_2("orientations_data", CalculiXModelSchema::path("Orientations"), saved_orientations_data))
     {
       PRINT_ERROR("Cannot read CalculiX Orientations: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Orientations/name_data") && !file.read_dataset_string_rank_2("name_data", "Cubit-CalculiX/Orientations", saved_name_data))
+    if (file.nameExists(CalculiXModelSchema::path("Orientations/name_data")) && !file.read_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Orientations"), saved_name_data))
     {
       PRINT_ERROR("Cannot read CalculiX Orientations: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Orientations/a_data") && !file.read_dataset_string_rank_2("a_data", "Cubit-CalculiX/Orientations", saved_a_data))
+    if (file.nameExists(CalculiXModelSchema::path("Orientations/a_data")) && !file.read_dataset_string_rank_2("a_data", CalculiXModelSchema::path("Orientations"), saved_a_data))
     {
       PRINT_ERROR("Cannot read CalculiX Orientations: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Orientations/b_data") && !file.read_dataset_string_rank_2("b_data", "Cubit-CalculiX/Orientations", saved_b_data))
+    if (file.nameExists(CalculiXModelSchema::path("Orientations/b_data")) && !file.read_dataset_string_rank_2("b_data", CalculiXModelSchema::path("Orientations"), saved_b_data))
     {
       PRINT_ERROR("Cannot read CalculiX Orientations: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Orientations/rotation_data") && !file.read_dataset_string_rank_2("rotation_data", "Cubit-CalculiX/Orientations", saved_rotation_data))
+    if (file.nameExists(CalculiXModelSchema::path("Orientations/rotation_data")) && !file.read_dataset_string_rank_2("rotation_data", CalculiXModelSchema::path("Orientations"), saved_rotation_data))
     {
       PRINT_ERROR("Cannot read CalculiX Orientations: %s\n", file.last_error().c_str());
       return false;
@@ -164,32 +165,32 @@ bool CoreOrientationsPersistence::write(HDF5Tool& file, const CoreOrientations& 
       PRINT_ERROR("Cannot write CalculiX Orientations: invalid or duplicate IDs.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/Orientations"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("Orientations")))
     {
       PRINT_ERROR("Cannot write CalculiX Orientations: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("orientations_data", "Cubit-CalculiX/Orientations", orientations.orientations_data))
+    if (!file.write_dataset_int_rank_2("orientations_data", CalculiXModelSchema::path("Orientations"), orientations.orientations_data))
     {
       PRINT_ERROR("Cannot write CalculiX Orientations: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("name_data", "Cubit-CalculiX/Orientations", orientations.name_data))
+    if (!file.write_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Orientations"), orientations.name_data))
     {
       PRINT_ERROR("Cannot write CalculiX Orientations: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("a_data", "Cubit-CalculiX/Orientations", orientations.a_data))
+    if (!file.write_dataset_string_rank_2("a_data", CalculiXModelSchema::path("Orientations"), orientations.a_data))
     {
       PRINT_ERROR("Cannot write CalculiX Orientations: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("b_data", "Cubit-CalculiX/Orientations", orientations.b_data))
+    if (!file.write_dataset_string_rank_2("b_data", CalculiXModelSchema::path("Orientations"), orientations.b_data))
     {
       PRINT_ERROR("Cannot write CalculiX Orientations: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("rotation_data", "Cubit-CalculiX/Orientations", orientations.rotation_data))
+    if (!file.write_dataset_string_rank_2("rotation_data", CalculiXModelSchema::path("Orientations"), orientations.rotation_data))
     {
       PRINT_ERROR("Cannot write CalculiX Orientations: %s\n", file.last_error().c_str());
       return false;

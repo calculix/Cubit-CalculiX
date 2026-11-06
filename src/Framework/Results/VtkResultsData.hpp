@@ -1,5 +1,5 @@
-#ifndef FEA_VTKRESULTSDATA_HPP
-#define FEA_VTKRESULTSDATA_HPP
+#ifndef CUBITSIM_VTKRESULTSDATA_HPP
+#define CUBITSIM_VTKRESULTSDATA_HPP
 
 #include <memory>
 #include <string>
@@ -9,7 +9,7 @@
 class vtkDataObject;
 class vtkTable;
 
-namespace FeaResults
+namespace SimResults
 {
   enum class LinkSource
   {
@@ -72,6 +72,11 @@ namespace FeaResults
     int increment = -1;
     int total_increment = -1;
     double time = 0.0;
+    int analysis_type = -1;
+    int mode = -1;
+    int nodal_diameter = -1;
+    int subcase = -1;
+    std::vector<std::string> source_parameters;
     std::vector<Field> fields;
     // The builder must supply owning handles whose deleters release a VTK
     // reference (Delete()). Never wrap a borrowed VTK pointer with default delete.
@@ -103,4 +108,4 @@ namespace FeaResults
   };
 }
 
-#endif // FEA_VTKRESULTSDATA_HPP
+#endif // CUBITSIM_VTKRESULTSDATA_HPP

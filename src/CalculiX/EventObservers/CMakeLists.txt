@@ -1,4 +1,4 @@
-project(Cubit-CalculiX_observers)
+project(cubit-sim_observers)
 
 set(EO_COMP_SRC
     ${CMAKE_CURRENT_LIST_DIR}/Observer.cpp

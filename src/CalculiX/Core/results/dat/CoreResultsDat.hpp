@@ -36,6 +36,8 @@ public:
   std::chrono::high_resolution_clock::time_point t_start = std::chrono::high_resolution_clock::now();
 
   std::vector<std::vector<int>> result_blocks;
+  std::vector<DatResultTable> result_tables;
+  std::vector<std::string> diagnostics;
   // result_blocks[0][0] result block
   // result_blocks[0][1] total time data id
   // result_blocks[0][2] result block type

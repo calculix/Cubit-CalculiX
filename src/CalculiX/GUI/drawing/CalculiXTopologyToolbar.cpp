@@ -69,7 +69,7 @@ CalculiXTopologyToolbar::CalculiXTopologyToolbar(QWidget* parent)
   threshold->setRange(0, 1);
   threshold->setSingleStep(0.05);
   threshold->setKeyboardTracking(false);
-  QSettings settings("Cubit-CalculiX", "Framework");
+  QSettings settings("cubit-sim", "Framework");
   threshold->setValue(settings.value("TopologyToolbar/Threshold", 0.5).toDouble());
   threshold->setToolTip(tr("Density threshold: elements below this density are shown as red edges; preserved elements always remain green"));
   addWidget(threshold);
@@ -86,7 +86,7 @@ CalculiXTopologyToolbar::CalculiXTopologyToolbar(QWidget* parent)
   connect(iterations, &QComboBox::currentIndexChanged, this, [this]() { selectionChanged(); });
   connect(threshold, &QDoubleSpinBox::valueChanged, this, [this](double value)
   {
-    QSettings("Cubit-CalculiX", "Framework").setValue("TopologyToolbar/Threshold", value);
+    QSettings("cubit-sim", "Framework").setValue("TopologyToolbar/Threshold", value);
     selectionChanged();
   });
   connect(visibility, &QAction::triggered, this, [this](bool enabled)

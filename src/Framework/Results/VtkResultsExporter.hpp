@@ -1,11 +1,11 @@
-#ifndef FEA_VTKRESULTSEXPORTER_HPP
-#define FEA_VTKRESULTSEXPORTER_HPP
+#ifndef CUBITSIM_VTKRESULTSEXPORTER_HPP
+#define CUBITSIM_VTKRESULTSEXPORTER_HPP
 
 #include "VtkResultsData.hpp"
 #include <functional>
 #include <string>
 
-namespace FeaResults
+namespace SimResults
 {
   /** Export already converted data without consulting a solver or current model.
    * destination must not exist. A private staging directory is renamed only

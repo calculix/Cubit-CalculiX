@@ -8,8 +8,8 @@
 
 struct CoreResultsVtkOptions
 {
-  // FRD coordinates are rounded by the solver's ASCII output. Comparison is
-  // abs(a-b) <= absolute + relative*max(abs(a),abs(b)), per coordinate.
+  // Accept abs(a-b) <= absolute + relative*max(abs(a),abs(b)), per coordinate,
+  // or an exact match after the candidate's float/%12.5E ASCII FRD conversion.
   double coordinate_absolute_tolerance = 1.0e-10;
   double coordinate_relative_tolerance = 2.0e-6;
   double time_absolute_tolerance = 1.0e-10;
@@ -95,7 +95,7 @@ struct CoreResultsVtkMesh
 
 struct CoreResultsVtkFieldPlan
 {
-  FeaResults::Field field;
+  SimResults::Field field;
   int source_block = -1; // Index in the existing reader's result_blocks.
   int source_data = -1;
   std::size_t component_offset = 0; // DAT element/IP identifiers are not values.
@@ -107,7 +107,15 @@ struct CoreResultsVtkIncrementPlan
   int increment = -1;
   int total_increment = -1;
   double time = 0.0;
+  int analysis_type = -1;
+  int mode = -1;
+  int nodal_diameter = -1;
+  int subcase = -1;
+  std::vector<std::string> source_parameters;
   std::vector<CoreResultsVtkFieldPlan> fields;
+  // Per-record sources such as FRD CELS; repeated reported node IDs are valid.
+  // Source indices refer to the same reader generation as spatial fields.
+  std::vector<CoreResultsVtkFieldPlan> table_fields;
 };
 
 struct CoreResultsVtkTablePlan
@@ -116,10 +124,12 @@ struct CoreResultsVtkTablePlan
   enum class Kind
   {
     Buckling,
-    Section
+    Section,
+    DatResult
   };
   Kind kind = Kind::Buckling;
   std::size_t source_data = 0;
+  int increment = -1; // -1 means a global table; otherwise a plan increment index.
 };
 
 /** Owned plan: no live Cubit handles or reader pointers. Source block indices
@@ -132,8 +142,8 @@ struct CoreResultsVtkPlan
   int job_id = -1;
   std::string run_identity;
   CoreResultsVtkOptions options;
-  FeaResults::LinkSource link_source = FeaResults::LinkSource::FrdOnly;
-  FeaResults::DatasetLayout layout = FeaResults::DatasetLayout::SingleGrid;
+  SimResults::LinkSource link_source = SimResults::LinkSource::FrdOnly;
+  SimResults::DatasetLayout layout = SimResults::DatasetLayout::SingleGrid;
   std::string input_path;
   std::vector<std::string> input_files;
   std::vector<std::string> diagnostics;

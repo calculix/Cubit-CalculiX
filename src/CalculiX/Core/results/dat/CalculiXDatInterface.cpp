@@ -109,3 +109,18 @@ std::vector<std::string> CalculiXDatInterface::dat_get_section_label(int job_id)
 {
   return CoreResultsDatQuery(*ccx_core.results).dat_get_section_label(job_id);
 }
+
+std::vector<DatResultTable> CalculiXDatInterface::dat_get_table_metadata(int job_id)
+{
+  return CoreResultsDatQuery(*ccx_core.results).dat_get_table_metadata(job_id);
+}
+
+std::vector<std::vector<double>> CalculiXDatInterface::dat_get_table_rows(int job_id, int table_id, std::size_t offset, std::size_t count)
+{
+  return CoreResultsDatQuery(*ccx_core.results).dat_get_table_rows(job_id, table_id, offset, count);
+}
+
+std::size_t CalculiXDatInterface::dat_get_table_row_count(int job_id, int table_id)
+{
+  return CoreResultsDatQuery(*ccx_core.results).dat_get_table_row_count(job_id, table_id);
+}

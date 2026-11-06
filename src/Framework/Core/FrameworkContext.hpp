@@ -9,11 +9,12 @@
 #include <string>
 
 class UserOptionsManager;
+class DrawingService;
 class UserOptionsStore;
 class WorkspaceManager;
 class QWidget;
 
-class FEA_FRAMEWORK_EXPORT FrameworkContext
+class CUBITSIM_FRAMEWORK_EXPORT FrameworkContext
 {
 public:
   FrameworkContext();
@@ -38,6 +39,7 @@ public:
 private:
   // Declared before modules so the service outlives module destruction.
   std::unique_ptr<UserOptionsStore> options;
+  std::unique_ptr<DrawingService> drawings;
   ModuleManager modules;
   std::unique_ptr<WorkspaceManager> workspaces;
   std::unique_ptr<UserOptionsManager> optionsPages;
@@ -47,6 +49,6 @@ private:
 };
 
 // Implemented in the shared framework library, never in either entry-point DLL.
-FEA_FRAMEWORK_EXPORT FrameworkContext& framework_context();
+CUBITSIM_FRAMEWORK_EXPORT FrameworkContext& framework_context();
 
 #endif // FRAMEWORKCONTEXT_HPP

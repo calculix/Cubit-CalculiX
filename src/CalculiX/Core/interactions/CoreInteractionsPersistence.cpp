@@ -1,3 +1,4 @@
+#include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/interactions/CoreInteractionsPersistence.hpp"
 #include "Core/interactions/CoreConstraints.hpp"
 #include "Core/interactions/CoreSurfaceInteractions.hpp"
@@ -19,37 +20,37 @@ bool CoreInteractionsPersistence::read(HDF5Tool& file, CoreConstraints& constrai
     decltype(constraints.equation_data) saved_equation_data;
     decltype(constraints.equation_group_constraint_data) saved_equation_group_constraint_data;
     decltype(constraints.equation_group_data) saved_equation_group_data;
-    if (file.nameExists("Cubit-CalculiX/Constraints/constraints_data") && !file.read_dataset_int_rank_2("constraints_data", "Cubit-CalculiX/Constraints", saved_constraints_data))
+    if (file.nameExists(CalculiXModelSchema::path("Constraints/constraints_data")) && !file.read_dataset_int_rank_2("constraints_data", CalculiXModelSchema::path("Constraints"), saved_constraints_data))
     {
       PRINT_ERROR("Cannot read CalculiX Constraints: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Constraints/rigidbody_constraint_data") && !file.read_dataset_string_rank_2("rigidbody_constraint_data", "Cubit-CalculiX/Constraints", saved_rigidbody_constraint_data))
+    if (file.nameExists(CalculiXModelSchema::path("Constraints/rigidbody_constraint_data")) && !file.read_dataset_string_rank_2("rigidbody_constraint_data", CalculiXModelSchema::path("Constraints"), saved_rigidbody_constraint_data))
     {
       PRINT_ERROR("Cannot read CalculiX Constraints: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Constraints/tie_constraint_data") && !file.read_dataset_string_rank_2("tie_constraint_data", "Cubit-CalculiX/Constraints", saved_tie_constraint_data))
+    if (file.nameExists(CalculiXModelSchema::path("Constraints/tie_constraint_data")) && !file.read_dataset_string_rank_2("tie_constraint_data", CalculiXModelSchema::path("Constraints"), saved_tie_constraint_data))
     {
       PRINT_ERROR("Cannot read CalculiX Constraints: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Constraints/equation_constraint_data") && !file.read_dataset_string_rank_2("equation_constraint_data", "Cubit-CalculiX/Constraints", saved_equation_constraint_data))
+    if (file.nameExists(CalculiXModelSchema::path("Constraints/equation_constraint_data")) && !file.read_dataset_string_rank_2("equation_constraint_data", CalculiXModelSchema::path("Constraints"), saved_equation_constraint_data))
     {
       PRINT_ERROR("Cannot read CalculiX Constraints: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Constraints/equation_data") && !file.read_dataset_double_rank_2("equation_data", "Cubit-CalculiX/Constraints", saved_equation_data))
+    if (file.nameExists(CalculiXModelSchema::path("Constraints/equation_data")) && !file.read_dataset_double_rank_2("equation_data", CalculiXModelSchema::path("Constraints"), saved_equation_data))
     {
       PRINT_ERROR("Cannot read CalculiX Constraints: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Constraints/equation_group_constraint_data") && !file.read_dataset_string_rank_2("equation_group_constraint_data", "Cubit-CalculiX/Constraints", saved_equation_group_constraint_data))
+    if (file.nameExists(CalculiXModelSchema::path("Constraints/equation_group_constraint_data")) && !file.read_dataset_string_rank_2("equation_group_constraint_data", CalculiXModelSchema::path("Constraints"), saved_equation_group_constraint_data))
     {
       PRINT_ERROR("Cannot read CalculiX Constraints: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Constraints/equation_group_data") && !file.read_dataset_double_rank_2("equation_group_data", "Cubit-CalculiX/Constraints", saved_equation_group_data))
+    if (file.nameExists(CalculiXModelSchema::path("Constraints/equation_group_data")) && !file.read_dataset_double_rank_2("equation_group_data", CalculiXModelSchema::path("Constraints"), saved_equation_group_data))
     {
       PRINT_ERROR("Cannot read CalculiX Constraints: %s\n", file.last_error().c_str());
       return false;
@@ -210,42 +211,42 @@ bool CoreInteractionsPersistence::write(HDF5Tool& file, const CoreConstraints& c
       PRINT_ERROR("Cannot write CalculiX Constraints: invalid or duplicate IDs.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/Constraints"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("Constraints")))
     {
       PRINT_ERROR("Cannot write CalculiX Constraints: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("constraints_data", "Cubit-CalculiX/Constraints", constraints.constraints_data))
+    if (!file.write_dataset_int_rank_2("constraints_data", CalculiXModelSchema::path("Constraints"), constraints.constraints_data))
     {
       PRINT_ERROR("Cannot write CalculiX Constraints: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("rigidbody_constraint_data", "Cubit-CalculiX/Constraints", constraints.rigidbody_constraint_data))
+    if (!file.write_dataset_string_rank_2("rigidbody_constraint_data", CalculiXModelSchema::path("Constraints"), constraints.rigidbody_constraint_data))
     {
       PRINT_ERROR("Cannot write CalculiX Constraints: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("tie_constraint_data", "Cubit-CalculiX/Constraints", constraints.tie_constraint_data))
+    if (!file.write_dataset_string_rank_2("tie_constraint_data", CalculiXModelSchema::path("Constraints"), constraints.tie_constraint_data))
     {
       PRINT_ERROR("Cannot write CalculiX Constraints: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("equation_constraint_data", "Cubit-CalculiX/Constraints", constraints.equation_constraint_data))
+    if (!file.write_dataset_string_rank_2("equation_constraint_data", CalculiXModelSchema::path("Constraints"), constraints.equation_constraint_data))
     {
       PRINT_ERROR("Cannot write CalculiX Constraints: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_double_rank_2("equation_data", "Cubit-CalculiX/Constraints", constraints.equation_data))
+    if (!file.write_dataset_double_rank_2("equation_data", CalculiXModelSchema::path("Constraints"), constraints.equation_data))
     {
       PRINT_ERROR("Cannot write CalculiX Constraints: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("equation_group_constraint_data", "Cubit-CalculiX/Constraints", constraints.equation_group_constraint_data))
+    if (!file.write_dataset_string_rank_2("equation_group_constraint_data", CalculiXModelSchema::path("Constraints"), constraints.equation_group_constraint_data))
     {
       PRINT_ERROR("Cannot write CalculiX Constraints: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_double_rank_2("equation_group_data", "Cubit-CalculiX/Constraints", constraints.equation_group_data))
+    if (!file.write_dataset_double_rank_2("equation_group_data", CalculiXModelSchema::path("Constraints"), constraints.equation_group_data))
     {
       PRINT_ERROR("Cannot write CalculiX Constraints: %s\n", file.last_error().c_str());
       return false;
@@ -278,47 +279,47 @@ bool CoreInteractionsPersistence::read(HDF5Tool& file, CoreSurfaceInteractions& 
     decltype(interactions.gap_conductance_data) saved_gap_conductance_data;
     decltype(interactions.gap_heat_generation_data) saved_gap_heat_generation_data;
     decltype(interactions.friction_data) saved_friction_data;
-    if (file.nameExists("Cubit-CalculiX/SurfaceInteractions/surfaceinteractions_data") && !file.read_dataset_int_rank_2("surfaceinteractions_data", "Cubit-CalculiX/SurfaceInteractions", saved_surfaceinteractions_data))
+    if (file.nameExists(CalculiXModelSchema::path("SurfaceInteractions/surfaceinteractions_data")) && !file.read_dataset_int_rank_2("surfaceinteractions_data", CalculiXModelSchema::path("SurfaceInteractions"), saved_surfaceinteractions_data))
     {
       PRINT_ERROR("Cannot read CalculiX SurfaceInteractions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/SurfaceInteractions/surfaceinteraction_name_data") && !file.read_dataset_string_rank_2("surfaceinteraction_name_data", "Cubit-CalculiX/SurfaceInteractions", saved_surfaceinteraction_name_data))
+    if (file.nameExists(CalculiXModelSchema::path("SurfaceInteractions/surfaceinteraction_name_data")) && !file.read_dataset_string_rank_2("surfaceinteraction_name_data", CalculiXModelSchema::path("SurfaceInteractions"), saved_surfaceinteraction_name_data))
     {
       PRINT_ERROR("Cannot read CalculiX SurfaceInteractions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/SurfaceInteractions/exponential_surfacebehavior_data") && !file.read_dataset_string_rank_2("exponential_surfacebehavior_data", "Cubit-CalculiX/SurfaceInteractions", saved_exponential_surfacebehavior_data))
+    if (file.nameExists(CalculiXModelSchema::path("SurfaceInteractions/exponential_surfacebehavior_data")) && !file.read_dataset_string_rank_2("exponential_surfacebehavior_data", CalculiXModelSchema::path("SurfaceInteractions"), saved_exponential_surfacebehavior_data))
     {
       PRINT_ERROR("Cannot read CalculiX SurfaceInteractions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/SurfaceInteractions/linear_surfacebehavior_data") && !file.read_dataset_string_rank_2("linear_surfacebehavior_data", "Cubit-CalculiX/SurfaceInteractions", saved_linear_surfacebehavior_data))
+    if (file.nameExists(CalculiXModelSchema::path("SurfaceInteractions/linear_surfacebehavior_data")) && !file.read_dataset_string_rank_2("linear_surfacebehavior_data", CalculiXModelSchema::path("SurfaceInteractions"), saved_linear_surfacebehavior_data))
     {
       PRINT_ERROR("Cannot read CalculiX SurfaceInteractions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/SurfaceInteractions/tabular_surfacebehavior_data") && !file.read_dataset_string_rank_2("tabular_surfacebehavior_data", "Cubit-CalculiX/SurfaceInteractions", saved_tabular_surfacebehavior_data))
+    if (file.nameExists(CalculiXModelSchema::path("SurfaceInteractions/tabular_surfacebehavior_data")) && !file.read_dataset_string_rank_2("tabular_surfacebehavior_data", CalculiXModelSchema::path("SurfaceInteractions"), saved_tabular_surfacebehavior_data))
     {
       PRINT_ERROR("Cannot read CalculiX SurfaceInteractions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/SurfaceInteractions/tied_surfacebehavior_data") && !file.read_dataset_string_rank_2("tied_surfacebehavior_data", "Cubit-CalculiX/SurfaceInteractions", saved_tied_surfacebehavior_data))
+    if (file.nameExists(CalculiXModelSchema::path("SurfaceInteractions/tied_surfacebehavior_data")) && !file.read_dataset_string_rank_2("tied_surfacebehavior_data", CalculiXModelSchema::path("SurfaceInteractions"), saved_tied_surfacebehavior_data))
     {
       PRINT_ERROR("Cannot read CalculiX SurfaceInteractions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/SurfaceInteractions/gap_conductance_data") && !file.read_dataset_string_rank_2("gap_conductance_data", "Cubit-CalculiX/SurfaceInteractions", saved_gap_conductance_data))
+    if (file.nameExists(CalculiXModelSchema::path("SurfaceInteractions/gap_conductance_data")) && !file.read_dataset_string_rank_2("gap_conductance_data", CalculiXModelSchema::path("SurfaceInteractions"), saved_gap_conductance_data))
     {
       PRINT_ERROR("Cannot read CalculiX SurfaceInteractions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/SurfaceInteractions/gap_heat_generation_data") && !file.read_dataset_string_rank_2("gap_heat_generation_data", "Cubit-CalculiX/SurfaceInteractions", saved_gap_heat_generation_data))
+    if (file.nameExists(CalculiXModelSchema::path("SurfaceInteractions/gap_heat_generation_data")) && !file.read_dataset_string_rank_2("gap_heat_generation_data", CalculiXModelSchema::path("SurfaceInteractions"), saved_gap_heat_generation_data))
     {
       PRINT_ERROR("Cannot read CalculiX SurfaceInteractions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/SurfaceInteractions/friction_data") && !file.read_dataset_string_rank_2("friction_data", "Cubit-CalculiX/SurfaceInteractions", saved_friction_data))
+    if (file.nameExists(CalculiXModelSchema::path("SurfaceInteractions/friction_data")) && !file.read_dataset_string_rank_2("friction_data", CalculiXModelSchema::path("SurfaceInteractions"), saved_friction_data))
     {
       PRINT_ERROR("Cannot read CalculiX SurfaceInteractions: %s\n", file.last_error().c_str());
       return false;
@@ -511,52 +512,52 @@ bool CoreInteractionsPersistence::write(HDF5Tool& file, const CoreSurfaceInterac
       PRINT_ERROR("Cannot write CalculiX SurfaceInteractions: invalid or duplicate IDs.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/SurfaceInteractions"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("SurfaceInteractions")))
     {
       PRINT_ERROR("Cannot write CalculiX SurfaceInteractions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("surfaceinteractions_data", "Cubit-CalculiX/SurfaceInteractions", interactions.surfaceinteractions_data))
+    if (!file.write_dataset_int_rank_2("surfaceinteractions_data", CalculiXModelSchema::path("SurfaceInteractions"), interactions.surfaceinteractions_data))
     {
       PRINT_ERROR("Cannot write CalculiX SurfaceInteractions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("surfaceinteraction_name_data", "Cubit-CalculiX/SurfaceInteractions", interactions.surfaceinteraction_name_data))
+    if (!file.write_dataset_string_rank_2("surfaceinteraction_name_data", CalculiXModelSchema::path("SurfaceInteractions"), interactions.surfaceinteraction_name_data))
     {
       PRINT_ERROR("Cannot write CalculiX SurfaceInteractions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("exponential_surfacebehavior_data", "Cubit-CalculiX/SurfaceInteractions", interactions.exponential_surfacebehavior_data))
+    if (!file.write_dataset_string_rank_2("exponential_surfacebehavior_data", CalculiXModelSchema::path("SurfaceInteractions"), interactions.exponential_surfacebehavior_data))
     {
       PRINT_ERROR("Cannot write CalculiX SurfaceInteractions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("linear_surfacebehavior_data", "Cubit-CalculiX/SurfaceInteractions", interactions.linear_surfacebehavior_data))
+    if (!file.write_dataset_string_rank_2("linear_surfacebehavior_data", CalculiXModelSchema::path("SurfaceInteractions"), interactions.linear_surfacebehavior_data))
     {
       PRINT_ERROR("Cannot write CalculiX SurfaceInteractions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("tabular_surfacebehavior_data", "Cubit-CalculiX/SurfaceInteractions", interactions.tabular_surfacebehavior_data))
+    if (!file.write_dataset_string_rank_2("tabular_surfacebehavior_data", CalculiXModelSchema::path("SurfaceInteractions"), interactions.tabular_surfacebehavior_data))
     {
       PRINT_ERROR("Cannot write CalculiX SurfaceInteractions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("tied_surfacebehavior_data", "Cubit-CalculiX/SurfaceInteractions", interactions.tied_surfacebehavior_data))
+    if (!file.write_dataset_string_rank_2("tied_surfacebehavior_data", CalculiXModelSchema::path("SurfaceInteractions"), interactions.tied_surfacebehavior_data))
     {
       PRINT_ERROR("Cannot write CalculiX SurfaceInteractions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("gap_conductance_data", "Cubit-CalculiX/SurfaceInteractions", interactions.gap_conductance_data))
+    if (!file.write_dataset_string_rank_2("gap_conductance_data", CalculiXModelSchema::path("SurfaceInteractions"), interactions.gap_conductance_data))
     {
       PRINT_ERROR("Cannot write CalculiX SurfaceInteractions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("gap_heat_generation_data", "Cubit-CalculiX/SurfaceInteractions", interactions.gap_heat_generation_data))
+    if (!file.write_dataset_string_rank_2("gap_heat_generation_data", CalculiXModelSchema::path("SurfaceInteractions"), interactions.gap_heat_generation_data))
     {
       PRINT_ERROR("Cannot write CalculiX SurfaceInteractions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("friction_data", "Cubit-CalculiX/SurfaceInteractions", interactions.friction_data))
+    if (!file.write_dataset_string_rank_2("friction_data", CalculiXModelSchema::path("SurfaceInteractions"), interactions.friction_data))
     {
       PRINT_ERROR("Cannot write CalculiX SurfaceInteractions: %s\n", file.last_error().c_str());
       return false;
@@ -582,12 +583,12 @@ bool CoreInteractionsPersistence::read(HDF5Tool& file, CoreContactPairs& contact
 
     decltype(contacts.contactpairs_data) saved_contactpairs_data;
     decltype(contacts.adjust_contactpair_data) saved_adjust_contactpair_data;
-    if (file.nameExists("Cubit-CalculiX/ContactPairs/contactpairs_data") && !file.read_dataset_int_rank_2("contactpairs_data", "Cubit-CalculiX/ContactPairs", saved_contactpairs_data))
+    if (file.nameExists(CalculiXModelSchema::path("ContactPairs/contactpairs_data")) && !file.read_dataset_int_rank_2("contactpairs_data", CalculiXModelSchema::path("ContactPairs"), saved_contactpairs_data))
     {
       PRINT_ERROR("Cannot read CalculiX ContactPairs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/ContactPairs/adjust_contactpair_data") && !file.read_dataset_string_rank_2("adjust_contactpair_data", "Cubit-CalculiX/ContactPairs", saved_adjust_contactpair_data))
+    if (file.nameExists(CalculiXModelSchema::path("ContactPairs/adjust_contactpair_data")) && !file.read_dataset_string_rank_2("adjust_contactpair_data", CalculiXModelSchema::path("ContactPairs"), saved_adjust_contactpair_data))
     {
       PRINT_ERROR("Cannot read CalculiX ContactPairs: %s\n", file.last_error().c_str());
       return false;
@@ -653,17 +654,17 @@ bool CoreInteractionsPersistence::write(HDF5Tool& file, const CoreContactPairs& 
       PRINT_ERROR("Cannot write CalculiX ContactPairs: invalid or duplicate IDs.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/ContactPairs"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("ContactPairs")))
     {
       PRINT_ERROR("Cannot write CalculiX ContactPairs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("contactpairs_data", "Cubit-CalculiX/ContactPairs", contacts.contactpairs_data))
+    if (!file.write_dataset_int_rank_2("contactpairs_data", CalculiXModelSchema::path("ContactPairs"), contacts.contactpairs_data))
     {
       PRINT_ERROR("Cannot write CalculiX ContactPairs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("adjust_contactpair_data", "Cubit-CalculiX/ContactPairs", contacts.adjust_contactpair_data))
+    if (!file.write_dataset_string_rank_2("adjust_contactpair_data", CalculiXModelSchema::path("ContactPairs"), contacts.adjust_contactpair_data))
     {
       PRINT_ERROR("Cannot write CalculiX ContactPairs: %s\n", file.last_error().c_str());
       return false;

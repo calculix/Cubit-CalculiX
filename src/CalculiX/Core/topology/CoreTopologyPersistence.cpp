@@ -1,3 +1,4 @@
+#include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/topology/CoreTopologyPersistence.hpp"
 #include "Core/topology/CoreTopology.hpp"
 #include "Core/topology/CoreTopologyJobs.hpp"
@@ -21,10 +22,10 @@ bool CoreTopologyPersistence::read_derived_data(HDF5Tool& file, const CoreTopolo
   {
     decltype(materials.topology_material_data) saved_materials;
     decltype(sections.topology_solid_sections) saved_sections;
-    const std::string root = "Cubit-CalculiX/Topology";
+    const std::string root = CalculiXModelSchema::path("Topology");
     if (file.nameExists(root))
     {
-      TopologyHdf5<true> archive(file, "Cubit-CalculiX");
+      TopologyHdf5<true> archive(file, CalculiXModelSchema::path(""));
       if (!archive.value("TopologyMaterials", saved_materials) || !archive.value("TopologySections", saved_sections))
       {
         PRINT_ERROR("Unable to read topology material/section data.\n");
@@ -113,7 +114,7 @@ bool CoreTopologyPersistence::write_derived_data(HDF5Tool& file, CoreMaterials& 
 {
   try
   {
-    TopologyHdf5<false> archive(file, "Cubit-CalculiX");
+    TopologyHdf5<false> archive(file, CalculiXModelSchema::path(""));
 
     if (!archive.value("TopologyMaterials", materials.topology_material_data) || !archive.value("TopologySections", sections.topology_solid_sections))
     {

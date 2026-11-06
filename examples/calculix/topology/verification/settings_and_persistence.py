@@ -127,26 +127,33 @@ def run_suite(output_root=None, plugin_revision="not recorded"):
         return data
 
     def command(text, succeeds=True):
-        # Recent Cubit versions raise SyntaxError when cmd() returns false.
-        # Disable playback pausing only around intentionally rejected commands.
         previous_pause = cubit.is_playback_paused_on_error()
         before_errors = cubit.get_error_count()
+        returned = False
         detail = ""
-        ok = False
+
         try:
             if not succeeds:
                 cubit.set_playback_paused_on_error(False)
+
             try:
-                ok = bool(cubit.cmd(text))
+                returned = bool(cubit.cmd(text))
             except SyntaxError as error:
                 detail = str(error)
-                if succeeds:
-                    raise
+
+            after_errors = cubit.get_error_count()
+            ok = returned and after_errors <= before_errors
             require(ok == succeeds, "Unexpected command result: " + text)
         finally:
             cubit.set_playback_paused_on_error(previous_pause)
-            commands.append((text, "success" if succeeds else "rejection", ok,
-                             before_errors, cubit.get_error_count(), detail))
+            commands.append((
+                text,
+                "success" if succeeds else "rejection",
+                returned,
+                before_errors,
+                cubit.get_error_count(),
+                detail
+            ))
 
     def unchanged_except(before, after, keys):
         require(set(before) == set(after), "Settings keys changed")
@@ -183,7 +190,7 @@ def run_suite(output_root=None, plugin_revision="not recorded"):
 
         current_check = "default creation"
         command("reset")
-        command("ccx version")
+        command("sim version")
         # One unmeshed solid ensures a native model file can be written.
         command("create brick x 1 y 1 z 1")
         command("ccx create topology 1")

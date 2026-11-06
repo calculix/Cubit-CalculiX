@@ -1,3 +1,4 @@
+#include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/steps/CoreOutputsPersistence.hpp"
 #include "Core/steps/CoreHistoryOutputs.hpp"
 #include "Core/steps/CoreFieldOutputs.hpp"
@@ -17,32 +18,32 @@ bool CoreOutputsPersistence::read(HDF5Tool& file, CoreHistoryOutputs& outputs)
     decltype(outputs.element_data) saved_element_data;
     decltype(outputs.contact_data) saved_contact_data;
     decltype(outputs.section_data) saved_section_data;
-    if (file.nameExists("Cubit-CalculiX/HistoryOutputs/outputs_data") && !file.read_dataset_int_rank_2("outputs_data", "Cubit-CalculiX/HistoryOutputs", saved_outputs_data))
+    if (file.nameExists(CalculiXModelSchema::path("HistoryOutputs/outputs_data")) && !file.read_dataset_int_rank_2("outputs_data", CalculiXModelSchema::path("HistoryOutputs"), saved_outputs_data))
     {
       PRINT_ERROR("Cannot read CalculiX HistoryOutputs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/HistoryOutputs/name_data") && !file.read_dataset_string_rank_2("name_data", "Cubit-CalculiX/HistoryOutputs", saved_name_data))
+    if (file.nameExists(CalculiXModelSchema::path("HistoryOutputs/name_data")) && !file.read_dataset_string_rank_2("name_data", CalculiXModelSchema::path("HistoryOutputs"), saved_name_data))
     {
       PRINT_ERROR("Cannot read CalculiX HistoryOutputs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/HistoryOutputs/node_data") && !file.read_dataset_string_rank_2("node_data", "Cubit-CalculiX/HistoryOutputs", saved_node_data))
+    if (file.nameExists(CalculiXModelSchema::path("HistoryOutputs/node_data")) && !file.read_dataset_string_rank_2("node_data", CalculiXModelSchema::path("HistoryOutputs"), saved_node_data))
     {
       PRINT_ERROR("Cannot read CalculiX HistoryOutputs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/HistoryOutputs/element_data") && !file.read_dataset_string_rank_2("element_data", "Cubit-CalculiX/HistoryOutputs", saved_element_data))
+    if (file.nameExists(CalculiXModelSchema::path("HistoryOutputs/element_data")) && !file.read_dataset_string_rank_2("element_data", CalculiXModelSchema::path("HistoryOutputs"), saved_element_data))
     {
       PRINT_ERROR("Cannot read CalculiX HistoryOutputs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/HistoryOutputs/contact_data") && !file.read_dataset_string_rank_2("contact_data", "Cubit-CalculiX/HistoryOutputs", saved_contact_data))
+    if (file.nameExists(CalculiXModelSchema::path("HistoryOutputs/contact_data")) && !file.read_dataset_string_rank_2("contact_data", CalculiXModelSchema::path("HistoryOutputs"), saved_contact_data))
     {
       PRINT_ERROR("Cannot read CalculiX HistoryOutputs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/HistoryOutputs/section_data") && !file.read_dataset_string_rank_2("section_data", "Cubit-CalculiX/HistoryOutputs", saved_section_data))
+    if (file.nameExists(CalculiXModelSchema::path("HistoryOutputs/section_data")) && !file.read_dataset_string_rank_2("section_data", CalculiXModelSchema::path("HistoryOutputs"), saved_section_data))
     {
       PRINT_ERROR("Cannot read CalculiX HistoryOutputs: %s\n", file.last_error().c_str());
       return false;
@@ -202,37 +203,37 @@ bool CoreOutputsPersistence::write(HDF5Tool& file, const CoreHistoryOutputs& out
       PRINT_ERROR("Cannot write CalculiX HistoryOutputs: invalid or duplicate IDs.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/HistoryOutputs"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("HistoryOutputs")))
     {
       PRINT_ERROR("Cannot write CalculiX HistoryOutputs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("outputs_data", "Cubit-CalculiX/HistoryOutputs", outputs.outputs_data))
+    if (!file.write_dataset_int_rank_2("outputs_data", CalculiXModelSchema::path("HistoryOutputs"), outputs.outputs_data))
     {
       PRINT_ERROR("Cannot write CalculiX HistoryOutputs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("name_data", "Cubit-CalculiX/HistoryOutputs", outputs.name_data))
+    if (!file.write_dataset_string_rank_2("name_data", CalculiXModelSchema::path("HistoryOutputs"), outputs.name_data))
     {
       PRINT_ERROR("Cannot write CalculiX HistoryOutputs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("node_data", "Cubit-CalculiX/HistoryOutputs", outputs.node_data))
+    if (!file.write_dataset_string_rank_2("node_data", CalculiXModelSchema::path("HistoryOutputs"), outputs.node_data))
     {
       PRINT_ERROR("Cannot write CalculiX HistoryOutputs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("element_data", "Cubit-CalculiX/HistoryOutputs", outputs.element_data))
+    if (!file.write_dataset_string_rank_2("element_data", CalculiXModelSchema::path("HistoryOutputs"), outputs.element_data))
     {
       PRINT_ERROR("Cannot write CalculiX HistoryOutputs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("contact_data", "Cubit-CalculiX/HistoryOutputs", outputs.contact_data))
+    if (!file.write_dataset_string_rank_2("contact_data", CalculiXModelSchema::path("HistoryOutputs"), outputs.contact_data))
     {
       PRINT_ERROR("Cannot write CalculiX HistoryOutputs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("section_data", "Cubit-CalculiX/HistoryOutputs", outputs.section_data))
+    if (!file.write_dataset_string_rank_2("section_data", CalculiXModelSchema::path("HistoryOutputs"), outputs.section_data))
     {
       PRINT_ERROR("Cannot write CalculiX HistoryOutputs: %s\n", file.last_error().c_str());
       return false;
@@ -261,27 +262,27 @@ bool CoreOutputsPersistence::read(HDF5Tool& file, CoreFieldOutputs& outputs)
     decltype(outputs.node_data) saved_node_data;
     decltype(outputs.element_data) saved_element_data;
     decltype(outputs.contact_data) saved_contact_data;
-    if (file.nameExists("Cubit-CalculiX/FieldOutputs/outputs_data") && !file.read_dataset_int_rank_2("outputs_data", "Cubit-CalculiX/FieldOutputs", saved_outputs_data))
+    if (file.nameExists(CalculiXModelSchema::path("FieldOutputs/outputs_data")) && !file.read_dataset_int_rank_2("outputs_data", CalculiXModelSchema::path("FieldOutputs"), saved_outputs_data))
     {
       PRINT_ERROR("Cannot read CalculiX FieldOutputs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/FieldOutputs/name_data") && !file.read_dataset_string_rank_2("name_data", "Cubit-CalculiX/FieldOutputs", saved_name_data))
+    if (file.nameExists(CalculiXModelSchema::path("FieldOutputs/name_data")) && !file.read_dataset_string_rank_2("name_data", CalculiXModelSchema::path("FieldOutputs"), saved_name_data))
     {
       PRINT_ERROR("Cannot read CalculiX FieldOutputs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/FieldOutputs/node_data") && !file.read_dataset_string_rank_2("node_data", "Cubit-CalculiX/FieldOutputs", saved_node_data))
+    if (file.nameExists(CalculiXModelSchema::path("FieldOutputs/node_data")) && !file.read_dataset_string_rank_2("node_data", CalculiXModelSchema::path("FieldOutputs"), saved_node_data))
     {
       PRINT_ERROR("Cannot read CalculiX FieldOutputs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/FieldOutputs/element_data") && !file.read_dataset_string_rank_2("element_data", "Cubit-CalculiX/FieldOutputs", saved_element_data))
+    if (file.nameExists(CalculiXModelSchema::path("FieldOutputs/element_data")) && !file.read_dataset_string_rank_2("element_data", CalculiXModelSchema::path("FieldOutputs"), saved_element_data))
     {
       PRINT_ERROR("Cannot read CalculiX FieldOutputs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/FieldOutputs/contact_data") && !file.read_dataset_string_rank_2("contact_data", "Cubit-CalculiX/FieldOutputs", saved_contact_data))
+    if (file.nameExists(CalculiXModelSchema::path("FieldOutputs/contact_data")) && !file.read_dataset_string_rank_2("contact_data", CalculiXModelSchema::path("FieldOutputs"), saved_contact_data))
     {
       PRINT_ERROR("Cannot read CalculiX FieldOutputs: %s\n", file.last_error().c_str());
       return false;
@@ -420,32 +421,32 @@ bool CoreOutputsPersistence::write(HDF5Tool& file, const CoreFieldOutputs& outpu
       PRINT_ERROR("Cannot write CalculiX FieldOutputs: invalid or duplicate IDs.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/FieldOutputs"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("FieldOutputs")))
     {
       PRINT_ERROR("Cannot write CalculiX FieldOutputs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("outputs_data", "Cubit-CalculiX/FieldOutputs", outputs.outputs_data))
+    if (!file.write_dataset_int_rank_2("outputs_data", CalculiXModelSchema::path("FieldOutputs"), outputs.outputs_data))
     {
       PRINT_ERROR("Cannot write CalculiX FieldOutputs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("name_data", "Cubit-CalculiX/FieldOutputs", outputs.name_data))
+    if (!file.write_dataset_string_rank_2("name_data", CalculiXModelSchema::path("FieldOutputs"), outputs.name_data))
     {
       PRINT_ERROR("Cannot write CalculiX FieldOutputs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("node_data", "Cubit-CalculiX/FieldOutputs", outputs.node_data))
+    if (!file.write_dataset_string_rank_2("node_data", CalculiXModelSchema::path("FieldOutputs"), outputs.node_data))
     {
       PRINT_ERROR("Cannot write CalculiX FieldOutputs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("element_data", "Cubit-CalculiX/FieldOutputs", outputs.element_data))
+    if (!file.write_dataset_string_rank_2("element_data", CalculiXModelSchema::path("FieldOutputs"), outputs.element_data))
     {
       PRINT_ERROR("Cannot write CalculiX FieldOutputs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("contact_data", "Cubit-CalculiX/FieldOutputs", outputs.contact_data))
+    if (!file.write_dataset_string_rank_2("contact_data", CalculiXModelSchema::path("FieldOutputs"), outputs.contact_data))
     {
       PRINT_ERROR("Cannot write CalculiX FieldOutputs: %s\n", file.last_error().c_str());
       return false;

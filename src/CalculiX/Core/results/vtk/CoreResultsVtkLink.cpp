@@ -3,15 +3,19 @@
 #include "CoreResultsVtkElements.hpp"
 #include "Core/results/frd/CoreResultsFrd.hpp"
 #include "Core/results/dat/CoreResultsDat.hpp"
+#include "Core/results/ResultReadNumbers.hpp"
 #include "Core/mesh/CalculiXMeshInterface.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "MeshExportInterface.hpp"
 #include <algorithm>
+#include <charconv>
 #include <cmath>
 #include <limits>
 #include <map>
 #include <set>
+#include <string_view>
+#include <system_error>
 #include <utility>
 
 namespace
@@ -31,6 +35,36 @@ namespace
   bool close(double a, double b, double absolute, double relative)
   {
     return std::isfinite(a) && std::isfinite(b) && std::abs(a - b) <= absolute + relative * std::max(std::abs(a), std::abs(b));
+  }
+
+  /** Compare a parsed ASCII FRD coordinate with a model/INP coordinate.
+   * CalculiX writes coordinates using %12.5E after conversion to float.
+   * Accept the configured tolerance or an exact match after that conversion.
+   * This normalization applies only to mesh coordinates.
+   */
+  bool frd_coordinate_matches(double reference, double candidate, double absolute, double relative)
+  {
+    if (close(reference, candidate, absolute, relative))
+    {
+      return true;
+    }
+    if (!std::isfinite(reference) || !std::isfinite(candidate) ||
+      std::abs(candidate) > std::numeric_limits<float>::max())
+    {
+      return false;
+    }
+
+    const double solver_coordinate = static_cast<double>(static_cast<float>(candidate));
+    char buffer[64];
+    const auto formatted = std::to_chars(buffer, buffer + sizeof(buffer), solver_coordinate, std::chars_format::scientific, 5);
+    if (formatted.ec != std::errc{})
+    {
+      return false;
+    }
+
+    double written_coordinate = 0.0;
+    const std::string_view text(buffer, static_cast<std::size_t>(formatted.ptr - buffer));
+    return ResultReadNumbers::real(text, written_coordinate) && reference == written_coordinate;
   }
 
   template<class T>
@@ -107,13 +141,21 @@ namespace
 
   bool capture_model(CoreResultsVtkMesh& mesh, std::string& error)
   {
+    CalculiXMeshInterface mesh_interface;
+    const auto blocks = mesh_interface.get_blocks();
+    if (blocks.empty())
+    {
+      // An absent current analysis mesh is a normal INP/FRD fallback case.
+      // Do not initialize the exporter, which would emit Cubit errors.
+      error = "Current model has no analysis blocks.";
+      return false;
+    }
     auto* exporter = dynamic_cast<MeshExportInterface*>(CubitInterface::get_interface("MeshExport"));
     if (!exporter || !exporter->initialize_export())
     {
       error = "Current model mesh exporter is unavailable.";
       return false;
     }
-    CalculiXMeshInterface mesh_interface;
     const int buffer_size = 100;
     std::vector<double> x(buffer_size), y(buffer_size), z(buffer_size);
     std::vector<int> ids(buffer_size);
@@ -128,7 +170,7 @@ namespace
       start += count;
     }
     std::map<int, std::string> formulations;
-    for (int block : mesh_interface.get_blocks())
+    for (int block : blocks)
     {
       CoreResultsVtkGroup group;
       group.kind = CoreResultsVtkGroupKind::Block;
@@ -251,7 +293,7 @@ namespace
     return true;
   }
 
-  bool frame(CoreResultsVtkPlan& plan, int step, int increment, int total, double time, bool frd, std::size_t& index, std::string& error)
+  bool frame(CoreResultsVtkPlan& plan, int step, int increment, int total, double time, bool frd, std::size_t& index, std::string& error, const FrdAnalysis* analysis = nullptr)
   {
     if (!std::isfinite(time))
     {
@@ -267,7 +309,9 @@ namespace
       const bool same_id = identified && candidate.step == step && candidate.increment == increment;
       if (frd)
       {
-        if (candidate.total_increment == total && candidate.step == step && candidate.increment == increment && same_time)
+        const bool same_analysis = !analysis || (candidate.analysis_type == analysis->type && candidate.mode == analysis->mode &&
+          candidate.nodal_diameter == analysis->nodal_diameter && candidate.subcase == analysis->subcase);
+        if (candidate.total_increment == total && candidate.step == step && candidate.increment == increment && same_time && same_analysis)
         {
           matches.push_back(i);
         }
@@ -279,7 +323,7 @@ namespace
     }
     if (matches.size() > 1)
     {
-      error = "Ambiguous FRD/DAT increment match. Mode/analysis metadata is required; reader coverage revision is deferred.";
+      error = "Ambiguous FRD/DAT increment match; DAT provides insufficient mode/analysis identity. Results were not merged.";
       return false;
     }
     if (matches.empty())
@@ -289,12 +333,25 @@ namespace
       increment_plan.increment = increment;
       increment_plan.total_increment = frd ? total : -1;
       increment_plan.time = time;
+      if (analysis)
+      {
+        increment_plan.analysis_type = analysis->type;
+        increment_plan.mode = analysis->mode;
+        increment_plan.nodal_diameter = analysis->nodal_diameter;
+        increment_plan.subcase = analysis->subcase;
+        increment_plan.source_parameters = analysis->parameters;
+      }
       index = plan.increments.size();
       plan.increments.push_back(std::move(increment_plan));
     }
     else
     {
       index = matches.front();
+      if (analysis)
+      {
+        auto& parameters = plan.increments[index].source_parameters;
+        parameters.insert(parameters.end(), analysis->parameters.begin(), analysis->parameters.end());
+      }
     }
     return true;
   }
@@ -313,7 +370,8 @@ namespace
           return false;
         }
         std::size_t destination = 0;
-        if (!frame(plan, block[1], block[2], block[3], frd.total_times[block[4]], true, destination, error))
+        const FrdAnalysis* analysis = i < frd.result_analysis.size() ? &frd.result_analysis[i] : nullptr;
+        if (!frame(plan, block[1], block[2], block[3], frd.total_times[block[4]], true, destination, error, analysis))
         {
           return false;
         }
@@ -322,30 +380,55 @@ namespace
         field.source_data = block[6];
         field.field.source = "FRD";
         field.field.name = frd.result_block_type[block[5]];
-        // CCX frd.c writes nodal identifiers, including the slave-node ID for
-        // CELS. Do not infer cell association from a field name or tuple count.
-        field.field.association = FeaResults::Association::Node;
+        // Ordinary FRD fields use nodal identifiers. CELS reported labels can
+        // repeat and need not identify mesh nodes; preserve individual rows.
+        field.field.association = SimResults::Association::Node;
         field.field.components = frd.result_block_components[block[6]];
         if (field.field.components.empty())
         {
           error = "FRD field has no components.";
           return false;
         }
+        const bool contact_table = field.field.name == "CELS";
+        if (contact_table && field.field.components.size() != 1)
+        {
+          error = "FRD CELS contact contributions require one energy component.";
+          return false;
+        }
         for (const auto& row : frd.result_block_node_data[block[6]])
         {
-          if (row.size() < 2 || row[1] < 0 || static_cast<std::size_t>(row[1]) >= frd.result_block_data[block[6]].size() || !entity(plan.mesh.nodes, row[0]) || frd.result_block_data[block[6]][row[1]].size() != field.field.components.size())
+          if (row.size() < 2 || row[0] <= 0 || row[1] < 0 || static_cast<std::size_t>(row[1]) >= frd.result_block_data[block[6]].size())
           {
-            error = "FRD field references missing geometry or an invalid data row.";
+            error = "FRD field contains an invalid source record.";
+            return false;
+          }
+          if (frd.result_block_data[block[6]][row[1]].size() != field.field.components.size())
+          {
+            error = "FRD field component count does not match its source record.";
+            return false;
+          }
+          if (!contact_table && !entity(plan.mesh.nodes, row[0]))
+          {
+            error = "Spatial FRD field references missing geometry.";
             return false;
           }
         }
-        plan.increments[destination].fields.push_back(std::move(field));
+        if (contact_table)
+        {
+          field.field.association = SimResults::Association::Table;
+          plan.increments[destination].table_fields.push_back(std::move(field));
+        }
+        else
+        {
+          plan.increments[destination].fields.push_back(std::move(field));
+        }
       }
     }
     if (!plan.options.include_dat)
     {
       return true;
     }
+    plan.diagnostics.insert(plan.diagnostics.end(), dat.diagnostics.begin(), dat.diagnostics.end());
     for (std::size_t i = 0; i < dat.result_blocks.size(); ++i)
     {
       const auto& block = dat.result_blocks[i];
@@ -372,7 +455,7 @@ namespace
       field.field.source = "DAT";
       field.field.name = dat.result_block_type[block[2]];
       field.field.set_name = dat.result_block_set[block[3]];
-      field.field.association = association == 1 ? FeaResults::Association::Node : association == 2 ? FeaResults::Association::IntegrationPoint : FeaResults::Association::Element;
+      field.field.association = association == 1 ? SimResults::Association::Node : association == 2 ? SimResults::Association::IntegrationPoint : SimResults::Association::Element;
       const auto& components = dat.result_block_components[block[4]];
       if (components.size() <= field.component_offset)
       {
@@ -471,6 +554,31 @@ namespace
     {
       plan.tables.push_back({CoreResultsVtkTablePlan::Kind::Section, i});
     }
+    for (std::size_t i = 0; i < dat.result_tables.size(); ++i)
+    {
+      const auto& table = dat.result_tables[i];
+      if (table.columns.empty() || !std::isfinite(table.time))
+      {
+        error = "Invalid DAT table schema/time.";
+        return false;
+      }
+      for (const auto& row : table.rows)
+      {
+        if (row.size() != table.columns.size())
+        {
+          error = "Incomplete DAT table record.";
+          return false;
+        }
+      }
+      // These rows have no spatial association. Do not attempt to match contact
+      // labels or face quadrature IDs to ordinary mesh nodes/volume IPs.
+      std::size_t destination = 0;
+      if (!frame(plan, table.step, table.increment, -1, table.time, false, destination, error))
+      {
+        return false;
+      }
+      plan.tables.push_back({CoreResultsVtkTablePlan::Kind::DatResult, i, static_cast<int>(destination)});
+    }
     return true;
   }
 }
@@ -497,7 +605,7 @@ bool CoreResultsVtkLink::compatible(const CoreResultsVtkMesh& result, const Core
     }
     for (std::size_t axis = 0; axis < 3; ++axis)
     {
-      if (!close(node.coordinates[axis], other->coordinates[axis], options.coordinate_absolute_tolerance, options.coordinate_relative_tolerance))
+      if (!frd_coordinate_matches(node.coordinates[axis], other->coordinates[axis], options.coordinate_absolute_tolerance, options.coordinate_relative_tolerance))
       {
         reason = "Coordinates differ at result node " + std::to_string(node.id) + ".";
         return false;
@@ -547,7 +655,7 @@ bool CoreResultsVtkLink::prepare(int job_id, const CoreResultsFrd& frd, const Co
   CoreResultsVtkMesh current;
   if (capture_model(current, reason) && compatible(reference, current, options, reason))
   {
-    result.link_source = FeaResults::LinkSource::CurrentModel;
+    result.link_source = SimResults::LinkSource::CurrentModel;
     result.mesh = std::move(current);
     // Even with unchanged topology the user may have changed full/reduced
     // integration since the solve. A matching run INP is authoritative for the
@@ -577,7 +685,7 @@ bool CoreResultsVtkLink::prepare(int job_id, const CoreResultsFrd& frd, const Co
     CoreResultsInpReader reader;
     if (!input_path.empty() && reader.read(input_path, input, result.input_files, reason) && compatible(reference, input, options, reason))
     {
-      result.link_source = FeaResults::LinkSource::JobInput;
+      result.link_source = SimResults::LinkSource::JobInput;
       result.mesh = std::move(input);
     }
     else
@@ -602,6 +710,10 @@ bool CoreResultsVtkLink::prepare(int job_id, const CoreResultsFrd& frd, const Co
   }
   if (!select_groups(result, reason) || !fields(frd, dat, result, reason))
   {
+    for (const auto& diagnostic : result.diagnostics)
+    {
+      PRINT_INFO("VTK linking: %s\n", diagnostic.c_str());
+    }
     PRINT_ERROR("Cannot plan VTK conversion: %s\n", reason.c_str());
     return false;
   }
@@ -610,7 +722,7 @@ bool CoreResultsVtkLink::prepare(int job_id, const CoreResultsFrd& frd, const Co
     PRINT_ERROR("Cannot plan VTK conversion: no requested result fields.\n");
     return false;
   }
-  result.layout = result.mesh.groups.empty() ? FeaResults::DatasetLayout::SingleGrid : FeaResults::DatasetLayout::Collection;
+  result.layout = result.mesh.groups.empty() ? SimResults::DatasetLayout::SingleGrid : SimResults::DatasetLayout::Collection;
   output = std::move(result);
   return true;
 }

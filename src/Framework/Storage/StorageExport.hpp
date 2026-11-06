@@ -1,14 +1,14 @@
-#ifndef FEA_STORAGEEXPORT_HPP
-#define FEA_STORAGEEXPORT_HPP
+#ifndef CUBITSIM_STORAGEEXPORT_HPP
+#define CUBITSIM_STORAGEEXPORT_HPP
 
 #if defined(_WIN32)
-  #if defined(FEA_STORAGE_BUILD)
-    #define FEA_STORAGE_EXPORT __declspec(dllexport)
+  #if defined(CUBITSIM_STORAGE_BUILD)
+    #define CUBITSIM_STORAGE_EXPORT __declspec(dllexport)
   #else
-    #define FEA_STORAGE_EXPORT __declspec(dllimport)
+    #define CUBITSIM_STORAGE_EXPORT __declspec(dllimport)
   #endif
 #else
-  #define FEA_STORAGE_EXPORT
+  #define CUBITSIM_STORAGE_EXPORT
 #endif
 
-#endif // FEA_STORAGEEXPORT_HPP
+#endif // CUBITSIM_STORAGEEXPORT_HPP

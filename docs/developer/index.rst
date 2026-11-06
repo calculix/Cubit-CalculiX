@@ -13,4 +13,5 @@ implementations are excluded.
    code-documentation
    framework
    calculix
+   postprocessor
    ../README

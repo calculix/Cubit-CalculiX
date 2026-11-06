@@ -9,6 +9,7 @@ native numerical test specification is :doc:`numerical-verification-plan`.
    :maxdepth: 1
 
    vtk-conversion
+   results-output-coverage
    topology
    topology-algorithms
    topology-level-set

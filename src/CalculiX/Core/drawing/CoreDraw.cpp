@@ -1,4 +1,5 @@
-#include "CoreDrawSymbols.hpp"
+#include "Core/drawing/CalculiXDrawingAdapter.hpp"
+#include "Framework/Drawing/DrawingSymbols.hpp"
 #include "CoreDrawMeshGeometry.hpp"
 #include <QScopedValueRollback>
 #include "Core/drawing/CoreDraw.hpp"
@@ -62,64 +63,64 @@ bool CoreDraw::init()
 
 std::vector<double> CoreDraw::rotate(std::vector<double> coord, std::vector<double> vec_a, std::vector<double> vec_b)
 {
-  return CoreDrawSymbols::rotate(coord, vec_a, vec_b);
+  return DrawingSymbols::rotate(coord, vec_a, vec_b);
 }
 
 std::vector<double> CoreDraw::rotate_about_axis(std::vector<double> coord, std::vector<double> axis, double angle)
 {
-  return CoreDrawSymbols::rotate_about_axis(coord, axis, angle);
+  return DrawingSymbols::rotate_about_axis(coord, axis, angle);
 }
 
 std::vector<double> CoreDraw::unit_vector(std::vector<double> input)
 {
-  return CoreDrawSymbols::unit_vector(input);
+  return DrawingSymbols::unit_vector(input);
 }
 
 
 double CoreDraw::magnitude(std::vector<double> input)
 {
-  return CoreDrawSymbols::magnitude(input);
+  return DrawingSymbols::magnitude(input);
 }
 
 std::vector<double> CoreDraw::cross_product(std::vector<double> vec_a, std::vector<double> vec_b)
 {
-  return CoreDrawSymbols::cross_product(vec_a, vec_b);
+  return DrawingSymbols::cross_product(vec_a, vec_b);
 }
 
 std::vector<std::vector<double>> CoreDraw::cross_product_matrix(std::vector<double> vec)
 {
-  return CoreDrawSymbols::cross_product_matrix(vec);
+  return DrawingSymbols::cross_product_matrix(vec);
 }
 
 double CoreDraw::inner_product(std::vector<double> vec_a, std::vector<double> vec_b)
 {
-  return CoreDrawSymbols::inner_product(vec_a, vec_b);
+  return DrawingSymbols::inner_product(vec_a, vec_b);
 }
 
 std::vector<double> CoreDraw::mult_vector_scalar(std::vector<double> vec, double scalar)
 {
-  return CoreDrawSymbols::mult_vector_scalar(vec, scalar);
+  return DrawingSymbols::mult_vector_scalar(vec, scalar);
 }
 
 std::vector<std::vector<double>> CoreDraw::mult_matrix(std::vector<std::vector<double>> mat_a, std::vector<std::vector<double>> mat_b)
 {
-  return CoreDrawSymbols::mult_matrix(mat_a, mat_b);
+  return DrawingSymbols::mult_matrix(mat_a, mat_b);
 }
 
 
 std::vector<std::vector<double>> CoreDraw::mult_matrix_scalar(std::vector<std::vector<double>> mat_a, double scalar)
 {
-  return CoreDrawSymbols::mult_matrix_scalar(mat_a, scalar);
+  return DrawingSymbols::mult_matrix_scalar(mat_a, scalar);
 }
 
 std::vector<std::vector<double>> CoreDraw::add_matrix(std::vector<std::vector<double>> mat_a, std::vector<std::vector<double>> mat_b)
 {
-  return CoreDrawSymbols::add_matrix(mat_a, mat_b);
+  return DrawingSymbols::add_matrix(mat_a, mat_b);
 }
 
 std::vector<double> CoreDraw::mult_matrix_vector(std::vector<std::vector<double>> mat, std::vector<double> vec)
 {
-  return CoreDrawSymbols::mult_matrix_vector(mat, vec);
+  return DrawingSymbols::mult_matrix_vector(mat, vec);
 }
 
 bool CoreDraw::draw_arrow(std::vector<double> start_point, std::vector<double> direction, bool from_start_point, std::string color, double size)
@@ -128,7 +129,7 @@ bool CoreDraw::draw_arrow(std::vector<double> start_point, std::vector<double> d
   {
     return false;
   }
-  return CoreDrawSymbols::arrow(*currentGeometry, start_point, direction, from_start_point, color, size);
+  return DrawingSymbols::arrow(*currentGeometry, start_point, direction, from_start_point, color, size);
 }
 
 bool CoreDraw::draw_arrow_flat(std::vector<double> start_point, std::vector<double> direction, bool from_start_point, std::string color, double size)
@@ -137,7 +138,7 @@ bool CoreDraw::draw_arrow_flat(std::vector<double> start_point, std::vector<doub
   {
     return false;
   }
-  return CoreDrawSymbols::flatArrow(*currentGeometry, start_point, direction, from_start_point, color, size);
+  return DrawingSymbols::flatArrow(*currentGeometry, start_point, direction, from_start_point, color, size);
 }
 
 bool CoreDraw::draw_dof(std::vector<double> coord, int dof, std::string color, double size)
@@ -146,7 +147,7 @@ bool CoreDraw::draw_dof(std::vector<double> coord, int dof, std::string color, d
   {
     return false;
   }
-  return CoreDrawSymbols::displacement(*currentGeometry, coord, dof, color, size);
+  return CalculiXDrawingAdapter::displacement(*currentGeometry, coord, dof, color, size);
 }
 
 bool CoreDraw::draw_equation_node(std::vector<double> coord, int dof, std::string color, double size)
@@ -155,7 +156,7 @@ bool CoreDraw::draw_equation_node(std::vector<double> coord, int dof, std::strin
   {
     return false;
   }
-  return CoreDrawSymbols::equationNode(*currentGeometry, coord, dof, color, size);
+  return CalculiXDrawingAdapter::equationNode(*currentGeometry, coord, dof, color, size);
 }
 
 bool CoreDraw::draw_label(std::vector<double> coord, std::string color, double size)
@@ -166,8 +167,8 @@ bool CoreDraw::draw_label(std::vector<double> coord, std::string color, double s
 
 bool CoreDraw::draw_load_force(int id, double size)
 {
-  DrawGeometry geometry;
-  const QScopedValueRollback<DrawGeometry*> targetGuard(currentGeometry, &geometry);
+  DrawingGeometry geometry;
+  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
 
   CalculiXDrawInterface ccx_draw_iface;
   std::vector<std::vector<double>> draw_data = ccx_draw_iface.get_draw_data_for_load_force(id);
@@ -200,8 +201,8 @@ bool CoreDraw::draw_load_force(int id, double size)
 
 bool CoreDraw::draw_load_pressure(int id, double size)
 {
-  DrawGeometry geometry;
-  const QScopedValueRollback<DrawGeometry*> targetGuard(currentGeometry, &geometry);
+  DrawingGeometry geometry;
+  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
 
   CalculiXDrawInterface ccx_draw_iface;
 
@@ -221,8 +222,8 @@ bool CoreDraw::draw_load_pressure(int id, double size)
 
 bool CoreDraw::draw_load_heatflux(int id, double size)
 {
-  DrawGeometry geometry;
-  const QScopedValueRollback<DrawGeometry*> targetGuard(currentGeometry, &geometry);
+  DrawingGeometry geometry;
+  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
 
   CalculiXDrawInterface ccx_draw_iface;
 
@@ -242,8 +243,8 @@ bool CoreDraw::draw_load_heatflux(int id, double size)
 
 bool CoreDraw::draw_load_gravity(int id, double size)
 {
-  DrawGeometry geometry;
-  const QScopedValueRollback<DrawGeometry*> targetGuard(currentGeometry, &geometry);
+  DrawingGeometry geometry;
+  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
 
   CalculiXDrawInterface ccx_draw_iface;
 
@@ -263,8 +264,8 @@ bool CoreDraw::draw_load_gravity(int id, double size)
 
 bool CoreDraw::draw_load_centrifugal(int id, double size)
 {
-  DrawGeometry geometry;
-  const QScopedValueRollback<DrawGeometry*> targetGuard(currentGeometry, &geometry);
+  DrawingGeometry geometry;
+  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
 
   CalculiXDrawInterface ccx_draw_iface;
 
@@ -284,8 +285,8 @@ bool CoreDraw::draw_load_centrifugal(int id, double size)
 
 bool CoreDraw::draw_load_trajectory(int id, double size)
 {
-  DrawGeometry geometry;
-  const QScopedValueRollback<DrawGeometry*> targetGuard(currentGeometry, &geometry);
+  DrawingGeometry geometry;
+  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
 
   CalculiXLoadsInterface loads;
   const auto type = loads.loadstrajectory_get_load_type(id);
@@ -349,8 +350,8 @@ bool CoreDraw::draw_load_trajectory(int id, double size)
 
 bool CoreDraw::draw_load_film(int id, double size)
 {
-  DrawGeometry geometry;
-  const QScopedValueRollback<DrawGeometry*> targetGuard(currentGeometry, &geometry);
+  DrawingGeometry geometry;
+  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
 
   CalculiXDrawInterface ccx_draw_iface;
 
@@ -370,8 +371,8 @@ bool CoreDraw::draw_load_film(int id, double size)
 
 bool CoreDraw::draw_load_radiation(int id, double size)
 {
-  DrawGeometry geometry;
-  const QScopedValueRollback<DrawGeometry*> targetGuard(currentGeometry, &geometry);
+  DrawingGeometry geometry;
+  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
 
   CalculiXDrawInterface ccx_draw_iface;
 
@@ -391,8 +392,8 @@ bool CoreDraw::draw_load_radiation(int id, double size)
 
 bool CoreDraw::draw_load_surface_traction(int id, double size)
 {
-  DrawGeometry geometry;
-  const QScopedValueRollback<DrawGeometry*> targetGuard(currentGeometry, &geometry);
+  DrawingGeometry geometry;
+  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
 
   CalculiXDrawInterface ccx_draw_iface;
 
@@ -416,8 +417,8 @@ bool CoreDraw::draw_load_surface_traction(int id, double size)
 
 bool CoreDraw::draw_load_bodyheatflux(int id, double size)
 {
-  DrawGeometry geometry;
-  const QScopedValueRollback<DrawGeometry*> targetGuard(currentGeometry, &geometry);
+  DrawingGeometry geometry;
+  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
 
   CalculiXDrawInterface drawing;
   const auto data = drawing.get_draw_data_for_load_bodyheatflux(id);
@@ -444,8 +445,8 @@ bool CoreDraw::draw_load_bodyheatflux(int id, double size)
 
 bool CoreDraw::draw_bc_displacement(int id, double size)
 {
-  DrawGeometry geometry;
-  const QScopedValueRollback<DrawGeometry*> targetGuard(currentGeometry, &geometry);
+  DrawingGeometry geometry;
+  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
 
   CalculiXDrawInterface ccx_draw_iface;
 
@@ -465,8 +466,8 @@ bool CoreDraw::draw_bc_displacement(int id, double size)
 
 bool CoreDraw::draw_bc_temperature(int id, double size)
 {
-  DrawGeometry geometry;
-  const QScopedValueRollback<DrawGeometry*> targetGuard(currentGeometry, &geometry);
+  DrawingGeometry geometry;
+  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
 
   CalculiXDrawInterface ccx_draw_iface;
 
@@ -486,8 +487,8 @@ bool CoreDraw::draw_bc_temperature(int id, double size)
 
 bool CoreDraw::draw_orientation(int id, double size)
 {
-  DrawGeometry geometry;
-  const QScopedValueRollback<DrawGeometry*> targetGuard(currentGeometry, &geometry);
+  DrawingGeometry geometry;
+  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
 
   CalculiXDrawInterface ccx_draw_iface;
 
@@ -564,8 +565,8 @@ bool CoreDraw::draw_orientation(int id, double size)
 
 bool CoreDraw::draw_equation(int id, double size)
 {
-  DrawGeometry geometry;
-  const QScopedValueRollback<DrawGeometry*> targetGuard(currentGeometry, &geometry);
+  DrawingGeometry geometry;
+  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
 
   CalculiXDrawInterface drawing;
   const auto data = drawing.get_draw_data_for_equation(id);
@@ -588,8 +589,8 @@ bool CoreDraw::draw_equation(int id, double size)
 
 bool CoreDraw::draw_equationgroup(int id, double size)
 {
-  DrawGeometry geometry;
-  const QScopedValueRollback<DrawGeometry*> targetGuard(currentGeometry, &geometry);
+  DrawingGeometry geometry;
+  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
 
   CalculiXDrawInterface drawing;
   const auto data = drawing.get_draw_data_for_equationgroup(id);

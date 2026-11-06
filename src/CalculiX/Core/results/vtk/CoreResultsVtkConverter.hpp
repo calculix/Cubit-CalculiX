@@ -19,7 +19,7 @@ public:
    * conversion/validation. An empty error with false means user cancellation.
    * workers must be resolved to a positive count by the core/caller.
    */
-  bool build(const CoreResultsFrd& frd, const CoreResultsDat& dat, const CoreResultsVtkPlan& plan, std::atomic<bool>& cancelled, const std::function<bool(double)>& poll, std::shared_ptr<const FeaResults::VtkResultsData>& output, std::string& error) const;
+  bool build(const CoreResultsFrd& frd, const CoreResultsDat& dat, const CoreResultsVtkPlan& plan, std::atomic<bool>& cancelled, const std::function<bool(double)>& poll, std::shared_ptr<const SimResults::VtkResultsData>& output, std::string& error) const;
 };
 
 #endif // CORERESULTSVTKCONVERTER_HPP

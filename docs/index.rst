@@ -1,4 +1,4 @@
-Cubit FEA documentation
+Cubit cubit-sim documentation
 =======================
 
 Shared framework functionality and workspace-specific finite-element workflows.
@@ -12,6 +12,7 @@ imply complete developer comments.
 
    framework/index
    calculix/index
+   postprocessor/index
    developer/index
 
 * :ref:`genindex`

@@ -1,5 +1,5 @@
-#ifndef FEA_USEROPTIONSMANAGER_HPP
-#define FEA_USEROPTIONSMANAGER_HPP
+#ifndef CUBITSIM_USEROPTIONSMANAGER_HPP
+#define CUBITSIM_USEROPTIONSMANAGER_HPP
 
 #include "Framework/Interfaces/WorkspaceProviderInterface.hpp"
 #include <QObject>

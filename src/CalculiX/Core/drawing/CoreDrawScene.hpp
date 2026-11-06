@@ -1,14 +1,15 @@
 #ifndef COREDRAWSCENE_HPP
 #define COREDRAWSCENE_HPP
 
-#include "CoreDrawGraphics.hpp"
-#include "CoreDrawPicker.hpp"
+#include "CoreDrawTypes.hpp"
+#include "Framework/Interfaces/DrawingInterface.hpp"
 
 class CoreDrawScene
 {
 public:
   CoreDrawScene();
-  void replace(DrawEntityKey entity, DrawGeometry geometry);
+  void bind(DrawingInterface* service) noexcept;
+  void replace(DrawEntityKey entity, DrawingGeometry geometry);
   void clear(DrawGroup group);
   void clearAll();
   bool pickSymbol(int viewId, double xFraction, double yFraction, CalculiXDrawSelection& selection, std::string& error);
@@ -24,12 +25,12 @@ public:
   CalculiXDrawState state;
   bool workspaceActive = false;
 private:
-  std::map<DrawEntityKey, DrawGeometry> entities;
-  CoreDrawGraphics graphics;
-  CoreDrawPicker picker;
-  std::size_t pickRevision = 0;
-  CalculiXDrawSelection selection;
-  std::string selectionColor = "yellow";
   bool isHighlighted(DrawEntityKey entity, const CalculiXDrawSelection& requested) const;
+  std::map<DrawEntityKey, DrawingGeometry> entities;
+  DrawingInterface* drawings = nullptr;
+  CalculiXDrawSelection selection;
+  std::function<void(const CalculiXDrawSelection&)> pickCallback;
+  std::string hoverColor = "red";
+  std::string selectionColor = "yellow";
 };
 #endif

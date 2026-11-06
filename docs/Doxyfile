@@ -1,12 +1,12 @@
 # Run from docs/ (build.py supplies that working directory).
 DOXYFILE_ENCODING       = UTF-8
-PROJECT_NAME            = "Cubit FEA"
+PROJECT_NAME            = "cubit-sim"
 OUTPUT_DIRECTORY        = _build/doxygen
-# Project-owned Framework and CalculiX sources only.
+# Project-owned Framework, CalculiX and Postprocessor sources only.
 # These roots contain project code, including its adapters and utility wrappers.
 # src/Utility (CGAL/Eigen/HDF5/OpenPisco/gif.h), src/Library and src/Solvers are
 # deliberately outside INPUT. Generated wrapper/MOC/UI files are excluded below.
-INPUT                   = ../src/Framework ../src/CalculiX
+INPUT                   = ../src/Framework ../src/CalculiX ../src/Postprocessor
 FILE_PATTERNS           = *.hpp *.cpp *.h
 RECURSIVE               = YES
 EXCLUDE_PATTERNS        = */*_wrap* */moc_* */ui_* */.venv/*

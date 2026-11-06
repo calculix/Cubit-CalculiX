@@ -9,6 +9,26 @@
 #include <string>
 #include <vector>
 
+/** Non-spatial records retain reported identifiers and all contributions.
+ * Numeric IDs are at most the reader's signed int range and are exactly
+ * representable in double. Column names explicitly distinguish node labels,
+ * element+face codes and face integration points; none imply a mesh-node map.
+ */
+struct DatResultTable
+{
+  std::string key;
+  std::string name;
+  std::string set_name;
+  std::string slave_set;
+  std::string master_set;
+  int step = -1;
+  int increment = -1;
+  double time = 0.0;
+  std::size_t source_line = 0;
+  std::vector<std::string> columns;
+  std::vector<std::vector<double>> rows;
+};
+
 struct DatReadBatch
 {
   int data_id = -1;
@@ -49,6 +69,11 @@ struct DatReadState
   std::vector<std::string> components;
   std::streamoff file_size = 0;
   std::chrono::steady_clock::time_point progress_time{};
+  int association = 0; // Explicit: 1 node, 2 integration point, 3 element.
+  bool variable_components = false;
+  int table_id = -1;
+  std::size_t table_width = 0;
+  bool summary_section = false;
 };
 
 struct DatRawRecord
@@ -66,6 +91,7 @@ struct DatRawReadBatch
   std::vector<std::string> components;
   std::string text;
   std::vector<DatRawRecord> records;
+  int association = 0;
 };
 
 struct DatRawReadTask

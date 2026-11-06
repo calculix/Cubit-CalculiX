@@ -3,7 +3,6 @@
 #include <string>
 #include <vector>
 
-#include "Commands/application/ccxVersionCommand.hpp"
 #include "Commands/application/ccxUserOptionsCommand.hpp"
 #include "Commands/application/ccxResetCommand.hpp"
 #include "Commands/export/ccxExportCommand.hpp"
@@ -183,7 +182,6 @@
 std::vector<std::string> CalculiXCommands::command_keys() const
 {
   std::vector<std::string> keys;
-  keys.push_back("ccxVersionCommand");
   keys.push_back("ccxUserOptionsCommand");
   keys.push_back("ccxResetCommand");
   keys.push_back("ccxExportCommand");
@@ -373,10 +371,7 @@ CubitCommand* CalculiXCommands::create_command(const std::string &key)
   {
     return new ccxUserOptionsCommand();
   }
-  if(key == "ccxVersionCommand")
-  {
-    return new ccxVersionCommand();
-  }
+
   
   if(key == "ccxResetCommand")
   {

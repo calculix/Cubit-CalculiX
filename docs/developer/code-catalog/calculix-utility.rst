@@ -12,15 +12,15 @@ changing a path. External utility implementations are excluded.
 
    * - Source/download
      - Declaration hints
-   * - :download:`src/CalculiX/Utility/CGALTool.cpp <../../../src/CalculiX/Utility/CGALTool.cpp>`
+   * - :download:`src/Framework/Geometry/CGALTool.cpp <../../../src/Framework/Geometry/CGALTool.cpp>`
      - ``WrapProgressState, WrapProgressVisitor, TemporarySTL``
-   * - :download:`src/CalculiX/Utility/CGALTool.hpp <../../../src/CalculiX/Utility/CGALTool.hpp>`
+   * - :download:`src/Framework/Geometry/CGALTool.hpp <../../../src/Framework/Geometry/CGALTool.hpp>`
      - ``CGALTool, TriangleSoup, WrapMode``
    * - :download:`src/CalculiX/Utility/CMakeLists.txt <../../../src/CalculiX/Utility/CMakeLists.txt>`
      - ``Build registration``
-   * - :download:`src/CalculiX/Utility/CubitWrapInput.cpp <../../../src/CalculiX/Utility/CubitWrapInput.cpp>`
+   * - :download:`src/Framework/Geometry/CubitWrapInput.cpp <../../../src/Framework/Geometry/CubitWrapInput.cpp>`
      - ``BoundaryFace, ElementLayout``
-   * - :download:`src/CalculiX/Utility/CubitWrapInput.hpp <../../../src/CalculiX/Utility/CubitWrapInput.hpp>`
+   * - :download:`src/Framework/Geometry/CubitWrapInput.hpp <../../../src/Framework/Geometry/CubitWrapInput.hpp>`
      - ``BlockWrapMesh, WrapInput, WrapElement``
    * - :download:`src/CalculiX/Utility/ElementIntegration.cpp <../../../src/CalculiX/Utility/ElementIntegration.cpp>`
      - ``Implementation / integration``

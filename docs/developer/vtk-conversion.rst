@@ -177,8 +177,47 @@ IDs are resolved against the shared job mesh. Ambiguous time matches fail rather
 than associating results with the wrong increment. Existing DAT buckling and
 section records are retained as table plans; broader reader coverage is deferred.
 
+Topology integration and reported formulation failure
+-----------------------------------------------------
+
+The user-supplied log reviewed on 6 November 2026 records an ordinary HEX20 job
+exporting VTK successfully, followed by a HEX8 topology run whose first physical
+solve finished. Its FRD reader reported no result fields; DAT reading supplied
+internal energy 1237.94944 and compliance 2475.89888. Planning then reported:
+
+.. code-block:: text
+
+   Exact supported element formulation is required to locate DAT integration points for element 1.
+
+The topology evaluator nevertheless completed iteration 1 and prepared the next
+density design. Starting iteration 2 was rejected because job 1 still had pending
+VTK conversion. These are separate reader, evaluator and publication outcomes;
+the compliance value is not evidence of a completed VTK result. This is reported
+runtime evidence, not a reproduction performed during documentation work.
+
+``CoreResultsVtkLink::fields()`` emits that message when a DAT integration-point
+field references an element with an empty, unsupported or non-integrable
+``calculix_type``. ``prepare()`` first requires a valid FRD mesh. It attempts a
+current-model match, augments a match with exact formulations from a compatible
+INP, then tries INP linking before retaining FRD-only geometry. FRD-only element
+topology cannot distinguish full from reduced integration. Even a DAT-only
+conversion request currently passes through this FRD mesh requirement.
+
+The log does not identify which match failed or prove that C3D8 itself is
+unsupported. It does not contain the actual INP element declarations, link
+diagnostics or FRD connectivity needed to distinguish those causes. Preserve the
+run INP and included files, FRD/DAT, working directory, link diagnostics and exact
+formulations before changing output requests or model geometry. A no-fields FRD
+message alone does not establish an empty mesh. Partial-field options do not
+relax the requirement for valid integration-point geometry.
+
+After the cause is resolved, ``ccx result convert job <id> in_memory`` retries
+publication without file export. It can clear the next-job gate, but does not
+restart a failed topology controller. Review items and regression expectations
+are recorded in :doc:`review-findings` and :doc:`topology-verification`.
+
 Node ordering and integration points
------------------------------------
+------------------------------------
 
 ``CoreResultsVtkElements`` explicitly converts local positions between Exodus,
 CalculiX INP, FRD and VTK conventions while preserving global node IDs. CCX 2.23
@@ -209,6 +248,34 @@ FRD-only topology does not establish an exact integration formulation. Expanded
 shell/beam and layered integration-point mappings remain explicit unsupported
 cases in this stage, even where their unexpanded geometry can be described.
 
+FRD contact-contribution tables
+--------------------------------
+
+FRD ``CELS`` blocks are retained as one ``vtkTable`` per source block in the
+corresponding increment's ``tables`` collection. Columns are ``RecordIndex``
+(zero-based source row), ``ReportedNodeId`` (the FRD label), ``CELS`` (the
+unreduced energy) and ``Valid`` (one for finite energy, zero otherwise). Repeated
+labels remain separate rows in source order. They do not pass through the
+spatial-field duplicate-ID lookup.
+
+``RecordIndex`` identifies a row within one source block, not a contact point
+across increments. A reported node label alone does not provide the actual
+contact integration-point coordinates or a unique contact-element identity.
+No averaging or summation is applied. Non-finite values remain in the table;
+``no_partial`` skips the whole incomplete table instead of removing rows.
+
+Table field data records the job/run identity, source file/block/data indices,
+step/increment, time, and the identifier and reduction conventions. The result
+owns its columns independently of the readers. The existing exporter writes
+``increment_N_table_M.vtt`` and registers it in the PVD index under
+``IncrementTables``. Global DAT buckling and section tables retain their existing
+export path. No viewport or postprocessing workspace is introduced.
+
+The CELS checks cover repeated labels, changing row counts, non-finite energies,
+whole-table omission, serial/parallel values, reader-buffer lifetime and VTT
+export. These additions have not been compiled or run; building remains a user
+action.
+
 Verification limits
 -------------------
 
@@ -217,5 +284,6 @@ including reduced C3D8R interpolation and reference-volume sums for all supporte
 quadrature rules. Further coverage should include every ordering direction,
 curved higher-order geometry, INP includes/sets/surfaces, current-model/INP
 mismatch, field-name collisions and cancellation in each phase. Native job
-lifecycle and picking/hover still require an interactive Cubit check. The wider
-CalculiX 2.23 FRD/DAT output-coverage revision remains deferred.
+lifecycle and picking/hover still require an interactive Cubit check. The
+exposed-key coverage work and its remaining validation limits are recorded in
+:doc:`results-output-coverage`.

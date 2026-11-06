@@ -1,7 +1,7 @@
 # Standalone packaging script: no plugin build or documentation toolchain required.
 cmake_minimum_required(VERSION 3.5)
 
-foreach(_variable FEA_DOCUMENTATION_SOURCE FEA_DOCUMENTATION_DESTINATION)
+foreach(_variable CUBITSIM_DOCUMENTATION_SOURCE CUBITSIM_DOCUMENTATION_DESTINATION)
   if (NOT DEFINED ${_variable} OR "${${_variable}}" STREQUAL "")
     message(FATAL_ERROR "${_variable} must name an absolute directory")
   endif()
@@ -10,8 +10,8 @@ foreach(_variable FEA_DOCUMENTATION_SOURCE FEA_DOCUMENTATION_DESTINATION)
   endif()
 endforeach()
 
-get_filename_component(_source "${FEA_DOCUMENTATION_SOURCE}" REALPATH)
-get_filename_component(_destination "${FEA_DOCUMENTATION_DESTINATION}" REALPATH)
+get_filename_component(_source "${CUBITSIM_DOCUMENTATION_SOURCE}" REALPATH)
+get_filename_component(_destination "${CUBITSIM_DOCUMENTATION_DESTINATION}" REALPATH)
 if (NOT EXISTS "${_source}/index.html" OR IS_DIRECTORY "${_source}/index.html")
   message(FATAL_ERROR "Generated manual missing: ${_source}/index.html. Build docs/build.py first.")
 endif()
@@ -26,4 +26,4 @@ endif()
 
 file(MAKE_DIRECTORY "${_destination}")
 file(COPY "${_source}/" DESTINATION "${_destination}")
-message(STATUS "Staged Cubit FEA documentation: ${_destination}/index.html")
+message(STATUS "Staged Cubit cubit-sim documentation: ${_destination}/index.html")

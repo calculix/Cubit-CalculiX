@@ -1,5 +1,5 @@
-#ifndef FEA_USEROPTION_HPP
-#define FEA_USEROPTION_HPP
+#ifndef CUBITSIM_USEROPTION_HPP
+#define CUBITSIM_USEROPTION_HPP
 
 #include <functional>
 #include <map>

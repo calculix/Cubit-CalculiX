@@ -7,7 +7,7 @@ class CalculiXCore;
 struct ResolvedDrawScope
 {
   std::vector<DrawEntityKey> entities;
-  std::map<DrawEntityKey, DrawGeometry> geometry;
+  std::map<DrawEntityKey, DrawingGeometry> geometry;
 };
 
 class CoreDrawScope

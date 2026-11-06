@@ -2,6 +2,7 @@
 #define CALCULIXDRAWINTERFACE_HPP
 
 #include "CoreDrawTypes.hpp"
+class DrawingInterface;
 #include <string>
 #include <functional>
 #include <vector>
@@ -9,6 +10,7 @@
 class CalculiXDrawInterface
 {
 public:
+  void bind_drawing(DrawingInterface* drawings) noexcept;
   bool draw_step(int stepId, const std::vector<DrawFeature>& features, double size, std::string& error, const std::vector<DrawEntityKey>& entities = {});
   bool restore_pending_drawing(std::string& error);
   bool apply_drawing_options(std::string& error);

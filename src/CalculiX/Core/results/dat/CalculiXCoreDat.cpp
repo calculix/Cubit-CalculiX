@@ -105,3 +105,18 @@ std::vector<std::vector<double>> CalculiXCore::dat_get_element_values(int job_id
 {
   return CoreResultsDatQuery(*results).dat_get_element_values(job_id, element_id, time, result_block_type, result_block_set);
 }
+
+std::vector<DatResultTable> CalculiXCore::dat_get_table_metadata(int job_id)
+{
+  return CoreResultsDatQuery(*results).dat_get_table_metadata(job_id);
+}
+
+std::vector<std::vector<double>> CalculiXCore::dat_get_table_rows(int job_id, int table_id, std::size_t offset, std::size_t count)
+{
+  return CoreResultsDatQuery(*results).dat_get_table_rows(job_id, table_id, offset, count);
+}
+
+std::size_t CalculiXCore::dat_get_table_row_count(int job_id, int table_id)
+{
+  return CoreResultsDatQuery(*results).dat_get_table_row_count(job_id, table_id);
+}

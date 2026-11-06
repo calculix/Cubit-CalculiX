@@ -16,9 +16,9 @@ separate context statics in entry-point libraries would split ownership.
 
    * - Type
      - Contract and owner
-   * - ``FEAPlugin``
+   * - ``CubitSimPlugin``
      - Cubit command-plugin entry point. Acquires/releases command attachment, exposes Framework keys, delegates workspace command construction.
-   * - ``FEAComp``
+   * - ``CubitSimComp``
      - Loader-facing GUI component. Requires the command plugin, acquires the Framework and attaches a GUI host when requested; cleanup releases its acquisition.
    * - ``FrameworkContext``
      - Owns options storage, module manager, workspace manager and options pages. Reference counts clients; initializes services on first acquisition and shuts modules down after the last release.
@@ -27,8 +27,8 @@ separate context statics in entry-point libraries would split ownership.
    * - ``CalculiXModule``
      - Implements module, command, component and workspace provider contracts for CalculiX. Owns its command provider and internal GUI owner.
 
-Source: :download:`FEAPlugin.cpp <../../src/Framework/FEAPlugin.cpp>`,
-:download:`FEAComp.cpp <../../src/Framework/FEAComp.cpp>`,
+Source: :download:`CubitSimPlugin.cpp <../../src/Framework/CubitSimPlugin.cpp>`,
+:download:`CubitSimComp.cpp <../../src/Framework/CubitSimComp.cpp>`,
 :download:`FrameworkContext.hpp <../../src/Framework/Core/FrameworkContext.hpp>`,
 :download:`ModuleManager.hpp <../../src/Framework/Core/ModuleManager.hpp>` and
 :download:`CalculiXModule.hpp <../../src/CalculiX/CalculiXModule.hpp>`.
@@ -78,7 +78,7 @@ limits are in :doc:`user-options`.
 The Framework ``HDF5Tool`` is a project-owned storage adapter over the external
 HDF5 library. Document its group/dataset behavior and callers; the external HDF5
 implementation is out of scope. Numerical result ownership uses
-``FeaResults::VtkResultsData``: immutable published data, owning handles and no
+``SimResults::VtkResultsData``: immutable published data, owning handles and no
 borrowed solver-reader storage. Its optional exporter is separate from the
 in-memory ownership contract; see :doc:`vtk-conversion`.
 

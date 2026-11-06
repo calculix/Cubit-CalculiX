@@ -118,6 +118,8 @@ def inspect(cubit_root):
                            for name in re.findall(r"VTK::([A-Za-z0-9_]+)", path.read_text(encoding="utf-8"))})
     pending = list(dataset_roots)
     pending.append("vtkioparallelxml-9.4.dll")
+    # Cubit packages QVTK's Qt widget implementation inside showviz_qt.dll.
+    pending.append("showviz_qt.dll")
     pending.extend("vtk" + name.lower() + "-9.4.dll" for name in host_targets)
     libraries = []
     visited = set()
@@ -151,7 +153,7 @@ def inspect(cubit_root):
             continue
         dataset_closure.add(name)
         pending.extend(item["name"].lower() for item in by_name[name]["imports"] if item["name"].lower().startswith("vtk"))
-    return {"schema": 1, "cubit_root": str(root), "scope": "Dataset dependencies plus VTK targets referenced by existing Cubit SDK exports",
+    return {"schema": 2, "cubit_root": str(root), "scope": "Dataset/rendering dependencies plus Cubit's bundled QVTK implementation",
             "dataset_libraries": sorted(by_name[name]["name"] for name in dataset_closure), "host_sdk_targets": host_targets,
             "compatibility": "unvalidated", "libraries": libraries,
             "configuration_evidence": {"abi_namespaces_from_exports": sorted(set(namespaces)),

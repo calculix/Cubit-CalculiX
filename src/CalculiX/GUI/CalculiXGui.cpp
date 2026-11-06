@@ -1,6 +1,6 @@
 #include "GUI/drawing/CalculiXDrawingToolbar.hpp"
 #include "GUI/drawing/CalculiXTopologyToolbar.hpp"
-#include "GUI/drawing/NativeDisplayRefreshObserver.hpp"
+#include "Framework/Drawing/NativeDisplayRefreshObserver.hpp"
 #include "GUI/drawing/DrawingSelectionController.hpp"
 #include "GUI/drawing/DrawingPickController.hpp"
 #include "Core/drawing/CalculiXDrawInterface.hpp"
@@ -52,9 +52,19 @@ bool CalculiXGui::start(QWidget* host, std::string& error)
   setup_CCXDockWindowModelTree();
   drawingToolbar = new CalculiXDrawingToolbar(host);
   topologyToolbar = new CalculiXTopologyToolbar(host);
-  displayRefreshObserver = new NativeDisplayRefreshObserver(host);
+  displayRefreshObserver = new NativeDisplayRefreshObserver("calculix", host);
+  displayRefreshObserver->shouldWatch = []()
+  {
+    CalculiXDrawInterface drawing;
+    return drawing.drawing_state().overlayVisible && !drawing.topology_animation_active();
+  };
   displayRefreshObserver->displayChanged = [this]()
   {
+    std::string error;
+    if (!CalculiXDrawInterface().set_overlay_visible(false, error))
+    {
+      PRINT_WARNING("Unable to hide CalculiX display: %s\n", error.c_str());
+    }
     drawingToolbar->synchronize(CalculiXDrawInterface().drawing_state());
     topologyToolbar->cancelPendingPreview();
     topologyToolbar->refresh();
@@ -72,7 +82,6 @@ bool CalculiXGui::start(QWidget* host, std::string& error)
   setup_menus();
   mUserOptionsPanel = new UserOptionsPanel();
   setup_observers(1);
-  setup_window_title();
   boolwithGUI = true;
 
   return true;
@@ -83,7 +92,6 @@ void CalculiXGui::stop() noexcept
   try
   {
     boolwithGUI = false;
-    cleanup_window_title();
     cleanup_observers();
     delete displayRefreshObserver.data();
     displayRefreshObserver = nullptr;
@@ -146,38 +154,6 @@ void CalculiXGui::stop() noexcept
   {
     PRINT_ERROR("CalculiX GUI cleanup failed.\n");
   }
-}
-
-void CalculiXGui::setup_window_title()
-{
-  auto* host = Claro::instance();
-  CalculiXApplicationInterface application;
-  const QString suffix = " -- with Cubit-CalculiX " + QString::fromStdString(application.get_version());
-
-  if (host != nullptr && !host->get_title().contains(suffix))
-  {
-    titleHost = host;
-    titleSuffix = suffix;
-    host->set_title(host->get_title() + titleSuffix);
-  }
-}
-
-void CalculiXGui::cleanup_window_title()
-{
-  if (!QCoreApplication::closingDown() && titleHost != nullptr && !titleSuffix.isEmpty())
-  {
-    QString title = titleHost->get_title();
-    const auto position = title.lastIndexOf(titleSuffix);
-
-    if (position >= 0)
-    {
-      title.remove(position, titleSuffix.size());
-      titleHost->set_title(title);
-    }
-  }
-
-  titleHost = nullptr;
-  titleSuffix.clear();
 }
 
 void CalculiXGui::update()

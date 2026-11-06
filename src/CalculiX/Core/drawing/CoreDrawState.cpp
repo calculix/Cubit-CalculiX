@@ -73,7 +73,7 @@ CalculiXDrawState CoreDraw::drawingState() const
   return scene.state;
 }
 
-bool CoreDraw::storeGeometry(DrawEntityKey key, DrawGeometry geometry, double size)
+bool CoreDraw::storeGeometry(DrawEntityKey key, DrawingGeometry geometry, double size)
 {
   if (!std::isfinite(size) || size <= 0)
   {
@@ -487,4 +487,9 @@ bool CoreDraw::pickSymbol(int viewId, double xFraction, double yFraction, Calcul
     return true;
   }
   return scene.pickSymbol(viewId, xFraction, yFraction, selection, error);
+}
+
+void CoreDraw::bindDrawing(DrawingInterface* drawings) noexcept
+{
+  scene.bind(drawings);
 }

@@ -9,10 +9,13 @@
 #include <QByteArray>
 #include <QPointer>
 #include <QRect>
+#include <QString>
+#include <QDockWidget>
 
 class QToolBar;
 class Claro;
 class DocumentationManager;
+class WorkspaceGraphicsStack;
 class QMenuBar;
 class QGroupBox;
 class QTabWidget;
@@ -67,7 +70,9 @@ private:
   void watch_dock(QDockWidget* dock);
   bool dock_allowed(QDockWidget* dock) const;
   std::unique_ptr<DocumentationManager> documentation;
+  std::unique_ptr<WorkspaceGraphicsStack> graphics;
   QPointer<Claro> gui;
+  QString titleSuffix;
   QPointer<QDockWidget> commandDock;
   QPointer<QDockWidget> navigationDock;
   QPointer<QWidget> viewport;
@@ -90,7 +95,16 @@ private:
   bool nativeActive = true;
   bool changing = false;
   bool nativeModeVisible = true;
+  bool nativeNavigationDockVisible = true;
   bool hideNavigationMode = false;
+  bool useNativeNavigation = true;
+  bool independentGraphics = false;
+  Qt::DockWidgetAreas commandAllowedAreas;
+  QDockWidget::DockWidgetFeatures commandFeatures;
+  Qt::DockWidgetArea commandArea = Qt::NoDockWidgetArea;
+  bool commandFloating = false;
+  QRect commandGeometry;
+  QList<QPair<QPointer<QToolBar>, bool>> nativeToolbarVisibility;
 };
 
 #endif // CUBITWORKSPACEHOST_HPP

@@ -1,6 +1,7 @@
 #include "CoreResultsDatQuery.hpp"
 #include "Core/results/CoreResults.hpp"
 #include "CoreResultsDat.hpp"
+#include <algorithm>
 
 CoreResultsDatQuery::CoreResultsDatQuery(CoreResults& results)
   : results(results)
@@ -836,3 +837,47 @@ std::vector<std::string> CoreResultsDatQuery::dat_get_section_label(int job_id)
   return results.dat_data[dat_data_id].result_section_label;
 }
 
+
+std::vector<DatResultTable> CoreResultsDatQuery::dat_get_table_metadata(int job_id)
+{
+  const int id = results.get_dat_data_id_from_job_id(job_id);
+  if (id < 0 || static_cast<std::size_t>(id) >= results.dat_data.size())
+  {
+    return {};
+  }
+  std::vector<DatResultTable> metadata;
+  for (const auto& table : results.dat_data[id].result_tables)
+  {
+    metadata.push_back({table.key, table.name, table.set_name, table.slave_set, table.master_set,
+      table.step, table.increment, table.time, table.source_line, table.columns, {}});
+  }
+  return metadata;
+}
+
+std::vector<std::vector<double>> CoreResultsDatQuery::dat_get_table_rows(int job_id, int table_id, std::size_t offset, std::size_t count)
+{
+  const int id = results.get_dat_data_id_from_job_id(job_id);
+  if (id < 0 || static_cast<std::size_t>(id) >= results.dat_data.size() || table_id < 0 ||
+    static_cast<std::size_t>(table_id) >= results.dat_data[id].result_tables.size())
+  {
+    return {};
+  }
+  const auto& rows = results.dat_data[id].result_tables[table_id].rows;
+  if (offset >= rows.size())
+  {
+    return {};
+  }
+  const auto end = offset + std::min(count, rows.size() - offset);
+  return {rows.begin() + offset, rows.begin() + end};
+}
+
+std::size_t CoreResultsDatQuery::dat_get_table_row_count(int job_id, int table_id)
+{
+  const int id = results.get_dat_data_id_from_job_id(job_id);
+  if (id < 0 || static_cast<std::size_t>(id) >= results.dat_data.size() || table_id < 0 ||
+    static_cast<std::size_t>(table_id) >= results.dat_data[id].result_tables.size())
+  {
+    return 0;
+  }
+  return results.dat_data[id].result_tables[table_id].rows.size();
+}

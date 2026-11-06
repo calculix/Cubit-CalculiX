@@ -96,7 +96,7 @@ bool validPath(const UserOptionValue& value)
 std::vector<UserOption> definitions()
 {
 #ifdef _WIN32
-  const char* solverDefault = "Solver/ccx_dynamic.exe";
+  const char* solverDefault = "Solver/ccx_2.23.exe";
   const char* cgxDefault = "Postprocessor/CGX/cgx_STATIC.exe";
   const char* paraviewDefault = "Postprocessor/ParaView/bin/paraview.exe";
 #else

@@ -111,7 +111,7 @@ Save and load
 -------------
 
 ``CoreTopology::save_configuration`` writes a single required current layout
-below ``Cubit-CalculiX/Topology``. No topology format version or migration path
+below ``cubit-sim/workspaces/calculix/Topology``. No topology format version or migration path
 is stored. Older or incomplete topology layouts fail with a Cubit error; missing
 current fields are not replaced by defaults. An absent topology group represents
 a model without topology cases.

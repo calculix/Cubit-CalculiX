@@ -68,11 +68,11 @@ cmake --build build --target stage_documentation
 
 Use the actual release label when packaging. The default destination is
 `build/Release/documentation/` on Windows and `build/documentation/` on Linux,
-following the current plugin resource layout. `FEA_DOCUMENTATION_SOURCE` and
-`FEA_DOCUMENTATION_DESTINATION` are CMake cache paths for overriding the source
+following the current plugin resource layout. `CUBITSIM_DOCUMENTATION_SOURCE` and
+`CUBITSIM_DOCUMENTATION_DESTINATION` are CMake cache paths for overriding the source
 HTML tree and the destination. The destination names the documentation folder
 itself, not its parent. For example, configure with
-`-DFEA_DOCUMENTATION_DESTINATION=/release/plugin/documentation` for a separate
+`-DCUBITSIM_DOCUMENTATION_DESTINATION=/release/plugin/documentation` for a separate
 release directory. Use a clean release destination to avoid retaining obsolete
 pages from an older manual; staging copies files without deleting unrelated files.
 
@@ -80,16 +80,16 @@ The script can also be run without configuring or building the plugin; supply
 absolute paths (quote the complete `-D...` argument if it contains spaces):
 
 ```text
-cmake -DFEA_DOCUMENTATION_SOURCE=<absolute-html-directory> -DFEA_DOCUMENTATION_DESTINATION=<absolute-plugin-directory>/documentation -P src/cmake/StageDocumentation.cmake
+cmake -DCUBITSIM_DOCUMENTATION_SOURCE=<absolute-html-directory> -DCUBITSIM_DOCUMENTATION_DESTINATION=<absolute-plugin-directory>/documentation -P src/cmake/StageDocumentation.cmake
 ```
 
 Ship the resulting layout together:
 
 ```text
 plugin directory/
-  fea_plugin.dll               # Windows; libfea_plugin.so on Linux
-  fea_framework.dll            # Windows; libfea_framework.so on Linux
-  _fea_comp.pyd                # Windows; _fea_comp.so on Linux
+  cubitsim_plugin.dll               # Windows; libcubitsim_plugin.so on Linux
+  cubitsim_framework.dll            # Windows; libcubitsim_framework.so on Linux
+  _cubitsim_comp.pyd                # Windows; _cubitsim_comp.so on Linux
   ...other plugin libraries and resources...
   documentation/
     index.html
@@ -99,7 +99,7 @@ plugin directory/
 ```
 
 After rebuilding the plugin with the Help action, use
-**Help > FEA documentation**, or `fea documentation`. The Framework resolves
+**Help > cubit-sim documentation**, or `sim documentation`. The Framework resolves
 its component directory directly and opens its local `documentation/index.html`
 using the desktop's configured HTML application. Missing or unreadable manuals
 report the expected path; failure to submit the open request is also reported.
@@ -144,7 +144,7 @@ Doxygen warnings are saved to `docs/_build/doxygen-warnings.log`.
 
 ## Existing developer guides
 
-Start here when changing Cubit-CalculiX:
+Start here when changing cubit-sim:
 
 1. [Architecture overview](architecture.md): runtime components and data flow.
 2. [Source-code map](source-map.md): where to find each responsibility.

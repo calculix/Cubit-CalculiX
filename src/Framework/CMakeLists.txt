@@ -1,5 +1,6 @@
-# One external command plugin and component host the internal CalculiX module.
-add_library(fea_framework SHARED
+# One external command plugin/component hosts the internal application modules.
+add_library(cubitsim_framework SHARED
+  Core/CubitSimVersion.hpp
   Core/FrameworkContext.cpp
   Core/FrameworkContext.hpp
   Core/FrameworkModules.cpp
@@ -8,10 +9,12 @@ add_library(fea_framework SHARED
   Core/ModuleManager.hpp
   FrameworkExport.hpp
   Utility/StartupTrace.hpp
+  Interfaces/DrawingInterface.hpp
   Interfaces/ModuleInterface.hpp
   Interfaces/CommandProviderInterface.hpp
   Interfaces/ComponentProviderInterface.hpp
   Interfaces/WorkspaceProviderInterface.hpp
+  Interfaces/ResultSourceRegistryInterface.hpp
   GUI/DocumentationManager.cpp
   GUI/DocumentationManager.hpp
   GUI/UserOptionsManager.cpp
@@ -22,83 +25,86 @@ add_library(fea_framework SHARED
   GUI/WorkspaceHeader.hpp
   GUI/CubitWorkspaceHost.cpp
   GUI/CubitWorkspaceHost.hpp
+  GUI/WorkspaceGraphicsStack.cpp
+  GUI/WorkspaceGraphicsStack.hpp
   GUI/CommandDispatcher.cpp
   GUI/CommandDispatcher.hpp
 )
 
-target_compile_features(fea_framework PUBLIC cxx_std_17)
-target_link_libraries(fea_framework PRIVATE fea_storage calculix_module clarogui clarofw navigation cubiti cubit_util Qt6::Widgets)
-set_target_properties(fea_framework PROPERTIES AUTOMOC ON)
-target_compile_definitions(fea_framework PRIVATE FEA_FRAMEWORK_BUILD)
-target_include_directories(fea_framework PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
+target_compile_features(cubitsim_framework PUBLIC cxx_std_17)
+target_link_libraries(cubitsim_framework PRIVATE cubitsim_storage cubitsim_drawing calculix_module postprocessor_module clarogui clarofw navigation cubiti cubit_util Qt6::Widgets)
+set_target_properties(cubitsim_framework PROPERTIES AUTOMOC ON)
+target_compile_definitions(cubitsim_framework PRIVATE CUBITSIM_FRAMEWORK_BUILD)
+target_include_directories(cubitsim_framework PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
 
-add_library(fea_plugin MODULE
-  FEAPlugin.cpp FEAPlugin.hpp
+add_library(cubitsim_plugin MODULE
+  CubitSimPlugin.cpp CubitSimPlugin.hpp
   Commands/WorkspaceCommand.cpp Commands/WorkspaceCommand.hpp
   Commands/DocumentationCommand.cpp Commands/DocumentationCommand.hpp
+  Commands/CubitSimVersionCommand.cpp Commands/CubitSimVersionCommand.hpp
 )
-target_link_libraries(fea_plugin PRIVATE fea_framework cubiti cubit_util)
+target_link_libraries(cubitsim_plugin PRIVATE cubitsim_framework cubiti cubit_util)
 
-set(FEA_COMPONENT_WRAPPER "${CMAKE_CURRENT_BINARY_DIR}/fea_comp_wrap.cxx")
-set(FEA_COMPONENT_PROXY "${CMAKE_CURRENT_BINARY_DIR}/fea_comp.py")
+set(CUBITSIM_COMPONENT_WRAPPER "${CMAKE_CURRENT_BINARY_DIR}/cubitsim_comp_wrap.cxx")
+set(CUBITSIM_COMPONENT_PROXY "${CMAKE_CURRENT_BINARY_DIR}/cubitsim_comp.py")
 
 add_custom_command(
-  OUTPUT "${FEA_COMPONENT_WRAPPER}" "${FEA_COMPONENT_PROXY}"
+  OUTPUT "${CUBITSIM_COMPONENT_WRAPPER}" "${CUBITSIM_COMPONENT_PROXY}"
   # Startup can re-enter Cubit's interpreter; release the calling Python GIL.
   COMMAND "${SWIG_EXECUTABLE}" -c++ -python -threads
     "-I${CMAKE_CURRENT_SOURCE_DIR}"
     -outdir "${CMAKE_CURRENT_BINARY_DIR}"
-    -o "${FEA_COMPONENT_WRAPPER}"
-    "${CMAKE_CURRENT_SOURCE_DIR}/fea_comp.i"
-  DEPENDS fea_comp.i FEAComp.hpp
+    -o "${CUBITSIM_COMPONENT_WRAPPER}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/cubitsim_comp.i"
+  DEPENDS cubitsim_comp.i CubitSimComp.hpp
   VERBATIM
 )
 
-add_library(fea_comp SHARED FEAComp.cpp FEAComp.hpp "${FEA_COMPONENT_WRAPPER}")
-target_include_directories(fea_comp PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(fea_comp PRIVATE
-  fea_framework component clarogui clarofw cubiti cubit_util cubit_python Qt6::Widgets
+add_library(cubitsim_comp SHARED CubitSimComp.cpp CubitSimComp.hpp "${CUBITSIM_COMPONENT_WRAPPER}")
+target_include_directories(cubitsim_comp PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(cubitsim_comp PRIVATE
+  cubitsim_framework component clarogui clarofw cubiti cubit_util cubit_python Qt6::Widgets
 )
-set_target_properties(fea_comp PROPERTIES PREFIX "_")
+set_target_properties(cubitsim_comp PROPERTIES PREFIX "_")
 
 if (WIN32)
-  set_target_properties(fea_comp PROPERTIES SUFFIX ".pyd")
+  set_target_properties(cubitsim_comp PROPERTIES SUFFIX ".pyd")
 endif()
 
 # Share the deployment directory with module libraries and their resources.
-set(FEA_OUTPUT "${CCX_DEPLOY_DIRECTORY}")
+set(CUBITSIM_OUTPUT "${CUBITSIM_DEPLOY_DIRECTORY}")
 
-foreach (FEA_TARGET fea_framework fea_plugin fea_comp)
-  set_target_properties(${FEA_TARGET} PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${FEA_OUTPUT}"
-    LIBRARY_OUTPUT_DIRECTORY "${FEA_OUTPUT}"
-    ARCHIVE_OUTPUT_DIRECTORY "${FEA_OUTPUT}"
+foreach (CUBITSIM_TARGET cubitsim_framework cubitsim_plugin cubitsim_comp)
+  set_target_properties(${CUBITSIM_TARGET} PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CUBITSIM_OUTPUT}"
+    LIBRARY_OUTPUT_DIRECTORY "${CUBITSIM_OUTPUT}"
+    ARCHIVE_OUTPUT_DIRECTORY "${CUBITSIM_OUTPUT}"
     BUILD_RPATH_USE_ORIGIN TRUE
   )
 endforeach()
 
 if (UNIX)
-  set_target_properties(fea_plugin fea_comp PROPERTIES BUILD_RPATH "$ORIGIN")
+  set_target_properties(cubitsim_plugin cubitsim_comp PROPERTIES BUILD_RPATH "$ORIGIN")
 endif()
 
-add_custom_command(TARGET fea_comp POST_BUILD
+add_custom_command(TARGET cubitsim_comp POST_BUILD
   COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-    "${FEA_COMPONENT_PROXY}" "$<TARGET_FILE_DIR:fea_comp>/fea_comp.py"
+    "${CUBITSIM_COMPONENT_PROXY}" "$<TARGET_FILE_DIR:cubitsim_comp>/cubitsim_comp.py"
   VERBATIM
 )
 
 # Package an existing manual explicitly; normal builds do not generate or stage it.
-set(FEA_DOCUMENTATION_SOURCE "${CCX_SOURCE_ROOT}/../docs/_build/html" CACHE PATH "Generated manual directory")
+set(CUBITSIM_DOCUMENTATION_SOURCE "${CUBITSIM_SOURCE_ROOT}/../docs/_build/html" CACHE PATH "Generated manual directory")
 if (WIN32)
-  set(_fea_documentation_destination "${CMAKE_BINARY_DIR}/Release/documentation")
+  set(_cubitsim_documentation_destination "${CMAKE_BINARY_DIR}/Release/documentation")
 else()
-  set(_fea_documentation_destination "${CMAKE_BINARY_DIR}/documentation")
+  set(_cubitsim_documentation_destination "${CMAKE_BINARY_DIR}/documentation")
 endif()
-set(FEA_DOCUMENTATION_DESTINATION "${_fea_documentation_destination}" CACHE PATH "Packaged manual directory beside the plugin")
+set(CUBITSIM_DOCUMENTATION_DESTINATION "${_cubitsim_documentation_destination}" CACHE PATH "Packaged manual directory beside the plugin")
 add_custom_target(stage_documentation
   COMMAND "${CMAKE_COMMAND}"
-    "-DFEA_DOCUMENTATION_SOURCE=${FEA_DOCUMENTATION_SOURCE}"
-    "-DFEA_DOCUMENTATION_DESTINATION=${FEA_DOCUMENTATION_DESTINATION}"
+    "-DCUBITSIM_DOCUMENTATION_SOURCE=${CUBITSIM_DOCUMENTATION_SOURCE}"
+    "-DCUBITSIM_DOCUMENTATION_DESTINATION=${CUBITSIM_DOCUMENTATION_DESTINATION}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/../cmake/StageDocumentation.cmake"
-  COMMENT "Staging the existing Cubit FEA manual"
+  COMMENT "Staging the existing Cubit cubit-sim manual"
   VERBATIM)

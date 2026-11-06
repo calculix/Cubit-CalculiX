@@ -1,9 +1,11 @@
+#include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/results/frd/CoreResultsFrdPersistence.hpp"
 #include "Core/results/frd/CoreResultsFrd.hpp"
 #include "HDF5Tool.hpp"
 
 #include <cstddef>
 #include <string>
+#include <utility>
 
 #include "CubitMessage.hpp"
 #include "PersistenceTable.hpp"
@@ -16,6 +18,7 @@ namespace
   struct SavedFrdData
   {
     int job_id = -1;
+    std::vector<FrdAnalysis> result_analysis;
     decltype(CoreResultsFrd::elements) elements;
     decltype(CoreResultsFrd::elements_connectivity) elements_connectivity;
     decltype(CoreResultsFrd::header) header;
@@ -65,12 +68,31 @@ namespace
   {
     try
     {
-      const std::string group = "Cubit-CalculiX/Results/Frd/" + std::to_string(results.job_id) + "/";
+      const std::string group = CalculiXModelSchema::path("Results/Frd/") + std::to_string(results.job_id) + "/";
 
-      if (file.nameExists(group) && file.nameExists(group + std::string("/") + "header") && !file.read_dataset_string_rank_2("header", group, results.header))
+      // Header token counts vary between FRD records. Each row is stored as
+      // its own rank-one dataset; this development format has no legacy path.
+      const std::string header_rows = group + "header_rows/";
+      if (!file.nameExists(header_rows))
       {
-        PRINT_ERROR("Cannot read CalculiX Frd read_base_data for job %d: %s\n", results.job_id, file.last_error().c_str());
+        PRINT_ERROR("Cannot read FRD header rows for job %d: header_rows group is missing.\n", results.job_id);
         return false;
+      }
+      const auto indices = savedIndices(file, header_rows);
+      results.header.clear();
+      for (std::size_t index = 0; index < indices.size(); ++index)
+      {
+        if (indices[index] != static_cast<int>(index))
+        {
+          PRINT_ERROR("Cannot read FRD header rows for job %d: row indices are not contiguous.\n", results.job_id);
+          return false;
+        }
+        results.header.emplace_back();
+        if (!file.read_dataset_string_rank_1(std::to_string(index), header_rows, results.header.back()))
+        {
+          PRINT_ERROR("Cannot read FRD header row %zu for job %d: %s\n", index, results.job_id, file.last_error().c_str());
+          return false;
+        }
       }
       if (file.nameExists(group) && file.nameExists(group + std::string("/") + "materials") && !file.read_dataset_string_rank_2("materials", group, results.materials))
       {
@@ -125,17 +147,31 @@ namespace
   {
     try
     {
-      const std::string group = "Cubit-CalculiX/Results/Frd/" + std::to_string(results.job_id) + "/";
+      const std::string group = CalculiXModelSchema::path("Results/Frd/") + std::to_string(results.job_id) + "/";
 
       if (!file.ensureGroup(group))
       {
         PRINT_ERROR("Cannot save CalculiX Frd result group for job %d: %s\n", results.job_id, file.last_error().c_str());
         return false;
       }
-      if (!file.write_dataset_string_rank_2("header", group, results.header))
+      const std::string header_rows = group + "header_rows/";
+      if (file.nameExists(header_rows) && !file.deleteGroup(header_rows))
       {
-        PRINT_ERROR("Cannot save CalculiX Frd write_base_data for job %d: %s\n", results.job_id, file.last_error().c_str());
+        PRINT_ERROR("Cannot replace FRD header rows for job %d: %s\n", results.job_id, file.last_error().c_str());
         return false;
+      }
+      if (!file.ensureGroup(header_rows))
+      {
+        PRINT_ERROR("Cannot create FRD header rows for job %d: %s\n", results.job_id, file.last_error().c_str());
+        return false;
+      }
+      for (std::size_t index = 0; index < results.header.size(); ++index)
+      {
+        if (!file.write_dataset_string_rank_1(std::to_string(index), header_rows, results.header[index]))
+        {
+          PRINT_ERROR("Cannot save FRD header row %zu for job %d: %s\n", index, results.job_id, file.last_error().c_str());
+          return false;
+        }
       }
       if (!file.write_dataset_string_rank_2("materials", group, results.materials))
       {
@@ -190,7 +226,7 @@ namespace
   {
     try
     {
-      const std::string group = "Cubit-CalculiX/Results/Frd/" + std::to_string(results.job_id) + "/";
+      const std::string group = CalculiXModelSchema::path("Results/Frd/") + std::to_string(results.job_id) + "/";
       const std::string components = group + "result_block_components/";
 
       if (file.nameExists(components))
@@ -259,7 +295,7 @@ namespace
   {
     try
     {
-      const std::string group = "Cubit-CalculiX/Results/Frd/" + std::to_string(results.job_id) + "/";
+      const std::string group = CalculiXModelSchema::path("Results/Frd/") + std::to_string(results.job_id) + "/";
 
       if (!results.result_block_components.empty())
       {
@@ -341,7 +377,7 @@ namespace
   {
     try
     {
-      const std::string group = "Cubit-CalculiX/Results/Frd/" + std::to_string(results.job_id) + "/";
+      const std::string group = CalculiXModelSchema::path("Results/Frd/") + std::to_string(results.job_id) + "/";
 
       if (file.nameExists(group) && file.nameExists(group + std::string("/") + "sorted_node_ids") && !file.read_dataset_int_rank_1("sorted_node_ids", group, results.sorted_node_ids))
       {
@@ -401,7 +437,7 @@ namespace
   {
     try
     {
-      const std::string group = "Cubit-CalculiX/Results/Frd/" + std::to_string(results.job_id) + "/";
+      const std::string group = CalculiXModelSchema::path("Results/Frd/") + std::to_string(results.job_id) + "/";
 
       if (!file.write_dataset_int_rank_1("sorted_node_ids", group, results.sorted_node_ids))
       {
@@ -465,9 +501,60 @@ namespace
     }
   }
 
+  bool read_analysis(HDF5Tool& file, const std::string& group, SavedFrdData& results)
+  {
+    if (!file.nameExists(group + "/AnalysisIdentity"))
+    {
+      return true; // Older saves have no analysis identity; do not invent it.
+    }
+    std::vector<std::vector<int>> identity;
+    if (!file.read_dataset_int_rank_2("AnalysisIdentity", group, identity) ||
+      (!identity.empty() && identity.size() != results.result_blocks.size()) || !PersistenceTable::rows(identity, 4))
+    {
+      return false;
+    }
+    for (std::size_t i = 0; i < identity.size(); ++i)
+    {
+      FrdAnalysis analysis;
+      analysis.type = identity[i][0];
+      analysis.mode = identity[i][1];
+      analysis.nodal_diameter = identity[i][2];
+      analysis.subcase = identity[i][3];
+      if (!file.read_dataset_string_rank_1(std::to_string(i), group + "/AnalysisParameters/", analysis.parameters))
+      {
+        return false;
+      }
+      results.result_analysis.push_back(std::move(analysis));
+    }
+    return true;
+  }
+
+  bool write_analysis(HDF5Tool& file, const std::string& group, const CoreResultsFrd& results)
+  {
+    if (!file.ensureGroup(group + "/AnalysisParameters/"))
+    {
+      return false;
+    }
+    std::vector<std::vector<int>> identity;
+    for (std::size_t i = 0; i < results.result_analysis.size(); ++i)
+    {
+      const auto& analysis = results.result_analysis[i];
+      identity.push_back({analysis.type, analysis.mode, analysis.nodal_diameter, analysis.subcase});
+      if (!file.write_dataset_string_rank_1(std::to_string(i), group + "/AnalysisParameters/", analysis.parameters))
+      {
+        return false;
+      }
+    }
+    return file.write_dataset_int_rank_2("AnalysisIdentity", group, identity);
+  }
+
   template<class Data>
   bool validFrdData(const Data& results)
   {
+    if (!results.result_analysis.empty() && results.result_analysis.size() != results.result_blocks.size())
+    {
+      return false;
+    }
     if (!PersistenceTable::rows(results.nodes, 2) || !PersistenceTable::rows(results.nodes_coords, 3) || !PersistenceTable::rows(results.elements, 4) || !PersistenceTable::rows(results.result_blocks, 7))
     {
       return false;
@@ -540,7 +627,7 @@ bool CoreResultsFrdPersistence::read(HDF5Tool& file, CoreResultsFrd& results)
 {
   try
   {
-    const std::string group = "Cubit-CalculiX/Results/Frd/" + std::to_string(results.job_id);
+    const std::string group = CalculiXModelSchema::path("Results/Frd/") + std::to_string(results.job_id);
     if (!file.nameExists(group))
     {
       return true;
@@ -559,11 +646,17 @@ bool CoreResultsFrdPersistence::read(HDF5Tool& file, CoreResultsFrd& results)
     {
       return false;
     }
+    if (!read_analysis(file, group, saved))
+    {
+      PRINT_ERROR("Cannot read FRD analysis identity for job %d.\n", results.job_id);
+      return false;
+    }
     if (!validFrdData(saved))
     {
       PRINT_ERROR("Cannot read CalculiX Frd results for job %d: invalid data shape or result reference.\n", results.job_id);
       return false;
     }
+    results.result_analysis.swap(saved.result_analysis);
     results.elements.swap(saved.elements);
     results.elements_connectivity.swap(saved.elements_connectivity);
     results.header.swap(saved.header);
@@ -601,6 +694,11 @@ bool CoreResultsFrdPersistence::write(HDF5Tool& file, const CoreResultsFrd& resu
     if (!validFrdData(results))
     {
       PRINT_ERROR("Cannot save CalculiX Frd results for job %d: invalid data shape or result reference.\n", results.job_id);
+      return false;
+    }
+    if (!write_analysis(file, CalculiXModelSchema::path("Results/Frd/") + std::to_string(results.job_id), results))
+    {
+      PRINT_ERROR("Cannot save FRD analysis identity for job %d.\n", results.job_id);
       return false;
     }
     if (!write_base_data(file, results))

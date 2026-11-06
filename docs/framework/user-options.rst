@@ -5,7 +5,7 @@ Open Cubit's options dialog. Each registered workspace contributes its own page;
 CalculiX also exposes **CalculiX > Options**. Apply saves that workspace's
 settings. Cancel does not apply edits that have not already been applied.
 
-Preferences live in one ``cubitfea_user_options.h5`` file in Cubit's standard
+Preferences live in one ``cubitcubitsim_user_options.h5`` file in Cubit's standard
 settings directory. If the SDK supplies no usable directory, the startup working
 directory is used with a warning. The selected filename remains fixed for the
 session. Preferences are separate from the saved finite-element model.

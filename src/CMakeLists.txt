@@ -1,12 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(Cubit-CalculiX)
+project(cubit-sim)
 
-### version
-string(TIMESTAMP CCX_YEAR "%Y")
-string(TIMESTAMP CCX_MONTH "%m")
-string(REGEX REPLACE "^0" "" CCX_MONTH "${CCX_MONTH}") # 02 -> 2
-add_compile_definitions(CCX_VERSION="${CCX_YEAR}.${CCX_MONTH}")
+# The framework owns the application version used by every workspace.
+include("${CMAKE_CURRENT_SOURCE_DIR}/Framework/CubitSimVersion.cmake")
 
 if (UNIX)
  set(CUBIT_ROOT "$ENV{HOME}/Downloads/Coreform-Cubit-2026.11" CACHE PATH "Cubit installation used by this plugin")
@@ -67,6 +64,7 @@ endforeach()
 find_package(Qt6 COMPONENTS Core REQUIRED)
 find_package(Qt6 COMPONENTS Charts REQUIRED)
 find_package(Qt6 COMPONENTS Widgets REQUIRED)
+find_package(Qt6 COMPONENTS OpenGLWidgets REQUIRED)
 find_package(HDF5 REQUIRED COMPONENTS C CXX)
 ADD_DEFINITIONS(-DH5_BUILT_AS_DYNAMIC_LIB)
 
@@ -79,11 +77,14 @@ find_package(CGAL REQUIRED CONFIG)
 find_package(SWIG REQUIRED)
 find_package(Threads REQUIRED)
 
-set(CCX_SOURCE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
-set(CCX_DEPLOY_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
+set(CUBITSIM_SOURCE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
+set(CUBITSIM_DEPLOY_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
 
-include_directories("${CCX_SOURCE_ROOT}")
+include_directories("${CUBITSIM_SOURCE_ROOT}")
 add_subdirectory(Framework/Storage)
 add_subdirectory(Framework/Results)
+add_subdirectory(Framework/Geometry)
+add_subdirectory(Framework/Drawing)
 add_subdirectory(CalculiX)
+add_subdirectory(Postprocessor)
 add_subdirectory(Framework)

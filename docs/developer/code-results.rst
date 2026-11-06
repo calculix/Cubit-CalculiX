@@ -10,7 +10,7 @@ identities. Use the query methods rather than retaining a pointer/index across
 reader deletion, reload, job deletion or model reset.
 
 Current converted results are held separately as
-``shared_ptr<const FeaResults::VtkResultsData>``. A published result can outlive its
+``shared_ptr<const SimResults::VtkResultsData>``. A published result can outlive its
 registry entry only because it owns all required data; it must not borrow a
 reader's vector buffer. The current build is host-thread and synchronous, with
 explicit active/cancelled state and guarded reader mutation. Do not describe
@@ -52,7 +52,7 @@ association, component names, source, dataset identity and validity information.
 Node, element, integration-point and table data must not be merged solely because
 their vector lengths happen to match.
 
-``FeaResults::Increment`` holds owning dataset/table handles. Builders must use
+``SimResults::Increment`` holds owning dataset/table handles. Builders must use
 VTK-compatible deleters that release a reference with ``Delete()``, not default
 ``delete`` on a borrowed object. Published buffers are treated as immutable;
 deformation/filtering should produce separate outputs. All requested tasks must
@@ -99,11 +99,11 @@ limits.
 Legacy paths and external tools
 --------------------------------
 
-The ``results/legacy`` directory contains the retained legacy VTK writer and
-associated conversion path. Its presence in the source catalogue does not mean
-every conversion command uses it. Follow the actual dispatch and CMake source
-lists when changing either implementation; do not remove a path based only on
-its directory name.
+The ``results/legacy`` directory contains the retained legacy VTK writer. It is
+excluded from the current build and has no active callers. Current conversion
+uses the native plan/build/publication/export path documented in
+:doc:`vtk-conversion`. Catalogue inclusion records retained source, not an
+available runtime alternative.
 
 CGX/ParaView opening submits an external process/tool request. Jobs Monitor can
 offer those actions independently of topology-specific controls. The project's

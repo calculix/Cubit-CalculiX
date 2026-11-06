@@ -54,7 +54,7 @@ def module_info(source):
 
 
 def closure(modules):
-    pending = ["VTK::CommonCore", "VTK::CommonDataModel", "VTK::IOParallelXML"]
+    pending = ["VTK::CommonCore", "VTK::CommonDataModel", "VTK::IOParallelXML", "VTK::GUISupportQt"]
     result = set()
     while pending:
         name = pending.pop()
@@ -88,6 +88,9 @@ def validate(source, report, settings):
     core = next(item for item in report["libraries"] if item["name"].lower() == "vtkcommoncore-9.4.dll")
     if core["versions"] != ["9.4.2"]:
         raise ValueError("Cubit CommonCore does not identify itself as VTK 9.4.2")
+    qt = next((item for item in report["libraries"] if item["name"].lower() == "showviz_qt.dll"), None)
+    if qt is None or not any("?setRenderWindow@QVTKOpenGLNativeWidget@@" in item["name"] for item in qt["exports"]):
+        raise ValueError("Cubit showviz_qt.dll does not export the expected QVTK widget API")
     # MSVC names encode namespace components. Check a real public C++ symbol,
     # rather than inferring namespace configuration from version text.
     namespace = settings["VTK_ABI_NAMESPACE_NAME"]
@@ -111,6 +114,8 @@ def wrapper(source, selected, modules):
              "set(VTK_MODULE_ENABLE_VTK_CommonDataModel YES CACHE STRING \"\" FORCE)",
              "set(VTK_MODULE_ENABLE_VTK_IOXML YES CACHE STRING \"\" FORCE)"]
     lines.append('set(VTK_MODULE_ENABLE_VTK_IOParallelXML YES CACHE STRING "" FORCE)')
+    lines.append('set(VTK_QT_VERSION 6 CACHE STRING "" FORCE)')
+    lines.append('set(VTK_MODULE_ENABLE_VTK_GUISupportQt YES CACHE STRING "" FORCE)')
     for group in sorted({group for fields in modules.values() for group in fields.get("GROUPS", [])}):
         lines.append(f'set(VTK_GROUP_ENABLE_{group} DONT_WANT CACHE STRING "" FORCE)')
     lines.extend(["add_subdirectory(" + bracket(source) + " vtk)", "set(_includes \"set(CUBIT_VTK_GENERATED_INCLUDE_DIRECTORIES\\n\")"])
@@ -135,13 +140,17 @@ def write_sdk(output, source, report, modules):
         raise ValueError("CMake did not generate the SDK include metadata")
     lines = ["# Generated development adapter; runtime DLLs remain owned by Cubit.",
              'set(CUBIT_VTK_SDK_VERSION "9.4.2")', 'set(CUBIT_VTK_SDK_COMPATIBILITY "unvalidated")',
+             'set(CUBIT_VTK_SDK_FEATURES "results;viewport-qt")',
              "set(CUBIT_VTK_SDK_HOST_ROOT " + bracket(report["cubit_root"]) + ")",
              "set(CUBIT_VTK_SDK_SOURCE_ROOT " + bracket(source) + ")",
              "include(" + bracket(include_file) + ")", "list(REMOVE_DUPLICATES CUBIT_VTK_GENERATED_INCLUDE_DIRECTORIES)"]
     required_headers = ["vtkCommonCore/vtkOptions.h", "vtkCommonCore/vtkABINamespace.h",
                         "vtkCommonCore/vtkVersionMacros.h", "vtkCommonCore/vtkCommonCoreModule.h",
                         "vtkCommonCore/vtkArrayDispatchArrayList.h", "vtkCommonCore/vtkTypeListMacros.h",
-                        "vtkCommonDataModel/vtkCommonDataModelModule.h"]
+                        "vtkCommonDataModel/vtkCommonDataModelModule.h",
+                        "vtkRenderingCore/vtkRenderingCoreModule.h",
+                        "vtkRenderingOpenGL2/vtkRenderingOpenGL2Module.h",
+                        "vtkGUISupportQt/vtkGUISupportQtModule.h"]
     for relative in required_headers:
         header = output / "header-build/vtk" / relative
         if not header.is_file():
@@ -154,6 +163,7 @@ def write_sdk(output, source, report, modules):
         library = fields.get("LIBRARY_NAME", [])
         if library:
             target_for_dll[(library[0] + "-9.4.dll").lower()] = name
+    target_for_dll["showviz_qt.dll"] = "VTK::GUISupportQt"
     for item in report["libraries"]:
         name = item["name"]
         target = target_for_dll.get(name.lower())
@@ -179,6 +189,8 @@ def write_sdk(output, source, report, modules):
                       '  INTERFACE_COMPILE_FEATURES "${CUBIT_VTK_GENERATED_COMPILE_FEATURES}"', ")"])
     for item in report["libraries"]:
         dependencies = [target_for_dll[entry["name"].lower()] for entry in item["imports"] if entry["name"].lower() in target_for_dll]
+        if item["name"].lower() == "showviz_qt.dll":
+            dependencies.extend(["Qt6::Widgets", "Qt6::OpenGLWidgets"])
         if dependencies:
             lines.append("set_property(TARGET " + target_for_dll[item["name"].lower()] + " PROPERTY INTERFACE_LINK_LIBRARIES " + bracket(";".join(dependencies)) + ")")
     # Publish only after all librarian calls succeed (performed by the caller).
@@ -195,6 +207,7 @@ def main():
     parser.add_argument("--cmake", default="cmake")
     parser.add_argument("--generator-instance", default="")
     parser.add_argument("--toolset", default="")
+    parser.add_argument("--qt-dir", default="", help="Qt6_DIR used by the selected Cubit plugin build")
     parser.add_argument("--execute", action="store_true")
     args = parser.parse_args()
     source, output = args.source.resolve(), args.output.resolve()
@@ -213,6 +226,7 @@ def main():
     modules = module_info(source)
     selected = closure(modules)
     known_dlls = {(fields["LIBRARY_NAME"][0] + "-9.4.dll").lower() for fields in modules.values() if fields.get("LIBRARY_NAME")}
+    known_dlls.add("showviz_qt.dll")
     missing = sorted(name for name in expected if name.lower() not in known_dlls)
     if missing:
         raise ValueError(f"DLLs have no corresponding public source module: {missing}")
@@ -222,6 +236,8 @@ def main():
         command.append("-DCMAKE_GENERATOR_INSTANCE=" + args.generator_instance)
     if args.toolset:
         command.extend(["-T", args.toolset])
+    if args.qt_dir:
+        command.append("-DQt6_DIR=" + args.qt_dir)
     for name, value in settings.items():
         command.append("-D" + name + "=" + (("ON" if value else "OFF") if isinstance(value, bool) else value))
     plan = {"schema": 1, "source": str(source), "output": str(output), "settings": settings,

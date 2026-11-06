@@ -11,6 +11,7 @@
 
 class CalculiXCommands;
 class CalculiXGui;
+class CalculiXResultSourceProvider;
 
 class CalculiXModule : public ModuleInterface,
                        public CommandProviderInterface,
@@ -22,7 +23,7 @@ public:
   ~CalculiXModule() override;
 
   std::string module_id() const override;
-  bool initialize(UserOptionsInterface& options, std::string& error) override;
+  bool initialize(UserOptionsInterface& options, DrawingInterface& drawings, std::string& error) override;
   void shutdown() noexcept override;
   CommandProviderInterface* command_provider() noexcept override;
   ComponentProviderInterface* component_provider() noexcept override;
@@ -31,11 +32,13 @@ public:
   bool start_component(int withGUI, QWidget* host, std::string& error) override;
   void stop_component() noexcept override;
   WorkspaceProviderInterface* workspace_provider() noexcept override;
+  ResultSourceProviderInterface* result_source_provider() noexcept override;
   bool workspace_view(WorkspaceView& view, std::string& error) override;
 
 private:
   std::unique_ptr<CalculiXCommands> commands;
   std::unique_ptr<CalculiXGui> gui;
+  std::unique_ptr<CalculiXResultSourceProvider> resultProvider;
   bool observer_registered = false;
 };
 

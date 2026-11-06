@@ -37,7 +37,7 @@ bool DocumentationManager::attach(Claro* window, std::string& error)
   frameworkHelp = new QMenu(tr("&Help"), window->menuBar());
   frameworkHelp->setObjectName("Framework.Menu.Help");
   window->menuBar()->addMenu(frameworkHelp.data());
-  action = new QAction(window->style()->standardIcon(QStyle::SP_DialogHelpButton), tr("FEA documentation"), this);
+  action = new QAction(window->style()->standardIcon(QStyle::SP_DialogHelpButton), tr("cubit-sim documentation"), this);
   action->setObjectName("Framework.Documentation");
   action->setToolTip(tr("Open the installed offline Framework and workspace documentation."));
   frameworkHelp->addAction(action.data());
@@ -48,7 +48,7 @@ bool DocumentationManager::attach(Claro* window, std::string& error)
   connect(action.data(), &QAction::triggered, this, [this]()
   {
     std::string error;
-    if (!CommandDispatcher::submit(host.data(), "fea documentation", error))
+    if (!CommandDispatcher::submit(host.data(), "sim documentation", error))
     {
       PRINT_ERROR("Unable to submit documentation command: %s\n", error.c_str());
     }

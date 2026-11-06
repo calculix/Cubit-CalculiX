@@ -1,11 +1,11 @@
-#ifndef FEA_USEROPTIONSSTORE_HPP
-#define FEA_USEROPTIONSSTORE_HPP
+#ifndef CUBITSIM_USEROPTIONSSTORE_HPP
+#define CUBITSIM_USEROPTIONSSTORE_HPP
 
 #include "StorageExport.hpp"
 #include "Framework/Interfaces/UserOptionsInterface.hpp"
 #include "Framework/Utility/FrameworkPaths.hpp"
 
-class FEA_STORAGE_EXPORT UserOptionsStore : public UserOptionsInterface
+class CUBITSIM_STORAGE_EXPORT UserOptionsStore : public UserOptionsInterface
 {
 public:
   explicit UserOptionsStore(FrameworkPaths paths);

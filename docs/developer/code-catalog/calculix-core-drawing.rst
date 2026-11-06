@@ -34,21 +34,21 @@ changing a path. External utility implementations are excluded.
      - ``Implementation / integration``
    * - :download:`src/CalculiX/Core/drawing/CoreDrawConstraintData.hpp <../../../src/CalculiX/Core/drawing/CoreDrawConstraintData.hpp>`
      - ``CoreDrawConstraintData``
-   * - :download:`src/CalculiX/Core/drawing/CoreDrawGeometry.cpp <../../../src/CalculiX/Core/drawing/CoreDrawGeometry.cpp>`
+   * - :download:`src/Framework/Drawing/DrawingGeometry.cpp <../../../src/Framework/Drawing/DrawingGeometry.cpp>`
      - ``Implementation / integration``
-   * - :download:`src/CalculiX/Core/drawing/CoreDrawGeometry.hpp <../../../src/CalculiX/Core/drawing/CoreDrawGeometry.hpp>`
+   * - :download:`src/Framework/Drawing/DrawingGeometry.hpp <../../../src/Framework/Drawing/DrawingGeometry.hpp>`
      - ``DrawPrimitiveKind, DrawPrimitive, DrawGeometry``
-   * - :download:`src/CalculiX/Core/drawing/CoreDrawGraphics.cpp <../../../src/CalculiX/Core/drawing/CoreDrawGraphics.cpp>`
+   * - :download:`src/Framework/Drawing/DrawingGraphics.cpp <../../../src/Framework/Drawing/DrawingGraphics.cpp>`
      - ``Implementation / integration``
-   * - :download:`src/CalculiX/Core/drawing/CoreDrawGraphics.hpp <../../../src/CalculiX/Core/drawing/CoreDrawGraphics.hpp>`
+   * - :download:`src/Framework/Drawing/DrawingGraphics.hpp <../../../src/Framework/Drawing/DrawingGraphics.hpp>`
      - ``CoreDrawGraphics, NativeVisibility``
-   * - :download:`src/CalculiX/Core/drawing/CoreDrawHitTest.cpp <../../../src/CalculiX/Core/drawing/CoreDrawHitTest.cpp>`
+   * - :download:`src/Framework/Drawing/DrawingHitTest.cpp <../../../src/Framework/Drawing/DrawingHitTest.cpp>`
      - ``NativeBufferGuard, NativeFilterGuard``
-   * - :download:`src/CalculiX/Core/drawing/CoreDrawHitTest.hpp <../../../src/CalculiX/Core/drawing/CoreDrawHitTest.hpp>`
+   * - :download:`src/Framework/Drawing/DrawingHitTest.hpp <../../../src/Framework/Drawing/DrawingHitTest.hpp>`
      - ``CoreDrawHitTest``
-   * - :download:`src/CalculiX/Core/drawing/CoreDrawHover.cpp <../../../src/CalculiX/Core/drawing/CoreDrawHover.cpp>`
+   * - :download:`src/Framework/Drawing/DrawingHover.cpp <../../../src/Framework/Drawing/DrawingHover.cpp>`
      - ``Implementation / integration``
-   * - :download:`src/CalculiX/Core/drawing/CoreDrawHover.hpp <../../../src/CalculiX/Core/drawing/CoreDrawHover.hpp>`
+   * - :download:`src/Framework/Drawing/DrawingHover.hpp <../../../src/Framework/Drawing/DrawingHover.hpp>`
      - ``CoreDrawHover``
    * - :download:`src/CalculiX/Core/drawing/CoreDrawLoadData.cpp <../../../src/CalculiX/Core/drawing/CoreDrawLoadData.cpp>`
      - ``Implementation / integration``
@@ -66,11 +66,11 @@ changing a path. External utility implementations are excluded.
      - ``Implementation / integration``
    * - :download:`src/CalculiX/Core/drawing/CoreDrawPersistence.hpp <../../../src/CalculiX/Core/drawing/CoreDrawPersistence.hpp>`
      - ``CoreDrawPersistence``
-   * - :download:`src/CalculiX/Core/drawing/CoreDrawPickData.hpp <../../../src/CalculiX/Core/drawing/CoreDrawPickData.hpp>`
+   * - :download:`src/Framework/Drawing/DrawingPickData.hpp <../../../src/Framework/Drawing/DrawingPickData.hpp>`
      - ``DrawPickEntity, DrawPickSnapshot, DrawPickHit``
-   * - :download:`src/CalculiX/Core/drawing/CoreDrawPicker.cpp <../../../src/CalculiX/Core/drawing/CoreDrawPicker.cpp>`
+   * - :download:`src/Framework/Drawing/DrawingPicker.cpp <../../../src/Framework/Drawing/DrawingPicker.cpp>`
      - ``PickedDrawEntity``
-   * - :download:`src/CalculiX/Core/drawing/CoreDrawPicker.hpp <../../../src/CalculiX/Core/drawing/CoreDrawPicker.hpp>`
+   * - :download:`src/Framework/Drawing/DrawingPicker.hpp <../../../src/Framework/Drawing/DrawingPicker.hpp>`
      - ``CoreDrawPicker, DispatchState``
    * - :download:`src/CalculiX/Core/drawing/CoreDrawSavedState.cpp <../../../src/CalculiX/Core/drawing/CoreDrawSavedState.cpp>`
      - ``Implementation / integration``
@@ -86,9 +86,9 @@ changing a path. External utility implementations are excluded.
      - ``ResolvedDrawScope, CoreDrawScope``
    * - :download:`src/CalculiX/Core/drawing/CoreDrawState.cpp <../../../src/CalculiX/Core/drawing/CoreDrawState.cpp>`
      - ``Implementation / integration``
-   * - :download:`src/CalculiX/Core/drawing/CoreDrawSymbols.cpp <../../../src/CalculiX/Core/drawing/CoreDrawSymbols.cpp>`
+   * - :download:`src/Framework/Drawing/DrawingSymbols.cpp <../../../src/Framework/Drawing/DrawingSymbols.cpp>`
      - ``Implementation / integration``
-   * - :download:`src/CalculiX/Core/drawing/CoreDrawSymbols.hpp <../../../src/CalculiX/Core/drawing/CoreDrawSymbols.hpp>`
+   * - :download:`src/Framework/Drawing/DrawingSymbols.hpp <../../../src/Framework/Drawing/DrawingSymbols.hpp>`
      - ``CoreDrawSymbols``
    * - :download:`src/CalculiX/Core/drawing/CoreDrawTopology.cpp <../../../src/CalculiX/Core/drawing/CoreDrawTopology.cpp>`
      - ``Implementation / integration``

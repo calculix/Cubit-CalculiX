@@ -19,7 +19,7 @@ bool CoreDraw::draw_topology(int topologyId, int iterationId, double threshold)
   {
     return false;
   }
-  DrawGeometry geometry;
+  DrawingGeometry geometry;
   for (const auto& row : rows)
   {
     if (row.size() != 4 || !std::isfinite(row[0]) || std::floor(row[0]) != row[0] || row[0] < 1 || row[0] > static_cast<double>((std::numeric_limits<int>::max)()) || !std::isfinite(row[1]) || row[1] < 0 || row[1] > 1 || (row[3] != 0 && row[3] != 1))

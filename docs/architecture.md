@@ -4,7 +4,7 @@
 
 ## Runtime structure
 
-Cubit-CalculiX is a Cubit extension with command, GUI, shared model, and Python binding layers. Cubit supplies host services such as mesh access, command execution, and file-event notifications. CalculiX runs as an external solver.
+cubit-sim is a Cubit extension with command, GUI, shared model, and Python binding layers. Cubit supplies host services such as mesh access, command execution, and file-event notifications. CalculiX runs as an external solver.
 
 The following diagram summarizes calls observed in the source. It is a navigation aid, not an exhaustive dependency graph.
 
@@ -13,7 +13,7 @@ flowchart TD
     J[User commands and journals] --> C[Cubit command dispatcher]
     G[Qt panels] --> S[GuiSendCmd]
     S --> C
-    C --> P[FEAPlugin and module command providers]
+    C --> P[CubitSimPlugin and module command providers]
     P --> I[Domain interfaces]
     PY[SWIG Python interface] --> I
     I --> M[Shared ccx_core / CalculiXCore]
@@ -32,8 +32,8 @@ flowchart TD
 
 ## Entry points and shared state
 
-- [FEAPlugin.cpp](../src/Framework/FEAPlugin.cpp) registers the loader-facing command plugin with `CUBIT_PLUGIN`. It exposes the workspace command and delegates module command keys/construction through [FrameworkContext](../src/Framework/Core/FrameworkContext.cpp). CalculiX command registration lives in [CalculiXCommands.cpp](../src/CalculiX/Commands/CalculiXCommands.cpp).
-- [FEAComp.cpp](../src/Framework/FEAComp.cpp) is the loader-facing component. It attaches the workspace host through the Framework context. [CalculiXModule.cpp](../src/CalculiX/CalculiXModule.cpp) owns the module lifecycle and core observer registration; [CalculiXGui.cpp](../src/CalculiX/GUI/CalculiXGui.cpp) creates panels, model tree, menus, toolbars and GUI observer callbacks. The component binding is declared in [fea_comp.i](../src/Framework/fea_comp.i).
+- [CubitSimPlugin.cpp](../src/Framework/CubitSimPlugin.cpp) registers the loader-facing command plugin with `CUBIT_PLUGIN`. It exposes the workspace command and delegates module command keys/construction through [FrameworkContext](../src/Framework/Core/FrameworkContext.cpp). CalculiX command registration lives in [CalculiXCommands.cpp](../src/CalculiX/Commands/CalculiXCommands.cpp).
+- [CubitSimComp.cpp](../src/Framework/CubitSimComp.cpp) is the loader-facing component. It attaches the workspace host through the Framework context. [CalculiXModule.cpp](../src/CalculiX/CalculiXModule.cpp) owns the module lifecycle and core observer registration; [CalculiXGui.cpp](../src/CalculiX/GUI/CalculiXGui.cpp) creates panels, model tree, menus, toolbars and GUI observer callbacks. The component binding is declared in [cubitsim_comp.i](../src/Framework/cubitsim_comp.i).
 - [loadCalculiXCore.cpp](../src/CalculiX/Core/loadCalculiXCore.cpp) defines one global `CalculiXCore ccx_core`. [Domain interfaces](developer/interface-layout.rst) forward operations to this shared instance. Constructing an interface does not create an independent model.
 - [CalculiXCore.hpp](../src/CalculiX/Core/CalculiXCore.hpp) declares coordination operations. [CalculiXCoreInitialization.cpp](../src/CalculiX/Core/application/CalculiXCoreInitialization.cpp) implements `init()`, `init2()` and Python initialization; [CalculiXCoreMaintenance.cpp](../src/CalculiX/Core/application/CalculiXCoreMaintenance.cpp) implements updates/reset, and [CalculiXCorePersistence.cpp](../src/CalculiX/Core/application/CalculiXCorePersistence.cpp) implements model read/save. The destructor remains in [CalculiXCore.cpp](../src/CalculiX/Core/CalculiXCore.cpp). Domain-specific coordination is split across the corresponding Core directories.
 
@@ -55,13 +55,13 @@ Tree display data also passes through the interface. For damping, [CalculiXCoreS
 
 ## User options
 
-The framework owns one `cubitfea_user_options.h5` in Cubit's standard settings directory. If the SDK cannot resolve a settings directory, the startup working directory is used. The absolute filename is retained for the session. Each workspace supplies explicit typed defaults and validators through `UserOptionsInterface`; CalculiX declarations live in `CoreUserOptions.cpp`. Saved values are validated before populating `ccx_uo`. Resource defaults remain relative to the framework component directory. The options store is implemented in `fea_storage`, and modules receive its interface during initialization, avoiding a link dependency back to the framework host. The framework registers workspace-owned options widgets with Cubit. CalculiX editing runs through a replayable command. `ccx.cfg` is no longer read or written. See [the contract](developer/user-options.rst).
+The framework owns one `cubitcubitsim_user_options.h5` in Cubit's standard settings directory. If the SDK cannot resolve a settings directory, the startup working directory is used. The absolute filename is retained for the session. Each workspace supplies explicit typed defaults and validators through `UserOptionsInterface`; CalculiX declarations live in `CoreUserOptions.cpp`. Saved values are validated before populating `ccx_uo`. Resource defaults remain relative to the framework component directory. The options store is implemented in `cubitsim_storage`, and modules receive its interface during initialization, avoiding a link dependency back to the framework host. The framework registers workspace-owned options widgets with Cubit. CalculiX editing runs through a replayable command. `ccx.cfg` is no longer read or written. See [the contract](developer/user-options.rst).
 
 ## Model representation and persistence
 
 Domain objects such as `CoreSections`, `CoreSteps`, and `CoreDamping` hold feature state. Many interfaces use positional vectors rather than named record fields. For example, [CoreDamping.hpp](../src/CalculiX/Core/steps/CoreDamping.hpp) defines `damping_data[0]` as alpha and `[1]` as beta. Empty strings represent unset coefficients; an explicit zero is a different stored value.
 
-`CalculiXCore::read_cub()` and `save_cub()` use the shared framework storage library `fea_storage` and its [HDF5Tool](../src/Framework/Storage/HDF5Tool.hpp) to read/write groups beneath `Cubit-CalculiX` in the model file. Damping uses the rank-one string dataset `Cubit-CalculiX/Damping/damping_data`. The reader rejects the legacy `.cub` extension and directs users to `.cub5`.
+`CalculiXCore::read_cub()` and `save_cub()` use the shared framework storage library `cubitsim_storage` and its [HDF5Tool](../src/Framework/Storage/HDF5Tool.hpp) to read/write groups beneath `cubit-sim` in the model file. Damping uses the rank-one string dataset `cubit-sim/Damping/damping_data`. The reader rejects the legacy `.cub` extension and directs users to `.cub5`.
 
 Changing vector layout is therefore potentially a file-format change. Check initialization, reset, readers, writers, display consumers, and exports together. The damping reader fills two empty entries when its dataset is empty; that is not proof of a general migration mechanism.
 

@@ -44,8 +44,8 @@ public:
   bool delete_result(int job_id); // deletes results from results_data and deletes frd object
   bool add_result(int result_id, int job_id, int frd_id, int dat_id);
   bool load_result(int job_id); // loads the results for the job if possible
-  FeaResults::ConversionStatus get_vtk_status(int job_id) const;
-  std::shared_ptr<const FeaResults::VtkResultsData> get_vtk_result(int job_id) const;
+  SimResults::ConversionStatus get_vtk_status(int job_id) const;
+  std::shared_ptr<const SimResults::VtkResultsData> get_vtk_result(int job_id) const;
   bool prepare_vtk_plan(int job_id, const CoreResultsVtkOptions& options, CoreResultsVtkPlan& plan);
   // Host-thread, synchronous. Callers must use these interfaces rather than
   // mutating the public legacy reader containers during a conversion.
@@ -71,8 +71,8 @@ private:
   std::atomic<bool> vtk_cancelled{false};
   // Converted data is transient. Published handles may outlive deletion/reload
   // of a job in this registry and must never borrow reader storage.
-  std::map<int, FeaResults::ConversionStatus> vtk_status;
-  std::map<int, std::shared_ptr<const FeaResults::VtkResultsData>> vtk_results;
+  std::map<int, SimResults::ConversionStatus> vtk_status;
+  std::map<int, std::shared_ptr<const SimResults::VtkResultsData>> vtk_results;
   std::map<int, std::string> vtk_exports;
 
 };

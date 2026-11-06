@@ -3,6 +3,8 @@
 #include "GUI/CalculiXGui.hpp"
 #include "Core/application/CalculiXApplicationInterface.hpp"
 #include "Core/application/CoreObserver.hpp"
+#include "Core/drawing/CalculiXDrawInterface.hpp"
+#include "Core/results/CalculiXResultSourceProvider.hpp"
 #include "CubitInterface.hpp"
 #include "CubitCommandInterface.hpp"
 #include "CubitPluginManager.hpp"
@@ -56,7 +58,7 @@ std::string CalculiXModule::module_id() const
   return "calculix";
 }
 
-bool CalculiXModule::initialize(UserOptionsInterface& options, std::string& error)
+bool CalculiXModule::initialize(UserOptionsInterface& options, DrawingInterface& drawings, std::string& error)
 {
   error.clear();
 
@@ -72,9 +74,9 @@ bool CalculiXModule::initialize(UserOptionsInterface& options, std::string& erro
     {
       const auto keys = provider->get_keys();
 
-      if (std::find(keys.begin(), keys.end(), "ccxVersionCommand") != keys.end())
+      if (std::find(keys.begin(), keys.end(), "ccxResetCommand") != keys.end())
       {
-        error = "CalculiX commands are already registered. Restart Cubit using only the FEA plugin directory.";
+        error = "CalculiX commands are already registered. Restart Cubit using only the cubit-sim plugin directory.";
         return false;
       }
     }
@@ -92,7 +94,9 @@ bool CalculiXModule::initialize(UserOptionsInterface& options, std::string& erro
     return false;
   }
 
+  CalculiXDrawInterface().bind_drawing(&drawings);
   commands = std::make_unique<CalculiXCommands>();
+  resultProvider = std::make_unique<CalculiXResultSourceProvider>();
   application.core_observer().register_observer();
   observer_registered = true;
   return true;
@@ -101,6 +105,7 @@ bool CalculiXModule::initialize(UserOptionsInterface& options, std::string& erro
 void CalculiXModule::shutdown() noexcept
 {
   stop_component();
+  resultProvider.reset();
 
   if (observer_registered)
   {
@@ -109,6 +114,7 @@ void CalculiXModule::shutdown() noexcept
     observer_registered = false;
   }
 
+  CalculiXDrawInterface().bind_drawing(nullptr);
   commands.reset();
   CalculiXApplicationInterface().shutdown_user_options();
   // Project data remains owned by the one ccx_core in calculix_core.
@@ -194,6 +200,11 @@ void CalculiXModule::stop_component() noexcept
     gui->stop();
     gui.reset();
   }
+}
+
+ResultSourceProviderInterface* CalculiXModule::result_source_provider() noexcept
+{
+  return resultProvider.get();
 }
 
 WorkspaceProviderInterface* CalculiXModule::workspace_provider() noexcept

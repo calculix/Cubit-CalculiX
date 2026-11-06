@@ -4,7 +4,7 @@ GUI ownership, navigation and editor contracts
 Owners and host boundaries
 ---------------------------
 
-``CalculiXGui`` is an internal GUI owner; ``FEAComp`` is the loader-facing
+``CalculiXGui`` is an internal GUI owner; ``CubitSimComp`` is the loader-facing
 component. The Framework hosts workspace views. The CalculiX GUI creates its
 model tree, properties dock, drawing/topology toolbars, menus, panel manager and
 observers, and removes its resources during ``stop()``. Qt parent ownership and

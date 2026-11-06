@@ -1,3 +1,4 @@
+#include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/topology/CoreTopology.hpp"
 #include "Core/topology/CoreTopologyStructs.hpp"
 #include "CoreTopologyLevelSet.hpp"
@@ -252,7 +253,7 @@ bool CoreTopology::save_configuration(HDF5Tool& file) const
 {
   try
   {
-    const std::string root = "Cubit-CalculiX/Topology";
+    const std::string root = CalculiXModelSchema::path("Topology");
 
     if (topology_cases.size() > static_cast<size_t>(std::numeric_limits<int>::max()))
     {
@@ -390,7 +391,7 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
 {
   try
   {
-    const std::string root = "Cubit-CalculiX/Topology";
+    const std::string root = CalculiXModelSchema::path("Topology");
 
     // An absent topology group represents a model without topology cases.
     if (!file.nameExists(root))

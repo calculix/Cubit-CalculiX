@@ -47,7 +47,7 @@ void MaterialManagementItem::initialize_cubit(QString material_id_qstring,QStrin
   MaterialVector prop_vector;
   MaterialMatrix prop_matrix;
 
-  // we get the group properties for the Calculix-FEA Type
+  // we get the group properties for the Calculix-cubit-sim Type
   group_properties = ccx_materials_iface.get_material_group_properties();
 
   // we build our storages for the material data
@@ -162,7 +162,7 @@ void MaterialManagementItem::initialize_library(std::vector<std::string> tree_da
   {
     std::vector<std::vector<double>> tmp_values;
 
-    // we get the group properties for the Calculix-FEA Type
+    // we get the group properties for the Calculix-cubit-sim Type
     group_properties = ccx_materials_iface.get_material_group_properties();
 
     // we build our storages for the material data

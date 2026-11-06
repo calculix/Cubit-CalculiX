@@ -13,12 +13,12 @@
 WorkspaceHeader::WorkspaceHeader(QMainWindow* window, std::function<void(const QString&)> request)
   : QWidget(window), host(window), previousMargins(window->contentsMargins()), previousLayoutOnEntireRect(window->testAttribute(Qt::WA_LayoutOnEntireRect))
 {
-  setObjectName("FEA.WorkspaceHeader");
+  setObjectName("CubitSim.WorkspaceHeader");
   setAutoFillBackground(true);
   auto* row = new QHBoxLayout(this);
   row->setContentsMargins(4, 2, 4, 2);
   tabs = new QTabBar(this);
-  tabs->setObjectName("FEA.WorkspaceTabs");
+  tabs->setObjectName("CubitSim.WorkspaceTabs");
   tabs->setAccessibleName(tr("Application workspace"));
   tabs->setExpanding(false);
   tabs->setDrawBase(false);

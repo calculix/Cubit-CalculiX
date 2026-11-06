@@ -2,6 +2,8 @@
 #define CALCULIXCORE_HPP
 
 #include <vector>
+#include <cstddef>
+#include "Core/results/dat/CoreResultsDatStructs.hpp"
 #include <string>
 #include <set>
 #include <map>
@@ -13,6 +15,7 @@
 #include "Core/mesh/CoreSidesetFaces.hpp"
 #include "Core/steps/CoreStepsStructs.hpp"
 #include "Core/topology/CoreTopologyStructs.hpp"
+#include "Framework/Core/CubitSimVersion.hpp"
 
 class CoreBlocks;
 class CoreMaterials;
@@ -75,7 +78,7 @@ public:
   bool bool_block_gui_update = false;
   bool use_ccx_logfile = false;
   bool use_ccx_autocleanup = true;
-  std::string version = CCX_VERSION;
+  std::string version = CubitSim::Version;
   CoreSidesetFaces sideset_faces;
   bool checking_jobs = false;
   unsigned int silent_cmd_depth = 0;
@@ -562,6 +565,12 @@ public:
   std::vector<std::string> dat_get_section_set(int job_id);
   std::vector<std::vector<double>> dat_get_section_data(int job_id, std::string section_set);
   std::vector<std::string> dat_get_section_label(int job_id);
+
+  // Metadata excludes rows. Read table values in bounded pages through this API.
+  std::vector<DatResultTable> dat_get_table_metadata(int job_id);
+  std::size_t dat_get_table_row_count(int job_id, int table_id);
+  std::vector<std::vector<double>> dat_get_table_rows(int job_id, int table_id, std::size_t offset, std::size_t count);
+
 
   // Load drawing data
   std::vector<std::vector<double>> get_draw_data_for_load_force(int id);

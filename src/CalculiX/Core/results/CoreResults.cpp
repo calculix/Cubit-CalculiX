@@ -185,10 +185,10 @@ bool CoreResults::load_result(int job_id)
   }
 }
 
-FeaResults::ConversionStatus CoreResults::get_vtk_status(int job_id) const
+SimResults::ConversionStatus CoreResults::get_vtk_status(int job_id) const
 {
   const auto found = vtk_status.find(job_id);
-  return found == vtk_status.end() ? FeaResults::ConversionStatus::NotConverted : found->second;
+  return found == vtk_status.end() ? SimResults::ConversionStatus::NotConverted : found->second;
 }
 
 bool CoreResults::prepare_vtk_plan(int job_id, const CoreResultsVtkOptions& options, CoreResultsVtkPlan& plan)
@@ -213,29 +213,29 @@ bool CoreResults::prepare_vtk_plan_impl(int job_id, const CoreResultsVtkOptions&
     PRINT_ERROR("Cannot plan VTK results for a missing or running job.\n");
     return false;
   }
-  vtk_status[job_id] = FeaResults::ConversionStatus::Planning;
+  vtk_status[job_id] = SimResults::ConversionStatus::Planning;
   CoreResultsVtkLink linker;
   try
   {
     if (!linker.prepare(job_id, frd_data[frd_id], dat_data[dat_id], job[1] + ".inp", options, plan))
     {
-      vtk_status[job_id] = FeaResults::ConversionStatus::Failed;
+      vtk_status[job_id] = SimResults::ConversionStatus::Failed;
       return false;
     }
   }
   catch (const std::exception& error)
   {
-    vtk_status[job_id] = FeaResults::ConversionStatus::Failed;
+    vtk_status[job_id] = SimResults::ConversionStatus::Failed;
     PRINT_ERROR("VTK planning failed: %s\n", error.what());
     return false;
   }
   catch (...)
   {
-    vtk_status[job_id] = FeaResults::ConversionStatus::Failed;
+    vtk_status[job_id] = SimResults::ConversionStatus::Failed;
     PRINT_ERROR("Unexpected VTK planning failure.\n");
     return false;
   }
-  vtk_status[job_id] = FeaResults::ConversionStatus::Planned;
+  vtk_status[job_id] = SimResults::ConversionStatus::Planned;
   return true;
 }
 
@@ -287,7 +287,7 @@ bool CoreResults::build_vtk_result(int job_id, const CoreResultsVtkOptions& opti
     {
       if (ccx_uo.mConverterThreads < 1)
       {
-        vtk_status[job_id] = FeaResults::ConversionStatus::Failed;
+        vtk_status[job_id] = SimResults::ConversionStatus::Failed;
         PRINT_ERROR("VTK conversion requires at least one converter thread.\n");
         return false;
       }
@@ -304,7 +304,7 @@ bool CoreResults::build_vtk_result(int job_id, const CoreResultsVtkOptions& opti
     ProgressTool* progress = CubitInterface::app_util().get()->progress_tool();
     if (!progress)
     {
-      vtk_status[job_id] = FeaResults::ConversionStatus::Failed;
+      vtk_status[job_id] = SimResults::ConversionStatus::Failed;
       PRINT_ERROR("VTK conversion progress service is unavailable.\n");
       return false;
     }
@@ -329,45 +329,45 @@ bool CoreResults::build_vtk_result(int job_id, const CoreResultsVtkOptions& opti
       }
       return !vtk_cancelled.load(std::memory_order_relaxed);
     };
-    vtk_status[job_id] = FeaResults::ConversionStatus::Converting;
-    std::shared_ptr<const FeaResults::VtkResultsData> converted;
+    vtk_status[job_id] = SimResults::ConversionStatus::Converting;
+    std::shared_ptr<const SimResults::VtkResultsData> converted;
     std::string error;
     CoreResultsVtkConverter converter;
     if (!converter.build(frd_data[frd_id], dat_data[dat_id], plan, vtk_cancelled, poll, converted, error))
     {
       if (error.empty() && vtk_cancelled.load(std::memory_order_relaxed))
       {
-        vtk_status[job_id] = FeaResults::ConversionStatus::Cancelled;
+        vtk_status[job_id] = SimResults::ConversionStatus::Cancelled;
         PRINT_INFO("VTK result build cancelled.\n");
       }
       else
       {
-        vtk_status[job_id] = FeaResults::ConversionStatus::Failed;
+        vtk_status[job_id] = SimResults::ConversionStatus::Failed;
         PRINT_ERROR("VTK result build failed: %s\n", error.empty() ? "unknown conversion error" : error.c_str());
       }
       return false;
     }
     vtk_results[job_id] = std::move(converted);
     vtk_exports.erase(job_id);
-    vtk_status[job_id] = FeaResults::ConversionStatus::Complete;
+    vtk_status[job_id] = SimResults::ConversionStatus::Complete;
     CalculiXJobsInterface().set_job_conversion(job_id, -1);
     return true;
   }
   catch (const std::exception& error)
   {
-    vtk_status[job_id] = FeaResults::ConversionStatus::Failed;
+    vtk_status[job_id] = SimResults::ConversionStatus::Failed;
     PRINT_ERROR("VTK result build failed: %s\n", error.what());
     return false;
   }
   catch (...)
   {
-    vtk_status[job_id] = FeaResults::ConversionStatus::Failed;
+    vtk_status[job_id] = SimResults::ConversionStatus::Failed;
     PRINT_ERROR("Unexpected VTK result build failure.\n");
     return false;
   }
 }
 
-std::shared_ptr<const FeaResults::VtkResultsData> CoreResults::get_vtk_result(int job_id) const
+std::shared_ptr<const SimResults::VtkResultsData> CoreResults::get_vtk_result(int job_id) const
 {
   const auto found = vtk_results.find(job_id);
   return found == vtk_results.end() ? nullptr : found->second;
@@ -387,7 +387,7 @@ bool CoreResults::export_vtk_result(int job_id, const std::string& destination)
     return false;
   }
   const auto result = get_vtk_result(job_id);
-  if (!result || get_vtk_status(job_id) != FeaResults::ConversionStatus::Complete)
+  if (!result || get_vtk_status(job_id) != SimResults::ConversionStatus::Complete)
   {
     PRINT_ERROR("Build a complete VTK result before exporting job %d.\n", job_id);
     return false;
@@ -411,7 +411,7 @@ bool CoreResults::export_vtk_result(int job_id, const std::string& destination)
     }
     std::string index;
     std::string error;
-    if (!FeaResults::export_vtk_result(*result, target, index, error, [&](double)
+    if (!SimResults::export_vtk_result(*result, target, index, error, [&](double)
       {
         return !vtk_cancelled.load(std::memory_order_relaxed);
       }))

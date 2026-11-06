@@ -2,7 +2,7 @@ Stage 2: CalculiX module integration
 ====================================
 
 Stage 2 replaces the old CalculiX loader entry points with one
-``FEAPlugin`` command plugin and one ``FEAComp`` component. The framework
+``CubitSimPlugin`` command plugin and one ``CubitSimComp`` component. The framework
 registers an internal ``CalculiXModule``. Module code belongs in
 ``src/CalculiX``, not in the solver executable directory.
 
@@ -11,8 +11,8 @@ Source layout::
   src/
     CMakeLists.txt
     Framework/
-      FEAPlugin.hpp/.cpp
-      FEAComp.hpp/.cpp
+      CubitSimPlugin.hpp/.cpp
+      CubitSimComp.hpp/.cpp
       Core/
       Interfaces/
       Utility/
@@ -61,10 +61,10 @@ Loading and ownership
 
 The new ``calculix_commands`` and ``calculix_gui`` libraries are internal
 providers, not Cubit-discovered entry points. ``calculix_module`` implements
-the framework contracts and links those providers. Only ``fea_plugin`` uses
-``CUBIT_PLUGIN``; only ``fea_comp`` has component SWIG bindings.
+the framework contracts and links those providers. Only ``cubitsim_plugin`` uses
+``CUBIT_PLUGIN``; only ``cubitsim_comp`` has component SWIG bindings.
 
-Load ``fea_plugin`` through ``CUBIT_PLUGIN_DIR`` before starting ``FEAComp``.
+Load ``cubitsim_plugin`` through ``CUBIT_PLUGIN_DIR`` before starting ``CubitSimComp``.
 The component reports an error through CubitMessage if that command plugin
 has not attached. No automatic scanning of unrelated plugin folders occurs.
 Use a fresh deployment directory and restart Cubit: do not mix the old
@@ -85,12 +85,12 @@ delete that unrelated implementation.
 Component startup
 -----------------
 
-``FEAComp`` starts every component provider with the original ``withGUI``
+``CubitSimComp`` starts every component provider with the original ``withGUI``
 flag. A null Qt host is valid for headless startup; providers decide which
 features require a GUI. CalculiX initializes its material library and Python
 interface in both modes, and creates its GUI only when ``withGUI > 0``.
 
-The ``fea_comp`` SWIG binding enables threading so native component calls
+The ``cubitsim_comp`` SWIG binding enables threading so native component calls
 release the caller's Python GIL before re-entering Cubit's interpreter.
 Python initialization is an explicit component startup step, not a synthetic
 ``component_loaded`` callback or a GUI-only tracker side effect.
@@ -102,7 +102,7 @@ Settings and resources
 
    This section describes the Stage 2 implementation. The subsequent
    framework user-options service replaces CalculiXSettings and ccx.cfg
-   with required Core declarations and cubitfea_user_options.h5. See
+   with required Core declarations and cubitcubitsim_user_options.h5. See
    :doc:`user-options` for the current contract.
 
 CalculiX settings restoration is extracted from the old component into

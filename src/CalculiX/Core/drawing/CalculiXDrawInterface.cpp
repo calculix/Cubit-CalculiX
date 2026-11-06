@@ -436,3 +436,11 @@ void CalculiXDrawInterface::invalidate_topology(int topology_id)
     ccx_core.draw->invalidate_topology(topology_id);
   }
 }
+
+void CalculiXDrawInterface::bind_drawing(DrawingInterface* drawings) noexcept
+{
+  if (ccx_core.draw != nullptr)
+  {
+    ccx_core.draw->bindDrawing(drawings);
+  }
+}

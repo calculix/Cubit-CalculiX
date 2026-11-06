@@ -1,5 +1,6 @@
 #include <QToolBar>
 #include "WorkspaceManager.hpp"
+#include "Framework/Interfaces/DrawingInterface.hpp"
 #include "CubitWorkspaceHost.hpp"
 #include "WorkspaceHeader.hpp"
 #include "CommandDispatcher.hpp"
@@ -41,7 +42,7 @@ private:
 };
 }
 
-WorkspaceManager::WorkspaceManager() : host(std::make_unique<CubitWorkspaceHost>())
+WorkspaceManager::WorkspaceManager(DrawingInterface& service) : drawings(service), host(std::make_unique<CubitWorkspaceHost>())
 {
 }
 
@@ -94,7 +95,7 @@ bool WorkspaceManager::register_views(const std::vector<WorkspaceProviderInterfa
       return false;
     }
 
-    if (view.id.isEmpty() || view.id.contains(' ') || views.contains(view.id) || view.navigationModel == nullptr)
+    if (view.id.isEmpty() || view.id.contains(' ') || views.contains(view.id) || (view.useNativeNavigation && view.navigationModel == nullptr))
     {
       error = "A workspace has an invalid/duplicate identifier or no navigation model.";
       return false;
@@ -133,7 +134,7 @@ bool WorkspaceManager::register_views(const std::vector<WorkspaceProviderInterfa
     views.insert(view.id, view);
   }
 
-  QSettings settings("Cubit-CalculiX", "Framework");
+  QSettings settings("cubit-sim", "Framework");
   settings.beginGroup("Workspaces");
 
   for (auto it = views.cbegin(); it != views.cend(); ++it)
@@ -163,7 +164,7 @@ bool WorkspaceManager::register_views(const std::vector<WorkspaceProviderInterfa
   {
     std::string error;
 
-    if (!CommandDispatcher::submit(host->window(), "fea workspace " + id, error))
+    if (!CommandDispatcher::submit(host->window(), "sim workspace " + id, error))
     {
       PRINT_ERROR("Unable to submit workspace command: %s\n", error.c_str());
     }
@@ -241,6 +242,13 @@ bool WorkspaceManager::activate(const QString& id, std::string& error)
       return false;
     }
 
+    if (!drawings.activate_workspace(id.toStdString(), error))
+    {
+      host->restore_layout(before);
+      std::string rollbackError;
+      host->apply(views.value(previous), previousSelection, false, rollbackError);
+      return false;
+    }
     if (views.value(previous).activationChanged)
     {
       views.value(previous).activationChanged(false);
@@ -253,7 +261,7 @@ bool WorkspaceManager::activate(const QString& id, std::string& error)
     startup_trace("Workspace active: " + id);
     header->set_current(id);
 
-    QSettings settings("Cubit-CalculiX", "Framework");
+    QSettings settings("cubit-sim", "Framework");
     settings.beginGroup("Workspaces");
     settings.setValue("LayoutVersion", 1);
     settings.setValue(previous + "/Layout", before);
@@ -276,6 +284,11 @@ bool WorkspaceManager::activate(const QString& id, std::string& error)
     if (views.value(id).activationChanged)
     {
       views.value(id).activationChanged(false);
+    }
+    std::string drawingRollback;
+    if (!drawings.activate_workspace(previous.toStdString(), drawingRollback))
+    {
+      PRINT_ERROR("Cannot restore workspace drawings: %s\n", drawingRollback.c_str());
     }
     if (views.value(previous).activationChanged)
     {
@@ -326,7 +339,7 @@ void WorkspaceManager::shutdown() noexcept
   {
     if (ready && host->window() != nullptr)
     {
-      QSettings settings("Cubit-CalculiX", "Framework");
+      QSettings settings("cubit-sim", "Framework");
       settings.beginGroup("Workspaces");
       settings.setValue("LayoutVersion", 1);
       settings.setValue(current + "/Layout", host->save_layout());

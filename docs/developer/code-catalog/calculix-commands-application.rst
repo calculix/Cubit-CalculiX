@@ -40,9 +40,9 @@ changing a path. External utility implementations are excluded.
      - ``Implementation / integration``
    * - :download:`src/CalculiX/Commands/application/ccxUserOptionsCommand.hpp <../../../src/CalculiX/Commands/application/ccxUserOptionsCommand.hpp>`
      - ``ccxUserOptionsCommand``
-   * - :download:`src/CalculiX/Commands/application/ccxVersionCommand.cpp <../../../src/CalculiX/Commands/application/ccxVersionCommand.cpp>`
+   * - :download:`src/CalculiX/Commands/application/CubitSimVersionCommand.cpp <../../../src/CalculiX/Commands/application/CubitSimVersionCommand.cpp>`
      - ``Implementation / integration``
-   * - :download:`src/CalculiX/Commands/application/ccxVersionCommand.hpp <../../../src/CalculiX/Commands/application/ccxVersionCommand.hpp>`
-     - ``ccxVersionCommand``
+   * - :download:`src/CalculiX/Commands/application/CubitSimVersionCommand.hpp <../../../src/CalculiX/Commands/application/CubitSimVersionCommand.hpp>`
+     - ``CubitSimVersionCommand``
    * - :download:`src/CalculiX/Commands/application/CMakeLists.txt <../../../src/CalculiX/Commands/application/CMakeLists.txt>`
      - ``Build registration``

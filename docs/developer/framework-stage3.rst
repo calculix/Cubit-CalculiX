@@ -3,8 +3,8 @@ Stage 3: Cubit and CalculiX workspaces
 
 The framework command plugin provides::
 
-  fea workspace cubit
-  fea workspace calculix
+  sim workspace cubit
+  sim workspace calculix
 
 The header switch submits the same commands through Cubit's command widget.
 The selected tab changes only when activation succeeds. Commands require
@@ -14,7 +14,7 @@ common CalculiX features without creating workspace widgets.
 Ownership and startup
 ---------------------
 
-``FEAComp`` attaches the workspace host before starting internal components.
+``CubitSimComp`` attaches the workspace host before starting internal components.
 This captures the native layout and shared widgets before CalculiX adds its
 own hidden docks and menus. After startup, optional ``WorkspaceProviderInterface``
 implementations return borrowed workspace views. All widgets and navigation
@@ -84,7 +84,7 @@ reinserted by the workspace host.
 Settings and cleanup
 --------------------
 
-Layouts are GUI preferences in ``QSettings("Cubit-CalculiX", "Framework")``
+Layouts are GUI preferences in ``QSettings("cubit-sim", "Framework")``
 under ``Workspaces/<id>/Layout``, with layout version 1. Runtime navigation
 selections are tracked per workspace. No model data or .cub5 format changes
 are introduced. The old model-tree-wide saveState/restoreState calls are removed.
@@ -118,5 +118,5 @@ main-window layout. Cleanup is now explicit, idempotent, and connected to
 aboutToQuit; UI access checks application state, GUI thread and layout lifetime.
 The destructor does not save or restore widgets.
 
-Set FEA_STARTUP_TRACE to an absolute log filename for optional startup and
+Set CUBITSIM_STARTUP_TRACE to an absolute log filename for optional startup and
 workspace lifecycle tracing. Normal errors continue through CubitMessage.

@@ -11,6 +11,7 @@
 #include <vector>
 
 class Claro;
+class DrawingInterface;
 class CubitWorkspaceHost;
 class WorkspaceHeader;
 class QWidget;
@@ -18,7 +19,7 @@ class QWidget;
 class WorkspaceManager : public QObject
 {
 public:
-  WorkspaceManager();
+  explicit WorkspaceManager(DrawingInterface& drawings);
   ~WorkspaceManager() override;
   bool attach(QWidget* host, std::string& error);
   bool register_views(const std::vector<WorkspaceProviderInterface*>& providers, std::string& error);
@@ -29,6 +30,7 @@ protected:
   bool eventFilter(QObject* object, QEvent* event) override;
 
 private:
+  DrawingInterface& drawings;
   std::unique_ptr<CubitWorkspaceHost> host;
   QPointer<WorkspaceHeader> header;
   QHash<QString, WorkspaceView> views;

@@ -1,7 +1,7 @@
 [![GitHub](https://badgen.net/badge/icon/github?icon=github&label)](https://github.com/calculix/Cubit-CalculiX)
 [![Github All Releases](https://img.shields.io/github/downloads/calculix/Cubit-CalculiX/total.svg)](https://github.com/calculix/Cubit-CalculiX/releases)
 <br/>
-# Cubit-CalculiX 2025.9
+# cubit-sim 2025.9
 Hey ho that´s the CalculiX Component for coreform cubit!
 
 Full Model definitions for CalculiX can be done with Cubit as Preprocessor.
@@ -18,7 +18,7 @@ Or just use the links to download them from GitHub.
 
 This component was build with Cubit 2025.8!
 So it will most likely only work with this Cubit Release. 
-For older Cubit Releases you must pick an older Cubit-CalculiX Release. 
+For older Cubit Releases you must pick an older cubit-sim Release.
 Tested with Cubit 2025.8 on Windows 11 and Ubuntu 24.04
 
 Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/@CubitCalculiX) . We will post videos from examples and updates in the near future.
@@ -290,7 +290,7 @@ Restart Cubit.
 
 ![Add Component](/readme_docs/Setup_00.png?raw=true "Add Component")
 
-The Cubit Window should now show "Coreform Cubit 202x.x -- with Cubit-CalculiX 202x.x" in the Title.
+The Cubit Window should now show "Coreform Cubit 202x.x -- with cubit-sim 202x.x" in the Title.
 
 Now just enable the Model Tree
 
@@ -361,19 +361,19 @@ Build Process for Ubuntu 24.04
    wget https://f002.backblazeb2.com/file/cubit-downloads/Coreform-Cubit/Releases/Linux/Coreform-Cubit-2025.8%2B61943-Lin64.deb
    sudo apt-get install ./Coreform-Cubit-2025.8+61943-Lin64.deb
    ```
-3. Install Cubit-Calculix
-   Clone the Cubit-Calculix repository
+3. Install cubit-sim
+   Clone the cubit-sim repository
    ```
-   git clone https://github.com/calculix/Cubit-CalculiX.git
+   git clone https://github.com/calculix/Cubit-CalculiX.git ~/cubit-sim
    ```
 4. Build Steps   
    Clean and recreate the build directory, then run CMake and build:
    ```
-   rm -rf ~/Cubit-CalculiX/build
-   mkdir -p ~/Cubit-CalculiX/build
-   cmake -S ~/Cubit-CalculiX/src -B ~/Cubit-CalculiX/build
-   cmake --build ~/Cubit-CalculiX/build
-   cd ~/Cubit-CalculiX/build
+   rm -rf ~/cubit-sim/build
+   mkdir -p ~/cubit-sim/build
+   cmake -S ~/cubit-sim/src -B ~/cubit-sim/build
+   cmake --build ~/cubit-sim/build
+   cd ~/cubit-sim/build
    make -j4
    ```
 

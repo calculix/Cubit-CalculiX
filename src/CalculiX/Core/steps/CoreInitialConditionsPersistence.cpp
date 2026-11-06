@@ -1,3 +1,4 @@
+#include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/steps/CoreInitialConditionsPersistence.hpp"
 #include "Core/steps/CoreInitialConditions.hpp"
 #include "HDF5Tool.hpp"
@@ -17,32 +18,32 @@ bool CoreInitialConditionsPersistence::read(HDF5Tool& file, CoreInitialCondition
     decltype(conditions.stress_data) saved_stress_data;
     decltype(conditions.stress_block_data) saved_stress_block_data;
     decltype(conditions.stress_element_data) saved_stress_element_data;
-    if (file.nameExists("Cubit-CalculiX/InitialConditions/initialconditions_data") && !file.read_dataset_int_rank_2("initialconditions_data", "Cubit-CalculiX/InitialConditions", saved_initialconditions_data))
+    if (file.nameExists(CalculiXModelSchema::path("InitialConditions/initialconditions_data")) && !file.read_dataset_int_rank_2("initialconditions_data", CalculiXModelSchema::path("InitialConditions"), saved_initialconditions_data))
     {
       PRINT_ERROR("Cannot read CalculiX InitialConditions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/InitialConditions/displacement_data") && !file.read_dataset_string_rank_2("displacement_data", "Cubit-CalculiX/InitialConditions", saved_displacement_data))
+    if (file.nameExists(CalculiXModelSchema::path("InitialConditions/displacement_data")) && !file.read_dataset_string_rank_2("displacement_data", CalculiXModelSchema::path("InitialConditions"), saved_displacement_data))
     {
       PRINT_ERROR("Cannot read CalculiX InitialConditions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/InitialConditions/temperature_data") && !file.read_dataset_string_rank_2("temperature_data", "Cubit-CalculiX/InitialConditions", saved_temperature_data))
+    if (file.nameExists(CalculiXModelSchema::path("InitialConditions/temperature_data")) && !file.read_dataset_string_rank_2("temperature_data", CalculiXModelSchema::path("InitialConditions"), saved_temperature_data))
     {
       PRINT_ERROR("Cannot read CalculiX InitialConditions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/InitialConditions/stress_data") && !file.read_dataset_int_rank_1("stress_data", "Cubit-CalculiX/InitialConditions", saved_stress_data))
+    if (file.nameExists(CalculiXModelSchema::path("InitialConditions/stress_data")) && !file.read_dataset_int_rank_1("stress_data", CalculiXModelSchema::path("InitialConditions"), saved_stress_data))
     {
       PRINT_ERROR("Cannot read CalculiX InitialConditions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/InitialConditions/stress_block_data") && !file.read_dataset_double_rank_2("stress_block_data", "Cubit-CalculiX/InitialConditions", saved_stress_block_data))
+    if (file.nameExists(CalculiXModelSchema::path("InitialConditions/stress_block_data")) && !file.read_dataset_double_rank_2("stress_block_data", CalculiXModelSchema::path("InitialConditions"), saved_stress_block_data))
     {
       PRINT_ERROR("Cannot read CalculiX InitialConditions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/InitialConditions/stress_element_data") && !file.read_dataset_double_rank_2("stress_element_data", "Cubit-CalculiX/InitialConditions", saved_stress_element_data))
+    if (file.nameExists(CalculiXModelSchema::path("InitialConditions/stress_element_data")) && !file.read_dataset_double_rank_2("stress_element_data", CalculiXModelSchema::path("InitialConditions"), saved_stress_element_data))
     {
       PRINT_ERROR("Cannot read CalculiX InitialConditions: %s\n", file.last_error().c_str());
       return false;
@@ -178,37 +179,37 @@ bool CoreInitialConditionsPersistence::write(HDF5Tool& file, const CoreInitialCo
       PRINT_ERROR("Cannot write CalculiX InitialConditions: invalid or duplicate IDs.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/InitialConditions"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("InitialConditions")))
     {
       PRINT_ERROR("Cannot write CalculiX InitialConditions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("initialconditions_data", "Cubit-CalculiX/InitialConditions", conditions.initialconditions_data))
+    if (!file.write_dataset_int_rank_2("initialconditions_data", CalculiXModelSchema::path("InitialConditions"), conditions.initialconditions_data))
     {
       PRINT_ERROR("Cannot write CalculiX InitialConditions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("displacement_data", "Cubit-CalculiX/InitialConditions", conditions.displacement_data))
+    if (!file.write_dataset_string_rank_2("displacement_data", CalculiXModelSchema::path("InitialConditions"), conditions.displacement_data))
     {
       PRINT_ERROR("Cannot write CalculiX InitialConditions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("temperature_data", "Cubit-CalculiX/InitialConditions", conditions.temperature_data))
+    if (!file.write_dataset_string_rank_2("temperature_data", CalculiXModelSchema::path("InitialConditions"), conditions.temperature_data))
     {
       PRINT_ERROR("Cannot write CalculiX InitialConditions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_1("stress_data", "Cubit-CalculiX/InitialConditions", conditions.stress_data))
+    if (!file.write_dataset_int_rank_1("stress_data", CalculiXModelSchema::path("InitialConditions"), conditions.stress_data))
     {
       PRINT_ERROR("Cannot write CalculiX InitialConditions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_double_rank_2("stress_block_data", "Cubit-CalculiX/InitialConditions", conditions.stress_block_data))
+    if (!file.write_dataset_double_rank_2("stress_block_data", CalculiXModelSchema::path("InitialConditions"), conditions.stress_block_data))
     {
       PRINT_ERROR("Cannot write CalculiX InitialConditions: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_double_rank_2("stress_element_data", "Cubit-CalculiX/InitialConditions", conditions.stress_element_data))
+    if (!file.write_dataset_double_rank_2("stress_element_data", CalculiXModelSchema::path("InitialConditions"), conditions.stress_element_data))
     {
       PRINT_ERROR("Cannot write CalculiX InitialConditions: %s\n", file.last_error().c_str());
       return false;

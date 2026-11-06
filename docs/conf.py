@@ -5,9 +5,9 @@ import re
 ROOT = Path(__file__).resolve().parent
 REPOSITORY = ROOT.parent
 
-project = "Cubit FEA"
-author = "Cubit FEA contributors"
-copyright = "Cubit FEA contributors"
+project = "cubit-sim"
+author = "cubit-sim contributors"
+copyright = "cubit-sim contributors"
 release = "development"
 language = "en"
 extensions = ["myst_parser", "breathe", "sphinxcontrib.katex"]
@@ -19,8 +19,8 @@ myst_enable_extensions = ["colon_fence", "dollarmath"]
 myst_heading_anchors = 3
 highlight_language = "text"
 
-breathe_projects = {"Cubit FEA": str(ROOT / "_build/doxygen/xml")}
-breathe_default_project = "Cubit FEA"
+breathe_projects = {"cubit-sim": str(ROOT / "_build/doxygen/xml")}
+breathe_default_project = "cubit-sim"
 breathe_default_members = ()
 
 # Alabaster is bundled with Sphinx; use system fonts and local assets only.
@@ -29,7 +29,7 @@ html_theme_options = {"description": "User and developer documentation", "fixed_
 html_sidebars = {"**": ["about.html", "navigation.html", "relations.html", "searchbox.html"]}
 html_static_path = ["_static", ".tools/static"]
 html_css_files = ["manual.css"]
-html_title = "Cubit FEA documentation"
+html_title = "Cubit cubit-sim documentation"
 html_show_sourcelink = False
 html_show_sphinx = False
 html_copy_source = False

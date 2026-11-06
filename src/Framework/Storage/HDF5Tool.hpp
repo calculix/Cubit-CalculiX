@@ -8,7 +8,7 @@
 #include <chrono>
 #include <H5Cpp.h>
 
-class FEA_STORAGE_EXPORT HDF5Tool
+class CUBITSIM_STORAGE_EXPORT HDF5Tool
 {
 
 public:

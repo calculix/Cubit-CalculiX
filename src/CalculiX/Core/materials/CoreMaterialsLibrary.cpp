@@ -198,7 +198,7 @@ bool CoreMaterialsLibrary::create_material(std::string name, std::string groupna
   hdf5Tool.write_dataset_int_rank_1(std::string("material"), material, data); // create check variable
   hdf5Tool.write_dataset_string_rank_1(std::string("description"), material, str_data); // create description dataset
 
-  str_data[0] = "CalculiX-FEA";
+  str_data[0] = "CalculiX-cubit-sim";
   hdf5Tool.write_dataset_string_rank_1(std::string("PropertyGroup"), material, str_data); // create property group
 
 
@@ -414,7 +414,7 @@ bool CoreMaterialsLibrary::export_material(std::string name, std::string groupna
     return false;
   }
 
-  // we get the group properties for the Calculix-FEA Type
+  // we get the group properties for the Calculix-cubit-sim Type
   group_properties = ccx_materials_iface.get_material_group_properties();
 
   // we build our storages for the material data
@@ -569,7 +569,7 @@ bool CoreMaterialsLibrary::import_material(std::string name, std::string groupna
 
   ccx_application_iface.silent_cmd("create material \"" + cubit_name + "\" property_group \"" + str_data[0] + "\"");
 
-  // we get the group properties for the Calculix-FEA Type
+  // we get the group properties for the Calculix-cubit-sim Type
   group_properties = ccx_materials_iface.get_material_group_properties();
 
   for (size_t i = 0; i < group_properties.size(); i++)

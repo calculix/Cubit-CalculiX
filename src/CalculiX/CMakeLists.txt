@@ -58,7 +58,7 @@ SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${CMAKE_CURRENT_SOURCE_DIR}/GUI
-                    ${CCX_SOURCE_ROOT}/Utility
+                    ${CUBITSIM_SOURCE_ROOT}/Utility
                     ${CMAKE_CURRENT_BINARY_DIR})
 
 # Core domain sources are registered after calculix_core is created.
@@ -179,7 +179,7 @@ if (WIN32)
     target_link_libraries(calculix_core cubiti cubit_util cubit_gui cubit_python)
     #target_link_libraries(calculix_core clarogui navigation pickwidget clarofw Qt6::Charts Qt6::Widgets)
     target_link_libraries(calculix_core clarogui clarofw navigation Qt6::Charts Qt6::Widgets)
-    target_link_libraries(calculix_core fea_storage)
+    target_link_libraries(calculix_core cubitsim_storage)
     set_target_properties(calculix_core PROPERTIES AUTOMOC 1)
 
     add_library(calculix_gui SHARED ${CCXCOMP_SRCS})
@@ -193,18 +193,7 @@ if (WIN32)
     set_target_properties(calculix_pythoninterface PROPERTIES SUFFIX ".pyd" PREFIX "_")
     target_link_libraries(calculix_pythoninterface cubiti cubit_util)
 
-    add_library(ccx_cgal_tool STATIC
-        Utility/CGALTool.cpp
-        Utility/CGALTool.hpp
-        Utility/CubitWrapInput.cpp
-        Utility/CubitWrapInput.hpp
-    )
-
-    target_compile_features(ccx_cgal_tool PRIVATE cxx_std_17)
-    target_link_libraries(ccx_cgal_tool PRIVATE CGAL::CGAL cubiti cubit_util)
-    set_target_properties(ccx_cgal_tool PROPERTIES POSITION_INDEPENDENT_CODE ON)
-
-    target_link_libraries(calculix_core calculix_useroptions ccx_cgal_tool)
+    target_link_libraries(calculix_core calculix_useroptions)
     target_link_libraries(calculix_commands calculix_core)
     target_link_libraries(calculix_pythoninterface calculix_core)
     target_link_libraries(calculix_gui calculix_core)
@@ -223,7 +212,7 @@ if (UNIX)
     target_link_libraries(calculix_core cubiti cubit_util cubit_gui cubit_python)
     #target_link_libraries(calculix_core clarogui clarofw navigation pickwidget Qt6::Charts Qt6::Widgets)
     target_link_libraries(calculix_core clarogui clarofw navigation Qt6::Charts Qt6::Widgets)
-    target_link_libraries(calculix_core fea_storage)
+    target_link_libraries(calculix_core cubitsim_storage)
     set_target_properties(calculix_core PROPERTIES AUTOMOC 1)
 
     add_library(calculix_gui SHARED ${CCXCOMP_SRCS})
@@ -237,25 +226,19 @@ if (UNIX)
     set_target_properties(calculix_pythoninterface PROPERTIES SUFFIX ".so" PREFIX "_")
     target_link_libraries(calculix_pythoninterface cubiti cubit_util)
 
-    add_library(ccx_cgal_tool STATIC
-        Utility/CGALTool.cpp
-        Utility/CGALTool.hpp
-        Utility/CubitWrapInput.cpp
-        Utility/CubitWrapInput.hpp
-    )
-
-    target_compile_features(ccx_cgal_tool PRIVATE cxx_std_17)
-    target_link_libraries(ccx_cgal_tool PRIVATE CGAL::CGAL cubiti cubit_util)
-    set_target_properties(ccx_cgal_tool PROPERTIES POSITION_INDEPENDENT_CODE ON)
-
-    target_link_libraries(calculix_core calculix_useroptions ccx_cgal_tool)
+    target_link_libraries(calculix_core calculix_useroptions)
     target_link_libraries(calculix_pythoninterface calculix_core)
     target_link_libraries(calculix_commands calculix_core)
     target_link_libraries(calculix_gui calculix_core)
 endif (UNIX)
 
+# The wrapping command directly consumes the shared geometry API.
+target_link_libraries(calculix_commands cubitsim_geometry)
+target_link_libraries(calculix_core cubitsim_drawing)
+target_link_libraries(calculix_gui cubitsim_drawing)
+
 # The material-library GUI also uses the shared storage tool directly.
-target_link_libraries(calculix_gui fea_storage)
+target_link_libraries(calculix_gui cubitsim_storage)
 
 # Register feature sources after both platform branches create the targets.
 add_subdirectory(Core)
@@ -272,16 +255,28 @@ target_link_libraries(calculix_core showviz_base showviz_cubit showviz_mesh show
 
 # copy external software
 if (WIN32)
- file(COPY ${CCX_SOURCE_ROOT}/Solvers/CalculiX/Win/ DESTINATION ${CMAKE_BINARY_DIR}/Release/Solver/)
- #file(COPY ${CCX_SOURCE_ROOT}/Postprocessor/CGX/Win/ DESTINATION ${CMAKE_BINARY_DIR}/Release/Postprocessor/CGX/)
+ set(CCX_WINDOWS_SOLVER_DIRECTORY "${CUBITSIM_SOURCE_ROOT}/Solvers/CalculiX/Win")
+ add_custom_target(calculix_solver_runtime ALL
+   COMMAND "${CMAKE_COMMAND}" -E make_directory "${CUBITSIM_DEPLOY_DIRECTORY}/Solver"
+   COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+     "${CCX_WINDOWS_SOLVER_DIRECTORY}/ccx_2.23.exe"
+     "${CCX_WINDOWS_SOLVER_DIRECTORY}/libiomp5md.dll"
+     "${CCX_WINDOWS_SOLVER_DIRECTORY}/README.md"
+     "${CUBITSIM_DEPLOY_DIRECTORY}/Solver"
+   COMMAND "${CMAKE_COMMAND}" -E copy_directory
+     "${CCX_WINDOWS_SOLVER_DIRECTORY}/licenses"
+     "${CUBITSIM_DEPLOY_DIRECTORY}/Solver/licenses"
+   VERBATIM
+ )
+ #file(COPY ${CUBITSIM_SOURCE_ROOT}/Postprocessor/CGX/Win/ DESTINATION ${CMAKE_BINARY_DIR}/Release/Postprocessor/CGX/)
  # if missing -> please download paraview binaries from https://www.paraview.org/download/
- #file(COPY ${CCX_SOURCE_ROOT}/../../ParaView-6.0.0-MPI-Windows-Python3.12-msvc2017-AMD64/ DESTINATION ${CMAKE_BINARY_DIR}/Release/Postprocessor/ParaView/)
+ #file(COPY ${CUBITSIM_SOURCE_ROOT}/../../ParaView-6.0.0-MPI-Windows-Python3.12-msvc2017-AMD64/ DESTINATION ${CMAKE_BINARY_DIR}/Release/Postprocessor/ParaView/)
 endif (WIN32)
 if (UNIX)
- file(COPY ${CCX_SOURCE_ROOT}/Solvers/CalculiX/Linux/ DESTINATION ${CMAKE_BINARY_DIR}/Solver/)
- #file(COPY ${CCX_SOURCE_ROOT}/Postprocessor/CGX/Linux/ DESTINATION ${CMAKE_BINARY_DIR}/Postprocessor/CGX/)
+ file(COPY ${CUBITSIM_SOURCE_ROOT}/Solvers/CalculiX/Linux/ DESTINATION ${CMAKE_BINARY_DIR}/Solver/)
+ #file(COPY ${CUBITSIM_SOURCE_ROOT}/Postprocessor/CGX/Linux/ DESTINATION ${CMAKE_BINARY_DIR}/Postprocessor/CGX/)
  # if missing -> please download paraview binaries from https://www.paraview.org/download/
- #file(COPY ${CCX_SOURCE_ROOT}/../../ParaView-6.0.0-MPI-Linux-Python3.12-x86_64/ DESTINATION ${CMAKE_BINARY_DIR}/Postprocessor/ParaView/)
+ #file(COPY ${CUBITSIM_SOURCE_ROOT}/../../ParaView-6.0.0-MPI-Linux-Python3.12-x86_64/ DESTINATION ${CMAKE_BINARY_DIR}/Postprocessor/ParaView/)
 endif (UNIX)
 
 set_property(GLOBAL PROPERTY GLOBAL_DEPENDS_DEBUG_MODE 1)
@@ -296,6 +291,9 @@ if(POLICY CMP0071)
 endif()
 
 add_library(calculix_module SHARED CalculiXModule.cpp CalculiXModule.hpp)
+if (WIN32)
+  add_dependencies(calculix_module calculix_solver_runtime)
+endif()
 target_link_libraries(calculix_module PRIVATE
   calculix_commands calculix_gui calculix_core calculix_useroptions cubiti cubit_util
 )
@@ -304,9 +302,9 @@ foreach (CCX_TARGET calculix_module calculix_commands calculix_gui calculix_core
     calculix_useroptions calculix_pythoninterface)
   target_compile_features(${CCX_TARGET} PRIVATE cxx_std_17)
   set_target_properties(${CCX_TARGET} PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CCX_DEPLOY_DIRECTORY}"
-    LIBRARY_OUTPUT_DIRECTORY "${CCX_DEPLOY_DIRECTORY}"
-    ARCHIVE_OUTPUT_DIRECTORY "${CCX_DEPLOY_DIRECTORY}"
+    RUNTIME_OUTPUT_DIRECTORY "${CUBITSIM_DEPLOY_DIRECTORY}"
+    LIBRARY_OUTPUT_DIRECTORY "${CUBITSIM_DEPLOY_DIRECTORY}"
+    ARCHIVE_OUTPUT_DIRECTORY "${CUBITSIM_DEPLOY_DIRECTORY}"
   )
 endforeach()
 

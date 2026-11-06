@@ -1,4 +1,4 @@
-FEA framework: Stage 1 foundation
+cubit-sim framework: Stage 1 foundation
 =================================
 
 Status and scope
@@ -18,12 +18,12 @@ Build integration
 
 ``CCX_BUILD_FRAMEWORK`` defaults to ``OFF``. Enabling it adds:
 
-* ``fea_framework``: shared context and module manager.
-* ``fea_plugin``: Cubit command-plugin entry point.
-* ``fea_comp``: Cubit GUI component and SWIG binding.
+* ``cubitsim_framework``: shared context and module manager.
+* ``cubitsim_plugin``: Cubit command-plugin entry point.
+* ``cubitsim_comp``: Cubit GUI component and SWIG binding.
 
 Outputs are isolated under ``<build>/framework-stage1/<configuration>``.
-The component module is ``fea_comp`` and its class is ``FEAComp``. There is no
+The component module is ``cubitsim_comp`` and its class is ``CubitSimComp``. There is no
 new install rule, plugin-path change, startup configuration or automatic loading.
 Existing SDK/Python development paths are reused. The only Python-related
 addition is the loader binding; application logic remains C++.

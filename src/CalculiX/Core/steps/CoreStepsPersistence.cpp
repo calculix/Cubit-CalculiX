@@ -1,3 +1,4 @@
+#include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/steps/CoreStepsPersistence.hpp"
 #include "Core/steps/CoreSteps.hpp"
 #include "HDF5Tool.hpp"
@@ -27,87 +28,87 @@ bool CoreStepsPersistence::read(HDF5Tool& file, CoreSteps& steps)
     decltype(steps.bcs_data) saved_bcs_data;
     decltype(steps.historyoutputs_data) saved_historyoutputs_data;
     decltype(steps.fieldoutputs_data) saved_fieldoutputs_data;
-    if (file.nameExists("Cubit-CalculiX/Steps/steps_data") && !file.read_dataset_int_rank_2("steps_data", "Cubit-CalculiX/Steps", saved_steps_data))
+    if (file.nameExists(CalculiXModelSchema::path("Steps/steps_data")) && !file.read_dataset_int_rank_2("steps_data", CalculiXModelSchema::path("Steps"), saved_steps_data))
     {
       PRINT_ERROR("Cannot read CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Steps/name_data") && !file.read_dataset_string_rank_2("name_data", "Cubit-CalculiX/Steps", saved_name_data))
+    if (file.nameExists(CalculiXModelSchema::path("Steps/name_data")) && !file.read_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Steps"), saved_name_data))
     {
       PRINT_ERROR("Cannot read CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Steps/parameter_data") && !file.read_dataset_string_rank_2("parameter_data", "Cubit-CalculiX/Steps", saved_parameter_data))
+    if (file.nameExists(CalculiXModelSchema::path("Steps/parameter_data")) && !file.read_dataset_string_rank_2("parameter_data", CalculiXModelSchema::path("Steps"), saved_parameter_data))
     {
       PRINT_ERROR("Cannot read CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Steps/static_data") && !file.read_dataset_string_rank_2("static_data", "Cubit-CalculiX/Steps", saved_static_data))
+    if (file.nameExists(CalculiXModelSchema::path("Steps/static_data")) && !file.read_dataset_string_rank_2("static_data", CalculiXModelSchema::path("Steps"), saved_static_data))
     {
       PRINT_ERROR("Cannot read CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Steps/frequency_data") && !file.read_dataset_string_rank_2("frequency_data", "Cubit-CalculiX/Steps", saved_frequency_data))
+    if (file.nameExists(CalculiXModelSchema::path("Steps/frequency_data")) && !file.read_dataset_string_rank_2("frequency_data", CalculiXModelSchema::path("Steps"), saved_frequency_data))
     {
       PRINT_ERROR("Cannot read CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Steps/buckle_data") && !file.read_dataset_string_rank_2("buckle_data", "Cubit-CalculiX/Steps", saved_buckle_data))
+    if (file.nameExists(CalculiXModelSchema::path("Steps/buckle_data")) && !file.read_dataset_string_rank_2("buckle_data", CalculiXModelSchema::path("Steps"), saved_buckle_data))
     {
       PRINT_ERROR("Cannot read CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Steps/heattransfer_data") && !file.read_dataset_string_rank_2("heattransfer_data", "Cubit-CalculiX/Steps", saved_heattransfer_data))
+    if (file.nameExists(CalculiXModelSchema::path("Steps/heattransfer_data")) && !file.read_dataset_string_rank_2("heattransfer_data", CalculiXModelSchema::path("Steps"), saved_heattransfer_data))
     {
       PRINT_ERROR("Cannot read CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Steps/coupledtd_data") && !file.read_dataset_string_rank_2("coupledtd_data", "Cubit-CalculiX/Steps", saved_coupledtd_data))
+    if (file.nameExists(CalculiXModelSchema::path("Steps/coupledtd_data")) && !file.read_dataset_string_rank_2("coupledtd_data", CalculiXModelSchema::path("Steps"), saved_coupledtd_data))
     {
       PRINT_ERROR("Cannot read CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Steps/uncoupledtd_data") && !file.read_dataset_string_rank_2("uncoupledtd_data", "Cubit-CalculiX/Steps", saved_uncoupledtd_data))
+    if (file.nameExists(CalculiXModelSchema::path("Steps/uncoupledtd_data")) && !file.read_dataset_string_rank_2("uncoupledtd_data", CalculiXModelSchema::path("Steps"), saved_uncoupledtd_data))
     {
       PRINT_ERROR("Cannot read CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Steps/dynamic_data") && !file.read_dataset_string_rank_2("dynamic_data", "Cubit-CalculiX/Steps", saved_dynamic_data))
+    if (file.nameExists(CalculiXModelSchema::path("Steps/dynamic_data")) && !file.read_dataset_string_rank_2("dynamic_data", CalculiXModelSchema::path("Steps"), saved_dynamic_data))
     {
       PRINT_ERROR("Cannot read CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Steps/modal_dynamic_data") && !file.read_dataset_string_rank_2("modal_dynamic_data", "Cubit-CalculiX/Steps", saved_modal_dynamic_data))
+    if (file.nameExists(CalculiXModelSchema::path("Steps/modal_dynamic_data")) && !file.read_dataset_string_rank_2("modal_dynamic_data", CalculiXModelSchema::path("Steps"), saved_modal_dynamic_data))
     {
       PRINT_ERROR("Cannot read CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Steps/steady_state_dynamics_data") && !file.read_dataset_string_rank_2("steady_state_dynamics_data", "Cubit-CalculiX/Steps", saved_steady_state_dynamics_data))
+    if (file.nameExists(CalculiXModelSchema::path("Steps/steady_state_dynamics_data")) && !file.read_dataset_string_rank_2("steady_state_dynamics_data", CalculiXModelSchema::path("Steps"), saved_steady_state_dynamics_data))
     {
       PRINT_ERROR("Cannot read CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Steps/complex_frequency_data") && !file.read_dataset_string_rank_2("complex_frequency_data", "Cubit-CalculiX/Steps", saved_complex_frequency_data))
+    if (file.nameExists(CalculiXModelSchema::path("Steps/complex_frequency_data")) && !file.read_dataset_string_rank_2("complex_frequency_data", CalculiXModelSchema::path("Steps"), saved_complex_frequency_data))
     {
       PRINT_ERROR("Cannot read CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Steps/loads_data") && !file.read_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Steps", saved_loads_data))
+    if (file.nameExists(CalculiXModelSchema::path("Steps/loads_data")) && !file.read_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Steps"), saved_loads_data))
     {
       PRINT_ERROR("Cannot read CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Steps/bcs_data") && !file.read_dataset_int_rank_2("bcs_data", "Cubit-CalculiX/Steps", saved_bcs_data))
+    if (file.nameExists(CalculiXModelSchema::path("Steps/bcs_data")) && !file.read_dataset_int_rank_2("bcs_data", CalculiXModelSchema::path("Steps"), saved_bcs_data))
     {
       PRINT_ERROR("Cannot read CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Steps/historyoutputs_data") && !file.read_dataset_int_rank_2("historyoutputs_data", "Cubit-CalculiX/Steps", saved_historyoutputs_data))
+    if (file.nameExists(CalculiXModelSchema::path("Steps/historyoutputs_data")) && !file.read_dataset_int_rank_2("historyoutputs_data", CalculiXModelSchema::path("Steps"), saved_historyoutputs_data))
     {
       PRINT_ERROR("Cannot read CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Steps/fieldoutputs_data") && !file.read_dataset_int_rank_2("fieldoutputs_data", "Cubit-CalculiX/Steps", saved_fieldoutputs_data))
+    if (file.nameExists(CalculiXModelSchema::path("Steps/fieldoutputs_data")) && !file.read_dataset_int_rank_2("fieldoutputs_data", CalculiXModelSchema::path("Steps"), saved_fieldoutputs_data))
     {
       PRINT_ERROR("Cannot read CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
@@ -448,92 +449,92 @@ bool CoreStepsPersistence::write(HDF5Tool& file, const CoreSteps& steps)
       PRINT_ERROR("Cannot write CalculiX Steps: invalid or duplicate IDs.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/Steps"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("Steps")))
     {
       PRINT_ERROR("Cannot write CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("steps_data", "Cubit-CalculiX/Steps", steps.steps_data))
+    if (!file.write_dataset_int_rank_2("steps_data", CalculiXModelSchema::path("Steps"), steps.steps_data))
     {
       PRINT_ERROR("Cannot write CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("name_data", "Cubit-CalculiX/Steps", steps.name_data))
+    if (!file.write_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Steps"), steps.name_data))
     {
       PRINT_ERROR("Cannot write CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("parameter_data", "Cubit-CalculiX/Steps", steps.parameter_data))
+    if (!file.write_dataset_string_rank_2("parameter_data", CalculiXModelSchema::path("Steps"), steps.parameter_data))
     {
       PRINT_ERROR("Cannot write CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("static_data", "Cubit-CalculiX/Steps", steps.static_data))
+    if (!file.write_dataset_string_rank_2("static_data", CalculiXModelSchema::path("Steps"), steps.static_data))
     {
       PRINT_ERROR("Cannot write CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("frequency_data", "Cubit-CalculiX/Steps", steps.frequency_data))
+    if (!file.write_dataset_string_rank_2("frequency_data", CalculiXModelSchema::path("Steps"), steps.frequency_data))
     {
       PRINT_ERROR("Cannot write CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("buckle_data", "Cubit-CalculiX/Steps", steps.buckle_data))
+    if (!file.write_dataset_string_rank_2("buckle_data", CalculiXModelSchema::path("Steps"), steps.buckle_data))
     {
       PRINT_ERROR("Cannot write CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("heattransfer_data", "Cubit-CalculiX/Steps", steps.heattransfer_data))
+    if (!file.write_dataset_string_rank_2("heattransfer_data", CalculiXModelSchema::path("Steps"), steps.heattransfer_data))
     {
       PRINT_ERROR("Cannot write CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("coupledtd_data", "Cubit-CalculiX/Steps", steps.coupledtd_data))
+    if (!file.write_dataset_string_rank_2("coupledtd_data", CalculiXModelSchema::path("Steps"), steps.coupledtd_data))
     {
       PRINT_ERROR("Cannot write CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("uncoupledtd_data", "Cubit-CalculiX/Steps", steps.uncoupledtd_data))
+    if (!file.write_dataset_string_rank_2("uncoupledtd_data", CalculiXModelSchema::path("Steps"), steps.uncoupledtd_data))
     {
       PRINT_ERROR("Cannot write CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("dynamic_data", "Cubit-CalculiX/Steps", steps.dynamic_data))
+    if (!file.write_dataset_string_rank_2("dynamic_data", CalculiXModelSchema::path("Steps"), steps.dynamic_data))
     {
       PRINT_ERROR("Cannot write CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("modal_dynamic_data", "Cubit-CalculiX/Steps", steps.modal_dynamic_data))
+    if (!file.write_dataset_string_rank_2("modal_dynamic_data", CalculiXModelSchema::path("Steps"), steps.modal_dynamic_data))
     {
       PRINT_ERROR("Cannot write CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("steady_state_dynamics_data", "Cubit-CalculiX/Steps", steps.steady_state_dynamics_data))
+    if (!file.write_dataset_string_rank_2("steady_state_dynamics_data", CalculiXModelSchema::path("Steps"), steps.steady_state_dynamics_data))
     {
       PRINT_ERROR("Cannot write CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("complex_frequency_data", "Cubit-CalculiX/Steps", steps.complex_frequency_data))
+    if (!file.write_dataset_string_rank_2("complex_frequency_data", CalculiXModelSchema::path("Steps"), steps.complex_frequency_data))
     {
       PRINT_ERROR("Cannot write CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Steps", steps.loads_data))
+    if (!file.write_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Steps"), steps.loads_data))
     {
       PRINT_ERROR("Cannot write CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("bcs_data", "Cubit-CalculiX/Steps", steps.bcs_data))
+    if (!file.write_dataset_int_rank_2("bcs_data", CalculiXModelSchema::path("Steps"), steps.bcs_data))
     {
       PRINT_ERROR("Cannot write CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("historyoutputs_data", "Cubit-CalculiX/Steps", steps.historyoutputs_data))
+    if (!file.write_dataset_int_rank_2("historyoutputs_data", CalculiXModelSchema::path("Steps"), steps.historyoutputs_data))
     {
       PRINT_ERROR("Cannot write CalculiX Steps: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("fieldoutputs_data", "Cubit-CalculiX/Steps", steps.fieldoutputs_data))
+    if (!file.write_dataset_int_rank_2("fieldoutputs_data", CalculiXModelSchema::path("Steps"), steps.fieldoutputs_data))
     {
       PRINT_ERROR("Cannot write CalculiX Steps: %s\n", file.last_error().c_str());
       return false;

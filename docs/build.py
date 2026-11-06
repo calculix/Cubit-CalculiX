@@ -30,7 +30,7 @@ def prepare_math(fetch):
             print("Missing cached KaTeX archive. Run once with --fetch-assets, or copy the pinned archive into docs/.tools/.")
             return False
         print("Downloading pinned KaTeX styles, fonts, and license...", flush=True)
-        request = urllib.request.Request(specification["url"], headers={"User-Agent": "Cubit-CalculiX-docs"})
+        request = urllib.request.Request(specification["url"], headers={"User-Agent": "cubit-sim-docs"})
         with urllib.request.urlopen(request, timeout=60) as response:
             data = response.read()
         if hashlib.sha256(data).hexdigest() != specification["sha256"]:

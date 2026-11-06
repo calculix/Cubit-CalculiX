@@ -56,6 +56,7 @@ public:
   int current_total_time_id = -1;
   
   std::vector<std::vector<int>> result_blocks;
+  std::vector<FrdAnalysis> result_analysis; // Parallel to result_blocks when available.
   // result_blocks[0][0] result block
   // result_blocks[0][1] step
   // result_blocks[0][2] step increment

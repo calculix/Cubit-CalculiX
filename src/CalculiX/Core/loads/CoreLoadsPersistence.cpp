@@ -1,3 +1,4 @@
+#include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/loads/CoreLoadsPersistence.hpp"
 #include "Core/loads/CoreLoadsForces.hpp"
 #include "Core/loads/CoreLoadsPressures.hpp"
@@ -25,22 +26,22 @@ bool CoreLoadsPersistence::read(HDF5Tool& file, CoreLoadsForces& forces)
     decltype(forces.time_delay_data) saved_time_delay_data;
     decltype(forces.name_data) saved_name_data;
     decltype(forces.force_data) saved_force_data;
-    if (file.nameExists("Cubit-CalculiX/Loads/Forces/loads_data") && !file.read_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Loads/Forces", saved_loads_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Forces/loads_data")) && !file.read_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Loads/Forces"), saved_loads_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsForces: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Forces/time_delay_data") && !file.read_dataset_string_rank_2("time_delay_data", "Cubit-CalculiX/Loads/Forces", saved_time_delay_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Forces/time_delay_data")) && !file.read_dataset_string_rank_2("time_delay_data", CalculiXModelSchema::path("Loads/Forces"), saved_time_delay_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsForces: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Forces/name_data") && !file.read_dataset_string_rank_2("name_data", "Cubit-CalculiX/Loads/Forces", saved_name_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Forces/name_data")) && !file.read_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Loads/Forces"), saved_name_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsForces: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Forces/force_data") && !file.read_dataset_double_rank_2("force_data", "Cubit-CalculiX/Loads/Forces", saved_force_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Forces/force_data")) && !file.read_dataset_double_rank_2("force_data", CalculiXModelSchema::path("Loads/Forces"), saved_force_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsForces: %s\n", file.last_error().c_str());
       return false;
@@ -148,27 +149,27 @@ bool CoreLoadsPersistence::write(HDF5Tool& file, const CoreLoadsForces& forces)
       PRINT_ERROR("Cannot write CalculiX LoadsForces: invalid or duplicate IDs.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/Loads/Forces"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("Loads/Forces")))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsForces: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Loads/Forces", forces.loads_data))
+    if (!file.write_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Loads/Forces"), forces.loads_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsForces: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("time_delay_data", "Cubit-CalculiX/Loads/Forces", forces.time_delay_data))
+    if (!file.write_dataset_string_rank_2("time_delay_data", CalculiXModelSchema::path("Loads/Forces"), forces.time_delay_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsForces: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("name_data", "Cubit-CalculiX/Loads/Forces", forces.name_data))
+    if (!file.write_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Loads/Forces"), forces.name_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsForces: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_double_rank_2("force_data", "Cubit-CalculiX/Loads/Forces", forces.force_data))
+    if (!file.write_dataset_double_rank_2("force_data", CalculiXModelSchema::path("Loads/Forces"), forces.force_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsForces: %s\n", file.last_error().c_str());
       return false;
@@ -196,22 +197,22 @@ bool CoreLoadsPersistence::read(HDF5Tool& file, CoreLoadsPressures& pressures)
     decltype(pressures.time_delay_data) saved_time_delay_data;
     decltype(pressures.name_data) saved_name_data;
     decltype(pressures.magnitude_data) saved_magnitude_data;
-    if (file.nameExists("Cubit-CalculiX/Loads/Pressures/loads_data") && !file.read_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Loads/Pressures", saved_loads_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Pressures/loads_data")) && !file.read_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Loads/Pressures"), saved_loads_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsPressures: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Pressures/time_delay_data") && !file.read_dataset_string_rank_2("time_delay_data", "Cubit-CalculiX/Loads/Pressures", saved_time_delay_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Pressures/time_delay_data")) && !file.read_dataset_string_rank_2("time_delay_data", CalculiXModelSchema::path("Loads/Pressures"), saved_time_delay_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsPressures: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Pressures/name_data") && !file.read_dataset_string_rank_2("name_data", "Cubit-CalculiX/Loads/Pressures", saved_name_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Pressures/name_data")) && !file.read_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Loads/Pressures"), saved_name_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsPressures: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Pressures/magnitude_data") && !file.read_dataset_double_rank_2("magnitude_data", "Cubit-CalculiX/Loads/Pressures", saved_magnitude_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Pressures/magnitude_data")) && !file.read_dataset_double_rank_2("magnitude_data", CalculiXModelSchema::path("Loads/Pressures"), saved_magnitude_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsPressures: %s\n", file.last_error().c_str());
       return false;
@@ -319,27 +320,27 @@ bool CoreLoadsPersistence::write(HDF5Tool& file, const CoreLoadsPressures& press
       PRINT_ERROR("Cannot write CalculiX LoadsPressures: invalid or duplicate IDs.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/Loads/Pressures"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("Loads/Pressures")))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsPressures: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Loads/Pressures", pressures.loads_data))
+    if (!file.write_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Loads/Pressures"), pressures.loads_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsPressures: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("time_delay_data", "Cubit-CalculiX/Loads/Pressures", pressures.time_delay_data))
+    if (!file.write_dataset_string_rank_2("time_delay_data", CalculiXModelSchema::path("Loads/Pressures"), pressures.time_delay_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsPressures: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("name_data", "Cubit-CalculiX/Loads/Pressures", pressures.name_data))
+    if (!file.write_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Loads/Pressures"), pressures.name_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsPressures: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_double_rank_2("magnitude_data", "Cubit-CalculiX/Loads/Pressures", pressures.magnitude_data))
+    if (!file.write_dataset_double_rank_2("magnitude_data", CalculiXModelSchema::path("Loads/Pressures"), pressures.magnitude_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsPressures: %s\n", file.last_error().c_str());
       return false;
@@ -367,22 +368,22 @@ bool CoreLoadsPersistence::read(HDF5Tool& file, CoreLoadsHeatfluxes& heatfluxes)
     decltype(heatfluxes.time_delay_data) saved_time_delay_data;
     decltype(heatfluxes.name_data) saved_name_data;
     decltype(heatfluxes.magnitude_data) saved_magnitude_data;
-    if (file.nameExists("Cubit-CalculiX/Loads/HeatFluxes/loads_data") && !file.read_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Loads/HeatFluxes", saved_loads_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/HeatFluxes/loads_data")) && !file.read_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Loads/HeatFluxes"), saved_loads_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsHeatfluxes: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/HeatFluxes/time_delay_data") && !file.read_dataset_string_rank_2("time_delay_data", "Cubit-CalculiX/Loads/HeatFluxes", saved_time_delay_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/HeatFluxes/time_delay_data")) && !file.read_dataset_string_rank_2("time_delay_data", CalculiXModelSchema::path("Loads/HeatFluxes"), saved_time_delay_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsHeatfluxes: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/HeatFluxes/name_data") && !file.read_dataset_string_rank_2("name_data", "Cubit-CalculiX/Loads/HeatFluxes", saved_name_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/HeatFluxes/name_data")) && !file.read_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Loads/HeatFluxes"), saved_name_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsHeatfluxes: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/HeatFluxes/magnitude_data") && !file.read_dataset_double_rank_2("magnitude_data", "Cubit-CalculiX/Loads/HeatFluxes", saved_magnitude_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/HeatFluxes/magnitude_data")) && !file.read_dataset_double_rank_2("magnitude_data", CalculiXModelSchema::path("Loads/HeatFluxes"), saved_magnitude_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsHeatfluxes: %s\n", file.last_error().c_str());
       return false;
@@ -490,27 +491,27 @@ bool CoreLoadsPersistence::write(HDF5Tool& file, const CoreLoadsHeatfluxes& heat
       PRINT_ERROR("Cannot write CalculiX LoadsHeatfluxes: invalid or duplicate IDs.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/Loads/HeatFluxes"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("Loads/HeatFluxes")))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsHeatfluxes: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Loads/HeatFluxes", heatfluxes.loads_data))
+    if (!file.write_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Loads/HeatFluxes"), heatfluxes.loads_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsHeatfluxes: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("time_delay_data", "Cubit-CalculiX/Loads/HeatFluxes", heatfluxes.time_delay_data))
+    if (!file.write_dataset_string_rank_2("time_delay_data", CalculiXModelSchema::path("Loads/HeatFluxes"), heatfluxes.time_delay_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsHeatfluxes: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("name_data", "Cubit-CalculiX/Loads/HeatFluxes", heatfluxes.name_data))
+    if (!file.write_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Loads/HeatFluxes"), heatfluxes.name_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsHeatfluxes: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_double_rank_2("magnitude_data", "Cubit-CalculiX/Loads/HeatFluxes", heatfluxes.magnitude_data))
+    if (!file.write_dataset_double_rank_2("magnitude_data", CalculiXModelSchema::path("Loads/HeatFluxes"), heatfluxes.magnitude_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsHeatfluxes: %s\n", file.last_error().c_str());
       return false;
@@ -539,27 +540,27 @@ bool CoreLoadsPersistence::read(HDF5Tool& file, CoreLoadsGravity& gravity)
     decltype(gravity.direction_data) saved_direction_data;
     decltype(gravity.magnitude_data) saved_magnitude_data;
     decltype(gravity.name_data) saved_name_data;
-    if (file.nameExists("Cubit-CalculiX/Loads/Gravity/loads_data") && !file.read_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Loads/Gravity", saved_loads_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Gravity/loads_data")) && !file.read_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Loads/Gravity"), saved_loads_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsGravity: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Gravity/time_delay_data") && !file.read_dataset_string_rank_2("time_delay_data", "Cubit-CalculiX/Loads/Gravity", saved_time_delay_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Gravity/time_delay_data")) && !file.read_dataset_string_rank_2("time_delay_data", CalculiXModelSchema::path("Loads/Gravity"), saved_time_delay_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsGravity: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Gravity/direction_data") && !file.read_dataset_string_rank_2("direction_data", "Cubit-CalculiX/Loads/Gravity", saved_direction_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Gravity/direction_data")) && !file.read_dataset_string_rank_2("direction_data", CalculiXModelSchema::path("Loads/Gravity"), saved_direction_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsGravity: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Gravity/magnitude_data") && !file.read_dataset_string_rank_2("magnitude_data", "Cubit-CalculiX/Loads/Gravity", saved_magnitude_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Gravity/magnitude_data")) && !file.read_dataset_string_rank_2("magnitude_data", CalculiXModelSchema::path("Loads/Gravity"), saved_magnitude_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsGravity: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Gravity/name_data") && !file.read_dataset_string_rank_2("name_data", "Cubit-CalculiX/Loads/Gravity", saved_name_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Gravity/name_data")) && !file.read_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Loads/Gravity"), saved_name_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsGravity: %s\n", file.last_error().c_str());
       return false;
@@ -688,32 +689,32 @@ bool CoreLoadsPersistence::write(HDF5Tool& file, const CoreLoadsGravity& gravity
       PRINT_ERROR("Cannot write CalculiX LoadsGravity: invalid or duplicate IDs.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/Loads/Gravity"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("Loads/Gravity")))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsGravity: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Loads/Gravity", gravity.loads_data))
+    if (!file.write_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Loads/Gravity"), gravity.loads_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsGravity: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("time_delay_data", "Cubit-CalculiX/Loads/Gravity", gravity.time_delay_data))
+    if (!file.write_dataset_string_rank_2("time_delay_data", CalculiXModelSchema::path("Loads/Gravity"), gravity.time_delay_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsGravity: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("direction_data", "Cubit-CalculiX/Loads/Gravity", gravity.direction_data))
+    if (!file.write_dataset_string_rank_2("direction_data", CalculiXModelSchema::path("Loads/Gravity"), gravity.direction_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsGravity: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("magnitude_data", "Cubit-CalculiX/Loads/Gravity", gravity.magnitude_data))
+    if (!file.write_dataset_string_rank_2("magnitude_data", CalculiXModelSchema::path("Loads/Gravity"), gravity.magnitude_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsGravity: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("name_data", "Cubit-CalculiX/Loads/Gravity", gravity.name_data))
+    if (!file.write_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Loads/Gravity"), gravity.name_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsGravity: %s\n", file.last_error().c_str());
       return false;
@@ -743,32 +744,32 @@ bool CoreLoadsPersistence::read(HDF5Tool& file, CoreLoadsCentrifugal& centrifuga
     decltype(centrifugal.magnitude_data) saved_magnitude_data;
     decltype(centrifugal.coordinate_data) saved_coordinate_data;
     decltype(centrifugal.name_data) saved_name_data;
-    if (file.nameExists("Cubit-CalculiX/Loads/Centrifugal/loads_data") && !file.read_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Loads/Centrifugal", saved_loads_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Centrifugal/loads_data")) && !file.read_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Loads/Centrifugal"), saved_loads_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsCentrifugal: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Centrifugal/time_delay_data") && !file.read_dataset_string_rank_2("time_delay_data", "Cubit-CalculiX/Loads/Centrifugal", saved_time_delay_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Centrifugal/time_delay_data")) && !file.read_dataset_string_rank_2("time_delay_data", CalculiXModelSchema::path("Loads/Centrifugal"), saved_time_delay_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsCentrifugal: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Centrifugal/direction_data") && !file.read_dataset_string_rank_2("direction_data", "Cubit-CalculiX/Loads/Centrifugal", saved_direction_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Centrifugal/direction_data")) && !file.read_dataset_string_rank_2("direction_data", CalculiXModelSchema::path("Loads/Centrifugal"), saved_direction_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsCentrifugal: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Centrifugal/magnitude_data") && !file.read_dataset_string_rank_2("magnitude_data", "Cubit-CalculiX/Loads/Centrifugal", saved_magnitude_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Centrifugal/magnitude_data")) && !file.read_dataset_string_rank_2("magnitude_data", CalculiXModelSchema::path("Loads/Centrifugal"), saved_magnitude_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsCentrifugal: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Centrifugal/coordinate_data") && !file.read_dataset_string_rank_2("coordinate_data", "Cubit-CalculiX/Loads/Centrifugal", saved_coordinate_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Centrifugal/coordinate_data")) && !file.read_dataset_string_rank_2("coordinate_data", CalculiXModelSchema::path("Loads/Centrifugal"), saved_coordinate_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsCentrifugal: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Centrifugal/name_data") && !file.read_dataset_string_rank_2("name_data", "Cubit-CalculiX/Loads/Centrifugal", saved_name_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Centrifugal/name_data")) && !file.read_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Loads/Centrifugal"), saved_name_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsCentrifugal: %s\n", file.last_error().c_str());
       return false;
@@ -918,37 +919,37 @@ bool CoreLoadsPersistence::write(HDF5Tool& file, const CoreLoadsCentrifugal& cen
       PRINT_ERROR("Cannot write CalculiX LoadsCentrifugal: invalid or duplicate IDs.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/Loads/Centrifugal"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("Loads/Centrifugal")))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsCentrifugal: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Loads/Centrifugal", centrifugal.loads_data))
+    if (!file.write_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Loads/Centrifugal"), centrifugal.loads_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsCentrifugal: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("time_delay_data", "Cubit-CalculiX/Loads/Centrifugal", centrifugal.time_delay_data))
+    if (!file.write_dataset_string_rank_2("time_delay_data", CalculiXModelSchema::path("Loads/Centrifugal"), centrifugal.time_delay_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsCentrifugal: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("direction_data", "Cubit-CalculiX/Loads/Centrifugal", centrifugal.direction_data))
+    if (!file.write_dataset_string_rank_2("direction_data", CalculiXModelSchema::path("Loads/Centrifugal"), centrifugal.direction_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsCentrifugal: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("magnitude_data", "Cubit-CalculiX/Loads/Centrifugal", centrifugal.magnitude_data))
+    if (!file.write_dataset_string_rank_2("magnitude_data", CalculiXModelSchema::path("Loads/Centrifugal"), centrifugal.magnitude_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsCentrifugal: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("coordinate_data", "Cubit-CalculiX/Loads/Centrifugal", centrifugal.coordinate_data))
+    if (!file.write_dataset_string_rank_2("coordinate_data", CalculiXModelSchema::path("Loads/Centrifugal"), centrifugal.coordinate_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsCentrifugal: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("name_data", "Cubit-CalculiX/Loads/Centrifugal", centrifugal.name_data))
+    if (!file.write_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Loads/Centrifugal"), centrifugal.name_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsCentrifugal: %s\n", file.last_error().c_str());
       return false;
@@ -994,84 +995,84 @@ bool CoreLoadsPersistence::read(HDF5Tool& file, CoreLoadsTrajectory& trajectory)
     decltype(sphere.depth_data) saved_sphere_depth_data;
     decltype(sphere.time_data) saved_sphere_time_data;
     decltype(sphere.name_data) saved_sphere_name_data;
-    if (file.nameExists("Cubit-CalculiX/Loads/Trajectory/loads_data") && !file.read_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Loads/Trajectory", saved_loads_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Trajectory/loads_data")) && !file.read_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Loads/Trajectory"), saved_loads_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
 
-    if (file.nameExists("Cubit-CalculiX/Loads/Trajectory/Heatflux/loads_data") && !file.read_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Loads/Trajectory/Heatflux", saved_heatflux_loads_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Trajectory/Heatflux/loads_data")) && !file.read_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Loads/Trajectory/Heatflux"), saved_heatflux_loads_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Trajectory/Heatflux/fire_ray_surface_data") && !file.read_dataset_int_rank_2("fire_ray_surface_data", "Cubit-CalculiX/Loads/Trajectory/Heatflux", saved_heatflux_fire_ray_surface_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Trajectory/Heatflux/fire_ray_surface_data")) && !file.read_dataset_int_rank_2("fire_ray_surface_data", CalculiXModelSchema::path("Loads/Trajectory/Heatflux"), saved_heatflux_fire_ray_surface_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Trajectory/Heatflux/direction_data") && !file.read_dataset_string_rank_2("direction_data", "Cubit-CalculiX/Loads/Trajectory/Heatflux", saved_heatflux_direction_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Trajectory/Heatflux/direction_data")) && !file.read_dataset_string_rank_2("direction_data", CalculiXModelSchema::path("Loads/Trajectory/Heatflux"), saved_heatflux_direction_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Trajectory/Heatflux/magnitude_data") && !file.read_dataset_double_rank_2("magnitude_data", "Cubit-CalculiX/Loads/Trajectory/Heatflux", saved_heatflux_magnitude_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Trajectory/Heatflux/magnitude_data")) && !file.read_dataset_double_rank_2("magnitude_data", CalculiXModelSchema::path("Loads/Trajectory/Heatflux"), saved_heatflux_magnitude_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Trajectory/Heatflux/radius_data") && !file.read_dataset_double_rank_2("radius_data", "Cubit-CalculiX/Loads/Trajectory/Heatflux", saved_heatflux_radius_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Trajectory/Heatflux/radius_data")) && !file.read_dataset_double_rank_2("radius_data", CalculiXModelSchema::path("Loads/Trajectory/Heatflux"), saved_heatflux_radius_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Trajectory/Heatflux/time_data") && !file.read_dataset_string_rank_2("time_data", "Cubit-CalculiX/Loads/Trajectory/Heatflux", saved_heatflux_time_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Trajectory/Heatflux/time_data")) && !file.read_dataset_string_rank_2("time_data", CalculiXModelSchema::path("Loads/Trajectory/Heatflux"), saved_heatflux_time_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Trajectory/Heatflux/name_data") && !file.read_dataset_string_rank_2("name_data", "Cubit-CalculiX/Loads/Trajectory/Heatflux", saved_heatflux_name_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Trajectory/Heatflux/name_data")) && !file.read_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Loads/Trajectory/Heatflux"), saved_heatflux_name_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
 
-    if (file.nameExists("Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere/loads_data") && !file.read_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", saved_sphere_loads_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere/loads_data")) && !file.read_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere"), saved_sphere_loads_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere/fire_ray_surface_data") && !file.read_dataset_int_rank_2("fire_ray_surface_data", "Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", saved_sphere_fire_ray_surface_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere/fire_ray_surface_data")) && !file.read_dataset_int_rank_2("fire_ray_surface_data", CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere"), saved_sphere_fire_ray_surface_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere/direction_data") && !file.read_dataset_string_rank_2("direction_data", "Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", saved_sphere_direction_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere/direction_data")) && !file.read_dataset_string_rank_2("direction_data", CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere"), saved_sphere_direction_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere/magnitude_data") && !file.read_dataset_double_rank_2("magnitude_data", "Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", saved_sphere_magnitude_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere/magnitude_data")) && !file.read_dataset_double_rank_2("magnitude_data", CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere"), saved_sphere_magnitude_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere/radius_data") && !file.read_dataset_double_rank_2("radius_data", "Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", saved_sphere_radius_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere/radius_data")) && !file.read_dataset_double_rank_2("radius_data", CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere"), saved_sphere_radius_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere/depth_data") && !file.read_dataset_double_rank_2("depth_data", "Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", saved_sphere_depth_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere/depth_data")) && !file.read_dataset_double_rank_2("depth_data", CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere"), saved_sphere_depth_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere/time_data") && !file.read_dataset_string_rank_2("time_data", "Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", saved_sphere_time_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere/time_data")) && !file.read_dataset_string_rank_2("time_data", CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere"), saved_sphere_time_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere/name_data") && !file.read_dataset_string_rank_2("name_data", "Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", saved_sphere_name_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere/name_data")) && !file.read_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere"), saved_sphere_name_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
@@ -1377,99 +1378,99 @@ bool CoreLoadsPersistence::write(HDF5Tool& file, const CoreLoadsTrajectory& traj
       PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: invalid trajectory name_data reference.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/Loads/Trajectory"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("Loads/Trajectory")))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Loads/Trajectory", trajectory.loads_data))
-    {
-      PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
-      return false;
-    }
-
-    if (!file.ensureGroup("Cubit-CalculiX/Loads/Trajectory/Heatflux"))
-    {
-      PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
-      return false;
-    }
-    if (!file.write_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Loads/Trajectory/Heatflux", heatflux.loads_data))
-    {
-      PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
-      return false;
-    }
-    if (!file.write_dataset_int_rank_2("fire_ray_surface_data", "Cubit-CalculiX/Loads/Trajectory/Heatflux", heatflux.fire_ray_surface_data))
-    {
-      PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
-      return false;
-    }
-    if (!file.write_dataset_string_rank_2("direction_data", "Cubit-CalculiX/Loads/Trajectory/Heatflux", heatflux.direction_data))
-    {
-      PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
-      return false;
-    }
-    if (!file.write_dataset_double_rank_2("magnitude_data", "Cubit-CalculiX/Loads/Trajectory/Heatflux", heatflux.magnitude_data))
-    {
-      PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
-      return false;
-    }
-    if (!file.write_dataset_double_rank_2("radius_data", "Cubit-CalculiX/Loads/Trajectory/Heatflux", heatflux.radius_data))
-    {
-      PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
-      return false;
-    }
-    if (!file.write_dataset_string_rank_2("time_data", "Cubit-CalculiX/Loads/Trajectory/Heatflux", heatflux.time_data))
-    {
-      PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
-      return false;
-    }
-    if (!file.write_dataset_string_rank_2("name_data", "Cubit-CalculiX/Loads/Trajectory/Heatflux", heatflux.name_data))
+    if (!file.write_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Loads/Trajectory"), trajectory.loads_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
 
-    if (!file.ensureGroup("Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("Loads/Trajectory/Heatflux")))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", sphere.loads_data))
+    if (!file.write_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Loads/Trajectory/Heatflux"), heatflux.loads_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("fire_ray_surface_data", "Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", sphere.fire_ray_surface_data))
+    if (!file.write_dataset_int_rank_2("fire_ray_surface_data", CalculiXModelSchema::path("Loads/Trajectory/Heatflux"), heatflux.fire_ray_surface_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("direction_data", "Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", sphere.direction_data))
+    if (!file.write_dataset_string_rank_2("direction_data", CalculiXModelSchema::path("Loads/Trajectory/Heatflux"), heatflux.direction_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_double_rank_2("magnitude_data", "Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", sphere.magnitude_data))
+    if (!file.write_dataset_double_rank_2("magnitude_data", CalculiXModelSchema::path("Loads/Trajectory/Heatflux"), heatflux.magnitude_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_double_rank_2("radius_data", "Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", sphere.radius_data))
+    if (!file.write_dataset_double_rank_2("radius_data", CalculiXModelSchema::path("Loads/Trajectory/Heatflux"), heatflux.radius_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_double_rank_2("depth_data", "Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", sphere.depth_data))
+    if (!file.write_dataset_string_rank_2("time_data", CalculiXModelSchema::path("Loads/Trajectory/Heatflux"), heatflux.time_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("time_data", "Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", sphere.time_data))
+    if (!file.write_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Loads/Trajectory/Heatflux"), heatflux.name_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("name_data", "Cubit-CalculiX/Loads/Trajectory/BodyHeatfluxSphere", sphere.name_data))
+
+    if (!file.ensureGroup(CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere")))
+    {
+      PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
+      return false;
+    }
+    if (!file.write_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere"), sphere.loads_data))
+    {
+      PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
+      return false;
+    }
+    if (!file.write_dataset_int_rank_2("fire_ray_surface_data", CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere"), sphere.fire_ray_surface_data))
+    {
+      PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
+      return false;
+    }
+    if (!file.write_dataset_string_rank_2("direction_data", CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere"), sphere.direction_data))
+    {
+      PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
+      return false;
+    }
+    if (!file.write_dataset_double_rank_2("magnitude_data", CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere"), sphere.magnitude_data))
+    {
+      PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
+      return false;
+    }
+    if (!file.write_dataset_double_rank_2("radius_data", CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere"), sphere.radius_data))
+    {
+      PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
+      return false;
+    }
+    if (!file.write_dataset_double_rank_2("depth_data", CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere"), sphere.depth_data))
+    {
+      PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
+      return false;
+    }
+    if (!file.write_dataset_string_rank_2("time_data", CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere"), sphere.time_data))
+    {
+      PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
+      return false;
+    }
+    if (!file.write_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Loads/Trajectory/BodyHeatfluxSphere"), sphere.name_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsTrajectory: %s\n", file.last_error().c_str());
       return false;
@@ -1499,32 +1500,32 @@ bool CoreLoadsPersistence::read(HDF5Tool& file, CoreLoadsFilm& film)
     decltype(film.coefficient_data) saved_coefficient_data;
     decltype(film.film_time_delay_data) saved_film_time_delay_data;
     decltype(film.name_data) saved_name_data;
-    if (file.nameExists("Cubit-CalculiX/Loads/Film/loads_data") && !file.read_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Loads/Film", saved_loads_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Film/loads_data")) && !file.read_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Loads/Film"), saved_loads_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsFilm: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Film/time_delay_data") && !file.read_dataset_string_rank_2("time_delay_data", "Cubit-CalculiX/Loads/Film", saved_time_delay_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Film/time_delay_data")) && !file.read_dataset_string_rank_2("time_delay_data", CalculiXModelSchema::path("Loads/Film"), saved_time_delay_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsFilm: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Film/temperature_data") && !file.read_dataset_string_rank_2("temperature_data", "Cubit-CalculiX/Loads/Film", saved_temperature_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Film/temperature_data")) && !file.read_dataset_string_rank_2("temperature_data", CalculiXModelSchema::path("Loads/Film"), saved_temperature_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsFilm: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Film/coefficient_data") && !file.read_dataset_string_rank_2("coefficient_data", "Cubit-CalculiX/Loads/Film", saved_coefficient_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Film/coefficient_data")) && !file.read_dataset_string_rank_2("coefficient_data", CalculiXModelSchema::path("Loads/Film"), saved_coefficient_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsFilm: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Film/film_time_delay_data") && !file.read_dataset_string_rank_2("film_time_delay_data", "Cubit-CalculiX/Loads/Film", saved_film_time_delay_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Film/film_time_delay_data")) && !file.read_dataset_string_rank_2("film_time_delay_data", CalculiXModelSchema::path("Loads/Film"), saved_film_time_delay_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsFilm: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Film/name_data") && !file.read_dataset_string_rank_2("name_data", "Cubit-CalculiX/Loads/Film", saved_name_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Film/name_data")) && !file.read_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Loads/Film"), saved_name_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsFilm: %s\n", file.last_error().c_str());
       return false;
@@ -1674,37 +1675,37 @@ bool CoreLoadsPersistence::write(HDF5Tool& file, const CoreLoadsFilm& film)
       PRINT_ERROR("Cannot write CalculiX LoadsFilm: invalid or duplicate IDs.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/Loads/Film"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("Loads/Film")))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsFilm: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Loads/Film", film.loads_data))
+    if (!file.write_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Loads/Film"), film.loads_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsFilm: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("time_delay_data", "Cubit-CalculiX/Loads/Film", film.time_delay_data))
+    if (!file.write_dataset_string_rank_2("time_delay_data", CalculiXModelSchema::path("Loads/Film"), film.time_delay_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsFilm: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("temperature_data", "Cubit-CalculiX/Loads/Film", film.temperature_data))
+    if (!file.write_dataset_string_rank_2("temperature_data", CalculiXModelSchema::path("Loads/Film"), film.temperature_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsFilm: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("coefficient_data", "Cubit-CalculiX/Loads/Film", film.coefficient_data))
+    if (!file.write_dataset_string_rank_2("coefficient_data", CalculiXModelSchema::path("Loads/Film"), film.coefficient_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsFilm: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("film_time_delay_data", "Cubit-CalculiX/Loads/Film", film.film_time_delay_data))
+    if (!file.write_dataset_string_rank_2("film_time_delay_data", CalculiXModelSchema::path("Loads/Film"), film.film_time_delay_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsFilm: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("name_data", "Cubit-CalculiX/Loads/Film", film.name_data))
+    if (!file.write_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Loads/Film"), film.name_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsFilm: %s\n", file.last_error().c_str());
       return false;
@@ -1735,37 +1736,37 @@ bool CoreLoadsPersistence::read(HDF5Tool& file, CoreLoadsRadiation& radiation)
     decltype(radiation.radiation_time_delay_data) saved_radiation_time_delay_data;
     decltype(radiation.name_data) saved_name_data;
     decltype(radiation.cavity_data) saved_cavity_data;
-    if (file.nameExists("Cubit-CalculiX/Loads/Radiation/loads_data") && !file.read_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Loads/Radiation", saved_loads_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Radiation/loads_data")) && !file.read_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Loads/Radiation"), saved_loads_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsRadiation: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Radiation/time_delay_data") && !file.read_dataset_string_rank_2("time_delay_data", "Cubit-CalculiX/Loads/Radiation", saved_time_delay_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Radiation/time_delay_data")) && !file.read_dataset_string_rank_2("time_delay_data", CalculiXModelSchema::path("Loads/Radiation"), saved_time_delay_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsRadiation: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Radiation/temperature_data") && !file.read_dataset_string_rank_2("temperature_data", "Cubit-CalculiX/Loads/Radiation", saved_temperature_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Radiation/temperature_data")) && !file.read_dataset_string_rank_2("temperature_data", CalculiXModelSchema::path("Loads/Radiation"), saved_temperature_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsRadiation: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Radiation/emissivity_data") && !file.read_dataset_string_rank_2("emissivity_data", "Cubit-CalculiX/Loads/Radiation", saved_emissivity_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Radiation/emissivity_data")) && !file.read_dataset_string_rank_2("emissivity_data", CalculiXModelSchema::path("Loads/Radiation"), saved_emissivity_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsRadiation: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Radiation/radiation_time_delay_data") && !file.read_dataset_string_rank_2("radiation_time_delay_data", "Cubit-CalculiX/Loads/Radiation", saved_radiation_time_delay_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Radiation/radiation_time_delay_data")) && !file.read_dataset_string_rank_2("radiation_time_delay_data", CalculiXModelSchema::path("Loads/Radiation"), saved_radiation_time_delay_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsRadiation: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Radiation/name_data") && !file.read_dataset_string_rank_2("name_data", "Cubit-CalculiX/Loads/Radiation", saved_name_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Radiation/name_data")) && !file.read_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Loads/Radiation"), saved_name_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsRadiation: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/Radiation/cavity_data") && !file.read_dataset_string_rank_2("cavity_data", "Cubit-CalculiX/Loads/Radiation", saved_cavity_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/Radiation/cavity_data")) && !file.read_dataset_string_rank_2("cavity_data", CalculiXModelSchema::path("Loads/Radiation"), saved_cavity_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsRadiation: %s\n", file.last_error().c_str());
       return false;
@@ -1936,42 +1937,42 @@ bool CoreLoadsPersistence::write(HDF5Tool& file, const CoreLoadsRadiation& radia
       PRINT_ERROR("Cannot write CalculiX LoadsRadiation: invalid or duplicate IDs.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/Loads/Radiation"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("Loads/Radiation")))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsRadiation: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Loads/Radiation", radiation.loads_data))
+    if (!file.write_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Loads/Radiation"), radiation.loads_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsRadiation: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("time_delay_data", "Cubit-CalculiX/Loads/Radiation", radiation.time_delay_data))
+    if (!file.write_dataset_string_rank_2("time_delay_data", CalculiXModelSchema::path("Loads/Radiation"), radiation.time_delay_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsRadiation: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("temperature_data", "Cubit-CalculiX/Loads/Radiation", radiation.temperature_data))
+    if (!file.write_dataset_string_rank_2("temperature_data", CalculiXModelSchema::path("Loads/Radiation"), radiation.temperature_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsRadiation: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("emissivity_data", "Cubit-CalculiX/Loads/Radiation", radiation.emissivity_data))
+    if (!file.write_dataset_string_rank_2("emissivity_data", CalculiXModelSchema::path("Loads/Radiation"), radiation.emissivity_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsRadiation: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("radiation_time_delay_data", "Cubit-CalculiX/Loads/Radiation", radiation.radiation_time_delay_data))
+    if (!file.write_dataset_string_rank_2("radiation_time_delay_data", CalculiXModelSchema::path("Loads/Radiation"), radiation.radiation_time_delay_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsRadiation: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("name_data", "Cubit-CalculiX/Loads/Radiation", radiation.name_data))
+    if (!file.write_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Loads/Radiation"), radiation.name_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsRadiation: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("cavity_data", "Cubit-CalculiX/Loads/Radiation", radiation.cavity_data))
+    if (!file.write_dataset_string_rank_2("cavity_data", CalculiXModelSchema::path("Loads/Radiation"), radiation.cavity_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsRadiation: %s\n", file.last_error().c_str());
       return false;
@@ -1999,22 +2000,22 @@ bool CoreLoadsPersistence::read(HDF5Tool& file, CoreLoadsSurfaceTraction& tracti
     decltype(traction.time_delay_data) saved_time_delay_data;
     decltype(traction.force_data) saved_force_data;
     decltype(traction.name_data) saved_name_data;
-    if (file.nameExists("Cubit-CalculiX/Loads/SurfaceTraction/loads_data") && !file.read_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Loads/SurfaceTraction", saved_loads_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/SurfaceTraction/loads_data")) && !file.read_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Loads/SurfaceTraction"), saved_loads_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsSurfaceTraction: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/SurfaceTraction/time_delay_data") && !file.read_dataset_string_rank_2("time_delay_data", "Cubit-CalculiX/Loads/SurfaceTraction", saved_time_delay_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/SurfaceTraction/time_delay_data")) && !file.read_dataset_string_rank_2("time_delay_data", CalculiXModelSchema::path("Loads/SurfaceTraction"), saved_time_delay_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsSurfaceTraction: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/SurfaceTraction/force_data") && !file.read_dataset_double_rank_2("force_data", "Cubit-CalculiX/Loads/SurfaceTraction", saved_force_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/SurfaceTraction/force_data")) && !file.read_dataset_double_rank_2("force_data", CalculiXModelSchema::path("Loads/SurfaceTraction"), saved_force_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsSurfaceTraction: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/SurfaceTraction/name_data") && !file.read_dataset_string_rank_2("name_data", "Cubit-CalculiX/Loads/SurfaceTraction", saved_name_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/SurfaceTraction/name_data")) && !file.read_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Loads/SurfaceTraction"), saved_name_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsSurfaceTraction: %s\n", file.last_error().c_str());
       return false;
@@ -2122,27 +2123,27 @@ bool CoreLoadsPersistence::write(HDF5Tool& file, const CoreLoadsSurfaceTraction&
       PRINT_ERROR("Cannot write CalculiX LoadsSurfaceTraction: invalid or duplicate IDs.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/Loads/SurfaceTraction"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("Loads/SurfaceTraction")))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsSurfaceTraction: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Loads/SurfaceTraction", traction.loads_data))
+    if (!file.write_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Loads/SurfaceTraction"), traction.loads_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsSurfaceTraction: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("time_delay_data", "Cubit-CalculiX/Loads/SurfaceTraction", traction.time_delay_data))
+    if (!file.write_dataset_string_rank_2("time_delay_data", CalculiXModelSchema::path("Loads/SurfaceTraction"), traction.time_delay_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsSurfaceTraction: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_double_rank_2("force_data", "Cubit-CalculiX/Loads/SurfaceTraction", traction.force_data))
+    if (!file.write_dataset_double_rank_2("force_data", CalculiXModelSchema::path("Loads/SurfaceTraction"), traction.force_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsSurfaceTraction: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("name_data", "Cubit-CalculiX/Loads/SurfaceTraction", traction.name_data))
+    if (!file.write_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Loads/SurfaceTraction"), traction.name_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsSurfaceTraction: %s\n", file.last_error().c_str());
       return false;
@@ -2171,27 +2172,27 @@ bool CoreLoadsPersistence::read(HDF5Tool& file, CoreLoadsBodyHeatflux& bodyheatf
     decltype(bodyheatflux.element_data) saved_element_data;
     decltype(bodyheatflux.magnitude_data) saved_magnitude_data;
     decltype(bodyheatflux.name_data) saved_name_data;
-    if (file.nameExists("Cubit-CalculiX/Loads/BodyHeatflux/loads_data") && !file.read_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Loads/BodyHeatflux", saved_loads_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/BodyHeatflux/loads_data")) && !file.read_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Loads/BodyHeatflux"), saved_loads_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsBodyHeatflux: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/BodyHeatflux/time_delay_data") && !file.read_dataset_string_rank_2("time_delay_data", "Cubit-CalculiX/Loads/BodyHeatflux", saved_time_delay_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/BodyHeatflux/time_delay_data")) && !file.read_dataset_string_rank_2("time_delay_data", CalculiXModelSchema::path("Loads/BodyHeatflux"), saved_time_delay_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsBodyHeatflux: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/BodyHeatflux/element_data") && !file.read_dataset_int_rank_2("element_data", "Cubit-CalculiX/Loads/BodyHeatflux", saved_element_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/BodyHeatflux/element_data")) && !file.read_dataset_int_rank_2("element_data", CalculiXModelSchema::path("Loads/BodyHeatflux"), saved_element_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsBodyHeatflux: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/BodyHeatflux/magnitude_data") && !file.read_dataset_double_rank_2("magnitude_data", "Cubit-CalculiX/Loads/BodyHeatflux", saved_magnitude_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/BodyHeatflux/magnitude_data")) && !file.read_dataset_double_rank_2("magnitude_data", CalculiXModelSchema::path("Loads/BodyHeatflux"), saved_magnitude_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsBodyHeatflux: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Loads/BodyHeatflux/name_data") && !file.read_dataset_string_rank_2("name_data", "Cubit-CalculiX/Loads/BodyHeatflux", saved_name_data))
+    if (file.nameExists(CalculiXModelSchema::path("Loads/BodyHeatflux/name_data")) && !file.read_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Loads/BodyHeatflux"), saved_name_data))
     {
       PRINT_ERROR("Cannot read CalculiX LoadsBodyHeatflux: %s\n", file.last_error().c_str());
       return false;
@@ -2310,32 +2311,32 @@ bool CoreLoadsPersistence::write(HDF5Tool& file, const CoreLoadsBodyHeatflux& bo
       PRINT_ERROR("Cannot write CalculiX LoadsBodyHeatflux: invalid or duplicate IDs.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/Loads/BodyHeatflux"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("Loads/BodyHeatflux")))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsBodyHeatflux: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("loads_data", "Cubit-CalculiX/Loads/BodyHeatflux", bodyheatflux.loads_data))
+    if (!file.write_dataset_int_rank_2("loads_data", CalculiXModelSchema::path("Loads/BodyHeatflux"), bodyheatflux.loads_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsBodyHeatflux: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("time_delay_data", "Cubit-CalculiX/Loads/BodyHeatflux", bodyheatflux.time_delay_data))
+    if (!file.write_dataset_string_rank_2("time_delay_data", CalculiXModelSchema::path("Loads/BodyHeatflux"), bodyheatflux.time_delay_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsBodyHeatflux: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("element_data", "Cubit-CalculiX/Loads/BodyHeatflux", bodyheatflux.element_data))
+    if (!file.write_dataset_int_rank_2("element_data", CalculiXModelSchema::path("Loads/BodyHeatflux"), bodyheatflux.element_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsBodyHeatflux: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_double_rank_2("magnitude_data", "Cubit-CalculiX/Loads/BodyHeatflux", bodyheatflux.magnitude_data))
+    if (!file.write_dataset_double_rank_2("magnitude_data", CalculiXModelSchema::path("Loads/BodyHeatflux"), bodyheatflux.magnitude_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsBodyHeatflux: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("name_data", "Cubit-CalculiX/Loads/BodyHeatflux", bodyheatflux.name_data))
+    if (!file.write_dataset_string_rank_2("name_data", CalculiXModelSchema::path("Loads/BodyHeatflux"), bodyheatflux.name_data))
     {
       PRINT_ERROR("Cannot write CalculiX LoadsBodyHeatflux: %s\n", file.last_error().c_str());
       return false;

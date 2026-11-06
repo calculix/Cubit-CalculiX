@@ -1,3 +1,4 @@
+#include "Core/drawing/CalculiXDrawingAdapter.hpp"
 #include "Core/export/CoreCustomLines.hpp"
 #include <cctype>
 #include "Core/application/CoreIdSelection.hpp"
@@ -11,7 +12,7 @@
 #include "Core/mesh/CalculiXMeshInterface.hpp"
 #include "MeshExportInterface.hpp"
 #include "CubitInterface.hpp"
-#include "CoreDrawSymbols.hpp"
+#include "Framework/Drawing/DrawingSymbols.hpp"
 #include "CoreDrawMeshGeometry.hpp"
 #include "Core/loads/CoreLoadsForces.hpp"
 #include "Core/loads/CoreLoadsPressures.hpp"
@@ -165,27 +166,27 @@ bool faceSample(MeshExportInterface& mesh, ElementHandle element, ElementType ty
   };
   if (face.size() >= 3)
   {
-    normal = CoreDrawSymbols::cross_product(difference(face[1], face[0]), difference(face[2], face[0]));
+    normal = DrawingSymbols::cross_product(difference(face[1], face[0]), difference(face[2], face[0]));
   }
   else if (nodes.size() >= 3)
   {
     const auto a = coordinate(nodes[0]), b = coordinate(nodes[1]), c = coordinate(nodes[2]);
-    const auto plane = CoreDrawSymbols::cross_product(difference(b, a), difference(c, a));
-    normal = CoreDrawSymbols::cross_product(difference(face[1], face[0]), plane);
+    const auto plane = DrawingSymbols::cross_product(difference(b, a), difference(c, a));
+    normal = DrawingSymbols::cross_product(difference(face[1], face[0]), plane);
   }
   else
   {
     return false;
   }
-  if (CoreDrawSymbols::inner_product(normal, difference(point, centroid)) < 0)
+  if (DrawingSymbols::inner_product(normal, difference(point, centroid)) < 0)
   {
-    normal = CoreDrawSymbols::mult_vector_scalar(normal, -1);
+    normal = DrawingSymbols::mult_vector_scalar(normal, -1);
   }
-  if (CoreDrawSymbols::magnitude(normal) <= 1e-15)
+  if (DrawingSymbols::magnitude(normal) <= 1e-15)
   {
     return false;
   }
-  normal = CoreDrawSymbols::unit_vector(normal);
+  normal = DrawingSymbols::unit_vector(normal);
   return true;
 }
 
@@ -336,9 +337,22 @@ bool body(CalculiXCore& core, Conditions& conditions, DrawFeature feature, int i
       {
         return false;
       }
-      const auto axis = CoreDrawSymbols::unit_vector(direction);
-      std::vector<double> radial = {condition.point[0]-origin[0], condition.point[1]-origin[1], condition.point[2]-origin[2]};
-      condition.direction = CoreDrawSymbols::add_matrix({radial}, {CoreDrawSymbols::mult_vector_scalar(axis, -CoreDrawSymbols::inner_product(radial, axis))})[0];
+      const auto axis = DrawingSymbols::unit_vector(direction);
+      const std::vector<double> radial = {
+        condition.point[0] - origin[0],
+        condition.point[1] - origin[1],
+        condition.point[2] - origin[2]
+      };
+
+      // Remove the component parallel to the normalized rotation axis:
+      // r_perpendicular = r - (r . axis) axis.
+      const double axialDistance = DrawingSymbols::inner_product(radial, axis);
+      condition.direction.resize(3);
+      for (std::size_t component = 0; component < 3; ++component)
+      {
+        condition.direction[component] =
+          radial[component] - axialDistance * axis[component];
+      }
     }
     condition.value = magnitude;
     condition.step = step;
@@ -730,7 +744,7 @@ bool CoreDrawScope::resolveStep(CalculiXCore& core, int stepId, double size, Res
         bool valid = true;
         if (family.first == "BOUNDARY" || family.first == "TEMPERATURE")
         {
-          valid = CoreDrawSymbols::displacement(geometry, condition.point, condition.dof, condition.color, size);
+          valid = CalculiXDrawingAdapter::displacement(geometry, condition.point, condition.dof, condition.color, size);
         }
         else if (condition.body)
         {
@@ -739,14 +753,14 @@ bool CoreDrawScope::resolveStep(CalculiXCore& core, int stepId, double size, Res
         else if (condition.value != 0)
         {
           const bool towardVector = condition.owner.feature == DrawFeature::Force || condition.owner.feature == DrawFeature::SurfaceTraction || condition.owner.feature == DrawFeature::Gravity || condition.owner.feature == DrawFeature::Centrifugal;
-          auto direction = CoreDrawSymbols::mult_vector_scalar(condition.direction, towardVector ? -condition.value : condition.value);
+          auto direction = DrawingSymbols::mult_vector_scalar(condition.direction, towardVector ? -condition.value : condition.value);
           if (condition.dof > 3)
           {
-            valid = CoreDrawSymbols::flatArrow(geometry, condition.point, direction, false, condition.color, size);
+            valid = DrawingSymbols::flatArrow(geometry, condition.point, direction, false, condition.color, size);
           }
           else
           {
-            valid = CoreDrawSymbols::arrow(geometry, condition.point, direction, false, condition.color, size);
+            valid = DrawingSymbols::arrow(geometry, condition.point, direction, false, condition.color, size);
           }
         }
         if (!valid)

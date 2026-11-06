@@ -4,9 +4,11 @@
 #include <string>
 
 class UserOptionsInterface;
+class DrawingInterface;
 class CommandProviderInterface;
 class ComponentProviderInterface;
 class WorkspaceProviderInterface;
+class ResultSourceProviderInterface;
 
 class ModuleInterface
 {
@@ -16,7 +18,7 @@ public:
   // Stable identifier, independent of translated display text.
   virtual std::string module_id() const = 0;
 
-  virtual bool initialize(UserOptionsInterface& options, std::string& error) = 0;
+  virtual bool initialize(UserOptionsInterface& options, DrawingInterface& drawings, std::string& error) = 0;
 
   // Also valid after partial initialization; implementations must not throw.
   virtual void shutdown() noexcept = 0;
@@ -26,6 +28,13 @@ public:
   virtual ComponentProviderInterface* component_provider() noexcept = 0;
 
   virtual WorkspaceProviderInterface* workspace_provider() noexcept
+  {
+    return nullptr;
+  }
+
+  // Borrowed after successful initialization, until shutdown begins.
+  // Result loading does not require this module's GUI component to be started.
+  virtual ResultSourceProviderInterface* result_source_provider() noexcept
   {
     return nullptr;
   }

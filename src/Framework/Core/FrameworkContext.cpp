@@ -1,5 +1,6 @@
 #include "FrameworkContext.hpp"
 #include "FrameworkModules.hpp"
+#include "Framework/Drawing/DrawingService.hpp"
 #include "Framework/Storage/UserOptionsStore.hpp"
 #include "Framework/Utility/FrameworkPaths.hpp"
 #include "Framework/GUI/UserOptionsManager.hpp"
@@ -62,8 +63,10 @@ bool FrameworkContext::acquire(std::string& error)
       return false;
     }
     options = std::make_unique<UserOptionsStore>(std::move(paths));
-    if (!modules.initialize(*options, error))
+    drawings = std::make_unique<DrawingService>();
+    if (!modules.initialize(*options, *drawings, error))
     {
+      drawings.reset();
       options.reset();
       return false;
     }
@@ -85,6 +88,7 @@ void FrameworkContext::release() noexcept
   if (clients == 0)
   {
     modules.shutdown();
+    drawings.reset();
     options.reset();
   }
 }
@@ -104,7 +108,7 @@ bool FrameworkContext::acquire_command_plugin(std::string& error)
 {
   if (command_plugin_attached)
   {
-    error = "The FEA command plugin is already attached.";
+    error = "The cubit-sim command plugin is already attached.";
     return false;
   }
 
@@ -143,7 +147,7 @@ bool FrameworkContext::attach_workspace_host(QWidget* host, std::string& error)
 
   try
   {
-    auto manager = std::make_unique<WorkspaceManager>();
+    auto manager = std::make_unique<WorkspaceManager>(*drawings);
 
     if (!manager->attach(host, error))
     {
@@ -198,7 +202,7 @@ bool FrameworkContext::select_workspace(const std::string& id, std::string& erro
 {
   if (workspaces == nullptr)
   {
-    error = "Workspace switching requires the FEA GUI component.";
+    error = "Workspace switching requires the cubit-sim GUI component.";
     return false;
   }
 

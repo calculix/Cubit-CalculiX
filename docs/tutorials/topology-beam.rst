@@ -23,7 +23,7 @@ outputs, and :doc:`../developer/topology-export` for annotated input excerpts.
 1. Prepare the beam
 -------------------
 
-Open Cubit with Cubit-CalculiX loaded, choose a working directory for analysis
+Open Cubit with cubit-sim loaded, choose a working directory for analysis
 files, and play the downloaded journal using Cubit's journal playback. A
 configured CalculiX solver is required for the subsequent run. The journal uses
 the Spooles solver setting; use a compatible solver configuration.
@@ -52,7 +52,7 @@ The model contains:
      - A linear static step with the force, displacement BC, and output requests assigned.
 
 Use a consistent unit system for dimensions, material properties, and force.
-Cubit-CalculiX does not infer units from these numbers. The journal also creates
+cubit-sim does not infer units from these numbers. The journal also creates
 nodeset 2, named ``xl``; it is not the topology displacement selection.
 
 Display the mesh and inspect the support and rigid-body nodesets before running.

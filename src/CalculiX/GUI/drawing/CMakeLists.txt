@@ -1,8 +1,6 @@
 target_sources(calculix_gui PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXTopologyToolbar.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXTopologyToolbar.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/NativeDisplayRefreshObserver.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/NativeDisplayRefreshObserver.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/DrawingPickCursor.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/DrawingPickCursor.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/DrawingPickController.cpp

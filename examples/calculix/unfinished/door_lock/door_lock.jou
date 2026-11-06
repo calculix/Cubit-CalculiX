@@ -1,7 +1,7 @@
 ## from the coreform webinar
 ## Import geometry 
 reset
-import acis "/home/user/git/Cubit-CalculiX/examples/calculix/unfinished/door_lock/Door_Lock_Assembly.sat" nofreesurfaces attributes_on  separate_bodies 
+import acis "/home/user/git/cubit-sim/examples/calculix/unfinished/door_lock/Door_Lock_Assembly.sat" nofreesurfaces attributes_on  separate_bodies
 
 ## Mesh Volume 2 (Large Hinge)
 ### Composite the source and target surfaces

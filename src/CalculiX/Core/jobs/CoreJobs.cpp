@@ -899,7 +899,9 @@ bool CoreJobs::results_ready()
   }
   for (auto item = pending_result_jobs.begin(); item != pending_result_jobs.end();)
   {
-    if (get_jobs_data_id_from_job_id(*item) < 0 || results.get_vtk_status(*item) == FeaResults::ConversionStatus::Complete)
+    const int index = get_jobs_data_id_from_job_id(*item);
+    if (index < 0 || jobs_data[index][9] != "1" ||
+      results.get_vtk_status(*item) == SimResults::ConversionStatus::Complete)
     {
       item = pending_result_jobs.erase(item);
     }
@@ -918,35 +920,59 @@ bool CoreJobs::complete_job_results(int job_id)
     return false;
   }
   QScopedValueRollback<bool> guard(completing_results, true);
-  pending_result_jobs.insert(job_id);
   const int index = get_jobs_data_id_from_job_id(job_id);
   if (index < 0)
   {
     return false;
   }
   CalculiXResultsInterface results;
+  bool readers_loaded = false;
   try
   {
     jobs_data[index][6] = "-1";
-    if (!results.load_result(job_id) || !results.build_vtk_result(job_id, CoreResultsVtkOptions{}))
+    readers_loaded = results.load_result(job_id);
+    if (!readers_loaded)
     {
-      PRINT_ERROR("Job %d finished, but its result data could not be prepared. Retry conversion before the next job.\n", job_id);
+      jobs_data[index][3] = "4";
+      pending_result_jobs.erase(job_id);
+      PRINT_ERROR("Failed to load results for job %d.\n", job_id);
+      return false;
+    }
+
+    // Keep reader data for topology and later manual conversion.
+    if (jobs_data[index][9] != "1")
+    {
+      pending_result_jobs.erase(job_id);
+      return true;
+    }
+
+    pending_result_jobs.insert(job_id);
+    if (!results.build_vtk_result(job_id, CoreResultsVtkOptions{}))
+    {
+      PRINT_ERROR("VTK conversion failed for job %d. Retry conversion before the next job.\n", job_id);
       return false;
     }
     pending_result_jobs.erase(job_id);
-    if (jobs_data[index][9] == "1")
-    {
-      jobs_data[index][6] = results.export_vtk_result(job_id) ? "1" : "-1";
-    }
+    jobs_data[index][6] = results.export_vtk_result(job_id) ? "1" : "-1";
     return true;
   }
   catch (const std::exception& failure)
   {
+    if (!readers_loaded)
+    {
+      jobs_data[index][3] = "4";
+      pending_result_jobs.erase(job_id);
+    }
     PRINT_ERROR("Unable to prepare results for job %d: %s\n", job_id, failure.what());
     return false;
   }
   catch (...)
   {
+    if (!readers_loaded)
+    {
+      jobs_data[index][3] = "4";
+      pending_result_jobs.erase(job_id);
+    }
     PRINT_ERROR("Unable to prepare results for job %d.\n", job_id);
     return false;
   }

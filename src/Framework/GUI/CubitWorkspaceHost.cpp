@@ -1,5 +1,7 @@
 #include "CubitWorkspaceHost.hpp"
+#include "Framework/Core/CubitSimVersion.hpp"
 #include "DocumentationManager.hpp"
+#include "WorkspaceGraphicsStack.hpp"
 #include "Claro.hpp"
 #include "CommandWindow.hpp"
 #include "NavigationModel.hpp"
@@ -33,9 +35,24 @@ QDockWidget* enclosingDock(QWidget* widget, QWidget* host)
 }
 }
 
-CubitWorkspaceHost::CubitWorkspaceHost() = default;
+CubitWorkspaceHost::CubitWorkspaceHost() : graphics(std::make_unique<WorkspaceGraphicsStack>())
+{
+}
 
-CubitWorkspaceHost::~CubitWorkspaceHost() = default;
+CubitWorkspaceHost::~CubitWorkspaceHost()
+{
+  graphics->detach();
+  if (can_access_ui() && !titleSuffix.isEmpty())
+  {
+    QString title = gui->get_title();
+    const auto position = title.lastIndexOf(titleSuffix);
+    if (position >= 0)
+    {
+      title.remove(position, titleSuffix.size());
+      gui->set_title(title);
+    }
+  }
+}
 
 bool CubitWorkspaceHost::attach(Claro* host, std::string& error)
 {
@@ -48,6 +65,7 @@ bool CubitWorkspaceHost::attach(Claro* host, std::string& error)
   gui = host;
   commandDock = enclosingDock(host->command_line(), host);
   navigationDock = enclosingDock(host->command_buttons(), host);
+  nativeNavigationDockVisible = navigationDock != nullptr && !navigationDock->isHidden();
   viewport = host->graphics_widget();
   menu = host->menuBar();
   nativeNavigation = host->navigation_model();
@@ -99,7 +117,16 @@ bool CubitWorkspaceHost::attach(Claro* host, std::string& error)
     }
   }
 
-  return true;
+  titleSuffix = QString(" -- with Cubit-Sim %1").arg(CubitSim::Version);
+  if (!gui->get_title().contains(titleSuffix))
+  {
+    gui->set_title(gui->get_title() + titleSuffix);
+  }
+  else
+  {
+    titleSuffix.clear();
+  }
+  return graphics->attach(viewport, error);
 }
 
 bool CubitWorkspaceHost::validate(std::string& error) const
@@ -143,9 +170,14 @@ void CubitWorkspaceHost::watch_dock(QDockWidget* dock)
 
 bool CubitWorkspaceHost::dock_allowed(QDockWidget* dock) const
 {
-  if (dock == commandDock || dock == navigationDock)
+  if (dock == commandDock)
   {
     return true;
+  }
+
+  if (dock == navigationDock)
+  {
+    return useNativeNavigation;
   }
 
   for (const auto& owned : ownedDocks)
@@ -168,14 +200,14 @@ void CubitWorkspaceHost::register_view(const WorkspaceView& view)
     gui->addToolBar(Qt::TopToolBarArea, toolbar);
     toolbar->hide();
     const QString visibilityKey = "Workspaces/" + view.id + "/Toolbars/" + toolbar->objectName() + "/Visible";
-    toolbarVisibility[toolbar] = QSettings("Cubit-CalculiX", "Framework").value(visibilityKey, true).toBool();
+    toolbarVisibility[toolbar] = QSettings("cubit-sim", "Framework").value(visibilityKey, true).toBool();
     connect(toolbar, &QToolBar::visibilityChanged, this, [this, toolbar, visibilityKey](bool)
     {
       if (!changing && activeToolbars.contains(toolbar) && gui != nullptr && gui->isVisible())
       {
         const bool visible = !toolbar->isHidden();
         toolbarVisibility[toolbar] = visible;
-        QSettings("Cubit-CalculiX", "Framework").setValue(visibilityKey, visible);
+        QSettings("cubit-sim", "Framework").setValue(visibilityKey, visible);
       }
     });
     toolbar->toggleViewAction()->setVisible(false);
@@ -216,6 +248,7 @@ void CubitWorkspaceHost::remember_native()
   }
 
   nativeSelection = current_index();
+  nativeNavigationDockVisible = !navigationDock->isHidden();
 
   if (navigationMode != nullptr)
   {
@@ -327,7 +360,7 @@ bool CubitWorkspaceHost::restore_layout(const QByteArray& layout)
 
 bool CubitWorkspaceHost::apply(const WorkspaceView& view, const QPersistentModelIndex& selection, bool firstVisit, std::string& error)
 {
-  if (!validate(error) || view.navigationModel == nullptr)
+  if (!validate(error) || (view.useNativeNavigation && view.navigationModel == nullptr))
   {
     if (error.empty())
     {
@@ -338,6 +371,70 @@ bool CubitWorkspaceHost::apply(const WorkspaceView& view, const QPersistentModel
   }
 
   const QScopedValueRollback<bool> guard(changing, true);
+  if (!graphics->activate(view.graphicsPage, error))
+  {
+    return false;
+  }
+
+  const bool nextIndependent = view.graphicsPage != nullptr;
+
+  if (nextIndependent && !independentGraphics)
+  {
+    commandAllowedAreas = commandDock->allowedAreas();
+    commandFeatures = commandDock->features();
+    commandArea = gui->dockWidgetArea(commandDock);
+    commandFloating = commandDock->isFloating();
+    commandGeometry = commandDock->geometry();
+    nativeToolbarVisibility.clear();
+
+    for (auto* toolbar : gui->findChildren<QToolBar*>(QString(), Qt::FindDirectChildrenOnly))
+    {
+      if (!ownedToolbars.contains(toolbar))
+      {
+        nativeToolbarVisibility.append({toolbar, !toolbar->isHidden()});
+        toolbar->hide();
+      }
+    }
+  }
+  else if (!nextIndependent && independentGraphics)
+  {
+    commandDock->setAllowedAreas(commandAllowedAreas);
+    commandDock->setFeatures(commandFeatures);
+
+    if (commandArea != Qt::NoDockWidgetArea)
+    {
+      gui->addDockWidget(commandArea, commandDock);
+    }
+
+    commandDock->setFloating(commandFloating);
+
+    if (commandFloating)
+    {
+      commandDock->setGeometry(commandGeometry);
+    }
+
+    for (const auto& item : nativeToolbarVisibility)
+    {
+      if (item.first != nullptr)
+      {
+        item.first->setVisible(item.second);
+      }
+    }
+    nativeToolbarVisibility.clear();
+  }
+
+  independentGraphics = nextIndependent;
+  useNativeNavigation = view.useNativeNavigation;
+
+  if (independentGraphics)
+  {
+    commandDock->setFloating(false);
+    commandDock->setAllowedAreas(Qt::BottomDockWidgetArea);
+    commandDock->setFeatures(QDockWidget::NoDockWidgetFeatures);
+    gui->addDockWidget(Qt::BottomDockWidgetArea, commandDock);
+  }
+  commandDock->show();
+  navigationDock->setVisible(useNativeNavigation && (view.id != "cubit" || nativeNavigationDockVisible));
   nativeActive = view.id == "cubit";
   activeDocks.clear();
 
@@ -389,9 +486,17 @@ bool CubitWorkspaceHost::apply(const WorkspaceView& view, const QPersistentModel
     auto* modelDock = view.docks.at(0);
     auto* propertiesDock = view.docks.at(1);
     gui->addDockWidget(Qt::LeftDockWidgetArea, modelDock);
-    gui->splitDockWidget(modelDock, propertiesDock, Qt::Vertical);
-    gui->resizeDocks({modelDock, propertiesDock}, {420, 220}, Qt::Vertical);
-    gui->resizeDocks({modelDock}, {300}, Qt::Horizontal);
+    if (view.dockLayout == WorkspaceDockLayout::LeftRight)
+    {
+      gui->addDockWidget(Qt::RightDockWidgetArea, propertiesDock);
+      gui->resizeDocks({modelDock, propertiesDock}, {260, 280}, Qt::Horizontal);
+    }
+    else
+    {
+      gui->splitDockWidget(modelDock, propertiesDock, Qt::Vertical);
+      gui->resizeDocks({modelDock, propertiesDock}, {420, 220}, Qt::Vertical);
+      gui->resizeDocks({modelDock}, {300}, Qt::Horizontal);
+    }
   }
 
   for (const auto& item : nativeMenus)
@@ -446,9 +551,9 @@ bool CubitWorkspaceHost::apply(const WorkspaceView& view, const QPersistentModel
     if (index >= 0)
     {
       const bool navigationPage = item.page == panel || item.page->isAncestorOf(panel);
-      item.tabs->setTabVisible(index, nativeActive ? item.visible : navigationPage);
+      item.tabs->setTabVisible(index, nativeActive ? item.visible : (useNativeNavigation && navigationPage));
 
-      if ((!nativeActive && navigationPage) || (nativeActive && item.current && item.visible))
+      if ((!nativeActive && useNativeNavigation && navigationPage) || (nativeActive && item.current && item.visible))
       {
         item.tabs->setCurrentIndex(index);
       }
@@ -457,18 +562,21 @@ bool CubitWorkspaceHost::apply(const WorkspaceView& view, const QPersistentModel
 
   // Let Cubit construct the complete path before suppressing its Mode row.
   hideNavigationMode = false;
-  panel->setModel(view.navigationModel, view.navigationRoot);
-
-  if (selection.isValid() && selection.model() == view.navigationModel)
+  if (useNativeNavigation)
   {
-    panel->setCurrent(selection);
-  }
-  else if (view.initialNavigationSelection.isValid() && view.initialNavigationSelection.model() == view.navigationModel)
-  {
-    panel->setCurrent(view.initialNavigationSelection);
+    panel->setModel(view.navigationModel, view.navigationRoot);
+
+    if (selection.isValid() && selection.model() == view.navigationModel)
+    {
+      panel->setCurrent(selection);
+    }
+    else if (view.initialNavigationSelection.isValid() && view.initialNavigationSelection.model() == view.navigationModel)
+    {
+      panel->setCurrent(view.initialNavigationSelection);
+    }
   }
 
-  hideNavigationMode = view.hideNavigationMode;
+  hideNavigationMode = !useNativeNavigation || view.hideNavigationMode;
   if (navigationMode != nullptr)
   {
     navigationMode->setVisible(!hideNavigationMode && (nativeActive ? nativeModeVisible : true));

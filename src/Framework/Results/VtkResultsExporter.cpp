@@ -88,7 +88,7 @@ namespace
   }
 }
 
-bool FeaResults::export_vtk_result(const VtkResultsData& result, const std::string& destination,
+bool SimResults::export_vtk_result(const VtkResultsData& result, const std::string& destination,
   std::string& index_path, std::string& error, const std::function<bool(double)>& poll)
 {
   error.clear();
@@ -159,7 +159,12 @@ bool FeaResults::export_vtk_result(const VtkResultsData& result, const std::stri
       {
         return false;
       }
-      entry(file, increment.time, "Mesh", 0);
+      // Distinct modes can have equal frequency/time. Retain separate PVD
+      // groups rather than giving them the same time/group/part identity.
+      const std::string identity = increment.mode < 0 ? std::string{} :
+        "_Mode_" + std::to_string(increment.mode) + "_Analysis_" + std::to_string(increment.analysis_type) +
+        "_Diameter_" + std::to_string(increment.nodal_diameter) + "_Subcase_" + std::to_string(increment.subcase);
+      entry(file, increment.time, "Mesh" + identity, 0);
       for (std::size_t t = 0; t < increment.tables.size(); ++t)
       {
         const auto table = stem + "_table_" + std::to_string(t + 1) + ".vtt";
@@ -167,7 +172,7 @@ bool FeaResults::export_vtk_result(const VtkResultsData& result, const std::stri
         {
           return false;
         }
-        entry(table, increment.time, "IncrementTables", t);
+        entry(table, increment.time, "IncrementTables" + identity, t);
       }
     }
     for (std::size_t t = 0; t < result.tables.size(); ++t)

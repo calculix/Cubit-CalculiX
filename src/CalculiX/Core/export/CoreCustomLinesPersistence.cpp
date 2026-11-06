@@ -1,3 +1,4 @@
+#include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/export/CoreCustomLinesPersistence.hpp"
 #include "Core/export/CoreCustomLines.hpp"
 #include "HDF5Tool.hpp"
@@ -11,7 +12,7 @@ bool CoreCustomLinesPersistence::read(HDF5Tool& file, CoreCustomLines& lines)
   {
 
     decltype(lines.customlines_data) saved_customlines_data;
-    if (file.nameExists("Cubit-CalculiX/CustomLines/customlines_data") && !file.read_dataset_string_rank_2("customlines_data", "Cubit-CalculiX/CustomLines", saved_customlines_data))
+    if (file.nameExists(CalculiXModelSchema::path("CustomLines/customlines_data")) && !file.read_dataset_string_rank_2("customlines_data", CalculiXModelSchema::path("CustomLines"), saved_customlines_data))
     {
       PRINT_ERROR("Cannot read CalculiX CustomLines: %s\n", file.last_error().c_str());
       return false;
@@ -56,12 +57,12 @@ bool CoreCustomLinesPersistence::write(HDF5Tool& file, const CoreCustomLines& li
       PRINT_ERROR("Cannot write CalculiX CustomLines: invalid or duplicate IDs.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/CustomLines"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("CustomLines")))
     {
       PRINT_ERROR("Cannot write CalculiX CustomLines: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("customlines_data", "Cubit-CalculiX/CustomLines", lines.customlines_data))
+    if (!file.write_dataset_string_rank_2("customlines_data", CalculiXModelSchema::path("CustomLines"), lines.customlines_data))
     {
       PRINT_ERROR("Cannot write CalculiX CustomLines: %s\n", file.last_error().c_str());
       return false;

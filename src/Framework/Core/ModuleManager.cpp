@@ -2,6 +2,7 @@
 #include "Framework/Interfaces/CommandProviderInterface.hpp"
 #include "Framework/Interfaces/ComponentProviderInterface.hpp"
 #include "Framework/Interfaces/ModuleInterface.hpp"
+#include "Framework/Interfaces/ResultSourceProviderInterface.hpp"
 
 #include <exception>
 #include <utility>
@@ -46,7 +47,7 @@ bool ModuleManager::add_module(
   return true;
 }
 
-bool ModuleManager::initialize(UserOptionsInterface& options, std::string& error)
+bool ModuleManager::initialize(UserOptionsInterface& options, DrawingInterface& drawings, std::string& error)
 {
   error.clear();
 
@@ -67,7 +68,7 @@ bool ModuleManager::initialize(UserOptionsInterface& options, std::string& error
       // Record before calling initialize so partial startup is cleaned up too.
       started_modules.push_back(module.get());
 
-      if (!module->initialize(options, error))
+      if (!module->initialize(options, drawings, error))
       {
         if (error.empty())
         {
@@ -76,6 +77,22 @@ bool ModuleManager::initialize(UserOptionsInterface& options, std::string& error
 
         shutdown();
         return false;
+      }
+
+      // Result providers are independent of command and GUI providers.
+      if (auto* result_provider = module->result_source_provider())
+      {
+        const std::string prefix = result_provider->command_prefix();
+
+        if (prefix.empty() ||
+            !result_providers.emplace(prefix, result_provider).second ||
+            !application_result_providers.emplace(module->module_id(), result_provider).second)
+        {
+          error = "Empty or duplicate result-provider registration in module: "
+            + module->module_id();
+          shutdown();
+          return false;
+        }
       }
 
       auto* provider = module->command_provider();
@@ -87,7 +104,8 @@ bool ModuleManager::initialize(UserOptionsInterface& options, std::string& error
 
       for (const auto& key : provider->command_keys())
       {
-        if (key.empty() || key == "feaWorkspaceCommand" || !command_owners.emplace(key, provider).second)
+        if (key.empty() || key == "CubitSimWorkspaceCommand" || key == "CubitSimDocumentationCommand" ||
+            key == "CubitSimVersionCommand" || !command_owners.emplace(key, provider).second)
         {
           error = "Empty, reserved or duplicate command key in module: "
             + module->module_id() + " (" + key + ")";
@@ -119,6 +137,8 @@ bool ModuleManager::initialize(UserOptionsInterface& options, std::string& error
 void ModuleManager::shutdown() noexcept
 {
   stop_components();
+  result_providers.clear();
+  application_result_providers.clear();
   command_owners.clear();
   ordered_keys.clear();
 
@@ -211,6 +231,74 @@ CubitCommand* ModuleManager::create_command(const std::string& key)
   }
 
   return owner->second->create_command(key);
+}
+
+ResultSourceProviderInterface* ModuleManager::result_source_provider(const std::string& prefix) const noexcept
+{
+  const auto provider = result_providers.find(prefix);
+
+  if (!initialized || provider == result_providers.end())
+  {
+    return nullptr;
+  }
+
+  return provider->second;
+}
+
+ResultSourceProviderInterface* ModuleManager::application_result_source_provider(const std::string& application_id) const noexcept
+{
+  const auto provider = application_result_providers.find(application_id);
+
+  if (!initialized || provider == application_result_providers.end())
+  {
+    return nullptr;
+  }
+
+  return provider->second;
+}
+
+bool ModuleManager::resolve_result_provider(
+  const std::string& prefix,
+  ResolvedResultSourceProvider& output,
+  std::string& error) const
+{
+  error.clear();
+
+  try
+  {
+    auto* provider = result_source_provider(prefix);
+
+    if (provider == nullptr)
+    {
+      error = "Result provider is unavailable or unknown: " + prefix;
+      return false;
+    }
+
+    for (const auto& application : application_result_providers)
+    {
+      if (application.second == provider)
+      {
+        ResolvedResultSourceProvider resolved;
+        resolved.application_id = application.first;
+        resolved.provider = provider;
+        output = std::move(resolved);
+        return true;
+      }
+    }
+
+    error = "Result provider has no application identity: " + prefix;
+    return false;
+  }
+  catch (const std::exception& exception)
+  {
+    error = std::string("Cannot resolve result provider: ") + exception.what();
+    return false;
+  }
+  catch (...)
+  {
+    error = "Cannot resolve result provider: unknown failure.";
+    return false;
+  }
 }
 
 std::vector<WorkspaceProviderInterface*> ModuleManager::workspace_providers() const

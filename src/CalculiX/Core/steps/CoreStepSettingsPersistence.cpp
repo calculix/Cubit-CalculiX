@@ -1,3 +1,4 @@
+#include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/steps/CoreStepSettingsPersistence.hpp"
 #include "Core/steps/CoreDamping.hpp"
 #include "Core/steps/CorePhysicalConstants.hpp"
@@ -13,7 +14,7 @@ bool CoreStepSettingsPersistence::read(HDF5Tool& file, CoreDamping& damping)
 
     decltype(damping.damping_data) saved_damping_data;
     saved_damping_data.clear();
-    if (file.nameExists("Cubit-CalculiX/Damping/damping_data") && !file.read_dataset_string_rank_1("damping_data", "Cubit-CalculiX/Damping", saved_damping_data))
+    if (file.nameExists(CalculiXModelSchema::path("Damping/damping_data")) && !file.read_dataset_string_rank_1("damping_data", CalculiXModelSchema::path("Damping"), saved_damping_data))
     {
       PRINT_ERROR("Cannot read CalculiX Damping: %s\n", file.last_error().c_str());
       return false;
@@ -53,12 +54,12 @@ bool CoreStepSettingsPersistence::write(HDF5Tool& file, const CoreDamping& dampi
       PRINT_ERROR("Cannot write CalculiX Damping: damping requires two values.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/Damping"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("Damping")))
     {
       PRINT_ERROR("Cannot write CalculiX Damping: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_1("damping_data", "Cubit-CalculiX/Damping", damping.damping_data))
+    if (!file.write_dataset_string_rank_1("damping_data", CalculiXModelSchema::path("Damping"), damping.damping_data))
     {
       PRINT_ERROR("Cannot write CalculiX Damping: %s\n", file.last_error().c_str());
       return false;
@@ -84,7 +85,7 @@ bool CoreStepSettingsPersistence::read(HDF5Tool& file, CorePhysicalConstants& co
 
     decltype(constants.physicalconstants_data) saved_physicalconstants_data;
     saved_physicalconstants_data.clear();
-    if (file.nameExists("Cubit-CalculiX/PhysicalConstants/physicalconstants_data") && !file.read_dataset_string_rank_1("physicalconstants_data", "Cubit-CalculiX/PhysicalConstants", saved_physicalconstants_data))
+    if (file.nameExists(CalculiXModelSchema::path("PhysicalConstants/physicalconstants_data")) && !file.read_dataset_string_rank_1("physicalconstants_data", CalculiXModelSchema::path("PhysicalConstants"), saved_physicalconstants_data))
     {
       PRINT_ERROR("Cannot read CalculiX PhysicalConstants: %s\n", file.last_error().c_str());
       return false;
@@ -124,12 +125,12 @@ bool CoreStepSettingsPersistence::write(HDF5Tool& file, const CorePhysicalConsta
       PRINT_ERROR("Cannot write CalculiX PhysicalConstants: physical constants require three values.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/PhysicalConstants"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("PhysicalConstants")))
     {
       PRINT_ERROR("Cannot write CalculiX PhysicalConstants: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_1("physicalconstants_data", "Cubit-CalculiX/PhysicalConstants", constants.physicalconstants_data))
+    if (!file.write_dataset_string_rank_1("physicalconstants_data", CalculiXModelSchema::path("PhysicalConstants"), constants.physicalconstants_data))
     {
       PRINT_ERROR("Cannot write CalculiX PhysicalConstants: %s\n", file.last_error().c_str());
       return false;

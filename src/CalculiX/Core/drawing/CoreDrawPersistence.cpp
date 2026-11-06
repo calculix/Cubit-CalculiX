@@ -1,3 +1,4 @@
+#include "Core/application/CalculiXModelSchema.hpp"
 #include "CoreDrawPersistence.hpp"
 #include "CoreDraw.hpp"
 #include "HDF5Tool.hpp"
@@ -8,7 +9,7 @@
 
 namespace
 {
-const std::string Root = "Cubit-CalculiX/Core/Drawing";
+const std::string Root = CalculiXModelSchema::path("Core/Drawing");
 const std::array<std::pair<const char*, DrawGroup>, 4> Groups = {{{"bcs", DrawGroup::BoundaryConditions}, {"loads", DrawGroup::Loads}, {"constraints", DrawGroup::Constraints}, {"orientations", DrawGroup::Orientations}}};
 const std::array<std::pair<const char*, DrawFeature>, 15> Features = {{{"force", DrawFeature::Force}, {"pressure", DrawFeature::Pressure}, {"heatflux", DrawFeature::Heatflux}, {"gravity", DrawFeature::Gravity}, {"centrifugal", DrawFeature::Centrifugal}, {"trajectory", DrawFeature::Trajectory}, {"film", DrawFeature::Film}, {"radiation", DrawFeature::Radiation}, {"surface_traction", DrawFeature::SurfaceTraction}, {"body_heatflux", DrawFeature::BodyHeatflux}, {"displacement", DrawFeature::Displacement}, {"temperature", DrawFeature::Temperature}, {"orientation", DrawFeature::Orientation}, {"equation", DrawFeature::Equation}, {"equation_group", DrawFeature::EquationGroup}}};
 

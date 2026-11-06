@@ -1,3 +1,4 @@
+#include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/CalculiXCore.hpp"
 #include "Core/drawing/CoreDraw.hpp"
 #include "Core/drawing/CoreDrawPersistence.hpp"
@@ -41,7 +42,7 @@ std::unique_ptr<HDF5Tool> open_model_file(const std::string& filename, bool& has
       return nullptr;
     }
     auto file = std::make_unique<HDF5Tool>(filename, false);
-    hasCalculiXData = file->nameExists("Cubit-CalculiX");
+    hasCalculiXData = file->nameExists(CalculiXModelSchema::path(""));
     return file;
   }
   catch (const H5::Exception& error)
@@ -154,7 +155,7 @@ bool CalculiXCore::read_cub(std::string filename)
   std::string log = "";
   ProgressTool* progressbar = CubitInterface::app_util().get()->progress_tool();
 
-  log = "Reading Cubit-CalculiX data from \"" + filename + "\"\n";
+  log = "Reading cubit-sim data from \"" + filename + "\"\n";
   PRINT_INFO("%s", log.c_str());
   
   bool hasCalculiXData = false;
@@ -167,7 +168,7 @@ bool CalculiXCore::read_cub(std::string filename)
  
   if (!hasCalculiXData)
   {
-    log = "No Cubit-CalculiX data in \"" + filename + "\"\n";
+    log = "No cubit-sim data in \"" + filename + "\"\n";
     PRINT_INFO("%s", log.c_str());
     if (!CoreDrawPersistence::read(cubTool, *draw))
     {
@@ -177,7 +178,7 @@ bool CalculiXCore::read_cub(std::string filename)
   }
 
   PersistenceProgress progress(progressbar);
-  if (!progress.start(32, "Reading Cubit-CalculiX data"))
+  if (!progress.start(32, "Reading cubit-sim data"))
   {
     return false;
   }
@@ -484,7 +485,7 @@ bool CalculiXCore::read_cub(std::string filename)
   {
     return false;
   }
-  log = "Finished reading Cubit-CalculiX data from \"" + filename + "\"\n";
+  log = "Finished reading cubit-sim data from \"" + filename + "\"\n";
   PRINT_INFO("%s", log.c_str());
 
   return true;
@@ -506,13 +507,13 @@ bool CalculiXCore::save_cub(std::string filename)
 
   if (hasCalculiXData)
   {
-    log = "group already here. Can't write Cubit-CalculiX data into \"" + filename + "\"\n";
+    log = "group already here. Can't write cubit-sim data into \"" + filename + "\"\n";
     PRINT_INFO("%s", log.c_str());
     return false;
   }
 
   PersistenceProgress progress(progressbar);
-  if (!progress.start(32, "Writing Cubit-CalculiX data"))
+  if (!progress.start(32, "Writing cubit-sim data"))
   {
     return false;
   }
@@ -810,7 +811,7 @@ bool CalculiXCore::save_cub(std::string filename)
   {
     return false;
   }
-  log = "Finished saving Cubit-CalculiX data.\n";
+  log = "Finished saving cubit-sim data.\n";
   PRINT_INFO("%s", log.c_str());
 
   return true;

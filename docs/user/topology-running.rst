@@ -32,6 +32,41 @@ has converged or even completed its first iteration.
 Asynchronous solver execution does not make result reading asynchronous.
 Cubit may still pause while loading and evaluating results.
 
+Result conversion between solves
+--------------------------------
+
+The current job-completion routine reads FRD/DAT and builds an in-memory VTK
+result before another managed job may start. The automatic file-export setting
+controls writing the converted result; disabling it does not skip the in-memory
+build. This applies to physical and adjoint topology jobs as well as ordinary
+jobs.
+
+A finished solver process and a printed compliance value do not establish that
+conversion succeeded. If conversion fails, the job can remain solver-finished
+while the next iteration is blocked by pending VTK conversion. The message
+``results are loaded`` currently describes topology evaluation, not successful
+VTK publication.
+
+Keep the matching INP, FRD and DAT files. DAT integration-point visualization
+requires an exact supported CalculiX formulation, including full/reduced
+integration; a generic hex, tet or wedge shape does not establish it. Missing
+FRD field output is distinct from missing FRD mesh geometry. The converter
+currently requires FRD geometry even when converting DAT fields.
+
+After resolving the reported conversion problem, retry the affected job, for
+example:
+
+.. code-block:: text
+
+   ccx result convert job 1 in_memory
+
+Use the actual failed job ID. Retrying with the same unresolved inputs can fail
+again. A successful retry clears the conversion prerequisite on the next job
+readiness check; it does not resume a topology run already marked failed.
+Starting that topology case again resets its previous run data as described
+below. Deleting an affected job also removes its pending conversion entry, but
+deletion is not a conversion repair and can affect retained topology history.
+
 Waiting for completion
 ----------------------
 

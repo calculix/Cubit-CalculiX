@@ -21,15 +21,15 @@ bool FrameworkPaths::resolve(const void* componentAnchor, FrameworkPaths& paths,
     if (directory.isEmpty() || (QFileInfo::exists(directory) && !QFileInfo(directory).isDir()))
     {
       directory = QDir::currentPath();
-      PRINT_WARNING("Cubit settings directory is unavailable; using the working directory for FEA options.\n");
+      PRINT_WARNING("Cubit settings directory is unavailable; using the working directory for cubit-sim options.\n");
     }
     directory = QDir(directory).absolutePath();
     if (!QDir().mkpath(directory))
     {
-      error = "Cannot create the FEA options directory: " + directory.toStdString();
+      error = "Cannot create the cubit-sim options directory: " + directory.toStdString();
       return false;
     }
-    candidate.optionsFilename = QDir(directory).absoluteFilePath("cubitfea_user_options.h5").toUtf8().toStdString();
+    candidate.optionsFilename = QDir(directory).absoluteFilePath("cubitsim_user_options.h5").toUtf8().toStdString();
     paths = std::move(candidate);
     return true;
   }

@@ -1,4 +1,5 @@
 #include "CoreDrawScene.hpp"
+#include "CalculiXDrawingAdapter.hpp"
 #include <utility>
 
 CoreDrawScene::CoreDrawScene()
@@ -9,7 +10,16 @@ CoreDrawScene::CoreDrawScene()
   }
 }
 
-void CoreDrawScene::replace(DrawEntityKey entity, DrawGeometry geometry)
+void CoreDrawScene::bind(DrawingInterface* service) noexcept
+{
+  if (drawings != service)
+  {
+    detach();
+    drawings = service;
+  }
+}
+
+void CoreDrawScene::replace(DrawEntityKey entity, DrawingGeometry geometry)
 {
   entities[entity] = std::move(geometry);
 }
@@ -31,7 +41,10 @@ void CoreDrawScene::clear(DrawGroup group)
 
 void CoreDrawScene::clearAll()
 {
-  picker.deactivate();
+  if (drawings != nullptr)
+  {
+    drawings->clear("calculix");
+  }
   entities.clear();
   selection = {};
   state = CalculiXDrawState{};
@@ -52,11 +65,7 @@ bool CoreDrawScene::isHighlighted(DrawEntityKey entity, const CalculiXDrawSelect
   {
     return false;
   }
-  if (requested.stepId >= 0)
-  {
-    return group->second.allInScope && group->second.sourceScope.kind == DrawScopeKind::Step && group->second.sourceScope.stepId == requested.stepId;
-  }
-  return true;
+  return requested.stepId < 0 || (group->second.allInScope && group->second.sourceScope.kind == DrawScopeKind::Step && group->second.sourceScope.stepId == requested.stepId);
 }
 
 bool CoreDrawScene::setSelection(const CalculiXDrawSelection& requested)
@@ -67,8 +76,6 @@ bool CoreDrawScene::setSelection(const CalculiXDrawSelection& requested)
   {
     return false;
   }
-  // Keep the request even when its group is hidden or its symbols are not drawn yet.
-  // Only synchronize now if the visible highlighting actually changes.
   for (const auto& entity : entities)
   {
     if (isHighlighted(entity.first, previous) != isHighlighted(entity.first, selection))
@@ -81,101 +88,108 @@ bool CoreDrawScene::setSelection(const CalculiXDrawSelection& requested)
 
 bool CoreDrawScene::pickingActive() const
 {
-  return workspaceActive && state.overlayVisible && state.pickingEnabled && picker.active() && picker.ownsPickMode();
+  return drawings != nullptr && workspaceActive && drawings->picking_active("calculix");
 }
 
 bool CoreDrawScene::setPickingEnabled(bool enabled, std::string& error)
 {
-  picker.deactivate();
   state.pickingEnabled = enabled;
+  clearHover();
   return synchronize(error);
 }
 
 void CoreDrawScene::setPickCallback(std::function<void(const CalculiXDrawSelection&)> callback)
 {
-  picker.setCallback(std::move(callback));
+  pickCallback = std::move(callback);
+  if (drawings != nullptr)
+  {
+    const auto target = pickCallback;
+    drawings->set_pick_callback("calculix", target ? DrawingPickCallback([target](const DrawingSelection& picked)
+    {
+      CalculiXDrawSelection selected;
+      if (CalculiXDrawingAdapter::selection(picked, selected))
+      {
+        target(selected);
+      }
+    }) : DrawingPickCallback{});
+  }
 }
 
 bool CoreDrawScene::synchronize(std::string& error)
 {
-  DrawPickSnapshot pickData;
-  pickData.revision = ++pickRevision;
-  std::map<DrawGroup, DrawGeometry> groups;
+  error.clear();
+  if (drawings == nullptr)
+  {
+    if (!workspaceActive || entities.empty())
+    {
+      return true;
+    }
+    error = "The CalculiX drawing service is unavailable.";
+    return false;
+  }
+  DrawingFrame frame;
+  frame.style = {hoverColor, selectionColor};
+  frame.overlayVisible = state.overlayVisible && workspaceActive;
+  frame.pickingEnabled = state.pickingEnabled;
+  frame.selection = {selection.active, CalculiXDrawingAdapter::key(selection.entity, selection.stepId)};
+  for (const auto& group : state.groups)
+  {
+    frame.layers[drawing_group_name(group.first)] = {group.second.enabled, group.first == DrawGroup::Topology};
+  }
   for (const auto& entity : entities)
   {
     const auto group = state.groups.find(drawing_group(entity.first.feature));
-    if (state.pickingEnabled && entity.first.feature != DrawFeature::Topology && workspaceActive && state.overlayVisible && group != state.groups.end() && group->second.enabled)
+    int step = -1;
+    if (group != state.groups.end() && group->second.allInScope && group->second.sourceScope.kind == DrawScopeKind::Step)
     {
-      CalculiXDrawSelection owner;
-      owner.active = true;
-      owner.entity = entity.first;
-      if (group->second.allInScope && group->second.sourceScope.kind == DrawScopeKind::Step)
-      {
-        owner.stepId = group->second.sourceScope.stepId;
-      }
-      pickData.entities.push_back({owner, entity.second});
+      step = group->second.sourceScope.stepId;
     }
-    if (isHighlighted(entity.first, selection))
-    {
-      DrawGeometry highlighted = entity.second;
-      for (auto& primitive : highlighted.primitives)
-      {
-        primitive.color = selectionColor;
-      }
-      groups[drawing_group(entity.first.feature)].append(highlighted);
-    }
-    else
-    {
-      groups[drawing_group(entity.first.feature)].append(entity.second);
-    }
+    frame.entities.push_back({CalculiXDrawingAdapter::key(entity.first, step),
+      drawing_group_name(drawing_group(entity.first.feature)), entity.second, entity.first.feature != DrawFeature::Topology});
   }
-  picker.updateSnapshot(std::move(pickData));
-  if (picker.active() && !picker.ownsPickMode())
+  // Reset may have cleared the shared scene and its callback.
+  setPickCallback(pickCallback);
+  if (!drawings->submit("calculix", std::move(frame), error))
   {
-    // Respect a native pick mode the user selected after enabling ours.
-    state.pickingEnabled = false;
-  }
-  if (!state.pickingEnabled || !workspaceActive || !state.overlayVisible)
-  {
-    picker.deactivate();
-  }
-  if (!graphics.synchronize(groups, state, workspaceActive, error))
-  {
-    picker.deactivate();
     return false;
   }
-  if (state.pickingEnabled && workspaceActive && state.overlayVisible && !picker.activate(error))
+  if (workspaceActive && state.overlayVisible && state.pickingEnabled && !drawings->picking_active("calculix"))
   {
     state.pickingEnabled = false;
-    return false;
   }
   return true;
 }
 
 void CoreDrawScene::detach() noexcept
 {
-  picker.shutdown();
-  graphics.detach();
+  if (drawings != nullptr)
+  {
+    drawings->clear("calculix");
+  }
 }
 
 void CoreDrawScene::clearHover() noexcept
 {
-  picker.clearHover();
+  if (drawings != nullptr)
+  {
+    drawings->clear_hover("calculix");
+  }
 }
 
-void CoreDrawScene::setColors(const std::string& hoverColor, const std::string& selectedColor)
+void CoreDrawScene::setColors(const std::string& hover, const std::string& selected)
 {
-  selectionColor = selectedColor;
-  picker.setHoverColor(hoverColor);
+  hoverColor = hover;
+  selectionColor = selected;
 }
 
-bool CoreDrawScene::pickSymbol(int viewId, double xFraction, double yFraction, CalculiXDrawSelection& selection, std::string& error)
+bool CoreDrawScene::pickSymbol(int viewId, double x, double y, CalculiXDrawSelection& selected, std::string& error)
 {
-  selection = {};
+  selected = {};
   error.clear();
   if (!pickingActive())
   {
     return true;
   }
-  return picker.pickSymbol(viewId, xFraction, yFraction, selection, error);
+  DrawingSelection picked;
+  return drawings->pick("calculix", viewId, x, y, picked, error) && CalculiXDrawingAdapter::selection(picked, selected);
 }

@@ -9,6 +9,15 @@
 #include <string>
 #include <vector>
 
+struct FrdAnalysis
+{
+  int type = -1; // FRD 100CL analysis code; -1 means unavailable in older storage.
+  int mode = -1;
+  int nodal_diameter = -1;
+  int subcase = -1;
+  std::vector<std::string> parameters; // Original 1P/100CL lines, without reinterpretation.
+};
+
 struct FrdReadBatch
 {
   int data_id = -1;
@@ -50,6 +59,10 @@ struct FrdReadState
   std::vector<std::string> components;
   std::streamoff file_size = 0;
   std::chrono::steady_clock::time_point progress_time{};
+  std::string logical_record;
+  std::size_t record_line = 0;
+  int incomplete_data = -1;
+  FrdAnalysis analysis;
 };
 
 struct FrdRawRecord

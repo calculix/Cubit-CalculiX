@@ -29,11 +29,13 @@ target_sources(calculix_core PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/vtk/CoreResultsVtkLink.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXResultsInterface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXResultsInterface.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXResultSourceProvider.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXResultSourceProvider.hpp
 )
 
 # legacy/CoreResultsVtkWriterLegacy.* is intentionally not built or called.
-target_link_libraries(calculix_core fea_results fea_results_io)
-# Dataset conversion only. Serialization is linked through fea_results_io;
+target_link_libraries(calculix_core cubitsim_results cubitsim_results_io)
+# Dataset conversion only. Serialization is linked through cubitsim_results_io;
 # CubitVtkSDK supplies the host DLL targets without a viewport dependency.
 target_link_libraries(calculix_core VTK::CommonCore VTK::CommonDataModel)
 

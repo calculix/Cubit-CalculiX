@@ -1,4 +1,4 @@
-project(Cubit-CalculiX_useroptions)
+project(cubit-sim_useroptions)
 
 set(UO_SRC
     ${CMAKE_CURRENT_LIST_DIR}/UserOptionsExport.hpp

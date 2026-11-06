@@ -38,7 +38,7 @@ namespace
   using Key = CoreResultsVtkPointKey;
   using Coordinates = ElementIntegration::Coordinates;
   using Poll = std::function<bool(double)>;
-  using Association = FeaResults::Association;
+  using Association = SimResults::Association;
   using Kind = CoreResultsVtkGroupKind;
 
   struct Cell
@@ -51,7 +51,7 @@ namespace
 
   struct Domain
   {
-    FeaResults::Dataset metadata;
+    SimResults::Dataset metadata;
     Kind kind = Kind::Block;
     std::vector<Key> points;
     std::vector<int> elements;
@@ -139,7 +139,7 @@ namespace
     return "Unknown";
   }
 
-  std::string array_name(const FeaResults::Field& field)
+  std::string array_name(const SimResults::Field& field)
   {
     // Length prefixes make names injective even when user set/field names
     // contain separators. Names remain stable across increments.
@@ -611,7 +611,7 @@ namespace
         || (field.field.association == Association::IntegrationPoint && domain.kind == Kind::DatIntegrationPoints);
   }
 
-  bool attach(const CoreResultsVtkPlan& plan, const Domain& domain, vtkUnstructuredGrid* grid, FeaResults::Field metadata, vtkSmartPointer<vtkDoubleArray> array, vtkSmartPointer<vtkUnsignedCharArray> mask, FeaResults::Increment& increment, std::vector<std::string>& diagnostics, std::string& error)
+  bool attach(const CoreResultsVtkPlan& plan, const Domain& domain, vtkUnstructuredGrid* grid, SimResults::Field metadata, vtkSmartPointer<vtkDoubleArray> array, vtkSmartPointer<vtkUnsignedCharArray> mask, SimResults::Increment& increment, std::vector<std::string>& diagnostics, std::string& error)
   {
     const vtkIdType count = mask->GetNumberOfTuples();
     bool partial = false;
@@ -651,7 +651,7 @@ namespace
     return true;
   }
 
-  bool field_array(const CoreResultsFrd& frd, const CoreResultsDat& dat, const CoreResultsVtkPlan& plan, const CoreResultsVtkFieldPlan& field, const std::vector<Row>& rows, const Domain& domain, vtkUnstructuredGrid* grid, FeaResults::Increment& increment, std::vector<std::string>& diagnostics, CoreResultsVtkPipeline& pipeline, const Poll& poll, std::string& error)
+  bool field_array(const CoreResultsFrd& frd, const CoreResultsDat& dat, const CoreResultsVtkPlan& plan, const CoreResultsVtkFieldPlan& field, const std::vector<Row>& rows, const Domain& domain, vtkUnstructuredGrid* grid, SimResults::Increment& increment, std::vector<std::string>& diagnostics, CoreResultsVtkPipeline& pipeline, const Poll& poll, std::string& error)
   {
     const bool cells = field.field.association == Association::Element;
     const std::size_t count = cells ? domain.elements.size() : domain.points.size();
@@ -731,6 +731,15 @@ namespace
       {
         continue;
       }
+      if (i < frd.result_analysis.size())
+      {
+        const auto& analysis = frd.result_analysis[i];
+        if (increment.analysis_type != analysis.type || increment.mode != analysis.mode ||
+          increment.nodal_diameter != analysis.nodal_diameter || increment.subcase != analysis.subcase)
+        {
+          continue;
+        }
+      }
       if (found || frd.result_block_components[block[6]].size() != 3)
       {
         error = "Ambiguous or unsupported FRD displacement layout for integration-point interpolation.";
@@ -748,7 +757,7 @@ namespace
     return true;
   }
 
-  bool ip_displacement(const CoreResultsFrd& frd, const CoreResultsVtkPlan& plan, const CoreResultsVtkFieldPlan& field, const std::vector<Row>& rows, const ShapeCache& shapes, const Domain& domain, vtkUnstructuredGrid* grid, FeaResults::Increment& increment, std::vector<std::string>& diagnostics, CoreResultsVtkPipeline& pipeline, const Poll& poll, std::string& error)
+  bool ip_displacement(const CoreResultsFrd& frd, const CoreResultsVtkPlan& plan, const CoreResultsVtkFieldPlan& field, const std::vector<Row>& rows, const ShapeCache& shapes, const Domain& domain, vtkUnstructuredGrid* grid, SimResults::Increment& increment, std::vector<std::string>& diagnostics, CoreResultsVtkPipeline& pipeline, const Poll& poll, std::string& error)
   {
     const std::size_t count = domain.points.size();
     if (!fits(count, 3, error))
@@ -814,7 +823,7 @@ namespace
     {
       return false;
     }
-    FeaResults::Field metadata = field.field;
+    SimResults::Field metadata = field.field;
     metadata.name = "IntegrationPointDisplacement";
     metadata.set_name = domain.metadata.name;
     metadata.association = Association::IntegrationPoint;
@@ -822,7 +831,7 @@ namespace
     return attach(plan, domain, grid, metadata, array, mask, increment, diagnostics, error);
   }
 
-  bool partial_cells(const Domain& domain, vtkUnstructuredGrid* grid, const FeaResults::Increment& increment, CoreResultsVtkPipeline& pipeline, const Poll& poll, std::string& error)
+  bool partial_cells(const Domain& domain, vtkUnstructuredGrid* grid, const SimResults::Increment& increment, CoreResultsVtkPipeline& pipeline, const Poll& poll, std::string& error)
   {
     struct Mask
     {
@@ -902,15 +911,303 @@ namespace
     return true;
   }
 
-  bool tables(const CoreResultsDat& dat, const CoreResultsVtkPlan& plan, FeaResults::VtkResultsData& result, const Poll& poll, std::string& error)
+  /** Preserve FRD CELS records without reducing repeated reported labels.
+   * RecordIndex is the zero-based source mapping row within this block, not a
+   * physical contact-element/IP identity and not an identity across increments.
+   * Reported labels need not refer to mesh nodes and imply no coordinates.
+   * Non-finite energies retain their original value with Valid=0. no_partial
+   * skips the entire incomplete field, never a subset of its records.
+   */
+  bool contact_table(const CoreResultsFrd& frd, const CoreResultsVtkPlan& plan,
+    const CoreResultsVtkFieldPlan& field, SimResults::Increment& increment,
+    std::vector<std::string>& diagnostics, CoreResultsVtkPipeline& pipeline,
+    const Poll& poll, std::string& error)
+  {
+    if (field.field.source != "FRD" || field.field.name != "CELS" ||
+      field.field.association != Association::Table || field.field.components.size() != 1 ||
+      field.component_offset != 0 || field.source_block < 0 || field.source_data < 0 ||
+      static_cast<std::size_t>(field.source_block) >= frd.result_blocks.size() ||
+      static_cast<std::size_t>(field.source_data) >= frd.result_block_data.size() ||
+      static_cast<std::size_t>(field.source_data) >= frd.result_block_node_data.size())
+    {
+      error = "Stale or unsupported FRD contact table plan.";
+      return false;
+    }
+    const auto& block = frd.result_blocks[field.source_block];
+    if (block.size() < 7 || block[6] != field.source_data || block[5] < 0 ||
+      static_cast<std::size_t>(block[5]) >= frd.result_block_type.size() ||
+      frd.result_block_type[block[5]] != "CELS")
+    {
+      error = "FRD contact table source block does not match its plan.";
+      return false;
+    }
+    const auto& mapping = frd.result_block_node_data[field.source_data];
+    const auto& values = frd.result_block_data[field.source_data];
+    const std::size_t count = mapping.size();
+    if (!fits(count, 1, error))
+    {
+      return false;
+    }
+    auto record_index = vtkSmartPointer<vtkTypeInt64Array>::New();
+    auto reported_node = vtkSmartPointer<vtkTypeInt64Array>::New();
+    auto energy = vtkSmartPointer<vtkDoubleArray>::New();
+    auto validity = vtkSmartPointer<vtkUnsignedCharArray>::New();
+    record_index->SetName("RecordIndex");
+    reported_node->SetName("ReportedNodeId");
+    energy->SetName("CELS");
+    validity->SetName("Valid");
+    for (vtkAbstractArray* column : {static_cast<vtkAbstractArray*>(record_index.GetPointer()),
+      static_cast<vtkAbstractArray*>(reported_node.GetPointer()), static_cast<vtkAbstractArray*>(energy.GetPointer()),
+      static_cast<vtkAbstractArray*>(validity.GetPointer())})
+    {
+      column->SetNumberOfTuples(static_cast<vtkIdType>(count));
+    }
+    auto* records = record_index->GetPointer(0);
+    auto* nodes = reported_node->GetPointer(0);
+    double* energies = energy->GetPointer(0);
+    unsigned char* valid = validity->GetPointer(0);
+    if (count > 0 && (!records || !nodes || !energies || !valid))
+    {
+      error = "Cannot allocate FRD contact table columns.";
+      return false;
+    }
+    const std::size_t bytes_per_row = 2 * sizeof(vtkTypeInt64) + sizeof(double) + sizeof(unsigned char);
+    if (!pipeline.run(count, bytes_per_row, [&](std::size_t begin, std::size_t end, const std::atomic<bool>& cancelled, std::string& failure)
+    {
+      for (std::size_t i = begin; i < end; ++i)
+      {
+        if (cancelled.load(std::memory_order_relaxed))
+        {
+          return true;
+        }
+        const auto& row = mapping[i];
+        if (row.size() < 2 || row[0] <= 0 || row[1] < 0 ||
+          static_cast<std::size_t>(row[1]) >= values.size() || values[row[1]].size() != 1)
+        {
+          failure = "Invalid source record in FRD contact table.";
+          return false;
+        }
+        records[i] = static_cast<vtkTypeInt64>(i);
+        nodes[i] = row[0];
+        energies[i] = values[row[1]][0];
+        valid[i] = std::isfinite(energies[i]) ? 1 : 0;
+      }
+      return true;
+    }, poll, error))
+    {
+      return false;
+    }
+    if (!plan.options.include_partial && count > 0 &&
+      std::find(valid, valid + count, static_cast<unsigned char>(0)) != valid + count)
+    {
+      diagnostics.push_back("Skipped incomplete FRD CELS table from source block " + std::to_string(field.source_block) + ".");
+      return true;
+    }
+    record_index->Modified();
+    reported_node->Modified();
+    energy->Modified();
+    validity->Modified();
+    auto table = vtkSmartPointer<vtkTable>::New();
+    table->AddColumn(record_index);
+    table->AddColumn(reported_node);
+    table->AddColumn(energy);
+    table->AddColumn(validity);
+    auto* metadata = table->GetFieldData();
+    text(metadata, "TableName", "CELS");
+    text(metadata, "Source", "FRD");
+    text(metadata, "Field", "CELS");
+    text(metadata, "ResultKind", "ContactContributions");
+    text(metadata, "JobId", std::to_string(plan.job_id));
+    text(metadata, "RunIdentity", plan.run_identity);
+    text(metadata, "Step", std::to_string(increment.step));
+    text(metadata, "Increment", std::to_string(increment.increment));
+    text(metadata, "TotalIncrement", std::to_string(increment.total_increment));
+    text(metadata, "AnalysisType", std::to_string(increment.analysis_type));
+    text(metadata, "Mode", std::to_string(increment.mode));
+    text(metadata, "NodalDiameter", std::to_string(increment.nodal_diameter));
+    text(metadata, "Subcase", std::to_string(increment.subcase));
+    text(metadata, "SourceFile", frd.filepath);
+    text(metadata, "SourceBlockIndex", std::to_string(field.source_block));
+    text(metadata, "SourceDataIndex", std::to_string(field.source_data));
+    text(metadata, "RecordIndexRole", "ZeroBasedSourceMappingRowWithinBlock");
+    text(metadata, "ReportedNodeIdRole", "FRDLabelNotContactPointIdentity");
+    text(metadata, "Reduction", "None");
+    timestamp(table, increment.time);
+    increment.tables.push_back(own(table));
+    return true;
+  }
+
+  bool contact_tables(const CoreResultsFrd& frd, const CoreResultsVtkPlan& plan,
+    SimResults::VtkResultsData& result, CoreResultsVtkPipeline& pipeline, const Poll& poll, std::string& error)
+  {
+    std::size_t count = 0;
+    for (const auto& increment : plan.increments)
+    {
+      count += increment.table_fields.size();
+    }
+    std::size_t completed = 0;
+    for (std::size_t i = 0; i < plan.increments.size(); ++i)
+    {
+      for (const auto& field : plan.increments[i].table_fields)
+      {
+        const auto progress = [&](double fraction)
+        {
+          return !poll || poll(0.95 + 0.015 * (completed + fraction) / std::max<std::size_t>(1, count));
+        };
+        if (!contact_table(frd, plan, field, result.increments[i], result.diagnostics, pipeline, progress, error))
+        {
+          return false;
+        }
+        ++completed;
+      }
+    }
+    return true;
+  }
+
+  bool named_table(const CoreResultsDat& dat, const CoreResultsVtkPlan& plan, const CoreResultsVtkTablePlan& source,
+    SimResults::VtkResultsData& result, CoreResultsVtkPipeline& pipeline, const Poll& poll, std::string& error)
+  {
+    if (source.source_data >= dat.result_tables.size() || source.increment < 0 ||
+      static_cast<std::size_t>(source.increment) >= result.increments.size())
+    {
+      error = "Stale DAT named-table plan.";
+      return false;
+    }
+    const auto& input = dat.result_tables[source.source_data];
+    const auto& increment = result.increments[source.increment];
+    if (!close_time(input.time, increment.time, plan.options) ||
+      (input.step > 0 && increment.step > 0 && input.step != increment.step) ||
+      (input.increment > 0 && increment.increment > 0 && input.increment != increment.increment))
+    {
+      error = "DAT named-table identity does not match its planned increment.";
+      return false;
+    }
+    const auto count = input.rows.size();
+    const auto width = input.columns.size();
+    if (width == 0 || !std::isfinite(input.time) || !fits(count, width, error))
+    {
+      error = "Invalid DAT named-table dimensions/time.";
+      return false;
+    }
+    std::set<std::string> names = {"RecordIndex", "Valid"};
+    auto table = vtkSmartPointer<vtkTable>::New();
+    auto records = vtkSmartPointer<vtkTypeInt64Array>::New();
+    auto validity = vtkSmartPointer<vtkUnsignedCharArray>::New();
+    records->SetName("RecordIndex");
+    validity->SetName("Valid");
+    records->SetNumberOfTuples(static_cast<vtkIdType>(count));
+    validity->SetNumberOfTuples(static_cast<vtkIdType>(count));
+    table->AddColumn(records);
+    std::vector<double*> buffers;
+    for (const auto& name : input.columns)
+    {
+      if (name.empty() || !names.insert(name).second)
+      {
+        error = "Invalid or duplicate DAT table column name.";
+        return false;
+      }
+      auto column = vtkSmartPointer<vtkDoubleArray>::New();
+      column->SetName(name.c_str());
+      column->SetNumberOfTuples(static_cast<vtkIdType>(count));
+      buffers.push_back(column->GetPointer(0));
+      table->AddColumn(column);
+    }
+    table->AddColumn(validity);
+    auto* indices = records->GetPointer(0);
+    auto* valid = validity->GetPointer(0);
+    if (count > 0 && (!indices || !valid || std::any_of(buffers.begin(), buffers.end(), [](double* value)
+    {
+      return value == nullptr;
+    })))
+    {
+      error = "Cannot allocate DAT table columns.";
+      return false;
+    }
+    if (!pipeline.run(count, width * sizeof(double) + sizeof(vtkTypeInt64) + 1,
+      [&](std::size_t begin, std::size_t end, const std::atomic<bool>& cancelled, std::string& failure)
+    {
+      for (std::size_t row = begin; row < end; ++row)
+      {
+        if (cancelled.load(std::memory_order_relaxed))
+        {
+          return true;
+        }
+        if (input.rows[row].size() != width)
+        {
+          failure = "Inconsistent DAT named-table record width.";
+          return false;
+        }
+        indices[row] = static_cast<vtkTypeInt64>(row);
+        valid[row] = 1;
+        for (std::size_t column = 0; column < width; ++column)
+        {
+          buffers[column][row] = input.rows[row][column];
+          if (!std::isfinite(buffers[column][row]))
+          {
+            valid[row] = 0;
+          }
+        }
+      }
+      return true;
+    }, poll, error))
+    {
+      return false;
+    }
+    if (!plan.options.include_partial && count > 0 && std::find(valid, valid + count, static_cast<unsigned char>(0)) != valid + count)
+    {
+      result.diagnostics.push_back("Skipped incomplete DAT table " + input.name + ".");
+      return true;
+    }
+    for (vtkIdType column = 0; column < table->GetNumberOfColumns(); ++column)
+    {
+      table->GetColumn(column)->Modified();
+    }
+    auto* metadata = table->GetFieldData();
+    text(metadata, "Source", "DAT");
+    text(metadata, "Field", input.key);
+    text(metadata, "TableName", input.name);
+    text(metadata, "SetName", input.set_name);
+    text(metadata, "SlaveSet", input.slave_set);
+    text(metadata, "MasterSet", input.master_set);
+    text(metadata, "JobId", std::to_string(plan.job_id));
+    text(metadata, "RunIdentity", plan.run_identity);
+    text(metadata, "Step", std::to_string(input.step));
+    text(metadata, "Increment", std::to_string(input.increment));
+    text(metadata, "AnalysisType", std::to_string(increment.analysis_type));
+    text(metadata, "Mode", std::to_string(increment.mode));
+    text(metadata, "NodalDiameter", std::to_string(increment.nodal_diameter));
+    text(metadata, "Subcase", std::to_string(increment.subcase));
+    text(metadata, "SourceFile", dat.filepath);
+    text(metadata, "SourceDataIndex", std::to_string(source.source_data));
+    text(metadata, "SourceLine", std::to_string(input.source_line));
+    text(metadata, "Reduction", "None");
+    text(metadata, "RecordIndexRole", "ZeroBasedSourceRowWithinTable");
+    timestamp(table, input.time);
+    result.increments[source.increment].tables.push_back(own(table));
+    return true;
+  }
+
+  bool tables(const CoreResultsDat& dat, const CoreResultsVtkPlan& plan, SimResults::VtkResultsData& result, CoreResultsVtkPipeline& pipeline, const Poll& poll, std::string& error)
   {
     for (std::size_t i = 0; i < plan.tables.size(); ++i)
     {
-      if (poll && !poll(0.95 + 0.03 * static_cast<double>(i) / std::max<std::size_t>(1, plan.tables.size())))
+      if (poll && !poll(0.965 + 0.015 * static_cast<double>(i) / std::max<std::size_t>(1, plan.tables.size())))
       {
         return false;
       }
       const auto& source = plan.tables[i];
+      if (source.kind == CoreResultsVtkTablePlan::Kind::DatResult)
+      {
+        const Poll progress = [&](double fraction)
+        {
+          return !poll || poll(0.965 + 0.015 * (static_cast<double>(i) + fraction) / std::max<std::size_t>(1, plan.tables.size()));
+        };
+        if (!named_table(dat, plan, source, result, pipeline, progress, error))
+        {
+          return false;
+        }
+        continue;
+      }
       const bool buckle = source.kind == CoreResultsVtkTablePlan::Kind::Buckling;
       const std::vector<std::vector<double>>* rows = nullptr;
       std::vector<std::vector<double>> section;
@@ -994,7 +1291,7 @@ namespace
   }
 }
 
-bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResultsDat& dat, const CoreResultsVtkPlan& plan, std::atomic<bool>& cancelled, const std::function<bool(double)>& poll, std::shared_ptr<const FeaResults::VtkResultsData>& output, std::string& error) const
+bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResultsDat& dat, const CoreResultsVtkPlan& plan, std::atomic<bool>& cancelled, const std::function<bool(double)>& poll, std::shared_ptr<const SimResults::VtkResultsData>& output, std::string& error) const
 {
   error.clear();
   if (!CoreResultsVtkPipeline::valid(plan.options, error))
@@ -1020,7 +1317,7 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
     {
       return false;
     }
-    auto result = std::make_shared<FeaResults::VtkResultsData>();
+    auto result = std::make_shared<SimResults::VtkResultsData>();
     result->job_id = plan.job_id;
     result->run_identity = plan.run_identity;
     result->input_path = plan.input_path;
@@ -1081,7 +1378,7 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
         unassigned.ids.push_back(node[0]);
       }
     }
-    if (!unassigned.ids.empty() && plan.layout == FeaResults::DatasetLayout::Collection)
+    if (!unassigned.ids.empty() && plan.layout == SimResults::DatasetLayout::Collection)
     {
       groups.push_back(&unassigned);
     }
@@ -1104,7 +1401,7 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
       {
         return false;
       }
-      if (groups[i] == &base && plan.layout == FeaResults::DatasetLayout::SingleGrid)
+      if (groups[i] == &base && plan.layout == SimResults::DatasetLayout::SingleGrid)
       {
         for (int id : unassigned.ids)
         {
@@ -1126,7 +1423,7 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
       domains.push_back(std::move(domain));
     }
     result->layout = plan.layout;
-    if (result->layout == FeaResults::DatasetLayout::SingleGrid && domains.size() != 1)
+    if (result->layout == SimResults::DatasetLayout::SingleGrid && domains.size() != 1)
     {
       error = "Spatial datasets do not match the planned single-grid layout.";
       return false;
@@ -1148,11 +1445,27 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
       destination.increment = source.increment;
       destination.total_increment = source.total_increment;
       destination.time = source.time;
+      destination.analysis_type = source.analysis_type;
+      destination.mode = source.mode;
+      destination.nodal_diameter = source.nodal_diameter;
+      destination.subcase = source.subcase;
+      destination.source_parameters = source.source_parameters;
       for (const auto& domain : domains)
       {
         auto grid = vtkSmartPointer<vtkUnstructuredGrid>::New();
         grid->ShallowCopy(domain.geometry);
         timestamp(grid, source.time);
+        text(grid->GetFieldData(), "AnalysisType", std::to_string(source.analysis_type));
+        text(grid->GetFieldData(), "Mode", std::to_string(source.mode));
+        text(grid->GetFieldData(), "NodalDiameter", std::to_string(source.nodal_diameter));
+        text(grid->GetFieldData(), "Subcase", std::to_string(source.subcase));
+        auto parameters = vtkSmartPointer<vtkStringArray>::New();
+        parameters->SetName("SourceParameters");
+        for (const auto& line : source.source_parameters)
+        {
+          parameters->InsertNextValue(line);
+        }
+        grid->GetFieldData()->AddArray(parameters);
         grids[i].push_back(grid);
       }
     }
@@ -1233,7 +1546,7 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
         }
       }
     }
-    if (!tables(dat, plan, *result, observe, error))
+    if (!contact_tables(frd, plan, *result, pipeline, observe, error) || !tables(dat, plan, *result, pipeline, observe, error))
     {
       return false;
     }
@@ -1246,7 +1559,7 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
       vtkSmartPointer<vtkPartitionedDataSetCollection> collection;
       vtkSmartPointer<vtkDataAssembly> assembly;
       std::map<std::string, int> categories;
-      if (result->layout == FeaResults::DatasetLayout::Collection)
+      if (result->layout == SimResults::DatasetLayout::Collection)
       {
         collection = vtkSmartPointer<vtkPartitionedDataSetCollection>::New();
         collection->SetNumberOfPartitionedDataSets(static_cast<unsigned int>(domains.size()));

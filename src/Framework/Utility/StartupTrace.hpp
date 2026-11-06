@@ -1,5 +1,5 @@
-#ifndef FEA_STARTUPTRACE_HPP
-#define FEA_STARTUPTRACE_HPP
+#ifndef CUBITSIM_STARTUPTRACE_HPP
+#define CUBITSIM_STARTUPTRACE_HPP
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -7,7 +7,7 @@
 
 inline void startup_trace(const QString& message)
 {
-  const QString path = qEnvironmentVariable("FEA_STARTUP_TRACE");
+  const QString path = qEnvironmentVariable("CUBITSIM_STARTUP_TRACE");
 
   if (path.isEmpty())
   {
@@ -23,4 +23,4 @@ inline void startup_trace(const QString& message)
   }
 }
 
-#endif // FEA_STARTUPTRACE_HPP
+#endif // CUBITSIM_STARTUPTRACE_HPP

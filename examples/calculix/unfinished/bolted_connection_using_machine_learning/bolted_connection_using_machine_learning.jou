@@ -2,4 +2,4 @@
 reset
 
 # geometry from https://grabcad.com/library/aplicacao-de-parafusos-de-fixacao-na-montagem-de-um-flange-1
-import step "/home/user/git/Cubit-CalculiX/examples/calculix/unfinished/bolted_connection_using_machine_learning/EM1_ex_3_Montagem.stp" heal no_names 
+import step "/home/user/git/cubit-sim/examples/calculix/unfinished/bolted_connection_using_machine_learning/EM1_ex_3_Montagem.stp" heal no_names

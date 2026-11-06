@@ -21,9 +21,9 @@ bool CalculiXResultsInterface::prepare_vtk_plan(int job_id, const CoreResultsVtk
   return ccx_core.results->prepare_vtk_plan(job_id, options, plan);
 }
 
-FeaResults::ConversionStatus CalculiXResultsInterface::get_vtk_status(int job_id) const
+SimResults::ConversionStatus CalculiXResultsInterface::get_vtk_status(int job_id) const
 {
-  return ccx_core.results ? ccx_core.results->get_vtk_status(job_id) : FeaResults::ConversionStatus::NotConverted;
+  return ccx_core.results ? ccx_core.results->get_vtk_status(job_id) : SimResults::ConversionStatus::NotConverted;
 }
 
 bool CalculiXResultsInterface::build_vtk_result(int job_id, const CoreResultsVtkOptions& options)
@@ -56,7 +56,7 @@ bool CalculiXResultsInterface::is_vtk_build_active() const
   return ccx_core.results && ccx_core.results->is_vtk_build_active();
 }
 
-std::shared_ptr<const FeaResults::VtkResultsData> CalculiXResultsInterface::get_vtk_result(int job_id) const
+std::shared_ptr<const SimResults::VtkResultsData> CalculiXResultsInterface::get_vtk_result(int job_id) const
 {
   return ccx_core.results ? ccx_core.results->get_vtk_result(job_id) : nullptr;
 }

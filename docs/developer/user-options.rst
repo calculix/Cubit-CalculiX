@@ -4,7 +4,7 @@ Framework user options
 Ownership and initialization
 ----------------------------
 
-`FrameworkContext` owns `UserOptionsStore`, implemented in `fea_storage`.
+`FrameworkContext` owns `UserOptionsStore`, implemented in `cubitsim_storage`.
 It resolves paths and passes `UserOptionsInterface&` to module initialization.
 The service outlives the modules; modules must release borrowed pointers on
 shutdown. GUI pages are unregistered before workspace widgets are destroyed.
@@ -18,7 +18,7 @@ workspace state. No function stores the caller's validators.
 Storage
 -------
 
-The single file is named `cubitfea_user_options.h5`. Cubit's APPSETTINGS API
+The single file is named `cubitcubitsim_user_options.h5`. Cubit's APPSETTINGS API
 supplies the preferred directory. Empty or existing non-directory results
 fall back to the startup working directory. Directory creation or file access
 errors are reported; the store does not silently switch files after startup.

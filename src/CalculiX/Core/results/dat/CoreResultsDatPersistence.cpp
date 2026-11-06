@@ -1,3 +1,4 @@
+#include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/results/dat/CoreResultsDatPersistence.hpp"
 #include "Core/results/dat/CoreResultsDat.hpp"
 #include "HDF5Tool.hpp"
@@ -11,12 +12,17 @@
 #include <algorithm>
 #include <exception>
 #include <stdexcept>
+#include <charconv>
+#include <cmath>
+#include <set>
 
 namespace
 {
   struct SavedDatData
   {
     int job_id = -1;
+    std::vector<DatResultTable> result_tables;
+    std::vector<std::string> diagnostics;
     decltype(CoreResultsDat::buckle_data) buckle_data;
     decltype(CoreResultsDat::result_block_c1_data) result_block_c1_data;
     decltype(CoreResultsDat::result_block_components) result_block_components;
@@ -65,7 +71,7 @@ namespace
   {
     try
     {
-      const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
+      const std::string group = CalculiXModelSchema::path("Results/Dat/") + std::to_string(results.job_id) + "/";
 
       if (file.nameExists(group) && file.nameExists(group + std::string("/") + "result_blocks") && !file.read_dataset_int_rank_2("result_blocks", group, results.result_blocks))
       {
@@ -121,7 +127,7 @@ namespace
   {
     try
     {
-      const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
+      const std::string group = CalculiXModelSchema::path("Results/Dat/") + std::to_string(results.job_id) + "/";
 
       if (!file.ensureGroup(group))
       {
@@ -186,7 +192,7 @@ namespace
   {
     try
     {
-      const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
+      const std::string group = CalculiXModelSchema::path("Results/Dat/") + std::to_string(results.job_id) + "/";
       const std::string values = group + "result_block_data/";
 
       if (file.nameExists(values))
@@ -249,7 +255,7 @@ namespace
   {
     try
     {
-      const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
+      const std::string group = CalculiXModelSchema::path("Results/Dat/") + std::to_string(results.job_id) + "/";
 
       if (!results.result_block_data.empty())
       {
@@ -325,7 +331,7 @@ namespace
   {
     try
     {
-      const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
+      const std::string group = CalculiXModelSchema::path("Results/Dat/") + std::to_string(results.job_id) + "/";
       const std::string sections = group + "result_section/";
 
       if (file.nameExists(sections))
@@ -394,7 +400,7 @@ namespace
   {
     try
     {
-      const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
+      const std::string group = CalculiXModelSchema::path("Results/Dat/") + std::to_string(results.job_id) + "/";
 
       if (!results.result_section.empty())
       {
@@ -462,7 +468,7 @@ namespace
   {
     try
     {
-      const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
+      const std::string group = CalculiXModelSchema::path("Results/Dat/") + std::to_string(results.job_id) + "/";
       const std::string column_ids = group + "sorted_c1/";
 
       if (file.nameExists(column_ids))
@@ -525,7 +531,7 @@ namespace
   {
     try
     {
-      const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id) + "/";
+      const std::string group = CalculiXModelSchema::path("Results/Dat/") + std::to_string(results.job_id) + "/";
 
       if (!results.sorted_c1.empty())
       {
@@ -598,8 +604,104 @@ namespace
   }
 
   template<class Data>
+  bool valid_named_tables(const Data& results)
+  {
+    for (const auto& table : results.result_tables)
+    {
+      const std::set<std::string> names(table.columns.begin(), table.columns.end());
+      if (table.key.empty() || !std::isfinite(table.time) || table.columns.empty() ||
+        names.size() != table.columns.size() || names.count("") || names.count("RecordIndex") || names.count("Valid") ||
+        !std::all_of(table.rows.begin(), table.rows.end(), [&](const auto& row)
+        {
+          return row.size() == table.columns.size();
+        }))
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool read_named_tables(HDF5Tool& file, const std::string& group, SavedDatData& results)
+  {
+    if (!file.nameExists(group + "/NamedTableCount"))
+    {
+      return true; // Files saved before named tables were introduced.
+    }
+    std::vector<int> count;
+    if (!file.read_dataset_int_rank_1("NamedTableCount", group, count) || count.size() != 1 || count[0] < 0 || count[0] > 1000000)
+    {
+      return false;
+    }
+    results.result_tables.resize(static_cast<std::size_t>(count[0]));
+    for (std::size_t i = 0; i < results.result_tables.size(); ++i)
+    {
+      auto& table = results.result_tables[i];
+      const auto path = group + "/NamedTables/" + std::to_string(i) + "/";
+      std::vector<std::string> metadata;
+      std::vector<int> identity;
+      std::vector<double> time;
+      if (!file.read_dataset_string_rank_1("Metadata", path, metadata) || metadata.size() != 6 ||
+        !file.read_dataset_int_rank_1("Identity", path, identity) || identity.size() != 2 ||
+        !file.read_dataset_double_rank_1("Time", path, time) || time.size() != 1 ||
+        !file.read_dataset_string_rank_1("Columns", path, table.columns) ||
+        !file.read_dataset_double_rank_2("Rows", path, table.rows))
+      {
+        return false;
+      }
+      table.key = metadata[0];
+      table.name = metadata[1];
+      table.set_name = metadata[2];
+      table.slave_set = metadata[3];
+      table.master_set = metadata[4];
+      const auto parsed = std::from_chars(metadata[5].data(), metadata[5].data() + metadata[5].size(), table.source_line);
+      if (metadata[5].empty() || parsed.ec != std::errc{} || parsed.ptr != metadata[5].data() + metadata[5].size())
+      {
+        return false;
+      }
+      table.step = identity[0];
+      table.increment = identity[1];
+      table.time = time[0];
+    }
+    if (file.nameExists(group + "/ReaderDiagnostics") && !file.read_dataset_string_rank_1("ReaderDiagnostics", group, results.diagnostics))
+    {
+      return false;
+    }
+    return valid_named_tables(results);
+  }
+
+  bool write_named_tables(HDF5Tool& file, const std::string& group, const CoreResultsDat& results)
+  {
+    if (results.result_tables.size() > 1000000 || !file.ensureGroup(group) ||
+      !file.write_dataset_int_rank_1("NamedTableCount", group, {static_cast<int>(results.result_tables.size())}) ||
+      !file.write_dataset_string_rank_1("ReaderDiagnostics", group, results.diagnostics))
+    {
+      return false;
+    }
+    for (std::size_t i = 0; i < results.result_tables.size(); ++i)
+    {
+      const auto& table = results.result_tables[i];
+      const auto path = group + "/NamedTables/" + std::to_string(i) + "/";
+      if (!file.ensureGroup(path) ||
+        !file.write_dataset_string_rank_1("Metadata", path, {table.key, table.name, table.set_name, table.slave_set, table.master_set, std::to_string(table.source_line)}) ||
+        !file.write_dataset_int_rank_1("Identity", path, {table.step, table.increment}) ||
+        !file.write_dataset_double_rank_1("Time", path, {table.time}) ||
+        !file.write_dataset_string_rank_1("Columns", path, table.columns) ||
+        !file.write_dataset_double_rank_2("Rows", path, table.rows))
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  template<class Data>
   bool validDatData(const Data& results)
   {
+    if (!valid_named_tables(results))
+    {
+      return false;
+    }
     if (!PersistenceTable::rows(results.result_blocks, 7) || !PersistenceTable::rows(results.result_section, 2))
     {
       return false;
@@ -666,7 +768,7 @@ bool CoreResultsDatPersistence::read(HDF5Tool& file, CoreResultsDat& results)
 {
   try
   {
-    const std::string group = "Cubit-CalculiX/Results/Dat/" + std::to_string(results.job_id);
+    const std::string group = CalculiXModelSchema::path("Results/Dat/") + std::to_string(results.job_id);
     if (!file.nameExists(group))
     {
       return true;
@@ -690,11 +792,18 @@ bool CoreResultsDatPersistence::read(HDF5Tool& file, CoreResultsDat& results)
     {
       return false;
     }
+    if (!read_named_tables(file, group, saved))
+    {
+      PRINT_ERROR("Cannot read DAT named tables for job %d.\n", results.job_id);
+      return false;
+    }
     if (!validDatData(saved))
     {
       PRINT_ERROR("Cannot read CalculiX Dat results for job %d: invalid data shape or result reference.\n", results.job_id);
       return false;
     }
+    results.result_tables.swap(saved.result_tables);
+    results.diagnostics.swap(saved.diagnostics);
     results.buckle_data.swap(saved.buckle_data);
     results.result_block_c1_data.swap(saved.result_block_c1_data);
     results.result_block_components.swap(saved.result_block_components);
@@ -731,6 +840,11 @@ bool CoreResultsDatPersistence::write(HDF5Tool& file, const CoreResultsDat& resu
     if (!validDatData(results))
     {
       PRINT_ERROR("Cannot save CalculiX Dat results for job %d: invalid data shape or result reference.\n", results.job_id);
+      return false;
+    }
+    if (!write_named_tables(file, CalculiXModelSchema::path("Results/Dat/") + std::to_string(results.job_id), results))
+    {
+      PRINT_ERROR("Cannot save DAT named tables for job %d.\n", results.job_id);
       return false;
     }
     if (!write_block_metadata(file, results))

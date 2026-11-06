@@ -3,6 +3,8 @@
 
 #include <string>
 #include <vector>
+#include <cstddef>
+#include "Core/results/dat/CoreResultsDatStructs.hpp"
 
 class CoreResults;
 
@@ -32,6 +34,12 @@ public:
   std::vector<std::string> dat_get_section_set(int job_id); // returns the section set for a job
   std::vector<std::vector<double>> dat_get_section_data(int job_id, std::string section_set); // returns the section set data for a job
   std::vector<std::string> dat_get_section_label(int job_id); // returns the section labels for a job
+
+  // Metadata excludes rows. Read table values in bounded pages through this API.
+  std::vector<DatResultTable> dat_get_table_metadata(int job_id);
+  std::size_t dat_get_table_row_count(int job_id, int table_id);
+  std::vector<std::vector<double>> dat_get_table_rows(int job_id, int table_id, std::size_t offset, std::size_t count);
+
 
 private:
   CoreResults& results;

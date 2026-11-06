@@ -65,6 +65,18 @@ asynchronous. Wait can process host events; reentrant reset/deletion while a
 completion operation owns reader/model data must respect the existing guards.
 Kill request acceptance and confirmed terminal state are separate observations.
 
+``complete_job_results()`` registers a pending result job, loads FRD/DAT and
+calls ``build_vtk_result()`` with default options. It removes the pending entry
+only after a successful build; optional file export follows that removal.
+Consequently automatic export disabled does not mean conversion disabled.
+``results_ready()`` also clears entries whose VTK status is Complete or whose
+job was deleted. ``run_job()`` rejects another start while any pending entry
+remains. Solver status 2 alone therefore does not establish readiness for a
+subsequent topology physical or adjoint solve.
+
+See :doc:`vtk-conversion` for mesh/formulation prerequisites and
+:doc:`review-findings` for the reported topology/conversion coordination gap.
+
 ``.sta`` and ``.cvg`` data are progress/status evidence; ``.frd`` and ``.dat``
 contain numerical results used by readers. External files must remain available
 for workflows that re-read them. A model save does not automatically package

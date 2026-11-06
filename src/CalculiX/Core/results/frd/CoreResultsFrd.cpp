@@ -1,4 +1,5 @@
 #include "Core/results/frd/CoreResultsFrd.hpp"
+#include "Core/results/frd/CoreResultsFrdFormat.hpp"
 #include <numeric>
 #include <string>
 #include <string_view>
@@ -62,6 +63,7 @@ bool CoreResultsFrd::clear()
   elements_connectivity.clear();
   
   result_blocks.clear();
+  result_analysis.clear();
   total_times.clear();
   result_block_components.clear();
   result_block_type.clear();
@@ -888,6 +890,17 @@ bool CoreResultsFrd::read_parallel_boost()
     try
     {
       const auto finalize_begin = ResultReadTimings::Clock::now();
+      // Workers have joined. Only now may a truncated final block be removed.
+      if (state.incomplete_data >= 0)
+      {
+        const auto size = static_cast<std::size_t>(state.incomplete_data);
+        result_blocks.resize(size);
+        result_analysis.resize(size);
+        result_block_components.resize(size);
+        result_block_data.resize(size);
+        result_block_node_data.resize(size);
+        PRINT_WARNING("Discarded incomplete trailing FRD result block.\n");
+      }
       success = finalize_boost_results();
       phases.finalize_ns += ResultReadTimings::elapsed(finalize_begin);
     }
@@ -967,8 +980,13 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
         }
         if (current_read_mode == 4)
         {
-          PRINT_ERROR("FRD result block is incomplete at end of file.\n");
-          return false;
+          state.incomplete_data = state.data_id;
+          state.logical_record.clear();
+          if (batch.data_id == state.data_id)
+          {
+            batch.records.clear();
+            batch.text.clear();
+          }
         }
         state.finished = true;
         finished = batch.records.empty();
@@ -987,7 +1005,9 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
       continue;
     }
 
-    const bool result_row = current_read_mode == 4 && ResultReadNumbers::frd_record(raw);
+    const auto record_text = ResultReadNumbers::trim(raw);
+    const bool continuation = record_text.size() > 2 && record_text.substr(0, 2) == "-2" && ResultReadNumbers::whitespace(record_text[2]);
+    const bool result_row = current_read_mode == 4 && (ResultReadNumbers::frd_record(raw) || continuation);
     const auto row_bytes = raw.size() + sizeof(FrdRawRecord)
         + ResultsReaderPipeline::result_row_storage(state.components.size(), 2);
     if (!batch.records.empty())
@@ -1007,9 +1027,29 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
         PRINT_ERROR("FRD result row has no component definition at line %zu.\n", state.line_number);
         return false;
       }
-      ResultsReaderPipeline::append_raw_record(batch, state, raw);
-      batch_bytes += row_bytes;
+      if (state.logical_record.empty())
+      {
+        state.record_line = state.line_number;
+      }
+      const auto status = CoreResultsFrdFormat::append(raw, state.components.size(), state.logical_record);
+      if (status == CoreResultsFrdFormat::RecordStatus::Invalid)
+      {
+        PRINT_ERROR("Invalid FRD logical record at line %zu.\n", state.line_number);
+        return false;
+      }
+      if (status == CoreResultsFrdFormat::RecordStatus::Ready)
+      {
+        ResultsReaderPipeline::append_raw_record(batch, state, state.logical_record);
+        batch.records.back().source_line = state.record_line;
+        batch_bytes += state.logical_record.size() + row_bytes;
+        state.logical_record.clear();
+      }
       continue;
+    }
+    if (!state.logical_record.empty())
+    {
+      PRINT_ERROR("Incomplete FRD logical record before line %zu.\n", state.line_number);
+      return false;
     }
 
     // Common mesh records bypass string rewriting and stream conversions.
@@ -1103,6 +1143,35 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
     }
     else if (current_read_mode == 3)
     {
+      if (fields[0] == "1PSTEP")
+      {
+        state.analysis = FrdAnalysis{};
+      }
+      if (fields[0].compare(0, 2, "1P") == 0 || fields[0] == "100CL")
+      {
+        state.analysis.parameters.emplace_back(raw);
+      }
+      int* parameter = fields[0] == "1PMODE" ? &state.analysis.mode :
+        fields[0] == "1PHID" ? &state.analysis.nodal_diameter : fields[0] == "1PSUBC" ? &state.analysis.subcase : nullptr;
+      if (parameter && (fields.size() != 2 || !ResultReadNumbers::integer(fields[1], *parameter)))
+      {
+        PRINT_ERROR("Invalid FRD analysis parameter at line %zu.\n", state.line_number);
+        return false;
+      }
+      if (fields[0] == "100CL" && raw.size() >= 75)
+      {
+        double time = 0.0;
+        int increment = -1;
+        if (!CoreResultsFrdFormat::loadcase(raw, time, increment, state.analysis.type))
+        {
+          PRINT_ERROR("Unsupported binary FRD or invalid analysis header at line %zu. Use ASCII output.\n", state.line_number);
+          return false;
+        }
+        total_times.push_back(time);
+        current_total_time_id = static_cast<int>(total_times.size() - 1);
+        current_total_increment = increment;
+        continue;
+      }
       if ((fields[0] == "1PSTEP" && fields.size() < 4) || (fields[0] == "100CL" && fields.size() < 6) || (fields[0] == "-4" && fields.size() < 2))
       {
         PRINT_ERROR("Incomplete FRD parameter header at line %zu.\n", state.line_number);
@@ -1122,6 +1191,7 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
         state.data_id = result_blocks.back()[6];
         state.result_type = fields[1];
         state.components.clear();
+        result_analysis.push_back(state.analysis);
       }
     }
     else if (current_read_mode == 4)
@@ -1294,7 +1364,7 @@ FrdParsedBatch CoreResultsFrd::parse_raw_batch(const FrdRawReadBatch& batch, con
     const std::string_view line(batch.text.data() + record.offset, record.length);
     std::array<std::string_view, ResultReadNumbers::max_fields> fields;
     std::size_t count = 0;
-    if (!ResultReadNumbers::fields(line, fields, count) || count < source_components + 2 || fields[0] != "-1")
+    if (!ResultReadNumbers::fields(line, fields, count) || count != source_components + 2 || fields[0] != "-1")
     {
       output.error = "Invalid FRD result row at line " + std::to_string(record.source_line);
       return output;

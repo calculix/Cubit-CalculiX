@@ -16,6 +16,7 @@ class CoreDraw
 {
 
 public:
+  void bindDrawing(DrawingInterface* drawings) noexcept;
   bool drawForStep(int stepId, const std::vector<DrawFeature>& features, double size, std::string& error, const std::vector<DrawEntityKey>& entities = {});
   bool setAllVisible(bool visible, std::string& error);
   bool setScope(const DrawScope& scope, std::string& error);
@@ -123,10 +124,10 @@ public:
   bool graphics_clear();
 
 private:
-  bool storeGeometry(DrawEntityKey key, DrawGeometry geometry, double size);
+  bool storeGeometry(DrawEntityKey key, DrawingGeometry geometry, double size);
   double modelSymbolSize() const;
   CoreDrawScene scene;
-  DrawGeometry* currentGeometry = nullptr;
+  DrawingGeometry* currentGeometry = nullptr;
   bool rebuilding = false;
   bool restorePending = false;
   int activeTopologyId = -1;

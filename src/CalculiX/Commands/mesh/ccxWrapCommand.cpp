@@ -5,8 +5,8 @@
 #include "Core/topology/CalculiXTopologyInterface.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
-#include "CubitWrapInput.hpp"
-#include "CGALTool.hpp"
+#include "Framework/Geometry/CubitWrapInput.hpp"
+#include "Framework/Geometry/CGALTool.hpp"
 #include <QCoreApplication>
 #include <QEventLoop>
 #include <QScopedValueRollback>

@@ -4,7 +4,7 @@
 
 std::vector<std::string> WorkspaceCommand::get_syntax()
 {
-  return {"fea workspace {cubit|calculix}"};
+  return {"sim workspace {cubit|calculix|postprocessor}"};
 }
 
 std::vector<std::string> WorkspaceCommand::get_syntax_help()
@@ -14,12 +14,21 @@ std::vector<std::string> WorkspaceCommand::get_syntax_help()
 
 std::vector<std::string> WorkspaceCommand::get_help()
 {
-  return {"Switch the GUI workspace while retaining the Cubit model and viewport."};
+  return {"Switch application workspaces while retaining the Cubit model and each application's viewport."};
 }
 
 bool WorkspaceCommand::execute(CubitCommandData& data)
 {
-  const std::string target = data.find_keyword("calculix") ? "calculix" : "cubit";
+  std::string target = "cubit";
+
+  if (data.find_keyword("calculix"))
+  {
+    target = "calculix";
+  }
+  else if (data.find_keyword("postprocessor"))
+  {
+    target = "postprocessor";
+  }
   std::string error;
 
   if (!framework_context().select_workspace(target, error))

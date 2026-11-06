@@ -14,6 +14,12 @@ class QToolBar;
 class QDockWidget;
 class NavigationModel;
 
+enum class WorkspaceDockLayout
+{
+  StackedLeft,
+  LeftRight
+};
+
 struct WorkspaceView
 {
   // Borrowed options widget; framework unregisters it before provider teardown.
@@ -31,6 +37,10 @@ struct WorkspaceView
   QPersistentModelIndex navigationRoot;
   QPersistentModelIndex initialNavigationSelection;
   bool hideNavigationMode = false;
+  // Borrowed page; nullptr retains the original Cubit viewport.
+  QWidget* graphicsPage = nullptr;
+  bool useNativeNavigation = true;
+  WorkspaceDockLayout dockLayout = WorkspaceDockLayout::StackedLeft;
 };
 
 class WorkspaceProviderInterface

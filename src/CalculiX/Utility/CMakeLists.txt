@@ -1,7 +1,7 @@
-project(Cubit-CalculiX_Utility)
+project(cubit-sim_Utility)
 
 # Include Eigen code
-include_directories(${CCX_SOURCE_ROOT}/Utility/Eigen)
+include_directories(${CUBITSIM_SOURCE_ROOT}/Utility/Eigen)
 
 set(UTILITY_SRC
     ${CMAKE_CURRENT_LIST_DIR}/PersistenceTable.hpp
@@ -21,5 +21,5 @@ set(UTILITY_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ElementIntegration.cpp
     ${CMAKE_CURRENT_LIST_DIR}/GifAnimation.cpp
     ${CMAKE_CURRENT_LIST_DIR}/GifAnimation.hpp
-    ${CCX_SOURCE_ROOT}/Utility/gif.h
+    ${CUBITSIM_SOURCE_ROOT}/Utility/gif.h
     PARENT_SCOPE)

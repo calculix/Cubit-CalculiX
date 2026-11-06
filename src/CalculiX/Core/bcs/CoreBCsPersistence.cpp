@@ -1,3 +1,4 @@
+#include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/bcs/CoreBCsPersistence.hpp"
 #include "Core/bcs/CoreBCsDisplacements.hpp"
 #include "Core/bcs/CoreBCsTemperatures.hpp"
@@ -17,27 +18,27 @@ bool CoreBCsPersistence::read(HDF5Tool& file, CoreBCsDisplacements& displacement
     decltype(displacements.displacement_data) saved_displacement_data;
     decltype(displacements.mode_data) saved_mode_data;
     decltype(displacements.name_data) saved_name_data;
-    if (file.nameExists("Cubit-CalculiX/BCs/Displacements/bcs_data") && !file.read_dataset_int_rank_2("bcs_data", "Cubit-CalculiX/BCs/Displacements", saved_bcs_data))
+    if (file.nameExists(CalculiXModelSchema::path("BCs/Displacements/bcs_data")) && !file.read_dataset_int_rank_2("bcs_data", CalculiXModelSchema::path("BCs/Displacements"), saved_bcs_data))
     {
       PRINT_ERROR("Cannot read CalculiX BCsDisplacements: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/BCs/Displacements/time_delay_data") && !file.read_dataset_string_rank_2("time_delay_data", "Cubit-CalculiX/BCs/Displacements", saved_time_delay_data))
+    if (file.nameExists(CalculiXModelSchema::path("BCs/Displacements/time_delay_data")) && !file.read_dataset_string_rank_2("time_delay_data", CalculiXModelSchema::path("BCs/Displacements"), saved_time_delay_data))
     {
       PRINT_ERROR("Cannot read CalculiX BCsDisplacements: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/BCs/Displacements/displacement_data") && !file.read_dataset_double_rank_2("displacement_data", "Cubit-CalculiX/BCs/Displacements", saved_displacement_data))
+    if (file.nameExists(CalculiXModelSchema::path("BCs/Displacements/displacement_data")) && !file.read_dataset_double_rank_2("displacement_data", CalculiXModelSchema::path("BCs/Displacements"), saved_displacement_data))
     {
       PRINT_ERROR("Cannot read CalculiX BCsDisplacements: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/BCs/Displacements/mode_data") && !file.read_dataset_int_rank_2("mode_data", "Cubit-CalculiX/BCs/Displacements", saved_mode_data))
+    if (file.nameExists(CalculiXModelSchema::path("BCs/Displacements/mode_data")) && !file.read_dataset_int_rank_2("mode_data", CalculiXModelSchema::path("BCs/Displacements"), saved_mode_data))
     {
       PRINT_ERROR("Cannot read CalculiX BCsDisplacements: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/BCs/Displacements/name_data") && !file.read_dataset_string_rank_2("name_data", "Cubit-CalculiX/BCs/Displacements", saved_name_data))
+    if (file.nameExists(CalculiXModelSchema::path("BCs/Displacements/name_data")) && !file.read_dataset_string_rank_2("name_data", CalculiXModelSchema::path("BCs/Displacements"), saved_name_data))
     {
       PRINT_ERROR("Cannot read CalculiX BCsDisplacements: %s\n", file.last_error().c_str());
       return false;
@@ -156,32 +157,32 @@ bool CoreBCsPersistence::write(HDF5Tool& file, const CoreBCsDisplacements& displ
       PRINT_ERROR("Cannot write CalculiX BCsDisplacements: invalid or duplicate IDs.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/BCs/Displacements"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("BCs/Displacements")))
     {
       PRINT_ERROR("Cannot write CalculiX BCsDisplacements: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("bcs_data", "Cubit-CalculiX/BCs/Displacements", displacements.bcs_data))
+    if (!file.write_dataset_int_rank_2("bcs_data", CalculiXModelSchema::path("BCs/Displacements"), displacements.bcs_data))
     {
       PRINT_ERROR("Cannot write CalculiX BCsDisplacements: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("time_delay_data", "Cubit-CalculiX/BCs/Displacements", displacements.time_delay_data))
+    if (!file.write_dataset_string_rank_2("time_delay_data", CalculiXModelSchema::path("BCs/Displacements"), displacements.time_delay_data))
     {
       PRINT_ERROR("Cannot write CalculiX BCsDisplacements: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_double_rank_2("displacement_data", "Cubit-CalculiX/BCs/Displacements", displacements.displacement_data))
+    if (!file.write_dataset_double_rank_2("displacement_data", CalculiXModelSchema::path("BCs/Displacements"), displacements.displacement_data))
     {
       PRINT_ERROR("Cannot write CalculiX BCsDisplacements: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("mode_data", "Cubit-CalculiX/BCs/Displacements", displacements.mode_data))
+    if (!file.write_dataset_int_rank_2("mode_data", CalculiXModelSchema::path("BCs/Displacements"), displacements.mode_data))
     {
       PRINT_ERROR("Cannot write CalculiX BCsDisplacements: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("name_data", "Cubit-CalculiX/BCs/Displacements", displacements.name_data))
+    if (!file.write_dataset_string_rank_2("name_data", CalculiXModelSchema::path("BCs/Displacements"), displacements.name_data))
     {
       PRINT_ERROR("Cannot write CalculiX BCsDisplacements: %s\n", file.last_error().c_str());
       return false;
@@ -209,22 +210,22 @@ bool CoreBCsPersistence::read(HDF5Tool& file, CoreBCsTemperatures& temperatures)
     decltype(temperatures.time_delay_data) saved_time_delay_data;
     decltype(temperatures.magnitude_data) saved_magnitude_data;
     decltype(temperatures.name_data) saved_name_data;
-    if (file.nameExists("Cubit-CalculiX/BCs/Temperatures/bcs_data") && !file.read_dataset_int_rank_2("bcs_data", "Cubit-CalculiX/BCs/Temperatures", saved_bcs_data))
+    if (file.nameExists(CalculiXModelSchema::path("BCs/Temperatures/bcs_data")) && !file.read_dataset_int_rank_2("bcs_data", CalculiXModelSchema::path("BCs/Temperatures"), saved_bcs_data))
     {
       PRINT_ERROR("Cannot read CalculiX BCsTemperatures: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/BCs/Temperatures/time_delay_data") && !file.read_dataset_string_rank_2("time_delay_data", "Cubit-CalculiX/BCs/Temperatures", saved_time_delay_data))
+    if (file.nameExists(CalculiXModelSchema::path("BCs/Temperatures/time_delay_data")) && !file.read_dataset_string_rank_2("time_delay_data", CalculiXModelSchema::path("BCs/Temperatures"), saved_time_delay_data))
     {
       PRINT_ERROR("Cannot read CalculiX BCsTemperatures: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/BCs/Temperatures/magnitude_data") && !file.read_dataset_double_rank_2("magnitude_data", "Cubit-CalculiX/BCs/Temperatures", saved_magnitude_data))
+    if (file.nameExists(CalculiXModelSchema::path("BCs/Temperatures/magnitude_data")) && !file.read_dataset_double_rank_2("magnitude_data", CalculiXModelSchema::path("BCs/Temperatures"), saved_magnitude_data))
     {
       PRINT_ERROR("Cannot read CalculiX BCsTemperatures: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/BCs/Temperatures/name_data") && !file.read_dataset_string_rank_2("name_data", "Cubit-CalculiX/BCs/Temperatures", saved_name_data))
+    if (file.nameExists(CalculiXModelSchema::path("BCs/Temperatures/name_data")) && !file.read_dataset_string_rank_2("name_data", CalculiXModelSchema::path("BCs/Temperatures"), saved_name_data))
     {
       PRINT_ERROR("Cannot read CalculiX BCsTemperatures: %s\n", file.last_error().c_str());
       return false;
@@ -332,27 +333,27 @@ bool CoreBCsPersistence::write(HDF5Tool& file, const CoreBCsTemperatures& temper
       PRINT_ERROR("Cannot write CalculiX BCsTemperatures: invalid or duplicate IDs.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/BCs/Temperatures"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("BCs/Temperatures")))
     {
       PRINT_ERROR("Cannot write CalculiX BCsTemperatures: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("bcs_data", "Cubit-CalculiX/BCs/Temperatures", temperatures.bcs_data))
+    if (!file.write_dataset_int_rank_2("bcs_data", CalculiXModelSchema::path("BCs/Temperatures"), temperatures.bcs_data))
     {
       PRINT_ERROR("Cannot write CalculiX BCsTemperatures: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("time_delay_data", "Cubit-CalculiX/BCs/Temperatures", temperatures.time_delay_data))
+    if (!file.write_dataset_string_rank_2("time_delay_data", CalculiXModelSchema::path("BCs/Temperatures"), temperatures.time_delay_data))
     {
       PRINT_ERROR("Cannot write CalculiX BCsTemperatures: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_double_rank_2("magnitude_data", "Cubit-CalculiX/BCs/Temperatures", temperatures.magnitude_data))
+    if (!file.write_dataset_double_rank_2("magnitude_data", CalculiXModelSchema::path("BCs/Temperatures"), temperatures.magnitude_data))
     {
       PRINT_ERROR("Cannot write CalculiX BCsTemperatures: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("name_data", "Cubit-CalculiX/BCs/Temperatures", temperatures.name_data))
+    if (!file.write_dataset_string_rank_2("name_data", CalculiXModelSchema::path("BCs/Temperatures"), temperatures.name_data))
     {
       PRINT_ERROR("Cannot write CalculiX BCsTemperatures: %s\n", file.last_error().c_str());
       return false;
@@ -377,7 +378,7 @@ bool CoreBCsPersistence::read(HDF5Tool& file, CoreHBCs& hbcs)
   {
 
     decltype(hbcs.bcs_data) saved_bcs_data;
-    if (file.nameExists("Cubit-CalculiX/HBCs/bcs_data") && !file.read_dataset_int_rank_2("bcs_data", "Cubit-CalculiX/HBCs", saved_bcs_data))
+    if (file.nameExists(CalculiXModelSchema::path("HBCs/bcs_data")) && !file.read_dataset_int_rank_2("bcs_data", CalculiXModelSchema::path("HBCs"), saved_bcs_data))
     {
       PRINT_ERROR("Cannot read CalculiX HBCs: %s\n", file.last_error().c_str());
       return false;
@@ -412,12 +413,12 @@ bool CoreBCsPersistence::write(HDF5Tool& file, const CoreHBCs& hbcs)
       PRINT_ERROR("Cannot write CalculiX HBCs: bcs_data has incomplete rows.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/HBCs"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("HBCs")))
     {
       PRINT_ERROR("Cannot write CalculiX HBCs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("bcs_data", "Cubit-CalculiX/HBCs", hbcs.bcs_data))
+    if (!file.write_dataset_int_rank_2("bcs_data", CalculiXModelSchema::path("HBCs"), hbcs.bcs_data))
     {
       PRINT_ERROR("Cannot write CalculiX HBCs: %s\n", file.last_error().c_str());
       return false;

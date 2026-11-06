@@ -271,10 +271,10 @@ bool UserOptionsStore::transact(const std::string& workspace, const std::vector<
     QLockFile lock(filename + ".lock");
     if (!lock.tryLock(0))
     {
-      error = "The FEA options file is in use: " + paths.optionsFilename;
+      error = "The cubit-sim options file is in use: " + paths.optionsFilename;
       return false;
     }
-    QTemporaryDir temporary(QFileInfo(filename).absolutePath() + "/.cubitfea-options-XXXXXX");
+    QTemporaryDir temporary(QFileInfo(filename).absolutePath() + "/.cubitsim-options-XXXXXX");
     if (!temporary.isValid())
     {
       error = "Cannot create a temporary options directory.";
@@ -306,7 +306,7 @@ bool UserOptionsStore::transact(const std::string& workspace, const std::vector<
         auto value = definition.defaultValue;
         if (file.nameExists(item) && !readValue(file, item, definition, value))
         {
-          PRINT_WARNING("Invalid saved FEA option %s/%s; using its declared default.\n",
+          PRINT_WARNING("Invalid saved cubit-sim option %s/%s; using its declared default.\n",
             workspace.c_str(), definition.key.c_str());
           value = definition.defaultValue;
         }
@@ -342,7 +342,7 @@ bool UserOptionsStore::transact(const std::string& workspace, const std::vector<
     }
     if (input.error() != QFileDevice::NoError || !output.commit())
     {
-      error = "Cannot commit the FEA options file.";
+      error = "Cannot commit the cubit-sim options file.";
       return false;
     }
     return true;

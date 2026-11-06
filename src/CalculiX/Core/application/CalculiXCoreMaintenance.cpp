@@ -136,7 +136,7 @@ bool CalculiXCore::reset()
   customlines->reset();
 
   sideset_faces.clear();
-  PRINT_INFO("Reset Cubit-CalculiX\n");
+  PRINT_INFO("Reset cubit-sim\n");
 
   if (timer)
   {

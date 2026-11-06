@@ -21,7 +21,7 @@ class CCXDockWindowModelTree;
 class UserOptionsPanel;
 class Observer;
 
-// Internal GUI owner. FEAComp is the only loader-facing component.
+// Internal GUI owner. CubitSimComp is the only loader-facing component.
 class CalculiXGui
 {
 public:
@@ -43,8 +43,6 @@ private:
   void cleanup_CCXDockWindowModelTree();
   void setup_observers(int withGUI);
   void cleanup_observers();
-  void setup_window_title();
-  void cleanup_window_title();
 
   MenuManager* myMenus = nullptr;
   cmdPanelManager* mycmdPanels = nullptr;
@@ -56,8 +54,6 @@ private:
   QPointer<NativeDisplayRefreshObserver> displayRefreshObserver;
   QPointer<DrawingSelectionController> drawingSelection;
   QPointer<DrawingPickController> drawingPick;
-  QPointer<Claro> titleHost;
-  QString titleSuffix;
   Observer* mListener = nullptr;
   bool boolwithGUI = false;
 };

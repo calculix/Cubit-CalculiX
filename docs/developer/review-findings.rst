@@ -79,6 +79,47 @@ Later review: inspect options validation and all call paths, decide whether the
 class is explicitly single-use, and test zero/negative counts, startup failure,
 queue drain, in-flight work and repeated shutdown. No behavior was changed here.
 
+R5: Reported topology DAT conversion lacks exact formulation
+------------------------------------------------------------
+
+Priority: P2 reported runtime integration failure; root cause unresolved.
+
+The log reviewed on 6 November 2026 shows a HEX8 topology solve finishing with
+DAT energy available, then VTK planning rejecting the formulation of element 1.
+The next iteration cannot start because conversion remains pending. In
+:download:`CoreResultsVtkLink.cpp <../../src/CalculiX/Core/results/vtk/CoreResultsVtkLink.cpp>`
+line 422, the error covers empty/unsupported/non-integrable formulations.
+Link selection at lines 542--589 can retain FRD-only geometry after unsuccessful
+model/INP matches. Exact integration formulation must not be guessed from FRD
+topology or generic Cubit element shape.
+
+Later review: obtain the matching deck/includes, FRD/DAT and link diagnostics;
+identify the failed provenance/formulation path. Test DAT integration-point
+conversion with no FRD fields, matching run input, full/reduced formulations and
+topology-generated element sets. Distinguish absent fields from absent geometry.
+No converter fix or runtime reproduction was performed here.
+
+R6: Topology completion does not establish VTK readiness
+--------------------------------------------------------
+
+Priority: P2 source-confirmed coordination gap, also visible in the supplied log.
+
+:download:`CoreTopologyOptimization.cpp <../../src/CalculiX/Core/topology/CoreTopologyOptimization.cpp>`
+checks solver status at line 980 and prints ``results are loaded`` at line 1071
+after numerical evaluation. In contrast,
+:download:`CoreJobs.cpp <../../src/CalculiX/Core/jobs/CoreJobs.cpp>` lines 893--911
+gate later starts on pending VTK publication, and lines 914--944 retain pending
+state on conversion failure. Thus an evaluated iteration can be reported complete
+and a new design/job prepared before the next start is rejected. Solver status,
+topology evaluation and converted-result availability are distinct contracts.
+
+Later review: agree the required conversion policy, coordinate it through the
+existing interfaces before progressing to another physical/adjoint job, and
+report the failing result phase accurately. Test conversion failure, cancellation,
+successful retry, optional export failure and reset/deletion. A successful retry
+must not be described as resuming an already failed topology run. No production
+change was made.
+
 B1: Numerical journal cannot reach native level-set helpers
 -----------------------------------------------------------
 

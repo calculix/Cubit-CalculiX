@@ -28,7 +28,7 @@ The three command implementations are:
 - [ccxLoadsSurfaceTractionModifyCommand.cpp](../src/CalculiX/Commands/loads/ccxLoadsSurfaceTractionModifyCommand.cpp)
 - [ccxLoadsSurfaceTractionDeleteCommand.cpp](../src/CalculiX/Commands/loads/ccxLoadsSurfaceTractionDeleteCommand.cpp)
 
-Each provides syntax/help and an `execute()` entry point. [CalculiXCommands.cpp](../src/CalculiX/Commands/CalculiXCommands.cpp) includes their headers, advertises keys in `command_keys()`, and constructs them in `create_command()`. The loader-facing [FEAPlugin.cpp](../src/Framework/FEAPlugin.cpp) delegates through the Framework module registry. [loads/CMakeLists.txt](../src/CalculiX/Commands/loads/CMakeLists.txt) explicitly includes their source/header files.
+Each provides syntax/help and an `execute()` entry point. [CalculiXCommands.cpp](../src/CalculiX/Commands/CalculiXCommands.cpp) includes their headers, advertises keys in `command_keys()`, and constructs them in `create_command()`. The loader-facing [CubitSimPlugin.cpp](../src/Framework/CubitSimPlugin.cpp) delegates through the Framework module registry. [loads/CMakeLists.txt](../src/CalculiX/Commands/loads/CMakeLists.txt) explicitly includes their source/header files.
 
 Creation requires a sideset and all three force components. Optional inputs are `op`, `amplitude`, `timedelay`, and `name`. The create command packs these arguments as follows:
 
@@ -65,10 +65,10 @@ IDs are references, not vector indices. Use `get_*_data_id_from_*_id()` lookup m
 `CalculiXCore::read_cub()` and `save_cub()` read/write all four tables under:
 
 ```text
-Cubit-CalculiX/Loads/SurfaceTraction
+cubit-sim/Loads/SurfaceTraction
 ```
 
-The dataset names match the table names. Load/step associations are persisted separately as `loads_data` under `Cubit-CalculiX/Steps`.
+The dataset names match the table names. Load/step associations are persisted separately as `loads_data` under `cubit-sim/Steps`.
 
 The central core's cleanup logic clears missing amplitude references to `-1`, deletes surface-traction objects whose sidesets no longer exist, and removes stale surface-traction references from steps. Cleanup execution depends on the surrounding update/settings path; its timing was not runtime-tested here.
 

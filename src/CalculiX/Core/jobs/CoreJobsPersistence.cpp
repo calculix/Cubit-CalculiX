@@ -1,3 +1,4 @@
+#include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/jobs/CoreJobsPersistence.hpp"
 #include "Core/jobs/CoreJobs.hpp"
 #include "HDF5Tool.hpp"
@@ -18,7 +19,7 @@ bool CoreJobsPersistence::read(HDF5Tool& file, CoreJobs& jobs)
     decltype(jobs.output_console) saved_output_console;
     decltype(jobs.cvg) saved_cvg;
     decltype(jobs.sta) saved_sta;
-    const std::string group = "Cubit-CalculiX/Jobs";
+    const std::string group = CalculiXModelSchema::path("Jobs");
     if (file.nameExists(group) && file.nameExists(group + "/jobs_data") && !file.read_dataset_string_rank_2("jobs_data", group, saved_jobs_data))
     {
       PRINT_ERROR("Cannot read CalculiX jobs: %s\n", file.last_error().c_str());
@@ -170,34 +171,34 @@ bool CoreJobsPersistence::write(HDF5Tool& file, const CoreJobs& jobs)
       }
     }
 
-    if (!file.ensureGroup("Cubit-CalculiX/Jobs"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("Jobs")))
     {
       PRINT_ERROR("Cannot save CalculiX jobs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/Jobs/output_console"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("Jobs/output_console")))
     {
       PRINT_ERROR("Cannot save CalculiX jobs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/Jobs/cvg"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("Jobs/cvg")))
     {
       PRINT_ERROR("Cannot save CalculiX jobs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/Jobs/sta"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("Jobs/sta")))
     {
       PRINT_ERROR("Cannot save CalculiX jobs: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("jobs_data", "Cubit-CalculiX/Jobs", jobs.jobs_data))
+    if (!file.write_dataset_string_rank_2("jobs_data", CalculiXModelSchema::path("Jobs"), jobs.jobs_data))
     {
       PRINT_ERROR("Cannot save CalculiX jobs: %s\n", file.last_error().c_str());
       return false;
     }
     for (std::size_t index = 0; index < jobs.output_console.size(); ++index)
     {
-      if (!file.write_dataset_string_rank_1(std::to_string(index), "Cubit-CalculiX/Jobs/output_console", jobs.output_console[index]))
+      if (!file.write_dataset_string_rank_1(std::to_string(index), CalculiXModelSchema::path("Jobs/output_console"), jobs.output_console[index]))
       {
         PRINT_ERROR("Cannot save CalculiX job output_console: %s\n", file.last_error().c_str());
         return false;
@@ -205,7 +206,7 @@ bool CoreJobsPersistence::write(HDF5Tool& file, const CoreJobs& jobs)
     }
     for (std::size_t index = 0; index < jobs.cvg.size(); ++index)
     {
-      if (!file.write_dataset_string_rank_1(std::to_string(index), "Cubit-CalculiX/Jobs/cvg", jobs.cvg[index]))
+      if (!file.write_dataset_string_rank_1(std::to_string(index), CalculiXModelSchema::path("Jobs/cvg"), jobs.cvg[index]))
       {
         PRINT_ERROR("Cannot save CalculiX job cvg: %s\n", file.last_error().c_str());
         return false;
@@ -213,7 +214,7 @@ bool CoreJobsPersistence::write(HDF5Tool& file, const CoreJobs& jobs)
     }
     for (std::size_t index = 0; index < jobs.sta.size(); ++index)
     {
-      if (!file.write_dataset_string_rank_1(std::to_string(index), "Cubit-CalculiX/Jobs/sta", jobs.sta[index]))
+      if (!file.write_dataset_string_rank_1(std::to_string(index), CalculiXModelSchema::path("Jobs/sta"), jobs.sta[index]))
       {
         PRINT_ERROR("Cannot save CalculiX job sta: %s\n", file.last_error().c_str());
         return false;

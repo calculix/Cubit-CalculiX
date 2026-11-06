@@ -13,6 +13,4 @@ target_sources(calculix_commands PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxUseAutoCleanupCommand.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxUseLogCoreCommand.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxUseLogCoreCommand.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ccxVersionCommand.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ccxVersionCommand.hpp
 )

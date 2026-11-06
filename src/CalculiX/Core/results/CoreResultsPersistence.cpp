@@ -1,3 +1,4 @@
+#include "Core/application/CalculiXModelSchema.hpp"
 #include "CoreResultsPersistence.hpp"
 #include "CoreResults.hpp"
 #include "Core/results/frd/CoreResultsFrd.hpp"
@@ -41,7 +42,7 @@ bool CoreResultsPersistence::read_registry(HDF5Tool& file, CoreResults& results)
   try
   {
     decltype(results.results_data) saved;
-    if (file.nameExists("Cubit-CalculiX/Results/results_data") && !file.read_dataset_int_rank_2("results_data", "Cubit-CalculiX/Results", saved))
+    if (file.nameExists(CalculiXModelSchema::path("Results/results_data")) && !file.read_dataset_int_rank_2("results_data", CalculiXModelSchema::path("Results"), saved))
     {
       PRINT_ERROR("Cannot read CalculiX result registry: %s\n", file.last_error().c_str());
       return false;
@@ -76,7 +77,7 @@ bool CoreResultsPersistence::write_registry(HDF5Tool& file, const CoreResults& r
       PRINT_ERROR("Cannot save CalculiX result registry: invalid records or missing jobs.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/Results/Frd") || !file.ensureGroup("Cubit-CalculiX/Results/Dat") || !file.write_dataset_int_rank_2("results_data", "Cubit-CalculiX/Results", results.results_data))
+    if (!file.ensureGroup(CalculiXModelSchema::path("Results/Frd")) || !file.ensureGroup(CalculiXModelSchema::path("Results/Dat")) || !file.write_dataset_int_rank_2("results_data", CalculiXModelSchema::path("Results"), results.results_data))
     {
       PRINT_ERROR("Cannot save CalculiX result registry: %s\n", file.last_error().c_str());
       return false;

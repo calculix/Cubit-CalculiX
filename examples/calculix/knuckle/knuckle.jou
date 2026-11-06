@@ -3,8 +3,8 @@
 #!cubit
 reset
 #import acis "path/to/knuckle.sat" nofreesurfaces heal attributes_on  separate_bodies 
-#import acis "C:/Users/norbert/Desktop/GitHub/Cubit-CalculiX/examples/calculix/knuckle/knuckle.sat" nofreesurfaces heal attributes_on  separate_bodies 
-import acis "/home/user/git/Cubit-CalculiX/examples/calculix/knuckle/knuckle.sat" nofreesurfaces heal attributes_on separate_bodies
+#import acis "C:/Users/norbert/Desktop/GitHub/cubit-sim/examples/calculix/knuckle/knuckle.sat" nofreesurfaces heal attributes_on  separate_bodies
+import acis "/home/user/git/cubit-sim/examples/calculix/knuckle/knuckle.sat" nofreesurfaces heal attributes_on separate_bodies
 
 ## Assign sets
 block 1 vol 1

@@ -34,7 +34,7 @@ changing a path. External utility implementations are excluded.
      - ``Implementation / integration``
    * - :download:`src/CalculiX/GUI/drawing/DrawingSelectionController.hpp <../../../src/CalculiX/GUI/drawing/DrawingSelectionController.hpp>`
      - ``DrawingSelectionController``
-   * - :download:`src/CalculiX/GUI/drawing/NativeDisplayRefreshObserver.cpp <../../../src/CalculiX/GUI/drawing/NativeDisplayRefreshObserver.cpp>`
+   * - :download:`src/Framework/Drawing/NativeDisplayRefreshObserver.cpp <../../../src/Framework/Drawing/NativeDisplayRefreshObserver.cpp>`
      - ``Implementation / integration``
-   * - :download:`src/CalculiX/GUI/drawing/NativeDisplayRefreshObserver.hpp <../../../src/CalculiX/GUI/drawing/NativeDisplayRefreshObserver.hpp>`
+   * - :download:`src/Framework/Drawing/NativeDisplayRefreshObserver.hpp <../../../src/Framework/Drawing/NativeDisplayRefreshObserver.hpp>`
      - ``NativeDisplayRefreshObserver``

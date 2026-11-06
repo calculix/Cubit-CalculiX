@@ -10,7 +10,7 @@ formulas and :doc:`topology-export` for applied factors and result precision.
 A documented equation or method contract is not, by itself, a numerical test.
 
 Current configuration checks (batch 8a)
---------------------------------------
+---------------------------------------
 
 The following source-level additions are supplied; their native execution is
 **not yet verified** for the current implementation:
@@ -265,6 +265,29 @@ A future verification run should retain:
 This is an evidence-retention checklist, not a claim that these artifacts are
 currently supplied. Saving topology records in a model file alone does not
 package all external solver inputs/results. See :doc:`topology-results`.
+
+Conversion integration regression coverage
+------------------------------------------
+
+The current VTK routine adds a prerequisite between topology solves. Future
+verification must record solver completion, reader success, topology evaluation,
+VTK publication and optional file export separately. See :doc:`vtk-conversion`
+for the reported DAT-only-field failure and :doc:`review-findings` for open items.
+The following checks are required; they have not been executed in this pass:
+
+* A supported solid job with DAT integration-point output and FRD mesh but no
+  FRD field requests; exact formulations must come from a verified source.
+* Matching/mismatching run INP and current-model geometry, including full versus
+  reduced integration and topology material-group element sets.
+* Conversion failure/cancellation must produce an identifiable blocked phase;
+  a stored compliance value must not count as successful VTK publication.
+* Successful in-memory retry, failed retry, optional export failure, and pending
+  job deletion/reset; record whether a new run is needed after controller failure.
+* Both physical-to-next-iteration and physical-to-adjoint transitions, with
+  automatic file export enabled and disabled. Disabled export still builds VTK.
+
+These are native integration tests, not fulfilled by settings/persistence
+journals or by a Python reimplementation of the converter.
 
 Limitations and coverage still needed
 -------------------------------------

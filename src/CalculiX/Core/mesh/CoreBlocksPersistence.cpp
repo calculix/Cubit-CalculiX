@@ -1,3 +1,4 @@
+#include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/mesh/CoreBlocksPersistence.hpp"
 #include "Core/mesh/CoreBlocks.hpp"
 #include "HDF5Tool.hpp"
@@ -11,7 +12,7 @@ bool CoreBlocksPersistence::read(HDF5Tool& file, CoreBlocks& blocks)
   {
 
     decltype(blocks.blocks_data) saved_blocks_data;
-    if (file.nameExists("Cubit-CalculiX/Blocks/blocks_data") && !file.read_dataset_int_rank_2("blocks_data", "Cubit-CalculiX/Blocks", saved_blocks_data))
+    if (file.nameExists(CalculiXModelSchema::path("Blocks/blocks_data")) && !file.read_dataset_int_rank_2("blocks_data", CalculiXModelSchema::path("Blocks"), saved_blocks_data))
     {
       PRINT_ERROR("Cannot read CalculiX Blocks: %s\n", file.last_error().c_str());
       return false;
@@ -56,12 +57,12 @@ bool CoreBlocksPersistence::write(HDF5Tool& file, const CoreBlocks& blocks)
       PRINT_ERROR("Cannot write CalculiX Blocks: invalid or duplicate IDs.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/Blocks"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("Blocks")))
     {
       PRINT_ERROR("Cannot write CalculiX Blocks: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("blocks_data", "Cubit-CalculiX/Blocks", blocks.blocks_data))
+    if (!file.write_dataset_int_rank_2("blocks_data", CalculiXModelSchema::path("Blocks"), blocks.blocks_data))
     {
       PRINT_ERROR("Cannot write CalculiX Blocks: %s\n", file.last_error().c_str());
       return false;

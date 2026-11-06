@@ -1,3 +1,4 @@
+#include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/sections/CoreSectionsPersistence.hpp"
 #include "Core/sections/CoreSections.hpp"
 #include "HDF5Tool.hpp"
@@ -15,27 +16,27 @@ bool CoreSectionsPersistence::read(HDF5Tool& file, CoreSections& sections)
     decltype(sections.shell_section_data) saved_shell_section_data;
     decltype(sections.beam_section_data) saved_beam_section_data;
     decltype(sections.membrane_section_data) saved_membrane_section_data;
-    if (file.nameExists("Cubit-CalculiX/Sections/sections_data") && !file.read_dataset_int_rank_2("sections_data", "Cubit-CalculiX/Sections", saved_sections_data))
+    if (file.nameExists(CalculiXModelSchema::path("Sections/sections_data")) && !file.read_dataset_int_rank_2("sections_data", CalculiXModelSchema::path("Sections"), saved_sections_data))
     {
       PRINT_ERROR("Cannot read CalculiX Sections: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Sections/solid_section_data") && !file.read_dataset_string_rank_2("solid_section_data", "Cubit-CalculiX/Sections", saved_solid_section_data))
+    if (file.nameExists(CalculiXModelSchema::path("Sections/solid_section_data")) && !file.read_dataset_string_rank_2("solid_section_data", CalculiXModelSchema::path("Sections"), saved_solid_section_data))
     {
       PRINT_ERROR("Cannot read CalculiX Sections: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Sections/shell_section_data") && !file.read_dataset_string_rank_2("shell_section_data", "Cubit-CalculiX/Sections", saved_shell_section_data))
+    if (file.nameExists(CalculiXModelSchema::path("Sections/shell_section_data")) && !file.read_dataset_string_rank_2("shell_section_data", CalculiXModelSchema::path("Sections"), saved_shell_section_data))
     {
       PRINT_ERROR("Cannot read CalculiX Sections: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Sections/beam_section_data") && !file.read_dataset_string_rank_2("beam_section_data", "Cubit-CalculiX/Sections", saved_beam_section_data))
+    if (file.nameExists(CalculiXModelSchema::path("Sections/beam_section_data")) && !file.read_dataset_string_rank_2("beam_section_data", CalculiXModelSchema::path("Sections"), saved_beam_section_data))
     {
       PRINT_ERROR("Cannot read CalculiX Sections: %s\n", file.last_error().c_str());
       return false;
     }
-    if (file.nameExists("Cubit-CalculiX/Sections/membrane_section_data") && !file.read_dataset_string_rank_2("membrane_section_data", "Cubit-CalculiX/Sections", saved_membrane_section_data))
+    if (file.nameExists(CalculiXModelSchema::path("Sections/membrane_section_data")) && !file.read_dataset_string_rank_2("membrane_section_data", CalculiXModelSchema::path("Sections"), saved_membrane_section_data))
     {
       PRINT_ERROR("Cannot read CalculiX Sections: %s\n", file.last_error().c_str());
       return false;
@@ -174,32 +175,32 @@ bool CoreSectionsPersistence::write(HDF5Tool& file, const CoreSections& sections
       PRINT_ERROR("Cannot write CalculiX Sections: invalid or duplicate IDs.\n");
       return false;
     }
-    if (!file.ensureGroup("Cubit-CalculiX/Sections"))
+    if (!file.ensureGroup(CalculiXModelSchema::path("Sections")))
     {
       PRINT_ERROR("Cannot write CalculiX Sections: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_int_rank_2("sections_data", "Cubit-CalculiX/Sections", sections.sections_data))
+    if (!file.write_dataset_int_rank_2("sections_data", CalculiXModelSchema::path("Sections"), sections.sections_data))
     {
       PRINT_ERROR("Cannot write CalculiX Sections: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("solid_section_data", "Cubit-CalculiX/Sections", sections.solid_section_data))
+    if (!file.write_dataset_string_rank_2("solid_section_data", CalculiXModelSchema::path("Sections"), sections.solid_section_data))
     {
       PRINT_ERROR("Cannot write CalculiX Sections: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("shell_section_data", "Cubit-CalculiX/Sections", sections.shell_section_data))
+    if (!file.write_dataset_string_rank_2("shell_section_data", CalculiXModelSchema::path("Sections"), sections.shell_section_data))
     {
       PRINT_ERROR("Cannot write CalculiX Sections: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("beam_section_data", "Cubit-CalculiX/Sections", sections.beam_section_data))
+    if (!file.write_dataset_string_rank_2("beam_section_data", CalculiXModelSchema::path("Sections"), sections.beam_section_data))
     {
       PRINT_ERROR("Cannot write CalculiX Sections: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!file.write_dataset_string_rank_2("membrane_section_data", "Cubit-CalculiX/Sections", sections.membrane_section_data))
+    if (!file.write_dataset_string_rank_2("membrane_section_data", CalculiXModelSchema::path("Sections"), sections.membrane_section_data))
     {
       PRINT_ERROR("Cannot write CalculiX Sections: %s\n", file.last_error().c_str());
       return false;
