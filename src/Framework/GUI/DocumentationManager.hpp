@@ -9,7 +9,8 @@ class QAction;
 class Claro;
 class QMenu;
 
-// Owns only Framework entries; native Cubit menus remain owned by Cubit.
+// Owns Framework Help entries and places the single active Help menu last.
+// Native Cubit menus remain owned by Cubit.
 class DocumentationManager : public QObject
 {
 public:

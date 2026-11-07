@@ -610,6 +610,8 @@ namespace
     {
       const std::set<std::string> names(table.columns.begin(), table.columns.end());
       if (table.key.empty() || !std::isfinite(table.time) || table.columns.empty() ||
+        (table.scope != DatResultTableScope::Increment && table.scope != DatResultTableScope::StepSummary) ||
+        (table.scope == DatResultTableScope::StepSummary && table.increment != -1) ||
         names.size() != table.columns.size() || names.count("") || names.count("RecordIndex") || names.count("Valid") ||
         !std::all_of(table.rows.begin(), table.rows.end(), [&](const auto& row)
         {
@@ -641,8 +643,8 @@ namespace
       std::vector<std::string> metadata;
       std::vector<int> identity;
       std::vector<double> time;
-      if (!file.read_dataset_string_rank_1("Metadata", path, metadata) || metadata.size() != 6 ||
-        !file.read_dataset_int_rank_1("Identity", path, identity) || identity.size() != 2 ||
+      if (!file.read_dataset_string_rank_1("Metadata", path, metadata) || metadata.size() != 7 ||
+        !file.read_dataset_int_rank_1("Identity", path, identity) || identity.size() != 3 ||
         !file.read_dataset_double_rank_1("Time", path, time) || time.size() != 1 ||
         !file.read_dataset_string_rank_1("Columns", path, table.columns) ||
         !file.read_dataset_double_rank_2("Rows", path, table.rows))
@@ -654,6 +656,7 @@ namespace
       table.set_name = metadata[2];
       table.slave_set = metadata[3];
       table.master_set = metadata[4];
+      table.coordinate_system = metadata[6];
       const auto parsed = std::from_chars(metadata[5].data(), metadata[5].data() + metadata[5].size(), table.source_line);
       if (metadata[5].empty() || parsed.ec != std::errc{} || parsed.ptr != metadata[5].data() + metadata[5].size())
       {
@@ -661,6 +664,11 @@ namespace
       }
       table.step = identity[0];
       table.increment = identity[1];
+      if (identity[2] < 0 || identity[2] > 1)
+      {
+        return false;
+      }
+      table.scope = static_cast<DatResultTableScope>(identity[2]);
       table.time = time[0];
     }
     if (file.nameExists(group + "/ReaderDiagnostics") && !file.read_dataset_string_rank_1("ReaderDiagnostics", group, results.diagnostics))
@@ -683,8 +691,8 @@ namespace
       const auto& table = results.result_tables[i];
       const auto path = group + "/NamedTables/" + std::to_string(i) + "/";
       if (!file.ensureGroup(path) ||
-        !file.write_dataset_string_rank_1("Metadata", path, {table.key, table.name, table.set_name, table.slave_set, table.master_set, std::to_string(table.source_line)}) ||
-        !file.write_dataset_int_rank_1("Identity", path, {table.step, table.increment}) ||
+        !file.write_dataset_string_rank_1("Metadata", path, {table.key, table.name, table.set_name, table.slave_set, table.master_set, std::to_string(table.source_line), table.coordinate_system}) ||
+        !file.write_dataset_int_rank_1("Identity", path, {table.step, table.increment, static_cast<int>(table.scope)}) ||
         !file.write_dataset_double_rank_1("Time", path, {table.time}) ||
         !file.write_dataset_string_rank_1("Columns", path, table.columns) ||
         !file.write_dataset_double_rank_2("Rows", path, table.rows))

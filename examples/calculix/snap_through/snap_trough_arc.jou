@@ -48,7 +48,7 @@ nodeset 2 name "fix_2"
 nodeset 3 add surface 6
 nodeset 3 name "load_mid"
 
-create material "steel" property_group "CalculiX-FEA"
+create material "steel" property_group "SIM_CCX"
 modify material "steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
 modify material "steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
 modify material "steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0 

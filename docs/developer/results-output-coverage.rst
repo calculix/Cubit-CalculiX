@@ -28,6 +28,23 @@ are not presented as unmodified solver-generated files.
 Reader contracts
 ----------------
 
+The standard symmetric eigenvalue summary written by CCX 2.23 ``writeev.f`` is
+retained as a ``FREQUENCY`` step-summary table with mode ID, eigenvalue, real
+angular frequency, frequency in cycles per model time unit, and imaginary angular
+frequency. Equal frequencies do not merge mode rows. Complex and cyclic summary
+layouts produce an explicit unsupported-layout diagnostic. Participation factors
+and effective modal mass tables are not added by this change. Step summaries
+retain their step identity and are published as global VTK tables without physical
+time metadata. Their optional VTT export uses the existing summary-table path.
+The development persistence identity now stores table scope explicitly; earlier
+named-table identity records are not read. The updated native tests and Cubit
+journal still need execution against a rebuilt plugin.
+
+The dynamic kinetic-energy journal case uses free translation of a unit cube
+with density 2 and initial velocity ``(1,0,0)``. Its analytical kinetic energy is
+1, with constant velocity and displacement ``u_x=t``. Static cases do not request
+``ELKE``.
+
 The Boost FRD reader assembles complete ASCII logical rows before dispatch.
 A ``-1`` line supplies the reported node identifier and up to six components;
 ``-2`` lines supply further components without repeating the identifier. A row
@@ -35,7 +52,7 @@ stays together across bounded batch boundaries. Its final component count must
 match the component headers, excluding the FRD ``ALL`` display entry. This
 includes ``PSTRESS``/``PCONTAC`` magnitude/phase fields and multi-line ``SDV``.
 Binary FRD is explicitly rejected rather than interpreted as ASCII. The current
-tokenizer supports at most 128 fields per logical record including identifiers.
+result cursor supports variable-width logical records within the reader byte limits.
 
 Only blocks closed by ``-3`` are retained from interrupted FRD files. A final
 unclosed block is discarded after worker tasks have joined. Malformed completed
@@ -75,6 +92,14 @@ plan decides groups/layout and table destinations before VTK allocations. All
 increments remain resident. Publication follows worker completion and final
 validation; cancellation/failure retains the previous published result.
 
+VTK collection assemblies keep unique internal ``Dataset_N`` identifiers and use
+the original group/set names as their ``label`` attributes for display. Collection
+``NAME`` metadata and dataset ``GroupName`` fields retain the original names.
+Labels may contain spaces, Unicode, XML-special characters or duplicate names;
+each assembly leaf still maps to its own dataset index. Truly unnamed groups use
+their internal identifier as a display fallback. VTPC export/reload retains these
+labels. Existing exports must be regenerated to receive the labels.
+
 FRD analysis code, mode, nodal diameter, subcase and original parameter lines are
 retained with the increment and saved reader data. Field matching and
 displacement interpolation respect that identity. Real/imaginary and
@@ -104,12 +129,49 @@ core/query facade:
   in source order. Callers must stop using table IDs after reader reload.
 
 Save/reload includes named DAT tables, diagnostics and FRD analysis metadata.
-New datasets are optional when loading older saves in the current workspace
-schema; absent analysis identity
-stays unknown. New table schemas are validated before replacing loaded data.
+Named-table metadata now includes the coordinate system. This is a development
+format change: earlier six-string named-table metadata is not read. New table
+schemas are validated before replacing loaded data.
+
+Wide fields, local vectors and invalid values
+-------------------------------------------
+
+Logical FRD result rows and DAT field rows use a non-owning token cursor instead
+of a 128-token buffer. SDV width is determined by the declared FRD components or
+the first DAT row. Physical-line, decoded-row, batch and pending-memory bounds
+still apply; accepting more components does not permit unbounded records.
+
+CCX 2.23 nodal displacement, force and velocity rows ending in ``L`` retain
+``NodeId`` and their three reported components in a named table, with
+``CoordinateSystem=Local`` and source/set/step/increment/time provenance. No
+basis transformation is inferred. In mixed blocks only global rows are mapped
+to spatial vectors; all-local blocks produce no spatial vector field. Other
+local/generalized layouts remain unsupported rather than being guessed.
+
+Result payloads retain ``NaN`` and signed infinity, including finite components
+next to invalid components. VTK validity is zero for a tuple containing a
+nonfinite component. Missing tuples still use NaN. IDs, times and coordinates
+remain finite. Standard frequency-summary metadata remains finite as well.
+Stress/strain tensors containing nonfinite components produce NaN for all six
+derived components and never enter the principal-value solver. Interpolated
+quantities remain unavailable where their inputs are invalid.
 
 Limits and regression checks
 ----------------------------
+
+Successful VTK builds print total elapsed conversion milliseconds and phases for
+planning/linking, geometry and dataset setup, field mapping (including lookup
+construction), integration-point displacement interpolation, tables and final
+assembly/validation/worker joining. These are sequential caller-side wall-clock
+durations including worker waits, not aggregate worker or CPU times. Small setup,
+publication and teardown costs can make the total exceed the sum of the phases.
+Optional phase measurements are returned by the converter; Cubit logging remains
+in ``CoreResults``. Failure/cancellation does not print successful-build timings.
+
+VTK file export prints its own elapsed milliseconds, separately from conversion.
+``ccx result convert job <id> in_memory`` therefore prints conversion timings
+without an export duration. Explicit conversion and automatic job conversion use
+the same Core timing path. Reader timings remain separate.
 
 Expanded shell/beam/layered integration-point geometry remains unsupported.
 Describable unexpanded geometry does not establish its DAT point mapping. The
@@ -121,8 +183,10 @@ Checks under ``tests/results`` exercise headers, continuations, variable fields,
 contact identifiers and surface schemas. ``tests/vtk`` adds table ownership,
 parallel equality, cancellation, invalid widths and VTT round trips. Optional
 ``CUBITSIM_RESULTS_PERSISTENCE_TESTS`` checks real HDF5 save/reload, invalid-schema
-rejection and older-save compatibility.
+rejection and development-format round trips.
 
 ``python tests/results/check_coverage.py`` performs read-only inventory and
 fixture-structure checks. It does not compile or execute the C++ parsers. Native
 tests and interactive job/model save/reload remain required after the user builds.
+Regressions include 126/127/512-component SDV rows, local/global mixtures,
+nonfinite payload validity and local-table save/reopen.

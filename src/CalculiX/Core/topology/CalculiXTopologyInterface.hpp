@@ -43,6 +43,9 @@ public:
   bool get_topology_iteration_level_set_settings(int topology_id, int iteration_id, TopologyLevelSetSettings& settings);
   bool get_topology_iteration_method(int topology_id, int iteration_id, TopologyMethod& method);
   std::vector<std::vector<double>> get_topology_iteration_element_data(int topology_id,int iteration_id = -1);
+  /// Completed density iteration: [element ID, dJ/ds, unfiltered dJ/drho].
+  /// Grouped density gradients are SIMP surrogates. Returns empty on failure.
+  std::vector<std::vector<double>> get_topology_iteration_sensitivity_data(int topology_id, int iteration_id = -1);
   bool is_topology_adjoint_export() const;
   bool check_topology_export(int topology_id, int iteration_id);
   std::vector<std::vector<std::string>> get_topology_tree_data();  // gets the data from core to build the tree

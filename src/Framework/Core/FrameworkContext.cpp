@@ -5,6 +5,10 @@
 #include "Framework/Utility/FrameworkPaths.hpp"
 #include "Framework/GUI/UserOptionsManager.hpp"
 #include "Framework/GUI/WorkspaceManager.hpp"
+#include "Framework/GUI/Status/ResourceStatusWidget.hpp"
+#include "CubitMessage.hpp"
+#include <QMainWindow>
+#include <QStatusBar>
 
 #include <QCoreApplication>
 #include <QDesktopServices>
@@ -63,10 +67,18 @@ bool FrameworkContext::acquire(std::string& error)
       return false;
     }
     options = std::make_unique<UserOptionsStore>(std::move(paths));
+    preferences = std::make_unique<FrameworkUserOptions>();
+    if (!preferences->initialize(*options, error))
+    {
+      preferences.reset();
+      options.reset();
+      return false;
+    }
     drawings = std::make_unique<DrawingService>();
     if (!modules.initialize(*options, *drawings, error))
     {
       drawings.reset();
+      preferences.reset();
       options.reset();
       return false;
     }
@@ -87,8 +99,10 @@ void FrameworkContext::release() noexcept
 
   if (clients == 0)
   {
+    detach_workspace_host();
     modules.shutdown();
     drawings.reset();
+    preferences.reset();
     options.reset();
   }
 }
@@ -155,6 +169,14 @@ bool FrameworkContext::attach_workspace_host(QWidget* host, std::string& error)
     }
 
     workspaces = std::move(manager);
+    auto* window = qobject_cast<QMainWindow*>(host);
+    if (window == nullptr || preferences == nullptr)
+    {
+      error = "Resource status requires the Framework preferences and main window.";
+      detach_workspace_host();
+      return false;
+    }
+    resourceStatus = new ResourceStatusWidget(window->statusBar(), modules, *preferences);
     return true;
   }
   catch (const std::exception& exception)
@@ -166,6 +188,7 @@ bool FrameworkContext::attach_workspace_host(QWidget* host, std::string& error)
     error = "Cannot attach the workspace host.";
   }
 
+  detach_workspace_host();
   return false;
 }
 
@@ -181,7 +204,9 @@ bool FrameworkContext::register_workspaces(std::string& error)
         return false;
       }
       optionsPages = std::make_unique<UserOptionsManager>();
-      return optionsPages->attach(providers, error);
+      const auto frameworkPages = resourceStatus != nullptr
+        ? std::vector<WorkspaceView>{resourceStatus->options_page()} : std::vector<WorkspaceView>{};
+      return optionsPages->attach(providers, error, frameworkPages);
     }
 
     error = "No GUI workspace host is attached.";
@@ -225,12 +250,45 @@ bool FrameworkContext::select_workspace(const std::string& id, std::string& erro
 void FrameworkContext::detach_workspace_host() noexcept
 {
   optionsPages.reset();
+  delete resourceStatus.data();
+  resourceStatus = nullptr;
   if (workspaces != nullptr)
   {
     workspaces->shutdown();
   }
 
   workspaces.reset();
+}
+
+FrameworkOptions FrameworkContext::user_options() const noexcept
+{
+  return preferences != nullptr ? preferences->current() : FrameworkOptions{};
+}
+
+bool FrameworkContext::apply_user_options(const UserOptionValues& changes, std::string& error)
+{
+  if (preferences == nullptr)
+  {
+    error = "Framework preferences are unavailable.";
+    return false;
+  }
+  if (!preferences->apply(changes, error))
+  {
+    return false;
+  }
+  // Saving is committed. A display-refresh failure must not report a failed save.
+  try
+  {
+    if (resourceStatus != nullptr)
+    {
+      resourceStatus->apply_options();
+    }
+  }
+  catch (const std::exception& exception)
+  {
+    PRINT_WARNING("Framework preferences saved, but monitoring could not restart: %s\n", exception.what());
+  }
+  return true;
 }
 
 bool FrameworkContext::open_documentation(std::string& error) const
@@ -259,4 +317,19 @@ bool FrameworkContext::open_documentation(std::string& error) const
     return false;
   }
   return true;
+}
+
+std::vector<UserOption> FrameworkContext::user_option_definitions() const
+{
+  return FrameworkUserOptions::definitions();
+}
+
+bool FrameworkContext::user_option_values(UserOptionValues& snapshot, std::string& error) const
+{
+  if (preferences == nullptr)
+  {
+    error = "Framework preferences are unavailable.";
+    return false;
+  }
+  return preferences->values(snapshot, error);
 }

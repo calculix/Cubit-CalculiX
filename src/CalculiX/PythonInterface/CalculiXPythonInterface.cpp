@@ -215,6 +215,13 @@ std::vector<std::vector<double>> CalculiXPythonInterface::get_topology_iteration
   return ccx_topology_iface.get_topology_iteration_element_data(topology_id, iteration_id);
 }
 
+std::vector<std::vector<double>> CalculiXPythonInterface::get_topology_iteration_sensitivity_data(int topology_id, int iteration_id)
+{
+  CalculiXTopologyInterface ccx_topology_iface;
+
+  return ccx_topology_iface.get_topology_iteration_sensitivity_data(topology_id, iteration_id);
+}
+
 std::vector<std::string> CalculiXPythonInterface::frd_get_result_block_types(int job_id)
 {
   CalculiXFrdInterface ccx_frd_iface;

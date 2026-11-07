@@ -98,7 +98,7 @@ bool CoreTopologyTensorResults::read_final(CoreResults& results, int job_id, con
       return column;
     };
 
-    const int element_column = find_column("elem");
+    const int element_column = find_column("element");
     const int integration_column = find_column("integ.pnt.");
 
     if (element_column < 0 || integration_column < 0)

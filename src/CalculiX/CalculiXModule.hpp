@@ -12,6 +12,7 @@
 class CalculiXCommands;
 class CalculiXGui;
 class CalculiXResultSourceProvider;
+class CalculiXJobMonitorProvider;
 
 class CalculiXModule : public ModuleInterface,
                        public CommandProviderInterface,
@@ -33,12 +34,14 @@ public:
   void stop_component() noexcept override;
   WorkspaceProviderInterface* workspace_provider() noexcept override;
   ResultSourceProviderInterface* result_source_provider() noexcept override;
+  JobMonitorProviderInterface* job_monitor_provider() noexcept override;
   bool workspace_view(WorkspaceView& view, std::string& error) override;
 
 private:
   std::unique_ptr<CalculiXCommands> commands;
   std::unique_ptr<CalculiXGui> gui;
   std::unique_ptr<CalculiXResultSourceProvider> resultProvider;
+  std::unique_ptr<CalculiXJobMonitorProvider> monitorProvider;
   bool observer_registered = false;
 };
 

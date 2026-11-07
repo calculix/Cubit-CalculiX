@@ -11,7 +11,8 @@ UserOptionsManager::~UserOptionsManager()
   detach();
 }
 
-bool UserOptionsManager::attach(const std::vector<WorkspaceProviderInterface*>& providers, std::string& error)
+bool UserOptionsManager::attach(const std::vector<WorkspaceProviderInterface*>& providers, std::string& error,
+  const std::vector<WorkspaceView>& frameworkPages)
 {
   detach();
   auto* gui = Claro::instance();
@@ -22,6 +23,7 @@ bool UserOptionsManager::attach(const std::vector<WorkspaceProviderInterface*>& 
   }
   options = gui->options();
   std::set<QString> labels;
+  auto candidates = frameworkPages;
   for (auto* provider : providers)
   {
     WorkspaceView view;
@@ -30,6 +32,10 @@ bool UserOptionsManager::attach(const std::vector<WorkspaceProviderInterface*>& 
       detach();
       return false;
     }
+    candidates.push_back(view);
+  }
+  for (const auto& view : candidates)
+  {
     if (view.optionsPage == nullptr)
     {
       continue;

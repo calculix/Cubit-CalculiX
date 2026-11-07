@@ -15,4 +15,5 @@ See :doc:`code-framework` for the lifecycle/ownership contract and
    framework-stage2
    framework-stage3
    user-options
+   resource-monitoring
    framework-api

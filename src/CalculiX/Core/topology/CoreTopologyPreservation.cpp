@@ -6,6 +6,7 @@
 #include "MeshExportInterface.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
+#include <algorithm>
 #include <set>
 #include <string>
 
@@ -38,7 +39,8 @@ bool CoreTopologyPreservation::get_set_element_ids(const CoreMaterials& material
     }
     else if (set_type == 3)
     {
-      exists = mesh_query.check_sideset_exists(set_id);
+      const auto ids = CubitInterface::get_sideset_id_list();
+      exists = std::find(ids.begin(), ids.end(), set_id) != ids.end();
     }
   }
 
@@ -116,46 +118,147 @@ bool CoreTopologyPreservation::get_set_element_ids(const CoreMaterials& material
   }
   else
   {
-    SidesetHandle sideset;
+    const auto explicit_quads = CubitInterface::get_sideset_quads(set_id);
+    const auto explicit_tris = CubitInterface::get_sideset_tris(set_id);
 
-    if (!mesh.get_sideset_handle(set_id, sideset))
+    std::set<int> quad_ids(explicit_quads.begin(), explicit_quads.end());
+    std::set<int> tri_ids(explicit_tris.begin(), explicit_tris.end());
+
+    // Geometry membership and explicit mesh membership are both supported.
+    for (int surface_id : CubitInterface::get_sideset_surfaces(set_id))
     {
-      PRINT_ERROR("Unable to query sideset %d.\n", set_id);
-      return false;
+      const auto quads = CubitInterface::get_surface_quads(surface_id);
+      const auto tris = CubitInterface::get_surface_tris(surface_id);
+
+      quad_ids.insert(quads.begin(), quads.end());
+      tri_ids.insert(tris.begin(), tris.end());
     }
 
-    std::vector<ElementHandle> handles;
-    std::vector<ElementType> types;
-    std::vector<int> side_ids;
+    std::set<std::vector<int>> selected_faces;
 
-    const int batch_size = 100;
-    int start = 0;
-    int count = 0;
-
-    while ((count = mesh.get_sideset_sides(sideset, start, batch_size, handles, types, side_ids)) > 0)
+    const auto append_face = [&](const std::string& entity, int id) -> bool
     {
-      for (int i = 0; i < count; ++i)
+      auto nodes = CubitInterface::get_connectivity(entity, id);
+      const std::size_t expected = entity == "quad" ? 4 : 3;
+
+      if (nodes.size() != expected)
       {
-        int local_id = -1;
-        mesh.get_element_id(handles[i], local_id);
-
-        const std::string entity = blocks.get_cubit_element_type_entity_name(mesh.get_element_type_name(types[i]));
-        const int global_id = CubitInterface::get_global_element_id(entity, local_id);
-
-        if (analysis_elements.count(global_id) != 0)
-        {
-          resolved.insert(global_id);
-        }
+        PRINT_ERROR("Invalid %s connectivity in sideset %d.\n", entity.c_str(), set_id);
+        return false;
       }
 
-      start += count;
+      std::sort(nodes.begin(), nodes.end());
+
+      if (nodes.front() <= 0 ||
+          std::adjacent_find(nodes.begin(), nodes.end()) != nodes.end())
+      {
+        PRINT_ERROR("Invalid face nodes in sideset %d.\n", set_id);
+        return false;
+      }
+
+      selected_faces.insert(nodes);
+      return true;
+    };
+
+    for (int id : quad_ids)
+    {
+      if (!append_face("quad", id))
+      {
+        return false;
+      }
     }
 
-    if (count < 0)
+    for (int id : tri_ids)
     {
-      PRINT_ERROR("Failed to read sideset %d.\n", set_id);
+      if (!append_face("tri", id))
+      {
+        return false;
+      }
+    }
+
+    // Curve/edge preservation needs a separate membership contract.
+    if (!CubitInterface::get_sideset_curves(set_id).empty() ||
+        !CubitInterface::get_sideset_edges(set_id).empty())
+    {
+      PRINT_ERROR("Topology preservation requires surface, quad or tri members in sideset %d; curve/edge members are unsupported.\n", set_id);
       return false;
     }
+
+    // Zero-based corner positions in Cubit/Exodus connectivity.
+    // Midside-node permutations do not change these corner positions.
+    // A selected internal face preserves both adjacent analysis elements.
+    static const std::map<std::string, std::vector<std::vector<std::size_t>>> face_corners = {
+      {"hex", {
+        {0, 1, 2, 3}, {4, 5, 6, 7},
+        {0, 1, 5, 4}, {1, 2, 6, 5},
+        {2, 3, 7, 6}, {3, 0, 4, 7}
+      }},
+      {"tet", {
+        {0, 1, 2}, {0, 3, 1},
+        {1, 3, 2}, {2, 3, 0}
+      }},
+      {"wedge", {
+        {0, 1, 2}, {3, 4, 5},
+        {0, 1, 4, 3}, {1, 2, 5, 4}, {2, 0, 3, 5}
+      }}
+    };
+
+    for (const auto& assignment : analysis_elements)
+    {
+      const int global_id = assignment.first;
+
+      if (!CubitInterface::get_element_exists(global_id))
+      {
+        PRINT_ERROR("Topology element %d does not exist.\n", global_id);
+        return false;
+      }
+
+      std::string entity = CubitInterface::get_element_type(global_id);
+
+      if (entity != "hex" && entity != "tet" && entity != "wedge")
+      {
+        entity = blocks.get_cubit_element_type_entity_name(entity);
+      }
+
+      const int local_id = CubitInterface::get_element_type_id(global_id);
+      const auto layout = face_corners.find(entity);
+
+      if (local_id <= 0 || layout == face_corners.end())
+      {
+        PRINT_ERROR("Invalid topology volume element %d.\n", global_id);
+        return false;
+      }
+
+      const auto connectivity = CubitInterface::get_connectivity(entity, local_id);
+      const std::size_t expected = entity == "hex" ? 8 : entity == "tet" ? 4 : 6;
+
+      if (connectivity.size() != expected)
+      {
+        PRINT_ERROR("Invalid corner connectivity for topology element %d.\n", global_id);
+        return false;
+      }
+
+      for (const auto& positions : layout->second)
+      {
+        std::vector<int> face;
+        face.reserve(positions.size());
+
+        for (std::size_t position : positions)
+        {
+          face.push_back(connectivity[position]);
+        }
+
+        std::sort(face.begin(), face.end());
+
+        if (selected_faces.count(face) != 0)
+        {
+          resolved.insert(global_id);
+          break;
+        }
+      }
+    }
+
+    PRINT_INFO("Topology %d: sideset %d contains %zu mesh faces and selects %zu preserved volume elements.\n", topology_id, set_id, selected_faces.size(), resolved.size());
   }
 
   element_ids.assign(resolved.begin(), resolved.end());

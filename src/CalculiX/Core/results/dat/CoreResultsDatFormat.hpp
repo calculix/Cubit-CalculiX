@@ -54,24 +54,77 @@ namespace CoreResultsDatFormat
 
   inline bool numeric(std::string_view line, std::vector<double>& values)
   {
-    std::array<std::string_view, ResultReadNumbers::max_fields> fields;
-    std::size_t count = 0;
     values.clear();
-    if (!ResultReadNumbers::fields(line, fields, count))
-    {
-      return false;
-    }
-    for (std::size_t i = 0; i < count; ++i)
+    std::size_t position = 0;
+    std::string_view token;
+    while (ResultReadNumbers::next_field(line, position, token))
     {
       double value = 0.0;
-      if (!ResultReadNumbers::real(fields[i], value))
+      if (!ResultReadNumbers::result_value(token, value))
       {
         values.clear();
         return false;
       }
       values.push_back(value);
     }
-    return true;
+    return !values.empty();
+  }
+
+  inline bool local_vector_type(std::string_view type)
+  {
+    return type == "displacements" || type == "forces" || type == "velocities";
+  }
+
+  inline bool frequency_title(std::string_view source)
+  {
+    std::string compact;
+    for (char c : normalize(source))
+    {
+      if (!ResultReadNumbers::whitespace(c))
+      {
+        compact.push_back(c);
+      }
+    }
+    return compact == "eigenvalueoutput";
+  }
+
+  inline std::vector<std::string> frequency_columns()
+  {
+    return {"Mode", "Eigenvalue", "AngularFrequencyReal", "Frequency", "AngularFrequencyImaginary"};
+  }
+
+  // Standard symmetric CCX 2.23 writeev.f layout. Complex/cyclic variants have
+  // different columns and must not be inferred from numeric record width.
+  inline bool frequency_heading(DatReadState::FrequencyState state, std::string_view source)
+  {
+    const auto line = normalize(source);
+    if (state == DatReadState::FrequencyState::Columns)
+    {
+      return line == "mode no eigenvalue frequency";
+    }
+    if (state == DatReadState::FrequencyState::Parts)
+    {
+      return line == "real part imaginary part";
+    }
+    std::string units;
+    for (char c : line)
+    {
+      if (c != '(' && c != ')')
+      {
+        units.push_back(c);
+      }
+    }
+    return state == DatReadState::FrequencyState::Units && normalize(units) == "rad/time cycles/time rad/time";
+  }
+
+  inline bool frequency_row(std::string_view source, std::vector<double>& values)
+  {
+    return numeric(source, values) && values.size() == 5 &&
+      std::all_of(values.begin(), values.end(), [](double value)
+      {
+        return std::isfinite(value);
+      }) &&
+      values[0] >= 1 && values[0] <= std::numeric_limits<int>::max() && values[0] == std::floor(values[0]);
   }
 
   inline std::vector<std::string> section_columns()
@@ -99,10 +152,16 @@ namespace CoreResultsDatFormat
     for (std::size_t i = 0; i < columns.size(); ++i)
     {
       const auto& name = columns[i];
-      const bool id = name == "ReportedNodeId" || name == "SlaveElementId" || name == "SlaveFace" ||
+      const bool id = name == "NodeId" || name == "ReportedNodeId" || name == "SlaveElementId" || name == "SlaveFace" ||
         name == "ElementId" || name == "Face" || name == "IntegrationPoint";
       if ((id || name == "Count") && (!std::isfinite(values[i]) || values[i] != std::floor(values[i]) ||
         values[i] < (id ? 1 : 0) || values[i] > std::numeric_limits<int>::max()))
+      {
+        return false;
+      }
+      const bool coordinate = name == "X" || name == "Y" || name == "Z" ||
+        name == "CenterX" || name == "CenterY" || name == "CenterZ";
+      if (coordinate && !std::isfinite(values[i]))
       {
         return false;
       }

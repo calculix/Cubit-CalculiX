@@ -80,6 +80,7 @@ bool CoreResultsDat::clear()
 {
   result_blocks.clear();
   result_tables.clear();
+  pending_local_tables.clear();
   diagnostics.clear();
   total_times.clear();
   result_block_components.clear();
@@ -840,6 +841,17 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
   std::size_t batch_bytes = 0;
   std::string_view raw;
   std::streamoff next_poll = input.consumed_bytes();
+  const auto finish_frequency = [&]()
+  {
+    // No other tables are appended while this summary state is active.
+    if (state.frequency_table_id >= 0 && result_tables.back().rows.empty())
+    {
+      result_tables.pop_back();
+      diagnostics.push_back("Discarded empty DAT eigenvalue summary.");
+    }
+    state.frequency = DatReadState::FrequencyState::None;
+    state.frequency_table_id = -1;
+  };
   while (true)
   {
     if (input.consumed_bytes() >= next_poll)
@@ -864,6 +876,14 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
         {
           PRINT_ERROR("Cannot read DAT results: I/O error or line exceeds 64 KiB.\n");
           return false;
+        }
+        if (state.frequency != DatReadState::FrequencyState::None)
+        {
+          if (state.frequency != DatReadState::FrequencyState::Rows && state.frequency != DatReadState::FrequencyState::Unsupported)
+          {
+            diagnostics.push_back("Discarded incomplete trailing DAT eigenvalue summary header.");
+          }
+          finish_frequency();
         }
         if (state.table_id >= 0 && ((state.summary_section && (result_tables.back().rows.empty() ||
           result_tables.back().rows.back().size() != result_tables.back().columns.size())) ||
@@ -895,7 +915,7 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
       continue;
     }
     const bool field_row = state.association > 0 && ResultReadNumbers::dat_record(raw);
-    const auto row_bytes = raw.size() + sizeof(DatRawRecord) +
+    auto row_bytes = raw.size() + sizeof(DatRawRecord) +
       ResultsReaderPipeline::result_row_storage(state.components.size(), 3);
     if (!batch.records.empty() && (!field_row || batch.records.size() >= ResultsReaderPipeline::max_batch_lines ||
       batch_bytes + row_bytes > ResultsReaderPipeline::max_batch_bytes))
@@ -908,19 +928,19 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
     {
       if (state.variable_components)
       {
-        std::array<std::string_view, ResultReadNumbers::max_fields> tokens;
-        std::size_t count = 0;
-        if (!ResultReadNumbers::fields(raw, tokens, count))
-        {
-          PRINT_ERROR("Invalid variable DAT record at line %zu.\n", state.line_number);
-          return false;
-        }
+        std::string_view last;
+        const auto count = ResultReadNumbers::field_count(raw, &last);
         const std::size_t identifiers = state.association == 2 ? 2 : 1;
-        const bool suffix = !tokens[count - 1].empty() && tokens[count - 1].front() == '_';
+        const bool suffix = !last.empty() && (last.front() == '_' || last == "L");
         const std::size_t size = count - (suffix ? 1 : 0);
         if (size <= identifiers)
         {
           PRINT_ERROR("DAT variable record has no values at line %zu.\n", state.line_number);
+          return false;
+        }
+        if (size > ResultsReaderPipeline::max_batch_bytes / (sizeof(double) + sizeof(std::string)))
+        {
+          PRINT_ERROR("DAT component layout exceeds the reader batch limit at line %zu.\n", state.line_number);
           return false;
         }
         for (std::size_t i = identifiers; i < size; ++i)
@@ -930,20 +950,38 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
         result_block_components[state.data_id] = state.components;
         state.variable_components = false;
       }
+      row_bytes = raw.size() + sizeof(DatRawRecord) +
+        ResultsReaderPipeline::result_row_storage(state.components.size(), 3);
+      if (row_bytes > ResultsReaderPipeline::max_batch_bytes)
+      {
+        PRINT_ERROR("DAT record exceeds the reader batch limit at line %zu.\n", state.line_number);
+        return false;
+      }
       if (input.consumed_bytes() >= state.file_size)
       {
         // A killed solver can leave a partial final physical row. Validate
         // only this row on the scanner; normal numeric parsing stays in Boost.
-        std::array<std::string_view, ResultReadNumbers::max_fields> tokens;
-        std::size_t count = 0;
-        bool valid = ResultReadNumbers::fields(raw, tokens, count);
-        const bool suffix = valid && tokens[count - 1].front() == '_';
+        std::string_view last;
+        const auto count = ResultReadNumbers::field_count(raw, &last);
+        const bool local = last == "L" && state.association == 1 && local_vector_type(state.result_type) && state.components.size() == 3;
+        const bool suffix = !last.empty() && (last.front() == '_' || local);
         const std::size_t offset = state.association == 1 ? 1 : 0;
-        valid = valid && count == state.components.size() + offset + (suffix ? 1 : 0);
+        bool valid = count == state.components.size() + offset + (suffix ? 1 : 0);
+        std::size_t position = 0;
+        std::string_view token;
         for (std::size_t i = 0; valid && i < count - (suffix ? 1 : 0); ++i)
         {
           double value = 0.0;
-          valid = ResultReadNumbers::real(tokens[i], value);
+          valid = ResultReadNumbers::next_field(raw, position, token);
+          if (valid && (i == 0 || (state.association == 2 && i == 1)))
+          {
+            int identifier = 0;
+            valid = ResultReadNumbers::integer(token, identifier) && identifier > 0;
+          }
+          else if (valid)
+          {
+            valid = state.result_type == "global coordinates" ? ResultReadNumbers::real(token, value) : ResultReadNumbers::result_value(token, value);
+          }
         }
         if (!valid)
         {
@@ -960,6 +998,96 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
     }
 
     const std::string line = normalize(raw);
+    using FrequencyState = DatReadState::FrequencyState;
+    if (frequency_title(raw))
+    {
+      if ((state.table_id >= 0 && state.summary_section) || (current_read_mode >= 111 && current_read_mode <= 118))
+      {
+        PRINT_ERROR("Incomplete DAT statistics before eigenvalue summary at line %zu.\n", state.line_number);
+        return false;
+      }
+      finish_frequency();
+      state.frequency = FrequencyState::Columns;
+      state.frequency_source_line = state.line_number;
+      state.association = 0;
+      state.data_id = -1;
+      state.table_id = -1;
+      state.summary_section = false;
+      current_read_mode = 0;
+      continue;
+    }
+    if (state.frequency == FrequencyState::Columns || state.frequency == FrequencyState::Parts || state.frequency == FrequencyState::Units)
+    {
+      if (!frequency_heading(state.frequency, raw))
+      {
+        diagnostics.push_back("Unsupported DAT complex/cyclic or unrecognized eigenvalue summary layout at line " + std::to_string(state.line_number) + ": " + std::string(raw));
+        state.frequency = FrequencyState::Unsupported;
+        // Reprocess a new section/step rather than swallowing its heading.
+        state.pending_line.assign(raw.data(), raw.size());
+        state.has_pending_line = true;
+        continue;
+      }
+      if (state.frequency == FrequencyState::Columns)
+      {
+        state.frequency = FrequencyState::Parts;
+      }
+      else if (state.frequency == FrequencyState::Parts)
+      {
+        state.frequency = FrequencyState::Units;
+      }
+      else
+      {
+        if (!ResultsReaderPipeline::ids_fit(result_tables.size(), 1))
+        {
+          PRINT_ERROR("DAT eigenvalue table index overflow.\n");
+          return false;
+        }
+        DatResultTable table;
+        table.scope = DatResultTableScope::StepSummary;
+        table.key = "FREQUENCY";
+        table.name = "eigenvalue/frequency summary";
+        table.step = current_step;
+        table.increment = -1;
+        table.source_line = state.frequency_source_line;
+        table.columns = frequency_columns();
+        result_tables.push_back(std::move(table));
+        state.frequency_table_id = static_cast<int>(result_tables.size() - 1);
+        state.frequency = FrequencyState::Rows;
+      }
+      continue;
+    }
+    if (state.frequency == FrequencyState::Unsupported)
+    {
+      if (ResultReadNumbers::dat_record(raw) || line.find("mode no") == 0 || line.find("nodal") == 0 ||
+        line.find("diameter") == 0 || line.find("real part") == 0 || line.find("(rad/time)") == 0)
+      {
+        continue;
+      }
+      finish_frequency();
+    }
+    if (state.frequency == FrequencyState::Rows)
+    {
+      if (ResultReadNumbers::dat_record(raw))
+      {
+        std::vector<double> values;
+        auto& rows = result_tables[state.frequency_table_id].rows;
+        const bool valid = frequency_row(raw, values);
+        if (!valid || (!rows.empty() && values[0] <= rows.back()[0]))
+        {
+          if (!valid && input.consumed_bytes() >= state.file_size)
+          {
+            diagnostics.push_back("Discarded incomplete trailing DAT eigenvalue record.");
+            finish_frequency();
+            continue;
+          }
+          PRINT_ERROR("Invalid DAT eigenvalue record at line %zu.\n", state.line_number);
+          return false;
+        }
+        rows.push_back(std::move(values));
+        continue;
+      }
+      finish_frequency();
+    }
     const auto definition = header(raw);
     if (definition.kind != Kind::Unknown)
     {
@@ -1056,6 +1184,11 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
           row.insert(row.end(), values.begin(), values.end());
           if (row.size() == state.table_width)
           {
+            if (!identifiers(table.columns, row))
+            {
+              PRINT_ERROR("Invalid DAT statistics coordinates at line %zu.\n", state.line_number);
+              return false;
+            }
             state.table_id = -1;
             state.summary_section = false;
           }
@@ -1159,12 +1292,14 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
           PRINT_ERROR("Invalid DAT section record at line %zu.\n", state.line_number);
           return false;
         }
-        const bool valid = current_read_mode == 113 ? read_line_section_1(fields) :
-          current_read_mode == 115 ? read_line_section_2(fields) : current_read_mode == 117 ? read_line_section_3(fields) : read_line_section_4(fields);
-        if (!valid)
+        if (result_section_data.empty() || result_section_data.back().size() != 22 ||
+          (current_read_mode == 115 && !identifiers({"CenterX", "CenterY", "CenterZ", "NormalX", "NormalY", "NormalZ"}, values)))
         {
+          PRINT_ERROR("Invalid DAT section metadata at line %zu.\n", state.line_number);
           return false;
         }
+        const std::size_t offset = current_read_mode == 113 ? 2 : current_read_mode == 115 ? 8 : current_read_mode == 117 ? 14 : 17;
+        std::copy(values.begin(), values.end(), result_section_data.back().begin() + offset);
       }
       continue;
     }
@@ -1181,11 +1316,15 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
         buckle_data.emplace_back();
       }
       current_read_mode = 102;
-      if (fields.size() != 2 || !read_line_buckle(fields))
+      int mode = 0;
+      double factor = 0;
+      if (fields.size() != 2 || !ResultReadNumbers::integer(fields[0], mode) || mode <= 0 ||
+        !ResultReadNumbers::result_value(fields[1], factor))
       {
         PRINT_ERROR("Invalid DAT buckling record at line %zu.\n", state.line_number);
         return false;
       }
+      buckle_data.back().push_back({static_cast<double>(mode), factor});
       continue;
     }
     // An unrecognized heading must never leave the previous field active.
@@ -1242,24 +1381,23 @@ DatParsedBatch CoreResultsDat::parse_raw_batch(const DatRawReadBatch& batch, con
     }
 
     const std::string_view line(batch.text.data() + record.offset, record.length);
-    std::array<std::string_view, ResultReadNumbers::max_fields> fields;
-    std::size_t count = 0;
-    if (!ResultReadNumbers::fields(line, fields, count))
-    {
-      output.error = "Invalid DAT fields at line " + std::to_string(record.source_line);
-      return output;
-    }
+    std::string_view last;
+    const auto count = ResultReadNumbers::field_count(line, &last);
+    std::size_t position = 0;
+    std::string_view token;
     int identifier = 0;
-    if (!ResultReadNumbers::integer(fields[0], identifier) || identifier <= 0)
+    if (!ResultReadNumbers::next_field(line, position, token) || !ResultReadNumbers::integer(token, identifier) || identifier <= 0)
     {
       output.error = "Invalid DAT identifier at line " + std::to_string(record.source_line);
       return output;
     }
 
-    const bool shell_suffix = fields[count - 1].front() == '_';
+    const bool shell_suffix = !last.empty() && last.front() == '_';
+    const bool local = last == "L" && batch.association == 1 &&
+      CoreResultsDatFormat::local_vector_type(type) && component_count == 3;
     const bool elemental = batch.association > 0 ? batch.association != 1 : count == component_count || shell_suffix;
     const std::size_t offset = elemental ? 0 : 1;
-    if (count != component_count + offset + (shell_suffix ? 1 : 0))
+    if (count != component_count + offset + (shell_suffix || local ? 1 : 0))
     {
       output.error = "Incomplete DAT result row at line " + std::to_string(record.source_line);
       return output;
@@ -1269,25 +1407,40 @@ DatParsedBatch CoreResultsDat::parse_raw_batch(const DatRawReadBatch& batch, con
     {
       identifier_type = elemental ? (component_count == 2 || type == "emas" ? 3 : 2) : 1;
     }
-    if (identifier_type == 2)
-    {
-      int point = 0;
-      if (count < 3 || !ResultReadNumbers::integer(fields[1], point) || point <= 0)
-      {
-        output.error = "Invalid DAT integration-point identifier at line " + std::to_string(record.source_line);
-        return output;
-      }
-    }
-
     std::vector<double> row(component_count);
     row.reserve(component_count + (derived ? 6 : 0));
     for (std::size_t component = 0; component < component_count; ++component)
     {
-      if (!ResultReadNumbers::real(fields[component + offset], row[component]))
+      // Element/IP IDs remain part of the stored elemental row. Reuse the
+      // already consumed first token, then advance the non-owning cursor.
+      if ((component != 0 || !elemental) && !ResultReadNumbers::next_field(line, position, token))
+      {
+        output.error = "Incomplete DAT result row at line " + std::to_string(record.source_line);
+        return output;
+      }
+      const bool identity = elemental && (component == 0 || (identifier_type == 2 && component == 1));
+      int numeric_id = 0;
+      const bool valid = identity ? ResultReadNumbers::integer(token, numeric_id) && numeric_id > 0 :
+        (type == "globalcoordinates" ? ResultReadNumbers::real(token, row[component]) : ResultReadNumbers::result_value(token, row[component]));
+      if (!valid)
       {
         output.error = "Invalid DAT value at line " + std::to_string(record.source_line);
         return output;
       }
+      if (identity)
+      {
+        row[component] = numeric_id;
+      }
+    }
+    if (local)
+    {
+      if (output.local_rows.empty())
+      {
+        output.first_local_source_line = record.source_line;
+      }
+      row.insert(row.begin(), identifier);
+      output.local_rows.push_back(std::move(row));
+      continue;
     }
     const int local_id = static_cast<int>(values.size());
     values.push_back(std::move(row));
@@ -1300,12 +1453,44 @@ DatParsedBatch CoreResultsDat::parse_raw_batch(const DatRawReadBatch& batch, con
     return output;
   }
 
-  // Only the existing numerical calculations are reused, not the old text parser.
+  // Reuse numerical methods only for finite tensors. NaN/Inf remain payloads;
+  // derived values are unavailable and must not enter the eigensolver.
   const auto derived_begin = ResultReadTimings::Clock::now();
-  if (!reader.compute_predefined(0, 0))
+  if (derived)
   {
-    output.error = "Cannot compute DAT derived components.";
-    return output;
+    const bool stress = type == "stresses";
+    auto& components = reader.result_block_components[0];
+    const std::vector<std::string> extra = stress ?
+      std::vector<std::string>{"mises", "PS1", "PS2", "PS3", "worstPS", "maxShear"} :
+      std::vector<std::string>{"mises", "PE1", "PE2", "PE3", "worstPE", "maxShear"};
+    components.insert(components.end(), extra.begin(), extra.end());
+    CalculiXResultsInterface results;
+    for (auto& row : values)
+    {
+      if (cancelled.load(std::memory_order_relaxed))
+      {
+        output.error = "Reading cancelled.";
+        return output;
+      }
+      const std::vector<double> tensor(row.begin() + 2, row.begin() + 8);
+      if (!std::all_of(tensor.begin(), tensor.end(), [](double value)
+      {
+        return std::isfinite(value);
+      }))
+      {
+        row.insert(row.end(), 6, std::numeric_limits<double>::quiet_NaN());
+        continue;
+      }
+      row.push_back(stress ? results.compute_von_mises_stress(tensor) : results.compute_von_mises_strain(tensor));
+      const auto principal = stress ? results.compute_principal_stresses(tensor) : results.compute_principal_strains(tensor);
+      if (principal.size() < 4)
+      {
+        output.error = "Invalid DAT principal component result.";
+        return output;
+      }
+      row.insert(row.end(), principal.begin(), principal.begin() + 4);
+      row.push_back(0.5 * std::max({principal[0] - principal[2], principal[0] - principal[1], principal[1] - principal[2]}));
+    }
   }
   output.derived_ns = ResultReadTimings::elapsed(derived_begin);
   output.components = std::move(reader.result_block_components[0]);
@@ -1606,6 +1791,39 @@ bool CoreResultsDat::append_boost_batch(DatParsedBatch& batch)
     PRINT_ERROR("Invalid DAT batch size or result index overflow.\n");
     return false;
   }
+  if (!batch.local_rows.empty())
+  {
+    auto found = pending_local_tables.find(batch.data_id);
+    if (found == pending_local_tables.end())
+    {
+      const auto block = std::find_if(result_blocks.begin(), result_blocks.end(), [&](const std::vector<int>& value)
+      {
+        return value.size() >= 7 && value[4] == batch.data_id;
+      });
+      if (block == result_blocks.end() || (*block)[1] < 0 || static_cast<std::size_t>((*block)[1]) >= total_times.size() ||
+        (*block)[2] < 0 || static_cast<std::size_t>((*block)[2]) >= result_block_type.size() ||
+        (*block)[3] < 0 || static_cast<std::size_t>((*block)[3]) >= result_block_set.size())
+      {
+        PRINT_ERROR("Invalid DAT local-vector metadata.\n");
+        return false;
+      }
+      const auto type = erase_whitespace(result_block_type[(*block)[2]]);
+      DatResultTable table;
+      table.key = type == "displacements" ? "U" : (type == "forces" ? "RF" : "VF");
+      table.name = result_block_type[(*block)[2]] + " (local coordinates)";
+      table.coordinate_system = "Local";
+      table.set_name = result_block_set[(*block)[3]];
+      table.step = (*block)[5];
+      table.increment = (*block)[6];
+      table.time = total_times[(*block)[1]];
+      table.source_line = batch.first_local_source_line;
+      table.columns = {"NodeId"};
+      table.columns.insert(table.columns.end(), batch.components.begin(), batch.components.end());
+      found = pending_local_tables.emplace(batch.data_id, std::move(table)).first;
+    }
+    auto& rows = found->second.rows;
+    rows.insert(rows.end(), std::make_move_iterator(batch.local_rows.begin()), std::make_move_iterator(batch.local_rows.end()));
+  }
   const int offset = static_cast<int>(values.size());
   for (std::size_t i = 0; i < batch.values.size(); ++i)
   {
@@ -1619,6 +1837,11 @@ bool CoreResultsDat::append_boost_batch(DatParsedBatch& batch)
 
 bool CoreResultsDat::finalize_boost_results()
 {
+  for (auto& entry : pending_local_tables)
+  {
+    result_tables.push_back(std::move(entry.second));
+  }
+  pending_local_tables.clear();
   // Empty result collections are valid when no DAT output was requested.
   if (!check_element_sets())
   {

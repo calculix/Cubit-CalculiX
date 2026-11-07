@@ -14,16 +14,24 @@
  * representable in double. Column names explicitly distinguish node labels,
  * element+face codes and face integration points; none imply a mesh-node map.
  */
+enum class DatResultTableScope
+{
+  Increment = 0,
+  StepSummary = 1
+};
+
 struct DatResultTable
 {
+  DatResultTableScope scope = DatResultTableScope::Increment;
   std::string key;
   std::string name;
   std::string set_name;
   std::string slave_set;
   std::string master_set;
+  std::string coordinate_system; // "Local" retains reported components without a basis transform.
   int step = -1;
   int increment = -1;
-  double time = 0.0;
+  double time = 0.0; // Only Increment tables have a physical time.
   std::size_t source_line = 0;
   std::vector<std::string> columns;
   std::vector<std::vector<double>> rows;
@@ -49,6 +57,8 @@ struct DatParsedBatch
   std::vector<std::string> components;
   std::vector<std::vector<double>> values;
   std::vector<std::vector<int>> c1_data;
+  std::size_t first_local_source_line = 0;
+  std::vector<std::vector<double>> local_rows;
 };
 
 struct DatReadTask
@@ -60,6 +70,18 @@ struct DatReadTask
 
 struct DatReadState
 {
+  enum class FrequencyState
+  {
+    None,
+    Columns,
+    Parts,
+    Units,
+    Rows,
+    Unsupported
+  };
+  FrequencyState frequency = FrequencyState::None;
+  int frequency_table_id = -1;
+  std::size_t frequency_source_line = 0;
   bool finished = false;
   bool has_pending_line = false;
   std::size_t line_number = 0;

@@ -1,5 +1,5 @@
-Postprocessor source commands
-=============================
+Postprocessor commands
+======================
 
 Status and scope
 ----------------
@@ -102,6 +102,21 @@ The current syntax opens current files, so replay is not a promise of historical
 numerical reproducibility after files change. Explicit names make subsequent
 selection/closure independent of changed job display names. A duplicate name
 still fails; commands never silently replace a loaded source.
+
+Apply user options
+------------------
+
+.. code-block:: text
+
+   post useroptions icons "Icons/"
+   post useroptions list
+
+The options dialog submits a quoted readable icons command only when the field
+changes. Core validates and persists it under workspace ``postprocessor`` in the
+shared preferences file. Icon-directory changes take effect after restarting
+Cubit. Invalid values and failed saves leave the preference and active icons
+path unchanged. ``list`` prints the saved setting and any pending restart notice.
+Preferences are independent of model data.
 
 Lifecycle and deferred commands
 -------------------------------

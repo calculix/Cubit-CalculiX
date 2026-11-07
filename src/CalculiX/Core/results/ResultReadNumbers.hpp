@@ -5,6 +5,7 @@
 #include <charconv>
 #include <cmath>
 #include <cstddef>
+#include <limits>
 #include <string_view>
 #include <system_error>
 
@@ -58,7 +59,7 @@ inline bool integer(std::string_view text, int& value)
 
 // Reader-only conversion: retain file precision instead of formatting and
 // reparsing at the legacy helper's requested scientific precision.
-inline bool real(std::string_view text, double& value)
+inline bool parse_real(std::string_view text, double& value)
 {
   text = trim(text);
   if (!text.empty() && text.front() == '+')
@@ -73,14 +74,38 @@ inline bool real(std::string_view text, double& value)
   {
     return false;
   }
-  if (text == "INF")
+  // CCX/MSVC can write signed INF and NAN(IND). Handle these before D-exponent
+  // normalization; the D in an NaN payload is not a Fortran exponent.
+  auto special = text;
+  const bool negative = special.front() == '-';
+  if (negative)
   {
-    value = 1.255070e+29;
+    special.remove_prefix(1);
+  }
+  const auto equal = [&](std::string_view name)
+  {
+    if (special.size() != name.size())
+    {
+      return false;
+    }
+    for (std::size_t i = 0; i < name.size(); ++i)
+    {
+      const char c = special[i] >= 'a' && special[i] <= 'z' ? special[i] - 'a' + 'A' : special[i];
+      if (c != name[i])
+      {
+        return false;
+      }
+    }
+    return true;
+  };
+  if (equal("INF") || equal("INFINITY"))
+  {
+    value = negative ? -std::numeric_limits<double>::infinity() : std::numeric_limits<double>::infinity();
     return true;
   }
-  if (text == "-INF")
+  if (equal("NAN") || equal("NAN(IND)"))
   {
-    value = -1.255070e+29;
+    value = std::copysign(std::numeric_limits<double>::quiet_NaN(), negative ? -1.0 : 1.0);
     return true;
   }
 
@@ -100,7 +125,66 @@ inline bool real(std::string_view text, double& value)
   }
   const char* end = begin + text.size();
   const auto result = std::from_chars(begin, end, value, std::chars_format::general);
-  return result.ec == std::errc{} && result.ptr == end && std::isfinite(value);
+  return result.ec == std::errc{} && result.ptr == end;
+}
+
+// Result payloads retain non-finite values; consumers mark their validity.
+inline bool result_value(std::string_view text, double& value)
+{
+  return parse_real(text, value);
+}
+
+// Numerical metadata (coordinates/times/identities) must remain finite.
+inline bool real(std::string_view text, double& value)
+{
+  return parse_real(text, value) && std::isfinite(value);
+}
+
+// Non-owning cursor with no fixed token count. Preserve adjacent signed fields
+// without splitting exponent signs. The owner controls record/batch byte limits.
+inline bool next_field(std::string_view line, std::size_t& position, std::string_view& token)
+{
+  while (position < line.size() && whitespace(line[position]))
+  {
+    ++position;
+  }
+  if (position == line.size())
+  {
+    token = {};
+    return false;
+  }
+  const std::size_t begin = position++;
+  while (position < line.size() && !whitespace(line[position]))
+  {
+    const char value = line[position];
+    if ((value == '-' || value == '+') && !exponent(line[position - 1]))
+    {
+      break;
+    }
+    ++position;
+  }
+  token = line.substr(begin, position - begin);
+  return true;
+}
+
+inline std::size_t field_count(std::string_view line, std::string_view* last = nullptr)
+{
+  std::size_t position = 0;
+  std::size_t count = 0;
+  std::string_view token;
+  if (last)
+  {
+    *last = {};
+  }
+  while (next_field(line, position, token))
+  {
+    ++count;
+    if (last)
+    {
+      *last = token;
+    }
+  }
+  return count;
 }
 
 // Non-owning views stay valid only while the batch's text remains unchanged.
@@ -109,32 +193,15 @@ inline bool fields(std::string_view line, std::array<std::string_view, max_field
 {
   count = 0;
   std::size_t position = 0;
-  while (position < line.size())
+  std::string_view token;
+  while (next_field(line, position, token))
   {
-    while (position < line.size() && whitespace(line[position]))
-    {
-      ++position;
-    }
-    if (position == line.size())
-    {
-      break;
-    }
     if (count == output.size())
     {
       return false;
     }
 
-    const std::size_t begin = position++;
-    while (position < line.size() && !whitespace(line[position]))
-    {
-      const char value = line[position];
-      if ((value == '-' || value == '+') && !exponent(line[position - 1]))
-      {
-        break;
-      }
-      ++position;
-    }
-    output[count++] = line.substr(begin, position - begin);
+    output[count++] = token;
   }
   return count != 0;
 }

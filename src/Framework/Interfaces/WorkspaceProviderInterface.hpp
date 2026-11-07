@@ -31,6 +31,9 @@ struct WorkspaceView
   QIcon icon;
   QList<QDockWidget*> docks;
   QList<QAction*> menuActions;
+  // Ordered module toolbar group. The host places it together in the top area,
+  // after one row break when native top toolbars are visible. Placement is
+  // reasserted after layout restoration; per-toolbar visibility is preserved.
   QList<QToolBar*> toolbars;
   std::function<void(bool)> activationChanged;
   NavigationModel* navigationModel = nullptr;

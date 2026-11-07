@@ -3,6 +3,19 @@ add_library(cubitsim_framework SHARED
   Core/CubitSimVersion.hpp
   Core/FrameworkContext.cpp
   Core/FrameworkContext.hpp
+  Core/Monitoring/FrameworkUserOptions.cpp
+  Core/Monitoring/FrameworkUserOptions.hpp
+  Core/Monitoring/ResourceMonitor.cpp
+  Core/Monitoring/ResourceMonitor.hpp
+  Core/Monitoring/ResourceAttribution.cpp
+  Core/Monitoring/ResourceAttribution.hpp
+  Interfaces/JobMonitorProviderInterface.hpp
+  GUI/Status/ResourceStatusWidget.cpp
+  GUI/Status/ResourceStatusWidget.hpp
+  GUI/Status/ResourceUsageButton.cpp
+  GUI/Status/ResourceUsageButton.hpp
+  GUI/Status/FrameworkOptionsPanel.cpp
+  GUI/Status/FrameworkOptionsPanel.hpp
   Core/FrameworkModules.cpp
   Core/FrameworkModules.hpp
   Core/ModuleManager.cpp
@@ -32,6 +45,8 @@ add_library(cubitsim_framework SHARED
 )
 
 target_compile_features(cubitsim_framework PUBLIC cxx_std_17)
+target_link_libraries(cubitsim_framework PUBLIC Qt6::Core)
+target_link_libraries(cubitsim_framework PRIVATE cubitsim_system Threads::Threads)
 target_link_libraries(cubitsim_framework PRIVATE cubitsim_storage cubitsim_drawing calculix_module postprocessor_module clarogui clarofw navigation cubiti cubit_util Qt6::Widgets)
 set_target_properties(cubitsim_framework PROPERTIES AUTOMOC ON)
 target_compile_definitions(cubitsim_framework PRIVATE CUBITSIM_FRAMEWORK_BUILD)
@@ -40,6 +55,7 @@ target_include_directories(cubitsim_framework PUBLIC "${CMAKE_CURRENT_SOURCE_DIR
 add_library(cubitsim_plugin MODULE
   CubitSimPlugin.cpp CubitSimPlugin.hpp
   Commands/WorkspaceCommand.cpp Commands/WorkspaceCommand.hpp
+  Commands/UserOptionsCommand.cpp Commands/UserOptionsCommand.hpp
   Commands/DocumentationCommand.cpp Commands/DocumentationCommand.hpp
   Commands/CubitSimVersionCommand.cpp Commands/CubitSimVersionCommand.hpp
 )

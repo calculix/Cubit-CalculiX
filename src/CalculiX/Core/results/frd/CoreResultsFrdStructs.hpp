@@ -60,6 +60,7 @@ struct FrdReadState
   std::streamoff file_size = 0;
   std::chrono::steady_clock::time_point progress_time{};
   std::string logical_record;
+  bool logical_record_ready = false;
   std::size_t record_line = 0;
   int incomplete_data = -1;
   FrdAnalysis analysis;

@@ -1,7 +1,9 @@
 #ifndef POSTPROCESSORAPPLICATIONINTERFACE_HPP
 #define POSTPROCESSORAPPLICATIONINTERFACE_HPP
 
+#include "Framework/Interfaces/UserOption.hpp"
 #include "Postprocessor/Core/application/PostprocessorCore.hpp"
+#include "Postprocessor/Core/options/PostprocessorUserOptions.hpp"
 
 #include <optional>
 #include <string>
@@ -15,6 +17,14 @@ class PostprocessorApplicationInterface
 {
 public:
   explicit PostprocessorApplicationInterface(ResultSourceRegistryInterface& providers);
+  bool initialize_user_options(UserOptionsInterface& store, std::string& error);
+  void shutdown_user_options() noexcept;
+  const Postprocessor::UserOptions& user_options() const noexcept;
+  const std::string& active_icons_path() const noexcept;
+  bool user_options_restart_required() const;
+  std::vector<UserOption> user_option_definitions() const;
+  bool user_option_values(UserOptionValues& snapshot, std::string& error) const;
+  bool apply_user_options(const UserOptionValues& changes, std::string& error);
 
   bool open_job(
     const std::string& prefix,
@@ -30,6 +40,7 @@ public:
 private:
   ResultSourceRegistryInterface& providers;
   Postprocessor::PostprocessorCore core;
+  Postprocessor::PostprocessorUserOptions options;
 };
 
 #endif // POSTPROCESSORAPPLICATIONINTERFACE_HPP

@@ -3,6 +3,8 @@
 #include "Postprocessor/GUI/Viewport/PostprocessorViewport.hpp"
 #include "Postprocessor/GUI/ResultsTree/PostprocessorResultsTree.hpp"
 #include "Postprocessor/GUI/Properties/PostprocessorProperties.hpp"
+#include "Postprocessor/GUI/Resources/PostprocessorIconLoader.hpp"
+#include "Postprocessor/GUI/Options/PostprocessorOptionsPanel.hpp"
 #include "CubitMessage.hpp"
 
 #include <QAction>
@@ -31,6 +33,8 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(new QLabel(tr("3D View 1"), this));
   layout->addWidget(new PostprocessorViewport(this), 1);
+  optionsPanel = new PostprocessorOptionsPanel(this->application, submitCommand, this);
+  optionsPanel->hide();
 
   resultsDock = new QDockWidget(tr("Sources / Results"), host);
   resultsDock->setObjectName("Postprocessor.ResultsDock");
@@ -101,14 +105,9 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   file->addAction(closeAll);
   auto* results = new QMenu(tr("Results"), this);
   results->addAction(list);
-  auto* help = new QMenu(tr("Help"), this);
-  auto* documentation = help->addAction(tr("Documentation"));
-  connect(documentation, &QAction::triggered, this, [this]()
-  {
-    this->submit("sim documentation");
-  });
 
-  for (auto* menu : {file, results, help})
+  // Framework supplies the shared Help menu and keeps it last.
+  for (auto* menu : {file, results})
   {
     host->menuBar()->addAction(menu->menuAction());
     menu->menuAction()->setVisible(false);
@@ -122,6 +121,8 @@ PostprocessorWorkspace::~PostprocessorWorkspace()
   delete toolbar;
   delete resultsDock;
   delete propertiesDock;
+  // The options dialog may have reparented this page into its panel stack.
+  delete optionsPanel.data();
 }
 
 void PostprocessorWorkspace::submit(const QString& command)
@@ -190,7 +191,25 @@ void PostprocessorWorkspace::workspace_view(WorkspaceView& view)
 {
   view.id = "postprocessor";
   view.label = "Postprocessor";
-  view.icon = style()->standardIcon(QStyle::SP_ComputerIcon);
+  const auto activeApplication = application.lock();
+  view.icon = activeApplication ? PostprocessorIconLoader::load(activeApplication->active_icons_path(), "Postprocessor") : QIcon();
+  view.optionsPage = optionsPanel;
+  view.refreshOptions = [panel = QPointer<PostprocessorOptionsPanel>(optionsPanel)]()
+  {
+    if (panel != nullptr)
+    {
+      panel->refresh_settings();
+    }
+  };
+  view.applyOptions = [panel = QPointer<PostprocessorOptionsPanel>(optionsPanel)](std::string& error)
+  {
+    if (panel == nullptr)
+    {
+      error = "The Postprocessor options page is unavailable.";
+      return false;
+    }
+    return panel->save_settings(error);
+  };
   view.graphicsPage = this;
   view.useNativeNavigation = false;
   view.dockLayout = WorkspaceDockLayout::LeftRight;

@@ -59,10 +59,30 @@ bool DocumentationManager::attach(Claro* window, std::string& error)
 
 void DocumentationManager::set_native_workspace(bool native)
 {
-  if (frameworkHelp != nullptr)
+  if (host == nullptr || host->menuBar() == nullptr || frameworkHelp == nullptr)
   {
-    // If the native Help menu cannot be identified, retain the Framework menu.
-    frameworkHelp->menuAction()->setVisible(!native || nativeHelp == nullptr || !nativeHelp->menuAction()->isVisible());
+    return;
+  }
+
+  // Cubit keeps its native Help entries. Application workspaces share the one
+  // Framework menu instead of creating their own documentation menus.
+  const bool showNative = native && nativeHelp != nullptr && nativeHelp->menuAction()->isVisible();
+  frameworkHelp->menuAction()->setVisible(!showNative);
+
+  if (!native && nativeHelp != nullptr)
+  {
+    nativeHelp->menuAction()->setVisible(false);
+  }
+
+  auto* helpAction = showNative ? nativeHelp->menuAction() : frameworkHelp->menuAction();
+  auto* menuBar = host->menuBar();
+
+  // Workspace menus may have been appended after attach(). Reorder the active
+  // Help entry after visibility is applied on every workspace activation.
+  if (menuBar->actions().isEmpty() || menuBar->actions().last() != helpAction)
+  {
+    menuBar->removeAction(helpAction);
+    menuBar->addAction(helpAction);
   }
 }
 

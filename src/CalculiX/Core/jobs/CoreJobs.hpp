@@ -2,13 +2,14 @@
 #define COREJOBS_HPP
 
 #include "JobsSettings.hpp"
+#include "Framework/Interfaces/JobMonitorProviderInterface.hpp"
+#include <map>
 
 #include <vector>
 #include <string>
 #include <set>
 #ifdef WIN32
   #include <windows.h>
-  #include <map>
   #include <thread>
 #endif
 class CubitProcess;
@@ -20,6 +21,9 @@ class CoreJobs
 public:
   bool get_settings(int id, JobsSettings& settings, std::string& error) const;
   std::vector<int> get_job_ids() const;
+  bool get_monitor_snapshot(std::vector<JobMonitorEntry>& output, std::string& error) const;
+  void capture_monitor_execution(int job_id, std::uint64_t pid);
+  void clear_monitor_executions() noexcept;
   CoreJobs();
   ~CoreJobs();
 
@@ -93,6 +97,12 @@ public:
   ProgressTool *progressbar; // progressbar
 
 private:
+  struct MonitorExecution
+  {
+    std::string id;
+    std::optional<ProcessIdentity> process;
+  };
+  std::map<int, MonitorExecution> monitorExecutions;
   bool complete_job_results(int job_id);
   bool results_ready();
   bool completing_results = false;

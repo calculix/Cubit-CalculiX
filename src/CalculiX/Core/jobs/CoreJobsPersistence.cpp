@@ -119,6 +119,7 @@ bool CoreJobsPersistence::read(HDF5Tool& file, CoreJobs& jobs)
       }
     }
     jobs.jobs_data.swap(saved_jobs_data);
+    jobs.clear_monitor_executions();
     jobs.output_console.swap(saved_output_console);
     jobs.cvg.swap(saved_cvg);
     jobs.sta.swap(saved_sta);

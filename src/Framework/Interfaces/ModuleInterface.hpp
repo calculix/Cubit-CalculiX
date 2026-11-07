@@ -9,6 +9,7 @@ class CommandProviderInterface;
 class ComponentProviderInterface;
 class WorkspaceProviderInterface;
 class ResultSourceProviderInterface;
+class JobMonitorProviderInterface;
 
 class ModuleInterface
 {
@@ -28,6 +29,12 @@ public:
   virtual ComponentProviderInterface* component_provider() noexcept = 0;
 
   virtual WorkspaceProviderInterface* workspace_provider() noexcept
+  {
+    return nullptr;
+  }
+
+  // Borrowed only while initialized. Queries run on the application owner thread.
+  virtual JobMonitorProviderInterface* job_monitor_provider() noexcept
   {
     return nullptr;
   }

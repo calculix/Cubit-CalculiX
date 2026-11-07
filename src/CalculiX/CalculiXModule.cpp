@@ -1,4 +1,5 @@
 #include "CalculiXModule.hpp"
+#include "Core/jobs/CalculiXJobMonitorProvider.hpp"
 #include "Commands/CalculiXCommands.hpp"
 #include "GUI/CalculiXGui.hpp"
 #include "Core/application/CalculiXApplicationInterface.hpp"
@@ -97,6 +98,7 @@ bool CalculiXModule::initialize(UserOptionsInterface& options, DrawingInterface&
   CalculiXDrawInterface().bind_drawing(&drawings);
   commands = std::make_unique<CalculiXCommands>();
   resultProvider = std::make_unique<CalculiXResultSourceProvider>();
+  monitorProvider = std::make_unique<CalculiXJobMonitorProvider>();
   application.core_observer().register_observer();
   observer_registered = true;
   return true;
@@ -105,6 +107,7 @@ bool CalculiXModule::initialize(UserOptionsInterface& options, DrawingInterface&
 void CalculiXModule::shutdown() noexcept
 {
   stop_component();
+  monitorProvider.reset();
   resultProvider.reset();
 
   if (observer_registered)
@@ -124,6 +127,11 @@ void CalculiXModule::shutdown() noexcept
 CommandProviderInterface* CalculiXModule::command_provider() noexcept
 {
   return this;
+}
+
+JobMonitorProviderInterface* CalculiXModule::job_monitor_provider() noexcept
+{
+  return monitorProvider.get();
 }
 
 ComponentProviderInterface* CalculiXModule::component_provider() noexcept

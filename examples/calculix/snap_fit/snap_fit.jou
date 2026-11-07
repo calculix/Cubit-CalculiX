@@ -53,7 +53,7 @@ nodeset 2 add volume 2
 sideset 1 add surface 17 18 21 22
 sideset 2 add surface 3 15 14 13 12 
 
-create material "ABS" property_group "CalculiX-FEA"
+create material "ABS" property_group "SIM_CCX"
 modify material "ABS" scalar_properties "CCX_ELASTIC_USE_CARD" 1
 modify material "ABS" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
 modify material "ABS" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 2000 0.394 0

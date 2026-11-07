@@ -1,8 +1,7 @@
+#include "Framework/Commands/UserOptionCommandSupport.hpp"
 #include "UserOptionsPanel.hpp"
 #include "UserOptions.hpp"
 #include "Core/application/CalculiXApplicationInterface.hpp"
-#include <QJsonDocument>
-#include <QJsonObject>
 #include <QIntValidator>
 #include <QStringList>
 #include <limits>
@@ -138,24 +137,15 @@ void UserOptionsPanel::refresh_settings()
   }
   restartNotice->setText(pending.isEmpty() ? QString() : tr("Saved. Restart Cubit to apply: %1.").arg(pending.join(", ")));
   restartNotice->setVisible(!pending.isEmpty());
+  baseline = option_values();
 }
 
-bool UserOptionsPanel::save_settings(std::string& error)
+QJsonObject UserOptionsPanel::option_values() const
 {
-  error.clear();
-  bool validSolver = false;
-  bool validConverter = false;
-  const int solverThreads = lineEdit_2->text().toInt(&validSolver);
-  const int converterThreads = lineEdit_3->text().toInt(&validConverter);
-  if (!validSolver || !validConverter || solverThreads < 1 || converterThreads < 1)
-  {
-    error = "Thread counts must be positive integers.";
-    return false;
-  }
   QJsonObject values;
   values["paths/solver"] = lineEdit_1->text();
-  values["execution/solver_threads"] = solverThreads;
-  values["execution/converter_threads"] = converterThreads;
+  values["execution/solver_threads"] = lineEdit_2->text().toInt();
+  values["execution/converter_threads"] = lineEdit_3->text().toInt();
   values["paths/cgx"] = lineEdit_4->text();
   values["paths/paraview"] = lineEdit_5->text();
   values["paths/icons"] = lineEdit_6->text();
@@ -171,13 +161,36 @@ bool UserOptionsPanel::save_settings(std::string& error)
   values["drawing/orientations"] = drawing.orientations;
   values["drawing/hover_color"] = QString::fromStdString(drawing.hoverColor);
   values["drawing/selection_color"] = QString::fromStdString(drawing.selectionColor);
-  // Hex encoding prevents quotes, spaces, or non-ASCII paths from changing
-  // Cubit's command grammar and preserves complete command replay.
-  const auto payload = QJsonDocument(values).toJson(QJsonDocument::Compact).toHex().toStdString();
-  if (!CalculiXApplicationInterface().cmd("ccx useroptions apply \"" + payload + "\""))
+  return values;
+}
+
+bool UserOptionsPanel::save_settings(std::string& error)
+{
+  error.clear();
+  bool validSolver = false;
+  bool validConverter = false;
+  const int solverThreads = lineEdit_2->text().toInt(&validSolver);
+  const int converterThreads = lineEdit_3->text().toInt(&validConverter);
+  if (!validSolver || !validConverter || solverThreads < 1 || converterThreads < 1)
   {
-    error = "The user-options command failed; see the Cubit error message.";
+    error = "Thread counts must be positive integers.";
     return false;
+  }
+  const auto edited = option_values();
+  std::vector<std::pair<std::string, std::string>> commands;
+  if (!UserOptionCommandSupport::edited_commands("ccx useroptions", CalculiXApplicationInterface().user_option_definitions(), edited, baseline, commands, error))
+  {
+    return false;
+  }
+  for (const auto& command : commands)
+  {
+    if (!CalculiXApplicationInterface().cmd(command.second))
+    {
+      error = "The user-options command failed; see the Cubit error message.";
+      return false;
+    }
+    const auto key = QString::fromStdString(command.first);
+    baseline[key] = edited.value(key);
   }
   refresh_settings();
   return true;

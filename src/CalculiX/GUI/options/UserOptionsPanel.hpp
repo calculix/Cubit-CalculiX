@@ -1,6 +1,7 @@
 #ifndef USEROPTIONSPANEL_HPP
 #define USEROPTIONSPANEL_HPP
 
+#include <QJsonObject>
 #include <QWidget>
 #include <string>
 #include <QFrame>
@@ -36,6 +37,8 @@ public:
   bool save_settings(std::string& error);
 
 private:
+  QJsonObject option_values() const;
+  QJsonObject baseline;
   DrawingOptionsWidget* drawingOptions;
   QLabel* restartNotice;
   std::string log;

@@ -87,6 +87,7 @@ bool CoreJobs::reset()
     return false;
   }
   pending_result_jobs.clear();
+  clear_monitor_executions();
   #ifdef WIN32
     //close all jobs and threads first
     
@@ -283,6 +284,7 @@ bool CoreJobs::delete_job(int job_id)
     int iteration_id = -1;
     jobs_iface.get_job_topology_context(job_id, topology_id, iteration_id);
     jobs_data.erase(jobs_data.begin() + jobs_data_id);
+    monitorExecutions.erase(job_id);
     pending_result_jobs.erase(job_id);
     ccx_results_iface.delete_result(job_id);
     auto& observer = CalculiXApplicationInterface().core_observer();
@@ -443,6 +445,7 @@ bool CoreJobs::run_job(int job_id,int option)
       {        
         // Retain the process handle so even fast solvers remain queryable.
         running_process_handles.insert_or_assign(job_id, piProcInfo.hProcess);
+        capture_monitor_execution(job_id, piProcInfo.dwProcessId);
         CloseHandle(piProcInfo.hThread);
         
         // Close handles to the stdin and stdout pipes no longer needed by the child process.
@@ -588,6 +591,7 @@ bool CoreJobs::run_job(int job_id,int option)
       }
       if (process_id!=0)
       { 
+        capture_monitor_execution(job_id, process_id);
         jobs_data[job_data_id][4] = std::to_string(process_id);
         jobs_data[job_data_id][3] = "1";
         jobs_data[job_data_id][6] = "-1";

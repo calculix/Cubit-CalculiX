@@ -14,6 +14,15 @@ The user subsequently confirmed a successful rebuild after the fix. Building and
 prohibited until explicitly authorized. Documentation rendering has not been run
 either. Read :doc:`postprocessor` for ownership, method contracts and current limits.
 
+The user subsequently reported a workspace configuration failure: Qt-dependent
+usage requirements evaluated differently across Visual Studio configurations,
+while ``file(GENERATE)`` targeted one ``sdk-includes.cmake`` file. The preparation
+script was first changed to use per-configuration files, but the user's next
+configuration still failed because Qt compiler options also differ between C and
+C++. The script now generates files per configuration and compile language and
+publishes only Release CXX metadata. This correction has not been run through
+CMake by the agent.
+
 The subsequent workspace patch has not been compiled. After its build, execute
 the failure-preservation and refresh tests below; passing the compiler assertion
 alone is not evidence that source lifecycle or journal replay works correctly.
@@ -91,8 +100,17 @@ Workspace checks after build authorization
 * Reconfigure using the same Qt6 and Cubit 2026.11 installation. An older data-only
   VTK adapter should re-prepare rendering/Qt headers and import libraries. Confirm
   no VTK runtime DLL is built/copied and the original installation is untouched.
+  Confirm configuration produces distinct
+  ``sdk-includes-<CONFIG>-<COMPILE_LANGUAGE>.cmake`` files without conflicting
+  writes and that the published adapter includes Release CXX metadata only.
+  Stale configuration-only/unqualified files and Release C metadata must not mask
+  missing Release CXX output. Python-only regression checks do not establish
+  successful CMake generation.
 * Inspect the header below the title and above the menu. Tab switching must submit
   ``sim workspace postprocessor`` through the normal command window/journal path.
+* Verify exactly one visible Help menu in Cubit, CalculiX and Postprocessor, always
+  after every other visible menu. Native Cubit Help entries must remain available;
+  the shared manual action must work after repeated switches and GUI reattachment.
 * Switch repeatedly among all three workspaces. Cubit/CalculiX must retain their
   original viewport and camera; Postprocessor must show its independent empty one.
 * Verify left source/right properties docks, native navigation/toolbars hidden,
@@ -111,6 +129,27 @@ Workspace checks after build authorization
   destruction and verify no queued refresh targets a deleted workspace.
 * Record the first successful workspace build separately from native GUI, GL,
   source-value and journal verification; none has been performed by the agent.
+
+Options checks after build authorization
+---------------------------------------
+
+* Start with no Postprocessor preferences: GUI and headless startup must load
+  ``paths/icons = Icons/`` and preserve CalculiX and other workspace groups.
+* Verify a single Postprocessor page in Cubit's options dialog. Browse, Apply,
+  Cancel and reopening must preserve saved values and discard unapplied edits.
+* Apply paths with spaces and Unicode. Confirm one journaled
+  ``post useroptions icons "<path>"`` command and replay against a controlled preferences
+  file. Relative paths must resolve against the component directory, not cwd.
+* Save an internal absolute path and confirm relative storage. Save an external
+  absolute path and confirm it remains absolute. Reject empty, NUL-containing
+  and escaping relative paths, unknown keywords and
+  wrong types. Confirm both snapshots remain unchanged after failure.
+* Change the directory: active icons must remain unchanged until restart. Revert
+  to the active path: the pending restart notice must clear. Restart and verify
+  the chosen standalone SVG is loaded. Missing SVGs must not prevent startup.
+* Exercise locked-file/save failures, corrupt settings, repeated GUI attachment
+  and shutdown, including a retained command after application destruction.
+  No stale options callbacks may target deleted widgets or a different instance.
 
 Deferred feature checks
 -----------------------

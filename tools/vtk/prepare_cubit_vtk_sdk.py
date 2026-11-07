@@ -130,14 +130,18 @@ def wrapper(source, selected, modules):
         lines.append('string(APPEND _includes \")\\n\")')
     lines.extend(['get_target_property(_core_target VTK::CommonCore ALIASED_TARGET)',
                   'if(NOT _core_target)', '  set(_core_target VTK::CommonCore)', 'endif()',
-                  'file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/sdk-includes.cmake" CONTENT "${_includes}" TARGET ${_core_target})'])
+                  # Qt usage requirements differ across configurations and C/CXX.
+                  # Both evaluation axes need distinct outputs.
+                  'file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/sdk-includes-$<CONFIG>-$<COMPILE_LANGUAGE>.cmake" CONTENT "${_includes}" TARGET ${_core_target})'])
     return "\n".join(lines) + "\n"
 
 
 def write_sdk(output, source, report, modules):
-    include_file = output / "header-build/sdk-includes.cmake"
+    # Publish Release C++ usage requirements, matching this C++ SDK interface.
+    # Neither C metadata nor an older unqualified file is a valid fallback.
+    include_file = output / "header-build/sdk-includes-Release-CXX.cmake"
     if not include_file.is_file():
-        raise ValueError("CMake did not generate the SDK include metadata")
+        raise ValueError("CMake did not generate the Release CXX SDK include metadata")
     lines = ["# Generated development adapter; runtime DLLs remain owned by Cubit.",
              'set(CUBIT_VTK_SDK_VERSION "9.4.2")', 'set(CUBIT_VTK_SDK_COMPATIBILITY "unvalidated")',
              'set(CUBIT_VTK_SDK_FEATURES "results;viewport-qt")',

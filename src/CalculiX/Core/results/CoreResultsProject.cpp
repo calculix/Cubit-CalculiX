@@ -295,6 +295,8 @@ bool CoreResultsProject::project_topology(int topology_id,int iteration_id,doubl
     }
   } developer_guard{!developer_was_enabled};
 
+  ccx_draw_iface.invalidate_topology(topology_id);
+
   size_t deleted_count = 0;
 
   for (const auto& command : commands)

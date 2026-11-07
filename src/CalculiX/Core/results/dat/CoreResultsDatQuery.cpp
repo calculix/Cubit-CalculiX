@@ -848,8 +848,8 @@ std::vector<DatResultTable> CoreResultsDatQuery::dat_get_table_metadata(int job_
   std::vector<DatResultTable> metadata;
   for (const auto& table : results.dat_data[id].result_tables)
   {
-    metadata.push_back({table.key, table.name, table.set_name, table.slave_set, table.master_set,
-      table.step, table.increment, table.time, table.source_line, table.columns, {}});
+    metadata.push_back({table.scope, table.key, table.name, table.set_name, table.slave_set, table.master_set,
+      table.coordinate_system, table.step, table.increment, table.time, table.source_line, table.columns, {}});
   }
   return metadata;
 }

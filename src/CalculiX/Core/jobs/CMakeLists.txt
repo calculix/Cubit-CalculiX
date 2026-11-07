@@ -1,4 +1,7 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreJobsMonitoring.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXJobMonitorProvider.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXJobMonitorProvider.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/JobsSettings.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreJobs.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreJobs.cpp
@@ -11,3 +14,4 @@ target_sources(calculix_core PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXJobsInterface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXJobsInterface.hpp
 )
+target_link_libraries(calculix_core cubitsim_system)

@@ -9,6 +9,7 @@ Solver-specific modeling, commands and mathematics belong to workspace chapters.
 
    workspaces
    user-options
+   resource-monitoring
 
 .. toctree::
    :maxdepth: 1

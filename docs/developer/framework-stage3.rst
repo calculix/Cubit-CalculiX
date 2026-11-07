@@ -78,8 +78,15 @@ The initial CalculiX layout places its model and empty properties dock in a
 vertical left split. Bottom corners belong to the side docks, leaving the
 shared command dock below the middle viewport. Layout restoration protects
 the shared command dock and retains current native toolbar visibility. Toolbar
-positions come from Qt's saved layout; native toolbars are never removed and
-reinserted by the workspace host.
+positions of native bars come from Qt's saved layout; native toolbars are never
+removed and reinserted by the workspace host. After restoration, apply() calls
+place_workspace_toolbars() for module-owned bars only. It removes their old
+breaks/positions and appends the active workspace's ordered group, with one break
+before the group when a native top row is visible. CalculiX drawing and topology
+therefore share the row below Cubit's native bars; Postprocessor uses the first
+row while native toolbars are hidden. Saved per-toolbar visibility is applied
+after placement under the existing changing guard, so temporary hiding cannot
+overwrite user visibility preferences.
 
 Settings and cleanup
 --------------------
@@ -108,9 +115,19 @@ Startup crash investigation
 The first access violation occurred in Qt's toolbar area layout on the main
 window's first show. Restoring workspace state and then removing/reinserting
 native toolbars left an invalid layout item in Qt's pending layout state.
-The host now leaves toolbar ownership and positioning to QMainWindow and only
-reapplies their visibility. Do not reintroduce removeToolBar/addToolBar loops
-around restoreState.
+The host leaves native toolbar ownership and positioning to QMainWindow and only
+reapplies their visibility. Do not reintroduce removeToolBar/addToolBar loops for
+native bars around restoreState. The module grouping correction deliberately
+touches only ownedToolbars, whose layout the Framework controls. No native
+toolbar is removed or reinserted.
+
+After building is authorized, verify initial and repeated Cubit/CalculiX/
+Postprocessor switches, older saved layouts with merged toolbar rows, both
+CalculiX bars in order on one row, native toolbar positions retained, and each
+module bar hidden/shown through its existing visibility preference. Test first
+show and GUI detach/reattach for toolbar-layout lifetime regressions. This
+correction has only received static source checks; no build or native test has
+been run by the agent.
 
 A second access violation during process teardown hid the first failure:
 WorkspaceManager's destructor attempted saveState after Qt had destroyed the

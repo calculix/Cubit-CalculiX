@@ -41,7 +41,8 @@ completion. Programmatic refresh does not submit selection commands.
 
 **List sources** submits ``post list``. **Close selected source** submits a quoted
 ``post close`` command. **File > Close all sources** submits ``post close all``.
-**Help > Documentation** uses ``sim documentation``. Closing a source does not
+The shared **Help > cubit-sim documentation** uses ``sim documentation``.
+Help is the last menu in every workspace. Closing a source does not
 delete its files or solver job. The new toolbar uses Cubit's command-window and
 cancel SVG resources, with standard Qt icons as a fallback.
 

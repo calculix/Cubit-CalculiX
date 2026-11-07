@@ -557,7 +557,8 @@ namespace
     for (std::size_t i = 0; i < dat.result_tables.size(); ++i)
     {
       const auto& table = dat.result_tables[i];
-      if (table.columns.empty() || !std::isfinite(table.time))
+      if (table.columns.empty() || !std::isfinite(table.time) ||
+        (table.scope != DatResultTableScope::Increment && table.scope != DatResultTableScope::StepSummary))
       {
         error = "Invalid DAT table schema/time.";
         return false;
@@ -572,6 +573,16 @@ namespace
       }
       // These rows have no spatial association. Do not attempt to match contact
       // labels or face quadrature IDs to ordinary mesh nodes/volume IPs.
+      if (table.scope == DatResultTableScope::StepSummary)
+      {
+        if (table.increment != -1)
+        {
+          error = "DAT step summary has an increment identity.";
+          return false;
+        }
+        plan.tables.push_back({CoreResultsVtkTablePlan::Kind::DatResult, i, -1});
+        continue;
+      }
       std::size_t destination = 0;
       if (!frame(plan, table.step, table.increment, -1, table.time, false, destination, error))
       {

@@ -28,7 +28,7 @@ bool CoreMaterials::init()
     MaterialInterface::PropertyGroup grp;
     MaterialInterface::Property prop;
 
-    std::string group_name = "CalculiX-cubit-sim"; // don't forget to add new groups into grouplist function
+    std::string group_name = "SIM_CCX"; // don't forget to add new groups into grouplist function
     group_properties.clear();
     group_properties_description.clear();
 
@@ -345,7 +345,7 @@ bool CoreMaterials::check_initialized()
 std::vector<std::string> CoreMaterials::get_group_list() // get a list of the CalculiX Material Groups
 {
   std::vector<std::string> groups;
-  groups.push_back("CalculiX-cubit-sim");
+  groups.push_back("SIM_CCX");
   return groups;
 }
 
@@ -442,7 +442,7 @@ std::string CoreMaterials::get_material_cards_export(std::string material_name, 
   std::vector<std::string> material_card(2);
   std::string material_cards_export;
 
-  if (group_name=="CalculiX-cubit-sim")
+  if (group_name=="SIM_CCX")
   {
     // check if card is needed and then process the properties
     
@@ -1454,7 +1454,7 @@ std::string CoreMaterials::get_material_prefix(std::string material_name)
   std::vector<std::string> material_card(2);
   std::string prefix="";  
 
-  if (group_name=="CalculiX-cubit-sim")
+  if (group_name=="SIM_CCX")
   {
     // check if card is needed and then process the properties
     material_card[0]="COMPRESSION_ONLY"; // card name

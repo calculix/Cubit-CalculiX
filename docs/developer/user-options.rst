@@ -55,10 +55,11 @@ are identical at startup; ccx_uo always represents the active session values.
 The UserOptions and DrawingOptions constructors supply safe empty state;
 they do not define user preference defaults.
 
-The GUI owns the options widgets. It creates a complete JSON candidate and
-hex-encodes it into the ccx useroptions apply command so quoting and Unicode
-cannot alter command parsing. Core validates every key and value and prepares
-both the saved configuration and active candidate before saving the file.
+The GUI owns the options widgets and retains a baseline snapshot from refresh.
+It validates edited values and submits readable commands only for differences.
+Commands pass typed changes through the application interface. Core reads the
+saved snapshot, validates keys, types and values, merges the patch and prepares
+both saved and active candidates before saving the file.
 The active candidate retains the current icons, Python-interface and
 material-library paths. Only after saving succeeds does Core commit both
 snapshots using non-throwing member swaps. Validation or save failures leave
@@ -89,6 +90,48 @@ on its next opening; it does not undo a previously successful Apply.
 
 No ccx.cfg import or compatibility reader exists.
 
+Framework monitoring
+--------------------
+
+``Framework/Core/Monitoring/FrameworkUserOptions`` defines monitoring defaults
+under workspace ``framework``. Its Cubit-Sim options page is registered alongside
+workspace pages without creating a new workspace. Apply submits
+individual ``sim useroptions monitor ...`` commands for edited settings. Settings take
+effect immediately; headless Apply only saves preferences. Validation and save
+failure leave the active snapshot unchanged. See :doc:`resource-monitoring` for
+ownership, native-platform contracts and deferred verification.
+
+Postprocessor
+-------------
+
+``Postprocessor/Core/options/PostprocessorUserOptions`` owns the schema,
+validators, saved configuration and active icons path. The initial schema has one
+ComponentPath key, ``paths/icons``, defaulting to ``Icons/``. It loads through the
+borrowed Framework ``UserOptionsInterface`` under workspace ``postprocessor``
+before GUI startup, including headless startup. The store must outlive the
+application and is detached during module shutdown.
+
+``PostprocessorApplicationInterface`` exposes initialization, saved preferences,
+active path, pending-restart status and Apply. GUI and commands use that boundary.
+``GUI/Options/PostprocessorOptionsPanel`` supplies the existing Framework options
+page callbacks. Apply emits ``post useroptions icons "<path>"`` only after an edit;
+the command uses a weak application handle and passes a typed change to Core. Empty,
+unknown-key, wrong-type and invalid-path updates fail before saving.
+Absolute paths inside the component directory are saved relative to it. External
+paths remain absolute. The resource need not exist until used.
+
+Core prepares the saved candidate before persistence and publishes it with a
+non-throwing string swap only after a successful save. The active icons path is
+unchanged until restart. Failure leaves both snapshots unchanged. Restart status
+compares normalized paths, ignoring case on Windows. The SVG loader accepts the
+active directory and contains no preference defaults or storage access.
+
+Future preferences, including background colors and other display defaults,
+extend this schema and its typed snapshot, typed validation, panel and tests.
+No additional options registry or persistence file is required. Each setting must
+declare whether it changes current views, supplies defaults for new views, or
+requires restart. Background colors are not implemented by this patch.
+
 Verification pending build authorization
 ----------------------------------------
 
@@ -97,3 +140,24 @@ type, missing/new options, invalid types and values, file locking, atomic-save
 failure, Unicode paths, component relocation, and preservation of unrelated
 workspace groups. Verify panel Apply/Cancel, command replay, startup failure
 cleanup and GUI detach/reattach. No compilation is authorized at proposal time.
+
+Readable command transport
+--------------------------
+
+``Framework/Commands/UserOptionCommandSupport.hpp`` derives textual names and
+argument kinds from Core schemas, formats quoted UTF-8 strings and locale-neutral
+round-trip numbers, and converts parser values into typed changes. It defines no
+defaults. ``merge_user_option_changes`` rejects every invalid entry before
+modifying the candidate snapshot. The existing store owns persistence.
+
+The old hex/JSON command transport is removed. ``useroptions list`` queries saved
+values through each established application interface and prints the same setter
+syntax plus separate restart notices. Per-command persistence is transactional;
+a GUI Apply containing several commands is not one storage transaction.
+
+``tests/monitoring/FrameworkOptionsTests.cpp`` covers typed partial updates,
+invalid types/values, failed persistence, string transport and GUI change
+filtering. ``tests/verify_user_options.jou`` checks list commands and rejected
+setters through Cubit's parser without changing preferences. Native tests and
+interactive GUI command replay require the user's build; no build is performed
+as part of this change.

@@ -16,9 +16,21 @@ separate graphics page and scene. Dock layouts and tree selections
 are remembered separately for each workspace. Switching does not start or stop
 an analysis.
 
+Workspace toolbars form one ordered group. In CalculiX, its drawing and topology
+toolbars share a row below Cubit's native toolbars. Postprocessor uses its own
+top row while native toolbars are hidden. Framework reapplies this grouping after
+restoring a workspace layout, so older saved layouts cannot merge CalculiX
+actions into Cubit's row. Individual toolbar visibility preferences are retained.
+
 Open **Help > cubit-sim documentation**, or run::
 
    sim documentation
+
+There is one active Help menu, always last. Cubit retains its native Help entries
+with the cubit-sim documentation action added. CalculiX and Postprocessor use the
+shared Framework Help menu. Workspace modules do not create a second Help menu.
+The current documentation action opens the shared manual homepage; workspace-
+specific entry pages and contextual help destinations are not implemented yet.
 
 This opens the installed ``documentation/index.html`` beside the Framework
 libraries using the desktop's configured browser. It requires a GUI-capable

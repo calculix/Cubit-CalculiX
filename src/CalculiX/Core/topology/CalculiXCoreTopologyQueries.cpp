@@ -56,6 +56,18 @@ std::vector<std::vector<double>> CalculiXCore::get_topology_iteration_element_da
   return CoreTopologyQuery::get_iteration_element_data(*topology, *mat, *jobs, topology_id, iteration_id);
 }
 
+std::vector<std::vector<double>> CalculiXCore::get_topology_iteration_sensitivity_data(int topology_id, int iteration_id)
+{
+  if (!topology || !mat || !jobs)
+  {
+    PRINT_ERROR("Topology sensitivity query cores are not initialized.\n");
+    return {};
+  }
+
+  return CoreTopologyQuery::get_iteration_sensitivity_data(
+      *topology, *mat, *jobs, topology_id, iteration_id);
+}
+
 std::vector<std::vector<std::string>> CalculiXCore::get_topology_tree_data()
 {
   if (!topology)

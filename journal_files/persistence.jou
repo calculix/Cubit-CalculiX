@@ -230,7 +230,7 @@ def run_persistence_journal():
         sideset 1 name "PersistenceMaster"
         sideset 2 add surface 2
         sideset 2 name "PersistenceSlave"
-        create material "PersistenceSteel" property_group "CalculiX-FEA"
+        create material "PersistenceSteel" property_group "SIM_CCX"
         modify material "PersistenceSteel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
         modify material "PersistenceSteel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
         modify material "PersistenceSteel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0

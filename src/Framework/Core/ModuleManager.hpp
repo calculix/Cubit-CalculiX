@@ -17,6 +17,7 @@ class ComponentProviderInterface;
 class ModuleInterface;
 class WorkspaceProviderInterface;
 class ResultSourceProviderInterface;
+class JobMonitorProviderInterface;
 class QWidget;
 
 class CUBITSIM_FRAMEWORK_EXPORT ModuleManager : public ResultSourceRegistryInterface
@@ -35,6 +36,7 @@ public:
   bool start_components(int withGUI, QWidget* host, std::string& error);
   void stop_components() noexcept;
   std::vector<WorkspaceProviderInterface*> workspace_providers() const;
+  std::vector<JobMonitorProviderInterface*> job_monitor_providers() const;
 
   // Borrowed providers, available only while initialized. Do not retain across
   // shutdown; published result handles may outlive the provider itself.

@@ -3,12 +3,14 @@
 
 #include "Framework/Interfaces/WorkspaceProviderInterface.hpp"
 #include <QWidget>
+#include <QPointer>
 #include <functional>
 #include <memory>
 
 class PostprocessorApplicationInterface;
 class PostprocessorResultsTree;
 class PostprocessorProperties;
+class PostprocessorOptionsPanel;
 class QMainWindow;
 
 class PostprocessorWorkspace : public QWidget
@@ -28,6 +30,7 @@ private:
   std::function<bool(const std::string&, std::string&)> submitCommand;
   PostprocessorResultsTree* tree = nullptr;
   PostprocessorProperties* properties = nullptr;
+  QPointer<PostprocessorOptionsPanel> optionsPanel;
   QDockWidget* resultsDock = nullptr;
   QDockWidget* propertiesDock = nullptr;
   QToolBar* toolbar = nullptr;

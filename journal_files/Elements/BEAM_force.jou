@@ -10,7 +10,7 @@ block 4 add curve 4
 
 curve 1 2 3 4 size 10
 
-create material "Steel" property_group "CalculiX-FEA"
+create material "Steel" property_group "SIM_CCX"
 modify material "Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
 modify material "Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
 modify material "Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0 

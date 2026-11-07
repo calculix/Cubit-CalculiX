@@ -2,6 +2,7 @@
 #define CORERESULTSDAT_HPP
 
 #include <vector>
+#include <map>
 #include <string>
 #include <thread>
 #include <chrono>
@@ -170,6 +171,8 @@ public:
   ProgressTool *progressbar = nullptr; // progressbar
 
 private:
+  // Commit local rows only after scanning: scanner-owned summary tables use back().
+  std::map<int, DatResultTable> pending_local_tables;
   bool read_next_raw_batch(ResultsReaderPipeline::BufferedInput& input, DatReadState& state, DatRawReadBatch& batch, bool& finished);
   static DatParsedBatch parse_raw_batch(const DatRawReadBatch& batch, const std::atomic<bool>& cancelled);
   bool read_next_boost_batch(std::ifstream& file, DatReadState& state, DatReadBatch& batch, bool& finished);

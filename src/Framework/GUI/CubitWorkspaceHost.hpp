@@ -68,6 +68,7 @@ private:
   };
 
   void watch_dock(QDockWidget* dock);
+  void place_workspace_toolbars(const WorkspaceView& view);
   bool dock_allowed(QDockWidget* dock) const;
   std::unique_ptr<DocumentationManager> documentation;
   std::unique_ptr<WorkspaceGraphicsStack> graphics;

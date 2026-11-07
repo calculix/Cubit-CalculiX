@@ -183,7 +183,17 @@ std::string CalculiXApplicationInterface::component_directory() const
   return CoreUserOptions::component_directory();
 }
 
-bool CalculiXApplicationInterface::apply_user_options(const std::string& payload, std::string& error)
+bool CalculiXApplicationInterface::apply_user_options(const UserOptionValues& changes, std::string& error)
 {
-  return CoreUserOptions::apply(payload, error);
+  return CoreUserOptions::apply(changes, error);
+}
+
+std::vector<UserOption> CalculiXApplicationInterface::user_option_definitions() const
+{
+  return CoreUserOptions::user_option_definitions();
+}
+
+bool CalculiXApplicationInterface::user_option_values(UserOptionValues& snapshot, std::string& error) const
+{
+  return CoreUserOptions::values(snapshot, error);
 }

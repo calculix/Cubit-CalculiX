@@ -1,6 +1,7 @@
 #include "Core/results/frd/CoreResultsFrd.hpp"
 #include "Core/results/frd/CoreResultsFrdFormat.hpp"
 #include <numeric>
+#include <limits>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -951,6 +952,17 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
   }
 
   std::size_t batch_bytes = 0;
+  if (state.logical_record_ready)
+  {
+    // A completed wide row may not fit the preceding batch. Keep it logical
+    // across dispatch; do not feed it back through the physical-line limit.
+    batch_bytes = state.logical_record.size() + sizeof(FrdRawRecord) +
+      ResultsReaderPipeline::result_row_storage(state.components.size(), 2);
+    ResultsReaderPipeline::append_raw_record(batch, state, state.logical_record);
+    batch.records.back().source_line = state.record_line;
+    state.logical_record.clear();
+    state.logical_record_ready = false;
+  }
   std::string_view raw;
   std::streamoff next_poll = input.consumed_bytes();
   while (true)
@@ -1031,6 +1043,12 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
       {
         state.record_line = state.line_number;
       }
+      if (state.logical_record.size() > ResultsReaderPipeline::max_batch_bytes ||
+        raw.size() + 1 > ResultsReaderPipeline::max_batch_bytes - state.logical_record.size())
+      {
+        PRINT_ERROR("FRD logical record exceeds the batch byte limit at line %zu.\n", state.line_number);
+        return false;
+      }
       const auto status = CoreResultsFrdFormat::append(raw, state.components.size(), state.logical_record);
       if (status == CoreResultsFrdFormat::RecordStatus::Invalid)
       {
@@ -1039,9 +1057,21 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
       }
       if (status == CoreResultsFrdFormat::RecordStatus::Ready)
       {
+        const auto record_bytes = state.logical_record.size() + sizeof(FrdRawRecord) +
+          ResultsReaderPipeline::result_row_storage(state.components.size(), 2);
+        if (record_bytes > ResultsReaderPipeline::max_batch_bytes)
+        {
+          PRINT_ERROR("FRD decoded record exceeds the batch byte limit at line %zu.\n", state.record_line);
+          return false;
+        }
+        if (!batch.records.empty() && batch_bytes + record_bytes > ResultsReaderPipeline::max_batch_bytes)
+        {
+          state.logical_record_ready = true;
+          return true;
+        }
         ResultsReaderPipeline::append_raw_record(batch, state, state.logical_record);
         batch.records.back().source_line = state.record_line;
-        batch_bytes += state.logical_record.size() + row_bytes;
+        batch_bytes += record_bytes;
         state.logical_record.clear();
       }
       continue;
@@ -1209,7 +1239,7 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
       {
         state.components.push_back(fields[1]);
       }
-      if (state.components.size() > ResultsReaderPipeline::max_fields)
+      if (state.components.size() > ResultsReaderPipeline::max_batch_bytes / (sizeof(double) + sizeof(std::string)))
       {
         PRINT_ERROR("FRD result has too many components.\n");
         return false;
@@ -1362,15 +1392,15 @@ FrdParsedBatch CoreResultsFrd::parse_raw_batch(const FrdRawReadBatch& batch, con
     }
 
     const std::string_view line(batch.text.data() + record.offset, record.length);
-    std::array<std::string_view, ResultReadNumbers::max_fields> fields;
-    std::size_t count = 0;
-    if (!ResultReadNumbers::fields(line, fields, count) || count != source_components + 2 || fields[0] != "-1")
+    std::size_t position = 0;
+    std::string_view token;
+    if (!ResultReadNumbers::next_field(line, position, token) || token != "-1")
     {
       output.error = "Invalid FRD result row at line " + std::to_string(record.source_line);
       return output;
     }
     int identifier = 0;
-    if (!ResultReadNumbers::integer(fields[1], identifier) || identifier <= 0)
+    if (!ResultReadNumbers::next_field(line, position, token) || !ResultReadNumbers::integer(token, identifier) || identifier <= 0)
     {
       output.error = "Invalid FRD node identifier at line " + std::to_string(record.source_line);
       return output;
@@ -1379,11 +1409,16 @@ FrdParsedBatch CoreResultsFrd::parse_raw_batch(const FrdRawReadBatch& batch, con
     std::vector<double> row(output.components.size());
     for (std::size_t component = 0; component < source_components; ++component)
     {
-      if (!ResultReadNumbers::real(fields[component + 2], row[component]))
+      if (!ResultReadNumbers::next_field(line, position, token) || !ResultReadNumbers::result_value(token, row[component]))
       {
         output.error = "Invalid FRD value at line " + std::to_string(record.source_line);
         return output;
       }
+    }
+    if (ResultReadNumbers::next_field(line, position, token))
+    {
+      output.error = "Extra FRD result component at line " + std::to_string(record.source_line);
+      return output;
     }
     const int local_id = static_cast<int>(output.values.size());
     output.values.push_back(std::move(row));
@@ -1402,6 +1437,14 @@ FrdParsedBatch CoreResultsFrd::parse_raw_batch(const FrdRawReadBatch& batch, con
         return output;
       }
       const std::vector<double> tensor(row.begin(), row.begin() + 6);
+      if (!std::all_of(tensor.begin(), tensor.end(), [](double value)
+      {
+        return std::isfinite(value);
+      }))
+      {
+        std::fill(row.begin() + 6, row.end(), std::numeric_limits<double>::quiet_NaN());
+        continue;
+      }
       row[6] = stress ? ccx_results_iface.compute_von_mises_stress(tensor) : ccx_results_iface.compute_von_mises_strain(tensor);
       const auto principal = stress ? ccx_results_iface.compute_principal_stresses(tensor) : ccx_results_iface.compute_principal_strains(tensor);
       if (principal.size() < 4)

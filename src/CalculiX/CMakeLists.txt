@@ -83,6 +83,7 @@ add_subdirectory(PythonInterface)
 
 # Re-stage the approved toolbar SVGs when their source assets change.
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/CCX.svg"
     "${CMAKE_CURRENT_SOURCE_DIR}/Icons/CCXCGALWrap.svg"
     "${CMAKE_CURRENT_SOURCE_DIR}/Icons/CCXDrawingSize.svg"
     "${CMAKE_CURRENT_SOURCE_DIR}/Icons/CCXTopologyThreshold.svg"

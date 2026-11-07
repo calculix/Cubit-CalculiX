@@ -1,6 +1,8 @@
 add_library(postprocessor_core STATIC
   Core/application/PostprocessorCore.cpp
   Core/application/PostprocessorCore.hpp
+  Core/options/PostprocessorUserOptions.cpp
+  Core/options/PostprocessorUserOptions.hpp
   Core/sources/PostprocessorCoreSources.cpp
   Core/sources/SourceRuntime.hpp
   Core/sources/DataSource.hpp
@@ -11,17 +13,21 @@ add_library(postprocessor_core STATIC
   Core/layouts/LayoutDefinition.hpp
 )
 
-target_link_libraries(postprocessor_core PUBLIC cubitsim_results)
+target_link_libraries(postprocessor_core PUBLIC cubitsim_results PRIVATE Qt6::Core)
+target_include_directories(postprocessor_core PRIVATE "${CUBITSIM_SOURCE_ROOT}")
 target_compile_features(postprocessor_core PUBLIC cxx_std_17)
 set_target_properties(postprocessor_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 add_library(postprocessor_module SHARED
+  Icons/Postprocessor.svg
   PostprocessorModule.cpp
   PostprocessorModule.hpp
   Interfaces/PostprocessorApplicationInterface.cpp
   Interfaces/PostprocessorApplicationInterface.hpp
   Commands/PostprocessorCommands.cpp
   Commands/PostprocessorCommands.hpp
+  Commands/options/PostUserOptionsCommand.cpp
+  Commands/options/PostUserOptionsCommand.hpp
   Commands/sources/PostOpenCommand.cpp
   Commands/sources/PostOpenCommand.hpp
   Commands/sources/PostListCommand.cpp
@@ -32,6 +38,10 @@ add_library(postprocessor_module SHARED
   Commands/sources/PostCloseCommand.hpp
   GUI/PostprocessorGui.cpp
   GUI/PostprocessorGui.hpp
+  GUI/Options/PostprocessorOptionsPanel.cpp
+  GUI/Options/PostprocessorOptionsPanel.hpp
+  GUI/Resources/PostprocessorIconLoader.cpp
+  GUI/Resources/PostprocessorIconLoader.hpp
   GUI/Workspace/PostprocessorWorkspace.cpp
   GUI/Workspace/PostprocessorWorkspace.hpp
   GUI/Viewport/PostprocessorViewport.cpp
@@ -49,8 +59,19 @@ target_link_libraries(postprocessor_module PRIVATE postprocessor_core cubiti cub
 target_compile_features(postprocessor_module PUBLIC cxx_std_17)
 target_include_directories(postprocessor_module PUBLIC "${CUBITSIM_SOURCE_ROOT}")
 set_target_properties(postprocessor_module PROPERTIES
+  AUTORCC OFF
   RUNTIME_OUTPUT_DIRECTORY "${CUBITSIM_DEPLOY_DIRECTORY}"
   LIBRARY_OUTPUT_DIRECTORY "${CUBITSIM_DEPLOY_DIRECTORY}"
   ARCHIVE_OUTPUT_DIRECTORY "${CUBITSIM_DEPLOY_DIRECTORY}"
   BUILD_RPATH_USE_ORIGIN TRUE
 )
+
+# Deploy standalone SVGs beside the module, as for the CalculiX application.
+add_custom_target(postprocessor_icons ALL
+  COMMAND "${CMAKE_COMMAND}" -E make_directory "${CUBITSIM_DEPLOY_DIRECTORY}/Icons"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/Postprocessor.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/Postprocessor.svg"
+  VERBATIM
+)
+add_dependencies(postprocessor_module postprocessor_icons)

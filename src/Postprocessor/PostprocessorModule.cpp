@@ -20,7 +20,7 @@ std::string PostprocessorModule::module_id() const
   return "postprocessor";
 }
 
-bool PostprocessorModule::initialize(UserOptionsInterface&, DrawingInterface&, std::string& error)
+bool PostprocessorModule::initialize(UserOptionsInterface& options, DrawingInterface&, std::string& error)
 {
   error.clear();
 
@@ -29,7 +29,12 @@ bool PostprocessorModule::initialize(UserOptionsInterface&, DrawingInterface&, s
     return true;
   }
 
-  application = std::make_shared<PostprocessorApplicationInterface>(providers);
+  auto candidate = std::make_shared<PostprocessorApplicationInterface>(providers);
+  if (!candidate->initialize_user_options(options, error))
+  {
+    return false;
+  }
+  application = std::move(candidate);
   commands = std::make_unique<PostprocessorCommands>(application);
   return true;
 }
@@ -38,6 +43,10 @@ void PostprocessorModule::shutdown() noexcept
 {
   stop_component();
   commands.reset();
+  if (application != nullptr)
+  {
+    application->shutdown_user_options();
+  }
   application.reset();
 }
 

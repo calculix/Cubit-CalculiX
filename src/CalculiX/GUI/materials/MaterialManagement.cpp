@@ -1283,9 +1283,9 @@ void MaterialManagement::on_pushButton_new_clicked(bool)
                                          "Material Name:", QLineEdit::Normal,
                                          "", &ok);
   if (ok && !name.isEmpty()){
-    //commands.push_back("create material \"" + name + "\" property_group \"CalculiX-cubit-sim\"");
+    //commands.push_back("create material \"" + name + "\" property_group \"SIM_CCX\"");
     //commands.push_back();
-    commands.push_back("create material \"" + name.toStdString() + "\" property_group \"CalculiX-cubit-sim\"");
+    commands.push_back("create material \"" + name.toStdString() + "\" property_group \"SIM_CCX\"");
   }
 
   for (size_t i = 0; i < commands.size(); i++)

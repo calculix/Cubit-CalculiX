@@ -191,12 +191,60 @@ bool CubitWorkspaceHost::dock_allowed(QDockWidget* dock) const
   return nativeActive;
 }
 
+void CubitWorkspaceHost::place_workspace_toolbars(const WorkspaceView& view)
+{
+  // apply() guards these visibility changes with changing == true. Only module
+  // toolbars may be removed/reinserted; native Cubit layout items stay intact.
+  for (const auto& toolbar : ownedToolbars)
+  {
+    if (toolbar == nullptr)
+    {
+      continue;
+    }
+
+    toolbar->hide();
+
+    if (gui->toolBarArea(toolbar) != Qt::NoToolBarArea)
+    {
+      gui->removeToolBarBreak(toolbar);
+      gui->removeToolBar(toolbar);
+    }
+  }
+
+  if (view.toolbars.isEmpty())
+  {
+    return;
+  }
+
+  bool nativeTopRowVisible = false;
+
+  for (auto* toolbar : gui->findChildren<QToolBar*>(QString(), Qt::FindDirectChildrenOnly))
+  {
+    if (!ownedToolbars.contains(toolbar) &&
+        gui->toolBarArea(toolbar) == Qt::TopToolBarArea &&
+        !toolbar->isHidden())
+    {
+      nativeTopRowVisible = true;
+      break;
+    }
+  }
+
+  if (nativeTopRowVisible)
+  {
+    gui->addToolBarBreak(Qt::TopToolBarArea);
+  }
+
+  for (auto* toolbar : view.toolbars)
+  {
+    gui->addToolBar(Qt::TopToolBarArea, toolbar);
+  }
+}
+
 void CubitWorkspaceHost::register_view(const WorkspaceView& view)
 {
   for (auto* toolbar : view.toolbars)
   {
     ownedToolbars.append(toolbar);
-    gui->addToolBarBreak(Qt::TopToolBarArea);
     gui->addToolBar(Qt::TopToolBarArea, toolbar);
     toolbar->hide();
     const QString visibilityKey = "Workspaces/" + view.id + "/Toolbars/" + toolbar->objectName() + "/Visible";
@@ -525,6 +573,9 @@ bool CubitWorkspaceHost::apply(const WorkspaceView& view, const QPersistentModel
   {
     activeToolbars.append(toolbar);
   }
+  // Saved Qt layouts may have merged module bars into native rows. Reassert
+  // the workspace group after restoration and before applying saved visibility.
+  place_workspace_toolbars(view);
   for (const auto& toolbar : ownedToolbars)
   {
     if (toolbar == nullptr)

@@ -334,6 +334,99 @@ std::vector<std::vector<double>> CoreTopologyQuery::get_iteration_element_data(c
   return rows;
 }
 
+std::vector<std::vector<double>> CoreTopologyQuery::get_iteration_sensitivity_data(
+    const CoreTopology& topology,
+    const CoreMaterials& materials,
+    CoreJobs& jobs,
+    int topology_id,
+    int iteration_id)
+{
+  // Reuse validation of the completed job, design, applied factors and mesh IDs.
+  const auto element_data =
+      get_iteration_element_data(topology, materials, jobs, topology_id, iteration_id);
+
+  if (element_data.empty())
+  {
+    return {};
+  }
+
+  const auto entry = topology.topology_cases.find(topology_id);
+
+  if (entry == topology.topology_cases.end())
+  {
+    PRINT_ERROR("Topology %d does not exist.\n", topology_id);
+    return {};
+  }
+
+  const auto& configuration = entry->second;
+
+  if (iteration_id == -1)
+  {
+    iteration_id = configuration.selected_iteration;
+  }
+
+  TopologyMethod method = TopologyMethod::Unspecified;
+
+  if (!get_iteration_method(topology, topology_id, iteration_id, method) ||
+      method != TopologyMethod::Density)
+  {
+    PRINT_ERROR("Element sensitivity queries require a completed density iteration.\n");
+    return {};
+  }
+
+  const auto evaluation = configuration.iteration_evaluations.find(iteration_id);
+
+  if (evaluation == configuration.iteration_evaluations.end())
+  {
+    PRINT_ERROR("Topology iteration sensitivities are unavailable.\n");
+    return {};
+  }
+
+  const auto& stiffness = evaluation->second.stiffness_sensitivities;
+  const auto& density = evaluation->second.density_sensitivities;
+
+  if (stiffness.size() != element_data.size() ||
+      density.size() != element_data.size())
+  {
+    PRINT_ERROR("Incomplete topology iteration sensitivities.\n");
+    return {};
+  }
+
+  std::vector<std::vector<double>> rows;
+  rows.reserve(element_data.size());
+
+  for (const auto& element : element_data)
+  {
+    const int element_id = static_cast<int>(element[0]);
+    const auto stiffness_value = stiffness.find(element_id);
+    const auto density_value = density.find(element_id);
+
+    if (stiffness_value == stiffness.end() ||
+        density_value == density.end() ||
+        !std::isfinite(stiffness_value->second) ||
+        !std::isfinite(density_value->second))
+    {
+      PRINT_ERROR("Invalid sensitivities for topology element %d.\n", element_id);
+      return {};
+    }
+
+    if (element[3] == 1.0 &&
+        (stiffness_value->second != 0.0 || density_value->second != 0.0))
+    {
+      PRINT_ERROR("Preserved topology element %d has nonzero sensitivities.\n", element_id);
+      return {};
+    }
+
+    rows.push_back({
+        static_cast<double>(element_id),
+        stiffness_value->second,
+        density_value->second
+    });
+  }
+
+  return rows;
+}
+
 bool CoreTopologyQuery::get_job_context(const CoreTopology& topology, int job_id, int& topology_id, int& iteration_id)
 {
   topology_id = -1;

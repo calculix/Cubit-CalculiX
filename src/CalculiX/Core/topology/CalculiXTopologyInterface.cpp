@@ -336,6 +336,11 @@ std::vector<std::vector<double>> CalculiXTopologyInterface::get_topology_iterati
   return CoreTopologyQuery::get_iteration_element_data(*ccx_core.topology, *ccx_core.mat, *ccx_core.jobs, topology_id, iteration_id);
 }
 
+std::vector<std::vector<double>> CalculiXTopologyInterface::get_topology_iteration_sensitivity_data(int topology_id, int iteration_id)
+{
+  return ccx_core.get_topology_iteration_sensitivity_data(topology_id, iteration_id);
+}
+
 bool CalculiXTopologyInterface::is_topology_adjoint_export() const
 {
   return ccx_core.job_export_context.adjoint;

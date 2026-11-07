@@ -69,3 +69,43 @@ bool PostprocessorApplicationInterface::close_all_sources(std::string& error)
 {
   return core.close_all_sources(error);
 }
+
+bool PostprocessorApplicationInterface::initialize_user_options(UserOptionsInterface& store, std::string& error)
+{
+  return options.initialize(store, error);
+}
+
+void PostprocessorApplicationInterface::shutdown_user_options() noexcept
+{
+  options.detach();
+}
+
+const Postprocessor::UserOptions& PostprocessorApplicationInterface::user_options() const noexcept
+{
+  return options.current();
+}
+
+const std::string& PostprocessorApplicationInterface::active_icons_path() const noexcept
+{
+  return options.active_icons_path();
+}
+
+bool PostprocessorApplicationInterface::user_options_restart_required() const
+{
+  return options.restart_required();
+}
+
+bool PostprocessorApplicationInterface::apply_user_options(const UserOptionValues& changes, std::string& error)
+{
+  return options.apply(changes, error);
+}
+
+std::vector<UserOption> PostprocessorApplicationInterface::user_option_definitions() const
+{
+  return Postprocessor::PostprocessorUserOptions::definitions();
+}
+
+bool PostprocessorApplicationInterface::user_option_values(UserOptionValues& snapshot, std::string& error) const
+{
+  return options.values(snapshot, error);
+}

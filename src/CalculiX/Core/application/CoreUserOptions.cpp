@@ -3,12 +3,8 @@
 #include "Core/drawing/CalculiXDrawInterface.hpp"
 #include "loadUserOptions.hpp"
 #include "CubitMessage.hpp"
-#include <QByteArray>
 #include <QDir>
 #include <QFileInfo>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonParseError>
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -81,7 +77,7 @@ bool validColor(const UserOptionValue& value)
 bool validPath(const UserOptionValue& value)
 {
   const auto& path = std::get<std::string>(value);
-  if (path.empty() || path.find('\0') != std::string::npos)
+  if (path.empty() || path.find('\0') != std::string::npos || path.find_first_of("\"\r\n") != std::string::npos)
   {
     return false;
   }
@@ -164,86 +160,7 @@ UserOptions runtimeOptions(const UserOptionValues& values)
   return result;
 }
 
-bool decode(const std::string& payload, const std::vector<UserOption>& schema,
-  UserOptionValues& values, std::string& error)
-{
-  // Accept command-parser whitespace and one enclosing pair of quotes while
-  // retaining strict validation of the actual hexadecimal payload.
-  QByteArray encoded = QByteArray::fromStdString(payload).trimmed();
-  if (encoded.size() >= 2 && encoded.front() == '"' && encoded.back() == '"')
-  {
-    encoded = encoded.mid(1, encoded.size() - 2).trimmed();
-  }
-  const QByteArray bytes = QByteArray::fromHex(encoded);
-  if (encoded.isEmpty() || bytes.toHex() != encoded.toLower())
-  {
-    error = "Invalid encoded user-options payload (" + std::to_string(encoded.size()) + " characters; expected an even number of hexadecimal digits).";
-    return false;
-  }
-  QJsonParseError parser;
-  const auto document = QJsonDocument::fromJson(bytes, &parser);
-  if (parser.error != QJsonParseError::NoError || !document.isObject())
-  {
-    error = "Invalid user-options object.";
-    return false;
-  }
-  const auto object = document.object();
-  if (object.size() != static_cast<qsizetype>(schema.size()))
-  {
-    error = "The user-options object must contain exactly the declared keys.";
-    return false;
-  }
-  for (const auto& item : schema)
-  {
-    const auto saved = object.value(QString::fromStdString(item.key));
-    UserOptionValue value;
-    if (item.kind == UserOptionKind::Boolean && saved.isBool())
-    {
-      value = saved.toBool();
-    }
-    else if (item.kind == UserOptionKind::Integer && saved.isDouble())
-    {
-      const double number = saved.toDouble();
-      if (!std::isfinite(number) || std::trunc(number) != number ||
-          number < (std::numeric_limits<int>::min)() || number > (std::numeric_limits<int>::max)())
-      {
-        error = "Invalid integer user option: " + item.key;
-        return false;
-      }
-      value = static_cast<int>(number);
-    }
-    else if (item.kind == UserOptionKind::Real && saved.isDouble())
-    {
-      value = saved.toDouble();
-    }
-    else if ((item.kind == UserOptionKind::Text || item.kind == UserOptionKind::ComponentPath) && saved.isString())
-    {
-      QString text = saved.toString();
-      if (item.kind == UserOptionKind::ComponentPath && QFileInfo(text).isAbsolute())
-      {
-        const QDir base(QString::fromUtf8(optionsStore->component_directory().c_str()));
-        const QString relative = base.relativeFilePath(QDir::cleanPath(text));
-        if (relative != ".." && !relative.startsWith("../") && !QFileInfo(relative).isAbsolute())
-        {
-          text = relative;
-        }
-      }
-      value = text.toUtf8().toStdString();
-    }
-    else
-    {
-      error = "Wrong type for user option: " + item.key;
-      return false;
-    }
-    if (item.validator && !item.validator(value))
-    {
-      error = "Invalid user option: " + item.key;
-      return false;
-    }
-    values.emplace(item.key, std::move(value));
-  }
-  return true;
-}
+
 }
 
 bool CoreUserOptions::initialize(UserOptionsInterface& store, std::string& error)
@@ -299,7 +216,7 @@ std::string CoreUserOptions::component_directory()
   return optionsStore == nullptr ? std::string() : optionsStore->component_directory();
 }
 
-bool CoreUserOptions::apply(const std::string& payload, std::string& error)
+bool CoreUserOptions::apply(const UserOptionValues& changes, std::string& error)
 {
   error.clear();
   if (optionsStore == nullptr)
@@ -311,9 +228,22 @@ bool CoreUserOptions::apply(const std::string& payload, std::string& error)
   {
     const auto schema = definitions();
     UserOptionValues values;
-    if (!decode(payload, schema, values, error))
+    if (!optionsStore->load("calculix", schema, values, error) ||
+      !merge_user_option_changes(schema, changes, values, error))
     {
       return false;
+    }
+    for (const auto& item : schema)
+    {
+      if (item.kind == UserOptionKind::ComponentPath)
+      {
+        const auto path = QDir::fromNativeSeparators(QString::fromUtf8(std::get<std::string>(values.at(item.key)).c_str()));
+        const auto relative = QDir(QString::fromUtf8(optionsStore->component_directory().c_str())).relativeFilePath(QDir::cleanPath(path));
+        if (QFileInfo(path).isAbsolute() && relative != ".." && !relative.startsWith("../") && !QFileInfo(relative).isAbsolute())
+        {
+          values[item.key] = relative.toUtf8().toStdString();
+        }
+      }
     }
     // Prepare both snapshots before saving. Keep resources already loaded by
     // this session on their active paths until Cubit is restarted.
@@ -353,4 +283,19 @@ bool CoreUserOptions::apply(const std::string& payload, std::string& error)
     error = exception.what();
     return false;
   }
+}
+
+std::vector<UserOption> CoreUserOptions::user_option_definitions()
+{
+  return definitions();
+}
+
+bool CoreUserOptions::values(UserOptionValues& snapshot, std::string& error)
+{
+  if (optionsStore == nullptr)
+  {
+    error = "CalculiX user options are unavailable.";
+    return false;
+  }
+  return optionsStore->load("calculix", definitions(), snapshot, error);
 }

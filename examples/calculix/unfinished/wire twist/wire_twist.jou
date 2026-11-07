@@ -18,7 +18,7 @@ block 2 name "wire_2"
 block all element type hex20 
 
 #material
-create material "mat_1" property_group "CalculiX-FEA"
+create material "mat_1" property_group "SIM_CCX"
 modify material "mat_1" scalar_properties "CCX_ELASTIC_USE_CARD" 1
 modify material "mat_1" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
 modify material "mat_1" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 1.38e+5 0.3 0 

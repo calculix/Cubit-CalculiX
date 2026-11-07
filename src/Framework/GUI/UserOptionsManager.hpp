@@ -13,7 +13,8 @@ class UserOptionsManager : public QObject
 public:
   UserOptionsManager();
   ~UserOptionsManager() override;
-  bool attach(const std::vector<WorkspaceProviderInterface*>& providers, std::string& error);
+  bool attach(const std::vector<WorkspaceProviderInterface*>& providers, std::string& error,
+    const std::vector<WorkspaceView>& frameworkPages = {});
   void detach() noexcept;
 
 private:

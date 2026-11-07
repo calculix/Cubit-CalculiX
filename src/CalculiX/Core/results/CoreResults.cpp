@@ -279,6 +279,7 @@ bool CoreResults::build_vtk_result(int job_id, const CoreResultsVtkOptions& opti
     return false;
   }
   QScopedValueRollback<bool> guard(vtk_build_active, true);
+  const auto conversion_begin = std::chrono::steady_clock::now();
   vtk_cancelled.store(false, std::memory_order_relaxed);
   try
   {
@@ -294,10 +295,12 @@ bool CoreResults::build_vtk_result(int job_id, const CoreResultsVtkOptions& opti
       resolved.workers = static_cast<std::size_t>(ccx_uo.mConverterThreads);
     }
     CoreResultsVtkPlan plan;
+    const auto planning_begin = std::chrono::steady_clock::now();
     if (!prepare_vtk_plan_impl(job_id, resolved, plan))
     {
       return false;
     }
+    const double planning_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - planning_begin).count();
     plan.run_identity = std::to_string(job_id) + ":" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
     const int frd_id = get_frd_data_id_from_job_id(job_id);
     const int dat_id = get_dat_data_id_from_job_id(job_id);
@@ -333,7 +336,8 @@ bool CoreResults::build_vtk_result(int job_id, const CoreResultsVtkOptions& opti
     std::shared_ptr<const SimResults::VtkResultsData> converted;
     std::string error;
     CoreResultsVtkConverter converter;
-    if (!converter.build(frd_data[frd_id], dat_data[dat_id], plan, vtk_cancelled, poll, converted, error))
+    CoreResultsVtkTimings timings;
+    if (!converter.build(frd_data[frd_id], dat_data[dat_id], plan, vtk_cancelled, poll, converted, error, &timings))
     {
       if (error.empty() && vtk_cancelled.load(std::memory_order_relaxed))
       {
@@ -351,6 +355,10 @@ bool CoreResults::build_vtk_result(int job_id, const CoreResultsVtkOptions& opti
     vtk_exports.erase(job_id);
     vtk_status[job_id] = SimResults::ConversionStatus::Complete;
     CalculiXJobsInterface().set_job_conversion(job_id, -1);
+    const double conversion_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - conversion_begin).count();
+    PRINT_INFO("Duration of VTK conversion (Boost, %zu threads) [ms]: %.3f\n", resolved.workers, conversion_ms);
+    PRINT_INFO("VTK conversion phases [ms]: planning/linking %.3f, geometry %.3f, field mapping %.3f, IP displacement %.3f, tables %.3f, finalize %.3f.\n",
+      planning_ms, timings.geometry_ms, timings.fields_ms, timings.ip_displacement_ms, timings.tables_ms, timings.finalize_ms);
     return true;
   }
   catch (const std::exception& error)
@@ -393,6 +401,7 @@ bool CoreResults::export_vtk_result(int job_id, const std::string& destination)
     return false;
   }
   QScopedValueRollback<bool> guard(vtk_build_active, true);
+  const auto export_begin = std::chrono::steady_clock::now();
   vtk_cancelled.store(false, std::memory_order_relaxed);
   try
   {
@@ -421,6 +430,8 @@ bool CoreResults::export_vtk_result(int job_id, const std::string& destination)
     }
     vtk_exports[job_id] = index;
     CalculiXJobsInterface().set_job_conversion(job_id, 1);
+    const double export_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - export_begin).count();
+    PRINT_INFO("Duration of VTK export [ms]: %.3f\n", export_ms);
     PRINT_INFO("VTK result exported to %s\n", index.c_str());
     return true;
   }

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" role="img">
+  <title>Postprocessor contour cube</title>
+  <defs>
+    <linearGradient id="heat" x1="0" y1="1" x2="1" y2="0">
+      <stop stop-color="#4d89f5"/>
+      <stop offset=".4" stop-color="#35c997"/>
+      <stop offset=".7" stop-color="#ffd166"/>
+      <stop offset="1" stop-color="#ed6962"/>
+    </linearGradient>
+  </defs>
+  <path d="M3 7 12 2 21 7 21 17 12 22 3 17Z" fill="url(#heat)" stroke="#263238" stroke-width="1.4" stroke-linejoin="round"/>
+  <g fill="none" stroke="#263238" stroke-width=".9" stroke-linejoin="round">
+    <path d="M3 7 12 12 21 7M12 12V22M7.5 4.5 16.5 9.5V19.5M16.5 4.5 7.5 9.5V19.5M3 12 12 17 21 12"/>
+  </g>
+</svg>

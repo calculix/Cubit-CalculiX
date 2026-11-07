@@ -119,7 +119,7 @@ for v in volume_list:
 
 
 #material
-cubit.cmd('create material "solid" property_group "CalculiX-FEA"')
+cubit.cmd('create material "solid" property_group "SIM_CCX"')
 cubit.cmd('modify material "solid" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1')
 cubit.cmd('modify material "solid" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1')
 cubit.cmd('modify material "solid" scalar_properties "CCX_DENSITY_USE_CARD" 1')

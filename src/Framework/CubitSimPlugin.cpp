@@ -1,4 +1,5 @@
 #include "CubitSimPlugin.hpp"
+#include "Commands/UserOptionsCommand.hpp"
 #include "Framework/Commands/WorkspaceCommand.hpp"
 #include "Framework/Commands/DocumentationCommand.hpp"
 #include "Framework/Commands/CubitSimVersionCommand.hpp"
@@ -37,6 +38,7 @@ std::vector<std::string> CubitSimPlugin::get_keys()
   }
   keys.push_back("CubitSimWorkspaceCommand");
   keys.push_back("CubitSimDocumentationCommand");
+  keys.push_back("CubitSimUserOptionsCommand");
   const auto moduleKeys = framework_context().module_manager().command_keys();
   keys.insert(keys.end(), moduleKeys.begin(), moduleKeys.end());
   return keys;
@@ -51,6 +53,10 @@ CubitCommand* CubitSimPlugin::create_command(const std::string& key)
   if (!acquired)
   {
     return nullptr;
+  }
+  if (key == "CubitSimUserOptionsCommand")
+  {
+    return new UserOptionsCommand();
   }
   if (key == "CubitSimDocumentationCommand")
   {

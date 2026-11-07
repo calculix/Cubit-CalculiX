@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <chrono>
 #include <exception>
 #include <limits>
 #include <map>
@@ -696,7 +697,9 @@ namespace
         valid[i] = complete ? 1 : 0;
         for (std::size_t c = 0; c < components; ++c)
         {
-          destination[i * components + c] = complete ? values[source->data][field.component_offset + c] : nan;
+          // Validity describes the tuple; preserve every reported component,
+          // including finite neighbours and signed infinities in an invalid tuple.
+          destination[i * components + c] = source ? values[source->data][field.component_offset + c] : nan;
         }
       }
       return true;
@@ -1067,17 +1070,28 @@ namespace
   bool named_table(const CoreResultsDat& dat, const CoreResultsVtkPlan& plan, const CoreResultsVtkTablePlan& source,
     SimResults::VtkResultsData& result, CoreResultsVtkPipeline& pipeline, const Poll& poll, std::string& error)
   {
-    if (source.source_data >= dat.result_tables.size() || source.increment < 0 ||
-      static_cast<std::size_t>(source.increment) >= result.increments.size())
+    if (source.source_data >= dat.result_tables.size())
     {
       error = "Stale DAT named-table plan.";
       return false;
     }
     const auto& input = dat.result_tables[source.source_data];
-    const auto& increment = result.increments[source.increment];
-    if (!close_time(input.time, increment.time, plan.options) ||
-      (input.step > 0 && increment.step > 0 && input.step != increment.step) ||
-      (input.increment > 0 && increment.increment > 0 && input.increment != increment.increment))
+    if (input.scope != DatResultTableScope::Increment && input.scope != DatResultTableScope::StepSummary)
+    {
+      error = "Invalid DAT named-table scope.";
+      return false;
+    }
+    const bool summary = input.scope == DatResultTableScope::StepSummary;
+    if ((summary && (source.increment != -1 || input.increment != -1)) ||
+      (!summary && (source.increment < 0 || static_cast<std::size_t>(source.increment) >= result.increments.size())))
+    {
+      error = "DAT named-table scope does not match its plan.";
+      return false;
+    }
+    const auto* increment = summary ? nullptr : &result.increments[source.increment];
+    if (increment && (!close_time(input.time, increment->time, plan.options) ||
+      (input.step > 0 && increment->step > 0 && input.step != increment->step) ||
+      (input.increment > 0 && increment->increment > 0 && input.increment != increment->increment)))
     {
       error = "DAT named-table identity does not match its planned increment.";
       return false;
@@ -1169,21 +1183,36 @@ namespace
     text(metadata, "SetName", input.set_name);
     text(metadata, "SlaveSet", input.slave_set);
     text(metadata, "MasterSet", input.master_set);
+    if (!input.coordinate_system.empty())
+    {
+      text(metadata, "CoordinateSystem", input.coordinate_system);
+    }
     text(metadata, "JobId", std::to_string(plan.job_id));
     text(metadata, "RunIdentity", plan.run_identity);
     text(metadata, "Step", std::to_string(input.step));
     text(metadata, "Increment", std::to_string(input.increment));
-    text(metadata, "AnalysisType", std::to_string(increment.analysis_type));
-    text(metadata, "Mode", std::to_string(increment.mode));
-    text(metadata, "NodalDiameter", std::to_string(increment.nodal_diameter));
-    text(metadata, "Subcase", std::to_string(increment.subcase));
+    text(metadata, "TableScope", summary ? "StepSummary" : "Increment");
+    if (increment)
+    {
+      text(metadata, "AnalysisType", std::to_string(increment->analysis_type));
+      text(metadata, "Mode", std::to_string(increment->mode));
+      text(metadata, "NodalDiameter", std::to_string(increment->nodal_diameter));
+      text(metadata, "Subcase", std::to_string(increment->subcase));
+    }
     text(metadata, "SourceFile", dat.filepath);
     text(metadata, "SourceDataIndex", std::to_string(source.source_data));
     text(metadata, "SourceLine", std::to_string(input.source_line));
     text(metadata, "Reduction", "None");
     text(metadata, "RecordIndexRole", "ZeroBasedSourceRowWithinTable");
-    timestamp(table, input.time);
-    result.increments[source.increment].tables.push_back(own(table));
+    if (summary)
+    {
+      result.tables.push_back(own(table));
+    }
+    else
+    {
+      timestamp(table, input.time);
+      result.increments[source.increment].tables.push_back(own(table));
+    }
     return true;
   }
 
@@ -1291,9 +1320,20 @@ namespace
   }
 }
 
-bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResultsDat& dat, const CoreResultsVtkPlan& plan, std::atomic<bool>& cancelled, const std::function<bool(double)>& poll, std::shared_ptr<const SimResults::VtkResultsData>& output, std::string& error) const
+bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResultsDat& dat, const CoreResultsVtkPlan& plan, std::atomic<bool>& cancelled, const std::function<bool(double)>& poll, std::shared_ptr<const SimResults::VtkResultsData>& output, std::string& error, CoreResultsVtkTimings* timings) const
 {
   error.clear();
+  if (timings)
+  {
+    *timings = {};
+  }
+  using Clock = std::chrono::steady_clock;
+  const auto milliseconds_since = [](Clock::time_point begin)
+  {
+    return std::chrono::duration<double, std::milli>(Clock::now() - begin).count();
+  };
+  CoreResultsVtkTimings measured;
+  auto phase_begin = Clock::now();
   if (!CoreResultsVtkPipeline::valid(plan.options, error))
   {
     return false;
@@ -1469,6 +1509,8 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
         grids[i].push_back(grid);
       }
     }
+    measured.geometry_ms = milliseconds_since(phase_begin);
+    phase_begin = Clock::now();
     double operations = 0.0;
     for (const auto& increment : increments)
     {
@@ -1503,6 +1545,8 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
         }
       }
     }
+    measured.fields_ms = milliseconds_since(phase_begin);
+    phase_begin = Clock::now();
     const double displacement_operations = std::max(1.0, static_cast<double>(increments.size()) * domains.size());
     double displacement_operation = 0.0;
     if (plan.options.interpolate_ip_displacement)
@@ -1546,10 +1590,14 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
         }
       }
     }
+    measured.ip_displacement_ms = milliseconds_since(phase_begin);
+    phase_begin = Clock::now();
     if (!contact_tables(frd, plan, *result, pipeline, observe, error) || !tables(dat, plan, *result, pipeline, observe, error))
     {
       return false;
     }
+    measured.tables_ms = milliseconds_since(phase_begin);
+    phase_begin = Clock::now();
     for (std::size_t i = 0; i < result->increments.size(); ++i)
     {
       if (!observe(0.98 + 0.02 * static_cast<double>(i) / std::max<std::size_t>(1, result->increments.size())))
@@ -1607,6 +1655,8 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
             error = "VTK rejected the dataset assembly.";
             return false;
           }
+          const auto& label = domains[d].metadata.name;
+          assembly->SetAttribute(node, "label", label.empty() ? name.c_str() : label.c_str());
         }
       }
       vtkSmartPointer<vtkDataObject> dataset;
@@ -1628,6 +1678,11 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
       return false;
     }
     output = std::move(result);
+    measured.finalize_ms = milliseconds_since(phase_begin);
+    if (timings)
+    {
+      *timings = measured;
+    }
     return true;
   }
   catch (const std::exception& failure)

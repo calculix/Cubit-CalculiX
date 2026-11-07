@@ -64,6 +64,10 @@ it is not ownership of those objects.
 window names, navigation widgets, docks, toolbars and visibility restoration in
 that adapter. The intended workspace visibility of a toolbar differs from the
 temporary hidden state of an inactive workspace. See :doc:`framework-stage3`.
+Module toolbar order comes from WorkspaceView::toolbars. The host reasserts a
+single module group after saved-layout restoration, placing it below visible
+native top rows. Only module bars may be removed/reinserted for this correction;
+native Cubit bars remain under their existing QMainWindow layout ownership.
 
 Options, storage and results
 ----------------------------

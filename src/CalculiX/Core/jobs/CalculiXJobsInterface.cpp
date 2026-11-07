@@ -7,6 +7,16 @@
 #include "Core/jobs/CoreJobs.hpp"
 #include "Core/loadCalculiXCore.hpp"
 
+bool CalculiXJobsInterface::get_monitor_snapshot(std::vector<JobMonitorEntry>& output, std::string& error) const
+{
+  if (ccx_core.jobs == nullptr)
+  {
+    error = "CalculiX jobs are unavailable.";
+    return false;
+  }
+  return ccx_core.jobs->get_monitor_snapshot(output, error);
+}
+
 bool CalculiXJobsInterface::create_job(std::vector<std::string> options)
 {
   return ccx_core.jobs->create_job(options);

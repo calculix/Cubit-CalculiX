@@ -46,6 +46,12 @@ and exported solver name are different values. ``get_properties()`` gives a
 typed view; export collects the enabled cards and their data. A stored scalar or
 table is not sufficient to infer that an inactive card will be emitted.
 
+The canonical Cubit material property-group name is ``SIM_CCX``. Material creation,
+library import/export and maintained examples/journal fixtures use that exact name.
+Individual property keys retain their ``CCX_`` prefixes; the group name is distinct
+from those keys and from the C++ ``SimResults`` namespace. Updating journal text
+does not migrate material groups already stored in external Cubit model files.
+
 ``CoreMaterialsLibrary`` supports library initialization and management. Library
 storage is different from a model's current material assignments. The GUI
 material-management widgets are editors and selectors, not independent owners

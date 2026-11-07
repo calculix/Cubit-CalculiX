@@ -34,7 +34,7 @@ namespace CoreResultsFrdFormat
     line = ResultReadNumbers::trim(line);
     std::array<std::string_view, ResultReadNumbers::max_fields> fields;
     std::size_t count = 0;
-    if (!ResultReadNumbers::fields(line, fields, count) || components == 0 || components + 2 > fields.size())
+    if (!ResultReadNumbers::fields(line, fields, count) || components == 0)
     {
       return RecordStatus::Invalid;
     }
@@ -59,11 +59,12 @@ namespace CoreResultsFrdFormat
     {
       return RecordStatus::Invalid;
     }
-    if (!ResultReadNumbers::fields(record, fields, count) || count > components + 2)
+    count = ResultReadNumbers::field_count(record);
+    if (count < 2 || count - 2 > components)
     {
       return RecordStatus::Invalid;
     }
-    return count == components + 2 ? RecordStatus::Ready : RecordStatus::Pending;
+    return count - 2 == components ? RecordStatus::Ready : RecordStatus::Pending;
   }
 }
 

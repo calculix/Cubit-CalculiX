@@ -3,6 +3,7 @@
 #include "sources/PostListCommand.hpp"
 #include "sources/PostSelectCommand.hpp"
 #include "sources/PostCloseCommand.hpp"
+#include "options/PostUserOptionsCommand.hpp"
 
 #include <utility>
 
@@ -13,11 +14,16 @@ PostprocessorCommands::PostprocessorCommands(std::weak_ptr<PostprocessorApplicat
 
 std::vector<std::string> PostprocessorCommands::command_keys() const
 {
-  return {"PostOpenCommand", "PostListCommand", "PostSelectCommand", "PostCloseCommand"};
+  return {"PostOpenCommand", "PostListCommand", "PostSelectCommand", "PostCloseCommand", "PostUserOptionsCommand"};
 }
 
 CubitCommand* PostprocessorCommands::create_command(const std::string& key)
 {
+  if (key == "PostUserOptionsCommand")
+  {
+    return new PostUserOptionsCommand(application);
+  }
+
   if (key == "PostOpenCommand")
   {
     return new PostOpenCommand(application);

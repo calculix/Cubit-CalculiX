@@ -40,6 +40,9 @@ public:
   bool select_topology_iteration(int topology_id, int iteration_id);
   std::string get_topology_run_state(int topology_id);
   std::vector<std::vector<double>> get_topology_iteration_element_data(int topology_id,int iteration_id = -1);
+  /// Completed density iteration: [element ID, dJ/ds, unfiltered dJ/drho].
+  /// Grouped density gradients are SIMP surrogates. Returns empty on failure.
+  std::vector<std::vector<double>> get_topology_iteration_sensitivity_data(int topology_id, int iteration_id = -1);
   //QUERY results
   //FRD results
   std::vector<std::string> frd_get_result_block_types(int job_id); // returns a list of all result block types

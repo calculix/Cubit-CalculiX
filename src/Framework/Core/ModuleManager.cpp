@@ -105,7 +105,7 @@ bool ModuleManager::initialize(UserOptionsInterface& options, DrawingInterface& 
       for (const auto& key : provider->command_keys())
       {
         if (key.empty() || key == "CubitSimWorkspaceCommand" || key == "CubitSimDocumentationCommand" ||
-            key == "CubitSimVersionCommand" || !command_owners.emplace(key, provider).second)
+            key == "CubitSimVersionCommand" || key == "CubitSimUserOptionsCommand" || !command_owners.emplace(key, provider).second)
         {
           error = "Empty, reserved or duplicate command key in module: "
             + module->module_id() + " (" + key + ")";
@@ -313,5 +313,21 @@ std::vector<WorkspaceProviderInterface*> ModuleManager::workspace_providers() co
     }
   }
 
+  return providers;
+}
+
+std::vector<JobMonitorProviderInterface*> ModuleManager::job_monitor_providers() const
+{
+  std::vector<JobMonitorProviderInterface*> providers;
+  if (initialized)
+  {
+    for (auto* module : started_modules)
+    {
+      if (auto* provider = module->job_monitor_provider())
+      {
+        providers.push_back(provider);
+      }
+    }
+  }
   return providers;
 }
