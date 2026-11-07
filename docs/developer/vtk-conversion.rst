@@ -39,7 +39,7 @@ Commands and export
 
 ``ccx result convert job <id>`` builds and exports all reader sources by default.
 ``in_memory`` builds without writing files. ``frd`` or ``dat`` selects a source;
-both flags include both. ``no_partial`` skips incomplete fields. Explicit group
+both flags include both. Incomplete fields and tables are always retained. Explicit group
 IDs are checked against the linked run mesh rather than the current live model.
 Empty selections retain all groups of that kind.
 
@@ -72,10 +72,10 @@ Field metadata identifies the dataset, source, scope, component labels, unique
 array name and validity-mask array. The length-prefixed array names avoid
 collisions between FRD/DAT fields and user set names.
 
-Missing/non-finite tuples are represented by NaN and a zero validity mask when
-``include_partial`` is enabled. Otherwise the incomplete field is skipped and a
-diagnostic is retained. ``Partial`` cell arrays summarize missing incident point
-or cell values. Duplicate source identifiers are rejected until an explicit
+Missing tuples are represented by NaN and a zero validity mask. Reported
+non-finite values retain their components with zero tuple validity. Fields and
+table rows are always retained. ``Partial`` cell arrays summarize invalid
+incident point or cell values. Duplicate source identifiers are rejected until an explicit
 reduction policy is defined. No field is silently overwritten.
 
 Supported integration-point positions use cached shape coefficients. Matching
@@ -261,8 +261,8 @@ spatial-field duplicate-ID lookup.
 ``RecordIndex`` identifies a row within one source block, not a contact point
 across increments. A reported node label alone does not provide the actual
 contact integration-point coordinates or a unique contact-element identity.
-No averaging or summation is applied. Non-finite values remain in the table;
-``no_partial`` skips the whole incomplete table instead of removing rows.
+No averaging or summation is applied. Non-finite values and all source records
+remain in the table, with ``Valid=0`` on invalid rows.
 
 Table field data records the job/run identity, source file/block/data indices,
 step/increment, time, and the identifier and reduction conventions. The result
@@ -287,3 +287,48 @@ mismatch, field-name collisions and cancellation in each phase. Native job
 lifecycle and picking/hover still require an interactive Cubit check. The
 exposed-key coverage work and its remaining validation limits are recorded in
 :doc:`results-output-coverage`.
+
+Conversion performance and work budgets
+--------------------------------------
+
+``CoreResultsVtkRowMaps`` is a caller-owned cache for one build. It interns
+validated sorted source layouts using association, entity/IP keys and original
+source-row positions. Hashes select candidates; exact comparisons establish a
+hit. Each layout caches destination-to-source row indices by immutable domain ID.
+Ordered dense destinations use a merge; sparse or unsorted destinations use
+binary search while constructing the map. Cache hits allow field workers to copy
+through numeric indices. Source values, widths and offsets are validated for
+every field and are never cached as pointers. Already sorted source layouts avoid
+another sort. Missing tuples retain NaN; nonfinite payloads remain unchanged.
+
+Before creating the pipeline, the converter reserves up to one quarter of
+``pending_bytes`` (capped at 16 MiB each) for maps and reduction scratch when the
+budget is at least four chunks. The scheduler receives the remainder. Smaller
+budgets disable both auxiliary reservations. Cache vector capacities and estimated
+list-node overhead are charged to the map budget. Existing source/mesh indexes,
+allocator bookkeeping and resident result arrays remain outside this work budget.
+Cache eviction happens only on the caller between completed operations. Oversized
+maps use the uncached lookup path rather than exceeding the cache reservation.
+
+Field and IP-displacement workers coalesce invalidity once per chunk. After work
+completes, the caller records pointers only to incomplete masks, whose VTK arrays
+are retained by the corresponding grid. Finalization reduces point masks once,
+reduces cell invalidity directly into the Partial array and traverses connectivity
+once. Fully valid grids fill Partial with zero without connectivity inspection.
+If a point-mask union cannot fit the scratch reservation, the previous per-cell
+scan of incomplete point masks remains available as a bounded-memory fallback.
+
+The Boost pool remains reusable across all arrays. One-worker operations execute
+directly in bounded chunks; multiworker operations also use a direct path for a
+single chunk estimated at no more than 64 KiB. Parallel tasks notify a condition
+variable on completion. A 20 ms timeout preserves owner-thread progress and
+cancellation polling without mandatory 1 ms sleeps after short tasks. Workers
+write exclusive numeric output ranges, never VTK/Cubit APIs. Failure/cancellation
+stops and joins the pool before returning; publication remains all-or-nothing.
+
+Existing wall-clock conversion phase timings remain the benchmark. Regression
+coverage in ``tests/vtk/VtkDatasetTests.cpp`` includes source-row reorderings,
+changed subsets/IP keys, cache eviction, cached versus low-budget fallbacks,
+point/cell invalidity, direct/parallel execution, worker failures and cancellation.
+These native tests require the user's build and were not compiled or run as part
+of this change.

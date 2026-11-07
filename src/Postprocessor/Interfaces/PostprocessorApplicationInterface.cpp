@@ -70,6 +70,48 @@ bool PostprocessorApplicationInterface::close_all_sources(std::string& error)
   return core.close_all_sources(error);
 }
 
+bool PostprocessorApplicationInterface::set_source_visible(const std::string& name, bool visible, std::string& error)
+{
+  const auto id = core.source_id_from_name(name);
+  if (id.empty())
+  {
+    error = "Unknown Postprocessor source: " + name;
+    return false;
+  }
+  return core.set_source_visible(id, core.session().active_view_id, visible, error);
+}
+
+bool PostprocessorApplicationInterface::request_camera_fit(std::string& error)
+{
+  return core.request_camera_fit(core.session().active_view_id, error);
+}
+
+std::shared_ptr<const SimResults::VtkResultsData> PostprocessorApplicationInterface::result_data(const std::string& source_id) const
+{
+  return core.result_data(source_id);
+}
+
+bool PostprocessorApplicationInterface::source_has_mesh(const std::string& source_id) const noexcept
+{
+  return core.source_has_mesh(source_id);
+}
+
+std::uint64_t PostprocessorApplicationInterface::display_revision() const noexcept
+{
+  return core.display_revision();
+}
+
+bool PostprocessorApplicationInterface::visible_bounds(const std::string& view_id, std::array<double, 6>& bounds, std::string& error) const
+{
+  return core.visible_bounds(view_id, bounds, error);
+}
+
+bool PostprocessorApplicationInterface::complete_camera_fit(const std::string& view_id, std::uint64_t request,
+  std::uint64_t revision, const Postprocessor::CameraDefinition& camera, std::string& error)
+{
+  return core.complete_camera_fit(view_id, request, revision, camera, error);
+}
+
 bool PostprocessorApplicationInterface::initialize_user_options(UserOptionsInterface& store, std::string& error)
 {
   return options.initialize(store, error);

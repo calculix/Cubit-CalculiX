@@ -496,6 +496,7 @@ public:
   bool create_result(int job_id);
   bool delete_result(int job_id);
   bool load_result(int job_id);
+  // options contains [frd_only, dat_only]; incomplete data is always retained.
   int convert_result(int job_id, std::vector<int> options, std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids);
   bool project_result(int job_id, int step, int totalincrement, double scale);
   bool project_topology(int topology_id, int iteration_id = -1, double threshold = 0.5, bool preview = false);

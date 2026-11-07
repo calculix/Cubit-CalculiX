@@ -111,8 +111,8 @@ results without inventing a different time value.
 New DAT tables attach to matching increments. VTK columns are ``RecordIndex``,
 the named source columns and ``Valid``. Field data stores job/run identity,
 source path/line/index, time, step/increment and available set/pair names. Each
-table owns its copied buffers. ``no_partial`` omits an entire incomplete table
-instead of removing individual records.
+table owns its copied buffers. Every table record is retained, including invalid
+rows; the validity column supports filtering without discarding source data.
 
 The existing exporter writes ``increment_N_table_M.vtt`` beside ``.vtu``/``.vtpc``
 files and registers them in ``.pvd``. Export remains optional; tables are also

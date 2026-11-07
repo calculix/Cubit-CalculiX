@@ -9,16 +9,131 @@ numerical verification. See :doc:`topology-algorithms` for the implemented
 formulas and :doc:`topology-export` for applied factors and result precision.
 A documented equation or method contract is not, by itself, a numerical test.
 
+Current material-group derivative verification
+---------------------------------------------
+
+On 7 November 2026, run ``20261107T152047Z_4f21a6a1`` passed all 18 cases:
+C3D4, C3D6, C3D8, C3D10, C3D15 and C3D20, each with compliance, absolute Y
+displacement and displacement magnitude. The recorded Cubit version was 2026.11.
+The loaded plugin revision was **not recorded**; a checkout revision must not be
+substituted for the unknown binary revision. These results are evidence for the
+tested binary and fixtures, not a certificate for all later source changes.
+
+Each case ran three baseline density iterations and selected one interior,
+non-preserved material group from the final physical input. Group membership,
+Poisson's ratio, loads and constraints stayed fixed while only that group's
+Young's modulus changed. Six additional physical solves supplied three central
+finite differences. Displacement baselines used the implemented adjoint solve;
+perturbed jobs did not need adjoints. The iteration limit was intentional and
+does not mean optimization convergence was established.
+
+For a common applied factor increment in group G, the derivative target is
+
+.. math::
+
+   g_G=\sum_{e\in G}\frac{\partial J}{\partial s_e}.
+
+Native DAT queries recomputed compliance as twice the summed element energies,
+or displacement as the absolute Y component or vector norm at the single
+monitored node. The baseline objective was checked against the stored value.
+The journal rejected Y sign changes and near-zero displacement objectives.
+It checked finite raw sensitivities, exact zero sensitivities for preserved
+elements, and unchanged topology history after the perturbation jobs.
+
+Requested steps were h, h/2 and h/4, with
+``h=min(0.02, 0.2*min(s,1-s))``. The exported modulus used six decimal places in
+scientific notation. Actual steps were recovered from those rounded moduli,
+using the fixture's base Young's modulus 210000. With positive step lengths a
+and b on the lower and upper sides, the journal used
+
+.. math::
+
+   g_{\mathrm{FD}}=
+   \frac{b^2(J_0-J_-)+a^2(J_+-J_0)}{ab(a+b)}.
+
+Both finest estimates had to satisfy
+
+.. math::
+
+   |g_{\mathrm{FD}}-g_G|
+   \le 10^{-8}\max(|J_0|,1)
+      +0.02\max(|g_{\mathrm{FD}}|,|g_G|).
+
+The two finest estimates also had to agree under the same combined rule, with
+their magnitudes in the relative term. The absolute allowance is tied to this
+fixture and its objective units; it is not a universal tolerance.
+
+.. list-table:: Relative errors at the smallest perturbation (percent)
+   :header-rows: 1
+
+   * - Element
+     - Compliance
+     - Absolute Y
+     - Magnitude
+   * - C3D4
+     - 0.044284
+     - 0.016913
+     - 0.009910
+   * - C3D6
+     - 0.043328
+     - 0.016969
+     - 0.016980
+   * - C3D8
+     - 0.046429
+     - 0.023784
+     - 0.029981
+   * - C3D10
+     - 0.045647
+     - 0.007842
+     - 0.012861
+   * - C3D15
+     - 0.044197
+     - 0.013481
+     - 0.013480
+   * - C3D20
+     - 0.047419
+     - 0.020929
+     - 0.022712
+
+The shipped :download:`measurement summary <verification/topology-stiffness-sensitivities-20261107.csv>`
+retains all three step sizes, derivatives, errors and comparison outcomes.
+The local journal is ``tests/verify_topology_sensitivities.jou``; raw decks,
+results and per-case reports are under
+``tests/sensitivity_runs/20261107T152047Z_4f21a6a1/``. The tests directory is
+Git-ignored, so those local files are not downloads or dependencies of this manual.
+Preserve them externally for a full audit. Solver version, thread settings and
+binary provenance should be captured explicitly in subsequent runs; Cubit and
+wrapper version metadata alone do not establish them.
+
+This verifies selected fixed-group stiffness derivatives. It does not verify
+individual element derivatives, differentiation through material regrouping,
+the density/filter surrogate, or the level-set fraction, nodal chain and update.
+The level-set public execution gate remains closed.
+
+Current integration evidence
+----------------------------
+
+Local run ``20261107T120555Z_ced1ad13`` of ``tests/verify_topology_all.jou``
+reported PASS for configuration, the results regression, automatic conversion,
+density compliance and Y/magnitude displacement for all six formulations,
+preservation overrides, iteration-history persistence, rerun/delete, kill/reset
+and projection. Three native reader/converter executables were BLOCKED because
+they were unavailable. Manual GUI checks and native level-set mathematics were
+not established by that run. Density-history persistence must not be relabeled
+as level-set field/proposal persistence. Raw evidence remains local under
+``tests/topology_runs/20261107T120555Z_ced1ad13/``.
+
 Current configuration checks (batch 8a)
 ---------------------------------------
 
-The following source-level additions are supplied; their native execution is
-**not yet verified** for the current implementation:
+The focused configuration sources remain available. Configuration was exercised
+by the integration run above; its broader coverage must be kept separate from
+the older configuration-only entry and its stage manifest:
 
 * :download:`Single verification entry journal <../../examples/calculix/topology/verification/verify_topology.jou>`
 * :download:`Configuration journal <../../examples/calculix/topology/verification/settings_and_persistence.jou>`
 * :download:`Python verification script <../../examples/calculix/topology/verification/settings_and_persistence.py>`
-* :download:`GUI checklist and evidence instructions <../../tests/topology/README.md>`
+* Local GUI checklist and native-test instructions: ``tests/topology/README.md``.
 
 Use a built plugin and wrapper exposing
 ``CalculiXPythonInterface::get_topology_settings(id)``. This read-only query returns
@@ -32,8 +147,9 @@ Set Cubit's working directory to the repository root or the verification
 directory and play **verify_topology.jou**. It invokes the existing configuration
 script and records all verification stages in ``verification.csv``. Numerical
 helper stages are explicitly BLOCKED because their production C++ functions are
-not exposed by the current Python interface; GUI/solver/history checks remain
-NOT EXECUTED. A configuration pass cannot make the overall result complete.
+not exposed by the current Python interface. That older entry does not execute
+the newer solver/sensitivity matrices. A configuration pass cannot make the
+overall result complete.
 The native test specification is :doc:`numerical-verification-plan`; the
 documentation-only constraint and review items are in :doc:`review-findings`.
 
@@ -298,14 +414,14 @@ Limitations and coverage still needed
 
    * - Feature
      - Evidence status
-   * - Straight-sided C3D4, C3D6, C3D8, C3D10, C3D15 and C3D20; Y and magnitude
-     - Historically reported displacement checks at a single monitored node;
-       not rerun for the current revision in this documentation stage.
+   * - C3D4, C3D6, C3D8, C3D10, C3D15 and C3D20; Y and magnitude
+     - Fixed-group applied-factor checks passed in the November matrix at a
+       single monitored node. Individual element derivatives remain separate.
    * - Preserved-element sensitivities
-     - Historically reported zero values; current numerical rerun still needed.
-   * - Compliance raw sensitivities
-     - Derivation and source inspection are documented. No corresponding
-       finite-difference evidence is established by the displacement matrix.
+     - Exact zero raw factor/density entries checked in all 18 November cases;
+       level-set fixed-node geometry and assembly still require native checks.
+   * - Compliance raw stiffness-factor sensitivities
+     - Fixed-group sums passed for all six formulations in the November matrix.
    * - Curved higher-order elements
      - Additional numerical evidence required; straight-sided checks do not
        establish this coverage.
@@ -313,8 +429,13 @@ Limitations and coverage still needed
      - Additional targeted checks required; the smooth-branch matrix does not
        verify the chosen nonsmooth handling.
    * - Current grouped material exports and surrogate sensitivities
-     - Additional checks must distinguish independent applied-factor derivatives
-       from the grouped density surrogate and from regrouped finite differences.
+     - Fixed-group factor perturbations passed. Grouped density surrogates and
+       regrouped finite differences were not verified by that comparison.
+   * - Level-set interpolation and fraction/volume derivatives
+     - Native test sources supplied; not built or executed. See
+       :doc:`numerical-verification-plan` for coverage and remaining cases.
+   * - Level-set nodal assembly, proposal/acceptance and controller
+     - Numerical verification remains pending; public execution stays disabled.
    * - Filtered sensitivities
      - Not established as exact derivatives of a separate filtered objective.
        Objective finite differences do not verify the filter implementation.

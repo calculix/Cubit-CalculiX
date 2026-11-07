@@ -11,6 +11,7 @@ class PostprocessorApplicationInterface;
 class PostprocessorResultsTree;
 class PostprocessorProperties;
 class PostprocessorOptionsPanel;
+class PostprocessorViewport;
 class QMainWindow;
 
 class PostprocessorWorkspace : public QWidget
@@ -30,6 +31,7 @@ private:
   std::function<bool(const std::string&, std::string&)> submitCommand;
   PostprocessorResultsTree* tree = nullptr;
   PostprocessorProperties* properties = nullptr;
+  PostprocessorViewport* viewport = nullptr;
   QPointer<PostprocessorOptionsPanel> optionsPanel;
   QDockWidget* resultsDock = nullptr;
   QDockWidget* propertiesDock = nullptr;

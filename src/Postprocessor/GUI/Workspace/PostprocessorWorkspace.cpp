@@ -32,7 +32,9 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   auto* layout = new QVBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(new QLabel(tr("3D View 1"), this));
-  layout->addWidget(new PostprocessorViewport(this), 1);
+  const auto activeApplication = this->application.lock();
+  viewport = new PostprocessorViewport(activeApplication ? activeApplication->session().active_view_id : std::string(), this);
+  layout->addWidget(viewport, 1);
   optionsPanel = new PostprocessorOptionsPanel(this->application, submitCommand, this);
   optionsPanel->hide();
 
@@ -42,6 +44,13 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   {
     source_command("select", name);
     // Submission does not imply success; always restore committed selection.
+    QTimer::singleShot(0, this, [this]()
+    {
+      refresh();
+    });
+  }, [this](const QString& name, bool visible)
+  {
+    source_command(visible ? "show" : "hide", name);
     QTimer::singleShot(0, this, [this]()
     {
       refresh();
@@ -99,15 +108,25 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
 
   toolbar->addAction(list);
   toolbar->addAction(closeSelected);
+  const QIcon fitIcon(":/cubitgui/zoomreset.svg");
+  auto* fit = new QAction(fitIcon.isNull() ? style()->standardIcon(QStyle::SP_TitleBarMaxButton) : fitIcon, tr("Fit visible results"), this);
+  fit->setToolTip(tr("Fit all visible meshes in the active Postprocessor view"));
+  connect(fit, &QAction::triggered, this, [this]()
+  {
+    this->submit("post view fit");
+  });
+  toolbar->addAction(fit);
 
   auto* file = new QMenu(tr("File"), this);
   file->addAction(closeSelected);
   file->addAction(closeAll);
   auto* results = new QMenu(tr("Results"), this);
   results->addAction(list);
+  auto* view = new QMenu(tr("View"), this);
+  view->addAction(fit);
 
   // Framework supplies the shared Help menu and keeps it last.
-  for (auto* menu : {file, results})
+  for (auto* menu : {file, view, results})
   {
     host->menuBar()->addAction(menu->menuAction());
     menu->menuAction()->setVisible(false);
@@ -171,11 +190,15 @@ void PostprocessorWorkspace::refresh()
     }
 
     const auto& state = active->session();
-    tree->refresh(state);
+    tree->refresh(state, [active](const std::string& id)
+    {
+      return active->source_has_mesh(id);
+    });
     const auto source = state.sources.find(state.active_source_id);
     properties->show_source(source == state.sources.end() ? nullptr : &source->second);
     closeSelected->setEnabled(source != state.sources.end());
     closeAll->setEnabled(!state.sources.empty());
+    viewport->synchronize(active);
   }
   catch (const std::exception& exception)
   {

@@ -8,7 +8,7 @@ The Postprocessor currently provides Core data definitions, a source lifecycle
 owner and shared result-provider contracts. Framework registers the CalculiX
 provider under command prefix ``ccx`` and application identity ``calculix``.
 The Postprocessor module and initial ``post`` job/source command handlers are
-registered in source. Workspace panels and an independent empty viewport are
+registered in source. Workspace panels and an independent mesh viewport are
 described in :doc:`postprocessor-workspace`. See :doc:`../postprocessor/commands`
 for syntax and limitations. The user reported a successful rebuild after the
 member-wise swap fix; the subsequent workspace patch has not been compiled or
@@ -16,13 +16,15 @@ verified in a native Cubit session.
 
 The default session defines one 3D view and one layout pane. Additional sources
 do not create views. The Postprocessor viewport is separate from Cubit's viewport.
-Result actors, features, geometry loading, persistence,
+Mesh actors and initial show/hide/fit operations are implemented in source.
+Features, geometry loading, persistence,
 independent VTK file readers and independent FRD/DAT loading are not implemented.
 
 .. toctree::
    :maxdepth: 1
 
    postprocessor-verification
+   postprocessor-display
    postprocessor-workspace
 
 Implementation map

@@ -8,8 +8,10 @@
 class PostprocessorResultsTree : public QTreeWidget
 {
 public:
-  explicit PostprocessorResultsTree(std::function<void(const QString&)> select, QWidget* parent = nullptr);
-  void refresh(const Postprocessor::PostprocessorSession& session);
+  PostprocessorResultsTree(std::function<void(const QString&)> select,
+    std::function<void(const QString&, bool)> visibility, QWidget* parent = nullptr);
+  void refresh(const Postprocessor::PostprocessorSession& session,
+    const std::function<bool(const std::string&)>& has_mesh);
 };
 
 #endif // POSTPROCESSORRESULTSTREE_HPP

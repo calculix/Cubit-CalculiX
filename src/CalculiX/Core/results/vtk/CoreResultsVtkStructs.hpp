@@ -16,7 +16,6 @@ struct CoreResultsVtkOptions
   double time_relative_tolerance = 2.0e-6;
   bool include_frd = true;
   bool include_dat = true;
-  bool include_partial = true;
   // Zero inherits the existing converter-thread setting in the results core.
   std::size_t workers = 0;
   std::size_t chunk_rows = 4096;

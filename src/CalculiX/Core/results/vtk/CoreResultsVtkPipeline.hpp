@@ -7,12 +7,13 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <deque>
 #include <exception>
 #include <limits>
 #include <memory>
+#include <mutex>
 #include <string>
-#include <thread>
 
 /** One reusable pool per complete conversion. No VTK/Cubit API calls occur in
  * workers: work writes exclusive preallocated numeric ranges. The byte budget
@@ -51,6 +52,8 @@ public:
     struct Task
     {
       std::atomic<bool> finished{false};
+      std::mutex mutex;
+      std::condition_variable ready;
       bool success = true;
       std::size_t end = 0;
       std::string error;
@@ -75,65 +78,102 @@ public:
     bool success = true;
     try
     {
-      while (!cancelled.load(std::memory_order_relaxed) && (next < rows || !pending.empty()))
+      // Avoid dispatch/wakeup costs for one-worker runs and small single chunks.
+      // Keep direct work bounded by stride so progress/cancellation still poll.
+      const bool direct = options.workers == 1 ||
+        (rows <= stride && rows <= (64 * 1024) / std::max<std::size_t>(1, bytes_per_row));
+      if (direct)
       {
-        if (!poll(rows == 0 ? 1.0 : static_cast<double>(completed) / static_cast<double>(rows)))
+        while (next < rows && !cancelled.load(std::memory_order_relaxed))
         {
-          cancelled.store(true, std::memory_order_relaxed);
-          break;
-        }
-        if (next < rows && pending.size() < limit)
-        {
-          const std::size_t begin = next;
-          next += std::min(stride, rows - next);
-          auto task = std::make_shared<Task>();
-          task->end = next;
-          pending.push_back(task);
-          boost::asio::post(pool, [task, begin, work, this]()
+          if (!poll(static_cast<double>(next) / static_cast<double>(rows)))
           {
-            try
+            cancelled.store(true, std::memory_order_relaxed);
+            break;
+          }
+          const auto end = next + std::min(stride, rows - next);
+          if (!work(next, end, cancelled, error))
+          {
+            if (error.empty())
             {
-              if (!cancelled.load(std::memory_order_relaxed))
-              {
-                task->success = work(begin, task->end, cancelled, task->error);
-              }
+              error = "VTK conversion worker failed.";
             }
-            catch (const std::exception& failure)
-            {
-              task->success = false;
-              task->error = failure.what();
-            }
-            catch (...)
-            {
-              task->success = false;
-              task->error = "Unexpected VTK conversion worker failure.";
-            }
-            task->finished.store(true, std::memory_order_release);
-          });
-          continue;
+            success = false;
+            break;
+          }
+          next = end;
         }
-        const auto task = pending.front();
-        while (!task->finished.load(std::memory_order_acquire))
+      }
+      else
+      {
+        while (!cancelled.load(std::memory_order_relaxed) && (next < rows || !pending.empty()))
         {
           if (!poll(rows == 0 ? 1.0 : static_cast<double>(completed) / static_cast<double>(rows)))
           {
             cancelled.store(true, std::memory_order_relaxed);
             break;
           }
-          std::this_thread::sleep_for(std::chrono::milliseconds(1));
+          if (next < rows && pending.size() < limit)
+          {
+            const std::size_t begin = next;
+            next += std::min(stride, rows - next);
+            auto task = std::make_shared<Task>();
+            task->end = next;
+            pending.push_back(task);
+            boost::asio::post(pool, [task, begin, work, this]()
+            {
+              try
+              {
+                if (!cancelled.load(std::memory_order_relaxed))
+                {
+                  task->success = work(begin, task->end, cancelled, task->error);
+                }
+              }
+              catch (const std::exception& failure)
+              {
+                task->success = false;
+                task->error = failure.what();
+              }
+              catch (...)
+              {
+                task->success = false;
+                task->error = "Unexpected VTK conversion worker failure.";
+              }
+              {
+                std::lock_guard<std::mutex> lock(task->mutex);
+                task->finished.store(true, std::memory_order_release);
+              }
+              task->ready.notify_one();
+            });
+            continue;
+          }
+          const auto task = pending.front();
+          while (!task->finished.load(std::memory_order_acquire))
+          {
+            if (!poll(rows == 0 ? 1.0 : static_cast<double>(completed) / static_cast<double>(rows)))
+            {
+              cancelled.store(true, std::memory_order_relaxed);
+              break;
+            }
+            std::unique_lock<std::mutex> lock(task->mutex);
+            task->ready.wait_for(lock, std::chrono::milliseconds(20), [&]()
+            {
+              return task->finished.load(std::memory_order_acquire) || cancelled.load(std::memory_order_relaxed);
+            });
+          }
+          if (cancelled.load(std::memory_order_relaxed))
+          {
+            break;
+          }
+          if (!task->success)
+          {
+            error = task->error.empty() ? "VTK conversion worker failed." : task->error;
+            success = false;
+            break;
+          }
+          completed = task->end;
+          pending.pop_front();
         }
-        if (cancelled.load(std::memory_order_relaxed))
-        {
-          break;
-        }
-        if (!task->success)
-        {
-          error = task->error.empty() ? "VTK conversion worker failed." : task->error;
-          success = false;
-          break;
-        }
-        completed = task->end;
-        pending.pop_front();
       }
       if (success && !cancelled.load(std::memory_order_relaxed) && !poll(1.0))
       {

@@ -32,6 +32,7 @@ public:
   bool create_result(int job_id); // adds a new result for job
   bool delete_result(int job_id); // delete result for job
   bool load_result(int job_id); // load result for job
+  // options contains [frd_only, dat_only]; incomplete data is always retained.
   int convert_result(int job_id, std::vector<int> options, std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids); // convert result for job
   bool project_result(int job_id,int step,int totalincrement,double scale); // project disp result for job for specific step or increment
   bool project_topology(int topology_id, int iteration_id = -1,double threshold = 0.5, bool preview = false);

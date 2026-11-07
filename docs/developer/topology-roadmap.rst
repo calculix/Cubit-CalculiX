@@ -47,13 +47,22 @@ Current foundation
 Remaining implementation
 ------------------------
 
-* Batch 8a verification sources are supplied: a read-only Python settings query,
-  a configuration/save-reset-reopen journal and a separate manual GUI checklist.
-  Native checks remain unexecuted; the journal does not run an optimizer or
-  verify historical iteration persistence. See :doc:`topology-verification`.
-* Batch 8: independent geometry and finite-difference verification, solver
-  comparisons, mixed/higher-order meshes, performance checks, lifecycle tests,
-  user documentation, journals and screenshots.
+* Configuration, density integration/lifecycle and density-history persistence
+  have local November 2026 passing evidence. Manual GUI and level-set history
+  checks remain separate. See :doc:`topology-verification` for scope/provenance.
+* The physical-solve fixed-material-group derivative matrix passed all 18
+  cases: six formulations with compliance, absolute Y and displacement magnitude.
+  It does not establish density/filter or level-set nodal derivatives.
+* Native interpolation/geometry test sources and independent reference fixtures
+  are supplied under ``tests/topology``. They link the existing production module;
+  build/runtime execution remains pending. The tests directory is Git-ignored.
+* Next: verify nodal compliance/volume assembly, then independently check small
+  QP proposals, acceptance/backtracking, preservation and convergence diagnostics.
+* Then: native controller, level-set history persistence, mixed/curved meshes,
+  narrow-band refinement, performance, GUI lifecycle and Windows/Linux evidence.
+* Review the required evidence before enabling the supported level-set scope.
+  Public runs remain gated; current level-set integration supports compliance
+  only. Passing density displacement tests does not add level-set displacement.
 
 OpenPisco comparison and removal reminder
 -----------------------------------------

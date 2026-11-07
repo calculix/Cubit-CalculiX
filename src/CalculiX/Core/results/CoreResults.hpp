@@ -54,6 +54,7 @@ public:
   std::string get_vtk_export_path(int job_id) const;
   bool cancel_vtk_build();
   bool is_vtk_build_active() const;
+  // options contains [frd_only, dat_only]; incomplete data is always retained.
   int convert_result(int job_id, std::vector<int> options, std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids); // convert the results for the job if possible
   bool project_result(int job_id,int step,int totalincrement,double scale); // project disp result for job for specific step or increment
   bool project_topology(int topology_id,int iteration_id = -1,double threshold = 0.5,bool preview = false);

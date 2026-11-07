@@ -4,19 +4,69 @@ Native topology verification specification
 Status and execution boundary
 ------------------------------
 
-This is a specification for checking the production C++ implementation, not
-executed numerical evidence. The current Python interface does not expose the
-interpolation, level-set geometry, nodal-evaluation or proposal/acceptance helpers.
-The unified journal records those stages as BLOCKED. Production code is frozen
-for the documentation work; no bridge, test bypass or public run-gate removal
-was added. Implementing duplicate Python formulas would not verify the native
-functions and must not be reported as such.
+The November 2026 physical-solve matrix verified selected material-group
+stiffness-factor derivatives for all six formulations and three objectives.
+See :doc:`topology-verification` for evidence, tolerances and provenance limits.
+Those results do not verify the level-set field-to-fraction chain or updates.
 
-The entry journal is
-:download:`verify_topology.jou <../../examples/calculix/topology/verification/verify_topology.jou>`.
-It drives the available configuration checks and writes a complete stage manifest.
-See :doc:`topology-verification` for reporting conventions and
-:doc:`topology-level-set` for the method's definitions and assumptions.
+The current Python interface exposes historical raw sensitivities but not the
+interpolation, level-set geometry, nodal-evaluation or proposal/acceptance helpers.
+Native interpolation and geometry test sources now call the production functions
+directly; they have **not been configured, built or executed** in this batch.
+No test bypass, Python math replica or public run-gate removal is supplied.
+
+Local entry points have different scopes:
+
+* ``tests/verify_topology_all.jou``: integration and density lifecycle checks.
+* ``tests/verify_topology_sensitivities.jou``: the 18-case physical-solve matrix.
+* ``tests/topology/CMakeLists.txt``: native interpolation/geometry checks against
+  an already-built matching ``calculix_core`` module. It does not build the plugin.
+* The older :download:`configuration entry <../../examples/calculix/topology/verification/verify_topology.jou>`
+  remains a configuration manifest, not an invocation of the newer matrices.
+
+The tests directory is Git-ignored and not distributed as manual downloads.
+Native binaries require the matching Cubit runtime and plugin dependencies.
+Missing binaries, unresolved symbols, SDK initialization failures or loader errors
+are BLOCKED evidence, not mathematical PASS results. Windows and Linux require
+separate runs. See :doc:`topology-level-set` for method definitions.
+
+Supplied native test scope
+-------------------------
+
+``ReferenceElements.hpp`` specifies all six reference elements, independent
+CalculiX and Cubit/Exodus edge orderings, and a translated asymmetric affine map
+with determinant 1.5. It does not call the production permutation to construct
+its oracle. These synthetic fixtures do not replace live Cubit ordering checks.
+
+``InterpolationTests.cpp`` checks nodal identity, partition of unity, gradient
+sums, reference/physical coordinate reproduction, affine determinants and
+reference-gradient finite differences at steps 1e-3, 1e-4 and 1e-5. Algebraic
+identities use absolute tolerances of 2e-12 to 5e-12; gradient comparisons use
+2e-8 absolute plus 2e-8 relative. Unsupported types and invalid/singular/inverted
+inputs must fail and clear outputs.
+
+``LevelSetGeometryTests.cpp`` checks constant solid/void/zero fields, symmetric
+regularized planar cuts, preserved elements, geometric volumes, constraint-volume
+scaling and per-node fraction/volume derivatives. The smooth fixtures use
+interface width 1, integration tolerance 1e-7 and at most four refinements to
+separate derivative errors from narrow-interface resolution. All three steps
+1e-3, 1e-4 and 1e-5 are retained and must pass: fraction derivatives use 2e-6
+absolute plus 2e-4 relative; volume derivatives scale the absolute tolerance by
+the supplied constraint volume. Affine volumes use 2e-10 absolute plus 2e-10
+relative. These are declared regression tolerances, not observed accuracy.
+
+The geometry tests record subdivision counts and integration settings. Invalid
+requests must clear every output field. A narrow-band fixture with one allowed
+refinement and tolerance 1e-13 must report unresolved integration. That rejection
+does not establish narrow-band accuracy. Curved/mixed meshes, positive acceptance
+refinement studies, native nodal assembly and proposal/acceptance tests remain
+to be implemented. No placeholder test is counted as coverage.
+
+The CTest entries write ``evidence/interpolation.csv`` and ``evidence/geometry.csv``
+in their binary directory. Each row includes actual/expected values, explicit
+tolerances and its pass flag. Archive each run before rerunning, together with
+the tested plugin hash/revision, source revision, platform, compiler/configuration
+and matching Cubit version. The fixed filenames are overwritten on another run.
 
 Reference element fixtures
 ---------------------------

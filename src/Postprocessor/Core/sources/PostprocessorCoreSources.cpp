@@ -1,5 +1,6 @@
 #include "../application/PostprocessorCore.hpp"
 #include "Framework/Interfaces/ResultSourceProviderInterface.hpp"
+#include "../representations/ResultMesh.hpp"
 
 #include <exception>
 #include <filesystem>
@@ -143,9 +144,9 @@ namespace Postprocessor
   {
     error.clear();
 
-    if (source_operation_active)
+    if (source_operation_active || scene_revision == std::numeric_limits<std::uint64_t>::max())
     {
-      error = "A Postprocessor source operation is already active.";
+      error = "A Postprocessor source operation is active or display revisions are exhausted.";
       return false;
     }
     SourceOperationGuard guard(source_operation_active);
@@ -217,15 +218,21 @@ namespace Postprocessor
           return reference;
         }, published.reference);
 
+      const auto mesh_increment = first_mesh_increment(*published.data);
       auto staged_state = state;
       auto staged_runtime = runtime;
       staged_state.sources.emplace(source_id, std::move(source));
-      staged_runtime.emplace(source_id, SourceRuntime{published.data, 1});
+      staged_runtime.emplace(source_id, SourceRuntime{published.data, 1, mesh_increment});
       staged_state.active_source_id = source_id;
       staged_state.active_representation_id.clear();
+      if (!prepare_initial_display(staged_state, source_id, mesh_increment, error))
+      {
+        return false;
+      }
       state.swap(staged_state);
       runtime.swap(staged_runtime);
       next_source_number = number + 1;
+      ++scene_revision;
       error.clear();
       return true;
     }
@@ -248,9 +255,9 @@ namespace Postprocessor
   {
     error.clear();
 
-    if (source_operation_active)
+    if (source_operation_active || scene_revision == std::numeric_limits<std::uint64_t>::max())
     {
-      error = "A Postprocessor source operation is already active.";
+      error = "A Postprocessor source operation is active or display revisions are exhausted.";
       return false;
     }
     SourceOperationGuard guard(source_operation_active);
@@ -309,6 +316,7 @@ namespace Postprocessor
         return false;
       }
 
+      const auto mesh_increment = first_mesh_increment(*published.data);
       auto staged_state = state;
       auto staged_runtime = runtime;
       staged_state.sources.at(source_id).reference = std::visit(
@@ -316,9 +324,32 @@ namespace Postprocessor
         {
           return reference;
         }, published.reference);
-      staged_runtime.at(source_id) = SourceRuntime{published.data, loaded->second.revision + 1};
+      staged_runtime.at(source_id) = SourceRuntime{published.data, loaded->second.revision + 1, mesh_increment};
+      for (auto display = staged_state.representations.begin(); display != staged_state.representations.end();)
+      {
+        auto& definition = display->second;
+        if (definition.input.owner == OutputOwner::Source && definition.input.object_id == source_id)
+        {
+          if (!mesh_increment)
+          {
+            if (staged_state.active_representation_id == display->first)
+            {
+              staged_state.active_representation_id.clear();
+            }
+            display = staged_state.representations.erase(display);
+            continue;
+          }
+          if (definition.increment_index >= published.data->increments.size() ||
+              result_meshes(published.data->increments[definition.increment_index].dataset.get()).empty())
+          {
+            definition.increment_index = *mesh_increment;
+          }
+        }
+        ++display;
+      }
       state.swap(staged_state);
       runtime.swap(staged_runtime);
+      ++scene_revision;
       error.clear();
       return true;
     }
@@ -368,7 +399,8 @@ namespace Postprocessor
   {
     error.clear();
 
-    if (source_operation_active || state.sources.find(source_id) == state.sources.end())
+    if (source_operation_active || state.sources.find(source_id) == state.sources.end() ||
+        scene_revision == std::numeric_limits<std::uint64_t>::max())
     {
       error = "Cannot close a missing source or close sources during a source operation.";
       return false;
@@ -406,6 +438,7 @@ namespace Postprocessor
       staged_runtime.erase(source_id);
       state.swap(staged_state);
       runtime.swap(staged_runtime);
+      ++scene_revision;
       return true;
     }
     catch (const std::exception& exception)
@@ -424,7 +457,7 @@ namespace Postprocessor
   {
     error.clear();
 
-    if (source_operation_active)
+    if (source_operation_active || scene_revision == std::numeric_limits<std::uint64_t>::max())
     {
       error = "Cannot close sources during a Postprocessor source operation.";
       return false;
@@ -436,6 +469,7 @@ namespace Postprocessor
     runtime.clear();
     state.active_source_id.clear();
     state.active_representation_id.clear();
+    ++scene_revision;
     return true;
   }
 }

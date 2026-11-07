@@ -1,6 +1,11 @@
 add_library(postprocessor_core STATIC
   Core/application/PostprocessorCore.cpp
   Core/application/PostprocessorCore.hpp
+  Core/representations/DisplayDefaults.hpp
+  Core/representations/ResultMesh.cpp
+  Core/representations/ResultMesh.hpp
+  Core/representations/PostprocessorCoreRepresentations.cpp
+  Core/views/PostprocessorCoreViews.cpp
   Core/options/PostprocessorUserOptions.cpp
   Core/options/PostprocessorUserOptions.hpp
   Core/sources/PostprocessorCoreSources.cpp
@@ -13,7 +18,7 @@ add_library(postprocessor_core STATIC
   Core/layouts/LayoutDefinition.hpp
 )
 
-target_link_libraries(postprocessor_core PUBLIC cubitsim_results PRIVATE Qt6::Core)
+target_link_libraries(postprocessor_core PUBLIC cubitsim_results PRIVATE Qt6::Core VTK::CommonDataModel)
 target_include_directories(postprocessor_core PRIVATE "${CUBITSIM_SOURCE_ROOT}")
 target_compile_features(postprocessor_core PUBLIC cxx_std_17)
 set_target_properties(postprocessor_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
@@ -26,6 +31,12 @@ add_library(postprocessor_module SHARED
   Interfaces/PostprocessorApplicationInterface.hpp
   Commands/PostprocessorCommands.cpp
   Commands/PostprocessorCommands.hpp
+  Commands/display/PostShowCommand.cpp
+  Commands/display/PostShowCommand.hpp
+  Commands/display/PostHideCommand.cpp
+  Commands/display/PostHideCommand.hpp
+  Commands/views/PostViewFitCommand.cpp
+  Commands/views/PostViewFitCommand.hpp
   Commands/options/PostUserOptionsCommand.cpp
   Commands/options/PostUserOptionsCommand.hpp
   Commands/sources/PostOpenCommand.cpp
@@ -46,6 +57,8 @@ add_library(postprocessor_module SHARED
   GUI/Workspace/PostprocessorWorkspace.hpp
   GUI/Viewport/PostprocessorViewport.cpp
   GUI/Viewport/PostprocessorViewport.hpp
+  GUI/Viewport/PostprocessorScene.cpp
+  GUI/Viewport/PostprocessorScene.hpp
   GUI/ResultsTree/PostprocessorResultsTree.cpp
   GUI/ResultsTree/PostprocessorResultsTree.hpp
   GUI/Properties/PostprocessorProperties.cpp
@@ -55,7 +68,7 @@ add_library(postprocessor_module SHARED
 )
 
 target_link_libraries(postprocessor_module PRIVATE postprocessor_core cubiti cubit_util
-  Qt6::Widgets Qt6::OpenGLWidgets VTK::GUISupportQt VTK::RenderingCore VTK::RenderingOpenGL2)
+  Qt6::Widgets Qt6::OpenGLWidgets VTK::GUISupportQt VTK::RenderingCore VTK::RenderingOpenGL2 VTK::FiltersGeometry)
 target_compile_features(postprocessor_module PUBLIC cxx_std_17)
 target_include_directories(postprocessor_module PUBLIC "${CUBITSIM_SOURCE_ROOT}")
 set_target_properties(postprocessor_module PROPERTIES

@@ -36,6 +36,14 @@ public:
   bool select_source(const std::string& name, std::string& error);
   bool close_source(const std::string& name, std::string& error);
   bool close_all_sources(std::string& error);
+  bool set_source_visible(const std::string& name, bool visible, std::string& error);
+  bool request_camera_fit(std::string& error);
+  std::shared_ptr<const SimResults::VtkResultsData> result_data(const std::string& source_id) const;
+  bool source_has_mesh(const std::string& source_id) const noexcept;
+  std::uint64_t display_revision() const noexcept;
+  bool visible_bounds(const std::string& view_id, std::array<double, 6>& bounds, std::string& error) const;
+  bool complete_camera_fit(const std::string& view_id, std::uint64_t request,
+    std::uint64_t revision, const Postprocessor::CameraDefinition& camera, std::string& error);
 
 private:
   ResultSourceRegistryInterface& providers;

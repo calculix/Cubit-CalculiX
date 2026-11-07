@@ -523,6 +523,34 @@ GUI Method selection configures cases without enabling execution.
 Verification gates
 ------------------
 
+The November 2026 18-case solver matrix passed selected fixed-group raw
+stiffness-factor derivatives, including density displacement adjoints. It does
+not verify the level-set field-to-fraction mapping or add level-set displacement
+support. See :doc:`topology-verification` for the measurements and scope.
+
+.. list-table:: Gates before public level-set execution
+   :header-rows: 1
+
+   * - Gate
+     - Evidence / next action
+   * - Physical-solve raw stiffness derivatives
+     - Selected fixed-group checks passed; binary revision not recorded.
+   * - Interpolation and fraction/volume geometry
+     - Native sources supplied under tests/topology; build/run pending.
+   * - Nodal compliance and volume chain
+     - Native finite differences and shared/fixed-node assembly tests pending.
+   * - Proposal and acceptance
+     - Independent QP/KKT, restoration, backtracking and stale-source tests pending.
+   * - Controller and historical fields
+     - Level-set lifecycle/save-load and full compliance runs pending.
+   * - Mesh and deployment scope
+     - Curved/mixed/narrow-band refinement and Windows/Linux checks pending.
+
+Tests must exercise the production helpers and retain per-case evidence. The
+native specification and declared tolerances are in
+:doc:`numerical-verification-plan`. The public gate remains closed while these
+required checks are pending; no bypass command is introduced for testing.
+
 Before enabling runs, verify nodal interpolation, partition of unity, zero sum
 of shape gradients, finite-difference agreement of shape gradients, affine
 Jacobian volumes, all six node orderings, regularized planar cuts, fraction and

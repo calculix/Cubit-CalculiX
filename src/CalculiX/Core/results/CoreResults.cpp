@@ -445,9 +445,8 @@ bool CoreResults::export_vtk_result(int job_id, const std::string& destination)
 int CoreResults::convert_result(int job_id, std::vector<int> options, std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids)
 {
   CoreResultsVtkOptions settings;
-  settings.include_partial = options.empty() || options[0] != 0;
-  const bool frd_only = options.size() > 1 && options[1] == 1;
-  const bool dat_only = options.size() > 2 && options[2] == 1;
+  const bool frd_only = !options.empty() && options[0] == 1;
+  const bool dat_only = options.size() > 1 && options[1] == 1;
   settings.include_frd = frd_only || !dat_only;
   settings.include_dat = dat_only || !frd_only;
   settings.block_ids = std::move(block_ids);

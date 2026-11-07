@@ -5,6 +5,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 
 namespace Postprocessor
 {
@@ -16,6 +17,7 @@ namespace Postprocessor
     // Starts at one and advances only on a successful refresh. Future consumers
     // must invalidate derived outputs when their source revision changes.
     std::uint64_t revision = 1;
+    std::optional<std::size_t> first_mesh_increment;
   };
 }
 

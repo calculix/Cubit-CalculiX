@@ -4,6 +4,7 @@
 #include <array>
 #include <optional>
 #include <string>
+#include <cstdint>
 
 namespace Postprocessor
 {
@@ -32,6 +33,10 @@ namespace Postprocessor
     std::string id;
     std::string name;
     std::optional<CameraDefinition> camera;
+    // Session-local request bookkeeping, excluded from future persistence.
+    // Keep an existing camera as the orientation/projection seed for fitting.
+    bool fit_pending = true;
+    std::uint64_t fit_request = 0;
   };
 }
 

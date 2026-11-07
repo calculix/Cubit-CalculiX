@@ -1,6 +1,7 @@
 #include "CoreResultsVtkConverter.hpp"
 #include "CoreResultsVtkElements.hpp"
 #include "CoreResultsVtkPipeline.hpp"
+#include "CoreResultsVtkRowMaps.hpp"
 #include "Core/results/frd/CoreResultsFrd.hpp"
 #include "Core/results/dat/CoreResultsDat.hpp"
 #include <vtkCellArray.h>
@@ -61,10 +62,14 @@ namespace
     vtkSmartPointer<vtkIdTypeArray> connectivity;
   };
 
-  struct Row
+  using Row = CoreResultsVtkRowMaps::Row;
+
+  // Numeric views into masks already owned by this increment/domain's VTK grid.
+  // Only incomplete masks are recorded, after all field work has completed.
+  struct GridValidity
   {
-    Key key;
-    std::size_t data = 0;
+    std::vector<const unsigned char*> point_masks;
+    std::vector<const unsigned char*> cell_masks;
   };
 
   template<class T>
@@ -208,10 +213,14 @@ namespace
       }
       rows.push_back({{mapping[0], ip}, static_cast<std::size_t>(mapping[1])});
     }
-    std::sort(rows.begin(), rows.end(), [](const Row& a, const Row& b)
+    const auto less = [](const Row& a, const Row& b)
     {
       return a.key < b.key;
-    });
+    };
+    if (!std::is_sorted(rows.begin(), rows.end(), less))
+    {
+      std::sort(rows.begin(), rows.end(), less);
+    }
     for (std::size_t i = 1; i < rows.size(); ++i)
     {
       if (rows[i - 1].key == rows[i].key)
@@ -612,19 +621,8 @@ namespace
         || (field.field.association == Association::IntegrationPoint && domain.kind == Kind::DatIntegrationPoints);
   }
 
-  bool attach(const CoreResultsVtkPlan& plan, const Domain& domain, vtkUnstructuredGrid* grid, SimResults::Field metadata, vtkSmartPointer<vtkDoubleArray> array, vtkSmartPointer<vtkUnsignedCharArray> mask, SimResults::Increment& increment, std::vector<std::string>& diagnostics, std::string& error)
+  bool attach(const Domain& domain, vtkUnstructuredGrid* grid, SimResults::Field metadata, vtkSmartPointer<vtkDoubleArray> array, vtkSmartPointer<vtkUnsignedCharArray> mask, bool any_invalid, GridValidity& validity, SimResults::Increment& increment, std::string& error)
   {
-    const vtkIdType count = mask->GetNumberOfTuples();
-    bool partial = false;
-    for (vtkIdType i = 0; i < count; ++i)
-    {
-      partial = partial || mask->GetValue(i) == 0;
-    }
-    if (partial && !plan.options.include_partial)
-    {
-      diagnostics.push_back("Skipped incomplete field '" + metadata.name + "' in '" + domain.metadata.name + "', step " + std::to_string(increment.step) + ", increment " + std::to_string(increment.increment) + ".");
-      return true;
-    }
     metadata.dataset_id = domain.metadata.id;
     metadata.array_name = array_name(metadata);
     metadata.validity_array = "Valid/" + metadata.array_name;
@@ -648,11 +646,16 @@ namespace
     {
       grid->GetPointData()->SetVectors(array);
     }
+    if (any_invalid)
+    {
+      auto& masks = metadata.association == Association::Element ? validity.cell_masks : validity.point_masks;
+      masks.push_back(mask->GetPointer(0));
+    }
     increment.fields.push_back(std::move(metadata));
     return true;
   }
 
-  bool field_array(const CoreResultsFrd& frd, const CoreResultsDat& dat, const CoreResultsVtkPlan& plan, const CoreResultsVtkFieldPlan& field, const std::vector<Row>& rows, const Domain& domain, vtkUnstructuredGrid* grid, SimResults::Increment& increment, std::vector<std::string>& diagnostics, CoreResultsVtkPipeline& pipeline, const Poll& poll, std::string& error)
+  bool field_array(const CoreResultsFrd& frd, const CoreResultsDat& dat, const CoreResultsVtkFieldPlan& field, const std::vector<Row>& rows, const std::vector<std::size_t>* row_map, const Domain& domain, vtkUnstructuredGrid* grid, GridValidity& validity, SimResults::Increment& increment, CoreResultsVtkPipeline& pipeline, const Poll& poll, std::string& error)
   {
     const bool cells = field.field.association == Association::Element;
     const std::size_t count = cells ? domain.elements.size() : domain.points.size();
@@ -675,39 +678,58 @@ namespace
       return false;
     }
     const double nan = std::numeric_limits<double>::quiet_NaN();
+    std::atomic<bool> any_invalid{false};
     if (!pipeline.run(count, components * sizeof(double) + sizeof(unsigned char), [&](std::size_t begin, std::size_t end, const std::atomic<bool>& cancelled, std::string& failure)
     {
       (void)failure;
+      bool chunk_invalid = false;
       for (std::size_t i = begin; i < end; ++i)
       {
         if (cancelled.load(std::memory_order_relaxed))
         {
           return true;
         }
-        const Key key = cells ? Key{domain.elements[i], 0} : domain.points[i];
-        const Row* source = find_row(rows, key);
-        bool complete = source != nullptr;
-        if (source)
+        std::size_t source = CoreResultsVtkRowMaps::missing;
+        if (row_map)
         {
-          for (std::size_t c = 0; c < components; ++c)
+          source = (*row_map)[i];
+        }
+        else
+        {
+          const Key key = cells ? Key{domain.elements[i], 0} : domain.points[i];
+          const auto* row = find_row(rows, key);
+          if (row)
           {
-            complete = complete && std::isfinite(values[source->data][field.component_offset + c]);
+            source = row->data;
           }
         }
-        valid[i] = complete ? 1 : 0;
-        for (std::size_t c = 0; c < components; ++c)
+        double* target = destination + i * components;
+        if (source == CoreResultsVtkRowMaps::missing)
         {
-          // Validity describes the tuple; preserve every reported component,
-          // including finite neighbours and signed infinities in an invalid tuple.
-          destination[i * components + c] = source ? values[source->data][field.component_offset + c] : nan;
+          std::fill_n(target, components, nan);
+          valid[i] = 0;
         }
+        else
+        {
+          const double* input = values[source].data() + field.component_offset;
+          std::copy_n(input, components, target);
+          valid[i] = std::all_of(input, input + components, [](double value)
+          {
+            return std::isfinite(value);
+          }) ? 1 : 0;
+        }
+        chunk_invalid = chunk_invalid || valid[i] == 0;
+      }
+      if (chunk_invalid)
+      {
+        any_invalid.store(true, std::memory_order_relaxed);
       }
       return true;
     }, poll, error))
     {
       return false;
     }
-    return attach(plan, domain, grid, field.field, array, mask, increment, diagnostics, error);
+    return attach(domain, grid, field.field, array, mask, any_invalid.load(std::memory_order_relaxed), validity, increment, error);
   }
 
   bool close_time(double a, double b, const CoreResultsVtkOptions& options)
@@ -760,7 +782,7 @@ namespace
     return true;
   }
 
-  bool ip_displacement(const CoreResultsFrd& frd, const CoreResultsVtkPlan& plan, const CoreResultsVtkFieldPlan& field, const std::vector<Row>& rows, const ShapeCache& shapes, const Domain& domain, vtkUnstructuredGrid* grid, SimResults::Increment& increment, std::vector<std::string>& diagnostics, CoreResultsVtkPipeline& pipeline, const Poll& poll, std::string& error)
+  bool ip_displacement(const CoreResultsFrd& frd, const CoreResultsVtkPlan& plan, const CoreResultsVtkFieldPlan& field, const std::vector<Row>& rows, const ShapeCache& shapes, const Domain& domain, vtkUnstructuredGrid* grid, GridValidity& validity, SimResults::Increment& increment, CoreResultsVtkPipeline& pipeline, const Poll& poll, std::string& error)
   {
     const std::size_t count = domain.points.size();
     if (!fits(count, 3, error))
@@ -781,9 +803,11 @@ namespace
       return false;
     }
     const double nan = std::numeric_limits<double>::quiet_NaN();
+    std::atomic<bool> any_invalid{false};
     if (!pipeline.run(count, 3 * sizeof(double) + sizeof(unsigned char), [&](std::size_t begin, std::size_t end, const std::atomic<bool>& cancelled, std::string& failure)
     {
       (void)failure;
+      bool chunk_invalid = false;
       for (std::size_t i = begin; i < end; ++i)
       {
         if (cancelled.load(std::memory_order_relaxed))
@@ -816,10 +840,15 @@ namespace
         }
         complete = complete && std::isfinite(result[0]) && std::isfinite(result[1]) && std::isfinite(result[2]);
         valid[i] = complete ? 1 : 0;
+        chunk_invalid = chunk_invalid || !complete;
         for (std::size_t c = 0; c < 3; ++c)
         {
           destination[3 * i + c] = complete ? result[c] : nan;
         }
+      }
+      if (chunk_invalid)
+      {
+        any_invalid.store(true, std::memory_order_relaxed);
       }
       return true;
     }, poll, error))
@@ -831,34 +860,12 @@ namespace
     metadata.set_name = domain.metadata.name;
     metadata.association = Association::IntegrationPoint;
     metadata.interpolated = true;
-    return attach(plan, domain, grid, metadata, array, mask, increment, diagnostics, error);
+    return attach(domain, grid, metadata, array, mask, any_invalid.load(std::memory_order_relaxed), validity, increment, error);
   }
 
-  bool partial_cells(const Domain& domain, vtkUnstructuredGrid* grid, const SimResults::Increment& increment, CoreResultsVtkPipeline& pipeline, const Poll& poll, std::string& error)
+  bool partial_cells(const Domain& domain, vtkUnstructuredGrid* grid, const GridValidity& validity,
+    std::size_t scratch_budget, CoreResultsVtkPipeline& pipeline, const Poll& poll, std::string& error)
   {
-    struct Mask
-    {
-      bool cells = false;
-      const unsigned char* values = nullptr;
-    };
-    std::vector<Mask> masks;
-    for (const auto& field : increment.fields)
-    {
-      if (field.dataset_id != domain.metadata.id)
-      {
-        continue;
-      }
-      const bool cells = field.association == Association::Element;
-      vtkDataSetAttributes* attributes = cells ? static_cast<vtkDataSetAttributes*>(grid->GetCellData()) : static_cast<vtkDataSetAttributes*>(grid->GetPointData());
-      auto* mask = vtkUnsignedCharArray::SafeDownCast(attributes->GetArray(field.validity_array.c_str()));
-      const std::size_t expected = cells ? domain.elements.size() : domain.points.size();
-      if (!mask || mask->GetNumberOfTuples() != static_cast<vtkIdType>(expected))
-      {
-        error = "Missing/invalid field validity mask during finalization.";
-        return false;
-      }
-      masks.push_back({cells, mask->GetPointer(0)});
-    }
     auto partial = vtkSmartPointer<vtkUnsignedCharArray>::New();
     partial->SetName("Partial");
     partial->SetNumberOfTuples(static_cast<vtkIdType>(domain.elements.size()));
@@ -868,44 +875,102 @@ namespace
       error = "Cannot allocate the partial-cell array.";
       return false;
     }
+    // The auxiliary union is bounded. If it cannot fit, keep the previous
+    // per-cell scan of incomplete point masks, without allocating more scratch.
+    std::vector<unsigned char> invalid_points;
+    if (!validity.point_masks.empty() && domain.points.size() <= scratch_budget)
+    {
+      invalid_points.resize(domain.points.size());
+      if (invalid_points.capacity() > scratch_budget)
+      {
+        std::vector<unsigned char>().swap(invalid_points);
+      }
+    }
+    if (!invalid_points.empty())
+    {
+      if (!pipeline.run(invalid_points.size(), 1, [&](std::size_t begin, std::size_t end, const std::atomic<bool>& cancelled, std::string& failure)
+      {
+        (void)failure;
+        for (std::size_t point = begin; point < end; ++point)
+        {
+          if (cancelled.load(std::memory_order_relaxed))
+          {
+            return true;
+          }
+          bool missing = false;
+          for (const auto* mask : validity.point_masks)
+          {
+            if (mask[point] == 0)
+            {
+              missing = true;
+              break;
+            }
+          }
+          invalid_points[point] = missing ? 1 : 0;
+        }
+        return true;
+      }, [&](double fraction)
+      {
+        return poll(0.5 * fraction);
+      }, error))
+      {
+        return false;
+      }
+    }
     const vtkIdType* offsets = domain.offsets->GetPointer(0);
     const vtkIdType* connectivity = domain.connectivity->GetPointer(0);
     if (!pipeline.run(domain.elements.size(), 1, [&](std::size_t begin, std::size_t end, const std::atomic<bool>& cancelled, std::string& failure)
     {
       (void)failure;
-      for (std::size_t i = begin; i < end; ++i)
+      if (validity.point_masks.empty() && validity.cell_masks.empty())
+      {
+        std::fill(destination + begin, destination + end, static_cast<unsigned char>(0));
+        return true;
+      }
+      for (std::size_t cell = begin; cell < end; ++cell)
       {
         if (cancelled.load(std::memory_order_relaxed))
         {
           return true;
         }
         bool missing = false;
-        for (const auto& mask : masks)
+        for (const auto* mask : validity.cell_masks)
         {
-          if (mask.cells)
+          if (mask[cell] == 0)
           {
-            missing = mask.values[i] == 0;
-          }
-          else
-          {
-            for (vtkIdType p = offsets[i]; p < offsets[i + 1]; ++p)
-            {
-              if (mask.values[connectivity[p]] == 0)
-              {
-                missing = true;
-                break;
-              }
-            }
-          }
-          if (missing)
-          {
+            missing = true;
             break;
           }
         }
-        destination[i] = missing ? 1 : 0;
+        if (!validity.point_masks.empty())
+        {
+          for (vtkIdType p = offsets[cell]; !missing && p < offsets[cell + 1]; ++p)
+          {
+            const auto point = connectivity[p];
+            if (!invalid_points.empty())
+            {
+              missing = invalid_points[point] != 0;
+            }
+            else
+            {
+              for (const auto* mask : validity.point_masks)
+              {
+                if (mask[point] == 0)
+                {
+                  missing = true;
+                  break;
+                }
+              }
+            }
+          }
+        }
+        destination[cell] = missing ? 1 : 0;
       }
       return true;
-    }, poll, error))
+    }, [&](double fraction)
+    {
+      return poll(invalid_points.empty() ? fraction : 0.5 + 0.5 * fraction);
+    }, error))
     {
       return false;
     }
@@ -918,12 +983,12 @@ namespace
    * RecordIndex is the zero-based source mapping row within this block, not a
    * physical contact-element/IP identity and not an identity across increments.
    * Reported labels need not refer to mesh nodes and imply no coordinates.
-   * Non-finite energies retain their original value with Valid=0. no_partial
-   * skips the entire incomplete field, never a subset of its records.
+   * Non-finite energies retain their original value with Valid=0. Every source
+   * record is retained, including invalid and repeated contributions.
    */
   bool contact_table(const CoreResultsFrd& frd, const CoreResultsVtkPlan& plan,
     const CoreResultsVtkFieldPlan& field, SimResults::Increment& increment,
-    std::vector<std::string>& diagnostics, CoreResultsVtkPipeline& pipeline,
+    CoreResultsVtkPipeline& pipeline,
     const Poll& poll, std::string& error)
   {
     if (field.field.source != "FRD" || field.field.name != "CELS" ||
@@ -1000,12 +1065,6 @@ namespace
     {
       return false;
     }
-    if (!plan.options.include_partial && count > 0 &&
-      std::find(valid, valid + count, static_cast<unsigned char>(0)) != valid + count)
-    {
-      diagnostics.push_back("Skipped incomplete FRD CELS table from source block " + std::to_string(field.source_block) + ".");
-      return true;
-    }
     record_index->Modified();
     reported_node->Modified();
     energy->Modified();
@@ -1057,7 +1116,7 @@ namespace
         {
           return !poll || poll(0.95 + 0.015 * (completed + fraction) / std::max<std::size_t>(1, count));
         };
-        if (!contact_table(frd, plan, field, result.increments[i], result.diagnostics, pipeline, progress, error))
+        if (!contact_table(frd, plan, field, result.increments[i], pipeline, progress, error))
         {
           return false;
         }
@@ -1166,11 +1225,6 @@ namespace
     }, poll, error))
     {
       return false;
-    }
-    if (!plan.options.include_partial && count > 0 && std::find(valid, valid + count, static_cast<unsigned char>(0)) != valid + count)
-    {
-      result.diagnostics.push_back("Skipped incomplete DAT table " + input.name + ".");
-      return true;
     }
     for (vtkIdType column = 0; column < table->GetNumberOfColumns(); ++column)
     {
@@ -1371,7 +1425,14 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
     }
     std::vector<Domain> domains;
     ShapeCache shapes;
-    CoreResultsVtkPipeline pipeline(plan.options, cancelled);
+    // Share the configured work budget between cached maps, reduction scratch
+    // and task scheduling. Small budgets retain the uncached/no-scratch paths.
+    const std::size_t auxiliary_budget = plan.options.pending_bytes / plan.options.chunk_bytes >= 4 ?
+      std::min<std::size_t>(16 * 1024 * 1024, plan.options.pending_bytes / 4) : 0;
+    CoreResultsVtkRowMaps row_maps(auxiliary_budget);
+    auto scheduling_options = plan.options;
+    scheduling_options.pending_bytes -= 2 * auxiliary_budget;
+    CoreResultsVtkPipeline pipeline(scheduling_options, cancelled);
     std::vector<const CoreResultsVtkGroup*> groups;
     CoreResultsVtkGroup base;
     CoreResultsVtkGroup unassigned;
@@ -1476,6 +1537,7 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
     }
     const auto& increments = plan.increments.empty() ? table_frame : plan.increments;
     std::vector<std::vector<vtkSmartPointer<vtkUnstructuredGrid>>> grids(increments.size());
+    std::vector<std::vector<GridValidity>> validity(increments.size(), std::vector<GridValidity>(domains.size()));
     result->increments.resize(increments.size());
     for (std::size_t i = 0; i < increments.size(); ++i)
     {
@@ -1527,6 +1589,7 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
         {
           return false;
         }
+        auto* layout = row_maps.layout(rows, field.field.association);
         for (std::size_t d = 0; d < domains.size(); ++d)
         {
           const Poll progress = [&](double fraction)
@@ -1537,9 +1600,19 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
           {
             return false;
           }
-          if (applicable(field, domains[d]) && !field_array(frd, dat, plan, field, rows, domains[d], grids[i][d], result->increments[i], result->diagnostics, pipeline, progress, error))
+          if (applicable(field, domains[d]))
           {
-            return false;
+            const auto& domain = domains[d];
+            const bool cells = field.field.association == Association::Element;
+            const auto count = cells ? domain.elements.size() : domain.points.size();
+            const auto* mapping = row_maps.mapping(layout, domain.metadata.id, count, [&](std::size_t row)
+            {
+              return cells ? Key{domain.elements[row], 0} : domain.points[row];
+            });
+            if (!field_array(frd, dat, field, rows, mapping, domain, grids[i][d], validity[i][d], result->increments[i], pipeline, progress, error))
+            {
+              return false;
+            }
           }
           operation += 1.0;
         }
@@ -1582,7 +1655,7 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
           {
             return false;
           }
-          if (found && domains[d].kind == Kind::DatIntegrationPoints && !ip_displacement(frd, plan, field, rows, shapes, domains[d], grids[i][d], result->increments[i], result->diagnostics, pipeline, progress, error))
+          if (found && domains[d].kind == Kind::DatIntegrationPoints && !ip_displacement(frd, plan, field, rows, shapes, domains[d], grids[i][d], validity[i][d], result->increments[i], pipeline, progress, error))
           {
             return false;
           }
@@ -1620,7 +1693,7 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
         {
           return observe(0.98 + 0.02 * (static_cast<double>(i) + (static_cast<double>(d) + fraction) / domains.size()) / result->increments.size());
         };
-        if (!partial_cells(domains[d], grids[i][d], result->increments[i], pipeline, progress, error))
+        if (!partial_cells(domains[d], grids[i][d], validity[i][d], auxiliary_budget, pipeline, progress, error))
         {
           return false;
         }

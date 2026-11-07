@@ -8,7 +8,7 @@ The following command handlers are implemented in source. Native parser behavior
 job loading and journal replay remain unverified until building and testing are
 authorized. These commands manage loaded source data. Use
 ``sim workspace postprocessor`` to enter the :doc:`workspace`; its viewport is
-independent and remains empty until result rendering is implemented.
+independent and displays supported mesh sources with a neutral surface and edges.
 
 Open job results
 ----------------
@@ -42,6 +42,44 @@ The provider returns an immutable result snapshot. Opening a job without an expl
 snapshot request loads its current result files; the command does not select a
 historical solver run. The current CalculiX snapshot token identifies a conversion,
 not a durable solver run. Running jobs and active result conversions are rejected.
+
+Show and hide sources
+---------------------
+
+.. code-block:: text
+
+   post show "<source name>"
+   post hide "<source name>"
+
+These commands affect only the active view. Showing creates its source
+representation if needed; repeated show/hide requests are idempotent. Hiding
+retains the input data and does not change source selection, an established
+camera, or another view's visibility. Unknown names fail. Table-only sources
+cannot be shown as meshes. Tree checkboxes submit these same commands and restore
+authoritative Core state after failure.
+
+Opening a mesh source automatically creates a visible representation in the
+active view, using its first increment containing a supported nonempty mesh.
+Each representation stores its own increment index for future time comparison
+between views. There is no time-navigation command yet.
+
+Fit visible meshes
+------------------
+
+.. code-block:: text
+
+   post view fit
+
+Requests fitting all visible mesh bounds in the active view. It fails without
+visible mesh data. The first mesh in an initially unfitted view requests fitting
+automatically; later openings retain an established camera. The request preserves
+the current orientation/projection as its seed. The GUI completes it when the
+viewport is visible and has a valid OpenGL context, using the current viewport
+aspect ratio. Its resulting camera is validated and retained in Core.
+
+The command records the fit intent, not exact camera coordinates across different
+window sizes. A headless or hidden view retains the request until GUI completion.
+Mouse orbit/pan/zoom remain blocked pending their own journalable commands.
 
 List sources
 ------------
@@ -124,8 +162,8 @@ Lifecycle and deferred commands
 The module owns one application instance per initialized Framework lifetime.
 Application state is released at module shutdown. Command objects retain weak
 application handles; stale commands fail rather than access destroyed state.
-No ``post`` refresh/file/draw/view command is registered in this stage. Independent
+No ``post`` refresh/file/draw command is registered in this stage. Independent
 VTU/VTPC/VTT files, FRD/DAT file opening, Cubit geometry,
-automatic displays and view controls require their later implementations.
+field coloring, time navigation and mouse view controls require their later implementations.
 
 See :doc:`../developer/postprocessor` for source files and method contracts.

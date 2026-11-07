@@ -34,7 +34,7 @@ void heaviside(double phi, double width, double& value, double& derivative)
   {
     const double pi = std::acos(-1.0);
     const double scaled = phi / width;
-    value = 0.5 * (1.0 + scaled + std::sin(pi * scaled) / pi);
+    value = std::clamp(0.5 * (1.0 + scaled + std::sin(pi * scaled) / pi), 0.0, 1.0);
     derivative = 0.5 * (1.0 + std::cos(pi * scaled)) / width;
   }
 }

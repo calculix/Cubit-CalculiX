@@ -112,7 +112,7 @@ Workspace checks after build authorization
   after every other visible menu. Native Cubit Help entries must remain available;
   the shared manual action must work after repeated switches and GUI reattachment.
 * Switch repeatedly among all three workspaces. Cubit/CalculiX must retain their
-  original viewport and camera; Postprocessor must show its independent empty one.
+  original viewport and camera; Postprocessor must show its independent mesh view.
 * Verify left source/right properties docks, native navigation/toolbars hidden,
   command/error/history below only the middle column and unchanged status/progress.
 * Switch away and restore previous command-dock properties and native toolbar
@@ -124,7 +124,8 @@ Workspace checks after build authorization
 * Check native command/close icons in both themes and standard-icon fallback when
   resources are absent. Confirm tooltips and enabled states match selection.
 * Resize, minimize/restore and change displays/DPI. Rendering starts only with a
-  valid Qt OpenGL context. Shell input remains blocked; no camera mutation occurs.
+  valid Qt OpenGL context. Mouse navigation remains blocked; only requested fitting
+  may update the camera through its validated completion interface.
 * Retain a source across GUI detach/re-attach. Stop observer callbacks before widget
   destruction and verify no queued refresh targets a deleted workspace.
 * Record the first successful workspace build separately from native GUI, GL,
@@ -151,10 +152,34 @@ Options checks after build authorization
   and shutdown, including a retained command after application destruction.
   No stale options callbacks may target deleted widgets or a different instance.
 
+Mesh-display checks after build authorization
+---------------------------------------------
+
+Run the standalone ``src/Postprocessor/Tests`` project against the same VTK/Qt SDK.
+It exercises production Core and scene code without rendering. Then in Cubit:
+
+* Open an existing CalculiX job before and after entering Postprocessor. Confirm
+  first mesh display, neutral surface/edges and an initial camera fit. Check a
+  partition collection, a single grid, beam/shell/solid meshes and table-only data.
+* Open two sources. Verify the second retains the established camera; fit both
+  with ``post view fit``. Hide one and fit again; hidden geometry must not affect
+  bounds. With no visible mesh, fit must fail without changing the previous camera.
+* Toggle source checkboxes and type post show/hide. Confirm one journal command
+  per action, no duplicate representations, retained source data and no native
+  Cubit camera change. Failed commands restore Core checkbox state.
+* Close/refresh sources while Postprocessor is hidden, then return. No stale actor
+  or invalid frame may remain. Hide/show retains actors for unchanged data.
+* Record/replay open/show/hide/fit with controlled inputs. Fit completes only when
+  a visible, initialized viewport exists; dimensions can affect fitted coordinates.
+* Resize, recreate the GL context, switch workspaces and detach/reattach the GUI.
+  Confirm queued callbacks cannot access deleted widgets and camera state survives.
+* These native parser/render checks have not been run by the agent. Constructor
+  symbol inspection and static source checks are not equivalent to ABI/GL testing.
+
 Deferred feature checks
 -----------------------
 
-Native command journaling/replay remains unverified. Automatic display creation, VTU/VTPC/VTT import,
+Native command journaling/replay remains unverified. VTU/VTPC/VTT import,
 independent FRD/DAT loading, viewport navigation commands, geometry picking,
 comparison links, derived features and save/reopen require their corresponding
 implementations. Do not report these as verified from Core source inspection.

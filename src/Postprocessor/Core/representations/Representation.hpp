@@ -2,6 +2,7 @@
 #define POSTPROCESSOR_REPRESENTATION_HPP
 
 #include <string>
+#include <cstddef>
 
 namespace Postprocessor
 {
@@ -31,6 +32,8 @@ namespace Postprocessor
     OutputReference input;
     std::string view_id;
     bool visible = true;
+    // Per-view frame selection; independent views may choose different frames.
+    std::size_t increment_index = 0;
   };
 }
 

@@ -137,9 +137,12 @@ CMake generation failure. The earlier configuration-only correction still
 conflicted between C and C++; native configuration after this correction remains
 unverified.
 
-The widget receives its surface format before display. Initial render is queued
-until the Qt OpenGL widget is visible and valid. Result actors, camera commands,
-frame controls and multi-view layouts are not implemented in this stage.
+The widget receives its surface format before display. Rendering is queued until
+the Qt OpenGL widget is visible and valid. The scene now displays mesh partitions,
+with per-view show/hide commands and deferred camera-fit completion. See
+:doc:`postprocessor-display` for source maps, ownership and mathematical contracts.
+Field coloring, orbit/pan/zoom, frame controls and multi-view layouts are not
+implemented yet.
 
 Native toolbar icon inventory
 -----------------------------
