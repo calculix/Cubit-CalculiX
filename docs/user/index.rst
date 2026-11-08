@@ -16,6 +16,7 @@ and interpretation of results. The initial chapter covers topology.
    topology-management
    cgal
    topology-solver
+   job-monitor
 
 Planned coverage
 ----------------

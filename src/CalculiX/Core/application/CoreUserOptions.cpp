@@ -32,10 +32,6 @@ void swapOptions(UserOptions& first, UserOptions& second) noexcept
   first.mSolverThreadsName.swap(second.mSolverThreadsName);
   swap(first.mConverterThreads, second.mConverterThreads);
   first.mConverterThreadsName.swap(second.mConverterThreadsName);
-  first.mPathCGX.swap(second.mPathCGX);
-  first.mPathCGXName.swap(second.mPathCGXName);
-  first.mPathParaView.swap(second.mPathParaView);
-  first.mPathParaViewName.swap(second.mPathParaViewName);
   first.mPathIcons.swap(second.mPathIcons);
   first.mPathIconsName.swap(second.mPathIconsName);
   first.mPathPythonInterface.swap(second.mPathPythonInterface);
@@ -93,17 +89,11 @@ std::vector<UserOption> definitions()
 {
 #ifdef _WIN32
   const char* solverDefault = "Solver/ccx_2.23.exe";
-  const char* cgxDefault = "Postprocessor/CGX/cgx_STATIC.exe";
-  const char* paraviewDefault = "Postprocessor/ParaView/bin/paraview.exe";
 #else
   const char* solverDefault = "Solver/ccx_2.22_MT";
-  const char* cgxDefault = "Postprocessor/CGX/cgx_2.22";
-  const char* paraviewDefault = "Postprocessor/ParaView/bin/paraview";
 #endif
   return {
     {"paths/solver", UserOptionKind::ComponentPath, std::string(solverDefault), validPath},
-    {"paths/cgx", UserOptionKind::ComponentPath, std::string(cgxDefault), validPath},
-    {"paths/paraview", UserOptionKind::ComponentPath, std::string(paraviewDefault), validPath},
     {"paths/icons", UserOptionKind::ComponentPath, std::string("Icons/"), validPath},
     {"paths/python_interface", UserOptionKind::ComponentPath, std::string("."), validPath},
     {"paths/material_library", UserOptionKind::ComponentPath, std::string("libmaterial.hdf5"), validPath},
@@ -132,8 +122,6 @@ UserOptions runtimeOptions(const UserOptionValues& values)
 {
   UserOptions result;
   result.mPathSolver = resolvedPath(std::get<std::string>(values.at("paths/solver")));
-  result.mPathCGX = resolvedPath(std::get<std::string>(values.at("paths/cgx")));
-  result.mPathParaView = resolvedPath(std::get<std::string>(values.at("paths/paraview")));
   result.mPathIcons = resolvedPath(std::get<std::string>(values.at("paths/icons")));
   result.mPathPythonInterface = resolvedPath(std::get<std::string>(values.at("paths/python_interface")));
   result.mPathMaterialLibrary = resolvedPath(std::get<std::string>(values.at("paths/material_library")));
@@ -151,8 +139,6 @@ UserOptions runtimeOptions(const UserOptionValues& values)
   result.mPathSolverName = "Path to CalculiX Solver";
   result.mSolverThreadsName = "Solver - Threads";
   result.mConverterThreadsName = "Converter - Threads";
-  result.mPathCGXName = "Path to CGX";
-  result.mPathParaViewName = "Path to ParaView";
   result.mPathIconsName = "Path to Icons";
   result.mPathPythonInterfaceName = "Path to Python Interface";
   result.mSaveLoadedResultsName = "Save loaded FRD and DAT data";

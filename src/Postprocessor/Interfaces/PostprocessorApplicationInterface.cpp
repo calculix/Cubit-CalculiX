@@ -65,6 +65,11 @@ bool PostprocessorApplicationInterface::close_source(const std::string& name, st
   return core.close_source(id, error);
 }
 
+bool PostprocessorApplicationInterface::reset(std::string& error)
+{
+  return core.reset(error);
+}
+
 bool PostprocessorApplicationInterface::close_all_sources(std::string& error)
 {
   return core.close_all_sources(error);
@@ -84,6 +89,31 @@ bool PostprocessorApplicationInterface::set_source_visible(const std::string& na
 bool PostprocessorApplicationInterface::request_camera_fit(std::string& error)
 {
   return core.request_camera_fit(core.session().active_view_id, error);
+}
+
+bool PostprocessorApplicationInterface::camera_navigation_ready(const std::string& view_id) const noexcept
+{
+  return core.camera_navigation_ready(view_id);
+}
+
+bool PostprocessorApplicationInterface::set_camera(const Postprocessor::CameraDefinition& camera, std::string& error)
+{
+  return core.set_camera(core.session().active_view_id, camera, error);
+}
+
+bool PostprocessorApplicationInterface::rotate_camera(double yaw, double pitch, std::string& error)
+{
+  return core.rotate_camera(core.session().active_view_id, yaw, pitch, error);
+}
+
+bool PostprocessorApplicationInterface::pan_camera(double horizontal, double vertical, std::string& error)
+{
+  return core.pan_camera(core.session().active_view_id, horizontal, vertical, error);
+}
+
+bool PostprocessorApplicationInterface::zoom_camera(double factor, std::string& error)
+{
+  return core.zoom_camera(core.session().active_view_id, factor, error);
 }
 
 std::shared_ptr<const SimResults::VtkResultsData> PostprocessorApplicationInterface::result_data(const std::string& source_id) const

@@ -36,8 +36,14 @@ public:
   bool select_source(const std::string& name, std::string& error);
   bool close_source(const std::string& name, std::string& error);
   bool close_all_sources(std::string& error);
+  bool reset(std::string& error);
   bool set_source_visible(const std::string& name, bool visible, std::string& error);
   bool request_camera_fit(std::string& error);
+  bool camera_navigation_ready(const std::string& view_id) const noexcept;
+  bool set_camera(const Postprocessor::CameraDefinition& camera, std::string& error);
+  bool rotate_camera(double yaw, double pitch, std::string& error);
+  bool pan_camera(double horizontal, double vertical, std::string& error);
+  bool zoom_camera(double factor, std::string& error);
   std::shared_ptr<const SimResults::VtkResultsData> result_data(const std::string& source_id) const;
   bool source_has_mesh(const std::string& source_id) const noexcept;
   std::uint64_t display_revision() const noexcept;

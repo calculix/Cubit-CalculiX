@@ -1,4 +1,7 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/JobProgress.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/JobProgress.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreJobsProgress.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreJobsMonitoring.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXJobMonitorProvider.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXJobMonitorProvider.hpp

@@ -87,8 +87,6 @@ The interval is an integer from 1 to 60 seconds. Monitor colors use ``#RRGGBB``.
 CalculiX settings (Windows example paths)::
 
    ccx useroptions solver "Solver/ccx_2.23.exe"
-   ccx useroptions cgx "Postprocessor/CGX/cgx_STATIC.exe"
-   ccx useroptions paraview "Postprocessor/ParaView/bin/paraview.exe"
    ccx useroptions icons "Icons/"
    ccx useroptions python_interface "."
    ccx useroptions material_library "libmaterial.hdf5"

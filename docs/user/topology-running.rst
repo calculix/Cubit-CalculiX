@@ -58,7 +58,7 @@ example:
 
 .. code-block:: text
 
-   ccx result convert job 1 in_memory
+   ccx result convert job 1
 
 Use the actual failed job ID. Retrying with the same unresolved inputs can fail
 again. A successful retry clears the conversion prerequisite on the next job

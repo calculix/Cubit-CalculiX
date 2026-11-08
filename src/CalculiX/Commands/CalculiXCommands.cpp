@@ -153,10 +153,9 @@
 #include "Commands/topology/ccxWaitTopologyCommand.hpp"
 #include "Commands/topology/ccxKillTopologyCommand.hpp"
 #include "Commands/jobs/ccxWaitJobCommand.hpp"
-#include "Commands/results/ccxResultCGXJobCommand.hpp"
-#include "Commands/results/ccxResultParaViewJobCommand.hpp"
 #include "Commands/results/ccxResultLoadJobCommand.hpp"
 #include "Commands/results/ccxResultConvertJobCommand.hpp"
+#include "Commands/results/ccxResultExportJobCommand.hpp"
 #include "Commands/results/frd/ccxResultPlotJobFrdCommand.hpp"
 #include "Commands/results/dat/ccxResultPlotJobDatCommand.hpp"
 #include "Commands/results/dat/ccxResultPlotJobDatSectionCommand.hpp"
@@ -334,10 +333,9 @@ std::vector<std::string> CalculiXCommands::command_keys() const
   keys.push_back("ccxKillTopologyCommand");
   keys.push_back("ccxWaitJobCommand");
   keys.push_back("ccxKillJobCommand");
-  keys.push_back("ccxResultCGXJobCommand");
-  keys.push_back("ccxResultParaViewJobCommand");
   keys.push_back("ccxResultLoadJobCommand");
   keys.push_back("ccxResultConvertJobCommand");
+  keys.push_back("ccxResultExportJobCommand");
   keys.push_back("ccxResultPlotJobFrdCommand");
   keys.push_back("ccxResultPlotJobDatCommand");
   keys.push_back("ccxResultPlotJobDatSectionCommand");
@@ -1119,19 +1117,16 @@ CubitCommand* CalculiXCommands::create_command(const std::string &key)
     return new ccxRunTopologyCommand();
   }
 
-  if(key == "ccxResultCGXJobCommand")
-  {
-    return new ccxResultCGXJobCommand();
-  }
 
-  if(key == "ccxResultParaViewJobCommand")
-  {
-    return new ccxResultParaViewJobCommand();
-  }
 
   if(key == "ccxResultLoadJobCommand")
   {
     return new ccxResultLoadJobCommand();
+  }
+
+  if(key == "ccxResultExportJobCommand")
+  {
+    return new ccxResultExportJobCommand();
   }
 
   if(key == "ccxResultConvertJobCommand")

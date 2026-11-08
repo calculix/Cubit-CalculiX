@@ -19,5 +19,9 @@ bool register_framework_modules(ModuleManager& modules, std::string& error)
   {
     return CommandDispatcher::submit(Claro::instance(), QString::fromUtf8(command.c_str()), error);
   };
-  return modules.add_module(std::make_unique<PostprocessorModule>(modules, submit), error);
+  auto silent = [](const std::string& command, std::string& error)
+  {
+    return CommandDispatcher::silent(Claro::instance(), QString::fromUtf8(command.c_str()), error);
+  };
+  return modules.add_module(std::make_unique<PostprocessorModule>(modules, submit, silent), error);
 }

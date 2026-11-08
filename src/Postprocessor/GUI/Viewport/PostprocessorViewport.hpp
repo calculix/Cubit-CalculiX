@@ -5,20 +5,30 @@
 #include <vtkSmartPointer.h>
 #include <memory>
 #include <string>
+#include <functional>
+#include "CameraTimings.hpp"
+#include "Postprocessor/Core/options/PostprocessorUserOptions.hpp"
 
 class vtkGenericOpenGLRenderWindow;
 class vtkRenderer;
 class PostprocessorScene;
 class PostprocessorApplicationInterface;
+class CameraInteraction;
+class PostprocessorTriad;
 
-// Independent scene. Shell-stage input is blocked until view/camera commands
-// provide a journalable interaction contract. No Cubit scene objects are reused.
+// Independent scene and command-driven input. No Cubit scene objects are reused.
 class PostprocessorViewport : public QVTKOpenGLNativeWidget
 {
 public:
-  PostprocessorViewport(const std::string& view_id, QWidget* parent = nullptr);
+  using Dispatch = std::function<bool(const QString&, std::string&)>;
+  PostprocessorViewport(const std::string& view_id,
+    std::weak_ptr<PostprocessorApplicationInterface> application,
+    Dispatch submit, Dispatch silent, QWidget* parent = nullptr);
   ~PostprocessorViewport() override;
   void synchronize(const std::shared_ptr<PostprocessorApplicationInterface>& application);
+  void cancel_interaction();
+  void fit_view();
+  bool camera_command_active() const noexcept;
 
 protected:
   void initializeGL() override;
@@ -28,15 +38,30 @@ protected:
 
 private:
   void queue_render();
+  void request_frame();
+  void render_frame();
+  void on_frame_presented();
   void render_scene();
   void report_error(const std::string& error);
+  void queue_timing_report();
+  void report_timings();
   vtkSmartPointer<vtkGenericOpenGLRenderWindow> sceneWindow;
   vtkSmartPointer<vtkRenderer> renderer;
   std::unique_ptr<PostprocessorScene> scene;
+  CameraTimings timings;
+  std::unique_ptr<CameraInteraction> interaction;
+  std::unique_ptr<PostprocessorTriad> triad;
   std::weak_ptr<PostprocessorApplicationInterface> application;
   std::string viewId;
   std::string lastError;
+  std::optional<std::uint64_t> renderedGeometry;
+  std::optional<std::uint64_t> renderedCamera;
+  Postprocessor::UserOptions renderedOptions;
+  bool timingReportQueued = false;
   bool renderQueued = false;
+  bool frameDirty = false;
+  bool awaitingPresentation = false;
+  bool renderingFrame = false;
 };
 
 #endif // POSTPROCESSORVIEWPORT_HPP

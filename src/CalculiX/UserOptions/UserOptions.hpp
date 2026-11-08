@@ -17,10 +17,6 @@ class UserOptions
     QString mSolverThreadsName;
     int mConverterThreads;
     QString mConverterThreadsName;
-    QString mPathCGX;
-    QString mPathCGXName;
-    QString mPathParaView;
-    QString mPathParaViewName;
     QString mPathIcons;
     QString mPathIconsName;
     QString mPathPythonInterface;

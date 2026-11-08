@@ -2,7 +2,6 @@
 #include <string>
 #include <vector>
 #include "Core/results/vtk/CoreResultsVtkStructs.hpp"
-#include "Core/jobs/CalculiXJobsInterface.hpp"
 #include "Core/results/CalculiXResultsInterface.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
@@ -20,7 +19,7 @@ std::vector<std::string> ccxResultConvertJobCommand::get_syntax()
   std::vector<std::string> syntax_list;
 
   std::string syntax = "ccx ";
-  syntax.append("result convert job <value:label='job_id',help='<job_id>'> [frd] [dat] [in_memory]");
+  syntax.append("result convert job <value:label='job_id',help='<job_id>'> [frd] [dat] ");
   syntax.append("[block <value:label='block_ids',help='<block_ids>'>...] " );
   syntax.append("[nodeset <value:label='nodeset_ids',help='<nodeset_ids>'>...] " );
   syntax.append("[sideset <value:label='sideset_ids',help='<sideset_ids>'>...] " );
@@ -32,7 +31,7 @@ std::vector<std::string> ccxResultConvertJobCommand::get_syntax()
 std::vector<std::string> ccxResultConvertJobCommand::get_syntax_help()
 {
   std::vector<std::string> help(1);
-  help[0] = "ccx result convert job <job_id> [frd] [dat] [in_memory]";
+  help[0] = "ccx result convert job <job_id> [frd] [dat] ";
   help[0].append("[block <block_ids>...] " );
   help[0].append("[nodeset <nodeset_ids>...] " );
   help[0].append("[sideset <sideset_ids>...] " );
@@ -43,9 +42,9 @@ std::vector<std::string> ccxResultConvertJobCommand::get_syntax_help()
 std::vector<std::string> ccxResultConvertJobCommand::get_help()
 {
   return {
-      "Incomplete result fields are exported by default, "
+      "Build and retain VTK datasets without writing files. Incomplete fields are retained "
       "with NaN for missing values. "
-      "Use in_memory to retain datasets without writing files. "
+      "Use ccx result export job <job_id> to write files. "
       "Without frd/dat flags both reader sources are included."
   };
 }
@@ -74,17 +73,5 @@ bool ccxResultConvertJobCommand::execute(CubitCommandData &data)
   }
   // Resolve requested IDs against the linked run mesh, not a possibly changed
   // current model. Empty selections retain all groups of that kind.
-  if (!results.build_vtk_result(job_id, settings))
-  {
-    return false;
-  }
-  if (data.find_keyword("IN_MEMORY"))
-  {
-    return true;
-  }
-  if (!results.export_vtk_result(job_id))
-  {
-    return false;
-  }
-  return CalculiXJobsInterface().set_job_conversion(job_id, 1);
+  return results.build_vtk_result(job_id, settings);
 }

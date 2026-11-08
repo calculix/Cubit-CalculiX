@@ -10,6 +10,7 @@ target_sources(cubitsim_results INTERFACE
 )
 
 # Optional serialization is separate from the in-memory ownership contract.
+find_package(Threads REQUIRED)
 add_library(cubitsim_results_io STATIC VtkResultsExporter.cpp VtkResultsExporter.hpp)
-target_link_libraries(cubitsim_results_io PUBLIC cubitsim_results PRIVATE VTK::IOXML VTK::IOParallelXML)
+target_link_libraries(cubitsim_results_io PUBLIC cubitsim_results PRIVATE VTK::IOXML VTK::IOParallelXML Threads::Threads)
 set_target_properties(cubitsim_results_io PROPERTIES POSITION_INDEPENDENT_CODE ON)

@@ -1,5 +1,6 @@
 #ifndef JOBSMONITORLIVEMONITOR_HPP
 #define JOBSMONITORLIVEMONITOR_HPP
+#include "Core/jobs/JobProgress.hpp"
 #include <string>
 #include <vector>
 
@@ -35,10 +36,13 @@ public:
   int maximumBlockCount=2000;
 
   void clear();
-  void update(QString console, std::vector<std::string> cvg, std::vector<std::string> sta);
-  std::vector<std::string> split_line(std::string line);
+  void update(const CalculiXJobProgress::Data& data);
 
 private:
+  std::uint64_t generation = 0;
+  std::uint64_t revision = 0;
+  std::vector<std::vector<double>> cvg_table;
+  std::vector<std::vector<double>> sta_table;
   QGridLayout* gridLayout;
   QVBoxLayout* boxLayout_windows; 
   //QLabel* label_console;

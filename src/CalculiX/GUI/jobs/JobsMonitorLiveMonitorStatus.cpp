@@ -173,7 +173,7 @@ void JobsMonitorLiveMonitorStatus::clear()
   series_7->attachAxis(axisY2);
 }
 
-void JobsMonitorLiveMonitorStatus::update(std::vector<std::vector<double>> sta_table)
+void JobsMonitorLiveMonitorStatus::update(const std::vector<std::vector<double>>& sta_table)
 {
   /*
   .sta

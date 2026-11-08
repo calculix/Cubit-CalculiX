@@ -1,6 +1,6 @@
 #include "PostUserOptionsCommand.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
-#include "Framework/Commands/UserOptionCommandSupport.hpp"
+#include "PostprocessorOptionCommands.hpp"
 #include "CubitMessage.hpp"
 #include <exception>
 #include <utility>
@@ -13,7 +13,7 @@ PostUserOptionsCommand::PostUserOptionsCommand(std::weak_ptr<PostprocessorApplic
 std::vector<std::string> PostUserOptionsCommand::get_syntax()
 {
   const auto active = application.lock();
-  return active ? UserOptionCommandSupport::syntax("post useroptions", active->user_option_definitions()) : std::vector<std::string>{};
+  return active ? PostprocessorOptionCommands::syntax(active->user_option_definitions()) : std::vector<std::string>{};
 }
 
 std::vector<std::string> PostUserOptionsCommand::get_syntax_help()
@@ -21,6 +21,11 @@ std::vector<std::string> PostUserOptionsCommand::get_syntax_help()
   auto result = get_syntax();
   for (auto& line : result)
   {
+    if (line.find("post useroptions background ") == 0)
+    {
+      line = "post useroptions background {top|bottom} <red> <green> <blue>";
+      continue;
+    }
     const auto argument = line.find(" <");
     if (argument != std::string::npos)
     {
@@ -33,7 +38,7 @@ std::vector<std::string> PostUserOptionsCommand::get_syntax_help()
 
 std::vector<std::string> PostUserOptionsCommand::get_help()
 {
-  return {"Set and persist one named option. Booleans accept on/off. Quote paths and colors. Use list for saved, replayable settings and restart notices."};
+  return {"Set and persist one named option. Booleans accept on/off. Mouse left/middle/right configure dragging and accept rotate, zoom or pan. Quote paths; background colors take three RGB values in [0,1]. Use list for saved, replayable settings and restart notices."};
 }
 
 bool PostUserOptionsCommand::execute(CubitCommandData& data)
@@ -60,7 +65,7 @@ bool PostUserOptionsCommand::execute(CubitCommandData& data)
       for (const auto& item : schema)
       {
         std::string command;
-        if (!UserOptionCommandSupport::format("post useroptions", item, values.at(item.key), command, error))
+        if (!PostprocessorOptionCommands::format(item, values.at(item.key), command, error))
         {
           PRINT_ERROR("Cannot list user options: %s\n", error.c_str());
           return false;
@@ -78,7 +83,7 @@ bool PostUserOptionsCommand::execute(CubitCommandData& data)
       return true;
     }
     UserOptionValues changes;
-    if (!UserOptionCommandSupport::read(data, schema, changes, error) || !active.apply_user_options(changes, error))
+    if (!PostprocessorOptionCommands::read(data, schema, changes, error) || !active.apply_user_options(changes, error))
     {
       PRINT_ERROR("Cannot set user option: %s\n", error.c_str());
       return false;

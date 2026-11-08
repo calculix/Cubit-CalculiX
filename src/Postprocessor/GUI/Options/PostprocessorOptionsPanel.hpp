@@ -10,6 +10,8 @@
 class PostprocessorApplicationInterface;
 class QLineEdit;
 class QLabel;
+class QCheckBox;
+class QPushButton;
 
 class PostprocessorOptionsPanel : public QWidget
 {
@@ -26,6 +28,11 @@ private:
   std::function<bool(const std::string&, std::string&)> submitCommand;
   QLineEdit* iconsPath = nullptr;
   QLabel* restartNotice = nullptr;
+  QCheckBox* journalCamera = nullptr;
+  QCheckBox* triad = nullptr;
+  QPushButton* backgroundTop = nullptr;
+  QPushButton* backgroundBottom = nullptr;
+  void choose_color(QPushButton* button);
 };
 
 #endif

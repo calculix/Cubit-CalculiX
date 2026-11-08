@@ -13,13 +13,15 @@ class ResultSourceRegistryInterface;
 class PostprocessorApplicationInterface;
 class PostprocessorCommands;
 class PostprocessorGui;
+class PostprocessorModelObserver;
 
 class PostprocessorModule : public ModuleInterface, public CommandProviderInterface,
   public ComponentProviderInterface, public WorkspaceProviderInterface
 {
 public:
   PostprocessorModule(ResultSourceRegistryInterface& providers,
-    std::function<bool(const std::string&, std::string&)> submit);
+    std::function<bool(const std::string&, std::string&)> submit,
+    std::function<bool(const std::string&, std::string&)> silent);
   ~PostprocessorModule() override;
 
   std::string module_id() const override;
@@ -39,7 +41,9 @@ private:
   std::shared_ptr<PostprocessorApplicationInterface> application;
   std::unique_ptr<PostprocessorCommands> commands;
   std::unique_ptr<PostprocessorGui> gui;
+  std::unique_ptr<PostprocessorModelObserver> modelObserver;
   std::function<bool(const std::string&, std::string&)> submitCommand;
+  std::function<bool(const std::string&, std::string&)> silentCommand;
 };
 
 #endif // POSTPROCESSORMODULE_HPP

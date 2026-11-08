@@ -37,8 +37,8 @@ Optional file-export failure does not invalidate a successfully converted result
 Commands and export
 -------------------
 
-``ccx result convert job <id>`` builds and exports all reader sources by default.
-``in_memory`` builds without writing files. ``frd`` or ``dat`` selects a source;
+``ccx result convert job <id>`` builds and retains VTK datasets without writing
+files. ``frd`` or ``dat`` selects a source;
 both flags include both. Incomplete fields and tables are always retained. Explicit group
 IDs are checked against the linked run mesh rather than the current live model.
 Empty selections retain all groups of that kind.
@@ -49,10 +49,20 @@ index. VTPC child files are managed by VTK. Export uses a private staging
 directory and publishes by renaming it after success. Destinations must be new;
 existing exports remain untouched. Cancellation is checked between writer calls.
 Default job exports go to ``<job-name>.vtk/run_<token>/results.pvd``. The current
-export path is exposed through the results interface and used by the existing
-ParaView launcher; that transient path is not persisted in the job registry.
-Files remain independently usable after closing Cubit. After reloading a project,
-export again to populate the launcher's current path.
+export path is exposed through the results interface and is not persisted in the
+job registry. Files remain independently usable after closing Cubit.
+
+Export is explicit::
+
+   ccx result export job 1
+   ccx result export job 1 directory "C:/results/run_1"
+
+Export consumes the current completed snapshot without loading or converting.
+Conversion success and export availability are tracked independently. Job
+completion loads and converts without exporting. The job monitor's Load action
+runs load followed by convert, stopping on failure. Results opens the snapshot
+with ``post open ccx job 1`` and switches to the Postprocessor workspace.
+CGX and external ParaView launch commands and executable-path options are removed.
 
 Dataset construction
 --------------------
@@ -211,7 +221,7 @@ formulations before changing output requests or model geometry. A no-fields FRD
 message alone does not establish an empty mesh. Partial-field options do not
 relax the requirement for valid integration-point geometry.
 
-After the cause is resolved, ``ccx result convert job <id> in_memory`` retries
+After the cause is resolved, ``ccx result convert job <id>`` retries
 publication without file export. It can clear the next-job gate, but does not
 restart a failed topology controller. Review items and regression expectations
 are recorded in :doc:`review-findings` and :doc:`topology-verification`.

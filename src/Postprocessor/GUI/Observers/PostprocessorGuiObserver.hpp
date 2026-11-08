@@ -8,12 +8,13 @@
 class PostprocessorGuiObserver : public QObject, public CubitInterface::ObserverBase
 {
 public:
-  explicit PostprocessorGuiObserver(std::function<void()> refresh);
+  explicit PostprocessorGuiObserver(std::function<void()> refresh, std::function<bool()> suppress = {});
   ~PostprocessorGuiObserver() override;
   void notify_command_complete() override;
 
 private:
   std::function<void()> refresh;
+  std::function<bool()> suppress;
   bool pending = false;
 };
 

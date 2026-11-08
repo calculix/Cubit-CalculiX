@@ -67,8 +67,9 @@ Kill request acceptance and confirmed terminal state are separate observations.
 
 ``complete_job_results()`` registers a pending result job, loads FRD/DAT and
 calls ``build_vtk_result()`` with default options. It removes the pending entry
-only after a successful build; optional file export follows that removal.
-Consequently automatic export disabled does not mean conversion disabled.
+only after a successful build. Completion never exports files; use
+``ccx result export job <id>`` explicitly. ``no_conversion`` retains loaded reader
+data and skips VTK conversion.
 ``results_ready()`` also clears entries whose VTK status is Complete or whose
 job was deleted. ``run_job()`` rejects another start while any pending entry
 remains. Solver status 2 alone therefore does not establish readiness for a
@@ -76,6 +77,30 @@ subsequent topology physical or adjoint solve.
 
 See :doc:`vtk-conversion` for mesh/formulation prerequisites and
 :doc:`review-findings` for the reported topology/conversion coordination gap.
+
+STA/CVG progress data
+---------------------
+
+``CoreJobsProgress`` coordinates per-job incremental ``FileReader`` instances and
+the typed parser in ``JobProgress``. Complete raw lines remain in the existing
+STA/CVG vectors for persistence; typed caches and byte offsets are transient.
+Reset, deletion, a managed rerun and project loading discard the relevant caches.
+
+``CalculiXJobsInterface::get_job_progress`` exposes a borrowed host-thread view,
+valid only until the next job mutation/query. GUI consumers copy newly appended
+records into their own models and never retain that pointer across host events.
+Parser generations distinguish replacement from append even when row counts match.
+Only newly appended records are parsed; tables and plots share these records.
+
+The parser follows CCX 2.23 ``writesta.f``, ``writestadiv.f`` and ``writecvg.f``.
+Unsuccessful STA attempts retain the U marker as a boolean outcome. Numbers use
+the classic locale, support D/E and omitted-E Fortran exponents, and reject
+overflow/nonfinite fields into the unparsed-record list. Complete unfamiliar
+lines are preserved instead of guessed. Header positions are not hard-coded.
+
+``tests/jobs`` contains standalone native parser/file-reader regressions and
+mechanical/thermal example files. These tests do not require Cubit or Qt and
+must be built separately; the results journal only runs an existing executable.
 
 ``.sta`` and ``.cvg`` data are progress/status evidence; ``.frd`` and ``.dat``
 contain numerical results used by readers. External files must remain available

@@ -21,6 +21,7 @@ public:
   void apply_camera(const Postprocessor::CameraDefinition& camera);
   bool prepare_camera_fit(const std::array<double, 6>& bounds, Postprocessor::CameraDefinition& camera, std::string& error);
   void clear();
+  void apply_appearance(const std::array<double, 3>& top, const std::array<double, 3>& bottom);
 
 private:
   struct RepresentationActors
@@ -33,6 +34,9 @@ private:
     std::size_t increment, std::string& error);
   vtkSmartPointer<vtkRenderer> renderer;
   std::string viewId;
+  std::optional<std::uint64_t> geometryRevision;
+  std::optional<std::array<double, 6>> visibleBounds;
+  std::optional<Postprocessor::CameraDefinition> appliedCamera;
   std::map<std::string, std::shared_ptr<RepresentationActors>> displays;
 };
 

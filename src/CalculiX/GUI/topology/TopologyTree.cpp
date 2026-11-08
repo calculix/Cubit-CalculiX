@@ -450,7 +450,7 @@ void TopologyTree::populateContextMenu(QMenu &menu, QTreeWidgetItem *item, Model
           PRINT_ERROR("Topology preview failed.\n");
         }
       });
-      addCommandAction(menu, "ParaView", QString("ccx result paraview job %1").arg(job_id));
+      addCommandAction(menu, "Results", QString("post open ccx job %1").arg(job_id));
       menu.actions().last()->setEnabled(completed);
     }
     QAction *monitor = menu.addAction("Job monitor");

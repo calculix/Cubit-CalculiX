@@ -19,7 +19,7 @@ public:
 
 private:
   QPointer<OptionsPanel> options;
-  std::vector<WorkspaceView> pages;
+  std::vector<WorkspaceOptionsPage> pages;
 };
 
 #endif

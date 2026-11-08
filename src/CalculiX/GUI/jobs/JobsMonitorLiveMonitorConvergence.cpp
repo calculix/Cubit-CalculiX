@@ -148,7 +148,7 @@ void JobsMonitorLiveMonitorConvergence::clear()
   series_5->attachAxis(axisY2);
 }
 
-void JobsMonitorLiveMonitorConvergence::update(std::vector<std::vector<double>> cvg_table)
+void JobsMonitorLiveMonitorConvergence::update(const std::vector<std::vector<double>>& cvg_table)
 {
   /*
   .cvg

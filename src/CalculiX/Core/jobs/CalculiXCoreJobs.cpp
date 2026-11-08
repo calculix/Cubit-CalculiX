@@ -69,15 +69,7 @@ std::vector<std::vector<std::string>> CalculiXCore::get_jobs_tree_data()
   return jobs->get_tree_data();
 }
 
-bool CalculiXCore::result_cgx_job(int job_id)
-{
-  return jobs->result_cgx_job(job_id);
-}
 
-bool CalculiXCore::result_paraview_job(int job_id)
-{
-  return jobs->result_paraview_job(job_id);
-}
 
 bool CalculiXCore::prepare_job_input(int job_id, const std::string& filename)
 {

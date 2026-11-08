@@ -24,8 +24,6 @@ UserOptionsPanel::UserOptionsPanel(QWidget *parent) :
   HBoxLayout_1 = new QHBoxLayout();
   HBoxLayout_2 = new QHBoxLayout();
   HBoxLayout_3 = new QHBoxLayout();
-  HBoxLayout_4 = new QHBoxLayout();
-  HBoxLayout_5 = new QHBoxLayout();
   HBoxLayout_6 = new QHBoxLayout();
   HBoxLayout_7 = new QHBoxLayout();
   HBoxLayout_8 = new QHBoxLayout();
@@ -33,8 +31,6 @@ UserOptionsPanel::UserOptionsPanel(QWidget *parent) :
   label_1 = new QLabel();
   label_2 = new QLabel();
   label_3 = new QLabel();
-  label_4 = new QLabel();
-  label_5 = new QLabel();
   label_6 = new QLabel();
   label_7 = new QLabel();
   label_8 = new QLabel();
@@ -42,8 +38,6 @@ UserOptionsPanel::UserOptionsPanel(QWidget *parent) :
   label_1->setFixedWidth(labelWidth);
   label_2->setFixedWidth(labelWidth);
   label_3->setFixedWidth(labelWidth);
-  label_4->setFixedWidth(labelWidth);
-  label_5->setFixedWidth(labelWidth);
   label_6->setFixedWidth(labelWidth);
   label_7->setFixedWidth(labelWidth);
   label_8->setFixedWidth(labelWidth);
@@ -51,8 +45,6 @@ UserOptionsPanel::UserOptionsPanel(QWidget *parent) :
   lineEdit_1 = new QLineEdit();
   lineEdit_2 = new QLineEdit();
   lineEdit_3 = new QLineEdit();
-  lineEdit_4 = new QLineEdit();
-  lineEdit_5 = new QLineEdit();
   lineEdit_6 = new QLineEdit();
   lineEdit_7 = new QLineEdit();
   checkBox_8 = new QCheckBox();
@@ -66,8 +58,6 @@ UserOptionsPanel::UserOptionsPanel(QWidget *parent) :
   VBoxLayout->addLayout(HBoxLayout_1);
   VBoxLayout->addLayout(HBoxLayout_2);
   VBoxLayout->addLayout(HBoxLayout_3);
-  VBoxLayout->addLayout(HBoxLayout_4);
-  VBoxLayout->addLayout(HBoxLayout_5);
   VBoxLayout->addLayout(HBoxLayout_6);
   VBoxLayout->addLayout(HBoxLayout_7);
   VBoxLayout->addLayout(HBoxLayout_8);
@@ -86,10 +76,6 @@ UserOptionsPanel::UserOptionsPanel(QWidget *parent) :
   HBoxLayout_2->addWidget(lineEdit_2);
   HBoxLayout_3->addWidget(label_3);
   HBoxLayout_3->addWidget(lineEdit_3);
-  HBoxLayout_4->addWidget(label_4);
-  HBoxLayout_4->addWidget(lineEdit_4);
-  HBoxLayout_5->addWidget(label_5);
-  HBoxLayout_5->addWidget(lineEdit_5);
   HBoxLayout_6->addWidget(label_6);
   HBoxLayout_6->addWidget(lineEdit_6);
   HBoxLayout_7->addWidget(label_7);
@@ -113,8 +99,6 @@ void UserOptionsPanel::refresh_settings()
   label_1->setText(options.mPathSolverName);
   label_2->setText(options.mSolverThreadsName);
   label_3->setText(options.mConverterThreadsName);
-  label_4->setText(options.mPathCGXName);
-  label_5->setText(options.mPathParaViewName);
   label_6->setText(options.mPathIconsName);
   label_7->setText(options.mPathPythonInterfaceName);
   label_8->setText(options.mSaveLoadedResultsName);
@@ -123,8 +107,6 @@ void UserOptionsPanel::refresh_settings()
   lineEdit_1->setText(options.mPathSolver);
   lineEdit_2->setText(QString::number(options.mSolverThreads));
   lineEdit_3->setText(QString::number(options.mConverterThreads));
-  lineEdit_4->setText(options.mPathCGX);
-  lineEdit_5->setText(options.mPathParaView);
   lineEdit_6->setText(options.mPathIcons);
   lineEdit_7->setText(options.mPathPythonInterface);
   checkBox_8->setChecked(options.mSaveLoadedResults);
@@ -146,8 +128,6 @@ QJsonObject UserOptionsPanel::option_values() const
   values["paths/solver"] = lineEdit_1->text();
   values["execution/solver_threads"] = lineEdit_2->text().toInt();
   values["execution/converter_threads"] = lineEdit_3->text().toInt();
-  values["paths/cgx"] = lineEdit_4->text();
-  values["paths/paraview"] = lineEdit_5->text();
   values["paths/icons"] = lineEdit_6->text();
   values["paths/python_interface"] = lineEdit_7->text();
   values["results/save_loaded_results"] = checkBox_8->isChecked();

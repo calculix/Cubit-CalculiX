@@ -35,6 +35,10 @@ inline std::string name(const std::string& key)
   {
     return "drawing " + (leaf == "overlay_visible" ? std::string("overlay") : leaf);
   }
+  if (key.substr(0, slash) == "journal" || key.substr(0, slash) == "mouse" || key.substr(0, slash) == "diagnostics")
+  {
+    return key.substr(0, slash) + " " + leaf;
+  }
   return leaf;
 }
 

@@ -6,6 +6,9 @@ add_library(postprocessor_core STATIC
   Core/representations/ResultMesh.hpp
   Core/representations/PostprocessorCoreRepresentations.cpp
   Core/views/PostprocessorCoreViews.cpp
+  Core/views/PostprocessorCoreCamera.cpp
+  Core/views/CameraOperations.cpp
+  Core/views/CameraOperations.hpp
   Core/options/PostprocessorUserOptions.cpp
   Core/options/PostprocessorUserOptions.hpp
   Core/sources/PostprocessorCoreSources.cpp
@@ -27,6 +30,8 @@ add_library(postprocessor_module SHARED
   Icons/Postprocessor.svg
   PostprocessorModule.cpp
   PostprocessorModule.hpp
+  EventObservers/PostprocessorModelObserver.cpp
+  EventObservers/PostprocessorModelObserver.hpp
   Interfaces/PostprocessorApplicationInterface.cpp
   Interfaces/PostprocessorApplicationInterface.hpp
   Commands/PostprocessorCommands.cpp
@@ -37,8 +42,21 @@ add_library(postprocessor_module SHARED
   Commands/display/PostHideCommand.hpp
   Commands/views/PostViewFitCommand.cpp
   Commands/views/PostViewFitCommand.hpp
+  Commands/views/CameraCommandText.cpp
+  Commands/views/CameraCommandText.hpp
+  Commands/views/CameraCommandTiming.cpp
+  Commands/views/CameraCommandTiming.hpp
+  Commands/views/PostViewCameraCommand.cpp
+  Commands/views/PostViewCameraCommand.hpp
+  Commands/views/PostViewRotateCommand.cpp
+  Commands/views/PostViewRotateCommand.hpp
+  Commands/views/PostViewPanCommand.cpp
+  Commands/views/PostViewPanCommand.hpp
+  Commands/views/PostViewZoomCommand.cpp
+  Commands/views/PostViewZoomCommand.hpp
   Commands/options/PostUserOptionsCommand.cpp
   Commands/options/PostUserOptionsCommand.hpp
+  Commands/options/PostprocessorOptionCommands.hpp
   Commands/sources/PostOpenCommand.cpp
   Commands/sources/PostOpenCommand.hpp
   Commands/sources/PostListCommand.cpp
@@ -51,14 +69,22 @@ add_library(postprocessor_module SHARED
   GUI/PostprocessorGui.hpp
   GUI/Options/PostprocessorOptionsPanel.cpp
   GUI/Options/PostprocessorOptionsPanel.hpp
+  GUI/Options/PostprocessorMouseOptionsPanel.cpp
+  GUI/Options/PostprocessorMouseOptionsPanel.hpp
   GUI/Resources/PostprocessorIconLoader.cpp
   GUI/Resources/PostprocessorIconLoader.hpp
   GUI/Workspace/PostprocessorWorkspace.cpp
   GUI/Workspace/PostprocessorWorkspace.hpp
   GUI/Viewport/PostprocessorViewport.cpp
   GUI/Viewport/PostprocessorViewport.hpp
+  GUI/Viewport/CameraInteraction.cpp
+  GUI/Viewport/CameraInteraction.hpp
+  GUI/Viewport/CameraTimings.cpp
+  GUI/Viewport/CameraTimings.hpp
   GUI/Viewport/PostprocessorScene.cpp
   GUI/Viewport/PostprocessorScene.hpp
+  GUI/Viewport/PostprocessorTriad.cpp
+  GUI/Viewport/PostprocessorTriad.hpp
   GUI/ResultsTree/PostprocessorResultsTree.cpp
   GUI/ResultsTree/PostprocessorResultsTree.hpp
   GUI/Properties/PostprocessorProperties.cpp
@@ -68,7 +94,7 @@ add_library(postprocessor_module SHARED
 )
 
 target_link_libraries(postprocessor_module PRIVATE postprocessor_core cubiti cubit_util
-  Qt6::Widgets Qt6::OpenGLWidgets VTK::GUISupportQt VTK::RenderingCore VTK::RenderingOpenGL2 VTK::FiltersGeometry)
+  Qt6::Widgets Qt6::OpenGLWidgets VTK::GUISupportQt VTK::RenderingCore VTK::RenderingOpenGL2 VTK::FiltersCore VTK::FiltersGeometry)
 target_compile_features(postprocessor_module PUBLIC cxx_std_17)
 target_include_directories(postprocessor_module PUBLIC "${CUBITSIM_SOURCE_ROOT}")
 set_target_properties(postprocessor_module PROPERTIES

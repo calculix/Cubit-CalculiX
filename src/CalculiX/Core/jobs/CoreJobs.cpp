@@ -87,6 +87,7 @@ bool CoreJobs::reset()
     return false;
   }
   pending_result_jobs.clear();
+  clear_job_progress();
   clear_monitor_executions();
   #ifdef WIN32
     //close all jobs and threads first
@@ -285,6 +286,7 @@ bool CoreJobs::delete_job(int job_id)
     jobs_iface.get_job_topology_context(job_id, topology_id, iteration_id);
     jobs_data.erase(jobs_data.begin() + jobs_data_id);
     monitorExecutions.erase(job_id);
+    job_progress.erase(job_id);
     pending_result_jobs.erase(job_id);
     ccx_results_iface.delete_result(job_id);
     auto& observer = CalculiXApplicationInterface().core_observer();
@@ -418,6 +420,7 @@ bool CoreJobs::run_job(int job_id,int option)
 
       //clear stored data
       output_console[std::stoi(jobs_data[job_data_id][5])].clear();
+      job_progress.erase(job_id);
       cvg[std::stoi(jobs_data[job_data_id][7])].clear();
       sta[std::stoi(jobs_data[job_data_id][8])].clear();
 
@@ -578,6 +581,7 @@ bool CoreJobs::run_job(int job_id,int option)
       CubitProcessHandler[CubitProcessHandler_data_id].set_channel_mode(CubitProcess::ChannelMode::MergedChannels);
       temp = CubitProcessHandler[CubitProcessHandler_data_id].find_executable(programm);
       output_console[std::stoi(jobs_data[job_data_id][5])].clear();
+      job_progress.erase(job_id);
       cvg[std::stoi(jobs_data[job_data_id][7])].clear();
       sta[std::stoi(jobs_data[job_data_id][8])].clear();
 
@@ -957,7 +961,6 @@ bool CoreJobs::complete_job_results(int job_id)
       return false;
     }
     pending_result_jobs.erase(job_id);
-    jobs_data[index][6] = results.export_vtk_result(job_id) ? "1" : "-1";
     return true;
   }
   catch (const std::exception& failure)
@@ -1144,143 +1147,7 @@ bool CoreJobs::check_jobs()
   return false;
 }
 
-bool CoreJobs::get_cvgsta(int job_id)
-{
-  int jobs_data_id=-1;
-  
-  jobs_data_id = get_jobs_data_id_from_job_id(job_id);
 
-  if (jobs_data_id != -1)
-  {
-    int ic = 0;
-    std::string cvgline = "";
-    std::string staline = "";
-    std::ifstream cvgfile;
-    std::ifstream stafile;
-    cvgfile.open(jobs_data[jobs_data_id][1] + ".cvg");
-    stafile.open(jobs_data[jobs_data_id][1] + ".sta");
-    if (cvgfile.is_open())
-    {
-      ic = 0;
-      while (cvgfile)
-      {
-        std::getline(cvgfile,cvgline);
-        if (!this->is_whitespace(cvgline))
-        {
-          ++ic;
-        }
-        
-        if ((ic > cvg[std::stoi(jobs_data[jobs_data_id][7])].size())&&(!this->is_whitespace(cvgline)))
-        {
-          cvg[std::stoi(jobs_data[jobs_data_id][7])].push_back(cvgline);
-        }
-      }
-    }
-    if (stafile.is_open())
-    {
-      ic = 0;
-      while (stafile)
-      {
-        std::getline(stafile,staline);
-        if (!this->is_whitespace(staline))
-        {
-          ++ic;
-        }
-        if ((ic > sta[std::stoi(jobs_data[jobs_data_id][8])].size())&&(!this->is_whitespace(staline)))
-        {
-          sta[std::stoi(jobs_data[jobs_data_id][8])].push_back(staline);
-        }
-      }
-    }
-    cvgfile.close();
-    stafile.close();
-  }
-  
-  return true;
-}
-
-bool CoreJobs::result_cgx_job(int job_id)
-{
-  std::string filepath;
-  std::string log;
-  std::string command;
-
-  #ifdef WIN32
-    if (_access(ccx_uo.mPathCGX.toStdString().c_str(), 0) == 0)
-    {
-    }else{
-      log = "CGX not found! checked path \"" + ccx_uo.mPathCGX.toStdString() + "\" \n";
-      PRINT_INFO("%s", log.c_str());    
-      return false;
-    }
-  #else
-    if (access(ccx_uo.mPathCGX.toStdString().c_str(), X_OK) == 0) 
-    {
-    }else{
-      log = "CGX not found! checked path \"" + ccx_uo.mPathCGX.toStdString() + "\" \n";
-      PRINT_INFO("%s", log.c_str());    
-      return false;
-    }
-  #endif
-
-  int job_data_id;
-  job_data_id = get_jobs_data_id_from_job_id(job_id);
-  if (job_data_id != -1)
-  {    
-    //if (std::stoi(jobs_data[job_data_id][3])>1)
-    {
-      filepath = jobs_data[job_data_id][1] + ".frd";
-      #ifdef WIN32
-        CubitString programm;
-        std::vector<CubitString> arguments(2);
-        programm = ccx_uo.mPathCGX.toStdString().substr(0, ccx_uo.mPathCGX.toStdString().size()-4).c_str();
-        arguments[0] = filepath;
-        arguments[1] = NULL;
-        CubitProcess::start(programm, arguments, false);
-      #else
-        std::string shellstr;
-        shellstr = "nohup " + ccx_uo.mPathCGX.toStdString() + " " + filepath + " &";
-        system(shellstr.c_str());
-      #endif
-      log = "Opening Results with CGX for Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + "\n";
-      //log.append(filepath +  " \n");
-      PRINT_INFO("%s", log.c_str());
-    }
-  } else {
-    return false;
-  }
-  return true;
-}
-
-bool CoreJobs::result_paraview_job(int job_id)
-{
-  CalculiXResultsInterface results;
-  const auto index = results.get_vtk_export_path(job_id);
-  if (index.empty())
-  {
-    PRINT_ERROR("Export this job's VTK result before opening ParaView.\n");
-    return false;
-  }
-  CubitString program(ccx_uo.mPathParaView.toStdString().c_str());
-  std::vector<CubitString> arguments;
-  arguments.emplace_back("--data");
-  arguments.emplace_back(index.c_str());
-  const auto process = CubitProcess::start(program, arguments, false);
-#ifdef WIN32
-  const bool started = process.hProcess != nullptr && process.hProcess != INVALID_HANDLE_VALUE;
-  if (started)
-  {
-    CloseHandle(process.hProcess);
-  }
-  if (process.hThread != nullptr && process.hThread != INVALID_HANDLE_VALUE)
-  {
-    CloseHandle(process.hThread);
-  }
-  return started;
-#else
-  return process > 0;
-#endif
-}
 
 int CoreJobs::get_jobs_data_id_from_job_id(int job_id)
 { 
@@ -1554,7 +1421,7 @@ std::string CoreJobs::print_data()
 {
   std::string str_return;
   str_return = "\n CoreJobs jobs_data: \n";
-  str_return.append("job_id, name, filepath, status, process id, output console id, converted to paraview, cvg id, sta id \n");
+  str_return.append("job_id, name, filepath, status, process id, output console id, VTK converted, cvg id, sta id \n");
 
   for (size_t i = 0; i < jobs_data.size(); i++)
   {

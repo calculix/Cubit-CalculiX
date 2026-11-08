@@ -1,0 +1,5 @@
+test,platform,status,check_rows,failed_rows,reported_seconds,plugin_revision,evidence_scope
+topology_interpolation,Windows,PASS,3448,0,0.47,not recorded,Reference and affine interpolation cases after QP extraction
+topology_geometry,Windows,PASS,10044,0,0.46,not recorded,Reference and affine geometry cases after QP extraction
+topology_evaluation,Windows,PASS,6041,0,12.25,not recorded,Analytical nodal compliance and volume chain after QP extraction
+topology_qp,Windows,PASS,131,0,0.20,not recorded,Analytical numerical QP solution KKT and failure cases

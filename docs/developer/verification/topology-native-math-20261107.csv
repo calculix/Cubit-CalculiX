@@ -1,0 +1,3 @@
+test,platform,status,check_rows,failed_rows,reported_seconds,plugin_revision,evidence_scope
+topology_interpolation,Windows,PASS,3448,0,0.38,not recorded,Reference and affine interpolation cases before nodal assembly extraction
+topology_geometry,Windows,PASS,10044,0,0.41,not recorded,Reference and affine geometry cases after Heaviside clamp before nodal assembly extraction

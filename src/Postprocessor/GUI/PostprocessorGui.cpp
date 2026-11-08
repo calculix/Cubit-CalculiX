@@ -9,8 +9,9 @@
 #include <utility>
 
 PostprocessorGui::PostprocessorGui(std::weak_ptr<PostprocessorApplicationInterface> application,
-  std::function<bool(const std::string&, std::string&)> submit)
-  : application(std::move(application)), submitCommand(std::move(submit))
+  std::function<bool(const std::string&, std::string&)> submit,
+  std::function<bool(const std::string&, std::string&)> silent)
+  : application(std::move(application)), submitCommand(std::move(submit)), silentCommand(std::move(silent))
 {
 }
 
@@ -35,10 +36,13 @@ bool PostprocessorGui::start(QWidget* host, std::string& error)
     return true;
   }
 
-  workspace = new PostprocessorWorkspace(window, application, submitCommand);
+  workspace = new PostprocessorWorkspace(window, application, submitCommand, silentCommand);
   observer = std::make_unique<PostprocessorGuiObserver>([this]()
   {
     refresh();
+  }, [page = QPointer<PostprocessorWorkspace>(workspace)]()
+  {
+    return page != nullptr && page->camera_command_active();
   });
   return true;
 }

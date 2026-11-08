@@ -110,6 +110,146 @@ individual element derivatives, differentiation through material regrouping,
 the density/filter surrogate, or the level-set fraction, nodal chain and update.
 The level-set public execution gate remains closed.
 
+Native interpolation and geometry evidence
+------------------------------------------
+
+After rebuilding the plugin with the bounded-Heaviside fix, the user reported
+both Windows CTest entries passing: ``topology_interpolation`` in 0.38 seconds
+and ``topology_geometry`` in 0.41 seconds (0.80 seconds total CTest wall time).
+The retained local CSVs contain 3448 and 10044 check rows respectively, with
+zero failed rows. The shipped :download:`native-test summary <verification/topology-native-math-20261107.csv>`
+records those counts and the reported execution times. Binary revision/hash
+was not recorded. This evidence predates the nodal-assembly extraction and does
+not establish execution of its new native test or Linux coverage.
+
+The first geometry run exposed six constant-void failures. Interpolation of a
+constant coefficient can round just inside the regularization band, where
+cancellation in the sine formula can produce a tiny negative Heaviside value.
+Clamping the pointwise value to its mathematical range [0,1] removed that
+endpoint issue. The final integrated-fraction validation and the test tolerances
+were retained. The subsequent geometry test passed all declared cases, including
+expected invalid-input and unresolved-integration rejections. Those expected
+Cubit error messages are not unexpected test failures.
+
+This covers the supplied straight-sided reference/affine fixtures, smooth nodal
+fraction/volume derivatives and rejection contracts. It does not cover a full
+live-Cubit assembly, an optimizer update, curved/mixed meshes or narrow-interface
+accuracy. Nodal-assembly evidence from the subsequent run is recorded below.
+
+Native nodal-assembly evidence
+-----------------------------
+
+On 8 November 2026 the user reported all three native tests passing on Windows:
+interpolation 1.28 seconds, geometry 0.45 seconds and evaluation 11.62 seconds,
+with 13.42 seconds total CTest wall time. The retained CSVs contain 3448, 10044
+and 6041 check rows with no failures. The shipped
+:download:`three-test summary <verification/topology-native-math-20261108.csv>`
+records these counts and reported times; tested binary revision/hash remains
+unrecorded. These results precede the QP extraction and do not certify that change.
+
+The 30 analytical nodal cases exercise the shared production accumulation and
+normalization against finite differences of sum(q_e/s_e). They cover all six
+formulations, three void ratios, shared-node pairs, unequal volume/load weights
+and preserved-neighbor fixed-node zeros. Invalid inputs and partial-output
+clearing also passed. This is an analytical chain check using production geometry;
+the complete live-Cubit evaluation, graph assembly, proposal/acceptance and
+physical continuum level-set solve remain separate verification targets.
+
+Native QP evidence
+------------------
+
+The subsequent Windows run passed all four CTest entries: interpolation in
+0.47 seconds, geometry in 0.46 seconds, nodal evaluation in 12.25 seconds and
+QP in 0.20 seconds, with 13.48 seconds total wall time. The retained CSVs contain
+3448, 10044, 6041 and 131 check rows respectively, all passing. See the shipped
+:download:`four-test summary <verification/topology-native-qp-20261108.csv>`.
+Binary revision/hash remains unrecorded; these results apply to the tested
+binary and do not establish Linux coverage.
+
+The numerical QP cases passed analytical solution, bounds, signed linearized
+volume, independent KKT and rejection/limit checks. This does not certify
+the graph assembled from a live Cubit mesh or actual-volume backtracking.
+
+Live C3D8 update evidence
+------------------------
+
+Run ``20261108T192653Z_fc574ef7`` passed all three live fixture groups inside
+Cubit 2026.11 on Windows: single_hex 196 checks, shared_free 87 and
+shared_preserved 99, totaling 382 passing checks with no failed CSV rows.
+The shipped :download:`live summary <verification/topology-live-c3d8-20261108.csv>`
+retains those counts and run identity. Raw evidence remains local under
+``tests/live_topology_runs/20261108T192653Z_fc574ef7/``. Loaded binary revision
+was not recorded.
+
+The nonlinear backtracking case observed a full-proposal maximum change of
+approximately 0.1000000112 and an accepted change of 0.05000000562 at scale 0.5.
+The full proposal overshot actual volume; the accepted field was feasible while
+the ordinary residual retained the larger source-owned value. Restoration
+reduced volume while correctly reporting an unmet target. An interior shared
+graph case passed independent KKT checks with a nonzero graph contribution.
+Preserved/shared nodes, stale/tampered proposals, pinned lower bounds, aliasing
+and failure clearing passed. Mesh and job/case records remained unchanged.
+The printed native errors were expected rejection cases.
+
+This exercises live geometry, analytical compliance, proposal construction and
+acceptance for straight-sided C3D8 subdomains. It is not a physical continuum
+solve or a normal controller run. The journal/library now extend the feasible,
+shared-graph and preserved-neighbor checks to all six formulations in 18 fixture
+groups; its first run stopped at the integration limit described below. Mandatory
+restoration/backtracking fixtures remain C3D8-only. See
+:doc:`numerical-verification-plan` for scope and instructions. Public runs remain
+gated; controller, seeding, persistence, curved/mixed meshes and Linux execution
+remain separate.
+
+Expanded-matrix integration limit
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The first expanded run, ``20261108T194700Z_d7726c19``, passed 11 groups and
+failed C3D10_shared_preserved; six wedge groups were not executed. The retained
+CSV locates the failure in initial live_geometry, before proposal construction.
+The two C3D10 elements and their six shared-face nodes passed validation.
+The free neighbor had a quadratic face-pinned field at tolerance 1e-7, width 1,
+and a maximum of four refinements.
+
+On this affine tetrahedron, with t the opposite vertex's barycentric coordinate,
+the field is phi(t)=1-3*t+2*t^2 and the normalized slice measure is
+3*(1-t)^2 dt. An independent scalar quadrature diagnostic gave successive
+fraction/derivative differences of approximately 1.45e-5 at 8 subdivisions,
+1.67e-7 at 16 and 2.73e-9 at 32. Thus the four-refinement budget narrowly misses
+the declared 1e-7 criterion. Those scalar calculations are diagnostic evidence,
+not a native pass at five refinements.
+
+The live verification budget is now explicitly five refinements. Its tolerance
+and all production defaults are unchanged. A new native geometry regression
+requires unresolved integration with four refinements and cleared output, then
+convergence at 32 subdivisions with five. It compares fractions and all nodal
+derivatives against an independent one-dimensional Simpson reference. The new
+regression and expanded-matrix rerun subsequently passed, as recorded below.
+
+Expanded-matrix rerun evidence
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The user rebuilt the geometry executable and live library. The face-pinned
+geometry regression passed on Windows (0.85 seconds test time, 0.88 seconds
+CTest wall time). The retained geometry CSV contains 10093 passing rows, including
+49 rows for the new refinement/reference regression. Production defaults and
+the 1e-7 live-update tolerance were unchanged.
+
+Run ``20261108T200007Z_7ae44599`` then passed all 18 live fixture groups:
+2034 check rows, zero failures. The shipped
+:download:`six-formulation live summary <verification/topology-live-solids-20261108.csv>`
+records per-formulation/group counts and the explicit restoration/backtracking
+coverage flags. All six formulations passed feasible updates, shared graph KKT,
+shared-face/midside validation and preserved-neighbor checks. Mandatory restoration
+and nonlinear backtracking remain C3D8-only. Loaded binary revision remains
+unrecorded; this is Windows evidence, not Linux or curved/mixed-mesh certification.
+
+The next test sources add seed initialization before each update phase and a
+fifth standalone length-resolution test. These additions have not been built
+or executed. Their raw-default seed checks are distinct from controlled
+broad-band initial-geometry checks; controller, seeding persistence and actual
+default-width optimizer execution remain pending. No public gate is removed.
+
 Current integration evidence
 ----------------------------
 
@@ -399,8 +539,9 @@ The following checks are required; they have not been executed in this pass:
   a stored compliance value must not count as successful VTK publication.
 * Successful in-memory retry, failed retry, optional export failure, and pending
   job deletion/reset; record whether a new run is needed after controller failure.
-* Both physical-to-next-iteration and physical-to-adjoint transitions, with
-  automatic file export enabled and disabled. Disabled export still builds VTK.
+* Both physical-to-next-iteration and physical-to-adjoint transitions. Normal
+  completion builds VTK in memory without exporting; explicit export must not
+  change readiness for the next solve.
 
 These are native integration tests, not fulfilled by settings/persistence
 journals or by a Python reimplementation of the converter.
@@ -432,10 +573,22 @@ Limitations and coverage still needed
      - Fixed-group factor perturbations passed. Grouped density surrogates and
        regrouped finite differences were not verified by that comparison.
    * - Level-set interpolation and fraction/volume derivatives
-     - Native test sources supplied; not built or executed. See
-       :doc:`numerical-verification-plan` for coverage and remaining cases.
-   * - Level-set nodal assembly, proposal/acceptance and controller
-     - Numerical verification remains pending; public execution stays disabled.
+     - Supplied native cases passed on Windows after the endpoint fix. Linux,
+       curved/mixed and positive narrow-band refinement studies remain pending.
+   * - Level-set nodal compliance/volume assembly
+     - Shared production accumulation/normalization passed the Windows analytical
+       suite. Live analytical evaluation passed for all six formulations;
+       Linux execution remains pending.
+   * - Level-set numerical QP solver
+     - Extracted coordinate/multiplier solver passed analytical solution/KKT
+       tests on Windows; live graph assembly is not covered by that suite.
+   * - Level-set proposal/acceptance and controller
+     - All 18 expanded live groups passed after the refinement regression;
+       deterministic restoration/backtracking coverage remains C3D8-only.
+       Controller and historical persistence remain separate; public runs gated.
+   * - Level-set seed initialization
+     - Automatic-length and live field/fallback/initial-design tests supplied;
+       new build/run pending. Default-width initial integration is separate.
    * - Filtered sensitivities
      - Not established as exact derivatives of a separate filtered objective.
        Objective finite differences do not verify the filter implementation.

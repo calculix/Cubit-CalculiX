@@ -37,6 +37,7 @@ namespace Postprocessor
     // Keep an existing camera as the orientation/projection seed for fitting.
     bool fit_pending = true;
     std::uint64_t fit_request = 0;
+    std::uint64_t camera_revision = 0;
   };
 }
 

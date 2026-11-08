@@ -269,15 +269,9 @@ if (WIN32)
      "${CUBITSIM_DEPLOY_DIRECTORY}/Solver/licenses"
    VERBATIM
  )
- #file(COPY ${CUBITSIM_SOURCE_ROOT}/Postprocessor/CGX/Win/ DESTINATION ${CMAKE_BINARY_DIR}/Release/Postprocessor/CGX/)
- # if missing -> please download paraview binaries from https://www.paraview.org/download/
- #file(COPY ${CUBITSIM_SOURCE_ROOT}/../../ParaView-6.0.0-MPI-Windows-Python3.12-msvc2017-AMD64/ DESTINATION ${CMAKE_BINARY_DIR}/Release/Postprocessor/ParaView/)
 endif (WIN32)
 if (UNIX)
  file(COPY ${CUBITSIM_SOURCE_ROOT}/Solvers/CalculiX/Linux/ DESTINATION ${CMAKE_BINARY_DIR}/Solver/)
- #file(COPY ${CUBITSIM_SOURCE_ROOT}/Postprocessor/CGX/Linux/ DESTINATION ${CMAKE_BINARY_DIR}/Postprocessor/CGX/)
- # if missing -> please download paraview binaries from https://www.paraview.org/download/
- #file(COPY ${CUBITSIM_SOURCE_ROOT}/../../ParaView-6.0.0-MPI-Linux-Python3.12-x86_64/ DESTINATION ${CMAKE_BINARY_DIR}/Postprocessor/ParaView/)
 endif (UNIX)
 
 set_property(GLOBAL PROPERTY GLOBAL_DEPENDS_DEBUG_MODE 1)

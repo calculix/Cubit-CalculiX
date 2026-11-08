@@ -1,4 +1,5 @@
 #include "CoreTopologyLevelSetUpdate.hpp"
+#include "CoreTopologyLevelSetQP.hpp"
 #include "CoreTopologyLevelSet.hpp"
 #include "CoreTopologyLevelSetEvaluation.hpp"
 #include "CoreTopologyLevelSetGeometry.hpp"
@@ -17,14 +18,8 @@ using Vector = Eigen::VectorXd;
 
 struct Problem
 {
-  Sparse matrix;
-  Vector diagonal;
+  TopologyLevelSetQPProblem qp;
   Vector mass;
-  Vector origin;
-  Vector lower;
-  Vector upper;
-  Vector right;
-  Vector volume;
   std::map<int, int> indices;
 };
 
@@ -42,11 +37,11 @@ bool build_problem(const TopologyLevelSetDesign& source, const TopologyLevelSetE
   }
   const int count = static_cast<int>(source.node_values.size());
   problem.mass = Vector::Zero(count);
-  problem.origin.resize(count);
-  problem.lower.resize(count);
-  problem.upper.resize(count);
-  problem.right.resize(count);
-  problem.volume.resize(count);
+  problem.qp.origin.resize(count);
+  problem.qp.lower.resize(count);
+  problem.qp.upper.resize(count);
+  problem.qp.right.resize(count);
+  problem.qp.volume.resize(count);
   int index = 0;
   for (const auto& node : source.node_values)
   {
@@ -65,11 +60,11 @@ bool build_problem(const TopologyLevelSetDesign& source, const TopologyLevelSetE
       return false;
     }
     problem.indices.emplace(node.first, index);
-    problem.origin[index] = node.second;
-    problem.lower[index] = fixed ? 1.0 : (std::max)(-1.0, node.second - source.settings.move_limit);
-    problem.upper[index] = fixed ? 1.0 : (std::min)(1.0, node.second + source.settings.move_limit);
-    problem.right[index] = -objective->second / objective_scale;
-    problem.volume[index] = volume->second;
+    problem.qp.origin[index] = node.second;
+    problem.qp.lower[index] = fixed ? 1.0 : (std::max)(-1.0, node.second - source.settings.move_limit);
+    problem.qp.upper[index] = fixed ? 1.0 : (std::min)(1.0, node.second + source.settings.move_limit);
+    problem.qp.right[index] = -objective->second / objective_scale;
+    problem.qp.volume[index] = volume->second;
     ++index;
   }
   std::vector<Eigen::Triplet<double>> entries;
@@ -124,8 +119,8 @@ bool build_problem(const TopologyLevelSetDesign& source, const TopologyLevelSetE
       }
     }
   }
-  problem.matrix.resize(count, count);
-  problem.matrix.setFromTriplets(entries.begin(), entries.end());
+  problem.qp.matrix.resize(count, count);
+  problem.qp.matrix.setFromTriplets(entries.begin(), entries.end());
   for (int node = 0; node < count; ++node)
   {
     if (!std::isfinite(problem.mass[node]) || problem.mass[node] <= 0.0)
@@ -133,30 +128,30 @@ bool build_problem(const TopologyLevelSetDesign& source, const TopologyLevelSetE
       PRINT_ERROR("Invalid level-set proximal mass.\n");
       return false;
     }
-    const double regularization_diagonal = problem.matrix.coeff(node, node);
-    problem.matrix.coeffRef(node, node) += problem.mass[node];
-    if (problem.matrix.coeff(node, node) <= regularization_diagonal)
+    const double regularization_diagonal = problem.qp.matrix.coeff(node, node);
+    problem.qp.matrix.coeffRef(node, node) += problem.mass[node];
+    if (problem.qp.matrix.coeff(node, node) <= regularization_diagonal)
     {
       PRINT_ERROR("Level-set graph scaling loses the positive proximal mass.\n");
       return false;
     }
-    problem.right[node] += problem.mass[node] * problem.origin[node];
-    if (!std::isfinite(problem.right[node]))
+    problem.qp.right[node] += problem.mass[node] * problem.qp.origin[node];
+    if (!std::isfinite(problem.qp.right[node]))
     {
       PRINT_ERROR("Non-finite normalized level-set objective derivative.\n");
       return false;
     }
   }
-  problem.matrix.makeCompressed();
-  problem.diagonal = problem.matrix.diagonal();
+  problem.qp.matrix.makeCompressed();
+  problem.qp.diagonal = problem.qp.matrix.diagonal();
   for (int row = 0; row < count; ++row)
   {
-    if (!std::isfinite(problem.diagonal[row]) || problem.diagonal[row] <= 0.0)
+    if (!std::isfinite(problem.qp.diagonal[row]) || problem.qp.diagonal[row] <= 0.0)
     {
       PRINT_ERROR("Invalid level-set QP diagonal.\n");
       return false;
     }
-    for (Sparse::InnerIterator entry(problem.matrix, row); entry; ++entry)
+    for (Sparse::InnerIterator entry(problem.qp.matrix, row); entry; ++entry)
     {
       if (!std::isfinite(entry.value()))
       {
@@ -168,153 +163,7 @@ bool build_problem(const TopologyLevelSetDesign& source, const TopologyLevelSetE
   return true;
 }
 
-bool solve_box(const Problem& problem, double multiplier, const TopologyLevelSetUpdateControls& controls, Vector& values, double& residual)
-{
-  const Vector right = problem.right - multiplier * problem.volume;
-  if (!right.allFinite())
-  {
-    PRINT_ERROR("Non-finite level-set volume multiplier right-hand side.\n");
-    return false;
-  }
-  for (int sweep = 0; sweep < controls.maximum_coordinate_sweeps; ++sweep)
-  {
-    for (int row = 0; row < values.size(); ++row)
-    {
-      if (problem.lower[row] == problem.upper[row])
-      {
-        values[row] = problem.lower[row];
-        continue;
-      }
-      double off_diagonal = 0.0;
-      for (Sparse::InnerIterator entry(problem.matrix, row); entry; ++entry)
-      {
-        if (entry.col() != row)
-        {
-          off_diagonal += entry.value() * values[entry.col()];
-        }
-      }
-      const double value = (right[row] - off_diagonal) / problem.diagonal[row];
-      if (!std::isfinite(value))
-      {
-        PRINT_ERROR("Non-finite level-set QP coordinate.\n");
-        return false;
-      }
-      values[row] = clamp(value, problem.lower[row], problem.upper[row]);
-    }
-    const Vector gradient = problem.matrix * values - right;
-    if (!gradient.allFinite())
-    {
-      PRINT_ERROR("Non-finite level-set QP gradient.\n");
-      return false;
-    }
-    residual = 0.0;
-    for (int node = 0; node < values.size(); ++node)
-    {
-      const double projected = clamp(values[node] - gradient[node] / problem.diagonal[node], problem.lower[node], problem.upper[node]);
-      residual = (std::max)(residual, std::abs(values[node] - projected));
-    }
-    if (residual <= controls.qp_tolerance)
-    {
-      return true;
-    }
-  }
-  PRINT_ERROR("Level-set box QP did not converge within %d sweeps.\n", controls.maximum_coordinate_sweeps);
-  return false;
-}
 
-bool solve_proposal(const Problem& problem, double source_volume, double target, const TopologyLevelSetUpdateControls& controls, Vector& values, double& multiplier, double& residual)
-{
-  values = problem.origin;
-  multiplier = 0.0;
-  double minimum_change = 0.0;
-  for (int node = 0; node < values.size(); ++node)
-  {
-    const double endpoint = problem.volume[node] >= 0.0 ? problem.lower[node] : problem.upper[node];
-    minimum_change += problem.volume[node] * (endpoint - problem.origin[node]);
-  }
-  if (!std::isfinite(minimum_change))
-  {
-    PRINT_ERROR("Non-finite linearized level-set volume bound.\n");
-    return false;
-  }
-  if (source_volume > target + controls.volume_tolerance && minimum_change >= -controls.linear_volume_tolerance)
-  {
-    PRINT_ERROR("No resolved free linearized volume-reduction direction for the level-set design.\n");
-    return false;
-  }
-  // Restoration can require several physical iterations because of the move limit.
-  const double bound = problem.volume.dot(problem.origin) + (std::max)(target - source_volume, minimum_change);
-  if (!std::isfinite(bound) || !solve_box(problem, 0.0, controls, values, residual))
-  {
-    return false;
-  }
-  double value = problem.volume.dot(values);
-  if (!std::isfinite(value))
-  {
-    PRINT_ERROR("Non-finite linearized level-set volume.\n");
-    return false;
-  }
-  if (value <= bound + controls.linear_volume_tolerance)
-  {
-    return true;
-  }
-  double lower = 0.0;
-  double upper = 1.0;
-  bool bracketed = false;
-  for (int iteration = 0; iteration < controls.maximum_bracket_iterations; ++iteration)
-  {
-    if (!solve_box(problem, upper, controls, values, residual))
-    {
-      return false;
-    }
-    value = problem.volume.dot(values);
-    if (!std::isfinite(value))
-    {
-      PRINT_ERROR("Non-finite bracketed level-set volume.\n");
-      return false;
-    }
-    if (value <= bound + controls.linear_volume_tolerance)
-    {
-      bracketed = true;
-      break;
-    }
-    lower = upper;
-    upper *= 2.0;
-  }
-  if (!bracketed)
-  {
-    PRINT_ERROR("Unable to bracket the linearized level-set volume multiplier.\n");
-    return false;
-  }
-  for (int iteration = 0; iteration < controls.maximum_multiplier_iterations; ++iteration)
-  {
-    multiplier = 0.5 * lower + 0.5 * upper;
-    if (!solve_box(problem, multiplier, controls, values, residual))
-    {
-      return false;
-    }
-    value = problem.volume.dot(values);
-    if (!std::isfinite(value))
-    {
-      PRINT_ERROR("Non-finite multiplier level-set volume.\n");
-      return false;
-    }
-    if (std::abs(value - bound) <= controls.linear_volume_tolerance)
-    {
-      return true;
-    }
-    if (value > bound)
-    {
-      lower = multiplier;
-    }
-    else
-    {
-      upper = multiplier;
-    }
-  }
-  PRINT_ERROR("Linearized level-set volume multiplier did not converge.\n");
-  return false;
-}
 }
 
 bool CoreTopologyLevelSetUpdate::build_proposal(const TopologyLevelSetDesign& source, const TopologyLevelSetEvaluation& evaluation, const std::map<int, bool>& preserved, const std::map<int, double>& element_volumes, double target_volume_fraction, TopologyLevelSetProposal& proposal)
@@ -360,13 +209,13 @@ bool CoreTopologyLevelSetUpdate::build_proposal(const TopologyLevelSetDesign& so
   double multiplier = 0.0;
   double residual = 0.0;
   const double source_volume = prepared.volume.volume_fraction;
-  if (!solve_proposal(problem, source_volume, target_volume_fraction, controls, values, multiplier, residual))
+  if (!CoreTopologyLevelSetQP::solve(problem.qp, source_volume, target_volume_fraction, controls, values, multiplier, residual))
   {
     return false;
   }
-  const Vector direction = values - problem.origin;
+  const Vector direction = values - problem.qp.origin;
   const double ordinary_residual = direction.cwiseAbs().maxCoeff();
-  const double predicted_change = problem.volume.dot(direction);
+  const double predicted_change = problem.qp.volume.dot(direction);
   if (!direction.allFinite() || !std::isfinite(ordinary_residual) || !std::isfinite(predicted_change))
   {
     PRINT_ERROR("Invalid level-set proposal direction.\n");

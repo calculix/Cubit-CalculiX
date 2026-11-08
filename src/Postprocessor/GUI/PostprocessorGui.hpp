@@ -16,7 +16,8 @@ class PostprocessorGui
 {
 public:
   PostprocessorGui(std::weak_ptr<PostprocessorApplicationInterface> application,
-    std::function<bool(const std::string&, std::string&)> submit);
+    std::function<bool(const std::string&, std::string&)> submit,
+    std::function<bool(const std::string&, std::string&)> silent);
   ~PostprocessorGui();
   bool start(QWidget* host, std::string& error);
   void stop() noexcept;
@@ -26,6 +27,7 @@ public:
 private:
   std::weak_ptr<PostprocessorApplicationInterface> application;
   std::function<bool(const std::string&, std::string&)> submitCommand;
+  std::function<bool(const std::string&, std::string&)> silentCommand;
   QPointer<PostprocessorWorkspace> workspace;
   std::unique_ptr<PostprocessorGuiObserver> observer;
 };

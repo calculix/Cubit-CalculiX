@@ -33,6 +33,10 @@ namespace Postprocessor
 
     const PostprocessorSession& session() const noexcept;
 
+    // Restore an empty default session without reusing revision/identity tokens.
+    // Reject reset during provider callbacks; failure preserves the old session.
+    bool reset(std::string& error);
+
     // Exact, case-sensitive lookup; an empty result means no match.
     std::string source_id_from_name(const std::string& name) const;
     std::shared_ptr<const SimResults::VtkResultsData> result_data(const std::string& source_id) const;
@@ -42,12 +46,18 @@ namespace Postprocessor
       bool visible, std::string& error);
     bool visible_bounds(const std::string& view_id, std::array<double, 6>& bounds, std::string& error) const;
     bool request_camera_fit(const std::string& view_id, std::string& error);
+    bool camera_navigation_ready(const std::string& view_id) const noexcept;
+    bool set_camera(const std::string& view_id, const CameraDefinition& camera, std::string& error);
+    bool rotate_camera(const std::string& view_id, double yaw, double pitch, std::string& error);
+    bool pan_camera(const std::string& view_id, double horizontal, double vertical, std::string& error);
+    bool zoom_camera(const std::string& view_id, double factor, std::string& error);
     // GUI completion of an existing request, not a new user action. Reject stale
     // request/geometry revisions and invalid cameras before publishing anything.
     bool complete_camera_fit(const std::string& view_id, std::uint64_t request,
       std::uint64_t revision, const CameraDefinition& camera, std::string& error);
 
-    // nullopt uses the provider's suggested name. An explicit empty/blank name
+    // nullopt selects an already retained identical job snapshot, otherwise
+    // uses the provider's suggested name. An explicit empty/blank name
     // is invalid. Names are preserved verbatim and must be unique in the session.
     // Failure preserves session, runtime handles and the source ID allocator.
     // Provider-side reader/cache changes are outside this transaction boundary.

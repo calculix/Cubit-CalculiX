@@ -489,8 +489,6 @@ public:
   std::vector<std::vector<std::string>> get_jobs_tree_data();
 
   // Job result viewers
-  bool result_cgx_job(int job_id);
-  bool result_paraview_job(int job_id);
 
   // Result management
   bool create_result(int job_id);

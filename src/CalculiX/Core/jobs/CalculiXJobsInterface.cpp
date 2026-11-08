@@ -7,6 +7,16 @@
 #include "Core/jobs/CoreJobs.hpp"
 #include "Core/loadCalculiXCore.hpp"
 
+const CalculiXJobProgress::Data* CalculiXJobsInterface::get_job_progress(int job_id, std::string& error)
+{
+  if (!ccx_core.jobs)
+  {
+    error = "CalculiX jobs are unavailable.";
+    return nullptr;
+  }
+  return ccx_core.jobs->get_job_progress(job_id, error);
+}
+
 bool CalculiXJobsInterface::get_monitor_snapshot(std::vector<JobMonitorEntry>& output, std::string& error) const
 {
   if (ccx_core.jobs == nullptr)

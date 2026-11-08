@@ -12,6 +12,7 @@
 #include <QDockWidget>
 #include <QEvent>
 #include <QGroupBox>
+#include <QMenu>
 #include <QMenuBar>
 #include <QScopedValueRollback>
 #include <QTabWidget>
@@ -97,6 +98,14 @@ bool CubitWorkspaceHost::attach(Claro* host, std::string& error)
   for (auto* action : menu->actions())
   {
     nativeMenus.append({action, action->isVisible()});
+    QString label = action->text();
+    label.remove('&');
+    if (action->menu() != nullptr && label.compare(tr("Tools"), Qt::CaseInsensitive) == 0)
+    {
+      // Borrow Cubit's existing actions, including its Options dialog handler.
+      // Application workspaces share this menu rather than copying its entries.
+      nativeToolsMenu = action;
+    }
   }
 
   documentation = std::make_unique<DocumentationManager>();
@@ -551,7 +560,7 @@ bool CubitWorkspaceHost::apply(const WorkspaceView& view, const QPersistentModel
   {
     if (item.action != nullptr)
     {
-      item.action->setVisible(nativeActive && item.visible);
+      item.action->setVisible(item.action == nativeToolsMenu || (nativeActive && item.visible));
     }
   }
 
@@ -561,6 +570,14 @@ bool CubitWorkspaceHost::apply(const WorkspaceView& view, const QPersistentModel
     {
       action->setVisible(view.menuActions.contains(action.data()));
     }
+  }
+
+  if (nativeToolsMenu != nullptr)
+  {
+    // Workspace menus are appended after the native menus. Move Tools behind
+    // them, then let DocumentationManager place the active Help entry last.
+    menu->removeAction(nativeToolsMenu.data());
+    menu->addAction(nativeToolsMenu.data());
   }
 
   if (documentation != nullptr)

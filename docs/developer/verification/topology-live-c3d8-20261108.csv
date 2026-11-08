@@ -1,0 +1,4 @@
+run_id,group,status,check_rows,failed_rows,native_return,cubit_version,platform,plugin_revision
+20261108T192653Z_fc574ef7,single_hex,PASS,196,0,0,2026.11,win32,not recorded
+20261108T192653Z_fc574ef7,shared_free,PASS,87,0,0,2026.11,win32,not recorded
+20261108T192653Z_fc574ef7,shared_preserved,PASS,99,0,0,2026.11,win32,not recorded

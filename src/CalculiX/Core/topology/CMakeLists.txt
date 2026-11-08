@@ -1,4 +1,6 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetQP.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetQP.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologySaveValidation.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologySaveValidation.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCoreTopologyLevelSet.cpp

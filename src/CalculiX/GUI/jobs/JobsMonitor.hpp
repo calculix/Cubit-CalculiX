@@ -21,6 +21,7 @@
 #include <QTabWidget>
 class GuiTimer;
 class JobsMonitorLiveMonitor;
+class JobsMonitorProgressTables;
 class JobsMonitorFRD;
 class JobsMonitorDAT;
 class JobsMonitorDATSection;
@@ -43,10 +44,8 @@ private slots:
   void update_slot();
   void on_pushButton_run_clicked(bool);
   void on_pushButton_kill_clicked(bool);
-  void on_pushButton_result_cgx_clicked(bool);
   void on_pushButton_result_load_clicked(bool);
-  void on_pushButton_result_convert_clicked(bool);
-  void on_pushButton_result_paraview_clicked(bool);
+  void on_pushButton_results_clicked(bool);
   void on_pushButton_close_clicked(bool);
   
 private:
@@ -54,23 +53,18 @@ private:
   int current_job_id=-1;
   int maximumBlockCount=2000;
   int total_block_count_console_output = 0;
-  int total_block_count_cvg = 0;
-  int total_block_count_sta = 0;
   QTabWidget* TabWidget;
   QGridLayout* gridLayout;
   QHBoxLayout* boxLayout_window;
   QHBoxLayout* boxLayout_tab;
   QPushButton* pushButton_run;
   QPushButton* pushButton_kill;
-  QPushButton* pushButton_result_cgx;
   QPushButton* pushButton_result_load;
-  QPushButton* pushButton_result_convert;
-  QPushButton* pushButton_result_paraview;
+  QPushButton* pushButton_results;
   QPushButton* pushButton_close;
   JobsMonitorLiveMonitor* liveMonitor_widget;
+  JobsMonitorProgressTables* progress_tables;
   QPlainTextEdit* QPlainTextEdit_console;
-  QPlainTextEdit* QPlainTextEdit_cvg;
-  QPlainTextEdit* QPlainTextEdit_sta;
   JobsMonitorFRD* FRD_widget;
   JobsMonitorDAT* DAT_widget;
   JobsMonitorDATSection* DATSection_widget;

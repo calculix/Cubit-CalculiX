@@ -2,12 +2,14 @@
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "Postprocessor/Core/representations/DisplayDefaults.hpp"
 #include "Postprocessor/Core/representations/ResultMesh.hpp"
+#include "Postprocessor/Core/views/CameraOperations.hpp"
 #include <vtkActor.h>
 #include <vtkCamera.h>
 #include <vtkCallbackCommand.h>
 #include <vtkCommand.h>
 #include <vtkDataSetSurfaceFilter.h>
 #include <vtkDataSet.h>
+#include <vtkExtractEdges.h>
 #include <vtkOpenGLActor.h>
 #include <vtkOpenGLCamera.h>
 #include <vtkOpenGLPolyDataMapper.h>
@@ -44,6 +46,9 @@ void PostprocessorScene::clear()
   // The renderer belongs exclusively to this scene, including partial updates.
   renderer->RemoveAllViewProps();
   displays.clear();
+  geometryRevision.reset();
+  visibleBounds.reset();
+  appliedCamera.reset();
 }
 
 std::shared_ptr<PostprocessorScene::RepresentationActors> PostprocessorScene::build(
@@ -87,9 +92,41 @@ std::shared_ptr<PostprocessorScene::RepresentationActors> PostprocessorScene::bu
     property->SetEdgeColor(Postprocessor::DisplayDefaults::edge_color.data());
     property->SetLineWidth(Postprocessor::DisplayDefaults::edge_width);
     property->SetRepresentationToSurface();
-    property->EdgeVisibilityOn();
+    // Surface tessellation is needed for nonlinear faces, but its diagonals
+    // are not finite-element edges. Draw original cell edges separately.
+    property->EdgeVisibilityOff();
     actor->SetProperty(property);
     group->actors.push_back(actor);
+
+    auto edges = vtkSmartPointer<vtkExtractEdges>::New();
+    edges->SetInputData(mesh);
+    edges->UseAllPointsOn();
+    const auto edgeTag = edges->AddObserver(vtkCommand::ErrorEvent, observer);
+    edges->Update();
+    edges->RemoveObserver(edgeTag);
+    if (failed || edges->GetOutput() == nullptr)
+    {
+      error = "VTK could not extract the original mesh edges.";
+      return {};
+    }
+    if (edges->GetOutput()->GetNumberOfCells() != 0)
+    {
+      auto edgeMapper = vtkSmartPointer<vtkOpenGLPolyDataMapper>::New();
+      edgeMapper->SetInputConnection(edges->GetOutputPort());
+      edgeMapper->ScalarVisibilityOff();
+      // Apply only a mapper-local line bias; never change the host-wide
+      // coincident-topology mode. Opaque surfaces occlude interior edges.
+      edgeMapper->SetRelativeCoincidentTopologyLineOffsetParameters(0.0, -1.0);
+      auto edgeActor = vtkSmartPointer<vtkOpenGLActor>::New();
+      edgeActor->SetMapper(edgeMapper);
+      auto edgeProperty = vtkSmartPointer<vtkOpenGLProperty>::New();
+      const auto& edgeColor = Postprocessor::DisplayDefaults::edge_color;
+      edgeProperty->SetColor(edgeColor[0], edgeColor[1], edgeColor[2]);
+      edgeProperty->SetLineWidth(Postprocessor::DisplayDefaults::edge_width);
+      edgeProperty->LightingOff();
+      edgeActor->SetProperty(edgeProperty);
+      group->actors.push_back(edgeActor);
+    }
   }
   if (group->actors.empty())
   {
@@ -105,7 +142,7 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
   try
   {
     const auto revision = application.display_revision();
-    const auto state = application.session();
+    const auto& state = application.session();
     const auto view = state.views.find(viewId);
     if (view == state.views.end())
     {
@@ -113,73 +150,84 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
       error = "The viewport's view definition is unavailable.";
       return false;
     }
-    std::map<std::string, std::shared_ptr<RepresentationActors>> next;
-    for (const auto& entry : state.representations)
+    if (!geometryRevision || *geometryRevision != revision)
     {
-      const auto& display = entry.second;
-      if (display.view_id != viewId || display.input.owner != Postprocessor::OutputOwner::Source || display.input.port != 0)
+      std::map<std::string, std::shared_ptr<RepresentationActors>> next;
+      for (const auto& entry : state.representations)
       {
-        continue;
-      }
-      const auto data = application.result_data(display.input.object_id);
-      const auto existing = displays.find(entry.first);
-      std::shared_ptr<RepresentationActors> group;
-      if (existing != displays.end() && existing->second->data == data && existing->second->increment == display.increment_index)
-      {
-        group = existing->second;
-      }
-      else
-      {
-        if (!display.visible)
+        const auto& display = entry.second;
+        if (display.view_id != viewId || display.input.owner != Postprocessor::OutputOwner::Source || display.input.port != 0)
         {
-          // Retain an unchanged hidden group above, but build new geometry only
-          // when it is visible. Changed hidden inputs must not retain old actors.
           continue;
         }
-        std::string buildError;
-        group = build(data, display.increment_index, buildError);
-        if (!group)
+        const auto data = application.result_data(display.input.object_id);
+        const auto existing = displays.find(entry.first);
+        std::shared_ptr<RepresentationActors> group;
+        if (existing != displays.end() && existing->second->data == data && existing->second->increment == display.increment_index)
         {
-          error += (error.empty() ? "" : "\n") + display.name + ": " + buildError;
-          continue;
+          group = existing->second;
+        }
+        else
+        {
+          if (!display.visible)
+          {
+            // Retain an unchanged hidden group above, but build new geometry only
+            // when it is visible. Changed hidden inputs must not retain old actors.
+            continue;
+          }
+          std::string buildError;
+          group = build(data, display.increment_index, buildError);
+          if (!group)
+          {
+            error += (error.empty() ? "" : "\n") + display.name + ": " + buildError;
+            continue;
+          }
+        }
+        for (const auto& actor : group->actors)
+        {
+          actor->SetVisibility(display.visible);
+        }
+        next.emplace(entry.first, group);
+      }
+      // Remove closed/replaced/failed inputs even when another display failed.
+      // Never leave actors from an old source snapshot masquerading as current.
+      for (const auto& entry : displays)
+      {
+        const auto replacement = next.find(entry.first);
+        if (replacement == next.end() || replacement->second != entry.second)
+        {
+          for (const auto& actor : entry.second->actors)
+          {
+            renderer->RemoveActor(actor);
+          }
         }
       }
-      for (const auto& actor : group->actors)
+      for (const auto& entry : next)
       {
-        actor->SetVisibility(display.visible);
-      }
-      next.emplace(entry.first, group);
-    }
-    // Remove closed/replaced/failed inputs even when another display failed.
-    // Never leave actors from an old source snapshot masquerading as current.
-    for (const auto& entry : displays)
-    {
-      const auto replacement = next.find(entry.first);
-      if (replacement == next.end() || replacement->second != entry.second)
-      {
-        for (const auto& actor : entry.second->actors)
+        const auto previous = displays.find(entry.first);
+        if (previous == displays.end() || previous->second != entry.second)
         {
-          renderer->RemoveActor(actor);
+          for (const auto& actor : entry.second->actors)
+          {
+            renderer->AddActor(actor);
+          }
         }
       }
-    }
-    for (const auto& entry : next)
-    {
-      const auto previous = displays.find(entry.first);
-      if (previous == displays.end() || previous->second != entry.second)
+      displays.swap(next);
+      if (application.display_revision() != revision)
       {
-        for (const auto& actor : entry.second->actors)
-        {
-          renderer->AddActor(actor);
-        }
+        clear();
+        error = "The display inputs changed during scene synchronization.";
+        return false;
       }
-    }
-    displays.swap(next);
-    if (application.display_revision() != revision)
-    {
-      clear();
-      error = "The display inputs changed during scene synchronization.";
-      return false;
+      std::array<double, 6> bounds;
+      renderer->ComputeVisiblePropBounds(bounds.data());
+      visibleBounds = valid_bounds(bounds) ? std::optional<std::array<double, 6>>(bounds) : std::nullopt;
+      appliedCamera.reset();
+      if (error.empty())
+      {
+        geometryRevision = revision;
+      }
     }
     if (view->second.camera)
     {
@@ -210,6 +258,10 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
 
 void PostprocessorScene::apply_camera(const Postprocessor::CameraDefinition& definition)
 {
+  if (appliedCamera && Postprocessor::CameraOperations::equal(*appliedCamera, definition))
+  {
+    return;
+  }
   auto* camera = renderer->GetActiveCamera();
   camera->SetPosition(definition.position.data());
   camera->SetFocalPoint(definition.focal_point.data());
@@ -217,12 +269,11 @@ void PostprocessorScene::apply_camera(const Postprocessor::CameraDefinition& def
   camera->SetParallelProjection(definition.parallel_projection);
   camera->SetViewAngle(definition.vertical_view_angle_degrees);
   camera->SetParallelScale(definition.parallel_scale);
-  std::array<double, 6> bounds;
-  renderer->ComputeVisiblePropBounds(bounds.data());
-  if (valid_bounds(bounds))
+  if (visibleBounds)
   {
-    renderer->ResetCameraClippingRange(bounds.data());
+    renderer->ResetCameraClippingRange(visibleBounds->data());
   }
+  appliedCamera = definition;
 }
 
 bool PostprocessorScene::prepare_camera_fit(const std::array<double, 6>& bounds,
@@ -255,4 +306,11 @@ bool PostprocessorScene::prepare_camera_fit(const std::array<double, 6>& bounds,
   definition.vertical_view_angle_degrees = fitted->GetViewAngle();
   definition.parallel_scale = fitted->GetParallelScale();
   return true;
+}
+
+void PostprocessorScene::apply_appearance(const std::array<double, 3>& top, const std::array<double, 3>& bottom)
+{
+  renderer->SetBackground(bottom[0], bottom[1], bottom[2]);
+  renderer->SetBackground2(top[0], top[1], top[2]);
+  renderer->SetGradientBackground(top != bottom);
 }

@@ -78,6 +78,7 @@ private:
   QPointer<QDockWidget> navigationDock;
   QPointer<QWidget> viewport;
   QPointer<QMenuBar> menu;
+  QPointer<QAction> nativeToolsMenu;
   QPointer<NavigationModel> nativeNavigation;
   QPointer<QGroupBox> navigationMode;
   QPersistentModelIndex nativeSelection;

@@ -1,51 +1,10 @@
 #include "../application/PostprocessorCore.hpp"
 #include "../representations/ResultMesh.hpp"
+#include "CameraOperations.hpp"
 #include <algorithm>
 #include <cmath>
 #include <exception>
 #include <limits>
-
-namespace
-{
-  bool valid_camera(const Postprocessor::CameraDefinition& camera)
-  {
-    const auto finite = [](const std::array<double, 3>& values)
-    {
-      return std::all_of(values.begin(), values.end(), [](double value)
-      {
-        return std::isfinite(value);
-      });
-    };
-    if (!finite(camera.position) || !finite(camera.focal_point) || !finite(camera.view_up) ||
-        !std::isfinite(camera.parallel_scale) || camera.parallel_scale <= 0 ||
-        !std::isfinite(camera.vertical_view_angle_degrees) || camera.vertical_view_angle_degrees <= 0 ||
-        camera.vertical_view_angle_degrees >= 180)
-    {
-      return false;
-    }
-    std::array<double, 3> direction;
-    for (std::size_t axis = 0; axis < 3; ++axis)
-    {
-      direction[axis] = camera.focal_point[axis] - camera.position[axis];
-    }
-    const double length = std::hypot(direction[0], direction[1], direction[2]);
-    const double upLength = std::hypot(camera.view_up[0], camera.view_up[1], camera.view_up[2]);
-    if (!std::isfinite(length) || length <= 0 || !std::isfinite(upLength) || upLength <= 0)
-    {
-      return false;
-    }
-    std::array<double, 3> up;
-    for (std::size_t axis = 0; axis < 3; ++axis)
-    {
-      direction[axis] /= length;
-      up[axis] = camera.view_up[axis] / upLength;
-    }
-    const double cross = std::hypot(direction[1] * up[2] - direction[2] * up[1],
-      direction[2] * up[0] - direction[0] * up[2], direction[0] * up[1] - direction[1] * up[0]);
-    // Reject nearly parallel up/direction vectors to avoid unstable view frames.
-    return cross > 1e-12;
-  }
-}
 
 namespace Postprocessor
 {
@@ -114,7 +73,8 @@ namespace Postprocessor
   {
     error.clear();
     const auto found = state.views.find(view_id);
-    if (source_operation_active || found == state.views.end() || found->second.fit_request == std::numeric_limits<std::uint64_t>::max())
+    if (source_operation_active || found == state.views.end() || (found->second.fit_request == std::numeric_limits<std::uint64_t>::max() ||
+        found->second.camera_revision == std::numeric_limits<std::uint64_t>::max()))
     {
       error = "Cannot request a fit for this view during the current operation.";
       return false;
@@ -126,6 +86,7 @@ namespace Postprocessor
     }
     found->second.fit_pending = true;
     ++found->second.fit_request;
+    ++found->second.camera_revision;
     return true;
   }
 
@@ -135,18 +96,20 @@ namespace Postprocessor
     error.clear();
     const auto found = state.views.find(view_id);
     if (source_operation_active || found == state.views.end() || !found->second.fit_pending ||
-        found->second.fit_request != request || scene_revision != revision)
+        found->second.fit_request != request || scene_revision != revision ||
+        found->second.camera_revision == std::numeric_limits<std::uint64_t>::max())
     {
       error = "The camera fit request is no longer current.";
       return false;
     }
-    if (!valid_camera(camera))
+    if (!CameraOperations::valid(camera))
     {
       error = "The fitted camera is invalid.";
       return false;
     }
     found->second.camera = camera;
     found->second.fit_pending = false;
+    ++found->second.camera_revision;
     return true;
   }
 }

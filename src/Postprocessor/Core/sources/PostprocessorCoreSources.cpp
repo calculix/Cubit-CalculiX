@@ -2,6 +2,7 @@
 #include "Framework/Interfaces/ResultSourceProviderInterface.hpp"
 #include "../representations/ResultMesh.hpp"
 
+#include <algorithm>
 #include <exception>
 #include <filesystem>
 #include <limits>
@@ -178,6 +179,37 @@ namespace Postprocessor
       if (!validate_publication(request, published, false, error))
       {
         return false;
+      }
+
+      // Opening an already retained job snapshot without a name selects it.
+      // Explicit names still request independently retained sources. A newer
+      // run never silently replaces an older source with the same job name.
+      if (!name)
+      {
+        const auto* resolved = std::get_if<SimResults::JobSourceReference>(&published.reference);
+        for (const auto& entry : state.sources)
+        {
+          const auto* existing = std::get_if<JobSourceReference>(&entry.second.reference);
+          if (resolved && existing && existing->application_id == resolved->application_id &&
+            existing->project_id == resolved->project_id && existing->job_id == resolved->job_id &&
+            existing->run_identity == resolved->run_identity)
+          {
+            const auto loaded = runtime.find(entry.first);
+            if (loaded != runtime.end() && loaded->second.data == published.data)
+            {
+              auto staged = state;
+              staged.active_source_id = entry.first;
+              staged.active_representation_id.clear();
+              if (!prepare_initial_display(staged, entry.first, loaded->second.first_mesh_increment, error))
+              {
+                return false;
+              }
+              state.swap(staged);
+              ++scene_revision;
+              return true;
+            }
+          }
+        }
       }
 
       const std::string resolved_name = name ? *name : published.suggested_name;
@@ -449,6 +481,53 @@ namespace Postprocessor
     catch (...)
     {
       error = "Cannot close Postprocessor source: unknown failure.";
+      return false;
+    }
+  }
+
+  bool PostprocessorCore::reset(std::string& error)
+  {
+    error.clear();
+    if (source_operation_active || scene_revision == std::numeric_limits<std::uint64_t>::max())
+    {
+      error = "Cannot reset Postprocessor during a source operation or after revision exhaustion.";
+      return false;
+    }
+    SourceOperationGuard guard(source_operation_active);
+    try
+    {
+      PostprocessorSession staged;
+      std::uint64_t cameraRevision = 0;
+      std::uint64_t fitRequest = 0;
+      for (const auto& entry : state.views)
+      {
+        cameraRevision = std::max(cameraRevision, entry.second.camera_revision);
+        fitRequest = std::max(fitRequest, entry.second.fit_request);
+      }
+      if (cameraRevision == std::numeric_limits<std::uint64_t>::max() ||
+          fitRequest == std::numeric_limits<std::uint64_t>::max())
+      {
+        error = "Cannot reset Postprocessor after camera revision exhaustion.";
+        return false;
+      }
+      auto& view = staged.views.at(staged.active_view_id);
+      view.camera_revision = cameraRevision + 1;
+      view.fit_request = fitRequest + 1;
+      state.swap(staged);
+      runtime.clear();
+      // Retain the source ID allocator. Old handles/tokens must not address a
+      // newly opened source after reset. Published handles owned elsewhere live on.
+      ++scene_revision;
+      return true;
+    }
+    catch (const std::exception& exception)
+    {
+      error = std::string("Cannot reset Postprocessor: ") + exception.what();
+      return false;
+    }
+    catch (...)
+    {
+      error = "Cannot reset Postprocessor: unknown failure.";
       return false;
     }
   }

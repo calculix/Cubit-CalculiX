@@ -257,8 +257,7 @@ void JobsTree::populateContextMenu(
       hostPtr->myJobsMonitor->update();
     });
   }
-  addCommandAction(menu, "Result CGX", QString("ccx result cgx job ") + QString::number(entityId));
-  addCommandAction(menu, "Result ParaView", QString("ccx result paraview job ") + QString::number(entityId));
+  addCommandAction(menu, "Results", QString("post open ccx job ") + QString::number(entityId));
 }
 
 

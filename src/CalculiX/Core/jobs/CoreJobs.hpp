@@ -2,6 +2,7 @@
 #define COREJOBS_HPP
 
 #include "JobsSettings.hpp"
+#include "JobProgress.hpp"
 #include "Framework/Interfaces/JobMonitorProviderInterface.hpp"
 #include <map>
 
@@ -36,7 +37,7 @@ public:
   // jobs_data[0][3] status -1 no process, 1 process running, 2 process finished, 3 process killed, 4 process finished with errors, 5 process running currently waiting
   // jobs_data[0][4] process id
   // jobs_data[0][5] Output Console data id
-  // jobs_data[0][6] converted to paraview -1 false, 1 true linked, 2 true unlinked
+  // jobs_data[0][6] VTK conversion complete: -1 false, 1 true
   // jobs_data[0][7] .cvg data id
   // jobs_data[0][8] .sta data id
   // jobs_data[0][9] auto conversion 1, no conversion -1
@@ -72,9 +73,8 @@ public:
   bool kill_job(int job_id); // kill the jobs exits
   bool check_jobs(); // checks for changes of job processes
   bool get_cvgsta(int job_id); // gets filedata of .cvg and .sta
-  //bool result_ccx2paraview_job(int job_id); // converts the result with ccx2paraview
-  bool result_cgx_job(int job_id); // opens the results with cgx
-  bool result_paraview_job(int job_id); // opens the results with paraview
+  void clear_job_progress();
+  const CalculiXJobProgress::Data* get_job_progress(int job_id, std::string& error);
   int  get_jobs_data_id_from_job_id(int job_id); // searches for the job_id in the jobs_data and returns the indices or -1 if it fails
   #ifdef WIN32
     int  get_ProcessPipe_data_id_from_PipePID(int PipePID); // searches for the Pipe Handle data id in the Processpipe and returns the indices or -1 if it fails
@@ -85,7 +85,7 @@ public:
   #else
     int  get_CubitProcessHandler_data_id_from_process_id(int process_id); // searches for the CubitProcessHandler_id in the CubitProcessHandler and returns the indices or -1 if it fails
   #endif
-  bool set_job_conversion(int job_id, int conversion); // sets the paraview conversion value for the job
+  bool set_job_conversion(int job_id, int conversion); // sets the in-memory VTK conversion value for the job
   std::vector<std::string> get_job_data(int job_id);
   std::vector<std::string> get_job_console_output(int job_id);
   std::vector<std::string> get_job_cvg(int job_id);
@@ -97,6 +97,7 @@ public:
   ProgressTool *progressbar; // progressbar
 
 private:
+  std::map<int, CalculiXJobProgress::State> job_progress;
   struct MonitorExecution
   {
     std::string id;

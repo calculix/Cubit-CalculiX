@@ -7,6 +7,10 @@
 #include "display/PostShowCommand.hpp"
 #include "display/PostHideCommand.hpp"
 #include "views/PostViewFitCommand.hpp"
+#include "views/PostViewCameraCommand.hpp"
+#include "views/PostViewRotateCommand.hpp"
+#include "views/PostViewPanCommand.hpp"
+#include "views/PostViewZoomCommand.hpp"
 
 #include <utility>
 
@@ -18,11 +22,28 @@ PostprocessorCommands::PostprocessorCommands(std::weak_ptr<PostprocessorApplicat
 std::vector<std::string> PostprocessorCommands::command_keys() const
 {
   return {"PostOpenCommand", "PostListCommand", "PostSelectCommand", "PostCloseCommand", "PostUserOptionsCommand",
-    "PostShowCommand", "PostHideCommand", "PostViewFitCommand"};
+    "PostShowCommand", "PostHideCommand", "PostViewFitCommand", "PostViewCameraCommand",
+    "PostViewRotateCommand", "PostViewPanCommand", "PostViewZoomCommand"};
 }
 
 CubitCommand* PostprocessorCommands::create_command(const std::string& key)
 {
+  if (key == "PostViewCameraCommand")
+  {
+    return new PostViewCameraCommand(application);
+  }
+  if (key == "PostViewRotateCommand")
+  {
+    return new PostViewRotateCommand(application);
+  }
+  if (key == "PostViewPanCommand")
+  {
+    return new PostViewPanCommand(application);
+  }
+  if (key == "PostViewZoomCommand")
+  {
+    return new PostViewZoomCommand(application);
+  }
   if (key == "PostShowCommand")
   {
     return new PostShowCommand(application);

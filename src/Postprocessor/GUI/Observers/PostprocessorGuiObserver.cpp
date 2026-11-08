@@ -3,8 +3,8 @@
 #include <QTimer>
 #include <utility>
 
-PostprocessorGuiObserver::PostprocessorGuiObserver(std::function<void()> refresh)
-  : refresh(std::move(refresh))
+PostprocessorGuiObserver::PostprocessorGuiObserver(std::function<void()> refresh, std::function<bool()> suppress)
+  : refresh(std::move(refresh)), suppress(std::move(suppress))
 {
   register_observer();
 }
@@ -16,7 +16,10 @@ PostprocessorGuiObserver::~PostprocessorGuiObserver()
 
 void PostprocessorGuiObserver::notify_command_complete()
 {
-  if (pending)
+  // Our camera dispatcher already schedules its own viewport update. Do not
+  // enqueue a second workspace pass for its synchronous command completion.
+  // Normal external/source/options commands keep the authoritative refresh path.
+  if ((suppress && suppress()) || pending)
   {
     return;
   }

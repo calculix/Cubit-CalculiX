@@ -28,8 +28,8 @@ public:
 private slots:
   void on_pushButton_run_clicked(bool);
   void on_pushButton_kill_clicked(bool);
-  void on_pushButton_result_cgx_clicked(bool);
-  void on_pushButton_result_paraview_clicked(bool);
+  void on_pushButton_result_load_clicked(bool);
+  void on_pushButton_results_clicked(bool);
 
 private:
   std::string log;
@@ -43,12 +43,12 @@ private:
   QPushButton* pushButton_kill;
   QHBoxLayout* HBoxLayout_pushButton_kill;
   QSpacerItem* horizontal_spacer_pushButton_kill;
-  QPushButton* pushButton_result_cgx;
-  QHBoxLayout* HBoxLayout_pushButton_result_cgx;
-  QSpacerItem* horizontal_spacer_pushButton_result_cgx;
-  QPushButton* pushButton_result_paraview;
-  QHBoxLayout* HBoxLayout_pushButton_result_paraview;
-  QSpacerItem* horizontal_spacer_pushButton_result_paraview;
+  QPushButton* pushButton_result_load;
+  QHBoxLayout* HBoxLayout_pushButton_result_load;
+  QSpacerItem* horizontal_spacer_pushButton_result_load;
+  QPushButton* pushButton_results;
+  QHBoxLayout* HBoxLayout_pushButton_results;
+  QSpacerItem* horizontal_spacer_pushButton_results;
   QHBoxLayout* HBoxLayout_1;
   QLabel* label_1;
   QLineEdit* lineEdit_1;

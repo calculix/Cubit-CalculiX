@@ -7,6 +7,7 @@
 #include <QString>
 #include <string>
 #include <functional>
+#include <vector>
 
 class QWidget;
 class QAction;
@@ -20,12 +21,22 @@ enum class WorkspaceDockLayout
   LeftRight
 };
 
+struct WorkspaceOptionsPage
+{
+  QString label;
+  QWidget* widget = nullptr;
+  std::function<void()> refresh;
+  std::function<bool(std::string&)> apply;
+};
+
 struct WorkspaceView
 {
   // Borrowed options widget; framework unregisters it before provider teardown.
   QWidget* optionsPage = nullptr;
   std::function<void()> refreshOptions;
   std::function<bool(std::string&)> applyOptions;
+  // Same borrowed-widget lifetime as optionsPage; labels must be globally unique.
+  std::vector<WorkspaceOptionsPage> additionalOptionsPages;
   QString id;
   QString label;
   QIcon icon;

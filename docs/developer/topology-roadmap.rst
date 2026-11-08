@@ -53,11 +53,28 @@ Remaining implementation
 * The physical-solve fixed-material-group derivative matrix passed all 18
   cases: six formulations with compliance, absolute Y and displacement magnitude.
   It does not establish density/filter or level-set nodal derivatives.
-* Native interpolation/geometry test sources and independent reference fixtures
-  are supplied under ``tests/topology``. They link the existing production module;
-  build/runtime execution remains pending. The tests directory is Git-ignored.
-* Next: verify nodal compliance/volume assembly, then independently check small
-  QP proposals, acceptance/backtracking, preservation and convergence diagnostics.
+* Native interpolation/geometry tests passed on Windows after the bounded
+  Heaviside endpoint fix. Linux, curved/mixed and narrow-band accuracy checks
+  remain separate. Binary provenance limits are recorded with the evidence.
+* Native nodal compliance/volume accumulation and normalization passed the
+  Windows analytical suite: six formulations, shared nodes, unequal weights and
+  preserved neighbors. The complete live-Cubit evaluation remains separate.
+* The existing numerical QP solver is extracted into CoreTopologyLevelSetQP.
+  Seven analytical solution/KKT cases and failure/limit tests passed on Windows.
+  Graph assembly and actual-volume acceptance remain in the
+  live-mesh update code. The local tests directory remains Git-ignored.
+* The developer-only live C3D8 batch passed all 382 checks: graph KKT,
+  actual-volume acceptance, backtracking, restoration, preservation and source
+  residual ownership. No production command or public-gate bypass was introduced.
+* The expanded live matrix passed all 18 groups and 2034 checks after the
+  C3D10 refinement regression and five-refinement test budget. Tolerance and
+  production defaults stayed unchanged. Mandatory restoration/backtracking
+  coverage remains explicitly C3D8-only.
+* A fifth standalone length-resolution test and live seed phases are supplied:
+  raw defaults, deterministic lattice fields/anchors, forced fallback including
+  one free node, preservation and controlled complete initial designs. New
+  build/run pending; broad-band geometry is not default-width certification.
+* Next: run initialization checks, then controller/persistence verification.
 * Then: native controller, level-set history persistence, mixed/curved meshes,
   narrow-band refinement, performance, GUI lifecycle and Windows/Linux evidence.
 * Review the required evidence before enabling the supported level-set scope.

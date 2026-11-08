@@ -1,0 +1,19 @@
+run_id,formulation,fixture,status,check_rows,failed_rows,backtracking_case_included,restoration_case_included,cubit_version,platform,plugin_revision
+20261108T200007Z_7ae44599,C3D8,single,PASS,198,0,True,True,2026.11,win32,not recorded
+20261108T200007Z_7ae44599,C3D8,shared_free,PASS,93,0,False,False,2026.11,win32,not recorded
+20261108T200007Z_7ae44599,C3D8,shared_preserved,PASS,105,0,False,False,2026.11,win32,not recorded
+20261108T200007Z_7ae44599,C3D20,single,PASS,129,0,False,False,2026.11,win32,not recorded
+20261108T200007Z_7ae44599,C3D20,shared_free,PASS,173,0,False,False,2026.11,win32,not recorded
+20261108T200007Z_7ae44599,C3D20,shared_preserved,PASS,197,0,False,False,2026.11,win32,not recorded
+20261108T200007Z_7ae44599,C3D4,single,PASS,65,0,False,False,2026.11,win32,not recorded
+20261108T200007Z_7ae44599,C3D4,shared_free,PASS,65,0,False,False,2026.11,win32,not recorded
+20261108T200007Z_7ae44599,C3D4,shared_preserved,PASS,73,0,False,False,2026.11,win32,not recorded
+20261108T200007Z_7ae44599,C3D10,single,PASS,89,0,False,False,2026.11,win32,not recorded
+20261108T200007Z_7ae44599,C3D10,shared_free,PASS,101,0,False,False,2026.11,win32,not recorded
+20261108T200007Z_7ae44599,C3D10,shared_preserved,PASS,115,0,False,False,2026.11,win32,not recorded
+20261108T200007Z_7ae44599,C3D6,single,PASS,73,0,False,False,2026.11,win32,not recorded
+20261108T200007Z_7ae44599,C3D6,shared_free,PASS,77,0,False,False,2026.11,win32,not recorded
+20261108T200007Z_7ae44599,C3D6,shared_preserved,PASS,87,0,False,False,2026.11,win32,not recorded
+20261108T200007Z_7ae44599,C3D15,single,PASS,109,0,False,False,2026.11,win32,not recorded
+20261108T200007Z_7ae44599,C3D15,shared_free,PASS,133,0,False,False,2026.11,win32,not recorded
+20261108T200007Z_7ae44599,C3D15,shared_preserved,PASS,152,0,False,False,2026.11,win32,not recorded

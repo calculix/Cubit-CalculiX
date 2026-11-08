@@ -251,15 +251,10 @@ bool CoreTopologyLevelSetEvaluation::evaluate_compliance(const TopologyLevelSetD
     }
     const double requested = design.void_ratio + (1.0 - design.void_ratio) * fraction->second;
     candidate.factor_approximation = candidate.factor_approximation || std::abs(requested - factor->second) > 1.0e-12;
-    const double stiffness_derivative = -2.0 * (energy->second / factor->second);
-    if (!std::isfinite(stiffness_derivative))
+    if (!accumulate_compliance(design, nodes, geometry, entry.second, energy->second, factor->second, candidate))
     {
-      PRINT_ERROR("Non-finite level-set compliance factor derivative.\n");
       return false;
     }
-    candidate.compliance += 2.0 * energy->second;
-    candidate.total_volume += entry.second;
-    candidate.solid_volume += geometry.solid_volume;
     for (std::size_t node = 0; node < nodes.size(); ++node)
     {
       const int id = nodes[node];
@@ -268,39 +263,123 @@ bool CoreTopologyLevelSetEvaluation::evaluate_compliance(const TopologyLevelSetD
       {
         fixed.insert(id);
       }
-      if (design.fixed_nodes.count(id) != 0)
-      {
-        continue;
-      }
-      auto& objective_derivative = candidate.compliance_derivatives.at(id);
-      auto& volume_derivative = candidate.volume_derivatives.at(id);
-      objective_derivative += stiffness_derivative * (1.0 - design.void_ratio) * geometry.fraction_derivatives[node];
-      volume_derivative += geometry.volume_derivatives[node];
-      if (!std::isfinite(objective_derivative) || !std::isfinite(volume_derivative))
-      {
-        PRINT_ERROR("Non-finite assembled level-set nodal derivative.\n");
-        return false;
-      }
     }
   }
-  if (!valid_node_domain(design, touched, fixed) || !std::isfinite(candidate.compliance) ||
-      !std::isfinite(candidate.total_volume) || candidate.total_volume <= 0.0 || !std::isfinite(candidate.solid_volume))
+  if (!valid_node_domain(design, touched, fixed) || !finalize_compliance(candidate))
   {
-    PRINT_ERROR("Invalid assembled level-set compliance or volume.\n");
     return false;
   }
-  candidate.volume_fraction = candidate.solid_volume / candidate.total_volume;
-  for (const auto& node : candidate.volume_derivatives)
+  evaluation = std::move(candidate);
+  return true;
+}
+
+bool CoreTopologyLevelSetEvaluation::accumulate_compliance(const TopologyLevelSetDesign& design, const std::vector<int>& nodes, const TopologyLevelSetElementGeometry& geometry, double element_volume, double element_energy, double applied_factor, TopologyLevelSetEvaluation& evaluation)
+{
+  if (design.iteration_id < 1 || evaluation.iteration_id != design.iteration_id || evaluation.available ||
+      !std::isfinite(design.void_ratio) || design.void_ratio <= 0.0 || design.void_ratio >= 1.0 || nodes.empty() ||
+      evaluation.compliance_derivatives.size() != design.node_values.size() || evaluation.volume_derivatives.size() != design.node_values.size() ||
+      !evaluation.volume_fraction_derivatives.empty() ||
+      geometry.fraction_derivatives.size() != nodes.size() || geometry.volume_derivatives.size() != nodes.size() ||
+      !std::isfinite(geometry.solid_fraction) || geometry.solid_fraction < 0.0 || geometry.solid_fraction > 1.0 ||
+      !std::isfinite(geometry.integration_volume) || geometry.integration_volume <= 0.0 ||
+      !std::isfinite(geometry.solid_volume) || geometry.solid_volume < 0.0 ||
+      !std::isfinite(element_volume) || element_volume <= 0.0 || !std::isfinite(element_energy) || element_energy < 0.0 ||
+      !std::isfinite(applied_factor) || applied_factor <= 0.0 || applied_factor > 1.0 ||
+      !std::isfinite(evaluation.compliance) || evaluation.compliance < 0.0 ||
+      !std::isfinite(evaluation.total_volume) || evaluation.total_volume < 0.0 ||
+      !std::isfinite(evaluation.solid_volume) || evaluation.solid_volume < 0.0)
   {
-    const double derivative = node.second / candidate.total_volume;
-    if (!std::isfinite(derivative))
+    PRINT_ERROR("Invalid element data or unfinished level-set compliance accumulator.\n");
+    evaluation = {};
+    return false;
+  }
+  std::set<int> unique;
+  for (std::size_t node = 0; node < nodes.size(); ++node)
+  {
+    const int id = nodes[node];
+    const auto value = design.node_values.find(id);
+    const auto objective = evaluation.compliance_derivatives.find(id);
+    const auto volume = evaluation.volume_derivatives.find(id);
+    if (id <= 0 || !unique.insert(id).second || value == design.node_values.end() ||
+        objective == evaluation.compliance_derivatives.end() || volume == evaluation.volume_derivatives.end() ||
+        !std::isfinite(value->second) || value->second < -1.0 || value->second > 1.0 ||
+        !std::isfinite(objective->second) || !std::isfinite(volume->second) ||
+        !std::isfinite(geometry.fraction_derivatives[node]) || !std::isfinite(geometry.volume_derivatives[node]) ||
+        (design.fixed_nodes.count(id) != 0 && (value->second != 1.0 || objective->second != 0.0 || volume->second != 0.0)))
     {
-      PRINT_ERROR("Non-finite level-set volume fraction derivative.\n");
+      PRINT_ERROR("Invalid node domain or derivative in level-set compliance accumulation.\n");
+      evaluation = {};
       return false;
     }
-    candidate.volume_fraction_derivatives.emplace(node.first, derivative);
   }
-  candidate.available = true;
-  evaluation = std::move(candidate);
+  const double stiffness_derivative = -2.0 * (element_energy / applied_factor);
+  if (!std::isfinite(stiffness_derivative))
+  {
+    PRINT_ERROR("Non-finite level-set compliance factor derivative.\n");
+    evaluation = {};
+    return false;
+  }
+  evaluation.compliance += 2.0 * element_energy;
+  evaluation.total_volume += element_volume;
+  evaluation.solid_volume += geometry.solid_volume;
+  if (!std::isfinite(evaluation.compliance) || !std::isfinite(evaluation.total_volume) || !std::isfinite(evaluation.solid_volume))
+  {
+    PRINT_ERROR("Non-finite accumulated level-set compliance or volume.\n");
+    evaluation = {};
+    return false;
+  }
+  for (std::size_t node = 0; node < nodes.size(); ++node)
+  {
+    const int id = nodes[node];
+    if (design.fixed_nodes.count(id) != 0)
+    {
+      continue;
+    }
+    auto& objective = evaluation.compliance_derivatives.at(id);
+    auto& volume = evaluation.volume_derivatives.at(id);
+    objective += stiffness_derivative * (1.0 - design.void_ratio) * geometry.fraction_derivatives[node];
+    volume += geometry.volume_derivatives[node];
+    if (!std::isfinite(objective) || !std::isfinite(volume))
+    {
+      PRINT_ERROR("Non-finite assembled level-set nodal derivative.\n");
+      evaluation = {};
+      return false;
+    }
+  }
+  return true;
+}
+
+bool CoreTopologyLevelSetEvaluation::finalize_compliance(TopologyLevelSetEvaluation& evaluation)
+{
+  if (evaluation.available || evaluation.iteration_id < 1 || !std::isfinite(evaluation.compliance) || evaluation.compliance < 0.0 ||
+      !std::isfinite(evaluation.total_volume) || evaluation.total_volume <= 0.0 || !std::isfinite(evaluation.solid_volume) || evaluation.solid_volume < 0.0 ||
+      evaluation.compliance_derivatives.empty() || evaluation.compliance_derivatives.size() != evaluation.volume_derivatives.size() ||
+      !evaluation.volume_fraction_derivatives.empty())
+  {
+    PRINT_ERROR("Invalid assembled level-set compliance or volume.\n");
+    evaluation = {};
+    return false;
+  }
+  evaluation.volume_fraction = evaluation.solid_volume / evaluation.total_volume;
+  if (!std::isfinite(evaluation.volume_fraction))
+  {
+    PRINT_ERROR("Non-finite assembled level-set volume fraction.\n");
+    evaluation = {};
+    return false;
+  }
+  for (const auto& node : evaluation.volume_derivatives)
+  {
+    const auto objective = evaluation.compliance_derivatives.find(node.first);
+    const double derivative = node.second / evaluation.total_volume;
+    if (node.first <= 0 || objective == evaluation.compliance_derivatives.end() || !std::isfinite(objective->second) ||
+        !std::isfinite(node.second) || !std::isfinite(derivative))
+    {
+      PRINT_ERROR("Invalid nodal domain or non-finite level-set volume fraction derivative.\n");
+      evaluation = {};
+      return false;
+    }
+    evaluation.volume_fraction_derivatives.emplace(node.first, derivative);
+  }
+  evaluation.available = true;
   return true;
 }

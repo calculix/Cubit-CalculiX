@@ -27,7 +27,7 @@ public:
   bool isInitialized=false;
 
   void clear();
-  void update(std::vector<std::vector<double>> sta_table);
+  void update(const std::vector<std::vector<double>>& sta_table);
 
   QGridLayout* gridLayout;
   QHBoxLayout* boxLayout_window;

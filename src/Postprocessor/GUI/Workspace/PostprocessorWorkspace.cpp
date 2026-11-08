@@ -5,6 +5,7 @@
 #include "Postprocessor/GUI/Properties/PostprocessorProperties.hpp"
 #include "Postprocessor/GUI/Resources/PostprocessorIconLoader.hpp"
 #include "Postprocessor/GUI/Options/PostprocessorOptionsPanel.hpp"
+#include "Postprocessor/GUI/Options/PostprocessorMouseOptionsPanel.hpp"
 #include "CubitMessage.hpp"
 
 #include <QAction>
@@ -24,7 +25,8 @@
 
 PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   std::weak_ptr<PostprocessorApplicationInterface> application,
-  std::function<bool(const std::string&, std::string&)> submit)
+  std::function<bool(const std::string&, std::string&)> submit,
+  std::function<bool(const std::string&, std::string&)> silent)
   : QWidget(host), application(std::move(application)), submitCommand(std::move(submit))
 {
   setObjectName("Postprocessor.Workspace");
@@ -33,10 +35,21 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(new QLabel(tr("3D View 1"), this));
   const auto activeApplication = this->application.lock();
-  viewport = new PostprocessorViewport(activeApplication ? activeApplication->session().active_view_id : std::string(), this);
+  viewport = new PostprocessorViewport(activeApplication ? activeApplication->session().active_view_id : std::string(),
+    this->application,
+    [dispatch = submitCommand](const QString& command, std::string& error)
+    {
+      return dispatch && dispatch(command.toUtf8().toStdString(), error);
+    },
+    [dispatch = std::move(silent)](const QString& command, std::string& error)
+    {
+      return dispatch && dispatch(command.toUtf8().toStdString(), error);
+    }, this);
   layout->addWidget(viewport, 1);
   optionsPanel = new PostprocessorOptionsPanel(this->application, submitCommand, this);
   optionsPanel->hide();
+  mouseOptionsPanel = new PostprocessorMouseOptionsPanel(this->application, submitCommand, this);
+  mouseOptionsPanel->hide();
 
   resultsDock = new QDockWidget(tr("Sources / Results"), host);
   resultsDock->setObjectName("Postprocessor.ResultsDock");
@@ -113,7 +126,7 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   fit->setToolTip(tr("Fit all visible meshes in the active Postprocessor view"));
   connect(fit, &QAction::triggered, this, [this]()
   {
-    this->submit("post view fit");
+    viewport->fit_view();
   });
   toolbar->addAction(fit);
 
@@ -142,10 +155,12 @@ PostprocessorWorkspace::~PostprocessorWorkspace()
   delete propertiesDock;
   // The options dialog may have reparented this page into its panel stack.
   delete optionsPanel.data();
+  delete mouseOptionsPanel.data();
 }
 
 void PostprocessorWorkspace::submit(const QString& command)
 {
+  viewport->cancel_interaction();
   std::string error;
 
   if (!submitCommand || !submitCommand(command.toUtf8().toStdString(), error))
@@ -178,6 +193,11 @@ void PostprocessorWorkspace::source_command(const QString& verb, const QString& 
   submit("post " + verb + " " + delimiter + name + delimiter);
 }
 
+bool PostprocessorWorkspace::camera_command_active() const noexcept
+{
+  return viewport != nullptr && viewport->camera_command_active();
+}
+
 void PostprocessorWorkspace::refresh()
 {
   try
@@ -190,14 +210,19 @@ void PostprocessorWorkspace::refresh()
     }
 
     const auto& state = active->session();
-    tree->refresh(state, [active](const std::string& id)
+    if (!panelRevision || *panelRevision != active->display_revision() || panelSource != state.active_source_id)
     {
-      return active->source_has_mesh(id);
-    });
-    const auto source = state.sources.find(state.active_source_id);
-    properties->show_source(source == state.sources.end() ? nullptr : &source->second);
-    closeSelected->setEnabled(source != state.sources.end());
-    closeAll->setEnabled(!state.sources.empty());
+      tree->refresh(state, [active](const std::string& id)
+      {
+        return active->source_has_mesh(id);
+      });
+      const auto source = state.sources.find(state.active_source_id);
+      properties->show_source(source == state.sources.end() ? nullptr : &source->second);
+      closeSelected->setEnabled(source != state.sources.end());
+      closeAll->setEnabled(!state.sources.empty());
+      panelRevision = active->display_revision();
+      panelSource = state.active_source_id;
+    }
     viewport->synchronize(active);
   }
   catch (const std::exception& exception)
@@ -233,6 +258,26 @@ void PostprocessorWorkspace::workspace_view(WorkspaceView& view)
     }
     return panel->save_settings(error);
   };
+  view.additionalOptionsPages =
+  {
+    {QStringLiteral("Postprocessor Mouse"), mouseOptionsPanel.data(),
+      [panel = mouseOptionsPanel]()
+      {
+        if (panel != nullptr)
+        {
+          panel->refresh_settings();
+        }
+      },
+      [panel = mouseOptionsPanel](std::string& error)
+      {
+        if (panel == nullptr)
+        {
+          error = "The Postprocessor Mouse options page is unavailable.";
+          return false;
+        }
+        return panel->save_settings(error);
+      }}
+  };
   view.graphicsPage = this;
   view.useNativeNavigation = false;
   view.dockLayout = WorkspaceDockLayout::LeftRight;
@@ -244,6 +289,10 @@ void PostprocessorWorkspace::workspace_view(WorkspaceView& view)
     if (active && page != nullptr)
     {
       page->refresh();
+    }
+    else if (page != nullptr)
+    {
+      page->viewport->cancel_interaction();
     }
   };
 }

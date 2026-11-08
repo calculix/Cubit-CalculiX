@@ -12,10 +12,10 @@ changing a path. External utility implementations are excluded.
 
    * - Source/download
      - Declaration hints
-   * - :download:`src/CalculiX/Commands/results/ccxResultCGXJobCommand.cpp <../../../src/CalculiX/Commands/results/ccxResultCGXJobCommand.cpp>`
+   * - :download:`src/CalculiX/Commands/results/ccxResultExportJobCommand.cpp <../../../src/CalculiX/Commands/results/ccxResultExportJobCommand.cpp>`
      - ``Implementation / integration``
-   * - :download:`src/CalculiX/Commands/results/ccxResultCGXJobCommand.hpp <../../../src/CalculiX/Commands/results/ccxResultCGXJobCommand.hpp>`
-     - ``ccxResultCGXJobCommand``
+   * - :download:`src/CalculiX/Commands/results/ccxResultExportJobCommand.hpp <../../../src/CalculiX/Commands/results/ccxResultExportJobCommand.hpp>`
+     - ``ccxResultExportJobCommand``
    * - :download:`src/CalculiX/Commands/results/ccxResultConvertJobCommand.cpp <../../../src/CalculiX/Commands/results/ccxResultConvertJobCommand.cpp>`
      - ``Implementation / integration``
    * - :download:`src/CalculiX/Commands/results/ccxResultConvertJobCommand.hpp <../../../src/CalculiX/Commands/results/ccxResultConvertJobCommand.hpp>`
@@ -24,10 +24,6 @@ changing a path. External utility implementations are excluded.
      - ``Implementation / integration``
    * - :download:`src/CalculiX/Commands/results/ccxResultLoadJobCommand.hpp <../../../src/CalculiX/Commands/results/ccxResultLoadJobCommand.hpp>`
      - ``ccxResultLoadJobCommand``
-   * - :download:`src/CalculiX/Commands/results/ccxResultParaViewJobCommand.cpp <../../../src/CalculiX/Commands/results/ccxResultParaViewJobCommand.cpp>`
-     - ``Implementation / integration``
-   * - :download:`src/CalculiX/Commands/results/ccxResultParaViewJobCommand.hpp <../../../src/CalculiX/Commands/results/ccxResultParaViewJobCommand.hpp>`
-     - ``ccxResultParaViewJobCommand``
    * - :download:`src/CalculiX/Commands/results/ccxResultProjectJobCommand.cpp <../../../src/CalculiX/Commands/results/ccxResultProjectJobCommand.cpp>`
      - ``Implementation / integration``
    * - :download:`src/CalculiX/Commands/results/ccxResultProjectJobCommand.hpp <../../../src/CalculiX/Commands/results/ccxResultProjectJobCommand.hpp>`

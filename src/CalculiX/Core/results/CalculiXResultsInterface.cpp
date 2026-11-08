@@ -61,15 +61,7 @@ std::shared_ptr<const SimResults::VtkResultsData> CalculiXResultsInterface::get_
   return ccx_core.results ? ccx_core.results->get_vtk_result(job_id) : nullptr;
 }
 
-bool CalculiXResultsInterface::result_cgx_job(int job_id)
-{
-  return ccx_core.jobs->result_cgx_job(job_id);
-}
 
-bool CalculiXResultsInterface::result_paraview_job(int job_id)
-{
-  return ccx_core.jobs->result_paraview_job(job_id);
-}
 
 bool CalculiXResultsInterface::result_plot_job_frd(int job_id,int x_node_id, std::string x_block_type, std::string x_block_component, bool x_increment,bool x_time,int y_node_id, std::string y_block_type, std::string y_block_component, bool y_increment, bool y_time,QString title,QString x_axis,QString y_axis,bool save, QString save_filepath)
 {

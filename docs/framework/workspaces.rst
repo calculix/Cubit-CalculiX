@@ -26,6 +26,10 @@ Open **Help > cubit-sim documentation**, or run::
 
    sim documentation
 
+Cubit's native Tools menu is shared by every workspace and sits immediately
+before Help. Its existing actions, including Options, retain Cubit's handlers.
+CalculiX no longer creates a separate application menu containing only Options.
+
 There is one active Help menu, always last. Cubit retains its native Help entries
 with the cubit-sim documentation action added. CalculiX and Postprocessor use the
 shared Framework Help menu. Workspace modules do not create a second Help menu.

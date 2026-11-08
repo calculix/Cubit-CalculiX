@@ -536,11 +536,22 @@ support. See :doc:`topology-verification` for the measurements and scope.
    * - Physical-solve raw stiffness derivatives
      - Selected fixed-group checks passed; binary revision not recorded.
    * - Interpolation and fraction/volume geometry
-     - Native sources supplied under tests/topology; build/run pending.
+     - Supplied native cases passed on Windows after the Heaviside endpoint fix;
+       Linux and additional mesh/refinement coverage remain pending.
    * - Nodal compliance and volume chain
-     - Native finite differences and shared/fixed-node assembly tests pending.
+     - Shared native accumulation/normalization passed the Windows analytical
+       suite; live C3D8 analytical evaluation passed too. Remaining live types
+       and Linux verification are pending.
+   * - Numerical QP (quadratic programming) solver
+     - Analytical solution and independent KKT tests passed on Windows;
+       live graph assembly is separate.
    * - Proposal and acceptance
-     - Independent QP/KKT, restoration, backtracking and stale-source tests pending.
+     - All 18 six-formulation live groups passed after the C3D10 refinement
+       regression. Mandatory
+       restoration/backtracking fixtures remain C3D8-only.
+   * - Seed initialization
+     - Length-resolution and live raw-field/fallback/complete-design test sources
+       supplied; build/run pending. Default-width geometry remains separate.
    * - Controller and historical fields
      - Level-set lifecycle/save-load and full compliance runs pending.
    * - Mesh and deployment scope

@@ -169,7 +169,7 @@ Optional phase measurements are returned by the converter; Cubit logging remains
 in ``CoreResults``. Failure/cancellation does not print successful-build timings.
 
 VTK file export prints its own elapsed milliseconds, separately from conversion.
-``ccx result convert job <id> in_memory`` therefore prints conversion timings
+``ccx result convert job <id>`` therefore prints conversion timings
 without an export duration. Explicit conversion and automatic job conversion use
 the same Core timing path. Reader timings remain separate.
 

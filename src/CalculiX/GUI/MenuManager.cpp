@@ -2,7 +2,6 @@
 #include "MenuManager.hpp"
 #include "Claro.hpp"
 #include "ClaroFileMenu.hpp"
-#include "OptionsPanel.hpp"
 #include "CubitMessage.hpp"
 
 #include <QAction>
@@ -71,19 +70,6 @@ void MenuManager::setup_workspace_menus(Claro* host, QDockWidget* modelDock, QDo
   {
     view->addAction(topologyToolbar->toggleViewAction());
   }
-
-  auto* application = createMenu("CalculiX.Menu.Application", tr("&CalculiX"));
-  auto* options = application->addAction(host->style()->standardIcon(QStyle::SP_FileDialogDetailedView), tr("&Options..."));
-  connect(options, &QAction::triggered, this, [guard = QPointer<Claro>(host)]
-  {
-    if (guard != nullptr && guard->options() != nullptr)
-    {
-      guard->options()->refresh_settings();
-      guard->options()->show();
-      guard->options()->raise();
-      guard->options()->activateWindow();
-    }
-  });
 }
 
 QList<QAction*> MenuManager::workspace_menu_actions() const

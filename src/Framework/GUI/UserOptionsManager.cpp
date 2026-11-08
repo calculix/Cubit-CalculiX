@@ -34,27 +34,31 @@ bool UserOptionsManager::attach(const std::vector<WorkspaceProviderInterface*>& 
     }
     candidates.push_back(view);
   }
+  std::vector<WorkspaceOptionsPage> registrations;
   for (const auto& view : candidates)
   {
-    if (view.optionsPage == nullptr)
+    if (view.optionsPage != nullptr)
     {
-      continue;
+      registrations.push_back({view.label, view.optionsPage, view.refreshOptions, view.applyOptions});
     }
-    if (view.label.isEmpty() || !labels.insert(view.label).second ||
-        !view.refreshOptions || !view.applyOptions)
+    registrations.insert(registrations.end(), view.additionalOptionsPages.begin(), view.additionalOptionsPages.end());
+  }
+  for (const auto& page : registrations)
+  {
+    if (page.widget == nullptr || page.label.isEmpty() || !labels.insert(page.label).second || !page.refresh || !page.apply)
     {
       error = "Invalid or duplicate workspace options page.";
       detach();
       return false;
     }
-    pages.push_back(view);
-    options->add_panel(view.label, view.optionsPage);
+    pages.push_back(page);
+    options->add_panel(page.label, page.widget);
   }
   QObject::connect(options.data(), &OptionsPanel::refreshSettings, this, [this]()
   {
     for (const auto& page : pages)
     {
-      page.refreshOptions();
+      page.refresh();
     }
   });
   QObject::connect(options.data(), &OptionsPanel::saveSettings, this, [this]()
@@ -62,7 +66,7 @@ bool UserOptionsManager::attach(const std::vector<WorkspaceProviderInterface*>& 
     for (const auto& page : pages)
     {
       std::string error;
-      if (!page.applyOptions(error))
+      if (!page.apply(error))
       {
         PRINT_ERROR("Cannot save %s user options: %s\n",
           page.label.toUtf8().constData(), error.c_str());

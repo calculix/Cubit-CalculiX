@@ -50,6 +50,7 @@ bool ccxResultLoadJobCommand::execute(CubitCommandData &data)
   {
     output = "Failed!\n";
     PRINT_ERROR(output.c_str());
+    return false;
   }
     
   return true;

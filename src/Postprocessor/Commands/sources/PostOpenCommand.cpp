@@ -1,6 +1,7 @@
 #include "PostOpenCommand.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "CubitMessage.hpp"
+#include "CubitInterface.hpp"
 
 #include <exception>
 #include <optional>
@@ -27,7 +28,7 @@ std::vector<std::string> PostOpenCommand::get_help()
 {
   return {"Load job results through a registered provider, for example: post open ccx job 12.",
     "The source takes the job name unless a quoted name is supplied. Names must be unique.",
-    "Selects the opened source. Does not switch workspace, create a display, or split a view."};
+    "Selects the opened source and switches to the Postprocessor workspace after opening succeeds."};
 }
 
 bool PostOpenCommand::execute(CubitCommandData& data)
@@ -77,6 +78,11 @@ bool PostOpenCommand::execute(CubitCommandData& data)
     const auto& session = active->session();
     const auto& source = session.sources.at(session.active_source_id);
     PRINT_INFO("Opened Postprocessor source \"%s\".\n", source.name.c_str());
+    if (!CubitInterface::cmd_single("sim workspace postprocessor"))
+    {
+      PRINT_ERROR("Results are open, but switching to the Postprocessor workspace failed.\n");
+      return false;
+    }
     return true;
   }
   catch (const std::exception& exception)

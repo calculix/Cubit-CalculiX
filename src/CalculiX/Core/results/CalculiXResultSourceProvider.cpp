@@ -105,6 +105,10 @@ bool CalculiXResultSourceProvider::load_job(
         return false;
       }
     }
+    else if (!refresh && results.get_vtk_status(request.job_id) == SimResults::ConversionStatus::Complete)
+    {
+      data = results.get_vtk_result(request.job_id);
+    }
     else
     {
       if (!results.load_result(request.job_id))

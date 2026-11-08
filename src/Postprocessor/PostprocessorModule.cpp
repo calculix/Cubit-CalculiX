@@ -2,11 +2,14 @@
 #include "Commands/PostprocessorCommands.hpp"
 #include "Interfaces/PostprocessorApplicationInterface.hpp"
 #include "GUI/PostprocessorGui.hpp"
+#include "EventObservers/PostprocessorModelObserver.hpp"
+#include "CubitMessage.hpp"
 #include <utility>
 
 PostprocessorModule::PostprocessorModule(ResultSourceRegistryInterface& providers,
-  std::function<bool(const std::string&, std::string&)> submit)
-  : providers(providers), submitCommand(std::move(submit))
+  std::function<bool(const std::string&, std::string&)> submit,
+  std::function<bool(const std::string&, std::string&)> silent)
+  : providers(providers), submitCommand(std::move(submit)), silentCommand(std::move(silent))
 {
 }
 
@@ -24,7 +27,7 @@ bool PostprocessorModule::initialize(UserOptionsInterface& options, DrawingInter
 {
   error.clear();
 
-  if (application != nullptr && commands != nullptr)
+  if (application != nullptr && commands != nullptr && modelObserver != nullptr)
   {
     return true;
   }
@@ -36,11 +39,27 @@ bool PostprocessorModule::initialize(UserOptionsInterface& options, DrawingInter
   }
   application = std::move(candidate);
   commands = std::make_unique<PostprocessorCommands>(application);
+  modelObserver = std::make_unique<PostprocessorModelObserver>([this]()
+  {
+    std::string error;
+    if (!application->reset(error))
+    {
+      PRINT_ERROR("Cannot reset Postprocessor: %s\n", error.c_str());
+      return;
+    }
+    if (gui != nullptr)
+    {
+      // Refresh synchronously to release actors and their retained snapshots,
+      // including when another workspace is active. No nested command is sent.
+      gui->refresh();
+    }
+  });
   return true;
 }
 
 void PostprocessorModule::shutdown() noexcept
 {
+  modelObserver.reset();
   stop_component();
   commands.reset();
   if (application != nullptr)
@@ -81,7 +100,7 @@ bool PostprocessorModule::start_component(int withGUI, QWidget* host, std::strin
 
   if (gui == nullptr)
   {
-    gui = std::make_unique<PostprocessorGui>(application, submitCommand);
+    gui = std::make_unique<PostprocessorGui>(application, submitCommand, silentCommand);
   }
 
   return gui->start(host, error);

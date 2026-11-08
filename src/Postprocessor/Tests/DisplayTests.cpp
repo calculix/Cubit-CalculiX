@@ -2,11 +2,15 @@
 #include "Postprocessor/Core/representations/ResultMesh.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "Postprocessor/GUI/Viewport/PostprocessorScene.hpp"
+#include "Postprocessor/GUI/Viewport/PostprocessorTriad.hpp"
+#include <vtkRendererCollection.h>
+#include <vtkCamera.h>
 #include "Framework/Interfaces/ResultSourceProviderInterface.hpp"
 #include "Framework/Interfaces/ResultSourceRegistryInterface.hpp"
 #include <vtkActor.h>
 #include <vtkActorCollection.h>
 #include <vtkCellType.h>
+#include <vtkIdList.h>
 #include <vtkDataSet.h>
 #include <vtkDoubleArray.h>
 #include <vtkPointData.h>
@@ -17,6 +21,8 @@
 #include <vtkPartitionedDataSetCollection.h>
 #include <vtkPoints.h>
 #include <vtkProperty.h>
+#include <vtkPolyData.h>
+#include <vtkQuadraticHexahedron.h>
 #include <vtkTable.h>
 #include <vtkUnstructuredGrid.h>
 #include <functional>
@@ -146,6 +152,50 @@ public:
   }
 };
 
+void reset_checks()
+{
+  Provider provider;
+  provider.data = result(false);
+  Registry registry(provider);
+  PostprocessorApplicationInterface application(registry);
+  std::string error;
+  check(application.open_job("fake", 1, std::nullopt, error), "Cannot open reset fixture");
+  const auto source = application.session().active_source_id;
+  const auto data = application.result_data(source);
+  Postprocessor::CameraDefinition camera;
+  camera.position = {4, 5, 6};
+  check(application.set_camera(camera, error), "Cannot initialize reset fixture camera");
+  check(application.request_camera_fit(error), "Cannot request pre-reset fit");
+  const auto oldView = application.session().views.at("view1");
+  const auto oldRevision = application.display_revision();
+  auto renderer = vtkSmartPointer<vtkOpenGLRenderer>::New();
+  PostprocessorScene scene(renderer, "view1");
+  check(scene.synchronize(application, error) && renderer->GetActors()->GetNumberOfItems() == 2,
+    "Reset fixture actors missing");
+  check(application.reset(error), "Application reset failed");
+  const auto& state = application.session();
+  check(state.sources.empty() && state.representations.empty() && state.active_source_id.empty() &&
+    state.active_representation_id.empty(), "Reset retained source/display/selection definitions");
+  check(state.views.size() == 1 && state.active_view_id == "view1" && !state.views.at("view1").camera,
+    "Reset must restore one empty default view");
+  check(application.result_data(source) == nullptr && application.display_revision() > oldRevision,
+    "Reset retained runtime data or reused the display revision");
+  check(state.views.at("view1").camera_revision > oldView.camera_revision &&
+    state.views.at("view1").fit_request > oldView.fit_request,
+    "Reset reused camera/fit tokens");
+  check(!application.complete_camera_fit("view1", oldView.fit_request, oldRevision, camera, error),
+    "Pre-reset camera fit survived reset");
+  check(scene.synchronize(application, error) && renderer->GetActors()->GetNumberOfItems() == 0,
+    "Reset retained scene actors");
+  check(data != nullptr && !data->increments.empty(), "Reset invalidated externally owned published data");
+  const auto resetRevision = application.display_revision();
+  check(application.reset(error) && application.display_revision() > resetRevision, "Repeated reset failed");
+  check(application.open_job("fake", 1, std::nullopt, error) && application.session().active_source_id != source,
+    "Opening after reset failed or reused an old source identity");
+  check(scene.synchronize(application, error) && renderer->GetActors()->GetNumberOfItems() == 2,
+    "Opening after reset did not restore display actors");
+}
+
 void core_checks()
 {
   Provider provider;
@@ -157,10 +207,19 @@ void core_checks()
   {
     std::string nested;
     check(!core.set_source_visible("missing", "view1", true, nested), "Provider reentry changed display state");
+    check(!core.reset(nested), "Provider reentry reset an in-flight session");
   };
   check(core.open_result(provider, request, std::nullopt, error), "Cannot open test collection");
   provider.reenter = {};
   const auto id = core.source_id_from_name("Mesh");
+  const auto retained = core.result_data(id);
+  check(core.set_source_visible(id, "view1", false, error), "Cannot hide source before reopening");
+  check(core.open_result(provider, request, std::nullopt, error), "Cannot reopen retained snapshot");
+  check(core.session().sources.size() == 1 && core.session().active_source_id == id && core.result_data(id) == retained,
+    "Reopening duplicated or replaced a retained snapshot");
+  check(!core.session().representations.empty() && core.session().representations.begin()->second.visible,
+    "Reopening did not show the retained snapshot");
+  check(!core.open_result(provider, request, std::string("Mesh"), error), "Explicit duplicate source name was accepted");
   check(core.source_has_mesh(id) && core.session().representations.size() == 1, "Initial mesh display missing");
   if (core.session().representations.size() != 1)
   {
@@ -190,7 +249,7 @@ void core_checks()
   check(core.complete_camera_fit("view1", token, core.display_revision(), camera, error), "Valid camera completion failed");
   check(!core.session().views.at("view1").fit_pending, "Completed fit remains pending");
   provider.name = "Second";
-  check(core.open_result(provider, request, std::nullopt, error), "Second mesh opening failed");
+  check(core.open_result(provider, request, std::string("Second"), error), "Second mesh opening failed");
   check(core.session().views.at("view1").camera->position == camera.position && !core.session().views.at("view1").fit_pending,
     "Opening another source reset the camera");
   const auto oldData = core.result_data(id);
@@ -246,11 +305,52 @@ void scene_checks()
   window->SetSize(800, 600);
   window->AddRenderer(renderer);
   PostprocessorScene scene(renderer, "view1");
-  check(scene.synchronize(application, error) && renderer->GetActors()->GetNumberOfItems() == 1, "Single-grid actor missing");
+  scene.apply_appearance({1, 1, 1}, {1, 1, 1});
+  check(renderer->GetBackground()[0] == 1 && !renderer->GetGradientBackground(), "White/white background must be uniform.");
+  scene.apply_appearance({0, 0, 0}, {1, 1, 1});
+  check(renderer->GetGradientBackground() && renderer->GetBackground2()[0] == 0, "Different colors must enable the top/bottom gradient.");
+  const auto rendererCount = window->GetRenderers()->GetNumberOfItems();
+  {
+    PostprocessorTriad triad(window);
+    triad.update(renderer->GetActiveCamera(), true, {1, 1, 1}, 800, 600, 1);
+    check(window->GetRenderers()->GetNumberOfItems() == rendererCount + 1 && renderer->GetActors()->GetNumberOfItems() == 0,
+      "Triad must use a separate renderer without adding scene actors.");
+    auto* collection = window->GetRenderers();
+    collection->InitTraversal();
+    vtkRenderer* overlay = nullptr;
+    while (auto* next = collection->GetNextItem())
+    {
+      if (next != renderer.GetPointer())
+      {
+        overlay = next;
+      }
+    }
+    check(overlay != nullptr, "Triad overlay must be discoverable.");
+    if (overlay != nullptr)
+    {
+      overlay->GetActors()->InitTraversal();
+      auto* arrows = overlay->GetActors()->GetNextActor();
+      auto* data = arrows ? arrows->GetMapper()->GetInput() : nullptr;
+      check(data != nullptr, "Triad geometry must be available without rendering.");
+      if (data != nullptr)
+      {
+        const auto stamp = data->GetMTime();
+        triad.update(renderer->GetActiveCamera(), true, {1, 1, 1}, 800, 600, 1);
+        check(data->GetMTime() == stamp, "Unchanged triad orientation must not rebuild its geometry.");
+        renderer->GetActiveCamera()->Azimuth(10);
+        triad.update(renderer->GetActiveCamera(), true, {1, 1, 1}, 800, 600, 1);
+        check(arrows->GetMapper()->GetInput() == data && data->GetMTime() > stamp,
+          "Rotated triad must update its existing dataset instead of replacing buffers.");
+      }
+    }
+    triad.update(renderer->GetActiveCamera(), false, {1, 1, 1}, 800, 600, 1);
+  }
+  check(window->GetRenderers()->GetNumberOfItems() == rendererCount, "Triad destruction must detach its overlay.");
+  check(scene.synchronize(application, error) && renderer->GetActors()->GetNumberOfItems() == 2, "Single-grid surface and original edges missing");
   renderer->GetActors()->InitTraversal();
   auto* actor = renderer->GetActors()->GetNextActor();
-  check(actor != nullptr && actor->GetMapper()->GetScalarVisibility() == 0 && actor->GetProperty()->GetEdgeVisibility(),
-    "Initial display must use a neutral surface with edges");
+  check(actor != nullptr && actor->GetMapper()->GetScalarVisibility() == 0 && !actor->GetProperty()->GetEdgeVisibility(),
+    "Surface must not display tessellation edges");
   if (actor == nullptr)
   {
     return;
@@ -260,7 +360,7 @@ void scene_checks()
   check(raw->GetPointData()->GetNumberOfArrays() == 1 && raw->GetPointData()->GetScalars()->GetComponent(0, 0) == 17.0,
     "Display changed published field arrays");
   check(application.set_source_visible("Mesh", false, error) && scene.synchronize(application, error), "Scene hide failed");
-  check(actor->GetVisibility() == 0 && renderer->GetActors()->GetNumberOfItems() == 1, "Hide must retain actors but remove visibility");
+  check(actor->GetVisibility() == 0 && renderer->GetActors()->GetNumberOfItems() == 2, "Hide must retain surface and edge actors");
   check(application.set_source_visible("Mesh", true, error) && scene.synchronize(application, error), "Scene show failed");
   check(actor->GetVisibility() == 1, "Show did not restore actor visibility");
   std::array<double, 6> bounds;
@@ -271,7 +371,47 @@ void scene_checks()
     "Closing sources left actors behind");
   registry.provider.data = result(true);
   check(application.open_job("fake", 1, std::nullopt, error) && scene.synchronize(application, error) &&
-    renderer->GetActors()->GetNumberOfItems() == 2, "Collection must display every nonempty mesh partition");
+    renderer->GetActors()->GetNumberOfItems() == 4, "Collection must display surfaces and edges for every partition");
+  check(application.close_all_sources(error) && scene.synchronize(application, error), "Cannot clear partition display");
+  auto quadratic = vtkSmartPointer<vtkQuadraticHexahedron>::New();
+  auto quadraticGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
+  auto quadraticPoints = vtkSmartPointer<vtkPoints>::New();
+  const auto* coordinates = quadratic->GetParametricCoords();
+  for (vtkIdType i = 0; i < 20; ++i)
+  {
+    // Bow one midside node: edge display must retain it, not replace the
+    // quadratic element with a corner-only linear hex.
+    quadraticPoints->InsertNextPoint(coordinates[3 * i], coordinates[3 * i + 1],
+      coordinates[3 * i + 2] + (i == 8 ? -0.2 : 0.0));
+    quadratic->GetPointIds()->SetId(i, i);
+  }
+  quadraticGrid->SetPoints(quadraticPoints);
+  quadraticGrid->Allocate(1);
+  quadraticGrid->InsertNextCell(VTK_QUADRATIC_HEXAHEDRON, quadratic->GetPointIds());
+  auto quadraticResult = result(false);
+  quadraticGrid->Register(nullptr);
+  quadraticResult->increments[0].dataset = std::shared_ptr<vtkDataObject>(quadraticGrid.GetPointer(), [](vtkDataObject* value)
+  {
+    value->Delete();
+  });
+  registry.provider.data = quadraticResult;
+  check(application.open_job("fake", 1, std::nullopt, error) && scene.synchronize(application, error), "Cannot display quadratic hex");
+  check(renderer->GetActors()->GetNumberOfItems() == 2, "Quadratic hex needs separate surface and original edge actors");
+  renderer->GetActors()->InitTraversal();
+  auto* quadraticSurface = renderer->GetActors()->GetNextActor();
+  auto* quadraticEdges = renderer->GetActors()->GetNextActor();
+  check(quadraticSurface != nullptr && !quadraticSurface->GetProperty()->GetEdgeVisibility(), "Quadratic surface exposes tessellation diagonals");
+  auto* edgeData = quadraticEdges ? vtkPolyData::SafeDownCast(quadraticEdges->GetMapper()->GetInput()) : nullptr;
+  check(edgeData != nullptr && edgeData->GetNumberOfLines() == 24 && edgeData->GetNumberOfPolys() == 0,
+    "HEX20 must display only its 12 element edges split at midside nodes");
+  if (edgeData != nullptr && edgeData->GetNumberOfPoints() > 8)
+  {
+    double midpoint[3];
+    edgeData->GetPoint(8, midpoint);
+    check(midpoint[2] < -0.19, "Original midside curvature was lost");
+  }
+  check(quadraticGrid->GetCellType(0) == VTK_QUADRATIC_HEXAHEDRON && quadraticGrid->GetNumberOfPoints() == 20,
+    "Display changed original HEX20 topology");
   // Deliberately no Render(): parser, actual GL drawing and Qt lifecycle need
   // separate native integration checks after build authorization.
 }
@@ -280,6 +420,7 @@ void scene_checks()
 int main()
 {
   core_checks();
+  reset_checks();
   scene_checks();
   return failures == 0 ? 0 : 1;
 }

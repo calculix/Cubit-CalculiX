@@ -34,13 +34,18 @@ the command and are reported through Cubit's error mechanism.
 The job name becomes the source name unless a quoted override is supplied. Names
 must contain a non-whitespace character and be unique, with case-sensitive matching.
 Use the override to open a second independently retained snapshot of the same job.
-The new source becomes active; existing sources remain loaded. An explicit duplicate
+The source becomes active and successful opening executes
+``sim workspace postprocessor``. Existing sources remain loaded. An explicit duplicate
 name is rejected before loading; a duplicate suggested job name can be detected
 after loading but cannot replace existing Postprocessor data.
 
-The provider returns an immutable result snapshot. Opening a job without an explicit
-snapshot request loads its current result files; the command does not select a
-historical solver run. The current CalculiX snapshot token identifies a conversion,
+The provider returns an immutable result snapshot. CalculiX reuses its completed
+in-memory snapshot when available; otherwise it loads and converts the job files.
+Opening the same retained snapshot without a name selects its existing source
+and makes its representation visible in the active view. A distinct explicit
+name requests another source. A newer run does not silently replace an old one.
+Opening failure does not switch workspace; explicit refresh reloads result files.
+The current CalculiX snapshot token identifies a conversion,
 not a durable solver run. Running jobs and active result conversions are rejected.
 
 Show and hide sources
@@ -79,7 +84,45 @@ aspect ratio. Its resulting camera is validated and retained in Core.
 
 The command records the fit intent, not exact camera coordinates across different
 window sizes. A headless or hidden view retains the request until GUI completion.
-Mouse orbit/pan/zoom remain blocked pending their own journalable commands.
+Mouse navigation uses the camera commands below.
+
+Camera navigation
+-----------------
+
+.. code-block:: text
+
+   post view rotate <yaw_degrees> <pitch_degrees>
+   post view pan <horizontal> <vertical>
+   post view zoom <factor>
+   post view camera position <x> <y> <z> focal <x> <y> <z> up <x> <y> <z> projection {parallel|perspective} angle <degrees> scale <half-height>
+
+Rotation orbits the focal point. Positive angles follow the right-hand rule:
+yaw around orthonormal view-up, then pitch around the resulting right vector.
+Pan moves position and focal point in scene units along screen-right/up. Zoom
+requires a positive finite factor; values greater than one zoom in. Perspective
+zoom moves the camera toward the focal point; parallel zoom divides its half-span.
+Relative operations require an established camera. The absolute command supplies
+all values and can establish one directly. Invalid values preserve existing state.
+
+Drag assignments are configurable in **Postprocessor Mouse**. Defaults are left
+Rotate, middle Zoom and right Pan, independently of native Cubit mouse preferences.
+The wheel always zooms. A drag assigned to Rotate and started outside the central
+navigation circle spins about the view
+axis; a drag started inside orbits the focal point. The mode stays fixed until
+release. Mouse sensitivity and reverse zoom are independent Postprocessor options.
+``F`` fits visible meshes and ``Esc`` cancels the current gesture. F9 selects
+Front (Shift: Back), F10 Top (Shift: Bottom), F11 Right (Shift: Left), F12 Isometric
+(Shift: Orthographic projection). These use absolute camera commands and the same
+camera journal policy. Standard views retain focal point and distance. Coordinates
+use Z up: Front from -Y, Right from +X, Top from +Z; Isometric from +X,+Y,+Z.
+Orthographic conversion preserves the apparent vertical span at the focal plane.
+Native Cubit orientation parity still needs manual verification. F1-F4 have no
+assigned operation in the supplied hotkey reference. F5/Ctrl+R redraw and F6-F8
+saved views remain reserved pending agreement on their commands. Selection, mesh
+slicing, legend, screenshots and model saving require their corresponding tools.
+Touch and native Cubit/VTK interactor tools remain disabled. Camera previews are
+silent absolute commands. Completed gestures produce at most one normal command
+when **Record camera navigation** is enabled; the default is off.
 
 List sources
 ------------
@@ -132,8 +175,11 @@ Journaling and replay
 These are native ``CubitCommand`` handlers registered through the existing
 cubit-sim command plugin. Commands entered through Cubit's normal command path
 participate in its normal history/journal behavior. No separate journal writer
-or silent GUI mutation path is introduced. Source-tree and toolbar/menu actions
-submit the same commands through the established command dispatcher.
+is introduced. Source-tree actions always submit normal commands. GUI camera
+previews execute through ``silent_cmd``; the camera option controls completed GUI
+rotate/pan/zoom/fit actions only. Commands typed by the user retain Cubit's normal
+journal behavior regardless of that option. Opening, closing, selecting, visibility
+and options commands always retain their normal command path.
 
 Replay requires the referenced application job IDs and result files to exist.
 The current syntax opens current files, so replay is not a promise of historical
@@ -147,14 +193,37 @@ Apply user options
 .. code-block:: text
 
    post useroptions icons "Icons/"
+   post useroptions journal camera on
+   post useroptions journal camera off
+   post useroptions diagnostics camera on
+   post useroptions diagnostics camera off
+   post useroptions background top 1 1 1
+   post useroptions background bottom 1 1 1
+   post useroptions triad on
+   post useroptions mouse left rotate
+   post useroptions mouse middle zoom
+   post useroptions mouse right pan
+   post useroptions mouse sensitivity 1
+   post useroptions mouse reversezoom off
    post useroptions list
 
-The options dialog submits a quoted readable icons command only when the field
-changes. Core validates and persists it under workspace ``postprocessor`` in the
+The options dialog submits readable commands for changed settings. The camera
+option takes effect immediately after saving; it does not change Cubit's global
+journal setting. Core validates and persists options under ``postprocessor`` in the
 shared preferences file. Icon-directory changes take effect after restarting
 Cubit. Invalid values and failed saves leave the preference and active icons
 path unchanged. ``list`` prints the saved setting and any pending restart notice.
-Preferences are independent of model data.
+Preferences are independent of model data. Display defaults are white at both
+ends of the background and a visible bottom-left XYZ triad. Different top/bottom
+colors enable a vertical gradient. RGB components must be finite and in [0,1];
+one command changes the whole color atomically. Mouse button commands configure
+only dragging and accept ``rotate``, ``zoom`` or ``pan``. Multiple buttons may
+have the same action. Unapplied options edits are discarded when reopened.
+Bindings, sensitivity and reverse zoom are captured when a gesture starts, so
+saved changes apply to the next gesture. A click below the system drag threshold
+does not execute navigation. Selection and context-menu click tools remain separate. The triad does not participate
+in model fitting or selection. Display changes apply after saving without a
+restart. Sensitivity must be in [0.01,100]; reverse zoom defaults off.
 
 Lifecycle and deferred commands
 -------------------------------
@@ -164,6 +233,55 @@ Application state is released at module shutdown. Command objects retain weak
 application handles; stale commands fail rather than access destroyed state.
 No ``post`` refresh/file/draw command is registered in this stage. Independent
 VTU/VTPC/VTT files, FRD/DAT file opening, Cubit geometry,
-field coloring, time navigation and mouse view controls require their later implementations.
+field coloring and time navigation require their later implementations.
 
 See :doc:`../developer/postprocessor` for source files and method contracts.
+
+Camera timing diagnostics
+-------------------------
+
+``post useroptions diagnostics camera on`` enables diagnostics for the next mouse
+drag or wheel burst. It defaults off and is independent of camera journaling.
+After releasing the mouse (or ending the wheel burst), one multiline summary is
+printed when all associated frames have been presented or explicitly abandoned.
+No per-frame console output or files are written. Disable it with
+``post useroptions diagnostics camera off``. The setting is saved in preferences;
+changing it during a gesture applies to the next gesture.
+
+The summary identifies the view and gesture, input/coalescing counts, rendered
+and presented frame counts, unpresented frames, unrendered/superseded requests and
+dropped diagnostic gestures and unpaired dispatches. Each stage reports its sample count, average and
+maximum milliseconds. A stage with n=0 has no samples, not a measured zero cost.
+
+* Input wait: latest received input to preview consumption; it excludes delay
+  before Qt delivers the event. Older coalesced inputs are counted separately.
+* Formatting: absolute camera command text construction.
+* Command dispatch: the complete synchronous callback, including Cubit parsing,
+  command handling and any host work it performs. It is not parser-only time.
+* Camera handler: entry to exit of PostViewCameraCommand::execute, including
+  argument retrieval, the Core call and any error handling.
+* Core camera update: the application-interface set_camera call inside that handler.
+* Dispatch outside handler: total dispatch minus the matched handler duration
+  for that same invocation. It includes string conversion/Framework dispatch,
+  Cubit parsing and surrounding callbacks; it is not exclusively parser time.
+* Handler outside Core: matched handler duration minus its matched Core duration.
+  It includes argument retrieval and surrounding application/error handling.
+* Scene sync: the scene synchronization performed for that rendered frame.
+* Triad: orientation-overlay update.
+* Render wall time: elapsed CPU time inside VTK Render, including driver blocking;
+  this is not a GPU execution timer.
+* Presentation wait: Render return to the Qt presentation notification, including
+  any intervening GUI work. It is not a direct monitor/photon latency measurement.
+* Frame interval: consecutive frame starts within that gesture; it also includes
+  voluntary pauses in mouse movement, so compare while dragging continuously.
+
+This patch measures the remaining lag; it does not claim to fix its cause. After
+building, enable diagnostics, perform several continuous rotations, then compare
+command, Render and presentation maxima in the summaries.
+
+The handler/Core split is paired per dispatch. It does not subtract maxima from
+different commands. Missing handlers (for example rejection before execute),
+multiple handlers in one dispatch or inconsistent boundaries increment unpaired
+dispatches; valid total time remains available, but derived samples are omitted.
+Typed commands outside an instrumented GUI gesture do not arm this probe. The
+existing diagnostics command controls all measurements; no new syntax is needed.

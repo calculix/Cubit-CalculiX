@@ -3,6 +3,7 @@
 
 #include "CoreTopologyLevelSetStructs.hpp"
 #include <map>
+#include <vector>
 
 struct TopologyLevelSetDesign;
 
@@ -40,6 +41,27 @@ public:
    * No stored evaluation, material or job is changed by this helper.
    */
   static bool evaluate_compliance(const TopologyLevelSetDesign& design, const std::map<int, bool>& preserved, const std::map<int, double>& element_volumes, const std::map<int, double>& element_energies, const std::map<int, double>& applied_factors, TopologyLevelSetEvaluation& evaluation);
+
+  /**
+   * @brief Accumulate one element into an unfinished nodal evaluation.
+   * @return False with a Cubit error and cleared evaluation on invalid data.
+   * @note The caller initializes iteration_id and zero derivative maps for the
+   * complete design node domain. Subsequent calls add to those same maps.
+   * Uses dC/ds=-2*U/s and ds/dphi=(1-void_ratio)*d(alpha)/dphi; fixed
+   * coefficients are not varied. Input geometry is already evaluated in Cubit
+   * node order. This math-only helper does not verify live mesh membership,
+   * resolve preservation, or set factor_approximation. No model store changes.
+   */
+  static bool accumulate_compliance(const TopologyLevelSetDesign& design, const std::vector<int>& nodes, const TopologyLevelSetElementGeometry& geometry, double element_volume, double element_energy, double applied_factor, TopologyLevelSetEvaluation& evaluation);
+
+  /**
+   * @brief Normalize assembled volume derivatives and mark evaluation available.
+   * @return False with a Cubit error and cleared evaluation on invalid data.
+   * @note Total participating volume is constant during differentiation. Call
+   * once after all elements and live-domain validation; the helper cannot
+   * establish coverage of a Cubit mesh. No stored record is modified.
+   */
+  static bool finalize_compliance(TopologyLevelSetEvaluation& evaluation);
 };
 
 #endif
