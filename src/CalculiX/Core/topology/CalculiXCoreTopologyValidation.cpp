@@ -45,3 +45,8 @@ bool CalculiXCore::check_topology_export(int topology_id, int iteration_id)
 
   return CoreTopologyExportValidation::check(job_export_context, customlines, topology_id, iteration_id, validate_model);
 }
+
+bool CalculiXCore::is_topology_level_set_run_enabled()
+{
+  return CoreTopologyModelValidation::level_set_run_enabled();
+}

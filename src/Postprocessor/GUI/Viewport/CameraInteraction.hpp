@@ -25,7 +25,7 @@ public:
     std::weak_ptr<PostprocessorApplicationInterface> application,
     Dispatch submit, Dispatch silent, std::function<void()> redraw,
     std::function<void(const std::string&)> report, CameraTimings* timings = nullptr,
-    std::function<void()> timing_finished = {});
+    std::function<void()> timing_finished = {}, std::function<void(const QPointF&)> clicked = {});
   ~CameraInteraction() override;
   bool handle(QEvent* event);
   void cancel();
@@ -60,6 +60,7 @@ private:
   std::function<void(const std::string&)> report;
   CameraTimings* timings = nullptr;
   std::function<void()> timingFinished;
+  std::function<void(const QPointF&)> clicked;
   QTimer wheelTimer;
   QTimer restoreTimer;
   Mode mode = Mode::None;

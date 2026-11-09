@@ -1,7 +1,9 @@
 #include "Core/topology/CoreTopologyOptimization.hpp"
 #include "Core/topology/CoreTopologyStructs.hpp"
+#include "Core/topology/CoreTopologyLevelSetGeometryCache.hpp"
 #include <string>
 #include <map>
+#include <memory>
 #include <set>
 #include <array>
 #include "Core/jobs/CalculiXJobsInterface.hpp"
@@ -546,7 +548,7 @@ bool CoreTopologyOptimization::cancel_topology_runs()
   return true;
 }
 
-bool CoreTopologyOptimization::evaluate_topology_objective(int topology_id, int iteration_id)
+bool CoreTopologyOptimization::evaluate_topology_objective(int topology_id, int iteration_id, CoreTopologyLevelSetGeometryCache* cache)
 {
   CalculiXTopologyInterface ccx_topology_iface;
   CalculiXTopologyRunInterface ccx_topology_run_iface;
@@ -575,7 +577,7 @@ bool CoreTopologyOptimization::evaluate_topology_objective(int topology_id, int 
         return false;
       }
 
-      return ccx_topology_run_iface.evaluate_topology_compliance(topology_id, iteration_id, energies);
+      return ccx_topology_run_iface.evaluate_topology_compliance(topology_id, iteration_id, energies, cache);
     }
     case TopologyObjective::Mass:
     {
@@ -983,14 +985,20 @@ bool CoreTopologyOptimization::finish_topology_iteration(int topology_id, int it
     return false;
   }
 
-  if (!evaluate_topology_objective(topology_id, iteration_id))
+  TopologyOptions options;
+
+  if (!ccx_topology_iface.get_topology_settings(topology_id, options))
   {
     return false;
   }
 
-  TopologyOptions options;
-
-  if (!ccx_topology_iface.get_topology_settings(topology_id, options))
+  // One calling-thread cache spans the solved source evaluation and its proposal.
+  std::shared_ptr<CoreTopologyLevelSetGeometryCache> source_cache;
+  if (options.method == TopologyMethod::LevelSet && options.objective == TopologyObjective::Compliance)
+  {
+    source_cache = std::make_shared<CoreTopologyLevelSetGeometryCache>(iteration_id);
+  }
+  if (!evaluate_topology_objective(topology_id, iteration_id, source_cache.get()))
   {
     return false;
   }
@@ -1015,7 +1023,7 @@ bool CoreTopologyOptimization::finish_topology_iteration(int topology_id, int it
 
   if (options.method == TopologyMethod::LevelSet)
   {
-    if (options.objective != TopologyObjective::Compliance || !ccx_topology_run_iface.evaluate_topology_level_set_proposal(topology_id, iteration_id, level_set_proposal))
+    if (options.objective != TopologyObjective::Compliance || !ccx_topology_run_iface.evaluate_topology_level_set_proposal(topology_id, iteration_id, level_set_proposal, std::move(source_cache)))
     {
       return false;
     }

@@ -236,6 +236,15 @@ bool CoreTopologyModelValidation::validate_model(const CoreTopologyModelValidati
   return validate_displacements(data.displacements, data.mesh, displacement_ids, require_zero_displacements);
 }
 
+bool CoreTopologyModelValidation::level_set_run_enabled()
+{
+#if defined(CUBITSIM_VERIFY_LEVEL_SET_CONTROLLER)
+  return true;
+#else
+  return false;
+#endif
+}
+
 bool CoreTopologyModelValidation::validate_run(const CoreTopology& topology, MeshExportInterface& mesh, int topology_id, const std::function<bool()>& validate_model)
 {
   const auto entry = topology.topology_cases.find(topology_id);
@@ -254,18 +263,19 @@ bool CoreTopologyModelValidation::validate_run(const CoreTopology& topology, Mes
     return false;
   }
 
-  // Internal controller wiring exists, but normal runs must not precede native numerical verification.
-  if (configuration.method == TopologyMethod::LevelSet)
+  // Verification builds admit only the implemented level-set compliance objective.
+  const bool density = configuration.method == TopologyMethod::Density &&
+      (configuration.objective == TopologyObjective::Compliance || configuration.objective == TopologyObjective::Displacement);
+  const bool level_set = configuration.method == TopologyMethod::LevelSet && configuration.objective == TopologyObjective::Compliance;
+  if (configuration.method == TopologyMethod::LevelSet && !level_set_run_enabled())
   {
-    PRINT_ERROR("Level-set execution remains disabled pending native numerical verification.\n");
+    PRINT_ERROR("Level-set execution requires a developer controller-verification build.\n");
     return false;
   }
 
-  if (configuration.method != TopologyMethod::Density ||
-      (configuration.objective != TopologyObjective::Compliance &&
-       configuration.objective != TopologyObjective::Displacement))
+  if (!density && !level_set)
   {
-    PRINT_ERROR("Topology currently supports density optimization with compliance or displacement objectives.\n");
+    PRINT_ERROR("Topology supports density compliance/displacement and verification-only level-set compliance.\n");
     return false;
   }
 

@@ -64,6 +64,28 @@ FrameworkOptionsPanel::FrameworkOptionsPanel(QWidget* parent) : QWidget(parent)
   form->addRow(tr("Cubit color"), cubitColor);
   form->addRow(tr("Solver jobs color"), jobsColor);
   layout->addLayout(form);
+  auto* reset = new QPushButton(tr("Reset to defaults"),this);
+  reset->setObjectName("Framework.Options.ResetDefaults");
+  reset->setToolTip(tr("Restore this page's Core defaults as unsaved edits. Press Save to apply."));
+  layout->addWidget(reset);
+  connect(reset,&QPushButton::clicked,this,[this]()
+  {
+    UserOptionValues defaults;
+    for (const auto& item : framework_context().user_option_definitions())
+    {
+      defaults.emplace(item.key,item.defaultValue);
+    }
+    enabled->setChecked(std::get<bool>(defaults.at("monitor/enabled")));
+    interval->setValue(std::get<int>(defaults.at("monitor/interval_seconds")));
+    cpu->setChecked(std::get<bool>(defaults.at("monitor/show_cpu")));
+    memory->setChecked(std::get<bool>(defaults.at("monitor/show_memory")));
+    cubit->setChecked(std::get<bool>(defaults.at("monitor/show_cubit")));
+    jobs->setChecked(std::get<bool>(defaults.at("monitor/show_jobs")));
+    jobAttribution->setChecked(std::get<bool>(defaults.at("monitor/show_job_attribution")));
+    setColor(systemColor,QColor(QString::fromStdString(std::get<std::string>(defaults.at("monitor/system_color")))));
+    setColor(cubitColor,QColor(QString::fromStdString(std::get<std::string>(defaults.at("monitor/cubit_color")))));
+    setColor(jobsColor,QColor(QString::fromStdString(std::get<std::string>(defaults.at("monitor/jobs_color")))));
+  });
   layout->addStretch();
   refresh_settings();
 }

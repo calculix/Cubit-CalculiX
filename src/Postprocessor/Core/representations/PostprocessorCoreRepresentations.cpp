@@ -1,5 +1,7 @@
 #include "../application/PostprocessorCore.hpp"
+#include "ResultMesh.hpp"
 #include <exception>
+#include <algorithm>
 #include <limits>
 
 namespace Postprocessor
@@ -35,6 +37,7 @@ namespace Postprocessor
       }
     }
     Representation display;
+    display.coloring.palette = default_palette;
     display.id = "display:" + view_id + ":" + source_id;
     display.name = staged.sources.at(source_id).name;
     display.input = OutputReference{OutputOwner::Source, source_id, 0};
@@ -70,6 +73,122 @@ namespace Postprocessor
       }
     }
     return true;
+  }
+
+  bool PostprocessorCore::frame_has_mesh(const std::string& source_id, std::size_t increment_index) const
+  {
+    const auto loaded = runtime.find(source_id);
+    return loaded != runtime.end() && loaded->second.data &&
+      increment_index < loaded->second.data->increments.size() &&
+      !result_meshes(loaded->second.data->increments[increment_index].dataset.get()).empty();
+  }
+
+  bool PostprocessorCore::set_frame(const std::string& source_id, const std::string& view_id,
+    std::size_t increment_index, std::string& error)
+  {
+    error.clear();
+    if (source_operation_active || scene_revision == std::numeric_limits<std::uint64_t>::max() ||
+        state.sources.find(source_id) == state.sources.end() || state.views.find(view_id) == state.views.end())
+    {
+      error = "Cannot select a frame for this source/view during the current operation.";
+      return false;
+    }
+    try
+    {
+      if (!frame_has_mesh(source_id, increment_index))
+      {
+        error = "The requested frame is unavailable or has no displayable mesh.";
+        return false;
+      }
+      for (auto& entry : state.representations)
+      {
+        auto& display = entry.second;
+        if (display.input.owner == OutputOwner::Source && display.input.object_id == source_id &&
+            display.input.port == 0 && display.view_id == view_id)
+        {
+          if (display.increment_index != increment_index)
+          {
+            display.increment_index = increment_index;
+            ++scene_revision;
+          }
+          return true;
+        }
+      }
+      // Prepare a hidden representation if the source is not displayed here.
+      auto staged = state;
+      if (!ensure_source_representation(staged, source_id, view_id, increment_index, false, error))
+      {
+        return false;
+      }
+      state.swap(staged);
+      ++scene_revision;
+      return true;
+    }
+    catch (const std::exception& exception)
+    {
+      error = std::string("Cannot select Postprocessor frame: ") + exception.what();
+      return false;
+    }
+    catch (...)
+    {
+      error = "Cannot select Postprocessor frame: unknown failure.";
+      return false;
+    }
+  }
+
+  bool PostprocessorCore::set_coloring(const std::string& source_id, const std::string& view_id,
+    const ResultColoring& coloring, std::string& error)
+  {
+    error.clear();
+    if (source_operation_active || scene_revision == std::numeric_limits<std::uint64_t>::max() ||
+        !valid_coloring(coloring, error))
+    {
+      if (error.empty())
+      {
+        error = "Cannot change coloring during the current operation.";
+      }
+      return false;
+    }
+    for (auto& entry : state.representations)
+    {
+      auto& display = entry.second;
+      if (display.input.owner == OutputOwner::Source && display.input.object_id == source_id &&
+          display.input.port == 0 && display.view_id == view_id)
+      {
+        try
+        {
+          if (same_coloring(display.coloring, coloring))
+          {
+            return true;
+          }
+          if (coloring.field && !same_field(display.coloring.field,coloring.field))
+          {
+            const auto data = result_data(source_id);
+            const auto* field = data && display.increment_index < data->increments.size() ?
+              find_field(data->increments[display.increment_index],*coloring.field) : nullptr;
+            if (!field || field->association == SimResults::Association::Table ||
+                (coloring.field->magnitude && !field->vector_components) ||
+                (!coloring.field->magnitude && std::find(field->components.begin(),field->components.end(),coloring.field->component) == field->components.end()))
+            {
+              error = "The requested field/component is unavailable in this frame.";
+              return false;
+            }
+          }
+          auto staged = state;
+          staged.representations.at(entry.first).coloring = coloring;
+          state.swap(staged);
+          ++scene_revision;
+          return true;
+        }
+        catch (const std::exception& exception)
+        {
+          error = std::string("Cannot change result coloring: ") + exception.what();
+          return false;
+        }
+      }
+    }
+    error = "The source has no representation in the target view.";
+    return false;
   }
 
   bool PostprocessorCore::set_source_visible(const std::string& source_id, const std::string& view_id,

@@ -1,11 +1,7 @@
 #include "UserOptionsStore.hpp"
 #include "HDF5Tool.hpp"
+#include "Hdf5FileTransaction.hpp"
 #include "CubitMessage.hpp"
-#include <QFile>
-#include <QFileInfo>
-#include <QLockFile>
-#include <QSaveFile>
-#include <QTemporaryDir>
 #include <algorithm>
 #include <cctype>
 #include <cmath>
@@ -267,85 +263,41 @@ bool UserOptionsStore::transact(const std::string& workspace, const std::vector<
         }
       }
     }
-    const QString filename = QString::fromUtf8(paths.optionsFilename.c_str());
-    QLockFile lock(filename + ".lock");
-    if (!lock.tryLock(0))
+    return Hdf5FileTransaction().update(paths.optionsFilename,
+      [&](HDF5Tool& file, bool existed, std::string& error)
     {
-      error = "The cubit-sim options file is in use: " + paths.optionsFilename;
-      return false;
-    }
-    QTemporaryDir temporary(QFileInfo(filename).absolutePath() + "/.cubitsim-options-XXXXXX");
-    if (!temporary.isValid())
-    {
-      error = "Cannot create a temporary options directory.";
-      return false;
-    }
-    const QString staged = temporary.filePath("options.h5");
-    const bool existed = QFileInfo::exists(filename);
-    if (existed && !QFile::copy(filename, staged))
-    {
-      error = "Cannot copy the existing options file; it was left unchanged.";
-      return false;
-    }
-    HDF5Tool file(staged.toUtf8().toStdString());
-    if (!schemaVersion(file, "/", existed, error) || !file.ensureGroup("framework"))
-    {
-      return false;
-    }
-    const std::string group = "workspaces/" + workspace;
-    const bool workspaceExisted = file.nameExists(group);
-    if (!schemaVersion(file, group, workspaceExisted, error))
-    {
-      return false;
-    }
-    for (const auto& definition : definitions)
-    {
-      const std::string item = group + "/" + definition.key;
-      if (loading)
+      if (!schemaVersion(file, "/", existed, error) || !file.ensureGroup("framework"))
       {
-        auto value = definition.defaultValue;
-        if (file.nameExists(item) && !readValue(file, item, definition, value))
+        return false;
+      }
+      const std::string group = "workspaces/" + workspace;
+      const bool workspaceExisted = file.nameExists(group);
+      if (!schemaVersion(file, group, workspaceExisted, error))
+      {
+        return false;
+      }
+      for (const auto& definition : definitions)
+      {
+        const std::string item = group + "/" + definition.key;
+        if (loading)
         {
-          PRINT_WARNING("Invalid saved cubit-sim option %s/%s; using its declared default.\n",
-            workspace.c_str(), definition.key.c_str());
-          value = definition.defaultValue;
+          auto value = definition.defaultValue;
+          if (file.nameExists(item) && !readValue(file, item, definition, value))
+          {
+            PRINT_WARNING("Invalid saved cubit-sim option %s/%s; using its declared default.\n",
+              workspace.c_str(), definition.key.c_str());
+            value = definition.defaultValue;
+          }
+          values.emplace(definition.key, std::move(value));
         }
-        values.emplace(definition.key, std::move(value));
+        if (!writeValue(file, item, definition, values.at(definition.key)))
+        {
+          error = "Cannot write option " + definition.key + ": " + file.last_error();
+          return false;
+        }
       }
-      if (!writeValue(file, item, definition, values.at(definition.key)))
-      {
-        error = "Cannot write option " + definition.key + ": " + file.last_error();
-        return false;
-      }
-    }
-    if (!file.close())
-    {
-      error = "Cannot close the staged options file.";
-      return false;
-    }
-    QFile input(staged);
-    QSaveFile output(filename);
-    output.setDirectWriteFallback(false);
-    if (!input.open(QIODevice::ReadOnly) || !output.open(QIODevice::WriteOnly))
-    {
-      error = "Cannot open the options file for atomic replacement.";
-      return false;
-    }
-    while (!input.atEnd())
-    {
-      const QByteArray bytes = input.read(65536);
-      if (bytes.isEmpty() || output.write(bytes) != bytes.size())
-      {
-        error = "Cannot copy the staged options data.";
-        return false;
-      }
-    }
-    if (input.error() != QFileDevice::NoError || !output.commit())
-    {
-      error = "Cannot commit the cubit-sim options file.";
-      return false;
-    }
-    return true;
+      return true;
+    }, error);
   }
   catch (const H5::Exception& exception)
   {

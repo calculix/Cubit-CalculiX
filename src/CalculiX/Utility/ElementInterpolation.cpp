@@ -404,9 +404,29 @@ bool ElementInterpolation::evaluate_physical(const std::string& calculix_type, i
 {
   values.clear();
   determinant = 0.0;
-  if (!matches_cubit_type(calculix_type, cubit_type) || node_coordinates.size() != node_count(calculix_type))
+  std::vector<double> shape;
+  std::vector<Coordinates> gradients;
+  if (!evaluate_reference(calculix_type, point, shape, gradients))
   {
-    PRINT_ERROR("Incompatible connectivity in element interpolation.\n");
+    return false;
+  }
+  return evaluate_physical_from_reference(calculix_type, cubit_type, node_coordinates, shape, gradients, values, determinant);
+}
+
+bool ElementInterpolation::evaluate_physical_from_reference(const std::string& calculix_type, int cubit_type, const std::vector<Coordinates>& node_coordinates, const std::vector<double>& reference_values, const std::vector<Coordinates>& reference_gradients, std::vector<double>& values, double& determinant)
+{
+  if (&values == &reference_values)
+  {
+    PRINT_ERROR("Reference interpolation inputs must not alias output values.\n");
+    return false;
+  }
+  values.clear();
+  determinant = 0.0;
+  const auto count = node_count(calculix_type);
+  if (!matches_cubit_type(calculix_type, cubit_type) || count > 20 || node_coordinates.size() != count ||
+      reference_values.size() != count || reference_gradients.size() != count)
+  {
+    PRINT_ERROR("Incompatible connectivity or reference data in element interpolation.\n");
     return false;
   }
   for (const auto& coordinates : node_coordinates)
@@ -420,29 +440,32 @@ bool ElementInterpolation::evaluate_physical(const std::string& calculix_type, i
       }
     }
   }
-  std::vector<double> shape;
-  std::vector<Coordinates> gradients;
-  if (!evaluate_reference(calculix_type, point, shape, gradients))
-  {
-    return false;
-  }
   Eigen::Matrix3d jacobian = Eigen::Matrix3d::Zero();
-  std::vector<double> candidate(shape.size());
-  for (std::size_t node = 0; node < shape.size(); ++node)
+  // All supported formulations have at most 20 nodes; avoid point-wise allocations.
+  std::array<std::size_t, 20> sources{};
+  for (std::size_t node = 0; node < count; ++node)
   {
     const auto source = ElementNodeOrdering::cubit_source_index(cubit_type, node);
-    if (source >= node_coordinates.size())
+    if (source >= node_coordinates.size() || !std::isfinite(reference_values[node]))
     {
-      PRINT_ERROR("Invalid node ordering in element interpolation.\n");
+      PRINT_ERROR("Invalid node ordering or reference values in element interpolation.\n");
       return false;
     }
-    candidate[source] = shape[node];
+    sources[node] = source;
+    for (double gradient : reference_gradients[node])
+    {
+      if (!std::isfinite(gradient))
+      {
+        PRINT_ERROR("Non-finite reference gradients in element interpolation.\n");
+        return false;
+      }
+    }
     for (std::size_t row = 0; row < 3; ++row)
     {
       const double coordinate = node_coordinates[source][row] - node_coordinates[0][row];
       for (std::size_t column = 0; column < 3; ++column)
       {
-        jacobian(row, column) += coordinate * gradients[node][column];
+        jacobian(row, column) += coordinate * reference_gradients[node][column];
       }
     }
   }
@@ -452,7 +475,11 @@ bool ElementInterpolation::evaluate_physical(const std::string& calculix_type, i
     PRINT_ERROR("Invalid Jacobian determinant in element interpolation.\n");
     return false;
   }
-  values.swap(candidate);
+  values.resize(count);
+  for (std::size_t node = 0; node < count; ++node)
+  {
+    values[sources[node]] = reference_values[node];
+  }
   determinant = value;
   return true;
 }

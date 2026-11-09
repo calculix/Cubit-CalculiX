@@ -20,6 +20,8 @@ namespace Postprocessor
     inline constexpr double sensitivity_max = 100.0;
     inline constexpr bool reverse_zoom = false;
     inline constexpr double edge_width = 1.0;
+    inline constexpr double point_size_pixels = 6.0;
+    inline constexpr bool rounded_points = true;
   }
 }
 

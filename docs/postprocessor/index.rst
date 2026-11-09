@@ -15,4 +15,5 @@ See :doc:`../developer/postprocessor-verification` for the acceptance checklist.
 
    commands
    workspace
+   selection
    ../developer/postprocessor

@@ -358,3 +358,194 @@ reset during an active gesture, Esc afterward and preservation of user options.
 After an authorized build, also test native Cubit reset with Postprocessor
 visible, hidden and without its GUI started. Confirm only the original reset
 command is journaled and no stale geometry returns after switching workspaces.
+
+Frame navigation patch
+----------------------
+
+Added DisplayTests cases for active/explicit source frame selection, unavailable
+frames and invalid ordinals, idempotence, hidden visibility, preserved camera,
+scene geometry replacement and independent source instances. NavigationTests
+checks tree refresh without command callbacks, disabled missing frames, expansion
+preservation, external frame selection, explicit source callback arguments,
+sequence numbering across gaps and reset cleanup using Qt offscreen widgets.
+These additions have not been compiled or executed.
+
+After an authorized native build, open a multi-increment job. Try both forms of
+``post frame``, tree selection and all navigation buttons. Confirm journal entries
+contain absolute frame numbers and explicit source names for GUI navigation.
+Verify invalid/empty frames leave the display unchanged, hidden sources stay
+hidden, an established camera stays fixed and reset removes stale controls.
+
+Result coloring and dock regression checks
+-----------------------------------------
+
+ColoringTests covers threshold equality, disabled/re-enabled retained limits,
+crossed thresholds, invalid RGB, missing values, bands/reversal, extreme signed
+normalization, vector magnitude excluding derived columns, mask handling and
+immutable inputs. DisplayTests adds scalar mapping, maximum-limit color, palette
+updates without scalar-geometry replacement, missing-field frame changes and
+legend/actor cleanup on reset. Added cases have not been compiled or executed.
+
+After an authorized build, test both nodal and element fields, known displacement
+magnitude and integration-point datasets. Verify palette/range commands, limit
+on/off, masks, negative values, constant fields, missing fields and frame changes.
+Compare thresholds against numeric result values in the model's own units.
+Test double-click and toolbar command journaling, independent source settings,
+hide/show/reset cleanup and legend readability on light/dark backgrounds.
+Float/close/redock Result navigation, switch workspaces and restore it through
+View. Confirm Command Line remains available and the dock placement is retained.
+
+Grouped results, slider and options defaults
+--------------------------------------------
+
+Updated NavigationTests for one result item across repeated frames/datasets,
+stable selection/expansion, unavailable result state, gap-preserving slider
+positions, coalesced previews, one release commit and reset cancellation.
+ColoringTests covers compatible group identity and incompatible associations.
+CameraTests adds staged mouse-page default reset without command submission,
+discarding unsaved defaults and navigation-journal option publication.
+Added/updated cases have not been compiled or run.
+
+Native checks after an authorized build: migrate an old saved layout and verify
+Result navigation is directly above Command Line; float/move it and verify that
+placement survives workspace changes/restart. Scrub a multi-frame, multi-dataset
+source with navigation journaling on/off. Confirm no frame tree or repeated DISP/
+STRESS entries, one recorded release command when enabled, no preview entries,
+correct group coloring, safe reset/source-switch cancellation and unchanged camera.
+On each plugin options page, stage defaults, close without Save, then repeat and
+Save; check only the page's changed settings are applied through commands.
+
+Animation and prefixed options
+------------------------------
+
+DisplayTests adds Core animation defaults, restarting from the final frame,
+invalid FPS without mutation, live loop/FPS updates, source-change invalidation
+and reset cleanup. NavigationTests drives Qt timer timeout signals directly to
+cover skipped frames, silent previews, one final commit, loop wrap, live FPS and
+loop changes, end-of-sequence stopping and reset. These tests have not been
+compiled or executed.
+
+After an authorized build, verify all four options pages sort together under
+Cubit-Sim, open/save correctly and are removed correctly on plugin shutdown.
+Play a result with gaps in its frames; check 10 FPS default, pause, restart at
+last, live FPS changes and enabling/disabling Loop. Switch sources/workspaces,
+close/hide the navigation dock and reset during playback. Compare journal output
+with navigation recording on and off: no timer frames, one final absolute frame
+when enabled. Confirm the camera and result-color settings remain unchanged.
+
+Display Properties regression cases
+------------------------------------
+
+DisplayPropertiesTests adds Qt offscreen cases for refresh/edit without command
+submission, scientific fixed ranges, paired limit edits with valid intermediate
+commands, band count and legend settings, drafts surviving frame changes, external
+coloring refresh, disabled-limit value retention, invalid drafts without mutation,
+partial command failure, accepted-but-rejected submissions, stale source changes
+and reset disabling the page. The mocked dispatcher applies every emitted command
+through the application interface and deliberately triggers synchronous refresh.
+These additions have not been built or executed.
+
+After an authorized build, check Properties at narrow widths, source metadata,
+field/component readout, all palettes, reversal, bands, range modes and scientific
+notation. Apply minimum/maximum values and colors together, then toggle each
+limit independently. Verify command journaling and that animation preserves
+pending edits. Test external commands, source/view changes, reset, color-dialog
+context changes and an unavailable field/frame. Confirm failures show the actual
+committed settings and leave no misleading success state.
+
+Compact navigation and all-frame ranges
+----------------------------------------
+
+DisplayTests adds grouped multi-frame/multi-dataset bounds, masked outlier and NaN
+exclusion, explicit dataset scope, unchanged mapper range during frame navigation,
+cache invalidation after refresh and all-invalid data without fabricated bounds.
+ColoringTests checks streaming range accumulation against masked vector extraction.
+DisplayPropertiesTests covers the All frames editor choice and command transport.
+These additions remain uncompiled and unexecuted.
+
+After an authorized build, check that Result navigation occupies a single toolbar
+row beneath the main Postprocessor toolbar and leaves Command Line at normal
+width. Check slider/play/FPS/Loop, moving/floating, View visibility and workspace
+activation. Apply Current frame, All frames and Fixed ranges to results whose
+extrema differ between frames. Verify All frames keeps legend endpoints fixed
+while the result colors change. Refresh results and confirm the global bounds
+update; test masks, unavailable fields and independent limit highlighting.
+
+Deformation toolbar and geometry
+-------------------------------
+
+DeformationTests covers declared XYZ columns with an extra magnitude column,
+masked/NaN/overflow fallback, immutable original coordinates and arrays, dataset
+scope, mixed nodal/integration-point automatic displacement, ambiguous/missing
+roles and manual overrides. Application/scene checks cover transformed and overlay
+fit bounds, independent coloring and current-frame fallback.
+
+Toolbar cases check absence of Apply, immediate checkbox and field commands,
+refresh without submission, scientific scale debounce, silent previews, exactly
+one final normal command, duplicate completion suppression, incomplete exponent
+focus-out, frame changes during scale input, external updates, rejected commands,
+accepted-without-mutation detection, hide cancellation and reset. Timer signals
+are driven directly rather than waiting in tests. These cases have not been built
+or executed.
+
+After an authorized build, confirm Deform, vector, Scale and Undeformed share the
+navigation row without Apply. Test immediate toggles, field selection, typing
+pauses, Enter, focus loss and scientific notation. Verify previews are absent from
+the journal and the final scale appears once. Test source/workspace changes, reset,
+missing displacement, overlays and Fit. Camera movement must retain the existing
+direct preview path without rebuilding geometry.
+
+Dataset visibility and names
+----------------------------
+
+DisplayTests adds ID/name visibility, duplicate-name rejection, literal all name,
+unknown selectors without mutation, metadata-order independence, single-grid data
+without metadata, actor/scalar-geometry retention, current/all-frame/fixed ranges,
+Fit, absent-frame isolation, parent master toggles, hiding all, refresh reset of
+masks and retained result ownership. NavigationTests checks dataset checkbox
+callbacks using a sparse ID and signal-free preference refresh. These cases have
+not been compiled or executed.
+
+After an authorized build, exercise show/hide/show-only by both ID and name, plus
+Show all and the parent master checkbox. Check names with spaces, numeric names,
+quoted all, duplicate names and unavailable frames. Verify native parser behavior
+and journal replay, including the GUI's unique-name preference and numeric fallback.
+Confirm context menus survive/cancel safely around source refresh and workspace
+changes, legends and Fit follow visibility, and other sources/views retain their
+own settings. Source refresh must reset visibility overrides. No build or native
+parser validation was performed for this patch.
+
+Selection/probe and toolbar split
+--------------------------------
+
+SelectionTests adds exact 64-bit IDs and command formatting, point/cell/IP values,
+masked samples, deformed positions, element nodal ranges without averaging,
+missing-frame reappearance, hidden status, toolbar/readout refresh, CPU provenance
+picking/occlusion, actor retention, click-vs-fast-drag handling, and source
+closure/refresh/reset. The offscreen target is registered for Windows/Linux with
+the existing VTK/Qt test dependencies. These cases have not been built or executed.
+
+Static checks cover source registrations, API signatures, delimiter/brace balance,
+UTF-8 and whitespace. No compiler, linker, CMake configure, test executable, GL
+Render or native Cubit parser was run.
+
+After an authorized build, check the shared row order Field selection ->
+Deformation -> Navigation, independent View toggles, floating/moving and workspace
+switching. Confirm 6-pixel rounded point datasets retain colors/deformation. Pick
+nodes, original elements and IPs on undeformed/deformed data; test background Clear,
+F/Esc and all drag bindings. Verify no picks during drags and no camera commands
+from plain clicks. Check hidden geometry, overlays, high-DPI displays, curved
+higher-order faces, absent IDs, quoted 64-bit IDs and journal replay. Probe values
+must match original arrays and masks, update with frames, and never report a
+rendering triangle index as an element ID. Selections/highlights must clear with
+refresh, closure and reset without changing Fit bounds.
+
+Original-node picking and preselection follow-up
+----------------------------------------------
+
+The selection checks now cover copied 64-bit original element IDs on a quadratic
+cell surface, original mesh-node picking, background/occluded misses, and hover
+without Core selection changes. They have not been compiled or run in this patch.
+Native verification should include midside nodes, deformed nodal colors, dataset
+visibility, hover clearing on camera/frame/mode changes, and empty-space clearing
+of both the committed highlight and the probe readout.

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cstddef>
+#include <memory>
 #include "Core/results/dat/CoreResultsDatStructs.hpp"
 #include <string>
 #include <set>
@@ -17,6 +18,7 @@
 #include "Core/topology/CoreTopologyStructs.hpp"
 #include "Framework/Core/CubitSimVersion.hpp"
 
+class CoreTopologyLevelSetGeometryCache;
 class CoreBlocks;
 class CoreMaterials;
 class CoreMaterialsLibrary;
@@ -657,6 +659,9 @@ public:
   std::vector<std::vector<double>> get_topology_iteration_element_data(int topology_id, int iteration_id = -1);
   /// Completed density iteration: [element ID, dJ/ds, unfiltered dJ/drho].
   /// Grouped density gradients are SIMP surrogates. Returns empty on failure.
+  /// Historical [node ID, phi, fixed flag] rows, sorted by global node ID.
+  std::vector<std::vector<double>> get_topology_iteration_level_set_field_data(int topology_id, int iteration_id = -1);
+  bool is_topology_level_set_run_enabled();
   std::vector<std::vector<double>> get_topology_iteration_sensitivity_data(int topology_id, int iteration_id = -1);
   std::string get_topology_run_state(int topology_id);
   bool get_topology_base_run_info(int topology_id, TopologyRunInfo& information);
@@ -728,8 +733,8 @@ public:
   // Topology density updates
   bool set_topology_iteration_densities(int topology_id, int iteration_id, const std::map<int, double>& densities, int source_iteration = -1);
   bool initialize_topology_level_set_design(int topology_id);
-  bool evaluate_topology_level_set_compliance(int topology_id, int iteration_id, const std::map<int, double>& energies);
-  bool evaluate_topology_level_set_proposal(int topology_id, int iteration_id, TopologyLevelSetProposal& proposal);
+  bool evaluate_topology_level_set_compliance(int topology_id, int iteration_id, const std::map<int, double>& energies, CoreTopologyLevelSetGeometryCache* cache = nullptr);
+  bool evaluate_topology_level_set_proposal(int topology_id, int iteration_id, TopologyLevelSetProposal& proposal, std::shared_ptr<CoreTopologyLevelSetGeometryCache> source_cache = {});
   bool prepare_topology_level_set_iteration(int topology_id, int source_iteration, int next_iteration, const TopologyLevelSetProposal& proposal);
   bool check_topology_level_set_convergence(int topology_id, int previous_iteration, int current_iteration, bool& converged);
   bool prepare_topology_density_iteration(int topology_id, int source_iteration, int next_iteration);

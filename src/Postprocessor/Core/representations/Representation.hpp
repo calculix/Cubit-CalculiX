@@ -1,8 +1,12 @@
 #ifndef POSTPROCESSOR_REPRESENTATION_HPP
 #define POSTPROCESSOR_REPRESENTATION_HPP
 
+#include "ResultColoring.hpp"
+#include "AnimationDefinition.hpp"
+#include "ResultDeformation.hpp"
 #include <string>
 #include <cstddef>
+#include <set>
 
 namespace Postprocessor
 {
@@ -10,6 +14,13 @@ namespace Postprocessor
   {
     Source,
     Feature
+  };
+  enum class DatasetVisibilityAction
+  {
+    Show,
+    Hide,
+    ShowOnly,
+    ShowAll
   };
 
   struct OutputReference
@@ -32,9 +43,19 @@ namespace Postprocessor
     OutputReference input;
     std::string view_id;
     bool visible = true;
+    // Per-view preferences, retained across frames. Empty means all datasets.
+    // Source refresh clears these IDs because a new snapshot may reuse them.
+    std::set<std::size_t> hidden_datasets;
     // Per-view frame selection; independent views may choose different frames.
     std::size_t increment_index = 0;
+    ResultColoring coloring;
+    ResultDeformation deformation;
+    AnimationDefinition animation;
   };
+  inline bool dataset_visible(const Representation& display, std::size_t dataset)
+  {
+    return display.visible && display.hidden_datasets.count(dataset) == 0;
+  }
 }
 
 #endif // POSTPROCESSOR_REPRESENTATION_HPP

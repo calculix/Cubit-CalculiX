@@ -13,6 +13,8 @@ class CoreMaterials;
 class CoreTopologyQuery
 {
 public:
+  /// Completed historical coefficients; no queries against the live mesh.
+  static std::vector<std::vector<double>> get_iteration_level_set_field_data(const CoreTopology& topology, CoreJobs& jobs, int topology_id, int iteration_id);
   /// Captured historical method; never inferred from editable case settings.
   static bool get_iteration_level_set_settings(const CoreTopology& topology, int topology_id, int iteration_id, TopologyLevelSetSettings& settings);
   static bool get_iteration_method(const CoreTopology& topology, int topology_id, int iteration_id, TopologyMethod& method);

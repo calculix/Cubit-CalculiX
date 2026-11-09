@@ -145,3 +145,13 @@ int CalculiXCore::get_topology_iteration_adjoint_job_id(int topology_id, int ite
 
   return CoreTopologyQuery::get_iteration_adjoint_job_id(*topology, *jobs, topology_id, iteration_id);
 }
+
+std::vector<std::vector<double>> CalculiXCore::get_topology_iteration_level_set_field_data(int topology_id, int iteration_id)
+{
+  if (!topology || !jobs)
+  {
+    PRINT_ERROR("Topology/job cores are not initialized.\n");
+    return {};
+  }
+  return CoreTopologyQuery::get_iteration_level_set_field_data(*topology, *jobs, topology_id, iteration_id);
+}

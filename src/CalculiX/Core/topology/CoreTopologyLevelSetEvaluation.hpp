@@ -12,6 +12,7 @@ class CoreTopologyLevelSetEvaluation
 public:
   /**
    * @brief Query the current Cubit mesh and evaluate all element fractions/volumes.
+   * @param cache Optional transient source cache; live mesh queries/domain checks remain mandatory.
    * @return False without modifying design on failure; inputs must be the complete domain.
    * @note Volumes and preservation must have identical element IDs. The field
    * must contain exactly the domain nodes; fixed_nodes must equal the union of
@@ -19,7 +20,7 @@ public:
    * Initial designs require a resolved free interface. Cubit volumes, not
    * geometric normalization volumes, define the constraint. No model store changes.
    */
-  static bool build_geometry(TopologyLevelSetDesign& design, const std::map<int, bool>& preserved, const std::map<int, double>& element_volumes);
+  static bool build_geometry(TopologyLevelSetDesign& design, const std::map<int, bool>& preserved, const std::map<int, double>& element_volumes, CoreTopologyLevelSetGeometryCache* cache = nullptr);
 
   /**
    * @brief Build requested s=v+(1-v)*alpha factors, forcing preserved factors to one.
@@ -31,6 +32,7 @@ public:
 
   /**
    * @brief Assemble compliance and nodal derivatives at a solved applied design.
+   * @param cache Optional calling-thread source cache; never stored in the evaluation.
    * @return False with an unavailable/empty output on invalid/incomplete input.
    * @note Requires fixed loads, homogeneous prescribed displacement and symmetric
    * linear elasticity, as for density compliance. C=2*sum(Ue), dC/ds=-2*Ue/s.
@@ -40,7 +42,7 @@ public:
    * The caller verifies physical job completion and unchanged mesh before use.
    * No stored evaluation, material or job is changed by this helper.
    */
-  static bool evaluate_compliance(const TopologyLevelSetDesign& design, const std::map<int, bool>& preserved, const std::map<int, double>& element_volumes, const std::map<int, double>& element_energies, const std::map<int, double>& applied_factors, TopologyLevelSetEvaluation& evaluation);
+  static bool evaluate_compliance(const TopologyLevelSetDesign& design, const std::map<int, bool>& preserved, const std::map<int, double>& element_volumes, const std::map<int, double>& element_energies, const std::map<int, double>& applied_factors, TopologyLevelSetEvaluation& evaluation, CoreTopologyLevelSetGeometryCache* cache = nullptr);
 
   /**
    * @brief Accumulate one element into an unfinished nodal evaluation.

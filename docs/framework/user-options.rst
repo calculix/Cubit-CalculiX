@@ -53,10 +53,12 @@ Icon-path changes take effect after restarting Cubit; the page marks pending
 changes. Cancel discards unapplied edits when the page is refreshed on reopening.
 Missing SVG files produce empty icons and do not prevent startup.
 
-Additional display defaults, such as background colors, will belong to the same
-Postprocessor options schema. They are not implemented yet. Application defaults
-and settings of individual existing views are separate concepts; each future
-option must specify when it takes effect.
+The same page contains background colors, triad visibility, journal controls and
+**Default result palette**. Classic rainbow is the factory palette. Saving another
+palette affects newly created result displays, preserving existing display choices.
+The per-result Properties editor can override the palette. Reset to defaults
+stages the factory palette until Save. The preference uses the existing command
+path, for example ``post useroptions palette rainbow``.
 
 For the storage and module contracts, see :doc:`../developer/user-options`.
 
@@ -121,3 +123,25 @@ settings. The GUI validates all edited values before submitting the first
 command, submits one command per changed setting, and submits no commands for
 unchanged pages. Each successful command persists separately; if a later command
 fails, earlier successful changes remain saved. Defaults remain in workspace Core.
+
+Reset page defaults
+-------------------
+
+The Cubit-Sim, CalculiX, Postprocessor and Postprocessor Mouse options pages each
+provide Reset to defaults. It stages only that page's registered Core defaults in
+the controls. It does not change saved settings, submit commands or replace the
+page's baseline until Save. Closing/reopening restores the committed values.
+Save applies changed values through the existing readable user-options commands.
+Cubit's built-in pages remain managed by Cubit.
+
+Postprocessor includes separate Record camera navigation (default off) and Record
+result navigation (default on) switches. Source operations stay journaled.
+
+Grouped page labels
+-------------------
+
+All plugin pages use the Cubit-Sim prefix so Cubit's alphabetically sorted options
+list groups them together: Cubit-Sim - General, Cubit-Sim - CalculiX,
+Cubit-Sim - Postprocessor and Cubit-Sim - Postprocessor Mouse. Prefixing happens
+centrally during registration; refresh, Save and removal use the same registered
+label. Workspace tab names, settings namespaces and commands are unchanged.

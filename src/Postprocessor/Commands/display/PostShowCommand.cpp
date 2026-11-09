@@ -1,4 +1,5 @@
 #include "PostShowCommand.hpp"
+#include "DatasetCommandSupport.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "CubitMessage.hpp"
 #include <exception>
@@ -11,17 +12,23 @@ PostShowCommand::PostShowCommand(std::weak_ptr<PostprocessorApplicationInterface
 
 std::vector<std::string> PostShowCommand::get_syntax()
 {
-  return {"post show <string:type='quoted',number='1',label='source_name',help='<source name>'>"};
+  auto result = DatasetCommandSupport::syntax(true);
+  result.push_back("post show <string:type='quoted',number='1',label='source_name',help='<source name>'>");
+  return result;
 }
 
 std::vector<std::string> PostShowCommand::get_syntax_help()
 {
-  return {"post show \"<source name>\""};
+  return {"post show \"<source name>\"", "post show [only] dataset {ID|\"name\"} [source \"name\"]",
+    "post show dataset all [source \"name\"]"};
 }
 
 std::vector<std::string> PostShowCommand::get_help()
 {
-  return {"Show an opened mesh source in the active Postprocessor view without changing selection or an established camera."};
+  return {"Show an opened mesh source or dataset in the active view without moving its established camera.",
+    "Dataset selectors accept an ID or a quoted unique published name. Source defaults to the active source.",
+    "Only hides other datasets within that source. Dataset all restores all of its datasets.",
+    "Showing a dataset also enables its parent source. Showing a source retains its dataset preferences."};
 }
 
 bool PostShowCommand::execute(CubitCommandData& data)
@@ -30,6 +37,15 @@ bool PostShowCommand::execute(CubitCommandData& data)
   {
     const auto active = application.lock();
     std::string name, error;
+    if (active && data.find_keyword("DATASET"))
+    {
+      if (!DatasetCommandSupport::execute(data,*active,true,error))
+      {
+        PRINT_ERROR("Cannot show dataset: %s\n",error.c_str());
+        return false;
+      }
+      return true;
+    }
     if (!active || !data.get_string("source_name", name) || !active->set_source_visible(name, true, error))
     {
       PRINT_ERROR("Cannot show Postprocessor source: %s\n", error.empty() ? "application unavailable or missing quoted source name" : error.c_str());

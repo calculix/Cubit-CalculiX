@@ -1,4 +1,5 @@
 #include "CoreTopologyLevelSetGeometry.hpp"
+#include "CoreTopologyLevelSetQuadrature.hpp"
 #include "CoreTopologyLevelSet.hpp"
 #include "ElementInterpolation.hpp"
 #include "CubitMessage.hpp"
@@ -39,10 +40,18 @@ void heaviside(double phi, double width, double& value, double& derivative)
   }
 }
 
-bool integrate(const std::string& type, int cubit_type, const std::vector<ElementInterpolation::Coordinates>& coordinates, const std::vector<double>& phi, double width, bool preserved, int subdivisions, Integral& integral)
+bool integrate(const std::string& type, int cubit_type, const std::vector<ElementInterpolation::Coordinates>& coordinates, const std::vector<double>& phi, double width, bool preserved, int subdivisions, Integral& integral, const std::function<bool()>& poll, CoreTopologyLevelSetQuadrature* quadrature)
 {
   integral = {};
   integral.derivatives.assign(phi.size(), 0.0);
+  const CoreTopologyLevelSetQuadrature::Rule* rule = nullptr;
+  if (quadrature && !quadrature->acquire(type, cubit_type, subdivisions, poll, rule))
+  {
+    return false;
+  }
+  std::size_t sample_index = 0;
+  std::vector<double> shape;
+  shape.reserve(phi.size());
   const double g = std::sqrt(3.0 / 5.0);
   const double points[3] = {-g, 0.0, g};
   const double weights[3] = {5.0 / 9.0, 8.0 / 9.0, 5.0 / 9.0};
@@ -55,38 +64,55 @@ bool integrate(const std::string& type, int cubit_type, const std::vector<Elemen
     {
       for (int x = 0; x < subdivisions; ++x)
       {
+        if (poll && !poll())
+        {
+          return false;
+        }
         for (int k = 0; k < 3; ++k)
         {
           for (int j = 0; j < 3; ++j)
           {
             for (int i = 0; i < 3; ++i)
             {
-              const double u = (x + 0.5) / subdivisions + half * points[i];
-              const double v = (y + 0.5) / subdivisions + half * points[j];
-              const double w = (z + 0.5) / subdivisions + half * points[k];
-              ElementInterpolation::Coordinates point{};
-              double mapping = 8.0;
-              if (tet)
+              double determinant = 0.0;
+              double reference_weight = 0.0;
+              if (rule)
               {
-                point = {{u, (1.0 - u) * v, (1.0 - u) * (1.0 - v) * w}};
-                mapping = (1.0 - u) * (1.0 - u) * (1.0 - v);
-              }
-              else if (wedge)
-              {
-                point = {{u, (1.0 - u) * v, 2.0 * w - 1.0}};
-                mapping = 2.0 * (1.0 - u);
+                const auto& sample = rule->points[sample_index++];
+                if (!ElementInterpolation::evaluate_physical_from_reference(type, cubit_type, coordinates, sample.values, sample.gradients, shape, determinant))
+                {
+                  return false;
+                }
+                reference_weight = sample.reference_weight;
               }
               else
               {
-                point = {{2.0 * u - 1.0, 2.0 * v - 1.0, 2.0 * w - 1.0}};
+                const double u = (x + 0.5) / subdivisions + half * points[i];
+                const double v = (y + 0.5) / subdivisions + half * points[j];
+                const double w = (z + 0.5) / subdivisions + half * points[k];
+                ElementInterpolation::Coordinates point{};
+                double mapping = 8.0;
+                if (tet)
+                {
+                  point = {{u, (1.0 - u) * v, (1.0 - u) * (1.0 - v) * w}};
+                  mapping = (1.0 - u) * (1.0 - u) * (1.0 - v);
+                }
+                else if (wedge)
+                {
+                  point = {{u, (1.0 - u) * v, 2.0 * w - 1.0}};
+                  mapping = 2.0 * (1.0 - u);
+                }
+                else
+                {
+                  point = {{2.0 * u - 1.0, 2.0 * v - 1.0, 2.0 * w - 1.0}};
+                }
+                if (!ElementInterpolation::evaluate_physical(type, cubit_type, coordinates, point, shape, determinant))
+                {
+                  return false;
+                }
+                reference_weight = half * half * half * weights[i] * weights[j] * weights[k] * mapping;
               }
-              double determinant = 0.0;
-              std::vector<double> shape;
-              if (!ElementInterpolation::evaluate_physical(type, cubit_type, coordinates, point, shape, determinant))
-              {
-                return false;
-              }
-              const double weight = half * half * half * weights[i] * weights[j] * weights[k] * mapping * determinant;
+              const double weight = reference_weight * determinant;
               if (!std::isfinite(weight) || weight <= 0.0)
               {
                 PRINT_ERROR("Invalid level-set geometry integration weight.\n");
@@ -155,7 +181,7 @@ bool converged(const Integral& previous, const Integral& current, const Topology
 }
 }
 
-bool CoreTopologyLevelSetGeometry::evaluate_element(const std::string& calculix_type, int cubit_type, const std::vector<std::array<double, 3>>& node_coordinates, const std::vector<double>& node_values, double cubit_volume, bool preserved, const TopologyLevelSetSettings& settings, TopologyLevelSetElementGeometry& geometry)
+bool CoreTopologyLevelSetGeometry::evaluate_element(const std::string& calculix_type, int cubit_type, const std::vector<std::array<double, 3>>& node_coordinates, const std::vector<double>& node_values, double cubit_volume, bool preserved, const TopologyLevelSetSettings& settings, TopologyLevelSetElementGeometry& geometry, const std::function<bool()>& poll, CoreTopologyLevelSetQuadrature* quadrature)
 {
   geometry = {};
   if (!CoreTopologyLevelSet::validate_settings(settings))
@@ -178,7 +204,7 @@ bool CoreTopologyLevelSetGeometry::evaluate_element(const std::string& calculix_
     }
   }
   Integral previous;
-  if (!integrate(calculix_type, cubit_type, node_coordinates, node_values, settings.interface_width, preserved, 1, previous))
+  if (!integrate(calculix_type, cubit_type, node_coordinates, node_values, settings.interface_width, preserved, 1, previous, poll, quadrature))
   {
     return false;
   }
@@ -187,7 +213,7 @@ bool CoreTopologyLevelSetGeometry::evaluate_element(const std::string& calculix_
   {
     subdivisions *= 2;
     Integral current;
-    if (!integrate(calculix_type, cubit_type, node_coordinates, node_values, settings.interface_width, preserved, subdivisions, current))
+    if (!integrate(calculix_type, cubit_type, node_coordinates, node_values, settings.interface_width, preserved, subdivisions, current, poll, quadrature))
     {
       return false;
     }

@@ -15,6 +15,7 @@
 #include <map>
 #include <set>
 #include <array>
+#include <utility>
 
 #include "Core/topology/CoreTopology.hpp"
 #include "CubitMessage.hpp"
@@ -191,14 +192,14 @@ bool CalculiXTopologyRunInterface::finish_topology_iteration(int topology_id, in
   return ccx_core.topologyoptimization->finish_topology_iteration(topology_id, iteration_id);
 }
 
-bool CalculiXTopologyRunInterface::evaluate_topology_compliance(int topology_id, int iteration_id, const std::map<int, double>& energies)
+bool CalculiXTopologyRunInterface::evaluate_topology_compliance(int topology_id, int iteration_id, const std::map<int, double>& energies, CoreTopologyLevelSetGeometryCache* cache)
 {
   if (ccx_core.topology)
   {
     const auto entry = ccx_core.topology->topology_cases.find(topology_id);
     if (entry != ccx_core.topology->topology_cases.end() && entry->second.method == TopologyMethod::LevelSet)
     {
-      return ccx_core.evaluate_topology_level_set_compliance(topology_id, iteration_id, energies);
+      return ccx_core.evaluate_topology_level_set_compliance(topology_id, iteration_id, energies, cache);
     }
   }
 
@@ -423,14 +424,14 @@ bool CalculiXTopologyRunInterface::initialize_topology_level_set_design(int topo
   return ccx_core.initialize_topology_level_set_design(topology_id);
 }
 
-bool CalculiXTopologyRunInterface::evaluate_topology_level_set_compliance(int topology_id, int iteration_id, const std::map<int, double>& energies)
+bool CalculiXTopologyRunInterface::evaluate_topology_level_set_compliance(int topology_id, int iteration_id, const std::map<int, double>& energies, CoreTopologyLevelSetGeometryCache* cache)
 {
-  return ccx_core.evaluate_topology_level_set_compliance(topology_id, iteration_id, energies);
+  return ccx_core.evaluate_topology_level_set_compliance(topology_id, iteration_id, energies, cache);
 }
 
-bool CalculiXTopologyRunInterface::evaluate_topology_level_set_proposal(int topology_id, int iteration_id, TopologyLevelSetProposal& proposal)
+bool CalculiXTopologyRunInterface::evaluate_topology_level_set_proposal(int topology_id, int iteration_id, TopologyLevelSetProposal& proposal, std::shared_ptr<CoreTopologyLevelSetGeometryCache> source_cache)
 {
-  return ccx_core.evaluate_topology_level_set_proposal(topology_id, iteration_id, proposal);
+  return ccx_core.evaluate_topology_level_set_proposal(topology_id, iteration_id, proposal, std::move(source_cache));
 }
 
 bool CalculiXTopologyRunInterface::prepare_topology_level_set_iteration(int topology_id, int source_iteration, int next_iteration, const TopologyLevelSetProposal& proposal)

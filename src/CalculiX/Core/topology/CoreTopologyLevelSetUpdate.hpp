@@ -3,14 +3,16 @@
 
 #include "CoreTopologyLevelSetStructs.hpp"
 #include <map>
+#include <memory>
 
 struct TopologyLevelSetDesign;
 
 class CoreTopologyLevelSetUpdate
 {
 public:
-  /// Calculate the full-move QP once, without accepting or storing a next design.
-  static bool build_proposal(const TopologyLevelSetDesign& source, const TopologyLevelSetEvaluation& evaluation, const std::map<int, bool>& preserved, const std::map<int, double>& element_volumes, double target_volume_fraction, TopologyLevelSetProposal& proposal);
+  /// Calculate the full-move QP once; optionally reuse the completed sensitivity cache.
+  /// The successful transient proposal takes ownership; source checks always query Cubit.
+  static bool build_proposal(const TopologyLevelSetDesign& source, const TopologyLevelSetEvaluation& evaluation, const std::map<int, bool>& preserved, const std::map<int, double>& element_volumes, double target_volume_fraction, TopologyLevelSetProposal& proposal, std::shared_ptr<CoreTopologyLevelSetGeometryCache> source_cache = {});
   /// Accept a proposal from this solved source by actual-volume backtracking.
   static bool accept_proposal(const TopologyLevelSetDesign& source, const TopologyLevelSetProposal& proposal, const std::map<int, bool>& preserved, const std::map<int, double>& element_volumes, TopologyLevelSetDesign& next, std::map<int, double>& factors, TopologyLevelSetUpdateDiagnostics& diagnostics);
 

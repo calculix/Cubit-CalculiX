@@ -75,5 +75,6 @@ mesh volume all
 # jobs
 ccx create job name "first_run"
 ccx run job 1
-#ccx wait job 1
-#post open ccx job 1
+ccx wait job 1
+post open ccx job 1
+

@@ -32,12 +32,35 @@ namespace Postprocessor
         {
           continue;
         }
-        for (auto* mesh : result_meshes(data->increments[display.increment_index].dataset.get()))
+        const auto& frame = data->increments[display.increment_index];
+        for (const auto& part : result_mesh_parts(frame.dataset.get()))
         {
-          std::array<double, 6> current;
-          if (!mesh_bounds(mesh, current))
+          if (!dataset_visible(display,part.first))
           {
             continue;
+          }
+          std::shared_ptr<vtkDataSet> transformed;
+          std::string warning;
+          if (!deform_mesh(part.second,part.first,frame,display.deformation,transformed,warning,error))
+          {
+            return false;
+          }
+          std::array<double, 6> current;
+          if (!mesh_bounds(transformed ? transformed.get() : part.second,current))
+          {
+            continue;
+          }
+          if (display.deformation.enabled && display.deformation.overlay)
+          {
+            std::array<double,6> original;
+            if (mesh_bounds(part.second,original))
+            {
+              for (std::size_t axis = 0; axis < 3; ++axis)
+              {
+                current[axis*2] = std::min(current[axis*2],original[axis*2]);
+                current[axis*2+1] = std::max(current[axis*2+1],original[axis*2+1]);
+              }
+            }
           }
           if (!found)
           {
@@ -56,7 +79,7 @@ namespace Postprocessor
       }
       if (!found)
       {
-        error = "The view has no visible mesh to fit.";
+        // Empty is a normal query result: leave bounds untouched and error empty.
         return false;
       }
       bounds = combined;
@@ -82,7 +105,8 @@ namespace Postprocessor
     std::array<double, 6> bounds;
     if (!visible_bounds(view_id, bounds, error))
     {
-      return false;
+      // A valid empty view accepts Fit as a no-op without advancing its tokens.
+      return error.empty();
     }
     found->second.fit_pending = true;
     ++found->second.fit_request;

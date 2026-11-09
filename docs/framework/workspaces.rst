@@ -44,3 +44,13 @@ loading. A missing or unreadable manual reports its expected path.
 The manual needs no server or internet connection for navigation, search,
 formulas or packaged downloads. External solver-manual citations remain online
 links. See :doc:`../README` for installation and packaging of the manual.
+
+A workspace may declare a graphicsBottomDock and placement revision. Existing
+saved layouts are restored before a one-time revision migration places that
+dock between graphics and the shared command dock. The migration preserves other
+docks and saves its new revision only after successful activation. User placement
+is retained on subsequent visits.
+
+The Report workspace follows Postprocessor and is activated with
+``sim workspace report``. See :doc:`../report/workspace` for generation, Framework
+HDF5 profiles, project persistence, preview and PDF/ODT export.

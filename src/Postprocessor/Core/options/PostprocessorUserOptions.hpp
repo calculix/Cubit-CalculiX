@@ -3,6 +3,7 @@
 
 #include "Framework/Interfaces/UserOption.hpp"
 #include "Postprocessor/Core/representations/DisplayDefaults.hpp"
+#include "Postprocessor/Core/representations/ResultColoring.hpp"
 
 class UserOptionsInterface;
 
@@ -33,10 +34,12 @@ struct UserOptions
 {
   std::string iconsPath;
   bool journalCamera = false;
+  bool journalNavigation = true;
   bool diagnosticsCamera = false;
   std::array<double, 3> backgroundTop = DisplayDefaults::background_top;
   std::array<double, 3> backgroundBottom = DisplayDefaults::background_bottom;
   bool triadVisible = DisplayDefaults::triad_visible;
+  ColorPalette resultPalette = ColoringDefaults::palette;
   double mouseSensitivity = DisplayDefaults::mouse_sensitivity;
   bool reverseZoom = DisplayDefaults::reverse_zoom;
   MouseDragAction leftDrag = MouseDefaults::left;

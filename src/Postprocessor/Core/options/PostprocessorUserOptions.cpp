@@ -107,11 +107,18 @@ std::vector<UserOption> Postprocessor::PostprocessorUserOptions::definitions()
     return text && parse_mouse_drag_action(*text, action);
   };
   return {
+    {"color/palette", UserOptionKind::Text, std::string(color_palette_name(ColoringDefaults::palette)), [](const UserOptionValue& value)
+    {
+      const auto* text = std::get_if<std::string>(&value);
+      ColorPalette palette;
+      return text && parse_color_palette(*text,palette);
+    }},
     {"mouse/left", UserOptionKind::Text, std::string(mouse_drag_action_name(MouseDefaults::left)), validAction},
     {"mouse/middle", UserOptionKind::Text, std::string(mouse_drag_action_name(MouseDefaults::middle)), validAction},
     {"mouse/right", UserOptionKind::Text, std::string(mouse_drag_action_name(MouseDefaults::right)), validAction},
     {"paths/icons", UserOptionKind::ComponentPath, std::string("Icons/"), validPath},
     {"journal/camera", UserOptionKind::Boolean, false},
+    {"journal/navigation", UserOptionKind::Boolean, true},
     {"diagnostics/camera", UserOptionKind::Boolean, false},
     {"background/top", UserOptionKind::Text, format_background_color(DisplayDefaults::background_top), [](const UserOptionValue& value)
     {
@@ -149,8 +156,14 @@ bool Postprocessor::PostprocessorUserOptions::initialize(UserOptionsInterface& o
     auto active = resolvedPath(options.component_directory(), path).toUtf8().toStdString();
     UserOptions candidate;
     candidate.journalCamera = std::get<bool>(values.at("journal/camera"));
+    candidate.journalNavigation = std::get<bool>(values.at("journal/navigation"));
     candidate.diagnosticsCamera = std::get<bool>(values.at("diagnostics/camera"));
     candidate.triadVisible = std::get<bool>(values.at("display/triad"));
+    if (!parse_color_palette(std::get<std::string>(values.at("color/palette")),candidate.resultPalette))
+    {
+      error = "Unknown default result palette.";
+      return false;
+    }
     candidate.mouseSensitivity = std::get<double>(values.at("mouse/sensitivity"));
     candidate.reverseZoom = std::get<bool>(values.at("mouse/reversezoom"));
     if (!parse_mouse_drag_action(std::get<std::string>(values.at("mouse/left")), candidate.leftDrag) ||
@@ -168,10 +181,12 @@ bool Postprocessor::PostprocessorUserOptions::initialize(UserOptionsInterface& o
     }
     configured.iconsPath.swap(path);
     configured.journalCamera = candidate.journalCamera;
+    configured.journalNavigation = candidate.journalNavigation;
     configured.diagnosticsCamera = candidate.diagnosticsCamera;
     configured.backgroundTop = candidate.backgroundTop;
     configured.backgroundBottom = candidate.backgroundBottom;
     configured.triadVisible = candidate.triadVisible;
+    configured.resultPalette = candidate.resultPalette;
     configured.mouseSensitivity = candidate.mouseSensitivity;
     configured.reverseZoom = candidate.reverseZoom;
     configured.leftDrag = candidate.leftDrag;
@@ -248,8 +263,14 @@ bool Postprocessor::PostprocessorUserOptions::apply(const UserOptionValues& chan
     values["paths/icons"] = path;
     UserOptions candidate;
     candidate.journalCamera = std::get<bool>(values.at("journal/camera"));
+    candidate.journalNavigation = std::get<bool>(values.at("journal/navigation"));
     candidate.diagnosticsCamera = std::get<bool>(values.at("diagnostics/camera"));
     candidate.triadVisible = std::get<bool>(values.at("display/triad"));
+    if (!parse_color_palette(std::get<std::string>(values.at("color/palette")),candidate.resultPalette))
+    {
+      error = "Unknown default result palette.";
+      return false;
+    }
     candidate.mouseSensitivity = std::get<double>(values.at("mouse/sensitivity"));
     candidate.reverseZoom = std::get<bool>(values.at("mouse/reversezoom"));
     if (!parse_mouse_drag_action(std::get<std::string>(values.at("mouse/left")), candidate.leftDrag) ||
@@ -272,10 +293,12 @@ bool Postprocessor::PostprocessorUserOptions::apply(const UserOptionValues& chan
     // Non-throwing publication after persistence; active icons wait for restart.
     configured.iconsPath.swap(path);
     configured.journalCamera = candidate.journalCamera;
+    configured.journalNavigation = candidate.journalNavigation;
     configured.diagnosticsCamera = candidate.diagnosticsCamera;
     configured.backgroundTop = candidate.backgroundTop;
     configured.backgroundBottom = candidate.backgroundBottom;
     configured.triadVisible = candidate.triadVisible;
+    configured.resultPalette = candidate.resultPalette;
     configured.mouseSensitivity = candidate.mouseSensitivity;
     configured.reverseZoom = candidate.reverseZoom;
     configured.leftDrag = candidate.leftDrag;

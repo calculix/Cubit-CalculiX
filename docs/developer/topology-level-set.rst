@@ -6,7 +6,8 @@ Status and scope
 
 This chapter specifies the C++ implementation stages of a parameterized level-set
 method on the existing Cubit volume mesh. Internal controller integration exists,
-but the public run validator continues to reject level-set runs. The GUI allows
+but ordinary builds continue to reject level-set runs. A default-OFF developer
+capability admits compliance for controller verification only. The GUI allows
 case configuration through independent method-specific forms.
 Compliance is the
 first planned objective; displacement integration follows separate verification.
@@ -21,7 +22,7 @@ execution remains disabled. Case settings and level-set iteration records are
 serialized in one required unversioned topology layout. Result queries use the
 captured method and expose level-set solid fractions through the existing row
 contract. Optional command editing and method-specific settings forms are wired;
-native verification remains pending.
+native controller/persistence and GUI verification remain pending.
 Reset clears level-set designs and nested evaluations; transient proposals are
 discarded on terminal states and controller removal. Do not enable production
 level-set runs until the verification gates pass.
@@ -455,9 +456,11 @@ Internal controller integration
 The existing Preparing/Starting/Waiting/Evaluating controller phases dispatch by
 method. Density follows its existing path. Internal level-set preparation accepts
 compliance only; mass and level-set displacement remain unsupported. Public
-begin-run validation explicitly rejects level set pending native
-verification, before resetting case data or creating a solver job. No bypass
-command, additional solver executable or export-only job type was introduced.
+begin-run validation rejects level set in ordinary builds before resetting case
+data or creating a solver job. A verification build with
+``CUBITSIM_VERIFY_LEVEL_SET_CONTROLLER=ON`` admits only compliance and retains all
+other model checks. No runtime bypass command, additional solver executable or
+export-only job type was introduced.
 
 After common material/section initialization and preservation resolution, the
 level-set bridge collects Cubit volumes, constructs iteration 1 locally, and
@@ -550,10 +553,12 @@ support. See :doc:`topology-verification` for the measurements and scope.
        regression. Mandatory
        restoration/backtracking fixtures remain C3D8-only.
    * - Seed initialization
-     - Length-resolution and live raw-field/fallback/complete-design test sources
-       supplied; build/run pending. Default-width geometry remains separate.
+     - Length-resolution and all 18 live raw-field/fallback/complete-design fixtures
+       passed on Windows. Default-width geometry remains separate.
    * - Controller and historical fields
-     - Level-set lifecycle/save-load and full compliance runs pending.
+     - Six-formulation broad-band compliance/controller and save/load checks
+       passed on Windows, including cached-source regression. Further lifecycle,
+       default-width and Linux coverage remains separate.
    * - Mesh and deployment scope
      - Curved/mixed/narrow-band refinement and Windows/Linux checks pending.
 
@@ -575,3 +580,55 @@ The parameterized fixed-mesh background is described in
 parameterization method <https://link.springer.com/article/10.1007/s00158-010-0485-y>`_.
 The equations and contracts above define this implementation proposal; they do
 not claim to reproduce that paper's particular connectivity parameterization.
+
+The default-OFF developer controller capability and passing Windows broad-band
+controller/persistence evidence are specified in :doc:`topology-verification`.
+This capability does not enable production or GUI level-set runs.
+
+Source geometry reuse is transient and proposal-owned. Current mesh inputs are
+queried again and compared exactly before reusing an integrated element result;
+there is no fingerprint or persisted mesh cache. Candidate geometry remains
+fully integrated. The mathematical quadrature and consistency contracts are
+unchanged. Cache verification and timing interpretation are specified in
+:doc:`topology-verification`.
+
+The controller's second reuse stage starts the same transient cache during
+compliance sensitivity evaluation and moves it into the outgoing proposal.
+Historical evaluations do not own it. Exact current-input checks and uncached
+candidate integration remain required. This stage's six-formulation physical
+35-stage regression and live cached/uncached equivalence checks passed on
+Windows. The live run covers 6781 checks with zero failures; see
+:doc:`topology-verification` for provenance and remaining limits.
+
+Pass-local reference quadrature reuse
+------------------------------------
+
+CoreTopologyLevelSetQuadrature.hpp/.cpp caches reference weights, shape values
+and reference gradients per formulation/Cubit type/subdivision count during one
+geometry or sensitivity pass. Values/gradients remain in CalculiX order; physical
+mapping returns shape values in Cubit order through ElementNodeOrdering. No mesh
+coordinates, field coefficients, Jacobians or physical results belong in this
+cache. Every quadrature point still calculates its current element Jacobian,
+including curved quadratic elements. No affine-element assumption is introduced.
+
+ElementInterpolation::evaluate_physical_from_reference shares the existing
+coordinate-offset Jacobian accumulation and positive-determinant checks with
+evaluate_physical. Scratch output-vector capacity is reused; no new candidate
+shape vector is allocated per point in the prepared path. The ordinary wrapper
+still evaluates reference interpolation itself and remains available as fallback.
+
+The Core helper defaults to a 32 MiB retained point/vector-payload budget.
+Map/key overhead and temporary interpolation scratch are excluded. It estimates
+rule size before allocation and checks actual vector capacities before publishing.
+Oversized rules return a successful no-table result and use ordinary point-wise
+interpolation. Rules never evict during the pass, so borrowed rule pointers remain
+valid until the pass ends. Interrupted rules are discarded; reentrant rule builds
+are rejected. No persistent or process-global quadrature store is introduced.
+
+The cached rule preserves z/y/x/k/j/i order and the existing Duffy maps. The
+reference weight is half^3 times the three Gauss weights times the Duffy mapping
+factor, multiplied by the current physical determinant during integration.
+Regularized fractions, derivatives, Cubit-volume scaling, positivity checks,
+normalization and refinement tolerances remain unchanged. The existing source
+geometry cache forwards this pass-local cache on misses; its hits need no rule.
+See :doc:`topology-verification` for pending regression and memory-budget checks.

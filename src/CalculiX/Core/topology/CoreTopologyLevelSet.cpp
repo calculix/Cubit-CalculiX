@@ -1,4 +1,5 @@
 #include "CoreTopologyLevelSet.hpp"
+#include "CoreTopologyTrace.hpp"
 #include "CubitMessage.hpp"
 #include "CoreTopologyLevelSetInitialization.hpp"
 #include "CoreTopologyLevelSetEvaluation.hpp"
@@ -48,12 +49,27 @@ bool CoreTopologyLevelSet::build_initial_design(const TopologyLevelSetSettings& 
   factors.clear();
   TopologyLevelSetDesign candidate;
   std::map<int, double> requested;
-  if (!CoreTopologyLevelSetInitialization::initialize(settings, void_ratio, preserved, element_volumes, candidate) ||
-      !CoreTopologyLevelSetEvaluation::build_geometry(candidate, preserved, element_volumes) ||
-      !CoreTopologyLevelSetEvaluation::build_factors(candidate, preserved, requested))
+  CoreTopologyTrace::write("initial_design.initialize.enter");
+  if (!CoreTopologyLevelSetInitialization::initialize(settings, void_ratio, preserved, element_volumes, candidate))
   {
+    CoreTopologyTrace::write("initial_design.initialize.failed");
     return false;
   }
+  CoreTopologyTrace::write("initial_design.initialize.leave");
+  CoreTopologyTrace::write("initial_design.geometry.enter");
+  if (!CoreTopologyLevelSetEvaluation::build_geometry(candidate, preserved, element_volumes))
+  {
+    CoreTopologyTrace::write("initial_design.geometry.failed");
+    return false;
+  }
+  CoreTopologyTrace::write("initial_design.geometry.leave");
+  CoreTopologyTrace::write("initial_design.factors.enter");
+  if (!CoreTopologyLevelSetEvaluation::build_factors(candidate, preserved, requested))
+  {
+    CoreTopologyTrace::write("initial_design.factors.failed");
+    return false;
+  }
+  CoreTopologyTrace::write("initial_design.factors.leave");
   design = std::move(candidate);
   factors.swap(requested);
   return true;

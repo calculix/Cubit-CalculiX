@@ -45,6 +45,9 @@ public:
   std::vector<std::vector<double>> get_topology_iteration_element_data(int topology_id,int iteration_id = -1);
   /// Completed density iteration: [element ID, dJ/ds, unfiltered dJ/drho].
   /// Grouped density gradients are SIMP surrogates. Returns empty on failure.
+  /// Historical [node ID, phi, fixed flag] rows, sorted by global node ID.
+  std::vector<std::vector<double>> get_topology_iteration_level_set_field_data(int topology_id, int iteration_id = -1);
+  bool is_topology_level_set_run_enabled();
   std::vector<std::vector<double>> get_topology_iteration_sensitivity_data(int topology_id, int iteration_id = -1);
   bool is_topology_adjoint_export() const;
   bool check_topology_export(int topology_id, int iteration_id);

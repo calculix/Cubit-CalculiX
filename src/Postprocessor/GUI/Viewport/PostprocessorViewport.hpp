@@ -15,6 +15,7 @@ class PostprocessorScene;
 class PostprocessorApplicationInterface;
 class CameraInteraction;
 class PostprocessorTriad;
+class QTimer;
 
 // Independent scene and command-driven input. No Cubit scene objects are reused.
 class PostprocessorViewport : public QVTKOpenGLNativeWidget
@@ -43,6 +44,13 @@ private:
   void on_frame_presented();
   void render_scene();
   void report_error(const std::string& error);
+  void report_warning();
+  void pick(const QPointF& position);
+  void update_hover();
+  void clear_hover();
+  QTimer* hoverTimer = nullptr;
+  QPointF hoverPosition;
+  Dispatch submitCommand;
   void queue_timing_report();
   void report_timings();
   vtkSmartPointer<vtkGenericOpenGLRenderWindow> sceneWindow;
@@ -54,8 +62,10 @@ private:
   std::weak_ptr<PostprocessorApplicationInterface> application;
   std::string viewId;
   std::string lastError;
+  std::string lastWarning;
   std::optional<std::uint64_t> renderedGeometry;
   std::optional<std::uint64_t> renderedCamera;
+  std::optional<std::uint64_t> renderedSelection;
   Postprocessor::UserOptions renderedOptions;
   bool timingReportQueued = false;
   bool renderQueued = false;

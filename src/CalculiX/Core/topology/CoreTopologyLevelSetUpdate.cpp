@@ -3,12 +3,16 @@
 #include "CoreTopologyLevelSet.hpp"
 #include "CoreTopologyLevelSetEvaluation.hpp"
 #include "CoreTopologyLevelSetGeometry.hpp"
+#include "CoreTopologyLevelSetGeometryCache.hpp"
 #include "CoreTopologyStructs.hpp"
 #include "CubitMessage.hpp"
 #include "Eigen/Sparse"
+#include <QScopeGuard>
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <limits>
+#include <memory>
 #include <utility>
 
 namespace
@@ -166,8 +170,19 @@ bool build_problem(const TopologyLevelSetDesign& source, const TopologyLevelSetE
 
 }
 
-bool CoreTopologyLevelSetUpdate::build_proposal(const TopologyLevelSetDesign& source, const TopologyLevelSetEvaluation& evaluation, const std::map<int, bool>& preserved, const std::map<int, double>& element_volumes, double target_volume_fraction, TopologyLevelSetProposal& proposal)
+bool CoreTopologyLevelSetUpdate::build_proposal(const TopologyLevelSetDesign& source, const TopologyLevelSetEvaluation& evaluation, const std::map<int, bool>& preserved, const std::map<int, double>& element_volumes, double target_volume_fraction, TopologyLevelSetProposal& proposal, std::shared_ptr<CoreTopologyLevelSetGeometryCache> source_cache)
 {
+  const auto begin = std::chrono::steady_clock::now();
+  double source_geometry_ms = 0.0;
+  double assembly_ms = 0.0;
+  double qp_ms = 0.0;
+  bool succeeded = false;
+  const auto report_timing = qScopeGuard([&]()
+  {
+    const double total_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - begin).count();
+    PRINT_INFO("Level-set iteration %d proposal [ms]: source geometry %.3f; graph assembly %.3f; QP solve %.3f; total %.3f; status %s.\n",
+      source.iteration_id, source_geometry_ms, assembly_ms, qp_ms, total_ms, succeeded ? "complete" : "incomplete");
+  });
   proposal = {};
   const auto controls = CoreTopologyLevelSet::default_update_controls();
   if (!evaluation.available || evaluation.iteration_id != source.iteration_id || source.iteration_id < 1 ||
@@ -183,8 +198,15 @@ bool CoreTopologyLevelSetUpdate::build_proposal(const TopologyLevelSetDesign& so
     PRINT_ERROR("Invalid solved source data or target for level-set update.\n");
     return false;
   }
+  if (!source_cache)
+  {
+    source_cache = std::make_shared<CoreTopologyLevelSetGeometryCache>(source.iteration_id);
+  }
   auto prepared = source;
-  if (!CoreTopologyLevelSetEvaluation::build_geometry(prepared, preserved, element_volumes))
+  const auto source_geometry_begin = std::chrono::steady_clock::now();
+  const bool source_geometry_succeeded = CoreTopologyLevelSetEvaluation::build_geometry(prepared, preserved, element_volumes, source_cache.get());
+  source_geometry_ms += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - source_geometry_begin).count();
+  if (!source_geometry_succeeded)
   {
     return false;
   }
@@ -201,7 +223,10 @@ bool CoreTopologyLevelSetUpdate::build_proposal(const TopologyLevelSetDesign& so
   }
   const double objective_scale = source.objective_scale > 0.0 ? source.objective_scale : evaluation.compliance > 0.0 ? evaluation.compliance : 1.0;
   Problem problem;
-  if (!build_problem(prepared, evaluation, element_volumes, objective_scale, problem))
+  const auto assembly_begin = std::chrono::steady_clock::now();
+  const bool assembly_succeeded = build_problem(prepared, evaluation, element_volumes, objective_scale, problem);
+  assembly_ms += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - assembly_begin).count();
+  if (!assembly_succeeded)
   {
     return false;
   }
@@ -209,7 +234,10 @@ bool CoreTopologyLevelSetUpdate::build_proposal(const TopologyLevelSetDesign& so
   double multiplier = 0.0;
   double residual = 0.0;
   const double source_volume = prepared.volume.volume_fraction;
-  if (!CoreTopologyLevelSetQP::solve(problem.qp, source_volume, target_volume_fraction, controls, values, multiplier, residual))
+  const auto qp_begin = std::chrono::steady_clock::now();
+  const bool qp_succeeded = CoreTopologyLevelSetQP::solve(problem.qp, source_volume, target_volume_fraction, controls, values, multiplier, residual);
+  qp_ms += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - qp_begin).count();
+  if (!qp_succeeded)
   {
     return false;
   }
@@ -241,12 +269,38 @@ bool CoreTopologyLevelSetUpdate::build_proposal(const TopologyLevelSetDesign& so
   candidate.diagnostics.qp_stationarity_residual = residual;
   candidate.diagnostics.volume_multiplier = multiplier;
   candidate.diagnostics.linearized_volume_fraction = source_volume + predicted_change;
+  candidate.source_geometry_cache = std::move(source_cache);
   proposal = std::move(candidate);
+  succeeded = true;
   return true;
 }
 
 bool CoreTopologyLevelSetUpdate::accept_proposal(const TopologyLevelSetDesign& source, const TopologyLevelSetProposal& proposal, const std::map<int, bool>& preserved, const std::map<int, double>& element_volumes, TopologyLevelSetDesign& next, std::map<int, double>& factors, TopologyLevelSetUpdateDiagnostics& diagnostics)
 {
+  const auto begin = std::chrono::steady_clock::now();
+  double source_geometry_ms = 0.0;
+  double trial_geometry_ms = 0.0;
+  int trial_count = 0;
+  int backtracking_reductions = 0;
+  double accepted_scale = 0.0;
+  bool succeeded = false;
+  const int source_iteration = source.iteration_id;
+  const auto report_timing = qScopeGuard([&]()
+  {
+    const double total_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - begin).count();
+    PRINT_INFO("Level-set update after iteration %d acceptance [ms]: source geometry %.3f; trial geometry %.3f; total %.3f; status %s.\n",
+      source_iteration, source_geometry_ms, trial_geometry_ms, total_ms, succeeded ? "complete" : "incomplete");
+    if (succeeded)
+    {
+      PRINT_INFO("Level-set update after iteration %d acceptance: trials %d; backtracking reductions %d; accepted scale %.9g.\n",
+        source_iteration, trial_count, backtracking_reductions, accepted_scale);
+    }
+    else
+    {
+      PRINT_INFO("Level-set update after iteration %d acceptance: trials %d; backtracking reductions %d; no accepted scale.\n",
+        source_iteration, trial_count, backtracking_reductions);
+    }
+  });
   if (&next == &source || &factors == &source.node_values || &factors == &source.element_solid_fractions ||
       &factors == &proposal.node_values || &factors == &proposal.volume_fraction_derivatives || &factors == &element_volumes ||
       &factors == &next.node_values || &factors == &next.element_solid_fractions || &factors == &source.volume.density_sensitivities ||
@@ -273,7 +327,10 @@ bool CoreTopologyLevelSetUpdate::accept_proposal(const TopologyLevelSetDesign& s
     return false;
   }
   auto prepared = source;
-  if (!CoreTopologyLevelSetEvaluation::build_geometry(prepared, preserved, element_volumes))
+  const auto source_geometry_begin = std::chrono::steady_clock::now();
+  const bool source_geometry_succeeded = CoreTopologyLevelSetEvaluation::build_geometry(prepared, preserved, element_volumes, proposal.source_geometry_cache.get());
+  source_geometry_ms += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - source_geometry_begin).count();
+  if (!source_geometry_succeeded)
   {
     return false;
   }
@@ -333,7 +390,12 @@ bool CoreTopologyLevelSetUpdate::accept_proposal(const TopologyLevelSetDesign& s
       PRINT_ERROR("Non-finite accepted-field linearized volume change.\n");
       return false;
     }
-    if (!CoreTopologyLevelSetEvaluation::build_geometry(candidate, preserved, element_volumes))
+    ++trial_count;
+    backtracking_reductions = backtrack;
+    const auto trial_begin = std::chrono::steady_clock::now();
+    const bool integrated = CoreTopologyLevelSetEvaluation::build_geometry(candidate, preserved, element_volumes);
+    trial_geometry_ms += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - trial_begin).count();
+    if (!integrated)
     {
       return false;
     }
@@ -373,6 +435,8 @@ bool CoreTopologyLevelSetUpdate::accept_proposal(const TopologyLevelSetDesign& s
       next = std::move(candidate);
       factors.swap(requested);
       diagnostics = information;
+      accepted_scale = scale;
+      succeeded = true;
       return true;
     }
     scale *= 0.5;

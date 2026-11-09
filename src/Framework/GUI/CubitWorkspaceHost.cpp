@@ -245,6 +245,10 @@ void CubitWorkspaceHost::place_workspace_toolbars(const WorkspaceView& view)
 
   for (auto* toolbar : view.toolbars)
   {
+    if (view.toolbarRowBreaks.contains(toolbar))
+    {
+      gui->addToolBarBreak(Qt::TopToolBarArea);
+    }
     gui->addToolBar(Qt::TopToolBarArea, toolbar);
   }
 }
@@ -554,6 +558,15 @@ bool CubitWorkspaceHost::apply(const WorkspaceView& view, const QPersistentModel
       gui->resizeDocks({modelDock, propertiesDock}, {420, 220}, Qt::Vertical);
       gui->resizeDocks({modelDock}, {300}, Qt::Horizontal);
     }
+  }
+
+  if ((firstVisit || view.initializeGraphicsBottomDock) && view.graphicsBottomDock != nullptr && independentGraphics)
+  {
+    view.graphicsBottomDock->setFloating(false);
+    gui->addDockWidget(Qt::BottomDockWidgetArea,view.graphicsBottomDock);
+    gui->splitDockWidget(view.graphicsBottomDock,commandDock,Qt::Vertical);
+    view.graphicsBottomDock->show();
+    gui->resizeDocks({view.graphicsBottomDock},{view.graphicsBottomDock->sizeHint().height()},Qt::Vertical);
   }
 
   for (const auto& item : nativeMenus)

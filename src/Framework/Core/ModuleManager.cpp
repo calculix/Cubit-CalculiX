@@ -1,4 +1,7 @@
 #include "ModuleManager.hpp"
+#include "Framework/Reporting/ReportSourceEntry.hpp"
+#include "Framework/Reporting/ReportModelProviderInterface.hpp"
+#include "Framework/Reporting/ReportTemplateProviderInterface.hpp"
 #include "Framework/Interfaces/CommandProviderInterface.hpp"
 #include "Framework/Interfaces/ComponentProviderInterface.hpp"
 #include "Framework/Interfaces/ModuleInterface.hpp"
@@ -95,6 +98,44 @@ bool ModuleManager::initialize(UserOptionsInterface& options, DrawingInterface& 
         }
       }
 
+      auto* templates = module->report_template_provider();
+      auto* models = module->report_model_provider();
+      if ((templates == nullptr) != (models == nullptr))
+      {
+        error = "Reporting requires paired template/model providers in module: " + module->module_id();
+        shutdown();
+        return false;
+      }
+      if (templates != nullptr)
+      {
+        const auto prefix = templates->command_prefix();
+        if (prefix.empty() || prefix.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-") != std::string::npos ||
+            !report_templates.emplace(prefix, templates).second || !report_models.emplace(prefix, models).second)
+        {
+          error = "Invalid or duplicate report provider prefix: " + prefix;
+          shutdown();
+          return false;
+        }
+        if (auto* images = module->report_image_provider())
+        {
+          report_image_providers.emplace(prefix, images);
+        }
+      }
+      else if (auto* images = module->report_image_provider())
+      {
+        report_image_providers.emplace(module->module_id(), images);
+      }
+      if (auto* results = module->report_result_provider())
+      {
+        if (module->module_id() != "postprocessor" || result_report_provider != nullptr)
+        {
+          error = "Result reporting must be supplied exclusively by the Postprocessor module.";
+          shutdown();
+          return false;
+        }
+        result_report_provider = results;
+      }
+
       auto* provider = module->command_provider();
 
       if (provider == nullptr)
@@ -137,6 +178,10 @@ bool ModuleManager::initialize(UserOptionsInterface& options, DrawingInterface& 
 void ModuleManager::shutdown() noexcept
 {
   stop_components();
+  report_templates.clear();
+  report_models.clear();
+  report_image_providers.clear();
+  result_report_provider = nullptr;
   result_providers.clear();
   application_result_providers.clear();
   command_owners.clear();
@@ -330,4 +375,71 @@ std::vector<JobMonitorProviderInterface*> ModuleManager::job_monitor_providers()
     }
   }
   return providers;
+}
+
+void ModuleManager::bind_report_profiles(ReportProfileStoreInterface* store) noexcept
+{
+  profile_store = store;
+}
+
+bool ModuleManager::resolve_model_reporting(const std::string& prefix, ReportTemplateProviderInterface*& templates,
+  ReportModelProviderInterface*& models, std::string& error) const
+{
+  const auto t = report_templates.find(prefix);
+  const auto m = report_models.find(prefix);
+  if (!initialized || t == report_templates.end() || m == report_models.end())
+  {
+    error = "Report provider is unavailable or unknown: " + prefix;
+    return false;
+  }
+  templates = t->second;
+  models = m->second;
+  error.clear();
+  return true;
+}
+
+ReportProfileStoreInterface* ModuleManager::report_profiles() const noexcept
+{
+  return initialized ? profile_store : nullptr;
+}
+
+ReportResultProviderInterface* ModuleManager::report_results() const noexcept
+{
+  return initialized ? result_report_provider : nullptr;
+}
+
+ReportImageProviderInterface* ModuleManager::report_images(const std::string& prefix) const noexcept
+{
+  const auto found = report_image_providers.find(prefix);
+  return initialized && found != report_image_providers.end() ? found->second : nullptr;
+}
+
+bool ModuleManager::available_report_sources(std::vector<ReportSourceEntry>& output, std::string& error) const
+{
+  if (!initialized)
+  {
+    error = "Report source registry is not initialized.";
+    return false;
+  }
+  std::vector<ReportSourceEntry> candidate;
+  for (const auto& provider : report_models)
+  {
+    std::vector<ReportSourceEntry> entries;
+    if (!provider.second->available_sources(entries, error))
+    {
+      return false;
+    }
+    for (auto& entry : entries)
+    {
+      if (entry.request.provider != provider.first || entry.label.empty())
+      {
+        error = "A report provider published an invalid source entry.";
+        return false;
+      }
+      candidate.push_back(std::move(entry));
+    }
+  }
+  output = std::move(candidate);
+  error.clear();
+  return true;
 }

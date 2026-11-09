@@ -1,6 +1,54 @@
 Postprocessor commands
 ======================
 
+Deformation
+-----------
+
+Configure a source's representation in the active view::
+
+   post deform field auto
+   post deform scale 10
+   post deform on
+   post deform overlay on
+   post deform overlay off
+   post deform off
+   post deform field "DISP"
+   post deform field "IntegrationPointDisplacement" dataset 2
+
+Every form accepts ``source "name"``; omission selects the active source. Explicit
+field selection also accepts ``dataset N`` (zero-based, as with result coloring).
+The field argument accepts a published name or exact array name. Ambiguous
+variants require an exact array name and, if necessary, dataset qualification.
+Without a dataset qualifier, compatible datasets in the logical group deform
+together. Nonselected datasets keep their original coordinates.
+
+Automatic displacement is the default selection. It resolves one compatible field
+marked as displacement by the provider, independently for each dataset/frame.
+CalculiX marks ordinary ``DISP`` and calculated ``IntegrationPointDisplacement``;
+the integration-point calculation remains in its converter. Vector shape and field
+names alone never establish automatic displacement semantics. External data without
+role metadata can use explicit field selection.
+
+``field auto`` restores automatic mode and retains the last explicit selection.
+It has no dataset qualifier. ``field "name"`` switches to explicit mode and may
+target one dataset. Field selection retains the current enabled state. Enabling
+requires at least one mesh dataset with an available, unambiguous displacement
+field; other datasets may fall back to reference coordinates with warnings.
+``off`` retains all settings. Scale defaults to 1 and must be finite
+and nonnegative. Scale 0 shows reference coordinates. No unit conversion is
+performed. Overlay defaults to off and only appears while deformation is enabled.
+Coloring, palette ranges and threshold limits remain independent.
+
+Toolbar checkboxes and field selection submit these commands immediately. Scale
+input uses debounced silent previews and one normal journaled command on Enter or
+focus loss. Duplicate completion signals and programmatic refresh add no commands.
+Incomplete numeric input preserves the last valid display. Pending scale input
+is discarded if its source, view or snapshot changes. Completed deformation
+changes follow Cubit's normal journaling path, independently of the navigation
+journal option.
+Unavailable vectors or invalid samples during frame changes use reference
+coordinates with a warning, retaining the requested settings for later frames.
+
 Status and scope
 ----------------
 
@@ -75,8 +123,10 @@ Fit visible meshes
 
    post view fit
 
-Requests fitting all visible mesh bounds in the active view. It fails without
-visible mesh data. The first mesh in an initially unfitted view requests fitting
+Requests fitting all visible mesh bounds in the active view. With no visible
+mesh it succeeds without changing camera or fit state. The Fit button and F key
+skip command dispatch in that case, producing no output or journal entry.
+The first mesh in an initially unfitted view requests fitting
 automatically; later openings retain an established camera. The request preserves
 the current orientation/projection as its seed. The GUI completes it when the
 viewport is visible and has a valid OpenGL context, using the current viewport
@@ -193,6 +243,7 @@ Apply user options
 .. code-block:: text
 
    post useroptions icons "Icons/"
+   post useroptions palette rainbow
    post useroptions journal camera on
    post useroptions journal camera off
    post useroptions diagnostics camera on
@@ -285,3 +336,172 @@ multiple handlers in one dispatch or inconsistent boundaries increment unpaired
 dispatches; valid total time remains available, but derived samples are omitted.
 Typed commands outside an instrumented GUI gesture do not arm this probe. The
 existing diagnostics command controls all measurements; no new syntax is needed.
+
+Result frame selection
+----------------------
+
+Select a result frame in the active Postprocessor view::
+
+   post frame 3
+   post frame 3 source "first_run"
+
+The short form uses the active source. Frame numbers are positive, 1-based
+positions in the loaded result sequence, not solver increment identifiers.
+For example, frame 3 may contain step 2, increment 1. The command accepts integer
+frame numbers up to the native command limit (2147483647).
+
+Selection is stored on the source representation in the active view. It does not
+change another source or view, visibility, or an established camera. Unavailable
+frames and frames without displayable mesh fail without changing state. Selecting
+the current frame again does not advance the display revision.
+
+Result coloring and limits
+--------------------------
+
+Commands apply to the active source and view, unless an explicit source is given::
+
+   post color field "DISP" component magnitude source "first_run"
+   post color field "STRESS" component "SXX" dataset 0 source "first_run"
+   post color solid
+   post color palette viridis
+   post color palette bluewhitered
+   post color palette turbo
+   post color palette rainbow
+   post color palette grayscale
+   post color reverse on
+   post color reverse off
+   post color bands 12
+   post color bands continuous
+   post color range auto
+   post color range allframes
+   post color range symmetric
+   post color range -100 100
+   post legend on
+   post legend off
+
+Component strings must match the field metadata. Magnitude is available only
+for fields whose provider explicitly declares their three physical vector
+components. Tensor invariants are not calculated by this feature. Dataset IDs
+are zero-based catalogue IDs. Ambiguous field names must use the exact published
+array name and, where needed, the dataset qualifier. Table fields are excluded.
+
+Independent lower/upper limit colors are configured using normalized RGB::
+
+   post color limit minimum 0 color 0 0 1 source "first_run"
+   post color limit maximum 250 color 1 0 1 source "first_run"
+   post color limit minimum off source "first_run"
+   post color limit maximum off source "first_run"
+   post color limit maximum on source "first_run"
+
+A sample strictly below the minimum or above the maximum receives its limit
+color. Equality retains the palette color. Off preserves the threshold and RGB
+color; on re-enables that configuration. Both limits default to off. When both
+are enabled, minimum must be strictly less than maximum. Limits survive frame
+changes and do not alter the palette's numerical range.
+
+Thresholds use the selected result's units. A threshold of 250 is not assumed
+to mean MPa: select the correct component and use the units of the model/results.
+Missing or invalid values are gray, independently of either limit. The legend
+includes the enabled thresholds with their special colors.
+
+Grouped result selection and navigation recording
+------------------------------------------------
+
+Without a dataset qualifier, color-field selection groups compatible occurrences
+of the same result across datasets. Origins, sets, associations, component layouts
+and vector semantics must agree; incompatible variants remain ambiguous and require
+a qualified array name or explicit dataset. The same group persists across frames.
+
+GUI navigation recording is controlled independently from camera recording::
+
+   post useroptions journal navigation on
+   post useroptions journal navigation off
+
+This option defaults on and controls slider release, frame dropdown and frame
+buttons. Slider drag previews are never journaled. Typed frame commands still use
+Cubit's normal journal policy. Source opening/closing and coloring operations
+remain on the normal command path.
+
+Result animation
+----------------
+
+Playback controls operate on the active source/view, or an explicit source::
+
+   post animation play
+   post animation pause
+   post animation fps 10
+   post animation loop on
+   post animation loop off
+   post animation play source "first_run"
+
+FPS is an integer from 1 to 120, default 10. Loop defaults off. FPS and loop
+are independent settings on each representation. Play requires at least two
+displayable frames. Play at the final displayable frame restarts at the first;
+otherwise it continues from the selected frame. With Loop off, playback pauses
+at the final frame. With Loop on, it wraps to the first frame. FPS and loop
+changes take effect while playing.
+
+Playback is presented by the visible Postprocessor navigation toolbar. The Core
+stores settings and a transient playback request, not a background renderer.
+Loading/refreshing another source, reset, closing results and leaving the workspace
+stop the corresponding GUI playback. Playback requests are not persistent state
+that should automatically resume when reopening a saved session.
+
+Individual animation frames use silent frame commands. GUI Play/Pause and its
+final absolute frame follow journal/navigation. FPS and Loop changes use normal
+configuration commands. Typed commands always follow Cubit's normal journal
+policy. Journals capture playback intent and the final frame rather than every
+timer tick; the exact wall-clock playback sequence is not reproduced by replay.
+
+All-frame range mode
+--------------------
+
+``post color range allframes [source "name"]`` computes a shared legend/color
+range across all frames for the selected field and component. All matching
+compatible datasets are included unless the field selection has an explicit
+dataset scope. The source's units are retained. Validity masks and finite-value
+checks match ordinary field display. No limit threshold clips the calculated
+minimum/maximum.
+
+``post color range auto`` retains current-frame scaling. Fixed numeric bounds
+and current-frame symmetric scaling remain available.
+
+Dataset visibility
+------------------
+
+Select a mesh dataset by zero-based ID or quoted published name::
+
+   post show dataset 2
+   post hide dataset "Mesh"
+   post show only dataset "Integration points — ELSET_A" source "first_run"
+   post show dataset all source "first_run"
+
+All forms accept optional ``source "name"``; omission uses the active source.
+Commands affect only the active view. Names are matched exactly within the source;
+unknown or ambiguous names fail without changing visibility. Use the numeric ID
+to disambiguate duplicate names. Quoted ``"all"`` is a literal dataset name;
+unquoted ``all`` in the Show form restores all datasets in the source.
+
+Show enables the selected dataset and its parent source. Hide adds that dataset
+to the representation's hidden set without changing the parent master switch.
+Show only enables the parent and hides every other mesh dataset in that source.
+It does not hide other sources. Show all enables the parent and clears its hidden
+set. Existing ``post show "source"`` and ``post hide "source"`` retain dataset
+choices. GUI checkbox/context-menu actions use these normal journaled commands.
+No result arrays are unloaded, and no camera movement is requested automatically.
+
+Selection and probe commands
+----------------------------
+
+Use ``post pick mode node/element/integrationpoint`` to choose the next click kind.
+Select by original identity, with dataset ID or quoted name and optional source::
+
+   post pick node 42 dataset "Mesh"
+   post pick element 120 dataset 0 source "first_run"
+   post pick integrationpoint 3 element 120 dataset "Integration points"
+   post pick clear
+   post probe
+
+The same command path is used by GUI clicks and controls. Large decimal entity
+IDs may be quoted for exact 64-bit transport. See :doc:`selection` for readout
+semantics, masks, frame changes, supported identities and precision limits.

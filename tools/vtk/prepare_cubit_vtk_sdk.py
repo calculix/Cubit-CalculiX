@@ -54,7 +54,7 @@ def module_info(source):
 
 
 def closure(modules):
-    pending = ["VTK::CommonCore", "VTK::CommonDataModel", "VTK::IOParallelXML", "VTK::FiltersCore", "VTK::FiltersGeometry", "VTK::GUISupportQt"]
+    pending = ["VTK::CommonCore", "VTK::CommonDataModel", "VTK::IOParallelXML", "VTK::FiltersCore", "VTK::FiltersGeometry", "VTK::RenderingAnnotation", "VTK::GUISupportQt"]
     result = set()
     while pending:
         name = pending.pop()

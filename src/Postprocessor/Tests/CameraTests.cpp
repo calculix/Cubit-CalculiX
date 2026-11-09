@@ -7,6 +7,7 @@
 #include "Framework/Interfaces/UserOptionsInterface.hpp"
 #include <QApplication>
 #include <QComboBox>
+#include <QPushButton>
 #include "Postprocessor/GUI/Options/PostprocessorMouseOptionsPanel.hpp"
 #include "Postprocessor/Commands/options/PostprocessorOptionCommands.hpp"
 #include <QKeyEvent>
@@ -203,6 +204,13 @@ int main(int argc, char** argv)
     {
       ++failures;
     });
+  const auto cameraBeforeEmptyFit = *app->session().views.at(id).camera;
+  const auto revisionBeforeEmptyFit = app->session().views.at(id).camera_revision;
+  input.fit();
+  check(normal == 0 && silent == 0 &&
+    app->session().views.at(id).camera_revision == revisionBeforeEmptyFit &&
+    CameraOperations::equal(cameraBeforeEmptyFit,*app->session().views.at(id).camera),
+    "Empty Fit dispatched a command or changed the camera");
   auto drag = [&]()
   {
     QMouseEvent press(QEvent::MouseButtonPress, QPointF(100, 100), QPointF(100, 100),
@@ -321,9 +329,11 @@ int main(int argc, char** argv)
     Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
   input.handle(&clickRelease);
   check(silent == beforeClick, "A click without a drag must not dispatch navigation.");
+  int mouseCommands = 0;
   bool reject = false;
   PostprocessorMouseOptionsPanel panel(app, [&](const std::string& text, std::string& issue)
   {
+    ++mouseCommands;
     if (reject)
     {
       // The native dispatcher can accept submission despite handler failure.
@@ -349,6 +359,24 @@ int main(int argc, char** argv)
     check(!panel.save_settings(error) && app->user_options().leftDrag == MouseDragAction::Rotate,
       "Accepted-but-rejected submission must not be mistaken for a saved binding.");
   }
+  reject = false;
+  options.fail = false;
+  check(app->apply_user_options({{"mouse/left",std::string("zoom")}},error),"Cannot prepare nondefault mouse settings");
+  panel.refresh_settings();
+  const auto mouseCommandsBeforeDefaults = mouseCommands;
+  auto* resetDefaults = panel.findChild<QPushButton*>("Postprocessor.Mouse.ResetDefaults");
+  check(resetDefaults != nullptr,"Mouse page lacks Reset to defaults");
+  if (resetDefaults != nullptr)
+  {
+    resetDefaults->click();
+    check(combo && combo->currentData().toString() == "rotate" && mouseCommands == mouseCommandsBeforeDefaults &&
+      app->user_options().leftDrag == MouseDragAction::Zoom,"Reset must stage Core defaults without applying or journaling them");
+    panel.refresh_settings();
+    check(combo && combo->currentData().toString() == "zoom","Closing/reopening options must discard unsaved defaults");
+  }
+  check(app->user_options().journalNavigation,"Navigation journaling should default on");
+  check(app->apply_user_options({{"journal/navigation",false}},error) && !app->user_options().journalNavigation,
+    "Navigation journaling option did not disable");
   options.fail = false;
   check(app->apply_user_options({{"diagnostics/camera", true}}, error), "Enable integrated gesture timing.");
   CameraTimings capture;

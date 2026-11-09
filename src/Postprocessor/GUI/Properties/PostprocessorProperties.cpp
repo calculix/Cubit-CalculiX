@@ -1,16 +1,29 @@
 #include "PostprocessorProperties.hpp"
+#include "PostprocessorDisplayProperties.hpp"
+#include "Postprocessor/GUI/Selection/PostprocessorProbeProperties.hpp"
 
 #include <QFormLayout>
+#include <QVBoxLayout>
+#include <QScrollArea>
+#include <utility>
 #include <QLabel>
 #include <type_traits>
 #include <variant>
 
-PostprocessorProperties::PostprocessorProperties(QWidget* parent) : QWidget(parent)
+PostprocessorProperties::PostprocessorProperties(std::weak_ptr<PostprocessorApplicationInterface> application,
+  std::function<bool(const std::string&,std::string&)> submit, QWidget* parent) : QWidget(parent)
 {
   setObjectName("Postprocessor.Properties");
-  auto* layout = new QFormLayout(this);
-  name = new QLabel(this);
-  origin = new QLabel(this);
+  auto* layout = new QVBoxLayout(this);
+  layout->setContentsMargins(0,0,0,0);
+  auto* scroll = new QScrollArea(this);
+  scroll->setWidgetResizable(true);
+  scroll->setFrameShape(QFrame::NoFrame);
+  auto* content = new QWidget(scroll);
+  auto* contents = new QVBoxLayout(content);
+  auto* information = new QFormLayout;
+  name = new QLabel(content);
+  origin = new QLabel(content);
 
   for (auto* label : {name, origin})
   {
@@ -19,14 +32,24 @@ PostprocessorProperties::PostprocessorProperties(QWidget* parent) : QWidget(pare
     label->setTextInteractionFlags(Qt::TextSelectableByMouse);
   }
 
-  layout->addRow(tr("Name"), name);
-  layout->addRow(tr("Source"), origin);
+  information->addRow(tr("Name"),name);
+  information->addRow(tr("Source"),origin);
+  contents->addLayout(information);
+  probe = new PostprocessorProbeProperties(application,content);
+  contents->addWidget(probe);
+  display = new PostprocessorDisplayProperties(std::move(application),std::move(submit),content);
+  contents->addWidget(display);
+  contents->addStretch();
+  scroll->setWidget(content);
+  layout->addWidget(scroll);
 }
 
 void PostprocessorProperties::show_source(const Postprocessor::DataSource* source)
 {
   name->clear();
   origin->clear();
+  display->refresh();
+  probe->refresh();
 
   if (source == nullptr)
   {

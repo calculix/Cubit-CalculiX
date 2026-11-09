@@ -35,6 +35,7 @@ private:
   QPointer<WorkspaceHeader> header;
   QHash<QString, WorkspaceView> views;
   QHash<QString, QByteArray> layouts;
+  QHash<QString, unsigned int> bottomDockRevisions;
   QHash<QString, QPersistentModelIndex> selections;
   QString current = "cubit";
   bool ready = false;

@@ -29,6 +29,8 @@ void CalculiXPythonInterface::help()
   log.append("Interactions with Jobs\n");
   log.append("int get_job_status(int job_id); //status -2 no job -1 no process, 1 process running, 2 process finished, 3 process killed, 4 process finished with errors, 5 process running currently waiting \n");
   log.append("Topology: get_topology_settings(id) returns [keyword, value] rows for current common, density and level-set settings; empty on failure.\n");
+  log.append("Topology: is_topology_level_set_run_enabled() reports the loaded developer controller capability.\n");
+  log.append("Topology: get_topology_iteration_level_set_field_data(id, iteration=-1) returns sorted historical [node ID, phi, fixed flag] rows; -1 uses the selected iteration.\n");
   log.append("Interactions with FRD Results:\n");
   log.append("std::vector<std::string> frd_get_result_block_types(int job_id); // returns a list of all result block types \n");
   log.append("std::vector<std::string> frd_get_result_block_components(int job_id, std::string result_block_type); // returns a list of all result block components for a block type\n");
@@ -570,4 +572,14 @@ std::vector<std::vector<double>> CalculiXPythonInterface::loadstrajectory_bodyhe
   CalculiXLoadsInterface ccx_loads_iface;
 
   return ccx_loads_iface.loadstrajectory_bodyheatfluxsphere_get_magnitude(trajectory_id);
+}
+
+bool CalculiXPythonInterface::is_topology_level_set_run_enabled()
+{
+  return CalculiXTopologyInterface().is_topology_level_set_run_enabled();
+}
+
+std::vector<std::vector<double>> CalculiXPythonInterface::get_topology_iteration_level_set_field_data(int topology_id, int iteration_id)
+{
+  return CalculiXTopologyInterface().get_topology_iteration_level_set_field_data(topology_id, iteration_id);
 }

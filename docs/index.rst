@@ -13,6 +13,7 @@ imply complete developer comments.
    framework/index
    calculix/index
    postprocessor/index
+   report/index
    developer/index
 
 * :ref:`genindex`

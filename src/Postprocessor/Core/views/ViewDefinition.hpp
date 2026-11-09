@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 #include <cstdint>
+#include "../selection/SelectionState.hpp"
 
 namespace Postprocessor
 {
@@ -38,6 +39,7 @@ namespace Postprocessor
     bool fit_pending = true;
     std::uint64_t fit_request = 0;
     std::uint64_t camera_revision = 0;
+    SelectionState selection;
   };
 }
 

@@ -7,6 +7,7 @@
 #include <QGroupBox>
 #include <QVariant>
 #include <QCheckBox>
+#include <QComboBox>
 #include <QFormLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -40,6 +41,15 @@ PostprocessorOptionsPanel::PostprocessorOptionsPanel(std::weak_ptr<Postprocessor
   displayForm->addRow(tr("Screen Bottom"), backgroundBottom);
   triad = new QCheckBox(tr("Display Triad"), displayGroup);
   displayForm->addRow(triad);
+  resultPalette = new QComboBox(displayGroup);
+  resultPalette->setObjectName("Postprocessor.Options.DefaultResultPalette");
+  resultPalette->addItem(tr("Viridis"),QStringLiteral("viridis"));
+  resultPalette->addItem(tr("Blue - White - Red"),QStringLiteral("bluewhitered"));
+  resultPalette->addItem(tr("Turbo"),QStringLiteral("turbo"));
+  resultPalette->addItem(tr("Classic rainbow"),QStringLiteral("rainbow"));
+  resultPalette->addItem(tr("Grayscale"),QStringLiteral("grayscale"));
+  resultPalette->setToolTip(tr("Default palette for newly opened results and new views. Existing result display settings are preserved."));
+  displayForm->addRow(tr("Default result palette"),resultPalette);
   layout->addWidget(displayGroup);
   for (auto* button : {backgroundTop, backgroundBottom})
   {
@@ -52,9 +62,47 @@ PostprocessorOptionsPanel::PostprocessorOptionsPanel(std::weak_ptr<Postprocessor
   journalCamera->setToolTip(tr("Record completed GUI rotate, pan, zoom and fit actions. Typed commands follow Cubit's journal settings. Takes effect immediately."));
   layout->addWidget(new QLabel(tr("Journal"), this));
   layout->addWidget(journalCamera);
-  auto* journalNote = new QLabel(tr("Source and result operations always use the normal journaled command path."), this);
+  journalNavigation = new QCheckBox(tr("Record result navigation"),this);
+  journalNavigation->setObjectName("Postprocessor.Journal.Navigation");
+  journalNavigation->setToolTip(tr("Journal completed GUI frame selections. Slider previews are never journaled. Typed commands follow Cubit's journal settings."));
+  layout->addWidget(journalNavigation);
+  auto* journalNote = new QLabel(tr("Source opening/closing and result display settings remain journaled."), this);
   journalNote->setWordWrap(true);
   layout->addWidget(journalNote);
+  auto* reset = new QPushButton(tr("Reset to defaults"),this);
+  reset->setObjectName("Postprocessor.Options.ResetDefaults");
+  reset->setToolTip(tr("Restore this page's Core defaults as unsaved edits. Press Save to apply."));
+  layout->addWidget(reset);
+  connect(reset,&QPushButton::clicked,this,[this]()
+  {
+    const auto active = this->application.lock();
+    if (!active)
+    {
+      return;
+    }
+    UserOptionValues defaults;
+    for (const auto& option : active->user_option_definitions())
+    {
+      defaults.emplace(option.key,option.defaultValue);
+    }
+    iconsPath->setText(QString::fromStdString(std::get<std::string>(defaults.at("paths/icons"))));
+    journalCamera->setChecked(std::get<bool>(defaults.at("journal/camera")));
+    journalNavigation->setChecked(std::get<bool>(defaults.at("journal/navigation")));
+    triad->setChecked(std::get<bool>(defaults.at("display/triad")));
+    resultPalette->setCurrentIndex(resultPalette->findData(QString::fromStdString(std::get<std::string>(defaults.at("color/palette")))));
+    for (const auto& pair : {std::make_pair(backgroundTop,"background/top"),std::make_pair(backgroundBottom,"background/bottom")})
+    {
+      const auto text = std::get<std::string>(defaults.at(pair.second));
+      std::array<double,3> rgb;
+      if (Postprocessor::parse_background_color(text,rgb))
+      {
+        const auto color = QColor::fromRgbF(rgb[0],rgb[1],rgb[2]);
+        pair.first->setProperty("rgb",QString::fromStdString(text));
+        pair.first->setText(color.name());
+        pair.first->setStyleSheet(QStringLiteral("background-color: %1; color: %2;").arg(color.name(),color.lightnessF()>0.5 ? "black":"white"));
+      }
+    }
+  });
   layout->addStretch();
   connect(browse, &QPushButton::clicked, this, [this]()
   {
@@ -78,7 +126,9 @@ void PostprocessorOptionsPanel::refresh_settings()
   iconsPath->setText(QString::fromUtf8(active->user_options().iconsPath.c_str()));
   const auto& options = active->user_options();
   journalCamera->setChecked(options.journalCamera);
+  journalNavigation->setChecked(options.journalNavigation);
   triad->setChecked(options.triadVisible);
+  resultPalette->setCurrentIndex(resultPalette->findData(QString::fromLatin1(Postprocessor::color_palette_name(options.resultPalette))));
   const std::pair<QPushButton*, std::array<double, 3>> colors[] =
   {
     {backgroundTop, options.backgroundTop}, {backgroundBottom, options.backgroundBottom}
@@ -101,9 +151,11 @@ QJsonObject PostprocessorOptionsPanel::option_values() const
   QJsonObject values;
   values["paths/icons"] = iconsPath->text();
   values["journal/camera"] = journalCamera->isChecked();
+  values["journal/navigation"] = journalNavigation->isChecked();
   values["background/top"] = backgroundTop->property("rgb").toString();
   values["background/bottom"] = backgroundBottom->property("rgb").toString();
   values["display/triad"] = triad->isChecked();
+  values["color/palette"] = resultPalette->currentData().toString();
   return values;
 }
 

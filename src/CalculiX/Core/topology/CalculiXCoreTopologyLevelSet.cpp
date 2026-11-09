@@ -104,7 +104,7 @@ bool CalculiXCore::initialize_topology_level_set_design(int topology_id)
   return store_design(*configuration, topology_id, std::move(design), factors);
 }
 
-bool CalculiXCore::evaluate_topology_level_set_compliance(int topology_id, int iteration_id, const std::map<int, double>& energies)
+bool CalculiXCore::evaluate_topology_level_set_compliance(int topology_id, int iteration_id, const std::map<int, double>& energies, CoreTopologyLevelSetGeometryCache* cache)
 {
   auto* configuration = level_set_case(topology, topology_id);
   if (!configuration || !completed_job(topology_id, iteration_id))
@@ -125,7 +125,7 @@ bool CalculiXCore::evaluate_topology_level_set_compliance(int topology_id, int i
     return false;
   }
   TopologyLevelSetEvaluation evaluation;
-  if (!CoreTopologyLevelSetEvaluation::evaluate_compliance(design->second, configuration->element_preserved, volumes, energies, factors, evaluation) ||
+  if (!CoreTopologyLevelSetEvaluation::evaluate_compliance(design->second, configuration->element_preserved, volumes, energies, factors, evaluation, cache) ||
       !topology->set_iteration_element_energies(topology_id, iteration_id, energies) || !topology->evaluate_compliance(topology_id, iteration_id, factors))
   {
     return false;
@@ -134,7 +134,7 @@ bool CalculiXCore::evaluate_topology_level_set_compliance(int topology_id, int i
   return true;
 }
 
-bool CalculiXCore::evaluate_topology_level_set_proposal(int topology_id, int iteration_id, TopologyLevelSetProposal& proposal)
+bool CalculiXCore::evaluate_topology_level_set_proposal(int topology_id, int iteration_id, TopologyLevelSetProposal& proposal, std::shared_ptr<CoreTopologyLevelSetGeometryCache> source_cache)
 {
   proposal = {};
   auto* configuration = level_set_case(topology, topology_id);
@@ -161,7 +161,7 @@ bool CalculiXCore::evaluate_topology_level_set_proposal(int topology_id, int ite
     return false;
   }
   TopologyLevelSetProposal candidate;
-  if (!CoreTopologyLevelSetUpdate::build_proposal(design->second, evaluation->second.level_set_evaluation, configuration->element_preserved, volumes, configuration->target_volume_fraction, candidate))
+  if (!CoreTopologyLevelSetUpdate::build_proposal(design->second, evaluation->second.level_set_evaluation, configuration->element_preserved, volumes, configuration->target_volume_fraction, candidate, std::move(source_cache)))
   {
     return false;
   }

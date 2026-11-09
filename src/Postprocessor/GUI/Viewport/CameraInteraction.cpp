@@ -18,10 +18,10 @@ using namespace Postprocessor;
 CameraInteraction::CameraInteraction(QWidget* widget, std::string view_id,
   std::weak_ptr<PostprocessorApplicationInterface> active, Dispatch submit, Dispatch silent,
   std::function<void()> update, std::function<void(const std::string&)> errors, CameraTimings* recorder,
-  std::function<void()> timing_finished)
+  std::function<void()> timing_finished, std::function<void(const QPointF&)> click)
   : QObject(widget), surface(widget), viewId(std::move(view_id)), application(std::move(active)),
     submitCommand(std::move(submit)), silentCommand(std::move(silent)),
-    redraw(std::move(update)), report(std::move(errors)), timings(recorder), timingFinished(std::move(timing_finished))
+    redraw(std::move(update)), report(std::move(errors)), timings(recorder), timingFinished(std::move(timing_finished)), clicked(std::move(click))
 {
   wheelTimer.setSingleShot(true);
   wheelTimer.setInterval(NavigationDefaults::wheel_commit_delay_ms);
@@ -215,7 +215,7 @@ void CameraInteraction::preview()
       return;
     }
     const double angle = (std::atan2(last.y(), last.x()) - std::atan2(first.y(), first.x())) * 180 / std::acos(-1.0);
-    valid = CameraOperations::roll(baseline, angle * sensitivity, candidate, error);
+    valid = CameraOperations::roll(baseline, -angle * sensitivity, candidate, error);
   }
   else
   {
@@ -337,6 +337,20 @@ void CameraInteraction::fit()
   cancel();
   std::string error;
   const auto active = application.lock();
+  if (active)
+  {
+    std::array<double,6> bounds;
+    if (!active->visible_bounds(viewId,bounds,error))
+    {
+      if (!error.empty())
+      {
+        report(error);
+      }
+      // Skip dispatch so empty-view clicks/shortcuts produce no command output
+      // or journal entry, including when camera journaling is enabled.
+      return;
+    }
+  }
   const auto& dispatch = active && active->user_options().journalCamera ? submitCommand : silentCommand;
   if (!dispatch || !dispatch(QStringLiteral("post view fit"), error))
   {
@@ -385,6 +399,10 @@ bool CameraInteraction::handle(QEvent* event)
           return true;
         }
         point = static_cast<QMouseEvent*>(event)->position();
+        if ((point-origin).manhattanLength() >= QApplication::startDragDistance())
+        {
+          dragStarted = true;
+        }
         if (timings != nullptr)
         {
           timings->input();
@@ -400,11 +418,19 @@ bool CameraInteraction::handle(QEvent* event)
       if (mode != Mode::None && mode != Mode::Wheel && mouse->button() == button)
       {
         point = mouse->position();
+        const auto active = application.lock();
+        const bool isClick = button == Qt::LeftButton && mouse->modifiers() == Qt::NoModifier && !dragStarted &&
+          (point-origin).manhattanLength() < QApplication::startDragDistance() && owns_camera() && active &&
+          active->display_revision() == sceneRevision;
         if (timings != nullptr)
         {
           timings->input();
         }
         finish();
+        if (isClick && clicked)
+        {
+          clicked(mouse->position());
+        }
       }
       return true;
     }

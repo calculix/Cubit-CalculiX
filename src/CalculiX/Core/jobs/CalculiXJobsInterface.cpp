@@ -1,3 +1,5 @@
+#include "Framework/Reporting/ReportSource.hpp"
+#include <QFileInfo>
 #include "CalculiXJobsInterface.hpp"
 #include "Core/topology/CoreTopologyQuery.hpp"
 #include "CubitMessage.hpp"
@@ -125,4 +127,40 @@ std::vector<std::vector<std::string>> CalculiXJobsInterface::get_jobs_tree_data(
 bool CalculiXJobsInterface::get_job_settings(int id, JobsSettings& settings, std::string& error)
 {
   return ccx_core.jobs->get_settings(id, settings, error);
+}
+
+bool CalculiXJobsInterface::get_report_source(int id, ReportSource& output, std::string& error)
+{
+  JobsSettings settings;
+  if (id <= 0 || !get_job_settings(id, settings, error))
+  {
+    error = "Cannot resolve the CalculiX report job.";
+    return false;
+  }
+  if (get_job_status(id) == 1)
+  {
+    error = "Cannot read report input while the CalculiX job is running.";
+    return false;
+  }
+  // Solver execution writes <job name>.inp in its working directory. Prefer
+  // that actual run input over an imported source deck when both exist.
+  QString input = QString::fromStdString(settings.name) + ".inp";
+  if (!QFileInfo(input).isFile())
+  {
+    input = QString::fromStdString(settings.filepath);
+  }
+  const auto canonical = QFileInfo(input).canonicalFilePath();
+  if (canonical.isEmpty() || !QFileInfo(canonical).isFile())
+  {
+    error = "The job input deck is unavailable; reporting will not regenerate it.";
+    return false;
+  }
+  ReportSource source;
+  source.workspace_id = "calculix";
+  source.job_id = id;
+  source.input_files = {canonical.toStdString()};
+  source.provenance = "Existing input deck; historical model/result run linkage is unverified.";
+  output = std::move(source);
+  error.clear();
+  return true;
 }

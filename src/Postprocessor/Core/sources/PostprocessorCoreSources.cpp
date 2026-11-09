@@ -198,6 +198,16 @@ namespace Postprocessor
             if (loaded != runtime.end() && loaded->second.data == published.data)
             {
               auto staged = state;
+              if (staged.active_source_id != entry.first)
+              {
+                for (auto& display : staged.representations)
+                {
+                  if (display.second.view_id == staged.active_view_id)
+                  {
+                    display.second.animation.playing = false;
+                  }
+                }
+              }
               staged.active_source_id = entry.first;
               staged.active_representation_id.clear();
               if (!prepare_initial_display(staged, entry.first, loaded->second.first_mesh_increment, error))
@@ -255,6 +265,16 @@ namespace Postprocessor
       auto staged_runtime = runtime;
       staged_state.sources.emplace(source_id, std::move(source));
       staged_runtime.emplace(source_id, SourceRuntime{published.data, 1, mesh_increment});
+      if (staged_state.active_source_id != source_id)
+      {
+        for (auto& display : staged_state.representations)
+        {
+          if (display.second.view_id == staged_state.active_view_id)
+          {
+            display.second.animation.playing = false;
+          }
+        }
+      }
       staged_state.active_source_id = source_id;
       staged_state.active_representation_id.clear();
       if (!prepare_initial_display(staged_state, source_id, mesh_increment, error))
@@ -357,11 +377,17 @@ namespace Postprocessor
           return reference;
         }, published.reference);
       staged_runtime.at(source_id) = SourceRuntime{published.data, loaded->second.revision + 1, mesh_increment};
+      if (!clear_source_selection(staged_state,source_id,error))
+      {
+        return false;
+      }
       for (auto display = staged_state.representations.begin(); display != staged_state.representations.end();)
       {
         auto& definition = display->second;
         if (definition.input.owner == OutputOwner::Source && definition.input.object_id == source_id)
         {
+          definition.animation.playing = false;
+          definition.hidden_datasets.clear();
           if (!mesh_increment)
           {
             if (staged_state.active_representation_id == display->first)
@@ -411,6 +437,29 @@ namespace Postprocessor
     try
     {
       std::string selected = source_id;
+      if (state.active_source_id != source_id)
+      {
+        const bool running = std::any_of(state.representations.begin(),state.representations.end(),[this](const auto& entry)
+        {
+          return entry.second.view_id == state.active_view_id && entry.second.animation.playing;
+        });
+        if (running && scene_revision == std::numeric_limits<std::uint64_t>::max())
+        {
+          error = "Cannot stop animation after revision exhaustion.";
+          return false;
+        }
+        for (auto& entry : state.representations)
+        {
+          if (entry.second.view_id == state.active_view_id)
+          {
+            entry.second.animation.playing = false;
+          }
+        }
+        if (running)
+        {
+          ++scene_revision;
+        }
+      }
       state.active_source_id.swap(selected);
       state.active_representation_id.clear();
       return true;
@@ -467,6 +516,10 @@ namespace Postprocessor
       }
 
       staged_state.sources.erase(source_id);
+      if (!clear_source_selection(staged_state,source_id,error))
+      {
+        return false;
+      }
       staged_runtime.erase(source_id);
       state.swap(staged_state);
       runtime.swap(staged_runtime);
@@ -499,20 +552,23 @@ namespace Postprocessor
       PostprocessorSession staged;
       std::uint64_t cameraRevision = 0;
       std::uint64_t fitRequest = 0;
+      std::uint64_t selectionRevision = 0;
       for (const auto& entry : state.views)
       {
         cameraRevision = std::max(cameraRevision, entry.second.camera_revision);
         fitRequest = std::max(fitRequest, entry.second.fit_request);
+        selectionRevision = std::max(selectionRevision,entry.second.selection.revision);
       }
       if (cameraRevision == std::numeric_limits<std::uint64_t>::max() ||
-          fitRequest == std::numeric_limits<std::uint64_t>::max())
+          fitRequest == std::numeric_limits<std::uint64_t>::max() || selectionRevision == std::numeric_limits<std::uint64_t>::max())
       {
-        error = "Cannot reset Postprocessor after camera revision exhaustion.";
+        error = "Cannot reset Postprocessor after camera or selection revision exhaustion.";
         return false;
       }
       auto& view = staged.views.at(staged.active_view_id);
       view.camera_revision = cameraRevision + 1;
       view.fit_request = fitRequest + 1;
+      view.selection.revision = selectionRevision + 1;
       state.swap(staged);
       runtime.clear();
       // Retain the source ID allocator. Old handles/tokens must not address a
@@ -543,6 +599,10 @@ namespace Postprocessor
     }
     SourceOperationGuard guard(source_operation_active);
 
+    if (!clear_source_selection(state,"",error))
+    {
+      return false;
+    }
     state.representations.clear();
     state.sources.clear();
     runtime.clear();

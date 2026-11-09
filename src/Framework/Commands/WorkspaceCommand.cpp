@@ -4,7 +4,7 @@
 
 std::vector<std::string> WorkspaceCommand::get_syntax()
 {
-  return {"sim workspace {cubit|calculix|postprocessor}"};
+  return {"sim workspace {cubit|calculix|postprocessor|report}"};
 }
 
 std::vector<std::string> WorkspaceCommand::get_syntax_help()
@@ -28,6 +28,10 @@ bool WorkspaceCommand::execute(CubitCommandData& data)
   else if (data.find_keyword("postprocessor"))
   {
     target = "postprocessor";
+  }
+  else if (data.find_keyword("report"))
+  {
+    target = "report";
   }
   std::string error;
 

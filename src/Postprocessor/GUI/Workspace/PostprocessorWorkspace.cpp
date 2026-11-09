@@ -2,7 +2,11 @@
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "Postprocessor/GUI/Viewport/PostprocessorViewport.hpp"
 #include "Postprocessor/GUI/ResultsTree/PostprocessorResultsTree.hpp"
+#include "Postprocessor/GUI/Navigation/PostprocessorFrameNavigation.hpp"
+#include "Postprocessor/GUI/Navigation/PostprocessorDeformationControls.hpp"
+#include "Postprocessor/GUI/Selection/PostprocessorPickControls.hpp"
 #include "Postprocessor/GUI/Properties/PostprocessorProperties.hpp"
+#include "Postprocessor/GUI/Properties/PostprocessorColorControls.hpp"
 #include "Postprocessor/GUI/Resources/PostprocessorIconLoader.hpp"
 #include "Postprocessor/GUI/Options/PostprocessorOptionsPanel.hpp"
 #include "Postprocessor/GUI/Options/PostprocessorMouseOptionsPanel.hpp"
@@ -22,6 +26,7 @@
 #include <QVBoxLayout>
 #include <utility>
 #include <exception>
+#include <algorithm>
 
 PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   std::weak_ptr<PostprocessorApplicationInterface> application,
@@ -41,11 +46,125 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
     {
       return dispatch && dispatch(command.toUtf8().toStdString(), error);
     },
-    [dispatch = std::move(silent)](const QString& command, std::string& error)
+    [dispatch = silent](const QString& command, std::string& error)
     {
       return dispatch && dispatch(command.toUtf8().toStdString(), error);
     }, this);
   layout->addWidget(viewport, 1);
+  navigationToolbar = new QToolBar(tr("Result navigation"),host);
+  navigationToolbar->setObjectName("Postprocessor.NavigationToolbar");
+  navigationToolbar->setAllowedAreas(Qt::TopToolBarArea);
+  navigationToolbar->setMovable(true);
+  navigationToolbar->setFloatable(true);
+  navigationToolbar->setToolButtonStyle(Qt::ToolButtonIconOnly);
+  navigation = new PostprocessorFrameNavigation([this,dispatch = silent](std::size_t frame)
+  {
+    const auto command = frame_command(frame);
+    if (!command.isEmpty())
+    {
+      const auto active = this->application.lock();
+      if (active && active->user_options().journalNavigation)
+      {
+        this->submit(command);
+      }
+      else if (active)
+      {
+        viewport->cancel_interaction();
+        std::string error;
+        if (!dispatch || !dispatch(command.toUtf8().toStdString(),error))
+        {
+          PRINT_ERROR("Cannot select result frame: %s\n",error.c_str());
+        }
+      }
+    }
+    QTimer::singleShot(0,this,[this]()
+    {
+      panelRevision.reset();
+      refresh();
+    });
+  }, navigationToolbar, [this,dispatch = silent](std::size_t frame)
+  {
+    const auto command = frame_command(frame);
+    std::string error;
+    const bool accepted = !command.isEmpty() && dispatch && dispatch(command.toUtf8().toStdString(),error);
+    if (!accepted && !error.empty())
+    {
+      PRINT_ERROR("Cannot preview result frame: %s\n",error.c_str());
+    }
+    QTimer::singleShot(0,this,[this]()
+    {
+      panelRevision.reset();
+      refresh();
+    });
+    return accepted;
+  },[this,dispatch = silent](const QString& operation)
+  {
+    // Reuse the source/view/snapshot guard and safe quoting of frame commands.
+    const auto guarded = frame_command(1);
+    const auto suffix = guarded.indexOf(" source ");
+    const auto active = this->application.lock();
+    if (active && suffix >= 0)
+    {
+      const auto command = "post animation " + operation + guarded.mid(suffix);
+      const bool navigationAction = operation == "play" || operation == "pause";
+      if (!navigationAction || active->user_options().journalNavigation)
+      {
+        this->submit(command);
+      }
+      else
+      {
+        std::string error;
+        if (!dispatch || !dispatch(command.toUtf8().toStdString(),error))
+        {
+          PRINT_ERROR("Cannot change animation: %s\n",error.c_str());
+        }
+      }
+    }
+    QTimer::singleShot(0,this,[this]()
+    {
+      panelRevision.reset();
+      refresh();
+    });
+  });
+  navigationToolbar->addWidget(navigation);
+  deformationToolbar = new QToolBar(tr("Deformation"),host);
+  deformationToolbar->setObjectName("Postprocessor.DeformationToolbar");
+  deformationToolbar->setAllowedAreas(Qt::TopToolBarArea);
+  deformationToolbar->setMovable(true);
+  deformationToolbar->setFloatable(true);
+  deformationControls = new PostprocessorDeformationControls(this->application,
+    [this](const std::string& command,std::string& error)
+    {
+      viewport->cancel_interaction();
+      const bool accepted = submitCommand && submitCommand(command,error);
+      if (!accepted)
+      {
+        PRINT_ERROR("Cannot change deformation: %s\n",error.c_str());
+      }
+      QTimer::singleShot(0,this,[this]()
+      {
+        panelRevision.reset();
+        refresh();
+      });
+      return accepted;
+    },[this,dispatch = silent](const std::string& command,std::string& error)
+    {
+      viewport->cancel_interaction();
+      const bool accepted = dispatch && dispatch(command,error);
+      if (!accepted)
+      {
+        PRINT_ERROR("Cannot preview deformation: %s\n",error.c_str());
+      }
+      QTimer::singleShot(0,this,[this]()
+      {
+        panelRevision.reset();
+        refresh();
+      });
+      return accepted;
+    },deformationToolbar);
+  deformationToolbar->addWidget(deformationControls);
+  deformationToolbar->hide();
+  navigationToolbar->hide();
   optionsPanel = new PostprocessorOptionsPanel(this->application, submitCommand, this);
   optionsPanel->hide();
   mouseOptionsPanel = new PostprocessorMouseOptionsPanel(this->application, submitCommand, this);
@@ -59,6 +178,7 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
     // Submission does not imply success; always restore committed selection.
     QTimer::singleShot(0, this, [this]()
     {
+      panelRevision.reset();
       refresh();
     });
   }, [this](const QString& name, bool visible)
@@ -66,15 +186,42 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
     source_command(visible ? "show" : "hide", name);
     QTimer::singleShot(0, this, [this]()
     {
+      panelRevision.reset();
       refresh();
     });
   }, resultsDock);
+  tree->dataset_action = [this](const QString& source,Postprocessor::DatasetVisibilityAction action,std::optional<std::size_t> dataset)
+  {
+    dataset_command(source,action,dataset);
+    QTimer::singleShot(0,this,[this]()
+    {
+      panelRevision.reset();
+      refresh();
+    });
+  };
+  tree->activate_field = [this](const QString& source, std::size_t index)
+  {
+    QTimer::singleShot(0,this,[this,source,index]()
+    {
+      colorControls->apply_field(source,index);
+    });
+  };
   resultsDock->setWidget(tree);
   resultsDock->hide();
 
   propertiesDock = new QDockWidget(tr("Properties"), host);
   propertiesDock->setObjectName("Postprocessor.PropertiesDock");
-  properties = new PostprocessorProperties(propertiesDock);
+  properties = new PostprocessorProperties(this->application,[this](const std::string& command,std::string& error)
+  {
+    viewport->cancel_interaction();
+    const bool accepted = submitCommand && submitCommand(command,error);
+    QTimer::singleShot(0,this,[this]()
+    {
+      panelRevision.reset();
+      refresh();
+    });
+    return accepted;
+  },propertiesDock);
   propertiesDock->setWidget(properties);
   propertiesDock->hide();
 
@@ -129,14 +276,48 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
     viewport->fit_view();
   });
   toolbar->addAction(fit);
+  pickControls = new PostprocessorPickControls(this->application,[this](const QString& command)
+  {
+    this->submit(command);
+    QTimer::singleShot(0,this,[this]()
+    {
+      panelSelectionRevision.reset();
+      refresh();
+    });
+  },toolbar);
+  toolbar->addWidget(pickControls);
+  fieldToolbar = new QToolBar(tr("Field selection"),host);
+  fieldToolbar->setObjectName("Postprocessor.FieldToolbar");
+  fieldToolbar->setAllowedAreas(Qt::TopToolBarArea);
+  fieldToolbar->setMovable(true);
+  fieldToolbar->setFloatable(true);
+  colorControls = new PostprocessorColorControls(this->application,[this](const QString& command)
+  {
+    this->submit(command);
+    QTimer::singleShot(0,this,[this]()
+    {
+      panelRevision.reset();
+      refresh();
+    });
+  },fieldToolbar);
+  fieldToolbar->addWidget(colorControls);
+  fieldToolbar->hide();
 
   auto* file = new QMenu(tr("File"), this);
   file->addAction(closeSelected);
   file->addAction(closeAll);
   auto* results = new QMenu(tr("Results"), this);
   results->addAction(list);
+  auto* probe = results->addAction(tr("Probe selection"));
+  connect(probe,&QAction::triggered,this,[this]()
+  {
+    this->submit("post probe");
+  });
   auto* view = new QMenu(tr("View"), this);
   view->addAction(fit);
+  view->addAction(fieldToolbar->toggleViewAction());
+  view->addAction(deformationToolbar->toggleViewAction());
+  view->addAction(navigationToolbar->toggleViewAction());
 
   // Framework supplies the shared Help menu and keeps it last.
   for (auto* menu : {file, view, results})
@@ -152,6 +333,9 @@ PostprocessorWorkspace::~PostprocessorWorkspace()
 {
   delete toolbar;
   delete resultsDock;
+  delete navigationToolbar;
+  delete fieldToolbar;
+  delete deformationToolbar;
   delete propertiesDock;
   // The options dialog may have reparented this page into its panel stack.
   delete optionsPanel.data();
@@ -167,6 +351,47 @@ void PostprocessorWorkspace::submit(const QString& command)
   {
     PRINT_ERROR("Cannot submit Postprocessor command: %s\n", error.c_str());
   }
+}
+
+QString PostprocessorWorkspace::frame_command(std::size_t frame) const
+{
+  const auto active = application.lock();
+  if (!active)
+  {
+    return {};
+  }
+  const auto& state = active->session();
+  const auto source = state.sources.find(state.active_source_id);
+  std::optional<std::size_t> current;
+  for (const auto& entry : state.representations)
+  {
+    const auto& display = entry.second;
+    if (display.input.owner == Postprocessor::OutputOwner::Source && display.input.object_id == state.active_source_id &&
+        display.input.port == 0 && display.view_id == state.active_view_id)
+    {
+      current = display.increment_index;
+      break;
+    }
+  }
+  if (source == state.sources.end() || !navigation->matches_context(state.active_source_id+":"+state.active_view_id,
+      active->result_data(state.active_source_id),current))
+  {
+    return {};
+  }
+  const auto name = QString::fromUtf8(source->second.name.c_str());
+  const QChar delimiter = name.contains('"') ? QChar(0x27) : QChar('"');
+  if (name.isEmpty() || name.contains(delimiter))
+  {
+    return {};
+  }
+  for (QChar c : name)
+  {
+    if (c.unicode() < 32 || c.unicode() == 127)
+    {
+      return {};
+    }
+  }
+  return "post frame " + QString::number(static_cast<qulonglong>(frame)) + " source " + delimiter + name + delimiter;
 }
 
 void PostprocessorWorkspace::source_command(const QString& verb, const QString& name)
@@ -193,6 +418,74 @@ void PostprocessorWorkspace::source_command(const QString& verb, const QString& 
   submit("post " + verb + " " + delimiter + name + delimiter);
 }
 
+void PostprocessorWorkspace::dataset_command(const QString& name, Postprocessor::DatasetVisibilityAction action,
+  std::optional<std::size_t> dataset)
+{
+  const auto quote = [](const QString& text) -> QString
+  {
+    const QChar delimiter = text.contains('"') ? QChar(0x27) : QChar('"');
+    if (text.isEmpty() || text.contains(delimiter))
+    {
+      return {};
+    }
+    for (const auto character : text)
+    {
+      if (character.unicode() < 32 || character.unicode() == 127)
+      {
+        return {};
+      }
+    }
+    return delimiter+text+delimiter;
+  };
+  const auto source = quote(name);
+  const auto active = application.lock();
+  if (!active || source.isEmpty())
+  {
+    PRINT_ERROR("Dataset visibility requires a valid source name.\n");
+    return;
+  }
+  std::string sourceId;
+  for (const auto& entry : active->session().sources)
+  {
+    if (QString::fromUtf8(entry.second.name.c_str()) == name)
+    {
+      sourceId = entry.first;
+      break;
+    }
+  }
+  using Action = Postprocessor::DatasetVisibilityAction;
+  QString selector = "all";
+  if (action != Action::ShowAll)
+  {
+    if (!dataset)
+    {
+      return;
+    }
+    const auto catalogue = active->mesh_datasets(sourceId);
+    const auto found = std::find_if(catalogue.begin(),catalogue.end(),[&](const SimResults::Dataset& value)
+    {
+      return value.id == *dataset;
+    });
+    if (found == catalogue.end())
+    {
+      PRINT_ERROR("The selected mesh dataset is no longer available.\n");
+      return;
+    }
+    selector = QString::number(static_cast<qulonglong>(*dataset));
+    const auto label = quote(QString::fromUtf8(found->name.c_str()));
+    if (!label.isEmpty() && std::count_if(catalogue.begin(),catalogue.end(),[&](const SimResults::Dataset& value)
+        {
+          return value.name == found->name;
+        }) == 1)
+    {
+      selector = label;
+    }
+  }
+  const QString operation = action == Action::Hide ? "hide dataset " :
+    action == Action::ShowOnly ? "show only dataset " : "show dataset ";
+  submit("post "+operation+selector+" source "+source);
+}
+
 bool PostprocessorWorkspace::camera_command_active() const noexcept
 {
   return viewport != nullptr && viewport->camera_command_active();
@@ -210,18 +503,52 @@ void PostprocessorWorkspace::refresh()
     }
 
     const auto& state = active->session();
-    if (!panelRevision || *panelRevision != active->display_revision() || panelSource != state.active_source_id)
+    const auto currentView = state.views.find(state.active_view_id);
+    const auto selectionRevision = currentView == state.views.end() ? 0 : currentView->second.selection.revision;
+    if (!panelSelectionRevision || *panelSelectionRevision != selectionRevision ||
+        !panelRevision || *panelRevision != active->display_revision() || panelSource != state.active_source_id || panelView != state.active_view_id)
     {
       tree->refresh(state, [active](const std::string& id)
       {
-        return active->source_has_mesh(id);
+        return active->result_data(id);
+      }, [active](const std::string& id, std::size_t index)
+      {
+        return active->frame_has_mesh(id, index);
+      },[active](const std::string& id,std::optional<std::size_t> frame)
+      {
+        return active->field_groups(id,frame);
+      },[active](const std::string& id)
+      {
+        return active->mesh_datasets(id);
       });
       const auto source = state.sources.find(state.active_source_id);
       properties->show_source(source == state.sources.end() ? nullptr : &source->second);
       closeSelected->setEnabled(source != state.sources.end());
       closeAll->setEnabled(!state.sources.empty());
+      colorControls->refresh();
+      deformationControls->refresh();
+      pickControls->refresh();
+      panelSelectionRevision = selectionRevision;
       panelRevision = active->display_revision();
       panelSource = state.active_source_id;
+      panelView = state.active_view_id;
+      std::optional<std::size_t> frame;
+      Postprocessor::AnimationDefinition animation;
+      for (const auto& entry : state.representations)
+      {
+        const auto& display = entry.second;
+        if (display.input.owner == Postprocessor::OutputOwner::Source && display.input.object_id == panelSource &&
+            display.input.port == 0 && display.view_id == panelView)
+        {
+          frame = display.increment_index;
+          animation = display.animation;
+          break;
+        }
+      }
+      navigation->refresh(active->result_data(panelSource), frame, [active, id = panelSource](std::size_t index)
+      {
+        return active->frame_has_mesh(id, index);
+      },panelSource+":"+panelView,animation);
     }
     viewport->synchronize(active);
   }
@@ -281,9 +608,10 @@ void PostprocessorWorkspace::workspace_view(WorkspaceView& view)
   view.graphicsPage = this;
   view.useNativeNavigation = false;
   view.dockLayout = WorkspaceDockLayout::LeftRight;
-  view.docks = {resultsDock, propertiesDock};
+  view.docks = {resultsDock,propertiesDock};
   view.menuActions = menus;
-  view.toolbars = {toolbar};
+  view.toolbars = {toolbar,fieldToolbar,deformationToolbar,navigationToolbar};
+  view.toolbarRowBreaks = {fieldToolbar};
   view.activationChanged = [page = QPointer<PostprocessorWorkspace>(this)](bool active)
   {
     if (active && page != nullptr)

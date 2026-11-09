@@ -14,18 +14,18 @@ Current foundation
   is implemented in batch 7. No public level-set optimizer is enabled.
 * Batch 3: share element interpolation/Jacobians and introduce regularized
   solid-fraction and derivative evaluation for tet, wedge and hex, including
-  their supported quadratic variants. Native execution verification is pending.
+  their supported quadratic variants. Straight-sided native math tests passed on Windows.
 
 * Batch 4a foundation is implemented: direct Cubit queries, resolved lengths,
   deterministic seeded initial fields, fixed preserved nodes, requested stiffness
   factors, and nodal compliance/volume derivative assembly. Helpers return local
   records only; batch 5 adds the internal interface/controller bridge. Native
-  execution is pending. See :doc:`topology-level-set` for assumptions/limits.
+  helper tests passed on Windows; physical controller verification remains pending. See :doc:`topology-level-set` for assumptions/limits.
 
 * Batch 4b foundation is implemented: sparse element-graph regularization,
   bounded convex local updates, signed linearized volume constraints, actual
   volume backtracking/restoration and source-owned ordinary proposal diagnostics.
-  Native C++/Cubit verification and performance testing remain pending.
+  Native helper verification passed on Windows; controller and performance testing remain pending.
 
 * Batch 5 internal integration is implemented: separate proposal/acceptance,
   interface-based design/factor/evaluation storage, method dispatch, current
@@ -70,13 +70,33 @@ Remaining implementation
   C3D10 refinement regression and five-refinement test budget. Tolerance and
   production defaults stayed unchanged. Mandatory restoration/backtracking
   coverage remains explicitly C3D8-only.
-* A fifth standalone length-resolution test and live seed phases are supplied:
-  raw defaults, deterministic lattice fields/anchors, forced fallback including
-  one free node, preservation and controlled complete initial designs. New
-  build/run pending; broad-band geometry is not default-width certification.
-* Next: run initialization checks, then controller/persistence verification.
-* Then: native controller, level-set history persistence, mixed/curved meshes,
-  narrow-band refinement, performance, GUI lifecycle and Windows/Linux evidence.
+* Standalone initialization and the 18 live seed/update fixtures passed on
+  Windows: 36 phases, 6561 checks, zero failures. Broad-band complete geometry
+  remains distinct from raw-default seeds and default-width certification.
+* The six-formulation broad-band physical controller/persistence matrix passed
+  all 35 stages on Windows, including C3D8 lifecycle tests. Sensitivity-to-proposal
+  cache handoff retained exact historical fields, factors and evaluations.
+* Live cache equivalence run 20261109T121528Z_72c9d6ef passed 18 fixtures /
+  36 phases / 6781 checks with zero failures. The progress-start hang no longer
+  reproduced after switching the live loader to CDLL. Diagnostic tracing is now
+  opt-in, default OFF in the journal; no extra CMake option is introduced.
+* A pass-local, bounded reference quadrature cache and precomputed-reference
+  mapping path passed all seven native suites and the 35-stage Windows physical
+  controller regression (20261109T133442Z_73ec62b3), retaining exact fields,
+  element results and histories against baseline. All 31 export commands returned
+  successfully; the earlier export exception remains unexplained. The full live
+  update regression after quadrature reuse and clean timing comparison are pending.
+* The 60-iteration C3D8 broad-band run 20261109T140032Z_dd5a3f68 passed execution
+  and reached volume feasibility at iteration 6, but did not converge. Fields
+  continued reversing at the fixed 0.1 move limit. The journal now prepares a
+  controlled 0.05 comparison with unchanged tolerances and explicit oscillation
+  diagnostics; that comparison is not yet executed.
+* Next: compare the smaller fixed move limit before deciding whether adaptive
+  level-set moves are needed. Then extend the study to other element types and
+  expand default-width scope using the documented numerical gates.
+* Remaining: kill after completed iterations, solver-process failure cleanup,
+  mixed/curved meshes, narrow-band refinement, larger-model performance, GUI
+  lifecycle and Linux evidence. The standalone cache-suite result is separate.
 * Review the required evidence before enabling the supported level-set scope.
   Public runs remain gated; current level-set integration supports compliance
   only. Passing density displacement tests does not add level-set displacement.
@@ -106,3 +126,7 @@ Keep these explicit follow-up tasks open:
 
 This checklist is the durable reminder. It does not schedule an external
 notification or authorize source deletion.
+
+The default-OFF developer controller capability and passing Windows broad-band
+controller/persistence evidence are specified in :doc:`topology-verification`.
+This capability does not enable production or GUI level-set runs.

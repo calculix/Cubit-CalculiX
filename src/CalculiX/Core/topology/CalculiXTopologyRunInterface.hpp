@@ -6,9 +6,11 @@
 #include <map>
 #include <set>
 #include <array>
+#include <memory>
 
 struct TopologyRunInfo;
 struct TopologyLevelSetProposal;
+class CoreTopologyLevelSetGeometryCache;
 enum class TopologyRunState;
 
 class CalculiXTopologyRunInterface
@@ -32,7 +34,7 @@ public:
   bool check_topology_adjoint_results(int job_id);
   bool read_topology_job_displacements(int job_id, std::map<int, std::array<double, 3>>& displacements);
   bool finish_topology_iteration(int topology_id, int iteration_id);
-  bool evaluate_topology_compliance(int topology_id, int iteration_id, const std::map<int, double>& energies);
+  bool evaluate_topology_compliance(int topology_id, int iteration_id, const std::map<int, double>& energies, CoreTopologyLevelSetGeometryCache* cache = nullptr);
   bool evaluate_topology_displacement(int topology_id, int iteration_id, double value, int node_id, const std::map<int, double>& element_integrals);
   bool set_topology_iteration_displacement(int topology_id, int iteration_id, double displacement, int node_id);
   bool mark_topology_iteration_completed(int topology_id, int iteration_id);
@@ -40,8 +42,8 @@ public:
   bool read_topology_job_element_tensors(int job_id, const std::string& key, std::map<int, std::map<int, std::array<double, 6>>>& tensors);
   bool read_topology_displacement(int topology_id, int iteration_id, double& value, int& node_id, std::array<double, 3>* critical_displacement = nullptr);
   bool initialize_topology_level_set_design(int topology_id);
-  bool evaluate_topology_level_set_compliance(int topology_id, int iteration_id, const std::map<int, double>& energies);
-  bool evaluate_topology_level_set_proposal(int topology_id, int iteration_id, TopologyLevelSetProposal& proposal);
+  bool evaluate_topology_level_set_compliance(int topology_id, int iteration_id, const std::map<int, double>& energies, CoreTopologyLevelSetGeometryCache* cache = nullptr);
+  bool evaluate_topology_level_set_proposal(int topology_id, int iteration_id, TopologyLevelSetProposal& proposal, std::shared_ptr<CoreTopologyLevelSetGeometryCache> source_cache = {});
   bool prepare_topology_level_set_iteration(int topology_id, int source_iteration, int next_iteration, const TopologyLevelSetProposal& proposal);
   bool check_topology_level_set_convergence(int topology_id, int previous_iteration, int current_iteration, bool& converged);
   bool prepare_topology_density_iteration(int topology_id, int source_iteration, int next_iteration);

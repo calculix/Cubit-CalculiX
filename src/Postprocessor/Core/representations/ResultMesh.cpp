@@ -4,9 +4,41 @@
 #include <vtkPartitionedDataSetCollection.h>
 #include <algorithm>
 #include <cmath>
+#include <map>
 
 namespace Postprocessor
 {
+  std::vector<SimResults::Dataset> result_dataset_catalogue(const SimResults::VtkResultsData& data)
+  {
+    std::map<std::size_t,SimResults::Dataset> found;
+    for (const auto& frame : data.increments)
+    {
+      for (const auto& part : result_mesh_parts(frame.dataset.get()))
+      {
+        auto& entry = found[part.first];
+        entry.id = part.first;
+        entry.point_count = std::max(entry.point_count,static_cast<std::size_t>(part.second->GetNumberOfPoints()));
+        entry.cell_count = std::max(entry.cell_count,static_cast<std::size_t>(part.second->GetNumberOfCells()));
+      }
+    }
+    std::vector<SimResults::Dataset> result;
+    for (auto& entry : found)
+    {
+      const auto metadata = std::find_if(data.datasets.begin(),data.datasets.end(),[&](const SimResults::Dataset& value)
+      {
+        return value.id == entry.first;
+      });
+      if (metadata != data.datasets.end())
+      {
+        entry.second.name = metadata->name;
+        entry.second.kind = metadata->kind;
+        entry.second.model_id = metadata->model_id;
+      }
+      result.push_back(std::move(entry.second));
+    }
+    return result;
+  }
+
   bool mesh_bounds(vtkDataSet* mesh, std::array<double, 6>& bounds)
   {
     if (mesh == nullptr || mesh->GetNumberOfPoints() == 0 || mesh->GetNumberOfCells() == 0)
@@ -58,6 +90,29 @@ namespace Postprocessor
       }
     }
     return meshes;
+  }
+
+  std::vector<std::pair<std::size_t, vtkDataSet*>> result_mesh_parts(vtkDataObject* object)
+  {
+    std::vector<std::pair<std::size_t, vtkDataSet*>> parts;
+    if (auto* collection = vtkPartitionedDataSetCollection::SafeDownCast(object))
+    {
+      for (unsigned int i = 0; i < collection->GetNumberOfPartitionedDataSets(); ++i)
+      {
+        for (auto* mesh : result_meshes(collection->GetPartitionedDataSet(i)))
+        {
+          parts.emplace_back(i, mesh);
+        }
+      }
+    }
+    else
+    {
+      for (auto* mesh : result_meshes(object))
+      {
+        parts.emplace_back(0, mesh);
+      }
+    }
+    return parts;
   }
 
   std::optional<std::size_t> first_mesh_increment(const SimResults::VtkResultsData& data)

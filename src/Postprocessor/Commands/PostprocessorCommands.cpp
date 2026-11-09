@@ -1,10 +1,17 @@
 #include "PostprocessorCommands.hpp"
+#include "selection/PostPickCommand.hpp"
+#include "selection/PostProbeCommand.hpp"
 #include "sources/PostOpenCommand.hpp"
+#include "results/PostFrameCommand.hpp"
+#include "results/PostAnimationCommand.hpp"
 #include "sources/PostListCommand.hpp"
 #include "sources/PostSelectCommand.hpp"
 #include "sources/PostCloseCommand.hpp"
 #include "options/PostUserOptionsCommand.hpp"
 #include "display/PostShowCommand.hpp"
+#include "display/PostColorCommand.hpp"
+#include "display/PostDeformCommand.hpp"
+#include "display/PostLegendCommand.hpp"
 #include "display/PostHideCommand.hpp"
 #include "views/PostViewFitCommand.hpp"
 #include "views/PostViewCameraCommand.hpp"
@@ -21,13 +28,41 @@ PostprocessorCommands::PostprocessorCommands(std::weak_ptr<PostprocessorApplicat
 
 std::vector<std::string> PostprocessorCommands::command_keys() const
 {
-  return {"PostOpenCommand", "PostListCommand", "PostSelectCommand", "PostCloseCommand", "PostUserOptionsCommand",
+  return {"PostPickCommand", "PostProbeCommand", "PostDeformCommand", "PostAnimationCommand", "PostColorCommand", "PostLegendCommand", "PostFrameCommand", "PostOpenCommand", "PostListCommand", "PostSelectCommand", "PostCloseCommand", "PostUserOptionsCommand",
     "PostShowCommand", "PostHideCommand", "PostViewFitCommand", "PostViewCameraCommand",
     "PostViewRotateCommand", "PostViewPanCommand", "PostViewZoomCommand"};
 }
 
 CubitCommand* PostprocessorCommands::create_command(const std::string& key)
 {
+  if (key == "PostPickCommand")
+  {
+    return new PostPickCommand(application);
+  }
+  if (key == "PostProbeCommand")
+  {
+    return new PostProbeCommand(application);
+  }
+  if (key == "PostDeformCommand")
+  {
+    return new PostDeformCommand(application);
+  }
+  if (key == "PostAnimationCommand")
+  {
+    return new PostAnimationCommand(application);
+  }
+  if (key == "PostColorCommand")
+  {
+    return new PostColorCommand(application);
+  }
+  if (key == "PostLegendCommand")
+  {
+    return new PostLegendCommand(application);
+  }
+  if (key == "PostFrameCommand")
+  {
+    return new PostFrameCommand(application);
+  }
   if (key == "PostViewCameraCommand")
   {
     return new PostViewCameraCommand(application);

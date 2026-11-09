@@ -8,10 +8,13 @@
 #include <string>
 #include <vector>
 
+class ReportSource;
+
 class CalculiXJobsInterface
 {
 public:
   bool get_monitor_snapshot(std::vector<JobMonitorEntry>& output, std::string& error) const;
+  bool get_report_source(int id, ReportSource& output, std::string& error);
   bool get_job_settings(int id, JobsSettings& settings, std::string& error);
   bool create_job(std::vector<std::string> options); // adds a new job
   bool modify_job(int job_id, std::vector<std::string> options, std::vector<int> options_marker); // modify a job

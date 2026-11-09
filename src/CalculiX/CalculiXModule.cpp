@@ -1,4 +1,6 @@
 #include "CalculiXModule.hpp"
+#include "Core/reporting/CalculiXReportTemplateProvider.hpp"
+#include "Core/reporting/CalculiXReportModelProvider.hpp"
 #include "Core/jobs/CalculiXJobMonitorProvider.hpp"
 #include "Commands/CalculiXCommands.hpp"
 #include "GUI/CalculiXGui.hpp"
@@ -99,6 +101,8 @@ bool CalculiXModule::initialize(UserOptionsInterface& options, DrawingInterface&
   commands = std::make_unique<CalculiXCommands>();
   resultProvider = std::make_unique<CalculiXResultSourceProvider>();
   monitorProvider = std::make_unique<CalculiXJobMonitorProvider>();
+  reportTemplates = std::make_unique<CalculiXReportTemplateProvider>();
+  reportModels = std::make_unique<CalculiXReportModelProvider>();
   application.core_observer().register_observer();
   observer_registered = true;
   return true;
@@ -107,6 +111,8 @@ bool CalculiXModule::initialize(UserOptionsInterface& options, DrawingInterface&
 void CalculiXModule::shutdown() noexcept
 {
   stop_component();
+  reportModels.reset();
+  reportTemplates.reset();
   monitorProvider.reset();
   resultProvider.reset();
 
@@ -229,4 +235,14 @@ bool CalculiXModule::workspace_view(WorkspaceView& view, std::string& error)
   }
 
   return gui->workspace_view(view, error);
+}
+
+ReportTemplateProviderInterface* CalculiXModule::report_template_provider() noexcept
+{
+  return reportTemplates.get();
+}
+
+ReportModelProviderInterface* CalculiXModule::report_model_provider() noexcept
+{
+  return reportModels.get();
 }

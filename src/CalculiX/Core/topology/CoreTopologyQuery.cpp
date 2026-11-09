@@ -516,3 +516,51 @@ bool CoreTopologyQuery::validate_selected_iterations(const CoreTopology& topolog
 
   return true;
 }
+
+std::vector<std::vector<double>> CoreTopologyQuery::get_iteration_level_set_field_data(const CoreTopology& topology, CoreJobs& jobs, int topology_id, int iteration_id)
+{
+  TopologyMethod method;
+  if (!get_iteration_method(topology, topology_id, iteration_id, method) || method != TopologyMethod::LevelSet)
+  {
+    PRINT_ERROR("Missing historical level-set design.\n");
+    return {};
+  }
+  const auto& configuration = topology.topology_cases.at(topology_id);
+  if (iteration_id == -1)
+  {
+    iteration_id = configuration.selected_iteration;
+  }
+  const int job_id = get_iteration_job_id(topology, jobs, topology_id, iteration_id);
+  if (job_id <= 0 || jobs.get_job_status(job_id) != 2 || configuration.iteration_evaluations.count(iteration_id) == 0)
+  {
+    PRINT_ERROR("Topology iteration %d is not a completed evaluation.\n", iteration_id);
+    return {};
+  }
+  const auto& design = configuration.iteration_level_set_designs.at(iteration_id);
+  if (design.node_values.empty())
+  {
+    PRINT_ERROR("Empty historical level-set field.\n");
+    return {};
+  }
+  for (const int node_id : design.fixed_nodes)
+  {
+    if (design.node_values.count(node_id) == 0)
+    {
+      PRINT_ERROR("Missing fixed level-set node %d.\n", node_id);
+      return {};
+    }
+  }
+  std::vector<std::vector<double>> rows;
+  rows.reserve(design.node_values.size());
+  for (const auto& node : design.node_values)
+  {
+    const bool fixed = design.fixed_nodes.count(node.first) != 0;
+    if (node.first <= 0 || !std::isfinite(node.second) || node.second < -1.0 || node.second > 1.0 || (fixed && node.second != 1.0))
+    {
+      PRINT_ERROR("Invalid historical level-set node %d.\n", node.first);
+      return {};
+    }
+    rows.push_back({static_cast<double>(node.first), node.second, fixed ? 1.0 : 0.0});
+  }
+  return rows;
+}

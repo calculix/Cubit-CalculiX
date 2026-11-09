@@ -30,6 +30,8 @@ struct CoreTopologyModelValidationData
 class CoreTopologyModelValidation
 {
 public:
+  /// Compile-time developer capability; never persisted in a topology case.
+  static bool level_set_run_enabled();
   static bool validate_displacement_selection(const CoreTopology& topology, int topology_id, int iteration_id);
   static bool validate_run(const CoreTopology& topology, MeshExportInterface& mesh, int topology_id, const std::function<bool()>& validate_model);
   static bool validate_model(const CoreTopologyModelValidationData& data, bool require_zero_displacements);

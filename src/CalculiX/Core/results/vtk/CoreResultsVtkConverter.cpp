@@ -623,6 +623,12 @@ namespace
 
   bool attach(const Domain& domain, vtkUnstructuredGrid* grid, SimResults::Field metadata, vtkSmartPointer<vtkDoubleArray> array, vtkSmartPointer<vtkUnsignedCharArray> mask, bool any_invalid, GridValidity& validity, SimResults::Increment& increment, std::string& error)
   {
+    if ((metadata.source == "FRD" && metadata.name == "DISP" && metadata.components.size() >= 3) ||
+        (metadata.name == "IntegrationPointDisplacement" && metadata.components.size() == 3))
+    {
+      metadata.vector_components = std::array<std::size_t, 3>{0, 1, 2};
+      metadata.role = SimResults::FieldRole::Displacement;
+    }
     metadata.dataset_id = domain.metadata.id;
     metadata.array_name = array_name(metadata);
     metadata.validity_array = "Valid/" + metadata.array_name;

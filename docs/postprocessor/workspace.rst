@@ -24,6 +24,7 @@ Layout and actions
    Workspace header: Cubit | CalculiX | Postprocessor
    Postprocessor menu: File | View | Results | Help
    Toolbar: List sources | Close selected source | Fit visible results
+   Results row: [Field selection] [Deformation] [Result navigation]
    +-------------------+-----------------------------+--------------------+
    | Sources / Results | Own Postprocessor viewport   | Properties         |
    |                   |                             |                    |
@@ -35,7 +36,7 @@ Layout and actions
    Cubit status and progress
 
 The left dock lists opened source names. Selecting a source submits the existing
-``post select`` command. The right dock shows read-only source information. Sources
+``post select`` command. The right dock shows source information and the editable Display section. Sources
 opened or closed from the command window also update the panels after command
 completion. Programmatic refresh does not submit selection commands.
 
@@ -123,3 +124,208 @@ force other applications to release their data.
 Scene and camera/fit revisions advance rather than restart. Old gestures and
 fit completions cannot restore pre-reset state. Reset during a provider operation
 is rejected with an error, preserving the existing Postprocessor session.
+
+Source catalogue and frame navigation
+-------------------------------------
+
+The source tree contains Mesh and Results. Each result family (for example DISP,
+STRESS or TOSTRAIN) appears once, independent of the number of frames or compatible
+mesh datasets. There is no Frames branch. Distinct associations, sets, origins or
+component layouts remain separate variants beneath the result family. Unavailable
+variants remain visible but disabled in the selected frame. Dataset/tooltips
+continue to describe mesh structure rather than result-frame history.
+
+The toolbar uses the same result catalogue. Applying a compatible group colors
+all its matching datasets in the active view; an explicitly typed dataset qualifier
+continues to restrict coloring to that dataset. Frame changes update availability
+without replacing result identities or losing tree expansion/selection.
+
+Result navigation is confined to its compact toolbar row. Its dropdown, first/previous/next/last
+buttons and horizontal slider select displayable frames, skipping unavailable mesh
+frames without renumbering the underlying sequence. Frame labels show solver step,
+increment and time supplied by the provider. Slider positions represent frame
+sequence positions, not uniformly spaced physical times.
+
+Slider dragging coalesces pending input and previews absolute frame commands through
+silent_cmd. Release submits one normal absolute command when Record result navigation
+is enabled; the dropdown and buttons commit immediately. With recording disabled,
+GUI frame commits use silent commands too. Source opening/closing remains journaled.
+Changes of source, view, result snapshot or external frame state invalidate a pending
+drag. Hiding the toolbar cancels an owned drag back to its initial frame without a
+journal entry. Reset clears pending slider input and stale navigation state.
+
+Result colors
+-------------
+
+The toolbar selects a field and component for the active source/view. Double-click
+a tree field to apply it: declared vectors initially use magnitude, other fields
+use their first published component. These actions submit explicit source/array
+commands for the logical result group. Choosing Solid color disables contours while retaining palette,
+range and limit preferences. Geometry is not deformed by result coloring.
+
+Classic rainbow is the factory default palette. Viridis, Blue-white-red, Turbo and Grayscale are
+also available, with reversal and continuous or 2..256-band display. The current
+palette implementations use Core-owned RGB control points. Current-frame ranges cover valid samples of all compatible selected datasets in
+the current frame. All frames uses their combined finite minimum and maximum
+across the source's result sequence; its scale stays fixed during animation.
+Fixed ranges use user-entered bounds. Symmetric ranges use [-M,+M] for the current
+frame.
+
+Set **Default result palette** in **Cubit-Sim - Postprocessor** options to choose
+the palette for newly created result displays. Save persists this preference;
+Reset to defaults stages Classic rainbow until Save. Existing displays retain
+their palette, which can be changed separately using Properties -> Palette -> Apply.
+Classic rainbow uses blue-to-cyan-to-green-to-yellow-to-red RGB stops with dark
+blue and dark red endpoints.
+
+A field absent from the selected frame produces neutral geometry and an
+unavailable legend, retaining the requested field selection for later frames.
+The legend identifies the source and component; enabled limit labels show their
+thresholds and colors separately from the palette range. Palette, range, bands,
+limits and legend visibility are editable in the Display section of Properties
+and through commands.
+
+Result navigation toolbar
+-------------------------
+
+Three separate movable/floatable toolbars share this row in the order **Field
+selection**, **Deformation**, **Result navigation**. Each has its own View-menu
+toggle. Navigation is last so its slider can use the remaining width. Framework
+restores that default ordering on workspace activation, with a row break before
+Field selection. The main toolbar retains source/view actions and :doc:`selection`
+controls.
+
+The Deformation toolbar contains:
+**Deform**, displacement field, **Scale**, and **Undeformed**. There is no Apply
+button. Checkboxes and field selection update the selected source in the active
+view immediately through journaled ``post deform`` commands, independently of the
+navigation journal option. Programmatic refresh does not submit commands.
+
+The field dropdown defaults to **Automatic displacement**. For CalculiX this uses
+``DISP`` on ordinary mesh datasets and the converter's calculated
+``IntegrationPointDisplacement`` on integration-point datasets. Each dataset/frame
+resolves its own role-marked vector. Explicit selection overrides Automatic;
+returning to Automatic retains the previous explicit selection internally.
+Missing or ambiguous automatic fields leave that dataset undeformed with a warning.
+External vectors without role metadata remain available for explicit selection.
+
+Enable Deform and enter a nonnegative scale. Valid scale input previews after a
+250 ms typing pause through silent commands. Enter or leaving the field submits
+the final normal command once, including when the preview already displays that
+value. Incomplete input such as ``1e-`` keeps the last valid display; finishing
+retains and, if changed, journals that last valid value. Scale defaults to 1 and
+stays fixed during animation. Deformation itself remains off by default. Coordinates and
+displacement must use compatible units; the display uses
+``position = original position + scale * displacement``. **Undeformed** adds a
+neutral wireframe of the original mesh while deformation is enabled. Turning
+Deform off retains the field, scale and overlay preference.
+
+Coloring is independent: stress can color the displaced mesh. Source coordinates,
+result arrays and tree data are preserved. Only point-associated fields with
+declared XYZ vector components are selectable; derived magnitude columns are never
+used as coordinates. Both surfaces and actual element edges move. Fit includes
+the displaced mesh and, when enabled, the original overlay.
+
+Missing vectors display the current frame's original mesh with a warning in the
+command output. Invalid or masked displacement samples keep original coordinates;
+arithmetic overflow is handled the same way. Previous-frame geometry is never
+retained as a substitute. Hover the toolbar's **Error** label for command failures.
+Rejected changes reload the actual settings. Source, view or snapshot changes
+cancel pending scale input; ordinary frame navigation preserves an active scale
+edit. Hiding the toolbar cancels an owned preview silently. A net-zero scale edit
+restores silently rather than adding a journal entry. Each completed checkbox,
+field or scale action is independent.
+
+Result navigation is the last toolbar on the shared results row beneath the
+main Postprocessor toolbar. It contains frame buttons, Play/Pause, the frame
+selector, slider, FPS and Loop without an expanding dock area. The toolbar can
+be moved or floated; View > Result navigation controls visibility. The Framework
+reasserts workspace toolbar row grouping on activation and preserves visibility.
+Command Line remains in its own full center-column dock.
+
+Animation controls
+-------------------
+
+Result navigation includes a Play/Pause button, an FPS spinbox and a Loop
+checkbox. Play starts from the current frame, skipping frames without displayable
+meshes. Starting from the final frame restarts from the first. Loop is initially
+off, so playback stops at the end. Check Loop to repeat the sequence; changing
+it during playback applies immediately. Playback does not interpolate physical
+time between result frames. FPS is a target rate and may be lower for expensive
+frame updates.
+
+Manual stepping or slider dragging pauses animation. Hiding the navigation toolbar
+or leaving the workspace pauses it too. FPS/Loop settings remain associated with
+that source/view; another representation starts with its own Core defaults.
+
+Display Properties editor
+--------------------------
+
+The right Properties dock contains source information and a scrollable Display
+editor for the selected source's representation in the active view. Field and
+component are read-only here; use the toolbar or result tree to select them.
+
+Edit palette, reversal, continuous/banded contours, band count, range mode, fixed
+bounds, independent minimum/maximum limits and their colors, and legend visibility.
+Numeric inputs accept scientific notation using a decimal point. Fixed bounds
+are editable only in Fixed mode; their disabled values are retained fixed-range
+settings, not computed extrema. Choose All frames to keep colors and the legend
+on a common scale throughout playback. Each limit's value/color
+controls are enabled by its checkbox. Disabled limits retain their saved values.
+
+Changes are staged until Apply. A valid draft is applied through existing
+source-qualified color/legend commands. Animation and frame updates preserve
+unsaved edits while the representation, published result and committed coloring
+stay the same. A source/view/result replacement or an external coloring change
+reloads the committed settings. No selected representation disables the editor.
+
+Apply validates the complete draft before submitting anything. Limit updates
+may temporarily disable/configure/re-enable endpoints so intermediate command
+states remain valid. If submission or a handler fails, remaining commands stop
+and the panel reloads the state that actually committed, with an inline error.
+Successful earlier commands remain applied; Apply is not a multi-command undo
+transaction. Closing a color dialog after its owning context changes does not
+apply that color to the newly selected representation.
+
+All-frame legend range
+-----------------------
+
+In Properties > Range, choose All frames and Apply, or run
+``post color range allframes source "first_run"``. The legend then spans the
+selected field/component's valid minimum and maximum over every compatible
+dataset and frame. Missing, masked and nonfinite values are excluded. Limit
+highlighting does not change this range. Values can therefore change color
+during playback without the legend being rescaled each frame.
+
+The first calculation scans the selected source; its numeric result is cached
+for that immutable snapshot and selection. A refreshed/replaced source computes
+a new range. No valid samples means an unavailable range, not an invented zero
+interval. Use Fixed to set explicit legend bounds manually.
+
+Dataset visibility and isolation
+--------------------------------
+
+Mesh dataset rows have checkboxes and a context menu with Show, Hide, Show only
+and Show all datasets. The source checkbox remains a master switch; toggling it
+preserves child dataset choices. A dataset checkbox represents its stored choice,
+so it can remain checked while its parent source is hidden. Show on a dataset,
+Show only and Show all datasets also enable that parent source.
+
+Show only isolates datasets within the selected source, leaving other sources
+unchanged. Visibility belongs to the active view and survives frame changes and
+animation. Datasets absent in the current frame remain listed with an availability
+note and can still be configured for later frames. A source refresh clears old
+dataset overrides because a new snapshot may reuse IDs for different datasets.
+Reset and source closure remove their representation settings normally.
+
+The GUI journals unique published dataset names; duplicate or unrepresentable
+names use numeric IDs. Unnamed datasets display Dataset N and use IDs. Tooltips
+include the actual ID, independent of the dataset's position in the tree.
+Independent single-grid sources without dataset metadata expose dataset 0.
+
+Fit excludes hidden datasets and their undeformed overlays. Current-frame and
+symmetric automatic ranges use only visible compatible datasets. All frames
+combines their valid extrema across frames and remains fixed during playback;
+changing visibility can change that range. Fixed bounds and limit thresholds
+remain unchanged. Legends disappear when their scoped datasets have no visible
+geometry. Hiding keeps source arrays and cached actor geometry in memory.

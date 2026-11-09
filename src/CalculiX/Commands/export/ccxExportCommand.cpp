@@ -72,6 +72,8 @@ std::vector<std::string> ccxExportCommand::get_help()
 bool ccxExportCommand::execute(CubitCommandData &data)
 {
   CalculiXApplicationInterface ccx_application_iface;
+  CalculiXExportInterface ccx_export_iface;
+  ccx_export_iface.trace_export("export.execute.enter");
 
   std::ofstream output_file;
   MeshExportInterface *iface;
@@ -123,7 +125,12 @@ bool ccxExportCommand::execute(CubitCommandData &data)
     return false;
   }
 
-  const auto mesh_guard = qScopeGuard([&]() { CubitInterface::release_interface(iface); });
+  const auto mesh_guard = qScopeGuard([&]()
+  {
+    ccx_export_iface.trace_export("export.mesh_release.enter");
+    CubitInterface::release_interface(iface);
+    ccx_export_iface.trace_export("export.mesh_release.leave");
+  });
 
   // Get the Material Interface from CubitInterface
   material_iface = dynamic_cast<MaterialInterface*>(CubitInterface::get_interface("Material"));
@@ -134,26 +141,50 @@ bool ccxExportCommand::execute(CubitCommandData &data)
   }
 
 
-  const auto material_guard = qScopeGuard([&]() { CubitInterface::release_interface(material_iface); });
+  const auto material_guard = qScopeGuard([&]()
+  {
+    ccx_export_iface.trace_export("export.material_release.enter");
+    CubitInterface::release_interface(material_iface);
+    ccx_export_iface.trace_export("export.material_release.leave");
+  });
 
   // Now we can use the interface as before
   iface->set_use_sequential_ids(false);
 
   const bool previous_gui_block = ccx_application_iface.block_gui_update();
   ccx_application_iface.set_block_gui_update(true);
-  const auto gui_guard = qScopeGuard([&]() { ccx_application_iface.set_block_gui_update(previous_gui_block); });
+  const auto gui_guard = qScopeGuard([&]()
+  {
+    ccx_export_iface.trace_export("export.gui_restore.enter");
+    ccx_application_iface.set_block_gui_update(previous_gui_block);
+    ccx_export_iface.trace_export("export.gui_restore.leave");
+  });
   try
   {
-    const bool result = open_file(filename, output_file) && write_file(output_file, iface, material_iface, topology_id, iteration_id);
+    ccx_export_iface.trace_export("export.file_open.enter");
+    const bool opened = open_file(filename, output_file);
+    ccx_export_iface.trace_export("export.file_open.leave");
+    bool result = false;
+    if (opened)
+    {
+      ccx_export_iface.trace_export("export.write_file.enter");
+      result = write_file(output_file, iface, material_iface, topology_id, iteration_id);
+      ccx_export_iface.trace_export("export.write_file.leave");
+    }
+    ccx_export_iface.trace_export("export.file_close.enter");
     close_file(output_file);
+    ccx_export_iface.trace_export("export.file_close.leave");
+    ccx_export_iface.trace_export(result ? "export.execute.success" : "export.execute.failure");
     return result;
   }
   catch (const std::exception& error)
   {
+    ccx_export_iface.trace_export("export.execute.exception");
     PRINT_ERROR("CCX input export '%s' failed: %s\n", filename.c_str(), error.what());
   }
   catch (...)
   {
+    ccx_export_iface.trace_export("export.execute.unexpected_exception");
     PRINT_ERROR("CCX input export '%s' failed with an unexpected exception.\n", filename.c_str());
   }
   return false;
@@ -235,13 +266,16 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
     {
       try
       {
+        ccx_export_iface.trace_export("export.interrupted_cleanup.enter");
         if (!ccx_export_iface.clean_export())
         {
           PRINT_ERROR("Failed to clean up interrupted CCX export data.\n");
         }
+        ccx_export_iface.trace_export("export.interrupted_cleanup.leave");
       }
       catch (...)
       {
+        ccx_export_iface.trace_export("export.interrupted_cleanup.exception");
         PRINT_ERROR("Exception while cleaning up interrupted CCX export data.\n");
       }
     }
@@ -249,10 +283,13 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
     {
       try
       {
+        ccx_export_iface.trace_export("export.interrupted_progress_end.enter");
         progressbar->end();
+        ccx_export_iface.trace_export("export.interrupted_progress_end.leave");
       }
       catch (...)
       {
+        ccx_export_iface.trace_export("export.interrupted_progress_end.exception");
         PRINT_ERROR("Unable to end the CCX export progress display.\n");
       }
     }
@@ -367,33 +404,45 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
     //clean export data
     stage = "cleaning export data";
     cleanup_pending = false;
+    ccx_export_iface.trace_export("export.cleanup.enter");
     const bool cleanup_ok = ccx_export_iface.clean_export();
+    ccx_export_iface.trace_export("export.cleanup.leave");
     if (!cleanup_ok)
     {
       PRINT_ERROR("Failed to clean up prepared export data.\n");
     }
+    ccx_export_iface.trace_export("export.final_progress_step.enter");
     progressbar->step();
+    ccx_export_iface.trace_export("export.final_progress_step.leave");
 
+    stage = "ending export progress";
     progress_started = false;
+    ccx_export_iface.trace_export("export.progress_end.enter");
     progressbar->end();
+    ccx_export_iface.trace_export("export.progress_end.leave");
 
     if (result && cleanup_ok && output_file.good())
     {
+      stage = "writing export end custom lines";
+      ccx_export_iface.trace_export("export.end_custom_lines.enter");
       customline = ccx_export_iface.get_customline_data("END","EXPORT",-1);
       for (size_t icl = 0; icl < customline.size(); icl++)
       {
         output_file << customline[icl] << "\n";
       }
+      ccx_export_iface.trace_export("export.end_custom_lines.leave");
     }
 
     return result && cleanup_ok && output_file.good();
   }
   catch (const std::exception& error)
   {
+    ccx_export_iface.trace_export("export.write_file.exception");
     PRINT_ERROR("CCX input export failed during %s: %s\n", stage, error.what());
   }
   catch (...)
   {
+    ccx_export_iface.trace_export("export.write_file.unexpected_exception");
     PRINT_ERROR("CCX input export failed during %s with an unexpected exception.\n", stage);
   }
   return false;

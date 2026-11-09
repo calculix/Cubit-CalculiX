@@ -244,11 +244,16 @@ shared-face/midside validation and preserved-neighbor checks. Mandatory restorat
 and nonlinear backtracking remain C3D8-only. Loaded binary revision remains
 unrecorded; this is Windows evidence, not Linux or curved/mixed-mesh certification.
 
-The next test sources add seed initialization before each update phase and a
-fifth standalone length-resolution test. These additions have not been built
-or executed. Their raw-default seed checks are distinct from controlled
-broad-band initial-geometry checks; controller, seeding persistence and actual
-default-width optimizer execution remain pending. No public gate is removed.
+The fifth standalone initialization suite subsequently passed on Windows
+(0.20 seconds test time, 0.23 seconds CTest wall time). Live run
+``20261108T202157Z_9bab925c`` passed all 18 fixtures, 36 phases and 6561 checks:
+4527 initialization checks and 2034 update checks, with zero failures. Retained
+summaries are :download:`standalone initialization <verification/topology-native-initialization-20261108.csv>`
+and :download:`live initialization/update <verification/topology-live-initialization-20261108.csv>`.
+The loaded binary revision was not recorded. Raw-default seed checks remain
+distinct from controlled broad-band complete geometry (width 1, five refinements,
+Core tolerance 1e-4). This does not certify default-width optimizer execution.
+Controller and persistence verification remain pending.
 
 Current integration evidence
 ----------------------------
@@ -587,8 +592,8 @@ Limitations and coverage still needed
        deterministic restoration/backtracking coverage remains C3D8-only.
        Controller and historical persistence remain separate; public runs gated.
    * - Level-set seed initialization
-     - Automatic-length and live field/fallback/initial-design tests supplied;
-       new build/run pending. Default-width initial integration is separate.
+     - Standalone initialization and all 18 live seed fixtures passed on Windows.
+       Default-width initial integration is separate.
    * - Filtered sensitivities
      - Not established as exact derivatives of a separate filtered objective.
        Objective finite differences do not verify the filter implementation.
@@ -603,3 +608,433 @@ The previous documentation also reported inconsistent raw outputs in earlier
 multithreaded solver runs; their cause was not investigated. This chapter does
 not diagnose that solver behavior. A reproduction of the reported historical
 setup would use one solver thread and record the reader thread count separately.
+
+Developer controller and persistence verification
+------------------------------------------------
+
+``CUBITSIM_VERIFY_LEVEL_SET_CONTROLLER`` is a default-OFF CMake option on
+``calculix_core``. It admits only level-set compliance through the normal
+``ccx run topology`` controller. Density behavior and other model validation
+remain unchanged. Level-set displacement and mass remain unsupported. The
+capability is queried from the loaded binary, never saved in a case and never
+inferred from file contents. Ordinary builds reject level-set execution.
+GUI run controls remain gated; this stage uses commands.
+
+``tests/topology/verify_level_set_controller.jou`` is the local, Git-ignored
+Python-mode entry point. Run it only after rebuilding/restarting the verification
+plugin with the option enabled. It performs no build itself and checks the
+capability and wrapper methods before any reset. Missing capability reports
+BLOCKED and leaves the model untouched. Save current work before running it::
+
+   playback "C:/Users/offic/Desktop/Git/Cubit-CalculiX/tests/topology/verify_level_set_controller.jou"
+
+The journal runs two or three physical compliance iterations for each of the
+six supported solid formulations at width 1, integration tolerance 1e-4 and
+five refinements. It checks final DAT energy
+against C = 2 sum(U), field/factor completeness, fixed coefficients +1, changed
+physical designs, consecutive history, and no extra terminal job. Iteration-limit
+termination is allowed but is never recorded as convergence. Selection uses the
+existing Python selection interface because there is no separate selection CLI;
+run, modify, save/open, rerun and deletion use ordinary commands.
+
+It selects iteration 1, saves a native cub5, resets/reopens, compares settings,
+selection, evaluations, nodal fields and element fractions/factors, then checks
+rerun/deletion isolation from an unrelated case. It does not resume a run on
+reopen or require solver files to be deleted. Evidence is retained below
+``tests/controller_topology_runs/<token>/``. The first unexpected failure stops
+later stages, retains the model/files, and restores playback pause and cwd.
+
+``is_topology_level_set_run_enabled()`` reports the loaded Core capability.
+``get_topology_iteration_level_set_field_data(id, iteration=-1)`` returns sorted
+``[global node ID, phi, fixed flag]`` rows for a completed historical level-set
+design. Omitted iteration resolves the selected iteration; invalid/missing
+history reports a Cubit error and returns an empty vector. Coefficients must be
+finite in [-1,1], fixed nodes must exist with phi=+1. The query uses the captured
+historical method and stored field, without querying current mesh geometry.
+
+Controller/persistence evidence
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Windows run ``20261109T085516Z_1ae3883b`` passed all five original stages:
+fixture, physical controller, completed history, native persistence, and
+rerun/deletion isolation. Three C3D8 physical iterations completed and terminated
+at ``iteration_limit``, not convergence. Field/factor/preservation checks and
+compliance against final DAT energy passed. Selection and stored history matched
+after save/reset/open. The loaded plugin revision was not recorded. Empty FRD
+result messages did not invalidate these DAT-based checks; this evidence does
+not verify FRD displacement output or result conversion.
+
+Windows run ``20261109T090529Z_00f2deae`` passed all ten C3D8 stages, including
+the lifecycle extension: nonblocking start/separate wait, immediate kill and
+restart, infeasible-target preparation failure and recovery, and reset while active.
+Expected failed commands are logged and followed by explicit state/job checks.
+Unrelated-case isolation is checked before the final reset, which intentionally
+clears the whole model. The failure target is a valid positive fraction (0.01)
+below this fixture's pinned-element bound; it tests preparation failure, not
+solver-process failure. Immediate kill does not establish retention of already
+completed iterations during a later kill.
+
+Keep ``CUBITSIM_VERIFY_LEVEL_SET_CONTROLLER=ON`` in the active build cache while
+running these and later physical level-set verification journals. It may be
+turned OFF whenever returning to ordinary use; reconfigure/rebuild and restart
+Cubit for that change to affect the loaded binary. OFF blocks level-set runs,
+but does not invalidate saved evidence or enable production support. Removal of
+the verification gate is a separate future code change after the agreed evidence
+review, not a consequence of turning this option OFF.
+
+Remaining stages include kill after completed iterations, solver-process failure
+cleanup, default-width physical runs, six-formulation physical level-set coverage,
+GUI lifecycle and Linux evidence. Passing these scoped tests does not establish
+optimizer convergence or production readiness.
+
+Six-formulation physical controller matrix
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Status: **PASS on Windows**. The same controller journal runs the five
+physical-controller/history/persistence/rerun-deletion stages for C3D8, C3D20,
+C3D4, C3D10, C3D6 and C3D15. C3D8 additionally runs its five lifecycle stages.
+All cases retain width 1, integration tolerance 1e-4, five refinements, at most
+three evaluated physical designs and material cap 8. No tolerance is relaxed
+automatically after a failure. This is broad-band controller verification,
+not default-width or convergence certification.
+
+Expected nodal domains and preserved-node unions use expanded connectivity,
+including midside nodes for quadratic formulations. Each iteration must cover
+the complete element/node domain, preserve fixed coefficients and solid factors,
+respect the material cap, and agree with compliance from final DAT energy.
+The existing wedge fixture checks remain in use. Native persistence compares
+settings, evaluations, selected history, nodal fields and element fractions/factors.
+
+Suite report.json and commands.csv stay at the run root. Each formulation has
+its own directory containing solver files, connectivity.csv, completed.json,
+controller_history.cub5 and reopened.json. The extra C3D8 lifecycle files reside
+in C3D8/lifecycle. Case and stage statuses identify the formulation; a failure
+stops the matrix and retains the current model/evidence, with later cases marked
+NOT EXECUTED. Missing expanded-connectivity support is BLOCKED before reset.
+Keep the developer capability ON for this matrix. Production code and GUI gates
+are unchanged by this journal extension.
+
+The expanded Windows matrix subsequently passed in run
+``20261109T091152Z_850deaec``: all six formulations and all 35 stages, including
+C3D8 lifecycle checks. These are broad-band compliance/controller and native
+persistence results, not convergence or default-width certification. Loaded
+binary revision remains unrecorded.
+
+The reference-quadrature regression run ``20261109T133442Z_73ec62b3`` also
+passed all 35 stages. Fields, element fractions/factors and iteration histories
+match baseline ``20261109T110825Z_0fb770d1`` exactly for all six formulations;
+the only settings difference is the generated case name. All 31 input-export
+commands returned successfully, with matching mesh-interface release markers.
+The earlier C3D10 iteration-2 export exception did not recur; tracing has not
+established its cause. See ``verification/topology-controller-quadrature-20261109.csv``
+for the per-formulation evidence summary. This is not a convergence certificate.
+
+Longer level-set convergence study
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``tests/topology/verify_level_set_convergence.jou`` is a separate, Git-ignored
+C3D8 compliance study with at most 60 evaluated designs. It resets the model
+and runs physical jobs; save existing work before playback. The existing
+35-stage regression journal is unchanged. Run inside Cubit with the developer
+controller capability enabled::
+
+   playback "C:/Users/offic/Desktop/Git/Cubit-CalculiX/tests/topology/verify_level_set_convergence.jou"
+
+The reviewed beam fixture retains target volume fraction 0.7, material cap 8,
+interface width 1, integration tolerance 1e-4 and five refinements. Field and
+compliance convergence tolerances come from Core defaults and are recorded from
+the created case. The study does not relax tolerances or tune moves after failure.
+
+Each completed iteration is checked for full node/element coverage, preservation,
+valid fractions/factors and compliance equal to twice the final DAT internal
+energy. Consecutive stored fields and objectives independently determine maximum
+field change and relative compliance change. Their values are compared with
+the history diagnostics. The ordinary proposal residual remains in command
+output and is not independently verified by this journal. Compliance need not
+decrease monotonically during volume restoration.
+
+``tests/convergence_topology_runs/<token>/`` retains report.json, commands.csv,
+iterations.csv, final_snapshot.json, convergence_history.cub5 and solver files.
+The CSV reports volume excess above the target separately from feasibility at
+the documented update tolerance of 1e-6. Execution PASS means the run and data
+checks succeeded. An iteration-limit exit records convergence NOT_REACHED,
+even when volume is feasible. Only a converged exit with consistent diagnostics
+counts as REACHED; this is still not a global-optimality certificate.
+Tracing is disabled temporarily to avoid diagnostic I/O in timing observations;
+the inherited environment value and playback-error setting are restored afterward.
+The initial Windows run ``20261109T140032Z_dd5a3f68`` completed all 60
+iterations with execution PASS, volume feasible and convergence NOT_REACHED.
+Volume first became feasible at iteration 6. Final volume fraction was
+0.6990696864, compliance 6307.9029024, maximum field change 0.1 (limit 0.01)
+and relative compliance change 0.0137706168 (limit 0.001).
+All ten successive update-direction pairs in the final ten iterations reversed;
+their mean cosine was -0.9980559798. This indicates persistent field oscillation,
+not a convergence certificate. The fixed move limit was 0.1; material grouping
+or other algorithm choices are not excluded as contributing causes.
+
+The tracked ``verification/topology-level-set-convergence-20261109.csv``
+archives all 60 baseline rows, with oscillation diagnostics calculated from the
+stored nodal fields. For d_k = phi_k - phi_(k-1), successive_update_cosine is
+the normalized dot product of d_k and d_(k-1). It is empty when either update
+has zero norm or fewer than three fields exist. two_iteration_field_change is
+max(abs(phi_k - phi_(k-2))). These diagnostics do not modify convergence tests.
+
+The journal now requests level_set_move_limit 0.05 and compares with that
+recorded 0.1 baseline. All other case settings except the generated name must
+match before starting physical jobs; missing baseline files block before model
+reset. Both runs use the same reviewed fixture construction. Settings comparison
+does not independently certify identical mesh/model data or binary revisions.
+Each run retains its unique directory. report.json compares first feasible
+iteration, final compliance/volume/field changes, termination and final-ten
+update reversal statistics. A smaller move limit is an experiment, not a promise
+of convergence. This 0.05 comparison has not yet been executed in Cubit.
+
+Cubit progress display
+~~~~~~~~~~~~~~~~~~~~~~
+
+``CoreTopologyProgress.hpp/.cpp`` owns one calling-thread Cubit ProgressTool
+scope. Level-set geometry integration and compliance sensitivity evaluation
+report completed elements in the current pass. Proposal/source checks and
+backtracking use the same geometry pass automatically. Each pass starts at 0,
+updates at most once per 200 ms, reserves 100 percent for successful validation,
+and ends its progress scope on every return path. Initial/final display bypasses
+the interval limit. No progress bar is required when the service is unavailable.
+
+An optional callback reaches the composite integration subdivision-cell loop,
+so a slow individual element can service progress/interrupt polling without
+waiting for that element to finish. The percentage can remain unchanged during
+such an element; it measures completed elements, not elapsed-time completion.
+No extra event-processing loop or worker thread is introduced. Interruption
+returns false through the existing calculation/controller failure path; it does
+not introduce a separate killed-state policy. Geometry output stays cleared and
+complete designs/evaluations are committed only after successful final checks.
+Numerical rules and tolerances are unchanged.
+
+Progress repainting, interruption and the regression after this source change
+are **PENDING EXECUTION**. The passing matrix above predates the progress change.
+
+Level-set timing diagnostics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Geometry and compliance sensitivity passes print one two-line summary on scope
+exit, including unsuccessful and interrupted passes. They report iteration,
+completed/total elements, Cubit mesh-query time, integration time, remaining
+wall time, the slowest attempted element, and maximum subdivisions among
+successfully integrated elements. An incomplete-element ID identifies the
+current element if its processing did not finish; -1 means no element was active
+at exit. Status complete means the output was committed; incomplete covers
+validation failure, interruption and exception unwinding, with the underlying
+error message providing the cause. An empty pass has slowest ID -1 and depth 0.
+
+Proposal summaries separate source-geometry reconstruction, graph/QP assembly,
+QP solving and total wall time. Acceptance summaries separate source geometry,
+accumulated candidate-geometry time, attempted trials, reductions used for the
+last attempted trial, and accepted scale when successful. The first trial counts
+as one trial and zero reductions. No accepted scale is reported on failure.
+
+These are calling-thread steady-clock wall times in milliseconds, including
+progress handling. Parent measurements include nested child measurements and
+must not be added to them. Query time measures query_element; integration time
+measures evaluate_element. Remaining work includes coefficient lookup, assembly,
+validation and bookkeeping. Normal false-return calls contribute elapsed time;
+if a call throws before returning, the outer total still includes that work but
+its unfinished subphase counter may not. No timer is sampled per quadrature
+point and no per-element message is emitted. Timing counters are local to the
+invocation, are not persisted and do not change numerical controls or results.
+
+Timing-output and numerical regression verification after this instrumentation
+are **PENDING EXECUTION**. Keep the developer capability ON for comparison runs.
+
+Proposal-owned source geometry reuse
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The first performance batch adds CoreTopologyLevelSetGeometryCache.hpp/.cpp.
+A fresh transient cache is populated by the source build_geometry pass in
+build_proposal. The successful proposal owns it through a shared pointer;
+accept_proposal may reuse it only for its source pass. Consuming/clearing the
+controller proposal releases ownership, including terminal-state cleanup. No
+cache is serialized or retained in historical designs/evaluations. Ordinary
+cache-free calls remain valid.
+
+Every pass still queries the current Cubit element type, ordered expanded node
+IDs, coordinates and volume. Exact input equality is required for a hit, including
+nodal coefficients, preservation, interface width, integration tolerance and
+maximum refinements. All settings are validated even on hits. Other valid
+settings do not change this geometry operation. A changed valid input causes
+normal integration; invalid data still fails. Different positive source
+iterations never reuse or overwrite the cache's entries. There is no fingerprint
+and no assumed mesh immutability. The stored input vectors are comparison data
+for this proposal, not an authoritative mesh model. Additional transient memory
+is proportional to the participating source mesh.
+
+Only successfully integrated element geometry is published. Failed/interrupted
+misses leave prior entries intact and cannot publish partial geometry. Hits
+service the same calling-thread, 200 ms throttled polling callback. Existing
+complete-domain, fixed-node, volume, interface and source/proposal consistency
+checks remain in place. Candidate/backtracking geometry and physical compliance
+sensitivity evaluation remain uncached in this batch; therefore this change
+removes one repeated source integration pass, not both repeated passes.
+
+Geometry summaries report per-pass cache hits/misses and lookup/copy/validation
+time separately from actual integration. Counter deltas are local to the pass,
+while the cache itself counts over its proposal lifetime. Missing caches report
+zero hits/misses. Integration depth on a hit describes the stored result's
+quadrature depth, not newly performed quadrature. Timings include comparison and
+copy overhead; parent and child times still must not be added together.
+
+Local native target topology_geometry_cache_tests and CTest topology_geometry_cache
+exercise all six formulations against uncached geometry, input changes,
+iteration isolation, invalid requests and interrupt/retry behavior. Evidence is
+written to build/topology-tests/evidence/geometry_cache.csv. Like the other local
+tests, the sources remain Git-ignored and link the existing production binary.
+No build or native execution was performed for this batch. These tests and the
+35-stage controller journal are **PENDING EXECUTION** after the cache change.
+Keep the developer capability ON; compare source acceptance time with the
+pre-cache C3D10 timing evidence before considering further reuse.
+
+Sensitivity-to-proposal cache handoff
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The first cache batch passed all 35 controller stages in Windows run
+``20261109T102928Z_452b4f2d``. Its saved fields, element fractions/factors and
+iteration history matched the pre-cache run ``20261109T095215Z_b6449391`` exactly
+for all six formulations. C3D10 source acceptance after iteration 2 fell from
+27.913 seconds to 0.202 seconds, with 22600 hits, zero misses and no integration
+in that source pass. Total acceptance fell from 70.839 to 41.840 seconds, including
+ordinary run-to-run variation in candidate integration. This evidence predates
+the next handoff extension; it does not record a native cache-suite result.
+
+The second batch creates one fresh source cache in finish_topology_iteration,
+after confirming the physical job and reading case settings. It is created only
+for level-set compliance. A non-owning pointer is forwarded through the existing
+run interface/coordinator bridge into numerical sensitivity evaluation. The
+same shared cache is then moved through the proposal interface into build_proposal,
+which transfers ownership to the successful transient proposal. No cache pointer
+is stored in the historical evaluation. Early failures release local ownership;
+existing proposal consumption/terminal cleanup releases ownership afterward.
+
+The source is still queried and compared exactly at each pass. Sensitivity
+assembly retains fraction consistency, complete nodal-domain and fixed-node
+checks. Candidate geometry remains uncached. Standalone callers may omit the
+optional cache; build_proposal then creates its own as before. No numerical
+control, persistence layout, command or GUI changes are introduced.
+
+For an unchanged 22600-element C3D10 source, expected per-pass counters are:
+sensitivities 22600 misses, proposal source 22600 hits, acceptance source 22600
+hits, and no cache for candidate integration. Sensitivity summaries now separate
+lookup/copy/validation overhead from actual integration and other work, using
+per-pass counter deltas. Runtime savings for proposal construction must still
+be measured; passing counts alone does not verify numerical equivalence.
+
+The live update verification helper now compares uncached, fresh-cache and
+cache-hit sensitivity evaluations exactly, including every nodal derivative,
+volume and factor-approximation flag. It compares proposals with independently
+reintegrated source geometry and accepted designs/factors/diagnostics with a
+cache-free source acceptance. Ownership transfer and source-only hit/miss counts
+are checked. These comparisons supplement the existing independent analytical
+and KKT checks; they are not another mathematical reference. Rebuild/reload the
+live helper with the plugin before running verify_level_set_update.jou. Its
+exported journal ABI is unchanged, but internal C++ signatures changed.
+
+This handoff extension passed the physical 35-stage Windows controller run
+``20261109T110825Z_0fb770d1``. Fields, element fractions/factors and iteration
+history matched ``20261109T102928Z_452b4f2d`` exactly for all six formulations.
+The subsequent live equivalence run ``20261109T121528Z_72c9d6ef`` passed all
+18 fixtures and 36 phases: 4527 initialization checks plus 2254 update checks,
+6781 total with zero failures. The compact tracked summary is
+:download:`live cache-handoff evidence <verification/topology-live-cache-handoff-20261109.csv>`.
+Loaded plugin revision remains unrecorded. This does not establish default-width,
+curved/mixed-mesh or Linux behavior, or supply the separate standalone
+``topology_geometry_cache`` result. Keep CUBITSIM_VERIFY_LEVEL_SET_CONTROLLER ON
+for subsequent physical level-set verification.
+
+Opt-in live initialization hang trace
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+CoreTopologyTrace.hpp/.cpp writes timestamped UTC events to the path in
+CUBITSIM_TOPOLOGY_TRACE_FILE. An unset/empty value disables tracing. Each event
+opens/appends, flushes and closes its file; file-open/write failure does not
+change calculation return values. Tracing is diagnostic I/O and can affect
+timings; it is not enabled automatically by ordinary topology runs and adds no
+CMake option. No worker thread or additional event-processing loop is introduced.
+
+The live update journal defaults to TRACE_NATIVE = False. After successful
+library/API preflight it temporarily removes CUBITSIM_TOPOLOGY_TRACE_FILE, even
+if inherited, so normal verification does not include diagnostic trace I/O.
+Set TRACE_NATIVE = True in the journal to enable OUTPUT/native-trace.log before
+the first fixture. report.json records native_trace_enabled and a nullable
+native_trace path. Its previous environment value is restored on normal return
+or Python exception;
+a native call that remains blocked cannot execute that finally block until it
+returns. Restart Cubit after a forced termination before another verification run.
+
+Progress-service markers bracket app_util, progress_tool, start, initial/periodic/
+final percent, check_interrupt, interrupt-flag access and end. Periodic markers
+remain behind the existing 200 ms throttle. Initial-design markers separate seed
+initialization, geometry and factor construction without changing short-circuit
+failure behavior or output commits. Live seed stages also emit flushed console
+and trace markers for default seed, forced fallback, controlled seed and complete
+initial design. Compare the final unmatched enter marker with the last CSV row;
+a marker alone narrows the blocked call but does not establish its internal cause.
+
+The shared local Checks utility has an optional flush_rows flag, default false.
+Only the two live entry points enable it, flushing the CSV header and every
+completed check row. Native standalone tests retain their existing buffering.
+Rebuild the plugin and live helper, restart Cubit and rerun the same live journal.
+The initial reproduction and successful CDLL rerun are recorded below.
+No numerical rules or tolerances changed. Disabling automatic tracing is a
+journal-only cleanup; it has not itself been run in Cubit.
+
+The first captured hang trace in live run ``20261109T120621Z_de576a25`` ends at
+progress.start.enter, without its matching leave. This locates the block in
+Cubit ProgressTool::start before integration, but does not establish the
+internal locking cause. The live journal now loads its C boundary with
+ctypes.CDLL instead of PyDLL, releasing the GIL during the synchronous native
+call while keeping the same calling thread. The boundary uses C++/Cubit APIs,
+not direct Python C API calls. With the rebuilt live helper and CDLL loader,
+run ``20261109T121528Z_72c9d6ef`` completed all fixtures; its trace reaches
+progress.end.leave. The progress-start hang did not reproduce. This supports a
+GIL/progress-service locking interaction, but does not reveal Cubit's internal
+locking implementation. Trace-enabled timings include diagnostic file I/O and
+are not a clean performance baseline. Native tracing remains available on demand;
+the journal now disables it by default.
+
+Reference quadrature cache verification
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The performance batch adds the pass-local reference-rule cache and the
+precomputed-reference physical mapping entry point. The user-reported Windows
+native run passed all seven suites, including topology_quadrature, in 16.53 s.
+Existing numerical accuracy limits are unchanged.
+The new local target topology_quadrature_tests / CTest topology_quadrature writes
+build/topology-tests/evidence/quadrature.csv. It links the production library and
+requires rebuilding the plugin and native tests because helper signatures changed.
+
+Coverage includes all six formulations: prepared/ordinary mapping, independent
+finite-difference Jacobians using fixture-based node matching, partition of unity,
+zero summed reference gradients, canonical reference volumes, reused rules,
+element-specific determinants on perturbed corner/midside geometry, and
+cached/ordinary/zero-budget integration comparisons. Inverted elements, malformed
+reference gradients, direct output aliasing, unsupported rules, interrupted
+construction/hits, partial budget exhaustion and oversized level-32 requests
+exercise rejection and fallback behavior. No large table should be allocated
+when its estimate already exceeds the remaining payload budget.
+
+Pass summaries distinguish reference-rule hits, successful builds, budget
+fallbacks and retained payload bytes from integrated-source cache hits/misses.
+Source-cache hits do not use reference quadrature, so those passes may report
+zero rule activity. Rule generation is included in integration time; the first
+request pays its cost. Pass-local table destruction occurs after its inner timing
+summary but is included in surrounding caller wall times. The budget limits
+retained point/vector payload, not total process RSS or allocator/map overhead.
+
+The seven native suites and the 35-stage physical controller regression have
+passed on Windows. Physical run ``20261109T133442Z_73ec62b3`` retains exact
+historical fields, factors and evaluations against ``20261109T110825Z_0fb770d1``.
+The complete live update matrix after this quadrature change remains
+**PENDING EXECUTION**; its earlier baseline is ``20261109T121528Z_72c9d6ef``.
+The latest physical run enabled diagnostic tracing, so it is not a clean timing
+comparison. Keep tracing disabled for performance runs and the controller
+verification capability ON. Do not relax tolerances after a failure; record
+timings before claiming an improvement. Broader curved/mixed-mesh physical and
+default-width verification remain separate from these small-fixture checks.

@@ -3,6 +3,7 @@
 
 #include "Framework/FrameworkExport.hpp"
 #include "Framework/Interfaces/ResultSourceRegistryInterface.hpp"
+#include "Framework/Reporting/ReportProviderRegistryInterface.hpp"
 
 #include <map>
 #include <memory>
@@ -20,7 +21,7 @@ class ResultSourceProviderInterface;
 class JobMonitorProviderInterface;
 class QWidget;
 
-class CUBITSIM_FRAMEWORK_EXPORT ModuleManager : public ResultSourceRegistryInterface
+class CUBITSIM_FRAMEWORK_EXPORT ModuleManager : public ResultSourceRegistryInterface, public ReportProviderRegistryInterface
 {
 public:
   ModuleManager();
@@ -47,6 +48,14 @@ public:
     ResolvedResultSourceProvider& output,
     std::string& error) const override;
 
+  bool available_report_sources(std::vector<ReportSourceEntry>& output, std::string& error) const override;
+  void bind_report_profiles(ReportProfileStoreInterface* store) noexcept;
+  bool resolve_model_reporting(const std::string& prefix, ReportTemplateProviderInterface*& templates,
+    ReportModelProviderInterface*& models, std::string& error) const override;
+  ReportProfileStoreInterface* report_profiles() const noexcept override;
+  ReportResultProviderInterface* report_results() const noexcept override;
+  ReportImageProviderInterface* report_images(const std::string& prefix) const noexcept override;
+
   std::vector<std::string> command_keys() const;
   CubitCommand* create_command(const std::string& key);
 
@@ -58,6 +67,11 @@ private:
   std::map<std::string, ResultSourceProviderInterface*> result_providers;
   std::map<std::string, ResultSourceProviderInterface*> application_result_providers;
 
+  std::map<std::string, ReportTemplateProviderInterface*> report_templates;
+  std::map<std::string, ReportModelProviderInterface*> report_models;
+  std::map<std::string, ReportImageProviderInterface*> report_image_providers;
+  ReportResultProviderInterface* result_report_provider = nullptr;
+  ReportProfileStoreInterface* profile_store = nullptr;
   std::vector<std::string> ordered_keys;
 
   bool registration_closed = false;

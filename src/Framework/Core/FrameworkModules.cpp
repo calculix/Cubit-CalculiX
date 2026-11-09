@@ -2,6 +2,7 @@
 #include "ModuleManager.hpp"
 #include "CalculiX/CalculiXModule.hpp"
 #include "Postprocessor/PostprocessorModule.hpp"
+#include "Report/ReportModule.hpp"
 #include "Framework/GUI/CommandDispatcher.hpp"
 #include "Claro.hpp"
 #include <QString>
@@ -23,5 +24,9 @@ bool register_framework_modules(ModuleManager& modules, std::string& error)
   {
     return CommandDispatcher::silent(Claro::instance(), QString::fromUtf8(command.c_str()), error);
   };
-  return modules.add_module(std::make_unique<PostprocessorModule>(modules, submit, silent), error);
+  if (!modules.add_module(std::make_unique<PostprocessorModule>(modules, submit, silent), error))
+  {
+    return false;
+  }
+  return modules.add_module(std::make_unique<ReportModule>(modules, submit, silent), error);
 }

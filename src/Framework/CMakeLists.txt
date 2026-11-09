@@ -47,7 +47,7 @@ add_library(cubitsim_framework SHARED
 target_compile_features(cubitsim_framework PUBLIC cxx_std_17)
 target_link_libraries(cubitsim_framework PUBLIC Qt6::Core)
 target_link_libraries(cubitsim_framework PRIVATE cubitsim_system Threads::Threads)
-target_link_libraries(cubitsim_framework PRIVATE cubitsim_storage cubitsim_drawing calculix_module postprocessor_module clarogui clarofw navigation cubiti cubit_util Qt6::Widgets)
+target_link_libraries(cubitsim_framework PRIVATE cubitsim_storage cubitsim_drawing calculix_module postprocessor_module report_module clarogui clarofw navigation cubiti cubit_util Qt6::Widgets)
 set_target_properties(cubitsim_framework PROPERTIES AUTOMOC ON)
 target_compile_definitions(cubitsim_framework PRIVATE CUBITSIM_FRAMEWORK_BUILD)
 target_include_directories(cubitsim_framework PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")

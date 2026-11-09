@@ -46,6 +46,7 @@ struct WorkspaceView
   // after one row break when native top toolbars are visible. Placement is
   // reasserted after layout restoration; per-toolbar visibility is preserved.
   QList<QToolBar*> toolbars;
+  QList<QToolBar*> toolbarRowBreaks;
   std::function<void(bool)> activationChanged;
   NavigationModel* navigationModel = nullptr;
   QPersistentModelIndex navigationRoot;
@@ -54,6 +55,11 @@ struct WorkspaceView
   // Borrowed page; nullptr retains the original Cubit viewport.
   QWidget* graphicsPage = nullptr;
   bool useNativeNavigation = true;
+  // Optional default dock between the graphics page and shared command dock.
+  QDockWidget* graphicsBottomDock = nullptr;
+  unsigned int graphicsBottomDockRevision = 1;
+  // Transient request supplied by WorkspaceManager during a layout migration.
+  bool initializeGraphicsBottomDock = false;
   WorkspaceDockLayout dockLayout = WorkspaceDockLayout::StackedLeft;
 };
 

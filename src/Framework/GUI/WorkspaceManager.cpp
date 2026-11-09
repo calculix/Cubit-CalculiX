@@ -142,6 +142,7 @@ bool WorkspaceManager::register_views(const std::vector<WorkspaceProviderInterfa
     if (it.key() != "cubit")
     {
       host->register_view(it.value());
+      bottomDockRevisions[it.key()] = settings.value(it.key()+"/BottomDockRevision",0).toUInt();
 
       if (settings.value("LayoutVersion", 1).toInt() == 1)
       {
@@ -234,7 +235,10 @@ bool WorkspaceManager::activate(const QString& id, std::string& error)
       firstVisit = true;
     }
 
-    if (!host->apply(views.value(id), selections.value(id), firstVisit, error))
+    auto targetView = views.value(id);
+    targetView.initializeGraphicsBottomDock = targetView.graphicsBottomDock != nullptr &&
+      bottomDockRevisions.value(id) < targetView.graphicsBottomDockRevision;
+    if (!host->apply(targetView, selections.value(id), firstVisit, error))
     {
       host->restore_layout(before);
       std::string rollbackError;
@@ -265,6 +269,14 @@ bool WorkspaceManager::activate(const QString& id, std::string& error)
     settings.beginGroup("Workspaces");
     settings.setValue("LayoutVersion", 1);
     settings.setValue(previous + "/Layout", before);
+    if (targetView.initializeGraphicsBottomDock)
+    {
+      // Persist the migrated layout with its revision as one successful step.
+      layouts[id] = host->save_layout();
+      settings.setValue(id+"/Layout",layouts.value(id));
+      bottomDockRevisions[id] = targetView.graphicsBottomDockRevision;
+      settings.setValue(id+"/BottomDockRevision",targetView.graphicsBottomDockRevision);
+    }
     return true;
   }
   catch (const std::exception& exception)

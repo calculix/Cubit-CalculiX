@@ -5,6 +5,7 @@
 #include <QIntValidator>
 #include <QStringList>
 #include <limits>
+#include <QPushButton>
 #include "DrawingOptionsWidget.hpp"
 
 UserOptionsPanel::UserOptionsPanel(QWidget *parent) :
@@ -68,6 +69,35 @@ UserOptionsPanel::UserOptionsPanel(QWidget *parent) :
   restartNotice->setWordWrap(true);
   restartNotice->hide();
   VBoxLayout->addWidget(restartNotice);
+  auto* reset = new QPushButton(tr("Reset to defaults"),this);
+  reset->setObjectName("CalculiX.Options.ResetDefaults");
+  reset->setToolTip(tr("Restore this page's Core defaults as unsaved edits. Press Save to apply."));
+  VBoxLayout->addWidget(reset);
+  connect(reset,&QPushButton::clicked,this,[this]()
+  {
+    UserOptionValues defaults;
+    for (const auto& item : CalculiXApplicationInterface().user_option_definitions())
+    {
+      defaults.emplace(item.key,item.defaultValue);
+    }
+    lineEdit_1->setText(QString::fromStdString(std::get<std::string>(defaults.at("paths/solver"))));
+    lineEdit_2->setText(QString::number(std::get<int>(defaults.at("execution/solver_threads"))));
+    lineEdit_3->setText(QString::number(std::get<int>(defaults.at("execution/converter_threads"))));
+    lineEdit_6->setText(QString::fromStdString(std::get<std::string>(defaults.at("paths/icons"))));
+    lineEdit_7->setText(QString::fromStdString(std::get<std::string>(defaults.at("paths/python_interface"))));
+    checkBox_8->setChecked(std::get<bool>(defaults.at("results/save_loaded_results")));
+    lineEdit_9->setText(QString::fromStdString(std::get<std::string>(defaults.at("paths/material_library"))));
+    DrawingOptions drawing;
+    drawing.sizeFactor = std::get<double>(defaults.at("drawing/size_factor"));
+    drawing.overlayVisible = std::get<bool>(defaults.at("drawing/overlay_visible"));
+    drawing.boundaryConditions = std::get<bool>(defaults.at("drawing/boundary_conditions"));
+    drawing.loads = std::get<bool>(defaults.at("drawing/loads"));
+    drawing.constraints = std::get<bool>(defaults.at("drawing/constraints"));
+    drawing.orientations = std::get<bool>(defaults.at("drawing/orientations"));
+    drawing.hoverColor = std::get<std::string>(defaults.at("drawing/hover_color"));
+    drawing.selectionColor = std::get<std::string>(defaults.at("drawing/selection_color"));
+    drawingOptions->setOptions(drawing);
+  });
   VBoxLayout->addItem(vertical_spacer);
 
   HBoxLayout_1->addWidget(label_1);

@@ -1,0 +1,2 @@
+test,status,check_rows,failed_rows,test_seconds,ctest_wall_seconds,platform,plugin_revision
+topology_initialization,PASS,36,0,0.2,0.23,Windows,not recorded

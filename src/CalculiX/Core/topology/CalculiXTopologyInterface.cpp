@@ -360,3 +360,13 @@ std::vector<std::vector<std::string>> CalculiXTopologyInterface::get_topology_tr
 
   return ccx_core.topology->get_tree_data();
 }
+
+bool CalculiXTopologyInterface::is_topology_level_set_run_enabled()
+{
+  return ccx_core.is_topology_level_set_run_enabled();
+}
+
+std::vector<std::vector<double>> CalculiXTopologyInterface::get_topology_iteration_level_set_field_data(int topology_id, int iteration_id)
+{
+  return ccx_core.get_topology_iteration_level_set_field_data(topology_id, iteration_id);
+}

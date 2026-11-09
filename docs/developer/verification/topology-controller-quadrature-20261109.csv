@@ -1,0 +1,8 @@
+run_id,baseline_run_id,formulation,scope,status,passed_stages,fields,element_results,iteration_history,successful_exports,plugin_revision,platform,limitations
+20261109T133442Z_73ec62b3,20261109T110825Z_0fb770d1,C3D8,controller_and_persistence,PASS,10,exact,exact,exact,,not recorded,Windows,"Only generated case name differs; broad-band three-design regression, not convergence"
+20261109T133442Z_73ec62b3,20261109T110825Z_0fb770d1,C3D20,controller_and_persistence,PASS,5,exact,exact,exact,,not recorded,Windows,"Only generated case name differs; broad-band three-design regression, not convergence"
+20261109T133442Z_73ec62b3,20261109T110825Z_0fb770d1,C3D4,controller_and_persistence,PASS,5,exact,exact,exact,,not recorded,Windows,"Only generated case name differs; broad-band three-design regression, not convergence"
+20261109T133442Z_73ec62b3,20261109T110825Z_0fb770d1,C3D10,controller_and_persistence,PASS,5,exact,exact,exact,,not recorded,Windows,"Only generated case name differs; broad-band three-design regression, not convergence"
+20261109T133442Z_73ec62b3,20261109T110825Z_0fb770d1,C3D6,controller_and_persistence,PASS,5,exact,exact,exact,,not recorded,Windows,"Only generated case name differs; broad-band three-design regression, not convergence"
+20261109T133442Z_73ec62b3,20261109T110825Z_0fb770d1,C3D15,controller_and_persistence,PASS,5,exact,exact,exact,,not recorded,Windows,"Only generated case name differs; broad-band three-design regression, not convergence"
+20261109T133442Z_73ec62b3,20261109T110825Z_0fb770d1,all_six,export_return_and_cleanup,PASS,35,,,,31,not recorded,Windows,"31 command returns and matching GUI/material/mesh cleanup markers; earlier exception not reproduced, cause unresolved"

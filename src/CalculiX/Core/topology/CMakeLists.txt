@@ -1,4 +1,12 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetQuadrature.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetQuadrature.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyTrace.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyTrace.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetGeometryCache.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetGeometryCache.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyProgress.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyProgress.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetQP.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetQP.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologySaveValidation.hpp

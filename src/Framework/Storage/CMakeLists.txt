@@ -1,5 +1,7 @@
 # Shared storage foundation: no dependency on the host or workspace modules.
 add_library(cubitsim_storage SHARED
+  Hdf5FileTransaction.cpp Hdf5FileTransaction.hpp
+  ReportProfileStore.cpp ReportProfileStore.hpp
   UserOptionsStore.cpp
   UserOptionsStore.hpp
   ../Utility/FrameworkPaths.cpp
@@ -16,7 +18,7 @@ add_library(cubitsim_storage SHARED
 target_compile_features(cubitsim_storage PUBLIC cxx_std_17)
 target_compile_definitions(cubitsim_storage PRIVATE CUBITSIM_STORAGE_BUILD)
 target_include_directories(cubitsim_storage PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}" "${CUBITSIM_SOURCE_ROOT}")
-target_link_libraries(cubitsim_storage PUBLIC HDF5::HDF5 PRIVATE cubit_util Qt6::Core)
+target_link_libraries(cubitsim_storage PUBLIC HDF5::HDF5 cubitsim_reporting PRIVATE cubit_util Qt6::Core)
 if (CMAKE_DL_LIBS)
   target_link_libraries(cubitsim_storage PRIVATE ${CMAKE_DL_LIBS})
 endif()

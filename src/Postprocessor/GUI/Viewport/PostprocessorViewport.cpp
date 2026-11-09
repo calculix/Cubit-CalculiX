@@ -4,8 +4,12 @@
 #include "PostprocessorTriad.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "CubitMessage.hpp"
+#include "Postprocessor/Commands/selection/PickCommandText.hpp"
 
 #include <QEvent>
+#include <QMouseEvent>
+#include <QCursor>
+#include <QApplication>
 #include <QShowEvent>
 #include <QTimer>
 #include <QScopedValueRollback>
@@ -21,7 +25,7 @@
 PostprocessorViewport::PostprocessorViewport(const std::string& view_id,
   std::weak_ptr<PostprocessorApplicationInterface> active, Dispatch submit, Dispatch silent, QWidget* parent)
   : QVTKOpenGLNativeWidget(static_cast<vtkGenericOpenGLRenderWindow*>(nullptr), parent),
-    application(active), viewId(view_id)
+    submitCommand(submit), application(active), viewId(view_id)
 {
   setObjectName("Postprocessor.Viewport");
   auto surfaceFormat = QVTKOpenGLNativeWidget::defaultFormat();
@@ -36,6 +40,10 @@ PostprocessorViewport::PostprocessorViewport(const std::string& view_id,
   setRenderWindow(sceneWindow.GetPointer());
   scene = std::make_unique<PostprocessorScene>(renderer, viewId);
   triad = std::make_unique<PostprocessorTriad>(sceneWindow);
+  hoverTimer = new QTimer(this);
+  hoverTimer->setSingleShot(true);
+  hoverTimer->setInterval(Postprocessor::SelectionDefaults::hover_interval_ms);
+  connect(hoverTimer,&QTimer::timeout,this,&PostprocessorViewport::update_hover);
   connect(this, &QOpenGLWidget::frameSwapped, this, &PostprocessorViewport::on_frame_presented);
   interaction = std::make_unique<CameraInteraction>(this, viewId, active, std::move(submit),
     std::move(silent), [this]()
@@ -48,6 +56,9 @@ PostprocessorViewport::PostprocessorViewport(const std::string& view_id,
     }, &timings, [this]()
     {
       queue_timing_report();
+    },[this](const QPointF& position)
+    {
+      pick(position);
     });
 }
 
@@ -67,6 +78,99 @@ void PostprocessorViewport::cancel_interaction()
 void PostprocessorViewport::fit_view()
 {
   interaction->fit();
+}
+
+void PostprocessorViewport::clear_hover()
+{
+  if (hoverTimer)
+  {
+    hoverTimer->stop();
+  }
+  if (scene && scene->clear_hover())
+  {
+    queue_render();
+  }
+}
+
+void PostprocessorViewport::update_hover()
+{
+  const auto active = application.lock();
+  if (!active || active->session().active_view_id != viewId || !isVisible() ||
+      QApplication::mouseButtons() != Qt::NoButton || !rect().contains(mapFromGlobal(QCursor::pos())))
+  {
+    clear_hover();
+    return;
+  }
+  const auto view = active->session().views.find(viewId);
+  if (view == active->session().views.end())
+  {
+    clear_hover();
+    return;
+  }
+  std::string error;
+  if (!scene->synchronize(*active,error))
+  {
+    clear_hover();
+    return;
+  }
+  std::optional<Postprocessor::EntityReference> entity;
+  const double ratio = devicePixelRatioF();
+  if (!scene->pick(hoverPosition.x()*ratio,(height()-1-hoverPosition.y())*ratio,view->second.selection.mode,entity,error))
+  {
+    clear_hover();
+    return;
+  }
+  // Preselection is renderer-only feedback. It does not change Core selection,
+  // the probe readout, the active source, or the command journal.
+  if (scene->set_hover(entity,*active))
+  {
+    queue_render();
+  }
+}
+
+void PostprocessorViewport::pick(const QPointF& position)
+{
+  clear_hover();
+  const auto active = application.lock();
+  if (!active || active->session().active_view_id != viewId)
+  {
+    return;
+  }
+  std::string error, command;
+  if (!scene->synchronize(*active,error))
+  {
+    report_error(error);
+    return;
+  }
+  const auto view = active->session().views.find(viewId);
+  if (view == active->session().views.end())
+  {
+    return;
+  }
+  std::optional<Postprocessor::EntityReference> entity;
+  const double ratio = devicePixelRatioF();
+  if (!scene->pick(position.x()*ratio,(height()-1-position.y())*ratio,view->second.selection.mode,entity,error))
+  {
+    report_error(error);
+    return;
+  }
+  if (entity)
+  {
+    if (!Postprocessor::pick_command_text(*active,*entity,command,error))
+    {
+      report_error(error);
+      return;
+    }
+  }
+  else
+  {
+    command = "post pick clear";
+  }
+  if (!submitCommand || !submitCommand(QString::fromUtf8(command.c_str()),error))
+  {
+    report_error(error.empty() ? "Selection command rejected." : error);
+  }
+  synchronize(active);
 }
 
 bool PostprocessorViewport::camera_command_active() const noexcept
@@ -91,6 +195,28 @@ void PostprocessorViewport::resizeGL(int width, int height)
 
 bool PostprocessorViewport::event(QEvent* event)
 {
+  if (event->type() == QEvent::MouseMove && hoverTimer)
+  {
+    auto* mouse = static_cast<QMouseEvent*>(event);
+    if (mouse->buttons() == Qt::NoButton && mouse->modifiers() == Qt::NoModifier)
+    {
+      hoverPosition = mouse->position();
+      if (!hoverTimer->isActive())
+      {
+        hoverTimer->start();
+      }
+    }
+    else
+    {
+      clear_hover();
+    }
+  }
+  else if (event->type() == QEvent::Leave || event->type() == QEvent::MouseButtonPress ||
+           event->type() == QEvent::Wheel || event->type() == QEvent::KeyPress ||
+           event->type() == QEvent::Hide || event->type() == QEvent::WindowDeactivate)
+  {
+    clear_hover();
+  }
   if (interaction && interaction->handle(event))
   {
     event->accept();
@@ -141,6 +267,7 @@ void PostprocessorViewport::synchronize(const std::shared_ptr<PostprocessorAppli
     scene->clear();
     renderedGeometry.reset();
     renderedCamera.reset();
+    renderedSelection.reset();
     return;
   }
   // CPU-side synchronization releases closed actors even while this view is hidden.
@@ -150,10 +277,12 @@ void PostprocessorViewport::synchronize(const std::shared_ptr<PostprocessorAppli
   {
     report_error(error);
   }
+  report_warning();
   const auto view = active->session().views.find(viewId);
   const auto& options = active->user_options();
   if (!renderedGeometry || *renderedGeometry != active->display_revision() ||
       view == active->session().views.end() || !renderedCamera || *renderedCamera != view->second.camera_revision ||
+      !renderedSelection || *renderedSelection != view->second.selection.revision ||
       options.backgroundTop != renderedOptions.backgroundTop || options.backgroundBottom != renderedOptions.backgroundBottom ||
       options.triadVisible != renderedOptions.triadVisible)
   {
@@ -216,6 +345,19 @@ void PostprocessorViewport::on_frame_presented()
   }
 }
 
+void PostprocessorViewport::report_warning()
+{
+  const auto& warning = scene->warning();
+  if (warning != lastWarning)
+  {
+    if (!warning.empty())
+    {
+      PRINT_WARNING("Postprocessor deformation: %s\n",warning.c_str());
+    }
+    lastWarning = warning;
+  }
+}
+
 void PostprocessorViewport::report_error(const std::string& error)
 {
   if (error != lastError)
@@ -237,6 +379,7 @@ void PostprocessorViewport::render_scene()
     std::string error;
     const auto sceneStarted = timings.frame_stamp();
     const bool synchronized = scene->synchronize(*active, error);
+    report_warning();
     timings.record(CameraTimingStage::SceneSynchronization, sceneStarted);
     bool completed = synchronized;
     if (!synchronized)
@@ -282,6 +425,7 @@ void PostprocessorViewport::render_scene()
       if (current != active->session().views.end())
       {
         renderedCamera = current->second.camera_revision;
+        renderedSelection = current->second.selection.revision;
       }
       // Copy only display scalars, never paths or complete session registries.
       renderedOptions.backgroundTop = options.backgroundTop;

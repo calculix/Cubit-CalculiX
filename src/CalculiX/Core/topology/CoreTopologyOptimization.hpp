@@ -177,7 +177,7 @@ private:
   bool prepare_topology_iteration(int topology_id, int source_iteration, int next_iteration);
   bool check_topology_convergence(int topology_id, int previous_iteration, int current_iteration, bool& converged);
   void advance_topology_run(int topology_id, unsigned long long serial);
-  bool evaluate_topology_objective(int topology_id, int iteration_id);
+  bool evaluate_topology_objective(int topology_id, int iteration_id, CoreTopologyLevelSetGeometryCache* cache = nullptr);
   void finish_topology_run(int topology_id, unsigned long long serial, TopologyRunState state);
   void fail_topology_run(int topology_id, unsigned long long serial);
 };

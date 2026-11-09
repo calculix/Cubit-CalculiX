@@ -17,9 +17,11 @@ production nodal accumulation/normalization also passed its analytical Windows
 suite on 8 November. The extracted numerical QP suite subsequently passed too.
 The Cubit-hosted proposal/acceptance library and journal passed the C3D8 batch.
 Its six-formulation extension passed all 18 groups after the C3D10 refinement
-regression and five-refinement live-test budget. New seed-initialization tests
-have **not been built or executed** in this batch. No Python math replica or public
-run-gate removal is supplied; the developer entry calls stateless helpers.
+regression and five-refinement live-test budget. Standalone initialization and
+all 18 live initialization/update fixtures subsequently passed (36 phases,
+6561 checks). See :doc:`topology-verification` for retained evidence. The developer
+helper entry remains stateless; controller verification now has a separate,
+default-OFF build capability, not a runtime bypass command.
 
 Local entry points have different scopes:
 
@@ -165,8 +167,9 @@ An artificially saturated initial field must fail geometry resolution without
 changing its input. All-preserved, missing-domain and invalid-void requests must
 reject, clearing raw designs and complete-design/factor outputs.
 
-Both native initialization suites are pending execution. No new production
-settings, model owner, command or Python-interface method is introduced.
+Both native initialization suites passed on Windows. Complete-design checks
+use broad-band settings and do not certify default-width integration. No Python
+math replica or additional model owner is introduced.
 
 Reference element fixtures
 ---------------------------
@@ -414,8 +417,10 @@ Wrong iteration, changed source volume, out-of-bounds field and inconsistent
 residual must reject with cleared outputs. Aliasing rejects before clearing
 and preserves source data. A lower-bound rejection clears the proposal record.
 
-The journal uses standard-library ctypes.PyDLL to retain the GIL and call the
-library synchronously on Cubit's thread. It checks mesh IDs/connectivity/node
+The journal uses standard-library ctypes.CDLL to release the GIL while calling
+the library synchronously on the calling Cubit thread. Python reacquires the GIL
+after return; the native boundary does not call the Python C API. This avoids
+holding the GIL across Cubit GUI progress-service calls. It checks mesh IDs/connectivity/node
 coordinates before and after. The library compares job and topology tree rows
 through the existing interfaces, requiring no created/started job or new case.
 Analytical energies q/(2*s) are supplied; no solver process is launched. This
@@ -424,7 +429,7 @@ verification. Seed generation, persistence and curved/mixed meshes remain
 outside this batch. The original C3D8 cases passed; the six-formulation extension
 first ran with 11 passing groups, one C3D10 preserved-neighbor integration-limit
 failure and six unexecuted wedge groups. The five-refinement rerun then passed
-all 18 groups (2034 checks). New seed-initialization phases are pending.
+all 18 groups (2034 checks). Subsequent seed/update execution passed 36 phases and 6561 checks.
 Integration failures must be investigated rather than automatically relaxed.
 
 Build/run procedure for later authorized verification
@@ -456,12 +461,14 @@ commands.csv, and separate per-fixture check/mesh CSVs. A failing group stops
 later groups and retains its current mesh. Expected native rejection messages
 are distinguished by boolean/CSV checks, not the total Cubit error count.
 The tests directory remains Git-ignored and is not a manual download dependency.
-The seed-extended live target and journal have not been built/run in this batch.
+The seed-extended live target and journal passed 18 fixtures / 36 phases on Windows
+in run ``20261108T202157Z_9bab925c``; see :doc:`topology-verification`.
 Both exported entries are checked before reset. Each fixture now runs
 initialization first, then update, with separate phase statuses and CSVs named
 <formulation>_<fixture>_initialization.csv and <formulation>_<fixture>.csv.
-Initialization failure leaves update and later groups NOT EXECUTED. All native
-calls retain the GIL and neither creates a case/job nor changes the live mesh.
+Initialization failure leaves update and later groups NOT EXECUTED. Native
+calls release the GIL while remaining synchronous on the calling thread; neither
+entry creates a case/job nor changes the live mesh.
 
 Use current Cubit elements with a complete node domain and at least one preserved
 and one free region. Query current volumes/connectivity and call the existing
@@ -494,3 +501,55 @@ Keep the public gate until the required native evidence is reviewed. The later
 OpenPisco comparison is an additional reference, followed by a separate review
 of whether its bundled source is still needed; source removal is not authorized
 by completing this specification.
+
+The default-OFF developer controller capability and passing Windows broad-band
+controller/persistence evidence are specified in :doc:`topology-verification`.
+This capability does not enable production or GUI level-set runs.
+
+Current cache-handoff evidence
+------------------------------
+
+Physical run 20261109T110825Z_0fb770d1 passed all 35 Windows controller stages
+and retained exact fields, factors and history against its preceding run for
+all six formulations. Live run 20261109T121528Z_72c9d6ef passed 18 fixtures /
+36 phases / 6781 checks (4527 initialization + 2254 update), zero failures,
+including cached-versus-uncached evaluation/proposal/acceptance comparisons.
+The loaded plugin revision was not recorded. See :doc:`topology-verification`
+for the tracked per-phase CSV and remaining scope. The standalone cache test
+has no separately supplied result and is not marked passed here.
+
+The CDLL rerun completed progress start/end; the previous hang did not reproduce.
+This supports the GIL/progress-service diagnosis without establishing SDK locking
+internals. TRACE_NATIVE defaults to False in the live journal to avoid diagnostic
+file I/O in normal verification; True restores hang tracing. The original process
+environment is restored on normal return/Python failure. Default-width,
+curved/mixed meshes, broader lifecycle, GUI and Linux verification remain separate.
+
+Reference quadrature reuse regression
+-------------------------------------
+
+The pass-local rule cache must agree with ordinary integration for values,
+fractions, volume-scaled derivatives and refinement choice at existing tolerances.
+Its prepared mapping needs independent physical-map finite-difference Jacobian
+checks, including perturbed midside nodes, so agreement between two delegating
+entry points is not the sole reference. Reference weights must sum to canonical
+volume and shapes/gradients satisfy partition identities for all six types.
+Zero/exhausted budgets must choose uncached evaluation, preserving numerical
+settings. Interrupted construction must leave no published rule or retained
+payload; borrowed pointers remain stable until pass destruction.
+
+The user-reported Windows run passed all seven native suites, including the
+quadrature suite. Physical controller run ``20261109T133442Z_73ec62b3`` passed
+all 35 stages with fields, element results and histories identical to the
+pre-quadrature baseline. The full live update regression after quadrature reuse
+is still pending; no clean timing comparison or successful longer-run convergence
+is established. C3D8 run ``20261109T140032Z_dd5a3f68`` passed execution and
+reached volume feasibility at iteration 6 but ended at iteration 60 without
+convergence, with persistent field reversal at move limit 0.1. The journal now
+prepares a fixed-move 0.05 comparison with all other case settings unchanged
+except the generated name. Direction cosine and two-iteration field change are
+diagnostics, not convergence criteria. That comparison remains unexecuted;
+see :doc:`topology-verification`.
+A 32 MiB point/vector payload budget does not
+claim a hard bound on total process RSS. Reference data never justifies reusing
+physical Jacobians across elements or assuming curved mappings are affine.

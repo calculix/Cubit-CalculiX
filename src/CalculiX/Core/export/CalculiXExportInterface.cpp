@@ -5,6 +5,7 @@
 
 #include "Core/export/CoreCustomLines.hpp"
 #include "Core/loadCalculiXCore.hpp"
+#include "Core/topology/CoreTopologyTrace.hpp"
 
 std::vector<int> CalculiXExportInterface::get_customline_ids()
 {
@@ -19,6 +20,11 @@ bool CalculiXExportInterface::prepare_export()
 bool CalculiXExportInterface::clean_export()
 {
   return ccx_core.loadstrajectory->clean_export_if_needed();
+}
+
+void CalculiXExportInterface::trace_export(const char* event)
+{
+  CoreTopologyTrace::write(event);
 }
 
 bool CalculiXExportInterface::create_customline(std::vector<std::string> options)

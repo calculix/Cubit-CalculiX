@@ -2,6 +2,7 @@
 #include "FrameworkModules.hpp"
 #include "Framework/Drawing/DrawingService.hpp"
 #include "Framework/Storage/UserOptionsStore.hpp"
+#include "Framework/Storage/ReportProfileStore.hpp"
 #include "Framework/Utility/FrameworkPaths.hpp"
 #include "Framework/GUI/UserOptionsManager.hpp"
 #include "Framework/GUI/WorkspaceManager.hpp"
@@ -74,9 +75,13 @@ bool FrameworkContext::acquire(std::string& error)
       options.reset();
       return false;
     }
+    reportProfiles = std::make_unique<ReportProfileStore>(options->options_filename());
+    modules.bind_report_profiles(reportProfiles.get());
     drawings = std::make_unique<DrawingService>();
     if (!modules.initialize(*options, *drawings, error))
     {
+      modules.bind_report_profiles(nullptr);
+      reportProfiles.reset();
       drawings.reset();
       preferences.reset();
       options.reset();
@@ -101,6 +106,8 @@ void FrameworkContext::release() noexcept
   {
     detach_workspace_host();
     modules.shutdown();
+    modules.bind_report_profiles(nullptr);
+    reportProfiles.reset();
     drawings.reset();
     preferences.reset();
     options.reset();

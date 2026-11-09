@@ -10,6 +10,10 @@ class ComponentProviderInterface;
 class WorkspaceProviderInterface;
 class ResultSourceProviderInterface;
 class JobMonitorProviderInterface;
+class ReportTemplateProviderInterface;
+class ReportModelProviderInterface;
+class ReportResultProviderInterface;
+class ReportImageProviderInterface;
 
 class ModuleInterface
 {
@@ -35,6 +39,24 @@ public:
 
   // Borrowed only while initialized. Queries run on the application owner thread.
   virtual JobMonitorProviderInterface* job_monitor_provider() noexcept
+  {
+    return nullptr;
+  }
+
+  // Reporting providers are optional and independent of loaded GUI components.
+  virtual ReportTemplateProviderInterface* report_template_provider() noexcept
+  {
+    return nullptr;
+  }
+  virtual ReportModelProviderInterface* report_model_provider() noexcept
+  {
+    return nullptr;
+  }
+  virtual ReportResultProviderInterface* report_result_provider() noexcept
+  {
+    return nullptr;
+  }
+  virtual ReportImageProviderInterface* report_image_provider() noexcept
   {
     return nullptr;
   }

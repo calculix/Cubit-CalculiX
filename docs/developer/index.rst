@@ -14,4 +14,5 @@ implementations are excluded.
    framework
    calculix
    postprocessor
+   reporting
    ../README

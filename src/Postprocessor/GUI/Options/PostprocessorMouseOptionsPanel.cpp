@@ -10,6 +10,7 @@
 #include <utility>
 #include <type_traits>
 #include <QVariant>
+#include <QPushButton>
 
 PostprocessorMouseOptionsPanel::PostprocessorMouseOptionsPanel(
   std::weak_ptr<PostprocessorApplicationInterface> active,
@@ -52,6 +53,28 @@ PostprocessorMouseOptionsPanel::PostprocessorMouseOptionsPanel(
   auto* note = new QLabel(tr("These settings control Postprocessor viewports independently of Cubit. Saved changes apply to the next gesture."), this);
   note->setWordWrap(true);
   layout->addWidget(note);
+  auto* reset = new QPushButton(tr("Reset to defaults"),this);
+  reset->setObjectName("Postprocessor.Mouse.ResetDefaults");
+  reset->setToolTip(tr("Restore this page's Core defaults as unsaved edits. Press Save to apply."));
+  layout->addWidget(reset);
+  connect(reset,&QPushButton::clicked,this,[this]()
+  {
+    const auto active = application.lock();
+    if (!active)
+    {
+      return;
+    }
+    UserOptionValues defaults;
+    for (const auto& item : active->user_option_definitions())
+    {
+      defaults.emplace(item.key,item.defaultValue);
+    }
+    left->setCurrentIndex(left->findData(QString::fromStdString(std::get<std::string>(defaults.at("mouse/left")))));
+    middle->setCurrentIndex(middle->findData(QString::fromStdString(std::get<std::string>(defaults.at("mouse/middle")))));
+    right->setCurrentIndex(right->findData(QString::fromStdString(std::get<std::string>(defaults.at("mouse/right")))));
+    sensitivity->setValue(std::get<double>(defaults.at("mouse/sensitivity")));
+    reverseZoom->setChecked(std::get<bool>(defaults.at("mouse/reversezoom")));
+  });
   layout->addStretch();
   refresh_settings();
 }

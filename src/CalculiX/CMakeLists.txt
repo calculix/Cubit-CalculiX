@@ -233,6 +233,11 @@ if (UNIX)
     target_link_libraries(calculix_gui calculix_core)
 endif (UNIX)
 
+option(CUBITSIM_VERIFY_LEVEL_SET_CONTROLLER "Enable level-set compliance runs for controller verification" ON)
+if(CUBITSIM_VERIFY_LEVEL_SET_CONTROLLER)
+  target_compile_definitions(calculix_core PRIVATE CUBITSIM_VERIFY_LEVEL_SET_CONTROLLER)
+endif()
+
 # The wrapping command directly consumes the shared geometry API.
 target_link_libraries(calculix_commands cubitsim_geometry)
 target_link_libraries(calculix_core cubitsim_drawing)
@@ -285,6 +290,13 @@ if(POLICY CMP0071)
   cmake_policy(SET CMP0071 NEW)
 endif()
 
+target_sources(calculix_core PRIVATE
+  Core/reporting/CalculiXReportModelSnapshot.cpp Core/reporting/CalculiXReportModelSnapshot.hpp
+  Core/reporting/CalculiXReportInputReader.cpp Core/reporting/CalculiXReportInputReader.hpp
+  Core/reporting/CalculiXReportModelProvider.cpp Core/reporting/CalculiXReportModelProvider.hpp
+  Core/reporting/CalculiXReportTemplateProvider.cpp Core/reporting/CalculiXReportTemplateProvider.hpp
+)
+target_link_libraries(calculix_core cubitsim_reporting)
 add_library(calculix_module SHARED CalculiXModule.cpp CalculiXModule.hpp)
 if (WIN32)
   add_dependencies(calculix_module calculix_solver_runtime)

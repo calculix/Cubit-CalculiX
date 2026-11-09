@@ -2,6 +2,8 @@
 #define CUBITSIM_VTKRESULTSDATA_HPP
 
 #include <memory>
+#include <array>
+#include <optional>
 #include <string>
 #include <vector>
 #include <cstddef>
@@ -43,6 +45,12 @@ namespace SimResults
     Table
   };
 
+  enum class FieldRole
+  {
+    Unspecified,
+    Displacement
+  };
+
   struct Field
   {
     std::string name;
@@ -54,6 +62,12 @@ namespace SimResults
     std::string array_name;
     std::string validity_array;
     bool interpolated = false;
+    // Explicit physical vector components; derived extra columns are excluded.
+    // Absent for scalars/tensors or when the provider cannot establish semantics.
+    std::optional<std::array<std::size_t, 3>> vector_components;
+    // Provider-established physical meaning. Vector shape or array names alone
+    // do not establish displacement semantics for automatic deformation.
+    FieldRole role = FieldRole::Unspecified;
   };
 
   struct Dataset

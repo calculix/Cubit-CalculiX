@@ -2,6 +2,7 @@
 #include "CoreJobs.hpp"
 #include "CoreJobInputPreparation.hpp"
 #include "Core/topology/CoreTopologyOptimization.hpp"
+#include "Core/topology/CoreTopologyTrace.hpp"
 #include <QScopedValueRollback>
 
 bool CalculiXCore::create_job(std::vector<std::string> options)
@@ -75,7 +76,10 @@ bool CalculiXCore::prepare_job_input(int job_id, const std::string& filename)
 {
   const auto execute_command = [this](const std::string& text)
   {
-    return silent_cmd(text);
+    CoreTopologyTrace::write("job.export_command.enter");
+    const bool result = silent_cmd(text);
+    CoreTopologyTrace::write(result ? "job.export_command.success" : "job.export_command.failure");
+    return result;
   };
 
   return CoreJobInputPreparation::prepare(topology, job_export_context, job_id, filename, execute_command);

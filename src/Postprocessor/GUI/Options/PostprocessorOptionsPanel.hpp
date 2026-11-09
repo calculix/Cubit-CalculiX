@@ -11,6 +11,7 @@ class PostprocessorApplicationInterface;
 class QLineEdit;
 class QLabel;
 class QCheckBox;
+class QComboBox;
 class QPushButton;
 
 class PostprocessorOptionsPanel : public QWidget
@@ -29,7 +30,9 @@ private:
   QLineEdit* iconsPath = nullptr;
   QLabel* restartNotice = nullptr;
   QCheckBox* journalCamera = nullptr;
+  QCheckBox* journalNavigation = nullptr;
   QCheckBox* triad = nullptr;
+  QComboBox* resultPalette = nullptr;
   QPushButton* backgroundTop = nullptr;
   QPushButton* backgroundBottom = nullptr;
   void choose_color(QPushButton* button);

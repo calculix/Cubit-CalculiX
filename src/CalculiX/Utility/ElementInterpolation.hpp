@@ -32,6 +32,18 @@ namespace ElementInterpolation
    * and must be positive at this point. This is not an all-domain validity test.
    */
   bool evaluate_physical(const std::string& calculix_type, int cubit_type, const std::vector<Coordinates>& node_coordinates, const Coordinates& point, std::vector<double>& values, double& determinant);
+
+  /**
+   * @brief Map precomputed reference interpolation to one current physical element.
+   * @note Reference values/gradients use CalculiX order; output values use Cubit
+   * order. Recomputes the element-specific Jacobian, preserving accumulation
+   * order and subtraction of node_coordinates[0]. Inputs must not alias outputs.
+   * Direct vector aliasing is rejected before clearing the aliased input.
+   * @return False with empty values and zero determinant on invalid input or
+   * geometry (except the alias rejection above). Output capacity is reused.
+   */
+  bool evaluate_physical_from_reference(const std::string& calculix_type, int cubit_type, const std::vector<Coordinates>& node_coordinates, const std::vector<double>& reference_values, const std::vector<Coordinates>& reference_gradients, std::vector<double>& values, double& determinant);
+
 }
 
 #endif

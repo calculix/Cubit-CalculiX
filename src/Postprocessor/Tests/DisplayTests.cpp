@@ -13,9 +13,13 @@
 #include <vtkIdList.h>
 #include <vtkDataSet.h>
 #include <vtkDoubleArray.h>
+#include <vtkUnsignedCharArray.h>
+#include <limits>
 #include <vtkPointData.h>
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkMapper.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkLookupTable.h>
 #include <vtkOpenGLRenderer.h>
 #include <vtkPartitionedDataSet.h>
 #include <vtkPartitionedDataSetCollection.h>
@@ -26,7 +30,10 @@
 #include <vtkTable.h>
 #include <vtkUnstructuredGrid.h>
 #include <functional>
+#include <algorithm>
 #include <iostream>
+#include <cmath>
+#include <vtkPropCollection.h>
 
 namespace
 {
@@ -152,6 +159,376 @@ public:
   }
 };
 
+void coloring_scene_checks()
+{
+  Provider provider;
+  auto fixture = result(false);
+  SimResults::Field field;
+  field.name = "Stress";
+  field.array_name = "test_scalar";
+  field.components = {"SXX"};
+  fixture->increments[0].fields.push_back(field);
+  auto missing = fixture->increments[0];
+  missing.fields.clear();
+  fixture->increments.push_back(missing);
+  provider.data = fixture;
+  Registry registry(provider);
+  PostprocessorApplicationInterface application(registry);
+  std::string error;
+  check(application.open_job("fake",1,std::nullopt,error),"Cannot open coloring fixture");
+  check(!application.color_field("Mesh","Stress","",true,0,error),"Tensor/scalar magnitude was accepted");
+  check(application.color_field("Mesh","Stress","SXX",false,0,error),"Cannot select stress component");
+  auto settings = application.coloring("Mesh",error);
+  if (!settings)
+  {
+    check(false,"Color settings missing");
+    return;
+  }
+  settings->maximum = {true,10,{1,0,1}};
+  check(application.set_coloring("Mesh",*settings,error),"Cannot configure stress limit");
+  auto renderer = vtkSmartPointer<vtkOpenGLRenderer>::New();
+  PostprocessorScene scene(renderer,"view1");
+  check(scene.synchronize(application,error),"Cannot synchronize scalar coloring");
+  renderer->GetActors()->InitTraversal();
+  auto* actor = renderer->GetActors()->GetNextActor();
+  auto* mapper = actor ? vtkPolyDataMapper::SafeDownCast(actor->GetMapper()) : nullptr;
+  check(mapper && mapper->GetScalarVisibility(),"Result mapper did not enable scalars");
+  if (mapper)
+  {
+    auto* geometry = mapper->GetInput();
+    const auto stamp = geometry->GetMTime();
+    double rgb[3];
+    mapper->GetLookupTable()->GetColor(17,rgb);
+    check(rgb[0] > 0.99 && rgb[1] < 0.01 && rgb[2] > 0.99,"Maximum stress color missing");
+    settings->maximum.enabled = false;
+    settings->palette = Postprocessor::ColorPalette::Grayscale;
+    check(application.set_coloring("Mesh",*settings,error) && scene.synchronize(application,error),"Cannot disable maximum limit");
+    check(mapper->GetInput() == geometry && geometry->GetMTime() == stamp,"Palette update rebuilt scalar geometry");
+    mapper->GetLookupTable()->GetColor(17,rgb);
+    check(std::abs(rgb[0]-rgb[1]) < 0.01 && std::abs(rgb[1]-rgb[2]) < 0.01,"Disabled limit still overrode palette");
+  }
+  check(application.set_frame("Mesh",2,error) && scene.synchronize(application,error),"Cannot change to unavailable-field frame");
+  renderer->GetActors()->InitTraversal();
+  actor = renderer->GetActors()->GetNextActor();
+  check(actor && !actor->GetMapper()->GetScalarVisibility(),"Missing field left stale scalar colors");
+  const auto retained = application.coloring("Mesh",error);
+  check(retained && retained->field.has_value(),"Frame change discarded requested field identity");
+  auto* original = vtkDataSet::SafeDownCast(fixture->increments[0].dataset.get());
+  check(original->GetPointData()->GetNumberOfArrays() == 1,"Color display changed immutable input arrays");
+  check(application.reset(error) && scene.synchronize(application,error) && renderer->GetViewProps()->GetNumberOfItems() == 0,
+    "Reset left color legends or actors attached");
+}
+
+std::shared_ptr<SimResults::VtkResultsData> ranged_result(double peak,bool invalid = false)
+{
+  auto data = std::make_shared<SimResults::VtkResultsData>();
+  data->job_id = 1;
+  data->run_identity = "range-test";
+  data->layout = SimResults::DatasetLayout::Collection;
+  for (int frame = 0; frame < 2; ++frame)
+  {
+    auto* collection = vtkPartitionedDataSetCollection::New();
+    SimResults::Increment increment;
+    for (unsigned int domain = 0; domain < 2; ++domain)
+    {
+      const auto object = grid(domain*10);
+      auto* mesh = vtkDataSet::SafeDownCast(object.get());
+      auto* values = mesh->GetPointData()->GetScalars();
+      values->SetComponent(0,0,domain == 1 ? peak : (frame == 0 ? -10 : 20));
+      values->SetComponent(1,0,domain == 1 ? 5 : (frame == 0 ? 4 : 40));
+      values->SetComponent(2,0,9000); // Masked outlier must never set the range.
+      values->SetComponent(3,0,std::numeric_limits<double>::quiet_NaN());
+      auto mask = vtkSmartPointer<vtkUnsignedCharArray>::New();
+      mask->SetName("valid");
+      mask->InsertNextValue(invalid ? 0 : 1);
+      mask->InsertNextValue(invalid ? 0 : 1);
+      mask->InsertNextValue(0);
+      mask->InsertNextValue(1);
+      mesh->GetPointData()->AddArray(mask);
+      auto parts = vtkSmartPointer<vtkPartitionedDataSet>::New();
+      parts->SetPartition(0,object.get());
+      collection->SetPartitionedDataSet(domain,parts);
+      SimResults::Field field;
+      field.name = "Stress";
+      field.array_name = "test_scalar";
+      field.validity_array = "valid";
+      field.components = {"SXX"};
+      field.dataset_id = domain;
+      increment.fields.push_back(field);
+    }
+    increment.dataset = std::shared_ptr<vtkDataObject>(collection,[](vtkDataObject* object)
+    {
+      object->Delete();
+    });
+    data->increments.push_back(increment);
+  }
+  return data;
+}
+
+void all_frame_range_checks()
+{
+  Provider provider;
+  provider.data = ranged_result(1000);
+  Registry registry(provider);
+  PostprocessorApplicationInterface application(registry);
+  std::string error;
+  check(application.open_job("fake",1,std::nullopt,error) &&
+    application.color_field("Mesh","Stress","SXX",false,std::nullopt,error),"Cannot prepare grouped all-frame range fixture");
+  const auto source = application.session().active_source_id;
+  auto coloring = application.coloring("Mesh",error);
+  if (!coloring || !coloring->field)
+  {
+    check(false,"Range fixture has no field selection");
+    return;
+  }
+  const auto range = application.all_frame_range(source,*coloring->field,error);
+  check(range && (*range)[0] == -10 && (*range)[1] == 1000 && error.empty(),
+    "All-frame range did not combine valid samples across datasets and frames");
+  auto scoped = *coloring->field;
+  scoped.dataset_id = 0;
+  const auto subset = application.all_frame_range(source,scoped,error);
+  check(subset && (*subset)[0] == -10 && (*subset)[1] == 40,"Explicit dataset range scope was ignored");
+  coloring->range_mode = Postprocessor::ColorRangeMode::AllFrames;
+  check(application.set_coloring("Mesh",*coloring,error),"Cannot select all-frame range mode");
+  auto renderer = vtkSmartPointer<vtkOpenGLRenderer>::New();
+  PostprocessorScene scene(renderer,"view1");
+  for (std::size_t frame = 1; frame <= 2; ++frame)
+  {
+    check(application.set_frame("Mesh",frame,error) && scene.synchronize(application,error),"Cannot show all-frame coloring");
+    renderer->GetActors()->InitTraversal();
+    auto* actor = renderer->GetActors()->GetNextActor();
+    auto* mapper = actor ? actor->GetMapper() : nullptr;
+    check(mapper && mapper->GetLookupTable()->GetRange()[0] == -10 && mapper->GetLookupTable()->GetRange()[1] == 1000,
+      "Color/legend range changed while navigating frames");
+  }
+  Postprocessor::PostprocessorCore core;
+  SimResults::JobSourceReference request{"test","",1,""};
+  check(core.open_result(provider,request,std::nullopt,error),"Cannot open range refresh fixture");
+  const auto id = core.source_id_from_name("Mesh");
+  const auto initial = core.all_frame_range(id,*coloring->field,error);
+  provider.data = ranged_result(2000);
+  check(core.refresh_result(provider,id,error),"Cannot refresh cached range source");
+  const auto updated = core.all_frame_range(id,*coloring->field,error);
+  check(initial && updated && (*initial)[1] == 1000 && (*updated)[1] == 2000,"Source refresh retained a stale global range");
+  provider.data = ranged_result(2000,true);
+  check(core.refresh_result(provider,id,error),"Cannot load an all-invalid range fixture");
+  check(!core.all_frame_range(id,*coloring->field,error) && error.empty(),"All-invalid samples produced a fabricated numeric range");
+}
+
+void dataset_visibility_checks()
+{
+  using Action = Postprocessor::DatasetVisibilityAction;
+  using Selector = PostprocessorApplicationInterface::DatasetSelector;
+  Provider provider;
+  auto fixture = ranged_result(1000);
+  SimResults::Dataset ordinary;
+  ordinary.id = 0;
+  ordinary.name = "all"; // Quoted name must resolve a single dataset.
+  SimResults::Dataset integration;
+  integration.id = 1;
+  integration.name = "Integration points — ELSET_A";
+  fixture->datasets = {integration,ordinary}; // Metadata order is not the ID.
+  auto* first = vtkPartitionedDataSetCollection::SafeDownCast(fixture->increments[0].dataset.get());
+  auto* third = vtkPartitionedDataSetCollection::New();
+  third->SetPartitionedDataSet(0,first->GetPartitionedDataSet(0));
+  auto absentFrame = fixture->increments[0];
+  absentFrame.dataset = std::shared_ptr<vtkDataObject>(third,[](vtkDataObject* value)
+  {
+    value->Delete();
+  });
+  absentFrame.fields.erase(std::remove_if(absentFrame.fields.begin(),absentFrame.fields.end(),[](const SimResults::Field& field)
+  {
+    return field.dataset_id == 1;
+  }),absentFrame.fields.end());
+  fixture->increments.push_back(absentFrame);
+  provider.data = fixture;
+  Registry registry(provider);
+  PostprocessorApplicationInterface application(registry);
+  std::string error;
+  check(application.open_job("fake",1,std::nullopt,error),"Cannot open dataset visibility fixture");
+  const auto source = application.session().active_source_id;
+  const auto catalogue = application.mesh_datasets(source);
+  check(catalogue.size() == 2 && catalogue[0].id == 0 && catalogue[0].name == "all" &&
+    catalogue[1].id == 1 && catalogue[1].name == integration.name,"Dataset catalogue used metadata vector positions");
+  check(application.color_field("Mesh","Stress","SXX",false,std::nullopt,error),"Cannot color visibility fixture");
+  auto renderer = vtkSmartPointer<vtkOpenGLRenderer>::New();
+  PostprocessorScene scene(renderer,"view1");
+  check(scene.synchronize(application,error),"Cannot show visibility fixture");
+  renderer->GetActors()->InitTraversal();
+  vtkSmartPointer<vtkActor> firstActor = renderer->GetActors()->GetNextActor();
+  auto* scalarGeometry = firstActor ? firstActor->GetMapper()->GetInput() : nullptr;
+  check(application.set_dataset_visibility("",Action::Hide,Selector{integration.name},error),"Named dataset hide failed");
+  const auto& display = application.session().representations.begin()->second;
+  check(display.hidden_datasets == std::set<std::size_t>{1} && display.visible,"Named hide changed master visibility or wrong dataset");
+  check(scene.synchronize(application,error),"Cannot synchronize hidden dataset");
+  renderer->GetActors()->InitTraversal();
+  auto* retained = renderer->GetActors()->GetNextActor();
+  check(retained == firstActor && retained->GetMapper()->GetInput() == scalarGeometry,"Visibility rebuilt actors or scalar geometry");
+  check(retained->GetMapper()->GetLookupTable()->GetRange()[1] == 4,"Current-frame range included hidden samples");
+  std::array<double,6> bounds;
+  check(application.visible_bounds("view1",bounds,error) && bounds[0] == 0 && bounds[1] == 1,"Fit included hidden dataset");
+  auto coloring = application.coloring("Mesh",error);
+  coloring->range_mode = Postprocessor::ColorRangeMode::AllFrames;
+  check(application.set_coloring("Mesh",*coloring,error) && scene.synchronize(application,error),"Cannot set visible all-frame range");
+  check(firstActor->GetMapper()->GetLookupTable()->GetRange()[1] == 40,"All-frame range included hidden samples");
+  check(application.set_frame("Mesh",2,error) && scene.synchronize(application,error),"Cannot animate hidden dataset selection");
+  renderer->GetActors()->InitTraversal();
+  check(renderer->GetActors()->GetNextActor()->GetMapper()->GetLookupTable()->GetRange()[1] == 40,
+    "Visible all-frame range changed during playback");
+  check(application.set_dataset_visibility("Mesh",Action::ShowOnly,Selector{std::size_t{1}},error),"Dataset isolation failed");
+  check(application.visible_bounds("view1",bounds,error) && bounds[0] == 10 && bounds[1] == 11,"Isolation fit used the wrong dataset");
+  check(application.set_frame("Mesh",3,error) && !application.visible_bounds("view1",bounds,error),"Absent isolated dataset fabricated geometry");
+  check(application.session().representations.begin()->second.hidden_datasets == std::set<std::size_t>{0},"Frame navigation reset dataset preferences");
+  const auto revision = application.display_revision();
+  check(!application.set_dataset_visibility("Mesh",Action::Hide,Selector{std::size_t{99}},error) &&
+    !application.set_dataset_visibility("Mesh",Action::Hide,Selector{std::string("missing")},error) &&
+    application.display_revision() == revision,"Invalid dataset selection mutated state");
+  check(application.set_dataset_visibility("Mesh",Action::ShowAll,std::nullopt,error),"Show all datasets failed");
+  check(application.set_dataset_visibility("Mesh",Action::Hide,Selector{std::string("all")},error) &&
+    application.session().representations.begin()->second.hidden_datasets == std::set<std::size_t>{0},
+    "Quoted all name was treated as Show all");
+  check(application.set_source_visible("Mesh",false,error) && application.set_source_visible("Mesh",true,error) &&
+    application.session().representations.begin()->second.hidden_datasets.count(0) == 1,"Master switch reset child preferences");
+  check(application.set_dataset_visibility("Mesh",Action::Show,Selector{std::string("all")},error),"Named show failed");
+  check(application.result_data(source) == fixture,"Visibility replaced result data");
+  auto fixed = application.coloring("Mesh",error);
+  fixed->range_mode = Postprocessor::ColorRangeMode::Fixed;
+  fixed->fixed_range = {-5,500};
+  check(application.set_coloring("Mesh",*fixed,error) && application.set_frame("Mesh",1,error) &&
+    application.set_dataset_visibility("Mesh",Action::Hide,Selector{std::size_t{1}},error) && scene.synchronize(application,error),
+    "Cannot test fixed range with hidden datasets");
+  renderer->GetActors()->InitTraversal();
+  check(renderer->GetActors()->GetNextActor()->GetMapper()->GetLookupTable()->GetRange()[1] == 500,"Visibility changed fixed palette bounds");
+  check(application.set_dataset_visibility("Mesh",Action::Hide,Selector{std::size_t{0}},error) &&
+    scene.synchronize(application,error) && !application.visible_bounds("view1",bounds,error),"Hiding all datasets left fit geometry");
+  renderer->GetActors()->InitTraversal();
+  while (auto* actor = renderer->GetActors()->GetNextActor())
+  {
+    check(!actor->GetVisibility(),"Hiding all datasets left a visible actor");
+  }
+  Postprocessor::PostprocessorCore core;
+  SimResults::JobSourceReference request{"test","",1,""};
+  check(core.open_result(provider,request,std::nullopt,error),"Cannot open refresh visibility fixture");
+  const auto id = core.session().active_source_id;
+  check(core.set_dataset_visibility(id,"view1",Action::Hide,0,error),"Cannot hide before refresh");
+  check(core.refresh_result(provider,id,error) && core.session().representations.begin()->second.hidden_datasets.empty(),
+    "Source refresh retained old dataset IDs");
+  auto ambiguous = ranged_result(1000);
+  ordinary.name = "Duplicate";
+  integration.name = "Duplicate";
+  ambiguous->datasets = {ordinary,integration};
+  Provider other;
+  other.data = ambiguous;
+  Registry otherRegistry(other);
+  PostprocessorApplicationInterface otherApp(otherRegistry);
+  check(otherApp.open_job("fake",1,std::nullopt,error),"Cannot open duplicate name fixture");
+  const auto beforeAmbiguous = otherApp.display_revision();
+  check(!otherApp.set_dataset_visibility("Mesh",Action::ShowOnly,Selector{std::string("Duplicate")},error) &&
+    error.find("ambiguous") != std::string::npos && otherApp.display_revision() == beforeAmbiguous,
+    "Duplicate name silently chose a dataset");
+  check(otherApp.set_dataset_visibility("Mesh",Action::ShowOnly,Selector{std::size_t{1}},error),"Numeric ID could not disambiguate duplicate names");
+  Provider unnamed;
+  unnamed.data = result(false);
+  Registry unnamedRegistry(unnamed);
+  PostprocessorApplicationInterface unnamedApp(unnamedRegistry);
+  check(unnamedApp.open_job("fake",1,std::nullopt,error) &&
+    unnamedApp.mesh_datasets(unnamedApp.session().active_source_id).size() == 1 &&
+    unnamedApp.set_dataset_visibility("Mesh",Action::Hide,Selector{std::size_t{0}},error),"Independent grid without metadata is not selectable by ID");
+}
+
+void animation_checks()
+{
+  Provider provider;
+  auto data = result(false);
+  data->increments.emplace_back();
+  data->increments.push_back(data->increments.front());
+  provider.data = data;
+  Registry registry(provider);
+  PostprocessorApplicationInterface application(registry);
+  std::string error;
+  check(application.open_job("fake",1,std::nullopt,error),"Cannot open animation fixture");
+  auto settings = application.animation("Mesh",error);
+  check(settings && settings->frames_per_second == 10 && !settings->loop && !settings->playing,"Animation defaults differ from the agreed values");
+  if (!settings)
+  {
+    return;
+  }
+  check(application.set_frame("Mesh",3,error),"Cannot prepare last animation frame");
+  settings->playing = true;
+  check(application.set_animation("Mesh",*settings,error) && application.session().representations.begin()->second.increment_index == 0,
+    "Play at the final frame must restart at the first displayable frame");
+  const auto revision = application.display_revision();
+  settings->frames_per_second = 0;
+  check(!application.set_animation("Mesh",*settings,error) && application.display_revision() == revision,"Invalid FPS changed animation state");
+  settings->frames_per_second = 5;
+  settings->loop = true;
+  check(application.set_animation("Mesh",*settings,error),"Cannot change live FPS/loop settings");
+  settings = application.animation("Mesh",error);
+  check(settings && settings->loop && settings->playing && settings->frames_per_second == 5,"Live animation settings were not retained");
+  check(application.open_job("fake",1,std::string("Second"),error),"Cannot open a second animation source");
+  const auto previous = application.animation("Mesh",error);
+  const auto second = application.animation("Second",error);
+  check(previous && !previous->playing && second && !second->loop && second->frames_per_second == 10,
+    "Source changes failed to stop playback or leaked settings into another representation");
+  check(application.reset(error) && !application.animation("",error),"Reset retained animation state");
+}
+
+void frame_checks()
+{
+  Provider provider;
+  provider.data = result(false);
+  auto second = provider.data->increments[0];
+  second.dataset = grid(10);
+  second.step = 2;
+  second.increment = 1;
+  second.time = 0.3;
+  auto fixture = std::make_shared<SimResults::VtkResultsData>(*provider.data);
+  fixture->increments.emplace_back(); // An unavailable frame retains its ordinal.
+  fixture->increments.push_back(second);
+  provider.data = fixture;
+  Registry registry(provider);
+  PostprocessorApplicationInterface application(registry);
+  std::string error;
+  check(application.open_job("fake", 1, std::nullopt, error), "Cannot open frame fixture");
+  const auto source = application.session().active_source_id;
+  Postprocessor::CameraDefinition camera;
+  camera.position = {5, 5, 5};
+  check(application.set_camera(camera, error), "Cannot initialize frame camera");
+  auto renderer = vtkSmartPointer<vtkOpenGLRenderer>::New();
+  PostprocessorScene scene(renderer, "view1");
+  check(scene.synchronize(application, error), "Cannot create frame fixture scene");
+  check(application.set_source_visible("Mesh", false, error), "Cannot hide frame fixture");
+  const auto before = application.display_revision();
+  check(!application.set_frame("Mesh", 0, error) && !application.set_frame("Mesh", 2, error) &&
+    !application.set_frame("Mesh", 4, error) && !application.set_frame("missing", 1, error) &&
+    application.display_revision() == before, "Invalid frame selection changed display state");
+  check(application.set_frame("", 3, error), "Active-source frame selection failed");
+  const auto& display = application.session().representations.begin()->second;
+  check(display.increment_index == 2 && !display.visible && application.display_revision() == before + 1,
+    "Frame selection lost its ordinal, changed visibility or failed to advance revision");
+  check(application.session().views.at("view1").camera->position == camera.position,
+    "Frame selection moved an established camera");
+  const auto revision = application.display_revision();
+  check(application.set_frame("Mesh", 3, error) && application.display_revision() == revision,
+    "Repeated frame selection must be a no-op");
+  check(application.set_source_visible("Mesh", true, error) && scene.synchronize(application, error),
+    "Cannot show newly selected frame");
+  double bounds[6];
+  renderer->ComputeVisiblePropBounds(bounds);
+  check(bounds[0] == 10 && bounds[1] == 11, "Scene retained the previous frame's mesh");
+  check(application.result_data(source) == fixture, "Frame selection replaced or copied the published result");
+  check(application.open_job("fake", 1, std::string("Second"), error), "Cannot open independent source instance");
+  check(application.set_frame("Second", 1, error), "Cannot change the second source frame");
+  for (const auto& entry : application.session().representations)
+  {
+    if (entry.second.input.object_id == source)
+    {
+      check(entry.second.increment_index == 2, "Changing another source changed this frame selection");
+    }
+  }
+  check(application.reset(error) && !application.set_frame("", 1, error), "Reset retained active frame context");
+}
+
 void reset_checks()
 {
   Provider provider;
@@ -234,7 +611,18 @@ void core_checks()
   camera.view_up = {0, 0, 1};
   check(core.set_source_visible(id, "view1", false, error), "Hide failed");
   check(!core.complete_camera_fit("view1", 0, beforeHide, camera, error), "Stale fit completion was accepted");
-  check(!core.request_camera_fit("view1", error), "Fit of an empty view must fail");
+  const auto emptyFitState = core.session().views.at("view1");
+  error = "stale error";
+  check(core.request_camera_fit("view1", error) && error.empty(), "Fit of an empty view must be a successful no-op");
+  const auto& afterEmptyFit = core.session().views.at("view1");
+  check(afterEmptyFit.fit_request == emptyFitState.fit_request &&
+    afterEmptyFit.fit_pending == emptyFitState.fit_pending &&
+    afterEmptyFit.camera_revision == emptyFitState.camera_revision,
+    "Empty Fit changed camera revision or fit state");
+  bounds = {1,2,3,4,5,6};
+  check(!core.visible_bounds("view1",bounds,error) && error.empty() &&
+    bounds == std::array<double,6>{1,2,3,4,5,6},"Empty bounds query changed output or returned an error");
+  check(!core.request_camera_fit("missing-view",error) && !error.empty(),"Invalid Fit view stopped reporting errors");
   const auto hiddenRevision = core.display_revision();
   check(core.set_source_visible(id, "view1", false, error) && core.display_revision() == hiddenRevision, "Repeated hide must be idempotent");
   check(core.set_source_visible(id, "view1", true, error) && core.session().representations.size() == 1, "Show duplicated a display");
@@ -421,6 +809,11 @@ int main()
 {
   core_checks();
   reset_checks();
+  frame_checks();
+  animation_checks();
+  all_frame_range_checks();
+  dataset_visibility_checks();
+  coloring_scene_checks();
   scene_checks();
   return failures == 0 ? 0 : 1;
 }

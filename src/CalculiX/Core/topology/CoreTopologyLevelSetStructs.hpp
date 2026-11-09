@@ -3,6 +3,9 @@
 
 #include <vector>
 #include <map>
+#include <memory>
+
+class CoreTopologyLevelSetGeometryCache;
 
 /**
  * @brief Parameters for the planned fixed-mesh, nodal level-set method.
@@ -97,6 +100,8 @@ struct TopologyLevelSetProposal
   std::map<int, double> node_values;
   std::map<int, double> volume_fraction_derivatives;
   TopologyLevelSetUpdateDiagnostics diagnostics;
+  /// Proposal-owned source integration reuse; never persisted or used for candidates.
+  std::shared_ptr<CoreTopologyLevelSetGeometryCache> source_geometry_cache;
 };
 
 #endif

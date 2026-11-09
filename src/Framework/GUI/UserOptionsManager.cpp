@@ -43,8 +43,18 @@ bool UserOptionsManager::attach(const std::vector<WorkspaceProviderInterface*>& 
     }
     registrations.insert(registrations.end(), view.additionalOptionsPages.begin(), view.additionalOptionsPages.end());
   }
-  for (const auto& page : registrations)
+  for (auto page : registrations)
   {
+    // Prefix only registered option labels, never workspace identities or tabs.
+    const auto prefix = QStringLiteral("Cubit-Sim - ");
+    if (page.label.compare(QStringLiteral("Cubit-Sim"),Qt::CaseInsensitive) == 0)
+    {
+      page.label = prefix + tr("General");
+    }
+    else if (!page.label.startsWith(prefix,Qt::CaseInsensitive))
+    {
+      page.label.prepend(prefix);
+    }
     if (page.widget == nullptr || page.label.isEmpty() || !labels.insert(page.label).second || !page.refresh || !page.apply)
     {
       error = "Invalid or duplicate workspace options page.";

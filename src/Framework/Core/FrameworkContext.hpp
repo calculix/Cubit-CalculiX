@@ -14,6 +14,7 @@
 class UserOptionsManager;
 class DrawingService;
 class UserOptionsStore;
+class ReportProfileStore;
 class WorkspaceManager;
 class QWidget;
 class ResourceStatusWidget;
@@ -47,6 +48,7 @@ public:
 private:
   // Declared before modules so the service outlives module destruction.
   std::unique_ptr<UserOptionsStore> options;
+  std::unique_ptr<ReportProfileStore> reportProfiles;
   std::unique_ptr<FrameworkUserOptions> preferences;
   std::unique_ptr<DrawingService> drawings;
   ModuleManager modules;
