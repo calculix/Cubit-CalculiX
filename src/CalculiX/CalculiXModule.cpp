@@ -246,3 +246,36 @@ ReportModelProviderInterface* CalculiXModule::report_model_provider() noexcept
 {
   return reportModels.get();
 }
+
+ProjectStateProviderInterface* CalculiXModule::project_state_provider() noexcept
+{
+  return this;
+}
+std::string CalculiXModule::project_state_id() const
+{
+  return "calculix";
+}
+void CalculiXModule::set_project_coordinated(bool coordinated)
+{
+  CalculiXApplicationInterface::core_observer().project_coordinated = coordinated;
+}
+bool CalculiXModule::restore_project_model(const ProjectStateContext& context, std::string& error)
+{
+  error.clear();
+  if (!CalculiXApplicationInterface().core_read_cub(context.filename))
+  {
+    error = "CalculiX model/result restoration failed.";
+    return false;
+  }
+  return true;
+}
+bool CalculiXModule::write_project_state(const ProjectStateContext& context, std::string& error)
+{
+  error.clear();
+  if (!CalculiXApplicationInterface().core_save_cub(context.filename))
+  {
+    error = "CalculiX model/result persistence failed.";
+    return false;
+  }
+  return true;
+}

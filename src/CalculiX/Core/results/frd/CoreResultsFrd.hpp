@@ -109,6 +109,7 @@ public:
   bool reset(); // delete all data and initialize afterwards
   bool clear(); // clear all stored result data
   bool check_initialized(); // check if object is initialized
+  bool read_file(const std::string& path); // Detached source; never creates or queries a job.
   bool read(); // reads the frd file
   bool read_single(); // reads the frd file single core
   bool read_parallel_boost();

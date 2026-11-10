@@ -4,6 +4,7 @@
 #include "CubitMessage.hpp"
 
 #include <QMainWindow>
+#include "Claro.hpp"
 #include <QThread>
 #include <exception>
 #include <utility>
@@ -37,6 +38,12 @@ bool PostprocessorGui::start(QWidget* host, std::string& error)
   }
 
   workspace = new PostprocessorWorkspace(window, application, submitCommand, silentCommand);
+  if (!workspace->bind_native_toolbar(qobject_cast<Claro*>(host),error))
+  {
+    delete workspace.data();
+    workspace = nullptr;
+    return false;
+  }
   observer = std::make_unique<PostprocessorGuiObserver>([this]()
   {
     refresh();

@@ -12,6 +12,11 @@
 #include <QScrollBar>
 #include "Report/GUI/ReportPreviewWidget.hpp"
 #include "Report/GUI/ReportWorkspace.hpp"
+#include "Report/GUI/ReportToolbar.hpp"
+#include "Report/GUI/ReportSettingsCommandText.hpp"
+#include "Report/GUI/ReportSettingsDialog.hpp"
+#include <QDialogButtonBox>
+#include <QLineEdit>
 #include "Report/Interfaces/ReportApplicationInterface.hpp"
 #include <QMainWindow>
 #include <QComboBox>
@@ -26,6 +31,8 @@
 #include <QTemporaryDir>
 #include <QLockFile>
 #include <QFile>
+#include <QAction>
+#include <QFileInfo>
 #include <iostream>
 
 namespace
@@ -45,6 +52,13 @@ void fixture(const QString& filename, const QByteArray& text)
 {
   QFile file(filename);
   check(file.open(QIODevice::WriteOnly) && file.write(text) == text.size(), "Cannot create fixture");
+}
+
+QByteArray contents(const QString& filename)
+{
+  QFile file(filename);
+  check(file.open(QIODevice::ReadOnly), "Cannot read exported fixture");
+  return file.readAll();
 }
 }
 
@@ -87,7 +101,10 @@ int main(int argc, char** argv)
   check(core.configure("author", "Pending draft", error), "Create pending draft");
   check(core.generate("test", 2, "", error), "Generate second document using default profile");
   check(core.document()->configuration.values.at("author") == "Author A", "Apply default profile to future report");
-  check(core.select(firstId, error) && core.session().configuration_changed &&
+  ReportRequest firstSource;
+  firstSource.provider = "test";
+  firstSource.job_id = 1;
+  check(core.choose_source(firstSource, error) && core.document()->id == firstId && core.session().configuration_changed &&
     core.session().request.overrides.values.at("author") == "Pending draft", "Preserve per-report configuration drafts");
   check(options.load("test", schema, settings, error) && std::get<int>(settings.at("sentinel")) == 7, "Profile writes preserve unrelated preferences");
   std::vector<ReportProfile> listed;
@@ -296,8 +313,62 @@ int main(int argc, char** argv)
       QApplication::processEvents();
       check(commands.size() == beforeSlider + 2, "Fit and slider synchronization do not submit additional commands");
     }
+    const auto beforeOfflineRefresh = commands.size();
+    workspaceProviders.publish_sources = false;
+    workspace.refresh();
+    QApplication::processEvents();
+    auto* cachedPdfExport = workspace.findChild<QAction*>("ReportExportPdf");
+    check(sourceSelector->currentIndex() >= 0 && !generateButton->isEnabled() && cachedPdfExport && cachedPdfExport->isEnabled() &&
+      commands.size() == beforeOfflineRefresh, "An unavailable source keeps its saved preview/export accessible without refresh commands");
+    workspaceProviders.fail_discovery = true;
+    workspace.refresh();
+    QApplication::processEvents();
+    check(sourceSelector->currentIndex() >= 0 && !generateButton->isEnabled() && commands.size() == beforeOfflineRefresh,
+      "Discovery failure retains saved source selection without command retries");
   }
   ReportTestProviders brandingProviders;
+  ReportApplicationInterface exportApplication(providers);
+  check(exportApplication.generate("test", 1, "", error), "Generate a report for overwrite protection tests");
+  const auto existingPdf = directory.filePath("existing.pdf");
+  fixture(existingPdf, "preserve existing PDF");
+  check(!exportApplication.export_document("pdf", existingPdf.toStdString(), error) && contents(existingPdf) == "preserve existing PDF",
+    "PDF export preserves existing files unless overwrite is explicit");
+  check(exportApplication.export_document("pdf", existingPdf.toStdString(), error, true) && contents(existingPdf).startsWith("%PDF-"),
+    "Explicit PDF overwrite replaces the destination");
+  const auto existingOdt = directory.filePath("existing.odt");
+  fixture(existingOdt, "preserve existing ODT");
+  check(!exportApplication.export_document("odt", existingOdt.toStdString(), error) && contents(existingOdt) == "preserve existing ODT",
+    "ODT export preserves existing files unless overwrite is explicit");
+  check(exportApplication.export_document("odt", existingOdt.toStdString(), error, true) && contents(existingOdt).startsWith("PK"),
+    "Explicit ODT overwrite replaces the destination");
+  const auto pairedBase = directory.filePath("paired");
+  fixture(pairedBase + ".odt", "preserve paired ODT");
+  check(!exportApplication.export_document("both", pairedBase.toStdString(), error) &&
+    !QFileInfo::exists(pairedBase + ".pdf") && contents(pairedBase + ".odt") == "preserve paired ODT",
+    "Paired export detects the second destination collision before writing PDF");
+  check(exportApplication.export_document("both", pairedBase.toStdString(), error, true) &&
+    contents(pairedBase + ".pdf").startsWith("%PDF-") && contents(pairedBase + ".odt").startsWith("PK"),
+    "Explicit overwrite exports both formats");
+  check(!exportApplication.export_document("pdf", directory.path().toStdString(), error, true),
+    "Overwrite never treats a directory as a report file");
+  std::vector<std::string> toolbarFormats;
+  ReportToolbar exportToolbar(nullptr, QIcon(), QIcon(), [&toolbarFormats](const std::string& format)
+  {
+    toolbarFormats.push_back(format);
+  });
+  auto* pdfAction = exportToolbar.findChild<QAction*>("ReportExportPdf");
+  auto* odtAction = exportToolbar.findChild<QAction*>("ReportExportOdt");
+  check(pdfAction && odtAction && !pdfAction->isEnabled() && !odtAction->isEnabled(),
+    "Report toolbar export actions start disabled");
+  if (pdfAction && odtAction)
+  {
+    exportToolbar.set_export_enabled(true);
+    pdfAction->trigger();
+    odtAction->trigger();
+    check(toolbarFormats == std::vector<std::string>{"pdf", "odt"}, "Toolbar actions select the correct export format");
+    exportToolbar.set_export_enabled(false);
+    check(!pdfAction->isEnabled() && !odtAction->isEnabled(), "Report toolbar disables both exports together");
+  }
   brandingProviders.profiles = &profiles;
   ReportCore brandingCore(brandingProviders);
   check(brandingCore.generate("test", 1, "", error) && !brandingCore.document()->configuration.company_logo,
@@ -407,6 +478,146 @@ int main(int argc, char** argv)
   removeLogo.replace_company_logo = true;
   check(brandingCore.configure_patch(removeLogo, error) && !brandingCore.configuration_request().overrides.company_logo,
     "Explicit removal clears the company logo");
+  ReportConfiguration readable;
+  readable.values = {{"company_name", "Company Name Test"}, {"footer_right", "Page {page} of {pages}"},
+    {"header_line", "true"}, {"footer_line", "false"}, {"author", ""}};
+  std::string settingsCommand;
+  check(ReportSettingsCommandText::build(readable, QString(), settingsCommand, error) &&
+    settingsCommand == "report configure settings author \"\" company_name \"Company Name Test\" footer_line off footer_right \"Page {page} of {pages}\" header_line on",
+    "Settings commands preserve empty text and placeholders with separately readable on/off values");
+  readable.values = {{"company_name", "O'Brien Engineering"}};
+  check(ReportSettingsCommandText::build(readable, QString(), settingsCommand, error) &&
+    settingsCommand == "report configure settings company_name \"O'Brien Engineering\"",
+    "Readable settings preserve apostrophes in company names");
+  readable.values = {{"title", "Report \"A\""}};
+  check(ReportSettingsCommandText::build(readable, QString(), settingsCommand, error) &&
+    settingsCommand == "report configure settings title 'Report \"A\"'", "Readable settings choose a usable quote delimiter");
+  readable.values = {{"title", "O'Brien's \"Report\""}};
+  const auto previousCommand = settingsCommand;
+  check(!ReportSettingsCommandText::build(readable, QString(), settingsCommand, error) && settingsCommand == previousCommand,
+    "Unrepresentable quoting reports an error without an encoded fallback or partial command");
+  readable.values.clear();
+  readable.replace_company_logo = true;
+  check(ReportSettingsCommandText::build(readable, "C:/Company/logo.svg", settingsCommand, error) &&
+    settingsCommand == "report configure settings logo_file \"C:/Company/logo.svg\"", "Logo settings journal the filename rather than image bytes");
+  check(ReportSettingsCommandText::build(readable, QString(), settingsCommand, error) &&
+    settingsCommand == "report configure settings logo_remove", "Logo removal has a readable explicit argument");
+  readable.replace_company_logo = false;
+  check(!ReportSettingsCommandText::build(readable, QString(), settingsCommand, error), "Unchanged settings do not produce an empty settings command");
+  readable.values = {{"precision", "5 other_command"}};
+  check(!ReportSettingsCommandText::build(readable, QString(), settingsCommand, error), "Unquoted settings cannot inject additional command tokens");
+  auto dialogApplication = std::make_shared<ReportApplicationInterface>(providers);
+  check(dialogApplication->choose_source(modelSource, error), "Select a source for readable settings dialog tests");
+  std::vector<std::string> dialogCommands;
+  const auto applyTitle = [&dialogCommands, dialogApplication](const std::string& command, std::string& issue)
+  {
+    dialogCommands.push_back(command);
+    ReportConfiguration patch;
+    patch.values["title"] = "Changed report title";
+    return dialogApplication->configure_patch(patch, issue);
+  };
+  ReportSettingsDialog unchangedDialog(nullptr, dialogApplication->configuration_request().overrides, dialogApplication, applyTitle);
+  auto* unchangedButtons = unchangedDialog.findChild<QDialogButtonBox*>();
+  check(unchangedButtons != nullptr, "Find unchanged settings dialog buttons");
+  if (unchangedButtons)
+  {
+    unchangedButtons->button(QDialogButtonBox::Apply)->click();
+    check(dialogCommands.empty() && unchangedDialog.result() == QDialog::Accepted,
+      "Applying unchanged settings closes without submitting any command");
+  }
+  ReportSettingsDialog changedDialog(nullptr, dialogApplication->configuration_request().overrides, dialogApplication, applyTitle);
+  auto* changedTitle = changedDialog.findChild<QLineEdit*>("ReportSetting_title");
+  auto* changedButtons = changedDialog.findChild<QDialogButtonBox*>();
+  check(changedTitle && changedButtons, "Find title editor and Apply button");
+  if (changedTitle && changedButtons)
+  {
+    changedTitle->setText("Changed report title");
+    changedButtons->button(QDialogButtonBox::Apply)->click();
+    check(dialogCommands == std::vector<std::string>{"report configure settings title \"Changed report title\""} &&
+      changedDialog.result() == QDialog::Accepted, "Dialog submits only the edited setting as a readable command");
+  }
+  ReportTestProviders singleProviders;
+  singleProviders.profiles = &profiles;
+  ReportApplicationInterface defaultPreview(singleProviders);
+  check(defaultPreview.preview_mode() == "page", "New preview state defaults to Fit page");
+  ReportCore singleCore(singleProviders);
+  check(singleCore.generate("test", 1, "", error), "Generate the first report for a source");
+  const auto sourceId = singleCore.document()->id;
+  check(singleCore.note("test.content", "Job 1 note", error) && singleCore.configure("title", "Renamed report", error) &&
+    singleCore.generate("test", 1, "", error) && singleCore.session().documents.size() == 1 && singleCore.document()->id == sourceId &&
+    singleCore.document()->title == "Renamed report" && singleCore.document()->notes.at("test.content") == "Job 1 note",
+    "Generate replaces the same source after a title change and preserves its notes");
+  check(singleCore.generate("test", 1, "Standard / display name", error) && singleCore.session().documents.size() == 1 &&
+    singleCore.document()->id == sourceId && singleCore.document()->configuration.values.at("author") == "Author A",
+    "Applying another profile replaces the same source report");
+  const auto beforeFailedReplacement = singleCore.document();
+  const auto beforeFailedSession = singleCore.session().to_json();
+  singleProviders.fail_collection = true;
+  check(!singleCore.generate("test", 1, "", error) && singleCore.document() == beforeFailedReplacement &&
+    singleCore.session().to_json() == beforeFailedSession, "Failed generation preserves the previous report and all session state");
+  singleProviders.fail_collection = false;
+  singleProviders.changed_source = true;
+  check(!singleCore.update(error) && singleCore.document() == beforeFailedReplacement,
+    "Update still rejects a changed job snapshot");
+  check(singleCore.generate("test", 1, "", error) && singleCore.session().documents.size() == 1 &&
+    singleCore.document()->id == sourceId && singleCore.document()->source.fingerprints.front() == std::string(64, '2'),
+    "Explicit Generate accepts a changed job snapshot without adding a report instance");
+  singleProviders.changed_source = false;
+  check(singleCore.generate("test-alias", 1, "", error) && singleCore.document()->id == sourceId &&
+    singleCore.session().documents.size() == 1 && singleCore.configuration_request().provider == "test",
+    "Provider aliases share the canonical workspace/source report");
+  check(singleCore.configure("author", "Job 1 draft", error) && singleCore.generate("test", 2, "", error) &&
+    singleCore.session().documents.size() == 2, "Different jobs retain separate reports");
+  check(singleCore.note("test.content", "Job 2 note", error) && singleCore.configure("title", "Job 2 draft", error) &&
+    singleCore.choose_source(firstSource, error) && singleCore.document()->id == sourceId &&
+    singleCore.configuration_request().overrides.values.at("author") == "Job 1 draft" &&
+    singleCore.document()->notes.at("test.content") == "Job 1 note", "Source selection restores its report, notes and pending settings");
+  check(singleCore.generate_request(modelSource, "", error) && singleCore.session().documents.size() == 3 &&
+    singleCore.document()->source.kind == "model", "Current-model reports remain separate from job reports");
+  ReportRequest secondSource = firstSource;
+  secondSource.job_id = 2;
+  check(singleCore.choose_source(secondSource, error) && singleCore.configuration_request().overrides.values.at("title") == "Job 2 draft" &&
+    singleCore.document()->notes.at("test.content") == "Job 2 note", "Switching back restores the other source's settings and notes");
+  singleProviders.publish_sources = false;
+  std::vector<ReportSourceEntry> cachedSources;
+  check(singleCore.available_sources(cachedSources, error) && cachedSources.size() == 3,
+    "Stored reports remain in the source list after live sources disappear");
+  for (const auto& entry : cachedSources)
+  {
+    check(entry.has_report && !entry.available, "Unavailable stored reports are selectable but cannot be regenerated");
+  }
+  check(singleCore.choose_source(firstSource, error) && singleCore.document()->id == sourceId,
+    "A stored report can be selected without its source files");
+  const auto offlineReport = singleCore.document();
+  check(!singleCore.update(error) && !singleCore.generate("test", 1, "", error) && singleCore.document() == offlineReport,
+    "Unavailable-source generation and update preserve the cached report");
+  singleProviders.fail_discovery = true;
+  check(singleCore.available_sources(cachedSources, error) && cachedSources.size() == 3 && singleCore.choose_source(modelSource, error),
+    "Discovery failure still permits selection of saved reports");
+  singleProviders.fail_discovery = false;
+  singleProviders.publish_sources = true;
+  auto duplicateSession = singleCore.session().to_json();
+  auto duplicateDocuments = duplicateSession.value("documents").toArray();
+  auto duplicateDocument = duplicateDocuments.at(0).toObject();
+  duplicateDocument["id"] = "duplicate-source";
+  duplicateDocuments.append(duplicateDocument);
+  duplicateSession["documents"] = duplicateDocuments;
+  ReportSession rejectedSession;
+  check(!ReportSession::from_json(duplicateSession, rejectedSession, error) && rejectedSession.documents.empty(),
+    "Persistence rejects duplicate source reports without partially replacing session state");
+  auto fullSession = singleCore.session();
+  for (int job = 3; job < 1000; ++job)
+  {
+    auto saved = std::make_shared<ReportDocument>(*fullSession.documents.at(sourceId));
+    saved->id = "limit-" + std::to_string(job);
+    saved->source.job_id = job;
+    fullSession.documents.emplace(saved->id, saved);
+  }
+  ReportCore fullCore(singleProviders);
+  fullCore.restore(std::move(fullSession));
+  check(fullCore.session().documents.size() == 1000 && fullCore.generate("test", 1, "", error) &&
+    fullCore.session().documents.size() == 1000 && fullCore.document()->id == sourceId,
+    "The report-count limit allows replacement of an existing source");
   std::cout << failures << " report test failures\n";
   return failures == 0 ? 0 : 1;
 }

@@ -83,3 +83,15 @@ the selected nodal field's palette, masks and limits. Cell-associated fields do
 not invent values at nodes. Source/dataset visibility also controls its markers.
 
 Build and native graphics/parser validation remain outstanding for this patch.
+
+Hover readout
+-------------
+
+Hover also shows source/dataset, the current field component and value, and the
+original node or element ID. Node readout lists connected original element IDs
+when connectivity is available. Integration-point readout shows its parent
+element and IP number; integration points have no invented node ID. Element
+nodal fields retain min/max semantics rather than a fabricated point value.
+Owned lazy cell-link indexes accelerate repeated adjacency queries without
+mutating the provider's published meshes. Frame/camera/mode changes hide stale
+tooltips. Hover probes do not change selection or create journal commands.

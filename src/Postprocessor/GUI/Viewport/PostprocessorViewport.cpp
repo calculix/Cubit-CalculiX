@@ -9,6 +9,9 @@
 #include <QEvent>
 #include <QMouseEvent>
 #include <QCursor>
+#include <QToolTip>
+#include <sstream>
+#include <locale>
 #include <QApplication>
 #include <QShowEvent>
 #include <QTimer>
@@ -82,6 +85,9 @@ void PostprocessorViewport::fit_view()
 
 void PostprocessorViewport::clear_hover()
 {
+  QToolTip::hideText();
+  tooltipEntity.reset();
+  tooltipText.clear();
   if (hoverTimer)
   {
     hoverTimer->stop();
@@ -126,6 +132,57 @@ void PostprocessorViewport::update_hover()
   {
     queue_render();
   }
+  if (!entity)
+  {
+    tooltipEntity.reset();
+    tooltipText.clear();
+    QToolTip::hideText();
+    return;
+  }
+  if (tooltipEntity && Postprocessor::same_entity(*tooltipEntity,*entity) && !tooltipText.isEmpty())
+  {
+    QToolTip::showText(mapToGlobal(hoverPosition.toPoint()),tooltipText,this);
+    return;
+  }
+  const auto result = active->probe_entity(*entity,error);
+  if (!result)
+  {
+    QToolTip::hideText();
+    return;
+  }
+  std::ostringstream text;
+  text.imbue(std::locale::classic());
+  text << result->source_name << " / " << result->dataset_name << '\n';
+  text << (entity->kind == Postprocessor::EntityKind::Node ? "Node: " : "Element: ") << entity->entity_id;
+  if (entity->kind == Postprocessor::EntityKind::Node && !result->element_ids.empty())
+  {
+    text << "\nElement(s): ";
+    for (std::size_t index = 0; index < result->element_ids.size(); ++index)
+    {
+      text << (index ? ", " : "") << result->element_ids[index];
+    }
+  }
+  if (entity->integration_point)
+  {
+    text << "\nIntegration point: " << *entity->integration_point;
+  }
+  text << "\n" << result->field << " / " << result->component << ": ";
+  if (result->values)
+  {
+    text << (*result->values)[0];
+    if (result->range_value)
+    {
+      text << " .. " << (*result->values)[1];
+    }
+  }
+  else
+  {
+    text << "Unavailable";
+  }
+  text << "\nStep " << result->step << " / Increment " << result->increment << " / Time " << result->time;
+  tooltipEntity = entity;
+  tooltipText = QString::fromStdString(text.str()).toHtmlEscaped().replace("\n","<br>");
+  QToolTip::showText(mapToGlobal(hoverPosition.toPoint()),tooltipText,this);
 }
 
 void PostprocessorViewport::pick(const QPointF& position)
@@ -269,6 +326,13 @@ void PostprocessorViewport::synchronize(const std::shared_ptr<PostprocessorAppli
     renderedCamera.reset();
     renderedSelection.reset();
     return;
+  }
+  const auto currentView = active->session().views.find(viewId);
+  if (!renderedGeometry || *renderedGeometry != active->display_revision() || currentView == active->session().views.end() ||
+      !renderedCamera || *renderedCamera != currentView->second.camera_revision ||
+      !renderedSelection || *renderedSelection != currentView->second.selection.revision)
+  {
+    clear_hover();
   }
   // CPU-side synchronization releases closed actors even while this view is hidden.
   // OpenGL rendering and camera fitting still wait for the initialized Qt widget.

@@ -9,6 +9,8 @@ class CalculiXResultSourceProvider final : public ResultSourceProviderInterface
 {
 public:
   std::string command_prefix() const override;
+  bool available_jobs(std::vector<SimResults::ResultJobEntry>& output, std::string& error) const override;
+  bool restore(const SimResults::ResultSourceReference& request, SimResults::PublishedResultSource& output, std::string& error) override;
 
   bool open(
     const SimResults::ResultSourceReference& request,

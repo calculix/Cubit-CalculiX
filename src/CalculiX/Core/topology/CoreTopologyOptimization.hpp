@@ -2,6 +2,7 @@
 #define CORETOPOLOGYOPTIMIZATION_HPP
 
 #include "Core/topology/CoreTopologyStructs.hpp"
+#include "Core/topology/CoreTopologyLevelSetMoves.hpp"
 #include <array>
 #include <map>
 
@@ -164,6 +165,7 @@ private:
     int iteration_id = 1;
     int job_id = -1;
     TopologyLevelSetProposal pending_level_set_proposal;
+    TopologyLevelSetMoveState level_set_moves;
     bool stop_requested = false;
     bool kill_error_reported = false;
     TopologyRunState stop_state = TopologyRunState::Killed;

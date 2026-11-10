@@ -36,6 +36,20 @@ shared Framework Help menu. Workspace modules do not create a second Help menu.
 The current documentation action opens the shared manual homepage; workspace-
 specific entry pages and contextual help destinations are not implemented yet.
 
+Cubit's native File menu also remains available in every workspace. Ctrl+S uses
+the existing native Save action: an unnamed project opens Cubit's Save As dialog,
+and a named project saves to its current .cub filename. This applies while focus
+is in the main window's viewport, report preview, tree or text fields. Native
+modal dialogs retain their own keyboard handling. Cancelling Save As writes
+nothing; the Framework does not install competing workspace Save shortcuts.
+
+Explicit project saves and loads report completed state operations once per
+participating workspace, including CalculiX, Postprocessor and Report, followed
+by Framework metadata status. A workspace failure names that workspace and does
+not produce a success message for it. Native Cubit success does not imply that
+all additional workspace data was saved. Temporary/autosave callbacks retain
+their existing handling and are not reported as explicit project saves.
+
 This opens the installed ``documentation/index.html`` beside the Framework
 libraries using the desktop's configured browser. It requires a GUI-capable
 session. An accepted request does not guarantee that the browser has finished

@@ -632,3 +632,85 @@ Regularized fractions, derivatives, Cubit-volume scaling, positivity checks,
 normalization and refinement tolerances remain unchanged. The existing source
 geometry cache forwards this pass-local cache on misses; its hits need no rule.
 See :doc:`topology-verification` for pending regression and memory-budget checks.
+
+Reversal-based acceptance damping
+--------------------------------
+
+CoreTopologyLevelSetMoves.hpp/.cpp selects a transient applied scale for the
+currently gated level-set compliance controller. For accepted fields phi_k,
+let d_k = phi_k - phi_(k-1). The helper calculates the normalized dot product
+of d_k and d_(k-1) over free nodes. Fixed coefficients must remain exactly +1
+and their masks/node domains must match in all input fields. Zero-norm updates
+have no direction and reset the reversal streak.
+
+Core defaults classify cosine <= -0.8 as a reversal. Three consecutive reversals
+at volume-feasible sources halve the retained scale, down to 0.1; it never
+increases automatically. These are initial verification heuristics, not numerical
+convergence tolerances. Infeasible sources reset the streak and use applied scale
+1 for ordinary restoration, retaining any previously reduced adaptive scale for
+later feasible sources. No additional physical solve is introduced.
+
+The ordinary configured-move QP is constructed first and remains unchanged.
+Acceptance starts with alpha equal to the chosen scale and evaluates
+phi_trial = phi_source + alpha * (phi_QP - phi_source). Existing nonlinear
+volume checks and backtracking may reduce alpha further. Incoming step_scale
+and effective_move_limit include this damping. backtracking_steps counts only
+the subsequent nonlinear reductions, not adaptive halvings.
+
+The controller reads completed fields through CalculiXTopologyInterface and
+commits its candidate move state only after next-iteration preparation succeeds
+and the run serial still matches. State belongs to TopologyRunContext and is
+cleared on terminal cleanup; fresh runs start at scale 1. It is not saved or
+stored in topology case settings. No GUI or command option is introduced.
+
+Convergence still requires the ordinary full-configured-move proposal residual,
+accepted field change, relative compliance change and actual volume criteria.
+Reducing alpha cannot by itself certify convergence. Neither this heuristic nor
+volume-only acceptance promises monotone physical compliance or a global optimum;
+material quantization can still contribute to oscillation. All eight native
+suites and the expanded live acceptance matrix passed on Windows. The physical
+adaptive run passed execution but did not converge; its ordinary residual stayed
+above tolerance despite smaller accepted steps. The cap-192 comparison against
+the adaptive cap-8 baseline converged at iteration 34 with zero stored grouping
+error; the new stable-cap experiment below remains separate from that evidence.
+See :doc:`topology-verification` for run identifiers and retained evidence.
+
+Stable material palettes and hysteresis
+--------------------------------------
+
+CoreMaterialsTopologyGrouping assigns level-set factors through the material
+interface. The material Core retains all collection ownership. For each base
+material with n elements, reserve min(n,2) levels; distribute remaining slots
+round-robin by sorted base-material ID, never exceeding n. Insufficient endpoint
+capacity is an error. If a budget covers its n elements, retain their requested
+factors exactly. Thus sufficient global capacity preserves the unquantized path.
+
+Otherwise, with budget b >= 2 and physical void factor v, fixed levels are
+L_i = v + (1-v)*i/(b-1), with endpoints assigned exactly v and 1. Levels and
+budgets do not change with requested extrema or distinct-factor counts. Nearest
+level assignment is used initially. Later, retain an old level while the request
+stays within its midpoint boundaries extended by 0.1 level spacings. Requests
+beyond that band may jump directly across several levels. Physical endpoints
+override retention. The Core helper defines the margin and palette-validation
+tolerance. Zero/negative IDs, invalid factors and inconsistent previous palettes
+are rejected before committing new iteration records.
+
+For spacing h, nearest assignment alone has absolute error at most h/2 and
+hysteresis may retain up to 0.6*h error (apart from floating-point tolerance).
+Relative error near the void factor can be large. This is an absolute-factor
+stabilization heuristic, not an error-controlled optimum or convergence guarantee.
+Ordinary sensitivities remain an approximation to the continuous requested model;
+the piecewise-constant grouped solve is not thereby made differentiable.
+
+Only level-set preparation selects this policy. Density keeps its logarithmic
+quantizer. Source bounds and cap must stay fixed within the run. Previous stored
+applied factors provide the hysteresis assignment history. Fixed palettes require
+no new persistent state; historical export/load reconstructs stored applied
+factors exactly, never re-quantizes them. All nine native suites passed. The
+stable cap-8 fixture retained a quantization plateau, whereas stable cap 32
+converged at iteration 41 and preserved history after reopen. Frozen C3D8
+reanalysis measured an exact-factor compliance 0.125669 percent below its
+grouped control, relative to that control. This is neither a general accuracy
+bound nor a global-optimality certificate. Six-formulation convergence/reanalysis
+matrix playback remains pending. Existing convergence criteria, six-decimal
+export formatting, default cap, GUI and save format are unchanged.

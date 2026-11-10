@@ -19,6 +19,12 @@ public:
    */
   bool prepare(int job_id, const CoreResultsFrd& frd, const CoreResultsDat& dat, const std::string& input_path, const CoreResultsVtkOptions& options, CoreResultsVtkPlan& output) const;
 
+  // External INP is authoritative when supplied. Never capture the live model.
+  // A DAT-only source without an INP produces tables, not invented coordinates.
+  bool prepare_external(const CoreResultsFrd& frd, const CoreResultsDat& dat,
+    const std::string& input_path, const CoreResultsVtkOptions& options,
+    CoreResultsVtkPlan& output, std::string& error) const;
+
   // Pure snapshot comparison. Both snapshots must use unique sorted IDs and
   // CalculiX connectivity. Extra candidate nodes (e.g. unused reference nodes)
   // are permitted; analysis element IDs/connectivity must match exactly.

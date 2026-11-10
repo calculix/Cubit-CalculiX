@@ -6,6 +6,7 @@
 #include <string>
 #include <cstdint>
 #include "../selection/SelectionState.hpp"
+#include "../tables/ResultTables.hpp"
 
 namespace Postprocessor
 {
@@ -40,6 +41,7 @@ namespace Postprocessor
     std::uint64_t fit_request = 0;
     std::uint64_t camera_revision = 0;
     SelectionState selection;
+    std::optional<TableReference> table;
   };
 }
 

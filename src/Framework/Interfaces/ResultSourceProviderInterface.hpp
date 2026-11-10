@@ -2,6 +2,8 @@
 #define RESULTSOURCEPROVIDERINTERFACE_HPP
 
 #include "Framework/Results/PublishedResultSource.hpp"
+#include "Framework/Results/ResultJobEntry.hpp"
+#include <vector>
 
 #include <string>
 
@@ -9,10 +11,25 @@ class ResultSourceProviderInterface
 {
 public:
   virtual ~ResultSourceProviderInterface() = default;
+  // Host-thread metadata only: no result reads, conversion, or session mutation.
+  virtual bool available_jobs(std::vector<SimResults::ResultJobEntry>& output, std::string& error) const
+  {
+    output.clear();
+    error.clear();
+    return true;
+  }
+
 
   // Stable registered prefix, independent of translated GUI workspace labels.
   // Framework registration maps application identity to this provider once.
   virtual std::string command_prefix() const = 0;
+  // Project restoration must not substitute the latest on-disk solver run.
+  // Providers opt in explicitly; failure leaves the source unresolved.
+  virtual bool restore(const SimResults::ResultSourceReference&, SimResults::PublishedResultSource&, std::string& error)
+  {
+    error = "This provider cannot restore saved result references.";
+    return false;
+  }
 
   // Called synchronously on the Cubit host thread. Internal worker tasks must
   // finish before returning. Does not activate workspaces, mutate the

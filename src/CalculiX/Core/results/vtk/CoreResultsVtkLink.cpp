@@ -10,6 +10,7 @@
 #include "MeshExportInterface.hpp"
 #include <algorithm>
 #include <charconv>
+#include <cctype>
 #include <cmath>
 #include <limits>
 #include <map>
@@ -525,16 +526,60 @@ namespace
       }
       std::sort(group.ids.begin(), group.ids.end());
       group.ids.erase(std::unique(group.ids.begin(), group.ids.end()), group.ids.end());
-      auto existing = std::find_if(plan.mesh.groups.begin(), plan.mesh.groups.end(), [&](const CoreResultsVtkGroup& candidate)
+      // DAT set names may be uppercased by the solver. Reuse a model set only
+      // when its association, folded name AND exact membership agree uniquely.
+      // Similar names alone must never merge distinct output subsets.
+      auto equal_name = [](const std::string& left, const std::string& right)
       {
-        return candidate.kind == group.kind && candidate.name == group.name;
-      });
+        return left.size() == right.size() && std::equal(left.begin(),left.end(),right.begin(),[](unsigned char a,unsigned char b)
+        {
+          return std::toupper(a) == std::toupper(b);
+        });
+      };
+      std::optional<std::size_t> linked;
+      bool ambiguous = false;
+      for (std::size_t index = 0; index < plan.mesh.groups.size(); ++index)
+      {
+        const auto& candidate = plan.mesh.groups[index];
+        const bool association_matches = (group.kind == CoreResultsVtkGroupKind::DatNodes && candidate.kind == CoreResultsVtkGroupKind::Nodeset) ||
+          (group.kind == CoreResultsVtkGroupKind::DatElements && candidate.kind == CoreResultsVtkGroupKind::Block);
+        if (!association_matches || !equal_name(candidate.name,group.name))
+        {
+          continue;
+        }
+        auto ids = candidate.ids;
+        std::sort(ids.begin(),ids.end());
+        ids.erase(std::unique(ids.begin(),ids.end()),ids.end());
+        if (ids == group.ids)
+        {
+          ambiguous = linked.has_value();
+          if (ambiguous)
+          {
+            break;
+          }
+          linked = index;
+        }
+      }
+      auto existing = plan.mesh.groups.end();
+      if (linked && !ambiguous)
+      {
+        existing = plan.mesh.groups.begin()+*linked;
+      }
+      else
+      {
+        existing = std::find_if(plan.mesh.groups.begin(), plan.mesh.groups.end(), [&](const CoreResultsVtkGroup& candidate)
+        {
+          return candidate.kind == group.kind && candidate.name == group.name;
+        });
+      }
       if (existing == plan.mesh.groups.end())
       {
+        field.target_group = plan.mesh.groups.size();
         plan.mesh.groups.push_back(std::move(group));
       }
       else
       {
+        field.target_group = static_cast<std::size_t>(existing-plan.mesh.groups.begin());
         existing->ids.insert(existing->ids.end(), group.ids.begin(), group.ids.end());
         std::sort(existing->ids.begin(), existing->ids.end());
         existing->ids.erase(std::unique(existing->ids.begin(), existing->ids.end()), existing->ids.end());
@@ -735,5 +780,60 @@ bool CoreResultsVtkLink::prepare(int job_id, const CoreResultsFrd& frd, const Co
   }
   result.layout = result.mesh.groups.empty() ? SimResults::DatasetLayout::SingleGrid : SimResults::DatasetLayout::Collection;
   output = std::move(result);
+  return true;
+}
+
+bool CoreResultsVtkLink::prepare_external(const CoreResultsFrd& frd, const CoreResultsDat& dat,
+  const std::string& input_path, const CoreResultsVtkOptions& options,
+  CoreResultsVtkPlan& output, std::string& error) const
+{
+  CoreResultsVtkPlan plan;
+  plan.options = options;
+  plan.job_id = 0;
+  plan.external_source = true;
+  plan.input_path = input_path;
+  CoreResultsVtkMesh reference;
+  if (!frd.nodes.empty() && !frd_mesh(frd,reference,error))
+  {
+    return false;
+  }
+  if (!input_path.empty())
+  {
+    CoreResultsInpReader reader;
+    if (!reader.read(input_path,plan.mesh,plan.input_files,error) ||
+        (!reference.nodes.empty() && !compatible(reference,plan.mesh,options,error)))
+    {
+      return false;
+    }
+    plan.link_source = SimResults::LinkSource::JobInput;
+    for (const auto& node : reference.nodes)
+    {
+      auto found = std::lower_bound(plan.mesh.nodes.begin(),plan.mesh.nodes.end(),node.id,
+        [](const CoreResultsVtkNode& value,int id)
+      {
+        return value.id < id;
+      });
+      if (found != plan.mesh.nodes.end() && found->id == node.id)
+      {
+        found->coordinates = node.coordinates;
+      }
+    }
+  }
+  else
+  {
+    plan.mesh = std::move(reference);
+  }
+  if (!select_groups(plan,error) || !fields(frd,dat,plan,error) ||
+      (plan.increments.empty() && plan.tables.empty()))
+  {
+    if (error.empty())
+    {
+      error = "No convertible result fields or tables were found.";
+    }
+    return false;
+  }
+  plan.layout = plan.mesh.groups.empty() ? SimResults::DatasetLayout::SingleGrid : SimResults::DatasetLayout::Collection;
+  output = std::move(plan);
+  error.clear();
   return true;
 }

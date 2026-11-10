@@ -1,6 +1,7 @@
 #include "CoreTopologyIteration.hpp"
 #include "CoreTopology.hpp"
 #include "CoreTopologyQuery.hpp"
+#include "Core/materials/CalculiXMaterialsInterface.hpp"
 #include "Core/materials/CoreMaterials.hpp"
 #include "Core/jobs/CoreJobs.hpp"
 #include "CubitMessage.hpp"
@@ -111,7 +112,7 @@ bool CoreTopologyIteration::set_displacement(CoreTopology& topology, int topolog
   return true;
 }
 
-bool CoreTopologyIteration::set_factors(const CoreTopology& topology, CoreMaterials& materials, int topology_id, int iteration_id, const std::vector<int>& element_ids, const std::vector<double>& stiffness_factors)
+bool CoreTopologyIteration::set_factors(const CoreTopology& topology, int topology_id, int iteration_id, const std::vector<int>& element_ids, const std::vector<double>& stiffness_factors)
 {
   const auto entry = topology.topology_cases.find(topology_id);
 
@@ -161,7 +162,8 @@ bool CoreTopologyIteration::set_factors(const CoreTopology& topology, CoreMateri
     }
   }
 
-  if (!materials.set_topology_iteration_factors(topology_id, iteration_id, element_ids, factors, entry->second.material_cap))
+  const bool stable_levels = entry->second.method == TopologyMethod::LevelSet;
+  if (!CalculiXMaterialsInterface().set_topology_iteration_factors(topology_id, iteration_id, element_ids, factors, entry->second.material_cap, stable_levels, entry->second.void_stiffness_ratio))
   {
     PRINT_ERROR("Failed to store topology %d iteration %d factors.\n", topology_id, iteration_id);
     return false;

@@ -3,6 +3,7 @@
 #include "DocumentationManager.hpp"
 #include "WorkspaceGraphicsStack.hpp"
 #include "Claro.hpp"
+#include "ClaroFileMenu.hpp"
 #include "CommandWindow.hpp"
 #include "NavigationModel.hpp"
 #include "TaskPanel.hpp"
@@ -95,11 +96,27 @@ bool CubitWorkspaceHost::attach(Claro* host, std::string& error)
     watch_dock(dock);
   }
 
+  std::vector<QAction*> nativeFileActions;
+  if (host->file_menu() != nullptr)
+  {
+    host->file_menu()->get_items_for_toolbar(nativeFileActions);
+  }
   for (auto* action : menu->actions())
   {
     nativeMenus.append({action, action->isVisible()});
     QString label = action->text();
     label.remove('&');
+    if (action->menu() != nullptr)
+    {
+      for (auto* fileAction : nativeFileActions)
+      {
+        if (fileAction != nullptr && !fileAction->isSeparator() && action->menu()->actions().contains(fileAction))
+        {
+          nativeFileMenu = action;
+          break;
+        }
+      }
+    }
     if (action->menu() != nullptr && label.compare(tr("Tools"), Qt::CaseInsensitive) == 0)
     {
       // Borrow Cubit's existing actions, including its Options dialog handler.
@@ -573,7 +590,9 @@ bool CubitWorkspaceHost::apply(const WorkspaceView& view, const QPersistentModel
   {
     if (item.action != nullptr)
     {
-      item.action->setVisible(item.action == nativeToolsMenu || (nativeActive && item.visible));
+      // Keeping File available also preserves the native Save action's shortcut
+      // in every workspace. Cubit owns Save versus Save As and unsaved prompts.
+      item.action->setVisible(item.action == nativeFileMenu || item.action == nativeToolsMenu || (nativeActive && item.visible));
     }
   }
 

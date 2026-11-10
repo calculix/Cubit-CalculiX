@@ -45,7 +45,7 @@ namespace Postprocessor
   {
     std::optional<FieldSelection> field;
     ColorPalette palette = ColoringDefaults::palette;
-    ColorRangeMode range_mode = ColorRangeMode::Automatic;
+    ColorRangeMode range_mode = ColorRangeMode::AllFrames;
     std::array<double, 2> fixed_range = {0.0, 1.0};
     bool reversed = false;
     bool legend_visible = true;

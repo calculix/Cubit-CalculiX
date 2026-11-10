@@ -12,6 +12,8 @@
 #include "CubitMessage.hpp"
 #include <exception>
 #include <set>
+#include <charconv>
+#include <algorithm>
 
 namespace
 {
@@ -168,8 +170,35 @@ bool CoreResultsPersistence::read_loaded_results(HDF5Tool& file, CoreResults& re
         return false;
       }
     }
+    if (file.nameExists(CalculiXModelSchema::path("Results/result_identities")))
+    {
+      std::vector<std::string> records;
+      if (!file.read_dataset_string_rank_1("result_identities",CalculiXModelSchema::path("Results"),records) || records.size() % 2 != 0)
+      {
+        return false;
+      }
+      for (std::size_t index = 0; index < records.size(); index += 2)
+      {
+        int job = -1;
+        const auto& text = records[index];
+        const auto parsed = std::from_chars(text.data(),text.data()+text.size(),job);
+        if (parsed.ec != std::errc{} || parsed.ptr != text.data()+text.size() || job <= 0 ||
+            records[index+1].size() != 74 || records[index+1].rfind("sha256-v1:",0) != 0 ||
+            std::any_of(records[index+1].begin()+10,records[index+1].end(),[](char value)
+            {
+              return !((value >= '0' && value <= '9') || (value >= 'a' && value <= 'f'));
+            }) || std::none_of(saved.results_data.begin(),saved.results_data.end(),[&](const auto& row)
+            {
+              return row.size() >= 2 && row[1] == job;
+            }) || !saved.retained_identities.emplace(job,records[index+1]).second)
+        {
+          return false;
+        }
+      }
+    }
     results.frd_data.swap(saved.frd_data);
     results.dat_data.swap(saved.dat_data);
+    results.retained_identities.swap(saved.retained_identities);
     results.clear_vtk_cache();
     return true;
   }
@@ -201,6 +230,7 @@ bool CoreResultsPersistence::read(HDF5Tool& file, CoreResults& results)
     results.results_data.swap(saved.results_data);
     results.frd_data.swap(saved.frd_data);
     results.dat_data.swap(saved.dat_data);
+    results.retained_identities.swap(saved.retained_identities);
     results.clear_vtk_cache();
     return true;
   }
@@ -221,6 +251,19 @@ bool CoreResultsPersistence::write(HDF5Tool& file, const CoreResults& results, b
   try
   {
     if (!write_registry(file, results))
+    {
+      return false;
+    }
+    std::vector<std::string> identities;
+    for (const auto& item : results.retained_identities)
+    {
+      if (save_loaded_results)
+      {
+        identities.push_back(std::to_string(item.first));
+        identities.push_back(item.second);
+      }
+    }
+    if (!file.write_dataset_string_rank_1("result_identities",CalculiXModelSchema::path("Results"),identities))
     {
       return false;
     }

@@ -6,5 +6,5 @@ class ReportIconLoader
 {
 public:
   ReportIconLoader();
-  static QIcon load(const std::string& component_directory);
+  static QIcon load(const std::string& component_directory, const std::string& filename = "Report.svg");
 };

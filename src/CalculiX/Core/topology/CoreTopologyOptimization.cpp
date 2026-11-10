@@ -138,6 +138,7 @@ void CoreTopologyOptimization::finish_topology_run(int topology_id, unsigned lon
 
   run->second.pending_level_set_proposal = {};
   run->second.phase = TopologyRunPhase::Finished;
+  run->second.level_set_moves = {};
 
   if (ccx_topology_run_iface.set_topology_run_state(topology_id, state))
   {
@@ -1118,9 +1119,34 @@ bool CoreTopologyOptimization::prepare_topology_iteration(int topology_id, int s
     return false;
   }
   const auto serial = run->second.serial;
+  const auto previous_moves = run->second.level_set_moves;
+  const bool source_feasible = run->second.pending_level_set_proposal.diagnostics.volume_feasible;
+  CalculiXTopologyInterface topology_iface;
+  const auto current = topology_iface.get_topology_iteration_level_set_field_data(topology_id, source_iteration);
+  CoreTopologyLevelSetMoves::Field previous;
+  CoreTopologyLevelSetMoves::Field older;
+  if (source_iteration >= 2)
+  {
+    previous = topology_iface.get_topology_iteration_level_set_field_data(topology_id, source_iteration - 1);
+  }
+  if (source_iteration >= 3)
+  {
+    older = topology_iface.get_topology_iteration_level_set_field_data(topology_id, source_iteration - 2);
+  }
+  TopologyLevelSetMoveState next_moves;
+  double applied_scale = 1.0;
+  if (!CoreTopologyLevelSetMoves::evaluate(source_iteration, older, previous, current, source_feasible, previous_moves, next_moves, applied_scale))
+  {
+    return false;
+  }
+  run = topology_runs.find(topology_id);
+  if (run == topology_runs.end() || run->second.serial != serial)
+  {
+    return false;
+  }
   const auto proposal = std::move(run->second.pending_level_set_proposal);
   run->second.pending_level_set_proposal = {};
-  const bool prepared = CalculiXTopologyRunInterface().prepare_topology_level_set_iteration(topology_id, source_iteration, next_iteration, proposal);
+  const bool prepared = CalculiXTopologyRunInterface().prepare_topology_level_set_iteration(topology_id, source_iteration, next_iteration, proposal, applied_scale);
   run = topology_runs.find(topology_id);
   if (run == topology_runs.end() || run->second.serial != serial)
   {
@@ -1128,7 +1154,11 @@ bool CoreTopologyOptimization::prepare_topology_iteration(int topology_id, int s
   }
   if (prepared)
   {
-    run->second.pending_level_set_proposal = {};
+    run->second.level_set_moves = next_moves;
+    if (next_moves.scale < previous_moves.scale)
+    {
+      PRINT_INFO("Topology %d: repeated level-set reversals; applied move scale %.6g -> %.6g.\n", topology_id, previous_moves.scale, next_moves.scale);
+    }
   }
   return prepared;
 }

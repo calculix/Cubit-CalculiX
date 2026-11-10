@@ -7,6 +7,12 @@ namespace Postprocessor
     const AnimationDefinition& animation,std::string& error)
   {
     error.clear();
+    const auto tableView = state.views.find(view_id);
+    if (animation.playing && tableView != state.views.end() && tableView->second.table)
+    {
+      error = "Return to the 3D view before starting mesh animation.";
+      return false;
+    }
     if (source_operation_active || scene_revision == std::numeric_limits<std::uint64_t>::max() ||
         animation.frames_per_second < AnimationDefaults::minimum_fps || animation.frames_per_second > AnimationDefaults::maximum_fps)
     {

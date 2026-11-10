@@ -1,4 +1,8 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsExternalSource.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsExternalSource.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsIdentity.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsIdentity.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ResultReadBuffer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ResultReadNumbers.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ResultReadTimings.hpp

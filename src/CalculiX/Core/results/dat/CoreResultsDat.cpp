@@ -20,6 +20,7 @@
 #include "Core/results/ResultReadNumbers.hpp"
 #include "Core/results/ResultReadTimings.hpp"
 #include <functional>
+#include <filesystem>
 
 #include <algorithm>
 #include <iterator>
@@ -111,6 +112,20 @@ bool CoreResultsDat::clear()
 bool CoreResultsDat::check_initialized()
 {
   return is_initialized;
+}
+
+bool CoreResultsDat::read_file(const std::string& path)
+{
+  if (is_initialized || path.empty())
+  {
+    PRINT_ERROR("Detached DAT reader requires a fresh instance and a file path.\n");
+    return false;
+  }
+  job_id = 0;
+  filepath = path;
+  progressbar = CubitInterface::app_util().get()->progress_tool();
+  is_initialized = true;
+  return read_parallel_boost();
 }
 
 bool CoreResultsDat::read()
@@ -746,7 +761,7 @@ bool CoreResultsDat::read_parallel_boost()
     PRINT_ERROR("DAT reader requires at least one converter thread.\n");
     return false;
   }
-  std::ifstream file(filepath, std::ios::binary);
+  std::ifstream file(std::filesystem::u8path(filepath), std::ios::binary);
   if (!file.is_open())
   {
     PRINT_ERROR("Cannot open DAT file: %s\n", filepath.c_str());

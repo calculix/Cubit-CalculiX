@@ -28,15 +28,23 @@ regenerates an input file::
    report ccx model
    report source ccx job 1
 
-The source command selects pending configuration without replacing the displayed
-report. Generate creates the selected source's document. Update is disabled while
-a different pending source is selected. Existing reports remain available in the
-report selector. Model-only reports have no associated solver results.
+The source command opens that source's stored report and restores its settings,
+including pending edits. There is one report per workspace and model/job source.
+If none exists, the preview is empty until Generate succeeds. Generate replaces
+the report for that source; a title or profile change does not create another
+instance. Failure preserves the previous report. Notes retain their stable
+section associations. Different jobs and the current model keep separate reports.
+Model-only reports have no associated solver results.
+
+The Source dropdown is the only report navigator. Stored reports remain listed
+and selectable when their input files/provider sources are unavailable; Generate
+and Update are disabled for those entries. Refresh does not submit commands.
 
 Generation updates the central preview. Open preview / Export opens the separate
 preview window. Both viewers display continuously stacked pages with vertical
 scrolling, horizontal scrolling when needed, Ctrl+wheel zoom, page navigation,
-Fit width and Fit page. Changing zoom does not open another window. Ordinary
+Fit width and Fit page. The initial default is Fit page; manual fit/zoom choices
+remain available. Changing zoom does not open another window. Ordinary
 refreshes preserve scroll position; only visible pages are painted.
 
 The right raw-properties dock was removed. Content checkboxes remain in the left
@@ -62,6 +70,22 @@ Configuration commands use quoted keys and values::
 
 Other supported common settings are title, project, revision, cover and contents.
 Boolean values are true/false. Steps are all or comma-separated positive ordinals.
+
+The settings dialog journals a readable named-argument command containing only
+edited fields. Multiple edits remain one atomic Core change. Named boolean
+arguments use on/off; omitted arguments remain unchanged::
+
+   report configure settings company_name "Company Name Test" title "Engineering report Test"
+   report configure settings footer_line off header_line on
+   report configure settings footer_right "Page {page} of {pages}"
+   report configure settings logo_file "C:/Company/logo.svg"
+   report configure settings logo_remove
+
+Text arguments are quoted. Numeric arguments include precision and logo_width_mm;
+page_size accepts A4/Letter and logo_placement accepts header_left, header_center,
+header_right, footer_left, footer_center or footer_right. Applying unchanged
+settings submits no command. The encoded settings-data form is no longer used.
+
 Preview page numbers are 1-based; zoom is 1 to 300 percent. Preview navigation
 controls submit these commands through silent_cmd rather than adding journal entries.
 Changed settings require Update before export. The preview continues to display
@@ -95,9 +119,9 @@ but retains Framework profiles. There is no separate report save/open file forma
 Temporary native save notifications are currently skipped, matching the existing
 workspace integration; report recovery from native autosaves is not yet verified.
 
-Select saved reports using the report selector or their stable IDs::
+Choose stored reports by their readable source, then add notes or export::
 
-   report select "<report-id>"
+   report source ccx job 1
    report note "ccx.model.materials" "Material data pending review"
    report export pdf "connection.pdf"
    report export odt "connection.odt"
@@ -115,8 +139,8 @@ Source and numerical limits
 CalculiX reporting reads the existing job .inp, following INCLUDE files relative
 to their parent deck and recording SHA-256 fingerprints. It never regenerates
 input or starts a solver. Historical input/result-run linkage remains unverified.
-For job reports, Update rejects changed input files/fingerprints; generate a new
-report explicitly to accept current files. For current-model reports, Update
+For job reports, Update rejects changed input files/fingerprints; Generate again
+explicitly to replace the same source report with current files. For current-model reports, Update
 explicitly captures current Core data again, preserving report notes. The
 reporting-snapshot hash identifies the captured report content, not a solver run. Original input units are not inferred.
 
@@ -159,6 +183,24 @@ not the existing generated pages; Update or Generate remains explicit.
 
 Page navigation and company branding
 -----------------------------------
+
+The Report file toolbar appears below the menu and reuses Cubit's New, Open,
+Save and journal actions. Its PDF and ODT buttons use the P02 and O02 export-arrow
+icons. Export buttons require a generated report with no pending source or
+configuration changes. Toolbar and preview-window exports share the same file
+dialog and confirmation behavior.
+
+An existing destination requires explicit replacement approval. Interactive
+exports ask before overwriting; command exports require the overwrite keyword::
+
+  report export pdf "C:/Reports/connection.pdf" overwrite
+  report export odt "C:/Reports/connection.odt" overwrite
+  report export both "C:/Reports/connection" overwrite
+
+Without overwrite, existing files are preserved. Paired export checks both
+destinations before writing either file. PDF and ODT are committed separately;
+if ODT writing fails after PDF succeeds, the error reports that partial result.
+Cancelling file selection or declining replacement submits no export command.
 
 Both previews provide a page slider and a page number with the total page count.
 Dragging previews the target number in the slider tooltip; releasing navigates.

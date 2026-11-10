@@ -11,7 +11,7 @@ ReportTestProviders::~ReportTestProviders() = default;
 bool ReportTestProviders::resolve_model_reporting(const std::string& prefix, ReportTemplateProviderInterface*& templates,
   ReportModelProviderInterface*& models, std::string& error) const
 {
-  if (prefix != "test")
+  if (prefix != "test" && prefix != "test-alias")
   {
     error = "Unknown test provider.";
     return false;
@@ -53,6 +53,13 @@ bool ReportTestProviders::describe(ReportTemplate& output, std::string& error) c
   option.default_value = "true";
   result.options.push_back(option);
   result.defaults.values[option.key] = option.default_value;
+  ReportOption steps;
+  steps.key = "steps";
+  steps.label = "Steps";
+  steps.kind = "steps";
+  steps.default_value = "all";
+  result.options.push_back(steps);
+  result.defaults.values[steps.key] = steps.default_value;
   output = std::move(result);
   error.clear();
   return true;

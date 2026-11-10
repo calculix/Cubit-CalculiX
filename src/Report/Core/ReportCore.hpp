@@ -24,12 +24,13 @@ public:
   bool update(std::string& error);
   bool configure(const std::string& key, const std::string& value, std::string& error);
   bool profile(const std::string& action, const std::string& name, std::vector<ReportProfile>& output, std::string& error);
-  bool select(const std::string& id, std::string& error);
   bool note(const std::string& section, const std::string& text, std::string& error);
   void restore(ReportSession session);
   void reset();
 
 private:
+  std::shared_ptr<const ReportDocument> find_document(const ReportRequest& source, const std::string& workspace = "") const;
+  bool activate_document(const std::string& id, std::string& error);
   bool build(const ReportRequest& request, const ReportProfile* profile, bool updating, std::string& error);
   ReportProviderRegistryInterface& registry;
   ReportSession state;

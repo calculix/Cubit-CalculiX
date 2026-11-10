@@ -24,7 +24,6 @@ public:
   bool generate(const std::string& provider, int job, const std::string& profile, std::string& error);
   bool update(std::string& error);
   bool configure(const std::string& key, const std::string& value, std::string& error);
-  bool select(const std::string& id, std::string& error);
   bool note(const std::string& section, const std::string& value, std::string& error);
   bool profile(const std::string& action, const std::string& name, std::vector<ReportProfile>& output, std::string& error);
   bool request_preview(std::string& error, int page = -1, int zoom = -1, const std::string& fit = "");
@@ -36,7 +35,10 @@ public:
   int preview_zoom() const noexcept;
   std::uint64_t preview_revision() const noexcept;
   bool layout(std::shared_ptr<const ReportDocumentLayout>& output, std::string& error);
-  bool export_document(const std::string& format, const std::string& filename, std::string& error);
+  bool export_document(const std::string& format, const std::string& filename, std::string& error, bool overwrite = false);
+  bool prepare_project_read(const std::string& filename, std::string& error);
+  bool commit_project_read(std::string& error);
+  void discard_project_read() noexcept;
   bool read_project(const std::string& filename, std::string& error);
   bool write_project(const std::string& filename, std::string& error) const;
   void reset();
@@ -44,6 +46,7 @@ public:
 
 private:
   ReportCore core;
+  std::unique_ptr<ReportSession> preparedProject;
   std::shared_ptr<const ReportDocument> layout_source;
   std::shared_ptr<ReportDocumentLayout> cached_layout;
   std::uint64_t previewRevision = 0;

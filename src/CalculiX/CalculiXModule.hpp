@@ -2,6 +2,7 @@
 #define CALCULIXMODULE_HPP
 
 #include "Framework/Interfaces/ModuleInterface.hpp"
+#include "Framework/Interfaces/ProjectStateProviderInterface.hpp"
 #include "Framework/Interfaces/CommandProviderInterface.hpp"
 #include "Framework/Interfaces/ComponentProviderInterface.hpp"
 
@@ -19,9 +20,15 @@ class CalculiXReportModelProvider;
 class CalculiXModule : public ModuleInterface,
                        public CommandProviderInterface,
                        public ComponentProviderInterface,
-                       public WorkspaceProviderInterface
+                       public WorkspaceProviderInterface,
+                       public ProjectStateProviderInterface
 {
 public:
+  ProjectStateProviderInterface* project_state_provider() noexcept override;
+  std::string project_state_id() const override;
+  void set_project_coordinated(bool coordinated) override;
+  bool restore_project_model(const ProjectStateContext& context, std::string& error) override;
+  bool write_project_state(const ProjectStateContext& context, std::string& error) override;
   CalculiXModule();
   ~CalculiXModule() override;
 

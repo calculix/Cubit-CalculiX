@@ -128,9 +128,10 @@ ReportCore merges patches and validates candidates before committing. Requests
 do not perform document validation.
 
 The dialog stages logo imports through ReportApplicationInterface and submits
-one settings command. The new settings-data form transports base64-encoded JSON
-to avoid command quoting ambiguities; logo imports carry a filename rather than
-image bytes in the command. Core imports that file again transactionally. The
+one readable settings command containing only changed named arguments. Text is
+quoted, boolean arguments use on/off, and logo imports carry a filename rather
+than image bytes. The encoded settings-data form has been removed. Core imports
+that file again transactionally. The
 dialog verifies committed text and logo bytes before closing. It does not mutate
 Core state directly. Profile payloads are limited to 2 MiB, including the logo;
 project payloads remain limited to 64 MiB. Neither export nor profile loading
@@ -141,3 +142,84 @@ dispatch without refresh feedback, atomic company settings validation, logo
 removal, HDF5 profile/project round trips after deletion of the original file,
 PDF export, and ODT image embedding, XML and native page fields. No build,
 configure, compiler or test executable was invoked for these changes.
+
+Report file toolbar and overwrite policy
+---------------------------------------
+
+ReportToolbar owns only its PDF/ODT actions and separators. Native New/Open/Save
+actions are borrowed from ClaroFileMenu::get_items_for_toolbar and identified by
+unique standard shortcut bindings. The toolbar retains original native ownership,
+handlers, icons and enabled states. Missing/ambiguous native bindings fail GUI
+startup with an explicit error rather than guessing by translated text or list
+position. Journal actions come from ClaroToolsMenu::get_items_for_toolbar.
+WorkspaceView::toolbars supplies placement and visibility; ReportWorkspace deletes
+its toolbar explicitly because QMainWindow reparents registered toolbars.
+
+ReportExportDialog is shared by the toolbar and preview window. A save dialog
+sets the single-format default suffix. Both-format export treats its input as a
+base name, lists the actual existing outputs in one replacement prompt, and
+submits overwrite only after approval. Cancellation is handled without dispatch.
+ReportApplicationInterface also checks existing paths for command-only callers:
+overwrite defaults to false and every destination is preflighted before any
+output. Direct PDF/ODT exporters retain QSaveFile staging; paired export is not a
+cross-file transaction and reports PDF success if ODT subsequently fails.
+
+P02/O02 are deployed as Icons/ExportPdf.svg and Icons/ExportOdt.svg. Report's GUI
+now links the Claro GUI libraries for native action access. Added regression test
+sources cover toolbar format selection, export enablement, single-format
+replacement policy, paired-output collision preflight and directory rejection.
+These tests have not been built or executed under the active restriction.
+
+Readable settings and project feedback
+-------------------------------------
+
+ReportConfigureCommand derives named settings arguments from ReportUserOptions
+and the existing steps selector. Omitted arguments preserve their current values;
+ReportCore validates and commits the complete patch atomically. The dialog keeps
+its opening configuration to identify edits, and ReportSettingsCommandText builds
+a deterministic readable command. Applying without edits submits nothing. Mixed
+quote delimiters that cannot be represented by the existing command quoting
+helper produce an explicit error, with no encoded fallback. Regression sources
+cover readable flags, empty strings, placeholders, filenames, quoting errors and
+the dialog's changed-field-only/no-change behavior; they remain unbuilt/unrun.
+
+Framework ProjectStateCoordinator now reports successful writes per provider and
+successful read commits per provider. This includes the implemented Postprocessor
+prepare/resolve/commit handler. Framework metadata is validated before restoration
+and written after workspace writers close their files. Framework success is not
+reported as a complete workspace save when any writer failed. CalculiX's old
+duplicate global start/completion messages are removed. Native File-menu actions
+remain available in all workspaces; the existing native Save action owns Ctrl+S,
+Save As for unnamed projects, replacement prompts and cancellation.
+
+One report per source
+---------------------
+
+ReportCore matches reports by canonical workspace ID, source kind and model ID
+or job ID. Title, profile, fingerprints and run identity are excluded from that
+key: explicit Generate may replace those properties without adding an instance.
+Generate builds and validates a candidate before replacing the stored document,
+retaining its private ID and notes. Update still checks job source consistency.
+The 1000-report limit applies to new sources, not replacement. Session reads
+reject duplicate canonical source identities; no older-format migration is added.
+
+The public ID-based selection API and command and the second report dropdown
+have been removed. Source selection calls a private activation helper to restore
+the document and its configuration draft. Named profiles are already loaded by
+profile commands, so the GUI's Generate action submits only the source command,
+preserving edits made after loading a profile. Profile selection is reflected
+from committed configuration without dispatch during refresh.
+
+ReportSourceEntry::available describes regeneration capability, while has_report
+allows a cached source to remain selectable. Live discovery is merged with saved
+reports; missing live entries and failed discovery retain cached-only sources.
+The Core rejects generation/update for unavailable sources independently of GUI
+button state. Cached preview/export does not need original input files. A source
+without a generated report shows an empty preview while its pending settings
+remain separate from the prior source's stored document. Initial preview mode
+is Fit page; ordinary refresh preserves manual fit/zoom choices.
+
+Unbuilt/unrun regression sources cover repeated generation, title/profile changes,
+failed replacement, changed job snapshots, canonical provider aliases, per-source
+notes/drafts, missing sources/discovery, duplicate-session rejection and replacement
+at the report-count limit. The no-build/no-compile restriction remains active.

@@ -79,6 +79,7 @@ private:
   QPointer<QWidget> viewport;
   QPointer<QMenuBar> menu;
   QPointer<QAction> nativeToolsMenu;
+  QPointer<QAction> nativeFileMenu;
   QPointer<NavigationModel> nativeNavigation;
   QPointer<QGroupBox> navigationMode;
   QPersistentModelIndex nativeSelection;

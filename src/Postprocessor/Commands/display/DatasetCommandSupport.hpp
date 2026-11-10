@@ -10,7 +10,7 @@ namespace DatasetCommandSupport
   {
     const std::string source = " [source <string:type='quoted',number='1',label='source_name'>]";
     const std::string prefix = show ? "post show " : "post hide ";
-    std::vector<std::string> result;
+    std::vector<std::string> result = {prefix+"{blocks|nodesets|sidesets|integrationpoints}"+source};
     for (const auto& selector : {std::string("<value:label='dataset_id'>"),
         std::string("<string:type='quoted',number='1',label='dataset_name'>")})
     {
@@ -35,6 +35,16 @@ namespace DatasetCommandSupport
     {
       error = "A nonempty quoted source name is required.";
       return false;
+    }
+    for (auto category : {Postprocessor::DatasetCategory::Blocks,Postprocessor::DatasetCategory::NodeSets,
+        Postprocessor::DatasetCategory::SideSets,Postprocessor::DatasetCategory::IntegrationPoints})
+    {
+      if (data.find_keyword(category == Postprocessor::DatasetCategory::Blocks ? "BLOCKS" :
+          category == Postprocessor::DatasetCategory::NodeSets ? "NODESETS" :
+          category == Postprocessor::DatasetCategory::SideSets ? "SIDESETS" : "INTEGRATIONPOINTS"))
+      {
+        return application.set_category_visible(source,category,show,error);
+      }
     }
     using Action = Postprocessor::DatasetVisibilityAction;
     std::optional<PostprocessorApplicationInterface::DatasetSelector> selector;

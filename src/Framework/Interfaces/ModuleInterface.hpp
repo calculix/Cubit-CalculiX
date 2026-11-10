@@ -3,6 +3,7 @@
 
 #include <string>
 
+class ProjectStateProviderInterface;
 class UserOptionsInterface;
 class DrawingInterface;
 class CommandProviderInterface;
@@ -19,6 +20,10 @@ class ModuleInterface
 {
 public:
   virtual ~ModuleInterface() = default;
+  virtual ProjectStateProviderInterface* project_state_provider() noexcept
+  {
+    return nullptr;
+  }
 
   // Stable identifier, independent of translated display text.
   virtual std::string module_id() const = 0;

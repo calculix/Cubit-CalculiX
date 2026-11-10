@@ -9,6 +9,16 @@
 
 #include "Core/loadCalculiXCore.hpp"
 
+bool CalculiXMaterialsInterface::set_topology_iteration_factors(int topology_id, int iteration_id, const std::vector<int>& element_ids, const std::vector<double>& stiffness_factors, int material_cap, bool stable_levels, double minimum_factor)
+{
+  if (!ccx_core.mat)
+  {
+    PRINT_ERROR("Materials core is not initialized.\n");
+    return false;
+  }
+  return ccx_core.mat->set_topology_iteration_factors(topology_id, iteration_id, element_ids, stiffness_factors, material_cap, stable_levels, minimum_factor);
+}
+
 std::string CalculiXMaterialsInterface::get_material_name(int material_id)
 {
   return ccx_core.mat->get_material_name(material_id);

@@ -32,7 +32,7 @@ bool CalculiXCore::set_topology_iteration_factors(int topology_id, int iteration
     return false;
   }
 
-  return CoreTopologyIteration::set_factors(*topology, *mat, topology_id, iteration_id, element_ids, stiffness_factors);
+  return CoreTopologyIteration::set_factors(*topology, topology_id, iteration_id, element_ids, stiffness_factors);
 }
 
 bool CalculiXCore::select_topology_iteration(int topology_id, int iteration_id)

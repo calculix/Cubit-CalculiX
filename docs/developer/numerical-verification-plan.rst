@@ -542,13 +542,39 @@ The user-reported Windows run passed all seven native suites, including the
 quadrature suite. Physical controller run ``20261109T133442Z_73ec62b3`` passed
 all 35 stages with fields, element results and histories identical to the
 pre-quadrature baseline. The full live update regression after quadrature reuse
-is still pending; no clean timing comparison or successful longer-run convergence
+passed in ``20261110T120336Z_49229417`` (36 phases / 6928 checks), including new
+damping acceptance checks. The user-reported native run passed eight suites.
+No clean timing comparison or successful longer-run convergence
 is established. C3D8 run ``20261109T140032Z_dd5a3f68`` passed execution and
 reached volume feasibility at iteration 6 but ended at iteration 60 without
-convergence, with persistent field reversal at move limit 0.1. The journal now
-prepares a fixed-move 0.05 comparison with all other case settings unchanged
-except the generated name. Direction cosine and two-iteration field change are
-diagnostics, not convergence criteria. That comparison remains unexecuted;
+convergence, with persistent field reversal at move limit 0.1. The journal then
+ran a fixed-move 0.05 comparison (``20261110T072554Z_c4464b21``) with all other
+case settings unchanged except the generated name. Execution passed and volume
+became feasible at iteration 11, but all ten final update pairs reversed and
+convergence was not reached. Direction cosine and two-iteration field change
+are diagnostics, not convergence criteria. The subsequent change damps
+acceptance after repeated feasible-source reversals without shrinking the ordinary
+proposal residual. Its native/live checks passed, while adaptive physical run
+``20261110T115248Z_bf1905a1`` passed execution without convergence. Applied
+factor jumps remained large relative to requested changes. The next journal
+compared material caps 192 and 8 at unchanged adaptive controls, recording
+requested/applied factor errors and temporal changes. High-cap run
+``20261110T121410Z_a1202968`` converged at iteration 34 with zero stored
+quantization error. A new fixed-linear-palette/hysteresis helper now changes
+level-set grouping only. Its native material_grouping checks must verify stable
+budgets/levels, boundary retention/switching, exact endpoints, cap limits and
+invalid-history handling. The physical journal compares stable and logarithmic
+cap-8 runs with identical settings and verifies historical native reconstruction.
+All nine native suites subsequently passed. Stable cap 8 did not converge in
+60 iterations, while stable cap 32 converged at iteration 41 with native history
+preserved. Frozen-field reanalysis ``20261110T130950Z_484dc3c8`` reproduced
+grouped compliance 6305.0011384 and gave exact-factor compliance 6297.077716,
+a -0.125669 percent difference relative to the grouped value. No accuracy
+acceptance threshold is assigned from this single fixture. The next matrix
+extends convergence, save/reopen and paired frozen-field reanalysis to all six
+formulations. Shared-deck checks preserve CalculiX node ordering, including
+quadratic continuation records; an iteration limit is never relabeled convergence.
+The Python harness checks passed offline, but actual matrix playback is pending;
 see :doc:`topology-verification`.
 A 32 MiB point/vector payload budget does not
 claim a hard bound on total process RSS. Reference data never justifies reusing

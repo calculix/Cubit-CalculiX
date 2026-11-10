@@ -21,6 +21,7 @@
 #include "Core/results/ResultReadNumbers.hpp"
 #include "Core/results/ResultReadTimings.hpp"
 #include <functional>
+#include <filesystem>
 
 #include <algorithm>
 #include <fstream>
@@ -93,6 +94,20 @@ bool CoreResultsFrd::clear()
 bool CoreResultsFrd::check_initialized()
 {
   return is_initialized;
+}
+
+bool CoreResultsFrd::read_file(const std::string& path)
+{
+  if (is_initialized || path.empty())
+  {
+    PRINT_ERROR("Detached FRD reader requires a fresh instance and a file path.\n");
+    return false;
+  }
+  job_id = 0;
+  filepath = path;
+  progressbar = CubitInterface::app_util().get()->progress_tool();
+  is_initialized = true;
+  return read_parallel_boost();
 }
 
 bool CoreResultsFrd::read()
@@ -838,19 +853,22 @@ bool CoreResultsFrd::read_parallel_boost()
     PRINT_ERROR("FRD reader requires at least one converter thread.\n");
     return false;
   }
-  const auto job_data = ccx_jobs_iface.get_job_data(job_id);
-  if (job_data.size() <= 3)
+  if (job_id > 0)
   {
-    PRINT_ERROR("Cannot obtain FRD job status.\n");
-    return false;
-  }
-  if (job_data[3] == "1")
-  {
-    PRINT_ERROR("Cannot read FRD results while the job is running.\n");
-    return false;
+    const auto job_data = ccx_jobs_iface.get_job_data(job_id);
+    if (job_data.size() <= 3)
+    {
+      PRINT_ERROR("Cannot obtain FRD job status.\n");
+      return false;
+    }
+    if (job_data[3] == "1")
+    {
+      PRINT_ERROR("Cannot read FRD results while the job is running.\n");
+      return false;
+    }
   }
 
-  std::ifstream file(filepath, std::ios::binary);
+  std::ifstream file(std::filesystem::u8path(filepath), std::ios::binary);
   if (!file.is_open())
   {
     PRINT_ERROR("Cannot open FRD file: %s\n", filepath.c_str());

@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 
+class ProjectStateProviderInterface;
 class UserOptionsInterface;
 class DrawingInterface;
 class CommandProviderInterface;
@@ -37,6 +38,7 @@ public:
   bool start_components(int withGUI, QWidget* host, std::string& error);
   void stop_components() noexcept;
   std::vector<WorkspaceProviderInterface*> workspace_providers() const;
+  std::vector<ProjectStateProviderInterface*> project_state_providers() const;
   std::vector<JobMonitorProviderInterface*> job_monitor_providers() const;
 
   // Borrowed providers, available only while initialized. Do not retain across
@@ -48,6 +50,9 @@ public:
     ResolvedResultSourceProvider& output,
     std::string& error) const override;
 
+  bool resolve_application_result_provider(const std::string& application,
+    ResolvedResultSourceProvider& output, std::string& error) const override;
+  bool available_result_jobs(std::vector<SimResults::ResultJobEntry>& output, std::string& error) const override;
   bool available_report_sources(std::vector<ReportSourceEntry>& output, std::string& error) const override;
   void bind_report_profiles(ReportProfileStoreInterface* store) noexcept;
   bool resolve_model_reporting(const std::string& prefix, ReportTemplateProviderInterface*& templates,

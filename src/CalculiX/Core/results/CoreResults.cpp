@@ -1,4 +1,5 @@
 #include "Core/results/CoreResults.hpp"
+#include "CoreResultsIdentity.hpp"
 #include <string>
 #include <vector>
 #include "Core/jobs/CalculiXJobsInterface.hpp"
@@ -51,6 +52,7 @@ bool CoreResults::reset()
     return false;
   }
   clear_vtk_cache();
+  retained_identities.clear();
   results_data.clear();
   frd_data.clear();
   dat_data.clear();
@@ -143,6 +145,7 @@ bool CoreResults::delete_result(int job_id)
     vtk_status.erase(job_id);
     frd_data.erase(frd_data.begin() + frd_data_id);
     dat_data.erase(dat_data.begin() + dat_data_id);
+    retained_identities.erase(job_id);
     results_data.erase(results_data.begin() + results_data_id);
     return true;
   }
@@ -154,6 +157,7 @@ bool CoreResults::load_result(int job_id)
   {
     return false;
   }
+  retained_identities.erase(job_id);
   vtk_results.erase(job_id);
   vtk_exports.erase(job_id);
   vtk_status.erase(job_id);
@@ -306,6 +310,7 @@ bool CoreResults::build_vtk_result(int job_id, const CoreResultsVtkOptions& opti
     plan.run_identity = std::to_string(job_id) + ":" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
     const int frd_id = get_frd_data_id_from_job_id(job_id);
     const int dat_id = get_dat_data_id_from_job_id(job_id);
+    plan.result_identity = retained_result_identity(frd_data[frd_id],dat_data[dat_id],plan);
     ProgressTool* progress = CubitInterface::app_util().get()->progress_tool();
     if (!progress)
     {
@@ -353,6 +358,7 @@ bool CoreResults::build_vtk_result(int job_id, const CoreResultsVtkOptions& opti
       }
       return false;
     }
+    retained_identities[job_id] = converted->result_identity;
     vtk_results[job_id] = std::move(converted);
     vtk_exports.erase(job_id);
     vtk_status[job_id] = SimResults::ConversionStatus::Complete;
@@ -560,4 +566,29 @@ std::string CoreResults::print_data()
   }
 
   return str_return;
+}
+
+std::string CoreResults::retained_identity(int job_id, std::string& error)
+{
+  error.clear();
+  if (!can_change_readers())
+  {
+    error = "CalculiX reader data is busy.";
+    return {};
+  }
+  CoreResultsVtkPlan plan;
+  if (!prepare_vtk_plan_impl(job_id,CoreResultsVtkOptions{},plan))
+  {
+    error = "The saved reader/mesh data cannot reproduce this result.";
+    return {};
+  }
+  const auto frd = get_frd_data_id_from_job_id(job_id), dat = get_dat_data_id_from_job_id(job_id);
+  const auto identity = retained_result_identity(frd_data[frd],dat_data[dat],plan);
+  const auto saved = retained_identities.find(job_id);
+  if (saved != retained_identities.end() && saved->second != identity)
+  {
+    error = "Saved result content or mesh-link metadata no longer matches its identity.";
+    return {};
+  }
+  return identity;
 }

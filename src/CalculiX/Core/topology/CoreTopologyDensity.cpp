@@ -47,7 +47,7 @@ bool CoreTopologyDensity::set_densities(CoreTopology& topology, CoreMaterials& m
     stiffness_factors.push_back(factor.second);
   }
 
-  if (!CoreTopologyIteration::set_factors(topology, materials, topology_id, iteration_id, element_ids, stiffness_factors))
+  if (!CoreTopologyIteration::set_factors(topology, topology_id, iteration_id, element_ids, stiffness_factors))
   {
     return false;
   }

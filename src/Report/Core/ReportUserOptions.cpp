@@ -48,7 +48,7 @@ std::vector<ReportOption> ReportUserOptions::definitions()
 
 std::string ReportUserOptions::initial_preview_mode()
 {
-  return "width";
+  return "page";
 }
 
 int ReportUserOptions::preview_margin()

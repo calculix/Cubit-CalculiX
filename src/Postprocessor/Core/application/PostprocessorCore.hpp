@@ -2,6 +2,7 @@
 #define POSTPROCESSOR_CORE_HPP
 
 #include "../session/PostprocessorSession.hpp"
+#include "../persistence/PostprocessorProjectState.hpp"
 #include "../sources/SourceRuntime.hpp"
 #include "../selection/ResultProbe.hpp"
 #include "Framework/Results/ResultSourceReference.hpp"
@@ -37,12 +38,17 @@ namespace Postprocessor
     bool pick_entity(const std::string& view_id, const EntityReference& entity, std::string& error);
     bool clear_pick(const std::string& view_id, std::string& error);
     std::optional<ProbeResult> probe(const std::string& view_id, std::string& error) const;
+    std::optional<ProbeResult> probe_entity(const std::string& view_id, const EntityReference& entity, std::string& error) const;
     // Preference for newly created representations only; existing display overrides survive.
     void set_default_palette(ColorPalette palette) noexcept;
 
     // Restore an empty default session without reusing revision/identity tokens.
     // Reject reset during provider callbacks; failure preserves the old session.
     bool reset(std::string& error);
+    bool capture_project(PostprocessorProjectState& output, std::string& error) const;
+    bool bind_project(PreparedPostprocessorProject& prepared, std::string& error) const;
+    bool restore_project(PreparedPostprocessorProject&& prepared, std::string& error);
+    std::string source_unavailable_reason(const std::string& id) const;
 
     // Exact, case-sensitive lookup; an empty result means no match.
     std::string source_id_from_name(const std::string& name) const;
@@ -67,6 +73,8 @@ namespace Postprocessor
     std::vector<SimResults::Dataset> mesh_datasets(const std::string& source_id) const;
     bool set_dataset_visibility(const std::string& source_id, const std::string& view_id,
       DatasetVisibilityAction action, std::optional<std::size_t> dataset, std::string& error);
+    bool set_category_visible(const std::string& source_id, const std::string& view_id,
+      DatasetCategory category, bool visible, std::string& error);
     bool set_source_visible(const std::string& source_id, const std::string& view_id,
       bool visible, std::string& error);
     // False with an empty error means no visible mesh; bounds remain unchanged.
@@ -96,6 +104,7 @@ namespace Postprocessor
 
     // Preserves source ID/name and active context; replaces resolved provenance
     // and runtime data and increments the revision only after full validation.
+    bool show_only_source(const std::string& source, const std::string& view, std::string& error);
     bool refresh_result(
       ResultSourceProviderInterface& provider,
       const std::string& source_id,
@@ -103,6 +112,9 @@ namespace Postprocessor
 
     // Selects a registered source, clearing stale active representation context.
     bool select_source(const std::string& source_id, std::string& error);
+    bool open_table(const std::string& source_id, const std::string& view_id, const std::string& name, bool field, std::string& error);
+    bool show_3d(const std::string& view_id, std::string& error);
+    ResultTableData table_data(const std::string& view_id) const;
 
     // Removes the source and its direct representations. Future feature
     // dependencies require explicit closure rules when features are implemented.
@@ -118,6 +130,8 @@ namespace Postprocessor
     bool prepare_initial_display(PostprocessorSession& staged, const std::string& source_id,
       const std::optional<std::size_t>& increment, std::string& error) const;
     PostprocessorSession state;
+    std::map<std::string,SavedRepresentationBinding> saved_bindings;
+    std::map<std::string,SavedFrameReference> saved_table_frames;
     ColorPalette default_palette = ColoringDefaults::palette;
     std::map<std::string, SourceRuntime> runtime;
     std::uint64_t next_source_number = 1;

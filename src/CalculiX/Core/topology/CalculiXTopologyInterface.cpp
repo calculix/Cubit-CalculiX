@@ -191,7 +191,7 @@ bool CalculiXTopologyInterface::set_topology_iteration_factors(int topology_id, 
     return false;
   }
 
-  return CoreTopologyIteration::set_factors(*ccx_core.topology, *ccx_core.mat, topology_id, iteration_id, element_ids, stiffness_factors);
+  return CoreTopologyIteration::set_factors(*ccx_core.topology, topology_id, iteration_id, element_ids, stiffness_factors);
 }
 
 bool CalculiXTopologyInterface::check_topology_material_assignment(int topology_id, int iteration_id, int element_id)

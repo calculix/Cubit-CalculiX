@@ -33,6 +33,7 @@ namespace Postprocessor
         entry.second.name = metadata->name;
         entry.second.kind = metadata->kind;
         entry.second.model_id = metadata->model_id;
+        entry.second.element_type = metadata->element_type;
       }
       result.push_back(std::move(entry.second));
     }

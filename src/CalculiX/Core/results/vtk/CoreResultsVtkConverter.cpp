@@ -55,6 +55,7 @@ namespace
   {
     SimResults::Dataset metadata;
     Kind kind = Kind::Block;
+    std::optional<std::size_t> source_group;
     std::vector<Key> points;
     std::vector<int> elements;
     vtkSmartPointer<vtkUnstructuredGrid> geometry;
@@ -239,6 +240,19 @@ namespace
     domain.metadata.name = group.name;
     domain.metadata.kind = kind_name(group.kind);
     domain.metadata.model_id = group.model_id;
+    if (group.kind == Kind::Block || group.kind == Kind::DatElements)
+    {
+      std::set<std::string> types;
+      for (int id : group.ids)
+      {
+        const auto* element = find_entity(plan.mesh.elements,id);
+        if (element && !element->calculix_type.empty())
+        {
+          types.insert(element->calculix_type);
+        }
+      }
+      domain.metadata.element_type = types.size() == 1 ? *types.begin() : types.empty() ? "" : "Mixed";
+    }
     if (group.kind == Kind::DatIntegrationPoints)
     {
       for (const auto& increment : plan.increments)
@@ -601,6 +615,11 @@ namespace
     }
     text(domain.geometry->GetFieldData(), "GroupName", domain.metadata.name);
     text(domain.geometry->GetFieldData(), "GroupKind", domain.metadata.kind);
+    text(domain.geometry->GetFieldData(), "ElementType", domain.metadata.element_type);
+    auto modelId = vtkSmartPointer<vtkTypeInt64Array>::New();
+    modelId->SetName("ModelId");
+    modelId->InsertNextValue(domain.metadata.model_id);
+    domain.geometry->GetFieldData()->AddArray(modelId);
     domain.metadata.point_count = keys.size();
     domain.metadata.cell_count = cell_count;
     return true;
@@ -611,6 +630,10 @@ namespace
     if (field.field.source == "FRD")
     {
       return domain.kind != Kind::DatIntegrationPoints;
+    }
+    if (field.target_group)
+    {
+      return domain.source_group == field.target_group;
     }
     if (field.field.set_name != domain.metadata.name)
     {
@@ -1420,11 +1443,18 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
     auto result = std::make_shared<SimResults::VtkResultsData>();
     result->job_id = plan.job_id;
     result->run_identity = plan.run_identity;
+    result->result_identity = plan.result_identity;
     result->input_path = plan.input_path;
     result->input_files = plan.input_files;
     result->link_source = plan.link_source;
     result->diagnostics = plan.diagnostics;
-    if (plan.job_id <= 0 || plan.mesh.nodes.empty() || plan.mesh.elements.empty())
+    const bool tablesOnly = plan.external_source && !plan.tables.empty() &&
+      std::all_of(plan.increments.begin(),plan.increments.end(),[](const auto& increment)
+      {
+        return increment.fields.empty() && increment.table_fields.empty();
+      });
+    if ((!plan.external_source && plan.job_id <= 0) || plan.job_id < 0 ||
+        (!tablesOnly && (plan.mesh.nodes.empty() || plan.mesh.elements.empty())))
     {
       error = "Invalid or empty VTK conversion plan.";
       return false;
@@ -1503,6 +1533,14 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
       }
       Domain domain;
       domain.metadata.id = i;
+      for (std::size_t index = 0; index < plan.mesh.groups.size(); ++index)
+      {
+        if (groups[i] == &plan.mesh.groups[index])
+        {
+          domain.source_group = index;
+          break;
+        }
+      }
       std::vector<Cell> cells;
       if (!domain_cells(plan, dat, *groups[i], domain, cells, error) || !prepare_shapes(plan, domain, shapes, error))
       {

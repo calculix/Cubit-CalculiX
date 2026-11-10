@@ -1,4 +1,5 @@
 #include "FrameworkContext.hpp"
+#include "ProjectStateCoordinator.hpp"
 #include "FrameworkModules.hpp"
 #include "Framework/Drawing/DrawingService.hpp"
 #include "Framework/Storage/UserOptionsStore.hpp"
@@ -30,6 +31,7 @@ FrameworkContext::FrameworkContext() = default;
 FrameworkContext::~FrameworkContext()
 {
   detach_workspace_host();
+  projects.reset();
   modules.shutdown();
 }
 
@@ -87,6 +89,21 @@ bool FrameworkContext::acquire(std::string& error)
       options.reset();
       return false;
     }
+    try
+    {
+      projects = std::make_unique<ProjectStateCoordinator>(modules.project_state_providers());
+    }
+    catch (const std::exception& exception)
+    {
+      error = std::string("Cannot initialize project persistence: ")+exception.what();
+      modules.shutdown();
+      modules.bind_report_profiles(nullptr);
+      reportProfiles.reset();
+      drawings.reset();
+      preferences.reset();
+      options.reset();
+      return false;
+    }
   }
 
   ++clients;
@@ -105,6 +122,7 @@ void FrameworkContext::release() noexcept
   if (clients == 0)
   {
     detach_workspace_host();
+    projects.reset();
     modules.shutdown();
     modules.bind_report_profiles(nullptr);
     reportProfiles.reset();

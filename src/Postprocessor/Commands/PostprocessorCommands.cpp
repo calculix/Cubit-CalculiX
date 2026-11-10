@@ -1,7 +1,10 @@
 #include "PostprocessorCommands.hpp"
+#include "tables/PostTableCommand.hpp"
+#include "tables/PostViewTypeCommand.hpp"
 #include "selection/PostPickCommand.hpp"
 #include "selection/PostProbeCommand.hpp"
 #include "sources/PostOpenCommand.hpp"
+#include "sources/PostRefreshCommand.hpp"
 #include "results/PostFrameCommand.hpp"
 #include "results/PostAnimationCommand.hpp"
 #include "sources/PostListCommand.hpp"
@@ -28,13 +31,25 @@ PostprocessorCommands::PostprocessorCommands(std::weak_ptr<PostprocessorApplicat
 
 std::vector<std::string> PostprocessorCommands::command_keys() const
 {
-  return {"PostPickCommand", "PostProbeCommand", "PostDeformCommand", "PostAnimationCommand", "PostColorCommand", "PostLegendCommand", "PostFrameCommand", "PostOpenCommand", "PostListCommand", "PostSelectCommand", "PostCloseCommand", "PostUserOptionsCommand",
+  return {"PostTableCommand", "PostViewTypeCommand", "PostPickCommand", "PostProbeCommand", "PostDeformCommand", "PostAnimationCommand", "PostColorCommand", "PostLegendCommand", "PostFrameCommand", "PostOpenCommand", "PostRefreshCommand", "PostListCommand", "PostSelectCommand", "PostCloseCommand", "PostUserOptionsCommand",
     "PostShowCommand", "PostHideCommand", "PostViewFitCommand", "PostViewCameraCommand",
     "PostViewRotateCommand", "PostViewPanCommand", "PostViewZoomCommand"};
 }
 
 CubitCommand* PostprocessorCommands::create_command(const std::string& key)
 {
+  if (key == "PostRefreshCommand")
+  {
+    return new PostRefreshCommand(application);
+  }
+  if (key == "PostTableCommand")
+  {
+    return new PostTableCommand(application);
+  }
+  if (key == "PostViewTypeCommand")
+  {
+    return new PostViewTypeCommand(application);
+  }
   if (key == "PostPickCommand")
   {
     return new PostPickCommand(application);

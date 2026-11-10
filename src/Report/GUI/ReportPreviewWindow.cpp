@@ -1,7 +1,7 @@
 #include "ReportPreviewWindow.hpp"
 #include <utility>
 #include "ReportPreviewWidget.hpp"
-#include "ReportCommandText.hpp"
+#include "ReportExportDialog.hpp"
 #include "Report/Document/ReportDocumentLayout.hpp"
 #include "CubitMessage.hpp"
 #include <QVBoxLayout>
@@ -12,7 +12,6 @@
 #include <QSlider>
 #include <QPushButton>
 #include <QLabel>
-#include <QFileDialog>
 #include <QSignalBlocker>
 #include <map>
 
@@ -185,14 +184,8 @@ void ReportPreviewWindow::set_view(int pageNumber, int zoomPercent, const std::s
 
 void ReportPreviewWindow::export_file(const std::string& format)
 {
-  const QString filter = format == "pdf" ? "PDF (*.pdf)" : format == "odt" ? "OpenDocument text (*.odt)" : "Output base name (*)";
-  const QString filename = QFileDialog::getSaveFileName(this, tr("Export report"), QString(), filter);
-  if (filename.isEmpty())
-  {
-    return;
-  }
-  std::string quoted, error;
-  if (!ReportCommandText::quote(filename, quoted, error) || !submit("report export " + format + " " + quoted, error))
+  std::string error;
+  if (!ReportExportDialog::run(this, format, submit, error))
   {
     PRINT_ERROR("Cannot export report: %s\n", error.c_str());
   }

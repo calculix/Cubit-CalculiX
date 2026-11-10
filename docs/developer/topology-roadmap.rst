@@ -85,15 +85,33 @@ Remaining implementation
   controller regression (20261109T133442Z_73ec62b3), retaining exact fields,
   element results and histories against baseline. All 31 export commands returned
   successfully; the earlier export exception remains unexplained. The full live
-  update regression after quadrature reuse and clean timing comparison are pending.
+  update regression passed in 20261110T120336Z_49229417 with 36 phases and 6928
+  checks. A clean quadrature timing comparison remains pending.
 * The 60-iteration C3D8 broad-band run 20261109T140032Z_dd5a3f68 passed execution
   and reached volume feasibility at iteration 6, but did not converge. Fields
-  continued reversing at the fixed 0.1 move limit. The journal now prepares a
-  controlled 0.05 comparison with unchanged tolerances and explicit oscillation
-  diagnostics; that comparison is not yet executed.
-* Next: compare the smaller fixed move limit before deciding whether adaptive
-  level-set moves are needed. Then extend the study to other element types and
-  expand default-width scope using the documented numerical gates.
+  continued reversing at the fixed 0.1 move limit. Fixed-0.05 comparison run
+  20261110T072554Z_c4464b21 also passed execution without convergence, with
+  feasibility from iteration 11 and nearly opposite final update directions.
+* Reversal-based acceptance damping is implemented at source level: three
+  consecutive feasible-source reversals halve the applied scale down to 0.1.
+  Ordinary QP residuals and convergence tests remain unchanged. All eight native
+  suites and expanded live acceptance checks passed. Physical adaptive run
+  20261110T115248Z_bf1905a1 passed execution but remained unconverged after 60
+  designs. Small fraction changes still caused large grouped-factor jumps.
+* High-cap run 20261110T121410Z_a1202968 converged at iteration 34 with zero
+  stored quantization error. This supports investigating grouping as a blocker
+  in the capped fixture, without establishing general convergence or optimality.
+* Fixed linear palettes with hysteresis are implemented at source level for
+  level-set grouping; density and historical reconstruction retain their paths.
+  All nine native suites passed. Stable cap 8 passed execution/history checks
+  but remained unconverged at iteration 60. Stable cap 32 converged at iteration
+  41 and preserved history after reopen. Frozen C3D8 reanalysis gave grouped
+  compliance 6305.0011384 and exact-factor compliance 6297.077716, a -0.125669
+  percent difference relative to the grouped control, with history unchanged.
+* Next: execute verify_level_set_matrix.jou for all six formulations. Shared
+  fixture/deck/history helpers and offline tests are prepared; actual matrix
+  playback is pending. Keep execution, convergence and approximation accuracy
+  separate. Then expand default-width scope using the documented numerical gates.
 * Remaining: kill after completed iterations, solver-process failure cleanup,
   mixed/curved meshes, narrow-band refinement, larger-model performance, GUI
   lifecycle and Linux evidence. The standalone cache-suite result is separate.

@@ -2,6 +2,13 @@
 #include "../representations/ResultMesh.hpp"
 #include <exception>
 #include <limits>
+#include <vtkStaticCellLinks.h>
+#include <vtkDataSet.h>
+#include <vtkPointData.h>
+#include <vtkCellData.h>
+#include <vtkDataArray.h>
+#include <vtkVariant.h>
+#include <set>
 
 namespace Postprocessor
 {
@@ -20,6 +27,10 @@ namespace Postprocessor
     }
     for (auto& entry : session.views)
     {
+      if (entry.second.table && (source_id.empty() || entry.second.table->source_id == source_id))
+      {
+        entry.second.table.reset();
+      }
       auto& selection = entry.second.selection;
       if (selection.entity && (source_id.empty() || selection.entity->source_id == source_id))
       {
@@ -156,9 +167,20 @@ namespace Postprocessor
       error = "No result entity is selected in this view.";
       return std::nullopt;
     }
+    return probe_entity(view_id,*view->second.selection.entity,error);
+  }
+
+  std::optional<ProbeResult> PostprocessorCore::probe_entity(const std::string& view_id,
+    const EntityReference& entity, std::string& error) const
+  {
+    error.clear();
+    if (state.views.find(view_id) == state.views.end())
+    {
+      error = "The probe view is unavailable.";
+      return std::nullopt;
+    }
     try
     {
-      const auto& entity = *view->second.selection.entity;
       const auto data = result_data(entity.source_id);
       for (const auto& entry : state.representations)
       {
@@ -168,6 +190,55 @@ namespace Postprocessor
         {
           auto result = probe_result(*data,display,entity);
           result.source_name = state.sources.at(entity.source_id).name;
+          if (entity.kind == EntityKind::Node && display.increment_index < data->increments.size())
+          {
+            const auto source = runtime.find(entity.source_id);
+            std::set<std::int64_t> parents;
+            for (const auto& part : result_mesh_parts(data->increments[display.increment_index].dataset.get()))
+            {
+              auto* ids = part.second->GetCellData()->GetArray("OriginalElementId");
+              if (!ids || ids->GetNumberOfComponents() != 1 || ids->GetDataType() == VTK_FLOAT || ids->GetDataType() == VTK_DOUBLE ||
+                  part.second->GetPointData()->HasArray("IntegrationPointId") || source == runtime.end())
+              {
+                continue;
+              }
+              std::string issue;
+              const auto points = entity_indices(part.second,entity,issue);
+              if (points.empty())
+              {
+                continue;
+              }
+              auto& links = source->second.node_links[part.second];
+              if (!links)
+              {
+                auto candidate = std::shared_ptr<vtkStaticCellLinks>(vtkStaticCellLinks::New(),[](vtkStaticCellLinks* value)
+                {
+                  value->Delete();
+                });
+                candidate->SetDataSet(part.second);
+                candidate->BuildLinks();
+                links = std::move(candidate);
+              }
+              for (auto point : points)
+              {
+                const auto count = links->GetNcells(static_cast<vtkIdType>(point));
+                const auto* cells = links->GetCells(static_cast<vtkIdType>(point));
+                for (vtkIdType index = 0; index < count; ++index)
+                {
+                  if (cells[index] < ids->GetNumberOfTuples())
+                  {
+                    bool valid = false;
+                    const auto id = ids->GetVariantValue(cells[index]).ToLongLong(&valid);
+                    if (valid && id >= 0)
+                    {
+                      parents.insert(id);
+                    }
+                  }
+                }
+              }
+            }
+            result.element_ids.assign(parents.begin(),parents.end());
+          }
           return result;
         }
       }

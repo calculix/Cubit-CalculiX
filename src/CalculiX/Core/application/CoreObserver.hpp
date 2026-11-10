@@ -22,6 +22,7 @@ public:
   void notify_cub_file_read(std::string filename) override;
   void notify_cub_file_saved(std::string filename, bool is_tmp_file) override;
 
+  bool project_coordinated = false;
   bool is_updating() const { return updating; }
 
 private:

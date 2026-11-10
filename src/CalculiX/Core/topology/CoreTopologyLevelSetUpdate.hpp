@@ -14,7 +14,9 @@ public:
   /// The successful transient proposal takes ownership; source checks always query Cubit.
   static bool build_proposal(const TopologyLevelSetDesign& source, const TopologyLevelSetEvaluation& evaluation, const std::map<int, bool>& preserved, const std::map<int, double>& element_volumes, double target_volume_fraction, TopologyLevelSetProposal& proposal, std::shared_ptr<CoreTopologyLevelSetGeometryCache> source_cache = {});
   /// Accept a proposal from this solved source by actual-volume backtracking.
-  static bool accept_proposal(const TopologyLevelSetDesign& source, const TopologyLevelSetProposal& proposal, const std::map<int, bool>& preserved, const std::map<int, double>& element_volumes, TopologyLevelSetDesign& next, std::map<int, double>& factors, TopologyLevelSetUpdateDiagnostics& diagnostics);
+  /// initial_step_scale in (0,1] damps application without changing the ordinary
+  /// proposal/residual. Subsequent backtracking may reduce the scale further.
+  static bool accept_proposal(const TopologyLevelSetDesign& source, const TopologyLevelSetProposal& proposal, const std::map<int, bool>& preserved, const std::map<int, double>& element_volumes, TopologyLevelSetDesign& next, std::map<int, double>& factors, TopologyLevelSetUpdateDiagnostics& diagnostics, double initial_step_scale = 1.0);
 
   /**
    * @brief Build a regularized, bounded outgoing field using a solved source design.

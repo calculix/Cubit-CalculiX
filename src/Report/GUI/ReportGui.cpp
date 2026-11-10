@@ -6,6 +6,7 @@
 #include "Report/Interfaces/ReportApplicationInterface.hpp"
 #include "CubitMessage.hpp"
 #include <QMainWindow>
+#include "Claro.hpp"
 #include <QThread>
 #include <exception>
 
@@ -35,7 +36,13 @@ bool ReportGui::start(QWidget* host, std::string& error)
     error = "Report GUI startup requires its application and the Cubit GUI thread.";
     return false;
   }
-  workspace = new ReportWorkspace(host, application, submit, silent, ReportIconLoader::load(componentDirectory));
+  workspace = new ReportWorkspace(host, application, submit, silent, ReportIconLoader::load(componentDirectory),
+    ReportIconLoader::load(componentDirectory, "ExportPdf.svg"), ReportIconLoader::load(componentDirectory, "ExportOdt.svg"));
+  if (!workspace->bind_native_toolbar(qobject_cast<Claro*>(host), error))
+  {
+    delete workspace.data();
+    return false;
+  }
   active->set_gui_available(true);
   observer = std::make_unique<ReportGuiObserver>([this]()
   {

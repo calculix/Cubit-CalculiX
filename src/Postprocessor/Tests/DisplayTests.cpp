@@ -807,6 +807,8 @@ void scene_checks()
 
 int main()
 {
+  check(Postprocessor::SelectionState{}.mode == Postprocessor::EntityKind::Node,"New views must default to node picking");
+  check(Postprocessor::ResultColoring{}.range_mode == Postprocessor::ColorRangeMode::AllFrames,"New displays must default to All frames range");
   core_checks();
   reset_checks();
   frame_checks();

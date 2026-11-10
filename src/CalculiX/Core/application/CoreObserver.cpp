@@ -56,13 +56,17 @@ void CoreObserver::notify_model_reset()
 
 void CoreObserver::notify_cub_file_read(std::string filename)
 {
+  if (project_coordinated)
+  {
+    return;
+  }
   CalculiXApplicationInterface ccx_application_iface;
   ccx_application_iface.core_read_cub(filename);
 }
 
 void CoreObserver::notify_cub_file_saved(std::string filename, bool is_tmp_file)
 {
-  if (!is_tmp_file)
+  if (!is_tmp_file && !project_coordinated)
   {
     CalculiXApplicationInterface ccx_application_iface;
     ccx_application_iface.core_save_cub(filename);

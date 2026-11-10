@@ -4,6 +4,9 @@
 #include "vtk/CoreResultsVtkStructs.hpp"
 
 #include <exception>
+#include <QFileInfo>
+#include <QString>
+#include "CoreResultsExternalSource.hpp"
 #include <utility>
 #include <variant>
 
@@ -22,8 +25,8 @@ bool CalculiXResultSourceProvider::open(
 
   if (job == nullptr)
   {
-    error = "Independent CalculiX file loading is not implemented yet.";
-    return false;
+    const auto* files = std::get_if<SimResults::FileSourceReference>(&request);
+    return files && CoreResultsExternalSource().open(*files,output,error);
   }
 
   return load_job(*job, false, output, error);
@@ -39,8 +42,7 @@ bool CalculiXResultSourceProvider::refresh(
 
   if (job == nullptr)
   {
-    error = "Independent CalculiX file refresh is not implemented yet.";
-    return false;
+    return open(current,output,error);
   }
 
   return load_job(*job, true, output, error);
@@ -138,6 +140,7 @@ bool CalculiXResultSourceProvider::load_job(
     SimResults::JobSourceReference resolved = request;
     resolved.application_id = "calculix";
     resolved.run_identity = data->run_identity;
+    resolved.result_identity = data->result_identity;
     published.reference = std::move(resolved);
     published.suggested_name = settings.name;
     published.data = std::move(data);
@@ -155,4 +158,104 @@ bool CalculiXResultSourceProvider::load_job(
     error = "CalculiX result loading failed with an unknown exception.";
     return false;
   }
+}
+
+bool CalculiXResultSourceProvider::restore(const SimResults::ResultSourceReference& request,
+  SimResults::PublishedResultSource& output, std::string& error)
+{
+  error.clear();
+  if (const auto* files = std::get_if<SimResults::FileSourceReference>(&request))
+  {
+    return CoreResultsExternalSource().open(*files,output,error,true);
+  }
+  const auto* job = std::get_if<SimResults::JobSourceReference>(&request);
+  if (!job || job->application_id != "calculix" || job->job_id <= 0 || job->result_identity.empty() || !job->project_id.empty())
+  {
+    error = "The saved CalculiX reference has no supported durable result identity.";
+    return false;
+  }
+  try
+  {
+    CalculiXResultsInterface results;
+    JobsSettings settings;
+    CalculiXJobsInterface jobs;
+    if (!jobs.get_job_settings(job->job_id,settings,error) || jobs.get_job_status(job->job_id) == 1 || results.is_vtk_build_active())
+    {
+      error = "The saved CalculiX job is missing or busy.";
+      return false;
+    }
+    auto data = results.get_vtk_result(job->job_id);
+    if (!data || data->result_identity != job->result_identity)
+    {
+      const auto retained = results.retained_identity(job->job_id,error);
+      if (retained.empty() || retained != job->result_identity)
+      {
+        if (error.empty())
+        {
+          error = "The retained CalculiX result differs from the saved result.";
+        }
+        return false;
+      }
+      // Never call load_result(): only readers restored from .cub are allowed.
+      if (!results.build_vtk_result(job->job_id,CoreResultsVtkOptions{}))
+      {
+        error = "Cannot reconstruct VTK data from the saved reader buffers.";
+        return false;
+      }
+      data = results.get_vtk_result(job->job_id);
+    }
+    if (!data || data->result_identity != job->result_identity)
+    {
+      error = "The reconstructed result failed durable identity validation.";
+      return false;
+    }
+    auto resolved = *job;
+    resolved.run_identity = data->run_identity;
+    SimResults::PublishedResultSource candidate;
+    candidate.reference = resolved;
+    candidate.suggested_name = settings.name;
+    candidate.data = std::move(data);
+    output = std::move(candidate);
+    return true;
+  }
+  catch (const std::exception& exception)
+  {
+    error = std::string("Cannot restore CalculiX result: ")+exception.what();
+    return false;
+  }
+}
+
+bool CalculiXResultSourceProvider::available_jobs(std::vector<SimResults::ResultJobEntry>& output, std::string& error) const
+{
+  CalculiXJobsInterface jobs;
+  CalculiXResultsInterface results;
+  std::vector<SimResults::ResultJobEntry> entries;
+  for (const auto& row : jobs.get_jobs_tree_data())
+  {
+    bool valid = false;
+    const int id = row.empty() ? -1 : QString::fromStdString(row[0]).toInt(&valid);
+    JobsSettings settings;
+    if (!valid || id <= 0 || !jobs.get_job_settings(id,settings,error))
+    {
+      error = "Cannot obtain result job metadata.";
+      return false;
+    }
+    SimResults::ResultJobEntry entry;
+    entry.reference.application_id = "calculix";
+    entry.reference.job_id = id;
+    entry.command_prefix = "ccx";
+    entry.application_name = "CalculiX";
+    entry.job_name = settings.name;
+    const bool busy = jobs.get_job_status(id) == 1 || results.is_vtk_build_active();
+    const auto data = results.get_vtk_result(id);
+    const auto job = jobs.get_job_data(id);
+    const bool files = job.size() > 1 && QFileInfo::exists(QString::fromStdString(job[1]+".frd")) &&
+      QFileInfo::exists(QString::fromStdString(job[1]+".dat"));
+    entry.available = !busy && (data || files);
+    entry.unavailable_reason = busy ? "Job or result conversion is running." : files || data ? "" : "Result files are not available.";
+    entries.push_back(std::move(entry));
+  }
+  output = std::move(entries);
+  error.clear();
+  return true;
 }

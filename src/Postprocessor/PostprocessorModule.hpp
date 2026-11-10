@@ -2,6 +2,7 @@
 #define POSTPROCESSORMODULE_HPP
 
 #include "Framework/Interfaces/ModuleInterface.hpp"
+#include "Framework/Interfaces/ProjectStateProviderInterface.hpp"
 #include "Framework/Interfaces/CommandProviderInterface.hpp"
 #include "Framework/Interfaces/ComponentProviderInterface.hpp"
 #include "Framework/Interfaces/WorkspaceProviderInterface.hpp"
@@ -16,7 +17,7 @@ class PostprocessorGui;
 class PostprocessorModelObserver;
 
 class PostprocessorModule : public ModuleInterface, public CommandProviderInterface,
-  public ComponentProviderInterface, public WorkspaceProviderInterface
+  public ComponentProviderInterface, public WorkspaceProviderInterface, public ProjectStateProviderInterface
 {
 public:
   PostprocessorModule(ResultSourceRegistryInterface& providers,
@@ -25,6 +26,14 @@ public:
   ~PostprocessorModule() override;
 
   std::string module_id() const override;
+  ProjectStateProviderInterface* project_state_provider() noexcept override;
+  std::string project_state_id() const override;
+  bool prepare_project_read(const ProjectStateContext& context, std::string& error) override;
+  bool resolve_project_sources(const ProjectStateContext& context, std::string& error) override;
+  bool commit_project_read(const ProjectStateContext& context, std::string& error) override;
+  void discard_project_read() noexcept override;
+  bool prepare_project_save(const ProjectStateContext& context, std::string& error) override;
+  bool write_project_state(const ProjectStateContext& context, std::string& error) override;
   bool initialize(UserOptionsInterface& options, DrawingInterface& drawings, std::string& error) override;
   void shutdown() noexcept override;
   CommandProviderInterface* command_provider() noexcept override;

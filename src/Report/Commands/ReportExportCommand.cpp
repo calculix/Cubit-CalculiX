@@ -12,7 +12,7 @@ ReportExportCommand::~ReportExportCommand() = default;
 
 std::vector<std::string> ReportExportCommand::get_syntax()
 {
-  return {"report export {pdf|odt|both} <string:type='quoted',number='1',label='filename'>"};
+  return {"report export {pdf|odt|both} <string:type='quoted',number='1',label='filename'> [overwrite]"};
 }
 
 std::vector<std::string> ReportExportCommand::get_syntax_help()
@@ -22,7 +22,7 @@ std::vector<std::string> ReportExportCommand::get_syntax_help()
 
 std::vector<std::string> ReportExportCommand::get_help()
 {
-  return {"Export the current generated report. For both, filename is the base name; .pdf and .odt are appended."};
+  return {"Export the current generated report. Existing files require overwrite. For both, filename is the base name; .pdf and .odt are appended and both destinations are checked first."};
 }
 
 bool ReportExportCommand::execute(CubitCommandData& data)
@@ -61,5 +61,5 @@ bool ReportExportCommand::run(CubitCommandData& data, const std::shared_ptr<Repo
     error = "Report export needs a quoted destination.";
     return false;
   }
-  return active->export_document(data.find_keyword("PDF") ? "pdf" : data.find_keyword("ODT") ? "odt" : "both", filename, error);
+  return active->export_document(data.find_keyword("PDF") ? "pdf" : data.find_keyword("ODT") ? "odt" : "both", filename, error, data.find_keyword("OVERWRITE"));
 }

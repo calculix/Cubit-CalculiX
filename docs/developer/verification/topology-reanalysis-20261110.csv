@@ -1,0 +1,2 @@
+run_id,source_run,formulation,iteration,control_job,exact_job,control_compliance,exact_compliance,signed_relative_compliance_change,absolute_relative_compliance_change,topology_history_unchanged,accuracy_acceptance,plugin_revision
+20261110T130950Z_484dc3c8,20261110T124312Z_6c4e8390,C3D8,41,42,43,6305.0011384,6297.077716,-0.0012566884963339797,0.0012566884963339797,True,NOT_ASSESSED,not recorded

@@ -23,7 +23,7 @@ std::vector<std::string> ReportSourceCommand::get_syntax_help()
 
 std::vector<std::string> ReportSourceCommand::get_help()
 {
-  return {"Select an available model or job as the pending report source without replacing the displayed report."};
+  return {"Choose a model/job source and open its stored report and settings, or configure it before first generation. Stored reports remain viewable when source files are unavailable."};
 }
 
 bool ReportSourceCommand::execute(CubitCommandData& data)

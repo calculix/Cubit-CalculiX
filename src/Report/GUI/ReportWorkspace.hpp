@@ -17,15 +17,19 @@ class QSlider;
 class QPushButton;
 class QLabel;
 class QMenu;
+class Claro;
+class ReportToolbar;
 
 class ReportWorkspace final : public QWidget
 {
 public:
   ReportWorkspace(QWidget* host, std::weak_ptr<ReportApplicationInterface> application,
     std::function<bool(const std::string&, std::string&)> submit,
-    std::function<bool(const std::string&, std::string&)> silent, const QIcon& icon);
+    std::function<bool(const std::string&, std::string&)> silent, const QIcon& icon,
+    const QIcon& pdfIcon = QIcon(), const QIcon& odtIcon = QIcon());
   ~ReportWorkspace() override;
   void refresh();
+  bool bind_native_toolbar(Claro* host, std::string& error);
   void workspace_view(WorkspaceView& view);
 
 private:
@@ -37,12 +41,12 @@ private:
   std::function<bool(const std::string&, std::string&)> submit;
   std::function<bool(const std::string&, std::string&)> silent;
   QIcon icon;
+  QPointer<ReportToolbar> toolbar;
   QPointer<QDockWidget> treeDock;
   ReportContentTree* tree;
   ReportPreviewWidget* page;
   ReportPreviewWindow* preview;
   QComboBox* sources;
-  QComboBox* reports;
   QComboBox* profiles;
   QWidget* navigationBar;
   QSpinBox* pageNumber;

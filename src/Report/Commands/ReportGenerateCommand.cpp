@@ -23,7 +23,7 @@ std::vector<std::string> ReportGenerateCommand::get_syntax_help()
 
 std::vector<std::string> ReportGenerateCommand::get_help()
 {
-  return {"Generate a model/steps report using its workspace template and saved defaults. Refreshes the workspace preview without opening another window."};
+  return {"Generate or replace the one report for a model/job source. Preserves notes and uses existing settings unless an explicit profile is supplied. Refreshes the preview without opening another window."};
 }
 
 bool ReportGenerateCommand::execute(CubitCommandData& data)

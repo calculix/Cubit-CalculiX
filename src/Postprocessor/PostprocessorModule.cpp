@@ -126,3 +126,47 @@ bool PostprocessorModule::workspace_view(WorkspaceView& view, std::string& error
 
   return gui->workspace_view(view, error);
 }
+
+ProjectStateProviderInterface* PostprocessorModule::project_state_provider() noexcept
+{
+  return this;
+}
+std::string PostprocessorModule::project_state_id() const
+{
+  return "postprocessor";
+}
+bool PostprocessorModule::prepare_project_read(const ProjectStateContext& context, std::string& error)
+{
+  return application && application->read_project_definitions(context.filename,error);
+}
+bool PostprocessorModule::resolve_project_sources(const ProjectStateContext&, std::string& error)
+{
+  return application && application->resolve_project_sources(error);
+}
+bool PostprocessorModule::commit_project_read(const ProjectStateContext&, std::string& error)
+{
+  if (!application || !application->commit_project_restore(error))
+  {
+    return false;
+  }
+  if (gui)
+  {
+    gui->refresh();
+  }
+  return true;
+}
+void PostprocessorModule::discard_project_read() noexcept
+{
+  if (application)
+  {
+    application->discard_project_restore();
+  }
+}
+bool PostprocessorModule::prepare_project_save(const ProjectStateContext&, std::string& error)
+{
+  return application && application->prepare_project_save(error);
+}
+bool PostprocessorModule::write_project_state(const ProjectStateContext& context, std::string& error)
+{
+  return application && application->write_project(context.filename,error);
+}

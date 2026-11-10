@@ -7,6 +7,7 @@
 #include <string>
 #include <functional>
 #include "CameraTimings.hpp"
+#include "Postprocessor/Core/selection/EntityReference.hpp"
 #include "Postprocessor/Core/options/PostprocessorUserOptions.hpp"
 
 class vtkGenericOpenGLRenderWindow;
@@ -50,6 +51,8 @@ private:
   void clear_hover();
   QTimer* hoverTimer = nullptr;
   QPointF hoverPosition;
+  std::optional<Postprocessor::EntityReference> tooltipEntity;
+  QString tooltipText;
   Dispatch submitCommand;
   void queue_timing_report();
   void report_timings();

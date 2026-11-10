@@ -170,7 +170,7 @@ bool CalculiXCore::evaluate_topology_level_set_proposal(int topology_id, int ite
   return true;
 }
 
-bool CalculiXCore::prepare_topology_level_set_iteration(int topology_id, int source_iteration, int next_iteration, const TopologyLevelSetProposal& proposal)
+bool CalculiXCore::prepare_topology_level_set_iteration(int topology_id, int source_iteration, int next_iteration, const TopologyLevelSetProposal& proposal, double initial_step_scale)
 {
   auto* configuration = level_set_case(topology, topology_id);
   if (!configuration || source_iteration < 1 || source_iteration == (std::numeric_limits<int>::max)() ||
@@ -198,7 +198,7 @@ bool CalculiXCore::prepare_topology_level_set_iteration(int topology_id, int sou
   TopologyLevelSetDesign design;
   std::map<int, double> factors;
   TopologyLevelSetUpdateDiagnostics diagnostics;
-  if (!CoreTopologyLevelSetUpdate::accept_proposal(source->second, proposal, configuration->element_preserved, volumes, design, factors, diagnostics))
+  if (!CoreTopologyLevelSetUpdate::accept_proposal(source->second, proposal, configuration->element_preserved, volumes, design, factors, diagnostics, initial_step_scale))
   {
     return false;
   }

@@ -1,4 +1,5 @@
 #include "ReportApplicationInterface.hpp"
+#include <QFileInfo>
 #include "Report/Core/ReportLogo.hpp"
 #include <utility>
 #include "Report/Core/ReportProjectPersistence.hpp"
@@ -55,11 +56,6 @@ bool ReportApplicationInterface::configure(const std::string& key, const std::st
   return core.configure(key, value, error);
 }
 
-bool ReportApplicationInterface::select(const std::string& id, std::string& error)
-{
-  return core.select(id, error);
-}
-
 bool ReportApplicationInterface::note(const std::string& section, const std::string& value, std::string& error)
 {
   return core.note(section, value, error);
@@ -72,6 +68,11 @@ bool ReportApplicationInterface::profile(const std::string& action, const std::s
 
 bool ReportApplicationInterface::request_preview(std::string& error, int page, int zoom, const std::string& fit)
 {
+  if (session().pending_source)
+  {
+    error = "Generate the selected source before opening its report preview.";
+    return false;
+  }
   if (!guiAvailable || !document())
   {
     error = "Report preview needs a generated document and the Report GUI component.";
@@ -152,8 +153,30 @@ bool ReportApplicationInterface::layout(std::shared_ptr<const ReportDocumentLayo
   return true;
 }
 
-bool ReportApplicationInterface::export_document(const std::string& format, const std::string& filename, std::string& error)
+bool ReportApplicationInterface::export_document(const std::string& format, const std::string& filename, std::string& error, bool overwrite)
 {
+  if ((format != "pdf" && format != "odt" && format != "both") || QString::fromStdString(filename).trimmed().isEmpty())
+  {
+    error = "Report export requires a valid format and a non-empty destination.";
+    return false;
+  }
+  const std::vector<std::string> targets = format == "both" ?
+    std::vector<std::string>{filename + ".pdf", filename + ".odt"} : std::vector<std::string>{filename};
+  // Preflight every destination before writing either output of a paired export.
+  for (const auto& target : targets)
+  {
+    const QFileInfo file(QString::fromStdString(target));
+    if (file.isDir())
+    {
+      error = "Report destination is a directory: " + target;
+      return false;
+    }
+    if (!overwrite && (file.exists() || file.isSymLink()))
+    {
+      error = "Report destination already exists; use overwrite to replace it: " + target;
+      return false;
+    }
+  }
   if (session().configuration_changed || session().pending_source)
   {
     error = "Generate the selected source or update its changed configuration before exporting.";
@@ -189,8 +212,9 @@ bool ReportApplicationInterface::export_document(const std::string& format, cons
   return false;
 }
 
-bool ReportApplicationInterface::read_project(const std::string& filename, std::string& error)
+bool ReportApplicationInterface::prepare_project_read(const std::string& filename, std::string& error)
 {
+  preparedProject.reset();
   try
   {
     HDF5Tool file(filename, false);
@@ -204,9 +228,7 @@ bool ReportApplicationInterface::read_project(const std::string& filename, std::
       error = "Cannot close saved Report project data.";
       return false;
     }
-    core.restore(std::move(candidate));
-    cached_layout.reset();
-    layout_source.reset();
+    preparedProject = std::make_unique<ReportSession>(std::move(candidate));
     return true;
   }
   catch (const H5::Exception& exception)
@@ -274,7 +296,18 @@ bool ReportApplicationInterface::available_sources(std::vector<ReportSourceEntry
 
 bool ReportApplicationInterface::choose_source(const ReportRequest& source, std::string& error)
 {
-  return core.choose_source(source, error);
+  const auto before = core.document();
+  if (!core.choose_source(source, error))
+  {
+    return false;
+  }
+  if (core.document() != before)
+  {
+    previewPage = ReportUserOptions::initial_preview_page();
+    ++previewPageRevision;
+    ++previewRevision;
+  }
+  return true;
 }
 
 bool ReportApplicationInterface::generate_request(const ReportRequest& source, const std::string& profile, std::string& error)
@@ -322,4 +355,27 @@ bool ReportApplicationInterface::load_logo(const std::string& filename, ReportIm
 std::uint64_t ReportApplicationInterface::preview_fit_revision() const noexcept
 {
   return previewFitRevision;
+}
+
+bool ReportApplicationInterface::commit_project_read(std::string& error)
+{
+  error.clear();
+  if (!preparedProject)
+  {
+    error = "No Report project restore was prepared.";
+    return false;
+  }
+  core.restore(std::move(*preparedProject));
+  preparedProject.reset();
+  cached_layout.reset();
+  layout_source.reset();
+  return true;
+}
+void ReportApplicationInterface::discard_project_read() noexcept
+{
+  preparedProject.reset();
+}
+bool ReportApplicationInterface::read_project(const std::string& filename, std::string& error)
+{
+  return prepare_project_read(filename,error) && commit_project_read(error);
 }

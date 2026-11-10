@@ -16,17 +16,22 @@ std::vector<std::string> PostOpenCommand::get_syntax()
 {
   return {"post open <string:type='unquoted',number='1',label='provider',help='<provider prefix>'> "
     "job <value:label='job_id',help='<job ID>'> "
-    "[name <string:type='quoted',number='1',label='source_name',help='<source name>'>]"};
+    "[name <string:type='quoted',number='1',label='source_name',help='<source name>'>]",
+    "post open ccx file <string:type='quoted',number='1',label='file_path'> [dat <string:type='quoted',number='1',label='dat_path'>] [input <string:type='quoted',number='1',label='input_path'>] [name <string:type='quoted',number='1',label='source_name'>]",
+    "post open file <string:type='quoted',number='1',label='file_path'> [name <string:type='quoted',number='1',label='source_name'>]"};
 }
 
 std::vector<std::string> PostOpenCommand::get_syntax_help()
 {
-  return {"post open <provider> job <job_id> [name \"<source name>\"]"};
+  return {"post open <provider> job <job_id> [name \"<source name>\"]",
+    "post open file \"<path.vtu|vtpc|vtt>\" [name \"<source name>\"]"};
 }
 
 std::vector<std::string> PostOpenCommand::get_help()
 {
   return {"Load job results through a registered provider, for example: post open ccx job 12.",
+    "Standalone VTK files use: post open file \"C:/results/mesh.vtu\".",
+    "External CalculiX results use: post open ccx file \"beam.frd\" [dat \"beam.dat\"] [input \"beam.inp\"].",
     "The source takes the job name unless a quoted name is supplied. Names must be unique.",
     "Selects the opened source and switches to the Postprocessor workspace after opening succeeds."};
 }
@@ -46,9 +51,11 @@ bool PostOpenCommand::execute(CubitCommandData& data)
     std::string prefix;
     int job_id = -1;
 
-    if (!data.get_string("provider", prefix) || !data.get_value("job_id", job_id))
+    const bool file = data.find_keyword("FILE");
+    std::string path;
+    if (file ? !data.get_string("file_path",path) : (!data.get_string("provider", prefix) || !data.get_value("job_id", job_id)))
     {
-      PRINT_ERROR("Postprocessor opening requires a provider prefix and job ID.\n");
+      PRINT_ERROR("Postprocessor opening requires a provider/job or a quoted result file path.\n");
       return false;
     }
 
@@ -69,7 +76,26 @@ bool PostOpenCommand::execute(CubitCommandData& data)
 
     std::string error;
 
-    if (!active->open_job(prefix, job_id, name, error))
+    std::vector<std::string> paths;
+    if (file)
+    {
+      paths.push_back(path);
+      for (const auto& option : {std::pair<const char*,const char*>{"DAT","dat_path"},{"INPUT","input_path"}})
+      {
+        if (data.find_keyword(option.first))
+        {
+          std::string companion;
+          if (!data.get_string(option.second,companion) || companion.empty())
+          {
+            PRINT_ERROR("Result companion paths must be nonempty quoted strings.\n");
+            return false;
+          }
+          paths.push_back(std::move(companion));
+        }
+      }
+    }
+    if (!(file ? active->open_file(data.find_keyword("CCX") ? "ccx" : "vtk",paths,name,error) :
+        active->open_job(prefix,job_id,name,error)))
     {
       PRINT_ERROR("Cannot open Postprocessor source: %s\n", error.c_str());
       return false;

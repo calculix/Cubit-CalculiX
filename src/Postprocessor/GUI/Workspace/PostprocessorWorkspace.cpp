@@ -1,4 +1,8 @@
 #include "PostprocessorWorkspace.hpp"
+#include "PostprocessorToolbar.hpp"
+#include "Postprocessor/GUI/Sources/PostprocessorSourceControls.hpp"
+#include "Postprocessor/GUI/Sources/PostprocessorImportDialog.hpp"
+#include <QMessageBox>
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "Postprocessor/GUI/Viewport/PostprocessorViewport.hpp"
 #include "Postprocessor/GUI/ResultsTree/PostprocessorResultsTree.hpp"
@@ -21,6 +25,9 @@
 #include <QMenuBar>
 #include <QPointer>
 #include <QStyle>
+#include <QStackedWidget>
+#include <QFileDialog>
+#include "Postprocessor/GUI/Tables/PostprocessorTableView.hpp"
 #include <QToolBar>
 #include <QTimer>
 #include <QVBoxLayout>
@@ -38,7 +45,8 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   hide();
   auto* layout = new QVBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
-  layout->addWidget(new QLabel(tr("3D View 1"), this));
+  viewTitle = new QLabel(tr("3D View 1"),this);
+  layout->addWidget(viewTitle);
   const auto activeApplication = this->application.lock();
   viewport = new PostprocessorViewport(activeApplication ? activeApplication->session().active_view_id : std::string(),
     this->application,
@@ -50,7 +58,11 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
     {
       return dispatch && dispatch(command.toUtf8().toStdString(), error);
     }, this);
-  layout->addWidget(viewport, 1);
+  viewStack = new QStackedWidget(this);
+  viewStack->addWidget(viewport);
+  tableView = new PostprocessorTableView(viewStack);
+  viewStack->addWidget(tableView);
+  layout->addWidget(viewStack,1);
   navigationToolbar = new QToolBar(tr("Result navigation"),host);
   navigationToolbar->setObjectName("Postprocessor.NavigationToolbar");
   navigationToolbar->setAllowedAreas(Qt::TopToolBarArea);
@@ -190,6 +202,53 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
       refresh();
     });
   }, resultsDock);
+  tree->open_table = [this](const QString& source,const QString& key,bool field)
+  {
+    const auto quote = [](const QString& value) -> QString
+    {
+      const QChar delimiter = value.contains('"') ? QChar(0x27) : QChar('"');
+      if (value.contains(delimiter))
+      {
+        return {};
+      }
+      for (QChar character : value)
+      {
+        if (character.unicode() < 32 || character.unicode() == 127)
+        {
+          return {};
+        }
+      }
+      return delimiter+value+delimiter;
+    };
+    const auto table = quote(key), name = quote(source);
+    if (table.isEmpty() || name.isEmpty())
+    {
+      PRINT_ERROR("Table/source names cannot be represented by one quoted argument.\n");
+      return;
+    }
+    this->submit(QString(field ? "post table field " : "post table open ")+table+" source "+name);
+    QTimer::singleShot(0,this,[this]()
+    {
+      panelRevision.reset();
+      refresh();
+    });
+  };
+  tree->category_action = [this](const QString& name,Postprocessor::DatasetCategory category,bool visible)
+  {
+    const QChar delimiter = name.contains('"') ? QChar(0x27) : QChar('"');
+    if (name.contains(delimiter) || name.contains('\n') || name.contains('\r'))
+    {
+      PRINT_ERROR("Cannot quote the result source name.\n");
+      return;
+    }
+    this->submit(QString(visible ? "post show " : "post hide ")+
+      QString::fromLatin1(Postprocessor::dataset_category_name(category))+" source "+delimiter+name+delimiter);
+    QTimer::singleShot(0,this,[this]()
+    {
+      panelRevision.reset();
+      refresh();
+    });
+  };
   tree->dataset_action = [this](const QString& source,Postprocessor::DatasetVisibilityAction action,std::optional<std::size_t> dataset)
   {
     dataset_command(source,action,dataset);
@@ -225,6 +284,55 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   propertiesDock->setWidget(properties);
   propertiesDock->hide();
 
+  nativeToolbar = new PostprocessorToolbar(host);
+  nativeToolbar->hide();
+  sourceToolbar = new QToolBar(tr("Result sources"),host);
+  sourceToolbar->setObjectName("Postprocessor.SourceToolbar");
+  sourceToolbar->setAllowedAreas(Qt::TopToolBarArea);
+  sourceToolbar->setMovable(true);
+  sourceToolbar->setFloatable(true);
+  const auto catalogue = [this](std::vector<SimResults::ResultJobEntry>& entries,std::string& error)
+  {
+    const auto active = this->application.lock();
+    return active && active->available_jobs(entries,error);
+  };
+  sourceControls = new PostprocessorSourceControls(catalogue,[this](const SimResults::ResultJobEntry& job)
+  {
+    add_job(job);
+  },[this]()
+  {
+    import_results();
+  },sourceToolbar);
+  sourceToolbar->addWidget(sourceControls);
+  sourceToolbar->hide();
+  tree->available_jobs = catalogue;
+  tree->add_job = [this](const SimResults::ResultJobEntry& job)
+  {
+    add_job(job);
+  };
+  tree->import_files = [this]()
+  {
+    import_results();
+  };
+  tree->source_action = [this](const QString& source,SourceAction action)
+  {
+    if (action == SourceAction::RemoveAll)
+    {
+      if (QMessageBox::question(this,tr("Remove sources"),tr("Remove all opened Postprocessor sources? Jobs and files are retained.")) == QMessageBox::Yes)
+      {
+        this->submit("post close all");
+      }
+      return;
+    }
+    const QString verb = action == SourceAction::Show ? "show" : action == SourceAction::Hide ? "hide" :
+      action == SourceAction::ShowOnly ? "show only" : action == SourceAction::Refresh ? "refresh" : "close";
+    source_command(verb,source);
+    QTimer::singleShot(0,this,[this]()
+    {
+      panelRevision.reset();
+      refresh();
+    });
+  };
   toolbar = new QToolBar(tr("Postprocessor"), host);
   toolbar->setObjectName("Postprocessor.Toolbar");
   toolbar->setAllowedAreas(Qt::TopToolBarArea);
@@ -266,8 +374,6 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
     this->submit("post close all");
   });
 
-  toolbar->addAction(list);
-  toolbar->addAction(closeSelected);
   const QIcon fitIcon(":/cubitgui/zoomreset.svg");
   auto* fit = new QAction(fitIcon.isNull() ? style()->standardIcon(QStyle::SP_TitleBarMaxButton) : fitIcon, tr("Fit visible results"), this);
   fit->setToolTip(tr("Fit all visible meshes in the active Postprocessor view"));
@@ -306,6 +412,11 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   auto* file = new QMenu(tr("File"), this);
   file->addAction(closeSelected);
   file->addAction(closeAll);
+  auto* importResults = file->addAction(tr("Import result files…"));
+  connect(importResults,&QAction::triggered,this,[this]()
+  {
+    import_results();
+  });
   auto* results = new QMenu(tr("Results"), this);
   results->addAction(list);
   auto* probe = results->addAction(tr("Probe selection"));
@@ -315,6 +426,17 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   });
   auto* view = new QMenu(tr("View"), this);
   view->addAction(fit);
+  auto* meshView = view->addAction(tr("3D view"));
+  connect(meshView,&QAction::triggered,this,[this]()
+  {
+    this->submit("post view type 3d");
+    QTimer::singleShot(0,this,[this]()
+    {
+      panelRevision.reset();
+      refresh();
+    });
+  });
+  view->addAction(sourceToolbar->toggleViewAction());
   view->addAction(fieldToolbar->toggleViewAction());
   view->addAction(deformationToolbar->toggleViewAction());
   view->addAction(navigationToolbar->toggleViewAction());
@@ -331,6 +453,8 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
 
 PostprocessorWorkspace::~PostprocessorWorkspace()
 {
+  delete nativeToolbar;
+  delete sourceToolbar;
   delete toolbar;
   delete resultsDock;
   delete navigationToolbar;
@@ -372,6 +496,11 @@ QString PostprocessorWorkspace::frame_command(std::size_t frame) const
       current = display.increment_index;
       break;
     }
+  }
+  const auto view = state.views.find(state.active_view_id);
+  if (view != state.views.end() && view->second.table && view->second.table->source_id == state.active_source_id)
+  {
+    current = view->second.table->frame;
   }
   if (source == state.sources.end() || !navigation->matches_context(state.active_source_id+":"+state.active_view_id,
       active->result_data(state.active_source_id),current))
@@ -520,7 +649,25 @@ void PostprocessorWorkspace::refresh()
       },[active](const std::string& id)
       {
         return active->mesh_datasets(id);
+      },[active](const std::string& id)
+      {
+        return active->tables(id);
+      },[active](const std::string& id)
+      {
+        return active->source_unavailable_reason(id);
       });
+      const bool table = currentView != state.views.end() && currentView->second.table.has_value();
+      if (table)
+      {
+        viewport->cancel_interaction();
+        tableView->show_data(active->table_data());
+      }
+      else
+      {
+        tableView->show_data({});
+      }
+      viewStack->setCurrentWidget(table ? static_cast<QWidget*>(tableView) : static_cast<QWidget*>(viewport));
+      viewTitle->setText(table ? tr("Table view") : tr("3D View 1"));
       const auto source = state.sources.find(state.active_source_id);
       properties->show_source(source == state.sources.end() ? nullptr : &source->second);
       closeSelected->setEnabled(source != state.sources.end());
@@ -528,6 +675,9 @@ void PostprocessorWorkspace::refresh()
       colorControls->refresh();
       deformationControls->refresh();
       pickControls->refresh();
+      pickControls->setEnabled(!table);
+      colorControls->setEnabled(!table);
+      deformationControls->setEnabled(!table);
       panelSelectionRevision = selectionRevision;
       panelRevision = active->display_revision();
       panelSource = state.active_source_id;
@@ -545,10 +695,14 @@ void PostprocessorWorkspace::refresh()
           break;
         }
       }
+      if (table && currentView->second.table->source_id == panelSource)
+      {
+        frame = currentView->second.table->frame;
+      }
       navigation->refresh(active->result_data(panelSource), frame, [active, id = panelSource](std::size_t index)
       {
-        return active->frame_has_mesh(id, index);
-      },panelSource+":"+panelView,animation);
+        return active->frame_available(id, index);
+      },panelSource+":"+panelView,animation,!table);
     }
     viewport->synchronize(active);
   }
@@ -610,12 +764,13 @@ void PostprocessorWorkspace::workspace_view(WorkspaceView& view)
   view.dockLayout = WorkspaceDockLayout::LeftRight;
   view.docks = {resultsDock,propertiesDock};
   view.menuActions = menus;
-  view.toolbars = {toolbar,fieldToolbar,deformationToolbar,navigationToolbar};
-  view.toolbarRowBreaks = {fieldToolbar};
+  view.toolbars = {nativeToolbar,toolbar,sourceToolbar,fieldToolbar,deformationToolbar,navigationToolbar};
+  view.toolbarRowBreaks = {sourceToolbar};
   view.activationChanged = [page = QPointer<PostprocessorWorkspace>(this)](bool active)
   {
     if (active && page != nullptr)
     {
+      page->sourceControls->refresh();
       page->refresh();
     }
     else if (page != nullptr)
@@ -623,4 +778,47 @@ void PostprocessorWorkspace::workspace_view(WorkspaceView& view)
       page->viewport->cancel_interaction();
     }
   };
+}
+
+bool PostprocessorWorkspace::bind_native_toolbar(Claro* host, std::string& error)
+{
+  if (!nativeToolbar->bind_native_actions(host,error))
+  {
+    return false;
+  }
+  sourceControls->set_import_icon(nativeToolbar->open_icon());
+  return true;
+}
+void PostprocessorWorkspace::add_job(const SimResults::ResultJobEntry& job)
+{
+  // Prefix is a registered command token, not user-entered display text.
+  if (!job.available || job.reference.job_id <= 0 || job.command_prefix.empty() ||
+      !std::all_of(job.command_prefix.begin(),job.command_prefix.end(),[](unsigned char value)
+      {
+        return (value >= 'a' && value <= 'z') || (value >= 'A' && value <= 'Z') ||
+          (value >= '0' && value <= '9') || value == '_';
+      }))
+  {
+    return;
+  }
+  submit(QStringLiteral("post open ")+QString::fromStdString(job.command_prefix)+" job "+QString::number(job.reference.job_id));
+  QTimer::singleShot(0,this,[this]()
+  {
+    sourceControls->refresh();
+    panelRevision.reset();
+    refresh();
+  });
+}
+void PostprocessorWorkspace::import_results()
+{
+  const auto command = PostprocessorImportDialog::command(this);
+  if (!command.isEmpty())
+  {
+    submit(command);
+    QTimer::singleShot(0,this,[this]()
+    {
+      panelRevision.reset();
+      refresh();
+    });
+  }
 }

@@ -148,3 +148,13 @@ std::vector<double> CalculiXResultsInterface::compute_principal_strains(std::vec
 {
   return CoreResultsMath::compute_principal_strains(vec);
 }
+
+std::string CalculiXResultsInterface::retained_identity(int job_id, std::string& error)
+{
+  if (!ccx_core.results)
+  {
+    error = "CalculiX results are not initialized.";
+    return {};
+  }
+  return ccx_core.results->retained_identity(job_id,error);
+}

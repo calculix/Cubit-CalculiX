@@ -11,6 +11,7 @@ namespace Postprocessor
   struct ProbeResult
   {
     EntityReference entity;
+    std::vector<std::int64_t> element_ids;
     std::string source_name, dataset_name, status, field, component, value_status;
     bool available = false;
     bool visible = false;

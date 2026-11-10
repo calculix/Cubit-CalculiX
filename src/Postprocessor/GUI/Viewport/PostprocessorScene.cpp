@@ -1,3 +1,4 @@
+#include "Postprocessor/Core/representations/ResultReferenceMesh.hpp"
 #include "PostprocessorScene.hpp"
 #include "Postprocessor/GUI/Selection/PostprocessorPicking.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
@@ -185,9 +186,32 @@ std::shared_ptr<PostprocessorScene::RepresentationActors> PostprocessorScene::bu
     }
 
     std::vector<vtkDataSet*> edgeMeshes = {mesh};
-    if (transformed && display.deformation.overlay)
+    std::vector<std::shared_ptr<vtkDataSet>> referenceMeshes;
+    if (display.deformation.enabled && display.deformation.overlay)
     {
-      edgeMeshes.push_back(part.second);
+      if (part.second->GetPointData()->HasArray("IntegrationPointId"))
+      {
+        std::string referenceWarning;
+        if (!Postprocessor::integration_point_reference_meshes(data->increments[increment],part.second,
+            referenceMeshes,referenceWarning))
+        {
+          error = referenceWarning;
+          return {};
+        }
+        for (const auto& reference : referenceMeshes)
+        {
+          edgeMeshes.push_back(reference.get());
+        }
+        if (!referenceWarning.empty())
+        {
+          auto& message = group->warnings[part.first];
+          message += (message.empty() ? "" : "\n")+referenceWarning;
+        }
+      }
+      else if (transformed)
+      {
+        edgeMeshes.push_back(part.second);
+      }
     }
     for (auto* edgeMesh : edgeMeshes)
     {
@@ -219,6 +243,13 @@ std::shared_ptr<PostprocessorScene::RepresentationActors> PostprocessorScene::bu
         edgeProperty->SetLineWidth(Postprocessor::DisplayDefaults::edge_width);
         edgeProperty->LightingOff();
         edgeActor->SetProperty(edgeProperty);
+        if (edgeMesh != mesh)
+        {
+          edgeActor->PickableOff();
+        }
+        // Reference geometry follows its owning IP dataset, even when the
+        // ordinary parent block representation is hidden. The mapper pipeline
+        // retains its extracted input after referenceMeshes leaves this scope.
         group->actors.push_back({part.first,edgeActor});
       }
     }
@@ -258,6 +289,10 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
           continue;
         }
         const auto data = application.result_data(display.input.object_id);
+        if (!data)
+        {
+          continue;
+        }
         const auto existing = displays.find(entry.first);
         std::shared_ptr<RepresentationActors> group;
         if (existing != displays.end() && existing->second->data == data && existing->second->increment == display.increment_index &&

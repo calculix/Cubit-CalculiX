@@ -10,6 +10,7 @@
 #include <QDateTime>
 #include <QUuid>
 #include <functional>
+#include <set>
 
 ReportCore::ReportCore(ReportProviderRegistryInterface& providers) : registry(providers)
 {
@@ -58,6 +59,20 @@ bool ReportCore::generate(const std::string& provider, int job, const std::strin
 bool ReportCore::generate_request(const ReportRequest& source, const std::string& name, std::string& error)
 {
   ReportRequest request = source;
+  ReportTemplateProviderInterface* templates = nullptr;
+  ReportModelProviderInterface* models = nullptr;
+  ReportTemplate definition;
+  if ((request.kind != "job" && request.kind != "model") ||
+      (request.kind == "job" && request.job_id <= 0) ||
+      (request.kind == "model" && request.model_id.empty()) ||
+      !registry.resolve_model_reporting(source.provider, templates, models, error) || !templates->describe(definition, error))
+  {
+    if (error.empty())
+    {
+      error = "Report generation requires a valid model or positive job ID.";
+    }
+    return false;
+  }
   const auto& current = configuration_request();
   if (name.empty() && current.provider == source.provider && current.kind == source.kind &&
       current.model_id == source.model_id && current.job_id == source.job_id && !current.overrides.values.empty())
@@ -67,17 +82,24 @@ bool ReportCore::generate_request(const ReportRequest& source, const std::string
     request.profile_revision = current.profile_revision;
     return build(request, nullptr, false, error);
   }
-  const auto& provider = source.provider;
-  ReportTemplateProviderInterface* templates = nullptr;
-  ReportModelProviderInterface* models = nullptr;
-  ReportTemplate definition;
-  if ((request.kind == "job" && request.job_id <= 0) || !registry.resolve_model_reporting(provider, templates, models, error) || !templates->describe(definition, error))
+  if (name.empty())
   {
-    if (error.empty())
+    if (const auto saved = find_document(source, definition.workspace_id))
     {
-      error = "Report generation requires a positive job ID.";
+      const auto draft = state.drafts.find(saved->id);
+      if (draft != state.drafts.end())
+      {
+        request = draft->second;
+      }
+      else
+      {
+        request.overrides = saved->configuration;
+        request.profile_id = saved->profile_id;
+        request.profile_revision = saved->profile_revision;
+      }
+      request.provider = source.provider;
+      return build(request, nullptr, false, error);
     }
-    return false;
   }
   ReportProfile selected;
   bool found = false;
@@ -107,36 +129,50 @@ bool ReportCore::generate_request(const ReportRequest& source, const std::string
     request.profile_id = selected.id;
     request.profile_revision = selected.revision;
   }
-  const auto& draft = configuration_request();
-  if ((name.empty() || draft.profile_id == selected.id) &&
-      draft.provider == source.provider && draft.kind == source.kind &&
-      (source.kind == "model" || !document() || draft.job_id == source.job_id))
-  {
-    if (draft.overrides.replace_company_logo || !draft.overrides.values.empty())
-    {
-      request.overrides.company_logo = draft.overrides.company_logo;
-    }
-    for (const auto& option : draft.overrides.values)
-    {
-      request.overrides.values[option.first] = option.second;
-    }
-  }
   return build(request, found ? &selected : nullptr, false, error);
 }
 
 bool ReportCore::build(const ReportRequest& request, const ReportProfile* profile, bool updating, std::string& error)
 {
   error.clear();
-  if (!updating && state.documents.size() >= 1000)
-  {
-    error = "The project already contains the maximum supported number of reports (1000).";
-    return false;
-  }
   ReportTemplateProviderInterface* templates = nullptr;
   ReportModelProviderInterface* models = nullptr;
   ReportTemplate definition;
   if (!registry.resolve_model_reporting(request.provider, templates, models, error) || !templates->describe(definition, error))
   {
+    return false;
+  }
+  std::vector<ReportSourceEntry> liveSources;
+  if (!models->available_sources(liveSources, error))
+  {
+    return false;
+  }
+  bool sourceAvailable = false;
+  for (const auto& entry : liveSources)
+  {
+    if (entry.request.kind == request.kind &&
+        (request.kind == "job" ? entry.request.job_id == request.job_id : entry.request.model_id == request.model_id))
+    {
+      sourceAvailable = entry.available;
+      if (!sourceAvailable)
+      {
+        error = entry.unavailable_reason;
+      }
+      break;
+    }
+  }
+  if (!sourceAvailable)
+  {
+    if (error.empty())
+    {
+      error = "The selected report source is unavailable for generation or update.";
+    }
+    return false;
+  }
+  const auto previous = find_document(request, definition.workspace_id);
+  if (!previous && state.documents.size() >= 1000)
+  {
+    error = "The project already contains the maximum supported number of report sources (1000).";
     return false;
   }
   ReportConfigurationResolver::add_common_options(definition);
@@ -146,6 +182,7 @@ bool ReportCore::build(const ReportRequest& request, const ReportProfile* profil
     return false;
   }
   ReportRequest resolved = request;
+  resolved.provider = templates->command_prefix();
   if (!ReportConfigurationResolver::resolve(definition, request.overrides, resolved.overrides, error))
   {
     return false;
@@ -156,9 +193,9 @@ bool ReportCore::build(const ReportRequest& request, const ReportProfile* profil
     return false;
   }
   auto candidate = std::make_shared<ReportDocument>();
-  candidate->id = QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();
+  candidate->id = previous ? previous->id : QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();
   candidate->title = resolved.overrides.values.at("title");
-  candidate->provider = request.provider;
+  candidate->provider = resolved.provider;
   candidate->template_id = definition.id;
   candidate->template_revision = definition.revision;
   candidate->profile_id = request.profile_id;
@@ -169,13 +206,17 @@ bool ReportCore::build(const ReportRequest& request, const ReportProfile* profil
   {
     return false;
   }
-  if (candidate->source.kind != request.kind || candidate->source.job_id != request.job_id ||
+  if (candidate->source.workspace_id != definition.workspace_id || candidate->source.kind != request.kind || candidate->source.job_id != request.job_id ||
       (request.kind == "model" && candidate->source.model_id != request.model_id))
   {
     error = "The provider returned report content for a different source.";
     return false;
   }
-  const auto previous = document();
+  if (previous)
+  {
+    candidate->id = previous->id;
+    candidate->notes = previous->notes;
+  }
   if (updating && previous != nullptr)
   {
     if (candidate->source.workspace_id != previous->source.workspace_id ||
@@ -185,11 +226,9 @@ bool ReportCore::build(const ReportRequest& request, const ReportProfile* profil
         (request.kind == "job" && candidate->source.fingerprints != previous->source.fingerprints) ||
         candidate->source.run_identity != previous->source.run_identity)
     {
-      error = "Report sources changed. Generate a new report explicitly to use the current job files.";
+      error = "Report sources changed. Generate again explicitly to replace the report using the current job files.";
       return false;
     }
-    candidate->id = previous->id;
-    candidate->notes = previous->notes;
     candidate->profile_revision = request.profile_revision;
   }
   const auto resultSelection = resolved.overrides.values.find("post.results");
@@ -245,7 +284,7 @@ bool ReportCore::update(std::string& error)
 {
   if (!document() || state.pending_source)
   {
-    error = "Generate the selected source or select its existing report before updating.";
+    error = "Choose a source with a generated report before updating.";
     return false;
   }
   return build(state.request, nullptr, true, error);
@@ -397,7 +436,7 @@ bool ReportCore::profile(const std::string& action, const std::string& name, std
   return false;
 }
 
-bool ReportCore::select(const std::string& id, std::string& error)
+bool ReportCore::activate_document(const std::string& id, std::string& error)
 {
   const auto found = state.documents.find(id);
   if (found == state.documents.end())
@@ -477,11 +516,62 @@ const ReportRequest& ReportCore::configuration_request() const noexcept
 
 bool ReportCore::available_sources(std::vector<ReportSourceEntry>& output, std::string& error) const
 {
-  return registry.available_report_sources(output, error);
+  std::vector<ReportSourceEntry> entries;
+  const bool discovered = registry.available_report_sources(entries, error);
+  if (!discovered && state.documents.empty())
+  {
+    return false;
+  }
+  const std::string discoveryError = error;
+  if (!discovered)
+  {
+    entries.clear();
+  }
+  std::set<std::string> represented;
+  for (auto& entry : entries)
+  {
+    if (const auto saved = find_document(entry.request))
+    {
+      entry.has_report = true;
+      represented.insert(saved->id);
+    }
+  }
+  for (const auto& item : state.documents)
+  {
+    if (represented.count(item.first) != 0)
+    {
+      continue;
+    }
+    const auto& saved = *item.second;
+    ReportSourceEntry entry;
+    entry.request.provider = saved.provider;
+    entry.request.kind = saved.source.kind;
+    entry.request.model_id = saved.source.model_id;
+    entry.request.job_id = saved.source.job_id;
+    entry.workspace_label = saved.source.workspace_id;
+    entry.label = (saved.source.kind == "model" ? std::string("Current model") : "Job " + std::to_string(saved.source.job_id)) +
+      " (saved report; source unavailable)";
+    entry.has_report = true;
+    entry.unavailable_reason = discoveryError.empty() ? "Saved report can be viewed; its source is unavailable for generation or update." : discoveryError;
+    entries.push_back(std::move(entry));
+  }
+  output = std::move(entries);
+  error.clear();
+  return true;
 }
 
-bool ReportCore::choose_source(const ReportRequest& source, std::string& error)
+bool ReportCore::choose_source(const ReportRequest& requested, std::string& error)
 {
+  ReportRequest source = requested;
+  {
+    ReportTemplateProviderInterface* templates = nullptr;
+    ReportModelProviderInterface* models = nullptr;
+    std::string ignored;
+    if (registry.resolve_model_reporting(source.provider, templates, models, ignored))
+    {
+      source.provider = templates->command_prefix();
+    }
+  }
   std::vector<ReportSourceEntry> entries;
   if (!available_sources(entries, error))
   {
@@ -494,11 +584,6 @@ bool ReportCore::choose_source(const ReportRequest& source, std::string& error)
     {
       continue;
     }
-    if (!entry.available)
-    {
-      error = entry.unavailable_reason;
-      return false;
-    }
     const auto matches = [&](const ReportRequest& candidate)
     {
       return candidate.provider == source.provider && candidate.kind == source.kind &&
@@ -509,11 +594,14 @@ bool ReportCore::choose_source(const ReportRequest& source, std::string& error)
       error.clear();
       return true;
     }
-    if (document() && matches(state.request))
+    if (const auto saved = find_document(source))
     {
-      state.pending_source = false;
-      error.clear();
-      return true;
+      return activate_document(saved->id, error);
+    }
+    if (!entry.available)
+    {
+      error = entry.unavailable_reason;
+      return false;
     }
     ReportTemplateProviderInterface* templates = nullptr;
     ReportModelProviderInterface* models = nullptr;
@@ -572,4 +660,33 @@ bool ReportCore::validate_configuration_patch(const ReportConfiguration& patch, 
   }
   ReportConfiguration resolved;
   return ReportConfigurationResolver::resolve(definition, candidate, resolved, error);
+}
+
+std::shared_ptr<const ReportDocument> ReportCore::find_document(const ReportRequest& source, const std::string& workspace) const
+{
+  std::string owner = workspace;
+  if (owner.empty())
+  {
+    ReportTemplateProviderInterface* templates = nullptr;
+    ReportModelProviderInterface* models = nullptr;
+    ReportTemplate definition;
+    std::string ignored;
+    if (registry.resolve_model_reporting(source.provider, templates, models, ignored) && templates->describe(definition, ignored))
+    {
+      owner = definition.workspace_id;
+    }
+  }
+  // Source identity excludes title, profile, input fingerprints and run identity.
+  // Those may change when Generate replaces the report for the same model/job.
+  for (const auto& item : state.documents)
+  {
+    const auto& saved = *item.second;
+    if ((owner.empty() ? saved.provider == source.provider : saved.source.workspace_id == owner) &&
+        saved.source.kind == source.kind &&
+        (source.kind == "job" ? saved.source.job_id == source.job_id : saved.source.model_id == source.model_id))
+    {
+      return item.second;
+    }
+  }
+  return nullptr;
 }

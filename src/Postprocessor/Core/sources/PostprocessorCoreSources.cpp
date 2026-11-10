@@ -8,6 +8,7 @@
 #include <limits>
 #include <utility>
 #include <variant>
+#include <set>
 
 namespace
 {
@@ -32,6 +33,136 @@ namespace
   private:
     bool& active;
   };
+
+  bool prepare_table(Postprocessor::PostprocessorSession& staged, const std::string& source,
+    const std::shared_ptr<const SimResults::VtkResultsData>& data, std::string& error)
+  {
+    const auto tables = Postprocessor::result_tables(*data,std::nullopt);
+    auto& view = staged.views.at(staged.active_view_id);
+    view.table.reset();
+    if (tables.empty())
+    {
+      return true;
+    }
+    Postprocessor::TableReference reference;
+    reference.source_id = source;
+    reference.key = tables.front().key;
+    auto table = Postprocessor::result_table_data(data,reference);
+    for (std::size_t index = 0; !table.table && index < data->increments.size(); ++index)
+    {
+      reference.frame = index;
+      table = Postprocessor::result_table_data(data,reference);
+    }
+    if (!table.table || table.rows > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+    {
+      error = "The first result table is unavailable or exceeds the table view row limit.";
+      return false;
+    }
+    view.table = std::move(reference);
+    staged.active_representation_id.clear();
+    return true;
+  }
+
+  int category(const SimResults::Dataset& dataset)
+  {
+    if (Postprocessor::dataset_in_category(dataset,Postprocessor::DatasetCategory::Blocks))
+    {
+      return 0;
+    }
+    if (Postprocessor::dataset_in_category(dataset,Postprocessor::DatasetCategory::NodeSets))
+    {
+      return 1;
+    }
+    if (Postprocessor::dataset_in_category(dataset,Postprocessor::DatasetCategory::SideSets))
+    {
+      return 2;
+    }
+    return Postprocessor::dataset_in_category(dataset,Postprocessor::DatasetCategory::IntegrationPoints) ? 3 : 4;
+  }
+
+  // New sources only: choose blocks, otherwise the first present category in
+  // catalogue/tree order. Other representations and restored state are untouched.
+  void initialize_result_display(Postprocessor::PostprocessorSession& staged,
+    const SimResults::VtkResultsData& data, const std::vector<SimResults::Dataset>& datasets)
+  {
+    const auto active = staged.representations.find(staged.active_representation_id);
+    if (active == staged.representations.end())
+    {
+      return;
+    }
+    auto& display = active->second;
+    const auto& frame = data.increments.at(display.increment_index);
+    const auto parts = Postprocessor::result_mesh_parts(frame.dataset.get());
+    std::set<std::size_t> present;
+    for (const auto& part : parts)
+    {
+      present.insert(part.first);
+    }
+    int selectedCategory = -1;
+    for (const auto& dataset : datasets)
+    {
+      if (present.count(dataset.id) != 0)
+      {
+        const int kind = category(dataset);
+        if (selectedCategory < 0 || kind == 0)
+        {
+          selectedCategory = kind;
+        }
+        if (kind == 0)
+        {
+          break;
+        }
+      }
+    }
+    for (const auto& dataset : datasets)
+    {
+      if (category(dataset) != selectedCategory)
+      {
+        display.hidden_datasets.insert(dataset.id);
+      }
+    }
+    // result_field_groups uses the same name/key ordering as the result tree.
+    // Select only fields with valid samples on the initially visible datasets.
+    for (const auto& group : Postprocessor::result_field_groups(data,display.increment_index))
+    {
+      const auto& field = group.field;
+      if (!group.available || field.association == SimResults::Association::Table || field.components.empty())
+      {
+        continue;
+      }
+      Postprocessor::FieldSelection selection;
+      selection.array_name = field.array_name;
+      selection.association = field.association;
+      selection.group_key = group.key;
+      selection.magnitude = field.vector_components.has_value();
+      if (!selection.magnitude)
+      {
+        selection.component = field.components.front();
+      }
+      std::optional<std::array<double,2>> range;
+      for (const auto& current : frame.fields)
+      {
+        if (!Postprocessor::dataset_visible(display,current.dataset_id) ||
+            Postprocessor::field_group_key(current) != group.key)
+        {
+          continue;
+        }
+        for (const auto& part : parts)
+        {
+          if (part.first == current.dataset_id)
+          {
+            std::string issue;
+            Postprocessor::accumulate_color_range(part.second,current,selection,range,issue);
+          }
+        }
+      }
+      if (range)
+      {
+        display.coloring.field = std::move(selection);
+        break;
+      }
+    }
+  }
 
   bool valid_name(const std::string& name)
   {
@@ -214,6 +345,10 @@ namespace Postprocessor
               {
                 return false;
               }
+              if (!loaded->second.first_mesh_increment && !prepare_table(staged,entry.first,published.data,error))
+              {
+                return false;
+              }
               state.swap(staged);
               ++scene_revision;
               return true;
@@ -278,6 +413,14 @@ namespace Postprocessor
       staged_state.active_source_id = source_id;
       staged_state.active_representation_id.clear();
       if (!prepare_initial_display(staged_state, source_id, mesh_increment, error))
+      {
+        return false;
+      }
+      if (mesh_increment)
+      {
+        initialize_result_display(staged_state,*published.data,staged_runtime.at(source_id).datasets);
+      }
+      if (!mesh_increment && !prepare_table(staged_state,source_id,published.data,error))
       {
         return false;
       }
@@ -460,6 +603,17 @@ namespace Postprocessor
           ++scene_revision;
         }
       }
+      auto& view = state.views.at(state.active_view_id);
+      if (view.table && view.table->source_id != source_id)
+      {
+        if (scene_revision == std::numeric_limits<std::uint64_t>::max())
+        {
+          error = "Cannot change view after revision exhaustion.";
+          return false;
+        }
+        view.table.reset();
+        ++scene_revision;
+      }
       state.active_source_id.swap(selected);
       state.active_representation_id.clear();
       return true;
@@ -571,6 +725,8 @@ namespace Postprocessor
       view.selection.revision = selectionRevision + 1;
       state.swap(staged);
       runtime.clear();
+      saved_bindings.clear();
+      saved_table_frames.clear();
       // Retain the source ID allocator. Old handles/tokens must not address a
       // newly opened source after reset. Published handles owned elsewhere live on.
       ++scene_revision;
@@ -606,6 +762,8 @@ namespace Postprocessor
     state.representations.clear();
     state.sources.clear();
     runtime.clear();
+    saved_bindings.clear();
+    saved_table_frames.clear();
     state.active_source_id.clear();
     state.active_representation_id.clear();
     ++scene_revision;

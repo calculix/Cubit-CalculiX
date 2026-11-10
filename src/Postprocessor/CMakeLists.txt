@@ -1,4 +1,8 @@
 add_library(postprocessor_core STATIC
+  Core/tables/ResultTables.cpp
+  Core/tables/PostprocessorCoreTables.cpp
+  Core/persistence/PostprocessorSessionCodec.cpp
+  Core/application/PostprocessorCorePersistence.cpp
   Core/application/PostprocessorCore.cpp
   Core/application/PostprocessorCore.hpp
   Core/selection/EntityReference.hpp
@@ -7,6 +11,8 @@ add_library(postprocessor_core STATIC
   Core/selection/ResultProbe.cpp
   Core/selection/PostprocessorCoreSelection.cpp
   Core/representations/DisplayDefaults.hpp
+  Core/representations/ResultReferenceMesh.cpp
+  Core/representations/ResultReferenceMesh.hpp
   Core/representations/ResultMesh.cpp
   Core/representations/ResultMesh.hpp
   Core/representations/ResultDeformation.cpp
@@ -14,6 +20,7 @@ add_library(postprocessor_core STATIC
   Core/representations/PostprocessorCoreDeformation.cpp
   Core/representations/PostprocessorCoreRepresentations.cpp
   Core/representations/PostprocessorCoreDatasetVisibility.cpp
+  Core/representations/PostprocessorCoreCategories.cpp
   Core/views/PostprocessorCoreViews.cpp
   Core/views/PostprocessorCoreCamera.cpp
   Core/views/CameraOperations.cpp
@@ -35,7 +42,7 @@ add_library(postprocessor_core STATIC
   Core/layouts/LayoutDefinition.hpp
 )
 
-target_link_libraries(postprocessor_core PUBLIC cubitsim_results PRIVATE Qt6::Core VTK::CommonDataModel)
+target_link_libraries(postprocessor_core PUBLIC cubitsim_results PRIVATE Qt6::Core VTK::CommonDataModel VTK::FiltersCore)
 target_include_directories(postprocessor_core PRIVATE "${CUBITSIM_SOURCE_ROOT}")
 target_compile_features(postprocessor_core PUBLIC cxx_std_17)
 set_target_properties(postprocessor_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
@@ -43,6 +50,16 @@ set_target_properties(postprocessor_core PROPERTIES POSITION_INDEPENDENT_CODE ON
 add_library(postprocessor_module SHARED
   Icons/Postprocessor.svg
   Icons/PostprocessorIntegrationPoint.svg
+  Core/sources/VtkFileSourceProvider.cpp
+  Commands/tables/PostTableCommand.cpp
+  Commands/tables/PostViewTypeCommand.cpp
+  GUI/Workspace/PostprocessorToolbar.cpp
+  GUI/Sources/PostprocessorSourceControls.cpp
+  GUI/Sources/PostprocessorImportDialog.cpp
+  GUI/Tables/PostprocessorTableModel.cpp
+  GUI/Tables/PostprocessorTableView.cpp
+  Core/persistence/PostprocessorProjectPersistence.cpp
+  Interfaces/PostprocessorProjectInterface.cpp
   PostprocessorModule.cpp
   PostprocessorModule.hpp
   EventObservers/PostprocessorModelObserver.cpp
@@ -89,6 +106,7 @@ add_library(postprocessor_module SHARED
   Commands/options/PostUserOptionsCommand.cpp
   Commands/options/PostUserOptionsCommand.hpp
   Commands/options/PostprocessorOptionCommands.hpp
+  Commands/sources/PostRefreshCommand.cpp
   Commands/sources/PostOpenCommand.cpp
   Commands/sources/PostOpenCommand.hpp
   Commands/sources/PostListCommand.cpp
@@ -142,8 +160,8 @@ add_library(postprocessor_module SHARED
   GUI/Observers/PostprocessorGuiObserver.hpp
 )
 
-target_link_libraries(postprocessor_module PRIVATE postprocessor_core cubiti cubit_util
-  Qt6::Widgets Qt6::OpenGLWidgets VTK::GUISupportQt VTK::RenderingCore VTK::RenderingAnnotation VTK::RenderingOpenGL2 VTK::FiltersCore VTK::FiltersGeometry)
+target_link_libraries(postprocessor_module PRIVATE postprocessor_core cubitsim_storage cubiti cubit_util clarogui clarofw
+  Qt6::Widgets Qt6::OpenGLWidgets VTK::IOXML VTK::GUISupportQt VTK::RenderingCore VTK::RenderingAnnotation VTK::RenderingOpenGL2 VTK::FiltersCore VTK::FiltersGeometry)
 target_compile_features(postprocessor_module PUBLIC cxx_std_17)
 target_include_directories(postprocessor_module PUBLIC "${CUBITSIM_SOURCE_ROOT}")
 set_target_properties(postprocessor_module PROPERTIES

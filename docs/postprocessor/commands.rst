@@ -282,9 +282,8 @@ Lifecycle and deferred commands
 The module owns one application instance per initialized Framework lifetime.
 Application state is released at module shutdown. Command objects retain weak
 application handles; stale commands fail rather than access destroyed state.
-No ``post`` refresh/file/draw command is registered in this stage. Independent
-VTU/VTPC/VTT files, FRD/DAT file opening, Cubit geometry,
-field coloring and time navigation require their later implementations.
+Source refresh and independent result-file opening are registered. Cubit
+geometry drawing and additional analysis commands remain separate features.
 
 See :doc:`../developer/postprocessor` for source files and method contracts.
 
@@ -505,3 +504,57 @@ Select by original identity, with dataset ID or quoted name and optional source:
 The same command path is used by GUI clicks and controls. Large decimal entity
 IDs may be quoted for exact 64-bit transport. See :doc:`selection` for readout
 semantics, masks, frame changes, supported identities and precision limits.
+
+
+Dataset category visibility
+----------------------------
+
+Toggle all datasets in a category atomically in the active view::
+
+   post show blocks source "first_run"
+   post hide nodesets source "first_run"
+   post show sidesets
+   post hide integrationpoints
+
+Both ``show`` and ``hide`` accept each category. The optional source qualifier
+uses the active source when omitted. Show also enables the parent source; Hide
+preserves the master source switch. Empty categories report that no matching
+datasets exist. The category tree checkbox submits one of these commands, rather
+than a command for every child.
+
+
+External files and source refresh
+---------------------------------
+
+Open external sources without creating a solver job::
+
+   post open ccx file "beam.frd" dat "beam.dat" input "beam.inp"
+   post open ccx file "beam.dat"
+   post open file "mesh.vtu"
+   post open file "results.vtpc"
+   post open file "forces.vtt"
+
+``dat`` and ``input`` are optional companions for an FRD source. A DAT primary
+accepts an optional ``input``. Every opening form accepts ``name "source"``;
+otherwise the file basename is used. Names must be unique. Imports do not
+implicitly load same-basename companions; the GUI suggests paths for confirmation.
+
+The external CalculiX provider uses the existing FRD/DAT readers and converter.
+It never links implicitly to the current Cubit mesh. A supplied INP is checked
+against FRD connectivity and coordinates. DAT without mesh information remains
+available as tables; it does not acquire fabricated spatial coordinates.
+
+Source isolation and explicit reload::
+
+   post show only "beam"
+   post refresh "beam"
+
+Show only changes source visibility in the active view in one Core publication.
+It preserves dataset choices and camera pose. Refresh explicitly accepts newer
+file contents, retaining the previous snapshot on failure. An ordinary project
+restore instead requires the saved result identity. Refresh can invalidate old
+dataset overrides, as documented under dataset visibility.
+
+Source removal uses the existing ``post close "name"`` and ``post close all``
+commands. GUI menus label these operations Remove; solver jobs and external files
+are retained.

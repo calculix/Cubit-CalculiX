@@ -26,7 +26,7 @@ public:
   ~PostprocessorFrameNavigation() override;
   void stop_playback(bool commit = true);
   void refresh(const std::shared_ptr<const SimResults::VtkResultsData>& data,
-    std::optional<std::size_t> current, const std::function<bool(std::size_t)>& has_mesh, const std::string& context = {}, const Postprocessor::AnimationDefinition& animation = {});
+    std::optional<std::size_t> current, const std::function<bool(std::size_t)>& has_mesh, const std::string& context = {}, const Postprocessor::AnimationDefinition& animation = {}, bool allow_animation = true);
   bool matches_context(const std::string& key, const std::shared_ptr<const SimResults::VtkResultsData>& data, std::optional<std::size_t> current) const;
 protected:
   void hideEvent(QHideEvent* event) override;
@@ -46,6 +46,7 @@ private:
   std::function<void(const QString&)> animationCommand;
   Postprocessor::AnimationDefinition playback;
   bool running = false;
+  bool playbackAllowed = true;
   QTimer animationTimer;
   QToolButton* play;
   QCheckBox* loop;

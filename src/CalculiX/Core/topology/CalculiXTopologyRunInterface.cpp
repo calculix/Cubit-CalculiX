@@ -434,9 +434,9 @@ bool CalculiXTopologyRunInterface::evaluate_topology_level_set_proposal(int topo
   return ccx_core.evaluate_topology_level_set_proposal(topology_id, iteration_id, proposal, std::move(source_cache));
 }
 
-bool CalculiXTopologyRunInterface::prepare_topology_level_set_iteration(int topology_id, int source_iteration, int next_iteration, const TopologyLevelSetProposal& proposal)
+bool CalculiXTopologyRunInterface::prepare_topology_level_set_iteration(int topology_id, int source_iteration, int next_iteration, const TopologyLevelSetProposal& proposal, double initial_step_scale)
 {
-  return ccx_core.prepare_topology_level_set_iteration(topology_id, source_iteration, next_iteration, proposal);
+  return ccx_core.prepare_topology_level_set_iteration(topology_id, source_iteration, next_iteration, proposal, initial_step_scale);
 }
 
 bool CalculiXTopologyRunInterface::check_topology_level_set_convergence(int topology_id, int previous_iteration, int current_iteration, bool& converged)

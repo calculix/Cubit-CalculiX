@@ -24,6 +24,7 @@ private:
   void apply();
   std::weak_ptr<ReportApplicationInterface> application;
   ReportRequest source;
+  ReportConfiguration initialConfiguration;
   std::function<bool(const std::string&, std::string&)> submit;
   QLineEdit* title;
   QLineEdit* author;

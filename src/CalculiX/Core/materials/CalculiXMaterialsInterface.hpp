@@ -9,6 +9,7 @@
 class CalculiXMaterialsInterface
 {
 public:
+  bool set_topology_iteration_factors(int topology_id, int iteration_id, const std::vector<int>& element_ids, const std::vector<double>& stiffness_factors, int material_cap, bool stable_levels, double minimum_factor);
   bool get_topology_iteration_factors(int topology_id, int iteration_id, std::map<int, double>& factors);
   bool get_material_properties(int id, MaterialProperties& properties, std::string& error);
   std::string get_material_name(int material_id); // gets the material name

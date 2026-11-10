@@ -549,3 +549,78 @@ without Core selection changes. They have not been compiled or run in this patch
 Native verification should include midside nodes, deformed nodal colors, dataset
 visibility, hover clearing on camera/frame/mode changes, and empty-space clearing
 of both the committed highlight and the probe readout.
+
+Group tree, DAT aliases, tables and hover values
+----------------------------------------------
+
+New source-level checks cover DAT fields bound to a captured model nodeset,
+published formulation/ID metadata, read-only node adjacency probes, spatial table
+masks and exact IDs, native/global/frame tables, table-only navigation, and VTT
+read/write fixtures. No build, compilation, native parser or test execution was
+performed for this extension. Verify tree checkbox/selection actions in Cubit,
+including the formerly duplicated load_target entry, before claiming the reported
+hang is resolved. Also verify standalone VTT paths on Windows and Linux, source
+closure/reset, missing-frame tables and return to the retained 3D camera.
+
+
+Project persistence and category visibility
+-------------------------------------------
+
+The project persistence implementation and outstanding native verification are
+specified in :doc:`postprocessor-project-persistence`. New standalone cases in
+``ProjectPersistenceTests.cpp`` cover Core/codec restoration and tree category
+behavior. Reader persistence cases compare durable result fingerprints across
+HDF5 round-trip. VTT cases reject changed file content on restoration. These new
+cases were not built or executed for the persistence patch, per the current
+no-compilation instruction. Native save/open and staged HDF5 recovery still need
+Windows/Linux integration verification.
+
+
+Source tools and independent imports
+------------------------------------
+
+``ImportTests.cpp`` adds cases for exact VTU node IDs and numeric arrays,
+comparison-source isolation, failed-import session preservation, VTPC dependency
+changes, and catalogue selection versus explicit Add. Native toolbar binding,
+FRD/DAT/INP conversion and menu interaction still require Cubit integration checks.
+These cases were added without building, compiling or executing them, per the
+current instruction. Verify Windows and Linux paths (including non-ASCII names),
+DAT-only tables, INP includes, incompatible mesh rejection, source refresh,
+missing dependencies on reopen, and journal replay of the new commands.
+
+
+Integration-point reference outlines
+-------------------------------------
+
+``ReferenceMeshTests.cpp`` covers exact 64-bit parent IDs, repeated IP parents,
+higher-order topology/coordinates, identical overlapping blocks, ambiguous and
+missing parents, and immutable inputs. These cases were added without compiling
+or executing them. Native GUI verification must additionally hide the parent
+block, display deformed IPs with Undeformed enabled, toggle the IP dataset and
+Undeformed, and confirm that reference edges do not enter the pick list.
+
+
+External DAT spatial fallback
+------------------------------
+
+Native regression: import an FRD mesh omitting a reference node and a DAT whose
+nodal output includes that node, without INP. Confirm that the FRD is displayed,
+unlinked nodal blocks and IP blocks lacking exact formulations appear as tables,
+and IDs/values/frame navigation are preserved. Then import with a compatible INP
+containing the reference node and formulation, and confirm spatial association.
+Also cover mixed linked/unlinked DAT blocks, DAT-only tables, malformed records,
+and incompatible INP rejection. Fallback diagnostics are deduplicated across
+frames. These native checks have not been executed; no build was performed.
+DisplayTests now asserts the Node and AllFrames Core defaults; it was not run.
+
+
+New-source display defaults
+----------------------------
+
+``SourceDefaultsTests.cpp`` covers blocks-only initial visibility, skipping hidden
+fields during automatic result selection, vector Magnitude/scalar component
+selection, first-category fallback, initial Results expansion/field selection,
+manual collapse retention and retained-source visibility preservation. The
+category persistence fixture explicitly enables node sets before testing bulk
+hide operations. Cases were added but not compiled or executed; native GUI and
+journal replay verification remain outstanding.

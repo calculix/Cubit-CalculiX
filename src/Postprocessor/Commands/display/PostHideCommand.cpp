@@ -35,7 +35,8 @@ bool PostHideCommand::execute(CubitCommandData& data)
   {
     const auto active = application.lock();
     std::string name, error;
-    if (active && data.find_keyword("DATASET"))
+    if (active && (data.find_keyword("DATASET") || data.find_keyword("BLOCKS") || data.find_keyword("NODESETS") ||
+        data.find_keyword("SIDESETS") || data.find_keyword("INTEGRATIONPOINTS")))
     {
       if (!DatasetCommandSupport::execute(data,*active,false,error))
       {

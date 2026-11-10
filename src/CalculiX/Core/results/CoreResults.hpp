@@ -33,6 +33,7 @@ public:
   std::vector<CoreResultsDat> dat_data;
   // dat_data[0] dat file reader object
 
+  std::map<int,std::string> retained_identities; // Saved with reader state; never a replacement for verifying content.
   bool is_initialized = false;
 
   bool init(); // initialize
@@ -46,6 +47,7 @@ public:
   bool load_result(int job_id); // loads the results for the job if possible
   SimResults::ConversionStatus get_vtk_status(int job_id) const;
   std::shared_ptr<const SimResults::VtkResultsData> get_vtk_result(int job_id) const;
+  std::string retained_identity(int job_id, std::string& error);
   bool prepare_vtk_plan(int job_id, const CoreResultsVtkOptions& options, CoreResultsVtkPlan& plan);
   // Host-thread, synchronous. Callers must use these interfaces rather than
   // mutating the public legacy reader containers during a conversion.

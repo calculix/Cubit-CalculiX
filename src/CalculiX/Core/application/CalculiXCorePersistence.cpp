@@ -155,8 +155,6 @@ bool CalculiXCore::read_cub(std::string filename)
   std::string log = "";
   ProgressTool* progressbar = CubitInterface::app_util().get()->progress_tool();
 
-  log = "Reading cubit-sim data from \"" + filename + "\"\n";
-  PRINT_INFO("%s", log.c_str());
   
   bool hasCalculiXData = false;
   auto opened = open_model_file(filename, hasCalculiXData);
@@ -168,7 +166,7 @@ bool CalculiXCore::read_cub(std::string filename)
  
   if (!hasCalculiXData)
   {
-    log = "No cubit-sim data in \"" + filename + "\"\n";
+    log = "[CalculiX] No saved model data in \"" + filename + "\"\n";
     PRINT_INFO("%s", log.c_str());
     if (!CoreDrawPersistence::read(cubTool, *draw))
     {
@@ -178,7 +176,7 @@ bool CalculiXCore::read_cub(std::string filename)
   }
 
   PersistenceProgress progress(progressbar);
-  if (!progress.start(32, "Reading cubit-sim data"))
+  if (!progress.start(32, "Reading CalculiX data"))
   {
     return false;
   }
@@ -485,16 +483,13 @@ bool CalculiXCore::read_cub(std::string filename)
   {
     return false;
   }
-  log = "Finished reading cubit-sim data from \"" + filename + "\"\n";
-  PRINT_INFO("%s", log.c_str());
 
   return true;
 }
 
 bool CalculiXCore::save_cub(std::string filename)
 {
-  std::string log = "Saving Cubit-CaluliX data to \"" + filename + "\"\n";
-  PRINT_INFO("%s", log.c_str());
+  std::string log;
   ProgressTool* progressbar = CubitInterface::app_util().get()->progress_tool();
 
   bool hasCalculiXData = false;
@@ -513,7 +508,7 @@ bool CalculiXCore::save_cub(std::string filename)
   }
 
   PersistenceProgress progress(progressbar);
-  if (!progress.start(32, "Writing cubit-sim data"))
+  if (!progress.start(32, "Writing CalculiX data"))
   {
     return false;
   }
@@ -811,8 +806,6 @@ bool CalculiXCore::save_cub(std::string filename)
   {
     return false;
   }
-  log = "Finished saving cubit-sim data.\n";
-  PRINT_INFO("%s", log.c_str());
 
   return true;
 }

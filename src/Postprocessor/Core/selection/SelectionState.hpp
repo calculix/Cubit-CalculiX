@@ -7,7 +7,7 @@ namespace Postprocessor
 {
   namespace SelectionDefaults
   {
-    inline constexpr EntityKind mode = EntityKind::Element;
+    inline constexpr EntityKind mode = EntityKind::Node;
     inline constexpr double pick_radius_pixels = 8.0;
     inline constexpr int hover_interval_ms = 40;
     inline constexpr std::array<double,3> hover_color = {1.0,0.55,0.0};

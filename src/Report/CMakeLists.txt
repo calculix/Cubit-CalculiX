@@ -29,7 +29,11 @@ add_library(report_module SHARED
   GUI/ReportIconLoader.cpp GUI/ReportIconLoader.hpp
   Icons/Report.svg
   GUI/ReportSettingsDialog.cpp
+  GUI/ReportSettingsCommandText.cpp GUI/ReportSettingsCommandText.hpp
   GUI/ReportWorkspace.cpp
+  GUI/ReportToolbar.cpp GUI/ReportToolbar.hpp
+  GUI/ReportExportDialog.cpp GUI/ReportExportDialog.hpp
+  Icons/ExportPdf.svg Icons/ExportOdt.svg
   Interfaces/ReportApplicationInterface.cpp
   ReportModule.cpp
   Commands/ReportCommands.hpp
@@ -61,7 +65,7 @@ add_library(report_module SHARED
 )
 target_compile_features(report_module PUBLIC cxx_std_17)
 target_include_directories(report_module PUBLIC "${CUBITSIM_SOURCE_ROOT}")
-target_link_libraries(report_module PRIVATE cubitsim_reporting cubitsim_storage cubiti cubit_util Qt6::Widgets Qt6::Svg)
+target_link_libraries(report_module PRIVATE cubitsim_reporting cubitsim_storage cubiti cubit_util clarogui clarofw Qt6::Widgets Qt6::Svg)
 set_target_properties(report_module PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY "${CUBITSIM_DEPLOY_DIRECTORY}"
   LIBRARY_OUTPUT_DIRECTORY "${CUBITSIM_DEPLOY_DIRECTORY}"
@@ -79,6 +83,10 @@ add_custom_target(report_icons ALL
   COMMAND "${CMAKE_COMMAND}" -E make_directory "${CUBITSIM_DEPLOY_DIRECTORY}/Icons"
   COMMAND "${CMAKE_COMMAND}" -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/Icons/Report.svg" "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/Report.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/ExportPdf.svg" "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/ExportPdf.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/ExportOdt.svg" "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/ExportOdt.svg"
   VERBATIM
 )
 add_dependencies(report_module report_icons)

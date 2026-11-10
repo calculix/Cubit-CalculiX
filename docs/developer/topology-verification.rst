@@ -779,7 +779,7 @@ the normalized dot product of d_k and d_(k-1). It is empty when either update
 has zero norm or fewer than three fields exist. two_iteration_field_change is
 max(abs(phi_k - phi_(k-2))). These diagnostics do not modify convergence tests.
 
-The journal now requests level_set_move_limit 0.05 and compares with that
+The next journal requested level_set_move_limit 0.05 and compared with that
 recorded 0.1 baseline. All other case settings except the generated name must
 match before starting physical jobs; missing baseline files block before model
 reset. Both runs use the same reviewed fixture construction. Settings comparison
@@ -787,7 +787,226 @@ does not independently certify identical mesh/model data or binary revisions.
 Each run retains its unique directory. report.json compares first feasible
 iteration, final compliance/volume/field changes, termination and final-ten
 update reversal statistics. A smaller move limit is an experiment, not a promise
-of convergence. This 0.05 comparison has not yet been executed in Cubit.
+of convergence. Windows run ``20261110T072554Z_c4464b21`` passed execution
+and the settings comparison but again reached iteration_limit at 60 designs.
+Volume became feasible at iteration 11 and ended at 0.6997237353. Final
+compliance was 6199.352122, field change 0.05 and relative compliance change
+0.0098051904. All ten final direction pairs reversed, with mean cosine
+-0.9999999999994. The smaller move reduced amplitude but did not remove the
+two-cycle. ``verification/topology-level-set-convergence-20261110.csv`` retains
+the complete fixed-0.05 history and direction diagnostics.
+
+The subsequent journal compared controller reversal damping against that fixed-0.05
+run, retaining configured move limit 0.05. Only the generated case name may
+differ in case settings. Rebuild/restart the plugin before playback; the existing
+capability query does not identify whether a loaded binary includes damping.
+Retain console scale-reduction messages together with report.json. The comparison
+records expected adaptive behavior, not an independent binary-capability claim.
+
+CoreTopologyLevelSetMoves has a new standalone moves suite for reversal streaks,
+fixed/zero updates, restoration, scale floor/reset, history validation and alias
+errors. The live helper adds damped acceptance and invalid-scale checks, including
+unchanged ordinary residual and source/proposal inputs. Rebuild the live helper
+after the C++ signature change before running verify_level_set_update.jou.
+The user-reported Windows CTest run passed all eight native suites, including
+moves, in 16.96 s. Live run ``20261110T120336Z_49229417`` passed all 18 fixtures,
+36 initialization/update phases and 6928 numerical checks with zero failures.
+All 190 fixture commands returned and completed; the earlier reset interruption
+did not recur. Expected rejection messages are checked by the helper and do not
+indicate failed CSV checks. The per-phase summary is retained in
+``verification/topology-live-damping-20261110.csv``. Loaded binary revisions
+remain unrecorded; these Windows results do not establish Linux certification.
+
+Adaptive physical run ``20261110T115248Z_bf1905a1`` completed all 60 iterations
+with execution PASS and feasible final volume 0.6999939989, but convergence
+NOT_REACHED. Accepted field change fell to 0.005 at adaptive scale 0.1 while
+the ordinary proposal residual stayed 0.05. Final compliance was 6155.3758736
+and relative compliance change 0.0064655949, above the 0.001 tolerance.
+All ten final direction pairs still reversed (mean cosine -0.9533880367).
+The unchanged full-proposal criterion prevented damping from falsely certifying
+convergence. Its 60 iteration rows and factor diagnostics are archived in
+``verification/topology-level-set-adaptive-convergence-20261110.csv``.
+
+Material-cap isolation experiment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Stored iteration-60 data for element 113 show fraction 0.6322428367 ->
+0.6369365830 but applied factor 0.5473286076 -> 0.7388361645. For the same
+fraction change, the requested continuous factor changes by only 0.0046890525.
+The existing grouping uses per-iteration logarithmic minimum/maximum bins and
+nearest-bin rounding; moving boundaries and bin crossings can amplify changes.
+This is evidence for investigating quantization, not proof that it is the sole
+cause of nonconvergence.
+
+The isolation journal compared cap 192 with adaptive cap-8 baseline
+``20261110T115248Z_bf1905a1``. The reviewed beam has 192 elements and one base
+material. A cap at least as large as the element count can retain every distinct
+requested factor using the existing grouping path. The journal checks this
+bound before running jobs, verifies the requested cap, and allows only name
+and material_cap to differ in case settings. Move limit 0.05, adaptive policy,
+convergence tolerances, width/refinement settings and iteration limit stay fixed.
+Grouping mathematics and production defaults are unchanged.
+
+New CSV columns report distinct material groups, maximum relative factor error
+abs(applied/requested - 1), and maximum absolute requested/applied factor changes
+between consecutive iterations. Requested factors use the existing level-set
+formula void_ratio + (1-void_ratio)*fraction, with preserved factors exactly 1.
+Stored high-cap applied factors must agree within relative tolerance 2e-12.
+This does not test six-decimal input-file formatting error. The material export
+message now explicitly calls its value quantization error rather than temporal
+stiffness change. High-cap run ``20261110T121410Z_a1202968`` passed execution
+and converged at iteration 34: field change 0.0049654985, ordinary proposal
+residual 0.00538813, relative compliance change 2.3333961e-5 and volume fraction
+0.6999486894. Stored quantization error was zero throughout, with 169 groups
+in the final design. The run is archived in
+``verification/topology-level-set-high-cap-convergence-20261110.csv``.
+This establishes convergence only for the reviewed broad-band C3D8 fixture;
+it does not authorize removing the production gate or comparing the cap-8
+compliance value as if both runs used the same applied material approximation.
+
+Stable capped grouping experiment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+CoreMaterialsTopologyGrouping.hpp/.cpp adds fixed linear levels and hysteresis
+for level-set runs. Density retains the previous logarithmic grouping path.
+Budgets are deterministic from captured base-material element counts and cap,
+not per-iteration distinct factors. Levels span the configured void ratio to 1.
+A base whose budget covers all its elements remains exact; otherwise endpoint
+factors are exact and previous assignments are retained within 0.1 level spacings
+past a midpoint. Previous domains, caps and palette membership are validated.
+
+The journal now compares stable cap-8 grouping against adaptive logarithmic
+cap-8 run ``20261110T115248Z_bf1905a1``, retaining the converged cap-192 run as
+an accuracy reference. Only the generated case name may differ in settings.
+Build/restart the new plugin first: the journal checks fixed-palette membership
+to detect a loaded old policy. It then saves/reopens the native model and requires
+the complete snapshot, including applied factors, to remain identical. Historical
+reconstruction uses stored factors directly and never reapplies hysteresis.
+
+The new native material_grouping suite covers fixed levels under changing
+extrema/distinct counts, upward/downward retention and switching, multi-level
+jumps, exact endpoints, per-base budgets, exact high-cap/singleton paths,
+invalid history and aliased outputs. These new tests and the physical stable-cap
+comparison are **PENDING EXECUTION**. Eight native suites passed before this
+change; that result does not validate the new ninth suite. Quantization error
+can remain substantial, particularly near void, and all convergence criteria
+stay unchanged. No GUI, default-cap or save-format change is introduced.
+
+Subsequent Windows evidence
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The user-reported native run passed all nine suites, including material_grouping,
+in 16.96 s. Stable cap-8 run ``20261110T123542Z_23eaf956`` passed execution and
+native save/reopen, but ended at iteration 60 without convergence. The last four
+applied-factor transitions were identical despite changes in the requested field;
+zero compliance change alone was correctly insufficient because the ordinary
+proposal residual stayed 0.05. Final quantization error was 26.355344 percent.
+
+Stable cap-32 run ``20261110T124312Z_6c4e8390`` converged at iteration 41 and
+passed native save/reopen. Final field change was 0.0053711503, ordinary proposal
+residual 0.00556216, relative compliance change zero and volume fraction
+0.6999964095. It used 23 material groups with maximum relative factor error
+14.615751 percent. Its reported compliance 6305.0011384 is approximately 0.124
+percent above the high-cap run, but the optimized fields differ and their applied
+material approximations differ. That comparison does not isolate reanalysis
+error. The complete cap-32 history is archived in
+``verification/topology-level-set-stable-cap32-convergence-20261110.csv``.
+
+Frozen-design exact-factor reanalysis
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``tests/topology/verify_level_set_reanalysis.jou`` prepares two ordinary
+file-backed jobs for iteration 41 of ``20261110T124312Z_6c4e8390``. It resets
+the model and opens that run's saved convergence_history.cub5; save current work
+before playback. It never calls ccx run topology or advances the design::
+
+   playback "C:/Users/offic/Desktop/Git/Cubit-CalculiX/tests/topology/verify_level_set_reanalysis.jou"
+
+The grouped control copies the saved selected input unchanged and must reproduce
+archived compliance within relative tolerance 1e-6. The second deck replaces
+solid-section assignments with per-element elastic materials using the same
+stored fractions and requested factor v + (1-v)*fraction, with preserved factors
+exactly 1. Base modulus and Poisson ratio are recovered from an exported preserved
+solid and checked against every grouped assignment. Moduli use six-decimal
+scientific formatting. The term exact means no grouping; export rounding remains.
+
+The fixture-specific parser rejects includes, non-C3D8 elements, multiple steps,
+non-isotropic/temperature-dependent elasticity, unsupported section data and
+nonhomogeneous displacement constraints. The original mesh, loads, constraints,
+outputs and step are retained. Original sets/material cards remain present but
+their old solid-section assignments are replaced. New input files are separately
+reread for complete, nonoverlapping per-element section coverage.
+
+``tests/reanalysis_topology_runs/<token>/`` retains factors.csv, report.json,
+commands.csv and both jobs' input/results. The report compares exact-factor and
+grouped compliance for the same frozen field and verifies that topology settings,
+history, factors and fields remain unchanged after both normal jobs. It records
+accuracy_acceptance NOT_ASSESSED: no user accuracy threshold or optimization
+certificate is inferred. This journal needs no C++ change or new helper build.
+The original standalone C3D8 journal passed in Windows run
+``20261110T130950Z_484dc3c8``. The unchanged grouped control gave compliance
+6305.0011384 and reproduced the archived value; exact-factor reanalysis of the
+same frozen field gave 6297.077716. The signed difference is -0.0012566884963
+relative to the grouped control (approximately -0.125669 percent). Topology
+history remained unchanged. No accuracy threshold was applied. See
+``verification/topology-reanalysis-20261110.csv`` for the retained summary.
+
+Six-formulation convergence and reanalysis matrix
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``tests/topology/verify_level_set_matrix.jou`` runs C3D8, C3D20, C3D4, C3D10,
+C3D6 and C3D15 sequentially. Each case resets the model, creates the reviewed
+beam fixture, runs at cap 32 for at most 60 evaluated designs, validates full
+history, saves/reopens its native model, and reanalyses its final evaluated
+field with an unchanged grouped control and exact requested factors::
+
+   playback "C:/Users/offic/Desktop/Git/Cubit-CalculiX/tests/topology/verify_level_set_matrix.jou"
+
+Save existing work before playback. Keep the developer controller capability ON.
+No additional C++ build or helper-library change is needed for this journal.
+Move limit 0.05, current adaptive damping, Core convergence defaults, interface
+width 1, integration tolerance 1e-4 and five refinements are retained. Existing
+wedge-fixture validation includes expanded midside connectivity. The mesh is
+generated per formulation; objectives across those different meshes are not
+an independent accuracy or optimality certificate.
+
+An iteration-limit exit records convergence NOT_REACHED while still permitting
+final-design reanalysis and later formulations. Unexpected command, solver,
+history or control-reproduction failures stop the matrix and retain the current
+model and all earlier files; later cases remain NOT EXECUTED. Python interruptions
+are recorded separately. Missing APIs or a disabled capability block before reset.
+The report exposes the active command phase, with flushed command-enter/return
+events for locating a native block that cannot execute Python exception cleanup.
+
+``tests/matrix_topology_runs/<token>/`` contains report.json, summary.csv,
+commands.csv and command-events.jsonl. Each formulation has its own directory
+with report.json, iterations.csv, factors.csv, final_snapshot.json,
+convergence_history.cub5 and all solver inputs/results. The summary separates
+execution, convergence, history reopen and signed relative reanalysis difference
+(exact/grouped - 1). maximum_factor_error is the maximum across the entire
+optimization history, not just the final iteration. Accuracy acceptance remains
+NOT_ASSESSED; no threshold is invented from the C3D8 result.
+
+The shared test-only ``level_set_verification.py`` receives APIs/command callbacks
+explicitly and performs no Cubit actions on import. Both original standalone
+journals retain playback entry points and now delegate reusable validation to it.
+The reader supports the six exported formulations and continued quadratic
+connectivity, retaining original node order and all unaffected deck lines.
+It remains a restricted fixture reader, not a general-purpose CalculiX importer.
+
+Offline tests can be run without Cubit::
+
+   python tests/topology/test_level_set_verification.py
+
+Six Python test methods passed, covering all-six synthetic decks, malformed
+connectivity/material/section cases, copied-job verification, paired reanalysis,
+iteration-limit continuation, unexpected failure/interrupt stopping and environment
+restoration. Additional offline checks passed on actual exported decks for all
+six formulations (192 hex, 22600 tet and 2592 wedge elements per corresponding
+fixture). Refactored C3D8 standalone reanalysis/history checks passed with mocked
+APIs. These are harness checks, separate from the nine passing native suites.
+The new six-formulation matrix and refactored playback entry points remain
+**PENDING CUBIT EXECUTION**; no production-gate change is implied.
 
 Cubit progress display
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -1031,9 +1250,10 @@ retained point/vector payload, not total process RSS or allocator/map overhead.
 The seven native suites and the 35-stage physical controller regression have
 passed on Windows. Physical run ``20261109T133442Z_73ec62b3`` retains exact
 historical fields, factors and evaluations against ``20261109T110825Z_0fb770d1``.
-The complete live update matrix after this quadrature change remains
-**PENDING EXECUTION**; its earlier baseline is ``20261109T121528Z_72c9d6ef``.
-The latest physical run enabled diagnostic tracing, so it is not a clean timing
+The complete live update matrix, including damping acceptance checks, passed
+in ``20261110T120336Z_49229417`` (36 phases / 6928 checks); its earlier baseline
+is ``20261109T121528Z_72c9d6ef``. The quadrature controller regression enabled
+diagnostic tracing, so it is not a clean timing
 comparison. Keep tracing disabled for performance runs and the controller
 verification capability ON. Do not relax tolerances after a failure; record
 timings before claiming an improvement. Broader curved/mixed-mesh physical and

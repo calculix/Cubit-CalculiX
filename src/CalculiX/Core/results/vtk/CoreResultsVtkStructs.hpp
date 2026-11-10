@@ -4,6 +4,7 @@
 #include "Framework/Results/VtkResultsData.hpp"
 #include "ElementIntegration.hpp"
 #include <string>
+#include <optional>
 #include <vector>
 
 struct CoreResultsVtkOptions
@@ -98,6 +99,8 @@ struct CoreResultsVtkFieldPlan
   int source_block = -1; // Index in the existing reader's result_blocks.
   int source_data = -1;
   std::size_t component_offset = 0; // DAT element/IP identifiers are not values.
+  // Stable index in the completed plan catalogue, not a VTK output index.
+  std::optional<std::size_t> target_group;
 };
 
 struct CoreResultsVtkIncrementPlan
@@ -139,7 +142,9 @@ struct CoreResultsVtkTablePlan
 struct CoreResultsVtkPlan
 {
   int job_id = -1;
+  bool external_source = false; // Detached files may have job ID zero and table-only output.
   std::string run_identity;
+  std::string result_identity;
   CoreResultsVtkOptions options;
   SimResults::LinkSource link_source = SimResults::LinkSource::FrdOnly;
   SimResults::DatasetLayout layout = SimResults::DatasetLayout::SingleGrid;

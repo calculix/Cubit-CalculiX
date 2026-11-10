@@ -2,6 +2,8 @@
 #define RESULTSOURCEREGISTRYINTERFACE_HPP
 
 #include <string>
+#include <vector>
+#include "Framework/Results/ResultJobEntry.hpp"
 
 class ResultSourceProviderInterface;
 
@@ -17,6 +19,18 @@ class ResultSourceRegistryInterface
 {
 public:
   virtual ~ResultSourceRegistryInterface() = default;
+  virtual bool available_result_jobs(std::vector<SimResults::ResultJobEntry>& output, std::string& error) const
+  {
+    output.clear();
+    error.clear();
+    return true;
+  }
+
+  virtual bool resolve_application_result_provider(const std::string& application,
+    ResolvedResultSourceProvider& output, std::string& error) const
+  {
+    return resolve_result_provider(application,output,error);
+  }
 
   // Resolve a command prefix and its canonical application identity together.
   // Success replaces output and clears error; failure leaves output unchanged.

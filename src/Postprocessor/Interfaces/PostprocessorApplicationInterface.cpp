@@ -1,5 +1,7 @@
 #include "PostprocessorApplicationInterface.hpp"
 #include <algorithm>
+#include <exception>
+#include "Postprocessor/Core/sources/VtkFileSourceProvider.hpp"
 #include "Framework/Interfaces/ResultSourceRegistryInterface.hpp"
 
 PostprocessorApplicationInterface::PostprocessorApplicationInterface(ResultSourceRegistryInterface& providers)
@@ -466,4 +468,126 @@ std::vector<UserOption> PostprocessorApplicationInterface::user_option_definitio
 bool PostprocessorApplicationInterface::user_option_values(UserOptionValues& snapshot, std::string& error) const
 {
   return options.values(snapshot, error);
+}
+
+std::optional<Postprocessor::ProbeResult> PostprocessorApplicationInterface::probe_entity(
+  const Postprocessor::EntityReference& entity, std::string& error) const
+{
+  return core.probe_entity(core.session().active_view_id,entity,error);
+}
+
+bool PostprocessorApplicationInterface::open_vtt(const std::string& path, const std::optional<std::string>& name, std::string& error)
+{
+  return open_file("vtk",{path},name,error);
+}
+bool PostprocessorApplicationInterface::open_table(const std::string& source, const std::string& name, bool field, std::string& error)
+{
+  const auto id = source.empty() ? core.session().active_source_id : core.source_id_from_name(source);
+  return core.open_table(id,core.session().active_view_id,name,field,error);
+}
+bool PostprocessorApplicationInterface::show_3d(std::string& error)
+{
+  return core.show_3d(core.session().active_view_id,error);
+}
+Postprocessor::ResultTableData PostprocessorApplicationInterface::table_data() const
+{
+  return core.table_data(core.session().active_view_id);
+}
+std::vector<Postprocessor::ResultTableDescriptor> PostprocessorApplicationInterface::tables(const std::string& source_id) const
+{
+  const auto data = core.result_data(source_id);
+  return data ? Postprocessor::result_tables(*data,std::nullopt) : std::vector<Postprocessor::ResultTableDescriptor>{};
+}
+
+bool PostprocessorApplicationInterface::frame_available(const std::string& source_id, std::size_t index) const
+{
+  const auto view = core.session().views.find(core.session().active_view_id);
+  if (view != core.session().views.end() && view->second.table && view->second.table->source_id == source_id)
+  {
+    const auto data = core.result_data(source_id);
+    return data && index < data->increments.size();
+  }
+  return core.frame_has_mesh(source_id,index);
+}
+
+bool PostprocessorApplicationInterface::set_category_visible(const std::string& name,
+  Postprocessor::DatasetCategory category, bool visible, std::string& error)
+{
+  const auto id = name.empty() ? core.session().active_source_id : core.source_id_from_name(name);
+  return core.set_category_visible(id,core.session().active_view_id,category,visible,error);
+}
+
+bool PostprocessorApplicationInterface::available_jobs(std::vector<SimResults::ResultJobEntry>& output, std::string& error) const
+{
+  try
+  {
+    return providers.available_result_jobs(output,error);
+  }
+  catch (const std::exception& exception)
+  {
+    error = std::string("Cannot enumerate result jobs: ")+exception.what();
+    return false;
+  }
+  catch (...)
+  {
+    error = "Cannot enumerate result jobs.";
+    return false;
+  }
+}
+bool PostprocessorApplicationInterface::open_file(const std::string& prefix, const std::vector<std::string>& paths,
+  const std::optional<std::string>& name, std::string& error)
+{
+  SimResults::FileSourceReference request{prefix,paths,{}};
+  bool opened = false;
+  if (prefix == "vtk")
+  {
+    Postprocessor::VtkFileSourceProvider provider;
+    opened = core.open_result(provider,request,name,error);
+  }
+  else
+  {
+    ResolvedResultSourceProvider resolved;
+    if (!providers.resolve_result_provider(prefix,resolved,error) || !resolved.provider)
+    {
+      return false;
+    }
+    opened = core.open_result(*resolved.provider,request,name,error);
+  }
+  return opened;
+}
+bool PostprocessorApplicationInterface::refresh_source(const std::string& name, std::string& error)
+{
+  const auto id = core.source_id_from_name(name);
+  const auto source = core.session().sources.find(id);
+  if (source == core.session().sources.end())
+  {
+    error = "The result source does not exist.";
+    return false;
+  }
+  if (const auto* files = std::get_if<Postprocessor::FileSourceReference>(&source->second.reference))
+  {
+    if (files->provider_id == "vtk")
+    {
+      Postprocessor::VtkFileSourceProvider provider;
+      return core.refresh_result(provider,id,error);
+    }
+    ResolvedResultSourceProvider resolved;
+    return providers.resolve_result_provider(files->provider_id,resolved,error) && resolved.provider &&
+      core.refresh_result(*resolved.provider,id,error);
+  }
+  const auto* job = std::get_if<Postprocessor::JobSourceReference>(&source->second.reference);
+  ResolvedResultSourceProvider resolved;
+  if (!job || !providers.resolve_application_result_provider(job->application_id,resolved,error) || !resolved.provider)
+  {
+    if (error.empty())
+    {
+      error = "This source cannot be refreshed by a result provider.";
+    }
+    return false;
+  }
+  return core.refresh_result(*resolved.provider,id,error);
+}
+bool PostprocessorApplicationInterface::show_only_source(const std::string& name, std::string& error)
+{
+  return core.show_only_source(core.source_id_from_name(name),core.session().active_view_id,error);
 }

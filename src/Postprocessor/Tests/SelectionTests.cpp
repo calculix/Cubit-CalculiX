@@ -223,6 +223,15 @@ int main(int argc,char** argv)
   {
     return 1;
   }
+  check(result->element_ids == std::vector<std::int64_t>{120},"Node probe did not report its connected element");
+  const auto hoverRevision = app->session().views.at(view).selection.revision;
+  check(app->probe_entity(EntityReference{source,0,EntityKind::Node,largeNode,{}},error).has_value() &&
+    app->session().views.at(view).selection.revision == hoverRevision,"Read-only hover probe changed selection");
+  check(app->open_table("Model","stress",true,error),"Cannot open spatial field as table");
+  const auto fieldRows = app->table_data();
+  check(fieldRows.rows == 4 && result_table_cell(fieldRows,0,1) == "9007199254740993" &&
+    result_table_cell(fieldRows,1,2) == "Unavailable","Spatial table lost original identity or validity mask");
+  check(app->show_3d(error),"Cannot return from field table to 3D");
   check(scene.synchronize(*app,error),"Cannot highlight selected node");
   renderer->GetActors()->InitTraversal();
   check(renderer->GetActors()->GetNextActor() == originalActor,"Selection rebuilt mesh actors");

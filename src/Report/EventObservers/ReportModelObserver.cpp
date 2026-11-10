@@ -25,7 +25,7 @@ void ReportModelObserver::notify_model_reset()
 
 void ReportModelObserver::notify_cub_file_read(std::string filename)
 {
-  if (updating)
+  if (updating || project_coordinated)
   {
     return;
   }
@@ -45,7 +45,7 @@ void ReportModelObserver::notify_cub_file_saved(std::string filename, bool tempo
   // Follow the existing SDK integration: temporary native saves are not amended.
   // Explicit project saves embed report data. Autosave integration needs separate
   // host lifecycle verification before claiming report recovery from temp files.
-  if (temporary || updating)
+  if (temporary || updating || project_coordinated)
   {
     return;
   }

@@ -9,10 +9,14 @@
 #include <optional>
 #include <cstdint>
 #include <cstddef>
+#include "Framework/Results/ResultJobEntry.hpp"
 
 class PostprocessorApplicationInterface;
 class PostprocessorResultsTree;
 class PostprocessorProperties;
+class PostprocessorTableView;
+class QStackedWidget;
+class QLabel;
 class PostprocessorOptionsPanel;
 class PostprocessorMouseOptionsPanel;
 class PostprocessorViewport;
@@ -20,6 +24,9 @@ class PostprocessorFrameNavigation;
 class PostprocessorColorControls;
 class PostprocessorDeformationControls;
 class PostprocessorPickControls;
+class PostprocessorToolbar;
+class PostprocessorSourceControls;
+class Claro;
 class QMainWindow;
 namespace Postprocessor
 {
@@ -35,11 +42,14 @@ public:
     std::function<bool(const std::string&, std::string&)> silent);
   ~PostprocessorWorkspace() override;
   void refresh();
+  bool bind_native_toolbar(Claro* host, std::string& error);
   bool camera_command_active() const noexcept;
   void workspace_view(WorkspaceView& view);
 
 private:
   void submit(const QString& command);
+  void import_results();
+  void add_job(const SimResults::ResultJobEntry& job);
   QString frame_command(std::size_t frame) const;
   void source_command(const QString& verb, const QString& name);
   void dataset_command(const QString& source, Postprocessor::DatasetVisibilityAction action, std::optional<std::size_t> dataset);
@@ -48,6 +58,9 @@ private:
   PostprocessorResultsTree* tree = nullptr;
   PostprocessorProperties* properties = nullptr;
   PostprocessorViewport* viewport = nullptr;
+  QStackedWidget* viewStack = nullptr;
+  PostprocessorTableView* tableView = nullptr;
+  QLabel* viewTitle = nullptr;
   PostprocessorFrameNavigation* navigation = nullptr;
   PostprocessorDeformationControls* deformationControls = nullptr;
   PostprocessorPickControls* pickControls = nullptr;
@@ -60,6 +73,9 @@ private:
   QDockWidget* resultsDock = nullptr;
   QDockWidget* propertiesDock = nullptr;
   QToolBar* toolbar = nullptr;
+  PostprocessorToolbar* nativeToolbar = nullptr;
+  QToolBar* sourceToolbar = nullptr;
+  PostprocessorSourceControls* sourceControls = nullptr;
   QList<QAction*> menus;
   QAction* closeSelected = nullptr;
   QAction* closeAll = nullptr;

@@ -13,7 +13,7 @@
 #include <QCheckBox>
 #include <QFileDialog>
 #include <QPixmap>
-#include <QJsonDocument>
+#include "ReportSettingsCommandText.hpp"
 #include <QScrollArea>
 #include <QHBoxLayout>
 #include <utility>
@@ -43,6 +43,7 @@ ReportSettingsDialog::ReportSettingsDialog(QWidget* parent, const ReportConfigur
       }
     }
   }
+  initialConfiguration = displayed;
   const auto text = [&](const std::string& key)
   {
     const auto found = displayed.values.find(key);
@@ -51,6 +52,7 @@ ReportSettingsDialog::ReportSettingsDialog(QWidget* parent, const ReportConfigur
   auto* general = new QWidget(tabs);
   auto* fields = new QFormLayout(general);
   title = new QLineEdit(text("title"), general);
+  title->setObjectName("ReportSetting_title");
   author = new QLineEdit(text("author"), general);
   project = new QLineEdit(text("project"), general);
   revision = new QLineEdit(text("revision"), general);
@@ -220,28 +222,35 @@ void ReportSettingsDialog::apply()
   patch.values["logo_width_mm"] = std::to_string(logoWidth->value());
   patch.replace_company_logo = logoChanged;
   patch.company_logo = stagedLogo;
+  for (auto entry = patch.values.begin(); entry != patch.values.end();)
+  {
+    const auto initial = initialConfiguration.values.find(entry->first);
+    if (initial != initialConfiguration.values.end() && initial->second == entry->second)
+    {
+      entry = patch.values.erase(entry);
+    }
+    else
+    {
+      ++entry;
+    }
+  }
+  if (patch.values.empty() && !patch.replace_company_logo)
+  {
+    accept();
+    return;
+  }
   std::string validation;
   if (!active->validate_configuration_patch(patch, validation))
   {
     message->setText(QString::fromStdString(validation));
     return;
   }
-  auto payload = patch.to_json();
-  payload.remove("company_logo");
-  if (logoChanged)
+  std::string command, error;
+  if (!ReportSettingsCommandText::build(patch, logoFilename, command, error))
   {
-    if (logoFilename.isEmpty())
-    {
-      payload.insert("company_logo", QJsonValue(QJsonValue::Null));
-    }
-    else
-    {
-      payload.insert("logo_file", logoFilename);
-    }
+    message->setText(QString::fromStdString(error));
+    return;
   }
-  const auto encoded = QJsonDocument(payload).toJson(QJsonDocument::Compact).toBase64();
-  const std::string command = "report configure settings data \"" + encoded.toStdString() + "\"";
-  std::string error;
   if (!submit(command, error))
   {
     message->setText(QString::fromStdString(error));

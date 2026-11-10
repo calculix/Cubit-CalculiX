@@ -15,6 +15,32 @@ namespace Postprocessor
     Source,
     Feature
   };
+  enum class DatasetCategory
+  {
+    Blocks, NodeSets, SideSets, IntegrationPoints
+  };
+  inline const char* dataset_category_name(DatasetCategory category)
+  {
+    switch (category)
+    {
+      case DatasetCategory::Blocks: return "blocks";
+      case DatasetCategory::NodeSets: return "nodesets";
+      case DatasetCategory::SideSets: return "sidesets";
+      case DatasetCategory::IntegrationPoints: return "integrationpoints";
+    }
+    return "";
+  }
+  inline bool dataset_in_category(const SimResults::Dataset& data, DatasetCategory category)
+  {
+    switch (category)
+    {
+      case DatasetCategory::Blocks: return data.kind == "Blocks" || data.kind == "DAT_Elements";
+      case DatasetCategory::NodeSets: return data.kind == "Nodesets" || data.kind == "DAT_Nodes";
+      case DatasetCategory::SideSets: return data.kind == "Surfaces";
+      case DatasetCategory::IntegrationPoints: return data.kind == "DAT_IntegrationPoints";
+    }
+    return false;
+  }
   enum class DatasetVisibilityAction
   {
     Show,

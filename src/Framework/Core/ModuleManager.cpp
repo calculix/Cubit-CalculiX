@@ -443,3 +443,57 @@ bool ModuleManager::available_report_sources(std::vector<ReportSourceEntry>& out
   error.clear();
   return true;
 }
+
+std::vector<ProjectStateProviderInterface*> ModuleManager::project_state_providers() const
+{
+  std::vector<ProjectStateProviderInterface*> result;
+  for (const auto& module : modules)
+  {
+    if (auto* provider = module->project_state_provider())
+    {
+      result.push_back(provider);
+    }
+  }
+  return result;
+}
+
+bool ModuleManager::resolve_application_result_provider(const std::string& application,
+  ResolvedResultSourceProvider& output, std::string& error) const
+{
+  error.clear();
+  const auto found = application_result_providers.find(application);
+  if (found == application_result_providers.end())
+  {
+    error = "The saved result application is unavailable: "+application;
+    return false;
+  }
+  output = {application,found->second};
+  return true;
+}
+
+bool ModuleManager::available_result_jobs(std::vector<SimResults::ResultJobEntry>& output, std::string& error) const
+{
+  error.clear();
+  if (!initialized)
+  {
+    error = "Result providers are not initialized.";
+    return false;
+  }
+  std::vector<SimResults::ResultJobEntry> entries;
+  for (const auto& item : application_result_providers)
+  {
+    std::vector<SimResults::ResultJobEntry> jobs;
+    if (!item.second->available_jobs(jobs,error))
+    {
+      return false;
+    }
+    for (auto& job : jobs)
+    {
+      job.reference.application_id = item.first;
+      job.command_prefix = item.second->command_prefix();
+      entries.push_back(std::move(job));
+    }
+  }
+  output = std::move(entries);
+  return true;
+}

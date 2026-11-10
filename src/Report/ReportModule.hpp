@@ -1,5 +1,6 @@
 #pragma once
 #include "Framework/Interfaces/ModuleInterface.hpp"
+#include "Framework/Interfaces/ProjectStateProviderInterface.hpp"
 #include "Framework/Interfaces/CommandProviderInterface.hpp"
 #include "Framework/Interfaces/ComponentProviderInterface.hpp"
 #include "Framework/Interfaces/WorkspaceProviderInterface.hpp"
@@ -13,9 +14,16 @@ class ReportGui;
 class ReportModelObserver;
 
 class ReportModule final : public ModuleInterface, public CommandProviderInterface,
-  public ComponentProviderInterface, public WorkspaceProviderInterface
+  public ComponentProviderInterface, public WorkspaceProviderInterface, public ProjectStateProviderInterface
 {
 public:
+  ProjectStateProviderInterface* project_state_provider() noexcept override;
+  std::string project_state_id() const override;
+  void set_project_coordinated(bool coordinated) override;
+  bool prepare_project_read(const ProjectStateContext& context, std::string& error) override;
+  bool commit_project_read(const ProjectStateContext& context, std::string& error) override;
+  void discard_project_read() noexcept override;
+  bool write_project_state(const ProjectStateContext& context, std::string& error) override;
   ReportModule(ReportProviderRegistryInterface& registry,
     std::function<bool(const std::string&, std::string&)> submit,
     std::function<bool(const std::string&, std::string&)> silent);

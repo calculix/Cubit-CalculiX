@@ -1,6 +1,8 @@
 # One external command plugin/component hosts the internal application modules.
 add_library(cubitsim_framework SHARED
   Core/CubitSimVersion.hpp
+  Core/ProjectStateCoordinator.cpp
+  Core/ProjectStateCoordinator.hpp
   Core/FrameworkContext.cpp
   Core/FrameworkContext.hpp
   Core/Monitoring/FrameworkUserOptions.cpp

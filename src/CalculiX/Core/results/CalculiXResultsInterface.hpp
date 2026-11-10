@@ -29,6 +29,7 @@ public:
   bool result_csv_job_dat_section(int job_id,std::string result_set, std::string time,bool overwrite, std::string save_filepath); // save the results to csv
   bool create_result(int job_id); // adds a new result for job
   bool delete_result(int job_id); // delete result for job
+  std::string retained_identity(int job_id, std::string& error);
   bool load_result(int job_id); // load result for job
   // options contains [frd_only, dat_only]; incomplete data is always retained.
   int convert_result(int job_id, std::vector<int> options, std::vector<int> block_ids, std::vector<int> nodeset_ids, std::vector<int> sideset_ids); // convert result for job

@@ -26,7 +26,7 @@ std::vector<std::string> PostFrameCommand::get_help()
 {
   return {"Select a 1-based result frame in the active view; source defaults to the active source.",
     "Frame numbers are positions in the loaded sequence, not solver increment identifiers.",
-    "Preserves visibility and camera. Frames without displayable mesh are rejected."};
+    "Preserves visibility and camera. Mesh views require displayable mesh; active table views can navigate table-only frames."};
 }
 
 bool PostFrameCommand::execute(CubitCommandData& data)

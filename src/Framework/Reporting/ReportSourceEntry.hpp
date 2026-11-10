@@ -10,5 +10,7 @@ public:
   std::string workspace_label;
   std::string label;
   bool available = false;
+  // A cached report remains selectable even when regeneration is unavailable.
+  bool has_report = false;
   std::string unavailable_reason;
 };

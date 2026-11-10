@@ -7,7 +7,8 @@ commands, source panels and a workspace with its own VTK viewport. Mesh results
 create visible per-view representations with neutral surfaces and edges. Show,
 hide and fit use Postprocessor commands; loading does not switch workspaces.
 
-This implementation has not been compiled or verified in a native Cubit session.
+The latest group-tree, hover-tooltip and table-view extensions have not been
+compiled or verified in a native Cubit session.
 See :doc:`../developer/postprocessor-verification` for the acceptance checklist.
 
 .. toctree::
@@ -16,4 +17,6 @@ See :doc:`../developer/postprocessor-verification` for the acceptance checklist.
    commands
    workspace
    selection
+   tables
    ../developer/postprocessor
+   ../developer/postprocessor-project-persistence

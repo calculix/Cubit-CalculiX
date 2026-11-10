@@ -36,6 +36,9 @@ Table controls and live updates
 
 Click a column header to sort numerically. Select rows and press Ctrl+C, or use
 the context-menu copy action, to copy tab-separated values with column headers.
+Rows use compact font-based heights and the longer column titles span two lines.
+Columns fit the first populated batch of each run; subsequent manual resizing
+is preserved during live updates. Copied headers remain on a single line.
 Follow latest starts enabled. Scrolling upward, dragging the scrollbar or
 clicking a row pauses following; recheck the control to follow new rows again.
 
@@ -46,6 +49,7 @@ generation and the corresponding plot data. Header-only files display an empty
 state rather than an error, including analyses that do not report these records.
 
 Unrecognized or invalid complete rows are retained in the expandable Unparsed
-lines section with their source line number. Reader errors appear above the
-table while already cached rows remain inspectable. Raw completed lines remain
+lines section with their source line number; this section is hidden when empty.
+Reader errors appear above the table while cached rows remain inspectable.
+Raw completed lines remain
 part of saved job data; typed monitoring caches are reconstructed after reload.

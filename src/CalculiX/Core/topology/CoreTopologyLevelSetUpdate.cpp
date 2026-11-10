@@ -275,7 +275,7 @@ bool CoreTopologyLevelSetUpdate::build_proposal(const TopologyLevelSetDesign& so
   return true;
 }
 
-bool CoreTopologyLevelSetUpdate::accept_proposal(const TopologyLevelSetDesign& source, const TopologyLevelSetProposal& proposal, const std::map<int, bool>& preserved, const std::map<int, double>& element_volumes, TopologyLevelSetDesign& next, std::map<int, double>& factors, TopologyLevelSetUpdateDiagnostics& diagnostics)
+bool CoreTopologyLevelSetUpdate::accept_proposal(const TopologyLevelSetDesign& source, const TopologyLevelSetProposal& proposal, const std::map<int, bool>& preserved, const std::map<int, double>& element_volumes, TopologyLevelSetDesign& next, std::map<int, double>& factors, TopologyLevelSetUpdateDiagnostics& diagnostics, double initial_step_scale)
 {
   const auto begin = std::chrono::steady_clock::now();
   double source_geometry_ms = 0.0;
@@ -312,6 +312,11 @@ bool CoreTopologyLevelSetUpdate::accept_proposal(const TopologyLevelSetDesign& s
   next = {};
   factors.clear();
   diagnostics = {};
+  if (!std::isfinite(initial_step_scale) || initial_step_scale <= 0.0 || initial_step_scale > 1.0)
+  {
+    PRINT_ERROR("Invalid initial level-set acceptance scale.\n");
+    return false;
+  }
   const auto controls = CoreTopologyLevelSet::default_update_controls();
   const double target_volume_fraction = proposal.diagnostics.target_volume_fraction;
   if (!proposal.available || !proposal.diagnostics.available || proposal.source_iteration != source.iteration_id ||
@@ -365,7 +370,7 @@ bool CoreTopologyLevelSetUpdate::accept_proposal(const TopologyLevelSetDesign& s
   }
   const double objective_scale = proposal.objective_scale;
   const bool restoring = source_volume > target_volume_fraction + controls.volume_tolerance;
-  double scale = 1.0;
+  double scale = initial_step_scale;
   for (int backtrack = 0; backtrack <= controls.maximum_backtracking_steps; ++backtrack)
   {
     auto candidate = prepared;

@@ -22,9 +22,9 @@ Layout and actions
 .. code-block:: text
 
    Workspace header: Cubit | CalculiX | Postprocessor
-   Postprocessor menu: File | View | Results | Help
-   Toolbar: List sources | Close selected source | Fit visible results
-   Results row: [Field selection] [Deformation] [Result navigation]
+   Postprocessor menu: File | View | Results | Tools | Help
+   Toolbar: Cubit New/Open/Save | Journal controls | Fit | Node/Element/IP
+   Results row: [Source selector / Add / Import] [Field] [Deformation] [Navigation]
    +-------------------+-----------------------------+--------------------+
    | Sources / Results | Own Postprocessor viewport   | Properties         |
    |                   |                             |                    |
@@ -50,8 +50,9 @@ remain selectable without a mesh checkbox.
 **View > Fit visible results** and the fit toolbar action submit ``post view fit``.
 The shared **Help > cubit-sim documentation** uses ``sim documentation``.
 Help is the last menu in every workspace. Closing a source does not
-delete its files or solver job. The new toolbar uses Cubit's command-window and
-cancel and zoom-reset SVG resources, with standard Qt icons as a fallback.
+delete its files or solver job. The first toolbar borrows Cubit's native New/Open/Save and journal actions,
+including their handlers, shortcuts, enabled states and icons. List and Close
+remain menu actions. Fit and picking remain Postprocessor viewport operations.
 
 The shared command dock remains below the middle graphics column, with floating,
 movement and closing disabled while this workspace is active. Native Cubit
@@ -128,7 +129,9 @@ is rejected with an error, preserving the existing Postprocessor session.
 Source catalogue and frame navigation
 -------------------------------------
 
-The source tree contains Mesh and Results. Each result family (for example DISP,
+The source tree contains Blocks / Element sets, Node sets, Side sets / Surfaces,
+Integration points and Results directly below each source. Empty categories are
+omitted; there is no intermediate Mesh item. Each result family (for example DISP,
 STRESS or TOSTRAIN) appears once, independent of the number of frames or compatible
 mesh datasets. There is no Frames branch. Distinct associations, sets, origins or
 component layouts remain separate variants beneath the result family. Unavailable
@@ -329,3 +332,100 @@ combines their valid extrema across frames and remains fixed during playback;
 changing visibility can change that range. Fixed bounds and limit thresholds
 remain unchanged. Legends disappear when their scoped datasets have no visible
 geometry. Hiding keeps source arrays and cached actor geometry in memory.
+
+
+Category visibility and project state
+-------------------------------------
+
+Blocks, node sets, side sets and integration-point categories have checkboxes.
+A partial checkbox means some children are hidden. Toggling a category updates
+all its datasets in one command and one scene publication. Source checkboxes
+remain master switches and retain individual child choices.
+
+Native project save/open includes Postprocessor references and display settings,
+without a second copy of CalculiX result arrays. Missing or changed sources show
+an unavailable label and reason, retaining their saved catalogue and settings.
+Saved cameras are preserved and playback restores paused. CalculiX retained
+results must be saved by its workspace for those references to resolve.
+
+
+Adding and importing sources
+----------------------------
+
+The second toolbar row begins with a job selector, an Add (+) button and an Import
+folder button. Jobs are grouped by workspace and identified by name and ID.
+Choosing a job only changes the selector; Add submits ``post open ccx job N``.
+The catalogue refreshes when the workspace or dropdown opens. Catalogue reads do
+not load or convert result arrays. Running/unavailable jobs are disabled with a
+reason. Source controls have bounded width and their toolbar can be moved.
+
+Import accepts FRD, DAT, VTU, VTPC and VTT. CalculiX import displays optional DAT
+and INP companions, suggesting existing same-basename files for confirmation.
+Only explicitly selected paths enter the journal command. Imported CalculiX data
+uses detached readers and the existing converter, without creating a job or
+querying the current Cubit mesh. INP establishes sets and element formulations;
+FRD coordinates remain authoritative after a compatible INP match. Without an
+INP, DAT-only spatial records appear as tables containing their original IDs.
+Exact formulations may require an INP to locate integration-point output.
+
+VTU/VTPC imports retain original arrays, identifiers and collection structure.
+Displacement semantics are not inferred merely from a three-component array.
+VTT opens as a table. External sources remain references in project storage;
+VTPC dependencies and INP includes participate in integrity checks.
+
+Right-clicking empty space offers Add job results and Import result files.
+Right-clicking a source additionally offers Show, Hide, Show only this source,
+Refresh, Remove and Remove all. Mesh visibility actions are disabled for
+unavailable/table-only sources. Remove closes a source without deleting files or
+jobs. Remove all asks for confirmation. Dataset and field menus are retained.
+All mutations use commands; listing jobs and opening menus do not journal.
+
+
+Undeformed integration-point reference
+--------------------------------------
+
+When Deform and Undeformed are enabled, integration-point datasets also draw the
+original FE edges of their parent elements. Parent lookup uses integral original
+element IDs in the same source/frame, independently of the ordinary block's
+visibility. Original coordinates and higher-order cell topology are retained.
+The outline follows its IP dataset's visibility, uses the existing reference
+color and cannot be picked. Repeated IP parents and identical overlapping block
+cells are deduplicated. Conflicting or missing parents are omitted with a display
+warning; no outline is guessed from a set name or reconstructed from IP positions.
+
+
+New-view defaults and incomplete external DAT links
+----------------------------------------------------
+
+New and reset views default to node picking. New result representations use the
+All frames color range, keeping the legend scale fixed while navigating frames.
+Projects retain their explicitly saved pick mode and range mode.
+
+External FRD/DAT imports preserve each DAT block as a table when its node/element
+IDs cannot be located in the supplied mesh or its IP formulation is unknown.
+Other compatible DAT blocks and the FRD mesh/fields remain spatially available.
+Original IDs, component columns, set, step, increment and time are retained;
+logical fallback table identities remain stable across frames. A matching INP
+can supply missing reference nodes and exact formulations. Invalid record schemas
+and incompatible supplied INP meshes still fail; this fallback does not invent
+coordinates or infer integration rules from FRD geometry type alone.
+
+
+Initial source visibility and result coloring
+---------------------------------------------
+
+A newly opened mesh source shows only Blocks / Element sets when that category is
+present in its initial mesh frame. Node sets, side sets and integration points
+start hidden. If blocks are absent, the first present mesh category in catalogue
+and tree order is shown instead. All datasets in that category are enabled.
+
+The first available result group in tree order with valid samples on those
+visible datasets is selected automatically. Declared vectors use Magnitude;
+other fields use their first component. The All frames range default is retained.
+If no compatible valid field exists, the mesh keeps its solid display color.
+These defaults are committed with ``post open``; they submit no extra commands.
+
+Results and its result-variant branches expand when first created, and the active
+coloring field is selected in the tree. Later refreshes preserve manual branch
+expansion/collapse choices. Reopening an already retained source does not reset
+its coloring or visibility. Project restoration keeps saved settings.

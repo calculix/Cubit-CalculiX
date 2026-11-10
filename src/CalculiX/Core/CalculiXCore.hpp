@@ -735,7 +735,7 @@ public:
   bool initialize_topology_level_set_design(int topology_id);
   bool evaluate_topology_level_set_compliance(int topology_id, int iteration_id, const std::map<int, double>& energies, CoreTopologyLevelSetGeometryCache* cache = nullptr);
   bool evaluate_topology_level_set_proposal(int topology_id, int iteration_id, TopologyLevelSetProposal& proposal, std::shared_ptr<CoreTopologyLevelSetGeometryCache> source_cache = {});
-  bool prepare_topology_level_set_iteration(int topology_id, int source_iteration, int next_iteration, const TopologyLevelSetProposal& proposal);
+  bool prepare_topology_level_set_iteration(int topology_id, int source_iteration, int next_iteration, const TopologyLevelSetProposal& proposal, double initial_step_scale = 1.0);
   bool check_topology_level_set_convergence(int topology_id, int previous_iteration, int current_iteration, bool& converged);
   bool prepare_topology_density_iteration(int topology_id, int source_iteration, int next_iteration);
   bool filter_topology_density_sensitivities(int topology_id, int iteration_id, const std::map<int, double>& element_volumes, const std::map<int, std::array<double, 3>>& element_centers);

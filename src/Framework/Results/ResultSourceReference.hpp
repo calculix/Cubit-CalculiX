@@ -17,6 +17,7 @@ namespace SimResults
     // Published references identify the run actually loaded; a later job
     // execution must not silently replace an already published snapshot.
     std::string run_identity;
+    std::string result_identity; // Durable content/link fingerprint; independent of conversion tokens.
   };
 
   struct FileSourceReference
@@ -28,6 +29,7 @@ namespace SimResults
     // Published paths are resolved absolute paths. VTPC child-file dependencies
     // remain the reader's responsibility, not separate Postprocessor sources.
     std::vector<std::string> paths;
+    std::string content_identity; // SHA-256 of the standalone file when supported.
   };
 
   using ResultSourceReference = std::variant<

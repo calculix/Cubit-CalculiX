@@ -11,6 +11,7 @@
 #include <cstddef>
 #include <string>
 
+class ProjectStateCoordinator;
 class UserOptionsManager;
 class DrawingService;
 class UserOptionsStore;
@@ -52,6 +53,7 @@ private:
   std::unique_ptr<FrameworkUserOptions> preferences;
   std::unique_ptr<DrawingService> drawings;
   ModuleManager modules;
+  std::unique_ptr<ProjectStateCoordinator> projects;
   std::unique_ptr<WorkspaceManager> workspaces;
   std::unique_ptr<UserOptionsManager> optionsPages;
   QPointer<ResourceStatusWidget> resourceStatus;

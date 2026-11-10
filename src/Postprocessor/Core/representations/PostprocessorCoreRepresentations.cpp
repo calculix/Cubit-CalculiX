@@ -59,6 +59,7 @@ namespace Postprocessor
     {
       return true;
     }
+    staged.views.at(staged.active_view_id).table.reset();
     if (!ensure_source_representation(staged, source_id, staged.active_view_id, *increment, true, error))
     {
       return false;
@@ -95,6 +96,31 @@ namespace Postprocessor
     }
     try
     {
+      const auto data = result_data(source_id);
+      const auto& table = state.views.at(view_id).table;
+      if (table && table->source_id == source_id)
+      {
+        if (!data || increment_index >= data->increments.size())
+        {
+          error = "The requested table frame is unavailable.";
+          return false;
+        }
+        auto requested = *table;
+        requested.frame = increment_index;
+        if (result_table_data(data,requested).rows > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        {
+          error = "This table frame exceeds the current Qt table view row limit.";
+          return false;
+        }
+        if (table->frame != increment_index)
+        {
+          auto staged = state;
+          staged.views.at(view_id).table->frame = increment_index;
+          state.swap(staged);
+          ++scene_revision;
+        }
+        return true;
+      }
       if (!frame_has_mesh(source_id, increment_index))
       {
         error = "The requested frame is unavailable or has no displayable mesh.";

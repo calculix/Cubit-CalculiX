@@ -1,4 +1,5 @@
 #include "Core/materials/CoreMaterials.hpp"
+#include "CoreMaterialsTopologyGrouping.hpp"
 #include <string>
 #include <vector>
 #include <map>
@@ -1614,7 +1615,7 @@ bool CoreMaterials::initialize_topology_materials(int topology_id,const std::vec
   return true;
 }
 
-bool CoreMaterials::set_topology_iteration_factors(int topology_id,int iteration_id,const std::vector<int>& element_ids,const std::vector<double>& stiffness_factors, int material_cap)
+bool CoreMaterials::set_topology_iteration_factors(int topology_id,int iteration_id,const std::vector<int>& element_ids,const std::vector<double>& stiffness_factors, int material_cap, bool stable_levels, double minimum_factor)
 {
   auto collection = topology_material_data.find(topology_id);
 
@@ -1649,7 +1650,34 @@ bool CoreMaterials::set_topology_iteration_factors(int topology_id,int iteration
   TopologyMaterialGrouping grouping;
   std::map<int, double> applied_factors;
 
-  if (!build_topology_material_groups(data, factors, material_cap, grouping, applied_factors, true))
+  if (stable_levels)
+  {
+    const std::map<int, double>* previous = nullptr;
+    if (iteration_id > 1)
+    {
+      const auto old = data.iteration_factors.find(iteration_id - 1);
+      const auto old_cap = data.iteration_material_caps.find(iteration_id - 1);
+      if (old == data.iteration_factors.end() || old_cap == data.iteration_material_caps.end() || old_cap->second != material_cap)
+      {
+        PRINT_ERROR("Missing previous topology factors or changed material cap.\n");
+        return false;
+      }
+      previous = &old->second;
+    }
+    std::map<int, double> stable_factors;
+    if (!CoreMaterialsTopologyGrouping::apply(data.element_base_material, factors, previous, material_cap, minimum_factor, stable_factors) ||
+        !build_topology_material_groups(data, stable_factors, material_cap, grouping, applied_factors, false))
+    {
+      return false;
+    }
+    grouping.maximum_relative_factor_error = 0.0;
+    for (const auto& requested : factors)
+    {
+      const double error = std::abs(applied_factors.at(requested.first) / requested.second - 1.0);
+      grouping.maximum_relative_factor_error = (std::max)(grouping.maximum_relative_factor_error, error);
+    }
+  }
+  else if (!build_topology_material_groups(data, factors, material_cap, grouping, applied_factors, true))
   {
     return false;
   }
@@ -1662,7 +1690,7 @@ bool CoreMaterials::set_topology_iteration_factors(int topology_id,int iteration
   data.iteration_material_groups.clear();
   data.iteration_material_groups.emplace(iteration_id, std::move(grouping));
 
-  PRINT_INFO("Topology %d iteration %d: %llu material groups, cap %d, maximum stiffness change %.6f%%.\n", topology_id, iteration_id, static_cast<unsigned long long>(group_count), material_cap, 100.0 * maximum_error);
+  PRINT_INFO("Topology %d iteration %d: %llu material groups, cap %d, maximum relative stiffness-factor quantization error %.6f%%.\n", topology_id, iteration_id, static_cast<unsigned long long>(group_count), material_cap, 100.0 * maximum_error);
   return true;
 }
 

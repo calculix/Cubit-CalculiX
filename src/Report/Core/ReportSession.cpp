@@ -1,6 +1,8 @@
 #include "ReportSession.hpp"
 #include <utility>
 #include "Framework/Reporting/ReportJson.hpp"
+#include <set>
+#include <tuple>
 
 ReportSession::ReportSession() = default;
 
@@ -51,12 +53,21 @@ bool ReportSession::from_json(const QJsonObject& input, ReportSession& output, s
     error = "Saved report count exceeds the supported limit.";
     return false;
   }
+  std::set<std::tuple<std::string, std::string, std::string, int>> sources;
   for (const auto value : docs)
   {
     auto document = std::make_shared<ReportDocument>();
     if (!value.isObject() || !ReportDocument::from_json(value.toObject(), *document, error) ||
         !candidate.documents.emplace(document->id, document).second)
     {
+      return false;
+    }
+    const auto& source = document->source;
+    const auto key = std::make_tuple(source.workspace_id, source.kind,
+      source.kind == "model" ? source.model_id : std::string(), source.kind == "job" ? source.job_id : 0);
+    if (!sources.insert(key).second)
+    {
+      error = "Saved report session contains more than one report for the same source.";
       return false;
     }
   }

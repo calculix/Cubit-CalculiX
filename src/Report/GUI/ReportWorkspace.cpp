@@ -1,4 +1,6 @@
 #include "ReportWorkspace.hpp"
+#include "ReportToolbar.hpp"
+#include "ReportExportDialog.hpp"
 #include "ReportContentTree.hpp"
 #include "ReportSettingsDialog.hpp"
 #include "ReportPreviewWidget.hpp"
@@ -40,10 +42,19 @@ std::string sourceCommand(const ReportRequest& request, bool choose)
 
 ReportWorkspace::ReportWorkspace(QWidget* host, std::weak_ptr<ReportApplicationInterface> active,
   std::function<bool(const std::string&, std::string&)> send,
-  std::function<bool(const std::string&, std::string&)> quiet, const QIcon& image)
+  std::function<bool(const std::string&, std::string&)> quiet, const QIcon& image,
+  const QIcon& pdfIcon, const QIcon& odtIcon)
   : QWidget(host), application(std::move(active)), submit(std::move(send)), silent(std::move(quiet)), icon(image)
 {
   setObjectName("ReportWorkspace");
+  toolbar = new ReportToolbar(this, pdfIcon, odtIcon, [this](const std::string& format)
+  {
+    std::string error;
+    if (!ReportExportDialog::run(this, format, submit, error))
+    {
+      PRINT_ERROR("Cannot export report: %s\n", error.c_str());
+    }
+  });
   auto* outer = new QVBoxLayout(this);
   auto* sourceRow = new QHBoxLayout();
   sources = new QComboBox(this);
@@ -129,16 +140,6 @@ ReportWorkspace::ReportWorkspace(QWidget* host, std::weak_ptr<ReportApplicationI
     ReportSettingsDialog dialog(this, configuration.values.empty() ? definition.defaults : configuration, application, submit);
     dialog.exec();
     refresh();
-  });
-  reports = new QComboBox(this);
-  outer->addWidget(reports);
-  connect(reports, &QComboBox::activated, this, [this](int index)
-  {
-    std::string quoted, error;
-    if (ReportCommandText::quote(reports->itemData(index).toString(), quoted, error))
-    {
-      dispatch("report select " + quoted);
-    }
   });
   status = new QLabel(this);
   status->setWordWrap(true);
@@ -255,6 +256,7 @@ ReportWorkspace::ReportWorkspace(QWidget* host, std::weak_ptr<ReportApplicationI
 
 ReportWorkspace::~ReportWorkspace()
 {
+  delete toolbar.data();
   delete treeDock.data();
 }
 
@@ -278,7 +280,7 @@ void ReportWorkspace::choose_source(int index)
     return;
   }
   const int entry = sources->itemData(index).toInt();
-  if (entry >= 0 && entry < static_cast<int>(entries.size()) && entries[entry].available)
+  if (entry >= 0 && entry < static_cast<int>(entries.size()) && (entries[entry].available || entries[entry].has_report))
   {
     const auto active = application.lock();
     if (active && sameSource(entries[entry].request, active->configuration_request()))
@@ -305,18 +307,9 @@ void ReportWorkspace::generate()
   {
     return;
   }
-  std::string command = sourceCommand(entries[index].request, false);
-  if (profiles->currentIndex() > 0)
-  {
-    std::string quoted, error;
-    if (!ReportCommandText::quote(profiles->currentText(), quoted, error))
-    {
-      PRINT_ERROR("%s\n", error.c_str());
-      return;
-    }
-    command += " profile " + quoted;
-  }
-  dispatch(command);
+  // Profile selection already loads its settings through a command. Generate
+  // uses the current configuration, including edits made after loading it.
+  dispatch(sourceCommand(entries[index].request, false));
 }
 
 void ReportWorkspace::profile_action(const std::string& action)
@@ -347,6 +340,7 @@ void ReportWorkspace::refresh()
     return;
   }
   const auto& state = active->session();
+  toolbar->set_export_enabled(active->document() != nullptr && !state.configuration_changed && !state.pending_source);
   const auto& request = active->configuration_request();
   std::string error;
   const bool sourcesAvailable = active->available_sources(entries, error);
@@ -373,7 +367,7 @@ void ReportWorkspace::refresh()
       sources->addItem(QString::fromStdString(entry.label), static_cast<int>(index));
       auto* item = qobject_cast<QStandardItemModel*>(sources->model())->item(sources->count() - 1);
       item->setToolTip(QString::fromStdString(entry.unavailable_reason));
-      if (!entry.available)
+      if (!entry.available && !entry.has_report)
       {
         item->setEnabled(false);
       }
@@ -386,8 +380,9 @@ void ReportWorkspace::refresh()
   }
   const int sourceIndex = sources->currentData().isValid() ? sources->currentData().toInt() : -1;
   const bool sourceReady = sourcesAvailable && sourceIndex >= 0 && sourceIndex < static_cast<int>(entries.size()) &&
-    entries[sourceIndex].available && sameSource(entries[sourceIndex].request, request);
-  generateButton->setEnabled(sourceReady);
+    (entries[sourceIndex].available || entries[sourceIndex].has_report) && sameSource(entries[sourceIndex].request, request);
+  const bool canRegenerate = sourceReady && entries[sourceIndex].available;
+  generateButton->setEnabled(canRegenerate);
   settingsButton->setEnabled(sourceReady);
   profileButton->setEnabled(sourceReady);
   profiles->setEnabled(sourceReady);
@@ -400,20 +395,7 @@ void ReportWorkspace::refresh()
     profiles->clear();
     profileWorkspace.clear();
   }
-  updateButton->setEnabled(active->document() != nullptr && !state.pending_source);
-  {
-    QSignalBlocker guard(reports);
-    reports->clear();
-    for (const auto& item : state.documents)
-    {
-      const auto label = item.second->source.kind == "model" ? " / current model" : " / job " + std::to_string(item.second->source.job_id);
-      reports->addItem(QString::fromStdString(item.second->title + label), QString::fromStdString(item.first));
-      if (item.first == state.active_id)
-      {
-        reports->setCurrentIndex(reports->count() - 1);
-      }
-    }
-  }
+  updateButton->setEnabled(canRegenerate && active->document() != nullptr && !state.pending_source);
   ReportTemplate definition;
   if (sourceReady && active->describe(definition, error))
   {
@@ -424,21 +406,21 @@ void ReportWorkspace::refresh()
       if (active->profile("list", "", available, error))
       {
         QSignalBlocker guard(profiles);
-        const QString previous = profiles->currentText();
         profiles->clear();
         profiles->addItem(tr("Workspace default"));
         for (const auto& profile : available)
         {
-          profiles->addItem(QString::fromStdString(profile.name));
+          profiles->addItem(QString::fromStdString(profile.name), QString::fromStdString(profile.id));
         }
-        const int found = profiles->findText(previous);
-        profiles->setCurrentIndex(found >= 0 ? found : 0);
         profileWorkspace = definition.workspace_id;
       }
     }
+    QSignalBlocker guard(profiles);
+    const int selected = profiles->findData(QString::fromStdString(request.profile_id));
+    profiles->setCurrentIndex(selected >= 0 ? selected : 0);
   }
   std::shared_ptr<const ReportDocumentLayout> layout;
-  if (active->document() && active->layout(layout, error))
+  if (active->document() && !state.pending_source && active->layout(layout, error))
   {
     page->set_layout(layout);
     preview->set_layout(layout);
@@ -457,8 +439,7 @@ void ReportWorkspace::refresh()
     }
     pageNumber->setMaximum(layout->page_count());
     pageNumber->setValue(page->page() + 1);
-    status->setText(state.pending_source ? tr("Source selection changed. Generate to create its report; the previous report remains visible.") :
-      state.configuration_changed ? tr("Settings changed. Update before export; preview shows the last generated report.") :
+    status->setText(state.configuration_changed ? tr("Settings changed. Update before export; preview shows the last generated report.") :
       tr("%1 pages. Save the project to retain the report.").arg(layout->page_count()));
   }
   else
@@ -472,7 +453,8 @@ void ReportWorkspace::refresh()
     page->set_layout(nullptr);
     preview->set_layout(nullptr);
     preview->hide();
-    status->setText(QString::fromStdString(error.empty() ? "Choose a source, configure content, then Generate." : error));
+    status->setText(state.pending_source ? tr("This source has no generated report. Configure its content, then Generate.") :
+      QString::fromStdString(error.empty() ? "Choose a source, configure content, then Generate." : error));
   }
   navigationBar->setEnabled(layout != nullptr);
   if (previewWindowRevision != active->preview_window_revision())
@@ -496,6 +478,7 @@ void ReportWorkspace::workspace_view(WorkspaceView& view)
   view.dockLayout = WorkspaceDockLayout::StackedLeft;
   view.docks = {treeDock};
   view.menuActions = {menu->menuAction()};
+  view.toolbars = {toolbar.data()};
   view.activationChanged = [widget = QPointer<ReportWorkspace>(this)](bool active)
   {
     if (active && widget)
@@ -503,4 +486,9 @@ void ReportWorkspace::workspace_view(WorkspaceView& view)
       widget->refresh();
     }
   };
+}
+
+bool ReportWorkspace::bind_native_toolbar(Claro* host, std::string& error)
+{
+  return toolbar->bind_native_actions(host, error);
 }

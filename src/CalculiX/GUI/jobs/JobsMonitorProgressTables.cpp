@@ -7,6 +7,7 @@
 #include <QClipboard>
 #include <QComboBox>
 #include <QFont>
+#include <QFontMetrics>
 #include <QGroupBox>
 #include <QHeaderView>
 #include <QHBoxLayout>
@@ -42,10 +43,17 @@ public:
 
   QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override
   {
-    static const QStringList status_headers = {"Step", "Increment", "Attempt", "Outcome", "Iterations",
-      "Total time", "Step time", "Increment size"};
-    static const QStringList convergence_headers = {"Step", "Increment", "Attempt", "Iteration", "Contact elements",
-      "Force residual [%]", "Displacement correction [%]", "Flux residual [%]", "Temperature correction [%]"};
+    static const QStringList status_headers =
+    {
+      "Step", "Increment", "Attempt", "Outcome", "Iterations",
+      "Total\ntime", "Step\ntime", "Increment\nsize"
+    };
+    static const QStringList convergence_headers =
+    {
+      "Step", "Increment", "Attempt", "Iteration", "Contact\nelements",
+      "Force\nresidual [%]", "Displacement\ncorrection [%]",
+      "Flux\nresidual [%]", "Temperature\ncorrection [%]"
+    };
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole)
     {
       const auto& headers = status ? status_headers : convergence_headers;
@@ -228,12 +236,21 @@ namespace
     view->setSelectionMode(QAbstractItemView::ExtendedSelection);
     view->setEditTriggers(QAbstractItemView::NoEditTriggers);
     view->setAlternatingRowColors(true);
-    view->verticalHeader()->hide();
-    view->horizontalHeader()->setDefaultSectionSize(145);
-    for (int i = 0; i < 3; ++i)
-    {
-      view->setColumnWidth(i, 75);
-    }
+    view->setWordWrap(false);
+    view->setStyleSheet("QTableView::item { padding: 0px 3px; }");
+    auto* rows = view->verticalHeader();
+    rows->hide();
+    const int row_height = view->fontMetrics().height() + 4;
+    rows->setMinimumSectionSize(row_height);
+    rows->setDefaultSectionSize(row_height);
+    rows->setSectionResizeMode(QHeaderView::Fixed);
+    auto* headers = view->horizontalHeader();
+    headers->setSectionResizeMode(QHeaderView::Interactive);
+    headers->setMinimumSectionSize(40);
+    headers->setStretchLastSection(false);
+    headers->setResizeContentsPrecision(250);
+    headers->setFixedHeight(2 * headers->fontMetrics().height() + 8);
+    view->resizeColumnsToContents();
     auto* copy = new QAction("Copy rows with headers", view);
     copy->setShortcut(QKeySequence::Copy);
     copy->setShortcutContext(Qt::WidgetWithChildrenShortcut);
@@ -254,7 +271,9 @@ namespace
       QStringList headers;
       for (int column = 0; column < view->model()->columnCount(); ++column)
       {
-        headers.append(view->model()->headerData(column, Qt::Horizontal).toString());
+        QString title = view->model()->headerData(column, Qt::Horizontal).toString();
+        title.replace('\n', ' ');
+        headers.append(title);
       }
       lines.append(headers.join('\t'));
       for (const auto& row : rows)
@@ -342,6 +361,10 @@ JobsMonitorProgressTables::JobsMonitorProgressTables(QWidget* owner) : QObject(o
   convergence_proxy->setSourceModel(convergence_model);
   auto* status_layout = new QVBoxLayout(status);
   auto* convergence_layout = new QVBoxLayout(convergence);
+  status_layout->setContentsMargins(4, 4, 4, 4);
+  status_layout->setSpacing(3);
+  convergence_layout->setContentsMargins(4, 4, 4, 4);
+  convergence_layout->setSpacing(3);
   follow_status = new QCheckBox("Follow latest", status);
   follow_convergence = new QCheckBox("Follow latest", convergence);
   follow_status->setChecked(true);
@@ -354,10 +377,17 @@ JobsMonitorProgressTables::JobsMonitorProgressTables(QWidget* owner) : QObject(o
   convergence_view = new QTableView(convergence);
   configure(status_view, status_proxy, follow_status);
   configure(convergence_view, convergence_proxy, follow_convergence);
-  status_layout->addWidget(follow_status);
-  status_layout->addWidget(status_summary);
+  auto* status_controls = new QHBoxLayout();
+  status_controls->setContentsMargins(0, 0, 0, 0);
+  status_controls->setSpacing(4);
+  status_controls->addWidget(status_summary);
+  status_controls->addStretch();
+  status_controls->addWidget(follow_status);
+  status_layout->addLayout(status_controls);
   status_layout->addWidget(status_view, 1);
   auto* filters = new QHBoxLayout();
+  filters->setContentsMargins(0, 0, 0, 0);
+  filters->setSpacing(4);
   step = new QComboBox(convergence);
   increment = new QComboBox(convergence);
   attempt = new QComboBox(convergence);
@@ -367,10 +397,10 @@ JobsMonitorProgressTables::JobsMonitorProgressTables(QWidget* owner) : QObject(o
   filters->addWidget(increment);
   filters->addWidget(new QLabel("Attempt", convergence));
   filters->addWidget(attempt);
+  filters->addWidget(convergence_summary);
   filters->addStretch();
   filters->addWidget(follow_convergence);
   convergence_layout->addLayout(filters);
-  convergence_layout->addWidget(convergence_summary);
   convergence_layout->addWidget(convergence_view, 1);
   status_unparsed = unparsed_box(status, status_text);
   convergence_unparsed = unparsed_box(convergence, convergence_text);
@@ -444,6 +474,8 @@ void JobsMonitorProgressTables::clear()
   convergence_text->clear();
   status_unparsed->setTitle("Unparsed lines (0)");
   convergence_unparsed->setTitle("Unparsed lines (0)");
+  status_unparsed->hide();
+  convergence_unparsed->hide();
   for (auto* combo : {step, increment, attempt})
   {
     const QSignalBlocker blocked(combo);
@@ -514,8 +546,22 @@ void JobsMonitorProgressTables::update(const CalculiXJobProgress::Data& data, co
     clear();
     read_error = error;
   }
+  const bool first_status_rows = status_model->rowCount() == 0 && !data.status.empty();
+  const bool first_convergence_rows = convergence_model->rowCount() == 0 && !data.convergence.empty();
   status_model->update(data, reset);
   convergence_model->update(data, reset);
+  // Fit only the first populated batch of each generation, not every poll.
+  // Subsequent user column resizing must remain in effect during live updates.
+  if (first_status_rows)
+  {
+    status_view->resizeColumnsToContents();
+    const int outcome_width = status_view->fontMetrics().horizontalAdvance("Unconverged") + 24;
+    status_view->setColumnWidth(3, (std::max)(status_view->columnWidth(3), outcome_width));
+  }
+  if (first_convergence_rows)
+  {
+    convergence_view->resizeColumnsToContents();
+  }
   for (std::size_t i = unparsed_count; i < data.unparsed.size(); ++i)
   {
     const auto& line = data.unparsed[i];
@@ -533,6 +579,8 @@ void JobsMonitorProgressTables::update(const CalculiXJobProgress::Data& data, co
   unparsed_count = data.unparsed.size();
   status_unparsed->setTitle(QString("Unparsed lines (%1)").arg(static_cast<qulonglong>(status_unparsed_count)));
   convergence_unparsed->setTitle(QString("Unparsed lines (%1)").arg(static_cast<qulonglong>(convergence_unparsed_count)));
+  status_unparsed->setVisible(status_unparsed_count > 0);
+  convergence_unparsed->setVisible(convergence_unparsed_count > 0);
   generation = data.generation;
   revision = data.revision;
   update_filters();

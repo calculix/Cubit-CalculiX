@@ -99,3 +99,38 @@ bool ReportModule::workspace_view(WorkspaceView& view, std::string& error)
   }
   return gui->workspace_view(view, error);
 }
+
+ProjectStateProviderInterface* ReportModule::project_state_provider() noexcept
+{
+  return this;
+}
+std::string ReportModule::project_state_id() const
+{
+  return "report";
+}
+void ReportModule::set_project_coordinated(bool coordinated)
+{
+  if (modelObserver)
+  {
+    modelObserver->project_coordinated = coordinated;
+  }
+}
+bool ReportModule::prepare_project_read(const ProjectStateContext& context, std::string& error)
+{
+  return application && application->prepare_project_read(context.filename,error);
+}
+bool ReportModule::commit_project_read(const ProjectStateContext&, std::string& error)
+{
+  return application && application->commit_project_read(error);
+}
+void ReportModule::discard_project_read() noexcept
+{
+  if (application)
+  {
+    application->discard_project_read();
+  }
+}
+bool ReportModule::write_project_state(const ProjectStateContext& context, std::string& error)
+{
+  return application && application->write_project(context.filename,error);
+}

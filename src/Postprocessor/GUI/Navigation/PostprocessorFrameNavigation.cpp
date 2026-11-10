@@ -162,8 +162,9 @@ void PostprocessorFrameNavigation::choose(int position)
 
 void PostprocessorFrameNavigation::refresh(const std::shared_ptr<const SimResults::VtkResultsData>& data,
   std::optional<std::size_t> current, const std::function<bool(std::size_t)>& has_mesh, const std::string& key,
-  const Postprocessor::AnimationDefinition& animation)
+  const Postprocessor::AnimationDefinition& animation, bool allow_animation)
 {
+  playbackAllowed = allow_animation;
   const bool owned = snapshot == data && context == key && current == expected;
   const bool externalFrame = running && snapshot == data && context == key && current != expected;
   if (owned && (dragging || running))
@@ -340,7 +341,7 @@ void PostprocessorFrameNavigation::synchronize_animation(const Postprocessor::An
   const QSignalBlocker fpsBlocker(fps);
   loop->setChecked(playback.loop);
   fps->setValue(playback.frames_per_second);
-  const bool canPlay = indices.size() > 1 && expected.has_value() && static_cast<bool>(animationCommand) && static_cast<bool>(preview);
+  const bool canPlay = playbackAllowed && indices.size() > 1 && expected.has_value() && static_cast<bool>(animationCommand) && static_cast<bool>(preview);
   running = playback.playing && canPlay && isVisible();
   if (!running)
   {
@@ -353,8 +354,8 @@ void PostprocessorFrameNavigation::synchronize_animation(const Postprocessor::An
   play->setIcon(style()->standardIcon(running ? QStyle::SP_MediaPause : QStyle::SP_MediaPlay));
   play->setToolTip(running ? tr("Pause result animation") : tr("Play result animation"));
   play->setEnabled(canPlay);
-  fps->setEnabled(!indices.empty() && static_cast<bool>(animationCommand));
-  loop->setEnabled(!indices.empty() && static_cast<bool>(animationCommand));
+  fps->setEnabled(playbackAllowed && !indices.empty() && static_cast<bool>(animationCommand));
+  loop->setEnabled(playbackAllowed && !indices.empty() && static_cast<bool>(animationCommand));
 }
 
 void PostprocessorFrameNavigation::commit_animation_frame()
